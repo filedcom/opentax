@@ -128,7 +128,23 @@ export const inputSchema = z.object({
   // qualified HSA funding distribution. Death and disability do not trigger
   // recapture; callers affirm that neither exception applies before routing.
   testing_period_failure: z.object({
-    last_month_rule_excess_amount: z.number().nonnegative(),
+    // The 2025 line 18 is recalculated from the filed 2024 contribution lines
+    // and the 2024 monthly limitation, not accepted as an entered tax amount.
+    last_month_rule_evidence: z.object({
+      contribution_year: z.literal(2024),
+      eligible_hdhp_coverage_by_month: z.array(
+        z.nativeEnum(CoverageType).nullable(),
+      ).length(12),
+      age_55_or_older: z.boolean(),
+      married_at_year_end: z.literal(false),
+      last_month_rule_elected: z.literal(true),
+      filed_form8889_line2: z.number().int().nonnegative(),
+      filed_form8889_line4_archer: z.literal(0),
+      filed_form8889_line8: z.number().int().nonnegative(),
+      filed_form8889_line9: z.number().int().nonnegative(),
+      filed_form8889_line10: z.literal(0),
+      filed_form8889_line13: z.number().int().nonnegative(),
+    }).strict().optional(),
     qualified_funding_distribution_amount: z.number().nonnegative(),
     not_death_or_disability: z.literal(true),
     prior_year_source: z.string().trim().min(1),
@@ -144,10 +160,64 @@ export const inputSchema = z.object({
       filed_prior_year_form8889_line10: z.number().positive().optional(),
       eligible_through_prior_year_end: z.literal(true).optional(),
     }).optional(),
-  }).optional(),
+  }).strict().optional(),
 }).strict();
 
 type Form8889Input = z.infer<typeof inputSchema>;
+
+// 2025 Part III line 18 uses the 2024 Line 3 Limitation Chart and Worksheet.
+// This bounded path supports a single, unmarried beneficiary with no Archer
+// MSA or IRA funding contribution in 2024; those distinct reductions/allocation
+// need their own source records rather than an inferred amount.
+function lastMonthRuleIncome(input: Form8889Input): number {
+  const evidence = input.testing_period_failure?.last_month_rule_evidence;
+  if (!evidence) return 0;
+  const currentCoverage = input.eligible_hdhp_coverage_by_month;
+  if (!currentCoverage || !currentCoverage.includes(null)) {
+    throw new Error(
+      "Form 8889 last-month rule needs twelve 2025 eligibility facts showing a testing-period failure",
+    );
+  }
+  const priorCoverage = evidence.eligible_hdhp_coverage_by_month;
+  const december = priorCoverage[11];
+  if (
+    december === null || !priorCoverage.slice(0, 11).includes(null)
+  ) {
+    throw new Error(
+      "Form 8889 last-month rule needs a 2024 eligibility gap and December 1 HDHP coverage",
+    );
+  }
+  if (
+    input.testing_period_failure?.qualified_funding_transfer_evidence
+      ?.transfer_year === 2024
+  ) {
+    throw new Error(
+      "Form 8889 combined 2024 last-month-rule and IRA funding recapture needs separate source reconciliation",
+    );
+  }
+  const annualLimit = (coverage: CoverageType | null): number => {
+    if (coverage === null) return 0;
+    return (coverage === CoverageType.Family ? 8_300 : 4_150) +
+      (evidence.age_55_or_older ? 1_000 : 0);
+  };
+  const enhancedLimit = annualLimit(december);
+  const redeterminedLimit = Math.round(
+    priorCoverage.reduce((sum, coverage) => sum + annualLimit(coverage), 0) /
+      12,
+  );
+  const contributed = evidence.filed_form8889_line2 +
+    evidence.filed_form8889_line9;
+  if (
+    evidence.filed_form8889_line8 !== enhancedLimit ||
+    contributed > enhancedLimit ||
+    evidence.filed_form8889_line13 !== evidence.filed_form8889_line2
+  ) {
+    throw new Error(
+      "Form 8889 last-month rule needs filed 2024 contribution lines that reconcile to the elected limit",
+    );
+  }
+  return Math.max(0, contributed - redeterminedLimit);
+}
 
 function verifyFundingTestingPeriod(
   input: Form8889Input,
@@ -724,8 +794,9 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
       (employerTreatment?.amount_included_in_w2_box1 ?? 0);
     const penalty = nonQualifiedPenalty(input, taxable);
     const failure = input.testing_period_failure;
+    const lastMonthIncome = lastMonthRuleIncome(input);
     const partIIIIncome = failure
-      ? failure.last_month_rule_excess_amount +
+      ? lastMonthIncome +
         failure.qualified_funding_distribution_amount
       : 0;
     const eligibilityTax = partIIIIncome * 0.1;
@@ -783,7 +854,7 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
       printFields.print_line17b_penalty = penalty;
     }
     if (partIIIIncome > 0 && failure) {
-      printFields.print_line18 = failure.last_month_rule_excess_amount;
+      printFields.print_line18 = lastMonthIncome;
       printFields.print_line19 = failure.qualified_funding_distribution_amount;
       printFields.print_line20 = partIIIIncome;
       printFields.print_line21 = eligibilityTax;

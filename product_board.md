@@ -1570,8 +1570,11 @@ requires identified current- or prior-year IRA-to-HSA transfers, twelve 2025
 monthly eligibility facts, and an amount reconciled to the relevant Form 8889
 line 10. The rule checks each transfer's own testing period and rejects expired
 or unsupported free-text recapture amounts. Trustee and prior-return evidence
-authentication, last-month-rule line 18 reconstruction, full-batch validation,
-and IRS acceptance remain open.
+authentication, full-batch validation, and IRS acceptance remain open. A new
+bounded unmarried-beneficiary route reconstructs last-month-rule line 18 from
+filed TY2024 contribution lines and twelve monthly HDHP facts, and rejects the
+old entered amount, conflicting filed lines, spouse allocation, and overlapping
+prior-year IRA funding. Its cases are written but unrun.
 
 Build-pass addendum for GAP-8283 (unrun): Section A column (h) now uses a
 supported reduced contribution amount instead of unreduced FMV and links a

@@ -19,6 +19,22 @@ const uniformFamily = {
   eligible_hdhp_coverage_by_month: Array(12).fill(CoverageType.Family),
   married_at_year_end: false,
 };
+const prior2024LastMonth = {
+  contribution_year: 2024,
+  eligible_hdhp_coverage_by_month: [
+    ...Array(11).fill(null),
+    CoverageType.SelfOnly,
+  ],
+  age_55_or_older: false,
+  married_at_year_end: false,
+  last_month_rule_elected: true,
+  filed_form8889_line2: 1_546,
+  filed_form8889_line4_archer: 0,
+  filed_form8889_line8: 4_150,
+  filed_form8889_line9: 0,
+  filed_form8889_line10: 0,
+  filed_form8889_line13: 1_546,
+};
 
 function compute(input: Record<string, unknown>) {
   return form8889.compute(
@@ -948,36 +964,128 @@ Deno.test("combined: deduction + non-qualified distribution both present", () =>
   assertEquals(fieldsOf(result.outputs, schedule2)!.line17c_hsa_penalty, 200);
 });
 
-Deno.test("part3: prior-year testing-period failure reaches Schedule 1 line 8f and Schedule 2 line 17d", () => {
+Deno.test("part3: 2024 last-month-rule coverage and filed contributions reconstruct 2025 line 18", () => {
   const result = compute({
     eligible_hdhp_coverage_by_month: Array(12).fill(null),
     testing_period_failure: {
-      last_month_rule_excess_amount: 1200,
-      qualified_funding_distribution_amount: 800,
+      last_month_rule_evidence: prior2024LastMonth,
+      qualified_funding_distribution_amount: 0,
       not_death_or_disability: true,
-      prior_year_source:
-        "2024 Form 8889 line 3 worksheet and IRA-to-HSA transfer",
-      qualified_funding_transfer_evidence: {
-        transfer_year: 2024,
-        transfers: [{
-          amount: 800,
-          transfer_month: 6,
-          source_reference: "2024 IRA trustee transfer confirmation",
-        }],
-        filed_prior_year_form8889_line10: 800,
-        eligible_through_prior_year_end: true,
-      },
+      prior_year_source: "Filed 2024 Form 8889 and monthly HDHP records",
     },
   });
-  assertEquals(fieldsOf(result.outputs, schedule1)?.line8f_hsa_income, 2000);
+  assertEquals(fieldsOf(result.outputs, schedule1)?.line8f_hsa_income, 1200);
   assertEquals(
     fieldsOf(result.outputs, schedule2)?.line17d_hsa_eligibility_tax,
-    200,
+    120,
   );
   assertEquals(findOutput(result, "form8889")?.fields.print_line18, 1200);
-  assertEquals(findOutput(result, "form8889")?.fields.print_line19, 800);
-  assertEquals(findOutput(result, "form8889")?.fields.print_line20, 2000);
-  assertEquals(findOutput(result, "form8889")?.fields.print_line21, 200);
+  assertEquals(findOutput(result, "form8889")?.fields.print_line19, 0);
+  assertEquals(findOutput(result, "form8889")?.fields.print_line20, 1200);
+  assertEquals(findOutput(result, "form8889")?.fields.print_line21, 120);
+});
+
+Deno.test("part3: last-month rule produces no recapture when 2024 contributions fit the monthly limit", () => {
+  const result = compute({
+    eligible_hdhp_coverage_by_month: Array(12).fill(null),
+    testing_period_failure: {
+      last_month_rule_evidence: {
+        ...prior2024LastMonth,
+        filed_form8889_line2: 300,
+        filed_form8889_line13: 300,
+      },
+      qualified_funding_distribution_amount: 0,
+      not_death_or_disability: true,
+      prior_year_source: "Filed 2024 Form 8889",
+    },
+  });
+  assertEquals(findOutput(result, "form8889"), undefined);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)?.line8f_hsa_income,
+    undefined,
+  );
+});
+
+Deno.test("part3: unsupported or contradictory 2024 last-month-rule records stop", () => {
+  const failure = {
+    last_month_rule_evidence: prior2024LastMonth,
+    qualified_funding_distribution_amount: 0,
+    not_death_or_disability: true,
+    prior_year_source: "Filed 2024 Form 8889",
+  };
+  const current = Array(12).fill(null);
+  assertThrows(
+    () =>
+      compute({
+        eligible_hdhp_coverage_by_month: current,
+        testing_period_failure: {
+          ...failure,
+          last_month_rule_evidence: {
+            ...prior2024LastMonth,
+            filed_form8889_line8: 4_000,
+          },
+        },
+      }),
+    Error,
+    "filed 2024 contribution lines that reconcile",
+  );
+  assertThrows(() =>
+    compute({
+      eligible_hdhp_coverage_by_month: current,
+      testing_period_failure: {
+        ...failure,
+        last_month_rule_evidence: {
+          ...prior2024LastMonth,
+          married_at_year_end: true,
+        },
+      },
+    })
+  );
+  assertThrows(() =>
+    compute({
+      eligible_hdhp_coverage_by_month: current,
+      testing_period_failure: {
+        ...failure,
+        last_month_rule_excess_amount: 1_200,
+      },
+    })
+  );
+  assertThrows(
+    () =>
+      compute({
+        eligible_hdhp_coverage_by_month: Array(12).fill(CoverageType.SelfOnly),
+        testing_period_failure: failure,
+      }),
+    Error,
+    "showing a testing-period failure",
+  );
+});
+
+Deno.test("part3: 2024 last-month rule and prior-year IRA funding need separate reconciliation", () => {
+  assertThrows(
+    () =>
+      compute({
+        eligible_hdhp_coverage_by_month: Array(12).fill(null),
+        testing_period_failure: {
+          last_month_rule_evidence: prior2024LastMonth,
+          qualified_funding_distribution_amount: 800,
+          not_death_or_disability: true,
+          prior_year_source: "Filed 2024 Form 8889",
+          qualified_funding_transfer_evidence: {
+            transfer_year: 2024,
+            transfers: [{
+              amount: 800,
+              transfer_month: 6,
+              source_reference: "2024 IRA trustee confirmation",
+            }],
+            filed_prior_year_form8889_line10: 800,
+            eligible_through_prior_year_end: true,
+          },
+        },
+      }),
+    Error,
+    "combined 2024 last-month-rule and IRA funding recapture",
+  );
 });
 
 Deno.test("part3: only prior-year transfers still in testing on first ineligible month reach line 19", () => {
@@ -988,7 +1096,6 @@ Deno.test("part3: only prior-year transfers still in testing on first ineligible
       ...Array(6).fill(null),
     ],
     testing_period_failure: {
-      last_month_rule_excess_amount: 0,
       qualified_funding_distribution_amount: 1_000,
       not_death_or_disability: true,
       prior_year_source: "Filed 2024 Form 8889 line 10",
@@ -1024,7 +1131,6 @@ Deno.test("part3: expired prior-year transfer cannot be recaptured on line 19", 
           ...Array(6).fill(null),
         ],
         testing_period_failure: {
-          last_month_rule_excess_amount: 0,
           qualified_funding_distribution_amount: 800,
           not_death_or_disability: true,
           prior_year_source: "Filed 2024 Form 8889 line 10",
@@ -1050,7 +1156,6 @@ Deno.test("part3: a positive line 19 cannot use only a free-text source", () => 
     () =>
       compute({
         testing_period_failure: {
-          last_month_rule_excess_amount: 0,
           qualified_funding_distribution_amount: 800,
           not_death_or_disability: true,
           prior_year_source: "IRA transfer",
@@ -1080,7 +1185,6 @@ Deno.test("part3: current-year line 19 must match the Part I funding transfer", 
       }],
     },
     testing_period_failure: {
-      last_month_rule_excess_amount: 0,
       qualified_funding_distribution_amount: 1_000,
       not_death_or_disability: true,
       prior_year_source: sourceReference,
@@ -1104,11 +1208,16 @@ Deno.test("part3: distribution and testing-period income share line 8f but keep 
     qualified_medical_expenses: 400,
     exception_qualified_taxable_amount: 0,
     testing_period_failure: {
-      last_month_rule_excess_amount: 500,
+      last_month_rule_evidence: {
+        ...prior2024LastMonth,
+        filed_form8889_line2: 846,
+        filed_form8889_line13: 846,
+      },
       qualified_funding_distribution_amount: 0,
       not_death_or_disability: true,
       prior_year_source: "2024 HSA contribution worksheet",
     },
+    eligible_hdhp_coverage_by_month: Array(12).fill(null),
   });
   assertEquals(fieldsOf(result.outputs, schedule1)?.line8f_hsa_income, 1100);
   assertEquals(fieldsOf(result.outputs, schedule2)?.line17c_hsa_penalty, 120);
