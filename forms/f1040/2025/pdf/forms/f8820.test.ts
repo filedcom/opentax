@@ -59,6 +59,36 @@ Deno.test("Form 8820 PDF projects its credit and checks Form 3800", () => {
   );
 });
 
+Deno.test("Form 8820 PDF includes a controlled-group allocation page", async () => {
+  const grouped = {
+    ...source,
+    controlled_group: {
+      group_classification_document_reference: "Section 41(f)(1)(B) analysis",
+      taxpayer_member_ein: "123456789",
+      members: [{
+        ein: "123456789",
+        business_name: "Taxpayer business",
+        qualified_clinical_testing_expenses: 100_000,
+      }, {
+        ein: "987654321",
+        business_name: "Related business",
+        qualified_clinical_testing_expenses: 200_000,
+      }],
+    },
+  };
+  const projected = form8820Pdf.projectFields?.(grouped, {
+    f3800: { f8820_credit: { credit_amount: 18_500 } },
+  }) ?? {};
+  assertEquals(projected.line2a, 19_750);
+  const document = await PDFDocument.create();
+  const formPage = document.addPage([612, 792]);
+  await form8820Pdf.decoratePages?.(document, [formPage], projected, undefined);
+  await form8820Pdf.appendSupplementalPages?.(document, projected, undefined);
+  assertEquals(document.getPageCount(), 2);
+  const pages = await PDFDocument.load(await document.save());
+  assertEquals(pages.getPageCount(), 2);
+});
+
 Deno.test("Form 8820 PDF includes a zero-credit reduced election", () => {
   const election = {
     ...source,

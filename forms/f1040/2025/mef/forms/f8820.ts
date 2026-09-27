@@ -72,7 +72,10 @@ function reconcileFiledExpenseReductions(
   }
 }
 
-export function buildForm8820Document(raw: unknown): string {
+export function buildForm8820Document(
+  raw: unknown,
+  controlledGroupStatementId?: string,
+): string {
   const input = inputSchema.parse(raw);
   const lines = calculateForm8820(input);
   if (lines.line2c <= 0 && !input.reduced_section280c_credit_election) {
@@ -87,6 +90,12 @@ export function buildForm8820Document(raw: unknown): string {
     element(
       "ReducedSection280CCrElectInd",
       String(input.reduced_section280c_credit_election),
+      controlledGroupStatementId
+        ? {
+          referenceDocumentId: controlledGroupStatementId,
+          referenceDocumentName: "ControlledGroupMembersStatement",
+        }
+        : undefined,
     ),
     element("EmployerDifferentialWageCrAmt", lines.line2b),
     element("CYCLessEmployerDiffWageCrAmt", lines.line2c),
@@ -127,6 +136,14 @@ export const form8820: MefFormDescriptor<"f8820", Input> = {
     ) {
       throw new Error("Form 8820 source credit needs attached Form 3800");
     }
+    const groupStatementIds = context?.documentIdsByPendingKey
+      ?.f8820_controlled_group_statement;
+    if (
+      source.controlled_group && context?.documentIdsByPendingKey &&
+      groupStatementIds?.length !== 1
+    ) {
+      throw new Error("Form 8820 controlled group needs its linked statement");
+    }
     if (
       !source.reduced_section280c_credit_election &&
       !context?.binaryAttachmentFileNames?.includes(
@@ -141,7 +158,7 @@ export const form8820: MefFormDescriptor<"f8820", Input> = {
     ) {
       reconcileFiledExpenseReductions(source, context.pending);
     }
-    return buildForm8820Document(source);
+    return buildForm8820Document(source, groupStatementIds?.[0]);
   },
   async buildBinaryAttachments(fields, context) {
     if (fields.f8820s === undefined) return [];

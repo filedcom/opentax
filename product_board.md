@@ -194,8 +194,15 @@ attachment from the same rows. MeF now cross-checks Schedule C
 lines 11/27b and Schedule F lines 13/32 against the net filed amount for the
 named business or farm. Other deduction lines and capitalized basis stop until
 their filed values can be reconciled. Filled statement rendering remains
-unverified. Controlled groups,
-passive credits, K-1 document reconciliation, eligibility-document verification,
+unverified. The current unrun controlled-group pass requires taxpayer and
+related-business EINs and qualified expense amounts, allocates the group's
+aggregate credit by member expenses with whole-dollar reconciliation, and
+links a native `ControlledGroupMembersStmt` to Form 8820 line 2a. The PDF
+builder now marks line 2a "See Attached" and appends the member calculation.
+Source, MeF, local XSD, and PDF-builder cases are written but unrun, and the
+filled PDF has not been visually verified. Groups whose statement exceeds the
+IRS 1,000-character XML field still stop instead of truncating members.
+Passive credits, K-1 document reconciliation, eligibility-document verification,
 filled-PDF verification, and IRS business rules remain open. The reduced-credit
 election now retains an IRS8820 document and paper form even with no
 current-year credit, without requiring a Form 3800 source document. The official

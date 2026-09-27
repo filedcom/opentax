@@ -3,6 +3,7 @@ import { PDFDocument } from "pdf-lib";
 import { FilingStatus } from "../../../mef/header.ts";
 import { inputSchema } from "../../../nodes/inputs/f8820/index.ts";
 import { buildForm8820Document, form8820 } from "./f8820.ts";
+import { form8820ControlledGroupStatement } from "./f8820_controlled_group_statement.ts";
 
 const source = inputSchema.parse({
   f8820s: [{
@@ -46,6 +47,55 @@ Deno.test("Form 8820 MeF maps the election, wage offset, and drug identity", () 
     xml,
     "<OrphanDrugDesignationNum>FDA-123</OrphanDrugDesignationNum>",
   );
+});
+
+Deno.test("Form 8820 MeF links its controlled-group calculation statement", () => {
+  const grouped = {
+    ...source,
+    controlled_group: {
+      group_classification_document_reference: "Section 41(f)(1)(B) analysis",
+      taxpayer_member_ein: "123456789",
+      members: [{
+        ein: "123456789",
+        business_name: "Taxpayer business",
+        qualified_clinical_testing_expenses: 100_000,
+      }, {
+        ein: "987654321",
+        business_name: "Related business",
+        qualified_clinical_testing_expenses: 200_000,
+      }],
+    },
+  };
+  const pending = { f8820: grouped };
+  assertThrows(
+    () =>
+      form8820.build(grouped, {
+        pending,
+        documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
+      }),
+    Error,
+    "controlled group needs its linked statement",
+  );
+  const xml = form8820.build(grouped, {
+    pending,
+    documentIdsByPendingKey: {
+      f3800: ["IRS3800_1"],
+      f8820_controlled_group_statement: ["ControlledGroupMembersStmt1"],
+    },
+  });
+  assertStringIncludes(
+    xml,
+    'referenceDocumentId="ControlledGroupMembersStmt1" referenceDocumentName="ControlledGroupMembersStatement"',
+  );
+  assertStringIncludes(
+    xml,
+    "<ReducedSection280CCrElectAmt>19750</ReducedSection280CCrElectAmt>",
+  );
+  const statement = form8820ControlledGroupStatement.build({}, { pending });
+  assertStringIncludes(statement, "<ControlledGroupMembersStmt>");
+  assertStringIncludes(statement, "aggregate qualified expenses: 300000");
+  assertStringIncludes(statement, "Related business (987654321)");
+  assertStringIncludes(statement, "credit share 39500");
 });
 
 Deno.test("Form 8820 MeF requires the linked Form 3800 and any expense statement", () => {

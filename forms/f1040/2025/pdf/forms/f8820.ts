@@ -99,8 +99,96 @@ export const form8820Pdf: PdfFormDescriptor = {
     return calculateForm8820(source).line2c > 0 ||
       source.reduced_section280c_credit_election;
   },
+  decoratePages: async (document, pages, fields) => {
+    const source = inputSchema.parse(fields);
+    if (!source.controlled_group) return;
+    const page = pages[0];
+    if (!page) throw new Error("Form 8820 PDF is missing page 1");
+    const font = await document.embedFont(StandardFonts.HelveticaBold);
+    page.drawText("See Attached", {
+      x: 399,
+      y: 575,
+      size: 7,
+      font,
+    });
+  },
   appendSupplementalPages: async (document, fields, filer) => {
     const source = inputSchema.parse(fields);
+    if (source.controlled_group) {
+      const group = calculateForm8820(source).controlledGroup!;
+      const regular = await document.embedFont(StandardFonts.Helvetica);
+      const bold = await document.embedFont(StandardFonts.HelveticaBold);
+      let page = document.addPage([612, 792]);
+      let y = 660;
+      const header = () => {
+        page.drawText("Form 8820 - Controlled-group line 2a allocation", {
+          x: 40,
+          y: 750,
+          size: 12,
+          font: bold,
+        });
+        page.drawText(
+          `Group basis: ${
+            source.controlled_group!.group_classification_document_reference
+          }`,
+          { x: 40, y: 730, size: 8, font: regular, maxWidth: 530 },
+        );
+        page.drawText(
+          `Group expenses: ${group.totalExpenses}    Group credit: ${group.totalCredit}    Rate: ${
+            source.reduced_section280c_credit_election ? "19.75%" : "25%"
+          }`,
+          { x: 40, y: 710, size: 9, font: regular },
+        );
+        page.drawText("Member", { x: 40, y: 680, size: 9, font: bold });
+        page.drawText("EIN", { x: 288, y: 680, size: 9, font: bold });
+        page.drawText("Expenses", { x: 375, y: 680, size: 9, font: bold });
+        page.drawText("Credit share", {
+          x: 480,
+          y: 680,
+          size: 9,
+          font: bold,
+        });
+        y = 660;
+      };
+      header();
+      for (const member of group.members) {
+        if (y < 70) {
+          page = document.addPage([612, 792]);
+          header();
+        }
+        page.drawText(member.business_name, {
+          x: 40,
+          y,
+          size: 8,
+          font: regular,
+          maxWidth: 235,
+        });
+        page.drawText(member.ein, { x: 288, y, size: 8, font: regular });
+        page.drawText(String(member.qualified_clinical_testing_expenses), {
+          x: 375,
+          y,
+          size: 8,
+          font: regular,
+        });
+        page.drawText(String(member.credit_share), {
+          x: 480,
+          y,
+          size: 8,
+          font: regular,
+        });
+        y -= 18;
+      }
+      if (y < 65) {
+        page = document.addPage([612, 792]);
+        header();
+      }
+      page.drawText(
+        `Taxpayer EIN ${source.controlled_group.taxpayer_member_ein}; Form 8820 line 2a share: ${
+          calculateForm8820(source).line2a
+        }`,
+        { x: 40, y: y - 12, size: 9, font: bold },
+      );
+    }
     const extra = source.f8820s.filter((drug) =>
       drug.qualified_clinical_testing_expenses > 0
     ).slice(26);

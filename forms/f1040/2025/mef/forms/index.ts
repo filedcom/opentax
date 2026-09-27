@@ -49,6 +49,7 @@ import { form8815 } from "./f8815.ts";
 import { form8824 } from "./f8824.ts";
 import { form8826 } from "./f8826_draft.ts";
 import { form8820 } from "./f8820.ts";
+import { form8820ControlledGroupStatement } from "./f8820_controlled_group_statement.ts";
 import { form8829 } from "./f8829.ts";
 import { form8834 } from "./f8834.ts";
 import { form8839 } from "./f8839.ts";
@@ -261,4 +262,6 @@ export const ALL_MEF_FORMS = [
   form8621ExcessStatement,
   // Form 8814 line 1a nominee and interest-adjustment statement.
   childTaxableInterestStatement,
+  // Form 8820 controlled-group allocation follows Form 8814 statements.
+  form8820ControlledGroupStatement,
 ] as const;

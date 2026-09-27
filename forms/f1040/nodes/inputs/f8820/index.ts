@@ -23,6 +23,16 @@ const passThroughCreditSchema = z.object({
   subject_to_passive_activity_limit: z.boolean(),
 });
 
+const controlledGroupSchema = z.object({
+  group_classification_document_reference: z.string().trim().min(1).max(80),
+  taxpayer_member_ein: z.string().regex(/^\d{9}$/),
+  members: z.array(z.object({
+    ein: z.string().regex(/^\d{9}$/),
+    business_name: z.string().trim().min(1).max(75),
+    qualified_clinical_testing_expenses: z.number().int().nonnegative(),
+  })).min(2),
+});
+
 const expenseReductionSchema = z.object({
   treatment: z.enum(["current_deduction", "capitalized_basis"]),
   return_form_or_schedule: z.string().trim().min(1),
@@ -59,6 +69,7 @@ const expenseReductionSchema = z.object({
 export const inputSchema = z.object({
   f8820s: z.array(drugSchema),
   pass_through_credits: z.array(passThroughCreditSchema).optional(),
+  controlled_group: controlledGroupSchema.optional(),
   reduced_section280c_credit_election: z.boolean(),
   form8932_overlapping_wage_credit: z.number().int().nonnegative(),
   subject_to_passive_activity_limit: z.boolean(),
@@ -67,6 +78,24 @@ export const inputSchema = z.object({
   ).optional(),
   expense_reductions: z.array(expenseReductionSchema).optional(),
 }).superRefine((input, ctx) => {
+  const group = input.controlled_group;
+  if (group) {
+    const memberEins = new Set(group.members.map((member) => member.ein));
+    if (memberEins.size !== group.members.length) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["controlled_group", "members"],
+        message: "Form 8820 controlled-group member EINs must be distinct",
+      });
+    }
+    if (!memberEins.has(group.taxpayer_member_ein)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["controlled_group", "taxpayer_member_ein"],
+        message: "Form 8820 taxpayer must be a listed group member",
+      });
+    }
+  }
   if (
     input.f8820s.length === 0 &&
     (input.pass_through_credits?.length ?? 0) === 0 &&
@@ -135,6 +164,49 @@ export interface Form8820Lines {
   line2c: number;
   line3: number;
   line4: number;
+  controlledGroup?: {
+    totalExpenses: number;
+    totalCredit: number;
+    members: {
+      ein: string;
+      business_name: string;
+      qualified_clinical_testing_expenses: number;
+      credit_share: number;
+    }[];
+  };
+}
+
+function allocateControlledGroupCredit(
+  group: z.infer<typeof controlledGroupSchema>,
+  rate: number,
+): NonNullable<Form8820Lines["controlledGroup"]> {
+  const totalExpenses = group.members.reduce(
+    (sum, member) => sum + member.qualified_clinical_testing_expenses,
+    0,
+  );
+  const totalCredit = Math.round(totalExpenses * rate);
+  const shares = group.members.map((member) =>
+    totalExpenses === 0
+      ? 0
+      : totalCredit * member.qualified_clinical_testing_expenses /
+        totalExpenses
+  );
+  const wholeShares = shares.map(Math.floor);
+  const remainder = totalCredit - wholeShares.reduce((sum, n) => sum + n, 0);
+  const ranked = group.members.map((member, index) => ({
+    index,
+    fraction: shares[index] - wholeShares[index],
+    ein: member.ein,
+  })).sort((a, b) => b.fraction - a.fraction || a.ein.localeCompare(b.ein));
+  for (const { index } of ranked.slice(0, remainder)) wholeShares[index]++;
+  return {
+    totalExpenses,
+    totalCredit,
+    members: group.members.map((member, index) => ({
+      ...member,
+      credit_share: wholeShares[index],
+    })),
+  };
 }
 
 function validDesignationDate(value: string): boolean {
@@ -159,9 +231,22 @@ export function calculateForm8820(raw: F8820Input): Form8820Lines {
     (sum, drug) => sum + drug.qualified_clinical_testing_expenses,
     0,
   ));
-  const line2a = Math.round(
-    line1 * (input.reduced_section280c_credit_election ? 0.1975 : 0.25),
+  const rate = input.reduced_section280c_credit_election ? 0.1975 : 0.25;
+  const controlledGroup = input.controlled_group
+    ? allocateControlledGroupCredit(input.controlled_group, rate)
+    : undefined;
+  const taxpayerMember = controlledGroup?.members.find((member) =>
+    member.ein === input.controlled_group?.taxpayer_member_ein
   );
+  if (
+    taxpayerMember &&
+    taxpayerMember.qualified_clinical_testing_expenses !== line1
+  ) {
+    throw new Error(
+      "Form 8820 taxpayer group expenses must equal own line 1 expenses",
+    );
+  }
+  const line2a = taxpayerMember?.credit_share ?? Math.round(line1 * rate);
   const line2b = input.form8932_overlapping_wage_credit;
   if (line2b > line2a) {
     throw new Error("Form 8820 overlapping wage credit exceeds line 2a");
@@ -210,7 +295,15 @@ export function calculateForm8820(raw: F8820Input): Form8820Lines {
     (sum, entry) => sum + entry.credit_amount,
     0,
   );
-  return { line1, line2a, line2b, line2c, line3, line4: line2c + line3 };
+  return {
+    line1,
+    line2a,
+    line2b,
+    line2c,
+    line3,
+    line4: line2c + line3,
+    ...(controlledGroup ? { controlledGroup } : {}),
+  };
 }
 
 class F8820Node extends TaxNode<typeof inputSchema> {

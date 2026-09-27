@@ -35,6 +35,82 @@ Deno.test("Form 8820 reduced section 280C election uses 19.75%", () => {
   });
 });
 
+Deno.test("Form 8820 allocates the aggregate controlled-group credit to members", () => {
+  const group = {
+    group_classification_document_reference: "Section 41(f)(1)(B) analysis",
+    taxpayer_member_ein: "123456789",
+    members: [{
+      ein: "123456789",
+      business_name: "Taxpayer business",
+      qualified_clinical_testing_expenses: 1,
+    }, {
+      ein: "987654321",
+      business_name: "Related business",
+      qualified_clinical_testing_expenses: 2,
+    }],
+  };
+  const lines = calculateForm8820(source({
+    f8820s: [{ ...drug, qualified_clinical_testing_expenses: 1 }],
+    controlled_group: group,
+  }));
+  assertEquals(lines.line1, 1);
+  assertEquals(lines.line2a, 0);
+  assertEquals(lines.controlledGroup?.totalExpenses, 3);
+  assertEquals(lines.controlledGroup?.totalCredit, 1);
+  assertEquals(
+    lines.controlledGroup?.members.map((member) => member.credit_share),
+    [0, 1],
+  );
+  assertEquals(
+    calculateForm8820(source({
+      f8820s: [{ ...drug, qualified_clinical_testing_expenses: 2 }],
+      controlled_group: {
+        ...group,
+        taxpayer_member_ein: "987654321",
+      },
+    })).line2a,
+    1,
+  );
+});
+
+Deno.test("Form 8820 refuses an inconsistent controlled-group allocation", () => {
+  const group = {
+    group_classification_document_reference: "Section 41(f)(1)(B) analysis",
+    taxpayer_member_ein: "123456789",
+    members: [{
+      ein: "123456789",
+      business_name: "Taxpayer business",
+      qualified_clinical_testing_expenses: 80_000,
+    }, {
+      ein: "987654321",
+      business_name: "Related business",
+      qualified_clinical_testing_expenses: 20_000,
+    }],
+  };
+  assertThrows(
+    () => calculateForm8820(source({ controlled_group: group })),
+    Error,
+    "taxpayer group expenses must equal own line 1",
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...source(),
+      controlled_group: { ...group, taxpayer_member_ein: "111111111" },
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...source(),
+      controlled_group: {
+        ...group,
+        members: [group.members[0], { ...group.members[1], ein: "123456789" }],
+      },
+    }).success,
+    false,
+  );
+});
+
 Deno.test("Form 8820 full credit uses 25% and needs the deduction statement", () => {
   assertThrows(() =>
     calculateForm8820(source({
