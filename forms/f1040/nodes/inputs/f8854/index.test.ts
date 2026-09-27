@@ -31,6 +31,7 @@ import {
   buildForm8854SectionD,
 } from "../../../2025/mef/forms/f8854_section_d.ts";
 import { calculateSectionDDeferral } from "./section-d.ts";
+import { buildForm8854InitialBundle } from "../../../2025/mef/forms/f8854_initial.ts";
 
 function asset(
   assetId: string,
@@ -1105,6 +1106,152 @@ Deno.test("Form 8854 Section D rejects invalid elections and emits a no-deferral
     Error,
     "linked statement document",
   );
+});
+
+Deno.test("Form 8854 initial bundle assembles Parts I and II without pretending to register filing", () => {
+  const noncovered = buildForm8854InitialBundle(
+    inputSchema.parse(input()),
+    {
+      form: "DOC-8854",
+      balanceSheet: {},
+      sectionC: {},
+      binaryAttachments: [],
+    },
+  );
+  assertStringIncludes(noncovered.formXml, '<IRS8854 documentId="DOC-8854">');
+  assertStringIncludes(
+    noncovered.formXml,
+    "<InitialExptrtStmtSpcfdYrInd>X</InitialExptrtStmtSpcfdYrInd>",
+  );
+  assertStringIncludes(noncovered.formXml, "<ExpatriationInformationGrp>");
+  assertStringIncludes(noncovered.formXml, "<InitialExptrtStmtBalSheetGrp>");
+  assertEquals(
+    noncovered.formXml.includes("PropertyOwnedDtExpatriationGrp"),
+    false,
+  );
+  assertEquals(
+    noncovered.formXml.includes("AnnualExptrtStmtBfrSpcfdYrGrp"),
+    false,
+  );
+  assertEquals(noncovered.nativeStatements.length, 0);
+
+  const covered = buildForm8854InitialBundle(
+    inputSchema.parse(input({
+      balance_sheet: balanceSheetWithNetWorth(2_000_000),
+      section_c: sectionC([asset("stock", 1_000_000, 100_000)]),
+    })),
+    {
+      form: "DOC-8854-C",
+      balanceSheet: {},
+      sectionC: { computation: "DOC-COMP" },
+      binaryAttachments: [],
+    },
+  );
+  assertStringIncludes(covered.formXml, "<PropertyOwnedDtExpatriationGrp>");
+  assertStringIncludes(covered.formXml, "<ExptrtTaxDeferralGrp>");
+  assertEquals(covered.nativeStatements.map((row) => row.documentName), [
+    "Form8854ComputationStatement",
+  ]);
+});
+
+Deno.test("Form 8854 initial bundle requires actual IDs for election PDFs", () => {
+  const parsed = inputSchema.parse(input({
+    balance_sheet: balanceSheetWithNetWorth(2_000_000),
+    section_c: sectionC([
+      asset("business", 2_000_000, 200_000),
+      asset("stock", 1_000_000, 800_000),
+    ]),
+    section_d: electedDeferral(["stock"]),
+  }));
+  const ids = {
+    form: "DOC-8854",
+    balanceSheet: {},
+    sectionC: {
+      computation: "DOC-COMP",
+      deferredPropertyTaxElection: "DOC-DEFERRED",
+    },
+    binaryAttachments: ["DOC-HYP-WITH", "DOC-HYP-WITHOUT", "DOC-AGREEMENT"],
+  };
+  assertThrows(
+    () =>
+      buildForm8854InitialBundle(parsed, {
+        ...ids,
+        binaryAttachments: ["DOC-HYP-WITH", "DOC-HYP-WITHOUT"],
+      }),
+    Error,
+    "needs binary attachment DOC-AGREEMENT",
+  );
+  const bundle = buildForm8854InitialBundle(parsed, ids);
+  assertStringIncludes(
+    bundle.formXml,
+    'referenceDocumentId="DOC-HYP-WITH DOC-HYP-WITHOUT DOC-AGREEMENT" referenceDocumentName="BinaryAttachment"',
+  );
+  assertEquals(bundle.nativeStatements.length, 2);
+  assertEquals(
+    bundle.nativeStatements[1].documentName,
+    "DeferredPropertyTaxElectionStatement",
+  );
+  assertThrows(
+    () =>
+      buildForm8854InitialBundle(parsed, {
+        ...ids,
+        binaryAttachments: [...ids.binaryAttachments, "DOC-AGREEMENT"],
+      }),
+    Error,
+    "document IDs must be unique",
+  );
+});
+
+Deno.test("Form 8854 trust full-value election requires a linked valuation ruling", () => {
+  const section = {
+    ...sectionC(),
+    nongrantor_trust_interests: [{
+      item_id: "trust",
+      description: "Foreign nongrantor trust",
+      treatment: NongrantorTrustTreatment.ElectFullValue,
+      valuation_letter_ruling_document_id: "DOC-RULING",
+    }],
+  };
+  assertEquals(
+    inputSchema.safeParse(input({
+      section_c: {
+        ...section,
+        nongrantor_trust_interests: [{
+          ...section.nongrantor_trust_interests[0],
+          valuation_letter_ruling_document_id: undefined,
+        }],
+      },
+    })).success,
+    false,
+  );
+  const parsed = inputSchema.parse(input({
+    balance_sheet: balanceSheetWithNetWorth(2_000_000),
+    section_c: section,
+  }));
+  const ids = {
+    form: "DOC-8854",
+    balanceSheet: {},
+    sectionC: { nongrantorTrust: "DOC-TRUST" },
+    binaryAttachments: ["DOC-RULING"],
+  };
+  assertThrows(
+    () =>
+      buildForm8854InitialBundle(parsed, {
+        ...ids,
+        binaryAttachments: [],
+      }),
+    Error,
+    "needs binary attachment DOC-RULING",
+  );
+  const bundle = buildForm8854InitialBundle(parsed, ids);
+  assertStringIncludes(
+    bundle.formXml,
+    "<Section877AElectionInd>X</Section877AElectionInd>",
+  );
+  assertStringIncludes(bundle.formXml, 'referenceDocumentId="DOC-RULING"');
+  assertEquals(bundle.nativeStatements.map((row) => row.documentName), [
+    "NongrantorTrustStatement",
+  ]);
 });
 
 Deno.test("Form 8854 does not turn deemed gain into a dollar-for-dollar Schedule 2 tax", () => {

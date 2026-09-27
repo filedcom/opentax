@@ -1135,8 +1135,13 @@ allocation XML. The document IDs, security, agent, and waiver confirmations are
 source assertions; the hypothetical return PDFs, agreement copy, original
 mailing, and IRS acceptance are not authenticated or attached. Annual statement
 facts, exception source corroboration, property-character gain/loss routing,
-PDF, complete MeF serialization, source reconciliation, and IRS business rules
-remain open. The calculation and rejection cases are
+PDF, registered MeF serialization, source reconciliation, and IRS business rules
+remain open. An unregistered initial-form bundle now composes Parts I and II in
+XSD order and requires explicit MeF document IDs for native statements and the
+known binary attachments, including deferral hypotheticals, agreement copy,
+and trust valuation rulings. It validates ID shape and uniqueness, but cannot
+prove that those source PDFs or the original mailed agreement actually exist.
+The calculation and rejection cases are
 written but unrun. See the
 [2025 Form 8854 instructions](https://www.irs.gov/instructions/i8854).
 
