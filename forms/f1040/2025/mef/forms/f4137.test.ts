@@ -74,7 +74,6 @@ Deno.test("Form 4137 refuses allocated tips without employer detail", () => {
     () =>
       form4137.build({
         w2_tip_sources: [{
-          recipient: "taxpayer",
           allocated_tips: 500,
           ss_wages_and_tips: 30_000,
         }],

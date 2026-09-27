@@ -16,6 +16,7 @@ Deno.test("W-2 allocated tips are reconciled to Form 4137 and actual tip income 
       taxpayer_ssn: "123-45-6789",
     },
     w2: [{
+      employee_ssn: "123-45-6789",
       employer_name: "CAFE",
       employer_ein: "123456789",
       box1_wages: 30_000,
@@ -38,7 +39,7 @@ Deno.test("W-2 allocated tips are reconciled to Form 4137 and actual tip income 
   }, ctx);
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.form4137?.w2_tip_sources, [{
-    recipient: "taxpayer",
+    employee_ssn: "123-45-6789",
     allocated_tips: 1_000,
     ss_wages_and_tips: 32_000,
   }]);
@@ -84,6 +85,7 @@ Deno.test("Joint return keeps taxpayer and spouse Form 4137 wage bases separate"
     },
     w2: [
       {
+        employee_ssn: "123-45-6789",
         employer_name: "CAFE",
         employer_ein: "123456789",
         box1_wages: 30_000,
@@ -128,10 +130,58 @@ Deno.test("Joint return keeps taxpayer and spouse Form 4137 wage bases separate"
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.f1040?.line1c_unreported_tips, 4_000);
   assertEquals(result.pending.schedule2?.line5_unreported_tip_tax, 245);
+  assertEquals(result.pending.form4137?.taxpayer_ssn, "123-45-6789");
+  assertEquals(result.pending.form4137?.spouse_ssn, "987-65-4321");
   assertEquals(result.pending.form4137?.w2_tip_sources, [
-    { recipient: "taxpayer", allocated_tips: 1_000, ss_wages_and_tips: 32_000 },
-    { recipient: "spouse", allocated_tips: 500, ss_wages_and_tips: 176_100 },
+    {
+      employee_ssn: "123-45-6789",
+      allocated_tips: 1_000,
+      ss_wages_and_tips: 32_000,
+    },
+    {
+      employee_ssn: "987-65-4321",
+      allocated_tips: 500,
+      ss_wages_and_tips: 176_100,
+    },
   ]);
+});
+
+Deno.test("Form 4137 rejects a W-2 employee SSN outside the filed return", () => {
+  const result = execute(plan, registry, {
+    general: {
+      filing_status: FilingStatus.Single,
+      taxpayer_first_name: "Alex",
+      taxpayer_last_name: "Tipper",
+      taxpayer_ssn: "123-45-6789",
+    },
+    w2: [{
+      employee_ssn: "111-22-3333",
+      employer_name: "CAFE",
+      employer_ein: "123456789",
+      box1_wages: 30_000,
+      box2_fed_withheld: 2_000,
+      box3_ss_wages: 30_000,
+      box8_allocated_tips: 1_000,
+    }],
+    form4137: {
+      forms: [{
+        recipient: "taxpayer",
+        employers: [{
+          name: "CAFE",
+          ein: "123456789",
+          tips_received: 1_000,
+          tips_reported: 0,
+        }],
+      }],
+    },
+  }, ctx);
+  assertEquals(
+    result.diagnostics.some((entry) =>
+      entry.nodeType === "form4137" &&
+      entry.message.includes("does not match a filer")
+    ),
+    true,
+  );
 });
 
 Deno.test("Form 4137 line 6 reaches Form 8959 line 2 and Additional Medicare Tax", () => {
@@ -166,7 +216,6 @@ Deno.test("Form 4137 line 6 reaches Form 8959 line 2 and Additional Medicare Tax
   }, ctx);
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.form4137?.w2_tip_sources, [{
-    recipient: "taxpayer",
     allocated_tips: 4_000,
     ss_wages_and_tips: 176_100,
   }]);

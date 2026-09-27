@@ -14,6 +14,7 @@ import { eitc } from "../../intermediate/forms/eitc/index.ts";
 import { f8812 } from "../f8812/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { form8959 } from "../../intermediate/forms/form8959/index.ts";
+import { form4137 } from "../../intermediate/forms/form4137/index.ts";
 import { form8960 } from "../../intermediate/forms/form8960/index.ts";
 import {
   below100FplStatusSchema,
@@ -673,6 +674,7 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
     eitc,
     f8812,
     agi_aggregator,
+    form4137,
     form8959,
     form8960,
     form8962,
@@ -855,6 +857,19 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
           { spouse_blind: parsed.spouse_blind }),
       } as AtLeastOne<z.infer<typeof form8995["inputSchema"]>>),
     ];
+
+    if (parsed.taxpayer_ssn !== undefined) {
+      outputs.push(this.outputNodes.output(form4137, {
+        taxpayer_ssn: parsed.taxpayer_ssn,
+        ...(parsed.spouse_ssn !== undefined && {
+          spouse_ssn: parsed.spouse_ssn,
+        }),
+      }));
+    } else if (parsed.spouse_ssn !== undefined) {
+      outputs.push(this.outputNodes.output(form4137, {
+        spouse_ssn: parsed.spouse_ssn,
+      }));
+    }
 
     // Send zero counts too, so an explicit Schedule 8812 cannot claim children
     // who are absent from the Form 1040 dependent rows.

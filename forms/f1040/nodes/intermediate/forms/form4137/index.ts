@@ -51,12 +51,14 @@ const formSchema = z.object({
 }).strict();
 
 const w2TipSourceSchema = z.object({
-  recipient: recipientSchema,
+  employee_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
   allocated_tips: z.number().nonnegative(),
   ss_wages_and_tips: z.number().nonnegative().optional(),
 }).strict();
 
 export const inputSchema = z.object({
+  taxpayer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
+  spouse_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
   forms: z.array(formSchema).optional(),
   w2_tip_sources: z.array(w2TipSourceSchema).optional(),
 }).strict();
@@ -89,15 +91,42 @@ export function calculateForm4137(
   if (recipients.size !== forms.length) {
     throw new Error("Form 4137 needs one form per tip recipient");
   }
-  for (const source of sources) {
-    if (source.allocated_tips > 0 && !recipients.has(source.recipient)) {
+  if (
+    forms.length === 0 && sources.every((source) => source.allocated_tips === 0)
+  ) {
+    return [];
+  }
+  const taxpayerSsn = input.taxpayer_ssn?.replaceAll("-", "");
+  const spouseSsn = input.spouse_ssn?.replaceAll("-", "");
+  if (taxpayerSsn !== undefined && taxpayerSsn === spouseSsn) {
+    throw new Error("Form 4137 taxpayer and spouse SSNs must differ");
+  }
+  const attributedSources = sources.map((source) => {
+    const employeeSsn = source.employee_ssn?.replaceAll("-", "");
+    let recipient: "taxpayer" | "spouse";
+    if (employeeSsn === undefined) {
+      if (spouseSsn !== undefined) {
+        throw new Error(
+          "Form 4137 joint-return W-2 needs employee SSN for tip attribution",
+        );
+      }
+      recipient = "taxpayer";
+    } else if (taxpayerSsn !== undefined && employeeSsn === taxpayerSsn) {
+      recipient = "taxpayer";
+    } else if (spouseSsn !== undefined && employeeSsn === spouseSsn) {
+      recipient = "spouse";
+    } else {
+      throw new Error("Form 4137 W-2 employee SSN does not match a filer");
+    }
+    if (source.allocated_tips > 0 && !recipients.has(recipient)) {
       throw new Error(
-        `Form 4137 ${source.recipient} allocated tips need employer tip records`,
+        `Form 4137 ${recipient} allocated tips need employer tip records`,
       );
     }
-  }
+    return { ...source, recipient };
+  });
   return forms.map((form) => {
-    const related = sources.filter((source) =>
+    const related = attributedSources.filter((source) =>
       source.recipient === form.recipient
     );
     const allocated = related.reduce(

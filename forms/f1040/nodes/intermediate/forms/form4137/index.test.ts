@@ -25,7 +25,6 @@ Deno.test("Form 4137 requires employer rows when W-2 has allocated tips", () => 
     () =>
       compute({
         w2_tip_sources: [{
-          recipient: "taxpayer",
           allocated_tips: 500,
           ss_wages_and_tips: 30_000,
         }],
@@ -43,7 +42,6 @@ Deno.test("Form 4137 calculates unreported income, SS tax and Medicare tax from 
       ss_wages_from_w2: 30_000,
     }],
     w2_tip_sources: [{
-      recipient: "taxpayer",
       allocated_tips: 2_500,
       ss_wages_and_tips: 30_000,
     }],
@@ -153,6 +151,75 @@ Deno.test("Form 4137 keeps taxpayer and spouse computations separate", () => {
   assertEquals(fieldsOf(result.outputs, form8959)?.unreported_tips, 4_000);
 });
 
+Deno.test("Form 4137 attributes W-2 wages by employee SSN, including an explicit taxpayer SSN", () => {
+  const calculated = calculateForm4137(
+    inputSchema.parse({
+      taxpayer_ssn: "123-45-6789",
+      spouse_ssn: "987-65-4321",
+      forms: [
+        { recipient: "taxpayer", employers: [employer] },
+        {
+          recipient: "spouse",
+          employers: [{
+            name: "DINER",
+            ein: "98-7654321",
+            tips_received: 1_000,
+            tips_reported: 0,
+          }],
+        },
+      ],
+      w2_tip_sources: [
+        {
+          employee_ssn: "123456789",
+          allocated_tips: 500,
+          ss_wages_and_tips: 30_000,
+        },
+        {
+          employee_ssn: "987-65-4321",
+          allocated_tips: 500,
+          ss_wages_and_tips: 176_100,
+        },
+      ],
+    }),
+    176_100,
+  );
+  assertEquals(calculated.map((form) => form.ssWagesAndTips), [
+    30_000,
+    176_100,
+  ]);
+  assertEquals(calculated.map((form) => form.totalTax), [230, 15]);
+});
+
+Deno.test("Form 4137 rejects unknown and unattributed joint-return W-2 identities", () => {
+  const source = {
+    taxpayer_ssn: "123-45-6789",
+    spouse_ssn: "987-65-4321",
+    forms: [{ recipient: "taxpayer", employers: [employer] }],
+  };
+  assertThrows(
+    () =>
+      compute({
+        ...source,
+        w2_tip_sources: [{
+          employee_ssn: "111-22-3333",
+          allocated_tips: 500,
+          ss_wages_and_tips: 30_000,
+        }],
+      }),
+    Error,
+    "does not match a filer",
+  );
+  assertThrows(
+    () =>
+      compute({
+        ...source,
+        w2_tip_sources: [{ allocated_tips: 500, ss_wages_and_tips: 30_000 }],
+      }),
+    Error,
+    "needs employee SSN",
+  );
+});
+
 Deno.test("Form 4137 refuses duplicate recipients and inconsistent W-2 wages", () => {
   assertThrows(
     () =>
@@ -174,7 +241,6 @@ Deno.test("Form 4137 refuses duplicate recipients and inconsistent W-2 wages", (
           ss_wages_from_w2: 20_000,
         }],
         w2_tip_sources: [{
-          recipient: "taxpayer",
           allocated_tips: 500,
           ss_wages_and_tips: 30_000,
         }],
@@ -191,7 +257,7 @@ Deno.test("Form 4137 lower reported tips require supporting records", () => {
       employers: [{ ...employer, tips_received: 2_500 }],
       ss_wages_from_w2: 0,
     }],
-    w2_tip_sources: [{ recipient: "taxpayer", allocated_tips: 1_000 }],
+    w2_tip_sources: [{ allocated_tips: 1_000 }],
   };
   assertThrows(() => compute(raw), Error, "without supporting records");
   const result = compute({
@@ -284,7 +350,7 @@ Deno.test("Form 4137 rejects impossible employer and below-$20 month facts", () 
 Deno.test("Form 4137 with no tip activity has no outputs", () => {
   assertEquals(compute({}).outputs, []);
   assertEquals(
-    compute({ w2_tip_sources: [{ recipient: "taxpayer", allocated_tips: 0 }] })
+    compute({ w2_tip_sources: [{ allocated_tips: 0 }] })
       .outputs,
     [],
   );
