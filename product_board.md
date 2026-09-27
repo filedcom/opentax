@@ -511,8 +511,8 @@ activity's statement reference; its source case is written but unrun. Tax-use
 allocation and carryover statement generation remain open. An unrun XML-row
 plan now collapses multiple carryover years into one schema group per credit
 line, records the latest origin year as the IRS instructs for Part IV column
-(b), and retains every source year for the required Part VI detail. A
-schema-backed maps now name the Part V and VI detail groups for every supported
+(b), and retains every source year for the required Part VI detail. Schema-backed
+maps now name the Part V and VI detail groups for every supported
 current-year and carryover row. A pure XML fragment builder writes passive
 Part III/IV aggregates and, when needed, Part V/VI source detail with the
 verified EIN or missing-EIN reason, tax use, and carryforward. Direct and
@@ -521,8 +521,11 @@ on every row and returns unwrapped Part V details so a filed Form 3800 can
 combine them with nonpassive details under one schema group. The registered
 nonpassive builder now uses the shared line-ordered Part V group assembler;
 its mixed-detail ordering case is written but unrun. These passive fragments
-are not yet joined
-into the filed Form 3800, and complete source-document and Part II
+now carry structured Part IV amounts, and a shared Part IV assembler orders
+carryover rows and derives lines 5-7 from columns (d)-(i), including applied
+tax use and remaining carryforward. Its source and local XSD cases are written
+but unrun. The passive rows and Part IV assembler are not yet joined to the
+filed Form 3800, and complete source-document and Part II
 reconciliation remains open.
 A pure tax-use allocator now reconciles the source totals with the three Part II
 caps and applies older credit years first. It stops a partially used year with

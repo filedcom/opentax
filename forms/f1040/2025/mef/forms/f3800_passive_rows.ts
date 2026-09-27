@@ -20,9 +20,23 @@ export type Form3800PassiveXmlRow = {
   readonly xml: string;
 };
 
+export type Form3800CarryoverAmount = {
+  readonly line: Form3800CreditLine;
+  readonly passiveBeforeLimit: number;
+  readonly passiveAfterLimit: number;
+  readonly nonpassiveCredit: number;
+  readonly appliedCredit: number;
+  readonly recapturedOrAdjusted: number;
+  readonly carryforwardCredit: number;
+};
+
+export type Form3800CarryoverXmlRow = Form3800PassiveXmlRow & {
+  readonly amount: Form3800CarryoverAmount;
+};
+
 export type Form3800PassiveRowXml = {
   readonly partIII: readonly Form3800PassiveXmlRow[];
-  readonly partIV: readonly Form3800PassiveXmlRow[];
+  readonly partIV: readonly Form3800CarryoverXmlRow[];
   readonly partV: readonly Form3800PassiveXmlRow[];
   readonly partVI: readonly Form3800PassiveXmlRow[];
 };
@@ -145,6 +159,15 @@ export function buildForm3800PassiveRowXml(
     );
     return {
       line: row.form3800CreditLine,
+      amount: {
+        line: row.form3800CreditLine,
+        passiveBeforeLimit: row.beforePassiveLimit,
+        passiveAfterLimit: row.afterPassiveLimit,
+        nonpassiveCredit: 0,
+        appliedCredit: applied,
+        recapturedOrAdjusted: 0,
+        carryforwardCredit: unused,
+      },
       xml: elements(row.tag, [
         row.requiresSourceBreakdown
           ? element("CyovGeneralBusinessCrItemCnt", row.sources.length)

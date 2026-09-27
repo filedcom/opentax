@@ -3,6 +3,7 @@ import { PassiveCreditReportingRoute } from "../../../nodes/intermediate/forms/f
 import { PassiveCreditSourceOrigin } from "../../../nodes/intermediate/forms/form8582cr/source.ts";
 import type { Form3800PassiveTaxUseVintage } from "../../../nodes/inputs/f3800/calculation.ts";
 import { buildForm3800PassiveRowXml } from "./f3800_passive_rows.ts";
+import { buildForm3800PartIVXml } from "./f3800_part_iv.ts";
 import { buildForm3800PartVXml } from "./f3800_part_v.ts";
 
 const own: Form3800PassiveTaxUseVintage = {
@@ -90,6 +91,15 @@ Deno.test("Form 3800 passive carryover XML keeps summary and source-year detail"
   const xml = buildForm3800PassiveRowXml([own, partnership]);
   assertEquals(xml.partIV.length, 1);
   assertEquals(xml.partIV[0].line, "1h");
+  assertEquals(xml.partIV[0].amount, {
+    line: "1h",
+    passiveBeforeLimit: 300,
+    passiveAfterLimit: 230,
+    nonpassiveCredit: 0,
+    appliedCredit: 180,
+    recapturedOrAdjusted: 0,
+    carryforwardCredit: 50,
+  });
   assertEquals(xml.partVI.length, 2);
   assertStringIncludes(
     xml.partIV[0].xml,
@@ -228,7 +238,7 @@ Deno.test("Form 3800 passive carryover fragments follow TY2025v5.4 IRS3800 XSD",
   const xml =
     `<IRS3800 xmlns="http://www.irs.gov/efile"><CAMTAndBEATInd>false</CAMTAndBEATInd>${
       fragments.partIII.map((row) => row.xml).join("")
-    }${fragments.partIV.map((row) => row.xml).join("")}${
+    }${buildForm3800PartIVXml(fragments.partIV).join("")}${
       buildForm3800PartVXml(fragments.partV)
     }${fragments.partVI.map((row) => row.xml).join("")}</IRS3800>`;
   const path = await Deno.makeTempFile({ suffix: ".xml" });
