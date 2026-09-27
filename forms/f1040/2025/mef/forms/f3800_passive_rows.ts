@@ -50,6 +50,16 @@ export type Form3800PassiveSourceDocument = {
   readonly documentName: string;
 };
 
+function selfSourceDocument(
+  source: Form3800PassiveTaxUseVintage,
+  documents: Readonly<Record<string, Form3800PassiveSourceDocument>>,
+): Form3800PassiveSourceDocument | undefined {
+  return source.sourceOrigin.kind === PassiveCreditSourceOrigin.Self &&
+      Object.hasOwn(documents, source.sourceForm)
+    ? documents[source.sourceForm]
+    : undefined;
+}
+
 function sourceEntity(
   sources: readonly Form3800PassiveTaxUseVintage[],
 ): Form3800CurrentCreditRowMetadata["entity"] {
@@ -173,12 +183,10 @@ export function buildForm3800PassiveRowXml(
     if (!amount) {
       throw new Error("Form 3800 current-year passive row was not combined");
     }
-    const linkedDocuments = row.sources.flatMap((source) =>
-      source.sourceOrigin.kind === PassiveCreditSourceOrigin.Self &&
-        selfSourceDocuments[source.sourceForm]
-        ? [selfSourceDocuments[source.sourceForm]]
-        : []
-    );
+    const linkedDocuments = row.sources.flatMap((source) => {
+      const document = selfSourceDocument(source, selfSourceDocuments);
+      return document ? [document] : [];
+    });
     const uniqueDocuments = new Map(
       linkedDocuments.map((document) => [document.documentId, document]),
     );
@@ -246,31 +254,31 @@ export function buildForm3800PassiveRowXml(
         `Form 3800 Part III line ${row.form3800CreditLine} has no Part V detail row`,
       );
     }
-    return row.sources.map((source) => ({
-      line: row.form3800CreditLine,
-      xml: elements(tag, [
-        sourceEin([source]),
-        element("OthThnCrTrnsfrElectCrBfrLmtAmt", source.beforePassiveLimit),
-        element("CrTrnsfrElectCrAllwAftrLmtAmt", source.afterPassiveLimit),
-        element("TotalGeneralBusCreditsAmt", source.afterPassiveLimit),
-        element(
-          "TotalGBCLessGrossEPEAppTxAmt",
-          source.appliedAgainstTax,
-        ),
-        element("CarryforwardGeneralBusCrAmt", source.unusedAfterTaxLimit),
-      ], {
-        ...(source.sourceOrigin.kind === PassiveCreditSourceOrigin.Self &&
-            selfSourceDocuments[source.sourceForm]
-          ? {
-            referenceDocumentId:
-              selfSourceDocuments[source.sourceForm].documentId,
-            referenceDocumentName:
-              selfSourceDocuments[source.sourceForm].documentName,
-          }
-          : {}),
-        lineNumberTxt: `Part III Line ${row.form3800CreditLine}`,
-      }),
-    }));
+    return row.sources.map((source) => {
+      const document = selfSourceDocument(source, selfSourceDocuments);
+      return {
+        line: row.form3800CreditLine,
+        xml: elements(tag, [
+          sourceEin([source]),
+          element("OthThnCrTrnsfrElectCrBfrLmtAmt", source.beforePassiveLimit),
+          element("CrTrnsfrElectCrAllwAftrLmtAmt", source.afterPassiveLimit),
+          element("TotalGeneralBusCreditsAmt", source.afterPassiveLimit),
+          element(
+            "TotalGBCLessGrossEPEAppTxAmt",
+            source.appliedAgainstTax,
+          ),
+          element("CarryforwardGeneralBusCrAmt", source.unusedAfterTaxLimit),
+        ], {
+          ...(document
+            ? {
+              referenceDocumentId: document.documentId,
+              referenceDocumentName: document.documentName,
+            }
+            : {}),
+          lineNumberTxt: `Part III Line ${row.form3800CreditLine}`,
+        }),
+      };
+    });
   });
   const partVI = carryover.flatMap((row) => {
     const tag = row.carryoverDetailTag;
