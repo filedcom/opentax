@@ -16,6 +16,8 @@ const amount = z.number().finite().nonnegative();
 /** TY2026 Form 1040 core return lines. Inputs are final upstream amounts. */
 export const inputSchema = z.object({
   filing_status: filingStatusSchema,
+  line1a_wages: amount.optional(),
+  line1i_combat_pay: amount.optional(),
   line6b_ss_taxable: amount.optional(),
   line8_additional_income: z.number().finite().optional(),
   line9_total_income: z.number().finite(),
@@ -104,6 +106,8 @@ class F10402026Node extends TaxNode<typeof inputSchema> {
     const outputs: NodeOutput[] = [{
       nodeType: this.nodeType,
       fields: {
+        line1a_wages: input.line1a_wages,
+        line1i_combat_pay: input.line1i_combat_pay,
         line6b_ss_taxable: input.line6b_ss_taxable,
         line8_additional_income: input.line8_additional_income,
         line9_total_income: input.line9_total_income,

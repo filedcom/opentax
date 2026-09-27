@@ -72,6 +72,10 @@ The shared AGI aggregator now has explicit 2025/2026 downstream shapes. For
 node and the final 1040 derive the same AGI. A graph test reaches the 2026
 1040 from income facts and preserves taxable Social Security and Schedule 1
 additional income. It does not yet include the full W-2/general input graph.
+The focused graph now accepts multiple actual W-2 input records and reaches
+1040 wages, tax, withholding, and refund. The shared W-2 node's 2026 config
+tests also cover retirement limits. The general identity input and the rest of
+the W-2 downstream form branches are still outside this calculation slice.
 The shared Form 8839 node now splits the credit into refundable 1040 line 30
 and nonrefundable Schedule 3 amounts for both TY2025 and TY2026, using each
 year’s per-child cap and MAGI phaseout. It now consumes and emits nonrefundable

@@ -41,6 +41,11 @@ The shared AGI aggregator now emits a TY2026 income/adjustment pair to this
 node while retaining its TY2025 output contract. A graph test runs income
 facts → AGI → deduction choice → tax → 1040 and checks Social Security and
 Schedule 1 income pass-through. The rest of the 2026 input graph is pending.
+The shared W-2 input now reaches that focused graph: two W-2 records produce
+1040 wages, AGI, taxable income, income tax, withholding, and refund. This is
+an executable calculation slice, not the registered 2026 product; Form 1040
+income-line completeness, general/identity input, validation, MeF, and PDF
+remain to be connected.
 The shared Form 8839 node now applies TY2026 adoption limits, emits the
 refundable per-child credit to 1040 line 30, and tracks nonrefundable
 carryforwards by origin year. Its full credit-limit worksheet and TY2026
