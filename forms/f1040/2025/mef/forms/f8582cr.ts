@@ -10,6 +10,7 @@ import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import { sameForm3800PassiveAllocations } from "./f3800_passive_link.ts";
 import { reconcileOrphanDrugK1Credits } from "./f8820_credit_evidence.ts";
 import { reconcileDisabledAccessK1Credits } from "./f8826_credit_evidence.ts";
+import { readDisabledAccessCapLedger } from "./f8826_cap_ledger.ts";
 
 function combineK1ActivityCredits<
   T extends {
@@ -54,7 +55,9 @@ function reconcilePassiveDisabledAccessSources(
   if (!context.pending) {
     throw new Error("Form 8582-CR source evidence needs the filed return");
   }
-  const credits = sourceAllocations.flatMap((source) => {
+  const grossSources = readDisabledAccessCapLedger(context)
+    ?.rawPassiveSources ?? sourceAllocations;
+  const credits = grossSources.flatMap((source) => {
     if (
       source.form3800_credit_line !== "1e" ||
       source.current_year_credit === 0
@@ -172,12 +175,14 @@ export const form8582cr: MefFormDescriptor<"form8582cr", unknown> = {
       return "";
     }
     const lines = calculateForm8582CR(inputSchema.parse(raw));
-    if (lines.partI.line5 === 0) return "";
     if (context) {
-      reconcileFiledBusinessCredits(lines.sourceAllocations, context);
-      reconcilePassiveOrphanDrugSources(lines.sourceAllocations, context);
       reconcilePassiveDisabledAccessSources(lines.sourceAllocations, context);
+      if (lines.partI.line5 > 0) {
+        reconcileFiledBusinessCredits(lines.sourceAllocations, context);
+        reconcilePassiveOrphanDrugSources(lines.sourceAllocations, context);
+      }
     }
+    if (lines.partI.line5 === 0) return "";
     if (
       lines.allowedByReportingRoute[PassiveCreditReportingRoute.Form8834] > 0
     ) {

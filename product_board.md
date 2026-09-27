@@ -53,12 +53,14 @@ pass now routes gross Form 8826 and nonpassive K-1 sources with public Form
 8582-CR facts through an upstream disabled-access node. It pro-rates a shared
 $5,000 current-year cap, passing whole-dollar passive shares to Form 8582-CR
 before its tax limit and cent-precision nonpassive shares to Form 3800. The
-gross K-1 facts remain in that node for source reconciliation. These graph
-cases are written but unrun. The MeF exporters still compare capped amounts to
-gross Form 8826/K-1 records, and passive Form 8826 sources are not yet handled
-by this node. Until those paths are fixed and verified, mixed-source filing is
-not supported. The IRS requires pro-rata allocation of the overall limited
-credit; the per-source rounding policy still needs business-rule review.
+gross K-1 facts remain in that node for source reconciliation. The MeF build
+pass now recomputes the cap from those gross facts, checks capped Form 3800 and
+Form 8582-CR rows, and reconciles the original K-1/Form 8826 amounts. A mixed
+K-1 graph and local XSD case are written but unrun. Passive Form 8826 sources
+are not yet handled by this node. Until that path and the full-batch and IRS
+business-rule checks pass, mixed-source filing is not supported. The IRS
+requires pro-rata allocation of the overall limited credit; the per-source
+rounding policy still needs business-rule review.
 
 The latest completed full test run is **6,596 passed, 0 failed, 48 ignored**
 (`deno task test`, 2026-09-26, before the later multi-policy line 10 and

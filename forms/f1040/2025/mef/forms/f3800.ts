@@ -43,6 +43,7 @@ import { buildForm3800NonpassiveParts } from "./f3800_nonpassive.ts";
 import { sameForm3800PassiveAllocations } from "./f3800_passive_link.ts";
 import { buildForm3800PassiveRowXml } from "./f3800_passive_rows.ts";
 import { reconcileDisabledAccessK1Credits } from "./f8826_credit_evidence.ts";
+import { readDisabledAccessCapLedger } from "./f8826_cap_ledger.ts";
 import { inputSchema as trustK1InputSchema } from "../../../nodes/inputs/k1_trust/index.ts";
 import { inputSchema as partnershipK1InputSchema } from "../../../nodes/inputs/k1_partnership/index.ts";
 import { inputSchema as sCorpK1InputSchema } from "../../../nodes/inputs/k1_s_corp/index.ts";
@@ -180,15 +181,17 @@ function sourceForm8826(
   fields: z.infer<typeof f3800InputSchema>,
   context: MefBuildContext,
 ) {
+  const ledger = readDisabledAccessCapLedger(context);
   if (!fields.f8826_credit_entries?.length) return undefined;
   const actual = fields.f8826_credit_entries;
-  const formSources = actual.filter((entry) =>
+  const sourceEntries = ledger?.rawEntries ?? actual;
+  const formSources = sourceEntries.filter((entry) =>
     entry.source_type === "self" ||
     ((entry.source_type === "partnership" ||
       entry.source_type === "s_corporation") &&
       !entry.source_document_reference)
   );
-  const directSources = actual.filter((entry) =>
+  const directSources = sourceEntries.filter((entry) =>
     entry.source_type === "estate" || entry.source_type === "trust" ||
     ((entry.source_type === "partnership" ||
       entry.source_type === "s_corporation") &&
@@ -217,17 +220,19 @@ function sourceForm8826(
   }
   const expected = source && lines
     ? [
-      ...(lines.selfCreditAfterCap > 0
+      ...((ledger ? lines.line6 : lines.selfCreditAfterCap) > 0
         ? [{
           source_type: "self",
           source_ein: undefined,
-          credit_amount: lines.selfCreditAfterCap,
+          credit_amount: ledger ? lines.line6 : lines.selfCreditAfterCap,
           subject_to_passive_activity_limit:
             source.subject_to_passive_activity_limit,
         }]
         : []),
       ...(source.pass_through_credits ?? []).flatMap((entry, index) => {
-        const credit = lines.passThroughCreditsAfterCap[index] ?? 0;
+        const credit = ledger
+          ? entry.credit_amount
+          : lines.passThroughCreditsAfterCap[index] ?? 0;
         return credit > 0
           ? [{
             source_type: entry.entity_type,
