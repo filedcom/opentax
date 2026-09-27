@@ -132,7 +132,7 @@ Deno.test("TY2026 Form 2441 credit cannot exceed calculated line 18 tax", () => 
   assertEquals(result.pending.f1040.line20_nonrefundable_credits, lines.line11);
 });
 
-Deno.test("TY2026 W-2 box 10 requires Form 2441 details", () => {
+Deno.test("TY2026 W-2 box 10 requires Form 2441 details", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: filer,
     w2: [{
@@ -144,6 +144,11 @@ Deno.test("TY2026 W-2 box 10 requires Form 2441 details", () => {
   assertEquals(result.diagnostics.length, 1);
   assertEquals(result.diagnostics[0].nodeType, "form2441");
   assertMatch(result.diagnostics[0].message, /box 10 needs Form 2441/);
+  await assertRejects(
+    () => buildPdfBytes2026(result.pending),
+    Error,
+    "needs a completed Form 2441 calculation",
+  );
 });
 
 Deno.test("TY2026 Form 2441 rejects a filing status mismatch", () => {
