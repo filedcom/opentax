@@ -37,6 +37,10 @@ for the implementation contract.
 - [`FORM8960-GRAPH.md`](FORM8960-GRAPH.md) and `pdf-fields-f8960.csv`:
   NIIT source ownership, 2026 Schedule 2 line 6, the missing MAGI/election
   and PDF/MeF lines, and all 38 draft widgets.
+- [`FORM4137-8919-GRAPH.md`](FORM4137-8919-GRAPH.md),
+  `pdf-fields-f4137.csv`, and `pdf-fields-f8919.csv`: embedded 2026
+  instructions, owner-keyed FICA/wage-base sequence, printed reason codes,
+  Schedule 2 source conflict, and 34/40 draft widgets.
 - [`PARITY-QUEUE.md`](PARITY-QUEUE.md): dependency-ordered full 1040 coding
   queue across the 2025 graph/PDF/MeF inventories and 2026-only attachments.
 - [`INSTRUCTION-COVERAGE.md`](INSTRUCTION-COVERAGE.md) and

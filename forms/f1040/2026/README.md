@@ -19,6 +19,11 @@ The [Form 8960 contract](../../../docs/ty2026/FORM8960-GRAPH.md) maps
 investment-income sources and the §911 MAGI adjustment to 2026 Schedule 2
 line 6. Its registered calculator and draft PDF omit printed adjustment,
 election and expense fields; current MeF remains to build.
+The [Forms 4137/8919 contract](../../../docs/ty2026/FORM4137-8919-GRAPH.md)
+orders unreported-tip and misclassified-wage FICA against one Social
+Security wage base. Both 2026 drafts embed instructions; Form 8919's shared
+reason codes and Schedule 2 output are stale, and Form 4137's printed
+Schedule 2 cross-reference conflicts with the 2026 Schedule 2 draft.
 The [Form 1116 contract](../../../docs/ty2026/FORM1116-GRAPH.md) maps
 foreign-tax categories, carryovers, redeterminations and the revised line
 18/20 bases from 1040, Schedule 1-A and Schedule 2; its full attachment

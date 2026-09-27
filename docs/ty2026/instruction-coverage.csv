@@ -30,7 +30,7 @@ f1116,i1116,URL serves 2025,https://www.irs.gov/pub/irs-dft/i1116--dft.pdf,Use o
 f2555,i2555,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i2555--dft.pdf,Use pinned PDF; recheck final instructions.
 f4136,i4136,URL serves 2025,https://www.irs.gov/pub/irs-dft/i4136--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
 f4136sa,i4136sa,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i4136sa--dft.pdf,2025 Schedule A and combined i4136 booklet pinned as comparators; obtain 2026 Schedule A and instructions when published.
-f4137,i4137,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i4137--dft.pdf,Recheck IRS draft directory or another instruction slug.
+f4137,i4137,2026 instructions embedded in form draft,https://www.irs.gov/pub/irs-dft/f4137--dft.pdf,2026 draft pages 1-2 embed instructions; printed Schedule 2 line 5 conflicts with 2026 Schedule 2 line 16a.
 f461,i461,URL serves 2025,https://www.irs.gov/pub/irs-dft/i461--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
 f4684,i4684,URL serves 2025,https://www.irs.gov/pub/irs-dft/i4684--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
 f4797,i4797,URL serves 2025,https://www.irs.gov/pub/irs-dft/i4797--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
@@ -58,7 +58,7 @@ f8859,i8859,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i8859--dft.
 f8880,i8880,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i8880--dft.pdf,Recheck IRS draft directory or another instruction slug.
 f8912,i8912,continuous-use final pinned,https://www.irs.gov/pub/irs-pdf/i8912.pdf,December 2024 final instructions are continuous-use; current form pinned and Schedule 3 line 6k checked; verify MeF and final return lines.
 f8915f,i8915f,URL serves 2025,https://www.irs.gov/pub/irs-dft/i8915f--dft.pdf,2026 form draft pinned; use pinned December 2025 instructions only as comparator and obtain 2026 revision before filing.
-f8919,i8919,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i8919--dft.pdf,Recheck IRS draft directory or another instruction slug.
+f8919,i8919,2026 instructions embedded in form draft,https://www.irs.gov/pub/irs-dft/f8919--dft.pdf,2026 draft pages 1-2 embed reason-code and line instructions; line 13 routes to Schedule 2 line 16b.
 f8936,i8936,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i8936--dft.pdf,Use pinned PDF; recheck final instructions.
 f8936sa,i8936sa,covered by combined 2026 draft,https://www.irs.gov/pub/irs-dft/i8936--dft.pdf,Combined Form 8936 instructions explicitly cover Schedule A; use pinned i8936 PDF and recheck final.
 f8949,i8949,URL serves 2025,https://www.irs.gov/pub/irs-dft/i8949--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.

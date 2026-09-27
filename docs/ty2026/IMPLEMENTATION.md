@@ -164,6 +164,12 @@ income, activity dispositions, allocable expenses and the §911 MAGI
 worksheet. The registered 2026 graph/PDF slice lacks printed lines 5c, 6
 and 9c, election boxes, and a current MeF serializer; all 38 draft widgets
 are inventoried.
+The [Forms 4137/8919 contract](FORM4137-8919-GRAPH.md) maps tips and
+misclassified wages through 1040 lines 1c/1g, Form 8959, and Schedule 2
+lines 16a/16b with a shared $184,500 Social Security wage base. Its pinned
+2026 drafts embed instructions. Form 8919's shared reason-code enum and
+TY2025 Schedule 2 output are wrong for 2026; Form 4137's own Schedule 2
+cross-reference conflicts with the newer Schedule 2 draft.
 The [scenario 12 contract](ATS-SCENARIO-12.md) and
 [business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
 broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800
