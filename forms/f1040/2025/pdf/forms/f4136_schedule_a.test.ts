@@ -94,6 +94,18 @@ Deno.test("Schedule A (Form 4136) has exact 2025 page and widget paths", () => {
     "topmostSubform[0].Page2[0].Line8Table[0].Line8f[0].ColE[0].f2_119[0]",
   );
   assertEquals(
+    names.line13_registration_number,
+    "topmostSubform[0].Page3[0].f3_156[0]",
+  );
+  assertEquals(
+    names.line13a_quantity,
+    "topmostSubform[0].Page3[0].Table_Line13[0].Line13a[0].f3_158[0]",
+  );
+  assertEquals(
+    names.line13c_credit_dollars,
+    "topmostSubform[0].Page3[0].Table_Line13[0].Line13c[0].ColE[0].f3_175[0]",
+  );
+  assertEquals(
     names.line11h_quantity,
     "topmostSubform[0].Page3[0].Line11Table[0].Line11h[0].f3_87[0]",
   );
@@ -254,6 +266,72 @@ Deno.test("Schedule A (Form 4136) keeps aviation vendor lines 8a, 8c, 8d, and 8f
   assertEquals(instances[1].line8c_quantity, undefined);
   assertEquals(instances[1].line8d_quantity, undefined);
   assertEquals(instances[1].line8f_quantity, undefined);
+});
+
+Deno.test("Schedule A (Form 4136) keeps registered card issuer line 13c on its activity", () => {
+  const projected = form4136ScheduleAPdf.projectFields?.({
+    claimant_context: "business",
+    business: {
+      qualifying_business_activity: true,
+      business_name: "Example Card Issuer",
+      business_ein: "987654321",
+      principal_activity_code: "522210",
+      equipment_make: "Payment",
+      equipment_model: "Card Network",
+      equipment_type: "fleet card platform",
+      sales_records_confirmed: true,
+      no_duplicate_excise_claim: true,
+    },
+    claims: [{
+      line: "13c",
+      unit: "gallons",
+      qualified_quantity: 1_000,
+      actual_fuel_cost: 3_000,
+      excise_tax_rate_per_gallon: 0.244,
+      credit_card_issuer_registration_number: "CC123456789",
+      credit_card_sales: [{
+        sale_record_reference: "CARD-001",
+        purchase_date: "2025-06-12",
+        buyer_name: "Example City",
+        buyer_address: "20 City Hall Road, Wilmington, DE 19801",
+        buyer_ein: "123456789",
+        card_account_number: "CITY-2025",
+        gallons: 1_000,
+        actual_fuel_cost: 3_000,
+        card_issued_to_government_buyer_confirmed: true,
+        exclusive_government_use_confirmed: true,
+        buyer_tax_arrangement: "tax_not_collected",
+        vendor_tax_arrangement: "tax_repaid",
+        certificate_r: {
+          record_reference: "Certificate R-001",
+          account_number: "CITY-2025",
+          effective_date: "2025-01-01",
+          expiration_date: "2026-12-31",
+          signed_by_buyer_confirmed: true,
+          held_unexpired_when_claimed_confirmed: true,
+          information_believed_true_confirmed: true,
+        },
+      }],
+    }],
+    additional_activities: [{
+      business,
+      claims: [{
+        line: "1a",
+        unit: "gallons",
+        qualified_quantity: 100,
+        actual_fuel_cost: 300,
+        not_highway_vehicle: true,
+        not_noncommercial_motorboat: true,
+      }],
+    }],
+    primary_activity_has_most_credit: true,
+  }, {});
+  const instances = form4136ScheduleAPdf.instances?.(projected ?? {}) ?? [];
+  assertEquals(instances.length, 2);
+  assertEquals(instances[0].line13_registration_number, "CC123456789");
+  assertEquals(instances[0].line13c_quantity, 1_000);
+  assertEquals(instances[0].line13c_credit_dollars, "243");
+  assertEquals(instances[1].line13c_quantity, undefined);
 });
 
 Deno.test("Schedule A (Form 4136) keeps blocked-pump line 7b on its activity", () => {

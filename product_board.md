@@ -322,6 +322,14 @@ the foreign-trade LUST credit to the exact type 09 sales already claimed on
 8d/8e. Their native MeF and parent/Schedule A PDF rows have unrun source,
 XML, PDF, and local XSD cases. Filled rendering, IRS business rules, and ATS
 acceptance remain open.
+Registered credit-card-issuer lines 13a-13c now require CC registration,
+government card-purchase records, matching Model Certificate R accounts and
+coverage periods, tax disposition, vendor reimbursement, and gallon/cost
+reconciliation. Line 13c's $.244-taxed branch uses the $.243 credit, the MeF
+tax-rate marker and linked credit-card-users statement, and overlays the
+printed parent/Schedule A PDF rate and description. Source, XML, PDF, and local
+XSD cases are written but unrun. Mixed 13c tax rates on one return stop because
+the schema has only one group; IRS business-rule and ATS acceptance are open.
 Diesel-water emulsion lines 14a and 14b now have ultimate-purchaser source
 facts, the standard and reduced bus-use rates, export-proof validation, MeF
 groups, and parent/Schedule A PDF fields. Source, XML, PDF, and XSD cases are

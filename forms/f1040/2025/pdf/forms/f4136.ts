@@ -80,6 +80,9 @@ const creditReferenceNumber: Record<Line, string> = {
   "11f": "424",
   "11g": "425",
   "11h": "435",
+  "13a": "360",
+  "13b": "346",
+  "13c": "369",
   "14a": "309",
   "14b": "306",
   "15a": "310",
@@ -91,7 +94,7 @@ function fieldPath(p: number, n: number): string {
   if (
     p === 1 && n <= 9 || p === 2 && (n === 84 || n === 99) ||
     p === 3 && n === 1 ||
-    p === 4 && (n === 102 || n === 124 || n === 125)
+    p === 4 && (n === 64 || n === 102 || n === 124 || n === 125)
   ) {
     return `${page(p)}.f${p}_${n}[0]`;
   }
@@ -226,6 +229,16 @@ function fieldPath(p: number, n: number): string {
     column = offset === 3 || offset === 4
       ? "ColD"
       : offset === 5 || offset === 6
+      ? "ColE"
+      : "";
+  } else if (p === 4 && n >= 65 && n <= 85) {
+    table = "Table_Line13";
+    const index = Math.floor((n - 65) / 7);
+    line = `Line13${String.fromCharCode(97 + index)}`;
+    const offset = (n - 65) % 7;
+    column = offset === 2 || offset === 3
+      ? "ColD"
+      : offset === 4 || offset === 5
       ? "ColE"
       : "";
   } else if (p === 4 && n >= 86 && n <= 101) {
@@ -403,6 +416,16 @@ const fields: PdfFieldEntry[] = [
       ...moneyFields(`line${line}_credit`, 3, base + 5),
     ];
   }),
+  text("line13_registration_number", 4, 64),
+  text("line13a_quantity", 4, 66),
+  ...moneyFields("line13a_cost", 4, 67),
+  ...moneyFields("line13a_credit", 4, 69),
+  text("line13b_quantity", 4, 73),
+  ...moneyFields("line13b_cost", 4, 74),
+  ...moneyFields("line13b_credit", 4, 76),
+  text("line13c_quantity", 4, 80),
+  ...moneyFields("line13c_cost", 4, 81),
+  ...moneyFields("line13c_credit", 4, 83),
   text("line14a_type", 4, 86),
   text("line14a_quantity", 4, 88),
   ...moneyFields("line14a_cost", 4, 89),
@@ -472,18 +495,15 @@ function putLine(
   }
 }
 
-async function decorateBusRates(
+async function decorateConditionalRates(
   document: PDFDocument,
   pages: readonly PDFPage[],
   fields: Record<string, unknown>,
 ): Promise<void> {
   const input = inputSchema.parse(fields);
-  if (!allForm4136Claims(input).some((claim) => claim.type_of_use === "05")) {
-    return;
-  }
-  const page = pages[2];
-  if (!page) throw new Error("Form 4136 bus rates require page 3");
   const font = await document.embedFont(StandardFonts.Helvetica);
+  const page = pages[2];
+  if (!page) throw new Error("Form 4136 rates require page 3");
   for (const [index, line] of alternativeFuelLines.entries()) {
     const claims = allForm4136Claims(input).filter((claim) =>
       claim.line === line
@@ -527,6 +547,36 @@ async function decorateBusRates(
       page4.drawText(".124", { x: 293.5, y: 327, size: 8, font });
       page4.drawText("Bus", { x: 260, y: 327, size: 8, font });
     }
+  }
+  if (
+    allForm4136Claims(input).some((claim) =>
+      claim.line === "13c" && claim.excise_tax_rate_per_gallon === 0.244
+    )
+  ) {
+    const page4 = pages[3];
+    if (!page4) throw new Error("Form 4136 line 13c needs page 4");
+    page4.drawRectangle({
+      x: 188.7,
+      y: 408.3,
+      width: 21,
+      height: 11,
+      color: rgb(1, 1, 1),
+    });
+    page4.drawRectangle({
+      x: 297.8,
+      y: 408.8,
+      width: 17,
+      height: 10.5,
+      color: rgb(1, 1, 1),
+    });
+    page4.drawText("$.244", { x: 189.3, y: 410.2, size: 8, font });
+    page4.drawText(".243", { x: 298.5, y: 410.5, size: 8, font });
+    page4.drawText("Taxed at $.244", {
+      x: 225,
+      y: 410.5,
+      size: 7,
+      font,
+    });
   }
 }
 
@@ -755,6 +805,9 @@ export function projectForm4136Fields(
       "8d",
       "8e",
       "8f",
+      "13a",
+      "13b",
+      "13c",
       "14a",
       "14b",
       "15a",
@@ -800,6 +853,9 @@ export function projectForm4136Fields(
   putClaimGroup(out, input, ["8d"], "line8d");
   putClaimGroup(out, input, ["8e"], "line8e");
   putClaimGroup(out, input, ["8f"], "line8f");
+  putClaimGroup(out, input, ["13a"], "line13a");
+  putClaimGroup(out, input, ["13b"], "line13b");
+  putClaimGroup(out, input, ["13c"], "line13c");
   putClaimGroup(out, input, ["14a"], "line14a");
   putClaimGroup(out, input, ["14b"], "line14b");
   putClaimGroup(out, input, ["15a"], "line15a");
@@ -814,6 +870,9 @@ export function projectForm4136Fields(
   out.line8_registration_number = allForm4136Claims(input).find((claim) =>
     ["8a", "8b", "8c", "8d", "8e", "8f"].includes(claim.line)
   )?.vendor_registration_number;
+  out.line13_registration_number = allForm4136Claims(input).find((claim) =>
+    claim.line === "13a" || claim.line === "13b" || claim.line === "13c"
+  )?.credit_card_issuer_registration_number;
   out.line15_registration_number = allForm4136Claims(input).find((claim) =>
     claim.line === "15a"
   )?.blender_registration_number;
@@ -844,6 +903,6 @@ export const form4136Pdf: PdfFormDescriptor = {
     }
     return projectForm4136Fields(input);
   },
-  decoratePages: decorateBusRates,
+  decoratePages: decorateConditionalRates,
   appendSupplementalPages: appendClaimStatement,
 };

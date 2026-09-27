@@ -182,6 +182,9 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
     const l8d = onLine(input, "8d");
     const l8e = onLine(input, "8e");
     const l8f = onLine(input, "8f");
+    const l13a = onLine(input, "13a");
+    const l13b = onLine(input, "13b");
+    const l13c = onLine(input, "13c");
     const l14a = onLine(input, "14a");
     const l14b = onLine(input, "14b");
     const l15a = onLine(input, "15a");
@@ -234,6 +237,19 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
       keroseneBuyerStatementIds.length !== (l7a.length ? 1 : 0)
     ) {
       throw new Error("Form 4136 line 7a needs one kerosene buyer statement");
+    }
+    const highRate13c = l13c.some((claim) =>
+      claim.excise_tax_rate_per_gallon === 0.244
+    );
+    const cardUsersStatementIds = context.documentIdsByPendingKey
+      ?.f4136_credit_card_users_statement ?? [];
+    if (
+      context.documentIdsByPendingKey &&
+      cardUsersStatementIds.length !== (highRate13c ? 1 : 0)
+    ) {
+      throw new Error(
+        "Form 4136 line 13c taxed at $.244 needs one linked credit-card-users statement",
+      );
     }
 
     return elements(
@@ -526,6 +542,45 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
             ];
           },
         ),
+        element(
+          "CreditCardIssrRegistrationNum",
+          [...l13a, ...l13b, ...l13c][0]
+            ?.credit_card_issuer_registration_number,
+        ),
+        elements("DslFuelSoldStLocalGovtUseGrp", [
+          element("DslFuelSoldStLocalGovtGalsQty", qty(l13a)),
+          l13a.length ? element("ActualFuelCostAmt", cost(l13a)) : "",
+          l13a.length
+            ? credit("DslFuelSoldStLocalGovtCrAmt", lineAmount(l13a), "360")
+            : "",
+        ]),
+        elements("KrsnFuelSoldStLocalGovtUseGrp", [
+          element("KrsnFuelSoldStLocalGovtGalsQty", qty(l13b)),
+          l13b.length ? element("ActualFuelCostAmt", cost(l13b)) : "",
+          l13b.length
+            ? credit("KrsnFuelSoldStLocalGovtCrAmt", lineAmount(l13b), "346")
+            : "",
+        ]),
+        elements("KrsnSoldStLocalGovtAvnUseGrp", [
+          element(
+            "KrsnAvnSoldStLocalGovtGalsQty",
+            qty(l13c),
+            highRate13c ? { keroseneTaxRateCd: "TAXEDAT244" } : undefined,
+          ),
+          l13c.length ? element("ActualFuelCostAmt", cost(l13c)) : "",
+          l13c.length
+            ? element("KrsnAvnSoldStLocalGovtCrAmt", lineAmount(l13c), {
+              creditReferenceNum: "369",
+              ...(highRate13c && cardUsersStatementIds[0]
+                ? {
+                  referenceDocumentId: cardUsersStatementIds[0],
+                  referenceDocumentName:
+                    "NontaxableUseFuelsCreditCardUsersStatement",
+                }
+                : {}),
+            })
+            : "",
+        ]),
         ...l14a.filter((claim) => claim.type_of_use === "05").map((claim) =>
           busDetail("BusNontxUseDieselWtrEmlsnGrp", claim)
         ),

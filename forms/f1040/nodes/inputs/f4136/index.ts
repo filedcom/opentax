@@ -43,6 +43,9 @@ export const FORM4136_RATES = {
   "8d": 0.243,
   "8e": 0.218,
   "8f": 0.001,
+  "13a": 0.243,
+  "13b": 0.243,
+  "13c": 0.218,
   "11a": 0.183,
   "11b": 0.183,
   "11c": 0.183,
@@ -106,6 +109,9 @@ const fuelLine = z.enum([
   "8d",
   "8e",
   "8f",
+  "13a",
+  "13b",
+  "13c",
   "11a",
   "11b",
   "11c",
@@ -345,6 +351,40 @@ export const fuelClaimSchema = z.object({
     1,
   )
     .optional(),
+  credit_card_issuer_registration_number: z.string().regex(
+    /^CC[A-Z0-9]{1,18}$/,
+  ).optional(),
+  credit_card_sales: z.array(z.object({
+    sale_record_reference: z.string().trim().min(1),
+    purchase_date: saleDate,
+    buyer_name: z.string().trim().min(1),
+    buyer_address: z.string().trim().min(1),
+    buyer_ein: z.string().regex(/^\d{9}$/),
+    card_account_number: z.string().trim().min(1),
+    gallons: z.number().int().positive(),
+    actual_fuel_cost: z.number().finite().positive(),
+    card_issued_to_government_buyer_confirmed: z.literal(true),
+    exclusive_government_use_confirmed: z.literal(true),
+    buyer_tax_arrangement: z.enum([
+      "tax_not_collected",
+      "buyer_written_consent",
+    ]),
+    vendor_tax_arrangement: z.enum([
+      "tax_repaid",
+      "tax_repayment_agreed",
+      "vendor_written_consent",
+      "vendor_reimbursement_arranged",
+    ]),
+    certificate_r: z.object({
+      record_reference: z.string().trim().min(1),
+      account_number: z.string().trim().min(1),
+      effective_date: saleDate,
+      expiration_date: saleDate,
+      signed_by_buyer_confirmed: z.literal(true),
+      held_unexpired_when_claimed_confirmed: z.literal(true),
+      information_believed_true_confirmed: z.literal(true),
+    }),
+  })).min(1).optional(),
   emulsion_water_percentage: z.number().finite().min(14).max(100).optional(),
   emulsion_epa_additive_record_reference: z.string().trim().min(1).max(100)
     .optional(),
@@ -385,6 +425,7 @@ const activitySchema = z.object({
 }).superRefine((input, ctx) => {
   const seen = new Set<string>();
   const aviationSaleRecords = new Set<string>();
+  const cardSaleRecords = new Set<string>();
   input.claims.forEach((claim, index) => {
     if (claim.line === "6a" || claim.line === "7a") {
       if (!/^UV[A-Z0-9]{1,18}$/.test(claim.vendor_registration_number ?? "")) {
@@ -936,6 +977,120 @@ const activitySchema = z.object({
           path: ["business", "sales_records_confirmed"],
         });
       }
+    } else if (
+      claim.line === "13a" || claim.line === "13b" || claim.line === "13c"
+    ) {
+      if (!claim.credit_card_issuer_registration_number) {
+        ctx.addIssue({
+          code: "custom",
+          message:
+            `Form 4136 line ${claim.line} needs an IRS-issued CC registration number`,
+          path: ["claims", index, "credit_card_issuer_registration_number"],
+        });
+      }
+      const permittedTaxRates = claim.line === "13c" ? [0.219, 0.244] : [0.244];
+      if (
+        !claim.excise_tax_rate_per_gallon ||
+        !permittedTaxRates.includes(claim.excise_tax_rate_per_gallon)
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          message:
+            `Form 4136 line ${claim.line} needs its permitted source tax rate`,
+          path: ["claims", index, "excise_tax_rate_per_gallon"],
+        });
+      }
+      if (
+        (claim.line === "13a" || claim.line === "13b") &&
+        claim.undyed_fuel_confirmed !== true
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          message: `Form 4136 line ${claim.line} needs undyed taxable fuel`,
+          path: ["claims", index, "undyed_fuel_confirmed"],
+        });
+      }
+      const sales = claim.credit_card_sales ?? [];
+      if (
+        !sales.length ||
+        sales.reduce((sum, sale) => sum + sale.gallons, 0) !==
+          claim.qualified_quantity ||
+        Math.round(
+            sales.reduce((sum, sale) => sum + sale.actual_fuel_cost, 0) * 100,
+          ) !==
+          Math.round(claim.actual_fuel_cost * 100)
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          message:
+            `Form 4136 line ${claim.line} card purchases must reconcile to claimed gallons and fuel cost`,
+          path: ["claims", index, "credit_card_sales"],
+        });
+      }
+      for (const [saleIndex, sale] of sales.entries()) {
+        const certificate = sale.certificate_r;
+        if (certificate.account_number !== sale.card_account_number) {
+          ctx.addIssue({
+            code: "custom",
+            message:
+              `Form 4136 line ${claim.line} Model Certificate R account must match the card purchase`,
+            path: [
+              "claims",
+              index,
+              "credit_card_sales",
+              saleIndex,
+              "certificate_r",
+              "account_number",
+            ],
+          });
+        }
+        if (cardSaleRecords.has(sale.sale_record_reference)) {
+          ctx.addIssue({
+            code: "custom",
+            message:
+              "Form 4136 card purchase cannot support multiple line 13 claims",
+            path: [
+              "claims",
+              index,
+              "credit_card_sales",
+              saleIndex,
+              "sale_record_reference",
+            ],
+          });
+        }
+        cardSaleRecords.add(sale.sale_record_reference);
+        const latestExpiration = new Date(
+          `${certificate.effective_date}T00:00:00.000Z`,
+        );
+        latestExpiration.setUTCFullYear(latestExpiration.getUTCFullYear() + 2);
+        if (
+          certificate.effective_date > sale.purchase_date ||
+          sale.purchase_date > certificate.expiration_date ||
+          certificate.expiration_date >
+            latestExpiration.toISOString().slice(0, 10)
+        ) {
+          ctx.addIssue({
+            code: "custom",
+            message:
+              `Form 4136 line ${claim.line} Model Certificate R must cover the card purchase and last no longer than two years`,
+            path: [
+              "claims",
+              index,
+              "credit_card_sales",
+              saleIndex,
+              "certificate_r",
+            ],
+          });
+        }
+      }
+      if (input.business.sales_records_confirmed !== true) {
+        ctx.addIssue({
+          code: "custom",
+          message:
+            `Form 4136 line ${claim.line} needs confirmed card purchase records`,
+          path: ["business", "sales_records_confirmed"],
+        });
+      }
     } else if (claim.line === "15a") {
       if (
         !claim.blender_registration_number ||
@@ -1343,6 +1498,34 @@ export const inputSchema = z.discriminatedUnion("claimant_context", [
       path: ["claims"],
     });
   }
+  const line13Claims = activities.flatMap((activity) => activity.claims)
+    .filter((claim) =>
+      claim.line === "13a" || claim.line === "13b" || claim.line === "13c"
+    );
+  if (
+    new Set(
+      line13Claims.map((claim) => claim.credit_card_issuer_registration_number),
+    ).size > 1
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Form 4136 line 13 has one CC registration-number field",
+      path: ["claims"],
+    });
+  }
+  if (
+    new Set(
+      line13Claims.filter((claim) => claim.line === "13c")
+        .map((claim) => claim.excise_tax_rate_per_gallon),
+    ).size > 1
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message:
+        "Form 4136 line 13c cannot mix the $.219 and $.244 tax-rate cases on one return",
+      path: ["claims"],
+    });
+  }
 });
 
 export type Form4136Input = z.infer<typeof inputSchema>;
@@ -1375,6 +1558,9 @@ export function form4136BlenderCertification(
 export function rateForForm4136Claim(
   claim: Form4136Input["claims"][number],
 ): number {
+  if (claim.line === "13c" && claim.excise_tax_rate_per_gallon === 0.244) {
+    return 0.243;
+  }
   if (claim.type_of_use === "05" && claim.line in FORM4136_BUS_RATES) {
     return FORM4136_BUS_RATES[claim.line as keyof typeof FORM4136_BUS_RATES];
   }

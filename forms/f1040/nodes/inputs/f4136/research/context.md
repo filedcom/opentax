@@ -74,6 +74,18 @@ Line 8f links the foreign-trade LUST credit to those exact type 09 sales on
 8d/8e; its gallons, cost, registration, and vendor settlement must agree with
 the base claims. Source, XML, XSD, and PDF cases are written but unrun. Filled
 PDFs, IRS business-rule review, and ATS acceptance remain open.
+Registered credit-card-issuer lines 13a-13c now use CC registration and
+card-purchase records tied to the government buyer, Model Certificate R's
+account and two-year period, both buyer-tax and vendor-reimbursement routes,
+and reconciled gallons and fuel costs. Line 13c distinguishes kerosene taxed
+at $.219 from $.244. For the latter the credit rate is $.243, the PDF's
+preprinted description and rate are overlaid, and a native
+`NontxUseFuelsCrCardUsersStmt` is linked to the MeF group. The local XSD fixes
+line 13c's credit reference number to 369 and provides a `TAXEDAT244` marker;
+that representation and the rate overlay need full-batch XSD, filled-PDF, IRS
+business-rule, and ATS verification. Mixed source tax rates on one 13c return
+are rejected because the schema has one line 13c group. Source, XML, PDF, and
+XSD cases are written but unrun.
 Line 14a accepts the 2025 use codes for diesel-water emulsion and applies
 the reduced $.124 rate only to bus use (type 05); line 14b uses the export
 rate and requires retained proof. Both require the emulsion's water percentage

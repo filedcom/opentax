@@ -992,6 +992,151 @@ Deno.test("Form 4136: noncommercial aviation lines 8d and 8e separate Waiver L f
   );
 });
 
+Deno.test("Form 4136: registered card issuer lines 13a-13c require matched government purchases and Certificate R", () => {
+  const issuerBusiness = {
+    qualifying_business_activity: true,
+    business_name: "Example Card Issuer",
+    business_ein: "987654321",
+    principal_activity_code: "522210",
+    equipment_make: "Payment",
+    equipment_model: "Card Network",
+    equipment_type: "fleet card platform",
+    sales_records_confirmed: true,
+    no_duplicate_excise_claim: true,
+  } as const;
+  const sale = {
+    sale_record_reference: "CARD-001",
+    purchase_date: "2025-06-12",
+    buyer_name: "Example City",
+    buyer_address: "20 City Hall Road, Wilmington, DE 19801",
+    buyer_ein: "123456789",
+    card_account_number: "CITY-2025",
+    gallons: 1_000,
+    actual_fuel_cost: 3_000,
+    card_issued_to_government_buyer_confirmed: true as const,
+    exclusive_government_use_confirmed: true as const,
+    buyer_tax_arrangement: "tax_not_collected" as const,
+    vendor_tax_arrangement: "tax_repaid" as const,
+    certificate_r: {
+      record_reference: "Certificate R-001",
+      account_number: "CITY-2025",
+      effective_date: "2025-01-01",
+      expiration_date: "2026-12-31",
+      signed_by_buyer_confirmed: true as const,
+      held_unexpired_when_claimed_confirmed: true as const,
+      information_believed_true_confirmed: true as const,
+    },
+  };
+  const base = {
+    unit: "gallons" as const,
+    qualified_quantity: 1_000,
+    actual_fuel_cost: 3_000,
+    credit_card_issuer_registration_number: "CC123456789",
+    excise_tax_rate_per_gallon: 0.244,
+    credit_card_sales: [sale],
+  };
+  for (const line of ["13a", "13b"] as const) {
+    const claim = { ...base, line, undyed_fuel_confirmed: true as const };
+    assertEquals(
+      parseInput({ business: issuerBusiness, claims: [claim] }).success,
+      true,
+    );
+    assertEquals(
+      compute({ business: issuerBusiness, claims: [claim] }).outputs[0].fields
+        .line12_fuel_tax_credit,
+      243,
+    );
+  }
+  for (const [rate, expected] of [[0.219, 218], [0.244, 243]] as const) {
+    const claim = {
+      ...base,
+      line: "13c" as const,
+      excise_tax_rate_per_gallon: rate,
+    };
+    assertEquals(
+      parseInput({ business: issuerBusiness, claims: [claim] }).success,
+      true,
+    );
+    assertEquals(
+      compute({ business: issuerBusiness, claims: [claim] }).outputs[0].fields
+        .line12_fuel_tax_credit,
+      expected,
+    );
+  }
+  const dieselClaim = {
+    ...base,
+    line: "13a" as const,
+    undyed_fuel_confirmed: true as const,
+  };
+  for (
+    const invalid of [
+      { ...dieselClaim, credit_card_issuer_registration_number: "UV123456789" },
+      { ...dieselClaim, undyed_fuel_confirmed: undefined },
+      { ...dieselClaim, excise_tax_rate_per_gallon: 0.219 },
+      { ...dieselClaim, credit_card_sales: [{ ...sale, gallons: 999 }] },
+      {
+        ...dieselClaim,
+        credit_card_sales: [{ ...sale, actual_fuel_cost: 2_999 }],
+      },
+      {
+        ...dieselClaim,
+        credit_card_sales: [{ ...sale, card_account_number: "OTHER" }],
+      },
+      {
+        ...dieselClaim,
+        credit_card_sales: [{ ...sale, buyer_tax_arrangement: undefined }],
+      },
+      {
+        ...dieselClaim,
+        credit_card_sales: [{ ...sale, vendor_tax_arrangement: undefined }],
+      },
+      {
+        ...dieselClaim,
+        credit_card_sales: [{
+          ...sale,
+          certificate_r: {
+            ...sale.certificate_r,
+            expiration_date: "2027-01-02",
+          },
+        }],
+      },
+      {
+        ...dieselClaim,
+        credit_card_sales: [{
+          ...sale,
+          certificate_r: {
+            ...sale.certificate_r,
+            information_believed_true_confirmed: undefined,
+          },
+        }],
+      },
+    ]
+  ) {
+    assertEquals(
+      parseInput({ business: issuerBusiness, claims: [invalid] }).success,
+      false,
+    );
+  }
+  assertEquals(
+    parseInput({
+      business: issuerBusiness,
+      claims: [dieselClaim, { ...dieselClaim, line: "13b" }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    parseInput({
+      business: issuerBusiness,
+      claims: [{ ...base, line: "13c", excise_tax_rate_per_gallon: 0.219 }, {
+        ...base,
+        line: "13c",
+        excise_tax_rate_per_gallon: 0.244,
+      }],
+    }).success,
+    false,
+  );
+});
+
 Deno.test("Form 4136: represented 2025 Part II rates are line-specific", () => {
   const cases = [
     ["1a", undefined, 18.3],

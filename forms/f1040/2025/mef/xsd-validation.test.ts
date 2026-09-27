@@ -726,6 +726,72 @@ Deno.test({
 
 Deno.test({
   name:
+    "XSD: Form 4136 registered card issuer lines 13a-13c and high-rate statement validate",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const claims = ["13a", "13b", "13c"].map((line, index) => ({
+    line,
+    unit: "gallons",
+    qualified_quantity: 1_000,
+    actual_fuel_cost: 3_000,
+    undyed_fuel_confirmed: true,
+    excise_tax_rate_per_gallon: 0.244,
+    credit_card_issuer_registration_number: "CC123456789",
+    credit_card_sales: [{
+      sale_record_reference: `CARD-${index + 1}`,
+      purchase_date: "2025-06-12",
+      buyer_name: "Example City",
+      buyer_address: "20 City Hall Road, Wilmington, DE 19801",
+      buyer_ein: "123456789",
+      card_account_number: "CITY-2025",
+      gallons: 1_000,
+      actual_fuel_cost: 3_000,
+      card_issued_to_government_buyer_confirmed: true,
+      exclusive_government_use_confirmed: true,
+      buyer_tax_arrangement: "tax_not_collected",
+      vendor_tax_arrangement: "tax_repaid",
+      certificate_r: {
+        record_reference: "Certificate R-001",
+        account_number: "CITY-2025",
+        effective_date: "2025-01-01",
+        expiration_date: "2026-12-31",
+        signed_by_buyer_confirmed: true,
+        held_unexpired_when_claimed_confirmed: true,
+        information_believed_true_confirmed: true,
+      },
+    }],
+  }));
+  const xml = buildMefXml({
+    f1040: { line31_additional_payments: 729 },
+    schedule3: { line12_fuel_tax_credit: 729, line15_total: 729 },
+    f4136: {
+      claimant_context: "business",
+      additional_activities: [],
+      primary_activity_has_most_credit: true,
+      business: {
+        qualifying_business_activity: true,
+        business_name: "Example Card Issuer",
+        business_ein: "987654321",
+        principal_activity_code: "522210",
+        equipment_make: "Payment",
+        equipment_model: "Card Network",
+        equipment_type: "fleet card platform",
+        sales_records_confirmed: true,
+        no_duplicate_excise_claim: true,
+      },
+      claims,
+    },
+  }, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(xml, "<NontxUseFuelsCrCardUsersStmt ");
+  assertStringIncludes(xml, "<CreditRt>0.243</CreditRt>");
+  assertStringIncludes(xml, 'keroseneTaxRateCd="TAXEDAT244"');
+  await validateXsd(xml, "Form 4136 card issuer lines 13a-13c");
+});
+
+Deno.test({
+  name:
     "XSD: Form 4136 exported dyed fuel and gasoline blendstock groups validate",
   sanitizeOps: false,
   sanitizeResources: false,

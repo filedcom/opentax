@@ -14,6 +14,7 @@ function fieldPath(p: number, n: number): string {
   let column = "";
   if (
     p === 1 && n <= 8 || p === 2 && (n === 41 || n === 56 || n === 73) ||
+    p === 3 && n === 156 ||
     p === 4 && (n === 17 || n === 39 || n === 40)
   ) {
     return `${page(p)}.f${p}_${n}[0]`;
@@ -84,6 +85,16 @@ function fieldPath(p: number, n: number): string {
     column = offset === 3 || offset === 4
       ? "ColD"
       : offset === 5 || offset === 6
+      ? "ColE"
+      : "";
+  } else if (p === 3 && n >= 157 && n <= 177) {
+    table = "Table_Line13";
+    const index = Math.floor((n - 157) / 7);
+    line = `Line13${String.fromCharCode(97 + index)}`;
+    const offset = (n - 157) % 7;
+    column = offset === 2 || offset === 3
+      ? "ColD"
+      : offset === 4 || offset === 5
       ? "ColE"
       : "";
   } else if (p === 4 && n >= 1 && n <= 16) {
@@ -213,6 +224,16 @@ const fields: PdfFieldEntry[] = [
       ...money(`line${line}_credit`, 3, base + 5),
     ];
   }),
+  text("line13_registration_number", 3, 156),
+  text("line13a_quantity", 3, 158),
+  ...money("line13a_cost", 3, 159),
+  ...money("line13a_credit", 3, 161),
+  text("line13b_quantity", 3, 165),
+  ...money("line13b_cost", 3, 166),
+  ...money("line13b_credit", 3, 168),
+  text("line13c_quantity", 3, 172),
+  ...money("line13c_cost", 3, 173),
+  ...money("line13c_credit", 3, 175),
   text("line14a_type", 4, 1),
   text("line14a_quantity", 4, 3),
   ...money("line14a_cost", 4, 4),
@@ -269,10 +290,9 @@ export const form4136ScheduleAPdf: PdfFormDescriptor = {
     fields,
   ) {
     const input = inputSchema.parse(fields);
-    if (!input.claims.some((claim) => claim.type_of_use === "05")) return;
     const page3 = pages[2];
     if (!page3) {
-      throw new Error("Schedule A (Form 4136) needs page 3 for bus rates");
+      throw new Error("Schedule A (Form 4136) needs page 3 for rates");
     }
     const font = await document.embedFont(StandardFonts.Helvetica);
     for (const [index, line] of line11.entries()) {
@@ -314,6 +334,34 @@ export const form4136ScheduleAPdf: PdfFormDescriptor = {
         page4.drawText(".124", { x: 293.5, y: 669, size: 8, font });
         page4.drawText("Bus", { x: 260, y: 669, size: 8, font });
       }
+    }
+    if (
+      input.claims.some((claim) =>
+        claim.line === "13c" && claim.excise_tax_rate_per_gallon === 0.244
+      )
+    ) {
+      page3.drawRectangle({
+        x: 188.7,
+        y: 114.2,
+        width: 21,
+        height: 11,
+        color: rgb(1, 1, 1),
+      });
+      page3.drawRectangle({
+        x: 297.8,
+        y: 114.7,
+        width: 17,
+        height: 10.5,
+        color: rgb(1, 1, 1),
+      });
+      page3.drawText("$.244", { x: 189.3, y: 116.1, size: 8, font });
+      page3.drawText(".243", { x: 298.5, y: 116.4, size: 8, font });
+      page3.drawText("Taxed at $.244", {
+        x: 225,
+        y: 116.4,
+        size: 7,
+        font,
+      });
     }
   },
   appendSupplementalPages: form4136Pdf.appendSupplementalPages,

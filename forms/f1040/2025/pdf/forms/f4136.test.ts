@@ -155,6 +155,18 @@ Deno.test("Form 4136 PDF maps page 1 business and page 4 total widgets", () => {
     "topmostSubform[0].Page3[0].Table_Line8[0].Line8f[0].ColE[0].f3_47[0]",
   );
   assertEquals(
+    names.line13_registration_number,
+    "topmostSubform[0].Page4[0].f4_64[0]",
+  );
+  assertEquals(
+    names.line13a_quantity,
+    "topmostSubform[0].Page4[0].Table_Line13[0].Line13a[0].f4_66[0]",
+  );
+  assertEquals(
+    names.line13c_credit_dollars,
+    "topmostSubform[0].Page4[0].Table_Line13[0].Line13c[0].ColE[0].f4_83[0]",
+  );
+  assertEquals(
     names.line11c_quantity,
     "topmostSubform[0].Page3[0].Table_Line11[0].Line11c[0].f3_97[0]",
   );
@@ -354,6 +366,58 @@ Deno.test("Form 4136 PDF projects noncommercial aviation lines 8d through 8f wit
   assertEquals(result?.line8e_credit_dollars, "218");
   assertEquals(result?.line8f_quantity, 1_000);
   assertEquals(result?.line8f_credit_dollars, "1");
+});
+
+Deno.test("Form 4136 PDF projects registered card issuer line 13c taxed at $.244", () => {
+  const result = form4136Pdf.projectFields?.({
+    ...activityContext,
+    business: {
+      qualifying_business_activity: true,
+      business_name: "Example Card Issuer",
+      business_ein: "987654321",
+      principal_activity_code: "522210",
+      equipment_make: "Payment",
+      equipment_model: "Card Network",
+      equipment_type: "fleet card platform",
+      sales_records_confirmed: true,
+      no_duplicate_excise_claim: true,
+    },
+    claims: [{
+      line: "13c",
+      unit: "gallons",
+      qualified_quantity: 1_000,
+      actual_fuel_cost: 3_000,
+      excise_tax_rate_per_gallon: 0.244,
+      credit_card_issuer_registration_number: "CC123456789",
+      credit_card_sales: [{
+        sale_record_reference: "CARD-001",
+        purchase_date: "2025-06-12",
+        buyer_name: "Example City",
+        buyer_address: "20 City Hall Road, Wilmington, DE 19801",
+        buyer_ein: "123456789",
+        card_account_number: "CITY-2025",
+        gallons: 1_000,
+        actual_fuel_cost: 3_000,
+        card_issued_to_government_buyer_confirmed: true,
+        exclusive_government_use_confirmed: true,
+        buyer_tax_arrangement: "tax_not_collected",
+        vendor_tax_arrangement: "tax_repaid",
+        certificate_r: {
+          record_reference: "Certificate R-001",
+          account_number: "CITY-2025",
+          effective_date: "2025-01-01",
+          expiration_date: "2026-12-31",
+          signed_by_buyer_confirmed: true,
+          held_unexpired_when_claimed_confirmed: true,
+          information_believed_true_confirmed: true,
+        },
+      }],
+    }],
+  }, { schedule3: { line12_fuel_tax_credit: 243 } });
+  assertEquals(result?.line13_registration_number, "CC123456789");
+  assertEquals(result?.line13c_quantity, 1_000);
+  assertEquals(result?.line13c_cost_dollars, "3000");
+  assertEquals(result?.line13c_credit_dollars, "243");
 });
 
 Deno.test("Form 4136 PDF maps line 7a government kerosene and appends buyers", async () => {
