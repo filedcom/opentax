@@ -39,6 +39,9 @@ disclosure and paid-leave method changes before Form 3800 routing.
 The [Form 3468 contract](FORM3468-GRAPH.md) maps its 2025 comparator's
 Parts I–VII to per-facility 2026 eligibility, credit/election evidence,
 Form 3800 rows and Form 4255 recapture.
+The [Form 4255 contract](FORM4255-GRAPH.md) maps the current recapture form's
+credit-use, carryover, EPE/transfer, PWA and emissions ledgers to the revised
+2026 Schedule 2 destinations and 646 printable fields.
 The [Form 8962 contract](FORM8962-GRAPH.md) identifies the 2026 line 27
 repayment and reserved lines 28/29, Form 1095-A and Schedule 2/3 graph
 handoff, full PDF field map, and the current-instruction/MeF gates.

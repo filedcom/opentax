@@ -65,6 +65,9 @@ for the implementation contract.
 - [`FORM3468-GRAPH.md`](FORM3468-GRAPH.md) and `pdf-fields-f3468.csv`:
   seven-part investment-credit facility ledger, Form 3800/4255 links,
   Notice 2026-15 and 321 comparator widgets.
+- [`FORM4255-GRAPH.md`](FORM4255-GRAPH.md) and `pdf-fields-f4255.csv`:
+  property-credit recapture, EPE/transfer/PWA/emissions branches, revised
+  Schedule 2 destinations and 646 current form widgets.
 - [`PARITY-QUEUE.md`](PARITY-QUEUE.md): dependency-ordered full 1040 coding
   queue across the 2025 graph/PDF/MeF inventories and 2026-only attachments.
 - [`INSTRUCTION-COVERAGE.md`](INSTRUCTION-COVERAGE.md) and

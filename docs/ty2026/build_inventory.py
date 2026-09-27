@@ -30,6 +30,7 @@ NODE_PROGRESS = {
     "f6765": "Current form/instructions pinned; 2026 Section G requirement and form-revision header conflict identified; replace QRE shortcut, build 270 PDF widgets, payroll election and Form 3800/current MeF; see FORM5884-6765-8994-GRAPH.md",
     "f8994": "Notice 2026-28 pinned; wage/premium method, eligibility and deduction updates missing from shared node; 2021 form is comparator, current Form 3800/MeF needed; see FORM5884-6765-8994-GRAPH.md",
     "f3468": "Published 2025 form/instructions pinned as comparator and Notice 2026-15 PFE guidance pinned; shared flat credit skips seven-part facility ledger, 321 PDF widgets, Form 3800/4255/current MeF; see FORM3468-GRAPH.md",
+    "f4255": "Current Dec 2025 form/instructions pinned; shared node sends recapture to 2026 Schedule 2 line 17a (household tax), missing credit-use/EPE/transfer/PWA/emissions, 646 PDF widgets/current MeF; see FORM4255-GRAPH.md",
     "form8962": "2026 percentage and repayment paths updated; verify final instructions",
     "form_1116": "2026 line 18 adds Schedule 1-A line 43 and line 20 needs Schedule 2 line 1z; shared node omits full category/carryover and new PDF/MeF route; see FORM1116-GRAPH.md",
     "form2555": "2026 form/instructions and Notice 2026-25 pinned; structured filing rejects 2026 and housing route uses legacy Schedule 1 key; see FORM2555-GRAPH.md",

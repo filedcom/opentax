@@ -21,6 +21,8 @@ The [Forms 5884/6765/8994 plan](FORM5884-6765-8994-GRAPH.md) gives the
 first source-level business-credit decisions behind Form 3800.
 The [Form 3468 plan](FORM3468-GRAPH.md) covers the multi-facility investment
 credit and its 2026 authority/MeF release gates.
+The [Form 4255 plan](FORM4255-GRAPH.md) closes the corresponding recapture
+side, including its separate 2026 Schedule 2 routes.
 
 ## Coding sequence
 

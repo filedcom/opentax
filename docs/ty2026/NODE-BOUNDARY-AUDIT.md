@@ -33,6 +33,8 @@ retain a TY2025 regression.
 The [Form 3468 facility plan](FORM3468-GRAPH.md) now specifies the largest
 investment-credit source in the business-credit row, including its seven
 printed parts and distinct Form 3800 destinations.
+The [Form 4255 recapture plan](FORM4255-GRAPH.md) specifies the credit-history
+and Schedule 2 side of that ledger.
 
 1. The business credit group contains direct `schedule3` outputs, including
    [`f8994`](../../forms/f1040/nodes/inputs/f8994/index.ts). The 2026 route

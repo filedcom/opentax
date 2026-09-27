@@ -61,6 +61,10 @@ the flat investment-credit shortcut with per-facility Part I–VII facts,
 PFE/bonus/election evidence and distinct Form 3800 rows. Its current
 published form is a 2025 comparator, so final 2026 PDF/MeF mapping waits
 for the matching release.
+The [Form 4255 contract](../../../docs/ty2026/FORM4255-GRAPH.md) uses that
+facility/credit history to calculate recapture, excessive payment/transfer,
+PWA and emissions branches. The shared node sends all recapture to old
+Schedule 2 line 17a, now the 2026 household-employment-tax line.
 The [Form 1116 contract](../../../docs/ty2026/FORM1116-GRAPH.md) maps
 foreign-tax categories, carryovers, redeterminations and the revised line
 18/20 bases from 1040, Schedule 1-A and Schedule 2; its full attachment

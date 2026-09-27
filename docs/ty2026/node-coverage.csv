@@ -59,7 +59,7 @@ f8911,forms/f1040/nodes/inputs/f8911/index.ts,inputs,1,no,yes,no,n/a,P1,audit-re
 f8826,forms/f1040/nodes/inputs/f8826/index.ts,inputs,1,no,no,no,n/a,P1,audit-required,"Current Sep 2017 form with embedded instructions pinned; route cost reduction, passive release and Form 3800 before Schedule 3, 18 PDF widgets/current MeF; see FORM8826-8835-STATEMENTS.md"
 f4136,forms/f1040/nodes/inputs/f4136/index.ts,inputs,1,no,yes,yes,yes,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 f3468,forms/f1040/nodes/inputs/f3468/index.ts,inputs,1,no,no,no,n/a,P1,audit-required,"Published 2025 form/instructions pinned as comparator and Notice 2026-15 PFE guidance pinned; shared flat credit skips seven-part facility ledger, 321 PDF widgets, Form 3800/4255/current MeF; see FORM3468-GRAPH.md"
-f4255,forms/f1040/nodes/inputs/f4255/index.ts,inputs,1,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
+f4255,forms/f1040/nodes/inputs/f4255/index.ts,inputs,1,no,no,no,n/a,P1,audit-required,"Current Dec 2025 form/instructions pinned; shared node sends recapture to 2026 Schedule 2 line 17a (household tax), missing credit-use/EPE/transfer/PWA/emissions, 646 PDF widgets/current MeF; see FORM4255-GRAPH.md"
 f8801,forms/f1040/nodes/inputs/f8801/index.ts,inputs,0,no,no,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"
 f8332,forms/f1040/nodes/inputs/f8332/index.ts,inputs,0,no,no,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"
 f8822,forms/f1040/nodes/inputs/f8822/index.ts,inputs,0,no,no,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"

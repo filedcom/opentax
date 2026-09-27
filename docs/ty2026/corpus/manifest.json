@@ -1940,6 +1940,22 @@
       "status": "downloaded",
       "bytes": 528627,
       "sha256": "1241c52527a918bc6caab89b9bc85090463920fd1d174c99314f85eb3c1687f3"
+    },
+    {
+      "path": "authorities/f4255--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/f4255.pdf",
+      "kind": "current-revision",
+      "status": "downloaded",
+      "bytes": 249398,
+      "sha256": "90c2e3f99a980b088fafdacbdbf68cc2902883517b1667680fac9ee473422549"
+    },
+    {
+      "path": "authorities/i4255--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/i4255.pdf",
+      "kind": "current-revision-instructions",
+      "status": "downloaded",
+      "bytes": 212812,
+      "sha256": "16ae22860c6d604652d7b038b024bd162affa8b66ebccf80b77e390179bfde19"
     }
   ]
 }
