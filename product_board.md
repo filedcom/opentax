@@ -232,12 +232,16 @@ filled PDF has not been visually verified. Larger groups now use multiple
 1,000-character native statement documents with all IDs linked to Form 8820;
 the multi-document case is written but unrun.
 The next unrun pass captures the 2025 partnership K-1 box 15 code Z and
-S-corporation K-1 box 13 code Z amounts, plus estate/trust K-1 box 13 code ZZ
-orphan-drug statement amounts, EINs, source references, and passive
+S-corporation K-1 box 13 code Z amounts, plus estate/trust K-1 box 13 code M
+orphan-drug amounts, EINs, source references, and passive
 classifications. Form 8820 MeF now compares each claimed pass-through amount
 with that K-1 input, including pass-through-only claims. This is input-to-input
-reconciliation, not verification of an uploaded K-1, its attached code ZZ
-statement, or its issuer filing. Automatic K-1-to-Form-3800 routing remains
+reconciliation, not verification of an uploaded K-1 or its issuer filing.
+The estate/trust code M classification follows the 2025
+[Form 1041 Schedule K-1 instructions](https://www.irs.gov/instructions/i1041);
+code ZZ is reserved here for separately identified other credits such as the
+disabled-access credit. The earlier orphan-drug code ZZ label was incorrect.
+Automatic K-1-to-Form-3800 routing remains
 open. Passive credits, eligibility-document verification,
 filled-PDF verification, and IRS business rules remain open. The reduced-credit
 election now retains an IRS8820 document and paper form even with no
@@ -602,7 +606,7 @@ credits on line 1h now reconcile to one K-1 box 15/13 credit with matching EIN,
 reference, amount, and passive flag, using the same check as Form 8820.
 Those direct and full-return XSD cases are written but unrun. Other credit
 types, prior-year source documents, self-earned passive credits, estate/trust
-statement attachment authenticity, and missing-EIN source evidence still need
+K-1 document authenticity, and missing-EIN source evidence still need
 reconciliation. Current-year passive disabled-access credits on line 1e now
 match partnership or S-corporation K-1 code K evidence, or a named estate/trust
 K-1 code ZZ statement. Its direct and full-return XSD cases are written but

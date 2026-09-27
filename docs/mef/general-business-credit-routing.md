@@ -58,10 +58,10 @@ The linked IRS8820 and IRS3800 XML cases are written but unrun. The current
 build pass also has structured section 280C deduction or basis reductions,
 controlled-group allocation statements, pass-through source identities, and a
 paper Form 8820 PDF builder. Partnership K-1 box 15 code Z and S-corporation
-K-1 box 13 code Z amounts, plus estate/trust K-1 box 13 code ZZ orphan-drug
-statement amounts, now reconcile to the claimed pass-through credit during MeF
+K-1 box 13 code Z amounts, plus estate/trust K-1 box 13 code M orphan-drug
+amounts, now reconcile to the claimed pass-through credit during MeF
 export, with written but unrun cases. This compares entered source facts;
-actual K-1 documents and their attached statements, automatic K-1 credit
+actual K-1 documents, automatic K-1 credit
 routing, passive credits, filled-PDF output, and IRS business rules remain open.
 
 `f8826` now forwards its line 8 source amount to `f3800` as a separate line 1e

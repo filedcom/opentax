@@ -38,9 +38,7 @@ export const itemSchema = z.object({
   entity_type: z.enum(["estate", "trust"]).optional(),
   estate_trust_ein: z.string().regex(/^\d{9}$/).optional(),
   source_document_reference: z.string().trim().min(1).optional(),
-  box13_code_zz_orphan_drug_credit: z.number().int().positive().optional(),
-  box13_code_zz_orphan_drug_statement_reference: z.string().trim().min(1)
-    .optional(),
+  box13_code_m_orphan_drug_credit: z.number().int().positive().optional(),
   orphan_drug_credit_subject_to_passive_activity_limit: z.boolean().optional(),
   box13_code_zz_disabled_access_credit: z.number().finite().positive().refine(
     (amount) =>
@@ -131,13 +129,12 @@ export const itemSchema = z.object({
   box14_foreign_tax_credit_method: z.nativeEnum(ForeignTaxCreditMethod)
     .optional(),
 }).superRefine((item, ctx) => {
-  if (item.box13_code_zz_orphan_drug_credit !== undefined) {
+  if (item.box13_code_m_orphan_drug_credit !== undefined) {
     for (
       const key of [
         "entity_type",
         "estate_trust_ein",
         "source_document_reference",
-        "box13_code_zz_orphan_drug_statement_reference",
         "orphan_drug_credit_subject_to_passive_activity_limit",
       ] as const
     ) {
@@ -145,13 +142,13 @@ export const itemSchema = z.object({
         ctx.addIssue({
           code: "custom",
           path: [key],
-          message: `K-1 box 13 code ZZ orphan-drug credit needs ${key}`,
+          message: `K-1 box 13 code M orphan-drug credit needs ${key}`,
         });
       }
     }
     if (
       item.box13_credits !== undefined &&
-      item.box13_credits < item.box13_code_zz_orphan_drug_credit
+      item.box13_credits < item.box13_code_m_orphan_drug_credit
     ) {
       ctx.addIssue({
         code: "custom",
@@ -182,13 +179,13 @@ export const itemSchema = z.object({
   if (
     item.box13_credits !== undefined &&
     Math.round(item.box13_credits * 100) <
-      Math.round((item.box13_code_zz_orphan_drug_credit ?? 0) * 100) +
+      Math.round((item.box13_code_m_orphan_drug_credit ?? 0) * 100) +
         Math.round((item.box13_code_zz_disabled_access_credit ?? 0) * 100)
   ) {
     ctx.addIssue({
       code: "custom",
       path: ["box13_credits"],
-      message: "K-1 named code ZZ credits exceed box 13 total credits",
+      message: "K-1 named credits exceed box 13 total credits",
     });
   }
 });

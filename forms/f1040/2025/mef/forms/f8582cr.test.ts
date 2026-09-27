@@ -178,7 +178,7 @@ Deno.test("Form 8582-CR passive orphan-drug credit matches the current K-1", () 
   );
 });
 
-Deno.test("Form 8582-CR estate orphan-drug credit matches its code ZZ statement", () => {
+Deno.test("Form 8582-CR estate orphan-drug credit matches K-1 code M", () => {
   const source = {
     ...otherCredit,
     source_origin: {
@@ -187,7 +187,6 @@ Deno.test("Form 8582-CR estate orphan-drug credit matches its code ZZ statement"
       ein: "123456789",
     },
     source_document_reference: "2025 Estate K-1",
-    source_statement_reference: "2025 orphan-drug statement",
   };
   const input = {
     credit_sources: [source],
@@ -206,9 +205,7 @@ Deno.test("Form 8582-CR estate orphan-drug credit matches its code ZZ statement"
           entity_type: "estate",
           estate_trust_ein: "123456789",
           source_document_reference: "2025 Estate K-1",
-          box13_code_zz_orphan_drug_credit: 1_500,
-          box13_code_zz_orphan_drug_statement_reference:
-            "2025 orphan-drug statement",
+          box13_code_m_orphan_drug_credit: 1_500,
           orphan_drug_credit_subject_to_passive_activity_limit: true,
         }],
       },
@@ -227,14 +224,13 @@ Deno.test("Form 8582-CR estate orphan-drug credit matches its code ZZ statement"
           k1_trust: {
             k1_trusts: [{
               ...context.pending.k1_trust.k1_trusts[0],
-              box13_code_zz_orphan_drug_statement_reference:
-                "Unclaimed statement",
+              box13_code_m_orphan_drug_credit: 1_499,
             }],
           },
         },
       }),
     Error,
-    "does not reconcile to K-1 box 13 code ZZ",
+    "does not reconcile to K-1 box 13 code M",
   );
 });
 

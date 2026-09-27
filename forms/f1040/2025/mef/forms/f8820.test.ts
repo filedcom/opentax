@@ -336,12 +336,11 @@ Deno.test("Form 8820 pass-through credit reconciles to partnership and S-corp K-
   );
 });
 
-Deno.test("Form 8820 estate and trust pass-through credits reconcile to K-1 code ZZ", () => {
+Deno.test("Form 8820 estate and trust pass-through credits reconcile to K-1 code M", () => {
   const credits = ["estate", "trust"].map((type, index) => ({
     source_type: type as "estate" | "trust",
     entity_ein: String(123_456_789 + index),
     source_document_reference: `2025 ${type} K-1`,
-    source_statement_reference: `${type} orphan-drug allocation statement`,
     credit_amount: 500 + index,
     subject_to_passive_activity_limit: false,
   }));
@@ -357,9 +356,7 @@ Deno.test("Form 8820 estate and trust pass-through credits reconcile to K-1 code
     entity_type: credit.source_type,
     estate_trust_ein: credit.entity_ein,
     source_document_reference: credit.source_document_reference,
-    box13_code_zz_orphan_drug_credit: credit.credit_amount,
-    box13_code_zz_orphan_drug_statement_reference:
-      credit.source_statement_reference,
+    box13_code_m_orphan_drug_credit: credit.credit_amount,
     orphan_drug_credit_subject_to_passive_activity_limit: false,
   }));
   assertEquals(
@@ -382,7 +379,7 @@ Deno.test("Form 8820 estate and trust pass-through credits reconcile to K-1 code
         },
       }),
     Error,
-    "does not reconcile to K-1 box 13 code ZZ",
+    "does not reconcile to K-1 box 13 code M",
   );
   assertThrows(
     () =>
@@ -392,14 +389,33 @@ Deno.test("Form 8820 estate and trust pass-through credits reconcile to K-1 code
           k1_trust: {
             k1_trusts: [{
               ...k1_trusts[0],
-              box13_code_zz_orphan_drug_statement_reference:
-                "Different statement",
+              box13_code_m_orphan_drug_credit: 999,
             }, k1_trusts[1]],
           },
         },
       }),
     Error,
-    "does not reconcile to K-1 box 13 code ZZ",
+    "does not reconcile to K-1 box 13 code M",
+  );
+  assertThrows(
+    () =>
+      form8820.build(passThroughOnly, {
+        pending: {
+          f8820: passThroughOnly,
+          k1_trust: {
+            k1_trusts: [{
+              ...k1_trusts[0],
+              box13_code_m_orphan_drug_credit: undefined,
+              box13_code_zz_disabled_access_credit: 500,
+              box13_code_zz_disabled_access_statement_reference:
+                "Unrelated disabled-access statement",
+              disabled_access_credit_subject_to_passive_activity_limit: false,
+            }, k1_trusts[1]],
+          },
+        },
+      }),
+    Error,
+    "does not reconcile to K-1 box 13 code M",
   );
 });
 

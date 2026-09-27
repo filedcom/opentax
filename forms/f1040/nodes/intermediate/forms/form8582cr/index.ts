@@ -150,7 +150,6 @@ function allocateCreditsToSources(
     activity_reference: source.activity_reference,
     source_form: source.source_form,
     source_document_reference: source.source_document_reference,
-    source_statement_reference: source.source_statement_reference,
     source_origin: source.source_origin,
     category: source.category,
     reporting_route: source.reporting_route,

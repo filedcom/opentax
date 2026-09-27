@@ -364,30 +364,3 @@ Deno.test("Form 8820 accepts identified pass-through credit without own drugs", 
     })
   );
 });
-
-Deno.test("Form 8820 estate and trust credits require a separate code ZZ statement reference", () => {
-  const trustCredit = {
-    source_type: "trust" as const,
-    entity_ein: "123456789",
-    source_document_reference: "2025 Trust K-1",
-    credit_amount: 500,
-    subject_to_passive_activity_limit: true,
-  };
-  assertEquals(
-    f8820.inputSchema.safeParse(source({
-      f8820s: [],
-      pass_through_credits: [trustCredit],
-    })).success,
-    false,
-  );
-  assertEquals(
-    f8820.inputSchema.safeParse(source({
-      f8820s: [],
-      pass_through_credits: [{
-        ...trustCredit,
-        source_statement_reference: "Box 13 ZZ orphan-drug statement",
-      }],
-    })).success,
-    true,
-  );
-});
