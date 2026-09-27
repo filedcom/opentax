@@ -146,6 +146,12 @@ result and dependent continuations from the revised first-page table. The
 draft Schedule 8812 filler reconciles its credit lines and appends two pages
 when a credit is filed; both forms passed visual QA. The full PDF bundle
 remains open across the rest of the supported 2025 surface.
+The dedicated 2026 Schedule 3 node and draft PDF now route excess Social
+Security withholding from two W-2s through line 11, line 15, and Form 1040
+line 31. It leaves reserved 2026 line 5b blank, models new line 13e, and
+sends credit source amounts to Schedule 8812 for worksheet reconciliation.
+The combined three-page PDF passed visual QA. Other Schedule 3 sources remain
+open.
 The [MeF v1 drift review](MEF-V1-DRIFT.md) confirms the downloaded May package
 predates 1040 lines 12f, 24a–c, 32a–c, Schedule 3-A, and the new
 work-authorization question. IRS announced v4 on September 24 through the

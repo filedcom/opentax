@@ -62,3 +62,45 @@ Deno.test("TY2026 Schedule 8812 requires calculated tax and worksheet facts", ()
     "needs complete Credit Limit Worksheet",
   );
 });
+
+Deno.test("TY2026 Schedule 8812 worksheet checks filed Schedule 3 credit sources", () => {
+  const schedule3Lines = {
+    schedule3_line1: 100,
+    schedule3_line2: 0,
+    schedule3_line3: 0,
+    schedule3_line4: 0,
+    schedule3_line6d: 0,
+    schedule3_line6f: 0,
+    schedule3_line6l: 0,
+    schedule3_line6m: 0,
+    schedule3_line5a: 0,
+    schedule3_line6c: 0,
+    schedule3_line6g: 0,
+    schedule3_line6h: 0,
+  };
+  assertThrows(
+    () =>
+      f8812_2026.compute(context, {
+        auto_qualifying_children: 1,
+        auto_filing_status: FilingStatus.Single,
+        auto_agi: 50_000,
+        auto_income_tax_liability: 3_000,
+        auto_schedule3_credit_lines: schedule3Lines,
+        credit_limit_worksheet_2026: worksheet,
+      }),
+    Error,
+    "disagrees with Schedule 3 schedule3_line1",
+  );
+  const result = f8812_2026.compute(context, {
+    auto_qualifying_children: 1,
+    auto_filing_status: FilingStatus.Single,
+    auto_agi: 50_000,
+    auto_income_tax_liability: 3_000,
+    auto_schedule3_credit_lines: schedule3Lines,
+    credit_limit_worksheet_2026: { ...worksheet, schedule3_line1: 100 },
+  });
+  assertEquals(
+    result.outputs.find((output) => output.nodeType === "f8812")!.fields.line13,
+    2_900,
+  );
+});

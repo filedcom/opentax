@@ -16,6 +16,7 @@ import { f8812_2026 } from "./nodes/f8812.ts";
 import { schedule1_2026 } from "./nodes/schedule1.ts";
 import { schedule_b_2026 } from "./nodes/schedule_b.ts";
 import { schedule2_2026 } from "./nodes/schedule2.ts";
+import { schedule3_2026 } from "./nodes/schedule3.ts";
 import { schedule3a } from "./nodes/schedule3a.ts";
 import { standard_deduction_2026 } from "./nodes/standard_deduction.ts";
 
@@ -34,6 +35,7 @@ export const registry: NodeRegistry = {
   agi_aggregator,
   schedule1a,
   schedule2: schedule2_2026,
+  schedule3: schedule3_2026,
   standard_deduction: standard_deduction_2026,
   income_tax_calculation,
   f8812: f8812_2026,

@@ -58,6 +58,37 @@ const creditLimitWorksheet = {
   worksheet_b_applies: false,
 };
 
+Deno.test("TY2026 W-2 excess Social Security withholding reaches Schedule 3 and PDF", async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: filer,
+    w2: [
+      {
+        box1_wages: 150_000,
+        box2_fed_withheld: 20_000,
+        box3_ss_wages: 150_000,
+        box4_ss_withheld: 9_300,
+      },
+      {
+        box1_wages: 150_000,
+        box2_fed_withheld: 20_000,
+        box3_ss_wages: 150_000,
+        box4_ss_withheld: 9_300,
+      },
+    ],
+  }, context);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule3.line11_excess_ss, 7_161);
+  assertEquals(result.pending.schedule3.line15_total, 7_161);
+  assertEquals(result.pending.f1040.line31_other_payments, 7_161);
+  const pdf = await PDFDocument.load(
+    await buildCorePdfBytes2026({
+      f1040: result.pending.f1040,
+      schedule3: result.pending.schedule3,
+    }),
+  );
+  assertEquals(pdf.getPageCount(), 3);
+});
+
 Deno.test("TY2026 registered dependent reaches Schedule 8812, Form 1040, and PDF", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {

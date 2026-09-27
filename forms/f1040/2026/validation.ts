@@ -138,6 +138,20 @@ export const CALCULATION_RULES_2026: readonly RuleDef[] = [
         number(ctx, "f8812", "line27") === f1040(ctx, "line28_actc"),
     "Schedule 8812 must reconcile to Form 1040 child credits.",
   ),
+  rule(
+    "F1040-2026-LOCAL-10",
+    "reject",
+    "missing_document",
+    (ctx) =>
+      f1040(ctx, "line20_nonrefundable_credits") === 0 &&
+        f1040(ctx, "line31_other_payments") === 0 ||
+      ctx.hasForm("schedule3") &&
+        number(ctx, "schedule3", "line8_total") ===
+          f1040(ctx, "line20_nonrefundable_credits") &&
+        number(ctx, "schedule3", "line15_total") ===
+          f1040(ctx, "line31_other_payments"),
+    "Schedule 3 must reconcile to Form 1040 lines 20 and 31.",
+  ),
 ];
 
 /** No provisional XML-name map is supplied before the current TY2026 MeF schema. */

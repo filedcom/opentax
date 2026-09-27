@@ -20,6 +20,8 @@ for the implementation contract.
   and AMT attachment field maps and remaining print-detail gaps.
 - [`PDF-DEPENDENTS-8812-MAP.md`](PDF-DEPENDENTS-8812-MAP.md): the revised
   dependent table, continuation, Schedule 8812 AcroForm fields, and checks.
+- [`PDF-SCHEDULE3-MAP.md`](PDF-SCHEDULE3-MAP.md): the revised Schedule 3 lines,
+  Form 1040 and Schedule 8812 routes, and draft PDF fields.
 - [`SCHEDULE1-GRAPH.md`](SCHEDULE1-GRAPH.md) and
   `pdf-fields-f1040s1.csv`: the 2026 Schedule 1 source/AGI contract, changed
   line meanings, and 73 draft PDF widgets.

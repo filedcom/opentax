@@ -9,8 +9,24 @@ import {
 } from "../../nodes/inputs/f8812/index.ts";
 import { f1040_2026_node } from "./f1040.ts";
 
+export const schedule3CreditLines2026Schema = z.object({
+  schedule3_line1: z.number().finite().nonnegative(),
+  schedule3_line2: z.number().finite().nonnegative(),
+  schedule3_line3: z.number().finite().nonnegative(),
+  schedule3_line4: z.number().finite().nonnegative(),
+  schedule3_line6d: z.number().finite().nonnegative(),
+  schedule3_line6f: z.number().finite().nonnegative(),
+  schedule3_line6l: z.number().finite().nonnegative(),
+  schedule3_line6m: z.number().finite().nonnegative(),
+  schedule3_line5a: z.number().finite().nonnegative(),
+  schedule3_line6c: z.number().finite().nonnegative(),
+  schedule3_line6g: z.number().finite().nonnegative(),
+  schedule3_line6h: z.number().finite().nonnegative(),
+}).strict();
+
 export const f8812Input2026Schema = sharedInputSchema.extend({
   auto_schedule2_line3: z.number().finite().nonnegative().optional(),
+  auto_schedule3_credit_lines: schedule3CreditLines2026Schema.optional(),
 });
 
 /** Calculate 2026 child credits after AGI, income tax, and Schedule 2. */
@@ -34,6 +50,22 @@ class F8812Node2026 extends TaxNode<typeof f8812Input2026Schema> {
       throw new Error(
         "TY2026 Schedule 8812 needs calculated Form 1040 line 16 tax",
       );
+    }
+    if (
+      input.auto_schedule3_credit_lines && input.credit_limit_worksheet_2026
+    ) {
+      const worksheet = input.credit_limit_worksheet_2026;
+      for (
+        const [key, value] of Object.entries(input.auto_schedule3_credit_lines)
+      ) {
+        if (
+          key in worksheet && worksheet[key as keyof typeof worksheet] !== value
+        ) {
+          throw new Error(
+            `TY2026 Schedule 8812 worksheet disagrees with Schedule 3 ${key}`,
+          );
+        }
+      }
     }
     const lines = calculateSchedule8812Lines(2026, {
       ...input,

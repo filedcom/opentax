@@ -8,6 +8,7 @@ import { buildSchedule1APdfBytes2026 } from "./schedule1a.ts";
 import { buildScheduleBPdfBytes2026 } from "./schedule_b.ts";
 import { buildSchedule2PdfBytes2026 } from "./schedule2.ts";
 import { buildSchedule3APdfBytes2026 } from "./schedule3a.ts";
+import { buildSchedule3PdfBytes2026 } from "./schedule3.ts";
 import { buildSchedule8812PdfBytes2026 } from "./schedule_8812.ts";
 
 function amount(fields: Record<string, unknown>, key: string): number {
@@ -24,6 +25,7 @@ interface CorePdfInput2026 {
   readonly schedule1a?: Record<string, unknown>;
   readonly schedule2?: Record<string, unknown>;
   readonly schedule3a?: Record<string, unknown>;
+  readonly schedule3?: Record<string, unknown>;
   readonly scheduleB?: Record<string, unknown>;
   readonly form6251?: Record<string, unknown>;
   readonly form4137?: Record<string, unknown>;
@@ -38,6 +40,7 @@ export async function buildCorePdfBytes2026({
   schedule1a,
   schedule2,
   schedule3a,
+  schedule3,
   scheduleB,
   form6251,
   form4137,
@@ -107,6 +110,23 @@ export async function buildCorePdfBytes2026({
   }
   const optionalAmount = (fields: Record<string, unknown>, key: string) =>
     fields[key] === undefined ? 0 : amount(fields, key);
+  if (
+    !schedule3 &&
+    (optionalAmount(f1040, "line20_nonrefundable_credits") > 0 ||
+      optionalAmount(f1040, "line31_other_payments") > 0)
+  ) {
+    throw new Error("TY2026 core PDF needs Schedule 3 for credits or payments");
+  }
+  if (
+    schedule3 && (
+      amount(schedule3, "line8_total") !==
+        optionalAmount(f1040, "line20_nonrefundable_credits") ||
+      amount(schedule3, "line15_total") !==
+        optionalAmount(f1040, "line31_other_payments")
+    )
+  ) {
+    throw new Error("TY2026 core PDF Schedule 3 disagrees with Form 1040");
+  }
   if (
     !schedule1 &&
     (optionalAmount(f1040, "line8_additional_income") !== 0 ||
@@ -203,6 +223,11 @@ export async function buildCorePdfBytes2026({
   }
   if (schedule3a) {
     parts.push(await buildSchedule3APdfBytes2026(schedule3a, { name, ssn }));
+  }
+  if (schedule3) {
+    parts.push(
+      await buildSchedule3PdfBytes2026(schedule3, f1040, { name, ssn }),
+    );
   }
   if (f8812?.file_schedule_8812 === true) {
     parts.push(
