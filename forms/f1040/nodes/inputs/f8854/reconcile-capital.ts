@@ -1,4 +1,5 @@
-import { inputSchema as form8949InputSchema } from "../f8949/index.ts";
+import { z } from "zod";
+import { transactionSchema as filedTransactionSchema } from "../../intermediate/forms/form8949/index.ts";
 import { dateSchema, type F8854Input, inputSchema } from "./index.ts";
 import {
   allocateMarkToMarketExclusion,
@@ -12,10 +13,10 @@ function dayBefore(isoDate: string): string {
   return date.toISOString().slice(0, 10);
 }
 
-/** Match each claimed Form 8949 deemed sale to one identified source row. */
+/** Match each claimed Form 8949 deemed sale to one accumulated filing row. */
 export function reconcileForm8854Form8949Properties(
   raw8854: F8854Input,
-  raw8949: unknown,
+  filedForm8949: unknown,
 ): { itemId: string; transactionId: string; gainOrLoss: number }[] {
   const input = inputSchema.parse(raw8854);
   if (input.section_c === null) return [];
@@ -25,7 +26,9 @@ export function reconcileForm8854Form8949Properties(
       asset.reported_form_code === ReportedFormCode.Form8949
     )
   ) return [];
-  const form8949 = form8949InputSchema.parse(raw8949);
+  const transactions = z.array(filedTransactionSchema).parse(
+    filedForm8949 ?? [],
+  );
   const allocations = allocateMarkToMarketExclusion(assets);
   const matches = assets.flatMap((asset, index) => {
     if (asset.reported_form_code !== ReportedFormCode.Form8949) return [];
@@ -38,7 +41,7 @@ export function reconcileForm8854Form8949Properties(
         `Form 8854 property ${asset.item_id} needs loss-character and deductibility facts`,
       );
     }
-    const candidates = form8949.f8949s.filter((transaction) =>
+    const candidates = transactions.filter((transaction) =>
       transaction.source_transaction_id === asset.reported_transaction_id
     );
     if (candidates.length !== 1) {
@@ -62,6 +65,13 @@ export function reconcileForm8854Form8949Properties(
       );
     }
     if (
+      transaction.is_long_term !== ["F", "L"].includes(transaction.part)
+    ) {
+      throw new Error(
+        `Form 8854 property ${asset.item_id} has inconsistent Form 8949 holding-period classification`,
+      );
+    }
+    if (
       !Number.isSafeInteger(transaction.proceeds) ||
       !Number.isSafeInteger(transaction.cost_basis) ||
       transaction.proceeds !== asset.fmv_day_before_expatriation ||
@@ -72,10 +82,6 @@ export function reconcileForm8854Form8949Properties(
       );
     }
     if (
-      transaction.wash_sale_loss !== undefined ||
-      transaction.loss_not_allowed !== undefined ||
-      transaction.accrued_market_discount !== undefined ||
-      transaction.ordinary_income_portion !== undefined ||
       transaction.qsbs_code !== undefined ||
       transaction.qsbs_amount !== undefined
     ) {
@@ -105,7 +111,8 @@ export function reconcileForm8854Form8949Properties(
       expectedAdjustment;
     if (
       gainOrLoss !==
-        (nondeductibleLoss ? 0 : allocation.gainAfterExclusion)
+        (nondeductibleLoss ? 0 : allocation.gainAfterExclusion) ||
+      transaction.gain_loss !== gainOrLoss
     ) {
       throw new Error(
         `Form 8854 property ${asset.item_id} does not match Form 8949 recognized gain`,

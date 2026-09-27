@@ -102,10 +102,10 @@ function validateIds(
 export function buildForm8854InitialBundle(
   rawInput: F8854Input,
   ids: Form8854InitialDocumentIds,
-  reportingSources: { form8949: unknown },
+  filingPending: { form8949: unknown },
 ): { formXml: string; nativeStatements: Form8854NativeStatement[] } {
   const input = inputSchema.parse(rawInput);
-  reconcileForm8854Form8949Properties(input, reportingSources.form8949);
+  reconcileForm8854Form8949Properties(input, filingPending.form8949);
   const changeXml = buildForm8854ChangeStatement(input);
   const balanceStatements = buildForm8854BalanceSheetStatements(
     input.balance_sheet,

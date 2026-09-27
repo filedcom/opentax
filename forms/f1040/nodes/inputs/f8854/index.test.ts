@@ -73,6 +73,16 @@ function deemedSale8949(
   };
 }
 
+function filed8949(...transactions: Record<string, unknown>[]) {
+  return transactions.map((transaction) => ({
+    ...transaction,
+    gain_loss: Number(transaction.proceeds) -
+      Number(transaction.cost_basis) +
+      Number(transaction.adjustment_amount ?? 0),
+    is_long_term: ["F", "L"].includes(String(transaction.part)),
+  }));
+}
+
 function sectionC(markToMarketAssets: ReturnType<typeof asset>[] = []) {
   return {
     property_inventory_confirmed_complete: true,
@@ -1182,9 +1192,9 @@ Deno.test("Form 8854 initial bundle assembles Parts I and II without pretending 
     coveredInput,
     coveredIds,
     {
-      form8949: {
-        f8949s: [deemedSale8949("stock", 1_000_000, 100_000, 890_000)],
-      },
+      form8949: filed8949(
+        deemedSale8949("stock", 1_000_000, 100_000, 890_000),
+      ),
     },
   );
   assertStringIncludes(covered.formXml, "<PropertyOwnedDtExpatriationGrp>");
@@ -1212,24 +1222,22 @@ Deno.test("Form 8854 initial bundle requires actual IDs for election PDFs", () =
     },
     binaryAttachments: ["DOC-HYP-WITH", "DOC-HYP-WITHOUT", "DOC-AGREEMENT"],
   };
-  const reportingSources = {
-    form8949: {
-      f8949s: [
-        deemedSale8949("business", 2_000_000, 200_000, 801_000),
-        deemedSale8949("stock", 1_000_000, 800_000, 89_000),
-      ],
-    },
+  const filingPending = {
+    form8949: filed8949(
+      deemedSale8949("business", 2_000_000, 200_000, 801_000),
+      deemedSale8949("stock", 1_000_000, 800_000, 89_000),
+    ),
   };
   assertThrows(
     () =>
       buildForm8854InitialBundle(parsed, {
         ...ids,
         binaryAttachments: ["DOC-HYP-WITH", "DOC-HYP-WITHOUT"],
-      }, reportingSources),
+      }, filingPending),
     Error,
     "needs binary attachment DOC-AGREEMENT",
   );
-  const bundle = buildForm8854InitialBundle(parsed, ids, reportingSources);
+  const bundle = buildForm8854InitialBundle(parsed, ids, filingPending);
   assertStringIncludes(
     bundle.formXml,
     'referenceDocumentId="DOC-HYP-WITH DOC-HYP-WITHOUT DOC-AGREEMENT" referenceDocumentName="BinaryAttachment"',
@@ -1321,8 +1329,17 @@ Deno.test("Form 8854 gain property matches one identified Form 8949 deemed sale"
     adjustment_amount: -890_000,
   };
   assertEquals(
-    reconcileForm8854Form8949Properties(parsed, { f8949s: [transaction] }),
+    reconcileForm8854Form8949Properties(parsed, filed8949(transaction)),
     [{ itemId: "stock", transactionId: "TX-stock", gainOrLoss: 10_000 }],
+  );
+  assertThrows(() =>
+    reconcileForm8854Form8949Properties(parsed, { f8949s: [transaction] })
+  );
+  assertThrows(() =>
+    reconcileForm8854Form8949Properties(parsed, [{
+      ...filed8949(transaction)[0],
+      gain_loss: 9_999,
+    }])
   );
   for (
     const bad of [
@@ -1334,14 +1351,15 @@ Deno.test("Form 8854 gain property matches one identified Form 8949 deemed sale"
     ]
   ) {
     assertThrows(() =>
-      reconcileForm8854Form8949Properties(parsed, { f8949s: [bad] })
+      reconcileForm8854Form8949Properties(parsed, filed8949(bad))
     );
   }
   assertThrows(
     () =>
-      reconcileForm8854Form8949Properties(parsed, {
-        f8949s: [transaction, transaction],
-      }),
+      reconcileForm8854Form8949Properties(
+        parsed,
+        filed8949(transaction, transaction),
+      ),
     Error,
     "exactly one identified Form 8949 transaction",
   );
@@ -1363,7 +1381,7 @@ Deno.test("Form 8854 capital reconciliation refuses uncharacterized losses and d
     section_c: sectionC([asset("loss", 100, 200)]),
   }));
   assertThrows(
-    () => reconcileForm8854Form8949Properties(parsed, { f8949s: [] }),
+    () => reconcileForm8854Form8949Properties(parsed, filed8949()),
     Error,
     "needs loss-character and deductibility facts",
   );
@@ -1379,7 +1397,7 @@ Deno.test("Form 8854 deductible capital loss matches its unadjusted Form 8949 ro
   }));
   const transaction = deemedSale8949("stock-loss", 100, 200, 0);
   assertEquals(
-    reconcileForm8854Form8949Properties(parsed, { f8949s: [transaction] }),
+    reconcileForm8854Form8949Properties(parsed, filed8949(transaction)),
     [{
       itemId: "stock-loss",
       transactionId: "TX-stock-loss",
@@ -1387,13 +1405,14 @@ Deno.test("Form 8854 deductible capital loss matches its unadjusted Form 8949 ro
     }],
   );
   assertThrows(() =>
-    reconcileForm8854Form8949Properties(parsed, {
-      f8949s: [{
+    reconcileForm8854Form8949Properties(
+      parsed,
+      filed8949({
         ...transaction,
         adjustment_codes: "L",
         adjustment_amount: 100,
-      }],
-    })
+      }),
+    )
   );
 });
 
@@ -1411,7 +1430,7 @@ Deno.test("Form 8854 personal-use loss requires Form 8949 code L and zero recogn
     adjustment_amount: 100,
   };
   assertEquals(
-    reconcileForm8854Form8949Properties(parsed, { f8949s: [transaction] }),
+    reconcileForm8854Form8949Properties(parsed, filed8949(transaction)),
     [{
       itemId: "personal-loss",
       transactionId: "TX-personal-loss",
@@ -1419,9 +1438,10 @@ Deno.test("Form 8854 personal-use loss requires Form 8949 code L and zero recogn
     }],
   );
   assertThrows(() =>
-    reconcileForm8854Form8949Properties(parsed, {
-      f8949s: [{ ...transaction, adjustment_amount: 99 }],
-    })
+    reconcileForm8854Form8949Properties(
+      parsed,
+      filed8949({ ...transaction, adjustment_amount: 99 }),
+    )
   );
 });
 
