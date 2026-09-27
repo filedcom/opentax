@@ -114,7 +114,8 @@ export interface F1040Config {
   luxuryAutoYear1NoBonus: number;
   luxuryAutoYear1WithBonus: number;
   luxuryAutoYear2: number;
-  luxuryAutoYear3Plus: number;
+  luxuryAutoYear3: number;
+  luxuryAutoYear4Plus: number;
 
   // ── Household Employment (Schedule H) ─────────────────────────────────────
   householdFicaThreshold: number;

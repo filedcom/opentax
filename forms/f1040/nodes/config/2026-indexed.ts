@@ -68,6 +68,11 @@ type IndexedKeys =
   | "feieHousingBase"
   | "section179Limit"
   | "section179PhaseoutThreshold"
+  | "luxuryAutoYear1NoBonus"
+  | "luxuryAutoYear1WithBonus"
+  | "luxuryAutoYear2"
+  | "luxuryAutoYear3"
+  | "luxuryAutoYear4Plus"
   | "householdFicaThreshold"
   | "householdFutaQuarterlyThreshold"
   | "saltCap"
@@ -263,6 +268,12 @@ export const INDEXED_CONFIG_2026 = {
   feieHousingBase: 21_264, // §911(c)(1)(B): 16% × $132,900.
   section179Limit: 2_560_000,
   section179PhaseoutThreshold: 4_090_000,
+  // Rev. Proc. 2026-15 §4.01(2), Tables 1–2; cars placed in service in 2026.
+  luxuryAutoYear1NoBonus: 12_300,
+  luxuryAutoYear1WithBonus: 20_300,
+  luxuryAutoYear2: 19_800,
+  luxuryAutoYear3: 11_900,
+  luxuryAutoYear4Plus: 7_160,
   // Pinned 2026 draft Schedule H, questions A and C.
   householdFicaThreshold: 3_000,
   householdFutaQuarterlyThreshold: 1_000,

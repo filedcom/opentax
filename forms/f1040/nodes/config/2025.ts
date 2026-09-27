@@ -400,8 +400,11 @@ export const LUXURY_AUTO_YEAR1_WITH_BONUS_2025 = 20_200;
 /** Luxury auto Year 2 limit (TY2025). */
 export const LUXURY_AUTO_YEAR2_2025 = 19_600;
 
-/** Luxury auto Year 3+ limit (TY2025). */
-export const LUXURY_AUTO_YEAR3_PLUS_2025 = 11_900;
+/** Luxury auto Year 3 limit (placed in service in 2025). Rev. Proc. 2025-16. */
+export const LUXURY_AUTO_YEAR3_2025 = 11_800;
+
+/** Luxury auto Year 4 and later limit (placed in service in 2025). */
+export const LUXURY_AUTO_YEAR4_PLUS_2025 = 7_060;
 
 // ─── Schedule H — Household Employment Taxes ─────────────────────────────────
 // IRC §3510; IRS Publication 926 (2025)
@@ -668,7 +671,8 @@ export const config2025: F1040Config = {
   luxuryAutoYear1NoBonus:       LUXURY_AUTO_YEAR1_NO_BONUS_2025,
   luxuryAutoYear1WithBonus:     LUXURY_AUTO_YEAR1_WITH_BONUS_2025,
   luxuryAutoYear2:              LUXURY_AUTO_YEAR2_2025,
-  luxuryAutoYear3Plus:          LUXURY_AUTO_YEAR3_PLUS_2025,
+  luxuryAutoYear3:              LUXURY_AUTO_YEAR3_2025,
+  luxuryAutoYear4Plus:          LUXURY_AUTO_YEAR4_PLUS_2025,
   householdFicaThreshold:       HOUSEHOLD_FICA_THRESHOLD_2025,
   householdFutaQuarterlyThreshold: HOUSEHOLD_FUTA_QUARTERLY_THRESHOLD,
   saltCap:                      SALT_CAP_2025,

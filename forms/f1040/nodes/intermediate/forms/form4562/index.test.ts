@@ -421,6 +421,19 @@ Deno.test("edge: luxury auto year-2 limit ($19,600) for pre-Jan20 property", () 
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 19_600);
 });
 
+Deno.test("edge: luxury auto year-3 and year-4 limits are distinct", () => {
+  for (const [year, expected] of [[3, 11_800], [4, 7_060]] as const) {
+    const result = compute({
+      macrs_gds_basis: 80_000,
+      macrs_gds_recovery_period: 5,
+      macrs_gds_year_of_service: year,
+      is_luxury_auto: true,
+      luxury_auto_year: year,
+    });
+    assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, expected);
+  }
+});
+
 Deno.test("edge: §179 fully phased out at cost ≥ $6,500,000 produces no output", () => {
   const result = compute({
     section_179_cost: 7_000_000,

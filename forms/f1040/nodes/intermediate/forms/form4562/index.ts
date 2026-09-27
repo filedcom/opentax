@@ -251,7 +251,8 @@ function luxuryAutoLimit(year: number, hasBonusDep: boolean, cfg: import("../../
     return hasBonusDep ? cfg.luxuryAutoYear1WithBonus : cfg.luxuryAutoYear1NoBonus;
   }
   if (year === 2) return cfg.luxuryAutoYear2;
-  return cfg.luxuryAutoYear3Plus;
+  if (year === 3) return cfg.luxuryAutoYear3;
+  return cfg.luxuryAutoYear4Plus;
 }
 
 function applyLuxuryAutoLimit(

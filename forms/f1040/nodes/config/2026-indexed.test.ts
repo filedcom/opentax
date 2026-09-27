@@ -125,3 +125,11 @@ Deno.test("2026 Medicare and household tax thresholds match draft forms", () => 
   assertEquals(INDEXED_CONFIG_2026.householdFicaThreshold, 3_000);
   assertEquals(INDEXED_CONFIG_2026.householdFutaQuarterlyThreshold, 1_000);
 });
+
+Deno.test("2026 passenger auto caps separate third and succeeding years", () => {
+  assertEquals(INDEXED_CONFIG_2026.luxuryAutoYear1WithBonus, 20_300);
+  assertEquals(INDEXED_CONFIG_2026.luxuryAutoYear1NoBonus, 12_300);
+  assertEquals(INDEXED_CONFIG_2026.luxuryAutoYear2, 19_800);
+  assertEquals(INDEXED_CONFIG_2026.luxuryAutoYear3, 11_900);
+  assertEquals(INDEXED_CONFIG_2026.luxuryAutoYear4Plus, 7_160);
+});

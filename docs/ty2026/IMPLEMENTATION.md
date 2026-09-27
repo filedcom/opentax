@@ -16,12 +16,12 @@ The shared Form 8962 node now selects TY2025 or TY2026 applicable percentage,
 repayment cap, and QSEHRA affordability rules explicitly; 2026 FPL figures
 are sourced from the 2025 HHS guideline PDF. The complete `F1040Config` for
 2026 and final Form 8962 instruction table remain outstanding.
-`forms/f1040/nodes/config/2026-indexed.ts` now holds 83 source-backed 2026
+`forms/f1040/nodes/config/2026-indexed.ts` now holds 88 source-backed 2026
 config members, including tax brackets, standard deduction, AMT, capital-gain,
 HSA, IRA, QBI, EITC, and other indexed amounts. The QBI config distinguishes the TY2026 MFS threshold from
 other nonjoint statuses and shares one threshold selector across the nodes.
 This is not yet a complete or registered `F1040Config`.
-The remaining 27 members are grouped below so source review and implementation
+The remaining 23 members are grouped below so source review and implementation
 can proceed without repeating the config inventory:
 
 | Source target | Remaining `F1040Config` members |
@@ -29,12 +29,15 @@ can proceed without repeating the config inventory:
 | Final Schedule 8812 instructions and §24 | `actcEarnedIncomeFloor`, `ctcPhaseOutThresholdMfj`, `ctcPhaseOutThresholdOther`, `odcPerDependent` |
 | 2026 Form 8960 instructions and §1411 | `niitThresholdMfj`, `niitThresholdMfs`, `niitThresholdOther` |
 | 2026 Schedule A instructions and SALT statute | `saltFloor`, `saltFloorMfs`, `saltPhaseoutRate` |
-| 2026 passenger auto limit guidance and Form 4562 | `luxuryAutoYear1NoBonus`, `luxuryAutoYear1WithBonus`, `luxuryAutoYear2`, `luxuryAutoYear3Plus` |
 | 2026 retirement/benefit forms and notices | `retirementLimits`, `sepContributionRate`, `simpleEmployerMatchRate`, `psoExclusionLimit`, `deathBenefitMax`, `mdaMax`, `mdaPhaseOutThreshold`, `mdaZeroThreshold` |
 | 2026 Forms 982, 2106, 8396 and Schedule B | `qpriCapMfs`, `qpriCapStandard`, `f2106PerformingArtistAgiLimit`, `mccMaxCreditHighRate`, `scheduleBDividendThreshold` |
 
 The current `retirementLimits` shape may need to distinguish enhanced SIMPLE
 limits and age 60–63 catch-ups. Specify those cases before adding 2026 values.
+Rev. Proc. 2026-15 is pinned for passenger autos first placed in service in
+2026, and Rev. Proc. 2025-16 supports the TY2025 regression correction. Form
+4562 must select the cap table by the vehicle's placed-in-service year, not
+merely the return year, before TY2026 old-vehicle scenarios are complete.
 The shared Form 2441 detailed and aggregate calculations now select explicit
 TY2025/TY2026 benefit limits and credit rates, with 2026 phaseout boundaries
 tested. Its TY2026 MeF/PDF serializers remain outstanding.

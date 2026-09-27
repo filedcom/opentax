@@ -746,6 +746,22 @@
       "status": "downloaded",
       "bytes": 944507,
       "sha256": "ba14ab76bf382cad90b7feb20fc443c4bda5e3743878fb4f6b2d79b8c8ef18cd"
+    },
+    {
+      "path": "authorities/rp-26-15.pdf",
+      "url": "https://www.irs.gov/pub/irs-drop/rp-26-15.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 155837,
+      "sha256": "8283d079c1a2308ce8b406a5e5def34a0bb74e834052bf4a84fbb3f5e2ddbd43"
+    },
+    {
+      "path": "authorities/rp-25-16.pdf",
+      "url": "https://www.irs.gov/pub/irs-drop/rp-25-16.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 119937,
+      "sha256": "00494bed582487f24963cf664540bd18f42a1ff924d43215eef2a971d975bc1b"
     }
   ]
 }
