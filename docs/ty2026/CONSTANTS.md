@@ -9,7 +9,7 @@ SHA-256 in `corpus/manifest.json`.
 
 | Config members or rule | TY2026 authority / decision |
 | --- | --- |
-| `brackets*`, `standardDeductionBase`, `standardDeductionAdditional` | [Rev. Proc. 2025-32](https://www.irs.gov/pub/irs-drop/rp-25-32.pdf) §§4.01, 4.14 and draft 1040. Base amounts: Single/MFS $16,100; MFJ/QSS $32,200; HOH $24,150. Additional age/blind amounts are $2,050 unmarried (other than surviving spouse), $1,650 otherwise. |
+| `brackets*`, `standardDeductionBase`, `standardDeductionAdditional` | [Rev. Proc. 2025-32](https://www.irs.gov/pub/irs-drop/rp-25-32.pdf) §§4.01, 4.14 and draft 1040. These tables are recorded in `2026-indexed.ts`, with bracket bases checked at every boundary. Base deductions: Single/MFS $16,100; MFJ/QSS $32,200; HOH $24,150. Additional age/blind amounts are $2,050 unmarried (other than surviving spouse), $1,650 otherwise. |
 | `seniorDeduction*` | Draft Schedule 1-A and [2026 Schedule 1-A instructions when issued](https://www.irs.gov/forms-pubs/about-schedule-1-a-form-1040); verify thresholds and interaction with 1040 line 13a. |
 | `qdcgt*`, `amt*` | Rev. Proc. 2025-32 §§4.03, 4.10; draft Schedule D and Form 6251. Reconcile any special rates/AMT capital-gain worksheet. Indexed amounts are in `2026-indexed.ts`. |
 | `ssWageBase`, `ssTaxPerEmployer` | [IRS Topic 751](https://www.irs.gov/taxtopics/tc751), 2026 Social Security wage base $184,500; draft Schedule SE and Forms 4137/8919. Compute excess withholding using the correct 2026 maximum, not a literal in the 2025 node. |
@@ -20,7 +20,7 @@ SHA-256 in `corpus/manifest.json`.
 | `eitc*` | Rev. Proc. 2025-32 §4.06 and 2026 EIC tables/instructions when final. Indexed thresholds and caps are in `2026-indexed.ts`; cover all qualifying-child counts, filing statuses, investment-income limit, and Schedule 3-A interaction. |
 | `ctc*`, `actc*` | Rev. Proc. 2025-32 §4.05, draft Schedule 8812 and 1040; verify citizenship/SSN restrictions and refundable route through 1040 line 32a and Schedule 3-A. |
 | `saversCredit*` | Rev. Proc. 2025-32 and 2026 Form 8880 instructions; confirm credit phaseout/status table and contribution cap. |
-| `savingsBond*`, `kiddie*`, `feie*` | Rev. Proc. 2025-32 §§4.17, 4.02, 4.39 respectively; 2026 Forms 8815, 8615, 2555. |
+| `savingsBond*`, `kiddie*`, `feie*` | Rev. Proc. 2025-32 §§4.17, 4.02, 4.39 respectively; 2026 Forms 8815, 8615, 2555. The two kiddie floors are $1,350 in `2026-indexed.ts`. |
 | `section179*`, `luxuryAuto*` | Rev. Proc. 2025-32 §4.24, draft Form 4562, and separate IRS 2026 passenger-auto limit guidance when issued. Bonus-depreciation rules require date-specific review. |
 | `household*` | Draft Schedule H and 2026 instructions/SSA threshold publication; verify FICA and FUTA triggers independently. |
 | `salt*` | [IRS 2026 SALT correction](https://www.irs.gov/forms-pubs/correction-to-state-and-local-income-tax-deduction-amount-in-the-2026-form-1040-es), draft Schedule A, and final instructions. Cap $40,400 ($20,200 MFS); phaseout begins $505,000 ($252,500 MFS); floor $10,000 ($5,000 MFS). |

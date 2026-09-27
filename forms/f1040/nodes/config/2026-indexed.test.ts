@@ -4,6 +4,42 @@ import { config2025 } from "./2025.ts";
 import { INDEXED_CONFIG_2026 } from "./2026-indexed.ts";
 import { qbiThresholdForStatus } from "./qbi.ts";
 
+Deno.test("2026 tax brackets match published tax at every boundary", () => {
+  for (
+    const brackets of [
+      INDEXED_CONFIG_2026.bracketsMfj,
+      INDEXED_CONFIG_2026.bracketsSingle,
+      INDEXED_CONFIG_2026.bracketsHoh,
+      INDEXED_CONFIG_2026.bracketsMfs,
+    ]
+  ) {
+    assertEquals(brackets[0].over, 0);
+    for (let index = 1; index < brackets.length; index++) {
+      const previous = brackets[index - 1];
+      const current = brackets[index];
+      assertEquals(previous.upTo, current.over);
+      assertEquals(
+        previous.base + (previous.upTo - previous.over) * previous.rate,
+        current.base,
+      );
+    }
+  }
+  assertEquals(INDEXED_CONFIG_2026.bracketsMfj[6].base, 206_583.50);
+  assertEquals(INDEXED_CONFIG_2026.bracketsMfs[6].over, 384_350);
+});
+
+Deno.test("2026 standard deduction and kiddie floor use published amounts", () => {
+  assertEquals(
+    INDEXED_CONFIG_2026.standardDeductionBase[FilingStatus.HOH],
+    24_150,
+  );
+  assertEquals(
+    INDEXED_CONFIG_2026.standardDeductionAdditional[FilingStatus.QSS],
+    1_650,
+  );
+  assertEquals(INDEXED_CONFIG_2026.kiddieStandardDeductionFloor, 1_350);
+});
+
 Deno.test("2026 QBI threshold distinguishes MFS from other nonjoint returns", () => {
   assertEquals(
     qbiThresholdForStatus(FilingStatus.Single, INDEXED_CONFIG_2026),

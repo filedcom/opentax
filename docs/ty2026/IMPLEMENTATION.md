@@ -16,9 +16,9 @@ The shared Form 8962 node now selects TY2025 or TY2026 applicable percentage,
 repayment cap, and QSEHRA affordability rules explicitly; 2026 FPL figures
 are sourced from the 2025 HHS guideline PDF. The complete `F1040Config` for
 2026 and final Form 8962 instruction table remain outstanding.
-`forms/f1040/nodes/config/2026-indexed.ts` now holds 54 source-backed 2026
-config members, including AMT, capital-gain, HSA, IRA, QBI, EITC, and other
-indexed amounts. The QBI config distinguishes the TY2026 MFS threshold from
+`forms/f1040/nodes/config/2026-indexed.ts` now holds 62 source-backed 2026
+config members, including tax brackets, standard deduction, AMT, capital-gain,
+HSA, IRA, QBI, EITC, and other indexed amounts. The QBI config distinguishes the TY2026 MFS threshold from
 other nonjoint statuses and shares one threshold selector across the nodes.
 This is not yet a complete or registered `F1040Config`.
 The shared Form 2441 detailed and aggregate calculations now select explicit
