@@ -61,6 +61,12 @@ The pure 2026 itemized-deduction module applies P.L. 119-21's charitable
 floor and the Publication 505 overall limit. The 2026 Schedule A node still
 needs to feed these rules, including carryforward attribution and its new
 form lines.
+The dedicated 2026 standard-deduction node now selects standard or itemized,
+applies the dependent and age/blindness amounts, computes the nonitemizer
+charitable deduction, and feeds taxable income and draft 2026 Form 6251 values
+to the shared income-tax node. A focused calculation graph reaches the 2026
+1040 with no direct 1040 input. Income and deduction source nodes are not yet
+connected to that graph.
 The shared Form 8839 node now splits the credit into refundable 1040 line 30
 and nonrefundable Schedule 3 amounts for both TY2025 and TY2026, using each
 year’s per-child cap and MAGI phaseout. It now consumes and emits nonrefundable

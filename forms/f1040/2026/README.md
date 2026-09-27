@@ -31,6 +31,12 @@ EIC checkboxes 27b/27c, refund 35a, applied estimates 36, and penalty 38.
 `itemized-deductions.ts` computes the 2026 charitable floor and overall
 itemized limitation from already allowable contribution and deduction amounts.
 The Schedule A node and carryforward accounting remain to implement.
+`nodes/standard_deduction.ts` is the dedicated 2026 deduction-choice node. It
+uses 2026 standard-deduction amounts, sends the same total income and adjustments
+to the 1040 node, and routes taxable income plus draft 2026 Form 6251 lines 1b
+and 2a to the shared income-tax calculator. A focused graph test now executes
+deduction choice → tax → 1040. Upstream income, Schedule A, Schedule 1-A, and
+QBI edges still need to be wired into the 2026 graph.
 The shared Form 8839 node now applies TY2026 adoption limits, emits the
 refundable per-child credit to 1040 line 30, and tracks nonrefundable
 carryforwards by origin year. Its full credit-limit worksheet and TY2026
