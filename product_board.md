@@ -202,6 +202,13 @@ source graph when marked nonpassive, retaining separate K-1 and statement
 references. The input and graph cases are written but unrun. The filed Form
 3800 XML path still expects a Form 8826 source and does not yet emit this
 direct pass-through route; it must remain blocked until that bridge is built.
+The filed line 1e bridge must reconcile the direct entry to the entered K-1
+code ZZ amount and its named statement, combine it with any own, partnership,
+or S-corporation Form 8826 credit under the single $5,000 line cap, allocate
+the shared Part II tax use across all line 1e sources, and emit one Part III
+row with the required Part V source details. It must omit IRS8826 when the
+recipient has only pass-through credit, as the
+[2025 Form 3800 instructions](https://www.irs.gov/instructions/i3800) allow.
 The Part V draft now apportions whole-dollar source and applied amounts so the
 printed rows add back to the rounded Part III and Part II totals; its rounding
 case is written but unrun. Solo, combined, and negative cases are written but
