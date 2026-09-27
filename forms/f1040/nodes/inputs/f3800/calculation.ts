@@ -11,6 +11,9 @@ export type Form3800PassiveCreditVintage = {
   readonly activityReference: string;
   readonly sourceForm: string;
   readonly sourceDocumentReference: string;
+  readonly form3800CreditLine: NonNullable<
+    Form8582CRSourceAllocation["form3800_credit_line"]
+  >;
   readonly reportingRoute: PassiveCreditReportingRoute;
   readonly originatingTaxYear: number;
   readonly beforePassiveLimit: number;
@@ -27,6 +30,9 @@ export function splitForm3800PassiveCreditVintages(
 ): Form3800PassiveCreditVintage[] {
   if (source.reporting_route === PassiveCreditReportingRoute.Form8834) {
     throw new Error("Form 8834 credit does not belong on Form 3800");
+  }
+  if (!source.form3800_credit_line) {
+    throw new Error("Form 3800 passive source needs its exact credit line");
   }
   const vintages = [
     ...source.prior_unallowed_credits.map((credit) => ({
@@ -63,6 +69,7 @@ export function splitForm3800PassiveCreditVintages(
         activityReference: source.activity_reference,
         sourceForm: source.source_form,
         sourceDocumentReference: vintage.sourceDocumentReference,
+        form3800CreditLine: source.form3800_credit_line,
         reportingRoute: source.reporting_route,
         originatingTaxYear: vintage.originatingTaxYear,
         beforePassiveLimit: vintage.beforePassiveLimit,

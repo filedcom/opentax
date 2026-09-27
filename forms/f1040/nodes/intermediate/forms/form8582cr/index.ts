@@ -8,7 +8,11 @@ import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { FilingStatus, filingStatusSchema } from "../../../types.ts";
 import { schedule3 } from "../../aggregation/schedule3/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
-import { PassiveCreditReportingRoute } from "./credit-route.ts";
+import {
+  form3800SpecifiedCreditLineSchema,
+  form3800StandardCreditLineSchema,
+  PassiveCreditReportingRoute,
+} from "./credit-route.ts";
 
 export { PassiveCreditReportingRoute } from "./credit-route.ts";
 
@@ -35,12 +39,11 @@ export enum PassiveCreditCategory {
   Other = "other",
 }
 
-const creditSourceSchema = z.object({
+const creditSourceBaseSchema = z.object({
   activity_reference: z.string().trim().min(1),
   source_form: z.string().trim().min(1),
   source_document_reference: z.string().trim().min(1),
   category: z.nativeEnum(PassiveCreditCategory),
-  reporting_route: z.nativeEnum(PassiveCreditReportingRoute),
   current_year_credit: z.number().int().nonnegative(),
   prior_unallowed_credits: z.array(z.object({
     originating_tax_year: z.number().int().min(1900).max(2024),
@@ -49,11 +52,44 @@ const creditSourceSchema = z.object({
     actively_participated_origin_year: z.boolean().optional(),
   })),
   publicly_traded_partnership: z.boolean(),
-}).refine(
+});
+
+const creditSourceSchema = z.discriminatedUnion("reporting_route", [
+  creditSourceBaseSchema.extend({
+    reporting_route: z.literal(PassiveCreditReportingRoute.Form3800Line3),
+    form3800_credit_line: form3800StandardCreditLineSchema,
+  }),
+  creditSourceBaseSchema.extend({
+    reporting_route: z.literal(PassiveCreditReportingRoute.Form3800Line24),
+    form3800_credit_line: z.literal("3"),
+  }),
+  creditSourceBaseSchema.extend({
+    reporting_route: z.literal(PassiveCreditReportingRoute.Form3800Line33),
+    form3800_credit_line: form3800SpecifiedCreditLineSchema,
+  }),
+  creditSourceBaseSchema.extend({
+    reporting_route: z.literal(PassiveCreditReportingRoute.Form8834),
+    form3800_credit_line: z.never().optional(),
+  }),
+]).refine(
   (source) =>
     source.current_year_credit > 0 || source.prior_unallowed_credits.length > 0,
   { message: "Form 8582-CR source must have current or prior credit" },
-);
+).superRefine((source, ctx) => {
+  if (
+    source.reporting_route !== PassiveCreditReportingRoute.Form8834 &&
+    source.current_year_credit > 0 &&
+    (source.form3800_credit_line.startsWith("2") ||
+      source.form3800_credit_line === "4y")
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["form3800_credit_line"],
+      message:
+        "Form 3800 carryover-only line cannot contain current-year credit",
+    });
+  }
+});
 
 type PassiveCreditSource = z.infer<typeof creditSourceSchema>;
 
@@ -177,6 +213,7 @@ function allocateCreditsToSources(
     source_document_reference: source.source_document_reference,
     category: source.category,
     reporting_route: source.reporting_route,
+    form3800_credit_line: source.form3800_credit_line,
     current_year_credit: source.current_year_credit,
     prior_unallowed_credits: source.prior_unallowed_credits,
     total_credit: totals[index],

@@ -26,6 +26,11 @@ Deno.test("Form 3800: classifies allowed passive credit into lines 3, 24, and 33
     source_document_reference: `2025 ${activity} credit statement`,
     category: PassiveCreditCategory.Other,
     reporting_route: route,
+    form3800_credit_line: route === PassiveCreditReportingRoute.Form3800Line3
+      ? "1h"
+      : route === PassiveCreditReportingRoute.Form3800Line24
+      ? "3"
+      : "4d",
     current_year_credit: amount,
     prior_unallowed_credits: [],
     publicly_traded_partnership: false,
@@ -90,6 +95,7 @@ Deno.test("Form 3800: line 2 includes prior passive credit before limitation", (
       source_document_reference: "2025 clinical credit statement",
       category: PassiveCreditCategory.Other,
       reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+      form3800_credit_line: "1h",
       current_year_credit: 100,
       prior_unallowed_credits: [{
         originating_tax_year: 2023,
@@ -115,6 +121,7 @@ Deno.test("Form 3800: line 2 includes prior passive credit before limitation", (
       sourceForm: "Form 8820",
       sourceDocumentReference: "2023 clinical credit carryover",
       reportingRoute: PassiveCreditReportingRoute.Form3800Line3,
+      form3800CreditLine: "1h",
       originatingTaxYear: 2023,
       beforePassiveLimit: 400,
       afterPassiveLimit: 200,
@@ -124,6 +131,7 @@ Deno.test("Form 3800: line 2 includes prior passive credit before limitation", (
       sourceForm: "Form 8820",
       sourceDocumentReference: "2025 clinical credit statement",
       reportingRoute: PassiveCreditReportingRoute.Form3800Line3,
+      form3800CreditLine: "1h",
       originatingTaxYear: 2025,
       beforePassiveLimit: 100,
       afterPassiveLimit: 0,
@@ -139,6 +147,7 @@ Deno.test("Form 3800: passive source vintages keep oldest carryovers first", () 
       source_document_reference: "2025 rehabilitation statement",
       category: PassiveCreditCategory.Other,
       reporting_route: PassiveCreditReportingRoute.Form3800Line33,
+      form3800_credit_line: "4a",
       current_year_credit: 300,
       prior_unallowed_credits: [
         {

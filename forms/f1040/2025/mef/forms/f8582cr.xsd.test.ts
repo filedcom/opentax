@@ -31,6 +31,7 @@ Deno.test({
       source_document_reference: "2025 rental credit statement",
       category: PassiveCreditCategory.ActiveRental,
       reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+      form3800_credit_line: "1f",
       current_year_credit: 3_000,
       prior_unallowed_credits: [{
         originating_tax_year: 2024,
@@ -74,6 +75,7 @@ Deno.test({
       source_document_reference: "2025 rehabilitation credit statement",
       category: PassiveCreditCategory.RehabilitationOrPre1990Housing,
       reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+      form3800_credit_line: "1a",
       current_year_credit: 2_000,
       prior_unallowed_credits: [],
       publicly_traded_partnership: false,
@@ -83,6 +85,7 @@ Deno.test({
       source_document_reference: "2025 low-income housing credit statement",
       category: PassiveCreditCategory.LowIncomeHousing,
       reporting_route: PassiveCreditReportingRoute.Form3800Line33,
+      form3800_credit_line: "4d",
       current_year_credit: 2_000,
       prior_unallowed_credits: [],
       publicly_traded_partnership: false,

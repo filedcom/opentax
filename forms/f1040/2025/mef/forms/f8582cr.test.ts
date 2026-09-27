@@ -11,6 +11,7 @@ const otherCredit = {
   source_document_reference: "2025 clinical credit statement",
   category: PassiveCreditCategory.Other,
   reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+  form3800_credit_line: "1h",
   current_year_credit: 1_500,
   prior_unallowed_credits: [{
     originating_tax_year: 2024,
@@ -26,6 +27,7 @@ const rentalCredit = {
   source_document_reference: "2025 rental credit statement",
   category: PassiveCreditCategory.ActiveRental,
   reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+  form3800_credit_line: "1f",
   current_year_credit: 3_000,
   prior_unallowed_credits: [],
   publicly_traded_partnership: false,

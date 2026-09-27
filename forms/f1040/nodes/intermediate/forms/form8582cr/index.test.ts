@@ -23,6 +23,7 @@ function source(
     source_document_reference: `2025 ${activity} credit statement`,
     category,
     reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+    form3800_credit_line: "1h" as const,
     current_year_credit: current,
     prior_unallowed_credits: prior > 0
       ? [{
@@ -91,6 +92,58 @@ Deno.test("Form 8582-CR identifies each current and prior credit source", () => 
       }],
     }).success,
     false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...parsed,
+      credit_sources: [{
+        ...other(100),
+        form3800_credit_line: undefined,
+      }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...parsed,
+      credit_sources: [{
+        ...other(100),
+        form3800_credit_line: "1r",
+      }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...parsed,
+      credit_sources: [{
+        ...other(100),
+        reporting_route: PassiveCreditReportingRoute.Form3800Line33,
+        form3800_credit_line: "1h",
+      }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...parsed,
+      credit_sources: [{
+        ...other(100),
+        form3800_credit_line: "2h",
+      }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...parsed,
+      credit_sources: [{
+        ...other(0, 500),
+        source_form: "Form 8931",
+        form3800_credit_line: "2h",
+      }],
+    }).success,
+    true,
   );
   assertEquals(
     inputSchema.safeParse({
@@ -604,10 +657,12 @@ Deno.test("Form 8582-CR keeps allowed credits in their explicit filing routes", 
       {
         ...other(300, 0, "Specified credit"),
         reporting_route: PassiveCreditReportingRoute.Form3800Line33,
+        form3800_credit_line: "4d",
       },
       {
         ...other(100, 0, "Empowerment credit"),
         reporting_route: PassiveCreditReportingRoute.Form3800Line24,
+        form3800_credit_line: "3",
       },
     ],
     regular_tax_all_income: 10_000,
