@@ -479,6 +479,21 @@ Deno.test("agi_aggregator: rental profits limit the special passive loss allowan
   assertEquals(agi(result), 40_000);
 });
 
+Deno.test("agi_aggregator: released Form 4797 and operating PAL is booked once", () => {
+  const result = compute({
+    line1a_wages: 60_000,
+    line5_schedule_e: 4_000,
+    pal_current_income: 4_000,
+    pal_prior_unallowed: 10_000,
+    filing_status: "single",
+  });
+  // The Form 8582 ledger assigns $800 to Schedule E and $3,200 to Form 4797.
+  // AGI sees the combined $4,000 only once; Form 8582 supplies the line split.
+  assertEquals(agi(result), 60_000);
+  const f1040 = result.outputs.find((item) => item.nodeType === "f1040");
+  assertEquals(f1040?.fields.line8_additional_income, undefined);
+});
+
 Deno.test("agi_aggregator: active rental income share cannot be guessed", () => {
   assertThrows(
     () =>

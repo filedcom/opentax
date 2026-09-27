@@ -9,6 +9,60 @@ Deno.test("Form 4797: no gain or loss does not emit a document", () => {
   assertEquals(form4797.build({ junk: 999 }), "");
 });
 
+Deno.test("Form 4797: prior passive losses use finalized Form 8582 Part IX amounts", () => {
+  const f8582 = {
+    activities: [
+      {
+        name: "Rental A",
+        activity_type: "B",
+        property_type: 1,
+        reporting_form: "schedule_e",
+        current_net: 0,
+        prior_unallowed_operating: 2_000,
+        prior_unallowed_4797_part1: 6_000,
+        prior_unallowed_4797_part2: 2_000,
+      },
+      {
+        name: "Rental B",
+        activity_type: "B",
+        property_type: 1,
+        reporting_form: "schedule_e",
+        current_net: 4_000,
+        prior_unallowed_operating: 0,
+        prior_unallowed_4797_part1: 0,
+        prior_unallowed_4797_part2: 0,
+      },
+    ],
+    current_income: 4_000,
+    prior_unallowed: 10_000,
+    has_other_passive: true,
+  };
+  const xml = form4797.build({}, { pending: { form8582: f8582 } });
+  assertStringIncludes(xml, "<PropertyDesc>PAL</PropertyDesc>");
+  assertStringIncludes(
+    xml,
+    "<TotalPropertyGainLossAmt>-2400</TotalPropertyGainLossAmt>",
+  );
+  assertStringIncludes(xml, "<TotalGainLossAmt>-2400</TotalGainLossAmt>");
+  assertStringIncludes(xml, "<OrdinaryLossAmt>2400</OrdinaryLossAmt>");
+  assertStringIncludes(
+    xml,
+    "<PassiveActivityLossLiteralCd>PAL</PassiveActivityLossLiteralCd>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalOrdinaryGainLossAmt>-3200</TotalOrdinaryGainLossAmt>",
+  );
+  assertThrows(
+    () =>
+      form4797.build({ section_1231_gain: 100 }, {
+        pending: { form8582: f8582 },
+      }),
+    Error,
+    "cannot overlap current Form 4797 transactions",
+  );
+});
+
 Deno.test("Form 4797: section 1231 gain uses Part I line 7", () => {
   const xml = form4797.build({ section_1231_gain: 20_000 });
   assertStringIncludes(
@@ -17,6 +71,84 @@ Deno.test("Form 4797: section 1231 gain uses Part I line 7", () => {
   );
   assertEquals(xml.includes("<TotalOrdinaryGainLossAmt>"), false);
   assertEquals(xml.includes("<TotalGainLossAmt>"), false);
+});
+
+Deno.test("Form 4797: linked passive property sale rows populate native Parts I and II", () => {
+  const rows = [
+    {
+      activity_name: "Land rental",
+      part: "I",
+      property_description: "Undeveloped parcel",
+      acquired_on: "2023-04-01",
+      sold_on: "2025-05-01",
+      gross_sales_price: 20_000,
+      cost_or_other_basis: 12_000,
+      depreciation_allowed: 0,
+    },
+    {
+      activity_name: "Land rental",
+      part: "II",
+      property_description: "Short-held parcel",
+      acquired_on: "2025-01-01",
+      sold_on: "2025-06-01",
+      gross_sales_price: 9_000,
+      cost_or_other_basis: 7_000,
+      depreciation_allowed: 0,
+    },
+  ];
+  const scheduleEItem = {
+    tsj: "T",
+    property_description: "Land rental",
+    property_type: 1,
+    activity_type: "B",
+    fair_rental_days: 365,
+    personal_use_days: 0,
+    rent_income: 0,
+    form_1099_payments_made: false,
+    disposed_of: true,
+  };
+  const xml = form4797.build(
+    { passive_property_sales: rows },
+    { pending: { schedule_e: { schedule_es: [scheduleEItem] } } },
+  );
+  assertStringIncludes(xml, "<PropertySaleOrExchange>");
+  assertStringIncludes(xml, "<OrdinaryGainLoss>");
+  assertStringIncludes(xml, "<PropertyDesc>Undeveloped parcel</PropertyDesc>");
+  assertStringIncludes(
+    xml,
+    "<TotalPropertyGainLossAmt>8000</TotalPropertyGainLossAmt>",
+  );
+  assertStringIncludes(xml, "<TotalGainLossAmt>8000</TotalGainLossAmt>");
+  assertStringIncludes(
+    xml,
+    "<TotalOrdinaryGainLossAmt>2000</TotalOrdinaryGainLossAmt>",
+  );
+  assertThrows(
+    () =>
+      form4797.build(
+        { passive_property_sales: rows },
+        {
+          pending: {
+            schedule_e: {
+              schedule_es: [{
+                ...scheduleEItem,
+                prior_unallowed_passive_4797_part1: 100,
+              }],
+            },
+          },
+        },
+      ),
+    Error,
+    "completed Form 8582 allocation",
+  );
+  assertThrows(
+    () =>
+      form4797.build({ passive_property_sales: rows }, {
+        pending: { schedule_e: { schedule_es: [] } },
+      }),
+    Error,
+    "linked disposed Schedule E activity",
+  );
 });
 
 Deno.test("Form 4797: Form 6252 section 1231 gain appears on line 4 and line 7", () => {
@@ -45,7 +177,10 @@ Deno.test("Form 4797: Form 8824 section 1231 gain appears on line 5 and line 7",
     gain_form8824: 8_000,
   });
   assertStringIncludes(xml, "<GainLossForm8824Amt>8000</GainLossForm8824Amt>");
-  assertStringIncludes(xml, "<TotalPropertyGainLossAmt>8000</TotalPropertyGainLossAmt>");
+  assertStringIncludes(
+    xml,
+    "<TotalPropertyGainLossAmt>8000</TotalPropertyGainLossAmt>",
+  );
 });
 
 Deno.test("Form 4797: partnership and S-corp K-1 amounts retain line 2 source rows", () => {

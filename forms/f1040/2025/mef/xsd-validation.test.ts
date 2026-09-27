@@ -67,6 +67,19 @@ const nonApplicableBelowFpl = {
   no_alternative_marriage_calculation: true,
 } as const;
 
+function noAptcSlcspDeterminations(premiums: number[], slcsps: number[]) {
+  return premiums.flatMap((premium, index) =>
+    premium > 0
+      ? [{
+        month: index + 1,
+        basis: "no_aptc",
+        corrected_slcsp: slcsps[index],
+        determination_source: "marketplace_tool",
+      }]
+      : []
+  );
+}
+
 Deno.test({
   name: "XSD: TY2025 Schedule 2 tax lines retain schema order",
   sanitizeOps: false,
@@ -3327,6 +3340,10 @@ Deno.test({
       monthly_premiums: Array(12).fill(500),
       monthly_slcsps: [...Array(11).fill(600), 601],
       monthly_aptcs: Array(12).fill(0),
+      slcsp_corrections: noAptcSlcspDeterminations(
+        Array(12).fill(500),
+        [...Array(11).fill(600), 601],
+      ),
     }],
   });
   assertEquals(result.diagnostics, []);
@@ -3748,6 +3765,10 @@ Deno.test({
       policy_number: "NO-APTC-POLICY",
       monthly_premiums: [15_000, ...Array(11).fill(0)],
       monthly_aptcs: Array(12).fill(0),
+      slcsp_corrections: noAptcSlcspDeterminations(
+        [15_000, ...Array(11).fill(0)],
+        [12_000, ...Array(11).fill(0)],
+      ),
       shared_policy_periods: [{
         basis: "no_aptc",
         other_taxpayer_ssn: "222-33-4444",
@@ -3924,6 +3945,10 @@ Deno.test({
         monthly_premiums: Array(12).fill(500),
         monthly_slcsps: Array(12).fill(600),
         monthly_aptcs: Array(12).fill(0),
+        slcsp_corrections: noAptcSlcspDeterminations(
+          Array(12).fill(500),
+          Array(12).fill(600),
+        ),
       },
       {
         issuer_name: "Second Marketplace Plan",
@@ -3931,6 +3956,10 @@ Deno.test({
         monthly_premiums: [...Array(11).fill(300), 301],
         monthly_slcsps: Array(12).fill(600),
         monthly_aptcs: Array(12).fill(0),
+        slcsp_corrections: noAptcSlcspDeterminations(
+          [...Array(11).fill(300), 301],
+          Array(12).fill(600),
+        ),
       },
     ],
   });
@@ -3966,6 +3995,10 @@ Deno.test({
         monthly_premiums: Array(12).fill(500),
         monthly_slcsps: Array(12).fill(600),
         monthly_aptcs: Array(12).fill(0),
+        slcsp_corrections: noAptcSlcspDeterminations(
+          Array(12).fill(500),
+          Array(12).fill(600),
+        ),
       },
       {
         issuer_name: "Second Marketplace Plan",
@@ -3973,6 +4006,10 @@ Deno.test({
         monthly_premiums: Array(12).fill(300),
         monthly_slcsps: Array(12).fill(600),
         monthly_aptcs: Array(12).fill(0),
+        slcsp_corrections: noAptcSlcspDeterminations(
+          Array(12).fill(300),
+          Array(12).fill(600),
+        ),
       },
     ],
   });
@@ -4007,6 +4044,10 @@ Deno.test({
       monthly_premiums: Array(12).fill(500),
       monthly_slcsps: Array(12).fill(500),
       monthly_aptcs: Array(12).fill(0),
+      slcsp_corrections: noAptcSlcspDeterminations(
+        Array(12).fill(500),
+        Array(12).fill(500),
+      ),
     }],
   });
   assertEquals(result.diagnostics, []);
@@ -4052,6 +4093,10 @@ Deno.test({
       monthly_premiums: Array(12).fill(500),
       monthly_slcsps: Array(12).fill(600),
       monthly_aptcs: Array(12).fill(0),
+      slcsp_corrections: noAptcSlcspDeterminations(
+        Array(12).fill(500),
+        Array(12).fill(600),
+      ),
     }],
   });
   assertEquals(result.diagnostics, []);

@@ -31,6 +31,74 @@ Deno.test("Part I: pure §1231 gain routes to schedule_d line_11_form2439", () =
   assertEquals(sd?.fields.line_11_form2439, 10_000);
 });
 
+Deno.test("passive property sale source routes dated Part I and Part II gains", () => {
+  const result = compute({
+    passive_property_sales: [
+      {
+        activity_name: "Land rental",
+        part: "I",
+        property_description: "Undeveloped parcel",
+        acquired_on: "2023-04-01",
+        sold_on: "2025-05-01",
+        gross_sales_price: 20_000,
+        cost_or_other_basis: 12_000,
+        depreciation_allowed: 0,
+      },
+      {
+        activity_name: "Land rental",
+        part: "II",
+        property_description: "Short-held parcel",
+        acquired_on: "2025-01-01",
+        sold_on: "2025-06-01",
+        gross_sales_price: 9_000,
+        cost_or_other_basis: 7_000,
+        depreciation_allowed: 0,
+      },
+    ],
+  });
+  assertEquals(
+    findOutput(result, "schedule_d")?.fields.line_11_form2439,
+    8_000,
+  );
+  assertEquals(
+    findOutput(result, "schedule1")?.fields.line4_other_gains,
+    2_000,
+  );
+  assertEquals(
+    findOutput(result, "agi_aggregator")?.fields.line4_other_gains,
+    2_000,
+  );
+});
+
+Deno.test("passive property sale source rejects duplicate aggregate and unsupported sale facts", () => {
+  const sale = {
+    activity_name: "Land rental",
+    part: "I",
+    property_description: "Undeveloped parcel",
+    acquired_on: "2023-04-01",
+    sold_on: "2025-05-01",
+    gross_sales_price: 20_000,
+    cost_or_other_basis: 12_000,
+    depreciation_allowed: 0,
+  };
+  assertThrows(() =>
+    compute({ passive_property_sales: [sale], section_1231_gain: 8_000 })
+  );
+  assertThrows(() =>
+    compute({
+      passive_property_sales: [{ ...sale, depreciation_allowed: 100 }],
+    })
+  );
+  assertThrows(() =>
+    compute({ passive_property_sales: [{ ...sale, part: "II" }] })
+  );
+  assertThrows(() =>
+    compute({
+      passive_property_sales: [{ ...sale, cost_or_other_basis: 25_000 }],
+    })
+  );
+});
+
 Deno.test("Part I: K-1 and Form 6252 section 1231 gains accumulate", () => {
   const result = compute({
     section_1231_gain: [4_000, 10_000],

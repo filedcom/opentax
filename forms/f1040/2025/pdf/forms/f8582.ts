@@ -1,4 +1,5 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
+import { inputSchema as form8582InputSchema } from "../../../nodes/intermediate/forms/form8582/index.ts";
 
 // IRS Form 8582 (2025) AcroForm field names.
 // Passive Activity Loss Limitations.
@@ -13,17 +14,59 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 //   modified_agi         → line 7  (modified adjusted gross income)
 //   active_participation → line 13 (special allowance)
 const fields: ReadonlyArray<PdfFieldEntry> = [
-  { kind: "text", domainKey: "passive_schedule_c", pdfField: "topmostSubform[0].Page1[0].f1_03[0]" },
-  { kind: "text", domainKey: "passive_schedule_f", pdfField: "topmostSubform[0].Page1[0].f1_04[0]" },
-  { kind: "text", domainKey: "current_income", pdfField: "topmostSubform[0].Page1[0].f1_05[0]" },
-  { kind: "text", domainKey: "current_loss", pdfField: "topmostSubform[0].Page1[0].f1_08[0]" },
-  { kind: "text", domainKey: "prior_unallowed", pdfField: "topmostSubform[0].Page1[0].f1_09[0]" },
-  { kind: "text", domainKey: "modified_agi", pdfField: "topmostSubform[0].Page1[0].f1_16[0]" },
-  { kind: "text", domainKey: "active_participation", pdfField: "topmostSubform[0].Page1[0].Table_Part4[0].Row1[0].f1_22[0]" },
+  {
+    kind: "text",
+    domainKey: "passive_schedule_c",
+    pdfField: "topmostSubform[0].Page1[0].f1_03[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "passive_schedule_f",
+    pdfField: "topmostSubform[0].Page1[0].f1_04[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "current_income",
+    pdfField: "topmostSubform[0].Page1[0].f1_05[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "current_loss",
+    pdfField: "topmostSubform[0].Page1[0].f1_08[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "prior_unallowed",
+    pdfField: "topmostSubform[0].Page1[0].f1_09[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "modified_agi",
+    pdfField: "topmostSubform[0].Page1[0].f1_16[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "active_participation",
+    pdfField: "topmostSubform[0].Page1[0].Table_Part4[0].Row1[0].f1_22[0]",
+  },
 ];
 
 export const form8582Pdf: PdfFormDescriptor = {
   pendingKey: "form8582",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8582--2025.pdf",
+  projectFields(fields) {
+    const input = form8582InputSchema.parse(fields);
+    if (
+      input.activities?.some((activity) =>
+        activity.prior_unallowed_4797_part1 > 0 ||
+        activity.prior_unallowed_4797_part2 > 0
+      )
+    ) {
+      throw new Error(
+        "Form 8582 PDF needs Part IX activity and form/part row mapping",
+      );
+    }
+    return fields;
+  },
   fields,
 };

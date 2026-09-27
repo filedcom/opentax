@@ -1,5 +1,6 @@
 import { element, elements } from "../../../mef/xml.ts";
 import {
+  allocateOtherPassivePrior4797,
   allocatePassiveActivityLosses,
   inputSchema,
   passiveLossLimit,
@@ -34,8 +35,11 @@ function linkedActivities(context: MefBuildContext): Array<{
   name: string;
   activity_type: "A" | "B";
   property_type: number;
+  reporting_source: "schedule_e" | "form4835";
   current_net: number;
   prior_unallowed_operating: number;
+  prior_unallowed_4797_part1: number;
+  prior_unallowed_4797_part2: number;
   prior_active_participation?: boolean;
   reporting_form: string;
 }> {
@@ -45,13 +49,18 @@ function linkedActivities(context: MefBuildContext): Array<{
   const properties = scheduleE.schedule_es.filter((item) =>
     (item.activity_type === "A" || item.activity_type === "B") &&
     (computePropertyNet(item) !== 0 ||
-      (item.prior_unallowed_passive_operating ?? 0) > 0)
+      (item.prior_unallowed_passive_operating ?? 0) > 0 ||
+      (item.prior_unallowed_passive_4797_part1 ?? 0) > 0 ||
+      (item.prior_unallowed_passive_4797_part2 ?? 0) > 0)
   ).map((item) => ({
     name: item.property_description,
     activity_type: item.activity_type as "A" | "B",
     property_type: item.property_type,
+    reporting_source: "schedule_e" as const,
     current_net: computePropertyNet(item),
     prior_unallowed_operating: item.prior_unallowed_passive_operating ?? 0,
+    prior_unallowed_4797_part1: item.prior_unallowed_passive_4797_part1 ?? 0,
+    prior_unallowed_4797_part2: item.prior_unallowed_passive_4797_part2 ?? 0,
     prior_active_participation: item.prior_passive_losses_active_when_incurred,
     reporting_form: "Sch E, line 22",
   }));
@@ -72,8 +81,11 @@ function linkedActivities(context: MefBuildContext): Array<{
           ? "A" as const
           : "B" as const,
         property_type: 5,
+        reporting_source: "form4835" as const,
         current_net: net,
         prior_unallowed_operating: item.prior_unallowed_passive_operating ?? 0,
+        prior_unallowed_4797_part1: 0,
+        prior_unallowed_4797_part2: 0,
         prior_active_participation:
           item.prior_passive_losses_active_when_incurred,
         reporting_form: "4835, line 34c",
@@ -93,9 +105,15 @@ function assertLinkedActivities(
       item.name !== activities[index].name ||
       item.activity_type !== activities[index].activity_type ||
       item.property_type !== activities[index].property_type ||
+      (activities[index].reporting_form !== undefined &&
+        item.reporting_source !== activities[index].reporting_form) ||
       item.current_net !== activities[index].current_net ||
       item.prior_unallowed_operating !==
         activities[index].prior_unallowed_operating ||
+      item.prior_unallowed_4797_part1 !==
+        activities[index].prior_unallowed_4797_part1 ||
+      item.prior_unallowed_4797_part2 !==
+        activities[index].prior_unallowed_4797_part2 ||
       item.prior_active_participation !==
         activities[index].prior_active_participation
     )
@@ -147,8 +165,15 @@ function buildOtherPassive(
     0,
   );
   const priorLoss = activities.reduce(
-    (sum, activity) => sum + activity.prior_unallowed_operating,
+    (sum, activity) =>
+      sum + activity.prior_unallowed_operating +
+      activity.prior_unallowed_4797_part1 +
+      activity.prior_unallowed_4797_part2,
     0,
+  );
+  const hasPrior4797 = activities.some((activity) =>
+    activity.prior_unallowed_4797_part1 > 0 ||
+    activity.prior_unallowed_4797_part2 > 0
   );
   const totalLoss = currentLoss + priorLoss;
   if (
@@ -161,10 +186,12 @@ function buildOtherPassive(
       activity.name.length > 30 ||
       !Number.isSafeInteger(activity.current_net) ||
       !Number.isSafeInteger(activity.prior_unallowed_operating) ||
+      !Number.isSafeInteger(activity.prior_unallowed_4797_part1) ||
+      !Number.isSafeInteger(activity.prior_unallowed_4797_part2) ||
       (activity.current_net === 0 &&
-        activity.prior_unallowed_operating === 0) ||
-      activity.prior_unallowed_4797_part1 !== 0 ||
-      activity.prior_unallowed_4797_part2 !== 0
+        activity.prior_unallowed_operating === 0 &&
+        activity.prior_unallowed_4797_part1 === 0 &&
+        activity.prior_unallowed_4797_part2 === 0)
     ) ||
     !Number.isSafeInteger(currentIncome) ||
     !Number.isSafeInteger(totalLoss) || totalLoss <= 0 ||
@@ -185,6 +212,9 @@ function buildOtherPassive(
     );
   }
   assertLinkedActivities(activities, context);
+  const prior4797Allocation = hasPrior4797
+    ? allocateOtherPassivePrior4797(input)
+    : undefined;
   const limit = passiveLossLimit({
     currentIncome,
     currentLoss,
@@ -195,12 +225,16 @@ function buildOtherPassive(
     filingStatus: input.filing_status,
   });
   const losses = activities.map((activity) =>
-    Math.max(0, -activity.current_net) + activity.prior_unallowed_operating
+    Math.max(0, -activity.current_net) + activity.prior_unallowed_operating +
+    activity.prior_unallowed_4797_part1 +
+    activity.prior_unallowed_4797_part2
   );
   const allocation = allocatePassiveActivityLosses(
     activities.map((activity) => ({
       currentNet: activity.current_net,
-      priorUnallowed: activity.prior_unallowed_operating,
+      priorUnallowed: activity.prior_unallowed_operating +
+        activity.prior_unallowed_4797_part1 +
+        activity.prior_unallowed_4797_part2,
       specialEligible: false,
       priorSpecialEligible: false,
     })),
@@ -213,6 +247,17 @@ function buildOtherPassive(
   );
   const ratios = worksheetRatios(
     lossRows.map(({ index }) => allocation.overallLosses[index]),
+  );
+  const activityReportingForm = (index: number): string | undefined => {
+    const lines = prior4797Allocation?.byActivity[index]?.partIX ?? [];
+    if (lines.length > 1) return undefined;
+    return lines[0]?.reportingForm ?? reportingForm(context, index);
+  };
+  const partIXActivities = lossRows.filter(({ index }) =>
+    (prior4797Allocation?.byActivity[index]?.partIX.length ?? 0) > 1
+  );
+  const partVIIIActivities = lossRows.filter(({ index }) =>
+    (prior4797Allocation?.byActivity[index]?.partIX.length ?? 0) <= 1
   );
   const overallNet = currentIncome - totalLoss;
   return elements("IRS8582", [
@@ -233,22 +278,37 @@ function buildOtherPassive(
           activity.current_net < 0
             ? element("CurrentYearNetLossAmt", -activity.current_net)
             : "",
-          activity.prior_unallowed_operating > 0
+          activity.prior_unallowed_operating +
+                activity.prior_unallowed_4797_part1 +
+                activity.prior_unallowed_4797_part2 >
+              0
             ? element(
               "PriorYearUnallowedLossesAmt",
-              activity.prior_unallowed_operating,
+              activity.prior_unallowed_operating +
+                activity.prior_unallowed_4797_part1 +
+                activity.prior_unallowed_4797_part2,
             )
             : "",
-          activity.current_net > activity.prior_unallowed_operating
+          activity.current_net >
+              activity.prior_unallowed_operating +
+                activity.prior_unallowed_4797_part1 +
+                activity.prior_unallowed_4797_part2
             ? element(
               "OverallGainAmt",
-              activity.current_net - activity.prior_unallowed_operating,
+              activity.current_net - activity.prior_unallowed_operating -
+                activity.prior_unallowed_4797_part1 -
+                activity.prior_unallowed_4797_part2,
             )
             : "",
-          activity.current_net < activity.prior_unallowed_operating
+          activity.current_net <
+              activity.prior_unallowed_operating +
+                activity.prior_unallowed_4797_part1 +
+                activity.prior_unallowed_4797_part2
             ? element(
               "OverallLossAmt",
-              activity.prior_unallowed_operating - activity.current_net,
+              activity.prior_unallowed_operating +
+                activity.prior_unallowed_4797_part1 +
+                activity.prior_unallowed_4797_part2 - activity.current_net,
             )
             : "",
         ])
@@ -266,7 +326,7 @@ function buildOtherPassive(
         ...lossRows.map(({ activity, index }, position) =>
           elements("WrkshtLossGrp", [
             element("UnallowedLossActivityNm", activity.name),
-            element("ReportingFormOrScheduleNm", reportingForm(context, index)),
+            element("ReportingFormOrScheduleNm", activityReportingForm(index)),
             element("F8582WrkshtLossesAmt", allocation.overallLosses[index]),
             element("LossesPct", ratios[position]),
             element("PriorYearUnallowedLossesAmt", allocation.suspended[index]),
@@ -279,12 +339,12 @@ function buildOtherPassive(
         element("TotalLossAmt", limit.suspended),
       ])
       : "",
-    limit.suspended > 0
+    partVIIIActivities.length > 0
       ? elements("ParentWrkshtListActivityGrp", [
-        ...lossRows.map(({ activity, index }) =>
+        ...partVIIIActivities.map(({ activity, index }) =>
           elements("WrkshtListActivityGrp", [
             element("AllowedLossActivityNm", activity.name),
-            element("ReportingFormOrScheduleNm", reportingForm(context, index)),
+            element("ReportingFormOrScheduleNm", activityReportingForm(index)),
             element("F8582WrkshtLossesAmt", losses[index]),
             element("PriorYearUnallowedLossesAmt", allocation.suspended[index]),
             element("F8582WrkshtAllowedLossesAmt", allocation.allowed[index]),
@@ -292,15 +352,59 @@ function buildOtherPassive(
         ),
         element(
           "TotalLossAmt",
-          lossRows.reduce((sum, row) => sum + losses[row.index], 0),
+          partVIIIActivities.reduce((sum, row) => sum + losses[row.index], 0),
         ),
-        element("TotalUnallowedLossAmt", limit.suspended),
+        element(
+          "TotalUnallowedLossAmt",
+          partVIIIActivities.reduce(
+            (sum, row) => sum + allocation.suspended[row.index],
+            0,
+          ),
+        ),
         element(
           "TotalAllowedLossAmt",
-          lossRows.reduce((sum, row) => sum + allocation.allowed[row.index], 0),
+          partVIIIActivities.reduce(
+            (sum, row) => sum + allocation.allowed[row.index],
+            0,
+          ),
         ),
       ])
       : "",
+    ...partIXActivities.map(({ activity, index }) => {
+      const ledger = prior4797Allocation!.byActivity[index];
+      const positiveRows = ledger.partIX.filter((line) => line.netLoss > 0);
+      const positiveRatios = worksheetRatios(
+        positiveRows.map((line) => line.netLoss),
+      );
+      let ratioIndex = 0;
+      return elements("ParentWrkshtLossActivityGrp", [
+        element("MultipleLossActivityNm", activity.name),
+        ...ledger.partIX.map((line) =>
+          elements("WrkshtLossActivityGrp", [
+            element("ReportingFormOrScheduleNm", line.reportingForm),
+            element("NetLossAmt", line.lossIncludingPrior),
+            line.currentSamePartGain > 0
+              ? element("NetIncomeAmt", line.currentSamePartGain)
+              : "",
+            element("NetIncomeLossAmt", line.netLoss),
+            line.netLoss > 0
+              ? element("LossesPct", positiveRatios[ratioIndex++])
+              : "",
+            element("PriorYearUnallowedLossesAmt", line.suspended),
+            element("F8582WrkshtLossesAmt", line.allowed),
+          ])
+        ),
+        element(
+          "TotalNetIncomeLossAmt",
+          ledger.partIX.reduce((sum, line) => sum + line.netLoss, 0),
+        ),
+        element("TotalUnallowedAmt", ledger.suspended),
+        element(
+          "TotalAllowedAmt",
+          ledger.partIX.reduce((sum, line) => sum + line.allowed, 0),
+        ),
+      ]);
+    }),
   ]);
 }
 

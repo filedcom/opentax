@@ -1,5 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import {
+  allocateOtherPassivePrior4797,
+  allocatePartIXLosses,
   allocatePassiveActivityLosses,
   allocateRentalLosses,
   form8582,
@@ -23,6 +25,145 @@ Deno.test("rental allocation preserves allowed total and stable largest remainde
   assertEquals(allocateRentalLosses([1, 1, 1], 2), [1, 1, 0]);
   assertEquals(allocateRentalLosses([5_000, 5_000], 0), [0, 0]);
   assertThrows(() => allocateRentalLosses([100, 200], 301));
+});
+
+Deno.test("Part IX keeps prior Form 4797 Parts I and II separate from Schedule E", () => {
+  assertEquals(
+    allocatePartIXLosses([
+      {
+        reportingForm: "Schedule E, line 22",
+        lossIncludingPrior: 4_000,
+        currentSamePartGain: 0,
+      },
+      {
+        reportingForm: "Form 4797, Part I",
+        lossIncludingPrior: 6_000,
+        currentSamePartGain: 1_000,
+      },
+      {
+        reportingForm: "Form 4797, Part II",
+        lossIncludingPrior: 3_000,
+        currentSamePartGain: 0,
+      },
+    ], 6_000),
+    [
+      {
+        reportingForm: "Schedule E, line 22",
+        lossIncludingPrior: 4_000,
+        currentSamePartGain: 0,
+        netLoss: 4_000,
+        suspended: 2_000,
+        allowed: 2_000,
+      },
+      {
+        reportingForm: "Form 4797, Part I",
+        lossIncludingPrior: 6_000,
+        currentSamePartGain: 1_000,
+        netLoss: 5_000,
+        suspended: 2_500,
+        allowed: 3_500,
+      },
+      {
+        reportingForm: "Form 4797, Part II",
+        lossIncludingPrior: 3_000,
+        currentSamePartGain: 0,
+        netLoss: 3_000,
+        suspended: 1_500,
+        allowed: 1_500,
+      },
+    ],
+  );
+});
+
+Deno.test("Part IX same-part gain offsets a prior Form 4797 loss before suspension", () => {
+  assertEquals(
+    allocatePartIXLosses([
+      {
+        reportingForm: "Form 4797, Part I",
+        lossIncludingPrior: 2_000,
+        currentSamePartGain: 3_000,
+      },
+      {
+        reportingForm: "Form 4797, Part II",
+        lossIncludingPrior: 5_000,
+        currentSamePartGain: 0,
+      },
+    ], 4_000),
+    [
+      {
+        reportingForm: "Form 4797, Part I",
+        lossIncludingPrior: 2_000,
+        currentSamePartGain: 3_000,
+        netLoss: 0,
+        suspended: 0,
+        allowed: 2_000,
+      },
+      {
+        reportingForm: "Form 4797, Part II",
+        lossIncludingPrior: 5_000,
+        currentSamePartGain: 0,
+        netLoss: 5_000,
+        suspended: 4_000,
+        allowed: 1_000,
+      },
+    ],
+  );
+  assertThrows(() =>
+    allocatePartIXLosses([
+      {
+        reportingForm: "Form 4797, Part I",
+        lossIncludingPrior: 2_000,
+        currentSamePartGain: 3_000,
+      },
+    ], 1)
+  );
+});
+
+Deno.test("prior Form 4797 PAL reaches Schedule 1 line 4 while operating PAL stays on line 5", () => {
+  const input = {
+    activities: [
+      {
+        name: "Rental A",
+        activity_type: "B",
+        property_type: 1,
+        reporting_form: "schedule_e",
+        current_net: 0,
+        prior_unallowed_operating: 2_000,
+        prior_unallowed_4797_part1: 6_000,
+        prior_unallowed_4797_part2: 2_000,
+      },
+      {
+        name: "Rental B",
+        activity_type: "B",
+        property_type: 1,
+        reporting_form: "schedule_e",
+        current_net: 4_000,
+        prior_unallowed_operating: 0,
+        prior_unallowed_4797_part1: 0,
+        prior_unallowed_4797_part2: 0,
+      },
+    ],
+    current_income: 4_000,
+    prior_unallowed: 10_000,
+    has_other_passive: true,
+  };
+  const ledger = allocateOtherPassivePrior4797(inputSchema.parse(input));
+  assertEquals(ledger.allowedOperating, 800);
+  assertEquals(ledger.allowedPartI, 2_400);
+  assertEquals(ledger.allowedPartII, 800);
+  assertEquals(ledger.suspendedTotal, 6_000);
+  const result = compute(input);
+  assertEquals(
+    findOutput(result, "schedule1")?.fields.line4_other_gains,
+    -3_200,
+  );
+  assertEquals(findOutput(result, "schedule1")?.fields.line5_schedule_e, -800);
+  assertEquals(result.carryforwards?.suspended_pal_8582, 6_000);
+  assertThrows(
+    () => compute({ ...input, has_current_4797_transaction: true }),
+    Error,
+    "no current Form 4797 transaction",
+  );
 });
 
 Deno.test("rental activity allocation offsets own profit before distributing shared allowance", () => {
@@ -217,33 +358,46 @@ Deno.test("Form 8582 reconciles Schedule E and Form 4835 activity totals before 
   );
 });
 
-Deno.test("Form 8582 does not route prior Form 4797 losses to Schedule 1", () => {
+Deno.test("Form 8582 keeps fully suspended prior Form 4797 losses off Schedule 1", () => {
   const activity = {
     name: "Rental business",
     activity_type: "B",
     property_type: 1,
+    reporting_form: "schedule_e",
     current_net: 0,
     prior_unallowed_operating: 0,
     prior_unallowed_4797_part1: 4_000,
     prior_unallowed_4797_part2: 0,
   };
-  assertThrows(
-    () => compute({ activities: [activity], prior_unallowed: 4_000 }),
-    Error,
-    "prior Form 4797 losses need Part IX allocation",
-  );
+  const result = compute({
+    activities: [activity],
+    prior_unallowed: 4_000,
+    has_other_passive: true,
+  });
+  assertEquals(findOutput(result, "schedule1"), undefined);
+  assertEquals(result.carryforwards?.suspended_pal_8582, 4_000);
   assertThrows(
     () =>
       compute({
         activities: [{
           ...activity,
-          prior_unallowed_4797_part1: 0,
-          prior_unallowed_4797_part2: 4_000,
+          activity_type: "A",
         }],
         prior_unallowed: 4_000,
+        has_active_rental: true,
       }),
     Error,
-    "prior Form 4797 losses need Part IX allocation",
+    "only other-passive activities",
+  );
+  assertThrows(
+    () =>
+      compute({
+        activities: [{ ...activity, reporting_form: undefined }],
+        prior_unallowed: 4_000,
+        has_other_passive: true,
+      }),
+    Error,
+    "only other-passive activities",
   );
 });
 

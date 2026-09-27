@@ -373,6 +373,7 @@ function form8582Outputs(
       name: item.property_description,
       activity_type: item.activity_type as "A" | "B",
       property_type: item.property_type,
+      reporting_form: "schedule_e" as const,
       current_net: computePropertyNet(item),
       prior_unallowed_operating: item.prior_unallowed_passive_operating ?? 0,
       prior_active_participation:
@@ -386,6 +387,7 @@ function form8582Outputs(
       name: farm.name,
       activity_type: farm.actively_participated ? "A" as const : "B" as const,
       property_type: 5,
+      reporting_form: "form4835" as const,
       current_net: farm.current_net,
       prior_unallowed_operating: farm.prior_unallowed_operating ?? 0,
       prior_active_participation: farm.prior_active_participation,

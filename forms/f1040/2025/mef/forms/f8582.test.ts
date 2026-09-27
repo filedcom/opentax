@@ -31,6 +31,51 @@ Deno.test("Form 8582: prior-year suspended losses require activity allocation", 
   );
 });
 
+Deno.test("Form 8582: prior Form 4797 Part I and II losses stay separate in Part IX", () => {
+  const xml = form8582.build({
+    activities: [
+      {
+        name: "Rental A",
+        activity_type: "B",
+        property_type: 1,
+        reporting_form: "schedule_e",
+        current_net: 0,
+        prior_unallowed_operating: 2_000,
+        prior_unallowed_4797_part1: 6_000,
+        prior_unallowed_4797_part2: 2_000,
+      },
+      {
+        name: "Rental B",
+        activity_type: "B",
+        property_type: 1,
+        reporting_form: "schedule_e",
+        current_net: 4_000,
+        prior_unallowed_operating: 0,
+        prior_unallowed_4797_part1: 0,
+        prior_unallowed_4797_part2: 0,
+      },
+    ],
+    current_income: 4_000,
+    prior_unallowed: 10_000,
+    has_other_passive: true,
+  });
+  assertStringIncludes(
+    xml,
+    "<MultipleLossActivityNm>Rental A</MultipleLossActivityNm>",
+  );
+  assertStringIncludes(
+    xml,
+    "<ReportingFormOrScheduleNm>Form 4797, Part I</ReportingFormOrScheduleNm>",
+  );
+  assertStringIncludes(
+    xml,
+    "<ReportingFormOrScheduleNm>Form 4797, Part II</ReportingFormOrScheduleNm>",
+  );
+  assertStringIncludes(xml, "<TotalUnallowedAmt>6000</TotalUnallowedAmt>");
+  assertStringIncludes(xml, "<TotalAllowedAmt>4000</TotalAllowedAmt>");
+  assertEquals(xml.includes("<ParentWrkshtListActivityGrp>"), false);
+});
+
 const singleRental = {
   activities: [{
     name: "Rental house",

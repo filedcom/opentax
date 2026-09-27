@@ -8,6 +8,7 @@ import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule_d } from "../../aggregation/schedule_d/index.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
+import { form8582 } from "../form8582/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { normalizeArray } from "../../../utils.ts";
 
@@ -25,6 +26,47 @@ export const k1Section1231RowSchema = z.object({
 }).strict();
 export type K1Section1231Row = z.infer<typeof k1Section1231RowSchema>;
 
+// Source transactions for a Schedule E passive activity. This deliberately
+// describes only direct, no-recapture sales on Form 4797 lines 2 and 10;
+// Part III recapture needs its own property-level calculation.
+export const passivePropertySaleSchema = z.object({
+  activity_name: z.string().min(1),
+  part: z.enum(["I", "II"]),
+  property_description: z.string().min(1),
+  acquired_on: z.string().date(),
+  sold_on: z.string().date(),
+  gross_sales_price: z.number().int().nonnegative(),
+  cost_or_other_basis: z.number().int().nonnegative(),
+  depreciation_allowed: z.literal(0),
+}).strict().superRefine((sale, ctx) => {
+  const gain = sale.gross_sales_price - sale.cost_or_other_basis;
+  const acquired = new Date(`${sale.acquired_on}T00:00:00Z`);
+  const anniversary = new Date(Date.UTC(
+    acquired.getUTCFullYear() + 1,
+    acquired.getUTCMonth(),
+    acquired.getUTCDate(),
+  ));
+  const sold = new Date(`${sale.sold_on}T00:00:00Z`);
+  if (
+    sale.sold_on < "2025-01-01" || sale.sold_on > "2025-12-31" ||
+    sold <= acquired ||
+    (sale.part === "I" && sold <= anniversary) ||
+    (sale.part === "II" && sold > anniversary) ||
+    !Number.isSafeInteger(gain) || gain <= 0
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message:
+        "Form 4797 passive sale needs a positive 2025 gain and the holding period for its part",
+    });
+  }
+});
+export type PassivePropertySale = z.infer<typeof passivePropertySaleSchema>;
+
+export function passiveSaleGain(sale: PassivePropertySale): number {
+  return sale.gross_sales_price - sale.cost_or_other_basis;
+}
+
 export const inputSchema = z.object({
   // Indicator from schedule_e: count of rental properties marked disposed_of=true.
   // Does not drive computation on its own — actual sale data must also be present.
@@ -41,6 +83,7 @@ export const inputSchema = z.object({
   gain_form8824: z.number().nonnegative().optional(),
   // Form 4797 Part I line 2, one source row per Schedule K-1.
   k1_1231_rows: z.array(k1Section1231RowSchema).optional(),
+  passive_property_sales: z.array(passivePropertySaleSchema).optional(),
 
   // Part I line 8 — prior-year nonrecaptured §1231 losses that must be
   // recaptured as ordinary income before any remaining §1231 gain is treated
@@ -78,7 +121,9 @@ function totalSection1231(input: Form4797Input): number {
   return normalizeArray(input.section_1231_gain).reduce(
     (sum, gain) => sum + gain,
     0,
-  );
+  ) + (input.passive_property_sales ?? []).filter((sale) =>
+    sale.part === "I"
+  ).reduce((sum, sale) => sum + passiveSaleGain(sale), 0);
 }
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
@@ -87,6 +132,7 @@ function totalSection1231(input: Form4797Input): number {
 function hasSaleData(input: Form4797Input): boolean {
   return (
     totalSection1231(input) !== 0 ||
+    (input.passive_property_sales?.length ?? 0) > 0 ||
     (input.k1_1231_rows?.length ?? 0) > 0 ||
     (input.ordinary_gain !== undefined && input.ordinary_gain !== 0) ||
     (input.ordinary_gain_form4684 !== undefined &&
@@ -155,10 +201,35 @@ class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
     schedule_d,
     schedule1,
     agi_aggregator,
+    form8582,
   ]);
 
   compute(_ctx: NodeContext, rawInput: Form4797Input): NodeResult {
     const input = inputSchema.parse(rawInput);
+
+    // The aggregate legacy amounts cannot be reconciled to these property
+    // rows, so never allow them to describe the same Form 4797 part.
+    if (
+      (input.passive_property_sales ?? []).some((sale) => sale.part === "I") &&
+      (input.section_1231_gain !== undefined ||
+        input.gain_form6252 !== undefined ||
+        input.gain_form8824 !== undefined ||
+        (input.k1_1231_rows?.length ?? 0) > 0)
+    ) {
+      throw new Error(
+        "Form 4797 passive Part I sales cannot overlap aggregate Part I sources",
+      );
+    }
+    if (
+      (input.passive_property_sales ?? []).some((sale) => sale.part === "II") &&
+      (input.ordinary_gain !== undefined ||
+        input.ordinary_gain_form4684 !== undefined ||
+        input.recapture_form6252 !== undefined)
+    ) {
+      throw new Error(
+        "Form 4797 passive Part II sales cannot overlap aggregate Part II sources",
+      );
+    }
 
     if (!hasSaleData(input)) {
       return { outputs: [] };
@@ -168,10 +239,13 @@ class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
     const priorLoss = input.nonrecaptured_1231_loss ?? 0;
     const partIIOrdinaryGain = (input.ordinary_gain ?? 0) +
       (input.ordinary_gain_form4684 ?? 0) +
-      (input.recapture_form6252 ?? 0);
+      (input.recapture_form6252 ?? 0) +
+      (input.passive_property_sales ?? []).filter((sale) => sale.part === "II")
+        .reduce((sum, sale) => sum + passiveSaleGain(sale), 0);
     const unrecaptured1250 = input.unrecaptured_section_1250_gain ?? 0;
 
     const outputs: NodeOutput[] = [];
+    outputs.push(output(form8582, { has_current_4797_transaction: true }));
 
     // Schedule D: §1231 net gain → LT capital gain (line 11)
     const sdOut = scheduleDOutput(grossGain, priorLoss);

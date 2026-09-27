@@ -12,6 +12,7 @@
 | section_1231_gain | number | K-1, Form 6252/8824, or direct calculation | Part I line 7 gain or loss before the five-year prior-loss lookback | IRC §1231 | https://www.irs.gov/instructions/i4797 |
 | gain_form6252 | number | Form 6252 | Part I line 4 amount already included in `section_1231_gain` | Form 4797 line 4 | https://www.irs.gov/pub/irs-pdf/f4797.pdf |
 | k1_1231_rows | K-1 source rows | partnership and S-corp K-1 nodes | Part I line 2, one row per nonzero box 10 or box 9 amount | Form 4797 line 2 | https://www.irs.gov/instructions/i4797 |
+| passive_property_sales | dated sale rows | direct, linked to one disposed Schedule E passive activity | Positive, no-depreciation Part I line 2 or Part II line 10 sales with proceeds, basis, and exact activity link | Form 4797 lines 2 and 10 | https://www.irs.gov/instructions/i4797 |
 | ordinary_gain | number | direct (4797 screen) | Additional Part II ordinary gain or loss, excluding the separately calculated §1231 recapture | IRC §1245/1250 | https://www.irs.gov/instructions/i4797 |
 | ordinary_gain_form4684 | number | Form 4684 | Section B line 31 or 38a net trade/business casualty gain or loss, routed to Form 4797 line 14 | Form 4684 line 31/38a | https://www.irs.gov/pub/irs-pdf/f4684.pdf |
 | recapture_form6252 | number | Form 6252 | Line 12 depreciation recapture from Form 4797 Part III; not Form 6252 line 25 | Form 6252 line 12 | https://www.irs.gov/pub/irs-pdf/f6252.pdf |
@@ -23,6 +24,20 @@
 ## Calculation Logic
 
 ### Step 1 — Part I: Net Section 1231 Gain/Loss
+
+- `passive_property_sales` now carries direct property-level source rows for
+  positive gains with zero depreciation allowed, acquired/sold dates, proceeds,
+  and basis. The holding period determines whether the row belongs in Part I
+  line 2 or Part II line 10. Native MeF rows link to exactly one disposed
+  passive Schedule E activity. Aggregate Part I/II amounts cannot overlap the
+  corresponding rows, since the engine cannot prove they are different sales.
+- This is only a bounded no-recapture source path, not completion of prior PAL
+  losses. A linked activity with current operating loss or any prior passive
+  carryforward still fails MeF until the shared Form 8582 Part IX allocation is
+  wired into Form 4797 and AGI. The PDF projection also explicitly stops on
+  these rows until its property-level line 2/10 map exists. Current sales
+  requiring depreciation recapture, losses, installment treatment, or other Part
+  III detail remain unsupported by this source shape.
 
 - Multiple source nodes can supply `section_1231_gain`; the node sums their
   contributions and self-emits the total for Form 4797 MeF.

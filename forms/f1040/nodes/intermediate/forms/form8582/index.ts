@@ -34,12 +34,16 @@ export const inputSchema = z.object({
     name: z.string().min(1),
     activity_type: z.enum(["A", "B"]),
     property_type: z.number().int().min(1).max(8),
+    reporting_form: z.enum(["schedule_e", "form4835"]).optional(),
     current_net: z.number(),
     prior_unallowed_operating: z.number().nonnegative(),
     prior_active_participation: z.boolean().optional(),
     prior_unallowed_4797_part1: z.number().nonnegative(),
     prior_unallowed_4797_part2: z.number().nonnegative(),
   })).optional(),
+  // Form 4797 reports this source fact before Form 8582 runs. A current sale
+  // and a prior Form 4797 PAL need a separate character-allocation route.
+  has_current_4797_transaction: z.boolean().optional(),
   // Per-activity passthrough fields (merged by executor; stored for traceability)
   // schedule_c passive net profit/loss
   passive_schedule_c: z.number().optional(),
@@ -152,6 +156,53 @@ export function allocateRentalLosses(
   return amounts;
 }
 
+// Form 8582 Part IX keeps losses on Form 4797 Parts I and II separate from
+// Schedule E/Form 4835 losses. The caller must supply each form/part's actual
+// current gain from its originating return, not infer it from the activity net.
+export type PartIXLossLine = {
+  readonly reportingForm: string;
+  readonly lossIncludingPrior: number;
+  readonly currentSamePartGain: number;
+};
+
+export type PartIXAllocatedLine = PartIXLossLine & {
+  readonly netLoss: number;
+  readonly suspended: number;
+  readonly allowed: number;
+};
+
+export function allocatePartIXLosses(
+  lines: readonly PartIXLossLine[],
+  suspendedForActivity: number,
+): PartIXAllocatedLine[] {
+  if (
+    lines.length === 0 ||
+    lines.some((line) =>
+      line.reportingForm.length === 0 ||
+      !Number.isSafeInteger(line.lossIncludingPrior) ||
+      line.lossIncludingPrior < 0 ||
+      !Number.isSafeInteger(line.currentSamePartGain) ||
+      line.currentSamePartGain < 0
+    )
+  ) {
+    throw new Error(
+      "Form 8582 Part IX needs source-backed whole-dollar form/part lines",
+    );
+  }
+  const netLosses = lines.map((line) =>
+    Math.max(0, line.lossIncludingPrior - line.currentSamePartGain)
+  );
+  // Part IX column (d) allocates only the activity's Part VII suspended loss.
+  // Keep whole-dollar column (d) amounts reconciled to the Part VII total.
+  const suspended = allocateRentalLosses(netLosses, suspendedForActivity);
+  return lines.map((line, index) => ({
+    ...line,
+    netLoss: netLosses[index],
+    suspended: suspended[index],
+    allowed: line.lossIncludingPrior - suspended[index],
+  }));
+}
+
 export function allocatePassiveActivityLosses(
   activities: readonly {
     currentNet: number;
@@ -237,26 +288,16 @@ function totalPassiveLoss(input: Form8582Input): number {
 function assertActivityTotals(input: Form8582Input): void {
   if (input.activities === undefined) return;
 
-  // Form 4797 losses must be allocated separately in Form 8582 Part IX and
-  // reported back on Form 4797. The current Schedule 1 route only handles
-  // Schedule E/Form 4835 operating losses, so never combine the two origins.
-  if (
-    input.activities.some((activity) =>
-      activity.prior_unallowed_4797_part1 > 0 ||
-      activity.prior_unallowed_4797_part2 > 0
-    )
-  ) {
-    throw new Error(
-      "Form 8582 prior Form 4797 losses need Part IX allocation and Form 4797 reporting",
-    );
-  }
-
   const activities = input.activities;
   const sum = (select: (activity: typeof activities[number]) => number) =>
     activities.reduce((total, activity) => total + select(activity), 0);
   const currentIncome = sum((activity) => Math.max(0, activity.current_net));
   const currentLoss = sum((activity) => Math.max(0, -activity.current_net));
-  const priorLoss = sum((activity) => activity.prior_unallowed_operating);
+  const priorLoss = sum((activity) =>
+    activity.prior_unallowed_operating +
+    activity.prior_unallowed_4797_part1 +
+    activity.prior_unallowed_4797_part2
+  );
   const rentalIncome = sum((activity) =>
     activity.activity_type === "A" ? Math.max(0, activity.current_net) : 0
   );
@@ -282,6 +323,8 @@ function assertActivityTotals(input: Form8582Input): void {
     activities.some((activity) =>
       !Number.isSafeInteger(activity.current_net) ||
       !Number.isSafeInteger(activity.prior_unallowed_operating) ||
+      !Number.isSafeInteger(activity.prior_unallowed_4797_part1) ||
+      !Number.isSafeInteger(activity.prior_unallowed_4797_part2) ||
       (activity.activity_type === "A" &&
         activity.prior_unallowed_operating > 0 &&
         activity.prior_active_participation === undefined)
@@ -299,6 +342,132 @@ function assertActivityTotals(input: Form8582Input): void {
       "Form 8582 activity amounts do not reconcile to passive-loss totals",
     );
   }
+}
+
+export type OtherPassivePrior4797Allocation = {
+  readonly allowedOperating: number;
+  readonly allowedPartI: number;
+  readonly allowedPartII: number;
+  readonly allowedTotal: number;
+  readonly suspendedTotal: number;
+  readonly byActivity: readonly {
+    readonly name: string;
+    readonly grossOperating: number;
+    readonly grossPartI: number;
+    readonly grossPartII: number;
+    readonly suspended: number;
+    readonly partIX: readonly PartIXAllocatedLine[];
+  }[];
+};
+
+/** B-activity prior Form 4797 PALs with no current Form 4797 transaction. */
+export function allocateOtherPassivePrior4797(
+  input: Form8582Input,
+): OtherPassivePrior4797Allocation {
+  assertActivityTotals(input);
+  const activities = input.activities ?? [];
+  if (
+    activities.length === 0 ||
+    !activities.some((activity) =>
+      activity.prior_unallowed_4797_part1 > 0 ||
+      activity.prior_unallowed_4797_part2 > 0
+    ) ||
+    new Set(activities.map((activity) => activity.name)).size !==
+      activities.length ||
+    activities.some((activity) => activity.activity_type !== "B") ||
+    activities.some((activity) => activity.reporting_form === undefined) ||
+    input.has_current_4797_transaction === true
+  ) {
+    throw new Error(
+      "Form 8582 prior Form 4797 loss route needs only other-passive activities and no current Form 4797 transaction",
+    );
+  }
+  const limit = passiveLossLimit(passiveActivity(input));
+  const allocation = allocatePassiveActivityLosses(
+    activities.map((activity) => ({
+      currentNet: activity.current_net,
+      priorUnallowed: activity.prior_unallowed_operating +
+        activity.prior_unallowed_4797_part1 +
+        activity.prior_unallowed_4797_part2,
+      specialEligible: false,
+      priorSpecialEligible: false,
+    })),
+    limit.allowed,
+  );
+  const byActivity = activities.map((activity, index) => {
+    const grossOperating = Math.max(0, -activity.current_net) +
+      activity.prior_unallowed_operating;
+    const grossPartI = activity.prior_unallowed_4797_part1;
+    const grossPartII = activity.prior_unallowed_4797_part2;
+    const lines: PartIXLossLine[] = [
+      ...(grossOperating > 0
+        ? [{
+          reportingForm: activity.reporting_form === "form4835"
+            ? "4835, line 34c"
+            : "Sch E, line 22",
+          lossIncludingPrior: grossOperating,
+          currentSamePartGain: Math.max(0, activity.current_net),
+        }]
+        : []),
+      ...(grossPartI > 0
+        ? [{
+          reportingForm: "Form 4797, Part I",
+          lossIncludingPrior: grossPartI,
+          currentSamePartGain: 0,
+        }]
+        : []),
+      ...(grossPartII > 0
+        ? [{
+          reportingForm: "Form 4797, Part II",
+          lossIncludingPrior: grossPartII,
+          currentSamePartGain: 0,
+        }]
+        : []),
+    ];
+    if (lines.length === 0 && allocation.suspended[index] !== 0) {
+      throw new Error("Form 8582 gain-only activity cannot suspend a loss");
+    }
+    const partIX = lines.length > 0
+      ? allocatePartIXLosses(lines, allocation.suspended[index])
+      : [];
+    return {
+      name: activity.name,
+      grossOperating,
+      grossPartI,
+      grossPartII,
+      suspended: allocation.suspended[index],
+      partIX,
+    };
+  });
+  const allowedByForm = (form: string) =>
+    byActivity.reduce(
+      (sum, activity) =>
+        sum +
+        activity.partIX.filter((line) => line.reportingForm === form).reduce(
+          (lineSum, line) => lineSum + line.allowed,
+          0,
+        ),
+      0,
+    );
+  const allowedOperating = allowedByForm("Sch E, line 22") +
+    allowedByForm("4835, line 34c");
+  const allowedPartI = allowedByForm("Form 4797, Part I");
+  const allowedPartII = allowedByForm("Form 4797, Part II");
+  if (
+    allowedOperating + allowedPartI + allowedPartII !== limit.allowed ||
+    byActivity.reduce((sum, activity) => sum + activity.suspended, 0) !==
+      limit.suspended
+  ) {
+    throw new Error("Form 8582 Part IX loss origins do not reconcile");
+  }
+  return {
+    allowedOperating,
+    allowedPartI,
+    allowedPartII,
+    allowedTotal: limit.allowed,
+    suspendedTotal: limit.suspended,
+    byActivity,
+  };
 }
 
 // MFS filer who lived with spouse any time during the year cannot use Part II
@@ -434,6 +603,29 @@ class Form8582Node extends TaxNode<typeof inputSchema> {
     const input = inputSchema.parse(rawInput);
 
     assertActivityTotals(input);
+
+    const hasPrior4797 =
+      input.activities?.some((activity) =>
+        activity.prior_unallowed_4797_part1 > 0 ||
+        activity.prior_unallowed_4797_part2 > 0
+      ) ?? false;
+    if (hasPrior4797) {
+      const allocation = allocateOtherPassivePrior4797(input);
+      const line4 = allocation.allowedPartI + allocation.allowedPartII;
+      return {
+        outputs: line4 + allocation.allowedOperating > 0
+          ? [output(schedule1, {
+            ...(line4 > 0 ? { line4_other_gains: -line4 } : {}),
+            ...(allocation.allowedOperating > 0
+              ? { line5_schedule_e: -allocation.allowedOperating }
+              : {}),
+          })]
+          : [],
+        ...(allocation.suspendedTotal > 0
+          ? { carryforwards: { suspended_pal_8582: allocation.suspendedTotal } }
+          : {}),
+      };
+    }
 
     if (
       input.has_active_rental === true &&
