@@ -16,6 +16,7 @@ import { buildMefBundle, buildMefXml } from "./builder.ts";
 import type { MefFormsPending } from "./types.ts";
 import { FilingStatus } from "../../nodes/types.ts";
 import { EnergyType } from "../../nodes/inputs/f8835/index.ts";
+import { BondType } from "../../nodes/inputs/f8912/index.ts";
 import { SS_WAGE_BASE_2025 } from "../../nodes/config/2025.ts";
 import { extractFilerIdentity } from "../../mef/filer.ts";
 import {
@@ -52,6 +53,49 @@ const nonApplicableBelowFpl = {
   no_self_employed_health_insurance_deduction: true,
   no_alternative_marriage_calculation: true,
 } as const;
+
+Deno.test({
+  name: "XSD: Form 8912 allowed credit links to Schedule 3 line 6k",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const xml = buildMefXml({
+    f1040: {
+      line16_income_tax: 1_000,
+      line20_nonrefundable_credits: 100,
+      form8912_source_lines: { line1: 100, line2: 0, line3: 0, line4: 100 },
+    },
+    schedule3: { line6k_tax_credit_bonds: 100, line8_total: 100 },
+    form6251: { line11_amt: 0 },
+    f8912: {
+      f8912s: [{
+        reported_bonds: [{
+          bond_type: BondType.QECB,
+          issue_date: "2017-12-31",
+          issuer_name: "Town Energy Authority",
+          issuer_ein: "123456789",
+          unique_identifier_code: "O",
+          unique_identifier: "BOND1097",
+          monthly_credit_amounts: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100],
+          credit_amount: 100,
+          purchase_accrued_interest: 0,
+          sale_accrued_interest: 0,
+          taxable_interest_reported_elsewhere: 100,
+          issuer_elected_direct_payment: false,
+          is_pass_through_creb_credit: false,
+        }],
+        unreported_bonds: [],
+        carryforwards: [],
+      }],
+      allowed_credit: 100,
+      unused_credit: 0,
+    },
+  }, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(xml, "<IRS8912 ");
+  assertStringIncludes(xml, 'referenceDocumentName="IRS8912"');
+  await validateXsd(xml, "Form 8912 Schedule 3 line 6k");
+});
 
 Deno.test({
   name:

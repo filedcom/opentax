@@ -39,7 +39,7 @@ Deno.test("Schedule 3: Form 3800 pending source keeps the schedule available wit
     fieldsOf(result.outputs, f1040)?.line20_nonrefundable_credits,
     undefined,
   );
-  assertEquals(fieldsOf(result.outputs, f1040)?.form3800_schedule3_lines, {
+  assertEquals(fieldsOf(result.outputs, f1040)?.credit_limit_schedule3_lines, {
     line1: 0,
     line2: 0,
     line3: 0,
@@ -51,6 +51,15 @@ Deno.test("Schedule 3: Form 3800 pending source keeps the schedule available wit
     line6kBondCredit: 0,
     line7: 0,
   });
+});
+
+Deno.test("Schedule 3: Form 8912 pending source supplies the shared credit-limit snapshot", () => {
+  const result = compute({ form8912_source_credit_pending: true });
+  assertEquals(result.outputs.length, 1);
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.credit_limit_schedule3_lines?.line7,
+    0,
+  );
 });
 
 Deno.test("Schedule 3: sends Form 8936 tentative and priority amounts to Form 1040", () => {

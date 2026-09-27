@@ -395,9 +395,24 @@ function dependentXml(fields: Input, context?: MefBuildContext): string[] {
 
 function buildIRS1040(fields: Input, context?: MefBuildContext): string {
   if ((fields.form8912_source_lines?.line4 ?? 0) > 0) {
-    throw new Error(
-      "Form 8912 positive credit cannot be filed until the Part II tax limit and source document are integrated",
-    );
+    const bond = context?.pending?.f8912;
+    const allowed = bond && typeof bond === "object" &&
+        "allowed_credit" in bond
+      ? bond.allowed_credit
+      : undefined;
+    if (
+      typeof allowed !== "number" || !Number.isFinite(allowed) || allowed < 0
+    ) {
+      throw new Error(
+        "Form 1040 bond credit needs finalized Form 8912 Part II",
+      );
+    }
+    if (
+      context?.documentIdsByPendingKey &&
+      context.documentIdsByPendingKey.f8912?.length !== 1
+    ) {
+      throw new Error("Form 1040 bond credit needs one attached Form 8912");
+    }
   }
   // IndividualReturnFilingStatusCd is required by IRS1040.xsd §230 and must
   // precede all income/deduction fields in the XSD sequence.

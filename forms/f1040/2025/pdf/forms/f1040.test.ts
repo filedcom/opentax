@@ -21,7 +21,7 @@ Deno.test("irs1040Pdf: unresolved Form 8912 credit cannot print an unfinished re
     () =>
       irs1040Pdf.projectFields?.({ form8912_source_lines: { line4: 100 } }, {}),
     Error,
-    "Part II tax limit and source document",
+    "matching Form 8912 PDF",
   );
 });
 

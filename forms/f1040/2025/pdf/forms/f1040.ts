@@ -408,7 +408,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
       bondCredit.line4 > 0
     ) {
       throw new Error(
-        "Form 8912 positive credit cannot be printed until the Part II tax limit and source document are integrated",
+        "Form 8912 credit cannot be printed until the matching Form 8912 PDF is available",
       );
     }
     return fields;

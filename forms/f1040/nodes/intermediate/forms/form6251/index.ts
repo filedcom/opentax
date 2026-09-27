@@ -82,6 +82,8 @@ export const inputSchema = z.object({
   // Form 3800 separately requires the TMT computation and, for its ordinary
   // credit, a filed Form 6251 even when AMT is zero.
   must_file_for_gbc: z.boolean().optional(),
+  // Form 8912 Part II line 8 needs computed AMT even when it is zero.
+  must_compute_for_bond_credit: z.boolean().optional(),
 
   // AMT QDCGT inputs (IRC §55(b)(3)) — same preferential 0%/15%/20% rates
   // apply for AMT purposes, preventing over-taxation of investment income.
@@ -423,7 +425,8 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
 
     if (
       amt === 0 && input.must_file_for_credit !== true &&
-      input.must_file_for_gbc !== true
+      input.must_file_for_gbc !== true &&
+      input.must_compute_for_bond_credit !== true
     ) {
       return { outputs: [] };
     }
@@ -432,10 +435,12 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
       ...(amt > 0
         ? [this.outputNodes.output(schedule2, { line2_amt: amt })]
         : []),
-      ...(input.must_file_for_gbc === true
+      ...(input.must_file_for_gbc === true ||
+          input.must_file_for_credit === true ||
+          input.must_compute_for_bond_credit === true
         ? [this.outputNodes.output(f1040, {
-          form3800_form6251_line9: netTmt,
-          form3800_form6251_line11: amt,
+          credit_limit_form6251_line9: netTmt,
+          credit_limit_form6251_line11: amt,
         })]
         : []),
       {
@@ -443,7 +448,8 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
         fields: {
           ...input,
           must_file_for_credit: input.must_file_for_credit === true ||
-            input.must_file_for_gbc === true,
+            input.must_file_for_gbc === true ||
+            input.must_compute_for_bond_credit === true,
           regular_tax: adjustedRegularTax,
           ...(input.form4952_amt_line2c_difference !== undefined &&
               input.taking_standard_deduction !== true
