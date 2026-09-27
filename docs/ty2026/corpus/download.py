@@ -171,6 +171,8 @@ sources += [
     ("authorities/n26-15--2026.pdf", IRS + "/pub/irs-drop/n-26-15.pdf", "current-guidance"),
     ("authorities/f4255--2025.pdf", IRS + "/pub/irs-pdf/f4255.pdf", "current-revision"),
     ("authorities/i4255--2025.pdf", IRS + "/pub/irs-pdf/i4255.pdf", "current-revision-instructions"),
+    ("authorities/f965a--2021.pdf", IRS + "/pub/irs-pdf/f965a.pdf", "current-revision"),
+    ("authorities/i965a--2021.pdf", IRS + "/pub/irs-pdf/i965a.pdf", "current-revision-instructions"),
     ("authorities/p505--2026.pdf", IRS + "/pub/irs-prior/p505--2026.pdf", "final-authority"),
     ("authorities/rp-25-32.pdf", IRS + "/pub/irs-drop/rp-25-32.pdf", "final-authority"),
     ("authorities/rp-25-19.pdf", IRS + "/pub/irs-drop/rp-25-19.pdf", "final-authority"),

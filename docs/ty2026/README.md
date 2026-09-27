@@ -68,6 +68,9 @@ for the implementation contract.
 - [`FORM4255-GRAPH.md`](FORM4255-GRAPH.md) and `pdf-fields-f4255.csv`:
   property-credit recapture, EPE/transfer/PWA/emissions branches, revised
   Schedule 2 destinations and 646 current form widgets.
+- [`FORM965A-GRAPH.md`](FORM965A-GRAPH.md) and `pdf-fields-f965a.csv`:
+  continuing section 965 liability/payment ledger, 2026 Schedule 2 line
+  12/15 draft conflict and 413 current form widgets.
 - [`PARITY-QUEUE.md`](PARITY-QUEUE.md): dependency-ordered full 1040 coding
   queue across the 2025 graph/PDF/MeF inventories and 2026-only attachments.
 - [`INSTRUCTION-COVERAGE.md`](INSTRUCTION-COVERAGE.md) and

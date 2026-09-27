@@ -1956,6 +1956,24 @@
       "status": "downloaded",
       "bytes": 212812,
       "sha256": "16ae22860c6d604652d7b038b024bd162affa8b66ebccf80b77e390179bfde19"
+    },
+    {
+      "path": "authorities/f965a--2021.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/f965a.pdf",
+      "kind": "current-revision",
+      "status": "downloaded",
+      "bytes": 201733,
+      "sha256": "ec389e548af6627533adba1293017a5cc101e41b1ae237de608eae7efa09a446",
+      "year_check": "current-revision"
+    },
+    {
+      "path": "authorities/i965a--2021.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/i965a.pdf",
+      "kind": "current-revision-instructions",
+      "status": "downloaded",
+      "bytes": 153690,
+      "sha256": "c6f7b4a89f68261975754572be6bd55b0e29ab642fe14017cbf92e7f37a9bef1",
+      "year_check": "current-revision"
     }
   ]
 }

@@ -106,7 +106,7 @@ f5471,forms/f1040/nodes/inputs/f5471/index.ts,inputs,1,no,no,no,n/a,P1,audit-req
 f8805,forms/f1040/nodes/inputs/f8805/index.ts,inputs,1,no,no,no,n/a,P1,audit-required,"route owner in NODE-BOUNDARY-AUDIT.md; verify 2026 authority, node outputs, PDF/MeF filing and full-return test"
 fec,forms/f1040/nodes/inputs/fec/index.ts,inputs,1,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 qsehra,forms/f1040/nodes/inputs/qsehra/index.ts,inputs,2,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
-f965,forms/f1040/nodes/inputs/f965/index.ts,inputs,2,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
+f965,forms/f1040/nodes/inputs/f965/index.ts,inputs,2,no,no,no,n/a,P1,audit-required,"Current Jan 2021 Form 965-A/instructions pinned; 2026 Schedule 2 prints line 12 but line 15 omits it; shared node uses obsolete line 9 and 2017-only final-year assumption; build liability/payment/deferral ledger, PDF/current MeF; see FORM965A-GRAPH.md"
 ppp_forgiveness,forms/f1040/nodes/inputs/ppp_forgiveness/index.ts,inputs,0,no,no,no,n/a,P2,audit-required,"route owner in NODE-BOUNDARY-AUDIT.md; verify 2026 authority, node outputs, PDF/MeF filing and full-return test"
 depletion,forms/f1040/nodes/inputs/depletion/index.ts,inputs,1,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 lump_sum_ss,forms/f1040/nodes/inputs/lump_sum_ss/index.ts,inputs,0,no,no,no,n/a,P2,audit-required,"route owner in NODE-BOUNDARY-AUDIT.md; verify 2026 authority, node outputs, PDF/MeF filing and full-return test"

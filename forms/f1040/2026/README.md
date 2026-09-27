@@ -65,6 +65,10 @@ The [Form 4255 contract](../../../docs/ty2026/FORM4255-GRAPH.md) uses that
 facility/credit history to calculate recapture, excessive payment/transfer,
 PWA and emissions branches. The shared node sends all recapture to old
 Schedule 2 line 17a, now the 2026 household-employment-tax line.
+The [Form 965-A contract](../../../docs/ty2026/FORM965A-GRAPH.md) preserves
+the outstanding liability and actual payment history and routes the
+reporting-year amount to Schedule 2 line 12. The current draft's line 15
+addition omits line 12, so the final total requires IRS resolution.
 The [Form 1116 contract](../../../docs/ty2026/FORM1116-GRAPH.md) maps
 foreign-tax categories, carryovers, redeterminations and the revised line
 18/20 bases from 1040, Schedule 1-A and Schedule 2; its full attachment
