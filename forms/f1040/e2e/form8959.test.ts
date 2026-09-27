@@ -3,9 +3,37 @@ import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { execute } from "../../../core/runtime/executor.ts";
 import { registry } from "../2025/registry.ts";
 import { FilingStatus } from "../nodes/types.ts";
+import { Box12Code } from "../nodes/inputs/w2/index.ts";
 
 const plan = buildExecutionPlan(registry);
 const ctx = { taxYear: 2025, formType: "f1040" };
+
+Deno.test("uncollected W-2 Medicare tax restores Form 8959 regular withholding", () => {
+  const result = execute(plan, registry, {
+    general: {
+      filing_status: FilingStatus.Single,
+      taxpayer_first_name: "Alex",
+      taxpayer_last_name: "Worker",
+      taxpayer_ssn: "123-45-6789",
+    },
+    w2: [{
+      employee_ssn: "123-45-6789",
+      employer_name: "ACME",
+      employer_ein: "123456789",
+      box1_wages: 210_000,
+      box5_medicare_wages: 210_000,
+      box6_medicare_withheld: 3_015,
+      box12_entries: [
+        { code: Box12Code.B, amount: 20 },
+        { code: Box12Code.N, amount: 10 },
+      ],
+    }],
+  }, ctx);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form8959?.line19_medicare_withheld, 3_045);
+  assertEquals(result.pending.form8959?.line22_additional_withheld, 0);
+  assertEquals(result.pending.schedule2?.line11_additional_medicare, 90);
+});
 
 Deno.test("W-2, substitute W-2, and household Medicare wages reach one Form 8959", () => {
   const result = execute(plan, registry, {

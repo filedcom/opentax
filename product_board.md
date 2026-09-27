@@ -954,6 +954,12 @@ local XSD batch now includes zero-tax MFJ FICA and RRTA filing triggers and the
 QSS $200,000 threshold, all unrun. The full-batch gate and IRS business-rule
 review remain open.
 
+The Form 8959 line 19 source audit now adds W-2 box 12 codes B and N to box 6
+for FICA wages, as the 2025 instructions require, and excludes those codes on
+RRTA W-2s. Source and full-return cases are written but unrun. Form CT-2
+employee-representative amounts for lines 14 and 23 are still missing, as is the
+separate review of how uncollected RRTA Medicare tax reaches Schedule 2.
+
 ## Workstreams
 
 | ID       | Workstream                               | Current state                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Next evidence required                                                                                                                                                                                                                            |

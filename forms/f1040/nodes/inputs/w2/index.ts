@@ -233,6 +233,16 @@ function validateItem(
   ) {
     throw new Error("W-2 box 6 Medicare withholding needs box 5 wages");
   }
+  if (
+    (box14Amount(item, "RRTA compensation") ?? 0) === 0 &&
+    (item.box5_medicare_wages ?? 0) === 0 &&
+    (item.box12_entries ?? []).some((entry) =>
+      (entry.code === Box12Code.B || entry.code === Box12Code.N) &&
+      entry.amount > 0
+    )
+  ) {
+    throw new Error("W-2 box 12 Medicare codes B/N need box 5 wages");
+  }
   if (ssWages > ssWageBase) {
     throw new Error(
       `W-2 validation error: SS taxable wages (${ssWages}) exceed the wage base limit (${ssWageBase})`,
@@ -342,7 +352,10 @@ function medicareOutput(w2s: W2Items): NodeOutput[] {
   const ficaItems = w2s.filter(
     (item) =>
       item.box5_medicare_wages !== undefined ||
-      item.box6_medicare_withheld !== undefined,
+      item.box6_medicare_withheld !== undefined ||
+      (item.box12_entries ?? []).some((entry) =>
+        entry.code === Box12Code.B || entry.code === Box12Code.N
+      ),
   );
   const rrtaWages = w2s.reduce(
     (sum, item) => sum + (box14Amount(item, "RRTA compensation") ?? 0),
@@ -364,10 +377,15 @@ function medicareOutput(w2s: W2Items): NodeOutput[] {
     (sum, item) => sum + (item.box5_medicare_wages ?? 0),
     0,
   );
-  const totalWithheld = ficaItems.reduce(
-    (sum, item) => sum + (item.box6_medicare_withheld ?? 0),
-    0,
-  );
+  const totalWithheld = ficaItems.reduce((sum, item) => {
+    const uncollectedMedicare =
+      (box14Amount(item, "RRTA compensation") ?? 0) > 0
+        ? 0
+        : (item.box12_entries ?? []).filter((entry) =>
+          entry.code === Box12Code.B || entry.code === Box12Code.N
+        ).reduce((amount, entry) => amount + entry.amount, 0);
+    return sum + (item.box6_medicare_withheld ?? 0) + uncollectedMedicare;
+  }, 0);
   const fields: Partial<z.infer<typeof form8959["inputSchema"]>> = {};
   if (totalBox5Wages > 0) fields.w2_medicare_wages = totalBox5Wages;
   if (totalWithheld > 0) fields.w2_medicare_withheld = totalWithheld;

@@ -442,6 +442,7 @@ Deno.test("box12_code_z_routes_to_schedule2_409a_excise: Code Z = $2,000 → sec
 Deno.test("box12_code_a_routes_to_schedule2_uncollected_fica: Code A = $300 + Code B = $200 → uncollected_fica = 500", () => {
   const result = compute([minimalItem({
     box1_wages: 30000,
+    box5_medicare_wages: 30000,
     box12_entries: [{ code: Box12Code.A, amount: 300 }, {
       code: Box12Code.B,
       amount: 200,
@@ -453,6 +454,7 @@ Deno.test("box12_code_a_routes_to_schedule2_uncollected_fica: Code A = $300 + Co
 Deno.test("box12_code_m_n_routes_to_schedule2_uncollected_fica_gtl: M = $200 + N = $100 → uncollected_fica_gtl = 300", () => {
   const result = compute([minimalItem({
     box1_wages: 0,
+    box5_medicare_wages: 1000,
     box12_entries: [{ code: Box12Code.M, amount: 200 }, {
       code: Box12Code.N,
       amount: 100,
@@ -651,6 +653,40 @@ Deno.test("two_w2s_medicare_wages_aggregate_to_form8959: $60k + $60k = $120,000"
   assertEquals(fieldsOf(result.outputs, form8959)!.w2_medicare_withheld, 1740);
 });
 
+Deno.test("Form 8959 line 19 adds W-2 box 12 codes B and N to box 6", () => {
+  const result = compute([minimalItem({
+    box1_wages: 210_000,
+    box5_medicare_wages: 210_000,
+    box6_medicare_withheld: 3_015,
+    box12_entries: [
+      { code: Box12Code.B, amount: 20 },
+      { code: Box12Code.N, amount: 10 },
+    ],
+  })]);
+  assertEquals(fieldsOf(result.outputs, form8959)?.w2_medicare_wages, 210_000);
+  assertEquals(fieldsOf(result.outputs, form8959)?.w2_medicare_withheld, 3_045);
+});
+
+Deno.test("Form 8959 line 19 excludes box 12 B and N on an RRTA W-2", () => {
+  const result = compute([minimalItem({
+    box1_wages: 220_000,
+    box14_entries: [{
+      description: "RRTA compensation",
+      amount: 220_000,
+      is_state_sdi_pfml: false,
+    }],
+    box12_entries: [
+      { code: Box12Code.B, amount: 20 },
+      { code: Box12Code.N, amount: 10 },
+    ],
+  })]);
+  assertEquals(fieldsOf(result.outputs, form8959)?.w2_rrta_wages, 220_000);
+  assertEquals(
+    fieldsOf(result.outputs, form8959)?.w2_medicare_withheld,
+    undefined,
+  );
+});
+
 Deno.test("Form 8959 gets W-2 box 5, not box 1, when the boxes differ", () => {
   const result = compute([minimalItem({
     box1_wages: 190_000,
@@ -697,6 +733,18 @@ Deno.test("W-2 box 6 Medicare withholding needs box 5 wages", () => {
   );
   const result = compute([minimalItem({ box1_wages: 100_000 })]);
   assertEquals(fieldsOf(result.outputs, form8959), undefined);
+});
+
+Deno.test("FICA W-2 box 12 Medicare codes B and N need box 5 wages", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box1_wages: 30_000,
+        box12_entries: [{ code: Box12Code.B, amount: 20 }],
+      })]),
+    Error,
+    "box 12 Medicare codes B/N need box 5 wages",
+  );
 });
 
 Deno.test("two_w2s_state_withheld_aggregate_to_schedule_a: $2k + $3k = $5,000 line_5a", () => {
