@@ -295,6 +295,12 @@ cases written but unrun.
 Export lines 1d, 2c, 3e, and 4d now require a typed retained-proof reference
 instead of a bare export affirmation; positive and rejection cases are written
 but unrun. Source-record identity and IRS business-rule review remain open.
+Registered-vendor diesel line 6a now has a distinct vendor source route with
+an IRS-issued UV registration number, tax-settlement method, certificate P
+records, named government buyers, and gallon reconciliation. Its separate
+government-buyer MeF statement and page-2 PDF fields are built, with source,
+XML, PDF, and XSD cases written but unrun. The filled PDF and IRS business rules
+are not verified; line 6b and lines 7-8 remain open.
 The Schedule A section of the 2025 IRS instructions instead says to show the
 activity with the most qualifying fuel usage. That conflict is unresolved;
 the current code follows the printed Form 4136 and needs IRS business-rule

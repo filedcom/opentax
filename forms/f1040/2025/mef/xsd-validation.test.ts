@@ -210,6 +210,55 @@ Deno.test({
 });
 
 Deno.test({
+  name:
+    "XSD: Form 4136 vendor diesel sale and government-buyer statement validate",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const xml = buildMefXml({
+    f1040: { line31_additional_payments: 36 },
+    schedule3: { line12_fuel_tax_credit: 36.45, line15_total: 36.45 },
+    f4136: {
+      claimant_context: "business",
+      additional_activities: [],
+      primary_activity_has_most_credit: true,
+      business: {
+        qualifying_business_activity: true,
+        business_name: "Example Fuel Vendor",
+        principal_activity_code: "457100",
+        equipment_make: "Example",
+        equipment_model: "Pump",
+        equipment_type: "diesel dispenser",
+        sales_records_confirmed: true,
+        no_duplicate_excise_claim: true,
+      },
+      claims: [{
+        line: "6a",
+        unit: "gallons",
+        qualified_quantity: 150,
+        actual_fuel_cost: 400,
+        undyed_fuel_confirmed: true,
+        vendor_registration_number: "UV123456789",
+        vendor_tax_settlement: "tax_excluded_price",
+        government_sales: [{
+          sale_date: "2025-06-12",
+          buyer_name: "Example City",
+          buyer_ein: "123456789",
+          gallons: 150,
+          certificate_p_record_reference: "Certificate P-2025-1",
+          certificate_information_believed_true: true,
+          exclusive_government_use_confirmed: true,
+        }],
+      }],
+    },
+  }, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(xml, "<SlsUndyedDslStLclGovtGrp>");
+  assertStringIncludes(xml, "<ToWhomDieselFuelSoldStatement ");
+  await validateXsd(xml, "Form 4136 government diesel sales");
+});
+
+Deno.test({
   name: "XSD: Form 4136 all non-bus line 11 fuel groups validate",
   sanitizeOps: false,
   sanitizeResources: false,

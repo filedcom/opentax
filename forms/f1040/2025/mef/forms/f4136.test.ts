@@ -1,5 +1,6 @@
 import { assertStringIncludes, assertThrows } from "@std/assert";
 import { form4136 } from "./f4136.ts";
+import { form4136DieselGovernmentSalesStatement } from "./f4136_diesel_government_sales_statement.ts";
 const certifications = {
   undyed_fuel_confirmed: true,
   right_to_claim_not_waived: true,
@@ -85,6 +86,65 @@ Deno.test("Form 4136 XML rejects a Schedule 3 source mismatch", () => {
     Error,
     "does not match Schedule 3",
   );
+});
+
+Deno.test("Form 4136 XML and buyer statement reconcile registered vendor line 6a", () => {
+  const vendor = {
+    ...activityContext,
+    business: {
+      qualifying_business_activity: true as const,
+      business_name: "Example Fuel Vendor",
+      principal_activity_code: "457100",
+      equipment_make: "Example",
+      equipment_model: "Pump",
+      equipment_type: "diesel dispenser",
+      sales_records_confirmed: true as const,
+      no_duplicate_excise_claim: true as const,
+    },
+    claims: [{
+      line: "6a" as const,
+      unit: "gallons" as const,
+      qualified_quantity: 150,
+      actual_fuel_cost: 400,
+      undyed_fuel_confirmed: true as const,
+      vendor_registration_number: "UV123456789",
+      vendor_tax_settlement: "tax_excluded_price" as const,
+      government_sales: [{
+        sale_date: "2025-06-12",
+        buyer_name: "Example City",
+        buyer_ein: "123456789",
+        gallons: 150,
+        certificate_p_record_reference: "Certificate P-2025-1",
+        certificate_information_believed_true: true as const,
+        exclusive_government_use_confirmed: true as const,
+      }],
+    }],
+  };
+  const xml = form4136.build(vendor, {
+    pending: { schedule3: { line12_fuel_tax_credit: 36.45 } },
+  });
+  assertStringIncludes(
+    xml,
+    "<UndyedDieselRegistrationNum>UV123456789</UndyedDieselRegistrationNum>",
+  );
+  assertStringIncludes(
+    xml,
+    "<SlsUndyedDslStLclGovtGalsQty>150</SlsUndyedDslStLclGovtGalsQty>",
+  );
+  assertStringIncludes(
+    xml,
+    '<SlsUndyedDslUseStLclGovtCrAmt creditReferenceNum="360">36</SlsUndyedDslUseStLclGovtCrAmt>',
+  );
+  const statement = form4136DieselGovernmentSalesStatement.build(undefined, {
+    pending: { f4136: vendor },
+  });
+  assertStringIncludes(statement, "<ToWhomDieselFuelSoldStatement>");
+  assertStringIncludes(
+    statement,
+    "<BusinessNameLine1Txt>Example City</BusinessNameLine1Txt>",
+  );
+  assertStringIncludes(statement, "<EIN>123456789</EIN>");
+  assertStringIncludes(statement, "<GallonsBoughtQty>150</GallonsBoughtQty>");
 });
 
 Deno.test("Form 4136 XML separates other-use and exported gasoline", () => {

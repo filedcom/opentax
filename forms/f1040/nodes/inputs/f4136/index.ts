@@ -32,6 +32,7 @@ export const FORM4136_RATES = {
   "5c": 0.243,
   "5d": 0.218,
   "5e": 0.001,
+  "6a": 0.243,
   "11a": 0.183,
   "11b": 0.183,
   "11c": 0.183,
@@ -78,6 +79,7 @@ const fuelLine = z.enum([
   "5c",
   "5d",
   "5e",
+  "6a",
   "11a",
   "11b",
   "11c",
@@ -100,6 +102,12 @@ const alternativeFuelUseCodes = [
   "14",
   "15",
 ] as const;
+const saleDate = z.string().refine((value) => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(date.getTime()) &&
+    date.toISOString().slice(0, 10) === value;
+}, "Invalid sale date");
 const allowedUseCodes: Partial<
   Record<z.infer<typeof fuelLine>, readonly string[]>
 > = {
@@ -147,18 +155,34 @@ export const fuelClaimSchema = z.object({
   train_use_confirmed: z.literal(true).optional(),
   certain_intercity_or_local_bus_use_confirmed: z.literal(true).optional(),
   excise_tax_rate_per_gallon: z.number().finite().positive().optional(),
+  vendor_registration_number: z.string().regex(/^[A-Z0-9]{1,20}$/).optional(),
+  vendor_tax_settlement: z.enum([
+    "tax_excluded_price",
+    "tax_repaid_to_buyer",
+    "buyer_written_consent",
+  ]).optional(),
+  government_sales: z.array(z.object({
+    sale_date: saleDate,
+    buyer_name: z.string().trim().min(1),
+    buyer_ein: z.string().regex(/^\d{9}$/),
+    gallons: z.number().int().positive(),
+    certificate_p_record_reference: z.string().trim().min(1),
+    certificate_information_believed_true: z.literal(true),
+    exclusive_government_use_confirmed: z.literal(true),
+  })).min(1).optional(),
 });
 
 const businessSchema = z.object({
   qualifying_business_activity: z.literal(true),
-  claimant_is_ultimate_purchaser: z.literal(true),
+  claimant_is_ultimate_purchaser: z.literal(true).optional(),
   business_name: z.string().trim().min(1),
   business_ein: z.string().regex(/^\d{9}$/).optional(),
   principal_activity_code: z.string().regex(/^\d{6}$/),
   equipment_make: z.string().trim().min(1),
   equipment_model: z.string().trim().min(1),
   equipment_type: z.string().trim().min(1),
-  purchase_records_confirmed: z.literal(true),
+  purchase_records_confirmed: z.literal(true).optional(),
+  sales_records_confirmed: z.literal(true).optional(),
   no_duplicate_excise_claim: z.literal(true),
 });
 
@@ -168,6 +192,52 @@ const activitySchema = z.object({
 }).superRefine((input, ctx) => {
   const seen = new Set<string>();
   input.claims.forEach((claim, index) => {
+    if (claim.line === "6a") {
+      if (!/^UV[A-Z0-9]{1,18}$/.test(claim.vendor_registration_number ?? "")) {
+        ctx.addIssue({
+          code: "custom",
+          message:
+            "Form 4136 line 6a needs an IRS-issued UV registration number",
+          path: ["claims", index, "vendor_registration_number"],
+        });
+      }
+      if (!claim.vendor_tax_settlement) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Form 4136 line 6a needs the vendor tax-settlement method",
+          path: ["claims", index, "vendor_tax_settlement"],
+        });
+      }
+      if (
+        !claim.government_sales?.length ||
+        claim.government_sales.reduce((sum, sale) => sum + sale.gallons, 0) !==
+          claim.qualified_quantity
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          message:
+            "Form 4136 line 6a government sales must reconcile to claimed gallons",
+          path: ["claims", index, "government_sales"],
+        });
+      }
+      if (input.business.sales_records_confirmed !== true) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Form 4136 line 6a needs confirmed sales records",
+          path: ["business", "sales_records_confirmed"],
+        });
+      }
+    } else if (
+      input.business.claimant_is_ultimate_purchaser !== true ||
+      input.business.purchase_records_confirmed !== true
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          `Form 4136 line ${claim.line} needs an ultimate purchaser and purchase records`,
+        path: ["business", "claimant_is_ultimate_purchaser"],
+      });
+    }
     if (claim.type_of_use === "05" && claim.line in FORM4136_BUS_RATES) {
       const requiredUnit = claim.line === "11a" || claim.line === "11c"
         ? "GGE"
@@ -216,7 +286,20 @@ const activitySchema = z.object({
       });
     }
     const requiredFacts = [
-      ...(["3a", "3b", "3c", "3d", "3e", "4a", "4b", "4c", "4d", "4e", "4f"]
+      ...([
+          "3a",
+          "3b",
+          "3c",
+          "3d",
+          "3e",
+          "4a",
+          "4b",
+          "4c",
+          "4d",
+          "4e",
+          "4f",
+          "6a",
+        ]
           .includes(claim.line)
         ? ["undyed_fuel_confirmed"] as const
         : []),
@@ -393,6 +476,18 @@ export const inputSchema = z.discriminatedUnion("claimant_context", [
       unitsByLine.set(claim.line, claim.unit);
     });
   });
+  const line6aRegistrations = new Set(
+    activities.flatMap((activity) => activity.claims)
+      .filter((claim) => claim.line === "6a")
+      .map((claim) => claim.vendor_registration_number),
+  );
+  if (line6aRegistrations.size > 1) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Form 4136 line 6 has one registration-number field",
+      path: ["claims"],
+    });
+  }
 });
 
 export type Form4136Input = z.infer<typeof inputSchema>;
