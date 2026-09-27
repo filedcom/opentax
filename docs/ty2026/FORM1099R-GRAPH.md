@@ -52,6 +52,11 @@ IRA and pension distributions; the remaining cases below are still required.
   reach the correct 1040/AGI lines and withholding totals from box facts.
   This graph and two-page PDF case now passes, including simultaneous
   SSA-1099 and W-2 withholding.
+- Code 1 with the full amount subject to 10% now routes directly to 2026
+  Schedule 2 line 5, then Form 1040 line 23 and the PDF, as allowed by the
+  pinned [2026 draft Form 5329 instructions](corpus/draft/i5329.pdf). The
+  source requires explicit full-tax and SIMPLE IRA first-two-years facts;
+  early SIMPLE and mixed-code cases require the still-open Form 5329 path.
 - Taxable code-G Roth rollover, early distribution with Form 5329, IRA
   basis with Form 8606, and QCD with and without optional code Y need
   independent calculation fixtures.

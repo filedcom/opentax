@@ -52,3 +52,70 @@ Deno.test("TY2026 Form 1099-R rejects unaudited distribution branches", () => {
     );
   }
 });
+
+Deno.test("TY2026 code 1 reports full early-distribution tax on Schedule 2", () => {
+  const result = f1099r_2026.compute(context, {
+    statements: [{
+      ...base,
+      box7a_codes: ["1"],
+      early_distribution_tax_facts: {
+        full_amount_subject_to_ten_percent: true,
+        simple_ira_in_first_two_years: false,
+      },
+    }],
+  });
+  assertEquals(
+    result.outputs.find((output) => output.nodeType === "schedule2")?.fields,
+    {
+      line5_form5329_early_tax: 500,
+    },
+  );
+  assertEquals(
+    result.outputs.some((output) => output.nodeType === "form5329"),
+    false,
+  );
+  assertThrows(
+    () =>
+      f1099r_2026.compute(context, {
+        statements: [
+          {
+            ...base,
+            box7a_codes: ["1"],
+            early_distribution_tax_facts: {
+              full_amount_subject_to_ten_percent: true,
+              simple_ira_in_first_two_years: false,
+            },
+          },
+          base,
+        ],
+      }),
+    Error,
+    "mixed codes need Form 5329 review",
+  );
+  assertThrows(
+    () =>
+      f1099r_2026.compute(context, {
+        statements: [{
+          ...base,
+          box7a_codes: ["1"],
+        }],
+      }),
+    Error,
+    "needs full-tax and SIMPLE-period facts",
+  );
+  assertThrows(
+    () =>
+      f1099r_2026.compute(context, {
+        statements: [{
+          ...base,
+          box7a_codes: ["1"],
+          early_distribution_tax_facts: {
+            full_amount_subject_to_ten_percent: true,
+            simple_ira_in_first_two_years: true,
+          },
+        }],
+      }),
+    Error,
+    "25% Form 5329 route",
+  );
+});

@@ -906,6 +906,16 @@
       "sha256": "0bb009120b7793c15445c0e4be2cd525bc37b19c215f2478b6df627dcf23db14",
       "retrieved_utc": "2026-09-27T10:19:16.676873+00:00",
       "year_check": "2026-present"
+    },
+    {
+      "path": "draft/i5329.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/i5329--dft.pdf",
+      "kind": "draft-instructions",
+      "status": "downloaded",
+      "bytes": 344113,
+      "sha256": "55f531aad380ec1ac63cc697e0f5d0cd603c503e18cebd9fb04b0bd46633aa35",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-09-27T10:26:30.950147+00:00"
     }
   ]
 }

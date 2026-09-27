@@ -869,6 +869,36 @@ Deno.test("TY2026 normal IRA and pension 1099-Rs reach AGI, withholding, and PDF
   assertEquals(pdf.getForm().getFields().length, 0);
 });
 
+Deno.test("TY2026 1099-R code 1 reaches Schedule 2 line 5 without Form 5329", async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: filer,
+    w2: [{ box1_wages: 30_000, box2_fed_withheld: 1_500 }],
+    f1099r: [{
+      payer_name: "IRA Custodian",
+      payer_ein: "123456789",
+      recipient: "taxpayer",
+      box1_gross_distribution: 10_000,
+      box2a_taxable_amount: 10_000,
+      box4_federal_withheld: 1_000,
+      box7a_codes: ["1"],
+      box7b_ira_sep_simple: true,
+      early_distribution_tax_facts: {
+        full_amount_subject_to_ten_percent: true,
+        simple_ira_in_first_two_years: false,
+      },
+    }],
+  }, context);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040.line4a_ira_gross, 10_000);
+  assertEquals(result.pending.f1040.line4b_ira_taxable, 10_000);
+  assertEquals(result.pending.schedule2.line5_form5329_early_tax, 1_000);
+  assertEquals(result.pending.f1040.line23_other_taxes, 1_000);
+  assertEquals(result.pending.form5329, undefined);
+  const pdf = await PDFDocument.load(await buildPdfBytes2026(result.pending));
+  assertEquals(pdf.getPageCount(), 4);
+  assertEquals(pdf.getForm().getFields().length, 0);
+});
+
 Deno.test("TY2026 registry executes a wages-only return", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {

@@ -158,7 +158,9 @@ benefits require a repayment-deduction route before filing; see the
 Final 2026 Form 1099-R and instructions are pinned. A dedicated `f1099r`
 input uses boxes 7a–7d and 8a/8b and routes normal, fully taxable IRA and
 pension distributions to AGI and the printed 1040. Other codes and special
-accounts fail explicitly until their linked forms are built; see the
+accounts fail explicitly until their linked forms are built. Code 1 can
+route the full 10% early-distribution tax to Schedule 2 line 5 when the
+taxpayer supplies the full-tax and SIMPLE-period facts; see the
 [1099-R contract](../../../docs/ty2026/FORM1099R-GRAPH.md). Form 1040 line
 25b sums withholding from multiple 1099 sources in the active graph.
 The dedicated TY2026 Form 1099-DIV input now routes ordinary, qualified,

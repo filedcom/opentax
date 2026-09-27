@@ -8,6 +8,7 @@ import type {
 import { TaxNode } from "../../../../core/types/tax-node.ts";
 import { agi_aggregator } from "../../nodes/intermediate/aggregation/agi_aggregator/index.ts";
 import { f1040_2026_node } from "./f1040.ts";
+import { schedule2_2026 } from "./schedule2.ts";
 
 const amount = z.number().finite().nonnegative();
 
@@ -28,6 +29,10 @@ export const f1099rItem2026Schema = z.object({
   box7d_earnings_on_excess_contributions: amount.optional(),
   box8a_other: amount.optional(),
   box8b_pct_annuity_contract: z.number().finite().min(0).max(100).optional(),
+  early_distribution_tax_facts: z.object({
+    full_amount_subject_to_ten_percent: z.literal(true),
+    simple_ira_in_first_two_years: z.boolean(),
+  }).strict().optional(),
 }).strict();
 
 export const f1099rInput2026Schema = z.object({
@@ -37,7 +42,11 @@ export const f1099rInput2026Schema = z.object({
 class F1099rNode2026 extends TaxNode<typeof f1099rInput2026Schema> {
   readonly nodeType = "f1099r";
   readonly inputSchema = f1099rInput2026Schema;
-  readonly outputNodes = new OutputNodes([f1040_2026_node, agi_aggregator]);
+  readonly outputNodes = new OutputNodes([
+    f1040_2026_node,
+    agi_aggregator,
+    schedule2_2026,
+  ]);
 
   compute(
     ctx: NodeContext,
@@ -50,10 +59,25 @@ class F1099rNode2026 extends TaxNode<typeof f1099rInput2026Schema> {
     let iraGross = 0;
     let pensionGross = 0;
     let withheld = 0;
+    let earlyTaxable = 0;
+    const hasEarlyDistribution = statements.some((statement) =>
+      statement.box7a_codes.length === 1 && statement.box7a_codes[0] === "1"
+    );
+    if (
+      hasEarlyDistribution &&
+      statements.some((statement) =>
+        statement.box7a_codes.length !== 1 ||
+        statement.box7a_codes[0] !== "1"
+      )
+    ) {
+      throw new Error(
+        "TY2026 code 1 direct tax needs all 1099-R statements to qualify; mixed codes need Form 5329 review",
+      );
+    }
     for (const statement of statements) {
       if (
         statement.box7a_codes.length !== 1 ||
-        statement.box7a_codes[0] !== "7" ||
+        !["1", "7"].includes(statement.box7a_codes[0]) ||
         statement.box7c_trump_account === true ||
         (statement.box7d_earnings_on_excess_contributions ?? 0) > 0 ||
         (statement.box3_capital_gain ?? 0) > 0 ||
@@ -66,12 +90,33 @@ class F1099rNode2026 extends TaxNode<typeof f1099rInput2026Schema> {
           "TY2026 Form 1099-R distribution needs its code, basis, or special-account calculation route",
         );
       }
+      if (statement.box7a_codes[0] === "1") {
+        if (!statement.early_distribution_tax_facts) {
+          throw new Error(
+            "TY2026 code 1 direct tax needs full-tax and SIMPLE-period facts",
+          );
+        }
+        if (
+          statement.early_distribution_tax_facts.simple_ira_in_first_two_years
+        ) {
+          throw new Error(
+            "TY2026 early SIMPLE IRA distribution needs the 25% Form 5329 route",
+          );
+        }
+      } else if (statement.early_distribution_tax_facts) {
+        throw new Error(
+          "TY2026 normal distribution cannot claim early-tax facts",
+        );
+      }
       if (statement.box7b_ira_sep_simple) {
         iraGross += statement.box1_gross_distribution;
       } else {
         pensionGross += statement.box1_gross_distribution;
       }
       withheld += statement.box4_federal_withheld ?? 0;
+      if (statement.box7a_codes[0] === "1") {
+        earlyTaxable += statement.box2a_taxable_amount;
+      }
     }
     const outputs: NodeOutput[] = [];
     if (iraGross > 0) {
@@ -82,6 +127,11 @@ class F1099rNode2026 extends TaxNode<typeof f1099rInput2026Schema> {
     if (pensionGross > 0) {
       outputs.push(this.outputNodes.output(agi_aggregator, {
         line5b_pension_taxable: pensionGross,
+      }));
+    }
+    if (earlyTaxable > 0) {
+      outputs.push(this.outputNodes.output(schedule2_2026, {
+        line5_form5329_early_tax: Math.round(earlyTaxable * 0.1),
       }));
     }
     if (iraGross > 0) {
@@ -112,6 +162,7 @@ class F1099rNode2026 extends TaxNode<typeof f1099rInput2026Schema> {
         ira_gross: iraGross,
         pension_gross: pensionGross,
         withholding: withheld,
+        early_taxable: earlyTaxable,
       },
     });
     return { outputs };
