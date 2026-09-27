@@ -1,9 +1,28 @@
 # TY2026 MeF ATS fixture inventory
 
 Source: [IRS TY2026 ATS index](https://www.irs.gov/e-file-providers/tax-year-2026-form-1040-series-and-extensions-modernized-e-file-mef-assurance-testing-system-ats-information),
-captured 2026-09-27. The manifest pins each linked PDF's exact URL and hash.
+captured 2026-09-27, and the pinned [TY2026 Publication 1436
+guidelines](corpus/authorities/p1436--2026.pdf), SHA-256
+`cf856032c7104b5ad1765b07a1769642b24e771c4fe87089d85c613331d2ce3a`.
+The manifest pins each linked PDF's exact URL and hash.
 These are **draft** scenarios. The index lists 1040 scenarios 13 and 14 but
 provides no PDF link in this snapshot. Recheck the index before release.
+
+Publication 1436 specifies **October 13, 2026** as ATS opening. It calls
+the base 1040 packet six returns; the public index additionally provides
+scenario 12 and lists 13/14 without PDFs. Use the current index and the
+software product's declared form scope to select applicable scenarios;
+the guide does not make a seven-scenario local fixture set an IRS approval.
+Each transmitted return must pass both XML schema and active business-rule
+validation. For ATS, the primary and spouse SSN must have `00` in digits
+4–5 (`R0000-129-01` and `R0000-130-01`). The return header carries a
+valid public IP address, the selected electronic signature option, and
+the appropriate test/prod indicator. Practitioner PIN testing needs the
+taxpayer PIN, practitioner PIN, PIN-entered-by indicator and signed date.
+Track rejects/acknowledgments until all applicable business-rule violations
+are corrected. Actual ATS approval also needs the IRS software
+identification/application and transmission process; local XSD validation
+and matching PDF arithmetic alone are not acceptance.
 
 | Product | Linked scenarios in corpus | Implementation use |
 | --- | --- | --- |

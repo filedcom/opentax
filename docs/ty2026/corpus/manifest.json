@@ -2172,6 +2172,15 @@
       "bytes": 511215,
       "sha256": "f461d17ce14de4efb4d95936c8639434861dbf174da250ac777f50cd1883c692",
       "year_check": "2026-present"
+    },
+    {
+      "path": "authorities/p1436--2026.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/p1436.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 533268,
+      "sha256": "cf856032c7104b5ad1765b07a1769642b24e771c4fe87089d85c613331d2ce3a",
+      "year_check": "2026-present"
     }
   ]
 }
