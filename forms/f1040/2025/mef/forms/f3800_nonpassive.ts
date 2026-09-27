@@ -35,6 +35,82 @@ type Form8826PartVSource = {
   readonly ein?: string;
 };
 
+type FiledForm8826PartVSource = Form8826PartVSource & {
+  readonly filedCredit: number;
+  readonly filedApplied: number;
+};
+
+function cents(amount: number, description: string): number {
+  const value = Math.round(amount * 100);
+  if (
+    !Number.isFinite(amount) || !Number.isSafeInteger(value) ||
+    Math.abs(amount * 100 - value) > 0.000001
+  ) {
+    throw new Error(`${description} must have cent precision`);
+  }
+  return value;
+}
+
+/** Keep whole-dollar Part V rows additive with the separately rounded totals. */
+function filedForm8826Sources(
+  sources: readonly Form8826PartVSource[],
+  applied: readonly number[],
+): FiledForm8826PartVSource[] {
+  const creditCents = sources.map((source, index) =>
+    cents(source.credit, `Form 8826 source ${index + 1} credit`)
+  );
+  const appliedCents = applied.map((amount, index) =>
+    cents(amount, `Form 8826 source ${index + 1} applied credit`)
+  );
+  const allocate = (amounts: readonly number[]): number[] => {
+    const whole = amounts.map((amount) => Math.floor(amount / 100));
+    const target = Math.round(
+      amounts.reduce((sum, amount) => sum + amount, 0) / 100,
+    );
+    const remaining = target - whole.reduce((sum, amount) => sum + amount, 0);
+    const order = amounts.map((amount, index) => ({
+      index,
+      remainder: amount % 100,
+    })).sort((a, b) => b.remainder - a.remainder || a.index - b.index);
+    for (const { index } of order.slice(0, remaining)) whole[index] += 1;
+    return whole;
+  };
+  const filedApplied = allocate(appliedCents);
+  const filedCredit = creditCents.map((amount, index) =>
+    Math.max(Math.floor(amount / 100), filedApplied[index])
+  );
+  const creditTarget = Math.round(
+    creditCents.reduce((sum, amount) => sum + amount, 0) / 100,
+  );
+  const remainingCredit = creditTarget -
+    filedCredit.reduce((sum, amount) => sum + amount, 0);
+  if (remainingCredit < 0) {
+    throw new Error(
+      "Form 8826 Part V whole-dollar source rows cannot reconcile",
+    );
+  }
+  const creditOrder = creditCents.map((amount, index) => ({
+    index,
+    remainder: amount % 100,
+  })).filter(({ index }) =>
+    filedCredit[index] < Math.ceil(creditCents[index] / 100)
+  )
+    .sort((a, b) => b.remainder - a.remainder || a.index - b.index);
+  if (remainingCredit > creditOrder.length) {
+    throw new Error(
+      "Form 8826 Part V whole-dollar source rows cannot reconcile",
+    );
+  }
+  for (const { index } of creditOrder.slice(0, remainingCredit)) {
+    filedCredit[index] += 1;
+  }
+  return sources.map((source, index) => ({
+    ...source,
+    filedCredit: filedCredit[index],
+    filedApplied: filedApplied[index],
+  }));
+}
+
 export function buildIRS3800Nonpassive(
   input: Form3800NonpassiveXmlInput,
 ): string {
@@ -156,14 +232,20 @@ export function buildIRS3800Nonpassive(
       }
     }
     if (
-      form8826AppliedSources.reduce((sum, amount) => sum + amount, 0) !==
-        input.form8826!.appliedCredit
+      form8826AppliedSources.reduce(
+        (sum, amount, index) =>
+          sum + cents(amount, `Form 8826 source ${index + 1} applied credit`),
+        0,
+      ) !== cents(input.form8826!.appliedCredit, "Form 8826 applied credit")
     ) {
       throw new Error(
         "Form 3800 Form 8826 Part V applied credits do not reconcile",
       );
     }
   }
+  const filedForm8826PartV = form8826NeedsPartV
+    ? filedForm8826Sources(form8826Sources, form8826AppliedSources)
+    : [];
   const appliedAt = (index: number): number => {
     const amount = input.appliedCreditsByFacility[index];
     if (amount === undefined) {
@@ -207,18 +289,18 @@ export function buildIRS3800Nonpassive(
   }
   const form8826DocumentId = input.form8826?.documentId;
   const form8826PartVGroups = form8826NeedsPartV
-    ? form8826Sources.map((source, index) =>
+    ? filedForm8826PartV.map((source) =>
       elements("Frm8826CYAggrgtAmtGrp", [
         source.ein ? element("PassThroughEntityEIN", source.ein) : "",
-        element("OthThnCrTrnsfrElectCrNoLmtAmt", source.credit),
-        element("TotalGeneralBusCreditsAmt", source.credit),
+        element("OthThnCrTrnsfrElectCrNoLmtAmt", source.filedCredit),
+        element("TotalGeneralBusCreditsAmt", source.filedCredit),
         element(
           "TotalGBCLessGrossEPEAppTxAmt",
-          form8826AppliedSources[index],
+          source.filedApplied,
         ),
         element(
           "CarryforwardGeneralBusCrAmt",
-          source.credit - form8826AppliedSources[index],
+          source.filedCredit - source.filedApplied,
         ),
       ], {
         ...(source.ein || !form8826DocumentId ? {} : {
