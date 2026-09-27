@@ -4,6 +4,11 @@ import {
   inputSchema as form8582crInputSchema,
 } from "../../../nodes/intermediate/forms/form8582cr/index.ts";
 import { inputSchema as f3800InputSchema } from "../../../nodes/inputs/f3800/index.ts";
+import {
+  calculateForm8826,
+  inputSchema as f8826InputSchema,
+  isEligible as isForm8826Eligible,
+} from "../../../nodes/inputs/f8826/index.ts";
 import { reconcileDisabledAccessK1Credits } from "./f8826_credit_evidence.ts";
 
 /** Rebuild the filed cap from the gross graph ledger, not the reduced credits. */
@@ -13,6 +18,27 @@ export function readDisabledAccessCapLedger(context: MefBuildContext) {
   const raw = disabledAccessLimit.inputSchema.parse(
     pending.disabled_access_limit,
   );
+  const form8826 = pending.f8826 === undefined
+    ? undefined
+    : f8826InputSchema.parse(pending.f8826);
+  const selfCredit = form8826 && isForm8826Eligible(form8826)
+    ? calculateForm8826(form8826).line6
+    : 0;
+  const expectedSelf = form8826?.subject_to_passive_activity_limit &&
+      selfCredit > 0
+    ? {
+      source_document_reference: form8826.source_document_reference,
+      credit_amount: selfCredit,
+    }
+    : undefined;
+  if (
+    JSON.stringify(raw.required_disabled_access_self_credit) !==
+      JSON.stringify(expectedSelf)
+  ) {
+    throw new Error(
+      "Passive Form 8826 source differs from the gross disabled-access ledger",
+    );
+  }
   const result = disabledAccessLimit.compute(
     { taxYear: 2025, formType: "f1040" },
     raw,

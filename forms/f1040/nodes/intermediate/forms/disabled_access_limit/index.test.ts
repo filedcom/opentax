@@ -139,3 +139,84 @@ Deno.test("mixed K-1 disabled-access amounts pass through one upstream cap in th
     false,
   );
 });
+
+Deno.test("passive self-earned Form 8826 and nonpassive K-1 share the upstream cap", () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    f8826: {
+      eligible_expenditures: 6_250,
+      prior_year_gross_receipts: 500_000,
+      prior_year_full_time_employee_count: 20,
+      subject_to_passive_activity_limit: true,
+      source_document_reference: "2025 self-earned Form 8826",
+    },
+    k1_s_corp: [{
+      corporation_name: "Access S corporation",
+      corporation_ein: "987654321",
+      source_document_reference: "2025 access S corporation K-1",
+      box13_code_k_disabled_access_credit: 4_000,
+      disabled_access_credit_subject_to_passive_activity_limit: false,
+    }],
+    form8582cr: {
+      credit_sources: [{
+        activity_reference: "Self-earned passive access",
+        source_form: "Form 8826",
+        source_document_reference: "2025 self-earned Form 8826",
+        source_origin: { kind: PassiveCreditSourceOrigin.Self },
+        category: PassiveCreditCategory.Other,
+        reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+        form3800_credit_line: "1e",
+        current_year_credit: 3_000,
+        prior_unallowed_credits: [],
+        publicly_traded_partnership: false,
+      }],
+      regular_tax_all_income: 0,
+      regular_tax_without_passive: 0,
+    },
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  assertEquals(
+    (result.pending.form8582cr.credit_sources as Array<{
+      current_year_credit: number;
+    }>)[0].current_year_credit,
+    2_143,
+  );
+  assertEquals(
+    (result.pending.f3800.f8826_credit_entries as Array<{
+      credit_amount: number;
+    }>)[0].credit_amount,
+    2_857,
+  );
+});
+
+Deno.test("passive self-earned Form 8826 needs matching Form 8582-CR activity facts", () => {
+  assertThrows(() =>
+    disabledAccessLimit.compute(
+      { taxYear: 2025, formType: "f1040" },
+      disabledAccessLimit.inputSchema.parse({
+        required_disabled_access_self_credit: {
+          source_document_reference: "2025 self-earned Form 8826",
+          credit_amount: 3_000,
+        },
+      }),
+    )
+  );
+  assertThrows(() =>
+    disabledAccessLimit.compute(
+      { taxYear: 2025, formType: "f1040" },
+      disabledAccessLimit.inputSchema.parse({
+        required_disabled_access_self_credit: {
+          source_document_reference: "2025 self-earned Form 8826",
+          credit_amount: 3_000,
+        },
+        credit_sources: [{
+          ...passiveSource,
+          source_origin: { kind: PassiveCreditSourceOrigin.Self },
+          source_document_reference: "2025 self-earned Form 8826",
+          current_year_credit: 2_999,
+        }],
+        regular_tax_all_income: 0,
+        regular_tax_without_passive: 0,
+      }),
+    )
+  );
+});

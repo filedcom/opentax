@@ -58,9 +58,13 @@ pass now recomputes the cap from those gross facts, checks capped Form 3800 and
 Form 8582-CR rows, and reconciles the original K-1/Form 8826 amounts. Even a
 nonpassive K-1 source rounded to zero by the cap is now checked against its
 gross K-1 amount. A mixed K-1 graph, zero-share source case, and local XSD case
-are written but unrun. Passive Form 8826 sources are not yet handled by this
-node. Until that path and the full-batch and IRS
-business-rule checks pass, mixed-source filing is not supported. The IRS
+are written but unrun. A self-earned passive Form 8826 source now supplies a
+gross source-reference marker that must match the public Form 8582-CR activity
+amount before the same cap; the MeF ledger checks it against Form 8826. Its
+mixed graph, source-document, and local XSD cases are written but unrun.
+Passive Form 8826 pass-through sources are not yet handled. Until that path
+and the full-batch and IRS business-rule checks pass, mixed-source filing is
+not supported. The IRS
 requires pro-rata allocation of the overall limited credit; the per-source
 rounding policy still needs business-rule review.
 
@@ -254,8 +258,9 @@ source calculation for lines 1, 3, 5, 6, 7, and 8, with direct schema and
 reconciliation cases written but unrun. It is registered for self-earned claims,
 requires a Form 3800 document in the linked bundle, and omits the recipient's
 own form for pass-through-only claims. Form 8826 now requires a passive-activity
-answer and stops a positive passive credit pending Form 8582-CR, with unrun
-cases. The build pass now accepts identified partnership and S-corporation line
+answer and a source reference for a passive self-earned credit, and requires a
+matching Form 8582-CR activity input rather than routing it as nonpassive.
+Those cases are written but unrun. The build pass now accepts identified partnership and S-corporation line
 7 sources, caps their combined line 8 with self-earned credit at $5,000, and
 lets pass-through-only credit reach Form 3800 without requiring the recipient's
 own eligibility facts or an `IRS8826` document. Passive K-1 credits stop pending

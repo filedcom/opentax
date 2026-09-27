@@ -20,6 +20,13 @@ import {
 // reconciliation. No second public return-input shape is introduced.
 const inputSchema = z.object({
   f8826_credit_entries: z.array(f8826CreditEntrySchema).optional(),
+  required_disabled_access_self_credit: z.object({
+    source_document_reference: z.string().trim().min(1),
+    credit_amount: z.number().finite().positive().refine((amount) =>
+      Number.isSafeInteger(Math.round(amount * 100)) &&
+      Math.abs(amount * 100 - Math.round(amount * 100)) < 0.000001
+    ),
+  }).optional(),
 }).passthrough();
 
 class DisabledAccessLimitNode extends TaxNode<typeof inputSchema> {
@@ -46,13 +53,33 @@ class DisabledAccessLimitNode extends TaxNode<typeof inputSchema> {
     if (
       !hasPassiveFacts &&
       ("required_disabled_access_k1_credits" in input ||
-        "required_orphan_drug_k1_credits" in input)
+        "required_orphan_drug_k1_credits" in input ||
+        input.required_disabled_access_self_credit !== undefined)
     ) {
       throw new Error(
-        "Passive K-1 credit needs Form 8582-CR activity and tax facts",
+        "Passive disabled-access credit needs Form 8582-CR activity and tax facts",
       );
     }
     const passive = hasPassiveFacts ? form8582crInputSchema.parse(input) : null;
+    if (input.required_disabled_access_self_credit) {
+      const required = input.required_disabled_access_self_credit;
+      const matched = passive?.credit_sources.filter((source) =>
+        source.source_form === "Form 8826" &&
+        source.source_origin.kind === "self" &&
+        source.reporting_route === PassiveCreditReportingRoute.Form3800Line3 &&
+        source.form3800_credit_line === "1e" &&
+        source.source_document_reference === required.source_document_reference
+      ) ?? [];
+      if (
+        matched.reduce((sum, source) =>
+          sum + source.current_year_credit, 0) !==
+          Math.round(required.credit_amount)
+      ) {
+        throw new Error(
+          "Passive Form 8826 credit does not match its Form 8582-CR activity sources",
+        );
+      }
+    }
     const passiveIndexes =
       passive?.credit_sources.flatMap((source, index) =>
         source.reporting_route === PassiveCreditReportingRoute.Form3800Line3 &&

@@ -147,3 +147,56 @@ Deno.test("MeF disabled-access ledger checks a K-1 even when its cap share round
     })
   );
 });
+
+Deno.test("MeF disabled-access ledger ties a passive self-earned source to Form 8826", () => {
+  const selfForm = {
+    eligible_expenditures: 6_250,
+    prior_year_gross_receipts: 500_000,
+    prior_year_full_time_employee_count: 20,
+    subject_to_passive_activity_limit: true,
+    source_document_reference: "2025 self-earned Form 8826",
+  };
+  const gross = {
+    required_disabled_access_self_credit: {
+      source_document_reference: "2025 self-earned Form 8826",
+      credit_amount: 3_000,
+    },
+    credit_sources: [{
+      activity_reference: "Self-earned passive access",
+      source_form: "Form 8826",
+      source_document_reference: "2025 self-earned Form 8826",
+      source_origin: { kind: PassiveCreditSourceOrigin.Self },
+      category: PassiveCreditCategory.Other,
+      reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+      form3800_credit_line: "1e",
+      current_year_credit: 3_000,
+      prior_unallowed_credits: [],
+      publicly_traded_partnership: false,
+    }],
+    regular_tax_all_income: 0,
+    regular_tax_without_passive: 0,
+  };
+  const capped = disabledAccessLimit.compute(
+    { taxYear: 2025, formType: "f1040" },
+    disabledAccessLimit.inputSchema.parse(gross),
+  );
+  const pending = {
+    f8826: selfForm,
+    disabled_access_limit: gross,
+    form8582cr: capped.outputs.find((item) => item.nodeType === "form8582cr")
+      ?.fields,
+  };
+  assertEquals(
+    readDisabledAccessCapLedger({ pending })?.rawPassiveSources[0]
+      .current_year_credit,
+    3_000,
+  );
+  assertThrows(() =>
+    readDisabledAccessCapLedger({
+      pending: {
+        ...pending,
+        f8826: { ...selfForm, eligible_expenditures: 5_250 },
+      },
+    })
+  );
+});

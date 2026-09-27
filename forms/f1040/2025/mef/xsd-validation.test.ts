@@ -2420,6 +2420,70 @@ Deno.test({
 
 Deno.test({
   name:
+    "XSD: passive self-earned Form 8826 and nonpassive K-1 share the disabled-access cap",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const result = runReturn({
+    general,
+    f8826: {
+      eligible_expenditures: 6_250,
+      prior_year_gross_receipts: 500_000,
+      prior_year_full_time_employee_count: 20,
+      subject_to_passive_activity_limit: true,
+      source_document_reference: "2025 self-earned Form 8826",
+    },
+    k1_s_corp: [{
+      corporation_name: "Access S corporation",
+      corporation_ein: "987654321",
+      source_document_reference: "2025 access S corporation K-1",
+      box13_code_k_disabled_access_credit: 4_000,
+      disabled_access_credit_subject_to_passive_activity_limit: false,
+    }],
+    form8582cr: {
+      credit_sources: [{
+        activity_reference: "Self-earned passive access",
+        source_form: "Form 8826",
+        source_document_reference: "2025 self-earned Form 8826",
+        source_origin: { kind: PassiveCreditSourceOrigin.Self },
+        category: PassiveCreditCategory.Other,
+        reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+        form3800_credit_line: "1e",
+        current_year_credit: 3_000,
+        prior_unallowed_credits: [],
+        publicly_traded_partnership: false,
+      }],
+      regular_tax_all_income: 0,
+      regular_tax_without_passive: 0,
+    },
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(
+    (result.pending.form8582cr as {
+      credit_sources: Array<{ current_year_credit: number }>;
+    }).credit_sources[0].current_year_credit,
+    2_143,
+  );
+  assertEquals(
+    (result.pending.f3800 as {
+      f8826_credit_entries: Array<{ credit_amount: number }>;
+    }).f8826_credit_entries[0].credit_amount,
+    2_857,
+  );
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(xml, "<IRS8826 ");
+  assertStringIncludes(xml, "<IRS8582CR ");
+  assertStringIncludes(xml, "<IRS3800 ");
+  await validateXsd(xml, "passive self-earned Form 8826 mixed cap");
+});
+
+Deno.test({
+  name:
     "XSD: Form 8582-CR start input carries passive orphan-drug K-1 through the return",
   sanitizeOps: false,
   sanitizeResources: false,

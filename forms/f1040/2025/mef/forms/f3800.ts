@@ -16,6 +16,7 @@ import {
 import {
   calculateForm8826,
   inputSchema as f8826InputSchema,
+  isEligible as isForm8826Eligible,
 } from "../../../nodes/inputs/f8826/index.ts";
 import {
   calculateForm8820,
@@ -220,7 +221,8 @@ function sourceForm8826(
   }
   const expected = source && lines
     ? [
-      ...((ledger ? lines.line6 : lines.selfCreditAfterCap) > 0
+      ...(!source.subject_to_passive_activity_limit &&
+          (ledger ? lines.line6 : lines.selfCreditAfterCap) > 0
         ? [{
           source_type: "self",
           source_ein: undefined,
@@ -852,7 +854,11 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
     }
     const form8826Applied = applied("nonpassive:8826");
     const form8826Ids = context.documentIdsByPendingKey.f8826 ?? [];
-    const selfEarned = (form8826?.lines?.line6 ?? 0) > 0;
+    const filedForm8826 = context.pending?.f8826 === undefined
+      ? undefined
+      : f8826InputSchema.parse(context.pending.f8826);
+    const selfEarned = filedForm8826 && isForm8826Eligible(filedForm8826) &&
+      calculateForm8826(filedForm8826).line6 > 0;
     if (selfEarned ? form8826Ids.length !== 1 : form8826Ids.length !== 0) {
       throw new Error(
         "Form 3800 Form 8826 document count does not match self-earned source",

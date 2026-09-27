@@ -7,6 +7,7 @@ import {
 } from "../../../nodes/inputs/f8826/index.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 import { reconcileDisabledAccessK1Credits } from "./f8826_credit_evidence.ts";
+import { readDisabledAccessCapLedger } from "./f8826_cap_ledger.ts";
 
 /**
  * TY2025 Form 8826 source document. Pass-through-only recipients report the
@@ -36,14 +37,6 @@ export function buildForm8826Document(rawInput: unknown): string {
       "Form 8826 passive pass-through credit needs Form 8582-CR before Form 3800",
     );
   }
-  if (
-    lines.line6 > 0 && isEligible(input) &&
-    input.subject_to_passive_activity_limit
-  ) {
-    throw new Error(
-      "Form 8826 passive credit needs Form 8582-CR before Form 3800",
-    );
-  }
   if (lines.line8 <= 0) {
     throw new Error("Form 8826 has no eligible source credit to document");
   }
@@ -70,6 +63,14 @@ export const form8826: MefFormDescriptor<"f8826", Input> = {
     const source = inputSchema.parse(fields);
     const lines = calculateForm8826(source);
     if (context?.documentIdsByPendingKey) {
+      if (
+        source.subject_to_passive_activity_limit && lines.line6 > 0 &&
+        !readDisabledAccessCapLedger(context)
+      ) {
+        throw new Error(
+          "Passive Form 8826 needs its Form 8582-CR source ledger",
+        );
+      }
       if (
         lines.line8 > 0 &&
         context.documentIdsByPendingKey.f3800?.length !== 1

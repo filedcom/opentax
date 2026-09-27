@@ -1,6 +1,7 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { calculateForm8826, f8826 } from "../../../nodes/inputs/f8826/index.ts";
 import { f3800 } from "../../../nodes/inputs/f3800/index.ts";
+import { disabledAccessLimit } from "../../../nodes/intermediate/forms/disabled_access_limit/index.ts";
 import { buildForm8826Document, form8826 } from "./f8826_draft.ts";
 
 const source = {
@@ -26,8 +27,12 @@ Deno.test("Form 8826 draft: source credit, numbered lines, and XML reconcile", (
     { taxYear: 2025, formType: "f1040" },
     source,
   ).outputs[0];
-  assertEquals(forwarded?.nodeType, "f3800");
-  const credit = f3800.inputSchema.parse(forwarded?.fields)
+  assertEquals(forwarded?.nodeType, "disabled_access_limit");
+  const limited = disabledAccessLimit.compute(
+    { taxYear: 2025, formType: "f1040" },
+    disabledAccessLimit.inputSchema.parse(forwarded?.fields),
+  ).outputs.find((item) => item.nodeType === "f3800");
+  const credit = f3800.inputSchema.parse(limited?.fields)
     .f8826_credit_entries?.[0]?.credit_amount;
   assertEquals(credit, lines.line8);
   const xml = buildForm8826Document(source);
@@ -238,6 +243,31 @@ Deno.test("Form 8826 draft: passive K-1 credit and ineligible self-credit stop",
       }),
     Error,
     "ineligible self-earned credit",
+  );
+});
+
+Deno.test("Form 8826 draft: passive self-earned source retains its own document", () => {
+  const passive = {
+    ...source,
+    eligible_expenditures: 6_250,
+    subject_to_passive_activity_limit: true,
+    source_document_reference: "2025 self-earned Form 8826",
+  };
+  const forwarded = f8826.compute(
+    { taxYear: 2025, formType: "f1040" },
+    passive,
+  ).outputs[0];
+  assertEquals(forwarded?.nodeType, "disabled_access_limit");
+  assertEquals(
+    forwarded?.fields.required_disabled_access_self_credit,
+    {
+      source_document_reference: "2025 self-earned Form 8826",
+      credit_amount: 3_000,
+    },
+  );
+  assertStringIncludes(
+    buildForm8826Document(passive),
+    "<ShareOfCreditAmt>3000</ShareOfCreditAmt>",
   );
 });
 

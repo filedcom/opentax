@@ -37,6 +37,8 @@ export const inputSchema = z.object({
   prior_year_full_time_employee_count: z.number().int().nonnegative()
     .optional(),
   subject_to_passive_activity_limit: z.boolean(),
+  // Identifies this self-earned credit in the public Form 8582-CR activity rows.
+  source_document_reference: z.string().trim().min(1).optional(),
   // Form 8826 line 7. Each K-1 source keeps its own identity and activity
   // classification; the combined line 8 amount is capped at $5,000.
   pass_through_credits: z.array(z.object({
@@ -56,6 +58,18 @@ export const inputSchema = z.object({
       code: z.ZodIssueCode.custom,
       message:
         "Self-earned Form 8826 credit needs both prior-year eligibility facts",
+    });
+  }
+  if (
+    input.eligible_expenditures > EXPENDITURE_FLOOR &&
+    input.subject_to_passive_activity_limit &&
+    !input.source_document_reference
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["source_document_reference"],
+      message:
+        "Passive Form 8826 needs a Form 8582-CR source document reference",
     });
   }
   const seen = new Set<string>();
@@ -176,19 +190,21 @@ class F8826Node extends TaxNode<typeof inputSchema> {
         "Form 8826 passive pass-through credit needs Form 8582-CR before Form 3800",
       );
     }
-    if (
-      lines.line6 > 0 && isEligible(input) &&
-      input.subject_to_passive_activity_limit
-    ) {
-      throw new Error(
-        "Form 8826 passive credit needs Form 8582-CR before Form 3800",
-      );
-    }
     return {
       outputs: lines.line8 > 0
         ? [output(disabledAccessLimit, {
+          ...(lines.line6 > 0 && isEligible(input) &&
+              input.subject_to_passive_activity_limit
+            ? {
+              required_disabled_access_self_credit: {
+                source_document_reference: input.source_document_reference,
+                credit_amount: lines.line6,
+              },
+            }
+            : {}),
           f8826_credit_entries: [
-            ...(lines.line6 > 0 && isEligible(input)
+            ...(lines.line6 > 0 && isEligible(input) &&
+                !input.subject_to_passive_activity_limit
               ? [{
                 source_type: "self" as const,
                 credit_amount: lines.line6,
