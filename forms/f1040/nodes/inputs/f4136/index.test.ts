@@ -523,6 +523,121 @@ Deno.test("Form 4136: registered kerosene vendors use distinct line 7 source rou
   );
 });
 
+Deno.test("Form 4136: commercial aviation vendor lines 8a and 8b require Model Waiver L", () => {
+  const vendorBusiness = {
+    qualifying_business_activity: true,
+    business_name: "Example Aviation Vendor",
+    principal_activity_code: "424720",
+    equipment_make: "Example",
+    equipment_model: "Fuel Truck",
+    equipment_type: "aviation refueler",
+    sales_records_confirmed: true,
+    no_duplicate_excise_claim: true,
+  } as const;
+  const sale = {
+    sale_record_reference: "AV-001",
+    sale_date: "2025-06-12",
+    buyer_name: "Example Airline",
+    buyer_address: "10 Airport Road, Wilmington, DE 19801",
+    gallons: 100,
+    commercial_aviation_nonforeign_trade_confirmed: true as const,
+    waiver_l: {
+      kind: "single_purchase" as const,
+      record_reference: "Waiver L-001",
+      invoice_or_delivery_ticket_number: "AV-001",
+      waived_gallons: 100,
+      signed_by_buyer_confirmed: true as const,
+      held_unexpired_when_claimed_confirmed: true as const,
+    },
+  };
+  const base = {
+    unit: "gallons" as const,
+    qualified_quantity: 100,
+    actual_fuel_cost: 300,
+    vendor_registration_number: "UA123456789",
+    vendor_tax_settlement: "tax_excluded_price" as const,
+    aviation_vendor_sales: [sale],
+  };
+  const lowTax = {
+    ...base,
+    line: "8a" as const,
+    excise_tax_rate_per_gallon: 0.219,
+  };
+  const standardTax = {
+    ...base,
+    line: "8b" as const,
+    excise_tax_rate_per_gallon: 0.244,
+    aviation_vendor_sales: [{
+      ...sale,
+      sale_record_reference: "AV-002",
+      sale_date: "2025-07-15",
+      waiver_l: {
+        kind: "account_period" as const,
+        record_reference: "Waiver L-002",
+        account_or_order_number: "AIR-2025",
+        effective_date: "2025-07-01",
+        expiration_date: "2026-06-30",
+        signed_by_buyer_confirmed: true as const,
+        held_unexpired_when_claimed_confirmed: true as const,
+      },
+    }],
+  };
+  assertEquals(
+    parseInput({ business: vendorBusiness, claims: [lowTax, standardTax] })
+      .success,
+    true,
+  );
+  assertEquals(
+    compute({ business: vendorBusiness, claims: [lowTax, standardTax] })
+      .outputs[0].fields
+      .line12_fuel_tax_credit,
+    37.5,
+  );
+  assertEquals(
+    parseInput({
+      business: vendorBusiness,
+      claims: [lowTax, {
+        ...standardTax,
+        aviation_vendor_sales: [{
+          ...standardTax.aviation_vendor_sales[0],
+          sale_record_reference: "AV-001",
+        }],
+      }],
+    }).success,
+    false,
+  );
+  for (
+    const invalid of [
+      { ...lowTax, vendor_registration_number: "UV123456789" },
+      { ...lowTax, excise_tax_rate_per_gallon: 0.244 },
+      { ...lowTax, vendor_tax_settlement: undefined },
+      { ...lowTax, aviation_vendor_sales: [] },
+      {
+        ...lowTax,
+        aviation_vendor_sales: [{
+          ...sale,
+          waiver_l: { ...sale.waiver_l, waived_gallons: 99 },
+        }],
+      },
+      {
+        ...standardTax,
+        aviation_vendor_sales: [{
+          ...standardTax.aviation_vendor_sales[0],
+          waiver_l: {
+            ...standardTax.aviation_vendor_sales[0].waiver_l,
+            expiration_date: "2025-07-14",
+          },
+        }],
+      },
+    ]
+  ) {
+    assertEquals(
+      parseInput({ business: vendorBusiness, claims: [invalid] }).success,
+      false,
+    );
+  }
+});
+
 Deno.test("Form 4136: represented 2025 Part II rates are line-specific", () => {
   const cases = [
     ["1a", undefined, 18.3],

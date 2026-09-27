@@ -176,6 +176,8 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
     const l7a = onLine(input, "7a");
     const l7b = onLine(input, "7b");
     const l7c = onLine(input, "7c");
+    const l8a = onLine(input, "8a");
+    const l8b = onLine(input, "8b");
     const l14a = onLine(input, "14a");
     const l14b = onLine(input, "14b");
     const l15a = onLine(input, "15a");
@@ -461,6 +463,24 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
           l7c.length ? element("ActualFuelCostAmt", cost(l7c)) : "",
           l7c.length
             ? credit("SlsUndyedKrsnUseBusCrAmt", lineAmount(l7c), "347")
+            : "",
+        ]),
+        element(
+          "KeroseneForAvnRegistrationNum",
+          [...l8a, ...l8b][0]?.vendor_registration_number,
+        ),
+        elements("KrsnUseCmrclAvnTxdAt219Grp", [
+          element("SlsKrsnUsedInAvnTxd219GalsQty", qty(l8a)),
+          l8a.length ? element("ActualFuelCostAmt", cost(l8a)) : "",
+          l8a.length
+            ? credit("SlsKrsnUsedInAvnTxd219CrAmt", lineAmount(l8a), "355")
+            : "",
+        ]),
+        elements("KrsnUseCmrclAvnTxdAt244Grp", [
+          element("SlsKrsnUsedInAvnTxd244GalsQty", qty(l8b)),
+          l8b.length ? element("ActualFuelCostAmt", cost(l8b)) : "",
+          l8b.length
+            ? credit("SlsKrsnUsedInAvnTxd244CrAmt", lineAmount(l8b), "417")
             : "",
         ]),
         ...alternativeFuelTags.flatMap(

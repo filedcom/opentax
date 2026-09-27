@@ -540,6 +540,72 @@ Deno.test("Form 4136 XML separates line 7b blocked pump from line 7c bus sales",
   );
 });
 
+Deno.test("Form 4136 XML separates commercial aviation vendor tax rates on lines 8a and 8b", () => {
+  const vendor = {
+    ...activityContext,
+    business: {
+      qualifying_business_activity: true as const,
+      business_name: "Example Aviation Vendor",
+      principal_activity_code: "424720",
+      equipment_make: "Example",
+      equipment_model: "Fuel Truck",
+      equipment_type: "aviation refueler",
+      sales_records_confirmed: true as const,
+      no_duplicate_excise_claim: true as const,
+    },
+    claims: [
+      { line: "8a" as const, excise_tax_rate_per_gallon: 0.219 },
+      { line: "8b" as const, excise_tax_rate_per_gallon: 0.244 },
+    ].map((claim, index) => ({
+      ...claim,
+      unit: "gallons" as const,
+      qualified_quantity: 100,
+      actual_fuel_cost: 300,
+      vendor_registration_number: "UA123456789",
+      vendor_tax_settlement: "tax_excluded_price" as const,
+      aviation_vendor_sales: [{
+        sale_record_reference: index ? "AV-002" : "AV-001",
+        sale_date: index ? "2025-07-12" : "2025-06-12",
+        buyer_name: "Example Airline",
+        buyer_address: "10 Airport Road, Wilmington, DE 19801",
+        gallons: 100,
+        commercial_aviation_nonforeign_trade_confirmed: true as const,
+        waiver_l: {
+          kind: "single_purchase" as const,
+          record_reference: index ? "Waiver L-002" : "Waiver L-001",
+          invoice_or_delivery_ticket_number: index ? "AV-002" : "AV-001",
+          waived_gallons: 100,
+          signed_by_buyer_confirmed: true as const,
+          held_unexpired_when_claimed_confirmed: true as const,
+        },
+      }],
+    })),
+  };
+  const xml = form4136.build(vendor, {
+    pending: { schedule3: { line12_fuel_tax_credit: 37.5 } },
+  });
+  assertStringIncludes(
+    xml,
+    "<KeroseneForAvnRegistrationNum>UA123456789</KeroseneForAvnRegistrationNum>",
+  );
+  assertStringIncludes(
+    xml,
+    "<SlsKrsnUsedInAvnTxd219GalsQty>100</SlsKrsnUsedInAvnTxd219GalsQty>",
+  );
+  assertStringIncludes(
+    xml,
+    "<SlsKrsnUsedInAvnTxd244GalsQty>100</SlsKrsnUsedInAvnTxd244GalsQty>",
+  );
+  assertStringIncludes(
+    xml,
+    '<SlsKrsnUsedInAvnTxd219CrAmt creditReferenceNum="355">18</SlsKrsnUsedInAvnTxd219CrAmt>',
+  );
+  assertStringIncludes(
+    xml,
+    '<SlsKrsnUsedInAvnTxd244CrAmt creditReferenceNum="417">20</SlsKrsnUsedInAvnTxd244CrAmt>',
+  );
+});
+
 Deno.test("Form 4136 XML separates other-use and exported gasoline", () => {
   const xml = form4136.build({
     ...activityContext,

@@ -66,6 +66,8 @@ const creditReferenceNumber: Record<Line, string> = {
   "7a": "346",
   "7b": "346",
   "7c": "347",
+  "8a": "355",
+  "8b": "417",
   "11a": "419",
   "11b": "420",
   "11c": "421",
@@ -84,6 +86,7 @@ const page = (number: number) => `topmostSubform[0].Page${number}[0]`;
 function fieldPath(p: number, n: number): string {
   if (
     p === 1 && n <= 9 || p === 2 && (n === 84 || n === 99) ||
+    p === 3 && n === 1 ||
     p === 4 && (n === 102 || n === 124 || n === 125)
   ) {
     return `${page(p)}.f${p}_${n}[0]`;
@@ -201,6 +204,16 @@ function fieldPath(p: number, n: number): string {
         ? "ColE"
         : "";
     }
+  } else if (p === 3 && n >= 2 && n <= 49) {
+    table = "Table_Line8";
+    const index = Math.floor((n - 2) / 8);
+    line = `Line8${String.fromCharCode(97 + index)}`;
+    const offset = (n - 2) % 8;
+    column = offset === 3 || offset === 4
+      ? "ColD"
+      : offset === 5 || offset === 6
+      ? "ColE"
+      : "";
   } else if (p === 3 && n >= 79 && n <= 142) {
     table = "Table_Line11";
     const index = Math.floor((n - 79) / 8);
@@ -356,6 +369,13 @@ const fields: PdfFieldEntry[] = [
   text("line7c_quantity", 2, 110),
   ...moneyFields("line7c_cost", 2, 111),
   ...moneyFields("line7c_credit", 2, 113),
+  text("line8_registration_number", 3, 1),
+  text("line8a_quantity", 3, 4),
+  ...moneyFields("line8a_cost", 3, 5),
+  ...moneyFields("line8a_credit", 3, 7),
+  text("line8b_quantity", 3, 12),
+  ...moneyFields("line8b_cost", 3, 13),
+  ...moneyFields("line8b_credit", 3, 15),
   ...alternativeFuelLines.flatMap((line, index) => {
     const base = 79 + index * 8;
     return [
@@ -711,6 +731,8 @@ export function projectForm4136Fields(
       "7a",
       "7b",
       "7c",
+      "8a",
+      "8b",
       "14a",
       "14b",
       "15a",
@@ -750,6 +772,8 @@ export function projectForm4136Fields(
   putClaimGroup(out, input, ["6b"], "line6b");
   putClaimGroup(out, input, ["7a", "7b"], "line7");
   putClaimGroup(out, input, ["7c"], "line7c");
+  putClaimGroup(out, input, ["8a"], "line8a");
+  putClaimGroup(out, input, ["8b"], "line8b");
   putClaimGroup(out, input, ["14a"], "line14a");
   putClaimGroup(out, input, ["14b"], "line14b");
   putClaimGroup(out, input, ["15a"], "line15a");
@@ -760,6 +784,9 @@ export function projectForm4136Fields(
   )?.vendor_registration_number;
   out.line7_registration_number = allForm4136Claims(input).find((claim) =>
     claim.line === "7a" || claim.line === "7b" || claim.line === "7c"
+  )?.vendor_registration_number;
+  out.line8_registration_number = allForm4136Claims(input).find((claim) =>
+    claim.line === "8a" || claim.line === "8b"
   )?.vendor_registration_number;
   out.line15_registration_number = allForm4136Claims(input).find((claim) =>
     claim.line === "15a"

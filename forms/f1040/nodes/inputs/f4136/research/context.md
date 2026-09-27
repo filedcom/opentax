@@ -51,7 +51,16 @@ Government sales now also affirm that a state-issued credit card was not used.
 Lines 7a and 7b share the printed and MeF cost/credit group; line 7c has a
 separate $.17 group. Conflicting registrations on the one printed line 7 field
 are rejected. Source, XML, PDF, and local XSD cases are written but unrun;
-filled render and IRS business-rule review remain open. Vendor line 8 is open.
+filled render and IRS business-rule review remain open.
+Line 8a/8b commercial-aviation vendor claims now require a UA registration,
+sales records that reconcile to gallons and have distinct sale references,
+confirmed non-foreign-trade commercial
+aviation, kerosene taxed at $.219/$.244 respectively, tax settlement, and a
+retained, signed, unexpired Model Waiver L. The waiver source distinguishes a
+single invoice from an account period of no more than one year. Their native
+MeF groups and parent/Schedule A PDF widgets are mapped, with source, XML,
+local XSD, and PDF cases written but unrun. Noncommercial aviation lines
+8c-8f and IRS business-rule review remain open.
 Line 14a accepts the 2025 use codes for diesel-water emulsion and applies
 the reduced $.124 rate only to bus use (type 05); line 14b uses the export
 rate and requires retained proof. Both require the emulsion's water percentage

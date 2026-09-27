@@ -127,6 +127,18 @@ Deno.test("Form 4136 PDF maps page 1 business and page 4 total widgets", () => {
     "topmostSubform[0].Page2[0].Table_Line7[0].Line7c[0].ColE[0].f2_113[0]",
   );
   assertEquals(
+    names.line8_registration_number,
+    "topmostSubform[0].Page3[0].f3_1[0]",
+  );
+  assertEquals(
+    names.line8a_quantity,
+    "topmostSubform[0].Page3[0].Table_Line8[0].Line8a[0].f3_4[0]",
+  );
+  assertEquals(
+    names.line8b_credit_dollars,
+    "topmostSubform[0].Page3[0].Table_Line8[0].Line8b[0].ColE[0].f3_15[0]",
+  );
+  assertEquals(
     names.line11c_quantity,
     "topmostSubform[0].Page3[0].Table_Line11[0].Line11c[0].f3_97[0]",
   );
@@ -166,6 +178,54 @@ Deno.test("Form 4136 PDF maps page 1 business and page 4 total widgets", () => {
     names.line17_total_cents,
     "topmostSubform[0].Page4[0].f4_125[0]",
   );
+});
+
+Deno.test("Form 4136 PDF projects commercial aviation vendor lines 8a and 8b", () => {
+  const result = form4136Pdf.projectFields?.({
+    ...activityContext,
+    business: {
+      qualifying_business_activity: true,
+      business_name: "Example Aviation Vendor",
+      principal_activity_code: "424720",
+      equipment_make: "Example",
+      equipment_model: "Fuel Truck",
+      equipment_type: "aviation refueler",
+      sales_records_confirmed: true,
+      no_duplicate_excise_claim: true,
+    },
+    claims: [
+      { line: "8a", excise_tax_rate_per_gallon: 0.219 },
+      { line: "8b", excise_tax_rate_per_gallon: 0.244 },
+    ].map((claim, index) => ({
+      ...claim,
+      unit: "gallons",
+      qualified_quantity: 1_000,
+      actual_fuel_cost: 3_000,
+      vendor_registration_number: "UA123456789",
+      vendor_tax_settlement: "tax_excluded_price",
+      aviation_vendor_sales: [{
+        sale_record_reference: index ? "AV-002" : "AV-001",
+        sale_date: index ? "2025-07-12" : "2025-06-12",
+        buyer_name: "Example Airline",
+        buyer_address: "10 Airport Road, Wilmington, DE 19801",
+        gallons: 1_000,
+        commercial_aviation_nonforeign_trade_confirmed: true,
+        waiver_l: {
+          kind: "single_purchase",
+          record_reference: index ? "Waiver L-002" : "Waiver L-001",
+          invoice_or_delivery_ticket_number: index ? "AV-002" : "AV-001",
+          waived_gallons: 1_000,
+          signed_by_buyer_confirmed: true,
+          held_unexpired_when_claimed_confirmed: true,
+        },
+      }],
+    })),
+  }, { schedule3: { line12_fuel_tax_credit: 375 } });
+  assertEquals(result?.line8_registration_number, "UA123456789");
+  assertEquals(result?.line8a_quantity, 1_000);
+  assertEquals(result?.line8a_credit_dollars, "175");
+  assertEquals(result?.line8b_quantity, 1_000);
+  assertEquals(result?.line8b_credit_dollars, "200");
 });
 
 Deno.test("Form 4136 PDF maps line 7a government kerosene and appends buyers", async () => {
