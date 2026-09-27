@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   calculateForm3800Nonpassive,
   type Form8835CreditEntry,
+  ZERO_FORM3800_PASSIVE_ACTIVITY,
 } from "../../../nodes/inputs/f3800/calculation.ts";
 import { inputSchema as f3800InputSchema } from "../../../nodes/inputs/f3800/index.ts";
 import {
@@ -519,7 +520,10 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
       );
     }
     const tax = taxContextSchema.parse(fields.tax_context);
-    const lines = calculateForm3800Nonpassive(tax);
+    const lines = calculateForm3800Nonpassive(
+      tax,
+      ZERO_FORM3800_PASSIVE_ACTIVITY,
+    );
     if (!sameMoney(fields.allowed_credit, lines.line38)) {
       throw new Error(
         "Form 3800 allowed credit does not reconcile to finalized Part II",

@@ -11,6 +11,7 @@ import {
   deriveForm3800NonpassiveInput,
   type Form3800NonpassiveInput,
   type Form3800NonpassiveLines,
+  ZERO_FORM3800_PASSIVE_ACTIVITY,
 } from "../../inputs/f3800/calculation.ts";
 import {
   calculateForm8912IndividualLimit,
@@ -544,7 +545,10 @@ function businessCreditAllowance(
     schedule3Line6bPriorMinimumTax: schedule3.line6bPriorMinimumTax,
     form8912CreditInSchedule3Line7: schedule3.line6kBondCredit,
   }, credits);
-  const lines = calculateForm3800Nonpassive(tax);
+  const lines = calculateForm3800Nonpassive(
+    tax,
+    ZERO_FORM3800_PASSIVE_ACTIVITY,
+  );
   const originalSchedule3Credits = homebuyer?.schedule3Credits ??
     cleanVehicles?.schedule3Credits ?? electric?.schedule3Credits ??
     (input.line20_nonrefundable_credits ?? 0);

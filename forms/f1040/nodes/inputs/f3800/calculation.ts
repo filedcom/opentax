@@ -1,10 +1,4 @@
-/**
- * TY2025 Form 3800 Part II for individual, non-passive credits only.
- *
- * Source: https://www.irs.gov/pub/irs-pdf/f3800.pdf (2025, Part II lines 7-38)
- * The caller must separately classify Part III credits and exclude passive,
- * empowerment-zone, EPE, and other special-limit cases from this calculation.
- */
+/** TY2025 Form 3800 Part I and II for individual credits. */
 import { FilingStatus } from "../../types.ts";
 import { PassiveCreditReportingRoute } from "../../intermediate/forms/form8582cr/credit-route.ts";
 
@@ -15,6 +9,16 @@ export type Form3800PassiveActivityLines = {
   readonly line24: number;
   readonly line32: number;
   readonly line33: number;
+};
+
+/** Pass explicitly when a source has no passive activity credits. */
+export const ZERO_FORM3800_PASSIVE_ACTIVITY: Form3800PassiveActivityLines = {
+  line2: 0,
+  line3: 0,
+  line23: 0,
+  line24: 0,
+  line32: 0,
+  line33: 0,
 };
 
 /** Classify Form 8582-CR worksheet 9 source amounts into Form 3800's passive lines. */
@@ -94,6 +98,11 @@ export type Form3800NonpassiveInput =
   );
 
 export type Form3800NonpassiveLines = {
+  line1: number;
+  line2: number;
+  line3: number;
+  line4: number;
+  line5: number;
   line6: number;
   line7: number;
   line8: number;
@@ -108,9 +117,23 @@ export type Form3800NonpassiveLines = {
   line15: number;
   line16: number;
   line17: number;
+  line18: number;
+  line19: number;
+  line20: number;
+  line21: number;
+  line22: number;
+  line23: number;
+  line24: number;
+  line25: number;
+  line26: number;
   line27: number;
   line28: number;
   line29: number;
+  line30: number;
+  line32: number;
+  line33: number;
+  line34: number;
+  line35: number;
   line36: number;
   line37: number;
   line38: number;
@@ -209,6 +232,7 @@ export function deriveForm3800NonpassiveInput(
 
 export function calculateForm3800Nonpassive(
   input: Form3800NonpassiveInput,
+  passive: Form3800PassiveActivityLines,
 ): Form3800NonpassiveLines {
   for (
     const [name, amount] of Object.entries({
@@ -225,7 +249,27 @@ export function calculateForm3800Nonpassive(
       throw new Error(`Form 3800 ${name} must be a nonnegative finite amount`);
     }
   }
-  const line6 = input.standardCredit;
+  for (const [name, amount] of Object.entries(passive)) {
+    if (!Number.isSafeInteger(amount) || amount < 0) {
+      throw new Error(
+        `Form 3800 passive ${name} must be a nonnegative whole-dollar amount`,
+      );
+    }
+  }
+  if (
+    passive.line3 > passive.line2 || passive.line24 > passive.line23 ||
+    passive.line33 > passive.line32
+  ) {
+    throw new Error(
+      "Form 3800 passive allowed credit exceeds credit before limitation",
+    );
+  }
+  const line1 = input.standardCredit;
+  const line2 = passive.line2;
+  const line3 = passive.line3;
+  const line4 = 0;
+  const line5 = 0;
+  const line6 = line1 + line3 + line4 + line5;
   const line7 = input.regularTax;
   const line8 = input.alternativeMinimumTax;
   const line9 = line7 + line8;
@@ -243,12 +287,31 @@ export function calculateForm3800Nonpassive(
   const line15 = Math.max(line13, line14);
   const line16 = Math.max(0, line11 - line15);
   const line17 = Math.min(line6, line16);
+  const line18 = 0.75 * line14;
+  const line19 = Math.max(line13, line18);
+  const line20 = Math.max(0, line11 - line19);
+  const line21 = Math.max(0, line20 - line17);
+  const line22 = 0;
+  const line23 = passive.line23;
+  const line24 = passive.line24;
+  const line25 = line22 + line24;
+  const line26 = Math.min(line21, line25);
   const line27 = Math.max(0, line11 - line13);
-  const line28 = line17;
+  const line28 = line17 + line26;
   const line29 = Math.max(0, line27 - line28);
-  const line36 = input.specifiedCredit;
+  const line30 = input.specifiedCredit;
+  const line32 = passive.line32;
+  const line33 = passive.line33;
+  const line34 = 0;
+  const line35 = 0;
+  const line36 = line30 + line33 + line34 + line35;
   const line37 = Math.min(line29, line36);
   return {
+    line1,
+    line2,
+    line3,
+    line4,
+    line5,
     line6,
     line7,
     line8,
@@ -263,9 +326,23 @@ export function calculateForm3800Nonpassive(
     line15,
     line16,
     line17,
+    line18,
+    line19,
+    line20,
+    line21,
+    line22,
+    line23,
+    line24,
+    line25,
+    line26,
     line27,
     line28,
     line29,
+    line30,
+    line32,
+    line33,
+    line34,
+    line35,
     line36,
     line37,
     line38: line28 + line37,

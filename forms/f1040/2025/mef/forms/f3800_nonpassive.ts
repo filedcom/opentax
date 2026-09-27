@@ -4,6 +4,7 @@ import {
   classifyForm8835Credits,
   type Form3800NonpassiveInput,
   type Form8835CreditEntry,
+  ZERO_FORM3800_PASSIVE_ACTIVITY,
 } from "../../../nodes/inputs/f3800/calculation.ts";
 import {
   calculateForm8826,
@@ -325,7 +326,10 @@ export function buildIRS3800Nonpassive(
     }
     return id;
   });
-  const lines = calculateForm3800Nonpassive(input.tax);
+  const lines = calculateForm3800Nonpassive(
+    input.tax,
+    ZERO_FORM3800_PASSIVE_ACTIVITY,
+  );
   const form8826Sources: Form8826PartVSource[] = input.form8826 &&
       form8826Lines
     ? [

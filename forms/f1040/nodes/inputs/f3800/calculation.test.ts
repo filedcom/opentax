@@ -11,6 +11,7 @@ import {
   classifyForm3800PassiveCredits,
   classifyForm8835Credits,
   deriveForm3800NonpassiveInput,
+  ZERO_FORM3800_PASSIVE_ACTIVITY,
 } from "./calculation.ts";
 
 Deno.test("Form 3800: classifies allowed passive credit into lines 3, 24, and 33", () => {
@@ -195,18 +196,21 @@ Deno.test("Form 3800 Part II: MFS threshold depends on spouse business credit", 
     ...base,
     filingStatus: FilingStatus.MFS,
     spouseHasBusinessCredit: true,
-  });
+  }, ZERO_FORM3800_PASSIVE_ACTIVITY);
   const withoutSpouseCredit = calculateForm3800Nonpassive({
     ...base,
     filingStatus: FilingStatus.MFS,
     spouseHasBusinessCredit: false,
-  });
+  }, ZERO_FORM3800_PASSIVE_ACTIVITY);
   assertEquals(withSpouseCredit.line13, 1_875);
   assertEquals(withoutSpouseCredit.line13, 0);
 });
 
 Deno.test("Form 3800 Part II: ordinary credit cannot exceed tax above TMT", () => {
-  const result = calculateForm3800Nonpassive(input({ standardCredit: 30_000 }));
+  const result = calculateForm3800Nonpassive(
+    input({ standardCredit: 30_000 }),
+    ZERO_FORM3800_PASSIVE_ACTIVITY,
+  );
   assertEquals(result.line13, 3_750);
   assertEquals(result.line15, 20_000);
   assertEquals(result.line16, 20_000);
@@ -216,10 +220,13 @@ Deno.test("Form 3800 Part II: ordinary credit cannot exceed tax above TMT", () =
 });
 
 Deno.test("Form 3800 Part II: specified credit reaches section C after ordinary credit", () => {
-  const result = calculateForm3800Nonpassive(input({
-    standardCredit: 30_000,
-    specifiedCredit: 15_000,
-  }));
+  const result = calculateForm3800Nonpassive(
+    input({
+      standardCredit: 30_000,
+      specifiedCredit: 15_000,
+    }),
+    ZERO_FORM3800_PASSIVE_ACTIVITY,
+  );
   assertEquals(result.line17, 20_000);
   assertEquals(result.line27, 36_250);
   assertEquals(result.line29, 16_250);
@@ -228,12 +235,15 @@ Deno.test("Form 3800 Part II: specified credit reaches section C after ordinary 
 });
 
 Deno.test("Form 3800 Part II: foreign and prior credits reduce net income tax", () => {
-  const result = calculateForm3800Nonpassive(input({
-    foreignTaxCredit: 3_000,
-    priorAllowableCredits: 10_000,
-    tentativeMinimumTax: 5_000,
-    standardCredit: 30_000,
-  }));
+  const result = calculateForm3800Nonpassive(
+    input({
+      foreignTaxCredit: 3_000,
+      priorAllowableCredits: 10_000,
+      tentativeMinimumTax: 5_000,
+      standardCredit: 30_000,
+    }),
+    ZERO_FORM3800_PASSIVE_ACTIVITY,
+  );
   assertEquals(result.line10c, 13_000);
   assertEquals(result.line11, 27_000);
   assertEquals(result.line12, 27_000);
@@ -242,13 +252,16 @@ Deno.test("Form 3800 Part II: foreign and prior credits reduce net income tax", 
 });
 
 Deno.test("Form 3800 Part II: no net income tax allows no business credit", () => {
-  const result = calculateForm3800Nonpassive(input({
-    regularTax: 5_000,
-    foreignTaxCredit: 5_000,
-    tentativeMinimumTax: 0,
-    standardCredit: 4_000,
-    specifiedCredit: 3_000,
-  }));
+  const result = calculateForm3800Nonpassive(
+    input({
+      regularTax: 5_000,
+      foreignTaxCredit: 5_000,
+      tentativeMinimumTax: 0,
+      standardCredit: 4_000,
+      specifiedCredit: 3_000,
+    }),
+    ZERO_FORM3800_PASSIVE_ACTIVITY,
+  );
   assertEquals(result.line11, 0);
   assertEquals(result.line38, 0);
   assertEquals(result.unusedStandardCredit, 4_000);
@@ -256,25 +269,92 @@ Deno.test("Form 3800 Part II: no net income tax allows no business credit", () =
 });
 
 Deno.test("Form 3800 Part II: AMT and TMT are distinct inputs", () => {
-  const result = calculateForm3800Nonpassive(input({
-    regularTax: 20_000,
-    alternativeMinimumTax: 5_000,
-    tentativeMinimumTax: 25_000,
-    standardCredit: 1_000,
-    specifiedCredit: 1_000,
-  }));
+  const result = calculateForm3800Nonpassive(
+    input({
+      regularTax: 20_000,
+      alternativeMinimumTax: 5_000,
+      tentativeMinimumTax: 25_000,
+      standardCredit: 1_000,
+      specifiedCredit: 1_000,
+    }),
+    ZERO_FORM3800_PASSIVE_ACTIVITY,
+  );
   assertEquals(result.line8, 5_000);
   assertEquals(result.line14, 25_000);
   assertEquals(result.line17, 0);
   assertEquals(result.line37, 1_000);
 });
 
+Deno.test("Form 3800 Part II: passive standard, empowerment, and specified credits use their separate limits", () => {
+  const result = calculateForm3800Nonpassive(
+    input({
+      standardCredit: 1_000,
+      specifiedCredit: 3_000,
+    }),
+    {
+      line2: 4_000,
+      line3: 2_000,
+      line23: 9_000,
+      line24: 5_000,
+      line32: 12_000,
+      line33: 7_000,
+    },
+  );
+  assertEquals(result.line6, 3_000);
+  assertEquals(result.line17, 3_000);
+  assertEquals(result.line18, 15_000);
+  assertEquals(result.line21, 22_000);
+  assertEquals(result.line25, 5_000);
+  assertEquals(result.line26, 5_000);
+  assertEquals(result.line28, 8_000);
+  assertEquals(result.line29, 28_250);
+  assertEquals(result.line36, 10_000);
+  assertEquals(result.line37, 10_000);
+  assertEquals(result.line38, 18_000);
+});
+
+Deno.test("Form 3800 Part II: empowerment credit is limited after standard credit", () => {
+  const result = calculateForm3800Nonpassive(
+    input({
+      standardCredit: 20_000,
+    }),
+    {
+      ...ZERO_FORM3800_PASSIVE_ACTIVITY,
+      line23: 10_000,
+      line24: 10_000,
+    },
+  );
+  assertEquals(result.line17, 20_000);
+  assertEquals(result.line21, 5_000);
+  assertEquals(result.line26, 5_000);
+  assertEquals(result.line38, 25_000);
+});
+
+Deno.test("Form 3800 Part II: rejects passive credit exceeding its before-limit line", () => {
+  assertThrows(
+    () =>
+      calculateForm3800Nonpassive(input(), {
+        ...ZERO_FORM3800_PASSIVE_ACTIVITY,
+        line23: 99,
+        line24: 100,
+      }),
+    Error,
+    "exceeds credit before limitation",
+  );
+});
+
 Deno.test("Form 3800 Part II: rejects negative and nonfinite source amounts", () => {
   assertThrows(() =>
-    calculateForm3800Nonpassive(input({ standardCredit: -1 }))
+    calculateForm3800Nonpassive(
+      input({ standardCredit: -1 }),
+      ZERO_FORM3800_PASSIVE_ACTIVITY,
+    )
   );
   assertThrows(() =>
-    calculateForm3800Nonpassive(input({ regularTax: Number.NaN }))
+    calculateForm3800Nonpassive(
+      input({ regularTax: Number.NaN }),
+      ZERO_FORM3800_PASSIVE_ACTIVITY,
+    )
   );
 });
 
