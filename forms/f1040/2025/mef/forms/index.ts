@@ -9,7 +9,7 @@ import { form1116 } from "./f1116.ts";
 import { form1116DirectExpenseStatement } from "./f1116_direct_expense_statement.ts";
 import { form2441 } from "./f2441.ts";
 import { form2555 } from "./f2555.ts";
-import { form3800Unregistered } from "./f3800_unregistered.ts";
+import { form3800 } from "./f3800.ts";
 import { form4137 } from "./f4137.ts";
 import { form4562 } from "./f4562.ts";
 import { form461 } from "./f461.ts";
@@ -117,8 +117,8 @@ export const ALL_MEF_FORMS = [
   form2441,
   // Form 2555
   form2555,
-  // Form 3800 remains fail-closed while its XML source bundle is unfinished.
-  form3800Unregistered,
+  // Form 3800 is one document after Form 2555 in ReturnData1040.xsd.
+  form3800,
   // Form 4137
   form4137,
   // Form 4562
