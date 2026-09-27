@@ -6,7 +6,7 @@ import {
   type NodeResult,
   TaxNode,
 } from "../../../../core/types/tax-node.ts";
-import { filingStatusSchema } from "../../nodes/types.ts";
+import { identityInputSchema } from "../identity.ts";
 import { calculateDeductions2026 } from "../deductions.ts";
 import { calculateSettlement2026 } from "../settlement.ts";
 import { schedule3a } from "./schedule3a.ts";
@@ -14,8 +14,7 @@ import { schedule3a } from "./schedule3a.ts";
 const amount = z.number().finite().nonnegative();
 
 /** TY2026 Form 1040 core return lines. Inputs are final upstream amounts. */
-export const inputSchema = z.object({
-  filing_status: filingStatusSchema,
+export const inputSchema = identityInputSchema.extend({
   line1a_wages: amount.optional(),
   line1c_unreported_tips: amount.optional(),
   line1i_combat_pay: amount.optional(),
@@ -64,6 +63,15 @@ class F10402026Node extends TaxNode<typeof inputSchema> {
       throw new Error("TY2026 Form 1040 node requires f1040:2026 context");
     }
     const input = inputSchema.parse(rawInput);
+    if (
+      input.dependent_count > 0 ||
+      input.qualifying_child_tax_credit_count > 0 ||
+      input.other_dependent_count > 0
+    ) {
+      throw new Error(
+        "TY2026 dependents need the 2026 child-credit finalization path",
+      );
+    }
     if (input.credit_limit_schedule2_line1z > 0) {
       throw new Error(
         "TY2026 Schedule 2 credit-limit tax needs the 2026 credit finalization path",
@@ -113,6 +121,7 @@ class F10402026Node extends TaxNode<typeof inputSchema> {
     const outputs: NodeOutput[] = [{
       nodeType: this.nodeType,
       fields: {
+        ...identityInputSchema.parse(input),
         line1a_wages: input.line1a_wages,
         line1c_unreported_tips: input.line1c_unreported_tips,
         line1i_combat_pay: input.line1i_combat_pay,

@@ -73,6 +73,20 @@ Deno.test("TY2026 1040 rejects unfinalized Schedule 2 credit-limit tax", () => {
   );
 });
 
+Deno.test("TY2026 1040 rejects dependents until the credit path is finalized", () => {
+  assertThrows(
+    () =>
+      f1040_2026_node.compute(context, {
+        filing_status: FilingStatus.Single,
+        line9_total_income: 80_000,
+        deduction_method: "standard",
+        dependent_count: 1,
+      }),
+    Error,
+    "child-credit finalization path",
+  );
+});
+
 Deno.test("TY2026 1040 allocates refund and rejects declining a claimed EIC", () => {
   const base = {
     filing_status: FilingStatus.Single,

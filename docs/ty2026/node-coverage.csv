@@ -18,7 +18,7 @@ f2441,forms/f1040/nodes/inputs/f2441/index.ts,inputs,0,yes,yes,yes,yes,P2,audit-
 f8812,forms/f1040/nodes/inputs/f8812/index.ts,inputs,0,yes,yes,no,n/a,P0,audit-required,"verify 2026 law, node outputs, and graph route"
 f8863,forms/f1040/nodes/inputs/f8863/index.ts,inputs,4,no,yes,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 f8949,forms/f1040/nodes/inputs/f8949/index.ts,inputs,0,no,yes,yes,yes,P2,audit-required,"verify 2026 law, node outputs, and graph route"
-general,forms/f1040/nodes/inputs/general/index.ts,inputs,4,yes,no,no,n/a,P0,audit-required,dependent ages and qualifying-relative income updated; audit other fields
+general,forms/f1040/nodes/inputs/general/index.ts,inputs,4,yes,no,no,n/a,P0,audit-required,"2026 ages, relative limit, and no-dependent identity graph updated; audit credits"
 k1_trust,forms/f1040/nodes/inputs/k1_trust/index.ts,inputs,0,no,no,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"
 k1_s_corp,forms/f1040/nodes/inputs/k1_s_corp/index.ts,inputs,0,no,no,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"
 k1_partnership,forms/f1040/nodes/inputs/k1_partnership/index.ts,inputs,0,no,no,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"

@@ -16,7 +16,7 @@ REGISTRY = ROOT / "forms/f1040/2025/registry.ts"
 # A node stays unverified until its 2026 behavior, outputs, and form route are
 # checked. These notes identify work already started without marking it done.
 NODE_PROGRESS = {
-    "general": "dependent ages and qualifying-relative income updated; audit other fields",
+    "general": "2026 ages, relative limit, and no-dependent identity graph updated; audit credits",
     "w2": "2026 SIMPLE/deferral limits and TP/TT routing updated; audit remaining outputs",
     "auto_expense": "2026 business mileage periods updated; audit remaining rules",
     "f2106": "2026 business mileage and AGI limit updated; audit remaining rules",

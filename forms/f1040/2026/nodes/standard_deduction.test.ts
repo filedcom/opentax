@@ -8,6 +8,7 @@ import { schedule1a } from "../../nodes/intermediate/forms/schedule1a/index.ts";
 import { form4137 } from "../../nodes/intermediate/forms/form4137/index.ts";
 import { schedule2 } from "../../nodes/intermediate/aggregation/schedule2/index.ts";
 import { w2, w2ItemSchema } from "../../nodes/inputs/w2/index.ts";
+import { general } from "../../nodes/inputs/general/index.ts";
 import { income_tax_calculation } from "../../nodes/intermediate/worksheets/income_tax_calculation/index.ts";
 import { FilingStatus } from "../../nodes/types.ts";
 import { f1040_2026_node } from "./f1040.ts";
@@ -220,6 +221,44 @@ Deno.test("2026 W-2 inputs reach wages, withholding, AGI, tax, and refund", () =
   assertEquals(result.pending.f1040.line16_income_tax, 8_770);
   assertEquals(result.pending.f1040.line25a_w2_withheld, 10_000);
   assertEquals(result.pending.f1040.line35a_refund, 1_230);
+});
+
+Deno.test("2026 general filer facts reach Form 1040 and deduction choice", () => {
+  const start = buildStartNode([
+    { node: general, inputSchema: general.inputSchema, isArray: false },
+    { node: w2, itemSchema: w2ItemSchema, isArray: true },
+  ]);
+  const registry: NodeRegistry = {
+    start,
+    general,
+    w2,
+    agi_aggregator,
+    schedule1a,
+    standard_deduction: standard_deduction_2026,
+    income_tax_calculation,
+    f1040: f1040_2026_node,
+    schedule3a,
+  };
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: {
+      filing_status: FilingStatus.Single,
+      taxpayer_first_name: "Ada",
+      taxpayer_last_name: "Rivera",
+      taxpayer_ssn: "111223333",
+      taxpayer_dob: "1990-07-12",
+      address_line1: "10 Main St",
+      address_city: "Boston",
+      address_state: "MA",
+      address_zip: "02108",
+    },
+    w2: [{ box1_wages: 80_000, box2_fed_withheld: 10_000 }],
+  }, context);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040.taxpayer_first_name, "Ada");
+  assertEquals(result.pending.f1040.taxpayer_last_name, "Rivera");
+  assertEquals(result.pending.f1040.address_zip, "02108");
+  assertEquals(result.pending.f1040.line9_total_income, 80_000);
+  assertEquals(result.pending.f1040.line12e_standard_or_itemized, 16_100);
 });
 
 Deno.test("2026 Schedule 1-A line 44 reduces taxable income in graph", () => {

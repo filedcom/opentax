@@ -532,7 +532,7 @@ function buildF1040Input(
   const counts = dependentCounts(deps, filer, taxYear);
 
   const fields: Record<string, unknown> = {
-    filing_status: input.filing_status,
+    ...(taxYear !== 2026 && { filing_status: input.filing_status }),
     dependent_count: counts.dependent_count,
     qualifying_child_tax_credit_count: counts.qualifying_child_tax_credit_count,
     other_dependent_count: counts.other_dependent_count,
@@ -726,9 +726,9 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
     };
     const f1040Input = buildF1040Input(effectiveInput, ctx.taxYear);
 
-    const sdInput: Record<string, unknown> = {
-      filing_status: parsed.filing_status,
-    };
+    const sdInput: Record<string, unknown> = ctx.taxYear === 2026
+      ? {}
+      : { filing_status: parsed.filing_status };
     if (taxpayerAge65 !== undefined) {
       sdInput["taxpayer_age_65_or_older"] = taxpayerAge65;
     }
@@ -778,12 +778,14 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
         f1040,
         f1040Input as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>,
       ),
-      this.outputNodes.output(
-        standard_deduction,
-        sdInput as AtLeastOne<
-          z.infer<typeof standard_deduction["inputSchema"]>
-        >,
-      ),
+      ...(Object.keys(sdInput).length > 0
+        ? [this.outputNodes.output(
+          standard_deduction,
+          sdInput as AtLeastOne<
+            z.infer<typeof standard_deduction["inputSchema"]>
+          >,
+        )]
+        : []),
       this.outputNodes.output(eitc, {
         filing_status: parsed.filing_status,
         filer_has_valid_ssns: filer.eitc,

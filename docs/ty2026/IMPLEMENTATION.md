@@ -79,8 +79,13 @@ node and the final 1040 derive the same AGI. A graph test reaches the 2026
 additional income. It does not yet include the full W-2/general input graph.
 The focused graph now accepts multiple actual W-2 input records and reaches
 1040 wages, tax, withholding, and refund. The shared W-2 node's 2026 config
-tests also cover retirement limits. The general identity input and the rest of
-the W-2 downstream form branches are still outside this calculation slice.
+tests also cover retirement limits. The remaining W-2 downstream form
+branches are still outside this calculation slice.
+The shared general input now reaches the focused TY2026 graph for a filer
+without dependents. The 2026 Form 1040 node preserves filer identity and
+address fields; AGI and deduction resolution supply one filing-status value
+to avoid duplicate graph inputs. Returns with dependents explicitly fail at
+the 2026 final node until child-credit finalization is implemented.
 The shared Schedule 1-A node now emits its 2026 line 15/27/36/43/44 results
 and sends lines 43/44 to the 2026 deduction node. AGI adds Form 2555 amounts
 back for Schedule 1-A MAGI in 2026. W-2 code TP/TT records now feed employee
