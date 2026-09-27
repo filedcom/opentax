@@ -9,11 +9,11 @@ import { TaxNode } from "../../../../core/types/tax-node.ts";
 import {
   inputSchema as sharedSchedule3InputSchema,
 } from "../../nodes/intermediate/aggregation/schedule3/index.ts";
-import { f1040_2026_node } from "./f1040.ts";
-import { f8812_2026 } from "./f8812.ts";
+import { credit_resolution_2026 } from "./credit_resolution.ts";
 
 const amount = z.number().finite().nonnegative();
 export const schedule3Input2026Schema = sharedSchedule3InputSchema.omit({
+  line5a_residential_clean_energy: true,
   line5b_energy_efficient_home: true,
 }).extend({
   line13a_form2439: amount.optional(),
@@ -58,7 +58,7 @@ export function calculateSchedule3_2026(input: Input) {
     (input.line2_childcare_credit ?? 0) +
     (input.line3_education_credit ?? 0) +
     (input.line4_retirement_savings_credit ?? 0) +
-    (input.line5a_residential_clean_energy ?? 0) + line7;
+    line7;
   const line14 = (input.line13a_form2439 ?? 0) +
     (input.line13b_section1341 ?? 0) +
     (input.line13c_form3800_elective_payment ?? 0) +
@@ -75,7 +75,7 @@ export function calculateSchedule3_2026(input: Input) {
 class Schedule3Node2026 extends TaxNode<typeof schedule3Input2026Schema> {
   readonly nodeType = "schedule3";
   readonly inputSchema = schedule3Input2026Schema;
-  readonly outputNodes = new OutputNodes([f1040_2026_node, f8812_2026]);
+  readonly outputNodes = new OutputNodes([credit_resolution_2026]);
 
   compute(
     ctx: NodeContext,
@@ -100,32 +100,30 @@ class Schedule3Node2026 extends TaxNode<typeof schedule3Input2026Schema> {
       throw new Error("TY2026 Schedule 3 other credit needs a description");
     }
     const lines = calculateSchedule3_2026(input);
-    const outputs: NodeOutput[] = [this.outputNodes.output(f8812_2026, {
-      auto_schedule3_credit_lines: {
-        schedule3_line1: lines.line1,
-        schedule3_line2: input.line2_childcare_credit ?? 0,
-        schedule3_line3: input.line3_education_credit ?? 0,
-        schedule3_line4: input.line4_retirement_savings_credit ?? 0,
-        schedule3_line6d: input.line6d_elderly_disabled_credit ?? 0,
-        schedule3_line6f: lines.line6f,
-        schedule3_line6l: input.line6l_form8978_credit ?? 0,
-        schedule3_line6m: lines.line6m,
-        schedule3_line5a: input.line5a_residential_clean_energy ?? 0,
-        schedule3_line6c: input.line6c_adoption_credit ?? 0,
-        schedule3_line6g: input.line6g_mortgage_interest_credit ?? 0,
-        schedule3_line6h: input.line6h_dc_homebuyer_credit ?? 0,
+    const outputs: NodeOutput[] = [this.outputNodes.output(
+      credit_resolution_2026,
+      {
+        schedule3_base: {
+          line1_total: lines.line1,
+          line2_childcare_credit: input.line2_childcare_credit ?? 0,
+          line3_education_credit: input.line3_education_credit ?? 0,
+          line4_retirement_savings_credit:
+            input.line4_retirement_savings_credit ?? 0,
+          line6c_adoption_credit: input.line6c_adoption_credit ?? 0,
+          line6d_elderly_disabled_credit:
+            input.line6d_elderly_disabled_credit ?? 0,
+          line6f_clean_vehicle_credit: lines.line6f,
+          line6g_mortgage_interest_credit:
+            input.line6g_mortgage_interest_credit ?? 0,
+          line6h_dc_homebuyer_credit: input.line6h_dc_homebuyer_credit ?? 0,
+          line6l_form8978_credit: input.line6l_form8978_credit ?? 0,
+          line6m_prev_owned_clean_vehicle_credit: lines.line6m,
+          line8_before_form5695: lines.line8,
+          line15_total: lines.line15,
+        },
       },
-    })];
+    )];
     if (lines.line8 > 0 || lines.line15 > 0) {
-      outputs.push(this.outputNodes.output(
-        f1040_2026_node,
-        lines.line8 > 0
-          ? {
-            line20_nonrefundable_credits: lines.line8,
-            ...(lines.line15 > 0 && { line31_other_payments: lines.line15 }),
-          }
-          : { line31_other_payments: lines.line15 },
-      ));
       outputs.push({
         nodeType: this.nodeType,
         fields: {

@@ -16,6 +16,10 @@ see [the Schedule H contract](../../../docs/ty2026/SCHEDULEH-GRAPH.md).
 14 and 2026 Form 5695 lines 1–4 in the required order. It still needs
 source-node inputs and graph execution before a carryforward return can
 produce the existing Form 5695 PDF from calculated facts.
+The registered `credit_resolution` node now receives the pre-5695 Schedule 3
+amounts and sends their totals to Form 1040 and Schedule 8812. Schedule 3
+line 5a can no longer be injected into that upstream node. Carryforward and
+tax sources still need to enter this stage before it can finalize line 5a.
 
 The first executable 2026 calculation is `settlement.ts`: it assembles 1040
 lines 24a–c and 32a–c, Schedule 3-A Part I/II, payments, refund, and amount
