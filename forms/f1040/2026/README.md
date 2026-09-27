@@ -38,6 +38,9 @@ repayment, affordability, and FPL paths, with boundary tests. These pieces
 still require final output wiring and instruction reconciliation.
 The shared Form 2441 calculations now select explicit TY2026 employer benefit
 limits and credit rates; their 2026 output mappings remain to build.
+The [Form 2441 contract](../../../docs/ty2026/FORM2441-GRAPH.md) uses the
+pinned draft instructions to specify provider/benefit facts, the pre-AGI
+benefit stage, post-AGI credit stage, and the full attachment work.
 The `forms/f1040/nodes/config/2026-indexed.ts` module contains all 111 TY2026
 config members, including the distinct MFS QBI threshold and standard/enhanced
 SIMPLE plan limits. `forms/f1040/nodes/config/2026.ts` registers the complete
