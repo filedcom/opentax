@@ -259,6 +259,82 @@ Deno.test("Form 3800 XML: multiple Form 8826 K-1 sources need exact Part V appli
   );
 });
 
+Deno.test("Form 3800 XML: whole-dollar Form 8826 Part V rows reconcile after source rounding", () => {
+  const xml = buildIRS3800Nonpassive({
+    tax: {
+      ...tax,
+      regularTax: 20_002,
+      tentativeMinimumTax: 20_000,
+      standardCredit: 4.47,
+      specifiedCredit: 0,
+    },
+    form8826: {
+      source: {
+        eligible_expenditures: 0,
+        subject_to_passive_activity_limit: false,
+        pass_through_credits: [
+          {
+            entity_type: "partnership",
+            entity_ein: "111111111",
+            credit_amount: 1.49,
+            subject_to_passive_activity_limit: false,
+          },
+          {
+            entity_type: "partnership",
+            entity_ein: "222222222",
+            credit_amount: 1.49,
+            subject_to_passive_activity_limit: false,
+          },
+          {
+            entity_type: "partnership",
+            entity_ein: "333333333",
+            credit_amount: 1.49,
+            subject_to_passive_activity_limit: false,
+          },
+        ],
+      },
+      appliedCredit: 2,
+      appliedCreditsBySource: [0.49, 1.49, 0.02],
+    },
+    facilities: [],
+    form8835DocumentIds: [],
+    appliedCreditsByFacility: [],
+    transferStatementIdsByFileName: {},
+  });
+  const rows = [
+    ...xml.matchAll(
+      /<Frm8826CYAggrgtAmtGrp[^>]*>(.*?)<\/Frm8826CYAggrgtAmtGrp>/g,
+    ),
+  ]
+    .map((match) => match[1]);
+  assertEquals(rows.length, 3);
+  const amount = (row: string, tag: string): number => {
+    const match = row.match(new RegExp(`<${tag}>(\\d+)</${tag}>`));
+    if (!match) throw new Error(`Missing ${tag}`);
+    return Number(match[1]);
+  };
+  const credits = rows.map((row) => amount(row, "TotalGeneralBusCreditsAmt"));
+  const applied = rows.map((row) =>
+    amount(row, "TotalGBCLessGrossEPEAppTxAmt")
+  );
+  const remaining = rows.map((row) =>
+    amount(row, "CarryforwardGeneralBusCrAmt")
+  );
+  assertEquals(credits, [2, 1, 1]);
+  assertEquals(applied, [1, 1, 0]);
+  assertEquals(remaining, [1, 0, 1]);
+  assertEquals(credits.reduce((sum, value) => sum + value, 0), 4);
+  assertEquals(applied.reduce((sum, value) => sum + value, 0), 2);
+  assertStringIncludes(
+    xml,
+    "<TotalGeneralBusCreditsAmt>4</TotalGeneralBusCreditsAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<CurrentYearCreditAllowedAmt>2</CurrentYearCreditAllowedAmt>",
+  );
+});
+
 Deno.test("Form 3800 XML: self-earned credit needs Form 8826 document, pass-through-only credit must omit it", () => {
   const base = {
     tax: { ...tax, standardCredit: 1_250, specifiedCredit: 0 },
