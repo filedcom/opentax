@@ -91,11 +91,61 @@ Deno.test("Form 8820 MeF links its controlled-group calculation statement", () =
     xml,
     "<ReducedSection280CCrElectAmt>19750</ReducedSection280CCrElectAmt>",
   );
-  const statement = form8820ControlledGroupStatement.build({}, { pending });
-  assertStringIncludes(statement, "<ControlledGroupMembersStmt>");
-  assertStringIncludes(statement, "aggregate qualified expenses: 300000");
-  assertStringIncludes(statement, "Related business (987654321)");
-  assertStringIncludes(statement, "credit share 39500");
+  const statements = form8820ControlledGroupStatement.build({}, { pending });
+  assertEquals(statements.length, 1);
+  assertStringIncludes(statements[0], "<ControlledGroupMembersStmt>");
+  assertStringIncludes(statements[0], "aggregate qualified expenses: 300000");
+  assertStringIncludes(statements[0], "Related business (987654321)");
+  assertStringIncludes(statements[0], "credit share 39500");
+});
+
+Deno.test("Form 8820 MeF links every statement for a large controlled group", () => {
+  const members = [
+    {
+      ein: "123456789",
+      business_name: "Taxpayer business",
+      qualified_clinical_testing_expenses: 100_000,
+    },
+    ...Array.from({ length: 30 }, (_, index) => ({
+      ein: String(200_000_000 + index),
+      business_name: `Related business ${index + 1}`,
+      qualified_clinical_testing_expenses: 100_000,
+    })),
+  ];
+  const grouped = {
+    ...source,
+    controlled_group: {
+      group_classification_document_reference: "Section 41(f)(1)(B) analysis",
+      taxpayer_member_ein: "123456789",
+      members,
+    },
+  };
+  const statements = form8820ControlledGroupStatement.build({}, {
+    pending: { f8820: grouped },
+  });
+  assertEquals(statements.length > 1, true);
+  assertEquals(
+    statements.every((xml) =>
+      xml.match(/<ShortExplanationTxt>(.*?)<\/ShortExplanationTxt>/)?.[1]
+        .length! <=
+        1000
+    ),
+    true,
+  );
+  const statementIds = statements.map((_, index) =>
+    `ControlledGroupMembersStmt${index + 1}`
+  );
+  const xml = form8820.build(grouped, {
+    documentIdsByPendingKey: {
+      f3800: ["IRS3800_1"],
+      f8820_controlled_group_statement: statementIds,
+    },
+  });
+  assertStringIncludes(
+    xml,
+    `referenceDocumentId="${statementIds.join(" ")}"`,
+  );
+  assertStringIncludes(statements.join(""), "Related business 30");
 });
 
 Deno.test("Form 8820 MeF requires the linked Form 3800 and any expense statement", () => {

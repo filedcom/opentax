@@ -87,13 +87,13 @@ Deno.test({
     subject_to_passive_activity_limit: false,
   };
   const documents = [{
-    xml: buildForm8820Document(source, "ControlledGroupMembersStmt1"),
+    xml: buildForm8820Document(source, ["ControlledGroupMembersStmt1"]),
     schema: XSD_PATH,
     root: "IRS8820",
   }, {
     xml: form8820ControlledGroupStatement.build({}, {
       pending: { f8820: source },
-    }),
+    })[0],
     schema: STATEMENT_XSD_PATH,
     root: "ControlledGroupMembersStmt",
   }];

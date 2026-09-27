@@ -200,8 +200,9 @@ aggregate credit by member expenses with whole-dollar reconciliation, and
 links a native `ControlledGroupMembersStmt` to Form 8820 line 2a. The PDF
 builder now marks line 2a "See Attached" and appends the member calculation.
 Source, MeF, local XSD, and PDF-builder cases are written but unrun, and the
-filled PDF has not been visually verified. Groups whose statement exceeds the
-IRS 1,000-character XML field still stop instead of truncating members.
+filled PDF has not been visually verified. Larger groups now use multiple
+1,000-character native statement documents with all IDs linked to Form 8820;
+the multi-document case is written but unrun.
 Passive credits, K-1 document reconciliation, eligibility-document verification,
 filled-PDF verification, and IRS business rules remain open. The reduced-credit
 election now retains an IRS8820 document and paper form even with no
