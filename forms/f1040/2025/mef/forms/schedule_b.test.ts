@@ -74,10 +74,10 @@ Deno.test("schedule_b: combined parent and Form 8814 dividends include payer row
     dividend_info: [{ payerName: "Fund A", amount: 1_200 }],
     form8814_dividends: 500,
     print_line6_total: 1_700,
-    print_div_payer_1: "Fund A",
-    print_div_amount_1: 1_200,
-    print_div_payer_2: "Form 8814",
-    print_div_amount_2: 500,
+    dividend_rows: [
+      { payerName: "Fund A", amount: 1_200 },
+      { payerName: "Form 8814", amount: 500 },
+    ],
   });
   assertStringIncludes(
     xml,
@@ -90,6 +90,25 @@ Deno.test("schedule_b: combined parent and Form 8814 dividends include payer row
   assertStringIncludes(
     xml,
     "<TotalOrdinaryDividendsAmt>1700</TotalOrdinaryDividendsAmt>",
+  );
+});
+
+Deno.test("schedule_b: all 16 dividend payer rows enter native MeF", () => {
+  const xml = scheduleB.build({
+    dividend_rows: Array.from({ length: 16 }, (_, index) => ({
+      payerName: `Fund ${index + 1}`,
+      amount: 100,
+    })),
+    print_line6_total: 1_600,
+  });
+  assertEquals((xml.match(/<Form1040SchBPartII>/g) ?? []).length, 16);
+  assertStringIncludes(
+    xml,
+    "<BusinessNameLine1Txt>Fund 16</BusinessNameLine1Txt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalOrdinaryDividendsAmt>1600</TotalOrdinaryDividendsAmt>",
   );
 });
 

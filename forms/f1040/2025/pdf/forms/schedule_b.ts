@@ -1,5 +1,6 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { appendScheduleBInterestStatement } from "./schedule_b_interest_statement.ts";
+import { appendScheduleBDividendStatement } from "./schedule_b_dividend_statement.ts";
 import {
   appendScheduleBForeignCountriesStatement,
   foreignCountryPrintFields,
@@ -154,6 +155,7 @@ export const scheduleBPdf: PdfFormDescriptor = {
     fields["foreign_trust_question"] === true,
   async appendSupplementalPages(document, fields, filer) {
     await appendScheduleBInterestStatement(document, fields, filer);
+    await appendScheduleBDividendStatement(document, fields, filer);
     await appendScheduleBForeignCountriesStatement(document, fields, filer);
   },
 };

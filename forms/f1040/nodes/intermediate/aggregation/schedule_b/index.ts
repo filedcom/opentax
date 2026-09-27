@@ -167,8 +167,8 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
     }
 
     // ── Self-emit print-layer values for the PDF builder ─────────────────────
-    // Per-payer rows (up to the form's row counts: 14 interest, 15 dividend)
-    // plus the Part I/II totals and explicit Part III answers.
+    // Preserve all payer rows for MeF and PDF continuation pages, then fill
+    // the printed 14 interest and 15 dividend slots and Part III answers.
     const printFields: Record<string, unknown> = {};
     const intAmounts = normalizeArray(input.taxable_interest_net);
     const intNames = normalizeArray(
@@ -202,15 +202,13 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
         amount: input.form8814_dividends!,
       });
     }
-    if (dividendRows.length > 15 && line6 > 1500) {
+    if (line6 > 0 && dividendRows.some((row) => !row.payerName.trim())) {
       throw new Error(
-        "Schedule B needs an additional dividend-payer statement for more than 15 rows",
+        "Schedule B needs every dividend payer name when dividends are reported",
       );
     }
-    if (line6 > 1500 && dividendRows.some((row) => !row.payerName.trim())) {
-      throw new Error(
-        "Schedule B needs every dividend payer name when total dividends exceed $1,500",
-      );
+    if (dividendRows.length > 0) {
+      printFields.dividend_rows = dividendRows;
     }
     for (let i = 0; i < Math.min(dividendRows.length, 15); i++) {
       printFields[`print_div_payer_${i + 1}`] = dividendRows[i].payerName;

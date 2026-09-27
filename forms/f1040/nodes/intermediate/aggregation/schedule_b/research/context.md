@@ -121,9 +121,11 @@ flowchart LR
 
 5. **Part III foreign accounts**: Explicit taxpayer answers and affirmative elected-child facts combine. FBAR filing is never inferred from account value or the child's election. The PDF prints two country names or appends a country statement; MeF emits up to 25 IRS country codes.
 
-6. **Zero outputs**: If all interest nets to zero after EE/I exclusion and no dividends → return empty outputs (no f1040 routing needed).
+6. **Dividend payer overflow**: The IRS Schedule B MeF schema permits unbounded Part II payer groups even though the printed form has 15 rows. The node retains every named dividend payer, the serializer emits every native row, and the PDF appends a continuation page after row 15. The 2025 instructions allow separate payer statements when the printed spaces run out. These cases are written but unrun.
 
-7. **Seller-financed mortgage**: Interest from seller-financed mortgages is included in `taxable_interest_net` from f1099int. Listing order (seller-financed first) is a display concern, not a calculation concern.
+7. **Zero outputs**: If all interest nets to zero after EE/I exclusion and no dividends or affirmative foreign facts → return empty outputs (no f1040 routing needed).
+
+8. **Seller-financed mortgage**: Interest from seller-financed mortgages is included in `taxable_interest_net` from f1099int. Listing order (seller-financed first) is a display concern, not a calculation concern.
 
 ---
 

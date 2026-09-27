@@ -56,3 +56,34 @@ Deno.test({
     await Deno.remove(path);
   }
 });
+
+Deno.test({
+  name: "XSD: Schedule B accepts more than 15 native dividend payers",
+  ignore: !xsdAvailable,
+  sanitizeOps: false,
+  sanitizeResources: false,
+}, async () => {
+  const xml = buildMefXml({
+    f1040: { filing_status: "single", line3b_ordinary_dividends: 1_600 },
+    schedule_b: {
+      dividend_rows: Array.from({ length: 16 }, (_, index) => ({
+        payerName: `Fund ${index + 1}`,
+        amount: 100,
+      })),
+      print_line6_total: 1_600,
+    },
+  }, filer);
+  assertEquals((xml.match(/<Form1040SchBPartII>/g) ?? []).length, 16);
+  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(path, xml);
+    const result = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", XSD_PATH, path],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
+  } finally {
+    await Deno.remove(path);
+  }
+});

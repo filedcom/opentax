@@ -132,6 +132,22 @@ Deno.test("Form 8814 and below-threshold parent dividends trigger Schedule B wit
   assertEquals(printable?.print_div_payer_1, "Fund A");
   assertEquals(printable?.print_div_payer_2, "Form 8814");
   assertEquals(printable?.print_div_amount_2, 500);
+  assertEquals(printable?.dividend_rows, [
+    { payerName: "Fund A", amount: 1_200 },
+    { payerName: "Form 8814", amount: 500 },
+  ]);
+});
+
+Deno.test("Schedule B keeps all 16 dividend payers for MeF and PDF overflow", () => {
+  const result = compute({
+    payerName: Array.from({ length: 16 }, (_, index) => `Fund ${index + 1}`),
+    ordinaryDividends: Array(16).fill(100),
+  });
+  const printable = findOutput(result, "schedule_b")?.fields;
+  assertEquals((printable?.dividend_rows as unknown[]).length, 16);
+  assertEquals(printable?.print_div_payer_15, "Fund 15");
+  assertEquals(printable?.print_div_payer_16, undefined);
+  assertEquals(printable?.print_line6_total, 1_600);
 });
 
 Deno.test("zero ordinaryDividends produces no dividend output", () => {

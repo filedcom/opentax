@@ -7,6 +7,7 @@ export interface Fields {
   taxable_interest_net?: number | readonly number[] | null;
   ee_bond_exclusion?: number | null;
   ordinaryDividends?: number | readonly number[] | null;
+  dividend_rows?: readonly { payerName: string; amount: number }[];
   print_line2_total?: number | null;
   print_line4_total?: number | null;
   print_line6_total?: number | null;
@@ -24,7 +25,7 @@ type Input = Partial<Fields> & Record<string, unknown>;
 // Element order matches the XSD sequence (required for validation).
 // - taxable_interest_net → TaxableInterestSubtotalAmt (line 2)
 // - ee_bond_exclusion    → ExcludableSavingsBondIntAmt (line 3, note: "Excludable" not "Excludible")
-// - ordinaryDividends    → TotalOrdinaryDividendsAmt  (line 6)
+// - print_line6_total / ordinaryDividends → TotalOrdinaryDividendsAmt (line 6)
 export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["taxable_interest_net", "TaxableInterestSubtotalAmt"],
   ["ee_bond_exclusion", "ExcludableSavingsBondIntAmt"],
@@ -107,6 +108,7 @@ function buildIRS1040ScheduleB(fields: Input): string {
     fields.taxable_interest_net === undefined &&
     fields.interest_rows === undefined &&
     fields.ordinaryDividends === undefined &&
+    fields.dividend_rows === undefined &&
     fields.dividend_info === undefined &&
     fields.form8814_dividends === undefined &&
     fields.ee_bond_exclusion === undefined &&
@@ -125,18 +127,34 @@ function buildIRS1040ScheduleB(fields: Input): string {
     fields.foreign_trust_question !== true &&
     (dividends ?? 0) <= 1500
   ) return "";
-  const rows = Array.from({ length: 15 }, (_, index) => {
-    const name = fields[`print_div_payer_${index + 1}`];
-    const amount = fields[`print_div_amount_${index + 1}`];
-    if (typeof amount !== "number" || amount <= 0) return "";
-    if (typeof name !== "string" || !name.trim()) {
+  const dividendRows = fields.dividend_rows ?? [];
+  if (
+    dividendRows.some((row) =>
+      !row.payerName.trim() || !Number.isFinite(row.amount) || row.amount < 0
+    )
+  ) {
+    throw new Error("Schedule B dividend rows need named, nonnegative payers");
+  }
+  if (
+    dividendRows.length > 0 && dividends !== undefined &&
+    Math.abs(
+        dividendRows.reduce((total, row) => total + row.amount, 0) - dividends,
+      ) > 0.000001
+  ) {
+    throw new Error(
+      "Schedule B dividend payer rows do not reconcile to line 6",
+    );
+  }
+  const rows = dividendRows.map(({ payerName, amount }) => {
+    if (amount <= 0) return "";
+    if (!payerName.trim()) {
       throw new Error(
         "Schedule B MeF needs a payer name for each dividend row",
       );
     }
     return elements("Form1040SchBPartII", [
       elements("DividendPayerNameBusiness", [
-        element("BusinessNameLine1Txt", name),
+        element("BusinessNameLine1Txt", payerName),
       ]),
       element("DividendAmt", amount),
     ]);

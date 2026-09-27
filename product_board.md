@@ -297,13 +297,16 @@ PDF path now appends paginated interest-payer detail after the 14 printed rows,
 with cases written but unrun. This does not yet cover all Schedule B adjustment
 rows. The current build pass also carries explicit Schedule B Part III foreign-
 account, FBAR, country, and trust answers from a dedicated input into the MeF
-XML and PDF fields.
-An elected Form 8814 child's foreign-account or trust fact forces the matching
+XML and PDF fields. An elected Form 8814 child's foreign-account or trust fact forces the matching
 Schedule B Yes answer and Form 8814 literal, but FBAR filing is never inferred
 from that fact. More than two country names get a PDF supplemental page. These
 cases are written but unrun; source PDF rendering and IRS business rules remain
-open. The PDF statements still need filled-render verification. The next Form
-8912 graph pass requires each bond's taxable interest already reported by
+open. The PDF statements still need filled-render verification. The Schedule B
+pass also removes the 15-dividend-payer cutoff: the Schedule B
+node retains every dividend payer, MeF emits every native Part II row, and the
+PDF builder appends a continuation statement after the 15 printed rows. Its
+source-to-XSD, reconciliation, and PDF-page cases are written but unrun. The
+next Form 8912 graph pass requires each bond's taxable interest already reported by
 another input, validates that amount against computed bond interest, and routes
 only the unreported balance to Schedule B. Positive credit was formerly blocked
 at final Form 1040 assembly. The current MeF path requires a finalized, attached
