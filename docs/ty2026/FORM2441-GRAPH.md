@@ -51,7 +51,7 @@ credit-limit resolution, without a cycle back through AGI.
   validate the required provider/person rows, month detail, and benefit
   worksheet. Do not register that aggregate input as the TY2026 filing path.
 - The TY2025 PDF descriptor prints only one benefit field. Build a 2026
-  AcroForm inventory and fill both printed pages, including all required
+  [AcroForm inventory](PDF-FORM2441-MAP.md) and fill both printed pages, including all required
   Part I provider and Part II person fields and any continuation statement.
   Reconcile line 26 to 1040 line 1e and line 11 to Schedule 3 line 2.
 

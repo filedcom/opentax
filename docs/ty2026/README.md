@@ -46,6 +46,10 @@ for the implementation contract.
   Roth-distribution, spouse-form, and carryforward implementation contract.
 - [`FORM2441-GRAPH.md`](FORM2441-GRAPH.md): dependent-care benefits before
   AGI, 2026 credit phaseout and limit, provider detail, PDF, and MeF order.
+- [`PDF-FORM2441-MAP.md`](PDF-FORM2441-MAP.md) and
+  `pdf-fields-f2441.csv`: all 72 draft Form 2441 terminal widgets, the two
+  printed-page map, the missing benefits-question widget, and continuation
+  requirements.
 - [`CAPITAL-GAIN-GRAPH.md`](CAPITAL-GAIN-GRAPH.md): direct 1099-DIV box 2a
   decision, Schedule D/8949 dependencies, and PDF/MeF work order.
 - [`PDF-SCHEDULED-MAP.md`](PDF-SCHEDULED-MAP.md) and
