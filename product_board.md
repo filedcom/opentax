@@ -440,9 +440,10 @@ correction treats the $25,000/$12,500 rental allowance as an income allowance,
 uses tax attributable to the remaining allowance for line 15, subtracts the
 amount already used on Form 8582 line 9, and distinguishes MFS spouses who
 lived apart. Real-estate-professional status no longer bypasses the limit for
-every activity. The node still sends its aggregate allowed amount directly to
-Schedule 3, so source-level filing route, Form 3800 limitation, and
-ATS acceptance remain open. The unrun source pass
+every activity. Its source allocations now go to the Form 3800 node instead of
+depositing the aggregate allowed amount directly to Schedule 3. Form 3800
+currently stops that route until the source rows, shared limit, and XML are
+wired together, so filing support and ATS acceptance remain open. The unrun source pass
 replaces one aggregate passive-credit amount with activity and document
 references, credit category, a current-year amount, and originating-year-stamped
 prior unallowed credit rows. Active-rental
@@ -459,13 +460,12 @@ amounts have not been split by prior-year vintage for Form 3800 Part IV. Each
 source now explicitly identifies its reporting route as Form 3800 line 3, 24,
 or 33, or Form 8834, and the calculation totals allowed credits by route. A
 positive Form 8834 route stops node and XML output until its separate filing
-path is built; the remaining Form 3800 routes still use the incorrect direct
-Schedule 3 deposit.
+path is built; business-credit routes now hand their source allocations to
+Form 3800, where the incomplete filing path stops explicitly.
 The native `IRS8582CR` MeF descriptor now serializes Parts I-IV, with direct XML
 and local XSD cases written but unrun. Passive Form 3800 Part I lines 2/3,
 Part II lines 23/24 and 32/33, and source columns in Parts III/IV still need a
-source-backed filing route before the Form 8582-CR direct Schedule 3 deposit
-can be removed. An unrun pure classifier derives those six passive pre-limit
+source-backed filing route before passive credits can be filed. An unrun pure classifier derives those six passive pre-limit
 and allowed line amounts from Form 8582-CR source allocations, including prior
 credits, and rejects Form 8834 sources. The shared Form 3800 Part I/II
 calculator now applies standard, empowerment-zone, and specified passive

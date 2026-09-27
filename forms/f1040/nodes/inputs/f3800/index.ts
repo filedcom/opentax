@@ -10,6 +10,7 @@ import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { classifyForm8835Credits } from "./calculation.ts";
+import { sourceAllocationSchema } from "../../intermediate/forms/form8582cr/source.ts";
 
 // TY2025 — Form 3800: General Business Credit.
 // Source-backed Form 8826, Form 8835, and Form 5884 entries pass classified source
@@ -111,6 +112,7 @@ export const inputSchema = z.object({
   f8820_credit: f8820CreditSchema.optional(),
   f8936_new_vehicle_credit: f8936NewVehicleCreditSchema.optional(),
   f8936_commercial_vehicle_credit: f8936NewVehicleCreditSchema.optional(),
+  passive_source_allocations: z.array(sourceAllocationSchema).min(1).optional(),
   form8936_applied_credit: appliedSourceCreditSchema.optional(),
   form8936_commercial_applied_credit: appliedSourceCreditSchema.optional(),
   form8820_applied_credit: appliedSourceCreditSchema.optional(),
@@ -132,7 +134,8 @@ export const inputSchema = z.object({
     input.f5884_credit !== undefined ||
     input.f8820_credit !== undefined ||
     input.f8936_new_vehicle_credit !== undefined ||
-    input.f8936_commercial_vehicle_credit !== undefined,
+    input.f8936_commercial_vehicle_credit !== undefined ||
+    input.passive_source_allocations !== undefined,
   {
     message: "Form 3800 needs a credit source",
   },
@@ -280,6 +283,11 @@ class F3800Node extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
+    if (parsed.passive_source_allocations !== undefined) {
+      throw new Error(
+        "Form 3800 passive credit source rows need Part III/IV XML and the Part II tax limit before filing",
+      );
+    }
     return {
       outputs: schedule3Output(
         parsed.f3800s ?? [],

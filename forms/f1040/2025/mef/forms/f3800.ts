@@ -494,6 +494,11 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f3800.pdf",
   build(fields, context = {}) {
+    if (fields.passive_source_allocations?.length) {
+      throw new Error(
+        "Form 3800 passive source rows need Part III/IV XML and the Part II tax limit before filing",
+      );
+    }
     const hasLegacyCredit = fields.f3800s?.some((entry) =>
       Object.values(entry).some((value) =>
         typeof value === "number" && value > 0

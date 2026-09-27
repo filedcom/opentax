@@ -2,7 +2,35 @@ import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { EnergyType } from "../../../nodes/inputs/f8835/index.ts";
 import { TargetGroup } from "../../../nodes/inputs/f5884/index.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
+import {
+  PassiveCreditCategory,
+  sourceAllocationSchema,
+} from "../../../nodes/intermediate/forms/form8582cr/source.ts";
+import { PassiveCreditReportingRoute } from "../../../nodes/intermediate/forms/form8582cr/credit-route.ts";
 import { form3800 } from "./f3800.ts";
+
+Deno.test("Form 3800 XML refuses passive sources until Parts III/IV reconcile", () => {
+  const source = sourceAllocationSchema.parse({
+    activity_reference: "Clinical activity",
+    source_form: "Form 8820",
+    source_document_reference: "2025 clinical credit statement",
+    category: PassiveCreditCategory.Other,
+    reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+    form3800_credit_line: "1h",
+    current_year_credit: 1_000,
+    prior_unallowed_credits: [],
+    publicly_traded_partnership: false,
+    total_credit: 1_000,
+    special_allowed_credit: 0,
+    unallowed_credit: 500,
+    allowed_credit: 500,
+  });
+  assertThrows(
+    () => form3800.build({ passive_source_allocations: [source] }),
+    Error,
+    "need Part III/IV XML",
+  );
+});
 
 const tax = {
   filingStatus: FilingStatus.Single as const,

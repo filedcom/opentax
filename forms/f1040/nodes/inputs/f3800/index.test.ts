@@ -4,6 +4,12 @@ import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
+import {
+  calculateForm8582CR,
+  inputSchema as form8582crInputSchema,
+  PassiveCreditCategory,
+  PassiveCreditReportingRoute,
+} from "../../intermediate/forms/form8582cr/index.ts";
 
 function minimalItem(overrides: Record<string, unknown> = {}) {
   return { ...overrides };
@@ -26,6 +32,32 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 Deno.test("f3800.inputSchema: empty array fails (min 1)", () => {
   const parsed = f3800.inputSchema.safeParse({ f3800s: [] });
   assertEquals(parsed.success, false);
+});
+
+Deno.test("f3800: passive source cannot bypass Part III/IV and the shared tax limit", () => {
+  const pac = calculateForm8582CR(form8582crInputSchema.parse({
+    credit_sources: [{
+      activity_reference: "Clinical activity",
+      source_form: "Form 8820",
+      source_document_reference: "2025 clinical credit statement",
+      category: PassiveCreditCategory.Other,
+      reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+      form3800_credit_line: "1h",
+      current_year_credit: 1_000,
+      prior_unallowed_credits: [],
+      publicly_traded_partnership: false,
+    }],
+    regular_tax_all_income: 10_000,
+    regular_tax_without_passive: 9_500,
+  }));
+  assertThrows(
+    () =>
+      f3800.compute({ taxYear: 2025, formType: "f1040" }, {
+        passive_source_allocations: pac.sourceAllocations,
+      }),
+    Error,
+    "need Part III/IV XML",
+  );
 });
 
 Deno.test("f3800: Form 8835 source credit waits for finalized tax instead of depositing gross credit", () => {

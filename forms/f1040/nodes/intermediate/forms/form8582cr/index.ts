@@ -1,20 +1,20 @@
 import { z } from "zod";
-import type {
-  NodeOutput,
-  NodeResult,
-} from "../../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../../core/types/tax-node.ts";
+import type { NodeResult } from "../../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { FilingStatus, filingStatusSchema } from "../../../types.ts";
-import { schedule3 } from "../../aggregation/schedule3/index.ts";
+import { f3800 } from "../../../inputs/f3800/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import { PassiveCreditReportingRoute } from "./credit-route.ts";
 import {
-  form3800SpecifiedCreditLineSchema,
-  form3800StandardCreditLineSchema,
-  PassiveCreditReportingRoute,
-} from "./credit-route.ts";
+  creditSourceSchema,
+  PassiveCreditCategory,
+  type PassiveCreditSource,
+  sourceAllocationSchema,
+} from "./source.ts";
 
 export { PassiveCreditReportingRoute } from "./credit-route.ts";
+export { PassiveCreditCategory } from "./source.ts";
 
 // Form 8582-CR — Passive Activity Credit Limitations
 // Mirrors Form 8582 (passive losses) but applies to passive activity credits (PAC).
@@ -31,67 +31,6 @@ const MFS_ALLOWANCE_MAX = 12_500; // IRC §469(i)(5)(B)
 const MFS_MAGI_UPPER = 75_000; // IRC §469(i)(5)(B)
 const REHABILITATION_MAGI_UPPER = 250_000;
 const MFS_REHABILITATION_MAGI_UPPER = 125_000;
-
-export enum PassiveCreditCategory {
-  ActiveRental = "active_rental",
-  RehabilitationOrPre1990Housing = "rehabilitation_or_pre1990_housing",
-  LowIncomeHousing = "low_income_housing_post1989",
-  Other = "other",
-}
-
-const creditSourceBaseSchema = z.object({
-  activity_reference: z.string().trim().min(1),
-  source_form: z.string().trim().min(1),
-  source_document_reference: z.string().trim().min(1),
-  category: z.nativeEnum(PassiveCreditCategory),
-  current_year_credit: z.number().int().nonnegative(),
-  prior_unallowed_credits: z.array(z.object({
-    originating_tax_year: z.number().int().min(1900).max(2024),
-    credit_amount: z.number().int().positive(),
-    source_document_reference: z.string().trim().min(1),
-    actively_participated_origin_year: z.boolean().optional(),
-  })),
-  publicly_traded_partnership: z.boolean(),
-});
-
-const creditSourceSchema = z.discriminatedUnion("reporting_route", [
-  creditSourceBaseSchema.extend({
-    reporting_route: z.literal(PassiveCreditReportingRoute.Form3800Line3),
-    form3800_credit_line: form3800StandardCreditLineSchema,
-  }),
-  creditSourceBaseSchema.extend({
-    reporting_route: z.literal(PassiveCreditReportingRoute.Form3800Line24),
-    form3800_credit_line: z.literal("3"),
-  }),
-  creditSourceBaseSchema.extend({
-    reporting_route: z.literal(PassiveCreditReportingRoute.Form3800Line33),
-    form3800_credit_line: form3800SpecifiedCreditLineSchema,
-  }),
-  creditSourceBaseSchema.extend({
-    reporting_route: z.literal(PassiveCreditReportingRoute.Form8834),
-    form3800_credit_line: z.never().optional(),
-  }),
-]).refine(
-  (source) =>
-    source.current_year_credit > 0 || source.prior_unallowed_credits.length > 0,
-  { message: "Form 8582-CR source must have current or prior credit" },
-).superRefine((source, ctx) => {
-  if (
-    source.reporting_route !== PassiveCreditReportingRoute.Form8834 &&
-    source.current_year_credit > 0 &&
-    (source.form3800_credit_line.startsWith("2") ||
-      source.form3800_credit_line === "4y")
-  ) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ["form3800_credit_line"],
-      message:
-        "Form 3800 carryover-only line cannot contain current-year credit",
-    });
-  }
-});
-
-type PassiveCreditSource = z.infer<typeof creditSourceSchema>;
 
 function priorCredit(source: PassiveCreditSource): number {
   return source.prior_unallowed_credits.reduce(
@@ -673,20 +612,12 @@ export function calculateForm8582CR(raw: Form8582CRInput) {
   };
 }
 
-function schedule3Output(allowedCredit: number): NodeOutput[] {
-  if (allowedCredit <= 0) return [];
-  return [{
-    nodeType: schedule3.nodeType,
-    fields: { line6a_general_business_credit: allowedCredit },
-  }];
-}
-
 // ─── Node class ───────────────────────────────────────────────────────────────
 
 class Form8582CRNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form8582cr";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule3]);
+  readonly outputNodes = new OutputNodes([f3800]);
 
   compute(_ctx: NodeContext, rawInput: Form8582CRInput): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -700,8 +631,13 @@ class Form8582CRNode extends TaxNode<typeof inputSchema> {
         "Form 8582-CR allowed Form 8834 credit needs its separate filing route and tax limit",
       );
     }
+    const businessSources = lines.sourceAllocations.filter((source) =>
+      source.reporting_route !== PassiveCreditReportingRoute.Form8834
+    ).map((source) => sourceAllocationSchema.parse(source));
     return {
-      outputs: schedule3Output(lines.line37),
+      outputs: businessSources.length > 0
+        ? [output(f3800, { passive_source_allocations: businessSources })]
+        : [],
       ...(lines.suspendedCredit > 0
         ? { carryforwards: { suspended_pac_8582cr: lines.suspendedCredit } }
         : {}),

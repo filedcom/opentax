@@ -9,7 +9,7 @@ import {
 } from "./index.ts";
 import { FilingStatus } from "../../../types.ts";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
-import { schedule3 } from "../../aggregation/schedule3/index.ts";
+import { f3800 } from "../../../inputs/f3800/index.ts";
 
 function source(
   category: PassiveCreditCategory,
@@ -57,8 +57,10 @@ function compute(input: Record<string, unknown>) {
 }
 
 function allowed(result: ReturnType<typeof compute>): number {
-  return fieldsOf(result.outputs, schedule3)?.line6a_general_business_credit ??
-    0;
+  return fieldsOf(result.outputs, f3800)?.passive_source_allocations?.reduce(
+    (sum, source) => sum + source.allowed_credit,
+    0,
+  ) ?? 0;
 }
 
 Deno.test("Form 8582-CR identifies each current and prior credit source", () => {
@@ -201,6 +203,16 @@ Deno.test("Form 8582-CR identifies each current and prior credit source", () => 
     }).success,
     false,
   );
+});
+
+Deno.test("Form 8582-CR sends business credits to Form 3800, not Schedule 3", () => {
+  const result = compute({
+    credit_sources: [other(1_000, 500)],
+    regular_tax_all_income: 10_000,
+    regular_tax_without_passive: 9_000,
+  });
+  assertEquals(result.outputs.map((item) => item.nodeType), ["f3800"]);
+  assertEquals(allowed(result), 1_000);
 });
 
 Deno.test("Form 8582-CR Part I keeps the four IRS categories and prior credits separate", () => {
