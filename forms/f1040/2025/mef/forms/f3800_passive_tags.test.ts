@@ -6,6 +6,7 @@ import {
 } from "../../../nodes/intermediate/forms/form8582cr/credit-route.ts";
 import { groupForm3800PassiveCreditVintages } from "../../../nodes/inputs/f3800/calculation.ts";
 import {
+  form3800CarryoverDetailXmlTags,
   form3800PassiveXmlTags,
   planForm3800PassiveXmlRows,
 } from "./f3800_passive_tags.ts";
@@ -34,6 +35,18 @@ Deno.test("Form 3800 passive XML tags cover every source credit line", () => {
   assertEquals(form3800PassiveXmlTags["2h"], {
     carryover: "Frm8931CYCfwdAllwCrGrp",
   });
+  assertEquals(
+    Object.keys(form3800CarryoverDetailXmlTags).sort(),
+    Object.keys(form3800PassiveXmlTags).sort(),
+  );
+  assertEquals(
+    form3800CarryoverDetailXmlTags["1h"],
+    "Frm8820CYCyovCrAggrgtGrp",
+  );
+  assertEquals(
+    form3800CarryoverDetailXmlTags["4d"],
+    "Frm8586CYSpcfdCrAggrgtGrp",
+  );
 });
 
 Deno.test("Form 3800 passive XML plan keeps one carryover group with source detail", () => {
@@ -58,7 +71,8 @@ Deno.test("Form 3800 passive XML plan keeps one carryover group with source deta
     planned.map((row) => ({
       part: row.part,
       tag: row.tag,
-      year: row.summaryOriginatingTaxYear,
+      detailTag: row.carryoverDetailTag,
+      year: row.latestOriginatingTaxYear,
       before: row.beforePassiveLimit,
       after: row.afterPassiveLimit,
       sourceYears: row.sources.map((entry) => entry.originatingTaxYear),
@@ -68,6 +82,7 @@ Deno.test("Form 3800 passive XML plan keeps one carryover group with source deta
       {
         part: "current",
         tag: "Form8820CYCreditsGrp",
+        detailTag: undefined,
         year: 2025,
         before: 300,
         after: 200,
@@ -77,7 +92,8 @@ Deno.test("Form 3800 passive XML plan keeps one carryover group with source deta
       {
         part: "carryover",
         tag: "Frm8820CYCyovCrGrp",
-        year: undefined,
+        detailTag: "Frm8820CYCyovCrAggrgtGrp",
+        year: 2024,
         before: 300,
         after: 250,
         sourceYears: [2022, 2024],
@@ -113,7 +129,7 @@ Deno.test("Form 3800 passive XML summary year survives same-year sources", () =>
     ]),
   );
   assertEquals(planned.length, 1);
-  assertEquals(planned[0].summaryOriginatingTaxYear, 2023);
+  assertEquals(planned[0].latestOriginatingTaxYear, 2023);
   assertEquals(planned[0].requiresSourceBreakdown, true);
   assertEquals(planned[0].sources.length, 2);
 });

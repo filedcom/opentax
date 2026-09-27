@@ -490,9 +490,10 @@ credits by exact Form 3800 row and originating year while preserving each
 activity's statement reference; its source case is written but unrun. Tax-use
 allocation and carryover statement generation remain open. An unrun XML-row
 plan now collapses multiple carryover years into one schema group per credit
-line and retains each source for the required detail. It sets a summary year
-only when all sources share that year, avoiding a misleading latest-year label
-for mixed-year carryovers. It does not yet serialize those rows into the filed
+line, records the latest origin year as the IRS instructs for Part IV column
+(b), and retains every source year for the required Part VI detail. A
+schema-backed map now names the Part VI detail group for every supported
+carryover row. The plan and map do not yet serialize those rows into the filed
 Form 3800.
 A pure tax-use allocator now reconciles the source totals with the three Part II
 caps and applies older credit years first. It stops a partially used year with

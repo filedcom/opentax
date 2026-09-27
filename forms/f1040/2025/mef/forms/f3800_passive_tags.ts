@@ -161,12 +161,87 @@ export const form3800PassiveXmlTags: Readonly<
   },
 };
 
+/** TY2025v5.4 IRS3800.xsd Part VI source-detail groups for Part IV rows. */
+export const form3800CarryoverDetailXmlTags = {
+  "1a": "Frm3468PartIICYAggrgtAmtGrp",
+  "1b": "Frm7207CYCyovCrAggrgtGrp",
+  "1c": "Frm6765CYCyovCrAggrgtGrp",
+  "1d": "Frm3468PartIIICyovCrAggrgtGrp",
+  "1e": "Frm8826CYCyovCrAggrgtGrp",
+  "1f": "Frm8835PartIICYCyovCrAggrgtGrp",
+  "1g": "Frm7210CYCyovCrAggrgtGrp",
+  "1h": "Frm8820CYCyovCrAggrgtGrp",
+  "1i": "Frm8874CYCyovCrAggrgtGrp",
+  "1j": "Frm8881PartICYCyovCrAggrgtGrp",
+  "1k": "Frm8882CYCyovCrAggrgtGrp",
+  "1l": "Frm8864BdslCYCyovCrAggrgtGrp",
+  "1m": "Frm8896CYCyovCrAggrgtGrp",
+  "1n": "Frm8906CYCyovCrAggrgtGrp",
+  "1o": "Frm3468PartIVCYCyovCrAggrgtGrp",
+  "1p": "Frm8908CYCyovCrAggrgtGrp",
+  "1q": "Frm7218PartIICYCyovCrAggrgtGrp",
+  "1s": "Frm8911CYCyovCrAggrgtGrp",
+  "1t": "Frm8830CYCyovCrAggrgtGrp",
+  "1u": "Frm7213PartIICYCyovCrAggrgtGrp",
+  "1v": "Frm3468PartVCYCyovCrAggrgtGrp",
+  "1w": "Frm8932CYCyovCrAggrgtGrp",
+  "1x": "Frm8933CYCyovCrAggrgtGrp",
+  "1y": "Frm8936PartIICYCyovCrAggrgtGrp",
+  "1aa": "Frm8936PartVCYCyovCrAggrgtGrp",
+  "1bb": "Frm8904CYCyovCrAggrgtGrp",
+  "1cc": "Frm7213PartICYCyovCrAggrgtGrp",
+  "1dd": "Frm8881PartIICYCyovCrAggrgtGrp",
+  "1ee": "Frm8881PartIIICYCyovCrAggrgGrp",
+  "1ff": "Frm8864SAFCYCyovCrAggrgtGrp",
+  "1gg": "Frm7211PartIICYCyovCrAggrgtGrp",
+  "1zz": "CYCyovOtherBusCreditsAggrgtGrp",
+  "2a": "Frm5884ACYCfwdAllwCrAggrgtGrp",
+  "2b": "Frm8586CYCfwdAllwCrAggrgtGrp",
+  "2c": "Frm8845CYCfwdAllwCrAggrgtGrp",
+  "2d": "Frm8907CYCfwdAllwCrAggrgtGrp",
+  "2e": "Frm8909CYCfwdAllwCrAggrgtGrp",
+  "2f": "Frm8923CYCfwdAllwCrAggrgtGrp",
+  "2h": "Frm8931CYCfwdAllwCrAggrgtGrp",
+  "2i": "Frm1065BCYCfwdAllwCrAggrgtGrp",
+  "2j": "Frm5884CYCfwdAllwCrAggrgtGrp",
+  "2k": "Frm6478CYCfwdAllwCrAggrgtGrp",
+  "2l": "Frm8846CYCfwdAllwCrAggrgtGrp",
+  "2m": "Frm8900CYCfwdAllwCrAggrgtGrp",
+  "2n": "CYCfwdAllwTrAKPplnAggrgtGrp",
+  "2o": "CYCfwdEmplrAffctHrrcnAggrgtGrp",
+  "2p": "CYCfwdAllwKtrnHsngAggrgtGrp",
+  "2q": "CYCfwdCrMwdDsstrEmplrAggrgtGrp",
+  "2r": "CYCfwdAllwCrEmplrHsngAggrgtGrp",
+  "2s": "Frm5884BCYCfwdAllwCrAggrgtGrp",
+  "2t": "Frm8847CYCfwdAllwCrAggrgtGrp",
+  "2u": "Frm8861CYCfwdAllwCrAggrgtGrp",
+  "2v": "Frm8884CYCfwdAllwCrAggrgtGrp",
+  "2w": "Frm8942CYCfwdAllwCrAggrgtGrp",
+  "2x": "Frm8910CYCfwdAllwCrAggrgtGrp",
+  "2zz": "CYCfwdAllwOtherBusCrAggrgtGrp",
+  "3": "Frm8844CYCyovCrAggrgtGrp",
+  "4a": "Frm3468PartVICYSpfdCrAggrgtGrp",
+  "4b": "Frm5884CYSpcfdCrAggrgtGrp",
+  "4c": "Frm6478CYSpcfdCrAggrgtGrp",
+  "4d": "Frm8586CYSpcfdCrAggrgtGrp",
+  "4e": "Frm8835CYSpcfdCrAggrgtGrp",
+  "4f": "Frm8846CYSpcfdCrAggrgtGrp",
+  "4g": "Frm8900CYSpcfdCrAggrgtGrp",
+  "4h": "Frm8941CYSpcfdCrAggrgtGrp",
+  "4i": "Frm6765ESBCYSpcfdCrAggrgtGrp",
+  "4j": "Frm8994CYSpcfdCrAggrgtGrp",
+  "4k": "Frm3468VIICYSpcfdCrAggrgtGrp",
+  "4y": "ESBCCYSpcfdCrAggrgtGrp",
+  "4z": "CYOtherSpcfdCreditsAggrgtGrp",
+} as const satisfies Readonly<Record<Form3800CreditLine, string>>;
+
 export type PlannedForm3800PassiveXmlRow = {
   readonly form3800CreditLine: Form3800CreditLine;
   readonly part: "current" | "carryover";
   readonly tag: string;
-  /** A summary year exists only when every source has the same origin year. */
-  readonly summaryOriginatingTaxYear: number | undefined;
+  readonly carryoverDetailTag: string | undefined;
+  /** Part IV column (b) uses the latest year when sources span multiple years. */
+  readonly latestOriginatingTaxYear: number;
   readonly beforePassiveLimit: number;
   readonly afterPassiveLimit: number;
   readonly sources: readonly Form3800PassiveCreditVintage[];
@@ -217,10 +292,10 @@ export function planForm3800PassiveXmlRows(
       const sources = [...prior.sources, ...row.sources];
       return [...planned.slice(0, -1), {
         ...prior,
-        summaryOriginatingTaxYear:
-          prior.summaryOriginatingTaxYear === row.originatingTaxYear
-            ? row.originatingTaxYear
-            : undefined,
+        latestOriginatingTaxYear: Math.max(
+          prior.latestOriginatingTaxYear,
+          row.originatingTaxYear,
+        ),
         beforePassiveLimit,
         afterPassiveLimit,
         sources,
@@ -231,7 +306,10 @@ export function planForm3800PassiveXmlRows(
       form3800CreditLine: row.form3800CreditLine,
       part: rowPart,
       tag,
-      summaryOriginatingTaxYear: row.originatingTaxYear,
+      carryoverDetailTag: rowPart === "carryover"
+        ? form3800CarryoverDetailXmlTags[row.form3800CreditLine]
+        : undefined,
+      latestOriginatingTaxYear: row.originatingTaxYear,
       beforePassiveLimit: row.beforePassiveLimit,
       afterPassiveLimit: row.afterPassiveLimit,
       sources: row.sources,
