@@ -122,6 +122,25 @@ Deno.test("S corporation K-1 box 13 code K needs source identity and passive cla
   );
 });
 
+Deno.test("nonpassive S corporation K-1 code K reaches source-backed Form 3800", () => {
+  const result = compute([minimalItem({
+    corporation_ein: "123456789",
+    source_document_reference: "2025 S corporation K-1",
+    box13_code_k_disabled_access_credit: 500.25,
+    disabled_access_credit_subject_to_passive_activity_limit: false,
+  })]);
+  assertEquals(findOutput(result, "f3800")?.fields, {
+    f8826_credit_entries: [{
+      source_type: "s_corporation",
+      source_ein: "123456789",
+      source_document_reference: "2025 S corporation K-1",
+      credit_amount: 500.25,
+      subject_to_passive_activity_limit: false,
+    }],
+  });
+  assertEquals(findOutput(result, "form8582cr"), undefined);
+});
+
 Deno.test("box 9 retains each S-corp's Form 4797 line 2 amount", () => {
   const result = compute([
     minimalItem({ corporation_name: "Corp One", box9_net_1231: 3_000 }),

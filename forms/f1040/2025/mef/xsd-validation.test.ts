@@ -1708,6 +1708,97 @@ Deno.test({
 });
 
 Deno.test({
+  name: "XSD: direct partnership code K files Form 3800 without Form 8826",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const reference = "2025 Access partnership K-1";
+  const xml = buildMefXml(
+    {
+      f1040: { line16_income_tax: 1_000 },
+      schedule3: { line6a_total: 500, line7_total: 500 },
+      form6251: { line11_amt: 0, net_tmt: 0 },
+      k1_partnership: {
+        k1_partnerships: [{
+          partnership_name: "Access partnership",
+          partnership_ein: "123456789",
+          source_document_reference: reference,
+          box15_code_k_disabled_access_credit: 500,
+          disabled_access_credit_subject_to_passive_activity_limit: false,
+        }],
+      },
+      f3800: {
+        f8826_credit_entries: [{
+          source_type: "partnership",
+          source_ein: "123456789",
+          source_document_reference: reference,
+          credit_amount: 500,
+          subject_to_passive_activity_limit: false,
+        }],
+        tax_context: {
+          filingStatus: FilingStatus.Single,
+          regularTax: 1_000,
+          alternativeMinimumTax: 0,
+          foreignTaxCredit: 0,
+          priorAllowableCredits: 0,
+          tentativeMinimumTax: 0,
+          standardCredit: 500,
+          specifiedCredit: 0,
+        },
+        allowed_credit: 500,
+      },
+    } satisfies MefFormsPending & { k1_partnership: unknown },
+    extractFilerIdentity(singleGeneral()),
+  );
+  assertStringIncludes(xml, "<IRS3800 ");
+  assertEquals(xml.includes("<IRS8826 "), false);
+  await validateXsd(xml, "direct partnership disabled-access K-1 code K");
+});
+
+Deno.test("nonpassive partnership and S-corporation code K route through a normal return", () => {
+  const result = runReturn({
+    general: singleGeneral(),
+    k1_partnership: [{
+      partnership_name: "Access partnership",
+      partnership_ein: "123456789",
+      source_document_reference: "2025 Access partnership K-1",
+      box15_code_k_disabled_access_credit: 500.25,
+      disabled_access_credit_subject_to_passive_activity_limit: false,
+    }],
+    k1_s_corp: [{
+      corporation_name: "Access S corporation",
+      corporation_ein: "987654321",
+      source_document_reference: "2025 Access S corporation K-1",
+      box13_code_k_disabled_access_credit: 499.75,
+      disabled_access_credit_subject_to_passive_activity_limit: false,
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  const entries = (result.pending.f3800 as {
+    f8826_credit_entries?: Array<{ source_type: string }>;
+  }).f8826_credit_entries ?? [];
+  assertEquals(
+    [...entries].sort((left, right) =>
+      left.source_type.localeCompare(right.source_type)
+    ),
+    [{
+      source_type: "partnership",
+      source_ein: "123456789",
+      source_document_reference: "2025 Access partnership K-1",
+      credit_amount: 500.25,
+      subject_to_passive_activity_limit: false,
+    }, {
+      source_type: "s_corporation",
+      source_ein: "987654321",
+      source_document_reference: "2025 Access S corporation K-1",
+      credit_amount: 499.75,
+      subject_to_passive_activity_limit: false,
+    }],
+  );
+});
+
+Deno.test({
   name:
     "XSD: direct estate orphan-drug code M files Form 3800 without Form 8820",
   sanitizeOps: false,

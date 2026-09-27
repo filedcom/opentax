@@ -183,11 +183,16 @@ function sourceForm8826(
   if (!fields.f8826_credit_entries?.length) return undefined;
   const actual = fields.f8826_credit_entries;
   const formSources = actual.filter((entry) =>
-    entry.source_type === "self" || entry.source_type === "partnership" ||
-    entry.source_type === "s_corporation"
+    entry.source_type === "self" ||
+    ((entry.source_type === "partnership" ||
+      entry.source_type === "s_corporation") &&
+      !entry.source_document_reference)
   );
   const directSources = actual.filter((entry) =>
-    entry.source_type === "estate" || entry.source_type === "trust"
+    entry.source_type === "estate" || entry.source_type === "trust" ||
+    ((entry.source_type === "partnership" ||
+      entry.source_type === "s_corporation") &&
+      Boolean(entry.source_document_reference))
   );
   const raw = context.pending?.f8826;
   if (formSources.length > 0 && !raw) {
@@ -197,6 +202,19 @@ function sourceForm8826(
   }
   const source = raw ? f8826InputSchema.parse(raw) : undefined;
   const lines = source ? calculateForm8826(source) : undefined;
+  if (
+    directSources.some((entry) =>
+      source?.pass_through_credits?.some((other) =>
+        entry.source_type === other.entity_type &&
+        entry.source_ein === other.entity_ein &&
+        entry.source_document_reference === other.source_document_reference
+      )
+    )
+  ) {
+    throw new Error(
+      "Form 3800 disabled-access K-1 source is duplicated on Form 8826",
+    );
+  }
   const expected = source && lines
     ? [
       ...(lines.selfCreditAfterCap > 0
@@ -245,10 +263,11 @@ function sourceForm8826(
       directSources.map((entry) => {
         if (
           !entry.source_ein || !entry.source_document_reference ||
-          !entry.source_statement_reference
+          ((entry.source_type === "estate" || entry.source_type === "trust") &&
+            !entry.source_statement_reference)
         ) {
           throw new Error(
-            "Form 3800 estate/trust disabled-access source is incomplete",
+            "Form 3800 K-1 disabled-access source is incomplete",
           );
         }
         return {

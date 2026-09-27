@@ -1235,6 +1235,140 @@ Deno.test("Form 3800 files direct estate/trust disabled-access code ZZ without F
   }
 });
 
+Deno.test("Form 3800 files direct partnership and S-corporation code K without Form 8826", () => {
+  for (const source_type of ["partnership", "s_corporation"] as const) {
+    const taxContext = { ...tax, standardCredit: 1_250 };
+    const entry = {
+      source_type,
+      source_ein: "123456789",
+      source_document_reference: `2025 ${source_type} K-1`,
+      credit_amount: 1_250,
+      subject_to_passive_activity_limit: false,
+    };
+    const k1 = source_type === "partnership"
+      ? {
+        k1_partnership: {
+          k1_partnerships: [{
+            partnership_name: "Access partnership",
+            partnership_ein: "123456789",
+            source_document_reference: entry.source_document_reference,
+            box15_code_k_disabled_access_credit: 1_250,
+            disabled_access_credit_subject_to_passive_activity_limit: false,
+          }],
+        },
+      }
+      : {
+        k1_s_corp: {
+          k1_s_corps: [{
+            corporation_name: "Access S corporation",
+            corporation_ein: "123456789",
+            source_document_reference: entry.source_document_reference,
+            box13_code_k_disabled_access_credit: 1_250,
+            disabled_access_credit_subject_to_passive_activity_limit: false,
+          }],
+        },
+      };
+    const fields = {
+      f8826_credit_entries: [entry],
+      tax_context: taxContext,
+      allowed_credit: 1_250,
+    };
+    const context = {
+      pending: { ...filedPending(taxContext, 1_250), ...k1 },
+      documentIdsByPendingKey: { form6251: ["IRS6251_1"] },
+    };
+    const xml = form3800.build(fields, context);
+    assertStringIncludes(xml, "<Form8826CYCreditsGrp>");
+    assertStringIncludes(
+      xml,
+      "<PassThroughEntityEIN>123456789</PassThroughEntityEIN>",
+    );
+    assertEquals(xml.includes('referenceDocumentName="IRS8826"'), false);
+    assertThrows(
+      () =>
+        form3800.build(fields, {
+          ...context,
+          pending: { ...filedPending(taxContext, 1_250) },
+        }),
+      Error,
+      source_type === "partnership"
+        ? "does not reconcile to K-1 box 15 code K"
+        : "does not reconcile to K-1 box 13 code K",
+    );
+    assertThrows(
+      () =>
+        form3800.build(fields, {
+          ...context,
+          pending: {
+            ...context.pending,
+            f8826: {
+              eligible_expenditures: 0,
+              subject_to_passive_activity_limit: false,
+              pass_through_credits: [{
+                entity_type: source_type,
+                entity_ein: "123456789",
+                source_document_reference: entry.source_document_reference,
+                credit_amount: 1_250,
+                subject_to_passive_activity_limit: false,
+              }],
+            },
+          },
+        }),
+      Error,
+      "duplicated on Form 8826",
+    );
+  }
+});
+
+Deno.test("Form 3800 caps two direct code K pass-through credits at line 1e's $5,000 limit", () => {
+  const taxContext = { ...tax, standardCredit: 5_000 };
+  const xml = form3800.build({
+    f8826_credit_entries: [{
+      source_type: "partnership",
+      source_ein: "123456789",
+      source_document_reference: "2025 Access partnership K-1",
+      credit_amount: 3_000,
+      subject_to_passive_activity_limit: false,
+    }, {
+      source_type: "s_corporation",
+      source_ein: "987654321",
+      source_document_reference: "2025 Access S corporation K-1",
+      credit_amount: 3_000,
+      subject_to_passive_activity_limit: false,
+    }],
+    tax_context: taxContext,
+    allowed_credit: 5_000,
+  }, {
+    pending: {
+      ...filedPending(taxContext, 5_000),
+      k1_partnership: {
+        k1_partnerships: [{
+          partnership_name: "Access partnership",
+          partnership_ein: "123456789",
+          source_document_reference: "2025 Access partnership K-1",
+          box15_code_k_disabled_access_credit: 3_000,
+          disabled_access_credit_subject_to_passive_activity_limit: false,
+        }],
+      },
+      k1_s_corp: {
+        k1_s_corps: [{
+          corporation_name: "Access S corporation",
+          corporation_ein: "987654321",
+          source_document_reference: "2025 Access S corporation K-1",
+          box13_code_k_disabled_access_credit: 3_000,
+          disabled_access_credit_subject_to_passive_activity_limit: false,
+        }],
+      },
+    },
+    documentIdsByPendingKey: { form6251: ["IRS6251_1"] },
+  });
+  assertStringIncludes(
+    xml,
+    "<TotalGeneralBusCreditsAmt>5000</TotalGeneralBusCreditsAmt>",
+  );
+  assertEquals(xml.includes('referenceDocumentName="IRS8826"'), false);
+});
+
 Deno.test("Form 3800 combines self-earned and trust disabled-access credits on one line 1e", () => {
   const own = { ...selfEarned, eligible_expenditures: 5_000 };
   const taxContext = { ...tax, standardCredit: 3_375 };

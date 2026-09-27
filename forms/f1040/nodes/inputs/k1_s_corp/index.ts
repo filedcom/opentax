@@ -549,23 +549,29 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
       }),
       ...k1_s_corps.flatMap((item) => {
         const credit = item.box13_code_k_disabled_access_credit;
-        if (
-          credit === undefined ||
-          !item.disabled_access_credit_subject_to_passive_activity_limit
-        ) {
-          return [];
-        }
+        if (credit === undefined) return [];
         if (!item.corporation_ein || !item.source_document_reference) {
           throw new Error(
             "S-corporation disabled-access K-1 source is incomplete",
           );
         }
-        return [output(form8582cr, {
-          required_disabled_access_k1_credits: [{
+        if (item.disabled_access_credit_subject_to_passive_activity_limit) {
+          return [output(form8582cr, {
+            required_disabled_access_k1_credits: [{
+              source_type: "s_corporation",
+              source_ein: item.corporation_ein,
+              source_document_reference: item.source_document_reference,
+              credit_amount: credit,
+            }],
+          })];
+        }
+        return [output(f3800, {
+          f8826_credit_entries: [{
             source_type: "s_corporation",
             source_ein: item.corporation_ein,
             source_document_reference: item.source_document_reference,
             credit_amount: credit,
+            subject_to_passive_activity_limit: false,
           }],
         })];
       }),

@@ -98,7 +98,7 @@ end-to-end, and business-rule tests before it can become a whole-form claim.
 | `f5884` | `IRS5884` | P: employee wages and group facts; certification, passive limits, and carryovers open | R | P: controlled-group and deduction statements; render open | P: cases written, unrun | P: cases written, unrun | ? |
 | `form8582cr` | `IRS8582CR` | P: direct start input, passive-credit tax limit, K-1 orphan-drug and disabled-access source guards with split-activity reconciliation; PTP and auto K-1 activity facts open | R | ? | P: cases written, unrun | P: cases written, unrun | ? |
 | `f8820` | `IRS8820` | P: own-expense and pass-through inputs; nonpassive partnership/S-corp/trust K-1 direct; passive K-1 requires matching Form 8582-CR facts; auto facts open | R | P: controlled-group statement; render open | P: cases written, unrun | P: cases written, unrun | ? |
-| `f8826` | `IRS8826` | P: own and pass-through credit inputs; direct trust credit reaches Form 3800, passive K-1 credits require Form 8582-CR facts; nonpassive partnership/S-corporation auto route and full form path open | R | ? | P: cases written, unrun | P: cases written, unrun | ? |
+| `f8826` | `IRS8826` | P: own and pass-through credit inputs; direct nonpassive K-1 code K/ZZ reaches Form 3800 without Form 8826, passive K-1 credits require Form 8582-CR facts; full own-credit form path open | R | ? | P: cases written, unrun | P: cases written, unrun | ? |
 | `f8835` | `IRS8835` | P: facility credit and transfer inputs; full eligibility and carryovers open | R | P: election statement; render open | P: cases written, unrun | P: cases written, unrun | ? |
 
 ## In-scope ATS document and attachment gaps

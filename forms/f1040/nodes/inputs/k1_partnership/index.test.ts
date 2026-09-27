@@ -122,6 +122,25 @@ Deno.test("partnership K-1 box 15 code K needs source identity and passive class
   );
 });
 
+Deno.test("nonpassive partnership K-1 code K reaches source-backed Form 3800", () => {
+  const result = compute([minimalItem({
+    partnership_ein: "123456789",
+    source_document_reference: "2025 Partnership K-1",
+    box15_code_k_disabled_access_credit: 500.25,
+    disabled_access_credit_subject_to_passive_activity_limit: false,
+  })]);
+  assertEquals(findOutput(result, "f3800")?.fields, {
+    f8826_credit_entries: [{
+      source_type: "partnership",
+      source_ein: "123456789",
+      source_document_reference: "2025 Partnership K-1",
+      credit_amount: 500.25,
+      subject_to_passive_activity_limit: false,
+    }],
+  });
+  assertEquals(findOutput(result, "form8582cr"), undefined);
+});
+
 Deno.test("box 10 retains each partnership's Form 4797 line 2 amount", () => {
   const result = compute([
     minimalItem({ partnership_name: "Partner One", box10_net_1231: 10_000 }),
