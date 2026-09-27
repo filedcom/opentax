@@ -172,6 +172,8 @@ export const inputSchema = z.object({
   alternative_marriage: alternativeMarriageSchema.optional(),
   alternative_marriage_policies: z.array(alternativeMarriagePolicySchema).min(1)
     .optional(),
+  alternative_marriage_source_month: z.number().int().min(1).max(12)
+    .optional(),
 
   // Annual totals (used when no monthly detail provided)
   annual_premium: z.number().nonnegative().optional(),
@@ -347,6 +349,11 @@ function alternativeMarriageCalculation(
 } | undefined {
   const election = input.alternative_marriage;
   if (!election) return undefined;
+  if (input.alternative_marriage_source_month !== election.marriage_month) {
+    throw new Error(
+      "Form 8962 marriage month must match the Form 1095-A source month",
+    );
+  }
   if (
     !input.monthly_premiums || !input.monthly_slcsps ||
     !input.monthly_aptcs

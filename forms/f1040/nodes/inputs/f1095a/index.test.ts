@@ -1,4 +1,8 @@
-import { assertEquals, assertThrows } from "@std/assert";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { form8962 as form8962Mef } from "../../../2025/mef/forms/f8962.ts";
+import { form8962Pdf } from "../../../2025/pdf/forms/f8962.ts";
+import { form8962 } from "../../intermediate/forms/form8962/index.ts";
+import { FilingStatus } from "../../types.ts";
 import { f1095a } from "./index.ts";
 
 function minimalItem(overrides: Record<string, unknown> = {}) {
@@ -8,9 +12,15 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function compute(items: ReturnType<typeof minimalItem>[]) {
+function compute(
+  items: ReturnType<typeof minimalItem>[],
+  alternative_marriage_month?: number,
+) {
   return f1095a.compute({ taxYear: 2025, formType: "f1040" }, {
     f1095as: items,
+    ...(alternative_marriage_month !== undefined
+      ? { alternative_marriage_month }
+      : {}),
   });
 }
 
@@ -164,7 +174,7 @@ Deno.test("identified spouse policy carries corrected 1095-A rows to marriage wo
         corrected_slcsp: 650,
       }],
     }),
-  ]);
+  ], 6);
   assertEquals(
     findOutput(result, "form8962")?.fields.alternative_marriage_policies,
     [{
@@ -186,7 +196,7 @@ Deno.test("marriage policy source requires unique identity and monthly columns",
         monthly_premiums: Array(12).fill(500),
         monthly_slcsps: Array(12).fill(600),
         monthly_aptcs: Array(12).fill(450),
-      })]),
+      })], 6),
     Error,
     "unique policy numbers",
   );
@@ -197,9 +207,103 @@ Deno.test("marriage policy source requires unique identity and monthly columns",
         alternative_marriage_owner: "primary",
         monthly_premiums: Array(12).fill(500),
         monthly_slcsps: Array(12).fill(600),
-      })]),
+      })], 6),
     Error,
     "complete monthly columns",
+  );
+});
+
+Deno.test("same-state spouses add separate SLCSP through wedding month, then dedupe", () => {
+  const policy = (owner: "primary" | "spouse", number: string) =>
+    minimalItem({
+      policy_number: number,
+      alternative_marriage_owner: owner,
+      coverage_state: "NY",
+      monthly_premiums: Array(12).fill(500),
+      monthly_slcsps: Array(12).fill(600),
+      monthly_aptcs: Array(12).fill(500),
+    });
+  const source = compute([
+    policy("primary", "PRIMARY-1095A"),
+    policy("spouse", "SPOUSE-1095A"),
+  ], 6);
+  const sourceFields = findOutput(source, "form8962")?.fields;
+  assertEquals(sourceFields?.monthly_slcsps, [
+    ...Array(6).fill(1_200),
+    ...Array(6).fill(600),
+  ]);
+  assertEquals(sourceFields?.annual_slcsp, 10_800);
+  assertEquals(sourceFields?.alternative_marriage_source_month, 6);
+  assertEquals(sourceFields?.annual_line11_eligible, undefined);
+  const calculated = form8962.compute({ taxYear: 2025, formType: "f1040" }, {
+    ...sourceFields,
+    fpl_region: "contiguous",
+    filing_status: FilingStatus.MFJ,
+    dependent_income_complete: true,
+    household_size: 2,
+    taxpayer_modified_agi: 80_000,
+    alternative_marriage: {
+      both_unmarried_january_1: true,
+      married_december_31: true,
+      alternative_family_sizes_verified: true,
+      marriage_month: 6,
+      primary: { family_size: 1, policy_numbers: ["PRIMARY-1095A"] },
+      spouse: { family_size: 1, policy_numbers: ["SPOUSE-1095A"] },
+    },
+  });
+  const form = calculated.outputs.find((item) => item.nodeType === "form8962")
+    ?.fields;
+  const rows = form?.monthly_ptc_rows as Array<{ slcsp: number }>;
+  assertEquals(rows[0].slcsp, 1_200);
+  assertEquals(rows[6].slcsp, 600);
+  assertEquals(form?.alternative_marriage_primary, {
+    family_size: 1,
+    monthly_contribution: 153,
+    start_month: 1,
+    end_month: 6,
+  });
+  assertEquals(form?.alternative_marriage_spouse, {
+    family_size: 1,
+    monthly_contribution: 153,
+    start_month: 1,
+    end_month: 6,
+  });
+  const xml = form8962Mef.build(form!);
+  assertStringIncludes(xml, "<AltCalcForMarriagePrimaryGrp>");
+  assertStringIncludes(xml, "<AltCalcForMarriageSpouseGrp>");
+  assertStringIncludes(
+    xml,
+    "<MonthlyPremiumSLCSPAmt>1200</MonthlyPremiumSLCSPAmt>",
+  );
+  const pdf = form8962Pdf.projectFields?.(form!, {});
+  assertEquals(pdf?.pdf_month_1_slcsp, "1200");
+  assertEquals(pdf?.pdf_month_7_slcsp, "600");
+  assertEquals(pdf?.pdf_marriage_spouse_end_month, "06");
+});
+
+Deno.test("marriage source month is required and cannot contradict Part V", () => {
+  const policy = minimalItem({
+    policy_number: "PRIMARY-1095A",
+    alternative_marriage_owner: "primary",
+    coverage_state: "NY",
+    monthly_premiums: Array(12).fill(500),
+    monthly_slcsps: Array(12).fill(600),
+    monthly_aptcs: Array(12).fill(500),
+  });
+  assertThrows(() => compute([policy]), Error, "must be supplied together");
+  assertThrows(
+    () =>
+      compute([
+        minimalItem({
+          coverage_state: "NY",
+          monthly_premiums: Array(12).fill(500),
+          monthly_slcsps: Array(12).fill(600),
+          monthly_aptcs: Array(12).fill(500),
+        }),
+        policy,
+      ], 6),
+    Error,
+    "spouse owner",
   );
 });
 

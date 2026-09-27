@@ -108,6 +108,7 @@ Deno.test("Pub 974 marriage Worksheets I-V elect beneficial pre-marriage credit"
     monthly_aptcs: Array(12).fill(1_000),
     annual_line11_eligible: true,
     alternative_marriage: marriageAlternative,
+    alternative_marriage_source_month: 6,
     alternative_marriage_policies: [marriagePolicy],
   });
   const calculated = fields(result, "form8962");
@@ -170,6 +171,7 @@ Deno.test("Pub 974 marriage worksheet keeps line 12-23 contribution through an e
         policy_numbers: ["GAP-1095A"],
       },
     },
+    alternative_marriage_source_month: 3,
     alternative_marriage_policies: [{
       policy_number: "GAP-1095A",
       owner: "primary",
@@ -215,6 +217,7 @@ Deno.test("marriage alternative requires MFJ and reconciled pre-marriage workshe
     monthly_slcsps: Array(12).fill(1_200),
     monthly_aptcs: Array(12).fill(1_000),
     alternative_marriage: marriageAlternative,
+    alternative_marriage_source_month: 6,
     alternative_marriage_policies: [marriagePolicy],
   };
   assertThrows(
@@ -254,6 +257,7 @@ Deno.test("marriage Worksheets II and IV add two separate pre-marriage families"
       primary: group,
       spouse: { family_size: 1, policy_numbers: ["SPOUSE-1095A"] },
     },
+    alternative_marriage_source_month: 6,
     alternative_marriage_policies: [
       {
         ...marriagePolicy,
@@ -300,6 +304,7 @@ Deno.test("marriage alternative is not elected without excess APTC", () => {
         monthly_slcsps: Array(12).fill(1_200),
         monthly_aptcs: Array(12).fill(100),
         alternative_marriage: marriageAlternative,
+        alternative_marriage_source_month: 6,
         alternative_marriage_policies: [{
           ...marriagePolicy,
           monthly_aptcs: Array(12).fill(100),
@@ -319,7 +324,18 @@ Deno.test("marriage alternative rejects unsourced and mismatched policy identiti
     monthly_slcsps: Array(12).fill(1_200),
     monthly_aptcs: Array(12).fill(1_000),
     alternative_marriage: marriageAlternative,
+    alternative_marriage_source_month: 6,
   };
+  assertThrows(
+    () =>
+      compute({
+        ...base,
+        alternative_marriage_source_month: 5,
+        alternative_marriage_policies: [marriagePolicy],
+      }),
+    Error,
+    "must match the Form 1095-A source month",
+  );
   assertThrows(() => compute(base), Error, "uniquely identified");
   assertThrows(
     () =>

@@ -133,6 +133,8 @@ export const itemSchema = z.object({
 // Node inputSchema — all 1095-A forms for this return
 export const inputSchema = z.object({
   f1095as: z.array(itemSchema).min(1),
+  // Include the wedding month. It is the final pre-marriage month in Pub. 974.
+  alternative_marriage_month: z.number().int().min(1).max(12).optional(),
 });
 
 type F1095AItem = z.infer<typeof itemSchema>;
@@ -163,7 +165,10 @@ function mergeMonthlyArrays(
   return merged;
 }
 
-function mergeMonthlySlcsps(items: F1095AItems): number[] | null {
+function mergeMonthlySlcsps(
+  items: F1095AItems,
+  marriageMonth?: number,
+): number[] | null {
   if (items.length === 1) return items[0].monthly_slcsps ?? null;
   if (!items.some((item) => item.monthly_slcsps !== undefined)) return null;
   const merged = new Array<number>(12).fill(0);
@@ -177,13 +182,19 @@ function mergeMonthlySlcsps(items: F1095AItems): number[] | null {
           "Form 1095-A multiple policies need coverage_state to combine SLCSP",
         );
       }
-      const existing = byState.get(item.coverage_state);
+      // The two spouses have separate pre-marriage coverage families, even
+      // when their Marketplace plans are in the same state. The wedding month
+      // is included; the first full married month uses the joint family.
+      const key = marriageMonth !== undefined && month < marriageMonth
+        ? `${item.coverage_state}:${item.alternative_marriage_owner}`
+        : item.coverage_state;
+      const existing = byState.get(key);
       if (existing !== undefined && existing !== slcsp) {
         throw new Error(
           "Form 1095-A same-state policies disagree on monthly SLCSP",
         );
       }
-      byState.set(item.coverage_state, slcsp);
+      byState.set(key, slcsp);
     }
     merged[month] = [...byState.values()].reduce(
       (sum, value) => sum + value,
@@ -204,7 +215,38 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([form8962]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
-    const { f1095as } = inputSchema.parse(input);
+    const { f1095as, alternative_marriage_month: marriageMonth } = inputSchema
+      .parse(input);
+    const hasMarriageOwner = f1095as.some((item) =>
+      item.alternative_marriage_owner !== undefined
+    );
+    if (hasMarriageOwner !== (marriageMonth !== undefined)) {
+      throw new Error(
+        "Form 1095-A marriage policy owners and marriage month must be supplied together",
+      );
+    }
+    if (marriageMonth !== undefined) {
+      for (const item of f1095as) {
+        if (
+          !item.monthly_premiums || !item.monthly_aptcs
+        ) {
+          throw new Error(
+            "Form 1095-A marriage calculation needs complete monthly columns for every policy",
+          );
+        }
+        if (
+          !item.alternative_marriage_owner &&
+          item.monthly_premiums.some((amount, month) =>
+            month < marriageMonth &&
+            (amount > 0 || item.monthly_aptcs![month] > 0)
+          )
+        ) {
+          throw new Error(
+            "Form 1095-A pre-marriage coverage needs a spouse owner for every policy",
+          );
+        }
+      }
+    }
     for (const item of f1095as) {
       for (
         const [monthlyKey, annualKey] of [
@@ -507,7 +549,7 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
       allocatedItems,
       "monthly_premiums",
     );
-    const mergedSlcsps = mergeMonthlySlcsps(allocatedItems);
+    const mergedSlcsps = mergeMonthlySlcsps(allocatedItems, marriageMonth);
     const mergedAptcs = mergeMonthlyArrays(allocatedItems, "monthly_aptcs");
 
     // Preserve an explicit all-zero column C. It is still a real 1095-A monthly
@@ -532,7 +574,14 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
     if (totalAnnualPremium > 0) {
       form8962Fields.annual_premium = totalAnnualPremium;
     }
-    if (totalAnnualSlcsp > 0) form8962Fields.annual_slcsp = totalAnnualSlcsp;
+    if (marriageMonth !== undefined && mergedSlcsps !== null) {
+      form8962Fields.annual_slcsp = mergedSlcsps.reduce(
+        (sum, amount) => sum + amount,
+        0,
+      );
+    } else if (totalAnnualSlcsp > 0) {
+      form8962Fields.annual_slcsp = totalAnnualSlcsp;
+    }
     if (totalAnnualAptc > 0) form8962Fields.annual_aptc = totalAnnualAptc;
     if (activePremiums !== null) {
       form8962Fields.monthly_premiums = activePremiums;
@@ -540,6 +589,10 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
     if (activeSlcsps !== null) form8962Fields.monthly_slcsps = activeSlcsps;
     if (activeAptcs !== null) form8962Fields.monthly_aptcs = activeAptcs;
     if (
+      activePremiums !== null && activeSlcsps !== null &&
+      activePremiums[0] > 0 && activeSlcsps[0] > 0 &&
+      activePremiums.every((amount) => amount === activePremiums[0]) &&
+      activeSlcsps.every((amount) => amount === activeSlcsps[0]) &&
       allocatedItems.every((item) =>
         !item.shared_policy_periods &&
         item.monthly_premiums && item.monthly_slcsps && item.monthly_aptcs &&
@@ -556,6 +609,9 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
     }
     if (sharedAllocations.length > 0) {
       form8962Fields.shared_policy_allocations = sharedAllocations;
+    }
+    if (marriageMonth !== undefined) {
+      form8962Fields.alternative_marriage_source_month = marriageMonth;
     }
     const marriagePolicies = allocatedItems.filter((item) =>
       item.alternative_marriage_owner !== undefined

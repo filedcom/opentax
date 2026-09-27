@@ -165,7 +165,15 @@ based on household income and size. Net PTC flows to **Schedule 3 line 9**
   unassigned policy rather than accepting manually entered worksheet arrays.
   This is a breaking replacement of the prior monthly worksheet input shape.
   Pre-marriage rows reconcile premiums, SLCSP, and APTC to the aggregated 1095-A
-  columns before Part V is emitted. Multiple policies in one state with
-  conflicting SLCSP still stop pending exact coverage-family facts. Source-to-
-  PDF rendering, self-employed insurance interactions, and IRS business rules
-  still need a complete audit.
+  columns before Part V is emitted. The Form 1095-A source now requires the
+  marriage month alongside spouse-owned policies and carries it to Form 8962 for
+  an equality check. Through the wedding month, same-state SLCSP is grouped
+  separately by spouse because they have separate coverage families; from the
+  first full married month it is grouped by state for the joint family. This
+  follows the 2025 Form 8962 instructions under “Marriage in 2025” and
+  Publication 974 Worksheets II/IV. The annual aggregate SLCSP derives from
+  those monthly amounts after each 1095-A annual total is checked against its
+  reported monthly rows. Conflicting SLCSP amounts within a spouse/state or the
+  post-marriage joint family still stop pending corrected coverage-family facts.
+  Source-to-PDF rendering, self-employed insurance interactions, and IRS
+  business rules still need a complete audit.
