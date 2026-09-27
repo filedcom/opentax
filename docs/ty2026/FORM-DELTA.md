@@ -5,7 +5,7 @@ Evidence here is from the IRS draft PDFs in `corpus/draft/`, captured
 
 | Draft form/line | TY2026 requirement | Existing TY2025 code to inspect |
 | --- | --- | --- |
-| 1040 11a–11b, 25a–25d, 27b–27c, 34–38 | AGI is printed on 11a and carried to 11b; withholding sources occupy 25a–25c and sum on 25d; EIC has clergy/decline checkboxes; overpayment can be divided between refund 35a and 2027 estimates 36, while penalty is line 38. | The 2026 core node now emits 11a/11b and withholding source lines, checks the EIC decline contradiction, and supports line 36. Input nodes, filer flags, summary, PDF and MeF mappings still need to supply and export them. |
+| 1040 11a–11b, 25a–25d, 27b–27c, 34–38 | AGI is printed on 11a and carried to 11b; withholding sources occupy 25a–25c and sum on 25d; EIC has clergy/decline checkboxes; overpayment can be divided between refund 35a and 2027 estimates 36, while penalty is line 38. | The 2026 core node emits these lines; the dedicated 2026 main-form PDF descriptor maps them against the pinned draft. Finish all upstream sources, CLI summary, MeF, and full PDF bundle. |
 | 1040 12e–15 | 12e is standard/itemized; new 12f is nonitemizer charitable deduction; 13a is Schedule 1-A line 44; 13b is QBI; line 14 sums all four. | `nodes/outputs/f1040/index.ts` computes line 14 from old keys; `2025/mef/forms/f1040.ts` and `2025/pdf/forms/f1040.ts` map old lines. |
 | 1040 24a–24c | 24a is total tax before Form 1062 payment; 24b is Form 1062 line 15; 24c is their sum. Refund and amount due compare payments with **24c**. | Current output and CLI summary use `line24_total_tax`; extend 2026 domain keys and summary deliberately. |
 | 1040 27–33 | 30 is refundable adoption credit; 32a sums refundable credits, 32b is Schedule 3-A, 32c subtracts 32b, and 33 sums 25d + 26 + 32c. | Current output computes one `line32_refundable_credits_total`; add Schedule 3-A result and route to line 33. |
@@ -17,7 +17,7 @@ Evidence here is from the IRS draft PDFs in `corpus/draft/`, captured
 | Form 8962 | Draft line 6 says 401% FPL is ineligible for PTC. Draft line 27 sends the full excess APTC to Schedule 2 line 1a; lines 28–29 are reserved. Rev. Proc. 2025-32 §2.04 removes the repayment limitation after 2025. | `nodes/intermediate/forms/form8962/index.ts` now dispatches percentage, repayment, and QSEHRA affordability rules by tax year; finish the 2026 FPL config, PDF/MeF line map, and final instruction check. |
 | Form 8839 and 1040 30 | Refundable adoption credit has a new 1040 payment line and may trigger Schedule 3-A. | Current form8839 and output routes; match the 2026 draft and Rev. Proc. adoption limits. |
 | Schedule 1-A | Total additional deductions now enter 1040 line 13a; draft total is line 44. | `nodes/intermediate/forms/schedule1a/index.ts`, final output, MeF/PDF mappings. |
-| 1040 identity/dependents | New work-authorization question and expanded dependent residence/credit checkboxes appear on the draft 1040. | `nodes/inputs/general`, filer identity, MeF header and 1040, PDF mapping, business rules. Treat the question as filing data, not as a derived answer. |
+| 1040 identity/dependents | New work-authorization question and expanded dependent residence/credit checkboxes appear on the draft 1040. | `general` now carries TY2026-only taxpayer/spouse answers and the main-form PDF maps their yes/no boxes. Dependent rows, MeF identity fields, and business rules remain. Treat the question as filing data, not as a derived answer. |
 
 ## End-to-end propagation check
 

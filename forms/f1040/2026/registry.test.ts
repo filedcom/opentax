@@ -17,6 +17,7 @@ Deno.test("TY2026 registry executes a wages-only return", () => {
       taxpayer_tin_issued_by_due_date: true,
       taxpayer_ssn_valid_for_employment: true,
       taxpayer_ssn_issued_before_due_date: true,
+      taxpayer_citizen_national_or_work_authorized: true,
       address_line1: "10 Main St",
       address_city: "Boston",
       address_state: "MA",
@@ -28,6 +29,10 @@ Deno.test("TY2026 registry executes a wages-only return", () => {
   assertEquals(result.pending.f1040.line9_total_income, 80_000);
   assertEquals(result.pending.f1040.line16_income_tax, 8_770);
   assertEquals(result.pending.f1040.line35a_refund, 1_230);
+  assertEquals(
+    result.pending.f1040.taxpayer_citizen_national_or_work_authorized,
+    true,
+  );
 });
 
 Deno.test("TY2026 registry routes W-2 and Form 4137 tips through Schedule 2", () => {

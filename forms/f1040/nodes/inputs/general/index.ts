@@ -142,6 +142,7 @@ export const inputSchema = z.object({
   taxpayer_ssn_valid_for_employment: z.boolean().optional(),
   taxpayer_ssn_issued_before_due_date: z.boolean().optional(),
   taxpayer_tin_issued_by_due_date: z.boolean().optional(),
+  taxpayer_citizen_national_or_work_authorized: z.boolean().optional(),
   taxpayer_dob: z.string().optional(),
   taxpayer_blind: z.boolean().optional(),
   taxpayer_age_65_or_older: z.boolean().optional(),
@@ -163,6 +164,7 @@ export const inputSchema = z.object({
   spouse_ssn_valid_for_employment: z.boolean().optional(),
   spouse_ssn_issued_before_due_date: z.boolean().optional(),
   spouse_tin_issued_by_due_date: z.boolean().optional(),
+  spouse_citizen_national_or_work_authorized: z.boolean().optional(),
   spouse_dob: z.string().optional(),
   spouse_blind: z.boolean().optional(),
   spouse_age_65_or_older: z.boolean().optional(),
@@ -575,6 +577,11 @@ function buildF1040Input(
     "taxpayer_tin_issued_by_due_date",
     input.taxpayer_tin_issued_by_due_date,
   );
+  addIfDefined(
+    fields,
+    "taxpayer_citizen_national_or_work_authorized",
+    input.taxpayer_citizen_national_or_work_authorized,
+  );
   addIfDefined(fields, "taxpayer_dob", input.taxpayer_dob);
   addIfDefined(fields, "taxpayer_blind", input.taxpayer_blind);
   addIfDefined(
@@ -605,6 +612,11 @@ function buildF1040Input(
     fields,
     "spouse_tin_issued_by_due_date",
     input.spouse_tin_issued_by_due_date,
+  );
+  addIfDefined(
+    fields,
+    "spouse_citizen_national_or_work_authorized",
+    input.spouse_citizen_national_or_work_authorized,
   );
   addIfDefined(fields, "spouse_dob", input.spouse_dob);
   addIfDefined(fields, "spouse_blind", input.spouse_blind);
@@ -698,6 +710,13 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
 
   compute(ctx: NodeContext, input: GeneralInput): NodeResult {
     const parsed = inputSchema.parse(input);
+    if (
+      ctx.taxYear !== 2026 &&
+      (parsed.taxpayer_citizen_national_or_work_authorized !== undefined ||
+        parsed.spouse_citizen_national_or_work_authorized !== undefined)
+    ) {
+      throw new Error("Form 1040 work-authorization answers require TY2026");
+    }
     if (
       parsed.taxpayer_can_be_claimed_as_dependent === true &&
       parsed.dependent_earned_income === undefined

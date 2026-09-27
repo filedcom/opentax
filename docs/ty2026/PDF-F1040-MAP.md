@@ -42,3 +42,9 @@ student/disability checkbox groups `c1_14`–`c1_29`; its credit selection uses
 `c1_30`–`c1_33`. These need row-level mapping and data validation before the
 2026 PDF builder is complete. The AcroForm tooltips provide the exact row and
 column labels in the CSV.
+
+`forms/f1040/2026/pdf/forms/f1040.ts` maps the currently computed 1040 fields,
+and `forms/f1040/2026/pdf/f1040.ts` fills the pinned draft and removes its
+cover page. A wages-only graph result was rendered and inspected on both
+pages. This is the main-form component; the full PDF bundle still needs
+dependent rows, remaining 1040 fields, and every supported attached form.

@@ -131,7 +131,9 @@ suite still needs a separate run before that release gate is green.
 The draft 2026 Form 1040's 207 AcroForm fields are inventoried with tooltips,
 widget coordinates, and physical pages in `pdf-fields-f1040.csv`. The
 [Form 1040 PDF map](PDF-F1040-MAP.md) identifies changed 2026 line fields and
-the new authorization/dependent checkbox groups; the builder remains open.
+the new authorization/dependent checkbox groups. The dedicated main-form
+descriptor and filler now produce a two-page draft 1040 from a wages-only
+graph result, with visual QA. The full PDF bundle remains open.
 
 ## 0. Freeze source versions and establish the baseline
 

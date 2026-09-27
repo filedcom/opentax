@@ -55,6 +55,26 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
+Deno.test("2026 work-authorization answers reach Form 1040 only in TY2026", () => {
+  const result = compute2026({
+    filing_status: FilingStatus.MFJ,
+    taxpayer_citizen_national_or_work_authorized: true,
+    spouse_citizen_national_or_work_authorized: false,
+  });
+  const f1040 = findOutput(result, "f1040")!;
+  assertEquals(f1040.fields.taxpayer_citizen_national_or_work_authorized, true);
+  assertEquals(f1040.fields.spouse_citizen_national_or_work_authorized, false);
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.Single,
+        taxpayer_citizen_national_or_work_authorized: true,
+      }),
+    Error,
+    "require TY2026",
+  );
+});
+
 // A minimal dependent who qualifies for CTC:
 // - has SSN, no ITIN, DOB puts them under 17 at Dec 31 2025, >6 months in home
 function qualifyingChildDep(overrides: Record<string, unknown> = {}) {
@@ -553,10 +573,14 @@ Deno.test("TY2026 qualifying relative income boundary is $5,300", () => {
     taxpayer_provided_over_half_support: true,
     gross_income,
   });
-  const count = (gross_income: number) => findOutput(compute2026({
-    filing_status: FilingStatus.Single,
-    dependents: [relative(gross_income)],
-  }), "f1040")?.fields.other_dependent_count;
+  const count = (gross_income: number) =>
+    findOutput(
+      compute2026({
+        filing_status: FilingStatus.Single,
+        dependents: [relative(gross_income)],
+      }),
+      "f1040",
+    )?.fields.other_dependent_count;
   assertEquals(count(5_299), 1);
   assertEquals(count(5_300), 0);
 });

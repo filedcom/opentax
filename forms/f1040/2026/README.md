@@ -84,6 +84,11 @@ returns through the normal graph planner and executor. It is limited to nodes
 whose TY2026 routes have been checked and is not a registered CLI product or
 an export path yet. The generic start-node factory lives in
 `forms/f1040/start.ts`, shared by both tax years.
+`pdf/forms/f1040.ts` maps the current 1040 output fields to the pinned draft
+AcroForm, including revised tax/payment lines and the new work-authorization
+answers. `pdf/f1040.ts` fills the two printed pages from a calculated pending
+1040; its wages-only sample was rendered and visually checked. It is not yet
+the full return PDF builder: dependent rows and attached forms remain.
 The shared Form 8839 node now applies TY2026 adoption limits, emits the
 refundable per-child credit to 1040 line 30, and tracks nonrefundable
 carryforwards by origin year. Its full credit-limit worksheet and TY2026
