@@ -1840,6 +1840,59 @@ Deno.test({
 
 Deno.test({
   name:
+    "XSD: Form 8582-CR start input carries passive orphan-drug K-1 through the return",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const reference = "2025 clinical partnership K-1";
+  const result = runReturn({
+    general,
+    k1_partnership: [{
+      partnership_name: "Clinical partnership",
+      partnership_ein: "123456789",
+      source_document_reference: reference,
+      box15_code_z_orphan_drug_credit: 500,
+      orphan_drug_credit_subject_to_passive_activity_limit: true,
+    }],
+    form8582cr: {
+      credit_sources: [{
+        activity_reference: "Clinical partnership activity",
+        source_form: "Form 8820",
+        source_document_reference: reference,
+        source_origin: {
+          kind: PassiveCreditSourceOrigin.Partnership,
+          entity_reference: "Clinical partnership",
+          ein: "123456789",
+        },
+        category: PassiveCreditCategory.Other,
+        reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+        form3800_credit_line: "1h",
+        current_year_credit: 500,
+        prior_unallowed_credits: [],
+        publicly_traded_partnership: false,
+      }],
+      regular_tax_all_income: 0,
+      regular_tax_without_passive: 0,
+    },
+  });
+  assertEquals(result.diagnostics, []);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(xml, "<IRS8582CR ");
+  assertStringIncludes(xml, "<IRS3800 ");
+  assertStringIncludes(
+    xml,
+    "<PassThroughEntityEIN>123456789</PassThroughEntityEIN>",
+  );
+  await validateXsd(xml, "Form 8582-CR passive K-1 normal return path");
+});
+
+Deno.test({
+  name:
     "XSD: pass-through-only Form 8826 code K reaches Form 3800 without IRS8826",
   sanitizeOps: false,
   sanitizeResources: false,

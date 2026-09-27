@@ -30,6 +30,13 @@ separately earned Form 8820 amount without duplicating a source, and does not
 invent a Form 8820 attachment for K-1-only credits. The source, tax-limit,
 and XML cases are written but unrun. Passive K-1 credits remain open.
 
+The existing Form 8582-CR source-and-tax input is now reachable from the
+normal Form 1040 start node, so a taxpayer can supply the passive-credit
+activities and the two required passive-income tax figures for calculation and
+Form 3800 routing. A full-return passive K-1-to-XML case is written but unrun.
+Automatic creation of those activity facts from a K-1 amount alone is not
+claimed; K-1s do not supply the tax-without-passive-income figure.
+
 The latest completed full test run is **6,596 passed, 0 failed, 48 ignored**
 (`deno task test`, 2026-09-26, before the later multi-policy line 10 and
 dependent-MAGI changes). The user asked for the remaining implementation to be

@@ -334,6 +334,10 @@ import {
   inputSchema as form4137InputSchema,
 } from "../nodes/intermediate/forms/form4137/index.ts";
 import {
+  form8582cr,
+  inputSchema as form8582crInputSchema,
+} from "../nodes/intermediate/forms/form8582cr/index.ts";
+import {
   f8917,
   itemSchema as f8917ItemSchema,
 } from "../nodes/inputs/f8917/index.ts";
@@ -681,6 +685,7 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: auto_expense, itemSchema: autoExpenseItemSchema, isArray: true },
   { node: schedule_f, inputSchema: scheduleFInputSchema, isArray: false },
   { node: form4137, inputSchema: form4137InputSchema, isArray: false },
+  { node: form8582cr, inputSchema: form8582crInputSchema, isArray: false },
   { node: f8917, itemSchema: f8917ItemSchema, isArray: true },
   { node: f8867, itemSchema: f8867ItemSchema, isArray: true },
   { node: f8859, itemSchema: f8859ItemSchema, isArray: true },

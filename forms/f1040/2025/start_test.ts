@@ -1,5 +1,13 @@
 import { assertEquals } from "@std/assert";
 import { buildStartNode, inputNodes } from "./start.ts";
+import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
+import { execute } from "../../../core/runtime/executor.ts";
+import { registry } from "./registry.ts";
+import {
+  PassiveCreditCategory,
+  PassiveCreditReportingRoute,
+  PassiveCreditSourceOrigin,
+} from "../nodes/intermediate/forms/form8582cr/index.ts";
 
 Deno.test("inputNodes has expected structure (array + singleton entries)", () => {
   const arrayEntries = inputNodes.filter((e) => e.isArray === true);
@@ -68,6 +76,57 @@ Deno.test("singleton Schedule F entry routes farm records to its calculation nod
     { schedule_f: input },
   );
   assertEquals(result.outputs, [{ nodeType: "schedule_f", fields: input }]);
+});
+
+Deno.test("Form 8582-CR passive credit facts reach the calculation node", () => {
+  const startNode = buildStartNode(inputNodes);
+  const facts = {
+    credit_sources: [],
+    regular_tax_all_income: 0,
+    regular_tax_without_passive: 0,
+  };
+  const result = startNode.compute(
+    { taxYear: 2025, formType: "f1040" },
+    { form8582cr: facts },
+  );
+  assertEquals(result.outputs, [{ nodeType: "form8582cr", fields: facts }]);
+});
+
+Deno.test("Form 8582-CR source input reaches Form 3800 in the return plan", () => {
+  const source = {
+    activity_reference: "Clinical activity",
+    source_form: "Form 8820",
+    source_document_reference: "2025 clinical credit statement",
+    source_origin: { kind: PassiveCreditSourceOrigin.Self },
+    category: PassiveCreditCategory.Other,
+    reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+    form3800_credit_line: "1h" as const,
+    current_year_credit: 500,
+    prior_unallowed_credits: [],
+    publicly_traded_partnership: false,
+  };
+  const result = execute(buildExecutionPlan(registry), registry, {
+    form8582cr: {
+      credit_sources: [source],
+      regular_tax_all_income: 0,
+      regular_tax_without_passive: 0,
+    },
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.pending.form8582cr.credit_sources, [source]);
+  assertEquals(result.pending.f3800.passive_source_allocations, [{
+    ...source,
+    source_statement_reference: undefined,
+    total_credit: 500,
+    special_allowed_credit: 0,
+    unallowed_credit: 500,
+    allowed_credit: 0,
+  }]);
+  assertEquals(
+    result.diagnostics.some((item) =>
+      item.nodeType === "form8582cr" || item.nodeType === "f3800"
+    ),
+    false,
+  );
 });
 
 Deno.test("singleton Form 8824 exchange routes to its calculation node", () => {
