@@ -28,6 +28,8 @@ The [Form 4255 plan](FORM4255-GRAPH.md) closes the corresponding recapture
 side, including its separate 2026 Schedule 2 routes.
 The [Form 965-A plan](FORM965A-GRAPH.md) identifies the continuing liability
 ledger and the printed 2026 Schedule 2 line 12/15 conflict.
+The [Schedule R plan](SCHEDULER-GRAPH.md) supplies its source-level credit
+calculation, tax-liability limit and 2026 filed attachment.
 
 ## Coding sequence
 

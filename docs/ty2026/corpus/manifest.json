@@ -1974,6 +1974,15 @@
       "bytes": 153690,
       "sha256": "c6f7b4a89f68261975754572be6bd55b0e29ab642fe14017cbf92e7f37a9bef1",
       "year_check": "current-revision"
+    },
+    {
+      "path": "draft/f1040sr.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f1040sr--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 208960,
+      "sha256": "0fcbd9fe296b470b2a0ceadc497380159f7d872f7aa11d86ae856bbd2234f5b6",
+      "year_check": "2026-present"
     }
   ]
 }

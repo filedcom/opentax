@@ -69,6 +69,10 @@ The [Form 965-A contract](../../../docs/ty2026/FORM965A-GRAPH.md) preserves
 the outstanding liability and actual payment history and routes the
 reporting-year amount to Schedule 2 line 12. The current draft's line 15
 addition omits line 12, so the final total requires IRS resolution.
+The [Schedule R contract](../../../docs/ty2026/SCHEDULER-GRAPH.md) maps
+the nine age/disability filing choices, the printed credit-limit worksheet,
+both PDF pages and Schedule 3 line 6d. The shared node's QSS and mixed-age
+joint-return arithmetic does not match the 2026 form.
 The [Form 1116 contract](../../../docs/ty2026/FORM1116-GRAPH.md) maps
 foreign-tax categories, carryovers, redeterminations and the revised line
 18/20 bases from 1040, Schedule 1-A and Schedule 2; its full attachment

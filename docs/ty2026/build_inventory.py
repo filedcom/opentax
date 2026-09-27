@@ -59,6 +59,7 @@ NODE_PROGRESS = {
     "f3468": "Published 2025 form/instructions pinned as comparator and Notice 2026-15 PFE guidance pinned; shared flat credit skips seven-part facility ledger, 321 PDF widgets, Form 3800/4255/current MeF; see FORM3468-GRAPH.md",
     "f4255": "Current Dec 2025 form/instructions pinned; shared node sends recapture to 2026 Schedule 2 line 17a (household tax), missing credit-use/EPE/transfer/PWA/emissions, 646 PDF widgets/current MeF; see FORM4255-GRAPH.md",
     "f965": "Current Jan 2021 Form 965-A/instructions pinned; 2026 Schedule 2 prints line 12 but line 15 omits it; shared node uses obsolete line 9 and 2017-only final-year assumption; build liability/payment/deferral ledger, PDF/current MeF; see FORM965A-GRAPH.md",
+    "schedule_r": "2026 form/instructions pinned; shared node skips tax-liability worksheet, QSS base and MFJ mixed-age disability rules; derive box/line 10-22 from owner facts, add PDF/current MeF; see SCHEDULER-GRAPH.md",
     "schedule_a": "2026 deduction source/choice and noncash-gift attachment need the SALT, charity floor, mortgage-interest and AGI loops; reconcile Form 8283/ATS 2 and current PDF/MeF; see DEDUCTION-GRAPH.md",
     "eitc": "2026 qualifying-child, earned-income, recertification and opt-out answers must reconcile Schedule EIC/8862, 1040 line 27 and ATS 4/ATS 2; see FORM8862-8863-EIC-GRAPH.md",
     "form5695": "2026 draft is prior-year residential clean-energy carryforward only; remove new-expense/joint-occupancy branches and finish credit ordering/PDF/MeF; see FORM5695-CREDIT-GRAPH.md",

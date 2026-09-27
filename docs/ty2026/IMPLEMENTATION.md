@@ -46,6 +46,10 @@ The [Form 965-A contract](FORM965A-GRAPH.md) maps the continuing liability,
 deferral and actual installment history to Schedule 2 line 12. Its January
 2021 form/instructions and 413 PDF widgets are pinned; the 2026 Schedule 2
 draft omits line 12 from line 15's printed addition and needs resolution.
+The [Schedule R contract](SCHEDULER-GRAPH.md) pins its 2026 form and
+instructions, maps nine eligibility choices and the credit-limit worksheet,
+and inventories all 27 PDF widgets. The shared node misses mixed-age
+disability and QSS arithmetic and does not file the schedule.
 The [Form 8962 contract](FORM8962-GRAPH.md) identifies the 2026 line 27
 repayment and reserved lines 28/29, Form 1095-A and Schedule 2/3 graph
 handoff, full PDF field map, and the current-instruction/MeF gates.

@@ -72,6 +72,9 @@ for the implementation contract.
 - [`FORM965A-GRAPH.md`](FORM965A-GRAPH.md) and `pdf-fields-f965a.csv`:
   continuing section 965 liability/payment ledger, 2026 Schedule 2 line
   12/15 draft conflict and 413 current form widgets.
+- [`SCHEDULER-GRAPH.md`](SCHEDULER-GRAPH.md) and
+  `pdf-fields-f1040sr.csv`: 2026 elderly/disabled eligibility, box-specific
+  amount and tax-limit worksheet, Schedule 3 line 6d and 27 PDF widgets.
 - [`PARITY-QUEUE.md`](PARITY-QUEUE.md): dependency-ordered full 1040 coding
   queue across the 2025 graph/PDF/MeF inventories and 2026-only attachments.
 - [`INSTRUCTION-COVERAGE.md`](INSTRUCTION-COVERAGE.md) and
