@@ -276,7 +276,10 @@ qualifying fuel usage, and credits round by claim before the activity totals
 are combined. Both PDF descriptors now use the actual nested AcroForm paths;
 all mapped widget names were found in the IRS PDFs. Filled rendering and the
 binary-attachment IRS business rule are unverified. Mixed units on one fuel
-line stop until conversion rules are verified. Additional claim lines, source evidence, full
+line stop until conversion rules are verified. A tagged home-kerosene variant
+now implements the IRS line A exception and leaves business lines B-F blank;
+its source, XML, PDF, and XSD cases are written but unrun. Additional claim
+lines, source evidence, full
 test/XSD and IRS business rules, and ATS acceptance remain open.
 
 Form 8936 now enters the start graph as one singleton input containing both Part

@@ -156,9 +156,15 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
     const l4b = onLine(input, "4b");
     const l5c = onLine(input, "5c");
     const l5d = onLine(input, "5d");
-    const scheduleAIds = input.additional_activities.length
+    const business = input.claimant_context === "business"
+      ? input.business
+      : undefined;
+    const additionalActivityCount = input.claimant_context === "business"
+      ? input.additional_activities.length
+      : 0;
+    const scheduleAIds = additionalActivityCount
       ? Array.from(
-        { length: 1 + input.additional_activities.length },
+        { length: 1 + additionalActivityCount },
         (_, index) =>
           context.documentIdsByAttachmentFileName?.[
             form4136ScheduleAFileName(index)
@@ -173,7 +179,7 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
       );
     }
     if (
-      input.additional_activities.length && context.documentIdsByPendingKey &&
+      additionalActivityCount && context.documentIdsByPendingKey &&
       !scheduleAIds.every(Boolean)
     ) {
       throw new Error(
@@ -187,21 +193,25 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
         element("QlfyUsageFuelsEligFTCInd", "true"),
         element(
           "QlfyBusinessActivitiesCnt",
-          1 + input.additional_activities.length,
+          business ? 1 + additionalActivityCount : undefined,
         ),
-        elements("BusinessName", [
-          element("BusinessNameLine1Txt", input.business.business_name),
-        ]),
-        element("EIN", input.business.business_ein),
+        business
+          ? elements("BusinessName", [
+            element("BusinessNameLine1Txt", business.business_name),
+          ])
+          : "",
+        element("EIN", business?.business_ein),
         element(
           "PrincipalBusinessActivityCd",
-          input.business.principal_activity_code,
+          business?.principal_activity_code,
         ),
-        elements("EquipmentDescriptionGrp", [
-          element("MakeNm", input.business.equipment_make),
-          element("ModelNm", input.business.equipment_model),
-          element("EquipmentTypeDesc", input.business.equipment_type),
-        ]),
+        business
+          ? elements("EquipmentDescriptionGrp", [
+            element("MakeNm", business.equipment_make),
+            element("ModelNm", business.equipment_model),
+            element("EquipmentTypeDesc", business.equipment_type),
+          ])
+          : "",
         elements("NontaxableUseOfGasolineGrp", [
           element("OffHwyBusUseGasolineGalsQty", qty(l1a)),
           element("FarmingPurposesGasolineGalsQty", qty(l1b)),
@@ -290,6 +300,7 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
   async buildBinaryAttachments(raw, context) {
     if (!raw.claims?.length) return [];
     const input = inputSchema.parse(raw);
+    if (input.claimant_context === "home_kerosene") return [];
     if (!input.additional_activities.length) return [];
     const activities = [
       { business: input.business, claims: input.claims },
@@ -298,6 +309,7 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
     return await Promise.all(activities.map(async (activity, index) => {
       const projected = projectForm4136Fields({
         ...activity,
+        claimant_context: "business",
         additional_activities: [],
         primary_activity_has_most_qualified_fuel_usage: true,
       });

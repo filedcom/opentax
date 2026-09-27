@@ -7,10 +7,14 @@ Source: [2025 Form 4136](https://www.irs.gov/pub/irs-pdf/f4136.pdf),
 
 The 2025 form added Part I business-activity questions and Part II column (d),
 actual fuel cost from records. The prior flat gallon fields could calculate a
-number without either fact, so the input is now a line-indexed claim array with
-an affirmed single qualifying business, equipment details, purchase-record and
-no-duplicate-claim confirmations, ultimate-purchaser status, units, and actual
-fuel cost on every claim.
+number without either fact, so the business input is now a line-indexed claim
+array with a primary qualifying activity, equipment details, purchase-record
+and no-duplicate-claim confirmations, ultimate-purchaser status, units, and
+actual fuel cost on every claim. A separate tagged `home_kerosene` input covers
+the IRS line A exception for undyed kerosene purchased away from a blocked pump
+and used at home for heating, lighting, or cooking. It requires the purchase,
+use, and nonduplicate facts, allows only line 4a/type 08, and omits business
+lines B-F in XML and PDF.
 The input also requires the printed undyed-fuel, no-waiver, no-credit-card-
 certificate, and non-highway-vehicle certifications on affected claims.
 The represented line rates are 1a/1b $.183, 2b $.193, 3a/3b $.243, 4a/4b
@@ -47,7 +51,6 @@ and ATS verification. Exact source-PDF widget names have been mapped for both
 forms, but neither filled PDF has been rendered and checked yet. The
 input rejects mixed measurement units on one combined fuel line until the
 source conversion and rounding can be verified against IRS rules. The
-undyed-kerosene home-use exception,
 other Part II lines, seller/purchase-date source identities, other rate-by-use
 exceptions, and cross-form duplicate claims are not modeled yet. No IRS ATS
 acknowledgment exists.

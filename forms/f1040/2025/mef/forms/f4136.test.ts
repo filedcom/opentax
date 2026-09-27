@@ -7,6 +7,7 @@ const certifications = {
   not_highway_vehicle: true,
 } as const;
 const activityContext = {
+  claimant_context: "business" as const,
   additional_activities: [],
   primary_activity_has_most_qualified_fuel_usage: true as const,
 };
@@ -300,4 +301,38 @@ Deno.test("Form 4136 XML combines two activities and links both Schedule A PDFs"
     Error,
     "Schedule A",
   );
+});
+
+Deno.test("Form 4136 XML omits business fields for home-use kerosene", () => {
+  const xml = form4136.build({
+    claimant_context: "home_kerosene",
+    claimant_is_ultimate_purchaser: true,
+    home_purchase_outside_blocked_pump: true,
+    home_use_heating_lighting_or_cooking: true,
+    purchase_records_confirmed: true,
+    no_duplicate_excise_claim: true,
+    claims: [{
+      line: "4a",
+      type_of_use: "08",
+      unit: "gallons",
+      qualified_quantity: 100,
+      actual_fuel_cost: 300,
+      undyed_fuel_confirmed: true,
+    }],
+  }, { pending: { schedule3: { line12_fuel_tax_credit: 24.3 } } });
+  assertStringIncludes(
+    xml,
+    "<QlfyUsageFuelsEligFTCInd>true</QlfyUsageFuelsEligFTCInd>",
+  );
+  assertStringIncludes(
+    xml,
+    "<NontaxableUseOfFuelTypeCd>08</NontaxableUseOfFuelTypeCd>",
+  );
+  assertStringIncludes(xml, "<FarmPrpsUndyedKeroseneCrAmt");
+  if (
+    xml.includes("<QlfyBusinessActivitiesCnt>") ||
+    xml.includes("<BusinessName>")
+  ) {
+    throw new Error("Home-use kerosene must skip Form 4136 business lines B-F");
+  }
 });
