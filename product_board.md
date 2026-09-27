@@ -206,9 +206,14 @@ S-corporation sources under one line 1e row, and uses the shared Part II tax-use
 allocation and Part V detail path. A pass-through-only recipient omits IRS8826,
 as the [2025 Form 3800 instructions](https://www.irs.gov/instructions/i3800)
 allow. Direct, mismatch, and local XSD cases are written but unrun. A mixed
-source set whose gross credit exceeds the $5,000 cap still stops; its
-cross-source cap allocation is not built yet, and input-to-input K-1 matching
-does not authenticate the K-1 or statement.
+source set above $5,000 now uses a shared cent-precision, largest-remainder
+proration to allocate the Form 3800 line 1e cap among entered sources; the
+graph, filed source rows, and partial Part II use consume the same allocation.
+The IRS instructions state the line cap but do not specify this per-source
+allocation method, so it needs business-rule review. The combined passive and
+nonpassive line 1e cap still stops rather than reallocating between those
+categories. Input-to-input K-1 matching does not authenticate the K-1 or
+statement.
 The Part V draft now apportions whole-dollar source and applied amounts so the
 printed rows add back to the rounded Part III and Part II totals; its rounding
 case is written but unrun. Solo, combined, and negative cases are written but

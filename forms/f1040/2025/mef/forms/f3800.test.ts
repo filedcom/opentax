@@ -1101,31 +1101,71 @@ Deno.test("Form 3800 combines self-earned and trust disabled-access credits on o
     xml,
     "<PassThroughEntityEIN>123456789</PassThroughEntityEIN>",
   );
-  assertThrows(
-    () =>
-      form3800.build({
-        ...fields,
-        f8826_credit_entries: [{
-          ...fields.f8826_credit_entries[0],
-        }, {
-          ...fields.f8826_credit_entries[1],
-          credit_amount: 3_000,
+  const cappedTax = { ...taxContext, standardCredit: 5_000 };
+  const cappedXml = form3800.build({
+    ...fields,
+    f8826_credit_entries: [{
+      ...fields.f8826_credit_entries[0],
+    }, {
+      ...fields.f8826_credit_entries[1],
+      credit_amount: 3_000,
+    }],
+    tax_context: cappedTax,
+    allowed_credit: 5_000,
+  }, {
+    ...context,
+    pending: {
+      ...filedPending(cappedTax, 5_000),
+      f8826: own,
+      k1_trust: {
+        k1_trusts: [{
+          ...trust,
+          box13_code_zz_disabled_access_credit: 3_000,
         }],
-      }, {
-        ...context,
-        pending: {
-          ...context.pending,
-          k1_trust: {
-            k1_trusts: [{
-              ...trust,
-              box13_code_zz_disabled_access_credit: 3_000,
-            }],
-          },
-        },
-      }),
-    Error,
-    "exceed the $5,000 cap",
+      },
+    },
+  });
+  assertStringIncludes(
+    cappedXml,
+    "<TotalGeneralBusCreditsAmt>5000</TotalGeneralBusCreditsAmt>",
   );
+  assertEquals([...cappedXml.matchAll(/<Form8826CYCreditsGrp/g)].length, 1);
+  assertEquals([...cappedXml.matchAll(/<Frm8826CYAggrgtAmtGrp/g)].length, 2);
+  const limitedTax = { ...cappedTax, regularTax: 23_000 };
+  const limitedFields = {
+    ...fields,
+    f8826_credit_entries: [{
+      ...fields.f8826_credit_entries[0],
+    }, {
+      ...fields.f8826_credit_entries[1],
+      credit_amount: 3_000,
+    }],
+    tax_context: limitedTax,
+    allowed_credit: 3_000,
+  };
+  const limitedContext = {
+    ...context,
+    pending: {
+      ...filedPending(limitedTax, 3_000),
+      f8826: own,
+      k1_trust: {
+        k1_trusts: [{
+          ...trust,
+          box13_code_zz_disabled_access_credit: 3_000,
+        }],
+      },
+    },
+  };
+  assertThrows(
+    () => form3800.build(limitedFields, limitedContext),
+    Error,
+    "Part V applied amounts for each Form 8826 source",
+  );
+  const limitedXml = form3800.build({
+    ...limitedFields,
+    form8826_applied_credits_by_source: [1_000, 2_000],
+  }, limitedContext);
+  assertEquals([...limitedXml.matchAll(/<Frm8826CYAggrgtAmtGrp/g)].length, 2);
 });
 
 Deno.test("Form 3800 descriptor requires chosen Part V use when two K-1 sources are partly limited", () => {

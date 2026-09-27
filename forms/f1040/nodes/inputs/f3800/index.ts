@@ -15,6 +15,7 @@ import {
   ZERO_FORM3800_PASSIVE_ACTIVITY,
 } from "./calculation.ts";
 import { sourceAllocationSchema } from "../../intermediate/forms/form8582cr/source.ts";
+import { allocateDisabledAccessLine1eCredits } from "./disabled-access.ts";
 
 // TY2025 — Form 3800: General Business Credit.
 // Source-backed Form 8826, Form 8835, and Form 5884 entries pass classified source
@@ -266,13 +267,9 @@ function schedule3Output(
     }
     sourceIds.add(id);
   }
-  const form8826Credit = f8826Entries.reduce(
-    (sum, entry) => sum + entry.credit_amount,
-    0,
-  );
-  if (form8826Credit > 5_000) {
-    throw new Error("Form 8826 source credits exceed the $5,000 cap");
-  }
+  const form8826Credit = allocateDisabledAccessLine1eCredits(
+    f8826Entries.map((entry) => entry.credit_amount),
+  ).reduce((sum, credit) => sum + credit, 0);
   const passiveLines = passiveSources
     ? classifyForm3800PassiveCredits(passiveSources)
     : ZERO_FORM3800_PASSIVE_ACTIVITY;

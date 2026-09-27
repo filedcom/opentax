@@ -7,6 +7,7 @@ import {
   type Form8835CreditEntry,
 } from "../../../nodes/inputs/f3800/calculation.ts";
 import { inputSchema as f3800InputSchema } from "../../../nodes/inputs/f3800/index.ts";
+import { allocateDisabledAccessLine1eCredits } from "../../../nodes/inputs/f3800/disabled-access.ts";
 import {
   calculateForm8582CR,
   inputSchema as f8582crInputSchema,
@@ -260,18 +261,18 @@ function sourceForm8826(
       context.pending,
     );
   }
-  const credit = actual.reduce((sum, entry) => sum + entry.credit_amount, 0);
-  if (!Number.isFinite(credit) || credit > 5_000) {
-    throw new Error("Form 3800 disabled-access sources exceed the $5,000 cap");
-  }
+  const cappedAmounts = allocateDisabledAccessLine1eCredits(
+    actual.map((entry) => entry.credit_amount),
+  );
+  const credit = cappedAmounts.reduce((sum, amount) => sum + amount, 0);
   return {
     source,
     lines,
     credit,
-    sources: actual.map((entry) => ({
-      credit: entry.credit_amount,
-      ein: entry.source_ein,
-    })),
+    sources: actual.flatMap((entry, index) => {
+      const amount = cappedAmounts[index] ?? 0;
+      return amount > 0 ? [{ credit: amount, ein: entry.source_ein }] : [];
+    }),
   };
 }
 

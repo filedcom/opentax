@@ -366,13 +366,14 @@ Deno.test("f3800: estate and trust disabled-access entries retain K-1 and statem
       false,
     );
   }
-  assertThrows(
-    () =>
+  assertEquals(
+    fieldsOf(
       f3800.compute({ taxYear: 2025, formType: "f1040" }, {
         f8826_credit_entries: [{ ...entry, credit_amount: 5_000.01 }],
-      }),
-    Error,
-    "exceed the $5,000 cap",
+      }).outputs,
+      f1040,
+    )?.form3800_source_credits?.standardCredit,
+    5_000,
   );
 });
 

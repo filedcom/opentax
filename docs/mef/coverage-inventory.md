@@ -122,8 +122,11 @@ XSD cases. The passive route also matches distinct estate/trust K-1 and named
 code ZZ statement references, with unrun source and XSD cases. The nonpassive
 estate/trust amount now enters Form 3800 directly, matches both K-1 and
 statement references in the filed descriptor, and omits IRS8826 for a
-pass-through-only recipient; its direct and XSD cases are unrun. The underlying statement
-attachment, mixed-source credit above the $5,000 cap, prior-year evidence, Form 8826 PDF,
+pass-through-only recipient; its direct and XSD cases are unrun. Mixed
+nonpassive sources now share a cent-precision $5,000 cap allocation; the
+per-source allocation method needs business-rule review. The underlying
+statement attachment, combined passive/nonpassive credit above the cap,
+prior-year evidence, Form 8826 PDF,
 and ATS acceptance remain open.
 
 Form 8820 is also in scope outside the Scenario 4 rows. The current build pass
