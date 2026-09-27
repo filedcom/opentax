@@ -32,6 +32,10 @@ instructions, including line 19b vehicle interest and its distinct Schedule
 E/SE routing. [ATS scenario 3](ATS-SCENARIO-03.md) now has page-level source
 facts and independently calculated intermediate amounts, with the missing
 farm optional Schedule SE method named as an implementation dependency.
+The [Schedule SE contract](SCHEDULESE-GRAPH.md) maps both optional methods,
+the owner/source boundary, all 27 draft PDF fields, and the exact current
+graph/serializer gaps. Its ATS scenario 3 case can be implemented without
+re-researching the source lines, subject to current MeF and rounding checks.
 
 ## Chronological progress notes
 

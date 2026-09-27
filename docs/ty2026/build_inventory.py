@@ -43,7 +43,7 @@ NODE_PROGRESS = {
     "form8606": "2026 form and instructions pinned; dedicated per-owner basis and Roth calculation needed before registry; see FORM8606-GRAPH.md",
     "schedule_f": "2026 draft makes line 21b vehicle interest and 21c other interest; build dedicated farm input, PDF/MeF, ATS 3; see SCHEDULEF-GRAPH.md",
     "f4835": "2026 form/instructions pinned; line 19b vehicle interest and farm-rent Schedule E route need PDF/MeF and ATS 3; see FORM4835-GRAPH.md",
-    "schedule_se": "ATS 3 elects 2026 farm optional method; build gross-income eligibility, line 15, tax/deduction, PDF/MeF; see ATS-SCENARIO-03.md",
+    "schedule_se": "ATS 3 elects 2026 farm optional method; current Schedule F suppresses low-profit/loss SE route and 2025 PDF map puts profit in 2026 name field; see SCHEDULESE-GRAPH.md",
 }
 
 P0_NODES = {

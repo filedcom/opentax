@@ -69,6 +69,9 @@ for the implementation contract.
 - [`SCHEDULEF-GRAPH.md`](SCHEDULEF-GRAPH.md): farm cash/accrual income, the
   new vehicle-interest line 21b, farm-loss and carryforward dependencies,
   PDF/MeF build order, and the ATS scenario 3 farm fixture.
+- [`SCHEDULESE-GRAPH.md`](SCHEDULESE-GRAPH.md): owner-keyed self-employment
+  earnings, farm/nonfarm optional-method eligibility and lines, the complete
+  2026 draft AcroForm field map, MeF refresh gate, and ATS scenario 3.
 - [`FORM4562B-GRAPH.md`](FORM4562B-GRAPH.md): newly pinned 2026 amortization
   attachment, per-asset input and carryforward contract, and current
   instructions/MeF acceptance gates.

@@ -34,6 +34,11 @@ The [Form 4835 contract](../../../docs/ty2026/FORM4835-GRAPH.md) and
 production-based farm rent to Schedule E while keeping Schedule F farm profit
 separate for the elected Schedule SE farm optional method. That packet also
 requires 1099-R, Schedule D, and QBI/cooperative reconciliation.
+The [Schedule SE contract](../../../docs/ty2026/SCHEDULESE-GRAPH.md) maps the
+owner-level source and optional-method rules, every 2026 PDF field, and the
+MeF refresh gate. In particular, the current Schedule F output suppresses
+low-profit/loss optional-method cases and the TY2025 PDF filler maps its first
+money field to what is the 2026 name field.
 `credit-resolution.ts` computes Schedule 8812 Worksheet B through line 14
 and 2026 Form 5695 lines 1–4 in the required order. The registered graph
 receives tax, dependent, AGI, Schedule 2, and Schedule 3 amounts.
