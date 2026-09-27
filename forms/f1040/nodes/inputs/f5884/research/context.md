@@ -44,6 +44,9 @@ These checks are written but unrun under the requested build-first workflow.
 The row still accepts affirmed eligibility facts rather than reconciling
 certifications, payroll periods, and wage exclusions against primary source
 documents. Successor-employer wages, controlled-group allocations, pass-through
-credits, passive-activity limitations, carryovers, PDF, and ATS acceptance
-remain open. The native XML and shared nonpassive tax limit still need the full
-test batch, local XSD validation, and business-rule review before filing use.
+credits, passive-activity limitations, carryovers, filled-PDF inspection, and
+ATS acceptance remain open. The one-page PDF descriptor now maps the official
+fillable widgets for lines 1a-1c, 2, and 4, but has not been visually verified
+after filling. Native XML and the shared nonpassive tax limit still need the
+full test batch, local XSD validation, and business-rule review before filing
+use.

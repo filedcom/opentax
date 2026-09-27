@@ -170,9 +170,11 @@ recipients. Source and rejection cases
 are written but unrun. The current pass now forwards its nonpassive line 4b
 credit through the shared Form 3800 tax limit instead of depositing gross
 credit on Schedule 3. Native `IRS5884` source XML, the linked `IRS3800` line
-4b group, and partial-limit reconciliation have cases written but unrun.
-Passive credit, carryovers, filled PDF, IRS business rules, and ATS acceptance
-remain open. An unrun pure Form 8912 Part I/II limit
+4b group, and partial-limit reconciliation have cases written but unrun. The
+continuous-use IRS Form 5884 PDF now has the exact one-page AcroForm field map
+for lines 1a-1c, 2, and 4, with unrun source-reconciliation cases. Passive
+credit, carryovers, filled-PDF inspection, IRS business rules, and ATS
+acceptance remain open. An unrun pure Form 8912 Part I/II limit
 calculation now keeps its line 12 allowed credit and unused amount separate,
 taking the already-allowed Form 3800 credit on line 10c. It rejects pass-through
 CREB cases until their separate taxable-income limit is modeled. The Form 8912
