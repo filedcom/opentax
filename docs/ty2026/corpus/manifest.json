@@ -1,5 +1,5 @@
 {
-  "snapshot_utc": "2026-09-27T12:17:33.015566+00:00",
+  "snapshot_utc": "2026-09-27T16:42:49.382318+00:00",
   "source_pages": [
     "https://www.irs.gov/e-file-providers/tax-year-2026-form-1040-series-and-extensions-modernized-e-file-mef-assurance-testing-system-ats-information",
     "https://www.irs.gov/tax-professionals/tax-year-2026-modernized-e-file-schema-and-business-rules-for-individual-tax-returns-and-extensions"
@@ -2180,6 +2180,24 @@
       "status": "downloaded",
       "bytes": 533268,
       "sha256": "cf856032c7104b5ad1765b07a1769642b24e771c4fe87089d85c613331d2ce3a",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "draft/f3903.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f3903--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 220942,
+      "sha256": "589d204b50c9962bf6c69acdf9b95981bb75a83fb9c4bca19e01d0e984b31a8d",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "draft/i3903.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/i3903--dft.pdf",
+      "kind": "draft-instructions",
+      "status": "downloaded",
+      "bytes": 225314,
+      "sha256": "65bf15d80c9125c8a99ff651bd373623f4cbd239c606b7f2979d65c56086f29c",
       "year_check": "2026-present"
     }
   ]

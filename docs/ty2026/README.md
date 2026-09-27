@@ -91,6 +91,9 @@ for the implementation contract.
   student-loan statements, Schedule A points/MIP and Schedule 1 line 21.
 - [`FORM1098VLI-GRAPH.md`](FORM1098VLI-GRAPH.md): new 2026 vehicle-loan
   statement, final regulations, Schedule 1-A Part IV and business allocation.
+- [`FORM3903-EDUCATOR-GRAPH.md`](FORM3903-EDUCATOR-GRAPH.md): pinned 2026
+  moving form/instructions, military and intelligence moves, reimbursement
+  and storage routes, and the new educator Schedule A line 17k handoff.
 - [`PARITY-QUEUE.md`](PARITY-QUEUE.md): dependency-ordered full 1040 coding
   queue across the 2025 graph/PDF/MeF inventories and 2026-only attachments.
 - [`INSTRUCTION-COVERAGE.md`](INSTRUCTION-COVERAGE.md) and

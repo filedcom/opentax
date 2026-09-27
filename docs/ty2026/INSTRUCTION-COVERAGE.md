@@ -4,7 +4,7 @@ Snapshot: September 27, 2026. The [coverage ledger](instruction-coverage.csv)
 checks the expected IRS draft instruction URL for each form in the TY2025 PDF
 surface and additional active inputs. The form slug is a lookup aid, not
 proof that every form has its own instruction booklet. Current result across
-92 entries: **27 pinned 2026 drafts**, **21 URLs serving 2025 instructions**,
+93 entries: **28 pinned 2026 drafts**, **21 URLs serving 2025 instructions**,
 **9 with no draft at the expected URL**, **9 with 2026 instructions embedded
 in their form drafts**, **1 covered by a combined 2026 booklet**, **6 with
 current continuous-use instructions**, **5 current older-revision
@@ -81,6 +81,10 @@ feed Schedule 1-A Part IV and mixed-use activity-interest allocation.
 Form 6252 has its instructions on pages 2–4 of the pinned 2026 draft form;
 some references there still name the old Form 4797 lines, so they need
 final-source reconciliation before coding.
+The 2026 Form 3903 draft and separate instructions are pinned. They add
+intelligence-community relocation, a certification checkbox, split-year
+moving mileage, Schedule 1 storage-only treatment and taxable excess
+reimbursement. See the [moving/educator plan](FORM3903-EDUCATOR-GRAPH.md).
 
 The pinned PDFs include 2026 Schedules E, F, SE, R, and 8812 and Forms 2106,
 2441, 2555, 4835, 5329, 5695, 7206, 8606, 8615, 8814, 8815, 8829, 8853,

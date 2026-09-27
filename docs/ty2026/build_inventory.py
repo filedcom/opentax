@@ -16,6 +16,8 @@ REGISTRY = ROOT / "forms/f1040/2025/registry.ts"
 # A node stays unverified until its 2026 behavior, outputs, and form route are
 # checked. These notes identify work already started without marking it done.
 NODE_PROGRESS = {
+    "f3903": "2026 form/instructions pinned; add intelligence-community/certification, per-move expense and W-2 code P ledger, storage-only/2555, Schedule 1 line14 and 1040 line1h, PDF/current MeF; see FORM3903-EDUCATOR-GRAPH.md",
+    "educator_expenses": "2026 Schedule 1 line11 plus Schedule A line17k; require 900-hour/role evidence and owner-keyed nonduplicated expenses, apply per-educator cap then itemized choice/overall limit, PDF/current MeF; see FORM3903-EDUCATOR-GRAPH.md",
     "f1098": "2025 continuous-use form and Dec 2026 instructions pinned; do not register until 8a/8c points correction, 2026 8d MIP, debt/use and mixed-activity allocation, box4 tax-benefit recovery, PDF/current MeF; see FORM1098-1098E-GRAPH.md",
     "f1098e": "2026 form and combined instructions pinned; registered box1/AGI/line21 slice remains, add qualified-loan/borrower and box2 paid-interest facts, full MAGI/SSA audit, PDF/current MeF; see FORM1098-1098E-GRAPH.md",
     "f1099oid": "Jan 2024 continuous-use form/combined instructions pinned; unregistered node mishandles box6 net reporting, TIPS negatives, box10 premium, box11 tax-exempt/PAB split, boxes3/5/12-14; add basis and Schedule B/1/AMT/1040/PDF/current MeF; see INTEREST-GRAPH.md",

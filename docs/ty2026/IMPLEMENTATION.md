@@ -71,6 +71,11 @@ allocation, and student-loan eligibility/MAGI work.
 The [Form 1098-VLI contract](FORM1098VLI-GRAPH.md) pins the new 2026
 vehicle-loan source, final regulations, loan/refund facts and allocation
 to Schedule 1-A Part IV or business-interest schedules.
+The [Form 3903/educator contract](FORM3903-EDUCATOR-GRAPH.md) pins the 2026
+moving form and instructions, all ten PDF widgets, per-move deduction or
+taxable reimbursement routes, and educator Schedule A line 17k after the
+Schedule 1 limit. Both shared input nodes need 2026 source facts before
+registration.
 The [Form 8962 contract](FORM8962-GRAPH.md) identifies the 2026 line 27
 repayment and reserved lines 28/29, Form 1095-A and Schedule 2/3 graph
 handoff, full PDF field map, and the current-instruction/MeF gates.

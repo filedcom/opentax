@@ -99,6 +99,10 @@ pins the new 2026 lender statement and final regulations. The current
 Schedule 1-A calculator/PDF can print a VIN and allowed interest, but the
 source intake must establish qualifying debt, original use, assembly,
 refund history and business-interest allocation first.
+The [Form 3903 and educator contract](../../../docs/ty2026/FORM3903-EDUCATOR-GRAPH.md)
+pins 2026 moving instructions and maps the intelligence-community expansion,
+per-move Form 3903, Schedule 1/1040 reimbursement routes and educator
+Schedule A line 17k after the capped Schedule 1 deduction.
 The [Form 1116 contract](../../../docs/ty2026/FORM1116-GRAPH.md) maps
 foreign-tax categories, carryovers, redeterminations and the revised line
 18/20 bases from 1040, Schedule 1-A and Schedule 2; its full attachment
