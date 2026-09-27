@@ -770,6 +770,57 @@ Deno.test("TY2026 1099-INT private-activity bond interest reaches Form 6251 and 
   assertEquals(pdf.getPageCount(), 6);
 });
 
+Deno.test("TY2026 SSA-1099 reaches taxable benefits, withholding, and PDF", async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: filer,
+    w2: [{ box1_wages: 30_000, box2_fed_withheld: 1_500 }],
+    ssa1099: [{
+      statement_type: "ssa1099",
+      box3_gross_benefits: 22_000,
+      box4_repaid: 2_000,
+      box5_net_benefits: 20_000,
+      box6_federal_withheld: 400,
+    }],
+  }, context);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040.line6a_ss_gross, 20_000);
+  assertEquals(result.pending.f1040.line6b_ss_taxable, 9_600);
+  assertEquals(result.pending.f1040.line9_total_income, 39_600);
+  assertEquals(result.pending.f1040.line25b_withheld_1099, 400);
+  assertEquals(result.pending.f1040.line25d_total_withholding, 1_900);
+  const pdf = await PDFDocument.load(await buildPdfBytes2026(result.pending));
+  assertEquals(pdf.getPageCount(), 2);
+  assertEquals(pdf.getForm().getFields().length, 0);
+});
+
+Deno.test("TY2026 RRB-1099 box 10 withholding joins SSA benefits", () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: filer,
+    w2: [{ box1_wages: 30_000, box2_fed_withheld: 1_500 }],
+    ssa1099: [
+      {
+        statement_type: "ssa1099",
+        box3_gross_benefits: 20_000,
+        box4_repaid: 0,
+        box5_net_benefits: 20_000,
+        box6_federal_withheld: 400,
+      },
+      {
+        statement_type: "rrb1099",
+        box3_gross_benefits: 10_500,
+        box4_repaid: 500,
+        box5_net_benefits: 10_000,
+        box10_federal_withheld: 350,
+      },
+    ],
+  }, context);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040.line6a_ss_gross, 30_000);
+  assertEquals(result.pending.f1040.line6b_ss_taxable, 13_850);
+  assertEquals(result.pending.f1040.line25b_withheld_1099, 750);
+  assertEquals(result.pending.f1040.line25d_total_withholding, 2_250);
+});
+
 Deno.test("TY2026 registry executes a wages-only return", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {

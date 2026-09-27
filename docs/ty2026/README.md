@@ -33,6 +33,8 @@ for the implementation contract.
   AGI, NIIT, PDF, and MeF wiring and attachment contract.
 - [`DIVIDEND-GRAPH.md`](DIVIDEND-GRAPH.md): continuous-use 1099-DIV source,
   current TY2026 income/withholding route, and dependent-form worklist.
+- [`SSA-BENEFITS-GRAPH.md`](SSA-BENEFITS-GRAPH.md): SSA-1099 and RRB-1099 box
+  distinctions, taxable-benefit route, and remaining repayment/election work.
 - [`CAPITAL-GAIN-GRAPH.md`](CAPITAL-GAIN-GRAPH.md): direct 1099-DIV box 2a
   decision, Schedule D/8949 dependencies, and PDF/MeF work order.
 - [`PDF-SCHEDULED-MAP.md`](PDF-SCHEDULED-MAP.md) and

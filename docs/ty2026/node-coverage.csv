@@ -26,7 +26,7 @@ schedule_a,forms/f1040/nodes/inputs/schedule_a/index.ts,inputs,0,yes,yes,yes,yes
 schedule_c,forms/f1040/nodes/inputs/schedule_c/index.ts,inputs,1,yes,yes,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 schedule_e,forms/f1040/nodes/inputs/schedule_e/index.ts,inputs,0,no,yes,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"
 rrb1099r,forms/f1040/nodes/inputs/rrb1099r/index.ts,inputs,5,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
-ssa1099,forms/f1040/nodes/inputs/ssa1099/index.ts,inputs,4,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
+ssa1099,forms/f1040/nodes/inputs/ssa1099/index.ts,inputs,4,no,no,no,n/a,P1,audit-required,"dedicated 2026 SSA/RRB source registered through AGI and PDF; add net-repayment deduction, lump-sum election, MeF, and current-year instruction check"
 w2,forms/f1040/nodes/inputs/w2/index.ts,inputs,0,yes,yes,no,n/a,P2,audit-required,"2026 SIMPLE, TP/TT, and Schedule 2 box12 routing updated; audit other outputs"
 w2g,forms/f1040/nodes/inputs/w2g/index.ts,inputs,0,no,no,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"
 f1099patr,forms/f1040/nodes/inputs/f1099patr/index.ts,inputs,0,no,no,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"

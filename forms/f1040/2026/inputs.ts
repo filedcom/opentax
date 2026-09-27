@@ -2,6 +2,7 @@ import type { InputNodeEntry } from "../../../core/types/form-definition.ts";
 import { z } from "zod";
 import { general } from "../nodes/inputs/general/index.ts";
 import { w2, w2ItemSchema } from "../nodes/inputs/w2/index.ts";
+import { ssa1099_2026, ssa1099Item2026Schema } from "./nodes/ssa1099.ts";
 import {
   f1098e,
   itemSchema as f1098eItemSchema,
@@ -50,6 +51,7 @@ export const capitalActivityInput2026Schema = z.object({
 export const inputNodes: readonly InputNodeEntry[] = [
   { node: general, inputSchema: general.inputSchema, isArray: false },
   { node: w2, itemSchema: w2ItemSchema, isArray: true },
+  { node: ssa1099_2026, itemSchema: ssa1099Item2026Schema, isArray: true },
   { node: f1098e, itemSchema: f1098eItemSchema, isArray: true },
   { node: f1099g, itemSchema: f1099gItemSchema2026, isArray: true },
   { node: f1099int, itemSchema: f1099intItemSchema.strict(), isArray: true },

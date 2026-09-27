@@ -150,6 +150,11 @@ the two printed draft pages and reconciles lines 10/26 to Form 1040 lines
 remaining source and print-detail work.
 Form 1098-E is a registered TY2026 input. The AGI calculation applies its
 2026 phaseout before Schedule 1 line 21 and Form 1040 line 10 are printed.
+The dedicated `ssa1099` input distinguishes SSA-1099 box 6 from RRB-1099
+box 10 withholding. Net benefits reach Form 1040 line 6a, the AGI taxability
+worksheet computes line 6b, and the PDF prints both. Negative aggregate net
+benefits require a repayment-deduction route before filing; see the
+[SSA benefits contract](../../../docs/ty2026/SSA-BENEFITS-GRAPH.md).
 The dedicated TY2026 Form 1099-DIV input now routes ordinary, qualified,
 and exempt-interest dividends, federal withholding, private-activity-bond
 AMT interest, plain box 2a capital gain distributions, and NIIT income. Its
