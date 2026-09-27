@@ -90,7 +90,7 @@ export const inputSchema = z.object({
   filing_status: z.string().optional(),
   // Tax-exempt interest (Schedule B, Form 1099-INT box 8) — included in provisional income
   // for Social Security taxability per IRC §86(b)(1) even though excluded from AGI
-  tax_exempt_interest: z.number().nonnegative().optional(),
+  tax_exempt_interest: accumulable(z.number().nonnegative()).optional(),
   // MFS filer who lived with spouse at any time during the year (IRC §86(c)(2))
   // When true: 85% of SS benefits are always taxable, no threshold applies
   mfs_lived_with_spouse: z.boolean().optional(),
@@ -293,7 +293,7 @@ function resolveSsaTaxable(
   }
 
   const isMfj = input.filing_status === "mfj" || input.filing_status === "qss";
-  const taxExemptInterest = input.tax_exempt_interest ?? 0;
+  const taxExemptInterest = sumField(input.tax_exempt_interest);
   // IRS SSA Worksheet (Form 1040 instructions, Lines 6a–6b):
   // Line 7 = Line 5 − Line 6.  Line 5 = 50% benefits + income items + tax-exempt interest.
   // Line 6 = Schedule 1, lines 11–20 (ATL deductions). So provisional income
@@ -570,7 +570,7 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
       // exclusions, and the non-taxable portion of Social Security. Dependent
       // modified AGI is a separate Worksheet 1-2 amount, not sourced here.
       this.outputNodes.output(form8962, {
-        taxpayer_modified_agi: agi + (input.tax_exempt_interest ?? 0) +
+        taxpayer_modified_agi: agi + sumField(input.tax_exempt_interest) +
           (input.line8d_foreign_earned_income_exclusion ?? 0) +
           (input.line8d_foreign_housing_deduction ?? 0) +
           Math.max(0, ssaGross - ssaTaxable),

@@ -4,6 +4,7 @@ import { OutputNodes } from "../../../../core/types/output-nodes.ts";
 import { TaxNode } from "../../../../core/types/tax-node.ts";
 import { itemSchema as sharedItemSchema } from "../../nodes/inputs/f1099div/index.ts";
 import { agi_aggregator } from "../../nodes/intermediate/aggregation/agi_aggregator/index.ts";
+import { form6251 } from "../../nodes/intermediate/forms/form6251/index.ts";
 import { form8960 } from "../../nodes/intermediate/forms/form8960/index.ts";
 import { income_tax_calculation } from "../../nodes/intermediate/worksheets/income_tax_calculation/index.ts";
 import { f1040_2026_node } from "./f1040.ts";
@@ -22,6 +23,11 @@ export const f1099divItem2026Schema = sharedItemSchema.extend({
     ctx.addIssue({ code: z.ZodIssueCode.custom, message });
   if ((item.box1b ?? 0) > item.box1a) {
     reject("1099-DIV qualified dividends exceed ordinary dividends");
+  }
+  if ((item.box13 ?? 0) > (item.box12 ?? 0)) {
+    reject(
+      "1099-DIV private activity bond dividends exceed exempt-interest dividends",
+    );
   }
   if (item.isNominee || item.box11) {
     reject("TY2026 1099-DIV nominee or FATCA reporting needs its filed route");
@@ -48,9 +54,6 @@ export const f1099divItem2026Schema = sharedItemSchema.extend({
   ) {
     reject("TY2026 1099-DIV foreign tax needs Form 1116 or direct credit");
   }
-  if ((item.box12 ?? 0) > 0 || (item.box13 ?? 0) > 0) {
-    reject("TY2026 1099-DIV exempt-interest dividends need the AGI route");
-  }
   if (item.box14 || item.box15 || (item.box16 ?? 0) > 0) {
     reject("TY2026 1099-DIV state withholding needs the Schedule A route");
   }
@@ -72,6 +75,7 @@ class F1099DivNode2026 extends TaxNode<typeof f1099divInput2026Schema> {
     f1040_2026_node,
     income_tax_calculation,
     form8960,
+    form6251,
   ]);
 
   compute(ctx: NodeContext, rawInput: z.input<typeof f1099divInput2026Schema>) {
@@ -86,6 +90,14 @@ class F1099DivNode2026 extends TaxNode<typeof f1099divInput2026Schema> {
     );
     const withholding = f1099divs.reduce(
       (sum, item) => sum + (item.box4 ?? 0),
+      0,
+    );
+    const exemptInterest = f1099divs.reduce(
+      (sum, item) => sum + (item.box12 ?? 0),
+      0,
+    );
+    const privateActivityBondInterest = f1099divs.reduce(
+      (sum, item) => sum + (item.box13 ?? 0),
       0,
     );
     const outputs = [];
@@ -122,6 +134,19 @@ class F1099DivNode2026 extends TaxNode<typeof f1099divInput2026Schema> {
     if (withholding > 0) {
       outputs.push(this.outputNodes.output(f1040_2026_node, {
         line25b_withheld_1099: withholding,
+      }));
+    }
+    if (exemptInterest > 0) {
+      outputs.push(this.outputNodes.output(f1040_2026_node, {
+        line2a_tax_exempt: exemptInterest,
+      }));
+      outputs.push(this.outputNodes.output(agi_aggregator, {
+        tax_exempt_interest: exemptInterest,
+      }));
+    }
+    if (privateActivityBondInterest > 0) {
+      outputs.push(this.outputNodes.output(form6251, {
+        private_activity_bond_interest: privateActivityBondInterest,
       }));
     }
     if (ordinary > 0) {

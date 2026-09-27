@@ -36,7 +36,7 @@ export const inputSchema = identityInputSchema.extend({
   line1g_wages_8919: amount.optional(),
   line1h_other_earned: z.number().finite().optional(),
   line1i_combat_pay: amount.optional(),
-  line2a_tax_exempt: amount.optional(),
+  line2a_tax_exempt: accumulableAmount.optional(),
   line2b_taxable_interest: z.number().finite().optional(),
   line3a_qualified_dividends: accumulableAmount.optional(),
   line3b_ordinary_dividends: accumulableSignedAmount.optional(),
@@ -184,7 +184,9 @@ class F10402026Node extends TaxNode<typeof inputSchema> {
         line1h_other_earned: input.line1h_other_earned,
         line1i_combat_pay: input.line1i_combat_pay,
         line1z_total_wages: line1zWages,
-        line2a_tax_exempt: input.line2a_tax_exempt,
+        line2a_tax_exempt: input.line2a_tax_exempt === undefined
+          ? undefined
+          : sumAmount(input.line2a_tax_exempt),
         line2b_taxable_interest: input.line2b_taxable_interest,
         line3a_qualified_dividends:
           input.line3a_qualified_dividends === undefined

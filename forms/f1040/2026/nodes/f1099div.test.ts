@@ -32,6 +32,38 @@ Deno.test("TY2026 1099-DIV routes ordinary and qualified dividends", () => {
   ]);
 });
 
+Deno.test("TY2026 1099-DIV separates exempt dividends and their AMT subset", () => {
+  const outputs = f1099div_2026.compute(context, {
+    f1099divs: [{ ...basic, box12: 10_000, box13: 4_000 }],
+  }).outputs;
+  assertEquals(
+    outputs.find((item) =>
+      item.nodeType === "f1040" && item.fields.line2a_tax_exempt !== undefined
+    )?.fields.line2a_tax_exempt,
+    10_000,
+  );
+  assertEquals(
+    outputs.find((item) =>
+      item.nodeType === "agi_aggregator" &&
+      item.fields.tax_exempt_interest !== undefined
+    )?.fields.tax_exempt_interest,
+    10_000,
+  );
+  assertEquals(
+    outputs.find((item) => item.nodeType === "form6251")?.fields
+      .private_activity_bond_interest,
+    4_000,
+  );
+  assertThrows(
+    () =>
+      f1099div_2026.compute(context, {
+        f1099divs: [{ ...basic, box12: 3_000, box13: 4_000 }],
+      }),
+    Error,
+    "private activity bond dividends exceed exempt-interest dividends",
+  );
+});
+
 Deno.test("TY2026 1099-DIV rejects unconnected capital gain and foreign tax routes", () => {
   for (
     const [extra, message] of [

@@ -537,6 +537,18 @@ Deno.test("agi_aggregator: tax_exempt_interest raises provisional income for SSA
   assertEquals(agi(result), 8_500);
 });
 
+Deno.test("agi_aggregator: tax-exempt interest from multiple 1099 sources accumulates", () => {
+  const result = compute({
+    line1a_wages: 8_000,
+    line6a_ss_gross: 20_000,
+    tax_exempt_interest: [3_000, 5_000],
+    filing_status: "single",
+  });
+  assertEquals(agi(result), 8_500);
+  const form8962 = result.outputs.find((item) => item.nodeType === "form8962");
+  assertEquals(form8962?.fields.taxpayer_modified_agi, 36_000);
+});
+
 Deno.test("agi_aggregator: tax_exempt_interest absent → provisional income excludes it", () => {
   // Without tax-exempt interest, provisional = 8_000 + 10_000 = 18_000 < 25_000 → $0 SS taxable
   const result = compute({

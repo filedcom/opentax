@@ -210,11 +210,12 @@ country continuations. The core PDF builder appends it and reconciles lines
 4/6 to 1040 lines 2b/3b. MeF and exceptional interest routes remain to
 implement.
 The January 2024 continuous-use Form 1099-DIV and instructions are now pinned
-in the corpus. The dedicated TY2026 1099-DIV source handles ordinary and
-qualified dividends plus federal withholding through AGI, tax, Form 1040,
-Schedule B when required, and the draft PDF. The [branch contract](DIVIDEND-GRAPH.md)
+in the corpus. The dedicated TY2026 1099-DIV source handles ordinary,
+qualified, and exempt-interest dividends, plus federal withholding and
+private-activity-bond AMT, through AGI, tax, Form 1040, Schedule B when
+required, Form 6251, and the draft PDF. The [branch contract](DIVIDEND-GRAPH.md)
 identifies each remaining 1099-DIV box and its required downstream form;
-capital gains, QBI, foreign tax, exempt-interest, state withholding, nominee,
+capital gains, QBI, foreign tax, state withholding, nominee,
 and basis routes currently fail with named diagnostics. MeF remains open.
 Progress update: 1099-INT and Schedule B Part III answers are now registered
 TY2026 inputs. A public graph test carries taxable interest, box 2 penalty,

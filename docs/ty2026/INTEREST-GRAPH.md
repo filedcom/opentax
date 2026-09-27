@@ -11,7 +11,7 @@ before calling this an accepted return path.
 | Source fact or election | Existing route | TY2026 work to complete |
 | --- | --- | --- |
 | 1099-INT boxes 1, 3, 10, taxable bond premium election, nominee/accrued-interest/OID adjustments | `f1099int` → `schedule_b` → AGI line 2b and 1040 line 2b | The source emits gross payer and labeled adjustment data; the 2026 Schedule B node reconciles it. Its draft PDF fills the printed schedule and continuation pages. The public input now accepts these facts and Part III disclosure answers; MeF remains. |
-| Box 8 less box 13 tax-exempt bond premium | `f1099int` → 1040 line 2a and AGI Social Security worksheet input | Verify gross and net tax-exempt amounts and any 1099-OID or 1099-DIV contributions before calculating Social Security taxability. |
+| Box 8 less box 13 tax-exempt bond premium | `f1099int` → 1040 line 2a and AGI Social Security worksheet input | 1099-DIV box 12 now accumulates with this amount in the registered 2026 graph; 1099-OID and public SSA-1099 routes remain. |
 | Box 2 early-withdrawal penalty | `f1099int` → Schedule 1 line 18 and AGI adjustments | A registered graph now reaches 1040 line 10 and AGI; its five-page 1040/Schedule 1/Schedule B PDF passes. MeF remains open. |
 | Box 4 federal withholding | `f1099int` → 1040 line 25b | Reconcile all 1099 withholding, line 25d, and refund or balance. |
 | Box 9 private-activity bond interest | `f1099int` → Form 6251 line 2g; Form 4952 when investment property is affirmed | The registered source reaches Form 6251, Schedule 2, Form 1040, and a six-page PDF when AMT is due. The Form 4952 branch still fails explicitly. |

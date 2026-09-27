@@ -155,6 +155,42 @@ Deno.test("TY2026 dividends over $1,500 reach the filed Schedule B", async () =>
   assertEquals(pdf.getPageCount(), 3);
 });
 
+Deno.test("TY2026 1099-INT and 1099-DIV exempt income reaches 1040 and AMT", async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: filer,
+    w2: [{ box1_wages: 100_000, box2_fed_withheld: 10_000 }],
+    f1099int: [{ payer_name: "Municipal Bond", box8: 20_000, box9: 10_000 }],
+    f1099div: [{
+      payerName: "Bond Fund",
+      isNominee: false,
+      box11: false,
+      box1a: 0,
+      box12: 280_000,
+      box13: 280_000,
+    }],
+  }, context);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040.line2a_tax_exempt, 300_000);
+  assertEquals(result.pending.agi_aggregator.tax_exempt_interest, [
+    20_000,
+    280_000,
+  ]);
+  assertEquals(result.pending.form8962.taxpayer_modified_agi, 400_000);
+  assertEquals(result.pending.form6251.private_activity_bond_interest, 290_000);
+  const amt = Number(result.pending.form6251.line11_amt);
+  assertEquals(amt > 0, true);
+  assertEquals(result.pending.schedule2.line2_amt, amt);
+  assertEquals(result.pending.f1040.line17_additional_taxes, amt);
+  const pdf = await PDFDocument.load(
+    await buildCorePdfBytes2026({
+      f1040: result.pending.f1040,
+      schedule2: result.pending.schedule2,
+      form6251: result.pending.form6251,
+    }),
+  );
+  assertEquals(pdf.getPageCount(), 6);
+});
+
 Deno.test("TY2026 registered dependent reaches Schedule 8812, Form 1040, and PDF", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {

@@ -4,7 +4,7 @@ ext,forms/f1040/nodes/inputs/ext/index.ts,inputs,0,no,no,no,n/a,P2,audit-require
 f1098,forms/f1040/nodes/inputs/f1098/index.ts,inputs,2,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 f1099b,forms/f1040/nodes/inputs/f1099b/index.ts,inputs,0,no,no,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"
 f1099c,forms/f1040/nodes/inputs/f1099c/index.ts,inputs,0,no,no,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"
-f1099div,forms/f1040/nodes/inputs/f1099div/index.ts,inputs,0,yes,no,no,n/a,P2,audit-required,"dedicated 2026 ordinary/qualified dividend and withholding route; add capital gains, QBI, foreign credit, exempt interest, and MeF"
+f1099div,forms/f1040/nodes/inputs/f1099div/index.ts,inputs,0,yes,no,no,n/a,P2,audit-required,"2026 ordinary/qualified/exempt dividends, PAB/AMT, and withholding route; add capital gains, QBI, foreign credit, and MeF"
 f1099g,forms/f1040/nodes/inputs/f1099g/index.ts,inputs,0,yes,no,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"
 f1099int,forms/f1040/nodes/inputs/f1099int/index.ts,inputs,1,yes,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 f1099k,forms/f1040/nodes/inputs/f1099k/index.ts,inputs,5,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"

@@ -16,7 +16,8 @@ form. Recheck the continuous-use source when IRS changes it, and reconcile the
 | Box 3 and boxes 9–10 distributions | Security basis and later disposition | Explicitly rejected when nonzero. | Add basis/carryforward records and applicable gain routes. |
 | Box 5 section 199A dividends | Form 8995/8995-A and 1040 line 13b | Explicitly rejected when nonzero. | Complete the Schedule A/QBI joint resolver and 2026 QBI output. |
 | Boxes 6–8 foreign expense/tax/country | Form 1116 or direct Schedule 3 credit | Explicitly rejected when populated. | Choose 2026 direct-credit eligibility or Form 1116, including qualified-dividend rate adjustment. |
-| Boxes 12–13 exempt-interest and private-activity bond dividends | 1040 line 2a, Social Security worksheet, Form 6251 | Explicitly rejected when nonzero. | Feed both 1040 and AGI Social Security inputs; reconcile AMT/PAB details. |
+| Box 12 exempt-interest dividends | 1040 line 2a; Social Security provisional-income worksheet and Form 8962 modified AGI | Registered. It sums with 1099-INT box 8 net of box 13 bond premium. | Add SSA-1099 and Form 8962 to the public 2026 graph, then verify full return examples and MeF fields. |
+| Box 13 private-activity bond dividends, included in box 12 | Form 6251 line 2g, then Schedule 2 and Form 1040 if AMT is due | Registered and constrained to box 12. It sums with 1099-INT box 9, without adding box 13 to 1040 line 2a twice. | Complete Form 6251 adjustments and current MeF attachment. |
 | Boxes 14–16 state withholding | Schedule A and state detail | Explicitly rejected when populated. | Complete TY2026 itemized-deduction route and filed detail. |
 | Nominee, FATCA, investment-property flags | Schedule B nominee adjustment, foreign-asset answers, Form 4952 | Explicitly rejected when true. | Add the matching disclosure and source-reconciliation paths. |
 
@@ -27,6 +28,7 @@ while the 1040 looks complete. The filed Schedule B PDF checks line 6 against
 1040 line 3b. A plain dividend return below the filing threshold has no
 Schedule B attachment; the node still retains payer rows in pending data.
 
-Graph tests cover a plain qualified-dividend/withholding return and a filed
-Schedule B case above $1,500. The full Form 1099-DIV surface, current MeF
+Graph tests cover a plain qualified-dividend/withholding return, a filed
+Schedule B case above $1,500, and combined 1099-INT/1099-DIV exempt income
+that reaches Form 6251 and a six-page PDF. The full Form 1099-DIV surface, current MeF
 package, and TY2026 ATS examples remain release gates.
