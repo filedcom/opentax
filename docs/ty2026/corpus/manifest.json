@@ -2136,6 +2136,33 @@
       "bytes": 196656,
       "sha256": "6f13ff025d4ab270ac53d9f1b60f7f354b1e558366b9d6bfd49cc60bf57fbc63",
       "year_check": "2024-current"
+    },
+    {
+      "path": "authorities/f1098vli--2026.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/f1098vli--2026.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 508658,
+      "sha256": "5518ddcaac288ff567da4ce5e2267de9371d42d73f762939c46515e0d041e060",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "authorities/i1098vli--2026.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/i1098vli--2026.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 162719,
+      "sha256": "9b6499edf218b56b54711284d9bc7a249ef7524546feb0088e167125031e5ae4",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "authorities/irb26-39.pdf",
+      "url": "https://www.irs.gov/pub/irs-irbs/irb26-39.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 1614992,
+      "sha256": "d7771a6ba17cb11242ac1dfeb23c71b5ac042b6d58666f16181b66b859a530a1",
+      "year_check": "2026-present"
     }
   ]
 }

@@ -94,6 +94,11 @@ The [Forms 1098/1098-E contract](../../../docs/ty2026/FORM1098-1098E-GRAPH.md)
 records the unregistered mortgage node's reported-points error and missing
 2026 MIP line 8d, plus the registered student-loan source's eligibility
 and old-loan interest gaps.
+The [Form 1098-VLI contract](../../../docs/ty2026/FORM1098VLI-GRAPH.md)
+pins the new 2026 lender statement and final regulations. The current
+Schedule 1-A calculator/PDF can print a VIN and allowed interest, but the
+source intake must establish qualifying debt, original use, assembly,
+refund history and business-interest allocation first.
 The [Form 1116 contract](../../../docs/ty2026/FORM1116-GRAPH.md) maps
 foreign-tax categories, carryovers, redeterminations and the revised line
 18/20 bases from 1040, Schedule 1-A and Schedule 2; its full attachment

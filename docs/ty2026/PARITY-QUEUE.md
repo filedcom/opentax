@@ -40,6 +40,8 @@ The [Form 1099-G plan](FORM1099G-GRAPH.md) closes the source-research gap
 for 2026 family leave, business tax recoveries and farm/CCC payments.
 The [Forms 1098/1098-E plan](FORM1098-1098E-GRAPH.md) adds the 2026
 Schedule A reported-points/MIP routes and qualified student-loan worksheet.
+The [new Form 1098-VLI plan](FORM1098VLI-GRAPH.md) maps each lender's
+vehicle loan to Schedule 1-A Part IV and the business-interest owners.
 
 ## Coding sequence
 
@@ -111,6 +113,9 @@ The 2025 serializer and PDF inventories cannot reveal these by themselves:
 - Form 1040 Schedule 1-A, Schedule 3-A and Form 1062, including the 1040
   12f/13a/13b, 24a–c, 30 and 32a–c dependencies. The current graph and PDF
   cover slices; the current MeF package is needed for filed XML.
+- New [Form 1098-VLI](FORM1098VLI-GRAPH.md) lender evidence for Schedule
+  1-A Part IV. The current per-VIN calculator/PDF needs loan qualification,
+  refund and business-interest allocation before a complete filed route.
 - Form 4562-B in [ATS 12](ATS-SCENARIO-12.md); new amortization attachment
   rather than the former Form 4562 Part VI.
 - Form 7207, Form 7205, Form 7220, and Schedule A (Form 3800), with signed
