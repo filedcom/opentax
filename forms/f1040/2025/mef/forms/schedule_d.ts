@@ -128,7 +128,16 @@ export const scheduleD: MefFormDescriptor<"schedule_d", Input> = {
   pendingKey: "schedule_d",
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040sd.pdf",
-  build(fields) {
+  build(fields, context) {
+    if (
+      fields.pending_active_4797 === true &&
+      context?.pending?.agi_final?.capital_finalized !== true
+    ) {
+      throw new Error(
+        "Schedule D active-rental Form 4797 sale needs finalized PAL allocation",
+      );
+    }
+    if (fields.active_4797_final_no_schedule_d === true) return "";
     return buildIRS1040ScheduleD(fields);
   },
 };

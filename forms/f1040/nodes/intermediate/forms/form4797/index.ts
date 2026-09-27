@@ -122,6 +122,39 @@ export const inputSchema = z.object({
 
 type Form4797Input = z.infer<typeof inputSchema>;
 
+function activeRentalMixedSale(input: Form4797Input): boolean {
+  const sales = input.passive_property_sales ?? [];
+  const activities = input.passive_activity_sources ?? [];
+  if (
+    !sales.length ||
+    !activities.some((activity) =>
+      activity.activity_type === "A" &&
+      (activity.prior_unallowed_4797_part1 > 0 ||
+        activity.prior_unallowed_4797_part2 > 0)
+    )
+  ) return false;
+  const activity = activities[0];
+  if (
+    activities.length !== 1 || activity.activity_type !== "A" ||
+    activity.prior_active_participation !== true ||
+    activity.reporting_form !== "schedule_e" ||
+    sales.some((sale) =>
+      sale.activity_name !== activity.name ||
+      sale.entire_activity_interest_disposed !== false ||
+      !(input.passive_disposed_activity_names ?? []).includes(
+        sale.activity_name,
+      )
+    ) ||
+    (input.nonrecaptured_1231_loss ?? 0) !== 0 ||
+    (input.unrecaptured_section_1250_gain ?? 0) !== 0
+  ) {
+    throw new Error(
+      "Form 4797 active-rental PAL sale needs one retained, linked Schedule E activity with prior active participation and no separate recapture",
+    );
+  }
+  return true;
+}
+
 function mixedPassiveAllocation(input: Form4797Input) {
   const sales = input.passive_property_sales ?? [];
   const activities = input.passive_activity_sources ?? [];
@@ -268,6 +301,13 @@ class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, rawInput: Form4797Input): NodeResult {
     const input = inputSchema.parse(rawInput);
+    const passiveSales = input.passive_property_sales ?? [];
+    if (
+      new Set(passiveSales.map((sale) => JSON.stringify(sale))).size !==
+        passiveSales.length
+    ) {
+      throw new Error("Form 4797 duplicate passive property sale source");
+    }
 
     // The aggregate legacy amounts cannot be reconciled to these property
     // rows, so never allow them to describe the same Form 4797 part.
@@ -297,8 +337,10 @@ class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
       return { outputs: [] };
     }
 
-    const passiveSales = input.passive_property_sales ?? [];
-    const allocation = mixedPassiveAllocation(input);
+    const activeRentalSale = activeRentalMixedSale(input);
+    const allocation = activeRentalSale
+      ? undefined
+      : mixedPassiveAllocation(input);
     const saleGains = passiveSales.map((sale) => ({
       activity_name: sale.activity_name,
       part: sale.part,
@@ -317,6 +359,25 @@ class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
     const unrecaptured1250 = input.unrecaptured_section_1250_gain ?? 0;
 
     const outputs: NodeOutput[] = [];
+    if (activeRentalSale) {
+      outputs.push(output(form8582, {
+        has_current_4797_transaction: true,
+        current_4797_sale_gains: saleGains,
+      }));
+      outputs.push(output(schedule_d, {
+        pending_active_4797: true,
+        line_11_form2439: grossGain,
+      }));
+      outputs.push(output(agi_aggregator, {
+        pal_pending_active_4797: true,
+        pal_current_4797_gain: saleGains.reduce(
+          (sum, sale) => sum + sale.gain,
+          0,
+        ),
+        line4_other_gains: partIIOrdinaryGain,
+      }));
+      return { outputs };
+    }
     outputs.push(output(form8582, {
       has_current_4797_transaction: true,
       ...(saleGains.length > 0 ? { current_4797_sale_gains: saleGains } : {}),

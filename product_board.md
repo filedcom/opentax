@@ -50,10 +50,15 @@ MeF builders consume the same ledger for Part IX and PAL rows. Dated,
 activity-linked positive no-depreciation current sale rows fill native Form 4797
 MeF Parts I and II; their gains enter the Form 8582 limit and Part IX same-part
 offset, while losses already netted on Form 4797 are not subtracted again in
-AGI. Active-rental prior PAL, depreciation recapture, whole-activity disposition
-exceptions, and aggregate Form 4797 source overlap remain blocked. PDF export
-stops on these PAL and property-sale rows until their exact 2025 field maps
-exist. This does not complete GAP-8582; all new cases are written but unrun.
+AGI. A second bounded path now carries an active rental's dated Schedule E
+property sale through provisional Schedule D and AGI, Form 8582's special
+allowance and Part IX split, and final Schedule D/AGI/1040 values without a
+dependency cycle. Current operating loss and sale gain stay separate on Form
+8582, and duplicate sale sources stop. Depreciation recapture, whole-activity
+disposition exceptions, and aggregate Form 4797 source overlap remain blocked.
+PDF export still stops on these complex PAL/property-sale rows until its exact
+2025 field maps exist. This does not complete GAP-8582; all new cases are
+written but unrun.
 
 The same parallel pass writes Form 8962's guarded alternative year-of-marriage
 calculation and native Part V groups, with line 26 zero on an election. Its 2025

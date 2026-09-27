@@ -186,11 +186,13 @@ import { schedule2 } from "../nodes/intermediate/aggregation/schedule2/index.ts"
 import { schedule3 } from "../nodes/intermediate/aggregation/schedule3/index.ts";
 import { schedule_b } from "../nodes/intermediate/aggregation/schedule_b/index.ts";
 import { schedule_d } from "../nodes/intermediate/aggregation/schedule_d/index.ts";
+import { schedule_d_final } from "../nodes/intermediate/aggregation/schedule_d_final/index.ts";
 import { schedule_f } from "../nodes/intermediate/forms/schedule_f/index.ts";
 import { schedule_h } from "../nodes/intermediate/forms/schedule_h/index.ts";
 import { schedule_se } from "../nodes/intermediate/forms/schedule_se/index.ts";
 import { unrecaptured_1250_worksheet } from "../nodes/intermediate/worksheets/unrecaptured_1250_worksheet/index.ts";
 import { agi_aggregator } from "../nodes/intermediate/aggregation/agi_aggregator/index.ts";
+import { agi_final } from "../nodes/intermediate/aggregation/agi_final/index.ts";
 import { income_tax_calculation } from "../nodes/intermediate/worksheets/income_tax_calculation/index.ts";
 import { form8978_reporting_year } from "../nodes/intermediate/worksheets/form8978_reporting_year/index.ts";
 import { qdcgtw } from "../nodes/intermediate/worksheets/qdcgtw/index.ts";
@@ -394,11 +396,13 @@ export const registry: NodeRegistry = {
   schedule3,
   schedule_b,
   schedule_d,
+  schedule_d_final,
   schedule_f,
   schedule_h,
   schedule_se,
   unrecaptured_1250_worksheet,
   agi_aggregator,
+  agi_final,
   income_tax_calculation,
   form8978_reporting_year,
   qdcgtw,

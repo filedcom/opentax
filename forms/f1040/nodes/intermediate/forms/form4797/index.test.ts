@@ -131,6 +131,101 @@ Deno.test("mixed retained passive sale nets prior Part I and II PAL once", () =>
   ]);
 });
 
+Deno.test("active rental sale defers Part I and II PAL until modified AGI is known", () => {
+  const input = {
+    passive_activity_sources: [{
+      name: "Rental house",
+      activity_type: "A",
+      property_type: 1,
+      reporting_form: "schedule_e",
+      current_net: 0,
+      prior_unallowed_operating: 1_000,
+      prior_active_participation: true,
+      prior_unallowed_4797_part1: 3_000,
+      prior_unallowed_4797_part2: 1_000,
+    }],
+    passive_disposed_activity_names: ["Rental house"],
+    passive_property_sales: [{
+      activity_name: "Rental house",
+      part: "I",
+      property_description: "Retained rental parcel",
+      acquired_on: "2023-04-01",
+      sold_on: "2025-05-01",
+      gross_sales_price: 12_000,
+      cost_or_other_basis: 10_000,
+      depreciation_allowed: 0,
+      entire_activity_interest_disposed: false,
+    }, {
+      activity_name: "Rental house",
+      part: "II",
+      property_description: "Short-held rental parcel",
+      acquired_on: "2025-01-01",
+      sold_on: "2025-06-01",
+      gross_sales_price: 5_000,
+      cost_or_other_basis: 4_500,
+      depreciation_allowed: 0,
+      entire_activity_interest_disposed: false,
+    }],
+  };
+  const result = compute(input);
+  assertEquals(
+    findOutput(result, "schedule_d")?.fields.pending_active_4797,
+    true,
+  );
+  assertEquals(
+    findOutput(result, "schedule_d")?.fields.line_11_form2439,
+    2_000,
+  );
+  assertEquals(
+    findOutput(result, "agi_aggregator")?.fields.pal_pending_active_4797,
+    true,
+  );
+  assertEquals(
+    findOutput(result, "agi_aggregator")?.fields.pal_current_4797_gain,
+    2_500,
+  );
+  assertEquals(
+    findOutput(result, "agi_aggregator")?.fields.line4_other_gains,
+    500,
+  );
+  assertEquals(findOutput(result, "schedule1"), undefined);
+  assertEquals(
+    compute({
+      passive_activity_sources: input.passive_activity_sources,
+      disposed_properties: 1,
+    }).outputs,
+    [],
+  );
+  assertThrows(() =>
+    compute({
+      ...input,
+      passive_property_sales: [{
+        ...input.passive_property_sales[0],
+        entire_activity_interest_disposed: true,
+      }, input.passive_property_sales[1]],
+    })
+  );
+});
+
+Deno.test("the same sale from Schedule E and direct Form 4797 cannot be counted twice", () => {
+  const sale = {
+    activity_name: "Rental house",
+    part: "I",
+    property_description: "Retained rental parcel",
+    acquired_on: "2023-04-01",
+    sold_on: "2025-05-01",
+    gross_sales_price: 12_000,
+    cost_or_other_basis: 10_000,
+    depreciation_allowed: 0,
+    entire_activity_interest_disposed: false,
+  };
+  assertThrows(
+    () => compute({ passive_property_sales: [sale, sale] }),
+    Error,
+    "duplicate passive property sale source",
+  );
+});
+
 Deno.test("passive property sale source rejects duplicate aggregate and unsupported sale facts", () => {
   const sale = {
     activity_name: "Land rental",

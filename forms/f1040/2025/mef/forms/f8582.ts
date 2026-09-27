@@ -271,6 +271,9 @@ function buildOtherPassive(
   const allocation = allocatePassiveActivityLosses(
     activities.map((activity) => ({
       currentNet: activity.current_net + saleGainFor(activity.name),
+      currentIncome: Math.max(0, activity.current_net) +
+        saleGainFor(activity.name),
+      currentLoss: Math.max(0, -activity.current_net),
       priorUnallowed: activity.prior_unallowed_operating +
         activity.prior_unallowed_4797_part1 +
         activity.prior_unallowed_4797_part2,
@@ -472,38 +475,56 @@ export const form8582: MefFormDescriptor<"form8582", Input> = {
     ) {
       return buildOtherPassive(input, context);
     }
-    const currentIncome = activities.reduce(
+    const saleGains = input.current_4797_sale_gains ?? [];
+    const saleGainFor = (name: string) =>
+      saleGains
+        .filter((sale) => sale.activity_name === name)
+        .reduce((sum, sale) => sum + sale.gain, 0);
+    const operatingIncome = activities.reduce(
       (sum, activity) => sum + Math.max(0, activity.current_net),
       0,
     );
+    const currentIncome = operatingIncome +
+      saleGains.reduce((sum, sale) => sum + sale.gain, 0);
     const currentLoss = activities.reduce(
       (sum, activity) => sum + Math.max(0, -activity.current_net),
       0,
     );
     const priorLoss = activities.reduce(
-      (sum, activity) => sum + activity.prior_unallowed_operating,
+      (sum, activity) =>
+        sum + activity.prior_unallowed_operating +
+        activity.prior_unallowed_4797_part1 +
+        activity.prior_unallowed_4797_part2,
       0,
     );
     const loss = currentLoss + priorLoss;
     const rentalActivities = activities.filter((activity) =>
       activity.activity_type === "A" &&
       (activity.current_net !== 0 ||
-        (activity.prior_unallowed_operating > 0 &&
-          activity.prior_active_participation === true))
+        (activity.prior_unallowed_operating > 0 ||
+            activity.prior_unallowed_4797_part1 > 0 ||
+            activity.prior_unallowed_4797_part2 > 0) &&
+          activity.prior_active_participation === true)
     );
     const otherActivities = [
       ...activities.filter((activity) => activity.activity_type === "B"),
       ...activities.filter((activity) =>
         activity.activity_type === "A" &&
-        activity.prior_unallowed_operating > 0 &&
+        (activity.prior_unallowed_operating > 0 ||
+          activity.prior_unallowed_4797_part1 > 0 ||
+          activity.prior_unallowed_4797_part2 > 0) &&
         activity.prior_active_participation === false
       ).map((activity) => ({
         ...activity,
         current_net: 0,
       })),
     ];
-    const rentalIncome = rentalActivities.reduce(
+    const rentalOperatingIncome = rentalActivities.reduce(
       (sum, activity) => sum + Math.max(0, activity.current_net),
+      0,
+    );
+    const rentalIncome = rentalOperatingIncome + rentalActivities.reduce(
+      (sum, activity) => sum + saleGainFor(activity.name),
       0,
     );
     const rentalCurrentLoss = rentalActivities.reduce(
@@ -514,7 +535,9 @@ export const form8582: MefFormDescriptor<"form8582", Input> = {
       (sum, activity) =>
         sum +
         (activity.prior_active_participation === true
-          ? activity.prior_unallowed_operating
+          ? activity.prior_unallowed_operating +
+            activity.prior_unallowed_4797_part1 +
+            activity.prior_unallowed_4797_part2
           : 0),
       0,
     );
@@ -536,17 +559,23 @@ export const form8582: MefFormDescriptor<"form8582", Input> = {
         (activity.current_net === 0 &&
           activity.prior_unallowed_operating === 0) ||
         (activity.activity_type === "A" &&
-          activity.prior_unallowed_operating > 0 &&
+          (activity.prior_unallowed_operating > 0 ||
+            activity.prior_unallowed_4797_part1 > 0 ||
+            activity.prior_unallowed_4797_part2 > 0) &&
           activity.prior_active_participation === undefined) ||
-        activity.prior_unallowed_4797_part1 !== 0 ||
-        activity.prior_unallowed_4797_part2 !== 0
+        (activity.prior_unallowed_4797_part1 > 0 ||
+            activity.prior_unallowed_4797_part2 > 0) &&
+          (activities.length !== 1 ||
+            activity.activity_type !== "A" ||
+            activity.prior_active_participation !== true ||
+            saleGains.length === 0)
       ) ||
       !Number.isSafeInteger(loss) || loss <= 0 ||
       !Number.isSafeInteger(currentIncome) ||
       (input.current_loss ?? 0) !== currentLoss ||
       (input.rental_current_loss ?? 0) !== rentalCurrentLoss ||
-      (input.current_income ?? 0) !== currentIncome ||
-      (input.rental_current_income ?? 0) !== rentalIncome ||
+      (input.current_income ?? 0) !== operatingIncome ||
+      (input.rental_current_income ?? 0) !== rentalOperatingIncome ||
       (input.prior_unallowed ?? 0) !== priorLoss ||
       (input.rental_prior_eligible_loss ?? 0) !== rentalPriorLoss ||
       (input.passive_schedule_c ?? 0) !== 0 ||
@@ -562,6 +591,15 @@ export const form8582: MefFormDescriptor<"form8582", Input> = {
       );
     }
 
+    assertLinkedActivities(activities, context);
+    assertLinkedSales(input, context);
+    const prior4797Allocation =
+      activities.some((activity) =>
+          activity.prior_unallowed_4797_part1 > 0 ||
+          activity.prior_unallowed_4797_part2 > 0
+        )
+        ? allocateOtherPassivePrior4797(input)
+        : undefined;
     const limit = passiveLossLimit({
       currentIncome,
       currentLoss,
@@ -573,12 +611,19 @@ export const form8582: MefFormDescriptor<"form8582", Input> = {
       filingStatus: input.filing_status,
     });
     const losses = activities.map((activity) =>
-      Math.max(0, -activity.current_net) + activity.prior_unallowed_operating
+      Math.max(0, -activity.current_net) + activity.prior_unallowed_operating +
+      activity.prior_unallowed_4797_part1 +
+      activity.prior_unallowed_4797_part2
     );
     const allocation = allocatePassiveActivityLosses(
       activities.map((activity) => ({
-        currentNet: activity.current_net,
-        priorUnallowed: activity.prior_unallowed_operating,
+        currentNet: activity.current_net + saleGainFor(activity.name),
+        currentIncome: Math.max(0, activity.current_net) +
+          saleGainFor(activity.name),
+        currentLoss: Math.max(0, -activity.current_net),
+        priorUnallowed: activity.prior_unallowed_operating +
+          activity.prior_unallowed_4797_part1 +
+          activity.prior_unallowed_4797_part2,
         specialEligible: activity.activity_type === "A",
         priorSpecialEligible: activity.prior_active_participation === true,
       })),
@@ -592,8 +637,6 @@ export const form8582: MefFormDescriptor<"form8582", Input> = {
       specialByActivity,
       postSpecialLosses,
     } = allocation;
-
-    assertLinkedActivities(activities, context);
 
     const overallNet = currentIncome - loss;
     const difference = Math.max(0, 150_000 - magi);
@@ -628,6 +671,17 @@ export const form8582: MefFormDescriptor<"form8582", Input> = {
       postSpecialLosses[index] > 0 && limit.suspended > 0
         ? [{ activity, index }]
         : []
+    );
+    const activityReportingForm = (index: number): string | undefined => {
+      const lines = prior4797Allocation?.byActivity[index]?.partIX ?? [];
+      if (lines.length > 1) return undefined;
+      return lines[0]?.reportingForm ?? reportingForm(context, index);
+    };
+    const partIXRows = suspendedRows.filter(({ index }) =>
+      (prior4797Allocation?.byActivity[index]?.partIX.length ?? 0) > 1
+    );
+    const partVIIIRows = suspendedRows.filter(({ index }) =>
+      (prior4797Allocation?.byActivity[index]?.partIX.length ?? 0) <= 1
     );
     const suspendedRatios = worksheetRatios(
       suspendedRows.map(({ index }) => postSpecialLosses[index]),
@@ -674,40 +728,55 @@ export const form8582: MefFormDescriptor<"form8582", Input> = {
         ...rentalActivities.map((activity) =>
           elements("WrkshtRentalActGrp", [
             element("PassiveActivityNm", activity.name),
-            activity.current_net > 0
-              ? element("CurrentYearNetIncomeAmt", activity.current_net)
+            Math.max(0, activity.current_net) + saleGainFor(activity.name) > 0
+              ? element(
+                "CurrentYearNetIncomeAmt",
+                Math.max(0, activity.current_net) + saleGainFor(activity.name),
+              )
               : "",
             activity.current_net < 0
               ? element("CurrentYearNetLossAmt", -activity.current_net)
               : "",
-            activity.prior_unallowed_operating > 0 &&
+            activity.prior_unallowed_operating +
+                    activity.prior_unallowed_4797_part1 +
+                    activity.prior_unallowed_4797_part2 > 0 &&
               activity.prior_active_participation === true
               ? element(
                 "PriorYearRentalUnallowedAmt",
-                activity.prior_unallowed_operating,
+                activity.prior_unallowed_operating +
+                  activity.prior_unallowed_4797_part1 +
+                  activity.prior_unallowed_4797_part2,
               )
               : "",
-            activity.current_net >
+            activity.current_net + saleGainFor(activity.name) >
                 (activity.prior_active_participation === true
-                  ? activity.prior_unallowed_operating
+                  ? activity.prior_unallowed_operating +
+                    activity.prior_unallowed_4797_part1 +
+                    activity.prior_unallowed_4797_part2
                   : 0)
               ? element(
                 "OverallGainAmt",
-                activity.current_net -
+                activity.current_net + saleGainFor(activity.name) -
                   (activity.prior_active_participation === true
-                    ? activity.prior_unallowed_operating
+                    ? activity.prior_unallowed_operating +
+                      activity.prior_unallowed_4797_part1 +
+                      activity.prior_unallowed_4797_part2
                     : 0),
               )
               : "",
-            activity.current_net <
+            activity.current_net + saleGainFor(activity.name) <
                 (activity.prior_active_participation === true
-                  ? activity.prior_unallowed_operating
+                  ? activity.prior_unallowed_operating +
+                    activity.prior_unallowed_4797_part1 +
+                    activity.prior_unallowed_4797_part2
                   : 0)
               ? element(
                 "OverallLossAmt",
                 (activity.prior_active_participation === true
-                  ? activity.prior_unallowed_operating
-                  : 0) - activity.current_net,
+                  ? activity.prior_unallowed_operating +
+                    activity.prior_unallowed_4797_part1 +
+                    activity.prior_unallowed_4797_part2
+                  : 0) - activity.current_net - saleGainFor(activity.name),
               )
               : "",
           ])
@@ -771,7 +840,7 @@ export const form8582: MefFormDescriptor<"form8582", Input> = {
               element("SpecialAllowanceActivityNm", activity.name),
               element(
                 "ReportingFormOrScheduleNm",
-                reportingForm(context, index),
+                activityReportingForm(index),
               ),
               element("F8582WrkshtLossesAmt", specialEligibleLosses[index]),
               element("LossesPct", allowanceRatios[position]),
@@ -808,7 +877,7 @@ export const form8582: MefFormDescriptor<"form8582", Input> = {
               element("UnallowedLossActivityNm", activity.name),
               element(
                 "ReportingFormOrScheduleNm",
-                reportingForm(context, index),
+                activityReportingForm(index),
               ),
               element("F8582WrkshtLossesAmt", postSpecialLosses[index]),
               element("LossesPct", suspendedRatios[position]),
@@ -825,14 +894,14 @@ export const form8582: MefFormDescriptor<"form8582", Input> = {
           element("TotalLossAmt", limit.suspended),
         ])
         : "",
-      limit.suspended > 0
+      partVIIIRows.length > 0
         ? elements("ParentWrkshtListActivityGrp", [
-          ...suspendedRows.map(({ activity, index }) =>
+          ...partVIIIRows.map(({ activity, index }) =>
             elements("WrkshtListActivityGrp", [
               element("AllowedLossActivityNm", activity.name),
               element(
                 "ReportingFormOrScheduleNm",
-                reportingForm(context, index),
+                activityReportingForm(index),
               ),
               element("F8582WrkshtLossesAmt", losses[index]),
               element(
@@ -844,18 +913,59 @@ export const form8582: MefFormDescriptor<"form8582", Input> = {
           ),
           element(
             "TotalLossAmt",
-            suspendedRows.reduce((sum, row) => sum + losses[row.index], 0),
+            partVIIIRows.reduce((sum, row) => sum + losses[row.index], 0),
           ),
-          element("TotalUnallowedLossAmt", limit.suspended),
+          element(
+            "TotalUnallowedLossAmt",
+            partVIIIRows.reduce(
+              (sum, row) => sum + suspendedByActivity[row.index],
+              0,
+            ),
+          ),
           element(
             "TotalAllowedLossAmt",
-            suspendedRows.reduce(
+            partVIIIRows.reduce(
               (sum, row) => sum + allowedByActivity[row.index],
               0,
             ),
           ),
         ])
         : "",
+      ...partIXRows.map(({ activity, index }) => {
+        const ledger = prior4797Allocation!.byActivity[index];
+        const positiveRows = ledger.partIX.filter((line) => line.netLoss > 0);
+        const positiveRatios = worksheetRatios(
+          positiveRows.map((line) => line.netLoss),
+        );
+        let ratioIndex = 0;
+        return elements("ParentWrkshtLossActivityGrp", [
+          element("MultipleLossActivityNm", activity.name),
+          ...ledger.partIX.map((line) =>
+            elements("WrkshtLossActivityGrp", [
+              element("ReportingFormOrScheduleNm", line.reportingForm),
+              element("NetLossAmt", line.lossIncludingPrior),
+              line.currentSamePartGain > 0
+                ? element("NetIncomeAmt", line.currentSamePartGain)
+                : "",
+              element("NetIncomeLossAmt", line.netLoss),
+              line.netLoss > 0
+                ? element("LossesPct", positiveRatios[ratioIndex++])
+                : "",
+              element("PriorYearUnallowedLossesAmt", line.suspended),
+              element("F8582WrkshtLossesAmt", line.allowed),
+            ])
+          ),
+          element(
+            "TotalNetIncomeLossAmt",
+            ledger.partIX.reduce((sum, line) => sum + line.netLoss, 0),
+          ),
+          element("TotalUnallowedAmt", ledger.suspended),
+          element(
+            "TotalAllowedAmt",
+            ledger.partIX.reduce((sum, line) => sum + line.allowed, 0),
+          ),
+        ]);
+      }),
     ]);
   },
 };

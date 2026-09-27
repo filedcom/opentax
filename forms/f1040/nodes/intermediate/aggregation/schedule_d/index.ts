@@ -9,6 +9,7 @@ import { FilingStatus } from "../../../types.ts";
 import { normalizeArray } from "../../../utils.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import { agi_aggregator } from "../agi_aggregator/index.ts";
+import { schedule_d_final } from "../schedule_d_final/index.ts";
 import { income_tax_calculation } from "../../worksheets/income_tax_calculation/index.ts";
 import { rate_28_gain_worksheet } from "../../worksheets/rate_28_gain_worksheet/index.ts";
 import { form8960 } from "../../forms/form8960/index.ts";
@@ -98,6 +99,8 @@ export const inputSchema = z.object({
   line_12_cap_gain_dist: z.number().nonnegative().optional(),
   // Undistributed LT gains (Form 2439, Form 4797 Part I, etc.) — Line 11
   line_11_form2439: accumulable(z.number()).optional(),
+  // Gross Part I gain is held here until Form 8582 allocates an active-rental PAL.
+  pending_active_4797: z.boolean().optional(),
   // Source audit fields for Form 6252; included in the aggregate lines above.
   gain_form6252_lt: z.number().nonnegative().optional(),
   gain_form8824_lt: z.number().nonnegative().optional(),
@@ -291,6 +294,7 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
     rate_28_gain_worksheet,
     form8960,
     form8995,
+    schedule_d_final,
   ]);
 
   compute(_ctx: NodeContext, rawInput: ScheduleDInput): NodeResult {
@@ -306,30 +310,44 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
     }
 
     if (!hasCapitalActivity(input)) {
-      return { outputs: [] };
+      return {
+        outputs: input.pending_active_4797 === true
+          ? [this.outputNodes.output(schedule_d_final, {
+            provisional_input: input,
+          })]
+          : [],
+      };
     }
 
     if (hasOnlyCapitalGainDistributions(input)) {
       const distributions = (input.line13_cap_gain_distrib ?? 0) +
         (input.line13_form8814 ?? 0) +
         (input.line_12_cap_gain_dist ?? 0);
-      return {
-        outputs: [
-          this.outputNodes.output(f1040, {
-            line7a_cap_gain_distrib: distributions,
-          }),
-          this.outputNodes.output(agi_aggregator, {
-            line7a_cap_gain_distrib: distributions,
-          }),
-          this.outputNodes.output(income_tax_calculation, {
-            net_capital_gain: distributions,
-          }),
-          this.outputNodes.output(form8995, {
-            net_capital_gain: distributions,
-          }),
-          this.outputNodes.output(form8960, { line5a_net_gain: distributions }),
-        ],
-      };
+      const outputs: NodeOutput[] = [
+        this.outputNodes.output(f1040, {
+          line7a_cap_gain_distrib: distributions,
+        }),
+        this.outputNodes.output(agi_aggregator, {
+          line7a_cap_gain_distrib: distributions,
+        }),
+        this.outputNodes.output(income_tax_calculation, {
+          net_capital_gain: distributions,
+        }),
+        this.outputNodes.output(form8995, {
+          net_capital_gain: distributions,
+        }),
+        this.outputNodes.output(form8960, { line5a_net_gain: distributions }),
+      ];
+      return input.pending_active_4797 === true
+        ? {
+          outputs: [
+            ...outputs.filter((row) => row.nodeType === "agi_aggregator"),
+            this.outputNodes.output(schedule_d_final, {
+              provisional_input: input,
+            }),
+          ],
+        }
+        : { outputs };
     }
 
     // f8949 transactions (pre-computed gain_loss + is_long_term)
@@ -518,7 +536,16 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
     }
     outputs.push({ nodeType: this.nodeType, fields: printFields });
 
-    return { outputs };
+    return input.pending_active_4797 === true
+      ? {
+        outputs: [
+          ...outputs.filter((row) => row.nodeType === "agi_aggregator"),
+          this.outputNodes.output(schedule_d_final, {
+            provisional_input: input,
+          }),
+        ],
+      }
+      : { outputs };
   }
 }
 

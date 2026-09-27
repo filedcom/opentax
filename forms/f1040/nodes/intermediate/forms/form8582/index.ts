@@ -7,6 +7,8 @@ import { output, TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { FilingStatus, filingStatusSchema } from "../../../types.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
+import { schedule_d_final } from "../../aggregation/schedule_d_final/index.ts";
+import { agi_final } from "../../aggregation/agi_final/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
 // ─── Constants — mathematical rates, unchanged across years ──────────────────
@@ -212,6 +214,8 @@ export function allocatePartIXLosses(
 export function allocatePassiveActivityLosses(
   activities: readonly {
     currentNet: number;
+    currentIncome?: number;
+    currentLoss?: number;
     priorUnallowed: number;
     specialEligible: boolean;
     priorSpecialEligible: boolean;
@@ -225,13 +229,23 @@ export function allocatePassiveActivityLosses(
   specialByActivity: number[];
   postSpecialLosses: number[];
 } {
-  const grossLosses = activities.map(({ currentNet, priorUnallowed }) =>
-    Math.max(0, -currentNet) + priorUnallowed
+  const grossLosses = activities.map((
+    { currentNet, currentLoss, priorUnallowed },
+  ) => (currentLoss ?? Math.max(0, -currentNet)) + priorUnallowed);
+  const ownIncome = activities.map(({ currentNet, currentIncome }) =>
+    currentIncome ?? Math.max(0, currentNet)
   );
-  const ownIncome = activities.map(({ currentNet }) => Math.max(0, currentNet));
   if (
-    activities.some(({ currentNet, priorUnallowed }) =>
+    activities.some((
+      { currentNet, currentIncome, currentLoss, priorUnallowed },
+    ) =>
       !Number.isSafeInteger(currentNet) ||
+      (currentIncome !== undefined &&
+        (!Number.isSafeInteger(currentIncome) || currentIncome < 0)) ||
+      (currentLoss !== undefined &&
+        (!Number.isSafeInteger(currentLoss) || currentLoss < 0)) ||
+      (currentIncome !== undefined && currentLoss !== undefined &&
+        currentIncome - currentLoss !== currentNet) ||
       !Number.isSafeInteger(priorUnallowed) || priorUnallowed < 0
     )
   ) {
@@ -246,7 +260,7 @@ export function allocatePassiveActivityLosses(
         overallLosses[index],
         Math.max(
           0,
-          Math.max(0, -activity.currentNet) +
+          (activity.currentLoss ?? Math.max(0, -activity.currentNet)) +
             (activity.priorSpecialEligible ? activity.priorUnallowed : 0) -
             ownIncome[index],
         ),
@@ -337,7 +351,9 @@ function assertActivityTotals(input: Form8582Input): void {
   const eligibleRentalPrior = sum((activity) =>
     activity.activity_type === "A" &&
       activity.prior_active_participation === true
-      ? activity.prior_unallowed_operating
+      ? activity.prior_unallowed_operating +
+        activity.prior_unallowed_4797_part1 +
+        activity.prior_unallowed_4797_part2
       : 0
   );
   const hasActiveRental = activities.some((activity) =>
@@ -392,7 +408,7 @@ export type OtherPassivePrior4797Allocation = {
   }[];
 };
 
-/** B-activity prior Form 4797 PALs, with separately sourced current gains. */
+/** Prior Form 4797 PALs with activity-linked current gains and Part IX character. */
 export function allocateOtherPassivePrior4797(
   input: Form8582Input,
 ): OtherPassivePrior4797Allocation {
@@ -406,13 +422,21 @@ export function allocateOtherPassivePrior4797(
     ) ||
     new Set(activities.map((activity) => activity.name)).size !==
       activities.length ||
-    activities.some((activity) => activity.activity_type !== "B") ||
+    activities.some((activity) =>
+      activity.activity_type !== "B" && activity.activity_type !== "A"
+    ) ||
     activities.some((activity) => activity.reporting_form === undefined) ||
+    (activities.some((activity) => activity.activity_type === "A") &&
+      (activities.length !== 1 ||
+        activities[0].prior_active_participation !== true ||
+        input.modified_agi === undefined ||
+        input.filing_status === FilingStatus.MFS ||
+        (input.current_4797_sale_gains?.length ?? 0) === 0)) ||
     (input.has_current_4797_transaction === true &&
       (input.current_4797_sale_gains?.length ?? 0) === 0)
   ) {
     throw new Error(
-      "Form 8582 prior Form 4797 loss route needs identified other-passive activities and sourced current Form 4797 gains",
+      "Form 8582 prior Form 4797 loss route needs identified activities and sourced current Form 4797 gains",
     );
   }
   const gainsFor = (name: string, part: "I" | "II") =>
@@ -424,11 +448,14 @@ export function allocateOtherPassivePrior4797(
     activities.map((activity) => ({
       currentNet: activity.current_net + gainsFor(activity.name, "I") +
         gainsFor(activity.name, "II"),
+      currentIncome: Math.max(0, activity.current_net) +
+        gainsFor(activity.name, "I") + gainsFor(activity.name, "II"),
+      currentLoss: Math.max(0, -activity.current_net),
       priorUnallowed: activity.prior_unallowed_operating +
         activity.prior_unallowed_4797_part1 +
         activity.prior_unallowed_4797_part2,
-      specialEligible: false,
-      priorSpecialEligible: false,
+      specialEligible: activity.activity_type === "A",
+      priorSpecialEligible: activity.prior_active_participation === true,
     })),
     limit.allowed,
   );
@@ -614,13 +641,21 @@ export function passiveLossLimit(activity: PassiveActivity): PassiveLossLimit {
 }
 
 function passiveActivity(input: Form8582Input): PassiveActivity {
+  const activeNames = new Set(
+    (input.activities ?? [])
+      .filter((activity) => activity.activity_type === "A")
+      .map((activity) => activity.name),
+  );
+  const activeSaleIncome = (input.current_4797_sale_gains ?? [])
+    .filter((sale) => activeNames.has(sale.activity_name))
+    .reduce((sum, sale) => sum + sale.gain, 0);
   return {
     currentIncome: totalPassiveIncome(input),
     currentLoss: input.current_loss ?? 0,
     priorUnallowed: input.prior_unallowed ?? 0,
     rentalLoss: (input.rental_current_loss ?? 0) +
       (input.rental_prior_eligible_loss ?? 0),
-    rentalIncome: input.rental_current_income ?? 0,
+    rentalIncome: (input.rental_current_income ?? 0) + activeSaleIncome,
     // Part II needs both an active rental activity and actual participation
     activeParticipation: (input.has_active_rental ?? false) &&
       (input.active_participation ?? false),
@@ -639,7 +674,11 @@ function schedule1Output(allowedLoss: number): NodeOutput[] {
 class Form8582Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form8582";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1]);
+  readonly outputNodes = new OutputNodes([
+    schedule1,
+    schedule_d_final,
+    agi_final,
+  ]);
 
   compute(_ctx: NodeContext, rawInput: Form8582Input): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -655,6 +694,50 @@ class Form8582Node extends TaxNode<typeof inputSchema> {
       const allocation = allocateOtherPassivePrior4797(input);
       const line4 = allocation.allowedPartI + allocation.allowedPartII;
       const mixedCurrentSale = (input.current_4797_sale_gains?.length ?? 0) > 0;
+      const activeRentalSale = input.activities?.some((activity) =>
+        activity.activity_type === "A"
+      ) ?? false;
+      if (activeRentalSale) {
+        const grossPartI = (input.current_4797_sale_gains ?? [])
+          .filter((sale) => sale.part === "I")
+          .reduce((sum, sale) => sum + sale.gain, 0);
+        const grossPartII = (input.current_4797_sale_gains ?? [])
+          .filter((sale) => sale.part === "II")
+          .reduce((sum, sale) => sum + sale.gain, 0);
+        const ordinaryPartILoss = Math.min(
+          0,
+          grossPartI - allocation.allowedPartI,
+        );
+        const line4 = grossPartII - allocation.allowedPartII +
+          ordinaryPartILoss;
+        return {
+          outputs: [
+            output(schedule_d_final, {
+              capital_reduction: Math.min(grossPartI, allocation.allowedPartI),
+            }),
+            output(agi_final, {
+              allowed_part_i: allocation.allowedPartI,
+              allowed_part_ii: allocation.allowedPartII,
+              allowed_total: allocation.allowedTotal,
+              part_i_ordinary_loss: ordinaryPartILoss,
+            }),
+            ...(line4 !== 0 ||
+                allocation.allowedOperating > 0
+              ? [output(schedule1, {
+                ...(line4 !== 0 ? { line4_other_gains: line4 } : {}),
+                ...(allocation.allowedOperating > 0
+                  ? { line5_schedule_e: -allocation.allowedOperating }
+                  : {}),
+              })]
+              : []),
+          ],
+          ...(allocation.suspendedTotal > 0
+            ? {
+              carryforwards: { suspended_pal_8582: allocation.suspendedTotal },
+            }
+            : {}),
+        };
+      }
       return {
         outputs: (mixedCurrentSale ? allocation.allowedOperating : line4 +
             allocation.allowedOperating) > 0

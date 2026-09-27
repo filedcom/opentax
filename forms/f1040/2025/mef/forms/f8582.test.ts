@@ -113,6 +113,52 @@ Deno.test("Form 8582: current Form 4797 gain appears in the matching Part IX row
   assertStringIncludes(xml, "<TotalAllowedAmt>1500</TotalAllowedAmt>");
 });
 
+Deno.test("Form 8582: active-rental gain and prior PAL fill Part IV, II, and IX", () => {
+  const xml = form8582.build({
+    activities: [{
+      name: "Rental house",
+      activity_type: "A",
+      property_type: 1,
+      reporting_form: "schedule_e",
+      current_net: 0,
+      prior_unallowed_operating: 1_000,
+      prior_active_participation: true,
+      prior_unallowed_4797_part1: 3_000,
+      prior_unallowed_4797_part2: 1_000,
+    }],
+    prior_unallowed: 5_000,
+    rental_prior_eligible_loss: 5_000,
+    has_active_rental: true,
+    active_participation: true,
+    has_current_4797_transaction: true,
+    current_4797_sale_gains: [
+      { activity_name: "Rental house", part: "I", gain: 1_000 },
+      { activity_name: "Rental house", part: "II", gain: 500 },
+    ],
+    modified_agi: 200_000,
+  });
+  assertStringIncludes(
+    xml,
+    "<RentalRealtyIncomeAmt>1500</RentalRealtyIncomeAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<PYUnallowedRentalLossAmt>5000</PYUnallowedRentalLossAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalLossesAllowedAmt>1500</TotalLossesAllowedAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<ReportingFormOrScheduleNm>Form 4797, Part I</ReportingFormOrScheduleNm><NetLossAmt>3000</NetLossAmt><NetIncomeAmt>1000</NetIncomeAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<ReportingFormOrScheduleNm>Form 4797, Part II</ReportingFormOrScheduleNm><NetLossAmt>1000</NetLossAmt><NetIncomeAmt>500</NetIncomeAmt>",
+  );
+});
+
 const singleRental = {
   activities: [{
     name: "Rental house",

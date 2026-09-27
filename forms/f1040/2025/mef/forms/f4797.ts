@@ -83,6 +83,12 @@ function buildIRS4797(fields: Input, context?: MefBuildContext): string {
   const passiveSales = z.array(passivePropertySaleSchema).parse(
     fields.passive_property_sales ?? [],
   );
+  if (
+    new Set(passiveSales.map((sale) => JSON.stringify(sale))).size !==
+      passiveSales.length
+  ) {
+    throw new Error("Form 4797 duplicate passive property sale source");
+  }
   const passivePartI = passiveSales.filter((sale) => sale.part === "I");
   const passivePartII = passiveSales.filter((sale) => sale.part === "II");
   if (
@@ -273,6 +279,8 @@ function buildIRS4797(fields: Input, context?: MefBuildContext): string {
   if (
     (gross === undefined || gross === 0) && form4684 === 0 &&
     installmentGain === 0 && exchangeGain === 0 && k1Rows.length === 0 &&
+    passivePartI.length === 0 &&
+    (priorPassive?.allowedPartI ?? 0) === 0 &&
     passivePartII.length === 0 &&
     (priorPassive?.allowedPartII ?? 0) === 0
   ) return "";

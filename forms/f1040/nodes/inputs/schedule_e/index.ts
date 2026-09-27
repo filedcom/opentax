@@ -16,7 +16,10 @@ import { form8995 } from "../../intermediate/forms/form8995/index.ts";
 import { scheduleA as schedule_a } from "../schedule_a/index.ts";
 import { form8582 } from "../../intermediate/forms/form8582/index.ts";
 import { form8960 } from "../../intermediate/forms/form8960/index.ts";
-import { form4797 } from "../../intermediate/forms/form4797/index.ts";
+import {
+  form4797,
+  passivePropertySaleSchema,
+} from "../../intermediate/forms/form4797/index.ts";
 import { form4562 } from "../../intermediate/forms/form4562/index.ts";
 import { form8990 } from "../../intermediate/forms/form8990/index.ts";
 import { TSJ, tsjSchema } from "../../types.ts";
@@ -86,6 +89,9 @@ export const itemSchema = z.object({
   days_owned_in_year: z.number().int().min(1).max(365).optional(),
   placed_in_service: z.boolean().optional(),
   disposed_of: z.boolean().optional(),
+  // Dated sales of property in this rental activity. Form 4797 calculates
+  // the gain from these same canonical rows and Form 8582 allocates its PAL.
+  passive_property_sales: z.array(passivePropertySaleSchema).optional(),
   carry_to_8960: z.boolean().optional(),
   main_home_or_second_home: z.boolean().optional(),
   occupancy_percent: z.number().min(0).max(100).optional(),
@@ -308,7 +314,10 @@ function eligibleActiveRentalPriorLoss(items: EItems): number {
       item.prior_passive_losses_active_when_incurred === true
     )
     .reduce(
-      (sum, item) => sum + (item.prior_unallowed_passive_operating ?? 0),
+      (sum, item) =>
+        sum + (item.prior_unallowed_passive_operating ?? 0) +
+        (item.prior_unallowed_passive_4797_part1 ?? 0) +
+        (item.prior_unallowed_passive_4797_part2 ?? 0),
       0,
     );
 }
@@ -573,6 +582,30 @@ function form4797Outputs(
   farms: readonly FarmActivity[],
 ): NodeOutput[] {
   const disposedItems = items.filter((item) => item.disposed_of === true);
+  const sales = items.flatMap((item) => {
+    if (!item.passive_property_sales?.length) return [];
+    if (
+      item.disposed_of !== true ||
+      (item.activity_type !== "A" && item.activity_type !== "B") ||
+      item.passive_property_sales.some((sale) =>
+        sale.activity_name !== item.property_description
+      )
+    ) {
+      throw new Error(
+        "Schedule E passive property sales require a disposed property in the same named A or B activity",
+      );
+    }
+    return item.passive_property_sales;
+  });
+  if (
+    sales.length > 0 &&
+    new Set(items.map((item) => item.property_description)).size !==
+      items.length
+  ) {
+    throw new Error(
+      "Schedule E passive property sales require unique activity names",
+    );
+  }
   if (disposedItems.length === 0) return [];
   const passiveLedger = form8582Outputs(items, farms)[0]?.fields;
   const activities = passiveLedger?.activities as
@@ -583,6 +616,7 @@ function form4797Outputs(
     passive_disposed_activity_names: disposedItems.map((item) =>
       item.property_description
     ),
+    ...(sales.length ? { passive_property_sales: sales } : {}),
     ...(activities ? { passive_activity_sources: activities } : {}),
   })];
 }

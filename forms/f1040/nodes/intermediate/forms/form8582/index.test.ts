@@ -207,6 +207,128 @@ Deno.test("retained passive sale gain releases prior Form 4797 PAL by part", () 
   );
 });
 
+Deno.test("active-rental Form 4797 PAL uses pre-PAL MAGI and same-part gains", () => {
+  const base = {
+    activities: [{
+      name: "Rental house",
+      activity_type: "A",
+      property_type: 1,
+      reporting_form: "schedule_e",
+      current_net: 0,
+      prior_unallowed_operating: 1_000,
+      prior_active_participation: true,
+      prior_unallowed_4797_part1: 3_000,
+      prior_unallowed_4797_part2: 1_000,
+    }],
+    prior_unallowed: 5_000,
+    rental_prior_eligible_loss: 5_000,
+    has_active_rental: true,
+    active_participation: true,
+    has_current_4797_transaction: true,
+    current_4797_sale_gains: [
+      { activity_name: "Rental house", part: "I", gain: 1_000 },
+      { activity_name: "Rental house", part: "II", gain: 500 },
+    ],
+  };
+  const phased = allocateOtherPassivePrior4797(inputSchema.parse({
+    ...base,
+    modified_agi: 148_000,
+  }));
+  const phasedOut = allocateOtherPassivePrior4797(inputSchema.parse({
+    ...base,
+    modified_agi: 200_000,
+  }));
+  assertEquals(phased.allowedTotal, 2_500);
+  assertEquals(phased.suspendedTotal, 2_500);
+  assertEquals(phasedOut.allowedTotal, 1_500);
+  assertEquals(phasedOut.allowedOperating, 0);
+  assertEquals(phasedOut.allowedPartI, 1_000);
+  assertEquals(phasedOut.allowedPartII, 500);
+  const result = compute({ ...base, modified_agi: 200_000 });
+  assertEquals(
+    findOutput(result, "schedule_d_final")?.fields.capital_reduction,
+    1_000,
+  );
+  assertEquals(findOutput(result, "agi_final")?.fields.allowed_total, 1_500);
+  assertEquals(result.carryforwards?.suspended_pal_8582, 3_500);
+});
+
+Deno.test("active-rental operating loss and property gain stay separate in Part IV", () => {
+  const ledger = allocateOtherPassivePrior4797(inputSchema.parse({
+    activities: [{
+      name: "Rental house",
+      activity_type: "A",
+      property_type: 1,
+      reporting_form: "schedule_e",
+      current_net: -1_000,
+      prior_unallowed_operating: 0,
+      prior_active_participation: true,
+      prior_unallowed_4797_part1: 3_000,
+      prior_unallowed_4797_part2: 0,
+    }],
+    current_loss: 1_000,
+    rental_current_loss: 1_000,
+    prior_unallowed: 3_000,
+    rental_prior_eligible_loss: 3_000,
+    has_active_rental: true,
+    active_participation: true,
+    has_current_4797_transaction: true,
+    current_4797_sale_gains: [{
+      activity_name: "Rental house",
+      part: "I",
+      gain: 2_000,
+    }],
+    modified_agi: 200_000,
+  }));
+  assertEquals(ledger.allowedTotal, 2_000);
+  assertEquals(ledger.allowedOperating, 0);
+  assertEquals(ledger.allowedPartI, 2_000);
+  assertEquals(ledger.suspendedTotal, 2_000);
+});
+
+Deno.test("active-rental Part I PAL exceeding sale gain stays ordinary", () => {
+  const result = compute({
+    activities: [{
+      name: "Rental house",
+      activity_type: "A",
+      property_type: 1,
+      reporting_form: "schedule_e",
+      current_net: 0,
+      prior_unallowed_operating: 1_000,
+      prior_active_participation: true,
+      prior_unallowed_4797_part1: 3_000,
+      prior_unallowed_4797_part2: 0,
+    }],
+    prior_unallowed: 4_000,
+    rental_prior_eligible_loss: 4_000,
+    has_active_rental: true,
+    active_participation: true,
+    has_current_4797_transaction: true,
+    current_4797_sale_gains: [{
+      activity_name: "Rental house",
+      part: "I",
+      gain: 1_000,
+    }],
+    modified_agi: 50_000,
+  });
+  assertEquals(
+    findOutput(result, "schedule_d_final")?.fields.capital_reduction,
+    1_000,
+  );
+  assertEquals(
+    findOutput(result, "agi_final")?.fields.part_i_ordinary_loss,
+    -2_000,
+  );
+  assertEquals(
+    findOutput(result, "schedule1")?.fields.line4_other_gains,
+    -2_000,
+  );
+  assertEquals(
+    findOutput(result, "schedule1")?.fields.line5_schedule_e,
+    -1_000,
+  );
+});
+
 Deno.test("rental activity allocation offsets own profit before distributing shared allowance", () => {
   assertEquals(
     allocatePassiveActivityLosses([

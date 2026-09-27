@@ -230,6 +230,76 @@ Deno.test("Form 4797: retained sale and prior PAL reconcile in both native parts
   );
 });
 
+Deno.test("Form 4797: active-rental PAL uses finalized Form 8582 allowance", () => {
+  const sale = {
+    activity_name: "Rental house",
+    part: "I",
+    property_description: "Retained rental parcel",
+    acquired_on: "2023-04-01",
+    sold_on: "2025-05-01",
+    gross_sales_price: 12_000,
+    cost_or_other_basis: 10_000,
+    depreciation_allowed: 0,
+    entire_activity_interest_disposed: false,
+  };
+  const xml = form4797.build({ passive_property_sales: [sale] }, {
+    pending: {
+      schedule_e: {
+        schedule_es: [{
+          tsj: "T",
+          property_description: "Rental house",
+          property_type: 1,
+          activity_type: "A",
+          fair_rental_days: 365,
+          personal_use_days: 0,
+          rent_income: 0,
+          form_1099_payments_made: false,
+          disposed_of: true,
+          prior_unallowed_passive_operating: 1_000,
+          prior_unallowed_passive_4797_part1: 3_000,
+          prior_passive_losses_active_when_incurred: true,
+        }],
+      },
+      form8582: {
+        activities: [{
+          name: "Rental house",
+          activity_type: "A",
+          property_type: 1,
+          reporting_form: "schedule_e",
+          current_net: 0,
+          prior_unallowed_operating: 1_000,
+          prior_active_participation: true,
+          prior_unallowed_4797_part1: 3_000,
+          prior_unallowed_4797_part2: 0,
+        }],
+        prior_unallowed: 4_000,
+        rental_prior_eligible_loss: 4_000,
+        has_active_rental: true,
+        active_participation: true,
+        has_current_4797_transaction: true,
+        current_4797_sale_gains: [{
+          activity_name: "Rental house",
+          part: "I",
+          gain: 2_000,
+        }],
+        modified_agi: 200_000,
+      },
+    },
+  });
+  assertStringIncludes(
+    xml,
+    "<PropertyDesc>PAL</PropertyDesc><GainOrLossAmt>-2000</GainOrLossAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<PropertyDesc>Retained rental parcel</PropertyDesc>",
+  );
+  assertStringIncludes(
+    xml,
+    "<PassiveActivityLossLiteralCd>PAL</PassiveActivityLossLiteralCd>",
+  );
+});
+
 Deno.test("Form 4797: Form 6252 section 1231 gain appears on line 4 and line 7", () => {
   const xml = form4797.build({
     section_1231_gain: 8_000,

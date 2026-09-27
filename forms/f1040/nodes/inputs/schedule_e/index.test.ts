@@ -388,6 +388,38 @@ Deno.test("routing: disposed_of=false produces no form4797 output", () => {
   assertEquals(f4797, undefined);
 });
 
+Deno.test("routing: a retained-activity sale reaches Form 4797 from its Schedule E property", () => {
+  const sale = {
+    activity_name: "Rental house",
+    part: "I",
+    property_description: "Retained rental parcel",
+    acquired_on: "2023-04-01",
+    sold_on: "2025-05-01",
+    gross_sales_price: 12_000,
+    cost_or_other_basis: 10_000,
+    depreciation_allowed: 0,
+    entire_activity_interest_disposed: false,
+  };
+  const result = compute([minimalItem({
+    property_description: "Rental house",
+    disposed_of: true,
+    passive_property_sales: [sale],
+  })]);
+  assertEquals(findOutput(result, "form4797")?.fields.passive_property_sales, [
+    sale,
+  ]);
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        property_description: "Rental house",
+        disposed_of: true,
+        passive_property_sales: [{ ...sale, activity_name: "Other rental" }],
+      })]),
+    Error,
+    "same named A or B activity",
+  );
+});
+
 Deno.test("routing: expense_depreciation_amt routes to form6251 with correct adjustment", () => {
   const result = compute([
     minimalItem({

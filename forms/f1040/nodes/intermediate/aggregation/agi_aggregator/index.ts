@@ -28,6 +28,7 @@ import { form_1116 } from "../../forms/form_1116/index.ts";
 import { FilingStatus } from "../../../types.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 import { schedule1a } from "../../forms/schedule1a/index.ts";
+import { agi_final } from "../agi_final/index.ts";
 
 // Fields that may arrive from multiple upstream nodes accumulate as arrays in the
 // executor pending dict. Declaring them accumulable prevents Zod parse failure.
@@ -123,6 +124,11 @@ export const inputSchema = z.object({
   // Part I/II prior PAL already netted on Form 4797; only the remaining
   // allowed PAL is subtracted from AGI here.
   pal_4797_preapplied_loss: z.number().nonnegative().optional(),
+  // A retained active-rental sale is provisionally reported at gross gain so
+  // modified AGI can be calculated before Form 8582 allocates its prior PAL.
+  pal_pending_active_4797: z.boolean().optional(),
+  // The finalized Form 8582 allowance is carried into the second AGI pass.
+  pal_final_allowed_loss: z.number().nonnegative().optional(),
   // Current income from actively participated rental real estate, for Form 8582 line 1a.
   pal_rental_income: z.number().nonnegative().optional(),
   // Prior-year unallowed passive loss carryforward
@@ -424,6 +430,9 @@ function modifiedAgiFor8582(input: AgiInput): number {
 
 // IRC §469(a): the part of the withheld passive loss that is deductible this year.
 function allowedPassiveLoss(input: AgiInput): number {
+  if (input.pal_final_allowed_loss !== undefined) {
+    return input.pal_final_allowed_loss;
+  }
   const currentLoss = input.pal_current_loss ?? 0;
   const priorUnallowed = input.pal_prior_unallowed ?? 0;
   if (currentLoss === 0 && priorUnallowed === 0) return 0;
@@ -528,12 +537,23 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
     form8582,
     form_1116,
     schedule1a,
+    agi_final,
   ]);
 
   compute(ctx: NodeContext, rawInput: AgiInput): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
+    if (input.pal_pending_active_4797 === true) {
+      return {
+        outputs: [
+          this.outputNodes.output(form8582, {
+            modified_agi: modifiedAgiFor8582(input),
+          }),
+          this.outputNodes.output(agi_final, { pre_pal_input: input }),
+        ],
+      };
+    }
     const agi = computeAgi(input, cfg);
     const totalIncome = grossIncome(input, cfg) - exclusions(input);
 
