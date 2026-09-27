@@ -59,6 +59,9 @@ The [Form 8990 business-interest contract](FORM8990-GRAPH.md) supplies
 source-keyed interest, the 2026 $32 million exemption threshold, ATI,
 capitalized interest, partnership/S-corp schedules and carryforward
 allocation before activity profit and return-level loss limits.
+The [Form 4952 investment-interest contract](FORM4952-GRAPH.md) separates
+mixed-use debt from business interest, maps the line-4g tax-rate election
+and routes allowed interest among Schedule A, Form 6198 and source schedules.
 
 These are **work assignments**, not blanket approvals to reuse TY2025 code.
 The pinned draft/authority files and `instruction-coverage.csv` are the

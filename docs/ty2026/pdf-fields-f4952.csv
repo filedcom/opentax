@@ -1,0 +1,18 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_1[0],/Tx,Page 1. Name(s) shown on return. ,2,36 683.968 460.05 697.969,yes
+topmostSubform[0].Page1[0].f1_2[0],/Tx,Identifying number. ,2,460.8 683.968 576 697.969,yes
+topmostSubform[0].Page1[0].f1_3[0],/Tx,Part I. Total Investment Interest Expense. 1. Investment interest expense paid or accrued in 2026 (see instructions). ,2,504 647.968 576 659.967,yes
+topmostSubform[0].Page1[0].f1_4[0],/Tx,"2. Disallowed investment interest expense from 2025 Form 4952, line 7. ",2,504 635.969 576 647.968,yes
+topmostSubform[0].Page1[0].f1_5[0],/Tx,3. Total investment interest expense. Add lines 1 and 2. ,2,504 623.97 576 635.969,yes
+topmostSubform[0].Page1[0].Line4a_ReadOrder[0].f1_6[0],/Tx,Part I I. Net Investment Income. 4a. Gross income from property held for investment (excluding any net gain from the disposition of property held for investment). ,2,410.4 575.968 481.65 587.967,yes
+topmostSubform[0].Page1[0].f1_7[0],/Tx,4b. Qualified dividends included on line 4a. ,2,410.4 563.969 481.65 575.968,yes
+topmostSubform[0].Page1[0].f1_8[0],/Tx,4c. Subtract line 4b from line 4a. ,2,504 551.97 576 563.969,yes
+topmostSubform[0].Page1[0].f1_9[0],/Tx,4d. Net gain from the disposition of property held for investment. ,2,410.4 539.968 481.65 551.967,yes
+topmostSubform[0].Page1[0].f1_10[0],/Tx,4e. Enter the smaller of line 4d or your net capital gain from the disposition of property held for investment. See instructions. ,2,410.4 515.97 481.65 527.969,yes
+topmostSubform[0].Page1[0].f1_11[0],/Tx,4f. Subtract line 4e from line 4d. ,2,504 503.968 576 515.967,yes
+topmostSubform[0].Page1[0].f1_12[0],/Tx,4g. Enter the amount from lines 4b and 4e that you elect to include in investment income. See instructions. ,2,504 491.969 576 503.968,yes
+topmostSubform[0].Page1[0].f1_13[0],/Tx,"4h. Investment income. Add lines 4c, 4f, and 4g. ",2,504 479.97 576 491.969,yes
+topmostSubform[0].Page1[0].f1_14[0],/Tx,5. Investment expenses (see instructions). ,2,504 467.968 576 479.967,yes
+topmostSubform[0].Page1[0].f1_15[0],/Tx,"6. Net investment income. Subtract line 5 from line 4h. If zero or less, enter 0. ",2,504 455.969 576 467.968,yes
+topmostSubform[0].Page1[0].f1_16[0],/Tx,"Part I I I. Investment Interest Expense Deduction. 7. Disallowed investment interest expense to be carried forward to 2027. Subtract line 6 from line 3. If zero or less, enter 0. ",2,504 407.97 576 419.969,yes
+topmostSubform[0].Page1[0].f1_17[0],/Tx,8. Investment interest expense deduction. Enter the smaller of line 3 or line 6. See instructions. ,2,504 395.968 576 407.967,yes

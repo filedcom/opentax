@@ -94,6 +94,10 @@ The [Form 8990 contract](FORM8990-GRAPH.md) maps the $32 million 2026
 gross-receipts threshold, source-keyed deductible and capitalized interest,
 ATI, pass-through EBIE/ETI/EBII and CFC branches. Its 138 draft PDF widgets
 are inventoried; the shared Schedule 1 addback loses source deductions.
+The [Form 4952 contract](FORM4952-GRAPH.md) maps investment-interest income,
+the qualified-dividend/capital-gain tax election, AMT carryforwards and
+Schedule A/6198/E destinations. Its 2026 form embeds instructions and has
+17 PDF widgets; the shared node currently demands AMT inputs unconditionally.
 The [scenario 12 contract](ATS-SCENARIO-12.md) and
 [business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
 broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800

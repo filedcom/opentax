@@ -1603,6 +1603,15 @@
       "bytes": 310574,
       "sha256": "001d2a9c1f4ca0d74226bc763d73049f5088ab2d5c3f2553b2dfa107de19a2f3",
       "retrieved_utc": "2026-09-27T14:27:46Z"
+    },
+    {
+      "path": "authorities/p550--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/p550--2025.pdf",
+      "kind": "prior-year-comparator",
+      "status": "downloaded",
+      "bytes": 2401930,
+      "sha256": "83552968a07e63d1c81e5b4f311fc0e54728b5ff9654b5a0d2ba6292c5574317",
+      "retrieved_utc": "2026-09-27T14:30:44Z"
     }
   ]
 }

@@ -134,6 +134,10 @@ The [Form 8990 contract](../../../docs/ty2026/FORM8990-GRAPH.md) maps
 the 2026 $32 million small-business test, ATI and source-level interest
 allocation, including pass-through Schedule A/B and CFC branches. Its
 138 PDF widgets and current MeF/validation routes remain to implement.
+The [Form 4952 contract](../../../docs/ty2026/FORM4952-GRAPH.md) maps
+investment-interest limits and the capital-gain election through Schedule
+A, Form 6198, Schedule D tax and AMT. Its 17 PDF widgets and current
+MeF/validation routes remain to implement.
 The [Form 4835 contract](../../../docs/ty2026/FORM4835-GRAPH.md) and
 [ATS scenario 3 plan](../../../docs/ty2026/ATS-SCENARIO-03.md) connect
 production-based farm rent to Schedule E while keeping Schedule F farm profit
