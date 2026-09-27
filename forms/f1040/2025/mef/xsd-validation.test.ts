@@ -88,6 +88,48 @@ Deno.test({
   await validateXsd(xml, "TY2025 Schedule 2 lines 16, 17b, and 17c");
 });
 
+Deno.test({
+  name: "XSD: Form 8611 building recapture links to Schedule 2 line 16",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const xml = buildMefXml({
+    f1040: { line23_other_taxes: 9_090 },
+    schedule2: { line16_lihtc_recapture: 9_090 },
+    f8611: { f8611s: [{
+      source_document_reference: "2025 Building A recapture worksheet",
+      building_bin: "TX1234567",
+      building_us_address: {
+        line1: "10 Housing Way",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+      },
+      placed_in_service_date: "2017-08-01",
+      calculation: {
+        source_type: "own_credit",
+        recapture_event_type: "DISPOSITION",
+        credit_year_first_claimed: 2017,
+        recapture_year: 2025,
+        line1_prior_form8586_credits: 30_000,
+        line2_additions_to_qualified_basis_credits: 0,
+        line6_qualified_basis_decrease_ratio: 1,
+        line7_prior_accelerated_recapture_amount: 0,
+        line11_interest_from_prior_years: 100,
+        prior_unused_credits: 1_000,
+        unused_additions_to_qualified_basis_credits: 0,
+      },
+    }] },
+  }, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(xml, "<IRS8611 ");
+  assertStringIncludes(
+    xml,
+    'referenceDocumentName="IRS8611">9090</RecaptureTaxAmt>',
+  );
+  await validateXsd(xml, "Form 8611 building recapture and Schedule 2");
+});
+
 Deno.test("section 965 installment reaches Schedule 2 but not Form 1040 line 23", () => {
   const result = runReturn({
     general: singleGeneral(),

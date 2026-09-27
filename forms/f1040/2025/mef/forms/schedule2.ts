@@ -124,6 +124,23 @@ function buildIRS1040Schedule2(
       );
       continue;
     }
+    if (key === "line16_lihtc_recapture" && value > 0) {
+      const formIds = context?.documentIdsByPendingKey?.f8611 ?? [];
+      if (context?.documentIdsByPendingKey && formIds.length === 0) {
+        throw new Error("Schedule 2 line 16 needs attached Forms 8611");
+      }
+      childrenByTag.set(tag, element(
+        tag,
+        value,
+        formIds.length > 0
+          ? {
+            referenceDocumentId: formIds.join(" "),
+            referenceDocumentName: "IRS8611",
+          }
+          : undefined,
+      ));
+      continue;
+    }
     childrenByTag.set(tag, element(tag, value));
   }
 

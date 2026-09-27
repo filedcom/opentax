@@ -41,6 +41,7 @@ import { form8396 } from "./f8396.ts";
 import { form8582 } from "./f8582.ts";
 import { form8582cr } from "./f8582cr.ts";
 import { form8606 } from "./f8606.ts";
+import { form8611 } from "./f8611.ts";
 import { form8615 } from "./f8615.ts";
 import { form8621 } from "./f8621.ts";
 import { form8621ExcessStatement } from "./f8621_excess_statement.ts";
@@ -178,6 +179,8 @@ export const ALL_MEF_FORMS = [
   form8582cr,
   // Form 8606
   form8606,
+  // Form 8611, one document per building.
+  form8611,
   // Form 8615
   form8615,
   // Form 8621, one document per PFIC/QEF holding.
