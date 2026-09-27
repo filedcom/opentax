@@ -57,6 +57,31 @@ function specifiedEntry(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function filedPending(
+  context: {
+    regularTax: number;
+    alternativeMinimumTax: number;
+    tentativeMinimumTax: number;
+    priorAllowableCredits: number;
+  },
+  allowedCredit: number,
+) {
+  return {
+    f1040: {
+      line16_income_tax: context.regularTax,
+      line17_additional_taxes: context.alternativeMinimumTax,
+    },
+    form6251: {
+      line11_amt: context.alternativeMinimumTax,
+      net_tmt: context.tentativeMinimumTax,
+    },
+    schedule3: {
+      line6a_total: allowedCredit,
+      line7_total: allowedCredit + context.priorAllowableCredits,
+    },
+  };
+}
+
 Deno.test("Form 3800 descriptor stays empty without credit and rejects legacy gross credit", () => {
   assertEquals(form3800.build({}), "");
   assertEquals(form3800.build({ f3800s: [{}] }), "");
@@ -79,7 +104,7 @@ Deno.test("Form 3800 descriptor links self-earned Form 8826 and finalized Part I
   };
   assertStringIncludes(form3800.build(fields), "<IRS3800>");
   const xml = form3800.build(fields, {
-    pending: { f8826: selfEarned, schedule3: { line6a_total: 5_000 } },
+    pending: { ...filedPending(tax, 5_000), f8826: selfEarned },
     documentIdsByPendingKey: {
       f8826: ["IRS8826_1"],
       f8835: [],
@@ -98,8 +123,40 @@ Deno.test("Form 3800 descriptor links self-earned Form 8826 and finalized Part I
     () =>
       form3800.build(fields, {
         pending: {
+          ...filedPending(tax, 5_000),
+          f1040: { line16_income_tax: 41_000 },
+          f8826: selfEarned,
+        },
+        documentIdsByPendingKey: {
+          f8826: ["IRS8826_1"],
+          form6251: ["IRS6251_1"],
+        },
+      }),
+    Error,
+    "regularTax does not reconcile to the filed return",
+  );
+  assertThrows(
+    () =>
+      form3800.build(fields, {
+        pending: {
+          ...filedPending(tax, 5_000),
+          schedule3: { line6a_total: 5_000, line7_total: 6_000 },
+          f8826: selfEarned,
+        },
+        documentIdsByPendingKey: {
+          f8826: ["IRS8826_1"],
+          form6251: ["IRS6251_1"],
+        },
+      }),
+    Error,
+    "priorAllowableCredits does not reconcile to the filed return",
+  );
+  assertThrows(
+    () =>
+      form3800.build(fields, {
+        pending: {
+          ...filedPending(tax, 5_000),
           f8826: { ...selfEarned, eligible_expenditures: 5_000 },
-          schedule3: { line6a_total: 5_000 },
         },
         documentIdsByPendingKey: {
           f8826: ["IRS8826_1"],
@@ -132,7 +189,7 @@ Deno.test("Form 3800 descriptor preserves a pass-through-only Form 8826 source",
     tax_context: { ...tax, standardCredit: 1_250 },
     allowed_credit: 1_250,
   }, {
-    pending: { f8826: source, schedule3: { line6a_total: 1_250 } },
+    pending: { ...filedPending(tax, 1_250), f8826: source },
     documentIdsByPendingKey: { f8826: [], f8835: [], form6251: ["IRS6251_1"] },
   });
   assertStringIncludes(
@@ -174,7 +231,10 @@ Deno.test("Form 3800 descriptor requires chosen Part V use when two K-1 sources 
     allowed_credit: 3_000,
   };
   const context = {
-    pending: { f8826: source, schedule3: { line6a_total: 3_000 } },
+    pending: {
+      ...filedPending(fields.tax_context, 3_000),
+      f8826: source,
+    },
     documentIdsByPendingKey: { f8826: [], f8835: [], form6251: ["IRS6251_1"] },
   };
   assertThrows(
@@ -205,8 +265,8 @@ Deno.test("Form 3800 descriptor links a specified Form 8835 facility", () => {
   };
   const context = {
     pending: {
+      ...filedPending(fields.tax_context, 6_000),
       f8835: { f8835s: [windFacility] },
-      schedule3: { line6a_total: 6_000 },
     },
     documentIdsByPendingKey: { f8826: [], f8835: ["IRS8835_1"] },
   };
@@ -253,8 +313,8 @@ Deno.test("Form 3800 descriptor needs explicit Part V use for partly limited sam
   };
   const context = {
     pending: {
+      ...filedPending(fields.tax_context, 7_000),
       f8835: { f8835s: [windFacility, windFacility] },
-      schedule3: { line6a_total: 7_000 },
     },
     documentIdsByPendingKey: {
       f8826: [],
@@ -304,6 +364,7 @@ Deno.test("Form 3800 descriptor requires a bundled transfer-election statement",
   };
   const context = {
     pending: {
+      ...filedPending(fields.tax_context, 4_000),
       f8835: {
         f8835s: [{
           ...windFacility,
@@ -312,7 +373,6 @@ Deno.test("Form 3800 descriptor requires a bundled transfer-election statement",
           transfer_election_statement_file_name: statement,
         }],
       },
-      schedule3: { line6a_total: 4_000 },
     },
     documentIdsByPendingKey: { f8826: [], f8835: ["IRS8835_1"] },
   };
