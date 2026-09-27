@@ -3,6 +3,7 @@ import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import { balanceSheetSchema, calculateBalanceSheet } from "./balance-sheet.ts";
 
 // 2025 Form 8854 and instructions. The $206,000 average-tax threshold and
 // $890,000 mark-to-market exclusion apply to TY2025, not the 2024 amounts.
@@ -120,7 +121,7 @@ export const inputSchema = z.object({
   expatriate_type: z.nativeEnum(ExpatriateType),
   part_i: partISchema,
   prior_year_us_income_tax_less_foreign_tax_credit: priorYearTaxSchema,
-  net_worth_at_expatriation: z.number().nonnegative(),
+  balance_sheet: balanceSheetSchema,
   certified_tax_compliance: z.boolean(),
   exception_facts: exceptionFactsSchema,
   significant_asset_liability_changes_prior_5_years: z.boolean(),
@@ -328,7 +329,7 @@ export function isCoveredExpatriate(rawInput: F8854Input): boolean {
   if (answers.minorQualifies) return false;
   return averageAnnualNetIncomeTax(input) >
       AVG_ANNUAL_TAX_THRESHOLD_2025 ||
-    input.net_worth_at_expatriation >= NET_WORTH_THRESHOLD;
+    calculateBalanceSheet(input.balance_sheet).netWorth >= NET_WORTH_THRESHOLD;
 }
 
 class F8854Node extends TaxNode<typeof inputSchema> {

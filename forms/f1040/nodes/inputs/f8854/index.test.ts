@@ -1,6 +1,10 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { buildForm8854PartI } from "../../../2025/mef/forms/f8854_part_i.ts";
 import {
+  buildForm8854BalanceSheet,
+  buildForm8854BalanceSheetStatements,
+} from "../../../2025/mef/forms/f8854_balance_sheet.ts";
+import {
   buildForm8854ChangeStatement,
   buildForm8854PartIISectionA,
 } from "../../../2025/mef/forms/f8854_part_ii_a.ts";
@@ -16,6 +20,7 @@ import {
   sectionAExceptionAnswers,
 } from "./index.ts";
 import { allocateMarkToMarketExclusion } from "./mark-to-market.ts";
+import { calculateBalanceSheet } from "./balance-sheet.ts";
 
 function asset(
   assetId: string,
@@ -53,7 +58,7 @@ function input(overrides: Record<string, unknown> = {}) {
     exception_facts: { dual_citizen: null, minor: null },
     significant_asset_liability_changes_prior_5_years: false,
     prior_year_us_income_tax_less_foreign_tax_credit: priorYearTax(0),
-    net_worth_at_expatriation: 0,
+    balance_sheet: balanceSheetWithNetWorth(0),
     certified_tax_compliance: true,
     ...overrides,
   };
@@ -66,6 +71,25 @@ function priorYearTax(amount: number) {
     year_2022: amount,
     year_2021: amount,
     year_2020: amount,
+  };
+}
+
+function balanceSheetWithNetWorth(netWorth: number) {
+  return {
+    asset_categories_confirmed_complete: true,
+    liabilities_confirmed_complete: true,
+    cash_and_bank_deposits: {
+      fair_market_value: netWorth,
+      us_adjusted_basis: netWorth,
+    },
+    foreign_cfc_securities_within_line5: [],
+    partnership_interests: [],
+    owned_trust_assets: [],
+    nongrantor_trust_interests: [],
+    other_assets: [],
+    installment_obligations_liability: 0,
+    mortgage_liability: 0,
+    other_liabilities: [],
   };
 }
 
@@ -113,13 +137,13 @@ Deno.test("Form 8854 uses TY2025 covered-expatriate thresholds", () => {
   );
   assertEquals(
     isCoveredExpatriate(inputSchema.parse(input({
-      net_worth_at_expatriation: 1_999_999,
+      balance_sheet: balanceSheetWithNetWorth(1_999_999),
     }))),
     false,
   );
   assertEquals(
     isCoveredExpatriate(inputSchema.parse(input({
-      net_worth_at_expatriation: 2_000_000,
+      balance_sheet: balanceSheetWithNetWorth(2_000_000),
     }))),
     true,
   );
@@ -143,7 +167,7 @@ Deno.test("Form 8854 dual-citizen exception waives only tax and net-worth tests"
   const covered = {
     part_i: dualCitizenPartI(),
     prior_year_us_income_tax_less_foreign_tax_credit: priorYearTax(300_000),
-    net_worth_at_expatriation: 4_000_000,
+    balance_sheet: balanceSheetWithNetWorth(4_000_000),
     exception_facts: { dual_citizen: dual, minor: null },
   };
   assertEquals(isCoveredExpatriate(inputSchema.parse(input(covered))), false);
@@ -416,7 +440,7 @@ Deno.test("Form 8854 Section A emits all five prior years and explicit exception
       year_2021: 4,
       year_2020: 5,
     },
-    net_worth_at_expatriation: 2_000_000,
+    balance_sheet: balanceSheetWithNetWorth(2_000_000),
     exception_facts: {
       dual_citizen: dual,
       minor: {
@@ -487,6 +511,157 @@ Deno.test("Form 8854 Section A line 3 links a native explanation statement", () 
       significant_asset_liability_changes_prior_5_years: true,
     })).success,
     false,
+  );
+});
+
+Deno.test("Form 8854 Section B derives net worth without counting line 5a twice", () => {
+  const sheet = {
+    ...balanceSheetWithNetWorth(500_000),
+    nonmarketable_foreign_securities: {
+      fair_market_value: 1_600_000,
+      us_adjusted_basis: 1_000_000,
+    },
+    foreign_cfc_securities_within_line5: [{
+      fair_market_value: 500_000,
+      us_adjusted_basis: 300_000,
+      foreign_entity_description: "Foreign CFC",
+    }],
+    mortgage_liability: 200_000,
+  };
+  assertEquals(
+    calculateBalanceSheet(
+      inputSchema.parse(input({
+        balance_sheet: sheet,
+      })).balance_sheet,
+    ),
+    {
+      totalAssetsFairMarketValue: 2_100_000,
+      totalAssetsUsAdjustedBasis: 1_500_000,
+      totalLiabilities: 200_000,
+      netWorth: 1_900_000,
+    },
+  );
+  assertEquals(
+    isCoveredExpatriate(inputSchema.parse(input({
+      balance_sheet: sheet,
+    }))),
+    false,
+  );
+  assertStringIncludes(
+    buildForm8854PartIISectionA(inputSchema.parse(input({
+      balance_sheet: sheet,
+    }))),
+    "<NetWorthOnExptrtDateAmt>1900000</NetWorthOnExptrtDateAmt>",
+  );
+  assertEquals(
+    inputSchema.safeParse(input({
+      balance_sheet: {
+        ...sheet,
+        foreign_cfc_securities_within_line5: [{
+          fair_market_value: 1_600_001,
+          us_adjusted_basis: 300_000,
+          foreign_entity_description: "Overstated subset",
+        }],
+      },
+    })).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse(input({
+      balance_sheet: {
+        ...sheet,
+        asset_categories_confirmed_complete: false,
+      },
+    })).success,
+    false,
+  );
+  const negative = inputSchema.parse(input({
+    balance_sheet: {
+      ...balanceSheetWithNetWorth(0),
+      mortgage_liability: 100,
+    },
+  }));
+  assertEquals(calculateBalanceSheet(negative.balance_sheet).netWorth, -100);
+  assertEquals(isCoveredExpatriate(negative), false);
+});
+
+Deno.test("Form 8854 Section B emits ordered totals and linked detail statements", () => {
+  const sheet = {
+    ...balanceSheetWithNetWorth(100_000),
+    partnership_interests: [{
+      partnership_name: "Partnership One",
+      ein: "123456789",
+      fair_market_value: 400_000,
+      us_adjusted_basis: 300_000,
+    }],
+    owned_trust_assets: [{
+      trust_name: "Owned Trust",
+      trust_ein: "987654321",
+      asset_description: "Trust real property",
+      fair_market_value: 200_000,
+      us_adjusted_basis: 150_000,
+    }],
+    nongrantor_trust_interests: [{
+      trust_name: "Beneficial Trust",
+      fair_market_value: 100_000,
+      us_adjusted_basis: 50_000,
+    }],
+    other_assets: [{
+      description: "Collectibles",
+      fair_market_value: 20_000,
+      us_adjusted_basis: 15_000,
+    }],
+    other_liabilities: [{ description: "Personal loan", amount: 10_000 }],
+    mortgage_liability: 40_000,
+  };
+  const parsed = inputSchema.parse(input({ balance_sheet: sheet }));
+  assertEquals(calculateBalanceSheet(parsed.balance_sheet).netWorth, 770_000);
+  assertThrows(
+    () => buildForm8854BalanceSheet(parsed),
+    Error,
+    "linked statement document",
+  );
+  assertThrows(
+    () =>
+      buildForm8854BalanceSheet(inputSchema.parse(input()), {
+        partnership: "DOC-EMPTY",
+      }),
+    Error,
+    "cannot link an empty statement",
+  );
+  const xml = buildForm8854BalanceSheet(parsed, {
+    partnership: "DOC-P",
+    ownedTrust: "DOC-O",
+    nongrantorTrust: "DOC-N",
+    otherAssets: "DOC-A",
+    otherLiabilities: "DOC-L",
+  });
+  assertStringIncludes(xml, "<FairMarketValueAmt>820000</FairMarketValueAmt>");
+  assertStringIncludes(xml, "<TotalLiabilityAmt>50000</TotalLiabilityAmt>");
+  assertStringIncludes(xml, "<NetWorthAmt>770000</NetWorthAmt>");
+  assertStringIncludes(
+    xml,
+    'referenceDocumentId="DOC-P" referenceDocumentName="PartnershipInterestStatement"',
+  );
+  assertEquals(
+    xml.indexOf("<TotalPartnershipInterestGrp") <
+      xml.indexOf("<TotAssetsHeldByTrSect671679Grp"),
+    true,
+  );
+  const statements = buildForm8854BalanceSheetStatements(parsed.balance_sheet);
+  assertStringIncludes(
+    statements.partnership,
+    "<PartnershipInterestStatement>",
+  );
+  assertStringIncludes(statements.ownedTrust, "<OwnedTrustValueStatement>");
+  assertStringIncludes(
+    statements.nongrantorTrust,
+    "<NongrantorTrBeneficialIntStmt>",
+  );
+  assertStringIncludes(statements.otherAssets, "<OtherAssetsNotIncludedStmt>");
+  assertStringIncludes(
+    statements.otherLiabilities,
+    "<OtherLiabilitiesStatement>",
   );
 });
 
@@ -592,7 +767,7 @@ Deno.test("Form 8854 does not turn deemed gain into a dollar-for-dollar Schedule
       f8854.compute(
         { taxYear: 2025, formType: "f1040" },
         inputSchema.parse(input({
-          net_worth_at_expatriation: 2_000_000,
+          balance_sheet: balanceSheetWithNetWorth(2_000_000),
           assets: [asset("A", 2_000_000, 500_000)],
         })),
       ),

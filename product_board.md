@@ -1111,11 +1111,16 @@ schema-ordered XML builder. Part II Section A now emits the five prior-year tax
 lines, covered-status answers, and a linked native change-explanation statement
 when line 3 is yes. Those builders are written but not registered as a complete
 `IRS8854` form. The Form 8854 node still rejects filing, including non-covered
-cases. Balance-sheet and annual statement facts, exception source corroboration,
-excluded asset classes, property-character gain/loss routing, deferral,
-remaining statements, PDF, complete MeF serialization, source reconciliation,
-and IRS business rules remain open. The calculation and rejection cases are
-written but unrun. See the
+cases. Section B now takes balance-sheet categories and derives asset,
+liability, and net-worth totals instead of trusting a free-entered number. Its
+unregistered XML builder emits the form lines and native itemized statements for
+partnership interests, owned and nongrantor trusts, other assets, and other
+liabilities. Line 5a is checked as a subset of line 5 and excluded from line 20.
+These category values remain entered assertions without independent valuation
+evidence. Annual statement facts, exception source corroboration, excluded asset
+classes, property-character gain/loss routing, deferral, remaining statements,
+PDF, complete MeF serialization, source reconciliation, and IRS business rules
+remain open. The calculation and rejection cases are written but unrun. See the
 [2025 Form 8854 instructions](https://www.irs.gov/instructions/i8854).
 
 ## Registered Form 1040 MeF documents to audit

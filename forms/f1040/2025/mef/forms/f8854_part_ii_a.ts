@@ -4,6 +4,7 @@ import {
   inputSchema,
   sectionAExceptionAnswers,
 } from "../../../nodes/inputs/f8854/index.ts";
+import { calculateBalanceSheet } from "../../../nodes/inputs/f8854/balance-sheet.ts";
 
 /** IRS8854 Part II Section A children in 2025v5.4 XSD order. */
 export function buildForm8854PartIISectionA(
@@ -35,7 +36,10 @@ export function buildForm8854PartIISectionA(
     element("USIncomeTax3rdYearBfrExptrtAmt", taxes.year_2022),
     element("USIncomeTax4thYearBfrExptrtAmt", taxes.year_2021),
     element("USIncomeTax5thYearBfrExptrtAmt", taxes.year_2020),
-    element("NetWorthOnExptrtDateAmt", input.net_worth_at_expatriation),
+    element(
+      "NetWorthOnExptrtDateAmt",
+      calculateBalanceSheet(input.balance_sheet).netWorth,
+    ),
     element(
       "ChangeAstLiab5YrBfrExptrtInd",
       String(input.significant_asset_liability_changes_prior_5_years),

@@ -32,6 +32,13 @@ answer to significant asset or liability changes requires an explanation and a
 linked native `ChangePrePostExptrtDateStmt`. These builders are not registered
 as a complete Form 8854 document.
 
+Part II Section B now takes category-level asset values and liabilities and
+derives total assets, total liabilities, and net worth. Line 5a is a checked
+subset of foreign nonmarketable securities and is not added again on line 20.
+Partnership, trust, other-asset, and other-liability rows have native statement
+builders and required document links. The source values and valuations are still
+entered assertions, and the Section B builder remains unregistered.
+
 The current build pass allocates the $890,000 exclusion across identified gain
 properties in proportion to their positive built-in gains, with a stable
 cent-balancing rule. Loss properties receive no exclusion. This is only the

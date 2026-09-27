@@ -105,10 +105,11 @@ end-to-end, and business-rule tests before it can become a whole-form claim.
 | `f8835`                             | `IRS8835`                                                        | P: facility credit and transfer inputs; full eligibility and carryovers open                                                                                                          | R                                                                                                                                                                | P: election statement; render open                                                                                                   | P: cases written, unrun                                                                      | P: cases written, unrun                                                  | ?                  |
 | `f8874`                             | `IRS8874`                                                        | P: own passive and nonpassive QEI, partnership/S-corporation AD, and estate/trust ZZ activity facts written; carryover, recapture, leap-day and passive cents open                    | P: native source, Form 8582-CR, and Form 3800 line 1i/Part V written, unrun                                                                                      | ?                                                                                                                                    | P: local XSD case written, unrun                                                             | P: source and reconciliation cases written, unrun                        | ?                  |
 
-The `f8854` row now has unregistered Part I and Part II Section A XML builders,
-plus a native change-explanation statement builder. They do not constitute an
-`IRS8854` serializer or change the missing end-to-end filing status. Source,
-calculation, and XML-shape cases are written but unrun.
+The `f8854` row now has unregistered Part I and Part II Section A/B XML
+builders, plus native change-explanation and balance-sheet detail statement
+builders. They do not constitute an `IRS8854` serializer or change the missing
+end-to-end filing status. Source, calculation, and XML-shape cases are written
+but unrun.
 
 The `form8959` row also has a new, unrun CT-2 employee-representative source:
 four quarters per recipient feed Form 8959 lines 14 and 23. W-2 box 12 codes B
