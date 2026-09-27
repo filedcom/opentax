@@ -8,6 +8,7 @@ import {
 import { groupForm3800PassiveCreditVintages } from "../../../nodes/inputs/f3800/calculation.ts";
 import {
   form3800CarryoverDetailXmlTags,
+  form3800CurrentDetailXmlTags,
   form3800PassiveXmlTags,
   planForm3800PassiveXmlRows,
 } from "./f3800_passive_tags.ts";
@@ -48,6 +49,16 @@ Deno.test("Form 3800 passive XML tags cover every source credit line", () => {
     form3800CarryoverDetailXmlTags["4d"],
     "Frm8586CYSpcfdCrAggrgtGrp",
   );
+  assertEquals(
+    Object.keys(form3800CurrentDetailXmlTags).sort(),
+    Object.entries(form3800PassiveXmlTags).flatMap(([line, tags]) =>
+      tags.current ? [line] : []
+    ).sort(),
+  );
+  assertEquals(
+    form3800CurrentDetailXmlTags["1h"],
+    "Frm8820CYAggrgtAmtGrp",
+  );
 });
 
 Deno.test("Form 3800 passive XML plan keeps one carryover group with source detail", () => {
@@ -73,6 +84,7 @@ Deno.test("Form 3800 passive XML plan keeps one carryover group with source deta
     planned.map((row) => ({
       part: row.part,
       tag: row.tag,
+      currentDetailTag: row.currentDetailTag,
       detailTag: row.carryoverDetailTag,
       year: row.latestOriginatingTaxYear,
       before: row.beforePassiveLimit,
@@ -84,6 +96,7 @@ Deno.test("Form 3800 passive XML plan keeps one carryover group with source deta
       {
         part: "current",
         tag: "Form8820CYCreditsGrp",
+        currentDetailTag: "Frm8820CYAggrgtAmtGrp",
         detailTag: undefined,
         year: 2025,
         before: 300,
@@ -94,6 +107,7 @@ Deno.test("Form 3800 passive XML plan keeps one carryover group with source deta
       {
         part: "carryover",
         tag: "Frm8820CYCyovCrGrp",
+        currentDetailTag: undefined,
         detailTag: "Frm8820CYCyovCrAggrgtGrp",
         year: 2024,
         before: 300,

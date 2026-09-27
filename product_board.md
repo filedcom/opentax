@@ -492,12 +492,13 @@ allocation and carryover statement generation remain open. An unrun XML-row
 plan now collapses multiple carryover years into one schema group per credit
 line, records the latest origin year as the IRS instructs for Part IV column
 (b), and retains every source year for the required Part VI detail. A
-schema-backed map now names the Part VI detail group for every supported
-carryover row. A pure XML fragment builder now writes the passive Part IV
-aggregate and, when needed, each Part VI source-year detail with its verified
-EIN or missing-EIN reason and tax-use carryforward. Direct and local XSD cases
-are written but unrun. These fragments are not yet joined into the filed Form
-3800, and Part III/V passive rows remain open.
+schema-backed maps now name the Part V and VI detail groups for every supported
+current-year and carryover row. A pure XML fragment builder writes passive
+Part III/IV aggregates and, when needed, Part V/VI source detail with the
+verified EIN or missing-EIN reason, tax use, and carryforward. Direct and
+local XSD cases are written but unrun. These fragments are not yet joined
+into the filed Form 3800, and complete source-document and Part II
+reconciliation remains open.
 A pure tax-use allocator now reconciles the source totals with the three Part II
 caps and applies older credit years first. It stops a partially used year with
 multiple source rows unless their named credit types have an explicit IRS

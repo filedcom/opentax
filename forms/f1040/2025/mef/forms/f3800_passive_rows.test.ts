@@ -2,7 +2,7 @@ import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { PassiveCreditReportingRoute } from "../../../nodes/intermediate/forms/form8582cr/credit-route.ts";
 import { PassiveCreditSourceOrigin } from "../../../nodes/intermediate/forms/form8582cr/source.ts";
 import type { Form3800PassiveTaxUseVintage } from "../../../nodes/inputs/f3800/calculation.ts";
-import { buildForm3800PassiveCarryoverXml } from "./f3800_passive_carryover.ts";
+import { buildForm3800PassiveRowXml } from "./f3800_passive_rows.ts";
 
 const own: Form3800PassiveTaxUseVintage = {
   sourceKey: "own-2023",
@@ -38,8 +38,57 @@ const partnership: Form3800PassiveTaxUseVintage = {
   unusedAfterTaxLimit: 50,
 };
 
+const currentOwn: Form3800PassiveTaxUseVintage = {
+  ...own,
+  sourceKey: "own-2025",
+  originatingTaxYear: 2025,
+  appliedAgainstTax: 60,
+  unusedAfterTaxLimit: 20,
+};
+
+const currentPartnership: Form3800PassiveTaxUseVintage = {
+  ...partnership,
+  sourceKey: "partnership-2025",
+  originatingTaxYear: 2025,
+};
+
+Deno.test("Form 3800 passive current-year XML keeps Part III and V source amounts", () => {
+  const xml = buildForm3800PassiveRowXml([
+    currentOwn,
+    currentPartnership,
+  ]);
+  assertEquals(xml.partIII.length, 1);
+  assertEquals(xml.partV.length, 1);
+  assertEquals(xml.partIV, []);
+  assertEquals(xml.partVI, []);
+  assertStringIncludes(
+    xml.partIII[0],
+    "<CYGeneralBusinessCrItemCnt>2</CYGeneralBusinessCrItemCnt>",
+  );
+  assertStringIncludes(
+    xml.partIII[0],
+    "<CrSubjToPassiveActyLmtAmt>300</CrSubjToPassiveActyLmtAmt>",
+  );
+  assertStringIncludes(
+    xml.partIII[0],
+    "<TotalGeneralBusCreditsAmt>230</TotalGeneralBusCreditsAmt>",
+  );
+  assertStringIncludes(
+    xml.partIII[0],
+    "<TotalGeneralBusCreditsAppTxAmt>160</TotalGeneralBusCreditsAppTxAmt>",
+  );
+  assertEquals(
+    (xml.partV[0].match(/<Frm8820CYAggrgtAmtGrp/g) ?? []).length,
+    2,
+  );
+  assertStringIncludes(
+    xml.partV[0],
+    "<CrTrnsfrElectCrAllwAftrLmtAmt>150</CrTrnsfrElectCrAllwAftrLmtAmt>",
+  );
+});
+
 Deno.test("Form 3800 passive carryover XML keeps summary and source-year detail", () => {
-  const xml = buildForm3800PassiveCarryoverXml([own, partnership]);
+  const xml = buildForm3800PassiveRowXml([own, partnership]);
   assertEquals(xml.partIV.length, 1);
   assertEquals(xml.partVI.length, 2);
   assertStringIncludes(
@@ -85,7 +134,7 @@ Deno.test("Form 3800 passive carryover XML preserves explicit missing-EIN reason
       missing_ein_reason: "APPLD FOR",
     },
   };
-  const xml = buildForm3800PassiveCarryoverXml([source]);
+  const xml = buildForm3800PassiveRowXml([source]);
   assertEquals(xml.partVI, []);
   assertStringIncludes(
     xml.partIV[0],
@@ -119,7 +168,7 @@ Deno.test("Form 3800 passive summary EIN uses the entity's combined years", () =
       ein: "987654321",
     },
   };
-  const xml = buildForm3800PassiveCarryoverXml([
+  const xml = buildForm3800PassiveRowXml([
     oldest,
     otherEntity,
     later,
@@ -131,7 +180,7 @@ Deno.test("Form 3800 passive summary EIN uses the entity's combined years", () =
   assertEquals(xml.partVI.length, 3);
   assertThrows(
     () =>
-      buildForm3800PassiveCarryoverXml([
+      buildForm3800PassiveRowXml([
         oldest,
         {
           ...later,
@@ -149,13 +198,12 @@ Deno.test("Form 3800 passive summary EIN uses the entity's combined years", () =
 
 Deno.test("Form 3800 passive carryover XML rejects unreconciled tax use", () => {
   assertThrows(
-    () =>
-      buildForm3800PassiveCarryoverXml([{ ...own, unusedAfterTaxLimit: 1 }]),
+    () => buildForm3800PassiveRowXml([{ ...own, unusedAfterTaxLimit: 1 }]),
     Error,
     "do not reconcile",
   );
   assertThrows(
-    () => buildForm3800PassiveCarryoverXml([own, { ...own }]),
+    () => buildForm3800PassiveRowXml([own, { ...own }]),
     Error,
     "must be unique",
   );
@@ -171,11 +219,18 @@ Deno.test("Form 3800 passive carryover fragments follow TY2025v5.4 IRS3800 XSD",
   } catch {
     return;
   }
-  const fragments = buildForm3800PassiveCarryoverXml([own, partnership]);
+  const fragments = buildForm3800PassiveRowXml([
+    own,
+    partnership,
+    currentOwn,
+    currentPartnership,
+  ]);
   const xml =
     `<IRS3800 xmlns="http://www.irs.gov/efile"><CAMTAndBEATInd>false</CAMTAndBEATInd>${
-      fragments.partIV.join("")
-    }${fragments.partVI.join("")}</IRS3800>`;
+      fragments.partIII.join("")
+    }${fragments.partIV.join("")}${fragments.partV.join("")}${
+      fragments.partVI.join("")
+    }</IRS3800>`;
   const path = await Deno.makeTempFile({ suffix: ".xml" });
   try {
     await Deno.writeTextFile(path, xml);

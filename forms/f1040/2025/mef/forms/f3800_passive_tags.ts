@@ -235,12 +235,64 @@ export const form3800CarryoverDetailXmlTags = {
   "4z": "CYOtherSpcfdCreditsAggrgtGrp",
 } as const satisfies Readonly<Record<Form3800CreditLine, string>>;
 
+/** TY2025v5.4 IRS3800.xsd Part V source-detail groups for Part III rows. */
+export const form3800CurrentDetailXmlTags: Readonly<
+  Partial<Record<Form3800CreditLine, string>>
+> = {
+  "1a": "Frm3468PartIICYAggrgtAmtGrp",
+  "1b": "Frm7207CYAggrgtAmtGrp",
+  "1c": "Frm6765CYAggrgtAmtGrp",
+  "1d": "Frm3468PartIIICYAggrgtAmtGrp",
+  "1e": "Frm8826CYAggrgtAmtGrp",
+  "1f": "Frm8835PartIICYAggrgtAmtGrp",
+  "1g": "Frm7210CYAggrgtAmtGrp",
+  "1h": "Frm8820CYAggrgtAmtGrp",
+  "1i": "Frm8874CYAggrgtAmtGrp",
+  "1j": "Frm8881PartICYAggrgtAmtGrp",
+  "1k": "Frm8882CYAggrgtAmtGrp",
+  "1l": "Frm8864CYAggrgtAmtGrp",
+  "1m": "Frm8896CYAggrgtAmtGrp",
+  "1n": "Frm8906CYAggrgtAmtGrp",
+  "1o": "Frm3468PartIVCYAggrgtAmtGrp",
+  "1p": "Frm8908CYAggrgtAmtGrp",
+  "1q": "Frm7218PartIICYAggrgtAmtGrp",
+  "1s": "Frm8911PartICYAggrgtAmtGrp",
+  "1t": "Frm8830CYAggrgtAmtGrp",
+  "1u": "Frm7213PartIICYAggrgtAmtGrp",
+  "1v": "Frm3468PartVCYAggrgtAmtGrp",
+  "1w": "Frm8932CYAggrgtAmtGrp",
+  "1x": "Frm8933CYAggrgtAmtGrp",
+  "1y": "Frm8936PartIICYAggrgtAmtGrp",
+  "1aa": "Frm8936PartVCYAggrgtAmtGrp",
+  "1bb": "Frm8904CYAggrgtAmtGrp",
+  "1cc": "Frm7213PartICYAggrgtAmtGrp",
+  "1dd": "Frm8881PartIICYAggrgtAmtGrp",
+  "1ee": "Frm8881PartIIICYAggrgtAmtGrp",
+  "1ff": "Frm8864SAFCYAggrgtAmtGrp",
+  "1gg": "Frm7211PartIICYAggrgtAmtGrp",
+  "1zz": "GenBusOtherCrCYAggrgtAmtGrp",
+  "3": "Frm8844CYAggrgtAmtGrp",
+  "4a": "Frm3468PartVICYAggrgtAmtGrp",
+  "4b": "Frm5884CYAggrgtAmtGrp",
+  "4c": "Frm6478CYSpcfdCrAggrgtGrp",
+  "4d": "Frm8586CYAggrgtAmtGrp",
+  "4e": "Frm8835PartIICYSpcfdAmtGrp",
+  "4f": "Frm8846CYAggrgtAmtGrp",
+  "4g": "Frm8900CYAggrgtAmtGrp",
+  "4h": "Frm8941CYAggrgtAmtGrp",
+  "4i": "Frm6765ESBCYAggrgtAmtGrp",
+  "4j": "Frm8994CYAggrgtAmtGrp",
+  "4k": "Frm3468PartVIICYAggrgtAmtGrp",
+  "4z": "GenBusOthSpcfdCrCYAggrgtAmtGrp",
+};
+
 export type PlannedForm3800PassiveXmlRow<
   T extends Form3800PassiveCreditVintage = Form3800PassiveCreditVintage,
 > = {
   readonly form3800CreditLine: Form3800CreditLine;
   readonly part: "current" | "carryover";
   readonly tag: string;
+  readonly currentDetailTag: string | undefined;
   readonly carryoverDetailTag: string | undefined;
   /** Part IV column (b) uses the latest year when sources span multiple years. */
   readonly latestOriginatingTaxYear: number;
@@ -310,6 +362,9 @@ export function planForm3800PassiveXmlRows<
       form3800CreditLine: row.form3800CreditLine,
       part: rowPart,
       tag,
+      currentDetailTag: rowPart === "current"
+        ? form3800CurrentDetailXmlTags[row.form3800CreditLine]
+        : undefined,
       carryoverDetailTag: rowPart === "carryover"
         ? form3800CarryoverDetailXmlTags[row.form3800CreditLine]
         : undefined,

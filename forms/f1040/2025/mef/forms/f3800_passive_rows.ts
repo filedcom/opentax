@@ -7,8 +7,10 @@ import {
 } from "../../../nodes/intermediate/forms/form8582cr/source.ts";
 import { planForm3800PassiveXmlRows } from "./f3800_passive_tags.ts";
 
-export type Form3800PassiveCarryoverXml = {
+export type Form3800PassiveRowXml = {
+  readonly partIII: readonly string[];
   readonly partIV: readonly string[];
+  readonly partV: readonly string[];
   readonly partVI: readonly string[];
 };
 
@@ -53,10 +55,10 @@ function sourceEin(
     : element("MissingEINReasonCd", origin.missing_ein_reason);
 }
 
-/** Serialize passive Part IV rows and their required Part VI year/source detail. */
-export function buildForm3800PassiveCarryoverXml(
+/** Serialize passive Part III-VI source rows after Form 3800 tax-use allocation. */
+export function buildForm3800PassiveRowXml(
   vintages: readonly Form3800PassiveTaxUseVintage[],
-): Form3800PassiveCarryoverXml {
+): Form3800PassiveRowXml {
   if (
     new Set(vintages.map((source) => source.sourceKey)).size !== vintages.length
   ) {
@@ -77,8 +79,27 @@ export function buildForm3800PassiveCarryoverXml(
   }
   const planned = planForm3800PassiveXmlRows(
     groupForm3800PassiveCreditVintages(vintages),
-  ).filter((row) => row.part === "carryover");
-  const partIV = planned.map((row) => {
+  );
+  const current = planned.filter((row) => row.part === "current");
+  const carryover = planned.filter((row) => row.part === "carryover");
+  const partIII = current.map((row) =>
+    elements(row.tag, [
+      row.requiresSourceBreakdown
+        ? element("CYGeneralBusinessCrItemCnt", row.sources.length)
+        : "",
+      sourceEin(row.sources),
+      element("CrSubjToPassiveActyLmtAmt", row.beforePassiveLimit),
+      element("TotalGeneralBusCreditsAmt", row.afterPassiveLimit),
+      element(
+        "TotalGeneralBusCreditsAppTxAmt",
+        row.sources.reduce(
+          (sum, source) => sum + source.appliedAgainstTax,
+          0,
+        ),
+      ),
+    ])
+  );
+  const partIV = carryover.map((row) => {
     const applied = row.sources.reduce(
       (sum, source) => sum + source.appliedAgainstTax,
       0,
@@ -99,7 +120,32 @@ export function buildForm3800PassiveCarryoverXml(
       element("CarryforwardGeneralBusCrAmt", unused),
     ]);
   });
-  const partVI = planned.flatMap((row) => {
+  const currentDetail = current.flatMap((row) => {
+    if (!row.requiresSourceBreakdown) return [];
+    const tag = row.currentDetailTag;
+    if (!tag) {
+      throw new Error(
+        `Form 3800 Part III line ${row.form3800CreditLine} has no Part V detail row`,
+      );
+    }
+    return row.sources.map((source) =>
+      elements(tag, [
+        sourceEin([source]),
+        element("OthThnCrTrnsfrElectCrBfrLmtAmt", source.beforePassiveLimit),
+        element("CrTrnsfrElectCrAllwAftrLmtAmt", source.afterPassiveLimit),
+        element("TotalGeneralBusCreditsAmt", source.afterPassiveLimit),
+        element(
+          "TotalGBCLessGrossEPEAppTxAmt",
+          source.appliedAgainstTax,
+        ),
+        element("CarryforwardGeneralBusCrAmt", source.unusedAfterTaxLimit),
+      ], { lineNumberTxt: `Part III Line ${row.form3800CreditLine}` })
+    );
+  });
+  const partV = currentDetail.length > 0
+    ? [elements("GBCBreakdownCYAggrgtAmtGrp", currentDetail)]
+    : [];
+  const partVI = carryover.flatMap((row) => {
     const tag = row.carryoverDetailTag;
     if (!row.requiresSourceBreakdown || !tag) return [];
     return row.sources.map((source) =>
@@ -113,5 +159,5 @@ export function buildForm3800PassiveCarryoverXml(
       ], { lineNumberTxt: `Part IV Line ${row.form3800CreditLine}` })
     );
   });
-  return { partIV, partVI };
+  return { partIII, partIV, partV, partVI };
 }
