@@ -417,9 +417,18 @@ function alternativeMarriageCalculation(
       start_month: coveredMonths[0] + 1,
       end_month: coveredMonths.at(-1)! + 1,
     };
+    // Pub. 974 Worksheets II/IV run from start through stop, inclusive. A
+    // temporary gap in enrollment still has the worksheet's column C amount;
+    // its credit is zero because the enrollment premium is zero.
+    for (
+      let month = coveredMonths[0];
+      month <= coveredMonths.at(-1)!;
+      month++
+    ) {
+      contributions[month] += contribution;
+    }
     for (const month of coveredMonths) {
       result.coveredMonths[month] = true;
-      contributions[month] += contribution;
       credits[month] += allowedPtc(
         coverage.monthly_slcsps[month],
         coverage.monthly_premiums[month],

@@ -151,10 +151,14 @@ based on household income and size. Net PTC flows to **Schedule 3 line 9**
   groups using fields inspected on the 2025 source form. The Part V line 35/36
   family size, monthly contribution, start month, and stop month fields are
   f2_29 through f2_36. An election checks line 9 Yes and line 10 No even without
-  a Part IV allocation; incomplete Part V source facts stop. For allocation five
-  onward, the PDF builder appends paginated statement pages and marks line 34
-  No. A page-decoration hook writes the QSEHRA label in the first-page top
-  margin. These generated pages have not had filled-render QA. The marriage
-  calculation still needs direct spouse-specific pre-marriage 1095-A derivation
-  and full source-to-PDF verification. Self-employed insurance interactions and
-  IRS business rules still need a complete audit.
+  a Part IV allocation; incomplete Part V source facts stop. Under Publication
+  974 Worksheets II/IV, the alternative monthly contribution carries through
+  every month from the reported start through stop month, even when an
+  intervening 1095-A month has no enrollment premium. Its credit remains zero in
+  that gap, while Form 8962 column (c) and the PDF keep the contribution. For
+  allocation five onward, the PDF builder appends paginated statement pages and
+  marks line 34 No. A page-decoration hook writes the QSEHRA label in the
+  first-page top margin. These generated pages have not had filled-render QA.
+  The marriage calculation still needs direct spouse-specific pre-marriage
+  1095-A derivation and full source-to-PDF verification. Self-employed insurance
+  interactions and IRS business rules still need a complete audit.

@@ -1,5 +1,34 @@
 # Schedule A — Itemized Deductions
 
+## Current TY2025 charitable-limit build pass (unverified)
+
+The implementation now takes `cash_contributions_to_50_percent_organizations`
+and categorized `noncash_contribution_items`, including Form 8283 items. It does
+**not** accept nonzero raw filed lines 11-13 as source inputs. Publication 526
+(2025) Worksheet 2 lines 13, 17, 24, 30, and 40 determine current-year allowed
+amounts for cash 60%, noncash 50%, other 30%, capital-gain 30%, and capital-gain
+20%. Schedule A finalizes the filed line 11/12 amounts and emits the excess in
+category-specific current-year carryforward fields. The direct MeF and PDF
+builders reject charitable filed lines without that finalization. The cases are
+written but have not been run in the requested build-first batch.
+
+The direct `line_13_contribution_carryover` path remains rejected. Pub. 526
+explicitly prohibits using Worksheet 2 when a prior-year carryover exists. Prior
+deductions require origin-year and category records, current-year-before-
+prior-year and oldest-vintage priority, 50%-organization carryover priority
+against current second-category gifts, potential capital-gain-election
+refiguring, and a decision about carryover when the standard deduction wins.
+Form 8283 instructions also require the prior completed Form 8283 and any
+originally required appraisal on a noncash carryover return. Cash gifts to
+30%-limit organizations and qualified conservation contributions are rejected
+until their source categories and filed-line allocation are modeled. K-1
+charitable-contribution boxes have no source route. The benchmark fixtures 69,
+73, 74, 75, 81, 84, 87, 89, 95, and 101 have raw charity amounts but no
+organization/property classification; do not infer their categories.
+
+Primary source:
+[IRS Publication 526 (2025), Worksheet 2 and Carryovers](https://www.irs.gov/publications/p526).
+
 ## Overview
 
 Schedule A is the federal form for itemized deductions for individual taxpayers.

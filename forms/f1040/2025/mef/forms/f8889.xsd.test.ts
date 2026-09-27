@@ -48,7 +48,7 @@ Deno.test({
       print_line12: 6_550,
       print_line13_deduction: 2_000,
       print_line14a_distributions: 4_000,
-      print_line14b_rollovers: 0,
+      print_line14b_excluded_distributions: 0,
       print_line14c: 4_000,
       print_line15_qualified: 3_000,
       print_line16_taxable: 1_000,

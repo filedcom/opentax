@@ -1,5 +1,6 @@
 import { assertEquals } from "@std/assert";
 import { form8889Pdf } from "./f8889.ts";
+import { schedule1Pdf } from "./schedule1.ts";
 
 Deno.test("2025 Form 8889 PDF projects every modeled line to its AcroForm field", () => {
   const expected = new Map<string, string>([
@@ -16,7 +17,7 @@ Deno.test("2025 Form 8889 PDF projects every modeled line to its AcroForm field"
     ["print_line12", "f1_13[0]"],
     ["print_line13_deduction", "f1_14[0]"],
     ["print_line14a_distributions", "f1_15[0]"],
-    ["print_line14b_rollovers", "f1_16[0]"],
+    ["print_line14b_excluded_distributions", "f1_16[0]"],
     ["print_line14c", "f1_17[0]"],
     ["print_line15_qualified", "f1_18[0]"],
     ["print_line16_taxable", "f1_19[0]"],
@@ -45,4 +46,23 @@ Deno.test("2025 Form 8889 PDF projects every modeled line to its AcroForm field"
   assertEquals(actual.size, nonCoverage.length);
   for (const [key, field] of expected) assertEquals(actual.get(key), field);
   assertEquals(actual.size, expected.size);
+});
+
+Deno.test("Schedule 1 PDF identifies HSA excess-withdrawal earnings on line 8z", () => {
+  const [hsaOnly] = schedule1Pdf.instances?.({
+    line8z_hsa_excess_earnings: 100,
+  }) ?? [];
+  assertEquals(hsaOnly.line8z_other, 100);
+  assertEquals(hsaOnly.line8z_description, "HSA excess earnings");
+
+  const [combined] = schedule1Pdf.instances?.({
+    line8z_hsa_excess_earnings: 100,
+    line8z_form8814: 50,
+    line8z_other: 25,
+  }) ?? [];
+  assertEquals(combined.line8z_other, 175);
+  assertEquals(
+    combined.line8z_description,
+    "Form 8814, HSA excess earnings, other income",
+  );
 });

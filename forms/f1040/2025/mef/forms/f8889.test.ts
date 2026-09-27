@@ -44,6 +44,15 @@ Deno.test("Form 8889 rejects raw HSA values without computed form lines", () => 
     Error,
     "requires computed print_line fields",
   );
+  assertThrows(
+    () =>
+      form8889.build(
+        { hsa_excluded_distributions: { rollover_amount: 500 } },
+        context,
+      ),
+    Error,
+    "requires computed print_line fields",
+  );
 });
 
 Deno.test("Form 8889 calculated IRA-to-HSA transfer reaches native line 10", () => {
@@ -72,6 +81,31 @@ Deno.test("Form 8889 calculated IRA-to-HSA transfer reaches native line 10", () 
   assertStringIncludes(
     xml,
     "<HSALimitedContributionAmt>3300</HSALimitedContributionAmt>",
+  );
+});
+
+Deno.test("Form 8889 agreed spouse allocation reaches native line 6", () => {
+  const result = form8889Node.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form8889InputSchema.parse({
+      eligible_hdhp_coverage_by_month: Array(12).fill(CoverageType.Family),
+      age_55_or_older: false,
+      last_month_rule_elected: false,
+      married_at_year_end: true,
+      spouse_has_separate_hsa: true,
+      spouse_allocated_family_limit: 4275,
+      taxpayer_hsa_contributions: 4000,
+    }),
+  );
+  const printed = result.outputs.find((entry) => entry.nodeType === "form8889");
+  const xml = form8889.build(printed?.fields ?? {}, context);
+  assertStringIncludes(
+    xml,
+    "<HSAFamilyDeductibleAmt>4275</HSAFamilyDeductibleAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<HSALimitedGrossContributionAmt>4275</HSALimitedGrossContributionAmt>",
   );
 });
 
@@ -124,7 +158,7 @@ Deno.test("Form 8889 serializes all calculated 2025 lines in XSD order", () => {
     print_line12: 5_800,
     print_line13_deduction: 2_000,
     print_line14a_distributions: 4_000,
-    print_line14b_rollovers: 500,
+    print_line14b_excluded_distributions: 500,
     print_line14c: 3_500,
     print_line15_qualified: 2_500,
     print_line16_taxable: 1_000,

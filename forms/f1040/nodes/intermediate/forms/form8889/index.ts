@@ -62,6 +62,9 @@ export const inputSchema = z.object({
   last_month_rule_elected: z.boolean().optional(),
   married_at_year_end: z.boolean().optional(),
   spouse_has_separate_hsa: z.boolean().optional(),
+  // Agreed allocation of the refigured family-coverage limit to the spouse's
+  // separate HSA (line 6 worksheet step 2). No assumed 50/50 allocation.
+  spouse_allocated_family_limit: z.number().int().nonnegative().optional(),
   // Line 4: Archer MSA distributions received during the year (Form 8853).
   // IRC §223(b)(4)(B): Archer MSA distributions reduce the HSA contribution limit.
   archer_msa_distributions: z.number().nonnegative().optional(),
@@ -69,10 +72,16 @@ export const inputSchema = z.object({
   // ── Part II: Distributions ───────────────────────────────────────────────
   // Line 14a: Total HSA distributions received during the year (1099-SA box 1)
   hsa_distributions: z.number().nonnegative().optional(),
-  // Line 14b: rollovers plus timely withdrawals of excess contributions and
-  // their earnings that were included on line 14a.
-  hsa_rollovers_and_timely_excess_withdrawals: z.number().nonnegative()
-    .optional(),
+  // Line 14b: identify rollover amounts separately from timely excess
+  // withdrawals, whose included earnings also reach Schedule 1 other income.
+  hsa_excluded_distributions: z.object({
+    rollover_amount: z.number().nonnegative().optional(),
+    timely_excess_withdrawal: z.object({
+      amount_including_earnings: z.number().nonnegative(),
+      included_earnings: z.number().nonnegative(),
+      withdrawn_by_return_due_date: z.literal(true),
+    }).optional(),
+  }).optional(),
   // Line 15: Qualified medical expenses paid from HSA (unreimbursed)
   // IRC §213(d)
   qualified_medical_expenses: z.number().nonnegative().optional(),
@@ -109,6 +118,7 @@ function contributionLimitLines(
   line1: CoverageType;
   line3: number;
   line5: number;
+  line6: number;
   line7: number;
   line8: number;
 } {
@@ -159,12 +169,33 @@ function contributionLimitLines(
       "Form 8889 family contribution limit needs an explicit marriage answer",
     );
   }
+  if (marriedFamily && input.spouse_has_separate_hsa === undefined) {
+    throw new Error(
+      "Form 8889 married family coverage needs a separate-spouse-HSA answer",
+    );
+  }
   if (
-    marriedFamily &&
-    input.spouse_has_separate_hsa !== false
+    input.spouse_allocated_family_limit !== undefined &&
+    !(marriedFamily && input.spouse_has_separate_hsa === true)
   ) {
     throw new Error(
-      "Form 8889 married family coverage needs spouse-HSA allocation facts",
+      "Form 8889 spouse family-limit allocation requires married separate-HSA coverage",
+    );
+  }
+  if (
+    marriedFamily && input.spouse_has_separate_hsa === true &&
+    input.spouse_allocated_family_limit === undefined
+  ) {
+    throw new Error(
+      "Form 8889 married separate HSAs need the agreed family-limit allocation",
+    );
+  }
+  if (
+    marriedFamily && input.spouse_has_separate_hsa === true &&
+    input.last_month_rule_elected && december === CoverageType.SelfOnly
+  ) {
+    throw new Error(
+      "Form 8889 December self-only last-month rule needs separate spouse allocation treatment",
     );
   }
   const catchupOnLine7 = input.age_55_or_older === true && marriedFamily;
@@ -188,11 +219,27 @@ function contributionLimitLines(
       : worksheet,
   );
   const line5 = Math.max(0, line3 - (input.archer_msa_distributions ?? 0));
+  const familyMonthsForAllocation = input.last_month_rule_elected &&
+      december === CoverageType.Family
+    ? 12
+    : familyMonths;
+  const familyPortion = Math.max(
+    0,
+    Math.round(familyLimit * familyMonthsForAllocation / 12) -
+      (input.archer_msa_distributions ?? 0),
+  );
+  const spouseAllocation = input.spouse_allocated_family_limit ?? 0;
+  if (spouseAllocation > familyPortion) {
+    throw new Error(
+      "Form 8889 spouse allocation exceeds the refigured family limit",
+    );
+  }
+  const line6 = line5 - spouseAllocation;
   const catchupMonths = input.last_month_rule_elected ? 12 : eligible.length;
   const line7 = catchupOnLine7
     ? Math.round(catchupLimit * catchupMonths / 12)
     : 0;
-  return { line1, line3, line5, line7, line8: line5 + line7 };
+  return { line1, line3, line5, line6, line7, line8: line6 + line7 };
 }
 
 // Part I, Line 13: Deductible HSA contributions for AGI purposes.
@@ -225,12 +272,29 @@ function excessContributions(input: Form8889Input, deductible: number): number {
   return Math.max(0, (input.taxpayer_hsa_contributions ?? 0) - deductible);
 }
 
-// Part II: Taxable (non-qualified) distributions
-// = max(0, total_distributions - qualified_expenses)
+function excludedDistributions(input: Form8889Input): {
+  excluded: number;
+  earnings: number;
+} {
+  const sources = input.hsa_excluded_distributions;
+  const timely = sources?.timely_excess_withdrawal;
+  const earnings = timely?.included_earnings ?? 0;
+  if (timely && earnings > timely.amount_including_earnings) {
+    throw new Error(
+      "Form 8889 timely excess-withdrawal earnings cannot exceed the withdrawal",
+    );
+  }
+  return {
+    excluded: (sources?.rollover_amount ?? 0) +
+      (timely?.amount_including_earnings ?? 0),
+    earnings,
+  };
+}
+
+// Part II: Taxable (non-qualified) distributions after line 14b exclusions.
 // IRC §223(f)(2)
-function taxableDistributions(input: Form8889Input): number {
+function taxableDistributions(input: Form8889Input, excluded: number): number {
   const total = input.hsa_distributions ?? 0;
-  const excluded = input.hsa_rollovers_and_timely_excess_withdrawals ?? 0;
   if (excluded > total) {
     throw new Error("Form 8889 line 14b cannot exceed HSA distributions");
   }
@@ -264,12 +328,19 @@ function nonQualifiedPenalty(input: Form8889Input, taxable: number): number {
   return (taxable - excepted) * NON_QUALIFIED_PENALTY_RATE;
 }
 
-// Merged Schedule 1 output — deduction (line 13) and Form 8889 income (line 8f)
-// are emitted as a single output to avoid duplicate nodeType entries
-function schedule1Output(deductible: number, income: number): NodeOutput[] {
+// Merged Schedule 1 output avoids duplicate nodeType entries when deduction,
+// HSA distribution income, and timely excess-withdrawal earnings coexist.
+function schedule1Output(
+  deductible: number,
+  income: number,
+  excessWithdrawalEarnings: number,
+): NodeOutput[] {
   const input: Partial<z.infer<typeof schedule1["inputSchema"]>> = {};
   if (deductible > 0) input.line13_hsa_deduction = deductible;
   if (income > 0) input.line8f_hsa_income = income;
+  if (excessWithdrawalEarnings > 0) {
+    input.line8z_hsa_excess_earnings = excessWithdrawalEarnings;
+  }
   if (Object.keys(input).length === 0) return [];
   return [
     output(
@@ -360,7 +431,8 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
     );
     const deductible = deductibleContributions(input, line12);
     const excess = excessContributions(input, deductible);
-    const taxable = taxableDistributions(input);
+    const line14b = excludedDistributions(input);
+    const taxable = taxableDistributions(input, line14b.excluded);
     const penalty = nonQualifiedPenalty(input, taxable);
     const failure = input.testing_period_failure;
     const partIIIIncome = failure
@@ -370,7 +442,7 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
     const eligibilityTax = partIIIIncome * 0.1;
 
     const outputs: NodeOutput[] = [
-      ...schedule1Output(deductible, taxable + partIIIIncome),
+      ...schedule1Output(deductible, taxable + partIIIIncome, line14b.earnings),
       ...excessOutput(excess),
       ...penaltyOutput(penalty, eligibilityTax),
     ];
@@ -391,7 +463,7 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
       printFields.print_line3_limit = limitLines.line3;
       printFields.print_line4_archer = input.archer_msa_distributions ?? 0;
       printFields.print_line5 = limitLines.line5;
-      printFields.print_line6 = limitLines.line5;
+      printFields.print_line6 = limitLines.line6;
       printFields.print_line7_catchup = limitLines.line7;
       printFields.print_line8 = limitLines.line8;
       printFields.print_line9_employer = employer;
@@ -403,9 +475,8 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
     const distributions = input.hsa_distributions ?? 0;
     if (distributions > 0) {
       printFields.print_line14a_distributions = distributions;
-      const line14b = input.hsa_rollovers_and_timely_excess_withdrawals ?? 0;
-      printFields.print_line14b_rollovers = line14b;
-      printFields.print_line14c = distributions - line14b;
+      printFields.print_line14b_excluded_distributions = line14b.excluded;
+      printFields.print_line14c = distributions - line14b.excluded;
       printFields.print_line15_qualified = input.qualified_medical_expenses ??
         0;
       printFields.print_line16_taxable = taxable;
@@ -428,6 +499,9 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
     if (deductible > 0) agiFields.line13_hsa_deduction = deductible;
     if (taxable + partIIIIncome > 0) {
       agiFields.line8f_hsa_income = taxable + partIIIIncome;
+    }
+    if (line14b.earnings > 0) {
+      agiFields.line8z_hsa_excess_earnings = line14b.earnings;
     }
     if (Object.keys(agiFields).length > 0) {
       outputs.push(this.outputNodes.output(

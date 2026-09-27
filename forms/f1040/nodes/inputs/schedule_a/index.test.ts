@@ -172,7 +172,10 @@ Deno.test("scheduleA.compute: line_6_other_taxes reaches deduction decision", ()
 });
 
 Deno.test("scheduleA.compute: zero taxes route as zero", () => {
-  const result = compute({ line_11_cash_contributions: 500 });
+  const result = compute({
+    cash_contributions_to_50_percent_organizations: 500,
+    agi: 10_000,
+  });
   assertEquals(
     findOutput(result, "standard_deduction")?.fields.itemized_taxes,
     0,
@@ -210,64 +213,121 @@ Deno.test("scheduleA.compute: Form 8396 line 3 reduces deductible mortgage inter
 });
 
 // =============================================================================
-// 6. CHARITABLE CONTRIBUTIONS — 60% AGI cap
+// 6. CHARITABLE CONTRIBUTIONS — Pub. 526 Worksheet 2
 // =============================================================================
 
 Deno.test("scheduleA.compute: cash contributions below 60% AGI cap pass through unchanged", () => {
   // 5000 < 60% × 100000 = 60000
-  const result = compute({ line_11_cash_contributions: 5_000, agi: 100_000 });
+  const result = compute({
+    cash_contributions_to_50_percent_organizations: 5_000,
+    agi: 100_000,
+  });
   assertEquals(deductionInput(result).itemized_deductions, 5_000);
 });
 
 Deno.test("scheduleA.compute: cash contributions exactly at 60% AGI cap pass through unchanged", () => {
   // 60% × 100000 = 60000
-  const result = compute({ line_11_cash_contributions: 60_000, agi: 100_000 });
+  const result = compute({
+    cash_contributions_to_50_percent_organizations: 60_000,
+    agi: 100_000,
+  });
   assertEquals(deductionInput(result).itemized_deductions, 60_000);
 });
 
 Deno.test("scheduleA.compute: cash contributions $1 above 60% AGI cap are capped at 60% AGI", () => {
   // 60001 > 60000 → capped at 60000
-  const result = compute({ line_11_cash_contributions: 60_001, agi: 100_000 });
-  assertEquals(deductionInput(result).itemized_deductions, 60_000);
-});
-
-Deno.test("scheduleA.compute: contributions aggregate 11 + 12 + 13 before 60% AGI cap (below cap)", () => {
-  // 20000 + 10000 + 5000 = 35000 < 60% × 100000 = 60000
   const result = compute({
-    line_11_cash_contributions: 20_000,
-    line_12_noncash_contributions: 10_000,
-    line_13_contribution_carryover: 5_000,
-    agi: 100_000,
-  });
-  assertEquals(deductionInput(result).itemized_deductions, 35_000);
-});
-
-Deno.test("scheduleA.compute: contributions aggregate 11 + 12 + 13 and cap at 60% AGI when over limit", () => {
-  // 40000 + 15000 + 10000 = 65000 > 60% × 100000 = 60000 → capped
-  const result = compute({
-    line_11_cash_contributions: 40_000,
-    line_12_noncash_contributions: 15_000,
-    line_13_contribution_carryover: 10_000,
+    cash_contributions_to_50_percent_organizations: 60_001,
     agi: 100_000,
   });
   assertEquals(deductionInput(result).itemized_deductions, 60_000);
+  assertEquals(result.carryforwards?.charitable_cash_60_2025, 1);
 });
 
-Deno.test("scheduleA.compute: carryover + current-year contributions subject to same 60% AGI cap", () => {
-  // 40000 + 30000 = 70000 > 60% × 100000 = 60000 → capped
+Deno.test("scheduleA.compute: cash and 50% noncash route to separate filed lines", () => {
   const result = compute({
-    line_11_cash_contributions: 40_000,
-    line_13_contribution_carryover: 30_000,
+    cash_contributions_to_50_percent_organizations: 20_000,
+    noncash_contribution_items: [{
+      source: "Form 8283 item 1",
+      amount: 10_000,
+      category: "noncash_50",
+    }],
     agi: 100_000,
   });
-  assertEquals(deductionInput(result).itemized_deductions, 60_000);
+  assertEquals(deductionInput(result).itemized_deductions, 30_000);
+  assertEquals(
+    result.finalizations?.[0].fields.line_11_cash_contributions,
+    20_000,
+  );
+  assertEquals(
+    result.finalizations?.[0].fields.line_12_noncash_contributions,
+    10_000,
+  );
 });
 
-Deno.test("scheduleA.compute: contributions with no AGI pass through uncapped (zero AGI guard)", () => {
-  // When AGI not provided, implementation uses 0; with agi=0 limit would be 0,
-  // but the code uses: agi > 0 ? min(...) : raw — so raw passes through
-  const result = compute({ line_11_cash_contributions: 5_000 });
-  assertEquals(deductionInput(result).itemized_deductions, 5_000);
+Deno.test("scheduleA.compute: 50% noncash room subtracts deductible cash", () => {
+  const result = compute({
+    cash_contributions_to_50_percent_organizations: 40_000,
+    noncash_contribution_items: [{
+      source: "Form 8283 item 1",
+      amount: 15_000,
+      category: "noncash_50",
+    }],
+    agi: 100_000,
+  });
+  assertEquals(deductionInput(result).itemized_deductions, 50_000);
+  assertEquals(result.carryforwards?.charitable_noncash_50_2025, 5_000);
+});
+
+Deno.test("scheduleA.inputSchema: unclassified filed amounts and prior carryover are rejected", () => {
+  for (
+    const field of [
+      "line_11_cash_contributions",
+      "line_12_noncash_contributions",
+      "line_13_contribution_carryover",
+    ]
+  ) {
+    assertEquals(
+      scheduleA.inputSchema.safeParse({ [field]: 1 }).success,
+      false,
+    );
+  }
+});
+
+Deno.test("scheduleA.compute: classified contributions require AGI and zero AGI yields carryforward", () => {
+  const input = { cash_contributions_to_50_percent_organizations: 5_000 };
+  let threw = false;
+  try {
+    compute(input);
+  } catch {
+    threw = true;
+  }
+  assertEquals(threw, true);
+  const result = compute({ ...input, agi: 0 });
+  assertEquals(deductionInput(result).itemized_deductions, 0);
+  assertEquals(result.carryforwards?.charitable_cash_60_2025, 5_000);
+});
+
+Deno.test("scheduleA.compute: Pub. 526 20% category obeys nested 50%, 30%, and 20% ceilings", () => {
+  const result = compute({
+    agi: 100_000,
+    cash_contributions_to_50_percent_organizations: 10_000,
+    noncash_contribution_items: [
+      { source: "50% ordinary", category: "noncash_50", amount: 10_000 },
+      { source: "other 30%", category: "other_30", amount: 10_000 },
+      { source: "capital 30%", category: "capital_gain_30", amount: 10_000 },
+      { source: "capital 20%", category: "capital_gain_20", amount: 20_000 },
+    ],
+  });
+  assertEquals(
+    result.finalizations?.[0].fields.line_12_noncash_contributions,
+    40_000,
+  );
+  assertEquals(deductionInput(result).itemized_deductions, 50_000);
+  assertEquals(
+    result.carryforwards?.charitable_capital_gain_20_2025,
+    10_000,
+  );
 });
 
 // =============================================================================
@@ -293,7 +353,7 @@ Deno.test("scheduleA.compute: total itemized = medical + taxes + interest + cont
     line_5b_real_estate_tax: 4_000,
     line_6_other_taxes: 2_000,
     line_8a_mortgage_interest_1098: 15_000,
-    line_11_cash_contributions: 3_000,
+    cash_contributions_to_50_percent_organizations: 3_000,
     line_15_casualty_theft_loss: 2_000,
     line_16_other_deductions: 500,
   });
@@ -366,7 +426,7 @@ Deno.test("scheduleA.compute: smoke — all major boxes populate total and AMT t
   // SALT: 4000 + 3000 + 2000 = 9000 (under $40,000 cap)
   // line_6: 2500 → taxesTotal = 9000 + 2500 = 11500
   // Interest: 18000 + 1000 + 3000 = 22000
-  // Contributions: 10000 + 5000 + 2000 = 17000 (17000 < 60% × 120000 = 72000)
+  // Contributions: 10000 cash + 5000 ordinary noncash + 2000 capital gain = 17000
   // Casualty: 4000; Other: 750
   // Total = 6000 + 11500 + 22000 + 17000 + 4000 + 750 = 61250
   const result = compute({
@@ -379,10 +439,15 @@ Deno.test("scheduleA.compute: smoke — all major boxes populate total and AMT t
     line_8a_mortgage_interest_1098: 18_000,
     line_8c_points_no_1098: 1_000,
     line_9_investment_interest: 3_000,
-    investment_interest_taxable_interest: 3_000,
-    line_11_cash_contributions: 10_000,
-    line_12_noncash_contributions: 5_000,
-    line_13_contribution_carryover: 2_000,
+    cash_contributions_to_50_percent_organizations: 10_000,
+    noncash_contribution_items: [
+      { source: "equipment", amount: 5_000, category: "noncash_50" },
+      {
+        source: "long-term property",
+        amount: 2_000,
+        category: "capital_gain_30",
+      },
+    ],
     line_15_casualty_theft_loss: 4_000,
     line_16_other_deductions: 750,
   });

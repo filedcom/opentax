@@ -13,11 +13,22 @@ import { FilingStatus } from "../../types.ts";
 import { CONFIG_BY_YEAR } from "../../config/index.ts";
 import type { F1040Config } from "../../config/index.ts";
 
-// 60% AGI limit for cash charitable contributions to public charities (IRC §170(b)(1)(A))
-const CASH_CONTRIBUTION_AGI_PCT = 0.60;
-
-// 30% AGI limit for noncash capital gain property contributions (IRC §170(b)(1)(C))
-const NONCASH_CAPITAL_GAIN_AGI_PCT = 0.30;
+// Publication 526 (2025), Worksheet 2, lines 4-10. These are source
+// classifications, not the percentage of the final Schedule A deduction.
+export const noncashContributionCategorySchema = z.enum([
+  "noncash_50",
+  "other_30",
+  "capital_gain_30",
+  "capital_gain_20",
+]);
+export type NoncashContributionCategory = z.infer<
+  typeof noncashContributionCategorySchema
+>;
+const noncashContributionItemSchema = z.object({
+  source: z.string().trim().min(1),
+  amount: z.number().nonnegative(),
+  category: noncashContributionCategorySchema,
+});
 
 // 7.5% AGI floor for medical deductions
 const MEDICAL_AGI_FLOOR_PCT = 0.075;
@@ -51,29 +62,52 @@ export const inputSchema = z.object({
     .optional(),
   form8396_interest_reporting_line: z.enum(["8a", "8b"]).optional(),
   line_9_investment_interest: z.number().nonnegative().optional(),
-  prior_year_investment_interest_carryforward: z.number().nonnegative().optional(),
-  investment_interest_taxable_interest: amounts.optional(),
-  investment_interest_ordinary_dividends: amounts.optional(),
-  investment_interest_qualified_dividends: amounts.optional(),
-  // Form 4952 lines 4d, 4e, 4g and 5; enter property-held-for-investment amounts.
-  investment_net_gain: z.number().nonnegative().optional(),
-  investment_net_capital_gain: z.number().nonnegative().optional(),
-  reported_net_capital_gain: z.number().nonnegative().optional(),
-  elected_qualified_dividends: z.number().nonnegative().optional(),
-  elected_net_capital_gain: z.number().nonnegative().optional(),
-  investment_expenses: z.number().nonnegative().optional(),
-  // Taxpayer-chosen reasonable allocation for Form 8960 line 9b.
-  niit_allocable_state_local_tax: z.number().nonnegative().optional(),
-  // Line 11: Cash contributions to public charities — 60% AGI cap (IRC §170(b)(1)(A))
+  // Source amounts must be classified before the filed Schedule A lines are set.
+  cash_contributions_to_50_percent_organizations: z.number().nonnegative()
+    .optional(),
+  cash_contributions_to_30_percent_organizations: z.number().nonnegative()
+    .optional(),
+  qualified_conservation_contributions: z.number().nonnegative().optional(),
+  noncash_contribution_items: z.array(noncashContributionItemSchema).optional(),
+  // Filed values. Nonzero direct input is rejected; this node finalizes them.
   line_11_cash_contributions: z.number().nonnegative().optional(),
-  // Line 12: Noncash contributions — treated as capital gain property, 30% AGI cap
-  // IRC §170(b)(1)(C) for appreciated capital gain property; 50% cap for other noncash.
-  // This field represents the more restrictive capital gain property category.
   line_12_noncash_contributions: z.number().nonnegative().optional(),
   line_13_contribution_carryover: z.number().nonnegative().optional(),
   line_15_casualty_theft_loss: z.number().nonnegative().optional(),
   line_16_other_deductions: z.number().nonnegative().optional(),
 }).superRefine((data, ctx) => {
+  if ((data.cash_contributions_to_30_percent_organizations ?? 0) > 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["cash_contributions_to_30_percent_organizations"],
+      message:
+        "30%-limit cash gifts need cash/noncash allocation within Pub. 526 Worksheet 2 lines 5 and 7; this route is not yet implemented",
+    });
+  }
+  if ((data.qualified_conservation_contributions ?? 0) > 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["qualified_conservation_contributions"],
+      message:
+        "Qualified conservation contributions need the separate 50% or 100% Worksheet 2 limits and substantiation route",
+    });
+  }
+  for (
+    const line of [
+      "line_11_cash_contributions",
+      "line_12_noncash_contributions",
+      "line_13_contribution_carryover",
+    ] as const
+  ) {
+    if ((data[line] ?? 0) > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [line],
+        message:
+          "Unclassified charitable deduction cannot be filed directly; provide categorized current-year source contributions. Prior-year carryovers need their original category and substantiation route.",
+      });
+    }
+  }
   // IRC §164(b)(5): Taxpayer may elect to deduct general sales taxes in lieu of
   // state and local income taxes. The election is mutually exclusive — you cannot
   // deduct both. Reject when both are provided with nonzero values.
@@ -125,8 +159,11 @@ function computeSALT(input: ScheduleAInput, cfg: F1040Config): number {
 function computeInterestTotal(input: ScheduleAInput): number {
   const mortgage = (input.line_8a_mortgage_interest_1098 ?? 0) +
     (input.line_8b_mortgage_interest_no_1098 ?? 0);
-  return Math.max(0, mortgage -
-      (input.form8396_interest_credit_reduction ?? 0)) +
+  return Math.max(
+    0,
+    mortgage -
+      (input.form8396_interest_credit_reduction ?? 0),
+  ) +
     (input.line_8c_points_no_1098 ?? 0) +
     allowedInvestmentInterest;
 }
@@ -149,26 +186,67 @@ function investmentIncome(input: ScheduleAInput): number {
     netGain - netCapitalGain + electedDividends + electedGain);
 }
 
-function computeContributions(input: ScheduleAInput, agi: number): number {
-  if (agi <= 0) {
-    return (input.line_11_cash_contributions ?? 0) +
-      (input.line_12_noncash_contributions ?? 0) +
-      (input.line_13_contribution_carryover ?? 0);
+function computeContributions(
+  input: ScheduleAInput,
+  agi: number,
+  taxYear: number,
+) {
+  const sourceCash = input.cash_contributions_to_50_percent_organizations ?? 0;
+  const byCategory = {
+    noncash_50: 0,
+    other_30: 0,
+    capital_gain_30: 0,
+    capital_gain_20: 0,
+  };
+  for (const item of input.noncash_contribution_items ?? []) {
+    byCategory[item.category] += item.amount;
   }
-  // IRC §170(b)(1)(A): cash contributions to public charities capped at 60% of AGI
-  const cashAllowed = Math.min(
-    input.line_11_cash_contributions ?? 0,
-    agi * CASH_CONTRIBUTION_AGI_PCT,
+  const positiveAgi = Math.max(0, agi);
+  const floorZero = (amount: number) => Math.max(0, amount);
+  // Pub. 526 (2025), Worksheet 2, lines 13, 17, 24, 30, and 40.
+  // In particular, line 21 reserves the *source* 50%-organization gifts,
+  // rather than only their presently deductible amount.
+  const cash = Math.min(sourceCash, positiveAgi * .6);
+  const noncash50 = Math.min(
+    byCategory.noncash_50,
+    floorZero(positiveAgi * .5 - cash),
   );
-  // IRC §170(b)(1)(C): noncash capital gain property contributions capped at 30% of AGI
-  const noncashAllowed = Math.min(
-    input.line_12_noncash_contributions ?? 0,
-    agi * NONCASH_CAPITAL_GAIN_AGI_PCT,
+  const other30 = Math.min(
+    byCategory.other_30,
+    floorZero(
+      positiveAgi * .5 - byCategory.capital_gain_30 -
+        byCategory.noncash_50 - sourceCash,
+    ),
+    positiveAgi * .3,
   );
-  // Carryover follows the original contribution type; apply overall 60% ceiling to total
-  const carryover = input.line_13_contribution_carryover ?? 0;
-  const combined = cashAllowed + noncashAllowed + carryover;
-  return Math.min(combined, agi * CASH_CONTRIBUTION_AGI_PCT);
+  const capitalGain30 = Math.min(
+    byCategory.capital_gain_30,
+    floorZero(positiveAgi * .5 - byCategory.noncash_50 - sourceCash),
+    positiveAgi * .3,
+  );
+  const capitalGain20 = Math.min(
+    byCategory.capital_gain_20,
+    floorZero(
+      positiveAgi * .5 - cash - noncash50 - other30 - capitalGain30,
+    ),
+    floorZero(positiveAgi * .3 - other30),
+    floorZero(positiveAgi * .3 - capitalGain30),
+    positiveAgi * .2,
+  );
+  const carryforwards = {
+    [`charitable_cash_60_${taxYear}`]: sourceCash - cash,
+    [`charitable_noncash_50_${taxYear}`]: byCategory.noncash_50 - noncash50,
+    [`charitable_other_30_${taxYear}`]: byCategory.other_30 - other30,
+    [`charitable_capital_gain_30_${taxYear}`]: byCategory.capital_gain_30 -
+      capitalGain30,
+    [`charitable_capital_gain_20_${taxYear}`]: byCategory.capital_gain_20 -
+      capitalGain20,
+  };
+  return {
+    cash,
+    noncash: noncash50 + other30 + capitalGain30 + capitalGain20,
+    carryforwards,
+  };
 }
 
 class ScheduleANode extends TaxNode<typeof inputSchema> {
@@ -177,9 +255,17 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([standard_deduction]);
 
   compute(ctx: NodeContext, input: ScheduleAInput): NodeResult {
+    inputSchema.parse(input);
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const agi = input.agi ?? 0;
+    const hasContributions =
+      (input.cash_contributions_to_50_percent_organizations ?? 0) > 0 ||
+      (input.noncash_contribution_items ?? []).some((item) => item.amount > 0);
+    if (hasContributions && input.agi === undefined) {
+      throw new Error("Schedule A charitable limits require computed AGI");
+    }
+    const contributions = computeContributions(input, agi, ctx.taxYear);
     const saltCapped = computeSALT(input, cfg);
     const taxesTotal = saltCapped + (input.line_6_other_taxes ?? 0);
     const expense = input.line_9_investment_interest ?? 0;
@@ -198,8 +284,8 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
     }
     const totalItemized = computeMedicalDeduction(input, agi) +
       taxesTotal +
-      computeInterestTotal(input, allowed) +
-      computeContributions(input, agi) +
+      computeInterestTotal(input) +
+      contributions.cash + contributions.noncash +
       (input.line_15_casualty_theft_loss ?? 0) +
       (input.line_16_other_deductions ?? 0);
 
@@ -209,7 +295,19 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
         itemized_taxes: taxesTotal,
       }),
     ];
-    return { outputs };
+    return {
+      outputs,
+      finalizations: [{
+        nodeType: this.nodeType,
+        fields: {
+          line_11_cash_contributions: contributions.cash,
+          line_12_noncash_contributions: contributions.noncash,
+          line_13_contribution_carryover: 0,
+          charitable_limits_finalized: true,
+        },
+      }],
+      carryforwards: contributions.carryforwards,
+    };
   }
 }
 

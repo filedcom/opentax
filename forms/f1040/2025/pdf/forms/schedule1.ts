@@ -129,18 +129,31 @@ export const schedule1Pdf: PdfFormDescriptor = {
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040s1--2025.pdf",
   instances(fields) {
     const electionAmount = fields.line8z_form8814;
-    if (typeof electionAmount !== "number" || electionAmount <= 0) {
+    const hsaEarnings = fields.line8z_hsa_excess_earnings;
+    if (
+      (typeof electionAmount !== "number" || electionAmount <= 0) &&
+      (typeof hsaEarnings !== "number" || hsaEarnings <= 0)
+    ) {
       return [fields];
     }
     const otherAmount = typeof fields.line8z_other === "number"
       ? fields.line8z_other
       : 0;
+    const labels = [
+      typeof electionAmount === "number" && electionAmount > 0
+        ? "Form 8814"
+        : "",
+      typeof hsaEarnings === "number" && hsaEarnings > 0
+        ? "HSA excess earnings"
+        : "",
+      otherAmount !== 0 ? "other income" : "",
+    ].filter(Boolean);
     return [{
       ...fields,
-      line8z_other: otherAmount + electionAmount,
-      line8z_description: otherAmount > 0
-        ? "Form 8814 and other income"
-        : "Form 8814",
+      line8z_other: otherAmount +
+        (typeof electionAmount === "number" ? electionAmount : 0) +
+        (typeof hsaEarnings === "number" ? hsaEarnings : 0),
+      line8z_description: labels.join(", "),
     }];
   },
   fields,

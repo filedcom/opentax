@@ -12,8 +12,9 @@ is `IRS8889.xsd` in the TY2025 v5.4 schema bundle.
   amount alone does not establish those facts. Mixed self-only/family and
   partial-year limits use the monthly worksheet; an elected last-month rule
   requires December eligibility and uses its coverage for the year. Married
-  family coverage with a separate spouse HSA still stops pending the spouse
-  allocation and separate Form 8889.
+  family coverage with separate spouse HSAs now requires the agreed allocation
+  of the refigured family limit on line 6; no 50/50 default is assumed. A
+  spouse's own Form 8889 is not generated from the primary form's facts.
 - The 2025 line 3 limitation uses the monthly worksheet amount, not an assumed
   full year. For an age-55 married family filer, the additional contribution
   belongs on line 7; otherwise eligible catch-up is included on line 3. The
@@ -28,13 +29,15 @@ is `IRS8889.xsd` in the TY2025 v5.4 schema bundle.
   and available personal contribution room. The permitted second
   self-only-to-family transfer, external IRA reconciliation, and later testing
   period remain open.
-- Part II subtracts line 14b rollovers/timely excess withdrawals from line 14a
-  before applying line 15 medical expenses. The taxable line 16 amount goes to
-  Schedule 1 **line 8f**, not line 8z. The nonexcepted 20% line 17b tax goes to
-  Schedule 2 line 17c. A taxable distribution needs the explicit portion
-  qualifying for an additional-tax exception; line 17a is checked when that
-  portion is positive and line 17b taxes only the remainder. This also covers
-  mixed excepted and nonexcepted distributions.
+- Part II separately identifies line 14b rollovers and timely excess withdrawals
+  before applying line 15 medical expenses. Earnings included in a timely excess
+  withdrawal route to Schedule 1 other income for the year withdrawn. The
+  taxable line 16 amount goes to Schedule 1 **line 8f**, not line 8z. The
+  nonexcepted 20% line 17b tax goes to Schedule 2 line 17c. A taxable
+  distribution needs the explicit portion qualifying for an additional-tax
+  exception; line 17a is checked when that portion is positive and line 17b
+  taxes only the remainder. This also covers mixed excepted and nonexcepted
+  distributions.
 - Part III accepts a sourced prior-year last-month-rule excess amount and/or
   prior qualified HSA funding distribution after confirmation that death or
   disability does not excuse the testing-period failure. It sums lines 18 and 19
@@ -48,10 +51,11 @@ is `IRS8889.xsd` in the TY2025 v5.4 schema bundle.
 ## Still open
 
 The later-year last-month-rule testing-period ledger, evidence for monthly
-eligibility (including Medicare and other disqualifying coverage), married
-family spouse allocation, separate spouse forms, source classification of
-taxable distributions by exception, second qualified funding distributions,
-employer contribution year adjustments, excess-contribution withdrawal
-treatment, source authentication, PDF visual verification, IRS business rules,
-and ATS acceptance remain unverified. All newly written cases await the one full
-test batch requested by the user.
+eligibility (including Medicare and other disqualifying coverage), source
+verification of the spouse allocation, separate spouse forms, source
+classification of taxable distributions by exception, second qualified funding
+distributions, employer contribution year adjustments, excess-contribution
+withdrawal and related-income treatment outside the timely 2025 route, source
+authentication, PDF visual verification, IRS business rules, and ATS acceptance
+remain unverified. All newly written cases await the one full test batch
+requested by the user.

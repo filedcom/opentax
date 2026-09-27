@@ -123,6 +123,57 @@ Deno.test("Pub 974 marriage Worksheets I-V elect beneficial pre-marriage credit"
   assertEquals(calculated?.alternative_marriage_spouse, undefined);
 });
 
+Deno.test("Pub 974 marriage worksheet keeps line 12-23 contribution through an enrollment gap", () => {
+  const premiums = [800, 0, 800, ...Array(9).fill(0)];
+  const slcsps = [1_000, 0, 1_000, ...Array(9).fill(0)];
+  const aptcs = [1_000, 0, 1_000, ...Array(9).fill(0)];
+  const result = compute({
+    filing_status: FilingStatus.MFJ,
+    household_size: 2,
+    taxpayer_modified_agi: 80_000,
+    monthly_premiums: premiums,
+    monthly_slcsps: slcsps,
+    monthly_aptcs: aptcs,
+    alternative_marriage: {
+      both_unmarried_january_1: true,
+      married_december_31: true,
+      alternative_family_sizes_verified: true,
+      marriage_month: 3,
+      primary: {
+        family_size: 1,
+        monthly_premiums: premiums,
+        monthly_slcsps: slcsps,
+      },
+    },
+  });
+  const form = fields(result, "form8962");
+  const rows = form?.monthly_ptc_rows as Array<{
+    premium: number;
+    slcsp: number;
+    contribution: number;
+    allowed_credit: number;
+  }>;
+  assertEquals(form?.alternative_marriage_primary, {
+    family_size: 1,
+    monthly_contribution: 153,
+    start_month: 1,
+    end_month: 3,
+  });
+  assertEquals(rows[0].contribution, 153);
+  assertEquals(rows[1], {
+    month_code: "FEBRUARY",
+    premium: 0,
+    slcsp: 0,
+    contribution: 153,
+    max_assistance: 0,
+    allowed_credit: 0,
+    aptc: 0,
+  });
+  assertEquals(rows[2].contribution, 153);
+  assertEquals(form?.total_premium_tax_credit, 1_600);
+  assertEquals(form?.excess_advance_premium, 400);
+});
+
 Deno.test("marriage alternative requires MFJ and reconciled pre-marriage worksheets", () => {
   const base = {
     household_size: 2,

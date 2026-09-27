@@ -260,14 +260,14 @@ Deno.test("part2: fully non-qualified distribution → income + 20% penalty", ()
 Deno.test("part2: line 14b rollover reduces taxable net distributions", () => {
   const result = compute({
     hsa_distributions: 5000,
-    hsa_rollovers_and_timely_excess_withdrawals: 3000,
+    hsa_excluded_distributions: { rollover_amount: 3000 },
     qualified_medical_expenses: 1500,
     exception_qualified_taxable_amount: 0,
   });
   assertEquals(fieldsOf(result.outputs, schedule1)?.line8f_hsa_income, 500);
   assertEquals(fieldsOf(result.outputs, schedule2)?.line17c_hsa_penalty, 100);
   assertEquals(
-    findOutput(result, "form8889")?.fields.print_line14b_rollovers,
+    findOutput(result, "form8889")?.fields.print_line14b_excluded_distributions,
     3000,
   );
   assertEquals(findOutput(result, "form8889")?.fields.print_line14c, 2000);
@@ -278,7 +278,7 @@ Deno.test("part2: line 14b and line 15 cannot exceed their source distribution",
     () =>
       compute({
         hsa_distributions: 1000,
-        hsa_rollovers_and_timely_excess_withdrawals: 1001,
+        hsa_excluded_distributions: { rollover_amount: 1001 },
       }),
     Error,
     "line 14b cannot exceed",
@@ -287,11 +287,57 @@ Deno.test("part2: line 14b and line 15 cannot exceed their source distribution",
     () =>
       compute({
         hsa_distributions: 1000,
-        hsa_rollovers_and_timely_excess_withdrawals: 600,
+        hsa_excluded_distributions: { rollover_amount: 600 },
         qualified_medical_expenses: 500,
       }),
     Error,
     "line 15 qualified expenses cannot exceed",
+  );
+});
+
+Deno.test("part2: timely excess-withdrawal earnings reach Schedule 1 other income", () => {
+  const result = compute({
+    hsa_distributions: 3000,
+    hsa_excluded_distributions: {
+      timely_excess_withdrawal: {
+        amount_including_earnings: 1000,
+        included_earnings: 100,
+        withdrawn_by_return_due_date: true,
+      },
+    },
+    qualified_medical_expenses: 2000,
+  });
+  assertEquals(
+    findOutput(result, "form8889")?.fields.print_line14b_excluded_distributions,
+    1000,
+  );
+  assertEquals(findOutput(result, "form8889")?.fields.print_line14c, 2000);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)?.line8z_hsa_excess_earnings,
+    100,
+  );
+  assertEquals(
+    findOutput(result, "agi_aggregator")?.fields.line8z_hsa_excess_earnings,
+    100,
+  );
+  assertEquals(fieldsOf(result.outputs, schedule2), undefined);
+});
+
+Deno.test("part2: excluded withdrawal earnings cannot exceed its distribution", () => {
+  assertThrows(
+    () =>
+      compute({
+        hsa_distributions: 1000,
+        hsa_excluded_distributions: {
+          timely_excess_withdrawal: {
+            amount_including_earnings: 500,
+            included_earnings: 501,
+            withdrawn_by_return_due_date: true,
+          },
+        },
+      }),
+    Error,
+    "earnings cannot exceed the withdrawal",
   );
 });
 
@@ -407,6 +453,81 @@ Deno.test("part1: married family catch-up prints on line 7, not line 3", () => {
   assertEquals(
     findOutput(result, "form8889")?.fields.print_line7_catchup,
     1000,
+  );
+});
+
+Deno.test("part1: separate spouses allocate the full-year family limit on line 6", () => {
+  const result = compute({
+    ...uniformFamily,
+    married_at_year_end: true,
+    spouse_has_separate_hsa: true,
+    spouse_allocated_family_limit: 4275,
+    taxpayer_hsa_contributions: 5000,
+  });
+  const printed = findOutput(result, "form8889")?.fields;
+  assertEquals(printed?.print_line5, 8550);
+  assertEquals(printed?.print_line6, 4275);
+  assertEquals(printed?.print_line8, 4275);
+  assertEquals(fieldsOf(result.outputs, schedule1)?.line13_hsa_deduction, 4275);
+  assertEquals(fieldsOf(result.outputs, form5329)?.excess_hsa, 725);
+});
+
+Deno.test("part1: a partial-year family limit allocates only the family portion", () => {
+  const result = compute({
+    ...uniformFamily,
+    eligible_hdhp_coverage_by_month: [
+      ...Array(6).fill(CoverageType.Family),
+      ...Array(6).fill(null),
+    ],
+    married_at_year_end: true,
+    spouse_has_separate_hsa: true,
+    spouse_allocated_family_limit: 2000,
+    taxpayer_hsa_contributions: 2000,
+  });
+  const printed = findOutput(result, "form8889")?.fields;
+  assertEquals(printed?.print_line5, 4275);
+  assertEquals(printed?.print_line6, 2275);
+  assertEquals(printed?.print_line8, 2275);
+});
+
+Deno.test("part1: the spouse family allocation follows the Archer-adjusted limit", () => {
+  const result = compute({
+    ...uniformFamily,
+    married_at_year_end: true,
+    spouse_has_separate_hsa: true,
+    archer_msa_distributions: 1000,
+    spouse_allocated_family_limit: 3775,
+    taxpayer_hsa_contributions: 3000,
+  });
+  const printed = findOutput(result, "form8889")?.fields;
+  assertEquals(printed?.print_line5, 7550);
+  assertEquals(printed?.print_line6, 3775);
+  assertEquals(printed?.print_line13_deduction, 3000);
+});
+
+Deno.test("part1: separate spouses need an agreed allocation within the family limit", () => {
+  assertThrows(
+    () =>
+      compute({
+        ...uniformFamily,
+        married_at_year_end: true,
+        spouse_has_separate_hsa: true,
+        taxpayer_hsa_contributions: 1000,
+      }),
+    Error,
+    "need the agreed family-limit allocation",
+  );
+  assertThrows(
+    () =>
+      compute({
+        ...uniformFamily,
+        married_at_year_end: true,
+        spouse_has_separate_hsa: true,
+        spouse_allocated_family_limit: 8551,
+        taxpayer_hsa_contributions: 1000,
+      }),
+    Error,
+    "exceeds the refigured family limit",
   );
 });
 

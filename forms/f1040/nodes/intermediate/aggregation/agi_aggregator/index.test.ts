@@ -83,6 +83,14 @@ Deno.test("agi_aggregator: unemployment compensation added to AGI", () => {
   assertEquals(agi(result), 35_000);
 });
 
+Deno.test("agi_aggregator: timely HSA excess-withdrawal earnings increase AGI", () => {
+  const result = compute({
+    line1a_wages: 30_000,
+    line8z_hsa_excess_earnings: 100,
+  });
+  assertEquals(agi(result), 30_100);
+});
+
 Deno.test("agi_aggregator: ordinary dividends included", () => {
   const result = compute({ line3b_ordinary_dividends: 2_000 });
   assertEquals(agi(result), 2_000);

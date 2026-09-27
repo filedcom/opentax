@@ -63,7 +63,12 @@ Deno.test("f8283.inputSchema: negative cost_or_adjusted_basis fails", () => {
 
 Deno.test("f8283.inputSchema: valid FMVMethod passes", () => {
   const parsed = f8283.inputSchema.safeParse({
-    section_a_items: [{ fmv: 300, fmv_method: FMVMethod.ThriftShopValue }],
+    section_a_items: [{
+      fmv: 300,
+      fmv_method: FMVMethod.ThriftShopValue,
+      charitable_limit_category: "noncash_50",
+      is_capital_gain_property: false,
+    }],
   });
   assertEquals(parsed.success, true);
 });
@@ -75,26 +80,86 @@ Deno.test("f8283.inputSchema: invalid FMVMethod fails", () => {
   assertEquals(parsed.success, false);
 });
 
+Deno.test("f8283.inputSchema: positive gift cannot omit AGI-limit classification", () => {
+  assertEquals(
+    f8283.inputSchema.safeParse({ section_a_items: [{ fmv: 250 }] }).success,
+    false,
+  );
+  assertEquals(
+    f8283.inputSchema.safeParse({
+      section_b_items: [{ fmv: 6_000, deduction_claimed: 5_500 }],
+    }).success,
+    false,
+  );
+});
+
+Deno.test("f8283.inputSchema: capital-gain 50% election needs reduced basis", () => {
+  assertEquals(
+    f8283.inputSchema.safeParse({
+      section_a_items: [{
+        fmv: 1_000,
+        deduction_claimed: 1_000,
+        cost_or_adjusted_basis: 400,
+        is_capital_gain_property: true,
+        charitable_limit_category: "noncash_50",
+        capital_gain_reduction_election_confirmed: true,
+      }],
+    }).success,
+    false,
+  );
+});
+
 // =============================================================================
 // 2. Per-Section Routing
 // =============================================================================
 
-Deno.test("f8283.compute: section A item routes fmv to schedule_a line_12_noncash_contributions", () => {
-  const result = compute({ section_a_items: [{ fmv: 300 }] });
+Deno.test("f8283.compute: section A item routes categorized source to Schedule A", () => {
+  const result = compute({
+    section_a_items: [{
+      fmv: 300,
+      charitable_limit_category: "noncash_50",
+      is_capital_gain_property: false,
+    }],
+  });
   const fields = fieldsOf(result.outputs, schedule_a)!;
-  assertEquals(fields.line_12_noncash_contributions, 300);
+  assertEquals(fields.noncash_contribution_items, [{
+    source: "Form 8283 item 1: property",
+    amount: 300,
+    category: "noncash_50",
+  }]);
 });
 
 Deno.test("f8283.compute: Section A routes the claimed deduction, not the higher FMV", () => {
   const result = compute({
     section_a_items: [
-      { fmv: 1_200, deduction_claimed: 700 },
-      { fmv: 400, deduction_claimed: 250 },
+      {
+        fmv: 1_200,
+        deduction_claimed: 700,
+        charitable_limit_category: "noncash_50",
+        is_capital_gain_property: false,
+      },
+      {
+        fmv: 400,
+        deduction_claimed: 250,
+        charitable_limit_category: "noncash_50",
+        is_capital_gain_property: false,
+      },
     ],
   });
   assertEquals(
-    fieldsOf(result.outputs, schedule_a)?.line_12_noncash_contributions,
-    950,
+    fieldsOf(result.outputs, schedule_a)?.noncash_contribution_items,
+    [
+      {
+        source: "Form 8283 item 1: property",
+        amount: 700,
+        category: "noncash_50",
+      },
+      {
+        source: "Form 8283 item 2: property",
+        amount: 250,
+        category: "noncash_50",
+      },
+    ],
   );
 });
 
@@ -116,10 +181,19 @@ Deno.test("f8283.compute: Section A rejects claimed amounts without FMV or above
 
 Deno.test("f8283.compute: section B item routes claimed deduction to schedule_a line 12", () => {
   const result = compute({
-    section_b_items: [{ fmv: 7000, deduction_claimed: 6000 }],
+    section_b_items: [{
+      fmv: 7000,
+      deduction_claimed: 6000,
+      charitable_limit_category: "noncash_50",
+      is_capital_gain_property: false,
+    }],
   });
   const fields = fieldsOf(result.outputs, schedule_a)!;
-  assertEquals(fields.line_12_noncash_contributions, 6000);
+  assertEquals(fields.noncash_contribution_items, [{
+    source: "Form 8283 item 1: property",
+    amount: 6000,
+    category: "noncash_50",
+  }]);
 });
 
 Deno.test("f8283.compute: zero fmv — no schedule_a output", () => {
@@ -148,10 +222,11 @@ Deno.test("f8283.compute: capital gain property is not automatically capped at b
       deduction_claimed: 10000,
       cost_or_adjusted_basis: 4000,
       is_capital_gain_property: true,
+      charitable_limit_category: "capital_gain_30",
     }],
   });
   const fields = fieldsOf(result.outputs, schedule_a)!;
-  assertEquals(fields.line_12_noncash_contributions, 10000);
+  assertEquals(fields.noncash_contribution_items?.[0]?.amount, 10000);
 });
 
 Deno.test("f8283.compute: a stated reduction is honored when below FMV", () => {
@@ -161,10 +236,11 @@ Deno.test("f8283.compute: a stated reduction is honored when below FMV", () => {
       deduction_claimed: 2500,
       cost_or_adjusted_basis: 5000,
       is_capital_gain_property: true,
+      charitable_limit_category: "capital_gain_30",
     }],
   });
   const fields = fieldsOf(result.outputs, schedule_a)!;
-  assertEquals(fields.line_12_noncash_contributions, 2500);
+  assertEquals(fields.noncash_contribution_items?.[0]?.amount, 2500);
 });
 
 Deno.test("f8283.compute: section B NOT capital gain property — uses full fmv", () => {
@@ -174,10 +250,11 @@ Deno.test("f8283.compute: section B NOT capital gain property — uses full fmv"
       deduction_claimed: 10000,
       cost_or_adjusted_basis: 4000,
       is_capital_gain_property: false,
+      charitable_limit_category: "noncash_50",
     }],
   });
   const fields = fieldsOf(result.outputs, schedule_a)!;
-  assertEquals(fields.line_12_noncash_contributions, 10000);
+  assertEquals(fields.noncash_contribution_items?.[0]?.amount, 10000);
 });
 
 // =============================================================================
@@ -186,34 +263,80 @@ Deno.test("f8283.compute: section B NOT capital gain property — uses full fmv"
 
 Deno.test("f8283.compute: multiple section A items — fmv summed", () => {
   const result = compute({
-    section_a_items: [{ fmv: 200 }, { fmv: 350 }, { fmv: 150 }],
+    section_a_items: [
+      {
+        fmv: 200,
+        charitable_limit_category: "noncash_50",
+        is_capital_gain_property: false,
+      },
+      {
+        fmv: 350,
+        charitable_limit_category: "noncash_50",
+        is_capital_gain_property: false,
+      },
+      {
+        fmv: 150,
+        charitable_limit_category: "noncash_50",
+        is_capital_gain_property: false,
+      },
+    ],
   });
   const fields = fieldsOf(result.outputs, schedule_a)!;
-  assertEquals(fields.line_12_noncash_contributions, 700);
+  assertEquals(
+    fields.noncash_contribution_items?.map((item: { amount: number }) =>
+      item.amount
+    ),
+    [200, 350, 150],
+  );
 });
 
 Deno.test("f8283.compute: section A + section B items combined", () => {
   const result = compute({
-    section_a_items: [{ fmv: 1000 }],
-    section_b_items: [{ fmv: 6000, deduction_claimed: 6000 }],
+    section_a_items: [{
+      fmv: 1000,
+      charitable_limit_category: "noncash_50",
+      is_capital_gain_property: false,
+    }],
+    section_b_items: [{
+      fmv: 6000,
+      deduction_claimed: 6000,
+      charitable_limit_category: "noncash_50",
+      is_capital_gain_property: false,
+    }],
   });
   const fields = fieldsOf(result.outputs, schedule_a)!;
-  assertEquals(fields.line_12_noncash_contributions, 7000);
+  assertEquals(
+    fields.noncash_contribution_items?.map((item: { amount: number }) =>
+      item.amount
+    ),
+    [1000, 6000],
+  );
 });
 
 Deno.test("f8283.compute: section B with capital gain basis limitation combined with section A", () => {
   const result = compute({
-    section_a_items: [{ fmv: 500 }],
+    section_a_items: [{
+      fmv: 500,
+      charitable_limit_category: "noncash_50",
+      is_capital_gain_property: false,
+    }],
     section_b_items: [{
       fmv: 8000,
       deduction_claimed: 3000,
       cost_or_adjusted_basis: 3000,
       is_capital_gain_property: true,
+      charitable_limit_category: "noncash_50",
+      capital_gain_reduction_election_confirmed: true,
     }],
   });
   const fields = fieldsOf(result.outputs, schedule_a)!;
   // Explicitly reduced deduction, not an automatic capital-gain basis cap.
-  assertEquals(fields.line_12_noncash_contributions, 3500);
+  assertEquals(
+    fields.noncash_contribution_items?.map((item: { amount: number }) =>
+      item.amount
+    ),
+    [500, 3000],
+  );
 });
 
 // =============================================================================
@@ -250,6 +373,9 @@ Deno.test("f8283.compute: sold vehicle is limited to acknowledged proceeds", () 
     date_contributed: "2025-06-01",
     fmv: 20_000,
     deduction_claimed: 15_000,
+    cost_or_adjusted_basis: 25_000,
+    charitable_limit_category: "noncash_50",
+    is_capital_gain_property: false,
     vehicle_sale_acknowledgment: {
       copy_received_from_donee: true,
       donee_certified: true,
@@ -275,7 +401,8 @@ Deno.test("f8283.compute: sold vehicle is limited to acknowledged proceeds", () 
   };
   const result = compute({ section_a_items: [item] });
   assertEquals(
-    fieldsOf(result.outputs, schedule_a)?.line_12_noncash_contributions,
+    fieldsOf(result.outputs, schedule_a)?.noncash_contribution_items?.[0]
+      ?.amount,
     15_000,
   );
   assertThrows(
@@ -290,7 +417,7 @@ Deno.test("f8283.compute: sold vehicle is limited to acknowledged proceeds", () 
         section_a_items: [{ ...item, vehicle_sale_acknowledgment: undefined }],
       }),
     Error,
-    "needs exactly one donee sale or needy-transfer acknowledgment",
+    "needs exactly one donee sale, needy-transfer, significant-use, or material-improvement acknowledgment",
   );
   assertThrows(
     () =>
@@ -316,6 +443,9 @@ Deno.test("f8283.compute: needy-transfer certificate permits FMV but requires ti
     date_contributed: "2025-06-01",
     fmv: 20_000,
     deduction_claimed: 4_500,
+    cost_or_adjusted_basis: 25_000,
+    charitable_limit_category: "noncash_50",
+    is_capital_gain_property: false,
     vehicle_needy_transfer_acknowledgment: {
       copy_received_from_donee: true,
       donee_certified: true,
@@ -341,7 +471,7 @@ Deno.test("f8283.compute: needy-transfer certificate permits FMV but requires ti
   };
   assertEquals(
     fieldsOf(compute({ section_a_items: [needy] }).outputs, schedule_a)
-      ?.line_12_noncash_contributions,
+      ?.noncash_contribution_items?.[0]?.amount,
     4_500,
   );
   assertThrows(
@@ -393,6 +523,9 @@ Deno.test("f8283.compute: significant-use certificate permits Section A FMV but 
     date_contributed: "2025-06-01",
     fmv: 4_800,
     deduction_claimed: 4_800,
+    cost_or_adjusted_basis: 20_000,
+    charitable_limit_category: "noncash_50",
+    is_capital_gain_property: false,
     vehicle_significant_use_acknowledgment: {
       copy_received_from_donee: true,
       donee_certified: true,
@@ -420,7 +553,7 @@ Deno.test("f8283.compute: significant-use certificate permits Section A FMV but 
   };
   assertEquals(
     fieldsOf(compute({ section_a_items: [item] }).outputs, schedule_a)
-      ?.line_12_noncash_contributions,
+      ?.noncash_contribution_items?.[0]?.amount,
     4_800,
   );
   assertThrows(
@@ -485,6 +618,9 @@ Deno.test("f8283.compute: material-improvement certificate requires major value-
     date_contributed: "2025-08-01",
     fmv: 3_500,
     deduction_claimed: 3_500,
+    cost_or_adjusted_basis: 20_000,
+    charitable_limit_category: "noncash_50",
+    is_capital_gain_property: false,
     vehicle_material_improvement_acknowledgment: {
       copy_received_from_donee: true,
       donee_certified: true,
@@ -512,7 +648,7 @@ Deno.test("f8283.compute: material-improvement certificate requires major value-
   };
   assertEquals(
     fieldsOf(compute({ section_a_items: [item] }).outputs, schedule_a)
-      ?.line_12_noncash_contributions,
+      ?.noncash_contribution_items?.[0]?.amount,
     3_500,
   );
   assertThrows(
@@ -540,6 +676,8 @@ Deno.test("f8283.compute: Section B exception vehicle routes claimed amount with
     date_contributed: "2025-06-01",
     fmv: 20_000,
     deduction_claimed: 15_000,
+    charitable_limit_category: "capital_gain_30",
+    is_capital_gain_property: true,
     cost_or_adjusted_basis: 18_000,
     vehicle_vin: "1HGBH41JXMN109186",
     vehicle_acknowledgment_attachment_file_name: "Form1098C-Improvement.pdf",
@@ -598,7 +736,7 @@ Deno.test("f8283.compute: Section B exception vehicle routes claimed amount with
   };
   assertEquals(
     fieldsOf(compute({ section_b_items: [item] }).outputs, schedule_a)
-      ?.line_12_noncash_contributions,
+      ?.noncash_contribution_items?.[0]?.amount,
     15_000,
   );
   assertThrows(
@@ -654,6 +792,8 @@ Deno.test("f8283.compute: high-value Section B appraisal gate keeps special rout
           property_type: SectionBPropertyType.Equipment,
           fmv: 650_000,
           deduction_claimed: 600_000,
+          charitable_limit_category: "noncash_50",
+          is_capital_gain_property: false,
         }],
       }),
     Error,
@@ -666,6 +806,8 @@ Deno.test("f8283.compute: high-value Section B appraisal gate keeps special rout
           property_type: SectionBPropertyType.OtherRealEstate,
           fmv: 650_000,
           deduction_claimed: 600_000,
+          charitable_limit_category: "noncash_50",
+          is_capital_gain_property: false,
         }],
       }),
     Error,
@@ -695,10 +837,11 @@ Deno.test("f8283.compute: section B capital gain with no basis — uses full fmv
       fmv: 5000,
       deduction_claimed: 5000,
       is_capital_gain_property: true,
+      charitable_limit_category: "capital_gain_30",
     }],
   });
   const fields = fieldsOf(result.outputs, schedule_a)!;
-  assertEquals(fields.line_12_noncash_contributions, 5000);
+  assertEquals(fields.noncash_contribution_items?.[0]?.amount, 5000);
 });
 
 Deno.test("f8283.compute: fmv equals basis — uses fmv exactly", () => {
@@ -708,10 +851,11 @@ Deno.test("f8283.compute: fmv equals basis — uses fmv exactly", () => {
       deduction_claimed: 4000,
       cost_or_adjusted_basis: 4000,
       is_capital_gain_property: true,
+      charitable_limit_category: "capital_gain_30",
     }],
   });
   const fields = fieldsOf(result.outputs, schedule_a)!;
-  assertEquals(fields.line_12_noncash_contributions, 4000);
+  assertEquals(fields.noncash_contribution_items?.[0]?.amount, 4000);
 });
 
 // =============================================================================
@@ -724,12 +868,16 @@ Deno.test("f8283.compute: smoke test — section A and section B items combined"
       {
         property_description: "Used clothing",
         fmv: 250,
+        charitable_limit_category: "noncash_50",
+        is_capital_gain_property: false,
         fmv_method: FMVMethod.ThriftShopValue,
         date_contributed: "2025-11-15",
       },
       {
         property_description: "Books",
         fmv: 75,
+        charitable_limit_category: "noncash_50",
+        is_capital_gain_property: false,
         fmv_method: FMVMethod.CatalogValue,
       },
     ],
@@ -740,11 +888,17 @@ Deno.test("f8283.compute: smoke test — section A and section B items combined"
         deduction_claimed: 12000,
         cost_or_adjusted_basis: 8000,
         is_capital_gain_property: true,
+        charitable_limit_category: "capital_gain_30",
       },
     ],
   });
 
   const fields = fieldsOf(result.outputs, schedule_a)!;
   // Section A: 250 + 75 = 325; Section B: claimed FMV of 12,000.
-  assertEquals(fields.line_12_noncash_contributions, 12325);
+  assertEquals(
+    fields.noncash_contribution_items?.map((item: { amount: number }) =>
+      item.amount
+    ),
+    [250, 75, 12000],
+  );
 });

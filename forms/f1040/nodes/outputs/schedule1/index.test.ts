@@ -99,6 +99,11 @@ Deno.test("schedule1: taxable Form 8889 amounts enter line 8f and total income",
   assertEquals(f.line10_total_additional_income, 1100);
 });
 
+Deno.test("schedule1: HSA excess-withdrawal earnings enter line 8z total", () => {
+  const f = fields({ line8z_hsa_excess_earnings: 100 });
+  assertEquals(f.line10_total_additional_income, 100);
+});
+
 Deno.test("schedule1: foreign earned income exclusion offsets income", () => {
   const f = fields({
     line3_schedule_c: 50_000,

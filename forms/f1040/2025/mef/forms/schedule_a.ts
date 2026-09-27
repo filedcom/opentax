@@ -20,6 +20,7 @@ export interface Fields {
   line_11_cash_contributions?: number | null;
   line_12_noncash_contributions?: number | null;
   line_13_contribution_carryover?: number | null;
+  charitable_limits_finalized?: boolean;
   line_15_casualty_theft_loss?: number | null;
   line_16_other_deductions?: number | null;
 }
@@ -66,6 +67,16 @@ function buildIRS1040ScheduleA(
     returnFields.line12e_itemized_deductions === undefined
   ) {
     return "";
+  }
+  if (
+    ((fields.line_11_cash_contributions ?? 0) > 0 ||
+      (fields.line_12_noncash_contributions ?? 0) > 0 ||
+      (fields.line_13_contribution_carryover ?? 0) > 0) &&
+    fields.charitable_limits_finalized !== true
+  ) {
+    throw new Error(
+      "Schedule A charitable lines require categorized-source AGI-limit finalization",
+    );
   }
   const reduction = fields.form8396_interest_credit_reduction ?? 0;
   const gross8a = fields.line_8a_mortgage_interest_1098 ?? 0;

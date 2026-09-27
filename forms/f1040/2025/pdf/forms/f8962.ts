@@ -249,7 +249,9 @@ function projectFields(
       }
       if (
         (row.premium ?? 0) === 0 && (row.slcsp ?? 0) === 0 &&
-        (row.aptc ?? 0) === 0
+        (row.contribution ?? 0) === 0 &&
+        (row.max_assistance ?? 0) === 0 &&
+        (row.allowed_credit ?? 0) === 0 && (row.aptc ?? 0) === 0
       ) continue;
       for (const column of MONTH_COLUMNS) {
         const value = row[column];

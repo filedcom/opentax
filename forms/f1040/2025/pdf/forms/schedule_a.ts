@@ -27,33 +27,85 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 
 const fields: ReadonlyArray<PdfFieldEntry> = [
   // ── Medical and Dental Expenses ──────────────────────────────────────────────
-  { kind: "text", domainKey: "line_1_medical", pdfField: "form1[0].Page1[0].f1_1[0]" },
+  {
+    kind: "text",
+    domainKey: "line_1_medical",
+    pdfField: "form1[0].Page1[0].f1_1[0]",
+  },
   { kind: "text", domainKey: "agi", pdfField: "form1[0].Page1[0].f1_2[0]" },
   // Line 3 threshold and Line 4 net medical computed by PDF — not mapped
 
   // ── Taxes You Paid ───────────────────────────────────────────────────────────
   // IRC §164(b)(5) election: state income tax or sales tax — mutually exclusive.
   // Both map to the same PDF field (line 5a). Only one will be nonzero at runtime.
-  { kind: "text", domainKey: "line_5a_state_income_tax", pdfField: "form1[0].Page1[0].f1_5[0]" },
-  { kind: "text", domainKey: "line_5a_sales_tax", pdfField: "form1[0].Page1[0].f1_5[0]" },
-  { kind: "text", domainKey: "line_5b_real_estate_tax", pdfField: "form1[0].Page1[0].f1_6[0]" },
-  { kind: "text", domainKey: "line_5c_personal_property_tax", pdfField: "form1[0].Page1[0].f1_7[0]" },
-  { kind: "text", domainKey: "line_6_other_taxes", pdfField: "form1[0].Page1[0].f1_9[0]" },
+  {
+    kind: "text",
+    domainKey: "line_5a_state_income_tax",
+    pdfField: "form1[0].Page1[0].f1_5[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line_5a_sales_tax",
+    pdfField: "form1[0].Page1[0].f1_5[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line_5b_real_estate_tax",
+    pdfField: "form1[0].Page1[0].f1_6[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line_5c_personal_property_tax",
+    pdfField: "form1[0].Page1[0].f1_7[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line_6_other_taxes",
+    pdfField: "form1[0].Page1[0].f1_9[0]",
+  },
 
   // ── Interest You Paid ────────────────────────────────────────────────────────
-  { kind: "text", domainKey: "line_8a_mortgage_interest_1098", pdfField: "form1[0].Page1[0].f1_11[0]" },
-  { kind: "text", domainKey: "line_9_investment_interest", pdfField: "form1[0].Page1[0].f1_13[0]" },
+  {
+    kind: "text",
+    domainKey: "line_8a_mortgage_interest_1098",
+    pdfField: "form1[0].Page1[0].f1_11[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line_9_investment_interest",
+    pdfField: "form1[0].Page1[0].f1_13[0]",
+  },
 
   // ── Gifts to Charity ─────────────────────────────────────────────────────────
-  { kind: "text", domainKey: "line_11_cash_contributions", pdfField: "form1[0].Page1[0].f1_15[0]" },
-  { kind: "text", domainKey: "line_12_noncash_contributions", pdfField: "form1[0].Page1[0].Line8b_ReadOrder[0].f1_16[0]" },
-  { kind: "text", domainKey: "line_13_contribution_carryover", pdfField: "form1[0].Page1[0].f1_17[0]" },
+  {
+    kind: "text",
+    domainKey: "line_11_cash_contributions",
+    pdfField: "form1[0].Page1[0].f1_15[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line_12_noncash_contributions",
+    pdfField: "form1[0].Page1[0].Line8b_ReadOrder[0].f1_16[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line_13_contribution_carryover",
+    pdfField: "form1[0].Page1[0].f1_17[0]",
+  },
 
   // ── Casualty and Theft Losses ────────────────────────────────────────────────
-  { kind: "text", domainKey: "line_15_casualty_theft_loss", pdfField: "form1[0].Page1[0].f1_19[0]" },
+  {
+    kind: "text",
+    domainKey: "line_15_casualty_theft_loss",
+    pdfField: "form1[0].Page1[0].f1_19[0]",
+  },
 
   // ── Other Itemized Deductions ────────────────────────────────────────────────
-  { kind: "text", domainKey: "line_16_other_deductions", pdfField: "form1[0].Page1[0].f1_20[0]" },
+  {
+    kind: "text",
+    domainKey: "line_16_other_deductions",
+    pdfField: "form1[0].Page1[0].f1_20[0]",
+  },
 ];
 
 export const scheduleAPdf: PdfFormDescriptor = {
@@ -62,6 +114,20 @@ export const scheduleAPdf: PdfFormDescriptor = {
   fields,
   // Schedule A is filed only when the return actually itemizes (1040 line 12
   // carries an itemized amount) — not merely because AGI was deposited here.
-  includeWhen: (_fields, all) =>
-    (((all?.["f1040"]?.["line12e_itemized_deductions"]) as number | undefined) ?? 0) > 0,
+  includeWhen: (input, all) => {
+    const amount = (key: string) => Number(input[key] ?? 0);
+    if (
+      (amount("line_11_cash_contributions") > 0 ||
+        amount("line_12_noncash_contributions") > 0 ||
+        amount("line_13_contribution_carryover") > 0) &&
+      input["charitable_limits_finalized"] !== true
+    ) {
+      throw new Error(
+        "Schedule A PDF charitable lines require categorized-source AGI-limit finalization",
+      );
+    }
+    return (((all?.["f1040"]?.["line12e_itemized_deductions"]) as
+      | number
+      | undefined) ?? 0) > 0;
+  },
 };

@@ -18,7 +18,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [string, string]> = [
   ["print_line12", "HSALimitedContributionAmt"],
   ["print_line13_deduction", "TotalHSADeductionAmt"],
   ["print_line14a_distributions", "TotalHSADistributionAmt"],
-  ["print_line14b_rollovers", "HSADistributionRolloverAmt"],
+  ["print_line14b_excluded_distributions", "HSADistributionRolloverAmt"],
   ["print_line14c", "HSANetDistributionAmt"],
   ["print_line15_qualified", "UnreimbQualMedAndDentalExpAmt"],
   ["print_line16_taxable", "TaxableHSADistributionAmt"],
@@ -42,7 +42,7 @@ const RAW_HSA_KEYS = [
   "employer_hsa_contributions",
   "qualified_hsa_funding_distribution",
   "hsa_distributions",
-  "hsa_rollovers_and_timely_excess_withdrawals",
+  "hsa_excluded_distributions",
   "qualified_medical_expenses",
   "testing_period_failure",
 ];

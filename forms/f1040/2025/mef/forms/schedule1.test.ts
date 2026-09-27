@@ -156,6 +156,20 @@ Deno.test("line8z_other maps to OtherIncomeAmt", () => {
   assertStringIncludes(result, "<OtherIncomeAmt>400</OtherIncomeAmt>");
 });
 
+Deno.test("HSA excess-withdrawal earnings combine once with other line 8z income", () => {
+  const result = schedule1.build({
+    line8z_other: 400,
+    line8z_hsa_excess_earnings: 100,
+    line8z_form8814: 50,
+  });
+  assertStringIncludes(result, "<OtherIncomeAmt>550</OtherIncomeAmt>");
+  assertEquals(result.match(/<OtherIncomeAmt>/g)?.length, 1);
+  assertStringIncludes(
+    schedule1.build({ line8z_hsa_excess_earnings: 100 }),
+    "<OtherIncomeAmt>100</OtherIncomeAmt>",
+  );
+});
+
 Deno.test("line8z_golden_parachute maps to ExcessGoldenParachuteAmt", () => {
   const result = schedule1.build({ line8z_golden_parachute: 50000 });
   assertStringIncludes(

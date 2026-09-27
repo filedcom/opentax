@@ -5,7 +5,10 @@ import type {
 } from "../../../../../core/types/tax-node.ts";
 import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { scheduleA as schedule_a } from "../schedule_a/index.ts";
+import {
+  noncashContributionCategorySchema,
+  scheduleA as schedule_a,
+} from "../schedule_a/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Method used to determine FMV
@@ -128,6 +131,10 @@ const sectionAItemSchema = z.object({
   donor_acquisition_description: z.string().optional(),
   fmv: z.number().nonnegative().optional(),
   deduction_claimed: z.number().nonnegative().optional(),
+  // Pub. 526 Worksheet 2 category of this actual donee/property combination.
+  charitable_limit_category: noncashContributionCategorySchema.optional(),
+  is_capital_gain_property: z.boolean().optional(),
+  capital_gain_reduction_election_confirmed: z.literal(true).optional(),
   fmv_method: z.nativeEnum(FMVMethod).optional(),
   fmv_method_description: z.string().optional(),
   cost_or_adjusted_basis: z.number().nonnegative().optional(),
@@ -148,6 +155,7 @@ const sectionAItemSchema = z.object({
   // Clothing/household — must be in good used condition or better
   is_clothing_household: z.boolean().optional(),
 }).superRefine((item, ctx) => {
+  validateCharitableLimitCategory(item, ctx);
   if (item.deduction_claimed !== undefined && item.fmv === undefined) {
     ctx.addIssue({
       code: "custom",
@@ -263,6 +271,8 @@ const sectionBItemSchema = z.object({
   // FMV and the Schedule A deduction are distinct, especially for ordinary
   // income property and the specific capital-gain-property reductions.
   deduction_claimed: z.number().nonnegative(),
+  charitable_limit_category: noncashContributionCategorySchema.optional(),
+  capital_gain_reduction_election_confirmed: z.literal(true).optional(),
   cost_or_adjusted_basis: z.number().nonnegative().optional(),
   // An exception vehicle above $5,000 belongs in Section B, with its own
   // appraiser and donee signatures in addition to Form 1098-C evidence.
@@ -307,6 +317,7 @@ const sectionBItemSchema = z.object({
   // does not by itself cap the deduction at basis.
   is_capital_gain_property: z.boolean().optional(),
 }).superRefine((item, ctx) => {
+  validateCharitableLimitCategory(item, ctx);
   if (item.deduction_claimed > item.fmv) {
     ctx.addIssue({
       code: "custom",
@@ -451,23 +462,95 @@ export type SectionAItem = z.infer<typeof sectionAItemSchema>;
 export type SectionBItem = z.infer<typeof sectionBItemSchema>;
 export type F8283Input = z.infer<typeof inputSchema>;
 
-function totalSectionAContributions(items: SectionAItem[]): number {
-  return items.reduce(
-    (sum, item) => sum + (item.deduction_claimed ?? item.fmv ?? 0),
-    0,
-  );
-}
+type ClassifiedItem = {
+  property_description?: string;
+  deduction_claimed?: number;
+  fmv?: number;
+  charitable_limit_category?: z.infer<
+    typeof noncashContributionCategorySchema
+  >;
+  is_capital_gain_property?: boolean;
+  capital_gain_reduction_election_confirmed?: true;
+  cost_or_adjusted_basis?: number;
+};
 
-function totalSectionBContributions(items: SectionBItem[]): number {
-  return items.reduce((sum, item) => sum + item.deduction_claimed, 0);
+function validateCharitableLimitCategory(
+  item: ClassifiedItem,
+  ctx: z.RefinementCtx,
+): void {
+  const claimed = item.deduction_claimed ?? item.fmv ?? 0;
+  if (claimed <= 0) return;
+  const category = item.charitable_limit_category;
+  if (!category) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["charitable_limit_category"],
+      message:
+        "Form 8283 claimed gift needs its Pub. 526 donee/property AGI-limit category",
+    });
+    return;
+  }
+  if (item.is_capital_gain_property === undefined) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["is_capital_gain_property"],
+      message:
+        "Form 8283 AGI-limit classification needs an explicit capital-gain-property determination",
+    });
+  }
+  const capitalCategory = category === "capital_gain_30" ||
+    category === "capital_gain_20";
+  if (capitalCategory && item.is_capital_gain_property !== true) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["is_capital_gain_property"],
+      message:
+        "Capital-gain charitable limit needs confirmed capital-gain property",
+    });
+  }
+  if (item.is_capital_gain_property === true && category === "other_30") {
+    ctx.addIssue({
+      code: "custom",
+      path: ["charitable_limit_category"],
+      message: "Capital-gain property cannot use the ordinary 30% category",
+    });
+  }
+  if (item.is_capital_gain_property === true && category === "noncash_50") {
+    if (
+      !item.capital_gain_reduction_election_confirmed ||
+      item.cost_or_adjusted_basis === undefined ||
+      claimed > item.cost_or_adjusted_basis
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["capital_gain_reduction_election_confirmed"],
+        message:
+          "50% category for capital-gain property needs confirmed FMV-reduction election and a deduction no greater than basis",
+      });
+    }
+  }
 }
 
 function scheduleAOutput(input: F8283Input): NodeOutput[] {
-  const sectionA = totalSectionAContributions(input.section_a_items ?? []);
-  const sectionB = totalSectionBContributions(input.section_b_items ?? []);
-  const total = sectionA + sectionB;
-  if (total === 0) return [];
-  return [output(schedule_a, { line_12_noncash_contributions: total })];
+  const items = [
+    ...(input.section_a_items ?? []),
+    ...(input.section_b_items ?? []),
+  ].flatMap((item, index) => {
+    const amount = item.deduction_claimed ?? item.fmv ?? 0;
+    if (amount === 0) return [];
+    if (!item.charitable_limit_category) {
+      throw new Error("Form 8283 contribution lacks AGI-limit category");
+    }
+    return [{
+      source: `Form 8283 item ${index + 1}: ${
+        item.property_description ?? "property"
+      }`,
+      amount,
+      category: item.charitable_limit_category,
+    }];
+  });
+  if (items.length === 0) return [];
+  return [output(schedule_a, { noncash_contribution_items: items })];
 }
 
 class F8283Node extends TaxNode<typeof inputSchema> {

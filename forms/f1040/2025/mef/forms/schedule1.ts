@@ -20,6 +20,7 @@ export interface Fields {
   line8z_nqdc?: number | null;
   line8z_other?: number | null;
   line8z_form8814?: number | null;
+  line8z_hsa_excess_earnings?: number | null;
   line8z_golden_parachute?: number | null;
   line9_total_other_income?: number | null;
   line10_total_additional_income?: number | null;
@@ -76,14 +77,21 @@ function buildIRS1040Schedule1(
         value.reduce((sum: number, amount: number) => sum + amount, 0),
       );
     }
-    if (typeof value !== "number") return "";
     if (key === "line8z_other") {
       const form8814 = fields.line8z_form8814;
+      const hsaEarnings = fields.line8z_hsa_excess_earnings;
+      if (
+        typeof value !== "number" && typeof form8814 !== "number" &&
+        typeof hsaEarnings !== "number"
+      ) return "";
       return element(
         tag,
-        value + (typeof form8814 === "number" ? form8814 : 0),
+        (typeof value === "number" ? value : 0) +
+          (typeof form8814 === "number" ? form8814 : 0) +
+          (typeof hsaEarnings === "number" ? hsaEarnings : 0),
       );
     }
+    if (typeof value !== "number") return "";
     if (key === "line8d_foreign_earned_income_exclusion") {
       const formId = context?.documentIdsByPendingKey?.form2555?.[0];
       return element(
@@ -112,12 +120,6 @@ function buildIRS1040Schedule1(
     }
     return element(tag, value);
   });
-  if (
-    typeof fields.line8z_form8814 === "number" &&
-    typeof fields.line8z_other !== "number"
-  ) {
-    children.push(element("OtherIncomeAmt", fields.line8z_form8814));
-  }
   return elements("IRS1040Schedule1", children);
 }
 
