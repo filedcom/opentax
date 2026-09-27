@@ -57,6 +57,10 @@ claimed. This node is not registered yet; it still needs the full upstream
 input surface, form-specific credit reconciliation, and MeF/PDF mappings.
 It now also exposes separate AGI 11a/11b, withholding 25a–25d, EIC 27b/27c,
 and overpayment allocation 35a/36, with focused calculation tests.
+The pure 2026 itemized-deduction module applies P.L. 119-21's charitable
+floor and the Publication 505 overall limit. The 2026 Schedule A node still
+needs to feed these rules, including carryforward attribution and its new
+form lines.
 The CLI node list, inspect, and graph commands now accept `--year` and select
 the registered definition for that year. They still default to TY2025 for
 existing CLI calls; an unregistered year fails explicitly.

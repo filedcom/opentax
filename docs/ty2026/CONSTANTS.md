@@ -38,8 +38,13 @@ SHA-256 in `corpus/manifest.json`.
 - 1040 line 12f permits cash charitable deductions up to $1,000, or $2,000
   MFJ, for eligible nonitemizers; [IRS Topic 506](https://www.irs.gov/taxtopics/tc506)
   and the draft 1040 are the starting authorities. Schedule A charitable
-  deductions have a separate 0.5% AGI floor; verify with final Schedule A
-  instructions.
+  deductions have a separate 0.5% AGI floor under P.L. 119-21 §70425.
+  [2026 Publication 505](https://www.irs.gov/publications/p505), Worksheets
+  2-5 and 2-6, also supplies a 5.4% overall itemized-deduction reduction
+  above the top bracket threshold ($768,700 MFJ/QSS, $640,600 Single/HOH,
+  $384,350 MFS). The pure 2026 calculations are in `itemized-deductions.ts`;
+  charitable carryforward attribution and final Schedule A line mapping
+  remain to build and verify against final instructions.
 - Mileage has a **midyear boundary**: [Notice 2026-10](https://www.irs.gov/pub/irs-drop/n-26-10.pdf)
   and [IRB 2026-29](https://www.irs.gov/pub/irs-irbs/irb26-29.pdf). Business
   mileage is 72.5¢ Jan–Jun and 76¢ Jul–Dec; medical/moving is 20.5¢ then
