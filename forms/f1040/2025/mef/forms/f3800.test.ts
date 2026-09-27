@@ -46,8 +46,18 @@ Deno.test("Form 3800 files a source-backed passive-only current-year credit", ()
     tax_context: passiveTax,
     allowed_credit: 300,
   }, {
-    pending: filedPending(passiveTax, 300),
-    documentIdsByPendingKey: { form6251: ["IRS6251_1"] },
+    pending: {
+      ...filedPending(passiveTax, 300),
+      form8582cr: {
+        credit_sources: [source],
+        regular_tax_all_income: 1_000,
+        regular_tax_without_passive: 500,
+      },
+    },
+    documentIdsByPendingKey: {
+      form6251: ["IRS6251_1"],
+      form8582cr: ["IRS8582CR_1"],
+    },
   });
   assertStringIncludes(
     xml,
@@ -60,6 +70,52 @@ Deno.test("Form 3800 files a source-backed passive-only current-year credit", ()
   assertStringIncludes(
     xml,
     "<PassThroughEntityEIN>123456789</PassThroughEntityEIN>",
+  );
+  assertThrows(
+    () =>
+      form3800.build({
+        passive_source_allocations: [source],
+        tax_context: passiveTax,
+        allowed_credit: 300,
+      }, {
+        pending: {
+          ...filedPending(passiveTax, 300),
+          form8582cr: {
+            credit_sources: [source],
+            regular_tax_all_income: 1_000,
+            regular_tax_without_passive: 500,
+          },
+        },
+        documentIdsByPendingKey: { form6251: ["IRS6251_1"] },
+      }),
+    Error,
+    "needs one attached Form 8582-CR",
+  );
+  assertThrows(
+    () =>
+      form3800.build({
+        passive_source_allocations: [{
+          ...source,
+          source_document_reference: "Unfiled K-1",
+        }],
+        tax_context: passiveTax,
+        allowed_credit: 300,
+      }, {
+        pending: {
+          ...filedPending(passiveTax, 300),
+          form8582cr: {
+            credit_sources: [source],
+            regular_tax_all_income: 1_000,
+            regular_tax_without_passive: 500,
+          },
+        },
+        documentIdsByPendingKey: {
+          form6251: ["IRS6251_1"],
+          form8582cr: ["IRS8582CR_1"],
+        },
+      }),
+    Error,
+    "sources differ from filed Form 8582-CR",
   );
 });
 
@@ -184,10 +240,19 @@ Deno.test("Form 3800 applies a passive carryover before a Form 8826 current cred
     tax_context: mixedTax,
     allowed_credit: 250,
   }, {
-    pending: { ...filedPending(mixedTax, 250), f8826: accessSource },
+    pending: {
+      ...filedPending(mixedTax, 250),
+      f8826: accessSource,
+      form8582cr: {
+        credit_sources: [passive],
+        regular_tax_all_income: 1_000,
+        regular_tax_without_passive: 700,
+      },
+    },
     documentIdsByPendingKey: {
       f8826: ["IRS8826_1"],
       form6251: ["IRS6251_1"],
+      form8582cr: ["IRS8582CR_1"],
     },
   });
   assertStringIncludes(xml, "<Frm8820CYCyovCrGrp>");
@@ -240,10 +305,19 @@ Deno.test("Form 3800 merges passive and nonpassive Form 8826 on one current-year
     tax_context: mixedTax,
     allowed_credit: 600,
   }, {
-    pending: { ...filedPending(mixedTax, 600), f8826: accessSource },
+    pending: {
+      ...filedPending(mixedTax, 600),
+      f8826: accessSource,
+      form8582cr: {
+        credit_sources: [passive],
+        regular_tax_all_income: 1_000,
+        regular_tax_without_passive: 500,
+      },
+    },
     documentIdsByPendingKey: {
       f8826: ["IRS8826_1"],
       form6251: ["IRS6251_1"],
+      form8582cr: ["IRS8582CR_1"],
     },
   });
   assertStringIncludes(

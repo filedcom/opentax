@@ -147,8 +147,8 @@ but unrun. The nonpassive filed builder now places line-keyed Part III groups
 through one schema-ordered assembler that rejects duplicate or unmatched rows.
 The assembler now derives Part III column totals from current-year
 source amounts instead of reusing Part II limits that can include carryovers;
-its mixed current-year and cent-precision cases are written but unrun. It does not yet combine
-passive and nonpassive rows. Direct builder
+its mixed current-year and cent-precision cases are written but unrun. The
+descriptor now combines passive and nonpassive rows. Direct builder
 cases are written but unrun. The draft now indexes Part V facility allocations
 and linked source documents by entry position, so equal-valued or reused
 facility objects do not silently reuse the first allocation; that case is
@@ -498,18 +498,19 @@ explicit zero passive lines. The XML builder now consumes passive source
 allocations, but the filed route is not verified yet. The new source and
 1040 cases are written but unrun. An unrun source transform now splits
 each allowed credit by originating tax year, keeping prior carryovers ahead of
-2025 credit for the future Parts III/IV rows. It does not yet allocate the
-separate Form 3800 tax-liability limit to those rows. Form 8582-CR business-credit
+2025 credit for the Parts III/IV rows. The shared source-use pass now allocates
+the separate Form 3800 tax-liability limit to those rows. Form 8582-CR business-credit
 sources now require the exact 2025 Form 3800 credit row, distinguish standard,
 empowerment-zone, and specified rows, and reject reserved or carryover-only
-rows for current-year credit. Written source-validation cases are unrun. This
-is source metadata only, not a completed Form 3800 XML route. A schema-backed
+rows for current-year credit. Written source-validation cases are unrun. The
+source-backed Form 3800 XML route is built but unverified. A schema-backed
 map now names each supported Part III and IV XML row tag, including expired
-carryover-only rows; its coverage case is written but unrun. The map is not yet
-connected to the return serializer. A pure aggregation now groups passive
+carryover-only rows; its coverage case is written but unrun. The map now feeds
+the return serializer. A pure aggregation now groups passive
 credits by exact Form 3800 row and originating year while preserving each
 activity's statement reference; its source case is written but unrun. Tax-use
-allocation and carryover statement generation remain open. An unrun XML-row
+allocation is built but unverified; source-specific carryover evidence remains
+open. An unrun XML-row
 plan now collapses multiple carryover years into one schema group per credit
 line, records the latest origin year as the IRS instructs for Part IV column
 (b), and retains every source year for the required Part VI detail. Schema-backed
@@ -541,8 +542,13 @@ metadata. The nonpassive builder now retains the same metadata alongside every
 current-year row, including source counts, first transfer registration number,
 entity, and document reference. Their source cases are written but unrun. The
 same-line aggregate and Part V source join are now connected in the descriptor;
-their cases are written but unrun. Complete
-passive source-document and Part II reconciliation remains open. Current-year
+their cases are written but unrun. The descriptor now recalculates the attached
+Form 8582-CR and compares every passive allocation before filing Form 3800;
+Form 8582-CR also requires the matching Form 3800 business-credit rows.
+Missing or changed linked documents stop export. These direct negative and
+full-return XSD cases are written but unrun. Credit-specific K-1 and other
+source-document reconciliation remains open. The handoff now retains the
+publicly traded partnership source flag. Current-year
 source details are now retained even when a standalone row has only one source,
 including Form 8936 lines 1y/1aa. The filed assembler emits Part V details
 only when the aggregate row has multiple sources and checks the detail count;
@@ -583,8 +589,9 @@ origin. Partnership, S corporation, estate, trust, and cooperative sources
 require either a nine-digit EIN or the explicit `APPLD FOR` reason. That
 provenance carries through the Form 3800 vintage plan instead of inferring an
 entity from a free-text source form. The source and propagation cases are
-written but unrun; the MeF builder
-still needs to serialize and reconcile the linked rows.
+written but unrun; the MeF builder now serializes the linked rows and checks
+their allocation against Form 8582-CR. Credit-specific source-document
+evidence still needs reconciliation.
 Pass-through sources also carry a stable entity reference so the passive
 Part IV summary chooses the entity with the greatest combined credit across
 its source years. Conflicting EINs for one entity stop XML generation. The

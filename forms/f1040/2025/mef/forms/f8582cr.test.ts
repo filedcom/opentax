@@ -1,5 +1,7 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
+  calculateForm8582CR,
+  inputSchema,
   PassiveCreditCategory,
   PassiveCreditReportingRoute,
   PassiveCreditSourceOrigin,
@@ -69,6 +71,48 @@ Deno.test("Form 8582-CR: Part I preserves current and prior other credits", () =
   );
   assertStringIncludes(xml, "<AllowedCreditsAmt>1000</AllowedCreditsAmt>");
   assertEquals(xml.includes("<SpecialAllowActiveGrp>"), false);
+});
+
+Deno.test("Form 8582-CR requires the same business sources on attached Form 3800", () => {
+  const input = {
+    credit_sources: [otherCredit],
+    regular_tax_all_income: 10_000,
+    regular_tax_without_passive: 9_000,
+  };
+  const allocation = calculateForm8582CR(inputSchema.parse(input))
+    .sourceAllocations[0];
+  assertEquals(allocation.publicly_traded_partnership, false);
+  assertStringIncludes(
+    form8582cr.build(input, {
+      documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
+      pending: { f3800: { passive_source_allocations: [allocation] } },
+    }),
+    "<AllowedCreditsAmt>1000</AllowedCreditsAmt>",
+  );
+  assertThrows(
+    () =>
+      form8582cr.build(input, {
+        documentIdsByPendingKey: {},
+      }),
+    Error,
+    "needs one attached Form 3800",
+  );
+  assertThrows(
+    () =>
+      form8582cr.build(input, {
+        documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
+        pending: {
+          f3800: {
+            passive_source_allocations: [{
+              ...allocation,
+              source_document_reference: "Unfiled credit statement",
+            }],
+          },
+        },
+      }),
+    Error,
+    "differs from filed Form 3800",
+  );
 });
 
 Deno.test("Form 8582-CR: active rental Part II serializes the tax limitation", () => {

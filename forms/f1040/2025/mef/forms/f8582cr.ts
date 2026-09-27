@@ -4,18 +4,51 @@ import {
   inputSchema,
   PassiveCreditReportingRoute,
 } from "../../../nodes/intermediate/forms/form8582cr/index.ts";
-import type { MefFormDescriptor } from "../form-descriptor.ts";
+import { inputSchema as f3800InputSchema } from "../../../nodes/inputs/f3800/index.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
+import { sameForm3800PassiveAllocations } from "./f3800_passive_link.ts";
+
+function reconcileFiledBusinessCredits(
+  sourceAllocations: ReturnType<
+    typeof calculateForm8582CR
+  >["sourceAllocations"],
+  context: MefBuildContext,
+): void {
+  const businessSources = sourceAllocations.filter((source) =>
+    source.reporting_route !== PassiveCreditReportingRoute.Form8834
+  );
+  if (businessSources.length === 0 || !context.documentIdsByPendingKey) return;
+  if (context.documentIdsByPendingKey.f3800?.length !== 1) {
+    throw new Error(
+      "Form 8582-CR business credit needs one attached Form 3800",
+    );
+  }
+  const form3800 = f3800InputSchema.parse(context.pending?.f3800);
+  if (
+    !sameForm3800PassiveAllocations(
+      businessSources,
+      form3800.passive_source_allocations ?? [],
+    )
+  ) {
+    throw new Error(
+      "Form 8582-CR business credit differs from filed Form 3800",
+    );
+  }
+}
 
 export const form8582cr: MefFormDescriptor<"form8582cr", unknown> = {
   pendingKey: "form8582cr",
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8582cr.pdf",
-  build(raw) {
+  build(raw, context) {
     if (!raw || typeof raw !== "object" || !("credit_sources" in raw)) {
       return "";
     }
     const lines = calculateForm8582CR(inputSchema.parse(raw));
     if (lines.partI.line5 === 0) return "";
+    if (context) {
+      reconcileFiledBusinessCredits(lines.sourceAllocations, context);
+    }
     if (
       lines.allowedByReportingRoute[PassiveCreditReportingRoute.Form8834] > 0
     ) {

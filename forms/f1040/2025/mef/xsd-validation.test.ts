@@ -16,6 +16,11 @@ import { buildMefBundle, buildMefXml } from "./builder.ts";
 import type { MefFormsPending } from "./types.ts";
 import { FilingStatus } from "../../nodes/types.ts";
 import { EnergyType } from "../../nodes/inputs/f8835/index.ts";
+import {
+  PassiveCreditCategory,
+  PassiveCreditReportingRoute,
+  PassiveCreditSourceOrigin,
+} from "../../nodes/intermediate/forms/form8582cr/index.ts";
 import { TargetGroup } from "../../nodes/inputs/f5884/index.ts";
 import { BondType } from "../../nodes/inputs/f8912/index.ts";
 import { SS_WAGE_BASE_2025 } from "../../nodes/config/2025.ts";
@@ -1336,6 +1341,207 @@ Deno.test({
     bundle.xml,
     "Form 4136 multiple activities with Schedule A",
   );
+});
+
+Deno.test({
+  name: "XSD: filed passive-only Form 8582-CR credit reaches Form 3800",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const source = {
+    activity_reference: "Clinical partnership",
+    source_form: "Form 8820",
+    source_origin: {
+      kind: PassiveCreditSourceOrigin.Partnership,
+      entity_reference: "Clinical partnership",
+      ein: "123456789",
+    },
+    source_document_reference: "2025 clinical credit statement",
+    category: PassiveCreditCategory.Other,
+    reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+    form3800_credit_line: "1h" as const,
+    current_year_credit: 1_000,
+    prior_unallowed_credits: [],
+    publicly_traded_partnership: false,
+  };
+  const xml = buildMefXml({
+    f1040: { line16_income_tax: 1_000 },
+    schedule3: { line6a_total: 500, line7_total: 500 },
+    form6251: { line11_amt: 0, net_tmt: 0 },
+    form8582cr: {
+      credit_sources: [source],
+      regular_tax_all_income: 1_000,
+      regular_tax_without_passive: 500,
+    },
+    f3800: {
+      passive_source_allocations: [{
+        ...source,
+        total_credit: 1_000,
+        special_allowed_credit: 0,
+        unallowed_credit: 500,
+        allowed_credit: 500,
+      }],
+      tax_context: {
+        filingStatus: FilingStatus.Single,
+        regularTax: 1_000,
+        alternativeMinimumTax: 0,
+        foreignTaxCredit: 0,
+        priorAllowableCredits: 0,
+        tentativeMinimumTax: 0,
+        standardCredit: 0,
+        specifiedCredit: 0,
+      },
+      allowed_credit: 500,
+    },
+  }, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(xml, "<IRS8582CR ");
+  assertStringIncludes(xml, "<IRS3800 ");
+  await validateXsd(xml, "passive Form 8582-CR and Form 3800");
+});
+
+Deno.test({
+  name: "XSD: passive carryover and current Form 8826 share Form 3800 tax use",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const source = {
+    activity_reference: "Clinical partnership",
+    source_form: "Form 8820",
+    source_origin: {
+      kind: PassiveCreditSourceOrigin.Partnership,
+      entity_reference: "Clinical partnership",
+      ein: "123456789",
+    },
+    source_document_reference: "2025 clinical credit statement",
+    category: PassiveCreditCategory.Other,
+    reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+    form3800_credit_line: "1h" as const,
+    current_year_credit: 300,
+    prior_unallowed_credits: [{
+      originating_tax_year: 2023,
+      credit_amount: 200,
+      source_document_reference: "2023 clinical credit statement",
+    }],
+    publicly_traded_partnership: false,
+  };
+  const xml = buildMefXml({
+    f1040: { line16_income_tax: 250 },
+    schedule3: { line6a_total: 250, line7_total: 250 },
+    form6251: { line11_amt: 0, net_tmt: 0 },
+    form8582cr: {
+      credit_sources: [source],
+      regular_tax_all_income: 1_000,
+      regular_tax_without_passive: 700,
+    },
+    f8826: {
+      eligible_expenditures: 450,
+      prior_year_gross_receipts: 500_000,
+      prior_year_full_time_employee_count: 20,
+      subject_to_passive_activity_limit: false,
+    },
+    f3800: {
+      passive_source_allocations: [{
+        ...source,
+        total_credit: 500,
+        special_allowed_credit: 0,
+        unallowed_credit: 200,
+        allowed_credit: 300,
+      }],
+      f8826_credit_entries: [{
+        source_type: "self",
+        credit_amount: 100,
+        subject_to_passive_activity_limit: false,
+      }],
+      tax_context: {
+        filingStatus: FilingStatus.Single,
+        regularTax: 250,
+        alternativeMinimumTax: 0,
+        foreignTaxCredit: 0,
+        priorAllowableCredits: 0,
+        tentativeMinimumTax: 0,
+        standardCredit: 100,
+        specifiedCredit: 0,
+      },
+      allowed_credit: 250,
+    },
+  }, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(xml, "<IRS8582CR ");
+  assertStringIncludes(xml, "<IRS3800 ");
+  assertStringIncludes(xml, "<IRS8826 ");
+  await validateXsd(xml, "passive carryover and current Form 8826");
+});
+
+Deno.test({
+  name: "XSD: passive and nonpassive Form 8826 sources share Part III line 1e",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const source = {
+    activity_reference: "Access partnership",
+    source_form: "Form 8826",
+    source_origin: {
+      kind: PassiveCreditSourceOrigin.Partnership,
+      entity_reference: "Access partnership",
+      ein: "123456789",
+    },
+    source_document_reference: "2025 Schedule K-1 access credit",
+    category: PassiveCreditCategory.Other,
+    reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+    form3800_credit_line: "1e" as const,
+    current_year_credit: 500,
+    prior_unallowed_credits: [],
+    publicly_traded_partnership: false,
+  };
+  const xml = buildMefXml({
+    f1040: { line16_income_tax: 1_000 },
+    schedule3: { line6a_total: 600, line7_total: 600 },
+    form6251: { line11_amt: 0, net_tmt: 0 },
+    form8582cr: {
+      credit_sources: [source],
+      regular_tax_all_income: 1_000,
+      regular_tax_without_passive: 500,
+    },
+    f8826: {
+      eligible_expenditures: 450,
+      prior_year_gross_receipts: 500_000,
+      prior_year_full_time_employee_count: 20,
+      subject_to_passive_activity_limit: false,
+    },
+    f3800: {
+      passive_source_allocations: [{
+        ...source,
+        total_credit: 500,
+        special_allowed_credit: 0,
+        unallowed_credit: 0,
+        allowed_credit: 500,
+      }],
+      f8826_credit_entries: [{
+        source_type: "self",
+        credit_amount: 100,
+        subject_to_passive_activity_limit: false,
+      }],
+      tax_context: {
+        filingStatus: FilingStatus.Single,
+        regularTax: 1_000,
+        alternativeMinimumTax: 0,
+        foreignTaxCredit: 0,
+        priorAllowableCredits: 0,
+        tentativeMinimumTax: 0,
+        standardCredit: 100,
+        specifiedCredit: 0,
+      },
+      allowed_credit: 600,
+    },
+  }, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(
+    xml,
+    "<CYGeneralBusinessCrItemCnt>2</CYGeneralBusinessCrItemCnt>",
+  );
+  assertStringIncludes(xml, "<Form8826CYCreditsGrp");
+  await validateXsd(xml, "mixed Form 8826 credit on Part III line 1e");
 });
 
 Deno.test({

@@ -8,6 +8,11 @@ import {
 } from "../../../nodes/inputs/f3800/calculation.ts";
 import { inputSchema as f3800InputSchema } from "../../../nodes/inputs/f3800/index.ts";
 import {
+  calculateForm8582CR,
+  inputSchema as f8582crInputSchema,
+  PassiveCreditReportingRoute,
+} from "../../../nodes/intermediate/forms/form8582cr/index.ts";
+import {
   calculateForm8826,
   inputSchema as f8826InputSchema,
 } from "../../../nodes/inputs/f8826/index.ts";
@@ -34,6 +39,7 @@ import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import { buildIRS3800Document } from "./f3800_document.ts";
 import { joinForm3800DocumentParts } from "./f3800_join.ts";
 import { buildForm3800NonpassiveParts } from "./f3800_nonpassive.ts";
+import { sameForm3800PassiveAllocations } from "./f3800_passive_link.ts";
 import { buildForm3800PassiveRowXml } from "./f3800_passive_rows.ts";
 
 const amount = z.number().finite().nonnegative();
@@ -68,6 +74,26 @@ type PendingForm3800 = Partial<z.infer<typeof f3800InputSchema>> & {
 
 function sameMoney(a: number, b: number): boolean {
   return Math.round(a * 100) === Math.round(b * 100);
+}
+
+function reconcilePassiveSources(
+  fields: z.infer<typeof f3800InputSchema>,
+  context: MefBuildContext,
+): void {
+  const sources = fields.passive_source_allocations ?? [];
+  if (sources.length === 0) return;
+  if (context.documentIdsByPendingKey?.form8582cr?.length !== 1) {
+    throw new Error("Form 3800 passive credit needs one attached Form 8582-CR");
+  }
+  const filedSource = f8582crInputSchema.parse(context.pending?.form8582cr);
+  const calculated = calculateForm8582CR(filedSource).sourceAllocations.filter(
+    (source) => source.reporting_route !== PassiveCreditReportingRoute.Form8834,
+  );
+  if (!sameForm3800PassiveAllocations(sources, calculated)) {
+    throw new Error(
+      "Form 3800 passive credit sources differ from filed Form 8582-CR",
+    );
+  }
 }
 
 const filedReturnSchema = z.object({
@@ -544,6 +570,7 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
       return "<IRS3800><CAMTAndBEATInd>false</CAMTAndBEATInd></IRS3800>";
     }
     reconcileFiledTaxContext(tax, fields.allowed_credit, context);
+    reconcilePassiveSources(parsed, context);
     if (
       lines.line6 > 0 &&
       context.documentIdsByPendingKey.form6251?.length !== 1

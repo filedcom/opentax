@@ -156,6 +156,7 @@ function allocateCreditsToSources(
     form3800_credit_line: source.form3800_credit_line,
     current_year_credit: source.current_year_credit,
     prior_unallowed_credits: source.prior_unallowed_credits,
+    publicly_traded_partnership: source.publicly_traded_partnership,
     total_credit: totals[index],
     special_allowed_credit: specialAllowed[index],
     unallowed_credit: unallowed[index],
