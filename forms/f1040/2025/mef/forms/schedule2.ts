@@ -26,6 +26,7 @@ export interface Fields {
   line17f_medicare_advantage_msa_tax?: number | null;
   line17p_form8621_interest?: number | null;
   line17z_other_additional_taxes?: number | null;
+  line20_965_tax_installment?: number | null;
 }
 
 type Input = Partial<Fields> & Record<string, unknown>;
@@ -48,6 +49,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line17c_hsa_penalty", "HSADistriAddnlPercentTaxAmt"],
   ["line17e_archer_msa_tax", "ArcherMSAAddnlDistriTaxAmt"],
   ["line17f_medicare_advantage_msa_tax", "MedicareMSAAddnlDistriTaxAmt"],
+  ["line20_965_tax_installment", "Section965TaxInstallmentAmt"],
 ];
 
 // Aggregated mappings: multiple inputSchema fields -> single XSD element
@@ -85,6 +87,7 @@ const ELEMENT_ORDER = [
   "ExcessParachutePaymentAmt",
   "InterestOnEachNetIncrInTaxAmt",
   "TotalAnyOtherTaxesAmt",
+  "Section965TaxInstallmentAmt",
   "TotalOtherTaxesAmt",
 ] as const;
 

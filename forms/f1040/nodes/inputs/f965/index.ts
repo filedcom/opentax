@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
@@ -14,7 +14,7 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 //   Year 7:    20%
 //   Year 8:    25%
 // TY2025 is the 8th (final) installment year for the original 2017 inclusion.
-// Current-year installment (Form 965-A Part II col (k)) → Schedule 2 line 9.
+// Current-year installment (Form 965-A Part II col (k)) → Schedule 2 line 20.
 
 // Transfer agreement type — which Form 965-X was filed, if any
 export enum TransferAgreementType {
@@ -40,7 +40,7 @@ export const itemSchema = z.object({
   // Form 965-A Part I col (g) checkbox
   installment_election: z.boolean(),
   // Current-year installment payment (Form 965-A Part II col (k))
-  // This amount flows to Schedule 2 line 9
+  // This amount flows to Schedule 2 line 20, not line 21/Form 1040 line 23.
   current_year_installment: z.number().nonnegative(),
   // Transfer agreement type — which companion form was filed, if any
   // Form 965-C, 965-D, or 965-E; informational metadata (does not change amount)
@@ -62,14 +62,17 @@ type F965Items = F965Item[];
 
 // Sum of all current-year installment payments across all inclusion years
 function totalCurrentYearInstallment(items: F965Items): number {
-  return items.reduce((sum, item) => sum + (item.current_year_installment ?? 0), 0);
+  return items.reduce(
+    (sum, item) => sum + (item.current_year_installment ?? 0),
+    0,
+  );
 }
 
-// Route total current-year installment to Schedule 2 line 9 if nonzero
+// Route total current-year installment to Schedule 2 line 20 if nonzero.
 function schedule2Output(items: F965Items) {
   const total = totalCurrentYearInstallment(items);
   if (total === 0) return [];
-  return [output(schedule2, { line9_965_net_tax_liability: total })];
+  return [output(schedule2, { line20_965_tax_installment: total })];
 }
 
 class F965Node extends TaxNode<typeof inputSchema> {

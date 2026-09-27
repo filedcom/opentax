@@ -237,9 +237,9 @@ Deno.test("calc: line17_exit_tax alone routes to f1040 line23", () => {
   assertEquals(fieldsOf(result.outputs, f1040)!.line23_other_taxes, 50_000);
 });
 
-Deno.test("calc: line9_965_net_tax_liability alone routes to f1040 line23", () => {
-  const result = compute({ line9_965_net_tax_liability: 10_000 });
-  assertEquals(fieldsOf(result.outputs, f1040)!.line23_other_taxes, 10_000);
+Deno.test("calc: line20 section 965 installment does not enter Form 1040 line 23", () => {
+  const result = compute({ line20_965_tax_installment: 10_000 });
+  assertEquals(fieldsOf(result.outputs, f1040), undefined);
 });
 
 Deno.test("routing: mixed Part I and Part II taxes stay separated", () => {
@@ -263,7 +263,7 @@ Deno.test("agg: all fields populated — grand total is correct sum", () => {
     line6_uncollected_8919: 500,
     line9_household_employment: 600,
     line8_form5329_tax: 700,
-    line9_965_net_tax_liability: 800,
+    line20_965_tax_installment: 800,
     line17b_mortgage_subsidy_recapture: 1_000,
     line16_lihtc_recapture: 1_100,
     line11_additional_medicare: 1_200,
@@ -283,7 +283,7 @@ Deno.test("agg: all fields populated — grand total is correct sum", () => {
   });
   const fields = fieldsOf(result.outputs, f1040)!;
   assertEquals(fields.line17_additional_taxes, 1_200);
-  assertEquals(fields.line23_other_taxes, 32_000);
+  assertEquals(fields.line23_other_taxes, 31_200);
 });
 
 // ── Previously untested fields ───────────────────────────────────────────────

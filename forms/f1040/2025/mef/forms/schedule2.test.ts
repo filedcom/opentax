@@ -166,6 +166,15 @@ Deno.test("TY2025 mortgage and housing recaptures use lines 17b and 16", () => {
   );
 });
 
+Deno.test("section 965 installment stays on Schedule 2 line 20, outside line 21", () => {
+  const result = schedule2.build({ line20_965_tax_installment: 8_000 });
+  assertStringIncludes(
+    result,
+    "<Section965TaxInstallmentAmt>8000</Section965TaxInstallmentAmt>",
+  );
+  assertEquals(result.includes("<TotalOtherTaxesAmt>"), false);
+});
+
 Deno.test("every mapped Schedule 2 field survives the schema-order builder", () => {
   const fields = Object.fromEntries(FIELD_MAP.map(([key]) => [key, 1]));
   const result = schedule2.build(fields);

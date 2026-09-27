@@ -146,10 +146,10 @@ Deno.test("f965.compute: current_year_installment absent (uses 0 default) — no
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("f965.compute: current_year_installment routes to schedule2 line9_965_net_tax_liability", () => {
+Deno.test("f965.compute: current_year_installment routes to schedule2 line20_965_tax_installment", () => {
   const result = compute([minimalItem({ current_year_installment: 8000 })]);
   const fields = fieldsOf(result.outputs, schedule2)!;
-  assertEquals(fields.line9_965_net_tax_liability, 8000);
+  assertEquals(fields.line20_965_tax_installment, 8000);
 });
 
 Deno.test("f965.compute: transfer_agreement_type does not change routing amount", () => {
@@ -163,8 +163,8 @@ Deno.test("f965.compute: transfer_agreement_type does not change routing amount"
   })]);
   const fieldsNone = fieldsOf(resultNone.outputs, schedule2)!;
   const fieldsC = fieldsOf(resultC.outputs, schedule2)!;
-  assertEquals(fieldsNone.line9_965_net_tax_liability, 5000);
-  assertEquals(fieldsC.line9_965_net_tax_liability, 5000);
+  assertEquals(fieldsNone.line20_965_tax_installment, 5000);
+  assertEquals(fieldsC.line20_965_tax_installment, 5000);
 });
 
 Deno.test("f965.compute: installment_election false, current_year_installment 0 — no output", () => {
@@ -190,21 +190,33 @@ Deno.test("f965.compute: s_corp_deferred_amount does not route to schedule2", ()
 
 Deno.test("f965.compute: multiple items — installments summed into one schedule2 output", () => {
   const result = compute([
-    minimalItem({ tax_year_of_inclusion: "2017", current_year_installment: 8000 }),
-    minimalItem({ tax_year_of_inclusion: "2018", current_year_installment: 4000 }),
+    minimalItem({
+      tax_year_of_inclusion: "2017",
+      current_year_installment: 8000,
+    }),
+    minimalItem({
+      tax_year_of_inclusion: "2018",
+      current_year_installment: 4000,
+    }),
   ]);
   const fields = fieldsOf(result.outputs, schedule2)!;
-  assertEquals(fields.line9_965_net_tax_liability, 12000);
-  assertEquals(result.outputs.filter((o) => o.nodeType === "schedule2").length, 1);
+  assertEquals(fields.line20_965_tax_installment, 12000);
+  assertEquals(
+    result.outputs.filter((o) => o.nodeType === "schedule2").length,
+    1,
+  );
 });
 
 Deno.test("f965.compute: multiple items, one zero — sum excludes zero", () => {
   const result = compute([
-    minimalItem({ tax_year_of_inclusion: "2017", current_year_installment: 6000 }),
+    minimalItem({
+      tax_year_of_inclusion: "2017",
+      current_year_installment: 6000,
+    }),
     minimalItem({ tax_year_of_inclusion: "2018", current_year_installment: 0 }),
   ]);
   const fields = fieldsOf(result.outputs, schedule2)!;
-  assertEquals(fields.line9_965_net_tax_liability, 6000);
+  assertEquals(fields.line20_965_tax_installment, 6000);
 });
 
 Deno.test("f965.compute: multiple items all zero — no output", () => {
@@ -227,7 +239,7 @@ Deno.test("f965.compute: 8% installment (year 1–5) — exact amount passed thr
     current_year_installment: 8_000,
   })]);
   const fields = fieldsOf(result.outputs, schedule2)!;
-  assertEquals(fields.line9_965_net_tax_liability, 8_000);
+  assertEquals(fields.line20_965_tax_installment, 8_000);
 });
 
 Deno.test("f965.compute: 25% installment (year 8 — final) — exact amount passed through", () => {
@@ -238,7 +250,7 @@ Deno.test("f965.compute: 25% installment (year 8 — final) — exact amount pas
     current_year_installment: 25_000,
   })]);
   const fields = fieldsOf(result.outputs, schedule2)!;
-  assertEquals(fields.line9_965_net_tax_liability, 25_000);
+  assertEquals(fields.line20_965_tax_installment, 25_000);
 });
 
 // =============================================================================
@@ -290,7 +302,7 @@ Deno.test("f965.compute: transfer_agreement_type C — still routes installment 
     transfer_agreement_type: TransferAgreementType.C,
   })]);
   const fields = fieldsOf(result.outputs, schedule2)!;
-  assertEquals(fields.line9_965_net_tax_liability, 9000);
+  assertEquals(fields.line20_965_tax_installment, 9000);
 });
 
 Deno.test("f965.compute: transfer_agreement_type D — still routes installment to schedule2", () => {
@@ -299,7 +311,7 @@ Deno.test("f965.compute: transfer_agreement_type D — still routes installment 
     transfer_agreement_type: TransferAgreementType.D,
   })]);
   const fields = fieldsOf(result.outputs, schedule2)!;
-  assertEquals(fields.line9_965_net_tax_liability, 7500);
+  assertEquals(fields.line20_965_tax_installment, 7500);
 });
 
 Deno.test("f965.compute: transfer_agreement_type E — still routes installment to schedule2", () => {
@@ -308,7 +320,7 @@ Deno.test("f965.compute: transfer_agreement_type E — still routes installment 
     transfer_agreement_type: TransferAgreementType.E,
   })]);
   const fields = fieldsOf(result.outputs, schedule2)!;
-  assertEquals(fields.line9_965_net_tax_liability, 6000);
+  assertEquals(fields.line20_965_tax_installment, 6000);
 });
 
 Deno.test("f965.compute: remaining_balance present — does not route to schedule2", () => {
@@ -323,7 +335,7 @@ Deno.test("f965.compute: remaining_balance present — does not route to schedul
 Deno.test("f965.compute: large installment amount — routes correctly", () => {
   const result = compute([minimalItem({ current_year_installment: 999_999 })]);
   const fields = fieldsOf(result.outputs, schedule2)!;
-  assertEquals(fields.line9_965_net_tax_liability, 999_999);
+  assertEquals(fields.line20_965_tax_installment, 999_999);
 });
 
 // =============================================================================
@@ -355,6 +367,6 @@ Deno.test("f965.compute: smoke test — two inclusion years, installment electio
 
   // Total installment = 20000 + 8000 = 28000 → schedule2 line9
   const fields = fieldsOf(result.outputs, schedule2)!;
-  assertEquals(fields.line9_965_net_tax_liability, 28_000);
+  assertEquals(fields.line20_965_tax_installment, 28_000);
   assertEquals(result.outputs.length, 1);
 });

@@ -73,6 +73,7 @@ Deno.test({
       line16_lihtc_recapture: 750,
       line17b_mortgage_subsidy_recapture: 1_000,
       line17c_hsa_penalty: 300,
+      line20_965_tax_installment: 8_000,
     },
   }, extractFilerIdentity(singleGeneral()));
   assertStringIncludes(xml, "<RecaptureTaxAmt>750</RecaptureTaxAmt>");
@@ -80,7 +81,34 @@ Deno.test({
     xml,
     "<MortgSbsdyRecaptureTaxAmt>1000</MortgSbsdyRecaptureTaxAmt>",
   );
+  assertStringIncludes(
+    xml,
+    "<Section965TaxInstallmentAmt>8000</Section965TaxInstallmentAmt>",
+  );
   await validateXsd(xml, "TY2025 Schedule 2 lines 16, 17b, and 17c");
+});
+
+Deno.test("section 965 installment reaches Schedule 2 but not Form 1040 line 23", () => {
+  const result = runReturn({
+    general: singleGeneral(),
+    f965: [{
+      tax_year_of_inclusion: "2017",
+      net_965_tax_liability: 32_000,
+      installment_election: true,
+      current_year_installment: 8_000,
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(
+    (result.pending.schedule2 as { line20_965_tax_installment?: number })
+      .line20_965_tax_installment,
+    8_000,
+  );
+  assertEquals(
+    (result.pending.f1040 as { line23_other_taxes?: number })
+      .line23_other_taxes ?? 0,
+    0,
+  );
 });
 
 Deno.test({

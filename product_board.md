@@ -104,6 +104,10 @@ line 13 aggregate in schema order. Form 5405 repayment is rejected for TY2025
 because the IRS ended that form after TY2024. The source and XSD cases are
 written but unrun; Form 8611 attachment and other Schedule 2 routes still need
 audit.
+The section 965 installment now goes to Schedule 2 line 20 and is excluded
+from line 21/Form 1040 line 23, matching the printed 2025 line 21 sum. The
+Form 965-A attachment path is still open, so this is not a complete section
+965 filing route. These cases are written but unrun.
 
 The current untested Form 8936 commercial-vehicle pass replaces the new/used
 boolean with one three-way credit type and adds Schedule A Part V basis, Section
