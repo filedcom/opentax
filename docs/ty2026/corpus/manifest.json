@@ -916,6 +916,16 @@
       "sha256": "55f531aad380ec1ac63cc697e0f5d0cd603c503e18cebd9fb04b0bd46633aa35",
       "year_check": "2026-present",
       "retrieved_utc": "2026-09-27T10:26:30.950147+00:00"
+    },
+    {
+      "path": "draft/i8606.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/i8606--dft.pdf",
+      "kind": "draft-instructions",
+      "status": "downloaded",
+      "bytes": 705603,
+      "sha256": "d2717dedf7b5f7025fbbec73f1be0093adbe306cdb6e97b2e32f8a54b8e51878",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-09-27T10:48:00+00:00"
     }
   ]
 }

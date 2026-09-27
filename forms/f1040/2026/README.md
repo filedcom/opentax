@@ -169,6 +169,10 @@ taxable totals, reach AGI and Form 1040 lines 5a/5b, and mark draft line
 contract.
 Normal code 7 pensions with a payer-determined taxable box 2a below the
 gross box 1 now use the same separate totals without the rollover box.
+The [Form 8606 contract](../../../docs/ty2026/FORM8606-GRAPH.md) uses the
+newly pinned 2026 instructions to specify the owner-wide IRA basis inputs,
+calculation order, PDF, and MeF work that remains before IRA basis or Roth
+conversion cases can enter this registry.
 An early SIMPLE IRA distribution in its first two years uses a dedicated
 Form 5329 Part I node at 25%, with its three printed draft pages attached
 to the return PDF. The [Form 5329 contract](../../../docs/ty2026/FORM5329-GRAPH.md)

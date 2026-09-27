@@ -39,6 +39,8 @@ for the implementation contract.
   IRA/pension downstream routes, and filing gates.
 - [`FORM5329-GRAPH.md`](FORM5329-GRAPH.md): early SIMPLE IRA Part I tax and
   attachment route, with the remaining additional-tax work.
+- [`FORM8606-GRAPH.md`](FORM8606-GRAPH.md): 2026 IRA basis, conversion,
+  Roth-distribution, spouse-form, and carryforward implementation contract.
 - [`CAPITAL-GAIN-GRAPH.md`](CAPITAL-GAIN-GRAPH.md): direct 1099-DIV box 2a
   decision, Schedule D/8949 dependencies, and PDF/MeF work order.
 - [`PDF-SCHEDULED-MAP.md`](PDF-SCHEDULED-MAP.md) and
