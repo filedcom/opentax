@@ -1133,10 +1133,15 @@ it across all positive-gain properties before selecting deferred properties,
 and emits unregistered Section D, Section C column (g), and native per-property
 allocation XML. The document IDs, security, agent, and waiver confirmations are
 source assertions; the hypothetical return PDFs, agreement copy, original
-mailing, and IRS acceptance are not authenticated or attached. Annual statement
-facts, exception source corroboration, property-character gain/loss routing,
-PDF, registered MeF serialization, source reconciliation, and IRS business rules
-remain open. An unregistered initial-form bundle now composes Parts I and II in
+mailing, and IRS acceptance are not authenticated or attached. A separate
+unregistered annual input and Part III XML builder now represent prior deferred
+properties, 2025 dispositions, and eligible-compensation and nongrantor-trust
+distributions. It rejects unsupported pre-June-17-2008 dates and more than
+three distribution rows per category; prior Form 8854 amounts, disposition
+reporting, and payment evidence remain entered source assertions. Exception
+source corroboration, property-character gain/loss routing, PDF, registered MeF
+serialization, source reconciliation, and IRS business rules remain open. An
+unregistered initial-form bundle now composes Parts I and II in
 XSD order and requires explicit MeF document IDs for native statements and the
 known binary attachments, including deferral hypotheticals, agreement copy,
 and trust valuation rulings. It validates ID shape and uniqueness, but cannot

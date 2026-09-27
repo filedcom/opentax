@@ -25,7 +25,7 @@ function validISODate(value: string): boolean {
     date.toISOString().slice(0, 10) === value;
 }
 
-const dateSchema = z.string().refine(
+export const dateSchema = z.string().refine(
   validISODate,
   "Date must be valid ISO YYYY-MM-DD",
 );
