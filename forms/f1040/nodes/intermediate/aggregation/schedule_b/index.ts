@@ -15,6 +15,7 @@ import { form8960 } from "../../forms/form8960/index.ts";
 import { scheduleA } from "../../../inputs/schedule_a/index.ts";
 import { normalizeArray } from "../../../utils.ts";
 import { scheduleBFilingRequired } from "../../../../schedule_b_filing.ts";
+import { sellerFinancedBuyerSchema } from "../../../../seller_financed_buyer.ts";
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
@@ -31,15 +32,7 @@ const interestDetailSchema = z.object({
   accrued: z.number().nonnegative(),
   oid_adjustment: z.number().nonnegative(),
   bond_premium: z.number().nonnegative(),
-  seller_financed_buyer: z.object({
-    name: z.string().min(1),
-    ssn: z.string().regex(/^[0-9]{9}$/),
-    address_line1: z.string().min(1),
-    address_line2: z.string().optional(),
-    city: z.string().min(1),
-    state: z.string().regex(/^[A-Z]{2}$/),
-    zip: z.string().regex(/^[0-9]{5}([0-9]{4}|[0-9]{7})?$/),
-  }).optional(),
+  seller_financed_buyer: sellerFinancedBuyerSchema.optional(),
 });
 
 const dividendDetailSchema = z.object({

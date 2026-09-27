@@ -7,6 +7,7 @@ import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
 import { form_1116 } from "../../intermediate/forms/form_1116/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
+import type { SellerFinancedBuyer } from "../../../seller_financed_buyer.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -16,15 +17,7 @@ type ItemOverrides = Partial<{
   payer_name: string;
   payer_tin: string;
   seller_financed: boolean;
-  seller_financed_buyer: {
-    name: string;
-    ssn: string;
-    address_line1: string;
-    address_line2?: string;
-    city: string;
-    state: string;
-    zip: string;
-  };
+  seller_financed_buyer: SellerFinancedBuyer;
   box1: number;
   investment_property_for_form4952: boolean;
   box2: number;
@@ -59,7 +52,8 @@ function minimalItem(overrides: ItemOverrides = {}): ItemOverrides {
   };
 }
 
-const buyer = {
+const buyer: SellerFinancedBuyer = {
+  address_type: "us",
   name: "Jane Buyer",
   ssn: "123456789",
   address_line1: "456 Oak Ave",
@@ -220,6 +214,47 @@ Deno.test("schema: seller_financed with all required fields is valid", () => {
       seller_financed_buyer?: typeof buyer;
     })?.seller_financed_buyer,
     buyer,
+  );
+});
+
+Deno.test("schema: seller-financed foreign buyer uses a complete foreign address", () => {
+  const foreignBuyer: SellerFinancedBuyer = {
+    address_type: "foreign",
+    name: "Jane Buyer",
+    ssn: "123456789",
+    address_line1: "10 Queen St",
+    city: "Toronto",
+    province_or_state: "Ontario",
+    country_code: "CA",
+    foreign_postal_code: "M5H2N2",
+  };
+  const result = compute([minimalItem({
+    seller_financed: true,
+    seller_financed_buyer: foreignBuyer,
+    box1: 900,
+  })]);
+  assertEquals(
+    (fieldsOf(result.outputs, schedule_b)?.interest_detail as {
+      seller_financed_buyer?: SellerFinancedBuyer;
+    })?.seller_financed_buyer,
+    foreignBuyer,
+  );
+  assertThrows(() =>
+    compute([minimalItem({
+      seller_financed: true,
+      box1: 900,
+      seller_financed_buyer: { ...foreignBuyer, country_code: "" },
+    })])
+  );
+  assertThrows(() =>
+    inputSchema.parse({
+      f1099ints: [{
+        payer_name: "Buyer mortgage",
+        seller_financed: true,
+        box1: 900,
+        seller_financed_buyer: { ...foreignBuyer, state: "TX" },
+      }],
+    })
   );
 });
 

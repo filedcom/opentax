@@ -105,6 +105,7 @@ Deno.test("schedule_b: gross interest and adjustment lines reconcile to line 2",
 Deno.test("schedule_b: seller-financed buyer row precedes ordinary interest", () => {
   const seller = {
     buyer: {
+      address_type: "us" as const,
       name: "Jane Buyer",
       ssn: "123456789",
       address_line1: "456 Oak Ave",
@@ -143,6 +144,34 @@ Deno.test("schedule_b: seller-financed buyer row precedes ordinary interest", ()
       foreign_trust_question: false,
     })
   );
+});
+
+Deno.test("schedule_b: foreign seller-financed buyer uses the foreign address choice", () => {
+  const xml = scheduleB.build({
+    seller_financed_rows: [{
+      buyer: {
+        address_type: "foreign",
+        name: "Jane Buyer",
+        ssn: "123456789",
+        address_line1: "10 Queen St",
+        city: "Toronto",
+        province_or_state: "Ontario",
+        country_code: "CA",
+        foreign_postal_code: "M5H2N2",
+      },
+      amount: 900,
+    }],
+    interest_line1_subtotal: 900,
+    print_line2_total: 900,
+    print_line4_total: 900,
+    foreign_accounts_question: false,
+    foreign_trust_question: false,
+  });
+  assertStringIncludes(xml, "<SellerFinancedAddressForeign>");
+  assertStringIncludes(xml, "<ProvinceOrStateNm>Ontario</ProvinceOrStateNm>");
+  assertStringIncludes(xml, "<CountryCd>CA</CountryCd>");
+  assertStringIncludes(xml, "<ForeignPostalCd>M5H2N2</ForeignPostalCd>");
+  assertNotIncludes(xml, "<SellerFinancedAddressUS>");
 });
 
 Deno.test("schedule_b: MeF refuses a required Part III with unanswered questions", () => {

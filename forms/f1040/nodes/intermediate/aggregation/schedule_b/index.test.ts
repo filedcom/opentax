@@ -179,6 +179,7 @@ Deno.test("gross 1099-INT and other net interest sources each appear once", () =
 
 Deno.test("seller-financed interest is first and retains buyer identity", () => {
   const buyer = {
+    address_type: "us",
     name: "Jane Buyer",
     ssn: "123456789",
     address_line1: "456 Oak Ave",

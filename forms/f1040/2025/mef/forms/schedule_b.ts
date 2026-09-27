@@ -1,19 +1,15 @@
 import { element, elements } from "../../../mef/xml.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 import { scheduleBFilingRequired } from "../../../schedule_b_filing.ts";
+import {
+  type SellerFinancedBuyer,
+  sellerFinancedBuyerSchema,
+} from "../../../seller_financed_buyer.ts";
 
 export interface Fields {
   interest_rows?: readonly { payerName: string; amount: number }[] | null;
   seller_financed_rows?: readonly {
-    buyer: {
-      name: string;
-      ssn: string;
-      address_line1: string;
-      address_line2?: string;
-      city: string;
-      state: string;
-      zip: string;
-    };
+    buyer: SellerFinancedBuyer;
     amount: number;
   }[];
   payer_name?: string | readonly string[] | null;
@@ -119,10 +115,7 @@ function buildIRS1040ScheduleB(fields: Input): string {
   }
   if (
     sellerRows.some((row) =>
-      !row?.buyer?.name?.trim() || !/^[0-9]{9}$/.test(row.buyer.ssn) ||
-      !row.buyer.address_line1?.trim() || !row.buyer.city?.trim() ||
-      !/^[A-Z]{2}$/.test(row.buyer.state) ||
-      !/^[0-9]{5}([0-9]{4}|[0-9]{7})?$/.test(row.buyer.zip) ||
+      !sellerFinancedBuyerSchema.safeParse(row?.buyer).success ||
       !Number.isFinite(row.amount) || row.amount <= 0
     )
   ) {
@@ -134,15 +127,30 @@ function buildIRS1040ScheduleB(fields: Input): string {
   const sellerXml = sellerRows.map((row) =>
     elements("Form1040SchBPartIGroup1", [
       element("SellerFinancedNm", row.buyer.name),
-      elements("SellerFinancedAddressUS", [
-        element("AddressLine1Txt", row.buyer.address_line1),
-        row.buyer.address_line2
-          ? element("AddressLine2Txt", row.buyer.address_line2)
-          : "",
-        element("CityNm", row.buyer.city),
-        element("StateAbbreviationCd", row.buyer.state),
-        element("ZIPCd", row.buyer.zip),
-      ]),
+      row.buyer.address_type === "us"
+        ? elements("SellerFinancedAddressUS", [
+          element("AddressLine1Txt", row.buyer.address_line1),
+          row.buyer.address_line2
+            ? element("AddressLine2Txt", row.buyer.address_line2)
+            : "",
+          element("CityNm", row.buyer.city),
+          element("StateAbbreviationCd", row.buyer.state),
+          element("ZIPCd", row.buyer.zip),
+        ])
+        : elements("SellerFinancedAddressForeign", [
+          element("AddressLine1Txt", row.buyer.address_line1),
+          row.buyer.address_line2
+            ? element("AddressLine2Txt", row.buyer.address_line2)
+            : "",
+          element("CityNm", row.buyer.city),
+          row.buyer.province_or_state
+            ? element("ProvinceOrStateNm", row.buyer.province_or_state)
+            : "",
+          element("CountryCd", row.buyer.country_code),
+          row.buyer.foreign_postal_code
+            ? element("ForeignPostalCd", row.buyer.foreign_postal_code)
+            : "",
+        ]),
       element("SellerFinancedSSN", row.buyer.ssn),
       element("SellerFinancedMortgageIntAmt", row.amount),
     ])

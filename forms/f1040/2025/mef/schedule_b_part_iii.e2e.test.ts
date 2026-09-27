@@ -154,6 +154,7 @@ Deno.test("seller-financed buyer identity reaches Schedule B MeF", () => {
         payer_name: "Buyer mortgage",
         seller_financed: true,
         seller_financed_buyer: {
+          address_type: "us",
           name: "Jane Buyer",
           ssn: "123456789",
           address_line1: "456 Oak Ave",
@@ -182,6 +183,44 @@ Deno.test("seller-financed buyer identity reaches Schedule B MeF", () => {
     xml,
     "<TotalSellerFinancedMortgIntAmt>900</TotalSellerFinancedMortgIntAmt>",
   );
+});
+
+Deno.test("foreign seller-financed buyer reaches Schedule B MeF", () => {
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    {
+      general,
+      f1099int: [{
+        payer_name: "Buyer mortgage",
+        seller_financed: true,
+        seller_financed_buyer: {
+          address_type: "foreign",
+          name: "Jane Buyer",
+          ssn: "123456789",
+          address_line1: "10 Queen St",
+          city: "Toronto",
+          province_or_state: "Ontario",
+          country_code: "CA",
+          foreign_postal_code: "M5H2N2",
+        },
+        box1: 900,
+      }],
+      schedule_b_part_iii: {
+        foreign_accounts_question: false,
+        foreign_trust_question: false,
+      },
+    },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(xml, "<SellerFinancedAddressForeign>");
+  assertStringIncludes(xml, "<CountryCd>CA</CountryCd>");
+  assertStringIncludes(xml, "<ForeignPostalCd>M5H2N2</ForeignPostalCd>");
 });
 
 Deno.test("1099-OID premiums and nominee amount reach Schedule B adjustments", () => {

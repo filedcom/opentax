@@ -101,6 +101,7 @@ Deno.test({
     schedule_b: {
       seller_financed_rows: [{
         buyer: {
+          address_type: "us",
           name: "Jane Buyer",
           ssn: "123456789",
           address_line1: "456 Oak Ave",
@@ -159,6 +160,50 @@ Deno.test({
     },
   }, filer);
   assertStringIncludes(xml, "<NomineeDividendAmt ");
+  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(path, xml);
+    const result = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", XSD_PATH, path],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
+  } finally {
+    await Deno.remove(path);
+  }
+});
+
+Deno.test({
+  name: "XSD: Schedule B seller-financed foreign buyer address",
+  ignore: !xsdAvailable,
+  sanitizeOps: false,
+  sanitizeResources: false,
+}, async () => {
+  const xml = buildMefXml({
+    f1040: { filing_status: "single", line2b_taxable_interest: 900 },
+    schedule_b: {
+      seller_financed_rows: [{
+        buyer: {
+          address_type: "foreign",
+          name: "Jane Buyer",
+          ssn: "123456789",
+          address_line1: "10 Queen St",
+          city: "Toronto",
+          province_or_state: "Ontario",
+          country_code: "CA",
+          foreign_postal_code: "M5H2N2",
+        },
+        amount: 900,
+      }],
+      interest_line1_subtotal: 900,
+      print_line2_total: 900,
+      print_line4_total: 900,
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    },
+  }, filer);
+  assertStringIncludes(xml, "<SellerFinancedAddressForeign>");
   const path = await Deno.makeTempFile({ suffix: ".xml" });
   try {
     await Deno.writeTextFile(path, xml);

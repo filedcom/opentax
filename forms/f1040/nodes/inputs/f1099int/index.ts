@@ -22,21 +22,13 @@ import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
 import { form4952 } from "../../intermediate/forms/form4952/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import { sellerFinancedBuyerSchema } from "../../../seller_financed_buyer.ts";
 
 export const itemSchema = z.object({
   payer_name: z.string().min(1),
   payer_tin: z.string().optional(),
   seller_financed: z.boolean().optional(),
-  seller_financed_buyer: z.object({
-    name: z.string().regex(/^([A-Za-z0-9'\-] ?)*[A-Za-z0-9'\-]$/).max(35),
-    ssn: z.string().regex(/^[0-9]{9}$/),
-    address_line1: z.string().regex(/^[A-Za-z0-9]( ?[A-Za-z0-9\-/])*$/).max(35),
-    address_line2: z.string().regex(/^[A-Za-z0-9]( ?[A-Za-z0-9\-/])*$/).max(35)
-      .optional(),
-    city: z.string().regex(/^([A-Za-z] ?)*[A-Za-z]$/).max(22),
-    state: z.string().regex(/^[A-Z]{2}$/),
-    zip: z.string().regex(/^[0-9]{5}([0-9]{4}|[0-9]{7})?$/),
-  }).optional(),
+  seller_financed_buyer: sellerFinancedBuyerSchema.optional(),
   box1: z.number().nonnegative().optional(),
   // Affirm that this payer's taxable interest is from property held for
   // investment and is not already in Form 4952's manual "other" income.

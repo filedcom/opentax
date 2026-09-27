@@ -1,16 +1,12 @@
 import { PDFDocument, StandardFonts } from "pdf-lib";
 import type { FilerIdentity } from "../../../mef/header.ts";
+import {
+  type SellerFinancedBuyer,
+  sellerFinancedBuyerSchema,
+} from "../../../seller_financed_buyer.ts";
 
 interface SellerRow {
-  buyer: {
-    name: string;
-    ssn: string;
-    address_line1: string;
-    address_line2?: string;
-    city: string;
-    state: string;
-    zip: string;
-  };
+  buyer: SellerFinancedBuyer;
   amount: number;
 }
 
@@ -29,10 +25,7 @@ export async function appendScheduleBSellerFinancedStatement(
   const rows = rawRows as SellerRow[];
   if (
     rows.some((row) =>
-      !row?.buyer?.name?.trim() || !/^[0-9]{9}$/.test(row.buyer.ssn) ||
-      !row.buyer.address_line1?.trim() || !row.buyer.city?.trim() ||
-      !/^[A-Z]{2}$/.test(row.buyer.state) ||
-      !/^[0-9]{5}([0-9]{4}|[0-9]{7})?$/.test(row.buyer.zip) ||
+      !sellerFinancedBuyerSchema.safeParse(row?.buyer).success ||
       !Number.isFinite(row.amount) || row.amount <= 0
     )
   ) {
@@ -74,7 +67,11 @@ export async function appendScheduleBSellerFinancedStatement(
       const y = 650 - (index - first) * 72;
       const address = [row.buyer.address_line1, row.buyer.address_line2]
         .filter(Boolean).join(", ");
-      const location = `${row.buyer.city}, ${row.buyer.state} ${row.buyer.zip}`;
+      const location = row.buyer.address_type === "us"
+        ? `${row.buyer.city}, ${row.buyer.state} ${row.buyer.zip}`
+        : [row.buyer.city, row.buyer.province_or_state].filter(Boolean).join(
+          ", ",
+        );
       page.drawText(`${index + 1}. ${row.buyer.name}  SSN: ${row.buyer.ssn}`, {
         x: 36,
         y,
@@ -83,6 +80,13 @@ export async function appendScheduleBSellerFinancedStatement(
       });
       page.drawText(address, { x: 50, y: y - 17, size: 9, font: regular });
       page.drawText(location, { x: 50, y: y - 34, size: 9, font: regular });
+      if (row.buyer.address_type === "foreign") {
+        page.drawText(
+          [row.buyer.country_code, row.buyer.foreign_postal_code]
+            .filter(Boolean).join(" "),
+          { x: 50, y: y - 51, size: 9, font: regular },
+        );
+      }
       page.drawText(`Interest: ${Math.round(row.amount)}`, {
         x: 430,
         y: y - 17,

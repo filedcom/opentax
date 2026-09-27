@@ -19,6 +19,7 @@ const filer: FilerIdentity = {
 
 const seller = {
   buyer: {
+    address_type: "us",
     name: "Jane Buyer",
     ssn: "123456789",
     address_line1: "456 Oak Ave",
@@ -50,6 +51,26 @@ Deno.test("Schedule B seller statement paginates after eight buyers", async () =
     })),
   }, filer);
   assertEquals(document.getPageCount(), 2);
+});
+
+Deno.test("Schedule B seller statement includes a foreign buyer address", async () => {
+  const document = await PDFDocument.create();
+  await appendScheduleBSellerFinancedStatement(document, {
+    seller_financed_rows: [{
+      buyer: {
+        address_type: "foreign",
+        name: "Jane Buyer",
+        ssn: "123456789",
+        address_line1: "10 Queen St",
+        city: "Toronto",
+        province_or_state: "Ontario",
+        country_code: "CA",
+        foreign_postal_code: "M5H2N2",
+      },
+      amount: 900,
+    }],
+  }, filer);
+  assertEquals(document.getPageCount(), 1);
 });
 
 Deno.test("Schedule B seller statement rejects missing buyer SSN", async () => {
