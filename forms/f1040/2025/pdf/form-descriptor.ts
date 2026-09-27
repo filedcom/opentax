@@ -80,6 +80,8 @@ export interface PdfFormDescriptor {
   readonly instances?: (
     fields: Record<string, unknown>,
   ) => ReadonlyArray<Record<string, unknown>>;
+  /** Zero-based source PDF pages to retain for a particular instance. */
+  readonly pageIndices?: (fields: Record<string, unknown>) => readonly number[];
   readonly fields: ReadonlyArray<PdfFieldEntry>;
   readonly filerFields?: ReadonlyArray<PdfFieldEntry>;
   readonly rows?: PdfRowDescriptor;

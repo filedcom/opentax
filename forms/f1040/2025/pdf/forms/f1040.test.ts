@@ -1,4 +1,4 @@
-import { assertEquals, assertMatch, assertThrows } from "@std/assert";
+import { assertEquals, assertMatch } from "@std/assert";
 import { irs1040Pdf } from "./f1040.ts";
 
 // ---------------------------------------------------------------------------
@@ -16,13 +16,8 @@ Deno.test("irs1040Pdf: pdfUrl points to IRS f1040", () => {
   );
 });
 
-Deno.test("irs1040Pdf: unresolved Form 8912 credit cannot print an unfinished return", () => {
-  assertThrows(
-    () =>
-      irs1040Pdf.projectFields?.({ form8912_source_lines: { line4: 100 } }, {}),
-    Error,
-    "matching Form 8912 PDF",
-  );
+Deno.test("irs1040Pdf: Form 8912 has its own PDF descriptor", () => {
+  assertEquals(irs1040Pdf.projectFields, undefined);
 });
 
 // ---------------------------------------------------------------------------

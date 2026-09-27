@@ -208,15 +208,19 @@ rows. The PDF statement still needs filled-render verification. The next Form
 another input, validates that amount against computed bond interest, and routes
 only the unreported balance to Schedule B. Positive credit was formerly blocked
 at final Form 1040 assembly. The current MeF path requires a finalized, attached
-Form 8912; the PDF path still stops until its matching Form 8912 PDF is built.
+Form 8912; the PDF path now has a descriptor but is not rendered or tested yet.
 These graph and duplicate-interest cases are written but unrun. The source node
 now hands separate Part I lines 1 through 4 to the Form 1040 sink instead of a
-tentative scalar. Multiple partially limited bond sources and CREB/QZAB
-deduction elections still stop MeF export pending bond-specific unused-credit
-treatment. Source-document identity reconciliation remains open. The Form
-1097-BTC reported-bond input now requires all 12 monthly credit boxes and checks
-their sum against annual box 1, captures box 2a's C/A/O code, and constrains box
-2b to the IRS 39-character alphanumeric identifier. It also rejects duplicate
+tentative scalar. The PDF build now maps Form 8912 Part I/II to its IRS widgets,
+adds 20-row Part III and one-bond Part IV pages as needed, and reconciles the
+printed credit with finalized Schedule 3 and the graph. Its descriptor and
+pagination cases are written but unrun; filled-render inspection is still
+required. Multiple partially limited bond sources and CREB/QZAB deduction
+elections still stop MeF export pending bond-specific unused-credit treatment.
+Source-document identity reconciliation remains open. The Form 1097-BTC
+reported-bond input now requires all 12 monthly credit boxes and checks their
+sum against annual box 1, captures box 2a's C/A/O code, and constrains box 2b to
+the IRS 39-character alphanumeric identifier. It also rejects duplicate
 issuer-EIN/unique-ID pairs within and across Form 8912 input items. These source
 cases are written but unrun. The actual annual 1097-BTC document, corrected
 statements, fiscal-year allocation, multi-bond type 1097-BTC source model, and
