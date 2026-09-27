@@ -1,8 +1,38 @@
-import { assertEquals } from "@std/assert";
-import { form8582cr, inputSchema } from "./index.ts";
+import { assertEquals, assertThrows } from "@std/assert";
+import {
+  calculateForm8582CRPartI,
+  form8582cr,
+  inputSchema,
+  PassiveCreditCategory,
+} from "./index.ts";
 import { FilingStatus } from "../../../types.ts";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { schedule3 } from "../../aggregation/schedule3/index.ts";
+
+function source(
+  category: PassiveCreditCategory,
+  current: number,
+  prior = 0,
+  activity = "Rental house",
+) {
+  return {
+    activity_reference: activity,
+    source_form: "Form 8820",
+    source_document_reference: `2025 ${activity} credit statement`,
+    category,
+    current_year_credit: current,
+    prior_unallowed_credit: prior,
+    publicly_traded_partnership: false,
+  };
+}
+
+function other(current: number, prior = 0, activity = "Clinical activity") {
+  return source(PassiveCreditCategory.Other, current, prior, activity);
+}
+
+function rental(current: number, prior = 0, activity = "Rental house") {
+  return source(PassiveCreditCategory.ActiveRental, current, prior, activity);
+}
 
 function compute(input: Record<string, unknown>) {
   return form8582cr.compute(
@@ -11,257 +41,215 @@ function compute(input: Record<string, unknown>) {
   );
 }
 
-function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
-  return result.outputs.find((o) => o.nodeType === nodeType);
+function allowed(result: ReturnType<typeof compute>): number {
+  return fieldsOf(result.outputs, schedule3)?.line6a_general_business_credit ??
+    0;
 }
 
-// =============================================================================
-// 1. Input Validation
-// =============================================================================
-
-Deno.test("form8582cr: valid minimal input passes", () => {
-  compute({
-    total_passive_credits: 1_000,
+Deno.test("Form 8582-CR identifies each current and prior credit source", () => {
+  const parsed = inputSchema.parse({
+    credit_sources: [other(1_000, 500)],
     regular_tax_all_income: 10_000,
     regular_tax_without_passive: 8_000,
-  });
-});
-
-Deno.test("form8582cr: negative total_passive_credits fails schema", () => {
-  const parsed = inputSchema.safeParse({
-    total_passive_credits: -500,
-    regular_tax_all_income: 10_000,
-    regular_tax_without_passive: 8_000,
-  });
-  assertEquals(parsed.success, false);
-});
-
-Deno.test("form8582cr: negative regular_tax_all_income fails schema", () => {
-  const parsed = inputSchema.safeParse({
-    total_passive_credits: 1_000,
-    regular_tax_all_income: -1,
-    regular_tax_without_passive: 0,
-  });
-  assertEquals(parsed.success, false);
-});
-
-Deno.test("form8582cr: negative regular_tax_without_passive fails schema", () => {
-  const parsed = inputSchema.safeParse({
-    total_passive_credits: 1_000,
-    regular_tax_all_income: 10_000,
-    regular_tax_without_passive: -1,
-  });
-  assertEquals(parsed.success, false);
-});
-
-// =============================================================================
-// 2. Zero Inputs — No Output
-// =============================================================================
-
-Deno.test("form8582cr: zero passive credits → no output", () => {
-  const result = compute({
-    total_passive_credits: 0,
-    regular_tax_all_income: 10_000,
-    regular_tax_without_passive: 8_000,
-  });
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("form8582cr: zero prior_unallowed and zero total_passive_credits → no output", () => {
-  const result = compute({
-    total_passive_credits: 0,
-    regular_tax_all_income: 10_000,
-    regular_tax_without_passive: 10_000,
-    prior_unallowed_credits: 0,
-  });
-  assertEquals(result.outputs.length, 0);
-});
-
-// =============================================================================
-// 3. Base Credit Calculation (Tax Attributable to Passive Income)
-// =============================================================================
-
-Deno.test("form8582cr: allowed credit = min(credits, tax_attributable_to_passive)", () => {
-  // tax_attributable = 10000 - 7000 = 3000; credits = 2000; allowed = 2000
-  const result = compute({
-    total_passive_credits: 2_000,
-    regular_tax_all_income: 10_000,
-    regular_tax_without_passive: 7_000,
-  });
-  const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6a_general_business_credit, 2_000);
-});
-
-Deno.test("form8582cr: credits capped by tax attributable to passive", () => {
-  // tax_attributable = 10000 - 9000 = 1000; credits = 5000; allowed = 1000
-  const result = compute({
-    total_passive_credits: 5_000,
-    regular_tax_all_income: 10_000,
-    regular_tax_without_passive: 9_000,
-  });
-  const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6a_general_business_credit, 1_000);
-});
-
-Deno.test("form8582cr: zero tax attributable → no base credit allowed", () => {
-  // tax_attributable = 10000 - 10000 = 0; no special allowance → no output
-  const result = compute({
-    total_passive_credits: 3_000,
-    regular_tax_all_income: 10_000,
-    regular_tax_without_passive: 10_000,
-  });
-  assertEquals(result.outputs.length, 0);
-});
-
-// =============================================================================
-// 4. Prior Year Carryforward Credits
-// =============================================================================
-
-Deno.test("form8582cr: prior_unallowed_credits added to total available", () => {
-  // credits_available = 1000 + 500 = 1500; tax_attributable = 2000; allowed = 1500
-  const result = compute({
-    total_passive_credits: 1_000,
-    prior_unallowed_credits: 500,
-    regular_tax_all_income: 10_000,
-    regular_tax_without_passive: 8_000,
-  });
-  const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6a_general_business_credit, 1_500);
-});
-
-// =============================================================================
-// 5. Special Allowance — Rental Real Estate (Part II)
-// =============================================================================
-
-Deno.test("form8582cr: rental RE special allowance — MAGI below threshold → full allowance available", () => {
-  // The $25,000 dollar allowance produces $3,000 of tax, not $25,000 credit.
-  const result = compute({
-    total_passive_credits: 3_000,
-    rental_real_estate_credits: 3_000,
-    regular_tax_all_income: 10_000,
-    regular_tax_without_passive: 10_000,
-    modified_agi: 80_000,
-    has_active_rental_participation: true,
-    form8582_line9_special_allowance_used: 0,
-    part_ii_tax_on_income_less_line14: 7_000,
-    filing_status: FilingStatus.Single,
-  });
-  const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6a_general_business_credit, 3_000);
-});
-
-Deno.test("form8582cr: rental RE special allowance — MAGI above upper threshold → no special allowance", () => {
-  // MAGI=160000 > 150000, no special allowance
-  const result = compute({
-    total_passive_credits: 3_000,
-    rental_real_estate_credits: 3_000,
-    regular_tax_all_income: 10_000,
-    regular_tax_without_passive: 10_000,
-    modified_agi: 160_000,
-    has_active_rental_participation: true,
-    form8582_line9_special_allowance_used: 0,
-    filing_status: FilingStatus.Single,
-  });
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("form8582cr: rental RE special allowance — MAGI in phase-out range", () => {
-  // Line 12 is $15,000; the tax difference on that allowance is $1,000.
-  const result = compute({
-    total_passive_credits: 3_000,
-    rental_real_estate_credits: 3_000,
-    regular_tax_all_income: 10_000,
-    regular_tax_without_passive: 10_000,
-    modified_agi: 120_000,
-    has_active_rental_participation: true,
-    form8582_line9_special_allowance_used: 0,
-    part_ii_tax_on_income_less_line14: 9_000,
-    filing_status: FilingStatus.Single,
-  });
-  const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6a_general_business_credit, 1_000);
-});
-
-Deno.test("form8582cr: rental RE special allowance — MAGI at lower threshold → full max", () => {
-  // MAGI=100000 gives a $25,000 income allowance, worth $2,000 of tax here.
-  const result = compute({
-    total_passive_credits: 5_000,
-    rental_real_estate_credits: 5_000,
-    regular_tax_all_income: 10_000,
-    regular_tax_without_passive: 10_000,
-    modified_agi: 100_000,
-    has_active_rental_participation: true,
-    form8582_line9_special_allowance_used: 0,
-    part_ii_tax_on_income_less_line14: 8_000,
-    filing_status: FilingStatus.Single,
-  });
-  const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6a_general_business_credit, 2_000);
-});
-
-// =============================================================================
-// 6. MFS Ineligibility for Special Allowance
-// =============================================================================
-
-Deno.test("form8582cr: MFS filing status → no special allowance", () => {
-  // MFS → ineligible for special allowance; tax_attributable = 0 → no output
-  const result = compute({
-    total_passive_credits: 3_000,
-    rental_real_estate_credits: 3_000,
-    regular_tax_all_income: 10_000,
-    regular_tax_without_passive: 10_000,
-    modified_agi: 50_000,
-    has_active_rental_participation: true,
-    form8582_line9_special_allowance_used: 0,
-    mfs_lived_apart_all_year: false,
-    filing_status: FilingStatus.MFS,
-  });
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("form8582cr: MFS lived apart uses the $75,000 Part II threshold", () => {
-  const result = compute({
-    total_passive_credits: 3_000,
-    rental_real_estate_credits: 3_000,
-    regular_tax_all_income: 10_000,
-    regular_tax_without_passive: 10_000,
-    modified_agi: 60_000,
-    has_active_rental_participation: true,
-    form8582_line9_special_allowance_used: 0,
-    part_ii_tax_on_income_less_line14: 8_500,
-    mfs_lived_apart_all_year: true,
-    filing_status: FilingStatus.MFS,
   });
   assertEquals(
-    fieldsOf(result.outputs, schedule3)?.line6a_general_business_credit,
-    1_500,
+    parsed.credit_sources[0].activity_reference,
+    "Clinical activity",
+  );
+  assertEquals(allowed(compute(parsed)), 1_500);
+  assertEquals(
+    inputSchema.safeParse({
+      ...parsed,
+      credit_sources: [other(-1)],
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...parsed,
+      credit_sources: [other(1_000), other(500)],
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...parsed,
+      credit_sources: [{ ...other(1_000), publicly_traded_partnership: true }],
+    }).success,
+    false,
   );
 });
 
-Deno.test("form8582cr: Form 8582 line 9 can use the whole dollar allowance", () => {
-  const result = compute({
-    total_passive_credits: 3_000,
-    rental_real_estate_credits: 3_000,
+Deno.test("Form 8582-CR Part I keeps the four IRS categories and prior credits separate", () => {
+  const lines = calculateForm8582CRPartI(inputSchema.parse({
+    credit_sources: [
+      rental(100, 20),
+      source(
+        PassiveCreditCategory.RehabilitationOrPre1990Housing,
+        200,
+        30,
+        "Rehab",
+      ),
+      source(PassiveCreditCategory.LowIncomeHousing, 300, 40, "Housing"),
+      other(400, 50),
+    ],
     regular_tax_all_income: 10_000,
-    regular_tax_without_passive: 10_000,
+    regular_tax_without_passive: 9_500,
     modified_agi: 100_000,
-    has_active_rental_participation: true,
-    form8582_line9_special_allowance_used: 25_000,
+    form8582_line9_special_allowance_used: 0,
     filing_status: FilingStatus.Single,
+  }));
+  assertEquals(lines.rental, { current: 100, prior: 20, total: 120 });
+  assertEquals(lines.rehabilitation, {
+    current: 200,
+    prior: 30,
+    total: 230,
+  });
+  assertEquals(lines.housing, { current: 300, prior: 40, total: 340 });
+  assertEquals(lines.other, { current: 400, prior: 50, total: 450 });
+  assertEquals([lines.line5, lines.line6, lines.line7], [1_140, 500, 640]);
+});
+
+Deno.test("Form 8582-CR rejects negative tax inputs", () => {
+  const base = {
+    credit_sources: [other(1_000)],
+    regular_tax_all_income: 10_000,
+    regular_tax_without_passive: 8_000,
+  };
+  assertEquals(
+    inputSchema.safeParse({
+      ...base,
+      regular_tax_all_income: -1,
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...base,
+      regular_tax_without_passive: -1,
+    }).success,
+    false,
+  );
+});
+
+Deno.test("Form 8582-CR emits no credit for an empty source list", () => {
+  const result = compute({
+    credit_sources: [],
+    regular_tax_all_income: 10_000,
+    regular_tax_without_passive: 8_000,
   });
   assertEquals(result.outputs, []);
 });
 
-Deno.test("form8582cr: Part II needs the tax on income less line 14", () => {
+Deno.test("Form 8582-CR limits credits to tax on net passive income", () => {
+  assertEquals(
+    allowed(compute({
+      credit_sources: [other(2_000)],
+      regular_tax_all_income: 10_000,
+      regular_tax_without_passive: 7_000,
+    })),
+    2_000,
+  );
+  const capped = compute({
+    credit_sources: [other(5_000)],
+    regular_tax_all_income: 10_000,
+    regular_tax_without_passive: 9_000,
+  });
+  assertEquals(allowed(capped), 1_000);
+  assertEquals(capped.carryforwards?.suspended_pac_8582cr, 4_000);
+  assertEquals(
+    allowed(compute({
+      credit_sources: [other(3_000)],
+      regular_tax_all_income: 10_000,
+      regular_tax_without_passive: 10_000,
+    })),
+    0,
+  );
+});
+
+Deno.test("Form 8582-CR Part II converts the dollar rental allowance to tax", () => {
+  const result = compute({
+    credit_sources: [rental(3_000)],
+    regular_tax_all_income: 10_000,
+    regular_tax_without_passive: 10_000,
+    modified_agi: 80_000,
+    form8582_line9_special_allowance_used: 0,
+    part_ii_tax_on_income_less_line14: 7_000,
+    filing_status: FilingStatus.Single,
+  });
+  assertEquals(allowed(result), 3_000);
+  assertEquals(
+    allowed(compute({
+      credit_sources: [rental(3_000)],
+      regular_tax_all_income: 10_000,
+      regular_tax_without_passive: 10_000,
+      modified_agi: 120_000,
+      form8582_line9_special_allowance_used: 0,
+      part_ii_tax_on_income_less_line14: 9_000,
+      filing_status: FilingStatus.Single,
+    })),
+    1_000,
+  );
+  assertEquals(
+    allowed(compute({
+      credit_sources: [rental(3_000)],
+      regular_tax_all_income: 10_000,
+      regular_tax_without_passive: 10_000,
+      modified_agi: 160_000,
+      form8582_line9_special_allowance_used: 0,
+      filing_status: FilingStatus.Single,
+    })),
+    0,
+  );
+});
+
+Deno.test("Form 8582-CR Part II subtracts the Form 8582 loss allowance", () => {
+  const result = compute({
+    credit_sources: [rental(3_000)],
+    regular_tax_all_income: 10_000,
+    regular_tax_without_passive: 10_000,
+    modified_agi: 100_000,
+    form8582_line9_special_allowance_used: 25_000,
+    filing_status: FilingStatus.Single,
+  });
+  assertEquals(allowed(result), 0);
+});
+
+Deno.test("Form 8582-CR MFS Part II requires lived-apart facts", () => {
+  const base = {
+    credit_sources: [rental(3_000)],
+    regular_tax_all_income: 10_000,
+    regular_tax_without_passive: 10_000,
+    modified_agi: 60_000,
+    form8582_line9_special_allowance_used: 0,
+    filing_status: FilingStatus.MFS,
+  };
+  assertEquals(inputSchema.safeParse(base).success, false);
+  assertEquals(
+    allowed(compute({
+      ...base,
+      mfs_lived_apart_all_year: false,
+    })),
+    0,
+  );
+  assertEquals(
+    allowed(compute({
+      ...base,
+      mfs_lived_apart_all_year: true,
+      part_ii_tax_on_income_less_line14: 8_500,
+    })),
+    1_500,
+  );
+});
+
+Deno.test("Form 8582-CR Part II needs the tax on income less line 14", () => {
   assertThrows(
     () =>
       compute({
-        total_passive_credits: 3_000,
-        rental_real_estate_credits: 3_000,
+        credit_sources: [rental(3_000)],
         regular_tax_all_income: 10_000,
         regular_tax_without_passive: 10_000,
         modified_agi: 100_000,
-        has_active_rental_participation: true,
         form8582_line9_special_allowance_used: 0,
         filing_status: FilingStatus.Single,
       }),
@@ -270,15 +258,11 @@ Deno.test("form8582cr: Part II needs the tax on income less line 14", () => {
   );
 });
 
-// =============================================================================
-// 7. Real Estate Professional Bypass
-// =============================================================================
-
-Deno.test("form8582cr: professional status alone cannot reclassify every activity", () => {
+Deno.test("Form 8582-CR professional status cannot reclassify all activities", () => {
   assertThrows(
     () =>
       compute({
-        total_passive_credits: 4_000,
+        credit_sources: [other(4_000)],
         regular_tax_all_income: 20_000,
         regular_tax_without_passive: 15_000,
         is_real_estate_professional: true,
@@ -289,54 +273,36 @@ Deno.test("form8582cr: professional status alone cannot reclassify every activit
   );
 });
 
-// =============================================================================
-// 8. Output Routing
-// =============================================================================
-
-Deno.test("form8582cr: allowed credit routes to schedule3.line6a_general_business_credit", () => {
-  // tax_attributable = 15000 - 12000 = 3000; credits = 2000; allowed = 2000
-  const result = compute({
-    total_passive_credits: 2_000,
-    regular_tax_all_income: 15_000,
-    regular_tax_without_passive: 12_000,
-  });
-  const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6a_general_business_credit, 2_000);
+Deno.test("Form 8582-CR separates rehabilitation and housing credits for Parts III/IV", () => {
+  for (
+    const category of [
+      PassiveCreditCategory.RehabilitationOrPre1990Housing,
+      PassiveCreditCategory.LowIncomeHousing,
+    ]
+  ) {
+    assertThrows(
+      () =>
+        compute({
+          credit_sources: [source(category, 1_000)],
+          regular_tax_all_income: 10_000,
+          regular_tax_without_passive: 9_000,
+        }),
+      Error,
+      "need Parts III and IV",
+    );
+  }
 });
 
-Deno.test("form8582cr: no credit allowed → no schedule3 output", () => {
+Deno.test("Form 8582-CR combines different activity credits before the tax limit", () => {
   const result = compute({
-    total_passive_credits: 2_000,
-    regular_tax_all_income: 10_000,
-    regular_tax_without_passive: 10_000,
-  });
-  const out = findOutput(result, "schedule3");
-  assertEquals(out, undefined);
-});
-
-// =============================================================================
-// 9. Smoke Test
-// =============================================================================
-
-Deno.test("form8582cr: smoke test — active rental participation, MAGI at 125000", () => {
-  // tax_attributable = 12000-10000 = 2000
-  // MAGI=125000: special_allowance = 25000 - 50%*(125000-100000) = 25000-12500 = 12500
-  // tax attributable to $12,500 allowance is $4,000 here
-  // non-rental credits also limited by tax_attributable=2000 already counted
-  // total_passive_credits=7000, base=min(7000,2000)=2000
-  // total allowed = min(7000, 2000+4000) = 6000
-  const result = compute({
-    total_passive_credits: 7_000,
-    rental_real_estate_credits: 5_000,
-    prior_unallowed_credits: 0,
+    credit_sources: [rental(5_000), other(2_000)],
     regular_tax_all_income: 12_000,
     regular_tax_without_passive: 10_000,
     modified_agi: 125_000,
-    has_active_rental_participation: true,
     form8582_line9_special_allowance_used: 0,
     part_ii_tax_on_income_less_line14: 8_000,
     filing_status: FilingStatus.MFJ,
   });
-  const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6a_general_business_credit, 6_000);
+  assertEquals(allowed(result), 6_000);
+  assertEquals(result.carryforwards?.suspended_pac_8582cr, 1_000);
 });

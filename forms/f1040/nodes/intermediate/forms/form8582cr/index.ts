@@ -23,12 +23,60 @@ const MAGI_UPPER_THRESHOLD = 150_000; // IRC §469(i)(3)(A)
 const MFS_ALLOWANCE_MAX = 12_500; // IRC §469(i)(5)(B)
 const MFS_MAGI_UPPER = 75_000; // IRC §469(i)(5)(B)
 
+export enum PassiveCreditCategory {
+  ActiveRental = "active_rental",
+  RehabilitationOrPre1990Housing = "rehabilitation_or_pre1990_housing",
+  LowIncomeHousing = "low_income_housing_post1989",
+  Other = "other",
+}
+
+const creditSourceSchema = z.object({
+  activity_reference: z.string().trim().min(1),
+  source_form: z.string().trim().min(1),
+  source_document_reference: z.string().trim().min(1),
+  category: z.nativeEnum(PassiveCreditCategory),
+  current_year_credit: z.number().int().nonnegative(),
+  prior_unallowed_credit: z.number().int().nonnegative(),
+  publicly_traded_partnership: z.boolean(),
+}).refine(
+  (source) => source.current_year_credit + source.prior_unallowed_credit > 0,
+  { message: "Form 8582-CR source must have current or prior credit" },
+);
+
+type PassiveCreditSource = z.infer<typeof creditSourceSchema>;
+
+function categoryCredit(
+  sources: readonly PassiveCreditSource[],
+  category: PassiveCreditCategory,
+): number {
+  return sources.filter((source) => source.category === category).reduce(
+    (sum, source) =>
+      sum + source.current_year_credit + source.prior_unallowed_credit,
+    0,
+  );
+}
+
+function categoryAmounts(
+  sources: readonly PassiveCreditSource[],
+  category: PassiveCreditCategory,
+) {
+  const matches = sources.filter((source) => source.category === category);
+  const current = matches.reduce(
+    (sum, source) => sum + source.current_year_credit,
+    0,
+  );
+  const prior = matches.reduce(
+    (sum, source) => sum + source.prior_unallowed_credit,
+    0,
+  );
+  return { current, prior, total: current + prior };
+}
+
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 export const inputSchema = z.object({
-  // Total current-year passive activity credits from all sources (Part I lines
-  // 1a, 2a, 3a, and 4a, before the separate prior-year amount below).
-  total_passive_credits: z.number().nonnegative(),
+  // Source identity and current/prior amounts feed the four Part I worksheets.
+  credit_sources: z.array(creditSourceSchema),
 
   // Regular tax computed on all income including passive net income
   // Part I, Line 6 (full tax side)
@@ -46,14 +94,6 @@ export const inputSchema = z.object({
   // activity must separately satisfy material participation.
   is_real_estate_professional: z.boolean().optional(),
 
-  // True if taxpayer actively participated in rental real estate activity
-  // Required to claim Part II special allowance; IRC §469(i)(6)
-  has_active_rental_participation: z.boolean().optional(),
-
-  // Credits specifically from rental real estate with active participation
-  // Used for Part II special allowance calculation
-  rental_real_estate_credits: z.number().nonnegative().optional(),
-
   // Form 8582 line 9 uses part of the dollar special allowance before this
   // credit worksheet computes Form 8582-CR line 14.
   form8582_line9_special_allowance_used: z.number().nonnegative().optional(),
@@ -64,24 +104,36 @@ export const inputSchema = z.object({
 
   // MFS filers who lived with their spouse cannot use Part II.
   filing_status: filingStatusSchema.optional(),
-
-  // Prior-year unallowed PAC carryforward from Form 8582-CR prior years
-  // IRC §469(b)
-  prior_unallowed_credits: z.number().nonnegative().optional(),
 }).superRefine((input, ctx) => {
+  const sourceIds = new Set<string>();
+  input.credit_sources.forEach((source, index) => {
+    const id = [
+      source.activity_reference,
+      source.source_form,
+      source.source_document_reference,
+      source.category,
+    ].join(":");
+    if (sourceIds.has(id)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["credit_sources", index],
+        message: "Form 8582-CR source activity is duplicated",
+      });
+    }
+    sourceIds.add(id);
+  });
   if (
-    (input.rental_real_estate_credits ?? 0) >
-      input.total_passive_credits + (input.prior_unallowed_credits ?? 0)
+    input.credit_sources.some((source) => source.publicly_traded_partnership)
   ) {
     ctx.addIssue({
       code: "custom",
-      path: ["rental_real_estate_credits"],
-      message: "Form 8582-CR rental credits exceed total available credits",
+      path: ["credit_sources"],
+      message:
+        "Form 8582-CR publicly traded partnerships need their separate limitation",
     });
   }
   if (
-    input.has_active_rental_participation &&
-    (input.rental_real_estate_credits ?? 0) > 0
+    categoryCredit(input.credit_sources, PassiveCreditCategory.ActiveRental) > 0
   ) {
     if (input.filing_status === undefined) {
       ctx.addIssue({
@@ -119,38 +171,56 @@ export const inputSchema = z.object({
 
 type Form8582CRInput = z.infer<typeof inputSchema>;
 
-// ─── Pure helpers ─────────────────────────────────────────────────────────────
-
-// Tax attributable to net passive income = difference in regular tax
-// Form 8582-CR Part I, Line 6
-function taxAttributableToPassive(input: Form8582CRInput): number {
-  return Math.max(
+export function calculateForm8582CRPartI(raw: Form8582CRInput) {
+  const input = inputSchema.parse(raw);
+  const rental = categoryAmounts(
+    input.credit_sources,
+    PassiveCreditCategory.ActiveRental,
+  );
+  const rehabilitation = categoryAmounts(
+    input.credit_sources,
+    PassiveCreditCategory.RehabilitationOrPre1990Housing,
+  );
+  const housing = categoryAmounts(
+    input.credit_sources,
+    PassiveCreditCategory.LowIncomeHousing,
+  );
+  const other = categoryAmounts(
+    input.credit_sources,
+    PassiveCreditCategory.Other,
+  );
+  const line5 = rental.total + rehabilitation.total + housing.total +
+    other.total;
+  const line6 = Math.max(
     0,
     input.regular_tax_all_income - input.regular_tax_without_passive,
   );
+  return {
+    rental,
+    rehabilitation,
+    housing,
+    other,
+    line5,
+    line6,
+    line7: Math.max(0, line5 - line6),
+  };
 }
 
-function totalCreditsAvailable(input: Form8582CRInput): number {
-  return input.total_passive_credits + (input.prior_unallowed_credits ?? 0);
-}
+// ─── Pure helpers ─────────────────────────────────────────────────────────────
 
 // Form 8582-CR Part II converts the dollar special allowance to tax before
 // allowing any additional credit. The $25,000 figure is never itself a credit.
-function specialAllowanceCredit(
+function calculatePartII(
   input: Form8582CRInput,
-  remainingCredits: number,
-): number {
-  if (!input.has_active_rental_participation) return 0;
+  partI: ReturnType<typeof calculateForm8582CRPartI>,
+) {
+  if (partI.rental.total === 0 || partI.line7 === 0) return undefined;
   if (
     input.filing_status === FilingStatus.MFS &&
     !input.mfs_lived_apart_all_year
-  ) return 0;
-  const line8 = Math.min(
-    input.rental_real_estate_credits ?? 0,
-    remainingCredits,
-  );
-  if (line8 === 0) return 0;
-  const upper = input.filing_status === FilingStatus.MFS
+  ) return undefined;
+  const line8 = Math.min(partI.rental.total, partI.line7);
+  const line9 = input.filing_status === FilingStatus.MFS
     ? MFS_MAGI_UPPER
     : MAGI_UPPER_THRESHOLD;
   const max = input.filing_status === FilingStatus.MFS
@@ -161,30 +231,63 @@ function specialAllowanceCredit(
   if (modifiedAgi === undefined || lossAllowanceUsed === undefined) {
     throw new Error("Form 8582-CR Part II needs MAGI and Form 8582 line 9");
   }
+  const line10 = modifiedAgi;
+  const line11 = Math.max(0, line9 - line10);
   const line12 = Math.min(
     max,
-    PHASE_OUT_RATE * Math.max(0, upper - modifiedAgi),
+    PHASE_OUT_RATE * line11,
   );
-  const line14 = Math.max(
-    0,
-    line12 - lossAllowanceUsed,
-  );
-  if (line14 === 0) return 0;
-  const taxWithoutAllowance = input.part_ii_tax_on_income_less_line14;
-  if (
-    taxWithoutAllowance === undefined ||
-    taxWithoutAllowance > input.regular_tax_all_income
-  ) {
-    throw new Error(
-      "Form 8582-CR line 15 needs tax on income less the line 14 allowance",
-    );
+  const line13 = lossAllowanceUsed;
+  const line14 = Math.max(0, line12 - line13);
+  let line15 = 0;
+  if (line14 > 0) {
+    const taxWithoutAllowance = input.part_ii_tax_on_income_less_line14;
+    if (
+      taxWithoutAllowance === undefined ||
+      taxWithoutAllowance > input.regular_tax_all_income
+    ) {
+      throw new Error(
+        "Form 8582-CR line 15 needs tax on income less the line 14 allowance",
+      );
+    }
+    line15 = input.regular_tax_all_income - taxWithoutAllowance;
   }
-  return Math.min(line8, input.regular_tax_all_income - taxWithoutAllowance);
+  return {
+    line8,
+    line9,
+    line10,
+    line11,
+    line12,
+    line13,
+    line14,
+    line15,
+    line16: Math.min(line8, line15),
+  };
 }
 
-function computeAllowedCredit(input: Form8582CRInput): number {
-  const available = totalCreditsAvailable(input);
-  if (available === 0) return 0;
+export function calculateForm8582CR(raw: Form8582CRInput) {
+  const input = inputSchema.parse(raw);
+  const partI = calculateForm8582CRPartI(input);
+  if (partI.line5 === 0) {
+    return { partI, partII: undefined, line37: 0, suspendedCredit: 0 };
+  }
+
+  if (
+    categoryCredit(
+        input.credit_sources,
+        PassiveCreditCategory.RehabilitationOrPre1990Housing,
+      ) >
+      0 ||
+    categoryCredit(
+        input.credit_sources,
+        PassiveCreditCategory.LowIncomeHousing,
+      ) >
+      0
+  ) {
+    throw new Error(
+      "Form 8582-CR rehabilitation and low-income housing credits need Parts III and IV",
+    );
+  }
 
   // This single taxpayer status cannot reclassify all activity credits.
   if (input.is_real_estate_professional === true) {
@@ -193,20 +296,14 @@ function computeAllowedCredit(input: Form8582CRInput): number {
     );
   }
 
-  // Base: credits allowed up to tax attributable to passive income
-  const taxAttr = taxAttributableToPassive(input);
-  const baseAllowed = Math.min(available, taxAttr);
-
-  // Additional Part II credit is limited by tax on the dollar allowance.
-  const special = specialAllowanceCredit(
-    input,
-    Math.max(0, available - taxAttr),
-  );
-
-  // Total allowed = base + any special allowance credit above the base
-  // But total cannot exceed total available
-  const totalAllowed = Math.min(available, baseAllowed + special);
-  return totalAllowed;
+  const partII = calculatePartII(input, partI);
+  const line37 = Math.min(partI.line5, partI.line6 + (partII?.line16 ?? 0));
+  return {
+    partI,
+    partII,
+    line37,
+    suspendedCredit: partI.line5 - line37,
+  };
 }
 
 function schedule3Output(allowedCredit: number): NodeOutput[] {
@@ -227,15 +324,12 @@ class Form8582CRNode extends TaxNode<typeof inputSchema> {
   compute(_ctx: NodeContext, rawInput: Form8582CRInput): NodeResult {
     const input = inputSchema.parse(rawInput);
 
-    const available = totalCreditsAvailable(input);
-    if (available === 0) return { outputs: [] };
-
-    const allowedCredit = computeAllowedCredit(input);
-    const suspendedPac = available - allowedCredit;
+    const lines = calculateForm8582CR(input);
+    if (lines.partI.line5 === 0) return { outputs: [] };
     return {
-      outputs: schedule3Output(allowedCredit),
-      ...(suspendedPac > 0
-        ? { carryforwards: { suspended_pac_8582cr: suspendedPac } }
+      outputs: schedule3Output(lines.line37),
+      ...(lines.suspendedCredit > 0
+        ? { carryforwards: { suspended_pac_8582cr: lines.suspendedCredit } }
         : {}),
     };
   }

@@ -39,6 +39,7 @@ import { form8283 } from "./f8283.ts";
 import { form8283VehicleStatement } from "./f8283_vehicle_statement.ts";
 import { form8396 } from "./f8396.ts";
 import { form8582 } from "./f8582.ts";
+import { form8582cr } from "./f8582cr.ts";
 import { form8606 } from "./f8606.ts";
 import { form8615 } from "./f8615.ts";
 import { form8621 } from "./f8621.ts";
@@ -173,6 +174,8 @@ export const ALL_MEF_FORMS = [
   form8396,
   // Form 8582
   form8582,
+  // Form 8582-CR
+  form8582cr,
   // Form 8606
   form8606,
   // Form 8615

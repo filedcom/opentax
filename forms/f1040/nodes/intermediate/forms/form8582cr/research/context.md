@@ -15,18 +15,15 @@ Form 8582-CR limits passive activity credits. The current node calculates a Part
 
 | Field | Type | Required | Source / Label | Description | IRS Reference | URL |
 | ----- | ---- | -------- | -------------- | ----------- | ------------- | --- |
-| total_passive_credits | number >= 0 | yes | Total Passive Credits | All current-year passive activity credits from all sources (Part I, Line 5) | IRC §469(d)(2) | https://www.law.cornell.edu/uscode/text/26/469 |
+| credit_sources | array | yes | Activity credit sources | Each source identifies its activity, source form/document, Part I category, current-year amount, prior unallowed amount, and PTP status | Form 8582-CR Worksheets 1-4 | https://www.irs.gov/instructions/i8582cr |
 | regular_tax_all_income | number >= 0 | yes | Regular Tax (All Income) | Regular tax computed on all income including passive | Form 8582-CR Part I Line 6 computation | https://www.irs.gov/instructions/i8582cr |
 | regular_tax_without_passive | number >= 0 | yes | Regular Tax (Ex. Passive) | Regular tax computed on income excluding net passive income | Form 8582-CR Part I Line 6 computation | https://www.irs.gov/instructions/i8582cr |
 | modified_agi | number >= 0 | no | Modified AGI | MAGI for Part II rental real estate phase-out calculation | IRC §469(i)(3) | https://www.law.cornell.edu/uscode/text/26/469 |
 | is_real_estate_professional | boolean | no | Real Estate Professional | True if taxpayer qualifies as real estate professional per IRC §469(c)(7) | IRC §469(c)(7) | https://www.law.cornell.edu/uscode/text/26/469 |
-| has_active_rental_participation | boolean | no | Active Participation | True if taxpayer actively participated in rental real estate activity | IRC §469(i)(6) | https://www.law.cornell.edu/uscode/text/26/469 |
-| rental_real_estate_credits | number >= 0 | no | Rental RE Credits | Credits specifically from rental real estate with active participation (Part II) | IRC §469(i) | https://www.law.cornell.edu/uscode/text/26/469 |
 | form8582_line9_special_allowance_used | number >= 0 | required for active rental credit | Form 8582 line 9 | Dollar allowance already used by passive rental losses | Form 8582-CR line 13 | https://www.irs.gov/instructions/i8582cr |
 | part_ii_tax_on_income_less_line14 | number >= 0 | required when line 14 is positive | Part II tax worksheet | Tax on taxable income after subtracting the line 14 dollar allowance | Form 8582-CR line 15 | https://www.irs.gov/instructions/i8582cr |
 | mfs_lived_apart_all_year | boolean | required for MFS active rental credit | MFS lived-apart answer | Distinguishes the $75,000 threshold from ineligibility | Form 8582-CR lines 9 and 12 | https://www.irs.gov/instructions/i8582cr |
 | filing_status | enum(single, mfj, mfs, hoh, qw) | no | Filing Status | Filing status for MFS phase-out thresholds | IRC §469(i)(5) | https://www.law.cornell.edu/uscode/text/26/469 |
-| prior_unallowed_credits | number >= 0 | no | Prior Year Unallowed | Unused PAC carryforward from prior years | IRC §469(b) | https://www.law.cornell.edu/uscode/text/26/469 |
 
 ---
 
@@ -37,7 +34,7 @@ tax_attributable_to_passive = regular_tax_all_income − regular_tax_without_pas
 Source: Form 8582-CR instructions Part I, Line 6; IRC §469(d)(2)
 
 ### Step 2 — Total Passive Credits Available
-total_credits_available = total_passive_credits + (prior_unallowed_credits ?? 0)
+total_credits_available = sum(source.current_year_credit + source.prior_unallowed_credit)
 
 ### Step 3 — Base Allowed Credit (against passive income tax)
 base_allowed = min(total_credits_available, tax_attributable_to_passive)
@@ -50,6 +47,7 @@ If active rental credits remain after the line 6 passive-income tax limit:
   - line 15 = tax on taxable income − tax on taxable income less line 14
   - line 16 = min(line 8, line 15)
 The $25,000 figure is an income allowance, never a $25,000 credit. MFS filers who lived with a spouse have no Part II allowance. Real-estate-professional status alone does not reclassify every rental activity as nonpassive.
+The current build stops rehabilitation, older housing, newer housing, and PTP categories pending their separate limitations instead of putting them through the active-rental computation.
 Source: Form 8582-CR lines 8–16 and instructions.
 
 ### Step 5 — Total Allowed Credit

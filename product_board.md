@@ -442,7 +442,12 @@ amount already used on Form 8582 line 9, and distinguishes MFS spouses who
 lived apart. Real-estate-professional status no longer bypasses the limit for
 every activity. The node still sends its aggregate allowed amount directly to
 Schedule 3, so source-level allocation, Form 3800 limitation, Parts III/IV,
-native output, and ATS acceptance remain open. Form 4136 now combines its represented
+native output, and ATS acceptance remain open. The next unrun source pass
+replaces one aggregate passive-credit amount with activity and document
+references, credit category, and separate current/prior amounts. Active-rental
+and other credits now feed Part I by source; rehabilitation and housing credits
+are identified but stop until Parts III/IV are calculated, and PTP credits stop
+pending their separate limitation. Form 4136 now combines its represented
 fuel-use credits on refundable line 12 instead of misrouting some to general
 business credit and some to a nonexistent Form 1040 field; the represented 2025
 fuel rates are updated, with separate aviation-kerosene tax-rate inputs. These
