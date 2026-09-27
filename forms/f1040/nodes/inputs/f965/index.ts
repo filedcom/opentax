@@ -17,7 +17,9 @@ const taxId = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("ein"), value: z.string().regex(/^\d{9}$/) }),
   z.object({ kind: z.literal("ssn"), value: z.string().regex(/^\d{9}$/) }),
 ]);
-const agreementFileName = z.string().regex(/^[A-Za-z0-9_.-]+\.pdf$/);
+const agreementFileName = z.string().max(64).regex(
+  /^(?!.*\.\.)[A-Za-z0-9_.-]+\.pdf$/,
+);
 
 const transferAgreementSchema = z.object({
   agreement_type: z.enum(["965-C", "965-D", "965-E"]),
@@ -48,7 +50,10 @@ export const sCorpDeferredRowSchema = z.object({
   triggered_liability: amount,
   transferred_liability: signedAmount,
   counterparty_tax_id: taxId.optional(),
-  transfer_agreement_file_name: agreementFileName.optional(),
+  transfer_agreement_links: z.array(z.object({
+    transferee_tax_id: taxId,
+    file_name: agreementFileName,
+  })).optional(),
   multiple_transferees: z.array(z.object({
     tax_id: taxId,
     transferred_amount: amount.positive(),
@@ -58,6 +63,35 @@ export const sCorpDeferredRowSchema = z.object({
     ctx.addIssue({
       code: "custom",
       message: "Form 965-A Part IV transfer needs the counterparty tax ID",
+    });
+  }
+  if (row.transferred_liability !== 0) {
+    const transferees = row.multiple_transferees?.map((item) => item.tax_id) ??
+      (row.counterparty_tax_id ? [row.counterparty_tax_id] : []);
+    const links = row.transfer_agreement_links ?? [];
+    const taxIdKey = (id: z.infer<typeof taxId>) => `${id.kind}:${id.value}`;
+    if (
+      links.length !== transferees.length ||
+      new Set(transferees.map(taxIdKey)).size !== transferees.length ||
+      new Set(links.map((link) => link.file_name)).size !== links.length ||
+      new Set(links.map((link) => taxIdKey(link.transferee_tax_id))).size !==
+        links.length ||
+      links.some((link) =>
+        !transferees.some((id) =>
+          taxIdKey(id) === taxIdKey(link.transferee_tax_id)
+        )
+      )
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "Form 965-D needs one distinct signed agreement for each transferee",
+      });
+    }
+  } else if (row.transfer_agreement_links?.length) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Form 965-D agreements require a Part IV transfer",
     });
   }
   if (
@@ -162,8 +196,12 @@ export const inputSchema = z.object({
     }
     agreementFiles.add(agreement.file_name);
   }
-  const agreementMatches = (fileName: string | undefined, type: "965-C" | "965-D" | "965-E") =>
-    fileName !== undefined && input.transfer_agreements.some((agreement) =>
+  const agreementMatches = (
+    fileName: string | undefined,
+    type: "965-C" | "965-D" | "965-E",
+  ) =>
+    fileName !== undefined &&
+    input.transfer_agreements.some((agreement) =>
       agreement.file_name === fileName && agreement.agreement_type === type
     );
   const triggeredInPartI = input.f965s
@@ -207,16 +245,31 @@ export const inputSchema = z.object({
       ctx.addIssue({
         code: "custom",
         path: ["f965s", index],
-        message: "Form 965-A installment transfer needs the signed Form 965-C copy",
+        message:
+          "Form 965-A installment transfer needs the signed Form 965-C copy",
       });
     }
-    if (row.entry_type === "triggered_s_corp" &&
+    if (
+      row.entry_type === "triggered_s_corp" &&
       row.requires_965e_consent &&
-      !agreementMatches(row.consent_agreement_file_name, "965-E")) {
+      !agreementMatches(row.consent_agreement_file_name, "965-E")
+    ) {
       ctx.addIssue({
         code: "custom",
         path: ["f965s", index],
-        message: "Form 965-A consent-triggered installment needs the signed Form 965-E copy",
+        message:
+          "Form 965-A consent-triggered installment needs the signed Form 965-E copy",
+      });
+    }
+    if (
+      row.entry_type === "triggered_s_corp" &&
+      !row.requires_965e_consent && row.consent_agreement_file_name
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["f965s", index],
+        message:
+          "Form 965-E consent copy requires a consent-triggered installment",
       });
     }
     if (
@@ -332,12 +385,40 @@ export const inputSchema = z.object({
     }
   }
   input.s_corp_deferred_rows.forEach((row, index) => {
-    if (row.transferred_liability !== 0 &&
-      !agreementMatches(row.transfer_agreement_file_name, "965-D")) {
+    if (
+      row.transferred_liability !== 0 &&
+      row.transfer_agreement_links?.some((link) =>
+        !agreementMatches(link.file_name, "965-D")
+      )
+    ) {
       ctx.addIssue({
         code: "custom",
         path: ["s_corp_deferred_rows", index],
-        message: "Form 965-A S corporation transfer needs the signed Form 965-D copy",
+        message:
+          "Form 965-A S corporation transfer needs the signed Form 965-D copy",
+      });
+    }
+  });
+  const referencedAgreements = new Set([
+    ...input.f965s.flatMap((row) => [
+      row.transfer_agreement_file_name,
+      row.entry_type === "triggered_s_corp" && row.requires_965e_consent
+        ? row.consent_agreement_file_name
+        : undefined,
+    ]),
+    ...input.s_corp_deferred_rows.flatMap((row) =>
+      row.transferred_liability !== 0
+        ? (row.transfer_agreement_links ?? []).map((link) => link.file_name)
+        : []
+    ),
+  ].filter((name): name is string => name !== undefined));
+  input.transfer_agreements.forEach((agreement, index) => {
+    if (!referencedAgreements.has(agreement.file_name)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["transfer_agreements", index],
+        message:
+          "Form 965-A agreement PDF is not linked to a transfer or consent",
       });
     }
   });

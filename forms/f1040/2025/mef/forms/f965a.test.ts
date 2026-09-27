@@ -29,6 +29,7 @@ const input = {
   }],
   s_corp_calculations: [],
   s_corp_deferred_rows: [],
+  transfer_agreements: [],
 };
 
 Deno.test("Form 965-A emits cumulative Part I/II and reporting-year payment", () => {
@@ -68,6 +69,7 @@ Deno.test("Form 965-A links native netted-transfer and multiple-transferee state
       ...input.f965s[0],
       net_tax_adjustment: 100,
       net_tax_adjustment_kind: "netted_adjustment_and_transfer",
+      transfer_agreement_file_name: "Form965C.pdf",
       counterparty_tax_id: { kind: "ein", value: "987654321" },
       netted_adjustment_and_transfer: {
         adjustment_amount: 200,
@@ -84,6 +86,13 @@ Deno.test("Form 965-A links native netted-transfer and multiple-transferee state
       beginning_deferred_liability: 10_000,
       triggered_liability: 0,
       transferred_liability: -6_000,
+      transfer_agreement_links: [{
+        transferee_tax_id: { kind: "ein", value: "123123123" },
+        file_name: "Form965D1.pdf",
+      }, {
+        transferee_tax_id: { kind: "ssn", value: "321321321" },
+        file_name: "Form965D2.pdf",
+      }],
       counterparty_tax_id: { kind: "ein", value: "123123123" },
       multiple_transferees: [
         {
@@ -95,6 +104,22 @@ Deno.test("Form 965-A links native netted-transfer and multiple-transferee state
           transferred_amount: 4_000,
         },
       ],
+    }],
+    transfer_agreements: [{
+      agreement_type: "965-C",
+      file_name: "Form965C.pdf",
+      signed_pdf_base64: "JVBERi0x",
+      source_document_reference: "2025 signed Form 965-C",
+    }, {
+      agreement_type: "965-D",
+      file_name: "Form965D1.pdf",
+      signed_pdf_base64: "JVBERi0x",
+      source_document_reference: "2025 first signed Form 965-D",
+    }, {
+      agreement_type: "965-D",
+      file_name: "Form965D2.pdf",
+      signed_pdf_base64: "JVBERi0x",
+      source_document_reference: "2025 second signed Form 965-D",
     }],
   };
   const context = {
@@ -113,19 +138,77 @@ Deno.test("Form 965-A links native netted-transfer and multiple-transferee state
   );
   const parent = form965a.build(withStatements, {
     ...context,
+    binaryAttachmentFileNames: [
+      "Form965C.pdf",
+      "Form965D1.pdf",
+      "Form965D2.pdf",
+    ],
+    documentIdsByAttachmentFileName: {
+      "Form965C.pdf": "BinaryAttachment2",
+      "Form965D1.pdf": "BinaryAttachment3",
+      "Form965D2.pdf": "BinaryAttachment4",
+    },
     documentIdsByPendingKey: {
       f965_net_adjustment_transfer_statement: ["net1"],
       f965_multiple_transferee_statement: ["multi1"],
     },
   });
-  assertStringIncludes(parent, 'referenceDocumentId="net1 multi1"');
+  assertStringIncludes(
+    parent,
+    'referenceDocumentId="BinaryAttachment2 BinaryAttachment3 BinaryAttachment4 net1 multi1"',
+  );
   assertThrows(
     () =>
       form965a.build(withStatements, {
         ...context,
+        binaryAttachmentFileNames: [
+          "Form965C.pdf",
+          "Form965D1.pdf",
+          "Form965D2.pdf",
+        ],
+        documentIdsByAttachmentFileName: {
+          "Form965C.pdf": "BinaryAttachment2",
+          "Form965D1.pdf": "BinaryAttachment3",
+          "Form965D2.pdf": "BinaryAttachment4",
+        },
         documentIdsByPendingKey: {},
       }),
     Error,
     "needs its supporting transfer statement",
+  );
+});
+
+Deno.test("Form 965-A rejects an omitted signed agreement from the MeF bundle", () => {
+  const source = {
+    ...input,
+    f965s: [{
+      ...input.f965s[0],
+      net_tax_adjustment: -100,
+      net_tax_adjustment_kind: "transfer_out",
+      transfer_agreement_file_name: "Form965C.pdf",
+      counterparty_tax_id: { kind: "ein", value: "987654321" },
+      paid_by_installment_year: [
+        2_560,
+        2_560,
+        2_560,
+        2_560,
+        2_560,
+        4_800,
+        6_400,
+        7_900,
+      ],
+      current_year_payment: 7_900,
+    }],
+    transfer_agreements: [{
+      agreement_type: "965-C",
+      file_name: "Form965C.pdf",
+      signed_pdf_base64: "JVBERi0x",
+      source_document_reference: "2025 signed Form 965-C",
+    }],
+  };
+  assertThrows(
+    () => form965a.build(source, { binaryAttachmentFileNames: [] }),
+    Error,
+    "needs each signed transfer agreement PDF",
   );
 });

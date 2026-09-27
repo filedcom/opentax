@@ -208,6 +208,7 @@ const f965Source = {
   }],
   s_corp_calculations: [],
   s_corp_deferred_rows: [],
+  transfer_agreements: [],
 };
 
 Deno.test("section 965 payment reaches Schedule 2 but not Form 1040 line 23", () => {
@@ -250,12 +251,19 @@ Deno.test({
   sanitizeResources: false,
   ignore: !xsdAvailable,
 }, async () => {
+  const pdf = await PDFDocument.create();
+  pdf.addPage();
+  const pdfBytes = await pdf.save();
+  const syntheticPdfBase64 = btoa(
+    Array.from(pdfBytes, (byte) => String.fromCharCode(byte)).join(""),
+  );
   const f965 = {
     ...f965Source,
     f965s: [{
       ...f965Source.f965s[0],
       net_tax_adjustment: 100,
       net_tax_adjustment_kind: "netted_adjustment_and_transfer",
+      transfer_agreement_file_name: "Form965C.pdf",
       counterparty_tax_id: { kind: "ein", value: "987654321" },
       netted_adjustment_and_transfer: {
         adjustment_amount: 200,
@@ -263,6 +271,17 @@ Deno.test({
         explanation: "IRS examination adjustment followed by transfer",
         source_document_reference: "2025 signed transfer agreement",
       },
+    }, {
+      entry_type: "triggered_s_corp",
+      source_document_reference: "2025 consent-triggering transaction",
+      tax_year_of_inclusion: 2018,
+      installment_election: true,
+      triggered_liability: 1_000,
+      net_tax_adjustment: 0,
+      paid_by_installment_year: Array(8).fill(0),
+      current_year_payment: 0,
+      requires_965e_consent: true,
+      consent_agreement_file_name: "Form965E.pdf",
     }],
     s_corp_deferred_rows: [{
       election_or_transfer_year: 2018,
@@ -272,6 +291,13 @@ Deno.test({
       beginning_deferred_liability: 10_000,
       triggered_liability: 0,
       transferred_liability: -6_000,
+      transfer_agreement_links: [{
+        transferee_tax_id: { kind: "ein", value: "123123123" },
+        file_name: "Form965D1.pdf",
+      }, {
+        transferee_tax_id: { kind: "ssn", value: "321321321" },
+        file_name: "Form965D2.pdf",
+      }],
       counterparty_tax_id: { kind: "ein", value: "123123123" },
       multiple_transferees: [
         {
@@ -283,15 +309,51 @@ Deno.test({
           transferred_amount: 4_000,
         },
       ],
+    }, {
+      election_or_transfer_year: 2025,
+      source_document_reference: "2025 S corporation consent transaction",
+      corporation_name: "Consent S Corp",
+      corporation_ein: "456789123",
+      beginning_deferred_liability: 1_000,
+      triggered_liability: 1_000,
+      transferred_liability: 0,
+    }],
+    transfer_agreements: [{
+      agreement_type: "965-C",
+      file_name: "Form965C.pdf",
+      signed_pdf_base64: syntheticPdfBase64,
+      source_document_reference: "Synthetic signed Form 965-C test fixture",
+    }, {
+      agreement_type: "965-D",
+      file_name: "Form965D1.pdf",
+      signed_pdf_base64: syntheticPdfBase64,
+      source_document_reference: "Synthetic first Form 965-D test fixture",
+    }, {
+      agreement_type: "965-D",
+      file_name: "Form965D2.pdf",
+      signed_pdf_base64: syntheticPdfBase64,
+      source_document_reference: "Synthetic second Form 965-D test fixture",
+    }, {
+      agreement_type: "965-E",
+      file_name: "Form965E.pdf",
+      signed_pdf_base64: syntheticPdfBase64,
+      source_document_reference: "Synthetic Form 965-E test fixture",
     }],
   };
-  const xml = buildMefXml({
+  const bundle = await buildMefBundle({
     f1040: { line23_other_taxes: 0 },
     schedule2: { line20_965_tax_installment: 8_000 },
     f965,
-  }, extractFilerIdentity(singleGeneral()));
+  }, {
+    filer: extractFilerIdentity(singleGeneral()),
+    attachments: [],
+  });
+  const { xml } = bundle;
+  assertEquals(bundle.attachments.length, 4);
+  assertEquals(bundle.attachments[0].bytes, pdfBytes);
   assertStringIncludes(xml, "<NetAdjustmentTransferStmt ");
   assertStringIncludes(xml, "<MultipleTransfereeStmt ");
+  assertStringIncludes(xml, "<BinaryAttachment ");
   assertStringIncludes(
     xml,
     'referenceDocumentName="BinaryAttachment NetAdjustmentTransferStatement MultipleTransfereeStatement"',

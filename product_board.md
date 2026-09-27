@@ -117,8 +117,12 @@ a 2017 inclusion normally has its eighth installment in 2025 was incorrect;
 the normal eighth year was 2024. Native MeF statements now describe netted
 Part I adjustments/transfers and allocate Part IV transfers among multiple
 transferees, with required source facts, reconciliation, and parent document
-links. Consent-agreement binary attachments, historical tax computations, and
-IRS business rules remain open. These cases are written but unrun.
+links. The build pass now takes source-provided signed Form 965-C, 965-D, and
+965-E PDF copies for reported transfer or consent events, preserves their
+bytes in the MeF bundle, and links them from Form 965-A. Multiple partial
+Form 965-D transfers require one copy per transferee. The bundle case is
+written but unrun. It does not create, sign, mail, or authenticate an
+agreement. Historical tax computations and IRS business rules remain open.
 
 The current untested Form 8936 commercial-vehicle pass replaces the new/used
 boolean with one three-way credit type and adds Schedule A Part V basis, Section

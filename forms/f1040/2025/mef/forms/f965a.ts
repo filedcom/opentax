@@ -149,6 +149,17 @@ function buildIRS965A(input: F965Input, context?: MefBuildContext): string {
     ?.f965_net_adjustment_transfer_statement ?? [];
   const multipleStatementIds = context?.documentIdsByPendingKey
     ?.f965_multiple_transferee_statement ?? [];
+  const agreementIds = input.transfer_agreements.map((agreement) =>
+    context?.documentIdsByAttachmentFileName?.[agreement.file_name]
+  );
+  if (
+    context?.binaryAttachmentFileNames &&
+    input.transfer_agreements.some((agreement) =>
+      !context.binaryAttachmentFileNames?.includes(agreement.file_name)
+    )
+  ) {
+    throw new Error("Form 965-A needs each signed transfer agreement PDF");
+  }
   if (
     context?.documentIdsByPendingKey &&
     ((needsNetStatement && netStatementIds.length === 0) ||
@@ -157,7 +168,17 @@ function buildIRS965A(input: F965Input, context?: MefBuildContext): string {
   ) {
     throw new Error("Form 965-A needs its supporting transfer statement");
   }
-  const statementIds = [...netStatementIds, ...multipleStatementIds];
+  if (
+    context?.documentIdsByAttachmentFileName &&
+    agreementIds.some((id) => !id)
+  ) {
+    throw new Error("Form 965-A needs each signed transfer agreement PDF");
+  }
+  const statementIds = [
+    ...agreementIds.filter((id): id is string => !!id),
+    ...netStatementIds,
+    ...multipleStatementIds,
+  ];
   return elements(
     "IRS965A",
     [
@@ -204,5 +225,19 @@ export const form965a: MefFormDescriptor<"f965", unknown> = {
       }
     }
     return buildIRS965A(input, context);
+  },
+  async buildBinaryAttachments(raw) {
+    if (!raw || typeof raw !== "object" || !("f965s" in raw)) return [];
+    const input = inputSchema.parse(raw);
+    return input.transfer_agreements.map((agreement, index) => ({
+      fileName: agreement.file_name,
+      description: `Form ${agreement.agreement_type} agreement copy ${
+        index + 1
+      }`,
+      bytes: Uint8Array.from(
+        atob(agreement.signed_pdf_base64),
+        (character) => character.charCodeAt(0),
+      ),
+    }));
   },
 };

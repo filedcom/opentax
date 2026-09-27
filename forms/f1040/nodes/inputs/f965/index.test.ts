@@ -37,6 +37,7 @@ function source(overrides: Partial<F965Input> = {}) {
     }],
     s_corp_calculations: [],
     s_corp_deferred_rows: [],
+    transfer_agreements: [],
     ...overrides,
   });
 }
@@ -144,6 +145,7 @@ Deno.test("Form 965-A netted adjustment and transfer require reconciling facts",
     ...row,
     net_tax_adjustment: 100,
     net_tax_adjustment_kind: "netted_adjustment_and_transfer" as const,
+    transfer_agreement_file_name: "Form965C.pdf",
     counterparty_tax_id: { kind: "ein" as const, value: "987654321" },
     netted_adjustment_and_transfer: {
       adjustment_amount: 200,
@@ -152,7 +154,15 @@ Deno.test("Form 965-A netted adjustment and transfer require reconciling facts",
       source_document_reference: "2025 signed transfer agreement",
     },
   };
-  const input = source({ f965s: [transaction] });
+  const input = source({
+    f965s: [transaction],
+    transfer_agreements: [{
+      agreement_type: "965-C",
+      file_name: "Form965C.pdf",
+      signed_pdf_base64: "JVBERi0x",
+      source_document_reference: "2025 signed Form 965-C",
+    }],
+  });
   assertEquals(unpaidLiability(input, input.f965s[0]), 100);
   assertThrows(() =>
     source({
@@ -173,6 +183,13 @@ Deno.test("Form 965-A multiple transferees must sum to Part IV transfer", () => 
     beginning_deferred_liability: 10_000,
     triggered_liability: 0,
     transferred_liability: -6_000,
+    transfer_agreement_links: [{
+      transferee_tax_id: { kind: "ein" as const, value: "123123123" },
+      file_name: "Form965D1.pdf",
+    }, {
+      transferee_tax_id: { kind: "ssn" as const, value: "321321321" },
+      file_name: "Form965D2.pdf",
+    }],
     counterparty_tax_id: { kind: "ein" as const, value: "123123123" },
     multiple_transferees: [
       {
@@ -185,13 +202,89 @@ Deno.test("Form 965-A multiple transferees must sum to Part IV transfer", () => 
       },
     ],
   };
-  const input = source({ s_corp_deferred_rows: [annualRow] });
+  const input = source({
+    s_corp_deferred_rows: [annualRow],
+    transfer_agreements: [{
+      agreement_type: "965-D",
+      file_name: "Form965D1.pdf",
+      signed_pdf_base64: "JVBERi0x",
+      source_document_reference: "2025 first signed Form 965-D",
+    }, {
+      agreement_type: "965-D",
+      file_name: "Form965D2.pdf",
+      signed_pdf_base64: "JVBERi0x",
+      source_document_reference: "2025 second signed Form 965-D",
+    }],
+  });
   assertEquals(input.s_corp_deferred_rows[0].transferred_liability, -6_000);
   assertThrows(() =>
     source({
       s_corp_deferred_rows: [{
         ...annualRow,
+        transfer_agreement_links: annualRow.transfer_agreement_links.slice(
+          0,
+          1,
+        ),
+      }],
+      transfer_agreements: input.transfer_agreements,
+    })
+  );
+  assertThrows(() =>
+    source({
+      s_corp_deferred_rows: [{
+        ...annualRow,
         transferred_liability: -5_000,
+      }],
+      transfer_agreements: input.transfer_agreements,
+    })
+  );
+});
+
+Deno.test("Form 965-A consent-triggered liability needs its signed Form 965-E copy", () => {
+  const triggered = {
+    entry_type: "triggered_s_corp" as const,
+    source_document_reference: "2025 consent-triggering transaction",
+    tax_year_of_inclusion: 2018,
+    installment_election: true,
+    triggered_liability: 1_000,
+    net_tax_adjustment: 0,
+    paid_by_installment_year: Array(8).fill(0),
+    current_year_payment: 0,
+    requires_965e_consent: true,
+    consent_agreement_file_name: "Form965E.pdf",
+  };
+  const deferred = {
+    election_or_transfer_year: 2025,
+    source_document_reference: "2025 S corporation consent transaction",
+    corporation_name: "Example S Corp",
+    corporation_ein: "123456789",
+    beginning_deferred_liability: 1_000,
+    triggered_liability: 1_000,
+    transferred_liability: 0,
+  };
+  assertThrows(() =>
+    source({
+      f965s: [source().f965s[0], triggered],
+      s_corp_deferred_rows: [deferred],
+    })
+  );
+  const input = source({
+    f965s: [source().f965s[0], triggered],
+    s_corp_deferred_rows: [deferred],
+    transfer_agreements: [{
+      agreement_type: "965-E",
+      file_name: "Form965E.pdf",
+      signed_pdf_base64: "JVBERi0x",
+      source_document_reference: "2025 signed Form 965-E",
+    }],
+  });
+  assertEquals(input.f965s[1].entry_type, "triggered_s_corp");
+  assertThrows(() =>
+    source({
+      ...input,
+      transfer_agreements: [{
+        ...input.transfer_agreements[0],
+        agreement_type: "965-D",
       }],
     })
   );

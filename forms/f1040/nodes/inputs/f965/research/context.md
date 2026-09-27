@@ -1,7 +1,10 @@
 # Form 965-A: cumulative individual section 965 tax report
 
 Sources: [Form 965-A](https://www.irs.gov/pub/irs-pdf/f965a.pdf),
-[IRS instructions](https://www.irs.gov/instructions/i965a), and TY2025v5.4
+[IRS instructions](https://www.irs.gov/instructions/i965a),
+[Form 965-C instructions](https://www.irs.gov/instructions/i965c),
+[Form 965-D instructions](https://www.irs.gov/instructions/i965d),
+[Form 965-E instructions](https://www.irs.gov/instructions/i965e), and TY2025v5.4
 `IRS965A.xsd`.
 
 Form 965-A is required for a taxpayer with net section 965 liability unpaid at
@@ -33,10 +36,18 @@ nets a subsequent adjustment with a transfer out. The native multiple-transferee
 statement is required when one Part IV transfer out is allocated among more than
 one transferee. Both statements are linked from Form 965-A in the MeF bundle.
 
+The source model now requires a named source-provided PDF copy of the applicable
+signed Form 965-C, 965-D, or 965-E for a reported transfer or consent event.
+For multiple partial S-corporation transfers it requires a separate Form 965-D
+copy linked to each transferee, as the IRS instructions require.
+The bundle preserves the supplied PDF bytes and links each attachment from
+`IRS965A`. It does not create, sign, mail, or independently authenticate an
+agreement. The original-mailing deadline and the source document's validity
+must be checked outside this exporter.
+
 Open verification and coverage: the IRS TY2025 XSD and full return tests are
-written but unrun under the requested build-first workflow. Consent-agreement
-binary attachments and independent authentication of transfer agreements have
-not been built. The model takes actual installment payments from a ledger; it
+written but unrun under the requested build-first workflow. Independent
+authentication of transfer agreements remains open. The model takes actual installment payments from a ledger; it
 does not calculate accrued interest, penalties, acceleration, or the historical
 tax-with/without computations. Those source records and any agreement with the
 IRS must be reviewed before filing.
