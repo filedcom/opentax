@@ -7,26 +7,28 @@ import {
 } from "../../../nodes/inputs/f8912/calculation.ts";
 import {
   type F8912UnreportedBond,
+  inputSchema,
   interestFromItem,
-  itemSchema,
   partIVRowInput,
-  sourceLinesFromItem,
+  sourceLinesFromInput,
 } from "../../../nodes/inputs/f8912/index.ts";
 
 // An unregistered document builder. Return assembly must derive Part II from
 // finalized return credits and attach this document before it may file.
 export function buildForm8912Document(
-  rawItem: unknown,
+  rawInput: unknown,
   finalizedReturn: Form8912FinalizedReturnLines,
 ): string {
-  const item = itemSchema.parse(rawItem);
-  if (item.reported_bonds.length > 99 || item.unreported_bonds.length > 99) {
+  const input = inputSchema.parse(rawInput);
+  const reportedBonds = input.f8912s.flatMap((item) => item.reported_bonds);
+  const unreportedBonds = input.f8912s.flatMap((item) => item.unreported_bonds);
+  if (reportedBonds.length > 99 || unreportedBonds.length > 99) {
     throw new Error(
       "Form 8912 MeF supports at most 99 Part III or Part IV bond groups",
     );
   }
-  const source = sourceLinesFromItem(item);
-  interestFromItem(item);
+  const source = sourceLinesFromInput(input);
+  input.f8912s.forEach(interestFromItem);
   const limit = calculateForm8912IndividualLimit(
     deriveForm8912IndividualLimitInput(source, finalizedReturn),
   );
@@ -42,7 +44,7 @@ export function buildForm8912Document(
   }
 
   let line19 = 0;
-  const partIV = item.unreported_bonds.map((bond) => {
+  const partIV = unreportedBonds.map((bond) => {
     const details = bond.line18_rows.map((row) => {
       const sourceRow = partIVRowInput(bond, row);
       const lines = calculateForm8912PartIVBond(sourceRow);
@@ -82,7 +84,7 @@ export function buildForm8912Document(
     element("TotalCreditsAmt", limit.line10e),
     element("NetIncomeTaxAmt", limit.line11),
     element("CurrentYearAllowableCreditAmt", limit.line12),
-    ...item.reported_bonds.map((bond) =>
+    ...reportedBonds.map((bond) =>
       elements("BondInformation", [
         elements("BondIssuerName", [
           element("BusinessNameLine1Txt", bond.issuer_name),

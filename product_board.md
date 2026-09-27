@@ -178,30 +178,32 @@ taxable-interest reconciliation, and IRS business-rule review.
 
 The next Form 8912 build pass models each Part IV bond as one or more explicit
 line 18 rows, preserves bond identity on carryforwards, and drafts `IRS8912` MeF
-output with separate Parts I through IV and a Part II input reconciliation.
-Direct XML and local schema cases are written but unrun. The builder is not
-registered, since the return graph does not yet supply final tax, AMT, prior
-credits, and allowed Form 3800 in the required order. Positive Form 8912 claims
-remain blocked at final Form 1040 assembly and export; this XML draft is not a
-filing path. Its displayed whole-dollar row and aggregate rounding, as well as
-pass-through CREB taxable-income limits, still need end-to-end reconciliation.
-The draft now derives Part II from explicit finalized Form 1040, Schedule 2,
-Schedule 3, Form 6251, and allowed Form 3800 lines. It removes Schedule 3 lines
-1, 6a, 6b, and 6k from line 8 when computing Form 8912 line 10b, checks the Form
-3800 amount against line 6a, and requires Form 8912 line 12 to match Schedule 3
-line 6k. These bridge and XML cases are written but unrun. No graph node
-currently supplies that finalized snapshot, so the builder stays unregistered
-and positive claims remain blocked. Form 8912 source items now capture
-bond-level purchase-price accrued interest and accrued interest on disposition.
-An unrun pure calculation separates current-year deemed interest from prior-year
-credit carryforwards and the purchase-price basis recovery. Schedule B's MeF
-builder now emits source-backed interest-payer rows and its line 1/4 totals when
-paired payer names and amounts are available; source-to-XSD cases are written
-but unrun. The Schedule B node now self-emits paired interest rows so
-numeric-array pending normalization does not discard payer amounts before
-XML/PDF export. The PDF path now appends paginated interest-payer detail after
-the 14 printed rows, with cases written but unrun. This does not yet cover all
-Schedule B adjustment rows. The PDF statement still needs filled-render
+output with separate Parts I through IV and a Part II input reconciliation. The
+draft now combines all `f8912s` source items into one Form 8912 Part I/II
+document while retaining each Part III/IV bond row; its multi-item case is
+written but unrun. Direct XML and local schema cases are written but unrun. The
+builder is not registered, since the return graph does not yet supply final tax,
+AMT, prior credits, and allowed Form 3800 in the required order. Positive Form
+8912 claims remain blocked at final Form 1040 assembly and export; this XML
+draft is not a filing path. Its displayed whole-dollar row and aggregate
+rounding, as well as pass-through CREB taxable-income limits, still need
+end-to-end reconciliation. The draft now derives Part II from explicit finalized
+Form 1040, Schedule 2, Schedule 3, Form 6251, and allowed Form 3800 lines. It
+removes Schedule 3 lines 1, 6a, 6b, and 6k from line 8 when computing Form 8912
+line 10b, checks the Form 3800 amount against line 6a, and requires Form 8912
+line 12 to match Schedule 3 line 6k. These bridge and XML cases are written but
+unrun. No graph node currently supplies that finalized snapshot, so the builder
+stays unregistered and positive claims remain blocked. Form 8912 source items
+now capture bond-level purchase-price accrued interest and accrued interest on
+disposition. An unrun pure calculation separates current-year deemed interest
+from prior-year credit carryforwards and the purchase-price basis recovery.
+Schedule B's MeF builder now emits source-backed interest-payer rows and its
+line 1/4 totals when paired payer names and amounts are available; source-to-XSD
+cases are written but unrun. The Schedule B node now self-emits paired interest
+rows so numeric-array pending normalization does not discard payer amounts
+before XML/PDF export. The PDF path now appends paginated interest-payer detail
+after the 14 printed rows, with cases written but unrun. This does not yet cover
+all Schedule B adjustment rows. The PDF statement still needs filled-render
 verification. The next Form 8912 graph pass requires each bond's taxable
 interest already reported by another input, validates that amount against
 computed bond interest, and routes only the unreported balance to Schedule B.

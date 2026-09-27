@@ -368,6 +368,28 @@ export function sourceLinesFromItem(
   );
 }
 
+export function sourceLinesFromInput(
+  input: z.infer<typeof inputSchema>,
+): Form8912SourceLines {
+  return input.f8912s.reduce<Form8912SourceLines>((total, item) => {
+    const lines = sourceLinesFromItem(item);
+    return {
+      line1: total.line1 + lines.line1,
+      line2: total.line2 + lines.line2,
+      line3: total.line3 + lines.line3,
+      line4: total.line4 + lines.line4,
+      hasPassThroughCrebCredit: total.hasPassThroughCrebCredit ||
+        lines.hasPassThroughCrebCredit,
+    };
+  }, {
+    line1: 0,
+    line2: 0,
+    line3: 0,
+    line4: 0,
+    hasPassThroughCrebCredit: false,
+  });
+}
+
 export function interestFromItem(item: F8912Item): Form8912BondInterest {
   return interestRowsFromItem(item).reduce(
     (sum, { interest }) => ({

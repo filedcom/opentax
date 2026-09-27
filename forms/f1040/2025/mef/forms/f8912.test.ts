@@ -62,7 +62,7 @@ const finalized = {
 };
 
 Deno.test("Form 8912 MeF draft keeps source rows and allowed credit distinct", () => {
-  const xml = buildForm8912Document(source, finalized);
+  const xml = buildForm8912Document({ f8912s: [source] }, finalized);
   assertStringIncludes(
     xml,
     "<TotalAllForm1097BTCAmt>100</TotalAllForm1097BTCAmt>",
@@ -89,10 +89,38 @@ Deno.test("Form 8912 MeF draft keeps source rows and allowed credit distinct", (
   );
 });
 
+Deno.test("Form 8912 MeF draft combines separate input items into one Part I and II", () => {
+  const second = {
+    reported_bonds: [{
+      ...source.reported_bonds[0],
+      unique_identifier: "SECOND1097",
+      monthly_credit_amounts: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 50],
+      credit_amount: 50,
+    }],
+    unreported_bonds: [],
+    carryforwards: [],
+  };
+  const xml = buildForm8912Document({ f8912s: [source, second] }, {
+    ...finalized,
+    schedule3Line6k: 350,
+    schedule3Line8: 350,
+  });
+  assertStringIncludes(
+    xml,
+    "<TotalAllForm1097BTCAmt>150</TotalAllForm1097BTCAmt>",
+  );
+  assertStringIncludes(xml, "<TotalCreditAmt>350</TotalCreditAmt>");
+  assertStringIncludes(
+    xml,
+    "<CurrentYearAllowableCreditAmt>350</CurrentYearAllowableCreditAmt>",
+  );
+  assertEquals(xml.split("<BondInformation>").length - 1, 2);
+});
+
 Deno.test("Form 8912 MeF draft rejects a Schedule 3 line 6k mismatch", () => {
   assertThrows(
     () =>
-      buildForm8912Document(source, {
+      buildForm8912Document({ f8912s: [source] }, {
         ...finalized,
         schedule3Line6k: 500,
         schedule3Line8: 500,
@@ -116,7 +144,7 @@ Deno.test("Form 8912 MeF draft emits each Part IV line 18 detail", () => {
       ],
     }],
   };
-  const xml = buildForm8912Document(twoRows, {
+  const xml = buildForm8912Document({ f8912s: [twoRows] }, {
     ...finalized,
     schedule3Line6k: 387.5,
     schedule3Line8: 387.5,
@@ -134,7 +162,7 @@ Deno.test("Form 8912 MeF draft emits each Part IV line 18 detail", () => {
 });
 
 Deno.test("Form 8912 MeF draft limits line 12 after prior credits", () => {
-  const xml = buildForm8912Document(source, {
+  const xml = buildForm8912Document({ f8912s: [source] }, {
     ...finalized,
     form1040Line16: 250,
     schedule3Line1: 50,
@@ -153,7 +181,7 @@ Deno.test("Form 8912 MeF draft limits line 12 after prior credits", () => {
 Deno.test("Form 8912 MeF draft rejects unmatched allowed Form 3800 credit", () => {
   assertThrows(
     () =>
-      buildForm8912Document(source, {
+      buildForm8912Document({ f8912s: [source] }, {
         ...finalized,
         schedule3Line6a: 100,
         schedule3Line8: 400,
@@ -167,10 +195,12 @@ Deno.test("Form 8912 MeF draft rejects purchase interest larger than its bond cr
   assertThrows(
     () =>
       buildForm8912Document({
-        ...source,
-        reported_bonds: [{
-          ...source.reported_bonds[0],
-          purchase_accrued_interest: 101,
+        f8912s: [{
+          ...source,
+          reported_bonds: [{
+            ...source.reported_bonds[0],
+            purchase_accrued_interest: 101,
+          }],
         }],
       }, finalized),
     Error,
@@ -188,7 +218,7 @@ Deno.test("Form 8912 MeF draft validates its IRS source schema", async () => {
   } catch {
     return;
   }
-  const xml = buildForm8912Document(source, finalized).replace(
+  const xml = buildForm8912Document({ f8912s: [source] }, finalized).replace(
     "<IRS8912>",
     '<IRS8912 xmlns="http://www.irs.gov/efile">',
   );
