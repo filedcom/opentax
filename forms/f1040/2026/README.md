@@ -130,6 +130,10 @@ The [Form 8824 contract](../../../docs/ty2026/FORM8824-GRAPH.md) maps
 §1031 multi-property exchanges and deferred replacement basis, two-year
 related-party reporting, recapture and §1043 sales. Its 68 PDF widgets and
 current MeF/validation routes remain to implement.
+The [Form 8990 contract](../../../docs/ty2026/FORM8990-GRAPH.md) maps
+the 2026 $32 million small-business test, ATI and source-level interest
+allocation, including pass-through Schedule A/B and CFC branches. Its
+138 PDF widgets and current MeF/validation routes remain to implement.
 The [Form 4835 contract](../../../docs/ty2026/FORM4835-GRAPH.md) and
 [ATS scenario 3 plan](../../../docs/ty2026/ATS-SCENARIO-03.md) connect
 production-based farm rent to Schedule E while keeping Schedule F farm profit

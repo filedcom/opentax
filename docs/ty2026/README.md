@@ -89,6 +89,9 @@ for the implementation contract.
 - [`FORM8824-GRAPH.md`](FORM8824-GRAPH.md) and `pdf-fields-f8824.csv`:
   multi-property §1031 exchange, two-year related-party state, deferred
   basis and §1043 sale, plus all 68 draft PDF widgets.
+- [`FORM8990-GRAPH.md`](FORM8990-GRAPH.md) and `pdf-fields-f8990.csv`:
+  §163(j) business-interest limit, 2026 $32 million gross-receipts test,
+  source/activity carryforwards and all 138 draft PDF widgets.
 - [`FORM8962-GRAPH.md`](FORM8962-GRAPH.md) and `pdf-fields-f8962.csv`:
   2026 premium tax credit line 27, 400% FPL boundary, Form 1095-A/allocations,
   143 PDF widgets, and MeF/graph acceptance order.

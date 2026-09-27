@@ -1594,6 +1594,15 @@
       "bytes": 1732834,
       "sha256": "b8282a22f637e147b6435787bf9e20db6c24d08d8124386cce75eaab05de0cfd",
       "retrieved_utc": "2026-09-27T14:24:25Z"
+    },
+    {
+      "path": "authorities/i8990--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/i8990.pdf",
+      "kind": "prior-year-comparator",
+      "status": "downloaded",
+      "bytes": 310574,
+      "sha256": "001d2a9c1f4ca0d74226bc763d73049f5088ab2d5c3f2553b2dfa107de19a2f3",
+      "retrieved_utc": "2026-09-27T14:27:46Z"
     }
   ]
 }

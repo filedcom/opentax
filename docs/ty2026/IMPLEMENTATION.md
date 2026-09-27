@@ -90,6 +90,10 @@ The [Form 8824 contract](FORM8824-GRAPH.md) maps multi-property §1031,
 deferred basis, related-party disposition, recapture and the separate §1043
 sale. Its 68 PDF widgets are inventoried; the draft also names old Form 4797
 destinations that require final-source correction.
+The [Form 8990 contract](FORM8990-GRAPH.md) maps the $32 million 2026
+gross-receipts threshold, source-keyed deductible and capitalized interest,
+ATI, pass-through EBIE/ETI/EBII and CFC branches. Its 138 draft PDF widgets
+are inventoried; the shared Schedule 1 addback loses source deductions.
 The [scenario 12 contract](ATS-SCENARIO-12.md) and
 [business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
 broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800
