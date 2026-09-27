@@ -73,6 +73,19 @@ const certificationSchema = z.discriminatedUnion("path", [
   }),
 ]);
 
+const successorEmployerSchema = z.object({
+  predecessor_ein: z.string().regex(/^\d{9}$/),
+  predecessor_first_workday_on: z.string().date(),
+  acquisition_on: z.string().date(),
+  substantially_all_business_assets_acquired_confirmed: z.literal(true),
+  employee_continued_immediately_confirmed: z.literal(true),
+  predecessor_certification_remains_valid_confirmed: z.literal(true),
+  predecessor_hours_worked: z.number().nonnegative(),
+  predecessor_first_year_qualified_wages: z.number().nonnegative(),
+  predecessor_second_year_qualified_wages: z.number().nonnegative().optional(),
+  wage_periods_start_at_predecessor_confirmed: z.literal(true),
+});
+
 // Per-item schema — one entry per employee
 export const itemSchema = z.object({
   employee_reference: z.string().trim().min(1),
@@ -82,6 +95,7 @@ export const itemSchema = z.object({
       "Work opportunity credit requires employment beginning before 2026",
   }),
   certification: certificationSchema,
+  successor_employer: successorEmployerSchema.optional(),
   qualified_wages_confirmed: z.literal(true),
   not_prior_employee_confirmed: z.literal(true),
   not_related_or_dependent_confirmed: z.literal(true),
@@ -98,9 +112,11 @@ export const itemSchema = z.object({
   designated_community_resident_location_confirmed: z.literal(true).optional(),
 }).superRefine((item, ctx) => {
   const certification = item.certification;
+  const firstWorkday = item.successor_employer?.predecessor_first_workday_on ??
+    item.hired_on;
   if (
     certification.path === "certified_by_start" &&
-    certification.certification_received_on > item.hired_on
+    certification.certification_received_on > firstWorkday
   ) {
     ctx.addIssue({
       code: "custom",
@@ -110,11 +126,11 @@ export const itemSchema = z.object({
   }
   if (certification.path === "form8850_prescreen") {
     const deadline = new Date(
-      Date.parse(`${item.hired_on}T00:00:00Z`) + 28 * 86_400_000,
+      Date.parse(`${firstWorkday}T00:00:00Z`) + 28 * 86_400_000,
     ).toISOString().slice(0, 10);
     for (
       const [field, latest] of [
-        ["job_offer_on", item.hired_on],
+        ["job_offer_on", firstWorkday],
         ["prescreen_completed_on", certification.job_offer_on],
         [
           "form8850_signed_by_applicant_on",
@@ -143,6 +159,55 @@ export const itemSchema = z.object({
         code: "custom",
         path: ["certification", "certification_received_on"],
         message: "Certification cannot precede the prescreening submission",
+      });
+    }
+  }
+  if (item.successor_employer) {
+    const successor = item.successor_employer;
+    if (
+      successor.predecessor_first_workday_on > successor.acquisition_on ||
+      successor.acquisition_on > item.hired_on
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["successor_employer", "acquisition_on"],
+        message:
+          "Successor acquisition must follow the predecessor start and precede successor employment",
+      });
+    }
+    if (
+      item.target_group !== TargetGroup.LongTermFamilyAssistance &&
+      successor.predecessor_second_year_qualified_wages !== undefined
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["successor_employer", "predecessor_second_year_qualified_wages"],
+        message: "Only long-term family assistance has second-year wages",
+      });
+    }
+    const firstStart = new Date(
+      `${successor.predecessor_first_workday_on}T00:00:00Z`,
+    );
+    const anniversary = (years: number) =>
+      new Date(Date.UTC(
+        firstStart.getUTCFullYear() + years,
+        firstStart.getUTCMonth(),
+        firstStart.getUTCDate(),
+      )).toISOString().slice(0, 10);
+    if (item.first_year_wages > 0 && item.hired_on >= anniversary(1)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["first_year_wages"],
+        message:
+          "Successor first-year wages cannot begin after the predecessor's first year",
+      });
+    }
+    if ((item.second_year_wages ?? 0) > 0 && item.hired_on >= anniversary(2)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["second_year_wages"],
+        message:
+          "Successor second-year wages cannot begin after the predecessor's second year",
       });
     }
   }
@@ -265,24 +330,43 @@ function wageCap(item: F5884Item): number {
 }
 
 export function calculateForm5884(input: z.infer<typeof inputSchema>) {
-  const rows = input.f5884s.map((item) => ({
-    item,
-    firstYearWages: item.hours_worked < 120
-      ? 0
-      : Math.min(item.first_year_wages, wageCap(item)),
-    secondYearWages:
-      item.target_group === TargetGroup.LongTermFamilyAssistance &&
-        item.hours_worked >= 120
-        ? Math.min(item.second_year_wages ?? 0, WAGE_CAP_LTFA_SECOND)
-        : 0,
-  }));
+  const rows = input.f5884s.map((item) => {
+    const successor = item.successor_employer;
+    const totalHours = item.hours_worked +
+      (successor?.predecessor_hours_worked ?? 0);
+    return {
+      item,
+      totalHours,
+      firstYearWages: totalHours < 120 ? 0 : Math.min(
+        item.first_year_wages,
+        Math.max(
+          0,
+          wageCap(item) -
+            (successor?.predecessor_first_year_qualified_wages ?? 0),
+        ),
+      ),
+      secondYearWages:
+        item.target_group === TargetGroup.LongTermFamilyAssistance &&
+          totalHours >= 120
+          ? Math.min(
+            item.second_year_wages ?? 0,
+            Math.max(
+              0,
+              WAGE_CAP_LTFA_SECOND -
+                (successor?.predecessor_second_year_qualified_wages ?? 0),
+            ),
+          )
+          : 0,
+    };
+  });
   const line1aWages = Math.round(
-    rows.filter((row) =>
-      row.item.hours_worked >= 120 && row.item.hours_worked < 400
-    ).reduce((sum, row) => sum + row.firstYearWages, 0),
+    rows.filter((row) => row.totalHours >= 120 && row.totalHours < 400).reduce(
+      (sum, row) => sum + row.firstYearWages,
+      0,
+    ),
   );
   const line1bWages = Math.round(
-    rows.filter((row) => row.item.hours_worked >= 400)
+    rows.filter((row) => row.totalHours >= 400)
       .reduce((sum, row) => sum + row.firstYearWages, 0),
   );
   const line1cWages = Math.round(rows.reduce(

@@ -120,6 +120,167 @@ Deno.test("Form 8850 prescreen path enforces offer, signatures, and SWA deadline
   assertEquals(parse({ certification_received_on: "2025-02-11" }), false);
 });
 
+Deno.test("successor credit keeps predecessor wage cap and combined hours", () => {
+  const successor = {
+    predecessor_ein: "123456789",
+    predecessor_first_workday_on: "2025-01-01",
+    acquisition_on: "2025-04-01",
+    substantially_all_business_assets_acquired_confirmed: true as const,
+    employee_continued_immediately_confirmed: true as const,
+    predecessor_certification_remains_valid_confirmed: true as const,
+    predecessor_hours_worked: 100,
+    predecessor_first_year_qualified_wages: 2_000,
+    wage_periods_start_at_predecessor_confirmed: true as const,
+  };
+  const item = minimalItem({
+    hired_on: "2025-04-01",
+    certification: {
+      path: "certified_by_start",
+      swa_certification_reference: "SWA-001",
+      certification_received_on: "2025-01-01",
+      certification_received_before_claim_confirmed: true,
+    },
+    successor_employer: successor,
+    first_year_wages: 6_000,
+    hours_worked: 300,
+  });
+  assertEquals(itemSchema.safeParse(item).success, true);
+  const lines = calculateForm5884({
+    f5884s: [item],
+    subject_to_passive_activity_limit: false,
+  });
+  assertEquals(lines.line1aWages, 0);
+  assertEquals(lines.line1bWages, 4_000);
+  assertEquals(lines.line1bCredit, 1_600);
+  assertEquals(
+    itemSchema.safeParse({
+      ...item,
+      certification: {
+        ...item.certification,
+        certification_received_on: "2025-01-02",
+      },
+    }).success,
+    false,
+  );
+  assertEquals(
+    itemSchema.safeParse({
+      ...item,
+      successor_employer: { ...successor, acquisition_on: "2024-12-31" },
+    }).success,
+    false,
+  );
+  assertEquals(
+    itemSchema.safeParse({
+      ...item,
+      hired_on: "2026-01-01",
+      successor_employer: { ...successor, acquisition_on: "2026-01-01" },
+    }).success,
+    false,
+  );
+  assertEquals(
+    itemSchema.safeParse({
+      ...item,
+      hired_on: "2025-04-01",
+      successor_employer: {
+        ...successor,
+        predecessor_first_workday_on: "2024-01-01",
+      },
+      certification: {
+        ...item.certification,
+        certification_received_on: "2024-01-01",
+      },
+    }).success,
+    false,
+  );
+  assertEquals(
+    itemSchema.safeParse({
+      ...item,
+      successor_employer: {
+        ...successor,
+        predecessor_second_year_qualified_wages: 1_000,
+      },
+    }).success,
+    false,
+  );
+  const prescreen = {
+    path: "form8850_prescreen",
+    swa_certification_reference: "SWA-001",
+    certification_received_on: "2025-02-01",
+    certification_received_before_claim_confirmed: true,
+    job_offer_on: "2024-12-20",
+    prescreen_completed_on: "2024-12-20",
+    form8850_signed_by_applicant_on: "2024-12-20",
+    form8850_signed_by_employer_on: "2025-01-20",
+    form8850_submitted_to_swa_on: "2025-01-20",
+    eta_form: "9061",
+  };
+  assertEquals(
+    itemSchema.safeParse({ ...item, certification: prescreen }).success,
+    true,
+  );
+  assertEquals(
+    itemSchema.safeParse({
+      ...item,
+      certification: {
+        ...prescreen,
+        form8850_signed_by_employer_on: "2025-01-30",
+        form8850_submitted_to_swa_on: "2025-01-30",
+      },
+    }).success,
+    false,
+  );
+});
+
+Deno.test("successor long-term family assistance shares the second-year cap", () => {
+  const item = minimalItem({
+    target_group: TargetGroup.LongTermFamilyAssistance,
+    hired_on: "2025-03-01",
+    certification: {
+      path: "certified_by_start",
+      swa_certification_reference: "SWA-002",
+      certification_received_on: "2024-01-15",
+      certification_received_before_claim_confirmed: true,
+    },
+    successor_employer: {
+      predecessor_ein: "123456789",
+      predecessor_first_workday_on: "2024-01-15",
+      acquisition_on: "2025-03-01",
+      substantially_all_business_assets_acquired_confirmed: true,
+      employee_continued_immediately_confirmed: true,
+      predecessor_certification_remains_valid_confirmed: true,
+      predecessor_hours_worked: 500,
+      predecessor_first_year_qualified_wages: 10_000,
+      predecessor_second_year_qualified_wages: 3_000,
+      wage_periods_start_at_predecessor_confirmed: true,
+    },
+    first_year_wages: 0,
+    second_year_wages: 8_000,
+    hours_worked: 200,
+  });
+  assertEquals(itemSchema.safeParse(item).success, true);
+  const lines = calculateForm5884({
+    f5884s: [item],
+    subject_to_passive_activity_limit: false,
+  });
+  assertEquals(lines.line1cWages, 7_000);
+  assertEquals(lines.line1cCredit, 3_500);
+  assertEquals(
+    itemSchema.safeParse({
+      ...item,
+      hired_on: "2025-03-01",
+      successor_employer: {
+        ...item.successor_employer!,
+        predecessor_first_workday_on: "2023-01-15",
+      },
+      certification: {
+        ...item.certification,
+        certification_received_on: "2023-01-15",
+      },
+    }).success,
+    false,
+  );
+});
+
 // ── Zero Output Cases ─────────────────────────────────────────────────────────
 
 Deno.test("zero_wages_produces_no_output", () => {

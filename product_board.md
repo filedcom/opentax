@@ -169,6 +169,12 @@ Form 8850 prescreening completed by the offer date, signed before submission,
 submitted to the state workforce agency within 28 calendar days of hire, and
 followed by certification before claiming. These timing cases are written but
 unrun; certification revocation and disaster postponement handling remain open.
+The successor-employer build pass now anchors certification timing to the
+predecessor's first workday, combines prior and current hours, and reduces the
+first- and second-year wage caps by predecessor qualified wages. It requires
+acquisition, continuous-employment, and retained-certification facts; source
+cases also reject wages when the successor starts after the applicable wage
+period. They are written but unrun and payroll records are not yet reconciled.
 It applies the missing $24,000 disabled-long-term-unemployed veteran cap and the 120-hour
 minimum plus hours-based first-year rate to long-term family assistance
 recipients. Source and rejection cases

@@ -23,6 +23,17 @@ employee references are rejected. A summer-youth row additionally confirms the
 zone and service period; a designated-community-resident row confirms the
 qualifying work location.
 
+The certification is now a dated record of either SWA certification received by
+the first workday or timely Form 8850 prescreening, signatures, and submission.
+For successor employment, the first workday and Form 8850 deadline are measured
+from the predecessor's start, not the acquisition date. The successor record
+also requires the predecessor EIN, acquisition and continued-employment facts,
+prior qualified wages and hours, a still-valid certification, and confirmation
+that both wage periods start with the predecessor. The calculation combines
+hours, reduces each wage cap by the predecessor's qualified wages, and rejects
+positive wages when successor employment begins after the applicable period. These
+cases are written but unrun.
+
 `pass_through_credits` separately identifies partnership, S corporation,
 cooperative, estate, and trust allocations by entity EIN, source document
 reference, amount, and passive-activity answer. Duplicate entity sources are
@@ -52,7 +63,7 @@ the 120-hour threshold.
 These checks are written but unrun under the requested build-first workflow.
 The row still accepts affirmed eligibility facts rather than reconciling
 certifications, payroll periods, and wage exclusions against primary source
-documents. Successor-employer wages, controlled-group allocations, pass-through
+documents. Controlled-group allocations, pass-through
 credits, passive-activity limitations, carryovers, source-document
 reconciliation, filled-PDF inspection, and ATS acceptance remain open. The
 one-page PDF descriptor now maps the official fillable widgets for lines
