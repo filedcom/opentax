@@ -1109,8 +1109,19 @@ Deno.test("IRS1040ScheduleF absent when schedule_f missing from pending", () => 
 });
 
 Deno.test("IRS1040ScheduleB present when schedule_b has data", () => {
-  const xml = buildMefXml({ schedule_b: { taxable_interest_net: 1500 } });
+  const xml = buildMefXml({
+    schedule_b: {
+      taxable_interest_net: 1501,
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    },
+  });
   assertStringIncludes(xml, "<IRS1040ScheduleB ");
+});
+
+Deno.test("IRS1040ScheduleB absent at the $1,500 threshold", () => {
+  const xml = buildMefXml({ schedule_b: { taxable_interest_net: 1500 } });
+  assertNotIncludes(xml, "<IRS1040ScheduleB ");
 });
 
 Deno.test("IRS1040ScheduleB absent when schedule_b missing from pending", () => {
@@ -1268,7 +1279,11 @@ Deno.test("documentCnt=28 when all currently serializable forms have data", () =
     form8606: { nondeductible_contributions: 6000 },
     form_1116: sampleForm1116,
     schedule_f: sampleScheduleF,
-    schedule_b: { taxable_interest_net: 1500 },
+    schedule_b: {
+      taxable_interest_net: 1501,
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    },
     form4797: { section_1231_gain: 12000 },
     form8880: { contributions_taxpayer: 3000 },
     form8995: { qbi: 50000, qbi_deduction: 10000 },
@@ -1326,7 +1341,11 @@ Deno.test("all 28 serializable forms populated: XML contains their document tags
     form8606: { nondeductible_contributions: 6000 },
     form_1116: sampleForm1116,
     schedule_f: sampleScheduleF,
-    schedule_b: { taxable_interest_net: 1500 },
+    schedule_b: {
+      taxable_interest_net: 1501,
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    },
     form4797: { section_1231_gain: 12000 },
     form8880: { contributions_taxpayer: 3000 },
     form8995: { qbi: 50000, qbi_deduction: 10000 },

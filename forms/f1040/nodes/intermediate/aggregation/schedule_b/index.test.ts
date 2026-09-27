@@ -86,14 +86,16 @@ Deno.test("multiple interest entries (array) aggregate to line2b", () => {
 Deno.test("interest payer and amount pairs survive the Schedule B output boundary", () => {
   const result = compute({
     payer_name: ["Bank A", "Bond issuer"],
-    taxable_interest_net: [300, 700],
+    taxable_interest_net: [800, 900],
+    foreign_accounts_question: false,
+    foreign_trust_question: false,
   });
   const printable = findOutput(result, "schedule_b")?.fields;
   assertEquals(printable?.interest_rows, [
-    { payerName: "Bank A", amount: 300 },
-    { payerName: "Bond issuer", amount: 700 },
+    { payerName: "Bank A", amount: 800 },
+    { payerName: "Bond issuer", amount: 900 },
   ]);
-  assertEquals(printable?.print_line2_total, 1_000);
+  assertEquals(printable?.print_line2_total, 1_700);
 });
 
 Deno.test("1099-INT gross interest and deductions remain distinct from taxable interest", () => {
@@ -331,6 +333,47 @@ Deno.test("Schedule B demands Part III answers above the $1,500 threshold", () =
     findOutput(atThreshold, "f1040")?.fields.line2b_taxable_interest,
     1_500,
   );
+  assertEquals(findOutput(atThreshold, "schedule_b"), undefined);
+});
+
+Deno.test("Schedule B does not combine below-threshold interest and dividends", () => {
+  const result = compute({
+    payer_name: "Bank",
+    taxable_interest_net: 800,
+    payerName: "Fund",
+    ordinaryDividends: 900,
+  });
+  assertEquals(findOutput(result, "f1040")?.fields, {
+    line2b_taxable_interest: 800,
+    line3b_ordinary_dividends: 900,
+  });
+  assertEquals(findOutput(result, "schedule_b"), undefined);
+});
+
+Deno.test("Schedule B validates below-threshold interest and dividend details", () => {
+  assertThrows(() =>
+    compute({
+      interest_detail: {
+        payer_name: "Bank",
+        gross: 100,
+        net: 80,
+        nominee: 10,
+        accrued: 0,
+        oid_adjustment: 0,
+        bond_premium: 0,
+      },
+    })
+  );
+  assertThrows(() =>
+    compute({
+      dividend_detail: {
+        payer_name: "Fund",
+        gross: 100,
+        net: 70,
+        nominee: 20,
+      },
+    })
+  );
 });
 
 Deno.test("zero ordinaryDividends produces no dividend output", () => {
@@ -372,9 +415,9 @@ Deno.test("both interest and dividends produce a single f1040 output with both f
     ordinaryDividends: 600,
     isNominee: false,
   });
-  // f1040 + agi_aggregator + form8960 (interest > 0)
-  // routing outputs + self-emitted print-line output for the PDF builder
-  assertEquals(result.outputs.length, 5);
+  // Each income category is below $1,500, so no Schedule B is filed.
+  assertEquals(result.outputs.length, 3);
+  assertEquals(findOutput(result, "schedule_b"), undefined);
   const f1040 = findOutput(result, "f1040");
   const inp = f1040?.fields as Record<string, number>;
   assertEquals(inp.line2b_taxable_interest, 400);
@@ -388,6 +431,8 @@ Deno.test("ee_bond_exclusion reduces taxable interest (line 4 = line 2 - line 3)
     payer_name: "Treasury",
     taxable_interest_net: 2000,
     ee_bond_exclusion: 500,
+    foreign_accounts_question: false,
+    foreign_trust_question: false,
   });
   const f1040 = findOutput(result, "f1040");
   assertEquals(
@@ -401,18 +446,21 @@ Deno.test("ee_bond_exclusion equal to total interest → no line2b output", () =
     payer_name: "Treasury",
     taxable_interest_net: 800,
     ee_bond_exclusion: 800,
+    foreign_accounts_question: false,
+    foreign_trust_question: false,
   });
-  // No interest remaining → no f1040 output if no dividends
-  assertEquals(result.outputs.length, 0);
+  assertEquals(findOutput(result, "f1040"), undefined);
+  assertEquals(findOutput(result, "schedule_b")?.fields.print_line4_total, 0);
 });
 
-Deno.test("ee_bond_exclusion exceeding total interest → line2b clamped to zero, no output", () => {
-  const result = compute({
-    payer_name: "Treasury",
-    taxable_interest_net: 300,
-    ee_bond_exclusion: 500,
-  });
-  assertEquals(result.outputs.length, 0);
+Deno.test("ee_bond_exclusion cannot exceed total interest", () => {
+  assertThrows(() =>
+    compute({
+      payer_name: "Treasury",
+      taxable_interest_net: 300,
+      ee_bond_exclusion: 500,
+    })
+  );
 });
 
 Deno.test("mixed scalar and array interest entries normalize correctly", () => {
@@ -452,6 +500,8 @@ Deno.test("smoke: multiple interest + dividend payers with EE bond exclusion", (
     payerName: ["Vanguard Total Market", "Fidelity Index"],
     ordinaryDividends: [2000, 1200],
     isNominee: [false, false],
+    foreign_accounts_question: false,
+    foreign_trust_question: false,
   });
 
   // f1040 + agi_aggregator + form8960 (interest > 0)
@@ -491,6 +541,8 @@ Deno.test("threshold: 3 interest payers totaling $1,600 > $1,500 — all include
   const result = compute({
     payer_name: ["Payer A", "Payer B", "Payer C"],
     taxable_interest_net: [600, 800, 200],
+    foreign_accounts_question: false,
+    foreign_trust_question: false,
   });
   const f1040 = findOutput(result, "f1040");
   assertEquals(
@@ -516,6 +568,8 @@ Deno.test("threshold: dividend total $1,600 > $1,500 — all included in line3b"
   const result = compute({
     payerName: ["Fund A", "Fund B", "Fund C"],
     ordinaryDividends: [600, 700, 300],
+    foreign_accounts_question: false,
+    foreign_trust_question: false,
   });
   const f1040 = findOutput(result, "f1040");
   assertEquals(

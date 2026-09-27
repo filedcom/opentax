@@ -30,15 +30,12 @@ Deno.test("schedule_b: all unknown keys returns empty string", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Section 3: Zero value emitted
+// Section 3: Below-threshold input
 // ---------------------------------------------------------------------------
 
-Deno.test("schedule_b: taxable_interest_net at zero is emitted", () => {
+Deno.test("schedule_b: zero taxable interest does not file the form", () => {
   const result = scheduleB.build({ taxable_interest_net: 0 });
-  assertStringIncludes(
-    result,
-    "<TaxableInterestSubtotalAmt>0</TaxableInterestSubtotalAmt>",
-  );
+  assertEquals(result, "");
 });
 
 // ---------------------------------------------------------------------------
@@ -159,19 +156,21 @@ Deno.test("schedule_b: MeF refuses a required Part III with unanswered questions
 });
 
 Deno.test("schedule_b: ee_bond_exclusion maps to ExcludableSavingsBondIntAmt", () => {
-  const result = scheduleB.build({ ee_bond_exclusion: 500 });
+  const result = scheduleB.build({
+    taxable_interest_net: 1_000,
+    ee_bond_exclusion: 500,
+    foreign_accounts_question: false,
+    foreign_trust_question: false,
+  });
   assertStringIncludes(
     result,
     "<ExcludableSavingsBondIntAmt>500</ExcludableSavingsBondIntAmt>",
   );
 });
 
-Deno.test("schedule_b: ordinaryDividends maps to TotalOrdinaryDividendsAmt", () => {
+Deno.test("schedule_b: below-threshold ordinary dividends do not file the form", () => {
   const result = scheduleB.build({ ordinaryDividends: 1200 });
-  assertStringIncludes(
-    result,
-    "<TotalOrdinaryDividendsAmt>1200</TotalOrdinaryDividendsAmt>",
-  );
+  assertEquals(result, "");
 });
 
 Deno.test("schedule_b: nominee dividends reconcile gross line 5 to net line 6", () => {
@@ -276,6 +275,51 @@ Deno.test("schedule_b: No foreign answers do not force a below-threshold filing"
   );
 });
 
+Deno.test("schedule_b: $1,500 income thresholds are separate and strict", () => {
+  assertEquals(
+    scheduleB.build({
+      taxable_interest_net: 800,
+      ordinaryDividends: 900,
+    }),
+    "",
+  );
+  assertEquals(scheduleB.build({ taxable_interest_net: 1_500 }), "");
+  assertEquals(scheduleB.build({ ordinaryDividends: 1_500 }), "");
+  assertStringIncludes(
+    scheduleB.build({
+      taxable_interest_net: 1_501,
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    }),
+    "<IRS1040ScheduleB>",
+  );
+  assertStringIncludes(
+    scheduleB.build({
+      ordinaryDividends: 1_501,
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    }),
+    "<IRS1040ScheduleB>",
+  );
+});
+
+Deno.test("schedule_b: savings bond exclusion requires enough line 2 interest", () => {
+  assertThrows(() => scheduleB.build({ ee_bond_exclusion: 1 }));
+  assertThrows(() =>
+    scheduleB.build({
+      taxable_interest_net: 300,
+      ee_bond_exclusion: 500,
+    })
+  );
+  assertThrows(() =>
+    scheduleB.build({
+      taxable_interest_net: 1_000,
+      ee_bond_exclusion: 500,
+      print_line4_total: 600,
+    })
+  );
+});
+
 Deno.test("schedule_b: Part III No answers alone do not create a document", () => {
   assertEquals(
     scheduleB.build({
@@ -332,11 +376,15 @@ Deno.test("schedule_b: FBAR Yes carries ordered IRS country codes", () => {
 // Section 5: Sparse output
 // ---------------------------------------------------------------------------
 
-Deno.test("schedule_b: single known field emits only that element, absent fields omitted", () => {
-  const result = scheduleB.build({ taxable_interest_net: 1000 });
+Deno.test("schedule_b: single income category emits only its elements", () => {
+  const result = scheduleB.build({
+    taxable_interest_net: 1_600,
+    foreign_accounts_question: false,
+    foreign_trust_question: false,
+  });
   assertStringIncludes(
     result,
-    "<TaxableInterestSubtotalAmt>1000</TaxableInterestSubtotalAmt>",
+    "<TaxableInterestSubtotalAmt>1600</TaxableInterestSubtotalAmt>",
   );
   assertNotIncludes(result, "<ExcludableSavingsBondIntAmt>");
   assertNotIncludes(result, "<TotalOrdinaryDividendsAmt>");
@@ -409,6 +457,8 @@ Deno.test("schedule_b: multiple source interest rows reconcile to line 2", () =>
     taxable_interest_net: [100, 275],
     print_line2_total: 375,
     print_line4_total: 375,
+    foreign_accounts_question: false,
+    foreign_trust_question: true,
   });
   assertEquals(xml.split("<Form1040SchBPartIGroup2>").length - 1, 2);
   assertStringIncludes(
@@ -420,6 +470,8 @@ Deno.test("schedule_b: multiple source interest rows reconcile to line 2", () =>
       scheduleB.build({
         payer_name: ["Bank A"],
         taxable_interest_net: [100, 275],
+        foreign_accounts_question: false,
+        foreign_trust_question: true,
       }),
     Error,
     "pair one-to-one",
@@ -437,6 +489,8 @@ Deno.test("schedule_b: normalized graph output keeps every source interest row",
       ],
       print_line2_total: 375,
       print_line4_total: 375,
+      foreign_accounts_question: false,
+      foreign_trust_question: true,
     },
   });
   const xml = scheduleB.build(pending.schedule_b ?? {});
@@ -458,6 +512,8 @@ Deno.test("schedule_b: source interest detail follows the IRS 2025 schema", asyn
   const xml = scheduleB.build({
     payer_name: ["Bank A", "Bond issuer"],
     taxable_interest_net: [100, 275],
+    foreign_accounts_question: false,
+    foreign_trust_question: true,
   }).replace(
     "<IRS1040ScheduleB>",
     '<IRS1040ScheduleB xmlns="http://www.irs.gov/efile">',

@@ -175,6 +175,20 @@ function buildIRS1040ScheduleB(fields: Input): string {
     : interest === undefined
     ? undefined
     : Math.max(0, interest - (fields.ee_bond_exclusion ?? 0));
+  if (
+    typeof fields.ee_bond_exclusion === "number" &&
+    (interest === undefined || fields.ee_bond_exclusion > interest)
+  ) {
+    throw new Error("Schedule B savings bond exclusion exceeds interest");
+  }
+  if (
+    interest !== undefined && taxableInterest !== undefined &&
+    Math.abs(
+        taxableInterest - (interest - (fields.ee_bond_exclusion ?? 0)),
+      ) > 0.000001
+  ) {
+    throw new Error("Schedule B line 4 does not reconcile to lines 2 and 3");
+  }
   const filingRequired = scheduleBFilingRequired({
     taxableInterest: taxableInterest ?? 0,
     ordinaryDividends: dividends ?? 0,

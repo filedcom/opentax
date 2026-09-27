@@ -331,7 +331,15 @@ Schedules D/B, credits, withholding, and AMT, and keeps the reported gross box
 1a and nominee reduction on Schedule B lines 5/6. MeF uses the dedicated
 nominee-dividend element; a supplemental PDF statement reconciles the printed
 gross rows to net line 6. Source, XML, XSD, and PDF cases are written but unrun.
-Foreign buyer addresses, Schedule B filing triggers, filled-PDF layout, and IRS
+The current build pass shares one Schedule B filing rule across the node, MeF,
+and PDF paths: taxable interest and ordinary dividends each have a strict
+$1,500 threshold, while seller-financed interest, adjustments, savings-bond
+exclusion, nominee amounts, and foreign-account/trust facts can require the
+form below that threshold. Below-threshold income still routes to Form 1040
+without producing Schedule B. Reconciliation now runs before that filing gate,
+and a savings-bond exclusion larger than interest is rejected. Boundary,
+special-trigger, and invalid-source cases are written but unrun. Foreign buyer
+addresses, a complete filing-trigger audit, filled-PDF layout, and IRS
 business-rule acceptance remain open, so this is not complete Schedule B
 support. The next Form 8912 graph pass requires each bond's taxable interest
 already reported by another input, validates that amount against computed bond

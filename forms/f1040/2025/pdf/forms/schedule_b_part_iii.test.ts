@@ -61,6 +61,21 @@ Deno.test("Schedule B PDF includes seller-financed and adjustment filings below 
   assertEquals(scheduleBPdf.includeWhen?.({ dividend_nominee: 100 }), true);
 });
 
+Deno.test("Schedule B PDF uses separate strict $1,500 thresholds", () => {
+  assertEquals(
+    scheduleBPdf.includeWhen?.({
+      print_line4_total: 800,
+      print_line6_total: 900,
+    }),
+    false,
+  );
+  assertEquals(scheduleBPdf.includeWhen?.({ print_line4_total: 1_500 }), false);
+  assertEquals(scheduleBPdf.includeWhen?.({ print_line6_total: 1_500 }), false);
+  assertEquals(scheduleBPdf.includeWhen?.({ print_line4_total: 1_501 }), true);
+  assertEquals(scheduleBPdf.includeWhen?.({ print_line6_total: 1_501 }), true);
+  assertEquals(scheduleBPdf.includeWhen?.({ ee_bond_exclusion: 500 }), true);
+});
+
 Deno.test("Schedule B PDF prints two countries or appends a longer list", async () => {
   const short = scheduleBPdf.projectFields?.({
     foreign_country_names: ["Canada", "France"],

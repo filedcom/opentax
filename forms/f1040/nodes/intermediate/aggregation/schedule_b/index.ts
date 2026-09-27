@@ -134,6 +134,23 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
   compute(_ctx: NodeContext, rawInput: ScheduleBInput): NodeResult {
     const input = inputSchema.parse(rawInput);
 
+    const line2 = totalTaxableInterest(input);
+    if ((input.ee_bond_exclusion ?? 0) > line2) {
+      throw new Error("Schedule B savings bond exclusion exceeds interest");
+    }
+    for (const row of normalizeArray(input.interest_detail)) {
+      const adjusted = row.gross - row.nominee - row.accrued -
+        row.oid_adjustment - row.bond_premium;
+      if (Math.abs(adjusted - row.net) > 0.000001) {
+        throw new Error("Schedule B interest detail does not reconcile");
+      }
+    }
+    for (const row of normalizeArray(input.dividend_detail)) {
+      if (Math.abs(row.gross - row.nominee - row.net) > 0.000001) {
+        throw new Error("Schedule B dividend detail does not reconcile");
+      }
+    }
+
     const line4 = line4TaxableInterest(input);
     const line6 = line6OrdinaryDividends(input);
     const dividendsForReturn = normalizeArray(input.ordinaryDividends)
@@ -246,13 +263,6 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
     // Preserve all payer rows for MeF and PDF continuation pages, then fill
     // the printed 14 interest and 15 dividend slots and Part III answers.
     const printFields: Record<string, unknown> = {};
-    for (const row of details) {
-      const adjusted = row.gross - row.nominee - row.accrued -
-        row.oid_adjustment - row.bond_premium;
-      if (Math.abs(adjusted - row.net) > 0.000001) {
-        throw new Error("Schedule B interest detail does not reconcile");
-      }
-    }
     const intAmounts = normalizeArray(input.taxable_interest_net);
     const intNames = normalizeArray(
       input.payer_name as string | string[] | undefined,
@@ -312,11 +322,6 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
     const divNames = normalizeArray(
       input.payerName as string | string[] | undefined,
     );
-    for (const row of dividendDetails) {
-      if (Math.abs(row.gross - row.nominee - row.net) > 0.000001) {
-        throw new Error("Schedule B dividend detail does not reconcile");
-      }
-    }
     const dividendRows = dividendDetails.map((row) => ({
       payerName: row.payer_name,
       amount: row.gross,
