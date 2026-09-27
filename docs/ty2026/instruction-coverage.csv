@@ -1,0 +1,67 @@
+form_slug,instruction_slug,snapshot_status,irs_draft_url,next_action
+f1040,i1040gi,URL serves 2025,https://www.irs.gov/pub/irs-dft/i1040gi--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f1040s1,i1040s1,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i1040s1--dft.pdf,Recheck IRS draft directory or another instruction slug.
+f1040s1a,i1040s1a,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i1040s1a--dft.pdf,Recheck IRS draft directory or another instruction slug.
+f1040s2,i1040s2,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i1040s2--dft.pdf,Recheck IRS draft directory or another instruction slug.
+f1040s3,i1040s3,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i1040s3--dft.pdf,Recheck IRS draft directory or another instruction slug.
+f1040s3a,i1040s3a,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i1040s3a--dft.pdf,Recheck IRS draft directory or another instruction slug.
+f1040sa,i1040sa,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i1040sa--dft.pdf,Recheck IRS draft directory or another instruction slug.
+f1040sb,i1040sb,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i1040sb--dft.pdf,Use pinned PDF; recheck final instructions.
+f1040sc,i1040sc,URL serves 2025,https://www.irs.gov/pub/irs-dft/i1040sc--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f1040sd,i1040sd,URL serves 2025,https://www.irs.gov/pub/irs-dft/i1040sd--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f1040se,i1040se,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i1040se--dft.pdf,Use pinned PDF; recheck final instructions.
+f1040sei,i1040sei,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i1040sei--dft.pdf,Recheck IRS draft directory or another instruction slug.
+f1040sse,i1040sse,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i1040sse--dft.pdf,Use pinned PDF; recheck final instructions.
+f1040sh,i1040sh,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i1040sh--dft.pdf,Use pinned PDF; recheck final instructions.
+f1040sf,i1040sf,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i1040sf--dft.pdf,Use pinned PDF; recheck final instructions.
+f1040s8,i1040s8,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i1040s8--dft.pdf,Use pinned PDF; recheck final instructions.
+f2441,i2441,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i2441--dft.pdf,Use pinned PDF; recheck final instructions.
+f4562,i4562,URL serves 2025,https://www.irs.gov/pub/irs-dft/i4562--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f6251,i6251,URL serves 2025,https://www.irs.gov/pub/irs-dft/i6251--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f8839,i8839,URL serves 2025,https://www.irs.gov/pub/irs-dft/i8839--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f8889,i8889,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i8889--dft.pdf,Use pinned PDF; recheck final instructions.
+f8962,i8962,URL serves 2025,https://www.irs.gov/pub/irs-dft/i8962--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f8995,i8995,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i8995--dft.pdf,Use pinned PDF; recheck final instructions.
+f8995a,i8995a,URL serves 2025,https://www.irs.gov/pub/irs-dft/i8995a--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f1062,i1062,URL serves 2025,https://www.irs.gov/pub/irs-dft/i1062--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f1116,i1116,URL serves 2025,https://www.irs.gov/pub/irs-dft/i1116--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f2555,i2555,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i2555--dft.pdf,Use pinned PDF; recheck final instructions.
+f4136,i4136,URL serves 2025,https://www.irs.gov/pub/irs-dft/i4136--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f4136sa,i4136sa,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i4136sa--dft.pdf,Recheck IRS draft directory or another instruction slug.
+f4137,i4137,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i4137--dft.pdf,Recheck IRS draft directory or another instruction slug.
+f461,i461,URL serves 2025,https://www.irs.gov/pub/irs-dft/i461--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f4684,i4684,URL serves 2025,https://www.irs.gov/pub/irs-dft/i4684--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f4797,i4797,URL serves 2025,https://www.irs.gov/pub/irs-dft/i4797--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f4952,i4952,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i4952--dft.pdf,Recheck IRS draft directory or another instruction slug.
+f4972,i4972,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i4972--dft.pdf,Recheck IRS draft directory or another instruction slug.
+f5329,i5329,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i5329--dft.pdf,Use pinned PDF; recheck final instructions.
+f5695,i5695,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i5695--dft.pdf,Use pinned PDF; recheck final instructions.
+f6198,i6198,URL serves 2025,https://www.irs.gov/pub/irs-dft/i6198--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f6252,i6252,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i6252--dft.pdf,Recheck IRS draft directory or another instruction slug.
+f6781,i6781,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i6781--dft.pdf,Recheck IRS draft directory or another instruction slug.
+f7206,i7206,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i7206--dft.pdf,Use pinned PDF; recheck final instructions.
+f8396,i8396,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i8396--dft.pdf,Recheck IRS draft directory or another instruction slug.
+f8582,i8582,URL serves 2025,https://www.irs.gov/pub/irs-dft/i8582--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f8606,i8606,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i8606--dft.pdf,Use pinned PDF; recheck final instructions.
+f8615,i8615,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i8615--dft.pdf,Use pinned PDF; recheck final instructions.
+f8814,i8814,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i8814--dft.pdf,Use pinned PDF; recheck final instructions.
+f8815,i8815,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i8815--dft.pdf,Use pinned PDF; recheck final instructions.
+f8824,i8824,URL serves 2025,https://www.irs.gov/pub/irs-dft/i8824--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f8829,i8829,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i8829--dft.pdf,Use pinned PDF; recheck final instructions.
+f8834,i8834,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i8834--dft.pdf,Recheck IRS draft directory or another instruction slug.
+f8853,i8853,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i8853--dft.pdf,Use pinned PDF; recheck final instructions.
+f8859,i8859,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i8859--dft.pdf,Recheck IRS draft directory or another instruction slug.
+f8880,i8880,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i8880--dft.pdf,Recheck IRS draft directory or another instruction slug.
+f8912,i8912,year unverified,https://www.irs.gov/pub/irs-dft/i8912--dft.pdf,Inspect current continuous-use instructions before treating as 2026 authority.
+f8919,i8919,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i8919--dft.pdf,Recheck IRS draft directory or another instruction slug.
+f8936,i8936,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i8936--dft.pdf,Use pinned PDF; recheck final instructions.
+f8936sa,i8936sa,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i8936sa--dft.pdf,Recheck IRS draft directory or another instruction slug.
+f8949,i8949,URL serves 2025,https://www.irs.gov/pub/irs-dft/i8949--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f8959,i8959,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i8959--dft.pdf,Use pinned PDF; recheck final instructions.
+f8960,i8960,URL serves 2025,https://www.irs.gov/pub/irs-dft/i8960--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f8990,i8990,URL serves 2025,https://www.irs.gov/pub/irs-dft/i8990--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f982,i982,year unverified,https://www.irs.gov/pub/irs-dft/i982--dft.pdf,Inspect current continuous-use instructions before treating as 2026 authority.
+schedule_r,i1040sr,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i1040sr--dft.pdf,Use pinned PDF; recheck final instructions.
+f2106,i2106,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i2106--dft.pdf,Use pinned PDF; recheck final instructions.
+f4835,i4835,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i4835--dft.pdf,Use pinned PDF; recheck final instructions.
+f8863,i8863,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i8863--dft.pdf,Use pinned PDF; recheck final instructions.

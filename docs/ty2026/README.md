@@ -27,6 +27,9 @@ for the implementation contract.
   line meanings, and 73 draft PDF widgets.
 - [`MEF-V1-DRIFT.md`](MEF-V1-DRIFT.md): why the downloaded May v1 1040 XSD
   cannot describe the September draft form, and the exact refresh/diff gate.
+- [`INSTRUCTION-COVERAGE.md`](INSTRUCTION-COVERAGE.md) and
+  `instruction-coverage.csv`: available 2026 instructions, URLs still serving
+  2025, and source refresh gates for the full form inventory.
 - [`GRAPH-ROUTES.md`](GRAPH-ROUTES.md) and `graph-route-gaps.csv`: generated
   inventory of declared 2026 edges whose downstream target is not registered.
 - [`INTEREST-GRAPH.md`](INTEREST-GRAPH.md): source-backed 1099-INT, Schedule B,

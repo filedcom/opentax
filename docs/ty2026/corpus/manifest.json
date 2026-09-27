@@ -926,6 +926,196 @@
       "sha256": "d2717dedf7b5f7025fbbec73f1be0093adbe306cdb6e97b2e32f8a54b8e51878",
       "year_check": "2026-present",
       "retrieved_utc": "2026-09-27T10:48:00+00:00"
+    },
+    {
+      "path": "draft/i1040se.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/i1040se--dft.pdf",
+      "kind": "draft-instructions",
+      "status": "downloaded",
+      "bytes": 345851,
+      "sha256": "71d19faaf741cf3c9841c3b44e7a4a8d3f380ab5d3723140c1b859ae97b0459a",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-09-27T10:53:16.928968+00:00"
+    },
+    {
+      "path": "draft/i1040sf.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/i1040sf--dft.pdf",
+      "kind": "draft-instructions",
+      "status": "downloaded",
+      "bytes": 359780,
+      "sha256": "f36a2d5dcc15560c9570531d3af7c6e7101c224a1b2b5c4bf9d34f656c823e0d",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-09-27T10:53:16.776129+00:00"
+    },
+    {
+      "path": "draft/i1040sse.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/i1040sse--dft.pdf",
+      "kind": "draft-instructions",
+      "status": "downloaded",
+      "bytes": 278712,
+      "sha256": "8c6b42b7d5852813bd03030c05afcd7d3126f3271a463ed007918165a0e388d3",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-09-27T10:53:16.688184+00:00"
+    },
+    {
+      "path": "draft/i1040sr.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/i1040sr--dft.pdf",
+      "kind": "draft-instructions",
+      "status": "downloaded",
+      "bytes": 291632,
+      "sha256": "6f30613aacd956f145fea666527ad68bea5d5f8a87072270f9a17e14f41ae661",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-09-27T10:53:16.777946+00:00"
+    },
+    {
+      "path": "draft/i2106.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/i2106--dft.pdf",
+      "kind": "draft-instructions",
+      "status": "downloaded",
+      "bytes": 408158,
+      "sha256": "e82a4e9ed565aaea37f2aebee76bcf24d9d32d781ac16dd06ecc2c6cda18e60d",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-09-27T10:53:16.788988+00:00"
+    },
+    {
+      "path": "draft/i2441.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/i2441--dft.pdf",
+      "kind": "draft-instructions",
+      "status": "downloaded",
+      "bytes": 414466,
+      "sha256": "7fdecfe193df435542bb452ba108bee011bef7032fda8abe972d6fbd5de233e7",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-09-27T10:53:16.875031+00:00"
+    },
+    {
+      "path": "draft/i4835.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/i4835--dft.pdf",
+      "kind": "draft-instructions",
+      "status": "downloaded",
+      "bytes": 279108,
+      "sha256": "37d68265aae539290c8187bb80252ec7baef0a61995e7e8126581d9fceffeeeb",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-09-27T10:53:17.528295+00:00"
+    },
+    {
+      "path": "draft/i8814.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/i8814--dft.pdf",
+      "kind": "draft-instructions",
+      "status": "downloaded",
+      "bytes": 270557,
+      "sha256": "66431f1f4588c1195fbca28f35cec7c9659d2a68eccf98afac62e8729362233d",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-09-27T10:53:17.556587+00:00"
+    },
+    {
+      "path": "draft/i8815.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/i8815--dft.pdf",
+      "kind": "draft-instructions",
+      "status": "downloaded",
+      "bytes": 212437,
+      "sha256": "931b0f01c17f81500124e8ad859ff03948cd788f936936ae6c3e9d02fd4c5257",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-09-27T10:53:17.550782+00:00"
+    },
+    {
+      "path": "draft/i8853.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/i8853--dft.pdf",
+      "kind": "draft-instructions",
+      "status": "downloaded",
+      "bytes": 323079,
+      "sha256": "b8cf14a2282edd869ba389c423a93d7dc57efc9791e4d10b500531135259ae57",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-09-27T10:53:17.637800+00:00"
+    },
+    {
+      "path": "draft/i8863.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/i8863--dft.pdf",
+      "kind": "draft-instructions",
+      "status": "downloaded",
+      "bytes": 363054,
+      "sha256": "9e6bc190a572a4d2b131f493a55405297359d05fdc96eb8b698bc4937be6c745",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-09-27T10:53:17.822387+00:00"
+    },
+    {
+      "path": "draft/i8936.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/i8936--dft.pdf",
+      "kind": "draft-instructions",
+      "status": "downloaded",
+      "bytes": 353913,
+      "sha256": "23e95637f0dd45e64d7666eb8099a5009cd1ce4ee0b7a649e878b19763d04adf",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-09-27T10:53:17.824237+00:00"
+    },
+    {
+      "path": "draft/i8959.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/i8959--dft.pdf",
+      "kind": "draft-instructions",
+      "status": "downloaded",
+      "bytes": 262986,
+      "sha256": "c5b1661eeb6cb33be840a0a01616d477d2731d2b3928e1bcd3fa13b1494bbaf1",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-09-27T10:53:18.348682+00:00"
+    },
+    {
+      "path": "draft/i8995.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/i8995--dft.pdf",
+      "kind": "draft-instructions",
+      "status": "downloaded",
+      "bytes": 391879,
+      "sha256": "7fd77be32b9dfd5ee07338e19f21adad6f71c672ee1fc3ddd325480d70ea219b",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-09-27T10:53:18.449273+00:00"
+    },
+    {
+      "path": "draft/i2555.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/i2555--dft.pdf",
+      "kind": "draft-instructions",
+      "status": "downloaded",
+      "bytes": 345094,
+      "sha256": "b4809eba2b16c4f00d009cf733874f9ec51f853a5b9c4daf1660f6e0a0790482",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-09-27T10:54:44.328313+00:00"
+    },
+    {
+      "path": "draft/i7206.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/i7206--dft.pdf",
+      "kind": "draft-instructions",
+      "status": "downloaded",
+      "bytes": 311897,
+      "sha256": "0b06657958a23088806040d89fe8ff66ff1b28742eec5f5c21fb0d6e67376ff4",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-09-27T10:54:44.328032+00:00"
+    },
+    {
+      "path": "draft/i8615.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/i8615--dft.pdf",
+      "kind": "draft-instructions",
+      "status": "downloaded",
+      "bytes": 337706,
+      "sha256": "ac1ec51a5367dfa8187ea9fef43fb6cbf87b4ca1324bf3084c5557407a03160f",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-09-27T10:54:44.208862+00:00"
+    },
+    {
+      "path": "draft/i8829.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/i8829--dft.pdf",
+      "kind": "draft-instructions",
+      "status": "downloaded",
+      "bytes": 276905,
+      "sha256": "1b6750eec4fb1e613fe3fa5e059f81e0e45b30412933ec986a5bfe7e4e42ac35",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-09-27T10:54:44.191935+00:00"
+    },
+    {
+      "path": "draft/i8889.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/i8889--dft.pdf",
+      "kind": "draft-instructions",
+      "status": "downloaded",
+      "bytes": 376577,
+      "sha256": "c7f6165c62f63ee7eee9e59ea0c1bde038bc4f0a4d8bf6c3bebdc264c2e3c01c",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-09-27T10:54:44.216012+00:00"
     }
   ]
 }

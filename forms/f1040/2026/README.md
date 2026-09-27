@@ -6,6 +6,9 @@ yet. **Goal: the same full
 calculation → validation → MeF XML → PDF → ATS/XSD workflow as TY2025, across
 the supported 1040 form surface.** Do not call registration alone TY2026
 support.
+The [instruction availability ledger](../../../docs/ty2026/INSTRUCTION-COVERAGE.md)
+now distinguishes 2026 drafts from draft URLs still serving 2025, so each
+remaining route has an explicit source check before coding.
 
 The dedicated 2026 Schedule H node now calculates Part I and FUTA Section A,
 routes household employment tax to Schedule 2 line 17a, and has a two-page
