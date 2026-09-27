@@ -74,6 +74,90 @@ function categoryAmounts(
   return { current, prior, total: current + prior };
 }
 
+/** Distribute a whole-dollar credit limit by the worksheet ratios exactly. */
+function allocateWholeDollarCredits(
+  balances: readonly number[],
+  amount: number,
+): number[] {
+  const total = balances.reduce((sum, balance) => sum + balance, 0);
+  if (
+    balances.some((balance) => !Number.isSafeInteger(balance) || balance < 0) ||
+    !Number.isSafeInteger(total) || !Number.isSafeInteger(amount) ||
+    amount < 0 || amount > total
+  ) {
+    throw new Error(
+      "Form 8582-CR allocation needs whole-dollar balances and an amount within them",
+    );
+  }
+  if (total === 0) return balances.map(() => 0);
+  const shares = balances.map((balance, index) => {
+    const product = BigInt(balance) * BigInt(amount);
+    return {
+      index,
+      quotient: Number(product / BigInt(total)),
+      remainder: product % BigInt(total),
+    };
+  });
+  const allocated = shares.map((share) => share.quotient);
+  let remaining = amount - allocated.reduce((sum, value) => sum + value, 0);
+  const ranked = [...shares].sort((a, b) =>
+    a.remainder === b.remainder
+      ? a.index - b.index
+      : a.remainder > b.remainder
+      ? -1
+      : 1
+  );
+  for (const share of ranked) {
+    if (remaining === 0) break;
+    allocated[share.index]++;
+    remaining--;
+  }
+  return allocated;
+}
+
+function allocateCreditsToSources(
+  sources: readonly PassiveCreditSource[],
+  specialByCategory: Readonly<Record<PassiveCreditCategory, number>>,
+  unallowedTotal: number,
+) {
+  const totals = sources.map((source) =>
+    source.current_year_credit + source.prior_unallowed_credit
+  );
+  const specialAllowed = sources.map(() => 0);
+  const categories = [
+    PassiveCreditCategory.ActiveRental,
+    PassiveCreditCategory.RehabilitationOrPre1990Housing,
+    PassiveCreditCategory.LowIncomeHousing,
+    PassiveCreditCategory.Other,
+  ] as const;
+  for (const category of categories) {
+    const indexes = sources.flatMap((source, index) =>
+      source.category === category ? [index] : []
+    );
+    const shares = allocateWholeDollarCredits(
+      indexes.map((index) => totals[index]),
+      specialByCategory[category],
+    );
+    indexes.forEach((index, position) => {
+      specialAllowed[index] = shares[position];
+    });
+  }
+  const balances = totals.map((total, index) => total - specialAllowed[index]);
+  const unallowed = allocateWholeDollarCredits(balances, unallowedTotal);
+  return sources.map((source, index) => ({
+    activity_reference: source.activity_reference,
+    source_form: source.source_form,
+    source_document_reference: source.source_document_reference,
+    category: source.category,
+    current_year_credit: source.current_year_credit,
+    prior_unallowed_credit: source.prior_unallowed_credit,
+    total_credit: totals[index],
+    special_allowed_credit: specialAllowed[index],
+    unallowed_credit: unallowed[index],
+    allowed_credit: totals[index] - unallowed[index],
+  }));
+}
+
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 export const inputSchema = z.object({
@@ -115,12 +199,12 @@ export const inputSchema = z.object({
 }).superRefine((input, ctx) => {
   const sourceIds = new Set<string>();
   input.credit_sources.forEach((source, index) => {
-    const id = [
+    const id = JSON.stringify([
       source.activity_reference,
       source.source_form,
       source.source_document_reference,
       source.category,
-    ].join(":");
+    ]);
     if (sourceIds.has(id)) {
       ctx.addIssue({
         code: "custom",
@@ -425,6 +509,7 @@ export function calculateForm8582CR(raw: Form8582CRInput) {
       partIV: undefined,
       line37: 0,
       suspendedCredit: 0,
+      sourceAllocations: [],
     };
   }
 
@@ -443,13 +528,26 @@ export function calculateForm8582CR(raw: Form8582CRInput) {
     partI.line6 + (partII?.line16 ?? 0) + (partIII?.line30 ?? 0) +
       (partIV?.line36 ?? 0),
   );
+  const suspendedCredit = partI.line5 - line37;
+  const sourceAllocations = allocateCreditsToSources(
+    input.credit_sources,
+    {
+      [PassiveCreditCategory.ActiveRental]: partII?.line16 ?? 0,
+      [PassiveCreditCategory.RehabilitationOrPre1990Housing]: partIII?.line30 ??
+        0,
+      [PassiveCreditCategory.LowIncomeHousing]: partIV?.line36 ?? 0,
+      [PassiveCreditCategory.Other]: 0,
+    },
+    suspendedCredit,
+  );
   return {
     partI,
     partII,
     partIII,
     partIV,
     line37,
-    suspendedCredit: partI.line5 - line37,
+    suspendedCredit,
+    sourceAllocations,
   };
 }
 

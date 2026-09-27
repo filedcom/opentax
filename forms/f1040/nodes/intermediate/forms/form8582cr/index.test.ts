@@ -1,5 +1,6 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import {
+  calculateForm8582CR,
   calculateForm8582CRPartI,
   form8582cr,
   inputSchema,
@@ -311,7 +312,7 @@ Deno.test("Form 8582-CR Part IV limits post-1989 housing credit by remaining all
 });
 
 Deno.test("Form 8582-CR orders active rental, rehabilitation, then housing allowances", () => {
-  const result = compute({
+  const input = {
     credit_sources: [
       rental(1_000),
       source(
@@ -329,9 +330,18 @@ Deno.test("Form 8582-CR orders active rental, rehabilitation, then housing allow
     part_ii_tax_on_income_less_line14: 8_000,
     part_iv_tax_on_income_less_remaining_allowance: 6_000,
     filing_status: FilingStatus.Single,
-  });
+  };
+  const result = compute(input);
   assertEquals(allowed(result), 4_000);
   assertEquals(result.carryforwards?.suspended_pac_8582cr, 1_000);
+  const lines = calculateForm8582CR(inputSchema.parse(input));
+  assertEquals(
+    lines.sourceAllocations.map((source) => [
+      source.special_allowed_credit,
+      source.unallowed_credit,
+    ]),
+    [[1_000, 0], [1_000, 1_000], [2_000, 0]],
+  );
 });
 
 Deno.test("Form 8582-CR requires Part III and IV worksheet taxes when used", () => {
@@ -392,4 +402,63 @@ Deno.test("Form 8582-CR combines different activity credits before the tax limit
   });
   assertEquals(allowed(result), 6_000);
   assertEquals(result.carryforwards?.suspended_pac_8582cr, 1_000);
+});
+
+Deno.test("Form 8582-CR worksheets 5 and 8 allocate special and suspended credit by source", () => {
+  const lines = calculateForm8582CR(inputSchema.parse({
+    credit_sources: [
+      rental(1_000, 0, "Rental A"),
+      rental(3_000, 0, "Rental B"),
+      other(2_000),
+    ],
+    regular_tax_all_income: 10_000,
+    regular_tax_without_passive: 9_000,
+    modified_agi: 100_000,
+    form8582_line9_special_allowance_used: 0,
+    part_ii_tax_on_income_less_line14: 8_000,
+    filing_status: FilingStatus.Single,
+  }));
+  assertEquals([lines.partI.line5, lines.line37, lines.suspendedCredit], [
+    6_000,
+    3_000,
+    3_000,
+  ]);
+  assertEquals(
+    lines.sourceAllocations.map((source) => [
+      source.activity_reference,
+      source.special_allowed_credit,
+      source.unallowed_credit,
+      source.allowed_credit,
+    ]),
+    [
+      ["Rental A", 500, 375, 625],
+      ["Rental B", 1_500, 1_125, 1_875],
+      ["Clinical activity", 0, 1_500, 500],
+    ],
+  );
+});
+
+Deno.test("Form 8582-CR allocation preserves exact dollars and source identity", () => {
+  const lines = calculateForm8582CR(inputSchema.parse({
+    credit_sources: [other(1, 0, "A"), other(1, 0, "B"), other(1, 0, "C")],
+    regular_tax_all_income: 10_000,
+    regular_tax_without_passive: 9_998,
+  }));
+  assertEquals(
+    lines.sourceAllocations.map((source) => source.unallowed_credit),
+    [
+      1,
+      0,
+      0,
+    ],
+  );
+  assertEquals(lines.sourceAllocations.map((source) => source.allowed_credit), [
+    0,
+    1,
+    1,
+  ]);
+  assertEquals(
+    lines.sourceAllocations[0].source_document_reference,
+    "2025 A credit statement",
+  );
 });

@@ -441,15 +441,18 @@ uses tax attributable to the remaining allowance for line 15, subtracts the
 amount already used on Form 8582 line 9, and distinguishes MFS spouses who
 lived apart. Real-estate-professional status no longer bypasses the limit for
 every activity. The node still sends its aggregate allowed amount directly to
-Schedule 3, so source-level allocation, Form 3800 limitation, and
+Schedule 3, so source-level filing route, Form 3800 limitation, and
 ATS acceptance remain open. The unrun source pass
 replaces one aggregate passive-credit amount with activity and document
 references, credit category, and separate current/prior amounts. Active-rental
 and other credits now feed Part I by source. The next unrun pass computes Part III
 rehabilitation/pre-1990 housing and Part IV post-1989 housing allowances with
 separate worksheet tax inputs; PTP credits still stop pending their per-partnership
-limitation. The native `IRS8582CR` MeF descriptor now serializes Parts I-IV,
-with direct XML and local XSD cases written but unrun. Form 4136 now combines its represented
+limitation. The next unrun pass allocates the three special allowances and the
+remaining suspended credit across named sources using Worksheets 5-9. The node
+still returns only an aggregate carryforward, with no prior-year vintage split.
+The native `IRS8582CR` MeF descriptor now serializes Parts I-IV, with direct XML
+and local XSD cases written but unrun. Form 4136 now combines its represented
 fuel-use credits on refundable line 12 instead of misrouting some to general
 business credit and some to a nonexistent Form 1040 field; the represented 2025
 fuel rates are updated, with separate aviation-kerosene tax-rate inputs. These

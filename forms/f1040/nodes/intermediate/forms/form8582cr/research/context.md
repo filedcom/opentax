@@ -1,7 +1,7 @@
 # Form 8582-CR — Passive Activity Credit Limitations
 
 ## Overview
-Form 8582-CR limits passive activity credits. The current build pass calculates Parts I-IV and a native MeF descriptor serializes those lines. The node still deposits its allowed total directly in Schedule 3 line 6a. That is not the final filing route: each allowed business credit must enter its source form or Form 3800, then survive the Form 3800 tax limit. Source-level allocation is still open. The current carryforward is aggregate, not yet by activity and credit identity. The calculation and native MeF cases are written but unrun.
+Form 8582-CR limits passive activity credits. The current build pass calculates Parts I-IV and a native MeF descriptor serializes those lines. Worksheets 5-9 now allocate special allowances and the suspended balance by source identity in the pure calculation. The node still deposits its allowed total directly in Schedule 3 line 6a. That is not the final filing route: each allowed business credit must enter its source form or Form 3800, then survive the Form 3800 tax limit. The node carryforward is still aggregate, and prior-year vintage is not retained. The calculation and native MeF cases are written but unrun.
 
 **IRS Form:** Form 8582-CR
 **Drake Screen:** CR
@@ -56,8 +56,14 @@ Source: Form 8582-CR lines 8–16 and instructions.
 allowed_credit = min(total_credits_available, Part I line 6 + Part II line 16 + Part III line 30 + Part IV line 36)
 unallowed_credit = total_credits_available − allowed_credit
 
+Allocate lines 16, 30, and 36 proportionally within their respective Part I
+source categories. Subtract those special allowances from each source balance,
+then allocate the line 5 less line 37 suspended amount across the residual
+balances. Per-source allowed credit is total less suspended credit. Exact
+whole-dollar apportionment uses largest remainders and stable source order.
+
 ### Step 6 — Route Allowed Credit
-The current node still routes directly to Schedule 3 line 6a; this is an open correctness gap. The intended route is source-level allowed credit to Form 3800 (or another applicable credit form), then its separate limit and Schedule 3.
+The current node still routes directly to Schedule 3 line 6a; this is an open correctness gap. The intended route is each calculated source-level allowed credit to Form 3800 (or another applicable credit form), then its separate limit and Schedule 3. The source allocations are not yet passed into that route or persisted as per-source carryforwards.
 
 ---
 
