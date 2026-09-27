@@ -31,6 +31,11 @@ for the implementation contract.
   acceptance order.
 - [`MEF-V1-DRIFT.md`](MEF-V1-DRIFT.md): why the downloaded May v1 1040 XSD
   cannot describe the September draft form, and the exact refresh/diff gate.
+- [`MEF-PUBLIC-CROSSWALK.md`](MEF-PUBLIC-CROSSWALK.md),
+  `mef-descriptor-coverage.csv`, and
+  [`MEF-BINARY-ATTACHMENTS.md`](MEF-BINARY-ATTACHMENTS.md): the public TY2026
+  inventory against 85 existing runtime descriptors, and the four generated
+  PDF binary routes plus caller-supplied statements.
 - [`FORM4136-GRAPH.md`](FORM4136-GRAPH.md): fuel-tax claim and per-business
   Schedule A route, with the missing 2026 Schedule A release gate and
   485/482-widget main-form/prior-year comparator inventories.

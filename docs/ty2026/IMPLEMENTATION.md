@@ -26,6 +26,9 @@ required to close each route.
 The [product assembly handoff](PRODUCT-ASSEMBLY.md) names the year-specific
 catalog, CLI summary, validation, XML, PDF and submission-archive seams that
 must be completed after the individual form routes.
+The [MeF binary attachment handoff](MEF-BINARY-ATTACHMENTS.md) records the
+four TY2025-generated PDF routes, their TY2026 decisions, caller-supplied
+statements, XML references and ZIP acceptance checks.
 The [Form 8826/8835 and statement contract](FORM8826-8835-STATEMENTS.md)
 closes the TY2025 MeF inventory's distinct credit-form and statement-only
 routes, including the 2026 crop-election text change and 5695 statement
