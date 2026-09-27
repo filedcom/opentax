@@ -510,7 +510,8 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
         return coverage;
       });
       if (funding.transfers.length === 2) {
-        const [first, second] = funding.transfers;
+        const first = funding.transfers[0]!;
+        const second = funding.transfers[1]!;
         if (
           transferCoverage[0] !== CoverageType.SelfOnly ||
           transferCoverage[1] !== CoverageType.Family ||
