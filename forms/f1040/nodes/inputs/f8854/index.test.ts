@@ -38,6 +38,7 @@ import { calculateSectionDDeferral } from "./section-d.ts";
 import {
   buildForm8854InitialBundle,
   buildForm8854NativeStatementContents,
+  linkForm8854NativeStatementIds,
 } from "../../../2025/mef/forms/f8854_initial.ts";
 import { reconcileForm8854Form8949Properties } from "./reconcile-capital.ts";
 
@@ -1234,7 +1235,26 @@ Deno.test("Form 8854 native statement set is stable before document IDs are assi
     buildForm8854NativeStatementContents(multiple).map((statement) =>
       statement.key
     ),
-    ["changeStatement", "partnership", "otherLiabilities"],
+    ["changeStatement", "otherLiabilities", "partnership"],
+  );
+  const ordered = buildForm8854NativeStatementContents(multiple);
+  const links = linkForm8854NativeStatementIds(
+    ordered,
+    ["DOC-CHANGE", "DOC-LIABILITY", "DOC-PARTNERSHIP"],
+    [],
+  );
+  assertEquals(links.changeStatement, "DOC-CHANGE");
+  assertEquals(links.balanceSheet.otherLiabilities, "DOC-LIABILITY");
+  assertEquals(links.balanceSheet.partnership, "DOC-PARTNERSHIP");
+  assertThrows(() =>
+    linkForm8854NativeStatementIds(ordered, ["DOC-CHANGE"], [])
+  );
+  assertThrows(() =>
+    linkForm8854NativeStatementIds(
+      ordered,
+      ["DOC-CHANGE", "DOC-CHANGE", "DOC-PARTNERSHIP"],
+      [],
+    )
   );
 });
 

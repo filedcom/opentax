@@ -69,6 +69,7 @@ export function buildForm8854NativeStatementContents(
   const sectionC = input.section_c
     ? buildForm8854SectionCStatements(input.section_c)
     : null;
+  // ReturnData1040.xsd orders the Form 8854 native roots as listed here.
   const candidates: Form8854NativeStatementContent[] = [
     {
       key: "changeStatement",
@@ -76,19 +77,34 @@ export function buildForm8854NativeStatementContents(
       xml: buildForm8854ChangeStatement(input),
     },
     {
-      key: "partnership",
-      documentName: "PartnershipInterestStatement",
-      xml: balance.partnership,
+      key: "deferredPropertyTaxElection",
+      documentName: "DeferredPropertyTaxElectionStatement",
+      xml: buildForm8854DeferredPropertyStatement(input),
     },
     {
-      key: "ownedTrust",
-      documentName: "OwnedTrustValueStatement",
-      xml: balance.ownedTrust,
+      key: "eligibleDeferredCompensation",
+      documentName: "EligibleDeferredCompensationItemStatement",
+      xml: sectionC?.eligibleDeferredCompensation ?? "",
+    },
+    {
+      key: "computation",
+      documentName: "Form8854ComputationStatement",
+      xml: sectionC?.computation ?? "",
+    },
+    {
+      key: "ineligibleDeferredCompensation",
+      documentName: "IneligibleDeferredCompensationItemStatement",
+      xml: sectionC?.ineligibleDeferredCompensation ?? "",
     },
     {
       key: "balanceSheetNongrantorTrust",
       documentName: "NongrantorTrustsBeneficialInterestStatement",
       xml: balance.nongrantorTrust,
+    },
+    {
+      key: "sectionCNongrantorTrust",
+      documentName: "NongrantorTrustStatement",
+      xml: sectionC?.nongrantorTrust ?? "",
     },
     {
       key: "otherAssets",
@@ -101,37 +117,64 @@ export function buildForm8854NativeStatementContents(
       xml: balance.otherLiabilities,
     },
     {
-      key: "eligibleDeferredCompensation",
-      documentName: "EligibleDeferredCompensationItemStatement",
-      xml: sectionC?.eligibleDeferredCompensation ?? "",
+      key: "ownedTrust",
+      documentName: "OwnedTrustValueStatement",
+      xml: balance.ownedTrust,
     },
     {
-      key: "ineligibleDeferredCompensation",
-      documentName: "IneligibleDeferredCompensationItemStatement",
-      xml: sectionC?.ineligibleDeferredCompensation ?? "",
+      key: "partnership",
+      documentName: "PartnershipInterestStatement",
+      xml: balance.partnership,
     },
     {
       key: "specifiedTaxDeferredAccounts",
       documentName: "SpecifiedTaxDeferredAccountsStatement",
       xml: sectionC?.specifiedTaxDeferredAccounts ?? "",
     },
-    {
-      key: "sectionCNongrantorTrust",
-      documentName: "NongrantorTrustStatement",
-      xml: sectionC?.nongrantorTrust ?? "",
-    },
-    {
-      key: "computation",
-      documentName: "Form8854ComputationStatement",
-      xml: sectionC?.computation ?? "",
-    },
-    {
-      key: "deferredPropertyTaxElection",
-      documentName: "DeferredPropertyTaxElectionStatement",
-      xml: buildForm8854DeferredPropertyStatement(input),
-    },
   ];
   return candidates.filter((statement) => statement.xml !== "");
+}
+
+/** Bind the assembler's ordered statement IDs to this exact statement set. */
+export function linkForm8854NativeStatementIds(
+  contents: readonly Form8854NativeStatementContent[],
+  statementIds: readonly string[],
+  binaryAttachments: readonly string[],
+): Form8854InitialDocumentLinks {
+  if (contents.length !== statementIds.length) {
+    throw new Error("Form 8854 native statement set changed while linking IDs");
+  }
+  const linked = new Map<Form8854NativeStatementKey, string>();
+  contents.forEach((statement, index) => {
+    if (linked.has(statement.key)) {
+      throw new Error(`Form 8854 statement ${statement.key} is duplicated`);
+    }
+    linked.set(statement.key, statementIds[index]);
+  });
+  if (new Set(statementIds).size !== statementIds.length) {
+    throw new Error("Form 8854 native statement IDs must be unique");
+  }
+  return {
+    changeStatement: linked.get("changeStatement"),
+    balanceSheet: {
+      partnership: linked.get("partnership"),
+      ownedTrust: linked.get("ownedTrust"),
+      nongrantorTrust: linked.get("balanceSheetNongrantorTrust"),
+      otherAssets: linked.get("otherAssets"),
+      otherLiabilities: linked.get("otherLiabilities"),
+    },
+    sectionC: {
+      eligibleDeferredCompensation: linked.get("eligibleDeferredCompensation"),
+      ineligibleDeferredCompensation: linked.get(
+        "ineligibleDeferredCompensation",
+      ),
+      specifiedTaxDeferredAccounts: linked.get("specifiedTaxDeferredAccounts"),
+      nongrantorTrust: linked.get("sectionCNongrantorTrust"),
+      computation: linked.get("computation"),
+      deferredPropertyTaxElection: linked.get("deferredPropertyTaxElection"),
+    },
+    binaryAttachments,
+  };
 }
 
 function linkedStatementId(

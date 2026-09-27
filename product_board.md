@@ -1166,7 +1166,11 @@ binary documents. Registration still requires generating those IDs from the
 actual document set and proving its native statements and binary attachments
 are emitted. The initial builder now exposes an ID-independent, stable native
 statement set for the assembler's first document-discovery pass, with its
-written case unrun. The calculation and rejection cases are
+written case unrun. Its discovery order now follows the native Form 8854
+statement roots in ReturnData1040.xsd; the multi-statement order case is
+written but unrun. An ordered-ID linker now maps assembler IDs back to the
+statement keys and rejects count or ID collisions, also with unrun cases.
+The calculation and rejection cases are
 written but unrun. See the
 [2025 Form 8854 instructions](https://www.irs.gov/instructions/i8854).
 
