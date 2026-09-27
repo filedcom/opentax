@@ -89,6 +89,12 @@ AcroForm, including revised tax/payment lines and the new work-authorization
 answers. `pdf/f1040.ts` fills the two printed pages from a calculated pending
 1040; its wages-only sample was rendered and visually checked. It is not yet
 the full return PDF builder: dependent rows and attached forms remain.
+`pdf/schedule3a.ts` now renders the new one-page schedule with a static
+overlay because the draft's 16 widgets are absent from its AcroForm tree. Its
+line reconciliation, election checks, and rendered placement are verified.
+`pdf/core.ts` now appends it when a relevant refundable credit is filed and
+reconciles its main amounts to the 1040. The combined three-page PDF passed
+visual QA; the remaining supported forms still need PDF output.
 The shared Form 8839 node now applies TY2026 adoption limits, emits the
 refundable per-child credit to 1040 line 30, and tracks nonrefundable
 carryforwards by origin year. Its full credit-limit worksheet and TY2026
@@ -124,6 +130,9 @@ repository is public. The Drive folder contains `IMF_05-28-2026_Release-2.zip`
 with `1040x_Schema_2026v1.0.zip` and `1040_Business_Rules_2026v1.0.csv`.
 IRS lists **2026v4.0** as the newer package on 2026-09-24. v1 is for research
 and cannot be the final validation target.
+The [v1 drift review](../../../docs/ty2026/MEF-V1-DRIFT.md) confirms that its
+1040 XSD predates the draft form's 12f, 24a–c, 32a–c, Schedule 3-A, and
+work-authorization topology. Do not serialize TY2026 from those v1 fields.
 
 ## Build contract
 

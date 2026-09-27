@@ -134,6 +134,17 @@ widget coordinates, and physical pages in `pdf-fields-f1040.csv`. The
 the new authorization/dependent checkbox groups. The dedicated main-form
 descriptor and filler now produce a two-page draft 1040 from a wages-only
 graph result, with visual QA. The full PDF bundle remains open.
+The [MeF v1 drift review](MEF-V1-DRIFT.md) confirms the downloaded May package
+predates 1040 lines 12f, 24a–c, 32a–c, Schedule 3-A, and the new
+work-authorization question. IRS announced v4 on September 24 through the
+registered e-Services mailbox. Obtain that package before fixing 2026 XML
+element names or asserting schema validation.
+The [Schedule 3-A PDF map](PDF-SCHEDULE3A-MAP.md) records its 16 orphaned
+widgets and line-level pending keys. A hash-pinned static overlay now renders
+the schedule's header, numbers, and elections; the one-page result passed
+visual QA. The two main 1040 pages and Schedule 3-A now merge into a
+three-page core PDF when a relevant credit is present, with lines 24a, 31,
+32a, and 32b reconciled. Other supported attachments remain to implement.
 
 ## 0. Freeze source versions and establish the baseline
 

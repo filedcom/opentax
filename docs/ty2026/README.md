@@ -9,6 +9,11 @@ for the implementation contract.
 - [`PDF-F1040-MAP.md`](PDF-F1040-MAP.md) and `pdf-fields-f1040.csv`: the
   draft 2026 Form 1040 AcroForm inventory and changed-line mapping for the
   future year-specific PDF builder.
+- [`PDF-SCHEDULE3A-MAP.md`](PDF-SCHEDULE3A-MAP.md) and
+  `pdf-fields-f1040s3a.csv`: the new schedule's line/widget map and its
+  orphaned-field issue.
+- [`MEF-V1-DRIFT.md`](MEF-V1-DRIFT.md): why the downloaded May v1 1040 XSD
+  cannot describe the September draft form, and the exact refresh/diff gate.
 
 - [`corpus/manifest.json`](corpus/manifest.json): URL, SHA-256, byte length,
   and retrieval date for **57 TY2026 IRS draft forms**, the **2026 draft

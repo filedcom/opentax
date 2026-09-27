@@ -1,0 +1,17 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+form1[0].Page1[0].f1_01[0],/Tx,"Page 1. Name(s) shown on Form 1040, 1040-S R, 1040-N R, or 1040-S S. ",2,36 684.5 445.4 698.001,no
+form1[0].Page1[0].f1_02[0],/Tx,Your social security number. ,2,447.4 684.5 576 698.001,no
+form1[0].Page1[0].Line1a_ReadOrder[0].f1_03[0],/Tx,"CAUTION. Complete Schedule 3-A (Form 1040) only if you are claiming the earned income credit (E I C), additional child tax credit (A C T C), refundable American opportunity credit, or refundable adoption credit. Part I. Federal Public Benefit (Refunded Portion of Certain Refundable Credits). 1a. Enter the amount from Form 1040 or 1040-S R, line 32a. If you are filing Form 1040-N R or Form 1040-S S, enter 0. ",2,411.4 606.502 481.4 618.001,no
+form1[0].Page1[0].f1_04[0],/Tx,"1b. Enter the amount from Form 1040 or 1040-S R, line 31. If you are filing Form 1040-N R or Form 1040-S S, enter 0. ",2,411.4 576.5 481.4 587.999,no
+form1[0].Page1[0].f1_05[0],/Tx,"2. Subtract line 1b from line 1a. If you are filing Form 1040-N R, add Form 1040-N R, lines 28 and 30, and enter the total. If you are filing Form 1040-S S, enter the amount from Part I, line 10. ",2,505 546.501 576 558,no
+form1[0].Page1[0].Line3_ReadOrder[0].f1_06[0],/Tx,"3. Enter the amount from Form 1040, 1040-S R, or 1040-N R, line 24a. If you are filing Form 1040-S S, enter the amount from Part I, line 7. ",2,411.4 516.502 481.4 528.001,no
+form1[0].Page1[0].f1_07[0],/Tx,"4. Enter the amount from Schedule 2 (Form 1040), line 20. If you are filing Form 1040-S S, enter the amount from Part I, line 6e. ",2,411.4 486.5 481.4 497.999,no
+form1[0].Page1[0].f1_08[0],/Tx,5. Subtract line 4 from line 3. ,2,505 468.5 576 479.999,no
+form1[0].Page1[0].c1_1[0],/Btn,"6. Is line 2 more than line 5? Yes. Subtract line 5 from line 2. This is your federal public benefit. Enter the result here, and go to line 7. ",2,66.2 440.001 74.2 448.001,no
+form1[0].Page1[0].c1_1[1],/Btn,"6. No. Stop. Enter 0 here. Enter 0 on Form 1040, 1040-S R, or 1040-N R, line 32b. If you are filing Form 1040-S S, enter 0 on Part I, line 12b. ",2,66.2 416 74.2 424,no
+form1[0].Page1[0].f1_09[0],/Tx,6. Amount. ,2,505 402.501 576 414,no
+form1[0].Page1[0].c1_2[0],/Btn,7. Do you want to receive your federal public benefit? Yes. Go to line 8. ,2,66.2 374.002 74.2 382.002,no
+form1[0].Page1[0].c1_2[1],/Btn,"7. No. Stop. Enter the amount from line 6 on Form 1040, 1040-S R, or 1040-N R, line 32b. If you are filing Form 1040-S S, enter the amount from line 6 on Part I, line 12b. ",2,66.2 362 74.2 370,no
+form1[0].Page1[0].c1_3[0],/Btn,"Part I I. Verification of Eligibility for Federal Public Benefit. 8. Are you or your spouse a U.S. citizen, U.S. national, or qualified alien? See instructions. Yes. Enter 0 here and on Form 1040, 1040-S R, or 1040-N R, line 32b. If you are filing Form 1040-S S, enter 0 on Part I, line 12b. ",2,66.2 308 74.2 316,no
+form1[0].Page1[0].c1_3[1],/Btn,"8. No. Enter the amount from line 6 here and on Form 1040, 1040-S R, or 1040-N R, line 32b. If you are filing Form 1040-S S, enter the amount from line 6 on Part I, line 12b. ",2,66.2 284.002 74.2 292.002,no
+form1[0].Page1[0].f1_10[0],/Tx,8. Amount. ,2,505 270.5 576 281.999,no
