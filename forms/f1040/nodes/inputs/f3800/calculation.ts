@@ -6,6 +6,68 @@
  * empowerment-zone, EPE, and other special-limit cases from this calculation.
  */
 import { FilingStatus } from "../../types.ts";
+import { PassiveCreditReportingRoute } from "../../intermediate/forms/form8582cr/credit-route.ts";
+
+export type Form3800PassiveActivityLines = {
+  readonly line2: number;
+  readonly line3: number;
+  readonly line23: number;
+  readonly line24: number;
+  readonly line32: number;
+  readonly line33: number;
+};
+
+/** Classify Form 8582-CR worksheet 9 source amounts into Form 3800's passive lines. */
+export function classifyForm3800PassiveCredits(
+  sources: readonly {
+    readonly reporting_route: PassiveCreditReportingRoute;
+    readonly total_credit: number;
+    readonly allowed_credit: number;
+  }[],
+): Form3800PassiveActivityLines {
+  const lines = {
+    line2: 0,
+    line3: 0,
+    line23: 0,
+    line24: 0,
+    line32: 0,
+    line33: 0,
+  };
+  for (const source of sources) {
+    if (
+      !Number.isSafeInteger(source.total_credit) ||
+      !Number.isSafeInteger(source.allowed_credit) ||
+      source.total_credit < 0 || source.allowed_credit < 0 ||
+      source.allowed_credit > source.total_credit
+    ) {
+      throw new Error(
+        "Form 3800 passive source needs whole-dollar available and allowed credits",
+      );
+    }
+    switch (source.reporting_route) {
+      case PassiveCreditReportingRoute.Form3800Line3:
+        lines.line2 += source.total_credit;
+        lines.line3 += source.allowed_credit;
+        break;
+      case PassiveCreditReportingRoute.Form3800Line24:
+        lines.line23 += source.total_credit;
+        lines.line24 += source.allowed_credit;
+        break;
+      case PassiveCreditReportingRoute.Form3800Line33:
+        lines.line32 += source.total_credit;
+        lines.line33 += source.allowed_credit;
+        break;
+      case PassiveCreditReportingRoute.Form8834:
+        throw new Error("Form 8834 credit does not belong on Form 3800");
+      default:
+        throw new Error("Form 3800 passive source has no filed line");
+    }
+  }
+  if (Object.values(lines).some((amount) => !Number.isSafeInteger(amount))) {
+    throw new Error("Form 3800 passive line total exceeds whole-dollar range");
+  }
+  return lines;
+}
 
 type Form3800TaxContext = {
   /** Form 1040 line 16 plus Schedule 2 line 1z. */

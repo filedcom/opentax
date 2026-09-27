@@ -66,6 +66,7 @@ whole-dollar apportionment uses largest remainders and stable source order.
 
 ### Step 6 — Route Allowed Credit
 The current node still routes Form 3800-designated credits directly to Schedule 3 line 6a; this is an open correctness gap. The pure calculation now totals allowed credit separately for Form 3800 lines 3, 24, and 33, and Form 8834. A positive Form 8834 route stops both node computation and MeF output until its separate tax limit and Schedule 3 line 6i handoff are wired. The intended general-business route is each calculated source-level allowed credit to Form 3800, then its separate limit and Schedule 3. The source allocations are not yet passed into that route or persisted as per-source carryforwards.
+An unrun pure Form 3800 classifier now derives passive line pairs 2/3, 23/24, and 32/33 from the source allocations. It is not yet connected to the Form 3800 tax limit, MeF XML, or source columns in Parts III/IV.
 
 ---
 

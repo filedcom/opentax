@@ -8,6 +8,9 @@ import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { FilingStatus, filingStatusSchema } from "../../../types.ts";
 import { schedule3 } from "../../aggregation/schedule3/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import { PassiveCreditReportingRoute } from "./credit-route.ts";
+
+export { PassiveCreditReportingRoute } from "./credit-route.ts";
 
 // Form 8582-CR — Passive Activity Credit Limitations
 // Mirrors Form 8582 (passive losses) but applies to passive activity credits (PAC).
@@ -30,13 +33,6 @@ export enum PassiveCreditCategory {
   RehabilitationOrPre1990Housing = "rehabilitation_or_pre1990_housing",
   LowIncomeHousing = "low_income_housing_post1989",
   Other = "other",
-}
-
-export enum PassiveCreditReportingRoute {
-  Form3800Line3 = "form3800_line3",
-  Form3800Line24 = "form3800_line24",
-  Form3800Line33 = "form3800_line33",
-  Form8834 = "form8834",
 }
 
 const creditSourceSchema = z.object({

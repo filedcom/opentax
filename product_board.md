@@ -466,7 +466,10 @@ and local XSD cases written but unrun. The existing Form 3800 calculation and
 XML builder cover nonpassive credits only. Passive Form 3800 Part I lines 2/3,
 Part II lines 23/24 and 32/33, and source columns in Parts III/IV still need a
 separate source-backed route before the Form 8582-CR direct Schedule 3 deposit
-can be removed. Form 4136 now combines its represented
+can be removed. An unrun pure classifier now derives those six passive
+pre-limit and allowed line amounts from Form 8582-CR source allocations,
+including prior credits, and rejects Form 8834 sources. The Form 3800 tax
+calculation and XML are not yet wired to it. Form 4136 now combines its represented
 fuel-use credits on refundable line 12 instead of misrouting some to general
 business credit and some to a nonexistent Form 1040 field; the represented 2025
 fuel rates are updated, with separate aviation-kerosene tax-rate inputs. These

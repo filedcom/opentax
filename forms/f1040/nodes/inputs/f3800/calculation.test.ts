@@ -1,10 +1,113 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../types.ts";
 import {
+  calculateForm8582CR,
+  inputSchema as form8582crInputSchema,
+  PassiveCreditCategory,
+  PassiveCreditReportingRoute,
+} from "../../intermediate/forms/form8582cr/index.ts";
+import {
   calculateForm3800Nonpassive,
+  classifyForm3800PassiveCredits,
   classifyForm8835Credits,
   deriveForm3800NonpassiveInput,
 } from "./calculation.ts";
+
+Deno.test("Form 3800: classifies allowed passive credit into lines 3, 24, and 33", () => {
+  const source = (
+    activity: string,
+    amount: number,
+    route: PassiveCreditReportingRoute,
+  ) => ({
+    activity_reference: activity,
+    source_form: "Form 3800 source form",
+    source_document_reference: `2025 ${activity} credit statement`,
+    category: PassiveCreditCategory.Other,
+    reporting_route: route,
+    current_year_credit: amount,
+    prior_unallowed_credits: [],
+    publicly_traded_partnership: false,
+  });
+  const pac = calculateForm8582CR(form8582crInputSchema.parse({
+    credit_sources: [
+      source("Standard", 200, PassiveCreditReportingRoute.Form3800Line3),
+      source("Empowerment", 300, PassiveCreditReportingRoute.Form3800Line24),
+      source("Specified", 500, PassiveCreditReportingRoute.Form3800Line33),
+    ],
+    regular_tax_all_income: 10_000,
+    regular_tax_without_passive: 9_500,
+  }));
+  assertEquals(classifyForm3800PassiveCredits(pac.sourceAllocations), {
+    line2: 200,
+    line3: 100,
+    line23: 300,
+    line24: 150,
+    line32: 500,
+    line33: 250,
+  });
+});
+
+Deno.test("Form 3800: passive line classification rejects nonbusiness and overallowed sources", () => {
+  assertThrows(
+    () =>
+      classifyForm3800PassiveCredits([{
+        reporting_route: PassiveCreditReportingRoute.Form8834,
+        total_credit: 100,
+        allowed_credit: 50,
+      }]),
+    Error,
+    "does not belong",
+  );
+  assertThrows(
+    () =>
+      classifyForm3800PassiveCredits([{
+        reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+        total_credit: 100,
+        allowed_credit: 101,
+      }]),
+    Error,
+    "whole-dollar",
+  );
+  assertThrows(
+    () =>
+      classifyForm3800PassiveCredits([{
+        reporting_route: PassiveCreditReportingRoute.Form3800Line33,
+        total_credit: 100.5,
+        allowed_credit: 50,
+      }]),
+    Error,
+    "whole-dollar",
+  );
+});
+
+Deno.test("Form 3800: line 2 includes prior passive credit before limitation", () => {
+  const pac = calculateForm8582CR(form8582crInputSchema.parse({
+    credit_sources: [{
+      activity_reference: "Clinical activity",
+      source_form: "Form 8820",
+      source_document_reference: "2025 clinical credit statement",
+      category: PassiveCreditCategory.Other,
+      reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+      current_year_credit: 100,
+      prior_unallowed_credits: [{
+        originating_tax_year: 2023,
+        credit_amount: 400,
+        source_document_reference: "2023 clinical credit carryover",
+      }],
+      publicly_traded_partnership: false,
+    }],
+    regular_tax_all_income: 10_000,
+    regular_tax_without_passive: 9_800,
+  }));
+  assertEquals(classifyForm3800PassiveCredits(pac.sourceAllocations), {
+    line2: 500,
+    line3: 200,
+    line23: 0,
+    line24: 0,
+    line32: 0,
+    line33: 0,
+  });
+});
 
 function input(overrides: Record<string, number> = {}) {
   return {
