@@ -4,6 +4,7 @@ import {
   type F8854AnnualInput,
 } from "../../../nodes/inputs/f8854/annual.ts";
 import { validateAnnualForm8854Filing } from "../../../nodes/inputs/f8854/annual_node.ts";
+import { reconcileAnnualForm8854Form8949Properties } from "../../../nodes/inputs/f8854/reconcile-annual-capital.ts";
 import { buildForm8854PartIFields } from "./f8854_part_i.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 
@@ -61,12 +62,43 @@ export function buildForm8854PartIII(rawInput: F8854AnnualInput): string {
 /** Unregistered annual IRS8854 document, separate from the 2025 initial path. */
 export function buildForm8854Annual(
   rawInput: F8854AnnualInput,
+  binaryAttachmentIdsByFileName: Readonly<Record<string, string>> = {},
+  phase: "discover" | "link" = "link",
 ): string {
   const input = annualInputSchema.parse(rawInput);
-  return elements("IRS8854", [
-    buildForm8854PartIFields(input.part_i, "ANNUAL"),
-    buildForm8854PartIII(input),
-  ]);
+  const paymentFileNames = [
+    ...new Set(input.deferred_properties.flatMap(
+      (property) =>
+        property.disposition.disposed_in_2025
+          ? [property.disposition.payment_confirmation_attachment_file_name]
+          : [],
+    )),
+  ];
+  const missingPaymentFile = paymentFileNames.find((fileName) =>
+    !binaryAttachmentIdsByFileName[fileName]
+  );
+  if (phase === "link" && missingPaymentFile) {
+    throw new Error(
+      `Annual Form 8854 needs payment confirmation PDF attachment ${missingPaymentFile}`,
+    );
+  }
+  const attachmentIds = paymentFileNames.flatMap((fileName) => {
+    const id = binaryAttachmentIdsByFileName[fileName];
+    return id ? [id] : [];
+  });
+  return elements(
+    "IRS8854",
+    [
+      buildForm8854PartIFields(input.part_i, "ANNUAL"),
+      buildForm8854PartIII(input),
+    ],
+    attachmentIds.length
+      ? {
+        referenceDocumentId: attachmentIds.join(" "),
+        referenceDocumentName: "BinaryAttachment",
+      }
+      : undefined,
+  );
 }
 
 export const form8854Annual: MefFormDescriptor<"f8854_annual", unknown> = {
@@ -81,6 +113,14 @@ export const form8854Annual: MefFormDescriptor<"f8854_annual", unknown> = {
       );
     }
     const input = validateAnnualForm8854Filing(annualInputSchema.parse(fields));
-    return buildForm8854Annual(input);
+    reconcileAnnualForm8854Form8949Properties(
+      input,
+      context?.pending?.form8949,
+    );
+    return buildForm8854Annual(
+      input,
+      context?.documentIdsByAttachmentFileName ?? {},
+      context?.documentIdsByPendingKey ? "link" : "discover",
+    );
   },
 };

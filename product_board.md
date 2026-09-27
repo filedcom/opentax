@@ -1151,15 +1151,19 @@ distributions. It rejects unsupported pre-June-17-2008 dates and more than
 three distribution rows per category; prior Form 8854 amounts, disposition
 reporting, and payment evidence remain entered source assertions. A registered
 annual node and MeF descriptor now file the no-disposition, no-distribution
-certification only; events needing return reporting or payment evidence still
-reject filing. Its graph, full-return, and local XSD cases are written but
+certification. Its graph, full-return, and local XSD cases are written but
 unrun. An annual deferred-property disposition now has separate actual-sale,
 full-disposition, deferred-tax, interest, payment-date, and receipt-filename
 facts. For a disposition reported on Form 8949, a written one-to-one check
 matches the filed transaction ID, sale date, proceeds, basis, adjustments,
 gain, and term flag; it is unrun. Annual events still reject at the registered
-filing gate until their payment attachment and remaining source routes are
-connected. Identified
+filing gate unless they are full-property Form 8949 dispositions without
+distributions. Those dispositions now reach the annual IRS8854 through the
+normal graph only when the filed Form 8949 row reconciles and the named
+payment-confirmation PDF is present in the bundle. Missing-row, missing-PDF,
+graph, and local XSD cases are written but unrun. The receipt's amounts and
+timeliness remain source assertions; non-Form 8949 dispositions and
+distributions still reject. Identified
 Form 8949 transactions now retain a source ID through calculation and MeF
 pending data. The unregistered initial bundle now checks the Form 8949 MeF
 filing rows, rather than a separate raw source, and requires a one-to-one match for
@@ -1196,7 +1200,7 @@ marked Copy; it cannot
 authenticate that mailing, the agreement's acceptance, adequate security, or
 the tax calculations printed in the supplied hypothetical returns. Bundle,
 source-graph, missing-PDF, and local XSD cases are written but unrun. Other covered income
-categories and annual disposition or distribution events remain blocked.
+categories and unsupported annual disposition or distribution events remain blocked.
 Exception source
 corroboration, PDF, broader source reconciliation, and IRS business rules
 remain open. An

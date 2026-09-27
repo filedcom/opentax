@@ -1,4 +1,9 @@
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import {
+  assertEquals,
+  assertRejects,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import { buildMefBundle, buildMefXml } from "../builder.ts";
 import { PDFDocument } from "pdf-lib";
 import { buildPending } from "../pending.ts";
@@ -213,6 +218,49 @@ const annualNoActivityInput = annualInputSchema.parse({
   eligible_deferred_compensation_items: [],
   nongrantor_trust_interests: [],
 });
+
+const annualCapitalDispositionInput = annualInputSchema.parse({
+  ...annualNoActivityInput,
+  deferred_properties: [{
+    ...annualNoActivityInput.deferred_properties[0],
+    disposition: {
+      disposed_in_2025: true,
+      entire_deferred_property_disposed_confirmed: true,
+      disposition_date: "2025-05-20",
+      reported_form_code: ReportedFormCode.Form8949,
+      reported_transaction_id: "TX-STOCK",
+      actual_sale_proceeds: 160_000,
+      adjusted_basis_at_disposition: 100_000,
+      deferred_tax_paid_amount: 50_000,
+      interest_paid_amount: 5_000,
+      payment_date: "2025-06-01",
+      payment_by_unextended_due_date_confirmed: true,
+      payment_confirmation_attachment_file_name: "deferred-tax-payment.pdf",
+    },
+  }],
+});
+
+const annualCapitalTransaction = {
+  part: "F",
+  description: "Stock holding",
+  source_transaction_id: "TX-STOCK",
+  date_acquired: "2020-01-01",
+  date_sold: "2025-05-20",
+  proceeds: 160_000,
+  cost_basis: 100_000,
+  gain_loss: 60_000,
+  is_long_term: true,
+};
+
+async function annualPaymentAttachment() {
+  const pdf = await PDFDocument.create();
+  pdf.addPage();
+  return {
+    fileName: "deferred-tax-payment.pdf",
+    description: "Deferred tax payment confirmation",
+    bytes: new Uint8Array(await pdf.save()),
+  };
+}
 
 function withNamespace(xml: string): string {
   return xml.replace(
@@ -494,31 +542,63 @@ Deno.test("annual Form 8854 descriptor refuses an unreported disposition", () =>
     () =>
       buildMefXml({
         f1040: { filing_status: "single" },
-        f8854_annual: {
-          ...annualNoActivityInput,
-          deferred_properties: [{
-            ...annualNoActivityInput.deferred_properties[0],
-            disposition: {
-              disposed_in_2025: true,
-              entire_deferred_property_disposed_confirmed: true,
-              disposition_date: "2025-05-20",
-              reported_form_code: ReportedFormCode.Form8949,
-              reported_transaction_id: "TX-STOCK",
-              actual_sale_proceeds: 160_000,
-              adjusted_basis_at_disposition: 100_000,
-              deferred_tax_paid_amount: 50_000,
-              interest_paid_amount: 5_000,
-              payment_date: "2025-06-01",
-              payment_by_unextended_due_date_confirmed: true,
-              payment_confirmation_attachment_file_name:
-                "deferred-tax-payment.pdf",
-            },
-          }],
-        },
+        f8854_annual: annualCapitalDispositionInput,
       }, filer),
     Error,
-    "reconciled 2025 reporting and payment evidence",
+    "needs exactly one identified Form 8949 transaction",
   );
+});
+
+Deno.test("annual Form 8854 capital disposition requires its payment PDF and filed sale", async () => {
+  const pending = {
+    f1040: { filing_status: "single" },
+    f8854_annual: annualCapitalDispositionInput,
+    form8949: [annualCapitalTransaction],
+  };
+  assertThrows(
+    () => buildMefXml(pending, filer),
+    Error,
+    "needs payment confirmation PDF attachment deferred-tax-payment.pdf",
+  );
+  await assertRejects(
+    () => buildMefBundle(pending, { filer, attachments: [] }),
+    Error,
+    "needs payment confirmation PDF attachment deferred-tax-payment.pdf",
+  );
+  const bundle = await buildMefBundle(pending, {
+    filer,
+    attachments: [await annualPaymentAttachment()],
+  });
+  assertStringIncludes(bundle.xml, "<IRS8854 documentId=");
+  assertStringIncludes(bundle.xml, "<DispositionDt>2025-05-20</DispositionDt>");
+  assertStringIncludes(bundle.xml, 'referenceDocumentName="BinaryAttachment"');
+  assertStringIncludes(bundle.xml, "<BinaryAttachment documentId=");
+});
+
+Deno.test("annual Form 8854 capital disposition reaches the PDF-backed return through the graph", async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: {
+      filing_status: "single",
+      taxpayer_first_name: "Alex",
+      taxpayer_last_name: "Taxpayer",
+      taxpayer_ssn: "123-45-6789",
+      taxpayer_dob: "1985-06-15",
+      address_line1: "1 Test Way",
+      address_city: "Austin",
+      address_state: "TX",
+      address_zip: "78701",
+    },
+    f8854_annual: annualCapitalDispositionInput,
+    f8949: { f8949s: [annualCapitalTransaction] },
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const bundle = await buildMefBundle(buildPending(result.pending), {
+    filer,
+    attachments: [await annualPaymentAttachment()],
+  });
+  assertStringIncludes(bundle.xml, "<IRS8854 documentId=");
+  assertStringIncludes(bundle.xml, "<IRS8949 documentId=");
+  assertStringIncludes(bundle.xml, "<DispositionDt>2025-05-20</DispositionDt>");
 });
 
 Deno.test("Form 8854 refuses ambiguous initial and annual statements for one filer", () => {
@@ -756,6 +836,35 @@ Deno.test({
   const path = await Deno.makeTempFile({ suffix: ".xml" });
   try {
     await Deno.writeTextFile(path, xml);
+    const result = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsd, path],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
+  } finally {
+    await Deno.remove(path);
+  }
+});
+
+Deno.test({
+  name: "XSD: annual Form 8854 capital disposition with linked payment PDF",
+  ignore: !xsdAvailable,
+  sanitizeOps: false,
+  sanitizeResources: false,
+}, async () => {
+  const bundle = await buildMefBundle({
+    f1040: { filing_status: "single" },
+    f8854_annual: annualCapitalDispositionInput,
+    form8949: [annualCapitalTransaction],
+  }, { filer, attachments: [await annualPaymentAttachment()] });
+  const xsd = new URL(
+    "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    import.meta.url,
+  ).pathname;
+  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(path, bundle.xml);
     const result = await new Deno.Command("xmllint", {
       args: ["--noout", "--schema", xsd, path],
       stdout: "piped",

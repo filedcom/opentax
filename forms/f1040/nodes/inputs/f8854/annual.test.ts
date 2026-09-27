@@ -196,6 +196,31 @@ Deno.test("annual Form 8854 disposition matches one filed Form 8949 sale and pay
     reconcileAnnualForm8854Form8949Properties(parsed, [transaction]),
     [{ itemId: "stock", transactionId: "TX-STOCK", gainOrLoss: 60_000 }],
   );
+  assertEquals(
+    f8854Annual.compute(
+      { taxYear: 2025, formType: "f1040" },
+      parsed,
+    ).outputs,
+    [],
+  );
+  assertThrows(
+    () =>
+      f8854Annual.compute(
+        { taxYear: 2025, formType: "f1040" },
+        annualInputSchema.parse({
+          ...parsed,
+          deferred_properties: [{
+            ...parsed.deferred_properties[0],
+            disposition: {
+              ...parsed.deferred_properties[0].disposition,
+              reported_form_code: ReportedFormCode.Form4797,
+            },
+          }],
+        }),
+      ),
+    Error,
+    "non-Form 8949 dispositions and distributions",
+  );
   for (
     const bad of [
       { ...transaction, date_sold: "2025-05-21" },

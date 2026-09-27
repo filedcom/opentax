@@ -3,6 +3,7 @@ import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { annualInputSchema, type F8854AnnualInput } from "./annual.ts";
+import { ReportedFormCode } from "./section-c.ts";
 
 export function validateAnnualForm8854Filing(
   raw: F8854AnnualInput,
@@ -10,7 +11,8 @@ export function validateAnnualForm8854Filing(
   const input = annualInputSchema.parse(raw);
   if (
     input.deferred_properties.some((property) =>
-      property.disposition.disposed_in_2025
+      property.disposition.disposed_in_2025 &&
+      property.disposition.reported_form_code !== ReportedFormCode.Form8949
     ) ||
     input.eligible_deferred_compensation_items.some((item) =>
       item.distributions.length > 0
@@ -20,7 +22,7 @@ export function validateAnnualForm8854Filing(
     )
   ) {
     throw new Error(
-      "Annual Form 8854 dispositions and distributions need reconciled 2025 reporting and payment evidence",
+      "Annual Form 8854 non-Form 8949 dispositions and distributions need reconciled 2025 reporting and payment evidence",
     );
   }
   return input;
