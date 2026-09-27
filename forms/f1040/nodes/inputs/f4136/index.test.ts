@@ -94,6 +94,10 @@ Deno.test("Form 4136: represented 2025 Part II rates are line-specific", () => {
     ["3e", undefined, 24.4],
     ["4a", "02", 24.3],
     ["4b", undefined, 24.3],
+    ["4c", undefined, 17],
+    ["4d", undefined, 24.4],
+    ["4e", "02", 4.3],
+    ["4f", "02", 21.8],
     ["5c", "01", 24.3],
     ["5d", "01", 21.8],
     ["11a", "02", 18.3],
@@ -119,10 +123,66 @@ Deno.test("Form 4136: represented 2025 Part II rates are line-specific", () => {
           : "gallons",
         qualified_quantity: 100,
         actual_fuel_cost: 200,
+        excise_tax_rate_per_gallon: line === "4e"
+          ? 0.044
+          : line === "4f"
+          ? 0.219
+          : undefined,
       }],
     });
     assertEquals(result.outputs[0].fields.line12_fuel_tax_credit, expected);
   }
+});
+
+Deno.test("Form 4136: kerosene bus, export, and reduced-tax claims require distinct proof", () => {
+  const claim = {
+    ...certifications,
+    line: "4e" as const,
+    type_of_use: "02",
+    unit: "gallons" as const,
+    qualified_quantity: 100,
+    actual_fuel_cost: 300,
+    excise_tax_rate_per_gallon: 0.044,
+  };
+  assertEquals(parseInput({ business, claims: [claim] }).success, true);
+  assertEquals(
+    parseInput({
+      business,
+      claims: [{ ...claim, excise_tax_rate_per_gallon: 0.219 }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    parseInput({
+      business,
+      claims: [{ ...claim, type_of_use: "08" }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    parseInput({
+      business,
+      claims: [{
+        ...claim,
+        line: "4c",
+        type_of_use: undefined,
+        certain_intercity_or_local_bus_use_confirmed: undefined,
+      }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    parseInput({
+      business,
+      claims: [{
+        ...claim,
+        line: "4d",
+        type_of_use: undefined,
+        exported_fuel_confirmed: undefined,
+      }],
+    }).success,
+    false,
+  );
 });
 
 Deno.test("Form 4136: diesel train, bus, and export claims require distinct proof", () => {
