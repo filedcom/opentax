@@ -216,6 +216,36 @@ Deno.test("TY2026 Credit Limit Worksheet A excludes Schedule 3 line 5b", () => {
   );
 });
 
+Deno.test("TY2026 Worksheet B line 15 sums the four Schedule 3 sources", () => {
+  const worksheet = {
+    ...zeroCreditWorksheet2026,
+    worksheet_b_applies: true,
+    schedule3_line5a: 10,
+    schedule3_line6c: 20,
+    schedule3_line6g: 30,
+    schedule3_line6h: 40,
+  };
+  assertEquals(calculateCreditLimitWorksheetALine5_2026(1_000, worksheet), 900);
+  assertThrows(
+    () =>
+      calculateCreditLimitWorksheetALine5_2026(1_000, {
+        ...worksheet,
+        worksheet_b_line15: 100,
+      } as never),
+    Error,
+    "Unrecognized key",
+  );
+  assertThrows(
+    () =>
+      calculateCreditLimitWorksheetALine5_2026(1_000, {
+        ...worksheet,
+        schedule3_line6h: undefined,
+      } as never),
+    Error,
+    "needs Schedule 3 lines",
+  );
+});
+
 Deno.test("schema: zero children and zero dependents produces no outputs", () => {
   const result = compute([minimalItem()]);
   assertEquals(result.outputs.length, 0);

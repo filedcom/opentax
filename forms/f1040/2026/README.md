@@ -73,9 +73,10 @@ and W-2 box 12 A/B/M/N and K are routed; code Z requires its separate 409A
 tax and interest calculation. Schedule 8812's `part_iib_2026` input now uses
 Schedule 2 lines 16c and 17c and checks them against amounts calculated in
 the graph. The 2026 Credit Limit Worksheet A uses its draft-instruction
-Schedule 3 line list and rejects the TY2025 worksheet shape. Worksheet B
-source credits, earned-income sources, and credit output still need a complete
-2026 return path.
+Schedule 3 line list and rejects the TY2025 worksheet shape. Worksheet B now
+sums its four Schedule 3 credit lines. Their graph reconciliation,
+earned-income sources, and credit output still need a complete 2026 return
+path.
 The shared Form 8839 node now applies TY2026 adoption limits, emits the
 refundable per-child credit to 1040 line 30, and tracks nonrefundable
 carryforwards by origin year. Its full credit-limit worksheet and TY2026

@@ -87,18 +87,30 @@ export const creditLimitWorksheet2026Schema = z.object({
   schedule3_line6m: z.number().nonnegative(),
   worksheet_b_applies: z.boolean(),
   worksheet_b_line14: z.number().nonnegative().optional(),
-  worksheet_b_line15: z.number().nonnegative().optional(),
+  schedule3_line5a: z.number().nonnegative().optional(),
+  schedule3_line6c: z.number().nonnegative().optional(),
+  schedule3_line6g: z.number().nonnegative().optional(),
+  schedule3_line6h: z.number().nonnegative().optional(),
 }).strict().superRefine((value, ctx) => {
-  if (value.worksheet_b_applies && value.worksheet_b_line15 === undefined) {
+  const bSources = [
+    value.schedule3_line5a,
+    value.schedule3_line6c,
+    value.schedule3_line6g,
+    value.schedule3_line6h,
+  ];
+  if (
+    value.worksheet_b_applies && bSources.some((amount) => amount === undefined)
+  ) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "TY2026 Schedule 8812 Worksheet B needs line 15",
+      message:
+        "TY2026 Schedule 8812 Worksheet B needs Schedule 3 lines 5a, 6c, 6g, and 6h",
     });
   }
   if (
     !value.worksheet_b_applies &&
     (value.worksheet_b_line14 !== undefined ||
-      value.worksheet_b_line15 !== undefined)
+      bSources.some((amount) => amount !== undefined))
   ) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -311,7 +323,8 @@ export function calculateCreditLimitWorksheetALine5_2026(
     worksheet.schedule3_line6d + worksheet.schedule3_line6f +
     worksheet.schedule3_line6l + worksheet.schedule3_line6m;
   const line4 = worksheet.worksheet_b_applies
-    ? worksheet.worksheet_b_line15!
+    ? worksheet.schedule3_line5a! + worksheet.schedule3_line6c! +
+      worksheet.schedule3_line6g! + worksheet.schedule3_line6h!
     : 0;
   return Math.max(0, form1040Line18Tax - line2 - line4);
 }

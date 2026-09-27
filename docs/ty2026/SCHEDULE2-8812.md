@@ -50,8 +50,8 @@ The 2026 draft instructions change Credit Limit Worksheet A line 2: add
 Schedule 3 lines 1, 2, 3, 4, 6d, 6f, 6l, and 6m. The 2025 worksheet also lists
 line 5b. Use a distinct 2026 worksheet input and reject the old shape.
 Worksheet B line 15 draws from Schedule 3 lines 5a, 6c, 6g, and 6h; those
-source credits need a separate calculation and reconciliation rather than a
-generic tax-credit total.
+source credits now sum inside the TY2026 worksheet. The graph still needs to
+reconcile them with the filed Schedule 3 lines.
 
 W-2 box 12 code K reports the excise tax and now reaches Schedule 2 line 13k.
 Code Z reports section 409A income, not its complete additional tax; its 2026

@@ -108,7 +108,8 @@ TY2026 Part II-B shape for Schedule 2 lines
 worksheet and credit-output graph still needs verification. The draft 2026
 Schedule 8812 instructions are pinned; Credit Limit Worksheet A now uses the
 2026 Schedule 3 line list and rejects the 2025 worksheet shape. Worksheet B
-line 15 still needs source-credit calculation and reconciliation. Code Z explicitly
+line 15 now sums the four 2026 Schedule 3 credit lines; graph reconciliation
+remains. Code Z explicitly
 fails until its 409A tax and interest path exists.
 The shared Form 8839 node now splits the credit into refundable 1040 line 30
 and nonrefundable Schedule 3 amounts for both TY2025 and TY2026, using each
