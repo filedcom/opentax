@@ -22,14 +22,12 @@ function excessTax(
     | "excess_roth_ira"
     | "excess_coverdell_esa"
     | "excess_archer_msa"
-    | "excess_hsa"
     | "excess_able",
   valueKey:
     | "traditional_ira_value"
     | "roth_ira_value"
     | "coverdell_esa_value"
     | "archer_msa_value"
-    | "hsa_value"
     | "able_value",
 ): number {
   const excess = input[excessKey] ?? 0;
@@ -52,12 +50,22 @@ function buildIRS5329(raw: Input, context?: MefBuildContext): string {
   const exception = input.early_distribution_exception ?? 0;
   const education = input.esa_able_distribution ?? 0;
   const educationException = input.esa_able_exception ?? 0;
+  const hsa = input.hsa_part_vii;
+  const hsaPriorRemaining = hsa
+    ? Math.max(
+      0,
+      hsa.line42_prior_excess -
+        hsa.line43_unused_contribution_room -
+        hsa.line44_taxable_distributions,
+    )
+    : 0;
+  const hsaTotal = hsaPriorRemaining + (hsa?.line47_current_year_excess ?? 0);
   const excess = [
     input.excess_traditional_ira,
     input.excess_roth_ira,
     input.excess_coverdell_esa,
     input.excess_archer_msa,
-    input.excess_hsa,
+    hsaTotal,
     input.excess_able,
   ].some((amount) => (amount ?? 0) > 0);
   if (!early && !education && !excess) {
@@ -104,7 +112,7 @@ function buildIRS5329(raw: Input, context?: MefBuildContext): string {
     "coverdell_esa_value",
   );
   const archerTax = excessTax(input, "excess_archer_msa", "archer_msa_value");
-  const hsaTax = excessTax(input, "excess_hsa", "hsa_value");
+  const hsaTax = hsa ? Math.min(hsaTotal, hsa.december_31_value) * 0.06 : 0;
   const ableTax = excessTax(input, "excess_able", "able_value");
   const subjectToEarlyTax = early - exception;
   const earlyTax = (regular - exception) * 0.1 + simple * 0.25;
@@ -150,10 +158,8 @@ function buildIRS5329(raw: Input, context?: MefBuildContext): string {
       ? element("ArcherMSAExcessContriTotalAmt", input.excess_archer_msa)
       : "",
     input.excess_archer_msa ? element("MSAExcessContribTaxAmt", archerTax) : "",
-    input.excess_hsa
-      ? element("HSAExcessContriTotalAmt", input.excess_hsa)
-      : "",
-    input.excess_hsa ? element("HSAExcessContribTaxAmt", hsaTax) : "",
+    hsaTotal ? element("HSAExcessContriTotalAmt", hsaTotal) : "",
+    hsaTotal ? element("HSAExcessContribTaxAmt", hsaTax) : "",
     input.excess_able
       ? element("ABLEExcessContriCYAmt", input.excess_able)
       : "",

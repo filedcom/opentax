@@ -1,9 +1,8 @@
 # Form 5329 — Additional Taxes on Qualified Plans
 
 ## Overview
-**IRS Form:** Form 5329
-**Drake Screen:** 5329
-**Tax Year:** 2025
+
+**IRS Form:** Form 5329 **Drake Screen:** 5329 **Tax Year:** 2025
 
 ---
 ## Input Fields
@@ -22,14 +21,15 @@
 | coverdell_esa_value | number (optional) | user/screen | FMV of Coverdell ESAs on Dec 31, 2025 | Part V, Line 33 | https://www.irs.gov/pub/irs-pdf/f5329.pdf |
 | excess_archer_msa | number (optional) | user/screen | Excess contributions to Archer MSAs (line 40) | Part VI, Line 40 | https://www.irs.gov/pub/irs-pdf/f5329.pdf |
 | archer_msa_value | number (optional) | user/screen | FMV of Archer MSAs on Dec 31, 2025 | Part VI, Line 41 | https://www.irs.gov/pub/irs-pdf/f5329.pdf |
-| excess_hsa | number (optional) | user/screen | Excess contributions to HSAs (line 48) | Part VII, Line 48 | https://www.irs.gov/pub/irs-pdf/f5329.pdf |
-| hsa_value | number (optional) | user/screen | FMV of HSAs on Dec 31, 2025 | Part VII, Line 49 | https://www.irs.gov/pub/irs-pdf/f5329.pdf |
+| hsa_part_vii | object (optional) | Form 8889 plus filed prior-year Form 5329 | Lines 42, 43, 44, 47, and December 31 HSA value; lines 45, 46, 48, and 49 are computed | Part VII, Lines 42-49 | https://www.irs.gov/instructions/i5329 |
 | excess_able | number (optional) | user/screen | Excess contributions to ABLE account (line 50) | Part VIII, Line 50 | https://www.irs.gov/pub/irs-pdf/f5329.pdf |
 | able_value | number (optional) | user/screen | FMV of ABLE account on Dec 31, 2025 | Part VIII, Line 51 | https://www.irs.gov/pub/irs-pdf/f5329.pdf |
-
 ---
+
 ## Calculation Logic
+
 ### Step 1 — Part I: Early Distributions (10% or 25% penalty)
+
 - Line 1: early distribution amount
 - Line 2: exception amount (fully or partially exempt portion)
 - Line 3: line 1 − line 2 = amount subject to tax
@@ -37,6 +37,7 @@
 - → Schedule 2 line 8
 
 ### Step 2 — Part II: ESA/ABLE Distributions (10% penalty)
+
 - Line 5: taxable ESA/QTP/ABLE distributions
 - Line 6: exception amount
 - Line 7: line 5 − line 6
@@ -44,17 +45,26 @@
 - → Schedule 2 line 8
 
 ### Step 3 — Part III: Excess Traditional IRA Contributions (6% penalty)
+
 - Line 16: total excess contributions (current + carryover)
 - Line 17: 6% × min(line 16, traditional_ira_value)
 - → Schedule 2 line 8
 
 ### Step 4 — Part IV: Excess Roth IRA Contributions (6% penalty)
+
 - Line 24: total excess Roth contributions
 - Line 25: 6% × min(line 24, roth_ira_value)
 - → Schedule 2 line 8
 
 ### Step 5 — Parts V–VIII: Excess Contributions to ESA/MSA/HSA/ABLE (6% each)
-- Formula: 6% × min(excess, account_value)
+
+- HSA line 42 takes 2024 Form 5329 line 48 only when its line 49 was positive.
+  Line 43 is 2025 Form 8889 line 12 less line 2. Line 44 is Form 8889 line 16.
+  Line 46 is the nonnegative remainder after lines 43 and 44, line 48 adds 2025
+  excess, and line 49 is 6% of the lesser of line 48 or the December 31 HSA
+  value. The lesser of line 43 or line 42 less line 44 is also included in Form
+  8889 line 13.
+- Other excess-contribution parts use 6% × min(excess, account_value).
 - → Schedule 2 line 8
 
 ---
@@ -62,14 +72,15 @@
 | Output Field | Destination Node | Line / Field | Condition | IRS Reference | URL |
 | ------------ | ---------------- | ------------ | --------- | ------------- | --- |
 | line8_form5329_tax | schedule2 | line 8 | total > 0 | Form 5329 (all parts) → Sch 2 line 8 | https://www.irs.gov/pub/irs-pdf/f5329.pdf |
-
 ---
+
 ## Constants & Thresholds (Tax Year 2025)
-| Constant | Value | Source | URL |
-| -------- | ----- | ------ | --- |
-| EARLY_DIST_RATE | 0.10 (10%) | IRC §72(t)(1) | https://www.irs.gov/instructions/i5329 |
-| SIMPLE_IRA_RATE | 0.25 (25%) | IRC §72(t)(6) | https://www.irs.gov/instructions/i5329 |
-| EXCESS_CONTRIB_RATE | 0.06 (6%) | IRC §4973 | https://www.irs.gov/instructions/i5329 |
+
+| Constant            | Value      | Source        | URL                                    |
+| ------------------- | ---------- | ------------- | -------------------------------------- |
+| EARLY_DIST_RATE     | 0.10 (10%) | IRC §72(t)(1) | https://www.irs.gov/instructions/i5329 |
+| SIMPLE_IRA_RATE     | 0.25 (25%) | IRC §72(t)(6) | https://www.irs.gov/instructions/i5329 |
+| EXCESS_CONTRIB_RATE | 0.06 (6%)  | IRC §4973     | https://www.irs.gov/instructions/i5329 |
 
 ---
 ## Data Flow Diagram
@@ -114,19 +125,24 @@ flowchart LR
   total --> schedule2
   schedule2 --> f1040
 ```
-
 ---
+
 ## Edge Cases & Special Rules
-- SIMPLE IRA within first 2 years of participation: 25% rate (not 10%) — code S on 1099-R
+
+- SIMPLE IRA within first 2 years of participation: 25% rate (not 10%) — code S
+  on 1099-R
 - Exception codes (01–23, 99): reduce early distribution subject to tax
-- Excess contributions: tax is 6% of lesser of (excess amount) or (account FMV on Dec 31)
+- Excess contributions: tax is 6% of lesser of (excess amount) or (account FMV
+  on Dec 31)
 - Part IX (RMD 25% penalty) is NOT present on 2025 Form 5329 — do not implement
 - If no penalty applies (all exceptions or zero excess), no output is produced
 - All penalty amounts aggregate to a single Schedule 2 line 8 output
 
 ---
+
 ## Sources
-| Document | Year | Section | URL | Saved as |
-| -------- | ---- | ------- | --- | -------- |
-| Form 5329 | 2025 | All parts | https://www.irs.gov/pub/irs-pdf/f5329.pdf | .research/docs/f5329.pdf |
-| Instructions for Form 5329 | 2025 | All | https://www.irs.gov/pub/irs-pdf/i5329.pdf | .research/docs/i5329.pdf |
+
+| Document                   | Year | Section   | URL                                       | Saved as                 |
+| -------------------------- | ---- | --------- | ----------------------------------------- | ------------------------ |
+| Form 5329                  | 2025 | All parts | https://www.irs.gov/pub/irs-pdf/f5329.pdf | .research/docs/f5329.pdf |
+| Instructions for Form 5329 | 2025 | All       | https://www.irs.gov/pub/irs-pdf/i5329.pdf | .research/docs/i5329.pdf |

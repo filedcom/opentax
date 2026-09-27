@@ -279,8 +279,13 @@ Deno.test("part6: 6% penalty on excess Archer MSA contributions", () => {
 Deno.test("part7: 6% penalty on excess HSA contributions", () => {
   // min(2000, 8000) × 6% = 120
   const result = compute({
-    excess_hsa: 2_000,
-    hsa_value: 8_000,
+    hsa_part_vii: {
+      line42_prior_excess: 0,
+      line43_unused_contribution_room: 0,
+      line44_taxable_distributions: 0,
+      line47_current_year_excess: 2_000,
+      december_31_value: 8_000,
+    },
   });
 
   const sch2Out = findOutput(result, "schedule2");
@@ -291,13 +296,51 @@ Deno.test("part7: 6% penalty on excess HSA contributions", () => {
 Deno.test("part7: HSA excess capped at account value", () => {
   // min(10000, 200) × 6% = 12
   const result = compute({
-    excess_hsa: 10_000,
-    hsa_value: 200,
+    hsa_part_vii: {
+      line42_prior_excess: 0,
+      line43_unused_contribution_room: 0,
+      line44_taxable_distributions: 0,
+      line47_current_year_excess: 10_000,
+      december_31_value: 200,
+    },
   });
 
   const sch2Out = findOutput(result, "schedule2");
   assertEquals(sch2Out !== undefined, true);
   assertEquals(fieldsOf(result.outputs, schedule2)!.line8_form5329_tax, 12);
+});
+
+Deno.test("part7: prior-year HSA excess is reduced by unused room and taxable distributions", () => {
+  const result = compute({
+    hsa_part_vii: {
+      line42_prior_excess: 2_000,
+      line43_unused_contribution_room: 500,
+      line44_taxable_distributions: 300,
+      line47_current_year_excess: 200,
+      december_31_value: 5_000,
+    },
+  });
+  const printed = findOutput(result, "form5329")?.fields;
+  assertEquals(printed?.print_hsa_line45, 800);
+  assertEquals(printed?.print_hsa_line46, 1_200);
+  assertEquals(printed?.print_hsa_line48, 1_400);
+  assertEquals(printed?.print_hsa_line49, 84);
+  assertEquals(fieldsOf(result.outputs, schedule2)?.line8_form5329_tax, 84);
+});
+
+Deno.test("part7: prior-year HSA excess fully absorbed has no 2025 excise", () => {
+  const result = compute({
+    hsa_part_vii: {
+      line42_prior_excess: 1_000,
+      line43_unused_contribution_room: 900,
+      line44_taxable_distributions: 100,
+      line47_current_year_excess: 0,
+      december_31_value: 2_000,
+    },
+  });
+  assertEquals(findOutput(result, "form5329")?.fields.print_hsa_line46, 0);
+  assertEquals(findOutput(result, "form5329")?.fields.print_hsa_line48, 0);
+  assertEquals(fieldsOf(result.outputs, schedule2), undefined);
 });
 
 // ---------------------------------------------------------------------------
@@ -397,8 +440,13 @@ Deno.test("smoke: multiple penalties across several parts", () => {
     traditional_ira_value: 10_000,
     excess_roth_ira: 1_000,
     roth_ira_value: 5_000,
-    excess_hsa: 500,
-    hsa_value: 8_000,
+    hsa_part_vii: {
+      line42_prior_excess: 0,
+      line43_unused_contribution_room: 0,
+      line44_taxable_distributions: 0,
+      line47_current_year_excess: 500,
+      december_31_value: 8_000,
+    },
   });
 
   const sch2Out = findOutput(result, "schedule2");

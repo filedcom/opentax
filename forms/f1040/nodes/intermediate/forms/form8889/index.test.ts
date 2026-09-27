@@ -68,7 +68,11 @@ Deno.test("part1: total contributions capped at annual limit (self_only 4300)", 
     hsa_december_31_value: 4500,
   });
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_hsa_deduction, 2300);
-  assertEquals(fieldsOf(result.outputs, form5329)!.excess_hsa, 200);
+  assertEquals(
+    fieldsOf(result.outputs, form5329)!.hsa_part_vii
+      ?.line47_current_year_excess,
+    200,
+  );
 });
 
 Deno.test("part1: employer fills entire limit → no taxpayer deduction, taxpayer excess to form5329", () => {
@@ -82,7 +86,11 @@ Deno.test("part1: employer fills entire limit → no taxpayer deduction, taxpaye
     hsa_december_31_value: 4800,
   });
   assertEquals(fieldsOf(result.outputs, schedule1), undefined);
-  assertEquals(fieldsOf(result.outputs, form5329)!.excess_hsa, 500);
+  assertEquals(
+    fieldsOf(result.outputs, form5329)!.hsa_part_vii
+      ?.line47_current_year_excess,
+    500,
+  );
 });
 
 Deno.test("part1: age 55+ catch-up adds $1000 to self_only limit", () => {
@@ -115,16 +123,86 @@ Deno.test("part1: contribution at exact limit → fully deductible, no excess", 
   assertEquals(f5329, undefined);
 });
 
+Deno.test("part1: filed prior-year HSA excess uses current unused room on Form 8889 line 13", () => {
+  const result = compute({
+    ...uniformSelfOnly,
+    prior_year_hsa_excess: {
+      form5329_line48: 2_000,
+      form5329_line49: 120,
+    },
+    taxpayer_hsa_contributions: 3_800,
+    hsa_december_31_value: 4_000,
+  });
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)?.line13_hsa_deduction,
+    4_300,
+  );
+  assertEquals(
+    findOutput(result, "form8889")?.fields.print_line13_deduction,
+    4_300,
+  );
+  assertEquals(fieldsOf(result.outputs, form5329)?.hsa_part_vii, {
+    line42_prior_excess: 2_000,
+    line43_unused_contribution_room: 500,
+    line44_taxable_distributions: 0,
+    line47_current_year_excess: 0,
+    december_31_value: 4_000,
+  });
+});
+
+Deno.test("part1: prior excess can supply line 13 without a current contribution", () => {
+  const result = compute({
+    ...uniformSelfOnly,
+    prior_year_hsa_excess: {
+      form5329_line48: 1_000,
+      form5329_line49: 60,
+    },
+    hsa_december_31_value: 1_000,
+  });
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)?.line13_hsa_deduction,
+    1_000,
+  );
+  assertEquals(
+    findOutput(result, "form8889")?.fields.print_line13_deduction,
+    1_000,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, form5329)?.hsa_part_vii?.line42_prior_excess,
+    1_000,
+  );
+});
+
+Deno.test("part1: zero 2024 Form 5329 line 49 does not carry line 48 forward", () => {
+  const result = compute({
+    ...uniformSelfOnly,
+    taxpayer_hsa_contributions: 3_800,
+    prior_year_hsa_excess: {
+      form5329_line48: 1_000,
+      form5329_line49: 0,
+    },
+  });
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)?.line13_hsa_deduction,
+    3_800,
+  );
+  assertEquals(fieldsOf(result.outputs, form5329), undefined);
+});
+
 // ─── Part I: Excess Contributions → form5329 ─────────────────────────────────
 
-Deno.test("part1: excess contributions route to form5329 excess_hsa", () => {
+Deno.test("part1: excess contributions route to form5329 line 47", () => {
   // self_only limit 4300; taxpayer contributes 5000 → excess = 700
   const result = compute({
     ...uniformSelfOnly,
     taxpayer_hsa_contributions: 5000,
     hsa_december_31_value: 5000,
   });
-  assertEquals(fieldsOf(result.outputs, form5329)!.excess_hsa, 700);
+  assertEquals(
+    fieldsOf(result.outputs, form5329)!.hsa_part_vii
+      ?.line47_current_year_excess,
+    700,
+  );
 });
 
 Deno.test("part1: combined employer+taxpayer excess routes to form5329", () => {
@@ -135,7 +213,11 @@ Deno.test("part1: combined employer+taxpayer excess routes to form5329", () => {
     employer_hsa_contributions: 4000,
     hsa_december_31_value: 9000,
   });
-  assertEquals(fieldsOf(result.outputs, form5329)!.excess_hsa, 450);
+  assertEquals(
+    fieldsOf(result.outputs, form5329)!.hsa_part_vii
+      ?.line47_current_year_excess,
+    450,
+  );
 });
 
 Deno.test("part1: direct IRA-to-HSA funding transfer reduces line 12 contribution room", () => {
@@ -160,7 +242,11 @@ Deno.test("part1: direct IRA-to-HSA funding transfer reduces line 12 contributio
   assertEquals(printed?.print_line11, 2000);
   assertEquals(printed?.print_line12, 2300);
   assertEquals(printed?.print_line13_deduction, 2300);
-  assertEquals(fieldsOf(result.outputs, form5329)?.excess_hsa, 200);
+  assertEquals(
+    fieldsOf(result.outputs, form5329)?.hsa_part_vii
+      ?.line47_current_year_excess,
+    200,
+  );
 });
 
 Deno.test("part1: a funding transfer needs eligible coverage in its transfer month", () => {
@@ -397,8 +483,15 @@ Deno.test("part1: retained employer excess omitted from W-2 box 1 reaches other 
     findOutput(result, "agi_aggregator")?.fields.line8z_hsa_excess_employer,
     700,
   );
-  assertEquals(fieldsOf(result.outputs, form5329)?.excess_hsa, 700);
-  assertEquals(fieldsOf(result.outputs, form5329)?.hsa_value, 300);
+  assertEquals(
+    fieldsOf(result.outputs, form5329)?.hsa_part_vii
+      ?.line47_current_year_excess,
+    700,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, form5329)?.hsa_part_vii?.december_31_value,
+    300,
+  );
   assertEquals(
     findOutput(result, "form8889")?.fields.print_line9_employer,
     5000,
@@ -416,7 +509,11 @@ Deno.test("part1: retained employer excess already in W-2 box 1 is not other inc
     hsa_december_31_value: 700,
   });
   assertEquals(fieldsOf(result.outputs, schedule1), undefined);
-  assertEquals(fieldsOf(result.outputs, form5329)?.excess_hsa, 700);
+  assertEquals(
+    fieldsOf(result.outputs, form5329)?.hsa_part_vii
+      ?.line47_current_year_excess,
+    700,
+  );
 });
 
 Deno.test("part1: employer excess only partly included in W-2 box 1 reports the remainder", () => {
@@ -433,7 +530,11 @@ Deno.test("part1: employer excess only partly included in W-2 box 1 reports the 
     fieldsOf(result.outputs, schedule1)?.line8z_hsa_excess_employer,
     400,
   );
-  assertEquals(fieldsOf(result.outputs, form5329)?.excess_hsa, 700);
+  assertEquals(
+    fieldsOf(result.outputs, form5329)?.hsa_part_vii
+      ?.line47_current_year_excess,
+    700,
+  );
 });
 
 Deno.test("part1: W-2 box 1 inclusion cannot exceed employer excess", () => {
@@ -473,7 +574,11 @@ Deno.test("part1: no eligible HDHP month leaves a zero limit and routes employer
     fieldsOf(result.outputs, schedule1)?.line8z_hsa_excess_employer,
     1000,
   );
-  assertEquals(fieldsOf(result.outputs, form5329)?.excess_hsa, 1000);
+  assertEquals(
+    fieldsOf(result.outputs, form5329)?.hsa_part_vii
+      ?.line47_current_year_excess,
+    1000,
+  );
 });
 
 Deno.test("part1: an excess HSA needs its December 31 value", () => {
@@ -560,8 +665,15 @@ Deno.test("part1: partial timely employer withdrawal leaves only the retained ex
     hsa_distributions: 310,
     hsa_december_31_value: 100,
   });
-  assertEquals(fieldsOf(result.outputs, form5329)?.excess_hsa, 400);
-  assertEquals(fieldsOf(result.outputs, form5329)?.hsa_value, 100);
+  assertEquals(
+    fieldsOf(result.outputs, form5329)?.hsa_part_vii
+      ?.line47_current_year_excess,
+    400,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, form5329)?.hsa_part_vii?.december_31_value,
+    100,
+  );
   assertEquals(
     fieldsOf(result.outputs, schedule1)?.line8z_hsa_excess_earnings,
     10,
@@ -907,7 +1019,11 @@ Deno.test("part1: separate spouses allocate the full-year family limit on line 6
   assertEquals(printed?.print_line6, 4275);
   assertEquals(printed?.print_line8, 4275);
   assertEquals(fieldsOf(result.outputs, schedule1)?.line13_hsa_deduction, 4275);
-  assertEquals(fieldsOf(result.outputs, form5329)?.excess_hsa, 725);
+  assertEquals(
+    fieldsOf(result.outputs, form5329)?.hsa_part_vii
+      ?.line47_current_year_excess,
+    725,
+  );
 });
 
 Deno.test("part1: a partial-year family limit allocates only the family portion", () => {

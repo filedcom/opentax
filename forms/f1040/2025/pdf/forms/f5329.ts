@@ -14,26 +14,115 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 // Part V   — Coverdell ESA FMV: line 29.
 // Part VI  — excess Archer MSA: line 30.
 // Part VI  — Archer MSA FMV: line 33.
-// Part VII — excess HSA: line 34.
-// Part VII — HSA FMV: line 37.
+// Part VII — HSA excess-contribution worksheet lines 42-49.
 // Part IX  — excess ABLE: line 42.
 // Part IX  — ABLE FMV: line 45.
 const fields: ReadonlyArray<PdfFieldEntry> = [
-  { kind: "text", domainKey: "early_distribution", pdfField: "topmostSubform[0].Page1[0].f1_3[0]" },
-  { kind: "text", domainKey: "simple_ira_early_distribution", pdfField: "topmostSubform[0].Page1[0].f1_10[0]" },
-  { kind: "text", domainKey: "esa_able_distribution", pdfField: "topmostSubform[0].Page1[0].f1_29[0]" },
-  { kind: "text", domainKey: "excess_traditional_ira", pdfField: "topmostSubform[0].Page1[0].f1_30[0]" },
-  { kind: "text", domainKey: "traditional_ira_value", pdfField: "topmostSubform[0].Page1[0].f1_33[0]" },
-  { kind: "text", domainKey: "excess_roth_ira", pdfField: "topmostSubform[0].Page2[0].f2_1[0]" },
-  { kind: "text", domainKey: "roth_ira_value", pdfField: "topmostSubform[0].Page2[0].f2_4[0]" },
-  { kind: "text", domainKey: "excess_coverdell_esa", pdfField: "topmostSubform[0].Page2[0].f2_5[0]" },
-  { kind: "text", domainKey: "coverdell_esa_value", pdfField: "topmostSubform[0].Page2[0].f2_8[0]" },
-  { kind: "text", domainKey: "excess_archer_msa", pdfField: "topmostSubform[0].Page2[0].f2_9[0]" },
-  { kind: "text", domainKey: "archer_msa_value", pdfField: "topmostSubform[0].Page2[0].f2_12[0]" },
-  { kind: "text", domainKey: "excess_hsa", pdfField: "topmostSubform[0].Page2[0].f2_13[0]" },
-  { kind: "text", domainKey: "hsa_value", pdfField: "topmostSubform[0].Page2[0].f2_16[0]" },
-  { kind: "text", domainKey: "excess_able", pdfField: "topmostSubform[0].Page2[0].f2_21[0]" },
-  { kind: "text", domainKey: "able_value", pdfField: "topmostSubform[0].Page2[0].f2_24[0]" },
+  {
+    kind: "text",
+    domainKey: "early_distribution",
+    pdfField: "topmostSubform[0].Page1[0].f1_3[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "simple_ira_early_distribution",
+    pdfField: "topmostSubform[0].Page1[0].f1_10[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "esa_able_distribution",
+    pdfField: "topmostSubform[0].Page1[0].f1_29[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "excess_traditional_ira",
+    pdfField: "topmostSubform[0].Page1[0].f1_30[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "traditional_ira_value",
+    pdfField: "topmostSubform[0].Page1[0].f1_33[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "excess_roth_ira",
+    pdfField: "topmostSubform[0].Page2[0].f2_1[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "roth_ira_value",
+    pdfField: "topmostSubform[0].Page2[0].f2_4[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "excess_coverdell_esa",
+    pdfField: "topmostSubform[0].Page2[0].f2_5[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "coverdell_esa_value",
+    pdfField: "topmostSubform[0].Page2[0].f2_8[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "excess_archer_msa",
+    pdfField: "topmostSubform[0].Page2[0].f2_9[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "archer_msa_value",
+    pdfField: "topmostSubform[0].Page2[0].f2_12[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_hsa_line42",
+    pdfField: "topmostSubform[0].Page2[0].f2_13[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_hsa_line43",
+    pdfField: "topmostSubform[0].Page2[0].f2_14[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_hsa_line44",
+    pdfField: "topmostSubform[0].Page2[0].f2_15[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_hsa_line45",
+    pdfField: "topmostSubform[0].Page2[0].f2_16[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_hsa_line46",
+    pdfField: "topmostSubform[0].Page2[0].f2_17[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_hsa_line47",
+    pdfField: "topmostSubform[0].Page2[0].f2_18[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_hsa_line48",
+    pdfField: "topmostSubform[0].Page2[0].f2_19[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_hsa_line49",
+    pdfField: "topmostSubform[0].Page2[0].f2_20[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "excess_able",
+    pdfField: "topmostSubform[0].Page2[0].f2_21[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "able_value",
+    pdfField: "topmostSubform[0].Page2[0].f2_24[0]",
+  },
 ];
 
 export const form5329Pdf: PdfFormDescriptor = {

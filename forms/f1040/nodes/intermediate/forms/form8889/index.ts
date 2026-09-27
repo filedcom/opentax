@@ -71,6 +71,12 @@ export const inputSchema = z.object({
     withdrawal_tax_year: z.literal(2026),
     withdrawn_by_return_due_date: z.literal(true),
   }).optional(),
+  // Carryover is sourced from the filed 2024 Form 5329, not inferred from
+  // the 2025 HSA balance. A zero prior-year line 49 stops the carryover.
+  prior_year_hsa_excess: z.object({
+    form5329_line48: z.number().nonnegative(),
+    form5329_line49: z.number().nonnegative(),
+  }).optional(),
   // Line 10: one direct IRA-to-HSA transfer, or a second in a later month of
   // this year after self-only coverage changes to family coverage.
   qualified_hsa_funding_distributions: z.object({
@@ -319,10 +325,13 @@ function totalContributions(
 // any timely withdrawn current-year personal principal. Employer excess and
 // its timely withdrawal are calculated separately in compute().
 // IRC §4973(a)(2)
-function excessContributions(input: Form8889Input, deductible: number): number {
+function excessContributions(
+  input: Form8889Input,
+  currentDeduction: number,
+): number {
   const personalExcess = Math.max(
     0,
-    (input.taxpayer_hsa_contributions ?? 0) - deductible,
+    (input.taxpayer_hsa_contributions ?? 0) - currentDeduction,
   );
   const withdrawn = input.hsa_excluded_distributions?.timely_excess_withdrawal;
   const withdrawnPrincipal = withdrawn
@@ -428,16 +437,34 @@ function schedule1Output(
 }
 
 // Excess contribution output → Form 5329 Part VII
-function excessOutput(excess: number, accountValue?: number): NodeOutput[] {
-  if (excess <= 0) return [];
+function excessOutput(
+  input: Form8889Input,
+  line12: number,
+  taxable: number,
+  currentExcess: number,
+): NodeOutput[] {
+  const prior = input.prior_year_hsa_excess;
+  const priorExcess = prior && prior.form5329_line49 > 0
+    ? prior.form5329_line48
+    : 0;
+  if (priorExcess <= 0 && currentExcess <= 0) return [];
+  const accountValue = input.hsa_december_31_value;
   if (accountValue === undefined) {
     throw new Error(
       "Form 8889 excess contributions need the December 31 HSA value for Form 5329",
     );
   }
   return [output(form5329, {
-    excess_hsa: excess,
-    hsa_value: accountValue,
+    hsa_part_vii: {
+      line42_prior_excess: priorExcess,
+      line43_unused_contribution_room: Math.max(
+        0,
+        line12 - (input.taxpayer_hsa_contributions ?? 0),
+      ),
+      line44_taxable_distributions: taxable,
+      line47_current_year_excess: currentExcess,
+      december_31_value: accountValue,
+    },
   })];
 }
 
@@ -472,6 +499,14 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
+    if (
+      (input.prior_year_hsa_excess?.form5329_line49 ?? 0) > 0 &&
+      (input.prior_year_hsa_excess?.form5329_line48 ?? 0) === 0
+    ) {
+      throw new Error(
+        "Form 8889 prior-year HSA excise needs a positive filed Form 5329 line 48",
+      );
+    }
     const funding = input.qualified_hsa_funding_distributions;
     const fundingAmount = funding?.transfers.reduce(
       (sum, transfer) => sum + transfer.amount,
@@ -480,7 +515,9 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
     const employer = employerContributionsForTaxYear(input);
     const hasContributions = totalContributions(input, employer) +
         fundingAmount > 0;
-    const limitLines = hasContributions
+    const hasPriorYearExcess =
+      (input.prior_year_hsa_excess?.form5329_line49 ?? 0) > 0;
+    const limitLines = hasContributions || hasPriorYearExcess
       ? contributionLimitLines(
         input,
         cfg.hsaSelfOnlyLimit,
@@ -567,13 +604,26 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
       0,
       (limitLines?.line8 ?? 0) - employer - fundingAmount,
     );
-    const deductible = deductibleContributions(input, line12);
-    const excess = excessContributions(input, deductible) + employerExcess -
+    const currentDeduction = deductibleContributions(input, line12);
+    const line42 = hasPriorYearExcess
+      ? input.prior_year_hsa_excess!.form5329_line48
+      : 0;
+    const line43 = Math.max(
+      0,
+      line12 - (input.taxpayer_hsa_contributions ?? 0),
+    );
+    const line14b = excludedDistributions(input);
+    const taxable = taxableDistributions(input, line14b.excluded);
+    const priorYearDeduction = Math.min(
+      line43,
+      Math.max(0, line42 - taxable),
+    );
+    const deductible = currentDeduction + priorYearDeduction;
+    const excess = excessContributions(input, currentDeduction) +
+      employerExcess -
       (employerWithdrawal?.principal ?? 0);
     const employerExcessIncome = employerExcess -
       (employerTreatment?.amount_included_in_w2_box1 ?? 0);
-    const line14b = excludedDistributions(input);
-    const taxable = taxableDistributions(input, line14b.excluded);
     const penalty = nonQualifiedPenalty(input, taxable);
     const failure = input.testing_period_failure;
     const partIIIIncome = failure
@@ -589,14 +639,15 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
         line14b.earnings,
         employerExcessIncome,
       ),
-      ...excessOutput(excess, input.hsa_december_31_value),
+      ...excessOutput(input, line12, taxable, excess),
       ...penaltyOutput(penalty, eligibilityTax),
     ];
 
     // Self-emit only the applicable printed parts for MeF and PDF. A
     // distribution-only or Part III-only filer need not have 2025 HDHP coverage.
     if (
-      !hasContributions && (input.hsa_distributions ?? 0) <= 0 &&
+      !hasContributions && !hasPriorYearExcess &&
+      (input.hsa_distributions ?? 0) <= 0 &&
       partIIIIncome <= 0
     ) {
       return { outputs };

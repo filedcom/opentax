@@ -103,10 +103,14 @@ export const inputSchema = z.object({
   archer_msa_value: z.number().nonnegative().optional(),
 
   // ── Part VII: Excess Contributions to HSAs (line 42–49) ─────────────────
-  // Line 48: Total excess contributions to HSAs
-  excess_hsa: z.number().nonnegative().optional(),
-  // FMV of HSAs on Dec 31, 2025 (caps the 6% tax base)
-  hsa_value: z.number().nonnegative().optional(),
+  // Source-linked Form 8889 amounts and filed prior-year Form 5329 carryover.
+  hsa_part_vii: z.object({
+    line42_prior_excess: z.number().nonnegative(),
+    line43_unused_contribution_room: z.number().nonnegative(),
+    line44_taxable_distributions: z.number().nonnegative(),
+    line47_current_year_excess: z.number().nonnegative(),
+    december_31_value: z.number().nonnegative(),
+  }).optional(),
 
   // ── Part VIII: Excess Contributions to ABLE Accounts (line 50–51) ───────
   // Line 50: Excess contributions to ABLE account
@@ -192,7 +196,18 @@ function partVI_tax(input: Form5329Input): number {
 // Part VII, Line 49: 6% excise on excess HSA contributions
 // IRC §4973(a)(2); Form 5329 line 49 → Schedule 2 line 8
 function partVII_tax(input: Form5329Input): number {
-  return excessContribTax(input.excess_hsa ?? 0, input.hsa_value);
+  const hsa = input.hsa_part_vii;
+  if (!hsa) return 0;
+  const priorRemaining = Math.max(
+    0,
+    hsa.line42_prior_excess -
+      hsa.line43_unused_contribution_room -
+      hsa.line44_taxable_distributions,
+  );
+  return excessContribTax(
+    priorRemaining + hsa.line47_current_year_excess,
+    hsa.december_31_value,
+  );
 }
 
 // Part VIII, Line 51: 6% excise on excess ABLE account contributions
@@ -263,10 +278,30 @@ class Form5329Node extends TaxNode<typeof inputSchema> {
     // these arrays are independent 1099-R distributions that must be summed.
     const regular = sumAmounts(input.early_distribution);
     const simple = sumAmounts(input.simple_ira_early_distribution);
+    const hsa = input.hsa_part_vii;
+    const hsaLine45 = hsa
+      ? hsa.line43_unused_contribution_room + hsa.line44_taxable_distributions
+      : 0;
+    const hsaLine46 = hsa
+      ? Math.max(0, hsa.line42_prior_excess - hsaLine45)
+      : 0;
+    const hsaLine48 = hsa ? hsaLine46 + hsa.line47_current_year_excess : 0;
     const printFields = {
       ...(regular > 0 ? { early_distribution: regular } : {}),
       ...(simple > 0 ? { simple_ira_early_distribution: simple } : {}),
       ...(subjects.length > 0 ? { subject_ts: subjects[0] ?? TS.T } : {}),
+      ...(hsa
+        ? {
+          print_hsa_line42: hsa.line42_prior_excess,
+          print_hsa_line43: hsa.line43_unused_contribution_room,
+          print_hsa_line44: hsa.line44_taxable_distributions,
+          print_hsa_line45: hsaLine45,
+          print_hsa_line46: hsaLine46,
+          print_hsa_line47: hsa.line47_current_year_excess,
+          print_hsa_line48: hsaLine48,
+          print_hsa_line49: partVII_tax(input),
+        }
+        : {}),
     };
     return {
       outputs: [

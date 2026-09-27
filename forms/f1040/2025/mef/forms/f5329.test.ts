@@ -111,8 +111,13 @@ Deno.test("Form 5329 excess-contribution lines use balance-capped tax", () => {
     coverdell_esa_value: 1_000,
     excess_archer_msa: 300,
     archer_msa_value: 1_000,
-    excess_hsa: 600,
-    hsa_value: 1_000,
+    hsa_part_vii: {
+      line42_prior_excess: 0,
+      line43_unused_contribution_room: 0,
+      line44_taxable_distributions: 0,
+      line47_current_year_excess: 600,
+      december_31_value: 1_000,
+    },
     excess_able: 200,
     able_value: 1_000,
   }, { filer });
@@ -144,9 +149,37 @@ Deno.test("Form 5329 excess-contribution lines use balance-capped tax", () => {
 
 Deno.test("Form 5329 will not invent a required account balance", () => {
   assertThrows(
-    () => form5329.build({ excess_hsa: 500 }, { filer }),
+    () =>
+      form5329.build({
+        hsa_part_vii: {
+          line42_prior_excess: 0,
+          line43_unused_contribution_room: 0,
+          line44_taxable_distributions: 0,
+          line47_current_year_excess: 500,
+        },
+      }, { filer }),
     Error,
-    "hsa_value",
+    "december_31_value",
+  );
+});
+
+Deno.test("Form 5329 MeF carries prior-year HSA excess after line 43 and line 44 reductions", () => {
+  const xml = form5329.build({
+    hsa_part_vii: {
+      line42_prior_excess: 2_000,
+      line43_unused_contribution_room: 500,
+      line44_taxable_distributions: 300,
+      line47_current_year_excess: 200,
+      december_31_value: 5_000,
+    },
+  }, { filer });
+  assertStringIncludes(
+    xml,
+    "<HSAExcessContriTotalAmt>1400</HSAExcessContriTotalAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<HSAExcessContribTaxAmt>84</HSAExcessContribTaxAmt>",
   );
 });
 
