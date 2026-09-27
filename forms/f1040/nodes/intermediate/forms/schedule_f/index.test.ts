@@ -58,6 +58,35 @@ Deno.test("schedule_f: net profit routes to schedule1 line6", () => {
   assertEquals(s1?.fields.line6_schedule_f, 40_000);
 });
 
+Deno.test("Schedule F reduces gross labor hired by linked Form 5884 line 2", () => {
+  const farm = minimalItem({
+    farm_id: "FARM-1",
+    line1_sales_livestock_resale: 50_000,
+    line22_labor_hired: 10_000,
+    line22_other_employment_credits: 500,
+  });
+  const result = compute({
+    schedule_fs: [farm],
+    wotc_wage_reductions: [{ farm_id: "FARM-1", credit_amount: 2_400 }],
+  });
+  assertEquals(
+    findOutput(result, "schedule1")?.fields.line6_schedule_f,
+    42_900,
+  );
+  assertThrows(() =>
+    compute({
+      schedule_fs: [farm],
+      wotc_wage_reductions: [{ farm_id: "OTHER", credit_amount: 2_400 }],
+    })
+  );
+  assertThrows(() =>
+    compute({
+      schedule_fs: [farm],
+      wotc_wage_reductions: [{ farm_id: "FARM-1", credit_amount: 10_000 }],
+    })
+  );
+});
+
 Deno.test("schedule_f: net profit >= $400 routes to schedule_se", () => {
   const result = compute({
     schedule_fs: [

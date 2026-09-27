@@ -6,8 +6,10 @@ import {
   computeTotalExpenses,
   conservationDeduction,
   inputSchema,
+  laborLessEmploymentCredits,
   reconcileFarmSources,
   type ScheduleFItem,
+  wotcReductionsByFarm,
 } from "../../../nodes/intermediate/forms/schedule_f/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import { inputSchema as form4835InputSchema } from "../../../nodes/inputs/f4835/index.ts";
@@ -29,13 +31,14 @@ function buildFarm(
   loanStatementId?: string,
   cropStatementId?: string,
   accrualLoanStatementId?: string,
+  wotcReduction = 0,
 ): string {
   const filer = context.filer;
   if (!filer) throw new Error(`Schedule F ${index + 1} needs filer identity`);
   const gross = computeGrossIncome(item);
-  const expenses = computeTotalExpenses(item, gross);
+  const expenses = computeTotalExpenses(item, gross, wotcReduction);
   const preliminaryNet = gross - expenses;
-  calculateScheduleFAtRiskNet(item);
+  calculateScheduleFAtRiskNet(item, wotcReduction);
   const otherExpenses = item.line32_other_expenses ?? [];
   const income = item.accounting_method === "accrual"
     ? elements("FarmIncomeCashMethodGrp", [element("GrossIncomeAmt", gross)])
@@ -170,7 +173,12 @@ function buildFarm(
     amount("InsuranceAmt", item.line20_insurance),
     amount("MortgageInterestPaidBanksAmt", item.line21a_interest_mortgage),
     amount("MortgageInterestPaidOtherAmt", item.line21b_interest_other),
-    amount("LaborHiredExpenseAmt", item.line22_labor_hired),
+    amount(
+      "LaborHiredExpenseAmt",
+      item.line22_labor_hired === undefined && wotcReduction === 0
+        ? undefined
+        : laborLessEmploymentCredits(item, wotcReduction),
+    ),
     amount("PensionProfitSharingPlansAmt", item.line23_pension_plans),
     amount("MachineryAndEquipmentRentAmt", item.line24a_rent_vehicles),
     amount("OtherBusinessPropertyRentAmt", item.line24b_rent_land),
@@ -241,6 +249,7 @@ export const scheduleF: MefFormDescriptor<
       schedule_fs: fields?.schedule_fs ?? [],
     });
     reconcileFarmSources(input);
+    const reductions = wotcReductionsByFarm(input);
     const rentalSource = context.pending?.f4835;
     const rentalItems = rentalSource === undefined
       ? []
@@ -303,6 +312,7 @@ export const scheduleF: MefFormDescriptor<
         (item.part_iii?.line40a_ccc_loans_election ?? 0) > 0
           ? accrualLoanIds[accrualLoanIndex++]
           : undefined,
+        reductions.get(item.farm_id ?? "") ?? 0,
       )
     );
   },

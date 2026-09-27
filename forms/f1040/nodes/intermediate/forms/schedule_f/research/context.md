@@ -50,7 +50,7 @@
 | line20_insurance | number? | user | Insurance (other than health) | Sch F Part II line 20 | https://www.irs.gov/pub/irs-pdf/i1040sf.pdf |
 | line21a_interest_mortgage | number? | user | Mortgage interest | Sch F Part II line 21a | https://www.irs.gov/pub/irs-pdf/i1040sf.pdf |
 | line21b_interest_other | number? | user | Other interest | Sch F Part II line 21b | https://www.irs.gov/pub/irs-pdf/i1040sf.pdf |
-| line22_labor_hired | number? | user | Labor hired | Sch F Part II line 22 | https://www.irs.gov/pub/irs-pdf/i1040sf.pdf |
+| line22_labor_hired | number? | user | Gross labor hired before employment credits; the calculator subtracts farm-linked Form 5884 line 2 and separately entered other employment credits for the filed line 22 amount | Sch F Part II line 22 | https://www.irs.gov/pub/irs-pdf/i1040sf.pdf |
 | line23_pension_plans | number? | user | Pension and profit-sharing plans | Sch F Part II line 23 | https://www.irs.gov/pub/irs-pdf/i1040sf.pdf |
 | line24a_rent_vehicles | number? | user | Rent/lease vehicles, machinery | Sch F Part II line 24a | https://www.irs.gov/pub/irs-pdf/i1040sf.pdf |
 | line24b_rent_land | number? | user | Rent/lease other property (land, pasture) | Sch F Part II line 24b | https://www.irs.gov/pub/irs-pdf/i1040sf.pdf |

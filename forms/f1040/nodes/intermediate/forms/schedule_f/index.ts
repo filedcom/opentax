@@ -146,7 +146,9 @@ export const itemSchema = z.object({
   line20_insurance: z.number().nonnegative().optional(),
   line21a_interest_mortgage: z.number().nonnegative().optional(),
   line21b_interest_other: z.number().nonnegative().optional(),
+  // Gross labor before work-opportunity and other employment-credit reductions.
   line22_labor_hired: z.number().nonnegative().optional(),
+  line22_other_employment_credits: z.number().nonnegative().optional(),
   line23_pension_plans: z.number().nonnegative().optional(),
   line24a_rent_vehicles: z.number().nonnegative().optional(),
   line24b_rent_land: z.number().nonnegative().optional(),
@@ -217,9 +219,56 @@ export const inputSchema = z.object({
   schedule_fs: z.array(itemSchema),
   filing_status: filingStatusSchema.optional(),
   farm_sources: z.array(farmSourceSchema).optional(),
+  wotc_wage_reductions: z.array(
+    z.object({
+      farm_id: z.string().min(1),
+      credit_amount: z.number().nonnegative(),
+    }).strict(),
+  ).optional(),
 }).strict();
 
 export type ScheduleFItem = z.infer<typeof itemSchema>;
+
+export function laborLessEmploymentCredits(
+  item: ScheduleFItem,
+  wotcReduction = 0,
+): number {
+  const gross = item.line22_labor_hired ?? 0;
+  const credits = (item.line22_other_employment_credits ?? 0) + wotcReduction;
+  if (credits < 0 || credits > gross) {
+    throw new Error("Schedule F employment credits exceed gross labor hired");
+  }
+  return gross - credits;
+}
+
+export function wotcReductionsByFarm(
+  input: Pick<
+    z.infer<typeof inputSchema>,
+    "schedule_fs" | "wotc_wage_reductions"
+  >,
+): Map<string, number> {
+  const farms = new Map<string, ScheduleFItem>();
+  for (const item of input.schedule_fs) {
+    if (!item.farm_id) continue;
+    if (farms.has(item.farm_id)) {
+      throw new Error("Schedule F farm ID is duplicated");
+    }
+    farms.set(item.farm_id, item);
+  }
+  const reductions = new Map<string, number>();
+  for (const entry of input.wotc_wage_reductions ?? []) {
+    const farm = farms.get(entry.farm_id);
+    if (!farm) {
+      throw new Error("Form 5884 references an unknown Schedule F farm");
+    }
+    reductions.set(
+      entry.farm_id,
+      (reductions.get(entry.farm_id) ?? 0) + entry.credit_amount,
+    );
+    laborLessEmploymentCredits(farm, reductions.get(entry.farm_id));
+  }
+  return reductions;
+}
 
 export function reconcileFarmSources(
   input: z.infer<typeof inputSchema>,
@@ -463,6 +512,7 @@ export function conservationDeduction(
 export function computeTotalExpenses(
   item: ScheduleFItem,
   grossIncome: number,
+  wotcReduction = 0,
 ): number {
   return (item.line10_car_truck ?? 0) +
     (item.line11_chemicals ?? 0) +
@@ -477,7 +527,7 @@ export function computeTotalExpenses(
     (item.line20_insurance ?? 0) +
     (item.line21a_interest_mortgage ?? 0) +
     (item.line21b_interest_other ?? 0) +
-    (item.line22_labor_hired ?? 0) +
+    laborLessEmploymentCredits(item, wotcReduction) +
     (item.line23_pension_plans ?? 0) +
     (item.line24a_rent_vehicles ?? 0) +
     (item.line24b_rent_land ?? 0) +
@@ -495,14 +545,17 @@ export function computeTotalExpenses(
 }
 
 // Line 34: Net profit (or loss)
-function computeNetProfit(item: ScheduleFItem): number {
+function computeNetProfit(item: ScheduleFItem, wotcReduction = 0): number {
   const grossIncome = computeGrossIncome(item);
-  const totalExpenses = computeTotalExpenses(item, grossIncome);
+  const totalExpenses = computeTotalExpenses(item, grossIncome, wotcReduction);
   return grossIncome - totalExpenses;
 }
 
-export function calculateScheduleFAtRiskNet(item: ScheduleFItem): AtRiskNet {
-  const preliminaryNet = computeNetProfit(item);
+export function calculateScheduleFAtRiskNet(
+  item: ScheduleFItem,
+  wotcReduction = 0,
+): AtRiskNet {
+  const preliminaryNet = computeNetProfit(item, wotcReduction);
   if (item.at_risk_simplified && item.line36_at_risk !== "b") {
     throw new Error("Schedule F Form 6198 facts require line 36b");
   }
@@ -575,7 +628,13 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
       return { outputs: [] };
     }
 
-    const atRisk = input.schedule_fs.map(calculateScheduleFAtRiskNet);
+    const reductions = wotcReductionsByFarm(input);
+    const atRisk = input.schedule_fs.map((item) =>
+      calculateScheduleFAtRiskNet(
+        item,
+        reductions.get(item.farm_id ?? "") ?? 0,
+      )
+    );
     const netProfits = atRisk.map((result) => result.atRiskNet);
     const propertyNet = netProfits.reduce((sum, p) => sum + p, 0);
     const totalNetProfit = propertyNet;

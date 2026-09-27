@@ -71,6 +71,26 @@ Deno.test("Schedule F emits one cash-method document per sourced farm", () => {
   );
 });
 
+Deno.test("Schedule F MeF labor matches gross payroll less employment credits", () => {
+  const [xml] = scheduleF.build({
+    schedule_fs: [farm({
+      farm_id: "FARM-1",
+      line1_sales_livestock_resale: 50_000,
+      line22_labor_hired: 10_000,
+      line22_other_employment_credits: 500,
+    })],
+    wotc_wage_reductions: [{ farm_id: "FARM-1", credit_amount: 2_400 }],
+  }, { filer: testFiler() });
+  assertStringIncludes(
+    xml,
+    "<LaborHiredExpenseAmt>7100</LaborHiredExpenseAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<NetFarmProfitLossAmt>42900</NetFarmProfitLossAmt>",
+  );
+});
+
 Deno.test("Schedule F reports preliminary farm loss and links at-risk computation separately", () => {
   const [xml] = scheduleF.build({
     schedule_fs: [farm({
