@@ -31,7 +31,7 @@ w2,forms/f1040/nodes/inputs/w2/index.ts,inputs,0,yes,yes,no,n/a,P2,audit-require
 w2g,forms/f1040/nodes/inputs/w2g/index.ts,inputs,0,no,no,no,n/a,P2,audit-required,"final Jan 2026 form/instructions pinned; shared box 2/3/7 labels stale and winnings route to 8z, not 2026 Schedule 1 line 8b; see ATS-SCENARIO-06.md"
 f1099patr,forms/f1040/nodes/inputs/f1099patr/index.ts,inputs,0,no,no,no,n/a,P0,audit-required,continuous-use source pinned; shared box 6/8/9 labels are wrong and boxes 10-13 missing; rebuild cooperative QBI route; see QBI-COOPERATIVE-GRAPH.md
 f8283,forms/f1040/nodes/inputs/f8283/index.ts,inputs,0,no,yes,no,n/a,P2,audit-required,Dec 2025 continuous-use form/instructions pinned; ATS 2 source record and Schedule A deduction/attachment choice need 2026 routing; see ATS-SCENARIO-02.md
-f7217,forms/f1040/nodes/inputs/f7217/index.ts,inputs,0,no,yes,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"
+f7217,forms/f1040/nodes/inputs/f7217/index.ts,inputs,0,no,yes,no,n/a,P2,audit-required,"Current Dec 2024 form/instructions and Apr 2026 K-1 box 19 correction pinned; per-date distribution, property basis/gain route, 306 PDF widgets and current MeF remain; see FORM7217-GRAPH.md"
 f9465,forms/f1040/nodes/inputs/f9465/index.ts,inputs,0,no,no,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"
 f8888,forms/f1040/nodes/inputs/f8888/index.ts,inputs,0,no,no,no,n/a,P2,audit-required,"Nov 2026 form/instructions pinned; ATS 5 split depends on final refund, shared node metadata-only and savings-bond fields obsolete; add PDF/current MeF; see ATS-SCENARIO-05.md"
 schedule_r,forms/f1040/nodes/inputs/schedule_r/index.ts,inputs,2,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
@@ -55,8 +55,8 @@ f8908,forms/f1040/nodes/inputs/f8908/index.ts,inputs,2,no,no,no,n/a,P1,audit-req
 f8941,forms/f1040/nodes/inputs/f8941/index.ts,inputs,2,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 f8834,forms/f1040/nodes/inputs/f8834/index.ts,inputs,1,no,yes,yes,no,P1,audit-required,"Current Oct 2024 form embeds instructions and applies to 2024+; 2026 Schedule 3 line 6i persists; derive Form 8582-CR released legacy passive credit, finalized TMT/order, 11 PDF widgets/current MeF; see FORM8834-GRAPH.md"
 f8874,forms/f1040/nodes/inputs/f8874/index.ts,inputs,1,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
-f8911,forms/f1040/nodes/inputs/f8911/index.ts,inputs,1,no,yes,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
-f8826,forms/f1040/nodes/inputs/f8826/index.ts,inputs,1,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
+f8911,forms/f1040/nodes/inputs/f8911/index.ts,inputs,1,no,yes,no,n/a,P1,audit-required,"Current Dec 2025 form/Schedule A/instructions apply to 2025+; Jun 30 2026 service cutoff, per-item personal/business split, 15/35 PDF widgets and current MeF; see MEF-REMAINDER.md"
+f8826,forms/f1040/nodes/inputs/f8826/index.ts,inputs,1,no,no,no,n/a,P1,audit-required,"Current Sep 2017 form with embedded instructions pinned; route cost reduction, passive release and Form 3800 before Schedule 3, 18 PDF widgets/current MeF; see FORM8826-8835-STATEMENTS.md"
 f4136,forms/f1040/nodes/inputs/f4136/index.ts,inputs,1,no,yes,yes,yes,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 f3468,forms/f1040/nodes/inputs/f3468/index.ts,inputs,1,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 f4255,forms/f1040/nodes/inputs/f4255/index.ts,inputs,1,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
@@ -86,7 +86,7 @@ f8859,forms/f1040/nodes/inputs/f8859/index.ts,inputs,1,no,yes,yes,yes,P1,audit-r
 f8820,forms/f1040/nodes/inputs/f8820/index.ts,inputs,2,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 f8896,forms/f1040/nodes/inputs/f8896/index.ts,inputs,2,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 f8912,forms/f1040/nodes/inputs/f8912/index.ts,inputs,0,no,yes,yes,no,P2,audit-required,"Current Dec 2024 continuous-use form/instructions pinned; 2026 Schedule 3 line 6k persists; shared input blocks 2025-origin carryforward and pass-through CREB, 218 PDF widgets/current MeF remain; see FORM8912-GRAPH.md"
-f8978,forms/f1040/nodes/inputs/f8978/index.ts,inputs,1,yes,yes,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
+f8978,forms/f1040/nodes/inputs/f8978/index.ts,inputs,1,yes,yes,no,n/a,P1,audit-required,Current Jan 2023 form/Schedule A and Dec 2024 instructions pinned; affected-year recomputation and reporting-year positive/negative routes need 91/154 PDF widgets/current MeF; see MEF-REMAINDER.md
 f8615,forms/f1040/nodes/inputs/f8615/index.ts,inputs,0,no,yes,yes,yes,P2,audit-required,"verify 2026 law, node outputs, and graph route"
 f8611,forms/f1040/nodes/inputs/f8611/index.ts,inputs,1,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 f8082,forms/f1040/nodes/inputs/f8082/index.ts,inputs,1,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
@@ -95,7 +95,7 @@ f8288,forms/f1040/nodes/inputs/f8288/index.ts,inputs,1,no,no,no,n/a,P1,audit-req
 f8621,forms/f1040/nodes/inputs/f8621/index.ts,inputs,0,yes,yes,no,n/a,P2,audit-required,"Current Dec 2025 Form 8621/instructions pinned; 2026 Schedule 2 routes line 16f/24 interest to 19a/19b, while shared node uses old 17p; complete PFIC elections/Part VI, 151 PDF widgets and current MeF; see FORM8621-GRAPH.md"
 household_wages,forms/f1040/nodes/inputs/household_wages/index.ts,inputs,0,no,no,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"
 f8828,forms/f1040/nodes/inputs/f8828/index.ts,inputs,1,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
-f8835,forms/f1040/nodes/inputs/f8835/index.ts,inputs,3,no,yes,no,n/a,P0,audit-required,"verify 2026 law, node outputs, and graph route"
+f8835,forms/f1040/nodes/inputs/f8835/index.ts,inputs,3,no,yes,no,n/a,P0,audit-required,"2025 form/instructions pinned as comparator, 2026 section 45 notice identified; replace 2025 rate/calendar assumption and build facility PDF/MeF and Form 3800 route; see FORM8826-8835-STATEMENTS.md"
 f8844,forms/f1040/nodes/inputs/f8844/index.ts,inputs,1,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 f8864,forms/f1040/nodes/inputs/f8864/index.ts,inputs,1,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 f8833,forms/f1040/nodes/inputs/f8833/index.ts,inputs,0,no,no,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"

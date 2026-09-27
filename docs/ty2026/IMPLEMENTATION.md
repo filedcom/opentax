@@ -30,6 +30,9 @@ sunset.
 The [remaining MeF contract](MEF-REMAINDER.md) maps Forms 8911/8978 and
 Schedules A plus seven source-linked serializers into 2026 calculation,
 PDF and XML evidence.
+The [node boundary audit](NODE-BOUNDARY-AUDIT.md) assigns the remaining
+TY2025 input and worksheet nodes to route owners before bulk 2026 registry
+work, including Form 3800 bypasses and filing-only metadata.
 The [Form 8962 contract](FORM8962-GRAPH.md) identifies the 2026 line 27
 repayment and reserved lines 28/29, Form 1095-A and Schedule 2/3 graph
 handoff, full PDF field map, and the current-instruction/MeF gates.

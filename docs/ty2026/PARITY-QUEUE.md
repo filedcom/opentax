@@ -15,6 +15,8 @@ registered nodes to absent targets. The 2025 inventories are broader than
 these counts: one tax form can need multiple graph nodes, and some 2026 forms
 have no 2025 counterpart. Recompute these observations after implementation
 changes; they are a snapshot, not a completion score.
+The [boundary audit](NODE-BOUNDARY-AUDIT.md) maps the other 85 TY2025
+registry nodes to route owners; it does not certify those routes for 2026.
 
 ## Coding sequence
 

@@ -48,6 +48,10 @@ The [remaining MeF contract](../../../docs/ty2026/MEF-REMAINDER.md) names
 Forms 8911/8978 and Schedules A, including the June 30 refueling-property
 cutoff, and gives explicit source/document ownership for the foreign-tax,
 fuel, at-risk, vehicle-gift, PFIC, clean-vehicle and 8812 serializers.
+The [node boundary audit](../../../docs/ty2026/NODE-BOUNDARY-AUDIT.md)
+assigns the other 85 TY2025 registry inputs and worksheets to 2026 route
+owners. It calls out credit nodes that bypass Form 3800 and metadata nodes
+with no graph effect, so registry parity does not hide an absent filing path.
 The [Form 1116 contract](../../../docs/ty2026/FORM1116-GRAPH.md) maps
 foreign-tax categories, carryovers, redeterminations and the revised line
 18/20 bases from 1040, Schedule 1-A and Schedule 2; its full attachment

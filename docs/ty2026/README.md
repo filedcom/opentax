@@ -56,6 +56,9 @@ for the implementation contract.
 - [`MEF-REMAINDER.md`](MEF-REMAINDER.md) and four matching PDF field
   inventories: Forms 8911/8978, their Schedules A, and the remaining
   source-linked TY2025 MeF serializers.
+- [`NODE-BOUNDARY-AUDIT.md`](NODE-BOUNDARY-AUDIT.md): route owners and
+  implementation decisions for the 85 TY2025 registry nodes not named
+  individually in the specialist plans.
 - [`PARITY-QUEUE.md`](PARITY-QUEUE.md): dependency-ordered full 1040 coding
   queue across the 2025 graph/PDF/MeF inventories and 2026-only attachments.
 - [`INSTRUCTION-COVERAGE.md`](INSTRUCTION-COVERAGE.md) and
