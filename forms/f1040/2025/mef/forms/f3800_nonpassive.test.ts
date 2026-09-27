@@ -243,6 +243,47 @@ Deno.test("Form 3800 XML: Form 8820 line 1h reconciles with Part II", () => {
   );
 });
 
+Deno.test("Form 3800 XML: Form 8874 line 1i links native source and tax use", () => {
+  const xml = buildFiledNonpassive({
+    tax: { ...tax, standardCredit: 5_000, specifiedCredit: 0 },
+    form8874: {
+      credit: 5_000,
+      documentId: "IRS8874_1",
+      appliedCredit: 5_000,
+    },
+    facilities: [],
+    form8835DocumentIds: [],
+    appliedCreditsByFacility: [],
+    transferStatementIdsByFileName: {},
+  });
+  assertStringIncludes(
+    xml,
+    '<Form8874CYCreditsGrp referenceDocumentId="IRS8874_1"',
+  );
+  assertStringIncludes(xml, "<Frm8874CYAggrgtAmtGrp");
+  assertStringIncludes(
+    xml,
+    "<CurrentYearCreditAllowedAmt>5000</CurrentYearCreditAllowedAmt>",
+  );
+  assertThrows(
+    () =>
+      buildFiledNonpassive({
+        tax: { ...tax, standardCredit: 5_000, specifiedCredit: 0 },
+        form8874: {
+          credit: 5_000,
+          documentId: "IRS8874_1",
+          appliedCredit: 5_001,
+        },
+        facilities: [],
+        form8835DocumentIds: [],
+        appliedCreditsByFacility: [],
+        transferStatementIdsByFileName: {},
+      }),
+    Error,
+    "invalid Form 8874",
+  );
+});
+
 Deno.test("Form 3800 XML: Form 8820 pass-through-only line 1h needs no Form 8820 document", () => {
   const xml = buildFiledNonpassive({
     tax: { ...tax, standardCredit: 1_250, specifiedCredit: 0 },

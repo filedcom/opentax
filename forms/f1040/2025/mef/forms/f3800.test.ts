@@ -390,6 +390,54 @@ Deno.test("Form 3800 links Form 8820 orphan-drug credit to line 1h", () => {
   );
 });
 
+Deno.test("Form 3800 links an identified Form 8874 credit to line 1i", () => {
+  const source = {
+    investments: [{
+      cde_name: "Community Development Entity",
+      cde_ein: "123456789",
+      cde_address: {
+        line1: "10 Main Street",
+        city: "Wilmington",
+        state: "DE",
+        zip: "19801",
+      },
+      initial_investment_date: "2023-04-15",
+      credit_allowance_date: "2025-04-15",
+      qualified_equity_investment_amount: 100_000,
+      designation_notice_reference: "2023 QEI notice",
+      held_on_credit_allowance_date: true,
+      qualified_on_credit_allowance_date: true,
+      recapture_notice_received: false,
+      subject_to_passive_activity_limit: false,
+    }],
+  };
+  const businessTax = { ...tax, standardCredit: 5_000 };
+  const fields = {
+    f8874_credit: {
+      credit_amount: 5_000,
+      subject_to_passive_activity_limit: false as const,
+    },
+    tax_context: businessTax,
+    allowed_credit: 5_000,
+  };
+  const context = {
+    pending: { ...filedPending(businessTax, 5_000), f8874: source },
+    documentIdsByPendingKey: { f8874: ["IRS8874_1"] },
+  };
+  const xml = form3800.build(fields, context);
+  assertStringIncludes(xml, "<Form8874CYCreditsGrp");
+  assertStringIncludes(xml, 'referenceDocumentId="IRS8874_1"');
+  assertThrows(
+    () =>
+      form3800.build({
+        ...fields,
+        f8874_credit: { ...fields.f8874_credit, credit_amount: 4_999 },
+      }, context),
+    Error,
+    "differs from Form 8874",
+  );
+});
+
 Deno.test("Form 3800 accepts Form 8820 pass-through-only credit without IRS8820", () => {
   const source = {
     f8820s: [],

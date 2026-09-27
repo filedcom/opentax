@@ -86,6 +86,21 @@ Deno.test("Form 3800 source-use rows retain each nonpassive form and cent amount
     "cent precision",
   );
 });
+
+Deno.test("Form 3800 retains the Form 8874 line 1i source before tax allocation", () => {
+  assertEquals(
+    form3800NonpassiveCreditUseRows({
+      form8874Credit: 50_000,
+      facilities: [],
+    }),
+    [{
+      sourceKey: "nonpassive:8874",
+      form3800CreditLine: "1i",
+      originatingTaxYear: 2025,
+      availableAfterPassiveLimit: 50_000,
+    }],
+  );
+});
 import { sourceAllocationSchema } from "../../intermediate/forms/form8582cr/source.ts";
 
 Deno.test("Form 3800: classifies allowed passive credit into lines 3, 24, and 33", () => {

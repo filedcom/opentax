@@ -63,6 +63,7 @@ import { form8853 } from "./f8853.ts";
 import { form8859 } from "./f8859.ts";
 import { form8862 } from "./f8862.ts";
 import { form8863 } from "./f8863.ts";
+import { form8874 } from "./f8874.ts";
 import { form8880 } from "./f8880.ts";
 import { form8889 } from "./f8889.ts";
 import { form8911 } from "./f8911.ts";
@@ -214,6 +215,7 @@ export const ALL_MEF_FORMS = [
   form8862,
   // Form 8863
   form8863,
+  form8874,
   // Form 8880
   form8880,
   // Form 8889

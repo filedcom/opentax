@@ -22,6 +22,18 @@ TY2025 Form 1040 calculation and MeF export changes are saved on the pushed
 there. No PR, merge, deployment, IRS ATS transmission, or ATS acknowledgment is
 recorded for this work.
 
+The Form 8874 build pass replaces precomputed credit buckets with identified
+qualified equity investments and 2025 credit allowance dates. It computes the 5%
+or 6% current-year credit, rejects duplicated or ineligible date facts, and
+routes the nonpassive amount through Form 3800 rather than directly to Schedule
+3. A native IRS8874 document and Form 3800 Part III line 1i/Part V source row
+are written, with source reconciliation and local XSD cases, but all cases are
+unrun. The route currently covers only a taxpayer's own nonpassive QEI. Passive
+activity credits, K-1 pass-through credits, carryovers, recapture and sale
+events, leap-day allowance dates, cent-bearing QEI/credit reporting, filled PDF
+inspection, and IRS business-rule/ATS evidence remain open. It is not filing
+ready.
+
 The current build pass now routes nonpassive Schedule K-1 orphan-drug credits
 from partnerships (box 15 code Z), S corporations (box 13 code Z), and
 estates/trusts (box 13 code M) directly to source-backed Form 3800 Part III line
@@ -61,15 +73,14 @@ gross K-1 amount. A mixed K-1 graph, zero-share source case, and local XSD case
 are written but unrun. A self-earned passive Form 8826 source now supplies a
 gross source-reference marker that must match the public Form 8582-CR activity
 amount before the same cap; the MeF ledger checks it against Form 8826. Its
-mixed graph, source-document, and local XSD cases are written but unrun.
-Passive Form 8826 partnership and S-corporation line 7 sources now deposit
-their own gross-evidence marker, which must match the Form 8582-CR activity
-rows and the entered K-1. This avoids counting the same K-1 twice when both
-source documents are entered. The graph, provenance, and XSD cases are written
-but unrun. Until the full-batch and IRS business-rule checks pass, mixed-source
-filing is not supported. The IRS requires pro-rata allocation of the overall
-limited credit; the per-source rounding policy still needs business-rule
-review.
+mixed graph, source-document, and local XSD cases are written but unrun. Passive
+Form 8826 partnership and S-corporation line 7 sources now deposit their own
+gross-evidence marker, which must match the Form 8582-CR activity rows and the
+entered K-1. This avoids counting the same K-1 twice when both source documents
+are entered. The graph, provenance, and XSD cases are written but unrun. Until
+the full-batch and IRS business-rule checks pass, mixed-source filing is not
+supported. The IRS requires pro-rata allocation of the overall limited credit;
+the per-source rounding policy still needs business-rule review.
 
 The latest completed full test run is **6,596 passed, 0 failed, 48 ignored**
 (`deno task test`, 2026-09-26, before the later multi-policy line 10 and
@@ -120,33 +131,32 @@ line 13 aggregate in schema order. Form 5405 repayment is rejected for TY2025
 because the IRS ended that form after TY2024. The source and XSD cases are
 written but unrun. Form 8611 now has a per-building source model, printed-form
 line calculation including the per-year Form 8609-A line 2 worksheet, one
-`IRS8611` attachment per building, and Schedule 2 line 16
-document links. Bond-financing details and a recapture-exception decision are
-required source facts. Its written node, XML, and XSD cases are unrun; historic
-credit, qualified-basis, and interest amounts still require source-record
-verification. Other Schedule 2 routes still need audit. The section 965
-installment now goes to Schedule 2 line 20 and is excluded from line 21/Form
-1040 line 23, matching the printed 2025 line 21 sum. A new Form 965-A source
-model and MeF descriptor now carry cumulative Part I/II liability and payments,
-Part III S-corporation computations, and Part IV deferred balances, and
-reconcile current-year payments to Schedule 2 line 20. The old assumption that
-a 2017 inclusion normally has its eighth installment in 2025 was incorrect;
-the normal eighth year was 2024. Native MeF statements now describe netted
-Part I adjustments/transfers and allocate Part IV transfers among multiple
-transferees, with required source facts, reconciliation, and parent document
-links. The build pass now takes source-provided signed Form 965-C, 965-D, and
-965-E PDF copies for reported transfer or consent events, preserves their
-bytes in the MeF bundle, and links them from Form 965-A. Multiple partial
-Form 965-D transfers require one copy per transferee. The bundle case is
-written but unrun. It does not create, sign, mail, or authenticate an
-agreement. Consent-triggered Form 965-E installments now also require evidence
-of the separate section 965(h) election; the case is written but unrun.
-Part IV transfer-in rows now omit the beginning balance and retain the
-transferor's agreement link; those cases are also written but unrun.
+`IRS8611` attachment per building, and Schedule 2 line 16 document links.
+Bond-financing details and a recapture-exception decision are required source
+facts. Its written node, XML, and XSD cases are unrun; historic credit,
+qualified-basis, and interest amounts still require source-record verification.
+Other Schedule 2 routes still need audit. The section 965 installment now goes
+to Schedule 2 line 20 and is excluded from line 21/Form 1040 line 23, matching
+the printed 2025 line 21 sum. A new Form 965-A source model and MeF descriptor
+now carry cumulative Part I/II liability and payments, Part III S-corporation
+computations, and Part IV deferred balances, and reconcile current-year payments
+to Schedule 2 line 20. The old assumption that a 2017 inclusion normally has its
+eighth installment in 2025 was incorrect; the normal eighth year was 2024.
+Native MeF statements now describe netted Part I adjustments/transfers and
+allocate Part IV transfers among multiple transferees, with required source
+facts, reconciliation, and parent document links. The build pass now takes
+source-provided signed Form 965-C, 965-D, and 965-E PDF copies for reported
+transfer or consent events, preserves their bytes in the MeF bundle, and links
+them from Form 965-A. Multiple partial Form 965-D transfers require one copy per
+transferee. The bundle case is written but unrun. It does not create, sign,
+mail, or authenticate an agreement. Consent-triggered Form 965-E installments
+now also require evidence of the separate section 965(h) election; the case is
+written but unrun. Part IV transfer-in rows now omit the beginning balance and
+retain the transferor's agreement link; those cases are also written but unrun.
 The triggered-liability case now distinguishes Part I's triggering-event year
 from Part IV's original deferral-election year and validates an event date;
-those cases are unrun.
-Historical tax computations and IRS business rules remain open.
+those cases are unrun. Historical tax computations and IRS business rules remain
+open.
 
 The current untested Form 8936 commercial-vehicle pass replaces the new/used
 boolean with one three-way credit type and adds Schedule A Part V basis, Section
@@ -241,15 +251,14 @@ build pass also reconciles its Part II tax context against filed Form 1040,
 Schedule 3, and Form 6251 amounts; its mismatch cases are written but unrun. It
 has not passed the deferred full test batch, local XSD, or business-rule
 validation and does not cover every passive credit category, other
-business-credit sources, or carryovers. The current build pass also has an
-unrun pure bridge from finalized Form 1040, Schedules 2 and 3, and Form 6251
-lines into the nonpassive Form 3800
-limit. It subtracts the specific Form 3800 line 7 and 10b exclusions instead of
-letting the general business credit count against itself. The bridge is now
-wired to graph finalization for Form 8826 and Form 8835 and requires Form 6251
-even with zero AMT when a standard GBC is claimed, but remains untested. Other
-GBC producers still send gross source credits straight to Schedule 3 line 6a and
-require a common limitation pass. The
+business-credit sources, or carryovers. The current build pass also has an unrun
+pure bridge from finalized Form 1040, Schedules 2 and 3, and Form 6251 lines
+into the nonpassive Form 3800 limit. It subtracts the specific Form 3800 line 7
+and 10b exclusions instead of letting the general business credit count against
+itself. The bridge is now wired to graph finalization for Form 8826 and Form
+8835 and requires Form 6251 even with zero AMT when a standard GBC is claimed,
+but remains untested. Other GBC producers still send gross source credits
+straight to Schedule 3 line 6a and require a common limitation pass. The
 [Form 8826](https://www.irs.gov/pub/irs-pdf/f8826.pdf) self-earned source now
 requires both preceding-year receipts and full-time employee headcount instead
 of treating missing facts as eligibility; its cases are written but unrun. Its
@@ -263,29 +272,27 @@ reconciliation cases written but unrun. It is registered for self-earned claims,
 requires a Form 3800 document in the linked bundle, and omits the recipient's
 own form for pass-through-only claims. Form 8826 now requires a passive-activity
 answer and a source reference for a passive self-earned credit, and requires a
-matching Form 8582-CR activity input rather than routing it as nonpassive.
-Those cases are written but unrun. The build pass now accepts identified
-partnership and S-corporation line 7 sources, caps their combined line 8 with
-self-earned credit at $5,000, and lets pass-through-only credit reach Form 3800
-without requiring the recipient's
-own eligibility facts or an `IRS8826` document. Passive K-1 credits require
-matching Form 8582-CR activity and tax facts. Each pass-through source now
-requires a document reference; the filed path matches current-year partnership
-and S-corporation code K K-1 facts to its EIN, reference, gross credit, and
-passive flag, and requires Form 3800
-even when the recipient has no Form 8826 document. These source, missing-link,
-and XML cases are written but unrun. The filed Form 3800 path also rejects
-passive Form 8826 source facts mislabeled as nonpassive. The combined cap now
-allocates credit pro rata in cents to each identified source before the Form
-3800 handoff. The registered Form 3800 nonpassive XML path now includes Form
-8826's distinct Part III line 1e group and Part V rows for multiple Form 8826
-sources. Part V retains the K-1 EIN, capped source credit, explicit
-applied-credit split, and remaining amount. Its Part III applied credit
-reconciles with Form 8835's line 1f and 4e groups and the shared Part II limit.
-The combined passive and nonpassive line 1e now shares the $5,000 upstream cap;
-the filed builder still rejects a total above that limit. Those cases are
-written but unrun. Estate/trust K-1 code ZZ disabled-access amounts now enter
-the Form 3800 source graph when marked
+matching Form 8582-CR activity input rather than routing it as nonpassive. Those
+cases are written but unrun. The build pass now accepts identified partnership
+and S-corporation line 7 sources, caps their combined line 8 with self-earned
+credit at $5,000, and lets pass-through-only credit reach Form 3800 without
+requiring the recipient's own eligibility facts or an `IRS8826` document.
+Passive K-1 credits require matching Form 8582-CR activity and tax facts. Each
+pass-through source now requires a document reference; the filed path matches
+current-year partnership and S-corporation code K K-1 facts to its EIN,
+reference, gross credit, and passive flag, and requires Form 3800 even when the
+recipient has no Form 8826 document. These source, missing-link, and XML cases
+are written but unrun. The filed Form 3800 path also rejects passive Form 8826
+source facts mislabeled as nonpassive. The combined cap now allocates credit pro
+rata in cents to each identified source before the Form 3800 handoff. The
+registered Form 3800 nonpassive XML path now includes Form 8826's distinct Part
+III line 1e group and Part V rows for multiple Form 8826 sources. Part V retains
+the K-1 EIN, capped source credit, explicit applied-credit split, and remaining
+amount. Its Part III applied credit reconciles with Form 8835's line 1f and 4e
+groups and the shared Part II limit. The combined passive and nonpassive line 1e
+now shares the $5,000 upstream cap; the filed builder still rejects a total
+above that limit. Those cases are written but unrun. Estate/trust K-1 code ZZ
+disabled-access amounts now enter the Form 3800 source graph when marked
 nonpassive, retaining separate K-1 and statement references. The input and graph
 cases are written but unrun. The filed Form 3800 XML path now reconciles direct
 estate/trust code ZZ source amounts against the entered K-1 and named statement,
@@ -303,12 +310,11 @@ line 1e path now apportions the cap before either activity or tax limitation,
 but its whole-dollar passive versus cent-precision nonpassive rounding remains
 unverified. Input-to-input K-1 matching does not authenticate the K-1 or
 statement. The Part V draft now apportions whole-dollar source and applied
-amounts so the printed
-rows add back to the rounded Part III and Part II totals; its rounding case is
-written but unrun. Solo, combined, and negative cases are written but unrun.
-Estate/trust K-1 and statement values are reconciled as entered, but document
-authenticity, broader filed source attribution, and carryforward identity
-remain open. Its source graph now calculates the
+amounts so the printed rows add back to the rounded Part III and Part II totals;
+its rounding case is written but unrun. Solo, combined, and negative cases are
+written but unrun. Estate/trust K-1 and statement values are reconciled as
+entered, but document authenticity, broader filed source attribution, and
+carryforward identity remain open. Its source graph now calculates the
 nonpassive limit, and the XML document bundle is linked but unverified. Schedule
 3 line 6a now requires and references the Form 3800 document in the linked MeF
 bundle. The

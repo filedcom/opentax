@@ -23,6 +23,10 @@ import {
   inputSchema as f8820InputSchema,
 } from "../../../nodes/inputs/f8820/index.ts";
 import {
+  calculateForm8874,
+  inputSchema as f8874InputSchema,
+} from "../../../nodes/inputs/f8874/index.ts";
+import {
   calculateForm8835,
   inputSchema as f8835InputSchema,
 } from "../../../nodes/inputs/f8835/index.ts";
@@ -335,6 +339,28 @@ function sourceForm8820(
     );
   }
   return { source, lines };
+}
+
+function sourceForm8874(
+  fields: z.infer<typeof f3800InputSchema>,
+  context: MefBuildContext,
+) {
+  if (!fields.f8874_credit) return undefined;
+  const raw = context.pending?.f8874;
+  if (!raw) {
+    throw new Error(
+      "Form 3800 new-markets credit needs Form 8874 source facts",
+    );
+  }
+  const source = f8874InputSchema.parse(raw);
+  const lines = calculateForm8874(source);
+  if (
+    !sameMoney(fields.f8874_credit.credit_amount, lines.line3) ||
+    fields.f8874_credit.subject_to_passive_activity_limit !== false
+  ) {
+    throw new Error("Form 3800 new-markets credit differs from Form 8874");
+  }
+  return { source, lines, credit: lines.line3 };
 }
 
 function sourceOrphanDrugK1Credits(
@@ -702,6 +728,7 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
     const hasSourceCredit = fields.allowed_credit !== undefined ||
       fields.f8826_credit_entries?.some((entry) => entry.credit_amount > 0) ||
       (fields.f8820_credit?.credit_amount ?? 0) > 0 ||
+      (fields.f8874_credit?.credit_amount ?? 0) > 0 ||
       fields.f8820_k1_credit_entries?.some((entry) =>
         entry.credit_amount > 0
       ) ||
@@ -746,6 +773,7 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
     }
     const form8826 = sourceForm8826(parsed, context);
     const form8820 = sourceForm8820(parsed, context);
+    const form8874 = sourceForm8874(parsed, context);
     const orphanDrugK1Credits = sourceOrphanDrugK1Credits(
       parsed,
       context,
@@ -787,6 +815,7 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
     const nonpassiveSources = form3800NonpassiveCreditUseRows({
       form8826Credit,
       form8820Credit,
+      form8874Credit: form8874?.credit,
       form5884Credit: form5884?.credit,
       form8936NewVehicleCredit: form8936?.credit,
       form8936CommercialVehicleCredit: form8936Commercial?.credit,
@@ -845,6 +874,7 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
       "nonpassive:8820",
       parsed.form8820_applied_credit,
     );
+    const form8874Applied = applied("nonpassive:8874");
     if (
       form8820Credit === 0 &&
       parsed.form8820_applied_credits_by_source !== undefined
@@ -873,6 +903,10 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
       throw new Error(
         "Form 3800 Form 8820 document count differs from the filed source",
       );
+    }
+    const form8874Ids = context.documentIdsByPendingKey.f8874 ?? [];
+    if (form8874Ids.length !== (form8874 ? 1 : 0)) {
+      throw new Error("Form 3800 Form 8874 document count differs from source");
     }
     const form8835Ids = context.documentIdsByPendingKey.f8835 ?? [];
     if (form8835Ids.length !== facilities.length) {
@@ -950,6 +984,13 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
               form8820Applied,
               parsed.form8820_applied_credits_by_source,
             ),
+          }
+          : undefined,
+        form8874: form8874
+          ? {
+            credit: form8874.credit,
+            documentId: form8874Ids[0],
+            appliedCredit: form8874Applied,
           }
           : undefined,
         form8936: form8936
