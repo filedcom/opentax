@@ -53,6 +53,17 @@ export const investmentSchema = z.object({
         "Form 8874 needs a 2025 initial or anniversary allowance date within the seven-year credit period",
     });
   }
+  const rate = year <= 3 ? 5 : 6;
+  const creditCents = Math.round(
+    investment.qualified_equity_investment_amount * rate,
+  );
+  if (creditCents <= 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["qualified_equity_investment_amount"],
+      message: "Form 8874 investment needs a positive current-year credit",
+    });
+  }
   if (investment.subject_to_passive_activity_limit) {
     for (
       const key of [
@@ -68,11 +79,7 @@ export const investmentSchema = z.object({
         });
       }
     }
-    const rate = year <= 3 ? 5 : 6;
-    const creditCents = Math.round(
-      investment.qualified_equity_investment_amount * rate,
-    );
-    if (creditCents <= 0 || creditCents % 100 !== 0) {
+    if (creditCents % 100 !== 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["qualified_equity_investment_amount"],

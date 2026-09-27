@@ -68,6 +68,7 @@ Deno.test("Form 8874 requires allowance-date and qualification evidence", () => 
       { ...investment, held_on_credit_allowance_date: false },
       { ...investment, recapture_notice_received: true },
       { ...investment, subject_to_passive_activity_limit: true },
+      { ...investment, qualified_equity_investment_amount: 0.01 },
     ]
   ) {
     assertEquals(
