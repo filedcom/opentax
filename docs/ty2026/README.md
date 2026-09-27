@@ -94,9 +94,12 @@ for the implementation contract.
 - [`ATS-SCENARIO-06.md`](ATS-SCENARIO-06.md): page-level W-2, W-2G, partnership,
   dependent, and overtime facts with the Schedule 1/1040 income bridge and
   unresolved source gates.
+- [`ATS-SCENARIO-05.md`](ATS-SCENARIO-05.md) and `pdf-fields-f8888.csv`:
+  refund allocation after settlement, account validation,
+  1040/Form 8888 indicator, and the draft-versus-ATS revision difference.
 
 - [`corpus/manifest.json`](corpus/manifest.json): URL, SHA-256, byte length,
-  and retrieval date for **60 TY2026 IRS draft forms**, **25 verified 2026
+  and retrieval date for **61 TY2026 IRS draft forms**, **26 verified 2026
   draft instruction PDFs**, **six draft form URLs that
   still serve an older year**, **13 IRS ATS PDFs**, **two MeF
   inventory spreadsheets**, final IRS authorities (Rev. Procs.

@@ -36,6 +36,11 @@ The [Schedule C contract](SCHEDULEC-GRAPH.md) maps all 109 draft PDF widgets,
 the 2026 line 16b/16c and vehicle-mileage labels, source ownership, and the
 unused statutory-W-2 output in the shared node. It sets the PDF/MeF/ATS 2
 acceptance order.
+The [ATS scenario 5 contract](ATS-SCENARIO-05.md) specifies Form 8888's
+refund-dependent checking remainder, savings allocation, 20-widget PDF map,
+and current MeF rules. Its packet embeds a December form while the public
+draft/instructions are November revisions; the form's attachment indicator
+is blank in the packet and must be reconciled for a completed return.
 The [Schedule F contract](SCHEDULEF-GRAPH.md) isolates the 2026 line 21b
 vehicle-interest change from the shared TY2025 21b other-interest input and
 maps the farm calculation, PDF, MeF, and ATS scenario 3 gates.

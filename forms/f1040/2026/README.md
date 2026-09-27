@@ -31,6 +31,10 @@ Form 8283. It also exercises 2026 pre-July mileage and the EIC opt-out.
 The [Schedule C implementation contract](../../../docs/ty2026/SCHEDULEC-GRAPH.md)
 pins the 109-widget draft PDF map and describes the new 16b/16c interest
 split, 44a–44c vehicle labels, and per-activity statutory income ownership.
+The [ATS scenario 5 plan](../../../docs/ty2026/ATS-SCENARIO-05.md) adds a
+Form 8888 split-refund route after 2026 settlement. The shared input is
+metadata-only and still includes obsolete savings-bond fields; no 2026
+Form 8888 PDF or MeF serializer is registered yet.
 The [Schedule F contract](../../../docs/ty2026/SCHEDULEF-GRAPH.md) maps the
 cash/accrual farm route and its attached forms. Its shared TY2025 input names
 other interest as line 21b; the 2026 form uses that line for vehicle-loan

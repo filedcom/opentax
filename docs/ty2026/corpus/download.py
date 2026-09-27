@@ -23,7 +23,7 @@ FORM_SLUGS = [
     "f1040sa", "f1040sb", "f1040sc", "f1040sd", "f1040se",
     "f1040sei", "f1040sse", "f1040sh", "f1040sf", "f1040s8",
     "f2441", "f4562", "f4562b", "f6251", "f8839", "f8889", "f8962", "f8995",
-    "f8995a", "f8995aa", "f1062",
+    "f8995a", "f8995aa", "f1062", "f8888",
     # Remaining IRS slugs represented by the TY2025 PDF descriptors.
     "f1116", "f2555", "f4136", "f4136sa", "f4137", "f461", "f4684",
     "f4797", "f4835", "f4952", "f4972", "f5329", "f5695", "f6198", "f6252",
@@ -79,7 +79,7 @@ for slug in (
     "i1040sse", "i1040sr", "i2106", "i2441", "i2555", "i4835",
     "i5329", "i5695", "i7206", "i8606", "i8615", "i8814",
     "i8815", "i8829", "i8853", "i8863", "i8889", "i8936",
-    "i8959", "i8995",
+    "i8959", "i8995", "i8888",
 ):
     sources.append(("draft/" + slug + ".pdf", IRS + "/pub/irs-dft/" + slug + "--dft.pdf", "draft-instructions"))
 

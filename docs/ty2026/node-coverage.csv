@@ -33,7 +33,7 @@ f1099patr,forms/f1040/nodes/inputs/f1099patr/index.ts,inputs,0,no,no,no,n/a,P0,a
 f8283,forms/f1040/nodes/inputs/f8283/index.ts,inputs,0,no,yes,no,n/a,P2,audit-required,Dec 2025 continuous-use form/instructions pinned; ATS 2 source record and Schedule A deduction/attachment choice need 2026 routing; see ATS-SCENARIO-02.md
 f7217,forms/f1040/nodes/inputs/f7217/index.ts,inputs,0,no,yes,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"
 f9465,forms/f1040/nodes/inputs/f9465/index.ts,inputs,0,no,no,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"
-f8888,forms/f1040/nodes/inputs/f8888/index.ts,inputs,0,no,no,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"
+f8888,forms/f1040/nodes/inputs/f8888/index.ts,inputs,0,no,no,no,n/a,P2,audit-required,"Nov 2026 form/instructions pinned; ATS 5 split depends on final refund, shared node metadata-only and savings-bond fields obsolete; add PDF/current MeF; see ATS-SCENARIO-05.md"
 schedule_r,forms/f1040/nodes/inputs/schedule_r/index.ts,inputs,2,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 f2210,forms/f1040/nodes/inputs/f2210/index.ts,inputs,0,no,no,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"
 f3903,forms/f1040/nodes/inputs/f3903/index.ts,inputs,1,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"

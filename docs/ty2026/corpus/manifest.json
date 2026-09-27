@@ -1256,6 +1256,26 @@
       "bytes": 1364431,
       "sha256": "3486cf0ad83401494aa57c688ffb411346ef399bd8202317c1eb3e6d41575c2e",
       "retrieved_utc": "2026-09-27T12:31:50.702043+00:00"
+    },
+    {
+      "path": "draft/f8888.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f8888--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 186167,
+      "sha256": "035ddccf75b0cef5cc065bca6beded3babd4395fd3df5f3dcc8b90e08f81e437",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-09-27T12:39:39.046665+00:00"
+    },
+    {
+      "path": "draft/i8888.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/i8888--dft.pdf",
+      "kind": "draft-instructions",
+      "status": "downloaded",
+      "bytes": 216208,
+      "sha256": "2dba8a99cd4d9498dd2d1d7d28050033ace5e338c05b6ce79dd17ab383bac735",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-09-27T12:39:39.047199+00:00"
     }
   ]
 }

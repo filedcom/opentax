@@ -1,4 +1,5 @@
 form_slug,instruction_slug,snapshot_status,irs_draft_url,next_action
+f8888,i8888,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i8888--dft.pdf,Review current instruction revision and reconcile ATS scenario 5 before filing.
 f1040,i1040gi,URL serves 2025,https://www.irs.gov/pub/irs-dft/i1040gi--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
 f1040s1,i1040s1,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i1040s1--dft.pdf,Recheck IRS draft directory or another instruction slug.
 f1040s1a,i1040s1a,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i1040s1a--dft.pdf,Recheck IRS draft directory or another instruction slug.
