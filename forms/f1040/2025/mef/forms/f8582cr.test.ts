@@ -54,6 +54,7 @@ Deno.test("Form 8582-CR rejects passive K-1 evidence without activity facts", ()
   for (
     const field of [
       "required_orphan_drug_k1_credits",
+      "required_new_markets_k1_credits",
       "required_disabled_access_k1_credits",
     ]
   ) {
@@ -198,6 +199,67 @@ Deno.test("Form 8582-CR passive orphan-drug credit matches the current K-1", () 
       }),
     Error,
     "does not reconcile to K-1 box 15 code Z",
+  );
+});
+
+Deno.test("Form 8582-CR passive New Markets Credit matches the K-1 code ZZ statement", () => {
+  const source = {
+    ...otherCredit,
+    source_form: "Form 8874",
+    form3800_credit_line: "1i" as const,
+    source_origin: {
+      kind: PassiveCreditSourceOrigin.Trust,
+      entity_reference: "Community trust",
+      ein: "123456789",
+    },
+    source_document_reference: "2025 trust K-1",
+    source_statement_reference: "New Markets statement",
+  };
+  const input = {
+    credit_sources: [source],
+    regular_tax_all_income: 10_000,
+    regular_tax_without_passive: 9_000,
+  };
+  const allocation = calculateForm8582CR(inputSchema.parse(input))
+    .sourceAllocations[0];
+  const context = {
+    documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
+    pending: {
+      f3800: { passive_source_allocations: [allocation] },
+      k1_trust: {
+        k1_trusts: [{
+          estate_trust_name: "Community trust",
+          entity_type: "trust" as const,
+          estate_trust_ein: "123456789",
+          source_document_reference: "2025 trust K-1",
+          box13_code_zz_new_markets_statement_reference:
+            "New Markets statement",
+          box13_code_zz_new_markets_credit: 1_500,
+          new_markets_credit_subject_to_passive_activity_limit: true,
+        }],
+      },
+    },
+  };
+  assertStringIncludes(
+    form8582cr.build(input, context),
+    "<AllowedCreditsAmt>1000</AllowedCreditsAmt>",
+  );
+  assertThrows(
+    () =>
+      form8582cr.build(input, {
+        ...context,
+        pending: {
+          ...context.pending,
+          k1_trust: {
+            k1_trusts: [{
+              ...context.pending.k1_trust.k1_trusts[0],
+              box13_code_zz_new_markets_statement_reference: "Other statement",
+            }],
+          },
+        },
+      }),
+    Error,
+    "does not reconcile to trust K-1 code ZZ statement",
   );
 });
 

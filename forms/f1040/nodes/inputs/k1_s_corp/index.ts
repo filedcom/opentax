@@ -577,9 +577,14 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
           );
         }
         if (item.new_markets_credit_subject_to_passive_activity_limit) {
-          throw new Error(
-            "Passive New Markets Credit needs Form 8582-CR activity facts",
-          );
+          return [output(form8582cr, {
+            required_new_markets_k1_credits: [{
+              source_type: "s_corporation",
+              source_ein: item.corporation_ein,
+              source_document_reference: item.source_document_reference,
+              credit_amount: credit,
+            }],
+          })];
         }
         return [output(f3800, {
           f8874_k1_credit_entries: [{

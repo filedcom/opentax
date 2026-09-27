@@ -36,9 +36,13 @@ when a partial tax limit cuts across multiple same-line sources. Those cases are
 written but unrun. Estate/trust box 13 code ZZ New Markets Credit now also
 requires an identifying statement and reaches the same source-backed line 1i
 without an invented IRS8874. Its reconciliation cases are written but unrun.
-Passive activity credits, carryovers, recapture and sale events, leap-day
-allowance dates, cent-bearing QEI/credit reporting, filled PDF inspection, and
-IRS business-rule/ATS evidence remain open. It is not filing ready.
+Passive K-1 code AD/ZZ amounts now deposit a required Form 8582-CR marker; the
+activity source must match the K-1 credit and the MeF builder reconciles it
+again before Form 3800 receives the passive allocation. These cases are written
+but unrun. Self-earned passive QEI credits, carryovers, recapture and sale
+events, leap-day allowance dates, cent-bearing QEI/credit reporting, filled PDF
+inspection, and IRS business-rule/ATS evidence remain open. It is not filing
+ready.
 
 The current build pass now routes nonpassive Schedule K-1 orphan-drug credits
 from partnerships (box 15 code Z), S corporations (box 13 code Z), and

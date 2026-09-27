@@ -52,6 +52,7 @@ import { readDisabledAccessCapLedger } from "./f8826_cap_ledger.ts";
 import { inputSchema as trustK1InputSchema } from "../../../nodes/inputs/k1_trust/index.ts";
 import { inputSchema as partnershipK1InputSchema } from "../../../nodes/inputs/k1_partnership/index.ts";
 import { inputSchema as sCorpK1InputSchema } from "../../../nodes/inputs/k1_s_corp/index.ts";
+import { reconcileNewMarketsK1Credits } from "./f8874_credit_evidence.ts";
 
 const amount = z.number().finite().nonnegative();
 const taxBase = z.object({
@@ -361,74 +362,6 @@ function sourceForm8874(
     throw new Error("Form 3800 new-markets credit differs from Form 8874");
   }
   return { source, lines, credit: lines.line3 };
-}
-
-function sourceNewMarketsK1Credits(
-  fields: z.infer<typeof f3800InputSchema>,
-  context: MefBuildContext,
-) {
-  const entries = fields.f8874_k1_credit_entries ?? [];
-  if (entries.length === 0) return [];
-  const partnerships =
-    entries.some((entry) => entry.source_type === "partnership")
-      ? partnershipK1InputSchema.parse(context.pending?.k1_partnership)
-        .k1_partnerships
-      : [];
-  const corporations =
-    entries.some((entry) => entry.source_type === "s_corporation")
-      ? sCorpK1InputSchema.parse(context.pending?.k1_s_corp).k1_s_corps
-      : [];
-  const estatesAndTrusts =
-    entries.some((entry) =>
-        entry.source_type === "estate" || entry.source_type === "trust"
-      )
-      ? trustK1InputSchema.parse(context.pending?.k1_trust).k1_trusts
-      : [];
-  const seen = new Set<string>();
-  for (const entry of entries) {
-    const key =
-      `${entry.source_type}:${entry.source_ein}:${entry.source_document_reference}:${
-        entry.source_statement_reference ?? ""
-      }`;
-    if (seen.has(key)) {
-      throw new Error("Form 3800 New Markets Credit K-1 source is duplicated");
-    }
-    seen.add(key);
-    const matches = entry.source_type === "partnership"
-      ? partnerships.filter((k1) =>
-        k1.partnership_ein === entry.source_ein &&
-        k1.source_document_reference === entry.source_document_reference &&
-        k1.box15_code_ad_new_markets_credit === entry.credit_amount &&
-        k1.new_markets_credit_subject_to_passive_activity_limit === false
-      )
-      : entry.source_type === "s_corporation"
-      ? corporations.filter((k1) =>
-        k1.corporation_ein === entry.source_ein &&
-        k1.source_document_reference === entry.source_document_reference &&
-        k1.box13_code_ad_new_markets_credit === entry.credit_amount &&
-        k1.new_markets_credit_subject_to_passive_activity_limit === false
-      )
-      : estatesAndTrusts.filter((k1) =>
-        k1.entity_type === entry.source_type &&
-        k1.estate_trust_ein === entry.source_ein &&
-        k1.source_document_reference === entry.source_document_reference &&
-        k1.box13_code_zz_new_markets_statement_reference ===
-          entry.source_statement_reference &&
-        k1.box13_code_zz_new_markets_credit === entry.credit_amount &&
-        k1.new_markets_credit_subject_to_passive_activity_limit === false
-      );
-    if (matches.length !== 1) {
-      throw new Error(
-        `Form 3800 New Markets Credit does not reconcile to ${entry.source_type} K-1 ${
-          entry.source_type === "partnership" ||
-            entry.source_type === "s_corporation"
-            ? "code AD"
-            : "code ZZ statement"
-        }`,
-      );
-    }
-  }
-  return entries;
 }
 
 function sourceOrphanDrugK1Credits(
@@ -848,7 +781,8 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
     const form8826 = sourceForm8826(parsed, context);
     const form8820 = sourceForm8820(parsed, context);
     const form8874 = sourceForm8874(parsed, context);
-    const newMarketsK1Credits = sourceNewMarketsK1Credits(parsed, context);
+    const newMarketsK1Credits = parsed.f8874_k1_credit_entries ?? [];
+    reconcileNewMarketsK1Credits(newMarketsK1Credits, context.pending ?? {});
     const orphanDrugK1Credits = sourceOrphanDrugK1Credits(
       parsed,
       context,

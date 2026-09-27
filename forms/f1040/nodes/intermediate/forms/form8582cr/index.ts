@@ -179,6 +179,13 @@ export const inputSchema = z.object({
     source_document_reference: z.string().trim().min(1),
     credit_amount: z.number().int().positive(),
   })).optional(),
+  required_new_markets_k1_credits: z.array(z.object({
+    source_type: z.enum(["partnership", "s_corporation", "estate", "trust"]),
+    source_ein: z.string().regex(/^\d{9}$/),
+    source_document_reference: z.string().trim().min(1),
+    source_statement_reference: z.string().trim().min(1).optional(),
+    credit_amount: z.number().int().positive(),
+  })).optional(),
   required_disabled_access_k1_credits: z.array(z.object({
     source_type: z.enum(["partnership", "s_corporation", "estate", "trust"]),
     source_ein: z.string().regex(/^\d{9}$/),
@@ -256,6 +263,58 @@ export const inputSchema = z.object({
         path: ["required_orphan_drug_k1_credits", index],
         message:
           "Form 8582-CR orphan-drug activity credits must match the passive K-1 amount",
+      });
+    }
+  });
+  const marketsK1Keys = new Set<string>();
+  input.required_new_markets_k1_credits?.forEach((evidence, index) => {
+    const key = [
+      evidence.source_type,
+      evidence.source_ein,
+      evidence.source_document_reference,
+      evidence.source_statement_reference ?? "",
+    ].join(":");
+    if (marketsK1Keys.has(key)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["required_new_markets_k1_credits", index],
+        message: "Form 8582-CR New Markets K-1 source is duplicated",
+      });
+    }
+    marketsK1Keys.add(key);
+    if (
+      (evidence.source_type === "estate" || evidence.source_type === "trust") &&
+      !evidence.source_statement_reference
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["required_new_markets_k1_credits", index],
+        message:
+          "Form 8582-CR estate/trust New Markets K-1 needs its code ZZ statement",
+      });
+    }
+    const matching = input.credit_sources.filter((source) =>
+      source.source_form === "Form 8874" &&
+      source.reporting_route === PassiveCreditReportingRoute.Form3800Line3 &&
+      source.form3800_credit_line === "1i" &&
+      source.source_document_reference === evidence.source_document_reference &&
+      (evidence.source_type === "partnership" ||
+        evidence.source_type === "s_corporation" ||
+        source.source_statement_reference ===
+          evidence.source_statement_reference) &&
+      source.source_origin.kind === evidence.source_type &&
+      source.source_origin.kind !== PassiveCreditSourceOrigin.Self &&
+      source.source_origin.ein === evidence.source_ein
+    );
+    if (
+      matching.reduce((sum, source) => sum + source.current_year_credit, 0) !==
+        evidence.credit_amount
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["required_new_markets_k1_credits", index],
+        message:
+          "Form 8582-CR New Markets activities must match the passive K-1 amount",
       });
     }
   });

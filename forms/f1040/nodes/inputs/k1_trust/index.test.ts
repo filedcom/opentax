@@ -142,11 +142,23 @@ Deno.test("estate/trust K-1 code ZZ New Markets Credit needs its statement", () 
         box13_credits: 1_249,
       }])
     );
-    assertThrows(() =>
-      compute([{
-        ...item,
-        new_markets_credit_subject_to_passive_activity_limit: true,
-      }])
+    assertEquals(
+      findOutput(
+        compute([{
+          ...item,
+          new_markets_credit_subject_to_passive_activity_limit: true,
+        }]),
+        "form8582cr",
+      )?.fields,
+      {
+        required_new_markets_k1_credits: [{
+          source_type: entity_type,
+          source_ein: "123456789",
+          source_document_reference: `${entity_type} K-1 2025`,
+          source_statement_reference: "Box 13 ZZ New Markets statement",
+          credit_amount: 1_250,
+        }],
+      },
     );
   }
 });

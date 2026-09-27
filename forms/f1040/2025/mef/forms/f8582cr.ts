@@ -11,6 +11,7 @@ import { sameForm3800PassiveAllocations } from "./f3800_passive_link.ts";
 import { reconcileOrphanDrugK1Credits } from "./f8820_credit_evidence.ts";
 import { reconcileDisabledAccessK1Credits } from "./f8826_credit_evidence.ts";
 import { readDisabledAccessCapLedger } from "./f8826_cap_ledger.ts";
+import { reconcileNewMarketsK1Credits } from "./f8874_credit_evidence.ts";
 
 function combineK1ActivityCredits<
   T extends {
@@ -128,6 +129,46 @@ function reconcilePassiveOrphanDrugSources(
   );
 }
 
+function reconcilePassiveNewMarketsSources(
+  sourceAllocations: ReturnType<
+    typeof calculateForm8582CR
+  >["sourceAllocations"],
+  context: MefBuildContext,
+): void {
+  if (!context.documentIdsByPendingKey) return;
+  if (!context.pending) {
+    throw new Error("Form 8582-CR source evidence needs the filed return");
+  }
+  const credits = sourceAllocations.flatMap((source) => {
+    if (
+      source.form3800_credit_line !== "1i" ||
+      source.current_year_credit === 0
+    ) return [];
+    const origin = source.source_origin;
+    if (
+      origin.kind === PassiveCreditSourceOrigin.Self ||
+      origin.kind === PassiveCreditSourceOrigin.Cooperative ||
+      !origin.ein || source.source_form !== "Form 8874"
+    ) {
+      throw new Error(
+        "Form 8582-CR passive New Markets Credit needs identifiable Form 8874 source evidence",
+      );
+    }
+    return [{
+      source_type: origin.kind,
+      source_ein: origin.ein,
+      source_document_reference: source.source_document_reference,
+      source_statement_reference: source.source_statement_reference,
+      credit_amount: source.current_year_credit,
+      subject_to_passive_activity_limit: true,
+    }];
+  });
+  reconcileNewMarketsK1Credits(
+    combineK1ActivityCredits(credits),
+    context.pending,
+  );
+}
+
 function reconcileFiledBusinessCredits(
   sourceAllocations: ReturnType<
     typeof calculateForm8582CR
@@ -164,6 +205,7 @@ export const form8582cr: MefFormDescriptor<"form8582cr", unknown> = {
     if (
       raw && typeof raw === "object" &&
       ("required_orphan_drug_k1_credits" in raw ||
+        "required_new_markets_k1_credits" in raw ||
         "required_disabled_access_k1_credits" in raw) &&
       !("credit_sources" in raw)
     ) {
@@ -180,6 +222,7 @@ export const form8582cr: MefFormDescriptor<"form8582cr", unknown> = {
       if (lines.partI.line5 > 0) {
         reconcileFiledBusinessCredits(lines.sourceAllocations, context);
         reconcilePassiveOrphanDrugSources(lines.sourceAllocations, context);
+        reconcilePassiveNewMarketsSources(lines.sourceAllocations, context);
       }
     }
     if (lines.partI.line5 === 0) return "";

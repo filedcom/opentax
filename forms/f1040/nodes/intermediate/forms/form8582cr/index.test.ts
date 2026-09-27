@@ -109,6 +109,62 @@ Deno.test("Form 8582-CR requires the passive K-1 orphan-drug amount in activity 
   );
 });
 
+Deno.test("Form 8582-CR requires passive New Markets K-1 activity and statement identity", () => {
+  const evidence = {
+    source_type: "trust" as const,
+    source_ein: "123456789",
+    source_document_reference: "2025 trust K-1",
+    source_statement_reference: "New Markets statement",
+    credit_amount: 500,
+  };
+  const activity = {
+    ...other(500),
+    source_form: "Form 8874",
+    form3800_credit_line: "1i" as const,
+    source_document_reference: evidence.source_document_reference,
+    source_statement_reference: evidence.source_statement_reference,
+    source_origin: {
+      kind: PassiveCreditSourceOrigin.Trust,
+      entity_reference: "Community trust",
+      ein: evidence.source_ein,
+    },
+  };
+  const facts = {
+    credit_sources: [activity],
+    required_new_markets_k1_credits: [evidence],
+    regular_tax_all_income: 0,
+    regular_tax_without_passive: 0,
+  };
+  assertEquals(inputSchema.safeParse(facts).success, true);
+  assertEquals(
+    inputSchema.safeParse({
+      ...facts,
+      credit_sources: [{ ...activity, current_year_credit: 499 }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...facts,
+      credit_sources: [{
+        ...activity,
+        source_statement_reference: "Other statement",
+      }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...facts,
+      required_new_markets_k1_credits: [{
+        ...evidence,
+        source_statement_reference: undefined,
+      }],
+    }).success,
+    false,
+  );
+});
+
 Deno.test("Form 8582-CR reconciles rounded disabled-access K-1 activity credits", () => {
   const evidence = {
     source_type: "partnership" as const,

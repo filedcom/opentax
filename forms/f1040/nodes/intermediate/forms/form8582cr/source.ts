@@ -128,6 +128,20 @@ export const creditSourceSchema = z.discriminatedUnion("reporting_route", [
         "Estate/trust passive disabled-access credit needs its code ZZ statement reference",
     });
   }
+  if (
+    source.current_year_credit > 0 &&
+    source.form3800_credit_line === "1i" &&
+    (source.source_origin.kind === PassiveCreditSourceOrigin.Estate ||
+      source.source_origin.kind === PassiveCreditSourceOrigin.Trust) &&
+    !source.source_statement_reference
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["source_statement_reference"],
+      message:
+        "Estate/trust passive New Markets Credit needs its code ZZ statement reference",
+    });
+  }
 });
 
 export type PassiveCreditSource = z.infer<typeof creditSourceSchema>;

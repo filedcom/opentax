@@ -26,12 +26,14 @@ pass-through-only filer does not get an invented IRS8874 attachment. Multiple
 same-line sources need explicit Part V use amounts if the tax limit only uses
 some of their combined credit. These cases are written but unrun. Estate/trust
 box 13 code ZZ amounts additionally require a source statement identifying the
-New Markets Credit and route directly to the same line 1i.
+New Markets Credit and route directly to the same line 1i. Passive K-1 code
+AD/ZZ credits require matching Form 8582-CR activity facts and are checked again
+against their K-1 during MeF assembly.
 
-Open work: passive credit and Form 8582-CR routing; carryovers and carrybacks;
-recapture and sale events; leap-day anniversary rules; cent-bearing investments
-and XML rounding; filled PDF output; IRS business rules and ATS acceptance. The
-current route is not filing-ready.
+Open work: self-earned passive credit; carryovers and carrybacks; recapture and
+sale events; leap-day anniversary rules; cent-bearing investments and XML
+rounding; filled PDF output; IRS business rules and ATS acceptance. The current
+route is not filing-ready.
 
 Sources:
 

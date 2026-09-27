@@ -509,9 +509,16 @@ function newMarketsCreditOutputs(items: K1TrustItems): NodeOutput[] {
       );
     }
     if (item.new_markets_credit_subject_to_passive_activity_limit) {
-      throw new Error(
-        "Passive New Markets Credit needs Form 8582-CR activity facts",
-      );
+      return [output(form8582cr, {
+        required_new_markets_k1_credits: [{
+          source_type: item.entity_type,
+          source_ein: item.estate_trust_ein,
+          source_document_reference: item.source_document_reference,
+          source_statement_reference:
+            item.box13_code_zz_new_markets_statement_reference,
+          credit_amount: credit,
+        }],
+      })];
     }
     return [output(f3800, {
       f8874_k1_credit_entries: [{
