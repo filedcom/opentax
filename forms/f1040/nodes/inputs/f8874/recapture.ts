@@ -25,6 +25,10 @@ export const recaptureSchema = z.object({
     "substantially_all_requirement_failed",
     "cde_redeemed_investment",
   ]),
+  // The six-month exception applies only to a substantially-all failure.
+  // A signed notice does not replace review of whether the CDE cured it.
+  substantially_all_cure_exception_applies: z.boolean().optional(),
+  substantially_all_cure_review_reference: z.string().trim().min(1).optional(),
   prior_years: z.array(z.object({
     tax_year: z.number().int().min(2018).max(2024),
     original_return_due_date: dateSchema,
@@ -49,7 +53,40 @@ export const recaptureSchema = z.object({
       message: "Investment must precede its recapture event",
     });
   }
+  if (input.recapture_event === "substantially_all_requirement_failed") {
+    if (
+      input.substantially_all_cure_exception_applies !== false ||
+      !input.substantially_all_cure_review_reference
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["substantially_all_cure_exception_applies"],
+        message:
+          "Substantially-all recapture needs documented review that the six-month cure exception does not apply",
+      });
+    }
+  } else if (
+    input.substantially_all_cure_exception_applies !== undefined ||
+    input.substantially_all_cure_review_reference !== undefined
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["substantially_all_cure_exception_applies"],
+      message:
+        "The substantially-all cure exception belongs only to that event",
+    });
+  }
   const initialDate = new Date(`${input.initial_investment_date}T00:00:00Z`);
+  const maximumSevenYearCredit =
+    3 * Math.round(input.qualified_equity_investment_amount * 0.05) +
+    4 * Math.round(input.qualified_equity_investment_amount * 0.06);
+  if (input.notice_credit_amount > maximumSevenYearCredit) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["notice_credit_amount"],
+      message: "Form 8874-B credit exceeds 39% of the qualified investment",
+    });
+  }
   const endOfSevenYears = new Date(initialDate);
   endOfSevenYears.setUTCFullYear(endOfSevenYears.getUTCFullYear() + 7);
   if (
@@ -114,6 +151,22 @@ export const recaptureSchema = z.object({
       });
     }
   });
+  const priorAllowedCreditDecrease = input.prior_years.reduce(
+    (sum, year) =>
+      sum + year.section38_credit_allowed_as_filed -
+      year.section38_credit_allowed_without_this_qei,
+    0,
+  );
+  if (
+    !Number.isSafeInteger(priorAllowedCreditDecrease) ||
+    priorAllowedCreditDecrease > maximumSevenYearCredit
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["prior_years"],
+      message: "Recaptured allowed credit exceeds the QEI's seven-year maximum",
+    });
+  }
 });
 
 export type NewMarketsRecaptureInput = z.infer<typeof recaptureSchema>;

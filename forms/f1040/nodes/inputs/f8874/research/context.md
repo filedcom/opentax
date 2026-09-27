@@ -19,8 +19,8 @@ source-form total; they use Form 3800's separate carryover path.
 
 The input node routes a self-earned nonpassive amount directly to Form 3800 and
 a self-earned passive amount through Form 8582-CR activity and tax facts. One
-IRS8874 source document carries all the QEI rows. Form 3800 Part III line 1i
-and Part V carry the resulting current-year source amounts. The MeF builders
+IRS8874 source document carries all the QEI rows. Form 3800 Part III line 1i and
+Part V carry the resulting current-year source amounts. The MeF builders
 cross-check the filed Form 8874, Form 8582-CR activity sources, and Form 3800.
 Source and XML cases are written but have not run in the deferred full batch.
 
@@ -32,12 +32,12 @@ some of their combined credit. These cases are written but unrun. Estate/trust
 box 13 code ZZ amounts additionally require a source statement identifying the
 New Markets Credit and route directly to the same line 1i. Passive K-1 code
 AD/ZZ credits require matching Form 8582-CR activity facts and are checked again
-against their K-1 during MeF assembly.
-When an own QEI causes Form 8874 to be filed, line 2 is rebuilt from the filed
-partnership/S-corporation K-1s and checked against the matching direct Form
-3800 entries or passive Form 8582-CR sources. Pass-through-only claims continue
-without an invented IRS8874 document. Line 2 does not include estate/trust code
-ZZ credits because the source form labels it for partnerships and S corporations.
+against their K-1 during MeF assembly. When an own QEI causes Form 8874 to be
+filed, line 2 is rebuilt from the filed partnership/S-corporation K-1s and
+checked against the matching direct Form 3800 entries or passive Form 8582-CR
+sources. Pass-through-only claims continue without an invented IRS8874 document.
+Line 2 does not include estate/trust code ZZ credits because the source form
+labels it for partnerships and S corporations.
 
 Open work: cent-bearing passive credit and shared XML rounding; carryovers and
 carrybacks; recapture and sale events; leap-day anniversary rules; filled PDF
@@ -52,16 +52,26 @@ prior-year Section 38 credits actually allowed if this QEI's credit had been
 zero, plus interest at the Section 6621 underpayment rate for each affected
 year. Unused carryovers and carrybacks must be adjusted rather than treated as
 tax used. The IRS audit guide describes daily-compounded interest from each
-prior return's original due date through the recapture-year return due date.
-For TY2025, Schedule 2 line 17a identifies this as `NMCR`; the MeF schema has a
+prior return's original due date through the recapture-year return due date. For
+TY2025, Schedule 2 line 17a identifies this as `NMCR`; the MeF schema has a
 separate `RecaptureOtherCreditsGrp` for that code. A standalone input needs the
 notice identity, prior return and recomputation evidence, prior due dates,
 applicable interest-rate periods, and carryover adjustments. It must not take a
 single unexplained recapture-tax amount.
 
+Form 8874's instructions exclude a substantially-all failure that the CDE
+corrects within six months of awareness, with only one correction permitted per
+QEI during the seven-year period. A signed Form 8874-B notice is still source
+evidence, but the substantially-all reason needs a documented cure review before
+this engine reports recapture. The build pass requires an explicit finding that
+the exception does not apply; it does not authenticate the CDE's underlying cure
+records. The underpayment-rate implementation uses the IRS quarterly table and a
+366-day denominator for 2024. Its written cross-quarter/leap-year case is unrun,
+and interest rounding needs independent IRS example reconciliation.
+
 A sale or other disposition alone does not trigger recapture, although the
-seller cannot claim an allowance date after disposition. This is distinct from
-a CDE redemption or other statutory recapture event. Sale gain/loss and basis
+seller cannot claim an allowance date after disposition. This is distinct from a
+CDE redemption or other statutory recapture event. Sale gain/loss and basis
 adjustments need their own source reconciliation.
 
 Sources:

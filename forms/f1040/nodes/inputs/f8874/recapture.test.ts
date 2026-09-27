@@ -66,6 +66,66 @@ Deno.test("New Markets recapture excludes unused credit from tax and interest", 
   assertEquals(result.years[0].carryforwardAdjustment, 3_000);
 });
 
+Deno.test("New Markets recapture compounds through rate changes and leap year", () => {
+  const priorYear = {
+    ...source.prior_years[0],
+    tax_year: 2022,
+    original_return_due_date: "2023-04-18",
+    section38_credit_allowed_as_filed: 10_000,
+    section38_credit_allowed_without_this_qei: 0,
+    original_unused_qei_credit: 0,
+  };
+  const result = calculateNewMarketsRecapture({
+    ...source,
+    qualified_equity_investment_amount: 200_000,
+    prior_years: [priorYear],
+  });
+  const days = (from: string, to: string) =>
+    (Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) /
+    86_400_000;
+  const expectedInterest = Math.round(
+    10_000 *
+        (1 + 0.07 / 365) ** days("2023-04-18", "2023-10-01") *
+        (1 + 0.08 / 365) ** days("2023-10-01", "2024-01-01") *
+        (1 + 0.08 / 366) ** days("2024-01-01", "2025-01-01") *
+        (1 + 0.07 / 365) ** days("2025-01-01", "2026-04-01") *
+        (1 + 0.06 / 365) ** days("2026-04-01", "2026-04-15") - 10_000,
+  );
+  assertEquals(result.interest, expectedInterest);
+});
+
+Deno.test("New Markets substantially-all recapture requires cure review", () => {
+  const failure = {
+    ...source,
+    recapture_event: "substantially_all_requirement_failed",
+  };
+  assertEquals(recaptureSchema.safeParse(failure).success, false);
+  assertEquals(
+    recaptureSchema.safeParse({
+      ...failure,
+      substantially_all_cure_exception_applies: true,
+      substantially_all_cure_review_reference: "CDE cure records",
+    }).success,
+    false,
+  );
+  assertEquals(
+    recaptureSchema.safeParse({
+      ...failure,
+      substantially_all_cure_exception_applies: false,
+      substantially_all_cure_review_reference: "CDE cure records",
+    }).success,
+    true,
+  );
+  assertEquals(
+    recaptureSchema.safeParse({
+      ...source,
+      substantially_all_cure_exception_applies: false,
+      substantially_all_cure_review_reference: "Irrelevant cure records",
+    }).success,
+    false,
+  );
+});
+
 Deno.test("New Markets recapture routes the computed total to Schedule 2", () => {
   const input = { ...source, prior_years: [...source.prior_years] };
   const result = f8874_recapture.compute(
@@ -161,6 +221,7 @@ Deno.test("New Markets recapture requires a statutory event and prior-year proof
     const invalid of [
       { ...source, recapture_event: "investment_sold" },
       { ...source, notice_reference: "" },
+      { ...source, notice_credit_amount: 40_000 },
       { ...source, prior_years: [] },
       { ...source, initial_investment_date: "2017-01-01" },
       { ...source, recapture_event_date: "2026-01-01" },
@@ -169,6 +230,14 @@ Deno.test("New Markets recapture requires a statutory event and prior-year proof
         prior_years: [{
           ...source.prior_years[0],
           section38_credit_allowed_without_this_qei: 10_000,
+        }],
+      },
+      {
+        ...source,
+        prior_years: [{
+          ...source.prior_years[0],
+          section38_credit_allowed_as_filed: 40_000,
+          section38_credit_allowed_without_this_qei: 0,
         }],
       },
       {
