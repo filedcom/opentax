@@ -49,7 +49,13 @@ Deno.test("f1040: unresolved Form 8912 credit stops final return assembly", () =
   assertThrows(
     () =>
       compute({
-        form8912_tentative_credit: 100,
+        form8912_source_lines: {
+          line1: 100,
+          line2: 0,
+          line3: 0,
+          line4: 100,
+          hasPassThroughCrebCredit: false,
+        },
         line2b_taxable_interest: 100,
       }),
     Error,

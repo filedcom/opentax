@@ -468,16 +468,14 @@ class F8912Node extends TaxNode<typeof inputSchema> {
   ): NodeResult {
     const input = inputSchema.parse(rawInput);
     const outputs: NodeOutput[] = [];
-    let tentativeCredit = 0;
+    const source = sourceLinesFromInput(input);
+    if (source.hasPassThroughCrebCredit) {
+      throw new Error(
+        "Form 8912 pass-through CREB credit needs its separate taxable-income limit",
+      );
+    }
     for (const item of input.f8912s) {
-      const lines = sourceLinesFromItem(item);
       const interestRows = interestRowsFromItem(item);
-      if (lines.hasPassThroughCrebCredit) {
-        throw new Error(
-          "Form 8912 pass-through CREB credit needs its separate taxable-income limit",
-        );
-      }
-      tentativeCredit += lines.line4;
       for (const row of interestRows) {
         const unreportedInterest = row.interest.taxableInterest -
           row.taxableInterestReportedElsewhere;
@@ -489,9 +487,9 @@ class F8912Node extends TaxNode<typeof inputSchema> {
         }
       }
     }
-    if (tentativeCredit > 0) {
+    if (source.line4 > 0) {
       outputs.push(this.outputNodes.output(f1040, {
-        form8912_tentative_credit: tentativeCredit,
+        form8912_source_lines: source,
       }));
     }
     return { outputs };

@@ -72,7 +72,7 @@ export interface Fields {
   line18_total_tax_before_credits?: number | null;
   line19_child_tax_credit?: number | null;
   line20_nonrefundable_credits?: number | null;
-  form8912_tentative_credit?: number | null;
+  form8912_source_lines?: { line4: number } | null;
   line21_credits_total?: number | null;
   line22_tax_after_credits?: number | null;
   line23_other_taxes?: number | null;
@@ -394,7 +394,7 @@ function dependentXml(fields: Input, context?: MefBuildContext): string[] {
 }
 
 function buildIRS1040(fields: Input, context?: MefBuildContext): string {
-  if ((fields.form8912_tentative_credit ?? 0) > 0) {
+  if ((fields.form8912_source_lines?.line4 ?? 0) > 0) {
     throw new Error(
       "Form 8912 positive credit cannot be filed until the Part II tax limit and source document are integrated",
     );

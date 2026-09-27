@@ -401,8 +401,12 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 export const irs1040Pdf: PdfFormDescriptor = {
   pendingKey: "f1040",
   projectFields(fields) {
-    const bondCredit = fields.form8912_tentative_credit;
-    if (typeof bondCredit === "number" && bondCredit > 0) {
+    const bondCredit = fields.form8912_source_lines;
+    if (
+      bondCredit && typeof bondCredit === "object" &&
+      "line4" in bondCredit && typeof bondCredit.line4 === "number" &&
+      bondCredit.line4 > 0
+    ) {
       throw new Error(
         "Form 8912 positive credit cannot be printed until the Part II tax limit and source document are integrated",
       );
