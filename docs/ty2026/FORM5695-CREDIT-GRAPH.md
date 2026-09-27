@@ -59,6 +59,15 @@ make the credit limit depend on an unfinished child-credit calculation.
 It covers the earned-income and payroll-tax branches, including Schedule 2
 lines 16c/17c. This is a pure calculation module; the registry does not yet
 collect all its source inputs or execute the ordered stage.
+The shared Schedule 8812 calculator now exposes and uses
+`calculateProvisionalSchedule8812Lines` for lines 1–12, so the future credit
+stage can obtain the same phaseout result as the final filed Schedule 8812.
+The graph planner executes each node once. The 2026 Schedule 3 node must
+therefore pass its pre-5695 source amounts to one credit-resolution node; that
+node must then finalize Schedule 3 line 5a and line 8, feed the final credit
+list to Schedule 8812, and feed Form 1040 line 20 once. Sending separate
+partial line 20 amounts to Form 1040 would produce an accumulated field and
+leave the printed Schedule 3 total unfinalized.
 Refactor the pure Schedule 8812 worksheet functions into the shared 2026
 credit-resolution stage, or provide separate pre- and post-5695 stages with
 explicit graph edges. Derive the inputs from registered source nodes and

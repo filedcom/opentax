@@ -396,6 +396,81 @@ function computeActcEarnedIncomeBased(
   return excess * ACTC_EARNED_INCOME_RATE;
 }
 
+export interface ProvisionalSchedule8812Input {
+  readonly filingStatus: z.infer<typeof filingStatusSchema>;
+  readonly agi: number;
+  readonly puertoRicoExcludedIncome: number;
+  readonly form2555Amounts: number;
+  readonly form4563Amount: number;
+  readonly qualifyingChildrenCount: number;
+  readonly otherDependentsCount: number;
+}
+
+/** Lines 1–12, which precede the credit-limit worksheets for both years. */
+export function calculateProvisionalSchedule8812Lines(
+  taxYear: number,
+  input: ProvisionalSchedule8812Input,
+) {
+  const cfg = CONFIG_BY_YEAR[taxYear];
+  if (!cfg) throw new Error(`No f1040 config for year ${taxYear}`);
+  if (
+    !Number.isFinite(input.agi) ||
+    !Number.isInteger(input.qualifyingChildrenCount) ||
+    input.qualifyingChildrenCount < 0 ||
+    !Number.isInteger(input.otherDependentsCount) ||
+    input.otherDependentsCount < 0 ||
+    [
+      input.puertoRicoExcludedIncome,
+      input.form2555Amounts,
+      input.form4563Amount,
+    ]
+      .some((value) => !Number.isFinite(value) || value < 0)
+  ) {
+    throw new Error("Schedule 8812 provisional lines need valid return facts");
+  }
+  const line1 = input.agi;
+  const line2a = input.puertoRicoExcludedIncome;
+  const line2b = input.form2555Amounts;
+  const line2c = input.form4563Amount;
+  const line2d = line2a + line2b + line2c;
+  const line3 = line1 + line2d;
+  const line4 = input.qualifyingChildrenCount;
+  const line5 = line4 * cfg.ctcPerChild;
+  const line6 = input.otherDependentsCount;
+  const line7 = line6 * cfg.odcPerDependent;
+  const line8 = line5 + line7;
+  const line9 = phaseOutThreshold(
+    input.filingStatus,
+    cfg.ctcPhaseOutThresholdMfj,
+    cfg.ctcPhaseOutThresholdOther,
+  );
+  const line11 = computePhaseOutReduction(
+    line3,
+    input.filingStatus,
+    cfg.ctcPhaseOutThresholdMfj,
+    cfg.ctcPhaseOutThresholdOther,
+  );
+  const line10 = line11 / 0.05;
+  const line12 = Math.max(0, line8 - line11);
+  return {
+    line1,
+    line2a,
+    line2b,
+    line2c,
+    line2d,
+    line3,
+    line4,
+    line5,
+    line6,
+    line7,
+    line8,
+    line9,
+    line10,
+    line11,
+    line12,
+  };
+}
+
 export function calculateSchedule8812Lines(
   taxYear: number,
   rawInput: F8812Input,
@@ -476,42 +551,47 @@ export function calculateSchedule8812Lines(
     : [];
   if (items.length === 0) return null;
 
-  const line4 = items.reduce(
+  const qualifyingChildrenCount = items.reduce(
     (sum, item) => sum + (item.qualifying_children_count ?? 0),
     0,
   );
-  const line6 = items.reduce(
+  const otherDependentsCount = items.reduce(
     (sum, item) => sum + (item.other_dependents_count ?? 0),
     0,
   );
-  if (line4 + line6 === 0) return null;
+  if (qualifyingChildrenCount + otherDependentsCount === 0) return null;
   const filingStatus = returnValue(items, "filing_status");
-  const line1 = returnValue(items, "agi");
+  const agi = returnValue(items, "agi");
   const tax = returnValue(items, "income_tax_liability");
-  if (filingStatus === undefined || line1 === undefined) {
+  if (filingStatus === undefined || agi === undefined) {
     throw new Error("Schedule 8812 needs filing status and Form 1040 AGI");
   }
-  const line2a = returnValue(items, "puerto_rico_excluded_income") ?? 0;
-  const line2b = returnValue(items, "form_2555_amounts") ?? 0;
-  const line2c = returnValue(items, "form_4563_amount") ?? 0;
-  const line2d = line2a + line2b + line2c;
-  const line3 = line1 + line2d;
-  const line5 = line4 * cfg.ctcPerChild;
-  const line7 = line6 * cfg.odcPerDependent;
-  const line8 = line5 + line7;
-  const line9 = phaseOutThreshold(
-    filingStatus,
-    cfg.ctcPhaseOutThresholdMfj,
-    cfg.ctcPhaseOutThresholdOther,
-  );
-  const line11 = computePhaseOutReduction(
+  const {
+    line1,
+    line2a,
+    line2b,
+    line2c,
+    line2d,
     line3,
+    line4,
+    line5,
+    line6,
+    line7,
+    line8,
+    line9,
+    line10,
+    line11,
+    line12,
+  } = calculateProvisionalSchedule8812Lines(taxYear, {
     filingStatus,
-    cfg.ctcPhaseOutThresholdMfj,
-    cfg.ctcPhaseOutThresholdOther,
-  );
-  const line10 = line11 / 0.05;
-  const line12 = Math.max(0, line8 - line11);
+    agi,
+    puertoRicoExcludedIncome:
+      returnValue(items, "puerto_rico_excluded_income") ?? 0,
+    form2555Amounts: returnValue(items, "form_2555_amounts") ?? 0,
+    form4563Amount: returnValue(items, "form_4563_amount") ?? 0,
+    qualifyingChildrenCount,
+    otherDependentsCount,
+  });
   if (line12 === 0) return null;
 
   const hasFEIE = items.some((item) =>

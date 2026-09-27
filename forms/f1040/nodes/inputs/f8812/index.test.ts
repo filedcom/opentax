@@ -5,6 +5,7 @@ import {
   calculateEarnedIncomeWorksheet,
   calculatePartIIBLines,
   calculatePartIIBLines2026,
+  calculateProvisionalSchedule8812Lines,
   calculateSchedule8812Lines,
   f8812,
   type F8812Input,
@@ -163,6 +164,30 @@ Deno.test("TY2026 Part II-B uses Schedule 2 lines 16c and 17c", () => {
     Error,
     "needs part_iib_2026",
   );
+});
+
+Deno.test("TY2026 provisional Schedule 8812 lines match the final worksheet", () => {
+  const provisional = calculateProvisionalSchedule8812Lines(2026, {
+    filingStatus: FilingStatus.Single,
+    agi: 200_001,
+    puertoRicoExcludedIncome: 0,
+    form2555Amounts: 0,
+    form4563Amount: 0,
+    qualifyingChildrenCount: 1,
+    otherDependentsCount: 0,
+  });
+  const final = calculateSchedule8812Lines(2026, {
+    auto_qualifying_children: 1,
+    auto_filing_status: FilingStatus.Single,
+    auto_agi: 200_001,
+    auto_income_tax_liability: 10_000,
+    credit_limit_worksheet_2026: zeroCreditWorksheet2026,
+  });
+  assertEquals(provisional.line11, 50);
+  assertEquals(provisional.line12, 2_150);
+  for (const [key, value] of Object.entries(provisional)) {
+    assertEquals(final?.[key as keyof typeof provisional], value);
+  }
 });
 
 Deno.test("TY2026 Credit Limit Worksheet A excludes Schedule 3 line 5b", () => {
