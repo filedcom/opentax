@@ -10,6 +10,8 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 export const FORM4136_RATES = {
   "1a": 0.183,
   "1b": 0.183,
+  "1c": 0.183,
+  "1d": 0.184,
   "2b": 0.193,
   "3a": 0.243,
   "3b": 0.243,
@@ -41,6 +43,8 @@ export const FORM4136_BUS_RATES = {
 const fuelLine = z.enum([
   "1a",
   "1b",
+  "1c",
+  "1d",
   "2b",
   "3a",
   "3b",
@@ -73,6 +77,7 @@ const alternativeFuelUseCodes = [
 const allowedUseCodes: Partial<
   Record<z.infer<typeof fuelLine>, readonly string[]>
 > = {
+  "1c": ["04", "05", "07", "11", "13", "14", "15"],
   "2b": ["01", "02", "09", "10", "11", "13", "14", "15"],
   "3a": ["02", "06", "07", "08", "11", "13", "14", "15"],
   "4a": ["02", "06", "07", "08", "11", "13", "14", "15"],
@@ -98,6 +103,8 @@ export const fuelClaimSchema = z.object({
   right_to_claim_not_waived: z.literal(true).optional(),
   credit_card_issuer_certificate_not_provided: z.literal(true).optional(),
   not_highway_vehicle: z.literal(true).optional(),
+  not_noncommercial_motorboat: z.literal(true).optional(),
+  exported_fuel_confirmed: z.literal(true).optional(),
 });
 
 const businessSchema = z.object({
@@ -119,14 +126,7 @@ const activitySchema = z.object({
 }).superRefine((input, ctx) => {
   const seen = new Set<string>();
   input.claims.forEach((claim, index) => {
-    if (claim.type_of_use === "05" && !(claim.line in FORM4136_BUS_RATES)) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Form 4136 bus use is only represented for line 11",
-        path: ["claims", index, "type_of_use"],
-      });
-    }
-    if (claim.type_of_use === "05") {
+    if (claim.type_of_use === "05" && claim.line in FORM4136_BUS_RATES) {
       const requiredUnit = claim.line === "11a" || claim.line === "11c"
         ? "GGE"
         : claim.line === "11g"
@@ -178,13 +178,18 @@ const activitySchema = z.object({
         ? ["undyed_fuel_confirmed"] as const
         : []),
       ...(claim.line === "5c" || claim.line === "5d" ||
+          (claim.line === "1c" &&
+            ["13", "14"].includes(claim.type_of_use ?? "")) ||
           (claim.line === "2b" &&
             ["13", "14"].includes(claim.type_of_use ?? ""))
         ? ["right_to_claim_not_waived"] as const
         : []),
-      ...(claim.line === "2b" && ["13", "14"].includes(claim.type_of_use ?? "")
+      ...((claim.line === "1c" || claim.line === "2b") &&
+          ["13", "14"].includes(claim.type_of_use ?? "")
         ? ["credit_card_issuer_certificate_not_provided"] as const
         : []),
+      ...(claim.line === "1c" ? ["not_noncommercial_motorboat"] as const : []),
+      ...(claim.line === "1d" ? ["exported_fuel_confirmed"] as const : []),
       ...(claim.line === "1a" || claim.type_of_use === "02"
         ? ["not_highway_vehicle"] as const
         : []),

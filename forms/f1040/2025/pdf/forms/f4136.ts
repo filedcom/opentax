@@ -38,6 +38,8 @@ const alternativeFuelRateTop = [
 const creditReferenceNumber: Record<Line, string> = {
   "1a": "362",
   "1b": "362",
+  "1c": "362",
+  "1d": "411",
   "2b": "324",
   "3a": "360",
   "3b": "360",
@@ -63,10 +65,20 @@ function fieldPath(p: number, n: number): string {
   let line = "";
   let column = "";
   if (p === 1) {
-    if (n >= 10 && n <= 23) {
+    if (n >= 10 && n <= 31) {
       table = "Table_Line1";
-      line = n <= 12 ? "Line1a" : n <= 15 ? "Line1b" : "Line1c";
-      column = n >= 20 && n <= 21 ? "ColD" : n >= 22 ? "ColE" : "";
+      line = n <= 12
+        ? "Line1a"
+        : n <= 16
+        ? "Line1b"
+        : n <= 23
+        ? "Line1c"
+        : "Line1d";
+      column = n >= 20 && n <= 21 || n >= 27 && n <= 28
+        ? "ColD"
+        : n >= 22 && n <= 23 || n >= 29 && n <= 30
+        ? "ColE"
+        : "";
     } else if (n >= 40 && n <= 47) {
       table = "Table_Line2";
       line = "Line2b";
@@ -140,8 +152,13 @@ const fields: PdfFieldEntry[] = [
   text("equipment_type", 1, 9),
   text("line1a_quantity", 1, 12),
   text("line1b_quantity", 1, 15),
+  text("line1c_type", 1, 17),
+  text("line1c_quantity", 1, 19),
   ...moneyFields("line1_cost", 1, 20),
   ...moneyFields("line1_credit", 1, 22),
+  text("line1d_quantity", 1, 26),
+  ...moneyFields("line1d_cost", 1, 27),
+  ...moneyFields("line1d_credit", 1, 29),
   text("line2b_type", 1, 40),
   text("line2b_quantity", 1, 42),
   ...moneyFields("line2b_cost", 1, 43),
@@ -351,6 +368,8 @@ export function projectForm4136Fields(
     const line of [
       "1a",
       "1b",
+      "1c",
+      "1d",
       "2b",
       "3a",
       "3b",
@@ -363,7 +382,8 @@ export function projectForm4136Fields(
   ) {
     putLine(out, input, line);
   }
-  putClaimGroup(out, input, ["1a", "1b"], "line1");
+  putClaimGroup(out, input, ["1a", "1b", "1c"], "line1");
+  putClaimGroup(out, input, ["1d"], "line1d");
   putClaimGroup(out, input, ["2b"], "line2b");
   putClaimGroup(out, input, ["3a", "3b"], "line3");
   putClaimGroup(out, input, ["4a", "4b"], "line4");

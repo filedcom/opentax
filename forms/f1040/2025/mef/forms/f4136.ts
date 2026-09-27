@@ -149,6 +149,8 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
 
     const l1a = onLine(input, "1a");
     const l1b = onLine(input, "1b");
+    const l1c = onLine(input, "1c");
+    const l1d = onLine(input, "1d");
     const l2b = onLine(input, "2b");
     const l3a = onLine(input, "3a");
     const l3b = onLine(input, "3b");
@@ -215,15 +217,23 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
         elements("NontaxableUseOfGasolineGrp", [
           element("OffHwyBusUseGasolineGalsQty", qty(l1a)),
           element("FarmingPurposesGasolineGalsQty", qty(l1b)),
-          l1a.length || l1b.length
-            ? element("ActualFuelCostAmt", cost([...l1a, ...l1b]))
+          ...l1c.map((claim) => detail("OtherNontaxableUseGasolineDtl", claim)),
+          l1a.length || l1b.length || l1c.length
+            ? element("ActualFuelCostAmt", cost([...l1a, ...l1b, ...l1c]))
             : "",
-          l1a.length || l1b.length
+          l1a.length || l1b.length || l1c.length
             ? credit(
               "NontaxableUseOfGasolineCrAmt",
-              lineAmount([...l1a, ...l1b]),
+              lineAmount([...l1a, ...l1b, ...l1c]),
               "362",
             )
+            : "",
+        ]),
+        elements("ExportedNontaxableUseGasGrp", [
+          element("ExportedNontxUseGasGalsQty", qty(l1d)),
+          l1d.length ? element("ActualFuelCostAmt", cost(l1d)) : "",
+          l1d.length
+            ? credit("ExportedNontxUseOfGasCrAmt", lineAmount(l1d), "411")
             : "",
         ]),
         ...l2b.map((claim) => detail("OthNontaxableAviationGasGrp", claim)),

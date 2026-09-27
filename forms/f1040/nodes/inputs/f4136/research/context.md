@@ -17,7 +17,10 @@ use, and nonduplicate facts, allows only line 4a/type 08, and omits business
 lines B-F in XML and PDF.
 The input also requires the printed undyed-fuel, no-waiver, no-credit-card-
 certificate, and non-highway-vehicle certifications on affected claims.
-The represented line rates are 1a/1b $.183, 2b $.193, 3a/3b $.243, 4a/4b
+Gasoline line 1c now requires a permitted use code and a noncommercial-
+motorboat exclusion; types 13/14 also require no-waiver and no-credit-card-
+certificate confirmations. Export line 1d requires an export confirmation.
+The represented line rates are 1a/1b/1c $.183, 1d $.184, 2b $.193, 3a/3b $.243, 4a/4b
 $.243, 5c $.243, 5d $.218, 11a-d/11h $.183, and 11e-g $.243. IRS type-of-use codes are
 required and constrained to the local XSD for variable-use lines. This model
 does not assert eligibility solely from gallon quantities.
@@ -31,6 +34,7 @@ Form 1040 line 31. The older research note's division between nonrefundable
 off-highway fuel and refundable farm fuel was wrong for the 2025 form.
 
 The native IRS4136 XML builder now serializes these represented claims, including
+separate gasoline line 1c detail and line 1d export groups,
 all line 11 alternative fuels and the reduced-rate type 5 bus branch, and
 reconciles its line 17 source total against Schedule 3 line 12. The PDF
 descriptor maps the actual 2025 AcroForm widgets across all four pages,

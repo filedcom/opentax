@@ -5,6 +5,8 @@ const certifications = {
   right_to_claim_not_waived: true,
   credit_card_issuer_certificate_not_provided: true,
   not_highway_vehicle: true,
+  not_noncommercial_motorboat: true,
+  exported_fuel_confirmed: true,
 } as const;
 const activityContext = {
   claimant_context: "business" as const,
@@ -74,6 +76,40 @@ Deno.test("Form 4136 XML rejects a Schedule 3 source mismatch", () => {
       }),
     Error,
     "does not match Schedule 3",
+  );
+});
+
+Deno.test("Form 4136 XML separates other-use and exported gasoline", () => {
+  const xml = form4136.build({
+    ...activityContext,
+    business: fields.business,
+    claims: [
+      {
+        ...certifications,
+        line: "1c",
+        type_of_use: "05",
+        unit: "gallons",
+        qualified_quantity: 100,
+        actual_fuel_cost: 300,
+      },
+      {
+        ...certifications,
+        line: "1d",
+        unit: "gallons",
+        qualified_quantity: 100,
+        actual_fuel_cost: 300,
+      },
+    ],
+  }, { pending: { schedule3: { line12_fuel_tax_credit: 36.7 } } });
+  assertStringIncludes(xml, "<OtherNontaxableUseGasolineDtl>");
+  assertStringIncludes(
+    xml,
+    "<NontaxableUseOfFuelTypeCd>05</NontaxableUseOfFuelTypeCd>",
+  );
+  assertStringIncludes(xml, "<ExportedNontaxableUseGasGrp>");
+  assertStringIncludes(
+    xml,
+    '<ExportedNontxUseOfGasCrAmt creditReferenceNum="411">18</ExportedNontxUseOfGasCrAmt>',
   );
 });
 
