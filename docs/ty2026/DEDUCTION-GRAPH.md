@@ -64,6 +64,7 @@ for review, then emit a single finalized set of form lines.
 | Area | Required detail | Current status |
 | --- | --- | --- |
 | Income | AGI, filing status, SALT modified AGI including foreign/Puerto Rico adjustments | AGI graph exists; SALT MAGI source path pending. |
+| Home-office SALT split | [Form 8829](FORM8829-GRAPH.md) line 11 worksheet divides business and personal property tax; limited cases iterate through Schedule C, SE, AGI and Schedule A until MAGI stabilizes. | Shared home-office node omits this loop; keep both allocations from one property-tax source. |
 | Schedule A | Medical, elected income/sales tax and property taxes, mortgage interest and insurance, investment interest, disaster losses, line 17 components | `schedule-a.ts` assembles lines from already allowed values. Input nodes and each separate eligibility limit pending. |
 | Charity | Cash/noncash category and percentage limits, contribution dates/recipients, origin-year carryforwards, floor attribution | Pure 0.5% floor exists; category-limit and carryforward accounting pending. Do not treat raw 11/12/14 amounts as all deductible. |
 | Schedule 1-A | Form line 44 total and line 43 enhanced senior deduction, plus eligibility facts | The shared node routes 2026 line 43/44 separately; Form 2555 MAGI addbacks, W-2 TP/TT, and employer-level Form 4137 reconciliation exist. Puerto Rico/Form 4563 addbacks remain. |

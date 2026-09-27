@@ -1450,6 +1450,24 @@
       "bytes": 1861233,
       "sha256": "e17265a7ff82e0b2541dbf7bd90797bdaa1eb5678c3d23d059f42939274f0845",
       "retrieved_utc": "2026-09-27T13:40:38Z"
+    },
+    {
+      "path": "authorities/n-26-16.pdf",
+      "url": "https://www.irs.gov/pub/irs-drop/n-26-16.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 246849,
+      "sha256": "742cb325c91706c97aa6cb65728e3f1ce78b19ae47f91d75217f7f976cba32ae",
+      "retrieved_utc": "2026-09-27T13:46:24Z"
+    },
+    {
+      "path": "authorities/p587--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/p587--2025.pdf",
+      "kind": "prior-year-comparator",
+      "status": "downloaded",
+      "bytes": 1482736,
+      "sha256": "7f68de213b25a0f826b6112191fcf89e29c121865ef59c4945f8699de0a6d2af",
+      "retrieved_utc": "2026-09-27T13:46:24Z"
     }
   ]
 }

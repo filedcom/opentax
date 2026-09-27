@@ -53,6 +53,10 @@ The [Form 8853 contract](FORM8853-GRAPH.md) maps Archer/Medicare Advantage
 MSA contributions/distributions, the 2026 $430 LTC per-diem amount and
 multi-payee statement, Form 8889 contribution handoff, Schedule 1/2 lines,
 and all 38 PDF fields. The shared node misses the prior-year MSA tax worksheet.
+The [Form 8829 contract](FORM8829-GRAPH.md) maps each home to its Schedule C
+activity, the SALT/AGI iteration, casualty and depreciation order, 2027
+carryforwards and all 58 PDF fields. The shared node loses line 43/44
+carryforwards and its TY2025 PDF mapping reverses the area fields.
 The [scenario 12 contract](ATS-SCENARIO-12.md) and
 [business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
 broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800

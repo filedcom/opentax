@@ -62,6 +62,9 @@ for the implementation contract.
 - [`FORM8853-GRAPH.md`](FORM8853-GRAPH.md) and `pdf-fields-f8853.csv`:
   Archer/Medicare Advantage MSA and LTC source routes, 2026 Schedule 1/2
   handoffs, repeated sections/statements, and all 38 PDF fields.
+- [`FORM8829-GRAPH.md`](FORM8829-GRAPH.md) and `pdf-fields-f8829.csv`:
+  per-home Schedule C deduction, 2026 SALT/casualty/depreciation ordering,
+  2027 carryforwards, QPP election gate, and 58 PDF fields.
 - [`FORM8962-GRAPH.md`](FORM8962-GRAPH.md) and `pdf-fields-f8962.csv`:
   2026 premium tax credit line 27, 400% FPL boundary, Form 1095-A/allocations,
   143 PDF widgets, and MeF/graph acceptance order.

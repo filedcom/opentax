@@ -43,6 +43,10 @@ The [Form 8853 contract](../../../docs/ty2026/FORM8853-GRAPH.md) maps
 Archer/Medicare Advantage MSA and LTC amounts to Form 8889, Schedule 1
 and Schedule 2, including the 2026 prior-year MSA 50% tax worksheet and
 multiple LTC payee statement. Its 38 draft PDF widgets are inventoried.
+The [Form 8829 contract](../../../docs/ty2026/FORM8829-GRAPH.md) maps
+home-office expenses and carryforwards by home and Schedule C activity,
+with the 2026 SALT iteration, Form 4684/4562 handoffs, QPP election gate
+and all 58 draft PDF fields.
 The [ATS scenario 12 plan](../../../docs/ty2026/ATS-SCENARIO-12.md) and
 [business credit contract](../../../docs/ty2026/GENERAL-BUSINESS-CREDIT-GRAPH.md)
 map Form 7207 → Form 3800 → Schedule 3 and Form 7205/7220 → Schedule C.

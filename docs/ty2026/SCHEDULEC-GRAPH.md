@@ -34,7 +34,8 @@ instruction ledger; recheck them before filing acceptance.
    if reused as-is for TY2026.
 2. Calculate vehicle/depreciation/interest/home-office allowed amounts before
    Schedule C. Apply the half-year business mileage function, Form 4562 and
-   Form 8829 attachment rules, debt allocation, and Form 8990 if applicable.
+   [Form 8829](FORM8829-GRAPH.md) attachment/carryforward rules, debt
+   allocation, and Form 8990 if applicable.
    Keep source inputs distinct from already allowed line amounts.
 3. Calculate each Schedule C line 31 after at-risk and passive limitations,
    then aggregate allowed line 31 amounts once to 2026 Schedule 1 line 3

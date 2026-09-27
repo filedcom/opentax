@@ -1,0 +1,59 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_01[0],/Tx,Page 1. Name(s) of proprietor(s). ,2,36 684.468 452.6 697.969,yes
+topmostSubform[0].Page1[0].f1_02[0],/Tx,Your social security number. ,2,454.6 684.468 576 697.969,yes
+topmostSubform[0].Page1[0].f1_03[0],/Tx,"Part I. Part of Your Home Used for Business. 1. Area used regularly and exclusively for business, regularly for daycare, or for storage of inventory or product samples (see instructions). ",2,490.6 648.468 576 659.967,yes
+topmostSubform[0].Page1[0].f1_04[0],/Tx,2. Total area of home. ,2,490.6 636.469 576 647.468,yes
+topmostSubform[0].Page1[0].f1_05[0],/Tx,3. Divide line 1 by line 2. Enter the result as a percentage. %. ,2,490.6 623.97 566 635.969,yes
+topmostSubform[0].Page1[0].f1_06[0],/Tx,"For daycare facilities not used exclusively for business, go to line 4. All others, go to line 7. 4. Multiply days used for daycare during year by hours used per day. hr. ",2,382.6 599.969 450 611.968,yes
+topmostSubform[0].Page1[0].f1_07[0],/Tx,"5. If you started or stopped using your home for daycare during the year, see instructions; otherwise, enter 8,760. hr. ",2,382.6 575.968 450 587.967,yes
+topmostSubform[0].Page1[0].f1_08[0],/Tx,6. Divide line 4 by line 5. Enter the result as a decimal amount. Numbers after the decimal. ,2,403.2 563.969 467 575.968,yes
+topmostSubform[0].Page1[0].f1_09[0],/Tx,"7. Business percentage. For daycare facilities not used exclusively for business, multiply line 6 by line 3 (enter the result as a percentage). All others, enter the amount from line 3. %. ",2,490.6 539.968 566 551.967,yes
+topmostSubform[0].Page1[0].Line8_ReadOrder[0].f1_10[0],/Tx,"Part I I. Figure Your Allowable Deduction. 8. Enter the amount from Schedule C, line 29, plus any gain derived from the business use of your home, minus any loss from the trade or business not derived from the business use of your home. See instructions. ",2,490.6 504.468 576 515.967,yes
+topmostSubform[0].Page1[0].Table_Lines9-12[0].Line9[0].f1_11[0],/Tx,See instructions for columns (a) and (b) before completing lines 9–22. Row: 9. Casualty losses (see instructions). Column: (a) Direct expenses. ,2,296.2 480.47 380.6 491.469,yes
+topmostSubform[0].Page1[0].Table_Lines9-12[0].Line9[0].f1_12[0],/Tx,Row: 9. Casualty losses (see instructions). Column: (b) Indirect expenses. ,2,382.6 480.47 467 491.469,yes
+topmostSubform[0].Page1[0].Table_Lines9-12[0].Line10[0].f1_13[0],/Tx,Row: 10. Deductible mortgage interest (see instructions). Column: (a) Direct expenses. ,2,296.2 468.471 380.6 479.47,yes
+topmostSubform[0].Page1[0].Table_Lines9-12[0].Line10[0].f1_14[0],/Tx,Row: 10. Deductible mortgage interest (see instructions). Column: (b) Indirect expenses. ,2,382.6 468.471 467 479.47,yes
+topmostSubform[0].Page1[0].Table_Lines9-12[0].Line11[0].f1_15[0],/Tx,Row: 11. Real estate taxes (see instructions). Column: (a) Direct expenses. ,2,296.2 456.472 380.6 467.471,yes
+topmostSubform[0].Page1[0].Table_Lines9-12[0].Line11[0].f1_16[0],/Tx,Row: 11. Real estate taxes (see instructions). Column: (b) Indirect expenses. ,2,382.6 456.472 467 467.471,yes
+topmostSubform[0].Page1[0].Table_Lines9-12[0].Line12[0].f1_17[0],/Tx,"Row: 12. Add lines 9, 10, and 11. Column: (a) Direct expenses. ",2,296.2 444.473 380.6 455.472,yes
+topmostSubform[0].Page1[0].Table_Lines9-12[0].Line12[0].f1_18[0],/Tx,"Row: 12. Add lines 9, 10, and 11. Column: (b) Indirect expenses. ",2,382.6 444.473 467 455.472,yes
+topmostSubform[0].Page1[0].f1_19[0],/Tx,"13. Multiply line 12, column (b), by line 7. Column: (b) Indirect expenses. ",2,382.6 432.468 467 443.467,yes
+topmostSubform[0].Page1[0].f1_20[0],/Tx,"14. Add line 12, column (a), and line 13. ",2,490.6 420.469 576 431.968,yes
+topmostSubform[0].Page1[0].f1_21[0],/Tx,"15. Subtract line 14 from line 8. If zero or less, enter 0. ",2,490.6 408.47 576 419.469,yes
+topmostSubform[0].Page1[0].Table_Lines16-23[0].Line16[0].f1_22[0],/Tx,Row: 16. Excess mortgage interest (see instructions). Column: (a) Direct expenses. ,2,296.2 396.471 380.6 407.47,yes
+topmostSubform[0].Page1[0].Table_Lines16-23[0].Line16[0].f1_23[0],/Tx,Row: 16. Excess mortgage interest (see instructions). Column: (b) Indirect expenses. ,2,382.6 396.471 467 407.47,yes
+topmostSubform[0].Page1[0].Table_Lines16-23[0].Line17[0].f1_24[0],/Tx,Row: 17. Excess real estate taxes (see instructions). Column: (a) Direct expenses. ,2,296.2 384.472 380.6 395.471,yes
+topmostSubform[0].Page1[0].Table_Lines16-23[0].Line17[0].f1_25[0],/Tx,Row: 17. Excess real estate taxes (see instructions). Column: (b) Indirect expenses. ,2,382.6 384.472 467 395.471,yes
+topmostSubform[0].Page1[0].Table_Lines16-23[0].Line18[0].f1_26[0],/Tx,Row: 18. Insurance. Column: (a) Direct expenses. ,2,296.2 372.473 380.6 383.472,yes
+topmostSubform[0].Page1[0].Table_Lines16-23[0].Line18[0].f1_27[0],/Tx,Row: 18. Insurance. Column: (b) Indirect expenses. ,2,382.6 372.473 467 383.472,yes
+topmostSubform[0].Page1[0].Table_Lines16-23[0].Line19[0].f1_28[0],/Tx,Row: 19. Rent. Column: (a) Direct expenses. ,2,296.2 360.474 380.6 371.473,yes
+topmostSubform[0].Page1[0].Table_Lines16-23[0].Line19[0].f1_29[0],/Tx,Row: 19. Rent. Column: (b) Indirect expenses. ,2,382.6 360.474 467 371.473,yes
+topmostSubform[0].Page1[0].Table_Lines16-23[0].Line20[0].f1_30[0],/Tx,Row: 20. Repairs and maintenance. Column: (a) Direct expenses. ,2,296.2 348.475 380.6 359.474,yes
+topmostSubform[0].Page1[0].Table_Lines16-23[0].Line20[0].f1_31[0],/Tx,Row: 20. Repairs and maintenance. Column: (b) Indirect expenses. ,2,382.6 348.475 467 359.474,yes
+topmostSubform[0].Page1[0].Table_Lines16-23[0].Line21[0].f1_32[0],/Tx,Row: 21. Utilities. Column: (a) Direct expenses. ,2,296.2 336.476 380.6 347.475,yes
+topmostSubform[0].Page1[0].Table_Lines16-23[0].Line21[0].f1_33[0],/Tx,Row: 21. Utilities. Column: (b) Indirect expenses. ,2,382.6 336.476 467 347.475,yes
+topmostSubform[0].Page1[0].Table_Lines16-23[0].Line22[0].f1_34[0],/Tx,Row: 22. Other expenses (see instructions). Column: (a) Direct expenses. ,2,296.2 324.477 380.6 335.476,yes
+topmostSubform[0].Page1[0].Table_Lines16-23[0].Line22[0].f1_35[0],/Tx,Row: 22. Other expenses (see instructions). Column: (b) Indirect expenses. ,2,382.6 324.477 467 335.476,yes
+topmostSubform[0].Page1[0].Table_Lines16-23[0].Line23[0].f1_36[0],/Tx,Row: 23. Add lines 16 through 22. Column: (a) Direct expenses. ,2,296.2 312.478 380.6 323.477,yes
+topmostSubform[0].Page1[0].Table_Lines16-23[0].Line23[0].f1_37[0],/Tx,Row: 23. Add lines 16 through 22. Column: (b) Indirect expenses. ,2,382.6 312.478 467 323.477,yes
+topmostSubform[0].Page1[0].f1_38[0],/Tx,"24. Multiply line 23, column (b), by line 7. Column: (b) Indirect expenses. ",2,382.6 300.47 467 311.469,yes
+topmostSubform[0].Page1[0].f1_39[0],/Tx,25. Carryover of prior year operating expenses (see instructions). Column: (b) Indirect expenses. ,2,382.6 288.468 467 299.467,yes
+topmostSubform[0].Page1[0].f1_40[0],/Tx,"26. Add line 23, column (a); line 24; and line 25. ",2,490.6 276.469 576 287.968,yes
+topmostSubform[0].Page1[0].f1_41[0],/Tx,27. Allowable operating expenses. Enter the smaller of line 15 or line 26. ,2,490.6 264.47 576 275.469,yes
+topmostSubform[0].Page1[0].f1_42[0],/Tx,28. Limit on excess casualty losses and depreciation. Subtract line 27 from line 15. ,2,490.6 252.468 576 263.467,yes
+topmostSubform[0].Page1[0].f1_43[0],/Tx,29. Excess casualty losses (see instructions). Column: (b) Indirect expenses. ,2,382.6 240.469 467 251.468,yes
+topmostSubform[0].Page1[0].f1_44[0],/Tx,30. Depreciation of your home from line 42 below. Column: (b) Indirect expenses. ,2,382.6 228.47 467 239.469,yes
+topmostSubform[0].Page1[0].f1_45[0],/Tx,31. Carryover of prior year excess casualty losses and depreciation (see instructions). Column: (b) Indirect expenses. ,2,382.6 216.468 467 227.467,yes
+topmostSubform[0].Page1[0].f1_46[0],/Tx,32. Add lines 29 through 31. ,2,490.6 204.469 576 215.968,yes
+topmostSubform[0].Page1[0].f1_47[0],/Tx,33. Allowable excess casualty losses and depreciation. Enter the smaller of line 28 or line 32. ,2,490.6 192.47 576 203.469,yes
+topmostSubform[0].Page1[0].f1_48[0],/Tx,"34. Add lines 14, 27, and 33. ",2,490.6 180.468 576 191.467,yes
+topmostSubform[0].Page1[0].f1_49[0],/Tx,"35. Casualty loss portion, if any, from lines 14 and 33. Carry amount to Form 4684. See instructions. ",2,490.6 168.469 576 179.468,yes
+topmostSubform[0].Page1[0].f1_50[0],/Tx,"36. Allowable expenses for business use of your home. Subtract line 35 from line 34. Enter here and on Schedule C, line 30. If your home was used for more than one business, see instructions. ",2,490.6 144.468 576 155.967,yes
+topmostSubform[0].Page1[0].f1_51[0],/Tx,Part I I I. Depreciation of Your Home. 37. Enter the smaller of your home’s adjusted basis or its fair market value. See instructions. ,2,490.6 120.47 576 131.469,yes
+topmostSubform[0].Page1[0].f1_52[0],/Tx,38. Value of land included on line 37. ,2,490.6 108.468 576 119.467,yes
+topmostSubform[0].Page1[0].f1_53[0],/Tx,39. Basis of building. Subtract line 38 from line 37. ,2,490.6 96.469 576 107.468,yes
+topmostSubform[0].Page1[0].f1_54[0],/Tx,40. Business basis of building. Multiply line 39 by line 7. ,2,490.6 84.47 576 95.469,yes
+topmostSubform[0].Page1[0].f1_55[0],/Tx,41. Depreciation percentage (see instructions). %. ,2,490.6 71.968 566 83.967,yes
+topmostSubform[0].Page1[0].f1_56[0],/Tx,42. Depreciation allowable (see instructions). Multiply line 40 by line 41. Enter here and on line 30 above. ,2,490.6 60.469 576 71.468,yes
+topmostSubform[0].Page1[0].f1_57[0],/Tx,"Part I V. Carryover of Unallowed Expenses to 2027. 43. Operating expenses. Subtract line 27 from line 26. If less than zero, enter 0. ",2,490.6 36.468 576 47.467,yes
+topmostSubform[0].Page1[0].f1_58[0],/Tx,"44. Excess casualty losses and depreciation. Subtract line 33 from line 32. If less than zero, enter 0. ",2,490.6 24.469 576 35.468,yes

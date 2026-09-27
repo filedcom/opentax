@@ -48,6 +48,7 @@ NODE_PROGRESS = {
     "form8959": "2026 form/instructions pinned; shared node sends combined old line 18 tax to Schedule 2 line 11, but 2026 splits line 12/18 to 17b/11 and changes PDF positions; see FORM8959-GRAPH.md",
     "form7206": "2026 form/instructions pinned; shared node uses aggregate profit/PTC shortcut, lacks per-business earnings and Form 2555, PDF fields mis-map; see FORM7206-GRAPH.md",
     "form8853": "2026 form/instructions pinned; shared node routes penalty to old Schedule 2 keys, omits MSA prior-year worksheet and LTC multi-payee statements; see FORM8853-GRAPH.md",
+    "form_8829": "2026 form/instructions and Notice 2026-16 pinned; shared node omits daycare/direct costs, Schedule A/SALT loop and 2027 carryforwards; PDF area fields reversed; see FORM8829-GRAPH.md",
     "schedule_f": "2026 draft makes line 21b vehicle interest and 21c other interest; build dedicated farm input, PDF/MeF, ATS 3; see SCHEDULEF-GRAPH.md",
     "f4835": "2026 form/instructions pinned; line 19b vehicle interest and farm-rent Schedule E route need PDF/MeF and ATS 3; see FORM4835-GRAPH.md",
     "schedule_se": "ATS 3 elects 2026 farm optional method; current Schedule F suppresses low-profit/loss SE route and 2025 PDF map puts profit in 2026 name field; see SCHEDULESE-GRAPH.md",
