@@ -1,4 +1,4 @@
-import { assertEquals, assertStringIncludes } from "@std/assert";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form8949 } from "./f8949.ts";
 
 function assertNotIncludes(actual: string, expected: string) {
@@ -197,7 +197,7 @@ Deno.test("Box B transaction: wrapped in ShortTermCapitalGainAndLossGrp", () => 
 // Section 5: Box C (no 1099-B) — correct checkbox indicator
 // ---------------------------------------------------------------------------
 
-Deno.test("Box C transaction: emits TransactionsNotRptedOn1099BInd checkbox", () => {
+Deno.test("Box C transaction: emits NonDATransNotRptOn1099BOrDAInd checkbox", () => {
   const result = form8949.build([{
     part: "C",
     description: "Coin XYZ",
@@ -210,7 +210,7 @@ Deno.test("Box C transaction: emits TransactionsNotRptedOn1099BInd checkbox", ()
   }]);
   assertStringIncludes(
     result,
-    "<TransactionsNotRptedOn1099BInd>X</TransactionsNotRptedOn1099BInd>",
+    "<NonDATransNotRptOn1099BOrDAInd>X</NonDATransNotRptOn1099BOrDAInd>",
   );
   assertNotIncludes(result, "<TransRptOn1099BThatShowBssInd>");
   assertNotIncludes(result, "<TransRptOn1099BNotShowBasisInd>");
@@ -395,10 +395,10 @@ Deno.test("one Box A and one Box D: both ShortTerm and LongTerm groups emitted",
 });
 
 // ---------------------------------------------------------------------------
-// Section 9: Part G grouped with A, Part J grouped with D
+// Section 9: Digital-asset boxes retain their separate groups
 // ---------------------------------------------------------------------------
 
-Deno.test("Part G transaction: grouped in ShortTermCapitalGainAndLossGrp with TransRptOn1099BThatShowBssInd", () => {
+Deno.test("Part G transaction: uses the 1099-DA basis-reported checkbox", () => {
   const result = form8949.build([{
     part: "G",
     description: "Digital asset G",
@@ -412,12 +412,12 @@ Deno.test("Part G transaction: grouped in ShortTermCapitalGainAndLossGrp with Tr
   assertStringIncludes(result, "<ShortTermCapitalGainAndLossGrp>");
   assertStringIncludes(
     result,
-    "<TransRptOn1099BThatShowBssInd>X</TransRptOn1099BThatShowBssInd>",
+    "<TransRptOn1099DAThatShowBssInd>X</TransRptOn1099DAThatShowBssInd>",
   );
   assertNotIncludes(result, "<LongTermCapitalGainAndLossGrp>");
 });
 
-Deno.test("Part G and Part A transactions grouped together in same group", () => {
+Deno.test("Part G and Part A transactions stay in separate short-term groups", () => {
   const result = form8949.build([
     {
       part: "A",
@@ -440,15 +440,15 @@ Deno.test("Part G and Part A transactions grouped together in same group", () =>
       is_long_term: false,
     },
   ]);
-  // Both in same group (one opening tag)
+  // Each printed checkbox needs a separate MeF group.
   const openCount =
     (result.match(/<ShortTermCapitalGainAndLossGrp>/g) || []).length;
-  assertEquals(openCount, 1);
+  assertEquals(openCount, 2);
   assertStringIncludes(result, "<PropertyDesc>Regular A</PropertyDesc>");
   assertStringIncludes(result, "<PropertyDesc>Digital G</PropertyDesc>");
 });
 
-Deno.test("Part J transaction: grouped in LongTermCapitalGainAndLossGrp with TransRptOn1099BThatShowBssInd", () => {
+Deno.test("Part J transaction: uses the long-term 1099-DA basis-reported checkbox", () => {
   const result = form8949.build([{
     part: "J",
     description: "Digital asset J",
@@ -462,7 +462,7 @@ Deno.test("Part J transaction: grouped in LongTermCapitalGainAndLossGrp with Tra
   assertStringIncludes(result, "<LongTermCapitalGainAndLossGrp>");
   assertStringIncludes(
     result,
-    "<TransRptOn1099BThatShowBssInd>X</TransRptOn1099BThatShowBssInd>",
+    "<TransRptOn1099DAThatShowBssInd>X</TransRptOn1099DAThatShowBssInd>",
   );
   assertNotIncludes(result, "<ShortTermCapitalGainAndLossGrp>");
 });
@@ -617,7 +617,7 @@ Deno.test("all 6 categories: each category has its correct checkbox indicator", 
   assertEquals(notReported, 2);
   // 2 no-1099b groups (C short + F long)
   const no1099b =
-    (result.match(/<TransactionsNotRptedOn1099BInd>/g) || []).length;
+    (result.match(/<NonDATransNotRptOn1099BOrDAInd>/g) || []).length;
   assertEquals(no1099b, 2);
 });
 
@@ -648,4 +648,78 @@ Deno.test("short-term groups emitted before long-term groups in XSD order", () =
   const stIdx = result.indexOf("<ShortTermCapitalGainAndLossGrp>");
   const ltIdx = result.indexOf("<LongTermCapitalGainAndLossGrp>");
   assertEquals(stIdx < ltIdx, true);
+});
+
+Deno.test("all twelve TY2025 Form 8949 boxes retain their own MeF checkbox", () => {
+  const boxes = [
+    ["A", "TransRptOn1099BThatShowBssInd"],
+    ["B", "TransRptOn1099BNotShowBasisInd"],
+    ["C", "NonDATransNotRptOn1099BOrDAInd"],
+    ["G", "TransRptOn1099DAThatShowBssInd"],
+    ["H", "TransRptOn1099DANotShowBssInd"],
+    ["I", "DATransNotRptOn1099DAOrBInd"],
+    ["D", "TransRptOn1099BThatShowBssInd"],
+    ["E", "TransRptOn1099BNotShowBasisInd"],
+    ["F", "NonDATransNotRptOn1099BOrDAInd"],
+    ["J", "TransRptOn1099DAThatShowBssInd"],
+    ["K", "TransRptOn1099DANotShowBssInd"],
+    ["L", "DATransNotRptOn1099DAOrBInd"],
+  ] as const;
+  const transactions = boxes.map(([part], index) => ({
+    part,
+    description: `Asset ${part}`,
+    date_acquired: index < 6 ? "2025-01-01" : "2023-01-01",
+    date_sold: "2025-06-01",
+    proceeds: 1000 + index,
+    cost_basis: 500,
+    gain_loss: 500 + index,
+    is_long_term: index >= 6,
+  }));
+  const xml = form8949.build(transactions);
+  assertEquals(
+    (xml.match(/<ShortTermCapitalGainAndLossGrp>/g) ?? []).length,
+    6,
+  );
+  assertEquals((xml.match(/<LongTermCapitalGainAndLossGrp>/g) ?? []).length, 6);
+  const groups = [...xml.matchAll(
+    /<(ShortTermCapitalGainAndLossGrp|LongTermCapitalGainAndLossGrp)>([\s\S]*?)<\/\1>/g,
+  )];
+  assertEquals(groups.length, 12);
+  for (const [index, [part, checkbox]] of boxes.entries()) {
+    assertEquals(
+      groups[index][1],
+      index < 6
+        ? "ShortTermCapitalGainAndLossGrp"
+        : "LongTermCapitalGainAndLossGrp",
+    );
+    assertStringIncludes(groups[index][2], `<${checkbox}>X</${checkbox}>`);
+    assertStringIncludes(
+      groups[index][2],
+      `<PropertyDesc>Asset ${part}</PropertyDesc>`,
+    );
+  }
+  assertNotIncludes(xml, "TransactionsNotRptedOn1099BInd");
+});
+
+Deno.test("Form 8949 MeF rejects unknown boxes and inconsistent term flags", () => {
+  const transaction = {
+    part: "C",
+    description: "Stock",
+    date_acquired: "2025-01-01",
+    date_sold: "2025-06-01",
+    proceeds: 1000,
+    cost_basis: 500,
+    gain_loss: 500,
+    is_long_term: false,
+  };
+  assertThrows(
+    () => form8949.build([{ ...transaction, part: "Z" }]),
+    Error,
+    "unsupported box Z",
+  );
+  assertThrows(
+    () => form8949.build([{ ...transaction, is_long_term: true }]),
+    Error,
+    "conflicts with its holding-period flag",
+  );
 });

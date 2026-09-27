@@ -2,68 +2,55 @@ import type { F8949Transaction } from "../types.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 
-
 type Term = "short" | "long";
-type Basis = "reported" | "not_reported" | "no_1099b";
-
 interface CategoryKey {
   term: Term;
-  basis: Basis;
+  checkbox: string;
 }
 
-// ─── Part -> category mapping ────────────────────────────────────────────────
+// Each 2025 paper checkbox has its own MeF indicator and its own group.
 
 const PART_TO_CATEGORY: Readonly<Record<string, CategoryKey>> = {
-  A: { term: "short", basis: "reported" },
-  G: { term: "short", basis: "reported" },
-  B: { term: "short", basis: "not_reported" },
-  H: { term: "short", basis: "not_reported" },
-  C: { term: "short", basis: "no_1099b" },
-  I: { term: "short", basis: "no_1099b" },
-  D: { term: "long", basis: "reported" },
-  J: { term: "long", basis: "reported" },
-  E: { term: "long", basis: "not_reported" },
-  K: { term: "long", basis: "not_reported" },
-  F: { term: "long", basis: "no_1099b" },
-  L: { term: "long", basis: "no_1099b" },
+  A: { term: "short", checkbox: "TransRptOn1099BThatShowBssInd" },
+  B: { term: "short", checkbox: "TransRptOn1099BNotShowBasisInd" },
+  C: { term: "short", checkbox: "NonDATransNotRptOn1099BOrDAInd" },
+  G: { term: "short", checkbox: "TransRptOn1099DAThatShowBssInd" },
+  H: { term: "short", checkbox: "TransRptOn1099DANotShowBssInd" },
+  I: { term: "short", checkbox: "DATransNotRptOn1099DAOrBInd" },
+  D: { term: "long", checkbox: "TransRptOn1099BThatShowBssInd" },
+  E: { term: "long", checkbox: "TransRptOn1099BNotShowBasisInd" },
+  F: { term: "long", checkbox: "NonDATransNotRptOn1099BOrDAInd" },
+  J: { term: "long", checkbox: "TransRptOn1099DAThatShowBssInd" },
+  K: { term: "long", checkbox: "TransRptOn1099DANotShowBssInd" },
+  L: { term: "long", checkbox: "DATransNotRptOn1099DAOrBInd" },
 };
 
-// Canonical order for group emission: short-term first, then long-term,
-// each in reported -> not_reported -> no_1099b order (XSD document order).
-const GROUP_ORDER: ReadonlyArray<CategoryKey> = [
-  { term: "short", basis: "reported" },
-  { term: "short", basis: "not_reported" },
-  { term: "short", basis: "no_1099b" },
-  { term: "long", basis: "reported" },
-  { term: "long", basis: "not_reported" },
-  { term: "long", basis: "no_1099b" },
+// The XSD permits up to six short-term and six long-term groups in that order.
+const GROUP_ORDER = [
+  "A",
+  "B",
+  "C",
+  "G",
+  "H",
+  "I",
+  "D",
+  "E",
+  "F",
+  "J",
+  "K",
+  "L",
 ];
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
 function categoryKeyOf(part: string): CategoryKey | undefined {
-  return PART_TO_CATEGORY[part.toUpperCase()];
-}
-
-function categoryId(key: CategoryKey): string {
-  return `${key.term}:${key.basis}`;
+  return PART_TO_CATEGORY[part];
 }
 
 function groupWrapper(term: Term): string {
   return term === "short"
     ? "ShortTermCapitalGainAndLossGrp"
     : "LongTermCapitalGainAndLossGrp";
-}
-
-function checkboxElement(basis: Basis): string {
-  switch (basis) {
-    case "reported":
-      return element("TransRptOn1099BThatShowBssInd", "X");
-    case "not_reported":
-      return element("TransRptOn1099BNotShowBasisInd", "X");
-    case "no_1099b":
-      return element("TransactionsNotRptedOn1099BInd", "X");
-  }
 }
 
 function buildAssetGrp(tx: F8949Transaction): string {
@@ -96,7 +83,7 @@ function buildGroup(key: CategoryKey, txs: F8949Transaction[]): string {
     : undefined;
 
   const children: string[] = [
-    checkboxElement(key.basis),
+    element(key.checkbox, "X"),
     ...txs.map(buildAssetGrp),
     element("TotalProceedsSalesPriceAmt", totalProceeds),
     element("TotalCostOrOtherBasisAmt", totalCost),
@@ -118,21 +105,27 @@ function buildIRS8949(transactions: F8949Transaction[]): string {
   const grouped = new Map<string, F8949Transaction[]>();
   for (const tx of transactions) {
     const key = categoryKeyOf(tx.part);
-    if (key === undefined) continue;
-    const id = categoryId(key);
-    const existing = grouped.get(id);
+    if (key === undefined) {
+      throw new Error(`Form 8949 has unsupported box ${tx.part}`);
+    }
+    if (tx.is_long_term !== (key.term === "long")) {
+      throw new Error(
+        `Form 8949 box ${tx.part} conflicts with its holding-period flag`,
+      );
+    }
+    const existing = grouped.get(tx.part);
     if (existing !== undefined) {
-      grouped.set(id, [...existing, tx]);
+      grouped.set(tx.part, [...existing, tx]);
     } else {
-      grouped.set(id, [tx]);
+      grouped.set(tx.part, [tx]);
     }
   }
 
   // Emit groups in canonical XSD order
-  const groupChildren: string[] = GROUP_ORDER.map((key) => {
-    const txs = grouped.get(categoryId(key));
+  const groupChildren: string[] = GROUP_ORDER.map((part) => {
+    const txs = grouped.get(part);
     if (txs === undefined || txs.length === 0) return "";
-    return buildGroup(key, txs);
+    return buildGroup(PART_TO_CATEGORY[part], txs);
   });
 
   return elements("IRS8949", groupChildren);

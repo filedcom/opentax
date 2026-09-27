@@ -22,6 +22,13 @@ TY2025 Form 1040 calculation and MeF export changes are saved on the pushed
 there. No PR, merge, deployment, IRS ATS transmission, or ATS acknowledgment is
 recorded for this work.
 
+The Form 8949 MeF build pass now preserves all twelve TY2025 paper boxes
+separately instead of merging 1099-DA digital-asset categories into 1099-B
+categories. It emits the six short-term groups before the six long-term groups,
+uses the v5.4 checkbox names, and rejects unknown boxes or conflicting term
+flags. The all-boxes XML and local XSD cases are written but unrun. Source
+classification of each transaction and ATS business rules remain open.
+
 The Form 8874 build pass replaces precomputed credit buckets with identified
 qualified equity investments and 2025 credit allowance dates. It computes the 5%
 or 6% current-year credit, rejects duplicated or ineligible date facts, and
