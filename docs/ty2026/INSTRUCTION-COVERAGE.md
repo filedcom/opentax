@@ -4,9 +4,9 @@ Snapshot: September 27, 2026. The [coverage ledger](instruction-coverage.csv)
 checks the expected IRS draft instruction URL for each form in the TY2025 PDF
 surface and additional active inputs. The form slug is a lookup aid, not
 proof that every form has its own instruction booklet. Current result across
-81 entries: **27 pinned 2026 drafts**, **20 URLs serving 2025 instructions**,
+82 entries: **27 pinned 2026 drafts**, **20 URLs serving 2025 instructions**,
 **9 with no draft at the expected URL**, **9 with 2026 instructions embedded
-in their form drafts**, **1 covered by a combined 2026 booklet**, **5 with
+in their form drafts**, **1 covered by a combined 2026 booklet**, **6 with
 current continuous-use instructions**, **5 current older-revision
 form/instruction pairs**, **2 current forms with embedded instructions**, and
 **2 2025 comparators awaiting 2026 revisions**, and **1 current-guidance
@@ -44,6 +44,9 @@ rate and Notice 2026-15 provide current guidance but do not supply a
 TY2026 PDF or MeF shape.
 Form 4255's December 2025 revision is currently served; its full recapture
 columns require the revised 2026 Schedule 2 and current MeF cross-check.
+Form 965-A and its January 2021 instructions remain current. The pinned
+2026 Schedule 2 prints its installment on line 12, while line 15 omits line
+12 from the addition instruction; see the [liability plan](FORM965A-GRAPH.md).
 Form 6252 has its instructions on pages 2–4 of the pinned 2026 draft form;
 some references there still name the old Form 4797 lines, so they need
 final-source reconciliation before coding.
