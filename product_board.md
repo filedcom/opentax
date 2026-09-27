@@ -1138,9 +1138,15 @@ unregistered annual input and Part III XML builder now represent prior deferred
 properties, 2025 dispositions, and eligible-compensation and nongrantor-trust
 distributions. It rejects unsupported pre-June-17-2008 dates and more than
 three distribution rows per category; prior Form 8854 amounts, disposition
-reporting, and payment evidence remain entered source assertions. Exception
-source corroboration, property-character gain/loss routing, PDF, registered MeF
-serialization, source reconciliation, and IRS business rules remain open. An
+reporting, and payment evidence remain entered source assertions. Identified
+Form 8949 transactions now retain a source ID through calculation and MeF
+pending data. The unregistered initial bundle requires a one-to-one match for
+Form 8854 gain properties marked `F8949`, including the deemed-sale date,
+whole-dollar proceeds and basis, and the exclusion adjustment. This is a
+reconciliation check, not an automatic transaction route; Form 8949 losses,
+Form 4797, direct Schedule D, and excluded-item income still need character
+and reporting checks. Exception source corroboration, PDF, registered MeF
+serialization, broader source reconciliation, and IRS business rules remain open. An
 unregistered initial-form bundle now composes Parts I and II in
 XSD order and requires explicit MeF document IDs for native statements and the
 known binary attachments, including deferral hypotheticals, agreement copy,

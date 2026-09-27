@@ -1,9 +1,10 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { QsbsCode, f8949, inputSchema } from "./index.ts";
+import { f8949, inputSchema, QsbsCode } from "./index.ts";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
+import { form8949 } from "../../intermediate/forms/form8949/index.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -22,8 +23,34 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: Record<string, unknown>[]) {
-  return f8949.compute({ taxYear: 2025, formType: "f1040" }, inputSchema.parse({ f8949s: items }));
+  const ctx = { taxYear: 2025, formType: "f1040" } as const;
+  const source = f8949.compute(ctx, inputSchema.parse({ f8949s: items }));
+  return {
+    outputs: source.outputs.flatMap((item) =>
+      item.nodeType === form8949.nodeType
+        ? form8949.compute(ctx, form8949.inputSchema.parse(item.fields)).outputs
+        : [item]
+    ),
+  };
 }
+
+Deno.test("direct Form 8949 input deposits an identified transaction for MeF before Schedule D", () => {
+  const source = f8949.compute(
+    { taxYear: 2025, formType: "f1040" },
+    inputSchema.parse({
+      f8949s: [minimalItem({ source_transaction_id: "deemed-sale-1" })],
+    }),
+  );
+  assertEquals(
+    source.outputs.some((item) => item.nodeType === schedule_d.nodeType),
+    false,
+  );
+  const transaction = fieldsOf(source.outputs, form8949)!.transaction as Record<
+    string,
+    unknown
+  >;
+  assertEquals(transaction.source_transaction_id, "deemed-sale-1");
+});
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
@@ -43,13 +70,19 @@ Deno.test("schema: rejects invalid part value 'Z'", () => {
 
 Deno.test("schema: zero proceeds (worthless security) — gain_loss equals negative cost_basis", () => {
   const result = compute([minimalItem({ proceeds: 0, cost_basis: 1000 })]);
-  const tx = (fieldsOf(result.outputs, schedule_d)!.transaction as Record<string, unknown>);
+  const tx = fieldsOf(result.outputs, schedule_d)!.transaction as Record<
+    string,
+    unknown
+  >;
   assertEquals(tx.gain_loss, -1000);
 });
 
 Deno.test("schema: zero cost_basis (written option expired) — gain_loss equals proceeds", () => {
   const result = compute([minimalItem({ proceeds: 500, cost_basis: 0 })]);
-  const tx = (fieldsOf(result.outputs, schedule_d)!.transaction as Record<string, unknown>);
+  const tx = fieldsOf(result.outputs, schedule_d)!.transaction as Record<
+    string,
+    unknown
+  >;
   assertEquals(tx.gain_loss, 500);
 });
 
@@ -58,19 +91,28 @@ Deno.test("schema: zero cost_basis (written option expired) — gain_loss equals
 // ---------------------------------------------------------------------------
 
 Deno.test("routing: part A routes to schedule_d with is_long_term=false", () => {
-  const tx = fieldsOf(compute([minimalItem({ part: "A" })]).outputs, schedule_d)!.transaction as Record<string, unknown>;
+  const tx = fieldsOf(
+    compute([minimalItem({ part: "A" })]).outputs,
+    schedule_d,
+  )!.transaction as Record<string, unknown>;
   assertEquals(tx.is_long_term, false);
   assertEquals(tx.part, "A");
 });
 
 Deno.test("routing: part B routes to schedule_d with is_long_term=false", () => {
-  const tx = fieldsOf(compute([minimalItem({ part: "B" })]).outputs, schedule_d)!.transaction as Record<string, unknown>;
+  const tx = fieldsOf(
+    compute([minimalItem({ part: "B" })]).outputs,
+    schedule_d,
+  )!.transaction as Record<string, unknown>;
   assertEquals(tx.is_long_term, false);
   assertEquals(tx.part, "B");
 });
 
 Deno.test("routing: part C routes to schedule_d with is_long_term=false", () => {
-  const tx = fieldsOf(compute([minimalItem({ part: "C" })]).outputs, schedule_d)!.transaction as Record<string, unknown>;
+  const tx = fieldsOf(
+    compute([minimalItem({ part: "C" })]).outputs,
+    schedule_d,
+  )!.transaction as Record<string, unknown>;
   assertEquals(tx.is_long_term, false);
   assertEquals(tx.part, "C");
 });
@@ -80,58 +122,88 @@ Deno.test("routing: part C routes to schedule_d with is_long_term=false", () => 
 // ---------------------------------------------------------------------------
 
 Deno.test("routing: part D routes to schedule_d with is_long_term=true", () => {
-  const tx = fieldsOf(compute([minimalItem({ part: "D", date_acquired: "2023-01-01" })]).outputs, schedule_d)!.transaction as Record<string, unknown>;
+  const tx = fieldsOf(
+    compute([minimalItem({ part: "D", date_acquired: "2023-01-01" })]).outputs,
+    schedule_d,
+  )!.transaction as Record<string, unknown>;
   assertEquals(tx.is_long_term, true);
   assertEquals(tx.part, "D");
 });
 
 Deno.test("routing: part E routes to schedule_d with is_long_term=true", () => {
-  const tx = fieldsOf(compute([minimalItem({ part: "E", date_acquired: "2023-06-01" })]).outputs, schedule_d)!.transaction as Record<string, unknown>;
+  const tx = fieldsOf(
+    compute([minimalItem({ part: "E", date_acquired: "2023-06-01" })]).outputs,
+    schedule_d,
+  )!.transaction as Record<string, unknown>;
   assertEquals(tx.is_long_term, true);
   assertEquals(tx.part, "E");
 });
 
 Deno.test("routing: part F routes to schedule_d with is_long_term=true", () => {
-  const tx = fieldsOf(compute([minimalItem({ part: "F", date_acquired: "2020-05-01" })]).outputs, schedule_d)!.transaction as Record<string, unknown>;
+  const tx = fieldsOf(
+    compute([minimalItem({ part: "F", date_acquired: "2020-05-01" })]).outputs,
+    schedule_d,
+  )!.transaction as Record<string, unknown>;
   assertEquals(tx.is_long_term, true);
   assertEquals(tx.part, "F");
 });
 
 // Digital asset short-term parts G, H, I
 Deno.test("routing: part G (digital asset, basis reported, short-term) is_long_term=false", () => {
-  const tx = fieldsOf(compute([minimalItem({ part: "G" })]).outputs, schedule_d)!.transaction as Record<string, unknown>;
+  const tx = fieldsOf(
+    compute([minimalItem({ part: "G" })]).outputs,
+    schedule_d,
+  )!.transaction as Record<string, unknown>;
   assertEquals(tx.is_long_term, false);
 });
 
 Deno.test("routing: part H (digital asset, basis not reported, short-term) is_long_term=false", () => {
-  const tx = fieldsOf(compute([minimalItem({ part: "H" })]).outputs, schedule_d)!.transaction as Record<string, unknown>;
+  const tx = fieldsOf(
+    compute([minimalItem({ part: "H" })]).outputs,
+    schedule_d,
+  )!.transaction as Record<string, unknown>;
   assertEquals(tx.is_long_term, false);
 });
 
 Deno.test("routing: part I (no 1099-DA, short-term digital asset) is_long_term=false", () => {
-  const tx = fieldsOf(compute([minimalItem({ part: "I" })]).outputs, schedule_d)!.transaction as Record<string, unknown>;
+  const tx = fieldsOf(
+    compute([minimalItem({ part: "I" })]).outputs,
+    schedule_d,
+  )!.transaction as Record<string, unknown>;
   assertEquals(tx.is_long_term, false);
 });
 
 // Digital asset long-term parts J, K, L
 Deno.test("routing: part J (digital asset, basis reported, long-term) is_long_term=true", () => {
-  const tx = fieldsOf(compute([minimalItem({ part: "J", date_acquired: "2022-01-01" })]).outputs, schedule_d)!.transaction as Record<string, unknown>;
+  const tx = fieldsOf(
+    compute([minimalItem({ part: "J", date_acquired: "2022-01-01" })]).outputs,
+    schedule_d,
+  )!.transaction as Record<string, unknown>;
   assertEquals(tx.is_long_term, true);
 });
 
 Deno.test("routing: part K (digital asset, basis not reported, long-term) is_long_term=true", () => {
-  const tx = fieldsOf(compute([minimalItem({ part: "K", date_acquired: "2022-03-01" })]).outputs, schedule_d)!.transaction as Record<string, unknown>;
+  const tx = fieldsOf(
+    compute([minimalItem({ part: "K", date_acquired: "2022-03-01" })]).outputs,
+    schedule_d,
+  )!.transaction as Record<string, unknown>;
   assertEquals(tx.is_long_term, true);
 });
 
 Deno.test("routing: part L (no 1099-DA, long-term digital asset) is_long_term=true", () => {
-  const tx = fieldsOf(compute([minimalItem({ part: "L", date_acquired: "2022-06-01" })]).outputs, schedule_d)!.transaction as Record<string, unknown>;
+  const tx = fieldsOf(
+    compute([minimalItem({ part: "L", date_acquired: "2022-06-01" })]).outputs,
+    schedule_d,
+  )!.transaction as Record<string, unknown>;
   assertEquals(tx.is_long_term, true);
 });
 
 // Zero gain/loss still routes to schedule_d
 Deno.test("routing: zero gain (proceeds = cost_basis, no adjustment) still routes to schedule_d with gain_loss=0", () => {
-  const tx = fieldsOf(compute([minimalItem({ proceeds: 1000, cost_basis: 1000 })]).outputs, schedule_d)!.transaction as Record<string, unknown>;
+  const tx = fieldsOf(
+    compute([minimalItem({ proceeds: 1000, cost_basis: 1000 })]).outputs,
+    schedule_d,
+  )!.transaction as Record<string, unknown>;
   assertEquals(tx.gain_loss, 0);
 });
 
@@ -456,7 +528,10 @@ Deno.test("inherited: INHERITED date_acquired with Part II part is_long_term=tru
       cost_basis: 400000,
     }),
   ]);
-  const tx = fieldsOf(result.outputs, schedule_d)!.transaction as Record<string, unknown>;
+  const tx = fieldsOf(result.outputs, schedule_d)!.transaction as Record<
+    string,
+    unknown
+  >;
   assertEquals(tx.is_long_term, true);
   assertEquals(tx.date_acquired, "INHERITED");
   assertEquals(tx.gain_loss, 100000);
@@ -482,9 +557,17 @@ Deno.test("inherited: VARIOUS date_acquired is forwarded correctly", () => {
 
 Deno.test("collectibles: long-term Part D still produces schedule_d with correct gain_loss", () => {
   const result = compute([
-    minimalItem({ part: "D", date_acquired: "2022-01-01", proceeds: 5000, cost_basis: 2000 }),
+    minimalItem({
+      part: "D",
+      date_acquired: "2022-01-01",
+      proceeds: 5000,
+      cost_basis: 2000,
+    }),
   ]);
-  const tx = fieldsOf(result.outputs, schedule_d)!.transaction as Record<string, unknown>;
+  const tx = fieldsOf(result.outputs, schedule_d)!.transaction as Record<
+    string,
+    unknown
+  >;
   assertEquals(tx.gain_loss, 3000);
   assertEquals(tx.is_long_term, true);
 });
@@ -608,7 +691,13 @@ Deno.test("state_tax_withheld: accepted by schema, does not route to f1040, sche
   ]);
   assertEquals(findOutput(result, "f1040"), undefined);
   // state tax does not go to federal; schedule_d still carries the gain
-  assertEquals((fieldsOf(result.outputs, schedule_d)!.transaction as Record<string, unknown>).gain_loss, 2000);
+  assertEquals(
+    (fieldsOf(result.outputs, schedule_d)!.transaction as Record<
+      string,
+      unknown
+    >).gain_loss,
+    2000,
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -723,7 +812,10 @@ Deno.test("edge: short sale — date_acquired after date_sold still produces cor
       cost_basis: 4500,
     }),
   ]);
-  const tx = fieldsOf(result.outputs, schedule_d)!.transaction as Record<string, unknown>;
+  const tx = fieldsOf(result.outputs, schedule_d)!.transaction as Record<
+    string,
+    unknown
+  >;
   assertEquals(tx.gain_loss, 500);
   assertEquals(tx.is_long_term, false);
 });
@@ -782,7 +874,12 @@ Deno.test("smoke: mixed short-term and long-term transactions in one call", () =
       adjustment_amount: 1000,
     }),
     // Short-term with withholding
-    minimalItem({ part: "B", proceeds: 3000, cost_basis: 2000, federal_withheld: 150 }),
+    minimalItem({
+      part: "B",
+      proceeds: 3000,
+      cost_basis: 2000,
+      federal_withheld: 150,
+    }),
   ]);
 
   const sdOutputs = result.outputs.filter((o) => o.nodeType === "schedule_d");
@@ -797,7 +894,7 @@ Deno.test("smoke: mixed short-term and long-term transactions in one call", () =
         unknown
       >).gain_loss,
   );
-  assertEquals(gains[0], 3000);   // 10000 - 7000
-  assertEquals(gains[1], -2000);  // 5000 - 8000 + 1000
-  assertEquals(gains[2], 1000);   // 3000 - 2000
+  assertEquals(gains[0], 3000); // 10000 - 7000
+  assertEquals(gains[1], -2000); // 5000 - 8000 + 1000
+  assertEquals(gains[2], 1000); // 3000 - 2000
 });

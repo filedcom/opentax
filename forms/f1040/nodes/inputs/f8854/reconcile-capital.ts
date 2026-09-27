@@ -1,0 +1,107 @@
+import { inputSchema as form8949InputSchema } from "../f8949/index.ts";
+import { dateSchema, type F8854Input, inputSchema } from "./index.ts";
+import {
+  allocateMarkToMarketExclusion,
+  wholeDollarAssets,
+} from "./mark-to-market.ts";
+import { ReportedFormCode } from "./section-c.ts";
+
+function dayBefore(isoDate: string): string {
+  const date = new Date(`${isoDate}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() - 1);
+  return date.toISOString().slice(0, 10);
+}
+
+/** Match each claimed Form 8949 deemed sale to one identified source row. */
+export function reconcileForm8854Form8949Properties(
+  raw8854: F8854Input,
+  raw8949: unknown,
+): { itemId: string; transactionId: string; gainOrLoss: number }[] {
+  const input = inputSchema.parse(raw8854);
+  if (input.section_c === null) return [];
+  const assets = wholeDollarAssets(input.section_c);
+  if (
+    !assets.some((asset) =>
+      asset.reported_form_code === ReportedFormCode.Form8949
+    )
+  ) return [];
+  const form8949 = form8949InputSchema.parse(raw8949);
+  const allocations = allocateMarkToMarketExclusion(assets);
+  const matches = assets.flatMap((asset, index) => {
+    if (asset.reported_form_code !== ReportedFormCode.Form8949) return [];
+    const allocation = allocations[index];
+    if (allocation.builtInGainOrLoss < 0) {
+      throw new Error(
+        `Form 8854 property ${asset.item_id} needs loss-character and deductibility facts`,
+      );
+    }
+    const candidates = form8949.f8949s.filter((transaction) =>
+      transaction.source_transaction_id === asset.reported_transaction_id
+    );
+    if (candidates.length !== 1) {
+      throw new Error(
+        `Form 8854 property ${asset.item_id} needs exactly one identified Form 8949 transaction`,
+      );
+    }
+    const transaction = candidates[0];
+    if (!["C", "F", "I", "L"].includes(transaction.part)) {
+      throw new Error(
+        `Form 8854 property ${asset.item_id} must use a Form 8949 no-information-return category`,
+      );
+    }
+    if (
+      transaction.date_sold !== dayBefore(input.expatriation_date) ||
+      !dateSchema.safeParse(transaction.date_acquired).success ||
+      transaction.date_acquired > transaction.date_sold
+    ) {
+      throw new Error(
+        `Form 8854 property ${asset.item_id} has inconsistent Form 8949 dates`,
+      );
+    }
+    if (
+      !Number.isSafeInteger(transaction.proceeds) ||
+      !Number.isSafeInteger(transaction.cost_basis) ||
+      transaction.proceeds !== asset.fmv_day_before_expatriation ||
+      transaction.cost_basis !== asset.us_adjusted_basis
+    ) {
+      throw new Error(
+        `Form 8854 property ${asset.item_id} does not match Form 8949 proceeds and basis`,
+      );
+    }
+    if (
+      transaction.wash_sale_loss !== undefined ||
+      transaction.loss_not_allowed !== undefined ||
+      transaction.accrued_market_discount !== undefined ||
+      transaction.ordinary_income_portion !== undefined ||
+      transaction.qsbs_code !== undefined ||
+      transaction.qsbs_amount !== undefined
+    ) {
+      throw new Error(
+        `Form 8854 property ${asset.item_id} has additional Form 8949 adjustments requiring separate characterization`,
+      );
+    }
+    const expectedAdjustment = -allocation.exclusionAllocated;
+    if (
+      (transaction.adjustment_codes ?? "") !==
+        (expectedAdjustment < 0 ? "O" : "") ||
+      (transaction.adjustment_amount ?? 0) !== expectedAdjustment
+    ) {
+      throw new Error(
+        `Form 8854 property ${asset.item_id} does not match its Form 8949 exclusion adjustment`,
+      );
+    }
+    const gainOrLoss = transaction.proceeds - transaction.cost_basis +
+      expectedAdjustment;
+    if (gainOrLoss !== allocation.gainAfterExclusion) {
+      throw new Error(
+        `Form 8854 property ${asset.item_id} does not match Form 8949 recognized gain`,
+      );
+    }
+    return [{
+      itemId: asset.item_id,
+      transactionId: asset.reported_transaction_id,
+      gainOrLoss,
+    }];
+  });
+  return matches;
+}

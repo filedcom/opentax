@@ -4,6 +4,7 @@ import {
   inputSchema,
 } from "../../../nodes/inputs/f8854/index.ts";
 import { NongrantorTrustTreatment } from "../../../nodes/inputs/f8854/section-c.ts";
+import { reconcileForm8854Form8949Properties } from "../../../nodes/inputs/f8854/reconcile-capital.ts";
 import {
   buildForm8854BalanceSheet,
   buildForm8854BalanceSheetStatements,
@@ -101,8 +102,10 @@ function validateIds(
 export function buildForm8854InitialBundle(
   rawInput: F8854Input,
   ids: Form8854InitialDocumentIds,
+  reportingSources: { form8949: unknown },
 ): { formXml: string; nativeStatements: Form8854NativeStatement[] } {
   const input = inputSchema.parse(rawInput);
+  reconcileForm8854Form8949Properties(input, reportingSources.form8949);
   const changeXml = buildForm8854ChangeStatement(input);
   const balanceStatements = buildForm8854BalanceSheetStatements(
     input.balance_sheet,

@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { schedule_d } from "../../aggregation/schedule_d/index.ts";
 import { rate_28_gain_worksheet } from "../../worksheets/rate_28_gain_worksheet/index.ts";
@@ -37,6 +37,7 @@ export enum Form8949Part {
 export const transactionSchema = z.object({
   part: z.nativeEnum(Form8949Part),
   description: z.string(),
+  source_transaction_id: z.string().trim().min(1).optional(),
   date_acquired: z.string(),
   date_sold: z.string(),
   proceeds: z.number().nonnegative(),
@@ -48,6 +49,8 @@ export const transactionSchema = z.object({
   // Collectibles flag (IRC §1(h)(5)) — gain is taxable at 28% max rate.
   // Set when the upstream 1099-B has box3_collectibles=true.
   collectibles: z.boolean().optional(),
+  qsbs_code: z.enum(["Q1", "Q2", "Q3"]).optional(),
+  qsbs_amount: z.number().nonnegative().optional(),
 });
 
 // Executor accumulation pattern: the engine merges repeated NodeOutputs targeting
@@ -61,6 +64,7 @@ export const inputSchema = z.object({
   // Flat transaction fields (alternative to nested transaction object)
   part: z.nativeEnum(Form8949Part).optional(),
   description: z.string().optional(),
+  source_transaction_id: z.string().trim().min(1).optional(),
   date_acquired: z.string().optional(),
   date_sold: z.string().optional(),
   proceeds: z.number().nonnegative().optional(),
@@ -70,6 +74,8 @@ export const inputSchema = z.object({
   gain_loss: z.number().optional(),
   is_long_term: z.boolean().optional(),
   collectibles: z.boolean().optional(),
+  qsbs_code: z.enum(["Q1", "Q2", "Q3"]).optional(),
+  qsbs_amount: z.number().nonnegative().optional(),
 });
 
 type Form8949Input = z.infer<typeof inputSchema>;
@@ -98,6 +104,7 @@ function flatFieldsToTransaction(input: Form8949Input): Transaction[] {
     return [{
       part: input.part,
       description: input.description,
+      source_transaction_id: input.source_transaction_id,
       date_acquired: input.date_acquired,
       date_sold: input.date_sold,
       proceeds: input.proceeds,
@@ -107,6 +114,8 @@ function flatFieldsToTransaction(input: Form8949Input): Transaction[] {
       gain_loss: input.gain_loss,
       is_long_term: input.is_long_term,
       collectibles: input.collectibles,
+      qsbs_code: input.qsbs_code,
+      qsbs_amount: input.qsbs_amount,
     }];
   }
   return [];
@@ -126,10 +135,14 @@ function routeTransaction(tx: Transaction): NodeOutput {
 // Only positive gains are routed (losses don't affect the 28% rate gain worksheet).
 function collectiblesGainOutputs(transactions: Transaction[]): NodeOutput[] {
   const total = transactions
-    .filter((tx) => tx.collectibles === true && tx.is_long_term && tx.gain_loss > 0)
+    .filter((tx) =>
+      tx.collectibles === true && tx.is_long_term && tx.gain_loss > 0
+    )
     .reduce((sum, tx) => sum + tx.gain_loss, 0);
   if (total <= 0) return [];
-  return [output(rate_28_gain_worksheet, { collectibles_gain_from_8949: total })];
+  return [
+    output(rate_28_gain_worksheet, { collectibles_gain_from_8949: total }),
+  ];
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────

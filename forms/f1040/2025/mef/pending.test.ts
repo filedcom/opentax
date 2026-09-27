@@ -15,3 +15,19 @@ Deno.test("MeF pending keeps finalized worksheet context", () => {
   );
   assertEquals(pending.f1040?.line24_total_tax, 900);
 });
+
+Deno.test("MeF pending retains Form 8949 transaction provenance for Form 8854 reconciliation", () => {
+  const transaction = {
+    part: "F",
+    description: "Deemed sale of shares",
+    source_transaction_id: "deemed-sale-1",
+    date_acquired: "2020-01-01",
+    date_sold: "2025-06-30",
+    proceeds: 1000,
+    cost_basis: 500,
+    gain_loss: 500,
+    is_long_term: true,
+  };
+  const pending = buildPending({ form8949: { transaction } });
+  assertEquals(pending.form8949?.[0].source_transaction_id, "deemed-sale-1");
+});

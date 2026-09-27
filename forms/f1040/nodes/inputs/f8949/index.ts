@@ -3,10 +3,14 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
+import {
+  type AtLeastOne,
+  output,
+  TaxNode,
+} from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
-import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
+import { form8949 } from "../../intermediate/forms/form8949/index.ts";
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
@@ -28,6 +32,7 @@ export enum QsbsCode {
 export const itemSchema = z.object({
   part: z.enum(["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"]),
   description: z.string(),
+  source_transaction_id: z.string().trim().min(1).optional(),
   date_acquired: z.string(),
   date_sold: z.string(),
   proceeds: z.number().nonnegative(),
@@ -44,12 +49,16 @@ export const itemSchema = z.object({
   // Accrued market discount (adjustment code D) — taxable as ordinary income,
   // not capital gain; reduces the capital gain reported on the transaction
   accrued_market_discount: z.number().nonnegative().optional()
-    .describe("Accrued market discount included in ordinary income (Form 8949 column (g), code D)"),
+    .describe(
+      "Accrued market discount included in ordinary income (Form 8949 column (g), code D)",
+    ),
   // Ordinary income portion of gain subject to recapture (IRC §1245/§1250) —
   // reduces the capital gain and routes to other income; relevant for depreciable
   // property and real estate sold at a gain
   ordinary_income_portion: z.number().nonnegative().optional()
-    .describe("Portion of gain taxable as ordinary income due to depreciation recapture (IRC §1245/§1250)"),
+    .describe(
+      "Portion of gain taxable as ordinary income due to depreciation recapture (IRC §1245/§1250)",
+    ),
 });
 
 export const inputSchema = z.object({
@@ -96,13 +105,15 @@ function processItem(item: F8949Item): NodeOutput[] {
   const recapture = item.ordinary_income_portion ?? 0;
   const ordinaryIncome = amd + recapture;
 
-  const gainLoss = item.proceeds - item.cost_basis + (adjustmentAmount ?? 0) - ordinaryIncome;
+  const gainLoss = item.proceeds - item.cost_basis + (adjustmentAmount ?? 0) -
+    ordinaryIncome;
 
   const outputs: NodeOutput[] = [
-    output(schedule_d, {
+    output(form8949, {
       transaction: {
         part: item.part,
         description: item.description,
+        source_transaction_id: item.source_transaction_id,
         date_acquired: item.date_acquired,
         date_sold: item.date_sold,
         proceeds: item.proceeds,
@@ -111,24 +122,41 @@ function processItem(item: F8949Item): NodeOutput[] {
         adjustment_amount: adjustmentAmount,
         gain_loss: gainLoss,
         is_long_term: isLongTerm(item),
-        ...(item.qsbs_code ? { qsbs_code: item.qsbs_code, qsbs_amount: item.qsbs_amount } : {}),
+        ...(item.qsbs_code
+          ? { qsbs_code: item.qsbs_code, qsbs_amount: item.qsbs_amount }
+          : {}),
       },
     }),
   ];
 
   if ((item.federal_withheld ?? 0) > 0) {
-    outputs.push(output(f1040, { line25b_withheld_1099: item.federal_withheld! }));
+    outputs.push(
+      output(f1040, { line25b_withheld_1099: item.federal_withheld! }),
+    );
   }
 
-  if (item.amt_cost_basis !== undefined && item.amt_cost_basis !== item.cost_basis) {
-    outputs.push(output(form6251, { other_adjustments: item.amt_cost_basis - item.cost_basis }));
+  if (
+    item.amt_cost_basis !== undefined && item.amt_cost_basis !== item.cost_basis
+  ) {
+    outputs.push(
+      output(form6251, {
+        other_adjustments: item.amt_cost_basis - item.cost_basis,
+      }),
+    );
   }
 
   // Route accrued market discount and §1245/§1250 recapture as ordinary income
   // to Schedule 1 line 8z (other income). Both amounts are already taxed at ordinary
-  // rates and are excluded from the capital gain sent to Schedule D above.
+  // rates and are excluded from the capital gain sent through Form 8949 above.
   if (ordinaryIncome > 0) {
-    outputs.push(output(schedule1, { line8z_other_income: ordinaryIncome } as AtLeastOne<z.infer<typeof schedule1["inputSchema"]>>));
+    outputs.push(
+      output(
+        schedule1,
+        { line8z_other_income: ordinaryIncome } as AtLeastOne<
+          z.infer<typeof schedule1["inputSchema"]>
+        >,
+      ),
+    );
   }
 
   return outputs;
@@ -137,7 +165,12 @@ function processItem(item: F8949Item): NodeOutput[] {
 class F8949Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8949";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule_d, f1040, form6251, schedule1]);
+  readonly outputNodes = new OutputNodes([
+    form8949,
+    f1040,
+    form6251,
+    schedule1,
+  ]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);

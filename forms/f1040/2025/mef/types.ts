@@ -4,6 +4,7 @@ export type { FilerIdentity } from "../../mef/header.ts";
 export interface F8949Transaction {
   part: string;
   description: string;
+  source_transaction_id?: string;
   date_acquired: string;
   date_sold: string;
   proceeds: number;

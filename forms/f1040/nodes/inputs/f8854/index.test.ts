@@ -32,6 +32,7 @@ import {
 } from "../../../2025/mef/forms/f8854_section_d.ts";
 import { calculateSectionDDeferral } from "./section-d.ts";
 import { buildForm8854InitialBundle } from "../../../2025/mef/forms/f8854_initial.ts";
+import { reconcileForm8854Form8949Properties } from "./reconcile-capital.ts";
 
 function asset(
   assetId: string,
@@ -46,6 +47,25 @@ function asset(
     basis_irrevocable_election_h2: false,
     reported_form_code: ReportedFormCode.Form8949,
     reported_transaction_id: `TX-${assetId}`,
+  };
+}
+
+function deemedSale8949(
+  itemId: string,
+  proceeds: number,
+  basis: number,
+  exclusion: number,
+) {
+  return {
+    part: "F" as const,
+    description: `Property ${itemId}`,
+    source_transaction_id: `TX-${itemId}`,
+    date_acquired: "2020-01-01",
+    date_sold: "2025-06-14",
+    proceeds,
+    cost_basis: basis,
+    adjustment_codes: exclusion > 0 ? "O" : undefined,
+    adjustment_amount: exclusion > 0 ? -exclusion : undefined,
   };
 }
 
@@ -1117,6 +1137,7 @@ Deno.test("Form 8854 initial bundle assembles Parts I and II without pretending 
       sectionC: {},
       binaryAttachments: [],
     },
+    { form8949: undefined },
   );
   assertStringIncludes(noncovered.formXml, '<IRS8854 documentId="DOC-8854">');
   assertStringIncludes(
@@ -1135,16 +1156,31 @@ Deno.test("Form 8854 initial bundle assembles Parts I and II without pretending 
   );
   assertEquals(noncovered.nativeStatements.length, 0);
 
+  const coveredInput = inputSchema.parse(input({
+    balance_sheet: balanceSheetWithNetWorth(2_000_000),
+    section_c: sectionC([asset("stock", 1_000_000, 100_000)]),
+  }));
+  const coveredIds = {
+    form: "DOC-8854-C",
+    balanceSheet: {},
+    sectionC: { computation: "DOC-COMP" },
+    binaryAttachments: [],
+  };
+  assertThrows(
+    () =>
+      buildForm8854InitialBundle(coveredInput, coveredIds, {
+        form8949: undefined,
+      }),
+    Error,
+    "needs exactly one identified Form 8949 transaction",
+  );
   const covered = buildForm8854InitialBundle(
-    inputSchema.parse(input({
-      balance_sheet: balanceSheetWithNetWorth(2_000_000),
-      section_c: sectionC([asset("stock", 1_000_000, 100_000)]),
-    })),
+    coveredInput,
+    coveredIds,
     {
-      form: "DOC-8854-C",
-      balanceSheet: {},
-      sectionC: { computation: "DOC-COMP" },
-      binaryAttachments: [],
+      form8949: {
+        f8949s: [deemedSale8949("stock", 1_000_000, 100_000, 890_000)],
+      },
     },
   );
   assertStringIncludes(covered.formXml, "<PropertyOwnedDtExpatriationGrp>");
@@ -1172,16 +1208,24 @@ Deno.test("Form 8854 initial bundle requires actual IDs for election PDFs", () =
     },
     binaryAttachments: ["DOC-HYP-WITH", "DOC-HYP-WITHOUT", "DOC-AGREEMENT"],
   };
+  const reportingSources = {
+    form8949: {
+      f8949s: [
+        deemedSale8949("business", 2_000_000, 200_000, 801_000),
+        deemedSale8949("stock", 1_000_000, 800_000, 89_000),
+      ],
+    },
+  };
   assertThrows(
     () =>
       buildForm8854InitialBundle(parsed, {
         ...ids,
         binaryAttachments: ["DOC-HYP-WITH", "DOC-HYP-WITHOUT"],
-      }),
+      }, reportingSources),
     Error,
     "needs binary attachment DOC-AGREEMENT",
   );
-  const bundle = buildForm8854InitialBundle(parsed, ids);
+  const bundle = buildForm8854InitialBundle(parsed, ids, reportingSources);
   assertStringIncludes(
     bundle.formXml,
     'referenceDocumentId="DOC-HYP-WITH DOC-HYP-WITHOUT DOC-AGREEMENT" referenceDocumentName="BinaryAttachment"',
@@ -1196,7 +1240,7 @@ Deno.test("Form 8854 initial bundle requires actual IDs for election PDFs", () =
       buildForm8854InitialBundle(parsed, {
         ...ids,
         binaryAttachments: [...ids.binaryAttachments, "DOC-AGREEMENT"],
-      }),
+      }, reportingSources),
     Error,
     "document IDs must be unique",
   );
@@ -1239,11 +1283,13 @@ Deno.test("Form 8854 trust full-value election requires a linked valuation rulin
       buildForm8854InitialBundle(parsed, {
         ...ids,
         binaryAttachments: [],
-      }),
+      }, { form8949: undefined }),
     Error,
     "needs binary attachment DOC-RULING",
   );
-  const bundle = buildForm8854InitialBundle(parsed, ids);
+  const bundle = buildForm8854InitialBundle(parsed, ids, {
+    form8949: undefined,
+  });
   assertStringIncludes(
     bundle.formXml,
     "<Section877AElectionInd>X</Section877AElectionInd>",
@@ -1252,6 +1298,71 @@ Deno.test("Form 8854 trust full-value election requires a linked valuation rulin
   assertEquals(bundle.nativeStatements.map((row) => row.documentName), [
     "NongrantorTrustStatement",
   ]);
+});
+
+Deno.test("Form 8854 gain property matches one identified Form 8949 deemed sale", () => {
+  const parsed = inputSchema.parse(input({
+    balance_sheet: balanceSheetWithNetWorth(2_000_000),
+    section_c: sectionC([asset("stock", 1_000_000, 100_000)]),
+  }));
+  const transaction = {
+    part: "F",
+    description: "Property stock",
+    source_transaction_id: "TX-stock",
+    date_acquired: "2020-01-01",
+    date_sold: "2025-06-14",
+    proceeds: 1_000_000,
+    cost_basis: 100_000,
+    adjustment_codes: "O",
+    adjustment_amount: -890_000,
+  };
+  assertEquals(
+    reconcileForm8854Form8949Properties(parsed, { f8949s: [transaction] }),
+    [{ itemId: "stock", transactionId: "TX-stock", gainOrLoss: 10_000 }],
+  );
+  for (
+    const bad of [
+      { ...transaction, source_transaction_id: undefined },
+      { ...transaction, date_sold: "2025-06-15" },
+      { ...transaction, proceeds: 999_999 },
+      { ...transaction, adjustment_amount: -889_999 },
+      { ...transaction, part: "A" },
+    ]
+  ) {
+    assertThrows(() =>
+      reconcileForm8854Form8949Properties(parsed, { f8949s: [bad] })
+    );
+  }
+  assertThrows(
+    () =>
+      reconcileForm8854Form8949Properties(parsed, {
+        f8949s: [transaction, transaction],
+      }),
+    Error,
+    "exactly one identified Form 8949 transaction",
+  );
+});
+
+Deno.test("Form 8854 capital reconciliation refuses uncharacterized losses and duplicated IDs", () => {
+  assertEquals(
+    inputSchema.safeParse(input({
+      balance_sheet: balanceSheetWithNetWorth(2_000_000),
+      section_c: sectionC([
+        asset("one", 1_000_000, 100_000),
+        asset("two", 1_000_000, 100_000),
+      ].map((row) => ({ ...row, reported_transaction_id: "SAME" }))),
+    })).success,
+    false,
+  );
+  const parsed = inputSchema.parse(input({
+    balance_sheet: balanceSheetWithNetWorth(2_000_000),
+    section_c: sectionC([asset("loss", 100, 200)]),
+  }));
+  assertThrows(
+    () => reconcileForm8854Form8949Properties(parsed, { f8949s: [] }),
+    Error,
+    "needs loss-character and deductibility facts",
+  );
 });
 
 Deno.test("Form 8854 does not turn deemed gain into a dollar-for-dollar Schedule 2 tax", () => {

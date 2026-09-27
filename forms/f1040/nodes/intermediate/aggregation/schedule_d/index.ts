@@ -37,6 +37,7 @@ const LONG_TERM_PARTS = new Set(["D", "E", "F", "J", "K", "L"]);
 const transactionSchema = z.object({
   part: z.enum(["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"]),
   description: z.string(),
+  source_transaction_id: z.string().trim().min(1).optional(),
   date_acquired: z.string(),
   date_sold: z.string(),
   proceeds: z.number().nonnegative(),
@@ -45,6 +46,8 @@ const transactionSchema = z.object({
   adjustment_amount: z.number().optional(),
   gain_loss: z.number(),
   is_long_term: z.boolean(),
+  qsbs_code: z.enum(["Q1", "Q2", "Q3"]).optional(),
+  qsbs_amount: z.number().nonnegative().optional(),
 });
 
 // d_screen transaction schema — gain_loss is computed from proceeds/cost/adjustment_amount
