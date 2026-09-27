@@ -112,6 +112,14 @@ P0_NODES = {
 }
 P1_NODES = {"form_1116"}
 
+# Keep the catch-up ledger tied to the explicit route-owner table. This is
+# only a plan reference, never a verified 2026 disposition.
+boundary_table = "\n".join(
+    line for line in (OUT / "NODE-BOUNDARY-AUDIT.md").read_text().splitlines()
+    if line.startswith("| ") and line.count("`") > 0
+)
+BOUNDARY_NODES = set(re.findall(r"`([^`]+)`", boundary_table))
+
 manifest = json.loads((OUT / "corpus/manifest.json").read_text())
 drafts = {Path(f["path"]).stem for f in manifest["files"]
           if f["kind"] == "draft-form" and f["status"] == "downloaded"}
@@ -204,11 +212,17 @@ for line in body.splitlines():
         "priority": "P0" if node_type in P0_NODES else "P1" if mentions or node_type in P1_NODES else "P2",
         "2026_disposition": "audit-required",
         "progress_or_next_action": NODE_PROGRESS.get(
-            node_type, "verify 2026 law, node outputs, and graph route"
+            node_type,
+            "route owner in NODE-BOUNDARY-AUDIT.md; verify 2026 authority, "
+            "node outputs, PDF/MeF filing and full-return test"
+            if node_type in BOUNDARY_NODES
+            else "verify 2026 law, node outputs, and graph route",
         ),
     })
 if len({row["node_type"] for row in node_rows}) != len(node_rows):
     raise RuntimeError("Duplicate node in TY2025 registry inventory")
+if not BOUNDARY_NODES <= {row["node_type"] for row in node_rows}:
+    raise RuntimeError("Boundary plan names a node outside the TY2025 registry")
 with (OUT / "node-coverage.csv").open("w", newline="") as handle:
     writer = csv.DictWriter(handle, fieldnames=list(node_rows[0]), lineterminator="\n")
     writer.writeheader()
