@@ -105,6 +105,52 @@ const statementInput = initialSchema.parse({
   },
 });
 
+const coveredCapitalInput = initialSchema.parse({
+  ...noncoveredInput,
+  balance_sheet: {
+    ...noncoveredInput.balance_sheet,
+    cash_and_bank_deposits: {
+      fair_market_value: 1_000_000,
+      us_adjusted_basis: 1_000_000,
+    },
+    marketable_us_securities: {
+      fair_market_value: 1_000_000,
+      us_adjusted_basis: 100_000,
+    },
+  },
+  section_c: {
+    property_inventory_confirmed_complete: true,
+    mark_to_market_assets: [{
+      item_id: "stock",
+      description: "100 shares of stock",
+      fmv_day_before_expatriation: 1_000_000,
+      us_adjusted_basis: 100_000,
+      basis_irrevocable_election_h2: false,
+      reported_form_code: ReportedFormCode.Form8949,
+      reported_transaction_id: "TX-STOCK",
+      form8949_standard_holding_period_confirmed: true,
+    }],
+    eligible_deferred_compensation: [],
+    ineligible_deferred_compensation: [],
+    specified_tax_deferred_accounts: [],
+    nongrantor_trust_interests: [],
+  },
+});
+
+const coveredCapitalTransaction = {
+  part: "F",
+  description: "100 shares of stock",
+  source_transaction_id: "TX-STOCK",
+  date_acquired: "2020-01-01",
+  date_sold: "2025-06-14",
+  proceeds: 1_000_000,
+  cost_basis: 100_000,
+  adjustment_codes: "O",
+  adjustment_amount: -890_000,
+  gain_loss: 10_000,
+  is_long_term: true,
+};
+
 const annualNoActivityInput = annualInputSchema.parse({
   expatriation_date: "2020-06-15",
   expatriate_type: ExpatriateType.CITIZEN,
@@ -162,7 +208,7 @@ Deno.test("noncovered initial Form 8854 is attached to the Form 1040 return", ()
   );
 });
 
-Deno.test("registered Form 8854 path refuses covered cases", () => {
+Deno.test("registered Form 8854 path refuses covered cases without Section C", () => {
   assertThrows(
     () =>
       form8854.build({
@@ -176,7 +222,80 @@ Deno.test("registered Form 8854 path refuses covered cases", () => {
         },
       }),
     Error,
-    "reconciled income forms and attachments",
+    "reconciled income forms for non-Form 8949 Section C items",
+  );
+});
+
+Deno.test("covered Form 8854 with reconciled Form 8949 property reaches full return", () => {
+  const xml = buildMefXml({
+    f1040: { filing_status: "single" },
+    f8854: coveredCapitalInput,
+    form8949: [coveredCapitalTransaction],
+  }, filer);
+  assertStringIncludes(xml, "<IRS8854 documentId=");
+  assertStringIncludes(xml, "<IRS8949 documentId=");
+  assertStringIncludes(xml, "<Form8854ComputationStatement documentId=");
+  assertStringIncludes(
+    xml,
+    "<GainAfterAllocationExclAmt>10000</GainAfterAllocationExclAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    'referenceDocumentName="Form8854ComputationStatement"',
+  );
+});
+
+Deno.test("covered Form 8854 filing rejects absent or unmatched Form 8949 rows", () => {
+  for (
+    const form8949 of [
+      undefined,
+      [{ ...coveredCapitalTransaction, proceeds: 999_999 }],
+    ]
+  ) {
+    assertThrows(() =>
+      buildMefXml({
+        f1040: { filing_status: "single" },
+        f8854: coveredCapitalInput,
+        form8949,
+      }, filer)
+    );
+  }
+});
+
+Deno.test("covered Form 8854 filing keeps noncapital Section C blocked", () => {
+  assertThrows(
+    () =>
+      form8854.build({
+        ...coveredCapitalInput,
+        section_c: {
+          ...coveredCapitalInput.section_c!,
+          mark_to_market_assets: [{
+            ...coveredCapitalInput.section_c!.mark_to_market_assets[0],
+            reported_form_code: ReportedFormCode.Form4797,
+            form8949_standard_holding_period_confirmed: undefined,
+          }],
+        },
+      }),
+    Error,
+    "reconciled income forms for non-Form 8949 Section C items",
+  );
+  assertThrows(
+    () =>
+      form8854.build({
+        ...coveredCapitalInput,
+        section_c: {
+          ...coveredCapitalInput.section_c!,
+          eligible_deferred_compensation: [{
+            item_id: "deferred-pay",
+            description: "Deferred compensation",
+            payor_eligible_under_877a_d1: true,
+            w8ce_payor_notification_confirmed: true,
+            irrevocable_treaty_waiver_confirmed: true,
+          }],
+        },
+      }),
+    Error,
+    "reconciled income forms for non-Form 8949 Section C items",
   );
 });
 
@@ -425,6 +544,35 @@ Deno.test({
   sanitizeResources: false,
 }, async () => {
   await validate8854(buildForm8854Annual(annualNoActivityInput));
+});
+
+Deno.test({
+  name: "XSD: covered initial Form 8854 with filed Form 8949 property",
+  ignore: !xsdAvailable,
+  sanitizeOps: false,
+  sanitizeResources: false,
+}, async () => {
+  const xml = buildMefXml({
+    f1040: { filing_status: "single" },
+    f8854: coveredCapitalInput,
+    form8949: [coveredCapitalTransaction],
+  }, filer);
+  const xsd = new URL(
+    "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    import.meta.url,
+  ).pathname;
+  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(path, xml);
+    const result = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsd, path],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
+  } finally {
+    await Deno.remove(path);
+  }
 });
 
 Deno.test({

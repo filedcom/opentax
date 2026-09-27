@@ -1169,9 +1169,15 @@ holding-period rules remain blocked rather than inferred from a description.
 These checks are
 written but unrun. This is a reconciliation check, not an automatic transaction
 route; other loss characters, Form 4797, direct Schedule D, and excluded-item
-income still need character and reporting checks. Exception source
-corroboration, PDF, covered and annual-event MeF serialization, broader source
-reconciliation, and IRS business rules remain open. An
+income still need character and reporting checks. The registered initial
+builder now files a covered return when Section C contains only identified
+Form 8949 mark-to-market properties, each reconciled to its filed transaction,
+with no other Section C category and no Section D deferral. Its full-return
+XML, missing-source rejection, and local XSD cases are written but unrun.
+Other covered income categories, binary attachment verification, and annual
+disposition or distribution events remain blocked. Exception source
+corroboration, PDF, broader source reconciliation, and IRS business rules
+remain open. An
 initial-form bundle now composes Parts I and II in
 XSD order and requires explicit MeF document IDs for native statements and the
 known binary attachments, including deferral hypotheticals, agreement copy,
@@ -1188,7 +1194,8 @@ written case unrun. Its discovery order now follows the native Form 8854
 statement roots in ReturnData1040.xsd; the multi-statement order case is
 written but unrun. An ordered-ID linker maps assembler IDs back to the
 statement keys and rejects count or ID collisions. These are now used by the
-registered noncovered path; the cases remain unrun.
+registered noncovered and reconciled capital-only covered paths; the cases
+remain unrun.
 The calculation and rejection cases are
 written but unrun. See the
 [2025 Form 8854 instructions](https://www.irs.gov/instructions/i8854).
