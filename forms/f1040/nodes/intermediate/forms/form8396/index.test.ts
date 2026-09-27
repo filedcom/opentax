@@ -59,18 +59,24 @@ Deno.test("Form 8396 limits a high-rate current credit and keeps the three vinta
 });
 
 Deno.test("Form 8396 does not apply the high-rate cap at exactly 20 percent", () => {
-  assertEquals(calculateForm8396Line3(form8396SourceSchema.parse({
-    ...source,
-    mcc_rate: 0.2,
-  })), 3_000);
+  assertEquals(
+    calculateForm8396Line3(form8396SourceSchema.parse({
+      ...source,
+      mcc_rate: 0.2,
+    })),
+    3_000,
+  );
 });
 
 Deno.test("Form 8396 prorates a high-rate cap for a nonspouse co-owner", () => {
-  assertEquals(calculateForm8396Line3(form8396SourceSchema.parse({
-    ...source,
-    nonspouse_coowner: true,
-    nonspouse_coowner_share: 0.4,
-  })), 800);
+  assertEquals(
+    calculateForm8396Line3(form8396SourceSchema.parse({
+      ...source,
+      nonspouse_coowner: true,
+      nonspouse_coowner_share: 0.4,
+    })),
+    800,
+  );
 });
 
 Deno.test("Form 8396 current credit is used before 2022, 2023, and 2024 carryforwards", () => {
@@ -93,35 +99,67 @@ Deno.test("Form 8396 source routes its line 3 reduction and defers line 9 tax us
     { taxYear: 2025, formType: "f1040" },
     parsed(),
   );
-  assertEquals(result.outputs.find((row) => row.nodeType === "schedule_a")
-    ?.fields.form8396_interest_credit_reduction, 2_000);
-  assertEquals(result.outputs.find((row) => row.nodeType === "schedule3")
-    ?.fields.form8396_source_credit_pending, true);
-  assertEquals(result.outputs.find((row) => row.nodeType === "f1040")
-    ?.fields.form8396_source, parsed());
-  assertEquals(result.outputs.some((row) =>
-    row.fields.line6g_mortgage_interest_credit !== undefined
-  ), false);
+  assertEquals(
+    result.outputs.find((row) => row.nodeType === "schedule_a")
+      ?.fields.form8396_interest_credit_reduction,
+    2_000,
+  );
+  assertEquals(
+    result.outputs.find((row) => row.nodeType === "schedule3")
+      ?.fields.form8396_source_credit_pending,
+    true,
+  );
+  assertEquals(
+    result.outputs.find((row) => row.nodeType === "f1040")
+      ?.fields.form8396_source,
+    parsed(),
+  );
+  assertEquals(
+    result.outputs.some((row) =>
+      row.fields.line6g_mortgage_interest_credit !== undefined
+    ),
+    false,
+  );
 });
 
 Deno.test("Form 8396 rejects unsupported or incomplete MCC claims", () => {
-  for (const invalid of [
-    { ...source, mcc_rate: 0.05 },
-    { ...source, interest_reporting_line: undefined },
-    { ...source, home_is_main_residence: false },
-    { ...source, home_in_issuer_jurisdiction: false },
-    { ...source, interest_paid_to_related_person: true },
-    { ...source, certificate_is_reissued: true },
-    { ...source, nonspouse_coowner: true },
-    { ...source, certificate_issue_date: "2026-01-01" },
-    {
-      ...source,
-      carryforward_vintages: [
-        source.carryforward_vintages[0],
-        source.carryforward_vintages[0],
-      ],
-    },
-  ]) {
+  for (
+    const invalid of [
+      { ...source, mcc_rate: 0.05 },
+      { ...source, interest_reporting_line: undefined },
+      { ...source, home_is_main_residence: false },
+      { ...source, home_in_issuer_jurisdiction: false },
+      { ...source, interest_paid_to_related_person: true },
+      { ...source, certificate_is_reissued: true },
+      { ...source, nonspouse_coowner: true },
+      { ...source, certificate_issue_date: "2026-01-01" },
+      {
+        ...source,
+        qualified_home_address_if_different: {
+          line1: "123 Main St",
+          city: "Austin",
+          state: "ZZ",
+          zip: "78701",
+        },
+      },
+      {
+        ...source,
+        qualified_home_address_if_different: {
+          line1: "123 Main St",
+          city: "Austin",
+          state: "TX",
+          zip: "78701-1234",
+        },
+      },
+      {
+        ...source,
+        carryforward_vintages: [
+          source.carryforward_vintages[0],
+          source.carryforward_vintages[0],
+        ],
+      },
+    ]
+  ) {
     assertEquals(form8396SourceSchema.safeParse(invalid).success, false);
   }
 });

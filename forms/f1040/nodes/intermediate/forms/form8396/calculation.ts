@@ -1,6 +1,77 @@
 import { z } from "zod";
 
 const wholeDollars = z.number().finite().int().nonnegative();
+export enum QualifiedHomeState {
+  AL = "AL",
+  AK = "AK",
+  AS = "AS",
+  AZ = "AZ",
+  AR = "AR",
+  CA = "CA",
+  CO = "CO",
+  MP = "MP",
+  CT = "CT",
+  DE = "DE",
+  DC = "DC",
+  FM = "FM",
+  FL = "FL",
+  GA = "GA",
+  GU = "GU",
+  HI = "HI",
+  ID = "ID",
+  IL = "IL",
+  IN = "IN",
+  IA = "IA",
+  KS = "KS",
+  KY = "KY",
+  LA = "LA",
+  ME = "ME",
+  MH = "MH",
+  MD = "MD",
+  MA = "MA",
+  MI = "MI",
+  MN = "MN",
+  MS = "MS",
+  MO = "MO",
+  MT = "MT",
+  NE = "NE",
+  NV = "NV",
+  NH = "NH",
+  NJ = "NJ",
+  NM = "NM",
+  NY = "NY",
+  NC = "NC",
+  ND = "ND",
+  OH = "OH",
+  OK = "OK",
+  OR = "OR",
+  PW = "PW",
+  PA = "PA",
+  PR = "PR",
+  RI = "RI",
+  SC = "SC",
+  SD = "SD",
+  TN = "TN",
+  TX = "TX",
+  VI = "VI",
+  UT = "UT",
+  VT = "VT",
+  VA = "VA",
+  WA = "WA",
+  WV = "WV",
+  WI = "WI",
+  WY = "WY",
+}
+
+export const qualifiedHomeAddressSchema = z.object({
+  line1: z.string().trim().max(35).regex(/^[A-Za-z0-9]( ?[A-Za-z0-9\-/])*$/),
+  line2: z.string().trim().max(35).regex(/^[A-Za-z0-9]( ?[A-Za-z0-9\-/])*$/)
+    .optional(),
+  city: z.string().trim().max(22).regex(/^([A-Za-z] ?)*[A-Za-z]$/),
+  state: z.nativeEnum(QualifiedHomeState),
+  zip: z.string().regex(/^\d{5}(?:\d{4}|\d{7})?$/),
+}).strict();
+
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
   const parsed = new Date(`${value}T00:00:00Z`);
   return !Number.isNaN(parsed.getTime()) &&
@@ -9,6 +80,7 @@ const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
 
 /** Source facts for the 2025 Form 8396, not a precomputed Schedule 3 credit. */
 export const form8396SourceSchema = z.object({
+  qualified_home_address_if_different: qualifiedHomeAddressSchema.optional(),
   certificate_issuer_name: z.string().trim().min(1),
   certificate_number: z.string().trim().min(1).max(22),
   certificate_issue_date: date,
@@ -23,15 +95,17 @@ export const form8396SourceSchema = z.object({
   certificate_is_reissued: z.boolean().optional(),
   nonspouse_coowner: z.boolean().optional(),
   nonspouse_coowner_share: z.number().finite().positive().lt(1).optional(),
-  carryforward_vintages: z.array(z.object({
-    originating_tax_year: z.union([
-      z.literal(2022),
-      z.literal(2023),
-      z.literal(2024),
-    ]),
-    amount: wholeDollars.refine((value) => value > 0),
-    prior_form8396_reference: z.string().trim().min(1),
-  }).strict()),
+  carryforward_vintages: z.array(
+    z.object({
+      originating_tax_year: z.union([
+        z.literal(2022),
+        z.literal(2023),
+        z.literal(2024),
+      ]),
+      amount: wholeDollars.refine((value) => value > 0),
+      prior_form8396_reference: z.string().trim().min(1),
+    }).strict(),
+  ),
 }).strict().superRefine((source, ctx) => {
   if (source.certificate_issue_date > "2025-12-31") {
     ctx.addIssue({
@@ -60,9 +134,9 @@ export const form8396SourceSchema = z.object({
   }
   if (
     source.nonspouse_coowner === true &&
-    source.nonspouse_coowner_share === undefined ||
+      source.nonspouse_coowner_share === undefined ||
     source.nonspouse_coowner === false &&
-    source.nonspouse_coowner_share !== undefined
+      source.nonspouse_coowner_share !== undefined
   ) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,

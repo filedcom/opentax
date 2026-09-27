@@ -1,15 +1,28 @@
 import { element, elements } from "../../../mef/xml.ts";
 import {
   calculateForm8396,
-  form8396SourceSchema,
   type Form8396Source,
+  form8396SourceSchema,
 } from "../../../nodes/intermediate/forms/form8396/calculation.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 type LineKey =
-  | "line1" | "line2" | "line3" | "line4" | "line5" | "line6"
-  | "line7" | "line8" | "line9" | "line10" | "line12"
-  | "line13" | "line14" | "line15" | "line16" | "line17";
+  | "line1"
+  | "line2"
+  | "line3"
+  | "line4"
+  | "line5"
+  | "line6"
+  | "line7"
+  | "line8"
+  | "line9"
+  | "line10"
+  | "line12"
+  | "line13"
+  | "line14"
+  | "line15"
+  | "line16"
+  | "line17";
 
 type Input = Partial<Form8396Source> & Partial<Record<LineKey, number>> & {
   credit_limit_worksheet_line1?: number;
@@ -17,6 +30,7 @@ type Input = Partial<Form8396Source> & Partial<Record<LineKey, number>> & {
 } & Record<string, unknown>;
 
 const SOURCE_KEYS = [
+  "qualified_home_address_if_different",
   "certificate_issuer_name",
   "certificate_number",
   "certificate_issue_date",
@@ -109,6 +123,24 @@ export const form8396: MefFormDescriptor<"form8396", Input> = {
     const { source, lines } = reconciledLines(fields);
     checkFiledCredit(lines.line9, context);
     return elements("IRS8396", [
+      source.qualified_home_address_if_different
+        ? elements("QlfyMortgageCertUSAddress", [
+          element(
+            "AddressLine1Txt",
+            source.qualified_home_address_if_different.line1,
+          ),
+          element(
+            "AddressLine2Txt",
+            source.qualified_home_address_if_different.line2,
+          ),
+          element("CityNm", source.qualified_home_address_if_different.city),
+          element(
+            "StateAbbreviationCd",
+            source.qualified_home_address_if_different.state,
+          ),
+          element("ZIPCd", source.qualified_home_address_if_different.zip),
+        ])
+        : "",
       element("MortgSbsdyCertIssuerAgencyNm", source.certificate_issuer_name),
       element("MortgageCreditCertificateNum", source.certificate_number),
       element("MortgCrCertificateIssueDt", source.certificate_issue_date),

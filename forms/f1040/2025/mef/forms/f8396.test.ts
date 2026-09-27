@@ -2,10 +2,17 @@ import { assertStringIncludes, assertThrows } from "@std/assert";
 import {
   calculateForm8396,
   form8396SourceSchema,
+  QualifiedHomeState,
 } from "../../../nodes/intermediate/forms/form8396/calculation.ts";
 import { form8396 } from "./f8396.ts";
 
 const source = form8396SourceSchema.parse({
+  qualified_home_address_if_different: {
+    line1: "123 Main St",
+    city: "Austin",
+    state: QualifiedHomeState.TX,
+    zip: "78701",
+  },
   certificate_issuer_name: "Austin Housing Finance Corporation",
   certificate_number: "MCC-2022-104",
   certificate_issue_date: "2022-03-15",
@@ -35,6 +42,10 @@ Deno.test("Form 8396 XML carries source, allowed credit, and vintage carryforwar
   const xml = form8396.build(fields, {
     pending: { schedule3: { line6g_mortgage_interest_credit: 1_100 } },
   });
+  assertStringIncludes(
+    xml,
+    "<QlfyMortgageCertUSAddress><AddressLine1Txt>123 Main St</AddressLine1Txt><CityNm>Austin</CityNm><StateAbbreviationCd>TX</StateAbbreviationCd><ZIPCd>78701</ZIPCd></QlfyMortgageCertUSAddress>",
+  );
   assertStringIncludes(
     xml,
     "<MortgSbsdyCertIssuerAgencyNm>Austin Housing Finance Corporation</MortgSbsdyCertIssuerAgencyNm>",
@@ -68,9 +79,10 @@ Deno.test("Form 8396 XML rejects line 9 and Schedule 3 mismatches", () => {
     "line9 differs from its source calculation",
   );
   assertThrows(
-    () => form8396.build(fields, {
-      pending: { schedule3: { line6g_mortgage_interest_credit: 1_000 } },
-    }),
+    () =>
+      form8396.build(fields, {
+        pending: { schedule3: { line6g_mortgage_interest_credit: 1_000 } },
+      }),
     Error,
     "differs from Schedule 3 line 6g",
   );

@@ -26,6 +26,7 @@ import { calculateForm8874Recapture } from "../../nodes/inputs/f8874/recapture_n
 import {
   calculateForm8396,
   form8396SourceSchema,
+  QualifiedHomeState,
 } from "../../nodes/intermediate/forms/form8396/calculation.ts";
 import { BondType } from "../../nodes/inputs/f8912/index.ts";
 import { SS_WAGE_BASE_2025 } from "../../nodes/config/2025.ts";
@@ -514,6 +515,12 @@ Deno.test({
   ignore: !xsdAvailable,
 }, async () => {
   const source = form8396SourceSchema.parse({
+    qualified_home_address_if_different: {
+      line1: "123 Main St",
+      city: "Austin",
+      state: QualifiedHomeState.TX,
+      zip: "78701",
+    },
     certificate_issuer_name: "Austin Housing Finance Corporation",
     certificate_number: "MCC-2022-104",
     certificate_issue_date: "2022-03-15",
@@ -555,7 +562,10 @@ Deno.test({
       credit_limit_worksheet_line2: 400,
     },
   } as MefFormsPending, extractFilerIdentity(singleGeneral()));
-  assertStringIncludes(xml, "<MortgageInterestCreditAmt>1100</MortgageInterestCreditAmt>");
+  assertStringIncludes(
+    xml,
+    "<MortgageInterestCreditAmt>1100</MortgageInterestCreditAmt>",
+  );
   assertStringIncludes(
     xml,
     "<RptHomeMortgIntAndPointsAmt>13000</RptHomeMortgIntAndPointsAmt>",

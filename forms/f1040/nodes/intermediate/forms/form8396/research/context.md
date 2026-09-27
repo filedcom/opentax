@@ -7,6 +7,8 @@ replaces it with source certificate identity, eligibility facts, and referenced
 carryforward vintages. It computes the 2025 printed Form 8396 lines 1-17 and
 finalizes line 9 after Form 1040 line 18 and the Credit Limit Worksheet's
 earlier credits are known. The allowed amount goes to Schedule 3 line 6g.
+An optional structured address for the certificate home, when different from
+the return address, maps to the PDF header and the native MeF address group.
 
 The current-year line 3 reduces deductible Schedule A mortgage interest even
 when tax liability allows less than the full credit. The Schedule A calculator
@@ -21,8 +23,9 @@ year, a linked calculation statement. The current source model explicitly
 rejects a reissued certificate rather than awarding an unsupported amount.
 That calculation and statement remain to be built. Other work still open:
 reconcile certified interest to Form 1098 or equivalent source documents;
-support the different-home-address field; verify the 2024 Form 8396 carryover
-references; fill and inspect the PDF; run local XSD and IRS business-rule
+verify the 2024 Form 8396 carryover
+references; run and visually inspect the newly mapped PDF field projection;
+run local XSD and IRS business-rule
 checks in the requested full batch; and obtain ATS acceptance when available.
 
 Primary source: [2025 Form 8396 and its instructions](https://www.irs.gov/pub/irs-pdf/f8396.pdf),
