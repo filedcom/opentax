@@ -1,4 +1,9 @@
-import { assertEquals, assertThrows } from "@std/assert";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { buildForm8854PartI } from "../../../2025/mef/forms/f8854_part_i.ts";
+import {
+  buildForm8854ChangeStatement,
+  buildForm8854PartIISectionA,
+} from "../../../2025/mef/forms/f8854_part_ii_a.ts";
 import {
   averageAnnualNetIncomeTax,
   AVG_ANNUAL_TAX_THRESHOLD_2025,
@@ -8,6 +13,7 @@ import {
   isCoveredExpatriate,
   MARK_TO_MARKET_EXCLUSION_2025,
   NET_WORTH_THRESHOLD,
+  sectionAExceptionAnswers,
 } from "./index.ts";
 import { allocateMarkToMarketExclusion } from "./mark-to-market.ts";
 
@@ -28,6 +34,24 @@ function input(overrides: Record<string, unknown> = {}) {
   return {
     expatriation_date: "2025-06-15",
     expatriate_type: ExpatriateType.CITIZEN,
+    part_i: {
+      mailing_address: {
+        kind: "US",
+        line1: "1 Main St",
+        city: "Wilmington",
+        state: "DE",
+        zip: "19801",
+      },
+      telephone: { kind: "US", number: "3025550123" },
+      notification: {
+        kind: "CITIZEN_STATE_DEPARTMENT",
+        date: "2025-06-15",
+      },
+      citizenships: [{ country_code: "US", acquired_date: "1980-01-01" }],
+      us_citizenship_acquisition: "BIRTH",
+    },
+    exception_facts: { dual_citizen: null, minor: null },
+    significant_asset_liability_changes_prior_5_years: false,
     prior_year_us_income_tax_less_foreign_tax_credit: priorYearTax(0),
     net_worth_at_expatriation: 0,
     certified_tax_compliance: true,
@@ -42,6 +66,17 @@ function priorYearTax(amount: number) {
     year_2022: amount,
     year_2021: amount,
     year_2020: amount,
+  };
+}
+
+function dualCitizenPartI() {
+  return {
+    ...input().part_i,
+    foreign_tax_residence_country_code: "FR",
+    citizenships: [
+      { country_code: "US", acquired_date: "1980-01-01" },
+      { country_code: "FR", acquired_date: "1980-01-01" },
+    ],
   };
 }
 
@@ -98,17 +133,18 @@ Deno.test("Form 8854 uses TY2025 covered-expatriate thresholds", () => {
 
 Deno.test("Form 8854 dual-citizen exception waives only tax and net-worth tests", () => {
   const dual = {
-    kind: "DUAL_CITIZEN_AT_BIRTH",
     us_citizen_at_birth: true,
     other_country_citizen_at_birth: true,
+    other_country_code: "FR",
     other_country_citizen_at_expatriation: true,
     other_country_tax_resident_at_expatriation: true,
     us_resident_tax_years_in_last_15: 10,
   };
   const covered = {
+    part_i: dualCitizenPartI(),
     prior_year_us_income_tax_less_foreign_tax_credit: priorYearTax(300_000),
     net_worth_at_expatriation: 4_000_000,
-    covered_expatriate_exception: dual,
+    exception_facts: { dual_citizen: dual, minor: null },
   };
   assertEquals(isCoveredExpatriate(inputSchema.parse(input(covered))), false);
   assertEquals(
@@ -121,9 +157,9 @@ Deno.test("Form 8854 dual-citizen exception waives only tax and net-worth tests"
   assertEquals(
     isCoveredExpatriate(inputSchema.parse(input({
       ...covered,
-      covered_expatriate_exception: {
-        ...dual,
-        us_resident_tax_years_in_last_15: 11,
+      exception_facts: {
+        dual_citizen: { ...dual, us_resident_tax_years_in_last_15: 11 },
+        minor: null,
       },
     }))),
     true,
@@ -131,9 +167,12 @@ Deno.test("Form 8854 dual-citizen exception waives only tax and net-worth tests"
   assertEquals(
     isCoveredExpatriate(inputSchema.parse(input({
       ...covered,
-      covered_expatriate_exception: {
-        ...dual,
-        other_country_tax_resident_at_expatriation: false,
+      exception_facts: {
+        dual_citizen: {
+          ...dual,
+          other_country_tax_resident_at_expatriation: false,
+        },
+        minor: null,
       },
     }))),
     true,
@@ -142,21 +181,20 @@ Deno.test("Form 8854 dual-citizen exception waives only tax and net-worth tests"
 
 Deno.test("Form 8854 minor exception uses the strict age and residence boundaries", () => {
   const minor = {
-    kind: "MINOR",
     date_of_birth: "2007-01-01",
     us_resident_tax_years_before_expatriation: 10,
   };
   const covered = {
     prior_year_us_income_tax_less_foreign_tax_credit: priorYearTax(300_000),
-    covered_expatriate_exception: minor,
+    exception_facts: { dual_citizen: null, minor },
   };
   assertEquals(isCoveredExpatriate(inputSchema.parse(input(covered))), false);
   assertEquals(
     isCoveredExpatriate(inputSchema.parse(input({
       ...covered,
-      covered_expatriate_exception: {
-        ...minor,
-        date_of_birth: "2006-12-15",
+      exception_facts: {
+        dual_citizen: null,
+        minor: { ...minor, date_of_birth: "2006-12-15" },
       },
     }))),
     true,
@@ -164,9 +202,9 @@ Deno.test("Form 8854 minor exception uses the strict age and residence boundarie
   assertEquals(
     isCoveredExpatriate(inputSchema.parse(input({
       ...covered,
-      covered_expatriate_exception: {
-        ...minor,
-        us_resident_tax_years_before_expatriation: 11,
+      exception_facts: {
+        dual_citizen: null,
+        minor: { ...minor, us_resident_tax_years_before_expatriation: 11 },
       },
     }))),
     true,
@@ -184,6 +222,16 @@ Deno.test("Form 8854 validates its source date and asset amounts", () => {
   assertEquals(
     inputSchema.safeParse(input({
       expatriate_type: ExpatriateType.LONG_TERM_RESIDENT,
+      part_i: {
+        ...input().part_i,
+        notification: {
+          kind: "LTR_HOMELAND_SECURITY",
+          date: "2025-06-15",
+        },
+        citizenships: [{ country_code: "CA", acquired_date: "1980-01-01" }],
+        us_citizenship_acquisition: undefined,
+        lawful_permanent_resident_date: "2012-01-01",
+      },
     })).success,
     true,
   );
@@ -202,20 +250,24 @@ Deno.test("Form 8854 validates its source date and asset amounts", () => {
   assertEquals(
     inputSchema.safeParse(input({
       expatriate_type: ExpatriateType.LONG_TERM_RESIDENT,
-      covered_expatriate_exception: {
-        kind: "MINOR",
-        date_of_birth: "2007-01-01",
-        us_resident_tax_years_before_expatriation: 2,
+      exception_facts: {
+        dual_citizen: null,
+        minor: {
+          date_of_birth: "2007-01-01",
+          us_resident_tax_years_before_expatriation: 2,
+        },
       },
     })).success,
     false,
   );
   assertEquals(
     inputSchema.safeParse(input({
-      covered_expatriate_exception: {
-        kind: "MINOR",
-        date_of_birth: "2025-07-01",
-        us_resident_tax_years_before_expatriation: 0,
+      exception_facts: {
+        dual_citizen: null,
+        minor: {
+          date_of_birth: "2025-07-01",
+          us_resident_tax_years_before_expatriation: 0,
+        },
       },
     })).success,
     false,
@@ -260,6 +312,215 @@ Deno.test("Form 8854 validates its source date and asset amounts", () => {
       },
     })).success,
     false,
+  );
+  assertEquals(
+    inputSchema.safeParse(input({
+      part_i: {
+        ...input().part_i,
+        notification: { kind: "LTR_HOMELAND_SECURITY", date: "2025-06-15" },
+      },
+    })).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse(input({
+      part_i: {
+        ...input().part_i,
+        notification: { kind: "CITIZEN_STATE_DEPARTMENT", date: "2025-06-14" },
+      },
+    })).success,
+    false,
+  );
+});
+
+Deno.test("Form 8854 Part I XML follows address, notification and citizenship order", () => {
+  const xml = buildForm8854PartI(inputSchema.parse(input({
+    part_i: {
+      ...input().part_i,
+      foreign_residence_address: {
+        kind: "FOREIGN",
+        line1: "2 Rue Exemple",
+        city: "Paris",
+        country_code: "FR",
+        postal_code: "75001",
+      },
+      foreign_tax_residence_country_code: "FR",
+      citizenships: [
+        { country_code: "US", acquired_date: "1980-01-01" },
+        { country_code: "FR", acquired_date: "1980-01-01" },
+      ],
+    },
+  })));
+  assertStringIncludes(xml, "<AfterExptrtMailAddrPhoneGrp><USAddress>");
+  assertStringIncludes(xml, "<USTelephoneNum>3025550123</USTelephoneNum>");
+  assertStringIncludes(xml, "<ForeignResidenceAddress>");
+  assertStringIncludes(
+    xml,
+    "<InitialExptrtStmtSpcfdYrInd>X</InitialExptrtStmtSpcfdYrInd>",
+  );
+  assertStringIncludes(
+    xml,
+    "<ExptrtNotifToDeptOfStateDt>2025-06-15</ExptrtNotifToDeptOfStateDt>",
+  );
+  assertEquals((xml.match(/<CountryCitizenshipGrp>/g) ?? []).length, 2);
+  assertEquals(
+    xml.indexOf("<ForeignResidenceAddress>") <
+      xml.indexOf("<InitialExptrtStmtSpcfdYrInd>"),
+    true,
+  );
+});
+
+Deno.test("Form 8854 Part I supports long-term dual-resident notice and foreign contact", () => {
+  const xml = buildForm8854PartI(inputSchema.parse(input({
+    expatriate_type: ExpatriateType.LONG_TERM_RESIDENT,
+    part_i: {
+      mailing_address: {
+        kind: "FOREIGN",
+        line1: "4 Example Road",
+        city: "Toronto",
+        province_or_state: "ON",
+        country_code: "CA",
+        postal_code: "M5H2N2",
+      },
+      telephone: { kind: "FOREIGN", number: "14165550123" },
+      notification: { kind: "LTR_DUAL_RESIDENT", date: "2025-06-15" },
+      citizenships: [{ country_code: "CA", acquired_date: "1980-01-01" }],
+      lawful_permanent_resident_date: "2012-01-01",
+    },
+  })));
+  assertStringIncludes(xml, "<AfterExptrtMailAddrPhoneGrp><ForeignAddress>");
+  assertStringIncludes(xml, "<ForeignPhoneNum>14165550123</ForeignPhoneNum>");
+  assertStringIncludes(xml, "<ExptrtNotifLongTermDualResGrp>");
+  assertStringIncludes(
+    xml,
+    "<LawfulPermanentResidentDt>2012-01-01</LawfulPermanentResidentDt>",
+  );
+  assertEquals(xml.includes("USCitizenByBirthInd"), false);
+});
+
+Deno.test("Form 8854 Section A emits all five prior years and explicit exception answers", () => {
+  const dual = {
+    us_citizen_at_birth: true,
+    other_country_citizen_at_birth: true,
+    other_country_code: "FR",
+    other_country_citizen_at_expatriation: true,
+    other_country_tax_resident_at_expatriation: true,
+    us_resident_tax_years_in_last_15: 10,
+  };
+  const parsed = inputSchema.parse(input({
+    part_i: dualCitizenPartI(),
+    prior_year_us_income_tax_less_foreign_tax_credit: {
+      year_2024: 1,
+      year_2023: 2,
+      year_2022: 3,
+      year_2021: 4,
+      year_2020: 5,
+    },
+    net_worth_at_expatriation: 2_000_000,
+    exception_facts: {
+      dual_citizen: dual,
+      minor: {
+        date_of_birth: "2007-01-01",
+        us_resident_tax_years_before_expatriation: 10,
+      },
+    },
+  }));
+  assertEquals(sectionAExceptionAnswers(parsed), {
+    dualCitizenBirth: true,
+    usResidentNoMoreThan10Of15: true,
+    minorQualifies: true,
+  });
+  const xml = buildForm8854PartIISectionA(parsed);
+  assertStringIncludes(
+    xml,
+    "<USIncomeTax1stYearBfrExptrtAmt>1</USIncomeTax1stYearBfrExptrtAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<USIncomeTax5thYearBfrExptrtAmt>5</USIncomeTax5thYearBfrExptrtAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<NetWorthOnExptrtDateAmt>2000000</NetWorthOnExptrtDateAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<DualCitizenBirthUSOthCntryInd>true</DualCitizenBirthUSOthCntryInd>",
+  );
+  assertStringIncludes(
+    xml,
+    "<USResNoMoreThan10Of15YrInd>true</USResNoMoreThan10Of15YrInd>",
+  );
+  assertStringIncludes(
+    xml,
+    "<Under18USResLessThan10YrInd>true</Under18USResLessThan10YrInd>",
+  );
+  assertEquals(
+    xml.indexOf("USIncomeTax1stYearBfrExptrtAmt") <
+      xml.indexOf("NetWorthOnExptrtDateAmt"),
+    true,
+  );
+});
+
+Deno.test("Form 8854 Section A line 3 links a native explanation statement", () => {
+  const parsed = inputSchema.parse(input({
+    significant_asset_liability_changes_prior_5_years: true,
+    significant_change_explanation: "A real property gift reduced net worth.",
+  }));
+  assertThrows(
+    () => buildForm8854PartIISectionA(parsed),
+    Error,
+    "linked statement document",
+  );
+  const xml = buildForm8854PartIISectionA(parsed, "DOC8854CHG1");
+  assertStringIncludes(
+    xml,
+    'referenceDocumentId="DOC8854CHG1" referenceDocumentName="ChangePreOrPostExpatriationDateStatement"',
+  );
+  assertStringIncludes(
+    buildForm8854ChangeStatement(parsed),
+    "<MediumExplanationTxt>A real property gift reduced net worth.</MediumExplanationTxt>",
+  );
+  assertEquals(buildForm8854ChangeStatement(inputSchema.parse(input())), "");
+  assertEquals(
+    inputSchema.safeParse(input({
+      significant_asset_liability_changes_prior_5_years: true,
+    })).success,
+    false,
+  );
+});
+
+Deno.test("Form 8854 dual-citizen country reconciles with Part I", () => {
+  const dual = {
+    us_citizen_at_birth: true,
+    other_country_citizen_at_birth: true,
+    other_country_code: "FR",
+    other_country_citizen_at_expatriation: true,
+    other_country_tax_resident_at_expatriation: true,
+    us_resident_tax_years_in_last_15: 10,
+  };
+  assertEquals(
+    inputSchema.safeParse(input({
+      exception_facts: { dual_citizen: dual, minor: null },
+    })).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse(input({
+      part_i: {
+        ...dualCitizenPartI(),
+        foreign_tax_residence_country_code: "DE",
+      },
+      exception_facts: { dual_citizen: dual, minor: null },
+    })).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse(input({
+      part_i: dualCitizenPartI(),
+      exception_facts: { dual_citizen: dual, minor: null },
+    })).success,
+    true,
   );
 });
 

@@ -25,6 +25,13 @@ The input now records the U.S. income tax less foreign tax credit for each of
 average. The supplied amounts still need reconciliation to those prior-year
 returns and credits.
 
+Part I now requires mailing address, phone, citizenship and notification facts,
+with a separate XML builder in 2025 schema order. Part II Section A has its own
+XML builder for the five tax-year lines, net worth, and exception answers. A yes
+answer to significant asset or liability changes requires an explanation and a
+linked native `ChangePrePostExptrtDateStmt`. These builders are not registered
+as a complete Form 8854 document.
+
 The current build pass allocates the $890,000 exclusion across identified gain
 properties in proportion to their positive built-in gains, with a stable
 cent-balancing rule. Loss properties receive no exclusion. This is only the
@@ -37,7 +44,8 @@ net-worth tests, but not the five-year certification test. U.S. residence and
 the minor's age boundary are checked. Citizenship, foreign tax residence, and
 U.S. residence years remain entered assertions, not independently verified
 records. Annual statements for pre-2025 expatriations are not modeled by this
-input.
+input. An asserted dual-citizen exception must identify the other country, which
+must match Part I citizenship and foreign tax residence.
 
 Remaining build work: model all required Form 8854 identification and
 certification fields; distinguish assets subject to mark-to-market from deferred

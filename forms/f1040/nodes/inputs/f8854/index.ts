@@ -27,21 +27,68 @@ const dateSchema = z.string().refine(
   "Date must be valid ISO YYYY-MM-DD",
 );
 
-export const exceptionSchema = z.discriminatedUnion("kind", [
-  z.object({
-    kind: z.literal("DUAL_CITIZEN_AT_BIRTH"),
+const usAddressSchema = z.object({
+  kind: z.literal("US"),
+  line1: z.string().trim().min(1),
+  line2: z.string().trim().min(1).optional(),
+  city: z.string().trim().min(1),
+  state: z.string().regex(/^[A-Z]{2}$/),
+  zip: z.string().regex(/^\d{5}(?:\d{4}|\d{7})?$/),
+});
+
+const foreignAddressSchema = z.object({
+  kind: z.literal("FOREIGN"),
+  line1: z.string().trim().min(1),
+  line2: z.string().trim().min(1).optional(),
+  city: z.string().trim().min(1).optional(),
+  province_or_state: z.string().trim().min(1).optional(),
+  country_code: z.string().regex(/^[A-Z]{2}$/),
+  postal_code: z.string().trim().min(1).optional(),
+});
+
+export const partISchema = z.object({
+  mailing_address: z.discriminatedUnion("kind", [
+    usAddressSchema,
+    foreignAddressSchema,
+  ]),
+  telephone: z.discriminatedUnion("kind", [
+    z.object({ kind: z.literal("US"), number: z.string().regex(/^\d{10}$/) }),
+    z.object({
+      kind: z.literal("FOREIGN"),
+      number: z.string().regex(/^\d{1,30}$/),
+    }),
+  ]),
+  foreign_residence_address: foreignAddressSchema.optional(),
+  foreign_tax_residence_country_code: z.string().regex(/^[A-Z]{2}$/).optional(),
+  notification: z.discriminatedUnion("kind", [
+    z.object({ kind: z.literal("CITIZEN_STATE_DEPARTMENT"), date: dateSchema }),
+    z.object({ kind: z.literal("LTR_HOMELAND_SECURITY"), date: dateSchema }),
+    z.object({ kind: z.literal("LTR_DUAL_RESIDENT"), date: dateSchema }),
+  ]),
+  citizenships: z.array(z.object({
+    country_code: z.string().regex(/^[A-Z]{2}$/),
+    acquired_date: dateSchema,
+  })).min(1).max(2),
+  us_citizenship_acquisition: z.enum(["BIRTH", "NATURALIZATION"]).optional(),
+  lawful_permanent_resident_date: dateSchema.optional(),
+  lawful_permanent_resident_rescinded_date: dateSchema.optional(),
+  permanent_resident_card_relinquished_date: dateSchema.optional(),
+});
+
+export const exceptionFactsSchema = z.object({
+  dual_citizen: z.object({
     us_citizen_at_birth: z.boolean(),
     other_country_citizen_at_birth: z.boolean(),
+    other_country_code: z.string().regex(/^[A-Z]{2}$/),
     other_country_citizen_at_expatriation: z.boolean(),
     other_country_tax_resident_at_expatriation: z.boolean(),
     us_resident_tax_years_in_last_15: z.number().int().min(0).max(15),
-  }),
-  z.object({
-    kind: z.literal("MINOR"),
+  }).nullable(),
+  minor: z.object({
     date_of_birth: dateSchema,
     us_resident_tax_years_before_expatriation: z.number().int().min(0),
-  }),
-]);
+  }).nullable(),
+});
 
 const moneySchema = z.number().finite().nonnegative().refine(
   (amount) =>
@@ -71,10 +118,13 @@ export const inputSchema = z.object({
     "This Form 8854 input covers initial expatriation in 2025 only",
   ),
   expatriate_type: z.nativeEnum(ExpatriateType),
+  part_i: partISchema,
   prior_year_us_income_tax_less_foreign_tax_credit: priorYearTaxSchema,
   net_worth_at_expatriation: z.number().nonnegative(),
   certified_tax_compliance: z.boolean(),
-  covered_expatriate_exception: exceptionSchema.optional(),
+  exception_facts: exceptionFactsSchema,
+  significant_asset_liability_changes_prior_5_years: z.boolean(),
+  significant_change_explanation: z.string().trim().min(1).optional(),
   assets: z.array(assetSchema).superRefine((assets, ctx) => {
     const ids = new Set<string>();
     for (const [index, asset] of assets.entries()) {
@@ -89,23 +139,132 @@ export const inputSchema = z.object({
     }
   }).optional(),
 }).superRefine((input, ctx) => {
-  const exception = input.covered_expatriate_exception;
-  if (exception && input.expatriate_type !== ExpatriateType.CITIZEN) {
+  const partI = input.part_i;
+  const citizen = input.expatriate_type === ExpatriateType.CITIZEN;
+  if (
+    citizen !==
+      (partI.notification.kind === "CITIZEN_STATE_DEPARTMENT")
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message:
+        "Form 8854 notification must match citizen or long-term resident status",
+      path: ["part_i", "notification"],
+    });
+  }
+  if (partI.notification.date !== input.expatriation_date) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Part I notification date must match the expatriation date",
+      path: ["part_i", "notification", "date"],
+    });
+  }
+  if (citizen && !partI.us_citizenship_acquisition) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Former citizens must state how U.S. citizenship was acquired",
+      path: ["part_i", "us_citizenship_acquisition"],
+    });
+  }
+  if (!citizen && partI.us_citizenship_acquisition) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Long-term residents cannot claim U.S. citizenship acquisition",
+      path: ["part_i", "us_citizenship_acquisition"],
+    });
+  }
+  const citizenshipCountryCodes = partI.citizenships.map((row) =>
+    row.country_code
+  );
+  if (
+    new Set(citizenshipCountryCodes).size !== citizenshipCountryCodes.length
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Form 8854 citizenship countries must be unique",
+      path: ["part_i", "citizenships"],
+    });
+  }
+  if (citizen && !partI.citizenships.some((row) => row.country_code === "US")) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Former citizens must list U.S. citizenship in Part I",
+      path: ["part_i", "citizenships"],
+    });
+  }
+  if (!citizen && !partI.lawful_permanent_resident_date) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message:
+        "Long-term residents must provide the lawful-permanent-resident date",
+      path: ["part_i", "lawful_permanent_resident_date"],
+    });
+  }
+  const exceptions = input.exception_facts;
+  const dual = exceptions.dual_citizen;
+  if (
+    dual?.us_citizen_at_birth && partI.us_citizenship_acquisition !== "BIRTH"
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message:
+        "Dual-citizen-at-birth facts require Part I citizenship by birth",
+      path: ["part_i", "us_citizenship_acquisition"],
+    });
+  }
+  if (
+    dual?.other_country_citizen_at_expatriation &&
+    !partI.citizenships.some((row) =>
+      row.country_code === dual.other_country_code
+    )
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message:
+        "Dual-citizen exception country must appear in Part I citizenships",
+      path: ["part_i", "citizenships"],
+    });
+  }
+  if (
+    dual?.other_country_tax_resident_at_expatriation &&
+    partI.foreign_tax_residence_country_code !== dual.other_country_code
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message:
+        "Dual-citizen exception country must match foreign tax residence",
+      path: ["part_i", "foreign_tax_residence_country_code"],
+    });
+  }
+  if (
+    (exceptions.dual_citizen || exceptions.minor) &&
+    input.expatriate_type !== ExpatriateType.CITIZEN
+  ) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message:
         "The dual-citizen and minor exceptions require relinquished U.S. citizenship",
-      path: ["covered_expatriate_exception"],
+      path: ["exception_facts"],
     });
   }
   if (
-    exception?.kind === "MINOR" &&
-    exception.date_of_birth >= input.expatriation_date
+    exceptions.minor &&
+    exceptions.minor.date_of_birth >= input.expatriation_date
   ) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: "Form 8854 birth date must precede expatriation",
-      path: ["covered_expatriate_exception", "date_of_birth"],
+      path: ["exception_facts", "minor", "date_of_birth"],
+    });
+  }
+  if (
+    input.significant_asset_liability_changes_prior_5_years &&
+    !input.significant_change_explanation
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Significant asset or liability changes require an explanation",
+      path: ["significant_change_explanation"],
     });
   }
 });
@@ -138,25 +297,35 @@ function underEighteenAndHalf(
   return new Date(`${expatriationDate}T00:00:00Z`) < cutoff;
 }
 
+export function sectionAExceptionAnswers(rawInput: F8854Input) {
+  const input = inputSchema.parse(rawInput);
+  const dual = input.exception_facts.dual_citizen;
+  const minor = input.exception_facts.minor;
+  const dualCitizenBirth = Boolean(
+    dual?.us_citizen_at_birth &&
+      dual.other_country_citizen_at_birth &&
+      dual.other_country_citizen_at_expatriation &&
+      dual.other_country_tax_resident_at_expatriation,
+  );
+  const usResidentNoMoreThan10Of15 = dualCitizenBirth && dual
+    ? dual.us_resident_tax_years_in_last_15 <= 10
+    : undefined;
+  const minorQualifies = Boolean(
+    minor &&
+      underEighteenAndHalf(minor.date_of_birth, input.expatriation_date) &&
+      minor.us_resident_tax_years_before_expatriation <= 10,
+  );
+  return { dualCitizenBirth, usResidentNoMoreThan10Of15, minorQualifies };
+}
+
 export function isCoveredExpatriate(rawInput: F8854Input): boolean {
   const input = inputSchema.parse(rawInput);
   if (!input.certified_tax_compliance) return true;
-  const exception = input.covered_expatriate_exception;
-  if (exception?.kind === "DUAL_CITIZEN_AT_BIRTH") {
-    if (
-      exception.us_citizen_at_birth &&
-      exception.other_country_citizen_at_birth &&
-      exception.other_country_citizen_at_expatriation &&
-      exception.other_country_tax_resident_at_expatriation &&
-      exception.us_resident_tax_years_in_last_15 <= 10
-    ) return false;
+  const answers = sectionAExceptionAnswers(input);
+  if (answers.dualCitizenBirth && answers.usResidentNoMoreThan10Of15) {
+    return false;
   }
-  if (exception?.kind === "MINOR") {
-    if (
-      underEighteenAndHalf(exception.date_of_birth, input.expatriation_date) &&
-      exception.us_resident_tax_years_before_expatriation <= 10
-    ) return false;
-  }
+  if (answers.minorQualifies) return false;
   return averageAnnualNetIncomeTax(input) >
       AVG_ANNUAL_TAX_THRESHOLD_2025 ||
     input.net_worth_at_expatriation >= NET_WORTH_THRESHOLD;
