@@ -866,6 +866,16 @@
       "bytes": 255808,
       "sha256": "f077991c83b086810c46cbad3755e0f126cb8dfd88cf8bf8ab2d5605d6e7ab45",
       "retrieved_utc": "2026-09-27T08:46:31.446292+00:00"
+    },
+    {
+      "path": "draft/i5695.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/i5695--dft.pdf",
+      "kind": "draft-instructions",
+      "status": "downloaded",
+      "bytes": 192781,
+      "sha256": "1efab06c78f27ce81c7f3ee0335a91e7a195c2702f35d908609e4cfee0db4bf0",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-09-27T09:16:31.679865+00:00"
     }
   ]
 }

@@ -1,0 +1,65 @@
+# TY2026 Form 5695 carryforward and credit ordering
+
+Sources: the pinned [2026 draft Form 5695](corpus/draft/f5695.pdf), its
+[2026 draft instructions](corpus/draft/i5695.pdf) (SHA-256
+`1efab06c78f27ce81c7f3ee0335a91e7a195c2702f35d908609e4cfee0db4bf0`),
+and the pinned [2026 draft Schedule 8812 instructions](corpus/draft/i1040s8.pdf).
+The current draft Form 5695 has one printed page, six AcroForm fields, and
+only four amount lines. The prior-year Form 5695 expense and Part II inputs
+are no longer its 2026 filing surface.
+
+| 2026 Form 5695 | Required value | Graph consequence |
+| --- | --- | --- |
+| Line 1 | Unused credit from **2025 Form 5695 line 16**, with origin-year provenance | This is the only new 2026 source amount. Expenses paid or property placed in service after 2025 do not create a new 2026 credit on this form. |
+| Line 2 | `max(0, 1040 line 18 − applicable earlier credits)` using the instructions' Residential Clean Energy Credit Limit Worksheet | Resolve after income tax, Schedule 2 line 3, and higher-priority credits are known. The instruction worksheet lists Schedule 3 lines 6l, 1, 2, 6d, 3, 4, 6m, 6f, 6g, 6c, 6h, plus the Schedule 8812 amount described below. |
+| Line 3 | `min(line 1, line 2)` | Schedule 3 line 5a, then 1040 line 20. File the form even if line 3 is zero. |
+| Line 4 | `line 1 − line 3` | 2027 carryforward, including when line 2 is zero. |
+
+## Schedule 8812 interaction
+
+The Form 5695 worksheet normally subtracts Form 1040 line 19. When the
+taxpayer must use Schedule 8812 Credit Limit Worksheet B, its **line 14**
+replaces 1040 line 19 for this purpose. Worksheet B line 14 is computed from
+the provisional child credit, earned income, Social Security/Medicare tax,
+Schedule 1 line 15, Schedule 2 lines 16c/17c, EIC, and Schedule 3 line 11.
+It does not depend on Form 5695. Worksheet B line 15 later includes Schedule
+3 line 5a and affects the final nonrefundable child credit. The correct order
+is therefore:
+
+```text
+income tax + Schedule 2 line 3 + other credit sources
+             ↓
+Schedule 8812 Worksheet B through line 14 (when applicable)
+             ↓
+Form 5695 line 2 → line 3 → Schedule 3 line 5a
+             ↓
+Schedule 8812 Worksheet B line 15 / Worksheet A → 1040 line 19
+             ↓
+Schedule 3 total, 1040 tax settlement, PDF and MeF attachments
+```
+
+The current registry runs Schedule 3 before its Schedule 8812 node and
+expects a user-supplied `credit_limit_worksheet_2026`. Feeding a Form 5695
+credit directly into that chain without ordering the worksheet stages would
+make the credit limit depend on an unfinished child-credit calculation.
+Refactor the pure Schedule 8812 worksheet functions into the shared 2026
+credit-resolution stage, or provide separate pre- and post-5695 stages with
+explicit graph edges. Derive the inputs from registered source nodes and
+reconcile any supplied worksheet evidence to them. Preserve the existing
+TY2025 path; no 2025 Form 5695 shape belongs on the 2026 input surface.
+
+## Completion checks
+
+1. A $200 prior-year carryforward with sufficient line 18 tax and no
+   competing credits prints line 1 as $200, line 2 as at least $200, and line 3
+   as $200; line 4 is blank or zero as appropriate. ATS
+   [scenario 1](ATS-SCENARIO-01.md) supplies
+   this carryforward.
+2. A limited-tax case prints line 4 and emits a matching 2027 carryforward;
+   a zero-limit case still prints Form 5695.
+3. A qualifying-child case using Worksheet B calculates line 14 before
+   Form 5695, then line 15 and Form 1040 line 19 afterward. Check the
+   combined Schedule 3/Form 5695/Schedule 8812 pages and line 20.
+4. Validate the XML form and business rules against the selected current
+   TY2026 MeF package, then compare the ATS fixture. The May v1 XSD is
+   insufficient for the September return topology.

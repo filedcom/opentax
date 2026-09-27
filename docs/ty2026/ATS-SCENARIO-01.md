@@ -15,7 +15,7 @@ do not copy blank lines as zeros.
 | 6–7 | Schedule 2; Schedule H household-employment tax reaches line 17a | Preserve the page 1/page 2 Schedule 2 topology and reconcile line 21 to 1040 line 23. |
 | 8 | Schedule 3; Form 5695 line 3 flows to line 5a | Reconcile Schedule 3 line 8 to 1040 line 20. |
 | 9–10 | Schedule H: $4,100 subject to Social Security and Medicare tax; $0 Additional Medicare wages and withheld income tax | Calculate Social Security at 12.4% and Medicare at 2.9%; determine FUTA using the checked state-contribution answers and wages. Reconcile Schedule H line 26 to Schedule 2 line 17a. |
-| 11 | Form 5695 is the four-line **carryforward-only** 2026 form; scenario states a $200 credit from the 2025 Form 5695 line 16 | Apply the 2026 residential clean energy credit limit worksheet. Route the smaller of carryforward and limit to Schedule 3 line 5a; carry unused credit to 2027. Do not use the old 2025 Form 5695 line topology. |
+| 11 | Form 5695 is the four-line **carryforward-only** 2026 form; scenario states a $200 credit from the 2025 Form 5695 line 16 | Apply the pinned [2026 credit-order plan](FORM5695-CREDIT-GRAPH.md) and residential clean energy credit limit worksheet. Route the smaller of carryforward and limit to Schedule 3 line 5a; carry unused credit to 2027. Do not use the old 2025 Form 5695 line topology. |
 
 ## Acceptance work
 

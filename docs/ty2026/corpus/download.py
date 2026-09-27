@@ -74,7 +74,7 @@ sources = []
 for slug in FORM_SLUGS:
     sources.append(("draft/" + slug + ".pdf", IRS + "/pub/irs-dft/" + slug + "--dft.pdf", "draft-form"))
 
-for slug in ("i1040sb", "i1040s8"):
+for slug in ("i1040sb", "i1040s8", "i5695"):
     sources.append(("draft/" + slug + ".pdf", IRS + "/pub/irs-dft/" + slug + "--dft.pdf", "draft-instructions"))
 
 for label, url in page_links(ATS_PAGE):
