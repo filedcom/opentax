@@ -27,6 +27,10 @@ The [Form 8936 contract](../../../docs/ty2026/FORM8936-GRAPH.md) maps the
 2025 acquisition cutoff and eligible 2026 service date, dealer transfers,
 new/used/commercial credits, 96 PDF fields, and downstream Schedule 2/3
 and Form 3800 routes. The shared node rejects 2026 service dates.
+The [Form 8889 contract](../../../docs/ty2026/FORM8889-GRAPH.md) maps
+per-beneficiary HSA coverage, contributions, distributions and failed
+testing periods into Schedule 1 lines 8f/13 and Schedule 2 lines 13c/13d.
+The shared node has incomplete 2026 destinations and PDF/MeF fields.
 The [ATS scenario 12 plan](../../../docs/ty2026/ATS-SCENARIO-12.md) and
 [business credit contract](../../../docs/ty2026/GENERAL-BUSINESS-CREDIT-GRAPH.md)
 map Form 7207 → Form 3800 → Schedule 3 and Form 7205/7220 → Schedule C.

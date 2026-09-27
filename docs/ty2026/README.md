@@ -50,6 +50,9 @@ for the implementation contract.
   attachment route, with the remaining additional-tax work.
 - [`FORM8606-GRAPH.md`](FORM8606-GRAPH.md): 2026 IRA basis, conversion,
   Roth-distribution, spouse-form, and carryforward implementation contract.
+- [`FORM8889-GRAPH.md`](FORM8889-GRAPH.md) and `pdf-fields-f8889.csv`:
+  owner-keyed HSA eligibility and contributions, distributions, testing-period
+  tax, 2026 Schedule 1/2 routes, and the full PDF field map.
 - [`FORM8962-GRAPH.md`](FORM8962-GRAPH.md) and `pdf-fields-f8962.csv`:
   2026 premium tax credit line 27, 400% FPL boundary, Form 1095-A/allocations,
   143 PDF widgets, and MeF/graph acceptance order.

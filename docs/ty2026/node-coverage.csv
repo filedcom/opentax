@@ -160,7 +160,7 @@ form8853,forms/f1040/nodes/intermediate/forms/form8853/index.ts,intermediate,1,y
 form8880,forms/f1040/nodes/intermediate/forms/form8880/index.ts,intermediate,0,yes,yes,yes,yes,P2,audit-required,"verify 2026 law, node outputs, and graph route"
 form7203,forms/f1040/nodes/intermediate/forms/form7203/index.ts,intermediate,0,no,no,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"
 form7206,forms/f1040/nodes/intermediate/forms/form7206/index.ts,intermediate,0,yes,yes,yes,yes,P2,audit-required,"verify 2026 law, node outputs, and graph route"
-form8889,forms/f1040/nodes/intermediate/forms/form8889/index.ts,intermediate,0,yes,yes,yes,yes,P2,audit-required,"verify 2026 law, node outputs, and graph route"
+form8889,forms/f1040/nodes/intermediate/forms/form8889/index.ts,intermediate,0,yes,yes,yes,yes,P2,audit-required,"2026 form/instructions pinned; shared node lacks month-by-month eligibility/spouse allocation, routes income/tax to wrong lines, and omits PDF/MeF parts; see FORM8889-GRAPH.md"
 form8919,forms/f1040/nodes/intermediate/forms/form8919/index.ts,intermediate,0,yes,yes,yes,yes,P2,audit-required,"verify 2026 law, node outputs, and graph route"
 form8949,forms/f1040/nodes/intermediate/forms/form8949/index.ts,intermediate,0,no,yes,yes,yes,P2,audit-required,2026 broker and digital-asset transactions reach category PDF pages and Schedule D; add direct public trades and MeF
 form8959,forms/f1040/nodes/intermediate/forms/form8959/index.ts,intermediate,1,yes,yes,yes,yes,P1,audit-required,"verify 2026 law, node outputs, and graph route"
