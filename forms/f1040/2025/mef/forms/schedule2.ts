@@ -22,6 +22,7 @@ export interface Fields {
   golden_parachute_excise?: number | null;
   line17k_golden_parachute_excise?: number | null;
   line17c_hsa_penalty?: number | null;
+  line17d_hsa_eligibility_tax?: number | null;
   line17a_investment_credit_recapture?: number | null;
   line17a_new_markets_credit_recapture?: number | null;
   line17b_mortgage_subsidy_recapture?: number | null;
@@ -51,6 +52,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line16_lihtc_recapture", "RecaptureTaxAmt"],
   ["line17b_mortgage_subsidy_recapture", "MortgSbsdyRecaptureTaxAmt"],
   ["line17c_hsa_penalty", "HSADistriAddnlPercentTaxAmt"],
+  ["line17d_hsa_eligibility_tax", "HDHPCoverageAddnlTaxAmt"],
   ["line17e_archer_msa_tax", "ArcherMSAAddnlDistriTaxAmt"],
   ["line17f_medicare_advantage_msa_tax", "MedicareMSAAddnlDistriTaxAmt"],
   ["line20_965_tax_installment", "Section965TaxInstallmentAmt"],
@@ -90,6 +92,7 @@ const ELEMENT_ORDER = [
   "TotalRecaptureOtherCreditsAmt",
   "MortgSbsdyRecaptureTaxAmt",
   "HSADistriAddnlPercentTaxAmt",
+  "HDHPCoverageAddnlTaxAmt",
   "ArcherMSAAddnlDistriTaxAmt",
   "MedicareMSAAddnlDistriTaxAmt",
   "IncmNonqlfyDefrdCompPlanAmt",
@@ -290,6 +293,7 @@ function buildIRS1040Schedule2(
     amount("line17a_new_markets_credit_recapture") +
     amount("line17b_mortgage_subsidy_recapture") +
     amount("line17c_hsa_penalty") +
+    amount("line17d_hsa_eligibility_tax") +
     amount("line17e_archer_msa_tax") +
     amount("line17f_medicare_advantage_msa_tax") +
     amount("section409a_excise") +

@@ -73,6 +73,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "text",
+    domainKey: "line17d_hsa_eligibility_tax",
+    pdfField: "form1[0].Page2[0].f2_05[0]",
+  },
+  {
+    kind: "text",
     domainKey: "line17z_description",
     pdfField: "form1[0].Page2[0].Line17z_ReadOrder[0].f2_19[0]",
   },

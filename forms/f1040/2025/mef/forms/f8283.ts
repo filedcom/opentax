@@ -52,6 +52,10 @@ export function needsVehicleStatement(item: SectionAItem): boolean {
     (item.deduction_claimed ?? item.fmv ?? 0) > 500;
 }
 
+export function needsSectionBVehicleStatement(item: SectionBItem): boolean {
+  return item.property_type === SectionBPropertyType.Vehicle;
+}
+
 function buildSectionAItem(
   item: SectionAItem,
   index: number,
@@ -82,7 +86,9 @@ function buildSectionAItem(
       (item.fmv_method && FMV_METHOD_LABELS[item.fmv_method]);
   const address = item.donee_organization_us_address;
   const acknowledgment = item.vehicle_sale_acknowledgment ??
-    item.vehicle_needy_transfer_acknowledgment;
+    item.vehicle_needy_transfer_acknowledgment ??
+    item.vehicle_significant_use_acknowledgment ??
+    item.vehicle_material_improvement_acknowledgment;
   const vehicleDescription = acknowledgment
     ? `${acknowledgment.vehicle_year} ${acknowledgment.vehicle_make} ${acknowledgment.vehicle_model}, ${acknowledgment.vehicle_condition}, ${acknowledgment.odometer_miles} miles`
     : item.property_description;
@@ -124,12 +130,22 @@ function buildSectionAItem(
 }
 
 export function buildVehicleStatement(
-  item: SectionAItem,
+  item: Pick<
+    SectionAItem,
+    | "date_contributed"
+    | "vehicle_vin"
+    | "vehicle_sale_acknowledgment"
+    | "vehicle_needy_transfer_acknowledgment"
+    | "vehicle_significant_use_acknowledgment"
+    | "vehicle_material_improvement_acknowledgment"
+  >,
   context: MefBuildContext,
 ): string {
   const saleAck = item.vehicle_sale_acknowledgment;
   const needyAck = item.vehicle_needy_transfer_acknowledgment;
-  const ack = saleAck ?? needyAck;
+  const useAck = item.vehicle_significant_use_acknowledgment;
+  const improvementAck = item.vehicle_material_improvement_acknowledgment;
+  const ack = saleAck ?? needyAck ?? useAck ?? improvementAck;
   if (!ack || !item.vehicle_vin || !item.date_contributed) {
     throw new Error(
       "Form 8283 vehicle needs a contemporaneous donee acknowledgment",
@@ -155,7 +171,21 @@ export function buildVehicleStatement(
     saleAck
       ? element("GrossProceedsFromSaleOfVehAmt", saleAck.gross_proceeds)
       : "",
+    useAck || improvementAck
+      ? element("CertifiesVehicleNotTrnsfrInd", "X")
+      : "",
     needyAck ? element("CertifiesVehTrnsfrToNeedyInd", "X") : "",
+    useAck
+      ? element(
+        "CertifiesDetailedImprvDesc",
+        `${useAck.intended_use_description}; intended duration: ${useAck.intended_use_duration}`,
+      )
+      : improvementAck
+      ? element(
+        "CertifiesDetailedImprvDesc",
+        improvementAck.intended_improvement_description,
+      )
+      : "",
     element("GoodsAndServicesInd", "false"),
   ]);
 }
@@ -193,6 +223,35 @@ function usAddress(address: {
 const BINARY_REFERENCE_NAME =
   "BinaryAttachment DeductionsTakenUnderSection170Stmt DoneesSignatureUnavailableStmt";
 
+function requiredVehicleAttachment(
+  item: { vehicle_acknowledgment_attachment_file_name?: string },
+  context: MefBuildContext,
+): { fileName: string; id?: string } {
+  const fileName = item.vehicle_acknowledgment_attachment_file_name;
+  if (!fileName) {
+    throw new Error(
+      "Form 8283 vehicle needs its donee-issued Form 1098-C or written acknowledgment PDF",
+    );
+  }
+  const description = context.attachmentDescriptionsByFileName?.[fileName];
+  if (
+    description === undefined ||
+    !/^(?:Form1098C|DoneeOrganizationContemporaneousWrittenAcknowledgment)/
+      .test(description)
+  ) {
+    throw new Error(
+      "Form 8283 vehicle attachment needs an IRS-approved description and matching PDF",
+    );
+  }
+  const id = context.documentIdsByAttachmentFileName?.[fileName];
+  if (context.documentIdsByPendingKey && !id) {
+    throw new Error(
+      "Form 8283 vehicle acknowledgment PDF has no linked MeF document",
+    );
+  }
+  return { fileName, id };
+}
+
 function requiredSignatureAttachment(
   fileName: string | undefined,
   description: string,
@@ -217,6 +276,8 @@ function buildSectionBItem(
   item: SectionBItem,
   index: number,
   context: MefBuildContext,
+  vehicleStatementId?: string,
+  vehicleAttachmentId?: string,
 ): string {
   if (
     !item.property_description || !item.property_type ||
@@ -259,6 +320,7 @@ function buildSectionBItem(
     SectionBPropertyType.OtherRealEstate,
     SectionBPropertyType.Equipment,
     SectionBPropertyType.Collectibles,
+    SectionBPropertyType.Vehicle,
     SectionBPropertyType.ClothingHousehold,
   ]);
   if (tangible.has(item.property_type) && !item.physical_condition?.trim()) {
@@ -266,7 +328,6 @@ function buildSectionBItem(
   }
   if (
     item.property_type === SectionBPropertyType.ArtAtLeast20000 ||
-    item.property_type === SectionBPropertyType.Vehicle ||
     item.deduction_claimed > 500_000
   ) {
     throw new Error(
@@ -293,20 +354,33 @@ function buildSectionBItem(
   const signatureIds = [appraiserId, doneeId].filter(
     (id): id is string => id !== undefined,
   );
+  const binaryIds = [vehicleAttachmentId, ...signatureIds].filter(
+    (id): id is string => id !== undefined,
+  );
   return elements(
     "IRS8283",
     [
       element(SECTION_B_PROPERTY_TAG[item.property_type], "X"),
-      elements("PropertyInformation", [
-        element("PropertyId", propertyId(0)),
-        element("DonatedPropertyDesc", item.property_description),
-        element("DonatedPropertyPhysicalCondTxt", item.physical_condition),
-        element("AppraisedFairMarketValueAmt", item.fmv),
-        element("DonorAcquiredDt", item.date_acquired.slice(0, 7)),
-        element("DonorAcquisitionDesc", item.donor_acquisition_description),
-        element("DonorCostOrAdjustedBasisAmt", item.cost_or_adjusted_basis),
-        element("DeductionClaimedAmt", item.deduction_claimed),
-      ]),
+      elements(
+        "PropertyInformation",
+        [
+          element("PropertyId", propertyId(0)),
+          element("DonatedPropertyDesc", item.property_description),
+          element("DonatedPropertyPhysicalCondTxt", item.physical_condition),
+          element("AppraisedFairMarketValueAmt", item.fmv),
+          element("DonorAcquiredDt", item.date_acquired.slice(0, 7)),
+          element("DonorAcquisitionDesc", item.donor_acquisition_description),
+          element("DonorCostOrAdjustedBasisAmt", item.cost_or_adjusted_basis),
+          element("DeductionClaimedAmt", item.deduction_claimed),
+        ],
+        vehicleStatementId
+          ? {
+            referenceDocumentId: vehicleStatementId,
+            referenceDocumentName:
+              "ContemporaneousWrittenAcknowledgmentStatement ContributionsOfMotorVehiclesBoatsAndAirplanesStatement",
+          }
+          : undefined,
+      ),
       elements("AppraiserName", [
         element("PersonFirstNm", appraisal.appraiser_first_name),
         element("PersonLastNm", appraisal.appraiser_last_name),
@@ -328,9 +402,9 @@ function buildSectionBItem(
       element("DoneeEIN", donee.ein),
       usAddress(donee.us_address, "DoneeUSAddress"),
     ],
-    signatureIds.length > 0
+    binaryIds.length > 0
       ? {
-        referenceDocumentId: signatureIds.join(" "),
+        referenceDocumentId: binaryIds.join(" "),
         referenceDocumentName: BINARY_REFERENCE_NAME,
       }
       : undefined,
@@ -349,41 +423,26 @@ export const form8283: MefFormDescriptor<
     const parsed = inputSchema.parse(fields);
     const sectionA = parsed.section_a_items ?? [];
     const sectionB = parsed.section_b_items ?? [];
-    const vehicleAttachmentNames = sectionA.filter(needsVehicleStatement)
-      .map((item) => {
-        const fileName = item.vehicle_acknowledgment_attachment_file_name;
-        if (!fileName) {
-          throw new Error(
-            "Form 8283 vehicle needs its donee-issued Form 1098-C or written acknowledgment PDF",
-          );
-        }
-        const description = context.attachmentDescriptionsByFileName
-          ?.[fileName];
-        if (
-          description === undefined ||
-          !/^(?:Form1098C|DoneeOrganizationContemporaneousWrittenAcknowledgment)/
-            .test(description)
-        ) {
-          throw new Error(
-            "Form 8283 vehicle attachment needs an IRS-approved description and matching PDF",
-          );
-        }
-        return fileName;
-      });
-    const attachmentIds = [...new Set(vehicleAttachmentNames)].map(
-      (fileName) => {
-        const id = context.documentIdsByAttachmentFileName?.[fileName];
-        if (context.documentIdsByPendingKey && !id) {
-          throw new Error(
-            "Form 8283 vehicle acknowledgment PDF has no linked MeF document",
-          );
-        }
-        return id;
-      },
-    ).filter((id): id is string => id !== undefined);
+    const sectionAVehicleAttachments = sectionA.filter(needsVehicleStatement)
+      .map((item) => requiredVehicleAttachment(item, context));
+    const sectionBVehicleAttachments = sectionB
+      .filter(needsSectionBVehicleStatement)
+      .map((item) => requiredVehicleAttachment(item, context));
+    const sectionAAttachmentIds = [
+      ...new Set(
+        sectionAVehicleAttachments.map((attachment) => attachment.id),
+      ),
+    ].filter((id): id is string => id !== undefined);
+    const sectionBAttachmentIdsByFileName = Object.fromEntries(
+      sectionBVehicleAttachments.map((attachment) => [
+        attachment.fileName,
+        attachment.id,
+      ]),
+    );
     const statementIds = context.documentIdsByPendingKey
       ?.form8283_vehicle_statement ?? [];
-    const requiredStatements = sectionA.filter(needsVehicleStatement).length;
+    const requiredStatements = sectionAVehicleAttachments.length +
+      sectionBVehicleAttachments.length;
     if (
       context.documentIdsByPendingKey &&
       statementIds.length !== requiredStatements
@@ -406,15 +465,29 @@ export const form8283: MefFormDescriptor<
                 : undefined,
             )
           ),
-          attachmentIds.length > 0
+          sectionAAttachmentIds.length > 0
             ? {
-              referenceDocumentId: attachmentIds.join(" "),
+              referenceDocumentId: sectionAAttachmentIds.join(" "),
               referenceDocumentName: BINARY_REFERENCE_NAME,
             }
             : undefined,
         )]
         : []),
-      ...sectionB.map((item, index) => buildSectionBItem(item, index, context)),
+      ...sectionB.map((item, index) =>
+        buildSectionBItem(
+          item,
+          index,
+          context,
+          needsSectionBVehicleStatement(item)
+            ? statementIds[nextStatement++]
+            : undefined,
+          item.vehicle_acknowledgment_attachment_file_name
+            ? sectionBAttachmentIdsByFileName[
+              item.vehicle_acknowledgment_attachment_file_name
+            ]
+            : undefined,
+        )
+      ),
     ];
   },
 };

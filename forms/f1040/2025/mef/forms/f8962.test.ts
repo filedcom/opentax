@@ -193,6 +193,35 @@ Deno.test("monthly QSEHRA credit and indicator are serialized together", () => {
   );
 });
 
+Deno.test("annual line 11 QSEHRA credit and indicator are serialized together", () => {
+  const xml = form8962.build({
+    household_size: 2,
+    taxpayer_modified_agi: 40_880,
+    household_income: 40_880,
+    federal_poverty_line: 20_440,
+    fpl_region: "contiguous",
+    federal_poverty_pct: 200,
+    applicable_figure: 0.02,
+    annual_applicable_contribution: 818,
+    monthly_applicable_contribution: 68,
+    qsehra_ind: true,
+    annual_premium: 6_000,
+    annual_slcsp: 7_200,
+    annual_max_ptc: 6_382,
+    annual_ptc_allowed: 5_400,
+    annual_aptc: 1_200,
+    total_premium_tax_credit: 5_400,
+    total_advance_ptc: 1_200,
+    net_premium_tax_credit: 4_200,
+  });
+  assertStringIncludes(xml, "<QSEHRAInd>true</QSEHRAInd>");
+  assertStringIncludes(
+    xml,
+    "<AnnualPremiumTaxCreditAllwAmt>5400</AnnualPremiumTaxCreditAllwAmt>",
+  );
+  assertEquals(xml.includes("<MonthlyPTCCalculationGrp>"), false);
+});
+
 Deno.test("Form 8962 carries five Part IV groups and marks line 34 No", () => {
   const allocations = Array.from({ length: 5 }, (_, index) => ({
     basis: "other_agreed" as const,

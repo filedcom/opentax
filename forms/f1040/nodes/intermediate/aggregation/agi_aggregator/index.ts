@@ -135,7 +135,9 @@ export const inputSchema = z.object({
   line8c_cod_income: z.number().optional(),
   // Line 8e — Taxable Archer/Medicare MSA distributions (Form 8853)
   line8e_archer_msa_dist: z.number().nonnegative().optional(),
-  // Line 8z — Other income (HSA taxable distributions, 1099-NEC line 8z, etc.)
+  // Line 8f — Form 8889 taxable distributions and testing-period income.
+  line8f_hsa_income: z.number().nonnegative().optional(),
+  // Line 8z — Other income (1099-NEC line 8z, etc.)
   line8z_other: z.number().optional(),
   line8z_form8814: z.number().nonnegative().optional(),
   // Line 8z — RTAA payments (Form 1099-G)
@@ -267,6 +269,7 @@ function nonSsaIncomeBeforePal(input: AgiInput): number {
     (input.line7_unemployment ?? 0) +
     (input.line8c_cod_income ?? 0) +
     (input.line8e_archer_msa_dist ?? 0) +
+    (input.line8f_hsa_income ?? 0) +
     (input.line8z_other ?? 0) +
     (input.line8z_form8814 ?? 0) +
     (input.line8z_rtaa ?? 0) +
@@ -456,6 +459,7 @@ function scheduleOnePartI(input: AgiInput): number {
     (input.line7_unemployment ?? 0) +
     (input.line8c_cod_income ?? 0) +
     (input.line8e_archer_msa_dist ?? 0) +
+    (input.line8f_hsa_income ?? 0) +
     (input.line8z_other ?? 0) +
     (input.line8z_form8814 ?? 0) +
     (input.line8z_rtaa ?? 0) +

@@ -754,6 +754,153 @@ Deno.test("annual line 11 QSEHRA reduces an unaffordable full-year benefit", () 
   assertEquals(fields(result, "form8962")?.annual_ptc_allowed, 4_800);
 });
 
+Deno.test("QSEHRA and the same 1095-A columns support annual line 11 or monthly lines 12-23", () => {
+  const qsehraMonths = Array.from({ length: 12 }, (_, index) =>
+    index < 6
+      ? {
+        self_only_slcsp: 500,
+        self_only_permitted_benefit: 100,
+        permitted_benefit: 100,
+      }
+      : null);
+  const source = {
+    household_size: 2,
+    taxpayer_modified_agi: 40_880,
+    annual_premium: 6_000,
+    annual_slcsp: 7_200,
+    annual_aptc: 1_200,
+    monthly_premiums: Array(12).fill(500),
+    monthly_slcsps: Array(12).fill(600),
+    monthly_aptcs: Array(12).fill(100),
+    qsehra_amount_offered: 600,
+    qsehra_w2_reported_benefit: 600,
+    qsehra_monthly_facts: qsehraMonths,
+  };
+  const annualForm = fields(
+    compute({ ...source, annual_line11_eligible: true }),
+    "form8962",
+  );
+  const monthlyForm = fields(
+    compute({ ...source, annual_line11_eligible: false }),
+    "form8962",
+  );
+  assertEquals(annualForm?.annual_ptc_allowed, 5_400);
+  assertEquals(annualForm?.monthly_ptc_rows, undefined);
+  assertEquals(monthlyForm?.annual_ptc_allowed, undefined);
+  assertEquals(
+    (monthlyForm?.monthly_ptc_rows as { allowed_credit: number }[])
+      .map((row) => row.allowed_credit),
+    [...Array(6).fill(400), ...Array(6).fill(500)],
+  );
+  assertEquals(annualForm?.total_premium_tax_credit, 5_400);
+  assertEquals(monthlyForm?.total_premium_tax_credit, 5_400);
+  assertEquals(annualForm?.qsehra_ind, true);
+  assertEquals(monthlyForm?.qsehra_ind, true);
+});
+
+Deno.test("QSEHRA annual Worksheet Q Part III handles affordable and unaffordable months", () => {
+  const facts = Array.from({ length: 12 }, (_, index) =>
+    index < 3
+      ? {
+        self_only_slcsp: 350,
+        self_only_permitted_benefit: 100,
+        permitted_benefit: 100,
+      }
+      : index < 6
+      ? {
+        self_only_slcsp: 500,
+        self_only_permitted_benefit: 100,
+        permitted_benefit: 100,
+      }
+      : null);
+  const form = fields(
+    annual(40_880, 6_000, 7_200, 0, {
+      household_size: 2,
+      qsehra_amount_offered: 600,
+      qsehra_monthly_facts: facts,
+    }),
+    "form8962",
+  );
+  assertEquals(form?.annual_ptc_allowed, 4_200);
+  assertEquals(form?.qsehra_ind, true);
+});
+
+Deno.test("combined annual and monthly 1095-A columns must reconcile before QSEHRA calculation", () => {
+  assertThrows(
+    () =>
+      compute({
+        household_size: 2,
+        taxpayer_modified_agi: 40_880,
+        annual_premium: 6_001,
+        monthly_premiums: Array(12).fill(500),
+        monthly_slcsps: Array(12).fill(600),
+        monthly_aptcs: Array(12).fill(0),
+        annual_line11_eligible: true,
+      }),
+    Error,
+    "annual premium must reconcile to twelve monthly 1095-A amounts",
+  );
+});
+
+Deno.test("QSEHRA cannot use annual line 11 when Marketplace premium changes during the year", () => {
+  const facts = Array.from({ length: 12 }, (_, index) =>
+    index < 6
+      ? {
+        self_only_slcsp: 500,
+        self_only_permitted_benefit: 100,
+        permitted_benefit: 100,
+      }
+      : null);
+  const premiums = [...Array(6).fill(500), ...Array(6).fill(600)];
+  const source = {
+    household_size: 2,
+    taxpayer_modified_agi: 40_880,
+    annual_premium: 6_600,
+    annual_slcsp: 7_200,
+    annual_aptc: 0,
+    monthly_premiums: premiums,
+    monthly_slcsps: Array(12).fill(600),
+    monthly_aptcs: Array(12).fill(0),
+    qsehra_amount_offered: 600,
+    qsehra_monthly_facts: facts,
+  };
+  assertThrows(
+    () => compute({ ...source, annual_line11_eligible: true }),
+    Error,
+    "line 11 requires twelve months of unchanged enrollment premium and applicable SLCSP",
+  );
+  const monthlyForm = fields(compute(source), "form8962");
+  assertEquals(monthlyForm?.annual_ptc_allowed, undefined);
+  assertEquals(
+    (monthlyForm?.monthly_ptc_rows as { allowed_credit: number }[]).length,
+    12,
+  );
+  assertEquals(monthlyForm?.total_premium_tax_credit, 5_592);
+});
+
+Deno.test("Form 8962 line 11 also refuses changing SLCSP or part-year Marketplace coverage", () => {
+  for (
+    const [premiums, slcsps] of [
+      [Array(12).fill(500), [...Array(6).fill(600), ...Array(6).fill(650)]],
+      [[...Array(11).fill(500), 0], Array(12).fill(600)],
+    ]
+  ) {
+    assertThrows(
+      () =>
+        compute({
+          household_size: 2,
+          taxpayer_modified_agi: 40_880,
+          monthly_premiums: premiums,
+          monthly_slcsps: slcsps,
+          monthly_aptcs: Array(12).fill(0),
+          annual_line11_eligible: true,
+        }),
+      Error,
+      "line 11 requires twelve months of unchanged enrollment premium and applicable SLCSP",
+    );
+  }
+});
+
 Deno.test("MFS cannot claim PTC without verified exception and allocation facts", () => {
   assertThrows(
     () =>

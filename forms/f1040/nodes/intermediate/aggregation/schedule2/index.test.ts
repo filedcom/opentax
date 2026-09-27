@@ -78,6 +78,16 @@ Deno.test("calc: line17h_nqdc_tax alone routes to f1040 line23", () => {
   assertEquals(fieldsOf(result.outputs, f1040)!.line23_other_taxes, 10000);
 });
 
+Deno.test("Form 8889 testing-period tax contributes to line 23 and chapter 1 offset classification", () => {
+  const result = compute({ line17d_hsa_eligibility_tax: 50 });
+  assertEquals(fieldsOf(result.outputs, f1040)?.line23_other_taxes, 50);
+  assertEquals(
+    fieldsOf(result.outputs, form8978_reporting_year)
+      ?.schedule2_chapter1_part2_tax,
+    50,
+  );
+});
+
 // ── Line aggregation ─────────────────────────────────────────────────────────
 
 Deno.test("agg: line13 = uncollected_fica + uncollected_fica_gtl", () => {

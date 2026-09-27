@@ -83,6 +83,30 @@ async function acknowledgmentPdf(): Promise<Uint8Array> {
   return pdf.save();
 }
 
+async function assertVehicleBundleXsd(xml: string): Promise<void> {
+  const xsdPath = new URL(
+    "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    import.meta.url,
+  ).pathname;
+  try {
+    await Deno.stat(xsdPath);
+  } catch {
+    return;
+  }
+  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(path, xml);
+    const checked = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsdPath, path],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
+  } finally {
+    await Deno.remove(path);
+  }
+}
+
 function needyTransferVehicle(
   vin = "1HGBH41JXMN109186",
   fileName = "Form1098C-Civic.pdf",
@@ -116,6 +140,74 @@ function needyTransferVehicle(
       vehicle_condition: "Good condition",
       odometer_miles: 60_000,
       goods_or_services_received: false,
+    },
+  };
+}
+
+function sectionBMaterialImprovementVehicle() {
+  return {
+    property_description: "2018 Honda Civic, fair condition, 90,000 miles",
+    property_type: SectionBPropertyType.Vehicle,
+    physical_condition: "Fair condition; engine needs replacement",
+    date_acquired: "2018-05-15",
+    donor_acquisition_description: "Purchase",
+    date_contributed: "2025-06-01",
+    fmv: 20_000,
+    deduction_claimed: 15_000,
+    cost_or_adjusted_basis: 18_000,
+    vehicle_vin: "1HGBH41JXMN109186",
+    vehicle_acknowledgment_attachment_file_name: "Form1098C-Improvement.pdf",
+    vehicle_material_improvement_acknowledgment: {
+      copy_received_from_donee: true,
+      donee_certified: true,
+      donee_name: "City Charity",
+      donee_ein: "987654321",
+      donee_us_address: {
+        line1: "1 Main St",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+      },
+      acknowledgment_furnished_date: "2025-06-20",
+      no_transfer_before_completion_confirmed: true,
+      intended_improvement_description: "Replace failed engine with new engine",
+      major_repair_or_addition_confirmed: true,
+      significant_value_increase_confirmed: true,
+      no_additional_donor_payment_confirmed: true,
+      vehicle_year: 2018,
+      vehicle_make: "Honda",
+      vehicle_model: "Civic",
+      vehicle_condition: "Fair condition",
+      odometer_miles: 90_000,
+      goods_or_services_received: false,
+    },
+    qualified_appraisal: {
+      appraiser_first_name: "Jane",
+      appraiser_last_name: "Smith",
+      signed_date: "2025-05-28",
+      appraiser_ein: "123456789",
+      signed_by_appraiser: true as const,
+      signature_attachment_file_name: "Form8283AppraiserSignature.pdf",
+      us_address: {
+        line1: "1 Art Way",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+      },
+    },
+    donee_acknowledgment: {
+      organization_name: "City Charity",
+      ein: "987654321",
+      received_date: "2025-06-01",
+      signed_by_donee: true as const,
+      unrelated_use: false,
+      signature_attachment_file_name: "Form8283DoneeSignature.pdf",
+      us_address: {
+        line1: "1 Main St",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+      },
     },
   };
 }
@@ -441,6 +533,241 @@ Deno.test("Form 8283 Section B return validates against TY2025 IRS XSD", async (
   }
 });
 
+Deno.test("Form 8283 Section B material-improvement vehicle links appraisal, donee, and 1098-C evidence", async () => {
+  const vehicle = sectionBMaterialImprovementVehicle();
+  const bytes = await acknowledgmentPdf();
+  const bundle = await buildMefBundle({
+    f8283: { section_b_items: [vehicle] },
+  }, {
+    filer: testFiler(),
+    attachments: [
+      {
+        fileName: "Form1098C-Improvement.pdf",
+        description: "Form1098C material improvement certification",
+        bytes,
+      },
+      {
+        fileName: "Form8283AppraiserSignature.pdf",
+        description: "Form 8283 appraiser signature document",
+        bytes,
+      },
+      {
+        fileName: "Form8283DoneeSignature.pdf",
+        description: "Form 8283 Donee signature document",
+        bytes,
+      },
+    ],
+  });
+  const xml = bundle.xml;
+  assertEquals(bundle.attachments.length, 3);
+  assertStringIncludes(xml, "<VehicleInd>X</VehicleInd>");
+  assertStringIncludes(
+    xml,
+    "<AppraisedFairMarketValueAmt>20000</AppraisedFairMarketValueAmt>",
+  );
+  assertStringIncludes(xml, "<DeductionClaimedAmt>15000</DeductionClaimedAmt>");
+  assertStringIncludes(
+    xml,
+    "<CertifiesVehicleNotTrnsfrInd>X</CertifiesVehicleNotTrnsfrInd>",
+  );
+  assertStringIncludes(
+    xml,
+    "<CertifiesDetailedImprvDesc>Replace failed engine with new engine</CertifiesDetailedImprvDesc>",
+  );
+  assertStringIncludes(xml, "<VIN>1HGBH41JXMN109186</VIN>");
+  assertStringIncludes(
+    xml,
+    'referenceDocumentName="ContemporaneousWrittenAcknowledgmentStatement ContributionsOfMotorVehiclesBoatsAndAirplanesStatement"',
+  );
+  assertStringIncludes(
+    xml,
+    'referenceDocumentId="BinaryAttachment3 BinaryAttachment4 BinaryAttachment5"',
+  );
+  assertStringIncludes(
+    xml,
+    "<Desc>Form1098C material improvement certification</Desc>",
+  );
+  await assertVehicleBundleXsd(xml);
+});
+
+for (const certification of ["significant use", "needy transfer"] as const) {
+  Deno.test(`Form 8283 Section B ${certification} vehicle emits its exception certification`, async () => {
+    const vehicle = sectionBMaterialImprovementVehicle();
+    const shared = {
+      copy_received_from_donee: true,
+      donee_certified: true,
+      donee_name: "City Charity",
+      donee_ein: "987654321",
+      donee_us_address: {
+        line1: "1 Main St",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+      },
+      acknowledgment_furnished_date: "2025-06-20",
+      vehicle_year: 2018,
+      vehicle_make: "Honda",
+      vehicle_model: "Civic",
+      vehicle_condition: "Fair condition",
+      odometer_miles: 90_000,
+      goods_or_services_received: false,
+    };
+    const item = certification === "significant use"
+      ? {
+        ...vehicle,
+        vehicle_acknowledgment_attachment_file_name: "Form1098C-Exception.pdf",
+        vehicle_material_improvement_acknowledgment: undefined,
+        vehicle_significant_use_acknowledgment: {
+          ...shared,
+          no_transfer_before_completion_confirmed: true,
+          intended_use_description: "Deliver meals to needy residents daily",
+          intended_use_duration: "one year",
+          regularly_conducted_charitable_activity_confirmed: true,
+          substantial_nonincidental_use_confirmed: true,
+        },
+      }
+      : {
+        ...vehicle,
+        vehicle_acknowledgment_attachment_file_name: "Form1098C-Exception.pdf",
+        vehicle_material_improvement_acknowledgment: undefined,
+        vehicle_needy_transfer_acknowledgment: {
+          ...shared,
+          vehicle_to_be_transferred_to_needy_confirmed: true,
+          transfer_for_significantly_below_fmv_confirmed: true,
+          direct_charitable_transportation_purpose_confirmed: true,
+        },
+      };
+    const bytes = await acknowledgmentPdf();
+    const bundle = await buildMefBundle({
+      f8283: { section_b_items: [item] },
+    }, {
+      filer: testFiler(),
+      attachments: [
+        {
+          fileName: "Form1098C-Exception.pdf",
+          description: `Form1098C ${certification} certification`,
+          bytes,
+        },
+        {
+          fileName: "Form8283AppraiserSignature.pdf",
+          description: "Form 8283 appraiser signature document",
+          bytes,
+        },
+        {
+          fileName: "Form8283DoneeSignature.pdf",
+          description: "Form 8283 Donee signature document",
+          bytes,
+        },
+      ],
+    });
+    const certificationTag = certification === "significant use"
+      ? "CertifiesVehicleNotTrnsfrInd"
+      : "CertifiesVehTrnsfrToNeedyInd";
+    assertStringIncludes(
+      bundle.xml,
+      `<${certificationTag}>X</${certificationTag}>`,
+    );
+    assertStringIncludes(
+      bundle.xml,
+      'referenceDocumentName="ContemporaneousWrittenAcknowledgmentStatement ContributionsOfMotorVehiclesBoatsAndAirplanesStatement"',
+    );
+    await assertVehicleBundleXsd(bundle.xml);
+  });
+}
+
+Deno.test("Form 8283 Section B vehicle refuses missing or mismatched exception evidence", async () => {
+  const vehicle = sectionBMaterialImprovementVehicle();
+  const bytes = await acknowledgmentPdf();
+  const attachments = [
+    {
+      fileName: "Form1098C-Improvement.pdf",
+      description: "Form1098C material improvement certification",
+      bytes,
+    },
+    {
+      fileName: "Form8283AppraiserSignature.pdf",
+      description: "Form 8283 appraiser signature document",
+      bytes,
+    },
+    {
+      fileName: "Form8283DoneeSignature.pdf",
+      description: "Form 8283 Donee signature document",
+      bytes,
+    },
+  ];
+  assertThrows(
+    () =>
+      form8283.build({
+        section_b_items: [{
+          ...vehicle,
+          vehicle_material_improvement_acknowledgment: undefined,
+        }],
+      }),
+    Error,
+    "exactly one donee",
+  );
+  assertThrows(
+    () =>
+      form8283.build({
+        section_b_items: [{
+          ...vehicle,
+          vehicle_material_improvement_acknowledgment: {
+            ...vehicle.vehicle_material_improvement_acknowledgment,
+            acknowledgment_furnished_date: "2025-07-02",
+          },
+        }],
+      }),
+    Error,
+    "within 30 days",
+  );
+  assertThrows(
+    () =>
+      form8283.build({
+        section_b_items: [{
+          ...vehicle,
+          donee_acknowledgment: {
+            ...vehicle.donee_acknowledgment,
+            organization_name: "Different Charity",
+          },
+        }],
+      }),
+    Error,
+    "same organization",
+  );
+  assertThrows(
+    () =>
+      form8283.build({
+        section_b_items: [{
+          ...vehicle,
+          vehicle_acknowledgment_attachment_file_name: undefined,
+        }],
+      }),
+    Error,
+    "donee-issued Form 1098-C",
+  );
+  await assertRejects(
+    () =>
+      buildMefBundle({ f8283: { section_b_items: [vehicle] } }, {
+        filer: testFiler(),
+        attachments: attachments.slice(1),
+      }),
+    Error,
+    "matching PDF",
+  );
+  await assertRejects(
+    () =>
+      buildMefBundle({ f8283: { section_b_items: [vehicle] } }, {
+        filer: testFiler(),
+        attachments: [{
+          ...attachments[0],
+          description: "Unrelated file",
+        }, ...attachments.slice(1)],
+      }),
+    Error,
+    "IRS-approved description",
+  );
+});
+
 Deno.test("Form 8283 Section B requires both correctly described signature PDFs", async () => {
   const gift = {
     property_description: "Antique desk",
@@ -589,6 +916,114 @@ Deno.test("Form 8283 needy-transfer vehicle links Form 1098-C and emits native b
   assertEquals(bundle.attachments.length, 1);
 });
 
+Deno.test("Form 8283 significant-use vehicle links donee PDF and emits boxes 5a and 5c", async () => {
+  const item = {
+    ...needyTransferVehicle(),
+    deduction_claimed: 4_800,
+    vehicle_needy_transfer_acknowledgment: undefined,
+    vehicle_significant_use_acknowledgment: {
+      copy_received_from_donee: true,
+      donee_certified: true,
+      donee_name: "Meals Charity",
+      donee_ein: "987654321",
+      donee_us_address: {
+        line1: "1 Main St",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+      },
+      acknowledgment_furnished_date: "2025-06-20",
+      no_transfer_before_completion_confirmed: true,
+      intended_use_description: "Deliver meals daily to needy residents",
+      intended_use_duration: "one year",
+      regularly_conducted_charitable_activity_confirmed: true,
+      substantial_nonincidental_use_confirmed: true,
+      vehicle_year: 2020,
+      vehicle_make: "Honda",
+      vehicle_model: "Civic",
+      vehicle_condition: "Good condition",
+      odometer_miles: 60_000,
+      goods_or_services_received: false,
+    },
+  };
+  const bundle = await buildMefBundle({
+    f8283: { section_a_items: [item] },
+  }, {
+    filer: testFiler(),
+    attachments: [{
+      fileName: "Form1098C-Civic.pdf",
+      description: "Form1098C Civic significant use certification",
+      bytes: await acknowledgmentPdf(),
+    }],
+  });
+  assertStringIncludes(
+    bundle.xml,
+    "<CertifiesVehicleNotTrnsfrInd>X</CertifiesVehicleNotTrnsfrInd>",
+  );
+  assertStringIncludes(
+    bundle.xml,
+    "<CertifiesDetailedImprvDesc>Deliver meals daily to needy residents; intended duration: one year</CertifiesDetailedImprvDesc>",
+  );
+  assertEquals(bundle.xml.includes("<GrossProceedsFromSaleOfVehAmt>"), false);
+  assertEquals(bundle.xml.includes("<CertifiesVehTrnsfrToNeedyInd>"), false);
+  assertStringIncludes(
+    bundle.xml,
+    "<AttachmentLocationTxt>Form1098C-Civic.pdf</AttachmentLocationTxt>",
+  );
+  await assertVehicleBundleXsd(bundle.xml);
+});
+
+Deno.test("Form 8283 material-improvement vehicle emits donee's box 5c detail", async () => {
+  const item = {
+    ...needyTransferVehicle(),
+    vehicle_needy_transfer_acknowledgment: undefined,
+    vehicle_material_improvement_acknowledgment: {
+      copy_received_from_donee: true,
+      donee_certified: true,
+      donee_name: "Repair Charity",
+      donee_ein: "987654321",
+      donee_us_address: {
+        line1: "1 Main St",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+      },
+      acknowledgment_furnished_date: "2025-06-20",
+      no_transfer_before_completion_confirmed: true,
+      intended_improvement_description: "Replace failed engine with new engine",
+      major_repair_or_addition_confirmed: true,
+      significant_value_increase_confirmed: true,
+      no_additional_donor_payment_confirmed: true,
+      vehicle_year: 2020,
+      vehicle_make: "Honda",
+      vehicle_model: "Civic",
+      vehicle_condition: "Good condition",
+      odometer_miles: 60_000,
+      goods_or_services_received: false,
+    },
+  };
+  const bundle = await buildMefBundle({
+    f8283: { section_a_items: [item] },
+  }, {
+    filer: testFiler(),
+    attachments: [{
+      fileName: "Form1098C-Civic.pdf",
+      description: "Form1098C Civic material improvement certification",
+      bytes: await acknowledgmentPdf(),
+    }],
+  });
+  assertStringIncludes(
+    bundle.xml,
+    "<CertifiesVehicleNotTrnsfrInd>X</CertifiesVehicleNotTrnsfrInd>",
+  );
+  assertStringIncludes(
+    bundle.xml,
+    "<CertifiesDetailedImprvDesc>Replace failed engine with new engine</CertifiesDetailedImprvDesc>",
+  );
+  assertEquals(bundle.xml.includes("<CertifiesVehSoldToUnrltPrtyInd>"), false);
+  await assertVehicleBundleXsd(bundle.xml);
+});
+
 Deno.test("Form 8283 links both native vehicle statement and donee-issued PDF", async () => {
   const bundle = await buildMefBundle({
     f8283: {
@@ -658,25 +1093,5 @@ Deno.test("Form 8283 links both native vehicle statement and donee-issued PDF", 
     'referenceDocumentName="BinaryAttachment DeductionsTakenUnderSection170Stmt DoneesSignatureUnavailableStmt"',
   );
   assertEquals(bundle.attachments.length, 1);
-  const xsdPath = new URL(
-    "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
-    import.meta.url,
-  ).pathname;
-  try {
-    await Deno.stat(xsdPath);
-  } catch {
-    return;
-  }
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
-  try {
-    await Deno.writeTextFile(path, xml);
-    const checked = await new Deno.Command("xmllint", {
-      args: ["--noout", "--schema", xsdPath, path],
-      stdout: "piped",
-      stderr: "piped",
-    }).output();
-    assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
-  } finally {
-    await Deno.remove(path);
-  }
+  await assertVehicleBundleXsd(xml);
 });

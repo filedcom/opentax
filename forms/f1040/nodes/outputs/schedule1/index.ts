@@ -41,6 +41,8 @@ const inputSchema = z.object({
   line8d_foreign_earned_income_exclusion: z.number().nonnegative().optional(),
   line8d_foreign_housing_deduction: z.number().nonnegative().optional(),
   line8e_archer_msa_dist: z.number().nonnegative().optional(),
+  // Form 8889 lines 16 and 20, Schedule 1 line 8f.
+  line8f_hsa_income: z.number().nonnegative().optional(),
   line8g_child_interest_dividends: z.number().nonnegative().optional(),
   line8i_prizes_awards: z.number().optional(),
   line8p_excess_business_loss: z.number().nonnegative().optional(),
@@ -120,6 +122,7 @@ function otherIncome(input: Schedule1Input): number {
       ? -(input.line8d_foreign_housing_deduction)
       : 0) +
     (input.line8e_archer_msa_dist ?? 0) +
+    (input.line8f_hsa_income ?? 0) +
     (input.line8g_child_interest_dividends ?? 0) +
     (input.line8i_prizes_awards ?? 0) +
     (input.line8p_excess_business_loss ?? 0) +

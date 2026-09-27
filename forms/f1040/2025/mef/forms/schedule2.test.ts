@@ -110,6 +110,26 @@ Deno.test("line4_se_tax maps to SelfEmploymentTaxAmt", () => {
   );
 });
 
+Deno.test("Form 8889 testing-period tax reaches Schedule 2 line 17d, 18, and 21", () => {
+  const xml = schedule2.build({
+    line17c_hsa_penalty: 120,
+    line17d_hsa_eligibility_tax: 50,
+  });
+  assertStringIncludes(
+    xml,
+    "<HSADistriAddnlPercentTaxAmt>120</HSADistriAddnlPercentTaxAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<HDHPCoverageAddnlTaxAmt>50</HDHPCoverageAddnlTaxAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalOtherAdditionalTaxesAmt>170</TotalOtherAdditionalTaxesAmt>",
+  );
+  assertStringIncludes(xml, "<TotalOtherTaxesAmt>170</TotalOtherTaxesAmt>");
+});
+
 Deno.test("line5_unreported_tip_tax maps to SocSecMedicareTaxUnrptdTipAmt", () => {
   const result = schedule2.build({ line5_unreported_tip_tax: 300 });
   assertStringIncludes(

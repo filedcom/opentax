@@ -264,6 +264,43 @@ function qsehraMonthlyCredit(
   return Math.max(0, tentativeCredit - facts.permitted_benefit);
 }
 
+// Pub. 974 Worksheets N and Q. Form 8962 line 11 is one annual amount, even
+// when the QSEHRA was available for only part of the year. Worksheet N removes
+// the provided months if all are affordable; Worksheet Q Part II subtracts a
+// uniform, unaffordable benefit; Part III handles mixed affordability/benefits.
+function qsehraAnnualCredit(
+  annualTentativeCredit: number,
+  householdIncome: number,
+  facts: NonNullable<Form8962Input["qsehra_monthly_facts"]>,
+): number {
+  const provided = facts.filter((month) => month !== null);
+  const monthlyTentative = annualTentativeCredit / 12;
+  const threshold = householdIncome * 0.0902 / 12;
+  const isAffordable = (month: NonNullable<(typeof facts)[number]>) =>
+    threshold >= month.self_only_slcsp - month.self_only_permitted_benefit;
+
+  if (provided.every(isAffordable)) {
+    // Worksheet N lines 10-13, including its all-year zero case.
+    return annualTentativeCredit - monthlyTentative * provided.length;
+  }
+  const uniformBenefit = provided.every((month) =>
+    month.permitted_benefit === provided[0].permitted_benefit
+  );
+  if (uniformBenefit && provided.every((month) => !isAffordable(month))) {
+    // Worksheet Q Parts I-II; the non-QSEHRA months retain their PTC.
+    return annualTentativeCredit -
+      Math.min(provided[0].permitted_benefit, monthlyTentative) *
+        provided.length;
+  }
+  // Worksheet Q Part III, lines 9-27. Column C covers provided months;
+  // line 26 adds back the annual line-11 share for the other months.
+  return provided.reduce(
+    (sum, month) =>
+      sum + qsehraMonthlyCredit(monthlyTentative, householdIncome, month),
+    annualTentativeCredit - monthlyTentative * provided.length,
+  );
+}
+
 // IRC §36B(f)(2)(B): cap on excess APTC repayment liability
 // Returns null when no cap applies (income ≥ 400% FPL)
 function repaymentCap(
@@ -692,6 +729,39 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
         "Form 8962 monthly calculation needs all three 1095-A columns for each month",
       );
     }
+    if (hasMonthlyColumns) {
+      for (
+        const [annual, monthly, label] of [
+          [input.annual_premium, input.monthly_premiums!, "premium"],
+          [input.annual_slcsp, input.monthly_slcsps!, "SLCSP"],
+          [input.annual_aptc, input.monthly_aptcs!, "APTC"],
+        ] as const
+      ) {
+        if (
+          annual !== undefined &&
+          Math.abs(annual - monthly.reduce((sum, amount) => sum + amount, 0)) >
+            0.01
+        ) {
+          throw new Error(
+            `Form 8962 annual ${label} must reconcile to twelve monthly 1095-A amounts`,
+          );
+        }
+      }
+    }
+    if (
+      hasMonthlyColumns && input.annual_line11_eligible === true &&
+      !input.alternative_marriage &&
+      (!input.monthly_premiums!.every((amount) =>
+        amount > 0 && amount === input.monthly_premiums![0]
+      ) ||
+        !input.monthly_slcsps!.every((amount) =>
+          amount > 0 && amount === input.monthly_slcsps![0]
+        ))
+    ) {
+      throw new Error(
+        "Form 8962 line 11 requires twelve months of unchanged enrollment premium and applicable SLCSP",
+      );
+    }
     if (!hasMonthlyColumns && input.annual_line11_eligible !== true) {
       throw new Error(
         "Form 8962 annual line 11 needs verified full-year unchanged monthly coverage",
@@ -829,15 +899,7 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
     const allowed = monthlyRows
       ? monthlyRows.reduce((sum, row) => sum + row.allowed_credit, 0)
       : qsehraFacts
-      ? qsehraFacts.reduce(
-        (sum, facts) =>
-          sum + qsehraMonthlyCredit(
-            annualTentativeCredit / 12,
-            income,
-            facts,
-          ),
-        0,
-      )
+      ? qsehraAnnualCredit(annualTentativeCredit, income, qsehraFacts)
       : annualTentativeCredit;
     const line24 = Math.round(allowed);
     const line25 = Math.round(aptc);

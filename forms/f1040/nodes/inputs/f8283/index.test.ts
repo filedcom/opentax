@@ -1,5 +1,5 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { f8283, FMVMethod } from "./index.ts";
+import { f8283, FMVMethod, SectionBPropertyType } from "./index.ts";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { scheduleA as schedule_a } from "../schedule_a/index.ts";
 
@@ -345,34 +345,303 @@ Deno.test("f8283.compute: needy-transfer certificate permits FMV but requires ti
     4_500,
   );
   assertThrows(
-    () => compute({ section_a_items: [{ ...needy, deduction_claimed: 20_001 }] }),
+    () =>
+      compute({ section_a_items: [{ ...needy, deduction_claimed: 20_001 }] }),
     Error,
     "deduction exceeds FMV",
   );
   assertThrows(
-    () => compute({ section_a_items: [{ ...needy, deduction_claimed: 5_001 }] }),
+    () =>
+      compute({ section_a_items: [{ ...needy, deduction_claimed: 5_001 }] }),
     Error,
     "needs Section B and a qualified appraisal",
   );
   assertThrows(
-    () => compute({ section_a_items: [{
-      ...needy,
-      vehicle_needy_transfer_acknowledgment: {
-        ...needy.vehicle_needy_transfer_acknowledgment,
-        acknowledgment_furnished_date: "2025-07-02",
-      },
-    }] }),
+    () =>
+      compute({
+        section_a_items: [{
+          ...needy,
+          vehicle_needy_transfer_acknowledgment: {
+            ...needy.vehicle_needy_transfer_acknowledgment,
+            acknowledgment_furnished_date: "2025-07-02",
+          },
+        }],
+      }),
     Error,
     "furnished within 30 days of contribution",
   );
   assertThrows(
-    () => compute({ section_a_items: [{
-      ...needy,
-      vehicle_needy_transfer_acknowledgment: {
-        ...needy.vehicle_needy_transfer_acknowledgment,
-        direct_charitable_transportation_purpose_confirmed: false,
+    () =>
+      compute({
+        section_a_items: [{
+          ...needy,
+          vehicle_needy_transfer_acknowledgment: {
+            ...needy.vehicle_needy_transfer_acknowledgment,
+            direct_charitable_transportation_purpose_confirmed: false,
+          },
+        }],
+      }),
+    Error,
+  );
+});
+
+Deno.test("f8283.compute: significant-use certificate permits Section A FMV but requires box 5a facts", () => {
+  const item = {
+    property_description: "2019 van, good condition, 70,000 miles",
+    is_vehicle: true,
+    vehicle_vin: "1HGBH41JXMN109186",
+    date_contributed: "2025-06-01",
+    fmv: 4_800,
+    deduction_claimed: 4_800,
+    vehicle_significant_use_acknowledgment: {
+      copy_received_from_donee: true,
+      donee_certified: true,
+      donee_name: "Meals Charity",
+      donee_ein: "987654321",
+      donee_us_address: {
+        line1: "1 Main St",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
       },
-    }] }),
+      acknowledgment_furnished_date: "2025-06-20",
+      no_transfer_before_completion_confirmed: true,
+      intended_use_description: "Deliver meals daily to needy residents",
+      intended_use_duration: "one year",
+      regularly_conducted_charitable_activity_confirmed: true,
+      substantial_nonincidental_use_confirmed: true,
+      vehicle_year: 2019,
+      vehicle_make: "Ford",
+      vehicle_model: "Transit",
+      vehicle_condition: "Good condition",
+      odometer_miles: 70_000,
+      goods_or_services_received: false,
+    },
+  };
+  assertEquals(
+    fieldsOf(compute({ section_a_items: [item] }).outputs, schedule_a)
+      ?.line_12_noncash_contributions,
+    4_800,
+  );
+  assertThrows(
+    () =>
+      compute({
+        section_a_items: [{ ...item, deduction_claimed: 5_001, fmv: 6_000 }],
+      }),
+    Error,
+    "needs Section B and a qualified appraisal",
+  );
+  assertThrows(
+    () =>
+      compute({
+        section_a_items: [{
+          ...item,
+          vehicle_significant_use_acknowledgment: {
+            ...item.vehicle_significant_use_acknowledgment,
+            acknowledgment_furnished_date: "2025-07-02",
+          },
+        }],
+      }),
+    Error,
+    "furnished within 30 days of contribution",
+  );
+  assertThrows(
+    () =>
+      compute({
+        section_a_items: [{
+          ...item,
+          vehicle_significant_use_acknowledgment: {
+            ...item.vehicle_significant_use_acknowledgment,
+            intended_use_duration: "",
+          },
+        }],
+      }),
+    Error,
+  );
+  assertThrows(
+    () =>
+      compute({
+        section_a_items: [{
+          ...item,
+          vehicle_material_improvement_acknowledgment: {
+            ...item.vehicle_significant_use_acknowledgment,
+            intended_improvement_description: "Replace engine",
+            major_repair_or_addition_confirmed: true,
+            significant_value_increase_confirmed: true,
+            no_additional_donor_payment_confirmed: true,
+          },
+        }],
+      }),
+    Error,
+    "exactly one donee",
+  );
+});
+
+Deno.test("f8283.compute: material-improvement certificate requires major value-adding work without donor payment", () => {
+  const item = {
+    property_description: "2018 sedan, fair condition, 90,000 miles",
+    is_vehicle: true,
+    vehicle_vin: "1HGBH41JXMN109186",
+    date_contributed: "2025-08-01",
+    fmv: 3_500,
+    deduction_claimed: 3_500,
+    vehicle_material_improvement_acknowledgment: {
+      copy_received_from_donee: true,
+      donee_certified: true,
+      donee_name: "Repair Charity",
+      donee_ein: "987654321",
+      donee_us_address: {
+        line1: "1 Main St",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+      },
+      acknowledgment_furnished_date: "2025-08-25",
+      no_transfer_before_completion_confirmed: true,
+      intended_improvement_description: "Replace failed engine with new engine",
+      major_repair_or_addition_confirmed: true,
+      significant_value_increase_confirmed: true,
+      no_additional_donor_payment_confirmed: true,
+      vehicle_year: 2018,
+      vehicle_make: "Honda",
+      vehicle_model: "Civic",
+      vehicle_condition: "Fair condition",
+      odometer_miles: 90_000,
+      goods_or_services_received: false,
+    },
+  };
+  assertEquals(
+    fieldsOf(compute({ section_a_items: [item] }).outputs, schedule_a)
+      ?.line_12_noncash_contributions,
+    3_500,
+  );
+  assertThrows(
+    () =>
+      compute({
+        section_a_items: [{
+          ...item,
+          vehicle_material_improvement_acknowledgment: {
+            ...item.vehicle_material_improvement_acknowledgment,
+            no_additional_donor_payment_confirmed: false,
+          },
+        }],
+      }),
+    Error,
+  );
+});
+
+Deno.test("f8283.compute: Section B exception vehicle routes claimed amount with signed appraisal facts", () => {
+  const item = {
+    property_description: "2018 Honda Civic, fair condition, 90,000 miles",
+    property_type: SectionBPropertyType.Vehicle,
+    physical_condition: "Fair condition; engine needs replacement",
+    date_acquired: "2018-05-15",
+    donor_acquisition_description: "Purchase",
+    date_contributed: "2025-06-01",
+    fmv: 20_000,
+    deduction_claimed: 15_000,
+    cost_or_adjusted_basis: 18_000,
+    vehicle_vin: "1HGBH41JXMN109186",
+    vehicle_acknowledgment_attachment_file_name: "Form1098C-Improvement.pdf",
+    vehicle_material_improvement_acknowledgment: {
+      copy_received_from_donee: true,
+      donee_certified: true,
+      donee_name: "City Charity",
+      donee_ein: "987654321",
+      donee_us_address: {
+        line1: "1 Main St",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+      },
+      acknowledgment_furnished_date: "2025-06-20",
+      no_transfer_before_completion_confirmed: true,
+      intended_improvement_description: "Replace failed engine with new engine",
+      major_repair_or_addition_confirmed: true,
+      significant_value_increase_confirmed: true,
+      no_additional_donor_payment_confirmed: true,
+      vehicle_year: 2018,
+      vehicle_make: "Honda",
+      vehicle_model: "Civic",
+      vehicle_condition: "Fair condition",
+      odometer_miles: 90_000,
+      goods_or_services_received: false,
+    },
+    qualified_appraisal: {
+      appraiser_first_name: "Jane",
+      appraiser_last_name: "Smith",
+      signed_date: "2025-05-28",
+      appraiser_ein: "123456789",
+      signed_by_appraiser: true,
+      signature_attachment_file_name: "Form8283AppraiserSignature.pdf",
+      us_address: {
+        line1: "1 Art Way",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+      },
+    },
+    donee_acknowledgment: {
+      organization_name: "City Charity",
+      ein: "987654321",
+      received_date: "2025-06-01",
+      signed_by_donee: true,
+      unrelated_use: false,
+      signature_attachment_file_name: "Form8283DoneeSignature.pdf",
+      us_address: {
+        line1: "1 Main St",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+      },
+    },
+  };
+  assertEquals(
+    fieldsOf(compute({ section_b_items: [item] }).outputs, schedule_a)
+      ?.line_12_noncash_contributions,
+    15_000,
+  );
+  assertThrows(
+    () => compute({ section_b_items: [{ ...item, vehicle_vin: undefined }] }),
+    Error,
+    "needs VIN",
+  );
+  assertThrows(
+    () =>
+      compute({
+        section_b_items: [{
+          ...item,
+          qualified_appraisal: undefined,
+        }],
+      }),
+    Error,
+    "needs qualified appraisal and signed donee facts",
+  );
+  assertThrows(
+    () =>
+      compute({
+        section_b_items: [{
+          ...item,
+          qualified_appraisal: {
+            ...item.qualified_appraisal,
+            signature_attachment_file_name: undefined,
+          },
+        }],
+      }),
+    Error,
+    "needs appraiser and donee signature PDFs",
+  );
+  assertThrows(
+    () =>
+      compute({
+        section_b_items: [{
+          ...item,
+          vehicle_material_improvement_acknowledgment: {
+            ...item.vehicle_material_improvement_acknowledgment,
+            no_additional_donor_payment_confirmed: false,
+          },
+        }],
+      }),
     Error,
   );
 });

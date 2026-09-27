@@ -1,183 +1,179 @@
-import { assertEquals, assertStringIncludes } from "@std/assert";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { FilingStatus } from "../../../mef/header.ts";
+import type { MefBuildContext } from "../form-descriptor.ts";
 import { form8889 } from "./f8889.ts";
 
-function assertNotIncludes(actual: string, expected: string) {
-  assertEquals(
-    actual.includes(expected),
-    false,
-    `Expected string NOT to include: ${expected}`,
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Section 1: Empty input
-// ---------------------------------------------------------------------------
-
-Deno.test("empty object returns empty string", () => {
-  assertEquals(form8889.build({}), "");
-});
-
-// ---------------------------------------------------------------------------
-// Section 2: Unknown keys ignored
-// ---------------------------------------------------------------------------
-
-Deno.test("all unknown keys returns empty string", () => {
-  assertEquals(form8889.build({ junk: 999, foo: "bar", baz: 0 }), "");
-});
-
-// ---------------------------------------------------------------------------
-// Section 3: Zero value emitted
-// ---------------------------------------------------------------------------
-
-Deno.test("taxpayer_hsa_contributions at zero is emitted", () => {
-  const result = form8889.build({ taxpayer_hsa_contributions: 0 });
-  assertStringIncludes(result, "<HSAContributionAmt>0</HSAContributionAmt>");
-});
-
-// ---------------------------------------------------------------------------
-// Section 4: Per-field mapping tests
-// ---------------------------------------------------------------------------
-
-Deno.test("taxpayer_hsa_contributions maps to HSAContributionAmt", () => {
-  const result = form8889.build({ taxpayer_hsa_contributions: 3000 });
-  assertStringIncludes(result, "<HSAContributionAmt>3000</HSAContributionAmt>");
-});
-
-Deno.test(
-  "employer_hsa_contributions maps to HSAEmployerContributionAmt",
-  () => {
-    const result = form8889.build({ employer_hsa_contributions: 1200 });
-    assertStringIncludes(
-      result,
-      "<HSAEmployerContributionAmt>1200</HSAEmployerContributionAmt>",
-    );
+const context: MefBuildContext = {
+  filer: {
+    primarySSN: "123-45-6789",
+    fullName: "Alex Taxpayer",
+    nameLine1: "TAXPAYER ALEX",
+    nameControl: "TAXP",
+    filingStatus: FilingStatus.Single,
+    address: {
+      line1: "1 Main St",
+      city: "Austin",
+      state: "TX",
+      zip: "78701",
+    },
   },
-);
-
-Deno.test("hsa_distributions maps to TotalHSADistributionAmt", () => {
-  const result = form8889.build({ hsa_distributions: 5000 });
-  assertStringIncludes(
-    result,
-    "<TotalHSADistributionAmt>5000</TotalHSADistributionAmt>",
-  );
-});
-
-Deno.test(
-  "qualified_medical_expenses maps to UnreimbQualMedAndDentalExpAmt",
-  () => {
-    const result = form8889.build({ qualified_medical_expenses: 4500 });
-    assertStringIncludes(
-      result,
-      "<UnreimbQualMedAndDentalExpAmt>4500</UnreimbQualMedAndDentalExpAmt>",
-    );
-  },
-);
-
-// ---------------------------------------------------------------------------
-// Section 5: Sparse output — single field only emits that element
-// ---------------------------------------------------------------------------
-
-Deno.test(
-  "single known field emits only that element, absent fields omitted",
-  () => {
-    const result = form8889.build({ taxpayer_hsa_contributions: 3000 });
-    assertStringIncludes(
-      result,
-      "<HSAContributionAmt>3000</HSAContributionAmt>",
-    );
-    assertNotIncludes(result, "<HSAEmployerContributionAmt>");
-    assertNotIncludes(result, "<TotalHSADistributionAmt>");
-    assertNotIncludes(result, "<UnreimbQualMedAndDentalExpAmt>");
-  },
-);
-
-// ---------------------------------------------------------------------------
-// Section 6: All fields present
-// ---------------------------------------------------------------------------
-
-const allFields = {
-  taxpayer_hsa_contributions: 3000,
-  employer_hsa_contributions: 1200,
-  hsa_distributions: 5000,
-  qualified_medical_expenses: 4500,
 };
 
-Deno.test("all fields present: output wrapped in IRS8889 tag", () => {
-  const result = form8889.build(allFields);
-  assertStringIncludes(result, "<IRS8889>");
-  assertStringIncludes(result, "</IRS8889>");
+Deno.test("Form 8889 omits an empty pending slot", () => {
+  assertEquals(form8889.build({}, context), "");
+  assertEquals(form8889.build({ unrelated: 10 }, context), "");
 });
 
-Deno.test("all fields present: all elements emitted with correct values", () => {
-  const result = form8889.build(allFields);
-  assertStringIncludes(result, "<HSAContributionAmt>3000</HSAContributionAmt>");
-  assertStringIncludes(
-    result,
-    "<HSAEmployerContributionAmt>1200</HSAEmployerContributionAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<TotalHSADistributionAmt>5000</TotalHSADistributionAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<UnreimbQualMedAndDentalExpAmt>4500</UnreimbQualMedAndDentalExpAmt>",
+Deno.test("Form 8889 rejects raw HSA values without computed form lines", () => {
+  assertThrows(
+    () => form8889.build({ taxpayer_hsa_contributions: 3_000 }, context),
+    Error,
+    "requires computed print_line fields",
   );
 });
 
-// ---------------------------------------------------------------------------
-// Section 7: Non-number fields ignored (coverage_type, age_55_or_older, distribution_exception)
-// ---------------------------------------------------------------------------
+Deno.test("Form 8889 requires the beneficiary SSN for every filed form", () => {
+  assertThrows(
+    () => form8889.build({ print_line14a_distributions: 500 }),
+    Error,
+    "beneficiary SSN",
+  );
+});
 
-Deno.test(
-  "non-number fields silently skipped: coverage_type string excluded",
-  () => {
-    const result = form8889.build({
-      coverage_type: "self_only",
-      taxpayer_hsa_contributions: 3000,
-    });
-    assertStringIncludes(
-      result,
-      "<HSAContributionAmt>3000</HSAContributionAmt>",
-    );
-    assertNotIncludes(result, "coverage_type");
-    assertNotIncludes(result, "self_only");
-  },
-);
+Deno.test("Form 8889 distribution-only filing has no invented HDHP coverage", () => {
+  const xml = form8889.build({
+    print_line14a_distributions: 800,
+    print_line14c: 800,
+    print_line15_qualified: 300,
+    print_line16_taxable: 500,
+    print_line17b_penalty: 100,
+  }, context);
+  assertStringIncludes(xml, "<RecipientSSN>123456789</RecipientSSN>");
+  assertStringIncludes(
+    xml,
+    "<TotalHSADistributionAmt>800</TotalHSADistributionAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TaxableHSADistributionAmt>500</TaxableHSADistributionAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<HSADistriAddnlPercentTaxAmt>100</HSADistriAddnlPercentTaxAmt>",
+  );
+  assertEquals(xml.includes("HDHPSelfOnlyCoverageInd"), false);
+  assertEquals(xml.includes("HDHPFamilyCoverageInd"), false);
+});
 
-Deno.test(
-  "non-number fields silently skipped: age_55_or_older boolean excluded",
-  () => {
-    const result = form8889.build({
-      age_55_or_older: true,
-      taxpayer_hsa_contributions: 500,
-    });
-    assertStringIncludes(
-      result,
-      "<HSAContributionAmt>500</HSAContributionAmt>",
-    );
-    assertNotIncludes(result, "age_55_or_older");
-  },
-);
+Deno.test("Form 8889 serializes all calculated 2025 lines in XSD order", () => {
+  const xml = form8889.build({
+    print_line1_coverage: "family",
+    print_line2_taxpayer_contributions: 2_000,
+    print_line3_limit: 8_550,
+    print_line4_archer: 100,
+    print_line5: 8_450,
+    print_line6: 8_000,
+    print_line7_catchup: 1_000,
+    print_line8: 9_000,
+    print_line9_employer: 3_000,
+    print_line10: 200,
+    print_line11: 3_200,
+    print_line12: 5_800,
+    print_line13_deduction: 2_000,
+    print_line14a_distributions: 4_000,
+    print_line14b_rollovers: 500,
+    print_line14c: 3_500,
+    print_line15_qualified: 2_500,
+    print_line16_taxable: 1_000,
+    print_line17a_exception: true,
+    print_line17b_penalty: 0,
+    print_line18: 300,
+    print_line19: 200,
+    print_line20: 500,
+    print_line21: 50,
+  }, context);
 
-Deno.test(
-  "non-number fields silently skipped: distribution_exception boolean excluded",
-  () => {
-    const result = form8889.build({
-      distribution_exception: false,
-      hsa_distributions: 2000,
-    });
-    assertStringIncludes(
-      result,
-      "<TotalHSADistributionAmt>2000</TotalHSADistributionAmt>",
-    );
-    assertNotIncludes(result, "distribution_exception");
-  },
-);
+  const tags = [
+    "PersonNm",
+    "RecipientSSN",
+    "HDHPFamilyCoverageInd",
+    "HSAContributionAmt",
+    "HSALimitedAnnualDeductibleAmt",
+    "TotalArcherMSAContributionAmt",
+    "HSALimitedDeductibleAllwdAmt",
+    "HSAFamilyDeductibleAmt",
+    "HSAAddnlContributionAmt",
+    "HSALimitedGrossContributionAmt",
+    "HSAEmployerContributionAmt",
+    "HSAQualifiedFundingDistriAmt",
+    "TotalHSAContributionAmt",
+    "HSALimitedContributionAmt",
+    "TotalHSADeductionAmt",
+    "TotalHSADistributionAmt",
+    "HSADistributionRolloverAmt",
+    "HSANetDistributionAmt",
+    "UnreimbQualMedAndDentalExpAmt",
+    "TaxableHSADistributionAmt",
+    "HSADistriAddnlPercentTaxExcInd",
+    "HSADistriAddnlPercentTaxAmt",
+    "HDHPCoverageFailPartialYrAmt",
+    "HDHPCoverageFailFundDistriAmt",
+    "HDHPCoverageIncomeAmt",
+    "HDHPCoverageAddnlTaxAmt",
+  ];
+  const positions = tags.map((tag) => xml.indexOf(`<${tag}>`));
+  assertEquals(positions.every((position) => position >= 0), true);
+  assertEquals(positions, [...positions].sort((a, b) => a - b));
+  assertStringIncludes(xml, "<PersonNm>Alex Taxpayer</PersonNm>");
+  assertStringIncludes(
+    xml,
+    "<TotalHSADeductionAmt>2000</TotalHSADeductionAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<HSADistriAddnlPercentTaxExcInd>X</HSADistriAddnlPercentTaxExcInd>",
+  );
+  assertStringIncludes(
+    xml,
+    "<HDHPCoverageAddnlTaxAmt>50</HDHPCoverageAddnlTaxAmt>",
+  );
+  assertEquals(xml.includes("HDHPSelfOnlyCoverageInd"), false);
+});
 
-Deno.test("only non-number fields provided returns empty string", () => {
-  assertEquals(
-    form8889.build({ coverage_type: "family", age_55_or_older: true }),
-    "",
+Deno.test("Form 8889 self-only line 1 and explicit zero deduction", () => {
+  const xml = form8889.build({
+    print_line1_coverage: "self_only",
+    print_line2_taxpayer_contributions: 0,
+    print_line9_employer: 1_000,
+    print_line13_deduction: 0,
+  }, context);
+  assertStringIncludes(
+    xml,
+    "<HDHPSelfOnlyCoverageInd>X</HDHPSelfOnlyCoverageInd>",
+  );
+  assertStringIncludes(xml, "<HSAContributionAmt>0</HSAContributionAmt>");
+  assertStringIncludes(xml, "<TotalHSADeductionAmt>0</TotalHSADeductionAmt>");
+});
+
+Deno.test("Form 8889 rejects invalid coverage, exception, and amounts", () => {
+  assertThrows(
+    () => form8889.build({ print_line1_coverage: "both" }, context),
+    Error,
+    "line 1",
+  );
+  assertThrows(
+    () => form8889.build({ print_line17a_exception: "yes" }, context),
+    Error,
+    "line 17a",
+  );
+  assertThrows(
+    () => form8889.build({ print_line16_taxable: -1 }, context),
+    Error,
+    "nonnegative amount",
+  );
+  assertThrows(
+    () => form8889.build({ print_line16_taxable: Number.NaN }, context),
+    Error,
+    "nonnegative amount",
   );
 });

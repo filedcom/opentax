@@ -10,10 +10,12 @@ verified IRS acceptance.
 - Section A currently sends reported FMV to Schedule A line 12 for nonvehicle
   gifts. For vehicles, it sends `deduction_claimed` when supplied. A vehicle
   claimed above $500 requires the donee's certified facts, a contribution date,
-  a VIN, and a claimed amount within the supported sale-proceeds or needy-person
-  transfer route. Significant use, material improvement, and other special
-  routes remain unsupported. Ordinary-income-property reductions and AGI
-  ceilings still need source-level calculation.
+  a VIN, and a claimed amount within the supported sale-proceeds, needy-person
+  transfer, significant-intervening-use, or material-improvement route. The
+  three gross-proceeds exceptions use Section A only when the claimed deduction
+  is at most $5,000; larger claims need Section B and a qualified appraisal.
+  Ordinary-income-property reductions and AGI ceilings still need source-level
+  calculation.
 - Section B requires separate `fmv` and `deduction_claimed` values. The
   calculation sends the claimed value to Schedule A line 12. Capital-gain
   property is **not** automatically capped at basis. FMV is usually available,
@@ -22,17 +24,29 @@ verified IRS acceptance.
   document per property with its property type, acquisition facts,
   qualified-appraiser declaration, and signed donee acknowledgment facts. The
   appraisal itself is generally retained, not attached. The model rejects
-  high-value art, Section B vehicles, and gifts above $500,000 until their
-  attachment requirements are implemented. Section A vehicles claimed at $500 or
+  high-value art and gifts above $500,000 until their
+  attachment requirements are implemented. A Section B vehicle using one of
+  the three gross-proceeds exceptions now requires a qualified appraisal,
+  appraiser and donee signature PDF references, a donee-issued Form 1098-C or equivalent
+  acknowledgment PDF, and its native `ContriVehicleBoatAirplaneStmt`. The
+  statement links to `PropertyInformation`; all three binaries link to that
+  item's `IRS8283` document. Section A vehicles claimed at $500 or
   less can include their VIN without a sale acknowledgment. For higher Section A
-  vehicle claims on the supported sale-proceeds and needy-person transfer
-  routes, a separate native MeF `ContriVehicleBoatAirplaneStmt` is generated
+  vehicle claims on all four supported certification routes, a separate native
+  MeF `ContriVehicleBoatAirplaneStmt` is generated
   from the donee facts and linked to the Form 8283 row. The actual donee-issued
   Form 1098-C or equivalent contemporaneous written acknowledgment must also
   be supplied as a PDF `BinaryAttachment` linked to `IRS8283`. The IRS 2025
   instructions explicitly require the copy for vehicle deductions above $500;
   the structured statement is supplemental, not a replacement. The local
   TY2025v5.4 `IRS8283.xsd` permits the binary reference on the form document.
+  The local statement schema has `CertifiesVehicleNotTrnsfrInd` for Form 1098-C
+  box 5a and `CertifiesDetailedImprvDesc` for box 5c. The use route requires the
+  donee's intended activity and duration, and the improvement route requires
+  its intended major value-adding work without an additional donor payment.
+  Both require the donee's no-transfer-before-completion certification and an
+  acknowledgment furnished within 30 days of contribution. These are
+  prospective donee certifications, not proof that the eventual work happened.
 - The serializer uses an array result for every call so one input can produce an
   optional Section A document and multiple Section B documents without a dual
   return shape.
@@ -41,9 +55,10 @@ verified IRS acceptance.
 
 1. Confirm each contribution's allowed deduction, including ordinary-income
    property reductions and 2025 Schedule A AGI limits, before totaling line 12.
-2. Cover the other vehicle certification routes and Section B vehicles. The
-   donee-issued acknowledgment attachment path for supported Section A routes
-   is implemented, but local code cannot authenticate PDF provenance or certify
+2. Cover remaining special vehicle rules and complete Section B evidence
+   review. The donee-issued acknowledgment attachment path for supported
+   Section A and exception Section B routes is implemented, but local code
+   cannot authenticate PDF provenance or certify
    that a user-supplied copy matches the donee's original.
 3. Build required appraisal, photograph, and special statements for high-value
    art, gifts over $500,000, certain clothing/household items, conservation

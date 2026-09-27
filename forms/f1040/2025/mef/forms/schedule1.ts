@@ -10,6 +10,7 @@ export interface Fields {
   line8c_cod_income?: number | null;
   line8d_foreign_earned_income_exclusion?: number | null;
   line8e_archer_msa_dist?: number | null;
+  line8f_hsa_income?: number | null;
   line8i_prizes_awards?: number | null;
   line8p_excess_business_loss?: number | null;
   line8z_rtaa?: number | null;
@@ -43,6 +44,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line8c_cod_income", "DebtCancellationAmt"],
   ["line8d_foreign_earned_income_exclusion", "TotalIncomeExclusionAmt"],
   ["line8e_archer_msa_dist", "TotArcherMSAMedcrLTCAmt"],
+  ["line8f_hsa_income", "TotHSADistriHDHPAmt"],
   ["line8i_prizes_awards", "PrizeAwardAmt"],
   ["line8p_excess_business_loss", "ExcessBusinessLossAmt"],
   ["line8z_rtaa", "RTAAPaymentsAmt"],
@@ -89,6 +91,22 @@ function buildIRS1040Schedule1(
         value,
         formId
           ? { referenceDocumentId: formId, referenceDocumentName: "IRS2555" }
+          : undefined,
+      );
+    }
+    if (key === "line8f_hsa_income") {
+      const formIds = context?.documentIdsByPendingKey?.form8889 ?? [];
+      if (context?.documentIdsByPendingKey && formIds.length === 0) {
+        throw new Error("Schedule 1 line 8f needs an attached Form 8889");
+      }
+      return element(
+        tag,
+        value,
+        formIds.length > 0
+          ? {
+            referenceDocumentId: formIds.join(" "),
+            referenceDocumentName: "IRS8889",
+          }
           : undefined,
       );
     }

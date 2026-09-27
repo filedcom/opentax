@@ -56,6 +56,17 @@ const sampleScheduleF = {
   }],
 };
 
+const sampleForm8889 = {
+  print_line1_coverage: "self_only",
+  print_line2_taxpayer_contributions: 3_600,
+  print_line3_limit: 4_300,
+  print_line5: 4_300,
+  print_line6: 4_300,
+  print_line8: 4_300,
+  print_line12: 4_300,
+  print_line13_deduction: 3_600,
+};
+
 const sampleForm2441 = {
   dep_care_benefits: 5000,
   agi: 50_000,
@@ -810,7 +821,7 @@ Deno.test("IRS1040ScheduleD absent when schedule_d has only unknown keys", () =>
 });
 
 Deno.test("IRS8889 present when form8889 has data", () => {
-  const xml = buildMefXml({ form8889: { taxpayer_hsa_contributions: 3600 } });
+  const xml = buildMefXml({ form8889: sampleForm8889 });
   assertStringIncludes(xml, "<IRS8889 ");
 });
 
@@ -884,7 +895,7 @@ Deno.test("documentCnt=10 when all 10 forms have data", () => {
     schedule2: { line2_amt: 5000 },
     schedule3: { line2_childcare_credit: 0 },
     schedule_d: { line_4_other_st: 1000 },
-    form8889: { taxpayer_hsa_contributions: 3600 },
+    form8889: sampleForm8889,
     form2441: sampleForm2441,
     form8949: [{
       part: "A",
@@ -909,7 +920,7 @@ Deno.test("all 10 forms populated: XML contains all 10 document tags", () => {
     schedule2: { line2_amt: 5000 },
     schedule3: { line2_childcare_credit: 0 },
     schedule_d: { line_4_other_st: 1000 },
-    form8889: { taxpayer_hsa_contributions: 3600 },
+    form8889: sampleForm8889,
     form2441: sampleForm2441,
     form8949: [{
       part: "A",
@@ -939,7 +950,7 @@ Deno.test("all 10 forms populated: XML contains all 10 document tags", () => {
 Deno.test("only f1040 and form8889 populated: documentCnt=2", () => {
   const xml = buildMefXml({
     f1040: { line1a_wages: 50000 },
-    form8889: { taxpayer_hsa_contributions: 3600 },
+    form8889: sampleForm8889,
   });
   assertStringIncludes(xml, 'documentCnt="2"');
 });
@@ -947,7 +958,7 @@ Deno.test("only f1040 and form8889 populated: documentCnt=2", () => {
 Deno.test("only f1040 and form8889 populated: only IRS1040 and IRS8889 present", () => {
   const xml = buildMefXml({
     f1040: { line1a_wages: 50000 },
-    form8889: { taxpayer_hsa_contributions: 3600 },
+    form8889: sampleForm8889,
   });
   assertStringIncludes(xml, "<IRS1040 ");
   assertStringIncludes(xml, "<IRS8889 ");
@@ -967,7 +978,7 @@ Deno.test("schedule_d STGainOrLossFromFormsAmt value appears in assembled output
 });
 
 Deno.test("form8889 HSAContributionAmt value appears in assembled output", () => {
-  const xml = buildMefXml({ form8889: { taxpayer_hsa_contributions: 3600 } });
+  const xml = buildMefXml({ form8889: sampleForm8889 });
   assertStringIncludes(xml, "<HSAContributionAmt>3600</HSAContributionAmt>");
 });
 
@@ -1284,7 +1295,7 @@ Deno.test("documentCnt=29 when all currently serializable forms have data", () =
     schedule2: { line2_amt: 5000 },
     schedule3: { line1_total: 800, line2_childcare_credit: 0 },
     schedule_d: { line_4_other_st: 1000 },
-    form8889: { taxpayer_hsa_contributions: 3600 },
+    form8889: sampleForm8889,
     form2441: sampleForm2441,
     form8949: [{
       part: "A",
@@ -1353,7 +1364,7 @@ Deno.test("all 29 serializable documents populated: XML contains their tags", ()
     schedule2: { line2_amt: 5000 },
     schedule3: { line1_total: 800, line2_childcare_credit: 0 },
     schedule_d: { line_4_other_st: 1000 },
-    form8889: { taxpayer_hsa_contributions: 3600 },
+    form8889: sampleForm8889,
     form2441: sampleForm2441,
     form8949: [{
       part: "A",

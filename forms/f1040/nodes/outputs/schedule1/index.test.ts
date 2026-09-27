@@ -9,7 +9,9 @@ function compute(input: Parameters<typeof schedule1.compute>[1]) {
   return schedule1.compute(ctx, input);
 }
 
-function fields(input: Parameters<typeof schedule1.compute>[1]): Record<string, unknown> {
+function fields(
+  input: Parameters<typeof schedule1.compute>[1],
+): Record<string, unknown> {
   const result = compute(input);
   return result.outputs[0].fields as Record<string, unknown>;
 }
@@ -89,6 +91,12 @@ Deno.test("schedule1: prizes and awards in line 8z", () => {
 Deno.test("schedule1: cancellation of debt income in line 8c", () => {
   const f = fields({ line8c_cod_income: 2_500 });
   assertEquals(f.line10_total_additional_income, 2_500);
+});
+
+Deno.test("schedule1: taxable Form 8889 amounts enter line 8f and total income", () => {
+  const f = fields({ line8f_hsa_income: 1100 });
+  assertEquals(f.line8f_hsa_income, 1100);
+  assertEquals(f.line10_total_additional_income, 1100);
 });
 
 Deno.test("schedule1: foreign earned income exclusion offsets income", () => {

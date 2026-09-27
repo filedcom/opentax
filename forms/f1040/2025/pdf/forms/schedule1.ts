@@ -72,6 +72,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "text",
+    domainKey: "line8f_hsa_income",
+    pdfField: "topmostSubform[0].Page1[0].f1_18[0]",
+  },
+  {
+    kind: "text",
     domainKey: "line8i_prizes_awards",
     pdfField: "topmostSubform[0].Page1[0].f1_21[0]",
   },

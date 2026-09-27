@@ -57,6 +57,8 @@ export const inputSchema = z.object({
   // Line 17c — 20% additional tax on non-qualified HSA distributions (Form 8889 line 20)
   // IRC §223(f)(4)(A); Form 8889 Part II line 20 → Schedule 2 line 17c
   line17c_hsa_penalty: z.number().nonnegative().optional(),
+  // Line 17d — Form 8889 line 21, failure to remain HSA-eligible.
+  line17d_hsa_eligibility_tax: z.number().nonnegative().optional(),
   // Line 11 — Additional Medicare Tax (from Form 8959 line 18)
   // IRC §3101(b)(2); Form 8959 line 18 → Schedule 2 line 11
   line11_additional_medicare: z.number().nonnegative().optional(),
@@ -149,6 +151,7 @@ function part2Total(input: Schedule2Input): number {
     (input.line17f_medicare_advantage_msa_tax ?? 0) +
     (input.line6_uncollected_8919 ?? 0) +
     (input.line17c_hsa_penalty ?? 0) +
+    (input.line17d_hsa_eligibility_tax ?? 0) +
     (input.line11_additional_medicare ?? 0) +
     (input.line12_niit ?? 0) +
     (input.line9_household_employment ?? 0) +
@@ -173,6 +176,7 @@ function part2Chapter1Tax(input: Schedule2Input): number {
     (input.line17e_archer_msa_tax ?? 0) +
     (input.line17f_medicare_advantage_msa_tax ?? 0) +
     (input.line17c_hsa_penalty ?? 0) +
+    (input.line17d_hsa_eligibility_tax ?? 0) +
     (input.line17a_investment_credit_recapture ?? 0) +
     (input.line17a_new_markets_credit_recapture ?? 0) +
     (input.line17b_mortgage_subsidy_recapture ?? 0) +

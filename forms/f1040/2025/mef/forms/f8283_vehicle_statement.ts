@@ -1,6 +1,10 @@
 import { inputSchema } from "../../../nodes/inputs/f8283/index.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
-import { buildVehicleStatement, needsVehicleStatement } from "./f8283.ts";
+import {
+  buildVehicleStatement,
+  needsSectionBVehicleStatement,
+  needsVehicleStatement,
+} from "./f8283.ts";
 
 // ReturnData1040.xsd places this supporting document after the numbered forms.
 // Its own descriptor preserves that sequence and lets IRS8283 reference its ID.
@@ -16,8 +20,9 @@ export const form8283VehicleStatement: MefFormDescriptor<
     const raw = context.pending?.f8283;
     if (raw === undefined) return [];
     const parsed = inputSchema.parse(raw);
-    return (parsed.section_a_items ?? [])
-      .filter(needsVehicleStatement)
-      .map((item) => buildVehicleStatement(item, context));
+    return [
+      ...(parsed.section_a_items ?? []).filter(needsVehicleStatement),
+      ...(parsed.section_b_items ?? []).filter(needsSectionBVehicleStatement),
+    ].map((item) => buildVehicleStatement(item, context));
   },
 };

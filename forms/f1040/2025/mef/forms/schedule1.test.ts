@@ -1,4 +1,4 @@
-import { assertEquals, assertStringIncludes } from "@std/assert";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { schedule1 } from "./schedule1.ts";
 
 function assertNotIncludes(actual: string, expected: string) {
@@ -95,6 +95,25 @@ Deno.test("line8i_prizes_awards maps to PrizeAwardAmt", () => {
   assertStringIncludes(result, "<PrizeAwardAmt>500</PrizeAwardAmt>");
 });
 
+Deno.test("line 8f HSA income references the attached Form 8889", () => {
+  const result = schedule1.build({ line8f_hsa_income: 1100 }, {
+    documentIdsByPendingKey: { form8889: ["IRS8889_1"] },
+  });
+  assertStringIncludes(
+    result,
+    '<TotHSADistriHDHPAmt referenceDocumentId="IRS8889_1" referenceDocumentName="IRS8889">1100</TotHSADistriHDHPAmt>',
+  );
+  assertEquals(result.includes("<OtherIncomeAmt>1100</OtherIncomeAmt>"), false);
+  assertThrows(
+    () =>
+      schedule1.build({ line8f_hsa_income: 1100 }, {
+        documentIdsByPendingKey: {},
+      }),
+    Error,
+    "needs an attached Form 8889",
+  );
+});
+
 Deno.test("line8z_rtaa maps to RTAAPaymentsAmt", () => {
   const result = schedule1.build({ line8z_rtaa: 300 });
   assertStringIncludes(result, "<RTAAPaymentsAmt>300</RTAAPaymentsAmt>");
@@ -167,11 +186,16 @@ Deno.test("Schedule E contributions emit one combined line 5 in form order", () 
     line5_schedule_e: [12_000, -5_000],
     line6_schedule_f: 2_000,
   });
-  assertStringIncludes(result, "<RentalRealEstateIncomeLossAmt>7000</RentalRealEstateIncomeLossAmt>");
+  assertStringIncludes(
+    result,
+    "<RentalRealEstateIncomeLossAmt>7000</RentalRealEstateIncomeLossAmt>",
+  );
   assertEquals(result.match(/<RentalRealEstateIncomeLossAmt>/g)?.length, 1);
   assertEquals(
-    result.indexOf("<OtherGainLossAmt>") < result.indexOf("<RentalRealEstateIncomeLossAmt>") &&
-      result.indexOf("<RentalRealEstateIncomeLossAmt>") < result.indexOf("<NetFarmProfitLossAmt>"),
+    result.indexOf("<OtherGainLossAmt>") <
+        result.indexOf("<RentalRealEstateIncomeLossAmt>") &&
+      result.indexOf("<RentalRealEstateIncomeLossAmt>") <
+        result.indexOf("<NetFarmProfitLossAmt>"),
     true,
   );
 });

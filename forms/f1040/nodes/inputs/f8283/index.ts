@@ -78,6 +78,40 @@ const vehicleNeedyTransferAcknowledgmentSchema = z.object({
   goods_or_services_received: z.literal(false),
 });
 
+// Form 1098-C boxes 5a and 5c. These are the donee's prospective
+// certifications, not a donor's unsupported assertion of completed use.
+const vehicleBox5aAcknowledgmentFields = {
+  copy_received_from_donee: z.literal(true),
+  donee_certified: z.literal(true),
+  donee_name: z.string().min(1),
+  donee_ein: z.string().regex(/^\d{9}$/),
+  donee_us_address: usAddressSchema,
+  acknowledgment_furnished_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  no_transfer_before_completion_confirmed: z.literal(true),
+  vehicle_year: z.number().int().min(1900).max(2100),
+  vehicle_make: z.string().min(1),
+  vehicle_model: z.string().min(1),
+  vehicle_condition: z.string().min(1),
+  odometer_miles: z.number().int().nonnegative(),
+  goods_or_services_received: z.literal(false),
+};
+
+const vehicleSignificantUseAcknowledgmentSchema = z.object({
+  ...vehicleBox5aAcknowledgmentFields,
+  intended_use_description: z.string().trim().min(1),
+  intended_use_duration: z.string().trim().min(1),
+  regularly_conducted_charitable_activity_confirmed: z.literal(true),
+  substantial_nonincidental_use_confirmed: z.literal(true),
+});
+
+const vehicleMaterialImprovementAcknowledgmentSchema = z.object({
+  ...vehicleBox5aAcknowledgmentFields,
+  intended_improvement_description: z.string().trim().min(1),
+  major_repair_or_addition_confirmed: z.literal(true),
+  significant_value_increase_confirmed: z.literal(true),
+  no_additional_donor_payment_confirmed: z.literal(true),
+});
+
 // Section A — items ≤$5,000 each (or ≤$10,000 for closely held stock)
 const sectionAItemSchema = z.object({
   property_description: z.string().optional(),
@@ -103,6 +137,10 @@ const sectionAItemSchema = z.object({
   vehicle_sale_acknowledgment: vehicleSaleAcknowledgmentSchema.optional(),
   vehicle_needy_transfer_acknowledgment:
     vehicleNeedyTransferAcknowledgmentSchema.optional(),
+  vehicle_significant_use_acknowledgment:
+    vehicleSignificantUseAcknowledgmentSchema.optional(),
+  vehicle_material_improvement_acknowledgment:
+    vehicleMaterialImprovementAcknowledgmentSchema.optional(),
   // Name of the actual donee-issued Form 1098-C or contemporaneous written
   // acknowledgment PDF supplied to the MeF bundle. The native statement is
   // not a substitute for this binary attachment under F8283-029/031/032/033.
@@ -139,19 +177,24 @@ const sectionAItemSchema = z.object({
   if (claimed <= 500) return;
   const saleAck = item.vehicle_sale_acknowledgment;
   const needyAck = item.vehicle_needy_transfer_acknowledgment;
-  if (Boolean(saleAck) === Boolean(needyAck)) {
+  const useAck = item.vehicle_significant_use_acknowledgment;
+  const improvementAck = item.vehicle_material_improvement_acknowledgment;
+  const exceptionAck = needyAck ?? useAck ?? improvementAck;
+  const acknowledgmentCount = [saleAck, needyAck, useAck, improvementAck]
+    .filter(Boolean).length;
+  if (acknowledgmentCount !== 1) {
     ctx.addIssue({
       code: "custom",
       message:
-        "Form 8283 vehicle above $500 needs exactly one donee sale or needy-transfer acknowledgment",
+        "Form 8283 vehicle above $500 needs exactly one donee sale, needy-transfer, significant-use, or material-improvement acknowledgment",
     });
     return;
   }
-  if (needyAck && claimed > 5_000) {
+  if (exceptionAck && claimed > 5_000) {
     ctx.addIssue({
       code: "custom",
       message:
-        "Form 8283 needy-transfer vehicle deduction above $5,000 needs Section B and a qualified appraisal",
+        "Form 8283 exception vehicle deduction above $5,000 needs Section B and a qualified appraisal",
     });
   }
   if (saleAck && claimed > saleAck.gross_proceeds) {
@@ -168,7 +211,10 @@ const sectionAItemSchema = z.object({
   }
   const sale = saleAck ? Date.parse(`${saleAck.sale_date}T00:00:00Z`) : NaN;
   const furnished = Date.parse(
-    `${saleAck?.acknowledgment_received_date ?? needyAck?.acknowledgment_furnished_date}T00:00:00Z`,
+    `${
+      saleAck?.acknowledgment_received_date ??
+        exceptionAck?.acknowledgment_furnished_date
+    }T00:00:00Z`,
   );
   const contributed = item.date_contributed
     ? Date.parse(`${item.date_contributed}T00:00:00Z`)
@@ -179,10 +225,12 @@ const sectionAItemSchema = z.object({
       message: "Form 8283 vehicle sale must follow its contribution",
     });
   }
-  if (saleAck && (
-    !Number.isFinite(sale) || !Number.isFinite(furnished) ||
-    furnished < sale || furnished - sale > 30 * 86_400_000
-  )) {
+  if (
+    saleAck && (
+      !Number.isFinite(sale) || !Number.isFinite(furnished) ||
+      furnished < sale || furnished - sale > 30 * 86_400_000
+    )
+  ) {
     ctx.addIssue({
       code: "custom",
       message:
@@ -190,14 +238,14 @@ const sectionAItemSchema = z.object({
     });
   }
   if (
-    needyAck &&
+    exceptionAck &&
     (!Number.isFinite(contributed) || !Number.isFinite(furnished) ||
       furnished < contributed || furnished - contributed > 30 * 86_400_000)
   ) {
     ctx.addIssue({
       code: "custom",
       message:
-        "Form 8283 needy-transfer acknowledgment must be furnished within 30 days of contribution",
+        "Form 8283 exception acknowledgment must be furnished within 30 days of contribution",
     });
   }
 });
@@ -216,6 +264,16 @@ const sectionBItemSchema = z.object({
   // income property and the specific capital-gain-property reductions.
   deduction_claimed: z.number().nonnegative(),
   cost_or_adjusted_basis: z.number().nonnegative().optional(),
+  // An exception vehicle above $5,000 belongs in Section B, with its own
+  // appraiser and donee signatures in addition to Form 1098-C evidence.
+  vehicle_vin: z.string().regex(/^[A-Z0-9]{1,17}$|^[A-Z0-9]{19}$/).optional(),
+  vehicle_needy_transfer_acknowledgment:
+    vehicleNeedyTransferAcknowledgmentSchema.optional(),
+  vehicle_significant_use_acknowledgment:
+    vehicleSignificantUseAcknowledgmentSchema.optional(),
+  vehicle_material_improvement_acknowledgment:
+    vehicleMaterialImprovementAcknowledgmentSchema.optional(),
+  vehicle_acknowledgment_attachment_file_name: z.string().min(1).optional(),
   qualified_appraisal: z.object({
     appraiser_first_name: z.string().min(1),
     appraiser_last_name: z.string().min(1),
@@ -250,6 +308,101 @@ const sectionBItemSchema = z.object({
     ctx.addIssue({
       code: "custom",
       message: "Form 8283 Section B deduction claimed exceeds appraised FMV",
+    });
+  }
+  const acknowledgments = [
+    item.vehicle_needy_transfer_acknowledgment,
+    item.vehicle_significant_use_acknowledgment,
+    item.vehicle_material_improvement_acknowledgment,
+  ];
+  if (item.property_type !== SectionBPropertyType.Vehicle) {
+    if (
+      item.vehicle_vin || item.vehicle_acknowledgment_attachment_file_name ||
+      acknowledgments.some(Boolean)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "Form 8283 Section B vehicle evidence needs vehicle property type",
+      });
+    }
+    return;
+  }
+  if (!item.vehicle_vin) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Form 8283 Section B vehicle needs VIN",
+    });
+  }
+  if (!item.qualified_appraisal || !item.donee_acknowledgment) {
+    ctx.addIssue({
+      code: "custom",
+      message:
+        "Form 8283 Section B vehicle needs qualified appraisal and signed donee facts",
+    });
+  }
+  if (
+    !item.qualified_appraisal?.signature_attachment_file_name ||
+    !item.donee_acknowledgment?.signature_attachment_file_name
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message:
+        "Form 8283 Section B vehicle needs appraiser and donee signature PDFs",
+    });
+  }
+  if (!item.vehicle_acknowledgment_attachment_file_name) {
+    ctx.addIssue({
+      code: "custom",
+      message:
+        "Form 8283 vehicle needs its donee-issued Form 1098-C or written acknowledgment PDF",
+    });
+  }
+  if (!item.physical_condition?.trim()) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Form 8283 Section B vehicle needs physical condition",
+    });
+  }
+  if (acknowledgments.filter(Boolean).length !== 1) {
+    ctx.addIssue({
+      code: "custom",
+      message:
+        "Form 8283 Section B vehicle needs exactly one donee needy-transfer, significant-use, or material-improvement acknowledgment",
+    });
+    return;
+  }
+  const ack = acknowledgments.find((value) => value !== undefined)!;
+  if (!item.date_contributed) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Form 8283 Section B vehicle needs contribution date",
+    });
+    return;
+  }
+  const contributed = Date.parse(`${item.date_contributed}T00:00:00Z`);
+  const furnished = Date.parse(
+    `${ack.acknowledgment_furnished_date}T00:00:00Z`,
+  );
+  if (
+    !Number.isFinite(contributed) || !Number.isFinite(furnished) ||
+    furnished < contributed || furnished - contributed > 30 * 86_400_000
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message:
+        "Form 8283 Section B vehicle acknowledgment must be furnished within 30 days of contribution",
+    });
+  }
+  if (
+    item.donee_acknowledgment &&
+    (item.donee_acknowledgment.organization_name !== ack.donee_name ||
+      item.donee_acknowledgment.ein !== ack.donee_ein)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message:
+        "Form 8283 Section B signed donee and vehicle acknowledgment must identify the same organization",
     });
   }
 });
