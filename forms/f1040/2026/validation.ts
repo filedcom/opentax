@@ -125,6 +125,18 @@ export const CALCULATION_RULES_2026: readonly RuleDef[] = [
           f1040(ctx, "line3b_ordinary_dividends"),
     "Schedule B is required for interest or dividends over $1,500.",
   ),
+  rule(
+    "F1040-2026-LOCAL-09",
+    "reject",
+    "missing_document",
+    (ctx) =>
+      f1040(ctx, "dependent_count") === 0 ||
+      ctx.hasForm("f8812") &&
+        number(ctx, "f8812", "line14") ===
+          f1040(ctx, "line19_child_tax_credit") &&
+        number(ctx, "f8812", "line27") === f1040(ctx, "line28_actc"),
+    "Schedule 8812 must reconcile to Form 1040 child credits.",
+  ),
 ];
 
 /** No provisional XML-name map is supplied before the current TY2026 MeF schema. */

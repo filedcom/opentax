@@ -15,6 +15,7 @@ import {
 } from "../nodes/inputs/f1099int/index.ts";
 import { schedule_b_2026 } from "./nodes/schedule_b.ts";
 import { form4137 } from "../nodes/intermediate/forms/form4137/index.ts";
+import { f8812_2026 } from "./nodes/f8812.ts";
 import {
   claimInputSchema as schedule1AClaimInputSchema,
   schedule1a,
@@ -44,5 +45,15 @@ export const inputNodes: readonly InputNodeEntry[] = [
     isArray: false,
   },
   { node: form4137, inputSchema: form4137.inputSchema, isArray: false },
+  {
+    node: f8812_2026,
+    inputSchema: f8812_2026.inputSchema.pick({
+      credit_limit_worksheet_2026: true,
+      line18a_earned_income: true,
+      earned_income_worksheet: true,
+      part_iib_2026: true,
+    }).strict(),
+    isArray: false,
+  },
   { node: schedule1a, inputSchema: schedule1AClaimInputSchema, isArray: false },
 ];

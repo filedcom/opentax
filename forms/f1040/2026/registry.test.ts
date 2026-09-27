@@ -1,9 +1,10 @@
-import { assertEquals, assertMatch } from "@std/assert";
+import { assertEquals, assertMatch, assertRejects } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import type { InputNodeEntry } from "../../../core/types/form-definition.ts";
 import { FilingStatus } from "../nodes/types.ts";
+import { DependentRelationship } from "../nodes/inputs/general/index.ts";
 import { form6251 } from "../nodes/intermediate/forms/form6251/index.ts";
 import { buildStartNode } from "../start.ts";
 import { inputNodes } from "./inputs.ts";
@@ -28,6 +29,57 @@ const filer = {
   address_state: "MA",
   address_zip: "02108",
 };
+
+Deno.test("TY2026 registered dependent reaches Schedule 8812 and Form 1040 credits", () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: {
+      ...filer,
+      dependents: [{
+        first_name: "Maya",
+        last_name: "Rivera",
+        ssn: "222334444",
+        ssn_valid_for_employment: true,
+        ssn_issued_before_due_date: true,
+        tin_issued_by_due_date: true,
+        dob: "2014-06-15",
+        relationship: DependentRelationship.Daughter,
+        months_in_home: 12,
+        lived_in_us_over_half_year: true,
+        us_citizen_national_or_resident: true,
+        provided_over_half_own_support: false,
+        filed_joint_return_except_refund_only: false,
+      }],
+    },
+    w2: [{ box1_wages: 80_000, box2_fed_withheld: 10_000 }],
+    f8812: {
+      credit_limit_worksheet_2026: {
+        schedule3_line1: 0,
+        schedule3_line2: 0,
+        schedule3_line3: 0,
+        schedule3_line4: 0,
+        schedule3_line6d: 0,
+        schedule3_line6f: 0,
+        schedule3_line6l: 0,
+        schedule3_line6m: 0,
+        worksheet_b_applies: false,
+      },
+    },
+  }, context);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f8812.line4, 1);
+  assertEquals(result.pending.f8812.line14, 2_200);
+  assertEquals(result.pending.f1040.line19_child_tax_credit, 2_200);
+  assertEquals(result.pending.f1040.line28_actc, 0);
+  assertEquals(result.pending.f1040.dependent_count, 1);
+});
+
+Deno.test("TY2026 dependent PDF waits for printed rows and Schedule 8812", async () => {
+  await assertRejects(
+    () => buildCorePdfBytes2026({ f1040: { dependent_count: 1 } }),
+    Error,
+    "needs dependent rows and Schedule 8812",
+  );
+});
 
 Deno.test("TY2026 registered 1099-G reaches Schedule 1, 1040, and the PDF bundle", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {

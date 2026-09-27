@@ -39,12 +39,15 @@ Schedule 2 graph against the supplied line sources. Its line 21 also needs W-2 b
 and 6 (plus the documented RRTA/Additional Medicare cases); line 24 needs
 Form 1040 line 27a and Schedule 3 line 11. Keep the 2025 contract intact.
 
-The Schedule 8812 node already has year-indexed CTC/ACTC caps and phaseout
-thresholds, but that alone does not prove a 2026 dependent return. Before
-enabling one, wire its 2026 credit-limit worksheet, earned-income line 18a,
-Part II-B sources where applicable, and nonrefundable/refundable outputs into
-the 2026 credit and settlement graph. Then remove the explicit dependent
-diagnostic in the 2026 Form 1040 node and verify a complete dependent return.
+The dedicated 2026 Schedule 8812 node is now in the calculation graph. It
+uses the year-specific credit-limit worksheet, requires verified line 18a
+earned income whenever an ACTC may arise, adds Schedule 2 line 3 to Form 1040
+line 16 for the credit limit, and sends lines 14 and 27 to Form 1040 lines 19
+and 28. A W-2 return with one qualifying child runs through the registry.
+The Form 1040 node still requires this credit calculation for dependent
+returns. PDF export rejects those returns until the revised dependent table
+and Schedule 8812 attachment are printed; MeF and Schedule 3 credit-source
+reconciliation remain open.
 
 The 2026 draft instructions change Credit Limit Worksheet A line 2: add
 Schedule 3 lines 1, 2, 3, 4, 6d, 6f, 6l, and 6m. The 2025 worksheet also lists

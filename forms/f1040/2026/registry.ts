@@ -12,6 +12,7 @@ import { schedule1a } from "../nodes/intermediate/forms/schedule1a/index.ts";
 import { income_tax_calculation } from "../nodes/intermediate/worksheets/income_tax_calculation/index.ts";
 import { start } from "./start.ts";
 import { f1040_2026_node } from "./nodes/f1040.ts";
+import { f8812_2026 } from "./nodes/f8812.ts";
 import { schedule1_2026 } from "./nodes/schedule1.ts";
 import { schedule_b_2026 } from "./nodes/schedule_b.ts";
 import { schedule2_2026 } from "./nodes/schedule2.ts";
@@ -35,6 +36,7 @@ export const registry: NodeRegistry = {
   schedule2: schedule2_2026,
   standard_deduction: standard_deduction_2026,
   income_tax_calculation,
+  f8812: f8812_2026,
   f1040: f1040_2026_node,
   schedule1: schedule1_2026,
   schedule3a,

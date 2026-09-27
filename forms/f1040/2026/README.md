@@ -62,10 +62,13 @@ The shared W-2 input now reaches that focused graph: two W-2 records produce
 1040 wages, AGI, taxable income, income tax, withholding, and refund. This is
 an executable calculation slice, not the registered 2026 product; Form 1040
 income-line completeness, validation, MeF, and PDF remain to be connected.
-The shared general input also reaches the focused graph for a filer without
-dependents. `identity.ts` defines the 2026 Form 1040 filer fields from that
-input. The final 2026 node rejects dependents until its child-credit path is
-finalized; a complete dependent return is not yet supported.
+The shared general input reaches the 2026 graph with dependent details.
+`identity.ts` defines the 2026 Form 1040 filer fields from that input. The
+dedicated 2026 Schedule 8812 node now finalizes CTC/ACTC in the calculation
+graph using the 2026 worksheet and verified earned income where needed. The
+PDF builder still rejects dependent returns until the changed dependent table
+and Schedule 8812 attachment are implemented; a complete dependent return is
+not yet supported.
 `schedule2.ts` now calculates the draft 2026 Schedule 2 subtotals with filed
 line numbers, and `nodes/schedule2.ts` routes its totals into the focused 1040
 graph. The [Schedule 2 and 8812 map](../../../docs/ty2026/SCHEDULE2-8812.md)

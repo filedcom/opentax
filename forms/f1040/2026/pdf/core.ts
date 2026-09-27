@@ -41,6 +41,11 @@ export async function buildCorePdfBytes2026({
   form4137,
   form8960,
 }: CorePdfInput2026): Promise<Uint8Array> {
+  if (typeof f1040.dependent_count === "number" && f1040.dependent_count > 0) {
+    throw new Error(
+      "TY2026 core PDF needs dependent rows and Schedule 8812 attachment",
+    );
+  }
   const claimsRelevantCredit = [
     "line27a_eic",
     "line28_actc",
