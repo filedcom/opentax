@@ -32,7 +32,9 @@ NODE_PROGRESS = {
     "schedule2": "dedicated 2026 line calculator/node routes tip and W-2 taxes; split other sources",
     "f8812": "2026 Part II-B uses Schedule 2 lines 16c/17c; Worksheets A/B use 2026 Schedule 3 lines; finish credit graph",
     "f1099div": "2026 ordinary/qualified/exempt dividends, direct box2a gain, PAB/AMT, and withholding; add special gains, QBI, foreign credit, and MeF",
-    "schedule_d": "2026 direct box2a distribution route verified; add capital transactions, carryovers, QOF, PDF, and MeF",
+    "schedule_d": "2026 box2a, carryover, and 1099-B/DA transaction PDF routes verified; add other capital sources, QOF, and MeF",
+    "f1099b": "dedicated 2026 1099-B input registered with Form 8949/Schedule D PDF; add unsupported broker branches and MeF",
+    "form8949": "2026 broker and digital-asset transactions reach category PDF pages and Schedule D; add direct public trades and MeF",
 }
 
 P0_NODES = {

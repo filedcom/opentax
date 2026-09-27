@@ -7,6 +7,7 @@ import {
   Form8949Part,
 } from "../../nodes/intermediate/forms/form8949/index.ts";
 import { f1040_2026_node } from "./f1040.ts";
+import { brokerTransaction } from "./broker_transaction.ts";
 
 const money = z.number().finite().nonnegative();
 
@@ -78,34 +79,18 @@ function transaction(item: Item) {
   const part = item.box12_basis_reported_to_irs
     ? (isLongTerm ? Form8949Part.D : Form8949Part.A)
     : (isLongTerm ? Form8949Part.E : Form8949Part.B);
-  const reportedBasis = item.box1e_reported_basis;
-  const taxBasis = item.taxpayer_cost_basis ?? reportedBasis!;
-  const basisFor8949 = item.box12_basis_reported_to_irs
-    ? reportedBasis!
-    : taxBasis;
-  const basisAdjustment = item.box12_basis_reported_to_irs
-    ? reportedBasis! - taxBasis
-    : 0;
-  const sellingExpenses = item.selling_expenses_not_in_box1d ?? 0;
-  const washSale = item.box1g_wash_sale_loss_disallowed ?? 0;
-  const adjustmentAmount = basisAdjustment - sellingExpenses + washSale;
-  const adjustmentCodes = [
-    basisAdjustment !== 0 ? "B" : "",
-    sellingExpenses > 0 ? "E" : "",
-    washSale > 0 ? "W" : "",
-  ].join("");
-  return {
+  return brokerTransaction({
     part,
     description: item.box1a_description,
-    date_acquired: item.box1b_date_acquired,
-    date_sold: item.box1c_date_sold,
+    dateAcquired: item.box1b_date_acquired,
+    dateSold: item.box1c_date_sold,
     proceeds: item.box1d_proceeds,
-    cost_basis: basisFor8949,
-    ...(adjustmentCodes ? { adjustment_codes: adjustmentCodes } : {}),
-    ...(adjustmentAmount !== 0 ? { adjustment_amount: adjustmentAmount } : {}),
-    gain_loss: item.box1d_proceeds - basisFor8949 + adjustmentAmount,
-    is_long_term: isLongTerm,
-  };
+    reportedBasis: item.box1e_reported_basis,
+    taxpayerBasis: item.taxpayer_cost_basis,
+    basisReportedToIrs: item.box12_basis_reported_to_irs,
+    sellingExpenses: item.selling_expenses_not_in_box1d ?? 0,
+    washSaleLossDisallowed: item.box1g_wash_sale_loss_disallowed ?? 0,
+  });
 }
 
 class F1099BNode2026 extends TaxNode<typeof f1099bInput2026Schema> {

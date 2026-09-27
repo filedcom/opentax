@@ -27,11 +27,12 @@ and worksheet behavior remains `audit-required` in `node-coverage.csv`.
 Registering it exposed a shared line 14 sign error: a positive long-term loss
 carryover must reduce the long-term net gain. The existing Schedule D tests
 cover this correction, and the TY2025 Schedule D MeF and PDF tests pass.
-The 2026 Schedule D PDF now supports the carryover and plain-distribution
-case, reconciles the filed lines with Form 1040, and appends the two printed
-draft pages. It rejects Form 8949 transactions and other capital sources until
-their details and attachments exist. The [draft PDF field map](PDF-SCHEDULED-MAP.md)
-inventories all 55 widgets and the remaining print/detail reconciliation.
+The 2026 Schedule D PDF supports carryovers, plain distributions, and
+individual 1099-B/1099-DA trades. The Form 8949 builder prints adjusted and
+noncovered trades in category-specific pages, and the combined PDF checks
+their records against Schedule D. Other capital sources still need source
+routes. The [draft PDF field map](PDF-SCHEDULED-MAP.md) inventories all 55
+widgets.
 The 2026 public `schedule_d` facts are `line_6_carryover`,
 `line_14_carryover`, `qof_disposition`, `qof_deferral_or_inclusion`, and
 `other_capital_activity`, and `form4952_filing`. All six must be supplied when the return contains
@@ -53,10 +54,10 @@ and Form 1099-B QOF nodes remain outside the dedicated 2026 registry.
    28% and unrecaptured §1250 gain worksheets, and AMT preferential rates.
    Register sources only with their corresponding calculation and print
    detail. Check interactions with QBI Form 8995/8995-A and Form 8960.
-3. Extend the TY2026 Schedule D PDF beyond carryovers and distributions, and
-   build Form 8949 from its pinned draft and
-   [field map](PDF-FORM8949-MAP.md). Reconcile row columns and attachment
-   conditions, render the completed pages, and test continuation rows.
+3. Extend the current Schedule D/Form 8949 route to nonbroker dispositions,
+   special-rate gains, and remaining capital sources. Render the completed
+   mixed return and negative-gain pages against the pinned
+   [field map](PDF-FORM8949-MAP.md).
 4. Map the same filed forms to the selected current TY2026 MeF schema and
    active rules, including document order, required attachments, and the
    direct line 7b election. The downloaded May v1 schema is research input,

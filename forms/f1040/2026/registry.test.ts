@@ -10,6 +10,7 @@ import { buildStartNode } from "../start.ts";
 import { inputNodes } from "./inputs.ts";
 import { registry } from "./registry.ts";
 import { buildCorePdfBytes2026 } from "./pdf/core.ts";
+import { buildPdfBytes2026 } from "./pdf/builder.ts";
 
 const context = { taxYear: 2026, formType: "f1040" };
 
@@ -57,6 +58,72 @@ const creditLimitWorksheet = {
   schedule3_line6m: 0,
   worksheet_b_applies: false,
 };
+
+Deno.test("TY2026 broker and digital asset trades reach Schedule D and Form 8949 PDFs", async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: { ...filer, digital_assets: true },
+    schedule_d: {
+      line_6_carryover: 0,
+      line_14_carryover: 0,
+      qof_disposition: false,
+      qof_deferral_or_inclusion: false,
+      other_capital_activity: false,
+      form4952_filing: false,
+    },
+    w2: [{ box1_wages: 70_000, box2_fed_withheld: 8_000 }],
+    f1099b: [
+      {
+        payer_name: "Broker",
+        box1a_description: "Direct shares",
+        box1b_date_acquired: "2026-01-10",
+        box1c_date_sold: "2026-06-10",
+        box1d_proceeds: 1_200,
+        box1e_reported_basis: 1_000,
+        box2_term: "short",
+        box12_basis_reported_to_irs: true,
+      },
+      {
+        payer_name: "Broker",
+        box1a_description: "Corrected shares",
+        box1b_date_acquired: "2026-01-10",
+        box1c_date_sold: "2026-06-10",
+        box1d_proceeds: 2_000,
+        box1e_reported_basis: 1_500,
+        taxpayer_cost_basis: 1_400,
+        box2_term: "short",
+        box12_basis_reported_to_irs: true,
+      },
+    ],
+    f1099da: [{
+      filer_name: "Digital Broker",
+      box1b_digital_asset_name: "Bitcoin",
+      box1d_date_acquired: "2025-01-01",
+      box1e_date_sold: "2026-07-01",
+      box1f_proceeds: 3_000,
+      box1g_reported_basis: 2_000,
+      box2_basis_reported_to_irs: true,
+      box6_term: "long",
+    }],
+  }, context);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule_d.print_line1a_gain, 200);
+  assertEquals(result.pending.schedule_d.print_line8a_gain, 1_000);
+  assertEquals(result.pending.schedule_d.print_line7_st_total, 800);
+  assertEquals(result.pending.schedule_d.print_line15_lt_total, 1_000);
+  assertEquals(result.pending.f1040.line7a_capital_gain, 1_800);
+  const pdf = await PDFDocument.load(await buildPdfBytes2026(result.pending));
+  assertEquals(pdf.getPageCount(), 5);
+  assertEquals(pdf.getForm().getFields().length, 0);
+  await assertRejects(
+    () =>
+      buildCorePdfBytes2026({
+        f1040: result.pending.f1040,
+        scheduleD: result.pending.schedule_d,
+      }),
+    Error,
+    "needs Form 8949",
+  );
+});
 
 Deno.test("TY2026 W-2 excess Social Security withholding reaches Schedule 3 and PDF", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {

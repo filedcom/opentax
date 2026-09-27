@@ -22,18 +22,16 @@ not the completeness of the older mapping or final 2026 form stability.
 
 ## Builder work order
 
-The current TY2026 builder maps all 55 widgets and fills the two printed
-pages for a capital loss carryover, with or without plain Form 1099-DIV box 2a
-distributions. It checks the draft hash, Schedule D lines 7/15/16/21, Form
-1040 line 7a/7b, QOF and Form 4952 answers, and the required line 17/20/22
-branches. Other source forms and Form 8949 transactions fail explicitly until
-their attachments can be printed. A four-page Form 1040/Schedule D sample
-passed visual review; reopening it found zero form fields and widget
-annotations.
+The TY2026 builder maps all 55 widgets. It fills carryovers, plain capital
+gain distributions, direct broker trades on lines 1a/8a, and Form 8949
+summary rows 1b/2/3/8b/9/10. It reconciles transaction totals to Schedule D
+lines 7/15/16 and Form 1040 line 7a, then requires Form 8949 pages for trades
+that need them. QOF, Form 4952, and other capital sources still require their
+own routes. The earlier carryover sample passed visual review; the mixed
+broker/digital sample passes combined PDF page and flattened-field checks.
 
 1. Reconcile the shared Schedule D calculation and print fields with this
-   table for every remaining source. Add explicit column totals for each
-   Form 8949 row and attach its transaction detail.
+   table for every remaining source, including nonbroker dispositions.
 2. Implement QOF and Form 4952 branches and their tax worksheets. The
    current public input requires both answers, but a Yes answer fails until
    its calculation and attachment route exists.

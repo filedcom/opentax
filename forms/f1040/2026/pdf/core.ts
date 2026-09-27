@@ -7,6 +7,12 @@ import { buildSchedule1PdfBytes2026 } from "./schedule1.ts";
 import { buildSchedule1APdfBytes2026 } from "./schedule1a.ts";
 import { buildScheduleBPdfBytes2026 } from "./schedule_b.ts";
 import { buildScheduleDPdfBytes2026 } from "./schedule_d.ts";
+import {
+  buildForm8949PdfBytes2026,
+  filedForm8949Transactions,
+  form8949Transactions,
+} from "./form8949.ts";
+import { isDirectScheduleDTransaction } from "../../nodes/intermediate/aggregation/schedule_d/index.ts";
 import { buildSchedule2PdfBytes2026 } from "./schedule2.ts";
 import { buildSchedule3APdfBytes2026 } from "./schedule3a.ts";
 import { buildSchedule3PdfBytes2026 } from "./schedule3.ts";
@@ -29,6 +35,7 @@ interface CorePdfInput2026 {
   readonly schedule3?: Record<string, unknown>;
   readonly scheduleB?: Record<string, unknown>;
   readonly scheduleD?: Record<string, unknown>;
+  readonly form8949?: Record<string, unknown>;
   readonly form6251?: Record<string, unknown>;
   readonly form4137?: Record<string, unknown>;
   readonly form8960?: Record<string, unknown>;
@@ -45,6 +52,7 @@ export async function buildCorePdfBytes2026({
   schedule3,
   scheduleB,
   scheduleD,
+  form8949,
   form6251,
   form4137,
   form8960,
@@ -123,6 +131,23 @@ export async function buildCorePdfBytes2026({
   }
   if (scheduleD && f1040.line7b_schedule_d_not_required === true) {
     throw new Error("TY2026 core PDF Schedule D conflicts with line 7b");
+  }
+  const scheduleTrades = scheduleD ? form8949Transactions(scheduleD) : [];
+  const attachmentTrades = form8949 ? form8949Transactions(form8949) : [];
+  if (
+    form8949 &&
+    JSON.stringify(scheduleTrades) !== JSON.stringify(attachmentTrades)
+  ) {
+    throw new Error(
+      "TY2026 core PDF Form 8949 disagrees with Schedule D trades",
+    );
+  }
+  const filedTrades = form8949 ? filedForm8949Transactions(form8949) : [];
+  if (
+    !form8949 &&
+    scheduleTrades.some((trade) => !isDirectScheduleDTransaction(trade))
+  ) {
+    throw new Error("TY2026 core PDF needs Form 8949 for adjusted trades");
   }
   if (
     f1040.line7b_schedule_d_not_required === true &&
@@ -261,6 +286,9 @@ export async function buildCorePdfBytes2026({
     parts.push(
       await buildScheduleDPdfBytes2026(scheduleD, f1040, { name, ssn }),
     );
+  }
+  if (filedTrades.length > 0 && form8949) {
+    parts.push(await buildForm8949PdfBytes2026(form8949, { name, ssn }));
   }
   if (form6251) {
     parts.push(await buildForm6251PdfBytes2026(form6251, f1040, { name, ssn }));

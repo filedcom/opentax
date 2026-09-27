@@ -228,10 +228,11 @@ and basis routes currently fail with named diagnostics. MeF remains open.
 The [capital transaction contract](TRANSACTION-GRAPH.md) now pins final 2026
 Forms 1099-B/1099-DA and their instructions, the draft Form 8949 field map,
 and a marked 2025 Form 8949 instruction comparator. A dedicated 2026 1099-B
-source node fixes the shared node's box-12/QOF mislabel and computes ordinary
-short/long trades with basis, selling-expense, and wash-sale adjustments. It
-is tested but remains outside the public 2026 registry until the Form 8949
-and expanded Schedule D print routes are present.
+source node fixes the shared node's box-12/QOF mislabel and computes supported
+short/long trades with basis, selling-expense, and wash-sale adjustments. A
+dedicated 1099-DA node handles individual digital-asset sales. Both now run
+through the public 2026 graph and the Form 8949/Schedule D PDF attachment
+path; a mixed-source return passes end-to-end calculation and PDF tests.
 Progress update: 1099-INT and Schedule B Part III answers are now registered
 TY2026 inputs. A public graph test carries taxable interest, box 2 penalty,
 and withholding to Schedule B, Schedule 1, Form 1040, and the combined PDF.

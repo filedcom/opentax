@@ -2,6 +2,8 @@ import { PDFDocument, StandardFonts } from "pdf-lib";
 import type { PdfFieldEntry } from "../../pdf/form-descriptor.ts";
 import { FilingStatus } from "../../nodes/types.ts";
 import { irsScheduleDPdf2026 } from "./forms/schedule_d.ts";
+import { form8949Transactions } from "./form8949.ts";
+import { isDirectScheduleDTransaction } from "../../nodes/intermediate/aggregation/schedule_d/index.ts";
 
 const pinnedDraft = new URL(
   "../../../../docs/ty2026/corpus/draft/f1040sd.pdf",
@@ -29,6 +31,7 @@ const supportedKeys = new Set([
   "line_6_carryover",
   "line_14_carryover",
   "line13_cap_gain_distrib",
+  "transaction",
   "qof_disposition",
   "qof_deferral_or_inclusion",
   "other_capital_activity",
@@ -43,7 +46,55 @@ const supportedKeys = new Set([
   "print_line19_unrecaptured_1250",
   "print_line20_qdcgt",
   "print_line21_loss",
+  "print_line1a_proceeds",
+  "print_line1a_cost",
+  "print_line1a_gain",
+  "print_line8a_proceeds",
+  "print_line8a_cost",
+  "print_line8a_gain",
 ]);
+
+const transactionRows: Record<string, string> = {
+  A: "1b",
+  B: "2",
+  C: "3",
+  G: "1b",
+  H: "2",
+  I: "3",
+  D: "8b",
+  E: "9",
+  F: "10",
+  J: "8b",
+  K: "9",
+  L: "10",
+};
+
+function transactionTotals(schedule: Record<string, unknown>) {
+  const transactions = form8949Transactions(schedule);
+  const values: Record<string, number> = {};
+  let shortGain = 0;
+  let longGain = 0;
+  for (const transaction of transactions) {
+    const row = isDirectScheduleDTransaction(transaction)
+      ? (transaction.is_long_term ? "8a" : "1a")
+      : transactionRows[transaction.part];
+    const prefix = `print_line${row}`;
+    for (
+      const [column, amount] of [
+        ["proceeds", transaction.proceeds],
+        ["cost", transaction.cost_basis],
+        ["adjustment", transaction.adjustment_amount ?? 0],
+        ["gain", transaction.gain_loss],
+      ] as const
+    ) {
+      values[`${prefix}_${column}`] = (values[`${prefix}_${column}`] ?? 0) +
+        amount;
+    }
+    if (transaction.is_long_term) longGain += transaction.gain_loss;
+    else shortGain += transaction.gain_loss;
+  }
+  return { transactions, values, shortGain, longGain };
+}
 
 function validate(
   schedule: Record<string, unknown>,
@@ -84,15 +135,28 @@ function validate(
   const line7 = amount(schedule, "print_line7_st_total");
   const line15 = amount(schedule, "print_line15_lt_total");
   const line16 = amount(schedule, "print_line16_combined");
+  const totals = transactionTotals(schedule);
+  for (const row of ["1a", "8a"]) {
+    for (const column of ["proceeds", "cost", "gain"]) {
+      const key = `print_line${row}_${column}`;
+      if (optionalAmount(schedule, key) !== (totals.values[key] ?? 0)) {
+        throw new Error(`TY2026 Schedule D PDF ${key} disagrees with trades`);
+      }
+    }
+  }
   if (
     shortCarryover < 0 || longCarryover < 0 || distribution < 0 ||
     optionalAmount(schedule, "line13_cap_gain_distrib") !== distribution ||
-    line7 !== -shortCarryover || line15 !== distribution - longCarryover ||
+    line7 !== totals.shortGain - shortCarryover ||
+    line15 !== totals.longGain + distribution - longCarryover ||
     line16 !== line7 + line15
   ) {
     throw new Error("TY2026 Schedule D PDF lines do not reconcile");
   }
-  if (shortCarryover === 0 && longCarryover === 0) {
+  if (
+    shortCarryover === 0 && longCarryover === 0 &&
+    totals.transactions.length === 0
+  ) {
     throw new Error("TY2026 Schedule D PDF has no filed-schedule trigger");
   }
   const expected1040 = line16 >= 0 ? line16 : Math.max(
@@ -128,6 +192,7 @@ function validate(
   }
   return {
     ...schedule,
+    ...totals.values,
     filer_name: filer.name,
     filer_ssn: filer.ssn,
     print_line21_loss: line16 < 0 ? Math.abs(expected1040) : undefined,

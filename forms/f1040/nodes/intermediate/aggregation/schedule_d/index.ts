@@ -29,6 +29,18 @@ const RATE_28_CODES = new Set(["C"]);
 
 // Long-term parts: D/J aggregate to Sch D Line 8b, E/K → Line 9, F/L → Line 10
 const LONG_TERM_PARTS = new Set(["D", "E", "F", "J", "K", "L"]);
+const DIRECT_PARTS = new Set(["A", "D", "G", "J"]);
+
+/** Basis reported to IRS, with no code or amount requiring Form 8949. */
+export function isDirectScheduleDTransaction(tx: {
+  part: string;
+  adjustment_codes?: string;
+  adjustment_amount?: number;
+}): boolean {
+  return DIRECT_PARTS.has(tx.part) &&
+    !(tx.adjustment_codes ?? "").length &&
+    (tx.adjustment_amount ?? 0) === 0;
+}
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
@@ -468,16 +480,13 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
     // (same pattern as the f1040 output node; keys are distinct from
     // inputSchema keys to avoid executor merge-accumulation).
     //
-    // Covered transactions with basis reported and no adjustments (Parts A/D)
+    // Covered transactions with basis reported and no adjustments (A/D/G/J)
     // qualify for direct reporting on lines 1a/8a without Form 8949
     // (Schedule D instructions, "Exception 1"). All other transactions remain
     // on the Form 8949 path and aggregate into lines 1b/2/3 and 8b/9/10.
-    const isDirect = (part: string, codes: string | undefined): boolean =>
-      (part === "A" || part === "D") && !(codes ?? "").length;
-
     const direct = { stP: 0, stC: 0, stG: 0, ltP: 0, ltC: 0, ltG: 0 };
     for (const tx of dScreenTxs) {
-      if (!isDirect(tx.part, tx.adjustment_codes)) continue;
+      if (!isDirectScheduleDTransaction(tx)) continue;
       const gl = dScreenGainLoss(tx);
       if (LONG_TERM_PARTS.has(tx.part)) {
         direct.ltP += tx.proceeds;
@@ -490,7 +499,7 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
       }
     }
     for (const tx of f8949Txs) {
-      if (!isDirect(tx.part, tx.adjustment_codes)) continue;
+      if (!isDirectScheduleDTransaction(tx)) continue;
       if (tx.is_long_term) {
         direct.ltP += tx.proceeds;
         direct.ltC += tx.cost_basis;

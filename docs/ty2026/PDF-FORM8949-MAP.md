@@ -13,16 +13,13 @@ widgets; all are in the AcroForm tree, split 101 per printed page.
 | Transaction rows | `Page1.Table_Line1_Part1.Row1`–`Row11` with `f1_03`–`f1_90`; analogous `Page2.Table_Line1_Part2` with `f2_03`–`f2_90` | Eleven rows per page. Eight columns per row: description, acquired, sold, proceeds, basis, code, adjustment, gain/loss. Field number is `3 + 8 × rowIndex + columnIndex`, zero based. |
 | Column totals | `f1_91`, `f1_92`, `f1_94`, `f1_95`; `f2_91`, `f2_92`, `f2_94`, `f2_95` | Total proceeds, basis, adjustments, gain/loss. The extra `f1_93`/`f2_93` are present in the AcroForm and need layout review; they are not amount totals. |
 
-The TY2025 PDF descriptor maps only the short-term row template and cannot
-print long-term rows or multiple Form 8949 category pages. Its structure is
-not sufficient for TY2026. The builder must partition transactions by box,
-repeat the relevant printed page for every group of at most eleven rows, fill
-all four numeric totals on each page, and reconcile category totals with the
-six Schedule D Form 8949 rows. Keep an audit trail from the source
-1099-B/1099-DA and taxpayer basis correction to every printed row.
+The TY2026 builder partitions transactions by box, repeats the relevant page
+for groups of at most eleven rows, fills column totals, and flattens each
+printed page. It excludes direct Schedule D trades. The combined PDF checks
+the transaction records against Schedule D before attaching Form 8949; the
+Schedule D builder groups the same records into its six summary rows.
 
-Before enabling the PDF route, render examples with one short-term and one
-long-term category, multiple categories on the same side, twelve transactions
-in one category, adjustment codes and negative gains, and digital asset
-categories. Reopen the flattened output and confirm no widgets or AcroForm
-fields remain.
+Short-term adjusted 1099-B and digital-asset H pages were rendered and
+inspected. A twelve-trade continuation and a long-term category have automated
+page and field checks. Add visual review for negative gains and a combined
+Schedule D/Form 8949 sample before replacing the draft with a final form.

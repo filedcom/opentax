@@ -24,20 +24,22 @@ the 2026 instructions when issued.
 | 1099-DA QOF, term, noncovered, optional aggregate methods | Boxes 3b, 6, 9, 11a–11c | QOF goes through its own election/disposition route. A short/long answer selects G/H or J/K; absent answer requires taxpayer classification. Optional aggregate proceeds cannot silently become one ordinary sale. |
 | Transactions without an information return | Form 8949 C/F or I/L | Capture the actual asset, dates, basis, proceeds, and adjustment codes; use digital categories I/L where applicable. |
 
-The shared `form8949` node deposits transaction records into the shared
-`schedule_d` calculator. It currently accepts all A–L parts, but its public
-input and PDF/MeF detail must be audited. The shared Schedule D calculator
-counts direct A/D/J/G trades and Form 8949 trades in the same net gain; its
-printed Form 8949 row totals are not yet emitted. Use one canonical transaction
-record per disposition and reconcile the two printed layers to it.
+The dedicated 2026 `f1099b` and `f1099da` inputs are registered. Both send a
+canonical transaction to the shared `form8949` node and then to Schedule D.
+The 2026 PDF builders exclude adjustment-free A/D/G/J trades from Form 8949,
+sum those on Schedule D lines 1a/8a, and group all other trades by A–L page
+and the six Schedule D summary rows. The combined PDF requires the Form 8949
+attachment whenever a filed trade needs it and checks the attachment records
+against Schedule D. The public input still needs source coverage for trades
+without a broker return, and MeF detail remains open.
 
 ## Implementation order
 
 1. Define dedicated TY2026 1099-B and 1099-DA input schemas with the actual
    2026 box meanings. The new `f1099b_2026` node now handles individual
    short/long trades, reported versus taxpayer basis, codes B/E/W, and federal
-   withholding in isolation; it is not yet registered in the 2026 graph.
-   Build the analogous 1099-DA source. Reject unsupported ordinary, QOF,
+   withholding. The 1099-DA node handles corresponding individual digital
+   asset sales. Both are registered. Reject unsupported ordinary, QOF,
    collectibles, aggregate, foreign, or state branches by name until their routes exist.
    Keep reported basis separate from taxpayer tax basis and require term and
    acquisition evidence before calculating a gain.

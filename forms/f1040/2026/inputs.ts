@@ -17,6 +17,8 @@ import {
 import { schedule_b_2026 } from "./nodes/schedule_b.ts";
 import { schedule_d } from "../nodes/intermediate/aggregation/schedule_d/index.ts";
 import { f1099div_2026, f1099divItem2026Schema } from "./nodes/f1099div.ts";
+import { f1099b_2026, f1099bItem2026Schema } from "./nodes/f1099b.ts";
+import { f1099da_2026, f1099daItem2026Schema } from "./nodes/f1099da.ts";
 import { form4137 } from "../nodes/intermediate/forms/form4137/index.ts";
 import { f8812_2026 } from "./nodes/f8812.ts";
 import {
@@ -48,6 +50,8 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f1099g, itemSchema: f1099gItemSchema2026, isArray: true },
   { node: f1099int, itemSchema: f1099intItemSchema.strict(), isArray: true },
   { node: f1099div_2026, itemSchema: f1099divItem2026Schema, isArray: true },
+  { node: f1099b_2026, itemSchema: f1099bItem2026Schema, isArray: true },
+  { node: f1099da_2026, itemSchema: f1099daItem2026Schema, isArray: true },
   {
     node: schedule_d,
     inputSchema: capitalActivityInput2026Schema,

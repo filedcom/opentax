@@ -74,7 +74,7 @@ Deno.test("TY2026 Schedule D PDF fills carryover and distributions", async () =>
         filer,
       ),
     Error,
-    "needs source form or Form 8949 detail",
+    "Required",
   );
   await assertRejects(
     () =>
