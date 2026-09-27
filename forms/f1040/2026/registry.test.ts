@@ -158,6 +158,13 @@ Deno.test("TY2026 dividends over $1,500 reach the filed Schedule B", async () =>
 Deno.test("TY2026 plain capital gain distributions reach line 7a and PDF", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: filer,
+    schedule_d: {
+      line_6_carryover: 0,
+      line_14_carryover: 0,
+      qof_disposition: false,
+      qof_deferral_or_inclusion: false,
+      other_capital_activity: false,
+    },
     w2: [{ box1_wages: 70_000, box2_fed_withheld: 8_000 }],
     f1099div: [{
       payerName: "North Bank",
@@ -188,6 +195,51 @@ Deno.test("TY2026 plain capital gain distributions reach line 7a and PDF", async
     Error,
     "needs Schedule D",
   );
+});
+
+Deno.test("TY2026 direct capital-gain reporting requires return-level facts", () => {
+  const facts = {
+    general: filer,
+    f1099div: [{
+      payerName: "North Bank",
+      isNominee: false,
+      box11: false,
+      box1a: 0,
+      box2a: 5_000,
+    }],
+  };
+  const plan = buildExecutionPlan(registry);
+  const missing = execute(plan, registry, facts, context);
+  assertEquals(missing.diagnostics.length, 1);
+  assertMatch(
+    missing.diagnostics[0].message,
+    /needs carryover amounts and capital-activity declarations/,
+  );
+  const carryover = execute(plan, registry, {
+    ...facts,
+    schedule_d: {
+      line_6_carryover: 0,
+      line_14_carryover: 1_000,
+      qof_disposition: false,
+      qof_deferral_or_inclusion: false,
+      other_capital_activity: false,
+    },
+  }, context);
+  assertEquals(carryover.diagnostics, []);
+  assertEquals(carryover.pending.f1040.line7a_capital_gain, 4_000);
+  assertEquals(carryover.pending.f1040.line7b_schedule_d_not_required, false);
+  const qof = execute(plan, registry, {
+    ...facts,
+    schedule_d: {
+      line_6_carryover: 0,
+      line_14_carryover: 0,
+      qof_disposition: true,
+      qof_deferral_or_inclusion: false,
+      other_capital_activity: false,
+    },
+  }, context);
+  assertEquals(qof.diagnostics.length, 1);
+  assertMatch(qof.diagnostics[0].message, /needs the QOF/);
 });
 
 Deno.test("TY2026 1099-INT and 1099-DIV exempt income reaches 1040 and AMT", async () => {

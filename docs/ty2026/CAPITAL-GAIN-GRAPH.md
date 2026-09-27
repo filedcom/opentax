@@ -14,7 +14,7 @@ as a filing rule.
 
 | Fact | Existing route | TY2026 disposition and next code |
 | --- | --- | --- |
-| Plain Form 1099-DIV box 2a, with no other modeled capital activity | `f1099div_2026` → shared `schedule_d` direct-distribution branch → AGI, 1040 line 7a/7b, qualified-dividend/capital-gain tax, Form 8960 | Registered and graph/PDF tested. The 1040 line 7b checkbox is mapped to the pinned draft. Capture capital loss carryovers, other transactions, and QOF elections as public facts before the direct-filing decision can be complete. |
+| Plain Form 1099-DIV box 2a, with no other modeled capital activity | `f1099div_2026` → shared `schedule_d` direct-distribution branch → AGI, 1040 line 7a/7b, qualified-dividend/capital-gain tax, Form 8960 | Registered and graph/PDF tested. The 1040 line 7b checkbox is mapped to the pinned draft. The public `schedule_d` input now requires both prior-year carryover amounts and explicit QOF/other-activity answers whenever capital activity is present. The declaration still needs reconciliation against every registered transaction source before filing readiness. |
 | 1099-DIV boxes 2b–2d and 2f | Schedule D line 13 plus unrecaptured §1250, §1202, 28% rate, or §897 work | The 2026 input rejects these nonzero amounts. Audit each worksheet, add source detail, then file Schedule D and any required statements. |
 | 1099-B/1099-DA and Form 8949 transactions | Schedule D short/long-term lines 1a–10; Form 8949 attachments where basis/adjustments require them | Audit 2026 forms and the shared transaction schema, register sources together, and preserve proceeds, basis, dates, codes, and payer detail for PDF/MeF. |
 | Capital loss carryover and other gain sources (Forms 2439, 4797, 6252, 4684, 6781, 8824, 8814, K-1) | Schedule D lines 4–6 and 11–14 | Add explicit prior-year carryforward provenance and each supported source route. A carryover or other capital activity disables direct 1040 reporting. |
@@ -29,12 +29,13 @@ carryover must reduce the long-term net gain. The existing Schedule D tests
 cover this correction, and the TY2025 Schedule D MeF and PDF tests pass.
 The current PDF boundary rejects nonzero 1040 line 7a when the direct-case
 line 7b checkbox is false: the 2026 Schedule D attachment is not built yet.
-The shared Schedule D print record currently hardcodes its QOF disposition
-answer to `false`; TY2026 must collect the actual return-level answer before
-that filed schedule can be enabled. Existing Form 8997 and Form 1099-B QOF
-nodes are outside the dedicated 2026 registry. The direct box 2a case still
-needs explicit return-level carryover and QOF facts to establish eligibility;
-absence of a registered source is not an affirmative answer.
+The 2026 public `schedule_d` facts are `line_6_carryover`,
+`line_14_carryover`, `qof_disposition`, `qof_deferral_or_inclusion`, and
+`other_capital_activity`. All five must be supplied when the return contains
+capital activity. QOF or other activity is rejected until its source route is
+implemented; the shared Schedule D print record uses the explicit 2026 QOF
+answer. TY2025 retains its prior `false` print default. Existing Form 8997
+and Form 1099-B QOF nodes remain outside the dedicated 2026 registry.
 
 ## End-to-end implementation order
 

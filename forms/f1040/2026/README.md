@@ -142,7 +142,9 @@ reconciles with Form 1040 line 3b and the draft PDF. The continuous-use
 special-rate capital-gain, QBI, foreign-tax, state, and basis routes still
 to implement; nonzero inputs on those routes fail before calculation.
 The shared Schedule D node now decides when box 2a can print directly on
-1040 line 7a with line 7b checked. The 2026 PDF boundary rejects capital gains
+1040 line 7a with line 7b checked. The public `schedule_d` input requires
+carryover amounts and QOF/other-capital-activity answers for this decision.
+The 2026 PDF boundary rejects capital gains
 that require a Schedule D attachment until its PDF is built.
 The dedicated `nodes/schedule_b.ts` is registered and now consumes gross
 interest with labeled adjustments, reconciles its lines, determines the

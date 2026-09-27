@@ -89,6 +89,10 @@ export const inputSchema = z.object({
   // Carryovers from prior year (entered as positive; treated as loss in computation)
   line_6_carryover: z.number().nonnegative().optional(),
   line_14_carryover: z.number().nonnegative().optional(),
+  // TY2026 requires these return-level declarations before using line 7b.
+  qof_disposition: z.boolean().optional(),
+  qof_deferral_or_inclusion: z.boolean().optional(),
+  other_capital_activity: z.boolean().optional(),
   // Capital gain distributions from d_screen (Line 13 of Schedule D — same line as line13_cap_gain_distrib)
   line_12_cap_gain_dist: z.number().nonnegative().optional(),
   // Undistributed LT gains (Form 2439, Form 4797 Part I, etc.) — Line 11
@@ -151,6 +155,9 @@ function hasCapitalActivity(input: ScheduleDInput): boolean {
     txs.length > 0 ||
     (input.line13_cap_gain_distrib ?? 0) > 0 ||
     (input.line13_form8814 ?? 0) > 0 ||
+    input.qof_disposition === true ||
+    input.qof_deferral_or_inclusion === true ||
+    input.other_capital_activity === true ||
     codGain !== 0 ||
     dScreenTxs.length > 0 ||
     hasAggregateLines
@@ -305,8 +312,30 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
     form8995,
   ]);
 
-  compute(_ctx: NodeContext, rawInput: ScheduleDInput): NodeResult {
+  compute(ctx: NodeContext, rawInput: ScheduleDInput): NodeResult {
     const input = inputSchema.parse(rawInput);
+
+    if (ctx.taxYear === 2026 && hasCapitalActivity(input)) {
+      if (
+        input.line_6_carryover === undefined ||
+        input.line_14_carryover === undefined ||
+        input.qof_disposition === undefined ||
+        input.qof_deferral_or_inclusion === undefined ||
+        input.other_capital_activity === undefined
+      ) {
+        throw new Error(
+          "TY2026 Schedule D needs carryover amounts and capital-activity declarations",
+        );
+      }
+      if (
+        input.qof_disposition || input.qof_deferral_or_inclusion ||
+        input.other_capital_activity
+      ) {
+        throw new Error(
+          "TY2026 Schedule D needs the QOF or other capital-activity source route",
+        );
+      }
+    }
 
     if (!hasCapitalActivity(input)) {
       return { outputs: [] };
@@ -474,9 +503,9 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
       print_line7_st_total: line7,
       print_line15_lt_total: line15,
       print_line16_combined: line16,
-      // QOF disposition question at the top of Schedule D — not modeled by the
-      // engine, so it is always answered "No".
-      print_qof_disposition: false,
+      // TY2026 takes the required return-level answer. TY2025 retains its
+      // existing "No" default until its public source shape is revised.
+      print_qof_disposition: input.qof_disposition ?? false,
     };
     // Multiple source nodes can contribute to these Form 6252/4797 lines.
     // Replace the executor's accumulated array with the exact line total for
