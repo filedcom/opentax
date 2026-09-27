@@ -122,6 +122,20 @@ export const itemSchema = z.object({
         "marketplace_error",
       ]),
       corrected_slcsp: z.number().nonnegative(),
+      determination_source: z.enum([
+        "marketplace_tool",
+        "marketplace_contact",
+      ]),
+    }).strict(),
+  ).min(1).optional(),
+  // Known changes that can make reported column B inaccurate. A change not
+  // reported to the Marketplace needs a month-by-month determination.
+  slcsp_review_periods: z.array(
+    z.object({
+      start_month: z.number().int().min(1).max(12),
+      end_month: z.number().int().min(1).max(12),
+      reason: z.enum(["coverage_family_change", "move"]),
+      reported_to_marketplace: z.boolean(),
     }).strict(),
   ).min(1).optional(),
   shared_policy_periods: z.array(sharedPolicySchema).min(1).refine(
@@ -270,16 +284,57 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
     }
     const correctedItems = f1095as.map((item) => {
       const corrections = item.slcsp_corrections;
-      if (!corrections) return item;
+      const reviews = item.slcsp_review_periods ?? [];
+      if (
+        (corrections || reviews.length > 0) &&
+        (!item.monthly_premiums || !item.monthly_aptcs)
+      ) {
+        throw new Error(
+          "Form 1095-A SLCSP review needs monthly premiums and APTC",
+        );
+      }
+      const correctedMonths = new Set<number>();
+      for (const review of reviews) {
+        if (review.start_month > review.end_month) {
+          throw new Error("Form 1095-A SLCSP review months are reversed");
+        }
+      }
+      for (let month = 0; month < 12; month++) {
+        const activeReviews = reviews.filter((review) =>
+          month + 1 >= review.start_month && month + 1 <= review.end_month
+        );
+        if (activeReviews.length > 1) {
+          throw new Error("Form 1095-A SLCSP review periods overlap");
+        }
+      }
+      if (!corrections) {
+        if (
+          item.monthly_premiums?.some((premium, month) =>
+            (premium > 0 || (item.monthly_aptcs?.[month] ?? 0) > 0) &&
+            item.monthly_aptcs?.[month] === 0
+          ) || reviews.some((review) =>
+            !review.reported_to_marketplace &&
+            item.monthly_premiums?.some((premium, index) =>
+              index + 1 >= review.start_month &&
+              index + 1 <= review.end_month &&
+              (premium > 0 || (item.monthly_aptcs?.[index] ?? 0) > 0)
+            )
+          )
+        ) {
+          throw new Error(
+            "Form 1095-A no-APTC or unreported-change months need Marketplace SLCSP determinations",
+          );
+        }
+        return item;
+      }
       if (!item.monthly_premiums || !item.monthly_aptcs) {
         throw new Error(
-          "Form 1095-A SLCSP corrections need monthly premiums and APTC",
+          "Form 1095-A SLCSP determinations need monthly premiums and APTC",
         );
       }
       const slcsps = item.monthly_slcsps
         ? [...item.monthly_slcsps]
         : Array<number>(12).fill(0);
-      const correctedMonths = new Set<number>();
       for (const correction of corrections) {
         const month = correction.month - 1;
         if (correctedMonths.has(month)) {
@@ -301,7 +356,51 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
             "Form 1095-A no-APTC SLCSP correction conflicts with paid APTC",
           );
         }
+        if (
+          (correction.basis === "coverage_family_change" ||
+            correction.basis === "move") &&
+          !reviews.some((review) =>
+            review.reason === correction.basis &&
+            correction.month >= review.start_month &&
+            correction.month <= review.end_month &&
+            !review.reported_to_marketplace
+          )
+        ) {
+          throw new Error(
+            "Form 1095-A coverage-family or move correction needs an unreported review period",
+          );
+        }
+        const unreportedReview = reviews.find((review) =>
+          !review.reported_to_marketplace &&
+          correction.month >= review.start_month &&
+          correction.month <= review.end_month
+        );
+        if (
+          unreportedReview && correction.basis !== unreportedReview.reason
+        ) {
+          throw new Error(
+            "Form 1095-A SLCSP determination basis must match the unreported change",
+          );
+        }
         slcsps[month] = correction.corrected_slcsp;
+      }
+      for (let month = 0; month < 12; month++) {
+        const covered = item.monthly_premiums[month] > 0 ||
+          item.monthly_aptcs[month] > 0;
+        if (!covered) continue;
+        const unreportedChange = reviews.some((review) =>
+          !review.reported_to_marketplace &&
+          month + 1 >= review.start_month &&
+          month + 1 <= review.end_month
+        );
+        if (
+          (item.monthly_aptcs[month] === 0 || unreportedChange) &&
+          !correctedMonths.has(month)
+        ) {
+          throw new Error(
+            "Form 1095-A no-APTC or unreported-change months need Marketplace SLCSP determinations",
+          );
+        }
       }
       if (
         !item.monthly_slcsps &&
@@ -588,6 +687,23 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
     }
     if (activeSlcsps !== null) form8962Fields.monthly_slcsps = activeSlcsps;
     if (activeAptcs !== null) form8962Fields.monthly_aptcs = activeAptcs;
+    const pub974PolicyMonths = allocatedItems.flatMap((item) =>
+      item.policy_number && item.monthly_premiums && item.monthly_aptcs
+        ? item.monthly_premiums.flatMap((premium, index) =>
+          premium > 0 || item.monthly_aptcs![index] > 0
+            ? [{
+              form1095a_policy_number: item.policy_number!,
+              month: index + 1,
+              premium,
+              aptc: item.monthly_aptcs![index],
+            }]
+            : []
+        )
+        : []
+    );
+    if (pub974PolicyMonths.length > 0) {
+      form8962Fields.pub974_form1095a_policy_months = pub974PolicyMonths;
+    }
     if (
       activePremiums !== null && activeSlcsps !== null &&
       activePremiums[0] > 0 && activeSlcsps[0] > 0 &&

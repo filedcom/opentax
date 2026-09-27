@@ -34,6 +34,41 @@ Deno.test("agi_aggregator: Form 8962 modified AGI adds Worksheet 1-1 amounts", (
   assertEquals(form8962?.fields.taxpayer_modified_agi, 40_500);
 });
 
+Deno.test("agi_aggregator: Pub 974 audit keeps income and adjustments separate", () => {
+  const result = compute({
+    line1a_wages: 50_000,
+    tax_exempt_interest: 300,
+    line15_se_deduction: 2_000,
+    line16_sep_simple: 1_000,
+    line17_se_health_insurance: 4_000,
+  });
+  const audit = result.outputs.find((item) => item.nodeType === "form8962")
+    ?.fields.pub974_income_audit;
+  assertEquals(audit, {
+    schedule1_line3_schedule_c: 0,
+    form1040_line9_total_income: 50_000,
+    form1040_line2a_tax_exempt_interest: 300,
+    form1040_nontaxable_social_security: 0,
+    form2555_lines45_and_50: 0,
+    schedule1_adjustments_except_line17: 3_000,
+    schedule1_line15_se_tax_deduction: 2_000,
+    schedule1_line16_retirement_deduction: 1_000,
+    schedule1_line17_se_health_insurance: 4_000,
+    unsupported_adjustments_present: false,
+  });
+});
+
+Deno.test("agi_aggregator: Pub 974 one-business audit rejects other business schedules", () => {
+  const result = compute({
+    line3_schedule_c: 50_000,
+    line6_schedule_f: 5_000,
+  });
+  const audit = result.outputs.find((item) => item.nodeType === "form8962")
+    ?.fields.pub974_income_audit;
+  assertEquals(audit?.schedule1_line3_schedule_c, 50_000);
+  assertEquals(audit?.unsupported_adjustments_present, true);
+});
+
 Deno.test("agi_aggregator: Form 8962 adds non-taxable Social Security after its worksheet", () => {
   const result = compute({
     line1a_wages: 20_000,

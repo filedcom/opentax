@@ -1,6 +1,9 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
@@ -18,7 +21,7 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 // form7206 intermediate node. This node routes the full premium amount and
 // trusts the user has verified it does not exceed SE profit.
 //
-// For complex scenarios (long-term care premiums, PTC reduction, profit cap),
+// For complex scenarios (long-term care premiums and profit cap),
 // use the form7206 node directly with se_net_profit and health_insurance_premiums.
 
 // ── Per-item schema ───────────────────────────────────────────────────────────
@@ -33,7 +36,8 @@ export const itemSchema = z.object({
 
 export const inputSchema = z.object({
   items: z.array(itemSchema).min(1),
-});
+  marketplace_ptc_premium_overlap: z.boolean(),
+}).strict();
 
 type SehiInput = z.infer<typeof inputSchema>;
 
@@ -48,9 +52,9 @@ function buildOutputs(deduction: number): NodeOutput[] {
   return [
     output(schedule1, { line17_se_health_insurance: deduction }),
     output(agi_aggregator, { line17_se_health_insurance: deduction }),
-      // This deduction is attributable to the trade or business, so it reduces QBI.
-      // i8995, Determining Your Qualified Business Income: the items to consider include
-      // the "self-employment health insurance deduction".
+    // This deduction is attributable to the trade or business, so it reduces QBI.
+    // i8995, Determining Your Qualified Business Income: the items to consider include
+    // the "self-employment health insurance deduction".
     output(form8995, { se_health_insurance_deduction: deduction }),
   ];
 }
@@ -64,6 +68,11 @@ class SelfEmployedHealthInsuranceNode extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, rawInput: SehiInput): NodeResult {
     const input = inputSchema.parse(rawInput);
+    if (input.marketplace_ptc_premium_overlap) {
+      throw new Error(
+        "Self-employed health insurance Marketplace PTC overlap requires Publication 974 deduction calculation",
+      );
+    }
     const deduction = totalPremiums(input);
     return { outputs: buildOutputs(deduction) };
   }
@@ -71,4 +80,5 @@ class SelfEmployedHealthInsuranceNode extends TaxNode<typeof inputSchema> {
 
 // ── Singleton export ──────────────────────────────────────────────────────────
 
-export const self_employed_health_insurance = new SelfEmployedHealthInsuranceNode();
+export const self_employed_health_insurance =
+  new SelfEmployedHealthInsuranceNode();

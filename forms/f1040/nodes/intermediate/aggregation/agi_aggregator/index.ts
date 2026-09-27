@@ -562,6 +562,34 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
           (input.line8d_foreign_earned_income_exclusion ?? 0) +
           (input.line8d_foreign_housing_deduction ?? 0) +
           Math.max(0, ssaGross - ssaTaxable),
+        pub974_income_audit: {
+          schedule1_line3_schedule_c: input.line3_schedule_c ?? 0,
+          form1040_line9_total_income: totalIncome,
+          form1040_line2a_tax_exempt_interest: input.tax_exempt_interest ?? 0,
+          form1040_nontaxable_social_security: Math.max(
+            0,
+            ssaGross - ssaTaxable,
+          ),
+          form2555_lines45_and_50:
+            (input.line8d_foreign_earned_income_exclusion ?? 0) +
+            (input.line8d_foreign_housing_deduction ?? 0),
+          schedule1_adjustments_except_line17: line10 -
+            (input.line17_se_health_insurance ?? 0),
+          schedule1_line15_se_tax_deduction: input.line15_se_deduction ?? 0,
+          schedule1_line16_retirement_deduction: input.line16_sep_simple ?? 0,
+          schedule1_line17_se_health_insurance:
+            input.line17_se_health_insurance ?? 0,
+          unsupported_adjustments_present:
+            (input.line20_ira_deduction ?? 0) !== 0 ||
+            (input.line19_student_loan_interest ?? 0) !== 0 ||
+            (input.line23_archer_msa_deduction ?? 0) !== 0 ||
+            (input.line24f_501c18d ?? 0) !== 0 ||
+            (input.line8b_savings_bond_exclusion ?? 0) !== 0 ||
+            (input.line5_schedule_e ?? 0) !== 0 ||
+            (input.line6_schedule_f ?? 0) !== 0 ||
+            (input.pal_current_loss ?? 0) !== 0 ||
+            (input.pal_prior_unallowed ?? 0) !== 0,
+        },
       }),
       this.outputNodes.output(schedule1a, { magi: agi }),
       // Pass AGI and filing_status to form8880 for Saver's Credit rate determination (IRC §25B)

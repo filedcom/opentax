@@ -614,8 +614,8 @@ export const LTC_PREMIUM_LIMITS_2025: ReadonlyArray<{ readonly maxAge: number; r
   { maxAge: 40,       limit:   480 },
   { maxAge: 50,       limit:   900 },
   { maxAge: 60,       limit: 1_800 },
-  { maxAge: 70,       limit: 4_770 },
-  { maxAge: Infinity, limit: 5_970 },
+  { maxAge: 70,       limit: 4_810 },
+  { maxAge: Infinity, limit: 6_020 },
 ] as const;
 
 // ─── Aggregate export (used by CONFIG_BY_YEAR barrel) ─────────────────────────

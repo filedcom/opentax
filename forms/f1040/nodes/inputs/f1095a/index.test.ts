@@ -12,6 +12,19 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function noAptcDeterminations(premiums: number[], slcsps: number[]) {
+  return premiums.flatMap((premium, index) =>
+    premium > 0
+      ? [{
+        month: index + 1,
+        basis: "no_aptc",
+        corrected_slcsp: slcsps[index],
+        determination_source: "marketplace_tool",
+      }]
+      : []
+  );
+}
+
 function compute(
   items: ReturnType<typeof minimalItem>[],
   alternative_marriage_month?: number,
@@ -168,10 +181,17 @@ Deno.test("identified spouse policy carries corrected 1095-A rows to marriage wo
       monthly_premiums: monthlyPremiums,
       monthly_slcsps: monthlySlcsps,
       monthly_aptcs: monthlyAptcs,
+      slcsp_review_periods: [{
+        start_month: 1,
+        end_month: 1,
+        reason: "coverage_family_change",
+        reported_to_marketplace: false,
+      }],
       slcsp_corrections: [{
         month: 1,
         basis: "coverage_family_change",
         corrected_slcsp: 650,
+        determination_source: "marketplace_tool",
       }],
     }),
   ], 6);
@@ -353,6 +373,24 @@ Deno.test("policy_number does not produce tax output", () => {
   );
 });
 
+Deno.test("policy-numbered monthly premiums and APTC retain Pub 974 source identity", () => {
+  const result = compute([minimalItem({
+    policy_number: "SEHI-2025",
+    monthly_premiums: [800, ...Array(11).fill(0)],
+    monthly_slcsps: [900, ...Array(11).fill(0)],
+    monthly_aptcs: [300, ...Array(11).fill(0)],
+  })]);
+  assertEquals(
+    findOutput(result, "form8962")?.fields.pub974_form1095a_policy_months,
+    [{
+      form1095a_policy_number: "SEHI-2025",
+      month: 1,
+      premium: 800,
+      aptc: 300,
+    }],
+  );
+});
+
 // ── 8. Edge cases ─────────────────────────────────────────────────────────────
 
 Deno.test("all-zero monthly arrays does not route to form8962", () => {
@@ -381,6 +419,10 @@ Deno.test("an explicit zero monthly APTC column stays with covered months", () =
     monthly_premiums: Array(12).fill(500),
     monthly_slcsps: Array(12).fill(600),
     monthly_aptcs: Array(12).fill(0),
+    slcsp_corrections: noAptcDeterminations(
+      Array(12).fill(500),
+      Array(12).fill(600),
+    ),
   })]);
   const out = findOutput(result, "form8962");
   assertEquals(out?.fields.monthly_aptcs, Array(12).fill(0));
@@ -418,6 +460,10 @@ Deno.test("multiple policies aggregate monthly arrays", () => {
       monthly_premiums: [100, 100, 100, 100, 100, 100, 0, 0, 0, 0, 0, 0],
       monthly_slcsps: [120, 120, 120, 120, 120, 120, 0, 0, 0, 0, 0, 0],
       monthly_aptcs: Array(12).fill(0),
+      slcsp_corrections: noAptcDeterminations(
+        [100, 100, 100, 100, 100, 100, 0, 0, 0, 0, 0, 0],
+        [120, 120, 120, 120, 120, 120, 0, 0, 0, 0, 0, 0],
+      ),
     }),
     minimalItem({
       issuer_name: "Second Marketplace",
@@ -425,6 +471,10 @@ Deno.test("multiple policies aggregate monthly arrays", () => {
       monthly_premiums: [0, 0, 0, 0, 0, 0, 200, 200, 200, 200, 200, 200],
       monthly_slcsps: [0, 0, 0, 0, 0, 0, 220, 220, 220, 220, 220, 220],
       monthly_aptcs: Array(12).fill(0),
+      slcsp_corrections: noAptcDeterminations(
+        [0, 0, 0, 0, 0, 0, 200, 200, 200, 200, 200, 200],
+        [0, 0, 0, 0, 0, 0, 220, 220, 220, 220, 220, 220],
+      ),
     }),
   ]);
   const out = findOutput(result, "form8962");
@@ -462,12 +512,20 @@ Deno.test("different-state policies add their SLCSP amounts", () => {
       monthly_premiums: Array(12).fill(300),
       monthly_slcsps: Array(12).fill(600),
       monthly_aptcs: Array(12).fill(0),
+      slcsp_corrections: noAptcDeterminations(
+        Array(12).fill(300),
+        Array(12).fill(600),
+      ),
     }),
     minimalItem({
       coverage_state: "CA",
       monthly_premiums: Array(12).fill(200),
       monthly_slcsps: Array(12).fill(700),
       monthly_aptcs: Array(12).fill(0),
+      slcsp_corrections: noAptcDeterminations(
+        Array(12).fill(200),
+        Array(12).fill(700),
+      ),
     }),
   ]);
   assertEquals(
@@ -486,6 +544,10 @@ Deno.test("multiple covered policies reject missing state or conflicting same-st
     monthly_premiums: Array(12).fill(300),
     monthly_slcsps: Array(12).fill(600),
     monthly_aptcs: Array(12).fill(0),
+    slcsp_corrections: noAptcDeterminations(
+      Array(12).fill(300),
+      Array(12).fill(600),
+    ),
   });
   assertThrows(
     () =>
@@ -495,6 +557,10 @@ Deno.test("multiple covered policies reject missing state or conflicting same-st
           monthly_premiums: Array(12).fill(200),
           monthly_slcsps: Array(12).fill(600),
           monthly_aptcs: Array(12).fill(0),
+          slcsp_corrections: noAptcDeterminations(
+            Array(12).fill(200),
+            Array(12).fill(600),
+          ),
         }),
       ]),
     Error,
@@ -509,6 +575,10 @@ Deno.test("multiple covered policies reject missing state or conflicting same-st
           monthly_premiums: Array(12).fill(200),
           monthly_slcsps: Array(12).fill(700),
           monthly_aptcs: Array(12).fill(0),
+          slcsp_corrections: noAptcDeterminations(
+            Array(12).fill(200),
+            Array(12).fill(700),
+          ),
         }),
       ]),
     Error,
@@ -524,6 +594,10 @@ Deno.test("monthly policy cannot silently omit an annual-only policy", () => {
           monthly_premiums: Array(12).fill(500),
           monthly_slcsps: Array(12).fill(600),
           monthly_aptcs: Array(12).fill(0),
+          slcsp_corrections: noAptcDeterminations(
+            Array(12).fill(500),
+            Array(12).fill(600),
+          ),
           annual_premium: 6_000,
           annual_slcsp: 7_200,
         }),
@@ -806,6 +880,12 @@ Deno.test("Situation 3 uses exact family SLCSP ratio for dollars and rounded Par
     policy_number: "NO-APTC-POLICY",
     monthly_premiums: [15_000, ...Array(11).fill(0)],
     monthly_aptcs: Array(12).fill(0),
+    slcsp_corrections: [{
+      month: 1,
+      basis: "no_aptc",
+      corrected_slcsp: 12_000,
+      determination_source: "marketplace_tool",
+    }],
     shared_policy_periods: [{
       basis: "no_aptc",
       other_taxpayer_ssn: "222-33-4444",
@@ -1016,10 +1096,17 @@ Deno.test("coverage-family change replaces reported SLCSP for affected months", 
     monthly_slcsps: Array(12).fill(850),
     monthly_aptcs: Array(12).fill(700),
     annual_slcsp: 10_200,
+    slcsp_review_periods: [{
+      start_month: 8,
+      end_month: 12,
+      reason: "coverage_family_change",
+      reported_to_marketplace: false,
+    }],
     slcsp_corrections: Array.from({ length: 5 }, (_, index) => ({
       month: index + 8,
       basis: "coverage_family_change",
       corrected_slcsp: 400,
+      determination_source: "marketplace_tool",
     })),
   })]);
   const fields = findOutput(result, "form8962")?.fields;
@@ -1029,6 +1116,148 @@ Deno.test("coverage-family change replaces reported SLCSP for affected months", 
   ]);
   assertEquals(fields?.annual_line11_eligible, undefined);
   assertEquals(fields?.annual_slcsp, undefined);
+  const calculated = form8962.compute({ taxYear: 2025, formType: "f1040" }, {
+    ...fields,
+    filing_status: FilingStatus.Single,
+    fpl_region: "contiguous",
+    household_size: 1,
+    taxpayer_modified_agi: 30_000,
+    dependent_income_complete: true,
+  });
+  const form = calculated.outputs.find((item) => item.nodeType === "form8962")
+    ?.fields;
+  const rows = form?.monthly_ptc_rows as Array<{ slcsp: number }>;
+  assertEquals(rows[6].slcsp, 850);
+  assertEquals(rows[7].slcsp, 400);
+  assertStringIncludes(
+    form8962Mef.build(form!),
+    "<MonthlyPremiumSLCSPAmt>400</MonthlyPremiumSLCSPAmt>",
+  );
+  assertEquals(
+    form8962Pdf.projectFields?.(form!, {})?.pdf_month_8_slcsp,
+    "400",
+  );
+});
+
+Deno.test("reported SLCSP does not substitute for Marketplace determination in no-APTC months", () => {
+  const source = {
+    monthly_premiums: [600, ...Array(11).fill(0)],
+    monthly_slcsps: [750, ...Array(11).fill(0)],
+    monthly_aptcs: Array(12).fill(0),
+  };
+  assertThrows(
+    () => compute([minimalItem(source)]),
+    Error,
+    "need Marketplace SLCSP determinations",
+  );
+  const result = compute([minimalItem({
+    ...source,
+    slcsp_corrections: [{
+      month: 1,
+      basis: "no_aptc",
+      corrected_slcsp: 750,
+      determination_source: "marketplace_contact",
+    }],
+  })]);
+  assertEquals(findOutput(result, "form8962")?.fields.monthly_slcsps, [
+    750,
+    ...Array(11).fill(0),
+  ]);
+});
+
+Deno.test("unreported coverage-family period requires every covered month's determination", () => {
+  const source = {
+    monthly_premiums: Array(12).fill(800),
+    monthly_slcsps: Array(12).fill(850),
+    monthly_aptcs: Array(12).fill(700),
+    slcsp_review_periods: [{
+      start_month: 8,
+      end_month: 9,
+      reason: "coverage_family_change",
+      reported_to_marketplace: false,
+    }],
+  };
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        ...source,
+        slcsp_corrections: [{
+          month: 8,
+          basis: "coverage_family_change",
+          corrected_slcsp: 400,
+          determination_source: "marketplace_tool",
+        }],
+      })]),
+    Error,
+    "need Marketplace SLCSP determinations",
+  );
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        ...source,
+        slcsp_review_periods: undefined,
+        slcsp_corrections: [{
+          month: 8,
+          basis: "coverage_family_change",
+          corrected_slcsp: 400,
+          determination_source: "marketplace_tool",
+        }],
+      })]),
+    Error,
+    "needs an unreported review period",
+  );
+  const reported = compute([minimalItem({
+    ...source,
+    slcsp_review_periods: [{
+      ...source.slcsp_review_periods[0],
+      reported_to_marketplace: true,
+    }],
+  })]);
+  assertEquals(
+    (findOutput(reported, "form8962")?.fields.monthly_slcsps as number[])[7],
+    850,
+  );
+});
+
+Deno.test("unreported move with no APTC requires the move basis and a determined SLCSP", () => {
+  const source = {
+    monthly_premiums: [600, ...Array(11).fill(0)],
+    monthly_slcsps: [750, ...Array(11).fill(0)],
+    monthly_aptcs: Array(12).fill(0),
+    slcsp_review_periods: [{
+      start_month: 1,
+      end_month: 1,
+      reason: "move",
+      reported_to_marketplace: false,
+    }],
+  };
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        ...source,
+        slcsp_corrections: [{
+          month: 1,
+          basis: "no_aptc",
+          corrected_slcsp: 800,
+          determination_source: "marketplace_tool",
+        }],
+      })]),
+    Error,
+    "basis must match the unreported change",
+  );
+  const result = compute([minimalItem({
+    ...source,
+    slcsp_corrections: [{
+      month: 1,
+      basis: "move",
+      corrected_slcsp: 800,
+      determination_source: "marketplace_tool",
+    }],
+  })]);
+  assertEquals(
+    (findOutput(result, "form8962")?.fields.monthly_slcsps as number[])[0],
+    800,
+  );
 });
 
 Deno.test("missing column B can be supplied for every covered no-APTC month", () => {
@@ -1039,6 +1268,7 @@ Deno.test("missing column B can be supplied for every covered no-APTC month", ()
       month,
       basis: "no_aptc",
       corrected_slcsp: 750,
+      determination_source: "marketplace_tool",
     })),
   })]);
   assertEquals(findOutput(result, "form8962")?.fields.monthly_slcsps, [
@@ -1058,10 +1288,11 @@ Deno.test("missing column B cannot leave a covered month uncorrected", () => {
           month: 1,
           basis: "no_aptc",
           corrected_slcsp: 750,
+          determination_source: "marketplace_tool",
         }],
       })]),
     Error,
-    "corrected SLCSP for every covered month",
+    "need Marketplace SLCSP determinations",
   );
 });
 
@@ -1075,9 +1306,38 @@ Deno.test("SLCSP corrections reject duplicate months and no-APTC contradictions"
     () =>
       compute([minimalItem({
         ...source,
+        slcsp_corrections: [{
+          month: 8,
+          basis: "marketplace_error",
+          corrected_slcsp: 650,
+        }],
+      })]),
+    Error,
+    "determination_source",
+  );
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        ...source,
+        slcsp_review_periods: [{
+          start_month: 8,
+          end_month: 8,
+          reason: "move",
+          reported_to_marketplace: false,
+        }],
         slcsp_corrections: [
-          { month: 8, basis: "move", corrected_slcsp: 650 },
-          { month: 8, basis: "move", corrected_slcsp: 650 },
+          {
+            month: 8,
+            basis: "move",
+            corrected_slcsp: 650,
+            determination_source: "marketplace_tool",
+          },
+          {
+            month: 8,
+            basis: "move",
+            corrected_slcsp: 650,
+            determination_source: "marketplace_tool",
+          },
         ],
       })]),
     Error,
@@ -1091,6 +1351,7 @@ Deno.test("SLCSP corrections reject duplicate months and no-APTC contradictions"
           month: 8,
           basis: "no_aptc",
           corrected_slcsp: 650,
+          determination_source: "marketplace_tool",
         }],
       })]),
     Error,

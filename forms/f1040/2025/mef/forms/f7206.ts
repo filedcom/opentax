@@ -37,6 +37,9 @@ export const form7206: MefFormDescriptor<"form7206", Input> = {
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f7206.pdf",
   build(fields) {
+    // Pub. 974's single-source, non-LTC, no-Form-2555 route uses the Form 1040
+    // deduction worksheet; it must not emit an empty legacy Form 7206 XML.
+    if (fields.pub974_form7206_omit === true) return "";
     return buildIRS7206(fields);
   },
 };

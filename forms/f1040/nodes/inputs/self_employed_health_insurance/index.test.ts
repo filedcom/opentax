@@ -1,11 +1,35 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { self_employed_health_insurance } from "./index.ts";
 
 const ctx = { taxYear: 2025, formType: "f1040" };
 
 function compute(items: { premiums_paid: number }[]) {
-  return self_employed_health_insurance.compute(ctx, { items });
+  return self_employed_health_insurance.compute(ctx, {
+    items,
+    marketplace_ptc_premium_overlap: false,
+  });
 }
+
+Deno.test("requires explicit Marketplace overlap review before routing", () => {
+  assertThrows(
+    () =>
+      self_employed_health_insurance.compute(
+        ctx,
+        { items: [{ premiums_paid: 1_000 }] } as never,
+      ),
+    Error,
+    "marketplace_ptc_premium_overlap",
+  );
+  assertThrows(
+    () =>
+      self_employed_health_insurance.compute(ctx, {
+        items: [{ premiums_paid: 1_000 }],
+        marketplace_ptc_premium_overlap: true,
+      }),
+    Error,
+    "requires Publication 974 deduction calculation",
+  );
+});
 
 Deno.test("routes premiums_paid to schedule1 line17_se_health_insurance", () => {
   const result = compute([{ premiums_paid: 1_000 }]);

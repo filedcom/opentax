@@ -98,6 +98,20 @@ based on household income and size. Net PTC flows to **Schedule 3 line 9**
 - For multiple covered policies, Form 1095-A routing uses one SLCSP per state
   per month, adds SLCSP across different states, and rejects missing coverage
   states or conflicting same-state benchmarks.
+- The 2025 Form 8962 line 10 instructions require a correct monthly SLCSP
+  determination when no APTC was paid, even if column B reports a positive
+  amount. Form 1095-A now requires a month-specific Marketplace tool/contact
+  determination for every covered zero-APTC month. Known coverage-family changes
+  or moves can be declared as review periods with a reported-to- Marketplace
+  flag; an unreported period needs a determination for every covered month.
+  Corrected rows record the Marketplace source, and change/move corrections must
+  match an unreported review period. A reported change uses the reported SLCSP
+  unless an independent error is identified. These facts cannot be inferred
+  solely from Form 1095-A policy amounts, so undeclared changes remain a
+  source-intake and verification requirement. See
+  [Form 8962 instructions](https://www.irs.gov/instructions/i8962) and
+  [Publication 974](https://www.irs.gov/pub/irs-pdf/p974.pdf), “Determining the
+  Premium for the Applicable SLCSP.”
 - QSEHRA calculation takes the employer's annual permitted benefit plus 12
   explicit monthly notice facts (null for months without QSEHRA): self-only
   SLCSP, self-only permitted benefit for Worksheet N, and the actual permitted
@@ -177,3 +191,49 @@ based on household income and size. Net PTC flows to **Schedule 3 line 9**
   post-marriage joint family still stop pending corrected coverage-family facts.
   Source-to-PDF rendering, self-employed insurance interactions, and IRS
   business rules still need a complete audit.
+
+## Self-employed insurance interaction, 2025 Pub. 974
+
+- Publication 974, pp. 49-51, Worksheets W/X are now represented as pure,
+  pre-AGI calculations. Worksheet W takes Form 1095-A policy/month-linked
+  specified premiums and attributable APTC, a separately established
+  nonspecified-premium deduction, and verified business earnings, Schedule 1
+  lines 15/16, and Form 2555 facts. It computes lines 1-3, 13-17, and 19.
+  Worksheet X takes Form 1040 income, tax-exempt interest, nontaxable Social
+  Security, Form 2555, other Schedule 1 adjustments, filing-required dependent
+  MAGI, FPL region/size, and filing status. It computes provisional household
+  income, repayment limit, and maximum deduction through line 31. Their narrowly
+  supported filing route is described below; broader source shapes remain
+  calculation-only.
+- Publication 974, pp. 52-53, Steps 2-6 now have a pure local iterative route
+  when all twelve Marketplace premium months are specified and reconcile to Form
+  8962 monthly premiums/APTC. It computes Form 8962 PTC from each trial
+  deduction's MAGI, refigures the deduction, and stops only when both PTC and
+  deduction change by less than $1.00. It stops without a result if the policy
+  facts do not reconcile, PTC is unavailable, or 100 steps cannot converge. The
+  result contains the Step 4 Form 8962 fields and Step 5 final deduction.
+  Form 7206 routes the supported deduction to Schedule 1, AGI, and QBI and
+  deposits a reconciliation record at Form 8962. The ordinary 1095-A path must
+  reproduce every named policy/month premium and APTC plus all twelve aggregate
+  premium/SLCSP/APTC rows. The AGI path independently audits the single
+  Schedule C business earned income against Worksheet W, Form 1040 line 9,
+  tax-exempt interest, nontaxable Social Security, Form 2555 addback, Schedule 1
+  adjustments excluding line 17, and the final line 17 amount, so offsetting
+  raw Worksheet X errors cannot hide behind an equal MAGI. Filing facts, MAGI
+  within the IRS <$1 convergence tolerance, and exact final whole-dollar PTC
+  must also match, or Form 8962 stops. The AGI-to-8962 graph thus has no
+  backward edge. The raw PTC shortcut has been removed. Both simplified SEHI and
+  Form 7206 require explicit Marketplace-overlap review; only the verified
+  full-year Form 7206 route proceeds on positive overlap. This is a narrow
+  supported path, not completion of GAP-8962. It also requires verified absence
+  of other SE-income sources, Form 2555 amounts, LTC premiums, and nonspecified
+  premium deductions. The 2025 Form 7206 instructions permit the Form 1040
+  deduction worksheet in this one-source case, so MeF/PDF omit Form 7206 only
+  for this marked route while retaining Schedule 1 and Form 8962. Partial-year
+  specified coverage, multiple establishing businesses, the special Form
+  8582/8814/8815/IRA/student-loan adjustments, and household statuses beyond
+  single/joint also remain outside the pure W/X slice.
+- Form 8962 line 10 and Publication 974 SLCSP instructions require a corrected
+  Marketplace-determined benchmark after an unreported move or coverage-family
+  change. That reason now has to match the review period even with zero APTC;
+  the same correction also satisfies the separate no-APTC determination rule.

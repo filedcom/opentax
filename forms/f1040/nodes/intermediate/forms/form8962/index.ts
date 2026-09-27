@@ -186,6 +186,61 @@ export const inputSchema = z.object({
   monthly_premiums: z.array(z.number().nonnegative()).length(12).optional(),
   monthly_slcsps: z.array(z.number().nonnegative()).length(12).optional(),
   monthly_aptcs: z.array(z.number().nonnegative()).length(12).optional(),
+  pub974_form1095a_policy_months: z.array(
+    z.object({
+      form1095a_policy_number: z.string().min(1),
+      month: z.number().int().min(1).max(12),
+      premium: z.number().nonnegative(),
+      aptc: z.number().nonnegative(),
+    }).strict(),
+  ).optional(),
+  pub974_income_audit: z.object({
+    schedule1_line3_schedule_c: z.number().finite(),
+    form1040_line9_total_income: z.number().finite(),
+    form1040_line2a_tax_exempt_interest: z.number().nonnegative(),
+    form1040_nontaxable_social_security: z.number().nonnegative(),
+    form2555_lines45_and_50: z.number().nonnegative(),
+    schedule1_adjustments_except_line17: z.number().finite(),
+    schedule1_line15_se_tax_deduction: z.number().nonnegative(),
+    schedule1_line16_retirement_deduction: z.number().nonnegative(),
+    schedule1_line17_se_health_insurance: z.number().nonnegative(),
+    unsupported_adjustments_present: z.boolean(),
+  }).strict().optional(),
+  // Internal reconciliation from the graph-safe Pub. 974 deduction route.
+  // The ordinary 1095-A and AGI graph must reproduce its policy facts/PTC.
+  pub974_reconciliation: z.object({
+    monthly_premiums: z.array(z.number().nonnegative()).length(12),
+    monthly_slcsps: z.array(z.number().nonnegative()).length(12),
+    monthly_aptcs: z.array(z.number().nonnegative()).length(12),
+    specified_policy_months: z.array(
+      z.object({
+        form1095a_policy_number: z.string().min(1),
+        month: z.number().int().min(1).max(12),
+        specified_premium: z.number().nonnegative(),
+        attributable_aptc: z.number().nonnegative(),
+      }).strict(),
+    ).min(12),
+    worksheet_x_source: z.object({
+      form1040_line9_total_income: z.number().finite(),
+      form1040_line2a_tax_exempt_interest: z.number().nonnegative(),
+      form1040_nontaxable_social_security: z.number().nonnegative(),
+      form2555_lines45_and_50: z.number().nonnegative(),
+      schedule1_adjustments_except_line17: z.number().nonnegative(),
+    }).strict(),
+    worksheet_w_line15_se_tax_deduction: z.number().nonnegative().optional(),
+    worksheet_w_line16_retirement_deduction: z.number().nonnegative()
+      .optional(),
+    worksheet_w_business_earned_income: z.number().nonnegative(),
+    schedule1_line17_final_deduction: z.number().nonnegative(),
+    taxpayer_modified_agi: z.number().finite(),
+    dependents_modified_agi: z.number().finite(),
+    household_size: z.number().int().positive(),
+    fpl_region: z.enum(["contiguous", "alaska", "hawaii"]),
+    filing_status: filingStatusSchema,
+    total_premium_tax_credit: z.number().nonnegative(),
+    specified_premiums: z.number().nonnegative(),
+    specified_deduction: z.number().nonnegative(),
+  }).strict().optional(),
 
   // Box 12 code FF or the QSEHRA source gives the annual permitted benefit.
   // Monthly notice facts are needed separately for Pub. 974 Worksheets N/Q.
@@ -687,6 +742,101 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
         "Form 8962 needs verified dependent filing and modified-AGI facts",
       );
     }
+    const pub974 = input.pub974_reconciliation;
+    if (pub974) {
+      const sameMonths = (actual: number[] | undefined, expected: number[]) =>
+        actual?.length === 12 &&
+        actual.every((value, index) =>
+          Math.abs(value - expected[index]) < 0.01
+        );
+      const actualPolicyMonths = input.pub974_form1095a_policy_months ?? [];
+      const expectedPolicyMonths = pub974.specified_policy_months;
+      const expectedRows = new Map(expectedPolicyMonths.map((row) => [
+        `${row.form1095a_policy_number}:${row.month}`,
+        row,
+      ]));
+      const actualKeys = actualPolicyMonths.map((row) =>
+        `${row.form1095a_policy_number}:${row.month}`
+      );
+      const policyMonthsMatch =
+        expectedRows.size === expectedPolicyMonths.length &&
+        actualKeys.length === expectedPolicyMonths.length &&
+        new Set(actualKeys).size === actualKeys.length &&
+        actualPolicyMonths.every((row) => {
+          const expected = expectedRows.get(
+            `${row.form1095a_policy_number}:${row.month}`,
+          );
+          return expected !== undefined &&
+            Math.abs(row.premium - expected.specified_premium) < 0.01 &&
+            Math.abs(row.aptc - expected.attributable_aptc) < 0.01;
+        });
+      const audit = input.pub974_income_audit;
+      const xSource = pub974.worksheet_x_source;
+      const incomeSourceMatches = audit !== undefined &&
+        !audit.unsupported_adjustments_present &&
+        Math.abs(
+            audit.schedule1_line3_schedule_c -
+              pub974.worksheet_w_business_earned_income,
+          ) < 0.01 &&
+        Math.abs(
+            audit.form1040_line9_total_income -
+              xSource.form1040_line9_total_income,
+          ) < 0.01 &&
+        Math.abs(
+            audit.form1040_line2a_tax_exempt_interest -
+              xSource.form1040_line2a_tax_exempt_interest,
+          ) < 0.01 &&
+        Math.abs(
+            audit.form1040_nontaxable_social_security -
+              xSource.form1040_nontaxable_social_security,
+          ) < 0.01 &&
+        Math.abs(
+            audit.form2555_lines45_and_50 - xSource.form2555_lines45_and_50,
+          ) < 0.01 &&
+        Math.abs(
+            audit.schedule1_adjustments_except_line17 -
+              xSource.schedule1_adjustments_except_line17,
+          ) < 0.01 &&
+        Math.abs(
+            audit.schedule1_line17_se_health_insurance -
+              pub974.schedule1_line17_final_deduction,
+          ) < 0.01 &&
+        (pub974.worksheet_w_line15_se_tax_deduction === undefined ||
+          Math.abs(
+              audit.schedule1_line15_se_tax_deduction -
+                pub974.worksheet_w_line15_se_tax_deduction,
+            ) < 0.01) &&
+        (pub974.worksheet_w_line16_retirement_deduction === undefined ||
+          Math.abs(
+              pub974.worksheet_w_line16_retirement_deduction -
+                audit.schedule1_line16_retirement_deduction,
+            ) < 0.01);
+      if (
+        !policyMonthsMatch || !incomeSourceMatches ||
+        input.shared_policy_allocations?.length || input.alternative_marriage ||
+        input.alternative_marriage_policies ||
+        input.alternative_marriage_source_month !== undefined ||
+        input.qsehra_monthly_facts ||
+        input.qsehra_amount_offered !== undefined ||
+        input.qsehra_w2_reported_benefit !== undefined ||
+        input.below_100_fpl_status || input.form8814_children?.length ||
+        input.form8814_expected_ssns?.length ||
+        !sameMonths(input.monthly_premiums, pub974.monthly_premiums) ||
+        !sameMonths(input.monthly_slcsps, pub974.monthly_slcsps) ||
+        !sameMonths(input.monthly_aptcs, pub974.monthly_aptcs) ||
+        Math.abs(input.taxpayer_modified_agi - pub974.taxpayer_modified_agi) >=
+          1 ||
+        (input.dependents_modified_agi ?? 0) !==
+          pub974.dependents_modified_agi ||
+        input.household_size !== pub974.household_size ||
+        input.fpl_region !== pub974.fpl_region ||
+        input.filing_status !== pub974.filing_status
+      ) {
+        throw new Error(
+          "Form 8962 does not reconcile to Publication 974 source and final MAGI",
+        );
+      }
+    }
     const taxpayerMagi = input.taxpayer_modified_agi;
     const expected8814 = input.form8814_expected_ssns ?? [];
     const reported8814 = input.form8814_children ?? [];
@@ -1005,6 +1155,17 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
       ? qsehraAnnualCredit(annualTentativeCredit, income, qsehraFacts)
       : annualTentativeCredit;
     const line24 = Math.round(allowed);
+    if (
+      pub974 && (
+        line24 !== pub974.total_premium_tax_credit ||
+        pub974.specified_deduction + line24 >
+          pub974.specified_premiums + 0.01
+      )
+    ) {
+      throw new Error(
+        "Form 8962 PTC does not reconcile to Publication 974 deduction",
+      );
+    }
     const line25 = Math.round(aptc);
     // Pub. 974 Worksheet N/Q: no Form 8962 when QSEHRA leaves no PTC and
     // no APTC was paid for anyone in the tax family.
