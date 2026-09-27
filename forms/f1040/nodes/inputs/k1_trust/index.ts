@@ -42,6 +42,16 @@ export const itemSchema = z.object({
   box13_code_zz_orphan_drug_statement_reference: z.string().trim().min(1)
     .optional(),
   orphan_drug_credit_subject_to_passive_activity_limit: z.boolean().optional(),
+  box13_code_zz_disabled_access_credit: z.number().finite().positive().refine(
+    (amount) =>
+      Number.isSafeInteger(Math.round(amount * 100)) &&
+      Math.abs(amount * 100 - Math.round(amount * 100)) < 0.000001,
+    { message: "K-1 disabled-access credit needs cent precision" },
+  ).optional(),
+  box13_code_zz_disabled_access_statement_reference: z.string().trim().min(1)
+    .optional(),
+  disabled_access_credit_subject_to_passive_activity_limit: z.boolean()
+    .optional(),
   // Affirm the beneficiary's limited portfolio boxes are investment-property
   // income not already included in Form 4952's manual "other" facts.
   investment_property_for_form4952: z.boolean().optional(),
@@ -149,6 +159,37 @@ export const itemSchema = z.object({
         message: "K-1 orphan-drug credit exceeds box 13 total credits",
       });
     }
+  }
+  if (item.box13_code_zz_disabled_access_credit !== undefined) {
+    for (
+      const key of [
+        "entity_type",
+        "estate_trust_ein",
+        "source_document_reference",
+        "box13_code_zz_disabled_access_statement_reference",
+        "disabled_access_credit_subject_to_passive_activity_limit",
+      ] as const
+    ) {
+      if (item[key] === undefined) {
+        ctx.addIssue({
+          code: "custom",
+          path: [key],
+          message: `K-1 box 13 code ZZ disabled-access credit needs ${key}`,
+        });
+      }
+    }
+  }
+  if (
+    item.box13_credits !== undefined &&
+    Math.round(item.box13_credits * 100) <
+      Math.round((item.box13_code_zz_orphan_drug_credit ?? 0) * 100) +
+        Math.round((item.box13_code_zz_disabled_access_credit ?? 0) * 100)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["box13_credits"],
+      message: "K-1 named code ZZ credits exceed box 13 total credits",
+    });
   }
 });
 

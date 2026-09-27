@@ -602,10 +602,11 @@ credits on line 1h now reconcile to one K-1 box 15/13 credit with matching EIN,
 reference, amount, and passive flag, using the same check as Form 8820.
 Those direct and full-return XSD cases are written but unrun. Other credit
 types, prior-year source documents, self-earned passive credits, estate/trust
-disabled-access statements, and missing-EIN source evidence still need
+statement attachment authenticity, and missing-EIN source evidence still need
 reconciliation. Current-year passive disabled-access credits on line 1e now
-match partnership or S-corporation K-1 code K evidence; its direct and
-full-return XSD cases are written but unrun.
+match partnership or S-corporation K-1 code K evidence, or a named estate/trust
+K-1 code ZZ statement. Its direct and full-return XSD cases are written but
+unrun; matching the statement reference is not proof its contents are attached.
 Pass-through sources also carry a stable entity reference so the passive
 Part IV summary chooses the entity with the greatest combined credit across
 its source years. Conflicting EINs for one entity stop XML generation. The

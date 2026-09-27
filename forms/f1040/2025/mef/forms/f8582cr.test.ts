@@ -178,7 +178,7 @@ Deno.test("Form 8582-CR passive orphan-drug credit matches the current K-1", () 
   );
 });
 
-Deno.test("Form 8582-CR passive disabled-access credit matches K-1 code K", () => {
+Deno.test("Form 8582-CR passive disabled-access credit matches K-1 source evidence", () => {
   for (
     const entry of [
       {
@@ -200,6 +200,32 @@ Deno.test("Form 8582-CR passive disabled-access credit matches K-1 code K", () =
           corporation_ein: "123456789",
           source_document_reference: "2025 access K-1",
           box13_code_k_disabled_access_credit: 1_500,
+          disabled_access_credit_subject_to_passive_activity_limit: true,
+        },
+      },
+      {
+        kind: PassiveCreditSourceOrigin.Trust,
+        pendingKey: "k1_trust" as const,
+        item: {
+          estate_trust_name: "Access trust",
+          entity_type: "trust",
+          estate_trust_ein: "123456789",
+          source_document_reference: "2025 Trust K-1",
+          box13_code_zz_disabled_access_credit: 1_500,
+          box13_code_zz_disabled_access_statement_reference: "2025 access K-1",
+          disabled_access_credit_subject_to_passive_activity_limit: true,
+        },
+      },
+      {
+        kind: PassiveCreditSourceOrigin.Estate,
+        pendingKey: "k1_trust" as const,
+        item: {
+          estate_trust_name: "Access estate",
+          entity_type: "estate",
+          estate_trust_ein: "123456789",
+          source_document_reference: "2025 Estate K-1",
+          box13_code_zz_disabled_access_credit: 1_500,
+          box13_code_zz_disabled_access_statement_reference: "2025 access K-1",
           disabled_access_credit_subject_to_passive_activity_limit: true,
         },
       },
@@ -229,7 +255,9 @@ Deno.test("Form 8582-CR passive disabled-access credit matches K-1 code K", () =
         [
           entry.pendingKey === "k1_partnership"
             ? "k1_partnerships"
-            : "k1_s_corps"
+            : entry.pendingKey === "k1_s_corp"
+            ? "k1_s_corps"
+            : "k1_trusts"
         ]: [entry.item],
       },
     };
@@ -250,7 +278,9 @@ Deno.test("Form 8582-CR passive disabled-access credit matches K-1 code K", () =
       Error,
       entry.kind === PassiveCreditSourceOrigin.Partnership
         ? "K-1 box 15 code K"
-        : "K-1 box 13 code K",
+        : entry.kind === PassiveCreditSourceOrigin.SCorporation
+        ? "K-1 box 13 code K"
+        : "K-1 box 13 code ZZ statement",
     );
   }
 });

@@ -63,6 +63,35 @@ Deno.test("estate or trust K-1 orphan-drug code ZZ needs its source statement", 
   );
 });
 
+Deno.test("estate or trust K-1 disabled-access code ZZ needs its named statement", () => {
+  assertThrows(() =>
+    compute([minimalItem({ box13_code_zz_disabled_access_credit: 500 })])
+  );
+  compute([minimalItem({
+    entity_type: "trust",
+    estate_trust_ein: "123456789",
+    source_document_reference: "2025 Trust K-1",
+    box13_credits: 750.25,
+    box13_code_zz_orphan_drug_credit: 250,
+    box13_code_zz_orphan_drug_statement_reference: "Orphan drug statement",
+    orphan_drug_credit_subject_to_passive_activity_limit: false,
+    box13_code_zz_disabled_access_credit: 500.25,
+    box13_code_zz_disabled_access_statement_reference: "Access statement",
+    disabled_access_credit_subject_to_passive_activity_limit: true,
+  })]);
+  assertThrows(() =>
+    compute([minimalItem({
+      entity_type: "estate",
+      estate_trust_ein: "123456789",
+      source_document_reference: "2025 Estate K-1",
+      box13_credits: 500,
+      box13_code_zz_disabled_access_credit: 500.25,
+      box13_code_zz_disabled_access_statement_reference: "Access statement",
+      disabled_access_credit_subject_to_passive_activity_limit: true,
+    })])
+  );
+});
+
 // ── 1. Input schema validation ────────────────────────────────────────────────
 
 Deno.test("empty array throws", () => {

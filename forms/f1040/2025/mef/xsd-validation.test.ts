@@ -1582,6 +1582,79 @@ Deno.test({
 
 Deno.test({
   name:
+    "XSD: trust K-1 code ZZ disabled-access statement reaches passive line 1e",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const source = {
+    activity_reference: "Access trust",
+    source_form: "Form 8826",
+    source_origin: {
+      kind: PassiveCreditSourceOrigin.Trust,
+      entity_reference: "Access trust",
+      ein: "123456789",
+    },
+    source_document_reference: "2025 trust access statement",
+    category: PassiveCreditCategory.Other,
+    reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+    form3800_credit_line: "1e" as const,
+    current_year_credit: 500,
+    prior_unallowed_credits: [],
+    publicly_traded_partnership: false,
+  };
+  const xml = buildMefXml(
+    {
+      f1040: { line16_income_tax: 1_000 },
+      schedule3: { line6a_total: 500, line7_total: 500 },
+      form6251: { line11_amt: 0, net_tmt: 0 },
+      form8582cr: {
+        credit_sources: [source],
+        regular_tax_all_income: 1_000,
+        regular_tax_without_passive: 500,
+      },
+      k1_trust: {
+        k1_trusts: [{
+          estate_trust_name: "Access trust",
+          entity_type: "trust",
+          estate_trust_ein: "123456789",
+          source_document_reference: "2025 Trust K-1",
+          box13_code_zz_disabled_access_credit: 500,
+          box13_code_zz_disabled_access_statement_reference:
+            "2025 trust access statement",
+          disabled_access_credit_subject_to_passive_activity_limit: true,
+        }],
+      },
+      f3800: {
+        passive_source_allocations: [{
+          ...source,
+          total_credit: 500,
+          special_allowed_credit: 0,
+          unallowed_credit: 0,
+          allowed_credit: 500,
+        }],
+        tax_context: {
+          filingStatus: FilingStatus.Single,
+          regularTax: 1_000,
+          alternativeMinimumTax: 0,
+          foreignTaxCredit: 0,
+          priorAllowableCredits: 0,
+          tentativeMinimumTax: 0,
+          standardCredit: 0,
+          specifiedCredit: 0,
+        },
+        allowed_credit: 500,
+      },
+    } satisfies MefFormsPending & { k1_trust: unknown },
+    extractFilerIdentity(singleGeneral()),
+  );
+  assertStringIncludes(xml, "<IRS8582CR ");
+  assertStringIncludes(xml, "<IRS3800 ");
+  await validateXsd(xml, "trust disabled-access K-1 code ZZ");
+});
+
+Deno.test({
+  name:
     "XSD: pass-through-only Form 8826 code K reaches Form 3800 without IRS8826",
   sanitizeOps: false,
   sanitizeResources: false,

@@ -29,8 +29,7 @@ function reconcilePassiveDisabledAccessSources(
     const origin = source.source_origin;
     if (origin.kind === PassiveCreditSourceOrigin.Self) return [];
     if (
-      (origin.kind !== PassiveCreditSourceOrigin.Partnership &&
-        origin.kind !== PassiveCreditSourceOrigin.SCorporation) ||
+      origin.kind === PassiveCreditSourceOrigin.Cooperative ||
       !origin.ein || source.source_form !== "Form 8826"
     ) {
       throw new Error(
