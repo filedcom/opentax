@@ -183,7 +183,7 @@ export const inputSchema = z.object({
     schedule2_line16c: z.number().nonnegative(),
     schedule2_line17c: z.number().nonnegative(),
     form1040_line27a_eic: z.number().nonnegative(),
-    schedule3_line11_adoption_credit: z.number().nonnegative(),
+    schedule3_line11_excess_ss_rrta: z.number().nonnegative(),
   }).strict().optional(),
   line18a_earned_income: z.number().optional(),
   earned_income_worksheet: earnedIncomeWorksheetSchema.optional(),
@@ -286,7 +286,7 @@ export function calculatePartIIBLines2026(
     details.schedule2_line17c;
   const line23 = line21 + line22;
   const line24 = details.form1040_line27a_eic +
-    details.schedule3_line11_adoption_credit;
+    details.schedule3_line11_excess_ss_rrta;
   const line25 = Math.max(0, line23 - line24);
   const line26 = Math.max(line20, line25);
   return { line21, line22, line23, line24, line25, line26 };

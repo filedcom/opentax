@@ -12,6 +12,10 @@ routes household employment tax to Schedule 2 line 17a, and has a two-page
 draft PDF attachment. Its ATS line 9 No case reconciles $627 through Form
 1040 line 23. Section B, payroll-to-form wage derivation, and MeF remain open;
 see [the Schedule H contract](../../../docs/ty2026/SCHEDULEH-GRAPH.md).
+`credit-resolution.ts` now computes Schedule 8812 Worksheet B through line
+14 and 2026 Form 5695 lines 1–4 in the required order. It still needs
+source-node inputs and graph execution before a carryforward return can
+produce the existing Form 5695 PDF from calculated facts.
 
 The first executable 2026 calculation is `settlement.ts`: it assembles 1040
 lines 24a–c and 32a–c, Schedule 3-A Part I/II, payments, refund, and amount

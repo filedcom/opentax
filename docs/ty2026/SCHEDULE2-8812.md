@@ -37,7 +37,8 @@ names Schedule 2 lines 5, 6, and 13. `part_iib_2026` now takes lines 16c and
 17c, rejects the 2025 shape, and checks any amounts arriving from the 2026
 Schedule 2 graph against the supplied line sources. Its line 21 also needs W-2 boxes 4
 and 6 (plus the documented RRTA/Additional Medicare cases); line 24 needs
-Form 1040 line 27a and Schedule 3 line 11. Keep the 2025 contract intact.
+Form 1040 line 27a and Schedule 3 line 11 (excess Social Security/tier 1 RRTA
+withholding). Keep the 2025 contract intact.
 
 The dedicated 2026 Schedule 8812 node is now in the calculation graph. It
 uses the year-specific credit-limit worksheet, requires verified line 18a

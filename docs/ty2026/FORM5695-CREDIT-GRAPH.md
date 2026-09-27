@@ -33,6 +33,11 @@ It does not depend on Form 5695. Worksheet B line 15 later includes Schedule
 3 line 5a and affects the final nonrefundable child credit. The correct order
 is therefore:
 
+Schedule 3 line 11 is **excess Social Security and tier 1 RRTA withholding**;
+the TY2026 worksheet input now names that source explicitly. The older shared
+field name called it an adoption credit, although its line number and
+arithmetic were unchanged.
+
 ```text
 income tax + Schedule 2 line 3 + other credit sources
              ↓
@@ -49,6 +54,11 @@ The current registry runs Schedule 3 before its Schedule 8812 node and
 expects a user-supplied `credit_limit_worksheet_2026`. Feeding a Form 5695
 credit directly into that chain without ordering the worksheet stages would
 make the credit limit depend on an unfinished child-credit calculation.
+`forms/f1040/2026/credit-resolution.ts` now calculates Worksheet B lines
+1–14 and the four Form 5695 carryforward lines from named, reconciled inputs.
+It covers the earned-income and payroll-tax branches, including Schedule 2
+lines 16c/17c. This is a pure calculation module; the registry does not yet
+collect all its source inputs or execute the ordered stage.
 Refactor the pure Schedule 8812 worksheet functions into the shared 2026
 credit-resolution stage, or provide separate pre- and post-5695 stages with
 explicit graph edges. Derive the inputs from registered source nodes and

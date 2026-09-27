@@ -108,15 +108,15 @@ Deno.test("TY2026 Part II-B uses Schedule 2 lines 16c and 17c", () => {
     schedule2_line16c: 200,
     schedule2_line17c: 50,
     form1040_line27a_eic: 100,
-    schedule3_line11_adoption_credit: 0,
+    schedule3_line11_excess_ss_rrta: 50,
   };
   assertEquals(calculatePartIIBLines2026(partIIB, 0), {
     line21: 1_000,
     line22: 350,
     line23: 1_350,
-    line24: 100,
-    line25: 1_250,
-    line26: 1_250,
+    line24: 150,
+    line25: 1_200,
+    line26: 1_200,
   });
   const input = {
     f8812s: [minimalItem({
@@ -129,7 +129,7 @@ Deno.test("TY2026 Part II-B uses Schedule 2 lines 16c and 17c", () => {
     part_iib_2026: partIIB,
   };
   const result = calculateSchedule8812Lines(2026, input);
-  assertEquals(result?.line27, 1_250);
+  assertEquals(result?.line27, 1_200);
   assertEquals(result?.partIIBLines?.line22, 350);
   assertThrows(
     () =>
