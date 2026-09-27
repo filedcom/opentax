@@ -258,8 +258,14 @@ routing and field-map cases are written but unrun. Form 8912's Part II limit now
 feeds line 6k, while these source forms still need complete eligibility,
 document, and business-rule review. The Schedule 3 MeF builder requires attached
 source-form IDs for lines 6h, 6i, 6k, and 12. Forms 8912, 8859, and 8834 are
-registered but unrun; the Form 4136 source serializer is not yet registered,
-so its path must not be treated as e-file ready.
+registered but unrun. The Form 4136 input has now
+replaced unsubstantiated flat gallon fields with a single qualifying business,
+purchase-record and duplicate-claim confirmations, and line-indexed gallons,
+use codes, and actual fuel costs. Its calculation and rejection cases are
+written but unrun. Its `IRS4136` builder now maps the represented lines and
+reconciles line 17 with Schedule 3 line 12; local XSD and source cases are
+written but unrun. Multiple businesses require Schedule A (Form 4136), and PDF,
+additional claim lines, source evidence, and ATS acceptance remain open.
 
 Form 8936 now enters the start graph as one singleton input containing both Part
 I MAGI breakdowns, both filing statuses, and its vehicle array. The old
