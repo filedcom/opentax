@@ -50,6 +50,8 @@ export const itemSchema = z.object({
   // Box 13 code Z is the shareholder's orphan-drug credit.
   box13_code_z_orphan_drug_credit: z.number().int().positive().optional(),
   orphan_drug_credit_subject_to_passive_activity_limit: z.boolean().optional(),
+  box13_code_ad_new_markets_credit: z.number().int().positive().optional(),
+  new_markets_credit_subject_to_passive_activity_limit: z.boolean().optional(),
   box13_code_k_disabled_access_credit: z.number().finite().positive().refine(
     (amount) =>
       Number.isSafeInteger(Math.round(amount * 100)) &&
@@ -186,6 +188,23 @@ export const itemSchema = z.object({
           code: "custom",
           path: [key],
           message: `K-1 box 13 code Z needs ${key}`,
+        });
+      }
+    }
+  }
+  if (item.box13_code_ad_new_markets_credit !== undefined) {
+    for (
+      const key of [
+        "corporation_ein",
+        "source_document_reference",
+        "new_markets_credit_subject_to_passive_activity_limit",
+      ] as const
+    ) {
+      if (item[key] === undefined) {
+        ctx.addIssue({
+          code: "custom",
+          path: [key],
+          message: `K-1 box 13 code AD needs ${key}`,
         });
       }
     }
@@ -541,6 +560,29 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
         }
         return [output(f3800, {
           f8820_k1_credit_entries: [{
+            source_type: "s_corporation",
+            source_ein: item.corporation_ein,
+            source_document_reference: item.source_document_reference,
+            credit_amount: credit,
+            subject_to_passive_activity_limit: false,
+          }],
+        })];
+      }),
+      ...k1_s_corps.flatMap((item) => {
+        const credit = item.box13_code_ad_new_markets_credit;
+        if (credit === undefined) return [];
+        if (!item.corporation_ein || !item.source_document_reference) {
+          throw new Error(
+            "S-corporation New Markets Credit K-1 source is incomplete",
+          );
+        }
+        if (item.new_markets_credit_subject_to_passive_activity_limit) {
+          throw new Error(
+            "Passive New Markets Credit needs Form 8582-CR activity facts",
+          );
+        }
+        return [output(f3800, {
+          f8874_k1_credit_entries: [{
             source_type: "s_corporation",
             source_ein: item.corporation_ein,
             source_document_reference: item.source_document_reference,

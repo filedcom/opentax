@@ -126,6 +126,14 @@ const f8874CreditSchema = z.object({
   subject_to_passive_activity_limit: z.literal(false),
 });
 
+const f8874K1CreditSchema = z.object({
+  source_type: z.enum(["partnership", "s_corporation"]),
+  source_ein: z.string().regex(/^\d{9}$/),
+  source_document_reference: z.string().trim().min(1),
+  credit_amount: z.number().int().positive(),
+  subject_to_passive_activity_limit: z.literal(false),
+});
+
 const f8820K1CreditSchema = z.object({
   source_type: z.enum(["partnership", "s_corporation", "estate", "trust"]),
   source_ein: z.string().regex(/^\d{9}$/),
@@ -153,6 +161,7 @@ export const inputSchema = z.object({
   f5884_credit: f5884CreditSchema.optional(),
   f8820_credit: f8820CreditSchema.optional(),
   f8874_credit: f8874CreditSchema.optional(),
+  f8874_k1_credit_entries: z.array(f8874K1CreditSchema).min(1).optional(),
   f8820_k1_credit_entries: z.array(f8820K1CreditSchema).min(1).optional(),
   f8936_new_vehicle_credit: f8936NewVehicleCreditSchema.optional(),
   f8936_commercial_vehicle_credit: f8936NewVehicleCreditSchema.optional(),
@@ -161,6 +170,8 @@ export const inputSchema = z.object({
   form8936_commercial_applied_credit: appliedSourceCreditSchema.optional(),
   form8820_applied_credit: appliedSourceCreditSchema.optional(),
   form8820_applied_credits_by_source: z.array(appliedSourceCreditSchema)
+    .optional(),
+  form8874_applied_credits_by_source: z.array(appliedSourceCreditSchema)
     .optional(),
   form5884_applied_credit: appliedSourceCreditSchema.optional(),
   form5884_applied_credits_by_source: z.array(appliedSourceCreditSchema)
@@ -178,6 +189,7 @@ export const inputSchema = z.object({
     input.f5884_credit !== undefined ||
     input.f8820_credit !== undefined ||
     input.f8874_credit !== undefined ||
+    input.f8874_k1_credit_entries !== undefined ||
     input.f8820_k1_credit_entries !== undefined ||
     input.f8936_new_vehicle_credit !== undefined ||
     input.f8936_commercial_vehicle_credit !== undefined ||
@@ -231,6 +243,7 @@ function schedule3Output(
   f5884Credit: z.infer<typeof f5884CreditSchema> | undefined,
   f8820Credit: z.infer<typeof f8820CreditSchema> | undefined,
   f8874Credit: z.infer<typeof f8874CreditSchema> | undefined,
+  f8874K1Credits: readonly z.infer<typeof f8874K1CreditSchema>[],
   f8820K1Credits: readonly z.infer<typeof f8820K1CreditSchema>[],
   f8936Credit: z.infer<typeof f8936NewVehicleCreditSchema> | undefined,
   f8936CommercialCredit:
@@ -273,6 +286,19 @@ function schedule3Output(
       "Orphan-drug K-1 passive credit needs Form 8582-CR before Form 3800",
     );
   }
+  const newMarketsK1Keys = new Set<string>();
+  for (const entry of f8874K1Credits) {
+    const key =
+      `${entry.source_type}:${entry.source_ein}:${entry.source_document_reference}`;
+    if (newMarketsK1Keys.has(key)) {
+      throw new Error("Duplicate New Markets Credit K-1 source");
+    }
+    newMarketsK1Keys.add(key);
+  }
+  const newMarketsK1Credit = f8874K1Credits.reduce(
+    (sum, entry) => sum + entry.credit_amount,
+    0,
+  );
   const orphanDrugK1Keys = new Set<string>();
   for (const entry of f8820K1Credits) {
     const key =
@@ -318,6 +344,7 @@ function schedule3Output(
     (f5884Credit?.credit_amount ?? 0) > 0 ||
     (f8820Credit?.credit_amount ?? 0) > 0 ||
     (f8874Credit?.credit_amount ?? 0) > 0 ||
+    newMarketsK1Credit > 0 ||
     orphanDrugK1Credit > 0 ||
     (f8936Credit?.credit_amount ?? 0) > 0 ||
     (f8936CommercialCredit?.credit_amount ?? 0) > 0 ||
@@ -334,6 +361,7 @@ function schedule3Output(
           standardCredit: form8826Credit +
             (f8820Credit?.credit_amount ?? 0) +
             (f8874Credit?.credit_amount ?? 0) +
+            newMarketsK1Credit +
             orphanDrugK1Credit +
             (f8936Credit?.credit_amount ?? 0) +
             (f8936CommercialCredit?.credit_amount ?? 0) +
@@ -367,6 +395,7 @@ class F3800Node extends TaxNode<typeof inputSchema> {
         parsed.f5884_credit,
         parsed.f8820_credit,
         parsed.f8874_credit,
+        parsed.f8874_k1_credit_entries ?? [],
         parsed.f8820_k1_credit_entries ?? [],
         parsed.f8936_new_vehicle_credit,
         parsed.f8936_commercial_vehicle_credit,

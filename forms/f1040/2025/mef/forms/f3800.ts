@@ -363,6 +363,51 @@ function sourceForm8874(
   return { source, lines, credit: lines.line3 };
 }
 
+function sourceNewMarketsK1Credits(
+  fields: z.infer<typeof f3800InputSchema>,
+  context: MefBuildContext,
+) {
+  const entries = fields.f8874_k1_credit_entries ?? [];
+  if (entries.length === 0) return [];
+  const partnerships =
+    entries.some((entry) => entry.source_type === "partnership")
+      ? partnershipK1InputSchema.parse(context.pending?.k1_partnership)
+        .k1_partnerships
+      : [];
+  const corporations =
+    entries.some((entry) => entry.source_type === "s_corporation")
+      ? sCorpK1InputSchema.parse(context.pending?.k1_s_corp).k1_s_corps
+      : [];
+  const seen = new Set<string>();
+  for (const entry of entries) {
+    const key =
+      `${entry.source_type}:${entry.source_ein}:${entry.source_document_reference}`;
+    if (seen.has(key)) {
+      throw new Error("Form 3800 New Markets Credit K-1 source is duplicated");
+    }
+    seen.add(key);
+    const matches = entry.source_type === "partnership"
+      ? partnerships.filter((k1) =>
+        k1.partnership_ein === entry.source_ein &&
+        k1.source_document_reference === entry.source_document_reference &&
+        k1.box15_code_ad_new_markets_credit === entry.credit_amount &&
+        k1.new_markets_credit_subject_to_passive_activity_limit === false
+      )
+      : corporations.filter((k1) =>
+        k1.corporation_ein === entry.source_ein &&
+        k1.source_document_reference === entry.source_document_reference &&
+        k1.box13_code_ad_new_markets_credit === entry.credit_amount &&
+        k1.new_markets_credit_subject_to_passive_activity_limit === false
+      );
+    if (matches.length !== 1) {
+      throw new Error(
+        `Form 3800 New Markets Credit does not reconcile to ${entry.source_type} K-1 code AD`,
+      );
+    }
+  }
+  return entries;
+}
+
 function sourceOrphanDrugK1Credits(
   fields: z.infer<typeof f3800InputSchema>,
   context: MefBuildContext,
@@ -649,7 +694,8 @@ function form5884SourceAllocations(
   );
 }
 
-function form8820SourceAllocations(
+function nonpassiveSourceAllocations(
+  form: "8820" | "8874",
   amounts: readonly number[],
   credit: number,
   appliedCredit: number,
@@ -657,7 +703,9 @@ function form8820SourceAllocations(
 ): readonly number[] | undefined {
   if (amounts.length === 0) {
     if (explicit !== undefined) {
-      throw new Error("Form 3800 has Form 8820 allocations without a source");
+      throw new Error(
+        `Form 3800 has Form ${form} allocations without a source`,
+      );
     }
     return undefined;
   }
@@ -666,7 +714,7 @@ function form8820SourceAllocations(
   if (sameMoney(appliedCredit, 0)) return amounts.map(() => 0);
   if (sameMoney(appliedCredit, credit)) return amounts;
   throw new Error(
-    "Form 3800 needs Part V applied amounts for each Form 8820 source",
+    `Form 3800 needs Part V applied amounts for each Form ${form} source`,
   );
 }
 
@@ -729,6 +777,9 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
       fields.f8826_credit_entries?.some((entry) => entry.credit_amount > 0) ||
       (fields.f8820_credit?.credit_amount ?? 0) > 0 ||
       (fields.f8874_credit?.credit_amount ?? 0) > 0 ||
+      fields.f8874_k1_credit_entries?.some((entry) =>
+        entry.credit_amount > 0
+      ) ||
       fields.f8820_k1_credit_entries?.some((entry) =>
         entry.credit_amount > 0
       ) ||
@@ -774,6 +825,7 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
     const form8826 = sourceForm8826(parsed, context);
     const form8820 = sourceForm8820(parsed, context);
     const form8874 = sourceForm8874(parsed, context);
+    const newMarketsK1Credits = sourceNewMarketsK1Credits(parsed, context);
     const orphanDrugK1Credits = sourceOrphanDrugK1Credits(
       parsed,
       context,
@@ -798,6 +850,17 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
       (sum, source) => sum + source.credit,
       0,
     );
+    const form8874Sources = [
+      ...(form8874 ? [{ credit: form8874.credit }] : []),
+      ...newMarketsK1Credits.map((entry) => ({
+        credit: entry.credit_amount,
+        ein: entry.source_ein,
+      })),
+    ];
+    const form8874Credit = form8874Sources.reduce(
+      (sum, source) => sum + source.credit,
+      0,
+    );
     if (
       form8820Credit > 0 &&
       form8820?.source.pass_through_credits?.some((source) =>
@@ -815,7 +878,7 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
     const nonpassiveSources = form3800NonpassiveCreditUseRows({
       form8826Credit,
       form8820Credit,
-      form8874Credit: form8874?.credit,
+      form8874Credit,
       form5884Credit: form5884?.credit,
       form8936NewVehicleCredit: form8936?.credit,
       form8936CommercialVehicleCredit: form8936Commercial?.credit,
@@ -978,7 +1041,8 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
             documentId: form8820Ids[0],
             appliedCredit: form8820Applied,
             sources: form8820Sources,
-            appliedCreditsBySource: form8820SourceAllocations(
+            appliedCreditsBySource: nonpassiveSourceAllocations(
+              "8820",
               form8820Sources.map((source) => source.credit),
               form8820Credit,
               form8820Applied,
@@ -986,11 +1050,19 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
             ),
           }
           : undefined,
-        form8874: form8874
+        form8874: form8874Credit > 0
           ? {
-            credit: form8874.credit,
+            credit: form8874Credit,
             documentId: form8874Ids[0],
             appliedCredit: form8874Applied,
+            sources: form8874Sources,
+            appliedCreditsBySource: nonpassiveSourceAllocations(
+              "8874",
+              form8874Sources.map((source) => source.credit),
+              form8874Credit,
+              form8874Applied,
+              parsed.form8874_applied_credits_by_source,
+            ),
           }
           : undefined,
         form8936: form8936

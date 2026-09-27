@@ -51,8 +51,11 @@ Form 8911 business use also needs the shared Form 3800 treatment.
 `f8874` now sends an identified nonpassive qualified equity investment's
 current-year credit to Form 3800 Part III line 1i. A native IRS8874 source
 document and Part V source row are written, with tests deferred to the full
-batch. Passive, pass-through, carryforward, recapture, and cent-bearing cases
-remain open; this is not a complete New Markets Credit filing path.
+batch. Nonpassive partnership and S-corporation K-1 code AD sources also enter
+line 1i directly, with filed K-1 amount and identity reconciliation and no
+invented IRS8874 for pass-through-only claims. Passive, estate/trust,
+carryforward, recapture, and cent-bearing cases remain open; this is not a
+complete New Markets Credit filing path.
 
 `f8820` now sends an identified, nonpassive orphan-drug source credit to Form
 3800 Part III line 1h instead of depositing its gross 25% credit in Schedule 3.

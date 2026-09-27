@@ -116,8 +116,14 @@ export type Form3800NonpassiveXmlInput = {
   };
   readonly form8874?: {
     readonly credit: number;
-    readonly documentId: string;
+    /** Present only when the filer earned a credit on their own Form 8874. */
+    readonly documentId?: string;
     readonly appliedCredit: number;
+    readonly sources: readonly {
+      readonly credit: number;
+      readonly ein?: string;
+    }[];
+    readonly appliedCreditsBySource?: readonly number[];
   };
   readonly form8936?: {
     readonly credit: number;
@@ -236,15 +242,45 @@ export function buildForm3800NonpassiveParts(
   const form5884Credit = input.form5884?.credit ?? 0;
   const form8936Credit = input.form8936?.credit ?? 0;
   const form8936CommercialCredit = input.form8936Commercial?.credit ?? 0;
-  if (
-    input.form8874 &&
-    (!input.form8874.documentId || !Number.isInteger(form8874Credit) ||
-      form8874Credit <= 0 ||
-      !Number.isInteger(input.form8874.appliedCredit) ||
-      input.form8874.appliedCredit < 0 ||
-      input.form8874.appliedCredit > form8874Credit)
-  ) {
-    throw new Error("Form 3800 has an invalid Form 8874 line 1i allocation");
+  if (input.form8874) {
+    const source = input.form8874;
+    const hasSelfEarned = source.sources.some((entry) => !entry.ein);
+    if (
+      !Number.isInteger(form8874Credit) || form8874Credit <= 0 ||
+      !Number.isInteger(source.appliedCredit) ||
+      source.appliedCredit < 0 || source.appliedCredit > form8874Credit ||
+      source.sources.length === 0 || source.sources.length > 999 ||
+      source.sources.some((entry) =>
+        !Number.isInteger(entry.credit) || entry.credit <= 0 ||
+        (entry.ein !== undefined && !/^\d{9}$/.test(entry.ein))
+      ) ||
+      source.sources.reduce((sum, entry) => sum + entry.credit, 0) !==
+        form8874Credit ||
+      hasSelfEarned !== Boolean(source.documentId) ||
+      source.sources.filter((entry) => !entry.ein).length > 1
+    ) {
+      throw new Error(
+        "Form 3800 has an invalid Form 8874 source or allocation",
+      );
+    }
+    if (source.sources.length > 1) {
+      const applied = source.appliedCreditsBySource;
+      if (
+        !applied || applied.length !== source.sources.length ||
+        applied.some((amount, index) =>
+          !Number.isInteger(amount) || amount < 0 ||
+          amount > source.sources[index].credit
+        ) ||
+        applied.reduce((sum, amount) => sum + amount, 0) !==
+          source.appliedCredit
+      ) {
+        throw new Error(
+          "Form 3800 Form 8874 Part V applied credits do not reconcile",
+        );
+      }
+    } else if (source.appliedCreditsBySource !== undefined) {
+      throw new Error("Form 3800 Form 8874 allocations need multiple sources");
+    }
   }
   if (
     input.form8936 &&
@@ -588,24 +624,26 @@ export function buildForm3800NonpassiveParts(
       });
     })
     : [];
-  const form8874PartVGroup = input.form8874
-    ? elements("Frm8874CYAggrgtAmtGrp", [
-      element("OthThnCrTrnsfrElectCrNoLmtAmt", form8874Credit),
-      element("TotalGeneralBusCreditsAmt", form8874Credit),
-      element(
-        "TotalGBCLessGrossEPEAppTxAmt",
-        input.form8874.appliedCredit,
-      ),
-      element(
-        "CarryforwardGeneralBusCrAmt",
-        form8874Credit - input.form8874.appliedCredit,
-      ),
-    ], {
-      referenceDocumentId: input.form8874.documentId,
-      referenceDocumentName: "IRS8874",
-      lineNumberTxt: "Part III Line 1i",
+  const form8874PartVGroups = input.form8874
+    ? input.form8874.sources.map((source, index) => {
+      const applied = input.form8874!.sources.length > 1
+        ? input.form8874!.appliedCreditsBySource![index]
+        : input.form8874!.appliedCredit;
+      return elements("Frm8874CYAggrgtAmtGrp", [
+        source.ein ? element("PassThroughEntityEIN", source.ein) : "",
+        element("OthThnCrTrnsfrElectCrNoLmtAmt", source.credit),
+        element("TotalGeneralBusCreditsAmt", source.credit),
+        element("TotalGBCLessGrossEPEAppTxAmt", applied),
+        element("CarryforwardGeneralBusCrAmt", source.credit - applied),
+      ], {
+        ...(source.ein || !input.form8874!.documentId ? {} : {
+          referenceDocumentId: input.form8874!.documentId,
+          referenceDocumentName: "IRS8874",
+        }),
+        lineNumberTxt: "Part III Line 1i",
+      });
     })
-    : undefined;
+    : [];
   const form5884 = input.form5884;
   const form5884PartVGroups = form5884
     ? form5884.sources.map((source, index) => {
@@ -744,6 +782,9 @@ export function buildForm3800NonpassiveParts(
   const form8820EntityCredits = passThroughEntityCredits(
     form8820PassThroughSources,
   );
+  const form8874EntityCredits = passThroughEntityCredits(
+    input.form8874?.sources.filter((source) => source.ein !== undefined) ?? [],
+  );
   const form5884EntityCredits = passThroughEntityCredits(
     form5884PassThroughSources,
   );
@@ -792,11 +833,14 @@ export function buildForm3800NonpassiveParts(
           form8874Credit,
           input.form8874.appliedCredit,
           {
-            sourceCount: 1,
+            sourceCount: input.form8874.sources.length,
+            entity: largestForm3800CurrentEntity(form8874EntityCredits),
             referenceDocumentId: input.form8874.documentId,
-            referenceDocumentName: "IRS8874",
+            referenceDocumentName: input.form8874.documentId
+              ? "IRS8874"
+              : undefined,
           },
-          [],
+          form8874EntityCredits,
         ),
       ]
       : []),
@@ -918,9 +962,7 @@ export function buildForm3800NonpassiveParts(
       ...form8826PartVGroups.map((xml) => ({ line: "1e" as const, xml })),
       ...partVGroups,
       ...form8820PartVGroups.map((xml) => ({ line: "1h" as const, xml })),
-      ...(form8874PartVGroup
-        ? [{ line: "1i" as const, xml: form8874PartVGroup }]
-        : []),
+      ...form8874PartVGroups.map((xml) => ({ line: "1i" as const, xml })),
       ...form5884PartVGroups.map((xml) => ({ line: "4b" as const, xml })),
       ...(input.form8936
         ? [form8936CurrentDetail(

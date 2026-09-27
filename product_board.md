@@ -28,11 +28,15 @@ or 6% current-year credit, rejects duplicated or ineligible date facts, and
 routes the nonpassive amount through Form 3800 rather than directly to Schedule
 3. A native IRS8874 document and Form 3800 Part III line 1i/Part V source row
 are written, with source reconciliation and local XSD cases, but all cases are
-unrun. The route currently covers only a taxpayer's own nonpassive QEI. Passive
-activity credits, K-1 pass-through credits, carryovers, recapture and sale
-events, leap-day allowance dates, cent-bearing QEI/credit reporting, filled PDF
-inspection, and IRS business-rule/ATS evidence remain open. It is not filing
-ready.
+unrun. The route now also takes nonpassive partnership box 15 code AD and
+S-corporation box 13 code AD credits directly to Form 3800 without inventing an
+IRS8874 attachment. The claimed amount is checked against its entered K-1
+identity and credit, with Part V source rows and explicit allocation required
+when a partial tax limit cuts across multiple same-line sources. Those cases are
+written but unrun. Passive activity credits, estate/trust pass-through credits,
+carryovers, recapture and sale events, leap-day allowance dates, cent-bearing
+QEI/credit reporting, filled PDF inspection, and IRS business-rule/ATS evidence
+remain open. It is not filing ready.
 
 The current build pass now routes nonpassive Schedule K-1 orphan-drug credits
 from partnerships (box 15 code Z), S corporations (box 13 code Z), and

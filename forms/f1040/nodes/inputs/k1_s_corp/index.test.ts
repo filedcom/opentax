@@ -94,6 +94,35 @@ Deno.test("S corporation K-1 code Z reaches source-backed Form 3800", () => {
   );
 });
 
+Deno.test("S corporation K-1 box 13 code AD reaches Form 3800 line 1i source", () => {
+  assertThrows(() =>
+    compute([minimalItem({
+      box13_code_ad_new_markets_credit: 1_250,
+    })])
+  );
+  const item = minimalItem({
+    corporation_ein: "123456789",
+    source_document_reference: "2025 S corporation K-1",
+    box13_code_ad_new_markets_credit: 1_250,
+    new_markets_credit_subject_to_passive_activity_limit: false,
+  });
+  assertEquals(findOutput(compute([item]), "f3800")?.fields, {
+    f8874_k1_credit_entries: [{
+      source_type: "s_corporation",
+      source_ein: "123456789",
+      source_document_reference: "2025 S corporation K-1",
+      credit_amount: 1_250,
+      subject_to_passive_activity_limit: false,
+    }],
+  });
+  assertThrows(() =>
+    compute([{
+      ...item,
+      new_markets_credit_subject_to_passive_activity_limit: true,
+    }])
+  );
+});
+
 Deno.test("S corporation K-1 box 13 code K needs source identity and passive classification", () => {
   assertThrows(() =>
     compute([minimalItem({ box13_code_k_disabled_access_credit: 500 })])

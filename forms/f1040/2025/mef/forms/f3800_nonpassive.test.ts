@@ -250,6 +250,7 @@ Deno.test("Form 3800 XML: Form 8874 line 1i links native source and tax use", ()
       credit: 5_000,
       documentId: "IRS8874_1",
       appliedCredit: 5_000,
+      sources: [{ credit: 5_000 }],
     },
     facilities: [],
     form8835DocumentIds: [],
@@ -273,6 +274,7 @@ Deno.test("Form 3800 XML: Form 8874 line 1i links native source and tax use", ()
           credit: 5_000,
           documentId: "IRS8874_1",
           appliedCredit: 5_001,
+          sources: [{ credit: 5_000 }],
         },
         facilities: [],
         form8835DocumentIds: [],
@@ -281,6 +283,57 @@ Deno.test("Form 3800 XML: Form 8874 line 1i links native source and tax use", ()
       }),
     Error,
     "invalid Form 8874",
+  );
+});
+
+Deno.test("Form 3800 XML: Form 8874 pass-through-only credit needs no invented source form", () => {
+  const xml = buildFiledNonpassive({
+    tax: { ...tax, standardCredit: 5_000, specifiedCredit: 0 },
+    form8874: {
+      credit: 5_000,
+      appliedCredit: 5_000,
+      sources: [{ credit: 5_000, ein: "123456789" }],
+    },
+    facilities: [],
+    form8835DocumentIds: [],
+    appliedCreditsByFacility: [],
+    transferStatementIdsByFileName: {},
+  });
+  assertStringIncludes(xml, "<Form8874CYCreditsGrp>");
+  assertStringIncludes(
+    xml,
+    "<PassThroughEntityEIN>123456789</PassThroughEntityEIN>",
+  );
+  assertEquals(xml.includes('referenceDocumentName="IRS8874"'), false);
+});
+
+Deno.test("Form 3800 XML: mixed Form 8874 sources need explicit partial-limit use", () => {
+  const base = {
+    tax: { ...tax, standardCredit: 30_000, specifiedCredit: 0 },
+    facilities: [],
+    form8835DocumentIds: [],
+    appliedCreditsByFacility: [],
+    transferStatementIdsByFileName: {},
+  };
+  const form8874 = {
+    credit: 30_000,
+    documentId: "IRS8874_1",
+    appliedCredit: 20_000,
+    sources: [{ credit: 20_000 }, { credit: 10_000, ein: "123456789" }],
+  };
+  assertThrows(
+    () => buildFiledNonpassive({ ...base, form8874 }),
+    Error,
+    "Part V applied credits",
+  );
+  const xml = buildFiledNonpassive({
+    ...base,
+    form8874: { ...form8874, appliedCreditsBySource: [15_000, 5_000] },
+  });
+  assertStringIncludes(xml, "<Frm8874CYAggrgtAmtGrp");
+  assertStringIncludes(
+    xml,
+    "<CarryforwardGeneralBusCrAmt>5000</CarryforwardGeneralBusCrAmt>",
   );
 });
 

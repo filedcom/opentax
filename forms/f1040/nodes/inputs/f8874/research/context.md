@@ -20,11 +20,17 @@ III line 1i and Part V to it. Form 3800's tax-liability limit determines the
 Schedule 3 line 6a amount. Source, XML, and local XSD cases are written but have
 not run in the deferred full batch.
 
-Open work: passive credit and Form 8582-CR routing; partnership, S-corporation,
-estate, and trust pass-through credits; carryovers and carrybacks; recapture and
-sale events; leap-day anniversary rules; cent-bearing investments and XML
-rounding; filled PDF output; IRS business rules and ATS acceptance. The current
-route is not filing-ready.
+Nonpassive partnership box 15 code AD and S-corporation box 13 code AD amounts
+go directly from identified K-1 sources to Form 3800 Part III line 1i. A
+pass-through-only filer does not get an invented IRS8874 attachment. Multiple
+same-line sources need explicit Part V use amounts if the tax limit only uses
+some of their combined credit. These cases are written but unrun.
+
+Open work: passive credit and Form 8582-CR routing; estate and trust
+pass-through credits; carryovers and carrybacks; recapture and sale events;
+leap-day anniversary rules; cent-bearing investments and XML rounding; filled
+PDF output; IRS business rules and ATS acceptance. The current route is not
+filing-ready.
 
 Sources:
 

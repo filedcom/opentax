@@ -422,7 +422,10 @@ Deno.test("Form 3800 links an identified Form 8874 credit to line 1i", () => {
   };
   const context = {
     pending: { ...filedPending(businessTax, 5_000), f8874: source },
-    documentIdsByPendingKey: { f8874: ["IRS8874_1"] },
+    documentIdsByPendingKey: {
+      f8874: ["IRS8874_1"],
+      form6251: ["IRS6251_1"],
+    },
   };
   const xml = form3800.build(fields, context);
   assertStringIncludes(xml, "<Form8874CYCreditsGrp");
@@ -435,6 +438,54 @@ Deno.test("Form 3800 links an identified Form 8874 credit to line 1i", () => {
       }, context),
     Error,
     "differs from Form 8874",
+  );
+});
+
+Deno.test("Form 3800 files partnership code AD directly without an IRS8874", () => {
+  const businessTax = { ...tax, standardCredit: 1_250 };
+  const source = {
+    partnership_name: "Community partnership",
+    partnership_ein: "123456789",
+    source_document_reference: "2025 partnership K-1",
+    box15_code_ad_new_markets_credit: 1_250,
+    new_markets_credit_subject_to_passive_activity_limit: false,
+  };
+  const fields = {
+    f8874_k1_credit_entries: [{
+      source_type: "partnership" as const,
+      source_ein: "123456789",
+      source_document_reference: "2025 partnership K-1",
+      credit_amount: 1_250,
+      subject_to_passive_activity_limit: false as const,
+    }],
+    tax_context: businessTax,
+    allowed_credit: 1_250,
+  };
+  const context = {
+    pending: {
+      ...filedPending(businessTax, 1_250),
+      k1_partnership: { k1_partnerships: [source] },
+    },
+    documentIdsByPendingKey: { f8874: [], form6251: ["IRS6251_1"] },
+  };
+  const xml = form3800.build(fields, context);
+  assertStringIncludes(xml, "<Form8874CYCreditsGrp>");
+  assertStringIncludes(
+    xml,
+    "<PassThroughEntityEIN>123456789</PassThroughEntityEIN>",
+  );
+  assertEquals(xml.includes('referenceDocumentName="IRS8874"'), false);
+  assertThrows(
+    () =>
+      form3800.build({
+        ...fields,
+        f8874_k1_credit_entries: [{
+          ...fields.f8874_k1_credit_entries[0],
+          credit_amount: 1_249,
+        }],
+      }, context),
+    Error,
+    "does not reconcile to partnership K-1 code AD",
   );
 });
 

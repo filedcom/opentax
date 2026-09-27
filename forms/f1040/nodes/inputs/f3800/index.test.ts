@@ -237,6 +237,51 @@ Deno.test("f3800: Form 8820 ordinary credit waits for the shared limit", () => {
   );
 });
 
+Deno.test("f3800: New Markets Credit K-1 sources wait for the shared limit", () => {
+  const result = f3800.compute({ taxYear: 2025, formType: "f1040" }, {
+    f8874_k1_credit_entries: [{
+      source_type: "partnership",
+      source_ein: "123456789",
+      source_document_reference: "2025 partnership K-1",
+      credit_amount: 1_250,
+      subject_to_passive_activity_limit: false,
+    }],
+  });
+  assertEquals(fieldsOf(result.outputs, f1040)?.form3800_source_credits, {
+    standardCredit: 1_250,
+    specifiedCredit: 0,
+    passiveLines: ZERO_FORM3800_PASSIVE_ACTIVITY,
+  });
+  assertEquals(fieldsOf(result.outputs, form6251)?.must_file_for_gbc, true);
+  assertEquals(
+    fieldsOf(result.outputs, schedule3)?.line6a_general_business_credit,
+    undefined,
+  );
+  assertThrows(
+    () =>
+      f3800.compute({ taxYear: 2025, formType: "f1040" }, {
+        f8874_k1_credit_entries: [
+          {
+            source_type: "partnership",
+            source_ein: "123456789",
+            source_document_reference: "2025 partnership K-1",
+            credit_amount: 1_250,
+            subject_to_passive_activity_limit: false,
+          },
+          {
+            source_type: "partnership",
+            source_ein: "123456789",
+            source_document_reference: "2025 partnership K-1",
+            credit_amount: 1_250,
+            subject_to_passive_activity_limit: false,
+          },
+        ],
+      }),
+    Error,
+    "Duplicate New Markets Credit K-1 source",
+  );
+});
+
 Deno.test("f3800: new clean vehicle business credit enters the ordinary limit", () => {
   const result = f3800.compute({ taxYear: 2025, formType: "f1040" }, {
     f8936_new_vehicle_credit: {
