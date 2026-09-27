@@ -16,6 +16,10 @@ function compute(items: F2106Item[], agi?: number) {
   return f2106.compute({ taxYear: 2025, formType: "f1040" }, { f2106s: items as z.infer<typeof itemSchema>[], agi });
 }
 
+function compute2026(items: F2106Item[], agi?: number) {
+  return f2106.compute({ taxYear: 2026, formType: "f1040" }, { f2106s: items as z.infer<typeof itemSchema>[], agi });
+}
+
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o: { nodeType: string }) => o.nodeType === nodeType);
 }
@@ -178,6 +182,45 @@ Deno.test("f2106.compute: standard mileage 0 miles = no vehicle expense", () => 
 // =============================================================================
 // 4. Vehicle Expenses — Actual Expense Method
 // =============================================================================
+
+Deno.test("f2106.compute: 2026 mileage applies each half-year rate", () => {
+  const result = compute2026([minimalItem({
+    vehicle_expense_method: VehicleMethod.STANDARD_MILEAGE,
+    business_miles: 2000,
+    business_miles_jan_jun_2026: 1000,
+    business_miles_jul_dec_2026: 1000,
+  })]);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line12_business_expenses, 1485);
+});
+
+Deno.test("f2106.compute: 2026 mileage requires matching period totals", () => {
+  assertThrows(() => compute2026([minimalItem({
+    vehicle_expense_method: VehicleMethod.STANDARD_MILEAGE,
+    business_miles: 1000,
+  })]), Error);
+  assertThrows(() => compute2026([minimalItem({
+    vehicle_expense_method: VehicleMethod.STANDARD_MILEAGE,
+    business_miles: 1000,
+    business_miles_jan_jun_2026: 400,
+    business_miles_jul_dec_2026: 500,
+  })]), Error);
+});
+
+Deno.test("f2106.compute: half-year mileage is limited to 2026 standard method", () => {
+  const periods = {
+    business_miles: 1000,
+    business_miles_jan_jun_2026: 500,
+    business_miles_jul_dec_2026: 500,
+  };
+  assertThrows(() => compute([minimalItem({
+    ...periods,
+    vehicle_expense_method: VehicleMethod.STANDARD_MILEAGE,
+  })]), Error);
+  assertThrows(() => compute2026([minimalItem({
+    ...periods,
+    vehicle_expense_method: VehicleMethod.ACTUAL_EXPENSE,
+  })]), Error);
+});
 
 Deno.test("f2106.compute: actual expenses × business_use_pct", () => {
   // $2000 × 80% = $1600

@@ -24,6 +24,12 @@ function compute(items: ReturnType<typeof minimalItem>[]) {
   });
 }
 
+function compute2026(items: ReturnType<typeof minimalItem>[]) {
+  return auto_expense.compute({ taxYear: 2026, formType: "f1040" }, {
+    auto_expenses: items,
+  });
+}
+
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
@@ -121,6 +127,38 @@ Deno.test("auto_expense.compute: standard mileage — zero business miles = no o
 // =============================================================================
 // 3. Actual expense method calculation
 // =============================================================================
+
+Deno.test("auto_expense.compute: 2026 mileage applies each half-year rate", () => {
+  const result = compute2026([minimalItem({
+    business_miles: 2000,
+    business_miles_jan_jun_2026: 1000,
+    business_miles_jul_dec_2026: 1000,
+    total_miles: 3000,
+  })]);
+  assertEquals(fieldsOf(result.outputs, scheduleC)!.line_9_car_truck_expenses, 1485);
+});
+
+Deno.test("auto_expense.compute: 2026 mileage requires matching period totals", () => {
+  assertThrows(() => compute2026([minimalItem({ business_miles: 1000 })]), Error);
+  assertThrows(() => compute2026([minimalItem({
+    business_miles: 1000,
+    business_miles_jan_jun_2026: 400,
+    business_miles_jul_dec_2026: 500,
+  })]), Error);
+});
+
+Deno.test("auto_expense.compute: half-year mileage is limited to 2026 standard method", () => {
+  const periods = {
+    business_miles: 1000,
+    business_miles_jan_jun_2026: 500,
+    business_miles_jul_dec_2026: 500,
+  };
+  assertThrows(() => compute([minimalItem(periods)]), Error);
+  assertThrows(() => compute2026([minimalItem({
+    ...periods,
+    method: AutoMethod.Actual,
+  })]), Error);
+});
 
 Deno.test("auto_expense.compute: actual method — 50% business use on $10,000 actual = $5,000", () => {
   const result = compute([minimalItem({

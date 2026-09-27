@@ -9,8 +9,9 @@ import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../config/index.ts";
+import { businessMileageDeduction } from "../../shared/business-mileage.ts";
 
-// TY2025 — Form 2106: Employee Business Expenses
+// Form 2106: Employee Business Expenses
 // Post-TCJA (P.L. 115-97 §11045), deductible ONLY for four qualifying categories:
 //   1. Armed Forces reservists (IRC §67(h)(1))
 //   2. Qualified performing artists (IRC §67(h)(2), §62(b))
@@ -32,9 +33,6 @@ export enum VehicleMethod {
   ACTUAL_EXPENSE = "ACTUAL_EXPENSE",
 }
 
-// TY2025 standard mileage rate for business (Notice 2025-05)
-const STANDARD_MILEAGE_RATE = 0.70;
-
 // IRC §274(n)(1) — 50% meals limitation
 const MEALS_DEDUCTION_PCT = 0.50;
 
@@ -46,6 +44,8 @@ export const itemSchema = z.object({
   vehicle_expense_method: z.nativeEnum(VehicleMethod).optional(),
   // Line 13 — Business miles (used with STANDARD_MILEAGE method)
   business_miles: z.number().nonnegative().optional(),
+  business_miles_jan_jun_2026: z.number().int().nonnegative().optional(),
+  business_miles_jul_dec_2026: z.number().int().nonnegative().optional(),
   // Lines 23–25 — Actual vehicle operating expenses before business-use percentage
   actual_vehicle_expenses: z.number().nonnegative().optional(),
   // Line 14 — Business use percentage (0–100) for actual expense method
@@ -82,9 +82,20 @@ function performingArtistEligible(agi: number | undefined, agiLimit: number): bo
 }
 
 // Compute vehicle expense for one item.
-function vehicleExpense(item: F2106Item): number {
+function vehicleExpense(item: F2106Item, taxYear: number): number {
   if (item.vehicle_expense_method === VehicleMethod.STANDARD_MILEAGE) {
-    return (item.business_miles ?? 0) * STANDARD_MILEAGE_RATE;
+    return businessMileageDeduction(
+      taxYear,
+      item.business_miles ?? 0,
+      item.business_miles_jan_jun_2026,
+      item.business_miles_jul_dec_2026,
+    );
+  }
+  if (
+    item.business_miles_jan_jun_2026 !== undefined ||
+    item.business_miles_jul_dec_2026 !== undefined
+  ) {
+    throw new Error("Half-year mileage applies only to the standard method");
   }
   if (item.vehicle_expense_method === VehicleMethod.ACTUAL_EXPENSE) {
     return (item.actual_vehicle_expenses ?? 0) * ((item.business_use_pct ?? 0) / 100);
@@ -98,9 +109,9 @@ function mealsDeduction(item: F2106Item): number {
 }
 
 // Total deductible expenses for one item before reimbursements.
-function totalExpenses(item: F2106Item): number {
+function totalExpenses(item: F2106Item, taxYear: number): number {
   return (
-    vehicleExpense(item) +
+    vehicleExpense(item, taxYear) +
     (item.parking_tolls_transportation ?? 0) +
     (item.travel_expenses ?? 0) +
     (item.other_expenses ?? 0) +
@@ -109,8 +120,8 @@ function totalExpenses(item: F2106Item): number {
 }
 
 // Net deduction for one item (IRC §62(a)(2)(A) — net of reimbursements, floor 0).
-function netDeduction(item: F2106Item): number {
-  return Math.max(0, totalExpenses(item) - (item.employer_reimbursements ?? 0));
+function netDeduction(item: F2106Item, taxYear: number): number {
+  return Math.max(0, totalExpenses(item, taxYear) - (item.employer_reimbursements ?? 0));
 }
 
 // Filter items to only those eligible for deduction.
@@ -122,18 +133,18 @@ function eligibleItems(items: F2106Items, agi: number | undefined, agiLimit: num
 }
 
 // Total deduction across all eligible items.
-function totalDeduction(items: F2106Items, agi: number | undefined, agiLimit: number): number {
-  return eligibleItems(items, agi, agiLimit).reduce((sum, item) => sum + netDeduction(item), 0);
+function totalDeduction(items: F2106Items, agi: number | undefined, agiLimit: number, taxYear: number): number {
+  return eligibleItems(items, agi, agiLimit).reduce((sum, item) => sum + netDeduction(item, taxYear), 0);
 }
 
-function schedule1Output(items: F2106Items, agi: number | undefined, agiLimit: number): NodeOutput[] {
-  const total = totalDeduction(items, agi, agiLimit);
+function schedule1Output(items: F2106Items, agi: number | undefined, agiLimit: number, taxYear: number): NodeOutput[] {
+  const total = totalDeduction(items, agi, agiLimit, taxYear);
   if (total === 0) return [];
   return [output(schedule1, { line12_business_expenses: total })];
 }
 
-function agiOutput(items: F2106Items, agi: number | undefined, agiLimit: number): NodeOutput[] {
-  const total = totalDeduction(items, agi, agiLimit);
+function agiOutput(items: F2106Items, agi: number | undefined, agiLimit: number, taxYear: number): NodeOutput[] {
+  const total = totalDeduction(items, agi, agiLimit, taxYear);
   if (total === 0) return [];
   return [output(agi_aggregator, { line12_business_expenses: total })];
 }
@@ -149,8 +160,8 @@ class F2106Node extends TaxNode<typeof inputSchema> {
     const parsed = inputSchema.parse(input);
     return {
       outputs: [
-        ...schedule1Output(parsed.f2106s, parsed.agi, cfg.f2106PerformingArtistAgiLimit),
-        ...agiOutput(parsed.f2106s, parsed.agi, cfg.f2106PerformingArtistAgiLimit),
+        ...schedule1Output(parsed.f2106s, parsed.agi, cfg.f2106PerformingArtistAgiLimit, ctx.taxYear),
+        ...agiOutput(parsed.f2106s, parsed.agi, cfg.f2106PerformingArtistAgiLimit, ctx.taxYear),
       ],
     };
   }

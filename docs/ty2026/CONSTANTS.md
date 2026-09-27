@@ -43,8 +43,9 @@ SHA-256 in `corpus/manifest.json`.
 - Mileage has a **midyear boundary**: [Notice 2026-10](https://www.irs.gov/pub/irs-drop/n-26-10.pdf)
   and [IRB 2026-29](https://www.irs.gov/pub/irs-irbs/irb26-29.pdf). Business
   mileage is 72.5¢ Jan–Jun and 76¢ Jul–Dec; medical/moving is 20.5¢ then
-  23.5¢. A single annual constant cannot represent this rule; input records
-  need date or half-year separation.
+  23.5¢. `auto_expense` and Form 2106 now require separate Jan–Jun and Jul–Dec
+  business miles for TY2026 standard-mileage claims, and check their sum
+  against annual business miles. Medical/moving mileage remains to implement.
 - Credits and deductions with effective-date sunsets (for example residential
   energy and clean-vehicle provisions) need source-specific TY2026 eligibility
   decisions. `year-literals.csv` identifies every shared-node 2025 literal to

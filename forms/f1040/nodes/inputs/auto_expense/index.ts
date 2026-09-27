@@ -9,10 +9,7 @@ import { scheduleC } from "../schedule_c/index.ts";
 import { scheduleE } from "../schedule_e/index.ts";
 import { schedule_f } from "../../intermediate/forms/schedule_f/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
-
-// TY2025 standard mileage rate for business vehicles
-// IRS Notice 2025-5: 70 cents per mile
-const STANDARD_MILEAGE_RATE = 0.70;
+import { businessMileageDeduction } from "../../shared/business-mileage.ts";
 
 export enum AutoMethod {
   Standard = "standard",
@@ -41,9 +38,11 @@ export const itemSchema = z.object({
   vehicle_description: z.string().min(1),
   // Date first placed in service (YYYY-MM-DD or MM/DD/YYYY)
   placed_in_service_date: z.string().min(1),
-  // Business miles driven during 2025
+  // Annual business miles; TY2026 standard mileage also needs the two periods.
   business_miles: z.number().int().nonnegative(),
-  // Total miles driven during 2025 (used for business-use percentage — actual method)
+  business_miles_jan_jun_2026: z.number().int().nonnegative().optional(),
+  business_miles_jul_dec_2026: z.number().int().nonnegative().optional(),
+  // Annual total miles (used for business-use percentage — actual method)
   total_miles: z.number().int().nonnegative(),
   // Calculation method
   method: z.nativeEnum(AutoMethod),
@@ -67,6 +66,13 @@ function validateItem(item: AutoExpenseItem): void {
     throw new Error(
       `auto_expense validation: business_miles (${item.business_miles}) cannot exceed total_miles (${item.total_miles}) for vehicle "${item.vehicle_description}"`,
     );
+  }
+  if (
+    item.method === AutoMethod.Actual &&
+    (item.business_miles_jan_jun_2026 !== undefined ||
+      item.business_miles_jul_dec_2026 !== undefined)
+  ) {
+    throw new Error("Half-year mileage applies only to the standard method");
   }
   if (
     item.method === AutoMethod.Actual && item.total_miles === 0 &&
@@ -97,12 +103,17 @@ function totalActualExpenses(
 }
 
 // Compute deductible expense for a single vehicle
-function deductibleExpense(item: AutoExpenseItem): number {
-  if (item.business_miles === 0) return 0;
-
+function deductibleExpense(item: AutoExpenseItem, taxYear: number): number {
   if (item.method === AutoMethod.Standard) {
-    return item.business_miles * STANDARD_MILEAGE_RATE;
+    return businessMileageDeduction(
+      taxYear,
+      item.business_miles,
+      item.business_miles_jan_jun_2026,
+      item.business_miles_jul_dec_2026,
+    );
   }
+
+  if (item.business_miles === 0) return 0;
 
   // Actual method: total actual × business percentage
   if (!item.actual_expenses) return 0;
@@ -117,6 +128,7 @@ function deductibleExpense(item: AutoExpenseItem): number {
 // Aggregate deductible amounts by purpose
 function aggregateByPurpose(
   items: AutoExpenseItems,
+  taxYear: number,
 ): Record<AutoPurpose, number> {
   const totals: Record<AutoPurpose, number> = {
     [AutoPurpose.SCHEDULE_C]: 0,
@@ -124,7 +136,7 @@ function aggregateByPurpose(
     [AutoPurpose.SCHEDULE_F]: 0,
   };
   for (const item of items) {
-    totals[item.purpose] += deductibleExpense(item);
+    totals[item.purpose] += deductibleExpense(item, taxYear);
   }
   return totals;
 }
@@ -132,6 +144,7 @@ function aggregateByPurpose(
 function buildOutputs(
   totals: Record<AutoPurpose, number>,
   items: AutoExpenseItems,
+  taxYear: number,
 ): NodeOutput[] {
   const outputs: NodeOutput[] = [];
   if (totals[AutoPurpose.SCHEDULE_C] > 0) {
@@ -150,7 +163,7 @@ function buildOutputs(
   }
   const farmSources = items.flatMap((item) => {
     if (item.purpose !== AutoPurpose.SCHEDULE_F) return [];
-    const amount = deductibleExpense(item);
+    const amount = deductibleExpense(item, taxYear);
     if (amount === 0) return [];
     if (!item.farm_id) {
       throw new Error(
@@ -170,7 +183,7 @@ class AutoExpenseNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([scheduleC, scheduleE, schedule_f]);
 
-  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+  compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
 
     // Cross-field validation
@@ -178,8 +191,8 @@ class AutoExpenseNode extends TaxNode<typeof inputSchema> {
       validateItem(item);
     }
 
-    const totals = aggregateByPurpose(parsed.auto_expenses);
-    return { outputs: buildOutputs(totals, parsed.auto_expenses) };
+    const totals = aggregateByPurpose(parsed.auto_expenses, ctx.taxYear);
+    return { outputs: buildOutputs(totals, parsed.auto_expenses, ctx.taxYear) };
   }
 }
 

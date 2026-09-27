@@ -34,6 +34,9 @@ The shared `general` node now uses the selected tax year for dependent CTC,
 ODC, and EITC age tests, and it uses Rev. Proc. 2025-32 §4.23's $5,300
 qualifying-relative gross-income ceiling for TY2026. Its TY2025 regression
 tests and TY2026 boundary tests pass.
+The `auto_expense` and Form 2106 nodes now use the two 2026 business-mileage
+rates and require period miles to reconcile to the annual total. Their focused
+TY2025 and TY2026 tests pass; medical/moving mileage still needs review.
 Rev. Proc. 2026-15 is pinned for passenger autos first placed in service in
 2026, and Rev. Proc. 2025-16 supports the TY2025 regression correction. Form
 4562 must select the cap table by the vehicle's placed-in-service year, not
