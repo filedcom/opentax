@@ -128,6 +128,10 @@ export function calculateSettlement2026(
     line32bFederalPublicBenefitReduction;
   const line33TotalPayments = input.line25dWithholding +
     input.line26EstimatedPayments + line32cNetRefundableCredits;
+  // Filed whole-dollar line 34/37 is the difference of the filed rounded
+  // operands. Rounding a cents-level difference can be off by one dollar.
+  const filedBalance = Math.round(line33TotalPayments) -
+    Math.round(line24cTaxIncludingForm1062);
 
   return {
     line24aTotalTax,
@@ -138,13 +142,7 @@ export function calculateSettlement2026(
     line32bFederalPublicBenefitReduction,
     line32cNetRefundableCredits,
     line33TotalPayments,
-    line34Overpayment: Math.max(
-      0,
-      line33TotalPayments - line24cTaxIncludingForm1062,
-    ),
-    line37AmountOwed: Math.max(
-      0,
-      line24cTaxIncludingForm1062 - line33TotalPayments,
-    ),
+    line34Overpayment: Math.max(0, filedBalance),
+    line37AmountOwed: Math.max(0, -filedBalance),
   };
 }

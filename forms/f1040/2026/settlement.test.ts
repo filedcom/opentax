@@ -88,3 +88,17 @@ Deno.test("2026 settlement rejects inconsistent upstream tax amounts", () => {
     "finite nonnegative",
   );
 });
+
+Deno.test("2026 balance uses rounded filed line 24c and 33 amounts", () => {
+  const result = calculateSettlement2026({
+    ...base,
+    line22TaxAfterCredits: 607.62,
+    line23OtherTaxes: 0,
+    form1062Line15: 0,
+    line25dWithholding: 1.28,
+    line26EstimatedPayments: 0,
+  });
+  assertEquals(result.line24cTaxIncludingForm1062, 607.62);
+  assertEquals(result.line33TotalPayments, 1.28);
+  assertEquals(result.line37AmountOwed, 607);
+});

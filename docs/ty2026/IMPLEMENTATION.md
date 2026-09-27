@@ -22,6 +22,11 @@ tested. Its TY2026 MeF/PDF serializers remain outstanding.
 `forms/f1040/2026/deductions.ts` implements the new 1040 lines 12e–15, and
 the prior CLI type-check errors have been cleared. Neither pure 2026
 calculator is connected to a registered graph yet.
+`forms/f1040/2026/nodes/f1040.ts` now assembles the changed core 1040 lines
+from final upstream amounts using the 2026 deduction and settlement
+calculators. It emits a `schedule3a` node when a relevant refundable credit is
+claimed. This node is not registered yet; it still needs the full upstream
+input surface, form-specific credit reconciliation, and MeF/PDF mappings.
 The CLI node list, inspect, and graph commands now accept `--year` and select
 the registered definition for that year. They still default to TY2025 for
 existing CLI calls; an unregistered year fails explicitly.
