@@ -24,6 +24,11 @@ orders unreported-tip and misclassified-wage FICA against one Social
 Security wage base. Both 2026 drafts embed instructions; Form 8919's shared
 reason codes and Schedule 2 output are stale, and Form 4137's printed
 Schedule 2 cross-reference conflicts with the 2026 Schedule 2 draft.
+The [Form 8839 contract](../../../docs/ty2026/FORM8839-GRAPH.md) maps
+per-child adoption credit and employer-benefit exclusion, the 1040 line 30
+refundable amount, Schedule 3 line 6c and Schedule 3-A interaction. Its
+shared calculator is not in the 2026 registry and lacks a full printable
+record, 2026 PDF and MeF routes.
 The [Form 1116 contract](../../../docs/ty2026/FORM1116-GRAPH.md) maps
 foreign-tax categories, carryovers, redeterminations and the revised line
 18/20 bases from 1040, Schedule 1-A and Schedule 2; its full attachment

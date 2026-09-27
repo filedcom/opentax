@@ -147,6 +147,7 @@ sources += [
     ("authorities/f4136sa--2025.pdf", IRS + "/pub/irs-pdf/f4136sa.pdf", "prior-year-comparator"),
     ("authorities/i4136--2025.pdf", IRS + "/pub/irs-pdf/i4136.pdf", "prior-year-comparator"),
     ("authorities/i8960--2025.pdf", IRS + "/pub/irs-pdf/i8960.pdf", "prior-year-comparator"),
+    ("authorities/i8839--2025.pdf", IRS + "/pub/irs-prior/i8839--2025.pdf", "prior-year-comparator"),
     ("authorities/p505--2026.pdf", IRS + "/pub/irs-prior/p505--2026.pdf", "final-authority"),
     ("authorities/rp-25-32.pdf", IRS + "/pub/irs-drop/rp-25-32.pdf", "final-authority"),
     ("authorities/rp-25-19.pdf", IRS + "/pub/irs-drop/rp-25-19.pdf", "final-authority"),

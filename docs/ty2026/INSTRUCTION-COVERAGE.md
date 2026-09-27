@@ -17,6 +17,8 @@ The 2026 Form 8915-F draft is pinned; its expected draft instruction URL
 still serves the December 2025 revision, pinned as a comparator.
 The 2026 Form 8960 draft is pinned; its available 2025 instructions are
 pinned as a comparator for MAGI, investment-expense and election worksheets.
+The 2026 Form 8839 draft is pinned; its available 2025 instructions are
+pinned as a comparator for adoption timing and credit-limit worksheets.
 Form 8912 and its December 2024 instructions explicitly use a continuous-use
 revision; the current PDFs are pinned separately from the draft URL.
 Form 982 remains on its March 2018 form and December 2021 instructions;

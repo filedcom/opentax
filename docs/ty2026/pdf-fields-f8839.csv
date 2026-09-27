@@ -1,0 +1,102 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_1[0],/Tx,Page 1. Name(s) shown on return. ,2,36 684 452.85 698.001,yes
+topmostSubform[0].Page1[0].f1_2[0],/Tx,Your social security number. ,2,454.35 684 576 698.001,yes
+topmostSubform[0].Page1[0].Table_PartI[0].BodyRow_Child1[0].f1_3[0],/Tx,"Part I. Information About Your Eligible Child or Children—You must complete this part. See instructions for details, including what to do if you need more space. 1. Row: Child 1. Column: (a) Child's name. First. ",2,58.6 587.996 136.05 600,yes
+topmostSubform[0].Page1[0].Table_PartI[0].BodyRow_Child1[0].f1_4[0],/Tx,Row: Child 1. Column: (a) Child's name. Last. ,2,137.8 587.996 229.65 600,yes
+topmostSubform[0].Page1[0].Table_PartI[0].BodyRow_Child1[0].f1_5[0],/Tx,Row: Child 1. Column: (b) Child's year of birth. ,2,231.15 587.996 280.05 600,yes
+topmostSubform[0].Page1[0].Table_PartI[0].BodyRow_Child1[0].c1_1[0],/Btn,Row: Child 1. Column: Check if child was— (c) born before 2009 and disabled. ,2,296.4 593.998 308.4 605.998,yes
+topmostSubform[0].Page1[0].Table_PartI[0].BodyRow_Child1[0].c1_2[0],/Btn,Row: Child 1. Column: Check if child was— (d) a child with special needs. ,2,339.6 593.998 351.6 605.998,yes
+topmostSubform[0].Page1[0].Table_PartI[0].BodyRow_Child1[0].c1_3[0],/Btn,Row: Child 1. Column: Check if child was— (e) a foreign child. ,2,382.8 593.998 394.8 605.998,yes
+topmostSubform[0].Page1[0].Table_PartI[0].BodyRow_Child1[0].f1_6[0],/Tx,Row: Child 1. Column: (f) Child's identifying number. ,2,411.15 587.996 524.85 600,yes
+topmostSubform[0].Page1[0].Table_PartI[0].BodyRow_Child1[0].c1_4[0],/Btn,Row: Child 1. Column: (g) Check if adoption became final in 2026 or earlier. ,2,544.8 593.998 556.8 605.998,yes
+topmostSubform[0].Page1[0].Table_PartI[0].BodyRow_Child2[0].f1_7[0],/Tx,Row: Child 2. Column: (a) Child's name. First. ,2,58.6 563.995 136.05 575.996,yes
+topmostSubform[0].Page1[0].Table_PartI[0].BodyRow_Child2[0].f1_8[0],/Tx,Row: Child 2. Column: (a) Child's name. Last. ,2,137.8 563.995 229.65 575.996,yes
+topmostSubform[0].Page1[0].Table_PartI[0].BodyRow_Child2[0].f1_9[0],/Tx,Row: Child 2. Column: (b) Child's year of birth. ,2,231.15 563.995 280.05 575.996,yes
+topmostSubform[0].Page1[0].Table_PartI[0].BodyRow_Child2[0].c1_5[0],/Btn,Row: Child 2. Column: Check if child was— (c) born before 2009 and disabled. ,2,296.4 569.996 308.4 581.996,yes
+topmostSubform[0].Page1[0].Table_PartI[0].BodyRow_Child2[0].c1_6[0],/Btn,Row: Child 2. Column: Check if child was— (d) a child with special needs. ,2,339.6 569.996 351.6 581.996,yes
+topmostSubform[0].Page1[0].Table_PartI[0].BodyRow_Child2[0].c1_7[0],/Btn,Row: Child 2. Column: Check if child was— (e) a foreign child. ,2,382.8 569.996 394.8 581.996,yes
+topmostSubform[0].Page1[0].Table_PartI[0].BodyRow_Child2[0].f1_10[0],/Tx,Row: Child 2. Column: (f) Child's identifying number. ,2,411.15 563.995 524.85 575.996,yes
+topmostSubform[0].Page1[0].Table_PartI[0].BodyRow_Child2[0].c1_8[0],/Btn,Row: Child 2. Column: (g) Check if adoption became final in 2026 or earlier. ,2,544.8 569.996 556.8 581.996,yes
+topmostSubform[0].Page1[0].Table_PartI[0].BodyRow_Child3[0].f1_11[0],/Tx,Row: Child 3. Column: (a) Child's name. First. ,2,58.6 539.994 136.05 551.995,yes
+topmostSubform[0].Page1[0].Table_PartI[0].BodyRow_Child3[0].f1_12[0],/Tx,Row: Child 3. Column: (a) Child's name. Last. ,2,137.8 539.994 229.65 551.995,yes
+topmostSubform[0].Page1[0].Table_PartI[0].BodyRow_Child3[0].f1_13[0],/Tx,Row: Child 3. Column: (b) Child's year of birth. ,2,231.15 539.994 280.05 551.995,yes
+topmostSubform[0].Page1[0].Table_PartI[0].BodyRow_Child3[0].c1_9[0],/Btn,Row: Child 3. Column: Check if child was— (c) born before 2009 and disabled. ,2,296.4 545.995 308.4 557.995,yes
+topmostSubform[0].Page1[0].Table_PartI[0].BodyRow_Child3[0].c1_10[0],/Btn,Row: Child 3. Column: Check if child was— (d) a child with special needs. ,2,339.6 545.995 351.6 557.995,yes
+topmostSubform[0].Page1[0].Table_PartI[0].BodyRow_Child3[0].c1_11[0],/Btn,Row: Child 3. Column: Check if child was— (e) a foreign child. ,2,382.8 545.995 394.8 557.995,yes
+topmostSubform[0].Page1[0].Table_PartI[0].BodyRow_Child3[0].f1_14[0],/Tx,Row: Child 3. Column: (f) Child's identifying number. ,2,411.15 539.994 524.85 551.995,yes
+topmostSubform[0].Page1[0].Table_PartI[0].BodyRow_Child3[0].c1_12[0],/Btn,Row: Child 3. Column: (g) Check if adoption became final in 2026 or earlier. ,2,544.8 545.995 556.8 557.995,yes
+topmostSubform[0].Page1[0].Child1[0].f1_15[0],/Tx,"Caution: If the child was a foreign child, see Special rules in the instructions for line 1, column (e), before you complete Part I I or Part I I I. If you received employer-provided adoption benefits, complete Part I I I on the back next. Part I I. Adoption Credit. 2. Maximum adoption credit per child. Enter $17,670. See instructions. Child 1. ",2,309.6 468 366.45 480.001,yes
+topmostSubform[0].Page1[0].Child2[0].f1_16[0],/Tx,2. Child 2. ,2,367.2 468 424.05 480.001,yes
+topmostSubform[0].Page1[0].Child3[0].f1_17[0],/Tx,2. Child 3. ,2,424.8 468 481.65 480.001,yes
+topmostSubform[0].Page1[0].Line3_ReadOrder[0].Line3Checkboxes_ReadOrder[0].c1_13[0],/Btn,3. Did you file Form 8839 for a prior year for the same child? No. Enter 0. ,2,93.6 446.001 101.6 454.001,yes
+topmostSubform[0].Page1[0].Line3_ReadOrder[0].Line3Checkboxes_ReadOrder[0].c1_13[1],/Btn,3. Yes. See instructions for the amount to enter. ,2,93.6 432.999 101.6 440.999,yes
+topmostSubform[0].Page1[0].f1_18[0],/Tx,3. Child 1. ,2,309.6 420.001 366.45 432,yes
+topmostSubform[0].Page1[0].f1_19[0],/Tx,3. Child 2. ,2,367.2 420.001 424.05 432,yes
+topmostSubform[0].Page1[0].f1_20[0],/Tx,3. Child 3. ,2,424.8 420.001 481.65 432,yes
+topmostSubform[0].Page1[0].f1_21[0],/Tx,4. Subtract line 3 from line 2. Child 1. ,2,309.6 408.002 366.45 420.001,yes
+topmostSubform[0].Page1[0].f1_22[0],/Tx,4. Child 2. ,2,367.2 408.002 424.05 420.001,yes
+topmostSubform[0].Page1[0].f1_23[0],/Tx,4. Child 3. ,2,424.8 408.002 481.65 420.001,yes
+topmostSubform[0].Page1[0].f1_24[0],/Tx,5. Qualified adoption expenses. See instructions. Child 1. Caution: Your qualified adoption expenses may not be equal to the adoption expenses you paid in 2026. ,2,309.6 396 366.45 407.999,yes
+topmostSubform[0].Page1[0].f1_25[0],/Tx,5. Child 2. ,2,367.2 396 424.05 407.999,yes
+topmostSubform[0].Page1[0].f1_26[0],/Tx,5. Child 3. ,2,424.8 396 481.65 407.999,yes
+topmostSubform[0].Page1[0].f1_27[0],/Tx,6. Enter the smaller of line 4 or line 5. Child 1. ,2,309.6 360 366.45 371.999,yes
+topmostSubform[0].Page1[0].f1_28[0],/Tx,6. Child 2. ,2,367.2 360 424.05 371.999,yes
+topmostSubform[0].Page1[0].f1_29[0],/Tx,6. Child 3. ,2,424.8 360 481.65 371.999,yes
+topmostSubform[0].Page1[0].f1_30[0],/Tx,7. Enter modified adjusted gross income. See instructions.,2,424.8 348.001 481.65 360,yes
+topmostSubform[0].Page1[0].Line8_ReadOrder[0].c1_14[0],/Btn,"8. Is line 7 more than $265,080? No. Skip lines 8 and 9, and enter 0 on line 10. ",2,64.8 325.999 72.8 333.999,yes
+topmostSubform[0].Page1[0].Line8_ReadOrder[0].c1_14[1],/Btn,"8. Yes. Subtract $265,080 from line 7. ",2,64.8 314 72.8 322,yes
+topmostSubform[0].Page1[0].f1_31[0],/Tx,8. Amount. ,2,424.8 312.001 481.65 324,yes
+topmostSubform[0].Page1[0].f1_32[0],/Tx,"9. Divide line 8 by $40,000. Enter the result as a decimal (rounded to at least three places). Do not enter more than 1.000. Number before the decimal. ",2,532.8 288 547.2 299.999,yes
+topmostSubform[0].Page1[0].f1_33[0],/Tx,9. Numbers after the decimal. ,2,550.8 288 576 299.999,yes
+topmostSubform[0].Page1[0].f1_34[0],/Tx,10. Multiply each amount on line 6 by line 9. Child 1. ,2,309.6 276.001 366.45 288,yes
+topmostSubform[0].Page1[0].f1_35[0],/Tx,10. Child 2. ,2,367.2 276.001 424.05 288,yes
+topmostSubform[0].Page1[0].f1_36[0],/Tx,10. Child 3. ,2,424.8 276.001 481.65 288,yes
+topmostSubform[0].Page1[0].f1_37[0],/Tx,11a. Subtract line 10 from line 6. Child 1. ,2,309.6 264.002 366.45 276.001,yes
+topmostSubform[0].Page1[0].f1_38[0],/Tx,11a. Child 2. ,2,367.2 264.002 424.05 276.001,yes
+topmostSubform[0].Page1[0].f1_39[0],/Tx,11a. Child 3. ,2,424.8 264.002 481.65 276.001,yes
+topmostSubform[0].Page1[0].f1_40[0],/Tx,"11b. Enter the smaller of the amount on line 11a or $5,120. Child 1.",2,309.6 252 366.45 263.999,yes
+topmostSubform[0].Page1[0].f1_41[0],/Tx,11b. Child 2. ,2,367.2 252 424.05 263.999,yes
+topmostSubform[0].Page1[0].f1_42[0],/Tx,11b. Child 3. ,2,424.8 252 481.65 263.999,yes
+topmostSubform[0].Page1[0].f1_43[0],/Tx,11c. Add the amounts on line 11b.,2,424.8 240.001 481.65 252,yes
+topmostSubform[0].Page1[0].f1_44[0],/Tx,12. Add the amounts on line 11a. ,2,504.75 228.002 576 240.001,yes
+topmostSubform[0].Page1[0].f1_45[0],/Tx,"13. Refundable adoption credit. Enter the amount from line 11(c) here and on Form 1040, 1040-S R, or 1040-N R, line 30. If you are claiming an adoption credit for more than three children, see instructions. Continue to line 14.",2,504.75 192.002 576 204.001,yes
+topmostSubform[0].Page1[0].f1_46[0],/Tx,"14. Subtract line 13 from line 12, if zero or less, enter 0.",2,504.75 180 576 191.999,yes
+topmostSubform[0].Page1[0].f1_47[0],/Tx,"15. Credit carryforward, if any, from prior years. See your Nonrefundable Adoption Credit Carryforward Worksheet in the 2025 Form 8839 instructions",2,504.75 156.002 576 168.001,yes
+topmostSubform[0].Page1[0].f1_48[0],/Tx,16. Add lines 14 and 15.,2,504.75 144 576 155.999,yes
+topmostSubform[0].Page1[0].f1_49[0],/Tx,17. Enter the amount from line 5 of the Credit Limit Worksheet in the instructions.,2,504.75 132.001 576 144,yes
+topmostSubform[0].Page1[0].f1_50[0],/Tx,"18a. Nonrefundable adoption credit. Enter the smaller of line 16 or line 17 here and on Schedule 3 (Form 1040), line 6c. If line 17 is smaller than line 16, you may have a credit carryforward. See instructions.",2,504.75 108 576 119.999,yes
+topmostSubform[0].Page1[0].f1_51[0],/Tx,18b. Nonrefundable credit carryforward to 2027. See instructions.,2,424.8 96.001 481.65 108,yes
+topmostSubform[0].Page2[0].Child1[0].f2_1[0],/Tx,"Page 2. Part I I I. Employer-Provided Adoption Benefits. 19. Maximum exclusion per child. Enter $17,670. See instructions. Child 1. ",3,309.6 695.999 366.45 708,yes
+topmostSubform[0].Page2[0].Child2[0].f2_2[0],/Tx,19. Child 2. ,3,367.2 695.999 424.05 708,yes
+topmostSubform[0].Page2[0].Child3[0].f2_3[0],/Tx,19. Child 3. ,3,424.8 695.999 481.65 708,yes
+topmostSubform[0].Page2[0].Line20_ReadOrder[0].Line20Checkboxes_ReadOrder[0].c2_1[0],/Btn,20. Did you receive employer-provided adoption benefits for a prior year for the same child? No. Enter 0. ,3,64.8 662.001 72.8 670.001,yes
+topmostSubform[0].Page2[0].Line20_ReadOrder[0].Line20Checkboxes_ReadOrder[0].c2_1[1],/Btn,20. Yes. See instructions for the amount to enter. ,3,64.8 649.999 72.8 657.999,yes
+topmostSubform[0].Page2[0].f2_4[0],/Tx,20. Child 1. ,3,309.6 648 366.45 659.999,yes
+topmostSubform[0].Page2[0].f2_5[0],/Tx,20. Child 2. ,3,367.2 648 424.05 659.999,yes
+topmostSubform[0].Page2[0].f2_6[0],/Tx,20. Child 3. ,3,424.8 648 481.65 659.999,yes
+topmostSubform[0].Page2[0].f2_7[0],/Tx,21. Subtract line 20 from line 19. Child 1. ,3,309.6 636.001 366.45 648,yes
+topmostSubform[0].Page2[0].f2_8[0],/Tx,21. Child 2. ,3,367.2 636.001 424.05 648,yes
+topmostSubform[0].Page2[0].f2_9[0],/Tx,21. Child 3. ,3,424.8 636.001 481.65 648,yes
+topmostSubform[0].Page2[0].f2_10[0],/Tx,22. Employer-provided adoption benefits you received in 2026. This amount should be shown in box 12 of your 2026 Form(s) W-2 with code T. Child 1. ,3,309.6 600.001 366.45 612.001,yes
+topmostSubform[0].Page2[0].f2_11[0],/Tx,22. Child 2. ,3,367.2 600.001 424.05 612.001,yes
+topmostSubform[0].Page2[0].f2_12[0],/Tx,22. Child 3. ,3,424.8 600.001 481.65 612.001,yes
+topmostSubform[0].Page2[0].f2_13[0],/Tx,23. Add the amounts on line 22. ,3,504.75 588.002 576 600.001,yes
+topmostSubform[0].Page2[0].f2_14[0],/Tx,"24. Enter the smaller of line 21 or line 22. But if the child was a child with special needs and the adoption became final in 2026, enter the amount from line 21. Child 1. ",3,309.6 551.999 366.45 563.999,yes
+topmostSubform[0].Page2[0].f2_15[0],/Tx,24. Child 2. ,3,367.2 551.999 424.05 563.999,yes
+topmostSubform[0].Page2[0].f2_16[0],/Tx,24. Child 3. ,3,424.8 551.999 481.65 563.999,yes
+topmostSubform[0].Page2[0].Line25_ReadOrder[0].f2_17[0],/Tx,25. Enter modified adjusted gross income (from the worksheet in the instructions). ,3,345.6 528.001 402.45 540,yes
+topmostSubform[0].Page2[0].Line26_ReadOrder[0].c2_2[0],/Btn,"24. Is line 25 more than $265,080? No. Skip lines 26 and 27, and enter 0 on line 28. ",3,64.8 505.999 72.8 513.999,yes
+topmostSubform[0].Page2[0].Line26_ReadOrder[0].c2_2[1],/Btn,"24. Yes. Subtract $265,080 from line 25. ",3,64.8 494 72.8 502,yes
+topmostSubform[0].Page2[0].f2_18[0],/Tx,26. Amount. ,3,345.6 492.001 402.45 504,yes
+topmostSubform[0].Page2[0].f2_19[0],/Tx,"27. Divide line 26 by $40,000. Enter the result as a decimal (rounded to at least three places). Do not enter more than 1.000. Number before the decimal. ",3,439.2 468 453.6 479.999,yes
+topmostSubform[0].Page2[0].f2_20[0],/Tx,27. Numbers after the decimal. ,3,457.2 468 482.4 479.999,yes
+topmostSubform[0].Page2[0].f2_21[0],/Tx,28. Multiply each amount on line 24 by line 27. Child 1. ,3,309.6 456.001 366.45 468,yes
+topmostSubform[0].Page2[0].f2_22[0],/Tx,28. Child 2. ,3,367.2 456.001 424.05 468,yes
+topmostSubform[0].Page2[0].f2_23[0],/Tx,28. Child 3. ,3,424.8 456.001 481.65 468,yes
+topmostSubform[0].Page2[0].f2_24[0],/Tx,27. Excluded benefits. Subtract line 28 from line 24. Child 1. ,3,309.6 444.002 366.45 456.001,yes
+topmostSubform[0].Page2[0].f2_25[0],/Tx,27. Child 2. ,3,367.2 444.002 424.05 456.001,yes
+topmostSubform[0].Page2[0].f2_26[0],/Tx,27. Child 3. ,3,424.8 444.002 481.65 456.001,yes
+topmostSubform[0].Page2[0].f2_27[0],/Tx,30. Add the amounts on line 29. ,3,504.75 432 576 443.999,yes
+topmostSubform[0].Page2[0].Line31_ReadOrder[0].Line29Checkboxes_ReadOrder[0].c2_3[0],/Btn,"31. Taxable benefits. Is line 30 more than line 23? No. Subtract line 30 from line 23. Also, include this amount, if more than zero, on line 1f of Form 1040, 1040-S R, or 1040-N R. ",3,64.8 410.501 72.8 418.501,yes
+topmostSubform[0].Page2[0].Line31_ReadOrder[0].Line29Checkboxes_ReadOrder[0].c2_3[1],/Btn,"31. Yes. Subtract line 23 from line 30. Enter the result as a negative number. Also, enter the result on line 1f of Form 1040, 1040-S R, or Form 1040-N R. ",3,64.8 386.5 72.8 394.5,yes
+topmostSubform[0].Page2[0].f2_28[0],/Tx,31. Amount. ,3,504.75 390.002 576 402.001,yes

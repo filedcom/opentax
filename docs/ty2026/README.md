@@ -41,6 +41,9 @@ for the implementation contract.
   `pdf-fields-f4137.csv`, and `pdf-fields-f8919.csv`: embedded 2026
   instructions, owner-keyed FICA/wage-base sequence, printed reason codes,
   Schedule 2 source conflict, and 34/40 draft widgets.
+- [`FORM8839-GRAPH.md`](FORM8839-GRAPH.md) and `pdf-fields-f8839.csv`:
+  per-child refundable/nonrefundable adoption credit, employer-benefit
+  exclusion, 2027 carryforward and all 101 draft widgets.
 - [`PARITY-QUEUE.md`](PARITY-QUEUE.md): dependency-ordered full 1040 coding
   queue across the 2025 graph/PDF/MeF inventories and 2026-only attachments.
 - [`INSTRUCTION-COVERAGE.md`](INSTRUCTION-COVERAGE.md) and

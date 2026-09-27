@@ -1764,6 +1764,14 @@
       "status": "downloaded",
       "bytes": 377700,
       "sha256": "b10fbb23ff4a053db197285497a00914c558e3ae0cdf5c956b7c0c7867376428"
+    },
+    {
+      "path": "authorities/i8839--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/i8839--2025.pdf",
+      "kind": "prior-year-comparator",
+      "status": "downloaded",
+      "bytes": 239505,
+      "sha256": "90dd5f4de0ca435d4e92666b5b50434e1ece488c67fc43a8c6697765bfb684eb"
     }
   ]
 }

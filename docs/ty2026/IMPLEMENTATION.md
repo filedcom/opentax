@@ -170,6 +170,11 @@ lines 16a/16b with a shared $184,500 Social Security wage base. Its pinned
 2026 drafts embed instructions. Form 8919's shared reason-code enum and
 TY2025 Schedule 2 output are wrong for 2026; Form 4137's own Schedule 2
 cross-reference conflicts with the newer Schedule 2 draft.
+The [Form 8839 contract](FORM8839-GRAPH.md) maps the 2026 per-child
+adoption credit, $5,120 refundable ceiling, employer-benefit exclusion,
+nonrefundable carryforward and Schedule 3-A handoff. The shared node has
+partial calculations, but not a complete 2026 child/source ledger, PDF
+record or current MeF serializer; all 101 draft widgets are inventoried.
 The [scenario 12 contract](ATS-SCENARIO-12.md) and
 [business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
 broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800
