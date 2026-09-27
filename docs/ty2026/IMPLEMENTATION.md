@@ -27,6 +27,11 @@ interest. It covers PDF, MeF, and ATS 3/6 acceptance; the route remains
 The [Schedule F contract](SCHEDULEF-GRAPH.md) isolates the 2026 line 21b
 vehicle-interest change from the shared TY2025 21b other-interest input and
 maps the farm calculation, PDF, MeF, and ATS scenario 3 gates.
+The [Form 4835 contract](FORM4835-GRAPH.md) maps the pinned one-page form and
+instructions, including line 19b vehicle interest and its distinct Schedule
+E/SE routing. [ATS scenario 3](ATS-SCENARIO-03.md) now has page-level source
+facts and independently calculated intermediate amounts, with the missing
+farm optional Schedule SE method named as an implementation dependency.
 
 ## Chronological progress notes
 

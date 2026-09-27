@@ -344,6 +344,16 @@
       "year_check": "2026-present"
     },
     {
+      "path": "draft/f4835.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f4835--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 262397,
+      "sha256": "5429b781b4f26ae981022e00accb2ce40bbe3db0017f6c004a70441d8b49ce37",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-09-27T12:04:46.398927+00:00"
+    },
+    {
       "path": "draft/f4952.pdf",
       "url": "https://www.irs.gov/pub/irs-dft/f4952--dft.pdf",
       "kind": "draft-form",

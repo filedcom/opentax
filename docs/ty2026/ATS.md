@@ -40,3 +40,7 @@ fixture gate.
 The [Schedule F contract](SCHEDULEF-GRAPH.md) extracts scenario 3's populated
 farm lines and independently derives its $4,207 net profit before an
 end-to-end fixture is accepted.
+The [scenario 3 fixture plan](ATS-SCENARIO-03.md) now maps all 18 packet
+pages, including the $11,908 Form 4835 farm rent and the elected Schedule SE
+farm optional method. Its missing source evidence and blank computed lines
+remain explicit fixture gates.

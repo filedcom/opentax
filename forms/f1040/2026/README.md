@@ -29,6 +29,11 @@ The new [Form 4562-B contract](../../../docs/ty2026/FORM4562B-GRAPH.md)
 uses the pinned 2026 draft to map amortization cost rows, prior-year assets,
 activity destinations, and PDF/MeF work. Its 2026 instructions remain a
 source gate before the amortization calculation can be implemented.
+The [Form 4835 contract](../../../docs/ty2026/FORM4835-GRAPH.md) and
+[ATS scenario 3 plan](../../../docs/ty2026/ATS-SCENARIO-03.md) connect
+production-based farm rent to Schedule E while keeping Schedule F farm profit
+separate for the elected Schedule SE farm optional method. That packet also
+requires 1099-R, Schedule D, and QBI/cooperative reconciliation.
 `credit-resolution.ts` computes Schedule 8812 Worksheet B through line 14
 and 2026 Form 5695 lines 1–4 in the required order. The registered graph
 receives tax, dependent, AGI, Schedule 2, and Schedule 3 amounts.

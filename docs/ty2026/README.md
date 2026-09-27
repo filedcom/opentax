@@ -72,9 +72,15 @@ for the implementation contract.
 - [`FORM4562B-GRAPH.md`](FORM4562B-GRAPH.md): newly pinned 2026 amortization
   attachment, per-asset input and carryforward contract, and current
   instructions/MeF acceptance gates.
+- [`FORM4835-GRAPH.md`](FORM4835-GRAPH.md): production-based farm rent,
+  the new vehicle-interest line 19b, Schedule E/SE boundary, loss limits,
+  PDF/MeF build order, and ATS scenario 3.
+- [`ATS-SCENARIO-03.md`](ATS-SCENARIO-03.md): page-level retirement, capital
+  gain, farm, farm-rent, and optional self-employment method facts with
+  independently derived intermediate amounts and filing gates.
 
 - [`corpus/manifest.json`](corpus/manifest.json): URL, SHA-256, byte length,
-  and retrieval date for **58 TY2026 IRS draft forms**, **25 verified 2026
+  and retrieval date for **59 TY2026 IRS draft forms**, **25 verified 2026
   draft instruction PDFs**, **six draft form URLs that
   still serve an older year**, **13 IRS ATS PDFs**, **two MeF
   inventory spreadsheets**, final IRS authorities (Rev. Procs.
