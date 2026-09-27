@@ -184,10 +184,10 @@ Deno.test("Form 965-A multiple transferees must sum to Part IV transfer", () => 
     triggered_liability: 0,
     transferred_liability: -6_000,
     transfer_agreement_links: [{
-      transferee_tax_id: { kind: "ein" as const, value: "123123123" },
+      counterparty_tax_id: { kind: "ein" as const, value: "123123123" },
       file_name: "Form965D1.pdf",
     }, {
-      transferee_tax_id: { kind: "ssn" as const, value: "321321321" },
+      counterparty_tax_id: { kind: "ssn" as const, value: "321321321" },
       file_name: "Form965D2.pdf",
     }],
     counterparty_tax_id: { kind: "ein" as const, value: "123123123" },
@@ -236,6 +236,45 @@ Deno.test("Form 965-A multiple transferees must sum to Part IV transfer", () => 
         transferred_liability: -5_000,
       }],
       transfer_agreements: input.transfer_agreements,
+    })
+  );
+});
+
+Deno.test("Form 965-A Part IV transfer in has one Form 965-D counterparty and no beginning balance", () => {
+  const transferIn = {
+    election_or_transfer_year: 2025,
+    source_document_reference: "2025 signed transfer-in agreement",
+    corporation_name: "Acquired S Corp",
+    corporation_ein: "456789123",
+    beginning_deferred_liability: 0,
+    triggered_liability: 0,
+    transferred_liability: 500,
+    counterparty_tax_id: { kind: "ein" as const, value: "987654321" },
+    transfer_agreement_links: [{
+      counterparty_tax_id: { kind: "ein" as const, value: "987654321" },
+      file_name: "Form965DIn.pdf",
+    }],
+  };
+  const agreement = {
+    agreement_type: "965-D" as const,
+    file_name: "Form965DIn.pdf",
+    signed_pdf_base64: "JVBERi0x",
+    source_document_reference: "2025 signed Form 965-D transfer in",
+  };
+  assertEquals(
+    source({
+      s_corp_deferred_rows: [transferIn],
+      transfer_agreements: [agreement],
+    }).s_corp_deferred_rows[0].transferred_liability,
+    500,
+  );
+  assertThrows(() =>
+    source({
+      s_corp_deferred_rows: [{
+        ...transferIn,
+        beginning_deferred_liability: 100,
+      }],
+      transfer_agreements: [agreement],
     })
   );
 });

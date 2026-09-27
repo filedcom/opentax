@@ -1,4 +1,4 @@
-import { assertStringIncludes, assertThrows } from "@std/assert";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form965a } from "./f965a.ts";
 import { form965aNetAdjustmentTransferStatement } from "./f965a_net_adjustment_transfer_statement.ts";
 import { form965aMultipleTransfereeStatement } from "./f965a_multiple_transferee_statement.ts";
@@ -87,10 +87,10 @@ Deno.test("Form 965-A links native netted-transfer and multiple-transferee state
       triggered_liability: 0,
       transferred_liability: -6_000,
       transfer_agreement_links: [{
-        transferee_tax_id: { kind: "ein", value: "123123123" },
+        counterparty_tax_id: { kind: "ein", value: "123123123" },
         file_name: "Form965D1.pdf",
       }, {
-        transferee_tax_id: { kind: "ssn", value: "321321321" },
+        counterparty_tax_id: { kind: "ssn", value: "321321321" },
         file_name: "Form965D2.pdf",
       }],
       counterparty_tax_id: { kind: "ein", value: "123123123" },
@@ -211,4 +211,46 @@ Deno.test("Form 965-A rejects an omitted signed agreement from the MeF bundle", 
     Error,
     "needs each signed transfer agreement PDF",
   );
+});
+
+Deno.test("Form 965-A transfer-in omits Part IV beginning balance", () => {
+  const transferIn = {
+    ...input,
+    s_corp_deferred_rows: [{
+      election_or_transfer_year: 2025,
+      source_document_reference: "2025 signed transfer-in agreement",
+      corporation_name: "Acquired S Corp",
+      corporation_ein: "456789123",
+      beginning_deferred_liability: 0,
+      triggered_liability: 0,
+      transferred_liability: 500,
+      counterparty_tax_id: { kind: "ein", value: "987654321" },
+      transfer_agreement_links: [{
+        counterparty_tax_id: { kind: "ein", value: "987654321" },
+        file_name: "Form965DIn.pdf",
+      }],
+    }],
+    transfer_agreements: [{
+      agreement_type: "965-D",
+      file_name: "Form965DIn.pdf",
+      signed_pdf_base64: "JVBERi0x",
+      source_document_reference: "2025 signed Form 965-D transfer in",
+    }],
+  };
+  const xml = form965a.build(transferIn, {
+    pending: { schedule2: { line20_965_tax_installment: 8_000 } },
+    binaryAttachmentFileNames: ["Form965DIn.pdf"],
+    documentIdsByAttachmentFileName: {
+      "Form965DIn.pdf": "BinaryAttachment1",
+    },
+  });
+  assertStringIncludes(
+    xml,
+    "<DeferredNetTaxLiabTrnsfrAmt>500</DeferredNetTaxLiabTrnsfrAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<DeferredNetTaxLiabilityAmt>500</DeferredNetTaxLiabilityAmt>",
+  );
+  assertEquals(xml.includes("<BeginningDeferredTaxLiabAmt>"), false);
 });

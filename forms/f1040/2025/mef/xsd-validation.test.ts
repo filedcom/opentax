@@ -293,10 +293,10 @@ Deno.test({
       triggered_liability: 0,
       transferred_liability: -6_000,
       transfer_agreement_links: [{
-        transferee_tax_id: { kind: "ein", value: "123123123" },
+        counterparty_tax_id: { kind: "ein", value: "123123123" },
         file_name: "Form965D1.pdf",
       }, {
-        transferee_tax_id: { kind: "ssn", value: "321321321" },
+        counterparty_tax_id: { kind: "ssn", value: "321321321" },
         file_name: "Form965D2.pdf",
       }],
       counterparty_tax_id: { kind: "ein", value: "123123123" },

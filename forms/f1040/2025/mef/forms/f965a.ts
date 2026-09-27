@@ -109,7 +109,10 @@ function sCorpDeferredRows(input: F965Input): string[] {
       element("ElectionTransferYr", row.election_or_transfer_year),
       businessName(row.corporation_name),
       element("SCorporationEIN", row.corporation_ein),
-      element("BeginningDeferredTaxLiabAmt", row.beginning_deferred_liability),
+      row.transferred_liability > 0 ? "" : element(
+        "BeginningDeferredTaxLiabAmt",
+        row.beginning_deferred_liability,
+      ),
       row.triggered_liability > 0
         ? element("NetTaxLiabilityTriggeredAmt", row.triggered_liability)
         : "",

@@ -51,7 +51,7 @@ export const sCorpDeferredRowSchema = z.object({
   transferred_liability: signedAmount,
   counterparty_tax_id: taxId.optional(),
   transfer_agreement_links: z.array(z.object({
-    transferee_tax_id: taxId,
+    counterparty_tax_id: taxId,
     file_name: agreementFileName,
   })).optional(),
   multiple_transferees: z.array(z.object({
@@ -65,27 +65,39 @@ export const sCorpDeferredRowSchema = z.object({
       message: "Form 965-A Part IV transfer needs the counterparty tax ID",
     });
   }
+  if (
+    row.transferred_liability > 0 &&
+    (row.beginning_deferred_liability !== 0 || row.triggered_liability !== 0)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message:
+        "Form 965-A transfer-in row must leave beginning and triggered liability blank",
+    });
+  }
   if (row.transferred_liability !== 0) {
-    const transferees = row.multiple_transferees?.map((item) => item.tax_id) ??
+    const counterparties = row.multiple_transferees?.map((item) =>
+      item.tax_id
+    ) ??
       (row.counterparty_tax_id ? [row.counterparty_tax_id] : []);
     const links = row.transfer_agreement_links ?? [];
     const taxIdKey = (id: z.infer<typeof taxId>) => `${id.kind}:${id.value}`;
     if (
-      links.length !== transferees.length ||
-      new Set(transferees.map(taxIdKey)).size !== transferees.length ||
+      links.length !== counterparties.length ||
+      new Set(counterparties.map(taxIdKey)).size !== counterparties.length ||
       new Set(links.map((link) => link.file_name)).size !== links.length ||
-      new Set(links.map((link) => taxIdKey(link.transferee_tax_id))).size !==
+      new Set(links.map((link) => taxIdKey(link.counterparty_tax_id))).size !==
         links.length ||
       links.some((link) =>
-        !transferees.some((id) =>
-          taxIdKey(id) === taxIdKey(link.transferee_tax_id)
+        !counterparties.some((id) =>
+          taxIdKey(id) === taxIdKey(link.counterparty_tax_id)
         )
       )
     ) {
       ctx.addIssue({
         code: "custom",
         message:
-          "Form 965-D needs one distinct signed agreement for each transferee",
+          "Form 965-D needs one distinct signed agreement for each transfer counterparty",
       });
     }
   } else if (row.transfer_agreement_links?.length) {

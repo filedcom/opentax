@@ -124,6 +124,8 @@ Form 965-D transfers require one copy per transferee. The bundle case is
 written but unrun. It does not create, sign, mail, or authenticate an
 agreement. Consent-triggered Form 965-E installments now also require evidence
 of the separate section 965(h) election; the case is written but unrun.
+Part IV transfer-in rows now omit the beginning balance and retain the
+transferor's agreement link; those cases are also written but unrun.
 Historical tax computations and IRS business rules remain open.
 
 The current untested Form 8936 commercial-vehicle pass replaces the new/used

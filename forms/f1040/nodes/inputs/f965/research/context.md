@@ -40,6 +40,8 @@ The source model now requires a named source-provided PDF copy of the applicable
 signed Form 965-C, 965-D, or 965-E for a reported transfer or consent event.
 For multiple partial S-corporation transfers it requires a separate Form 965-D
 copy linked to each transferee, as the IRS instructions require.
+For a Part IV transfer in, the agreement link identifies the transferor and the
+MeF row omits the beginning balance, matching the form's transfer-in directions.
 The bundle preserves the supplied PDF bytes and links each attachment from
 `IRS965A`. It does not create, sign, mail, or independently authenticate an
 agreement. The original-mailing deadline and the source document's validity
@@ -50,7 +52,8 @@ election.
 
 Open verification and coverage: the IRS TY2025 XSD and full return tests are
 written but unrun under the requested build-first workflow. Independent
-authentication of transfer agreements remains open. The model takes actual installment payments from a ledger; it
+authentication of transfer agreements remains open. The model takes actual
+installment payments from a ledger; it
 does not calculate accrued interest, penalties, acceleration, or the historical
 tax-with/without computations. Those source records and any agreement with the
 IRS must be reviewed before filing.
