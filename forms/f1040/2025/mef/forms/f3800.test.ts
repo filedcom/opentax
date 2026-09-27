@@ -112,7 +112,13 @@ Deno.test("Form 3800 links and limits a nonpassive Form 5884 line 4b credit", ()
       not_related_or_dependent_confirmed: true,
       more_than_half_wages_for_trade_or_business_confirmed: true,
       excluded_wages_removed_confirmed: true,
-      first_year_wages: 6_000,
+      wage_records: [{
+        payroll_record_reference: "PAY-001",
+        service_period_start_on: "2025-02-01",
+        service_period_end_on: "2025-02-28",
+        paid_or_incurred_on: "2025-02-28",
+        qualified_wages: 6_000,
+      }],
       hours_worked: 400,
     }],
   };
@@ -228,7 +234,13 @@ Deno.test("Form 3800 requires a Part V split when mixed Form 5884 sources are pa
       not_related_or_dependent_confirmed: true,
       more_than_half_wages_for_trade_or_business_confirmed: true,
       excluded_wages_removed_confirmed: true,
-      first_year_wages: 6_000,
+      wage_records: [{
+        payroll_record_reference: "PAY-001",
+        service_period_start_on: "2025-02-01",
+        service_period_end_on: "2025-02-28",
+        paid_or_incurred_on: "2025-02-28",
+        qualified_wages: 6_000,
+      }],
       hours_worked: 400,
     }],
     pass_through_credits: [{

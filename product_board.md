@@ -163,59 +163,65 @@ a shared Form 3800 finalization. It also identifies Form 8912 as a separate line
 6k credit formerly misrouted to 6a. The other direct deposits remain in code and
 can still overstate filed credits. The Form 5884 source build pass now requires
 employee identity, pre-2026 hire, state-workforce certification, wage
-eligibility affirmations, and a single certified veteran category. The input
-now requires dated evidence for either certification received by the first workday or
-Form 8850 prescreening completed by the offer date, signed before submission,
+eligibility affirmations, and a single certified veteran category. The input now
+requires dated evidence for either certification received by the first workday
+or Form 8850 prescreening completed by the offer date, signed before submission,
 submitted to the state workforce agency within 28 calendar days of hire, and
 followed by certification before claiming. These timing cases are written but
 unrun; disaster postponement handling remains open. The build pass now also
-records certification-revocation notice status, requires claimed-wage dates
-and exclusion of post-notice wages for false-information revocations, and
-rejects dates after the notice. Source cases are written but unrun; payroll
-transactions and other revocation reasons remain unreconciled.
-The successor-employer build pass now anchors certification timing to the
-predecessor's first workday, combines prior and current hours, and reduces the
-first- and second-year wage caps by predecessor qualified wages. It requires
-acquisition, continuous-employment, and retained-certification facts; source
-cases also reject wages when the successor starts after the applicable wage
-period. They are written but unrun and payroll records are not yet reconciled.
-The controlled-group pass now allocates the group credit by members' capped
+records certification-revocation notice status, requires claimed-wage dates and
+exclusion of post-notice wages for false-information revocations, and rejects
+dates after the notice. Source cases are written but unrun; payroll transactions
+and other revocation reasons remain unreconciled. The successor-employer build
+pass now anchors certification timing to the predecessor's first workday,
+combines prior and current hours, and reduces the first- and second-year wage
+caps by predecessor qualified wages. It requires acquisition,
+continuous-employment, and retained-certification facts; source cases also
+reject wages when the successor starts after the applicable wage period. They
+are written but unrun and payroll records are not yet reconciled. The source
+model now takes dated payroll rows rather than undated first- and second-year
+wage totals. Each row carries service-period dates, a 2025 paid-or-incurred
+date, a qualified amount, and a payroll reference. The source rejects duplicate
+references within an employee, service periods outside the first year (or LTFA
+second year), rows crossing the anniversary without a split, and wages
+recognized after a false-information revocation notice. These source and
+dependent XML/PDF fixture cases are written but unrun; payroll-document
+reconciliation and the underlying wage-deduction adjustment remain open. The
+controlled-group pass now allocates the group credit by members' capped
 qualified wages, requires a group-classification document reference, and sends
-only the taxpayer member's line 2 share to Form
-3800. Native member-share and explanation statements are linked to Form 5884;
-the printed form gets a calculation page. Source, XML, PDF, and XSD cases are
-written but unrun. Shared employees paid by multiple members, the business
-wage-deduction adjustment, filled-PDF inspection, and IRS business rules remain
-open.
-It applies the missing $24,000 disabled-long-term-unemployed veteran cap and the 120-hour
+only the taxpayer member's line 2 share to Form 3800. Native member-share and
+explanation statements are linked to Form 5884; the printed form gets a
+calculation page. Source, XML, PDF, and XSD cases are written but unrun. Shared
+employees paid by multiple members, the business wage-deduction adjustment,
+filled-PDF inspection, and IRS business rules remain open. It applies the
+missing $24,000 disabled-long-term-unemployed veteran cap and the 120-hour
 minimum plus hours-based first-year rate to long-term family assistance
-recipients. Source and rejection cases
-are written but unrun. The current pass now forwards its nonpassive line 4b
-credit through the shared Form 3800 tax limit instead of depositing gross
-credit on Schedule 3. Native `IRS5884` source XML, the linked `IRS3800` line
-4b group, and partial-limit reconciliation have cases written but unrun. The
-continuous-use IRS Form 5884 PDF now has the exact one-page AcroForm field map
-for lines 1a-1c, 2, 3, and 4, with unrun source-reconciliation cases. The
-source input now accepts identified partnership, S corporation, cooperative,
-estate, and trust allocations: pass-through-only recipients omit their own
-Form 5884, while mixed claims place them on line 3. Form 3800 requires Part V
-source allocations when a tax limit partly uses multiple line 4b sources;
-source, XML, PDF, and XSD cases are written but unrun. Passive credit,
-carryovers, K-1/1099-PATR document reconciliation, filled-PDF inspection, IRS
-business rules, and ATS
-acceptance remain open. An unrun pure Form 8912 Part I/II limit
-calculation now keeps its line 12 allowed credit and unused amount separate,
-taking the already-allowed Form 3800 credit on line 10c. It rejects pass-through
-CREB cases until their separate taxable-income limit is modeled. The Form 8912
-input now separates Form 1097-BTC reported amounts, unreported-bond
-calculations, and carryforward; its limited credit now routes to Schedule 3 line
-6k instead of depositing an unbounded amount on line 6a. This source model and
-its cases are unrun. A subsequent IRS-instructions review corrected Part IV
-column (e) to credit-allowance-date percentage, not ownership percentage, and
-separates BAB interest payable from other bonds' outstanding principal with the
-required 35% BAB rate. These source facts still need sale record-holder and
-other disposition allowance-date rules, bond-specific carryforward identity,
-taxable-interest reconciliation, and IRS business-rule review.
+recipients. Source and rejection cases are written but unrun. The current pass
+now forwards its nonpassive line 4b credit through the shared Form 3800 tax
+limit instead of depositing gross credit on Schedule 3. Native `IRS5884` source
+XML, the linked `IRS3800` line 4b group, and partial-limit reconciliation have
+cases written but unrun. The continuous-use IRS Form 5884 PDF now has the exact
+one-page AcroForm field map for lines 1a-1c, 2, 3, and 4, with unrun
+source-reconciliation cases. The source input now accepts identified
+partnership, S corporation, cooperative, estate, and trust allocations:
+pass-through-only recipients omit their own Form 5884, while mixed claims place
+them on line 3. Form 3800 requires Part V source allocations when a tax limit
+partly uses multiple line 4b sources; source, XML, PDF, and XSD cases are
+written but unrun. Passive credit, carryovers, K-1/1099-PATR document
+reconciliation, filled-PDF inspection, IRS business rules, and ATS acceptance
+remain open. An unrun pure Form 8912 Part I/II limit calculation now keeps its
+line 12 allowed credit and unused amount separate, taking the already-allowed
+Form 3800 credit on line 10c. It rejects pass-through CREB cases until their
+separate taxable-income limit is modeled. The Form 8912 input now separates Form
+1097-BTC reported amounts, unreported-bond calculations, and carryforward; its
+limited credit now routes to Schedule 3 line 6k instead of depositing an
+unbounded amount on line 6a. This source model and its cases are unrun. A
+subsequent IRS-instructions review corrected Part IV column (e) to
+credit-allowance-date percentage, not ownership percentage, and separates BAB
+interest payable from other bonds' outstanding principal with the required 35%
+BAB rate. These source facts still need sale record-holder and other disposition
+allowance-date rules, bond-specific carryforward identity, taxable-interest
+reconciliation, and IRS business-rule review.
 
 The next Form 8912 build pass models each Part IV bond as one or more explicit
 line 18 rows, preserves bond identity on carryforwards, and drafts `IRS8912` MeF
@@ -286,122 +292,115 @@ Schedule 3 line 6h, and retains the unused amount on Form 8859 line 4. Its
 native XML and PDF descriptors and source-to-return cases are built but unrun;
 the filled PDF has not been visually checked. Schedule 8812 Worksheet B line 14
 must be supplied when that worksheet applies. Form 8834 no longer calculates a
-2025 credit from new vehicle cost. It takes a prior-year passive-activity
-credit allowed this year from an asserted Form 8582-CR activity, applies its
+2025 credit from new vehicle cost. It takes a prior-year passive-activity credit
+allowed this year from an asserted Form 8582-CR activity, applies its
 regular-tax and tentative-minimum-tax limit, and routes only line 7 to Schedule
 3 line 6i. Its 2024 continuous-use XML and PDF descriptors are built, with
 source, tax-limit, and XSD cases written but unrun. The Form 8582-CR source
 calculation and combined-credit ordering with Forms 8859 or 8936 remain open;
-those combinations stop explicitly. Form 4136 now combines its represented fuel-use
-credits on refundable line 12 instead of misrouting some to general business
-credit and some to a nonexistent Form 1040 field; the represented 2025 fuel
-rates are updated, with separate aviation-kerosene tax-rate inputs. These
+those combinations stop explicitly. Form 4136 now combines its represented
+fuel-use credits on refundable line 12 instead of misrouting some to general
+business credit and some to a nonexistent Form 1040 field; the represented 2025
+fuel rates are updated, with separate aviation-kerosene tax-rate inputs. These
 routing and field-map cases are written but unrun. Form 8912's Part II limit now
 feeds line 6k, while these source forms still need complete eligibility,
 document, and business-rule review. The Schedule 3 MeF builder requires attached
 source-form IDs for lines 6h, 6i, 6k, and 12. Forms 8912, 8859, and 8834 are
-registered but unrun. The Form 4136 input has now
-replaced unsubstantiated flat gallon fields with a primary qualifying business,
-separately validated additional activities, and ultimate-purchaser affirmation,
-purchase-record and duplicate-claim confirmations, and line-indexed gallons,
-use codes, measurement units, and actual fuel costs. Its calculation and rejection cases are
-written but unrun. Its `IRS4136` builder now maps the represented lines and
-reconciles line 17 with Schedule 3 line 12; local XSD and source cases are
-written but unrun. All line 11 fuels and reduced-rate bus calculations/MeF
-groups are now built. The PDF builder now overlays the read-only preprinted
-line 11 rates for bus use and adds "Bus" beside the use code, but this still
-needs filled-render inspection. Mixed-rate rows refer to an attached detail
-statement. Multiple businesses now produce one official four-page Schedule A
-(Form 4136) PDF binary attachment per activity, and the Form 4136 XML references
-each attachment. Credits round by claim before the activity totals are
-combined. The primary activity is affirmed and checked as generating the most
-calculated credit, matching the form's Part I instruction; that case is written
-but unrun. Gasoline line 1c other-use detail and line 1d export groups now
-have distinct input, MeF, and PDF paths with unrun source-to-XSD cases.
-The next build pass adds aviation-gasoline lines 2a, 2c, and 2d with
-commercial-use, export, and foreign-trade LUST confirmations and unrun
-source-to-XSD/PDF cases.
-Diesel train, bus, and export lines 3c-3e now have separate credit rates,
-source confirmations, XML groups, and PDF fields, with cases written but
-unrun.
+registered but unrun. The Form 4136 input has now replaced unsubstantiated flat
+gallon fields with a primary qualifying business, separately validated
+additional activities, and ultimate-purchaser affirmation, purchase-record and
+duplicate-claim confirmations, and line-indexed gallons, use codes, measurement
+units, and actual fuel costs. Its calculation and rejection cases are written
+but unrun. Its `IRS4136` builder now maps the represented lines and reconciles
+line 17 with Schedule 3 line 12; local XSD and source cases are written but
+unrun. All line 11 fuels and reduced-rate bus calculations/MeF groups are now
+built. The PDF builder now overlays the read-only preprinted line 11 rates for
+bus use and adds "Bus" beside the use code, but this still needs filled-render
+inspection. Mixed-rate rows refer to an attached detail statement. Multiple
+businesses now produce one official four-page Schedule A (Form 4136) PDF binary
+attachment per activity, and the Form 4136 XML references each attachment.
+Credits round by claim before the activity totals are combined. The primary
+activity is affirmed and checked as generating the most calculated credit,
+matching the form's Part I instruction; that case is written but unrun. Gasoline
+line 1c other-use detail and line 1d export groups now have distinct input, MeF,
+and PDF paths with unrun source-to-XSD cases. The next build pass adds
+aviation-gasoline lines 2a, 2c, and 2d with commercial-use, export, and
+foreign-trade LUST confirmations and unrun source-to-XSD/PDF cases. Diesel
+train, bus, and export lines 3c-3e now have separate credit rates, source
+confirmations, XML groups, and PDF fields, with cases written but unrun.
 Undyed-kerosene lines 4c-4f now have bus, export, and taxed-at-$.044/$.219
-routes with unrun source-to-XSD/PDF cases. The 2025 instructions limit 4e/4f
-to use type 02 even though the local schema admits more codes; the input
-follows the instructions pending IRS business-rule review.
-Aviation-kerosene lines 5a, 5b, and 5e now have commercial-use and
-foreign-trade LUST routes, with rates and source-to-XSD/PDF cases written but
-unrun. Lines 5a-5d now require the source tax rate matching the selected row.
-The next input pass requires the 2025 line 1a noncommercial-motorboat
-exclusion and the line 2b outside-aircraft-propulsion fact, with rejection
-cases written but unrun.
-Export lines 1d, 2c, 3e, and 4d now require a typed retained-proof reference
-instead of a bare export affirmation; positive and rejection cases are written
-but unrun. Source-record identity and IRS business-rule review remain open.
-Registered-vendor diesel line 6a now has a distinct vendor source route with
-an IRS-issued UV registration number, tax-settlement method, certificate P
-records, named government buyers, and gallon reconciliation. Its separate
-government-buyer MeF statement and page-2 PDF fields are built, with source,
-XML, PDF, and XSD cases written but unrun. The filled PDF and IRS business rules
-are not verified. Line 6b now has a separate UB-registered vendor route with
-reconciled bus-sale records and invoice-specific or account-period Model Waiver
-N facts. The $.17 credit maps to native XML and both PDFs, and conflicting
-registrations on the form's shared line 6 field are rejected. Its source, XML,
-PDF, and local XSD cases are written but unrun. Registered-kerosene vendor
-lines 7a-7c now have separate government, blocked-pump, and bus-waiver source
-routes, with UV/UP/UB registration checks, the linked line 7a buyer statement,
-and native XML and PDF mappings. Government-sale records now also require an
-unexpired Certificate P and an affirmation that a state-issued credit card was
-not used. Source, XML, PDF, and local XSD cases are written but unrun.
-Commercial-aviation vendor lines 8a/8b now require UA registration, reconciled
-and distinctly identified sale records, the correct $.219/$.244 tax source,
-and invoice-specific or account-period Model Waiver L facts. Line 8c now
-separately requires nonexempt noncommercial aviation sales, UA registration,
-the $.244 source tax, and a signed Model Certificate Q tied to an invoice or
-account period. Lines 8d/8e now require noncommercial aviation sale records
-with the claimed use code, the $.244/$.219 source tax, and either Model Waiver
-L or, for government type 14, Certificate P and UV registration. Line 8f links
-the foreign-trade LUST credit to the exact type 09 sales already claimed on
-8d/8e. Their native MeF and parent/Schedule A PDF rows have unrun source,
-XML, PDF, and local XSD cases. Filled rendering, IRS business rules, and ATS
-acceptance remain open.
-Registered credit-card-issuer lines 13a-13c now require CC registration,
-government card-purchase records, matching Model Certificate R accounts and
-coverage periods, tax disposition, vendor reimbursement, and gallon/cost
-reconciliation. Line 13c's $.244-taxed branch uses the $.243 credit, the MeF
-tax-rate marker and linked credit-card-users statement, and overlays the
-printed parent/Schedule A PDF rate and description. Source, XML, PDF, and local
-XSD cases are written but unrun. The return-level input now also rejects the
-same card-sale record across business activities, with a cross-activity case
-written but unrun. Mixed 13c tax rates on one return stop because the schema
-has only one group; IRS business-rule and ATS acceptance are open.
-Diesel-water emulsion lines 14a and 14b now have ultimate-purchaser source
-facts, the standard and reduced bus-use rates, export-proof validation, MeF
-groups, and parent/Schedule A PDF fields. Source, XML, PDF, and XSD cases are
-written but unrun. Emulsion composition and EPA additive records are required;
-filled-PDF rendering and IRS business-rule review remain open.
+routes with unrun source-to-XSD/PDF cases. The 2025 instructions limit 4e/4f to
+use type 02 even though the local schema admits more codes; the input follows
+the instructions pending IRS business-rule review. Aviation-kerosene lines 5a,
+5b, and 5e now have commercial-use and foreign-trade LUST routes, with rates and
+source-to-XSD/PDF cases written but unrun. Lines 5a-5d now require the source
+tax rate matching the selected row. The next input pass requires the 2025 line
+1a noncommercial-motorboat exclusion and the line 2b outside-aircraft-propulsion
+fact, with rejection cases written but unrun. Export lines 1d, 2c, 3e, and 4d
+now require a typed retained-proof reference instead of a bare export
+affirmation; positive and rejection cases are written but unrun. Source-record
+identity and IRS business-rule review remain open. Registered-vendor diesel line
+6a now has a distinct vendor source route with an IRS-issued UV registration
+number, tax-settlement method, certificate P records, named government buyers,
+and gallon reconciliation. Its separate government-buyer MeF statement and
+page-2 PDF fields are built, with source, XML, PDF, and XSD cases written but
+unrun. The filled PDF and IRS business rules are not verified. Line 6b now has a
+separate UB-registered vendor route with reconciled bus-sale records and
+invoice-specific or account-period Model Waiver N facts. The $.17 credit maps to
+native XML and both PDFs, and conflicting registrations on the form's shared
+line 6 field are rejected. Its source, XML, PDF, and local XSD cases are written
+but unrun. Registered-kerosene vendor lines 7a-7c now have separate government,
+blocked-pump, and bus-waiver source routes, with UV/UP/UB registration checks,
+the linked line 7a buyer statement, and native XML and PDF mappings.
+Government-sale records now also require an unexpired Certificate P and an
+affirmation that a state-issued credit card was not used. Source, XML, PDF, and
+local XSD cases are written but unrun. Commercial-aviation vendor lines 8a/8b
+now require UA registration, reconciled and distinctly identified sale records,
+the correct $.219/$.244 tax source, and invoice-specific or account-period Model
+Waiver L facts. Line 8c now separately requires nonexempt noncommercial aviation
+sales, UA registration, the $.244 source tax, and a signed Model Certificate Q
+tied to an invoice or account period. Lines 8d/8e now require noncommercial
+aviation sale records with the claimed use code, the $.244/$.219 source tax, and
+either Model Waiver L or, for government type 14, Certificate P and UV
+registration. Line 8f links the foreign-trade LUST credit to the exact type 09
+sales already claimed on 8d/8e. Their native MeF and parent/Schedule A PDF rows
+have unrun source, XML, PDF, and local XSD cases. Filled rendering, IRS business
+rules, and ATS acceptance remain open. Registered credit-card-issuer lines
+13a-13c now require CC registration, government card-purchase records, matching
+Model Certificate R accounts and coverage periods, tax disposition, vendor
+reimbursement, and gallon/cost reconciliation. Line 13c's $.244-taxed branch
+uses the $.243 credit, the MeF tax-rate marker and linked credit-card-users
+statement, and overlays the printed parent/Schedule A PDF rate and description.
+Source, XML, PDF, and local XSD cases are written but unrun. The return-level
+input now also rejects the same card-sale record across business activities,
+with a cross-activity case written but unrun. Mixed 13c tax rates on one return
+stop because the schema has only one group; IRS business-rule and ATS acceptance
+are open. Diesel-water emulsion lines 14a and 14b now have ultimate-purchaser
+source facts, the standard and reduced bus-use rates, export-proof validation,
+MeF groups, and parent/Schedule A PDF fields. Source, XML, PDF, and XSD cases
+are written but unrun. Emulsion composition and EPA additive records are
+required; filled-PDF rendering and IRS business-rule review remain open.
 Registered-blender line 15a now has a distinct source route using taxed input
 diesel gallons, an IRS M registration number, production and disposition facts,
-the $.046 rate, a linked native blender-certification statement, and parent
-and Schedule A PDF fields. Source, XML, PDF, and local XSD cases are written
-but unrun. The filled PDF, IRS business rules, and ATS acceptance remain open.
-Exported dyed-fuel lines 16a and 16b now have an exporter-specific source
-route, retained export proof, fuel-kind and $.001 tax-rate checks, MeF groups,
-and parent/Schedule A PDF fields. Line 16a can combine dyed diesel and
-gasoline blendstock source rows with a PDF detail page. Source, XML, PDF, and
-XSD cases are written but unrun; the filled PDF and IRS business rules remain
-unverified.
+the $.046 rate, a linked native blender-certification statement, and parent and
+Schedule A PDF fields. Source, XML, PDF, and local XSD cases are written but
+unrun. The filled PDF, IRS business rules, and ATS acceptance remain open.
+Exported dyed-fuel lines 16a and 16b now have an exporter-specific source route,
+retained export proof, fuel-kind and $.001 tax-rate checks, MeF groups, and
+parent/Schedule A PDF fields. Line 16a can combine dyed diesel and gasoline
+blendstock source rows with a PDF detail page. Source, XML, PDF, and XSD cases
+are written but unrun; the filled PDF and IRS business rules remain unverified.
 The Schedule A section of the 2025 IRS instructions instead says to show the
-activity with the most qualifying fuel usage. That conflict is unresolved;
-the current code follows the printed Form 4136 and needs IRS business-rule
-or ATS confirmation.
-Both PDF descriptors now use the actual nested AcroForm paths;
-all mapped widget names were found in the IRS PDFs. Filled rendering and the
-binary-attachment IRS business rule are unverified. Mixed units on one fuel
-line stop until conversion rules are verified. A tagged home-kerosene variant
-now implements the IRS line A exception and leaves business lines B-F blank;
-its source, XML, PDF, and XSD cases are written but unrun. Additional claim
-lines, source evidence, full
-test/XSD and IRS business rules, and ATS acceptance remain open.
+activity with the most qualifying fuel usage. That conflict is unresolved; the
+current code follows the printed Form 4136 and needs IRS business-rule or ATS
+confirmation. Both PDF descriptors now use the actual nested AcroForm paths; all
+mapped widget names were found in the IRS PDFs. Filled rendering and the
+binary-attachment IRS business rule are unverified. Mixed units on one fuel line
+stop until conversion rules are verified. A tagged home-kerosene variant now
+implements the IRS line A exception and leaves business lines B-F blank; its
+source, XML, PDF, and XSD cases are written but unrun. Additional claim lines,
+source evidence, full test/XSD and IRS business rules, and ATS acceptance remain
+open.
 
 Form 8936 now enters the start graph as one singleton input containing both Part
 I MAGI breakdowns, both filing statuses, and its vehicle array. The old

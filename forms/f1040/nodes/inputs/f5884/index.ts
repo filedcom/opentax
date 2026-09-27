@@ -57,13 +57,31 @@ const revocationSchema = z.discriminatedUnion("status", [
   z.object({
     status: z.literal("revoked_for_false_employee_information"),
     notice_received_on: z.string().date(),
-    first_year_claimed_wages_last_paid_or_incurred_on: z.string().date()
-      .optional(),
-    second_year_claimed_wages_last_paid_or_incurred_on: z.string().date()
-      .optional(),
     post_notice_wages_excluded_confirmed: z.literal(true),
-  }),
+  }).strict(),
 ]);
+
+const wageRecordSchema = z.object({
+  payroll_record_reference: z.string().trim().min(1),
+  service_period_start_on: z.string().date(),
+  service_period_end_on: z.string().date(),
+  paid_or_incurred_on: z.string().date().refine(
+    (date) => date.startsWith("2025-"),
+    {
+      message: "Only wages paid or incurred in tax year 2025 are claimable",
+    },
+  ),
+  qualified_wages: z.number().positive(),
+});
+
+function anniversary(firstWorkday: string, years: number): string {
+  const start = new Date(`${firstWorkday}T00:00:00Z`);
+  return new Date(Date.UTC(
+    start.getUTCFullYear() + years,
+    start.getUTCMonth(),
+    start.getUTCDate(),
+  )).toISOString().slice(0, 10);
+}
 
 const certificationSchema = z.discriminatedUnion("path", [
   z.object({
@@ -117,16 +135,15 @@ export const itemSchema = z.object({
   not_related_or_dependent_confirmed: z.literal(true),
   more_than_half_wages_for_trade_or_business_confirmed: z.literal(true),
   excluded_wages_removed_confirmed: z.literal(true),
-  // First-year qualified wages (line 1a or 1b, depending on hours)
-  first_year_wages: z.number().nonnegative(),
-  // Second-year wages (line 1c, only for LTFA)
-  second_year_wages: z.number().nonnegative().optional(),
+  // Payroll rows establish tax-year recognition and the year-one/year-two
+  // service period before the Form 5884 wage caps are applied.
+  wage_records: z.array(wageRecordSchema),
   // Hours worked determine first-year rate and the 120-hour minimum.
   hours_worked: z.number().nonnegative(),
   veteran_category: z.nativeEnum(VeteranCategory).optional(),
   summer_youth_zone_and_service_period_confirmed: z.literal(true).optional(),
   designated_community_resident_location_confirmed: z.literal(true).optional(),
-}).superRefine((item, ctx) => {
+}).strict().superRefine((item, ctx) => {
   const certification = item.certification;
   const revocation = certification.revocation;
   if (revocation.status === "revoked_for_false_employee_information") {
@@ -139,51 +156,66 @@ export const itemSchema = z.object({
         message: "Revocation notice cannot precede certification receipt",
       });
     }
-    for (
-      const [wages, field] of [
-        [
-          item.first_year_wages,
-          "first_year_claimed_wages_last_paid_or_incurred_on",
-        ],
-        [
-          item.second_year_wages ?? 0,
-          "second_year_claimed_wages_last_paid_or_incurred_on",
-        ],
-      ] as const
-    ) {
-      const lastWageOn = revocation[field];
-      if (
-        wages > 0 && (!lastWageOn || lastWageOn > revocation.notice_received_on)
-      ) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["certification", "revocation", field],
-          message:
-            "Claimed wages must be paid or incurred on or before revocation notice",
-        });
-      }
-      if (
-        lastWageOn &&
-        (lastWageOn < item.hired_on || !lastWageOn.startsWith("2025-"))
-      ) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["certification", "revocation", field],
-          message:
-            "Claimed wages must be dated in 2025 on or after this employer's hire",
-        });
-      }
-      if (wages === 0 && lastWageOn) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["certification", "revocation", field],
-          message: "Do not date wages that are not claimed",
-        });
-      }
-    }
   }
   const firstWorkday = item.successor_employer?.predecessor_first_workday_on ??
     item.hired_on;
+  const firstAnniversary = anniversary(firstWorkday, 1);
+  const secondAnniversary = anniversary(firstWorkday, 2);
+  const payrollReferences = new Set<string>();
+  item.wage_records.forEach((record, index) => {
+    if (payrollReferences.has(record.payroll_record_reference)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["wage_records", index, "payroll_record_reference"],
+        message: "Payroll record is duplicated for this employee",
+      });
+    }
+    payrollReferences.add(record.payroll_record_reference);
+    if (
+      record.service_period_start_on > record.service_period_end_on ||
+      record.service_period_start_on < item.hired_on
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["wage_records", index, "service_period_start_on"],
+        message:
+          "Wage service must follow this employer's hire and precede its end date",
+      });
+    }
+    if (
+      record.service_period_start_on < firstAnniversary &&
+      record.service_period_end_on >= firstAnniversary
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["wage_records", index, "service_period_end_on"],
+        message: "Split payroll records at the first-year anniversary",
+      });
+    }
+    if (
+      record.service_period_start_on >= secondAnniversary ||
+      record.service_period_end_on >= secondAnniversary ||
+      (item.target_group !== TargetGroup.LongTermFamilyAssistance &&
+        record.service_period_start_on >= firstAnniversary)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["wage_records", index, "service_period_end_on"],
+        message: "Wage service is outside the qualifying first or second year",
+      });
+    }
+    if (
+      revocation.status === "revoked_for_false_employee_information" &&
+      record.paid_or_incurred_on > revocation.notice_received_on
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["wage_records", index, "paid_or_incurred_on"],
+        message:
+          "Claimed wages cannot be paid or incurred after revocation notice",
+      });
+    }
+  });
   if (
     certification.path === "certified_by_start" &&
     certification.certification_received_on > firstWorkday
@@ -255,31 +287,6 @@ export const itemSchema = z.object({
         message: "Only long-term family assistance has second-year wages",
       });
     }
-    const firstStart = new Date(
-      `${successor.predecessor_first_workday_on}T00:00:00Z`,
-    );
-    const anniversary = (years: number) =>
-      new Date(Date.UTC(
-        firstStart.getUTCFullYear() + years,
-        firstStart.getUTCMonth(),
-        firstStart.getUTCDate(),
-      )).toISOString().slice(0, 10);
-    if (item.first_year_wages > 0 && item.hired_on >= anniversary(1)) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["first_year_wages"],
-        message:
-          "Successor first-year wages cannot begin after the predecessor's first year",
-      });
-    }
-    if ((item.second_year_wages ?? 0) > 0 && item.hired_on >= anniversary(2)) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["second_year_wages"],
-        message:
-          "Successor second-year wages cannot begin after the predecessor's second year",
-      });
-    }
   }
   if (
     (item.target_group === TargetGroup.VeteranFoodStamp) !==
@@ -309,16 +316,6 @@ export const itemSchema = z.object({
       code: "custom",
       path: ["designated_community_resident_location_confirmed"],
       message: "Community resident wages need the qualifying work location",
-    });
-  }
-  if (
-    item.target_group !== TargetGroup.LongTermFamilyAssistance &&
-    item.second_year_wages !== undefined
-  ) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["second_year_wages"],
-      message: "Second-year wages are limited to long-term family assistance",
     });
   }
 });
@@ -489,11 +486,21 @@ export function calculateForm5884(input: z.infer<typeof inputSchema>) {
     const successor = item.successor_employer;
     const totalHours = item.hours_worked +
       (successor?.predecessor_hours_worked ?? 0);
+    const firstAnniversary = anniversary(
+      successor?.predecessor_first_workday_on ?? item.hired_on,
+      1,
+    );
+    const firstYearPaid = item.wage_records.filter((record) =>
+      record.service_period_start_on < firstAnniversary
+    ).reduce((sum, record) => sum + record.qualified_wages, 0);
+    const secondYearPaid = item.wage_records.filter((record) =>
+      record.service_period_start_on >= firstAnniversary
+    ).reduce((sum, record) => sum + record.qualified_wages, 0);
     return {
       item,
       totalHours,
       firstYearWages: totalHours < 120 ? 0 : Math.min(
-        item.first_year_wages,
+        firstYearPaid,
         Math.max(
           0,
           wageCap(item) -
@@ -504,7 +511,7 @@ export function calculateForm5884(input: z.infer<typeof inputSchema>) {
         item.target_group === TargetGroup.LongTermFamilyAssistance &&
           totalHours >= 120
           ? Math.min(
-            item.second_year_wages ?? 0,
+            secondYearPaid,
             Math.max(
               0,
               WAGE_CAP_LTFA_SECOND -
