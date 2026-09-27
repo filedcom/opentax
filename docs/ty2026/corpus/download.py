@@ -74,6 +74,8 @@ sources = []
 for slug in FORM_SLUGS:
     sources.append(("draft/" + slug + ".pdf", IRS + "/pub/irs-dft/" + slug + "--dft.pdf", "draft-form"))
 
+sources.append(("draft/i1040s8.pdf", IRS + "/pub/irs-dft/i1040s8--dft.pdf", "draft-instructions"))
+
 for label, url in page_links(ATS_PAGE):
     match = re.search(r"scenario\s+(\d+)", label, re.I)
     if not match or not url.lower().endswith(".pdf"):
@@ -114,7 +116,7 @@ for relative, url, kind in sources:
         # A draft URL can still point to a 2025 document. Keep it for review,
         # but flag the tax-year uncertainty in the manifest.
         year_check = None
-        if kind == "draft-form":
+        if kind in {"draft-form", "draft-instructions"}:
             text = subprocess.run(["pdftotext", "-f", "1", "-l", "2", str(target), "-"],
                                   capture_output=True, text=True).stdout
             year_check = "2026-present" if "2026" in text else "2026-not-found"

@@ -76,6 +76,37 @@ export const creditLimitWorksheetSchema = z.object({
   }
 });
 
+export const creditLimitWorksheet2026Schema = z.object({
+  schedule3_line1: z.number().nonnegative(),
+  schedule3_line2: z.number().nonnegative(),
+  schedule3_line3: z.number().nonnegative(),
+  schedule3_line4: z.number().nonnegative(),
+  schedule3_line6d: z.number().nonnegative(),
+  schedule3_line6f: z.number().nonnegative(),
+  schedule3_line6l: z.number().nonnegative(),
+  schedule3_line6m: z.number().nonnegative(),
+  worksheet_b_applies: z.boolean(),
+  worksheet_b_line14: z.number().nonnegative().optional(),
+  worksheet_b_line15: z.number().nonnegative().optional(),
+}).strict().superRefine((value, ctx) => {
+  if (value.worksheet_b_applies && value.worksheet_b_line15 === undefined) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "TY2026 Schedule 8812 Worksheet B needs line 15",
+    });
+  }
+  if (
+    !value.worksheet_b_applies &&
+    (value.worksheet_b_line14 !== undefined ||
+      value.worksheet_b_line15 !== undefined)
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "TY2026 Schedule 8812 Worksheet B lines require Worksheet B",
+    });
+  }
+});
+
 export const itemSchema = z.object({
   qualifying_children_count: z.number().int().nonnegative().optional(),
   other_dependents_count: z.number().int().nonnegative().optional(),
@@ -124,6 +155,7 @@ export const inputSchema = z.object({
   // Set by Form 8862 when prior-year CTC/ACTC disallowance has been cleared
   form8862_filed: z.boolean().optional(),
   credit_limit_worksheet: creditLimitWorksheetSchema.optional(),
+  credit_limit_worksheet_2026: creditLimitWorksheet2026Schema.optional(),
   part_iib: z.object({
     line21_w2_withheld_social_security_medicare: z.number().nonnegative(),
     schedule1_line15: z.number().nonnegative(),
@@ -171,6 +203,9 @@ export type F8812Input = z.infer<typeof inputSchema>;
 
 export type CreditLimitWorksheet = NonNullable<
   F8812Input["credit_limit_worksheet"]
+>;
+export type CreditLimitWorksheet2026 = NonNullable<
+  F8812Input["credit_limit_worksheet_2026"]
 >;
 export type PartIIBDetails = NonNullable<F8812Input["part_iib"]>;
 export type PartIIBDetails2026 = NonNullable<F8812Input["part_iib_2026"]>;
@@ -266,6 +301,21 @@ export function calculateCreditLimitWorksheetALine5(
   return Math.max(0, form1040Line18Tax - line2 - line4);
 }
 
+export function calculateCreditLimitWorksheetALine5_2026(
+  form1040Line18Tax: number,
+  rawWorksheet: CreditLimitWorksheet2026,
+): number {
+  const worksheet = creditLimitWorksheet2026Schema.parse(rawWorksheet);
+  const line2 = worksheet.schedule3_line1 + worksheet.schedule3_line2 +
+    worksheet.schedule3_line3 + worksheet.schedule3_line4 +
+    worksheet.schedule3_line6d + worksheet.schedule3_line6f +
+    worksheet.schedule3_line6l + worksheet.schedule3_line6m;
+  const line4 = worksheet.worksheet_b_applies
+    ? worksheet.worksheet_b_line15!
+    : 0;
+  return Math.max(0, form1040Line18Tax - line2 - line4);
+}
+
 function returnValue<K extends keyof F8812Item>(
   items: F8812Item[],
   key: K,
@@ -342,6 +392,19 @@ export function calculateSchedule8812Lines(
   const input = inputSchema.parse(rawInput);
   if (taxYear === 2026 && input.part_iib !== undefined) {
     throw new Error("TY2026 Schedule 8812 needs part_iib_2026 line sources");
+  }
+  if (taxYear === 2026 && input.credit_limit_worksheet !== undefined) {
+    throw new Error(
+      "TY2026 Schedule 8812 needs credit_limit_worksheet_2026",
+    );
+  }
+  if (
+    taxYear !== 2026 &&
+    input.credit_limit_worksheet_2026 !== undefined
+  ) {
+    throw new Error(
+      "Schedule 8812 credit_limit_worksheet_2026 requires TY2026",
+    );
   }
   if (taxYear !== 2026 && input.part_iib_2026 !== undefined) {
     throw new Error("Schedule 8812 part_iib_2026 requires TY2026");
@@ -458,8 +521,14 @@ export function calculateSchedule8812Lines(
       "Schedule 8812 credit-limit worksheet cannot be supplied both on an item and at the root",
     );
   }
-  const creditWorksheet = input.credit_limit_worksheet ??
-    itemCreditWorksheets[0];
+  if (taxYear === 2026 && itemCreditWorksheets.length > 0) {
+    throw new Error(
+      "TY2026 Schedule 8812 needs credit_limit_worksheet_2026",
+    );
+  }
+  const creditWorksheet = taxYear === 2026
+    ? input.credit_limit_worksheet_2026
+    : input.credit_limit_worksheet ?? itemCreditWorksheets[0];
   if (!creditWorksheet) {
     throw new Error(
       "Schedule 8812 needs complete Credit Limit Worksheet A and B answers",
@@ -478,7 +547,15 @@ export function calculateSchedule8812Lines(
       "Schedule 8812 needs Form 1040 line 18 tax before calculating line 14",
     );
   }
-  const line13 = calculateCreditLimitWorksheetALine5(tax, creditWorksheet);
+  const line13 = taxYear === 2026
+    ? calculateCreditLimitWorksheetALine5_2026(
+      tax,
+      creditWorksheet as CreditLimitWorksheet2026,
+    )
+    : calculateCreditLimitWorksheetALine5(
+      tax,
+      creditWorksheet as CreditLimitWorksheet,
+    );
   const line14 = Math.min(line12, line13);
 
   const canClaimActc = line4 > 0 && !doNotClaimActc && !hasFEIE;

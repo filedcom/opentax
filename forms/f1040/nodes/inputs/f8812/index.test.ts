@@ -1,6 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   calculateCreditLimitWorksheetALine5,
+  calculateCreditLimitWorksheetALine5_2026,
   calculateEarnedIncomeWorksheet,
   calculatePartIIBLines,
   calculatePartIIBLines2026,
@@ -18,6 +19,18 @@ const zeroCreditWorksheet = {
   schedule3_line3: 0,
   schedule3_line4: 0,
   schedule3_line5b: 0,
+  schedule3_line6d: 0,
+  schedule3_line6f: 0,
+  schedule3_line6l: 0,
+  schedule3_line6m: 0,
+  worksheet_b_applies: false,
+};
+
+const zeroCreditWorksheet2026 = {
+  schedule3_line1: 0,
+  schedule3_line2: 0,
+  schedule3_line3: 0,
+  schedule3_line4: 0,
   schedule3_line6d: 0,
   schedule3_line6f: 0,
   schedule3_line6l: 0,
@@ -112,7 +125,7 @@ Deno.test("TY2026 Part II-B uses Schedule 2 lines 16c and 17c", () => {
       earned_income: 2_500,
     })],
     line18a_earned_income: 2_500,
-    credit_limit_worksheet: zeroCreditWorksheet,
+    credit_limit_worksheet_2026: zeroCreditWorksheet2026,
     part_iib_2026: partIIB,
   };
   const result = calculateSchedule8812Lines(2026, input);
@@ -149,6 +162,57 @@ Deno.test("TY2026 Part II-B uses Schedule 2 lines 16c and 17c", () => {
       }),
     Error,
     "needs part_iib_2026",
+  );
+});
+
+Deno.test("TY2026 Credit Limit Worksheet A excludes Schedule 3 line 5b", () => {
+  assertEquals(
+    calculateCreditLimitWorksheetALine5_2026(1_000, {
+      ...zeroCreditWorksheet2026,
+      schedule3_line6d: 100,
+    }),
+    900,
+  );
+  assertThrows(
+    () =>
+      calculateCreditLimitWorksheetALine5_2026(1_000, {
+        ...zeroCreditWorksheet2026,
+        schedule3_line5b: 100,
+      } as never),
+    Error,
+    "Unrecognized key",
+  );
+  assertThrows(
+    () =>
+      calculateSchedule8812Lines(2026, {
+        f8812s: [minimalItem({ qualifying_children_count: 1 })],
+        credit_limit_worksheet: zeroCreditWorksheet,
+      }),
+    Error,
+    "needs credit_limit_worksheet_2026",
+  );
+  const result = calculateSchedule8812Lines(2026, {
+    f8812s: [minimalItem({
+      qualifying_children_count: 1,
+      income_tax_liability: 1_000,
+      earned_income: 12_500,
+    })],
+    line18a_earned_income: 12_500,
+    credit_limit_worksheet_2026: {
+      ...zeroCreditWorksheet2026,
+      schedule3_line6d: 100,
+    },
+  });
+  assertEquals(result?.line13, 900);
+  assertEquals(result?.line14, 900);
+  assertThrows(
+    () =>
+      calculateSchedule8812Lines(2025, {
+        f8812s: [minimalItem({ qualifying_children_count: 1 })],
+        credit_limit_worksheet_2026: zeroCreditWorksheet2026,
+      }),
+    Error,
+    "requires TY2026",
   );
 });
 

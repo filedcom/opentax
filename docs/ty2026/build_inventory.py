@@ -30,7 +30,7 @@ NODE_PROGRESS = {
     "schedule1a": "2026 line 13a, TP/4137 employer reconciliation, TT updated; audit remaining sources",
     "form4137": "2026 tips reach Schedule 1-A, income, Schedule 2 tax; audit other cases",
     "schedule2": "dedicated 2026 line calculator/node routes tip and W-2 taxes; split other sources",
-    "f8812": "2026 Part II-B uses Schedule 2 lines 16c/17c; finish credit graph",
+    "f8812": "2026 Part II-B uses Schedule 2 lines 16c/17c; Worksheet A uses 2026 Schedule 3 lines; finish credit graph",
 }
 
 P0_NODES = {

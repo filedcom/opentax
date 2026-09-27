@@ -150,6 +150,16 @@
       "year_check": "2026-present"
     },
     {
+      "path": "draft/i1040s8.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/i1040s8--dft.pdf",
+      "kind": "draft-instructions",
+      "status": "downloaded",
+      "bytes": 502615,
+      "sha256": "d1b1893ee232e2cd909a94ac2ef3ba9f2bb2a9591f8f238a6c61b75db3bf4335",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-09-27T05:07:13.986521+00:00"
+    },
+    {
       "path": "draft/f2441.pdf",
       "url": "https://www.irs.gov/pub/irs-dft/f2441--dft.pdf",
       "kind": "draft-form",

@@ -7,7 +7,8 @@ for the implementation contract.
 ## What is in this snapshot
 
 - [`corpus/manifest.json`](corpus/manifest.json): URL, SHA-256, byte length,
-  and retrieval date for **57 TY2026 IRS draft forms**, **five draft URLs that
+  and retrieval date for **57 TY2026 IRS draft forms**, the **2026 draft
+  Schedule 8812 instructions**, **five draft URLs that
   still serve an older year**, **13 IRS ATS PDFs**, **two MeF
   inventory spreadsheets**, final IRS authorities (Rev. Procs.
   2025-19, 2025-25, 2025-32; Notice 2025-67; Notice 2026-10; and IRB

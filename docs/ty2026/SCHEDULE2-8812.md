@@ -1,7 +1,8 @@
 # TY2026 Schedule 2 and Schedule 8812 dependency map
 
 Source snapshot: the committed draft `corpus/draft/f1040s2.pdf` (created
-April 27, 2026) and `corpus/draft/f1040s8.pdf` (created April 24, 2026).
+April 27, 2026), `corpus/draft/f1040s8.pdf` (created April 24, 2026), and
+`corpus/draft/i1040s8.pdf` (2026 instructions posted August 21, 2026).
 Recheck line numbers against final forms and instructions before MeF/PDF
 mapping. The pure 2026 Schedule 2 arithmetic is in
 `forms/f1040/2026/schedule2.ts`; `nodes/schedule2.ts` now publishes those
@@ -44,6 +45,13 @@ enabling one, wire its 2026 credit-limit worksheet, earned-income line 18a,
 Part II-B sources where applicable, and nonrefundable/refundable outputs into
 the 2026 credit and settlement graph. Then remove the explicit dependent
 diagnostic in the 2026 Form 1040 node and verify a complete dependent return.
+
+The 2026 draft instructions change Credit Limit Worksheet A line 2: add
+Schedule 3 lines 1, 2, 3, 4, 6d, 6f, 6l, and 6m. The 2025 worksheet also lists
+line 5b. Use a distinct 2026 worksheet input and reject the old shape.
+Worksheet B line 15 draws from Schedule 3 lines 5a, 6c, 6g, and 6h; those
+source credits need a separate calculation and reconciliation rather than a
+generic tax-credit total.
 
 W-2 box 12 code K reports the excise tax and now reaches Schedule 2 line 13k.
 Code Z reports section 409A income, not its complete additional tax; its 2026
