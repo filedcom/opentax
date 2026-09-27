@@ -171,10 +171,11 @@ Deno.test({
       line15_total: 42.6,
     },
     f4136: {
+      additional_activities: [],
+      primary_activity_has_most_qualified_fuel_usage: true,
       business: {
         qualifying_business_activity: true,
         claimant_is_ultimate_purchaser: true,
-        activity_count: 1,
         business_name: "Example Farm",
         principal_activity_code: "111000",
         equipment_make: "Example",
@@ -229,10 +230,11 @@ Deno.test({
       line15_total: 164.4,
     },
     f4136: {
+      additional_activities: [],
+      primary_activity_has_most_qualified_fuel_usage: true,
       business: {
         qualifying_business_activity: true,
         claimant_is_ultimate_purchaser: true,
-        activity_count: 1,
         business_name: "Example Fuel Business",
         principal_activity_code: "447100",
         equipment_make: "Example",
@@ -272,10 +274,11 @@ Deno.test({
       line15_total: 10.9,
     },
     f4136: {
+      additional_activities: [],
+      primary_activity_has_most_qualified_fuel_usage: true,
       business: {
         qualifying_business_activity: true,
         claimant_is_ultimate_purchaser: true,
-        activity_count: 1,
         business_name: "Example Bus Business",
         principal_activity_code: "485110",
         equipment_make: "Example",
@@ -295,6 +298,60 @@ Deno.test({
   }, extractFilerIdentity(singleGeneral()));
   assertStringIncludes(xml, "<BusNontxLiquifiedPetroleumGas>");
   await validateXsd(xml, "Form 4136 line 11 bus use");
+});
+
+Deno.test({
+  name: "XSD: Form 4136 multiple activities link two Schedule A PDFs",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const business = {
+    qualifying_business_activity: true,
+    claimant_is_ultimate_purchaser: true,
+    business_name: "First Fuel Business",
+    business_ein: "123456789",
+    principal_activity_code: "111000",
+    equipment_make: "Example",
+    equipment_model: "Tractor",
+    equipment_type: "farm tractor",
+    purchase_records_confirmed: true,
+    no_duplicate_excise_claim: true,
+  };
+  const claim = {
+    line: "1a" as const,
+    unit: "gallons" as const,
+    qualified_quantity: 100,
+    actual_fuel_cost: 300,
+    not_highway_vehicle: true,
+  };
+  const bundle = await buildMefBundle({
+    f1040: { line31_additional_payments: 27 },
+    schedule3: { line12_fuel_tax_credit: 27.45, line15_total: 27.45 },
+    f4136: {
+      business,
+      claims: [claim],
+      additional_activities: [{
+        business: {
+          ...business,
+          business_name: "Second Fuel Business",
+          business_ein: "987654321",
+        },
+        claims: [{ ...claim, qualified_quantity: 50 }],
+      }],
+      primary_activity_has_most_qualified_fuel_usage: true,
+    },
+  }, { filer: extractFilerIdentity(singleGeneral()), attachments: [] });
+  assertEquals(bundle.attachments.length, 2);
+  assertStringIncludes(bundle.xml, 'binaryAttachmentCnt="2"');
+  assertStringIncludes(
+    bundle.xml,
+    'referenceDocumentName="BinaryAttachment GeneralDependencySmall"',
+  );
+  await validateXsd(
+    bundle.xml,
+    "Form 4136 multiple activities with Schedule A",
+  );
 });
 
 Deno.test({

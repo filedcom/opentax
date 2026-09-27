@@ -5,7 +5,6 @@ import { form4136Pdf } from "./f4136.ts";
 const business = {
   qualifying_business_activity: true,
   claimant_is_ultimate_purchaser: true,
-  activity_count: 1,
   business_name: "Example Farm",
   principal_activity_code: "111000",
   equipment_make: "Example",
@@ -20,21 +19,31 @@ const certifications = {
   credit_card_issuer_certificate_not_provided: true,
   not_highway_vehicle: true,
 } as const;
+const activityContext = {
+  additional_activities: [],
+  primary_activity_has_most_qualified_fuel_usage: true,
+};
 
 Deno.test("Form 4136 PDF maps page 1 business and page 4 total widgets", () => {
   const names = Object.fromEntries(
     form4136Pdf.fields.map((field) => [field.domainKey, field.pdfField]),
   );
   assertEquals(names.business_name, "topmostSubform[0].Page1[0].f1_4[0]");
-  assertEquals(names.line1a_quantity, "topmostSubform[0].Page1[0].f1_12[0]");
+  assertEquals(
+    names.line1a_quantity,
+    "topmostSubform[0].Page1[0].Table_Line1[0].Line1a[0].f1_12[0]",
+  );
   assertEquals(
     names.line5d_credit_dollars,
-    "topmostSubform[0].Page2[0].f2_73[0]",
+    "topmostSubform[0].Page2[0].Table_Line5[0].Line5d[0].ColE[0].f2_73[0]",
   );
-  assertEquals(names.line11c_quantity, "topmostSubform[0].Page3[0].f3_97[0]");
+  assertEquals(
+    names.line11c_quantity,
+    "topmostSubform[0].Page3[0].Table_Line11[0].Line11c[0].f3_97[0]",
+  );
   assertEquals(
     names.line11h_credit_cents,
-    "topmostSubform[0].Page3[0].f3_141[0]",
+    "topmostSubform[0].Page3[0].Table_Line11[0].Line11h[0].ColE[0].f3_141[0]",
   );
   assertEquals(
     names.line17_total_cents,
@@ -44,6 +53,7 @@ Deno.test("Form 4136 PDF maps page 1 business and page 4 total widgets", () => {
 
 Deno.test("Form 4136 PDF projects gallons and split dollars/cents from source", () => {
   const result = form4136Pdf.projectFields?.({
+    ...activityContext,
     business,
     claims: [
       {
@@ -75,6 +85,7 @@ Deno.test("Form 4136 PDF projects gallons and split dollars/cents from source", 
 
 Deno.test("Form 4136 PDF carries multiple uses on a separate statement", async () => {
   const result = form4136Pdf.projectFields?.({
+    ...activityContext,
     business,
     claims: [
       {
@@ -106,6 +117,7 @@ Deno.test("Form 4136 PDF rejects a Schedule 3 mismatch", () => {
   assertThrows(
     () =>
       form4136Pdf.projectFields?.({
+        ...activityContext,
         business,
         claims: [{
           ...certifications,
@@ -122,6 +134,7 @@ Deno.test("Form 4136 PDF rejects a Schedule 3 mismatch", () => {
 
 Deno.test("Form 4136 PDF carries line 11 LNG diesel-gallon equivalents", () => {
   const result = form4136Pdf.projectFields?.({
+    ...activityContext,
     business,
     claims: [{
       ...certifications,
@@ -139,6 +152,7 @@ Deno.test("Form 4136 PDF carries line 11 LNG diesel-gallon equivalents", () => {
 
 Deno.test("Form 4136 PDF projects reduced-rate bus claims", async () => {
   const result = form4136Pdf.projectFields?.({
+    ...activityContext,
     business,
     claims: [{
       ...certifications,
@@ -161,6 +175,7 @@ Deno.test("Form 4136 PDF projects reduced-rate bus claims", async () => {
 
 Deno.test("Form 4136 PDF sends mixed bus and standard line 11 use to a statement", () => {
   const result = form4136Pdf.projectFields?.({
+    ...activityContext,
     business,
     claims: [
       {
@@ -175,7 +190,7 @@ Deno.test("Form 4136 PDF sends mixed bus and standard line 11 use to a statement
         ...certifications,
         line: "11a",
         type_of_use: "02",
-        unit: "gallons",
+        unit: "GGE",
         qualified_quantity: 100,
         actual_fuel_cost: 300,
       },

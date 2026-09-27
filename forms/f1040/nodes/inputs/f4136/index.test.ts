@@ -1,10 +1,9 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { f4136, inputSchema } from "./index.ts";
+import { f4136, type Form4136Input, inputSchema } from "./index.ts";
 
 const business = {
   qualifying_business_activity: true,
   claimant_is_ultimate_purchaser: true,
-  activity_count: 1,
   business_name: "Example Farm",
   principal_activity_code: "111000",
   equipment_make: "Example",
@@ -20,8 +19,20 @@ const certifications = {
   not_highway_vehicle: true,
 } as const;
 
-function compute(input: Parameters<typeof f4136.compute>[1]) {
-  return f4136.compute({ taxYear: 2025, formType: "f1040" }, input);
+function compute(input: Pick<Form4136Input, "business" | "claims">) {
+  return f4136.compute({ taxYear: 2025, formType: "f1040" }, {
+    ...input,
+    additional_activities: [],
+    primary_activity_has_most_qualified_fuel_usage: true,
+  });
+}
+
+function parseInput(input: Record<string, unknown>) {
+  return inputSchema.safeParse({
+    additional_activities: [],
+    primary_activity_has_most_qualified_fuel_usage: true,
+    ...input,
+  });
 }
 
 Deno.test("Form 4136: qualified business gasoline and diesel route to refundable Schedule 3 line 12", () => {
@@ -118,55 +129,56 @@ Deno.test("Form 4136: eligibility, costs, use codes, and duplicate claims are re
     qualified_quantity: 100,
     actual_fuel_cost: 300,
   } as const;
-  assertEquals(inputSchema.safeParse({ claims: [claim] }).success, false);
+  assertEquals(parseInput({ claims: [claim] }).success, false);
   assertEquals(
-    inputSchema.safeParse({
+    parseInput({
       business: { ...business, claimant_is_ultimate_purchaser: false },
       claims: [claim],
     }).success,
     false,
   );
   assertEquals(
-    inputSchema.safeParse({
-      business: { ...business, activity_count: 2 },
+    parseInput({
+      business,
       claims: [claim],
+      primary_activity_has_most_qualified_fuel_usage: false,
     }).success,
     false,
   );
   assertEquals(
-    inputSchema.safeParse({
+    parseInput({
       business,
       claims: [{ ...claim, actual_fuel_cost: 0 }],
     }).success,
     false,
   );
   assertEquals(
-    inputSchema.safeParse({
+    parseInput({
       business,
       claims: [{ ...claim, type_of_use: undefined }],
     }).success,
     false,
   );
   assertEquals(
-    inputSchema.safeParse({ business, claims: [claim, claim] }).success,
+    parseInput({ business, claims: [claim, claim] }).success,
     false,
   );
   assertEquals(
-    inputSchema.safeParse({
+    parseInput({
       business,
       claims: [{ ...claim, undyed_fuel_confirmed: undefined }],
     }).success,
     false,
   );
   assertEquals(
-    inputSchema.safeParse({
+    parseInput({
       business,
       claims: [{ ...claim, not_highway_vehicle: undefined }],
     }).success,
     false,
   );
   assertEquals(
-    inputSchema.safeParse({
+    parseInput({
       business,
       claims: [{ ...claim, unit: "GGE" }],
     }).success,
@@ -192,18 +204,18 @@ Deno.test("Form 4136: aviation claims require no-waiver and credit-card certific
     actual_fuel_cost: 300,
   };
   assertEquals(
-    inputSchema.safeParse({ business, claims: [aviation] }).success,
+    parseInput({ business, claims: [aviation] }).success,
     true,
   );
   assertEquals(
-    inputSchema.safeParse({
+    parseInput({
       business,
       claims: [{ ...aviation, right_to_claim_not_waived: undefined }],
     }).success,
     false,
   );
   assertEquals(
-    inputSchema.safeParse({
+    parseInput({
       business,
       claims: [{
         ...aviation,
@@ -213,7 +225,7 @@ Deno.test("Form 4136: aviation claims require no-waiver and credit-card certific
     false,
   );
   assertEquals(
-    inputSchema.safeParse({
+    parseInput({
       business,
       claims: [{
         ...aviation,
@@ -236,7 +248,7 @@ Deno.test("Form 4136: line 11 retains an explicit equivalent-fuel unit", () => {
     actual_fuel_cost: 300,
   };
   assertEquals(
-    inputSchema.safeParse({ business, claims: [claim] }).success,
+    parseInput({ business, claims: [claim] }).success,
     true,
   );
   assertEquals(
@@ -245,7 +257,7 @@ Deno.test("Form 4136: line 11 retains an explicit equivalent-fuel unit", () => {
     18.3,
   );
   assertEquals(
-    inputSchema.safeParse({
+    parseInput({
       business,
       claims: [{ ...claim, line: "3a" }],
     }).success,
@@ -274,7 +286,7 @@ Deno.test("Form 4136: line 11 bus claims use reduced rates and required units", 
       actual_fuel_cost: 300,
     } as const;
     assertEquals(
-      inputSchema.safeParse({ business, claims: [claim] }).success,
+      parseInput({ business, claims: [claim] }).success,
       true,
     );
     assertEquals(
@@ -283,11 +295,97 @@ Deno.test("Form 4136: line 11 bus claims use reduced rates and required units", 
       expected,
     );
     assertEquals(
-      inputSchema.safeParse({
+      parseInput({
         business,
         claims: [{ ...claim, unit: "gallons" }],
       }).success,
       unit === "gallons",
     );
   }
+});
+
+Deno.test("Form 4136: separate business activities combine credit without merging claim validation", () => {
+  const claim = {
+    ...certifications,
+    line: "1a" as const,
+    unit: "gallons" as const,
+    qualified_quantity: 100,
+    actual_fuel_cost: 300,
+  };
+  const input = {
+    business: { ...business, business_ein: "123456789" },
+    claims: [claim],
+    additional_activities: [{
+      business: {
+        ...business,
+        business_name: "Second Business",
+        business_ein: "987654321",
+      },
+      claims: [{ ...claim, qualified_quantity: 50 }],
+    }],
+    primary_activity_has_most_qualified_fuel_usage: true as const,
+  };
+  assertEquals(inputSchema.safeParse(input).success, true);
+  assertEquals(
+    f4136.compute({ taxYear: 2025, formType: "f1040" }, input).outputs[0]
+      .fields.line12_fuel_tax_credit,
+    27.45,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...input,
+      additional_activities: [{
+        ...input.additional_activities[0],
+        claims: [claim, claim],
+      }],
+    }).success,
+    false,
+  );
+});
+
+Deno.test("Form 4136: claim cents on separate Schedules A add to the parent credit", () => {
+  const claim = {
+    ...certifications,
+    line: "1a" as const,
+    unit: "gallons" as const,
+    qualified_quantity: 1,
+    actual_fuel_cost: 3,
+  };
+  const input = {
+    business,
+    claims: [claim],
+    additional_activities: [{
+      business: { ...business, business_name: "Second Activity" },
+      claims: [claim],
+    }],
+    primary_activity_has_most_qualified_fuel_usage: true as const,
+  };
+  assertEquals(
+    f4136.compute({ taxYear: 2025, formType: "f1040" }, input).outputs[0]
+      .fields.line12_fuel_tax_credit,
+    0.36,
+  );
+});
+
+Deno.test("Form 4136: a combined fuel line rejects mixed units without conversion", () => {
+  const claim = {
+    ...certifications,
+    line: "11a" as const,
+    type_of_use: "02",
+    unit: "GGE" as const,
+    qualified_quantity: 100,
+    actual_fuel_cost: 300,
+  };
+  assertEquals(
+    inputSchema.safeParse({
+      business,
+      claims: [claim],
+      additional_activities: [{
+        business: { ...business, business_name: "Second Activity" },
+        claims: [{ ...claim, unit: "gallons" }],
+      }],
+      primary_activity_has_most_qualified_fuel_usage: true,
+    }).success,
+    false,
+  );
 });

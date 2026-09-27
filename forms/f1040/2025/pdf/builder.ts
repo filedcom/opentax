@@ -95,7 +95,7 @@ function fillEntry(
   }
 }
 
-async function fillFormPdf(
+export async function fillFormPdf(
   descriptor: PdfFormDescriptor,
   fields: Record<string, unknown>,
   filer: FilerIdentity | undefined,

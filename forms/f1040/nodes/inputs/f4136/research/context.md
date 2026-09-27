@@ -1,6 +1,7 @@
 # Form 4136, tax year 2025
 
-Source: [2025 Form 4136](https://www.irs.gov/pub/irs-pdf/f4136.pdf) and
+Source: [2025 Form 4136](https://www.irs.gov/pub/irs-pdf/f4136.pdf),
+[2025 Schedule A](https://www.irs.gov/pub/irs-prior/f4136sa--2025.pdf), and
 [2025 instructions](https://www.irs.gov/instructions/i4136), checked
 2026-09-27. The TY2025v5.4 `IRS4136.xsd` is the MeF field authority.
 
@@ -35,8 +36,18 @@ rate, writes the reduced rate and "Bus," and sends mixed-rate rows to a detail
 statement. The bus overlay has not been visually checked yet. Its
 direct and local XSD/PDF cases are written but unrun. Filled PDF rendering,
 the full test batch, TY2025v5.4 XSD, and 2025 business rules remain open.
-Multiple business activities require separate Schedule A (Form 4136)
-documents and are currently refused. The undyed-kerosene home-use exception,
+Multiple activities now use the primary business plus `additional_activities`.
+Each is validated separately; claim credits round to cents before totals are
+combined. When more than one activity is present, the MeF bundle builds one
+official four-page Schedule A (Form 4136) PDF per activity as a binary
+attachment, and Form 4136 references each attachment. The primary activity
+must be affirmed as having the most qualifying fuel usage. The local schema
+contains no Schedule A XML root, so the binary route needs IRS business-rule
+and ATS verification. Exact source-PDF widget names have been mapped for both
+forms, but neither filled PDF has been rendered and checked yet. The
+input rejects mixed measurement units on one combined fuel line until the
+source conversion and rounding can be verified against IRS rules. The
+undyed-kerosene home-use exception,
 other Part II lines, seller/purchase-date source identities, other rate-by-use
 exceptions, and cross-form duplicate claims are not modeled yet. No IRS ATS
 acknowledgment exists.
