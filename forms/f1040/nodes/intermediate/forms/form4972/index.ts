@@ -6,6 +6,8 @@ import type {
 import { TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { income_tax_calculation } from "../../worksheets/income_tax_calculation/index.ts";
+import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
+import { f1040 } from "../../../outputs/f1040/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 import { tsSchema } from "../../../types.ts";
@@ -210,7 +212,11 @@ function partIIILines(
 class Form4972Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form4972";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([income_tax_calculation]);
+  readonly outputNodes = new OutputNodes([
+    income_tax_calculation,
+    agi_aggregator,
+    f1040,
+  ]);
 
   compute(ctx: NodeContext, rawInput: Form4972Input): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
@@ -231,6 +237,16 @@ class Form4972Node extends TaxNode<typeof inputSchema> {
     const taxableAmount = Math.round(input.lump_sum_amount);
     const capitalGain = Math.round(input.capital_gain_amount ?? 0);
     const deathBenefit = Math.round(input.death_benefit_exclusion ?? 0);
+    if (electCapGain && capitalGain === 0) {
+      throw new Error(
+        "form4972: Part II election needs a positive box 3 capital gain",
+      );
+    }
+    if (electCapGain && !elect10yr && deathBenefit > 0) {
+      throw new Error(
+        "form4972: Part II-only death benefit requires ordinary-income exclusion review",
+      );
+    }
     const deathBenefitCapitalShare = electCapGain && taxableAmount > 0
       ? Math.round(deathBenefit * capitalGain / taxableAmount)
       : 0;
@@ -253,8 +269,8 @@ class Form4972Node extends TaxNode<typeof inputSchema> {
       : undefined;
     const totalTax = Math.round(partIITaxAmt + (partIII?.line29 ?? 0));
 
-    // No output when combined tax is zero
-    if (totalTax === 0) {
+    // A rounded-zero Part II tax cannot erase ordinary income from line 5b.
+    if (totalTax === 0 && !(electCapGain && !elect10yr && ordinaryIncome > 0)) {
       return { outputs: [] };
     }
 
@@ -304,6 +320,16 @@ class Form4972Node extends TaxNode<typeof inputSchema> {
       this.outputNodes.output(income_tax_calculation, {
         form4972_tax: totalTax,
       }),
+      ...(electCapGain && !elect10yr
+        ? [
+          this.outputNodes.output(agi_aggregator, {
+            line5b_form4972_ordinary: ordinaryIncome,
+          }),
+          this.outputNodes.output(f1040, {
+            line5b_form4972_ordinary: ordinaryIncome,
+          }),
+        ]
+        : []),
     ];
 
     return { outputs };

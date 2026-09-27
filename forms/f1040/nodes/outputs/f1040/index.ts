@@ -79,6 +79,7 @@ const inputSchema = z.object({
   line5a_pension_gross: z.number().nonnegative().optional(),
   // Line 5b — Pensions and annuities, taxable amount
   line5b_pension_taxable: z.number().optional(),
+  line5b_form4972_ordinary: z.number().nonnegative().optional(),
   // Line 6a — Social security benefits, gross
   line6a_ss_gross: z.number().nonnegative().optional(),
   // Line 6b — Social security benefits, taxable amount
@@ -257,6 +258,7 @@ function totalIncome(input: F1040Input): number {
     sumField(input.line3b_ordinary_dividends) +
     (input.line4b_ira_taxable ?? 0) +
     (input.line5b_pension_taxable ?? 0) +
+    (input.line5b_form4972_ordinary ?? 0) +
     (input.line6b_ss_taxable ?? 0) +
     (input.line7_capital_gain ?? 0) +
     (input.line7a_cap_gain_distrib ?? 0) +
@@ -763,11 +765,14 @@ function assembleReturn(
   if (input.line4b_ira_taxable !== undefined) {
     result.line4b_ira_taxable = input.line4b_ira_taxable;
   }
-  if (input.line5a_pension_gross !== undefined) {
-    result.line5a_pension_gross = input.line5a_pension_gross;
+  const form4972Ordinary = input.line5b_form4972_ordinary ?? 0;
+  if (input.line5a_pension_gross !== undefined || form4972Ordinary > 0) {
+    result.line5a_pension_gross = (input.line5a_pension_gross ?? 0) +
+      form4972Ordinary;
   }
-  if (input.line5b_pension_taxable !== undefined) {
-    result.line5b_pension_taxable = input.line5b_pension_taxable;
+  if (input.line5b_pension_taxable !== undefined || form4972Ordinary > 0) {
+    result.line5b_pension_taxable = (input.line5b_pension_taxable ?? 0) +
+      form4972Ordinary;
   }
   if (input.line6a_ss_gross !== undefined) {
     result.line6a_ss_gross = input.line6a_ss_gross;

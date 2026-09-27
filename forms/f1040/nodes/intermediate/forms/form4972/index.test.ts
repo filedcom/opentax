@@ -1,6 +1,8 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { income_tax_calculation } from "../../worksheets/income_tax_calculation/index.ts";
+import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
+import { f1040 } from "../../../outputs/f1040/index.ts";
 import { form4972, inputSchema } from "./index.ts";
 
 function compute(input: Record<string, unknown>) {
@@ -23,6 +25,8 @@ function calculated(input: Record<string, unknown>) {
   return {
     tax: fieldsOf(outputs, income_tax_calculation)?.form4972_tax,
     lines: outputs.find((item) => item.nodeType === "form4972")?.fields,
+    agi: fieldsOf(outputs, agi_aggregator),
+    f1040: fieldsOf(outputs, f1040),
   };
 }
 
@@ -54,6 +58,8 @@ Deno.test("Form 4972 Part II uses 20% of the taxable pre-1974 capital gain", () 
   assertEquals(result.lines?.line6, 30_000);
   assertEquals(result.lines?.line7, 6_000);
   assertEquals(result.lines?.line30, undefined);
+  assertEquals(result.agi?.line5b_form4972_ordinary, 70_000);
+  assertEquals(result.f1040?.line5b_form4972_ordinary, 70_000);
 });
 
 Deno.test("Form 4972 Part III follows lines 12 through 29, not a tax-on-allowance subtraction", () => {
@@ -102,6 +108,27 @@ Deno.test("Form 4972 combines capital-gain and ten-year elections on line 30", (
   assertEquals(result.lines?.line29, 12_710);
   assertEquals(result.tax, 14_710);
   assertEquals(result.lines?.line30, 14_710);
+  assertEquals(result.agi, undefined);
+  assertEquals(result.f1040, undefined);
+});
+
+Deno.test("Form 4972 Part II rejects an election without box 3 capital gain", () => {
+  assertThrows(
+    () => calculated({ lump_sum_amount: 10_000, elect_capital_gain: true }),
+    Error,
+    "Part II election needs a positive box 3 capital gain",
+  );
+});
+
+Deno.test("Form 4972 Part II retains ordinary income when the special tax rounds to zero", () => {
+  const result = calculated({
+    lump_sum_amount: 101,
+    capital_gain_amount: 1,
+    elect_capital_gain: true,
+  });
+  assertEquals(result.tax, 0);
+  assertEquals(result.agi?.line5b_form4972_ordinary, 100);
+  assertEquals(result.f1040?.line5b_form4972_ordinary, 100);
 });
 
 Deno.test("Form 4972 annuity value goes through the actuarial adjustment", () => {

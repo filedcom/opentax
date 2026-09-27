@@ -80,6 +80,8 @@ export const inputSchema = z.object({
   line4b_ira_taxable: z.number().optional(),
   // Line 5b — Pensions and annuities, taxable amount (Form 1099-R)
   line5b_pension_taxable: z.number().optional(),
+  // Form 4972 Part II-only ordinary income remains on Form 1040 line 5b.
+  line5b_form4972_ordinary: z.number().nonnegative().optional(),
   // Line 6a — Social security benefits, gross (from SSA-1099 — for taxability worksheet)
   line6a_ss_gross: z.number().nonnegative().optional(),
   // Line 6b — Social security benefits, taxable amount (SSA-1099 worksheet)
@@ -253,6 +255,7 @@ function nonSsaIncomeBeforePal(input: AgiInput): number {
     sumField(input.line3b_ordinary_dividends) +
     (input.line4b_ira_taxable ?? 0) +
     (input.line5b_pension_taxable ?? 0) +
+    (input.line5b_form4972_ordinary ?? 0) +
     (input.line7_capital_gain ?? 0) +
     (input.line7a_cap_gain_distrib ?? 0) +
     (input.line1_state_refund ?? 0) +
