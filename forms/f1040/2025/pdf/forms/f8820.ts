@@ -100,10 +100,15 @@ export const form8820Pdf: PdfFormDescriptor = {
   },
   appendSupplementalPages: async (document, fields) => {
     const source = inputSchema.parse(fields);
+    const lines = calculateForm8820(source);
     const extra = source.f8820s.filter((drug) =>
       drug.qualified_clinical_testing_expenses > 0
     ).slice(26);
-    if (extra.length === 0) return;
+    const reductions = lines.line2a > 0 &&
+        !source.reduced_section280c_credit_election
+      ? source.expense_reductions ?? []
+      : [];
+    if (extra.length === 0 && reductions.length === 0) return;
     const regular = await document.embedFont(StandardFonts.Helvetica);
     const bold = await document.embedFont(StandardFonts.HelveticaBold);
     for (let offset = 0; offset < extra.length; offset += 20) {
@@ -155,6 +160,45 @@ export const form8820Pdf: PdfFormDescriptor = {
           font: regular,
         });
       });
+    }
+    for (let offset = 0; offset < reductions.length; offset += 17) {
+      const page = document.addPage([612, 792]);
+      page.drawText("Form 8820 - Section 280C expense reduction statement", {
+        x: 40,
+        y: 750,
+        size: 12,
+        font: bold,
+      });
+      page.drawText(
+        "Full-credit election not made. Amounts below reduce deductions or capitalized basis.",
+        { x: 40, y: 730, size: 8, font: regular },
+      );
+      reductions.slice(offset, offset + 17).forEach((entry, index) => {
+        const y = 700 - index * 38;
+        page.drawText(
+          `${entry.return_form_or_schedule} ${entry.return_line} - ${entry.treatment}`,
+          { x: 40, y, size: 8, font: bold, maxWidth: 530 },
+        );
+        page.drawText(entry.expense_record_reference, {
+          x: 40,
+          y: y - 13,
+          size: 8,
+          font: regular,
+          maxWidth: 250,
+        });
+        page.drawText(
+          `Before ${entry.amount_before_reduction}  Reduction ${entry.reduction_amount}  After ${entry.expense_amount_after_reduction}`,
+          { x: 300, y: y - 13, size: 8, font: regular, maxWidth: 270 },
+        );
+      });
+      if (offset + 17 >= reductions.length) {
+        page.drawText(`Total reduction (Form 8820 line 2a): ${lines.line2a}`, {
+          x: 40,
+          y: 35,
+          size: 9,
+          font: bold,
+        });
+      }
     }
   },
 };

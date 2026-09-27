@@ -186,8 +186,11 @@ flat 25% gross Schedule 3 deposit with identified orphan-drug source rows, the
 overlapping Form 8932 wage-credit offset, and a nonpassive Form 3800 line 1h
 handoff. A native IRS8820 document and linked Form 3800 line 1h group are
 registered, with source, XML, and XSD cases written but unrun. The full-credit
-path requires a bundled expense-reduction statement, but reconciliation to the
-actual deduction or capitalized basis remains open. Controlled groups,
+path now requires a bundled expense-reduction statement and structured rows
+identifying each deduction or capitalized-basis form, line, and expense record.
+The rows' before/reduction/after math and total reduction reconcile to Form
+8820 line 2a; the PDF packet prints them. Their correspondence to the actual
+filed deduction or capitalized basis remains open. Controlled groups,
 passive credits, K-1 document reconciliation, eligibility-document verification,
 filled-PDF verification, and IRS business rules remain open. The reduced-credit
 election now retains an IRS8820 document and paper form even with no

@@ -125,3 +125,28 @@ Deno.test("Form 8820 PDF prints mixed line 3 and omits a pass-through-only form"
   };
   assertEquals(form8820Pdf.includeWhen?.(only), false);
 });
+
+Deno.test("Form 8820 PDF appends the unreduced-credit expense statement", async () => {
+  const fullCredit = {
+    ...source,
+    reduced_section280c_credit_election: false,
+    expense_reduction_statement_file_name: "orphan-drug-reductions.pdf",
+    expense_reductions: [{
+      treatment: "current_deduction" as const,
+      return_form_or_schedule: "Schedule C",
+      return_line: "27b",
+      expense_record_reference: "CLINICAL-001",
+      amount_before_reduction: 100_000,
+      reduction_amount: 25_000,
+      expense_amount_after_reduction: 75_000,
+    }],
+  };
+  const projected = form8820Pdf.projectFields?.(fullCredit, {
+    f3800: { f8820_credit: { credit_amount: 23_750 } },
+  }) ?? {};
+  assertEquals(projected.line2a, 25_000);
+  assertEquals(projected.line4, 23_750);
+  const document = await PDFDocument.create();
+  await form8820Pdf.appendSupplementalPages?.(document, projected, undefined);
+  assertEquals(document.getPageCount(), 1);
+});

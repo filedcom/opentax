@@ -44,9 +44,36 @@ Deno.test("Form 8820 full credit uses 25% and needs the deduction statement", ()
   const lines = calculateForm8820(source({
     reduced_section280c_credit_election: false,
     expense_reduction_statement_file_name: "orphan-drug-deduction.pdf",
+    expense_reductions: [{
+      treatment: "current_deduction",
+      return_form_or_schedule: "Schedule C",
+      return_line: "27b",
+      expense_record_reference: "2025 clinical testing ledger",
+      amount_before_reduction: 100_000,
+      reduction_amount: 25_000,
+      expense_amount_after_reduction: 75_000,
+    }],
   }));
   assertEquals(lines.line2a, 25_000);
   assertEquals(lines.line4, 25_000);
+  assertThrows(
+    () =>
+      calculateForm8820(source({
+        reduced_section280c_credit_election: false,
+        expense_reduction_statement_file_name: "orphan-drug-deduction.pdf",
+        expense_reductions: [{
+          treatment: "current_deduction",
+          return_form_or_schedule: "Schedule C",
+          return_line: "27b",
+          expense_record_reference: "2025 clinical testing ledger",
+          amount_before_reduction: 100_000,
+          reduction_amount: 24_999,
+          expense_amount_after_reduction: 75_001,
+        }],
+      })),
+    Error,
+    "must equal the full credit",
+  );
 });
 
 Deno.test("Form 8820 subtracts overlapping Form 8932 wage credit", () => {
@@ -59,6 +86,63 @@ Deno.test("Form 8820 subtracts overlapping Form 8932 wage credit", () => {
     calculateForm8820(source({
       form8932_overlapping_wage_credit: 20_000,
     }))
+  );
+});
+
+Deno.test("Form 8820 full-credit reduction can split deductions and capitalized basis", () => {
+  const input = source({
+    reduced_section280c_credit_election: false,
+    expense_reduction_statement_file_name: "orphan-drug-reductions.pdf",
+    expense_reductions: [{
+      treatment: "current_deduction",
+      return_form_or_schedule: "Schedule C",
+      return_line: "27b",
+      expense_record_reference: "CLINICAL-001",
+      amount_before_reduction: 60_000,
+      reduction_amount: 15_000,
+      expense_amount_after_reduction: 45_000,
+    }, {
+      treatment: "capitalized_basis",
+      return_form_or_schedule: "Form 4562",
+      return_line: "Part III",
+      expense_record_reference: "CLINICAL-002",
+      amount_before_reduction: 40_000,
+      reduction_amount: 10_000,
+      expense_amount_after_reduction: 30_000,
+    }],
+  });
+  assertEquals(calculateForm8820(input).line2a, 25_000);
+  assertEquals(
+    inputSchema.safeParse({
+      ...input,
+      expense_reductions: [
+        input.expense_reductions![0],
+        {
+          ...input.expense_reductions![1],
+          expense_record_reference: "CLINICAL-001",
+        },
+      ],
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...input,
+      expense_reductions: [{
+        ...input.expense_reductions![0],
+        expense_amount_after_reduction: 44_999,
+      }, input.expense_reductions![1]],
+    }).success,
+    false,
+  );
+  assertThrows(
+    () =>
+      calculateForm8820({
+        ...input,
+        reduced_section280c_credit_election: true,
+      }),
+    Error,
+    "cannot claim an expense reduction",
   );
 });
 

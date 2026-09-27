@@ -61,6 +61,15 @@ Deno.test("Form 8820 MeF requires the linked Form 3800 and any expense statement
       ...source,
       reduced_section280c_credit_election: false,
       expense_reduction_statement_file_name: "deduction-reduction.pdf",
+      expense_reductions: [{
+        treatment: "current_deduction",
+        return_form_or_schedule: "Schedule C",
+        return_line: "27b",
+        expense_record_reference: "2025 clinical testing ledger",
+        amount_before_reduction: 100_000,
+        reduction_amount: 25_000,
+        expense_amount_after_reduction: 75_000,
+      }],
     }, {
       documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
       binaryAttachmentFileNames: [],
@@ -71,6 +80,15 @@ Deno.test("Form 8820 MeF requires the linked Form 3800 and any expense statement
       ...source,
       reduced_section280c_credit_election: false,
       expense_reduction_statement_file_name: "deduction-reduction.pdf",
+      expense_reductions: [{
+        treatment: "current_deduction",
+        return_form_or_schedule: "Schedule C",
+        return_line: "27b",
+        expense_record_reference: "2025 clinical testing ledger",
+        amount_before_reduction: 100_000,
+        reduction_amount: 25_000,
+        expense_amount_after_reduction: 75_000,
+      }],
     }, {
       documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
       binaryAttachmentFileNames: ["deduction-reduction.pdf"],

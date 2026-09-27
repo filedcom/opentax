@@ -123,7 +123,9 @@ registers an `IRS8820` document with identified orphan-drug details, the section
 Its source credit now enters the shared nonpassive Form 3800 line 1h. Own credit
 needs an attached Form 8820, while pass-through-only credit does not. Mixed
 credit appears on Form 8820 line 3/4 and preserves source EIN and applied amount
-in Form 3800 Part V. Expense or basis reduction, controlled groups, passive
+in Form 3800 Part V. The full-credit path requires itemized section 280C
+reductions that sum to line 2a and prints a PDF statement, but the reduction
+does not yet reconcile to each filed expense or basis line. Controlled groups, passive
 credits, K-1 document reconciliation, filled-PDF verification, business rules, and
 ATS evidence remain open. The official two-page PDF descriptor now maps Part I,
 the 26 Part II drug rows, and continuation pages for additional drugs. A

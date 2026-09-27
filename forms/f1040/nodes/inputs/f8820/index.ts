@@ -23,6 +23,27 @@ const passThroughCreditSchema = z.object({
   subject_to_passive_activity_limit: z.boolean(),
 });
 
+const expenseReductionSchema = z.object({
+  treatment: z.enum(["current_deduction", "capitalized_basis"]),
+  return_form_or_schedule: z.string().trim().min(1),
+  return_line: z.string().trim().min(1),
+  expense_record_reference: z.string().trim().min(1),
+  amount_before_reduction: z.number().int().nonnegative(),
+  reduction_amount: z.number().int().positive(),
+  expense_amount_after_reduction: z.number().int().nonnegative(),
+}).superRefine((entry, ctx) => {
+  if (
+    entry.amount_before_reduction - entry.reduction_amount !==
+      entry.expense_amount_after_reduction
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["expense_amount_after_reduction"],
+      message: "Form 8820 expense reduction must reconcile before and after",
+    });
+  }
+});
+
 export const inputSchema = z.object({
   f8820s: z.array(drugSchema),
   pass_through_credits: z.array(passThroughCreditSchema).optional(),
@@ -30,6 +51,7 @@ export const inputSchema = z.object({
   form8932_overlapping_wage_credit: z.number().int().nonnegative(),
   subject_to_passive_activity_limit: z.boolean(),
   expense_reduction_statement_file_name: z.string().min(1).optional(),
+  expense_reductions: z.array(expenseReductionSchema).optional(),
 }).superRefine((input, ctx) => {
   if (
     input.f8820s.length === 0 &&
@@ -62,6 +84,17 @@ export const inputSchema = z.object({
       });
     }
     entities.add(id);
+  });
+  const expenseRecords = new Set<string>();
+  input.expense_reductions?.forEach((entry, index) => {
+    if (expenseRecords.has(entry.expense_record_reference)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["expense_reductions", index, "expense_record_reference"],
+        message: "Form 8820 expense reduction record is duplicated",
+      });
+    }
+    expenseRecords.add(entry.expense_record_reference);
   });
 });
 
@@ -113,12 +146,35 @@ export function calculateForm8820(raw: F8820Input): Form8820Lines {
       "Form 8820 non-reduced credit needs the expense-reduction statement",
     );
   }
+  if (line2a > 0 && !input.reduced_section280c_credit_election) {
+    // The section 280C adjustment is the unreduced line 2a credit, not line
+    // 2c after the separate Form 8932 overlap subtraction.
+    const reduction = (input.expense_reductions ?? []).reduce(
+      (sum, entry) => sum + entry.reduction_amount,
+      0,
+    );
+    if (reduction !== line2a) {
+      throw new Error(
+        "Form 8820 expense reductions must equal the full credit on line 2a",
+      );
+    }
+  }
   if (
     input.reduced_section280c_credit_election &&
-    input.expense_reduction_statement_file_name
+    (input.expense_reduction_statement_file_name ||
+      (input.expense_reductions?.length ?? 0) > 0)
   ) {
     throw new Error(
       "Form 8820 reduced-credit election cannot claim an expense reduction",
+    );
+  }
+  if (
+    line2a === 0 &&
+    (input.expense_reduction_statement_file_name ||
+      (input.expense_reductions?.length ?? 0) > 0)
+  ) {
+    throw new Error(
+      "Form 8820 has no own credit to reduce deductions or basis",
     );
   }
   const line2c = Math.max(0, line2a - line2b);
