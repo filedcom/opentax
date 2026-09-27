@@ -1,17 +1,18 @@
 # TY2026 calculation graph route gaps
 
-The current dedicated registry declares **37 edges to targets it has not
+The current dedicated registry declares **36 edges to targets it has not
 registered**. `graph-route-gaps.csv` is generated from the executable registry
 by running `deno run --allow-write forms/f1040/2026/build_route_gaps.ts` from
-the repository root. Every target on these 37 edges exists in the TY2025 registry, but that
+the repository root. Every target on these 36 edges exists in the TY2025 registry, but that
 does not establish that their tax-year behavior or output lines are correct
 for 2026. This inventory covers edges from the currently registered nodes;
 it does not cover the remaining nodes in `node-coverage.csv`.
 
 The planner orders registered nodes and ignores edges to absent ones. The
 executor still deposits output values into the absent target's pending slot.
-A wages-only 2026 run currently produces 12 such slots, including EITC,
-Schedule A, Form 8812, Form 6251, and Form 8962. A successful core 1040
+A wages-only 2026 run still deposits values into absent nodes, including EITC,
+Schedule A, Form 8812, and Form 8962. Form 6251 is now registered and can
+send AMT through Schedule 2 to Form 1040. A successful core 1040
 calculation therefore does not prove that every upstream route was consumed.
 
 ## Work order
@@ -26,8 +27,8 @@ calculation therefore does not prove that every upstream route was consumed.
 2. **Deduction dependency:** implement the Schedule A and QBI joint resolver
    described in `DEDUCTION-GRAPH.md`, then connect the charitable floor,
    SALT and overall limitations, Form 8995, and 2026 deduction choice.
-3. **Tax and credits:** Form 8960 now routes 2026 NIIT to Schedule 2 line 6.
-   Connect Form 6251 and the remaining tax worksheets, then
+3. **Tax and credits:** Form 8960 now routes 2026 NIIT to Schedule 2 line 6;
+   Form 6251 routes computed AMT to line 2. Connect the remaining tax worksheets, then
    complete Form 8812, EITC, Form 2441, Schedule 3, Form 8962, and the
    credit-finalization path at the 2026 1040. Preserve the Schedule 2
    reordering and Schedule 3-A dependency; do not discard the current

@@ -54,7 +54,8 @@ export const inputSchema = z.object({
   // Must be included in AMTI even though excluded for regular tax.
   // IRC §57(a)(5); Form 6251 Line 2g
   private_activity_bond_interest: z.number().nonnegative().optional(),
-  // Line 2g — Private activity bond interest (alias used by f1099int and f1099div)
+  // Line 2g — Private activity bond interest from Forms 1099-INT and 1099-OID.
+  // The field above carries Form 1099-DIV box 13; independent sources add.
   line2g_pab_interest: z.number().nonnegative().optional(),
 
   // Line 2h — 7% of qualified small business stock gain excluded under §1202.

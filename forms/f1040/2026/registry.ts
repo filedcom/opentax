@@ -4,6 +4,7 @@ import { w2 } from "../nodes/inputs/w2/index.ts";
 import { agi_aggregator } from "../nodes/intermediate/aggregation/agi_aggregator/index.ts";
 import { form4137 } from "../nodes/intermediate/forms/form4137/index.ts";
 import { form8960 } from "../nodes/intermediate/forms/form8960/index.ts";
+import { form6251 } from "../nodes/intermediate/forms/form6251/index.ts";
 import { schedule1a } from "../nodes/intermediate/forms/schedule1a/index.ts";
 import { income_tax_calculation } from "../nodes/intermediate/worksheets/income_tax_calculation/index.ts";
 import { start } from "./start.ts";
@@ -20,6 +21,7 @@ export const registry: NodeRegistry = {
   w2,
   form4137,
   form8960,
+  form6251,
   schedule_b: schedule_b_2026,
   agi_aggregator,
   schedule1a,

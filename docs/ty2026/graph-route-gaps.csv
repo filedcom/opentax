@@ -16,7 +16,6 @@ general,form8962,yes
 general,form8995,yes
 general,schedule_a,yes
 income_tax_calculation,f8812,yes
-income_tax_calculation,form6251,yes
 income_tax_calculation,form8615,yes
 income_tax_calculation,form8978_reporting_year,yes
 income_tax_calculation,form_1116,yes

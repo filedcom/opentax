@@ -494,8 +494,7 @@ Deno.test("form6251: throws on negative regular_tax", () => {
 
 // ─── Output routing ───────────────────────────────────────────────────────────
 
-Deno.test("form6251: line2g_pab_interest alias produces same AMTI as private_activity_bond_interest", () => {
-  // Both fields represent line 2g — only the larger should count (no double-count).
+Deno.test("form6251: either PAB source reaches the same line 2g", () => {
   const via_primary = compute({
     filing_status: "single",
     regular_tax_income: 200_000,
@@ -514,8 +513,8 @@ Deno.test("form6251: line2g_pab_interest alias produces same AMTI as private_act
   );
 });
 
-Deno.test("form6251: both PAB fields set to same value — no double-count", () => {
-  // Setting both to 20_000 should produce same result as setting either alone.
+Deno.test("form6251: equal PAB amounts from two sources both count", () => {
+  // A 1099-DIV and a 1099-INT/OID can each report $20,000.
   const result = compute({
     filing_status: "single",
     regular_tax_income: 200_000,
@@ -523,7 +522,12 @@ Deno.test("form6251: both PAB fields set to same value — no double-count", () 
     line2g_pab_interest: 20_000,
     regular_tax: 15_000,
   });
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 19_294);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 24_494);
+  assertEquals(
+    result.outputs.find((output) => output.nodeType === "form6251")?.fields
+      .private_activity_bond_interest,
+    40_000,
+  );
 });
 
 Deno.test("form6251: routes AMT to Schedule 2 and its filed form", () => {
