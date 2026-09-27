@@ -1,4 +1,6 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
+import { rgb, StandardFonts } from "pdf-lib";
+import { form8814ParentPrintAmounts } from "./f8814.ts";
 
 // IRS Schedule D (2025) AcroForm field names.
 // Verified against the f1040sd--2025.pdf AcroForm field dump.
@@ -22,45 +24,185 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 
 const fields: ReadonlyArray<PdfFieldEntry> = [
   // ── QOF disposition question (top of page 1) ─────────────────────────────────
-  { kind: "checkboxWhen", domainKey: "print_qof_disposition", pdfField: "topmostSubform[0].Page1[0].c1_1[0]", whenValue: "true" },
-  { kind: "checkboxWhen", domainKey: "print_qof_disposition", pdfField: "topmostSubform[0].Page1[0].c1_1[1]", whenValue: "false" },
+  {
+    kind: "checkboxWhen",
+    domainKey: "print_qof_disposition",
+    pdfField: "topmostSubform[0].Page1[0].c1_1[0]",
+    whenValue: "true",
+  },
+  {
+    kind: "checkboxWhen",
+    domainKey: "print_qof_disposition",
+    pdfField: "topmostSubform[0].Page1[0].c1_1[1]",
+    whenValue: "false",
+  },
 
   // ── Part I: Short-Term — line 1a direct-reported totals ─────────────────────
-  { kind: "text", domainKey: "print_line1a_proceeds", pdfField: "topmostSubform[0].Page1[0].Table_PartI[0].Row1a[0].f1_3[0]" },
-  { kind: "text", domainKey: "print_line1a_cost", pdfField: "topmostSubform[0].Page1[0].Table_PartI[0].Row1a[0].f1_4[0]" },
-  { kind: "text", domainKey: "print_line1a_gain", pdfField: "topmostSubform[0].Page1[0].Table_PartI[0].Row1a[0].f1_6[0]" },
-  { kind: "text", domainKey: "line_4_other_st", pdfField: "topmostSubform[0].Page1[0].f1_19[0]" },
-  { kind: "text", domainKey: "line_5_k1_st", pdfField: "topmostSubform[0].Page1[0].f1_20[0]" },
-  { kind: "text", domainKey: "line_6_carryover", pdfField: "topmostSubform[0].Page1[0].f1_21[0]" },
-  { kind: "text", domainKey: "print_line7_st_total", pdfField: "topmostSubform[0].Page1[0].f1_22[0]" },
+  {
+    kind: "text",
+    domainKey: "print_line1a_proceeds",
+    pdfField: "topmostSubform[0].Page1[0].Table_PartI[0].Row1a[0].f1_3[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line1a_cost",
+    pdfField: "topmostSubform[0].Page1[0].Table_PartI[0].Row1a[0].f1_4[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line1a_gain",
+    pdfField: "topmostSubform[0].Page1[0].Table_PartI[0].Row1a[0].f1_6[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line_4_other_st",
+    pdfField: "topmostSubform[0].Page1[0].f1_19[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line_5_k1_st",
+    pdfField: "topmostSubform[0].Page1[0].f1_20[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line_6_carryover",
+    pdfField: "topmostSubform[0].Page1[0].f1_21[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line7_st_total",
+    pdfField: "topmostSubform[0].Page1[0].f1_22[0]",
+  },
 
   // ── Part II: Long-Term — line 8a direct-reported totals ─────────────────────
-  { kind: "text", domainKey: "print_line8a_proceeds", pdfField: "topmostSubform[0].Page1[0].Table_PartII[0].Row8a[0].f1_23[0]" },
-  { kind: "text", domainKey: "print_line8a_cost", pdfField: "topmostSubform[0].Page1[0].Table_PartII[0].Row8a[0].f1_24[0]" },
-  { kind: "text", domainKey: "print_line8a_gain", pdfField: "topmostSubform[0].Page1[0].Table_PartII[0].Row8a[0].f1_26[0]" },
-  { kind: "text", domainKey: "line_11_form2439", pdfField: "topmostSubform[0].Page1[0].f1_39[0]" },
-  { kind: "text", domainKey: "line_12_k1_lt", pdfField: "topmostSubform[0].Page1[0].f1_40[0]" },
-  { kind: "text", domainKey: "print_line13_cap_gain_distrib", pdfField: "topmostSubform[0].Page1[0].f1_41[0]" },
-  { kind: "text", domainKey: "line_14_carryover", pdfField: "topmostSubform[0].Page1[0].f1_42[0]" },
-  { kind: "text", domainKey: "print_line15_lt_total", pdfField: "topmostSubform[0].Page1[0].f1_43[0]" },
+  {
+    kind: "text",
+    domainKey: "print_line8a_proceeds",
+    pdfField: "topmostSubform[0].Page1[0].Table_PartII[0].Row8a[0].f1_23[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line8a_cost",
+    pdfField: "topmostSubform[0].Page1[0].Table_PartII[0].Row8a[0].f1_24[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line8a_gain",
+    pdfField: "topmostSubform[0].Page1[0].Table_PartII[0].Row8a[0].f1_26[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line_11_form2439",
+    pdfField: "topmostSubform[0].Page1[0].f1_39[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line_12_k1_lt",
+    pdfField: "topmostSubform[0].Page1[0].f1_40[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line13_cap_gain_distrib",
+    pdfField: "topmostSubform[0].Page1[0].f1_41[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line_14_carryover",
+    pdfField: "topmostSubform[0].Page1[0].f1_42[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line15_lt_total",
+    pdfField: "topmostSubform[0].Page1[0].f1_43[0]",
+  },
 
   // ── Part III: Summary (page 2) ───────────────────────────────────────────────
-  { kind: "text", domainKey: "print_line16_combined", pdfField: "topmostSubform[0].Page2[0].f2_1[0]" },
-  { kind: "checkboxWhen", domainKey: "print_line17_both_gains", pdfField: "topmostSubform[0].Page2[0].c2_1[0]", whenValue: "true" },
-  { kind: "checkboxWhen", domainKey: "print_line17_both_gains", pdfField: "topmostSubform[0].Page2[0].c2_1[1]", whenValue: "false" },
-  { kind: "text", domainKey: "print_line18_28pct", pdfField: "topmostSubform[0].Page2[0].f2_2[0]" },
-  { kind: "text", domainKey: "print_line19_unrecaptured_1250", pdfField: "topmostSubform[0].Page2[0].f2_3[0]" },
-  { kind: "checkboxWhen", domainKey: "print_line20_qdcgt", pdfField: "topmostSubform[0].Page2[0].c2_2[0]", whenValue: "true" },
-  { kind: "checkboxWhen", domainKey: "print_line20_qdcgt", pdfField: "topmostSubform[0].Page2[0].c2_2[1]", whenValue: "false" },
-  { kind: "text", domainKey: "print_line21_loss", pdfField: "topmostSubform[0].Page2[0].f2_4[0]" },
+  {
+    kind: "text",
+    domainKey: "print_line16_combined",
+    pdfField: "topmostSubform[0].Page2[0].f2_1[0]",
+  },
+  {
+    kind: "checkboxWhen",
+    domainKey: "print_line17_both_gains",
+    pdfField: "topmostSubform[0].Page2[0].c2_1[0]",
+    whenValue: "true",
+  },
+  {
+    kind: "checkboxWhen",
+    domainKey: "print_line17_both_gains",
+    pdfField: "topmostSubform[0].Page2[0].c2_1[1]",
+    whenValue: "false",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line18_28pct",
+    pdfField: "topmostSubform[0].Page2[0].f2_2[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line19_unrecaptured_1250",
+    pdfField: "topmostSubform[0].Page2[0].f2_3[0]",
+  },
+  {
+    kind: "checkboxWhen",
+    domainKey: "print_line20_qdcgt",
+    pdfField: "topmostSubform[0].Page2[0].c2_2[0]",
+    whenValue: "true",
+  },
+  {
+    kind: "checkboxWhen",
+    domainKey: "print_line20_qdcgt",
+    pdfField: "topmostSubform[0].Page2[0].c2_2[1]",
+    whenValue: "false",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line21_loss",
+    pdfField: "topmostSubform[0].Page2[0].f2_4[0]",
+  },
 ];
 
 export const scheduleDPdf: PdfFormDescriptor = {
   pendingKey: "schedule_d",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040sd--2025.pdf",
+  projectFields(fields, allPending) {
+    const child = form8814ParentPrintAmounts(allPending);
+    return {
+      ...fields,
+      print_form8814_line13_note: child.capitalGain > 0 &&
+          typeof fields.print_line13_cap_gain_distrib === "number"
+        ? `Form 8814 $${child.capitalGain}`
+        : undefined,
+    };
+  },
   fields,
+  async decoratePages(document, pages, fields) {
+    const note = fields.print_form8814_line13_note;
+    const page = pages[0];
+    if (!page || typeof note !== "string") return;
+    const font = await document.embedFont(StandardFonts.Helvetica);
+    // The 2025 Schedule D source PDF has line 13's dotted space at x260-470,
+    // y96-107; its amount field starts at x504.
+    page.drawRectangle({
+      x: 260,
+      y: 96,
+      width: 210,
+      height: 11,
+      color: rgb(1, 1, 1),
+    });
+    page.drawText(note, { x: 263, y: 99, size: 7, font });
+  },
   filerFields: [
-    { kind: "text", domainKey: "fullName", pdfField: "topmostSubform[0].Page1[0].f1_1[0]" },
-    { kind: "text", domainKey: "primarySSN", pdfField: "topmostSubform[0].Page1[0].f1_2[0]" },
+    {
+      kind: "text",
+      domainKey: "fullName",
+      pdfField: "topmostSubform[0].Page1[0].f1_1[0]",
+    },
+    {
+      kind: "text",
+      domainKey: "primarySSN",
+      pdfField: "topmostSubform[0].Page1[0].f1_2[0]",
+    },
   ],
 };

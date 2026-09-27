@@ -1,4 +1,5 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
+import { rgb, StandardFonts } from "pdf-lib";
 import { appendScheduleBInterestStatement } from "./schedule_b_interest_statement.ts";
 import { appendScheduleBDividendStatement } from "./schedule_b_dividend_statement.ts";
 import { appendScheduleBSellerFinancedStatement } from "./schedule_b_seller_financed_statement.ts";
@@ -56,6 +57,15 @@ function dividendRow(i: number): PdfFieldEntry[] {
 
 function numericAmount(value: unknown): number {
   return typeof value === "number" ? value : 0;
+}
+
+export function scheduleBForm8814DottedLines(
+  fields: Record<string, unknown>,
+): readonly ("7a" | "8")[] {
+  return [
+    ...(fields.form8814_foreign_account === true ? ["7a" as const] : []),
+    ...(fields.form8814_foreign_trust === true ? ["8" as const] : []),
+  ];
 }
 
 const fields: ReadonlyArray<PdfFieldEntry> = [
@@ -136,6 +146,27 @@ export const scheduleBPdf: PdfFormDescriptor = {
   pendingKey: "schedule_b",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040sb--2025.pdf",
   fields,
+  async decoratePages(document, pages, fields) {
+    const page = pages[0];
+    if (!page) return;
+    const lines = scheduleBForm8814DottedLines(fields);
+    if (lines.length === 0) return;
+    const font = await document.embedFont(StandardFonts.Helvetica);
+    const note = (y: number) => {
+      page.drawRectangle({
+        x: 432,
+        y: y - 2,
+        width: 86,
+        height: 10,
+        color: rgb(1, 1, 1),
+      });
+      page.drawText("Form 8814", { x: 435, y, size: 7, font });
+    };
+    // IRS instructions require the literal beside 7a and/or 8 for a child.
+    // These positions are the 2025 source PDF's dotted spaces, before Yes/No.
+    if (lines.includes("7a")) note(135);
+    if (lines.includes("8")) note(39);
+  },
   projectFields(fields) {
     const names = fields.foreign_country_names;
     return {

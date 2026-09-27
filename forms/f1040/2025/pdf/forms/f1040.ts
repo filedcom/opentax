@@ -1,4 +1,6 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
+import { rgb, StandardFonts } from "pdf-lib";
+import { form8814ParentPrintAmounts } from "./f8814.ts";
 
 // IRS Form 1040 (2025) AcroForm field names.
 // Verified empirically by filling each field with a unique value and inspecting the output.
@@ -156,6 +158,17 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     domainKey: "line3b_ordinary_dividends",
     pdfField: "topmostSubform[0].Page1[0].f1_61[0]",
   },
+  // 2025 line 3c has separate child-dividend boxes for lines 3a and 3b.
+  {
+    kind: "checkbox",
+    domainKey: "print_form8814_line3a_included",
+    pdfField: "topmostSubform[0].Page1[0].c1_33[0]",
+  },
+  {
+    kind: "checkbox",
+    domainKey: "print_form8814_line3b_included",
+    pdfField: "topmostSubform[0].Page1[0].c1_34[0]",
+  },
   {
     kind: "text",
     domainKey: "line4a_ira_gross",
@@ -198,6 +211,16 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "text",
     domainKey: "line7a_cap_gain_distrib",
     pdfField: "topmostSubform[0].Page1[0].f1_70[0]",
+  },
+  {
+    kind: "checkbox",
+    domainKey: "line7a_cap_gain_distrib",
+    pdfField: "topmostSubform[0].Page1[0].c1_43[0]",
+  },
+  {
+    kind: "checkbox",
+    domainKey: "print_form8814_line7a_included",
+    pdfField: "topmostSubform[0].Page1[0].c1_44[0]",
   },
   // f1_71 skipped (near line 7b check area)
   {
@@ -403,7 +426,36 @@ export const irs1040Pdf: PdfFormDescriptor = {
   // Year-pinned: /pub/irs-pdf/f1040.pdf silently changes revision each filing
   // season; this module is the 2025 form and must always fetch the 2025 PDF.
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040--2025.pdf",
+  projectFields(fields, allPending) {
+    const child = form8814ParentPrintAmounts(allPending);
+    return {
+      ...fields,
+      print_form8814_line3a_included: child.dividends > 0,
+      print_form8814_line3b_included: child.dividends > 0,
+      print_form8814_line7a_included: child.capitalGain > 0,
+      print_form8814_line7a_note: child.capitalGain > 0 &&
+          typeof fields.line7a_cap_gain_distrib === "number"
+        ? `Form 8814 $${child.capitalGain}`
+        : undefined,
+    };
+  },
   fields,
+  async decoratePages(document, pages, fields) {
+    const note = fields.print_form8814_line7a_note;
+    const page = pages[0];
+    if (!page || typeof note !== "string") return;
+    const font = await document.embedFont(StandardFonts.Helvetica);
+    // The 2025 source PDF places line 7a's dotted space at x312-470,
+    // y91-101; the amount field starts at x504. Keep attribution on that line.
+    page.drawRectangle({
+      x: 312,
+      y: 91,
+      width: 158,
+      height: 11,
+      color: rgb(1, 1, 1),
+    });
+    page.drawText(note, { x: 315, y: 93, size: 7, font });
+  },
   filerFields: [
     // domainKey uses dot-notation to traverse FilerIdentity (resolved in builder).
     // ── Primary taxpayer ────────────────────────────────────────────────────

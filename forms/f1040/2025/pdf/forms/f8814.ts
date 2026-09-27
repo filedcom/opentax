@@ -24,9 +24,9 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   text("line7_fraction", "14"),
   text("line8_whole", "15"),
   text("line8_fraction", "16"),
-  text("line9", "17"),
-  text("line10", "18"),
-  text("line11", "19"),
+  { ...text("line9", "17"), printZero: true },
+  { ...text("line10", "18"), printZero: true },
+  { ...text("line11", "19"), printZero: true },
   text("line12", "20"),
   text("line14", "22"),
   {
@@ -50,6 +50,8 @@ function toPdfFields(
 ): Record<string, unknown> {
   const item = line.item;
   const partI = line.line4 > 2_700;
+  const allocatePreferredIncome = (item.qualified_dividends ?? 0) > 0 ||
+    (item.capital_gain_distributions ?? 0) > 0;
   const proportion = (ratio: number) => {
     const rounded = Math.round(ratio * 100_000);
     return {
@@ -85,13 +87,21 @@ function toPdfFields(
     line3: item.capital_gain_distributions,
     line4: line.line4,
     line6: partI ? line.line6 : undefined,
-    line7_whole: partI && line.line7 > 0 ? line7Ratio.whole : undefined,
-    line7_fraction: partI && line.line7 > 0 ? line7Ratio.fraction : undefined,
-    line8_whole: partI && line.line8 > 0 ? line8Ratio.whole : undefined,
-    line8_fraction: partI && line.line8 > 0 ? line8Ratio.fraction : undefined,
-    line9: partI ? line.line9 : undefined,
-    line10: partI ? line.line10 : undefined,
-    line11: partI ? line.line11 : undefined,
+    line7_whole: partI && allocatePreferredIncome
+      ? line7Ratio.whole
+      : undefined,
+    line7_fraction: partI && allocatePreferredIncome
+      ? line7Ratio.fraction
+      : undefined,
+    line8_whole: partI && allocatePreferredIncome
+      ? line8Ratio.whole
+      : undefined,
+    line8_fraction: partI && allocatePreferredIncome
+      ? line8Ratio.fraction
+      : undefined,
+    line9: partI && allocatePreferredIncome ? line.line9 : undefined,
+    line10: partI && allocatePreferredIncome ? line.line10 : undefined,
+    line11: partI ? allocatePreferredIncome ? line.line11 : "-0-" : undefined,
     line12: partI ? line.line12 : undefined,
     line14: line.line14,
     line15_under_1350: line.line14 < 1_350,
@@ -105,6 +115,33 @@ function toPdfFields(
         ? `ND $${item.capital_gain_nominee_distribution}`
         : undefined,
   };
+}
+
+/** Values printed as the Form 8814 portion of the parents' return lines. */
+export function form8814ParentPrintAmounts(
+  allPending: Record<string, Record<string, unknown>>,
+): { readonly dividends: number; readonly capitalGain: number } {
+  const items = allPending.form8814?.items;
+  if (items === undefined) return { dividends: 0, capitalGain: 0 };
+  if (!Array.isArray(items)) {
+    throw new Error("Form 8814 PDF needs calculated child line items");
+  }
+  let dividends = 0;
+  let capitalGain = 0;
+  for (const item of items) {
+    if (
+      item === null || typeof item !== "object" ||
+      typeof item.line9 !== "number" ||
+      !Number.isFinite(item.line9) ||
+      typeof item.line10 !== "number" ||
+      !Number.isFinite(item.line10)
+    ) {
+      throw new Error("Form 8814 PDF needs calculated lines 9 and 10");
+    }
+    dividends += item.line9;
+    capitalGain += item.line10;
+  }
+  return { dividends, capitalGain };
 }
 
 export function form8814DottedNotes(fields: Record<string, unknown>): {
