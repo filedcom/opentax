@@ -170,12 +170,6 @@ export const irs1040Pdf2026: PdfFormDescriptor = {
   fields,
   pageIndices: () => [1, 2],
   projectFields: (rawFields) => {
-    if (
-      typeof rawFields.dependent_count === "number" &&
-      rawFields.dependent_count > 0
-    ) {
-      throw new Error("TY2026 Form 1040 PDF needs dependent row mapping");
-    }
     if (rawFields.digital_assets === undefined) {
       throw new Error("TY2026 PDF needs the digital-assets answer");
     }

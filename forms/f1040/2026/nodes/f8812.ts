@@ -51,6 +51,7 @@ class F8812Node2026 extends TaxNode<typeof f8812Input2026Schema> {
           nodeType: this.nodeType,
           fields: {
             ...lines,
+            file_schedule_8812: lines !== null,
             line14: lines?.line14 ?? 0,
             line27: lines?.line27 ?? 0,
             qualifying_children_count: input.auto_qualifying_children ?? 0,

@@ -94,7 +94,6 @@ class F10402026Node extends TaxNode<typeof inputSchema> {
     }
     const input = inputSchema.parse(rawInput);
     if (
-      input.dependent_count > 0 ||
       input.qualifying_child_tax_credit_count > 0 ||
       input.other_dependent_count > 0
     ) {

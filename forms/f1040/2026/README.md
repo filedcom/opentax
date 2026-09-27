@@ -66,9 +66,11 @@ The shared general input reaches the 2026 graph with dependent details.
 `identity.ts` defines the 2026 Form 1040 filer fields from that input. The
 dedicated 2026 Schedule 8812 node now finalizes CTC/ACTC in the calculation
 graph using the 2026 worksheet and verified earned income where needed. The
-PDF builder still rejects dependent returns until the changed dependent table
-and Schedule 8812 attachment are implemented; a complete dependent return is
-not yet supported.
+PDF builder prints the changed dependent table, a continuation for more than
+four dependents, and the two-page Schedule 8812 when its credit lines apply.
+One W-2/CTC return runs through the graph and PDF bundle. MeF, Schedule 3
+credit-source reconciliation, and the broader dependent credit cases remain
+open.
 `schedule2.ts` now calculates the draft 2026 Schedule 2 subtotals with filed
 line numbers, and `nodes/schedule2.ts` routes its totals into the focused 1040
 graph. The [Schedule 2 and 8812 map](../../../docs/ty2026/SCHEDULE2-8812.md)

@@ -1,5 +1,9 @@
 import { assertEquals } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
+import {
+  DependentCreditCategory,
+  DependentRelationship,
+} from "../../nodes/inputs/general/index.ts";
 import { buildF1040PdfBytes2026 } from "./f1040.ts";
 
 Deno.test("TY2026 Form 1040 PDF fills the pinned draft and removes its cover", async () => {
@@ -15,6 +19,9 @@ Deno.test("TY2026 Form 1040 PDF fills the pinned draft and removes its cover", a
     address_zip: "02108",
     digital_assets: false,
     taxpayer_citizen_national_or_work_authorized: true,
+    dependent_count: 0,
+    qualifying_child_tax_credit_count: 0,
+    other_dependent_count: 0,
     line1a_wages: 80_000,
     line11a_agi: 80_000,
     line11b_agi: 80_000,
@@ -32,4 +39,31 @@ Deno.test("TY2026 Form 1040 PDF fills the pinned draft and removes its cover", a
   const pdf = await PDFDocument.load(bytes);
   assertEquals(pdf.getPageCount(), 2);
   assertEquals(bytes.length > 10_000, true);
+});
+
+Deno.test("TY2026 Form 1040 prints four dependent columns and a continuation", async () => {
+  const dependents = Array.from({ length: 5 }, (_, index) => ({
+    first_name: `Child${index + 1}`,
+    last_name: "Rivera",
+    ssn: `22233444${index}`,
+    dob: "2010-06-15",
+    relationship: DependentRelationship.Daughter,
+    months_in_home: 12,
+    lived_in_us_over_half_year: true,
+    credit_category: DependentCreditCategory.None,
+  }));
+  const bytes = await buildF1040PdfBytes2026({
+    filing_status: "single",
+    taxpayer_first_name: "Ada",
+    taxpayer_last_name: "Rivera",
+    taxpayer_ssn: "111223333",
+    digital_assets: false,
+    taxpayer_citizen_national_or_work_authorized: true,
+    dependent_count: 5,
+    qualifying_child_tax_credit_count: 0,
+    other_dependent_count: 0,
+    dependent_details: dependents,
+  });
+  const pdf = await PDFDocument.load(bytes);
+  assertEquals(pdf.getPageCount(), 3);
 });

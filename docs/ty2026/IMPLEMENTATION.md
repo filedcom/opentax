@@ -85,11 +85,13 @@ The focused graph now accepts multiple actual W-2 input records and reaches
 1040 wages, tax, withholding, and refund. The shared W-2 node's 2026 config
 tests also cover retirement limits. The remaining W-2 downstream form
 branches are still outside this calculation slice.
-The shared general input now reaches the focused TY2026 graph for a filer
-without dependents. The 2026 Form 1040 node preserves filer identity and
-address fields; AGI and deduction resolution supply one filing-status value
-to avoid duplicate graph inputs. Returns with dependents explicitly fail at
-the 2026 final node until child-credit finalization is implemented.
+The shared general input reaches the focused TY2026 graph with dependent
+details. The 2026 Form 1040 node preserves filer identity and address fields;
+AGI and deduction resolution supply one filing-status value to avoid duplicate
+graph inputs. The dedicated 2026 Schedule 8812 node now finalizes CTC/ACTC for
+credit-category dependents and routes lines 14/27 to Form 1040 lines 19/28.
+The draft PDF bundle prints dependent rows, continuations, and Schedule 8812.
+The full Schedule 3 credit-source and MeF paths are still open.
 The shared Schedule 1-A node now emits its 2026 line 15/27/36/43/44 results
 and sends lines 43/44 to the 2026 deduction node. AGI adds Form 2555 amounts
 back for Schedule 1-A MAGI in 2026. W-2 code TP/TT records now feed employee
@@ -113,8 +115,10 @@ The focused tip-tax graph now uses the 2026 Schedule 2 node: Form 4137 reaches
 line 16a and W-2 A/B/M/N reach line 17c; the node sends line 3 and line 21
 totals to 1040. Other tax-source splits remain. Schedule 8812 now has a
 TY2026 Part II-B shape for Schedule 2 lines
-16c and 17c, with graph reconciliation of those line amounts. The rest of its
-worksheet and credit-output graph still needs verification. The draft 2026
+16c and 17c, with graph reconciliation of those line amounts. Its credit
+limit, earned-income, and 1040 output paths are now in the 2026 registry;
+Schedule 3 source reconciliation and broader Part II-B graph cases remain.
+The draft 2026
 Schedule 8812 instructions are pinned; Credit Limit Worksheet A now uses the
 2026 Schedule 3 line list and rejects the 2025 worksheet shape. Worksheet B
 line 15 now sums the four 2026 Schedule 3 credit lines; graph reconciliation
@@ -137,8 +141,11 @@ The draft 2026 Form 1040's 207 AcroForm fields are inventoried with tooltips,
 widget coordinates, and physical pages in `pdf-fields-f1040.csv`. The
 [Form 1040 PDF map](PDF-F1040-MAP.md) identifies changed 2026 line fields and
 the new authorization/dependent checkbox groups. The dedicated main-form
-descriptor and filler now produce a two-page draft 1040 from a wages-only
-graph result, with visual QA. The full PDF bundle remains open.
+descriptor and filler produce a two-page draft 1040 from a wages-only graph
+result and dependent continuations from the revised first-page table. The
+draft Schedule 8812 filler reconciles its credit lines and appends two pages
+when a credit is filed; both forms passed visual QA. The full PDF bundle
+remains open across the rest of the supported 2025 surface.
 The [MeF v1 drift review](MEF-V1-DRIFT.md) confirms the downloaded May package
 predates 1040 lines 12f, 24a–c, 32a–c, Schedule 3-A, and the new
 work-authorization question. IRS announced v4 on September 24 through the

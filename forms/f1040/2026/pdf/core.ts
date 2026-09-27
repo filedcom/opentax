@@ -8,6 +8,7 @@ import { buildSchedule1APdfBytes2026 } from "./schedule1a.ts";
 import { buildScheduleBPdfBytes2026 } from "./schedule_b.ts";
 import { buildSchedule2PdfBytes2026 } from "./schedule2.ts";
 import { buildSchedule3APdfBytes2026 } from "./schedule3a.ts";
+import { buildSchedule8812PdfBytes2026 } from "./schedule_8812.ts";
 
 function amount(fields: Record<string, unknown>, key: string): number {
   const value = fields[key];
@@ -27,6 +28,7 @@ interface CorePdfInput2026 {
   readonly form6251?: Record<string, unknown>;
   readonly form4137?: Record<string, unknown>;
   readonly form8960?: Record<string, unknown>;
+  readonly f8812?: Record<string, unknown>;
 }
 
 /** The current main-form and checked TY2026 attachment PDF slice. */
@@ -40,11 +42,28 @@ export async function buildCorePdfBytes2026({
   form6251,
   form4137,
   form8960,
+  f8812,
 }: CorePdfInput2026): Promise<Uint8Array> {
-  if (typeof f1040.dependent_count === "number" && f1040.dependent_count > 0) {
-    throw new Error(
-      "TY2026 core PDF needs dependent rows and Schedule 8812 attachment",
-    );
+  const creditDependentCount =
+    amount(f1040, "qualifying_child_tax_credit_count") +
+    amount(f1040, "other_dependent_count");
+  if (creditDependentCount > 0 && !f8812) {
+    throw new Error("TY2026 core PDF needs Schedule 8812 calculation");
+  }
+  if (creditDependentCount === 0 && f8812) {
+    throw new Error("TY2026 core PDF Schedule 8812 has no credit dependents");
+  }
+  if (
+    f8812 && (
+      amount(f8812, "line14") !==
+        (f1040.line19_child_tax_credit === undefined
+          ? 0
+          : amount(f1040, "line19_child_tax_credit")) ||
+      amount(f8812, "line27") !==
+        (f1040.line28_actc === undefined ? 0 : amount(f1040, "line28_actc"))
+    )
+  ) {
+    throw new Error("TY2026 core PDF Schedule 8812 disagrees with Form 1040");
   }
   const claimsRelevantCredit = [
     "line27a_eic",
@@ -184,6 +203,11 @@ export async function buildCorePdfBytes2026({
   }
   if (schedule3a) {
     parts.push(await buildSchedule3APdfBytes2026(schedule3a, { name, ssn }));
+  }
+  if (f8812?.file_schedule_8812 === true) {
+    parts.push(
+      await buildSchedule8812PdfBytes2026(f8812, f1040, { name, ssn }),
+    );
   }
   if (scheduleB) {
     parts.push(await buildScheduleBPdfBytes2026(scheduleB, { name, ssn }));

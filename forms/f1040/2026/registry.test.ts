@@ -30,39 +30,43 @@ const filer = {
   address_zip: "02108",
 };
 
-Deno.test("TY2026 registered dependent reaches Schedule 8812 and Form 1040 credits", () => {
+const dependentChild = {
+  first_name: "Maya",
+  last_name: "Rivera",
+  ssn: "222334444",
+  ssn_valid_for_employment: true,
+  ssn_issued_before_due_date: true,
+  tin_issued_by_due_date: true,
+  dob: "2014-06-15",
+  relationship: DependentRelationship.Daughter,
+  months_in_home: 12,
+  lived_in_us_over_half_year: true,
+  us_citizen_national_or_resident: true,
+  provided_over_half_own_support: false,
+  filed_joint_return_except_refund_only: false,
+};
+
+const creditLimitWorksheet = {
+  schedule3_line1: 0,
+  schedule3_line2: 0,
+  schedule3_line3: 0,
+  schedule3_line4: 0,
+  schedule3_line6d: 0,
+  schedule3_line6f: 0,
+  schedule3_line6l: 0,
+  schedule3_line6m: 0,
+  worksheet_b_applies: false,
+};
+
+Deno.test("TY2026 registered dependent reaches Schedule 8812, Form 1040, and PDF", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       ...filer,
-      dependents: [{
-        first_name: "Maya",
-        last_name: "Rivera",
-        ssn: "222334444",
-        ssn_valid_for_employment: true,
-        ssn_issued_before_due_date: true,
-        tin_issued_by_due_date: true,
-        dob: "2014-06-15",
-        relationship: DependentRelationship.Daughter,
-        months_in_home: 12,
-        lived_in_us_over_half_year: true,
-        us_citizen_national_or_resident: true,
-        provided_over_half_own_support: false,
-        filed_joint_return_except_refund_only: false,
-      }],
+      dependents: [dependentChild],
     },
     w2: [{ box1_wages: 80_000, box2_fed_withheld: 10_000 }],
     f8812: {
-      credit_limit_worksheet_2026: {
-        schedule3_line1: 0,
-        schedule3_line2: 0,
-        schedule3_line3: 0,
-        schedule3_line4: 0,
-        schedule3_line6d: 0,
-        schedule3_line6f: 0,
-        schedule3_line6l: 0,
-        schedule3_line6m: 0,
-        worksheet_b_applies: false,
-      },
+      credit_limit_worksheet_2026: creditLimitWorksheet,
     },
   }, context);
   assertEquals(result.diagnostics, []);
@@ -71,13 +75,70 @@ Deno.test("TY2026 registered dependent reaches Schedule 8812 and Form 1040 credi
   assertEquals(result.pending.f1040.line19_child_tax_credit, 2_200);
   assertEquals(result.pending.f1040.line28_actc, 0);
   assertEquals(result.pending.f1040.dependent_count, 1);
+  const pdf = await PDFDocument.load(
+    await buildCorePdfBytes2026({
+      f1040: result.pending.f1040,
+      f8812: result.pending.f8812,
+    }),
+  );
+  assertEquals(pdf.getPageCount(), 4);
 });
 
-Deno.test("TY2026 dependent PDF waits for printed rows and Schedule 8812", async () => {
+Deno.test("TY2026 prints a dependent without a credit or Schedule 8812", async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: {
+      ...filer,
+      dependents: [{
+        ...dependentChild,
+        ssn_issued_before_due_date: false,
+        tin_issued_by_due_date: false,
+      }],
+    },
+    w2: [{ box1_wages: 80_000, box2_fed_withheld: 10_000 }],
+  }, context);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040.dependent_count, 1);
+  assertEquals(result.pending.f1040.qualifying_child_tax_credit_count, 0);
+  assertEquals(result.pending.f1040.other_dependent_count, 0);
+  assertEquals(result.pending.f8812.line14, undefined);
+  const pdf = await PDFDocument.load(
+    await buildCorePdfBytes2026({
+      f1040: result.pending.f1040,
+    }),
+  );
+  assertEquals(pdf.getPageCount(), 2);
+});
+
+Deno.test("TY2026 phased-out CTC keeps the dependent row without Schedule 8812 PDF", async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: { ...filer, dependents: [dependentChild] },
+    w2: [{ box1_wages: 300_000, box2_fed_withheld: 60_000 }],
+    f8812: { credit_limit_worksheet_2026: creditLimitWorksheet },
+  }, context);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f8812.file_schedule_8812, false);
+  assertEquals(result.pending.f1040.line19_child_tax_credit, 0);
+  const pdf = await PDFDocument.load(
+    await buildCorePdfBytes2026({
+      f1040: result.pending.f1040,
+      f8812: result.pending.f8812,
+    }),
+  );
+  assertEquals(pdf.getPageCount(), 2);
+});
+
+Deno.test("TY2026 dependent PDF requires Schedule 8812 calculation", async () => {
   await assertRejects(
-    () => buildCorePdfBytes2026({ f1040: { dependent_count: 1 } }),
+    () =>
+      buildCorePdfBytes2026({
+        f1040: {
+          dependent_count: 1,
+          qualifying_child_tax_credit_count: 1,
+          other_dependent_count: 0,
+        },
+      }),
     Error,
-    "needs dependent rows and Schedule 8812",
+    "needs Schedule 8812 calculation",
   );
 });
 

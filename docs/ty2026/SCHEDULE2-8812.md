@@ -44,10 +44,13 @@ uses the year-specific credit-limit worksheet, requires verified line 18a
 earned income whenever an ACTC may arise, adds Schedule 2 line 3 to Form 1040
 line 16 for the credit limit, and sends lines 14 and 27 to Form 1040 lines 19
 and 28. A W-2 return with one qualifying child runs through the registry.
-The Form 1040 node still requires this credit calculation for dependent
-returns. PDF export rejects those returns until the revised dependent table
-and Schedule 8812 attachment are printed; MeF and Schedule 3 credit-source
-reconciliation remain open.
+The Form 1040 node requires this credit calculation when a dependent qualifies
+for CTC or ODC. The draft Form 1040 PDF now prints the revised four-column
+dependent table and an additional-dependents statement when needed. The core
+bundle includes the two-page draft Schedule 8812 when the calculation reaches
+its credit lines, and reconciles lines 14 and 27 with Form 1040 lines 19 and
+28. A one-child W-2 bundle was rendered and visually checked. MeF and Schedule
+3 credit-source reconciliation remain open.
 
 The 2026 draft instructions change Credit Limit Worksheet A line 2: add
 Schedule 3 lines 1, 2, 3, 4, 6d, 6f, 6l, and 6m. The 2025 worksheet also lists

@@ -18,6 +18,8 @@ for the implementation contract.
 - [`PDF-SCHEDULE2-6251-MAP.md`](PDF-SCHEDULE2-6251-MAP.md),
   `pdf-fields-f1040s2.csv`, and `pdf-fields-f6251.csv`: the 2026 additional-tax
   and AMT attachment field maps and remaining print-detail gaps.
+- [`PDF-DEPENDENTS-8812-MAP.md`](PDF-DEPENDENTS-8812-MAP.md): the revised
+  dependent table, continuation, Schedule 8812 AcroForm fields, and checks.
 - [`SCHEDULE1-GRAPH.md`](SCHEDULE1-GRAPH.md) and
   `pdf-fields-f1040s1.csv`: the 2026 Schedule 1 source/AGI contract, changed
   line meanings, and 73 draft PDF widgets.

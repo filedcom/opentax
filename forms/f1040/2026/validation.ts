@@ -130,7 +130,8 @@ export const CALCULATION_RULES_2026: readonly RuleDef[] = [
     "reject",
     "missing_document",
     (ctx) =>
-      f1040(ctx, "dependent_count") === 0 ||
+      f1040(ctx, "qualifying_child_tax_credit_count") +
+            f1040(ctx, "other_dependent_count") === 0 ||
       ctx.hasForm("f8812") &&
         number(ctx, "f8812", "line14") ===
           f1040(ctx, "line19_child_tax_credit") &&
