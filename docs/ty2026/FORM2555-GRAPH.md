@@ -54,6 +54,14 @@ than copying the TY2025 descriptor's five approximate fields.
   attachment. The TY2025 MeF serializer hardcodes 2025 calculation and a
   subset of fields. The current TY2026 XSD, document order, statement
   references and multiple-form rules are an output gate.
+- The TY2025 `foreign_employer_wages.ts` module has **two** MeF descriptors:
+  `FECRecord` and `WagesNotShownSchedule`. It derives both from
+  `form2555.filing_details`. The public TY2026 attachment workbook lists
+  them at form level (row 191) and line 1h (row 804), respectively. A foreign
+  employer's wages are a source record whether or not the taxpayer claims
+  §911; do not make the income record contingent on a Form 2555 election.
+  Confirm the selected XSD's filing conditions and references before
+  emitting either document.
 
 ## Dependencies and acceptance cases
 

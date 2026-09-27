@@ -22,7 +22,10 @@ workbooks. Current XSD and business rules remain the filing gate.
 The [public MeF serializer crosswalk](../../../docs/ty2026/MEF-PUBLIC-CROSSWALK.md)
 maps all 84 TY2025 serializer modules to the published 1040 accepted-form
 counts and attachment-name occurrences, with statement and missing-row
-review states. It also names 2026 additions outside the TY2025 inventory.
+review states. Its [descriptor ledger](../../../docs/ty2026/mef-descriptor-coverage.csv)
+records 85 runtime descriptors, including two foreign-wage descriptors
+from one module. The crosswalk also names 2026 additions outside the
+TY2025 inventory.
 The [Form 8962 contract](../../../docs/ty2026/FORM8962-GRAPH.md) maps the
 2026 full-repayment line 27, 400% FPL boundary and Form 1095-A source to
 Schedule 2/3, with a 143-widget PDF inventory and current-MeF gate.

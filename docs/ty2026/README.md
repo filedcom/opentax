@@ -305,6 +305,9 @@ for the implementation contract.
   Current result: 51 of 56 descriptors have a 2026 draft; five IRS draft
   URLs still serve older years and are recorded as `wrong-year` in the manifest.
 - [`mef-coverage.csv`](mef-coverage.csv): each TY2025 MeF serializer module.
+- [`mef-descriptor-coverage.csv`](mef-descriptor-coverage.csv): all 85
+  runtime MeF descriptors in XSD emission order, including the two foreign
+  employer wage documents exported by one module.
 - [`node-coverage.csv`](node-coverage.csv): all 191 registered TY2025 graph
   nodes, their source modules, 2025 year mentions, tax-year dispatch, matching
   MeF/PDF surface, available 2026 draft, and review priority. Every row remains

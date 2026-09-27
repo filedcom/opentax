@@ -3,7 +3,8 @@
 Snapshot: 2026-09-27. This is the coding order for the full TY2025 Form 1040
 product surface in TY2026. It sits beside the [detailed implementation
 plan](IMPLEMENTATION.md), [191-node ledger](node-coverage.csv), [56-PDF
-ledger](pdf-coverage.csv), and [84-MeF-module ledger](mef-coverage.csv). Do not
+ledger](pdf-coverage.csv), [84-MeF-module ledger](mef-coverage.csv), and
+[85-descriptor runtime ledger](mef-descriptor-coverage.csv). Do not
 interpret a TY2025 module or a TY2026 registry entry as a completed 2026
 filing route.
 

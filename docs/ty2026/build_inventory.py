@@ -16,6 +16,7 @@ REGISTRY = ROOT / "forms/f1040/2025/registry.ts"
 # A node stays unverified until its 2026 behavior, outputs, and form route are
 # checked. These notes identify work already started without marking it done.
 NODE_PROGRESS = {
+    "nol_carryforward": "Current Form 172/instructions and 109 fillable widgets pinned; derive pre-NOL taxable income from graph, deplete origin-year/owner balances oldest first, route allowed amount to Schedule 1 line 8a, and file each required IRS172 plus limitation statement; see FORM172-NOL-GRAPH.md; refresh 2026 law and MeF.",
     "rrb1099r": "RRB issuer explanations and IRS Pubs 575/915/939 pinned; shared node combines SSEB RRB-1099 boxes with pension RRB-1099-R boxes and mislabels 6-10; use separate owner-keyed source records and 1040 6a/b versus 5a/b, withholding/PDF/current MeF; see RRB-1099-GRAPH.md",
     "f4852": "Current Sep 2020 continuous-use form/printed instructions pinned; reconcile real/corrected/substitute payer records, line7e/8f withholding, taxable 1099-R basis, FICA/8959/5329, 34 PDF widgets/current MeF; see FORM4852-GRAPH.md",
     "f8938": "December 2026 draft and November 2021 continuous-use instructions pinned; calculate filer/abroad threshold and asset/exception ledger, Parts I-VI and continuation, 131 PDF widgets/current MeF; see FORM8938-GRAPH.md",
@@ -192,6 +193,43 @@ with (OUT / "mef-coverage.csv").open("w", newline="") as handle:
     writer.writerow(["component", "ty2025_serializer"])
     writer.writerows((name, str((MEF / (name + ".ts")).relative_to(ROOT))) for name in mef_names)
 
+# The module ledger has 84 rows, but the runtime ALL_MEF_FORMS list has 85
+# descriptors: foreign_employer_wages.ts exports two separate documents.
+imports = {}
+for imported, module in re.findall(
+    r'import\s*\{([^}]+)\}\s*from\s*"\./([^"/]+)\.ts"', mef_index
+):
+    for symbol in re.sub(r"//[^\n]*", "", imported).split(","):
+        symbol = symbol.strip()
+        if symbol:
+            imports[symbol] = module
+array = mef_index.split("export const ALL_MEF_FORMS = [", 1)[1].split(
+    "] as const;", 1
+)[0]
+symbols = [line.strip().rstrip(",") for line in array.splitlines()
+           if line.strip() and not line.strip().startswith("//")]
+descriptor_rows = []
+for sequence, symbol in enumerate(symbols, 1):
+    module = imports[symbol]
+    source = (MEF / (module + ".ts")).read_text()
+    declaration = re.search(r"export const " + re.escape(symbol) + r"\b", source)
+    if declaration is None:
+        raise ValueError(f"MeF descriptor export not found: {symbol}")
+    pending_key = re.search(r'pendingKey:\s*"([^"]+)"', source[declaration.end():])
+    if pending_key is None:
+        raise ValueError(f"MeF pending key not found: {symbol}")
+    descriptor_rows.append({
+        "sequence": sequence,
+        "symbol": symbol,
+        "pending_key": pending_key.group(1),
+        "ty2025_module": str((MEF / (module + ".ts")).relative_to(ROOT)),
+    })
+with (OUT / "mef-descriptor-coverage.csv").open("w", newline="") as handle:
+    writer = csv.DictWriter(handle, fieldnames=list(descriptor_rows[0]),
+                            lineterminator="\n")
+    writer.writeheader()
+    writer.writerows(descriptor_rows)
+
 year_literals = []
 for path in sorted(NODES.rglob("*.ts")):
     if path.name.endswith(".test.ts") or "/config/" in str(path):
@@ -270,4 +308,4 @@ with (OUT / "node-coverage.csv").open("w", newline="") as handle:
     writer.writeheader()
     writer.writerows(node_rows)
 
-print(f"PDF descriptors: {len(pdf_rows)}, MeF modules: {len(mef_names)}, registry nodes: {len(node_rows)}, node 2025 mentions: {len(year_literals)}")
+print(f"PDF descriptors: {len(pdf_rows)}, MeF modules: {len(mef_names)}, MeF descriptors: {len(descriptor_rows)}, registry nodes: {len(node_rows)}, node 2025 mentions: {len(year_literals)}")
