@@ -37,6 +37,9 @@ tests and TY2026 boundary tests pass.
 The `auto_expense` and Form 2106 nodes now use the two 2026 business-mileage
 rates and require period miles to reconcile to the annual total. Their focused
 TY2025 and TY2026 tests pass; medical/moving mileage still needs review.
+Form 8621 Part V now derives its event dates, three-year distribution history,
+and current/prior-year allocations from the selected return year. The TY2025
+and TY2026 excess-distribution tests pass.
 Rev. Proc. 2026-15 is pinned for passenger autos first placed in service in
 2026, and Rev. Proc. 2025-16 supports the TY2025 regression correction. Form
 4562 must select the cap table by the vehicle's placed-in-service year, not

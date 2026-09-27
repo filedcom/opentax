@@ -45,6 +45,12 @@ function compute(items: F8621Item[]) {
   });
 }
 
+function compute2026(items: F8621Item[]) {
+  return f8621.compute({ taxYear: 2026, formType: "f1040" }, {
+    f8621s: items,
+  });
+}
+
 Deno.test("Form 8621 validates one holding per item and rejects the old flat amount", () => {
   assertEquals(
     f8621.inputSchema.safeParse({ f8621s: [minimalItem()] }).success,
@@ -96,6 +102,26 @@ Deno.test("Form 8621 Part V puts prior-year tax on line 16 and interest on Sched
     result.outputs.filter((item) => item.nodeType === "form8621").length,
     1,
   );
+});
+
+Deno.test("Form 8621 routes a 2026 excess distribution using 2025 as the prior year", () => {
+  const event: ExcessEvent = {
+    kind: ExcessEventKind.Distribution,
+    holding_period_start: "2025-01-01",
+    first_pfic_tax_year: 2025,
+    shares_in_block: 100,
+    prior_year_distributions: [{ tax_year: 2025, amount_usd: 0 }],
+    current_year_distributions: [{
+      date: "2026-12-31",
+      amount_usd: 10_000,
+      year_charges: [{ tax_year: 2025, interest_charge: 150 }],
+    }],
+    taxable_nonexcess_dividend_usd: 0,
+  };
+  const result = compute2026([minimalItem({ excess_events: [event] })]);
+  assertEquals(fieldsOf(result.outputs, income_tax_calculation)?.form8621_tax, 1_850);
+  assertEquals(fieldsOf(result.outputs, schedule1)?.line8z_other, 5_000);
+  assertEquals(fieldsOf(result.outputs, schedule2)?.line17p_form8621_interest, 150);
 });
 
 Deno.test("Form 8621 routes taxable nonexcess distribution to dividends", () => {
@@ -240,6 +266,7 @@ Deno.test("Form 8621 QEF section 951 and 1293(g) amounts reduce each inclusion",
         regime: PficRegime.QEF,
         qef_ordinary_income: 100,
         qef_ordinary_951_or_1293g_reduction: 200,
+        qef_capital_gain: 0,
       })]),
     Error,
     "exceeds pro rata income",
@@ -285,6 +312,8 @@ Deno.test("Form 8621 rejects Part V events on a different regime", () => {
     () =>
       compute([minimalItem({
         regime: PficRegime.QEF,
+        qef_ordinary_income: 0,
+        qef_capital_gain: 0,
         excess_events: [excessEvent()],
       })]),
     Error,

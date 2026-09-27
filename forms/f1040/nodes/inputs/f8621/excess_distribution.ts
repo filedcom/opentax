@@ -5,7 +5,7 @@ import { z } from "zod";
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 const yearChargeSchema = z.object({
-  tax_year: z.number().int().min(1987).max(2024),
+  tax_year: z.number().int().min(1987).max(2025),
   foreign_tax_credit: z.number().nonnegative().optional(),
   // Interest under section 6621 is sourced for each prior PFIC year until
   // historical interest-rate periods and payment dates are modeled here.
@@ -22,18 +22,18 @@ const dispositionSchema = z.object({
   amount_usd: z.number().positive(),
   holding_period_start: dateSchema,
   event_date: dateSchema,
-  first_pfic_tax_year: z.number().int().min(1987).max(2025),
+  first_pfic_tax_year: z.number().int().min(1987).max(2026),
   year_charges: z.array(yearChargeSchema),
 }).strict();
 
 const distributionSchema = z.object({
   kind: z.literal(ExcessEventKind.Distribution),
   holding_period_start: dateSchema,
-  first_pfic_tax_year: z.number().int().min(1987).max(2025),
+  first_pfic_tax_year: z.number().int().min(1987).max(2026),
   shares_in_block: z.number().positive(),
   prior_year_distributions: z.array(
     z.object({
-      tax_year: z.number().int().min(2022).max(2024),
+      tax_year: z.number().int().min(2022).max(2025),
       amount_usd: z.number().nonnegative(),
     }).strict(),
   ),
@@ -106,7 +106,7 @@ function holdingDays(start: number, end: number): number {
 }
 
 function highestIndividualRate(year: number): number {
-  if (year >= 2018 && year <= 2025) return 0.37;
+  if (year >= 2018 && year <= 2026) return 0.37;
   if (year >= 2013 && year <= 2017) return 0.396;
   if (year >= 2003 && year <= 2012) return 0.35;
   if (year === 2002) return 0.386;
@@ -124,13 +124,13 @@ type TaxableExcess = Omit<z.infer<typeof dispositionSchema>, "kind"> & {
   kind: ExcessEventKind;
 };
 
-function allocateByHoldingDays(event: TaxableExcess): ExcessYearAllocation[] {
+function allocateByHoldingDays(event: TaxableExcess, taxYear: number): ExcessYearAllocation[] {
   const start = parseDate(event.holding_period_start);
   const end = parseDate(event.event_date);
   const startYear = new Date(start).getUTCFullYear();
-  if (end < start || new Date(end).getUTCFullYear() !== 2025) {
+  if (end < start || new Date(end).getUTCFullYear() !== taxYear) {
     throw new Error(
-      "Form 8621 Part V needs a valid holding period ending on a 2025 event date",
+      `Form 8621 Part V needs a valid holding period ending on a ${taxYear} event date`,
     );
   }
   const totalDays = holdingDays(start, end);
@@ -144,7 +144,7 @@ function allocateByHoldingDays(event: TaxableExcess): ExcessYearAllocation[] {
     cents: number;
     remainder: number;
   }[] = [];
-  for (let year = startYear; year <= 2025; year++) {
+  for (let year = startYear; year <= taxYear; year++) {
     const yearStart = Math.max(start, Date.UTC(year, 0, 1));
     const yearEnd = Math.min(end, Date.UTC(year, 11, 31));
     const days = holdingDays(yearStart, yearEnd);
@@ -176,8 +176,8 @@ function allocateByHoldingDays(event: TaxableExcess): ExcessYearAllocation[] {
   }));
 }
 
-function calculateTaxableExcess(event: TaxableExcess): ExcessEventResult {
-  const allocations = allocateByHoldingDays(event);
+function calculateTaxableExcess(event: TaxableExcess, taxYear: number): ExcessEventResult {
+  const allocations = allocateByHoldingDays(event, taxYear);
   const charges = new Map<number, z.infer<typeof yearChargeSchema>>();
   for (const charge of event.year_charges) {
     if (charges.has(charge.tax_year)) {
@@ -191,7 +191,7 @@ function calculateTaxableExcess(event: TaxableExcess): ExcessEventResult {
   let interest = 0;
   for (const year of allocations) {
     const charge = charges.get(year.tax_year);
-    if (year.tax_year === 2025 || !year.pfic_year) {
+    if (year.tax_year === taxYear || !year.pfic_year) {
       if (charge) {
         throw new Error(
           "Form 8621 charges apply only to prior PFIC tax years",
@@ -251,17 +251,18 @@ function calculateTaxableExcess(event: TaxableExcess): ExcessEventResult {
 
 function validatePriorHistory(
   event: z.infer<typeof distributionSchema>,
+  taxYear: number,
 ): number {
   const startYear = new Date(parseDate(event.holding_period_start))
     .getUTCFullYear();
-  if (startYear > 2025) {
+  if (startYear > taxYear) {
     throw new Error(
-      "Form 8621 holding period cannot begin after tax year 2025",
+      `Form 8621 holding period cannot begin after tax year ${taxYear}`,
     );
   }
   const requiredYears = Array.from(
-    { length: Math.min(3, 2025 - startYear) },
-    (_, index) => 2024 - index,
+    { length: Math.min(3, taxYear - startYear) },
+    (_, index) => taxYear - 1 - index,
   );
   const suppliedYears = event.prior_year_distributions.map((year) =>
     year.tax_year
@@ -299,14 +300,15 @@ function distributeCents(totalCents: number, weights: number[]): number[] {
 
 function calculateDistributionBlock(
   event: z.infer<typeof distributionSchema>,
+  taxYear: number,
 ): ExcessEventResult[] {
-  const priorYears = validatePriorHistory(event);
+  const priorYears = validatePriorHistory(event, taxYear);
   const start = parseDate(event.holding_period_start);
   const dates = event.current_year_distributions.map((distribution) => {
     const date = parseDate(distribution.date);
-    if (date < start || new Date(date).getUTCFullYear() !== 2025) {
+    if (date < start || new Date(date).getUTCFullYear() !== taxYear) {
       throw new Error(
-        "Form 8621 distribution must occur during the 2025 holding period",
+        `Form 8621 distribution must occur during the ${taxYear} holding period`,
       );
     }
     return date;
@@ -379,7 +381,7 @@ function calculateDistributionBlock(
         event_date: distribution.date,
         first_pfic_tax_year: event.first_pfic_tax_year,
         year_charges: distribution.year_charges,
-      });
+      }, taxYear);
       return {
         ...calculated,
         kind: ExcessEventKind.Distribution,
@@ -397,10 +399,17 @@ function calculateDistributionBlock(
 
 export function calculateExcessEvents(
   rawEvent: ExcessEvent,
+  taxYear: number,
 ): ExcessEventResult[] {
-  const event = excessEventSchema.parse(rawEvent);
-  if (event.kind === ExcessEventKind.Distribution) {
-    return calculateDistributionBlock(event);
+  if (taxYear !== 2025 && taxYear !== 2026) {
+    throw new Error(`Form 8621 excess distributions are unsupported for tax year ${taxYear}`);
   }
-  return [calculateTaxableExcess(event)];
+  const event = excessEventSchema.parse(rawEvent);
+  if (event.first_pfic_tax_year > taxYear) {
+    throw new Error("Form 8621 first PFIC tax year cannot follow the return year");
+  }
+  if (event.kind === ExcessEventKind.Distribution) {
+    return calculateDistributionBlock(event, taxYear);
+  }
+  return [calculateTaxableExcess(event, taxYear)];
 }

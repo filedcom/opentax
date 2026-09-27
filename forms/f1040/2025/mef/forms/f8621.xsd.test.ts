@@ -1,6 +1,6 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { buildMefXml } from "../builder.ts";
-import { FilingStatus } from "../../../nodes/types.ts";
+import { FilingStatus } from "../../../mef/header.ts";
 import { calculateExcessEvents } from "../../../nodes/inputs/f8621/excess_distribution.ts";
 import { ExcessEventKind } from "../../../nodes/inputs/f8621/excess_distribution.ts";
 import { itemSchema, PficRegime } from "../../../nodes/inputs/f8621/index.ts";
@@ -73,7 +73,7 @@ Deno.test({
     },
     schedule2: { line17p_form8621_interest: 150 },
     form8621: {
-      items: [{ item, excessEvents: calculateExcessEvents(event) }],
+      items: [{ item, excessEvents: calculateExcessEvents(item.excess_events![0], 2025) }],
     },
   }, filer);
   assertStringIncludes(xml, "<IRS8621 documentId=");

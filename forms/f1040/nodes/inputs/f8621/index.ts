@@ -16,7 +16,7 @@ import {
 } from "./excess_distribution.ts";
 import type { ExcessEventResult } from "./excess_distribution.ts";
 
-// TY2025 — Form 8621: Information Return by a Shareholder of a PFIC or QEF
+// Form 8621: Information Return by a Shareholder of a PFIC or QEF
 // US shareholders of Passive Foreign Investment Companies (PFICs) file annually.
 // IRC §§1291–1298. Three taxation regimes:
 // 1. Excess Distribution (default) — IRC §1291: special tax + interest charge on
@@ -167,10 +167,10 @@ function validateHoldings(items: F8621Items): void {
   }
 }
 
-function calculatedLines(items: F8621Items): Form8621Lines[] {
+function calculatedLines(items: F8621Items, taxYear: number): Form8621Lines[] {
   return items.map((item) => ({
     item,
-    excessEvents: (item.excess_events ?? []).flatMap(calculateExcessEvents),
+    excessEvents: (item.excess_events ?? []).flatMap((event) => calculateExcessEvents(event, taxYear)),
   }));
 }
 
@@ -196,10 +196,10 @@ class F8621Node extends TaxNode<typeof inputSchema> {
     income_tax_calculation,
   ]);
 
-  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+  compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { f8621s } = inputSchema.parse(input);
     validateHoldings(f8621s);
-    const lines = calculatedLines(f8621s);
+    const lines = calculatedLines(f8621s, ctx.taxYear);
     const currentAndPrePficIncome = totalEventLine(
       lines,
       (event) => event.line16b_current_and_pre_pfic_income,

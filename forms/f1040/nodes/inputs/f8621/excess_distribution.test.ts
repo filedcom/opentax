@@ -1,8 +1,11 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import {
-  calculateExcessEvents,
+  calculateExcessEvents as calculateForYear,
   ExcessEventKind,
 } from "./excess_distribution.ts";
+import type { ExcessEvent } from "./excess_distribution.ts";
+
+const calculateExcessEvents = (event: ExcessEvent) => calculateForYear(event, 2025);
 
 const distribution = {
   kind: ExcessEventKind.Distribution as const,
@@ -181,4 +184,30 @@ Deno.test("Form 8621 disposition needs section 1248 attribution for foreign tax 
     Error,
     "section 1248 dividend attribution",
   );
+});
+
+Deno.test("Form 8621 uses 2026 as current year and 2025 as prior PFIC year", () => {
+  const event: ExcessEvent = {
+    kind: ExcessEventKind.Distribution,
+    holding_period_start: "2025-01-01",
+    first_pfic_tax_year: 2025,
+    shares_in_block: 100,
+    prior_year_distributions: [{ tax_year: 2025, amount_usd: 0 }],
+    current_year_distributions: [{
+      date: "2026-12-31",
+      amount_usd: 10_000,
+      year_charges: [{ tax_year: 2025, interest_charge: 150 }],
+    }],
+    taxable_nonexcess_dividend_usd: 0,
+  };
+  const [result] = calculateForYear(event, 2026);
+  assertEquals(result.allocations.map((year) => year.tax_year), [2025, 2026]);
+  assertEquals(result.line16b_current_and_pre_pfic_income, 5_000);
+  assertEquals(result.line16e_additional_tax, 1_850);
+  assertEquals(result.line16f_interest, 150);
+  assertThrows(() => calculateForYear(event, 2025), Error);
+  assertThrows(() => calculateForYear({
+    ...event,
+    prior_year_distributions: [{ tax_year: 2024, amount_usd: 0 }],
+  }, 2026), Error, "every prior holding year");
 });
