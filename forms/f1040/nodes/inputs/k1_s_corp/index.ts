@@ -29,6 +29,7 @@ import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import { form4952 } from "../../intermediate/forms/form4952/index.ts";
 import { f3800 } from "../f3800/index.ts";
 import { form8582cr } from "../../intermediate/forms/form8582cr/index.ts";
+import { disabledAccessLimit } from "../../intermediate/forms/disabled_access_limit/index.ts";
 import { scheduleA as schedule_a } from "../schedule_a/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
@@ -498,6 +499,7 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
     form4952,
     f3800,
     form8582cr,
+    disabledAccessLimit,
   ]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
@@ -556,7 +558,7 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
           );
         }
         if (item.disabled_access_credit_subject_to_passive_activity_limit) {
-          return [output(form8582cr, {
+          return [output(disabledAccessLimit, {
             required_disabled_access_k1_credits: [{
               source_type: "s_corporation",
               source_ein: item.corporation_ein,
@@ -565,7 +567,7 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
             }],
           })];
         }
-        return [output(f3800, {
+        return [output(disabledAccessLimit, {
           f8826_credit_entries: [{
             source_type: "s_corporation",
             source_ein: item.corporation_ein,

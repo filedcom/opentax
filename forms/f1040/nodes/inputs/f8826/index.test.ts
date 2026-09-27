@@ -1,6 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { calculateForm8826, f8826 } from "./index.ts";
 import { f3800 } from "../f3800/index.ts";
+import { disabledAccessLimit } from "../../intermediate/forms/disabled_access_limit/index.ts";
 
 const eligibleFacts = {
   prior_year_gross_receipts: 500_000,
@@ -13,7 +14,15 @@ function compute(input: Parameters<typeof f8826.compute>[1]) {
 }
 
 function findForm3800(result: ReturnType<typeof compute>) {
-  return result.outputs.find((o) => o.nodeType === "f3800");
+  const source = result.outputs.find((o) =>
+    o.nodeType === "disabled_access_limit"
+  );
+  return source
+    ? disabledAccessLimit.compute(
+      { taxYear: 2025, formType: "f1040" },
+      disabledAccessLimit.inputSchema.parse(source.fields),
+    ).outputs.find((o) => o.nodeType === "f3800")
+    : undefined;
 }
 
 function form3800Credit(
@@ -183,7 +192,7 @@ Deno.test("combined $5,000 cap allocates all source credits pro rata to cents", 
     500_000,
   );
   assertEquals(
-    f3800.inputSchema.parse(compute(input).outputs[0]?.fields)
+    f3800.inputSchema.parse(findForm3800(compute(input))?.fields)
       .f8826_credit_entries,
     [{
       source_type: "self",
@@ -318,8 +327,8 @@ Deno.test("first-year business with zero prior-year receipts and employees quali
 
 Deno.test("routes_source_credit_to_Form_3800_without_claiming_Schedule_3", () => {
   const result = compute({ eligible_expenditures: 5000, ...eligibleFacts });
-  assertEquals(result.outputs[0]?.nodeType, "f3800");
-  assertEquals(result.outputs[0]?.fields.f8826_credit_entries, [{
+  assertEquals(result.outputs[0]?.nodeType, "disabled_access_limit");
+  assertEquals(findForm3800(result)?.fields.f8826_credit_entries, [{
     source_type: "self",
     credit_amount: 2375,
     subject_to_passive_activity_limit: false,

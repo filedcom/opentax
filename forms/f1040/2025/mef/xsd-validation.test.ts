@@ -2284,7 +2284,9 @@ Deno.test("passive disabled-access K-1 without Form 8582-CR facts reports a diag
     }],
   });
   assertEquals(
-    result.diagnostics.some((item) => item.nodeType === "form8582cr"),
+    result.diagnostics.some((item) =>
+      item.nodeType === "disabled_access_limit"
+    ),
     true,
   );
 });

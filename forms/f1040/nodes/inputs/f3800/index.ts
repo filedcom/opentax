@@ -67,7 +67,7 @@ const f8835CreditEntrySchema = z.object({
   transfer_election_statement_file_name: z.string().min(1).optional(),
 });
 
-const f8826CreditEntrySchema = z.object({
+export const f8826CreditEntrySchema = z.object({
   source_type: z.enum([
     "self",
     "partnership",

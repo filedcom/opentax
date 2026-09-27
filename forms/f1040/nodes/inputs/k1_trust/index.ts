@@ -17,6 +17,7 @@ import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
 import { form4952 } from "../../intermediate/forms/form4952/index.ts";
 import { f3800 } from "../f3800/index.ts";
 import { form8582cr } from "../../intermediate/forms/form8582cr/index.ts";
+import { disabledAccessLimit } from "../../intermediate/forms/disabled_access_limit/index.ts";
 import {
   ForeignTaxCreditMethod,
   ForeignTaxKind,
@@ -413,7 +414,7 @@ function disabledAccessCreditOutputs(items: K1TrustItems): NodeOutput[] {
       throw new Error("Estate/trust disabled-access K-1 source is incomplete");
     }
     if (item.disabled_access_credit_subject_to_passive_activity_limit) {
-      return [output(form8582cr, {
+      return [output(disabledAccessLimit, {
         required_disabled_access_k1_credits: [{
           source_type: item.entity_type,
           source_ein: item.estate_trust_ein,
@@ -424,7 +425,7 @@ function disabledAccessCreditOutputs(items: K1TrustItems): NodeOutput[] {
         }],
       })];
     }
-    return [output(f3800, {
+    return [output(disabledAccessLimit, {
       f8826_credit_entries: [{
         source_type: item.entity_type,
         source_ein: item.estate_trust_ein,
@@ -482,6 +483,7 @@ class K1TrustNode extends TaxNode<typeof inputSchema> {
     form4952,
     f3800,
     form8582cr,
+    disabledAccessLimit,
   ]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {

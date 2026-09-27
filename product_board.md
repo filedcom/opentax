@@ -48,23 +48,17 @@ guard and return/XML cases are unrun. Nonpassive partnership and S-corporation
 code K now route directly from the filed K-1 to Form 3800 line 1e without an
 invented Form 8826 attachment. The XML builder reconciles source identity and
 cents to the K-1, rejects a duplicate Form 8826 source, and retains the shared
-$5,000 line 1e cap. Source, cap, and XML cases are written but unrun. The $5,000
-cap is not yet allocated across a return that mixes passive and nonpassive
-disabled-access sources. The IRS requires the overall limited credit to be
-allocated pro rata, so that mixed-source path remains an open correctness gap
-rather than a supported filing claim. This needs an upstream source-allocation
-step: the current K-1/Form 8826 nonpassive path reaches Form 3800 directly,
-while passive source amounts reach Form 8582-CR first. The allocation must
-retain gross K-1 source amounts for reconciliation, cap current-year source
-amounts before Form 8582-CR applies its passive tax limit, and pass the same
-capped nonpassive amounts into Form 3800 and its Part V source rows. No such
-upstream step is implemented yet.
-The build pass now includes a pure mixed-source pro-rata allocator that assigns
-whole-dollar passive shares and cent-precision nonpassive shares, plus an
-explicit public-input-key facility for routing Form 8582-CR facts to a future
-upstream source node. Neither is wired to the return graph yet, and their cases
-are written but unrun. The per-source rounding policy still needs IRS
-business-rule review.
+$5,000 line 1e cap. Source, cap, and XML cases are written but unrun. The build
+pass now routes gross Form 8826 and nonpassive K-1 sources with public Form
+8582-CR facts through an upstream disabled-access node. It pro-rates a shared
+$5,000 current-year cap, passing whole-dollar passive shares to Form 8582-CR
+before its tax limit and cent-precision nonpassive shares to Form 3800. The
+gross K-1 facts remain in that node for source reconciliation. These graph
+cases are written but unrun. The MeF exporters still compare capped amounts to
+gross Form 8826/K-1 records, and passive Form 8826 sources are not yet handled
+by this node. Until those paths are fixed and verified, mixed-source filing is
+not supported. The IRS requires pro-rata allocation of the overall limited
+credit; the per-source rounding policy still needs business-rule review.
 
 The latest completed full test run is **6,596 passed, 0 failed, 48 ignored**
 (`deno task test`, 2026-09-26, before the later multi-policy line 10 and

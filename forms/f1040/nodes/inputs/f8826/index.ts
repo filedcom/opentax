@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { f3800 } from "../f3800/index.ts";
+import { disabledAccessLimit } from "../../intermediate/forms/disabled_access_limit/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Form 8826 — Disabled Access Credit (IRC §44)
@@ -154,7 +154,7 @@ export function calculateForm8826(input: F8826Input): F8826Lines {
 class F8826Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8826";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f3800]);
+  readonly outputNodes = new OutputNodes([disabledAccessLimit]);
 
   compute(_ctx: NodeContext, rawInput: F8826Input): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -186,22 +186,21 @@ class F8826Node extends TaxNode<typeof inputSchema> {
     }
     return {
       outputs: lines.line8 > 0
-        ? [output(f3800, {
+        ? [output(disabledAccessLimit, {
           f8826_credit_entries: [
-            ...(lines.selfCreditAfterCap > 0
+            ...(lines.line6 > 0 && isEligible(input)
               ? [{
                 source_type: "self" as const,
-                credit_amount: lines.selfCreditAfterCap,
+                credit_amount: lines.line6,
                 subject_to_passive_activity_limit: false,
               }]
               : []),
-            ...(input.pass_through_credits ?? []).flatMap((source, index) => {
-              const credit = lines.passThroughCreditsAfterCap[index] ?? 0;
-              return credit > 0
+            ...(input.pass_through_credits ?? []).flatMap((source) => {
+              return source.credit_amount > 0
                 ? [{
                   source_type: source.entity_type,
                   source_ein: source.entity_ein,
-                  credit_amount: credit,
+                  credit_amount: source.credit_amount,
                   subject_to_passive_activity_limit: false,
                 }]
                 : [];

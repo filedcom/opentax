@@ -28,6 +28,7 @@ import { form4562 } from "../../intermediate/forms/form4562/index.ts";
 import { form4952 } from "../../intermediate/forms/form4952/index.ts";
 import { f3800 } from "../f3800/index.ts";
 import { form8582cr } from "../../intermediate/forms/form8582cr/index.ts";
+import { disabledAccessLimit } from "../../intermediate/forms/disabled_access_limit/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Schedule K-1 (Form 1065) — Partner's Share of Income, Deductions, Credits
@@ -617,6 +618,7 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
     form4952,
     f3800,
     form8582cr,
+    disabledAccessLimit,
   ]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
@@ -684,7 +686,7 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
           );
         }
         if (item.disabled_access_credit_subject_to_passive_activity_limit) {
-          return [output(form8582cr, {
+          return [output(disabledAccessLimit, {
             required_disabled_access_k1_credits: [{
               source_type: "partnership",
               source_ein: item.partnership_ein,
@@ -693,7 +695,7 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
             }],
           })];
         }
-        return [output(f3800, {
+        return [output(disabledAccessLimit, {
           f8826_credit_entries: [{
             source_type: "partnership",
             source_ein: item.partnership_ein,

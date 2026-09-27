@@ -105,7 +105,7 @@ Deno.test("singleton Schedule F entry routes farm records to its calculation nod
   assertEquals(result.outputs, [{ nodeType: "schedule_f", fields: input }]);
 });
 
-Deno.test("Form 8582-CR passive credit facts reach the calculation node", () => {
+Deno.test("Form 8582-CR public facts reach upstream disabled-access allocation", () => {
   const startNode = buildStartNode(inputNodes);
   const facts = {
     credit_sources: [],
@@ -116,7 +116,10 @@ Deno.test("Form 8582-CR passive credit facts reach the calculation node", () => 
     { taxYear: 2025, formType: "f1040" },
     { form8582cr: facts },
   );
-  assertEquals(result.outputs, [{ nodeType: "form8582cr", fields: facts }]);
+  assertEquals(result.outputs, [{
+    nodeType: "disabled_access_limit",
+    fields: facts,
+  }]);
 });
 
 Deno.test("Form 8582-CR source input reaches Form 3800 in the return plan", () => {
