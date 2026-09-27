@@ -511,7 +511,12 @@ schema-backed maps now name the Part V and VI detail groups for every supported
 current-year and carryover row. A pure XML fragment builder writes passive
 Part III/IV aggregates and, when needed, Part V/VI source detail with the
 verified EIN or missing-EIN reason, tax use, and carryforward. Direct and
-local XSD cases are written but unrun. These fragments are not yet joined
+local XSD cases are written but unrun. Its output now keeps the credit-line key
+on every row and returns unwrapped Part V details so a filed Form 3800 can
+combine them with nonpassive details under one schema group. The registered
+nonpassive builder now uses the shared line-ordered Part V group assembler;
+its mixed-detail ordering case is written but unrun. These passive fragments
+are not yet joined
 into the filed Form 3800, and complete source-document and Part II
 reconciliation remains open.
 A pure tax-use allocator now reconciles the source totals with the three Part II

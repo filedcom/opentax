@@ -13,6 +13,7 @@ import {
   isEligible as isEligibleForForm8826,
 } from "../../../nodes/inputs/f8826/index.ts";
 import { form3800PartIAndIIXml } from "./f3800_part_i_ii.ts";
+import { buildForm3800PartVXml } from "./f3800_part_v.ts";
 import {
   buildForm3800CurrentCreditRowXml,
   combineForm3800CurrentCreditAmounts,
@@ -778,20 +779,11 @@ export function buildIRS3800Nonpassive(
         form5884Credit,
       lines.line38,
     ),
-    form8826PartVGroups.length + form8820PartVGroups.length +
-          form5884PartVGroups.length +
-          partVGroups.length > 0
-      ? elements("GBCBreakdownCYAggrgtAmtGrp", [
-        ...form8826PartVGroups,
-        ...partVGroups.filter((group) => group.line === "1f").map((group) =>
-          group.xml
-        ),
-        ...form8820PartVGroups,
-        ...form5884PartVGroups,
-        ...partVGroups.filter((group) => group.line === "4e").map((group) =>
-          group.xml
-        ),
-      ])
-      : "",
+    buildForm3800PartVXml([
+      ...form8826PartVGroups.map((xml) => ({ line: "1e" as const, xml })),
+      ...partVGroups,
+      ...form8820PartVGroups.map((xml) => ({ line: "1h" as const, xml })),
+      ...form5884PartVGroups.map((xml) => ({ line: "4b" as const, xml })),
+    ]),
   ]);
 }
