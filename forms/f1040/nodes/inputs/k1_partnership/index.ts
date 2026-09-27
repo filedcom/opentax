@@ -26,6 +26,7 @@ import { rate_28_gain_worksheet } from "../../intermediate/worksheets/rate_28_ga
 import { form4797 } from "../../intermediate/forms/form4797/index.ts";
 import { form4562 } from "../../intermediate/forms/form4562/index.ts";
 import { form4952 } from "../../intermediate/forms/form4952/index.ts";
+import { f3800 } from "../f3800/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Schedule K-1 (Form 1065) — Partner's Share of Income, Deductions, Credits
@@ -613,6 +614,7 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
     form4797,
     form4562,
     form4952,
+    f3800,
   ]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
@@ -645,6 +647,25 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
       ...box13DeductionOutputs(k1_partnerships),
       ...form6251Outputs(k1_partnerships),
       ...form8960Output(k1_partnerships),
+      ...k1_partnerships.flatMap((item) => {
+        const credit = item.box15_code_z_orphan_drug_credit;
+        if (
+          credit === undefined ||
+          item.orphan_drug_credit_subject_to_passive_activity_limit
+        ) return [];
+        if (!item.partnership_ein || !item.source_document_reference) {
+          throw new Error("Partnership orphan-drug K-1 source is incomplete");
+        }
+        return [output(f3800, {
+          f8820_k1_credit_entries: [{
+            source_type: "partnership",
+            source_ein: item.partnership_ein,
+            source_document_reference: item.source_document_reference,
+            credit_amount: credit,
+            subject_to_passive_activity_limit: false,
+          }],
+        })];
+      }),
       // box18_tax_exempt_income: excluded from taxable income — no routing needed.
       // box19_distributions: not taxable within basis — no routing needed (basis tracking not yet implemented).
     ];

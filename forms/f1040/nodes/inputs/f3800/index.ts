@@ -122,7 +122,7 @@ const f8820CreditSchema = z.object({
 });
 
 const f8820K1CreditSchema = z.object({
-  source_type: z.enum(["estate", "trust"]),
+  source_type: z.enum(["partnership", "s_corporation", "estate", "trust"]),
   source_ein: z.string().regex(/^\d{9}$/),
   source_document_reference: z.string().trim().min(1),
   credit_amount: z.number().int().positive(),
@@ -262,7 +262,7 @@ function schedule3Output(
   }
   if (f8820K1Credits.some((entry) => entry.subject_to_passive_activity_limit)) {
     throw new Error(
-      "Estate/trust orphan-drug passive credit needs Form 8582-CR before Form 3800",
+      "Orphan-drug K-1 passive credit needs Form 8582-CR before Form 3800",
     );
   }
   const orphanDrugK1Keys = new Set<string>();
@@ -270,7 +270,7 @@ function schedule3Output(
     const key =
       `${entry.source_type}:${entry.source_ein}:${entry.source_document_reference}`;
     if (orphanDrugK1Keys.has(key)) {
-      throw new Error("Duplicate estate/trust orphan-drug K-1 source");
+      throw new Error("Duplicate orphan-drug K-1 source");
     }
     orphanDrugK1Keys.add(key);
   }

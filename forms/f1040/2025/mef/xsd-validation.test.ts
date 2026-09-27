@@ -1759,6 +1759,87 @@ Deno.test({
 
 Deno.test({
   name:
+    "XSD: partnership and S-corporation orphan-drug K-1 credits share line 1h",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const xml = buildMefXml(
+    {
+      f1040: { line16_income_tax: 2_000 },
+      schedule3: { line6a_total: 1_500, line7_total: 1_500 },
+      form6251: { line11_amt: 0, net_tmt: 0 },
+      k1_partnership: {
+        k1_partnerships: [{
+          partnership_name: "Clinical partnership",
+          partnership_ein: "123456789",
+          source_document_reference: "2025 partnership K-1",
+          box15_code_z_orphan_drug_credit: 1_000,
+          orphan_drug_credit_subject_to_passive_activity_limit: false,
+        }],
+      },
+      k1_s_corp: {
+        k1_s_corps: [{
+          corporation_name: "Clinical S corporation",
+          corporation_ein: "987654321",
+          source_document_reference: "2025 S corporation K-1",
+          box13_code_z_orphan_drug_credit: 500,
+          orphan_drug_credit_subject_to_passive_activity_limit: false,
+        }],
+      },
+      f3800: {
+        f8820_k1_credit_entries: [
+          {
+            source_type: "partnership",
+            source_ein: "123456789",
+            source_document_reference: "2025 partnership K-1",
+            credit_amount: 1_000,
+            subject_to_passive_activity_limit: false,
+          },
+          {
+            source_type: "s_corporation",
+            source_ein: "987654321",
+            source_document_reference: "2025 S corporation K-1",
+            credit_amount: 500,
+            subject_to_passive_activity_limit: false,
+          },
+        ],
+        tax_context: {
+          filingStatus: FilingStatus.Single,
+          regularTax: 2_000,
+          alternativeMinimumTax: 0,
+          foreignTaxCredit: 0,
+          priorAllowableCredits: 0,
+          tentativeMinimumTax: 0,
+          standardCredit: 1_500,
+          specifiedCredit: 0,
+        },
+        allowed_credit: 1_500,
+      },
+    } satisfies MefFormsPending & {
+      k1_partnership: unknown;
+      k1_s_corp: unknown;
+    },
+    extractFilerIdentity(singleGeneral()),
+  );
+  assertStringIncludes(xml, "<IRS3800 ");
+  assertEquals(xml.includes("<IRS8820 "), false);
+  assertStringIncludes(
+    xml,
+    "<PassThroughEntityEIN>123456789</PassThroughEntityEIN>",
+  );
+  assertStringIncludes(
+    xml,
+    "<PassThroughEntityEIN>987654321</PassThroughEntityEIN>",
+  );
+  await validateXsd(
+    xml,
+    "partnership and S-corporation orphan-drug K-1 code Z",
+  );
+});
+
+Deno.test({
+  name:
     "XSD: pass-through-only Form 8826 code K reaches Form 3800 without IRS8826",
   sanitizeOps: false,
   sanitizeResources: false,

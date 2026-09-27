@@ -49,6 +49,34 @@ Deno.test("partnership K-1 box 15 code Z needs source identity and passive class
   })]);
 });
 
+Deno.test("partnership K-1 code Z reaches source-backed Form 3800", () => {
+  const item = minimalItem({
+    partnership_ein: "123456789",
+    source_document_reference: "2025 partnership K-1",
+    box15_code_z_orphan_drug_credit: 1_250,
+    orphan_drug_credit_subject_to_passive_activity_limit: false,
+  });
+  assertEquals(findOutput(compute([item]), "f3800")?.fields, {
+    f8820_k1_credit_entries: [{
+      source_type: "partnership",
+      source_ein: "123456789",
+      source_document_reference: "2025 partnership K-1",
+      credit_amount: 1_250,
+      subject_to_passive_activity_limit: false,
+    }],
+  });
+  assertEquals(
+    findOutput(
+      compute([{
+        ...item,
+        orphan_drug_credit_subject_to_passive_activity_limit: true,
+      }]),
+      "f3800",
+    ),
+    undefined,
+  );
+});
+
 Deno.test("partnership K-1 box 15 code K needs source identity and passive classification", () => {
   assertThrows(() =>
     compute([minimalItem({ box15_code_k_disabled_access_credit: 500 })])

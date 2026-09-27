@@ -61,6 +61,40 @@ Deno.test("f3800: estate/trust orphan-drug K-1 sources reach the tax limit", () 
   );
 });
 
+Deno.test("f3800: distinct K-1 orphan-drug sources add once", () => {
+  const credits = [
+    {
+      source_type: "partnership" as const,
+      source_ein: "123456789",
+      source_document_reference: "2025 partnership K-1",
+      credit_amount: 1_000,
+      subject_to_passive_activity_limit: false,
+    },
+    {
+      source_type: "s_corporation" as const,
+      source_ein: "987654321",
+      source_document_reference: "2025 S corporation K-1",
+      credit_amount: 500,
+      subject_to_passive_activity_limit: false,
+    },
+  ];
+  const result = f3800.compute({ taxYear: 2025, formType: "f1040" }, {
+    f8820_k1_credit_entries: credits,
+  });
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.form3800_source_credits?.standardCredit,
+    1_500,
+  );
+  assertThrows(
+    () =>
+      f3800.compute({ taxYear: 2025, formType: "f1040" }, {
+        f8820_k1_credit_entries: [credits[0], credits[0]],
+      }),
+    Error,
+    "Duplicate orphan-drug K-1 source",
+  );
+});
+
 // =============================================================================
 // 1. Input Schema Validation
 // =============================================================================

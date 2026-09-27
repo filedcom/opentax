@@ -44,6 +44,8 @@ import { sameForm3800PassiveAllocations } from "./f3800_passive_link.ts";
 import { buildForm3800PassiveRowXml } from "./f3800_passive_rows.ts";
 import { reconcileDisabledAccessK1Credits } from "./f8826_credit_evidence.ts";
 import { inputSchema as trustK1InputSchema } from "../../../nodes/inputs/k1_trust/index.ts";
+import { inputSchema as partnershipK1InputSchema } from "../../../nodes/inputs/k1_partnership/index.ts";
+import { inputSchema as sCorpK1InputSchema } from "../../../nodes/inputs/k1_s_corp/index.ts";
 
 const amount = z.number().finite().nonnegative();
 const taxBase = z.object({
@@ -307,18 +309,32 @@ function sourceForm8820(
   return { source, lines };
 }
 
-function sourceEstateTrustOrphanDrugCredits(
+function sourceOrphanDrugK1Credits(
   fields: z.infer<typeof f3800InputSchema>,
   context: MefBuildContext,
 ) {
   const entries = fields.f8820_k1_credit_entries ?? [];
   if (entries.length === 0) return [];
-  const k1s = trustK1InputSchema.parse(context.pending?.k1_trust).k1_trusts;
+  const partnershipK1s =
+    entries.some((entry) => entry.source_type === "partnership")
+      ? partnershipK1InputSchema.parse(context.pending?.k1_partnership)
+        .k1_partnerships
+      : [];
+  const sCorpK1s =
+    entries.some((entry) => entry.source_type === "s_corporation")
+      ? sCorpK1InputSchema.parse(context.pending?.k1_s_corp).k1_s_corps
+      : [];
+  const trustK1s =
+    entries.some((entry) =>
+        entry.source_type === "estate" || entry.source_type === "trust"
+      )
+      ? trustK1InputSchema.parse(context.pending?.k1_trust).k1_trusts
+      : [];
   const seen = new Set<string>();
   for (const entry of entries) {
     if (entry.subject_to_passive_activity_limit) {
       throw new Error(
-        "Estate/trust orphan-drug passive credit needs Form 8582-CR before Form 3800",
+        "Orphan-drug K-1 passive credit needs Form 8582-CR before Form 3800",
       );
     }
     const key = [
@@ -330,20 +346,52 @@ function sourceEstateTrustOrphanDrugCredits(
       throw new Error("Form 3800 orphan-drug K-1 source is duplicated");
     }
     seen.add(key);
-    const matches = k1s.filter((k1) =>
-      k1.entity_type === entry.source_type &&
-      k1.estate_trust_ein === entry.source_ein &&
-      k1.source_document_reference === entry.source_document_reference
-    );
-    if (
-      matches.length !== 1 ||
-      matches[0].box13_code_m_orphan_drug_credit !== entry.credit_amount ||
-      matches[0].orphan_drug_credit_subject_to_passive_activity_limit !==
-        entry.subject_to_passive_activity_limit
-    ) {
-      throw new Error(
-        "Form 3800 orphan-drug credit does not reconcile to estate/trust K-1 box 13 code M",
+    if (entry.source_type === "partnership") {
+      const matches = partnershipK1s.filter((k1) =>
+        k1.partnership_ein === entry.source_ein &&
+        k1.source_document_reference === entry.source_document_reference
       );
+      if (
+        matches.length !== 1 ||
+        matches[0].box15_code_z_orphan_drug_credit !== entry.credit_amount ||
+        matches[0].orphan_drug_credit_subject_to_passive_activity_limit !==
+          entry.subject_to_passive_activity_limit
+      ) {
+        throw new Error(
+          "Form 3800 orphan-drug credit does not reconcile to partnership K-1 box 15 code Z",
+        );
+      }
+    } else if (entry.source_type === "s_corporation") {
+      const matches = sCorpK1s.filter((k1) =>
+        k1.corporation_ein === entry.source_ein &&
+        k1.source_document_reference === entry.source_document_reference
+      );
+      if (
+        matches.length !== 1 ||
+        matches[0].box13_code_z_orphan_drug_credit !== entry.credit_amount ||
+        matches[0].orphan_drug_credit_subject_to_passive_activity_limit !==
+          entry.subject_to_passive_activity_limit
+      ) {
+        throw new Error(
+          "Form 3800 orphan-drug credit does not reconcile to S-corporation K-1 box 13 code Z",
+        );
+      }
+    } else {
+      const matches = trustK1s.filter((k1) =>
+        k1.entity_type === entry.source_type &&
+        k1.estate_trust_ein === entry.source_ein &&
+        k1.source_document_reference === entry.source_document_reference
+      );
+      if (
+        matches.length !== 1 ||
+        matches[0].box13_code_m_orphan_drug_credit !== entry.credit_amount ||
+        matches[0].orphan_drug_credit_subject_to_passive_activity_limit !==
+          entry.subject_to_passive_activity_limit
+      ) {
+        throw new Error(
+          "Form 3800 orphan-drug credit does not reconcile to estate/trust K-1 box 13 code M",
+        );
+      }
     }
   }
   return entries;
@@ -670,7 +718,7 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
     }
     const form8826 = sourceForm8826(parsed, context);
     const form8820 = sourceForm8820(parsed, context);
-    const estateTrustOrphanDrugCredits = sourceEstateTrustOrphanDrugCredits(
+    const orphanDrugK1Credits = sourceOrphanDrugK1Credits(
       parsed,
       context,
     );
@@ -685,7 +733,7 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
         credit: entry.credit_amount,
         ein: entry.entity_ein,
       })),
-      ...estateTrustOrphanDrugCredits.map((entry) => ({
+      ...orphanDrugK1Credits.map((entry) => ({
         credit: entry.credit_amount,
         ein: entry.source_ein,
       })),
@@ -697,7 +745,7 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
     if (
       form8820Credit > 0 &&
       form8820?.source.pass_through_credits?.some((source) =>
-        estateTrustOrphanDrugCredits.some((entry) =>
+        orphanDrugK1Credits.some((entry) =>
           entry.source_type === source.source_type &&
           entry.source_ein === source.entity_ein &&
           entry.source_document_reference === source.source_document_reference

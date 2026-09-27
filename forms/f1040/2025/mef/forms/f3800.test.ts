@@ -485,6 +485,67 @@ Deno.test("Form 3800 files trust K-1 code M directly on line 1h", () => {
   );
 });
 
+Deno.test("Form 3800 reconciles partnership and S-corporation code Z on line 1h", () => {
+  for (const source_type of ["partnership", "s_corporation"] as const) {
+    const businessTax = { ...tax, standardCredit: 1_250 };
+    const entry = {
+      source_type,
+      source_ein: "123456789",
+      source_document_reference: `2025 ${source_type} K-1`,
+      credit_amount: 1_250,
+      subject_to_passive_activity_limit: false,
+    };
+    const k1 = source_type === "partnership"
+      ? {
+        k1_partnership: {
+          k1_partnerships: [{
+            partnership_name: "Clinical partnership",
+            partnership_ein: "123456789",
+            source_document_reference: entry.source_document_reference,
+            box15_code_z_orphan_drug_credit: 1_250,
+            orphan_drug_credit_subject_to_passive_activity_limit: false,
+          }],
+        },
+      }
+      : {
+        k1_s_corp: {
+          k1_s_corps: [{
+            corporation_name: "Clinical S corporation",
+            corporation_ein: "123456789",
+            source_document_reference: entry.source_document_reference,
+            box13_code_z_orphan_drug_credit: 1_250,
+            orphan_drug_credit_subject_to_passive_activity_limit: false,
+          }],
+        },
+      };
+    const context = {
+      pending: { ...filedPending(businessTax, 1_250), ...k1 },
+      documentIdsByPendingKey: { form6251: ["IRS6251_1"] },
+    };
+    const xml = form3800.build({
+      f8820_k1_credit_entries: [entry],
+      tax_context: businessTax,
+      allowed_credit: 1_250,
+    }, context);
+    assertStringIncludes(xml, "<Form8820CYCreditsGrp>");
+    assertStringIncludes(
+      xml,
+      "<PassThroughEntityEIN>123456789</PassThroughEntityEIN>",
+    );
+    assertEquals(xml.includes('referenceDocumentName="IRS8820"'), false);
+    assertThrows(
+      () =>
+        form3800.build({
+          f8820_k1_credit_entries: [{ ...entry, credit_amount: 1_251 }],
+          tax_context: { ...businessTax, standardCredit: 1_251 },
+          allowed_credit: 1_251,
+        }, context),
+      Error,
+      "does not reconcile",
+    );
+  }
+});
+
 Deno.test("Form 3800 combines own Form 8820 and trust K-1 on line 1h", () => {
   const ownForm = {
     f8820s: [{
