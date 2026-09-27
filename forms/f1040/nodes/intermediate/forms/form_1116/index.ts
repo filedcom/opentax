@@ -189,6 +189,16 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, rawInput: Form1116Input): NodeResult {
     const input = inputSchema.parse(rawInput);
+    for (const item of input.foreign_tax_items ?? []) {
+      if (
+        item.income_category !== IncomeCategory.Passive &&
+        item.income_category !== IncomeCategory.General
+      ) {
+        throw new Error(
+          `Form 1116 ${item.income_category} category needs category-specific source facts and calculation before its credit can be claimed`,
+        );
+      }
+    }
     const totals = categoryTotals(
       input.foreign_tax_items ?? [],
       input.worldwide_gross_income ?? 0,

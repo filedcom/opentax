@@ -91,9 +91,30 @@ flowchart LR
    corporation, and trust inputs can carry the explanation alongside the
    foreign-deduction amount. This path is written but awaits the full test batch
    and IRS business-rule review.
-8. **Other categories** — section 951A, foreign branch, section 901(j), treaty,
-   and lump-sum income are not complete from category tags alone. Carryovers and
-   other-deduction statements remain open.
+8. **Other categories** — the 2025 form requires a separate Form 1116 and
+   separate Part IV credit line for section 951A, foreign branch, section
+   901(j), treaty-resourced, and lump-sum income. The calculation now rejects
+   the four unsupported categories represented in `IncomeCategory` before
+   sending any credit to Schedule 3, including when mixed with a supported
+   passive/general item. Those baskets still require their own source facts,
+   category-specific tax adjustments, MeF tags, and filing tests; a checkbox
+   alone is not a calculation. Lump-sum is not an input category yet.
+9. **2025 senior deduction and line 18** — Form 1116 line 18 adds back Schedule
+   1-A line 37 to Form 1040 line 11b less line 14, while line 3b expressly
+   excludes that senior deduction. The present worldwide-taxable- income input
+   is not proven against those source lines, so this is an open source-to-return
+   reconciliation gap rather than an amount to infer.
+10. **2025 PDF field map** — direct inspection of the official 2025 AcroForm
+    field tree and page-2 widget rectangles identifies
+    `topmostSubform[0].Page2[0].f2_10[0]` at printed line 18 and
+    `topmostSubform[0].Page2[0].f2_12[0]` at printed line 20. The PDF descriptor
+    now maps `total_income` and `us_tax_before_credits` to those fields,
+    respectively. This corrects the previous line-6/line-10 destinations but
+    does not establish that the raw line-18 input includes the Schedule 1-A
+    line-37 add-back. Likewise, line 20 also requires Schedule 2 line 1z in
+    addition to Form 1040 line 16, and the raw U.S.-tax input is not yet
+    reconciled to both sources. Render verification is deferred to the full
+    batch.
 
 ---
 

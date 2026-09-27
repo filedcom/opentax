@@ -1,5 +1,5 @@
-import { assertEquals } from "@std/assert";
-import { IncomeCategory, form1116 } from "./index.ts";
+import { assertEquals, assertThrows } from "@std/assert";
+import { form1116, IncomeCategory } from "./index.ts";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { schedule3 } from "../../aggregation/schedule3/index.ts";
 import { form6251 } from "../form6251/index.ts";
@@ -12,30 +12,39 @@ function credit(input: Parameters<typeof form1116.compute>[1]): number {
 }
 
 Deno.test("form1116: no foreign tax items produces no output", () => {
-  assertEquals(form1116.compute(ctx, { worldwide_taxable_income: 50_000 }).outputs, []);
+  assertEquals(
+    form1116.compute(ctx, { worldwide_taxable_income: 50_000 }).outputs,
+    [],
+  );
 });
 
 Deno.test("form1116: missing limitation inputs never grants full credit", () => {
-  assertEquals(credit({
-    foreign_tax_items: [{
-      foreign_tax_paid: 500,
-      foreign_gross_income: 1_000,
-      income_category: IncomeCategory.Passive,
-    }],
-  }), 0);
+  assertEquals(
+    credit({
+      foreign_tax_items: [{
+        foreign_tax_paid: 500,
+        foreign_gross_income: 1_000,
+        income_category: IncomeCategory.Passive,
+      }],
+    }),
+    0,
+  );
 });
 
 Deno.test("form1116: applies taxable-income ratio", () => {
-  assertEquals(credit({
-    foreign_tax_items: [{
-      foreign_tax_paid: 500,
-      foreign_gross_income: 1_000,
-      income_category: IncomeCategory.Passive,
-      apportioned_deductions: 155.94,
-    }],
-    worldwide_taxable_income: 85_250,
-    us_tax_before_credits: 13_669,
-  }), 135);
+  assertEquals(
+    credit({
+      foreign_tax_items: [{
+        foreign_tax_paid: 500,
+        foreign_gross_income: 1_000,
+        income_category: IncomeCategory.Passive,
+        apportioned_deductions: 155.94,
+      }],
+      worldwide_taxable_income: 85_250,
+      us_tax_before_credits: 13_669,
+    }),
+    135,
+  );
 });
 
 Deno.test("Form 1116 sends the same allowed foreign tax credit to Form 6251 line 10", () => {
@@ -49,7 +58,10 @@ Deno.test("Form 1116 sends the same allowed foreign tax credit to Form 6251 line
     worldwide_taxable_income: 85_250,
     us_tax_before_credits: 13_669,
   });
-  assertEquals(fieldsOf(result.outputs, schedule3)?.line1_foreign_tax_credit, 135);
+  assertEquals(
+    fieldsOf(result.outputs, schedule3)?.line1_foreign_tax_credit,
+    135,
+  );
   assertEquals(
     fieldsOf(result.outputs, form6251)?.schedule3_line1_foreign_tax_credit,
     135,
@@ -57,84 +69,149 @@ Deno.test("Form 1116 sends the same allowed foreign tax credit to Form 6251 line
 });
 
 Deno.test("form1116: directly allocable deductions reduce the limit", () => {
-  assertEquals(credit({
-    foreign_tax_items: [{
-      foreign_tax_paid: 500,
-      foreign_gross_income: 10_000,
-      directly_allocable_deductions: 8_000,
-      income_category: IncomeCategory.Passive,
-    }],
-    worldwide_taxable_income: 100_000,
-    us_tax_before_credits: 10_000,
-  }), 200);
+  assertEquals(
+    credit({
+      foreign_tax_items: [{
+        foreign_tax_paid: 500,
+        foreign_gross_income: 10_000,
+        directly_allocable_deductions: 8_000,
+        income_category: IncomeCategory.Passive,
+      }],
+      worldwide_taxable_income: 100_000,
+      us_tax_before_credits: 10_000,
+    }),
+    200,
+  );
 });
 
 Deno.test("form1116: computes passive and general category limits separately", () => {
-  assertEquals(credit({
-    foreign_tax_items: [
-      {
-        foreign_tax_paid: 2_000,
-        foreign_gross_income: 10_000,
-        income_category: IncomeCategory.Passive,
-      },
-      {
-        foreign_tax_paid: 100,
-        foreign_gross_income: 10_000,
-        income_category: IncomeCategory.General,
-      },
-    ],
-    worldwide_taxable_income: 100_000,
-    us_tax_before_credits: 10_000,
-  }), 1_100);
+  assertEquals(
+    credit({
+      foreign_tax_items: [
+        {
+          foreign_tax_paid: 2_000,
+          foreign_gross_income: 10_000,
+          income_category: IncomeCategory.Passive,
+        },
+        {
+          foreign_tax_paid: 100,
+          foreign_gross_income: 10_000,
+          income_category: IncomeCategory.General,
+        },
+      ],
+      worldwide_taxable_income: 100_000,
+      us_tax_before_credits: 10_000,
+    }),
+    1_100,
+  );
 });
 
 Deno.test("form1116: excluded wages reduce eligible income and credit", () => {
-  assertEquals(credit({
-    foreign_tax_items: [{
-      foreign_tax_paid: 1_000,
-      foreign_gross_income: 20_000,
-      excluded_income: 15_000,
-      income_category: IncomeCategory.General,
-    }],
-    worldwide_taxable_income: 50_000,
-    us_tax_before_credits: 5_000,
-  }), 500);
+  assertEquals(
+    credit({
+      foreign_tax_items: [{
+        foreign_tax_paid: 1_000,
+        foreign_gross_income: 20_000,
+        excluded_income: 15_000,
+        income_category: IncomeCategory.General,
+      }],
+      worldwide_taxable_income: 50_000,
+      us_tax_before_credits: 5_000,
+    }),
+    500,
+  );
 });
 
 Deno.test("form1116: same-category items aggregate before applying the limit", () => {
-  assertEquals(credit({
-    foreign_tax_items: [
-      {
-        foreign_tax_paid: 300,
-        foreign_gross_income: 2_000,
-        income_category: IncomeCategory.Passive,
-      },
-      {
-        foreign_tax_paid: 400,
-        foreign_gross_income: 3_000,
-        income_category: IncomeCategory.Passive,
-      },
-    ],
-    worldwide_taxable_income: 50_000,
-    us_tax_before_credits: 5_000,
-  }), 500);
+  assertEquals(
+    credit({
+      foreign_tax_items: [
+        {
+          foreign_tax_paid: 300,
+          foreign_gross_income: 2_000,
+          income_category: IncomeCategory.Passive,
+        },
+        {
+          foreign_tax_paid: 400,
+          foreign_gross_income: 3_000,
+          income_category: IncomeCategory.Passive,
+        },
+      ],
+      worldwide_taxable_income: 50_000,
+      us_tax_before_credits: 5_000,
+    }),
+    500,
+  );
 });
 
 Deno.test("form1116: Part IV caps combined category credits at U.S. tax", () => {
-  assertEquals(credit({
-    foreign_tax_items: [
-      {
-        foreign_tax_paid: 1_000,
-        foreign_gross_income: 10_000,
-        income_category: IncomeCategory.Passive,
-      },
-      {
-        foreign_tax_paid: 1_000,
-        foreign_gross_income: 10_000,
-        income_category: IncomeCategory.General,
-      },
-    ],
-    worldwide_taxable_income: 10_000,
-    us_tax_before_credits: 1_000,
-  }), 1_000);
+  assertEquals(
+    credit({
+      foreign_tax_items: [
+        {
+          foreign_tax_paid: 1_000,
+          foreign_gross_income: 10_000,
+          income_category: IncomeCategory.Passive,
+        },
+        {
+          foreign_tax_paid: 1_000,
+          foreign_gross_income: 10_000,
+          income_category: IncomeCategory.General,
+        },
+      ],
+      worldwide_taxable_income: 10_000,
+      us_tax_before_credits: 1_000,
+    }),
+    1_000,
+  );
+});
+
+Deno.test("form1116: unsupported separate categories cannot send a credit to Schedule 3", () => {
+  for (
+    const category of [
+      IncomeCategory.Section951A,
+      IncomeCategory.Branch,
+      IncomeCategory.Treaty,
+      IncomeCategory.Section901j,
+    ]
+  ) {
+    assertThrows(
+      () =>
+        form1116.compute(ctx, {
+          foreign_tax_items: [{
+            foreign_tax_paid: 500,
+            foreign_gross_income: 10_000,
+            income_category: category,
+          }],
+          worldwide_taxable_income: 100_000,
+          us_tax_before_credits: 10_000,
+        }),
+      Error,
+      "needs category-specific source facts and calculation",
+    );
+  }
+});
+
+Deno.test("form1116: unsupported category cannot ride alongside a supported basket", () => {
+  assertThrows(
+    () =>
+      form1116.compute(ctx, {
+        foreign_tax_items: [
+          {
+            foreign_tax_paid: 100,
+            foreign_gross_income: 1_000,
+            income_category: IncomeCategory.Passive,
+          },
+          {
+            foreign_tax_paid: 100,
+            foreign_gross_income: 1_000,
+            income_category: IncomeCategory.Branch,
+          },
+        ],
+        worldwide_taxable_income: 10_000,
+        us_tax_before_credits: 1_000,
+      }),
+    Error,
+    "needs category-specific source facts and calculation",
+  );
 });
