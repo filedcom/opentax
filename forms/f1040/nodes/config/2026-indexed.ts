@@ -32,6 +32,9 @@ type IndexedKeys =
   | "additionalMedicareThresholdMfj"
   | "additionalMedicareThresholdMfs"
   | "additionalMedicareThresholdOther"
+  | "niitThresholdMfj"
+  | "niitThresholdMfs"
+  | "niitThresholdOther"
   | "hsaSelfOnlyLimit"
   | "hsaFamilyLimit"
   | "hsaCatchup"
@@ -204,6 +207,11 @@ export const INDEXED_CONFIG_2026 = {
   additionalMedicareThresholdMfj: 250_000,
   additionalMedicareThresholdMfs: 125_000,
   additionalMedicareThresholdOther: 200_000,
+
+  // IRC §1411(b), as summarized in IRS Topic 559 (statutory, not indexed).
+  niitThresholdMfj: 250_000,
+  niitThresholdMfs: 125_000,
+  niitThresholdOther: 200_000,
 
   // Rev. Proc. 2025-19 §3.01(1); §223(b)(3) catch-up remains $1,000.
   hsaSelfOnlyLimit: 4_400,

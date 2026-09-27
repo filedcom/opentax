@@ -16,18 +16,17 @@ The shared Form 8962 node now selects TY2025 or TY2026 applicable percentage,
 repayment cap, and QSEHRA affordability rules explicitly; 2026 FPL figures
 are sourced from the 2025 HHS guideline PDF. The complete `F1040Config` for
 2026 and final Form 8962 instruction table remain outstanding.
-`forms/f1040/nodes/config/2026-indexed.ts` now holds 88 source-backed 2026
+`forms/f1040/nodes/config/2026-indexed.ts` now holds 91 source-backed 2026
 config members, including tax brackets, standard deduction, AMT, capital-gain,
 HSA, IRA, QBI, EITC, and other indexed amounts. The QBI config distinguishes the TY2026 MFS threshold from
 other nonjoint statuses and shares one threshold selector across the nodes.
 This is not yet a complete or registered `F1040Config`.
-The remaining 23 members are grouped below so source review and implementation
+The remaining 20 members are grouped below so source review and implementation
 can proceed without repeating the config inventory:
 
 | Source target | Remaining `F1040Config` members |
 | --- | --- |
 | Final Schedule 8812 instructions and §24 | `actcEarnedIncomeFloor`, `ctcPhaseOutThresholdMfj`, `ctcPhaseOutThresholdOther`, `odcPerDependent` |
-| 2026 Form 8960 instructions and §1411 | `niitThresholdMfj`, `niitThresholdMfs`, `niitThresholdOther` |
 | 2026 Schedule A instructions and SALT statute | `saltFloor`, `saltFloorMfs`, `saltPhaseoutRate` |
 | 2026 retirement/benefit forms and notices | `retirementLimits`, `sepContributionRate`, `simpleEmployerMatchRate`, `psoExclusionLimit`, `deathBenefitMax`, `mdaMax`, `mdaPhaseOutThreshold`, `mdaZeroThreshold` |
 | 2026 Forms 982, 2106, 8396 and Schedule B | `qpriCapMfs`, `qpriCapStandard`, `f2106PerformingArtistAgiLimit`, `mccMaxCreditHighRate`, `scheduleBDividendThreshold` |
