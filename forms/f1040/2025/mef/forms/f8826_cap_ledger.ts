@@ -4,6 +4,7 @@ import {
   inputSchema as form8582crInputSchema,
 } from "../../../nodes/intermediate/forms/form8582cr/index.ts";
 import { inputSchema as f3800InputSchema } from "../../../nodes/inputs/f3800/index.ts";
+import { reconcileDisabledAccessK1Credits } from "./f8826_credit_evidence.ts";
 
 /** Rebuild the filed cap from the gross graph ledger, not the reduced credits. */
 export function readDisabledAccessCapLedger(context: MefBuildContext) {
@@ -44,6 +45,28 @@ export function readDisabledAccessCapLedger(context: MefBuildContext) {
       "Form 8826 capped credits differ from the gross disabled-access source ledger",
     );
   }
+  // A source can receive a zero-cent share of the cap and disappear from the
+  // filed Form 3800 rows. Its original K-1 still has to be verified.
+  reconcileDisabledAccessK1Credits(
+    (raw.f8826_credit_entries ?? []).flatMap((entry) => {
+      if (entry.source_type === "self" || !entry.source_document_reference) {
+        return [];
+      }
+      if (!entry.source_ein) {
+        throw new Error("Form 8826 K-1 source needs its EIN");
+      }
+      return [{
+        source_type: entry.source_type,
+        entity_ein: entry.source_ein,
+        source_document_reference: entry.source_document_reference,
+        source_statement_reference: entry.source_statement_reference,
+        credit_amount: entry.credit_amount,
+        subject_to_passive_activity_limit:
+          entry.subject_to_passive_activity_limit,
+      }];
+    }),
+    pending,
+  );
   const rawPassiveSources = "credit_sources" in raw
     ? form8582crInputSchema.parse(raw).credit_sources
     : [];

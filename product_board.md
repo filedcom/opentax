@@ -55,9 +55,11 @@ $5,000 current-year cap, passing whole-dollar passive shares to Form 8582-CR
 before its tax limit and cent-precision nonpassive shares to Form 3800. The
 gross K-1 facts remain in that node for source reconciliation. The MeF build
 pass now recomputes the cap from those gross facts, checks capped Form 3800 and
-Form 8582-CR rows, and reconciles the original K-1/Form 8826 amounts. A mixed
-K-1 graph and local XSD case are written but unrun. Passive Form 8826 sources
-are not yet handled by this node. Until that path and the full-batch and IRS
+Form 8582-CR rows, and reconciles the original K-1/Form 8826 amounts. Even a
+nonpassive K-1 source rounded to zero by the cap is now checked against its
+gross K-1 amount. A mixed K-1 graph, zero-share source case, and local XSD case
+are written but unrun. Passive Form 8826 sources are not yet handled by this
+node. Until that path and the full-batch and IRS
 business-rule checks pass, mixed-source filing is not supported. The IRS
 requires pro-rata allocation of the overall limited credit; the per-source
 rounding policy still needs business-rule review.

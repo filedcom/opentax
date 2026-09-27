@@ -56,6 +56,15 @@ Deno.test("MeF disabled-access ledger preserves gross K-1 amounts while checking
     disabled_access_limit: raw,
     form8582cr: passive,
     f3800: nonpassive,
+    k1_s_corp: {
+      k1_s_corps: [{
+        corporation_name: "Access S corporation",
+        corporation_ein: "987654321",
+        source_document_reference: "2025 nonpassive access K-1",
+        box13_code_k_disabled_access_credit: 4_000,
+        disabled_access_credit_subject_to_passive_activity_limit: false,
+      }],
+    },
   };
   const ledger = readDisabledAccessCapLedger({ pending });
   assertEquals(ledger?.rawPassiveSources[0].current_year_credit, 3_000);
@@ -73,6 +82,65 @@ Deno.test("MeF disabled-access ledger preserves gross K-1 amounts while checking
           f8826_credit_entries: [{
             ...capped,
             credit_amount: 2_858,
+          }],
+        },
+      },
+    })
+  );
+});
+
+Deno.test("MeF disabled-access ledger checks a K-1 even when its cap share rounds to zero", () => {
+  const tinySource = {
+    credit_sources: [{
+      activity_reference: "Self-earned passive access",
+      source_form: "Form 8826",
+      source_document_reference: "2025 self-earned access credit",
+      source_origin: { kind: PassiveCreditSourceOrigin.Self },
+      category: PassiveCreditCategory.Other,
+      reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+      form3800_credit_line: "1e",
+      current_year_credit: 5_000,
+      prior_unallowed_credits: [],
+      publicly_traded_partnership: false,
+    }],
+    regular_tax_all_income: 0,
+    regular_tax_without_passive: 0,
+    f8826_credit_entries: [{
+      source_type: "s_corporation",
+      source_ein: "987654321",
+      source_document_reference: "2025 tiny access K-1",
+      credit_amount: 0.01,
+      subject_to_passive_activity_limit: false,
+    }],
+  };
+  const calculated = disabledAccessLimit.compute(
+    { taxYear: 2025, formType: "f1040" },
+    disabledAccessLimit.inputSchema.parse(tinySource),
+  );
+  const pending = {
+    disabled_access_limit: tinySource,
+    form8582cr: calculated.outputs.find((item) =>
+      item.nodeType === "form8582cr"
+    )?.fields,
+    k1_s_corp: {
+      k1_s_corps: [{
+        corporation_name: "Access S corporation",
+        corporation_ein: "987654321",
+        source_document_reference: "2025 tiny access K-1",
+        box13_code_k_disabled_access_credit: 0.01,
+        disabled_access_credit_subject_to_passive_activity_limit: false,
+      }],
+    },
+  };
+  assertEquals(readDisabledAccessCapLedger({ pending })?.cappedEntries, []);
+  assertThrows(() =>
+    readDisabledAccessCapLedger({
+      pending: {
+        ...pending,
+        k1_s_corp: {
+          k1_s_corps: [{
+            ...pending.k1_s_corp.k1_s_corps[0],
+            box13_code_k_disabled_access_credit: 0.02,
           }],
         },
       },

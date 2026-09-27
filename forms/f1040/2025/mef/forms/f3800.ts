@@ -182,8 +182,8 @@ function sourceForm8826(
   context: MefBuildContext,
 ) {
   const ledger = readDisabledAccessCapLedger(context);
-  if (!fields.f8826_credit_entries?.length) return undefined;
-  const actual = fields.f8826_credit_entries;
+  const actual = fields.f8826_credit_entries ?? [];
+  if (actual.length === 0 && !ledger?.rawEntries.length) return undefined;
   const sourceEntries = ledger?.rawEntries ?? actual;
   const formSources = sourceEntries.filter((entry) =>
     entry.source_type === "self" ||
@@ -260,7 +260,7 @@ function sourceForm8826(
       "Form 3800 disabled-access entries do not reconcile to Form 8826 sources",
     );
   }
-  if (directSources.length > 0) {
+  if (directSources.length > 0 && !ledger) {
     if (!context.pending) {
       throw new Error("Form 3800 estate/trust credit needs its K-1 source");
     }
@@ -288,6 +288,7 @@ function sourceForm8826(
       context.pending,
     );
   }
+  if (actual.length === 0) return undefined;
   const cappedAmounts = allocateDisabledAccessLine1eCredits(
     actual.map((entry) => entry.credit_amount),
   );
