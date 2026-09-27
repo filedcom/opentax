@@ -1,6 +1,9 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { buildMefXml } from "../builder.ts";
+import { type FilerIdentity, FilingStatus } from "../types.ts";
 import { buildForm8854Annual } from "./f8854_annual.ts";
 import { buildForm8854InitialBundle } from "./f8854_initial.ts";
+import { form8854 } from "./f8854.ts";
 import {
   ExpatriateType,
   inputSchema as initialSchema,
@@ -38,6 +41,51 @@ const partI = {
   us_citizenship_acquisition: "BIRTH" as const,
 };
 
+const filer: FilerIdentity = {
+  primarySSN: "123456789",
+  fullName: "Alex Taxpayer",
+  nameLine1: "TAXPAYER ALEX",
+  nameControl: "TAXP",
+  address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
+  filingStatus: FilingStatus.Single,
+  softwareId: "12345678",
+  originator: { efin: "123456", originatorType: "ERO" },
+};
+
+const noncoveredInput = initialSchema.parse({
+  expatriation_date: "2025-06-15",
+  expatriate_type: ExpatriateType.CITIZEN,
+  part_i: partI,
+  prior_year_us_income_tax_less_foreign_tax_credit: {
+    year_2024: 0,
+    year_2023: 0,
+    year_2022: 0,
+    year_2021: 0,
+    year_2020: 0,
+  },
+  balance_sheet: {
+    asset_categories_confirmed_complete: true,
+    liabilities_confirmed_complete: true,
+    cash_and_bank_deposits: {
+      fair_market_value: 100_000,
+      us_adjusted_basis: 100_000,
+    },
+    foreign_cfc_securities_within_line5: [],
+    partnership_interests: [],
+    owned_trust_assets: [],
+    nongrantor_trust_interests: [],
+    other_assets: [],
+    installment_obligations_liability: 0,
+    mortgage_liability: 0,
+    other_liabilities: [],
+  },
+  certified_tax_compliance: true,
+  exception_facts: { dual_citizen: null, minor: null },
+  significant_asset_liability_changes_prior_5_years: false,
+  section_c: null,
+  section_d: { elect_deferral: false },
+});
+
 function withNamespace(xml: string): string {
   return xml.replace(
     "<IRS8854",
@@ -59,6 +107,76 @@ async function validate8854(xml: string): Promise<void> {
     await Deno.remove(path);
   }
 }
+
+Deno.test("noncovered initial Form 8854 is attached to the Form 1040 return", () => {
+  const xml = buildMefXml({
+    f1040: { filing_status: "single" },
+    f8854: noncoveredInput,
+  }, filer);
+  assertStringIncludes(xml, "<IRS8854 documentId=");
+  assertStringIncludes(
+    xml,
+    "<InitialExptrtStmtSpcfdYrInd>X</InitialExptrtStmtSpcfdYrInd>",
+  );
+});
+
+Deno.test("registered Form 8854 path refuses covered and unlinked-statement cases", () => {
+  assertThrows(
+    () =>
+      form8854.build({
+        ...noncoveredInput,
+        balance_sheet: {
+          ...noncoveredInput.balance_sheet,
+          cash_and_bank_deposits: {
+            fair_market_value: 2_000_000,
+            us_adjusted_basis: 2_000_000,
+          },
+        },
+      }),
+    Error,
+    "reconciled income forms and attachments",
+  );
+  assertThrows(
+    () =>
+      form8854.build({
+        ...noncoveredInput,
+        balance_sheet: {
+          ...noncoveredInput.balance_sheet,
+          other_liabilities: [{ description: "Loan", amount: 100 }],
+        },
+      }),
+    Error,
+    "native statements must be linked",
+  );
+});
+
+Deno.test({
+  name: "XSD: noncovered initial Form 8854 in a full Form 1040 return",
+  ignore: !xsdAvailable,
+  sanitizeOps: false,
+  sanitizeResources: false,
+}, async () => {
+  const xml = buildMefXml({
+    f1040: { filing_status: "single" },
+    f8854: noncoveredInput,
+  }, filer);
+  const xsd = new URL(
+    "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    import.meta.url,
+  ).pathname;
+  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(path, xml);
+    const result = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsd, path],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
+  } finally {
+    await Deno.remove(path);
+  }
+});
 
 Deno.test({
   name: "XSD: initial Form 8854 with identified Form 8949 deemed sale",

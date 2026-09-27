@@ -1109,9 +1109,11 @@ older annual-statement path still needs its own data model. Required Part I
 mailing, telephone, notification, citizenship, and resident dates now have a
 schema-ordered XML builder. Part II Section A now emits the five prior-year tax
 lines, covered-status answers, and a linked native change-explanation statement
-when line 3 is yes. Those builders are written but not registered as a complete
-`IRS8854` form. The Form 8854 node still rejects filing, including non-covered
-cases. Section B now takes balance-sheet categories and derives asset,
+when line 3 is yes. The node and MeF descriptor now file an initial noncovered
+`IRS8854` only when no Section C property, deferral, or native statement needs
+linking. Covered and unlinked-statement cases still reject filing. Full-return
+and local XSD cases for the noncovered route are written but unrun. Section B
+now takes balance-sheet categories and derives asset,
 liability, and net-worth totals instead of trusting a free-entered number. Its
 unregistered XML builder emits the form lines and native itemized statements for
 partnership interests, owned and nongrantor trusts, other assets, and other
@@ -1152,9 +1154,9 @@ These checks are
 written but unrun. This is a reconciliation check, not an automatic transaction
 route; other loss characters, Form 4797, direct Schedule D, and excluded-item
 income still need character and reporting checks. Exception source
-corroboration, PDF, registered MeF
-serialization, broader source reconciliation, and IRS business rules remain open. An
-unregistered initial-form bundle now composes Parts I and II in
+corroboration, PDF, covered/annual MeF serialization, broader source
+reconciliation, and IRS business rules remain open. An
+initial-form bundle now composes Parts I and II in
 XSD order and requires explicit MeF document IDs for native statements and the
 known binary attachments, including deferral hypotheticals, agreement copy,
 and trust valuation rulings. It validates ID shape and uniqueness, but cannot

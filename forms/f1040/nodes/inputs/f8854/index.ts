@@ -335,12 +335,19 @@ class F8854Node extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([]);
 
   compute(_ctx: NodeContext, rawInput: F8854Input): NodeResult {
-    inputSchema.parse(rawInput);
+    const input = inputSchema.parse(rawInput);
+    if (
+      !isCoveredExpatriate(input) &&
+      input.section_c === null &&
+      !input.section_d.elect_deferral
+    ) {
+      return { outputs: [] };
+    }
     // A deemed gain is income reported by asset character on Form 8949,
     // Form 4797, Schedule E, etc. It is not a dollar-for-dollar Schedule 2 tax.
-    // Filing also requires an IRS8854 attachment, which is not built yet.
+    // Covered cases still need complete income-form and attachment reconciliation.
     throw new Error(
-      "Form 8854 is not filing-ready: asset-specific deemed gain reporting and the IRS8854 attachment are required",
+      "Form 8854 covered filing is not ready: asset-specific deemed gain reporting and linked IRS8854 attachments are required",
     );
   }
 }

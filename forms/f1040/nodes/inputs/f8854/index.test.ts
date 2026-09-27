@@ -1529,18 +1529,16 @@ Deno.test("Form 8854 does not turn deemed gain into a dollar-for-dollar Schedule
         })),
       ),
     Error,
-    "asset-specific deemed gain reporting and the IRS8854 attachment",
+    "asset-specific deemed gain reporting and linked IRS8854 attachments",
   );
 });
 
-Deno.test("Form 8854 filing never disappears silently just because no exit tax applies", () => {
-  assertThrows(
-    () =>
-      f8854.compute(
-        { taxYear: 2025, formType: "f1040" },
-        inputSchema.parse(input()),
-      ),
-    Error,
-    "IRS8854 attachment",
+Deno.test("Form 8854 noncovered initial input reaches the registered XML path", () => {
+  assertEquals(
+    f8854.compute(
+      { taxYear: 2025, formType: "f1040" },
+      inputSchema.parse(input()),
+    ).outputs,
+    [],
   );
 });

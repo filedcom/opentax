@@ -60,6 +60,7 @@ import { form8834 } from "./f8834.ts";
 import { form8839 } from "./f8839.ts";
 import { form8835 } from "./f8835.ts";
 import { form8853 } from "./f8853.ts";
+import { form8854 } from "./f8854.ts";
 import { form8859 } from "./f8859.ts";
 import { form8862 } from "./f8862.ts";
 import { form8863 } from "./f8863.ts";
@@ -210,6 +211,8 @@ export const ALL_MEF_FORMS = [
   form8839,
   // Form 8853
   form8853,
+  // Initial Form 8854 follows Form 8853 in ReturnData1040.xsd.
+  form8854,
   form8859,
   // Form 8862
   form8862,
