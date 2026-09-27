@@ -113,9 +113,12 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
 ];
 
 function buildIRS6251(fields: Input): string {
+  const line7ExceedsLine10 = typeof fields.tentative_tax === "number" &&
+    typeof fields.regular_tax === "number" &&
+    fields.tentative_tax > fields.regular_tax;
   if (
     (typeof fields.line11_amt !== "number" || fields.line11_amt <= 0) &&
-    fields.must_file_for_credit !== true
+    fields.must_file_for_credit !== true && !line7ExceedsLine10
   ) {
     return "";
   }

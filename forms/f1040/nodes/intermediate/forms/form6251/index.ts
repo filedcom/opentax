@@ -552,8 +552,10 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
     );
     const amt = computeAmt(netTmt, adjustedRegularTax);
 
+    // 2025 instructions require attachment when line 7 exceeds line 10,
+    // even if the AMT foreign tax credit reduces line 11 to zero.
     if (
-      amt === 0 && input.must_file_for_credit !== true &&
+      tmt <= adjustedRegularTax && input.must_file_for_credit !== true &&
       input.must_file_for_gbc !== true &&
       input.must_compute_for_bond_credit !== true
     ) {

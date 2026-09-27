@@ -255,6 +255,33 @@ Deno.test("f1099r.compute: explicit Form 4972 choice carries boxes 2a, 3, and 6"
   assertEquals(fields.recipient, TS.T);
 });
 
+Deno.test("f1099r.compute: Form 4972 rejects a partial multiple-recipient share", () => {
+  assertThrows(
+    () =>
+      compute([minimalPensionItem({
+        box1_gross_distribution: 100_000,
+        box2a_taxable_amount: 80_000,
+        box9a_pct_total: 50,
+        exclude_4972: true,
+        ts: TS.T,
+      })]),
+    Error,
+    "multiple recipients needs the distribution-share worksheet",
+  );
+});
+
+Deno.test("f1099r.compute: Form 4972 accepts an explicit full distribution share", () => {
+  const result = compute([minimalPensionItem({
+    box1_gross_distribution: 100_000,
+    box2a_taxable_amount: 80_000,
+    box9a_pct_total: 100,
+    exclude_4972: true,
+    ts: TS.T,
+  })]);
+  const form4972Out = result.outputs.find((o) => o.nodeType === "form4972");
+  assertEquals(form4972Out?.fields.lump_sum_amount, 80_000);
+});
+
 Deno.test("f1099r.compute: distribution code 7 does not route to form4972", () => {
   const result = compute([
     minimalPensionItem({ box7_distribution_code: DistributionCode.Code7 }),

@@ -77,8 +77,13 @@ export const form6251Pdf: PdfFormDescriptor = {
   pendingKey: "form6251",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f6251--2025.pdf",
   fields,
-  // Form 6251 attaches only when AMT is due (Schedule 2 line 1). The engine
-  // always runs the worksheet; a zero result means the form is not filed.
-  includeWhen: (_fields, all) =>
-    (((all?.["schedule2"]?.["line2_amt"]) as number | undefined) ?? 0) > 0,
+  // Line 7 exceeding line 10 requires attachment even when AMTFTC reduces
+  // line 11 to zero. Certain credits also require a filed zero-AMT form.
+  includeWhen: (fields) =>
+    (typeof fields["tentative_tax"] === "number" &&
+      typeof fields["regular_tax"] === "number" &&
+      fields["tentative_tax"] > fields["regular_tax"]) ||
+    (typeof fields["line11_amt"] === "number" &&
+      fields["line11_amt"] > 0) ||
+    fields["must_file_for_credit"] === true,
 };

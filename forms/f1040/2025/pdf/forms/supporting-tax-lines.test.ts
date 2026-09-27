@@ -94,6 +94,29 @@ Deno.test("Form 6251 maps the AMT investment-interest difference to line 2c", ()
   );
 });
 
+Deno.test("Form 6251 PDF attaches when line 7 exceeds line 10 despite zero AMT", () => {
+  assertEquals(
+    form6251Pdf.includeWhen?.({
+      tentative_tax: 29_094,
+      regular_tax: 10_000,
+      line11_amt: 0,
+    }),
+    true,
+  );
+  assertEquals(
+    form6251Pdf.includeWhen?.({
+      tentative_tax: 29_094,
+      regular_tax: 30_000,
+      line11_amt: 0,
+    }),
+    false,
+  );
+  assertEquals(
+    form6251Pdf.includeWhen?.({ must_file_for_credit: true, line11_amt: 0 }),
+    true,
+  );
+});
+
 Deno.test("Form 8962 PDF includes APTC-only monthly repayment", () => {
   assertEquals(
     form8962Pdf.includeWhen?.({

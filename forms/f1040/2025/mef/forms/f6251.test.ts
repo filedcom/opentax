@@ -50,6 +50,29 @@ Deno.test("a claimed Form 8911 credit attaches Form 6251 with zero AMT", () => {
   );
 });
 
+Deno.test("line 7 above line 10 attaches Form 6251 even when AMTFTC leaves zero AMT", () => {
+  const xml = form6251.build({
+    tentative_tax: 29_094,
+    amtftc: 29_094,
+    net_tmt: 0,
+    regular_tax: 10_000,
+    line11_amt: 0,
+  });
+  assertStringIncludes(xml, "<IRS6251>");
+  assertStringIncludes(
+    xml,
+    "<AlternativeMinimumTaxAmt>0</AlternativeMinimumTaxAmt>",
+  );
+  assertEquals(
+    form6251.build({
+      tentative_tax: 29_094,
+      regular_tax: 30_000,
+      line11_amt: 0,
+    }),
+    "",
+  );
+});
+
 Deno.test("Part III fields follow TY2025 XSD order and omit inapplicable lines", () => {
   const xml = filed({
     line12: 111_900,

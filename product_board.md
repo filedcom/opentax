@@ -1598,6 +1598,14 @@ source. Source authentication, the underlying deduction elsewhere on the return,
 other investment-expense types, full-batch validation, and IRS business rules
 remain open.
 
+Build-pass addendum for GAP-4972 (unrun): an explicit Form 1099-R box 9a share
+below 100% now stops the Form 4972 election because the multiple-recipient
+worksheet is not implemented. A 100% share continues through the existing
+single-recipient route. The 2025 line 24/27 rate schedule uses the printed
+$1,706.30 base in the $11,440–$13,710 bracket. Source-to-form cases for the
+share guard are written but unrun. Multiple-recipient tax allocation, NUA PDF
+appearance, and the full validation gates remain open.
+
 The following are registered in `forms/f1040/2025/mef/forms/index.ts`.
 **Registered means the builder can be invoked, not that the form is complete or
 approved.** Mark each row in the INV-01 matrix after checking calculations, XML,

@@ -620,15 +620,35 @@ Deno.test("form6251: AMTFTC reduces tentative minimum tax", () => {
   assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 14_094);
 });
 
-Deno.test("form6251: no output when AMTFTC fully offsets tentative minimum tax", () => {
-  // Single: TMT = $29,094; amtftc = $29,094; line9 = $0 → AMT = 0
+Deno.test("form6251: files when line 7 exceeds line 10 despite zero AMT after AMTFTC", () => {
+  // Single: line 7 = $29,094 > line 10 = $10,000; AMTFTC makes line 11 zero.
   const result = compute({
     filing_status: "single",
     regular_tax_income: 200_000,
     regular_tax: 10_000,
     amtftc: 29_094,
   });
-  assertEquals(result.outputs.length, 0);
+  assertEquals(fieldsOf(result.outputs, schedule2), undefined);
+  const filed = result.outputs.find((output) => output.nodeType === "form6251");
+  assertEquals(filed?.fields.tentative_tax, 29_094);
+  assertEquals(filed?.fields.regular_tax, 10_000);
+  assertEquals(filed?.fields.line11_amt, 0);
+  assertEquals(
+    mef6251.build(filed!.fields).includes(
+      "<AlternativeMinimumTaxAmt>0</AlternativeMinimumTaxAmt>",
+    ),
+    true,
+  );
+});
+
+Deno.test("form6251: AMTFTC does not require filing when line 7 does not exceed line 10", () => {
+  const result = compute({
+    filing_status: "single",
+    regular_tax_income: 200_000,
+    regular_tax: 30_000,
+    amtftc: 20_000,
+  });
+  assertEquals(result.outputs, []);
 });
 
 // ─── Other adjustment fields ──────────────────────────────────────────────────

@@ -31,7 +31,7 @@ const TAX_RATE_SCHEDULE: ReadonlyArray<{
   { over: 4_530, upTo: 6_690, base: 576.90, rate: 0.15 },
   { over: 6_690, upTo: 9_170, base: 900.90, rate: 0.16 },
   { over: 9_170, upTo: 11_440, base: 1_297.70, rate: 0.18 },
-  { over: 11_440, upTo: 13_710, base: 1_706.40, rate: 0.20 },
+  { over: 11_440, upTo: 13_710, base: 1_706.30, rate: 0.20 },
   { over: 13_710, upTo: 17_160, base: 2_160.30, rate: 0.23 },
   { over: 17_160, upTo: 22_880, base: 2_953.80, rate: 0.26 },
   { over: 22_880, upTo: 28_600, base: 4_441, rate: 0.30 },

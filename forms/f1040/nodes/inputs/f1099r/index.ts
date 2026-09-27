@@ -498,6 +498,11 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
     (item) => item.exclude_4972 === true,
   );
   return lumpItems.map((item) => {
+    if (item.box9a_pct_total !== undefined && item.box9a_pct_total < 100) {
+      throw new Error(
+        "Form 4972 election with multiple recipients needs the distribution-share worksheet; a partial box 9a share is not supported",
+      );
+    }
     if (item.box2a_taxable_amount === undefined) {
       throw new Error(
         "Form 4972 election requires the taxable amount from Form 1099-R box 2a or a separately calculated taxable amount",
