@@ -168,6 +168,108 @@ Deno.test("Form 3800 links and limits a nonpassive Form 5884 line 4b credit", ()
   );
 });
 
+Deno.test("Form 3800 reports pass-through-only Form 5884 credit without a recipient Form 5884", () => {
+  const source = {
+    subject_to_passive_activity_limit: false,
+    f5884s: [],
+    pass_through_credits: [{
+      source_type: "partnership" as const,
+      entity_ein: "123456789",
+      source_document_reference: "2025 K-1 box 15 code J",
+      credit_amount: 1_250,
+      subject_to_passive_activity_limit: false,
+    }],
+  };
+  const specifiedTax = {
+    ...tax,
+    standardCredit: 0,
+    specifiedCredit: 1_250,
+  };
+  const xml = form3800.build({
+    f5884_credit: {
+      credit_amount: 1_250,
+      subject_to_passive_activity_limit: false,
+    },
+    tax_context: specifiedTax,
+    allowed_credit: 1_250,
+  }, {
+    pending: { ...filedPending(specifiedTax, 1_250), f5884: source },
+    documentIdsByPendingKey: { f5884: [], f8835: [] },
+  });
+  assertStringIncludes(
+    xml,
+    "<PassThroughEntityEIN>123456789</PassThroughEntityEIN>",
+  );
+  assertEquals(xml.includes('referenceDocumentName="IRS5884"'), false);
+});
+
+Deno.test("Form 3800 requires a Part V split when mixed Form 5884 sources are partly limited", () => {
+  const source = {
+    subject_to_passive_activity_limit: false,
+    f5884s: [{
+      employee_reference: "EMP-001",
+      target_group: TargetGroup.TanfRecipient,
+      hired_on: "2025-01-15",
+      swa_certification_reference: "SWA-001",
+      qualified_wages_confirmed: true,
+      not_prior_employee_confirmed: true,
+      not_related_or_dependent_confirmed: true,
+      more_than_half_wages_for_trade_or_business_confirmed: true,
+      excluded_wages_removed_confirmed: true,
+      first_year_wages: 6_000,
+      hours_worked: 400,
+    }],
+    pass_through_credits: [{
+      source_type: "partnership" as const,
+      entity_ein: "123456789",
+      source_document_reference: "2025 K-1 box 15 code J",
+      credit_amount: 1_250,
+      subject_to_passive_activity_limit: false,
+    }],
+  };
+  const limitedTax = {
+    ...tax,
+    standardCredit: 0,
+    specifiedCredit: 3_650,
+    regularTax: 1_000,
+    tentativeMinimumTax: 0,
+  };
+  const context = {
+    pending: { ...filedPending(limitedTax, 1_000), f5884: source },
+    documentIdsByPendingKey: { f5884: ["IRS5884_1"], f8835: [] },
+  };
+  const fields = {
+    f5884_credit: {
+      credit_amount: 3_650,
+      subject_to_passive_activity_limit: false,
+    },
+    tax_context: limitedTax,
+    allowed_credit: 1_000,
+  };
+  assertThrows(
+    () => form3800.build(fields, context),
+    Error,
+    "Part V applied amounts",
+  );
+  const xml = form3800.build({
+    ...fields,
+    form5884_applied_credits_by_source: [600, 400],
+  }, context);
+  assertStringIncludes(
+    xml,
+    "<CYGeneralBusinessCrItemCnt>2</CYGeneralBusinessCrItemCnt>",
+  );
+  assertStringIncludes(xml, "<Frm5884CYAggrgtAmtGrp");
+  assertStringIncludes(
+    xml,
+    "<CarryforwardGeneralBusCrAmt>1800</CarryforwardGeneralBusCrAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<CarryforwardGeneralBusCrAmt>850</CarryforwardGeneralBusCrAmt>",
+  );
+});
+
 Deno.test("Form 3800 descriptor links self-earned Form 8826 and finalized Part II", () => {
   const fields = {
     f8826_credit_entries: [{

@@ -1458,6 +1458,112 @@ Deno.test({
 });
 
 Deno.test({
+  name:
+    "XSD: pass-through-only work opportunity credit omits recipient IRS5884",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const xml = buildMefXml({
+    f1040: { line16_income_tax: 40_000 },
+    schedule3: { line6a_total: 1_250, line7_total: 1_250 },
+    form6251: { line11_amt: 0, net_tmt: 20_000 },
+    f5884: {
+      subject_to_passive_activity_limit: false,
+      f5884s: [],
+      pass_through_credits: [{
+        source_type: "partnership",
+        entity_ein: "123456789",
+        source_document_reference: "2025 K-1 box 15 code J",
+        credit_amount: 1_250,
+        subject_to_passive_activity_limit: false,
+      }],
+    },
+    f3800: {
+      f5884_credit: {
+        credit_amount: 1_250,
+        subject_to_passive_activity_limit: false,
+      },
+      tax_context: {
+        filingStatus: FilingStatus.Single,
+        regularTax: 40_000,
+        alternativeMinimumTax: 0,
+        foreignTaxCredit: 0,
+        priorAllowableCredits: 0,
+        tentativeMinimumTax: 20_000,
+        standardCredit: 0,
+        specifiedCredit: 1_250,
+      },
+      allowed_credit: 1_250,
+    },
+  }, extractFilerIdentity(singleGeneral()));
+  assertEquals(xml.includes("<IRS5884 "), false);
+  assertStringIncludes(xml, "<Form5884CYCreditsGrp");
+  assertStringIncludes(
+    xml,
+    "<PassThroughEntityEIN>123456789</PassThroughEntityEIN>",
+  );
+  await validateXsd(xml, "pass-through-only Form 5884 credit on Form 3800");
+});
+
+Deno.test({
+  name: "XSD: partly limited mixed Form 5884 sources use Form 3800 Part V",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const xml = buildMefXml({
+    f1040: { line16_income_tax: 1_000 },
+    schedule3: { line6a_total: 1_000, line7_total: 1_000 },
+    form6251: { line11_amt: 0, net_tmt: 0 },
+    f5884: {
+      subject_to_passive_activity_limit: false,
+      f5884s: [{
+        employee_reference: "EMP-001",
+        target_group: TargetGroup.TanfRecipient,
+        hired_on: "2025-01-15",
+        swa_certification_reference: "SWA-001",
+        qualified_wages_confirmed: true,
+        not_prior_employee_confirmed: true,
+        not_related_or_dependent_confirmed: true,
+        more_than_half_wages_for_trade_or_business_confirmed: true,
+        excluded_wages_removed_confirmed: true,
+        first_year_wages: 6_000,
+        hours_worked: 400,
+      }],
+      pass_through_credits: [{
+        source_type: "partnership",
+        entity_ein: "123456789",
+        source_document_reference: "2025 K-1 box 15 code J",
+        credit_amount: 1_250,
+        subject_to_passive_activity_limit: false,
+      }],
+    },
+    f3800: {
+      f5884_credit: {
+        credit_amount: 3_650,
+        subject_to_passive_activity_limit: false,
+      },
+      form5884_applied_credits_by_source: [600, 400],
+      tax_context: {
+        filingStatus: FilingStatus.Single,
+        regularTax: 1_000,
+        alternativeMinimumTax: 0,
+        foreignTaxCredit: 0,
+        priorAllowableCredits: 0,
+        tentativeMinimumTax: 0,
+        standardCredit: 0,
+        specifiedCredit: 3_650,
+      },
+      allowed_credit: 1_000,
+    },
+  }, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(xml, "<IRS5884 ");
+  assertStringIncludes(xml, "<Frm5884CYAggrgtAmtGrp");
+  await validateXsd(xml, "mixed Form 5884 sources on Form 3800 Part V");
+});
+
+Deno.test({
   name: "XSD: 2025 Schedule 2 line 1a Form 8962 repayment precedes line 2 AMT",
   sanitizeOps: false,
   sanitizeResources: false,

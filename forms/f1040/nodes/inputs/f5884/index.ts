@@ -118,10 +118,35 @@ export const itemSchema = z.object({
   }
 });
 
+const passThroughCreditSchema = z.object({
+  source_type: z.enum([
+    "partnership",
+    "s_corporation",
+    "cooperative",
+    "estate",
+    "trust",
+  ]),
+  entity_ein: z.string().regex(/^\d{9}$/),
+  source_document_reference: z.string().trim().min(1),
+  credit_amount: z.number().int().nonnegative(),
+  subject_to_passive_activity_limit: z.boolean(),
+});
+
 export const inputSchema = z.object({
-  f5884s: z.array(itemSchema).min(1),
+  f5884s: z.array(itemSchema),
+  pass_through_credits: z.array(passThroughCreditSchema).optional(),
   subject_to_passive_activity_limit: z.boolean(),
 }).superRefine((input, ctx) => {
+  if (
+    input.f5884s.length === 0 &&
+    (input.pass_through_credits?.length ?? 0) === 0
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["f5884s"],
+      message: "Form 5884 needs an employer wage or pass-through credit source",
+    });
+  }
   const references = new Set<string>();
   input.f5884s.forEach((item, index) => {
     if (references.has(item.employee_reference)) {
@@ -132,6 +157,18 @@ export const inputSchema = z.object({
       });
     }
     references.add(item.employee_reference);
+  });
+  const entities = new Set<string>();
+  input.pass_through_credits?.forEach((entry, index) => {
+    const id = `${entry.source_type}:${entry.entity_ein}`;
+    if (entities.has(id)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["pass_through_credits", index, "entity_ein"],
+        message: "Work opportunity pass-through source is duplicated",
+      });
+    }
+    entities.add(id);
   });
 });
 
@@ -186,6 +223,10 @@ export function calculateForm5884(input: z.infer<typeof inputSchema>) {
   const line1bCredit = Math.round(line1bWages * RATE_HIGH_HOURS);
   const line1cCredit = Math.round(line1cWages * RATE_LTFA_SECOND_YEAR);
   const line2 = line1aCredit + line1bCredit + line1cCredit;
+  const line3 = (input.pass_through_credits ?? []).reduce(
+    (sum, entry) => sum + entry.credit_amount,
+    0,
+  );
   return {
     line1aWages,
     line1aCredit,
@@ -194,7 +235,8 @@ export function calculateForm5884(input: z.infer<typeof inputSchema>) {
     line1cWages,
     line1cCredit,
     line2,
-    line4: line2,
+    line3,
+    line4: line2 + line3,
   };
 }
 
@@ -208,14 +250,18 @@ class F5884Node extends TaxNode<typeof inputSchema> {
     rawInput: z.infer<typeof inputSchema>,
   ): NodeResult {
     const input = inputSchema.parse(rawInput);
-    const credit = calculateForm5884(input).line4;
+    const lines = calculateForm5884(input);
+    const credit = lines.line4;
     if (credit <= 0) return { outputs: [] };
     return {
       outputs: [output(f3800, {
         f5884_credit: {
           credit_amount: credit,
           subject_to_passive_activity_limit:
-            input.subject_to_passive_activity_limit,
+            (lines.line2 > 0 && input.subject_to_passive_activity_limit) ||
+            (input.pass_through_credits ?? []).some((entry) =>
+              entry.credit_amount > 0 && entry.subject_to_passive_activity_limit
+            ),
         },
       })],
     };

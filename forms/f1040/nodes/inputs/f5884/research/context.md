@@ -23,6 +23,15 @@ employee references are rejected. A summer-youth row additionally confirms the
 zone and service period; a designated-community-resident row confirms the
 qualifying work location.
 
+`pass_through_credits` separately identifies partnership, S corporation,
+cooperative, estate, and trust allocations by entity EIN, source document
+reference, amount, and passive-activity answer. Duplicate entity sources are
+rejected. A 1040 recipient with only pass-through credit reports Form 3800
+line 4b without their own Form 5884. If the recipient also earns credit from
+their own employees, Form 5884 line 3 combines the identified allocations
+with lines 1a-1c; line 4 forwards the total. A partly limited multi-source
+claim requires explicit Form 3800 Part V applied amounts for each source.
+
 Veterans require one `VeteranCategory`, rather than independent flags:
 
 | Certified category | First-year wage cap |
@@ -44,9 +53,10 @@ These checks are written but unrun under the requested build-first workflow.
 The row still accepts affirmed eligibility facts rather than reconciling
 certifications, payroll periods, and wage exclusions against primary source
 documents. Successor-employer wages, controlled-group allocations, pass-through
-credits, passive-activity limitations, carryovers, filled-PDF inspection, and
-ATS acceptance remain open. The one-page PDF descriptor now maps the official
-fillable widgets for lines 1a-1c, 2, and 4, but has not been visually verified
+credits, passive-activity limitations, carryovers, source-document
+reconciliation, filled-PDF inspection, and ATS acceptance remain open. The
+one-page PDF descriptor now maps the official fillable widgets for lines
+1a-1c, 2, 3, and 4, but has not been visually verified
 after filling. Native XML and the shared nonpassive tax limit still need the
 full test batch, local XSD validation, and business-rule review before filing
 use.

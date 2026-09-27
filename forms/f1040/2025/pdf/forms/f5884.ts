@@ -24,6 +24,7 @@ export const form5884Pdf: PdfFormDescriptor = {
     text("line1cWages", 7),
     text("line1cCredit", 8),
     text("line2", 9),
+    text("line3", 10),
     text("line4", 11),
   ],
   filerFields: [
@@ -42,8 +43,13 @@ export const form5884Pdf: PdfFormDescriptor = {
     if (!Array.isArray(fields.f5884s) || fields.f5884s.length === 0) return {};
     const source = inputSchema.parse(fields);
     const lines = calculateForm5884(source);
-    if (lines.line4 <= 0) return {};
-    if (source.subject_to_passive_activity_limit) {
+    if (lines.line2 <= 0) return {};
+    if (
+      source.subject_to_passive_activity_limit ||
+      (source.pass_through_credits ?? []).some((entry) =>
+        entry.credit_amount > 0 && entry.subject_to_passive_activity_limit
+      )
+    ) {
       throw new Error(
         "Form 5884 passive credit needs Form 8582-CR before PDF output",
       );
@@ -64,6 +70,6 @@ export const form5884Pdf: PdfFormDescriptor = {
     if (!Array.isArray(fields.f5884s) || fields.f5884s.length === 0) {
       return false;
     }
-    return calculateForm5884(inputSchema.parse(fields)).line4 > 0;
+    return calculateForm5884(inputSchema.parse(fields)).line2 > 0;
   },
 };

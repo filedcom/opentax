@@ -71,3 +71,23 @@ Deno.test("Form 5884 allowed credit reaches Schedule 3 after Form 3800 Part II",
   assertEquals(result.pending.f3800?.standard_credit_allowed, 0);
   assertEquals(result.pending.f3800?.specified_credit_allowed, allowed);
 });
+
+Deno.test("pass-through-only work opportunity credit reaches Form 3800 without employer wages", () => {
+  const result = execute(plan, registry, {
+    general,
+    f5884: {
+      f5884s: [],
+      subject_to_passive_activity_limit: false,
+      pass_through_credits: [{
+        source_type: "partnership",
+        entity_ein: "123456789",
+        source_document_reference: "2025 K-1 box 15 code J",
+        credit_amount: 1_250,
+        subject_to_passive_activity_limit: false,
+      }],
+    },
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.pending.f3800?.f5884_credit?.credit_amount, 1_250);
+  assertEquals(result.pending.f3800?.allowed_credit, 0);
+  assertEquals(result.diagnostics, []);
+});

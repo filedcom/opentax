@@ -1,5 +1,11 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { f5884, itemSchema, TargetGroup, VeteranCategory } from "./index.ts";
+import {
+  calculateForm5884,
+  f5884,
+  itemSchema,
+  TargetGroup,
+  VeteranCategory,
+} from "./index.ts";
 import type { z } from "zod";
 
 type F5884Item = z.infer<typeof itemSchema>;
@@ -34,7 +40,7 @@ function findForm3800(result: ReturnType<typeof compute>) {
 
 // ── Schema Validation ────────────────────────────────────────────────────────
 
-Deno.test("schema_rejects_empty_array", () => {
+Deno.test("schema_rejects_no_employer_or_pass_through_source", () => {
   assertThrows(
     () =>
       f5884.compute({ taxYear: 2025, formType: "f1040" }, {
@@ -294,5 +300,66 @@ Deno.test("work opportunity credit requires certified, distinct, qualified emplo
       subject_to_passive_activity_limit: false,
     }).success,
     false,
+  );
+});
+
+Deno.test("Form 5884 separates pass-through-only and mixed source credits", () => {
+  const partnership = {
+    source_type: "partnership" as const,
+    entity_ein: "123456789",
+    source_document_reference: "2025 K-1 box 15 code J",
+    credit_amount: 1_250,
+    subject_to_passive_activity_limit: false,
+  };
+  const passThroughOnly = {
+    f5884s: [],
+    pass_through_credits: [partnership],
+    subject_to_passive_activity_limit: false,
+  };
+  assertEquals(f5884.inputSchema.safeParse(passThroughOnly).success, true);
+  assertEquals(calculateForm5884(f5884.inputSchema.parse(passThroughOnly)), {
+    line1aWages: 0,
+    line1aCredit: 0,
+    line1bWages: 0,
+    line1bCredit: 0,
+    line1cWages: 0,
+    line1cCredit: 0,
+    line2: 0,
+    line3: 1_250,
+    line4: 1_250,
+  });
+  const onlyOutput = f5884.compute(
+    { taxYear: 2025, formType: "f1040" },
+    passThroughOnly,
+  );
+  assertEquals(onlyOutput.outputs[0]?.nodeType, "f3800");
+  assertEquals(
+    onlyOutput.outputs[0]?.fields.f5884_credit?.credit_amount,
+    1_250,
+  );
+  const mixed = {
+    ...passThroughOnly,
+    f5884s: [minimalItem({ first_year_wages: 6_000, hours_worked: 400 })],
+  };
+  const mixedLines = calculateForm5884(f5884.inputSchema.parse(mixed));
+  assertEquals(mixedLines.line2, 2_400);
+  assertEquals(mixedLines.line3, 1_250);
+  assertEquals(mixedLines.line4, 3_650);
+  assertEquals(
+    f5884.inputSchema.safeParse({
+      ...passThroughOnly,
+      pass_through_credits: [partnership, partnership],
+    }).success,
+    false,
+  );
+  assertEquals(
+    f5884.compute({ taxYear: 2025, formType: "f1040" }, {
+      ...passThroughOnly,
+      pass_through_credits: [{
+        ...partnership,
+        subject_to_passive_activity_limit: true,
+      }],
+    }).outputs[0]?.fields.f5884_credit?.subject_to_passive_activity_limit,
+    true,
   );
 });

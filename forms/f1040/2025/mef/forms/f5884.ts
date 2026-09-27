@@ -13,8 +13,13 @@ export const form5884: MefFormDescriptor<"f5884", unknown> = {
     if (!raw || typeof raw !== "object" || !("f5884s" in raw)) return "";
     const source = inputSchema.parse(raw);
     const lines = calculateForm5884(source);
-    if (lines.line4 <= 0) return "";
-    if (source.subject_to_passive_activity_limit) {
+    if (lines.line2 <= 0) return "";
+    if (
+      source.subject_to_passive_activity_limit ||
+      (source.pass_through_credits ?? []).some((entry) =>
+        entry.credit_amount > 0 && entry.subject_to_passive_activity_limit
+      )
+    ) {
       throw new Error(
         "Form 5884 passive credit needs Form 8582-CR before Form 3800",
       );
@@ -45,6 +50,9 @@ export const form5884: MefFormDescriptor<"f5884", unknown> = {
         ? element("TotalSecondYearWagesAmt", lines.line1cCredit)
         : "",
       element("TotalWagesAmt", lines.line2),
+      lines.line3 > 0
+        ? element("PassThruWorkOpportunityCrAmt", lines.line3)
+        : "",
       element("TotalCreditsAmt", lines.line4),
     ]);
   },

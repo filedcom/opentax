@@ -30,7 +30,36 @@ Deno.test("Form 5884 PDF maps the official wage and credit widgets", () => {
   assertEquals(names.line1cWages, "topmostSubform[0].Page1[0].f1_7[0]");
   assertEquals(names.line1cCredit, "topmostSubform[0].Page1[0].f1_8[0]");
   assertEquals(names.line2, "topmostSubform[0].Page1[0].f1_9[0]");
+  assertEquals(names.line3, "topmostSubform[0].Page1[0].f1_10[0]");
   assertEquals(names.line4, "topmostSubform[0].Page1[0].f1_11[0]");
+});
+
+Deno.test("Form 5884 PDF omits pass-through-only credit and prints mixed line 3", () => {
+  const passThrough = {
+    source_type: "partnership" as const,
+    entity_ein: "123456789",
+    source_document_reference: "2025 K-1 box 15 code J",
+    credit_amount: 1_250,
+    subject_to_passive_activity_limit: false,
+  };
+  assertEquals(
+    form5884Pdf.includeWhen?.({
+      subject_to_passive_activity_limit: false,
+      f5884s: [],
+      pass_through_credits: [passThrough],
+    }),
+    false,
+  );
+  const mixed = {
+    ...source,
+    pass_through_credits: [passThrough],
+  };
+  const projected = form5884Pdf.projectFields?.(mixed, {
+    f3800: { f5884_credit: { credit_amount: 3_650 } },
+  }) ?? {};
+  assertEquals(projected.line2, 2_400);
+  assertEquals(projected.line3, 1_250);
+  assertEquals(projected.line4, 3_650);
 });
 
 Deno.test("Form 5884 PDF projects source credit and requires Form 3800 reconciliation", () => {

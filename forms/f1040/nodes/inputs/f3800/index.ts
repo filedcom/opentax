@@ -99,6 +99,8 @@ export const inputSchema = z.object({
   f8826_credit_entries: z.array(f8826CreditEntrySchema).min(1).optional(),
   f5884_credit: f5884CreditSchema.optional(),
   form5884_applied_credit: appliedSourceCreditSchema.optional(),
+  form5884_applied_credits_by_source: z.array(appliedSourceCreditSchema)
+    .optional(),
   // Optional Part V allocation choices. Required only when a tax limit cuts
   // across multiple sources on the same Form 3800 credit line.
   form8826_applied_credits_by_source: z.array(appliedSourceCreditSchema)

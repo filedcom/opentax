@@ -51,3 +51,33 @@ Deno.test("Form 5884 emits source wages and credit only when bundled with Form 3
     "needs Form 8582-CR",
   );
 });
+
+Deno.test("Form 5884 omits the taxpayer form for pass-through-only credit and prints line 3 for mixed credit", () => {
+  const passThrough = {
+    source_type: "partnership" as const,
+    entity_ein: "123456789",
+    source_document_reference: "2025 K-1 box 15 code J",
+    credit_amount: 1_250,
+    subject_to_passive_activity_limit: false,
+  };
+  assertEquals(
+    form5884.build({
+      subject_to_passive_activity_limit: false,
+      f5884s: [],
+      pass_through_credits: [passThrough],
+    }),
+    "",
+  );
+  const mixed = form5884.build({
+    ...workOpportunitySource,
+    pass_through_credits: [passThrough],
+  }, {
+    documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
+  });
+  assertStringIncludes(mixed, "<TotalWagesAmt>2400</TotalWagesAmt>");
+  assertStringIncludes(
+    mixed,
+    "<PassThruWorkOpportunityCrAmt>1250</PassThruWorkOpportunityCrAmt>",
+  );
+  assertStringIncludes(mixed, "<TotalCreditsAmt>3650</TotalCreditsAmt>");
+});

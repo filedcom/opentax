@@ -242,17 +242,20 @@ function sourceForm5884(
     );
   }
   const source = f5884InputSchema.parse(raw);
-  const expected = calculateForm5884(source).line4;
+  const lines = calculateForm5884(source);
   if (
-    source.subject_to_passive_activity_limit ||
+    (lines.line2 > 0 && source.subject_to_passive_activity_limit) ||
+    (source.pass_through_credits ?? []).some((entry) =>
+      entry.credit_amount > 0 && entry.subject_to_passive_activity_limit
+    ) ||
     fields.f5884_credit.subject_to_passive_activity_limit ||
-    !sameMoney(fields.f5884_credit.credit_amount, expected)
+    !sameMoney(fields.f5884_credit.credit_amount, lines.line4)
   ) {
     throw new Error(
       "Form 3800 work opportunity entry does not reconcile to Form 5884 source",
     );
   }
-  return { source, credit: expected };
+  return { source, lines, credit: lines.line4 };
 }
 
 function form8826SourceAllocations(
@@ -278,6 +281,32 @@ function form8826SourceAllocations(
   if (sameMoney(appliedCredit, source.lines.line8)) return amounts;
   throw new Error(
     "Form 3800 needs Part V applied amounts for each Form 8826 source",
+  );
+}
+
+function form5884SourceAllocations(
+  source: ReturnType<typeof sourceForm5884>,
+  appliedCredit: number,
+  explicit: readonly number[] | undefined,
+): readonly number[] | undefined {
+  if (!source) {
+    if (explicit !== undefined) {
+      throw new Error("Form 3800 has Form 5884 allocations without a source");
+    }
+    return undefined;
+  }
+  const amounts = [
+    ...(source.lines.line2 > 0 ? [source.lines.line2] : []),
+    ...(source.source.pass_through_credits ?? []).flatMap((entry) =>
+      entry.credit_amount > 0 ? [entry.credit_amount] : []
+    ),
+  ];
+  if (amounts.length <= 1) return explicit;
+  if (explicit !== undefined) return explicit;
+  if (sameMoney(appliedCredit, 0)) return amounts.map(() => 0);
+  if (sameMoney(appliedCredit, source.credit)) return amounts;
+  throw new Error(
+    "Form 3800 needs Part V applied amounts for each Form 5884 source",
   );
 }
 
@@ -384,8 +413,13 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
       throw new Error("Form 3800 needs one attached Form 8835 per facility");
     }
     const form5884Ids = context.documentIdsByPendingKey.f5884 ?? [];
-    if (form5884Ids.length !== (form5884 ? 1 : 0)) {
-      throw new Error("Form 3800 needs one attached Form 5884 source document");
+    if (
+      form5884Ids.length !==
+        (form5884 && form5884.lines.line2 > 0 ? 1 : 0)
+    ) {
+      throw new Error(
+        "Form 3800 Form 5884 document count does not match self-earned source",
+      );
     }
     const form5884Applied = form5884
       ? parsed.form5884_applied_credit ??
@@ -410,6 +444,21 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
           credit: form5884.credit,
           documentId: form5884Ids[0],
           appliedCredit: form5884Applied,
+          sources: [
+            ...(form5884.lines.line2 > 0
+              ? [{ credit: form5884.lines.line2 }]
+              : []),
+            ...(form5884.source.pass_through_credits ?? []).flatMap((entry) =>
+              entry.credit_amount > 0
+                ? [{ credit: entry.credit_amount, ein: entry.entity_ein }]
+                : []
+            ),
+          ],
+          appliedCreditsBySource: form5884SourceAllocations(
+            form5884,
+            form5884Applied,
+            parsed.form5884_applied_credits_by_source,
+          ),
         }
         : undefined,
       form8826: form8826

@@ -172,8 +172,14 @@ credit through the shared Form 3800 tax limit instead of depositing gross
 credit on Schedule 3. Native `IRS5884` source XML, the linked `IRS3800` line
 4b group, and partial-limit reconciliation have cases written but unrun. The
 continuous-use IRS Form 5884 PDF now has the exact one-page AcroForm field map
-for lines 1a-1c, 2, and 4, with unrun source-reconciliation cases. Passive
-credit, carryovers, filled-PDF inspection, IRS business rules, and ATS
+for lines 1a-1c, 2, 3, and 4, with unrun source-reconciliation cases. The
+source input now accepts identified partnership, S corporation, cooperative,
+estate, and trust allocations: pass-through-only recipients omit their own
+Form 5884, while mixed claims place them on line 3. Form 3800 requires Part V
+source allocations when a tax limit partly uses multiple line 4b sources;
+source, XML, PDF, and XSD cases are written but unrun. Passive credit,
+carryovers, K-1/1099-PATR document reconciliation, filled-PDF inspection, IRS
+business rules, and ATS
 acceptance remain open. An unrun pure Form 8912 Part I/II limit
 calculation now keeps its line 12 allowed credit and unused amount separate,
 taking the already-allowed Form 3800 credit on line 10c. It rejects pass-through
