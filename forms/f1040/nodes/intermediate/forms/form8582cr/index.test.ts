@@ -58,6 +58,7 @@ Deno.test("Form 8582-CR source origin requires pass-through EIN or missing-EIN r
       ...other(100),
       source_origin: {
         kind: PassiveCreditSourceOrigin.Partnership,
+        entity_reference: "Clinical partnership",
         ein: "123456789",
       },
     }).success,
@@ -68,6 +69,7 @@ Deno.test("Form 8582-CR source origin requires pass-through EIN or missing-EIN r
       ...other(100),
       source_origin: {
         kind: PassiveCreditSourceOrigin.SCorporation,
+        entity_reference: "Clinical S corporation",
         missing_ein_reason: "APPLD FOR",
       },
     }).success,
@@ -83,7 +85,11 @@ Deno.test("Form 8582-CR source origin requires pass-through EIN or missing-EIN r
     assertEquals(
       creditSourceSchema.safeParse({
         ...other(100),
-        source_origin: { kind, ein: "123456789" },
+        source_origin: {
+          kind,
+          entity_reference: "Clinical pass-through",
+          ein: "123456789",
+        },
       }).success,
       true,
     );
@@ -91,7 +97,10 @@ Deno.test("Form 8582-CR source origin requires pass-through EIN or missing-EIN r
   assertEquals(
     creditSourceSchema.safeParse({
       ...other(100),
-      source_origin: { kind: PassiveCreditSourceOrigin.Partnership },
+      source_origin: {
+        kind: PassiveCreditSourceOrigin.Partnership,
+        entity_reference: "Clinical partnership",
+      },
     }).success,
     false,
   );

@@ -26,13 +26,15 @@ export type Form3800PassiveCreditVintage = {
   readonly afterPassiveLimit: number;
 };
 
-export type Form3800PassiveCreditRow = {
+export type Form3800PassiveCreditRow<
+  T extends Form3800PassiveCreditVintage = Form3800PassiveCreditVintage,
+> = {
   readonly form3800CreditLine:
     Form3800PassiveCreditVintage["form3800CreditLine"];
   readonly originatingTaxYear: number;
   readonly beforePassiveLimit: number;
   readonly afterPassiveLimit: number;
-  readonly sources: readonly Form3800PassiveCreditVintage[];
+  readonly sources: readonly T[];
 };
 
 export type Form3800CreditUseRow = {
@@ -219,9 +221,9 @@ export function allocateForm3800CreditUse(
 }
 
 /** Keep one aggregate per XML line and year while retaining its source detail. */
-export function groupForm3800PassiveCreditVintages(
-  vintages: readonly Form3800PassiveCreditVintage[],
-): Form3800PassiveCreditRow[] {
+export function groupForm3800PassiveCreditVintages<
+  T extends Form3800PassiveCreditVintage,
+>(vintages: readonly T[]): Form3800PassiveCreditRow<T>[] {
   const lineOrder = [
     ...form3800StandardCreditLineSchema.options,
     "3",
@@ -232,7 +234,7 @@ export function groupForm3800PassiveCreditVintages(
       lineOrder.indexOf(b.form3800CreditLine) ||
     a.originatingTaxYear - b.originatingTaxYear
   );
-  return ordered.reduce<Form3800PassiveCreditRow[]>((rows, vintage) => {
+  return ordered.reduce<Form3800PassiveCreditRow<T>[]>((rows, vintage) => {
     if (
       !Number.isSafeInteger(vintage.beforePassiveLimit) ||
       !Number.isSafeInteger(vintage.afterPassiveLimit) ||

@@ -54,7 +54,7 @@ Deno.test("Form 3800 passive XML plan keeps one carryover group with source deta
   const source = (year: number, before: number, after: number) => ({
     activityReference: "Clinical activity",
     sourceForm: "Form 8820",
-    sourceOrigin: { kind: PassiveCreditSourceOrigin.Self },
+    sourceOrigin: { kind: PassiveCreditSourceOrigin.Self } as const,
     sourceDocumentReference: `${year} clinical credit statement`,
     form3800CreditLine: "1h" as const,
     reportingRoute: PassiveCreditReportingRoute.Form3800Line3,
@@ -124,6 +124,7 @@ Deno.test("Form 3800 passive XML summary year survives same-year sources", () =>
         sourceForm: "Form 8820",
         sourceOrigin: {
           kind: PassiveCreditSourceOrigin.Partnership,
+          entity_reference: "Rental partnership B",
           ein: "123456789",
         },
         sourceDocumentReference: "2023 B statement",
@@ -141,6 +142,7 @@ Deno.test("Form 3800 passive XML summary year survives same-year sources", () =>
   assertEquals(planned[0].sources.length, 2);
   assertEquals(planned[0].sources[1].sourceOrigin, {
     kind: PassiveCreditSourceOrigin.Partnership,
+    entity_reference: "Rental partnership B",
     ein: "123456789",
   });
 });

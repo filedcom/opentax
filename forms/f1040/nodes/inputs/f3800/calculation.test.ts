@@ -240,7 +240,7 @@ Deno.test("Form 3800: groups same-line passive sources without losing activity o
   ) => ({
     activityReference,
     sourceForm: "Form 8820",
-    sourceOrigin: { kind: PassiveCreditSourceOrigin.Self },
+    sourceOrigin: { kind: PassiveCreditSourceOrigin.Self } as const,
     sourceDocumentReference:
       `${originatingTaxYear} ${activityReference} statement`,
     form3800CreditLine: "1h" as const,
@@ -397,6 +397,7 @@ Deno.test("Form 3800 passive source years reconcile with nonpassive credit order
     source_form: "Form 8820",
     source_origin: {
       kind: PassiveCreditSourceOrigin.Partnership,
+      entity_reference: "Clinical partnership",
       ein: "123456789",
     },
     source_document_reference: "2025 clinical statement",
@@ -451,6 +452,7 @@ Deno.test("Form 3800 passive source years reconcile with nonpassive credit order
         unused: 0,
         sourceOrigin: {
           kind: PassiveCreditSourceOrigin.Partnership,
+          entity_reference: "Clinical partnership",
           ein: "123456789",
         },
       },
@@ -462,6 +464,7 @@ Deno.test("Form 3800 passive source years reconcile with nonpassive credit order
         unused: 100,
         sourceOrigin: {
           kind: PassiveCreditSourceOrigin.Partnership,
+          entity_reference: "Clinical partnership",
           ein: "123456789",
         },
       },

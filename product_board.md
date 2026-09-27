@@ -493,8 +493,11 @@ plan now collapses multiple carryover years into one schema group per credit
 line, records the latest origin year as the IRS instructs for Part IV column
 (b), and retains every source year for the required Part VI detail. A
 schema-backed map now names the Part VI detail group for every supported
-carryover row. The plan and map do not yet serialize those rows into the filed
-Form 3800.
+carryover row. A pure XML fragment builder now writes the passive Part IV
+aggregate and, when needed, each Part VI source-year detail with its verified
+EIN or missing-EIN reason and tax-use carryforward. Direct and local XSD cases
+are written but unrun. These fragments are not yet joined into the filed Form
+3800, and Part III/V passive rows remain open.
 A pure tax-use allocator now reconciles the source totals with the three Part II
 caps and applies older credit years first. It stops a partially used year with
 multiple source rows unless their named credit types have an explicit IRS
@@ -513,6 +516,10 @@ provenance carries through the Form 3800 vintage plan instead of inferring an
 entity from a free-text source form. The source and propagation cases are
 written but unrun; the MeF builder
 still needs to serialize and reconcile the linked rows.
+Pass-through sources also carry a stable entity reference so the passive
+Part IV summary chooses the entity with the greatest combined credit across
+its source years. Conflicting EINs for one entity stop XML generation. The
+aggregation and negative cases are written but unrun.
 Form 4136 now combines its represented
 fuel-use credits on refundable line 12 instead of misrouting some to general
 business credit and some to a nonexistent Form 1040 field; the represented 2025

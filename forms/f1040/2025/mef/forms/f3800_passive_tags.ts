@@ -235,7 +235,9 @@ export const form3800CarryoverDetailXmlTags = {
   "4z": "CYOtherSpcfdCreditsAggrgtGrp",
 } as const satisfies Readonly<Record<Form3800CreditLine, string>>;
 
-export type PlannedForm3800PassiveXmlRow = {
+export type PlannedForm3800PassiveXmlRow<
+  T extends Form3800PassiveCreditVintage = Form3800PassiveCreditVintage,
+> = {
   readonly form3800CreditLine: Form3800CreditLine;
   readonly part: "current" | "carryover";
   readonly tag: string;
@@ -244,14 +246,16 @@ export type PlannedForm3800PassiveXmlRow = {
   readonly latestOriginatingTaxYear: number;
   readonly beforePassiveLimit: number;
   readonly afterPassiveLimit: number;
-  readonly sources: readonly Form3800PassiveCreditVintage[];
+  readonly sources: readonly T[];
   readonly requiresSourceBreakdown: boolean;
 };
 
 /** Part IV has one XML group per credit line, even with several origin years. */
-export function planForm3800PassiveXmlRows(
-  rows: readonly Form3800PassiveCreditRow[],
-): PlannedForm3800PassiveXmlRow[] {
+export function planForm3800PassiveXmlRows<
+  T extends Form3800PassiveCreditVintage,
+>(
+  rows: readonly Form3800PassiveCreditRow<T>[],
+): PlannedForm3800PassiveXmlRow<T>[] {
   const lineOrder = [
     ...form3800StandardCreditLineSchema.options,
     "3",
@@ -265,7 +269,7 @@ export function planForm3800PassiveXmlRows(
       lineOrder.indexOf(b.form3800CreditLine) ||
     a.originatingTaxYear - b.originatingTaxYear
   );
-  return ordered.reduce<PlannedForm3800PassiveXmlRow[]>((planned, row) => {
+  return ordered.reduce<PlannedForm3800PassiveXmlRow<T>[]>((planned, row) => {
     const rowPart = part(row.originatingTaxYear);
     const tags = form3800PassiveXmlTags[row.form3800CreditLine];
     const tag = rowPart === "current" ? tags.current : tags.carryover;

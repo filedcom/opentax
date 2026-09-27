@@ -22,6 +22,7 @@ export enum PassiveCreditSourceOrigin {
 }
 
 const passThroughOriginFields = {
+  entity_reference: z.string().trim().min(1),
   ein: z.string().regex(/^\d{9}$/).optional(),
   missing_ein_reason: z.literal("APPLD FOR").optional(),
 };
