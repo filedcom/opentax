@@ -1,22 +1,30 @@
 # TY2026 instruction availability
 
 Snapshot: September 27, 2026. The [coverage ledger](instruction-coverage.csv)
-checks the expected IRS draft instruction URL for each form in the TY2025 PDF
-surface and additional active inputs. The form slug is a lookup aid, not
-proof that every form has its own instruction booklet. Current result across
-95 entries: **28 pinned 2026 drafts**, **21 URLs serving 2025 instructions**,
-**9 with no draft at the expected URL**, **9 with 2026 instructions embedded
-in their form drafts**, **1 covered by a combined 2026 booklet**, **7 with
-current continuous-use instructions**, **5 current older-revision
-form/instruction pairs**, **3 current forms with embedded instructions**, and
-**2 2025 comparators awaiting 2026 revisions**, **1 current-guidance
-case with a prior-form comparator**, and **4 final 2026 information-return
-rows** (G/K plus one combined MISC/NEC booklet), and **2 final 2026
-Form 1098/1098-E source rows**, and **1 continuous-use Form 1099-OID
-row**, **1 final 2026 Form 1098-VLI source row**, and **1 final 2026
-Form 1098-T source row**. The
-missing and unverified groups are research gates, not unsupported-form
-decisions. Schedule A (Form 8936) is covered by the pinned Form 8936 booklet.
+maps the instruction **owner and actual IRS slug** for 95 form/source rows.
+It distinguishes a missing 2026 publication from a nonexistent per-schedule
+instruction URL. There are **28 pinned 2026 instruction drafts**, **21 draft
+URLs still serving 2025**, **5 schedules whose 2025 instructions are in the
+combined Form 1040 booklet**, **1 new Schedule 3-A instruction owner to
+confirm**, **1 corrected Schedule A slug still serving 2025**, and **2
+unresolved expected draft URLs**. The other rows include embedded,
+continuous-use, combined-form, final 2026, and prior-year authorities; the
+CSV records their individual status. These research gates do not imply that
+a form is unsupported. Schedule A (Form 8936) is covered by the pinned Form
+8936 booklet.
+
+The pinned [2025 Form 1040 instruction booklet](corpus/authorities/i1040gi--2025.pdf)
+contains instructions for Schedules **1, 1-A, 2, and 3**, plus EIC line and
+Schedule EIC filing guidance. Their `i1040s1`, `i1040s1a`, `i1040s2`,
+`i1040s3`, and `i1040sei` probes were false missing-publication signals;
+their owner is `i1040gi`. Schedule **3-A is new in 2026** and cannot be
+validated from that comparator; inspect the eventual 2026 combined booklet
+or a separate IRS publication. Schedule A has its own `i1040sca` booklet,
+not `i1040sa`. The pinned [2025 Schedule A instructions](corpus/authorities/i1040sca--2025.pdf)
+are a method comparator while the correct 2026 draft URL still serves 2025.
+The [IRS draft listing](https://www.irs.gov/draft-tax-forms) and
+[Form 1040 product page](https://www.irs.gov/forms-pubs/about-form-1040)
+were checked for these instruction owners on 2026-09-27.
 Forms 4137, 4952, 4972, 6252, 6781, 8396, 8859, 8880, and 8919 embed their 2026 instructions
 in the pinned draft forms.
 The 2026 Form 8915-F draft is pinned; its expected draft instruction URL
@@ -107,7 +115,7 @@ verified slug. A draft instruction remains subject to final-version review.
    the corresponding graph route. Record the exact line and worksheet source
    in the route contract or test. The presence of a PDF is not evidence that
    the TY2025 calculation can be registered unchanged.
-2. Do not treat the current `i1040gi`, `i1040sc`, `i1040sd`, `i8962`, or
+2. Do not treat the current `i1040gi`, `i1040sca`, `i1040sc`, `i1040sd`, `i8962`, or
    `i8995a` draft URLs as TY2026 authority: they currently return 2025
    instructions. The 2026 Form 1040 itself is pinned, but its full 2026
    instruction booklet is not yet available. Recheck the IRS publication

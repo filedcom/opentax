@@ -6,17 +6,17 @@ f3800,i3800,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i3800--dft.pdf,Rec
 f965a,i965a,continuous-use final pinned,https://www.irs.gov/pub/irs-pdf/i965a.pdf,Current January 2021 form and instructions pinned; reconcile 2026 Schedule 2 line 12/15 draft conflict and current MeF before filing.
 f8888,i8888,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i8888--dft.pdf,Review current instruction revision and reconcile ATS scenario 5 before filing.
 f1040,i1040gi,URL serves 2025,https://www.irs.gov/pub/irs-dft/i1040gi--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
-f1040s1,i1040s1,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i1040s1--dft.pdf,Recheck IRS draft directory or another instruction slug.
-f1040s1a,i1040s1a,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i1040s1a--dft.pdf,Recheck IRS draft directory or another instruction slug.
-f1040s2,i1040s2,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i1040s2--dft.pdf,Recheck IRS draft directory or another instruction slug.
-f1040s3,i1040s3,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i1040s3--dft.pdf,Recheck IRS draft directory or another instruction slug.
-f1040s3a,i1040s3a,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i1040s3a--dft.pdf,Recheck IRS draft directory or another instruction slug.
-f1040sa,i1040sa,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i1040sa--dft.pdf,Recheck IRS draft directory or another instruction slug.
+f1040s1,i1040gi,combined 1040 booklet pending; 2025 comparator pinned,https://www.irs.gov/pub/irs-dft/i1040gi--dft.pdf,The 2025 Form 1040 booklet contains Schedule 1 instructions; use its pinned copy only as comparator and map 2026 rules from the released 2026 combined booklet.
+f1040s1a,i1040gi,combined 1040 booklet pending; 2025 comparator pinned,https://www.irs.gov/pub/irs-dft/i1040gi--dft.pdf,The 2025 Form 1040 booklet contains Schedule 1-A instructions; use its pinned copy only as comparator and map 2026 rules from the released 2026 combined booklet.
+f1040s2,i1040gi,combined 1040 booklet pending; 2025 comparator pinned,https://www.irs.gov/pub/irs-dft/i1040gi--dft.pdf,The 2025 Form 1040 booklet contains Schedule 2 instructions; use its pinned copy only as comparator and map 2026 rules from the released 2026 combined booklet.
+f1040s3,i1040gi,combined 1040 booklet pending; 2025 comparator pinned,https://www.irs.gov/pub/irs-dft/i1040gi--dft.pdf,The 2025 Form 1040 booklet contains Schedule 3 instructions; use its pinned copy only as comparator and map 2026 rules from the released 2026 combined booklet.
+f1040s3a,i1040gi,2026 instruction owner unresolved; 1040 booklet pending,https://www.irs.gov/pub/irs-dft/i1040gi--dft.pdf,New 2026 schedule is absent from the 2025 booklet; inspect the released 2026 Form 1040 combined booklet or a separately published Schedule 3-A instruction.
+f1040sa,i1040sca,actual instruction slug serves 2025; comparator pinned,https://www.irs.gov/pub/irs-dft/i1040sca--dft.pdf,The actual Schedule A instruction slug is i1040sca; use the pinned 2025 booklet only as comparator and obtain its 2026 revision before finalizing SALT and educator itemization.
 f1040sb,i1040sb,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i1040sb--dft.pdf,Use pinned PDF; recheck final instructions.
 f1040sc,i1040sc,URL serves 2025,https://www.irs.gov/pub/irs-dft/i1040sc--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
 f1040sd,i1040sd,URL serves 2025,https://www.irs.gov/pub/irs-dft/i1040sd--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
 f1040se,i1040se,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i1040se--dft.pdf,Use pinned PDF; recheck final instructions.
-f1040sei,i1040sei,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i1040sei--dft.pdf,Recheck IRS draft directory or another instruction slug.
+f1040sei,i1040gi,combined 1040 booklet pending; 2025 comparator pinned,https://www.irs.gov/pub/irs-dft/i1040gi--dft.pdf,The 2025 Form 1040 booklet contains Schedule EIC instructions; use its pinned copy only as comparator and map 2026 rules from the released 2026 combined booklet.
 f1040sse,i1040sse,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i1040sse--dft.pdf,Use pinned PDF; recheck final instructions.
 f1040sh,i1040sh,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i1040sh--dft.pdf,Use pinned PDF; recheck final instructions.
 f1040sf,i1040sf,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i1040sf--dft.pdf,Use pinned PDF; recheck final instructions.

@@ -10,7 +10,9 @@ contract for the TY2026 `f1040` entry point, not a registered calculation path.
   after its limitation worksheet on 13, prior carryover on 14, total charity
   on 15, and total itemized deductions on 18. It adds detailed line 17
   categories. Pin its revision and any final instructions before serializer
-  field mapping.
+  field mapping. The correct instruction slug is `i1040sca`, whose draft URL
+  still serves 2025; the pinned [2025 booklet](corpus/authorities/i1040sca--2025.pdf)
+  is only a method comparator.
 - [2026 Publication 505](https://www.irs.gov/publications/p505), Worksheets
   2-5 and 2-6, specifies the 0.5% AGI charitable floor and the 5.4% overall
   itemized reduction above the top-bracket threshold. The latter uses AGI
