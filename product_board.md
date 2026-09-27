@@ -1151,7 +1151,11 @@ distributions. It rejects unsupported pre-June-17-2008 dates and more than
 three distribution rows per category; prior Form 8854 amounts, disposition
 reporting, and payment evidence remain entered source assertions. A registered
 annual node and MeF descriptor now file the no-disposition, no-distribution
-certification. Its graph, full-return, and local XSD cases are written but
+certification. The annual input also requires explicit confirmations that the
+original Form 8854 was mailed separately and the return-attached copy was
+marked “Copy,” as the 2025 instructions require. Those assertions do not prove
+mailing or the contents of the filed copy. Missing-confirmation cases are
+written but unrun. Its graph, full-return, and local XSD cases are written but
 unrun. An annual deferred-property disposition now has separate actual-sale,
 full-disposition, deferred-tax, interest, payment-date, and receipt-filename
 facts. For a disposition reported on Form 8949, a written one-to-one check

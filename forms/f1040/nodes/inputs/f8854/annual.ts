@@ -118,6 +118,8 @@ export const annualInputSchema = z.object({
   expatriate_type: z.nativeEnum(ExpatriateType),
   part_i: partISchema,
   prior_form8854_obligations_confirmed_complete: z.literal(true),
+  original_form8854_mailed_confirmed: z.literal(true),
+  attached_form8854_copy_marked_copy_confirmed: z.literal(true),
   deferred_properties: z.array(deferredPropertySchema).max(20),
   eligible_deferred_compensation_items: z.array(annualItemSchema).max(1000),
   nongrantor_trust_interests: z.array(annualTrustSchema).max(1000),

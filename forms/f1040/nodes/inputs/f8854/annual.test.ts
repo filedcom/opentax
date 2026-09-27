@@ -30,6 +30,8 @@ function annualInput(overrides: Record<string, unknown> = {}) {
       us_citizenship_acquisition: "BIRTH",
     },
     prior_form8854_obligations_confirmed_complete: true,
+    original_form8854_mailed_confirmed: true,
+    attached_form8854_copy_marked_copy_confirmed: true,
     deferred_properties: [],
     eligible_deferred_compensation_items: [{
       item_id: "plan",
@@ -257,6 +259,16 @@ Deno.test("annual Form 8854 disposition matches one filed Form 8949 sale and pay
 });
 
 Deno.test("annual Form 8854 rejects missing obligations and unsupported years", () => {
+  for (
+    const missingConfirmation of [
+      "original_form8854_mailed_confirmed",
+      "attached_form8854_copy_marked_copy_confirmed",
+    ]
+  ) {
+    const input: Record<string, unknown> = annualInput();
+    delete input[missingConfirmation];
+    assertEquals(annualInputSchema.safeParse(input).success, false);
+  }
   assertEquals(
     annualInputSchema.safeParse(annualInput({
       deferred_properties: [],
