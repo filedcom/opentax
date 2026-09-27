@@ -211,24 +211,26 @@ Positive credit still stops final Form 1040 assembly until Part II and the
 native document are registered; the fail-closed check moved to that sink and to
 Form 1040 XML/PDF export so taxable interest can reach AGI first without
 yielding an unfinished return. These graph and duplicate-interest cases are
-written but unrun. Source-document identity reconciliation remains open. The
-Form 1097-BTC reported-bond input now requires all 12 monthly credit boxes and
-checks their sum against annual box 1, captures box 2a's C/A/O code, and
-constrains box 2b to the IRS 39-character alphanumeric identifier. It also
-rejects duplicate issuer-EIN/unique-ID pairs within and across Form 8912 input
-items. These source cases are written but unrun. The actual annual 1097-BTC
-document, corrected statements, fiscal-year allocation, multi-bond type 1097-BTC
-source model, and full cross-document identity matching remain open. A new unrun
-check rejects a Part IV CUSIP already represented by a Form 1097-BTC with the
-same issuer EIN and box 2a code C, including identifiers with an account suffix
-and entries in separate Form 8912 input items. Account and other identifiers
-cannot be matched to a CUSIP from these facts alone. The Part IV input now
-records acquisition and allowance dates instead of an unchecked column (e)
-percentage. The build pass derives quarterly allowances, BAB interest-payment
-allowances, pre-October 2008 QZAB annual allowances, and the final quarter
-prorated on maturity or redemption, including a fifth partial date after
-December 15; it rejects dates outside the 2025 holding period or duplicated
-across line 18 rows. These date and XML cases are written but unrun.
+written but unrun. The source node now hands separate Part I lines 1 through 4
+to the Form 1040 sink instead of a tentative scalar; the positive-credit guard
+remains until Part II finalization is connected. Source-document identity
+reconciliation remains open. The Form 1097-BTC reported-bond input now requires
+all 12 monthly credit boxes and checks their sum against annual box 1, captures
+box 2a's C/A/O code, and constrains box 2b to the IRS 39-character alphanumeric
+identifier. It also rejects duplicate issuer-EIN/unique-ID pairs within and
+across Form 8912 input items. These source cases are written but unrun. The
+actual annual 1097-BTC document, corrected statements, fiscal-year allocation,
+multi-bond type 1097-BTC source model, and full cross-document identity matching
+remain open. A new unrun check rejects a Part IV CUSIP already represented by a
+Form 1097-BTC with the same issuer EIN and box 2a code C, including identifiers
+with an account suffix and entries in separate Form 8912 input items. Account
+and other identifiers cannot be matched to a CUSIP from these facts alone. The
+Part IV input now records acquisition and allowance dates instead of an
+unchecked column (e) percentage. The build pass derives quarterly allowances,
+BAB interest-payment allowances, pre-October 2008 QZAB annual allowances, and
+the final quarter prorated on maturity or redemption, including a fifth partial
+date after December 15; it rejects dates outside the 2025 holding period or
+duplicated across line 18 rows. These date and XML cases are written but unrun.
 Record-holder timing on a sale, other dispositions, and the required bond-rate
 source still need review.
 

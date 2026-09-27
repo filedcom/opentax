@@ -516,7 +516,13 @@ Deno.test("Form 8912: positive source credit does not bypass its Part II limit",
   assertEquals(
     result.outputs.find((output) => output.nodeType === "f1040")?.fields,
     {
-      form8912_tentative_credit: 275,
+      form8912_source_lines: {
+        line1: 100,
+        line2: 175,
+        line3: 0,
+        line4: 275,
+        hasPassThroughCrebCredit: false,
+      },
     },
   );
 });

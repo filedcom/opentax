@@ -39,7 +39,7 @@ Deno.test("empty object still emits required IRS1040 fields", () => {
 
 Deno.test("Form 1040 MeF refuses an unresolved Form 8912 credit", () => {
   assertThrows(
-    () => irs1040.build({ form8912_tentative_credit: 100 }),
+    () => irs1040.build({ form8912_source_lines: { line4: 100 } }),
     Error,
     "Part II tax limit and source document",
   );
