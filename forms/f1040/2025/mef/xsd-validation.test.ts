@@ -345,6 +345,62 @@ Deno.test({
 });
 
 Deno.test({
+  name:
+    "XSD: Form 4136 aviation gasoline commercial, export, and LUST groups validate",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const xml = buildMefXml({
+    f1040: { line31_additional_payments: 345 },
+    schedule3: { line12_fuel_tax_credit: 345, line15_total: 345 },
+    f4136: {
+      claimant_context: "business",
+      additional_activities: [],
+      primary_activity_has_most_credit: true,
+      business: {
+        qualifying_business_activity: true,
+        claimant_is_ultimate_purchaser: true,
+        business_name: "Example Aviation Business",
+        principal_activity_code: "481111",
+        equipment_make: "Example",
+        equipment_model: "Aircraft",
+        equipment_type: "commercial aircraft",
+        purchase_records_confirmed: true,
+        no_duplicate_excise_claim: true,
+      },
+      claims: [
+        {
+          line: "2a",
+          unit: "gallons",
+          qualified_quantity: 1_000,
+          actual_fuel_cost: 3_000,
+          commercial_aviation_nonforeign_trade_confirmed: true,
+        },
+        {
+          line: "2c",
+          unit: "gallons",
+          qualified_quantity: 1_000,
+          actual_fuel_cost: 3_000,
+          exported_fuel_confirmed: true,
+        },
+        {
+          line: "2d",
+          unit: "gallons",
+          qualified_quantity: 1_000,
+          actual_fuel_cost: 3_000,
+          foreign_trade_lust_tax_paid_confirmed: true,
+        },
+      ],
+    },
+  }, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(xml, "<CommercialAviationUseGasGrp>");
+  assertStringIncludes(xml, "<ExportedNontaxAviationGasGrp>");
+  assertStringIncludes(xml, "<LUSTTxAvnFuelFrgnTradeGrp>");
+  await validateXsd(xml, "Form 4136 aviation gasoline fixed-use lines");
+});
+
+Deno.test({
   name: "XSD: Form 4136 line 11 reduced-rate bus group validates",
   sanitizeOps: false,
   sanitizeResources: false,

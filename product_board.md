@@ -276,6 +276,13 @@ combined. The primary activity is affirmed and checked as generating the most
 calculated credit, matching the form's Part I instruction; that case is written
 but unrun. Gasoline line 1c other-use detail and line 1d export groups now
 have distinct input, MeF, and PDF paths with unrun source-to-XSD cases.
+The next build pass adds aviation-gasoline lines 2a, 2c, and 2d with
+commercial-use, export, and foreign-trade LUST confirmations and unrun
+source-to-XSD/PDF cases.
+The Schedule A section of the 2025 IRS instructions instead says to show the
+activity with the most qualifying fuel usage. That conflict is unresolved;
+the current code follows the printed Form 4136 and needs IRS business-rule
+or ATS confirmation.
 Both PDF descriptors now use the actual nested AcroForm paths;
 all mapped widget names were found in the IRS PDFs. Filled rendering and the
 binary-attachment IRS business rule are unverified. Mixed units on one fuel

@@ -19,6 +19,8 @@ const certifications = {
   not_highway_vehicle: true,
   not_noncommercial_motorboat: true,
   exported_fuel_confirmed: true,
+  commercial_aviation_nonforeign_trade_confirmed: true,
+  foreign_trade_lust_tax_paid_confirmed: true,
 } as const;
 
 function compute(
@@ -79,7 +81,10 @@ Deno.test("Form 4136: represented 2025 Part II rates are line-specific", () => {
     ["1b", undefined, 18.3],
     ["1c", "05", 18.3],
     ["1d", undefined, 18.4],
+    ["2a", undefined, 15],
     ["2b", "01", 19.3],
+    ["2c", undefined, 19.4],
+    ["2d", undefined, 0.1],
     ["3a", "02", 24.3],
     ["3b", undefined, 24.3],
     ["4a", "02", 24.3],
@@ -113,6 +118,49 @@ Deno.test("Form 4136: represented 2025 Part II rates are line-specific", () => {
     });
     assertEquals(result.outputs[0].fields.line12_fuel_tax_credit, expected);
   }
+});
+
+Deno.test("Form 4136: commercial aviation, export, and foreign-trade LUST facts are required", () => {
+  const claim = {
+    ...certifications,
+    line: "2a" as const,
+    unit: "gallons" as const,
+    qualified_quantity: 1_000,
+    actual_fuel_cost: 3_000,
+  };
+  assertEquals(parseInput({ business, claims: [claim] }).success, true);
+  assertEquals(
+    parseInput({
+      business,
+      claims: [{
+        ...claim,
+        commercial_aviation_nonforeign_trade_confirmed: undefined,
+      }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    parseInput({
+      business,
+      claims: [{
+        ...claim,
+        line: "2c",
+        exported_fuel_confirmed: undefined,
+      }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    parseInput({
+      business,
+      claims: [{
+        ...claim,
+        line: "2d",
+        foreign_trade_lust_tax_paid_confirmed: undefined,
+      }],
+    }).success,
+    false,
+  );
 });
 
 Deno.test("Form 4136: other-use and exported gasoline require their source confirmations", () => {

@@ -20,6 +20,8 @@ const certifications = {
   not_highway_vehicle: true,
   not_noncommercial_motorboat: true,
   exported_fuel_confirmed: true,
+  commercial_aviation_nonforeign_trade_confirmed: true,
+  foreign_trade_lust_tax_paid_confirmed: true,
 } as const;
 const activityContext = {
   claimant_context: "business",
@@ -45,6 +47,14 @@ Deno.test("Form 4136 PDF maps page 1 business and page 4 total widgets", () => {
     "topmostSubform[0].Page1[0].Table_Line1[0].Line1d[0].ColE[0].f1_29[0]",
   );
   assertEquals(
+    names.line2a_quantity,
+    "topmostSubform[0].Page1[0].Table_Line2[0].Line2a[0].f1_34[0]",
+  );
+  assertEquals(
+    names.line2d_credit_cents,
+    "topmostSubform[0].Page1[0].Table_Line2[0].Line2d[0].ColE[0].f1_62[0]",
+  );
+  assertEquals(
     names.line5d_credit_dollars,
     "topmostSubform[0].Page2[0].Table_Line5[0].Line5d[0].ColE[0].f2_73[0]",
   );
@@ -60,6 +70,25 @@ Deno.test("Form 4136 PDF maps page 1 business and page 4 total widgets", () => {
     names.line17_total_cents,
     "topmostSubform[0].Page4[0].f4_125[0]",
   );
+});
+
+Deno.test("Form 4136 PDF projects all aviation-gasoline fixed-use lines", () => {
+  const result = form4136Pdf.projectFields?.({
+    ...activityContext,
+    business,
+    claims: (["2a", "2c", "2d"] as const).map((line) => ({
+      ...certifications,
+      line,
+      unit: "gallons" as const,
+      qualified_quantity: 1_000,
+      actual_fuel_cost: 3_000,
+    })),
+  }, { schedule3: { line12_fuel_tax_credit: 345 } });
+  assertEquals(result?.line2a_quantity, 1_000);
+  assertEquals(result?.line2a_credit_dollars, "150");
+  assertEquals(result?.line2c_credit_dollars, "194");
+  assertEquals(result?.line2d_credit_dollars, "1");
+  assertEquals(result?.line17_total_dollars, "345");
 });
 
 Deno.test("Form 4136 PDF separates other-use and exported gasoline", () => {
