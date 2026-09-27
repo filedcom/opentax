@@ -165,13 +165,15 @@ The shared 1099-INT node now sends box 2 early-withdrawal penalties to AGI as
 well as printed Schedule 1; its focused TY2025 and TY2026-related tests pass.
 Full 1099-INT input registration awaits the Schedule B disclosure and
 dependent-node work in that contract.
-The dedicated 2026 Schedule B node now preserves gross interest and labeled
+The dedicated 2026 Schedule B node preserves gross interest and labeled
 adjustments, validates its line 2/4 totals and required Part III answers, and
 routes taxable interest to AGI, NIIT, and the final 1040. A temporary graph
 with 1099-INT and W-2 inputs executes through Schedule 2. The
-[Schedule B PDF field map](PDF-SCHEDULEB-MAP.md) inventories 72 draft widgets;
-the Schedule B PDF, MeF, direct disclosure input, and exceptional interest
-routes remain to implement.
+[Schedule B PDF field map](PDF-SCHEDULEB-MAP.md) inventories 72 draft widgets.
+The PDF filler now renders the filed page plus payer, seller-financed, and
+country continuations. The core PDF builder appends it and reconciles lines
+4/6 to 1040 lines 2b/3b. MeF, direct disclosure input, and exceptional
+interest routes remain to implement.
 
 ## 0. Freeze source versions and establish the baseline
 

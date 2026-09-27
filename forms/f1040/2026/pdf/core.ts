@@ -1,5 +1,6 @@
 import { PDFDocument } from "pdf-lib";
 import { buildF1040PdfBytes2026 } from "./f1040.ts";
+import { buildScheduleBPdfBytes2026 } from "./schedule_b.ts";
 import { buildSchedule3APdfBytes2026 } from "./schedule3a.ts";
 
 function amount(fields: Record<string, unknown>, key: string): number {
@@ -10,10 +11,11 @@ function amount(fields: Record<string, unknown>, key: string): number {
   return value;
 }
 
-/** The current main-form and Schedule 3-A PDF slice, not the full return bundle. */
+/** The current main-form, Schedule 3-A, and Schedule B PDF slice. */
 export async function buildCorePdfBytes2026(
   f1040: Record<string, unknown>,
   schedule3a?: Record<string, unknown>,
+  scheduleB?: Record<string, unknown>,
 ): Promise<Uint8Array> {
   const claimsRelevantCredit = [
     "line27a_eic",
@@ -30,25 +32,50 @@ export async function buildCorePdfBytes2026(
     );
   }
 
-  if (!schedule3a) return buildF1040PdfBytes2026(f1040);
   if (
-    amount(schedule3a, "line1a_refundable_credits") !==
-      amount(f1040, "line32a_refundable_credits") ||
-    amount(schedule3a, "line1b_other_payments") !==
-      amount(f1040, "line31_other_payments") ||
-    amount(schedule3a, "line3_total_tax") !==
-      amount(f1040, "line24a_total_tax")
+    schedule3a && (
+      amount(schedule3a, "line1a_refundable_credits") !==
+        amount(f1040, "line32a_refundable_credits") ||
+      amount(schedule3a, "line1b_other_payments") !==
+        amount(f1040, "line31_other_payments") ||
+      amount(schedule3a, "line3_total_tax") !==
+        amount(f1040, "line24a_total_tax")
+    )
   ) {
     throw new Error("TY2026 core PDF Schedule 3-A disagrees with Form 1040");
   }
-  const benefit = amount(schedule3a, "line6_federal_public_benefit");
-  const received = schedule3a.line7_wants_benefit === true &&
-    schedule3a.line8_eligible === true;
-  const expectedReduction = received ? 0 : benefit;
-  if (amount(f1040, "line32b_public_benefit_reduction") !== expectedReduction) {
-    throw new Error(
-      "TY2026 core PDF Schedule 3-A disagrees with Form 1040 line 32b",
-    );
+  if (schedule3a) {
+    const benefit = amount(schedule3a, "line6_federal_public_benefit");
+    const received = schedule3a.line7_wants_benefit === true &&
+      schedule3a.line8_eligible === true;
+    const expectedReduction = received ? 0 : benefit;
+    if (
+      amount(f1040, "line32b_public_benefit_reduction") !== expectedReduction
+    ) {
+      throw new Error(
+        "TY2026 core PDF Schedule 3-A disagrees with Form 1040 line 32b",
+      );
+    }
+  }
+  const optionalAmount = (fields: Record<string, unknown>, key: string) =>
+    fields[key] === undefined ? 0 : amount(fields, key);
+  if (
+    !scheduleB &&
+    (optionalAmount(f1040, "line2b_taxable_interest") > 1_500 ||
+      optionalAmount(f1040, "line3b_ordinary_dividends") > 1_500)
+  ) {
+    throw new Error("TY2026 core PDF needs Schedule B for income over $1,500");
+  }
+  if (scheduleB) {
+    if (
+      scheduleB.file_schedule_b !== true ||
+      amount(scheduleB, "print_line4_total") !==
+        optionalAmount(f1040, "line2b_taxable_interest") ||
+      amount(scheduleB, "print_line6_total") !==
+        optionalAmount(f1040, "line3b_ordinary_dividends")
+    ) {
+      throw new Error("TY2026 core PDF Schedule B disagrees with Form 1040");
+    }
   }
 
   const name = [
@@ -58,12 +85,15 @@ export async function buildCorePdfBytes2026(
   ].filter(Boolean).join(" ");
   const ssn = String(f1040.taxpayer_ssn ?? "");
   const mainBytes = await buildF1040PdfBytes2026(f1040);
-  const scheduleBytes = await buildSchedule3APdfBytes2026(schedule3a, {
-    name,
-    ssn,
-  });
+  const parts = [mainBytes];
+  if (schedule3a) {
+    parts.push(await buildSchedule3APdfBytes2026(schedule3a, { name, ssn }));
+  }
+  if (scheduleB) {
+    parts.push(await buildScheduleBPdfBytes2026(scheduleB, { name, ssn }));
+  }
   const merged = await PDFDocument.create();
-  for (const bytes of [mainBytes, scheduleBytes]) {
+  for (const bytes of parts) {
     const document = await PDFDocument.load(bytes);
     const pages = await merged.copyPages(document, document.getPageIndices());
     for (const page of pages) merged.addPage(page);

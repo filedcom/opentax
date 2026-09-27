@@ -114,7 +114,9 @@ interest with labeled adjustments, reconciles its lines, determines the
 modeled filing and Part III triggers, and sends taxable interest through AGI
 and Form 8960. A temporary graph test reaches 1040 from a 1099-INT source.
 The [PDF field map](../../../docs/ty2026/PDF-SCHEDULEB-MAP.md) records all
-72 draft widgets. The public input and PDF/MeF attachments remain open.
+72 draft widgets. `pdf/schedule_b.ts` fills the printed page and appends
+continuations; `pdf/core.ts` attaches it to the 1040 and checks the line
+totals. The public input and MeF attachment remain open.
 The shared Form 8839 node now applies TY2026 adoption limits, emits the
 refundable per-child credit to 1040 line 30, and tracks nonrefundable
 carryforwards by origin year. Its full credit-limit worksheet and TY2026

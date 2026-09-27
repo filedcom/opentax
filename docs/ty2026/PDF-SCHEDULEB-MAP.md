@@ -19,17 +19,22 @@ with `build_pdf_fields.py`. Recheck this map against the final 2026 form.
 | Part III, 7b countries | `foreign_countries` | `f1_65[0]`, `f1_66[0]` |
 | Part III, 8 foreign trust | `foreign_trust` yes/no | `c1_3[0]`/`[1]` |
 
-The new 2026 Schedule B node emits all interest and dividend rows, the filed
-totals, Part III answers, and `file_schedule_b`. Its interest rows show each
-payer's gross amount followed by separately labeled negative adjustments.
-When the rows exceed the printed 14/15 slots, the PDF builder must append a
-statement in the same row format, with name, SSN, and line totals. Seller-
-financed mortgage details (buyer SSN and address) also need a readable
-statement. Do not truncate these arrays when filling the PDF. The 2025
-interest statement renderer assumes nonnegative payer amounts and a 2025
-title, so it cannot render 2026 adjustment rows as-is.
+The 2026 Schedule B node emits all interest and dividend rows, filed totals,
+Part III answers, and `file_schedule_b`. Its interest rows show each payer's
+gross amount followed by separately labeled negative adjustments. The
+dedicated PDF filler verifies the source hash and row arithmetic, fills the
+printed page, then appends continuation pages after the 14 interest or 15
+dividend slots. Each continuation page carries the filer's name and SSN,
+the additional payer/adjustment rows, and the filed line total. It also
+appends seller-financed buyer SSN/address details and additional countries
+when needed. The sample with gross and nominee rows and the sample with a
+fifteenth payer and seller-financed details passed text extraction and visual
+inspection. Recheck the field map and placement against the final 2026 PDF.
 
 The 2026 draft instructions require Part III answers when taxable interest or
 ordinary dividends exceed $1,500, or when a foreign account/trust trigger
-applies. The 2026 calculation node checks the required answer combinations;
-the PDF builder must check them again before producing a filed schedule.
+applies. The calculation node and PDF builder check the answer combinations.
+`pdf/core.ts` appends Schedule B to the 1040 bundle and reconciles its lines
+4 and 6 with 1040 lines 2b and 3b. The bundle rejects a missing Schedule B
+when either main-form amount exceeds $1,500. Other attachment triggers still
+depend on Schedule B being passed from a fully registered product graph.

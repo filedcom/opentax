@@ -10,7 +10,7 @@ before calling this an accepted return path.
 
 | Source fact or election | Existing route | TY2026 work to complete |
 | --- | --- | --- |
-| 1099-INT boxes 1, 3, 10, taxable bond premium election, nominee/accrued-interest/OID adjustments | `f1099int` → `schedule_b` → AGI line 2b and 1040 line 2b | The source now emits gross payer and labeled adjustment data; the 2026 Schedule B node reconciles and prints it. Finish the PDF, MeF, and user input route for filing and disclosures. |
+| 1099-INT boxes 1, 3, 10, taxable bond premium election, nominee/accrued-interest/OID adjustments | `f1099int` → `schedule_b` → AGI line 2b and 1040 line 2b | The source emits gross payer and labeled adjustment data; the 2026 Schedule B node reconciles it. Its draft PDF fills the printed schedule and continuation pages. Finish MeF and the public input route for filing and disclosures. |
 | Box 8 less box 13 tax-exempt bond premium | `f1099int` → 1040 line 2a and AGI Social Security worksheet input | Verify gross and net tax-exempt amounts and any 1099-OID or 1099-DIV contributions before calculating Social Security taxability. |
 | Box 2 early-withdrawal penalty | `f1099int` → Schedule 1 line 18 and AGI adjustments | Both destinations now receive box 2; test line 10, AGI, tax, and printed Schedule 1 in the registered graph. |
 | Box 4 federal withholding | `f1099int` → 1040 line 25b | Reconcile all 1099 withholding, line 25d, and refund or balance. |
@@ -43,7 +43,7 @@ branches cannot silently strand data.
    Form 1116, and Form 4952 with the required 2026 routes. Reconcile each
    source amount to AGI, the final 1040, and Form 8960; handle multiple
    payers and withholding accumulation.
-3. Build 2026 Schedule B, Schedule 1, Form 6251, Form 1116, Form 4952, and
+3. Build 2026 Schedule 1, Form 6251, Form 1116, Form 4952, and
    Form 8960 PDF descriptors from their pinned drafts. Check whether each
    attachment is actually filed, render sample pages, and inspect disclosure
    text and Part III checkboxes.
