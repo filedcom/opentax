@@ -92,3 +92,54 @@ Deno.test("Form 8814 child facts force Schedule B foreign answers and literals",
     "<TrustFormLiteralCd>FORM8814</TrustFormLiteralCd>",
   );
 });
+
+Deno.test("1099-INT adjustments reach gross Schedule B rows and MeF deductions", () => {
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    {
+      general,
+      f1099int: [{
+        payer_name: "Bond Bank",
+        box1: 2_000,
+        nominee_interest: 100,
+        accrued_interest_paid: 50,
+        non_taxable_oid_adjustment: 75,
+        box11: 125,
+        elect_bond_premium_amortization: true,
+      }],
+      schedule_b_part_iii: {
+        foreign_accounts_question: false,
+        foreign_trust_question: false,
+      },
+    },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule_b?.print_line2_total, 1_650);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(xml, "<InterestAmt>2000</InterestAmt>");
+  assertStringIncludes(
+    xml,
+    '<NomineeInterestAmt nomineeInterestLiteralCd="NOMINEE DISTRIBUTION">100</NomineeInterestAmt>',
+  );
+  assertStringIncludes(
+    xml,
+    '<AccruedInterestAmt accruedInterestLiteralCd="ACCRUED INTEREST">50</AccruedInterestAmt>',
+  );
+  assertStringIncludes(
+    xml,
+    '<OriginalIssueDiscountAdjAmt originalIssueDiscountAdjLitCd="OID ADJUSTMENT">75</OriginalIssueDiscountAdjAmt>',
+  );
+  assertStringIncludes(
+    xml,
+    '<AmortizableBondPremAdjAmt amortizableBondPremiumAdjLitCd="ABP ADJUSTMENT">125</AmortizableBondPremAdjAmt>',
+  );
+  assertStringIncludes(
+    xml,
+    "<TaxableInterestSubtotalAmt>1650</TaxableInterestSubtotalAmt>",
+  );
+});

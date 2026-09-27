@@ -96,6 +96,85 @@ Deno.test("interest payer and amount pairs survive the Schedule B output boundar
   assertEquals(printable?.print_line2_total, 1_000);
 });
 
+Deno.test("1099-INT gross interest and deductions remain distinct from taxable interest", () => {
+  const result = compute({
+    interest_detail: {
+      payer_name: "Bond Bank",
+      gross: 2_000,
+      net: 1_650,
+      nominee: 100,
+      accrued: 50,
+      oid_adjustment: 75,
+      bond_premium: 125,
+    },
+    foreign_accounts_question: false,
+    foreign_trust_question: false,
+  });
+  const fields = findOutput(result, "schedule_b")?.fields;
+  assertEquals(
+    findOutput(result, "f1040")?.fields.line2b_taxable_interest,
+    1_650,
+  );
+  assertEquals(fields?.interest_rows, [{
+    payerName: "Bond Bank",
+    amount: 2_000,
+  }]);
+  assertEquals(fields?.interest_line1_subtotal, 2_000);
+  assertEquals(fields?.interest_nominee, 100);
+  assertEquals(fields?.interest_accrued, 50);
+  assertEquals(fields?.interest_oid_adjustment, 75);
+  assertEquals(fields?.interest_bond_premium, 125);
+  assertEquals(fields?.print_line2_total, 1_650);
+});
+
+Deno.test("Schedule B rejects interest details that do not reconcile", () => {
+  assertThrows(() =>
+    compute({
+      interest_detail: {
+        payer_name: "Bond Bank",
+        gross: 100,
+        net: 80,
+        nominee: 10,
+        accrued: 0,
+        oid_adjustment: 0,
+        bond_premium: 0,
+      },
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    })
+  );
+});
+
+Deno.test("gross 1099-INT and other net interest sources each appear once", () => {
+  const result = compute({
+    interest_detail: {
+      payer_name: "Bond Bank",
+      gross: 2_000,
+      net: 1_900,
+      nominee: 100,
+      accrued: 0,
+      oid_adjustment: 0,
+      bond_premium: 0,
+    },
+    payer_name: "Partnership",
+    taxable_interest_net: 400,
+    foreign_accounts_question: false,
+    foreign_trust_question: false,
+  });
+  assertEquals(
+    findOutput(result, "f1040")?.fields.line2b_taxable_interest,
+    2_300,
+  );
+  assertEquals(findOutput(result, "schedule_b")?.fields.interest_rows, [
+    { payerName: "Bond Bank", amount: 2_000 },
+    { payerName: "Partnership", amount: 400 },
+  ]);
+  assertEquals(
+    findOutput(result, "schedule_b")?.fields.interest_line1_subtotal,
+    2_400,
+  );
+});
+
 Deno.test("zero taxable_interest_net produces no interest in f1040 output", () => {
   const result = compute({ payer_name: "Bank A", taxable_interest_net: 0 });
   // If no dividends either, no output at all

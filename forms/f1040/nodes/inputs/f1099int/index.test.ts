@@ -79,6 +79,11 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
+function interestNet(fields: unknown): number | undefined {
+  return (fields as { interest_detail?: { net: number } } | undefined)
+    ?.interest_detail?.net;
+}
+
 Deno.test("1099-INT routes adjusted investment-property interest to Form 4952 only when affirmed", () => {
   const ordinary = compute([minimalItem({ box1: 1_000 })]);
   assertEquals(findOutput(ordinary, "form4952"), undefined);
@@ -109,7 +114,7 @@ Deno.test("1099-INT routes affirmed private-activity-bond interest to AMT Form 4
   );
 });
 
-Deno.test("1099-INT rejects negative net interest for Form 4952", () => {
+Deno.test("1099-INT rejects adjustments larger than reported interest", () => {
   assertThrows(
     () =>
       compute([minimalItem({
@@ -118,7 +123,7 @@ Deno.test("1099-INT rejects negative net interest for Form 4952", () => {
         investment_property_for_form4952: true,
       })]),
     Error,
-    "negative after adjustments",
+    "interest adjustments cannot exceed reported taxable interest",
   );
 });
 
@@ -198,12 +203,12 @@ Deno.test("schema: seller_financed with all required fields is valid", () => {
 
 Deno.test("box1 routes to schedule_b with correct net taxable_interest", () => {
   const result = compute([minimalItem({ box1: 100 })]);
-  assertEquals(fieldsOf(result.outputs, schedule_b)?.taxable_interest_net, 100);
+  assertEquals(interestNet(fieldsOf(result.outputs, schedule_b)), 100);
 });
 
 Deno.test("box1 = 0 routes to schedule_b with taxable_interest_net = 0", () => {
   const result = compute([minimalItem({ box1: 0 })]);
-  assertEquals(fieldsOf(result.outputs, schedule_b)?.taxable_interest_net, 0);
+  assertEquals(interestNet(fieldsOf(result.outputs, schedule_b)), 0);
 });
 
 Deno.test("box2 routes to schedule1 line18_early_withdrawal", () => {
@@ -221,12 +226,12 @@ Deno.test("box2 = 0 produces no schedule1 output", () => {
 
 Deno.test("box3 (US savings bond interest) adds to schedule_b taxable_interest_net", () => {
   const result = compute([minimalItem({ box3: 75 })]);
-  assertEquals(fieldsOf(result.outputs, schedule_b)?.taxable_interest_net, 75);
+  assertEquals(interestNet(fieldsOf(result.outputs, schedule_b)), 75);
 });
 
 Deno.test("box3 + box1 both included in schedule_b taxable_interest_net", () => {
   const result = compute([minimalItem({ box1: 100, box3: 75 })]);
-  assertEquals(fieldsOf(result.outputs, schedule_b)?.taxable_interest_net, 175);
+  assertEquals(interestNet(fieldsOf(result.outputs, schedule_b)), 175);
 });
 
 Deno.test("box4 routes to f1040 line25b_withheld_1099", () => {
@@ -282,7 +287,7 @@ Deno.test("box9 = 0 produces no form6251 output", () => {
 
 Deno.test("box10 (market discount) adds to schedule_b taxable_interest_net", () => {
   const result = compute([minimalItem({ box1: 100, box10: 50 })]);
-  assertEquals(fieldsOf(result.outputs, schedule_b)?.taxable_interest_net, 150);
+  assertEquals(interestNet(fieldsOf(result.outputs, schedule_b)), 150);
 });
 
 Deno.test("box11 (ABP) reduces schedule_b taxable_interest_net when election made", () => {
@@ -293,17 +298,17 @@ Deno.test("box11 (ABP) reduces schedule_b taxable_interest_net when election mad
       elect_bond_premium_amortization: true,
     }),
   ]);
-  assertEquals(fieldsOf(result.outputs, schedule_b)?.taxable_interest_net, 70);
+  assertEquals(interestNet(fieldsOf(result.outputs, schedule_b)), 70);
 });
 
 Deno.test("box11 (ABP) does NOT reduce net without IRC §171 election", () => {
   const result = compute([minimalItem({ box1: 100, box11: 30 })]);
-  assertEquals(fieldsOf(result.outputs, schedule_b)?.taxable_interest_net, 100);
+  assertEquals(interestNet(fieldsOf(result.outputs, schedule_b)), 100);
 });
 
 Deno.test("box12 (ABP treasury) reduces schedule_b taxable_interest_net", () => {
   const result = compute([minimalItem({ box3: 100, box12: 20 })]);
-  assertEquals(fieldsOf(result.outputs, schedule_b)?.taxable_interest_net, 80);
+  assertEquals(interestNet(fieldsOf(result.outputs, schedule_b)), 80);
 });
 
 Deno.test("box13 (ABP tax-exempt) reduces f1040 line2a — net = box8 - box13", () => {
@@ -326,21 +331,42 @@ Deno.test("box13 = box8: line2a is zero, no f1040 line2a output", () => {
 
 Deno.test("nominee_interest reduces schedule_b taxable_interest_net", () => {
   const result = compute([minimalItem({ box1: 100, nominee_interest: 40 })]);
-  assertEquals(fieldsOf(result.outputs, schedule_b)?.taxable_interest_net, 60);
+  assertEquals(interestNet(fieldsOf(result.outputs, schedule_b)), 60);
 });
 
 Deno.test("accrued_interest_paid reduces schedule_b taxable_interest_net", () => {
   const result = compute([
     minimalItem({ box1: 100, accrued_interest_paid: 10 }),
   ]);
-  assertEquals(fieldsOf(result.outputs, schedule_b)?.taxable_interest_net, 90);
+  assertEquals(interestNet(fieldsOf(result.outputs, schedule_b)), 90);
 });
 
 Deno.test("non_taxable_oid_adjustment reduces schedule_b taxable_interest_net", () => {
   const result = compute([
     minimalItem({ box1: 100, non_taxable_oid_adjustment: 8 }),
   ]);
-  assertEquals(fieldsOf(result.outputs, schedule_b)?.taxable_interest_net, 92);
+  assertEquals(interestNet(fieldsOf(result.outputs, schedule_b)), 92);
+});
+
+Deno.test("1099-INT keeps reported interest and adjustment categories for Schedule B", () => {
+  const result = compute([minimalItem({
+    payer_name: "Bond Bank",
+    box1: 2_000,
+    nominee_interest: 100,
+    accrued_interest_paid: 50,
+    non_taxable_oid_adjustment: 75,
+    box11: 125,
+    elect_bond_premium_amortization: true,
+  })]);
+  assertEquals(fieldsOf(result.outputs, schedule_b)?.interest_detail, {
+    payer_name: "Bond Bank",
+    gross: 2_000,
+    net: 1_650,
+    nominee: 100,
+    accrued: 50,
+    oid_adjustment: 75,
+    bond_premium: 125,
+  });
 });
 
 Deno.test("combined reductions: box1 - box11 - nominee - accrued - oid adjustment (with election)", () => {
@@ -355,7 +381,7 @@ Deno.test("combined reductions: box1 - box11 - nominee - accrued - oid adjustmen
       non_taxable_oid_adjustment: 5,
     }),
   ]);
-  assertEquals(fieldsOf(result.outputs, schedule_b)?.taxable_interest_net, 150);
+  assertEquals(interestNet(fieldsOf(result.outputs, schedule_b)), 150);
 });
 
 // ---------------------------------------------------------------------------
@@ -370,7 +396,7 @@ Deno.test("multiple payers — box1 produces one schedule_b output per payer", (
   const sbOutputs = result.outputs.filter((o) => o.nodeType === "schedule_b");
   assertEquals(sbOutputs.length, 2);
   const total = sbOutputs.reduce(
-    (sum, o) => sum + ((o.fields.taxable_interest_net as number) ?? 0),
+    (sum, o) => sum + (interestNet(o.fields) ?? 0),
     0,
   );
   assertEquals(total, 250);
@@ -395,7 +421,7 @@ Deno.test("multiple payers — box3 included in each schedule_b net", () => {
   const total = result.outputs
     .filter((o) => o.nodeType === "schedule_b")
     .reduce(
-      (sum, o) => sum + ((o.fields.taxable_interest_net as number) ?? 0),
+      (sum, o) => sum + (interestNet(o.fields) ?? 0),
       0,
     );
   assertEquals(total, 140);
@@ -442,7 +468,7 @@ Deno.test("multiple payers — nominee_interest deductions reduce each schedule_
   const total = result.outputs
     .filter((o) => o.nodeType === "schedule_b")
     .reduce(
-      (sum, o) => sum + ((o.fields.taxable_interest_net as number) ?? 0),
+      (sum, o) => sum + (interestNet(o.fields) ?? 0),
       0,
     );
   assertEquals(total, 135); // (100-25) + (100-40)
@@ -563,7 +589,7 @@ Deno.test("box4 backup withholding with zero box1 still routes to f1040 line25b"
 
 Deno.test("box8 tax-exempt interest and box1 taxable interest route to different nodes", () => {
   const result = compute([minimalItem({ box1: 100, box8: 500 })]);
-  assertEquals(fieldsOf(result.outputs, schedule_b)?.taxable_interest_net, 100);
+  assertEquals(interestNet(fieldsOf(result.outputs, schedule_b)), 100);
   assertEquals(fieldsOf(result.outputs, f1040)?.line2a_tax_exempt, 500);
 });
 
@@ -571,8 +597,8 @@ Deno.test("box10 = 0 does not change schedule_b net vs baseline", () => {
   const baseline = compute([minimalItem({ box1: 100 })]);
   const withZero = compute([minimalItem({ box1: 100, box10: 0 })]);
   assertEquals(
-    fieldsOf(baseline.outputs, schedule_b)?.taxable_interest_net,
-    fieldsOf(withZero.outputs, schedule_b)?.taxable_interest_net,
+    interestNet(fieldsOf(baseline.outputs, schedule_b)),
+    interestNet(fieldsOf(withZero.outputs, schedule_b)),
   );
 });
 

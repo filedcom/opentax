@@ -57,6 +57,54 @@ Deno.test("schedule_b: taxable_interest_net maps to TaxableInterestSubtotalAmt",
   );
 });
 
+Deno.test("schedule_b: gross interest and adjustment lines reconcile to line 2", () => {
+  const xml = scheduleB.build({
+    interest_rows: [{ payerName: "Bond Bank", amount: 2_000 }],
+    interest_line1_subtotal: 2_000,
+    interest_nominee: 100,
+    interest_accrued: 50,
+    interest_oid_adjustment: 75,
+    interest_bond_premium: 125,
+    print_line2_total: 1_650,
+    print_line4_total: 1_650,
+    foreign_accounts_question: false,
+    foreign_trust_question: false,
+  });
+  assertStringIncludes(
+    xml,
+    '<InterestSubtotalAmt interestSubtotalLiteralCd="INTEREST SUBTOTAL">2000</InterestSubtotalAmt>',
+  );
+  assertStringIncludes(
+    xml,
+    '<NomineeInterestAmt nomineeInterestLiteralCd="NOMINEE DISTRIBUTION">100</NomineeInterestAmt>',
+  );
+  assertStringIncludes(
+    xml,
+    '<AccruedInterestAmt accruedInterestLiteralCd="ACCRUED INTEREST">50</AccruedInterestAmt>',
+  );
+  assertStringIncludes(
+    xml,
+    '<OriginalIssueDiscountAdjAmt originalIssueDiscountAdjLitCd="OID ADJUSTMENT">75</OriginalIssueDiscountAdjAmt>',
+  );
+  assertStringIncludes(
+    xml,
+    '<AmortizableBondPremAdjAmt amortizableBondPremiumAdjLitCd="ABP ADJUSTMENT">125</AmortizableBondPremAdjAmt>',
+  );
+  assertStringIncludes(
+    xml,
+    "<TaxableInterestSubtotalAmt>1650</TaxableInterestSubtotalAmt>",
+  );
+  assertThrows(() =>
+    scheduleB.build({
+      interest_rows: [{ payerName: "Bond Bank", amount: 2_000 }],
+      interest_nominee: 100,
+      print_line2_total: 1_650,
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    })
+  );
+});
+
 Deno.test("schedule_b: MeF refuses a required Part III with unanswered questions", () => {
   assertThrows(() => scheduleB.build({ taxable_interest_net: 1_501 }));
   assertThrows(() =>

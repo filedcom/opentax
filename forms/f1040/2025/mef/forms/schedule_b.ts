@@ -11,6 +11,11 @@ export interface Fields {
   print_line2_total?: number | null;
   print_line4_total?: number | null;
   print_line6_total?: number | null;
+  interest_line1_subtotal?: number;
+  interest_nominee?: number;
+  interest_accrued?: number;
+  interest_oid_adjustment?: number;
+  interest_bond_premium?: number;
   foreign_accounts_question?: boolean;
   fincen_form114_required?: boolean;
   foreign_country_codes?: readonly string[];
@@ -91,11 +96,19 @@ function buildIRS1040ScheduleB(fields: Input): string {
       element("InterestAmt", interestAmounts[index]),
     ])
   );
+  const line1Subtotal = fields.interest_line1_subtotal ??
+    interestAmounts.reduce((total, amount) => total + amount, 0);
+  const adjustments = (fields.interest_nominee ?? 0) +
+    (fields.interest_accrued ?? 0) +
+    (fields.interest_oid_adjustment ?? 0) +
+    (fields.interest_bond_premium ?? 0);
   if (
     interestRows.length > 0 && interest !== undefined &&
-    Math.abs(
-        interestAmounts.reduce((total, amount) => total + amount, 0) - interest,
-      ) > 0.000001
+    (Math.abs(
+          line1Subtotal -
+            interestAmounts.reduce((total, amount) => total + amount, 0),
+        ) > 0.000001 ||
+      Math.abs(line1Subtotal - adjustments - interest) > 0.000001)
   ) {
     throw new Error(
       "Schedule B interest payer rows do not reconcile to line 2",
@@ -200,8 +213,32 @@ function buildIRS1040ScheduleB(fields: Input): string {
   const children = [
     ...interestRows,
     interestRows.length > 0 && interest !== undefined
-      ? element("InterestSubtotalAmt", interest, {
+      ? element("InterestSubtotalAmt", line1Subtotal, {
         interestSubtotalLiteralCd: "INTEREST SUBTOTAL",
+      })
+      : "",
+    (fields.interest_nominee ?? 0) > 0
+      ? element("NomineeInterestAmt", fields.interest_nominee!, {
+        nomineeInterestLiteralCd: "NOMINEE DISTRIBUTION",
+      })
+      : "",
+    (fields.interest_accrued ?? 0) > 0
+      ? element("AccruedInterestAmt", fields.interest_accrued!, {
+        accruedInterestLiteralCd: "ACCRUED INTEREST",
+      })
+      : "",
+    (fields.interest_oid_adjustment ?? 0) > 0
+      ? element(
+        "OriginalIssueDiscountAdjAmt",
+        fields.interest_oid_adjustment!,
+        {
+          originalIssueDiscountAdjLitCd: "OID ADJUSTMENT",
+        },
+      )
+      : "",
+    (fields.interest_bond_premium ?? 0) > 0
+      ? element("AmortizableBondPremAdjAmt", fields.interest_bond_premium!, {
+        amortizableBondPremiumAdjLitCd: "ABP ADJUSTMENT",
       })
       : "",
     interest === undefined

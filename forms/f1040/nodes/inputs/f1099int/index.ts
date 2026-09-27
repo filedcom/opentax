@@ -93,6 +93,11 @@ function validateIntItem(item: INTItem): void {
       );
     }
   }
+  if (computeTaxableInterestNet(item) < 0) {
+    throw new Error(
+      "INT validation error: interest adjustments cannot exceed reported taxable interest",
+    );
+  }
 }
 
 function computeTaxableInterestNet(item: INTItem): number {
@@ -112,9 +117,20 @@ function computeTaxableInterestNet(item: INTItem): number {
 }
 
 function scheduleBOutput(item: INTItem): NodeOutput {
+  const gross = (item.box1 ?? 0) + (item.box3 ?? 0) + (item.box10 ?? 0);
+  const bondPremium =
+    (item.elect_bond_premium_amortization === true ? item.box11 ?? 0 : 0) +
+    (item.box12 ?? 0);
   return output(schedule_b, {
-    payer_name: item.payer_name,
-    taxable_interest_net: computeTaxableInterestNet(item),
+    interest_detail: {
+      payer_name: item.payer_name,
+      gross,
+      net: computeTaxableInterestNet(item),
+      nominee: item.nominee_interest ?? 0,
+      accrued: item.accrued_interest_paid ?? 0,
+      oid_adjustment: item.non_taxable_oid_adjustment ?? 0,
+      bond_premium: bondPremium,
+    },
     box3_us_obligations: item.box3,
   });
 }

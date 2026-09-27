@@ -22,6 +22,16 @@ import { normalizeArray } from "../../../utils.ts";
 const accumulable = <T extends z.ZodTypeAny>(schema: T) =>
   z.union([schema, z.array(schema)]);
 
+const interestDetailSchema = z.object({
+  payer_name: z.string().min(1),
+  gross: z.number().nonnegative(),
+  net: z.number().nonnegative(),
+  nominee: z.number().nonnegative(),
+  accrued: z.number().nonnegative(),
+  oid_adjustment: z.number().nonnegative(),
+  bond_premium: z.number().nonnegative(),
+});
+
 export const foreignCountrySchema = z.object({
   irs_code: z.string().regex(/^[A-Z]{2}$/),
   name: z.string().min(1).max(90),
@@ -31,6 +41,7 @@ export const inputSchema = z.object({
   // ── Part I: Interest (from f1099int, one entry per payer) ──────────────────
   // Net taxable interest per payer (box1+box3+box10 - adjustments)
   taxable_interest_net: accumulable(z.number()).optional(),
+  interest_detail: accumulable(interestDetailSchema).optional(),
   // Payer names (informational — not used in calculation, but part of schema)
   payer_name: accumulable(z.string()).optional(),
   // US obligations interest (EE/I bonds) — used for Form 8815 exclusion (line 3)
@@ -69,7 +80,11 @@ type ScheduleBInput = z.infer<typeof inputSchema>;
 // Part I — Line 2: sum all per-payer taxable interest amounts
 function totalTaxableInterest(input: ScheduleBInput): number {
   return normalizeArray(input.taxable_interest_net)
-    .reduce((sum, n) => sum + n, 0);
+    .reduce((sum, n) => sum + n, 0) +
+    normalizeArray(input.interest_detail).reduce(
+      (sum, row) => sum + row.net,
+      0,
+    );
 }
 
 // Part I — Line 4: total interest minus EE/I bond exclusion (clamped to >= 0)
@@ -105,8 +120,13 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
       input.form8814_foreign_account === true;
     const foreignTrust = input.foreign_trust_question === true ||
       input.form8814_foreign_trust === true;
+    const details = normalizeArray(input.interest_detail);
+    const hasInterestAdjustment = details.some((row) =>
+      row.nominee > 0 || row.accrued > 0 || row.oid_adjustment > 0 ||
+      row.bond_premium > 0
+    );
     const partIIIRequired = line4 > 1_500 || line6 > 1_500 ||
-      foreignAccount || foreignTrust;
+      foreignAccount || foreignTrust || hasInterestAdjustment;
     if (
       partIIIRequired && input.foreign_accounts_question === undefined &&
       input.form8814_foreign_account !== true
@@ -140,7 +160,10 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
       throw new Error("Schedule B foreign country codes require FBAR filing");
     }
 
-    if (line4 === 0 && line6 === 0 && !foreignAccount && !foreignTrust) {
+    if (
+      line4 === 0 && line6 === 0 && !foreignAccount && !foreignTrust &&
+      !hasInterestAdjustment
+    ) {
       return { outputs: [] };
     }
 
@@ -184,22 +207,50 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
     // Preserve all payer rows for MeF and PDF continuation pages, then fill
     // the printed 14 interest and 15 dividend slots and Part III answers.
     const printFields: Record<string, unknown> = {};
+    for (const row of details) {
+      const adjusted = row.gross - row.nominee - row.accrued -
+        row.oid_adjustment - row.bond_premium;
+      if (Math.abs(adjusted - row.net) > 0.000001) {
+        throw new Error("Schedule B interest detail does not reconcile");
+      }
+    }
     const intAmounts = normalizeArray(input.taxable_interest_net);
     const intNames = normalizeArray(
       input.payer_name as string | string[] | undefined,
     );
     if (
-      intAmounts.length > 0 && intAmounts.length === intNames.length &&
-      intNames.every((name) => name.trim())
+      intAmounts.length > 0 &&
+      (intAmounts.length !== intNames.length ||
+        intNames.some((name) => !name.trim()))
     ) {
-      printFields.interest_rows = intAmounts.map((amount, index) => ({
-        payerName: intNames[index],
-        amount,
-      }));
+      throw new Error("Schedule B needs a name for each interest payer");
     }
-    for (let i = 0; i < Math.min(intAmounts.length, 14); i++) {
-      printFields[`print_int_payer_${i + 1}`] = intNames[i] ?? "";
-      printFields[`print_int_amount_${i + 1}`] = intAmounts[i];
+    const genericRows = intAmounts.map((amount, index) => ({
+      payerName: intNames[index],
+      amount,
+    }));
+    const detailRows = details.map((row) => ({
+      payerName: row.payer_name,
+      amount: row.gross,
+    }));
+    const allInterestRows = [...detailRows, ...genericRows];
+    if (allInterestRows.length > 0) printFields.interest_rows = allInterestRows;
+    for (let i = 0; i < Math.min(allInterestRows.length, 14); i++) {
+      printFields[`print_int_payer_${i + 1}`] = allInterestRows[i].payerName;
+      printFields[`print_int_amount_${i + 1}`] = allInterestRows[i].amount;
+    }
+    const totalAdjustments = (
+      field: "nominee" | "accrued" | "oid_adjustment" | "bond_premium",
+    ) => details.reduce((sum, row) => sum + row[field], 0);
+    printFields.interest_nominee = totalAdjustments("nominee");
+    printFields.interest_accrued = totalAdjustments("accrued");
+    printFields.interest_oid_adjustment = totalAdjustments("oid_adjustment");
+    printFields.interest_bond_premium = totalAdjustments("bond_premium");
+    if (allInterestRows.length > 0) {
+      printFields.interest_line1_subtotal = allInterestRows.reduce(
+        (sum, row) => sum + row.amount,
+        0,
+      );
     }
     const divAmounts = normalizeArray(input.ordinaryDividends);
     const divNames = normalizeArray(
@@ -228,7 +279,7 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
       printFields[`print_div_payer_${i + 1}`] = dividendRows[i].payerName;
       printFields[`print_div_amount_${i + 1}`] = dividendRows[i].amount;
     }
-    if (line4 > 0 || intAmounts.length > 0) {
+    if (line4 > 0 || allInterestRows.length > 0) {
       printFields.print_line2_total = totalTaxableInterest(input);
       printFields.print_line4_total = line4;
     }
