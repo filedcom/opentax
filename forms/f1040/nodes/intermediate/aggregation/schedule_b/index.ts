@@ -41,6 +41,13 @@ const interestDetailSchema = z.object({
   }).optional(),
 });
 
+const dividendDetailSchema = z.object({
+  payer_name: z.string().min(1),
+  gross: z.number().nonnegative(),
+  net: z.number().nonnegative(),
+  nominee: z.number().nonnegative(),
+});
+
 export const foreignCountrySchema = z.object({
   irs_code: z.string().regex(/^[A-Z]{2}$/),
   name: z.string().min(1).max(90),
@@ -60,6 +67,7 @@ export const inputSchema = z.object({
   // ── Part II: Dividends (from f1099div, one entry per payer when needed) ────
   // Ordinary dividends per payer (box1a); nominee amounts already excluded upstream
   ordinaryDividends: accumulable(z.number().nonnegative()).optional(),
+  dividend_detail: accumulable(dividendDetailSchema).optional(),
   // Dividend rows already routed directly to Form 1040 by their source node.
   // They become relevant when another source pushes the combined total above
   // the Schedule B filing threshold; they must not be routed twice.
@@ -107,6 +115,10 @@ function line4TaxableInterest(input: ScheduleBInput): number {
 function line6OrdinaryDividends(input: ScheduleBInput): number {
   return normalizeArray(input.ordinaryDividends)
     .reduce((sum, n) => sum + n, 0) +
+    normalizeArray(input.dividend_detail).reduce(
+      (sum, row) => sum + row.net,
+      0,
+    ) +
     (input.dividend_info ?? []).reduce((sum, row) => sum + row.amount, 0) +
     (input.form8814_dividends ?? 0);
 }
@@ -124,7 +136,11 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
     const line4 = line4TaxableInterest(input);
     const line6 = line6OrdinaryDividends(input);
     const dividendsForReturn = normalizeArray(input.ordinaryDividends)
-      .reduce((sum, n) => sum + n, 0);
+      .reduce((sum, n) => sum + n, 0) +
+      normalizeArray(input.dividend_detail).reduce(
+        (sum, row) => sum + row.net,
+        0,
+      );
     const foreignAccount = input.foreign_accounts_question === true ||
       input.form8814_foreign_account === true;
     const foreignTrust = input.foreign_trust_question === true ||
@@ -137,9 +153,11 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
     const hasSellerFinancedInterest = details.some((row) =>
       row.seller_financed_buyer !== undefined
     );
+    const dividendDetails = normalizeArray(input.dividend_detail);
+    const hasNomineeDividends = dividendDetails.some((row) => row.nominee > 0);
     const partIIIRequired = line4 > 1_500 || line6 > 1_500 ||
       foreignAccount || foreignTrust || hasInterestAdjustment ||
-      hasSellerFinancedInterest;
+      hasSellerFinancedInterest || hasNomineeDividends;
     if (
       partIIIRequired && input.foreign_accounts_question === undefined &&
       input.form8814_foreign_account !== true
@@ -175,7 +193,8 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
 
     if (
       line4 === 0 && line6 === 0 && !foreignAccount && !foreignTrust &&
-      !hasInterestAdjustment && !hasSellerFinancedInterest
+      !hasInterestAdjustment && !hasSellerFinancedInterest &&
+      !hasNomineeDividends
     ) {
       return { outputs: [] };
     }
@@ -287,10 +306,19 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
     const divNames = normalizeArray(
       input.payerName as string | string[] | undefined,
     );
-    const dividendRows = divAmounts.map((amount, index) => ({
+    for (const row of dividendDetails) {
+      if (Math.abs(row.gross - row.nominee - row.net) > 0.000001) {
+        throw new Error("Schedule B dividend detail does not reconcile");
+      }
+    }
+    const dividendRows = dividendDetails.map((row) => ({
+      payerName: row.payer_name,
+      amount: row.gross,
+    }));
+    dividendRows.push(...divAmounts.map((amount, index) => ({
       payerName: divNames[index] ?? "",
       amount,
-    }));
+    })));
     dividendRows.push(...(input.dividend_info ?? []));
     if ((input.form8814_dividends ?? 0) > 0) {
       dividendRows.push({
@@ -305,7 +333,15 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
     }
     if (dividendRows.length > 0) {
       printFields.dividend_rows = dividendRows;
+      printFields.dividend_line5_subtotal = dividendRows.reduce(
+        (sum, row) => sum + row.amount,
+        0,
+      );
     }
+    printFields.dividend_nominee = dividendDetails.reduce(
+      (sum, row) => sum + row.nominee,
+      0,
+    );
     for (let i = 0; i < Math.min(dividendRows.length, 15); i++) {
       printFields[`print_div_payer_${i + 1}`] = dividendRows[i].payerName;
       printFields[`print_div_amount_${i + 1}`] = dividendRows[i].amount;
@@ -314,7 +350,9 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
       printFields.print_line2_total = totalTaxableInterest(input);
       printFields.print_line4_total = line4;
     }
-    if (line6 > 0) printFields.print_line6_total = line6;
+    if (line6 > 0 || dividendRows.length > 0) {
+      printFields.print_line6_total = line6;
+    }
     if (foreignAccount || input.foreign_accounts_question !== undefined) {
       printFields.foreign_accounts_question = foreignAccount;
       if (foreignAccount) {

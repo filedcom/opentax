@@ -231,3 +231,41 @@ Deno.test("1099-OID premiums and nominee amount reach Schedule B adjustments", (
     "<TaxableInterestSubtotalAmt>1250</TaxableInterestSubtotalAmt>",
   );
 });
+
+Deno.test("1099-DIV nominee allocation reaches Schedule B and taxpayer-only return lines", () => {
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    {
+      general,
+      f1099div: [{
+        payerName: "Fund",
+        isNominee: true,
+        box11: false,
+        box1a: 1_000,
+        box1b: 500,
+        nominee_distribution: { box1a: 400, box1b: 200 },
+      }],
+      schedule_b_part_iii: {
+        foreign_accounts_question: false,
+        foreign_trust_question: false,
+      },
+    },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule_b?.print_line6_total, 600);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(xml, "<DividendAmt>1000</DividendAmt>");
+  assertStringIncludes(
+    xml,
+    '<NomineeDividendAmt nomineeDividendLiteralCd="NOMINEE DISTRIBUTION">400</NomineeDividendAmt>',
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalOrdinaryDividendsAmt>600</TotalOrdinaryDividendsAmt>",
+  );
+});

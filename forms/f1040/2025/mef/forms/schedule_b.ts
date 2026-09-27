@@ -20,6 +20,8 @@ export interface Fields {
   ee_bond_exclusion?: number | null;
   ordinaryDividends?: number | readonly number[] | null;
   dividend_rows?: readonly { payerName: string; amount: number }[];
+  dividend_line5_subtotal?: number;
+  dividend_nominee?: number;
   print_line2_total?: number | null;
   print_line4_total?: number | null;
   print_line6_total?: number | null;
@@ -174,6 +176,7 @@ function buildIRS1040ScheduleB(fields: Input): string {
     : Math.max(0, interest - (fields.ee_bond_exclusion ?? 0));
   const partIIIRequired = (taxableInterest ?? 0) > 1_500 ||
     (dividends ?? 0) > 1_500 ||
+    (fields.dividend_nominee ?? 0) > 0 ||
     sellerRows.length > 0 ||
     adjustments > 0 ||
     fields.foreign_accounts_question === true ||
@@ -213,6 +216,7 @@ function buildIRS1040ScheduleB(fields: Input): string {
     fields.seller_financed_rows === undefined &&
     fields.ordinaryDividends === undefined &&
     fields.dividend_rows === undefined &&
+    fields.dividend_nominee === undefined &&
     fields.dividend_info === undefined &&
     fields.form8814_dividends === undefined &&
     fields.ee_bond_exclusion === undefined &&
@@ -229,9 +233,18 @@ function buildIRS1040ScheduleB(fields: Input): string {
     fields.interest_rows === undefined &&
     fields.foreign_accounts_question !== true &&
     fields.foreign_trust_question !== true &&
+    (fields.dividend_nominee ?? 0) === 0 &&
     (dividends ?? 0) <= 1500
   ) return "";
   const dividendRows = fields.dividend_rows ?? [];
+  if (
+    (fields.dividend_nominee ?? 0) > 0 &&
+    (dividendRows.length === 0 || dividends === undefined)
+  ) {
+    throw new Error(
+      "Schedule B nominee dividends need gross payer rows and net line 6",
+    );
+  }
   if (
     dividendRows.some((row) =>
       !row.payerName.trim() || !Number.isFinite(row.amount) || row.amount < 0
@@ -239,11 +252,16 @@ function buildIRS1040ScheduleB(fields: Input): string {
   ) {
     throw new Error("Schedule B dividend rows need named, nonnegative payers");
   }
+  const dividendSubtotal = fields.dividend_line5_subtotal ??
+    dividendRows.reduce((total, row) => total + row.amount, 0);
   if (
     dividendRows.length > 0 && dividends !== undefined &&
-    Math.abs(
-        dividendRows.reduce((total, row) => total + row.amount, 0) - dividends,
-      ) > 0.000001
+    (Math.abs(
+          dividendRows.reduce((total, row) => total + row.amount, 0) -
+            dividendSubtotal,
+        ) > 0.000001 ||
+      Math.abs(dividendSubtotal - (fields.dividend_nominee ?? 0) - dividends) >
+        0.000001)
   ) {
     throw new Error(
       "Schedule B dividend payer rows do not reconcile to line 6",
@@ -311,6 +329,16 @@ function buildIRS1040ScheduleB(fields: Input): string {
         : Math.max(0, interest - (fields.ee_bond_exclusion ?? 0)),
     ),
     ...rows,
+    dividendRows.length > 0
+      ? element("OrdinaryDividendSubtotalAmt", dividendSubtotal, {
+        dividendSubtotalLiteralCd: "DIVIDEND SUBTOTAL",
+      })
+      : "",
+    (fields.dividend_nominee ?? 0) > 0
+      ? element("NomineeDividendAmt", fields.dividend_nominee!, {
+        nomineeDividendLiteralCd: "NOMINEE DISTRIBUTION",
+      })
+      : "",
     dividends === undefined
       ? ""
       : element("TotalOrdinaryDividendsAmt", dividends),

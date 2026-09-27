@@ -19,6 +19,28 @@ import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/in
 type ItemOverrides = Partial<{
   payerName: string;
   isNominee: boolean;
+  nominee_distribution: {
+    box1a: number;
+    box1b?: number;
+    box2a?: number;
+    box2b?: number;
+    box2c?: number;
+    box2d?: number;
+    box2e?: number;
+    box2f?: number;
+    box3?: number;
+    box4?: number;
+    box5?: number;
+    box6?: number;
+    box7?: number;
+    box9?: number;
+    box10?: number;
+    box12?: number;
+    box13?: number;
+    box16?: number;
+    foreign_source_dividends_usd?: number;
+    foreign_source_qualified_dividends_usd?: number;
+  };
   box11: boolean;
   box1a: number;
   investment_property_for_form4952: boolean;
@@ -631,10 +653,20 @@ Deno.test("schedule_b triggered when total box1a above $1,500", () => {
 
 Deno.test("nominee=true forces schedule_b even when total below $1,500", () => {
   const result = compute([
-    minimalItem({ payerName: "Nominee Payer", box1a: 500, isNominee: true }),
+    minimalItem({
+      payerName: "Nominee Payer",
+      box1a: 500,
+      isNominee: true,
+      nominee_distribution: { box1a: 200 },
+    }),
   ]);
   const sbFields = fieldsOf(result.outputs, schedule_b);
-  assertEquals(sbFields?.isNominee, true);
+  assertEquals(sbFields?.dividend_detail, {
+    payer_name: "Nominee Payer",
+    gross: 500,
+    net: 300,
+    nominee: 200,
+  });
 });
 
 Deno.test("multi-payer total below $1,500 retains all payer facts for combined-source threshold", () => {
@@ -828,13 +860,87 @@ Deno.test("box1a = 0, box2a > 0: pure cap-gain fund routes to schedule_d line13"
   );
 });
 
-Deno.test("isNominee=true passes full box1a amount to schedule_b (subtraction happens in schedule_b node)", () => {
+Deno.test("isNominee=true carries gross and taxpayer-owned dividends separately", () => {
   const result = compute([
-    minimalItem({ payerName: "Nominee Payer", box1a: 500, isNominee: true }),
+    minimalItem({
+      payerName: "Nominee Payer",
+      box1a: 500,
+      isNominee: true,
+      nominee_distribution: { box1a: 200 },
+    }),
   ]);
   const sbFields = fieldsOf(result.outputs, schedule_b);
-  assertEquals(sbFields?.isNominee, true);
-  assertEquals(sbFields?.ordinaryDividends, 500);
+  assertEquals(sbFields?.dividend_detail, {
+    payer_name: "Nominee Payer",
+    gross: 500,
+    net: 300,
+    nominee: 200,
+  });
+});
+
+Deno.test("1099-DIV nominee allocation removes owner amounts from every routed box", () => {
+  const result = compute([minimalItem({
+    payerName: "Fund",
+    isNominee: true,
+    box1a: 1_000,
+    box1b: 600,
+    box2a: 300,
+    box4: 100,
+    box5: 200,
+    box12: 100,
+    box13: 20,
+    nominee_distribution: {
+      box1a: 400,
+      box1b: 200,
+      box2a: 100,
+      box4: 40,
+      box5: 80,
+      box12: 30,
+      box13: 10,
+    },
+  })]);
+  assertEquals(fieldsOf(result.outputs, schedule_b)?.dividend_detail, {
+    payer_name: "Fund",
+    gross: 1_000,
+    net: 600,
+    nominee: 400,
+  });
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.line3a_qualified_dividends,
+    400,
+  );
+  assertEquals(fieldsOf(result.outputs, f1040)?.line25b_withheld_1099, 60);
+  assertEquals(fieldsOf(result.outputs, f1040)?.line2a_tax_exempt, 70);
+  assertEquals(
+    fieldsOf(result.outputs, schedule_d)?.line13_cap_gain_distrib,
+    200,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, form8995)?.line6_sec199a_dividends,
+    120,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, form6251)?.private_activity_bond_interest,
+    10,
+  );
+});
+
+Deno.test("1099-DIV nominee requires an allocation for every reported box", () => {
+  assertThrows(() =>
+    compute([minimalItem({
+      isNominee: true,
+      box1a: 500,
+      box1b: 100,
+      nominee_distribution: { box1a: 200 },
+    })])
+  );
+  assertThrows(() =>
+    compute([minimalItem({
+      isNominee: true,
+      box1a: 500,
+      nominee_distribution: { box1a: 600 },
+    })])
+  );
 });
 
 Deno.test("box13 = 0 with box12 > 0 — no form6251 output, only f1040 line2a", () => {

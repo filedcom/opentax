@@ -28,14 +28,14 @@ export async function appendScheduleBDividendStatement(
   }
   const dividends = rows as DividendRow[];
   if (
-    typeof fields.print_line6_total === "number" &&
+    typeof fields.dividend_line5_subtotal === "number" &&
     Math.abs(
         dividends.reduce((sum, row) => sum + row.amount, 0) -
-          fields.print_line6_total,
+          fields.dividend_line5_subtotal,
       ) > 0.000001
   ) {
     throw new Error(
-      "Schedule B dividend statement does not reconcile to line 6",
+      "Schedule B dividend statement does not reconcile to line 5",
     );
   }
   if (!filer) {
@@ -108,7 +108,7 @@ export async function appendScheduleBDividendStatement(
     page.drawText(
       `Dividend payers ${
         first + 1
-      }-${last} of ${dividends.length}. Total on Schedule B line 6.`,
+      }-${last} of ${dividends.length}. Total included in Schedule B line 5.`,
       { x: 36, y: 55, size: 8, font: regular },
     );
     page.drawText(`Page ${pageIndex + 1} of ${pageCount}`, {

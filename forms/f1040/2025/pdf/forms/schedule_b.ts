@@ -3,6 +3,7 @@ import { appendScheduleBInterestStatement } from "./schedule_b_interest_statemen
 import { appendScheduleBDividendStatement } from "./schedule_b_dividend_statement.ts";
 import { appendScheduleBSellerFinancedStatement } from "./schedule_b_seller_financed_statement.ts";
 import { appendScheduleBInterestAdjustmentsStatement } from "./schedule_b_interest_adjustments_statement.ts";
+import { appendScheduleBNomineeDividendStatement } from "./schedule_b_nominee_dividend_statement.ts";
 import {
   appendScheduleBForeignCountriesStatement,
   foreignCountryPrintFields,
@@ -152,6 +153,7 @@ export const scheduleBPdf: PdfFormDescriptor = {
   includeWhen: (fields) =>
     ((fields["print_line4_total"] as number | undefined) ?? 0) > 1500 ||
     ((fields["print_line6_total"] as number | undefined) ?? 0) > 1500 ||
+    ((fields["dividend_nominee"] as number | undefined) ?? 0) > 0 ||
     fields["ordinaryDividends"] !== undefined ||
     [
       "interest_nominee",
@@ -171,6 +173,7 @@ export const scheduleBPdf: PdfFormDescriptor = {
     await appendScheduleBInterestStatement(document, fields, filer);
     await appendScheduleBInterestAdjustmentsStatement(document, fields, filer);
     await appendScheduleBDividendStatement(document, fields, filer);
+    await appendScheduleBNomineeDividendStatement(document, fields, filer);
     await appendScheduleBForeignCountriesStatement(document, fields, filer);
   },
 };

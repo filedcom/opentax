@@ -21,6 +21,7 @@ Deno.test("Schedule B adds a continuation page after 15 dividend payers", async 
       payerName: `Fund ${index + 1}`,
       amount: 100,
     })),
+    dividend_line5_subtotal: 1_600,
     print_line6_total: 1_600,
   }, filer);
   assertEquals(document.getPageCount(), 2);
@@ -34,7 +35,23 @@ Deno.test("Schedule B does not add a page for exactly 15 dividend payers", async
       payerName: `Fund ${index + 1}`,
       amount: 100,
     })),
+    dividend_line5_subtotal: 1_500,
     print_line6_total: 1_500,
   }, filer);
   assertEquals(document.getPageCount(), 1);
+});
+
+Deno.test("Schedule B dividend continuation uses gross line 5 with a nominee reduction", async () => {
+  const document = await PDFDocument.create();
+  document.addPage([612, 792]);
+  await appendScheduleBDividendStatement(document, {
+    dividend_rows: Array.from({ length: 16 }, (_, index) => ({
+      payerName: `Fund ${index + 1}`,
+      amount: 100,
+    })),
+    dividend_line5_subtotal: 1_600,
+    dividend_nominee: 400,
+    print_line6_total: 1_200,
+  }, filer);
+  assertEquals(document.getPageCount(), 2);
 });

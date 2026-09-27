@@ -140,3 +140,35 @@ Deno.test({
     await Deno.remove(path);
   }
 });
+
+Deno.test({
+  name: "XSD: Schedule B nominee dividends report gross line 5 and net line 6",
+  ignore: !xsdAvailable,
+  sanitizeOps: false,
+  sanitizeResources: false,
+}, async () => {
+  const xml = buildMefXml({
+    f1040: { filing_status: "single", line3b_ordinary_dividends: 600 },
+    schedule_b: {
+      dividend_rows: [{ payerName: "Fund", amount: 1_000 }],
+      dividend_line5_subtotal: 1_000,
+      dividend_nominee: 400,
+      print_line6_total: 600,
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    },
+  }, filer);
+  assertStringIncludes(xml, "<NomineeDividendAmt ");
+  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(path, xml);
+    const result = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", XSD_PATH, path],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
+  } finally {
+    await Deno.remove(path);
+  }
+});

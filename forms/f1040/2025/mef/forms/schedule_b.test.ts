@@ -174,6 +174,39 @@ Deno.test("schedule_b: ordinaryDividends maps to TotalOrdinaryDividendsAmt", () 
   );
 });
 
+Deno.test("schedule_b: nominee dividends reconcile gross line 5 to net line 6", () => {
+  const xml = scheduleB.build({
+    dividend_rows: [{ payerName: "Fund", amount: 1_000 }],
+    dividend_line5_subtotal: 1_000,
+    dividend_nominee: 400,
+    print_line6_total: 600,
+    foreign_accounts_question: false,
+    foreign_trust_question: false,
+  });
+  assertStringIncludes(xml, "<DividendAmt>1000</DividendAmt>");
+  assertStringIncludes(
+    xml,
+    '<OrdinaryDividendSubtotalAmt dividendSubtotalLiteralCd="DIVIDEND SUBTOTAL">1000</OrdinaryDividendSubtotalAmt>',
+  );
+  assertStringIncludes(
+    xml,
+    '<NomineeDividendAmt nomineeDividendLiteralCd="NOMINEE DISTRIBUTION">400</NomineeDividendAmt>',
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalOrdinaryDividendsAmt>600</TotalOrdinaryDividendsAmt>",
+  );
+  assertThrows(() =>
+    scheduleB.build({
+      dividend_rows: [{ payerName: "Fund", amount: 1_000 }],
+      dividend_nominee: 400,
+      print_line6_total: 700,
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    })
+  );
+});
+
 Deno.test("schedule_b: combined parent and Form 8814 dividends include payer rows", () => {
   const xml = scheduleB.build({
     dividend_info: [{ payerName: "Fund A", amount: 1_200 }],

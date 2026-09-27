@@ -58,6 +58,7 @@ Deno.test("Schedule B PDF includes seller-financed and adjustment filings below 
     true,
   );
   assertEquals(scheduleBPdf.includeWhen?.({ interest_nominee: 100 }), true);
+  assertEquals(scheduleBPdf.includeWhen?.({ dividend_nominee: 100 }), true);
 });
 
 Deno.test("Schedule B PDF prints two countries or appends a longer list", async () => {

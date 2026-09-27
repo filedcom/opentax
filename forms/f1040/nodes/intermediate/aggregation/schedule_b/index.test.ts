@@ -237,6 +237,40 @@ Deno.test("single dividend entry routes ordinaryDividends to f1040 line3b", () =
   assertEquals(f1040?.fields, { line3b_ordinary_dividends: 800 });
 });
 
+Deno.test("nominee dividends keep gross line 5 and net line 6 separate", () => {
+  const result = compute({
+    dividend_detail: {
+      payer_name: "Fund",
+      gross: 1_000,
+      net: 600,
+      nominee: 400,
+    },
+    foreign_accounts_question: false,
+    foreign_trust_question: false,
+  });
+  assertEquals(
+    findOutput(result, "f1040")?.fields.line3b_ordinary_dividends,
+    600,
+  );
+  const fields = findOutput(result, "schedule_b")?.fields;
+  assertEquals(fields?.dividend_rows, [{ payerName: "Fund", amount: 1_000 }]);
+  assertEquals(fields?.dividend_line5_subtotal, 1_000);
+  assertEquals(fields?.dividend_nominee, 400);
+  assertEquals(fields?.print_line6_total, 600);
+  assertThrows(() =>
+    compute({
+      dividend_detail: {
+        payer_name: "Fund",
+        gross: 1_000,
+        net: 700,
+        nominee: 400,
+      },
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    })
+  );
+});
+
 Deno.test("multiple dividend entries (array) aggregate to line3b", () => {
   const result = compute({
     payerName: ["Fidelity", "Schwab"],

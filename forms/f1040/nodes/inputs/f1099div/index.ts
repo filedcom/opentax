@@ -30,9 +30,33 @@ import { f1040 } from "../../outputs/f1040/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../config/index.ts";
 
+const nomineeDistributionSchema = z.object({
+  box1a: z.number().nonnegative(),
+  box1b: z.number().nonnegative().optional(),
+  box2a: z.number().nonnegative().optional(),
+  box2b: z.number().nonnegative().optional(),
+  box2c: z.number().nonnegative().optional(),
+  box2d: z.number().nonnegative().optional(),
+  box2e: z.number().nonnegative().optional(),
+  box2f: z.number().nonnegative().optional(),
+  box3: z.number().nonnegative().optional(),
+  box4: z.number().nonnegative().optional(),
+  box5: z.number().nonnegative().optional(),
+  box6: z.number().nonnegative().optional(),
+  box7: z.number().nonnegative().optional(),
+  box9: z.number().nonnegative().optional(),
+  box10: z.number().nonnegative().optional(),
+  box12: z.number().nonnegative().optional(),
+  box13: z.number().nonnegative().optional(),
+  box16: z.number().nonnegative().optional(),
+  foreign_source_dividends_usd: z.number().nonnegative().optional(),
+  foreign_source_qualified_dividends_usd: z.number().nonnegative().optional(),
+});
+
 export const itemSchema = z.object({
   payerName: z.string().optional(),
   isNominee: z.boolean(),
+  nominee_distribution: nomineeDistributionSchema.optional(),
   box11: z.boolean(),
   box1a: z.number().nonnegative(),
   // Affirm this payer's dividends and capital-gain distributions come from
@@ -72,6 +96,60 @@ export const inputSchema = z.object({
 
 type DIVItem = z.infer<typeof itemSchema>;
 type DIVInput = z.infer<typeof inputSchema>;
+
+const nomineeFields = [
+  "box1a",
+  "box1b",
+  "box2a",
+  "box2b",
+  "box2c",
+  "box2d",
+  "box2e",
+  "box2f",
+  "box3",
+  "box4",
+  "box5",
+  "box6",
+  "box7",
+  "box9",
+  "box10",
+  "box12",
+  "box13",
+  "box16",
+  "foreign_source_dividends_usd",
+  "foreign_source_qualified_dividends_usd",
+] as const;
+
+function taxpayerShare(item: DIVItem): DIVItem {
+  if (!item.isNominee) {
+    if (item.nominee_distribution) {
+      throw new Error("1099-DIV nominee distribution requires isNominee");
+    }
+    return item;
+  }
+  const nominee = item.nominee_distribution;
+  if (!nominee || nominee.box1a <= 0 || nominee.box1a > item.box1a) {
+    throw new Error(
+      "1099-DIV nominee needs an ordinary-dividend amount within box 1a",
+    );
+  }
+  for (const key of nomineeFields) {
+    const gross = item[key] ?? 0;
+    const passedOn = nominee[key];
+    if (gross > 0 && passedOn === undefined) {
+      throw new Error(`1099-DIV nominee needs an explicit ${key} allocation`);
+    }
+    if ((passedOn ?? 0) > gross) {
+      throw new Error(`1099-DIV nominee ${key} exceeds the reported amount`);
+    }
+  }
+  const own = { ...item };
+  for (const key of nomineeFields) {
+    (own as Record<string, unknown>)[key] = (item[key] ?? 0) -
+      (nominee[key] ?? 0);
+  }
+  return own;
+}
 
 const HOLDING_PERIOD_199A_DAYS = 45;
 const HOLDING_PERIOD_FOREIGN_DAYS = 16;
@@ -160,14 +238,17 @@ function needsScheduleB(
   return totalBox1a > scheduleBDividendThreshold;
 }
 
-function dividendScheduleBOutput(item: DIVItem): NodeOutput[] {
-  if (!item.payerName?.trim()) {
+function dividendScheduleBOutput(gross: DIVItem, own: DIVItem): NodeOutput[] {
+  if (!gross.payerName?.trim()) {
     throw new Error("1099-DIV payer name is required when Schedule B is filed");
   }
   return [output(schedule_b, {
-    payerName: item.payerName,
-    ordinaryDividends: item.box1a,
-    isNominee: item.isNominee,
+    dividend_detail: {
+      payer_name: gross.payerName,
+      gross: gross.box1a,
+      net: own.box1a,
+      nominee: gross.nominee_distribution?.box1a ?? 0,
+    },
   })];
 }
 
@@ -210,7 +291,9 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
     const { taxableIncome, filingStatus } = parsed;
     // Normalize items first (clamp sub-box values that payers occasionally report
     // over their parent box due to data entry errors), then validate the rest.
-    const div1099s = parsed.f1099divs.map(normalizeDivItem);
+    const div1099s = parsed.f1099divs.map((item) =>
+      normalizeDivItem(taxpayerShare(item))
+    );
 
     for (const item of div1099s) {
       validateDivItem(item);
@@ -222,11 +305,13 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
     );
 
     const shouldRouteScheduleB = needsScheduleB(
-      div1099s,
+      parsed.f1099divs,
       cfg.scheduleBDividendThreshold,
     );
     const outputs: NodeOutput[] = shouldRouteScheduleB
-      ? div1099s.flatMap(dividendScheduleBOutput)
+      ? parsed.f1099divs.flatMap((gross, index) =>
+        dividendScheduleBOutput(gross, div1099s[index])
+      )
       : [];
     for (const item of div1099s) {
       if (item.investment_property_for_form4952 !== true) continue;
