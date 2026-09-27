@@ -1,8 +1,4 @@
 file,line,source_excerpt
-forms/f1040/nodes/inputs/auto_expense/index.ts,13,// TY2025 standard mileage rate for business vehicles
-forms/f1040/nodes/inputs/auto_expense/index.ts,14,// IRS Notice 2025-5: 70 cents per mile
-forms/f1040/nodes/inputs/auto_expense/index.ts,44,// Business miles driven during 2025
-forms/f1040/nodes/inputs/auto_expense/index.ts,46,// Total miles driven during 2025 (used for business-use percentage — actual method)
 forms/f1040/nodes/inputs/clergy/index.ts,12,"// TY2025 — Clergy/ministerial income treatment under IRC §107, §1402(a)(8), §1402(c)(4)"
 forms/f1040/nodes/inputs/depletion/index.ts,84,"// ─── Constants (TY2025 — IRC §613, §613A; no annual inflation adjustment) ────"
 forms/f1040/nodes/inputs/educator_expenses/index.ts,13,// TY2025 — Educator Expenses Deduction
@@ -24,9 +20,7 @@ forms/f1040/nodes/inputs/f1099m/index.ts,93,// Box 14 — Reserved for future us
 forms/f1040/nodes/inputs/f1099oid/index.ts,15,// IRS Form 1099-OID TY2025: Original Issue Discount
 forms/f1040/nodes/inputs/f1099oid/index.ts,21,// Box 1: Original issue discount for 2025
 forms/f1040/nodes/inputs/f1099r/index.ts,146,// Distribution code enum covering all valid 1099-R Box 7 codes for TY2025
-forms/f1040/nodes/inputs/f2106/index.ts,13,// TY2025 — Form 2106: Employee Business Expenses
-forms/f1040/nodes/inputs/f2106/index.ts,20,// Standard mileage rate TY2025: $0.70/mile (Notice 2025-05).
-forms/f1040/nodes/inputs/f2106/index.ts,35,// TY2025 standard mileage rate for business (Notice 2025-05)
+forms/f1040/nodes/inputs/f2106/index.ts,21,// Standard mileage rate TY2025: $0.70/mile (Notice 2025-05).
 forms/f1040/nodes/inputs/f2210/calculation.ts,20,"Date.UTC(2025, 3, 15),"
 forms/f1040/nodes/inputs/f2210/calculation.ts,21,"Date.UTC(2025, 5, 15),"
 forms/f1040/nodes/inputs/f2210/calculation.ts,22,"Date.UTC(2025, 8, 15),"
@@ -51,19 +45,9 @@ forms/f1040/nodes/inputs/f7207/index.ts,8,// ─── TY2025 Constants (IRC §4
 forms/f1040/nodes/inputs/f8082/index.ts,7,// TY2025 — Form 8082: Notice of Inconsistent Treatment or Administrative Adjustment Request (AAR)
 forms/f1040/nodes/inputs/f8288/index.ts,8,// TY2025 — Form 8288/8288-A: FIRPTA Withholding
 forms/f1040/nodes/inputs/f8611/index.ts,13,// ─── TY2025 Constants (IRC §42(j)) ───────────────────────────────────────────
-forms/f1040/nodes/inputs/f8621/excess_distribution.ts,25,"first_pfic_tax_year: z.number().int().min(1987).max(2025),"
-forms/f1040/nodes/inputs/f8621/excess_distribution.ts,32,"first_pfic_tax_year: z.number().int().min(1987).max(2025),"
-forms/f1040/nodes/inputs/f8621/excess_distribution.ts,109,if (year >= 2018 && year <= 2025) return 0.37;
-forms/f1040/nodes/inputs/f8621/excess_distribution.ts,131,if (end < start || new Date(end).getUTCFullYear() !== 2025) {
-forms/f1040/nodes/inputs/f8621/excess_distribution.ts,133,"""Form 8621 Part V needs a valid holding period ending on a 2025 event date"","
-forms/f1040/nodes/inputs/f8621/excess_distribution.ts,147,for (let year = startYear; year <= 2025; year++) {
-forms/f1040/nodes/inputs/f8621/excess_distribution.ts,194,if (year.tax_year === 2025 || !year.pfic_year) {
-forms/f1040/nodes/inputs/f8621/excess_distribution.ts,257,if (startYear > 2025) {
-forms/f1040/nodes/inputs/f8621/excess_distribution.ts,259,"""Form 8621 holding period cannot begin after tax year 2025"","
-forms/f1040/nodes/inputs/f8621/excess_distribution.ts,263,"{ length: Math.min(3, 2025 - startYear) },"
-forms/f1040/nodes/inputs/f8621/excess_distribution.ts,307,if (date < start || new Date(date).getUTCFullYear() !== 2025) {
-forms/f1040/nodes/inputs/f8621/excess_distribution.ts,309,"""Form 8621 distribution must occur during the 2025 holding period"","
-forms/f1040/nodes/inputs/f8621/index.ts,19,// TY2025 — Form 8621: Information Return by a Shareholder of a PFIC or QEF
+forms/f1040/nodes/inputs/f8621/excess_distribution.ts,8,"tax_year: z.number().int().min(1987).max(2025),"
+forms/f1040/nodes/inputs/f8621/excess_distribution.ts,36,"tax_year: z.number().int().min(2022).max(2025),"
+forms/f1040/nodes/inputs/f8621/excess_distribution.ts,404,if (taxYear !== 2025 && taxYear !== 2026) {
 forms/f1040/nodes/inputs/f8805/index.ts,16,// TY2025 withholding rates (IRC §1446(b)(2); Rev. Proc. 2024-40)
 forms/f1040/nodes/inputs/f8814/index.ts,19,"// 2025 Form 8814, Parts I and II."
 forms/f1040/nodes/inputs/f8820/index.ts,16,// TY2025 constant — IRC §45C(a); TCJA P.L. 115-97 §13401
@@ -242,3 +226,6 @@ forms/f1040/nodes/intermediate/worksheets/standard_deduction/index.ts,158,// 202
 forms/f1040/nodes/intermediate/worksheets/standard_deduction/index.ts,162,"// 2025 Form 6251 line 2a: Schedule A line 7 if itemizing, otherwise"
 forms/f1040/nodes/outputs/f1040/index.ts,38,// Lines reference: Form 1040 (2025)
 forms/f1040/nodes/outputs/f1040/index.ts,194,// Line 26 — 2025 estimated tax payments
+forms/f1040/nodes/shared/business-mileage.ts,2,"* Business standard mileage rates from Notice 2025-5, Notice 2026-10, and"
+forms/f1040/nodes/shared/business-mileage.ts,11,if (taxYear === 2025) {
+forms/f1040/nodes/shared/business-mileage.ts,13,"throw new Error(""TY2026 mileage periods cannot be used on a TY2025 return"");"

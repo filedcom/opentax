@@ -28,6 +28,26 @@ not in a registered graph yet. Expand its upstream input surface and preserve
 the 2025 credit-finalization behavior where 2026 law and forms still require it.
 CLI node inspection and graph commands accept `--year` and will select the
 TY2026 registry once this product is registered.
+The shared `auto_expense` and Form 2106 paths now apply the two 2026 business
+mileage rates using reconciled half-year miles. Form 8621 excess distributions
+use the return year for event dates and prior-year allocations.
+
+## Graph and output contract
+
+The engine builds a graph from each node's declared output edges. Its executor
+merges upstream fields into a pending record keyed by node type, then calls
+the final `f1040` node once. The TY2025 `f1040` node accepts a broad upstream
+field set and also finalizes several credit worksheets. The new TY2026 node
+currently accepts final amounts only; placing it in the 2025 registry would
+discard the upstream detail needed to reproduce the existing credit paths.
+
+Build a 2026 `inputs.ts` and `registry.ts` explicitly. For each shared node,
+confirm its TY2026 computation and output fields before adding it. Expand the
+TY2026 `f1040` input schema to accept those fields, retain the still-applicable
+credit finalizations, and map them to the revised 2026 line layout. Keep the
+Schedule 3-A inputs upstream of `f1040`; the final node can emit the completed
+Schedule 3-A record without creating a graph cycle. Check the execution plan
+for cycles and run one wages-only 2026 return before catalog registration.
 
 The source corpus and provenance are in [`docs/ty2026`](../../../docs/ty2026/README.md).
 Its raw IRS draft forms, ATS scenarios, and authorities are committed; the
