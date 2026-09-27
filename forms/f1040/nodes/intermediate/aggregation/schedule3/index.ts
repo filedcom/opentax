@@ -33,6 +33,7 @@ export const inputSchema = z.object({
   form3800_source_credit_pending: z.boolean().optional(),
   form8912_source_credit_pending: z.boolean().optional(),
   form8859_source_credit_pending: z.boolean().optional(),
+  form8834_source_credit_pending: z.boolean().optional(),
   // ── Part I — Nonrefundable Credits ─────────────────────────────────────────
 
   // Line 1 — Foreign tax credit (from Form 1116 line 35)
@@ -199,7 +200,8 @@ class Schedule3Node extends TaxNode<typeof inputSchema> {
       credits === 0 && payments === 0 &&
       input.form3800_source_credit_pending !== true &&
       input.form8912_source_credit_pending !== true &&
-      input.form8859_source_credit_pending !== true
+      input.form8859_source_credit_pending !== true &&
+      input.form8834_source_credit_pending !== true
     ) return { outputs: [] };
 
     const f1040Input: Partial<z.infer<typeof f1040["inputSchema"]>> = {};
@@ -212,7 +214,8 @@ class Schedule3Node extends TaxNode<typeof inputSchema> {
     if (
       input.form3800_source_credit_pending === true ||
       input.form8912_source_credit_pending === true ||
-      input.form8859_source_credit_pending === true
+      input.form8859_source_credit_pending === true ||
+      input.form8834_source_credit_pending === true
     ) {
       f1040Input.credit_limit_schedule3_lines = {
         line1: line1(input),
@@ -228,6 +231,9 @@ class Schedule3Node extends TaxNode<typeof inputSchema> {
         line6fCleanVehicle: cleanNew,
         line6gMortgage: input.line6g_mortgage_interest_credit ?? 0,
         line6hHomebuyer: input.line6h_dc_homebuyer_credit ?? 0,
+        line6iElectricVehicle: input.line6i_qualified_electric_vehicle_credit ??
+          0,
+        line6jRefueling: input.line6j_alt_fuel_vehicle_refueling ?? 0,
         line6kBondCredit: input.line6k_tax_credit_bonds ?? 0,
         line6lForm8978: input.line6l_form8978_credit ?? 0,
         line6mUsedCleanVehicle: cleanUsed,

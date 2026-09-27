@@ -126,6 +126,77 @@ Deno.test("f1040: Form 8859 needs completed tax and Worksheet B source", () => {
   );
 });
 
+Deno.test("f1040: Form 8834 limits an allowed passive credit against regular tax and TMT", () => {
+  const result = compute({
+    line16_income_tax: 1_000,
+    line19_child_tax_credit: 100,
+    line20_nonrefundable_credits: 150,
+    form8834_source_credit: 600,
+    credit_limit_schedule2_line1z: 0,
+    credit_limit_form6251_line9: 300,
+    credit_limit_schedule3_lines: {
+      ...emptySchedule3ForBusinessCredit,
+      line1: 100,
+      line2: 50,
+    },
+  });
+  const electric = result.finalizations?.find((item) =>
+    item.nodeType === "f8834"
+  );
+  const schedule = result.finalizations?.find((item) =>
+    item.nodeType === "schedule3"
+  );
+  assertEquals(electric?.fields.line1_source_credit, 600);
+  assertEquals(electric?.fields.line3a_foreign_tax_credit, 100);
+  assertEquals(electric?.fields.line3b_other_credits, 150);
+  assertEquals(electric?.fields.line4_net_regular_tax, 750);
+  assertEquals(electric?.fields.line6_adjusted_regular_tax, 450);
+  assertEquals(electric?.fields.line7_allowed_credit, 450);
+  assertEquals(schedule?.fields.line6i_qualified_electric_vehicle_credit, 450);
+  assertEquals(result.outputs[0].fields.line20_nonrefundable_credits, 600);
+});
+
+Deno.test("f1040: Form 8834 records a zero allowed credit when TMT exhausts the limit", () => {
+  const result = compute({
+    line16_income_tax: 500,
+    form8834_source_credit: 200,
+    credit_limit_form6251_line9: 500,
+    credit_limit_schedule3_lines: emptySchedule3ForBusinessCredit,
+  });
+  const electric = result.finalizations?.find((item) =>
+    item.nodeType === "f8834"
+  );
+  assertEquals(electric?.fields.line6_adjusted_regular_tax, 0);
+  assertEquals(electric?.fields.line7_allowed_credit, 0);
+});
+
+Deno.test("f1040: Form 8834 refuses unresolved joint credit ordering", () => {
+  assertThrows(
+    () =>
+      compute({
+        line16_income_tax: 1_000,
+        form8834_source_credit: 200,
+        form8859_source_carryforward: 100,
+        credit_limit_form6251_line9: 0,
+        credit_limit_schedule3_lines: emptySchedule3ForBusinessCredit,
+      }),
+    Error,
+    "joint credit-ordering",
+  );
+  assertThrows(
+    () =>
+      compute({
+        line16_income_tax: 1_000,
+        form8834_source_credit: 200,
+        form8936_tentative_new_credit: 100,
+        credit_limit_form6251_line9: 0,
+        credit_limit_schedule3_lines: emptySchedule3ForBusinessCredit,
+      }),
+    Error,
+    "joint credit-ordering",
+  );
+});
+
 Deno.test("f1040: Form 8912 needs finalized credit inputs", () => {
   assertThrows(
     () =>

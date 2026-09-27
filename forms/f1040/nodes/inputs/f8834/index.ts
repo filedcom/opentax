@@ -5,91 +5,65 @@ import type {
 } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
+import { form6251 } from "../../intermediate/forms/form6251/index.ts";
+import { f1040 } from "../../outputs/f1040/index.ts";
 
-// Form 8834 — Qualified Electric Vehicle Credit (IRC §30)
-// Old §30 credit for 2-/3-wheel and low-speed vehicles (NOT new §30D).
-// Mostly obsolete in TY2025 but carryforwards from prior years still exist.
-// Credit = cost × credit_percentage (10% for 2-/3-wheel, 10% for low-speed)
-// Personal-use credit reports on Schedule 3 line 6i, not Form 3800 line 6a.
-
-// TY2025 constants — IRC §30
-const MAX_CREDIT_TWO_THREE_WHEEL = 2500; // 10% × $25,000 cost cap
-const MAX_CREDIT_LOW_SPEED = 2500; // 10% × $25,000 cost cap
-const TWO_THREE_WHEEL_RATE = 0.10;
-const LOW_SPEED_RATE = 0.10;
-
-export enum VehicleType {
-  TwoThreeWheel = "two_three_wheel",
-  LowSpeed = "low_speed",
-}
-
+// The continuous-use 2024 Form 8834 applies to TY2025. Its line 1 is a
+// prior-year passive-activity credit *allowed this year* by Form 8582-CR.
+// Vehicle cost and service date no longer generate a Form 8834 credit.
 export const itemSchema = z.object({
-  // Vehicle description (as entered on Form 8834, Line 1)
-  vehicle_description: z.string().optional(),
-  // Date vehicle was placed in service (ISO YYYY-MM-DD)
-  date_placed_in_service: z.string().optional(),
-  // Original cost of vehicle (Line 2)
-  cost: z.number().nonnegative(),
-  // Credit percentage elected (10% is standard for both vehicle types)
-  credit_percentage: z.number().min(0).max(1).optional(),
-  // Vehicle type determines which cap applies
-  vehicle_type: z.nativeEnum(VehicleType).optional(),
-  // Whether taxpayer was the original user (original use requirement)
-  original_use: z.boolean().optional(),
+  source_form: z.literal("8582-CR"),
+  source_activity_id: z.string().trim().min(1),
+  allowed_passive_activity_credit: z.number().finite().nonnegative(),
 });
 
 export const inputSchema = z.object({
   f8834s: z.array(itemSchema).min(1),
+}).superRefine((input, ctx) => {
+  const activityIds = new Set<string>();
+  input.f8834s.forEach((item, index) => {
+    if (activityIds.has(item.source_activity_id)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Form 8834 source activity appears more than once",
+        path: ["f8834s", index, "source_activity_id"],
+      });
+    }
+    activityIds.add(item.source_activity_id);
+  });
 });
 
-type F8834Item = z.infer<typeof itemSchema>;
-
-function vehicleCredit(item: F8834Item): number {
-  // Original use required — if explicitly false, no credit
-  if (item.original_use === false) return 0;
-  if (item.cost <= 0) return 0;
-
-  const rate = item.credit_percentage ?? (
-    item.vehicle_type === VehicleType.LowSpeed
-      ? LOW_SPEED_RATE
-      : TWO_THREE_WHEEL_RATE
+export function form8834SourceCredit(
+  input: z.infer<typeof inputSchema>,
+): number {
+  return input.f8834s.reduce(
+    (sum, item) => sum + item.allowed_passive_activity_credit,
+    0,
   );
-  const rawCredit = item.cost * rate;
-
-  // Apply per-vehicle cap based on vehicle type
-  const cap = item.vehicle_type === VehicleType.LowSpeed
-    ? MAX_CREDIT_LOW_SPEED
-    : MAX_CREDIT_TWO_THREE_WHEEL;
-
-  return Math.min(rawCredit, cap);
-}
-
-function totalCredit(items: F8834Item[]): number {
-  return items.reduce((sum, item) => sum + vehicleCredit(item), 0);
-}
-
-function buildOutputs(credit: number): NodeOutput[] {
-  if (credit <= 0) return [];
-  return [{
-    nodeType: schedule3.nodeType,
-    fields: { line6i_qualified_electric_vehicle_credit: credit },
-  }];
 }
 
 class F8834Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8834";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule3]);
+  readonly outputNodes = new OutputNodes([schedule3, form6251, f1040]);
 
   compute(
     _ctx: NodeContext,
     rawInput: z.infer<typeof inputSchema>,
   ): NodeResult {
     const input = inputSchema.parse(rawInput);
-    const credit = totalCredit(input.f8834s);
-    return { outputs: buildOutputs(credit) };
+    const source = form8834SourceCredit(input);
+    if (source <= 0) return { outputs: [] };
+    const outputs: NodeOutput[] = [
+      this.outputNodes.output(schedule3, {
+        form8834_source_credit_pending: true,
+      }),
+      this.outputNodes.output(form6251, { must_file_for_credit: true }),
+      this.outputNodes.output(f1040, { form8834_source_credit: source }),
+    ];
+    return { outputs };
   }
 }
 

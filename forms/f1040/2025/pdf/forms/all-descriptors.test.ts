@@ -37,7 +37,11 @@ for (const descriptor of ALL_PDF_FORMS) {
       );
       return;
     }
-    const revision = label === "form982" ? "2018" : "2025";
+    const revision = label === "form982"
+      ? "2018"
+      : label === "f8834"
+      ? "2024"
+      : "2025";
     assertMatch(
       descriptor.pdfUrl,
       new RegExp(

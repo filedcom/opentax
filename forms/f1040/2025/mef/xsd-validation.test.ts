@@ -124,6 +124,41 @@ Deno.test({
 });
 
 Deno.test({
+  name: "XSD: Form 8834 passive credit links to Schedule 3 line 6i",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const xml = buildMefXml({
+    f1040: { line16_income_tax: 1_000, line20_nonrefundable_credits: 450 },
+    schedule3: {
+      line6i_qualified_electric_vehicle_credit: 450,
+      line7_total: 450,
+      line8_total: 450,
+    },
+    f8834: {
+      f8834s: [{
+        source_form: "8582-CR",
+        source_activity_id: "rental-a",
+        allowed_passive_activity_credit: 600,
+      }],
+      line1_source_credit: 600,
+      line2_regular_tax: 1_000,
+      line3a_foreign_tax_credit: 100,
+      line3b_other_credits: 150,
+      line3c_total_credits: 250,
+      line4_net_regular_tax: 750,
+      line5_tentative_minimum_tax: 300,
+      line6_adjusted_regular_tax: 450,
+      line7_allowed_credit: 450,
+    },
+  }, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(xml, "<IRS8834 ");
+  assertStringIncludes(xml, 'referenceDocumentName="IRS8834"');
+  await validateXsd(xml, "Form 8834 Schedule 3 line 6i");
+});
+
+Deno.test({
   name:
     "XSD: linked specified Form 8835 credit reaches Form 3800 and Schedule 3",
   sanitizeOps: false,
