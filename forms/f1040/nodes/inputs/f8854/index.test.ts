@@ -21,7 +21,11 @@ import {
 } from "./index.ts";
 import { allocateMarkToMarketExclusion } from "./mark-to-market.ts";
 import { calculateBalanceSheet } from "./balance-sheet.ts";
-import { NongrantorTrustTreatment, ReportedFormCode } from "./section-c.ts";
+import {
+  Form8949LossTreatment,
+  NongrantorTrustTreatment,
+  ReportedFormCode,
+} from "./section-c.ts";
 import {
   buildForm8854SectionC,
   buildForm8854SectionCStatements,
@@ -1363,6 +1367,83 @@ Deno.test("Form 8854 capital reconciliation refuses uncharacterized losses and d
     Error,
     "needs loss-character and deductibility facts",
   );
+});
+
+Deno.test("Form 8854 deductible capital loss matches its unadjusted Form 8949 row", () => {
+  const parsed = inputSchema.parse(input({
+    balance_sheet: balanceSheetWithNetWorth(2_000_000),
+    section_c: sectionC([{
+      ...asset("stock-loss", 100, 200),
+      form8949_loss_treatment: Form8949LossTreatment.DeductibleCapital,
+    }]),
+  }));
+  const transaction = deemedSale8949("stock-loss", 100, 200, 0);
+  assertEquals(
+    reconcileForm8854Form8949Properties(parsed, { f8949s: [transaction] }),
+    [{
+      itemId: "stock-loss",
+      transactionId: "TX-stock-loss",
+      gainOrLoss: -100,
+    }],
+  );
+  assertThrows(() =>
+    reconcileForm8854Form8949Properties(parsed, {
+      f8949s: [{
+        ...transaction,
+        adjustment_codes: "L",
+        adjustment_amount: 100,
+      }],
+    })
+  );
+});
+
+Deno.test("Form 8854 personal-use loss requires Form 8949 code L and zero recognized loss", () => {
+  const parsed = inputSchema.parse(input({
+    balance_sheet: balanceSheetWithNetWorth(2_000_000),
+    section_c: sectionC([{
+      ...asset("personal-loss", 100, 200),
+      form8949_loss_treatment: Form8949LossTreatment.NondeductiblePersonalUse,
+    }]),
+  }));
+  const transaction = {
+    ...deemedSale8949("personal-loss", 100, 200, 0),
+    adjustment_codes: "L",
+    adjustment_amount: 100,
+  };
+  assertEquals(
+    reconcileForm8854Form8949Properties(parsed, { f8949s: [transaction] }),
+    [{
+      itemId: "personal-loss",
+      transactionId: "TX-personal-loss",
+      gainOrLoss: 0,
+    }],
+  );
+  assertThrows(() =>
+    reconcileForm8854Form8949Properties(parsed, {
+      f8949s: [{ ...transaction, adjustment_amount: 99 }],
+    })
+  );
+});
+
+Deno.test("Form 8854 Form 8949 loss treatment cannot be claimed for a gain or Form 4797 asset", () => {
+  const gain = {
+    ...asset("gain", 200, 100),
+    form8949_loss_treatment: Form8949LossTreatment.DeductibleCapital,
+  };
+  const businessLoss = {
+    ...asset("business-loss", 100, 200),
+    reported_form_code: ReportedFormCode.Form4797,
+    form8949_loss_treatment: Form8949LossTreatment.DeductibleCapital,
+  };
+  for (const badAsset of [gain, businessLoss]) {
+    assertEquals(
+      inputSchema.safeParse(input({
+        balance_sheet: balanceSheetWithNetWorth(2_000_000),
+        section_c: sectionC([badAsset]),
+      })).success,
+      false,
+    );
+  }
 });
 
 Deno.test("Form 8854 does not turn deemed gain into a dollar-for-dollar Schedule 2 tax", () => {

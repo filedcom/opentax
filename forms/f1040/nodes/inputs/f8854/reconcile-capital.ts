@@ -4,7 +4,7 @@ import {
   allocateMarkToMarketExclusion,
   wholeDollarAssets,
 } from "./mark-to-market.ts";
-import { ReportedFormCode } from "./section-c.ts";
+import { Form8949LossTreatment, ReportedFormCode } from "./section-c.ts";
 
 function dayBefore(isoDate: string): string {
   const date = new Date(`${isoDate}T00:00:00Z`);
@@ -30,7 +30,10 @@ export function reconcileForm8854Form8949Properties(
   const matches = assets.flatMap((asset, index) => {
     if (asset.reported_form_code !== ReportedFormCode.Form8949) return [];
     const allocation = allocations[index];
-    if (allocation.builtInGainOrLoss < 0) {
+    if (
+      allocation.builtInGainOrLoss < 0 &&
+      asset.form8949_loss_treatment === undefined
+    ) {
       throw new Error(
         `Form 8854 property ${asset.item_id} needs loss-character and deductibility facts`,
       );
@@ -80,10 +83,18 @@ export function reconcileForm8854Form8949Properties(
         `Form 8854 property ${asset.item_id} has additional Form 8949 adjustments requiring separate characterization`,
       );
     }
-    const expectedAdjustment = -allocation.exclusionAllocated;
+    const nondeductibleLoss = asset.form8949_loss_treatment ===
+      Form8949LossTreatment.NondeductiblePersonalUse;
+    const expectedAdjustment = nondeductibleLoss
+      ? -allocation.builtInGainOrLoss
+      : -allocation.exclusionAllocated;
+    const expectedCode = nondeductibleLoss
+      ? "L"
+      : expectedAdjustment < 0
+      ? "O"
+      : "";
     if (
-      (transaction.adjustment_codes ?? "") !==
-        (expectedAdjustment < 0 ? "O" : "") ||
+      (transaction.adjustment_codes ?? "") !== expectedCode ||
       (transaction.adjustment_amount ?? 0) !== expectedAdjustment
     ) {
       throw new Error(
@@ -92,7 +103,10 @@ export function reconcileForm8854Form8949Properties(
     }
     const gainOrLoss = transaction.proceeds - transaction.cost_basis +
       expectedAdjustment;
-    if (gainOrLoss !== allocation.gainAfterExclusion) {
+    if (
+      gainOrLoss !==
+        (nondeductibleLoss ? 0 : allocation.gainAfterExclusion)
+    ) {
       throw new Error(
         `Form 8854 property ${asset.item_id} does not match Form 8949 recognized gain`,
       );

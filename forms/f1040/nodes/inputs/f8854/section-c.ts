@@ -18,6 +18,11 @@ export enum ReportedFormCode {
   ScheduleD = "F1040 SCHD",
 }
 
+export enum Form8949LossTreatment {
+  DeductibleCapital = "DEDUCTIBLE_CAPITAL",
+  NondeductiblePersonalUse = "NONDEDUCTIBLE_PERSONAL_USE",
+}
+
 export enum NongrantorTrustTreatment {
   TreatyWaiver = "TREATY_WAIVER",
   ElectFullValue = "ELECT_FULL_VALUE",
@@ -30,7 +35,21 @@ export const markToMarketAssetSchema = z.object({
   basis_irrevocable_election_h2: z.boolean(),
   reported_form_code: z.nativeEnum(ReportedFormCode),
   reported_transaction_id: z.string().trim().min(1),
-}).strict();
+  form8949_loss_treatment: z.nativeEnum(Form8949LossTreatment).optional(),
+}).strict().superRefine((asset, ctx) => {
+  if (
+    asset.form8949_loss_treatment !== undefined &&
+    (asset.reported_form_code !== ReportedFormCode.Form8949 ||
+      asset.fmv_day_before_expatriation >= asset.us_adjusted_basis)
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message:
+        "Form 8949 loss treatment applies only to a loss property reported on Form 8949",
+      path: ["form8949_loss_treatment"],
+    });
+  }
+});
 
 export const sectionCSchema = z.object({
   property_inventory_confirmed_complete: z.literal(true),
