@@ -107,6 +107,10 @@ The [Form 8938 contract](../../../docs/ty2026/FORM8938-GRAPH.md) pins its
 December 2026 disclosure draft and continuous-use instructions. The shared
 node currently files nothing; threshold, asset detail, Part III income,
 continuation PDF and current MeF output must be built.
+The [Form 4852 contract](../../../docs/ty2026/FORM4852-GRAPH.md) pins the
+current substitute W-2/1099-R form and maps its line 7/8 values through
+the 2026 wage, retirement, FICA and withholding owners, with printable
+explanations and the current MeF filing gate.
 The [Form 1116 contract](../../../docs/ty2026/FORM1116-GRAPH.md) maps
 foreign-tax categories, carryovers, redeterminations and the revised line
 18/20 bases from 1040, Schedule 1-A and Schedule 2; its full attachment

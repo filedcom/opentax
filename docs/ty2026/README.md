@@ -97,6 +97,9 @@ for the implementation contract.
 - [`FORM8938-GRAPH.md`](FORM8938-GRAPH.md) and `pdf-fields-f8938.csv`:
   December 2026 foreign-asset disclosure draft, continuous-use instructions,
   threshold/exception ledger, Part III income reconciliation and 131 widgets.
+- [`FORM4852-GRAPH.md`](FORM4852-GRAPH.md) and `pdf-fields-f4852.csv`:
+  current substitute W-2/1099-R authority, correct 7e/8f withholding lines,
+  original-versus-substitute reconciliation and 34 PDF widgets.
 - [`PARITY-QUEUE.md`](PARITY-QUEUE.md): dependency-ordered full 1040 coding
   queue across the 2025 graph/PDF/MeF inventories and 2026-only attachments.
 - [`INSTRUCTION-COVERAGE.md`](INSTRUCTION-COVERAGE.md) and
