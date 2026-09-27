@@ -1,0 +1,88 @@
+import { assertEquals } from "@std/assert";
+import {
+  form3800SpecifiedCreditLineSchema,
+  form3800StandardCreditLineSchema,
+  PassiveCreditReportingRoute,
+} from "../../../nodes/intermediate/forms/form8582cr/credit-route.ts";
+import { groupForm3800PassiveCreditVintages } from "../../../nodes/inputs/f3800/calculation.ts";
+import {
+  form3800PassiveXmlTags,
+  planForm3800PassiveXmlRows,
+} from "./f3800_passive_tags.ts";
+
+Deno.test("Form 3800 passive XML tags cover every source credit line", () => {
+  assertEquals(
+    Object.keys(form3800PassiveXmlTags).sort(),
+    [
+      ...form3800StandardCreditLineSchema.options,
+      "3",
+      ...form3800SpecifiedCreditLineSchema.options,
+    ].sort(),
+  );
+  assertEquals(form3800PassiveXmlTags["1h"], {
+    current: "Form8820CYCreditsGrp",
+    carryover: "Frm8820CYCyovCrGrp",
+  });
+  assertEquals(form3800PassiveXmlTags["3"], {
+    current: "Form8844CYCreditsGrp",
+    carryover: "Frm8844CYCrovCrGrp",
+  });
+  assertEquals(form3800PassiveXmlTags["4d"], {
+    current: "Form8586CYCreditsGrp",
+    carryover: "Frm8586CYSpcfdCrGrp",
+  });
+  assertEquals(form3800PassiveXmlTags["2h"], {
+    carryover: "Frm8931CYCfwdAllwCrGrp",
+  });
+});
+
+Deno.test("Form 3800 passive XML plan keeps one carryover group with source detail", () => {
+  const source = (year: number, before: number, after: number) => ({
+    activityReference: "Clinical activity",
+    sourceForm: "Form 8820",
+    sourceDocumentReference: `${year} clinical credit statement`,
+    form3800CreditLine: "1h" as const,
+    reportingRoute: PassiveCreditReportingRoute.Form3800Line3,
+    originatingTaxYear: year,
+    beforePassiveLimit: before,
+    afterPassiveLimit: after,
+  });
+  const planned = planForm3800PassiveXmlRows(
+    groupForm3800PassiveCreditVintages([
+      source(2025, 300, 200),
+      source(2022, 100, 100),
+      source(2024, 200, 150),
+    ]),
+  );
+  assertEquals(
+    planned.map((row) => ({
+      part: row.part,
+      tag: row.tag,
+      year: row.latestOriginatingTaxYear,
+      before: row.beforePassiveLimit,
+      after: row.afterPassiveLimit,
+      sourceYears: row.sources.map((entry) => entry.originatingTaxYear),
+      needsDetail: row.requiresSourceBreakdown,
+    })),
+    [
+      {
+        part: "current",
+        tag: "Form8820CYCreditsGrp",
+        year: 2025,
+        before: 300,
+        after: 200,
+        sourceYears: [2025],
+        needsDetail: false,
+      },
+      {
+        part: "carryover",
+        tag: "Frm8820CYCyovCrGrp",
+        year: 2024,
+        before: 300,
+        after: 250,
+        sourceYears: [2022, 2024],
+        needsDetail: true,
+      },
+    ],
+  );
+});

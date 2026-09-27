@@ -478,7 +478,17 @@ separate Form 3800 tax-liability limit to those rows. Form 8582-CR business-cred
 sources now require the exact 2025 Form 3800 credit row, distinguish standard,
 empowerment-zone, and specified rows, and reject reserved or carryover-only
 rows for current-year credit. Written source-validation cases are unrun. This
-is source metadata only, not a completed Form 3800 XML route. Form 4136 now combines its represented
+is source metadata only, not a completed Form 3800 XML route. A schema-backed
+map now names each supported Part III and IV XML row tag, including expired
+carryover-only rows; its coverage case is written but unrun. The map is not yet
+connected to the return serializer. A pure aggregation now groups passive
+credits by exact Form 3800 row and originating year while preserving each
+activity's statement reference; its source case is written but unrun. Tax-use
+allocation and carryover statement generation remain open. An unrun XML-row
+plan now collapses multiple carryover years into one schema group per credit
+line, records the latest origin year, and retains each source for the required
+detail. It does not yet serialize those rows into the filed Form 3800.
+Form 4136 now combines its represented
 fuel-use credits on refundable line 12 instead of misrouting some to general
 business credit and some to a nonexistent Form 1040 field; the represented 2025
 fuel rates are updated, with separate aviation-kerosene tax-rate inputs. These

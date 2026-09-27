@@ -11,6 +11,7 @@ import {
   classifyForm3800PassiveCredits,
   classifyForm8835Credits,
   deriveForm3800NonpassiveInput,
+  groupForm3800PassiveCreditVintages,
   splitForm3800PassiveCreditVintages,
   ZERO_FORM3800_PASSIVE_ACTIVITY,
 } from "./calculation.ts";
@@ -217,6 +218,49 @@ Deno.test("Form 3800: Form 8834 vintage cannot enter the general business credit
     () => splitForm3800PassiveCreditVintages(pac.sourceAllocations[0]),
     Error,
     "does not belong",
+  );
+});
+
+Deno.test("Form 3800: groups same-line passive sources without losing activity or vintage", () => {
+  const source = (
+    activityReference: string,
+    originatingTaxYear: number,
+    beforePassiveLimit: number,
+    afterPassiveLimit: number,
+  ) => ({
+    activityReference,
+    sourceForm: "Form 8820",
+    sourceDocumentReference:
+      `${originatingTaxYear} ${activityReference} statement`,
+    form3800CreditLine: "1h" as const,
+    reportingRoute: PassiveCreditReportingRoute.Form3800Line3,
+    originatingTaxYear,
+    beforePassiveLimit,
+    afterPassiveLimit,
+  });
+  const rows = groupForm3800PassiveCreditVintages([
+    source("B", 2025, 300, 200),
+    source("A", 2023, 100, 100),
+    source("A", 2025, 200, 100),
+  ]);
+  assertEquals(
+    rows.map((row) => ({
+      line: row.form3800CreditLine,
+      year: row.originatingTaxYear,
+      before: row.beforePassiveLimit,
+      after: row.afterPassiveLimit,
+      activities: row.sources.map((entry) => entry.activityReference),
+    })),
+    [
+      { line: "1h", year: 2023, before: 100, after: 100, activities: ["A"] },
+      {
+        line: "1h",
+        year: 2025,
+        before: 500,
+        after: 300,
+        activities: ["B", "A"],
+      },
+    ],
   );
 });
 

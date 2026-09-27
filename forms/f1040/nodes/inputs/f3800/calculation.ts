@@ -2,6 +2,10 @@
 import { FilingStatus } from "../../types.ts";
 import { PassiveCreditReportingRoute } from "../../intermediate/forms/form8582cr/credit-route.ts";
 import type { calculateForm8582CR } from "../../intermediate/forms/form8582cr/index.ts";
+import {
+  form3800SpecifiedCreditLineSchema,
+  form3800StandardCreditLineSchema,
+} from "../../intermediate/forms/form8582cr/credit-route.ts";
 
 type Form8582CRSourceAllocation = ReturnType<
   typeof calculateForm8582CR
@@ -19,6 +23,78 @@ export type Form3800PassiveCreditVintage = {
   readonly beforePassiveLimit: number;
   readonly afterPassiveLimit: number;
 };
+
+export type Form3800PassiveCreditRow = {
+  readonly form3800CreditLine:
+    Form3800PassiveCreditVintage["form3800CreditLine"];
+  readonly originatingTaxYear: number;
+  readonly beforePassiveLimit: number;
+  readonly afterPassiveLimit: number;
+  readonly sources: readonly Form3800PassiveCreditVintage[];
+};
+
+/** Keep one aggregate per XML line and year while retaining its source detail. */
+export function groupForm3800PassiveCreditVintages(
+  vintages: readonly Form3800PassiveCreditVintage[],
+): Form3800PassiveCreditRow[] {
+  const lineOrder = [
+    ...form3800StandardCreditLineSchema.options,
+    "3",
+    ...form3800SpecifiedCreditLineSchema.options,
+  ];
+  const ordered = [...vintages].sort((a, b) =>
+    lineOrder.indexOf(a.form3800CreditLine) -
+      lineOrder.indexOf(b.form3800CreditLine) ||
+    a.originatingTaxYear - b.originatingTaxYear
+  );
+  return ordered.reduce<Form3800PassiveCreditRow[]>((rows, vintage) => {
+    if (
+      !Number.isSafeInteger(vintage.beforePassiveLimit) ||
+      !Number.isSafeInteger(vintage.afterPassiveLimit) ||
+      vintage.beforePassiveLimit < 0 || vintage.afterPassiveLimit < 0 ||
+      vintage.afterPassiveLimit > vintage.beforePassiveLimit ||
+      !Number.isInteger(vintage.originatingTaxYear) ||
+      vintage.originatingTaxYear < 1900 ||
+      vintage.originatingTaxYear > 2025 ||
+      !lineOrder.includes(vintage.form3800CreditLine)
+    ) {
+      throw new Error(
+        "Form 3800 passive row has invalid source amounts or year",
+      );
+    }
+    const prior = rows.at(-1);
+    if (
+      prior?.form3800CreditLine === vintage.form3800CreditLine &&
+      prior.originatingTaxYear === vintage.originatingTaxYear
+    ) {
+      const beforePassiveLimit = prior.beforePassiveLimit +
+        vintage.beforePassiveLimit;
+      const afterPassiveLimit = prior.afterPassiveLimit +
+        vintage.afterPassiveLimit;
+      if (
+        !Number.isSafeInteger(beforePassiveLimit) ||
+        !Number.isSafeInteger(afterPassiveLimit)
+      ) {
+        throw new Error(
+          "Form 3800 passive row total exceeds whole-dollar range",
+        );
+      }
+      return [...rows.slice(0, -1), {
+        ...prior,
+        beforePassiveLimit,
+        afterPassiveLimit,
+        sources: [...prior.sources, vintage],
+      }];
+    }
+    return [...rows, {
+      form3800CreditLine: vintage.form3800CreditLine,
+      originatingTaxYear: vintage.originatingTaxYear,
+      beforePassiveLimit: vintage.beforePassiveLimit,
+      afterPassiveLimit: vintage.afterPassiveLimit,
+      sources: [vintage],
+    }];
+  }, []);
+}
 
 /**
  * Keep current-year Part III credit separate from each prior-year Part IV row.
