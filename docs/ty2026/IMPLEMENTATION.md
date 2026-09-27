@@ -50,6 +50,10 @@ The [Schedule R contract](SCHEDULER-GRAPH.md) pins its 2026 form and
 instructions, maps nine eligibility choices and the credit-limit worksheet,
 and inventories all 27 PDF widgets. The shared node misses mixed-age
 disability and QSS arithmetic and does not file the schedule.
+The [Schedule J contract](SCHEDULEJ-GRAPH.md) pins the 2026 draft and a
+marked 2025 instruction comparator, maps three base-year return/tax
+branches and inventories 27 PDF widgets. The shared node takes line 23
+as an input instead of computing or comparing the election's result.
 The [Form 8962 contract](FORM8962-GRAPH.md) identifies the 2026 line 27
 repayment and reserved lines 28/29, Form 1095-A and Schedule 2/3 graph
 handoff, full PDF field map, and the current-instruction/MeF gates.

@@ -30,6 +30,8 @@ The [Form 965-A plan](FORM965A-GRAPH.md) identifies the continuing liability
 ledger and the printed 2026 Schedule 2 line 12/15 conflict.
 The [Schedule R plan](SCHEDULER-GRAPH.md) supplies its source-level credit
 calculation, tax-liability limit and 2026 filed attachment.
+The [Schedule J plan](SCHEDULEJ-GRAPH.md) supplies the 2023–2025 base-year
+tax history and year-specific rate worksheets for the 1040 line 16 choice.
 
 ## Coding sequence
 

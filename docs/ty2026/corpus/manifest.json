@@ -1983,6 +1983,24 @@
       "bytes": 208960,
       "sha256": "0fcbd9fe296b470b2a0ceadc497380159f7d872f7aa11d86ae856bbd2234f5b6",
       "year_check": "2026-present"
+    },
+    {
+      "path": "draft/f1040sj.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f1040sj--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 191953,
+      "sha256": "3a98f9c8e1d3a936a28ddd60a4ba6c51ba5438c53a4699cf1137f106824545b4",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "authorities/i1040sj--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/i1040sj--2025.pdf",
+      "kind": "prior-year-comparator",
+      "status": "downloaded",
+      "bytes": 307306,
+      "sha256": "c5152385331a2ed517245a89a1ba597f0493b240dfe57edec1416e16baa3f870",
+      "year_check": "2025-present"
     }
   ]
 }

@@ -73,6 +73,10 @@ The [Schedule R contract](../../../docs/ty2026/SCHEDULER-GRAPH.md) maps
 the nine age/disability filing choices, the printed credit-limit worksheet,
 both PDF pages and Schedule 3 line 6d. The shared node's QSS and mixed-age
 joint-return arithmetic does not match the 2026 form.
+The [Schedule J contract](../../../docs/ty2026/SCHEDULEJ-GRAPH.md) maps the
+2026 farming/fishing election through three base-year returns and rate
+worksheets into Form 1040 line 16. The shared node instead accepts the
+answer as input and names the wrong base years.
 The [Form 1116 contract](../../../docs/ty2026/FORM1116-GRAPH.md) maps
 foreign-tax categories, carryovers, redeterminations and the revised line
 18/20 bases from 1040, Schedule 1-A and Schedule 2; its full attachment

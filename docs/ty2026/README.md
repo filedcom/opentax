@@ -75,6 +75,9 @@ for the implementation contract.
 - [`SCHEDULER-GRAPH.md`](SCHEDULER-GRAPH.md) and
   `pdf-fields-f1040sr.csv`: 2026 elderly/disabled eligibility, box-specific
   amount and tax-limit worksheet, Schedule 3 line 6d and 27 PDF widgets.
+- [`SCHEDULEJ-GRAPH.md`](SCHEDULEJ-GRAPH.md) and
+  `pdf-fields-f1040sj.csv`: elected farm/fishing income across the
+  2023–2025 base years, prior Schedule J state, 1040 line 16 and 27 widgets.
 - [`PARITY-QUEUE.md`](PARITY-QUEUE.md): dependency-ordered full 1040 coding
   queue across the 2025 graph/PDF/MeF inventories and 2026-only attachments.
 - [`INSTRUCTION-COVERAGE.md`](INSTRUCTION-COVERAGE.md) and

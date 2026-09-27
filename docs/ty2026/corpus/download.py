@@ -21,7 +21,7 @@ MEF_PAGE = IRS + "/tax-professionals/tax-year-2026-modernized-e-file-schema-and-
 FORM_SLUGS = [
     "f1040", "f1040s1", "f1040s1a", "f1040s2", "f1040s3", "f1040s3a",
     "f1040sa", "f1040sb", "f1040sc", "f1040sd", "f1040se",
-    "f1040sei", "f1040sse", "f1040sh", "f1040sf", "f1040sr", "f1040s8",
+    "f1040sei", "f1040sse", "f1040sh", "f1040sf", "f1040sj", "f1040sr", "f1040s8",
     "f2441", "f4562", "f4562b", "f6251", "f8839", "f8863", "f8889", "f8962", "f8995",
     "f8995a", "f8995aa", "f1062", "f8888",
     # Remaining IRS slugs represented by the TY2025 PDF descriptors.
@@ -173,6 +173,7 @@ sources += [
     ("authorities/i4255--2025.pdf", IRS + "/pub/irs-pdf/i4255.pdf", "current-revision-instructions"),
     ("authorities/f965a--2021.pdf", IRS + "/pub/irs-pdf/f965a.pdf", "current-revision"),
     ("authorities/i965a--2021.pdf", IRS + "/pub/irs-pdf/i965a.pdf", "current-revision-instructions"),
+    ("authorities/i1040sj--2025.pdf", IRS + "/pub/irs-prior/i1040sj--2025.pdf", "prior-year-comparator"),
     ("authorities/p505--2026.pdf", IRS + "/pub/irs-prior/p505--2026.pdf", "final-authority"),
     ("authorities/rp-25-32.pdf", IRS + "/pub/irs-drop/rp-25-32.pdf", "final-authority"),
     ("authorities/rp-25-19.pdf", IRS + "/pub/irs-drop/rp-25-19.pdf", "final-authority"),
