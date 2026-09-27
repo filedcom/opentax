@@ -1,5 +1,16 @@
-import { assertEquals, assertThrows } from "@std/assert";
-import { form4972Pdf } from "./f4972.ts";
+import {
+  assertEquals,
+  assertInstanceOf,
+  assertMatch,
+  assertThrows,
+} from "@std/assert";
+import {
+  decodePDFRawStream,
+  PDFArray,
+  PDFDocument,
+  PDFRawStream,
+} from "pdf-lib";
+import { form4972NuaAnnotations, form4972Pdf } from "./f4972.ts";
 
 Deno.test("2025 Form 4972 PDF uses calculated line fields instead of 1099-R source boxes", () => {
   const byKey = new Map(
@@ -74,4 +85,69 @@ Deno.test("2025 Form 4972 PDF refuses a calculated form without selected recipie
     Error,
     "needs the selected recipient name and SSN",
   );
+});
+
+Deno.test("2025 Form 4972 prints elected NUA beside each applicable form line", () => {
+  assertEquals(
+    form4972NuaAnnotations({
+      line6: 36_000,
+      line6_nua_capital_gain: 6_000,
+      line8: 84_000,
+      line8_nua_included: 14_000,
+    }),
+    [
+      { amount: 6_000, y: 485 },
+      { amount: 14_000, y: 390 },
+    ],
+  );
+  assertEquals(typeof form4972Pdf.decoratePages, "function");
+});
+
+Deno.test("2025 Form 4972 gates each NUA notation by its calculated elected line", () => {
+  assertEquals(
+    form4972NuaAnnotations({
+      line6_nua_capital_gain: 6_000,
+      line8_nua_included: 14_000,
+    }),
+    [],
+  );
+  assertEquals(
+    form4972NuaAnnotations({ line8: 100_000, line8_nua_included: 0 }),
+    [],
+  );
+  assertEquals(
+    form4972NuaAnnotations({
+      line6: 36_000,
+      line6_nua_capital_gain: 6_000,
+    }),
+    [{ amount: 6_000, y: 485 }],
+  );
+  assertEquals(
+    form4972NuaAnnotations({
+      line8: 120_000,
+      line8_nua_included: 20_000,
+    }),
+    [{ amount: 20_000, y: 390 }],
+  );
+});
+
+Deno.test("2025 Form 4972 PDF writes both NUA labels into the filing page", async () => {
+  const document = await PDFDocument.create();
+  const page = document.addPage([612, 792]);
+  await form4972Pdf.decoratePages?.(document, [page], {
+    line6: 36_000,
+    line6_nua_capital_gain: 6_000,
+    line8: 84_000,
+    line8_nua_included: 14_000,
+  }, undefined);
+
+  const saved = await PDFDocument.load(await document.save());
+  const contents = saved.getPage(0).node.Contents();
+  assertInstanceOf(contents, PDFArray);
+  const stream = contents.lookup(contents.size() - 1, PDFRawStream);
+  const operators = new TextDecoder().decode(
+    decodePDFRawStream(stream).decode(),
+  );
+  assertMatch(operators, /<4e55412036303030>/i);
+  assertMatch(operators, /<4e5541203134303030>/i);
 });

@@ -147,3 +147,17 @@ partIII --> schedule2
 | Instructions for Form 4972 | 2024 | All                    | https://www.irs.gov/instructions/i4972    | —        |
 | Publication 575            | 2024 | Lump-Sum Distributions | https://www.irs.gov/publications/p575     | —        |
 | f1099r context.md          | 2025 | Form 4972 routing      | project file                              | —        |
+
+## 2025 filing-page NUA notation
+
+The 2025
+[Form 4972 and instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf),
+page 3 NUA Worksheet line G and page 4 line 8 instructions, require `NUA` and
+the included amount on the dotted line beside line 6 and/or line 8. Line 6 shows
+the capital-gain portion of elected box 6 NUA; line 8 shows its ordinary portion
+when Part II is elected, or the full elected NUA when only Part III is elected.
+The filing page has no separate AcroForm text widgets for those dotted-line
+annotations, so the 2025 PDF descriptor draws them after filling the numeric
+AcroForm fields. The annotation coordinates were read from the unfilled 2025
+filing-page image already present in the workspace; filled-form visual
+inspection is reserved for the full batch.

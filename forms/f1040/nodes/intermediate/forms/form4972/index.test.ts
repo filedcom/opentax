@@ -190,6 +190,8 @@ Deno.test("Form 4972 combined elections include NUA ordinary share on Part III l
   });
   assertEquals(result.lines?.line6, 36_000);
   assertEquals(result.lines?.line8, 84_000);
+  assertEquals(result.lines?.line6_nua_capital_gain, 6_000);
+  assertEquals(result.lines?.line8_nua_included, 14_000);
   assertEquals(result.agi, undefined);
 });
 
@@ -223,6 +225,7 @@ Deno.test("Form 4972 Part III-only NUA election includes all of box 6 on line 8"
   });
   assertEquals(result.lines?.line6, undefined);
   assertEquals(result.lines?.line8, 120_000);
+  assertEquals(result.lines?.line8_nua_included, 20_000);
 });
 
 Deno.test("Form 4972 Part II rejects an election without box 3 capital gain", () => {

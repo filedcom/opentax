@@ -1,3 +1,4 @@
+import { StandardFonts } from "pdf-lib";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 
 // Field positions checked against the 2025 IRS AcroForm. Only page 1 is filed;
@@ -101,11 +102,42 @@ function projectedFields(
   };
 }
 
+// The 2025 filing page has no AcroForm fields on the dotted lines beside
+// lines 6 and 8. The instructions require the NUA amount beside the elected
+// line, so those two annotations are drawn after the numeric fields are filled.
+export function form4972NuaAnnotations(fields: Record<string, unknown>) {
+  const capital = fields.line6_nua_capital_gain;
+  const ordinary = fields.line8_nua_included;
+  return [
+    ...(typeof fields.line6 === "number" && typeof capital === "number" &&
+        capital > 0
+      ? [{ amount: Math.round(capital), y: 485 }]
+      : []),
+    ...(typeof fields.line8 === "number" && typeof ordinary === "number" &&
+        ordinary > 0
+      ? [{ amount: Math.round(ordinary), y: 390 }]
+      : []),
+  ];
+}
+
 export const form4972Pdf: PdfFormDescriptor = {
   pendingKey: "form4972",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f4972--2025.pdf",
   pageIndices: () => [0],
   projectFields: projectedFields,
+  decoratePages: async (document, pages, fields) => {
+    const annotations = form4972NuaAnnotations(fields);
+    if (annotations.length === 0) return;
+    const page = pages[0];
+    if (!page) throw new Error("Form 4972 filing page is missing");
+    const font = await document.embedFont(StandardFonts.Helvetica);
+    for (const { amount, y } of annotations) {
+      const label = `NUA ${amount}`;
+      // Keep the notation inside the dotted line, clear of the numbered box.
+      const x = 470 - font.widthOfTextAtSize(label, 8);
+      page.drawText(label, { x, y, size: 8, font });
+    }
+  },
   includeWhen: (fields) =>
     typeof fields.line6 === "number" || typeof fields.line8 === "number",
   fields,
