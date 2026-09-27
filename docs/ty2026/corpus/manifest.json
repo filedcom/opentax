@@ -886,6 +886,26 @@
       "sha256": "685fa1486b3a6e5712c5552da3ef0eb5f7b245dec3d3f28e642e37efe15dbf1e",
       "year_check": "2026-present",
       "retrieved_utc": "2026-09-27T09:25:00.217610+00:00"
+    },
+    {
+      "path": "authorities/f1099r--2026.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/f1099r--2026.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 621604,
+      "sha256": "d3de9319bed344f02621f97760a50bd19093de22f7d1e3352bd8ff10f61a4c44",
+      "retrieved_utc": "2026-09-27T10:19:16.676048+00:00",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "authorities/i1099r--2026.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/i1099r--2026.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 696395,
+      "sha256": "0bb009120b7793c15445c0e4be2cd525bc37b19c215f2478b6df627dcf23db14",
+      "retrieved_utc": "2026-09-27T10:19:16.676873+00:00",
+      "year_check": "2026-present"
     }
   ]
 }

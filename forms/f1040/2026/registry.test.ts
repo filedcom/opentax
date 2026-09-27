@@ -821,6 +821,54 @@ Deno.test("TY2026 RRB-1099 box 10 withholding joins SSA benefits", () => {
   assertEquals(result.pending.f1040.line25d_total_withholding, 2_250);
 });
 
+Deno.test("TY2026 normal IRA and pension 1099-Rs reach AGI, withholding, and PDF", async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: filer,
+    w2: [{ box1_wages: 30_000, box2_fed_withheld: 1_500 }],
+    f1099r: [
+      {
+        payer_name: "IRA Custodian",
+        payer_ein: "123456789",
+        recipient: "taxpayer",
+        box1_gross_distribution: 5_000,
+        box2a_taxable_amount: 5_000,
+        box4_federal_withheld: 400,
+        box7a_codes: ["7"],
+        box7b_ira_sep_simple: true,
+      },
+      {
+        payer_name: "Pension Plan",
+        payer_ein: "987654321",
+        recipient: "taxpayer",
+        box1_gross_distribution: 8_000,
+        box2a_taxable_amount: 8_000,
+        box4_federal_withheld: 600,
+        box7a_codes: ["7"],
+        box7b_ira_sep_simple: false,
+      },
+    ],
+    ssa1099: [{
+      statement_type: "ssa1099",
+      box3_gross_benefits: 20_000,
+      box4_repaid: 0,
+      box5_net_benefits: 20_000,
+      box6_federal_withheld: 350,
+    }],
+  }, context);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040.line4a_ira_gross, 5_000);
+  assertEquals(result.pending.f1040.line4b_ira_taxable, 5_000);
+  assertEquals(result.pending.f1040.line5a_pension_gross, 8_000);
+  assertEquals(result.pending.f1040.line5b_pension_taxable, 8_000);
+  assertEquals(result.pending.f1040.line6b_ss_taxable, 17_000);
+  assertEquals(result.pending.f1040.line9_total_income, 60_000);
+  assertEquals(result.pending.f1040.line25b_withheld_1099, 1_350);
+  assertEquals(result.pending.f1040.line25d_total_withholding, 2_850);
+  const pdf = await PDFDocument.load(await buildPdfBytes2026(result.pending));
+  assertEquals(pdf.getPageCount(), 2);
+  assertEquals(pdf.getForm().getFields().length, 0);
+});
+
 Deno.test("TY2026 registry executes a wages-only return", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {

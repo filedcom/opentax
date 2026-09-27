@@ -66,7 +66,7 @@ export const inputSchema = identityInputSchema.extend({
   line23_other_taxes: amount.default(0),
   form1062_line15: amount.default(0),
   line25a_w2_withheld: amount.default(0),
-  line25b_withheld_1099: amount.default(0),
+  line25b_withheld_1099: accumulableAmount.default(0),
   line25c_other_withheld: amount.default(0),
   line26_estimated_payments: amount.default(0),
   line27a_eic: amount.default(0),
@@ -134,7 +134,7 @@ class F10402026Node extends TaxNode<typeof inputSchema> {
       (input.line7a_cap_gain_distrib ?? 0) > 0 &&
       input.line7_capital_gain === undefined;
     const line25dWithholding = input.line25a_w2_withheld +
-      input.line25b_withheld_1099 + input.line25c_other_withheld;
+      sumAmount(input.line25b_withheld_1099) + input.line25c_other_withheld;
     const deductions = calculateDeductions2026({
       filingStatus: input.filing_status,
       adjustedGrossIncome: line11Agi,
@@ -229,7 +229,7 @@ class F10402026Node extends TaxNode<typeof inputSchema> {
         line24b_form1062: settlement.line24bForm1062,
         line24c_total_tax: settlement.line24cTaxIncludingForm1062,
         line25a_w2_withheld: input.line25a_w2_withheld,
-        line25b_withheld_1099: input.line25b_withheld_1099,
+        line25b_withheld_1099: sumAmount(input.line25b_withheld_1099),
         line25c_other_withheld: input.line25c_other_withheld,
         line25d_total_withholding: line25dWithholding,
         line26_estimated_payments: input.line26_estimated_payments,

@@ -35,6 +35,8 @@ for the implementation contract.
   current TY2026 income/withholding route, and dependent-form worklist.
 - [`SSA-BENEFITS-GRAPH.md`](SSA-BENEFITS-GRAPH.md): SSA-1099 and RRB-1099 box
   distinctions, taxable-benefit route, and remaining repayment/election work.
+- [`FORM1099R-GRAPH.md`](FORM1099R-GRAPH.md): final 2026 Form 1099-R box changes,
+  IRA/pension downstream routes, and filing gates.
 - [`CAPITAL-GAIN-GRAPH.md`](CAPITAL-GAIN-GRAPH.md): direct 1099-DIV box 2a
   decision, Schedule D/8949 dependencies, and PDF/MeF work order.
 - [`PDF-SCHEDULED-MAP.md`](PDF-SCHEDULED-MAP.md) and
@@ -56,7 +58,7 @@ for the implementation contract.
   inventory spreadsheets**, final IRS authorities (Rev. Procs.
   2025-19, 2025-25, 2025-32; Notice 2025-67; Notice 2026-10; and IRB
   2026-29 and 2026 W-2/W-3 instructions), continuous-use Form 1099-DIV and
-  its instructions, final 2026 Forms 1099-B/1099-DA with instructions, the
+  its instructions, final 2026 Forms 1099-B/1099-DA/1099-R with instructions, the
   2025 Form 1040 and Form 8949 instructions as marked comparators,
   Publication 505 (2026), and the final 2025 HHS poverty guidelines. All PDFs
   are source artifacts, not filing-ready forms. Run `python3

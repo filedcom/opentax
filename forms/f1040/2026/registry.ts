@@ -5,6 +5,7 @@ import { f1099g } from "../nodes/inputs/f1099g/index.ts";
 import { f1099int } from "../nodes/inputs/f1099int/index.ts";
 import { w2 } from "../nodes/inputs/w2/index.ts";
 import { ssa1099_2026 } from "./nodes/ssa1099.ts";
+import { f1099r_2026 } from "./nodes/f1099r.ts";
 import { agi_aggregator } from "../nodes/intermediate/aggregation/agi_aggregator/index.ts";
 import { form4137 } from "../nodes/intermediate/forms/form4137/index.ts";
 import { form8960 } from "../nodes/intermediate/forms/form8960/index.ts";
@@ -47,6 +48,7 @@ export const registry: NodeRegistry = {
   form8949,
   w2,
   ssa1099: ssa1099_2026,
+  f1099r: f1099r_2026,
   form4137,
   form8960,
   form6251,

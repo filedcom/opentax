@@ -155,6 +155,12 @@ box 10 withholding. Net benefits reach Form 1040 line 6a, the AGI taxability
 worksheet computes line 6b, and the PDF prints both. Negative aggregate net
 benefits require a repayment-deduction route before filing; see the
 [SSA benefits contract](../../../docs/ty2026/SSA-BENEFITS-GRAPH.md).
+Final 2026 Form 1099-R and instructions are pinned. A dedicated `f1099r`
+input uses boxes 7a–7d and 8a/8b and routes normal, fully taxable IRA and
+pension distributions to AGI and the printed 1040. Other codes and special
+accounts fail explicitly until their linked forms are built; see the
+[1099-R contract](../../../docs/ty2026/FORM1099R-GRAPH.md). Form 1040 line
+25b sums withholding from multiple 1099 sources in the active graph.
 The dedicated TY2026 Form 1099-DIV input now routes ordinary, qualified,
 and exempt-interest dividends, federal withholding, private-activity-bond
 AMT interest, plain box 2a capital gain distributions, and NIIT income. Its
