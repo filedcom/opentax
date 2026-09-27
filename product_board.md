@@ -138,12 +138,14 @@ at $5,000, and lets pass-through-only credit reach Form 3800 without requiring
 the recipient's own eligibility facts or an `IRS8826` document. Passive K-1
 credits stop pending Form 8582-CR. Source and XML cases are written but unrun.
 The combined cap now allocates credit pro rata in cents to each identified
-source before the Form 3800 handoff; K-1 document reconciliation, filed source
-attribution, and carryforward identity remain open. The unregistered Form 3800
-nonpassive XML draft now includes Form 8826's distinct Part III line 1e group
-and reconciles its explicit applied credit with Form 8835's line 1f and 4e
-groups and the shared Part II limit. Solo, combined, and negative cases are
-written but unrun. Its source graph and document bundle remain unconnected. The
+source before the Form 3800 handoff. The unregistered Form 3800 nonpassive XML
+draft now includes Form 8826's distinct Part III line 1e group and Part V rows
+for multiple Form 8826 sources. Part V retains the K-1 EIN, capped source
+credit, explicit applied-credit split, and remaining amount. Its Part III
+applied credit reconciles with Form 8835's line 1f and 4e groups and the shared
+Part II limit. Solo, combined, and negative cases are written but unrun. K-1
+document reconciliation, filed source attribution, and carryforward identity
+remain open. Its source graph and document bundle remain unconnected. The
 [business-credit routing audit](docs/mef/general-business-credit-routing.md) now
 names the direct line 6a producers and the source classifications needed before
 a shared Form 3800 finalization. It also identifies Form 8912 as a separate line

@@ -103,12 +103,13 @@ because a serializer exists or the IRS XSD permits them.
 | 1040-04  | Transfer Election Statement PDF     | M: source PDF identifies the attachment, but its content is not in the captured scenario facts                                                                                 |
 
 Form 8826 is another in-scope source document, outside the Scenario 4 rows
-above. Its self-earned lines 1, 3, 5, 6, and 8 now have an unregistered
-`IRS8826` XML draft and unrun source-to-XSD case. The unregistered Form 3800
-draft now has a linked Part III line 1e and a Part II nonpassive reconciliation,
-with solo and mixed-source cases written but unrun. No graph-level
-allowed-credit route, registered XML document, PDF, passive Form 8582-CR path,
-pass-through line 7, or ATS evidence exists yet.
+above. Its lines 1, 3, 5, 6, 7, and 8 now have an unregistered `IRS8826` XML
+draft and unrun source-to-XSD cases. The unregistered Form 3800 draft has a
+linked Part III line 1e, Part II nonpassive reconciliation, and Part V rows for
+multiple Form 8826 sources. Those rows retain capped source credit, K-1 EIN,
+explicit applied amount, and remaining amount; their cases are unrun. No
+graph-level allowed-credit route, registered XML document, PDF, passive Form
+8582-CR path, K-1 document reconciliation, or ATS evidence exists yet.
 
 The ATS inventory in `docs/ats/ty2025.md` identifies other scenario-specific
 facts that remain incomplete. This file must be expanded after comparing IRS

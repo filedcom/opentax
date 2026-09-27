@@ -20,12 +20,19 @@ export type Form3800NonpassiveXmlInput = {
     /** Required when the taxpayer has a self-earned Form 8826 credit. */
     readonly documentId?: string;
     readonly appliedCredit: number;
+    /** Self-earned source first, then positive K-1 sources in input order. */
+    readonly appliedCreditsBySource?: readonly number[];
   };
   readonly facilities: readonly Form8835CreditEntry[];
   readonly form8835DocumentIds: readonly string[];
   /** Part II credit allocated to each facility, in the same order. */
   readonly appliedCreditsByFacility: readonly number[];
   readonly transferStatementIdsByFileName: Readonly<Record<string, string>>;
+};
+
+type Form8826PartVSource = {
+  readonly credit: number;
+  readonly ein?: string;
 };
 
 export function buildIRS3800Nonpassive(
@@ -35,9 +42,10 @@ export function buildIRS3800Nonpassive(
   if (!input.form8826 && input.facilities.length === 0) {
     throw new Error("Form 3800 needs a source credit document");
   }
-  const form8826Credit = input.form8826
-    ? calculateForm8826(form8826InputSchema.parse(input.form8826.source)).line8
-    : 0;
+  const form8826Lines = input.form8826
+    ? calculateForm8826(form8826InputSchema.parse(input.form8826.source))
+    : undefined;
+  const form8826Credit = form8826Lines?.line8 ?? 0;
   if (input.form8826) {
     const source = input.form8826.source;
     const selfEarned = calculateForm8826(source).line6 > 0;
@@ -93,6 +101,69 @@ export function buildIRS3800Nonpassive(
     return id;
   });
   const lines = calculateForm3800Nonpassive(input.tax);
+  const form8826Sources: Form8826PartVSource[] = input.form8826 &&
+      form8826Lines
+    ? [
+      ...(form8826Lines.selfCreditAfterCap > 0
+        ? [{ credit: form8826Lines.selfCreditAfterCap }]
+        : []),
+      ...(input.form8826.source.pass_through_credits ?? []).flatMap(
+        (source, index) => {
+          const credit = form8826Lines.passThroughCreditsAfterCap[index] ?? 0;
+          return credit > 0 ? [{ credit, ein: source.entity_ein }] : [];
+        },
+      ),
+    ]
+    : [];
+  const form8826PassThroughSources = form8826Sources.filter((source) =>
+    source.ein !== undefined
+  );
+  const form8826NeedsPartV = form8826Sources.length > 1;
+  if (form8826NeedsPartV && form8826Sources.length > 999) {
+    throw new Error("Form 3800 Part V exceeds the Form 8826 item count");
+  }
+  if (
+    input.form8826?.appliedCreditsBySource !== undefined &&
+    !form8826NeedsPartV
+  ) {
+    throw new Error(
+      "Form 3800 Form 8826 source allocations are only needed for multiple sources",
+    );
+  }
+  if (
+    form8826NeedsPartV &&
+    input.form8826?.appliedCreditsBySource?.length !== form8826Sources.length
+  ) {
+    throw new Error(
+      "Form 3800 needs an applied credit for each Form 8826 Part V source",
+    );
+  }
+  const form8826AppliedSources = form8826NeedsPartV
+    ? input.form8826!.appliedCreditsBySource!
+    : [];
+  if (form8826NeedsPartV) {
+    for (const [index, source] of form8826Sources.entries()) {
+      const applied = form8826AppliedSources[index];
+      if (
+        applied === undefined || !Number.isFinite(applied) || applied < 0 ||
+        applied > source.credit
+      ) {
+        throw new Error(
+          `Form 3800 Form 8826 Part V source ${
+            index + 1
+          } has an invalid applied credit`,
+        );
+      }
+    }
+    if (
+      form8826AppliedSources.reduce((sum, amount) => sum + amount, 0) !==
+        input.form8826!.appliedCredit
+    ) {
+      throw new Error(
+        "Form 3800 Form 8826 Part V applied credits do not reconcile",
+      );
+    }
+  }
   const appliedAt = (index: number): number => {
     const amount = input.appliedCreditsByFacility[index];
     if (amount === undefined) {
@@ -134,6 +205,30 @@ export function buildIRS3800Nonpassive(
       "Form 3800 Part III applied credits do not reconcile to Part II",
     );
   }
+  const form8826DocumentId = input.form8826?.documentId;
+  const form8826PartVGroups = form8826NeedsPartV
+    ? form8826Sources.map((source, index) =>
+      elements("Frm8826CYAggrgtAmtGrp", [
+        source.ein ? element("PassThroughEntityEIN", source.ein) : "",
+        element("OthThnCrTrnsfrElectCrNoLmtAmt", source.credit),
+        element("TotalGeneralBusCreditsAmt", source.credit),
+        element(
+          "TotalGBCLessGrossEPEAppTxAmt",
+          form8826AppliedSources[index],
+        ),
+        element(
+          "CarryforwardGeneralBusCrAmt",
+          source.credit - form8826AppliedSources[index],
+        ),
+      ], {
+        ...(source.ein || !form8826DocumentId ? {} : {
+          referenceDocumentId: form8826DocumentId,
+          referenceDocumentName: "IRS8826",
+        }),
+        lineNumberTxt: "Part III Line 1e",
+      })
+    )
+    : [];
   const partVGroups: string[] = [];
   const partIIIGroups = credits.rows.map((row) => {
     const facilityIndexes = input.facilities.flatMap((facility, index) =>
@@ -286,6 +381,17 @@ export function buildIRS3800Nonpassive(
       ? elements(
         "Form8826CYCreditsGrp",
         [
+          form8826NeedsPartV
+            ? element("CYGeneralBusinessCrItemCnt", form8826Sources.length)
+            : "",
+          form8826PassThroughSources.length > 0
+            ? element(
+              "PassThroughEntityEIN",
+              [...form8826PassThroughSources].sort((a, b) =>
+                b.credit - a.credit
+              )[0].ein,
+            )
+            : "",
           element("GeneralBusCrFromNnPssvActyAmt", form8826Credit),
           element("TotalGeneralBusCreditsAmt", form8826Credit),
           element("TotalGeneralBusCreditsAppTxAmt", form8826Applied),
@@ -325,8 +431,11 @@ export function buildIRS3800Nonpassive(
       form8826Credit + credits.standardCredit + credits.specifiedCredit,
       lines.line38,
     ),
-    partVGroups.length > 0
-      ? elements("GBCBreakdownCYAggrgtAmtGrp", partVGroups)
+    form8826PartVGroups.length + partVGroups.length > 0
+      ? elements("GBCBreakdownCYAggrgtAmtGrp", [
+        ...form8826PartVGroups,
+        ...partVGroups,
+      ])
       : "",
   ]);
 }
