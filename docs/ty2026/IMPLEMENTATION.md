@@ -199,6 +199,14 @@ their Form 1116/4952 attachment paths exist. Treasury bond premium requires an
 amortization election for TY2026. A private-activity bond test reaches
 Form 6251, Schedule 2, Form 1040, and a six-page PDF. MeF and the remaining
 Schedule B disclosures still need end-to-end checks.
+The standalone TY2026 validation module now checks the calculated 1040's AGI,
+deductions, tax, payments, and required Schedule 1/2/B reconciliation using
+pending-field keys. It is a local calculation gate, not a 2026 MeF
+business-rule bundle. The standalone PDF builder selects only filed 2026
+attachments and rejects positive Schedule 1-A, Form 4137, and Form 8960 cases
+whose PDF attachments are not built yet. A wages-plus-interest graph produces
+the expected five-page PDF through this boundary. Catalog registration remains
+pending so `tax validate` does not report `canFile` from local-only rules.
 
 ## 0. Freeze source versions and establish the baseline
 
