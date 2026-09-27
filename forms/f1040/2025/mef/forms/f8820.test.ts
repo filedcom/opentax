@@ -79,3 +79,24 @@ Deno.test("Form 8820 MeF requires the linked Form 3800 and any expense statement
   );
   assertEquals(form8820.build({}), "");
 });
+
+Deno.test("Form 8820 MeF preserves a zero-credit reduced election without Form 3800", () => {
+  const election = {
+    ...source,
+    f8820s: [{ ...source.f8820s[0], qualified_clinical_testing_expenses: 0 }],
+    form8932_overlapping_wage_credit: 0,
+  };
+  const xml = form8820.build(election, { documentIdsByPendingKey: {} });
+  assertStringIncludes(
+    xml,
+    "<ReducedSection280CCrElectInd>true</ReducedSection280CCrElectInd>",
+  );
+  assertStringIncludes(
+    xml,
+    "<SumCurrYrCrandOrphnDrugCrAmt>0</SumCurrYrCrandOrphnDrugCrAmt>",
+  );
+  assertEquals(
+    form8820.build({ ...election, reduced_section280c_credit_election: false }),
+    "",
+  );
+});

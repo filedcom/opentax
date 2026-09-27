@@ -30,10 +30,10 @@ for (const descriptor of ALL_PDF_FORMS) {
   });
 
   Deno.test(`${label}: pdfUrl is pinned to the applicable IRS revision`, () => {
-    if (label === "f8912") {
+    if (["f8912", "f5884", "f8820"].includes(label)) {
       assertEquals(
         descriptor.pdfUrl,
-        "https://www.irs.gov/pub/irs-pdf/f8912.pdf",
+        `https://www.irs.gov/pub/irs-pdf/${label}.pdf`,
       );
       return;
     }
