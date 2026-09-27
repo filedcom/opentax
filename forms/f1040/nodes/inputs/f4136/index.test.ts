@@ -1135,6 +1135,71 @@ Deno.test("Form 4136: registered card issuer lines 13a-13c require matched gover
     }).success,
     false,
   );
+  const secondSale = {
+    ...sale,
+    sale_record_reference: "CARD-002",
+    gallons: 500,
+    actual_fuel_cost: 1_500,
+  };
+  const secondActivity = {
+    business: {
+      ...issuerBusiness,
+      business_name: "Example Card Issuer East",
+    },
+    claims: [{
+      ...dieselClaim,
+      qualified_quantity: 500,
+      actual_fuel_cost: 1_500,
+      credit_card_sales: [secondSale],
+    }],
+  };
+  assertEquals(
+    parseInput({
+      business: issuerBusiness,
+      claims: [dieselClaim],
+      additional_activities: [secondActivity],
+    }).success,
+    true,
+  );
+  const duplicateAcrossActivities = parseInput({
+    business: issuerBusiness,
+    claims: [dieselClaim],
+    additional_activities: [{
+      ...secondActivity,
+      claims: [{
+        ...secondActivity.claims[0],
+        credit_card_sales: [{
+          ...secondSale,
+          sale_record_reference: "CARD-001",
+        }],
+      }],
+    }],
+  });
+  assertEquals(duplicateAcrossActivities.success, false);
+  if (!duplicateAcrossActivities.success) {
+    assertEquals(
+      duplicateAcrossActivities.error.issues.some((issue) =>
+        issue.path.join(".") ===
+          "additional_activities.0.claims.0.credit_card_sales.0.sale_record_reference"
+      ),
+      true,
+    );
+  }
+  assertEquals(
+    parseInput({
+      business: issuerBusiness,
+      claims: [{ ...base, line: "13c", excise_tax_rate_per_gallon: 0.219 }],
+      additional_activities: [{
+        ...secondActivity,
+        claims: [{
+          ...secondActivity.claims[0],
+          line: "13c",
+          excise_tax_rate_per_gallon: 0.244,
+        }],
+      }],
+    }).success,
+    false,
+  );
 });
 
 Deno.test("Form 4136: represented 2025 Part II rates are line-specific", () => {

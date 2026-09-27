@@ -328,8 +328,10 @@ coverage periods, tax disposition, vendor reimbursement, and gallon/cost
 reconciliation. Line 13c's $.244-taxed branch uses the $.243 credit, the MeF
 tax-rate marker and linked credit-card-users statement, and overlays the
 printed parent/Schedule A PDF rate and description. Source, XML, PDF, and local
-XSD cases are written but unrun. Mixed 13c tax rates on one return stop because
-the schema has only one group; IRS business-rule and ATS acceptance are open.
+XSD cases are written but unrun. The return-level input now also rejects the
+same card-sale record across business activities, with a cross-activity case
+written but unrun. Mixed 13c tax rates on one return stop because the schema
+has only one group; IRS business-rule and ATS acceptance are open.
 Diesel-water emulsion lines 14a and 14b now have ultimate-purchaser source
 facts, the standard and reduced bus-use rates, export-proof validation, MeF
 groups, and parent/Schedule A PDF fields. Source, XML, PDF, and XSD cases are

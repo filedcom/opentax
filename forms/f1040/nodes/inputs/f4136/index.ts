@@ -1502,6 +1502,51 @@ export const inputSchema = z.discriminatedUnion("claimant_context", [
     .filter((claim) =>
       claim.line === "13a" || claim.line === "13b" || claim.line === "13c"
     );
+  const cardSaleActivityByReference = new Map<string, number>();
+  activities.forEach((activity, activityIndex) => {
+    activity.claims.forEach((claim, claimIndex) => {
+      if (
+        claim.line !== "13a" && claim.line !== "13b" &&
+        claim.line !== "13c"
+      ) return;
+      claim.credit_card_sales?.forEach((sale, saleIndex) => {
+        const previousActivity = cardSaleActivityByReference.get(
+          sale.sale_record_reference,
+        );
+        if (
+          previousActivity !== undefined &&
+          previousActivity !== activityIndex
+        ) {
+          ctx.addIssue({
+            code: "custom",
+            message:
+              "Form 4136 card purchase cannot support claims in multiple business activities",
+            path: activityIndex === 0
+              ? [
+                "claims",
+                claimIndex,
+                "credit_card_sales",
+                saleIndex,
+                "sale_record_reference",
+              ]
+              : [
+                "additional_activities",
+                activityIndex - 1,
+                "claims",
+                claimIndex,
+                "credit_card_sales",
+                saleIndex,
+                "sale_record_reference",
+              ],
+          });
+        }
+        cardSaleActivityByReference.set(
+          sale.sale_record_reference,
+          activityIndex,
+        );
+      });
+    });
+  });
   if (
     new Set(
       line13Claims.map((claim) => claim.credit_card_issuer_registration_number),
