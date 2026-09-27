@@ -132,7 +132,16 @@ export const fuelClaimSchema = z.object({
   credit_card_issuer_certificate_not_provided: z.literal(true).optional(),
   not_highway_vehicle: z.literal(true).optional(),
   not_noncommercial_motorboat: z.literal(true).optional(),
-  exported_fuel_confirmed: z.literal(true).optional(),
+  aviation_gasoline_outside_propulsion_confirmed: z.literal(true).optional(),
+  export_proof: z.object({
+    kind: z.enum([
+      "carrier_bill_of_lading",
+      "export_carrier_certificate",
+      "foreign_customs_bill_of_lading",
+      "foreign_consignee_receipt_statement",
+    ]),
+    record_reference: z.string().trim().min(1),
+  }).optional(),
   commercial_aviation_nonforeign_trade_confirmed: z.literal(true).optional(),
   foreign_trade_lust_tax_paid_confirmed: z.literal(true).optional(),
   train_use_confirmed: z.literal(true).optional(),
@@ -223,10 +232,11 @@ const activitySchema = z.object({
           ["13", "14"].includes(claim.type_of_use ?? "")
         ? ["credit_card_issuer_certificate_not_provided"] as const
         : []),
-      ...(claim.line === "1c" ? ["not_noncommercial_motorboat"] as const : []),
-      ...(claim.line === "1d" || claim.line === "2c" || claim.line === "3e" ||
-          claim.line === "4d"
-        ? ["exported_fuel_confirmed"] as const
+      ...(claim.line === "1a" || claim.line === "1c"
+        ? ["not_noncommercial_motorboat"] as const
+        : []),
+      ...(claim.line === "2b"
+        ? ["aviation_gasoline_outside_propulsion_confirmed"] as const
         : []),
       ...(claim.line === "2a" || claim.line === "5a" || claim.line === "5b"
         ? ["commercial_aviation_nonforeign_trade_confirmed"] as const
@@ -250,6 +260,17 @@ const activitySchema = z.object({
           path: ["claims", index, fact],
         });
       }
+    }
+    if (
+      ["1d", "2c", "3e", "4d"].includes(claim.line) &&
+      !claim.export_proof
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          `Form 4136 line ${claim.line} requires retained proof of exportation`,
+        path: ["claims", index, "export_proof"],
+      });
     }
     const expectedKeroseneRate = claim.line === "4e"
       ? 0.044

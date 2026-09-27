@@ -19,7 +19,11 @@ const certifications = {
   credit_card_issuer_certificate_not_provided: true,
   not_highway_vehicle: true,
   not_noncommercial_motorboat: true,
-  exported_fuel_confirmed: true,
+  aviation_gasoline_outside_propulsion_confirmed: true,
+  export_proof: {
+    kind: "carrier_bill_of_lading",
+    record_reference: "Export file 2025-001",
+  },
   commercial_aviation_nonforeign_trade_confirmed: true,
   foreign_trade_lust_tax_paid_confirmed: true,
   train_use_confirmed: true,

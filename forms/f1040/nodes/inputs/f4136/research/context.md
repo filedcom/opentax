@@ -17,9 +17,16 @@ use, and nonduplicate facts, allows only line 4a/type 08, and omits business
 lines B-F in XML and PDF.
 The input also requires the printed undyed-fuel, no-waiver, no-credit-card-
 certificate, and non-highway-vehicle certifications on affected claims.
+Line 1a now also excludes noncommercial motorboat use, and line 2b requires
+confirmation that the aviation gasoline was used outside the aircraft's
+propulsion system, matching the specific 2025 instructions.
+Export claims on lines 1d, 2c, 3e, and 4d now require the kind of retained
+IRS-accepted export proof and a nonempty record reference instead of a bare
+export affirmation. The proof remains with the taxpayer's records; it is not
+included as a repo file or return attachment.
 Gasoline line 1c now requires a permitted use code and a noncommercial-
 motorboat exclusion; types 13/14 also require no-waiver and no-credit-card-
-certificate confirmations. Export line 1d requires an export confirmation.
+certificate confirmations. Export line 1d requires retained export proof.
 The represented line rates are 1a/1b/1c $.183, 1d $.184, 2a $.150,
 2b $.193, 2c $.194, 2d $.001, 3a/3b/3c $.243, 3d $.170,
 3e $.244, 4a/4b $.243, 4c $.170, 4d $.244, 4e $.043, 4f $.218,

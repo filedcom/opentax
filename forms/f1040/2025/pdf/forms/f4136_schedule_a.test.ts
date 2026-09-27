@@ -43,6 +43,7 @@ Deno.test("Schedule A (Form 4136) expands one PDF per business activity", () => 
     qualified_quantity: 100,
     actual_fuel_cost: 300,
     not_highway_vehicle: true,
+    not_noncommercial_motorboat: true,
   };
   const projected = form4136ScheduleAPdf.projectFields?.({
     claimant_context: "business",

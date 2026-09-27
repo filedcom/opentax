@@ -289,6 +289,12 @@ follows the instructions pending IRS business-rule review.
 Aviation-kerosene lines 5a, 5b, and 5e now have commercial-use and
 foreign-trade LUST routes, with rates and source-to-XSD/PDF cases written but
 unrun. Lines 5a-5d now require the source tax rate matching the selected row.
+The next input pass requires the 2025 line 1a noncommercial-motorboat
+exclusion and the line 2b outside-aircraft-propulsion fact, with rejection
+cases written but unrun.
+Export lines 1d, 2c, 3e, and 4d now require a typed retained-proof reference
+instead of a bare export affirmation; positive and rejection cases are written
+but unrun. Source-record identity and IRS business-rule review remain open.
 The Schedule A section of the 2025 IRS instructions instead says to show the
 activity with the most qualifying fuel usage. That conflict is unresolved;
 the current code follows the printed Form 4136 and needs IRS business-rule
