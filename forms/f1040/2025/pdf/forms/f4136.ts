@@ -341,8 +341,10 @@ export function projectForm4136Fields(
   const total = calculateForm4136(input);
   const out: Record<string, unknown> = {
     ...input,
-    ...input.business,
-    activity_count: 1 + input.additional_activities.length,
+    ...(input.claimant_context === "business" ? input.business : {}),
+    ...(input.claimant_context === "business"
+      ? { activity_count: 1 + input.additional_activities.length }
+      : {}),
     qualified_yes: true,
   };
   for (

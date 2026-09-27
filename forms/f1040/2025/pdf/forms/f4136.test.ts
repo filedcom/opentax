@@ -20,6 +20,7 @@ const certifications = {
   not_highway_vehicle: true,
 } as const;
 const activityContext = {
+  claimant_context: "business",
   additional_activities: [],
   primary_activity_has_most_qualified_fuel_usage: true,
 };
@@ -200,4 +201,29 @@ Deno.test("Form 4136 PDF sends mixed bus and standard line 11 use to a statement
   assertEquals(result?.line11a_quantity, "STMT");
   assertEquals(result?.line11a_credit_dollars, "29");
   assertEquals(result?.line11a_credit_cents, "20");
+});
+
+Deno.test("Form 4136 PDF skips business lines for home-use kerosene", () => {
+  const result = form4136Pdf.projectFields?.({
+    claimant_context: "home_kerosene",
+    claimant_is_ultimate_purchaser: true,
+    home_purchase_outside_blocked_pump: true,
+    home_use_heating_lighting_or_cooking: true,
+    purchase_records_confirmed: true,
+    no_duplicate_excise_claim: true,
+    claims: [{
+      line: "4a",
+      type_of_use: "08",
+      unit: "gallons",
+      qualified_quantity: 100,
+      actual_fuel_cost: 300,
+      undyed_fuel_confirmed: true,
+    }],
+  }, { schedule3: { line12_fuel_tax_credit: 24.3 } });
+  assertEquals(result?.qualified_yes, true);
+  assertEquals(result?.activity_count, undefined);
+  assertEquals(result?.business_name, undefined);
+  assertEquals(result?.line4a_type, "08");
+  assertEquals(result?.line4a_quantity, 100);
+  assertEquals(result?.line17_total_dollars, "24");
 });

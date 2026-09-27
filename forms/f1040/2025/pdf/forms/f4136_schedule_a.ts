@@ -137,6 +137,7 @@ export const form4136ScheduleAPdf: PdfFormDescriptor = {
   projectFields(raw) {
     if (!Array.isArray(raw.claims) || !raw.claims.length) return {};
     const input = inputSchema.parse(raw);
+    if (input.claimant_context === "home_kerosene") return {};
     if (!input.additional_activities.length) return {};
     const activities = [
       { business: input.business, claims: input.claims },
@@ -146,6 +147,7 @@ export const form4136ScheduleAPdf: PdfFormDescriptor = {
       schedule_a_instances: activities.map((activity) =>
         projectForm4136Fields({
           ...activity,
+          claimant_context: "business",
           additional_activities: [],
           primary_activity_has_most_qualified_fuel_usage: true,
         })

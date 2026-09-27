@@ -171,6 +171,7 @@ Deno.test({
       line15_total: 42.6,
     },
     f4136: {
+      claimant_context: "business",
       additional_activities: [],
       primary_activity_has_most_qualified_fuel_usage: true,
       business: {
@@ -230,6 +231,7 @@ Deno.test({
       line15_total: 164.4,
     },
     f4136: {
+      claimant_context: "business",
       additional_activities: [],
       primary_activity_has_most_qualified_fuel_usage: true,
       business: {
@@ -262,6 +264,39 @@ Deno.test({
 });
 
 Deno.test({
+  name: "XSD: Form 4136 home kerosene exception has no business fields",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const xml = buildMefXml({
+    f1040: { line31_additional_payments: 24 },
+    schedule3: { line12_fuel_tax_credit: 24.3, line15_total: 24.3 },
+    f4136: {
+      claimant_context: "home_kerosene",
+      claimant_is_ultimate_purchaser: true,
+      home_purchase_outside_blocked_pump: true,
+      home_use_heating_lighting_or_cooking: true,
+      purchase_records_confirmed: true,
+      no_duplicate_excise_claim: true,
+      claims: [{
+        line: "4a",
+        type_of_use: "08",
+        unit: "gallons",
+        qualified_quantity: 100,
+        actual_fuel_cost: 300,
+        undyed_fuel_confirmed: true,
+      }],
+    },
+  }, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(
+    xml,
+    "<NontaxableUseOfFuelTypeCd>08</NontaxableUseOfFuelTypeCd>",
+  );
+  await validateXsd(xml, "Form 4136 home kerosene exception");
+});
+
+Deno.test({
   name: "XSD: Form 4136 line 11 reduced-rate bus group validates",
   sanitizeOps: false,
   sanitizeResources: false,
@@ -274,6 +309,7 @@ Deno.test({
       line15_total: 10.9,
     },
     f4136: {
+      claimant_context: "business",
       additional_activities: [],
       primary_activity_has_most_qualified_fuel_usage: true,
       business: {
@@ -329,6 +365,7 @@ Deno.test({
     f1040: { line31_additional_payments: 27 },
     schedule3: { line12_fuel_tax_credit: 27.45, line15_total: 27.45 },
     f4136: {
+      claimant_context: "business",
       business,
       claims: [claim],
       additional_activities: [{

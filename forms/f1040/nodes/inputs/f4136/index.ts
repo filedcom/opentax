@@ -210,12 +210,46 @@ const activitySchema = z.object({
   });
 });
 
-export const inputSchema = z.object({
+const businessInputSchema = z.object({
+  claimant_context: z.literal("business"),
   business: businessSchema,
   claims: z.array(fuelClaimSchema).min(1),
   additional_activities: z.array(activitySchema),
   primary_activity_has_most_qualified_fuel_usage: z.literal(true),
-}).superRefine((input, ctx) => {
+});
+
+const homeKeroseneInputSchema = z.object({
+  claimant_context: z.literal("home_kerosene"),
+  business: z.never().optional(),
+  additional_activities: z.never().optional(),
+  primary_activity_has_most_qualified_fuel_usage: z.never().optional(),
+  claimant_is_ultimate_purchaser: z.literal(true),
+  home_purchase_outside_blocked_pump: z.literal(true),
+  home_use_heating_lighting_or_cooking: z.literal(true),
+  purchase_records_confirmed: z.literal(true),
+  no_duplicate_excise_claim: z.literal(true),
+  claims: z.array(fuelClaimSchema).length(1),
+});
+
+export const inputSchema = z.discriminatedUnion("claimant_context", [
+  businessInputSchema,
+  homeKeroseneInputSchema,
+]).superRefine((input, ctx) => {
+  if (input.claimant_context === "home_kerosene") {
+    const claim = input.claims[0];
+    if (
+      claim.line !== "4a" || claim.type_of_use !== "08" ||
+      claim.unit !== "gallons" || claim.undyed_fuel_confirmed !== true
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "Home-use Form 4136 claims require undyed kerosene on line 4a, type of use 08, in gallons",
+        path: ["claims", 0],
+      });
+    }
+    return;
+  }
   const primary = activitySchema.safeParse({
     business: input.business,
     claims: input.claims,
@@ -253,7 +287,7 @@ export const inputSchema = z.object({
 export type Form4136Input = z.infer<typeof inputSchema>;
 
 export function allForm4136Claims(input: Form4136Input) {
-  return [
+  return input.claimant_context === "home_kerosene" ? input.claims : [
     ...input.claims,
     ...input.additional_activities.flatMap((activity) => activity.claims),
   ];
