@@ -104,46 +104,46 @@ cases written but unrun. Fiscal-year production still stops, and the linked Form
 3800 document, transfer election statement, Form 7220 source validation, PDF
 output, and complete ATS scenario remain open.
 
-The Form 3800 nonpassive XML draft now maps Form 8835 ordinary and specified
-credits to Part III, requires bundled transfer-election statement IDs, and
-breaks multiple same-line facilities into Part V rows. The per-facility Part II
-applied amounts must be explicit and reconcile to the calculated limit. Direct
-builder cases are written but unrun. The draft now indexes Part V facility
-allocations and linked source documents by entry position, so equal-valued or
-reused facility objects do not silently reuse the first allocation; that case is
-written but unrun. This builder is not registered in return assembly, has not
-passed local XSD or business-rule validation, and does not cover passive
-credits, other business-credit sources, or carryovers. A temporary fail-closed
-MeF descriptor rejects a Form 3800 claim until its XML source bundle is
-registered. The current build pass also has an unrun pure bridge from finalized
-Form 1040, Schedules 2 and 3, and Form 6251 lines into the nonpassive Form 3800
-limit. It subtracts the specific Form 3800 line 7 and 10b exclusions instead of
-letting the general business credit count against itself. The bridge is now
-wired to graph finalization for Form 8826 and Form 8835 and requires Form 6251
-even with zero AMT when a standard GBC is claimed, but remains untested. Other
-GBC producers still send gross source credits straight to Schedule 3 line 6a and
+The registered Form 3800 nonpassive XML path now maps Form 8835 ordinary and
+specified credits to Part III, requires bundled transfer-election statement IDs,
+and breaks multiple same-line facilities into Part V rows. Per-facility applied
+amounts must be explicit when a tax limit partly uses multiple facilities on one
+credit line; all allocations reconcile to the calculated limit. Direct builder
+cases are written but unrun. The draft now indexes Part V facility allocations
+and linked source documents by entry position, so equal-valued or reused
+facility objects do not silently reuse the first allocation; that case is
+written but unrun. The descriptor links source Form 8826/8835 documents and
+Schedule 3 line 6a, and refuses missing or mismatched source facts. It has not
+passed the deferred full test batch, local XSD, or business-rule validation and
+does not cover passive credits, other business-credit sources, or carryovers.
+The current build pass also has an unrun pure bridge from finalized Form 1040,
+Schedules 2 and 3, and Form 6251 lines into the nonpassive Form 3800 limit. It
+subtracts the specific Form 3800 line 7 and 10b exclusions instead of letting
+the general business credit count against itself. The bridge is now wired to
+graph finalization for Form 8826 and Form 8835 and requires Form 6251 even with
+zero AMT when a standard GBC is claimed, but remains untested. Other GBC
+producers still send gross source credits straight to Schedule 3 line 6a and
 require a common limitation pass. The
 [Form 8826](https://www.irs.gov/pub/irs-pdf/f8826.pdf) self-earned source now
 requires both preceding-year receipts and full-time employee headcount instead
 of treating missing facts as eligibility; its cases are written but unrun. Its
 credit now enters Form 3800 instead of being deposited gross into Schedule 3;
-the limited amount now reaches Schedule 3 in the graph, while MeF export still
-stops until IRS3800 and source documents are connected. The legacy
+the limited amount now reaches Schedule 3 in the graph. MeF source linkage is
+implemented but unverified in the deferred full batch. The legacy
 `f3800s.disabled_access_credit` input still deposits gross credit. These routing
 cases are written but unrun. A native `IRS8826` XML descriptor now shares the
 source calculation for lines 1, 3, 5, 6, 7, and 8, with direct schema and
 reconciliation cases written but unrun. It is registered for self-earned claims,
 requires a Form 3800 document in the linked bundle, and omits the recipient's
-own form for pass-through-only claims. The Form 3800 export guard still prevents
-a credit claim from filing. Form 8826 now requires a passive-activity answer and
-stops a positive passive credit pending Form 8582-CR, with unrun cases. The
-build pass now accepts identified partnership and S-corporation line 7 sources,
-caps their combined line 8 with self-earned credit at $5,000, and lets
-pass-through-only credit reach Form 3800 without requiring the recipient's own
-eligibility facts or an `IRS8826` document. Passive K-1 credits stop pending
+own form for pass-through-only claims. Form 8826 now requires a passive-activity
+answer and stops a positive passive credit pending Form 8582-CR, with unrun
+cases. The build pass now accepts identified partnership and S-corporation line
+7 sources, caps their combined line 8 with self-earned credit at $5,000, and
+lets pass-through-only credit reach Form 3800 without requiring the recipient's
+own eligibility facts or an `IRS8826` document. Passive K-1 credits stop pending
 Form 8582-CR. Source and XML cases are written but unrun. The combined cap now
 allocates credit pro rata in cents to each identified source before the Form
-3800 handoff. The unregistered Form 3800 nonpassive XML draft now includes Form
+3800 handoff. The registered Form 3800 nonpassive XML path now includes Form
 8826's distinct Part III line 1e group and Part V rows for multiple Form 8826
 sources. Part V retains the K-1 EIN, capped source credit, explicit
 applied-credit split, and remaining amount. Its Part III applied credit
@@ -152,9 +152,9 @@ The Part V draft now apportions whole-dollar source and applied amounts so the
 printed rows add back to the rounded Part III and Part II totals; its rounding
 case is written but unrun. Solo, combined, and negative cases are written but
 unrun. K-1 document reconciliation, filed source attribution, and carryforward
-identity remain open. Its source graph now calculates the nonpassive limit, but
-the XML document bundle remains unconnected. Schedule 3 line 6a now requires and
-references the Form 3800 document in the linked MeF bundle. The
+identity remain open. Its source graph now calculates the nonpassive limit, and
+the XML document bundle is linked but unverified. Schedule 3 line 6a now
+requires and references the Form 3800 document in the linked MeF bundle. The
 [business-credit routing audit](docs/mef/general-business-credit-routing.md) now
 names the direct line 6a producers and the source classifications needed before
 a shared Form 3800 finalization. It also identifies Form 8912 as a separate line
