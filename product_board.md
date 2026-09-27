@@ -301,6 +301,11 @@ records, named government buyers, and gallon reconciliation. Its separate
 government-buyer MeF statement and page-2 PDF fields are built, with source,
 XML, PDF, and XSD cases written but unrun. The filled PDF and IRS business rules
 are not verified; line 6b and lines 7-8 remain open.
+Diesel-water emulsion lines 14a and 14b now have ultimate-purchaser source
+facts, the standard and reduced bus-use rates, export-proof validation, MeF
+groups, and parent/Schedule A PDF fields. Source, XML, PDF, and XSD cases are
+written but unrun. Emulsion composition and EPA additive records are required;
+filled-PDF rendering and IRS business-rule review remain open.
 The Schedule A section of the 2025 IRS instructions instead says to show the
 activity with the most qualifying fuel usage. That conflict is unresolved;
 the current code follows the printed Form 4136 and needs IRS business-rule

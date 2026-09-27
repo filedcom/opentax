@@ -64,6 +64,14 @@ function fieldPath(p: number, n: number): string {
       : offset === 5 || offset === 6
       ? "ColE"
       : "";
+  } else if (p === 4 && n >= 1 && n <= 16) {
+    table = "Line14Table";
+    line = n <= 8 ? "Line14a" : "Line14b";
+    column = n >= 4 && n <= 5 || n >= 12 && n <= 13
+      ? "ColD"
+      : n >= 6 && n <= 7 || n >= 14 && n <= 15
+      ? "ColE"
+      : "";
   }
   if (!table || !line) {
     throw new Error(
@@ -139,6 +147,13 @@ const fields: PdfFieldEntry[] = [
       ...money(`line${line}_credit`, 3, base + 5),
     ];
   }),
+  text("line14a_type", 4, 1),
+  text("line14a_quantity", 4, 3),
+  ...money("line14a_cost", 4, 4),
+  ...money("line14a_credit", 4, 6),
+  text("line14b_quantity", 4, 11),
+  ...money("line14b_cost", 4, 12),
+  ...money("line14b_credit", 4, 14),
   ...money("line17_total", 4, 39),
 ];
 
@@ -205,6 +220,24 @@ export const form4136ScheduleAPdf: PdfFormDescriptor = {
         font,
       });
       page3.drawText("Bus", { x: 230, y: y + 2.8, size: 8, font });
+    }
+    const emulsionClaims = input.claims.filter((claim) => claim.line === "14a");
+    if (emulsionClaims.some((claim) => claim.type_of_use === "05")) {
+      const page4 = pages[3];
+      if (!page4) {
+        throw new Error("Schedule A (Form 4136) needs page 4 for bus rates");
+      }
+      page4.drawRectangle({
+        x: 292,
+        y: 666,
+        width: 23,
+        height: 11,
+        color: rgb(1, 1, 1),
+      });
+      if (emulsionClaims.length === 1) {
+        page4.drawText(".124", { x: 293.5, y: 669, size: 8, font });
+        page4.drawText("Bus", { x: 260, y: 669, size: 8, font });
+      }
     }
   },
   appendSupplementalPages: form4136Pdf.appendSupplementalPages,

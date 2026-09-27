@@ -27,6 +27,8 @@ const certifications = {
   foreign_trade_lust_tax_paid_confirmed: true,
   train_use_confirmed: true,
   certain_intercity_or_local_bus_use_confirmed: true,
+  emulsion_water_percentage: 14,
+  emulsion_epa_additive_record_reference: "EPA additive record 2025-1",
 } as const;
 
 function compute(
@@ -192,6 +194,9 @@ Deno.test("Form 4136: represented 2025 Part II rates are line-specific", () => {
     ["11f", "02", 24.3],
     ["11g", "02", 24.3],
     ["11h", "02", 18.3],
+    ["14a", "02", 19.7],
+    ["14a", "05", 12.4],
+    ["14b", undefined, 19.8],
   ] as const;
   for (const [line, type_of_use, expected] of cases) {
     const result = compute({
@@ -218,6 +223,53 @@ Deno.test("Form 4136: represented 2025 Part II rates are line-specific", () => {
     });
     assertEquals(result.outputs[0].fields.line12_fuel_tax_credit, expected);
   }
+});
+
+Deno.test("Form 4136: diesel-water emulsion use and export require distinct source facts", () => {
+  const useClaim = {
+    ...certifications,
+    line: "14a" as const,
+    type_of_use: "02",
+    unit: "gallons" as const,
+    qualified_quantity: 100,
+    actual_fuel_cost: 250,
+  };
+  assertEquals(parseInput({ business, claims: [useClaim] }).success, true);
+  assertEquals(
+    parseInput({
+      business,
+      claims: [{ ...useClaim, emulsion_water_percentage: 13.9 }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    parseInput({
+      business,
+      claims: [{
+        ...useClaim,
+        emulsion_epa_additive_record_reference: undefined,
+      }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    parseInput({ business, claims: [{ ...useClaim, type_of_use: "09" }] })
+      .success,
+    false,
+  );
+  const exportClaim = {
+    ...useClaim,
+    line: "14b" as const,
+    type_of_use: undefined,
+  };
+  assertEquals(parseInput({ business, claims: [exportClaim] }).success, true);
+  assertEquals(
+    parseInput({
+      business,
+      claims: [{ ...exportClaim, export_proof: undefined }],
+    }).success,
+    false,
+  );
 });
 
 Deno.test("Form 4136: kerosene bus, export, and reduced-tax claims require distinct proof", () => {

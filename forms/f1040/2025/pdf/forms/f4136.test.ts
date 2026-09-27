@@ -28,6 +28,8 @@ const certifications = {
   foreign_trade_lust_tax_paid_confirmed: true,
   train_use_confirmed: true,
   certain_intercity_or_local_bus_use_confirmed: true,
+  emulsion_water_percentage: 14,
+  emulsion_epa_additive_record_reference: "EPA additive record 2025-1",
 } as const;
 const activityContext = {
   claimant_context: "business",
@@ -105,9 +107,55 @@ Deno.test("Form 4136 PDF maps page 1 business and page 4 total widgets", () => {
     "topmostSubform[0].Page3[0].Table_Line11[0].Line11h[0].ColE[0].f3_141[0]",
   );
   assertEquals(
+    names.line14a_credit_dollars,
+    "topmostSubform[0].Page4[0].Table_Line14[0].Line14a[0].ColE[0].f4_91[0]",
+  );
+  assertEquals(
+    names.line14b_quantity,
+    "topmostSubform[0].Page4[0].Table_Line14[0].Line14b[0].f4_96[0]",
+  );
+  assertEquals(
     names.line17_total_cents,
     "topmostSubform[0].Page4[0].f4_125[0]",
   );
+});
+
+Deno.test("Form 4136 PDF projects emulsion bus and export rows", async () => {
+  const result = form4136Pdf.projectFields?.({
+    ...activityContext,
+    business,
+    claims: [
+      {
+        ...certifications,
+        line: "14a",
+        type_of_use: "05",
+        unit: "gallons",
+        qualified_quantity: 100,
+        actual_fuel_cost: 250,
+      },
+      {
+        ...certifications,
+        line: "14b",
+        unit: "gallons",
+        qualified_quantity: 100,
+        actual_fuel_cost: 250,
+      },
+    ],
+  }, { schedule3: { line12_fuel_tax_credit: 32.2 } });
+  assertEquals(result?.line14a_type, "05");
+  assertEquals(result?.line14a_quantity, 100);
+  assertEquals(result?.line14a_credit_dollars, "12");
+  assertEquals(result?.line14a_credit_cents, "40");
+  assertEquals(result?.line14b_credit_dollars, "19");
+  assertEquals(result?.line14b_credit_cents, "80");
+  const document = await PDFDocument.create();
+  for (let i = 0; i < 4; i++) document.addPage([612, 792]);
+  await form4136Pdf.decoratePages?.(
+    document,
+    document.getPages(),
+    result ?? {},
+  );
+  assertEquals(document.getPageCount(), 4);
 });
 
 Deno.test("Form 4136 PDF includes vendor line 6a and government-buyer detail", async () => {

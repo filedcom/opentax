@@ -16,6 +16,8 @@ const certifications = {
   foreign_trade_lust_tax_paid_confirmed: true,
   train_use_confirmed: true,
   certain_intercity_or_local_bus_use_confirmed: true,
+  emulsion_water_percentage: 14,
+  emulsion_epa_additive_record_reference: "EPA additive record 2025-1",
 } as const;
 const activityContext = {
   claimant_context: "business" as const,
@@ -85,6 +87,49 @@ Deno.test("Form 4136 XML rejects a Schedule 3 source mismatch", () => {
       }),
     Error,
     "does not match Schedule 3",
+  );
+});
+
+Deno.test("Form 4136 XML separates emulsion use, reduced-rate bus use, and export", () => {
+  const xml = form4136.build({
+    ...activityContext,
+    business: fields.business,
+    claims: [
+      {
+        ...certifications,
+        line: "14a",
+        type_of_use: "02",
+        unit: "gallons",
+        qualified_quantity: 100,
+        actual_fuel_cost: 250,
+      },
+      {
+        ...certifications,
+        line: "14a",
+        type_of_use: "05",
+        unit: "gallons",
+        qualified_quantity: 100,
+        actual_fuel_cost: 250,
+      },
+      {
+        ...certifications,
+        line: "14b",
+        unit: "gallons",
+        qualified_quantity: 100,
+        actual_fuel_cost: 250,
+      },
+    ],
+  }, { pending: { schedule3: { line12_fuel_tax_credit: 51.9 } } });
+  assertStringIncludes(xml, "<BusNontxUseDieselWtrEmlsnGrp>");
+  assertStringIncludes(xml, "<CreditRt>0.124</CreditRt>");
+  assertStringIncludes(xml, "<NontxUseDieselWaterEmulsionGrp>");
+  assertStringIncludes(
+    xml,
+    "<ExpNontxUseDslWtrEmulsionQty>100</ExpNontxUseDslWtrEmulsionQty>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalFuelTaxCreditAmt>52</TotalFuelTaxCreditAmt>",
   );
 });
 
