@@ -188,6 +188,27 @@
       "year_check": "2026-present"
     },
     {
+      "path": "draft/f4562b.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f4562b--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 200403,
+      "sha256": "16c23110b7ad4483b47f20269807566177881234b0fd9b7679cd648a169f7bf6",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-09-27T11:57:22.534150+00:00"
+    },
+    {
+      "path": "draft/f172.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f172--dft.pdf",
+      "kind": "draft-form",
+      "status": "wrong-year",
+      "bytes": 318154,
+      "sha256": "861bc783c33be8163d146a25c4e879835d1de2bfeb9edc05a7ac9ef8ba64113d",
+      "year_check": "2026-not-found",
+      "observed_revision": "December 2024",
+      "retrieved_utc": "2026-09-27T12:00:21.283646+00:00"
+    },
+    {
       "path": "draft/f6251.pdf",
       "url": "https://www.irs.gov/pub/irs-dft/f6251--dft.pdf",
       "kind": "draft-form",

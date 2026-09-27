@@ -24,6 +24,9 @@ The [Schedule E implementation contract](SCHEDULEE-GRAPH.md) now gives the
 next property/K-1 activity build order and the new line 13a split from other
 interest. It covers PDF, MeF, and ATS 3/6 acceptance; the route remains
 `audit-required` in the ledger.
+The [Schedule F contract](SCHEDULEF-GRAPH.md) isolates the 2026 line 21b
+vehicle-interest change from the shared TY2025 21b other-interest input and
+maps the farm calculation, PDF, MeF, and ATS scenario 3 gates.
 
 ## Chronological progress notes
 

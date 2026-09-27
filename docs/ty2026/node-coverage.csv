@@ -177,7 +177,7 @@ schedule2,forms/f1040/nodes/intermediate/aggregation/schedule2/index.ts,intermed
 schedule3,forms/f1040/nodes/intermediate/aggregation/schedule3/index.ts,intermediate,0,no,yes,yes,yes,P0,audit-required,"verify 2026 law, node outputs, and graph route"
 schedule_b,forms/f1040/nodes/intermediate/aggregation/schedule_b/index.ts,intermediate,0,no,yes,yes,yes,P2,audit-required,"verify 2026 law, node outputs, and graph route"
 schedule_d,forms/f1040/nodes/intermediate/aggregation/schedule_d/index.ts,intermediate,1,yes,yes,yes,yes,P1,audit-required,"2026 box2a, carryover, and 1099-B/DA transaction PDF routes verified; add other capital sources, QOF, and MeF"
-schedule_f,forms/f1040/nodes/intermediate/forms/schedule_f/index.ts,intermediate,1,yes,yes,yes,yes,P1,audit-required,"verify 2026 law, node outputs, and graph route"
+schedule_f,forms/f1040/nodes/intermediate/forms/schedule_f/index.ts,intermediate,1,yes,yes,yes,yes,P1,audit-required,"2026 draft makes line 21b vehicle interest and 21c other interest; build dedicated farm input, PDF/MeF, ATS 3; see SCHEDULEF-GRAPH.md"
 schedule_h,forms/f1040/nodes/intermediate/forms/schedule_h/index.ts,intermediate,3,yes,yes,yes,yes,P0,audit-required,"verify 2026 law, node outputs, and graph route"
 schedule_se,forms/f1040/nodes/intermediate/forms/schedule_se/index.ts,intermediate,1,yes,yes,yes,yes,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 unrecaptured_1250_worksheet,forms/f1040/nodes/intermediate/worksheets/unrecaptured_1250_worksheet/index.ts,intermediate,0,no,no,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"

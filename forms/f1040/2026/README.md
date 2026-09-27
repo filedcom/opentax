@@ -20,6 +20,15 @@ pinned 2026 form and instructions to the existing property and K-1 nodes.
 It identifies new line 13a vehicle-loan interest, the three-page Part I–V
 attachment, downstream passive/at-risk/interest limits, and ATS scenarios 3
 and 6. Schedule E is not registered in the TY2026 graph yet.
+The [Schedule F contract](../../../docs/ty2026/SCHEDULEF-GRAPH.md) maps the
+cash/accrual farm route and its attached forms. Its shared TY2025 input names
+other interest as line 21b; the 2026 form uses that line for vehicle-loan
+interest and moves other interest to 21c. The TY2026 route awaits a distinct
+input/output shape, complete PDF, current MeF map, and ATS scenario 3 check.
+The new [Form 4562-B contract](../../../docs/ty2026/FORM4562B-GRAPH.md)
+uses the pinned 2026 draft to map amortization cost rows, prior-year assets,
+activity destinations, and PDF/MeF work. Its 2026 instructions remain a
+source gate before the amortization calculation can be implemented.
 `credit-resolution.ts` computes Schedule 8812 Worksheet B through line 14
 and 2026 Form 5695 lines 1–4 in the required order. The registered graph
 receives tax, dependent, AGI, Schedule 2, and Schedule 3 amounts.

@@ -37,3 +37,6 @@ facts, the independent calculation chain, and the Schedule H/Form 5695/Form
 The [Schedule E contract](SCHEDULEE-GRAPH.md) identifies the Schedule E pages
 in scenarios 3 and 6; scenario 6's partnership row is an explicit Part II
 fixture gate.
+The [Schedule F contract](SCHEDULEF-GRAPH.md) extracts scenario 3's populated
+farm lines and independently derives its $4,207 net profit before an
+end-to-end fixture is accepted.

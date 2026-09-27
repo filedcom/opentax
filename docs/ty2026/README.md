@@ -66,10 +66,16 @@ for the implementation contract.
 - [`SCHEDULEE-GRAPH.md`](SCHEDULEE-GRAPH.md): the new rental vehicle-interest
   line, Part I–V activity graph, passive/at-risk/interest limits, PDF/MeF
   work, and ATS scenarios 3 and 6.
+- [`SCHEDULEF-GRAPH.md`](SCHEDULEF-GRAPH.md): farm cash/accrual income, the
+  new vehicle-interest line 21b, farm-loss and carryforward dependencies,
+  PDF/MeF build order, and the ATS scenario 3 farm fixture.
+- [`FORM4562B-GRAPH.md`](FORM4562B-GRAPH.md): newly pinned 2026 amortization
+  attachment, per-asset input and carryforward contract, and current
+  instructions/MeF acceptance gates.
 
 - [`corpus/manifest.json`](corpus/manifest.json): URL, SHA-256, byte length,
-  and retrieval date for **57 TY2026 IRS draft forms**, **25 verified 2026
-  draft instruction PDFs**, **five draft form URLs that
+  and retrieval date for **58 TY2026 IRS draft forms**, **25 verified 2026
+  draft instruction PDFs**, **six draft form URLs that
   still serve an older year**, **13 IRS ATS PDFs**, **two MeF
   inventory spreadsheets**, final IRS authorities (Rev. Procs.
   2025-19, 2025-25, 2025-32; Notice 2025-67; Notice 2026-10; and IRB
