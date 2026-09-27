@@ -59,6 +59,10 @@ type IndexedKeys =
   | "eitcInvestmentIncomeLimit"
   | "ctcPerChild"
   | "actcMaxPerChild"
+  | "actcEarnedIncomeFloor"
+  | "ctcPhaseOutThresholdMfj"
+  | "ctcPhaseOutThresholdOther"
+  | "odcPerDependent"
   | "saversCreditContributionCap"
   | "saversCreditAgiSingle"
   | "saversCreditAgiHoh"
@@ -81,6 +85,9 @@ type IndexedKeys =
   | "saltCap"
   | "saltPhaseoutThreshold"
   | "saltPhaseoutThresholdMfs"
+  | "saltFloor"
+  | "saltFloorMfs"
+  | "saltPhaseoutRate"
   | "fplBase"
   | "fplIncrement"
   | "fplAlaskaBase"
@@ -88,6 +95,12 @@ type IndexedKeys =
   | "fplHawaiiBase"
   | "fplHawaiiIncrement"
   | "qcdAnnualLimit"
+  | "mdaMax"
+  | "mdaPhaseOutThreshold"
+  | "mdaZeroThreshold"
+  | "deathBenefitMax"
+  | "mccMaxCreditHighRate"
+  | "scheduleBDividendThreshold"
   | "eblThresholdSingle"
   | "eblThresholdMfj"
   | "smallBizGrossReceipts"
@@ -257,6 +270,11 @@ export const INDEXED_CONFIG_2026 = {
   // Rev. Proc. 2025-32 §4.05(1)–(2).
   ctcPerChild: 2_200,
   actcMaxPerChild: 1_700,
+  // IRC §24(h)(3), (d)(1), and IRS CTC guidance; statutory limits unchanged.
+  odcPerDependent: 500,
+  ctcPhaseOutThresholdMfj: 400_000,
+  ctcPhaseOutThresholdOther: 200_000,
+  actcEarnedIncomeFloor: 2_500,
 
   // Notice 2025-67, pages 3–4, §25B retirement savings credit limits.
   // Per-person contribution cap: 2026 draft Form 8880, line 6.
@@ -289,6 +307,10 @@ export const INDEXED_CONFIG_2026 = {
   saltCap: 40_400,
   saltPhaseoutThreshold: 505_000,
   saltPhaseoutThresholdMfs: 252_500,
+  // P.L. 119-21 §68(b)(5)(B); IRS 2026 Form 1040-ES SALT correction.
+  saltPhaseoutRate: 0.30,
+  saltFloor: 10_000,
+  saltFloorMfs: 5_000,
 
   // 2025 HHS poverty guideline tables: TY2026 Form 8962 uses prior-year FPL.
   fplBase: 15_650,
@@ -317,4 +339,14 @@ export const INDEXED_CONFIG_2026 = {
   // Notice 2025-67: §408(d)(8) QCD and §415(c) plan contribution limit.
   qcdAnnualLimit: 111_000,
   sepMaxContribution: 72_000,
+
+  // Pinned 2026 draft Form 4972, lines 12–16 and page 4 instructions.
+  mdaMax: 10_000,
+  mdaPhaseOutThreshold: 20_000,
+  mdaZeroThreshold: 70_000,
+  deathBenefitMax: 5_000,
+
+  // Pinned 2026 draft Form 8396, line 3 instructions, and Schedule B Part III.
+  mccMaxCreditHighRate: 2_000,
+  scheduleBDividendThreshold: 1_500,
 } satisfies Pick<F1040Config, IndexedKeys>;

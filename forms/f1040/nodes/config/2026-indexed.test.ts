@@ -95,12 +95,17 @@ Deno.test("2026 HSA, IRA, and Social Security amounts use their own sources", ()
   assertEquals(INDEXED_CONFIG_2026.ssTaxPerEmployer, 184_500 * 0.062);
   assertEquals(INDEXED_CONFIG_2026.ctcPerChild, 2_200);
   assertEquals(INDEXED_CONFIG_2026.actcMaxPerChild, 1_700);
+  assertEquals(INDEXED_CONFIG_2026.odcPerDependent, 500);
+  assertEquals(INDEXED_CONFIG_2026.actcEarnedIncomeFloor, 2_500);
   assertEquals(INDEXED_CONFIG_2026.saversCreditContributionCap, 2_000);
 });
 
 Deno.test("2026 SALT and FPL amounts use the pinned forms and guideline tables", () => {
   assertEquals(INDEXED_CONFIG_2026.saltCap, 40_400);
   assertEquals(INDEXED_CONFIG_2026.saltPhaseoutThresholdMfs, 252_500);
+  assertEquals(INDEXED_CONFIG_2026.saltFloor, 10_000);
+  assertEquals(INDEXED_CONFIG_2026.saltFloorMfs, 5_000);
+  assertEquals(INDEXED_CONFIG_2026.saltPhaseoutRate, 0.30);
   assertEquals(INDEXED_CONFIG_2026.fplBase, 15_650);
   assertEquals(
     INDEXED_CONFIG_2026.fplBase + 3 * INDEXED_CONFIG_2026.fplIncrement,
@@ -135,4 +140,13 @@ Deno.test("2026 passenger auto caps separate third and succeeding years", () => 
   assertEquals(INDEXED_CONFIG_2026.luxuryAutoYear2, 19_800);
   assertEquals(INDEXED_CONFIG_2026.luxuryAutoYear3, 11_900);
   assertEquals(INDEXED_CONFIG_2026.luxuryAutoYear4Plus, 7_160);
+});
+
+Deno.test("2026 Form 4972 allowance extinguishes at the printed cutoff", () => {
+  assertEquals(INDEXED_CONFIG_2026.mdaMax, 10_000);
+  assertEquals(INDEXED_CONFIG_2026.mdaPhaseOutThreshold, 20_000);
+  assertEquals(INDEXED_CONFIG_2026.mdaZeroThreshold, 70_000);
+  assertEquals(INDEXED_CONFIG_2026.deathBenefitMax, 5_000);
+  assertEquals(INDEXED_CONFIG_2026.mccMaxCreditHighRate, 2_000);
+  assertEquals(INDEXED_CONFIG_2026.scheduleBDividendThreshold, 1_500);
 });
