@@ -113,16 +113,18 @@ cases are written but unrun. The draft now indexes Part V facility allocations
 and linked source documents by entry position, so equal-valued or reused
 facility objects do not silently reuse the first allocation; that case is
 written but unrun. The descriptor links source Form 8826/8835 documents and
-Schedule 3 line 6a, and refuses missing or mismatched source facts. It has not
-passed the deferred full test batch, local XSD, or business-rule validation and
-does not cover passive credits, other business-credit sources, or carryovers.
-The current build pass also has an unrun pure bridge from finalized Form 1040,
-Schedules 2 and 3, and Form 6251 lines into the nonpassive Form 3800 limit. It
-subtracts the specific Form 3800 line 7 and 10b exclusions instead of letting
-the general business credit count against itself. The bridge is now wired to
-graph finalization for Form 8826 and Form 8835 and requires Form 6251 even with
-zero AMT when a standard GBC is claimed, but remains untested. Other GBC
-producers still send gross source credits straight to Schedule 3 line 6a and
+Schedule 3 line 6a, and refuses missing or mismatched source facts. The current
+build pass also reconciles its Part II tax context against filed Form 1040,
+Schedule 3, and Form 6251 amounts; its mismatch cases are written but unrun. It
+has not passed the deferred full test batch, local XSD, or business-rule
+validation and does not cover passive credits, other business-credit sources, or
+carryovers. The current build pass also has an unrun pure bridge from finalized
+Form 1040, Schedules 2 and 3, and Form 6251 lines into the nonpassive Form 3800
+limit. It subtracts the specific Form 3800 line 7 and 10b exclusions instead of
+letting the general business credit count against itself. The bridge is now
+wired to graph finalization for Form 8826 and Form 8835 and requires Form 6251
+even with zero AMT when a standard GBC is claimed, but remains untested. Other
+GBC producers still send gross source credits straight to Schedule 3 line 6a and
 require a common limitation pass. The
 [Form 8826](https://www.irs.gov/pub/irs-pdf/f8826.pdf) self-earned source now
 requires both preceding-year receipts and full-time employee headcount instead

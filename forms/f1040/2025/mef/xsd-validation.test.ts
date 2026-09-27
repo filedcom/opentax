@@ -86,7 +86,9 @@ Deno.test({
     is_fiscal_year: false,
   };
   const xml = buildMefXml({
-    schedule3: { line6a_total: 6_000 },
+    f1040: { line16_income_tax: 40_000 },
+    schedule3: { line6a_total: 6_000, line7_total: 6_000 },
+    form6251: { line11_amt: 0, net_tmt: 20_000 },
     f3800: {
       f8835_credit_entries: [{
         form3800_line: "4e",

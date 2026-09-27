@@ -13,6 +13,7 @@ import {
   inputSchema as f8835InputSchema,
 } from "../../../nodes/inputs/f8835/index.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
+import { FilingStatus as MefFilingStatus } from "../../../mef/header.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import { buildIRS3800Nonpassive } from "./f3800_nonpassive.ts";
 
@@ -48,6 +49,81 @@ type PendingForm3800 = Partial<z.infer<typeof f3800InputSchema>> & {
 
 function sameMoney(a: number, b: number): boolean {
   return Math.round(a * 100) === Math.round(b * 100);
+}
+
+const filedReturnSchema = z.object({
+  line16_income_tax: amount,
+  line17_additional_taxes: amount.optional(),
+  line19_child_tax_credit: amount.optional(),
+  form8621_tax: amount.optional(),
+});
+const filedSchedule3Schema = z.object({
+  line1_total: amount.optional(),
+  line2_childcare_credit: amount.optional(),
+  line3_education_credit: amount.optional(),
+  line4_retirement_savings_credit: amount.optional(),
+  line5a_residential_clean_energy: amount.optional(),
+  line5b_energy_efficient_home: amount.optional(),
+  line6a_total: amount.optional(),
+  line6b_prior_year_min_tax_credit: amount.optional(),
+  line6k_tax_credit_bonds: amount.optional(),
+  line7_total: amount.optional(),
+});
+const filedForm6251Schema = z.object({
+  line11_amt: amount,
+  net_tmt: amount,
+});
+
+function reconcileFiledTaxContext(
+  tax: z.infer<typeof taxContextSchema>,
+  allowedCredit: number,
+  context: MefBuildContext,
+): void {
+  const mefStatus = {
+    [FilingStatus.Single]: MefFilingStatus.Single,
+    [FilingStatus.MFS]: MefFilingStatus.MarriedFilingSeparately,
+    [FilingStatus.MFJ]: MefFilingStatus.MarriedFilingJointly,
+    [FilingStatus.HOH]: MefFilingStatus.HeadOfHousehold,
+    [FilingStatus.QSS]: MefFilingStatus.QualifyingSurvivingSpouse,
+  }[tax.filingStatus];
+  if (context.filer && context.filer.filingStatus !== mefStatus) {
+    throw new Error("Form 3800 filing status differs from the filed return");
+  }
+  const form1040 = filedReturnSchema.parse(context.pending?.f1040);
+  const schedule3 = filedSchedule3Schema.parse(context.pending?.schedule3);
+  const form6251 = filedForm6251Schema.parse(context.pending?.form6251);
+  const checks = {
+    regularTax: form1040.line16_income_tax +
+      (form1040.line17_additional_taxes ?? 0) - form6251.line11_amt -
+      (form1040.form8621_tax ?? 0),
+    alternativeMinimumTax: form6251.line11_amt,
+    tentativeMinimumTax: form6251.net_tmt,
+    foreignTaxCredit: schedule3.line1_total ?? 0,
+    priorAllowableCredits: (form1040.line19_child_tax_credit ?? 0) +
+      (schedule3.line2_childcare_credit ?? 0) +
+      (schedule3.line3_education_credit ?? 0) +
+      (schedule3.line4_retirement_savings_credit ?? 0) +
+      (schedule3.line5a_residential_clean_energy ?? 0) +
+      (schedule3.line5b_energy_efficient_home ?? 0) +
+      (schedule3.line7_total ?? 0) - (schedule3.line6a_total ?? 0) -
+      (schedule3.line6b_prior_year_min_tax_credit ?? 0) -
+      (schedule3.line6k_tax_credit_bonds ?? 0),
+  };
+  for (const [key, value] of Object.entries(checks)) {
+    if (
+      !Number.isFinite(value) || value < 0 ||
+      !sameMoney(tax[key as keyof typeof checks], value)
+    ) {
+      throw new Error(
+        `Form 3800 ${key} does not reconcile to the filed return`,
+      );
+    }
+  }
+  if (!sameMoney(schedule3.line6a_total ?? 0, allowedCredit)) {
+    throw new Error(
+      "Form 3800 allowed credit does not reconcile to Schedule 3 line 6a",
+    );
+  }
 }
 
 function sourceForm8826(
@@ -252,25 +328,12 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
       // The bundle's first pass reserves document IDs; the second builds links.
       return "<IRS3800><CAMTAndBEATInd>false</CAMTAndBEATInd></IRS3800>";
     }
+    reconcileFiledTaxContext(tax, fields.allowed_credit, context);
     if (
       tax.standardCredit > 0 &&
       context.documentIdsByPendingKey.form6251?.length !== 1
     ) {
       throw new Error("Form 3800 ordinary credit needs attached Form 6251");
-    }
-    if (fields.allowed_credit > 0) {
-      const schedule3 = context.pending?.schedule3;
-      const line6a = schedule3 && typeof schedule3 === "object" &&
-          "line6a_total" in schedule3
-        ? schedule3.line6a_total
-        : undefined;
-      if (
-        typeof line6a !== "number" || !sameMoney(line6a, fields.allowed_credit)
-      ) {
-        throw new Error(
-          "Form 3800 allowed credit does not reconcile to Schedule 3 line 6a",
-        );
-      }
     }
     const form8826 = sourceForm8826(parsed, context);
     const facilities = sourceForm8835(parsed, context);
