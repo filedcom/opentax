@@ -166,14 +166,13 @@ calculation now keeps its line 12 allowed credit and unused amount separate,
 taking the already-allowed Form 3800 credit on line 10c. It rejects pass-through
 CREB cases until their separate taxable-income limit is modeled. The Form 8912
 input now separates Form 1097-BTC reported amounts, unreported-bond
-calculations, and carryforward; positive credit explicitly stops rather than
-depositing an unbounded amount on Schedule 3 line 6a. This source model and its
-cases are unrun. A subsequent IRS-instructions review corrected Part IV column
-(e) to credit-allowance-date percentage, not ownership percentage, and separates
-BAB interest payable from other bonds' outstanding principal with the required
-35% BAB rate. These source facts still need complete Part II integration,
-registered source-document serialization, sale record-holder and other
-disposition allowance-date rules, bond-specific carryforward identity,
+calculations, and carryforward; its limited credit now routes to Schedule 3 line
+6k instead of depositing an unbounded amount on line 6a. This source model and
+its cases are unrun. A subsequent IRS-instructions review corrected Part IV
+column (e) to credit-allowance-date percentage, not ownership percentage, and
+separates BAB interest payable from other bonds' outstanding principal with the
+required 35% BAB rate. These source facts still need sale record-holder and
+other disposition allowance-date rules, bond-specific carryforward identity,
 taxable-interest reconciliation, and IRS business-rule review.
 
 The next Form 8912 build pass models each Part IV bond as one or more explicit
@@ -182,57 +181,57 @@ output with separate Parts I through IV and a Part II input reconciliation. The
 draft now combines all `f8912s` source items into one Form 8912 Part I/II
 document while retaining each Part III/IV bond row; its multi-item case is
 written but unrun. Direct XML and local schema cases are written but unrun. The
-builder is not registered, since the return graph does not yet supply final tax,
-AMT, prior credits, and allowed Form 3800 in the required order. Positive Form
-8912 claims remain blocked at final Form 1040 assembly and export; this XML
-draft is not a filing path. Its displayed whole-dollar row and aggregate
-rounding, as well as pass-through CREB taxable-income limits, still need
-end-to-end reconciliation. The draft now derives Part II from explicit finalized
-Form 1040, Schedule 2, Schedule 3, Form 6251, and allowed Form 3800 lines. It
-removes Schedule 3 lines 1, 6a, 6b, and 6k from line 8 when computing Form 8912
-line 10b, checks the Form 3800 amount against line 6a, and requires Form 8912
-line 12 to match Schedule 3 line 6k. These bridge and XML cases are written but
-unrun. No graph node currently supplies that finalized snapshot, so the builder
-stays unregistered and positive claims remain blocked. Form 8912 source items
-now capture bond-level purchase-price accrued interest and accrued interest on
-disposition. An unrun pure calculation separates current-year deemed interest
-from prior-year credit carryforwards and the purchase-price basis recovery.
-Schedule B's MeF builder now emits source-backed interest-payer rows and its
-line 1/4 totals when paired payer names and amounts are available; source-to-XSD
-cases are written but unrun. The Schedule B node now self-emits paired interest
-rows so numeric-array pending normalization does not discard payer amounts
-before XML/PDF export. The PDF path now appends paginated interest-payer detail
-after the 14 printed rows, with cases written but unrun. This does not yet cover
-all Schedule B adjustment rows. The PDF statement still needs filled-render
-verification. The next Form 8912 graph pass requires each bond's taxable
-interest already reported by another input, validates that amount against
-computed bond interest, and routes only the unreported balance to Schedule B.
-Positive credit still stops final Form 1040 assembly until Part II and the
-native document are registered; the fail-closed check moved to that sink and to
-Form 1040 XML/PDF export so taxable interest can reach AGI first without
-yielding an unfinished return. These graph and duplicate-interest cases are
-written but unrun. The source node now hands separate Part I lines 1 through 4
-to the Form 1040 sink instead of a tentative scalar; the positive-credit guard
-remains until Part II finalization is connected. Source-document identity
-reconciliation remains open. The Form 1097-BTC reported-bond input now requires
-all 12 monthly credit boxes and checks their sum against annual box 1, captures
-box 2a's C/A/O code, and constrains box 2b to the IRS 39-character alphanumeric
-identifier. It also rejects duplicate issuer-EIN/unique-ID pairs within and
-across Form 8912 input items. These source cases are written but unrun. The
-actual annual 1097-BTC document, corrected statements, fiscal-year allocation,
-multi-bond type 1097-BTC source model, and full cross-document identity matching
-remain open. A new unrun check rejects a Part IV CUSIP already represented by a
-Form 1097-BTC with the same issuer EIN and box 2a code C, including identifiers
-with an account suffix and entries in separate Form 8912 input items. Account
-and other identifiers cannot be matched to a CUSIP from these facts alone. The
-Part IV input now records acquisition and allowance dates instead of an
-unchecked column (e) percentage. The build pass derives quarterly allowances,
-BAB interest-payment allowances, pre-October 2008 QZAB annual allowances, and
-the final quarter prorated on maturity or redemption, including a fifth partial
-date after December 15; it rejects dates outside the 2025 holding period or
-duplicated across line 18 rows. These date and XML cases are written but unrun.
-Record-holder timing on a sale, other dispositions, and the required bond-rate
-source still need review.
+builder is now registered for source-backed positive claims: the return graph
+calculates Part II after personal clean-vehicle and Form 3800 credit, finalizes
+Schedule 3 line 6k and Form 1040 line 20, and the MeF descriptor reconciles the
+source and filed return lines. Graph, linked-bundle, and local XSD cases are
+written but unrun, so this is not a verified filing path. Its displayed
+whole-dollar row and aggregate rounding, as well as pass-through CREB
+taxable-income limits, still need end-to-end reconciliation. The draft now
+derives Part II from explicit finalized Form 1040, Schedule 2, Schedule 3, Form
+6251, and allowed Form 3800 lines. It removes Schedule 3 lines 1, 6a, 6b, and 6k
+from line 8 when computing Form 8912 line 10b, checks the Form 3800 amount
+against line 6a, and requires Form 8912 line 12 to match Schedule 3 line 6k.
+These bridge and XML cases are written but unrun. The Form 1040 sink now
+supplies that finalized snapshot. Form 8912 source items now capture bond-level
+purchase-price accrued interest and accrued interest on disposition. An unrun
+pure calculation separates current-year deemed interest from prior-year credit
+carryforwards and the purchase-price basis recovery. Schedule B's MeF builder
+now emits source-backed interest-payer rows and its line 1/4 totals when paired
+payer names and amounts are available; source-to-XSD cases are written but
+unrun. The Schedule B node now self-emits paired interest rows so numeric-array
+pending normalization does not discard payer amounts before XML/PDF export. The
+PDF path now appends paginated interest-payer detail after the 14 printed rows,
+with cases written but unrun. This does not yet cover all Schedule B adjustment
+rows. The PDF statement still needs filled-render verification. The next Form
+8912 graph pass requires each bond's taxable interest already reported by
+another input, validates that amount against computed bond interest, and routes
+only the unreported balance to Schedule B. Positive credit was formerly blocked
+at final Form 1040 assembly. The current MeF path requires a finalized, attached
+Form 8912; the PDF path still stops until its matching Form 8912 PDF is built.
+These graph and duplicate-interest cases are written but unrun. The source node
+now hands separate Part I lines 1 through 4 to the Form 1040 sink instead of a
+tentative scalar. Multiple partially limited bond sources and CREB/QZAB
+deduction elections still stop MeF export pending bond-specific unused-credit
+treatment. Source-document identity reconciliation remains open. The Form
+1097-BTC reported-bond input now requires all 12 monthly credit boxes and checks
+their sum against annual box 1, captures box 2a's C/A/O code, and constrains box
+2b to the IRS 39-character alphanumeric identifier. It also rejects duplicate
+issuer-EIN/unique-ID pairs within and across Form 8912 input items. These source
+cases are written but unrun. The actual annual 1097-BTC document, corrected
+statements, fiscal-year allocation, multi-bond type 1097-BTC source model, and
+full cross-document identity matching remain open. A new unrun check rejects a
+Part IV CUSIP already represented by a Form 1097-BTC with the same issuer EIN
+and box 2a code C, including identifiers with an account suffix and entries in
+separate Form 8912 input items. Account and other identifiers cannot be matched
+to a CUSIP from these facts alone. The Part IV input now records acquisition and
+allowance dates instead of an unchecked column (e) percentage. The build pass
+derives quarterly allowances, BAB interest-payment allowances, pre-October 2008
+QZAB annual allowances, and the final quarter prorated on maturity or
+redemption, including a fifth partial date after December 15; it rejects dates
+outside the 2025 holding period or duplicated across line 18 rows. These date
+and XML cases are written but unrun. Record-holder timing on a sale, other
+dispositions, and the required bond-rate source still need review.
 
 The 2025 Schedule 3 build pass now carries separate lines 6h, 6k, and 12 through
 its calculation, MeF, and PDF field maps. Form 8859 and Form 8834 now deposit on
@@ -240,11 +239,12 @@ their printed lines 6h and 6i. Form 4136 now combines its represented fuel-use
 credits on refundable line 12 instead of misrouting some to general business
 credit and some to a nonexistent Form 1040 field; the represented 2025 fuel
 rates are updated, with separate aviation-kerosene tax-rate inputs. These
-routing and field-map cases are written but unrun. Form 8912 still needs its tax
-limit wired to line 6k, and all three source forms need complete eligibility,
-document, and business-rule review. The Schedule 3 MeF builder now requires
-attached source-form IDs for lines 6h, 6i, 6k, and 12; those source serializers
-are not yet registered, so these paths must not be treated as e-file ready.
+routing and field-map cases are written but unrun. Form 8912's Part II limit now
+feeds line 6k, while all three source forms still need complete eligibility,
+document, and business-rule review. The Schedule 3 MeF builder requires attached
+source-form IDs for lines 6h, 6i, 6k, and 12. Form 8912 is registered but unrun;
+the other source serializers are not yet registered, so these paths must not be
+treated as e-file ready.
 
 Form 8936 now enters the start graph as one singleton input containing both Part
 I MAGI breakdowns, both filing statuses, and its vehicle array. The old

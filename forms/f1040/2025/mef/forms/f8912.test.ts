@@ -1,6 +1,6 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { BondType } from "../../../nodes/inputs/f8912/index.ts";
-import { buildForm8912Document } from "./f8912.ts";
+import { buildForm8912Document, form8912 } from "./f8912.ts";
 
 const source = {
   reported_bonds: [{
@@ -60,6 +60,65 @@ const finalized = {
   schedule3Line8: 300,
   form3800AllowedCredit: 0,
 };
+
+const linked = {
+  pending: {
+    f1040: {
+      line16_income_tax: 1_000,
+      line20_nonrefundable_credits: 300,
+      form8912_source_lines: { line1: 100, line2: 175, line3: 25, line4: 300 },
+    },
+    form6251: { line11_amt: 0 },
+    schedule3: { line6k_tax_credit_bonds: 300, line8_total: 300 },
+  },
+};
+
+Deno.test("Form 8912 registered descriptor reconciles source, tax limit, and Schedule 3", () => {
+  const xml = form8912.build({
+    f8912s: [source],
+    allowed_credit: 300,
+    unused_credit: 0,
+  }, linked);
+  assertStringIncludes(
+    xml,
+    "<CurrentYearAllowableCreditAmt>300</CurrentYearAllowableCreditAmt>",
+  );
+  assertThrows(
+    () =>
+      form8912.build({
+        f8912s: [source],
+        allowed_credit: 250,
+        unused_credit: 50,
+      }, linked),
+    Error,
+    "graph credit does not reconcile",
+  );
+  assertThrows(
+    () => form8912.build({ f8912s: [source] }, linked),
+    Error,
+    "needs finalized Part II",
+  );
+  assertThrows(
+    () =>
+      form8912.build({
+        f8912s: [source],
+        allowed_credit: 50,
+        unused_credit: 250,
+      }, {
+        pending: {
+          ...linked.pending,
+          f1040: {
+            ...linked.pending.f1040,
+            line16_income_tax: 50,
+            line20_nonrefundable_credits: 50,
+          },
+          schedule3: { line6k_tax_credit_bonds: 50, line8_total: 50 },
+        },
+      }),
+    Error,
+    "bond-specific unused-credit allocation",
+  );
+});
 
 Deno.test("Form 8912 MeF draft keeps source rows and allowed credit distinct", () => {
   const xml = buildForm8912Document({ f8912s: [source] }, finalized);

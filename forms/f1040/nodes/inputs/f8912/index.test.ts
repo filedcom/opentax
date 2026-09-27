@@ -525,6 +525,14 @@ Deno.test("Form 8912: positive source credit does not bypass its Part II limit",
       },
     },
   );
+  assertEquals(
+    result.outputs.find((output) => output.nodeType === "schedule3")?.fields,
+    { form8912_source_credit_pending: true },
+  );
+  assertEquals(
+    result.outputs.find((output) => output.nodeType === "form6251")?.fields,
+    { must_compute_for_bond_credit: true },
+  );
 });
 
 Deno.test("Form 8912: zero source credit contributes no Schedule 3 output", () => {

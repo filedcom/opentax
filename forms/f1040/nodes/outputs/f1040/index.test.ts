@@ -45,7 +45,7 @@ Deno.test("f1040: empty input emits zeros for computed lines", () => {
   assertEquals(f.line35a_refund, 0);
 });
 
-Deno.test("f1040: unresolved Form 8912 credit stops final return assembly", () => {
+Deno.test("f1040: Form 8912 needs finalized credit inputs", () => {
   assertThrows(
     () =>
       compute({
@@ -59,8 +59,52 @@ Deno.test("f1040: unresolved Form 8912 credit stops final return assembly", () =
         line2b_taxable_interest: 100,
       }),
     Error,
-    "Part II tax limit and source document",
+    "finalized Form 1040 tax, Form 6251 AMT, and Schedule 3 credits",
   );
+});
+
+Deno.test("f1040: Form 8912 finalizes Schedule 3 line 6k", () => {
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    line16_income_tax: 1_000,
+    form8912_source_lines: {
+      line1: 100,
+      line2: 175,
+      line3: 25,
+      line4: 300,
+      hasPassThroughCrebCredit: false,
+    },
+    credit_limit_form6251_line11: 0,
+    credit_limit_schedule3_lines: emptySchedule3ForBusinessCredit,
+  });
+  assertEquals(result.outputs[0].fields.line20_nonrefundable_credits, 300);
+  assertEquals(result.finalizations?.[0].fields.line6k_tax_credit_bonds, 300);
+  assertEquals(result.finalizations?.[1].fields.allowed_credit, 300);
+  assertEquals(result.finalizations?.[1].fields.unused_credit, 0);
+});
+
+Deno.test("f1040: Form 8912 uses tax remaining after allowed Form 3800 credit", () => {
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    line16_income_tax: 250,
+    form3800_source_credits: { standardCredit: 200, specifiedCredit: 0 },
+    form8912_source_lines: {
+      line1: 300,
+      line2: 0,
+      line3: 0,
+      line4: 300,
+      hasPassThroughCrebCredit: false,
+    },
+    credit_limit_form6251_line9: 0,
+    credit_limit_form6251_line11: 0,
+    credit_limit_schedule3_lines: emptySchedule3ForBusinessCredit,
+  });
+  assertEquals(result.outputs[0].fields.line20_nonrefundable_credits, 250);
+  assertEquals(result.finalizations?.[0].fields.line6a_total, 200);
+  assertEquals(result.finalizations?.[0].fields.line6k_tax_credit_bonds, 50);
+  assertEquals(result.finalizations?.[1].fields.allowed_credit, 200);
+  assertEquals(result.finalizations?.[2].fields.allowed_credit, 50);
+  assertEquals(result.finalizations?.[2].fields.unused_credit, 250);
 });
 
 const emptySchedule3ForBusinessCredit = {
@@ -83,9 +127,9 @@ Deno.test("f1040: source-backed Form 3800 posts only its allowed ordinary credit
     line19_child_tax_credit: 2_000,
     line20_nonrefundable_credits: 1_000,
     form3800_source_credits: { standardCredit: 25_000, specifiedCredit: 0 },
-    form3800_form6251_line9: 20_000,
-    form3800_form6251_line11: 0,
-    form3800_schedule3_lines: {
+    credit_limit_form6251_line9: 20_000,
+    credit_limit_form6251_line11: 0,
+    credit_limit_schedule3_lines: {
       ...emptySchedule3ForBusinessCredit,
       line2: 1_000,
       line7: 0,
@@ -106,9 +150,9 @@ Deno.test("f1040: specified Form 3800 credit uses its separate AMT limit", () =>
     line16_income_tax: 20_000,
     line17_additional_taxes: 5_000,
     form3800_source_credits: { standardCredit: 0, specifiedCredit: 10_000 },
-    form3800_form6251_line9: 25_000,
-    form3800_form6251_line11: 5_000,
-    form3800_schedule3_lines: emptySchedule3ForBusinessCredit,
+    credit_limit_form6251_line9: 25_000,
+    credit_limit_form6251_line11: 5_000,
+    credit_limit_schedule3_lines: emptySchedule3ForBusinessCredit,
   });
   assertEquals(result.finalizations?.[1].fields.standard_credit_allowed, 0);
   assertEquals(
@@ -128,9 +172,9 @@ Deno.test("f1040: Form 3800 follows finalized personal clean-vehicle credit", ()
     form8936_priority_personal_credits: 0,
     form8936_schedule3_line7_tentative: 7_500,
     form3800_source_credits: { standardCredit: 5_000, specifiedCredit: 0 },
-    form3800_form6251_line9: 0,
-    form3800_form6251_line11: 0,
-    form3800_schedule3_lines: {
+    credit_limit_form6251_line9: 0,
+    credit_limit_form6251_line11: 0,
+    credit_limit_schedule3_lines: {
       ...emptySchedule3ForBusinessCredit,
       line7: 7_500,
     },
@@ -146,7 +190,7 @@ Deno.test("f1040: Form 3800 needs AMT evidence and does not mix legacy gross GBC
     filing_status: FilingStatus.Single,
     line16_income_tax: 10_000,
     form3800_source_credits: { standardCredit: 1_000, specifiedCredit: 0 },
-    form3800_schedule3_lines: emptySchedule3ForBusinessCredit,
+    credit_limit_schedule3_lines: emptySchedule3ForBusinessCredit,
   };
   assertThrows(
     () => compute(source),
@@ -157,9 +201,9 @@ Deno.test("f1040: Form 3800 needs AMT evidence and does not mix legacy gross GBC
     () =>
       compute({
         ...source,
-        form3800_form6251_line9: 0,
-        form3800_form6251_line11: 0,
-        form3800_schedule3_lines: {
+        credit_limit_form6251_line9: 0,
+        credit_limit_form6251_line11: 0,
+        credit_limit_schedule3_lines: {
           ...emptySchedule3ForBusinessCredit,
           line6aGbc: 100,
           line7: 100,
@@ -175,9 +219,9 @@ Deno.test("f1040: MFS Form 3800 requires the spouse business-credit answer", () 
     filing_status: FilingStatus.MFS,
     line16_income_tax: 20_000,
     form3800_source_credits: { standardCredit: 5_000, specifiedCredit: 0 },
-    form3800_form6251_line9: 0,
-    form3800_form6251_line11: 0,
-    form3800_schedule3_lines: emptySchedule3ForBusinessCredit,
+    credit_limit_form6251_line9: 0,
+    credit_limit_form6251_line11: 0,
+    credit_limit_schedule3_lines: emptySchedule3ForBusinessCredit,
   };
   assertThrows(() => compute(source), Error, "spouse business-credit answer");
   const withAnswer = compute({ ...source, spouse_has_business_credit: true });

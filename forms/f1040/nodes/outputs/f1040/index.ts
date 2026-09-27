@@ -12,6 +12,11 @@ import {
   type Form3800NonpassiveInput,
   type Form3800NonpassiveLines,
 } from "../../inputs/f3800/calculation.ts";
+import {
+  calculateForm8912IndividualLimit,
+  deriveForm8912IndividualLimitInput,
+  type Form8912IndividualLimitLines,
+} from "../../inputs/f8912/calculation.ts";
 import { FilingStatus } from "../../types.ts";
 
 // Fields that may arrive from multiple upstream nodes accumulate as arrays in the
@@ -138,10 +143,10 @@ const inputSchema = z.object({
     standardCredit: z.number().finite().nonnegative(),
     specifiedCredit: z.number().finite().nonnegative(),
   }).optional(),
-  form3800_form6251_line9: z.number().finite().nonnegative().optional(),
-  form3800_form6251_line11: z.number().finite().nonnegative().optional(),
-  form3800_schedule2_line1z: z.number().finite().nonnegative().optional(),
-  form3800_schedule3_lines: z.object({
+  credit_limit_form6251_line9: z.number().finite().nonnegative().optional(),
+  credit_limit_form6251_line11: z.number().finite().nonnegative().optional(),
+  credit_limit_schedule2_line1z: z.number().finite().nonnegative().optional(),
+  credit_limit_schedule3_lines: z.object({
     line1: z.number().finite().nonnegative(),
     line2: z.number().finite().nonnegative(),
     line3: z.number().finite().nonnegative(),
@@ -291,6 +296,12 @@ type BusinessCreditAllowance = {
   readonly schedule3Credits: number;
 };
 
+type BondCreditAllowance = {
+  readonly lines: Form8912IndividualLimitLines;
+  readonly schedule3Line7: number;
+  readonly schedule3Credits: number;
+};
+
 function cleanVehicleAllowance(
   input: F1040Input,
 ): CleanVehicleAllowance | undefined {
@@ -333,15 +344,15 @@ function businessCreditAllowance(
     credits.standardCredit + credits.specifiedCredit <= 0 ||
     input.filing_status === undefined ||
     input.line16_income_tax === undefined ||
-    input.form3800_form6251_line9 === undefined ||
-    input.form3800_form6251_line11 === undefined ||
-    input.form3800_schedule3_lines === undefined
+    input.credit_limit_form6251_line9 === undefined ||
+    input.credit_limit_form6251_line11 === undefined ||
+    input.credit_limit_schedule3_lines === undefined
   ) {
     throw new Error(
       "Form 3800 source credit needs filing status, Form 1040 tax, Form 6251, and Schedule 3 return lines",
     );
   }
-  const schedule3 = input.form3800_schedule3_lines;
+  const schedule3 = input.credit_limit_schedule3_lines;
   if (schedule3.line6aGbc > 0) {
     throw new Error(
       "Form 3800 source credit cannot combine with unbounded Schedule 3 general business credits",
@@ -352,13 +363,13 @@ function businessCreditAllowance(
     filingStatus: input.filing_status,
     spouseHasBusinessCredit: input.spouse_has_business_credit,
     form1040Line16: input.line16_income_tax ?? 0,
-    schedule2Line1z: input.form3800_schedule2_line1z ?? 0,
+    schedule2Line1z: input.credit_limit_schedule2_line1z ?? 0,
     educationCreditRecaptureTaxIncludedInLine7Sources: 0,
     form8621TaxIncludedInLine7Sources: input.form8621_tax ?? 0,
     deferred965TaxIncludedInLine7Sources: 0,
     triggering965TaxIncludedInLine7Sources: 0,
-    form6251Line11: input.form3800_form6251_line11,
-    form6251Line9: input.form3800_form6251_line9,
+    form6251Line11: input.credit_limit_form6251_line11,
+    form6251Line9: input.credit_limit_form6251_line9,
     form1040Line19: input.line19_child_tax_credit ?? 0,
     schedule3Line1: schedule3.line1,
     schedule3Line2: schedule3.line2,
@@ -379,6 +390,58 @@ function businessCreditAllowance(
     lines,
     schedule3Line7: schedule3Line7 + lines.line38,
     schedule3Credits: originalSchedule3Credits + lines.line38,
+  };
+}
+
+function bondCreditAllowance(
+  input: F1040Input,
+  cleanVehicles: CleanVehicleAllowance | undefined,
+  businessCredit: BusinessCreditAllowance | undefined,
+): BondCreditAllowance | undefined {
+  const source = input.form8912_source_lines;
+  if (!source || source.line4 <= 0) return undefined;
+  const schedule3 = input.credit_limit_schedule3_lines;
+  if (
+    input.line16_income_tax === undefined ||
+    input.credit_limit_form6251_line11 === undefined ||
+    schedule3 === undefined
+  ) {
+    throw new Error(
+      "Form 8912 needs finalized Form 1040 tax, Form 6251 AMT, and Schedule 3 credits",
+    );
+  }
+  if (schedule3.line6kBondCredit > 0) {
+    throw new Error(
+      "Form 8912 source credit cannot combine with prefilled Schedule 3 line 6k",
+    );
+  }
+  if (schedule3.line6aGbc > 0 && !businessCredit) {
+    throw new Error("Form 8912 needs source-backed allowed Form 3800 credit");
+  }
+  const priorSchedule3Credits = businessCredit?.schedule3Credits ??
+    cleanVehicles?.schedule3Credits ??
+    (input.line20_nonrefundable_credits ?? 0);
+  const priorSchedule3Line7 = businessCredit?.schedule3Line7 ??
+    cleanVehicles?.schedule3Line7 ?? schedule3.line7;
+  const allowedBusinessCredit = businessCredit?.lines.line38 ?? 0;
+  const lines = calculateForm8912IndividualLimit(
+    deriveForm8912IndividualLimitInput(source, {
+      form1040Line16: input.line16_income_tax,
+      form1040Line19: input.line19_child_tax_credit ?? 0,
+      schedule2Line1z: input.credit_limit_schedule2_line1z ?? 0,
+      form6251Line11: input.credit_limit_form6251_line11,
+      schedule3Line1: schedule3.line1,
+      schedule3Line6a: allowedBusinessCredit,
+      schedule3Line6b: schedule3.line6bPriorMinimumTax,
+      schedule3Line6k: 0,
+      schedule3Line8: priorSchedule3Credits,
+      form3800AllowedCredit: allowedBusinessCredit,
+    }),
+  );
+  return {
+    lines,
+    schedule3Line7: priorSchedule3Line7 + lines.line12,
+    schedule3Credits: priorSchedule3Credits + lines.line12,
   };
 }
 
@@ -413,6 +476,7 @@ function assembleReturn(
   input: F1040Input,
   cleanVehicles: CleanVehicleAllowance | undefined,
   businessCredit: BusinessCreditAllowance | undefined,
+  bondCredit: BondCreditAllowance | undefined,
 ): Record<string, number> {
   const computed_line1z = input.line1z_total_wages ?? totalWages(input);
   const computed_line9 = totalIncome(input);
@@ -423,7 +487,8 @@ function assembleReturn(
     (input.line13b_additional_deductions ?? 0);
   const computed_line15 = taxableIncome(input);
   const computed_line18 = totalTaxBeforeCredits(input);
-  const computed_line20 = businessCredit?.schedule3Credits ??
+  const computed_line20 = bondCredit?.schedule3Credits ??
+    businessCredit?.schedule3Credits ??
     cleanVehicles?.schedule3Credits ??
     (input.line20_nonrefundable_credits ?? 0);
   const computed_line21 = creditsTotal(input, computed_line20);
@@ -480,7 +545,10 @@ function assembleReturn(
   result.line12c_deduction_total = deductionAmount(input);
   result.line14_deductions_qbi_total = computed_line14;
   result.line32_refundable_credits_total = computed_line32;
-  if (cleanVehicles !== undefined || businessCredit !== undefined) {
+  if (
+    cleanVehicles !== undefined || businessCredit !== undefined ||
+    bondCredit !== undefined
+  ) {
     result.line20_nonrefundable_credits = computed_line20;
   }
   if (computed_line25c > 0) result.line25c_total = computed_line25c;
@@ -604,16 +672,21 @@ class F1040Node extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, rawInput: F1040Input): NodeResult {
     const input = inputSchema.parse(rawInput);
-    if ((input.form8912_source_lines?.line4 ?? 0) > 0) {
-      throw new Error(
-        "Form 8912 positive credit cannot be filed until the Part II tax limit and source document are integrated",
-      );
-    }
     const cleanVehicles = cleanVehicleAllowance(input);
     const businessCredit = businessCreditAllowance(input, cleanVehicles);
-    const assembled = assembleReturn(input, cleanVehicles, businessCredit);
+    const bondCredit = bondCreditAllowance(
+      input,
+      cleanVehicles,
+      businessCredit,
+    );
+    const assembled = assembleReturn(
+      input,
+      cleanVehicles,
+      businessCredit,
+      bondCredit,
+    );
     const schedule3Finalization = cleanVehicles === undefined &&
-        businessCredit === undefined
+        businessCredit === undefined && bondCredit === undefined
       ? undefined
       : {
         nodeType: "schedule3",
@@ -631,15 +704,22 @@ class F1040Node extends TaxNode<typeof inputSchema> {
           line6m_total: cleanVehicles && cleanVehicles.usedCredit > 0
             ? cleanVehicles.usedCredit
             : undefined,
-          line7_total: (businessCredit?.schedule3Line7 ??
-              cleanVehicles?.schedule3Line7 ?? 0) > 0
-            ? businessCredit?.schedule3Line7 ?? cleanVehicles?.schedule3Line7
+          line6k_tax_credit_bonds: bondCredit && bondCredit.lines.line12 > 0
+            ? bondCredit.lines.line12
             : undefined,
-          line8_total: (businessCredit?.schedule3Credits ??
-              cleanVehicles?.schedule3Credits ?? 0) > 0
-            ? businessCredit?.schedule3Credits ??
-              cleanVehicles?.schedule3Credits
-            : undefined,
+          line7_total:
+            (bondCredit?.schedule3Line7 ?? businessCredit?.schedule3Line7 ??
+                cleanVehicles?.schedule3Line7 ?? 0) > 0
+              ? bondCredit?.schedule3Line7 ?? businessCredit?.schedule3Line7 ??
+                cleanVehicles?.schedule3Line7
+              : undefined,
+          line8_total:
+            (bondCredit?.schedule3Credits ?? businessCredit?.schedule3Credits ??
+                cleanVehicles?.schedule3Credits ?? 0) > 0
+              ? bondCredit?.schedule3Credits ??
+                businessCredit?.schedule3Credits ??
+                cleanVehicles?.schedule3Credits
+              : undefined,
         },
       };
     return {
@@ -654,6 +734,15 @@ class F1040Node extends TaxNode<typeof inputSchema> {
               allowed_credit: businessCredit.lines.line38,
               standard_credit_allowed: businessCredit.lines.line17,
               specified_credit_allowed: businessCredit.lines.line37,
+            },
+          }]
+          : []),
+        ...(bondCredit
+          ? [{
+            nodeType: "f8912",
+            fields: {
+              allowed_credit: bondCredit.lines.line12,
+              unused_credit: bondCredit.lines.unusedCredit,
             },
           }]
           : []),

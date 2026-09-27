@@ -41,7 +41,27 @@ Deno.test("Form 1040 MeF refuses an unresolved Form 8912 credit", () => {
   assertThrows(
     () => irs1040.build({ form8912_source_lines: { line4: 100 } }),
     Error,
-    "Part II tax limit and source document",
+    "needs finalized Form 8912 Part II",
+  );
+});
+
+Deno.test("Form 1040 MeF accepts a finalized Form 8912 only with its document", () => {
+  const fields = { form8912_source_lines: { line4: 100 } };
+  assertThrows(
+    () =>
+      irs1040.build(fields, {
+        pending: { f8912: { allowed_credit: 100 } },
+        documentIdsByPendingKey: { f8912: [] },
+      }),
+    Error,
+    "one attached Form 8912",
+  );
+  assertStringIncludes(
+    irs1040.build(fields, {
+      pending: { f8912: { allowed_credit: 100 } },
+      documentIdsByPendingKey: { f8912: ["IRS8912_1"] },
+    }),
+    "<IRS1040>",
   );
 });
 
