@@ -106,6 +106,56 @@ Deno.test("Form 5884 full-return export reconciles its wage deduction", () => {
         pending: {
           schedule_c: {
             ...business,
+            schedule_cs: [{
+              ...business.schedule_cs[0],
+              line_26_wages: 3_000,
+            }],
+          },
+        },
+      }),
+    Error,
+    "payroll exceeds linked Schedule C gross wages",
+  );
+  const twoEmployees = {
+    ...workOpportunitySource,
+    f5884s: [
+      workOpportunitySource.f5884s[0],
+      {
+        ...workOpportunitySource.f5884s[0],
+        employee_reference: "EMP-002",
+        wage_records: [{
+          ...workOpportunitySource.f5884s[0].wage_records[0],
+          payroll_record_reference: "PAY-002",
+        }],
+      },
+    ],
+  };
+  assertThrows(
+    () =>
+      form5884.build(twoEmployees, {
+        pending: {
+          schedule_c: {
+            ...business,
+            schedule_cs: [{
+              ...business.schedule_cs[0],
+              line_26_wages: 10_000,
+            }],
+            wotc_wage_reductions: [{
+              business_reference: "BUSINESS-1",
+              credit_amount: 4_800,
+            }],
+          },
+        },
+      }),
+    Error,
+    "payroll exceeds linked Schedule C gross wages",
+  );
+  assertThrows(
+    () =>
+      form5884.build(workOpportunitySource, {
+        pending: {
+          schedule_c: {
+            ...business,
             wotc_wage_reductions: [{
               business_reference: "BUSINESS-1",
               credit_amount: 1_000,
@@ -144,6 +194,30 @@ Deno.test("Form 5884 full-return export reconciles its wage deduction", () => {
       },
     }),
     "<TotalWagesAmt>2400</TotalWagesAmt>",
+  );
+  assertThrows(
+    () =>
+      form5884.build(farmSource, {
+        pending: {
+          schedule_f: {
+            schedule_fs: [{
+              farm_id: "FARM-1",
+              line_a_principal_crop_activity: "GRAIN FARMING",
+              line_b_agricultural_activity_code: "111100",
+              line_e_material_participation: true,
+              accounting_method: "cash",
+              line1_sales_livestock_resale: 0,
+              line22_labor_hired: 3_000,
+            }],
+            wotc_wage_reductions: [{
+              farm_id: "FARM-1",
+              credit_amount: 2_400,
+            }],
+          },
+        },
+      }),
+    Error,
+    "payroll exceeds linked Schedule F gross labor hired",
   );
 });
 

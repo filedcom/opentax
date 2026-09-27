@@ -65,7 +65,11 @@ claimed amounts rather than by all qualifying payroll. The allocation and
 rejection cases are written but unrun. Capitalized labor in inventory,
 capitalized asset costs, and wage deductions on business forms other than
 Schedules C and F still need separate, source-backed destinations and
-sold-versus-ending-basis allocation.
+sold-versus-ending-basis allocation. The full MeF bundle also compares qualified
+payroll rows for each destination with its Schedule C line 26 gross wages or
+Schedule F line 22 gross labor hired. A destination whose gross wages are
+smaller than its assigned qualified payroll is rejected; this is not independent
+payroll-document matching.
 
 `pass_through_credits` separately identifies partnership, S corporation,
 cooperative, estate, and trust allocations by entity EIN, source document

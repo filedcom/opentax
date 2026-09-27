@@ -25,6 +25,8 @@ export const form5884: MefFormDescriptor<"f5884", unknown> = {
     if (context?.pending) {
       const expectedC = new Map<string, number>();
       const expectedF = new Map<string, number>();
+      const payrollC = new Map<string, number>();
+      const payrollF = new Map<string, number>();
       for (const allocation of lines.wageDeductionAllocations) {
         if (allocation.location.kind === "schedule_c") {
           expectedC.set(
@@ -35,16 +37,39 @@ export const form5884: MefFormDescriptor<"f5884", unknown> = {
           expectedF.set(allocation.location.farm_id, allocation.credit_amount);
         }
       }
-      const actualC = context.pending.schedule_c === undefined
+      for (const item of source.f5884s) {
+        if (
+          source.controlled_group &&
+          item.employer_ein !== source.controlled_group.taxpayer_member_ein
+        ) continue;
+        for (const record of item.wage_records) {
+          if (record.deduction_location.kind === "schedule_c") {
+            const id = record.deduction_location.business_reference;
+            payrollC.set(
+              id,
+              (payrollC.get(id) ?? 0) + record.qualified_wages,
+            );
+          } else if (record.deduction_location.kind === "schedule_f") {
+            const id = record.deduction_location.farm_id;
+            payrollF.set(
+              id,
+              (payrollF.get(id) ?? 0) + record.qualified_wages,
+            );
+          }
+        }
+      }
+      const scheduleC = context.pending.schedule_c === undefined
+        ? undefined
+        : scheduleCInputSchema.parse(context.pending.schedule_c);
+      const scheduleF = context.pending.schedule_f === undefined
+        ? undefined
+        : scheduleFInputSchema.parse(context.pending.schedule_f);
+      const actualC = scheduleC === undefined
         ? new Map<string, number>()
-        : wotcReductionsByBusiness(
-          scheduleCInputSchema.parse(context.pending.schedule_c),
-        );
-      const actualF = context.pending.schedule_f === undefined
+        : wotcReductionsByBusiness(scheduleC);
+      const actualF = scheduleF === undefined
         ? new Map<string, number>()
-        : wotcReductionsByFarm(
-          scheduleFInputSchema.parse(context.pending.schedule_f),
-        );
+        : wotcReductionsByFarm(scheduleF);
       for (
         const [expected, actual, schedule] of [
           [expectedC, actualC, "Schedule C"],
@@ -57,6 +82,24 @@ export const form5884: MefFormDescriptor<"f5884", unknown> = {
         ) {
           throw new Error(
             `Form 5884 line 2 does not reconcile to ${schedule} wages`,
+          );
+        }
+      }
+      for (const [id, wages] of payrollC) {
+        const business = scheduleC?.schedule_cs.find((item) =>
+          item.business_reference === id
+        );
+        if (!business || (business.line_26_wages ?? 0) < wages) {
+          throw new Error(
+            "Form 5884 payroll exceeds linked Schedule C gross wages",
+          );
+        }
+      }
+      for (const [id, wages] of payrollF) {
+        const farm = scheduleF?.schedule_fs.find((item) => item.farm_id === id);
+        if (!farm || (farm.line22_labor_hired ?? 0) < wages) {
+          throw new Error(
+            "Form 5884 payroll exceeds linked Schedule F gross labor hired",
           );
         }
       }

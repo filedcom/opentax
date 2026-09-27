@@ -209,8 +209,11 @@ reconciled to the remaining wage cap. The calculated reduction follows those
 claimed amounts; allocation and rejection cases are written but unrun.
 Capitalized inventory/asset costs, sold-versus-ending-inventory basis, other
 business forms, entity-return reconciliation, and payroll-document matching
-remain open. The controlled-group pass now allocates the group credit by
-members' capped qualified wages, requires a group-classification document
+remain open. The full MeF bundle now also checks that each linked Schedule C
+line 26 or Schedule F line 22 gross amount covers the qualified payroll rows
+assigned to it, not merely the smaller credit reduction. These mismatch cases
+are written but unrun. The controlled-group pass now allocates the group credit
+by members' capped qualified wages, requires a group-classification document
 reference, and sends only the taxpayer member's line 2 share to Form 3800.
 Native member-share and explanation statements are linked to Form 5884; the
 printed form gets a calculation page. Source, XML, PDF, and XSD cases are
