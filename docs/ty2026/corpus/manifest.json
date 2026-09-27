@@ -1387,6 +1387,51 @@
       "bytes": 162588,
       "sha256": "42476e45d5f5428acda84a796c5c0030aa381224d55af0ce4fbcd31b7c850c41",
       "retrieved_utc": "2026-09-27T12:58:36.690155+00:00"
+    },
+    {
+      "path": "authorities/i1116--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/i1116--2025.pdf",
+      "kind": "prior-year-comparator",
+      "status": "downloaded",
+      "bytes": 364870,
+      "sha256": "6998cf8cd04b659b60ccf0b3a3ffaa507cc1dbdb31da40850f38a599dc39e0b1",
+      "retrieved_utc": "2026-09-27T13:18:56.845318+00:00"
+    },
+    {
+      "path": "authorities/f1116sb--2022.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/f1116sb.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 109219,
+      "sha256": "32ca6e58c9396b4561ee111397b8b5d7fba8c71b09aaa7828d435e5fdb6c9ddf",
+      "retrieved_utc": "2026-09-27T13:18:57.523630+00:00"
+    },
+    {
+      "path": "authorities/i1116sb--2022.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/i1116sb.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 152400,
+      "sha256": "84d287be4147447e9d3b715f3ff97f9a7e47519c47b4e67b0cbf1fe07136a76c",
+      "retrieved_utc": "2026-09-27T13:18:58.205977+00:00"
+    },
+    {
+      "path": "authorities/f1116sc--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/f1116sc.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 165229,
+      "sha256": "33277563b9cb4fe35dac709201ab3052307d463e844392ba736a963996e51e1b",
+      "retrieved_utc": "2026-09-27T13:18:58.944725+00:00"
+    },
+    {
+      "path": "authorities/i1116sc--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/i1116sc.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 137036,
+      "sha256": "0ae29922efdd8e61bd9346856a82cafead43adda375a95a94cbb47df448c1fb0",
+      "retrieved_utc": "2026-09-27T13:18:59.670838+00:00"
     }
   ]
 }

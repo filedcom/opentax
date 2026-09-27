@@ -26,6 +26,9 @@ required to close each route.
 The [Form 8962 contract](FORM8962-GRAPH.md) identifies the 2026 line 27
 repayment and reserved lines 28/29, Form 1095-A and Schedule 2/3 graph
 handoff, full PDF field map, and the current-instruction/MeF gates.
+The [Form 1116 contract](FORM1116-GRAPH.md) pins its 2026 line 18
+Schedule 1-A addback and line 20 Schedule 2 tax base, continuous-use
+carryover/redetermination schedules, and the current graph/PDF/MeF gaps.
 The [scenario 12 contract](ATS-SCENARIO-12.md) and
 [business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
 broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800

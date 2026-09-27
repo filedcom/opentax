@@ -15,6 +15,10 @@ graph, PDF and MeF work against all TY2025 inventories and names the new
 The [Form 8962 contract](../../../docs/ty2026/FORM8962-GRAPH.md) maps the
 2026 full-repayment line 27, 400% FPL boundary and Form 1095-A source to
 Schedule 2/3, with a 143-widget PDF inventory and current-MeF gate.
+The [Form 1116 contract](../../../docs/ty2026/FORM1116-GRAPH.md) maps
+foreign-tax categories, carryovers, redeterminations and the revised line
+18/20 bases from 1040, Schedule 1-A and Schedule 2; its full attachment
+and MeF routes are still outside this registry.
 The [ATS scenario 12 plan](../../../docs/ty2026/ATS-SCENARIO-12.md) and
 [business credit contract](../../../docs/ty2026/GENERAL-BUSINESS-CREDIT-GRAPH.md)
 map Form 7207 → Form 3800 → Schedule 3 and Form 7205/7220 → Schedule C.
