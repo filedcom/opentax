@@ -62,6 +62,10 @@ and return-wide section 179 allocation explicit, maps all 271 draft widgets,
 and identifies the old Schedule 1 line 13 output as incompatible with 2026.
 Notice 2026-11, QPP guidance and prior-year comparators are pinned; final 2026
 instructions and current MeF remain gates.
+The [Form 461 contract](FORM461-GRAPH.md) pins the 2026 return-wide excess-
+business-loss worksheet, its Schedule 1 line 8p addback and future NOL record.
+The current per-source threshold shortcut can miss or overstate losses; the
+2025 PDF descriptor targets the 2026 name field instead of line 16.
 The [scenario 12 contract](ATS-SCENARIO-12.md) and
 [business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
 broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800

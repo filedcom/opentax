@@ -32,6 +32,9 @@ changes; they are a snapshot, not a completion score.
 The [Form 4562 asset-ledger contract](FORM4562-GRAPH.md) now covers the
 depreciation side of the business/property group, including the old Schedule
 1 route that must be replaced before the TY2026 calculation graph can use it.
+The [Form 461 return-wide loss contract](FORM461-GRAPH.md) follows the
+activity limits and replaces the per-source excess-loss shortcut with the
+printed 2026 worksheet and Schedule 1 line 8p/NOL handoff.
 
 These are **work assignments**, not blanket approvals to reuse TY2025 code.
 The pinned draft/authority files and `instruction-coverage.csv` are the

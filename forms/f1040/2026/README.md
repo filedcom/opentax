@@ -100,6 +100,11 @@ and QPP rules, Part V listed property, correct source-schedule destinations,
 and all 271 draft PDF widgets. The shared node's old Schedule 1 line 13
 depreciation output conflicts with the 2026 HSA line; 2026 instructions and
 current MeF remain acceptance gates.
+The [Form 461 contract](../../../docs/ty2026/FORM461-GRAPH.md) maps all
+2026 source and adjustment lines, the $256,000/$512,000 thresholds, return-wide
+loss aggregation, Schedule 1 line 8p and origin-year NOL carryover. Its shared
+node accepts precomputed per-source excesses, so it cannot yet file the
+18-widget form or correctly net multiple businesses.
 The [Form 4835 contract](../../../docs/ty2026/FORM4835-GRAPH.md) and
 [ATS scenario 3 plan](../../../docs/ty2026/ATS-SCENARIO-03.md) connect
 production-based farm rent to Schedule E while keeping Schedule F farm profit
