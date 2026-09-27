@@ -1,6 +1,7 @@
 import { PDFDocument } from "pdf-lib";
 import { buildF1040PdfBytes2026 } from "./f1040.ts";
 import { buildForm6251PdfBytes2026 } from "./f6251.ts";
+import { buildForm5695PdfBytes2026 } from "./form5695.ts";
 import { buildForm4137PdfBytes2026 } from "./f4137.ts";
 import { buildForm8960PdfBytes2026 } from "./f8960.ts";
 import { buildSchedule1PdfBytes2026 } from "./schedule1.ts";
@@ -37,6 +38,7 @@ interface CorePdfInput2026 {
   readonly scheduleD?: Record<string, unknown>;
   readonly form8949?: Record<string, unknown>;
   readonly form6251?: Record<string, unknown>;
+  readonly form5695?: Record<string, unknown>;
   readonly form4137?: Record<string, unknown>;
   readonly form8960?: Record<string, unknown>;
   readonly f8812?: Record<string, unknown>;
@@ -54,6 +56,7 @@ export async function buildCorePdfBytes2026({
   scheduleD,
   form8949,
   form6251,
+  form5695,
   form4137,
   form8960,
   f8812,
@@ -171,6 +174,12 @@ export async function buildCorePdfBytes2026({
     )
   ) {
     throw new Error("TY2026 core PDF Schedule 3 disagrees with Form 1040");
+  }
+  if (
+    optionalAmount(schedule3 ?? {}, "line5a_residential_clean_energy") > 0 &&
+    !form5695
+  ) {
+    throw new Error("TY2026 core PDF needs Form 5695 for residential credit");
   }
   if (
     !schedule1 &&
@@ -292,6 +301,11 @@ export async function buildCorePdfBytes2026({
   }
   if (form6251) {
     parts.push(await buildForm6251PdfBytes2026(form6251, f1040, { name, ssn }));
+  }
+  if (form5695) {
+    parts.push(
+      await buildForm5695PdfBytes2026(form5695, schedule3, { name, ssn }),
+    );
   }
   if (form8960) {
     parts.push(await buildForm8960PdfBytes2026(form8960, { name, ssn }));

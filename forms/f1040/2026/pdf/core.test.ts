@@ -8,6 +8,50 @@ import { schedule_b_2026 } from "../nodes/schedule_b.ts";
 import { schedule2_2026 } from "../nodes/schedule2.ts";
 import { buildCorePdfBytes2026 } from "./core.ts";
 
+Deno.test("TY2026 core PDF requires and attaches Form 5695 for Schedule 3 line 5a", async () => {
+  const result = f1040_2026_node.compute({ taxYear: 2026, formType: "f1040" }, {
+    filing_status: FilingStatus.Single,
+    taxpayer_first_name: "Sadie",
+    taxpayer_last_name: "Long",
+    taxpayer_ssn: "400001032",
+    digital_assets: false,
+    taxpayer_citizen_national_or_work_authorized: true,
+    line9_total_income: 48_100,
+    deduction_method: "standard",
+    line16_income_tax: 4_000,
+    line20_nonrefundable_credits: 120,
+  });
+  const f1040 =
+    result.outputs.find((output) => output.nodeType === "f1040")!.fields;
+  const schedule3 = {
+    line5a_residential_clean_energy: 120,
+    line1_total: 0,
+    line7_total: 0,
+    line8_total: 120,
+    line14_total: 0,
+    line15_total: 0,
+  };
+  const form5695 = {
+    line1_carryforward: 200,
+    line2_limit: 120,
+    line3_credit: 120,
+    line4_to_2027: 80,
+  };
+  const pdf = await PDFDocument.load(
+    await buildCorePdfBytes2026({
+      f1040,
+      schedule3,
+      form5695,
+    }),
+  );
+  assertEquals(pdf.getPageCount(), 4);
+  await assertRejects(
+    () => buildCorePdfBytes2026({ f1040, schedule3 }),
+    Error,
+    "needs Form 5695",
+  );
+});
+
 Deno.test("TY2026 core PDF appends required Schedule 3-A from a calculated credit", async () => {
   const result = f1040_2026_node.compute({ taxYear: 2026, formType: "f1040" }, {
     filing_status: FilingStatus.Single,

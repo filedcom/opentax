@@ -8,6 +8,13 @@ The current draft Form 5695 has one printed page, six AcroForm fields, and
 only four amount lines. The prior-year Form 5695 expense and Part II inputs
 are no longer its 2026 filing surface.
 
+The PDF builder maps `Page1.f1_01` and `f1_02` to name/SSN and `f1_3` through
+`f1_6` to lines 1–4. It checks the draft hash and arithmetic, requires the
+Schedule 3 line 5a amount to equal line 3, removes the draft cover, and
+flattens the page. A used-and-unused credit sample passed visual review.
+The normal graph still needs the ordered credit calculator below before it
+can produce that attachment from source facts.
+
 | 2026 Form 5695 | Required value | Graph consequence |
 | --- | --- | --- |
 | Line 1 | Unused credit from **2025 Form 5695 line 16**, with origin-year provenance | This is the only new 2026 source amount. Expenses paid or property placed in service after 2025 do not create a new 2026 credit on this form. |
