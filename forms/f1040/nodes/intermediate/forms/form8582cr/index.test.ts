@@ -273,24 +273,111 @@ Deno.test("Form 8582-CR professional status cannot reclassify all activities", (
   );
 });
 
-Deno.test("Form 8582-CR separates rehabilitation and housing credits for Parts III/IV", () => {
-  for (
-    const category of [
+Deno.test("Form 8582-CR Part III limits rehabilitation credit by tax on allowance", () => {
+  const result = compute({
+    credit_sources: [source(
       PassiveCreditCategory.RehabilitationOrPre1990Housing,
+      3_000,
+      0,
+      "Rehab",
+    )],
+    regular_tax_all_income: 10_000,
+    regular_tax_without_passive: 10_000,
+    modified_agi: 180_000,
+    form8582_line9_special_allowance_used: 0,
+    part_iii_tax_on_income_less_line26: 7_000,
+    filing_status: FilingStatus.Single,
+  });
+  assertEquals(allowed(result), 3_000);
+});
+
+Deno.test("Form 8582-CR Part IV limits post-1989 housing credit by remaining allowance tax", () => {
+  const result = compute({
+    credit_sources: [source(
       PassiveCreditCategory.LowIncomeHousing,
-    ]
-  ) {
-    assertThrows(
-      () =>
-        compute({
-          credit_sources: [source(category, 1_000)],
-          regular_tax_all_income: 10_000,
-          regular_tax_without_passive: 9_000,
-        }),
-      Error,
-      "need Parts III and IV",
-    );
-  }
+      4_000,
+      0,
+      "Housing",
+    )],
+    regular_tax_all_income: 10_000,
+    regular_tax_without_passive: 10_000,
+    modified_agi: 300_000,
+    form8582_line9_special_allowance_used: 5_000,
+    part_iv_tax_on_income_less_remaining_allowance: 8_000,
+    filing_status: FilingStatus.Single,
+  });
+  assertEquals(allowed(result), 2_000);
+  assertEquals(result.carryforwards?.suspended_pac_8582cr, 2_000);
+});
+
+Deno.test("Form 8582-CR orders active rental, rehabilitation, then housing allowances", () => {
+  const result = compute({
+    credit_sources: [
+      rental(1_000),
+      source(
+        PassiveCreditCategory.RehabilitationOrPre1990Housing,
+        2_000,
+        0,
+        "Rehab",
+      ),
+      source(PassiveCreditCategory.LowIncomeHousing, 2_000, 0, "Housing"),
+    ],
+    regular_tax_all_income: 10_000,
+    regular_tax_without_passive: 10_000,
+    modified_agi: 80_000,
+    form8582_line9_special_allowance_used: 0,
+    part_ii_tax_on_income_less_line14: 8_000,
+    part_iv_tax_on_income_less_remaining_allowance: 6_000,
+    filing_status: FilingStatus.Single,
+  });
+  assertEquals(allowed(result), 4_000);
+  assertEquals(result.carryforwards?.suspended_pac_8582cr, 1_000);
+});
+
+Deno.test("Form 8582-CR requires Part III and IV worksheet taxes when used", () => {
+  const base = {
+    regular_tax_all_income: 10_000,
+    regular_tax_without_passive: 10_000,
+    modified_agi: 180_000,
+    form8582_line9_special_allowance_used: 0,
+    filing_status: FilingStatus.Single,
+  };
+  assertThrows(
+    () =>
+      compute({
+        ...base,
+        credit_sources: [
+          source(PassiveCreditCategory.RehabilitationOrPre1990Housing, 2_000),
+        ],
+      }),
+    Error,
+    "line 27 needs tax",
+  );
+  assertThrows(
+    () =>
+      compute({
+        ...base,
+        credit_sources: [source(PassiveCreditCategory.LowIncomeHousing, 2_000)],
+      }),
+    Error,
+    "line 35 needs tax",
+  );
+});
+
+Deno.test("Form 8582-CR MFS lived with spouse skips all three special allowances", () => {
+  const result = compute({
+    credit_sources: [
+      rental(1_000),
+      source(PassiveCreditCategory.RehabilitationOrPre1990Housing, 1_000),
+      source(PassiveCreditCategory.LowIncomeHousing, 1_000),
+    ],
+    regular_tax_all_income: 10_000,
+    regular_tax_without_passive: 9_500,
+    filing_status: FilingStatus.MFS,
+    mfs_lived_apart_all_year: false,
+  });
+  assertEquals(allowed(result), 500);
+  assertEquals(result.carryforwards?.suspended_pac_8582cr, 2_500);
 });
 
 Deno.test("Form 8582-CR combines different activity credits before the tax limit", () => {

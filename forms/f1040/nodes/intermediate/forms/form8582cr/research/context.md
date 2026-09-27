@@ -1,7 +1,7 @@
 # Form 8582-CR — Passive Activity Credit Limitations
 
 ## Overview
-Form 8582-CR limits passive activity credits. The current node calculates a Part I and active-rental Part II slice, and a native MeF descriptor serializes those lines. The node still deposits its allowed total directly in Schedule 3 line 6a. That is not the final filing route: each allowed business credit must enter its source form or Form 3800, then survive the Form 3800 tax limit. Source-level allocation and Parts III/IV are still open. The current carryforward is aggregate, not yet by activity and credit identity. The native MeF cases are written but unrun.
+Form 8582-CR limits passive activity credits. The current build pass calculates Parts I-IV and a native MeF descriptor serializes those lines. The node still deposits its allowed total directly in Schedule 3 line 6a. That is not the final filing route: each allowed business credit must enter its source form or Form 3800, then survive the Form 3800 tax limit. Source-level allocation is still open. The current carryforward is aggregate, not yet by activity and credit identity. The calculation and native MeF cases are written but unrun.
 
 **IRS Form:** Form 8582-CR
 **Drake Screen:** CR
@@ -22,6 +22,8 @@ Form 8582-CR limits passive activity credits. The current node calculates a Part
 | is_real_estate_professional | boolean | no | Real Estate Professional | True if taxpayer qualifies as real estate professional per IRC §469(c)(7) | IRC §469(c)(7) | https://www.law.cornell.edu/uscode/text/26/469 |
 | form8582_line9_special_allowance_used | number >= 0 | required for active rental credit | Form 8582 line 9 | Dollar allowance already used by passive rental losses | Form 8582-CR line 13 | https://www.irs.gov/instructions/i8582cr |
 | part_ii_tax_on_income_less_line14 | number >= 0 | required when line 14 is positive | Part II tax worksheet | Tax on taxable income after subtracting the line 14 dollar allowance | Form 8582-CR line 15 | https://www.irs.gov/instructions/i8582cr |
+| part_iii_tax_on_income_less_line26 | number >= 0 | required when Part III line 26 is positive, unless the low-MAGI Part II shortcut applies | Part III tax worksheet | Tax on taxable income after subtracting line 26 | Form 8582-CR line 27 | https://www.irs.gov/instructions/i8582cr |
+| part_iv_tax_on_income_less_remaining_allowance | number >= 0 | required when Part IV has remaining eligible credit and dollar allowance | Part IV tax worksheet | Tax on taxable income less $25,000 (or $12,500 MFS) minus Form 8582 line 9 | Form 8582-CR line 35 | https://www.irs.gov/instructions/i8582cr |
 | mfs_lived_apart_all_year | boolean | required for MFS active rental credit | MFS lived-apart answer | Distinguishes the $75,000 threshold from ineligibility | Form 8582-CR lines 9 and 12 | https://www.irs.gov/instructions/i8582cr |
 | filing_status | enum(single, mfj, mfs, hoh, qw) | no | Filing Status | Filing status for MFS phase-out thresholds | IRC §469(i)(5) | https://www.law.cornell.edu/uscode/text/26/469 |
 
@@ -47,11 +49,11 @@ If active rental credits remain after the line 6 passive-income tax limit:
   - line 15 = tax on taxable income − tax on taxable income less line 14
   - line 16 = min(line 8, line 15)
 The $25,000 figure is an income allowance, never a $25,000 credit. MFS filers who lived with a spouse have no Part II allowance. Real-estate-professional status alone does not reclassify every rental activity as nonpassive.
-The current build stops rehabilitation, older housing, newer housing, and PTP categories pending their separate limitations instead of putting them through the active-rental computation.
+The build pass separately computes the rehabilitation/pre-1990 housing Part III and post-1989 housing Part IV tax limits. PTP credits still stop pending their per-partnership limitation instead of entering the ordinary worksheet.
 Source: Form 8582-CR lines 8–16 and instructions.
 
 ### Step 5 — Total Allowed Credit
-allowed_credit = min(total_credits_available, base_allowed + special_allowance_additional)
+allowed_credit = min(total_credits_available, Part I line 6 + Part II line 16 + Part III line 30 + Part IV line 36)
 unallowed_credit = total_credits_available − allowed_credit
 
 ### Step 6 — Route Allowed Credit

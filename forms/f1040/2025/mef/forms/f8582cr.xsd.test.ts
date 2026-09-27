@@ -51,3 +51,49 @@ Deno.test({
     await Deno.remove(path);
   }
 });
+
+Deno.test({
+  name: "XSD: Form 8582-CR rehabilitation and post-1989 housing limits",
+  ignore: !xsdAvailable,
+  sanitizeOps: false,
+  sanitizeResources: false,
+}, async () => {
+  const xml = form8582cr.build({
+    credit_sources: [{
+      activity_reference: "Rehabilitation building",
+      source_form: "Form 3468",
+      source_document_reference: "2025 rehabilitation credit statement",
+      category: PassiveCreditCategory.RehabilitationOrPre1990Housing,
+      current_year_credit: 2_000,
+      prior_unallowed_credit: 0,
+      publicly_traded_partnership: false,
+    }, {
+      activity_reference: "Housing project",
+      source_form: "Form 8586",
+      source_document_reference: "2025 low-income housing credit statement",
+      category: PassiveCreditCategory.LowIncomeHousing,
+      current_year_credit: 2_000,
+      prior_unallowed_credit: 0,
+      publicly_traded_partnership: false,
+    }],
+    regular_tax_all_income: 10_000,
+    regular_tax_without_passive: 10_000,
+    filing_status: "single",
+    modified_agi: 180_000,
+    form8582_line9_special_allowance_used: 0,
+    part_iii_tax_on_income_less_line26: 8_500,
+    part_iv_tax_on_income_less_remaining_allowance: 7_000,
+  }).replace("<IRS8582CR>", '<IRS8582CR xmlns="http://www.irs.gov/efile">');
+  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(path, xml);
+    const result = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", XSD_PATH, path],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
+  } finally {
+    await Deno.remove(path);
+  }
+});

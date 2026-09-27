@@ -22,6 +22,8 @@ const RENTAL_ALLOWANCE_MAX = 25_000; // IRC §469(i)(2)
 const MAGI_UPPER_THRESHOLD = 150_000; // IRC §469(i)(3)(A)
 const MFS_ALLOWANCE_MAX = 12_500; // IRC §469(i)(5)(B)
 const MFS_MAGI_UPPER = 75_000; // IRC §469(i)(5)(B)
+const REHABILITATION_MAGI_UPPER = 250_000;
+const MFS_REHABILITATION_MAGI_UPPER = 125_000;
 
 export enum PassiveCreditCategory {
   ActiveRental = "active_rental",
@@ -100,9 +102,15 @@ export const inputSchema = z.object({
   // Form 8582-CR line 15 worksheet: tax on taxable income less line 14.
   // The tax on unadjusted taxable income is regular_tax_all_income above.
   part_ii_tax_on_income_less_line14: z.number().nonnegative().optional(),
+  // Part III line 27 worksheet: tax after subtracting line 26 from taxable income.
+  part_iii_tax_on_income_less_line26: z.number().nonnegative().optional(),
+  // Part IV line 35 worksheet: tax after subtracting the remaining $25,000
+  // ($12,500 MFS) allowance, net of Form 8582 line 9, from taxable income.
+  part_iv_tax_on_income_less_remaining_allowance: z.number().nonnegative()
+    .optional(),
   mfs_lived_apart_all_year: z.boolean().optional(),
 
-  // MFS filers who lived with their spouse cannot use Part II.
+  // MFS filers who lived with their spouse cannot use Parts II-IV.
   filing_status: filingStatusSchema.optional(),
 }).superRefine((input, ctx) => {
   const sourceIds = new Set<string>();
@@ -132,28 +140,42 @@ export const inputSchema = z.object({
         "Form 8582-CR publicly traded partnerships need their separate limitation",
     });
   }
-  if (
-    categoryCredit(input.credit_sources, PassiveCreditCategory.ActiveRental) > 0
-  ) {
+  const specialAllowanceCredits =
+    categoryCredit(input.credit_sources, PassiveCreditCategory.ActiveRental) +
+    categoryCredit(
+      input.credit_sources,
+      PassiveCreditCategory.RehabilitationOrPre1990Housing,
+    ) +
+    categoryCredit(
+      input.credit_sources,
+      PassiveCreditCategory.LowIncomeHousing,
+    );
+  if (specialAllowanceCredits > 0) {
     if (input.filing_status === undefined) {
       ctx.addIssue({
         code: "custom",
         path: ["filing_status"],
-        message: "Form 8582-CR Part II needs filing status",
+        message: "Form 8582-CR special allowance needs filing status",
       });
     }
-    if (input.modified_agi === undefined) {
+    const eligibleForSpecialAllowance = input.filing_status !==
+        FilingStatus.MFS || input.mfs_lived_apart_all_year === true;
+    if (eligibleForSpecialAllowance && input.modified_agi === undefined) {
       ctx.addIssue({
         code: "custom",
         path: ["modified_agi"],
-        message: "Form 8582-CR Part II needs modified AGI",
+        message: "Form 8582-CR special allowance needs modified AGI",
       });
     }
-    if (input.form8582_line9_special_allowance_used === undefined) {
+    if (
+      eligibleForSpecialAllowance &&
+      input.form8582_line9_special_allowance_used === undefined
+    ) {
       ctx.addIssue({
         code: "custom",
         path: ["form8582_line9_special_allowance_used"],
-        message: "Form 8582-CR Part II needs Form 8582 line 9, including zero",
+        message:
+          "Form 8582-CR special allowance needs Form 8582 line 9, including zero",
       });
     }
     if (
@@ -163,7 +185,8 @@ export const inputSchema = z.object({
       ctx.addIssue({
         code: "custom",
         path: ["mfs_lived_apart_all_year"],
-        message: "Form 8582-CR MFS Part II needs the lived-apart answer",
+        message:
+          "Form 8582-CR MFS special allowance needs the lived-apart answer",
       });
     }
   }
@@ -265,28 +288,144 @@ function calculatePartII(
   };
 }
 
+function calculatePartIII(
+  input: Form8582CRInput,
+  partI: ReturnType<typeof calculateForm8582CRPartI>,
+  partII: ReturnType<typeof calculatePartII>,
+) {
+  if (partI.rehabilitation.total === 0) return undefined;
+  if (
+    input.filing_status === FilingStatus.MFS &&
+    !input.mfs_lived_apart_all_year
+  ) return undefined;
+  const line17 = partI.line7;
+  const line18 = partII?.line16 ?? 0;
+  const line19 = Math.max(0, line17 - line18);
+  const line20 = Math.min(partI.rehabilitation.total, line19);
+  const mfs = input.filing_status === FilingStatus.MFS;
+  const modifiedAgi = input.modified_agi;
+  const lossAllowanceUsed = input.form8582_line9_special_allowance_used;
+  if (modifiedAgi === undefined || lossAllowanceUsed === undefined) {
+    throw new Error("Form 8582-CR Part III needs MAGI and Form 8582 line 9");
+  }
+  const skipPhaseout = partII !== undefined &&
+    modifiedAgi <= (mfs ? 50_000 : 100_000);
+  const line21 = skipPhaseout
+    ? undefined
+    : mfs
+    ? MFS_REHABILITATION_MAGI_UPPER
+    : REHABILITATION_MAGI_UPPER;
+  const line22 = skipPhaseout ? undefined : modifiedAgi;
+  const line23 = line21 === undefined
+    ? undefined
+    : Math.max(0, line21 - modifiedAgi);
+  const line24 = line23 === undefined ? undefined : Math.min(
+    mfs ? MFS_ALLOWANCE_MAX : RENTAL_ALLOWANCE_MAX,
+    line23 * PHASE_OUT_RATE,
+  );
+  const line25 = skipPhaseout ? undefined : lossAllowanceUsed;
+  const line26 = line24 === undefined
+    ? undefined
+    : Math.max(0, line24 - lossAllowanceUsed);
+  let line27 = 0;
+  if (line20 > 0 && skipPhaseout) {
+    line27 = partII?.line15 ?? 0;
+  } else if (line20 > 0 && (line26 ?? 0) > 0) {
+    const taxWithoutAllowance = input.part_iii_tax_on_income_less_line26;
+    if (
+      taxWithoutAllowance === undefined ||
+      taxWithoutAllowance > input.regular_tax_all_income
+    ) {
+      throw new Error(
+        "Form 8582-CR line 27 needs tax on income less the line 26 allowance",
+      );
+    }
+    line27 = input.regular_tax_all_income - taxWithoutAllowance;
+  }
+  const line28 = line18;
+  const line29 = Math.max(0, line27 - line28);
+  return {
+    line17,
+    line18,
+    line19,
+    line20,
+    line21,
+    line22,
+    line23,
+    line24,
+    line25,
+    line26,
+    line27,
+    line28,
+    line29,
+    line30: Math.min(line20, line29),
+  };
+}
+
+function calculatePartIV(
+  input: Form8582CRInput,
+  partI: ReturnType<typeof calculateForm8582CRPartI>,
+  partII: ReturnType<typeof calculatePartII>,
+  partIII: ReturnType<typeof calculatePartIII>,
+) {
+  if (partI.housing.total === 0) return undefined;
+  if (
+    input.filing_status === FilingStatus.MFS &&
+    !input.mfs_lived_apart_all_year
+  ) return undefined;
+  const line31 = partIII?.line19 ??
+    Math.max(0, partI.line7 - (partII?.line16 ?? 0));
+  const line32 = partIII?.line30 ?? 0;
+  const line33 = Math.max(0, line31 - line32);
+  const line34 = Math.min(partI.housing.total, line33);
+  const lossAllowanceUsed = input.form8582_line9_special_allowance_used;
+  if (lossAllowanceUsed === undefined) {
+    throw new Error("Form 8582-CR Part IV needs Form 8582 line 9");
+  }
+  const allowance = input.filing_status === FilingStatus.MFS
+    ? MFS_ALLOWANCE_MAX
+    : RENTAL_ALLOWANCE_MAX;
+  const remainingAllowance = Math.max(0, allowance - lossAllowanceUsed);
+  let line35 = 0;
+  if (line34 > 0 && remainingAllowance > 0) {
+    const taxWithoutAllowance =
+      input.part_iv_tax_on_income_less_remaining_allowance;
+    if (
+      taxWithoutAllowance === undefined ||
+      taxWithoutAllowance > input.regular_tax_all_income
+    ) {
+      throw new Error(
+        "Form 8582-CR line 35 needs tax on income less the remaining allowance",
+      );
+    }
+    line35 = Math.max(
+      0,
+      input.regular_tax_all_income - taxWithoutAllowance -
+        (partII?.line16 ?? 0) - (partIII?.line30 ?? 0),
+    );
+  }
+  return {
+    line31,
+    line32,
+    line33,
+    line34,
+    line35,
+    line36: Math.min(line34, line35),
+  };
+}
+
 export function calculateForm8582CR(raw: Form8582CRInput) {
   const input = inputSchema.parse(raw);
   const partI = calculateForm8582CRPartI(input);
   if (partI.line5 === 0) {
-    return { partI, partII: undefined, line37: 0, suspendedCredit: 0 };
-  }
-
-  if (
-    categoryCredit(
-        input.credit_sources,
-        PassiveCreditCategory.RehabilitationOrPre1990Housing,
-      ) >
-      0 ||
-    categoryCredit(
-        input.credit_sources,
-        PassiveCreditCategory.LowIncomeHousing,
-      ) >
-      0
-  ) {
-    throw new Error(
-      "Form 8582-CR rehabilitation and low-income housing credits need Parts III and IV",
-    );
+    return {
+      partI,
+      partII: undefined,
+      partIII: undefined,
+      partIV: undefined,
+      line37: 0,
+      suspendedCredit: 0,
+    };
   }
 
   // This single taxpayer status cannot reclassify all activity credits.
@@ -297,10 +436,18 @@ export function calculateForm8582CR(raw: Form8582CRInput) {
   }
 
   const partII = calculatePartII(input, partI);
-  const line37 = Math.min(partI.line5, partI.line6 + (partII?.line16 ?? 0));
+  const partIII = calculatePartIII(input, partI, partII);
+  const partIV = calculatePartIV(input, partI, partII, partIII);
+  const line37 = Math.min(
+    partI.line5,
+    partI.line6 + (partII?.line16 ?? 0) + (partIII?.line30 ?? 0) +
+      (partIV?.line36 ?? 0),
+  );
   return {
     partI,
     partII,
+    partIII,
+    partIV,
     line37,
     suspendedCredit: partI.line5 - line37,
   };

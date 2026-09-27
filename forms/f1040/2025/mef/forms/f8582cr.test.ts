@@ -88,7 +88,35 @@ Deno.test("Form 8582-CR: active rental Part II serializes the tax limitation", (
   assertStringIncludes(xml, "<AllowedCreditsAmt>1000</AllowedCreditsAmt>");
 });
 
-Deno.test("Form 8582-CR: unsupported housing credit does not emit partial XML", () => {
+Deno.test("Form 8582-CR: Part III and IV serialize separate tax limits", () => {
+  const xml = form8582cr.build({
+    credit_sources: [{
+      ...otherCredit,
+      category: PassiveCreditCategory.RehabilitationOrPre1990Housing,
+      source_document_reference: "2025 rehabilitation credit statement",
+    }, {
+      ...otherCredit,
+      category: PassiveCreditCategory.LowIncomeHousing,
+      source_document_reference: "2025 low-income housing credit statement",
+    }],
+    regular_tax_all_income: 10_000,
+    regular_tax_without_passive: 10_000,
+    modified_agi: 180_000,
+    form8582_line9_special_allowance_used: 0,
+    part_iii_tax_on_income_less_line26: 8_500,
+    part_iv_tax_on_income_less_remaining_allowance: 7_000,
+    filing_status: "single",
+  });
+  assertStringIncludes(xml, "<RehabilitationCreditGrp>");
+  assertStringIncludes(xml, "<LowIncomeCreditGrp>");
+  assertStringIncludes(xml, "<SpecialAllowRehabGrp>");
+  assertStringIncludes(xml, "<SmallestRehabTaxAmt>1500</SmallestRehabTaxAmt>");
+  assertStringIncludes(xml, "<SpecialAllowLowIncomeGrp>");
+  assertStringIncludes(xml, "<TaxAmt>1500</TaxAmt>");
+  assertStringIncludes(xml, "<AllowedCreditsAmt>3000</AllowedCreditsAmt>");
+});
+
+Deno.test("Form 8582-CR: missing worksheet tax stops XML generation", () => {
   assertThrows(
     () =>
       form8582cr.build({
@@ -97,9 +125,12 @@ Deno.test("Form 8582-CR: unsupported housing credit does not emit partial XML", 
           category: PassiveCreditCategory.LowIncomeHousing,
         }],
         regular_tax_all_income: 10_000,
-        regular_tax_without_passive: 9_000,
+        regular_tax_without_passive: 10_000,
+        modified_agi: 180_000,
+        form8582_line9_special_allowance_used: 0,
+        filing_status: "single",
       }),
     Error,
-    "Parts III and IV",
+    "line 35 needs tax",
   );
 });

@@ -61,6 +61,46 @@ export const form8582cr: MefFormDescriptor<"form8582cr", unknown> = {
           element("SmallestTaxAmt", lines.partII.line16),
         ])
         : "",
+      lines.partIII
+        ? elements("SpecialAllowRehabGrp", [
+          element("TotalCreditMinusTaxAmt", lines.partIII.line17),
+          element("SmallestTaxAmt", lines.partIII.line18),
+          element("NetTaxAmt", lines.partIII.line19),
+          element("CreditOrNetTaxAmt", lines.partIII.line20),
+          lines.partIII.line21 === undefined
+            ? ""
+            : element("TotalArcherMSADistributionAmt", lines.partIII.line21),
+          lines.partIII.line22 === undefined
+            ? ""
+            : element("ModifiedAGIAmt", lines.partIII.line22),
+          lines.partIII.line23 === undefined
+            ? ""
+            : element("NetAGIAmt", lines.partIII.line23),
+          lines.partIII.line24 === undefined
+            ? ""
+            : element("PercentNetAGIAmt", lines.partIII.line24),
+          lines.partIII.line25 === undefined
+            ? ""
+            : element("AllowedRentalRealtyLossAmt", lines.partIII.line25),
+          lines.partIII.line26 === undefined
+            ? ""
+            : element("TaxableAmt", lines.partIII.line26),
+          element("AttributableTaxAmt", lines.partIII.line27),
+          element("RepeatedTaxAmt", lines.partIII.line28),
+          element("AdjustedTaxAmt", lines.partIII.line29),
+          element("SmallestRehabTaxAmt", lines.partIII.line30),
+        ])
+        : "",
+      lines.partIV
+        ? elements("SpecialAllowLowIncomeGrp", [
+          element("NetTaxAmt", lines.partIV.line31),
+          element("SmallestTaxAmt", lines.partIV.line32),
+          element("AdjustedTaxAmt", lines.partIV.line33),
+          element("CreditOrNetTaxAmt", lines.partIV.line34),
+          element("AttributableTaxAmt", lines.partIV.line35),
+          element("TaxAmt", lines.partIV.line36),
+        ])
+        : "",
       element("AllowedCreditsAmt", lines.line37),
     ]);
   },
