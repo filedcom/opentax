@@ -1633,6 +1633,12 @@ emitted XML tags are not native TY2025 v5.4 Form 8815 elements. See
 was made; rebuilding the source-to-return path or explicitly excluding claims
 requires a product decision before Form 8815 can be considered ready.
 
+Build-pass addendum for GAP-MAP / Form 8960 (unrun): eleven totals and tax
+lines already computed by the node now map to their native TY2025 MeF fields
+in filed order. Focused field and order cases are written but unrun. This does
+not settle the source inclusion/deduction audit, the 8814 interaction, local
+XSD validation, PDF appearance, or IRS business rules.
+
 The following are registered in `forms/f1040/2025/mef/forms/index.ts`.
 **Registered means the builder can be invoked, not that the form is complete or
 approved.** Mark each row in the INV-01 matrix after checking calculations, XML,

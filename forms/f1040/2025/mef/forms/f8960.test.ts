@@ -35,7 +35,7 @@ Deno.test("line1_taxable_interest at zero is emitted", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Section 4: Per-field mapping (one test per field, 11 fields)
+// Section 4: Per-field mapping
 // ---------------------------------------------------------------------------
 
 Deno.test("line1_taxable_interest maps to TaxableInterestAmt", () => {
@@ -135,6 +135,77 @@ Deno.test(
   },
 );
 
+// The node already computes these form lines. The TY2025 MeF schema has a
+// corresponding element for each, in the same sequence as the paper form.
+const computedLineTags = [
+  ["line4c_combined", "RentalREAndAdjNetIncmOrLossAmt"],
+  ["line5d_combined", "GainOrLossFromDisposAmt"],
+  ["line8_total_investment_income", "TotalIncomeAmt"],
+  ["line9d_total_expenses", "InvestmentExpenseAmt"],
+  ["line11_total_deductions", "TotalDeductionModificationAmt"],
+  ["line12_net_investment_income", "NetInvestmentIncomeAmt"],
+  ["line13_magi", "ModifiedAGIAmt"],
+  ["line14_threshold", "FilingThresholdAmt"],
+  ["line15_magi_excess", "MAGILessThresholdAmt"],
+  ["line16_taxable_base", "SmllrIncmOrMAGILessThrshldAmt"],
+  ["line17_niit", "IndivNetInvstIncomeTaxAmt"],
+] as const;
+
+for (const [field, tag] of computedLineTags) {
+  Deno.test(`${field} maps to ${tag}`, () => {
+    const result = form8960.build({ [field]: 125 });
+    assertStringIncludes(result, `<${tag}>125</${tag}>`);
+  });
+}
+
+Deno.test("computed line fields retain TY2025 schema sequence", () => {
+  const result = form8960.build({
+    line4a_passive_income: 2000,
+    line4b_rental_net: -500,
+    line4c_combined: 1500,
+    line5a_net_gain: 1000,
+    line5b_net_gain_adjustment: -200,
+    line5d_combined: 800,
+    line7_other_modifications: 100,
+    line8_total_investment_income: 2400,
+    line9a_investment_interest_expense: 200,
+    line9b_state_local_tax: 100,
+    line9d_total_expenses: 300,
+    line10_additional_modifications: 50,
+    line11_total_deductions: 350,
+    line12_net_investment_income: 2050,
+    line13_magi: 230000,
+    line14_threshold: 200000,
+    line15_magi_excess: 30000,
+    line16_taxable_base: 2050,
+    line17_niit: 77.9,
+  });
+  const orderedTags = [
+    "NetRentalIncomeOrLossAmt",
+    "AdjNetIncmOrLossNonSect1411Amt",
+    "RentalREAndAdjNetIncmOrLossAmt",
+    "PropertyDisposGainOrLossAmt",
+    "NonNIITPropDisposGainOrLossAmt",
+    "GainOrLossFromDisposAmt",
+    "OtherInvestmentIncomeOrLossAmt",
+    "TotalIncomeAmt",
+    "InvestmentInterestAmt",
+    "StateLocalForeignIncomeTaxAmt",
+    "InvestmentExpenseAmt",
+    "AdditionalModificationAmt",
+    "TotalDeductionModificationAmt",
+    "NetInvestmentIncomeAmt",
+    "ModifiedAGIAmt",
+    "FilingThresholdAmt",
+    "MAGILessThresholdAmt",
+    "SmllrIncmOrMAGILessThrshldAmt",
+    "IndivNetInvstIncomeTaxAmt",
+  ];
+  const offsets = orderedTags.map((tag) => result.indexOf(`<${tag}>`));
+  assertEquals(offsets.every((offset) => offset >= 0), true);
+  assertEquals(offsets, [...offsets].sort((a, b) => a - b));
+});
+
 // ---------------------------------------------------------------------------
 // Section 5: Sparse output
 // ---------------------------------------------------------------------------
@@ -162,7 +233,7 @@ Deno.test("two fields present: only those two elements emitted", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Section 6: All fields present
+// Section 6: All original source fields present
 // ---------------------------------------------------------------------------
 
 const allFields = {

@@ -7,12 +7,23 @@ export interface Fields {
   line3_annuities?: number | null;
   line4a_passive_income?: number | null;
   line4b_rental_net?: number | null;
+  line4c_combined?: number | null;
   line5a_net_gain?: number | null;
   line5b_net_gain_adjustment?: number | null;
+  line5d_combined?: number | null;
   line7_other_modifications?: number | null;
+  line8_total_investment_income?: number | null;
   line9a_investment_interest_expense?: number | null;
   line9b_state_local_tax?: number | null;
+  line9d_total_expenses?: number | null;
   line10_additional_modifications?: number | null;
+  line11_total_deductions?: number | null;
+  line12_net_investment_income?: number | null;
+  line13_magi?: number | null;
+  line14_threshold?: number | null;
+  line15_magi_excess?: number | null;
+  line16_taxable_base?: number | null;
+  line17_niit?: number | null;
 }
 
 type Input = Partial<Fields> & Record<string, unknown>;
@@ -23,12 +34,23 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line3_annuities", "AnnuitesFromNonQlfPlansAmt"],
   ["line4a_passive_income", "NetRentalIncomeOrLossAmt"],
   ["line4b_rental_net", "AdjNetIncmOrLossNonSect1411Amt"],
+  ["line4c_combined", "RentalREAndAdjNetIncmOrLossAmt"],
   ["line5a_net_gain", "PropertyDisposGainOrLossAmt"],
   ["line5b_net_gain_adjustment", "NonNIITPropDisposGainOrLossAmt"],
+  ["line5d_combined", "GainOrLossFromDisposAmt"],
   ["line7_other_modifications", "OtherInvestmentIncomeOrLossAmt"],
+  ["line8_total_investment_income", "TotalIncomeAmt"],
   ["line9a_investment_interest_expense", "InvestmentInterestAmt"],
   ["line9b_state_local_tax", "StateLocalForeignIncomeTaxAmt"],
+  ["line9d_total_expenses", "InvestmentExpenseAmt"],
   ["line10_additional_modifications", "AdditionalModificationAmt"],
+  ["line11_total_deductions", "TotalDeductionModificationAmt"],
+  ["line12_net_investment_income", "NetInvestmentIncomeAmt"],
+  ["line13_magi", "ModifiedAGIAmt"],
+  ["line14_threshold", "FilingThresholdAmt"],
+  ["line15_magi_excess", "MAGILessThresholdAmt"],
+  ["line16_taxable_base", "SmllrIncmOrMAGILessThrshldAmt"],
+  ["line17_niit", "IndivNetInvstIncomeTaxAmt"],
 ];
 
 function buildIRS8960(fields: Input): string {
