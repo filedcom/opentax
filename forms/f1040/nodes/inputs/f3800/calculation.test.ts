@@ -14,10 +14,78 @@ import {
   classifyForm3800PassiveCredits,
   classifyForm8835Credits,
   deriveForm3800NonpassiveInput,
+  form3800NonpassiveCreditUseRows,
   groupForm3800PassiveCreditVintages,
   splitForm3800PassiveCreditVintages,
   ZERO_FORM3800_PASSIVE_ACTIVITY,
 } from "./calculation.ts";
+
+Deno.test("Form 3800 source-use rows retain each nonpassive form and cent amount", () => {
+  assertEquals(
+    form3800NonpassiveCreditUseRows({
+      form8826Credit: 100.25,
+      form8820Credit: 200,
+      form5884Credit: 50,
+      form8936NewVehicleCredit: 75,
+      form8936CommercialVehicleCredit: 25,
+      facilities: [{
+        form3800_line: "1f",
+        credit_amount: 400,
+        transfer_out_amount: 100,
+        registration_number: "CAABC12ABCDE",
+        transfer_election_statement_file_name: "Transfer statement.pdf",
+        subject_to_passive_activity_limit: false,
+      }],
+    }),
+    [
+      {
+        sourceKey: "nonpassive:8826",
+        form3800CreditLine: "1e",
+        originatingTaxYear: 2025,
+        availableAfterPassiveLimit: 100.25,
+      },
+      {
+        sourceKey: "nonpassive:8820",
+        form3800CreditLine: "1h",
+        originatingTaxYear: 2025,
+        availableAfterPassiveLimit: 200,
+      },
+      {
+        sourceKey: "nonpassive:8936-new",
+        form3800CreditLine: "1y",
+        originatingTaxYear: 2025,
+        availableAfterPassiveLimit: 75,
+      },
+      {
+        sourceKey: "nonpassive:8936-commercial",
+        form3800CreditLine: "1aa",
+        originatingTaxYear: 2025,
+        availableAfterPassiveLimit: 25,
+      },
+      {
+        sourceKey: "nonpassive:5884",
+        form3800CreditLine: "4b",
+        originatingTaxYear: 2025,
+        availableAfterPassiveLimit: 50,
+      },
+      {
+        sourceKey: "nonpassive:8835:1f",
+        form3800CreditLine: "1f",
+        originatingTaxYear: 2025,
+        availableAfterPassiveLimit: 300,
+      },
+    ],
+  );
+  assertThrows(
+    () =>
+      form3800NonpassiveCreditUseRows({
+        form8826Credit: 100.001,
+        facilities: [],
+      }),
+    Error,
+    "cent precision",
+  );
+});
 import { sourceAllocationSchema } from "../../intermediate/forms/form8582cr/source.ts";
 
 Deno.test("Form 3800: classifies allowed passive credit into lines 3, 24, and 33", () => {
@@ -318,6 +386,32 @@ Deno.test("Form 3800 tax use applies oldest carryovers before current-year credi
   );
 });
 
+Deno.test("Form 3800 tax use keeps Form 8826 cents after an older passive carryover", () => {
+  const allocated = allocateForm3800CreditUse([
+    {
+      sourceKey: "access",
+      form3800CreditLine: "1e",
+      originatingTaxYear: 2025,
+      availableAfterPassiveLimit: 100.25,
+    },
+    {
+      sourceKey: "passive-prior",
+      form3800CreditLine: "1h",
+      originatingTaxYear: 2023,
+      availableAfterPassiveLimit: 100,
+    },
+  ], {
+    line6: 200.25,
+    line17: 100.10,
+    line25: 0,
+    line26: 0,
+    line36: 0,
+    line37: 0,
+  });
+  assertEquals(allocated.map((row) => row.appliedAgainstTax), [0.10, 100]);
+  assertEquals(allocated.map((row) => row.unusedAfterTaxLimit), [100.15, 0]);
+});
+
 Deno.test("Form 3800 tax use follows the named same-year credit-type order", () => {
   const sources = [
     {
@@ -474,6 +568,23 @@ Deno.test("Form 3800 passive source years reconcile with nonpassive credit order
     () => allocateForm3800PassiveCreditVintages([source], [], lines),
     Error,
     "does not reconcile",
+  );
+  const centLines = calculateForm3800Nonpassive({
+    filingStatus: FilingStatus.Single,
+    regularTax: 250.10,
+    alternativeMinimumTax: 0,
+    foreignTaxCredit: 0,
+    priorAllowableCredits: 0,
+    tentativeMinimumTax: 0,
+    standardCredit: 100.25,
+    specifiedCredit: 0,
+  }, classifyForm3800PassiveCredits([source]));
+  assertEquals(
+    allocateForm3800PassiveCreditVintages([source], [{
+      ...otherSources[0],
+      availableAfterPassiveLimit: 100.25,
+    }], centLines).map((row) => row.appliedAgainstTax),
+    [200, 0],
   );
 });
 

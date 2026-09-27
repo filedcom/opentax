@@ -550,7 +550,17 @@ combines nonpassive and passive current-year amounts on one credit line,
 retains all Part V source rows, and selects column (c) by the largest combined
 pass-through entity credit, including when the same EIN occurs on both sides.
 Mixed and passive-only source cases are written but unrun; the descriptor does
-not yet feed the join with finalized tax-use allocations.
+not yet feed the join with finalized tax-use allocations. A pure nonpassive
+source-use ledger now gives Forms 8826, 8820, 5884, both Form 8936 routes, and
+Form 8835 line aggregates stable keys and credit years for the common FIFO pass.
+It retains Form 8826 cent amounts and rejects imprecise source credit. Its
+mixed-source case is written but unrun; the ledger is not yet connected to
+the descriptor. The shared FIFO tax-use allocator now reconciles all three
+Part II buckets in integer cents, so a Form 8826 amount can follow an older
+passive carryover without being rounded away; source and bridge cases are
+written but unrun. A fractional-cent tax-use boundary is rejected. The passive
+XML path still needs consistent whole-dollar filing amounts when a boundary
+falls inside a passive source.
 A pure tax-use allocator now reconciles the source totals with the three Part II
 caps and applies older credit years first. It stops a partially used year with
 multiple source rows unless their named credit types have an explicit IRS

@@ -50,6 +50,71 @@ export type Form3800CreditUseAllocation = Form3800CreditUseRow & {
   readonly unusedAfterTaxLimit: number;
 };
 
+export type Form3800NonpassiveCreditSources = {
+  readonly form8826Credit?: number;
+  readonly form8820Credit?: number;
+  readonly form5884Credit?: number;
+  readonly form8936NewVehicleCredit?: number;
+  readonly form8936CommercialVehicleCredit?: number;
+  readonly facilities: readonly Form8835CreditEntry[];
+};
+
+/** Keep source-form identity and IRS credit line before the tax-use pass. */
+export function form3800NonpassiveCreditUseRows(
+  sources: Form3800NonpassiveCreditSources,
+): Form3800CreditUseRow[] {
+  const sourceRows = [
+    {
+      sourceKey: "nonpassive:8826",
+      form3800CreditLine: "1e" as const,
+      amount: sources.form8826Credit ?? 0,
+    },
+    {
+      sourceKey: "nonpassive:8820",
+      form3800CreditLine: "1h" as const,
+      amount: sources.form8820Credit ?? 0,
+    },
+    {
+      sourceKey: "nonpassive:8936-new",
+      form3800CreditLine: "1y" as const,
+      amount: sources.form8936NewVehicleCredit ?? 0,
+    },
+    {
+      sourceKey: "nonpassive:8936-commercial",
+      form3800CreditLine: "1aa" as const,
+      amount: sources.form8936CommercialVehicleCredit ?? 0,
+    },
+    {
+      sourceKey: "nonpassive:5884",
+      form3800CreditLine: "4b" as const,
+      amount: sources.form5884Credit ?? 0,
+    },
+    ...classifyForm8835Credits(sources.facilities).rows.map((row) => ({
+      sourceKey: `nonpassive:8835:${row.line}`,
+      form3800CreditLine: row.line,
+      amount: row.availableCredit,
+    })),
+  ];
+  for (const row of sourceRows) {
+    const cents = Math.round(row.amount * 100);
+    if (
+      !Number.isFinite(row.amount) || row.amount < 0 ||
+      !Number.isSafeInteger(cents) ||
+      Math.abs(row.amount * 100 - cents) > 0.000001
+    ) {
+      throw new Error(
+        "Form 3800 nonpassive source credit needs cent precision",
+      );
+    }
+  }
+  return sourceRows.filter((row) => row.amount > 0).map((row) => ({
+    sourceKey: row.sourceKey,
+    form3800CreditLine: row.form3800CreditLine,
+    originatingTaxYear: 2025,
+    availableAfterPassiveLimit: row.amount,
+  }));
+}
+
 export type Form3800PassiveTaxUseVintage =
   & Form3800PassiveCreditVintage
   & Form3800CreditUseAllocation;
@@ -101,6 +166,17 @@ const CREDIT_TYPE_ORDER = [
   "1ee",
 ] as const;
 
+function creditUseCents(amount: number): number {
+  const cents = Math.round(amount * 100);
+  if (
+    !Number.isFinite(amount) || !Number.isSafeInteger(cents) ||
+    Math.abs(amount * 100 - cents) > 0.000001
+  ) {
+    throw new Error("Form 3800 tax-use amount must have cent precision");
+  }
+  return cents;
+}
+
 /** Allocate the three Part II caps with carryforwards before 2025 credits. */
 export function allocateForm3800CreditUse(
   sources: readonly Form3800CreditUseRow[],
@@ -124,8 +200,15 @@ export function allocateForm3800CreditUse(
       !source.sourceKey || !validLines.includes(source.form3800CreditLine) ||
       !Number.isInteger(source.originatingTaxYear) ||
       source.originatingTaxYear < 1900 || source.originatingTaxYear > 2026 ||
-      !Number.isSafeInteger(source.availableAfterPassiveLimit) ||
-      source.availableAfterPassiveLimit < 0
+      source.availableAfterPassiveLimit < 0 ||
+      !Number.isFinite(source.availableAfterPassiveLimit) ||
+      !Number.isSafeInteger(
+        Math.round(source.availableAfterPassiveLimit * 100),
+      ) ||
+      Math.abs(
+          source.availableAfterPassiveLimit * 100 -
+            Math.round(source.availableAfterPassiveLimit * 100),
+        ) > 0.000001
     ) {
       throw new Error(
         "Form 3800 tax-use source has invalid line, year, or amount",
@@ -146,11 +229,17 @@ export function allocateForm3800CreditUse(
     const rows = sources.filter((source) =>
       bucket(source.form3800CreditLine) === name
     );
+    const availableCents = creditUseCents(available);
+    const limitCents = creditUseCents(limit);
+    const rowTotalCents = rows.reduce(
+      (sum, row) => sum + creditUseCents(row.availableAfterPassiveLimit),
+      0,
+    );
     if (
-      !Number.isSafeInteger(available) || !Number.isSafeInteger(limit) ||
-      available < 0 || limit < 0 || limit > available ||
-      rows.reduce((sum, row) => sum + row.availableAfterPassiveLimit, 0) !==
-        available
+      availableCents < 0 || limitCents < 0 ||
+      limitCents > availableCents ||
+      !Number.isSafeInteger(rowTotalCents) ||
+      rowTotalCents !== availableCents
     ) {
       throw new Error(
         `Form 3800 ${name} source total does not reconcile to Part II`,
@@ -167,13 +256,16 @@ export function allocateForm3800CreditUse(
     const years = [...new Set(ordered.map((row) => row.originatingTaxYear))];
     for (const year of years) {
       const older = ordered.filter((row) => row.originatingTaxYear < year)
-        .reduce((sum, row) => sum + row.availableAfterPassiveLimit, 0);
+        .reduce(
+          (sum, row) => sum + creditUseCents(row.availableAfterPassiveLimit),
+          0,
+        );
       const sameYear = ordered.filter((row) =>
         row.originatingTaxYear === year &&
         row.availableAfterPassiveLimit > 0
       );
       const yearAmount = sameYear.reduce(
-        (sum, row) => sum + row.availableAfterPassiveLimit,
+        (sum, row) => sum + creditUseCents(row.availableAfterPassiveLimit),
         0,
       );
       const orderRanks = sameYear.map((row) =>
@@ -182,7 +274,8 @@ export function allocateForm3800CreditUse(
         )
       );
       if (
-        sameYear.length > 1 && limit > older && limit < older + yearAmount &&
+        sameYear.length > 1 && limitCents > older &&
+        limitCents < older + yearAmount &&
         (orderRanks.some((rank) => rank < 0) ||
           new Set(orderRanks).size !== orderRanks.length)
       ) {
@@ -192,19 +285,19 @@ export function allocateForm3800CreditUse(
       }
     }
     return ordered.reduce<Form3800CreditUseAllocation[]>((allocated, row) => {
-      const used = allocated.reduce(
-        (sum, prior) => sum + prior.appliedAgainstTax,
+      const usedCents = allocated.reduce(
+        (sum, prior) => sum + creditUseCents(prior.appliedAgainstTax),
         0,
       );
-      const appliedAgainstTax = Math.min(
-        row.availableAfterPassiveLimit,
-        Math.max(0, limit - used),
+      const rowCents = creditUseCents(row.availableAfterPassiveLimit);
+      const appliedCents = Math.min(
+        rowCents,
+        Math.max(0, limitCents - usedCents),
       );
       return [...allocated, {
         ...row,
-        appliedAgainstTax,
-        unusedAfterTaxLimit: row.availableAfterPassiveLimit -
-          appliedAgainstTax,
+        appliedAgainstTax: appliedCents / 100,
+        unusedAfterTaxLimit: (rowCents - appliedCents) / 100,
       }];
     }, []);
   };
