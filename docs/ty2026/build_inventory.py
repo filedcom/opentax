@@ -44,13 +44,17 @@ NODE_PROGRESS = {
     "schedule_f": "2026 draft makes line 21b vehicle interest and 21c other interest; build dedicated farm input, PDF/MeF, ATS 3; see SCHEDULEF-GRAPH.md",
     "f4835": "2026 form/instructions pinned; line 19b vehicle interest and farm-rent Schedule E route need PDF/MeF and ATS 3; see FORM4835-GRAPH.md",
     "schedule_se": "ATS 3 elects 2026 farm optional method; current Schedule F suppresses low-profit/loss SE route and 2025 PDF map puts profit in 2026 name field; see SCHEDULESE-GRAPH.md",
+    "f1099patr": "continuous-use source pinned; shared box 6/8/9 labels are wrong and boxes 10-13 missing; rebuild cooperative QBI route; see QBI-COOPERATIVE-GRAPH.md",
+    "form8995": "2026 simplified form and $400 minimum pinned; patron status requires Form 8995-A; remove estimated-income path for 2026; see QBI-COOPERATIVE-GRAPH.md",
+    "form8995a": "2026 form/schedule A and continuous-use schedules B/C/D pinned; add patron reduction, 199A(g), $400 minimum, per-business PDF/MeF; see QBI-COOPERATIVE-GRAPH.md",
+    "qbi_aggregation": "Schedule B 8995-A pinned; shared input captures groups but emits no filing/calculation route; see QBI-COOPERATIVE-GRAPH.md",
 }
 
 P0_NODES = {
     "f1040", "general", "schedule_a", "schedule1a", "schedule1", "schedule2",
     "schedule3", "form8839", "form8962", "form5695", "f8936", "f8812",
     "eitc", "income_tax_calculation", "agi_aggregator", "standard_deduction",
-    "form4562", "form8995", "form8995a", "form_8829", "schedule_h",
+    "form4562", "f1099patr", "form8995", "form8995a", "form_8829", "schedule_h",
     "f8835", "form1062",
 }
 

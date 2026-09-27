@@ -62,6 +62,12 @@ for review, then emit a single finalized set of form lines.
 | Schedule 1-A | Form line 44 total and line 43 enhanced senior deduction, plus eligibility facts | The shared node routes 2026 line 43/44 separately; Form 2555 MAGI addbacks, W-2 TP/TT, and employer-level Form 4137 reconciliation exist. Puerto Rico/Form 4563 addbacks remain. |
 | QBI | All Form 8995/8995-A business, wage, UBIA, loss, gain, and carryforward facts | Existing shared nodes need a 2026 output contract and pre-QBI income from the joint resolver. |
 
+The [QBI/cooperative contract](QBI-COOPERATIVE-GRAPH.md) adds the mandatory
+patron Form 8995-A route, Form 8995-A Schedule D reduction, passed-through
+section 199A(g) deduction, and new $400 minimum. The shared Form 1099-PATR
+input mislabels current boxes 6, 8, and 9; its values cannot enter this
+resolver until that source shape is corrected and reconciled.
+
 ## Implementation order and gates
 
 1. Build TY2026 Schedule A input and form-line node from the pure calculator.

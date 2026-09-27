@@ -1,0 +1,37 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_1[0],/Tx,Page 1. Name(s) shown on return.,2,36 672.466 438.2 685.967,yes
+topmostSubform[0].Page1[0].f1_2[0],/Tx,Your taxpayer identification number.,2,440.2 672.466 576 685.967,yes
+topmostSubform[0].Page1[0].Table[0].Row1i[0].f1_3[0],/Tx,"Note: You can claim the qualified business income deduction only if you have qualified business income from a qualified trade or business, real estate investment trust dividends, publicly traded partnership income, or a domestic production activities deduction passed through from an agricultural or horticultural cooperative. See instructions. Use this form if your taxable income, before your qualified business income deduction, is at or below $201,750 ($201,775 if married filing separately; $403,500 if married filing jointly), and you aren’t a patron of an agricultural or horticultural cooperative. 1. Row: 1i. Column: (a) Trade, business, or aggregation name.",2,65.8 552.467 395 575.468,yes
+topmostSubform[0].Page1[0].Table[0].Row1i[0].f1_4[0],/Tx,Row: 1i. Column: (b) Taxpayer identification number.,2,397 552.467 481.4 563.968,yes
+topmostSubform[0].Page1[0].Table[0].Row1i[0].f1_5[0],/Tx,Row: 1i. Column: (c) Qualified business income or (loss).,2,483.4 552.467 576 563.968,yes
+topmostSubform[0].Page1[0].Table[0].Row1ii[0].f1_6[0],/Tx,"Row: 1i i. Column: (a) Trade, business, or aggregation name.",2,65.8 528.466 395 551.467,yes
+topmostSubform[0].Page1[0].Table[0].Row1ii[0].f1_7[0],/Tx,Row: 1i i. Column: (b) Taxpayer identification number.,2,397 528.466 481.4 539.967,yes
+topmostSubform[0].Page1[0].Table[0].Row1ii[0].f1_8[0],/Tx,Row: 1i i. Column: (c) Qualified business income or (loss).,2,483.4 528.466 576 539.967,yes
+topmostSubform[0].Page1[0].Table[0].Row1iii[0].f1_9[0],/Tx,"Row: 1i i i. Column: (a) Trade, business, or aggregation name.",2,65.8 504.465 395 527.466,yes
+topmostSubform[0].Page1[0].Table[0].Row1iii[0].f1_10[0],/Tx,Row: 1i i i. Column: (b) Taxpayer identification number.,2,397 504.465 481.4 515.966,yes
+topmostSubform[0].Page1[0].Table[0].Row1iii[0].f1_11[0],/Tx,Row: 1i i i. Column: (c) Qualified business income or (loss).,2,483.4 504.465 576 515.966,yes
+topmostSubform[0].Page1[0].Table[0].Row1iv[0].f1_12[0],/Tx,"Row: 1i v. Column: (a) Trade, business, or aggregation name.",2,65.8 480.464 395 503.465,yes
+topmostSubform[0].Page1[0].Table[0].Row1iv[0].f1_13[0],/Tx,Row: 1i v. Column: (b) Taxpayer identification number.,2,397 480.464 481.4 491.965,yes
+topmostSubform[0].Page1[0].Table[0].Row1iv[0].f1_14[0],/Tx,Row: 1i v. Column: (c) Qualified business income or (loss).,2,483.4 480.464 576 491.965,yes
+topmostSubform[0].Page1[0].Table[0].Row1v[0].f1_15[0],/Tx,"Row: 1v. Column: (a) Trade, business, or aggregation name.",2,65.8 456.463 395 479.464,yes
+topmostSubform[0].Page1[0].Table[0].Row1v[0].f1_16[0],/Tx,Row: 1v. Column: (b) Taxpayer identification number.,2,397 456.463 481.4 467.964,yes
+topmostSubform[0].Page1[0].Table[0].Row1v[0].f1_17[0],/Tx,Row: 1v. Column: (c) Qualified business income or (loss).,2,483.4 456.463 576 467.964,yes
+topmostSubform[0].Page1[0].f1_18[0],/Tx,"2. Total qualified business income or (loss). Combine lines 1 i through 1 v, column (c).",2,505 444.47 576 455.969,yes
+topmostSubform[0].Page1[0].f1_19[0],/Tx,3. Open parenthesis. Qualified business net (loss) carryforward from the prior year. Close parenthesis. ,2,507 432.468 573 443.467,yes
+topmostSubform[0].Page1[0].f1_20[0],/Tx,"4. Total qualified business income. Combine lines 2 and 3. If zero or less, enter 0.",2,505 420.469 576 431.468,yes
+topmostSubform[0].Page1[0].f1_21[0],/Tx,5. Qualified business income component. Multiply line 4 by 20% (0.20).,2,505 408.47 576 419.969,yes
+topmostSubform[0].Page1[0].f1_22[0],/Tx,6. Qualified R E I T dividends and publicly traded partnership (P T P) income or (loss) (see instructions).,2,505 396.468 576 407.967,yes
+topmostSubform[0].Page1[0].f1_23[0],/Tx,7. Open parenthesis. Qualified R E I T dividends and qualified P T P (loss) carryforward from the prior year. Close parenthesis. ,2,507 384.469 573 395.468,yes
+topmostSubform[0].Page1[0].f1_24[0],/Tx,"8. Total qualified R E I T dividends and P T P income. Combine lines 6 and 7. If zero or less, enter 0.",2,505 372.47 576 383.469,yes
+topmostSubform[0].Page1[0].f1_25[0],/Tx,9. R E I T and P T P component. Multiply line 8 by 20% (0.20).,2,505 360.468 576 371.967,yes
+topmostSubform[0].Page1[0].f1_26[0],/Tx,10. Qualified business income deduction before the income limitation. Add lines 5 and 9.,2,505 348.469 576 359.968,yes
+topmostSubform[0].Page1[0].f1_27[0],/Tx,11. Taxable income before qualified business income deduction (see instructions).,2,505 336.47 576 347.969,yes
+topmostSubform[0].Page1[0].f1_28[0],/Tx,"12. Enter your net capital gain, if any, increased by any qualified dividends.See instructions.",2,505 324.468 576 335.467,yes
+topmostSubform[0].Page1[0].f1_29[0],/Tx,"13. Subtract line 12 from line 11. If zero or less, enter 0.",2,505 312.469 576 323.468,yes
+topmostSubform[0].Page1[0].f1_30[0],/Tx,14. Income limitation. Multiply line 13 by 20% (0.20).,2,505 300.47 576 311.969,yes
+topmostSubform[0].Page1[0].f1_31[0],/Tx,15. Qualified business income deduction before the minimum deduction for active qualified business income. Enter the smaller of line 10 or line 14. ,2,505 276.469 576 287.968,yes
+topmostSubform[0].Page1[0].f1_32[0],/Tx,16. Minimum deduction for active qualified business income (see instructions).,2,505 264.47 576 275.469,yes
+topmostSubform[0].Page1[0].f1_33[0],/Tx,17. Qualified business income deduction. Enter the greater of line 15 or line 16. Also enter this amount on the applicable line of your return. See instructions.,2,505 240.469 576 251.468,yes
+topmostSubform[0].Page1[0].f1_34[0],/Tx,"18. Open parenthesis. Total qualified business (loss) carryforward. Combine lines 2 and 3. If greater than zero, enter -0-. Close parenthesis.",2,507.2 228.47 573 239.469,yes
+topmostSubform[0].Page1[0].f1_35[0],/Tx,"16. Open parenthesis. Total qualified business (loss) carryforward. Combine lines 2 and 3. If greater than zero, enter 0. Close parenthesis. ",2,507.2 204.469 573 215.468,yes
+topmostSubform[0].Page1[0].Checkbox8pt[0],/Btn,20. Check the box for this line 20 only if indicating a filing of this Form 8995 by an Electing Small Business Trust (E S B T). See instructions.,2,467.2 181.968 475.2 189.968,yes

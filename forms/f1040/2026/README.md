@@ -34,6 +34,11 @@ The [Form 4835 contract](../../../docs/ty2026/FORM4835-GRAPH.md) and
 production-based farm rent to Schedule E while keeping Schedule F farm profit
 separate for the elected Schedule SE farm optional method. That packet also
 requires 1099-R, Schedule D, and QBI/cooperative reconciliation.
+The [QBI/cooperative contract](../../../docs/ty2026/QBI-COOPERATIVE-GRAPH.md)
+pins the continuous-use 1099-PATR source, 2026 Form 8995-A and its schedules.
+It identifies incorrect shared box labels and the missing patron reduction,
+section 199A(g), $400 minimum, PDF, and MeF routes. ATS scenario 3 has a
+patron answer but lacks the cooperative statement needed to calculate them.
 The [Schedule SE contract](../../../docs/ty2026/SCHEDULESE-GRAPH.md) maps the
 owner-level source and optional-method rules, every 2026 PDF field, and the
 MeF refresh gate. In particular, the current Schedule F output suppresses

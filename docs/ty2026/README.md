@@ -72,6 +72,9 @@ for the implementation contract.
 - [`SCHEDULESE-GRAPH.md`](SCHEDULESE-GRAPH.md): owner-keyed self-employment
   earnings, farm/nonfarm optional-method eligibility and lines, the complete
   2026 draft AcroForm field map, MeF refresh gate, and ATS scenario 3.
+- [`QBI-COOPERATIVE-GRAPH.md`](QBI-COOPERATIVE-GRAPH.md): 1099-PATR box
+  correction, patron Form 8995-A/Schedule D calculations, 2026 minimum,
+  continuous-use schedules, PDF widget inventories, and ATS scenario 3 gaps.
 - [`FORM4562B-GRAPH.md`](FORM4562B-GRAPH.md): newly pinned 2026 amortization
   attachment, per-asset input and carryforward contract, and current
   instructions/MeF acceptance gates.
@@ -83,13 +86,14 @@ for the implementation contract.
   independently derived intermediate amounts and filing gates.
 
 - [`corpus/manifest.json`](corpus/manifest.json): URL, SHA-256, byte length,
-  and retrieval date for **59 TY2026 IRS draft forms**, **25 verified 2026
+  and retrieval date for **60 TY2026 IRS draft forms**, **25 verified 2026
   draft instruction PDFs**, **six draft form URLs that
   still serve an older year**, **13 IRS ATS PDFs**, **two MeF
   inventory spreadsheets**, final IRS authorities (Rev. Procs.
   2025-19, 2025-25, 2025-32; Notice 2025-67; Notice 2026-10; and IRB
   2026-29 and 2026 W-2/W-3 instructions), continuous-use Form 1099-DIV and
-  its instructions, final 2026 Forms 1099-B/1099-DA/1099-R with instructions, the
+  its instructions, continuous-use Form 1099-PATR and Form 8995-A Schedules
+  B/C/D, final 2026 Forms 1099-B/1099-DA/1099-R with instructions, the
   2025 Form 1040 and Form 8949 instructions as marked comparators,
   Publication 505 (2026), and the final 2025 HHS poverty guidelines. All PDFs
   are source artifacts, not filing-ready forms. Run `python3

@@ -36,8 +36,11 @@ missing source evidence are settled.
 2. Complete the 2026 Schedule F, Form 4835 → Schedule E, farm optional
    Schedule SE, and Schedule 1/2 graph. Reconcile farm profit and farm rent
    separately; only the former enters Schedule SE.
-3. Resolve the cooperative QBI fact using source records and the 2026 Form
-   8995/8995-A rules. Calculate Schedule D's tax worksheet, 1040 tax,
+3. Resolve the cooperative QBI fact using source records and the
+   [QBI/cooperative contract](QBI-COOPERATIVE-GRAPH.md). The stated patron
+   status selects Form 8995-A; the packet lacks the 1099-PATR/qualified-payment
+   evidence needed for a numeric Schedule D (Form 8995-A) reduction. Calculate
+   Schedule D (Form 1040)'s tax worksheet, 1040 tax,
    withholding, and settlement from the independent fixture facts.
 4. Render all named 2026 attachments and the 1040, inspect checked answers
    and amounts, and reconcile line 7a, 8, 10, 23, and 25b to their sources.

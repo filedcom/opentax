@@ -1,0 +1,115 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_01[0],/Tx,Page 1. Name(s) shown on return. ,2,36 684.468 452.6 697.969,yes
+topmostSubform[0].Page1[0].f1_02[0],/Tx,Your taxpayer identification number. ,2,454.6 684.468 576 697.969,yes
+topmostSubform[0].Page1[0].Table_PartI[0].RowA[0].f1_03[0],/Tx,"Note: You can claim the qualified business income deduction only if you have qualified business income from a qualified trade or business, real estate investment trust dividends, publicly traded partnership income, or a domestic production activities deduction passed through from an agricultural or horticultural cooperative. See instructions. Use this form if your taxable income, before your qualified business income deduction, is above $201,750 ($201,775 if married filing separately; $403,500 if married filing jointly), or you’re a patron of an agricultural or horticultural cooperative. Part I. Trade, Business, or Aggregation Information. Complete Schedules A, B, and/or C (Form 8995-A), as applicable, before starting Part I. Attach additional worksheets when needed. See instructions. 1. Row: A. Column: (a) Trade, business, or aggregation name. ",2,65.8 540.465 301.4 551.966,yes
+topmostSubform[0].Page1[0].Table_PartI[0].RowA[0].c1_1[0],/Btn,Row: A. Column: (b) Check if specified service. ,2,330.3 542.466 339.3 551.466,yes
+topmostSubform[0].Page1[0].Table_PartI[0].RowA[0].c1_2[0],/Btn,Row: A. Column: (c) Check if aggregation. ,2,395.1 542.466 404.1 551.466,yes
+topmostSubform[0].Page1[0].Table_PartI[0].RowA[0].f1_04[0],/Tx,Row: A. Column: (d) Taxpayer identification number. ,2,433 540.465 510.2 551.966,yes
+topmostSubform[0].Page1[0].Table_PartI[0].RowA[0].c1_3[0],/Btn,Row: A. Column: (e) Check if patron. ,2,539.1 542.716 548.1 551.716,yes
+topmostSubform[0].Page1[0].Table_PartI[0].RowB[0].f1_05[0],/Tx,"Row: B. Column: (a) Trade, business, or aggregation name. ",2,65.8 516.464 301.4 527.965,yes
+topmostSubform[0].Page1[0].Table_PartI[0].RowB[0].c1_4[0],/Btn,Row: B. Column: (b) Check if specified service. ,2,330.3 518.465 339.3 527.465,yes
+topmostSubform[0].Page1[0].Table_PartI[0].RowB[0].c1_5[0],/Btn,Row: B. Column: (c) Check if aggregation. ,2,395.1 518.465 404.1 527.465,yes
+topmostSubform[0].Page1[0].Table_PartI[0].RowB[0].f1_06[0],/Tx,Row: B. Column: (d) Taxpayer identification number. ,2,433 516.464 510.2 527.965,yes
+topmostSubform[0].Page1[0].Table_PartI[0].RowB[0].c1_6[0],/Btn,Row: B. Column: (e) Check if patron. ,2,539.1 518.715 548.1 527.715,yes
+topmostSubform[0].Page1[0].Table_PartI[0].RowC[0].f1_07[0],/Tx,"Row: C. Column: (a) Trade, business, or aggregation name. ",2,65.8 492.463 301.4 503.964,yes
+topmostSubform[0].Page1[0].Table_PartI[0].RowC[0].c1_7[0],/Btn,Row: C. Column: (b) Check if specified service. ,2,330.3 494.464 339.3 503.464,yes
+topmostSubform[0].Page1[0].Table_PartI[0].RowC[0].c1_8[0],/Btn,Row: C. Column: (c) Check if aggregation. ,2,395.1 494.464 404.1 503.464,yes
+topmostSubform[0].Page1[0].Table_PartI[0].RowC[0].f1_08[0],/Tx,Row: C. Column: (d) Taxpayer identification number. ,2,433 492.463 510.2 503.964,yes
+topmostSubform[0].Page1[0].Table_PartI[0].RowC[0].c1_9[0],/Btn,Row: C. Column: (e) Check if patron. ,2,539.1 494.714 548.1 503.714,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row2[0].f1_09[0],/Tx,"Part I I. Determine Your Adjusted Qualified Business Income. Row: 2. Qualified business income from the trade, business, or aggregation (see instructions). Column: A. ",2,361 432.465 431 443.966,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row2[0].f1_10[0],/Tx,"Row: 2. Qualified business income from the trade, business, or aggregation (see instructions). Column: B. ",2,433 432.465 503 443.966,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row2[0].f1_11[0],/Tx,"Row: 2. Qualified business income from the trade, business, or aggregation (see instructions). Column: C. ",2,505 432.465 576 443.966,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row3[0].f1_12[0],/Tx,"Row: 3. Multiply line 2 by 20% (0.20). If your taxable income is $201,750 or less ($201,775 if married filing separately; $403,500 if married filing jointly), skip lines 4 through 12 and enter the amount from line 3 on line 13. Column: A. ",2,361 384.466 431 395.965,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row3[0].f1_13[0],/Tx,"Row: 3. Multiply line 2 by 20% (0.20). If your taxable income is $201,750 or less ($201,775 if married filing separately; $403,500 if married filing jointly), skip lines 4 through 12 and enter the amount from line 3 on line 13. Column: B. ",2,433 384.466 503 395.965,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row3[0].f1_14[0],/Tx,"Row: 3. Multiply line 2 by 20% (0.20). If your taxable income is $201,750 or less ($201,775 if married filing separately; $403,500 if married filing jointly), skip lines 4 through 12 and enter the amount from line 3 on line 13. Column: C. ",2,505 384.466 576 395.965,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row4[0].f1_15[0],/Tx,"Row: 4. Allocable share of W-2 wages from the trade, business, or aggregation. Column: A. ",2,361 360.465 431 371.966,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row4[0].f1_16[0],/Tx,"Row: 4. Allocable share of W-2 wages from the trade, business, or aggregation. Column: B. ",2,433 360.465 503 371.966,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row4[0].f1_17[0],/Tx,"Row: 4. Allocable share of W-2 wages from the trade, business, or aggregation. Column: C. ",2,505 360.465 576 371.966,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row5[0].f1_18[0],/Tx,Row: 5. Multiply line 4 by 50% (0.50). Column: A. ,2,361 348.466 431 359.465,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row5[0].f1_19[0],/Tx,Row: 5. Multiply line 4 by 50% (0.50). Column: B. ,2,433 348.466 503 359.465,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row5[0].f1_20[0],/Tx,Row: 5. Multiply line 4 by 50% (0.50). Column: C. ,2,505 348.466 576 359.465,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row6[0].f1_21[0],/Tx,Row: 6. Multiply line 4 by 25% (0.25). Column: A. ,2,361 336.467 431 347.466,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row6[0].f1_22[0],/Tx,Row: 6. Multiply line 4 by 25% (0.25). Column: B. ,2,433 336.467 503 347.466,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row6[0].f1_23[0],/Tx,Row: 6. Multiply line 4 by 25% (0.25). Column: C. ,2,505 336.467 576 347.466,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row7[0].f1_24[0],/Tx,Row: 7. Allocable share of the unadjusted basis immediately after acquisition (U B I A) of all qualified property. Column: A. ,2,361 312.466 431 323.967,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row7[0].f1_25[0],/Tx,Row: 7. Allocable share of the unadjusted basis immediately after acquisition (U B I A) of all qualified property. Column: B. ,2,433 312.466 503 323.967,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row7[0].f1_26[0],/Tx,Row: 7. Allocable share of the unadjusted basis immediately after acquisition (U B I A) of all qualified property. Column: C. ,2,505 312.466 576 323.967,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row8[0].f1_27[0],/Tx,Row: 8. Multiply line 7 by 2.5% (0.025). Column: A. ,2,361 300.467 431 311.466,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row8[0].f1_28[0],/Tx,Row: 8. Multiply line 7 by 2.5% (0.025). Column: B. ,2,433 300.467 503 311.466,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row8[0].f1_29[0],/Tx,Row: 8. Multiply line 7 by 2.5% (0.025). Column: C. ,2,505 300.467 576 311.466,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row9[0].f1_30[0],/Tx,Row: 9. Add lines 6 and 8. Column: A. ,2,361 288.468 431 299.467,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row9[0].f1_31[0],/Tx,Row: 9. Add lines 6 and 8. Column: B. ,2,433 288.468 503 299.467,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row9[0].f1_32[0],/Tx,Row: 9. Add lines 6 and 8. Column: C. ,2,505 288.468 576 299.467,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row10[0].f1_33[0],/Tx,Row: 10. Enter the greater of line 5 or line 9. Column: A. ,2,361 276.469 431 287.468,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row10[0].f1_34[0],/Tx,Row: 10. Enter the greater of line 5 or line 9. Column: B. ,2,433 276.469 503 287.468,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row10[0].f1_35[0],/Tx,Row: 10. Enter the greater of line 5 or line 9. Column: C. ,2,505 276.469 576 287.468,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row11[0].f1_36[0],/Tx,Row: 11. W-2 wage and U B I A of qualified property limitation. Enter the smaller of line 3 or line 10. Column: A. ,2,361 252.468 431 263.969,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row11[0].f1_37[0],/Tx,Row: 11. W-2 wage and U B I A of qualified property limitation. Enter the smaller of line 3 or line 10. Column: B. ,2,433 252.468 503 263.969,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row11[0].f1_38[0],/Tx,Row: 11. W-2 wage and U B I A of qualified property limitation. Enter the smaller of line 3 or line 10. Column: C. ,2,505 252.468 576 263.969,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row12[0].f1_39[0],/Tx,"Row: 12. Phased-in reduction. Enter the amount from line 26, if any. Column: A. ",2,361 240.469 431 251.468,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row12[0].f1_40[0],/Tx,"Row: 12. Phased-in reduction. Enter the amount from line 26, if any. Column: B. ",2,433 240.469 503 251.468,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row12[0].f1_41[0],/Tx,"Row: 12. Phased-in reduction. Enter the amount from line 26, if any. Column: C. ",2,505 240.469 576 251.468,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row13[0].f1_42[0],/Tx,Row: 13. Qualified business income deduction before patron reduction. Enter the greater of line 11 or line 12. Column: A. ,2,361 216.468 431 227.969,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row13[0].f1_43[0],/Tx,Row: 13. Qualified business income deduction before patron reduction. Enter the greater of line 11 or line 12. Column: B. ,2,433 216.468 503 227.969,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row13[0].f1_44[0],/Tx,Row: 13. Qualified business income deduction before patron reduction. Enter the greater of line 11 or line 12. Column: C. ,2,505 216.468 576 227.969,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row14[0].f1_45[0],/Tx,"Row: 14. Patron reduction. Enter the amount from Schedule D (Form 8995-A), line 6, if any. See instructions. Column: A. ",2,361 192.467 431 203.968,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row14[0].f1_46[0],/Tx,"Row: 14. Patron reduction. Enter the amount from Schedule D (Form 8995-A), line 6, if any. See instructions. Column: B. ",2,433 192.467 503 203.968,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row14[0].f1_47[0],/Tx,"Row: 14. Patron reduction. Enter the amount from Schedule D (Form 8995-A), line 6, if any. See instructions. Column: C. ",2,505 192.467 576 203.968,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row15[0].f1_48[0],/Tx,Row: 15. Qualified business income component. Subtract line 14 from line 13. Column: A. ,2,361 180.468 431 191.467,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row15[0].f1_49[0],/Tx,Row: 15. Qualified business income component. Subtract line 14 from line 13. Column: B. ,2,433 180.468 503 191.467,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row15[0].f1_50[0],/Tx,Row: 15. Qualified business income component. Subtract line 14 from line 13. Column: C. ,2,505 180.468 576 191.467,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row16[0].f1_51[0],/Tx,Row: 16. Total qualified business income component. Add all amounts reported on line 15. Column: A. ,2,361 156.467 431 167.968,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row16[0].f1_52[0],/Tx,Row: 16. Total qualified business income component. Add all amounts reported on line 15. Column: B. ,2,432 155.967 503.25 167.968,yes
+topmostSubform[0].Page1[0].Table_PartII[0].Row16[0].f1_53[0],/Tx,Row: 16. Total qualified business income component. Add all amounts reported on line 15. Column: C. ,2,504 155.967 576 167.968,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row17[0].f2_01[0],/Tx,"Page 2. Part I I I. Phased-in Reduction. Complete Part I I I only if your taxable income is more than $201,750 but not $276,750 ($201,775 and $276,775 if married filing separately; $403,500 and $553,500 if married filing jointly) and line 10 is less than line 3. Otherwise, skip Part I I I. Row: 17. Enter the amounts from line 3. Column: A. ",3,361 672.469 431 683.468,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row17[0].f2_02[0],/Tx,Row: 17. Enter the amounts from line 3. Column: B. ,3,433 672.469 503 683.468,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row17[0].f2_03[0],/Tx,Row: 17. Enter the amounts from line 3. Column: C. ,3,505 672.469 576 683.468,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row18[0].f2_04[0],/Tx,Row: 18. Enter the amounts from line 10. Column: A. ,3,361 660.47 431 671.469,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row18[0].f2_05[0],/Tx,Row: 18. Enter the amounts from line 10. Column: B. ,3,433 660.47 503 671.469,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row18[0].f2_06[0],/Tx,Row: 18. Enter the amounts from line 10. Column: C. ,3,505 660.47 576 671.469,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row19[0].f2_07[0],/Tx,Row: 19. Subtract line 18 from line 17. Column: A. ,3,361 648.471 431 659.47,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row19[0].f2_08[0],/Tx,Row: 19. Subtract line 18 from line 17. Column: B. ,3,433 648.471 503 659.47,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row19[0].f2_09[0],/Tx,Row: 19. Subtract line 18 from line 17. Column: C. ,3,505 648.471 576 659.47,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row20[0].Ln20[0].f2_10[0],/Tx,Row: 20. Taxable income before qualified business income deduction. ,3,267.4 624.47 337.4 635.971,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row20[0].f2_11_RO[0],/Tx,Row: 20. Taxable income before qualified business income deduction. Column: A. ,3,360 623.97 431.25 635.971,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row20[0].f2_12_RO[0],/Tx,Row: 20. Taxable income before qualified business income deduction. Column: B. ,3,432 623.97 503.25 635.971,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row20[0].f2_13_RO[0],/Tx,Row: 20. Taxable income before qualified business income deduction. Column: C. ,3,504 623.97 576 635.971,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row21[0].Ln21[0].f2_14[0],/Tx,"Row: 21. Threshold. Enter $201,750 ($201,775 if married filing separately; $403,500 if married filing jointly). ",3,267.4 588.47 337.4 599.97,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row21[0].f2_15_RO[0],/Tx,"Row: 21. Threshold. Enter $201,750 ($201,775 if married filing separately; $403,500 if married filing jointly). Column: A. ",3,360 587.97 431.25 599.97,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row21[0].f2_16_RO[0],/Tx,"Row: 21. Threshold. Enter $201,750 ($201,775 if married filing separately; $403,500 if married filing jointly). Column: B. ",3,432 587.97 503.25 599.97,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row21[0].f2_17_RO[0],/Tx,"Row: 21. Threshold. Enter $201,750 ($201,775 if married filing separately; $403,500 if married filing jointly). Column: C. ",3,504 587.97 576 599.97,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row22[0].Ln22[0].f2_18[0],/Tx,Row: 22. Subtract line 21 from line 20. ,3,267.4 576.471 337.4 587.47,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row22[0].f2_19_RO[0],/Tx,Row: 22. Subtract line 21 from line 20. Column: A. ,3,360 575.971 431.25 587.97,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row22[0].f2_20_RO[0],/Tx,Row: 22. Subtract line 21 from line 20. Column: B. ,3,432 575.971 503.25 587.97,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row22[0].f2_21_RO[0],/Tx,Row: 22. Subtract line 21 from line 20. Column: C. ,3,504 575.971 576 587.97,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row23[0].Ln23[0].f2_22[0],/Tx,"Row: 23. Phase-in range. Enter $75,000 ($150,000 if married filing jointly). ",3,267.4 552.47 337.4 563.971,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row23[0].f2_23_RO[0],/Tx,"Row: 23. Phase-in range. Enter $75,000 ($150,000 if married filing jointly). Column: A. ",3,360 551.97 431.25 563.971,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row23[0].f2_24_RO[0],/Tx,"Row: 23. Phase-in range. Enter $75,000 ($150,000 if married filing jointly). Column: B. ",3,432 551.97 503.25 563.971,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row23[0].f2_25_RO[0],/Tx,"Row: 23. Phase-in range. Enter $75,000 ($150,000 if married filing jointly). Column: C. ",3,504 551.97 576 563.971,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row24[0].Ln24[0].f2_26[0],/Tx,Row: 24. Phase-in percentage. Divide line 22 by line 23. %. ,3,267.4 539.971 324 551.47,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row24[0].f2_27_RO[0],/Tx,Row: 24. Phase-in percentage. Divide line 22 by line 23. Column: A. ,3,360 539.971 431.25 551.97,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row24[0].f2_28_RO[0],/Tx,Row: 24. Phase-in percentage. Divide line 22 by line 23. Column: B. ,3,432 539.971 503.25 551.97,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row24[0].f2_29_RO[0],/Tx,Row: 24. Phase-in percentage. Divide line 22 by line 23. Column: C. ,3,504 539.971 576 551.97,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row25[0].f2_30[0],/Tx,Row: 25. Total phase-in reduction. Multiply line 19 by line 24. Column: A. ,3,361 528.472 431 539.471,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row25[0].f2_31[0],/Tx,Row: 25. Total phase-in reduction. Multiply line 19 by line 24. Column: B. ,3,433 528.472 503 539.471,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row25[0].f2_32[0],/Tx,Row: 25. Total phase-in reduction. Multiply line 19 by line 24. Column: C. ,3,505 528.472 576 539.471,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row26[0].f2_33[0],/Tx,"Row: 26. Qualified business income after phase-in reduction. Subtract line 25 from line 17. Enter this amount here and on line 12, for the corresponding trade or business. Column: A. ",3,361 492.472 431 503.972,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row26[0].f2_34[0],/Tx,"Row: 26. Qualified business income after phase-in reduction. Subtract line 25 from line 17. Enter this amount here and on line 12, for the corresponding trade or business. Column: B. ",3,433 492.472 503 503.972,yes
+topmostSubform[0].Page2[0].Table_PartIII[0].Row26[0].f2_35[0],/Tx,"Row: 26. Qualified business income after phase-in reduction. Subtract line 25 from line 17. Enter this amount here and on line 12, for the corresponding trade or business. Column: C. ",3,505 492.472 576 503.972,yes
+topmostSubform[0].Page2[0].f2_36[0],/Tx,"Part I V. Determine Your Qualified Business Income Deduction. 27. Total qualified business income component from all qualified trades, businesses, or aggregations. Enter the amount from line 16. ",3,505 456.469 576 467.468,yes
+topmostSubform[0].Page2[0].f2_37[0],/Tx,28. Qualified R E I T dividends and publicly traded partnership (P T P) income or (loss) (see instructions). ,3,505 444.47 576 455.469,yes
+topmostSubform[0].Page2[0].f2_38[0],/Tx,29. Open parenthesis. Qualified R E I T dividends and P T P (loss) carryforward from prior years. Close parenthesis. ,3,507 432.468 573 443.467,yes
+topmostSubform[0].Page2[0].f2_39[0],/Tx,"30. Total qualified R E I T dividends and P T P income. Combine lines 28 and 29. If less than zero, enter 0. ",3,505 420.469 576 431.468,yes
+topmostSubform[0].Page2[0].f2_40[0],/Tx,31. R E I T and P T P component. Multiply line 30 by 20% (0.20). ,3,505 408.47 576 419.469,yes
+topmostSubform[0].Page2[0].f2_41[0],/Tx,32. Qualified business income deduction before the income limitation. Add lines 27 and 31. ,3,505 396.468 576 407.467,yes
+topmostSubform[0].Page2[0].f2_42[0],/Tx,33. Taxable income before qualified business income deduction. ,3,505 384.469 576 395.468,yes
+topmostSubform[0].Page2[0].f2_43[0],/Tx,"34. Enter your net capital gain, if any, increased by any qualified dividends. See instructions. ",3,505 360.468 576 371.467,yes
+topmostSubform[0].Page2[0].f2_44[0],/Tx,"35. Subtract line 34 from line 33. If zero or less, enter 0. ",3,505 348.469 576 359.468,yes
+topmostSubform[0].Page2[0].f2_45[0],/Tx,36. Income limitation. Multiply line 35 by 20% (0.20). ,3,505 336.47 576 347.469,yes
+topmostSubform[0].Page2[0].f2_46[0],/Tx,37. Qualified business income deduction before the domestic production activities deduction (D P A D) under section 199A(g). Enter the smaller of line 32 or line 36. ,3,505 312.469 576 323.468,yes
+topmostSubform[0].Page2[0].f2_47[0],/Tx,38. D P A D under section 199A(g) allocated from an agricultural or horticultural cooperative. Don’t enter more than line 33 minus line 37. ,3,505 288.468 576 299.467,yes
+topmostSubform[0].Page2[0].f2_48[0],/Tx,"39. Qualified business income deduction before the minimum deduction for active qualified businessincome. Add lines 37 and 38. ",3,505 264.47 576 275.469,yes
+topmostSubform[0].Page2[0].f2_49[0],/Tx,40. Minimum deduction for active qualified business income (see instructions),3,505 252.468 576 263.467,yes
+topmostSubform[0].Page2[0].f2_50[0],/Tx,41. Total qualified business income deduction. Enter the greater of line 39 or line 40. Also enter this amount on the applicable line of your return. See instructions.,3,505 228.47 576 239.469,yes
+topmostSubform[0].Page2[0].f2_51[0],/Tx,"42. Open parenthesis. Total qualified R E I T dividends and P T P (loss) carryforward. Combine lines 28 and 29. If zero or greater, enter 0. Close parenthesis. ",3,507 204.469 573 215.468,yes
+topmostSubform[0].Page2[0].c2_1[0],/Btn,43. Check the box for this line 43 only if indicating a filing of this Form 8995-A by an Electing Small Business Trust (E S B T). See instructions.,3,462.299 181.468 471.299 190.468,yes

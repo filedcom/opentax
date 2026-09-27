@@ -1,5 +1,5 @@
 {
-  "snapshot_utc": "2026-09-27T03:00:28.993056+00:00",
+  "snapshot_utc": "2026-09-27T12:17:33.015566+00:00",
   "source_pages": [
     "https://www.irs.gov/e-file-providers/tax-year-2026-form-1040-series-and-extensions-modernized-e-file-mef-assurance-testing-system-ats-information",
     "https://www.irs.gov/tax-professionals/tax-year-2026-modernized-e-file-schema-and-business-rules-for-individual-tax-returns-and-extensions"
@@ -1147,6 +1147,70 @@
       "sha256": "c7f6165c62f63ee7eee9e59ea0c1bde038bc4f0a4d8bf6c3bebdc264c2e3c01c",
       "year_check": "2026-present",
       "retrieved_utc": "2026-09-27T10:54:44.216012+00:00"
+    },
+    {
+      "path": "draft/f8995aa.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f8995aa--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 200957,
+      "sha256": "b3de8da56451b067a23bce66c6d46a791eae3559c248888843eda4b561b6bdf3",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-09-27T12:17:33.015566+00:00"
+    },
+    {
+      "path": "authorities/f1099ptr--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/f1099ptr.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 493088,
+      "sha256": "4bdef5fc7c3bfb831af9be9365aaf6b1c691767ed3c9b787c15f49e85db557b3",
+      "retrieved_utc": "2026-09-27T12:17:33.015566+00:00"
+    },
+    {
+      "path": "authorities/i1099ptr--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/i1099ptr.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 138012,
+      "sha256": "780e689b2e188900f031b2fbaccdb9c14b93de4946198e03d8a1b25aa3a3fce7",
+      "retrieved_utc": "2026-09-27T12:17:33.015566+00:00"
+    },
+    {
+      "path": "authorities/f8995ab--2022.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/f8995ab.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 58680,
+      "sha256": "836460c0d7b5e17682a92e61147440336bda63b573f672d0cda0ebd276bc453f",
+      "retrieved_utc": "2026-09-27T12:17:33.015566+00:00"
+    },
+    {
+      "path": "authorities/f8995ac--2022.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/f8995ac.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 58825,
+      "sha256": "30074d5ce00204c6ab09a6146b95043f1e4f81cf6849590dc2caab08b09ae99b",
+      "retrieved_utc": "2026-09-27T12:17:33.015566+00:00"
+    },
+    {
+      "path": "authorities/f8995ad--2022.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/f8995ad.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 59491,
+      "sha256": "993afb4447fb6d0de29319bc26e811f6cc5c19dde6b28dad818c42f13a71d8ad",
+      "retrieved_utc": "2026-09-27T12:17:33.015566+00:00"
+    },
+    {
+      "path": "authorities/i8995a--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/i8995a.pdf",
+      "kind": "prior-year-comparator",
+      "status": "downloaded",
+      "bytes": 248825,
+      "sha256": "6df1301c1ce74ef391219094831accd22cfeac26ce510f4499c4834484f55d97",
+      "retrieved_utc": "2026-09-27T12:17:33.015566+00:00"
     }
   ]
 }

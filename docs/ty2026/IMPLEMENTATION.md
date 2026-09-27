@@ -36,6 +36,10 @@ The [Schedule SE contract](SCHEDULESE-GRAPH.md) maps both optional methods,
 the owner/source boundary, all 27 draft PDF fields, and the exact current
 graph/serializer gaps. Its ATS scenario 3 case can be implemented without
 re-researching the source lines, subject to current MeF and rounding checks.
+The [QBI/cooperative contract](QBI-COOPERATIVE-GRAPH.md) pins Form 1099-PATR
+and all four Form 8995-A schedules, flags the shared input's incorrect 1099-PATR
+box labels, and specifies the per-business Schedule D reduction and cooperative
+DPAD routes. The 2026 Form 8995-A instructions remain a source gate.
 
 ## Chronological progress notes
 
