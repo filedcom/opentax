@@ -20,6 +20,11 @@ as a filing rule.
 | Capital loss carryover and other gain sources (Forms 2439, 4797, 6252, 4684, 6781, 8824, 8814, K-1) | Schedule D lines 4–6 and 11–14 | Add explicit prior-year carryforward provenance and each supported source route. A carryover or other capital activity disables direct 1040 reporting. |
 | QOF deferral or inclusion | Form 8949 / Form 8997 and Schedule D | Add election and carryforward facts. Do not infer that no QOF activity exists merely because no current source node supplied it. |
 
+The [Form 4797 disposition contract](FORM4797-GRAPH.md) specifies the
+asset-level §1231 net and five-year loss recapture that produce its
+long-term Schedule D contribution, along with the separate unrecaptured
+§1250 worksheet source.
+
 The shared Schedule D calculator already distinguishes the direct
 distribution case from a filed schedule and routes net capital gain into the
 preferential-rate tax calculation. Its full TY2026 transaction, carryover,

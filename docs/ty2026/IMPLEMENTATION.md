@@ -78,6 +78,10 @@ The [Form 4684 contract](FORM4684-GRAPH.md) maps casualty events and property,
 the draft state-declaration and qualified-disaster split, Section B's
 Schedule A/Form 4797 routes, Ponzi and §165(i) branches, and all 162 PDF
 widgets. The 2026 instructions and current MeF remain acceptance gates.
+The [Form 4797 contract](FORM4797-GRAPH.md) maps its renumbered Part I–IV
+lines, per-asset disposition and recapture ledger, Form 4684 casualty
+feedback, five-year §1231 history, QPP use change and 188 PDF widgets.
+Its TY2025 MeF and shared aggregate node cannot file the complete 2026 form.
 The [scenario 12 contract](ATS-SCENARIO-12.md) and
 [business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
 broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800

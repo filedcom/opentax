@@ -118,6 +118,10 @@ The [Form 4684 contract](../../../docs/ty2026/FORM4684-GRAPH.md) maps
 2026 disaster and casualty events through the personal and business sections,
 then into Schedule A/Form 4797 and activity limits. The 162-widget PDF,
 current instructions and 2026 MeF instances remain to implement.
+The [Form 4797 contract](../../../docs/ty2026/FORM4797-GRAPH.md) maps
+per-asset business dispositions, recapture and §1231 history, including
+the Form 4684 feedback and 2026 line changes. Its 188 PDF widgets and
+current MeF/validation routes remain to implement.
 The [Form 4835 contract](../../../docs/ty2026/FORM4835-GRAPH.md) and
 [ATS scenario 3 plan](../../../docs/ty2026/ATS-SCENARIO-03.md) connect
 production-based farm rent to Schedule E while keeping Schedule F farm profit

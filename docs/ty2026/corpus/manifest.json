@@ -1558,6 +1558,15 @@
       "bytes": 17631,
       "sha256": "b0319b591235e21569018972244d6527a3be55a965e3b01ae9e53abaf89fcd10",
       "retrieved_utc": "2026-09-27T14:13:31Z"
+    },
+    {
+      "path": "authorities/i4797--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/i4797--2025.pdf",
+      "kind": "prior-year-comparator",
+      "status": "downloaded",
+      "bytes": 239974,
+      "sha256": "cddf741b95ec1689712aba82936346bd7b7c13dfe593fc66102a31e333b8fae9",
+      "retrieved_utc": "2026-09-27T14:16:41Z"
     }
   ]
 }

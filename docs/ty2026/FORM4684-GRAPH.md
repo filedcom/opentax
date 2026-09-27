@@ -51,8 +51,9 @@ This form feeds [Form 6198](FORM6198-GRAPH.md) for any activity loss subject
 to at-risk limits, then [Form 8582](FORM8582-GRAPH.md) passive restrictions and
 [Form 461](FORM461-GRAPH.md) excess-business-loss testing where applicable.
 Retain the original property/transaction character when allowed amounts flow
-to Form 4797, Schedule A or D. Reimbursements, involuntary-conversion gain
-deferral and later recoveries need their own year-specific records.
+to [Form 4797](FORM4797-GRAPH.md), Schedule A or D. Reimbursements,
+involuntary-conversion gain deferral and later recoveries need their own
+year-specific records.
 
 ## Current code boundary
 

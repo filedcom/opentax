@@ -80,6 +80,9 @@ for the implementation contract.
 - [`FORM4684-GRAPH.md`](FORM4684-GRAPH.md) and `pdf-fields-f4684.csv`:
   per-event casualty/theft, disaster classification, Schedule A/4797,
   Ponzi/election routes, and all 162 draft PDF widgets.
+- [`FORM4797-GRAPH.md`](FORM4797-GRAPH.md) and `pdf-fields-f4797.csv`:
+  per-asset dispositions, §1231 gain/loss and recapture, Form 4684 cycle,
+  new QPP use-change question, and all 188 draft PDF widgets.
 - [`FORM8962-GRAPH.md`](FORM8962-GRAPH.md) and `pdf-fields-f8962.csv`:
   2026 premium tax credit line 27, 400% FPL boundary, Form 1095-A/allocations,
   143 PDF widgets, and MeF/graph acceptance order.
