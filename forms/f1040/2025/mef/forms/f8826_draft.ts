@@ -28,15 +28,6 @@ export function buildForm8826Document(rawInput: unknown): string {
       "Form 8826 cannot combine an ineligible self-earned credit with pass-through credit",
     );
   }
-  if (
-    (input.pass_through_credits ?? []).some((source) =>
-      source.credit_amount > 0 && source.subject_to_passive_activity_limit
-    )
-  ) {
-    throw new Error(
-      "Form 8826 passive pass-through credit needs Form 8582-CR before Form 3800",
-    );
-  }
   if (lines.line8 <= 0) {
     throw new Error("Form 8826 has no eligible source credit to document");
   }
@@ -64,8 +55,11 @@ export const form8826: MefFormDescriptor<"f8826", Input> = {
     const lines = calculateForm8826(source);
     if (context?.documentIdsByPendingKey) {
       if (
-        source.subject_to_passive_activity_limit && lines.line6 > 0 &&
-        !readDisabledAccessCapLedger(context)
+        (source.subject_to_passive_activity_limit && lines.line6 > 0 ||
+          (source.pass_through_credits ?? []).some((entry) =>
+            entry.credit_amount > 0 &&
+            entry.subject_to_passive_activity_limit
+          )) && !readDisabledAccessCapLedger(context)
       ) {
         throw new Error(
           "Passive Form 8826 needs its Form 8582-CR source ledger",

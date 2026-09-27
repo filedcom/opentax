@@ -27,6 +27,15 @@ const inputSchema = z.object({
       Math.abs(amount * 100 - Math.round(amount * 100)) < 0.000001
     ),
   }).optional(),
+  required_form8826_pass_through_credits: z.array(z.object({
+    source_type: z.enum(["partnership", "s_corporation"]),
+    source_ein: z.string().regex(/^\d{9}$/),
+    source_document_reference: z.string().trim().min(1),
+    credit_amount: z.number().finite().positive().refine((amount) =>
+      Number.isSafeInteger(Math.round(amount * 100)) &&
+      Math.abs(amount * 100 - Math.round(amount * 100)) < 0.000001
+    ),
+  })).optional(),
 }).passthrough();
 
 class DisabledAccessLimitNode extends TaxNode<typeof inputSchema> {
@@ -54,7 +63,8 @@ class DisabledAccessLimitNode extends TaxNode<typeof inputSchema> {
       !hasPassiveFacts &&
       ("required_disabled_access_k1_credits" in input ||
         "required_orphan_drug_k1_credits" in input ||
-        input.required_disabled_access_self_credit !== undefined)
+        input.required_disabled_access_self_credit !== undefined ||
+        (input.required_form8826_pass_through_credits?.length ?? 0) > 0)
     ) {
       throw new Error(
         "Passive disabled-access credit needs Form 8582-CR activity and tax facts",
@@ -77,6 +87,26 @@ class DisabledAccessLimitNode extends TaxNode<typeof inputSchema> {
       ) {
         throw new Error(
           "Passive Form 8826 credit does not match its Form 8582-CR activity sources",
+        );
+      }
+    }
+    for (const required of input.required_form8826_pass_through_credits ?? []) {
+      const matched = passive?.credit_sources.filter((source) =>
+        source.source_form === "Form 8826" &&
+        source.source_origin.kind === required.source_type &&
+        source.source_origin.kind !== "self" &&
+        source.source_origin.ein === required.source_ein &&
+        source.reporting_route === PassiveCreditReportingRoute.Form3800Line3 &&
+        source.form3800_credit_line === "1e" &&
+        source.source_document_reference === required.source_document_reference
+      ) ?? [];
+      if (
+        matched.reduce((sum, source) =>
+          sum + source.current_year_credit, 0) !==
+          Math.round(required.credit_amount)
+      ) {
+        throw new Error(
+          "Passive Form 8826 pass-through credit does not match its Form 8582-CR activity sources",
         );
       }
     }

@@ -2420,6 +2420,73 @@ Deno.test({
 
 Deno.test({
   name:
+    "XSD: passive Form 8826 pass-through and its K-1 enter the shared cap once",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const result = runReturn({
+    general,
+    f8826: {
+      eligible_expenditures: 0,
+      subject_to_passive_activity_limit: false,
+      pass_through_credits: [{
+        entity_type: "partnership",
+        entity_ein: "123456789",
+        source_document_reference: "2025 access partnership K-1",
+        credit_amount: 3_000,
+        subject_to_passive_activity_limit: true,
+      }],
+    },
+    k1_partnership: [{
+      partnership_name: "Access partnership",
+      partnership_ein: "123456789",
+      source_document_reference: "2025 access partnership K-1",
+      box15_code_k_disabled_access_credit: 3_000,
+      disabled_access_credit_subject_to_passive_activity_limit: true,
+    }],
+    k1_s_corp: [{
+      corporation_name: "Access S corporation",
+      corporation_ein: "987654321",
+      source_document_reference: "2025 access S corporation K-1",
+      box13_code_k_disabled_access_credit: 4_000,
+      disabled_access_credit_subject_to_passive_activity_limit: false,
+    }],
+    form8582cr: {
+      credit_sources: [{
+        activity_reference: "Access partnership activity",
+        source_form: "Form 8826",
+        source_document_reference: "2025 access partnership K-1",
+        source_origin: {
+          kind: PassiveCreditSourceOrigin.Partnership,
+          entity_reference: "Access partnership",
+          ein: "123456789",
+        },
+        category: PassiveCreditCategory.Other,
+        reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+        form3800_credit_line: "1e",
+        current_year_credit: 3_000,
+        prior_unallowed_credits: [],
+        publicly_traded_partnership: false,
+      }],
+      regular_tax_all_income: 0,
+      regular_tax_without_passive: 0,
+    },
+  });
+  assertEquals(result.diagnostics, []);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(xml, "<IRS8582CR ");
+  assertStringIncludes(xml, "<IRS3800 ");
+  assertEquals(xml.includes("<IRS8826 "), false);
+  await validateXsd(xml, "passive Form 8826 pass-through shared cap");
+});
+
+Deno.test({
+  name:
     "XSD: passive self-earned Form 8826 and nonpassive K-1 share the disabled-access cap",
   sanitizeOps: false,
   sanitizeResources: false,

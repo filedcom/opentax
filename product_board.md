@@ -62,11 +62,14 @@ are written but unrun. A self-earned passive Form 8826 source now supplies a
 gross source-reference marker that must match the public Form 8582-CR activity
 amount before the same cap; the MeF ledger checks it against Form 8826. Its
 mixed graph, source-document, and local XSD cases are written but unrun.
-Passive Form 8826 pass-through sources are not yet handled. Until that path
-and the full-batch and IRS business-rule checks pass, mixed-source filing is
-not supported. The IRS
-requires pro-rata allocation of the overall limited credit; the per-source
-rounding policy still needs business-rule review.
+Passive Form 8826 partnership and S-corporation line 7 sources now deposit
+their own gross-evidence marker, which must match the Form 8582-CR activity
+rows and the entered K-1. This avoids counting the same K-1 twice when both
+source documents are entered. The graph, provenance, and XSD cases are written
+but unrun. Until the full-batch and IRS business-rule checks pass, mixed-source
+filing is not supported. The IRS requires pro-rata allocation of the overall
+limited credit; the per-source rounding policy still needs business-rule
+review.
 
 The latest completed full test run is **6,596 passed, 0 failed, 48 ignored**
 (`deno task test`, 2026-09-26, before the later multi-policy line 10 and
@@ -260,13 +263,15 @@ requires a Form 3800 document in the linked bundle, and omits the recipient's
 own form for pass-through-only claims. Form 8826 now requires a passive-activity
 answer and a source reference for a passive self-earned credit, and requires a
 matching Form 8582-CR activity input rather than routing it as nonpassive.
-Those cases are written but unrun. The build pass now accepts identified partnership and S-corporation line
-7 sources, caps their combined line 8 with self-earned credit at $5,000, and
-lets pass-through-only credit reach Form 3800 without requiring the recipient's
-own eligibility facts or an `IRS8826` document. Passive K-1 credits stop pending
-Form 8582-CR. Each pass-through source now requires a document reference; the
-filed path matches current-year partnership and S-corporation code K K-1 facts
-to its EIN, reference, gross credit, and passive flag, and requires Form 3800
+Those cases are written but unrun. The build pass now accepts identified
+partnership and S-corporation line 7 sources, caps their combined line 8 with
+self-earned credit at $5,000, and lets pass-through-only credit reach Form 3800
+without requiring the recipient's
+own eligibility facts or an `IRS8826` document. Passive K-1 credits require
+matching Form 8582-CR activity and tax facts. Each pass-through source now
+requires a document reference; the filed path matches current-year partnership
+and S-corporation code K K-1 facts to its EIN, reference, gross credit, and
+passive flag, and requires Form 3800
 even when the recipient has no Form 8826 document. These source, missing-link,
 and XML cases are written but unrun. The filed Form 3800 path also rejects
 passive Form 8826 source facts mislabeled as nonpassive. The combined cap now

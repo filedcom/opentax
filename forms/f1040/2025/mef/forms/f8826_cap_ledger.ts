@@ -39,6 +39,25 @@ export function readDisabledAccessCapLedger(context: MefBuildContext) {
       "Passive Form 8826 source differs from the gross disabled-access ledger",
     );
   }
+  const expectedPassThrough = (form8826?.pass_through_credits ?? []).flatMap(
+    (source) =>
+      source.credit_amount > 0 && source.subject_to_passive_activity_limit
+        ? [{
+          source_type: source.entity_type,
+          source_ein: source.entity_ein,
+          source_document_reference: source.source_document_reference,
+          credit_amount: source.credit_amount,
+        }]
+        : [],
+  );
+  if (
+    JSON.stringify(raw.required_form8826_pass_through_credits ?? []) !==
+      JSON.stringify(expectedPassThrough)
+  ) {
+    throw new Error(
+      "Passive Form 8826 pass-through sources differ from the gross disabled-access ledger",
+    );
+  }
   const result = disabledAccessLimit.compute(
     { taxYear: 2025, formType: "f1040" },
     raw,

@@ -200,3 +200,57 @@ Deno.test("MeF disabled-access ledger ties a passive self-earned source to Form 
     })
   );
 });
+
+Deno.test("MeF disabled-access ledger ties passive pass-through evidence to Form 8826", () => {
+  const form8826 = {
+    eligible_expenditures: 0,
+    subject_to_passive_activity_limit: false,
+    pass_through_credits: [{
+      entity_type: "partnership",
+      entity_ein: "123456789",
+      source_document_reference: "2025 access partnership K-1",
+      credit_amount: 3_000,
+      subject_to_passive_activity_limit: true,
+    }],
+  };
+  const gross = {
+    required_form8826_pass_through_credits: [{
+      source_type: "partnership",
+      source_ein: "123456789",
+      source_document_reference: "2025 access partnership K-1",
+      credit_amount: 3_000,
+    }],
+    credit_sources: [raw.credit_sources[0]],
+    regular_tax_all_income: 0,
+    regular_tax_without_passive: 0,
+  };
+  const capped = disabledAccessLimit.compute(
+    { taxYear: 2025, formType: "f1040" },
+    disabledAccessLimit.inputSchema.parse(gross),
+  );
+  const pending = {
+    f8826: form8826,
+    disabled_access_limit: gross,
+    form8582cr: capped.outputs.find((item) => item.nodeType === "form8582cr")
+      ?.fields,
+  };
+  assertEquals(
+    readDisabledAccessCapLedger({ pending })?.rawPassiveSources[0]
+      .current_year_credit,
+    3_000,
+  );
+  assertThrows(() =>
+    readDisabledAccessCapLedger({
+      pending: {
+        ...pending,
+        f8826: {
+          ...form8826,
+          pass_through_credits: [{
+            ...form8826.pass_through_credits[0],
+            credit_amount: 2_999,
+          }],
+        },
+      },
+    })
+  );
+});

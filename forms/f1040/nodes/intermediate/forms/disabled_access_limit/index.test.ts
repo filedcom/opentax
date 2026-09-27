@@ -220,3 +220,75 @@ Deno.test("passive self-earned Form 8826 needs matching Form 8582-CR activity fa
     )
   );
 });
+
+Deno.test("passive Form 8826 pass-through marker shares the cap without duplicating its K-1", () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    f8826: {
+      eligible_expenditures: 0,
+      subject_to_passive_activity_limit: false,
+      pass_through_credits: [{
+        entity_type: "partnership",
+        entity_ein: "123456789",
+        source_document_reference: "2025 access partnership K-1",
+        credit_amount: 3_000,
+        subject_to_passive_activity_limit: true,
+      }],
+    },
+    k1_partnership: [{
+      partnership_name: "Access partnership",
+      partnership_ein: "123456789",
+      source_document_reference: "2025 access partnership K-1",
+      box15_code_k_disabled_access_credit: 3_000,
+      disabled_access_credit_subject_to_passive_activity_limit: true,
+    }],
+    k1_s_corp: [{
+      corporation_name: "Access S corporation",
+      corporation_ein: "987654321",
+      source_document_reference: "2025 access S corporation K-1",
+      box13_code_k_disabled_access_credit: 4_000,
+      disabled_access_credit_subject_to_passive_activity_limit: false,
+    }],
+    form8582cr: {
+      credit_sources: [passiveSource],
+      regular_tax_all_income: 0,
+      regular_tax_without_passive: 0,
+    },
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  assertEquals(
+    (result.pending.disabled_access_limit
+      .required_form8826_pass_through_credits as Array<{
+        credit_amount: number;
+      }>)[0].credit_amount,
+    3_000,
+  );
+  assertEquals(
+    (result.pending.form8582cr.credit_sources as Array<{
+      current_year_credit: number;
+    }>)[0].current_year_credit,
+    2_143,
+  );
+  assertEquals(
+    (result.pending.f3800.f8826_credit_entries as Array<{
+      credit_amount: number;
+    }>)[0].credit_amount,
+    2_857,
+  );
+});
+
+Deno.test("passive Form 8826 pass-through amount must match its activity rows", () => {
+  assertThrows(() =>
+    disabledAccessLimit.compute(
+      { taxYear: 2025, formType: "f1040" },
+      disabledAccessLimit.inputSchema.parse({
+        ...input,
+        required_form8826_pass_through_credits: [{
+          source_type: "partnership",
+          source_ein: "123456789",
+          source_document_reference: "2025 access partnership K-1",
+          credit_amount: 2_999,
+        }],
+      }),
+    )
+  );
+});

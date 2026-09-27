@@ -181,15 +181,6 @@ class F8826Node extends TaxNode<typeof inputSchema> {
         "Form 8826 cannot combine an ineligible self-earned credit with pass-through credit",
       );
     }
-    if (
-      (input.pass_through_credits ?? []).some((source) =>
-        source.credit_amount > 0 && source.subject_to_passive_activity_limit
-      )
-    ) {
-      throw new Error(
-        "Form 8826 passive pass-through credit needs Form 8582-CR before Form 3800",
-      );
-    }
     return {
       outputs: lines.line8 > 0
         ? [output(disabledAccessLimit, {
@@ -202,6 +193,18 @@ class F8826Node extends TaxNode<typeof inputSchema> {
               },
             }
             : {}),
+          required_form8826_pass_through_credits:
+            (input.pass_through_credits ?? []).flatMap((source) =>
+              source.credit_amount > 0 &&
+                source.subject_to_passive_activity_limit
+                ? [{
+                  source_type: source.entity_type,
+                  source_ein: source.entity_ein,
+                  source_document_reference: source.source_document_reference,
+                  credit_amount: source.credit_amount,
+                }]
+                : []
+            ),
           f8826_credit_entries: [
             ...(lines.line6 > 0 && isEligible(input) &&
                 !input.subject_to_passive_activity_limit
@@ -212,7 +215,8 @@ class F8826Node extends TaxNode<typeof inputSchema> {
               }]
               : []),
             ...(input.pass_through_credits ?? []).flatMap((source) => {
-              return source.credit_amount > 0
+              return source.credit_amount > 0 &&
+                  !source.subject_to_passive_activity_limit
                 ? [{
                   source_type: source.entity_type,
                   source_ein: source.entity_ein,

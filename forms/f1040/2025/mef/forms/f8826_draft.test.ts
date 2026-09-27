@@ -207,7 +207,7 @@ Deno.test("Form 8826 draft: pass-through-only source goes to Form 3800 without F
   );
 });
 
-Deno.test("Form 8826 draft: passive K-1 credit and ineligible self-credit stop", () => {
+Deno.test("Form 8826 draft: passive K-1 credit needs activity facts and ineligible self-credit stops", () => {
   const passThrough = {
     entity_type: "partnership" as const,
     entity_ein: "123456789",
@@ -215,20 +215,28 @@ Deno.test("Form 8826 draft: passive K-1 credit and ineligible self-credit stop",
     credit_amount: 1_000,
     subject_to_passive_activity_limit: true,
   };
+  const forwarded = f8826.compute(
+    { taxYear: 2025, formType: "f1040" },
+    { ...source, pass_through_credits: [passThrough] },
+  ).outputs[0];
+  assertEquals(forwarded?.fields.required_form8826_pass_through_credits, [{
+    source_type: "partnership",
+    source_ein: "123456789",
+    source_document_reference: "2025 disabled-access K-1",
+    credit_amount: 1_000,
+  }]);
   assertThrows(
     () =>
-      f8826.compute({ taxYear: 2025, formType: "f1040" }, {
-        ...source,
-        pass_through_credits: [passThrough],
-      }),
+      disabledAccessLimit.compute(
+        { taxYear: 2025, formType: "f1040" },
+        disabledAccessLimit.inputSchema.parse(forwarded?.fields),
+      ),
     Error,
     "Form 8582-CR",
   );
-  assertThrows(
-    () =>
-      buildForm8826Document({ ...source, pass_through_credits: [passThrough] }),
-    Error,
-    "Form 8582-CR",
+  assertStringIncludes(
+    buildForm8826Document({ ...source, pass_through_credits: [passThrough] }),
+    "<PrtshpandSCorpDisabledAcsCrAmt>1000</PrtshpandSCorpDisabledAcsCrAmt>",
   );
   assertThrows(
     () =>

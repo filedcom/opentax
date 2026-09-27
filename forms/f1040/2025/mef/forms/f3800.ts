@@ -232,6 +232,7 @@ function sourceForm8826(
         }]
         : []),
       ...(source.pass_through_credits ?? []).flatMap((entry, index) => {
+        if (entry.subject_to_passive_activity_limit) return [];
         const credit = ledger
           ? entry.credit_amount
           : lines.passThroughCreditsAfterCap[index] ?? 0;
