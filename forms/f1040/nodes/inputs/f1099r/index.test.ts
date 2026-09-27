@@ -237,11 +237,12 @@ Deno.test("f1099r.compute: code A is eligibility information, not an election", 
   );
 });
 
-Deno.test("f1099r.compute: explicit Form 4972 choice carries box 2a and box 3", () => {
+Deno.test("f1099r.compute: explicit Form 4972 choice carries boxes 2a, 3, and 6", () => {
   const result = compute([minimalPensionItem({
     box1_gross_distribution: 100_000,
     box2a_taxable_amount: 80_000,
     box3_capital_gain: 10_000,
+    box6_nua: 4_000,
     box7_distribution_code: DistributionCode.CodeA,
     exclude_4972: true,
     ts: TS.T,
@@ -250,6 +251,7 @@ Deno.test("f1099r.compute: explicit Form 4972 choice carries box 2a and box 3", 
   const fields = form4972Out!.fields as Record<string, unknown>;
   assertEquals(fields.lump_sum_amount, 80_000);
   assertEquals(fields.capital_gain_amount, 10_000);
+  assertEquals(fields.box6_nua, 4_000);
   assertEquals(fields.recipient, TS.T);
 });
 

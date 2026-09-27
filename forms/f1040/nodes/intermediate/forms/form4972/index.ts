@@ -49,6 +49,9 @@ export const inputSchema = z.object({
 
   // Pre-1974 capital gain portion (from f1099r, box3_capital_gain)
   capital_gain_amount: z.number().nonnegative().optional(),
+  // Employer-security net unrealized appreciation (Form 1099-R box 6).
+  box6_nua: z.number().nonnegative().optional(),
+  elect_include_nua: z.boolean().optional(),
 
   // Eligibility: participant was born before January 2, 1936
   born_before_1936: z.boolean().optional(),
@@ -58,6 +61,7 @@ export const inputSchema = z.object({
   alternate_payee_distribution: z.boolean().optional(),
   participant_five_year_member: z.boolean().optional(),
   prior_election_after_1986: z.boolean().optional(),
+  prior_beneficiary_election_after_1986: z.boolean().optional(),
   participant_died_before_1996_08_21: z.boolean().optional(),
 
   // Part II election: apply 20% capital gain rate to pre-1974 portion
@@ -93,12 +97,16 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
     input.born_before_1936 !== true ||
     input.entire_balance_distributed !== true ||
     input.rolled_over_any !== false ||
-    input.prior_election_after_1986 !== false ||
+    typeof input.beneficiary_distribution !== "boolean" ||
+    typeof input.participant_five_year_member !== "boolean" ||
     !(
       input.beneficiary_distribution === true ||
       input.alternate_payee_distribution === true ||
       input.participant_five_year_member === true
-    )
+    ) ||
+    (input.beneficiary_distribution === true
+      ? input.prior_beneficiary_election_after_1986 !== false
+      : input.prior_election_after_1986 !== false)
   ) {
     throw new Error(
       "form4972: elected distribution lacks qualifying plan, rollover, participant, or prior-election facts",
@@ -116,7 +124,10 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
       `form4972: death_benefit_exclusion (${deathBenefit}) cannot exceed ${deathBenefitMax}`,
     );
   }
-  if (deathBenefit > input.lump_sum_amount) {
+  if (
+    deathBenefit > input.lump_sum_amount +
+        (input.elect_include_nua === true ? input.box6_nua ?? 0 : 0)
+  ) {
     throw new Error(
       "form4972: death benefit exclusion cannot exceed the taxable distribution",
     );
@@ -136,6 +147,14 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
   ) {
     throw new Error(
       "form4972: federal estate tax adjustment requires a beneficiary distribution",
+    );
+  }
+  if (
+    input.elect_include_nua === true &&
+    !(input.box6_nua !== undefined && input.box6_nua > 0)
+  ) {
+    throw new Error(
+      "form4972: NUA inclusion election needs a positive Form 1099-R box 6 amount",
     );
   }
   if (
@@ -239,8 +258,16 @@ class Form4972Node extends TaxNode<typeof inputSchema> {
 
     validateInput(input, cfg.deathBenefitMax);
 
-    const taxableAmount = Math.round(input.lump_sum_amount);
-    const capitalGain = Math.round(input.capital_gain_amount ?? 0);
+    const box2aTaxable = Math.round(input.lump_sum_amount);
+    const box3CapitalGain = Math.round(input.capital_gain_amount ?? 0);
+    const includedNua = input.elect_include_nua === true
+      ? Math.round(input.box6_nua ?? 0)
+      : 0;
+    const nuaCapitalGain = includedNua > 0 && box2aTaxable > 0
+      ? Math.round(includedNua * box3CapitalGain / box2aTaxable)
+      : 0;
+    const taxableAmount = box2aTaxable + includedNua;
+    const capitalGain = box3CapitalGain + nuaCapitalGain;
     const deathBenefit = Math.round(input.death_benefit_exclusion ?? 0);
     if (electCapGain && capitalGain === 0) {
       throw new Error(
@@ -302,11 +329,24 @@ class Form4972Node extends TaxNode<typeof inputSchema> {
         fields: {
           ...input,
           ...(electCapGain
-            ? { line6: capitalGainElected, line7: partIITaxAmt }
+            ? {
+              line6: capitalGainElected,
+              line7: partIITaxAmt,
+              ...(nuaCapitalGain > 0
+                ? { line6_nua_capital_gain: nuaCapitalGain }
+                : {}),
+            }
             : {}),
           ...(partIII
             ? {
               line8: ordinaryIncome,
+              ...(includedNua > 0
+                ? {
+                  line8_nua_included: electCapGain
+                    ? includedNua - nuaCapitalGain
+                    : includedNua,
+                }
+                : {}),
               line9: deathBenefit - deathBenefitCapitalShare,
               line10: partIII.line10,
               line11: Math.round(input.annuity_actuarial_value ?? 0),

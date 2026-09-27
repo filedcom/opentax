@@ -11,6 +11,7 @@ function electedReturn(
   elect10yr: boolean,
   includeOtherPension = false,
   deathBenefit = 0,
+  includedNua = 0,
 ) {
   return execute(plan, registry, {
     general: {
@@ -27,6 +28,7 @@ function electedReturn(
         box1_gross_distribution: 100_000,
         box2a_taxable_amount: 100_000,
         box3_capital_gain: 30_000,
+        ...(includedNua > 0 ? { box6_nua: includedNua } : {}),
         box7_distribution_code: DistributionCode.CodeA,
         ts: TS.T,
         exclude_4972: true,
@@ -45,10 +47,13 @@ function electedReturn(
       born_before_1936: true,
       entire_balance_distributed: true,
       rolled_over_any: false,
+      beneficiary_distribution: false,
       participant_five_year_member: true,
       prior_election_after_1986: false,
+      prior_beneficiary_election_after_1986: false,
       elect_capital_gain: true,
       elect_10yr_averaging: elect10yr,
+      ...(includedNua > 0 ? { elect_include_nua: true } : {}),
       ...(deathBenefit > 0
         ? {
           death_benefit_exclusion: deathBenefit,
@@ -91,4 +96,13 @@ Deno.test("Form 4972 Part II death benefit reduces the 1040 ordinary-income shar
   assertEquals(result.pending.form4972?.line7, 5_700);
   assertEquals(result.pending.f1040?.line5b_pension_taxable, 66_500);
   assertEquals(result.pending.f1040?.line9_total_income, 66_500);
+});
+
+Deno.test("Form 4972 Part II NUA election reaches Form 1040 ordinary income", () => {
+  const result = electedReturn(false, false, 0, 20_000);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form4972?.line6, 36_000);
+  assertEquals(result.pending.form4972?.line7, 7_200);
+  assertEquals(result.pending.f1040?.line5b_pension_taxable, 84_000);
+  assertEquals(result.pending.f1040?.line9_total_income, 84_000);
 });

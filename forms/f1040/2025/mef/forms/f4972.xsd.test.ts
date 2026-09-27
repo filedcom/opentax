@@ -44,6 +44,7 @@ Deno.test({
       born_before_1936: true,
       entire_balance_distributed: true,
       rolled_over_any: false,
+      beneficiary_distribution: false,
       participant_five_year_member: true,
       prior_election_after_1986: false,
       line6: 10_000,
@@ -63,6 +64,57 @@ Deno.test({
     xml,
     "<LumpSumDistributionTaxAmt>14710</LumpSumDistributionTaxAmt>",
   );
+  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(path, xml);
+    const result = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", XSD_PATH, path],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
+  } finally {
+    await Deno.remove(path);
+  }
+});
+
+Deno.test({
+  name:
+    "XSD: 2025 Form 4972 elected NUA amounts occupy the line 6 and 8 attributes",
+  ignore: !xsdAvailable,
+  sanitizeOps: false,
+  sanitizeResources: false,
+}, async () => {
+  const xml = buildMefXml({
+    f1040: {
+      filing_status: "single",
+      line16_income_tax: 18_950,
+      form4972_tax: 18_950,
+    },
+    form4972: {
+      recipient: TS.T,
+      born_before_1936: true,
+      entire_balance_distributed: true,
+      rolled_over_any: false,
+      beneficiary_distribution: false,
+      participant_five_year_member: true,
+      prior_election_after_1986: false,
+      line6: 36_000,
+      line6_nua_capital_gain: 6_000,
+      line7: 7_200,
+      line8: 84_000,
+      line8_nua_included: 14_000,
+      line10: 84_000,
+      line12: 84_000,
+      line17: 84_000,
+      line19: 84_000,
+      line25: 11_750,
+      line29: 11_750,
+      line30: 18_950,
+    },
+  }, filer);
+  assertStringIncludes(xml, 'capitalGainElectionNUAAmt="6000"');
+  assertStringIncludes(xml, 'netUnrealizedAppreciationAmt="14000"');
   const path = await Deno.makeTempFile({ suffix: ".xml" });
   try {
     await Deno.writeTextFile(path, xml);

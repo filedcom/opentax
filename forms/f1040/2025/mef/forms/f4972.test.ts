@@ -22,6 +22,7 @@ const qualified = {
   born_before_1936: true,
   entire_balance_distributed: true,
   rolled_over_any: false,
+  beneficiary_distribution: false,
   participant_five_year_member: true,
   prior_election_after_1986: false,
 };
@@ -68,6 +69,67 @@ Deno.test("Form 4972 spouse recipient is distinct from the taxpayer", () => {
   assertStringIncludes(
     xml,
     "<LumpSumDistributionTaxAmt>14705</LumpSumDistributionTaxAmt>",
+  );
+});
+
+Deno.test("Form 4972 MeF keeps own-plan and beneficiary prior elections separate", () => {
+  const xml = form4972.build(
+    {
+      ...qualified,
+      recipient: TS.T,
+      beneficiary_distribution: true,
+      participant_five_year_member: false,
+      prior_election_after_1986: true,
+      prior_beneficiary_election_after_1986: false,
+      line8: 10_000,
+      line29: 550,
+      line30: 550,
+    },
+    { filer },
+  );
+  assertStringIncludes(
+    xml,
+    "<PriorYearDistributionInd>true</PriorYearDistributionInd>",
+  );
+  assertStringIncludes(
+    xml,
+    "<BeneficiaryDistributionInd>false</BeneficiaryDistributionInd>",
+  );
+});
+
+Deno.test("Form 4972 writes elected NUA amounts on lines 6 and 8", () => {
+  const xml = form4972.build(
+    {
+      ...qualified,
+      recipient: TS.T,
+      line6: 36_000,
+      line6_nua_capital_gain: 6_000,
+      line7: 7_200,
+      line8: 84_000,
+      line8_nua_included: 14_000,
+      line30: 20_000,
+    },
+    { filer },
+  );
+  assertStringIncludes(
+    xml,
+    '<CapitalGainElectionAmt capitalGainElectionNUAAmt="6000" capitalGainElectionNUACd="NUA">36000</CapitalGainElectionAmt>',
+  );
+  assertStringIncludes(
+    xml,
+    '<LumpSumDistriOrdinaryIncmAmt netUnrealizedAppreciationAmt="14000" netUnrealizedAppreciationCd="NUA">84000</LumpSumDistriOrdinaryIncmAmt>',
+  );
+});
+
+Deno.test("Form 4972 rejects NUA attributes without their form lines", () => {
+  assertThrows(
+    () =>
+      form4972.build(
+        { ...qualified, recipient: TS.T, line7: 1, line6_nua_capital_gain: 1 },
+        { filer },
+      ),
+    Error,
+    "capital NUA needs line 6",
   );
 });
 

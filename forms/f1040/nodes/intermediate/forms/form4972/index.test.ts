@@ -18,8 +18,10 @@ function calculated(input: Record<string, unknown>) {
     recipient: "T",
     entire_balance_distributed: true,
     rolled_over_any: false,
+    beneficiary_distribution: false,
     participant_five_year_member: true,
     prior_election_after_1986: false,
+    prior_beneficiary_election_after_1986: false,
     ...input,
   }).outputs;
   return {
@@ -48,6 +50,30 @@ Deno.test("Form 4972 rejects an ineligible birth year", () => {
   );
 });
 
+Deno.test("Form 4972 beneficiary eligibility uses question 5b, not their own-plan question 5a", () => {
+  const result = calculated({
+    lump_sum_amount: 10_000,
+    beneficiary_distribution: true,
+    participant_five_year_member: false,
+    prior_election_after_1986: true,
+    prior_beneficiary_election_after_1986: false,
+    elect_10yr_averaging: true,
+  });
+  assertEquals(result.lines?.line8, 10_000);
+  assertThrows(
+    () =>
+      calculated({
+        lump_sum_amount: 10_000,
+        beneficiary_distribution: true,
+        participant_five_year_member: false,
+        prior_beneficiary_election_after_1986: undefined,
+        elect_10yr_averaging: true,
+      }),
+    Error,
+    "lacks qualifying plan",
+  );
+});
+
 Deno.test("Form 4972 Part II uses 20% of the taxable pre-1974 capital gain", () => {
   const result = calculated({
     lump_sum_amount: 100_000,
@@ -60,6 +86,45 @@ Deno.test("Form 4972 Part II uses 20% of the taxable pre-1974 capital gain", () 
   assertEquals(result.lines?.line30, undefined);
   assertEquals(result.agi?.line5b_form4972_ordinary, 70_000);
   assertEquals(result.f1040?.line5b_form4972_ordinary, 70_000);
+});
+
+Deno.test("Form 4972 Part II-only NUA election splits box 6 into capital and ordinary income", () => {
+  const result = calculated({
+    lump_sum_amount: 100_000,
+    capital_gain_amount: 30_000,
+    box6_nua: 20_000,
+    elect_include_nua: true,
+    elect_capital_gain: true,
+  });
+  assertEquals(result.lines?.line6, 36_000);
+  assertEquals(result.tax, 7_200);
+  assertEquals(result.agi?.line5b_form4972_ordinary, 84_000);
+  assertEquals(result.f1040?.line5b_form4972_ordinary, 84_000);
+});
+
+Deno.test("Form 4972 does not include box 6 NUA without its election", () => {
+  const result = calculated({
+    lump_sum_amount: 100_000,
+    capital_gain_amount: 30_000,
+    box6_nua: 20_000,
+    elect_capital_gain: true,
+  });
+  assertEquals(result.lines?.line6, 30_000);
+  assertEquals(result.agi?.line5b_form4972_ordinary, 70_000);
+});
+
+Deno.test("Form 4972 NUA election requires a positive box 6 source amount", () => {
+  assertThrows(
+    () =>
+      calculated({
+        lump_sum_amount: 100_000,
+        capital_gain_amount: 30_000,
+        elect_include_nua: true,
+        elect_capital_gain: true,
+      }),
+    Error,
+    "NUA inclusion election needs a positive Form 1099-R box 6 amount",
+  );
 });
 
 Deno.test("Form 4972 Part III follows lines 12 through 29, not a tax-on-allowance subtraction", () => {
@@ -110,6 +175,52 @@ Deno.test("Form 4972 combines capital-gain and ten-year elections on line 30", (
   assertEquals(result.lines?.line30, 14_710);
   assertEquals(result.agi, undefined);
   assertEquals(result.f1040, undefined);
+});
+
+Deno.test("Form 4972 combined elections include NUA ordinary share on Part III line 8", () => {
+  const result = calculated({
+    lump_sum_amount: 100_000,
+    capital_gain_amount: 30_000,
+    box6_nua: 20_000,
+    elect_include_nua: true,
+    elect_capital_gain: true,
+    elect_10yr_averaging: true,
+  });
+  assertEquals(result.lines?.line6, 36_000);
+  assertEquals(result.lines?.line8, 84_000);
+  assertEquals(result.agi, undefined);
+});
+
+Deno.test("Form 4972 NUA election uses the expanded base for death and estate allocations", () => {
+  const result = calculated({
+    lump_sum_amount: 100_000,
+    capital_gain_amount: 30_000,
+    box6_nua: 20_000,
+    elect_include_nua: true,
+    death_benefit_exclusion: 5_000,
+    federal_estate_tax: 4_000,
+    beneficiary_distribution: true,
+    participant_died_before_1996_08_21: true,
+    elect_capital_gain: true,
+    elect_10yr_averaging: true,
+  });
+  assertEquals(result.lines?.line6, 33_300);
+  assertEquals(result.lines?.line6_nua_capital_gain, 6_000);
+  assertEquals(result.lines?.line8, 84_000);
+  assertEquals(result.lines?.line8_nua_included, 14_000);
+  assertEquals(result.lines?.line9, 3_500);
+  assertEquals(result.lines?.line18, 2_800);
+});
+
+Deno.test("Form 4972 Part III-only NUA election includes all of box 6 on line 8", () => {
+  const result = calculated({
+    lump_sum_amount: 100_000,
+    box6_nua: 20_000,
+    elect_include_nua: true,
+    elect_10yr_averaging: true,
+  });
+  assertEquals(result.lines?.line6, undefined);
+  assertEquals(result.lines?.line8, 120_000);
 });
 
 Deno.test("Form 4972 Part II rejects an election without box 3 capital gain", () => {

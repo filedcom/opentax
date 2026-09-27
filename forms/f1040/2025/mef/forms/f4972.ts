@@ -10,9 +10,12 @@ export interface Fields {
   beneficiary_distribution?: boolean;
   participant_five_year_member?: boolean;
   prior_election_after_1986?: boolean;
+  prior_beneficiary_election_after_1986?: boolean;
   line6?: number;
+  line6_nua_capital_gain?: number;
   line7?: number;
   line8?: number;
+  line8_nua_included?: number;
   line9?: number;
   line10?: number;
   line11?: number;
@@ -96,13 +99,29 @@ function buildIRS4972(fields: Input, context?: MefBuildContext): string {
     fields.born_before_1936 !== true ||
     fields.entire_balance_distributed !== true ||
     fields.rolled_over_any !== false ||
-    fields.prior_election_after_1986 !== false ||
+    typeof fields.beneficiary_distribution !== "boolean" ||
+    typeof fields.participant_five_year_member !== "boolean" ||
     fields.beneficiary_distribution !== true &&
-      fields.participant_five_year_member !== true
+      fields.participant_five_year_member !== true ||
+    (fields.beneficiary_distribution === true
+      ? fields.prior_beneficiary_election_after_1986 !== false
+      : fields.prior_election_after_1986 !== false)
   ) {
     throw new Error("Form 4972 is missing qualifying Part I answers");
   }
   const recipient = recipientIdentity(fields, context);
+  if (
+    (fields.line6_nua_capital_gain ?? 0) > 0 &&
+    typeof fields.line6 !== "number"
+  ) {
+    throw new Error("Form 4972 capital NUA needs line 6");
+  }
+  if (
+    (fields.line8_nua_included ?? 0) > 0 &&
+    typeof fields.line8 !== "number"
+  ) {
+    throw new Error("Form 4972 ordinary NUA needs line 8");
+  }
   return elements("IRS4972", [
     element("PersonNm", recipient.name),
     element("SSN", recipient.ssn.replaceAll("-", "")),
@@ -116,12 +135,35 @@ function buildIRS4972(fields: Input, context?: MefBuildContext): string {
       "QualifyingAge5YearMemberInd",
       String(fields.participant_five_year_member === true),
     ),
+    fields.prior_election_after_1986 !== undefined
+      ? element(
+        "PriorYearDistributionInd",
+        String(fields.prior_election_after_1986),
+      )
+      : "",
     fields.beneficiary_distribution === true
-      ? element("BeneficiaryDistributionInd", "false")
-      : element("PriorYearDistributionInd", "false"),
+      ? element(
+        "BeneficiaryDistributionInd",
+        String(fields.prior_beneficiary_election_after_1986),
+      )
+      : "",
     ...FIELD_MAP.map(([key, tag]) => {
       const value = fields[key];
       if (typeof value !== "number") return "";
+      const capitalNua = fields.line6_nua_capital_gain ?? 0;
+      if (key === "line6" && capitalNua > 0) {
+        return element(tag, value, {
+          capitalGainElectionNUAAmt: String(Math.round(capitalNua)),
+          capitalGainElectionNUACd: "NUA",
+        });
+      }
+      const ordinaryNua = fields.line8_nua_included ?? 0;
+      if (key === "line8" && ordinaryNua > 0) {
+        return element(tag, value, {
+          netUnrealizedAppreciationAmt: String(Math.round(ordinaryNua)),
+          netUnrealizedAppreciationCd: "NUA",
+        });
+      }
       return element(tag, key === "line20" ? value.toFixed(5) : value);
     }),
   ]);

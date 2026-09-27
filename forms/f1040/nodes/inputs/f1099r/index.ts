@@ -509,6 +509,7 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
       ...(item.box3_capital_gain !== undefined
         ? { capital_gain_amount: item.box3_capital_gain }
         : {}),
+      ...(item.box6_nua !== undefined ? { box6_nua: item.box6_nua } : {}),
       ...(item.box8_other !== undefined
         ? { annuity_actuarial_value: item.box8_other }
         : {}),
