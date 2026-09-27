@@ -37,6 +37,56 @@ Deno.test("partnership K-1 portfolio boxes feed Form 4952 only when affirmed", (
   ]);
 });
 
+Deno.test("partnership K-1 box 20 code B routes only allowed investment depreciation to Form 4952", () => {
+  const item = minimalItem({
+    partnership_ein: "123456789",
+    source_document_reference: "2025 K-1 and investment-property statement",
+    box20_code_b_investment_expenses: {
+      reported_amount: 1_000,
+      allowed_deduction_amount: 600,
+      allowed_deduction_kind: "depreciation",
+      nonpassive_investment_property: true,
+    },
+  });
+  assertEquals(findOutput(compute([item]), "form4952")?.fields, {
+    source_k1_allowed_investment_expenses: 600,
+  });
+});
+
+Deno.test("partnership K-1 box 20 code B rejects unsourced or disallowed expenses", () => {
+  const expense = {
+    reported_amount: 1_000,
+    allowed_deduction_amount: 600,
+    allowed_deduction_kind: "depletion",
+    nonpassive_investment_property: true,
+  };
+  assertThrows(() =>
+    compute([minimalItem({
+      box20_code_b_investment_expenses: expense,
+    })])
+  );
+  assertThrows(() =>
+    compute([minimalItem({
+      partnership_ein: "123456789",
+      source_document_reference: "2025 K-1 statement",
+      box20_code_b_investment_expenses: {
+        ...expense,
+        allowed_deduction_amount: 1_100,
+      },
+    })])
+  );
+  assertThrows(() =>
+    compute([minimalItem({
+      partnership_ein: "123456789",
+      source_document_reference: "2025 K-1 statement",
+      box20_code_b_investment_expenses: {
+        ...expense,
+        allowed_deduction_kind: "miscellaneous_itemized",
+      },
+    })])
+  );
+});
+
 Deno.test("partnership K-1 box 15 code Z needs source identity and passive classification", () => {
   assertThrows(() =>
     compute([minimalItem({ box15_code_z_orphan_drug_credit: 1_250 })])

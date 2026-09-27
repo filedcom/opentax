@@ -114,6 +114,29 @@ Deno.test("Form 4952 combines explicit other income with multiple affirmed 1099 
   assertEquals(lines.line8, 1_680);
 });
 
+Deno.test("Form 4952 line 5 includes separately sourced allowed K-1 expenses", () => {
+  const lines = calculateForm4952({
+    investment_interest_expense: 2_000,
+    other_investment_property_gross_income: 3_000,
+    investment_expenses: 100,
+    investment_expenses_exclude_sourced_k1: true,
+    source_k1_allowed_investment_expenses: [400, 250],
+  });
+  assertEquals(lines.line5, 750);
+  assertEquals(lines.line6, 2_250);
+  assertEquals(lines.line8, 2_000);
+  assertThrows(
+    () =>
+      calculateForm4952({
+        investment_interest_expense: 2_000,
+        investment_expenses: 100,
+        source_k1_allowed_investment_expenses: 400,
+      }),
+    Error,
+    "must exclude sourced K-1 amounts",
+  );
+});
+
 Deno.test("Form 4952 carries forward interest when net investment income is zero", () => {
   const result = compute({
     investment_interest_expense: 5_000,

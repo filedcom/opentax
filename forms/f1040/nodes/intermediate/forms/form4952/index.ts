@@ -49,6 +49,7 @@ export const inputSchema = z.object({
   // 4g to eligible net capital gain first, then qualified dividends.
   elected_capital_gain_portion: z.number().nonnegative().optional(),
   investment_expenses: z.number().nonnegative().optional(),
+  investment_expenses_exclude_sourced_k1: z.literal(true).optional(),
   source_1099_interest: accumulableAmount.optional(),
   source_1099_dividends: accumulableAmount.optional(),
   source_1099_qualified_dividends: accumulableAmount.optional(),
@@ -57,6 +58,7 @@ export const inputSchema = z.object({
   source_k1_interest: accumulableAmount.optional(),
   source_k1_dividends: accumulableAmount.optional(),
   source_k1_qualified_dividends: accumulableAmount.optional(),
+  source_k1_allowed_investment_expenses: accumulableAmount.optional(),
   form8814_line9_qualified_dividends: z.number().nonnegative().optional(),
   form8814_line10_capital_gain: z.number().nonnegative().optional(),
   form8814_line12_investment_income: z.number().nonnegative().optional(),
@@ -95,6 +97,15 @@ interface Form4952Totals {
 }
 
 function sourceTotals(input: Form4952Input): Form4952Totals {
+  if (
+    (input.investment_expenses ?? 0) > 0 &&
+    sum(input.source_k1_allowed_investment_expenses) > 0 &&
+    input.investment_expenses_exclude_sourced_k1 !== true
+  ) {
+    throw new Error(
+      "Form 4952 manual investment expenses must exclude sourced K-1 amounts",
+    );
+  }
   const childDividends = input.form8814_line9_qualified_dividends ?? 0;
   const childGain = input.form8814_line10_capital_gain ?? 0;
   return {
@@ -112,7 +123,8 @@ function sourceTotals(input: Form4952Input): Form4952Totals {
     netCapitalGain: (input.other_investment_property_net_capital_gain ?? 0) +
       sum(input.source_1099_capital_gain_distributions) + childGain,
     line4g: input.investment_income_election ?? 0,
-    line5: input.investment_expenses ?? 0,
+    line5: (input.investment_expenses ?? 0) +
+      sum(input.source_k1_allowed_investment_expenses),
   };
 }
 

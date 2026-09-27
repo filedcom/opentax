@@ -1495,7 +1495,12 @@ written but unrun. See the
 Build-pass addendum for GAP-6251 (unrun): line 10 now receives the Form 4972
 subtraction, Form 8962's Schedule 2 line 1a amount as part of line 1z, Schedule
 3 line 1 foreign tax credit, and the negative Form 8978 adjustment. Schedule J
-refigure and other Schedule 2 line 1z sources remain open.
+refigure and other Schedule 2 line 1z sources remain open. An additional
+ordinary-income Form 2555 route now uses the 2025 Form 6251 Foreign Earned
+Income Tax Worksheet to calculate line 7 from Form 2555's excluded income and
+an explicitly sourced worksheet line 2b amount. Source-to-form and bracket
+cases are written but unrun. Form 2555 with preferential gain still stops
+pending the Part III capital-gain-excess refigure.
 
 Build-pass addendum for GAP-1116 (unrun): unsupported section 951A, foreign
 branch, treaty-resourced, and section 901(j) categories now stop before any
@@ -1511,6 +1516,31 @@ marks the child dividend and direct child capital-gain boxes, while Schedule D
 and Schedule B receive applicable Form 8814 notes. The Form 8814 PDF follows
 the Part I zero/skip print rules. The PDF field positions were inspected, but
 filled-render review, full-batch validation, and IRS acceptance remain open.
+
+Build-pass addendum for GAP-8889 (unrun): a positive Part III line 19 now
+requires identified current- or prior-year IRA-to-HSA transfers, twelve 2025
+monthly eligibility facts, and an amount reconciled to the relevant Form 8889
+line 10. The rule checks each transfer's own testing period and rejects expired
+or unsupported free-text recapture amounts. Trustee and prior-return evidence
+authentication, last-month-rule line 18 reconstruction, full-batch validation,
+and IRS acceptance remain open.
+
+Build-pass addendum for GAP-8283 (unrun): Section A column (h) now uses a
+supported reduced contribution amount instead of unreduced FMV and links a
+native `FairMarketValueStatement` with original FMV, calculation, and reason.
+The automatic routes are limited to donee-certified vehicle sale proceeds with
+sourced basis at least FMV, and purchased short-term ordinary-income property
+whose claimed amount equals basis. Other reductions, including combined sale
+and appreciation reductions, stop until their distinct source rules exist.
+The statement/XSD, full calculation batch, and IRS business rules are unverified.
+
+Build-pass addendum for GAP-4952 (unrun): partnership K-1 box 20 code B now
+feeds Form 4952 line 5 only for an identified payer and separately affirmed,
+already allowed nonpassive depreciation/depletion amount. Manual line 5 input
+requires an explicit no-duplicate assertion when it coexists with that K-1
+source. Source authentication, the underlying deduction elsewhere on the
+return, other investment-expense types, full-batch validation, and IRS business
+rules remain open.
 
 The following are registered in `forms/f1040/2025/mef/forms/index.ts`.
 **Registered means the builder can be invoked, not that the form is complete or

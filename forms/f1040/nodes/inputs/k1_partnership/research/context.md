@@ -1,4 +1,16 @@
 # Schedule K-1 (Form 1065) — Partner's Share of Income, Deductions, Credits
+## 2025 Form 4952 box 20 code B route
+
+The [2025 Partner K-1 instructions](https://www.irs.gov/instructions/i1065sk1)
+direct box 20 code B investment expenses to Form 4952 line 5. Because the
+[2025 Form 4952 instructions](https://www.irs.gov/pub/irs-pdf/f4952.pdf) require
+an otherwise allowed deduction and exclude passive and suspended miscellaneous
+itemized expenses, this route needs the issuing partnership's EIN, a
+K-1/statement reference, the reported code B amount, and a separately supported
+allowed depreciation or depletion amount for nonpassive investment property.
+Only the allowed amount feeds Form 4952 line 5. The K-1 box total alone does not
+create a deduction or establish its treatment elsewhere on the return.
+
 
 ## Overview
 Schedule K-1 (Form 1065) is issued by partnerships (including LLCs taxed as partnerships) to each partner, reporting the partner's distributive share of income, deductions, and credits. Key difference from S corp K-1: **Box 14 self-employment earnings are subject to Schedule SE**. QBI flows through Box 20 code Z.

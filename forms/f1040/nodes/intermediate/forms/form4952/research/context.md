@@ -11,6 +11,21 @@ investment-property income and expenses, plus affirmed 1099, K-1, and Form 8814
 source amounts. It calculates lines 1 through 8, emits native Form 4952, routes
 line 8 to Schedule A line 9, and records line 7 as a carryforward.
 
+The [2025 Partner K-1 instructions](https://www.irs.gov/instructions/i1065sk1)
+direct box 20 code B investment expenses to Form 4952 line 5. The
+[2025 Form 4952 instructions](https://www.irs.gov/pub/irs-pdf/f4952.pdf)
+limit that line to noninterest expenses otherwise allowed on the partner's
+return, exclude passive-activity deductions, and disallow miscellaneous
+itemized deductions for 2025. The partnership feeder therefore accepts only a
+payer-identified code B amount with a separately established, no-greater
+allowed amount for nonpassive investment-property depreciation or depletion.
+Only that allowed amount reaches `source_k1_allowed_investment_expenses` and
+line 5. This does not itself establish the deduction on another return line;
+that must be supported independently. Other code B categories and broker
+expenses remain outside this narrow source route. If separate manual line 5
+expenses are also entered, the filer must affirm they exclude the sourced K-1
+amount so the two fields do not count the same expense twice.
+
 For any claimed interest expense, `amt_refigure` is required. Its prior-year
 AMT disallowed interest is an independent source fact. Specific signed
 adjustments refigure investment-property income, qualified dividends,

@@ -170,6 +170,21 @@ export const itemSchema = z.object({
   // Box 20 code Z — Section 199A QBI information → Form 8995
   box20z_qbi: z.number().optional(),
 
+  // Box 20 code B is informational. Only the separately documented portion
+  // already allowed as a nonpassive depreciation/depletion deduction can
+  // reduce Form 4952 investment income in 2025.
+  box20_code_b_investment_expenses: z.object({
+    reported_amount: z.number().positive(),
+    allowed_deduction_amount: z.number().positive(),
+    allowed_deduction_kind: z.enum(["depreciation", "depletion"]),
+    nonpassive_investment_property: z.literal(true),
+  }).refine(
+    (value) => value.allowed_deduction_amount <= value.reported_amount,
+    {
+      message: "Allowed K-1 investment expense cannot exceed box 20 code B",
+    },
+  ).optional(),
+
   // Box 20 — W-2 wages for QBI limitation
   box20_w2_wages: z.number().nonnegative().optional(),
 
@@ -187,7 +202,7 @@ export const itemSchema = z.object({
   // Box 13 — Other deductions (various codes A-Z+)
   // Net total of deductible partnership items from Box 13 that reduce the
   // partner's income. Positive = deduction amount. Most common codes (e.g.,
-  // charitable contributions code A, investment interest code B) are collapsed
+  // charitable contributions code A, investment interest code H) are collapsed
   // to a single net figure for routing to Schedule A / AGI reduction.
   box13_deductions: z.number().nonnegative().optional(),
 
@@ -304,6 +319,19 @@ export const itemSchema = z.object({
           code: "custom",
           path: [key],
           message: `K-1 box 15 code K needs ${key}`,
+        });
+      }
+    }
+  }
+  if (item.box20_code_b_investment_expenses !== undefined) {
+    for (
+      const key of ["partnership_ein", "source_document_reference"] as const
+    ) {
+      if (item[key] === undefined) {
+        ctx.addIssue({
+          code: "custom",
+          path: [key],
+          message: `K-1 box 20 code B needs ${key}`,
         });
       }
     }
@@ -779,6 +807,16 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
       if ((item.box6b_qualified_dividends ?? 0) > 0) {
         outputs.push(output(form4952, {
           source_k1_qualified_dividends: item.box6b_qualified_dividends!,
+        }));
+      }
+    }
+
+    for (const item of k1_partnerships) {
+      const expense = item.box20_code_b_investment_expenses;
+      if (expense) {
+        outputs.push(output(form4952, {
+          source_k1_allowed_investment_expenses:
+            expense.allowed_deduction_amount,
         }));
       }
     }
