@@ -2,7 +2,7 @@
 
 | Material | Snapshot / authority | Use | Refresh trigger |
 | --- | --- | --- | --- |
-| IRS [TY2026 draft forms](https://www.irs.gov/downloads/irs-dft) | 57 local 2026 PDFs under `corpus/draft/`; five older-year draft URLs recorded `wrong-year` without local PDFs; hashes in manifest | Line topology, instructions printed on forms, PDF field work | Final form release or any draft revision. |
+| IRS [TY2026 draft forms](https://www.irs.gov/downloads/irs-dft) | 57 draft form PDFs under `corpus/draft/`; five older-year draft URLs recorded `wrong-year` without local PDFs; hashes in manifest | Line topology, instructions printed on forms, PDF field work | Final form release or any draft revision. |
 | IRS [2026 draft Schedule 8812 instructions](https://www.irs.gov/pub/irs-dft/i1040s8--dft.pdf) | `corpus/draft/i1040s8.pdf`, added 2026-09-27; hash and retrieval time in manifest | Credit Limit Worksheets A/B, Earned Income Chart/Worksheet, Part II-B source map | Final instructions or revised draft. |
 | IRS [2026 draft Form 5695 instructions](https://www.irs.gov/pub/irs-dft/i5695--dft.pdf) | `corpus/draft/i5695.pdf`, 2026-09-27 snapshot; SHA-256 `1efab06c78f27ce81c7f3ee0335a91e7a195c2702f35d908609e4cfee0db4bf0` | Carryforward-only eligibility, line 2 credit limit worksheet, and credit priority | Final instructions or revised draft. |
 | IRS [2026 draft Form 5329 instructions](https://www.irs.gov/pub/irs-dft/i5329--dft.pdf) | `corpus/draft/i5329.pdf`, SHA-256 `55f531aad380ec1ac63cc697e0f5d0cd603c503e18cebd9fb04b0bd46633aa35` | Code 1 direct Schedule 2 line 5 treatment, SIMPLE IRA 25% branch, and Form 5329 filing gates | Final instructions or revised draft. |
