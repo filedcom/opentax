@@ -71,8 +71,8 @@ flowchart LR subgraph inputs["Data Entry"] exp["eligible_expenditures"]
 gr["prior_year_gross_receipts"] fte["prior_year_full_time_employee_count"] end
 subgraph node["f8826 (Disabled Access Credit)"] elig["isEligible()"]
 credit["computeCredit()"] end subgraph outputs["Downstream Nodes"]
-s3["schedule3\nline6a_general_business_credit (gross, not yet Form 3800
-limited)"] end gr & fte --> elig --> credit exp --> credit --> s3
+gbc["f3800\nline 1e source entry; positive credit stops until limitation"] end
+gr & fte --> elig --> credit exp --> credit --> gbc
 
 ---
 

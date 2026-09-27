@@ -1,18 +1,14 @@
 import { z } from "zod";
-import type {
-  NodeOutput,
-  NodeResult,
-} from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import type { NodeResult } from "../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
+import { f3800 } from "../f3800/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Form 8826 — Disabled Access Credit (IRC §44)
 // Eligibility: prior-year gross receipts ≤$1M OR ≤30 full-time employees.
 // Credit: 50% × (eligible expenditures − $250), max expenditures $10,250 → max credit $5,000.
-// Source credit currently routes gross to Schedule 3 line 6a; Form 3800's
-// tax-liability limitation still needs to replace that tentative amount.
+// Source credit enters Form 3800. Its tax-liability limit is not yet finalized.
 
 // TY2025 constants — IRC §44
 const GROSS_RECEIPTS_LIMIT = 1_000_000; // $1,000,000
@@ -66,18 +62,10 @@ export function calculateForm8826(input: F8826Input): F8826Lines {
   };
 }
 
-function buildOutputs(credit: number): NodeOutput[] {
-  if (credit <= 0) return [];
-  return [{
-    nodeType: schedule3.nodeType,
-    fields: { line6a_general_business_credit: credit },
-  }];
-}
-
 class F8826Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8826";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule3]);
+  readonly outputNodes = new OutputNodes([f3800]);
 
   compute(_ctx: NodeContext, rawInput: F8826Input): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -87,7 +75,17 @@ class F8826Node extends TaxNode<typeof inputSchema> {
         "Form 8826 passive credit needs Form 8582-CR before Form 3800",
       );
     }
-    return { outputs: buildOutputs(lines.line8) };
+    return {
+      outputs: lines.line8 > 0
+        ? [output(f3800, {
+          f8826_credit_entries: [{
+            credit_amount: lines.line8,
+            subject_to_passive_activity_limit:
+              input.subject_to_passive_activity_limit,
+          }],
+        })]
+        : [],
+    };
   }
 }
 
