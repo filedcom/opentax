@@ -1280,21 +1280,23 @@ dates. Each event's holding-period allocation is derived from actual days,
 including leap years and cent balancing. Prior PFIC-year tax uses each year's
 [IRS-published highest rate](https://www.irs.gov/instructions/i8621), apply
 per-year foreign-tax-credit limits, and send Form 8621 line 16e to Form 1040
-line 16 with `1291TAX`. For calendar-year 2023 and 2024 prior PFIC allocations,
-section 1291 interest is now computed per year from the net tax, published
-quarterly section 6621 rates, and daily compounding through the 2025 return's
-unextended due date. Caller-entered interest is rejected; earlier prior years
-with net tax stop until verified rate history is added. Calculated interest goes
-to Schedule 2 line 17p; current/pre-PFIC income goes to Schedule 1. QEF net capital gain now routes
-to Schedule D, and mark-to-market loss is limited by unreversed prior
-inclusions. QEF section 951/1293(g) reductions are separate source facts. The
-section 301 taxable part of nonexcess distributions routes to Schedule B and
-Form 8960 as a separate sourced fact. Native `IRS8621` and a holding-period
-statement builder are registered; calculation and source-to-XSD cases are
-written but unrun. The engine still needs mixed-currency distribution
-conversion, mixed lots and historical disposition basis reconciliation,
-older historical interest periods and special due dates, complete QEF/MTM elections and supporting
-facts, PDF verification, XSD/business-rule evidence, and ATS acceptance.
+line 16 with `1291TAX`. Section 1291 interest is now computed per prior PFIC
+year from net tax and the IRS's historical quarterly section 6621 underpayment
+rates, daily compounded from the statutory April 15 return date through April
+15, 2026. Caller-entered interest is rejected. Calendar-year allocations back to
+1987 are modeled, except TY2019 and TY2020, which stop pending COVID-period
+due-date analysis. Taxpayer-specific disaster relief is not captured. Calculated
+interest goes to Schedule 2 line 17p; current/pre-PFIC income goes to
+Schedule 1. QEF net capital gain now routes to Schedule D, and mark-to-market
+loss is limited by unreversed prior inclusions. QEF section 951/1293(g)
+reductions are separate source facts. The section 301 taxable part of nonexcess
+distributions routes to Schedule B and Form 8960 as a separate sourced fact.
+Native `IRS8621` and a holding-period statement builder are registered;
+calculation and source-to-XSD cases are written but unrun. The engine still
+needs mixed-currency distribution conversion, mixed lots and historical
+disposition basis reconciliation, COVID-period and special due-date treatment,
+complete QEF/MTM elections and supporting facts, PDF verification,
+XSD/business-rule evidence, and ATS acceptance.
 
 The current build pass adds same-currency section 1291 distributions in a
 non-USD currency. It computes the 125% threshold in that currency and converts
@@ -1503,13 +1505,16 @@ written but unrun. See the
 Build-pass addendum for Form 2555 housing (unrun): the physical-presence,
 foreign-employer wage filing now takes sourced qualified housing expenses and
 calculates 2025 Parts VI, VII, and VIII through line 45, including the housing
-cap, base amount, employer-provided wage fraction, and residual FEIE. The
-native MeF fields and focused positive/rejection cases are written but unrun.
-The old aggregate housing amounts now reject instead of bypassing Part VI.
-This slice is limited to a single Sweden standard-limit residence; Notice
-2025-16 high-cost and other-location limits, multiple households, self-employed
-housing deduction, non-wage employer amounts, and later-limit elections remain
-open and fail closed. See the [2025 Form 2555 instructions](https://www.irs.gov/instructions/i2555)
+cap, base amount, employer-provided wage fraction, and residual FEIE. The native
+MeF fields and focused positive/rejection cases are written but unrun. The old
+aggregate housing amounts now reject instead of bypassing Part VI. The build
+pass includes all 136 adjusted-location rows in Notice 2025-16, requires an
+explicit reviewed table or unlisted-location selection, and emits the applicable
+line 29a/29b MeF fields. A listed city cannot silently take the standard cap.
+Multiple residences or households, self-employed housing deduction, non-wage
+employer amounts, and later-limit elections remain open. Regional locations such
+as Osaka-Kobe require documented human verification of geographic membership.
+See the [2025 Form 2555 instructions](https://www.irs.gov/instructions/i2555)
 and [Notice 2025-16](https://www.irs.gov/irb/2025-13_IRB#NOT-2025-16).
 
 Build-pass addendum for GAP-6251 (unrun): line 10 now receives the Form 4972

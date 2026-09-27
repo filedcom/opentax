@@ -142,35 +142,83 @@ function parseDate(value: string): number {
 const millisecondsPerDay = 86_400_000;
 
 // IRS 2025 Form 8621 instructions, line 16f: each prior PFIC year's net tax
-// bears interest from that return's unextended due date through the 2025
-// return's unextended due date. Section 1291(c)(3) uses the section 6621
+// bears interest from that return's statutory due date through the 2025
+// return's statutory due date. Section 1291(c)(3) uses the section 6621
 // underpayment rate; 26 CFR 301.6622-1 compounds daily with a 365/366 divisor.
-// Only calendar-year individual returns with published, verified due dates and
-// rate periods are modeled here. Other years fail closed.
+// Section 7503 lets a return be filed on the next workday but does not change
+// the interest due date. Taxpayer-specific relief is not captured or checked.
+// TY2019 and TY2020 are excluded because the nationwide COVID postponements
+// need a separate section 1291 due-date analysis. Fiscal years are not modeled.
 // https://www.irs.gov/instructions/i8621 (Part V, line 16f)
-// https://www.irs.gov/payments/quarterly-interest-rates
+// https://www.irs.gov/pub/irs-drop/rr-24-18.pdf (rate tables, pp. 6-10)
+// https://www.irs.gov/payments/quarterly-interest-rates (2025-26)
 // https://www.ecfr.gov/current/title-26/section-301.6622-1
-// https://www.irs.gov/newsroom/things-to-remember-when-filing-a-2023-tax-return
-// https://www.irs.gov/e-file-providers/tax-year-2024-processing-year-2025-form-1040-mef-due-dates
-// https://www.irs.gov/filing/individuals/how-to-file
-const section1291ReturnDueDates: Record<number, string> = {
-  2023: "2024-04-15",
-  2024: "2025-04-15",
-  2025: "2026-04-15",
+// https://www.irs.gov/irm/part20/irm_20-002-005r (IRM 20.2.5.5)
+// https://www.irs.gov/filing/individuals/how-to-file (TY2025 Apr. 15)
+const section6621QuarterlyUnderpaymentRates: Record<
+  number,
+  readonly [
+    number,
+    number,
+    number,
+    number,
+  ]
+> = {
+  1988: [11, 10, 10, 11],
+  1989: [11, 12, 12, 11],
+  1990: [11, 11, 11, 11],
+  1991: [11, 10, 10, 10],
+  1992: [9, 8, 8, 7],
+  1993: [7, 7, 7, 7],
+  1994: [7, 7, 8, 9],
+  1995: [9, 10, 9, 9],
+  1996: [9, 8, 9, 9],
+  1997: [9, 9, 9, 9],
+  1998: [9, 8, 8, 8],
+  1999: [7, 8, 8, 8],
+  2000: [8, 9, 9, 9],
+  2001: [9, 8, 7, 7],
+  2002: [6, 6, 6, 6],
+  2003: [5, 5, 5, 4],
+  2004: [4, 5, 4, 5],
+  2005: [5, 6, 6, 7],
+  2006: [7, 7, 8, 8],
+  2007: [8, 8, 8, 8],
+  2008: [7, 6, 5, 6],
+  2009: [5, 4, 4, 4],
+  2010: [4, 4, 4, 4],
+  2011: [3, 4, 4, 3],
+  2012: [3, 3, 3, 3],
+  2013: [3, 3, 3, 3],
+  2014: [3, 3, 3, 3],
+  2015: [3, 3, 3, 3],
+  2016: [3, 4, 4, 4],
+  2017: [4, 4, 4, 4],
+  2018: [4, 5, 5, 5],
+  2019: [6, 6, 5, 5],
+  2020: [5, 5, 3, 3],
+  2021: [3, 3, 3, 3],
+  2022: [3, 4, 5, 6],
+  2023: [7, 7, 7, 8],
+  2024: [8, 8, 8, 8],
+  2025: [7, 7, 7, 7],
+  // Interest for a TY2025 excess distribution stops on April 15, 2026.
+  2026: [7, 6],
 };
 
-const section6621UnderpaymentPeriods = [
-  { start: "2024-01-01", end: "2024-04-01", annualRate: 0.08 },
-  { start: "2024-04-01", end: "2024-07-01", annualRate: 0.08 },
-  { start: "2024-07-01", end: "2024-10-01", annualRate: 0.08 },
-  { start: "2024-10-01", end: "2025-01-01", annualRate: 0.08 },
-  { start: "2025-01-01", end: "2025-04-01", annualRate: 0.07 },
-  { start: "2025-04-01", end: "2025-07-01", annualRate: 0.07 },
-  { start: "2025-07-01", end: "2025-10-01", annualRate: 0.07 },
-  { start: "2025-10-01", end: "2026-01-01", annualRate: 0.07 },
-  { start: "2026-01-01", end: "2026-04-01", annualRate: 0.07 },
-  { start: "2026-04-01", end: "2026-07-01", annualRate: 0.06 },
-] as const;
+function section1291StatutoryCalendarDueDate(taxYear: number): string {
+  if (!Number.isInteger(taxYear) || taxYear < 1987 || taxYear > 2025) {
+    throw new Error(
+      `Form 8621 lacks a statutory Form 1040 due date for ${taxYear}`,
+    );
+  }
+  if (taxYear === 2019 || taxYear === 2020) {
+    throw new Error(
+      `Form 8621 section 1291 due date for TY${taxYear} needs COVID-postponement analysis`,
+    );
+  }
+  return `${taxYear + 1}-04-15`;
+}
 
 export function calculateSection1291Interest(
   priorTaxYear: number,
@@ -180,30 +228,25 @@ export function calculateSection1291Interest(
     throw new Error("Form 8621 section 1291 net increase in tax is invalid");
   }
   if (netIncreaseInTax === 0) return 0;
-  const startDate = section1291ReturnDueDates[priorTaxYear];
-  const endDate = section1291ReturnDueDates[2025];
-  if (!startDate || !endDate) {
-    throw new Error(
-      `Form 8621 section 1291 lacks verified due date or section 6621 rates for ${priorTaxYear}`,
-    );
-  }
-  const end = parseDate(endDate);
-  let day = parseDate(startDate);
+  const end = parseDate(section1291StatutoryCalendarDueDate(2025));
+  let day = parseDate(section1291StatutoryCalendarDueDate(priorTaxYear));
   let balance = netIncreaseInTax;
   while (day < end) {
-    const period = section6621UnderpaymentPeriods.find((period) =>
-      day >= parseDate(period.start) && day < parseDate(period.end)
-    );
-    if (!period) {
+    const date = new Date(day);
+    const year = date.getUTCFullYear();
+    const quarter = Math.floor(date.getUTCMonth() / 3);
+    const annualRatePercent = section6621QuarterlyUnderpaymentRates[year]?.[
+      quarter
+    ];
+    if (annualRatePercent === undefined) {
       throw new Error(
         `Form 8621 section 1291 lacks verified section 6621 rate for ${
-          new Date(day).toISOString().slice(0, 10)
+          date.toISOString().slice(0, 10)
         }`,
       );
     }
-    const year = new Date(day).getUTCFullYear();
     const leapYear = new Date(Date.UTC(year, 1, 29)).getUTCMonth() === 1;
-    balance *= 1 + period.annualRate / (leapYear ? 366 : 365);
+    balance *= 1 + annualRatePercent / 100 / (leapYear ? 366 : 365);
     day += millisecondsPerDay;
   }
   return Math.round((balance - netIncreaseInTax) * 100) / 100;

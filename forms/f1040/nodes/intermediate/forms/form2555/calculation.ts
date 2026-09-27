@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
+import { resolveHousingLimit2025 } from "./housing_limits_2025.ts";
 
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
@@ -33,8 +34,20 @@ const housingExpenseSchema = z.object({
 
 const employeeHousingSchema = z.object({
   city: z.string().trim().min(1),
-  country_code: z.string().length(2),
-  standard_limit_not_high_cost_location_verified: z.literal(true),
+  country_code: z.string().regex(/^[A-Z]{2}$/),
+  limit_selection: z.discriminatedUnion("kind", [
+    z.object({
+      kind: z.literal("notice_table"),
+      location: z.string().trim().min(1),
+      location_match_verified: z.literal(true),
+      review_document_reference: z.string().trim().min(1),
+    }).strict(),
+    z.object({
+      kind: z.literal("standard_unlisted"),
+      verified_not_listed: z.literal(true),
+      notice_review_document_reference: z.string().trim().min(1),
+    }).strict(),
+  ]),
   no_second_household: z.literal(true),
   no_other_housing_claimant: z.literal(true),
   no_section119_lodging_excluded: z.literal(true),
@@ -89,6 +102,7 @@ export interface PhysicalPresenceLines {
   readonly line25: 0;
   readonly line26: number;
   readonly line28: number;
+  readonly line29a?: string;
   readonly line29b: number;
   readonly line30: number;
   readonly line31: number;
@@ -163,6 +177,7 @@ export function calculatePhysicalPresence2555(
   }
   const housing = filing.employee_housing;
   let line28 = 0;
+  let line29a: string | undefined;
   let line29b = 0;
   let line30 = 0;
   let line31 = 0;
@@ -172,17 +187,10 @@ export function calculatePhysicalPresence2555(
   let line35 = 0;
   let line36 = 0;
   if (housing) {
-    // Sweden has no adjusted location in Notice 2025-16. Other countries
-    // need the notice table and any later-limit election before filing.
-    if (housing.country_code !== "SE") {
-      throw new Error(
-        "Form 2555 structured housing currently supports only Sweden standard-limit locations",
-      );
-    }
     if (
       housing.country_code !== filing.foreign_address.country_code ||
-      housing.city.toLowerCase() !==
-        filing.foreign_address.city.toLowerCase()
+      housing.city.trim().toLowerCase() !==
+        filing.foreign_address.city.trim().toLowerCase()
     ) {
       throw new Error(
         "Form 2555 employee housing location must match the single foreign residence",
@@ -204,10 +212,14 @@ export function calculatePhysicalPresence2555(
       line28 += expense.amount;
     }
     line31 = qualifyingDays;
-    // 2025 i2555 line 29b: standard-location cap, not a high-cost city.
-    line29b = qualifyingDays === 365
-      ? 39_000
-      : Math.round(106.85 * qualifyingDays);
+    const housingLimit = resolveHousingLimit2025(
+      housing.country_code,
+      housing.city,
+      housing.limit_selection,
+      qualifyingDays,
+    );
+    line29a = housingLimit.line29a;
+    line29b = housingLimit.line29b;
     line30 = Math.min(line28, line29b);
     line32 = qualifyingDays === 365
       ? 20_800
@@ -234,6 +246,7 @@ export function calculatePhysicalPresence2555(
     line25,
     line26,
     line28,
+    line29a,
     line29b,
     line30,
     line31,

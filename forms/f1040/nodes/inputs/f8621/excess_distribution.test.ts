@@ -57,9 +57,46 @@ Deno.test("Form 8621 rejects supplied interest and unverified prior-year periods
     "Unrecognized key",
   );
   assertThrows(
-    () => calculateSection1291Interest(2022, 1_000),
+    () => calculateSection1291Interest(2019, 1_000),
     Error,
-    "lacks verified due date",
+    "COVID-postponement analysis",
+  );
+  assertThrows(
+    () => calculateSection1291Interest(2020, 1_000),
+    Error,
+    "COVID-postponement analysis",
+  );
+});
+
+Deno.test("Form 8621 interest starts on statutory April 15 despite section 7503", () => {
+  const netTax = 1_000;
+  // TY2021 filing was timely through April 18, 2022, but section 7503
+  // does not move the April 15 statutory date used for interest.
+  // IRS IRM 20.2.5.5: https://www.irs.gov/irm/part20/irm_20-002-005r
+  const factor = Math.pow(1 + 0.04 / 365, 77) *
+    Math.pow(1 + 0.05 / 365, 92) *
+    Math.pow(1 + 0.06 / 365, 92) *
+    Math.pow(1 + 0.07 / 365, 90 + 91 + 92) *
+    Math.pow(1 + 0.08 / 365, 92) *
+    Math.pow(1 + 0.08 / 366, 366) *
+    Math.pow(1 + 0.07 / 365, 365 + 90) *
+    Math.pow(1 + 0.06 / 365, 14);
+  const expected = Math.round((netTax * factor - netTax) * 100) / 100;
+  assertEquals(calculateSection1291Interest(2021, netTax), expected);
+});
+
+Deno.test("Form 8621 uses the published historical quarterly rates back to 1987", () => {
+  const from1987 = calculateSection1291Interest(1987, 1_000);
+  const from1988 = calculateSection1291Interest(1988, 1_000);
+  const from2008 = calculateSection1291Interest(2008, 1_000);
+  const from2024 = calculateSection1291Interest(2024, 1_000);
+  assertEquals(from1987 > from1988, true);
+  assertEquals(from1988 > from2008, true);
+  assertEquals(from2008 > from2024, true);
+  assertThrows(
+    () => calculateSection1291Interest(1986, 1_000),
+    Error,
+    "lacks a statutory Form 1040 due date",
   );
 });
 
@@ -297,9 +334,9 @@ Deno.test("Form 8621 rejects incomplete history and excess section 301 dividends
     "invalid holding-period date",
   );
   assertThrows(
-    () => calculateSection1291Interest(2022, 100),
+    () => calculateSection1291Interest(2019, 100),
     Error,
-    "lacks verified due date",
+    "COVID-postponement analysis",
   );
 });
 

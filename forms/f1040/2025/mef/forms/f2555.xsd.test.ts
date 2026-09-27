@@ -5,6 +5,10 @@ import {
   calculatePhysicalPresence2555,
   type PhysicalPresenceFiling,
 } from "../../../nodes/intermediate/forms/form2555/calculation.ts";
+import {
+  NOTICE_2025_16_ROWS,
+  resolveHousingLimit2025,
+} from "../../../nodes/intermediate/forms/form2555/housing_limits_2025.ts";
 import { registry } from "../../registry.ts";
 import { buildMefXml } from "../builder.ts";
 import { type FilerIdentity, FilingStatus } from "../types.ts";
@@ -80,7 +84,12 @@ const employeeHousingDetails: PhysicalPresenceFiling = {
   employee_housing: {
     city: "Gothenburg",
     country_code: "SE",
-    standard_limit_not_high_cost_location_verified: true,
+    limit_selection: {
+      kind: "standard_unlisted",
+      verified_not_listed: true,
+      notice_review_document_reference:
+        "Notice 2025-16 Section 3 reviewed for Gothenburg",
+    },
     no_second_household: true,
     no_other_housing_claimant: true,
     no_section119_lodging_excluded: true,
@@ -193,7 +202,7 @@ Deno.test("Form 2555 housing requires its structured expense source", () => {
   );
 });
 
-Deno.test("Form 2555 rejects Toronto's high-cost location under the standard-limit route", () => {
+Deno.test("Form 2555 rejects a listed Toronto location under the standard-limit route", () => {
   assertThrows(
     () =>
       calculatePhysicalPresence2555({
@@ -206,8 +215,185 @@ Deno.test("Form 2555 rejects Toronto's high-cost location under the standard-lim
         },
       }, 2025),
     Error,
-    "only Sweden standard-limit locations",
+    "listed housing location cannot use the standard limit",
   );
+});
+
+Deno.test("Form 2555 Notice 2025-16 table is complete and explicit", () => {
+  assertEquals(NOTICE_2025_16_ROWS.length, 136);
+  assertEquals(
+    new Set(
+      NOTICE_2025_16_ROWS.map(([country, , location]) =>
+        `${country}:${location}`
+      ),
+    ).size,
+    136,
+  );
+  const toronto = {
+    kind: "notice_table" as const,
+    location: "Toronto",
+    location_match_verified: true as const,
+    review_document_reference: "Notice 2025-16 Toronto row and lease",
+  };
+  assertEquals(resolveHousingLimit2025("CA", "Toronto", toronto, 365), {
+    line29a: "Toronto, Canada",
+    line29b: 57_400,
+  });
+  assertEquals(resolveHousingLimit2025("CA", "Toronto", toronto, 181), {
+    line29a: "Toronto, Canada",
+    line29b: Math.round(157.26 * 181),
+  });
+  assertEquals(
+    NOTICE_2025_16_ROWS.find(([country, , location]) =>
+      country === "HK" && location === "Hong Kong"
+    ),
+    ["HK", "China", "Hong Kong", 114_300, 313.15],
+  );
+  assertEquals(
+    resolveHousingLimit2025("HK", "Hong Kong", {
+      kind: "notice_table",
+      location: "Hong Kong",
+      location_match_verified: true,
+      review_document_reference: "Notice 2025-16 Hong Kong row and lease",
+    }, 365),
+    { line29a: "Hong Kong, China", line29b: 114_300 },
+  );
+  const gothenburg = employeeHousingDetails.employee_housing!.limit_selection;
+  assertEquals(resolveHousingLimit2025("SE", "Gothenburg", gothenburg, 181), {
+    line29b: Math.round(106.85 * 181),
+  });
+});
+
+Deno.test("Form 2555 requires exact reviewed adjusted-location matching", () => {
+  const toronto = {
+    kind: "notice_table" as const,
+    location: "Toronto",
+    location_match_verified: true as const,
+    review_document_reference: "Notice 2025-16 Toronto row and lease",
+  };
+  assertThrows(
+    () => resolveHousingLimit2025("CA", "Ottawa", toronto, 365),
+    Error,
+    "does not match the residence city",
+  );
+  assertThrows(
+    () => resolveHousingLimit2025("SE", "Toronto", toronto, 365),
+    Error,
+    "not in Notice 2025-16 for this country",
+  );
+  assertThrows(
+    () => resolveHousingLimit2025("CA", "Tornto", toronto, 365),
+    Error,
+    "does not match the residence city",
+  );
+  assertThrows(
+    () =>
+      resolveHousingLimit2025("CA", "Toronto", {
+        kind: "standard_unlisted",
+        verified_not_listed: true,
+        notice_review_document_reference: "review",
+      }, 365),
+    Error,
+    "listed housing location cannot use the standard limit",
+  );
+});
+
+Deno.test("Form 2555 Notice 'other cities' categories are selected, never guessed", () => {
+  const colombiaOther = {
+    kind: "notice_table" as const,
+    location: "All cities other than Bogota",
+    location_match_verified: true as const,
+    review_document_reference:
+      "Notice 2025-16 Colombia other-cities row and residence proof",
+  };
+  assertEquals(
+    resolveHousingLimit2025("CO", "Medellin", colombiaOther, 365).line29b,
+    49_400,
+  );
+  assertThrows(
+    () => resolveHousingLimit2025("CO", "Bogota", colombiaOther, 365),
+    Error,
+    "does not cover the residence city",
+  );
+  assertThrows(
+    () =>
+      resolveHousingLimit2025("CO", "Medellin", {
+        kind: "standard_unlisted",
+        verified_not_listed: true,
+        notice_review_document_reference: "review",
+      }, 365),
+    Error,
+    "listed housing location cannot use the standard limit",
+  );
+  const mexicoOther = {
+    kind: "notice_table" as const,
+    location:
+      "All cities other than Ciudad Juarez, Cuernavaca, Guadalajara, Hermosillo, Matamoros, Mazatlan, Merida, Mexico City, Monterrey, Nogales, Nuevo Laredo, Tijuana, and Veracruz",
+    location_match_verified: true as const,
+    review_document_reference:
+      "Notice 2025-16 Mexico other-cities row and residence proof",
+  };
+  assertEquals(
+    resolveHousingLimit2025("MX", "Puebla", mexicoOther, 365).line29b,
+    39_400,
+  );
+  assertThrows(
+    () => resolveHousingLimit2025("MX", "Guadalajara", mexicoOther, 365),
+    Error,
+    "does not cover the residence city",
+  );
+});
+
+Deno.test({
+  name:
+    "XSD: Form 2555 Toronto adjusted housing limit reaches native line 29a/29b",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const torontoHousing: PhysicalPresenceFiling = {
+    ...employeeHousingDetails,
+    foreign_address: address,
+    employer_foreign_address: { ...address, line1: "10 King Street" },
+    tax_home_description: "Toronto, Canada",
+    principal_employment_country: "Canada",
+    employee_housing: {
+      ...employeeHousingDetails.employee_housing!,
+      city: "Toronto",
+      country_code: "CA",
+      limit_selection: {
+        kind: "notice_table",
+        location: "Toronto",
+        location_match_verified: true,
+        review_document_reference: "Notice 2025-16 Toronto row and 2025 lease",
+      },
+    },
+  };
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: {
+      filing_status: "single",
+      taxpayer_first_name: "Test",
+      taxpayer_last_name: "Taxpayer",
+      taxpayer_ssn: "123-45-6789",
+      taxpayer_dob: "1985-06-15",
+      address_line1: "1 Main St",
+      address_city: "Austin",
+      address_state: "TX",
+      address_zip: "78701",
+    },
+    form2555: { filing_details: torontoHousing },
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const xml = buildMefXml(result.pending, filer);
+  assertStringIncludes(
+    xml,
+    "<HousingExpenseLocationDesc>Toronto, Canada</HousingExpenseLocationDesc>",
+  );
+  assertStringIncludes(
+    xml,
+    "<HousingExpenseLimitAmt>57400</HousingExpenseLimitAmt>",
+  );
+  await validateXsd(xml);
 });
 
 Deno.test("Form 2555 aggregate facts cannot create invalid MeF XML", () => {

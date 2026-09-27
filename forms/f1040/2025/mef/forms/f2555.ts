@@ -125,6 +125,9 @@ function buildIRS2555(fields: Input, context?: MefBuildContext): string {
     ...(filing.employee_housing
       ? [
         element("HousingQualifiedExpenseAmt", lines.line28),
+        ...(lines.line29a
+          ? [element("HousingExpenseLocationDesc", lines.line29a)]
+          : []),
         element("HousingExpenseLimitAmt", lines.line29b),
         element("SmallerQualifiedOrLimitAmt", lines.line30),
         element("HousingQualifiedDaysCnt", lines.line31),
