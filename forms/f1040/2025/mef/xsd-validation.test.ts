@@ -4308,6 +4308,81 @@ Deno.test({
 });
 
 Deno.test({
+  name: "XSD: Form CT-2 quarterly compensation and tax paid reach Form 8959",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const result = runReturn({
+    general,
+    w2: [{
+      employee_ssn: "111-22-3333",
+      employer_name: "Rail Union",
+      employer_ein: "123456789",
+      employer_address_line1: "100 Main St",
+      employer_address_city: "Austin",
+      employer_address_state: "TX",
+      employer_address_zip: "78701",
+      box1_wages: 220_000,
+      box2_fed_withheld: 30_000,
+    }],
+    ct2: [
+      {
+        recipient: "taxpayer",
+        recipient_ssn: "111-22-3333",
+        tax_year: 2025,
+        quarter: 1,
+        line2_tier1_medicare_compensation: 50_000,
+        line3_additional_medicare_compensation: 0,
+        line3_additional_medicare_tax_paid: 0,
+      },
+      {
+        recipient: "taxpayer",
+        recipient_ssn: "111-22-3333",
+        tax_year: 2025,
+        quarter: 2,
+        line2_tier1_medicare_compensation: 50_000,
+        line3_additional_medicare_compensation: 0,
+        line3_additional_medicare_tax_paid: 0,
+      },
+      {
+        recipient: "taxpayer",
+        recipient_ssn: "111-22-3333",
+        tax_year: 2025,
+        quarter: 3,
+        line2_tier1_medicare_compensation: 50_000,
+        line3_additional_medicare_compensation: 0,
+        line3_additional_medicare_tax_paid: 0,
+      },
+      {
+        recipient: "taxpayer",
+        recipient_ssn: "111-22-3333",
+        tax_year: 2025,
+        quarter: 4,
+        line2_tier1_medicare_compensation: 70_000,
+        line3_additional_medicare_compensation: 20_000,
+        line3_additional_medicare_tax_paid: 180,
+        payment_reference: "EFTPS-Q4-2025-001",
+      },
+    ],
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form8959?.line14_rrta_wages, 220_000);
+  assertEquals(result.pending.form8959?.line23_rrta_withheld, 180);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalRailroadRetirementCompAmt>220000</TotalRailroadRetirementCompAmt>",
+  );
+  assertStringIncludes(xml, "<TotalW2AddlRRTTaxAmt>180</TotalW2AddlRRTTaxAmt>");
+  await validateXsd(xml, "Form CT-2 to Form 8959");
+});
+
+Deno.test({
   name: "XSD: RRTA W-2 box 14 feeds Form 4137 line 8 and Form 8959 Part III",
   sanitizeOps: false,
   sanitizeResources: false,

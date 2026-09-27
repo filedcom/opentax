@@ -17,10 +17,12 @@ screens.json) **Tax Year:** 2025
 | wages_8919 | number (optional) | form8919 | Wages from Form 8919 line 6 | Form 8959 line 3 | i8959 p.3 |
 | se_income | number (optional) | schedule_se | SE income from Sch SE Part I line 6 | Form 8959 line 8 | i8959 p.3 |
 | w2_rrta_wages | number (optional) | w2 | RRTA compensation (W-2 box 14) | Form 8959 line 14 | i8959 p.3 |
+| ct2_rrta_wages | number (optional) | ct2 | Employee-representative CT-2 line 2 Tier 1 Medicare compensation | Form 8959 line 14 | i8959 p.3 |
 | w2_medicare_withheld | number (optional) | w2 | Medicare tax withheld (W-2 box 6 + FICA codes B+N, excluding RRTA codes B+N) | Form 8959 line 19 | i8959 p.4 |
 | f4852_medicare_withheld | number (optional) | f4852 | Substitute W-2 Medicare withholding | Form 8959 line 19 | i8959 p.4 |
 | household_medicare_withheld | number (optional) | household_wages | Household employee Medicare withholding | Form 8959 line 19 | i8959 p.4 |
 | w2_rrta_medicare_withheld | number (optional) | w2 | Additional Medicare Tax withheld on RRTA (W-2 box 14) | Form 8959 line 23 | i8959 p.4 |
+| ct2_rrta_medicare_tax_paid | number (optional) | ct2 | Paid Additional Medicare Tax from CT-2 line 3 | Form 8959 line 23 | i8959 p.4 |
 | w2_single_over_withholding_threshold | boolean (optional) | w2 | One W-2 exceeds the $200,000 withholding trigger | Form 8959 filing rule | i8959 p.1 |
 | f4852_single_over_withholding_threshold | boolean (optional) | f4852 | One substitute W-2 exceeds the trigger | Form 8959 filing rule | i8959 p.1 |
 

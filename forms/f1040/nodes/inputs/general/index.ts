@@ -801,6 +801,8 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
       // Pass filing_status to form8959 so Additional Medicare Tax threshold is known
       this.outputNodes.output(form8959, {
         filing_status: parsed.filing_status,
+        ...(parsed.taxpayer_ssn && { taxpayer_ssn: parsed.taxpayer_ssn }),
+        ...(parsed.spouse_ssn && { spouse_ssn: parsed.spouse_ssn }),
       }),
       // Pass filing_status to form8960 so NIIT MAGI threshold is known
       this.outputNodes.output(form8960, {

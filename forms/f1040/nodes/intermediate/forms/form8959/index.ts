@@ -20,6 +20,10 @@ const AMT_RATE = 0.009;
 export const inputSchema = z.object({
   // Filing status — determines threshold (from general node)
   filing_status: z.nativeEnum(FilingStatus),
+  taxpayer_ssn: z.string().optional(),
+  spouse_ssn: z.string().optional(),
+  ct2_taxpayer_ssn: z.string().optional(),
+  ct2_spouse_ssn: z.string().optional(),
 
   // Part I line 1: separate source deposits are summed once, then printed
   // as total W-2 box 5 and substitute/household Medicare wages.
@@ -44,6 +48,7 @@ export const inputSchema = z.object({
   // Line 14 — Total RRTA compensation and tips (W-2 box 14)
   // Form 8959 line 14
   w2_rrta_wages: z.number().nonnegative().optional(),
+  ct2_rrta_wages: z.number().nonnegative().optional(),
 
   // Part V: Withholding Reconciliation
   // Line 19 — Total Medicare tax withheld (W-2 box 6 sum, includes box 12 codes B + N)
@@ -58,6 +63,7 @@ export const inputSchema = z.object({
   // This is already the additional-only portion as reported on W-2 box 14.
   // Form 8959 line 23
   w2_rrta_medicare_withheld: z.number().nonnegative().optional(),
+  ct2_rrta_medicare_tax_paid: z.number().nonnegative().optional(),
   // Filing is required when a single W-2 employer crosses the $200,000
   // withholding trigger, even if the return-wide filing-status threshold is not crossed.
   w2_single_over_withholding_threshold: z.boolean().optional(),
@@ -217,7 +223,8 @@ function totalAdditionalWithheld(input: Form8959Input): number {
     medicareWithheld(input),
     medicareWages(input),
   );
-  const line23 = input.w2_rrta_medicare_withheld ?? 0;
+  const line23 = (input.w2_rrta_medicare_withheld ?? 0) +
+    (input.ct2_rrta_medicare_tax_paid ?? 0);
   return toCents(line22 + line23);
 }
 
@@ -248,6 +255,34 @@ class Form8959Node extends TaxNode<typeof inputSchema> {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
+    if (
+      ((input.ct2_rrta_wages ?? 0) > 0 ||
+        (input.ct2_rrta_medicare_tax_paid ?? 0) > 0) &&
+      !input.ct2_taxpayer_ssn && !input.ct2_spouse_ssn
+    ) {
+      throw new Error("Form CT-2 amounts need a matching recipient SSN");
+    }
+    if (input.ct2_taxpayer_ssn) {
+      if (
+        !input.taxpayer_ssn ||
+        input.ct2_taxpayer_ssn.replaceAll("-", "") !==
+          input.taxpayer_ssn.replaceAll("-", "")
+      ) {
+        throw new Error("Taxpayer CT-2 SSN must match Form 1040 taxpayer SSN");
+      }
+    }
+    if (input.ct2_spouse_ssn) {
+      if (input.filing_status !== FilingStatus.MFJ) {
+        throw new Error("Spouse CT-2 records require married filing jointly");
+      }
+      if (
+        !input.spouse_ssn ||
+        input.ct2_spouse_ssn.replaceAll("-", "") !==
+          input.spouse_ssn.replaceAll("-", "")
+      ) {
+        throw new Error("Spouse CT-2 SSN must match Form 1040 spouse SSN");
+      }
+    }
 
     const limit = threshold(input.filing_status, cfg);
 
@@ -266,7 +301,7 @@ class Form8959Node extends TaxNode<typeof inputSchema> {
     const line13 = partIITax(line12);
 
     // Part III
-    const line14 = input.w2_rrta_wages ?? 0;
+    const line14 = (input.w2_rrta_wages ?? 0) + (input.ct2_rrta_wages ?? 0);
     const line16 = rrtaExcess(line14, limit);
     const line17 = partIIITax(line16);
 
@@ -278,7 +313,8 @@ class Form8959Node extends TaxNode<typeof inputSchema> {
     const line20 = line1;
     const line21 = regularMedicareOnWages(line20);
     const line22 = additionalMedicareFromWages(line19, line20);
-    const line23 = input.w2_rrta_medicare_withheld ?? 0;
+    const line23 = (input.w2_rrta_medicare_withheld ?? 0) +
+      (input.ct2_rrta_medicare_tax_paid ?? 0);
     const line24 = totalAdditionalWithheld(input);
 
     const outputs: NodeOutput[] = [

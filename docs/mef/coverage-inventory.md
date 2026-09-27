@@ -104,6 +104,12 @@ end-to-end, and business-rule tests before it can become a whole-form claim.
 | `f8835`                             | `IRS8835`                                                        | P: facility credit and transfer inputs; full eligibility and carryovers open                                                                                                          | R                                                                                                                                                                | P: election statement; render open                                                                                                   | P: cases written, unrun                                                                      | P: cases written, unrun                                                  | ?                  |
 | `f8874`                             | `IRS8874`                                                        | P: own passive and nonpassive QEI, partnership/S-corporation AD, and estate/trust ZZ activity facts written; carryover, recapture, leap-day and passive cents open                    | P: native source, Form 8582-CR, and Form 3800 line 1i/Part V written, unrun                                                                                      | ?                                                                                                                                    | P: local XSD case written, unrun                                                             | P: source and reconciliation cases written, unrun                        | ?                  |
 
+The `form8959` row also has a new, unrun CT-2 employee-representative source:
+four quarters per recipient feed Form 8959 lines 14 and 23. W-2 box 12 codes B
+and N now feed line 19 for FICA but not RRTA. Source-to-return and CT-2 XML/XSD
+cases are written, not yet verified. Actual CT-2 payment evidence and IRS
+business rules remain open.
+
 ## In-scope ATS document and attachment gaps
 
 These appear in Form 1040 Scenario 4 and cannot be treated as ATS-ready simply

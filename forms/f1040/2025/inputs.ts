@@ -112,6 +112,7 @@ import {
   ssa1099,
 } from "../nodes/inputs/ssa1099/index.ts";
 import { w2, w2ItemSchema } from "../nodes/inputs/w2/index.ts";
+import { ct2, itemSchema as ct2ItemSchema } from "../nodes/inputs/ct2/index.ts";
 import { itemSchema as w2gItemSchema, w2g } from "../nodes/inputs/w2g/index.ts";
 import {
   f1099patr,
@@ -585,8 +586,9 @@ import {
 } from "../nodes/intermediate/forms/form2555/index.ts";
 
 export const inputNodes: readonly InputNodeEntry[] = [
-  // Array inputs (22): each item represents a single form instance
+  // Array inputs: each item represents a single source record or form instance
   { node: w2, itemSchema: w2ItemSchema, isArray: true },
+  { node: ct2, itemSchema: ct2ItemSchema, isArray: true },
   { node: f1099int, itemSchema: f1099intItemSchema, isArray: true },
   { node: f1099oid, itemSchema: f1099oidItemSchema, isArray: true },
   { node: f1099div, itemSchema: f1099divItemSchema, isArray: true },

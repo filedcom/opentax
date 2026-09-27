@@ -150,6 +150,107 @@ Deno.test("W-2, Form 4852, and household Medicare wages sum once", () => {
   assertEquals(form?.line24_total_withheld, 0);
 });
 
+Deno.test("Form CT-2 compensation and paid tax combine with W-2 RRTA amounts", () => {
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    taxpayer_ssn: "123-45-6789",
+    ct2_taxpayer_ssn: "123-45-6789",
+    w2_rrta_wages: 60_000,
+    w2_rrta_medicare_withheld: 90,
+    ct2_rrta_wages: 220_000,
+    ct2_rrta_medicare_tax_paid: 180,
+  });
+  const form = findOutput(result, "form8959")?.fields;
+  assertEquals(form?.line14_rrta_wages, 280_000);
+  assertEquals(form?.line17_rrta_tax, 720);
+  assertEquals(form?.line23_rrta_withheld, 270);
+  assertEquals(form?.line24_total_withheld, 270);
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.line25c_additional_medicare_withheld,
+    270,
+  );
+});
+
+Deno.test("paid CT-2 tax remains creditable below the joint-return RRTA threshold", () => {
+  const result = compute({
+    filing_status: FilingStatus.MFJ,
+    taxpayer_ssn: "123-45-6789",
+    ct2_taxpayer_ssn: "123-45-6789",
+    ct2_rrta_wages: 220_000,
+    ct2_rrta_medicare_tax_paid: 180,
+  });
+  assertEquals(fieldsOf(result.outputs, schedule2), undefined);
+  assertEquals(findOutput(result, "form8959")?.fields.line18_total_tax, 0);
+  assertEquals(
+    findOutput(result, "form8959")?.fields.line23_rrta_withheld,
+    180,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.line25c_additional_medicare_withheld,
+    180,
+  );
+});
+
+Deno.test("spouse CT-2 records need a joint return", () => {
+  assertEquals(
+    inputSchema.safeParse({
+      filing_status: FilingStatus.Single,
+      ct2_rrta_wages: 220_000,
+      ct2_spouse_ssn: "987-65-4321",
+    }).success,
+    true,
+  );
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.Single,
+        ct2_rrta_wages: 220_000,
+        ct2_spouse_ssn: "987-65-4321",
+      }),
+    Error,
+    "Spouse CT-2 records require married filing jointly",
+  );
+});
+
+Deno.test("CT-2 amounts without a recipient SSN are rejected", () => {
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.Single,
+        ct2_rrta_wages: 220_000,
+      }),
+    Error,
+    "Form CT-2 amounts need a matching recipient SSN",
+  );
+});
+
+Deno.test("CT-2 recipient SSNs must match Form 1040 identity", () => {
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.MFJ,
+        taxpayer_ssn: "123-45-6789",
+        spouse_ssn: "987-65-4321",
+        ct2_taxpayer_ssn: "111-22-3333",
+        ct2_rrta_wages: 220_000,
+      }),
+    Error,
+    "Taxpayer CT-2 SSN must match",
+  );
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.MFJ,
+        taxpayer_ssn: "123-45-6789",
+        spouse_ssn: "987-65-4321",
+        ct2_spouse_ssn: "111-22-3333",
+        ct2_rrta_wages: 220_000,
+      }),
+    Error,
+    "Spouse CT-2 SSN must match",
+  );
+});
+
 Deno.test("part1_mfs_above: MFS $200k wages → 0.9% on $75k = $675", () => {
   const result = compute({
     filing_status: FilingStatus.MFS,

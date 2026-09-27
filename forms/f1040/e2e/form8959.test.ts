@@ -8,6 +8,69 @@ import { Box12Code } from "../nodes/inputs/w2/index.ts";
 const plan = buildExecutionPlan(registry);
 const ctx = { taxYear: 2025, formType: "f1040" };
 
+Deno.test("four Form CT-2 quarters reach Form 8959 and Form 1040 withholding", () => {
+  const result = execute(plan, registry, {
+    general: {
+      filing_status: FilingStatus.Single,
+      taxpayer_first_name: "Alex",
+      taxpayer_last_name: "Representative",
+      taxpayer_ssn: "123-45-6789",
+    },
+    w2: [{
+      employee_ssn: "123-45-6789",
+      employer_name: "Rail Union",
+      employer_ein: "123456789",
+      box1_wages: 220_000,
+      box2_fed_withheld: 30_000,
+    }],
+    ct2: [
+      {
+        recipient: "taxpayer",
+        recipient_ssn: "123-45-6789",
+        tax_year: 2025,
+        quarter: 1,
+        line2_tier1_medicare_compensation: 50_000,
+        line3_additional_medicare_compensation: 0,
+        line3_additional_medicare_tax_paid: 0,
+      },
+      {
+        recipient: "taxpayer",
+        recipient_ssn: "123-45-6789",
+        tax_year: 2025,
+        quarter: 2,
+        line2_tier1_medicare_compensation: 50_000,
+        line3_additional_medicare_compensation: 0,
+        line3_additional_medicare_tax_paid: 0,
+      },
+      {
+        recipient: "taxpayer",
+        recipient_ssn: "123-45-6789",
+        tax_year: 2025,
+        quarter: 3,
+        line2_tier1_medicare_compensation: 50_000,
+        line3_additional_medicare_compensation: 0,
+        line3_additional_medicare_tax_paid: 0,
+      },
+      {
+        recipient: "taxpayer",
+        recipient_ssn: "123-45-6789",
+        tax_year: 2025,
+        quarter: 4,
+        line2_tier1_medicare_compensation: 70_000,
+        line3_additional_medicare_compensation: 20_000,
+        line3_additional_medicare_tax_paid: 180,
+        payment_reference: "EFTPS-Q4-2025-001",
+      },
+    ],
+  }, ctx);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form8959?.line14_rrta_wages, 220_000);
+  assertEquals(result.pending.f1040?.line1a_wages, 220_000);
+  assertEquals(result.pending.form8959?.line23_rrta_withheld, 180);
+  assertEquals(result.pending.schedule2?.line11_additional_medicare, 180);
+  assertEquals(result.pending.f1040?.line25c_additional_medicare_withheld, 180);
+});
+
 Deno.test("uncollected W-2 Medicare tax restores Form 8959 regular withholding", () => {
   const result = execute(plan, registry, {
     general: {

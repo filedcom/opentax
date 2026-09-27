@@ -30,6 +30,7 @@ import { scheduleE } from "../nodes/inputs/schedule_e/index.ts";
 import { rrb1099r } from "../nodes/inputs/rrb1099r/index.ts";
 import { ssa1099 } from "../nodes/inputs/ssa1099/index.ts";
 import { w2 } from "../nodes/inputs/w2/index.ts";
+import { ct2 } from "../nodes/inputs/ct2/index.ts";
 import { w2g } from "../nodes/inputs/w2g/index.ts";
 import { f1099patr } from "../nodes/inputs/f1099patr/index.ts";
 import { f8283 } from "../nodes/inputs/f8283/index.ts";
@@ -236,6 +237,7 @@ export const registry: NodeRegistry = {
   rrb1099r,
   ssa1099,
   w2,
+  ct2,
   w2g,
   f1099patr,
   f8283,
