@@ -11,6 +11,7 @@ import {
   classifyForm3800PassiveCredits,
   classifyForm8835Credits,
   deriveForm3800NonpassiveInput,
+  splitForm3800PassiveCreditVintages,
   ZERO_FORM3800_PASSIVE_ACTIVITY,
 } from "./calculation.ts";
 
@@ -108,6 +109,106 @@ Deno.test("Form 3800: line 2 includes prior passive credit before limitation", (
     line32: 0,
     line33: 0,
   });
+  assertEquals(splitForm3800PassiveCreditVintages(pac.sourceAllocations[0]), [
+    {
+      activityReference: "Clinical activity",
+      sourceForm: "Form 8820",
+      sourceDocumentReference: "2023 clinical credit carryover",
+      reportingRoute: PassiveCreditReportingRoute.Form3800Line3,
+      originatingTaxYear: 2023,
+      beforePassiveLimit: 400,
+      afterPassiveLimit: 200,
+    },
+    {
+      activityReference: "Clinical activity",
+      sourceForm: "Form 8820",
+      sourceDocumentReference: "2025 clinical credit statement",
+      reportingRoute: PassiveCreditReportingRoute.Form3800Line3,
+      originatingTaxYear: 2025,
+      beforePassiveLimit: 100,
+      afterPassiveLimit: 0,
+    },
+  ]);
+});
+
+Deno.test("Form 3800: passive source vintages keep oldest carryovers first", () => {
+  const pac = calculateForm8582CR(form8582crInputSchema.parse({
+    credit_sources: [{
+      activity_reference: "Rental",
+      source_form: "Form 3468",
+      source_document_reference: "2025 rehabilitation statement",
+      category: PassiveCreditCategory.Other,
+      reporting_route: PassiveCreditReportingRoute.Form3800Line33,
+      current_year_credit: 300,
+      prior_unallowed_credits: [
+        {
+          originating_tax_year: 2024,
+          credit_amount: 200,
+          source_document_reference: "2024 carryover",
+        },
+        {
+          originating_tax_year: 2022,
+          credit_amount: 100,
+          source_document_reference: "2022 carryover",
+        },
+      ],
+      publicly_traded_partnership: false,
+    }],
+    regular_tax_all_income: 10_000,
+    regular_tax_without_passive: 9_750,
+  }));
+  assertEquals(
+    splitForm3800PassiveCreditVintages(pac.sourceAllocations[0]).map(
+      ({ originatingTaxYear, beforePassiveLimit, afterPassiveLimit }) => ({
+        originatingTaxYear,
+        beforePassiveLimit,
+        afterPassiveLimit,
+      }),
+    ),
+    [
+      {
+        originatingTaxYear: 2022,
+        beforePassiveLimit: 100,
+        afterPassiveLimit: 100,
+      },
+      {
+        originatingTaxYear: 2024,
+        beforePassiveLimit: 200,
+        afterPassiveLimit: 150,
+      },
+      {
+        originatingTaxYear: 2025,
+        beforePassiveLimit: 300,
+        afterPassiveLimit: 0,
+      },
+    ],
+  );
+});
+
+Deno.test("Form 3800: Form 8834 vintage cannot enter the general business credit", () => {
+  const pac = calculateForm8582CR(form8582crInputSchema.parse({
+    credit_sources: [{
+      activity_reference: "Legacy vehicle",
+      source_form: "Form 8834",
+      source_document_reference: "2024 Form 8834 credit statement",
+      category: PassiveCreditCategory.Other,
+      reporting_route: PassiveCreditReportingRoute.Form8834,
+      current_year_credit: 0,
+      prior_unallowed_credits: [{
+        originating_tax_year: 2024,
+        credit_amount: 100,
+        source_document_reference: "2024 Form 8834 carryover",
+      }],
+      publicly_traded_partnership: false,
+    }],
+    regular_tax_all_income: 10_000,
+    regular_tax_without_passive: 9_900,
+  }));
+  assertThrows(
+    () => splitForm3800PassiveCreditVintages(pac.sourceAllocations[0]),
+    Error,
+    "does not belong",
+  );
 });
 
 function input(overrides: Record<string, number> = {}) {

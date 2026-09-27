@@ -1,6 +1,80 @@
 /** TY2025 Form 3800 Part I and II for individual credits. */
 import { FilingStatus } from "../../types.ts";
 import { PassiveCreditReportingRoute } from "../../intermediate/forms/form8582cr/credit-route.ts";
+import type { calculateForm8582CR } from "../../intermediate/forms/form8582cr/index.ts";
+
+type Form8582CRSourceAllocation = ReturnType<
+  typeof calculateForm8582CR
+>["sourceAllocations"][number];
+
+export type Form3800PassiveCreditVintage = {
+  readonly activityReference: string;
+  readonly sourceForm: string;
+  readonly sourceDocumentReference: string;
+  readonly reportingRoute: PassiveCreditReportingRoute;
+  readonly originatingTaxYear: number;
+  readonly beforePassiveLimit: number;
+  readonly afterPassiveLimit: number;
+};
+
+/**
+ * Keep current-year Part III credit separate from each prior-year Part IV row.
+ * Apply oldest credit first under the 2025 Form 3800 credit ordering rule.
+ * Source: https://www.irs.gov/instructions/i3800 (Credit Ordering Rule)
+ */
+export function splitForm3800PassiveCreditVintages(
+  source: Form8582CRSourceAllocation,
+): Form3800PassiveCreditVintage[] {
+  if (source.reporting_route === PassiveCreditReportingRoute.Form8834) {
+    throw new Error("Form 8834 credit does not belong on Form 3800");
+  }
+  const vintages = [
+    ...source.prior_unallowed_credits.map((credit) => ({
+      originatingTaxYear: credit.originating_tax_year,
+      beforePassiveLimit: credit.credit_amount,
+      sourceDocumentReference: credit.source_document_reference,
+    })).sort((a, b) => a.originatingTaxYear - b.originatingTaxYear),
+    {
+      originatingTaxYear: 2025,
+      beforePassiveLimit: source.current_year_credit,
+      sourceDocumentReference: source.source_document_reference,
+    },
+  ];
+  const beforePassiveLimit = vintages.reduce(
+    (sum, vintage) => sum + vintage.beforePassiveLimit,
+    0,
+  );
+  if (
+    !Number.isSafeInteger(source.allowed_credit) ||
+    source.allowed_credit < 0 || source.allowed_credit > beforePassiveLimit ||
+    source.total_credit !== beforePassiveLimit
+  ) {
+    throw new Error("Form 3800 passive source vintage totals do not reconcile");
+  }
+  return vintages.filter((vintage) => vintage.beforePassiveLimit > 0).reduce<
+    Form3800PassiveCreditVintage[]
+  >(
+    (allocated, vintage) => {
+      const usedBefore = allocated.reduce(
+        (sum, row) => sum + row.afterPassiveLimit,
+        0,
+      );
+      return [...allocated, {
+        activityReference: source.activity_reference,
+        sourceForm: source.source_form,
+        sourceDocumentReference: vintage.sourceDocumentReference,
+        reportingRoute: source.reporting_route,
+        originatingTaxYear: vintage.originatingTaxYear,
+        beforePassiveLimit: vintage.beforePassiveLimit,
+        afterPassiveLimit: Math.min(
+          vintage.beforePassiveLimit,
+          source.allowed_credit - usedBefore,
+        ),
+      }];
+    },
+    [],
+  );
+}
 
 export type Form3800PassiveActivityLines = {
   readonly line2: number;

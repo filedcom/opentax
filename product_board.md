@@ -471,7 +471,10 @@ credits, and rejects Form 8834 sources. The shared Form 3800 Part I/II
 calculator now applies standard, empowerment-zone, and specified passive
 credits in their separate statutory order, with written but unrun cases. The
 1040 and XML callers still pass explicit zero passive lines, so the calculator
-does not yet make passive credits fileable. Form 4136 now combines its represented
+does not yet make passive credits fileable. An unrun source transform now splits
+each allowed credit by originating tax year, keeping prior carryovers ahead of
+2025 credit for the future Parts III/IV rows. It does not yet allocate the
+separate Form 3800 tax-liability limit to those rows. Form 4136 now combines its represented
 fuel-use credits on refundable line 12 instead of misrouting some to general
 business credit and some to a nonexistent Form 1040 field; the represented 2025
 fuel rates are updated, with separate aviation-kerosene tax-rate inputs. These
