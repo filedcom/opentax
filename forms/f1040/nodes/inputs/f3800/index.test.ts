@@ -2,6 +2,8 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { f3800 } from "./index.ts";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
+import { form6251 } from "../../intermediate/forms/form6251/index.ts";
+import { f1040 } from "../../outputs/f1040/index.ts";
 
 function minimalItem(overrides: Record<string, unknown> = {}) {
   return { ...overrides };
@@ -26,19 +28,29 @@ Deno.test("f3800.inputSchema: empty array fails (min 1)", () => {
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f3800: stops Form 8835 credit until its tax-liability limit is built", () => {
-  assertThrows(() =>
-    f3800.compute({ taxYear: 2025, formType: "f1040" }, {
-      f8835_credit_entries: [{
-        form3800_line: "4e",
-        credit_amount: 6_000,
-        transfer_out_amount: 2_000,
-        registration_number: "REG-1",
-        subject_to_passive_activity_limit: false,
-        transfer_election_statement_file_name:
-          "Transfer Election Statement.pdf",
-      }],
-    })
+Deno.test("f3800: Form 8835 source credit waits for finalized tax instead of depositing gross credit", () => {
+  const result = f3800.compute({ taxYear: 2025, formType: "f1040" }, {
+    f8835_credit_entries: [{
+      form3800_line: "4e",
+      credit_amount: 6_000,
+      transfer_out_amount: 2_000,
+      registration_number: "REG-1",
+      subject_to_passive_activity_limit: false,
+      transfer_election_statement_file_name: "Transfer Election Statement.pdf",
+    }],
+  });
+  assertEquals(fieldsOf(result.outputs, f1040)?.form3800_source_credits, {
+    standardCredit: 0,
+    specifiedCredit: 4_000,
+  });
+  assertEquals(fieldsOf(result.outputs, form6251)?.must_file_for_gbc, true);
+  assertEquals(
+    fieldsOf(result.outputs, schedule3)?.form3800_source_credit_pending,
+    true,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, schedule3)?.line6a_general_business_credit,
+    undefined,
   );
 });
 
@@ -74,18 +86,21 @@ Deno.test("f3800: passive Form 8835 credit needs Form 8582-CR before limitation"
   );
 });
 
-Deno.test("f3800: Form 8826 source credit stops before Schedule 3", () => {
-  assertThrows(
-    () =>
-      f3800.compute({ taxYear: 2025, formType: "f1040" }, {
-        f8826_credit_entries: [{
-          source_type: "self",
-          credit_amount: 2_375,
-          subject_to_passive_activity_limit: false,
-        }],
-      }),
-    Error,
-    "tax-liability limitation",
+Deno.test("f3800: Form 8826 source credit reaches the final tax limit without a gross Schedule 3 deposit", () => {
+  const result = f3800.compute({ taxYear: 2025, formType: "f1040" }, {
+    f8826_credit_entries: [{
+      source_type: "self",
+      credit_amount: 2_375,
+      subject_to_passive_activity_limit: false,
+    }],
+  });
+  assertEquals(fieldsOf(result.outputs, f1040)?.form3800_source_credits, {
+    standardCredit: 2_375,
+    specifiedCredit: 0,
+  });
+  assertEquals(
+    fieldsOf(result.outputs, schedule3)?.line6a_general_business_credit,
+    undefined,
   );
 });
 
@@ -134,6 +149,45 @@ Deno.test("f3800: Form 8826 source type and EIN must agree", () => {
         credit_amount: 1_000,
         subject_to_passive_activity_limit: false,
       }],
+    }).success,
+    false,
+  );
+});
+
+Deno.test("f3800: source-backed credit cannot combine with unbounded legacy credit", () => {
+  assertThrows(
+    () =>
+      f3800.compute({ taxYear: 2025, formType: "f1040" }, {
+        f3800s: [{ research_credit: 100 }],
+        f8826_credit_entries: [{
+          source_type: "self",
+          credit_amount: 200,
+          subject_to_passive_activity_limit: false,
+        }],
+      }),
+    Error,
+    "unbounded legacy",
+  );
+});
+
+Deno.test("f3800: direct Form 8826 entries reject duplicate sources and sub-cent credit", () => {
+  const entry = {
+    source_type: "partnership" as const,
+    source_ein: "123456789",
+    credit_amount: 200,
+    subject_to_passive_activity_limit: false,
+  };
+  assertThrows(
+    () =>
+      f3800.compute({ taxYear: 2025, formType: "f1040" }, {
+        f8826_credit_entries: [entry, entry],
+      }),
+    Error,
+    "Duplicate Form 8826 credit source",
+  );
+  assertEquals(
+    f3800.inputSchema.safeParse({
+      f8826_credit_entries: [{ ...entry, credit_amount: 1.001 }],
     }).success,
     false,
   );

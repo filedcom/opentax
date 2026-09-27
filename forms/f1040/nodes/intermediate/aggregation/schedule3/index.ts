@@ -28,6 +28,9 @@ function sumAccumulable(value: number | number[] | undefined): number {
 // and additional payments (Part II → line 15 → f1040 line 31).
 // All fields are optional — any subset may be present on a given return.
 export const inputSchema = z.object({
+  // Source-backed Form 3800 will finalize line 6a after the return tax and
+  // all credits ahead of it are known. This signal does not deposit gross credit.
+  form3800_source_credit_pending: z.boolean().optional(),
   // ── Part I — Nonrefundable Credits ─────────────────────────────────────────
 
   // Line 1 — Foreign tax credit (from Form 1116 line 35)
@@ -190,11 +193,28 @@ class Schedule3Node extends TaxNode<typeof inputSchema> {
     const credits = partITotal(input);
     const payments = partIITotal(input);
 
-    if (credits === 0 && payments === 0) return { outputs: [] };
+    if (
+      credits === 0 && payments === 0 &&
+      input.form3800_source_credit_pending !== true
+    ) return { outputs: [] };
 
     const f1040Input: Partial<z.infer<typeof f1040["inputSchema"]>> = {};
     if (credits > 0) f1040Input.line20_nonrefundable_credits = credits;
     if (payments > 0) f1040Input.line31_additional_payments = payments;
+    if (input.form3800_source_credit_pending === true) {
+      f1040Input.form3800_schedule3_lines = {
+        line1: line1(input),
+        line2: input.line2_childcare_credit ?? 0,
+        line3: input.line3_education_credit ?? 0,
+        line4: input.line4_retirement_savings_credit ?? 0,
+        line5a: input.line5a_residential_clean_energy ?? 0,
+        line5b: input.line5b_energy_efficient_home ?? 0,
+        line6aGbc: line6a(input),
+        line6bPriorMinimumTax: input.line6b_prior_year_min_tax_credit ?? 0,
+        line6kBondCredit: input.line6k_tax_credit_bonds ?? 0,
+        line7: line7(input),
+      };
+    }
     const cleanNew = sumAccumulable(input.line6f_clean_vehicle_credit);
     const cleanUsed = sumAccumulable(
       input.line6m_prev_owned_clean_vehicle_credit,

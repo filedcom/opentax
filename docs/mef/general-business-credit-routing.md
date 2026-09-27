@@ -40,22 +40,25 @@ other Schedule 3 line 6a accumulator; the Form 8586 specified-credit and
 carryover path needs source reconciliation. `form8582cr` deposits its passive
 activity allowed credit directly into line 6a, but that is only the passive
 activity limit, not necessarily the Form 3800 tax-liability limit. `f8835`
-instead forwards per-facility amounts to `f3800`; positive available credit
-currently stops rather than claiming gross credit. Form 8936 business-use and
-Form 8911 business-use paths also need the shared Form 3800 treatment.
+instead forwards per-facility amounts to `f3800`; positive available credit now
+waits for final Form 1040 tax and Form 6251 TMT before Schedule 3 receives the
+allowed amount. MeF export still stops until IRS3800 and the source bundle are
+registered. Form 8936 business-use and Form 8911 business-use paths also need
+the shared Form 3800 treatment.
 
 `f8826` now forwards its line 8 source amount to `f3800` as a separate line 1e
-entry. A positive nonpassive credit stops there until the Form 3800
-tax-liability limit is wired; a passive credit stops for Form 8582-CR. The older
-`f3800s.disabled_access_credit` input still deposits a gross amount and is not a
-source-backed Form 8826 claim. Identified partnership and S-corporation line 7
-credits now combine with self-earned line 6 under one $5,000 cap. A
-pass-through-only credit can appear on Form 3800 without a Form 8826 document;
-the source amounts are allocated pro rata in cents when that cap binds. K-1
-attachment reconciliation and filed source-attribution checks remain open. The
-unregistered Form 3800 XML draft now emits Part V rows for multiple Form 8826
-sources, retaining their EINs, capped amounts, explicit applied-credit split,
-and remaining amounts. This draft is not connected to return assembly.
+entry. A positive nonpassive credit is limited at final Form 1040 assembly; a
+passive credit stops for Form 8582-CR. The older `f3800s.disabled_access_credit`
+input still deposits a gross amount and is not a source-backed Form 8826 claim.
+Identified partnership and S-corporation line 7 credits now combine with
+self-earned line 6 under one $5,000 cap. A pass-through-only credit can appear
+on Form 3800 without a Form 8826 document; the source amounts are allocated pro
+rata in cents when that cap binds. K-1 attachment reconciliation and filed
+source-attribution checks remain open. The unregistered Form 3800 XML draft now
+emits Part V rows for multiple Form 8826 sources, retaining their EINs, capped
+amounts, explicit applied-credit split, and remaining amounts. The draft is not
+yet a registered filing document, and the MeF export guard rejects both
+source-backed and legacy Form 3800 credits.
 
 Separate 2025 Schedule 3 corrections in the current build pass: `f8859` now
 deposits into line 6h, `f8834` into line 6i, and the combined Form 4136 fuel
@@ -79,8 +82,9 @@ source cases and the stop are written but unrun in the current build pass.
    pass-through sources, and calculate Part I and all relevant Part II sections
    in the IRS ordering. Carryovers need originating-year identity.
 4. Use finalized Form 1040, Schedule 2, Schedule 3 excluding the GBC itself, and
-   Form 6251 amounts to determine Part II's allowed amount. Replace the
-   tentative Schedule 3 line 6a and Form 1040 line 20 with that amount.
+   Form 6251 amounts to determine Part II's allowed amount. Finalize Schedule 3
+   line 6a and Form 1040 line 20 with that amount, without depositing gross
+   source credit first.
 5. Reconcile the filed Form 3800 XML/PDF, every source document, Schedule 3,
    Form 1040, transfer statements, and any carryforward. Then run full-batch
    tests, local XSD, business rules, and ATS acceptance as separate gates.

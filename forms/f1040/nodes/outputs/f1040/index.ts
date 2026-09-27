@@ -6,6 +6,13 @@ import {
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { computeRegularMethodPenalty } from "../../inputs/f2210/calculation.ts";
+import {
+  calculateForm3800Nonpassive,
+  deriveForm3800NonpassiveInput,
+  type Form3800NonpassiveInput,
+  type Form3800NonpassiveLines,
+} from "../../inputs/f3800/calculation.ts";
+import { FilingStatus } from "../../types.ts";
 
 // Fields that may arrive from multiple upstream nodes accumulate as arrays in the
 // executor pending dict. Declaring them accumulable prevents Zod parse failure.
@@ -28,6 +35,8 @@ function sumField(value: number | number[] | undefined): number {
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 const inputSchema = z.object({
+  filing_status: z.nativeEnum(FilingStatus).optional(),
+  spouse_has_business_credit: z.boolean().optional(),
   // ── Part I — Income ───────────────────────────────────────────────────────
   // Line 1a — Wages (accumulable: w2, fec, f4852, f1099r and qsehra all route here)
   line1a_wages: accumulable(z.number()).optional(),
@@ -119,6 +128,25 @@ const inputSchema = z.object({
   // Form 8912 income reaches AGI, but positive credit is not filed until its
   // separate tax limit and source document are finalized.
   form8912_tentative_credit: z.number().nonnegative().optional(),
+  form3800_source_credits: z.object({
+    standardCredit: z.number().finite().nonnegative(),
+    specifiedCredit: z.number().finite().nonnegative(),
+  }).optional(),
+  form3800_form6251_line9: z.number().finite().nonnegative().optional(),
+  form3800_form6251_line11: z.number().finite().nonnegative().optional(),
+  form3800_schedule2_line1z: z.number().finite().nonnegative().optional(),
+  form3800_schedule3_lines: z.object({
+    line1: z.number().finite().nonnegative(),
+    line2: z.number().finite().nonnegative(),
+    line3: z.number().finite().nonnegative(),
+    line4: z.number().finite().nonnegative(),
+    line5a: z.number().finite().nonnegative(),
+    line5b: z.number().finite().nonnegative(),
+    line6aGbc: z.number().finite().nonnegative(),
+    line6bPriorMinimumTax: z.number().finite().nonnegative(),
+    line6kBondCredit: z.number().finite().nonnegative(),
+    line7: z.number().finite().nonnegative(),
+  }).optional(),
   // Line 21 — Sum of 19 + 20
   line21_credits_total: z.number().nonnegative().optional(),
   // Line 22 — Tax after credits (18 - 21)
@@ -250,6 +278,13 @@ type CleanVehicleAllowance = {
   readonly schedule3Line7: number;
 };
 
+type BusinessCreditAllowance = {
+  readonly tax: Form3800NonpassiveInput;
+  readonly lines: Form3800NonpassiveLines;
+  readonly schedule3Line7: number;
+  readonly schedule3Credits: number;
+};
+
 function cleanVehicleAllowance(
   input: F1040Input,
 ): CleanVehicleAllowance | undefined {
@@ -282,6 +317,65 @@ function cleanVehicleAllowance(
   };
 }
 
+function businessCreditAllowance(
+  input: F1040Input,
+  cleanVehicles: CleanVehicleAllowance | undefined,
+): BusinessCreditAllowance | undefined {
+  const credits = input.form3800_source_credits;
+  if (!credits) return undefined;
+  if (
+    credits.standardCredit + credits.specifiedCredit <= 0 ||
+    input.filing_status === undefined ||
+    input.line16_income_tax === undefined ||
+    input.form3800_form6251_line9 === undefined ||
+    input.form3800_form6251_line11 === undefined ||
+    input.form3800_schedule3_lines === undefined
+  ) {
+    throw new Error(
+      "Form 3800 source credit needs filing status, Form 1040 tax, Form 6251, and Schedule 3 return lines",
+    );
+  }
+  const schedule3 = input.form3800_schedule3_lines;
+  if (schedule3.line6aGbc > 0) {
+    throw new Error(
+      "Form 3800 source credit cannot combine with unbounded Schedule 3 general business credits",
+    );
+  }
+  const schedule3Line7 = cleanVehicles?.schedule3Line7 ?? schedule3.line7;
+  const tax = deriveForm3800NonpassiveInput({
+    filingStatus: input.filing_status,
+    spouseHasBusinessCredit: input.spouse_has_business_credit,
+    form1040Line16: input.line16_income_tax ?? 0,
+    schedule2Line1z: input.form3800_schedule2_line1z ?? 0,
+    educationCreditRecaptureTaxIncludedInLine7Sources: 0,
+    form8621TaxIncludedInLine7Sources: input.form8621_tax ?? 0,
+    deferred965TaxIncludedInLine7Sources: 0,
+    triggering965TaxIncludedInLine7Sources: 0,
+    form6251Line11: input.form3800_form6251_line11,
+    form6251Line9: input.form3800_form6251_line9,
+    form1040Line19: input.line19_child_tax_credit ?? 0,
+    schedule3Line1: schedule3.line1,
+    schedule3Line2: schedule3.line2,
+    schedule3Line3: schedule3.line3,
+    schedule3Line4: schedule3.line4,
+    schedule3Line5a: schedule3.line5a,
+    schedule3Line5b: schedule3.line5b,
+    schedule3Line7,
+    schedule3Line6aGbc: schedule3.line6aGbc,
+    schedule3Line6bPriorMinimumTax: schedule3.line6bPriorMinimumTax,
+    form8912CreditInSchedule3Line7: schedule3.line6kBondCredit,
+  }, credits);
+  const lines = calculateForm3800Nonpassive(tax);
+  const originalSchedule3Credits = cleanVehicles?.schedule3Credits ??
+    (input.line20_nonrefundable_credits ?? 0);
+  return {
+    tax,
+    lines,
+    schedule3Line7: schedule3Line7 + lines.line38,
+    schedule3Credits: originalSchedule3Credits + lines.line38,
+  };
+}
+
 function totalWithholding(input: F1040Input): number {
   return (
     (input.line25a_w2_withheld ?? 0) +
@@ -309,7 +403,11 @@ function totalPayments(input: F1040Input): number {
   );
 }
 
-function assembleReturn(input: F1040Input): Record<string, number> {
+function assembleReturn(
+  input: F1040Input,
+  cleanVehicles: CleanVehicleAllowance | undefined,
+  businessCredit: BusinessCreditAllowance | undefined,
+): Record<string, number> {
   const computed_line1z = input.line1z_total_wages ?? totalWages(input);
   const computed_line9 = totalIncome(input);
   const computed_line10 = input.line10_adjustments ?? 0;
@@ -319,8 +417,8 @@ function assembleReturn(input: F1040Input): Record<string, number> {
     (input.line13b_additional_deductions ?? 0);
   const computed_line15 = taxableIncome(input);
   const computed_line18 = totalTaxBeforeCredits(input);
-  const cleanVehicles = cleanVehicleAllowance(input);
-  const computed_line20 = cleanVehicles?.schedule3Credits ??
+  const computed_line20 = businessCredit?.schedule3Credits ??
+    cleanVehicles?.schedule3Credits ??
     (input.line20_nonrefundable_credits ?? 0);
   const computed_line21 = creditsTotal(input, computed_line20);
   const computed_line22 = Math.max(0, computed_line18 - computed_line21);
@@ -376,7 +474,7 @@ function assembleReturn(input: F1040Input): Record<string, number> {
   result.line12c_deduction_total = deductionAmount(input);
   result.line14_deductions_qbi_total = computed_line14;
   result.line32_refundable_credits_total = computed_line32;
-  if (cleanVehicles !== undefined) {
+  if (cleanVehicles !== undefined || businessCredit !== undefined) {
     result.line20_nonrefundable_credits = computed_line20;
   }
   if (computed_line25c > 0) result.line25c_total = computed_line25c;
@@ -505,27 +603,55 @@ class F1040Node extends TaxNode<typeof inputSchema> {
         "Form 8912 positive credit cannot be filed until the Part II tax limit and source document are integrated",
       );
     }
-    const assembled = assembleReturn(input);
     const cleanVehicles = cleanVehicleAllowance(input);
-    return {
-      outputs: [{ nodeType: this.nodeType, fields: assembled }],
-      finalizations: cleanVehicles === undefined ? undefined : [{
+    const businessCredit = businessCreditAllowance(input, cleanVehicles);
+    const assembled = assembleReturn(input, cleanVehicles, businessCredit);
+    const schedule3Finalization = cleanVehicles === undefined &&
+        businessCredit === undefined
+      ? undefined
+      : {
         nodeType: "schedule3",
         fields: {
-          line6f_total: cleanVehicles.newCredit > 0
+          ...(businessCredit
+            ? {
+              line6a_total: businessCredit.lines.line38 > 0
+                ? businessCredit.lines.line38
+                : undefined,
+            }
+            : {}),
+          line6f_total: cleanVehicles && cleanVehicles.newCredit > 0
             ? cleanVehicles.newCredit
             : undefined,
-          line6m_total: cleanVehicles.usedCredit > 0
+          line6m_total: cleanVehicles && cleanVehicles.usedCredit > 0
             ? cleanVehicles.usedCredit
             : undefined,
-          line7_total: cleanVehicles.schedule3Line7 > 0
-            ? cleanVehicles.schedule3Line7
+          line7_total: (businessCredit?.schedule3Line7 ??
+              cleanVehicles?.schedule3Line7 ?? 0) > 0
+            ? businessCredit?.schedule3Line7 ?? cleanVehicles?.schedule3Line7
             : undefined,
-          line8_total: cleanVehicles.schedule3Credits > 0
-            ? cleanVehicles.schedule3Credits
+          line8_total: (businessCredit?.schedule3Credits ??
+              cleanVehicles?.schedule3Credits ?? 0) > 0
+            ? businessCredit?.schedule3Credits ??
+              cleanVehicles?.schedule3Credits
             : undefined,
         },
-      }],
+      };
+    return {
+      outputs: [{ nodeType: this.nodeType, fields: assembled }],
+      finalizations: [
+        ...(schedule3Finalization ? [schedule3Finalization] : []),
+        ...(businessCredit
+          ? [{
+            nodeType: "f3800",
+            fields: {
+              tax_context: businessCredit.tax,
+              allowed_credit: businessCredit.lines.line38,
+              standard_credit_allowed: businessCredit.lines.line17,
+              specified_credit_allowed: businessCredit.lines.line37,
+            },
+          }]
+          : []),
+      ],
     };
   }
 }

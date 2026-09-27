@@ -131,6 +131,8 @@ export type DependentFiling = z.infer<typeof dependentFilingSchema>;
 
 export const inputSchema = z.object({
   filing_status: z.nativeEnum(FilingStatus),
+  // Required for the Form 3800 line 13 limit when filing separately.
+  spouse_has_business_credit: z.boolean().optional(),
   // Taxpayer identity
   taxpayer_first_name: z.string().optional(),
   taxpayer_last_name: z.string().optional(),
@@ -516,6 +518,11 @@ function buildF1040Input(input: GeneralInput): Record<string, unknown> {
     qualifying_child_tax_credit_count: counts.qualifying_child_tax_credit_count,
     other_dependent_count: counts.other_dependent_count,
   };
+  addIfDefined(
+    fields,
+    "spouse_has_business_credit",
+    input.spouse_has_business_credit,
+  );
   if (counts.dependent_count > 0) {
     fields.dependent_details = deps
       .filter((dep) => dep.dependent_on_another_return !== true)

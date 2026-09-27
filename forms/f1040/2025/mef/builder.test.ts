@@ -133,6 +133,19 @@ function assertNotIncludes(actual: string, expected: string) {
   );
 }
 
+Deno.test("MeF export rejects a Form 3800 credit until its required documents are registered", () => {
+  assertThrows(
+    () => buildMefXml({ f3800: { allowed_credit: 0 } }),
+    Error,
+    "Form 3800 credit cannot be exported",
+  );
+  assertThrows(
+    () => buildMefXml({ f3800: { f3800s: [{ research_credit: 100 }] } }),
+    Error,
+    "Form 3800 credit cannot be exported",
+  );
+});
+
 async function sampleAttachmentBytes(): Promise<Uint8Array> {
   const pdf = await PDFDocument.create();
   const page = pdf.addPage([612, 792]);

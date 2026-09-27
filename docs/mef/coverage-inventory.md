@@ -98,7 +98,7 @@ because a serializer exists or the IRS XSD permits them.
 
 | Scenario | IRS XML root or required attachment | Current evidence                                                                                                                                                               |
 | -------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1040-04  | `IRS3800`                           | M: no registered MeF serializer                                                                                                                                                |
+| 1040-04  | `IRS3800`                           | M: no registered XML serializer; a temporary descriptor fails export closed for a credit claim. The source-backed nonpassive graph limit is written but unrun.                 |
 | 1040-04  | `IRS8835`                           | Build pass: per-facility Part I/II serializer registered; source-to-XSD and negative cases written but unrun. Fiscal years, source statements, and ATS acceptance remain open. |
 | 1040-04  | Transfer Election Statement PDF     | M: source PDF identifies the attachment, but its content is not in the captured scenario facts                                                                                 |
 
@@ -107,9 +107,10 @@ above. Its lines 1, 3, 5, 6, 7, and 8 now have an unregistered `IRS8826` XML
 draft and unrun source-to-XSD cases. The unregistered Form 3800 draft has a
 linked Part III line 1e, Part II nonpassive reconciliation, and Part V rows for
 multiple Form 8826 sources. Those rows retain capped source credit, K-1 EIN,
-explicit applied amount, and remaining amount; their cases are unrun. No
-graph-level allowed-credit route, registered XML document, PDF, passive Form
-8582-CR path, K-1 document reconciliation, or ATS evidence exists yet.
+explicit applied amount, and remaining amount; their cases are unrun. The
+graph-level nonpassive allowed-credit route is written but unrun. No registered
+XML document, PDF, passive Form 8582-CR path, K-1 document reconciliation, or
+ATS evidence exists yet.
 
 The ATS inventory in `docs/ats/ty2025.md` identifies other scenario-specific
 facts that remain incomplete. This file must be expanded after comparing IRS
