@@ -24,8 +24,8 @@ def full_name(annotation):
     return ".".join(reversed(parts))
 
 
-def inventory(slug):
-    source = ROOT / f"corpus/draft/{slug}.pdf"
+def inventory(slug, source=None):
+    source = source or ROOT / f"corpus/draft/{slug}.pdf"
     target = ROOT / f"pdf-fields-{slug}.csv"
     reader = PdfReader(source)
     fields = reader.get_fields() or {}
@@ -70,3 +70,7 @@ def inventory(slug):
 
 for slug in SLUGS:
     inventory(slug)
+
+inventory("f1040sei", ROOT / "corpus/draft/f1040sei.pdf")
+inventory("f8862", ROOT / "corpus/authorities/f8862--2025.pdf")
+inventory("f8863", ROOT / "corpus/draft/f8863.pdf")

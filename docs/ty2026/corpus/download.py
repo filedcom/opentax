@@ -22,7 +22,7 @@ FORM_SLUGS = [
     "f1040", "f1040s1", "f1040s1a", "f1040s2", "f1040s3", "f1040s3a",
     "f1040sa", "f1040sb", "f1040sc", "f1040sd", "f1040se",
     "f1040sei", "f1040sse", "f1040sh", "f1040sf", "f1040s8",
-    "f2441", "f4562", "f4562b", "f6251", "f8839", "f8889", "f8962", "f8995",
+    "f2441", "f4562", "f4562b", "f6251", "f8839", "f8863", "f8889", "f8962", "f8995",
     "f8995a", "f8995aa", "f1062", "f8888",
     # Remaining IRS slugs represented by the TY2025 PDF descriptors.
     "f1116", "f2555", "f4136", "f4136sa", "f4137", "f461", "f4684",
@@ -105,6 +105,8 @@ sources += [
     ("authorities/iw2g--2026.pdf", IRS + "/pub/irs-prior/iw2g--2026.pdf", "final-authority"),
     ("authorities/f8283--2025.pdf", IRS + "/pub/irs-prior/f8283--2025.pdf", "final-authority"),
     ("authorities/i8283--2025.pdf", IRS + "/pub/irs-pdf/i8283.pdf", "final-authority"),
+    ("authorities/f8862--2025.pdf", IRS + "/pub/irs-prior/f8862--2025.pdf", "final-authority"),
+    ("authorities/i8862--2025.pdf", IRS + "/pub/irs-pdf/i8862.pdf", "final-authority"),
     ("authorities/p15a--2026.pdf", IRS + "/pub/irs-pdf/p15a.pdf", "final-authority"),
     ("authorities/f1099div--2024.pdf", IRS + "/pub/irs-prior/f1099div--2024.pdf", "final-authority"),
     ("authorities/i1099div--2024.pdf", IRS + "/pub/irs-prior/i1099div--2024.pdf", "final-authority"),

@@ -35,6 +35,12 @@ The [ATS scenario 5 plan](../../../docs/ty2026/ATS-SCENARIO-05.md) adds a
 Form 8888 split-refund route after 2026 settlement. The shared input is
 metadata-only and still includes obsolete savings-bond fields; no 2026
 Form 8888 PDF or MeF serializer is registered yet.
+The [ATS scenario 4 plan](../../../docs/ty2026/ATS-SCENARIO-04.md) maps its
+W-2, Form 2441, Form 8862, Form 8863, Schedule EIC/8812, and Schedule 3-A
+pages. The [credit graph contract](../../../docs/ty2026/FORM8862-8863-EIC-GRAPH.md)
+specifies the recertification facts and 2026 credit order. These EIC/8862/8863
+nodes and attachments are not in the TY2026 registry; the packet also lacks
+the institution EIN and completed Form 8862 selections needed to file.
 The [Schedule F contract](../../../docs/ty2026/SCHEDULEF-GRAPH.md) maps the
 cash/accrual farm route and its attached forms. Its shared TY2025 input names
 other interest as line 21b; the 2026 form uses that line for vehicle-loan

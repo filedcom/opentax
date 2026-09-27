@@ -50,6 +50,10 @@ for the implementation contract.
   Roth-distribution, spouse-form, and carryforward implementation contract.
 - [`FORM2441-GRAPH.md`](FORM2441-GRAPH.md): dependent-care benefits before
   AGI, 2026 credit phaseout and limit, provider detail, PDF, and MeF order.
+- [`FORM8862-8863-EIC-GRAPH.md`](FORM8862-8863-EIC-GRAPH.md),
+  `pdf-fields-f8862.csv`, `pdf-fields-f8863.csv`, and
+  `pdf-fields-f1040sei.csv`: credit
+  recertification, education-credit, and EIC source/graph/attachment order.
 - [`PDF-FORM2441-MAP.md`](PDF-FORM2441-MAP.md) and
   `pdf-fields-f2441.csv`: all 72 draft Form 2441 terminal widgets, the two
   printed-page map, the missing benefits-question widget, and continuation
@@ -88,6 +92,8 @@ for the implementation contract.
 - [`ATS-SCENARIO-03.md`](ATS-SCENARIO-03.md): page-level retirement, capital
   gain, farm, farm-rent, and optional self-employment method facts with
   independently derived intermediate amounts and filing gates.
+- [`ATS-SCENARIO-04.md`](ATS-SCENARIO-04.md): the 18-page dependent-care,
+  EIC, AOTC, CTC, Form 8862 and Schedule 3-A fixture contract.
 - [`ATS-SCENARIO-02.md`](ATS-SCENARIO-02.md): statutory employee Schedule C,
   two W-2s, pre-July vehicle mileage, Schedule A/Form 8283, cooperative
   patron, dependent-credit, and EIC election facts and source conflicts.
@@ -99,7 +105,7 @@ for the implementation contract.
   1040/Form 8888 indicator, and the draft-versus-ATS revision difference.
 
 - [`corpus/manifest.json`](corpus/manifest.json): URL, SHA-256, byte length,
-  and retrieval date for **61 TY2026 IRS draft forms**, **26 verified 2026
+  and retrieval date for **62 TY2026 IRS draft forms**, **26 verified 2026
   draft instruction PDFs**, **six draft form URLs that
   still serve an older year**, **13 IRS ATS PDFs**, **two MeF
   inventory spreadsheets**, final IRS authorities (Rev. Procs.
@@ -109,7 +115,7 @@ for the implementation contract.
   B/C/D, final 2026 Forms 1099-B/1099-DA/1099-R with instructions, the
   2025 Form 1040 and Form 8949 instructions as marked comparators, final
   January 2026 Form W-2G and its instructions, December 2025 continuous-use
-  Form 8283 and instructions, 2026 Publication 15-A,
+  Forms 8283 and 8862 with instructions, 2026 Publication 15-A,
   Publication 505 (2026), and the final 2025 HHS poverty guidelines. All PDFs
   are source artifacts, not filing-ready forms. Run `python3
   docs/ty2026/corpus/download.py` to refresh the snapshot; review all hash

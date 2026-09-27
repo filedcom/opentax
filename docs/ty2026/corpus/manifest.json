@@ -1276,6 +1276,34 @@
       "sha256": "2dba8a99cd4d9498dd2d1d7d28050033ace5e338c05b6ce79dd17ab383bac735",
       "year_check": "2026-present",
       "retrieved_utc": "2026-09-27T12:39:39.047199+00:00"
+    },
+    {
+      "path": "authorities/f8862--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/f8862--2025.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 153254,
+      "sha256": "fd783d1f46f1f286cd1d7a2cca8812fc2ec05760478359873e22ba9d05d5f3b5",
+      "retrieved_utc": "2026-09-27T12:48:03.154821+00:00"
+    },
+    {
+      "path": "authorities/i8862--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/i8862.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 155575,
+      "sha256": "2ef7f8c9bc5361398306d6707da67f70c25450261af2439286b24553fa275cde",
+      "retrieved_utc": "2026-09-27T12:48:04.055979+00:00"
+    },
+    {
+      "path": "draft/f8863.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f8863--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 225062,
+      "sha256": "b037225d76b74a73740398c3ea757d2cde892d4fc1cfe65da35659de8bbddd90",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-09-27T12:52:36.891669+00:00"
     }
   ]
 }

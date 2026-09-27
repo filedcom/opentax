@@ -41,6 +41,13 @@ refund-dependent checking remainder, savings allocation, 20-widget PDF map,
 and current MeF rules. Its packet embeds a December form while the public
 draft/instructions are November revisions; the form's attachment indicator
 is blank in the packet and must be reconciled for a completed return.
+The [ATS scenario 4 contract](ATS-SCENARIO-04.md) extracts the 18-page
+HOH/dependent-credit case and marks its blank Form 8862 selections,
+incomplete AOTC institution EIN, 1098-T exception, moving expense, and
+Form 2441 student box as explicit source gates. The
+[credit recertification/EIC/education contract](FORM8862-8863-EIC-GRAPH.md)
+pins continuous-use Form 8862 and its instructions, inventories its PDF and
+Schedule EIC widgets, and specifies the credit worksheet and graph order.
 The [Schedule F contract](SCHEDULEF-GRAPH.md) isolates the 2026 line 21b
 vehicle-interest change from the shared TY2025 21b other-interest input and
 maps the farm calculation, PDF, MeF, and ATS scenario 3 gates.
@@ -344,7 +351,7 @@ source routes before their Part I fields can print.
    in ignored `.state/research/docs/` because this repository is public.
 3. Use `node-coverage.csv` (191 registered TY2025 nodes),
    `pdf-coverage.csv` (56 descriptors: 51 current drafts, five older-year
-   URLs), `mef-coverage.csv` (84 serializers), `year-literals.csv` (233 non-test
+   URLs), `mef-coverage.csv` (84 serializers), `year-literals.csv` (237 non-test
    occurrences), and the current MeF accepted-form XLSX. Give each existing
    component one disposition: **2026 updated**, **2026 verified unchanged**,
    **replaced**, or **unsupported with explicit diagnostic**. Add Schedule 3-A

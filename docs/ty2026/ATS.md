@@ -47,6 +47,10 @@ The [scenario 3 fixture plan](ATS-SCENARIO-03.md) now maps all 18 packet
 pages, including the $11,908 Form 4835 farm rent and the elected Schedule SE
 farm optional method. Its missing source evidence and blank computed lines
 remain explicit fixture gates.
+The [scenario 4 fixture plan](ATS-SCENARIO-04.md) maps all 18 pages of its
+HOH/W-2/dependent-care/EIC/AOTC/CTC packet. It identifies the incomplete Form
+8862 selections, missing AOTC institution EIN and 1098-T evidence, unsupported
+moving expense, Form 2441 box B question, and credit-order/3-A gates.
 The [scenario 5 fixture plan](ATS-SCENARIO-05.md) maps the five-page W-2 and
 refund-split packet, including the Form 8888/1040 checkbox conflict and the
 November-versus-December Form 8888 revision difference.

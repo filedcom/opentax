@@ -1,0 +1,39 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_01[0],/Tx,Page 1. Name(s) shown on return. ,2,36 683.968 467.25 697.969,yes
+topmostSubform[0].Page1[0].f1_02[0],/Tx,Your social security number. ,2,469 683.968 576 697.969,yes
+topmostSubform[0].Page1[0].f1_03[0],/Tx,"Before you begin: See the instructions for Form 1040, line 27a, to make sure that (a) you can take the E I C, and (b) you have a qualifying child. See also Pub. 596. Be sure the child’s name on line 1 and social security number (S S N) on line 2 agree with the child’s social security card. Otherwise, at the time we process your return, we may reduce your E I C. If the name or S S N on the child’s social security card is not correct, call the Social Security Administration at 800-772-1213. If you have a child who meets the conditions to be your qualifying child for purposes of claiming the E I C, but that child doesn't have an S S N as defined in the instructions for Form 1040, line 27a, see the instructions. Caution: You can't claim the E I C for a child who didn't live with you for more than half of the year. If your child doesn't have an S S N as defined in the instructions for Form 1040, line 27a, see the instructions. If you take the E I C even though you are not eligible, you may not be allowed to take the credit for up to 10 years. See the instructions for details. It will take us longer to process your return and issue your refund if you do not fill in all lines that apply for each qualifying child. Qualifying Child Information. 1. Child's name. If you have more than three qualifying children, you have to list only three to get the maximum credit. Child 1. First name. Last name. ",2,209.8 467.968 330.45 479.967,yes
+topmostSubform[0].Page1[0].f1_04[0],/Tx,1. Child 2. First name. Last name. ,2,332.2 467.968 452.85 479.967,yes
+topmostSubform[0].Page1[0].f1_05[0],/Tx,1. Child 3. First name. Last name. ,2,454.6 467.968 576 479.967,yes
+topmostSubform[0].Page1[0].f1_06[0],/Tx,"2. Child's S S N. The child must have an S S N as defined in the instructions for Form 1040, line 27a, unless the child was born and died in 2026 or you are claiming the self-only E I C (see instructions). If your child was born and died in 2026 and did not have an S S N, enter “Died” on this line and attach a copy of the child’s birth certificate, death certificate, or hospital medical records showing a live birth. Child 1. ",2,209.8 347.969 330.45 359.968,yes
+topmostSubform[0].Page1[0].f1_07[0],/Tx,2. Child 2. ,2,332.2 347.969 452.85 359.968,yes
+topmostSubform[0].Page1[0].f1_08[0],/Tx,2. Child 3. ,2,454.6 347.969 576 359.968,yes
+topmostSubform[0].Page1[0].Year1_ReadOrder[0].f1_09[0],/Tx,3. Child's year of birth. Child 1. Year. Digit 1 of 4. ,2,244.8 329.969 259.2 341.968,yes
+topmostSubform[0].Page1[0].Year1_ReadOrder[0].f1_10[0],/Tx,3. Digit 2 of 4. ,2,266.4 329.969 280.8 341.968,yes
+topmostSubform[0].Page1[0].Year1_ReadOrder[0].f1_11[0],/Tx,3. Digit 3 of 4. ,2,288 329.969 302.4 341.968,yes
+topmostSubform[0].Page1[0].Year1_ReadOrder[0].f1_12[0],/Tx,"3. Digit 4 of 4. If born after 2007 and the child is younger than you (or your spouse if filing jointly), skip lines 4a and 4b; go to line 5. ",2,309.6 329.969 324 341.968,yes
+topmostSubform[0].Page1[0].Year2_ReadOrder[0].f1_13[0],/Tx,3. Child 2. Year. Digit 1 of 4. ,2,367.2 329.969 381.6 341.968,yes
+topmostSubform[0].Page1[0].Year2_ReadOrder[0].f1_14[0],/Tx,3. Digit 2 of 4. ,2,388.8 329.969 403.2 341.968,yes
+topmostSubform[0].Page1[0].Year2_ReadOrder[0].f1_15[0],/Tx,3. Digit 3 of 4. ,2,410.4 329.969 424.8 341.968,yes
+topmostSubform[0].Page1[0].Year2_ReadOrder[0].f1_16[0],/Tx,"3. Digit 4 of 4. If born after 2007 and the child is younger than you (or your spouse if filing jointly), skip lines 4a and 4b; go to line 5. ",2,432 329.969 446.4 341.968,yes
+topmostSubform[0].Page1[0].f1_17[0],/Tx,3. Child 3. Year. Digit 1 of 4. ,2,489.6 329.969 504 341.968,yes
+topmostSubform[0].Page1[0].f1_18[0],/Tx,3. Digit 2 of 4. ,2,511.2 329.969 525.6 341.968,yes
+topmostSubform[0].Page1[0].f1_19[0],/Tx,3. Digit 3 of 4. ,2,532.8 329.969 547.2 341.968,yes
+topmostSubform[0].Page1[0].f1_20[0],/Tx,"3. Digit 4 of 4. If born after 2007 and the child is younger than you (or your spouse if filing jointly), skip lines 4a and 4b; go to line 5. ",2,554.4 329.969 568.8 341.968,yes
+topmostSubform[0].Page1[0].Line4a_Child1_ReadOrder[0].Yes_ReadOrder[0].c1_1[0],/Btn,"4a. Was the child under age 24 at the end of 2026, a student, and younger than you (or your spouse if filing jointly)? Child 1. Yes. Go to line 5. ",2,216 266.468 231 281.468,yes
+topmostSubform[0].Page1[0].Line4a_Child1_ReadOrder[0].c1_1[0],/Btn,4a. No. Go to line 4b. ,2,277.2 266.468 292.2 281.468,yes
+topmostSubform[0].Page1[0].Line4a_Child2_ReadOrder[0].Yes_ReadOrder[0].c1_2[0],/Btn,4a. Child 2. Yes. Go to line 5. ,2,338.4 266.468 353.4 281.468,yes
+topmostSubform[0].Page1[0].Line4a_Child2_ReadOrder[0].c1_2[0],/Btn,4a. No. Go to line 4b. ,2,399.6 266.468 414.6 281.468,yes
+topmostSubform[0].Page1[0].Line4a_Child3_Yes_ReadOrder[0].c1_3[0],/Btn,4a. Child 3. Yes. Go to line 5. ,2,460.8 266.468 475.8 281.468,yes
+topmostSubform[0].Page1[0].c1_3[0],/Btn,4a. No. Go to line 4b. ,2,522 266.468 537 281.468,yes
+topmostSubform[0].Page1[0].Line4b_Child1_ReadOrder[0].Yes_ReadOrder[0].c1_4[0],/Btn,4b. Was the child permanently and totally disabled during any part of 2026? Child 1. Yes. Go to line 5. ,2,216 224.467 231 239.467,yes
+topmostSubform[0].Page1[0].Line4b_Child1_ReadOrder[0].c1_4[0],/Btn,4b. No. The child is not a qualifying child. ,2,277.2 224.467 292.2 239.467,yes
+topmostSubform[0].Page1[0].Line4b_Child2_ReadOrder[0].Yes_ReadOrder[0].c1_5[0],/Btn,4b. Child 2. Yes. Go to line 5. ,2,338.4 224.467 353.4 239.467,yes
+topmostSubform[0].Page1[0].Line4b_Child2_ReadOrder[0].c1_5[0],/Btn,4b. No. The child is not a qualifying child. ,2,399.6 224.467 414.6 239.467,yes
+topmostSubform[0].Page1[0].Line4b_Child3_Yes_ReadOrder[0].c1_6[0],/Btn,4b. Child 3. Yes. Go to line 5. ,2,460.8 224.467 475.8 239.467,yes
+topmostSubform[0].Page1[0].c1_6[0],/Btn,4b. No. The child is not a qualifying child. ,2,522 224.467 537 239.467,yes
+topmostSubform[0].Page1[0].f1_21[0],/Tx,"5. Child's relationship to you (for example, child, son, daughter, grandchild, niece, nephew, eligible foster child, etc.). Child 1. ",2,209.8 149.966 330.45 161.967,yes
+topmostSubform[0].Page1[0].f1_22[0],/Tx,5. Child 2. ,2,332.2 149.966 452.85 161.967,yes
+topmostSubform[0].Page1[0].f1_23[0],/Tx,5. Child 3. ,2,454.6 149.966 576 161.967,yes
+topmostSubform[0].Page1[0].Line6_Child1_ReadOrder[0].f1_24[0],/Tx,"6. Number of months child lived with you in the United States during 2026. If the child lived with you for more than half of 2026 but less than 7 months, enter ""7."" If the child was born or died in 2026 and your home was the child’s home for more than half the time they were alive during 2026, enter “12.” Child 1. months. Do not enter more than 12 months. ",2,230.4 65.97 266.4 77.969,yes
+topmostSubform[0].Page1[0].Line6_Child2_ReadOrder[0].f1_25[0],/Tx,6. Child 2. months. Do not enter more than 12 months. ,2,352.8 65.97 388.8 77.969,yes
+topmostSubform[0].Page1[0].f1_26[0],/Tx,6. Child 3. months. Do not enter more than 12 months. ,2,475.2 65.97 511.2 77.969,yes
