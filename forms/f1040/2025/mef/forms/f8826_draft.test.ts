@@ -1,7 +1,7 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { calculateForm8826, f8826 } from "../../../nodes/inputs/f8826/index.ts";
 import { f3800 } from "../../../nodes/inputs/f3800/index.ts";
-import { buildForm8826Document } from "./f8826_draft.ts";
+import { buildForm8826Document, form8826 } from "./f8826_draft.ts";
 
 const source = {
   eligible_expenditures: 20_000,
@@ -47,6 +47,33 @@ Deno.test("Form 8826 draft: source credit, numbered lines, and XML reconcile", (
   assertStringIncludes(
     xml,
     "<PrtshpandSCorpReportAmt>5000</PrtshpandSCorpReportAmt>",
+  );
+});
+
+Deno.test("Form 8826 descriptor emits a self-earned form only with a Form 3800 bundle", () => {
+  assertThrows(
+    () => form8826.build(source, { documentIdsByPendingKey: {} }),
+    Error,
+    "attached Form 3800",
+  );
+  assertStringIncludes(
+    form8826.build(source, {
+      documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
+    }),
+    "<IRS8826>",
+  );
+  assertEquals(
+    form8826.build({
+      eligible_expenditures: 0,
+      subject_to_passive_activity_limit: false,
+      pass_through_credits: [{
+        entity_type: "partnership",
+        entity_ein: "123456789",
+        credit_amount: 1_000,
+        subject_to_passive_activity_limit: false,
+      }],
+    }),
+    "",
   );
 });
 

@@ -58,7 +58,10 @@ source-attribution checks remain open. The unregistered Form 3800 XML draft now
 emits Part V rows for multiple Form 8826 sources, retaining their EINs, capped
 amounts, explicit applied-credit split, and remaining amounts. The draft is not
 yet a registered filing document, and the MeF export guard rejects both
-source-backed and legacy Form 3800 credits.
+source-backed and legacy Form 3800 credits. The self-earned Form 8826 XML is
+registered, while pass-through-only recipients do not attach their own
+Form 8826. Schedule 3 line 6a now requires a linked Form 3800 document before
+export.
 
 Separate 2025 Schedule 3 corrections in the current build pass: `f8859` now
 deposits into line 6h, `f8834` into line 6i, and the combined Form 4136 fuel

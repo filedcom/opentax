@@ -123,6 +123,7 @@ Deno.test("Schedule 3 has distinct 2025 lines 6h, 6k, and 12", () => {
 Deno.test("Schedule 3 source-credit lines require their attached filing forms", () => {
   for (
     const fields of [
+      { line6a_total: 500 },
       { line6h_dc_homebuyer_credit: 300 },
       { line6i_qualified_electric_vehicle_credit: 400 },
       { line6k_tax_credit_bonds: 450 },
@@ -138,6 +139,14 @@ Deno.test("Schedule 3 source-credit lines require their attached filing forms", 
     { documentIdsByPendingKey: { f8912: ["IRS8912_1"] } },
   );
   assertStringIncludes(xml, 'referenceDocumentId="IRS8912_1"');
+  const form3800Xml = schedule3.build(
+    { line6a_total: 500 },
+    { documentIdsByPendingKey: { f3800: ["IRS3800_1"] } },
+  );
+  assertStringIncludes(
+    form3800Xml,
+    'referenceDocumentId="IRS3800_1" referenceDocumentName="IRS3800"',
+  );
 });
 
 Deno.test("2025 Schedule 3 lines 6a, 6b, 6f, 6g, and 6m use distinct XML elements", () => {

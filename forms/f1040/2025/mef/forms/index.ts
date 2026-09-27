@@ -38,6 +38,7 @@ import { form8621ExcessStatement } from "./f8621_excess_statement.ts";
 import { form8814 } from "./f8814.ts";
 import { form8815 } from "./f8815.ts";
 import { form8824 } from "./f8824.ts";
+import { form8826 } from "./f8826_draft.ts";
 import { form8829 } from "./f8829.ts";
 import { form8839 } from "./f8839.ts";
 import { form8835 } from "./f8835.ts";
@@ -166,6 +167,8 @@ export const ALL_MEF_FORMS = [
   form8815,
   // Form 8824
   form8824,
+  // Form 8826 only for self-earned disabled access credit.
+  form8826,
   // Form 8829
   form8829,
   // Form 8835 is one document per qualified facility.
