@@ -80,6 +80,16 @@ export const investmentSchema = z.object({
           "Passive Form 8874 current-year credit needs whole-dollar source precision",
       });
     }
+  } else if (
+    investment.passive_activity_reference ||
+    investment.passive_source_document_reference
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["subject_to_passive_activity_limit"],
+      message:
+        "Nonpassive Form 8874 investment cannot carry passive activity references",
+    });
   }
 });
 
@@ -141,7 +151,8 @@ export function calculateForm8874(raw: F8874Input) {
   const line1 = line1Cents / 100;
   const passiveCents = rows.reduce(
     (sum, row) =>
-      sum + (row.investment.subject_to_passive_activity_limit
+      sum +
+      (row.investment.subject_to_passive_activity_limit
         ? Math.round(row.creditAmount * 100)
         : 0),
     0,
@@ -178,10 +189,9 @@ class F8874Node extends TaxNode<typeof inputSchema> {
           row.investment.subject_to_passive_activity_limit
             ? [output(form8582cr, {
               required_new_markets_self_credits: [{
-                activity_reference:
-                  row.investment.passive_activity_reference!,
-                source_document_reference:
-                  row.investment.passive_source_document_reference!,
+                activity_reference: row.investment.passive_activity_reference!,
+                source_document_reference: row.investment
+                  .passive_source_document_reference!,
                 credit_amount: row.creditAmount,
               }],
             })]

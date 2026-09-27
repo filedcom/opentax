@@ -157,4 +157,13 @@ Deno.test("Form 8874 passive investment requires distinct whole-dollar activity 
     }).success,
     false,
   );
+  assertEquals(
+    f8874.inputSchema.safeParse({
+      investments: [{
+        ...investment,
+        passive_activity_reference: "Not a passive activity",
+      }],
+    }).success,
+    false,
+  );
 });

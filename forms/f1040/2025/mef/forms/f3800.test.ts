@@ -517,6 +517,42 @@ Deno.test("Form 3800 keeps the Form 8874 attachment for a passive-only QEI", () 
     Error,
     "Form 8874 document count differs from source",
   );
+  const mixedTax = { ...businessTax, standardCredit: 360 };
+  const mixedXml = form3800.build({
+    ...input,
+    f8874_credit: {
+      credit_amount: 360,
+      subject_to_passive_activity_limit: false,
+    },
+    tax_context: mixedTax,
+    allowed_credit: 860,
+  }, {
+    ...context,
+    pending: {
+      ...filedPending(mixedTax, 860),
+      f8874: {
+        investments: [
+          ...context.pending.f8874.investments,
+          {
+            ...context.pending.f8874.investments[0],
+            initial_investment_date: "2022-04-15",
+            qualified_equity_investment_amount: 6_000,
+            designation_notice_reference: "2022 QEI notice",
+            subject_to_passive_activity_limit: false,
+            passive_activity_reference: undefined,
+            passive_source_document_reference: undefined,
+          },
+        ],
+      },
+      form8582cr: context.pending.form8582cr,
+    },
+  });
+  assertEquals([...mixedXml.matchAll(/<Form8874CYCreditsGrp/g)].length, 1);
+  assertStringIncludes(
+    mixedXml,
+    "<TotalGeneralBusCreditsAmt>860</TotalGeneralBusCreditsAmt>",
+  );
+  assertStringIncludes(mixedXml, 'referenceDocumentId="IRS8874_1"');
 });
 
 Deno.test("Form 3800 files partnership code AD directly without an IRS8874", () => {
