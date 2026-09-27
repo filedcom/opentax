@@ -202,6 +202,8 @@ class StandardDeductionNode extends TaxNode<typeof inputSchema> {
         form6251_line2a: form6251Line2a,
         filing_status: input.filing_status,
         taking_standard_deduction: takingStandard,
+        form8615_child_agi: input.agi,
+        form8615_child_deduction: deduction,
         ...(input.taxpayer_can_be_claimed_as_dependent === true &&
             input.dependent_earned_income !== undefined &&
             input.form8615_total_income !== undefined

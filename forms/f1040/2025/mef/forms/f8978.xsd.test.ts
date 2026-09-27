@@ -226,6 +226,48 @@ Deno.test("Form 8978 MeF export rejects calculated values that disagree with sou
   );
 });
 
+Deno.test("Form 8978 nonarithmetic lines 5 and 11 keep their separate calculation PDF linked", async () => {
+  const exceptional: Form8978Input = {
+    filings: [{
+      ...input.filings[0],
+      columns: [{
+        ...input.filings[0].columns[0],
+        corrected_taxable_income: 14_500,
+        corrected_taxable_income_explanation:
+          "A prior-year tax attribute changes taxable income by 2500.",
+        corrected_income_tax_liability: 1_650,
+        corrected_income_tax_liability_explanation:
+          "An affected-year tax item outside lines 8 and 10 adds 150.",
+      }],
+    }],
+  };
+  const bundle = await buildMefBundle({
+    f1040: {
+      filing_status: "single",
+      line16_income_tax: 650,
+      form8978_tax: 650,
+    },
+    f8978: {
+      ...exceptional,
+      calculated_filings: exceptional.filings.map(calculateFiling),
+      line14: 650,
+    },
+  }, { filer, attachments: [] });
+  assertStringIncludes(
+    bundle.xml,
+    "<TaxableIncomeCorrectAmt>14500</TaxableIncomeCorrectAmt>",
+  );
+  assertStringIncludes(
+    bundle.xml,
+    "<TotalCorrIncmTaxLiabAfterCrAmt>1650</TotalCorrIncmTaxLiabAfterCrAmt>",
+  );
+  assertStringIncludes(
+    bundle.xml,
+    'referenceDocumentName="BinaryAttachment IRS8978ScheduleA"',
+  );
+  assertEquals(bundle.attachments[0].fileName, "Form8978TaxCalculation1.pdf");
+});
+
 Deno.test({
   name: "XSD: Form 8978 and Schedule A link to Form 1040 line 16",
   ignore: !xsdAvailable,

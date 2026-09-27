@@ -27,23 +27,25 @@ const parent = {
   parent_tax_method: "ordinary" as const,
   child_unearned_income: 5_000,
   other_children_line5: [],
+  other_children_qualified_dividends_line5: [],
+  other_children_net_capital_gain_line5: [],
+  other_children_schedule_d_tax_worksheet_used: [],
+  other_children_form2555_used: [],
+  parent_qualified_dividends: 0,
+  parent_net_capital_gain: 0,
 };
 
-Deno.test("E2E: Form 8615 replaces the dependent child's line 16 tax", () => {
+Deno.test("E2E: Form 8615 stops rather than estimating low-income tax", () => {
   const result = execute(plan, registry, {
     general: child,
     f1099int: [{ payer_name: "Bank", box1: 5_000 }],
     f8615: parent,
   }, { taxYear: 2025, formType: "f1040" });
-  assertEquals(result.diagnostics, []);
-  assertEquals(result.pending.f1040?.line12a_standard_deduction, 1_350);
-  assertEquals(result.pending.f1040?.line15_taxable_income, 3_650);
-  assertEquals(result.pending.form8615?.line18_child_tax, 411);
-  assertEquals(result.pending.f1040?.line16_income_tax, 411);
-  assertEquals(result.pending.f1040?.line24_total_tax, 411);
   assertEquals(
-    result.pending.schedule2?.line17z_other_additional_taxes,
-    undefined,
+    result.diagnostics.some((diagnostic) =>
+      String(diagnostic.message).includes("exact 2025 IRS Tax Table")
+    ),
+    true,
   );
 });
 
@@ -74,6 +76,27 @@ Deno.test("E2E: Form 8615 rejects line 1 that disagrees with the child's income 
   assertEquals(
     result.diagnostics.some((diagnostic) =>
       String(diagnostic.message).includes("does not match the return sources")
+    ),
+    true,
+  );
+});
+
+Deno.test("E2E: qualified dividends also stop without the low-income Tax Table", () => {
+  const result = execute(plan, registry, {
+    general: child,
+    f1099int: [{ payer_name: "Bank", box1: 4_000 }],
+    f1099div: [{
+      payerName: "Broker",
+      isNominee: false,
+      box11: false,
+      box1a: 1_000,
+      box1b: 1_000,
+    }],
+    f8615: parent,
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(
+    result.diagnostics.some((diagnostic) =>
+      String(diagnostic.message).includes("exact 2025 IRS Tax Table")
     ),
     true,
   );

@@ -184,7 +184,34 @@ function usAddress(address: {
   ]);
 }
 
-function buildSectionBItem(item: SectionBItem, index: number): string {
+const BINARY_REFERENCE_NAME =
+  "BinaryAttachment DeductionsTakenUnderSection170Stmt DoneesSignatureUnavailableStmt";
+
+function requiredSignatureAttachment(
+  fileName: string | undefined,
+  description: string,
+  context: MefBuildContext,
+): string | undefined {
+  if (!fileName) {
+    throw new Error(`Form 8283 needs ${description} PDF`);
+  }
+  if (context.attachmentDescriptionsByFileName?.[fileName] !== description) {
+    throw new Error(
+      `Form 8283 needs a matching PDF described exactly as ${description}`,
+    );
+  }
+  const id = context.documentIdsByAttachmentFileName?.[fileName];
+  if (context.documentIdsByPendingKey && !id) {
+    throw new Error(`Form 8283 ${description} PDF has no linked MeF document`);
+  }
+  return id;
+}
+
+function buildSectionBItem(
+  item: SectionBItem,
+  index: number,
+  context: MefBuildContext,
+): string {
   if (
     !item.property_description || !item.property_type ||
     !item.date_acquired || !/^\d{4}-\d{2}-\d{2}$/.test(item.date_acquired) ||
@@ -247,39 +274,61 @@ function buildSectionBItem(item: SectionBItem, index: number): string {
   }
   const appraisal = item.qualified_appraisal;
   const donee = item.donee_acknowledgment;
-  return elements("IRS8283", [
-    element(SECTION_B_PROPERTY_TAG[item.property_type], "X"),
-    elements("PropertyInformation", [
-      element("PropertyId", propertyId(0)),
-      element("DonatedPropertyDesc", item.property_description),
-      element("DonatedPropertyPhysicalCondTxt", item.physical_condition),
-      element("AppraisedFairMarketValueAmt", item.fmv),
-      element("DonorAcquiredDt", item.date_acquired.slice(0, 7)),
-      element("DonorAcquisitionDesc", item.donor_acquisition_description),
-      element("DonorCostOrAdjustedBasisAmt", item.cost_or_adjusted_basis),
-      element("DeductionClaimedAmt", item.deduction_claimed),
-    ]),
-    elements("AppraiserName", [
-      element("PersonFirstNm", appraisal.appraiser_first_name),
-      element("PersonLastNm", appraisal.appraiser_last_name),
-    ]),
-    element("AppraiserSignedDt", appraisal.signed_date),
-    usAddress(appraisal.us_address, "AppraiserUSAddress"),
-    element(
-      appraisal.appraiser_ein ? "AppraiserEIN" : "AppraiserSSN",
-      appraisal.appraiser_ein ?? appraisal.appraiser_ssn,
-    ),
-    element("ReceivedDt", donee.received_date),
-    element(
-      "UsePropertyForUnrelatedUseInd",
-      donee.unrelated_use ? "true" : "false",
-    ),
-    elements("DoneeName", [
-      element("BusinessNameLine1Txt", donee.organization_name),
-    ]),
-    element("DoneeEIN", donee.ein),
-    usAddress(donee.us_address, "DoneeUSAddress"),
-  ]);
+  const appraiserId = requiredSignatureAttachment(
+    appraisal.signature_attachment_file_name,
+    "Form 8283 appraiser signature document",
+    context,
+  );
+  const doneeId = requiredSignatureAttachment(
+    donee.signature_attachment_file_name,
+    "Form 8283 Donee signature document",
+    context,
+  );
+  const signatureIds = [appraiserId, doneeId].filter(
+    (id): id is string => id !== undefined,
+  );
+  return elements(
+    "IRS8283",
+    [
+      element(SECTION_B_PROPERTY_TAG[item.property_type], "X"),
+      elements("PropertyInformation", [
+        element("PropertyId", propertyId(0)),
+        element("DonatedPropertyDesc", item.property_description),
+        element("DonatedPropertyPhysicalCondTxt", item.physical_condition),
+        element("AppraisedFairMarketValueAmt", item.fmv),
+        element("DonorAcquiredDt", item.date_acquired.slice(0, 7)),
+        element("DonorAcquisitionDesc", item.donor_acquisition_description),
+        element("DonorCostOrAdjustedBasisAmt", item.cost_or_adjusted_basis),
+        element("DeductionClaimedAmt", item.deduction_claimed),
+      ]),
+      elements("AppraiserName", [
+        element("PersonFirstNm", appraisal.appraiser_first_name),
+        element("PersonLastNm", appraisal.appraiser_last_name),
+      ]),
+      element("AppraiserSignedDt", appraisal.signed_date),
+      usAddress(appraisal.us_address, "AppraiserUSAddress"),
+      element(
+        appraisal.appraiser_ein ? "AppraiserEIN" : "AppraiserSSN",
+        appraisal.appraiser_ein ?? appraisal.appraiser_ssn,
+      ),
+      element("ReceivedDt", donee.received_date),
+      element(
+        "UsePropertyForUnrelatedUseInd",
+        donee.unrelated_use ? "true" : "false",
+      ),
+      elements("DoneeName", [
+        element("BusinessNameLine1Txt", donee.organization_name),
+      ]),
+      element("DoneeEIN", donee.ein),
+      usAddress(donee.us_address, "DoneeUSAddress"),
+    ],
+    signatureIds.length > 0
+      ? {
+        referenceDocumentId: signatureIds.join(" "),
+        referenceDocumentName: BINARY_REFERENCE_NAME,
+      }
+      : undefined,
+  );
 }
 
 export const form8283: MefFormDescriptor<
@@ -354,13 +403,12 @@ export const form8283: MefFormDescriptor<
           attachmentIds.length > 0
             ? {
               referenceDocumentId: attachmentIds.join(" "),
-              referenceDocumentName:
-                "BinaryAttachment DeductionsTakenUnderSection170Stmt DoneesSignatureUnavailableStmt",
+              referenceDocumentName: BINARY_REFERENCE_NAME,
             }
             : undefined,
         )]
         : []),
-      ...sectionB.map(buildSectionBItem),
+      ...sectionB.map((item, index) => buildSectionBItem(item, index, context)),
     ];
   },
 };

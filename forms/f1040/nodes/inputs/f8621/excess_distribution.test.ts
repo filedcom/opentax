@@ -91,6 +91,76 @@ Deno.test("Form 8621 apportions annual excess among actual distribution dates", 
   assertEquals(results[1].allocations[1].holding_days, 365);
 });
 
+Deno.test("Form 8621 determines same-currency excess before converting each distribution at its spot rate", () => {
+  const results = calculateExcessEvents({
+    kind: ExcessEventKind.Distribution,
+    holding_period_start: "2024-01-01",
+    first_pfic_tax_year: 2024,
+    shares_in_block: 100,
+    currency_code: "EUR",
+    prior_year_distributions: [{ tax_year: 2024, amount_foreign: 4_000 }],
+    current_year_distributions: [
+      {
+        date: "2025-06-30",
+        amount_foreign: 2_000,
+        spot_usd_per_unit: 1.1,
+        spot_rate_source: "Test spot quote, 2025-06-30",
+        year_charges: [{ tax_year: 2024, interest_charge: 10 }],
+      },
+      {
+        date: "2025-12-31",
+        amount_foreign: 8_000,
+        spot_usd_per_unit: 1.25,
+        spot_rate_source: "Test spot quote, 2025-12-31",
+        year_charges: [{ tax_year: 2024, interest_charge: 40 }],
+      },
+    ],
+    taxable_nonexcess_dividend_usd: 6_100,
+  });
+  assertEquals(results.map((result) => result.currency_code), ["EUR", "EUR"]);
+  assertEquals(results.map((result) => result.line15a_current_distributions), [
+    10_000,
+    10_000,
+  ]);
+  assertEquals(results.map((result) => result.line15d_threshold), [
+    5_000,
+    5_000,
+  ]);
+  assertEquals(results.map((result) => result.amount_form_currency), [
+    1_000,
+    4_000,
+  ]);
+  assertEquals(results.map((result) => result.amount_usd), [1_100, 5_000]);
+  assertEquals(results.map((result) => result.nonexcess_distribution), [
+    6_100,
+    6_100,
+  ]);
+});
+
+Deno.test("Form 8621 rejects a foreign taxable dividend above the translated nonexcess amount", () => {
+  assertThrows(
+    () =>
+      calculateExcessEvents({
+        kind: ExcessEventKind.Distribution,
+        holding_period_start: "2024-01-01",
+        first_pfic_tax_year: 2024,
+        shares_in_block: 100,
+        currency_code: "EUR",
+        prior_year_distributions: [{ tax_year: 2024, amount_foreign: 4_000 }],
+        current_year_distributions: [{
+          date: "2025-12-31",
+          amount_foreign: 10_000,
+          spot_usd_per_unit: 1.2,
+          spot_rate_source: "Test spot quote, 2025-12-31",
+          year_charges: [{ tax_year: 2024, interest_charge: 50 }],
+        }],
+        taxable_nonexcess_dividend_usd: 6_001,
+      }),
+    Error,
+    "exceeds nonexcess",
+  );
+});
+
 Deno.test("Form 8621 has no excess distribution in the first holding year", () => {
   const [result] = calculateExcessEvents({
     ...distribution,
@@ -180,5 +250,43 @@ Deno.test("Form 8621 disposition needs section 1248 attribution for foreign tax 
       }),
     Error,
     "section 1248 dividend attribution",
+  );
+});
+
+Deno.test("Form 8621 translates foreign net proceeds before subtracting USD adjusted basis", () => {
+  const [result] = calculateExcessEvents({
+    kind: ExcessEventKind.Disposition,
+    currency_code: "EUR",
+    net_proceeds_foreign: 10_000,
+    spot_usd_per_unit: 1.2,
+    spot_rate_source: "Test spot quote, 2025-12-31",
+    adjusted_basis_usd: 2_000,
+    holding_period_start: "2024-01-01",
+    event_date: "2025-12-31",
+    first_pfic_tax_year: 2024,
+    year_charges: [{ tax_year: 2024, interest_charge: 150 }],
+  });
+  assertEquals(result.amount_usd, 10_000);
+  assertEquals(result.currency_code, "USD");
+  assertEquals(result.line16c_prior_year_tax_before_credit, 1_853);
+});
+
+Deno.test("Form 8621 does not route a translated foreign disposition loss as section 1291 gain", () => {
+  assertThrows(
+    () =>
+      calculateExcessEvents({
+        kind: ExcessEventKind.Disposition,
+        currency_code: "EUR",
+        net_proceeds_foreign: 1_000,
+        spot_usd_per_unit: 1.2,
+        spot_rate_source: "Test spot quote, 2025-12-31",
+        adjusted_basis_usd: 2_000,
+        holding_period_start: "2024-01-01",
+        event_date: "2025-12-31",
+        first_pfic_tax_year: 2024,
+        year_charges: [],
+      }),
+    Error,
+    "positive USD gain",
   );
 });

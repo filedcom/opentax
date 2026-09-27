@@ -16,8 +16,8 @@ import { calculateForm8615 } from "../../forms/form8615/calculation.ts";
 import { inputSchema as form8615SourceSchema } from "../../../inputs/f8615/schema.ts";
 import { f8812 } from "../../../inputs/f8812/index.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
-import type { Bracket } from "../../../config/2025.ts";
 import { bracketsForStatus, taxFromBrackets } from "../tax_brackets.ts";
+import { preferentialTax } from "./preferential_tax.ts";
 
 // ─── Accumulable helper ───────────────────────────────────────────────────────
 
@@ -61,6 +61,8 @@ export const inputSchema = z.object({
   taking_standard_deduction: z.boolean().optional(),
   form8615_source: form8615SourceSchema.optional(),
   form8615_computed_unearned_income: z.number().nonnegative().optional(),
+  form8615_child_agi: z.number().optional(),
+  form8615_child_deduction: z.number().nonnegative().optional(),
 
   // ── QDCGT Worksheet inputs (optional) ────────────────────────────────────
   // Form 1040 Line 3a — Qualified dividends (from f1099div, k1_partnership, k1_s_corp, etc.).
@@ -100,148 +102,6 @@ export const inputSchema = z.object({
 type IncomeTaxCalcInput = z.infer<typeof inputSchema>;
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
-
-// 2025 Schedule D Tax Worksheet, lines 1–47, for positive Schedule D lines
-// 18/19 or a Form 4952 line 4g election. Worksheet lines 3–9 remove the
-// elected capital-gain and qualified-dividend portions from preferential tax.
-function scheduleDTax(
-  taxableIncome: number,
-  qualDividends: number,
-  netCapGain: number,
-  status: FilingStatus,
-  brackets: ReadonlyArray<Bracket>,
-  zeroCeiling: Record<FilingStatus, number>,
-  twentyFloor: Record<FilingStatus, number>,
-  unrecaptured1250: number,
-  rate28Gain: number,
-  form4952Election: number,
-  electedCapitalGain: number,
-): number {
-  const line1 = taxableIncome;
-  const line3 = form4952Election;
-  const line4 = electedCapitalGain;
-  const line5 = Math.max(0, line3 - line4);
-  const line6 = Math.max(0, qualDividends - line5);
-  const line8 = Math.min(line3, line4);
-  const line9 = Math.max(0, netCapGain - line8);
-  const line10 = line6 + line9;
-  const line11 = rate28Gain + unrecaptured1250;
-  const line12 = Math.min(line9, line11);
-  const line13 = line10 - line12;
-  const line14 = Math.max(0, line1 - line13);
-  const line16 = Math.min(line1, zeroCeiling[status]);
-  const line17 = Math.min(line14, line16);
-  const line18 = Math.max(0, line1 - line10);
-  const limit19 = status === FilingStatus.MFJ || status === FilingStatus.QSS
-    ? 394_600
-    : 197_300;
-  const line19 = Math.min(line1, limit19);
-  const line20 = Math.min(line14, line19);
-  const line21 = Math.max(line18, line20);
-  const line22 = line16 - line17;
-  if (line1 === line16) {
-    return Math.min(
-      taxFromBrackets(line21, brackets),
-      taxFromBrackets(line1, brackets),
-    );
-  }
-  const line23 = Math.min(line1, line13);
-  const line24 = line22;
-  const line25 = Math.max(0, line23 - line24);
-  const line27 = Math.min(line1, twentyFloor[status]);
-  const line28 = line21 + line22;
-  const line29 = Math.max(0, line27 - line28);
-  const line30 = Math.min(line25, line29);
-  const line31 = line30 * 0.15;
-  const line32 = line24 + line30;
-  if (line1 === line32) {
-    return Math.min(
-      line31 + taxFromBrackets(line21, brackets),
-      taxFromBrackets(line1, brackets),
-    );
-  }
-  const line33 = line23 - line32;
-  const line34 = line33 * 0.20;
-  const line35 = Math.min(line9, unrecaptured1250);
-  const line36 = line10 + line21;
-  const line38 = Math.max(0, line36 - line1);
-  const line39 = Math.max(0, line35 - line38);
-  const line40 = line39 * 0.25;
-  const line41 = line21 + line22 + line30 + line33 + line39;
-  const line42 = line1 - line41;
-  const line43 = rate28Gain > 0 ? line42 * 0.28 : 0;
-  const line44 = taxFromBrackets(line21, brackets);
-  const line45 = line31 + line34 + line40 + line43 + line44;
-  return Math.min(line45, taxFromBrackets(line1, brackets));
-}
-
-// Qualified Dividends and Capital Gain Tax Worksheet path (no Schedule D
-// 25%/28% special gain). The result is capped at regular bracket tax.
-function qdcgtTax(
-  taxableIncome: number,
-  qualDividends: number,
-  netCapGain: number,
-  status: FilingStatus,
-  brackets: ReadonlyArray<Bracket>,
-  zeroCeiling: Record<FilingStatus, number>,
-  twentyFloor: Record<FilingStatus, number>,
-  unrecaptured1250: number,
-  rate28Gain: number,
-  form4952Election: number,
-  electedCapitalGain: number,
-): number {
-  if (
-    form4952Election > 0 ||
-    (netCapGain > 0 && (unrecaptured1250 > 0 || rate28Gain > 0))
-  ) {
-    return scheduleDTax(
-      taxableIncome,
-      qualDividends,
-      netCapGain,
-      status,
-      brackets,
-      zeroCeiling,
-      twentyFloor,
-      unrecaptured1250,
-      rate28Gain,
-      form4952Election,
-      electedCapitalGain,
-    );
-  }
-  const prefIncome = Math.min(qualDividends + netCapGain, taxableIncome);
-  if (prefIncome <= 0) return taxFromBrackets(taxableIncome, brackets);
-
-  const ordinary = taxableIncome - prefIncome;
-  const zeroCeilingVal = zeroCeiling[status];
-  const twentyFloorVal = twentyFloor[status];
-
-  // Amount of preferentially taxed income in the 0% bracket
-  const inZero = Math.max(
-    0,
-    Math.min(taxableIncome, zeroCeilingVal) - ordinary,
-  );
-
-  // Remaining preferential income above the zero-rate ceiling
-  const remaining = prefIncome - inZero;
-
-  // Room available in the 15% bracket above the zero ceiling
-  const availFifteen = Math.max(
-    0,
-    twentyFloorVal - Math.max(ordinary, zeroCeilingVal),
-  );
-
-  const inFifteen = Math.min(remaining, availFifteen);
-  const inTwenty = remaining - inFifteen;
-
-  const prefTax = inFifteen * 0.15 + inTwenty * 0.20;
-  const ordinaryTax = taxFromBrackets(ordinary, brackets);
-
-  // Worksheet result is always ≤ regular bracket tax
-  return Math.min(
-    prefTax + ordinaryTax,
-    taxFromBrackets(taxableIncome, brackets),
-  );
-}
 
 // ─── Node class ───────────────────────────────────────────────────────────────
 
@@ -294,36 +154,36 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
     if (floor > 0) {
       const stackedIncome = input.taxable_income + floor;
       const stackedTax = hasPrefIncome
-        ? qdcgtTax(
-          stackedIncome,
-          qualDiv,
-          netCg,
-          input.filing_status,
+        ? preferentialTax({
+          taxableIncome: stackedIncome,
+          qualifiedDividends: qualDiv,
+          netCapitalGain: netCg,
+          filingStatus: input.filing_status,
           brackets,
-          cfg.qdcgtZeroCeiling,
-          cfg.qdcgtTwentyFloor,
-          unrecaptured1250,
-          rate28,
+          zeroCeiling: cfg.qdcgtZeroCeiling,
+          twentyFloor: cfg.qdcgtTwentyFloor,
+          unrecaptured1250Gain: unrecaptured1250,
+          rate28Gain: rate28,
           form4952Election,
           electedCapitalGain,
-        )
+        })
         : taxFromBrackets(stackedIncome, brackets);
       const floorTax = taxFromBrackets(floor, brackets);
       tax = Math.max(0, stackedTax - floorTax);
     } else if (hasPrefIncome) {
-      tax = qdcgtTax(
-        input.taxable_income,
-        qualDiv,
-        netCg,
-        input.filing_status,
+      tax = preferentialTax({
+        taxableIncome: input.taxable_income,
+        qualifiedDividends: qualDiv,
+        netCapitalGain: netCg,
+        filingStatus: input.filing_status,
         brackets,
-        cfg.qdcgtZeroCeiling,
-        cfg.qdcgtTwentyFloor,
-        unrecaptured1250,
-        rate28,
+        zeroCeiling: cfg.qdcgtZeroCeiling,
+        twentyFloor: cfg.qdcgtTwentyFloor,
+        unrecaptured1250Gain: unrecaptured1250,
+        rate28Gain: rate28,
         form4952Election,
         electedCapitalGain,
-      );
+      });
     } else {
       tax = taxFromBrackets(input.taxable_income, brackets);
     }
@@ -350,6 +210,12 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
         childRegularTax: tax,
         takingStandardDeduction: input.taking_standard_deduction,
         childHasPreferentialIncome: hasPrefIncome,
+        childQualifiedDividends: qualDiv,
+        childNetCapitalGain: netCg,
+        childNeedsScheduleDWorksheet: unrecaptured1250 > 0 || rate28 > 0 ||
+          form4952Election > 0,
+        childAdjustedGrossIncome: input.form8615_child_agi,
+        childDeduction: input.form8615_child_deduction,
         childForeignEarnedIncomeExclusion: floor,
         brackets: cfg,
       });

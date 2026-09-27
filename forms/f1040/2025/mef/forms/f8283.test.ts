@@ -227,6 +227,7 @@ Deno.test("Form 8283 Section B emits separate signed appraisal and donee documen
       signed_date: "2025-08-20",
       appraiser_ein: "123456789",
       signed_by_appraiser: true as const,
+      signature_attachment_file_name: "Form8283AppraiserSignature.pdf",
       us_address: {
         line1: "1 Art Way",
         city: "Austin",
@@ -240,6 +241,7 @@ Deno.test("Form 8283 Section B emits separate signed appraisal and donee documen
       received_date: "2025-08-21",
       signed_by_donee: true as const,
       unrelated_use: false,
+      signature_attachment_file_name: "Form8283DoneeSignature.pdf",
       us_address: {
         line1: "2 Museum Way",
         city: "Austin",
@@ -250,6 +252,17 @@ Deno.test("Form 8283 Section B emits separate signed appraisal and donee documen
   };
   const docs = form8283.build({
     section_b_items: [gift, { ...gift, property_description: "Antique chair" }],
+  }, {
+    attachmentDescriptionsByFileName: {
+      "Form8283AppraiserSignature.pdf":
+        "Form 8283 appraiser signature document",
+      "Form8283DoneeSignature.pdf": "Form 8283 Donee signature document",
+    },
+    documentIdsByAttachmentFileName: {
+      "Form8283AppraiserSignature.pdf": "BinaryAttachmentAppraiser",
+      "Form8283DoneeSignature.pdf": "BinaryAttachmentDonee",
+    },
+    documentIdsByPendingKey: {},
   });
   assertEquals(docs.length, 2);
   assertStringIncludes(docs[0], "<CollectiblesInd>X</CollectiblesInd>");
@@ -263,7 +276,15 @@ Deno.test("Form 8283 Section B emits separate signed appraisal and donee documen
     "<AppraiserSignedDt>2025-08-20</AppraiserSignedDt>",
   );
   assertStringIncludes(docs[0], "<DoneeEIN>987654321</DoneeEIN>");
+  assertStringIncludes(
+    docs[0],
+    'referenceDocumentId="BinaryAttachmentAppraiser BinaryAttachmentDonee"',
+  );
   assertStringIncludes(docs[1], "Antique chair");
+  assertStringIncludes(
+    docs[1],
+    'referenceDocumentId="BinaryAttachmentAppraiser BinaryAttachmentDonee"',
+  );
   assertThrows(
     () =>
       form8283.build({
@@ -280,7 +301,7 @@ Deno.test("Form 8283 Section B emits separate signed appraisal and donee documen
 });
 
 Deno.test("Form 8283 Section B return validates against TY2025 IRS XSD", async () => {
-  const xml = buildMefXml({
+  const bundle = await buildMefBundle({
     f8283: {
       section_b_items: [{
         property_description: "Antique desk",
@@ -298,6 +319,7 @@ Deno.test("Form 8283 Section B return validates against TY2025 IRS XSD", async (
           signed_date: "2025-08-20",
           appraiser_ein: "123456789",
           signed_by_appraiser: true,
+          signature_attachment_file_name: "Form8283AppraiserSignature.pdf",
           us_address: {
             line1: "1 Art Way",
             city: "Austin",
@@ -311,6 +333,7 @@ Deno.test("Form 8283 Section B return validates against TY2025 IRS XSD", async (
           received_date: "2025-08-21",
           signed_by_donee: true,
           unrelated_use: false,
+          signature_attachment_file_name: "Form8283DoneeSignature.pdf",
           us_address: {
             line1: "2 Museum Way",
             city: "Austin",
@@ -320,7 +343,39 @@ Deno.test("Form 8283 Section B return validates against TY2025 IRS XSD", async (
         },
       }],
     },
-  }, testFiler());
+  }, {
+    filer: testFiler(),
+    attachments: [
+      {
+        fileName: "Form8283AppraiserSignature.pdf",
+        description: "Form 8283 appraiser signature document",
+        bytes: await acknowledgmentPdf(),
+      },
+      {
+        fileName: "Form8283DoneeSignature.pdf",
+        description: "Form 8283 Donee signature document",
+        bytes: await acknowledgmentPdf(),
+      },
+    ],
+  });
+  const xml = bundle.xml;
+  assertEquals(bundle.attachments.length, 2);
+  assertStringIncludes(
+    xml,
+    'referenceDocumentId="BinaryAttachment2 BinaryAttachment3"',
+  );
+  assertStringIncludes(
+    xml,
+    'referenceDocumentName="BinaryAttachment DeductionsTakenUnderSection170Stmt DoneesSignatureUnavailableStmt"',
+  );
+  assertStringIncludes(
+    xml,
+    "<Desc>Form 8283 appraiser signature document</Desc>",
+  );
+  assertStringIncludes(
+    xml,
+    "<Desc>Form 8283 Donee signature document</Desc>",
+  );
   const xsdPath = new URL(
     "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
@@ -342,6 +397,96 @@ Deno.test("Form 8283 Section B return validates against TY2025 IRS XSD", async (
   } finally {
     await Deno.remove(path);
   }
+});
+
+Deno.test("Form 8283 Section B requires both correctly described signature PDFs", async () => {
+  const gift = {
+    property_description: "Antique desk",
+    property_type: SectionBPropertyType.Collectibles,
+    physical_condition: "Good condition",
+    date_acquired: "2018-05-15",
+    donor_acquisition_description: "Purchase",
+    date_contributed: "2025-08-21",
+    fmv: 8_000,
+    deduction_claimed: 8_000,
+    cost_or_adjusted_basis: 2_500,
+    qualified_appraisal: {
+      appraiser_first_name: "Jane",
+      appraiser_last_name: "Smith",
+      signed_date: "2025-08-20",
+      appraiser_ein: "123456789",
+      signed_by_appraiser: true as const,
+      signature_attachment_file_name: "Form8283AppraiserSignature.pdf",
+      us_address: {
+        line1: "1 Art Way",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+      },
+    },
+    donee_acknowledgment: {
+      organization_name: "City Museum",
+      ein: "987654321",
+      received_date: "2025-08-21",
+      signed_by_donee: true as const,
+      unrelated_use: false,
+      signature_attachment_file_name: "Form8283DoneeSignature.pdf",
+      us_address: {
+        line1: "2 Museum Way",
+        city: "Austin",
+        state: "TX",
+        zip: "78702",
+      },
+    },
+  };
+  assertThrows(
+    () =>
+      form8283.build({
+        section_b_items: [{
+          ...gift,
+          qualified_appraisal: {
+            ...gift.qualified_appraisal,
+            signature_attachment_file_name: undefined,
+          },
+        }],
+      }),
+    Error,
+    "needs Form 8283 appraiser signature document PDF",
+  );
+  const bytes = await acknowledgmentPdf();
+  await assertRejects(
+    () =>
+      buildMefBundle({ f8283: { section_b_items: [gift] } }, {
+        filer: testFiler(),
+        attachments: [{
+          fileName: "Form8283AppraiserSignature.pdf",
+          description: "Form 8283 appraiser signature document",
+          bytes,
+        }],
+      }),
+    Error,
+    "matching PDF described exactly as Form 8283 Donee signature document",
+  );
+  await assertRejects(
+    () =>
+      buildMefBundle({ f8283: { section_b_items: [gift] } }, {
+        filer: testFiler(),
+        attachments: [
+          {
+            fileName: "Form8283AppraiserSignature.pdf",
+            description: "Appraiser signature",
+            bytes,
+          },
+          {
+            fileName: "Form8283DoneeSignature.pdf",
+            description: "Form 8283 Donee signature document",
+            bytes,
+          },
+        ],
+      }),
+    Error,
+    "matching PDF described exactly as Form 8283 appraiser signature document",
+  );
 });
 
 Deno.test("Form 8283 still rejects gifts needing unlinked evidence", () => {

@@ -23,6 +23,18 @@ export const inputSchema = z.object({
   // Line 5 from every other Form 8615 for this parent. An explicit empty
   // array affirms that there are no other children in the allocation.
   other_children_line5: z.array(z.number().nonnegative()),
+  // These are the net preferential amounts included in each other child's
+  // Form 8615 line 5, after that child's own Line 5 Worksheet.
+  other_children_qualified_dividends_line5: z.array(z.number().nonnegative()),
+  other_children_net_capital_gain_line5: z.array(z.number().nonnegative()),
+  other_children_schedule_d_tax_worksheet_used: z.array(z.boolean()),
+  other_children_form2555_used: z.array(z.boolean()),
+  parent_qualified_dividends: z.number().nonnegative(),
+  parent_net_capital_gain: z.number().nonnegative(),
+  // Worksheet #2/#3 requires the itemized expenses directly connected to
+  // qualified dividends and net capital gain, not all line 2 expenses.
+  itemized_deductions_directly_connected_to_preferential_income: z.number()
+    .nonnegative().optional(),
 });
 
 export type F8615Input = z.infer<typeof inputSchema>;

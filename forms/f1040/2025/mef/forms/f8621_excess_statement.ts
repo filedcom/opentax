@@ -5,7 +5,7 @@ import type { MefFormDescriptor } from "../form-descriptor.ts";
 type Input = { items?: readonly Form8621Lines[] };
 
 function explain(line: Form8621Lines): string {
-  return line.excessEvents.map((result, index) => {
+  const allocations = line.excessEvents.map((result, index) => {
     const years = result.allocations.map((year) =>
       `${year.tax_year}: ${year.holding_days} days, ${year.allocated_amount} USD; PFIC year ${
         year.pfic_year ? "yes" : "no"
@@ -17,6 +17,20 @@ function explain(line: Form8621Lines): string {
       index + 1
     }, ${result.amount_usd} USD on ${result.event_date}. Holding period ${result.holding_period_start} through ${result.event_date}; first PFIC tax year ${result.first_pfic_tax_year}. Holding-period allocation: ${years}.`;
   }).join(" ");
+  const foreignRates = (line.item.excess_events ?? []).flatMap((event) =>
+    event.kind === "distribution" && "currency_code" in event
+      ? event.current_year_distributions.map((distribution) =>
+        `${distribution.date}: ${distribution.spot_usd_per_unit} USD per ${event.currency_code} (${distribution.spot_rate_source})`
+      )
+      : event.kind === "disposition" && "net_proceeds_foreign" in event
+      ? [
+        `${event.event_date}: ${event.spot_usd_per_unit} USD per ${event.currency_code} (${event.spot_rate_source}); ${event.net_proceeds_foreign} ${event.currency_code} net proceeds less ${event.adjusted_basis_usd} USD adjusted basis`,
+      ]
+      : []
+  );
+  return foreignRates.length > 0
+    ? `${allocations} Distribution-date spot rates: ${foreignRates.join("; ")}.`
+    : allocations;
 }
 
 export const form8621ExcessStatement: MefFormDescriptor<

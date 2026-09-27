@@ -183,6 +183,7 @@ const sectionBItemSchema = z.object({
     appraiser_ssn: z.string().regex(/^\d{9}$/).optional(),
     us_address: usAddressSchema,
     signed_by_appraiser: z.literal(true),
+    signature_attachment_file_name: z.string().min(1).optional(),
   }).superRefine((appraisal, ctx) => {
     if (Boolean(appraisal.appraiser_ein) === Boolean(appraisal.appraiser_ssn)) {
       ctx.addIssue({
@@ -198,6 +199,7 @@ const sectionBItemSchema = z.object({
     us_address: usAddressSchema,
     signed_by_donee: z.literal(true),
     unrelated_use: z.boolean(),
+    signature_attachment_file_name: z.string().min(1).optional(),
   }).optional(),
   // Used to select the correct charitable contribution limit downstream; it
   // does not by itself cap the deduction at basis.

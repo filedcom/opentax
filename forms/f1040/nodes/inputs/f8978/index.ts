@@ -53,12 +53,16 @@ export const yearColumnSchema = z.object({
   original_deductions: z.number().int(),
   deduction_adjustments: z.array(adjustmentSchema),
   corrected_taxable_income: z.number().int().optional(),
+  corrected_taxable_income_explanation: z.string().trim().min(1).max(5000)
+    .optional(),
   // Source-backed recomputation under that affected year's tax rules.
   corrected_income_tax: z.number().int().nonnegative(),
   corrected_amt: z.number().int().nonnegative(),
   original_credits: z.number().int().nonnegative(),
   credit_adjustments: z.array(adjustmentSchema),
   corrected_income_tax_liability: z.number().int().nonnegative().optional(),
+  corrected_income_tax_liability_explanation: z.string().trim().min(1)
+    .max(5000).optional(),
   original_tax_liability: z.number().int().nonnegative(),
   penalty: z.number().int().nonnegative().optional(),
   interest: z.number().int().nonnegative().optional(),
@@ -101,7 +105,17 @@ export function calculateYearColumn(column: YearColumn) {
   const line2 = column.original_income + line1b;
   const line3b = adjustmentTotal(column.deduction_adjustments);
   const line4 = column.original_deductions + line3b;
-  const line5 = column.corrected_taxable_income ?? line2 - line4;
+  const ordinaryLine5 = line2 - line4;
+  if (
+    column.corrected_taxable_income !== undefined &&
+    column.corrected_taxable_income !== ordinaryLine5 &&
+    !column.corrected_taxable_income_explanation
+  ) {
+    throw new Error(
+      `Form 8978 ${column.tax_year_end} line 5 adjustment needs its separate calculation statement`,
+    );
+  }
+  const line5 = column.corrected_taxable_income ?? ordinaryLine5;
   const line8 = column.corrected_income_tax + column.corrected_amt;
   const line9b = adjustmentTotal(column.credit_adjustments);
   const line10 = column.original_credits + line9b;
@@ -110,7 +124,17 @@ export function calculateYearColumn(column: YearColumn) {
       `Form 8978 ${column.tax_year_end} corrected credits need the affected-year tax limitation`,
     );
   }
-  const line11 = column.corrected_income_tax_liability ?? line8 - line10;
+  const ordinaryLine11 = line8 - line10;
+  if (
+    column.corrected_income_tax_liability !== undefined &&
+    column.corrected_income_tax_liability !== ordinaryLine11 &&
+    !column.corrected_income_tax_liability_explanation
+  ) {
+    throw new Error(
+      `Form 8978 ${column.tax_year_end} line 11 adjustment needs its separate calculation statement`,
+    );
+  }
+  const line11 = column.corrected_income_tax_liability ?? ordinaryLine11;
   const line13 = line11 - column.original_tax_liability;
   return {
     ...column,

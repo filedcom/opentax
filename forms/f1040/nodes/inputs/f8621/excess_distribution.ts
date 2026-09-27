@@ -26,11 +26,28 @@ const dispositionSchema = z.object({
   year_charges: z.array(yearChargeSchema),
 }).strict();
 
-const distributionSchema = z.object({
+const foreignDispositionSchema = dispositionSchema.omit({ amount_usd: true })
+  .extend({
+    currency_code: z.string().regex(/^[A-Z]{3}$/).refine((code) =>
+      code !== "USD"
+    ),
+    net_proceeds_foreign: z.number().positive(),
+    spot_usd_per_unit: z.number().positive().finite(),
+    spot_rate_source: z.string().trim().min(1),
+    adjusted_basis_usd: z.number().nonnegative(),
+  }).strict();
+
+const distributionBaseSchema = z.object({
   kind: z.literal(ExcessEventKind.Distribution),
   holding_period_start: dateSchema,
   first_pfic_tax_year: z.number().int().min(1987).max(2025),
   shares_in_block: z.number().positive(),
+  // Section 301 classification is a separate corporate earnings-and-profits
+  // fact. It cannot exceed the calculated nonexcess portion in USD.
+  taxable_nonexcess_dividend_usd: z.number().nonnegative(),
+});
+
+const distributionSchema = distributionBaseSchema.extend({
   prior_year_distributions: z.array(
     z.object({
       tax_year: z.number().int().min(2022).max(2024),
@@ -44,14 +61,38 @@ const distributionSchema = z.object({
       year_charges: z.array(yearChargeSchema),
     }).strict(),
   ).min(1),
-  // Section 301 classification is a separate corporate earnings-and-profits
-  // fact. It cannot exceed the calculated nonexcess portion.
-  taxable_nonexcess_dividend_usd: z.number().nonnegative(),
 }).strict();
 
-export const excessEventSchema = z.discriminatedUnion("kind", [
+// Form 8621 line 15 requires the excess threshold to be determined in the
+// common foreign currency when every relevant distribution uses that currency.
+// Each 2025 excess portion is then translated at its own distribution-date
+// spot rate. Prior-year rates are not needed for this same-currency threshold.
+const foreignDistributionSchema = distributionBaseSchema.extend({
+  currency_code: z.string().regex(/^[A-Z]{3}$/).refine((code) =>
+    code !== "USD"
+  ),
+  prior_year_distributions: z.array(
+    z.object({
+      tax_year: z.number().int().min(2022).max(2024),
+      amount_foreign: z.number().nonnegative(),
+    }).strict(),
+  ),
+  current_year_distributions: z.array(
+    z.object({
+      date: dateSchema,
+      amount_foreign: z.number().positive(),
+      spot_usd_per_unit: z.number().positive().finite(),
+      spot_rate_source: z.string().trim().min(1),
+      year_charges: z.array(yearChargeSchema),
+    }).strict(),
+  ).min(1),
+}).strict();
+
+export const excessEventSchema = z.union([
   distributionSchema,
+  foreignDistributionSchema,
   dispositionSchema,
+  foreignDispositionSchema,
 ]);
 
 export type ExcessEvent = z.infer<typeof excessEventSchema>;
@@ -70,6 +111,8 @@ export interface ExcessEventResult {
   holding_period_start: string;
   event_date: string;
   first_pfic_tax_year: number;
+  currency_code: string;
+  amount_form_currency: number;
   amount_usd: number;
   first_holding_year?: boolean;
   line15a_current_distributions?: number;
@@ -239,6 +282,8 @@ function calculateTaxableExcess(event: TaxableExcess): ExcessEventResult {
     holding_period_start: event.holding_period_start,
     event_date: event.event_date,
     first_pfic_tax_year: event.first_pfic_tax_year,
+    currency_code: "USD",
+    amount_form_currency: event.amount_usd,
     amount_usd: event.amount_usd,
     allocations,
     line16b_current_and_pre_pfic_income: Math.round(currentAndPrePfic),
@@ -249,9 +294,11 @@ function calculateTaxableExcess(event: TaxableExcess): ExcessEventResult {
   };
 }
 
-function validatePriorHistory(
-  event: z.infer<typeof distributionSchema>,
-): number {
+type DistributionBlock =
+  | z.infer<typeof distributionSchema>
+  | z.infer<typeof foreignDistributionSchema>;
+
+function validatePriorHistory(event: DistributionBlock): number {
   const startYear = new Date(parseDate(event.holding_period_start))
     .getUTCFullYear();
   if (startYear > 2025) {
@@ -298,8 +345,10 @@ function distributeCents(totalCents: number, weights: number[]): number[] {
 }
 
 function calculateDistributionBlock(
-  event: z.infer<typeof distributionSchema>,
+  event: DistributionBlock,
 ): ExcessEventResult[] {
+  const foreign = "currency_code" in event;
+  const currencyCode = foreign ? event.currency_code : "USD";
   const priorYears = validatePriorHistory(event);
   const start = parseDate(event.holding_period_start);
   const dates = event.current_year_distributions.map((distribution) => {
@@ -316,12 +365,25 @@ function calculateDistributionBlock(
       "Form 8621 stock block must combine same-day distributions",
     );
   }
-  const currentTotal = event.current_year_distributions.reduce(
-    (sum, distribution) => sum + distribution.amount_usd,
-    0,
+  const currentAmounts = event.current_year_distributions.map((distribution) =>
+    "amount_foreign" in distribution
+      ? distribution.amount_foreign
+      : distribution.amount_usd
   );
+  const currentUsd = event.current_year_distributions.map((distribution) =>
+    "amount_foreign" in distribution
+      ? Math.round(
+        distribution.amount_foreign * distribution.spot_usd_per_unit * 100,
+      )
+      : Math.round(distribution.amount_usd * 100)
+  );
+  const currentTotal = currentAmounts.reduce((sum, amount) => sum + amount, 0);
   const priorTotal = event.prior_year_distributions.reduce(
-    (sum, distribution) => sum + distribution.amount_usd,
+    (sum, distribution) =>
+      sum +
+      ("amount_foreign" in distribution
+        ? distribution.amount_foreign
+        : distribution.amount_usd),
     0,
   );
   const priorPerShare = priorTotal / event.shares_in_block;
@@ -331,21 +393,35 @@ function calculateDistributionBlock(
   const totalExcess = priorYears === 0
     ? 0
     : Math.round(Math.max(0, currentTotal - threshold) * 100) / 100;
-  const nonexcess = currentTotal - totalExcess;
-  if (event.taxable_nonexcess_dividend_usd > nonexcess + 0.01) {
+  const cents = distributeCents(
+    Math.round(totalExcess * 100),
+    currentAmounts,
+  );
+  const excessUsd = cents.map((amount, index) => {
+    const distribution = event.current_year_distributions[index];
+    return "amount_foreign" in distribution
+      ? Math.round(amount * distribution.spot_usd_per_unit)
+      : amount;
+  });
+  const nonexcessUsdCents = currentUsd.reduce(
+    (sum, amount, index) => sum + amount - excessUsd[index],
+    0,
+  );
+  const nonexcessUsd = nonexcessUsdCents / 100;
+  if (event.taxable_nonexcess_dividend_usd > nonexcessUsd + 0.01) {
     throw new Error(
       "Form 8621 taxable section 301 dividend exceeds nonexcess distributions",
     );
   }
-  const cents = distributeCents(
-    Math.round(totalExcess * 100),
-    event.current_year_distributions.map((distribution) =>
-      distribution.amount_usd
-    ),
-  );
   const results = event.current_year_distributions.map(
     (distribution, index) => {
-      const amount = cents[index] / 100;
+      const amountFormCurrency = cents[index] / 100;
+      const amount = excessUsd[index] / 100;
+      if (amountFormCurrency > 0 && amount === 0) {
+        throw new Error(
+          "Form 8621 foreign excess converts to less than one USD cent",
+        );
+      }
       if (amount === 0) {
         if (distribution.year_charges.length > 0) {
           throw new Error(
@@ -357,13 +433,15 @@ function calculateDistributionBlock(
           holding_period_start: event.holding_period_start,
           event_date: distribution.date,
           first_pfic_tax_year: event.first_pfic_tax_year,
+          currency_code: currencyCode,
+          amount_form_currency: 0,
           amount_usd: 0,
           first_holding_year: priorYears === 0,
           line15a_current_distributions: currentTotal,
           line15b_prior_distributions: priorTotal,
           line15c_prior_average: average,
           line15d_threshold: threshold,
-          nonexcess_distribution: nonexcess,
+          nonexcess_distribution: nonexcessUsd,
           allocations: [],
           line16b_current_and_pre_pfic_income: 0,
           line16c_prior_year_tax_before_credit: 0,
@@ -383,12 +461,14 @@ function calculateDistributionBlock(
       return {
         ...calculated,
         kind: ExcessEventKind.Distribution,
+        currency_code: currencyCode,
+        amount_form_currency: amountFormCurrency,
         first_holding_year: false,
         line15a_current_distributions: currentTotal,
         line15b_prior_distributions: priorTotal,
         line15c_prior_average: average,
         line15d_threshold: threshold,
-        nonexcess_distribution: nonexcess,
+        nonexcess_distribution: nonexcessUsd,
       };
     },
   );
@@ -401,6 +481,27 @@ export function calculateExcessEvents(
   const event = excessEventSchema.parse(rawEvent);
   if (event.kind === ExcessEventKind.Distribution) {
     return calculateDistributionBlock(event);
+  }
+  if ("net_proceeds_foreign" in event) {
+    const netProceedsUsd = Math.round(
+      event.net_proceeds_foreign * event.spot_usd_per_unit * 100,
+    ) / 100;
+    const gainUsd = Math.round(
+      (netProceedsUsd - event.adjusted_basis_usd) * 100,
+    ) / 100;
+    if (gainUsd <= 0) {
+      throw new Error(
+        "Form 8621 section 1291 disposition needs a positive USD gain; report a loss under its applicable return provision",
+      );
+    }
+    return [calculateTaxableExcess({
+      kind: event.kind,
+      amount_usd: gainUsd,
+      holding_period_start: event.holding_period_start,
+      event_date: event.event_date,
+      first_pfic_tax_year: event.first_pfic_tax_year,
+      year_charges: event.year_charges,
+    })];
   }
   return [calculateTaxableExcess(event)];
 }

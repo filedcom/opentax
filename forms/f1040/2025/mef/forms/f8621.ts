@@ -35,7 +35,7 @@ function buildEvent(
             result.line15c_prior_average,
           ),
           element("AverageDistri3PrevTY125PctAmt", result.line15d_threshold),
-          element("TotalExcessDistributionAmt", result.amount_usd),
+          element("TotalExcessDistributionAmt", result.amount_form_currency),
           element("TotalExcessDistributionUSAmt", result.amount_usd),
         ]),
       ].join("")
@@ -79,6 +79,14 @@ function buildItem(
   const qefOrdinaryReduction = item.qef_ordinary_951_or_1293g_reduction ?? 0;
   const qefCapitalReduction = item.qef_capital_951_or_1293g_reduction ?? 0;
   const hasEin = /^\d{2}-?\d{7}$/.test(item.company_ein_or_ref);
+  const currencies = new Set(
+    line.excessEvents.filter((event) =>
+      event.kind === ExcessEventKind.Distribution
+    ).map((event) => event.currency_code),
+  );
+  if (currencies.size > 1) {
+    throw new Error("Form 8621 Part V needs one line 15 currency per filing");
+  }
   const children = [
     filer
       ? element("ShareholderPersonNm", filer.fullName ?? filer.nameLine1)
@@ -146,7 +154,7 @@ function buildItem(
           : "",
       ].join("")
       : "",
-    element("FunctionalCurrencyCd", "USD"),
+    element("FunctionalCurrencyCd", [...currencies][0] ?? "USD"),
     ...line.excessEvents.map(buildEvent),
   ];
   return elements(

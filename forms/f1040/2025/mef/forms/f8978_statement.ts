@@ -95,10 +95,18 @@ export async function buildForm8978Statements(
       line(`Corrected income: ${money(year.line2)}`);
       line(`Corrected deductions: ${money(year.line4)}`);
       line(`Corrected taxable income: ${money(year.line5)}`);
+      if (year.line5 !== year.line2 - year.line4) {
+        line("Line 5 separate calculation:", bold);
+        paragraph(year.corrected_taxable_income_explanation!);
+      }
       line(`Corrected income tax: ${money(year.corrected_income_tax)}`);
       line(`Corrected AMT: ${money(year.corrected_amt)}`);
       line(`Corrected credits: ${money(year.line10)}`);
       line(`Corrected income tax liability: ${money(year.line11)}`);
+      if (year.line11 !== year.line8 - year.line10) {
+        line("Line 11 separate calculation:", bold);
+        paragraph(year.corrected_income_tax_liability_explanation!);
+      }
       line(
         `Previously reported income tax liability: ${
           money(year.original_tax_liability)

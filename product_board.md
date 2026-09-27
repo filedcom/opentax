@@ -1058,6 +1058,15 @@ acceptance remain open.
 | OUT-NR-SS-4868 | Other ATS return families                    | Standalone 1040-NR, 1040-SS, and 4868 exporters are outside the user-agreed Form 1040 scope.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | No gate on this board; retain the source inventory separately and do not imply those returns are supported.                                                                                             |
 | GAP-ATS        | IRS acceptance                               | No ATS transmission or acknowledgment has been recorded.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Authorized ATS credentials, complete package, accepted test transmissions, and archived acknowledgments.                                                                                                |
 
+### GAP-8283: Noncash contribution signatures
+
+The current build pass requires the actual appraiser-signature and donee-signature
+PDFs for Section B, checks the exact descriptions required by the 2025 MeF
+business rules F8283-041 and F8283-042, and links both binaries to the
+corresponding native `IRS8283` document. Missing or mismatched attachments stop
+export. The attachment and full-bundle cases are written but unrun. This does
+not settle other Form 8283 limits or attachment paths.
+
 ### GAP-8978: Partner's additional reporting year tax
 
 **Build pass, untested.** The old default-37% estimate and Schedule 2 positive
@@ -1078,6 +1087,12 @@ instructions audit and visual verification; interest, penalties, all required
 attachments, and IRS business rules remain unverified. See the
 [2025 Form 1040 instructions](https://www.irs.gov/instructions/i1040gi).
 
+The current build pass also requires a distinct source explanation when Form
+8978 line 5 differs from lines 2 less 4 or line 11 differs from lines 8 less
+10. The generated tax-computation PDF prints each exceptional calculation in
+its own labeled section. These source and statement cases are written but
+unrun, and the entered recomputation still needs independent tax-year review.
+
 ### GAP-8621: PFIC and QEF reporting
 
 **Build pass, untested; whole-form gap remains.** The flat 37% estimate and
@@ -1095,10 +1110,19 @@ inclusions. QEF section 951/1293(g) reductions are separate source facts. The
 section 301 taxable part of nonexcess distributions routes to Schedule B and
 Form 8960 as a separate sourced fact. Native `IRS8621` and a holding-period
 statement builder are registered; calculation and source-to-XSD cases are
-written but unrun. The engine still needs foreign-currency distribution
-conversion, mixed lots and disposition basis reconciliation, historical interest
+written but unrun. The engine still needs mixed-currency distribution
+conversion, mixed lots and historical disposition basis reconciliation, historical interest
 computation, complete QEF/MTM elections and supporting facts, PDF verification,
 XSD/business-rule evidence, and ATS acceptance.
+
+The current build pass adds same-currency section 1291 distributions in a
+non-USD currency. It computes the 125% threshold in that currency and converts
+each dated excess amount using an explicit spot rate and source. A disposition
+can instead derive its USD gain from foreign-currency net proceeds, a dated
+spot rate, and a supplied USD adjusted basis. The MeF currency code, line
+15e(1)/15e(2) values, and rate-source statement follow those facts. Focused
+calculation and MeF cases are written but unrun. Mixed currencies, historical
+basis derivation, and mixed or partial lots remain unsupported.
 
 ### GAP-8615: Child's unearned-income tax
 
@@ -1117,7 +1141,16 @@ numbered amount lines and parent identity/status. Calculation, source-to-return,
 local XSD, and PDF-field cases are written but unrun. The
 [2025 Form 8615 instructions](https://www.irs.gov/instructions/i8615) also
 require preferential-rate and Schedule J worksheets, and a Form 2555 route, when
-those facts affect a positive line 5; these still stop explicitly. Parent and
+those facts affect a positive line 5. The current build pass implements the
+three Line 5 qualified-dividend/capital-gain allocation worksheets and the
+qualified-dividend/capital-gain tax calculation for family line 9 and child
+line 15. It carries explicit parent and sibling preferential-income facts and
+native MeF worksheet indicators. Focused and end-to-end cases are written but
+unrun. Schedule D special-gain and Form 4952 routes, Schedule J, and Form 2555
+still stop explicitly. The IRS Tax Table for amounts below $100,000 is not
+implemented, so affected positive-line-5 paths now stop rather than using
+bracket tax. Rounding and the shared preferential-tax helper's
+behavior-preserving extraction await the full test batch. Parent and
 child eligibility proof, dependent earned-income source derivation beyond the
 stated amount, exact Tax Table behavior, visual PDF verification, and IRS
 business rules remain open. Do not treat the ordinary slice as whole-form

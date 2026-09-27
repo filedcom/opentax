@@ -16,15 +16,19 @@ export interface Fields {
   line7_other_children_income?: number;
   line8_family_income?: number;
   line9_family_tax?: number;
+  line9_preferential_tax_used?: boolean;
   line10_parent_tax?: number;
+  line10_preferential_tax_used?: boolean;
   line11_children_tax?: number;
   line12a_children_income?: number;
   line12b_allocation_ratio?: number;
   line13_allocable_tax?: number;
   line14_child_net_income?: number;
   line15_child_net_income_tax?: number;
+  line15_preferential_tax_used?: boolean;
   line16_combined_child_tax?: number;
   line17_child_regular_tax?: number;
+  line17_preferential_tax_used?: boolean;
   line18_child_tax?: number;
 }
 
@@ -76,9 +80,21 @@ function buildIRS8615(fields: Partial<Fields>): string {
       "IndividualReturnFilingStatusCd",
       FILING_STATUS_CODE[fields.parent_filing_status],
     ),
-    ...FIELD_MAP.map(([key, tag]) => {
+    ...FIELD_MAP.flatMap(([key, tag]) => {
       const value = fields[key];
-      return typeof value === "number" ? element(tag, value) : "";
+      const indicator = key === "line9_family_tax" &&
+          fields.line9_preferential_tax_used
+        ? element("FamilyCapitalGainsTaxInd", "X")
+        : key === "line10_parent_tax" && fields.line10_preferential_tax_used
+        ? element("ParentCapitalGainsTaxInd", "X")
+        : key === "line15_child_net_income_tax" &&
+            fields.line15_preferential_tax_used
+        ? element("ChildUnearnedIncomeInd", "X")
+        : key === "line17_child_regular_tax" &&
+            fields.line17_preferential_tax_used
+        ? element("ChildCapitalGainInd", "X")
+        : "";
+      return [indicator, typeof value === "number" ? element(tag, value) : ""];
     }),
   ];
   return elements("IRS8615", children);
