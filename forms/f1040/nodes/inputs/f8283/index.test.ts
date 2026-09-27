@@ -646,6 +646,33 @@ Deno.test("f8283.compute: Section B exception vehicle routes claimed amount with
   );
 });
 
+Deno.test("f8283.compute: high-value Section B appraisal gate keeps special routes explicit", () => {
+  assertThrows(
+    () =>
+      compute({
+        section_b_items: [{
+          property_type: SectionBPropertyType.Equipment,
+          fmv: 650_000,
+          deduction_claimed: 600_000,
+        }],
+      }),
+    Error,
+    "full qualified-appraisal PDF",
+  );
+  assertThrows(
+    () =>
+      compute({
+        section_b_items: [{
+          property_type: SectionBPropertyType.OtherRealEstate,
+          fmv: 650_000,
+          deduction_claimed: 600_000,
+        }],
+      }),
+    Error,
+    "special-substantiation route",
+  );
+});
+
 // =============================================================================
 // 6. Hard Validation
 // =============================================================================

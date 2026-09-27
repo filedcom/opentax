@@ -272,6 +272,30 @@ function requiredSignatureAttachment(
   return id;
 }
 
+function requiredQualifiedAppraisalAttachment(
+  fileName: string | undefined,
+  context: MefBuildContext,
+): string | undefined {
+  if (!fileName) {
+    throw new Error(
+      "Form 8283 deduction above $500,000 needs the full qualified-appraisal PDF",
+    );
+  }
+  const description = context.attachmentDescriptionsByFileName?.[fileName];
+  if (!description?.startsWith("Qualified Appraisal")) {
+    throw new Error(
+      "Form 8283 high-value appraisal PDF needs a description beginning Qualified Appraisal",
+    );
+  }
+  const id = context.documentIdsByAttachmentFileName?.[fileName];
+  if (context.documentIdsByPendingKey && !id) {
+    throw new Error(
+      "Form 8283 high-value appraisal PDF has no linked MeF document",
+    );
+  }
+  return id;
+}
+
 function buildSectionBItem(
   item: SectionBItem,
   index: number,
@@ -326,10 +350,7 @@ function buildSectionBItem(
   if (tangible.has(item.property_type) && !item.physical_condition?.trim()) {
     throw new Error("Form 8283 tangible property needs its physical condition");
   }
-  if (
-    item.property_type === SectionBPropertyType.ArtAtLeast20000 ||
-    item.deduction_claimed > 500_000
-  ) {
+  if (item.property_type === SectionBPropertyType.ArtAtLeast20000) {
     throw new Error(
       "Form 8283 Section B gift needs a linked appraisal or vehicle acknowledgment attachment",
     );
@@ -354,9 +375,16 @@ function buildSectionBItem(
   const signatureIds = [appraiserId, doneeId].filter(
     (id): id is string => id !== undefined,
   );
-  const binaryIds = [vehicleAttachmentId, ...signatureIds].filter(
-    (id): id is string => id !== undefined,
-  );
+  const qualifiedAppraisalId = item.deduction_claimed > 500_000
+    ? requiredQualifiedAppraisalAttachment(
+      appraisal.attachment_file_name,
+      context,
+    )
+    : undefined;
+  const binaryIds = [vehicleAttachmentId, qualifiedAppraisalId, ...signatureIds]
+    .filter(
+      (id): id is string => id !== undefined,
+    );
   return elements(
     "IRS8283",
     [

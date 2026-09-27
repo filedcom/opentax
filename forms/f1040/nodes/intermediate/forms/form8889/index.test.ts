@@ -6,15 +6,13 @@ import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 
 const uniformSelfOnly = {
-  coverage_type: CoverageType.SelfOnly,
-  coverage_type_constant_for_eligible_months: true,
-  months_of_hdhp_coverage: 12,
+  eligible_hdhp_coverage_by_month: Array(12).fill(CoverageType.SelfOnly),
   age_55_or_older: false,
   last_month_rule_elected: false,
 };
 const uniformFamily = {
   ...uniformSelfOnly,
-  coverage_type: CoverageType.Family,
+  eligible_hdhp_coverage_by_month: Array(12).fill(CoverageType.Family),
   married_at_year_end: false,
 };
 
@@ -32,7 +30,7 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 // ─── Smoke test ───────────────────────────────────────────────────────────────
 
 Deno.test("smoke: no contributions, no distributions → no outputs", () => {
-  const result = compute({ coverage_type: CoverageType.SelfOnly });
+  const result = compute({});
   assertEquals(result.outputs.length, 0);
 });
 
@@ -132,6 +130,69 @@ Deno.test("part1: combined employer+taxpayer excess routes to form5329", () => {
   assertEquals(fieldsOf(result.outputs, form5329)!.excess_hsa, 450);
 });
 
+Deno.test("part1: direct IRA-to-HSA funding transfer reduces line 12 contribution room", () => {
+  const result = compute({
+    ...uniformSelfOnly,
+    taxpayer_hsa_contributions: 2500,
+    employer_hsa_contributions: 1000,
+    qualified_hsa_funding_distribution: {
+      amount: 1000,
+      transfer_month: 6,
+      ira_type: "traditional",
+      direct_trustee_transfer: true,
+      no_prior_qualified_funding_distribution: true,
+      source_reference: "2025 IRA trustee transfer confirmation",
+    },
+  });
+  const printed = findOutput(result, "form8889")?.fields;
+  assertEquals(printed?.print_line10, 1000);
+  assertEquals(printed?.print_line11, 2000);
+  assertEquals(printed?.print_line12, 2300);
+  assertEquals(printed?.print_line13_deduction, 2300);
+  assertEquals(fieldsOf(result.outputs, form5329)?.excess_hsa, 200);
+});
+
+Deno.test("part1: a funding transfer needs eligible coverage in its transfer month", () => {
+  assertThrows(
+    () =>
+      compute({
+        ...uniformSelfOnly,
+        eligible_hdhp_coverage_by_month: [
+          ...Array(5).fill(CoverageType.SelfOnly),
+          null,
+          ...Array(6).fill(CoverageType.SelfOnly),
+        ],
+        qualified_hsa_funding_distribution: {
+          amount: 1000,
+          transfer_month: 6,
+          ira_type: "roth",
+          direct_trustee_transfer: true,
+          no_prior_qualified_funding_distribution: true,
+          source_reference: "Roth IRA trustee transfer confirmation",
+        },
+      }),
+    Error,
+    "needs HDHP eligibility in its transfer month",
+  );
+});
+
+Deno.test("part1: a funding-only Form 8889 prints line 10 without a deduction", () => {
+  const result = compute({
+    ...uniformSelfOnly,
+    qualified_hsa_funding_distribution: {
+      amount: 1000,
+      transfer_month: 3,
+      ira_type: "roth",
+      direct_trustee_transfer: true,
+      no_prior_qualified_funding_distribution: true,
+      source_reference: "Roth IRA trustee transfer confirmation",
+    },
+  });
+  assertEquals(findOutput(result, "form8889")?.fields.print_line10, 1000);
+  assertEquals(findOutput(result, "form8889")?.fields.print_line12, 3300);
+  assertEquals(fieldsOf(result.outputs, schedule1), undefined);
+});
+
 Deno.test("part1: employer funding above the contribution limit needs income treatment", () => {
   assertThrows(
     () =>
@@ -148,7 +209,6 @@ Deno.test("part1: employer funding above the contribution limit needs income tre
 
 Deno.test("part2: fully qualified distribution → no income, no penalty", () => {
   const result = compute({
-    coverage_type: CoverageType.SelfOnly,
     hsa_distributions: 2000,
     qualified_medical_expenses: 2000,
   });
@@ -161,30 +221,28 @@ Deno.test("part2: fully qualified distribution → no income, no penalty", () =>
 Deno.test("part2: non-qualified distribution → schedule1 line8f HSA income", () => {
   // distribute 3000, qualified 1000 → taxable 2000
   const result = compute({
-    coverage_type: CoverageType.SelfOnly,
     hsa_distributions: 3000,
     qualified_medical_expenses: 1000,
-    distribution_exception: false,
+    exception_qualified_taxable_amount: 0,
   });
   assertEquals(fieldsOf(result.outputs, schedule1)!.line8f_hsa_income, 2000);
 });
 
-Deno.test("part2: taxable distribution needs an explicit penalty exception answer", () => {
+Deno.test("part2: taxable distribution needs an explicit penalty exception amount", () => {
   assertThrows(
     () =>
       compute({ hsa_distributions: 3000, qualified_medical_expenses: 1000 }),
     Error,
-    "needs an explicit additional-tax exception answer",
+    "needs an explicit additional-tax exception amount",
   );
 });
 
 Deno.test("part2: non-qualified distribution → 20% penalty on schedule2 line17c_hsa_penalty", () => {
   // distribute 3000, qualified 1000 → taxable 2000 → penalty 400
   const result = compute({
-    coverage_type: CoverageType.SelfOnly,
     hsa_distributions: 3000,
     qualified_medical_expenses: 1000,
-    distribution_exception: false,
+    exception_qualified_taxable_amount: 0,
   });
   assertEquals(fieldsOf(result.outputs, schedule2)!.line17c_hsa_penalty, 400);
 });
@@ -192,9 +250,8 @@ Deno.test("part2: non-qualified distribution → 20% penalty on schedule2 line17
 Deno.test("part2: fully non-qualified distribution → income + 20% penalty", () => {
   // distribute 1000, no qualified expenses → taxable 1000 → penalty 200
   const result = compute({
-    coverage_type: CoverageType.SelfOnly,
     hsa_distributions: 1000,
-    distribution_exception: false,
+    exception_qualified_taxable_amount: 0,
   });
   assertEquals(fieldsOf(result.outputs, schedule1)!.line8f_hsa_income, 1000);
   assertEquals(fieldsOf(result.outputs, schedule2)!.line17c_hsa_penalty, 200);
@@ -205,7 +262,7 @@ Deno.test("part2: line 14b rollover reduces taxable net distributions", () => {
     hsa_distributions: 5000,
     hsa_rollovers_and_timely_excess_withdrawals: 3000,
     qualified_medical_expenses: 1500,
-    distribution_exception: false,
+    exception_qualified_taxable_amount: 0,
   });
   assertEquals(fieldsOf(result.outputs, schedule1)?.line8f_hsa_income, 500);
   assertEquals(fieldsOf(result.outputs, schedule2)?.line17c_hsa_penalty, 100);
@@ -238,17 +295,47 @@ Deno.test("part2: line 14b and line 15 cannot exceed their source distribution",
   );
 });
 
-Deno.test("part2: distribution_exception → income still taxable but no 20% penalty", () => {
+Deno.test("part2: fully excepted distribution keeps income but has no 20% tax", () => {
   // distribute 2000, qualified 500 → taxable 1500; exception → no penalty
   const result = compute({
-    coverage_type: CoverageType.SelfOnly,
     hsa_distributions: 2000,
     qualified_medical_expenses: 500,
-    distribution_exception: true,
+    exception_qualified_taxable_amount: 1500,
   });
   assertEquals(fieldsOf(result.outputs, schedule1)!.line8f_hsa_income, 1500);
   const s2 = findOutput(result, "schedule2");
   assertEquals(s2, undefined); // no penalty
+});
+
+Deno.test("part2: a partly excepted distribution taxes only the remaining amount", () => {
+  const result = compute({
+    hsa_distributions: 3000,
+    qualified_medical_expenses: 1000,
+    exception_qualified_taxable_amount: 750,
+  });
+  assertEquals(fieldsOf(result.outputs, schedule1)?.line8f_hsa_income, 2000);
+  assertEquals(fieldsOf(result.outputs, schedule2)?.line17c_hsa_penalty, 250);
+  assertEquals(
+    findOutput(result, "form8889")?.fields.print_line17a_exception,
+    true,
+  );
+  assertEquals(
+    findOutput(result, "form8889")?.fields.print_line17b_penalty,
+    250,
+  );
+});
+
+Deno.test("part2: the excepted portion cannot exceed taxable distributions", () => {
+  assertThrows(
+    () =>
+      compute({
+        hsa_distributions: 1000,
+        qualified_medical_expenses: 400,
+        exception_qualified_taxable_amount: 601,
+      }),
+    Error,
+    "exception amount cannot exceed taxable distributions",
+  );
 });
 
 // ─── Combined: contributions + distributions ──────────────────────────────────
@@ -259,7 +346,7 @@ Deno.test("combined: deduction + non-qualified distribution both present", () =>
     ...uniformSelfOnly,
     taxpayer_hsa_contributions: 3000,
     hsa_distributions: 1000,
-    distribution_exception: false,
+    exception_qualified_taxable_amount: 0,
   });
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_hsa_deduction, 3000);
   assertEquals(fieldsOf(result.outputs, schedule1)!.line8f_hsa_income, 1000);
@@ -291,7 +378,7 @@ Deno.test("part3: distribution and testing-period income share line 8f but keep 
   const result = compute({
     hsa_distributions: 1000,
     qualified_medical_expenses: 400,
-    distribution_exception: false,
+    exception_qualified_taxable_amount: 0,
     testing_period_failure: {
       last_month_rule_excess_amount: 500,
       qualified_funding_distribution_amount: 0,
@@ -323,27 +410,135 @@ Deno.test("part1: married family catch-up prints on line 7, not line 3", () => {
   );
 });
 
-Deno.test("part1: missing last-month-rule and uniform-coverage answers stop", () => {
+Deno.test("part1: missing monthly coverage and last-month-rule answers stop", () => {
   assertThrows(
     () =>
       compute({
-        coverage_type: CoverageType.Family,
-        months_of_hdhp_coverage: 6,
         age_55_or_older: false,
         taxpayer_hsa_contributions: 1000,
       }),
     Error,
-    "explicit uniform HDHP coverage",
+    "twelve monthly HDHP eligibility/coverage facts",
   );
   assertThrows(
     () =>
       compute({
         ...uniformSelfOnly,
+        last_month_rule_elected: undefined,
+        taxpayer_hsa_contributions: 1000,
+      }),
+    Error,
+    "last-month-rule answer",
+  );
+});
+
+Deno.test("part1: mixed full-year coverage uses the larger worksheet or December limit", () => {
+  const result = compute({
+    ...uniformFamily,
+    eligible_hdhp_coverage_by_month: [
+      ...Array(6).fill(CoverageType.SelfOnly),
+      ...Array(6).fill(CoverageType.Family),
+    ],
+    taxpayer_hsa_contributions: 8000,
+  });
+  assertEquals(findOutput(result, "form8889")?.fields.print_line3_limit, 8550);
+  assertEquals(
+    findOutput(result, "form8889")?.fields.print_line1_coverage,
+    "family",
+  );
+  assertEquals(fieldsOf(result.outputs, schedule1)?.line13_hsa_deduction, 8000);
+});
+
+Deno.test("part1: mixed coverage with December self-only keeps the larger worksheet", () => {
+  const result = compute({
+    ...uniformFamily,
+    eligible_hdhp_coverage_by_month: [
+      ...Array(7).fill(CoverageType.Family),
+      ...Array(5).fill(CoverageType.SelfOnly),
+    ],
+    taxpayer_hsa_contributions: 6500,
+  });
+  assertEquals(findOutput(result, "form8889")?.fields.print_line3_limit, 6779);
+  assertEquals(
+    findOutput(result, "form8889")?.fields.print_line1_coverage,
+    "family",
+  );
+});
+
+Deno.test("part1: partial-year coverage uses the twelve-month worksheet", () => {
+  const result = compute({
+    ...uniformSelfOnly,
+    eligible_hdhp_coverage_by_month: [
+      ...Array(6).fill(CoverageType.SelfOnly),
+      ...Array(6).fill(null),
+    ],
+    taxpayer_hsa_contributions: 2000,
+  });
+  assertEquals(findOutput(result, "form8889")?.fields.print_line3_limit, 2150);
+});
+
+Deno.test("part1: elected last-month rule uses December family coverage for the year", () => {
+  const result = compute({
+    ...uniformFamily,
+    eligible_hdhp_coverage_by_month: [
+      ...Array(11).fill(null),
+      CoverageType.Family,
+    ],
+    last_month_rule_elected: true,
+    taxpayer_hsa_contributions: 8000,
+  });
+  assertEquals(findOutput(result, "form8889")?.fields.print_line3_limit, 8550);
+  assertEquals(fieldsOf(result.outputs, schedule1)?.line13_hsa_deduction, 8000);
+});
+
+Deno.test("part1: elected last-month rule prints December self-only coverage", () => {
+  const result = compute({
+    ...uniformFamily,
+    eligible_hdhp_coverage_by_month: [
+      ...Array(10).fill(CoverageType.Family),
+      null,
+      CoverageType.SelfOnly,
+    ],
+    last_month_rule_elected: true,
+    taxpayer_hsa_contributions: 4000,
+  });
+  assertEquals(
+    findOutput(result, "form8889")?.fields.print_line1_coverage,
+    "self_only",
+  );
+  assertEquals(findOutput(result, "form8889")?.fields.print_line3_limit, 4300);
+});
+
+Deno.test("part1: married age-55 family catch-up uses eligible months on line 7", () => {
+  const result = compute({
+    ...uniformFamily,
+    eligible_hdhp_coverage_by_month: [
+      ...Array(6).fill(CoverageType.Family),
+      ...Array(6).fill(null),
+    ],
+    married_at_year_end: true,
+    spouse_has_separate_hsa: false,
+    age_55_or_older: true,
+    taxpayer_hsa_contributions: 4700,
+  });
+  assertEquals(findOutput(result, "form8889")?.fields.print_line3_limit, 4275);
+  assertEquals(findOutput(result, "form8889")?.fields.print_line7_catchup, 500);
+});
+
+Deno.test("part1: last-month rule requires December eligibility", () => {
+  assertThrows(
+    () =>
+      compute({
+        ...uniformSelfOnly,
+        eligible_hdhp_coverage_by_month: [
+          ...Array(11).fill(CoverageType.SelfOnly),
+          null,
+        ],
         last_month_rule_elected: true,
         taxpayer_hsa_contributions: 1000,
       }),
     Error,
-    "month-by-month eligibility facts",
+    "requires December 1 HDHP eligibility",
   );
 });
 
@@ -353,14 +548,13 @@ Deno.test("validation: a W-2 HSA contribution does not imply self-only coverage"
   assertThrows(
     () => compute({ employer_hsa_contributions: 1000 }),
     Error,
-    "explicit uniform HDHP coverage",
+    "twelve monthly HDHP eligibility/coverage facts",
   );
 });
 
 Deno.test("validation: negative contributions throw", () => {
   assertThrows(() =>
     compute({
-      coverage_type: CoverageType.SelfOnly,
       taxpayer_hsa_contributions: -100,
     })
   );
@@ -369,7 +563,6 @@ Deno.test("validation: negative contributions throw", () => {
 Deno.test("validation: negative distributions throw", () => {
   assertThrows(() =>
     compute({
-      coverage_type: CoverageType.SelfOnly,
       hsa_distributions: -500,
     })
   );

@@ -40,6 +40,7 @@ const LINE_KEYS = new Set([
 const RAW_HSA_KEYS = [
   "taxpayer_hsa_contributions",
   "employer_hsa_contributions",
+  "qualified_hsa_funding_distribution",
   "hsa_distributions",
   "hsa_rollovers_and_timely_excess_withdrawals",
   "qualified_medical_expenses",

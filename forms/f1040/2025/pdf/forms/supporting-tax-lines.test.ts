@@ -1,5 +1,7 @@
-import { assert, assertEquals } from "@std/assert";
+import { assert, assertEquals, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
+import { form8962 } from "../../../nodes/intermediate/forms/form8962/index.ts";
+import { FilingStatus } from "../../../types.ts";
 import type { PdfFormDescriptor } from "../form-descriptor.ts";
 import { form8959Pdf } from "./f8959.ts";
 import { form8960Pdf } from "./f8960.ts";
@@ -209,4 +211,127 @@ Deno.test("Form 8962 PDF marks line 34 No for a fifth allocation row", () => {
   assertEquals(projected?.pdf_line34_no, true);
   assertEquals(projected?.pdf_allocation_4_policy_number, "POLICY-4");
   assertEquals(projected?.pdf_allocation_5_policy_number, undefined);
+});
+
+Deno.test("Form 8962 PDF maps both Part V groups to the 2025 AcroForm", () => {
+  const page2 = "topmostSubform[0].Page2[0]";
+  const columns = [
+    "family_size",
+    "monthly_contribution",
+    "start_month",
+    "end_month",
+  ];
+  for (const [role, firstField] of [["primary", 29], ["spouse", 33]] as const) {
+    for (const [index, column] of columns.entries()) {
+      assertEquals(
+        mappedField(form8962Pdf, `pdf_marriage_${role}_${column}`),
+        `${page2}.f2_${firstField + index}[0]`,
+      );
+    }
+  }
+  const projected = form8962Pdf.projectFields?.({
+    monthly_ptc_rows: [],
+    alternative_marriage_primary: {
+      family_size: 1,
+      monthly_contribution: 45,
+      start_month: 1,
+      end_month: 5,
+    },
+    alternative_marriage_spouse: {
+      family_size: 2,
+      monthly_contribution: 67,
+      start_month: 2,
+      end_month: 5,
+    },
+  }, {});
+  assertEquals(projected?.pdf_line9_yes, true);
+  assertEquals(projected?.pdf_line9_no, false);
+  assertEquals(projected?.pdf_line10_no, true);
+  assertEquals(projected?.pdf_marriage_primary_family_size, "1");
+  assertEquals(projected?.pdf_marriage_primary_monthly_contribution, "45");
+  assertEquals(projected?.pdf_marriage_primary_start_month, "01");
+  assertEquals(projected?.pdf_marriage_primary_end_month, "05");
+  assertEquals(projected?.pdf_marriage_spouse_family_size, "2");
+  assertEquals(projected?.pdf_marriage_spouse_monthly_contribution, "67");
+  assertEquals(projected?.pdf_marriage_spouse_start_month, "02");
+  assertEquals(projected?.pdf_marriage_spouse_end_month, "05");
+});
+
+Deno.test("Form 8962 PDF keeps absent spouse Part V group blank", () => {
+  const projected = form8962Pdf.projectFields?.({
+    monthly_ptc_rows: [],
+    alternative_marriage_primary: {
+      family_size: 1,
+      monthly_contribution: 45,
+      start_month: 1,
+      end_month: 5,
+    },
+  }, {});
+  assertEquals(projected?.pdf_line9_yes, true);
+  assertEquals(projected?.pdf_marriage_primary_family_size, "1");
+  assertEquals(projected?.pdf_marriage_spouse_family_size, undefined);
+});
+
+Deno.test("Form 8962 PDF refuses incomplete Part V or missing monthly calculation", () => {
+  assertThrows(
+    () =>
+      form8962Pdf.projectFields?.({
+        alternative_marriage_primary: {
+          family_size: 1,
+          monthly_contribution: 45,
+          start_month: 1,
+          end_month: 5,
+        },
+      }, {}),
+    Error,
+    "Part V requires monthly lines 12-23",
+  );
+  assertThrows(
+    () =>
+      form8962Pdf.projectFields?.({
+        monthly_ptc_rows: [],
+        alternative_marriage_primary: {
+          family_size: 1,
+          monthly_contribution: 45,
+          start_month: 1,
+        },
+      }, {}),
+    Error,
+    "Part V needs complete line 35/36 facts",
+  );
+});
+
+Deno.test("Form 8962 marriage calculation reaches printed Part V line 35", () => {
+  const result = form8962.compute({ taxYear: 2025, formType: "f1040" }, {
+    filing_status: FilingStatus.MFJ,
+    household_size: 2,
+    taxpayer_modified_agi: 80_000,
+    dependent_income_complete: true,
+    fpl_region: "contiguous",
+    monthly_premiums: Array(12).fill(1_000),
+    monthly_slcsps: Array(12).fill(1_200),
+    monthly_aptcs: Array(12).fill(1_000),
+    alternative_marriage: {
+      both_unmarried_january_1: true,
+      married_december_31: true,
+      alternative_family_sizes_verified: true,
+      marriage_month: 6,
+      primary: {
+        family_size: 1,
+        monthly_premiums: [...Array(6).fill(1_000), ...Array(6).fill(0)],
+        monthly_slcsps: [...Array(6).fill(1_200), ...Array(6).fill(0)],
+      },
+    },
+  });
+  const formFields = result.outputs.find((item) => item.nodeType === "form8962")
+    ?.fields;
+  assert(formFields);
+  const projected = form8962Pdf.projectFields?.(formFields, {});
+  assertEquals(projected?.pdf_line9_yes, true);
+  assertEquals(projected?.pdf_line10_no, true);
+  assertEquals(projected?.pdf_marriage_primary_family_size, "1");
+  assertEquals(projected?.pdf_marriage_primary_monthly_contribution, "153");
+  assertEquals(projected?.pdf_marriage_primary_start_month, "01");
+  assertEquals(projected?.pdf_marriage_primary_end_month, "06");
+  assertEquals(projected?.pdf_marriage_spouse_family_size, undefined);
 });

@@ -212,6 +212,26 @@ function sectionBMaterialImprovementVehicle() {
   };
 }
 
+function sectionBHighValueEquipmentGift() {
+  const vehicle = sectionBMaterialImprovementVehicle();
+  return {
+    property_description: "Industrial printing press",
+    property_type: SectionBPropertyType.Equipment,
+    physical_condition: "Operational, professionally maintained",
+    date_acquired: "2018-05-15",
+    donor_acquisition_description: "Purchase",
+    date_contributed: "2025-06-01",
+    fmv: 650_000,
+    deduction_claimed: 600_000,
+    cost_or_adjusted_basis: 620_000,
+    qualified_appraisal: {
+      ...vehicle.qualified_appraisal,
+      attachment_file_name: "QualifiedAppraisal-Press.pdf",
+    },
+    donee_acknowledgment: vehicle.donee_acknowledgment,
+  };
+}
+
 Deno.test("Form 8283 Section A includes VIN without a donee PDF for a vehicle claimed at $500 or less", async () => {
   const bundle = await buildMefBundle({
     f8283: {
@@ -765,6 +785,197 @@ Deno.test("Form 8283 Section B vehicle refuses missing or mismatched exception e
       }),
     Error,
     "IRS-approved description",
+  );
+});
+
+Deno.test("Form 8283 Section B over $500,000 attaches the complete qualified appraisal separately from signatures", async () => {
+  const gift = sectionBHighValueEquipmentGift();
+  const bytes = await acknowledgmentPdf();
+  const bundle = await buildMefBundle({
+    f8283: { section_b_items: [gift] },
+  }, {
+    filer: testFiler(),
+    attachments: [
+      {
+        fileName: "QualifiedAppraisal-Press.pdf",
+        description: "Qualified Appraisal industrial printing press",
+        bytes,
+      },
+      {
+        fileName: "Form8283AppraiserSignature.pdf",
+        description: "Form 8283 appraiser signature document",
+        bytes,
+      },
+      {
+        fileName: "Form8283DoneeSignature.pdf",
+        description: "Form 8283 Donee signature document",
+        bytes,
+      },
+    ],
+  });
+  const xml = bundle.xml;
+  assertEquals(bundle.attachments.length, 3);
+  assertStringIncludes(xml, "<EquipmentInd>X</EquipmentInd>");
+  assertStringIncludes(
+    xml,
+    "<DeductionClaimedAmt>600000</DeductionClaimedAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    'referenceDocumentId="BinaryAttachment2 BinaryAttachment3 BinaryAttachment4"',
+  );
+  assertStringIncludes(
+    xml,
+    "<Desc>Qualified Appraisal industrial printing press</Desc>",
+  );
+  await assertVehicleBundleXsd(xml);
+});
+
+Deno.test("Form 8283 Section B high-value vehicle requires both its donee copy and full appraisal", async () => {
+  const vehicle = sectionBMaterialImprovementVehicle();
+  const gift = {
+    ...vehicle,
+    property_description: "2022 Ferrari SF90, excellent condition, 5,000 miles",
+    physical_condition: "Excellent condition",
+    date_acquired: "2022-05-15",
+    cost_or_adjusted_basis: 700_000,
+    fmv: 650_000,
+    deduction_claimed: 600_000,
+    vehicle_vin: "ZFF95NLA0N0275432",
+    vehicle_material_improvement_acknowledgment: {
+      ...vehicle.vehicle_material_improvement_acknowledgment,
+      vehicle_year: 2022,
+      vehicle_make: "Ferrari",
+      vehicle_model: "SF90",
+      vehicle_condition: "Excellent condition",
+      odometer_miles: 5_000,
+    },
+    qualified_appraisal: {
+      ...vehicle.qualified_appraisal,
+      attachment_file_name: "QualifiedAppraisal-Ferrari.pdf",
+    },
+  };
+  const bytes = await acknowledgmentPdf();
+  const bundle = await buildMefBundle({
+    f8283: { section_b_items: [gift] },
+  }, {
+    filer: testFiler(),
+    attachments: [
+      {
+        fileName: "Form1098C-Improvement.pdf",
+        description: "Form1098C material improvement certification",
+        bytes,
+      },
+      {
+        fileName: "QualifiedAppraisal-Ferrari.pdf",
+        description: "Qualified Appraisal donated vehicle",
+        bytes,
+      },
+      {
+        fileName: "Form8283AppraiserSignature.pdf",
+        description: "Form 8283 appraiser signature document",
+        bytes,
+      },
+      {
+        fileName: "Form8283DoneeSignature.pdf",
+        description: "Form 8283 Donee signature document",
+        bytes,
+      },
+    ],
+  });
+  assertEquals(bundle.attachments.length, 4);
+  assertStringIncludes(
+    bundle.xml,
+    'referenceDocumentId="BinaryAttachment3 BinaryAttachment4 BinaryAttachment5 BinaryAttachment6"',
+  );
+  assertStringIncludes(
+    bundle.xml,
+    "<Desc>Qualified Appraisal donated vehicle</Desc>",
+  );
+  assertStringIncludes(
+    bundle.xml,
+    "<CertifiesVehicleNotTrnsfrInd>X</CertifiesVehicleNotTrnsfrInd>",
+  );
+  await assertVehicleBundleXsd(bundle.xml);
+});
+
+Deno.test("Form 8283 high-value gift rejects absent or misdescribed appraisal PDF", async () => {
+  const gift = sectionBHighValueEquipmentGift();
+  assertThrows(
+    () =>
+      form8283.build({
+        section_b_items: [{
+          ...gift,
+          qualified_appraisal: {
+            ...gift.qualified_appraisal,
+            attachment_file_name: undefined,
+          },
+        }],
+      }),
+    Error,
+    "needs the full qualified-appraisal PDF",
+  );
+  const bytes = await acknowledgmentPdf();
+  await assertRejects(
+    () =>
+      buildMefBundle({ f8283: { section_b_items: [gift] } }, {
+        filer: testFiler(),
+        attachments: [
+          {
+            fileName: "QualifiedAppraisal-Press.pdf",
+            description: "Unrelated appraisal",
+            bytes,
+          },
+          {
+            fileName: "Form8283AppraiserSignature.pdf",
+            description: "Form 8283 appraiser signature document",
+            bytes,
+          },
+          {
+            fileName: "Form8283DoneeSignature.pdf",
+            description: "Form 8283 Donee signature document",
+            bytes,
+          },
+        ],
+      }),
+    Error,
+    "description beginning Qualified Appraisal",
+  );
+});
+
+Deno.test("Form 8283 $500,000 boundary does not require a full appraisal attachment", async () => {
+  const highValue = sectionBHighValueEquipmentGift();
+  const gift = {
+    ...highValue,
+    deduction_claimed: 500_000,
+    qualified_appraisal: {
+      ...highValue.qualified_appraisal,
+      attachment_file_name: undefined,
+    },
+  };
+  const bytes = await acknowledgmentPdf();
+  const bundle = await buildMefBundle({
+    f8283: { section_b_items: [gift] },
+  }, {
+    filer: testFiler(),
+    attachments: [
+      {
+        fileName: "Form8283AppraiserSignature.pdf",
+        description: "Form 8283 appraiser signature document",
+        bytes,
+      },
+      {
+        fileName: "Form8283DoneeSignature.pdf",
+        description: "Form 8283 Donee signature document",
+        bytes,
+      },
+    ],
+  });
+  assertEquals(bundle.attachments.length, 2);
+  assertEquals(bundle.xml.includes("Qualified Appraisal"), false);
+  assertStringIncludes(
+    bundle.xml,
+    "<DeductionClaimedAmt>500000</DeductionClaimedAmt>",
   );
 });
 

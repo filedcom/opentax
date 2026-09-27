@@ -283,6 +283,9 @@ const sectionBItemSchema = z.object({
     us_address: usAddressSchema,
     signed_by_appraiser: z.literal(true),
     signature_attachment_file_name: z.string().min(1).optional(),
+    // Full appraisal PDF, distinct from the Form 8283 signature PDF, is
+    // required when the claimed deduction for this item exceeds $500,000.
+    attachment_file_name: z.string().min(1).optional(),
   }).superRefine((appraisal, ctx) => {
     if (Boolean(appraisal.appraiser_ein) === Boolean(appraisal.appraiser_ssn)) {
       ctx.addIssue({
@@ -309,6 +312,37 @@ const sectionBItemSchema = z.object({
       code: "custom",
       message: "Form 8283 Section B deduction claimed exceeds appraised FMV",
     });
+  }
+  if (item.deduction_claimed > 500_000) {
+    const supportedHighValueTypes = new Set<SectionBPropertyType>([
+      SectionBPropertyType.Equipment,
+      SectionBPropertyType.Securities,
+      SectionBPropertyType.Collectibles,
+      SectionBPropertyType.Vehicle,
+    ]);
+    if (
+      !item.property_type || !supportedHighValueTypes.has(item.property_type)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "Form 8283 high-value property type needs its separate special-substantiation route",
+      });
+    }
+    if (!item.qualified_appraisal?.attachment_file_name) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "Form 8283 deduction above $500,000 needs the full qualified-appraisal PDF",
+      });
+    }
+    if (!item.qualified_appraisal || !item.donee_acknowledgment) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "Form 8283 high-value gift needs qualified appraisal and signed donee facts",
+      });
+    }
   }
   const acknowledgments = [
     item.vehicle_needy_transfer_acknowledgment,

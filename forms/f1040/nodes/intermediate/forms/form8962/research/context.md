@@ -147,9 +147,14 @@ based on household income and size. Net PTC flows to **Schedule 3 line 9**
   electronic build carries every row through that limit and marks line 34 No
   after four rows. This is an inference from the schema plus the 2025
   instructions, not an ATS acceptance result. The 2025 PDF descriptor covers
-  calculated lines, monthly rows, and four Part IV rows using fields inspected
-  on the source form. For allocation five onward, the PDF builder appends
-  paginated statement pages and marks line 34 No. A page-decoration hook writes
-  the QSEHRA label in the first-page top margin. These generated pages have not
-  had filled-render QA. Alternative marriage calculation, self-employed
-  insurance interactions, and IRS business rules still need a complete audit.
+  calculated lines, monthly rows, four Part IV rows, and both Part V marriage
+  groups using fields inspected on the 2025 source form. The Part V line 35/36
+  family size, monthly contribution, start month, and stop month fields are
+  f2_29 through f2_36. An election checks line 9 Yes and line 10 No even without
+  a Part IV allocation; incomplete Part V source facts stop. For allocation five
+  onward, the PDF builder appends paginated statement pages and marks line 34
+  No. A page-decoration hook writes the QSEHRA label in the first-page top
+  margin. These generated pages have not had filled-render QA. The marriage
+  calculation still needs direct spouse-specific pre-marriage 1095-A derivation
+  and full source-to-PDF verification. Self-employed insurance interactions and
+  IRS business rules still need a complete audit.

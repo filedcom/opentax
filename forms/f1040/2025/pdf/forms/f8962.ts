@@ -36,6 +36,12 @@ const ALLOCATION_COLUMNS = [
   "slcsp_pct",
   "aptc_pct",
 ] as const;
+const MARRIAGE_COLUMNS = [
+  "family_size",
+  "monthly_contribution",
+  "start_month",
+  "end_month",
+] as const;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -183,6 +189,13 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     domainKey: "pdf_line34_no",
     pdfField: `${PAGE2}.c2_1[1]`,
   },
+  ...(["primary", "spouse"] as const).flatMap((role, roleIndex) =>
+    MARRIAGE_COLUMNS.map((column, columnIndex) => ({
+      kind: "text" as const,
+      domainKey: `pdf_marriage_${role}_${column}`,
+      pdfField: `${PAGE2}.f2_${29 + roleIndex * 4 + columnIndex}[0]`,
+    }))
+  ),
 ];
 
 function projectFields(
@@ -203,8 +216,13 @@ function projectFields(
   const allocationRows: unknown[] = Array.isArray(allocations)
     ? allocations
     : [];
-  projected.pdf_line9_yes = allocationRows.length > 0;
-  projected.pdf_line9_no = allocationRows.length === 0;
+  const marriagePrimary = fields.alternative_marriage_primary;
+  const marriageSpouse = fields.alternative_marriage_spouse;
+  const hasMarriage =
+    marriagePrimary !== undefined && marriagePrimary !== null ||
+    marriageSpouse !== undefined && marriageSpouse !== null;
+  projected.pdf_line9_yes = allocationRows.length > 0 || hasMarriage;
+  projected.pdf_line9_no = allocationRows.length === 0 && !hasMarriage;
   projected.pdf_line34_yes = allocationRows.length > 0 &&
     allocationRows.length <= 4;
   projected.pdf_line34_no = allocationRows.length > 4;
@@ -215,6 +233,9 @@ function projectFields(
   }
   projected.pdf_line10_yes = !Array.isArray(monthlyRows);
   projected.pdf_line10_no = Array.isArray(monthlyRows);
+  if (hasMarriage && !Array.isArray(monthlyRows)) {
+    throw new Error("Form 8962 PDF Part V requires monthly lines 12-23");
+  }
   if (Array.isArray(monthlyRows)) {
     for (const row of monthlyRows) {
       if (!isRecord(row) || typeof row.month_code !== "string") {
@@ -272,6 +293,37 @@ function projectFields(
           : value;
     }
   });
+
+  for (
+    const [role, group] of [
+      ["primary", marriagePrimary],
+      ["spouse", marriageSpouse],
+    ] as const
+  ) {
+    if (group === undefined || group === null) continue;
+    if (
+      !isRecord(group) ||
+      typeof group.family_size !== "number" ||
+      !Number.isInteger(group.family_size) || group.family_size <= 0 ||
+      typeof group.monthly_contribution !== "number" ||
+      !Number.isInteger(group.monthly_contribution) ||
+      group.monthly_contribution < 0 ||
+      typeof group.start_month !== "number" ||
+      !Number.isInteger(group.start_month) ||
+      typeof group.end_month !== "number" ||
+      !Number.isInteger(group.end_month) ||
+      group.start_month < 1 || group.end_month > 12 ||
+      group.start_month > group.end_month
+    ) {
+      throw new Error("Form 8962 PDF Part V needs complete line 35/36 facts");
+    }
+    for (const column of MARRIAGE_COLUMNS) {
+      const value = group[column] as number;
+      projected[`pdf_marriage_${role}_${column}`] = column.endsWith("_month")
+        ? String(value).padStart(2, "0")
+        : String(value);
+    }
+  }
 
   const line24 = fields.total_premium_tax_credit;
   const line25 = fields.total_advance_ptc;

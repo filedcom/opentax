@@ -23,30 +23,35 @@ verified IRS acceptance.
 - Ordinary Section B gifts with more than $5,000 claimed now emit one `IRS8283`
   document per property with its property type, acquisition facts,
   qualified-appraiser declaration, and signed donee acknowledgment facts. The
-  appraisal itself is generally retained, not attached. The model rejects
-  high-value art and gifts above $500,000 until their
-  attachment requirements are implemented. A Section B vehicle using one of
-  the three gross-proceeds exceptions now requires a qualified appraisal,
-  appraiser and donee signature PDF references, a donee-issued Form 1098-C or equivalent
-  acknowledgment PDF, and its native `ContriVehicleBoatAirplaneStmt`. The
-  statement links to `PropertyInformation`; all three binaries link to that
-  item's `IRS8283` document. Section A vehicles claimed at $500 or
-  less can include their VIN without a sale acknowledgment. For higher Section A
-  vehicle claims on all four supported certification routes, a separate native
-  MeF `ContriVehicleBoatAirplaneStmt` is generated
+  appraisal itself is generally retained, not attached. For a single-item
+  deduction above $500,000, supported equipment, nonpublic securities,
+  collectibles, and exception vehicles now require the full qualified appraisal
+  as a separate PDF described with the IRS's `Qualified Appraisal` prefix. It
+  links to that item's `IRS8283` alongside the signature PDFs. This is not a
+  substitute for validating the appraisal's contents or grouping similar items
+  across donees. High-value art, conservation/easement and other special
+  property types remain stopped pending their extra evidence. A Section B
+  vehicle using one of the three gross-proceeds exceptions now requires a
+  qualified appraisal, appraiser and donee signature PDF references, a
+  donee-issued Form 1098-C or equivalent acknowledgment PDF, and its native
+  `ContriVehicleBoatAirplaneStmt`. The statement links to `PropertyInformation`;
+  all three binaries link to that item's `IRS8283` document. Section A vehicles
+  claimed at $500 or less can include their VIN without a sale acknowledgment.
+  For higher Section A vehicle claims on all four supported certification
+  routes, a separate native MeF `ContriVehicleBoatAirplaneStmt` is generated
   from the donee facts and linked to the Form 8283 row. The actual donee-issued
-  Form 1098-C or equivalent contemporaneous written acknowledgment must also
-  be supplied as a PDF `BinaryAttachment` linked to `IRS8283`. The IRS 2025
+  Form 1098-C or equivalent contemporaneous written acknowledgment must also be
+  supplied as a PDF `BinaryAttachment` linked to `IRS8283`. The IRS 2025
   instructions explicitly require the copy for vehicle deductions above $500;
   the structured statement is supplemental, not a replacement. The local
   TY2025v5.4 `IRS8283.xsd` permits the binary reference on the form document.
   The local statement schema has `CertifiesVehicleNotTrnsfrInd` for Form 1098-C
   box 5a and `CertifiesDetailedImprvDesc` for box 5c. The use route requires the
-  donee's intended activity and duration, and the improvement route requires
-  its intended major value-adding work without an additional donor payment.
-  Both require the donee's no-transfer-before-completion certification and an
-  acknowledgment furnished within 30 days of contribution. These are
-  prospective donee certifications, not proof that the eventual work happened.
+  donee's intended activity and duration, and the improvement route requires its
+  intended major value-adding work without an additional donor payment. Both
+  require the donee's no-transfer-before-completion certification and an
+  acknowledgment furnished within 30 days of contribution. These are prospective
+  donee certifications, not proof that the eventual work happened.
 - The serializer uses an array result for every call so one input can produce an
   optional Section A document and multiple Section B documents without a dual
   return shape.
@@ -55,14 +60,17 @@ verified IRS acceptance.
 
 1. Confirm each contribution's allowed deduction, including ordinary-income
    property reductions and 2025 Schedule A AGI limits, before totaling line 12.
-2. Cover remaining special vehicle rules and complete Section B evidence
-   review. The donee-issued acknowledgment attachment path for supported
-   Section A and exception Section B routes is implemented, but local code
-   cannot authenticate PDF provenance or certify
-   that a user-supplied copy matches the donee's original.
+2. Cover remaining special vehicle rules and complete Section B evidence review.
+   The donee-issued acknowledgment attachment path for supported Section A and
+   exception Section B routes is implemented, but local code cannot authenticate
+   PDF provenance or certify that a user-supplied copy matches the donee's
+   original.
 3. Build required appraisal, photograph, and special statements for high-value
-   art, gifts over $500,000, certain clothing/household items, conservation
-   easements, and pass-through contributions.
+   art, aggregated similar-item gifts over $500,000, certain clothing/household
+   items, conservation easements, and pass-through contributions. The supported
+   high-value Securities path relies on the entered Section B property type; the
+   source model does not independently verify that the security was nonpublicly
+   traded.
 4. Add PDF field mapping and verify document signatures/receipt facts.
 5. Run the requested full test batch, including the new Section B and vehicle
    statement local XSD cases, then resolve failures and rerun the complete
@@ -71,4 +79,8 @@ verified IRS acceptance.
 The [IRS instructions](https://www.irs.gov/instructions/i8283) explain the
 general FMV rule and exceptions for capital-gain property, Section B separate
 form requirements, and when a signed appraisal or other attachment must be
-submitted with the return.
+submitted with the return. The
+[IRS TY2025 MeF PDF guide](https://www.irs.gov/pub/irs-schema/ty2025-recommended-names-and-descriptions-for-pdf-files-by-form.pdf)
+recommends `QualifiedAppraisal.pdf` with a description beginning
+`Qualified
+Appraisal` for deductions above $500,000.
