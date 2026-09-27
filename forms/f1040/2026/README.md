@@ -64,6 +64,10 @@ The [Form 982 contract](../../../docs/ty2026/FORM982-GRAPH.md) pins the
 current cancellation-of-debt exclusion form, its 27 PDF widgets and the
 2026 QPRI written-arrangement gate. Per-debt exclusions, required
 attachment, Part II attribute reductions and corrected PDF/MeF remain.
+The [Form 8834 contract](../../../docs/ty2026/FORM8834-GRAPH.md) pins the
+current 2024+ legacy passive vehicle-credit form and 11 PDF widgets.
+Form 8582-CR must release its source credit before the 2026 Schedule 3
+line 6i and Form 6251 limitation route is finalized.
 The [Form 2555 contract](../../../docs/ty2026/FORM2555-GRAPH.md) maps the
 2026 $132,900 exclusion, location-specific housing limits, Schedule 1
 lines 8d/24j, SE tax and Form 1116 reductions. The structured shared

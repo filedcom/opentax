@@ -5,10 +5,10 @@ checks the expected IRS draft instruction URL for each form in the TY2025 PDF
 surface and additional active inputs. The form slug is a lookup aid, not
 proof that every form has its own instruction booklet. Current result across
 71 entries: **27 pinned 2026 drafts**, **20 URLs serving 2025 instructions**,
-**15 with no draft at the expected URL**, **4 with 2026 instructions embedded
+**14 with no draft at the expected URL**, **4 with 2026 instructions embedded
 in their form drafts**, **1 covered by a combined 2026 booklet**, **3 with
-current continuous-use instructions**, and **1 current older-revision
-form/instruction pair**. The
+current continuous-use instructions**, **1 current older-revision
+form/instruction pair**, and **1 current form with embedded instructions**. The
 missing and unverified groups are research gates, not unsupported-form
 decisions. Schedule A (Form 8936) is covered by the pinned Form 8936 booklet.
 Forms 4952, 4972, 6252, and 6781 embed their 2026 instructions in the pinned draft forms.
@@ -18,6 +18,8 @@ Form 8912 and its December 2024 instructions explicitly use a continuous-use
 revision; the current PDFs are pinned separately from the draft URL.
 Form 982 remains on its March 2018 form and December 2021 instructions;
 those current products are pinned, with 2026 COD law and MeF still to check.
+Form 8834's October 2024 revision explicitly applies to tax years beginning
+in 2024 or later and includes its own instructions; the current PDF is pinned.
 Form 6252 has its instructions on pages 2–4 of the pinned 2026 draft form;
 some references there still name the old Form 4797 lines, so they need
 final-source reconciliation before coding.

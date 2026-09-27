@@ -53,7 +53,7 @@ f8881,forms/f1040/nodes/inputs/f8881/index.ts,inputs,1,no,no,no,n/a,P1,audit-req
 f8882,forms/f1040/nodes/inputs/f8882/index.ts,inputs,1,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 f8908,forms/f1040/nodes/inputs/f8908/index.ts,inputs,2,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 f8941,forms/f1040/nodes/inputs/f8941/index.ts,inputs,2,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
-f8834,forms/f1040/nodes/inputs/f8834/index.ts,inputs,1,no,yes,yes,no,P1,audit-required,"verify 2026 law, node outputs, and graph route"
+f8834,forms/f1040/nodes/inputs/f8834/index.ts,inputs,1,no,yes,yes,no,P1,audit-required,"Current Oct 2024 form embeds instructions and applies to 2024+; 2026 Schedule 3 line 6i persists; derive Form 8582-CR released legacy passive credit, finalized TMT/order, 11 PDF widgets/current MeF; see FORM8834-GRAPH.md"
 f8874,forms/f1040/nodes/inputs/f8874/index.ts,inputs,1,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 f8911,forms/f1040/nodes/inputs/f8911/index.ts,inputs,1,no,yes,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 f8826,forms/f1040/nodes/inputs/f8826/index.ts,inputs,1,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"

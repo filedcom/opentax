@@ -149,6 +149,11 @@ The [Form 982 contract](FORM982-GRAPH.md) pins the current 2018 form and
 The shared 1099-C source lacks that agreement date, the calculator drops
 fully excluded attachments, and TY2025 PDF fields point at wrong lines;
 Part II attribute reductions and current MeF remain to build.
+The [Form 8834 contract](FORM8834-GRAPH.md) pins the October 2024 form,
+whose embedded instructions apply from 2024 onward, and its 11 widgets.
+Only Form 8582-CR-released legacy passive credits enter line 1; the
+2026 Schedule 3 line 6i route persists, with current MeF and credit-order
+reconciliation to verify.
 The [scenario 12 contract](ATS-SCENARIO-12.md) and
 [business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
 broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800

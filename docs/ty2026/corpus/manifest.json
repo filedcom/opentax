@@ -972,6 +972,15 @@
       "retrieved_utc": "2026-09-27T15:06:03.328880+00:00"
     },
     {
+      "path": "authorities/f8834--2024.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/f8834.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 69296,
+      "sha256": "6a48b2d674eaf6d41eb7c0d0fb1195ce996702b1ce32cacb44ee19f655ef81f9",
+      "retrieved_utc": "2026-09-27T15:09:07.511131+00:00"
+    },
+    {
       "path": "draft/i5695.pdf",
       "url": "https://www.irs.gov/pub/irs-dft/i5695--dft.pdf",
       "kind": "draft-instructions",

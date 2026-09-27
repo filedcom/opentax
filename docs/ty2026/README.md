@@ -128,6 +128,9 @@ for the implementation contract.
 - [`FORM982-GRAPH.md`](FORM982-GRAPH.md) and `pdf-fields-f982.csv`:
   current cancellation-of-debt exclusion form, 2026 QPRI written-agreement
   gate, tax-attribute ledger, and all 27 current PDF widgets.
+- [`FORM8834-GRAPH.md`](FORM8834-GRAPH.md) and `pdf-fields-f8834.csv`:
+  current 2024+ legacy passive vehicle-credit form, Form 8582-CR source,
+  2026 Schedule 3 line 6i, and all 11 current PDF widgets.
 - [`FORM8962-GRAPH.md`](FORM8962-GRAPH.md) and `pdf-fields-f8962.csv`:
   2026 premium tax credit line 27, 400% FPL boundary, Form 1095-A/allocations,
   143 PDF widgets, and MeF/graph acceptance order.
