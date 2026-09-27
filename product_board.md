@@ -1160,9 +1160,11 @@ known binary attachments, including deferral hypotheticals, agreement copy,
 and trust valuation rulings. It validates ID shape and uniqueness, but cannot
 prove that those source PDFs or the original mailed agreement actually exist.
 Local IRS8854 XSD cases for the unregistered initial and annual roots are
-written but unrun. Registration also requires adapting the bundle's supplied
-document IDs to the return assembler's generated IDs and proving its native
-statements and binary attachments are actually emitted. The calculation and rejection cases are
+written but unrun. Both root builders now leave `documentId` to the return
+assembler, and the initial builder accepts only IDs for linked native and
+binary documents. Registration still requires generating those IDs from the
+actual document set and proving its native statements and binary attachments
+are emitted. The calculation and rejection cases are
 written but unrun. See the
 [2025 Form 8854 instructions](https://www.irs.gov/instructions/i8854).
 

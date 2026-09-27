@@ -1146,14 +1146,13 @@ Deno.test("Form 8854 initial bundle assembles Parts I and II without pretending 
   const noncovered = buildForm8854InitialBundle(
     inputSchema.parse(input()),
     {
-      form: "DOC-8854",
       balanceSheet: {},
       sectionC: {},
       binaryAttachments: [],
     },
     { form8949: undefined },
   );
-  assertStringIncludes(noncovered.formXml, '<IRS8854 documentId="DOC-8854">');
+  assertStringIncludes(noncovered.formXml, "<IRS8854>");
   assertStringIncludes(
     noncovered.formXml,
     "<InitialExptrtStmtSpcfdYrInd>X</InitialExptrtStmtSpcfdYrInd>",
@@ -1175,7 +1174,6 @@ Deno.test("Form 8854 initial bundle assembles Parts I and II without pretending 
     section_c: sectionC([asset("stock", 1_000_000, 100_000)]),
   }));
   const coveredIds = {
-    form: "DOC-8854-C",
     balanceSheet: {},
     sectionC: { computation: "DOC-COMP" },
     binaryAttachments: [],
@@ -1214,7 +1212,6 @@ Deno.test("Form 8854 initial bundle requires actual IDs for election PDFs", () =
     section_d: electedDeferral(["stock"]),
   }));
   const ids = {
-    form: "DOC-8854",
     balanceSheet: {},
     sectionC: {
       computation: "DOC-COMP",
@@ -1285,7 +1282,6 @@ Deno.test("Form 8854 trust full-value election requires a linked valuation rulin
     section_c: section,
   }));
   const ids = {
-    form: "DOC-8854",
     balanceSheet: {},
     sectionC: { nongrantorTrust: "DOC-TRUST" },
     binaryAttachments: ["DOC-RULING"],

@@ -40,8 +40,8 @@ const partI = {
 
 function withNamespace(xml: string): string {
   return xml.replace(
-    "<IRS8854 ",
-    '<IRS8854 xmlns="http://www.irs.gov/efile" ',
+    "<IRS8854",
+    '<IRS8854 documentId="IRS88540" xmlns="http://www.irs.gov/efile"',
   );
 }
 
@@ -119,7 +119,6 @@ Deno.test({
     section_d: { elect_deferral: false },
   });
   const bundle = buildForm8854InitialBundle(input, {
-    form: "DOC-8854",
     balanceSheet: {},
     sectionC: { computation: "DOC-COMP" },
     binaryAttachments: [],
@@ -169,5 +168,5 @@ Deno.test({
     eligible_deferred_compensation_items: [],
     nongrantor_trust_interests: [],
   });
-  await validate8854(buildForm8854Annual(input, "DOC-8854-ANNUAL"));
+  await validate8854(buildForm8854Annual(input));
 });

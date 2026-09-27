@@ -25,8 +25,7 @@ import {
   buildForm8854SectionD,
 } from "./f8854_section_d.ts";
 
-export type Form8854InitialDocumentIds = {
-  form: string;
+export type Form8854InitialDocumentLinks = {
   changeStatement?: string;
   balanceSheet: Form8854BalanceSheetStatementIds;
   sectionC: Form8854SectionCStatementIds;
@@ -76,7 +75,7 @@ function requiredBinaryIds(input: F8854Input): string[] {
 }
 
 function validateIds(
-  ids: Form8854InitialDocumentIds,
+  ids: Form8854InitialDocumentLinks,
   statements: readonly Form8854NativeStatement[],
   requiredBinary: readonly string[],
 ): void {
@@ -86,7 +85,6 @@ function validateIds(
     }
   }
   const used = [
-    ids.form,
     ...statements.map((statement) => statement.documentId),
     ...ids.binaryAttachments,
   ];
@@ -101,7 +99,7 @@ function validateIds(
 /** Unregistered initial Form 8854 document and native statement fragments. */
 export function buildForm8854InitialBundle(
   rawInput: F8854Input,
-  ids: Form8854InitialDocumentIds,
+  ids: Form8854InitialDocumentLinks,
   filingPending: { form8949: unknown },
 ): { formXml: string; nativeStatements: Form8854NativeStatement[] } {
   const input = inputSchema.parse(rawInput);
@@ -179,20 +177,21 @@ export function buildForm8854InitialBundle(
     statement !== null
   );
   validateIds(ids, nativeStatements, requiredBinaryIds(input));
-  const formXml = elements("IRS8854", [
-    buildForm8854PartI(input),
-    buildForm8854PartIISectionA(input, ids.changeStatement),
-    buildForm8854BalanceSheet(input, ids.balanceSheet),
-    buildForm8854SectionC(input, ids.sectionC),
-    buildForm8854SectionD(input),
-  ], {
-    documentId: ids.form,
-    ...(ids.binaryAttachments.length
+  const formXml = elements(
+    "IRS8854",
+    [
+      buildForm8854PartI(input),
+      buildForm8854PartIISectionA(input, ids.changeStatement),
+      buildForm8854BalanceSheet(input, ids.balanceSheet),
+      buildForm8854SectionC(input, ids.sectionC),
+      buildForm8854SectionD(input),
+    ],
+    ids.binaryAttachments.length
       ? {
         referenceDocumentId: ids.binaryAttachments.join(" "),
         referenceDocumentName: "BinaryAttachment",
       }
-      : {}),
-  });
+      : undefined,
+  );
   return { formXml, nativeStatements };
 }

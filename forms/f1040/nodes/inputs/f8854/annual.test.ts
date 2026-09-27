@@ -50,8 +50,8 @@ function distribution() {
 
 Deno.test("annual Form 8854 certifies no distributions from a remaining eligible item", () => {
   const parsed = annualInputSchema.parse(annualInput());
-  const xml = buildForm8854Annual(parsed, "DOC-8854-ANNUAL");
-  assertStringIncludes(xml, '<IRS8854 documentId="DOC-8854-ANNUAL">');
+  const xml = buildForm8854Annual(parsed);
+  assertStringIncludes(xml, "<IRS8854>");
   assertStringIncludes(
     xml,
     "<AnnualExptrtStmtBfrSpcfdYrInd>X</AnnualExptrtStmtBfrSpcfdYrInd>",
@@ -155,11 +155,6 @@ Deno.test("annual Form 8854 rejects missing obligations and unsupported years", 
       },
     })).success,
     false,
-  );
-  assertThrows(
-    () => buildForm8854Annual(annualInputSchema.parse(annualInput()), "bad id"),
-    Error,
-    "MeF IdType",
   );
 });
 

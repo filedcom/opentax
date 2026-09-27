@@ -59,14 +59,10 @@ export function buildForm8854PartIII(rawInput: F8854AnnualInput): string {
 /** Unregistered annual IRS8854 document, separate from the 2025 initial path. */
 export function buildForm8854Annual(
   rawInput: F8854AnnualInput,
-  documentId: string,
 ): string {
   const input = annualInputSchema.parse(rawInput);
-  if (!/^[A-Za-z0-9:.\-]{1,30}$/.test(documentId)) {
-    throw new Error("Annual Form 8854 document ID must match MeF IdType");
-  }
   return elements("IRS8854", [
     buildForm8854PartIFields(input.part_i, "ANNUAL"),
     buildForm8854PartIII(input),
-  ], { documentId });
+  ]);
 }
