@@ -60,8 +60,18 @@ const f8835CreditEntrySchema = z.object({
 });
 
 const f8826CreditEntrySchema = z.object({
+  source_type: z.enum(["self", "partnership", "s_corporation"]),
+  source_ein: z.string().regex(/^\d{9}$/).optional(),
   credit_amount: z.number().finite().nonnegative(),
   subject_to_passive_activity_limit: z.boolean(),
+}).superRefine((entry, ctx) => {
+  if ((entry.source_type === "self") === (entry.source_ein !== undefined)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message:
+        "Form 8826 source EIN is required only for a pass-through source",
+    });
+  }
 });
 
 export const inputSchema = z.object({

@@ -79,6 +79,7 @@ Deno.test("f3800: Form 8826 source credit stops before Schedule 3", () => {
     () =>
       f3800.compute({ taxYear: 2025, formType: "f1040" }, {
         f8826_credit_entries: [{
+          source_type: "self",
           credit_amount: 2_375,
           subject_to_passive_activity_limit: false,
         }],
@@ -93,6 +94,7 @@ Deno.test("f3800: passive Form 8826 source credit requires Form 8582-CR", () => 
     () =>
       f3800.compute({ taxYear: 2025, formType: "f1040" }, {
         f8826_credit_entries: [{
+          source_type: "self",
           credit_amount: 2_375,
           subject_to_passive_activity_limit: true,
         }],
@@ -105,11 +107,36 @@ Deno.test("f3800: passive Form 8826 source credit requires Form 8582-CR", () => 
 Deno.test("f3800: zero Form 8826 source credit produces no Schedule 3 claim", () => {
   const result = f3800.compute({ taxYear: 2025, formType: "f1040" }, {
     f8826_credit_entries: [{
+      source_type: "self",
       credit_amount: 0,
       subject_to_passive_activity_limit: false,
     }],
   });
   assertEquals(result.outputs, []);
+});
+
+Deno.test("f3800: Form 8826 source type and EIN must agree", () => {
+  assertEquals(
+    f3800.inputSchema.safeParse({
+      f8826_credit_entries: [{
+        source_type: "partnership",
+        credit_amount: 1_000,
+        subject_to_passive_activity_limit: false,
+      }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    f3800.inputSchema.safeParse({
+      f8826_credit_entries: [{
+        source_type: "self",
+        source_ein: "123456789",
+        credit_amount: 1_000,
+        subject_to_passive_activity_limit: false,
+      }],
+    }).success,
+    false,
+  );
 });
 
 Deno.test("f3800.inputSchema: valid minimal item (empty object) passes", () => {

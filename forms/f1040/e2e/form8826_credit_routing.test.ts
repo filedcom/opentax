@@ -24,6 +24,7 @@ Deno.test("Form 8826 credit reaches Form 3800 but cannot bypass its tax limit", 
   }, { taxYear: 2025, formType: "f1040" });
 
   assertEquals(result.pending.f3800?.f8826_credit_entries, [{
+    source_type: "self",
     credit_amount: 2_375,
     subject_to_passive_activity_limit: false,
   }]);
@@ -36,4 +37,42 @@ Deno.test("Form 8826 credit reaches Form 3800 but cannot bypass its tax limit", 
     diagnostic.nodeType === "f3800"
   );
   assertMatch(form3800Failure?.message ?? "", /tax-liability limitation/);
+});
+
+Deno.test("pass-through-only disabled-access credit reaches Form 3800 without self eligibility facts", () => {
+  const result = execute(plan, registry, {
+    general: {
+      filing_status: FilingStatus.Single,
+      taxpayer_first_name: "Alex",
+      taxpayer_last_name: "Taxpayer",
+      taxpayer_ssn: "123-45-6789",
+      taxpayer_dob: "1985-06-15",
+    },
+    f8826: {
+      eligible_expenditures: 0,
+      subject_to_passive_activity_limit: false,
+      pass_through_credits: [{
+        entity_type: "s_corporation",
+        entity_ein: "987654321",
+        credit_amount: 1_250,
+        subject_to_passive_activity_limit: false,
+      }],
+    },
+  }, { taxYear: 2025, formType: "f1040" });
+
+  assertEquals(result.pending.f3800?.f8826_credit_entries, [{
+    source_type: "s_corporation",
+    source_ein: "987654321",
+    credit_amount: 1_250,
+    subject_to_passive_activity_limit: false,
+  }]);
+  assertEquals(
+    result.pending.schedule3?.line6a_general_business_credit,
+    undefined,
+  );
+  assertMatch(
+    result.diagnostics.find((diagnostic) => diagnostic.nodeType === "f3800")
+      ?.message ?? "",
+    /tax-liability limitation/,
+  );
 });
