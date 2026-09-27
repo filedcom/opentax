@@ -31,6 +31,10 @@ The alternative [Form 8814 parent election](../../../docs/ty2026/FORM8814-GRAPH.
 maps per-child eligibility, dividend/capital-gain allocation and parent
 tax/credit effects. Its 26 PDF widgets, source validation and current MeF
 route remain outside this registry.
+The [Form 8997 contract](../../../docs/ty2026/FORM8997-GRAPH.md) maps the
+2026 end of the legacy QOF deferral, new Part III Section B, reserved Part IV
+and post-deferral Part V. The 461-widget draft form and paired Form 8949
+routes remain outside this registry.
 The [Form 2555 contract](../../../docs/ty2026/FORM2555-GRAPH.md) maps the
 2026 $132,900 exclusion, location-specific housing limits, Schedule 1
 lines 8d/24j, SE tax and Form 1116 reductions. The structured shared

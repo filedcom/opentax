@@ -1,0 +1,462 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_01[0],/Tx,Page 1. Name. ,2,36 672.466 387.8 685.967,yes
+topmostSubform[0].Page1[0].f1_02[0],/Tx,Taxpayer identification number (T I N) (see instructions). ,2,389.8 672.466 576 685.967,yes
+topmostSubform[0].Page1[0].Table_Part1[0].Row1[0].f1_03[0],/Tx,"Part I. Total QOF Investment Holdings Due to Deferrals Prior to Beginning of Tax Year. If different from last year’s ending Q O F investment holdings, attach explanation. Row: 1. Column: (a) Q O F  E I N. ",2,36 576.468 92.6 587.969,yes
+topmostSubform[0].Page1[0].Table_Part1[0].Row1[0].f1_04[0],/Tx,Row: 1. Column: (b) Date Q O F investment acquired (M M/D D/Y Y Y Y). ,2,94.6 576.468 150.2 587.969,yes
+topmostSubform[0].Page1[0].Table_Part1[0].Row1[0].f1_05[0],/Tx,"Row: 1. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",2,152.2 576.468 380.6 587.969,yes
+topmostSubform[0].Page1[0].Table_Part1[0].Row1[0].f1_06[0],/Tx,Row: 1. Column: (d) Special gain code. ,2,382.6 576.468 416.6 587.969,yes
+topmostSubform[0].Page1[0].Table_Part1[0].Row1[0].f1_07[0],/Tx,Row: 1. Column: Deferred gain held in Q O F. (e) Amount of short-term deferred gain remaining in Q O F. ,2,418.6 576.468 495.8 587.969,yes
+topmostSubform[0].Page1[0].Table_Part1[0].Row1[0].f1_08[0],/Tx,Row: 1. Column: Deferred gain held in Q O F. (f) Amount of long-term deferred gain remaining in Q O F. ,2,497.8 576.468 576 587.969,yes
+topmostSubform[0].Page1[0].Table_Part1[0].Row2[0].f1_09[0],/Tx,Row: 2. Column: (a) Q O F  E I N. ,2,36 552.467 92.6 563.968,yes
+topmostSubform[0].Page1[0].Table_Part1[0].Row2[0].f1_10[0],/Tx,Row: 2. Column: (b) Date Q O F investment acquired (M M/D D/Y Y Y Y). ,2,94.6 552.467 150.2 563.968,yes
+topmostSubform[0].Page1[0].Table_Part1[0].Row2[0].f1_11[0],/Tx,"Row: 2. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",2,152.2 552.467 380.6 563.968,yes
+topmostSubform[0].Page1[0].Table_Part1[0].Row2[0].f1_12[0],/Tx,Row: 2. Column: (d) Special gain code. ,2,382.6 552.467 416.6 563.968,yes
+topmostSubform[0].Page1[0].Table_Part1[0].Row2[0].f1_13[0],/Tx,Row: 2. Column: Deferred gain held in Q O F. (e) Amount of short-term deferred gain remaining in Q O F. ,2,418.6 552.467 495.8 563.968,yes
+topmostSubform[0].Page1[0].Table_Part1[0].Row2[0].f1_14[0],/Tx,Row: 2. Column: Deferred gain held in Q O F. (f) Amount of long-term deferred gain remaining in Q O F. ,2,497.8 552.467 576 563.968,yes
+topmostSubform[0].Page1[0].Table_Part1[0].Row3[0].f1_15[0],/Tx,Row: 3. Column: (a) Q O F  E I N. ,2,36 528.466 92.6 539.967,yes
+topmostSubform[0].Page1[0].Table_Part1[0].Row3[0].f1_16[0],/Tx,Row: 3. Column: (b) Date Q O F investment acquired (M M/D D/Y Y Y Y). ,2,94.6 528.466 150.2 539.967,yes
+topmostSubform[0].Page1[0].Table_Part1[0].Row3[0].f1_17[0],/Tx,"Row: 3. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",2,152.2 528.466 380.6 539.967,yes
+topmostSubform[0].Page1[0].Table_Part1[0].Row3[0].f1_18[0],/Tx,Row: 3. Column: (d) Special gain code. ,2,382.6 528.466 416.6 539.967,yes
+topmostSubform[0].Page1[0].Table_Part1[0].Row3[0].f1_19[0],/Tx,Row: 3. Column: Deferred gain held in Q O F. (e) Amount of short-term deferred gain remaining in Q O F. ,2,418.6 528.466 495.8 539.967,yes
+topmostSubform[0].Page1[0].Table_Part1[0].Row3[0].f1_20[0],/Tx,Row: 3. Column: Deferred gain held in Q O F. (f) Amount of long-term deferred gain remaining in Q O F. ,2,497.8 528.466 576 539.967,yes
+topmostSubform[0].Page1[0].Table_Part1[0].Row4[0].f1_21[0],/Tx,Row: 4. Column: (a) Q O F  E I N. ,2,36 504.465 92.6 515.966,yes
+topmostSubform[0].Page1[0].Table_Part1[0].Row4[0].f1_22[0],/Tx,Row: 4. Column: (b) Date Q O F investment acquired (M M/D D/Y Y Y Y). ,2,94.6 504.465 150.2 515.966,yes
+topmostSubform[0].Page1[0].Table_Part1[0].Row4[0].f1_23[0],/Tx,"Row: 4. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",2,152.2 504.465 380.6 515.966,yes
+topmostSubform[0].Page1[0].Table_Part1[0].Row4[0].f1_24[0],/Tx,Row: 4. Column: (d) Special gain code. ,2,382.6 504.465 416.6 515.966,yes
+topmostSubform[0].Page1[0].Table_Part1[0].Row4[0].f1_25[0],/Tx,Row: 4. Column: Deferred gain held in Q O F. (e) Amount of short-term deferred gain remaining in Q O F. ,2,418.6 504.465 495.8 515.966,yes
+topmostSubform[0].Page1[0].Table_Part1[0].Row4[0].f1_26[0],/Tx,Row: 4. Column: Deferred gain held in Q O F. (f) Amount of long-term deferred gain remaining in Q O F. ,2,497.8 504.465 576 515.966,yes
+topmostSubform[0].Page1[0].Table_Part1[0].Row5[0].f1_27[0],/Tx,Row: 5. Column: (a) Q O F  E I N. ,2,36 480.464 92.6 491.965,yes
+topmostSubform[0].Page1[0].Table_Part1[0].Row5[0].f1_28[0],/Tx,Row: 5. Column: (b) Date Q O F investment acquired (M M/D D/Y Y Y Y). ,2,94.6 480.464 150.2 491.965,yes
+topmostSubform[0].Page1[0].Table_Part1[0].Row5[0].f1_29[0],/Tx,"Row: 5. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",2,152.2 480.464 380.6 491.965,yes
+topmostSubform[0].Page1[0].Table_Part1[0].Row5[0].f1_30[0],/Tx,Row: 5. Column: (d) Special gain code. ,2,382.6 480.464 416.6 491.965,yes
+topmostSubform[0].Page1[0].Table_Part1[0].Row5[0].f1_31[0],/Tx,Row: 5. Column: Deferred gain held in Q O F. (e) Amount of short-term deferred gain remaining in Q O F. ,2,418.6 480.464 495.8 491.965,yes
+topmostSubform[0].Page1[0].Table_Part1[0].Row5[0].f1_32[0],/Tx,Row: 5. Column: Deferred gain held in Q O F. (f) Amount of long-term deferred gain remaining in Q O F. ,2,497.8 480.464 576 491.965,yes
+topmostSubform[0].Page1[0].f1_33[0],/Tx,"1. Enter the totals, if any, from continuation sheet. Deferred gain held in Q O F. (e) Amount of short-term deferred gain remaining in Q O F. ",2,418.6 456.466 495.8 467.967,yes
+topmostSubform[0].Page1[0].f1_34[0],/Tx,1. Deferred gain held in Q O F. (f) Amount of long-term deferred gain remaining in Q O F. ,2,497.8 456.466 576 467.967,yes
+topmostSubform[0].Page1[0].f1_35[0],/Tx,2. Enter the totals from columns (e) and (f). Deferred gain held in Q O F. (e) Amount of short-term deferred gain remaining in Q O F. ,2,418.6 432.468 495.8 443.969,yes
+topmostSubform[0].Page1[0].f1_36[0],/Tx,2. Deferred gain held in Q O F. (f) Amount of long-term deferred gain remaining in Q O F. ,2,497.8 432.468 576 443.969,yes
+topmostSubform[0].Page1[0].Table_Part2[0].Row1[0].f1_37[0],/Tx,Part I I. Current Tax Year Capital Gains Deferred by Investing in Q O F. Row: 1. Column: (a) Q O F  E I N. ,2,36 348.466 92.6 359.967,yes
+topmostSubform[0].Page1[0].Table_Part2[0].Row1[0].f1_38[0],/Tx,Row: 1. Column: (b) Date Q O F investment acquired (M M/D D/Y Y Y Y). ,2,94.6 348.466 150.2 359.967,yes
+topmostSubform[0].Page1[0].Table_Part2[0].Row1[0].f1_39[0],/Tx,"Row: 1. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",2,152.2 348.466 380.6 359.967,yes
+topmostSubform[0].Page1[0].Table_Part2[0].Row1[0].f1_40[0],/Tx,Row: 1. Column: (d) Special gain code. ,2,382.6 348.466 416.6 359.967,yes
+topmostSubform[0].Page1[0].Table_Part2[0].Row1[0].f1_41[0],/Tx,Row: 1. Column: Deferred gain invested in Q O F. (e) Amount of short-term deferred gain in Q O F. ,2,418.6 348.466 495.8 359.967,yes
+topmostSubform[0].Page1[0].Table_Part2[0].Row1[0].f1_42[0],/Tx,Row: 1. Column: Deferred gain invested in Q O F. (f) Amount of long-term deferred gain in Q O F. ,2,497.8 348.466 576 359.967,yes
+topmostSubform[0].Page1[0].Table_Part2[0].Row2[0].f1_43[0],/Tx,Row: 2. Column: (a) Q O F  E I N. ,2,36 324.465 92.6 335.966,yes
+topmostSubform[0].Page1[0].Table_Part2[0].Row2[0].f1_44[0],/Tx,Row: 2. Column: (b) Date Q O F investment acquired (M M/D D/Y Y Y Y). ,2,94.6 324.465 150.2 335.966,yes
+topmostSubform[0].Page1[0].Table_Part2[0].Row2[0].f1_45[0],/Tx,"Row: 2. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",2,152.2 324.465 380.6 335.966,yes
+topmostSubform[0].Page1[0].Table_Part2[0].Row2[0].f1_46[0],/Tx,Row: 2. Column: (d) Special gain code. ,2,382.6 324.465 416.6 335.966,yes
+topmostSubform[0].Page1[0].Table_Part2[0].Row2[0].f1_47[0],/Tx,Row: 2. Column: Deferred gain invested in Q O F. (e) Amount of short-term deferred gain in Q O F. ,2,418.6 324.465 495.8 335.966,yes
+topmostSubform[0].Page1[0].Table_Part2[0].Row2[0].f1_48[0],/Tx,Row: 2. Column: Deferred gain invested in Q O F. (f) Amount of long-term deferred gain in Q O F. ,2,497.8 324.465 576 335.966,yes
+topmostSubform[0].Page1[0].Table_Part2[0].Row3[0].f1_49[0],/Tx,Row: 3. Column: (a) Q O F  E I N. ,2,36 300.464 92.6 311.965,yes
+topmostSubform[0].Page1[0].Table_Part2[0].Row3[0].f1_50[0],/Tx,Row: 3. Column: (b) Date Q O F investment acquired (M M/D D/Y Y Y Y). ,2,94.6 300.464 150.2 311.965,yes
+topmostSubform[0].Page1[0].Table_Part2[0].Row3[0].f1_51[0],/Tx,"Row: 3. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",2,152.2 300.464 380.6 311.965,yes
+topmostSubform[0].Page1[0].Table_Part2[0].Row3[0].f1_52[0],/Tx,Row: 3. Column: (d) Special gain code. ,2,382.6 300.464 416.6 311.965,yes
+topmostSubform[0].Page1[0].Table_Part2[0].Row3[0].f1_53[0],/Tx,Row: 3. Column: Deferred gain invested in Q O F. (e) Amount of short-term deferred gain in Q O F. ,2,418.6 300.464 495.8 311.965,yes
+topmostSubform[0].Page1[0].Table_Part2[0].Row3[0].f1_54[0],/Tx,Row: 3. Column: Deferred gain invested in Q O F. (f) Amount of long-term deferred gain in Q O F. ,2,497.8 300.464 576 311.965,yes
+topmostSubform[0].Page1[0].Table_Part2[0].Row4[0].f1_55[0],/Tx,Row: 4. Column: (a) Q O F  E I N. ,2,36 276.463 92.6 287.964,yes
+topmostSubform[0].Page1[0].Table_Part2[0].Row4[0].f1_56[0],/Tx,Row: 4. Column: (b) Date Q O F investment acquired (M M/D D/Y Y Y Y). ,2,94.6 276.463 150.2 287.964,yes
+topmostSubform[0].Page1[0].Table_Part2[0].Row4[0].f1_57[0],/Tx,"Row: 4. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",2,152.2 276.463 380.6 287.964,yes
+topmostSubform[0].Page1[0].Table_Part2[0].Row4[0].f1_58[0],/Tx,Row: 4. Column: (d) Special gain code. ,2,382.6 276.463 416.6 287.964,yes
+topmostSubform[0].Page1[0].Table_Part2[0].Row4[0].f1_59[0],/Tx,Row: 4. Column: Deferred gain invested in Q O F. (e) Amount of short-term deferred gain in Q O F. ,2,418.6 276.463 495.8 287.964,yes
+topmostSubform[0].Page1[0].Table_Part2[0].Row4[0].f1_60[0],/Tx,Row: 4. Column: Deferred gain invested in Q O F. (f) Amount of long-term deferred gain in Q O F. ,2,497.8 276.463 576 287.964,yes
+topmostSubform[0].Page1[0].Table_Part2[0].Row5[0].f1_61[0],/Tx,Row: 5. Column: (a) Q O F  E I N. ,2,36 252.462 92.6 263.963,yes
+topmostSubform[0].Page1[0].Table_Part2[0].Row5[0].f1_62[0],/Tx,Row: 5. Column: (b) Date Q O F investment acquired (M M/D D/Y Y Y Y). ,2,94.6 252.462 150.2 263.963,yes
+topmostSubform[0].Page1[0].Table_Part2[0].Row5[0].f1_63[0],/Tx,"Row: 5. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",2,152.2 252.462 380.6 263.963,yes
+topmostSubform[0].Page1[0].Table_Part2[0].Row5[0].f1_64[0],/Tx,Row: 5. Column: (d) Special gain code. ,2,382.6 252.462 416.6 263.963,yes
+topmostSubform[0].Page1[0].Table_Part2[0].Row5[0].f1_65[0],/Tx,Row: 5. Column: Deferred gain invested in Q O F. (e) Amount of short-term deferred gain in Q O F. ,2,418.6 252.462 495.8 263.963,yes
+topmostSubform[0].Page1[0].Table_Part2[0].Row5[0].f1_66[0],/Tx,Row: 5. Column: Deferred gain invested in Q O F. (f) Amount of long-term deferred gain in Q O F. ,2,497.8 252.462 576 263.963,yes
+topmostSubform[0].Page1[0].f1_67[0],/Tx,"1. Enter the totals, if any, from continuation sheet. Deferred gain invested in Q O F. (e) Amount of short-term deferred gain in Q O F. ",2,418.6 228.467 495.8 239.968,yes
+topmostSubform[0].Page1[0].f1_68[0],/Tx,1. Deferred gain invested in Q O F. (f) Amount of long-term deferred gain in Q O F. ,2,497.8 228.467 576 239.968,yes
+topmostSubform[0].Page1[0].f1_69[0],/Tx,2. Enter the totals from columns (e) and (f). See instructions for reporting on Form 8949. Deferred gain invested in Q O F. (e) Amount of short-term deferred gain in Q O F. ,2,418.6 192.467 495.8 203.967,yes
+topmostSubform[0].Page1[0].f1_70[0],/Tx,2. Deferred gain invested in Q O F. (f) Amount of long-term deferred gain in Q O F. ,2,497.8 192.467 576 203.967,yes
+topmostSubform[0].Page1[0].c1_1[0],/Btn,Applicability of Special Rules Regarding the Waiver of Certain Treaty Benefits. Are you a foreign eligible taxpayer? See instructions for more information. Yes. You may not elect to defer tax on an eligible gain by investing in a Q O F unless you check “Yes” in response to the next question. ,2,49.611 157.97 57.611 165.97,yes
+topmostSubform[0].Page1[0].c1_1[1],/Btn,No. Skip the next question and go to Part I I I. ,2,49.611 135.219 57.611 143.219,yes
+topmostSubform[0].Page1[0].c1_2[0],/Btn,Waiver of Treaty Benefits on Future Inclusions by a Foreign Eligible Taxpayer. Do you hereby irrevocably waive any benefits available under an applicable U.S. income tax convention that would exempt gains that you are deferring by investing in a Q O F from being subject to federal income tax at the time of inclusion? See instructions for more information. Yes. Report the deferral of the eligible gain in Part I I and on Form 8949. ,2,49.611 73.968 57.611 81.968,yes
+topmostSubform[0].Page1[0].c1_2[1],/Btn,No. You may not elect to defer tax on an eligible gain by investing in a Q O F. Do not report the deferral of any otherwise eligible gain in Part I I or on Form 8949. ,2,49.611 61.969 57.611 69.969,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row1[0].f2_01[0],/Tx,Page 2. Part I I I. Current-Year Capital Gains Recognized From Q O F Investments and Certain Other Transfers. Section A—Inclusion Events and Certain Other Transfers Before End of Deferral Period (see instructions). Row: 1. Column: (a) Q O F  E I N. ,3,36 462.499 99.8 474,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row1[0].f2_02[0],/Tx,Row: 1. Column: (b) Date of event (M M/D D/Y Y Y Y). ,3,101.8 462.499 164.6 474,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row1[0].f2_03[0],/Tx,"Row: 1. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",3,166.6 462.499 402.2 474,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row1[0].f2_04[0],/Tx,Row: 1. Column: (d) Deferred gain held in Q O F (see instructions). ,3,404.2 462.499 481.4 474,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row1[0].f2_05[0],/Tx,Row: 1. Column: (e) Fair market value (see instructions). ,3,483.4 462.499 560.6 474,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row1[0].f2_06[0],/Tx,Row: 1. Column: (f) Special gain code. ,3,562.6 462.499 596.6 474,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row1[0].f2_07[0],/Tx,Row: 1. Column: Amount of previously deferred gain included in gross income due to an inclusion event (see instructions). (g) Short-term gain. ,3,598.6 462.499 675.8 474,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row1[0].f2_08[0],/Tx,Row: 1. Column: Amount of previously deferred gain included in gross income due to an inclusion event (see instructions). (h) Long-term gain. ,3,677.8 462.499 756 474,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row2[0].f2_09[0],/Tx,Row: 2. Column: (a) Q O F  E I N. ,3,36 438.498 99.8 449.999,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row2[0].f2_10[0],/Tx,Row: 2. Column: (b) Date of event (M M/D D/Y Y Y Y). ,3,101.8 438.498 164.6 449.999,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row2[0].f2_11[0],/Tx,"Row: 2. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",3,166.6 438.498 402.2 449.999,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row2[0].f2_12[0],/Tx,Row: 2. Column: (d) Deferred gain held in Q O F (see instructions). ,3,404.2 438.498 481.4 449.999,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row2[0].f2_13[0],/Tx,Row: 2. Column: (e) Fair market value (see instructions). ,3,483.4 438.498 560.6 449.999,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row2[0].f2_14[0],/Tx,Row: 2. Column: (f) Special gain code. ,3,562.6 438.498 596.6 449.999,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row2[0].f2_15[0],/Tx,Row: 2. Column: Amount of previously deferred gain included in gross income due to an inclusion event (see instructions). (g) Short-term gain. ,3,598.6 438.498 675.8 449.999,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row2[0].f2_16[0],/Tx,Row: 2. Column: Amount of previously deferred gain included in gross income due to an inclusion event (see instructions). (h) Long-term gain. ,3,677.8 438.498 756 449.999,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row3[0].f2_17[0],/Tx,Row: 3. Column: (a) Q O F  E I N. ,3,36 414.497 99.8 425.998,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row3[0].f2_18[0],/Tx,Row: 3. Column: (b) Date of event (M M/D D/Y Y Y Y). ,3,101.8 414.497 164.6 425.998,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row3[0].f2_19[0],/Tx,"Row: 3. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",3,166.6 414.497 402.2 425.998,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row3[0].f2_20[0],/Tx,Row: 3. Column: (d) Deferred gain held in Q O F (see instructions). ,3,404.2 414.497 481.4 425.998,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row3[0].f2_21[0],/Tx,Row: 3. Column: (e) Fair market value (see instructions). ,3,483.4 414.497 560.6 425.998,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row3[0].f2_22[0],/Tx,Row: 3. Column: (f) Special gain code. ,3,562.6 414.497 596.6 425.998,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row3[0].f2_23[0],/Tx,Row: 3. Column: Amount of previously deferred gain included in gross income due to an inclusion event (see instructions). (g) Short-term gain. ,3,598.6 414.497 675.8 425.998,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row3[0].f2_24[0],/Tx,Row: 3. Column: Amount of previously deferred gain included in gross income due to an inclusion event (see instructions). (h) Long-term gain. ,3,677.8 414.497 756 425.998,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row4[0].f2_25[0],/Tx,Row: 4. Column: (a) Q O F  E I N. ,3,36 390.496 99.8 401.997,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row4[0].f2_26[0],/Tx,Row: 4. Column: (b) Date of event (M M/D D/Y Y Y Y). ,3,101.8 390.496 164.6 401.997,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row4[0].f2_27[0],/Tx,"Row: 4. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",3,166.6 390.496 402.2 401.997,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row4[0].f2_28[0],/Tx,Row: 4. Column: (d) Deferred gain held in Q O F (see instructions). ,3,404.2 390.496 481.4 401.997,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row4[0].f2_29[0],/Tx,Row: 4. Column: (e) Fair market value (see instructions). ,3,483.4 390.496 560.6 401.997,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row4[0].f2_30[0],/Tx,Row: 4. Column: (f) Special gain code. ,3,562.6 390.496 596.6 401.997,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row4[0].f2_31[0],/Tx,Row: 4. Column: Amount of previously deferred gain included in gross income due to an inclusion event (see instructions). (g) Short-term gain. ,3,598.6 390.496 675.8 401.997,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row4[0].f2_32[0],/Tx,Row: 4. Column: Amount of previously deferred gain included in gross income due to an inclusion event (see instructions). (h) Long-term gain. ,3,677.8 390.496 756 401.997,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row5[0].f2_33[0],/Tx,Row: 5. Column: (a) Q O F  E I N. ,3,36 366.495 99.8 377.996,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row5[0].f2_34[0],/Tx,Row: 5. Column: (b) Date of event (M M/D D/Y Y Y Y). ,3,101.8 366.495 164.6 377.996,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row5[0].f2_35[0],/Tx,"Row: 5. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",3,166.6 366.495 402.2 377.996,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row5[0].f2_36[0],/Tx,Row: 5. Column: (d) Deferred gain held in Q O F (see instructions). ,3,404.2 366.495 481.4 377.996,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row5[0].f2_37[0],/Tx,Row: 5. Column: (e) Fair market value (see instructions). ,3,483.4 366.495 560.6 377.996,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row5[0].f2_38[0],/Tx,Row: 5. Column: (f) Special gain code. ,3,562.6 366.495 596.6 377.996,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row5[0].f2_39[0],/Tx,Row: 5. Column: Amount of previously deferred gain included in gross income due to an inclusion event (see instructions). (g) Short-term gain. ,3,598.6 366.495 675.8 377.996,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row5[0].f2_40[0],/Tx,Row: 5. Column: Amount of previously deferred gain included in gross income due to an inclusion event (see instructions). (h) Long-term gain. ,3,677.8 366.495 756 377.996,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row6[0].f2_41[0],/Tx,Row: 6. Column: (a) Q O F  E I N. ,3,36 342.494 99.8 353.995,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row6[0].f2_42[0],/Tx,Row: 6. Column: (b) Date of event (M M/D D/Y Y Y Y). ,3,101.8 342.494 164.6 353.995,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row6[0].f2_43[0],/Tx,"Row: 6. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",3,166.6 342.494 402.2 353.995,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row6[0].f2_44[0],/Tx,Row: 6. Column: (d) Deferred gain held in Q O F (see instructions). ,3,404.2 342.494 481.4 353.995,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row6[0].f2_45[0],/Tx,Row: 6. Column: (e) Fair market value (see instructions). ,3,483.4 342.494 560.6 353.995,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row6[0].f2_46[0],/Tx,Row: 6. Column: (f) Special gain code. ,3,562.6 342.494 596.6 353.995,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row6[0].f2_47[0],/Tx,Row: 6. Column: Amount of previously deferred gain included in gross income due to an inclusion event (see instructions). (g) Short-term gain. ,3,598.6 342.494 675.8 353.995,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row6[0].f2_48[0],/Tx,Row: 6. Column: Amount of previously deferred gain included in gross income due to an inclusion event (see instructions). (h) Long-term gain. ,3,677.8 342.494 756 353.995,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row7[0].f2_49[0],/Tx,Row: 7. Column: (a) Q O F  E I N. ,3,36 318.493 99.8 329.994,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row7[0].f2_50[0],/Tx,Row: 7. Column: (b) Date of event (M M/D D/Y Y Y Y). ,3,101.8 318.493 164.6 329.994,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row7[0].f2_51[0],/Tx,"Row: 7. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",3,166.6 318.493 402.2 329.994,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row7[0].f2_52[0],/Tx,Row: 7. Column: (d) Deferred gain held in Q O F (see instructions). ,3,404.2 318.493 481.4 329.994,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row7[0].f2_53[0],/Tx,Row: 7. Column: (e) Fair market value (see instructions). ,3,483.4 318.493 560.6 329.994,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row7[0].f2_54[0],/Tx,Row: 7. Column: (f) Special gain code. ,3,562.6 318.493 596.6 329.994,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row7[0].f2_55[0],/Tx,Row: 7. Column: Amount of previously deferred gain included in gross income due to an inclusion event (see instructions). (g) Short-term gain. ,3,598.6 318.493 675.8 329.994,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row7[0].f2_56[0],/Tx,Row: 7. Column: Amount of previously deferred gain included in gross income due to an inclusion event (see instructions). (h) Long-term gain. ,3,677.8 318.493 756 329.994,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row8[0].f2_57[0],/Tx,Row: 8. Column: (a) Q O F  E I N. ,3,36 294.492 99.8 305.993,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row8[0].f2_58[0],/Tx,Row: 8. Column: (b) Date of event (M M/D D/Y Y Y Y). ,3,101.8 294.492 164.6 305.993,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row8[0].f2_59[0],/Tx,"Row: 8. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",3,166.6 294.492 402.2 305.993,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row8[0].f2_60[0],/Tx,Row: 8. Column: (d) Deferred gain held in Q O F (see instructions). ,3,404.2 294.492 481.4 305.993,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row8[0].f2_61[0],/Tx,Row: 8. Column: (e) Fair market value (see instructions). ,3,483.4 294.492 560.6 305.993,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row8[0].f2_62[0],/Tx,Row: 8. Column: (f) Special gain code. ,3,562.6 294.492 596.6 305.993,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row8[0].f2_63[0],/Tx,Row: 8. Column: Amount of previously deferred gain included in gross income due to an inclusion event (see instructions). (g) Short-term gain. ,3,598.6 294.492 675.8 305.993,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row8[0].f2_64[0],/Tx,Row: 8. Column: Amount of previously deferred gain included in gross income due to an inclusion event (see instructions). (h) Long-term gain. ,3,677.8 294.492 756 305.993,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row9[0].f2_65[0],/Tx,Row: 9. Column: (a) Q O F  E I N. ,3,36 270.491 99.8 281.992,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row9[0].f2_66[0],/Tx,Row: 9. Column: (b) Date of event (M M/D D/Y Y Y Y). ,3,101.8 270.491 164.6 281.992,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row9[0].f2_67[0],/Tx,"Row: 9. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",3,166.6 270.491 402.2 281.992,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row9[0].f2_68[0],/Tx,Row: 9. Column: (d) Deferred gain held in Q O F (see instructions). ,3,404.2 270.491 481.4 281.992,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row9[0].f2_69[0],/Tx,Row: 9. Column: (e) Fair market value (see instructions). ,3,483.4 270.491 560.6 281.992,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row9[0].f2_70[0],/Tx,Row: 9. Column: (f) Special gain code. ,3,562.6 270.491 596.6 281.992,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row9[0].f2_71[0],/Tx,Row: 9. Column: Amount of previously deferred gain included in gross income due to an inclusion event (see instructions). (g) Short-term gain. ,3,598.6 270.491 675.8 281.992,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row9[0].f2_72[0],/Tx,Row: 9. Column: Amount of previously deferred gain included in gross income due to an inclusion event (see instructions). (h) Long-term gain. ,3,677.8 270.491 756 281.992,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row10[0].f2_73[0],/Tx,Row: 10. Column: (a) Q O F  E I N. ,3,36 246.49 99.8 257.991,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row10[0].f2_74[0],/Tx,Row: 10. Column: (b) Date of event (M M/D D/Y Y Y Y). ,3,101.8 246.49 164.6 257.991,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row10[0].f2_75[0],/Tx,"Row: 10. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",3,166.6 246.49 402.2 257.991,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row10[0].f2_76[0],/Tx,Row: 10. Column: (d) Deferred gain held in Q O F (see instructions). ,3,404.2 246.49 481.4 257.991,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row10[0].f2_77[0],/Tx,Row: 10. Column: (e) Fair market value (see instructions). ,3,483.4 246.49 560.6 257.991,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row10[0].f2_78[0],/Tx,Row: 10. Column: (f) Special gain code. ,3,562.6 246.49 596.6 257.991,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row10[0].f2_79[0],/Tx,Row: 10. Column: Amount of previously deferred gain included in gross income due to an inclusion event (see instructions). (g) Short-term gain. ,3,598.6 246.49 675.8 257.991,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row10[0].f2_80[0],/Tx,Row: 10. Column: Amount of previously deferred gain included in gross income due to an inclusion event (see instructions). (h) Long-term gain. ,3,677.8 246.49 756 257.991,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row11[0].f2_81[0],/Tx,Row: 11. Column: (a) Q O F  E I N. ,3,36 222.489 99.8 233.99,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row11[0].f2_82[0],/Tx,Row: 11. Column: (b) Date of event (M M/D D/Y Y Y Y). ,3,101.8 222.489 164.6 233.99,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row11[0].f2_83[0],/Tx,"Row: 11. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",3,166.6 222.489 402.2 233.99,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row11[0].f2_84[0],/Tx,Row: 11. Column: (d) Deferred gain held in Q O F (see instructions). ,3,404.2 222.489 481.4 233.99,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row11[0].f2_85[0],/Tx,Row: 11. Column: (e) Fair market value (see instructions). ,3,483.4 222.489 560.6 233.99,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row11[0].f2_86[0],/Tx,Row: 11. Column: (f) Special gain code. ,3,562.6 222.489 596.6 233.99,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row11[0].f2_87[0],/Tx,Row: 11. Column: Amount of previously deferred gain included in gross income due to an inclusion event (see instructions). (g) Short-term gain. ,3,598.6 222.489 675.8 233.99,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row11[0].f2_88[0],/Tx,Row: 11. Column: Amount of previously deferred gain included in gross income due to an inclusion event (see instructions). (h) Long-term gain. ,3,677.8 222.489 756 233.99,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row12[0].f2_89[0],/Tx,Row: 12. Column: (a) Q O F  E I N. ,3,36 198.488 99.8 209.989,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row12[0].f2_90[0],/Tx,Row: 12. Column: (b) Date of event (M M/D D/Y Y Y Y). ,3,101.8 198.488 164.6 209.989,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row12[0].f2_91[0],/Tx,"Row: 12. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",3,166.6 198.488 402.2 209.989,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row12[0].f2_92[0],/Tx,Row: 12. Column: (d) Deferred gain held in Q O F (see instructions). ,3,404.2 198.488 481.4 209.989,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row12[0].f2_93[0],/Tx,Row: 12. Column: (e) Fair market value (see instructions). ,3,483.4 198.488 560.6 209.989,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row12[0].f2_94[0],/Tx,Row: 12. Column: (f) Special gain code. ,3,562.6 198.488 596.6 209.989,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row12[0].f2_95[0],/Tx,Row: 12. Column: Amount of previously deferred gain included in gross income due to an inclusion event (see instructions). (g) Short-term gain. ,3,598.6 198.488 675.8 209.989,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row12[0].f2_96[0],/Tx,Row: 12. Column: Amount of previously deferred gain included in gross income due to an inclusion event (see instructions). (h) Long-term gain. ,3,677.8 198.488 756 209.989,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row13[0].f2_97[0],/Tx,Row: 13. Column: (a) Q O F  E I N. ,3,36 174.487 99.8 185.988,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row13[0].f2_98[0],/Tx,Row: 13. Column: (b) Date of event (M M/D D/Y Y Y Y). ,3,101.8 174.487 164.6 185.988,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row13[0].f2_99[0],/Tx,"Row: 13. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",3,166.6 174.487 402.2 185.988,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row13[0].f2_100[0],/Tx,Row: 13. Column: (d) Deferred gain held in Q O F (see instructions). ,3,404.2 174.487 481.4 185.988,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row13[0].f2_101[0],/Tx,Row: 13. Column: (e) Fair market value (see instructions). ,3,483.4 174.487 560.6 185.988,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row13[0].f2_102[0],/Tx,Row: 13. Column: (f) Special gain code. ,3,562.6 174.487 596.6 185.988,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row13[0].f2_103[0],/Tx,Row: 13. Column: Amount of previously deferred gain included in gross income due to an inclusion event (see instructions). (g) Short-term gain. ,3,598.6 174.487 675.8 185.988,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row13[0].f2_104[0],/Tx,Row: 13. Column: Amount of previously deferred gain included in gross income due to an inclusion event (see instructions). (h) Long-term gain. ,3,677.8 174.487 756 185.988,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row14[0].f2_105[0],/Tx,Row: 14. Column: (a) Q O F  E I N. ,3,36 150.486 99.8 161.987,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row14[0].f2_106[0],/Tx,Row: 14. Column: (b) Date of event (M M/D D/Y Y Y Y). ,3,101.8 150.486 164.6 161.987,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row14[0].f2_107[0],/Tx,"Row: 14. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",3,166.6 150.486 402.2 161.987,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row14[0].f2_108[0],/Tx,Row: 14. Column: (d) Deferred gain held in Q O F (see instructions). ,3,404.2 150.486 481.4 161.987,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row14[0].f2_109[0],/Tx,Row: 14. Column: (e) Fair market value (see instructions). ,3,483.4 150.486 560.6 161.987,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row14[0].f2_110[0],/Tx,Row: 14. Column: (f) Special gain code. ,3,562.6 150.486 596.6 161.987,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row14[0].f2_111[0],/Tx,Row: 14. Column: Amount of previously deferred gain included in gross income due to an inclusion event (see instructions). (g) Short-term gain. ,3,598.6 150.486 675.8 161.987,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row14[0].f2_112[0],/Tx,Row: 14. Column: Amount of previously deferred gain included in gross income due to an inclusion event (see instructions). (h) Long-term gain. ,3,677.8 150.486 756 161.987,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row15[0].f2_113[0],/Tx,Row: 15. Column: (a) Q O F  E I N. ,3,36 126.485 99.8 137.986,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row15[0].f2_114[0],/Tx,Row: 15. Column: (b) Date of event (M M/D D/Y Y Y Y). ,3,101.8 126.485 164.6 137.986,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row15[0].f2_115[0],/Tx,"Row: 15. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",3,166.6 126.485 402.2 137.986,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row15[0].f2_116[0],/Tx,Row: 15. Column: (d) Deferred gain held in Q O F (see instructions). ,3,404.2 126.485 481.4 137.986,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row15[0].f2_117[0],/Tx,Row: 15. Column: (e) Fair market value (see instructions). ,3,483.4 126.485 560.6 137.986,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row15[0].f2_118[0],/Tx,Row: 15. Column: (f) Special gain code. ,3,562.6 126.485 596.6 137.986,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row15[0].f2_119[0],/Tx,Row: 15. Column: Amount of previously deferred gain included in gross income due to an inclusion event (see instructions). (g) Short-term gain. ,3,598.6 126.485 675.8 137.986,yes
+topmostSubform[0].Page2[0].Table_Part3_SectA[0].Row15[0].f2_120[0],/Tx,Row: 15. Column: Amount of previously deferred gain included in gross income due to an inclusion event (see instructions). (h) Long-term gain. ,3,677.8 126.485 756 137.986,yes
+topmostSubform[0].Page2[0].f2_121[0],/Tx,"1. Enter the totals, if any, from continuation sheet. Amount of previously deferred gain included in gross income due to an inclusion event (see instructions). (g) Short-term gain. ",3,598.6 102.499 675.8 114,yes
+topmostSubform[0].Page2[0].f2_122[0],/Tx,1. Amount of previously deferred gain included in gross income due to an inclusion event (see instructions). (h) Long-term gain. ,3,677.8 102.499 756 114,yes
+topmostSubform[0].Page2[0].f2_123[0],/Tx,"2. Enter totals from Section A, columns (g) and (h). Amount of previously deferred gain included in gross income due to an inclusion event (see instructions). (g) Short-term gain. ",3,598.6 78.498 675.8 89.999,yes
+topmostSubform[0].Page2[0].f2_124[0],/Tx,2. Amount of previously deferred gain included in gross income due to an inclusion event (see instructions). (h) Long-term gain. ,3,677.8 78.498 756 89.999,yes
+topmostSubform[0].Page2[0].c2_1[0],/Btn,Check this box if you disposed of any investment(s) and didn’t receive a Form 1099-B reporting the disposition from the Q O F or other third party. See the Instructions for Form 8949 for reporting requirements of any gain or loss. ,3,42.411 62.001 50.411 70.001,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row1[0].f3_01[0],/Tx,Page 3. Part I I I. Current-Year Capital Gains Recognized From Q O F Investments and Certain Other Transfers. Section B—Recognition of Remaining Deferred Gains Due to End of Deferral Period. Row: 1. Column: (a) Q O F  E I N. ,4,36 456.498 99.8 467.999,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row1[0].f3_02[0],/Tx,Row: 1. Column: (b) Date deferral period ends (M M/D D/Y Y Y Y). ,4,101.8 456.498 164.6 467.999,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row1[0].f3_03[0],/Tx,"Row: 1. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",4,166.6 456.498 323 467.999,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row1[0].f3_04[0],/Tx,Row: 1. Column: (d) Amount of remaining deferred gain held in Q O F (see instructions). ,4,325 456.498 402.2 467.999,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row1[0].f3_05[0],/Tx,Row: 1. Column: (e) Fair market value (see instructions). ,4,404.2 456.498 481.4 467.999,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row1[0].f3_06[0],/Tx,"Row: 1. Column: If you enter an amount in column (g), enter a code in column (f). (f) Special gain code. ",4,483.4 456.498 517.4 467.999,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row1[0].f3_07[0],/Tx,"Row: 1. Column: If you enter an amount in column (g), enter a code in column (f). (g) Amount of adjustment. ",4,519.4 456.498 596.6 467.999,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row1[0].f3_08[0],/Tx,Row: 1. Column: Amount of previously deferred gain included in gross income due to the end of the deferral period. (h) Short-term gain. ,4,598.6 456.498 675.8 467.999,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row1[0].f3_09[0],/Tx,Row: 1. Column: Amount of previously deferred gain included in gross income due to the end of the deferral period. (i) Long-term gain. ,4,677.8 456.498 756 467.999,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row2[0].f3_10[0],/Tx,Row: 2. Column: (a) Q O F  E I N. ,4,36 432.497 99.8 443.998,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row2[0].f3_11[0],/Tx,Row: 2. Column: (b) Date deferral period ends (M M/D D/Y Y Y Y). ,4,101.8 432.497 164.6 443.998,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row2[0].f3_12[0],/Tx,"Row: 2. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",4,166.6 432.497 323 443.998,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row2[0].f3_13[0],/Tx,Row: 2. Column: (d) Amount of remaining deferred gain held in Q O F (see instructions). ,4,325 432.497 402.2 443.998,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row2[0].f3_14[0],/Tx,Row: 2. Column: (e) Fair market value (see instructions). ,4,404.2 432.497 481.4 443.998,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row2[0].f3_15[0],/Tx,"Row: 2. Column: If you enter an amount in column (g), enter a code in column (f). (f) Special gain code. ",4,483.4 432.497 517.4 443.998,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row2[0].f3_16[0],/Tx,"Row: 2. Column: If you enter an amount in column (g), enter a code in column (f). (g) Amount of adjustment. ",4,519.4 432.497 596.6 443.998,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row2[0].f3_17[0],/Tx,Row: 2. Column: Amount of previously deferred gain included in gross income due to the end of the deferral period. (h) Short-term gain. ,4,598.6 432.497 675.8 443.998,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row2[0].f3_18[0],/Tx,Row: 2. Column: Amount of previously deferred gain included in gross income due to the end of the deferral period. (i) Long-term gain. ,4,677.8 432.497 756 443.998,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row3[0].f3_19[0],/Tx,Row: 3. Column: (a) Q O F  E I N. ,4,36 408.496 99.8 419.997,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row3[0].f3_20[0],/Tx,Row: 3. Column: (b) Date deferral period ends (M M/D D/Y Y Y Y). ,4,101.8 408.496 164.6 419.997,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row3[0].f3_21[0],/Tx,"Row: 3. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",4,166.6 408.496 323 419.997,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row3[0].f3_22[0],/Tx,Row: 3. Column: (d) Amount of remaining deferred gain held in Q O F (see instructions). ,4,325 408.496 402.2 419.997,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row3[0].f3_23[0],/Tx,Row: 3. Column: (e) Fair market value (see instructions). ,4,404.2 408.496 481.4 419.997,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row3[0].f3_24[0],/Tx,"Row: 3. Column: If you enter an amount in column (g), enter a code in column (f). (f) Special gain code. ",4,483.4 408.496 517.4 419.997,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row3[0].f3_25[0],/Tx,"Row: 3. Column: If you enter an amount in column (g), enter a code in column (f). (g) Amount of adjustment. ",4,519.4 408.496 596.6 419.997,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row3[0].f3_26[0],/Tx,Row: 3. Column: Amount of previously deferred gain included in gross income due to the end of the deferral period. (h) Short-term gain. ,4,598.6 408.496 675.8 419.997,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row3[0].f3_27[0],/Tx,Row: 3. Column: Amount of previously deferred gain included in gross income due to the end of the deferral period. (i) Long-term gain. ,4,677.8 408.496 756 419.997,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row4[0].f3_28[0],/Tx,Row: 4. Column: (a) Q O F  E I N. ,4,36 384.495 99.8 395.996,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row4[0].f3_29[0],/Tx,Row: 4. Column: (b) Date deferral period ends (M M/D D/Y Y Y Y). ,4,101.8 384.495 164.6 395.996,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row4[0].f3_30[0],/Tx,"Row: 4. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",4,166.6 384.495 323 395.996,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row4[0].f3_31[0],/Tx,Row: 4. Column: (d) Amount of remaining deferred gain held in Q O F (see instructions). ,4,325 384.495 402.2 395.996,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row4[0].f3_32[0],/Tx,Row: 4. Column: (e) Fair market value (see instructions). ,4,404.2 384.495 481.4 395.996,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row4[0].f3_33[0],/Tx,"Row: 4. Column: If you enter an amount in column (g), enter a code in column (f). (f) Special gain code. ",4,483.4 384.495 517.4 395.996,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row4[0].f3_34[0],/Tx,"Row: 4. Column: If you enter an amount in column (g), enter a code in column (f). (g) Amount of adjustment. ",4,519.4 384.495 596.6 395.996,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row4[0].f3_35[0],/Tx,Row: 4. Column: Amount of previously deferred gain included in gross income due to the end of the deferral period. (h) Short-term gain. ,4,598.6 384.495 675.8 395.996,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row4[0].f3_36[0],/Tx,Row: 4. Column: Amount of previously deferred gain included in gross income due to the end of the deferral period. (i) Long-term gain. ,4,677.8 384.495 756 395.996,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row5[0].f3_37[0],/Tx,Row: 5. Column: (a) Q O F  E I N. ,4,36 360.494 99.8 371.995,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row5[0].f3_38[0],/Tx,Row: 5. Column: (b) Date deferral period ends (M M/D D/Y Y Y Y). ,4,101.8 360.494 164.6 371.995,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row5[0].f3_39[0],/Tx,"Row: 5. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",4,166.6 360.494 323 371.995,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row5[0].f3_40[0],/Tx,Row: 5. Column: (d) Amount of remaining deferred gain held in Q O F (see instructions). ,4,325 360.494 402.2 371.995,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row5[0].f3_41[0],/Tx,Row: 5. Column: (e) Fair market value (see instructions). ,4,404.2 360.494 481.4 371.995,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row5[0].f3_42[0],/Tx,"Row: 5. Column: If you enter an amount in column (g), enter a code in column (f). (f) Special gain code. ",4,483.4 360.494 517.4 371.995,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row5[0].f3_43[0],/Tx,"Row: 5. Column: If you enter an amount in column (g), enter a code in column (f). (g) Amount of adjustment. ",4,519.4 360.494 596.6 371.995,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row5[0].f3_44[0],/Tx,Row: 5. Column: Amount of previously deferred gain included in gross income due to the end of the deferral period. (h) Short-term gain. ,4,598.6 360.494 675.8 371.995,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row5[0].f3_45[0],/Tx,Row: 5. Column: Amount of previously deferred gain included in gross income due to the end of the deferral period. (i) Long-term gain. ,4,677.8 360.494 756 371.995,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row6[0].f3_46[0],/Tx,Row: 6. Column: (a) Q O F  E I N. ,4,36 336.493 99.8 347.994,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row6[0].f3_47[0],/Tx,Row: 6. Column: (b) Date deferral period ends (M M/D D/Y Y Y Y). ,4,101.8 336.493 164.6 347.994,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row6[0].f3_48[0],/Tx,"Row: 6. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",4,166.6 336.493 323 347.994,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row6[0].f3_49[0],/Tx,Row: 6. Column: (d) Amount of remaining deferred gain held in Q O F (see instructions). ,4,325 336.493 402.2 347.994,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row6[0].f3_50[0],/Tx,Row: 6. Column: (e) Fair market value (see instructions). ,4,404.2 336.493 481.4 347.994,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row6[0].f3_51[0],/Tx,"Row: 6. Column: If you enter an amount in column (g), enter a code in column (f). (f) Special gain code. ",4,483.4 336.493 517.4 347.994,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row6[0].f3_52[0],/Tx,"Row: 6. Column: If you enter an amount in column (g), enter a code in column (f). (g) Amount of adjustment. ",4,519.4 336.493 596.6 347.994,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row6[0].f3_53[0],/Tx,Row: 6. Column: Amount of previously deferred gain included in gross income due to the end of the deferral period. (h) Short-term gain. ,4,598.6 336.493 675.8 347.994,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row6[0].f3_54[0],/Tx,Row: 6. Column: Amount of previously deferred gain included in gross income due to the end of the deferral period. (i) Long-term gain. ,4,677.8 336.493 756 347.994,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row7[0].f3_55[0],/Tx,Row: 7. Column: (a) Q O F  E I N. ,4,36 312.492 99.8 323.993,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row7[0].f3_56[0],/Tx,Row: 7. Column: (b) Date deferral period ends (M M/D D/Y Y Y Y). ,4,101.8 312.492 164.6 323.993,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row7[0].f3_57[0],/Tx,"Row: 7. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",4,166.6 312.492 323 323.993,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row7[0].f3_58[0],/Tx,Row: 7. Column: (d) Amount of remaining deferred gain held in Q O F (see instructions). ,4,325 312.492 402.2 323.993,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row7[0].f3_59[0],/Tx,Row: 7. Column: (e) Fair market value (see instructions). ,4,404.2 312.492 481.4 323.993,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row7[0].f3_60[0],/Tx,"Row: 7. Column: If you enter an amount in column (g), enter a code in column (f). (f) Special gain code. ",4,483.4 312.492 517.4 323.993,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row7[0].f3_61[0],/Tx,"Row: 7. Column: If you enter an amount in column (g), enter a code in column (f). (g) Amount of adjustment. ",4,519.4 312.492 596.6 323.993,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row7[0].f3_62[0],/Tx,Row: 7. Column: Amount of previously deferred gain included in gross income due to the end of the deferral period. (h) Short-term gain. ,4,598.6 312.492 675.8 323.993,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row7[0].f3_63[0],/Tx,Row: 7. Column: Amount of previously deferred gain included in gross income due to the end of the deferral period. (i) Long-term gain. ,4,677.8 312.492 756 323.993,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row8[0].f3_64[0],/Tx,Row: 8. Column: (a) Q O F  E I N. ,4,36 288.491 99.8 299.992,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row8[0].f3_65[0],/Tx,Row: 8. Column: (b) Date deferral period ends (M M/D D/Y Y Y Y). ,4,101.8 288.491 164.6 299.992,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row8[0].f3_66[0],/Tx,"Row: 8. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",4,166.6 288.491 323 299.992,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row8[0].f3_67[0],/Tx,Row: 8. Column: (d) Amount of remaining deferred gain held in Q O F (see instructions). ,4,325 288.491 402.2 299.992,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row8[0].f3_68[0],/Tx,Row: 8. Column: (e) Fair market value (see instructions). ,4,404.2 288.491 481.4 299.992,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row8[0].f3_69[0],/Tx,"Row: 8. Column: If you enter an amount in column (g), enter a code in column (f). (f) Special gain code. ",4,483.4 288.491 517.4 299.992,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row8[0].f3_70[0],/Tx,"Row: 8. Column: If you enter an amount in column (g), enter a code in column (f). (g) Amount of adjustment. ",4,519.4 288.491 596.6 299.992,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row8[0].f3_71[0],/Tx,Row: 8. Column: Amount of previously deferred gain included in gross income due to the end of the deferral period. (h) Short-term gain. ,4,598.6 288.491 675.8 299.992,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row8[0].f3_72[0],/Tx,Row: 8. Column: Amount of previously deferred gain included in gross income due to the end of the deferral period. (i) Long-term gain. ,4,677.8 288.491 756 299.992,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row9[0].f3_73[0],/Tx,Row: 9. Column: (a) Q O F  E I N. ,4,36 264.49 99.8 275.991,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row9[0].f3_74[0],/Tx,Row: 9. Column: (b) Date deferral period ends (M M/D D/Y Y Y Y). ,4,101.8 264.49 164.6 275.991,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row9[0].f3_75[0],/Tx,"Row: 9. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",4,166.6 264.49 323 275.991,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row9[0].f3_76[0],/Tx,Row: 9. Column: (d) Amount of remaining deferred gain held in Q O F (see instructions). ,4,325 264.49 402.2 275.991,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row9[0].f3_77[0],/Tx,Row: 9. Column: (e) Fair market value (see instructions). ,4,404.2 264.49 481.4 275.991,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row9[0].f3_78[0],/Tx,"Row: 9. Column: If you enter an amount in column (g), enter a code in column (f). (f) Special gain code. ",4,483.4 264.49 517.4 275.991,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row9[0].f3_79[0],/Tx,"Row: 9. Column: If you enter an amount in column (g), enter a code in column (f). (g) Amount of adjustment. ",4,519.4 264.49 596.6 275.991,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row9[0].f3_80[0],/Tx,Row: 9. Column: Amount of previously deferred gain included in gross income due to the end of the deferral period. (h) Short-term gain. ,4,598.6 264.49 675.8 275.991,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row9[0].f3_81[0],/Tx,Row: 9. Column: Amount of previously deferred gain included in gross income due to the end of the deferral period. (i) Long-term gain. ,4,677.8 264.49 756 275.991,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row10[0].f3_82[0],/Tx,Row: 10. Column: (a) Q O F  E I N. ,4,36 240.489 99.8 251.99,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row10[0].f3_83[0],/Tx,Row: 10. Column: (b) Date deferral period ends (M M/D D/Y Y Y Y). ,4,101.8 240.489 164.6 251.99,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row10[0].f3_84[0],/Tx,"Row: 10. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",4,166.6 240.489 323 251.99,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row10[0].f3_85[0],/Tx,Row: 10. Column: (d) Amount of remaining deferred gain held in Q O F (see instructions). ,4,325 240.489 402.2 251.99,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row10[0].f3_86[0],/Tx,Row: 10. Column: (e) Fair market value (see instructions). ,4,404.2 240.489 481.4 251.99,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row10[0].f3_87[0],/Tx,"Row: 10. Column: If you enter an amount in column (g), enter a code in column (f). (f) Special gain code. ",4,483.4 240.489 517.4 251.99,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row10[0].f3_88[0],/Tx,"Row: 10. Column: If you enter an amount in column (g), enter a code in column (f). (g) Amount of adjustment. ",4,519.4 240.489 596.6 251.99,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row10[0].f3_89[0],/Tx,Row: 10. Column: Amount of previously deferred gain included in gross income due to the end of the deferral period. (h) Short-term gain. ,4,598.6 240.489 675.8 251.99,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row10[0].f3_90[0],/Tx,Row: 10. Column: Amount of previously deferred gain included in gross income due to the end of the deferral period. (i) Long-term gain. ,4,677.8 240.489 756 251.99,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row11[0].f3_91[0],/Tx,Row: 11. Column: (a) Q O F  E I N. ,4,36 216.488 99.8 227.989,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row11[0].f3_92[0],/Tx,Row: 11. Column: (b) Date deferral period ends (M M/D D/Y Y Y Y). ,4,101.8 216.488 164.6 227.989,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row11[0].f3_93[0],/Tx,"Row: 11. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",4,166.6 216.488 323 227.989,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row11[0].f3_94[0],/Tx,Row: 11. Column: (d) Amount of remaining deferred gain held in Q O F (see instructions). ,4,325 216.488 402.2 227.989,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row11[0].f3_95[0],/Tx,Row: 11. Column: (e) Fair market value (see instructions). ,4,404.2 216.488 481.4 227.989,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row11[0].f3_96[0],/Tx,"Row: 11. Column: If you enter an amount in column (g), enter a code in column (f). (f) Special gain code. ",4,483.4 216.488 517.4 227.989,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row11[0].f3_97[0],/Tx,"Row: 11. Column: If you enter an amount in column (g), enter a code in column (f). (g) Amount of adjustment. ",4,519.4 216.488 596.6 227.989,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row11[0].f3_98[0],/Tx,Row: 11. Column: Amount of previously deferred gain included in gross income due to the end of the deferral period. (h) Short-term gain. ,4,598.6 216.488 675.8 227.989,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row11[0].f3_99[0],/Tx,Row: 11. Column: Amount of previously deferred gain included in gross income due to the end of the deferral period. (i) Long-term gain. ,4,677.8 216.488 756 227.989,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row12[0].f3_100[0],/Tx,Row: 12. Column: (a) Q O F  E I N. ,4,36 192.487 99.8 203.988,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row12[0].f3_101[0],/Tx,Row: 12. Column: (b) Date deferral period ends (M M/D D/Y Y Y Y). ,4,101.8 192.487 164.6 203.988,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row12[0].f3_102[0],/Tx,"Row: 12. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",4,166.6 192.487 323 203.988,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row12[0].f3_103[0],/Tx,Row: 12. Column: (d) Amount of remaining deferred gain held in Q O F (see instructions). ,4,325 192.487 402.2 203.988,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row12[0].f3_104[0],/Tx,Row: 12. Column: (e) Fair market value (see instructions). ,4,404.2 192.487 481.4 203.988,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row12[0].f3_105[0],/Tx,"Row: 12. Column: If you enter an amount in column (g), enter a code in column (f). (f) Special gain code. ",4,483.4 192.487 517.4 203.988,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row12[0].f3_106[0],/Tx,"Row: 12. Column: If you enter an amount in column (g), enter a code in column (f). (g) Amount of adjustment. ",4,519.4 192.487 596.6 203.988,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row12[0].f3_107[0],/Tx,Row: 12. Column: Amount of previously deferred gain included in gross income due to the end of the deferral period. (h) Short-term gain. ,4,598.6 192.487 675.8 203.988,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row12[0].f3_108[0],/Tx,Row: 12. Column: Amount of previously deferred gain included in gross income due to the end of the deferral period. (i) Long-term gain. ,4,677.8 192.487 756 203.988,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row13[0].f3_109[0],/Tx,Row: 13. Column: (a) Q O F  E I N. ,4,36 168.486 99.8 179.987,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row13[0].f3_110[0],/Tx,Row: 13. Column: (b) Date deferral period ends (M M/D D/Y Y Y Y). ,4,101.8 168.486 164.6 179.987,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row13[0].f3_111[0],/Tx,"Row: 13. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",4,166.6 168.486 323 179.987,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row13[0].f3_112[0],/Tx,Row: 13. Column: (d) Amount of remaining deferred gain held in Q O F (see instructions). ,4,325 168.486 402.2 179.987,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row13[0].f3_113[0],/Tx,Row: 13. Column: (e) Fair market value (see instructions). ,4,404.2 168.486 481.4 179.987,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row13[0].f3_114[0],/Tx,"Row: 13. Column: If you enter an amount in column (g), enter a code in column (f). (f) Special gain code. ",4,483.4 168.486 517.4 179.987,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row13[0].f3_115[0],/Tx,"Row: 13. Column: If you enter an amount in column (g), enter a code in column (f). (g) Amount of adjustment. ",4,519.4 168.486 596.6 179.987,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row13[0].f3_116[0],/Tx,Row: 13. Column: Amount of previously deferred gain included in gross income due to the end of the deferral period. (h) Short-term gain. ,4,598.6 168.486 675.8 179.987,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row13[0].f3_117[0],/Tx,Row: 13. Column: Amount of previously deferred gain included in gross income due to the end of the deferral period. (i) Long-term gain. ,4,677.8 168.486 756 179.987,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row14[0].f3_118[0],/Tx,Row: 14. Column: (a) Q O F  E I N. ,4,36 144.485 99.8 155.986,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row14[0].f3_119[0],/Tx,Row: 14. Column: (b) Date deferral period ends (M M/D D/Y Y Y Y). ,4,101.8 144.485 164.6 155.986,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row14[0].f3_120[0],/Tx,"Row: 14. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",4,166.6 144.485 323 155.986,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row14[0].f3_121[0],/Tx,Row: 14. Column: (d) Amount of remaining deferred gain held in Q O F (see instructions). ,4,325 144.485 402.2 155.986,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row14[0].f3_122[0],/Tx,Row: 14. Column: (e) Fair market value (see instructions). ,4,404.2 144.485 481.4 155.986,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row14[0].f3_123[0],/Tx,"Row: 14. Column: If you enter an amount in column (g), enter a code in column (f). (f) Special gain code. ",4,483.4 144.485 517.4 155.986,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row14[0].f3_124[0],/Tx,"Row: 14. Column: If you enter an amount in column (g), enter a code in column (f). (g) Amount of adjustment. ",4,519.4 144.485 596.6 155.986,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row14[0].f3_125[0],/Tx,Row: 14. Column: Amount of previously deferred gain included in gross income due to the end of the deferral period. (h) Short-term gain. ,4,598.6 144.485 675.8 155.986,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row14[0].f3_126[0],/Tx,Row: 14. Column: Amount of previously deferred gain included in gross income due to the end of the deferral period. (i) Long-term gain. ,4,677.8 144.485 756 155.986,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row15[0].f3_127[0],/Tx,Row: 15. Column: (a) Q O F  E I N. ,4,36 120.484 99.8 131.985,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row15[0].f3_128[0],/Tx,Row: 15. Column: (b) Date deferral period ends (M M/D D/Y Y Y Y). ,4,101.8 120.484 164.6 131.985,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row15[0].f3_129[0],/Tx,"Row: 15. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",4,166.6 120.484 323 131.985,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row15[0].f3_130[0],/Tx,Row: 15. Column: (d) Amount of remaining deferred gain held in Q O F (see instructions). ,4,325 120.484 402.2 131.985,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row15[0].f3_131[0],/Tx,Row: 15. Column: (e) Fair market value (see instructions). ,4,404.2 120.484 481.4 131.985,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row15[0].f3_132[0],/Tx,"Row: 15. Column: If you enter an amount in column (g), enter a code in column (f). (f) Special gain code. ",4,483.4 120.484 517.4 131.985,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row15[0].f3_133[0],/Tx,"Row: 15. Column: If you enter an amount in column (g), enter a code in column (f). (g) Amount of adjustment. ",4,519.4 120.484 596.6 131.985,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row15[0].f3_134[0],/Tx,Row: 15. Column: Amount of previously deferred gain included in gross income due to the end of the deferral period. (h) Short-term gain. ,4,598.6 120.484 675.8 131.985,yes
+topmostSubform[0].Page3[0].Table_Part3_SectB[0].Row15[0].f3_135[0],/Tx,Row: 15. Column: Amount of previously deferred gain included in gross income due to the end of the deferral period. (i) Long-term gain. ,4,677.8 120.484 756 131.985,yes
+topmostSubform[0].Page3[0].f3_136[0],/Tx,"3. Enter the totals, if any, from continuation sheet. Amount of previously deferred gain included in gross income due to the end of the deferral period. (h) Short-term gain. ",4,598.6 96.498 675.8 107.999,yes
+topmostSubform[0].Page3[0].f3_137[0],/Tx,3. Amount of previously deferred gain included in gross income due to the end of the deferral period. (i) Long-term gain. ,4,677.8 96.498 756 107.999,yes
+topmostSubform[0].Page3[0].f3_138[0],/Tx,"4. Enter totals from Section B, columns (h) and (i). Amount of previously deferred gain included in gross income due to the end of the deferral period. (h) Short-term gain. ",4,598.6 72.5 675.8 84.001,yes
+topmostSubform[0].Page3[0].f3_139[0],/Tx,4. Amount of previously deferred gain included in gross income due to the end of the deferral period. (i) Long-term gain. ,4,677.8 72.5 756 84.001,yes
+topmostSubform[0].Page3[0].f3_140[0],/Tx,5. Combine totals from lines 2 and 4. See instructions for reporting on Form 8949. Amount of previously deferred gain included in gross income due to the end of the deferral period. (h) Short-term gain. ,4,598.6 48.499 675.8 60,yes
+topmostSubform[0].Page3[0].f3_141[0],/Tx,5. Amount of previously deferred gain included in gross income due to the end of the deferral period. (i) Long-term gain. ,4,677.8 48.499 756 60,yes
+topmostSubform[0].Page4[0].Table_Part4[0].Row1[0].f4_01[0],/Tx,Page 4. Part I V. Total Q O F Investments With Deferrals Held at Year End (see instructions). Row: 1. Column: (a) Reserved. ,5,36 672.466 92.6 683.967,yes
+topmostSubform[0].Page4[0].Table_Part4[0].Row1[0].f4_02[0],/Tx,Row: 1. Column: (b) Reserved. ,5,94.6 672.466 150.2 683.967,yes
+topmostSubform[0].Page4[0].Table_Part4[0].Row1[0].f4_03[0],/Tx,Row: 1. Column: (c) Reserved for future use. ,5,152.2 672.466 380.6 683.967,yes
+topmostSubform[0].Page4[0].Table_Part4[0].Row1[0].f4_04[0],/Tx,Row: 1. Column: (d) Reserved. ,5,382.6 672.466 416.6 683.967,yes
+topmostSubform[0].Page4[0].Table_Part4[0].Row1[0].f4_05[0],/Tx,Row: 1. Column: Reserved for future use. (e) Reserved. ,5,418.6 672.466 495.8 683.967,yes
+topmostSubform[0].Page4[0].Table_Part4[0].Row1[0].f4_06[0],/Tx,Row: 1. Column: Reserved for future use. (f) Reserved. ,5,497.8 672.466 576 683.967,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row1[0].f4_07[0],/Tx,Part V. Total Qualifying Investments in Q O F Held After End of the Deferral Period. Row: 1. Column: (a) Q O F E I N. ,5,36 582.466 107 593.967,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row1[0].f4_08[0],/Tx,Row: 1. Column: (b) Date Q O F investment acquired (M M/D D/Y Y Y Y). ,5,109 582.466 179 593.967,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row1[0].f4_09[0],/Tx,"Row: 1. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",5,181 582.466 445.4 593.967,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row1[0].f4_10[0],/Tx,Row: 1. Column: (d) Basis in Q O F investment after end of the deferral period. ,5,447.4 582.466 524.6 593.967,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row1[0].f4_11[0],/Tx,Row: 1. Column: (e) Event code (see inst.). ,5,526.6 582.466 576 593.967,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row2[0].f4_12[0],/Tx,Row: 2. Column: (a) Q O F E I N. ,5,36 558.465 107 569.966,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row2[0].f4_13[0],/Tx,Row: 2. Column: (b) Date Q O F investment acquired (M M/D D/Y Y Y Y). ,5,109 558.465 179 569.966,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row2[0].f4_14[0],/Tx,"Row: 2. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",5,181 558.465 445.4 569.966,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row2[0].f4_15[0],/Tx,Row: 2. Column: (d) Basis in Q O F investment after end of the deferral period. ,5,447.4 558.465 524.6 569.966,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row2[0].f4_16[0],/Tx,Row: 2. Column: (e) Event code (see inst.). ,5,526.6 558.465 576 569.966,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row3[0].f4_17[0],/Tx,Row: 3. Column: (a) Q O F E I N. ,5,36 534.464 107 545.965,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row3[0].f4_18[0],/Tx,Row: 3. Column: (b) Date Q O F investment acquired (M M/D D/Y Y Y Y). ,5,109 534.464 179 545.965,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row3[0].f4_19[0],/Tx,"Row: 3. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",5,181 534.464 445.4 545.965,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row3[0].f4_20[0],/Tx,Row: 3. Column: (d) Basis in Q O F investment after end of the deferral period. ,5,447.4 534.464 524.6 545.965,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row3[0].f4_21[0],/Tx,Row: 3. Column: (e) Event code (see inst.). ,5,526.6 534.464 576 545.965,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row4[0].f4_22[0],/Tx,Row: 4. Column: (a) Q O F E I N. ,5,36 510.463 107 521.964,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row4[0].f4_23[0],/Tx,Row: 4. Column: (b) Date Q O F investment acquired (M M/D D/Y Y Y Y). ,5,109 510.463 179 521.964,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row4[0].f4_24[0],/Tx,"Row: 4. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",5,181 510.463 445.4 521.964,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row4[0].f4_25[0],/Tx,Row: 4. Column: (d) Basis in Q O F investment after end of the deferral period. ,5,447.4 510.463 524.6 521.964,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row4[0].f4_26[0],/Tx,Row: 4. Column: (e) Event code (see inst.). ,5,526.6 510.463 576 521.964,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row5[0].f4_27[0],/Tx,Row: 5. Column: (a) Q O F E I N. ,5,36 486.462 107 497.963,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row5[0].f4_28[0],/Tx,Row: 5. Column: (b) Date Q O F investment acquired (M M/D D/Y Y Y Y). ,5,109 486.462 179 497.963,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row5[0].f4_29[0],/Tx,"Row: 5. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",5,181 486.462 445.4 497.963,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row5[0].f4_30[0],/Tx,Row: 5. Column: (d) Basis in Q O F investment after end of the deferral period. ,5,447.4 486.462 524.6 497.963,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row5[0].f4_31[0],/Tx,Row: 5. Column: (e) Event code (see inst.). ,5,526.6 486.462 576 497.963,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row6[0].f4_32[0],/Tx,Row: 6. Column: (a) Q O F E I N. ,5,36 462.461 107 473.962,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row6[0].f4_33[0],/Tx,Row: 6. Column: (b) Date Q O F investment acquired (M M/D D/Y Y Y Y). ,5,109 462.461 179 473.962,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row6[0].f4_34[0],/Tx,"Row: 6. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",5,181 462.461 445.4 473.962,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row6[0].f4_35[0],/Tx,Row: 6. Column: (d) Basis in Q O F investment after end of the deferral period. ,5,447.4 462.461 524.6 473.962,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row6[0].f4_36[0],/Tx,Row: 6. Column: (e) Event code (see inst.). ,5,526.6 462.461 576 473.962,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row7[0].f4_37[0],/Tx,Row: 7. Column: (a) Q O F E I N. ,5,36 438.46 107 449.961,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row7[0].f4_38[0],/Tx,Row: 7. Column: (b) Date Q O F investment acquired (M M/D D/Y Y Y Y). ,5,109 438.46 179 449.961,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row7[0].f4_39[0],/Tx,"Row: 7. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",5,181 438.46 445.4 449.961,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row7[0].f4_40[0],/Tx,Row: 7. Column: (d) Basis in Q O F investment after end of the deferral period. ,5,447.4 438.46 524.6 449.961,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row7[0].f4_41[0],/Tx,Row: 7. Column: (e) Event code (see inst.). ,5,526.6 438.46 576 449.961,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row8[0].f4_42[0],/Tx,Row: 8. Column: (a) Q O F E I N. ,5,36 414.459 107 425.96,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row8[0].f4_43[0],/Tx,Row: 8. Column: (b) Date Q O F investment acquired (M M/D D/Y Y Y Y). ,5,109 414.459 179 425.96,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row8[0].f4_44[0],/Tx,"Row: 8. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",5,181 414.459 445.4 425.96,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row8[0].f4_45[0],/Tx,Row: 8. Column: (d) Basis in Q O F investment after end of the deferral period. ,5,447.4 414.459 524.6 425.96,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row8[0].f4_46[0],/Tx,Row: 8. Column: (e) Event code (see inst.). ,5,526.6 414.459 576 425.96,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row9[0].f4_47[0],/Tx,Row: 9. Column: (a) Q O F E I N. ,5,36 390.458 107 401.959,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row9[0].f4_48[0],/Tx,Row: 9. Column: (b) Date Q O F investment acquired (M M/D D/Y Y Y Y). ,5,109 390.458 179 401.959,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row9[0].f4_49[0],/Tx,"Row: 9. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",5,181 390.458 445.4 401.959,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row9[0].f4_50[0],/Tx,Row: 9. Column: (d) Basis in Q O F investment after end of the deferral period. ,5,447.4 390.458 524.6 401.959,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row9[0].f4_51[0],/Tx,Row: 9. Column: (e) Event code (see inst.). ,5,526.6 390.458 576 401.959,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row10[0].f4_52[0],/Tx,Row: 10. Column: (a) Q O F E I N. ,5,36 366.457 107 377.958,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row10[0].f4_53[0],/Tx,Row: 10. Column: (b) Date Q O F investment acquired (M M/D D/Y Y Y Y). ,5,109 366.457 179 377.958,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row10[0].f4_54[0],/Tx,"Row: 10. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",5,181 366.457 445.4 377.958,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row10[0].f4_55[0],/Tx,Row: 10. Column: (d) Basis in Q O F investment after end of the deferral period. ,5,447.4 366.457 524.6 377.958,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row10[0].f4_56[0],/Tx,Row: 10. Column: (e) Event code (see inst.). ,5,526.6 366.457 576 377.958,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row11[0].f4_57[0],/Tx,Row: 11. Column: (a) Q O F E I N. ,5,36 342.456 107 353.957,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row11[0].f4_58[0],/Tx,Row: 11. Column: (b) Date Q O F investment acquired (M M/D D/Y Y Y Y). ,5,109 342.456 179 353.957,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row11[0].f4_59[0],/Tx,"Row: 11. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",5,181 342.456 445.4 353.957,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row11[0].f4_60[0],/Tx,Row: 11. Column: (d) Basis in Q O F investment after end of the deferral period. ,5,447.4 342.456 524.6 353.957,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row11[0].f4_61[0],/Tx,Row: 11. Column: (e) Event code (see inst.). ,5,526.6 342.456 576 353.957,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row12[0].f4_62[0],/Tx,Row: 12. Column: (a) Q O F E I N. ,5,36 318.455 107 329.956,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row12[0].f4_63[0],/Tx,Row: 12. Column: (b) Date Q O F investment acquired (M M/D D/Y Y Y Y). ,5,109 318.455 179 329.956,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row12[0].f4_64[0],/Tx,"Row: 12. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",5,181 318.455 445.4 329.956,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row12[0].f4_65[0],/Tx,Row: 12. Column: (d) Basis in Q O F investment after end of the deferral period. ,5,447.4 318.455 524.6 329.956,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row12[0].f4_66[0],/Tx,Row: 12. Column: (e) Event code (see inst.). ,5,526.6 318.455 576 329.956,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row13[0].f4_67[0],/Tx,Row: 13. Column: (a) Q O F E I N. ,5,36 294.454 107 305.955,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row13[0].f4_68[0],/Tx,Row: 13. Column: (b) Date Q O F investment acquired (M M/D D/Y Y Y Y). ,5,109 294.454 179 305.955,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row13[0].f4_69[0],/Tx,"Row: 13. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",5,181 294.454 445.4 305.955,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row13[0].f4_70[0],/Tx,Row: 13. Column: (d) Basis in Q O F investment after end of the deferral period. ,5,447.4 294.454 524.6 305.955,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row13[0].f4_71[0],/Tx,Row: 13. Column: (e) Event code (see inst.). ,5,526.6 294.454 576 305.955,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row14[0].f4_72[0],/Tx,Row: 14. Column: (a) Q O F E I N. ,5,36 270.453 107 281.954,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row14[0].f4_73[0],/Tx,Row: 14. Column: (b) Date Q O F investment acquired (M M/D D/Y Y Y Y). ,5,109 270.453 179 281.954,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row14[0].f4_74[0],/Tx,"Row: 14. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",5,181 270.453 445.4 281.954,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row14[0].f4_75[0],/Tx,Row: 14. Column: (d) Basis in Q O F investment after end of the deferral period. ,5,447.4 270.453 524.6 281.954,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row14[0].f4_76[0],/Tx,Row: 14. Column: (e) Event code (see inst.). ,5,526.6 270.453 576 281.954,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row15[0].f4_77[0],/Tx,Row: 15. Column: (a) Q O F E I N. ,5,36 246.452 107 257.953,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row15[0].f4_78[0],/Tx,Row: 15. Column: (b) Date Q O F investment acquired (M M/D D/Y Y Y Y). ,5,109 246.452 179 257.953,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row15[0].f4_79[0],/Tx,"Row: 15. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",5,181 246.452 445.4 257.953,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row15[0].f4_80[0],/Tx,Row: 15. Column: (d) Basis in Q O F investment after end of the deferral period. ,5,447.4 246.452 524.6 257.953,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row15[0].f4_81[0],/Tx,Row: 15. Column: (e) Event code (see inst.). ,5,526.6 246.452 576 257.953,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row16[0].f4_82[0],/Tx,Row: 16. Column: (a) Q O F E I N. ,5,36 222.451 107 233.952,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row16[0].f4_83[0],/Tx,Row: 16. Column: (b) Date Q O F investment acquired (M M/D D/Y Y Y Y). ,5,109 222.451 179 233.952,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row16[0].f4_84[0],/Tx,"Row: 16. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",5,181 222.451 445.4 233.952,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row16[0].f4_85[0],/Tx,Row: 16. Column: (d) Basis in Q O F investment after end of the deferral period. ,5,447.4 222.451 524.6 233.952,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row16[0].f4_86[0],/Tx,Row: 16. Column: (e) Event code (see inst.). ,5,526.6 222.451 576 233.952,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row17[0].f4_87[0],/Tx,Row: 17. Column: (a) Q O F E I N. ,5,36 198.45 107 209.951,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row17[0].f4_88[0],/Tx,Row: 17. Column: (b) Date Q O F investment acquired (M M/D D/Y Y Y Y). ,5,109 198.45 179 209.951,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row17[0].f4_89[0],/Tx,"Row: 17. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",5,181 198.45 445.4 209.951,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row17[0].f4_90[0],/Tx,Row: 17. Column: (d) Basis in Q O F investment after end of the deferral period. ,5,447.4 198.45 524.6 209.951,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row17[0].f4_91[0],/Tx,Row: 17. Column: (e) Event code (see inst.). ,5,526.6 198.45 576 209.951,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row18[0].f4_92[0],/Tx,Row: 18. Column: (a) Q O F E I N. ,5,36 174.449 107 185.95,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row18[0].f4_93[0],/Tx,Row: 18. Column: (b) Date Q O F investment acquired (M M/D D/Y Y Y Y). ,5,109 174.449 179 185.95,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row18[0].f4_94[0],/Tx,"Row: 18. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",5,181 174.449 445.4 185.95,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row18[0].f4_95[0],/Tx,Row: 18. Column: (d) Basis in Q O F investment after end of the deferral period. ,5,447.4 174.449 524.6 185.95,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row18[0].f4_96[0],/Tx,Row: 18. Column: (e) Event code (see inst.). ,5,526.6 174.449 576 185.95,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row19[0].f4_97[0],/Tx,Row: 19. Column: (a) Q O F E I N. ,5,36 150.448 107 161.949,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row19[0].f4_98[0],/Tx,Row: 19. Column: (b) Date Q O F investment acquired (M M/D D/Y Y Y Y). ,5,109 150.448 179 161.949,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row19[0].f4_99[0],/Tx,"Row: 19. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",5,181 150.448 445.4 161.949,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row19[0].f4_100[0],/Tx,Row: 19. Column: (d) Basis in Q O F investment after end of the deferral period. ,5,447.4 150.448 524.6 161.949,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row19[0].f4_101[0],/Tx,Row: 19. Column: (e) Event code (see inst.). ,5,526.6 150.448 576 161.949,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row20[0].f4_102[0],/Tx,Row: 20. Column: (a) Q O F E I N. ,5,36 126.447 107 137.948,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row20[0].f4_103[0],/Tx,Row: 20. Column: (b) Date Q O F investment acquired (M M/D D/Y Y Y Y). ,5,109 126.447 179 137.948,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row20[0].f4_104[0],/Tx,"Row: 20. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",5,181 126.447 445.4 137.948,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row20[0].f4_105[0],/Tx,Row: 20. Column: (d) Basis in Q O F investment after end of the deferral period. ,5,447.4 126.447 524.6 137.948,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row20[0].f4_106[0],/Tx,Row: 20. Column: (e) Event code (see inst.). ,5,526.6 126.447 576 137.948,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row21[0].f4_107[0],/Tx,Row: 21. Column: (a) Q O F E I N. ,5,36 102.446 107 113.947,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row21[0].f4_108[0],/Tx,Row: 21. Column: (b) Date Q O F investment acquired (M M/D D/Y Y Y Y). ,5,109 102.446 179 113.947,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row21[0].f4_109[0],/Tx,"Row: 21. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",5,181 102.446 445.4 113.947,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row21[0].f4_110[0],/Tx,Row: 21. Column: (d) Basis in Q O F investment after end of the deferral period. ,5,447.4 102.446 524.6 113.947,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row21[0].f4_111[0],/Tx,Row: 21. Column: (e) Event code (see inst.). ,5,526.6 102.446 576 113.947,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row22[0].f4_112[0],/Tx,Row: 22. Column: (a) Q O F E I N. ,5,36 78.445 107 89.946,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row22[0].f4_113[0],/Tx,Row: 22. Column: (b) Date Q O F investment acquired (M M/D D/Y Y Y Y). ,5,109 78.445 179 89.946,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row22[0].f4_114[0],/Tx,"Row: 22. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",5,181 78.445 445.4 89.946,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row22[0].f4_115[0],/Tx,Row: 22. Column: (d) Basis in Q O F investment after end of the deferral period. ,5,447.4 78.445 524.6 89.946,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row22[0].f4_116[0],/Tx,Row: 22. Column: (e) Event code (see inst.). ,5,526.6 78.445 576 89.946,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row23[0].f4_117[0],/Tx,Row: 23. Column: (a) Q O F E I N. ,5,36 54.444 107 65.945,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row23[0].f4_118[0],/Tx,Row: 23. Column: (b) Date Q O F investment acquired (M M/D D/Y Y Y Y). ,5,109 54.444 179 65.945,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row23[0].f4_119[0],/Tx,"Row: 23. Column: (c) Description of Q O F investment (for example, 100 shares or 25% interest). ",5,181 54.444 445.4 65.945,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row23[0].f4_120[0],/Tx,Row: 23. Column: (d) Basis in Q O F investment after end of the deferral period. ,5,447.4 54.444 524.6 65.945,yes
+topmostSubform[0].Page4[0].Table_Part5[0].Row23[0].f4_121[0],/Tx,Row: 23. Column: (e) Event code (see inst.). ,5,526.6 54.444 576 65.945,yes

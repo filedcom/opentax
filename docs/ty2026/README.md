@@ -104,6 +104,9 @@ for the implementation contract.
 - [`FORM8814-GRAPH.md`](FORM8814-GRAPH.md) and `pdf-fields-f8814.csv`:
   parent election per child, allocated dividend/capital income and tax,
   cross-form effects, and all 26 draft PDF widgets.
+- [`FORM8997-GRAPH.md`](FORM8997-GRAPH.md) and `pdf-fields-f8997.csv`:
+  legacy QOF deferral recognition in 2026, revised Parts III–V, Form 8949
+  and future basis, with all 461 draft PDF widgets.
 - [`FORM8962-GRAPH.md`](FORM8962-GRAPH.md) and `pdf-fields-f8962.csv`:
   2026 premium tax credit line 27, 400% FPL boundary, Form 1095-A/allocations,
   143 PDF widgets, and MeF/graph acceptance order.

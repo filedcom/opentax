@@ -110,6 +110,11 @@ The [Form 8814 contract](FORM8814-GRAPH.md) maps the alternative parent
 election, per-child eligible source income, allocated dividend/capital gain,
 tax and AMT/NIIT/PTC effects. Its 26 draft PDF widgets are inventoried;
 eligibility and specialist source details need 2026 graph/MeF work.
+The [Form 8997 contract](FORM8997-GRAPH.md) uses the new draft and Notice
+2026-40 to map legacy QOF gain recognized at the end of the 2026 deferral
+period, split Part III A/B, reserved Part IV and post-deferral Part V.
+Its 461 widgets are inventoried; the two shared QOF nodes disagree on
+gain character and neither supplies a complete 2026 Form 8949/MeF route.
 The [scenario 12 contract](ATS-SCENARIO-12.md) and
 [business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
 broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800

@@ -41,6 +41,8 @@ NODE_PROGRESS = {
     "form6781": "2026 form embeds instructions; 1256 carryback and straddle Parts II/III, elections, QOF routing, 71 PDF widgets and current MeF remain; shared node handles only simple 60/40 accounts",
     "form8615": "2026 form/instructions pinned; child eligibility and source-derived unearned income, parent/sibling preferential worksheets, 2555/Schedule J, 32 PDF widgets and current MeF remain; shared calculator handles ordinary tax only",
     "f8814": "2026 form/instructions pinned; per-child election and source eligibility, special-gain/AMT/foreign-account detail, parent AGI/credit/NIIT routes, 26 PDF widgets and current MeF remain; shared input trusts eligibility flags",
+    "f8997": "2026 form changes QOF Parts III-V for end-of-deferral recognition; 2025 form is prior-year instruction comparator, 2026 instructions absent; build investment ledger, 2026 inclusion and Form 8949 route, PDF/MeF",
+    "form8997": "2026 QOF deferral ends for legacy investment; shared node treats all inclusion as long-term and misses form disclosure; reconcile with 2026 Form 8997 Parts III-V and Form 8949",
     "f1040": "dedicated 2026 node begun; expand upstream surface and finalizations",
     "schedule1a": "2026 line 13a, TP/4137 employer reconciliation, TT updated; audit remaining sources",
     "form4137": "2026 tips reach Schedule 1-A, income, Schedule 2 tax; audit other cases",

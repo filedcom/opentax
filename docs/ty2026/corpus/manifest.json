@@ -1612,6 +1612,34 @@
       "bytes": 2401930,
       "sha256": "83552968a07e63d1c81e5b4f311fc0e54728b5ff9654b5a0d2ba6292c5574317",
       "retrieved_utc": "2026-09-27T14:30:44Z"
+    },
+    {
+      "path": "draft/f8997.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f8997--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 185114,
+      "sha256": "3b773741f45044061bcdc3a02f319b02e6c2ce10890a061be513f7e4c581163f",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-09-27T14:42:43Z"
+    },
+    {
+      "path": "authorities/f8997--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/f8997--2025.pdf",
+      "kind": "prior-year-comparator",
+      "status": "downloaded",
+      "bytes": 131078,
+      "sha256": "97589000d39b67737c516763bc4b89a167a3c18b47163517e98490144f4f5a4b",
+      "retrieved_utc": "2026-09-27T14:42:43Z"
+    },
+    {
+      "path": "authorities/n-26-40.pdf",
+      "url": "https://www.irs.gov/pub/irs-drop/n-26-40.pdf",
+      "kind": "current-guidance",
+      "status": "downloaded",
+      "bytes": 170223,
+      "sha256": "4df687daf79373c8c9ed96913ebe77ad49bbcc8fea122964dc6c7efc97b8d148",
+      "retrieved_utc": "2026-09-27T14:42:43Z"
     }
   ]
 }

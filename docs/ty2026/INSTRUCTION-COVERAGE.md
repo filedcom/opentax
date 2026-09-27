@@ -2,10 +2,10 @@
 
 Snapshot: September 27, 2026. The [coverage ledger](instruction-coverage.csv)
 checks the expected IRS draft instruction URL for each form in the TY2025 PDF
-surface and five additional active inputs. The form slug is a lookup aid, not
+surface and six additional active inputs. The form slug is a lookup aid, not
 proof that every form has its own instruction booklet. Current result across
-68 entries: **27 pinned 2026 drafts**, **19 URLs serving 2025 instructions**,
-**15 with no draft at the expected URL**, **3 with 2026 instructions embedded
+69 entries: **27 pinned 2026 drafts**, **19 URLs serving 2025 instructions**,
+**16 with no draft at the expected URL**, **3 with 2026 instructions embedded
 in their form drafts**, **1 covered by a combined 2026 booklet**, **1 with
 current continuous-use instructions**, and **2 whose year was not
 established from the title**. The
