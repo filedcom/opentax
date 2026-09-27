@@ -8,6 +8,7 @@ import { f1040 } from "../../../outputs/f1040/index.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import { form8959 } from "../form8959/index.ts";
+import { form8919 } from "../form8919/index.ts";
 
 const employerSchema = z.object({
   name: z.string().min(1),
@@ -444,6 +445,7 @@ class Form4137Node extends TaxNode<typeof inputSchema> {
     schedule2,
     agi_aggregator,
     form8959,
+    form8919,
   ]);
 
   compute(ctx: NodeContext, rawInput: Form4137Input): NodeResult {
@@ -470,6 +472,14 @@ class Form4137Node extends TaxNode<typeof inputSchema> {
           : []),
         ...(medicareTips > 0
           ? [output(form8959, { unreported_tips: medicareTips })]
+          : []),
+        ...(forms.length > 0
+          ? [output(form8919, {
+            form4137_sources: forms.map((form) => ({
+              recipient: form.recipient,
+              line10_ss_tips: form.ssTips,
+            })),
+          })]
           : []),
       ],
     };

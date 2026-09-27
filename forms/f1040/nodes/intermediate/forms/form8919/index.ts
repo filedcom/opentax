@@ -27,9 +27,12 @@ export const employerSchema = z.object({
   tin: tin.optional(),
   reason_code: reasonCodeSchema,
   correspondence_received_date: validDate.optional(),
+  correspondence_reference: z.string().trim().min(1).optional(),
+  ss8_filed_date: validDate.optional(),
+  ss8_filing_reference: z.string().trim().min(1).optional(),
   form1099_received: z.boolean(),
   wages: amount.positive(),
-  nec_payer_tin: tin.optional(),
+  form1099_payer_tin: tin.optional(),
 }).strict().superRefine((employer, ctx) => {
   if ((employer.tin_type === "unknown") === (employer.tin !== undefined)) {
     ctx.addIssue({
@@ -65,10 +68,39 @@ export const employerSchema = z.object({
         "Form 8919 reason A/C needs a correspondence date, G/H must omit it",
     });
   }
-  if (employer.nec_payer_tin && !employer.form1099_received) {
+  if (
+    ["A", "C"].includes(employer.reason_code) !==
+      (employer.correspondence_reference !== undefined)
+  ) {
     ctx.addIssue({
       code: "custom",
-      message: "Form 8919 linked 1099-NEC requires column (e)",
+      message: "Form 8919 reason A/C needs an IRS correspondence reference",
+    });
+  }
+  const ss8Required = ["A", "G"].includes(employer.reason_code);
+  const ss8Complete = employer.ss8_filed_date !== undefined &&
+    employer.ss8_filing_reference !== undefined;
+  const ss8Present = employer.ss8_filed_date !== undefined ||
+    employer.ss8_filing_reference !== undefined;
+  if ((ss8Required && !ss8Complete) || (!ss8Required && ss8Present)) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Form 8919 reason A/G needs Form SS-8 filing date and reference",
+    });
+  }
+  if (employer.reason_code === "H" && !employer.form1099_received) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Form 8919 reason H needs a 1099-MISC or 1099-NEC",
+    });
+  }
+  if (
+    employer.form1099_received !==
+      (employer.form1099_payer_tin !== undefined)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Form 8919 column (e) must match a 1099-MISC/NEC source link",
     });
   }
 });
@@ -76,22 +108,36 @@ export const employerSchema = z.object({
 export const formSchema = z.object({
   recipient: z.enum(["taxpayer", "spouse"]),
   employers: z.array(employerSchema).min(1),
-  // Line 8 includes W-2 boxes 3 and 7, qualifying RRTA compensation,
-  // and Form 4137 line 10 for this recipient.
-  line8_prior_ss_wages_and_tips: amount,
 }).strict();
 
-export const necSourceSchema = z.object({
+export const form1099SourceSchema = z.object({
+  kind: z.enum(["1099misc", "1099nec"]),
   recipient_ssn: ssn,
+  payer_name: z.string().trim().min(1),
   payer_tin: tin,
-  amount: amount.positive(),
+  amount: z.number().positive(),
+}).strict();
+
+export const w2SourceSchema = z.object({
+  employee_ssn: z.string().optional(),
+  employer_name: z.string().optional(),
+  employer_ein: z.string().optional(),
+  ss_wages_and_tips: z.number().nonnegative(),
+  rrta_compensation: z.number().nonnegative(),
+}).strict();
+
+export const form4137SourceSchema = z.object({
+  recipient: z.enum(["taxpayer", "spouse"]),
+  line10_ss_tips: z.number().nonnegative(),
 }).strict();
 
 export const inputSchema = z.object({
   taxpayer_ssn: ssn.optional(),
   spouse_ssn: ssn.optional(),
   forms: z.array(formSchema).optional(),
-  nec_sources: z.array(necSourceSchema).optional(),
+  form1099_sources: z.array(form1099SourceSchema).optional(),
+  w2_sources: z.array(w2SourceSchema).optional(),
+  form4137_sources: z.array(form4137SourceSchema).optional(),
 }).strict();
 
 export type Form8919Input = z.infer<typeof inputSchema>;
@@ -142,8 +188,48 @@ export function calculateForm8919(
       firms.add(firm);
     }
   }
-  const sourceTotals = new Map<string, number>();
-  for (const source of input.nec_sources ?? []) {
+  if (forms.length === 0 && (input.form1099_sources?.length ?? 0) === 0) {
+    return [];
+  }
+  const w2ByRecipient = new Map<"taxpayer" | "spouse", {
+    ssWages: number;
+    rrtaCompensation: number;
+    employers: Set<string>;
+  }>();
+  for (const source of input.w2_sources ?? []) {
+    const employeeSsn = source.employee_ssn && digits(source.employee_ssn);
+    const recipient = employeeSsn === undefined
+      ? input.spouse_ssn === undefined ? "taxpayer" : undefined
+      : employeeSsn === digits(input.taxpayer_ssn ?? "")
+      ? "taxpayer"
+      : employeeSsn === digits(input.spouse_ssn ?? "")
+      ? "spouse"
+      : undefined;
+    if (!recipient) {
+      throw new Error("Form 8919 W-2 needs a filer-matching employee SSN");
+    }
+    const prior = w2ByRecipient.get(recipient) ?? {
+      ssWages: 0,
+      rrtaCompensation: 0,
+      employers: new Set<string>(),
+    };
+    prior.ssWages += source.ss_wages_and_tips;
+    prior.rrtaCompensation += source.rrta_compensation;
+    if (source.employer_ein) {
+      prior.employers.add(digits(source.employer_ein));
+    }
+    w2ByRecipient.set(recipient, prior);
+  }
+  const form4137ByRecipient = new Map<"taxpayer" | "spouse", number>();
+  for (const source of input.form4137_sources ?? []) {
+    form4137ByRecipient.set(
+      source.recipient,
+      (form4137ByRecipient.get(source.recipient) ?? 0) +
+        source.line10_ss_tips,
+    );
+  }
+  const sourceTotals = new Map<string, { amount: number; name: string }>();
+  for (const source of input.form1099_sources ?? []) {
     const recipient =
       digits(source.recipient_ssn) === digits(input.taxpayer_ssn ?? "")
         ? "taxpayer"
@@ -151,36 +237,68 @@ export function calculateForm8919(
         ? "spouse"
         : undefined;
     if (!recipient) {
-      throw new Error("Form 8919 1099-NEC recipient does not match a filer");
+      throw new Error(
+        "Form 8919 1099-MISC/NEC recipient does not match a filer",
+      );
     }
     const key = `${recipient}:${digits(source.payer_tin)}`;
-    sourceTotals.set(key, (sourceTotals.get(key) ?? 0) + source.amount);
+    const prior = sourceTotals.get(key);
+    if (prior && prior.name !== source.payer_name) {
+      throw new Error(
+        "Form 8919 1099-MISC/NEC payer names disagree for one TIN",
+      );
+    }
+    sourceTotals.set(key, {
+      amount: (prior?.amount ?? 0) + source.amount,
+      name: source.payer_name,
+    });
   }
   const matchedSources = new Set<string>();
   const result = forms.map((form) => {
     for (const employer of form.employers) {
-      if (!employer.nec_payer_tin) continue;
-      const key = `${form.recipient}:${digits(employer.nec_payer_tin)}`;
+      if (!employer.form1099_payer_tin) continue;
+      const key = `${form.recipient}:${digits(employer.form1099_payer_tin)}`;
       if (matchedSources.has(key)) {
         throw new Error(
-          "Form 8919 1099-NEC source is claimed by multiple firms",
+          "Form 8919 1099-MISC/NEC source is claimed by multiple firms",
         );
       }
       matchedSources.add(key);
-      if (sourceTotals.get(key) !== employer.wages) {
-        throw new Error("Form 8919 firm wages disagree with routed 1099-NEC");
+      const source = sourceTotals.get(key);
+      if (
+        !source || Math.round(source.amount) !== employer.wages ||
+        source.name !== employer.name
+      ) {
+        throw new Error(
+          "Form 8919 firm wages disagree with routed 1099-MISC/NEC",
+        );
       }
       if (
-        employer.tin && digits(employer.tin) !== digits(employer.nec_payer_tin)
+        employer.tin &&
+        digits(employer.tin) !== digits(employer.form1099_payer_tin)
       ) {
-        throw new Error("Form 8919 firm TIN disagrees with 1099-NEC payer");
+        throw new Error(
+          "Form 8919 firm TIN disagrees with 1099-MISC/NEC payer",
+        );
+      }
+    }
+    for (const employer of form.employers) {
+      if (employer.reason_code !== "H") continue;
+      const w2Employers = w2ByRecipient.get(form.recipient)?.employers;
+      if (!employer.tin || !w2Employers?.has(digits(employer.tin))) {
+        throw new Error("Form 8919 reason H needs a W-2 from the same firm");
       }
     }
     const line6 = form.employers.reduce(
       (sum, employer) => sum + employer.wages,
       0,
     );
-    const line8 = form.line8_prior_ss_wages_and_tips;
+    const w2 = w2ByRecipient.get(form.recipient);
+    const line8 = Math.round(
+      (w2?.ssWages ?? 0) +
+        Math.min(w2?.rrtaCompensation ?? 0, ssWageBase) +
+        (form4137ByRecipient.get(form.recipient) ?? 0),
+    );
     const line9 = Math.max(0, ssWageBase - line8);
     const line10 = Math.min(line6, line9);
     const line11 = Math.round(line10 * 0.062);
@@ -199,7 +317,9 @@ export function calculateForm8919(
   });
   for (const key of sourceTotals.keys()) {
     if (!matchedSources.has(key)) {
-      throw new Error("Routed 1099-NEC needs a matching Form 8919 firm row");
+      throw new Error(
+        "Routed 1099-MISC/NEC needs a matching Form 8919 firm row",
+      );
     }
   }
   return result;

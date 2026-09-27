@@ -976,11 +976,18 @@ recipient form containing identified firm rows and the 2025 A/C/G/H codes.
 Routed 1099-NEC income must match a firm row, so it is not counted twice.
 Line 6 now reaches Form 1040 and Form 8959, line 10 reaches Schedule SE, and
 line 13 reaches Schedule 2. The native IRS8919 XML now has identity, firm
-detail, and calculated lines. Node, MeF, full-return, and local XSD cases are
-written but unrun. This is not a completed audit: line 8 still needs direct
-W-2, RRTA, and Form 4137 source reconciliation; reason G needs Form SS-8
-filing evidence, reason H needs same-firm W-2 evidence; continuation and PDF
-projection need review. IRS business-rule and ATS acceptance are still open.
+detail, and calculated lines. The follow-on build replaces the free-entered
+line 8 with W-2 boxes 3 and 7,
+RRTA compensation capped at the 2025 wage base, and Form 4137 line 10 for
+each recipient. The MeF builder rederives those figures from the filed W-2 and
+Form 4137 documents. Reasons A/C require a referenced IRS correspondence,
+A/G require a referenced SS-8 filing, and H requires a W-2 from the same
+firm. These source and full-return cases are written but unrun. The actual
+letters/SS-8 receipts are still entered evidence, not authenticated documents;
+1099-MISC box 3 and 1099-NEC box 1 now share one source ledger and can be
+combined for a reason-H firm with a matching W-2. Those cases are written but
+unrun. Continuation, PDF review, IRS business rules, and ATS acceptance remain
+open.
 
 ## Workstreams
 

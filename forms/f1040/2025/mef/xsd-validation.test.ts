@@ -7457,6 +7457,20 @@ Deno.test({
   const general = singleGeneral();
   const result = runReturn({
     general,
+    w2: [{
+      employer_name: "Other Employer",
+      employer_ein: "22-2222222",
+      employee_ssn: general.taxpayer_ssn,
+      employer_address_line1: "1 Main St",
+      employer_address_city: "Austin",
+      employer_address_state: "TX",
+      employer_address_zip: "78701",
+      box1_wages: 150_000,
+      box2_fed_withheld: 20_000,
+      box3_ss_wages: 150_000,
+      box5_medicare_wages: 150_000,
+      box6_medicare_withheld: 2_175,
+    }],
     f1099nec: [{
       payer_name: "Employer Inc",
       payer_tin: "12-3456789",
@@ -7473,11 +7487,12 @@ Deno.test({
           tin_type: "ein",
           tin: "12-3456789",
           reason_code: "G",
+          ss8_filed_date: "2025-04-01",
+          ss8_filing_reference: "SS-8 delivery receipt",
           form1099_received: true,
           wages: 210_000,
-          nec_payer_tin: "12-3456789",
+          form1099_payer_tin: "12-3456789",
         }],
-        line8_prior_ss_wages_and_tips: 150_000,
       }],
     },
   });
@@ -7499,6 +7514,73 @@ Deno.test({
     "<WagesSubjectToSSTAmt>26100</WagesSubjectToSSTAmt>",
   );
   await validateXsd(xml, "Form 8919 1099-NEC wage routing");
+});
+
+Deno.test({
+  name:
+    "XSD: Form 8919 reason H combines same-firm 1099-MISC and 1099-NEC wages",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const result = runReturn({
+    general,
+    w2: [{
+      employer_name: "Employer Inc",
+      employer_ein: "12-3456789",
+      employee_ssn: general.taxpayer_ssn,
+      employer_address_line1: "1 Main St",
+      employer_address_city: "Austin",
+      employer_address_state: "TX",
+      employer_address_zip: "78701",
+      box1_wages: 20_000,
+      box2_fed_withheld: 1_000,
+      box3_ss_wages: 20_000,
+      box5_medicare_wages: 20_000,
+      box6_medicare_withheld: 290,
+    }],
+    f1099m: [{
+      payer_name: "Employer Inc",
+      payer_tin: "12-3456789",
+      recipient_tin: general.taxpayer_ssn,
+      box3_other_income: 10_000,
+      box3_other_income_routing: "form_8919",
+    }],
+    f1099nec: [{
+      payer_name: "Employer Inc",
+      payer_tin: "12-3456789",
+      recipient_ssn: general.taxpayer_ssn,
+      box1_nec: 40_000,
+      for_routing: "form_8919",
+    }],
+    form8919: {
+      forms: [{
+        recipient: "taxpayer",
+        employers: [{
+          name: "Employer Inc",
+          tin_type: "ein",
+          tin: "12-3456789",
+          reason_code: "H",
+          form1099_received: true,
+          wages: 50_000,
+          form1099_payer_tin: "12-3456789",
+        }],
+      }],
+    },
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040?.line1g_wages_8919, 50_000);
+  assertEquals(result.pending.schedule2?.line6_uncollected_8919, 3_825);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(
+    xml,
+    "<UncollectedSocSecMedReasonCd>H</UncollectedSocSecMedReasonCd>",
+  );
+  await validateXsd(xml, "Form 8919 mixed 1099-MISC and 1099-NEC wages");
 });
 
 Deno.test({

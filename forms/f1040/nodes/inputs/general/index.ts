@@ -14,6 +14,7 @@ import { eitc } from "../../intermediate/forms/eitc/index.ts";
 import { f8812 } from "../f8812/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { form8959 } from "../../intermediate/forms/form8959/index.ts";
+import { form8919 } from "../../intermediate/forms/form8919/index.ts";
 import { form4137 } from "../../intermediate/forms/form4137/index.ts";
 import { form8960 } from "../../intermediate/forms/form8960/index.ts";
 import {
@@ -675,6 +676,7 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
     f8812,
     agi_aggregator,
     form4137,
+    form8919,
     form8959,
     form8960,
     form8962,
@@ -867,8 +869,17 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
           spouse_ssn: parsed.spouse_ssn,
         }),
       }));
+      outputs.push(this.outputNodes.output(form8919, {
+        taxpayer_ssn: parsed.taxpayer_ssn,
+        ...(parsed.spouse_ssn !== undefined && {
+          spouse_ssn: parsed.spouse_ssn,
+        }),
+      }));
     } else if (parsed.spouse_ssn !== undefined) {
       outputs.push(this.outputNodes.output(form4137, {
+        spouse_ssn: parsed.spouse_ssn,
+      }));
+      outputs.push(this.outputNodes.output(form8919, {
         spouse_ssn: parsed.spouse_ssn,
       }));
     }

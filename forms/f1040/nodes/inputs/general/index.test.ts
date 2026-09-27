@@ -954,10 +954,14 @@ Deno.test("smoke: MFJ + 2 qualifying children + 1 qualifying relative → all ou
 
   assertEquals(
     result.outputs.length,
-    13,
-    "thirteen outputs including Form 4137 identity and Form 8962 family context",
+    14,
+    "fourteen outputs including Forms 4137 and 8919 identity and Form 8962 family context",
   );
   assertEquals(findOutput(result, "form4137")?.fields, {
+    taxpayer_ssn: "111-22-3333",
+    spouse_ssn: "222-33-4444",
+  });
+  assertEquals(findOutput(result, "form8919")?.fields, {
     taxpayer_ssn: "111-22-3333",
     spouse_ssn: "222-33-4444",
   });
@@ -1149,7 +1153,7 @@ Deno.test("smoke: all new major fields populated → routes correctly to f1040",
     ],
   });
 
-  assertEquals(result.outputs.length, 13);
+  assertEquals(result.outputs.length, 14);
   assertEquals(findOutput(result, "form8962")?.fields.household_size, 4);
   const input = findOutput(result, "f1040")?.fields as Record<string, unknown>;
   assertEquals(input?.filing_status, FilingStatus.MFJ);

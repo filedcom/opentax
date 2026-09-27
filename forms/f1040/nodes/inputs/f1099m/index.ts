@@ -17,6 +17,7 @@ import { scheduleC as schedule_c } from "../schedule_c/index.ts";
 import { scheduleE as schedule_e } from "../schedule_e/index.ts";
 import { schedule_f } from "../../intermediate/forms/schedule_f/index.ts";
 import { form8960 } from "../../intermediate/forms/form8960/index.ts";
+import { form8919 } from "../../intermediate/forms/form8919/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ---------------------------------------------------------------------------
@@ -28,6 +29,7 @@ const ROYALTIES_ROUTING = ["schedule_e", "schedule_c"] as const;
 const OTHER_INCOME_ROUTING = [
   "prizes_awards",
   "other_income",
+  "form_8919",
   "excluded",
 ] as const;
 
@@ -187,8 +189,11 @@ function scheduleEOutput(items: M99Item[]): NodeOutput | null {
 }
 
 function niitIncomeTotal(items: M99Item[]): number {
-  return totalOf(items, "box8_substitute_payments") + items
-    .filter((i) => i.box3_niit_applicable === true)
+  return items
+    .filter((i) =>
+      i.box3_niit_applicable === true &&
+      i.box3_other_income_routing !== "form_8919"
+    )
     .reduce((s, i) => s + (i.box3_other_income ?? 0), 0);
 }
 
@@ -228,6 +233,7 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
     agi_aggregator,
     f1040,
     form8960,
+    form8919,
   ]);
 
   compute(_ctx: NodeContext, input: M99Input): NodeResult {
@@ -235,6 +241,30 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
     if (m99s.length === 0) return { outputs: [] };
 
     const outputs: NodeOutput[] = [];
+
+    const form8919Sources = m99s.flatMap((item) => {
+      const amount = item.box3_other_income ?? 0;
+      if (item.box3_other_income_routing !== "form_8919" || amount === 0) {
+        return [];
+      }
+      if (item.box3_niit_applicable === true) {
+        throw new Error(
+          "1099-MISC wages routed to Form 8919 cannot be NIIT income",
+        );
+      }
+      return [{
+        kind: "1099misc" as const,
+        recipient_ssn: item.recipient_tin,
+        payer_name: item.payer_name,
+        payer_tin: item.payer_tin,
+        amount,
+      }];
+    });
+    if (form8919Sources.length > 0) {
+      outputs.push(this.outputNodes.output(form8919, {
+        form1099_sources: form8919Sources,
+      }));
+    }
 
     // f1040 line25b — federal withholding (always aggregated)
     const totalWithheld = totalOf(m99s, "box4_federal_withheld");

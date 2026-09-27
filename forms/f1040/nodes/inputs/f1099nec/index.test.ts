@@ -178,8 +178,10 @@ Deno.test("routing: box1_nec with form_8919 → form8919 node", () => {
   ]);
   const out = findOutput(result, "form8919");
   assertEquals(out !== undefined, true);
-  assertEquals(fieldsOf(result.outputs, form8919)!.nec_sources, [{
+  assertEquals(fieldsOf(result.outputs, form8919)!.form1099_sources, [{
+    kind: "1099nec",
     recipient_ssn: "123-45-6789",
+    payer_name: "Test Payer",
     payer_tin: "12-3456789",
     amount: 30000,
   }]);

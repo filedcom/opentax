@@ -1,12 +1,23 @@
 import { element, elements } from "../../../mef/xml.ts";
 import { CONFIG_BY_YEAR } from "../../../nodes/config/index.ts";
 import {
+  form8919W2Sources,
+  inputSchema as w2InputSchema,
+} from "../../../nodes/inputs/w2/index.ts";
+import {
+  calculateForm4137,
+  inputSchema as form4137InputSchema,
+} from "../../../nodes/intermediate/forms/form4137/index.ts";
+import {
   calculateForm8919,
   inputSchema,
 } from "../../../nodes/intermediate/forms/form8919/index.ts";
 import {
   inputSchema as necInputSchema,
 } from "../../../nodes/inputs/f1099nec/index.ts";
+import {
+  inputSchema as miscInputSchema,
+} from "../../../nodes/inputs/f1099m/index.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 
 type Fields = Partial<ReturnType<typeof inputSchema.parse>>;
@@ -30,17 +41,70 @@ export const form8919: MefFormDescriptor<
           (item.box1_nec ?? 0) > 0
         )
         .map((item) => ({
+          kind: "1099nec" as const,
           recipient_ssn: item.recipient_ssn,
+          payer_name: item.payer_name.trim(),
           payer_tin: item.payer_tin,
           amount: item.box1_nec,
         }))
       : [];
+    const miscSources = context?.pending?.f1099m
+      ? miscInputSchema.parse(context.pending.f1099m).f1099ms
+        .filter((item) =>
+          item.box3_other_income_routing === "form_8919" &&
+          (item.box3_other_income ?? 0) > 0
+        )
+        .map((item) => ({
+          kind: "1099misc" as const,
+          recipient_ssn: item.recipient_tin,
+          payer_name: item.payer_name.trim(),
+          payer_tin: item.payer_tin,
+          amount: item.box3_other_income,
+        }))
+      : [];
+    const sourceKeys = [...necSources, ...miscSources].map((source) =>
+      JSON.stringify(source)
+    ).sort();
+    const inputSourceKeys = (input.form1099_sources ?? []).map((source) =>
+      JSON.stringify(source)
+    ).sort();
     if (
-      JSON.stringify(necSources) !== JSON.stringify(input.nec_sources ?? [])
+      JSON.stringify(sourceKeys) !== JSON.stringify(inputSourceKeys)
     ) {
       throw new Error(
-        "Form 8919 routed 1099-NEC sources disagree with filed forms",
+        "Form 8919 routed 1099-MISC/NEC sources disagree with filed forms",
       );
+    }
+    if ((input.forms ?? []).length > 0) {
+      const w2Sources = context?.pending?.w2
+        ? form8919W2Sources(
+          w2InputSchema.parse(context.pending.w2).w2s,
+        )
+        : [];
+      if (
+        JSON.stringify(w2Sources) !== JSON.stringify(input.w2_sources ?? [])
+      ) {
+        throw new Error(
+          "Form 8919 line 8 W-2 sources disagree with filed W-2 documents",
+        );
+      }
+      const form4137Sources = context?.pending?.form4137
+        ? calculateForm4137(
+          form4137InputSchema.parse(context.pending.form4137),
+          CONFIG_BY_YEAR[2025].ssWageBase,
+        ).map((form) => ({
+          recipient: form.recipient,
+          line10_ss_tips: form.ssTips,
+        }))
+        : [];
+      if (
+        JSON.stringify(form4137Sources) !==
+          JSON.stringify(input.form4137_sources ?? [])
+      ) {
+        throw new Error(
+          "Form 8919 line 8 Form 4137 sources disagree with filed forms",
+        );
+      }
     }
     const calculated = calculateForm8919(
       input,

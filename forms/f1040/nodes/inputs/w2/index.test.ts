@@ -10,6 +10,7 @@ import { form8853 } from "../../intermediate/forms/form8853/index.ts";
 import { form8880 } from "../../intermediate/forms/form8880/index.ts";
 import { form8889 } from "../../intermediate/forms/form8889/index.ts";
 import { form8959 } from "../../intermediate/forms/form8959/index.ts";
+import { form8919 } from "../../intermediate/forms/form8919/index.ts";
 import { form8962 } from "../../intermediate/forms/form8962/index.ts";
 import { ira_deduction_worksheet } from "../../intermediate/worksheets/ira_deduction_worksheet/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
@@ -73,6 +74,27 @@ Deno.test("box2_fed_withheld_routes_to_f1040_line25a: $5,000 withheld appears ex
     minimalItem({ box1_wages: 50000, box2_fed_withheld: 5000 }),
   ]);
   assertEquals(fieldsOf(result.outputs, f1040)!.line25a_w2_withheld, 5000);
+});
+
+Deno.test("W-2 supplies Form 8919 line 8 wages and firm identity", () => {
+  const result = compute([minimalItem({
+    employee_ssn: "123-45-6789",
+    employer_name: "Rail Employer",
+    employer_ein: "12-3456789",
+    box1_wages: 100_000,
+    box14_entries: [{
+      description: "RRTA compensation",
+      amount: 100_000,
+      is_state_sdi_pfml: false,
+    }],
+  })]);
+  assertEquals(fieldsOf(result.outputs, form8919)?.w2_sources, [{
+    employee_ssn: "123-45-6789",
+    employer_name: "Rail Employer",
+    employer_ein: "12-3456789",
+    ss_wages_and_tips: 0,
+    rrta_compensation: 100_000,
+  }]);
 });
 
 Deno.test("box8_allocated_tips_routes_to_form4137: $2,000 allocated tips appear exactly on form4137", () => {

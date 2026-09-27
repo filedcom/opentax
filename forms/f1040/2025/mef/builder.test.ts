@@ -124,10 +124,11 @@ const sampleForm8919 = {
       tin_type: "ein" as const,
       tin: "12-3456789",
       reason_code: "G" as const,
+      ss8_filed_date: "2025-03-01",
+      ss8_filing_reference: "SS-8 delivery receipt",
       form1099_received: false,
       wages: 45_000,
     }],
-    line8_prior_ss_wages_and_tips: 0,
   }],
 };
 

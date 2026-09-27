@@ -4,6 +4,7 @@ import { f1040 } from "../../../outputs/f1040/index.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import { form8959 } from "../form8959/index.ts";
+import { form8919 } from "../form8919/index.ts";
 import { calculateForm4137, form4137, inputSchema } from "./index.ts";
 
 const employer = {
@@ -58,6 +59,10 @@ Deno.test("Form 4137 calculates unreported income, SS tax and Medicare tax from 
     230,
   );
   assertEquals(fieldsOf(result.outputs, form8959)?.unreported_tips, 3_000);
+  assertEquals(fieldsOf(result.outputs, form8919)?.form4137_sources, [{
+    recipient: "taxpayer",
+    line10_ss_tips: 3_000,
+  }]);
 });
 
 Deno.test("Form 4137 line 5 tips remain income but are excluded from FICA", () => {

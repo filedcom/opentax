@@ -66,12 +66,11 @@ function necIncomeOutput(item: NECItem): NodeOutput[] {
       if (!item.recipient_ssn) {
         throw new Error("1099-NEC routed to Form 8919 needs recipient_ssn");
       }
-      if (!Number.isInteger(box1)) {
-        throw new Error("Form 8919 1099-NEC wages must use whole dollars");
-      }
       return [output(form8919, {
-        nec_sources: [{
+        form1099_sources: [{
+          kind: "1099nec",
           recipient_ssn: item.recipient_ssn,
+          payer_name: item.payer_name,
           payer_tin: item.payer_tin,
           amount: box1,
         }],

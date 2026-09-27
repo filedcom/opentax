@@ -16,6 +16,7 @@ import { form8853 } from "../../intermediate/forms/form8853/index.ts";
 import { form8880 } from "../../intermediate/forms/form8880/index.ts";
 import { form8889 } from "../../intermediate/forms/form8889/index.ts";
 import { form8959 } from "../../intermediate/forms/form8959/index.ts";
+import { form8919 } from "../../intermediate/forms/form8919/index.ts";
 import { form8962 } from "../../intermediate/forms/form8962/index.ts";
 import { ira_deduction_worksheet } from "../../intermediate/worksheets/ira_deduction_worksheet/index.ts";
 import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
@@ -428,6 +429,23 @@ export function form4137Sources(w2s: W2Items) {
   });
 }
 
+export function form8919W2Sources(w2s: W2Items) {
+  return w2s.map((item) => ({
+    ...(item.employee_ssn !== undefined && {
+      employee_ssn: item.employee_ssn,
+    }),
+    ...(item.employer_name !== undefined && {
+      employer_name: item.employer_name,
+    }),
+    ...(item.employer_ein !== undefined && {
+      employer_ein: item.employer_ein,
+    }),
+    ss_wages_and_tips: (item.box3_ss_wages ?? 0) +
+      (item.box7_ss_tips ?? 0),
+    rrta_compensation: box14Amount(item, "RRTA compensation") ?? 0,
+  }));
+}
+
 function allocatedTipsOutput(w2s: W2Items): NodeOutput[] {
   const sources = form4137Sources(w2s);
   return sources.length > 0
@@ -575,6 +593,7 @@ class W2Node extends TaxNode<typeof inputSchema> {
     schedule_c,
     schedule_se,
     form4137,
+    form8919,
     form2441,
     form8959,
     form8889,
@@ -614,6 +633,7 @@ class W2Node extends TaxNode<typeof inputSchema> {
       ...retirementPlanOutput(input.w2s),
       ...scheduleAOutput(input.w2s),
       ...scheduleSEOutput(input.w2s),
+      output(form8919, { w2_sources: form8919W2Sources(input.w2s) }),
       ...qualifiedTipsOutput(input.w2s),
       ...box12NodeOutputs(input.w2s),
       this.outputNodes.output(f1040, f1040Fields as AtLeastOne<F1040Input>),

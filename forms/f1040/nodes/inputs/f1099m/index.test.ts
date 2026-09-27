@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { f1099m, itemSchema } from "./index.ts";
 import type { z } from "zod";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
@@ -7,6 +7,7 @@ import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
 import { scheduleC } from "../schedule_c/index.ts";
 import { schedule_f } from "../../intermediate/forms/schedule_f/index.ts";
+import { form8919 } from "../../intermediate/forms/form8919/index.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -238,6 +239,28 @@ Deno.test("f1099m.compute: box3_other_income with other_income routing routes to
     }),
   ]);
   assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_other, 2000);
+});
+
+Deno.test("f1099m.compute: misclassified box 3 wages route to Form 8919 only", () => {
+  const result = compute([minimalItem({
+    box3_other_income: 2_000,
+    box3_other_income_routing: "form_8919",
+  })]);
+  assertEquals(fieldsOf(result.outputs, form8919)?.form1099_sources, [{
+    kind: "1099misc",
+    recipient_ssn: "987654321",
+    payer_name: "Test Payer",
+    payer_tin: "123456789",
+    amount: 2_000,
+  }]);
+  assertEquals(findOutput(result, "schedule1"), undefined);
+  assertThrows(() =>
+    compute([minimalItem({
+      box3_other_income: 2_000,
+      box3_other_income_routing: "form_8919",
+      box3_niit_applicable: true,
+    })])
+  );
 });
 
 // Box 3 — zero value produces no schedule1 output
