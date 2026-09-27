@@ -12,6 +12,12 @@ const business = {
   purchase_records_confirmed: true,
   no_duplicate_excise_claim: true,
 } as const;
+const certifications = {
+  undyed_fuel_confirmed: true,
+  right_to_claim_not_waived: true,
+  credit_card_issuer_certificate_not_provided: true,
+  not_highway_vehicle: true,
+} as const;
 
 function compute(input: Parameters<typeof f4136.compute>[1]) {
   return f4136.compute({ taxYear: 2025, formType: "f1040" }, input);
@@ -21,8 +27,18 @@ Deno.test("Form 4136: qualified business gasoline and diesel route to refundable
   const result = compute({
     business,
     claims: [
-      { line: "1a", qualified_gallons: 100, actual_fuel_cost: 300 },
-      { line: "3b", qualified_gallons: 100, actual_fuel_cost: 400 },
+      {
+        ...certifications,
+        line: "1a",
+        qualified_gallons: 100,
+        actual_fuel_cost: 300,
+      },
+      {
+        ...certifications,
+        line: "3b",
+        qualified_gallons: 100,
+        actual_fuel_cost: 400,
+      },
     ],
   });
   assertEquals(result.outputs.length, 1);
@@ -52,6 +68,7 @@ Deno.test("Form 4136: represented 2025 Part II rates are line-specific", () => {
     const result = compute({
       business,
       claims: [{
+        ...certifications,
         line,
         type_of_use,
         qualified_gallons: 100,
@@ -66,7 +83,12 @@ Deno.test("Form 4136: credit rounds to cents", () => {
   assertEquals(
     compute({
       business,
-      claims: [{ line: "1a", qualified_gallons: 1, actual_fuel_cost: 3 }],
+      claims: [{
+        ...certifications,
+        line: "1a",
+        qualified_gallons: 1,
+        actual_fuel_cost: 3,
+      }],
     }).outputs[0].fields.line12_fuel_tax_credit,
     0.18,
   );
@@ -74,6 +96,7 @@ Deno.test("Form 4136: credit rounds to cents", () => {
 
 Deno.test("Form 4136: eligibility, costs, use codes, and duplicate claims are required", () => {
   const claim = {
+    ...certifications,
     line: "3a",
     type_of_use: "02",
     qualified_gallons: 100,
@@ -105,8 +128,65 @@ Deno.test("Form 4136: eligibility, costs, use codes, and duplicate claims are re
     inputSchema.safeParse({ business, claims: [claim, claim] }).success,
     false,
   );
+  assertEquals(
+    inputSchema.safeParse({
+      business,
+      claims: [{ ...claim, undyed_fuel_confirmed: undefined }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      business,
+      claims: [{ ...claim, not_highway_vehicle: undefined }],
+    }).success,
+    false,
+  );
   assertThrows(
     () => compute({ business, claims: [{ ...claim, qualified_gallons: -1 }] }),
     Error,
+  );
+});
+
+Deno.test("Form 4136: aviation claims require no-waiver and credit-card certifications", () => {
+  const aviation = {
+    ...certifications,
+    line: "2b" as const,
+    type_of_use: "13",
+    qualified_gallons: 100,
+    actual_fuel_cost: 300,
+  };
+  assertEquals(
+    inputSchema.safeParse({ business, claims: [aviation] }).success,
+    true,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      business,
+      claims: [{ ...aviation, right_to_claim_not_waived: undefined }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      business,
+      claims: [{
+        ...aviation,
+        credit_card_issuer_certificate_not_provided: undefined,
+      }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      business,
+      claims: [{
+        ...aviation,
+        line: "5c",
+        type_of_use: "01",
+        right_to_claim_not_waived: undefined,
+      }],
+    }).success,
+    false,
   );
 });

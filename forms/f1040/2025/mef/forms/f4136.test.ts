@@ -1,5 +1,11 @@
 import { assertStringIncludes, assertThrows } from "@std/assert";
 import { form4136 } from "./f4136.ts";
+const certifications = {
+  undyed_fuel_confirmed: true,
+  right_to_claim_not_waived: true,
+  credit_card_issuer_certificate_not_provided: true,
+  not_highway_vehicle: true,
+} as const;
 
 const fields = {
   business: {
@@ -14,8 +20,18 @@ const fields = {
     no_duplicate_excise_claim: true as const,
   },
   claims: [
-    { line: "1a" as const, qualified_gallons: 100, actual_fuel_cost: 300 },
-    { line: "3b" as const, qualified_gallons: 100, actual_fuel_cost: 400 },
+    {
+      ...certifications,
+      line: "1a" as const,
+      qualified_gallons: 100,
+      actual_fuel_cost: 300,
+    },
+    {
+      ...certifications,
+      line: "3b" as const,
+      qualified_gallons: 100,
+      actual_fuel_cost: 400,
+    },
   ],
 };
 
@@ -58,36 +74,42 @@ Deno.test("Form 4136 XML carries variable-use aviation, kerosene, and alternativ
     business: fields.business,
     claims: [
       {
+        ...certifications,
         line: "2b",
         type_of_use: "01",
         qualified_gallons: 100,
         actual_fuel_cost: 300,
       },
       {
+        ...certifications,
         line: "4a",
         type_of_use: "02",
         qualified_gallons: 100,
         actual_fuel_cost: 300,
       },
       {
+        ...certifications,
         line: "5c",
         type_of_use: "01",
         qualified_gallons: 100,
         actual_fuel_cost: 300,
       },
       {
+        ...certifications,
         line: "5d",
         type_of_use: "01",
         qualified_gallons: 100,
         actual_fuel_cost: 300,
       },
       {
+        ...certifications,
         line: "11a",
         type_of_use: "02",
         qualified_gallons: 100,
         actual_fuel_cost: 300,
       },
       {
+        ...certifications,
         line: "11c",
         type_of_use: "02",
         qualified_gallons: 100,

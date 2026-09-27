@@ -81,6 +81,7 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
       elements("BusinessName", [
         element("BusinessNameLine1Txt", input.business.business_name),
       ]),
+      element("EIN", input.business.business_ein),
       element(
         "PrincipalBusinessActivityCd",
         input.business.principal_activity_code,

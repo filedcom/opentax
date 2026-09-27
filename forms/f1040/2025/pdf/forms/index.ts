@@ -16,6 +16,7 @@ import { form1116Pdf } from "./f1116.ts";
 import { form2441Pdf } from "./f2441.ts";
 import { form2555Pdf } from "./f2555.ts";
 import { form4137Pdf } from "./f4137.ts";
+import { form4136Pdf } from "./f4136.ts";
 import { form4562Pdf } from "./f4562.ts";
 import { form4684Pdf } from "./f4684.ts";
 import { form4797Pdf } from "./f4797.ts";
@@ -71,6 +72,7 @@ export const ALL_PDF_FORMS: readonly PdfFormDescriptor[] = [
   form1116Pdf,
   form2441Pdf,
   form2555Pdf,
+  form4136Pdf,
   form4137Pdf,
   form4562Pdf,
   form4684Pdf,

@@ -183,8 +183,18 @@ Deno.test({
         no_duplicate_excise_claim: true,
       },
       claims: [
-        { line: "1a", qualified_gallons: 100, actual_fuel_cost: 300 },
-        { line: "3b", qualified_gallons: 100, actual_fuel_cost: 400 },
+        {
+          line: "1a",
+          qualified_gallons: 100,
+          actual_fuel_cost: 300,
+          not_highway_vehicle: true,
+        },
+        {
+          line: "3b",
+          qualified_gallons: 100,
+          actual_fuel_cost: 400,
+          undyed_fuel_confirmed: true,
+        },
       ],
     },
   }, extractFilerIdentity(singleGeneral()));
