@@ -2163,6 +2163,15 @@
       "bytes": 1614992,
       "sha256": "d7771a6ba17cb11242ac1dfeb23c71b5ac042b6d58666f16181b66b859a530a1",
       "year_check": "2026-present"
+    },
+    {
+      "path": "authorities/f1098t--2026.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/f1098t--2026.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 511215,
+      "sha256": "f461d17ce14de4efb4d95936c8639434861dbf174da250ac777f50cd1883c692",
+      "year_check": "2026-present"
     }
   ]
 }

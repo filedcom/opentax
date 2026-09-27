@@ -28,7 +28,7 @@ NODE_PROGRESS = {
     "f1099nec": "Final Dec 2026 NEC/combined instructions pinned; box1a income includes 1b tips and 1d overtime, 1c TTOC; use existing business/farm or Form8919 source, Schedule 1-A tags and withholding, no synthetic Schedule C; see FORM1099MISC-NEC-GRAPH.md",
     "f1099int": "Reconcile payer-level box amounts, withholding, Schedule B, AGI and foreign/AMT branches against 2026 sources; see INTEREST-GRAPH.md",
     "f1095a": "Route each policy's monthly 1095-A premiums/SLCSP/APTC and shared-policy facts to Form 8962; node is absent from 2026 registry; see FORM8962-GRAPH.md",
-    "f8863": "Use 2026 education eligibility and 1098-T source with Form 8863 refundable/nonrefundable split, Schedule 3 and 1040; see FORM8862-8863-EIC-GRAPH.md",
+    "f8863": "Final 2026 1098-T/combined instructions pinned; derive expenses after aid, prior-year boxes4/6 recapture, 2026-versus-2025 box7, EIN and exception before Form 8863 refundable/nonrefundable split, Schedule 3/1040, PDF/current MeF; see FORM8862-8863-EIC-GRAPH.md",
     "f8949": "Preserve broker/digital-asset lot, category, basis and adjustment detail through Schedule D, multi-page PDF and current MeF; see CAPITAL-GAIN-GRAPH.md and PDF-FORM8949-MAP.md",
     "f5695": "2026 form is prior-year residential clean-energy carryforward only; remove new-expense/joint-occupancy branches and finish credit-limit/PDF/MeF; see FORM5695-CREDIT-GRAPH.md",
     "f8862": "Prior disallowance/recertification must gate EIC/CTC/AOTC sources and filed 2026 attachment; see FORM8862-8863-EIC-GRAPH.md",

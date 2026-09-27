@@ -4,7 +4,7 @@ Snapshot: September 27, 2026. The [coverage ledger](instruction-coverage.csv)
 checks the expected IRS draft instruction URL for each form in the TY2025 PDF
 surface and additional active inputs. The form slug is a lookup aid, not
 proof that every form has its own instruction booklet. Current result across
-91 entries: **27 pinned 2026 drafts**, **21 URLs serving 2025 instructions**,
+92 entries: **27 pinned 2026 drafts**, **21 URLs serving 2025 instructions**,
 **9 with no draft at the expected URL**, **9 with 2026 instructions embedded
 in their form drafts**, **1 covered by a combined 2026 booklet**, **6 with
 current continuous-use instructions**, **5 current older-revision
@@ -13,7 +13,8 @@ form/instruction pairs**, **2 current forms with embedded instructions**, and
 case with a prior-form comparator**, and **4 final 2026 information-return
 rows** (G/K plus one combined MISC/NEC booklet), and **2 final 2026
 Form 1098/1098-E source rows**, and **1 continuous-use Form 1099-OID
-row**, and **1 final 2026 Form 1098-VLI source row**. The
+row**, **1 final 2026 Form 1098-VLI source row**, and **1 final 2026
+Form 1098-T source row**. The
 missing and unverified groups are research gates, not unsupported-form
 decisions. Schedule A (Form 8936) is covered by the pinned Form 8936 booklet.
 Forms 4137, 4952, 4972, 6252, 6781, 8396, 8859, 8880, and 8919 embed their 2026 instructions
@@ -71,6 +72,9 @@ Forms 1099-INT and 1099-OID and their combined January 2024 instructions
 are continuous-use. Their [interest plan](INTEREST-GRAPH.md) includes
 negative TIPS OID, premium reporting methods, tax-exempt/PAB separation,
 and basis/market-discount reconciliation.
+The final 2026 Form 1098-T shares instructions with Form 1098-E. Its
+box 1/4/5/6/7/8/9/10 handoff to Form 8863 is in the
+[education-credit plan](FORM8862-8863-EIC-GRAPH.md).
 The new [Form 1098-VLI plan](FORM1098VLI-GRAPH.md) pins the final 2026
 form/instructions and final vehicle-interest regulations. Its source boxes
 feed Schedule 1-A Part IV and mixed-use activity-interest allocation.

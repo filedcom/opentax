@@ -4,6 +4,8 @@ Sources: the pinned [December 2025 continuous-use Form 8862](corpus/authorities/
 and [instructions](corpus/authorities/i8862--2025.pdf), the
 [2026 draft Form 8863](corpus/draft/f8863.pdf) and
 [instructions](corpus/draft/i8863.pdf), the
+[2026 Form 1098-T tuition statement](corpus/authorities/f1098t--2026.pdf)
+and its [combined 1098-E/T instructions](corpus/authorities/i1098et--2026.pdf), the
 [2026 draft Schedule EIC](corpus/draft/f1040sei.pdf), and the
 [ATS scenario 4 packet](corpus/ats/1040-scenario-04.pdf), pages 11–16.
 Hashes are in `corpus/manifest.json`. Refresh final forms/instructions and
@@ -30,6 +32,35 @@ credits. The [2026 Schedule 8812 instructions](corpus/draft/i1040s8.pdf)
 then supply their own Worksheet A/B order. Resolve both from calculated tax
 and credit producers in one dependency graph; do not let a user-entered
 worksheet total bypass them.
+
+## Form 1098-T source ledger for Form 8863
+
+The final 2026 Form 1098-T is pinned at SHA-256
+`f461d17ce14de4efb4d95936c8639434861dbf174da250ac777f50cd1883c692`.
+The combined 2026 instructions are pinned in the [1098-E source
+plan](FORM1098-1098E-GRAPH.md). One tuition statement is evidence for
+payments and attendance, not a computed education credit. Keep student,
+institution/EIN, payer, academic period and corrected-form IDs across all
+statements and expense/aid ledgers.
+
+| Statement box | TY2026 Form 8863/return handoff |
+| --- | --- |
+| Box 1 current payments | Reconcile actual qualified expenses paid in 2026 with billing, term dates and the payer. The box is net of same-year reimbursements but **not** reduced by box 5 scholarships/grants. Add documented eligible expenses not included in the institution's box 1 under the AOTC or LLC rules, then subtract tax-free assistance/other double benefits. Do not use box 1 as `aoc_adjusted_expenses` or `llc_adjusted_expenses` directly. |
+| Boxes 4 and 6 prior-year corrections | Associate a tuition refund or scholarship reduction with the original tax year and actual credit claimed. Recompute the prior credit/recapture or amendment outcome under its year rules; neither is an automatic reduction/increase to 2026 expense. Preserve a separate current-year box 1/5 reconciliation. |
+| Box 5 scholarships/grants | Classify by grant restrictions and use against qualified expenses; reconcile Pell, employer assistance, 529 distributions and any taxable scholarship income without using one dollar twice. The institution reports grants it administers, so absence from box 5 does not prove no assistance. |
+| Box 7 future academic period | Box 7 on a **2026** statement means January–March **2027**; it may support the payment-timing rule for the 2026 credit. Form 8863's separate prior-year question asks whether a **2025** Form 1098-T had box 7 checked. Do not answer that question from the current box 7. |
+| Boxes 8/9 half-time and graduate | Use for AOTC half-time and first-four-years inquiries, with actual enrollment/transcript evidence when the form is missing or incomplete. Graduate status is not a stand-alone LLC approval or AOTC disallowance without the applicable student history. |
+| Box 10 insurer reimbursements; institution EIN/identity | Reduce or recover the expense in the correct payment year; preserve the institution EIN needed for AOTC/Part III, including the documented no-form exception. Determine from current MeF whether the 1098-T source itself is filed or only Form 8863 detail is filed. |
+
+The shared [`f8863` input](../../forms/f1040/nodes/inputs/f8863/index.ts)
+asks for 1098-T receipt booleans and accepts a caller-supplied adjusted
+expense, but has no source boxes, academic-period or prior-year correction
+record. Its `prior_year_1098t_received` name is broader than Form 8863's
+specific **2025 box 7** question. Before enabling the 2026 credit, build
+the per-student expense/aid ledger and derive those adjusted amounts and
+answers. Test tuition reported without a credit, books not in box 1,
+scholarship allocation, box 4 recapture, box 6 prior-year grant reduction,
+2026 box 7 versus 2025 box 7, insurer refund and a valid no-form exception.
 
 ## Current code gap and build sequence
 
