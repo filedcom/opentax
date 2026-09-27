@@ -12,6 +12,13 @@ The IRS field tooltips and rendered page 2 agree on these changed lines.
 Names in the last column have the prefix `topmostSubform[0].Page2[0].`,
 except line 11a's printed page 1 field.
 
+The 2026 main-form descriptor also maps the retained income lines 1a–1i,
+computed 1z, 2a–2b, 3a–3b, 4a–4b, 5a–5b, 6a–6b, and 7a to the pinned
+page-1 widgets. The dedicated 2026 final node now preserves these source
+amounts, sums accumulated wages and dividends for print, and combines the
+capital-gain and capital-gain-distribution inputs on printed line 7a. A
+populated income-page sample passed text extraction and visual inspection.
+
 | Form line | TY2026 pending key | PDF field suffix |
 | --- | --- | --- |
 | 11a | `line11a_agi` | `Page1[0].f1_75[0]` (page 1) |

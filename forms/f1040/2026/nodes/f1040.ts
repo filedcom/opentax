@@ -12,13 +12,42 @@ import { calculateSettlement2026 } from "../settlement.ts";
 import { schedule3a } from "./schedule3a.ts";
 
 const amount = z.number().finite().nonnegative();
+const accumulableAmount = z.union([amount, z.array(amount)]);
+const accumulableSignedAmount = z.union([
+  z.number().finite(),
+  z.array(z.number().finite()),
+]);
+
+function sumAmount(value: number | number[] | undefined): number {
+  if (value === undefined) return 0;
+  return Array.isArray(value)
+    ? value.reduce((sum, part) => sum + part, 0)
+    : value;
+}
 
 /** TY2026 Form 1040 core return lines. Inputs are final upstream amounts. */
 export const inputSchema = identityInputSchema.extend({
-  line1a_wages: amount.optional(),
+  line1a_wages: accumulableAmount.optional(),
+  line1b_household_wages: amount.optional(),
   line1c_unreported_tips: amount.optional(),
+  line1d_medicaid_waiver: amount.optional(),
+  line1e_taxable_dep_care: amount.optional(),
+  line1f_taxable_adoption_benefits: amount.optional(),
+  line1g_wages_8919: amount.optional(),
+  line1h_other_earned: z.number().finite().optional(),
   line1i_combat_pay: amount.optional(),
+  line2a_tax_exempt: amount.optional(),
+  line2b_taxable_interest: z.number().finite().optional(),
+  line3a_qualified_dividends: accumulableAmount.optional(),
+  line3b_ordinary_dividends: accumulableSignedAmount.optional(),
+  line4a_ira_gross: amount.optional(),
+  line4b_ira_taxable: z.number().finite().optional(),
+  line5a_pension_gross: amount.optional(),
+  line5b_pension_taxable: z.number().finite().optional(),
+  line6a_ss_gross: amount.optional(),
   line6b_ss_taxable: amount.optional(),
+  line7_capital_gain: z.number().finite().optional(),
+  line7a_cap_gain_distrib: amount.optional(),
   line8_additional_income: z.number().finite().optional(),
   line9_total_income: z.number().finite(),
   line10_adjustments: amount.default(0),
@@ -81,6 +110,24 @@ class F10402026Node extends TaxNode<typeof inputSchema> {
       throw new Error("Form 1040 line 27c cannot decline a claimed EIC");
     }
     const line11Agi = input.line9_total_income - input.line10_adjustments;
+    const wageLines = [
+      input.line1a_wages,
+      input.line1b_household_wages,
+      input.line1c_unreported_tips,
+      input.line1d_medicaid_waiver,
+      input.line1e_taxable_dep_care,
+      input.line1f_taxable_adoption_benefits,
+      input.line1g_wages_8919,
+      input.line1h_other_earned,
+    ];
+    const line1zWages = wageLines.some((value) => value !== undefined)
+      ? wageLines.reduce<number>((sum, value) => sum + sumAmount(value), 0)
+      : undefined;
+    const line7aCapitalGain = input.line7_capital_gain === undefined &&
+        input.line7a_cap_gain_distrib === undefined
+      ? undefined
+      : (input.line7_capital_gain ?? 0) +
+        (input.line7a_cap_gain_distrib ?? 0);
     const line25dWithholding = input.line25a_w2_withheld +
       input.line25b_withheld_1099 + input.line25c_other_withheld;
     const deductions = calculateDeductions2026({
@@ -122,10 +169,35 @@ class F10402026Node extends TaxNode<typeof inputSchema> {
       nodeType: this.nodeType,
       fields: {
         ...identityInputSchema.parse(input),
-        line1a_wages: input.line1a_wages,
+        line1a_wages: input.line1a_wages === undefined
+          ? undefined
+          : sumAmount(input.line1a_wages),
+        line1b_household_wages: input.line1b_household_wages,
         line1c_unreported_tips: input.line1c_unreported_tips,
+        line1d_medicaid_waiver: input.line1d_medicaid_waiver,
+        line1e_taxable_dep_care: input.line1e_taxable_dep_care,
+        line1f_taxable_adoption_benefits:
+          input.line1f_taxable_adoption_benefits,
+        line1g_wages_8919: input.line1g_wages_8919,
+        line1h_other_earned: input.line1h_other_earned,
         line1i_combat_pay: input.line1i_combat_pay,
+        line1z_total_wages: line1zWages,
+        line2a_tax_exempt: input.line2a_tax_exempt,
+        line2b_taxable_interest: input.line2b_taxable_interest,
+        line3a_qualified_dividends:
+          input.line3a_qualified_dividends === undefined
+            ? undefined
+            : sumAmount(input.line3a_qualified_dividends),
+        line3b_ordinary_dividends: input.line3b_ordinary_dividends === undefined
+          ? undefined
+          : sumAmount(input.line3b_ordinary_dividends),
+        line4a_ira_gross: input.line4a_ira_gross,
+        line4b_ira_taxable: input.line4b_ira_taxable,
+        line5a_pension_gross: input.line5a_pension_gross,
+        line5b_pension_taxable: input.line5b_pension_taxable,
+        line6a_ss_gross: input.line6a_ss_gross,
         line6b_ss_taxable: input.line6b_ss_taxable,
+        line7a_capital_gain: line7aCapitalGain,
         line8_additional_income: input.line8_additional_income,
         line9_total_income: input.line9_total_income,
         line10_adjustments: input.line10_adjustments,

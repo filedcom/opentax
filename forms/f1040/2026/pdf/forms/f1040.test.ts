@@ -33,6 +33,32 @@ Deno.test("TY2026 PDF maps revised tax, credit, and payment lines", () => {
   assertEquals(fields.get("line38_underpayment_penalty"), `${page2}f2_41[0]`);
 });
 
+Deno.test("TY2026 PDF maps income lines to the pinned draft", () => {
+  const fields = new Map(irs1040Pdf2026.fields.map((field) => [
+    field.domainKey,
+    field.pdfField,
+  ]));
+  const page1 = "topmostSubform[0].Page1[0].";
+  for (
+    const [key, widget] of [
+      ["line1z_total_wages", "f1_57[0]"],
+      ["line2a_tax_exempt", "f1_58[0]"],
+      ["line2b_taxable_interest", "f1_59[0]"],
+      ["line3a_qualified_dividends", "f1_60[0]"],
+      ["line3b_ordinary_dividends", "f1_61[0]"],
+      ["line4a_ira_gross", "f1_62[0]"],
+      ["line4b_ira_taxable", "f1_63[0]"],
+      ["line5a_pension_gross", "f1_65[0]"],
+      ["line5b_pension_taxable", "f1_66[0]"],
+      ["line6a_ss_gross", "f1_68[0]"],
+      ["line6b_ss_taxable", "f1_69[0]"],
+      ["line7a_capital_gain", "f1_70[0]"],
+    ]
+  ) {
+    assertEquals(fields.get(key), `${page1}${widget}`);
+  }
+});
+
 Deno.test("TY2026 PDF requires the new filer answers", () => {
   const project = irs1040Pdf2026.projectFields!;
   assertThrows(

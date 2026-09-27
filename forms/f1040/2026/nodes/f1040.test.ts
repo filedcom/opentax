@@ -9,6 +9,41 @@ import { schedule3a } from "./schedule3a.ts";
 
 const context = { taxYear: 2026, formType: "f1040" };
 
+Deno.test("TY2026 1040 preserves income sources and computes printed wage and gain lines", () => {
+  const result = f1040_2026_node.compute(context, {
+    filing_status: FilingStatus.Single,
+    line9_total_income: 52_200,
+    deduction_method: "standard",
+    line1a_wages: [40_000, 5_000],
+    line1b_household_wages: 1_000,
+    line1c_unreported_tips: 200,
+    line2a_tax_exempt: 300,
+    line2b_taxable_interest: 400,
+    line3a_qualified_dividends: [100, 200],
+    line3b_ordinary_dividends: [500, 100],
+    line4a_ira_gross: 2_000,
+    line4b_ira_taxable: 1_000,
+    line5a_pension_gross: 2_000,
+    line5b_pension_taxable: 1_000,
+    line6a_ss_gross: 4_000,
+    line6b_ss_taxable: 2_000,
+    line7_capital_gain: 900,
+    line7a_cap_gain_distrib: 100,
+  });
+  const fields =
+    result.outputs.find((output) => output.nodeType === "f1040")!.fields;
+  assertEquals(fields.line1a_wages, 45_000);
+  assertEquals(fields.line1z_total_wages, 46_200);
+  assertEquals(fields.line2a_tax_exempt, 300);
+  assertEquals(fields.line2b_taxable_interest, 400);
+  assertEquals(fields.line3a_qualified_dividends, 300);
+  assertEquals(fields.line3b_ordinary_dividends, 600);
+  assertEquals(fields.line4a_ira_gross, 2_000);
+  assertEquals(fields.line5b_pension_taxable, 1_000);
+  assertEquals(fields.line6a_ss_gross, 4_000);
+  assertEquals(fields.line7a_capital_gain, 1_000);
+});
+
 Deno.test("TY2026 1040 assembles deductions, Form 1062, and payments", () => {
   const result = f1040_2026_node.compute(context, {
     filing_status: FilingStatus.Single,

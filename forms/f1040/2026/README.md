@@ -95,6 +95,10 @@ line reconciliation, election checks, and rendered placement are verified.
 `pdf/core.ts` now appends it when a relevant refundable credit is filed and
 reconciles its main amounts to the 1040. The combined three-page PDF passed
 visual QA; the remaining supported forms still need PDF output.
+The final 1040 node and draft PDF descriptor also retain and print the
+principal income amounts through 7a, including aggregate 1z wages,
+accumulated dividends, and printed 7a capital gain. A populated income page passed visual QA. Its
+source nodes and supporting schedules remain to join the 2026 registry.
 The shared Form 8839 node now applies TY2026 adoption limits, emits the
 refundable per-child credit to 1040 line 30, and tracks nonrefundable
 carryforwards by origin year. Its full credit-limit worksheet and TY2026

@@ -145,6 +145,11 @@ the schedule's header, numbers, and elections; the one-page result passed
 visual QA. The two main 1040 pages and Schedule 3-A now merge into a
 three-page core PDF when a relevant credit is present, with lines 24a, 31,
 32a, and 32b reconciled. Other supported attachments remain to implement.
+The 2026 final 1040 node and main-form PDF descriptor now cover the principal
+income amounts through line 7a. The node sums accumulated wage and dividend
+amounts for the printed lines, and a populated page-1 sample passed text extraction and
+visual inspection. The source income nodes and their required attachment
+routes still need to enter the dedicated 2026 registry.
 
 ## 0. Freeze source versions and establish the baseline
 
