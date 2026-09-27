@@ -121,6 +121,14 @@ const f8820CreditSchema = z.object({
   subject_to_passive_activity_limit: z.boolean(),
 });
 
+const f8820K1CreditSchema = z.object({
+  source_type: z.enum(["estate", "trust"]),
+  source_ein: z.string().regex(/^\d{9}$/),
+  source_document_reference: z.string().trim().min(1),
+  credit_amount: z.number().int().positive(),
+  subject_to_passive_activity_limit: z.boolean(),
+});
+
 const f8936NewVehicleCreditSchema = z.object({
   credit_amount: z.number().finite().nonnegative(),
   subject_to_passive_activity_limit: z.boolean(),
@@ -139,6 +147,7 @@ export const inputSchema = z.object({
   f8826_credit_entries: z.array(f8826CreditEntrySchema).min(1).optional(),
   f5884_credit: f5884CreditSchema.optional(),
   f8820_credit: f8820CreditSchema.optional(),
+  f8820_k1_credit_entries: z.array(f8820K1CreditSchema).min(1).optional(),
   f8936_new_vehicle_credit: f8936NewVehicleCreditSchema.optional(),
   f8936_commercial_vehicle_credit: f8936NewVehicleCreditSchema.optional(),
   passive_source_allocations: z.array(sourceAllocationSchema).min(1).optional(),
@@ -162,6 +171,7 @@ export const inputSchema = z.object({
     input.f8826_credit_entries !== undefined ||
     input.f5884_credit !== undefined ||
     input.f8820_credit !== undefined ||
+    input.f8820_k1_credit_entries !== undefined ||
     input.f8936_new_vehicle_credit !== undefined ||
     input.f8936_commercial_vehicle_credit !== undefined ||
     input.passive_source_allocations !== undefined,
@@ -213,6 +223,7 @@ function schedule3Output(
   f8826Entries: z.infer<typeof f8826CreditEntrySchema>[],
   f5884Credit: z.infer<typeof f5884CreditSchema> | undefined,
   f8820Credit: z.infer<typeof f8820CreditSchema> | undefined,
+  f8820K1Credits: readonly z.infer<typeof f8820K1CreditSchema>[],
   f8936Credit: z.infer<typeof f8936NewVehicleCreditSchema> | undefined,
   f8936CommercialCredit:
     | z.infer<typeof f8936NewVehicleCreditSchema>
@@ -249,6 +260,24 @@ function schedule3Output(
       "Form 8820 passive credit needs Form 8582-CR before Form 3800",
     );
   }
+  if (f8820K1Credits.some((entry) => entry.subject_to_passive_activity_limit)) {
+    throw new Error(
+      "Estate/trust orphan-drug passive credit needs Form 8582-CR before Form 3800",
+    );
+  }
+  const orphanDrugK1Keys = new Set<string>();
+  for (const entry of f8820K1Credits) {
+    const key =
+      `${entry.source_type}:${entry.source_ein}:${entry.source_document_reference}`;
+    if (orphanDrugK1Keys.has(key)) {
+      throw new Error("Duplicate estate/trust orphan-drug K-1 source");
+    }
+    orphanDrugK1Keys.add(key);
+  }
+  const orphanDrugK1Credit = f8820K1Credits.reduce(
+    (sum, entry) => sum + entry.credit_amount,
+    0,
+  );
   if (
     (f8936Credit && f8936Credit.credit_amount > 0 &&
       f8936Credit.subject_to_passive_activity_limit) ||
@@ -280,6 +309,7 @@ function schedule3Output(
     (f8835Credit?.specifiedCredit ?? 0) > 0 ||
     (f5884Credit?.credit_amount ?? 0) > 0 ||
     (f8820Credit?.credit_amount ?? 0) > 0 ||
+    orphanDrugK1Credit > 0 ||
     (f8936Credit?.credit_amount ?? 0) > 0 ||
     (f8936CommercialCredit?.credit_amount ?? 0) > 0 ||
     hasPassiveSource;
@@ -294,6 +324,7 @@ function schedule3Output(
         form3800_source_credits: {
           standardCredit: form8826Credit +
             (f8820Credit?.credit_amount ?? 0) +
+            orphanDrugK1Credit +
             (f8936Credit?.credit_amount ?? 0) +
             (f8936CommercialCredit?.credit_amount ?? 0) +
             (f8835Credit?.standardCredit ?? 0),
@@ -325,6 +356,7 @@ class F3800Node extends TaxNode<typeof inputSchema> {
         parsed.f8826_credit_entries ?? [],
         parsed.f5884_credit,
         parsed.f8820_credit,
+        parsed.f8820_k1_credit_entries ?? [],
         parsed.f8936_new_vehicle_credit,
         parsed.f8936_commercial_vehicle_credit,
         parsed.passive_source_allocations,

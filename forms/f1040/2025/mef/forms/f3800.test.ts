@@ -424,6 +424,129 @@ Deno.test("Form 3800 accepts Form 8820 pass-through-only credit without IRS8820"
   assertEquals(xml.includes('referenceDocumentName="IRS8820"'), false);
 });
 
+Deno.test("Form 3800 files trust K-1 code M directly on line 1h", () => {
+  const businessTax = { ...tax, standardCredit: 1_250 };
+  const entry = {
+    source_type: "trust" as const,
+    source_ein: "123456789",
+    source_document_reference: "2025 trust K-1",
+    credit_amount: 1_250,
+    subject_to_passive_activity_limit: false,
+  };
+  const context = {
+    pending: {
+      ...filedPending(businessTax, 1_250),
+      k1_trust: {
+        k1_trusts: [{
+          estate_trust_name: "Clinical trust",
+          entity_type: "trust" as const,
+          estate_trust_ein: "123456789",
+          source_document_reference: "2025 trust K-1",
+          box13_code_m_orphan_drug_credit: 1_250,
+          orphan_drug_credit_subject_to_passive_activity_limit: false,
+        }],
+      },
+    },
+    documentIdsByPendingKey: { form6251: ["IRS6251_1"] },
+  };
+  const xml = form3800.build({
+    f8820_k1_credit_entries: [entry],
+    tax_context: businessTax,
+    allowed_credit: 1_250,
+  }, context);
+  assertStringIncludes(xml, "<Form8820CYCreditsGrp>");
+  assertStringIncludes(
+    xml,
+    "<PassThroughEntityEIN>123456789</PassThroughEntityEIN>",
+  );
+  assertEquals(xml.includes('referenceDocumentName="IRS8820"'), false);
+  assertThrows(
+    () =>
+      form3800.build({
+        f8820_k1_credit_entries: [{ ...entry, credit_amount: 1_251 }],
+        tax_context: { ...businessTax, standardCredit: 1_251 },
+        allowed_credit: 1_251,
+      }, context),
+    Error,
+    "does not reconcile to estate/trust K-1",
+  );
+  assertThrows(
+    () =>
+      form3800.build({
+        f8820_k1_credit_entries: [{
+          ...entry,
+          subject_to_passive_activity_limit: true,
+        }],
+        tax_context: businessTax,
+        allowed_credit: 1_250,
+      }, context),
+    Error,
+    "needs Form 8582-CR",
+  );
+});
+
+Deno.test("Form 3800 combines own Form 8820 and trust K-1 on line 1h", () => {
+  const ownForm = {
+    f8820s: [{
+      generic_name: "Test Orphan Drug",
+      designation_application_number: "FDA-123",
+      designation_date: "2024-03-15",
+      qualified_clinical_testing_expenses: 100_000,
+      qualifying_testing_confirmed: true,
+      expenses_exclude_third_party_funding: true,
+      expenses_not_used_for_research_credit: true,
+    }],
+    reduced_section280c_credit_election: true,
+    form8932_overlapping_wage_credit: 0,
+    subject_to_passive_activity_limit: false,
+  };
+  const entry = {
+    source_type: "estate" as const,
+    source_ein: "123456789",
+    source_document_reference: "2025 estate K-1",
+    credit_amount: 1_250,
+    subject_to_passive_activity_limit: false,
+  };
+  const businessTax = { ...tax, regularTax: 50_000, standardCredit: 21_000 };
+  const xml = form3800.build({
+    f8820_credit: {
+      credit_amount: 19_750,
+      subject_to_passive_activity_limit: false,
+    },
+    f8820_k1_credit_entries: [entry],
+    tax_context: businessTax,
+    allowed_credit: 21_000,
+  }, {
+    pending: {
+      ...filedPending(businessTax, 21_000),
+      f8820: ownForm,
+      k1_trust: {
+        k1_trusts: [{
+          estate_trust_name: "Clinical estate",
+          entity_type: "estate" as const,
+          estate_trust_ein: "123456789",
+          source_document_reference: "2025 estate K-1",
+          box13_code_m_orphan_drug_credit: 1_250,
+          orphan_drug_credit_subject_to_passive_activity_limit: false,
+        }],
+      },
+    },
+    documentIdsByPendingKey: {
+      f8820: ["IRS8820_1"],
+      form6251: ["IRS6251_1"],
+    },
+  });
+  assertStringIncludes(xml, "<Form8820CYCreditsGrp");
+  assertStringIncludes(
+    xml,
+    "<PassThroughEntityEIN>123456789</PassThroughEntityEIN>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalGeneralBusCreditsAmt>21000</TotalGeneralBusCreditsAmt>",
+  );
+});
+
 Deno.test("Form 3800 requires each mixed Form 8820 source allocation under a shared limit", () => {
   const source = {
     f8820s: [{

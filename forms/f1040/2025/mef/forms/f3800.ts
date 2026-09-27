@@ -43,6 +43,7 @@ import { buildForm3800NonpassiveParts } from "./f3800_nonpassive.ts";
 import { sameForm3800PassiveAllocations } from "./f3800_passive_link.ts";
 import { buildForm3800PassiveRowXml } from "./f3800_passive_rows.ts";
 import { reconcileDisabledAccessK1Credits } from "./f8826_credit_evidence.ts";
+import { inputSchema as trustK1InputSchema } from "../../../nodes/inputs/k1_trust/index.ts";
 
 const amount = z.number().finite().nonnegative();
 const taxBase = z.object({
@@ -306,6 +307,48 @@ function sourceForm8820(
   return { source, lines };
 }
 
+function sourceEstateTrustOrphanDrugCredits(
+  fields: z.infer<typeof f3800InputSchema>,
+  context: MefBuildContext,
+) {
+  const entries = fields.f8820_k1_credit_entries ?? [];
+  if (entries.length === 0) return [];
+  const k1s = trustK1InputSchema.parse(context.pending?.k1_trust).k1_trusts;
+  const seen = new Set<string>();
+  for (const entry of entries) {
+    if (entry.subject_to_passive_activity_limit) {
+      throw new Error(
+        "Estate/trust orphan-drug passive credit needs Form 8582-CR before Form 3800",
+      );
+    }
+    const key = [
+      entry.source_type,
+      entry.source_ein,
+      entry.source_document_reference,
+    ].join(":");
+    if (seen.has(key)) {
+      throw new Error("Form 3800 orphan-drug K-1 source is duplicated");
+    }
+    seen.add(key);
+    const matches = k1s.filter((k1) =>
+      k1.entity_type === entry.source_type &&
+      k1.estate_trust_ein === entry.source_ein &&
+      k1.source_document_reference === entry.source_document_reference
+    );
+    if (
+      matches.length !== 1 ||
+      matches[0].box13_code_m_orphan_drug_credit !== entry.credit_amount ||
+      matches[0].orphan_drug_credit_subject_to_passive_activity_limit !==
+        entry.subject_to_passive_activity_limit
+    ) {
+      throw new Error(
+        "Form 3800 orphan-drug credit does not reconcile to estate/trust K-1 box 13 code M",
+      );
+    }
+  }
+  return entries;
+}
+
 function sourceForm8835(
   fields: z.infer<typeof f3800InputSchema>,
   context: MefBuildContext,
@@ -505,26 +548,21 @@ function form5884SourceAllocations(
 }
 
 function form8820SourceAllocations(
-  source: ReturnType<typeof sourceForm8820>,
+  amounts: readonly number[],
+  credit: number,
   appliedCredit: number,
   explicit: readonly number[] | undefined,
 ): readonly number[] | undefined {
-  if (!source) {
+  if (amounts.length === 0) {
     if (explicit !== undefined) {
       throw new Error("Form 3800 has Form 8820 allocations without a source");
     }
     return undefined;
   }
-  const amounts = [
-    ...(source.lines.line2c > 0 ? [source.lines.line2c] : []),
-    ...(source.source.pass_through_credits ?? []).map((entry) =>
-      entry.credit_amount
-    ),
-  ];
   if (amounts.length <= 1) return explicit;
   if (explicit !== undefined) return explicit;
   if (sameMoney(appliedCredit, 0)) return amounts.map(() => 0);
-  if (sameMoney(appliedCredit, source.lines.line4)) return amounts;
+  if (sameMoney(appliedCredit, credit)) return amounts;
   throw new Error(
     "Form 3800 needs Part V applied amounts for each Form 8820 source",
   );
@@ -588,6 +626,9 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
     const hasSourceCredit = fields.allowed_credit !== undefined ||
       fields.f8826_credit_entries?.some((entry) => entry.credit_amount > 0) ||
       (fields.f8820_credit?.credit_amount ?? 0) > 0 ||
+      fields.f8820_k1_credit_entries?.some((entry) =>
+        entry.credit_amount > 0
+      ) ||
       fields.f8835_credit_entries?.some((entry) => entry.credit_amount > 0) ||
       (fields.f5884_credit?.credit_amount ?? 0) > 0 ||
       (fields.f8936_new_vehicle_credit?.credit_amount ?? 0) > 0 ||
@@ -629,12 +670,44 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
     }
     const form8826 = sourceForm8826(parsed, context);
     const form8820 = sourceForm8820(parsed, context);
+    const estateTrustOrphanDrugCredits = sourceEstateTrustOrphanDrugCredits(
+      parsed,
+      context,
+    );
     const facilities = sourceForm8835(parsed, context);
     const form5884 = sourceForm5884(parsed, context);
     const form8936 = sourceForm8936(parsed, context);
     const form8936Commercial = sourceForm8936Commercial(parsed, context);
     const form8826Credit = form8826?.credit ?? 0;
-    const form8820Credit = form8820?.lines.line4 ?? 0;
+    const form8820Sources = [
+      ...(form8820?.lines.line2c ? [{ credit: form8820.lines.line2c }] : []),
+      ...(form8820?.source.pass_through_credits ?? []).map((entry) => ({
+        credit: entry.credit_amount,
+        ein: entry.entity_ein,
+      })),
+      ...estateTrustOrphanDrugCredits.map((entry) => ({
+        credit: entry.credit_amount,
+        ein: entry.source_ein,
+      })),
+    ];
+    const form8820Credit = form8820Sources.reduce(
+      (sum, source) => sum + source.credit,
+      0,
+    );
+    if (
+      form8820Credit > 0 &&
+      form8820?.source.pass_through_credits?.some((source) =>
+        estateTrustOrphanDrugCredits.some((entry) =>
+          entry.source_type === source.source_type &&
+          entry.source_ein === source.entity_ein &&
+          entry.source_document_reference === source.source_document_reference
+        )
+      )
+    ) {
+      throw new Error(
+        "Form 3800 orphan-drug K-1 source is duplicated on Form 8820",
+      );
+    }
     const nonpassiveSources = form3800NonpassiveCreditUseRows({
       form8826Credit,
       form8820Credit,
@@ -692,11 +765,14 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
       parsed.form8936_commercial_applied_credit,
     );
     const form8820Applied = sourceApplied(
-      Boolean(form8820),
+      form8820Credit > 0,
       "nonpassive:8820",
       parsed.form8820_applied_credit,
     );
-    if (!form8820 && parsed.form8820_applied_credits_by_source !== undefined) {
+    if (
+      form8820Credit === 0 &&
+      parsed.form8820_applied_credits_by_source !== undefined
+    ) {
       throw new Error(
         "Form 3800 has Form 8820 source allocations without a source",
       );
@@ -782,22 +858,15 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
             ),
           }
           : undefined,
-        form8820: form8820
+        form8820: form8820Credit > 0
           ? {
             credit: form8820Credit,
             documentId: form8820Ids[0],
             appliedCredit: form8820Applied,
-            sources: [
-              ...(form8820.lines.line2c > 0
-                ? [{ credit: form8820.lines.line2c }]
-                : []),
-              ...(form8820.source.pass_through_credits ?? []).map((entry) => ({
-                credit: entry.credit_amount,
-                ein: entry.entity_ein,
-              })),
-            ],
+            sources: form8820Sources,
             appliedCreditsBySource: form8820SourceAllocations(
-              form8820,
+              form8820Sources.map((source) => source.credit),
+              form8820Credit,
               form8820Applied,
               parsed.form8820_applied_credits_by_source,
             ),

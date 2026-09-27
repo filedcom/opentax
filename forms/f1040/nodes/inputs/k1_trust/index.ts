@@ -428,6 +428,31 @@ function disabledAccessCreditOutputs(items: K1TrustItems): NodeOutput[] {
   });
 }
 
+function orphanDrugCreditOutputs(items: K1TrustItems): NodeOutput[] {
+  return items.flatMap((item) => {
+    const credit = item.box13_code_m_orphan_drug_credit;
+    if (
+      credit === undefined ||
+      item.orphan_drug_credit_subject_to_passive_activity_limit
+    ) return [];
+    if (
+      !item.entity_type || !item.estate_trust_ein ||
+      !item.source_document_reference
+    ) {
+      throw new Error("Estate/trust orphan-drug K-1 source is incomplete");
+    }
+    return [output(f3800, {
+      f8820_k1_credit_entries: [{
+        source_type: item.entity_type,
+        source_ein: item.estate_trust_ein,
+        source_document_reference: item.source_document_reference,
+        credit_amount: credit,
+        subject_to_passive_activity_limit: false,
+      }],
+    })];
+  });
+}
+
 class K1TrustNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "k1_trust";
   readonly inputSchema = inputSchema;
@@ -458,6 +483,7 @@ class K1TrustNode extends TaxNode<typeof inputSchema> {
       ...form1116Outputs(limitedItems),
       ...apportionedDeductionOutputs(limitedItems),
       ...disabledAccessCreditOutputs(limitedItems),
+      ...orphanDrugCreditOutputs(limitedItems),
     ];
 
     for (const item of limitedItems) {

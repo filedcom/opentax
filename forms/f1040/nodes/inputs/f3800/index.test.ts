@@ -27,6 +27,40 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   );
 }
 
+Deno.test("f3800: estate/trust orphan-drug K-1 sources reach the tax limit", () => {
+  const result = f3800.compute({ taxYear: 2025, formType: "f1040" }, {
+    f8820_k1_credit_entries: [{
+      source_type: "trust",
+      source_ein: "123456789",
+      source_document_reference: "2025 trust K-1",
+      credit_amount: 1_250,
+      subject_to_passive_activity_limit: false,
+    }],
+  });
+  assertEquals(fieldsOf(result.outputs, f1040)?.form3800_source_credits, {
+    standardCredit: 1_250,
+    specifiedCredit: 0,
+    passiveLines: ZERO_FORM3800_PASSIVE_ACTIVITY,
+  });
+  assertEquals(fieldsOf(result.outputs, schedule3), {
+    form3800_source_credit_pending: true,
+  });
+  assertThrows(
+    () =>
+      f3800.compute({ taxYear: 2025, formType: "f1040" }, {
+        f8820_k1_credit_entries: [{
+          source_type: "trust",
+          source_ein: "123456789",
+          source_document_reference: "2025 trust K-1",
+          credit_amount: 1_250,
+          subject_to_passive_activity_limit: true,
+        }],
+      }),
+    Error,
+    "needs Form 8582-CR",
+  );
+});
+
 // =============================================================================
 // 1. Input Schema Validation
 // =============================================================================

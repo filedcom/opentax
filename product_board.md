@@ -22,6 +22,14 @@ TY2025 Form 1040 calculation and MeF export changes are saved on the pushed
 there. No PR, merge, deployment, IRS ATS transmission, or ATS acknowledgment is
 recorded for this work.
 
+The current build pass now routes a nonpassive estate/trust Schedule K-1
+(Form 1041) box 13 code M orphan-drug credit directly to source-backed Form
+3800 Part III line 1h. It reconciles the credit to the filed K-1, combines it
+with any separately earned Form 8820 amount without duplicating a source, and
+does not invent a Form 8820 attachment for a K-1-only credit. The source,
+tax-limit, and XML cases are written but unrun. Passive K-1 credits and
+partnership/S-corporation automatic handoff remain open.
+
 The latest completed full test run is **6,596 passed, 0 failed, 48 ignored**
 (`deno task test`, 2026-09-26, before the later multi-policy line 10 and
 dependent-MAGI changes). The user asked for the remaining implementation to be
