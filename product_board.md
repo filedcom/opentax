@@ -1497,6 +1497,21 @@ subtraction, Form 8962's Schedule 2 line 1a amount as part of line 1z, Schedule
 3 line 1 foreign tax credit, and the negative Form 8978 adjustment. Schedule J
 refigure and other Schedule 2 line 1z sources remain open.
 
+Build-pass addendum for GAP-1116 (unrun): unsupported section 951A, foreign
+branch, treaty-resourced, and section 901(j) categories now stop before any
+Schedule 3 or Form 6251 credit is calculated, including mixed-basket returns.
+The Form 1116 PDF map now places worldwide taxable income on 2025 line 18 and
+U.S. tax before credits on line 20. The raw source amounts still need
+reconciliation to the 2025 Form 1040, Schedule 1-A, and Schedule 2 lines;
+category-specific calculations, visual PDF review, full-batch validation, and
+IRS business rules remain open.
+
+Build-pass addendum for GAP-8814 (unrun): the 2025 parent Form 1040 PDF now
+marks the child dividend and direct child capital-gain boxes, while Schedule D
+and Schedule B receive applicable Form 8814 notes. The Form 8814 PDF follows
+the Part I zero/skip print rules. The PDF field positions were inspected, but
+filled-render review, full-batch validation, and IRS acceptance remain open.
+
 The following are registered in `forms/f1040/2025/mef/forms/index.ts`.
 **Registered means the builder can be invoked, not that the form is complete or
 approved.** Mark each row in the INV-01 matrix after checking calculations, XML,

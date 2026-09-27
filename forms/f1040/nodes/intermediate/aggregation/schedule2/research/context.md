@@ -7,6 +7,26 @@ The [2025 Schedule 2](https://www.irs.gov/pub/irs-prior/f1040s2--2025.pdf) and l
 
 The 2025 PDF descriptor now maps already-modeled lines 9, 13, 16, 17b/c/e/f/h/k/p, and 20 to their AcroForm fields. Lines 13, 17h, and 17k sum their existing W-2 and information-return inputs for the printed form. The filled PDF and full test batch still need verification.
 
+### 2025 printed-line audit, build pass only
+
+The [2025 printed form](https://www.irs.gov/pub/irs-pdf/f1040s2.pdf)
+contains additional lines that the current aggregator does not derive from
+source facts. A generic amount on line 17z is not a substitute for these
+specific lines. This inventory is a scope boundary, not a claim that the
+unlisted calculation and MeF business rules have been verified.
+
+| Printed line | Current source status | Next source work |
+| --- | --- | --- |
+| 1y | No typed source route | Identify each permitted other-addition source and its required statement before routing to line 1y. |
+| 14, 15 | No installment-interest source route | Derive from the underlying sale and payment facts, then map the two distinct interest lines. |
+| 17g, 17i, 17j, 17l, 17m, 17n, 17o | No dedicated source routes | Add each applicable tax's form or transaction facts, source-specific calculation, and MeF detail. |
+| 17q | No section 1294 termination route from Form 8621 line 24 | Establish the election and deferred-tax ledger before calculating and reporting termination interest. |
+
+Line 10 is reserved, and line 20 is deliberately excluded from line 21 by
+the printed form's addition instruction. The current modeled lines and the
+Form 8978 chapter 1 classification still need the single full validation
+batch, including local XSD and business-rule review.
+
 **IRS Form:** Schedule 2 (Form 1040)
 **Drake Screen:** Screen "5"
 **Tax Year:** 2025
