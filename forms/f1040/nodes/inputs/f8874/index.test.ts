@@ -1,122 +1,87 @@
-import { assertEquals, assertAlmostEquals } from "@std/assert";
-import { f8874 } from "./index.ts";
+import { assertEquals } from "@std/assert";
+import { f3800 } from "../f3800/index.ts";
+import { calculateForm8874, f8874 } from "./index.ts";
 
-function compute(input: Parameters<typeof f8874.compute>[1]) {
-  return f8874.compute({ taxYear: 2025, formType: "f1040" }, input);
-}
+const investment = {
+  cde_name: "Community Development Entity",
+  cde_ein: "123456789",
+  cde_address: {
+    line1: "10 Main Street",
+    city: "Wilmington",
+    state: "DE",
+    zip: "19801",
+  },
+  initial_investment_date: "2023-04-15",
+  credit_allowance_date: "2025-04-15",
+  qualified_equity_investment_amount: 1_000_000,
+  designation_notice_reference: "2023 QEI notice",
+  held_on_credit_allowance_date: true,
+  qualified_on_credit_allowance_date: true,
+  recapture_notice_received: false,
+  subject_to_passive_activity_limit: false,
+} as const;
 
-function findSchedule3(result: ReturnType<typeof compute>) {
-  return result.outputs.find((o) => o.nodeType === "schedule3");
-}
-
-// ── Schema Validation ─────────────────────────────────────────────────────────
-
-Deno.test("schema_rejects_negative_credit_years_1_to_3", () => {
-  const result = f8874.inputSchema.safeParse({ credit_years_1_to_3: -100 });
-  assertEquals(result.success, false);
-});
-
-Deno.test("schema_accepts_empty_input", () => {
-  const result = f8874.inputSchema.safeParse({});
-  assertEquals(result.success, true);
-});
-
-// ── Zero / No Output Cases ────────────────────────────────────────────────────
-
-Deno.test("all_zero_produces_no_output", () => {
-  const result = compute({});
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("zero_investments_zero_carryforward_produces_no_output", () => {
-  const result = compute({
-    credit_years_1_to_3: 0,
-    credit_years_4_to_7: 0,
-    prior_year_carryforward: 0,
+Deno.test("Form 8874 computes each identified current-year credit allowance date", () => {
+  const lines = calculateForm8874({
+    investments: [investment, {
+      ...investment,
+      initial_investment_date: "2022-04-15",
+      designation_notice_reference: "2022 QEI notice",
+      qualified_equity_investment_amount: 500_000,
+    }],
   });
-  assertEquals(result.outputs.length, 0);
+  assertEquals(lines.rows.map((row) => row.creditYear), [3, 4]);
+  assertEquals(lines.rows.map((row) => row.rate), [5, 6]);
+  assertEquals(lines.rows.map((row) => row.creditAmount), [50_000, 30_000]);
+  assertEquals(lines.line3, 80_000);
+  const routed = f8874.compute(
+    { taxYear: 2025, formType: "f1040" },
+    { investments: [investment] },
+  ).outputs[0];
+  assertEquals(routed?.nodeType, "f3800");
+  assertEquals(
+    f3800.inputSchema.parse(routed?.fields).f8874_credit,
+    {
+      credit_amount: 50_000,
+      subject_to_passive_activity_limit: false,
+    },
+  );
 });
 
-// ── Direct Credit Amounts (pre-computed) ──────────────────────────────────────
-
-Deno.test("direct_credit_years_1_to_3_only", () => {
-  // $50,000 in pre-computed year 1-3 credit
-  const result = compute({ credit_years_1_to_3: 50000 });
-  const out = findSchedule3(result);
-  assertEquals(out?.fields.line6a_general_business_credit, 50000);
+Deno.test("Form 8874 rejects duplicate direct and precomputed legacy amounts", () => {
+  assertEquals(
+    f8874.inputSchema.safeParse({
+      investments: [investment],
+      credit_years_1_to_3: 50_000,
+    }).success,
+    false,
+  );
 });
 
-Deno.test("direct_credit_years_4_to_7_only", () => {
-  const result = compute({ credit_years_4_to_7: 60000 });
-  const out = findSchedule3(result);
-  assertEquals(out?.fields.line6a_general_business_credit, 60000);
+Deno.test("Form 8874 requires allowance-date and qualification evidence", () => {
+  for (
+    const source of [
+      { ...investment, credit_allowance_date: "2024-04-15" },
+      { ...investment, credit_allowance_date: "2025-04-16" },
+      { ...investment, initial_investment_date: "2018-04-15" },
+      { ...investment, qualified_on_credit_allowance_date: false },
+      { ...investment, held_on_credit_allowance_date: false },
+      { ...investment, recapture_notice_received: true },
+      { ...investment, subject_to_passive_activity_limit: true },
+    ]
+  ) {
+    assertEquals(
+      f8874.inputSchema.safeParse({ investments: [source] }).success,
+      false,
+    );
+  }
 });
 
-Deno.test("direct_credits_both_periods_combined", () => {
-  const result = compute({ credit_years_1_to_3: 50000, credit_years_4_to_7: 60000 });
-  const out = findSchedule3(result);
-  assertEquals(out?.fields.line6a_general_business_credit, 110000);
-});
-
-// ── Investment Amount → Applied Rate ─────────────────────────────────────────
-
-Deno.test("investment_early_5pct_rate", () => {
-  // $1,000,000 × 5% = $50,000
-  const result = compute({ investment_amount_early: 1_000_000 });
-  const out = findSchedule3(result);
-  assertEquals(out?.fields.line6a_general_business_credit, 50000);
-});
-
-Deno.test("investment_later_6pct_rate", () => {
-  // $1,000,000 × 6% = $60,000
-  const result = compute({ investment_amount_later: 1_000_000 });
-  const out = findSchedule3(result);
-  assertEquals(out?.fields.line6a_general_business_credit, 60000);
-});
-
-Deno.test("investment_both_periods_combined", () => {
-  // $500k × 5% = $25k; $500k × 6% = $30k → total $55k
-  const result = compute({
-    investment_amount_early: 500_000,
-    investment_amount_later: 500_000,
-  });
-  const out = findSchedule3(result);
-  assertAlmostEquals(out?.fields.line6a_general_business_credit as number, 55000, 0.01);
-});
-
-// ── Prior Year Carryforward ───────────────────────────────────────────────────
-
-Deno.test("carryforward_only", () => {
-  const result = compute({ prior_year_carryforward: 10000 });
-  const out = findSchedule3(result);
-  assertEquals(out?.fields.line6a_general_business_credit, 10000);
-});
-
-Deno.test("carryforward_plus_current_year", () => {
-  // $50k current + $10k carryforward = $60k
-  const result = compute({ credit_years_1_to_3: 50000, prior_year_carryforward: 10000 });
-  const out = findSchedule3(result);
-  assertEquals(out?.fields.line6a_general_business_credit, 60000);
-});
-
-// ── Mixed Inputs ──────────────────────────────────────────────────────────────
-
-Deno.test("all_inputs_combined", () => {
-  // direct: $10k + $12k = $22k; computed: $100k×5% + $100k×6% = $5k + $6k = $11k; carryforward $5k → $38k
-  const result = compute({
-    credit_years_1_to_3: 10000,
-    credit_years_4_to_7: 12000,
-    investment_amount_early: 100_000,
-    investment_amount_later: 100_000,
-    prior_year_carryforward: 5000,
-  });
-  const out = findSchedule3(result);
-  assertAlmostEquals(out?.fields.line6a_general_business_credit as number, 38000, 0.01);
-});
-
-// ── Routing ───────────────────────────────────────────────────────────────────
-
-Deno.test("routes_to_schedule3", () => {
-  const result = compute({ credit_years_1_to_3: 1000 });
-  assertEquals(result.outputs[0]?.nodeType, "schedule3");
+Deno.test("Form 8874 rejects a duplicated investment notice", () => {
+  assertEquals(
+    f8874.inputSchema.safeParse({
+      investments: [investment, investment],
+    }).success,
+    false,
+  );
 });

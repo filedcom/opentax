@@ -1,66 +1,119 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import type { NodeResult } from "../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import { f3800 } from "../f3800/index.ts";
 
-// Form 8874 — New Markets Credit (IRC §45D)
-// 7-year credit period: 5% for years 1–3, 6% for years 4–7 (total 39%).
-// Credit = qualified equity investment × applicable percentage for that year.
-// Routes to Schedule 3, Line 6z (general business credit).
-
-// TY2025 constants — IRC §45D(a)(2)
-const RATE_YEARS_1_TO_3 = 0.05;   // 5% — credit years 1, 2, 3
-const RATE_YEARS_4_TO_7 = 0.06;   // 6% — credit years 4, 5, 6, 7
-
-export const inputSchema = z.object({
-  // Qualified equity investments × applicable rate for years 1–3 (5%)
-  // Represents the total of (investment × 5%) already computed or from prior Form 8874
-  credit_years_1_to_3: z.number().nonnegative().optional(),
-  // Qualified equity investments × applicable rate for years 4–7 (6%)
-  credit_years_4_to_7: z.number().nonnegative().optional(),
-  // Alternative: provide raw investment amounts and year in credit period
-  // investment_amount_early: QEI in years 1-3 of their credit period
-  investment_amount_early: z.number().nonnegative().optional(),
-  // investment_amount_later: QEI in years 4-7 of their credit period
-  investment_amount_later: z.number().nonnegative().optional(),
-  // Prior-year carryforward of unused New Markets Credit
-  prior_year_carryforward: z.number().nonnegative().optional(),
+// Form 8874 line 1 is one row per qualified equity investment held on a
+// current-year credit allowance date. Prior-year carryovers belong on Form
+// 3800 Part IV, not in this current-year source calculation.
+const money = z.number().finite().positive().refine((amount) =>
+  Number.isSafeInteger(Math.round(amount * 100)) &&
+  Math.abs(amount * 100 - Math.round(amount * 100)) < 0.000001
+);
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
+  const date = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) &&
+    date.toISOString().slice(0, 10) === value;
 });
 
-type F8874Input = z.infer<typeof inputSchema>;
+export const investmentSchema = z.object({
+  cde_name: z.string().trim().min(1),
+  cde_ein: z.string().regex(/^\d{9}$/),
+  cde_address: z.object({
+    line1: z.string().trim().min(1),
+    city: z.string().trim().min(1),
+    state: z.string().length(2),
+    zip: z.string().regex(/^\d{5}(?:\d{4})?$/),
+  }),
+  initial_investment_date: isoDate,
+  credit_allowance_date: isoDate,
+  qualified_equity_investment_amount: money,
+  designation_notice_reference: z.string().trim().min(1),
+  held_on_credit_allowance_date: z.literal(true),
+  qualified_on_credit_allowance_date: z.literal(true),
+  recapture_notice_received: z.literal(false),
+  subject_to_passive_activity_limit: z.literal(false),
+}).superRefine((investment, ctx) => {
+  const initial = investment.initial_investment_date;
+  const allowance = investment.credit_allowance_date;
+  const year = Number(allowance.slice(0, 4)) - Number(initial.slice(0, 4)) + 1;
+  if (
+    allowance.slice(0, 4) !== "2025" || year < 1 || year > 7 ||
+    allowance.slice(5) !== initial.slice(5)
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["credit_allowance_date"],
+      message:
+        "Form 8874 needs a 2025 initial or anniversary allowance date within the seven-year credit period",
+    });
+  }
+});
 
-function computeCurrentYearCredit(input: F8874Input): number {
-  // If pre-computed credit amounts provided, use them directly
-  const directEarly = input.credit_years_1_to_3 ?? 0;
-  const directLater = input.credit_years_4_to_7 ?? 0;
+export const inputSchema = z.object({
+  investments: z.array(investmentSchema).min(1),
+}).strict().superRefine((input, ctx) => {
+  const seen = new Set<string>();
+  input.investments.forEach((investment, index) => {
+    const key = [
+      investment.cde_ein,
+      investment.initial_investment_date,
+      investment.designation_notice_reference,
+    ].join(":");
+    if (seen.has(key)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["investments", index],
+        message: "Form 8874 qualified equity investment is duplicated",
+      });
+    }
+    seen.add(key);
+  });
+});
 
-  // If raw investment amounts provided, apply statutory rates
-  const computedEarly = (input.investment_amount_early ?? 0) * RATE_YEARS_1_TO_3;
-  const computedLater = (input.investment_amount_later ?? 0) * RATE_YEARS_4_TO_7;
+export type F8874Input = z.infer<typeof inputSchema>;
 
-  return directEarly + directLater + computedEarly + computedLater;
-}
-
-function totalCredit(input: F8874Input): number {
-  return computeCurrentYearCredit(input) + (input.prior_year_carryforward ?? 0);
-}
-
-function buildOutputs(credit: number): NodeOutput[] {
-  if (credit <= 0) return [];
-  return [{ nodeType: schedule3.nodeType, fields: { line6a_general_business_credit: credit } }];
+export function calculateForm8874(raw: F8874Input) {
+  const input = inputSchema.parse(raw);
+  const rows = input.investments.map((investment) => {
+    const creditYear = Number(investment.credit_allowance_date.slice(0, 4)) -
+      Number(investment.initial_investment_date.slice(0, 4)) + 1;
+    const rate = creditYear <= 3 ? 5 : 6;
+    const creditAmount = Math.round(
+      investment.qualified_equity_investment_amount * rate,
+    ) / 100;
+    return { investment, creditYear, rate, creditAmount };
+  });
+  const line1Cents = rows.reduce(
+    (sum, row) => sum + Math.round(row.creditAmount * 100),
+    0,
+  );
+  if (!Number.isSafeInteger(line1Cents)) {
+    throw new Error("Form 8874 current-year credit exceeds safe cents");
+  }
+  const line1 = line1Cents / 100;
+  return { rows, line1, line2: 0, line3: line1 };
 }
 
 class F8874Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8874";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule3]);
+  readonly outputNodes = new OutputNodes([f3800]);
 
   compute(_ctx: NodeContext, rawInput: F8874Input): NodeResult {
-    const input = inputSchema.parse(rawInput);
-    const credit = totalCredit(input);
-    return { outputs: buildOutputs(credit) };
+    const lines = calculateForm8874(rawInput);
+    return {
+      outputs: lines.line3 > 0
+        ? [output(f3800, {
+          f8874_credit: {
+            credit_amount: lines.line3,
+            subject_to_passive_activity_limit: false,
+          },
+        })]
+        : [],
+    };
   }
 }
 

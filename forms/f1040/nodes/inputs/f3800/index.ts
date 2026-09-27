@@ -121,6 +121,11 @@ const f8820CreditSchema = z.object({
   subject_to_passive_activity_limit: z.boolean(),
 });
 
+const f8874CreditSchema = z.object({
+  credit_amount: z.number().finite().positive(),
+  subject_to_passive_activity_limit: z.literal(false),
+});
+
 const f8820K1CreditSchema = z.object({
   source_type: z.enum(["partnership", "s_corporation", "estate", "trust"]),
   source_ein: z.string().regex(/^\d{9}$/),
@@ -147,6 +152,7 @@ export const inputSchema = z.object({
   f8826_credit_entries: z.array(f8826CreditEntrySchema).min(1).optional(),
   f5884_credit: f5884CreditSchema.optional(),
   f8820_credit: f8820CreditSchema.optional(),
+  f8874_credit: f8874CreditSchema.optional(),
   f8820_k1_credit_entries: z.array(f8820K1CreditSchema).min(1).optional(),
   f8936_new_vehicle_credit: f8936NewVehicleCreditSchema.optional(),
   f8936_commercial_vehicle_credit: f8936NewVehicleCreditSchema.optional(),
@@ -171,6 +177,7 @@ export const inputSchema = z.object({
     input.f8826_credit_entries !== undefined ||
     input.f5884_credit !== undefined ||
     input.f8820_credit !== undefined ||
+    input.f8874_credit !== undefined ||
     input.f8820_k1_credit_entries !== undefined ||
     input.f8936_new_vehicle_credit !== undefined ||
     input.f8936_commercial_vehicle_credit !== undefined ||
@@ -223,6 +230,7 @@ function schedule3Output(
   f8826Entries: z.infer<typeof f8826CreditEntrySchema>[],
   f5884Credit: z.infer<typeof f5884CreditSchema> | undefined,
   f8820Credit: z.infer<typeof f8820CreditSchema> | undefined,
+  f8874Credit: z.infer<typeof f8874CreditSchema> | undefined,
   f8820K1Credits: readonly z.infer<typeof f8820K1CreditSchema>[],
   f8936Credit: z.infer<typeof f8936NewVehicleCreditSchema> | undefined,
   f8936CommercialCredit:
@@ -309,6 +317,7 @@ function schedule3Output(
     (f8835Credit?.specifiedCredit ?? 0) > 0 ||
     (f5884Credit?.credit_amount ?? 0) > 0 ||
     (f8820Credit?.credit_amount ?? 0) > 0 ||
+    (f8874Credit?.credit_amount ?? 0) > 0 ||
     orphanDrugK1Credit > 0 ||
     (f8936Credit?.credit_amount ?? 0) > 0 ||
     (f8936CommercialCredit?.credit_amount ?? 0) > 0 ||
@@ -324,6 +333,7 @@ function schedule3Output(
         form3800_source_credits: {
           standardCredit: form8826Credit +
             (f8820Credit?.credit_amount ?? 0) +
+            (f8874Credit?.credit_amount ?? 0) +
             orphanDrugK1Credit +
             (f8936Credit?.credit_amount ?? 0) +
             (f8936CommercialCredit?.credit_amount ?? 0) +
@@ -356,6 +366,7 @@ class F3800Node extends TaxNode<typeof inputSchema> {
         parsed.f8826_credit_entries ?? [],
         parsed.f5884_credit,
         parsed.f8820_credit,
+        parsed.f8874_credit,
         parsed.f8820_k1_credit_entries ?? [],
         parsed.f8936_new_vehicle_credit,
         parsed.f8936_commercial_vehicle_credit,
