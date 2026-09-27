@@ -4099,6 +4099,52 @@ Deno.test({
 
 Deno.test({
   name:
+    "XSD: joint return has distinct taxpayer and spouse Form 4137 documents",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = {
+    ...singleGeneral(),
+    filing_status: FilingStatus.MFJ,
+    spouse_first_name: "Sam",
+    spouse_last_name: "Tipster",
+    spouse_ssn: "222-33-4444",
+  };
+  const xml = buildMefXml({
+    form4137: {
+      forms: [
+        {
+          recipient: "taxpayer",
+          employers: [{
+            name: "CAFE",
+            ein: "123456789",
+            tips_received: 5_000,
+            tips_reported: 2_000,
+          }],
+          ss_wages_from_w2: 30_000,
+        },
+        {
+          recipient: "spouse",
+          employers: [{
+            name: "DINER",
+            ein: "987654321",
+            tips_received: 1_000,
+            tips_reported: 0,
+          }],
+          ss_wages_from_w2: 176_100,
+        },
+      ],
+    },
+  }, extractFilerIdentity(general));
+  assertEquals((xml.match(/<IRS4137\b/g) ?? []).length, 2);
+  assertStringIncludes(xml, "<SSN>111223333</SSN>");
+  assertStringIncludes(xml, "<SSN>222334444</SSN>");
+  await validateXsd(xml, "joint taxpayer and spouse Forms 4137");
+});
+
+Deno.test({
+  name:
     "XSD: Schedule F and Form 4835 elections link distinct CCC and crop statements",
   sanitizeOps: false,
   sanitizeResources: false,

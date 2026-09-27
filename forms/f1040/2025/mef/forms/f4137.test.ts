@@ -1,4 +1,5 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { FilingStatus } from "../../../mef/header.ts";
 import { testFiler } from "../test-filer.ts";
 import { form4137 } from "./f4137.ts";
 
@@ -94,5 +95,45 @@ Deno.test("Form 4137 refuses a spouse form without spouse identity", () => {
       }, { filer: testFiler() }),
     Error,
     "spouse name and SSN",
+  );
+});
+
+Deno.test("Form 4137 emits separate taxpayer and spouse documents", () => {
+  const filer = {
+    ...testFiler(),
+    filingStatus: FilingStatus.MarriedFilingJointly,
+    spouse: {
+      firstName: "Sam",
+      lastName: "Tipster",
+      ssn: "987654321",
+      nameControl: "TIPS",
+    },
+  };
+  const documents = form4137.build({
+    forms: [
+      base.forms[0],
+      {
+        recipient: "spouse",
+        employers: [{
+          name: "DINER",
+          ein: "987654321",
+          tips_received: 1_000,
+          tips_reported: 0,
+        }],
+        ss_wages_from_w2: 176_100,
+      },
+    ],
+  }, { filer });
+  assertEquals(documents.length, 2);
+  assertStringIncludes(documents[0], "<SSN>123456789</SSN>");
+  assertStringIncludes(
+    documents[0],
+    "<SocSecMedicareTaxUnrptdTipAmt>230</SocSecMedicareTaxUnrptdTipAmt>",
+  );
+  assertStringIncludes(documents[1], "<PersonNm>Sam Tipster</PersonNm>");
+  assertStringIncludes(documents[1], "<SSN>987654321</SSN>");
+  assertStringIncludes(
+    documents[1],
+    "<SocSecMedicareTaxUnrptdTipAmt>15</SocSecMedicareTaxUnrptdTipAmt>",
   );
 });
