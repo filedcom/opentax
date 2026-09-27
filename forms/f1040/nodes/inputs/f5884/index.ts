@@ -52,6 +52,27 @@ const WAGE_CAP_VETERAN_DISABLED_1YR = 12000; // disabled veteran 1-year
 const WAGE_CAP_VETERAN_LONG_TERM_UNEMPLOYED = 14000;
 const WAGE_CAP_VETERAN_DISABLED_LONG_TERM = 24000;
 
+const certificationSchema = z.discriminatedUnion("path", [
+  z.object({
+    path: z.literal("certified_by_start"),
+    swa_certification_reference: z.string().trim().min(1),
+    certification_received_on: z.string().date(),
+    certification_received_before_claim_confirmed: z.literal(true),
+  }),
+  z.object({
+    path: z.literal("form8850_prescreen"),
+    swa_certification_reference: z.string().trim().min(1),
+    certification_received_on: z.string().date(),
+    certification_received_before_claim_confirmed: z.literal(true),
+    job_offer_on: z.string().date(),
+    prescreen_completed_on: z.string().date(),
+    form8850_signed_by_applicant_on: z.string().date(),
+    form8850_signed_by_employer_on: z.string().date(),
+    form8850_submitted_to_swa_on: z.string().date(),
+    eta_form: z.enum(["9061", "9062"]),
+  }),
+]);
+
 // Per-item schema — one entry per employee
 export const itemSchema = z.object({
   employee_reference: z.string().trim().min(1),
@@ -60,7 +81,7 @@ export const itemSchema = z.object({
     message:
       "Work opportunity credit requires employment beginning before 2026",
   }),
-  swa_certification_reference: z.string().trim().min(1),
+  certification: certificationSchema,
   qualified_wages_confirmed: z.literal(true),
   not_prior_employee_confirmed: z.literal(true),
   not_related_or_dependent_confirmed: z.literal(true),
@@ -76,6 +97,55 @@ export const itemSchema = z.object({
   summer_youth_zone_and_service_period_confirmed: z.literal(true).optional(),
   designated_community_resident_location_confirmed: z.literal(true).optional(),
 }).superRefine((item, ctx) => {
+  const certification = item.certification;
+  if (
+    certification.path === "certified_by_start" &&
+    certification.certification_received_on > item.hired_on
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["certification", "certification_received_on"],
+      message: "Certification must be received by the first workday",
+    });
+  }
+  if (certification.path === "form8850_prescreen") {
+    const deadline = new Date(
+      Date.parse(`${item.hired_on}T00:00:00Z`) + 28 * 86_400_000,
+    ).toISOString().slice(0, 10);
+    for (
+      const [field, latest] of [
+        ["job_offer_on", item.hired_on],
+        ["prescreen_completed_on", certification.job_offer_on],
+        [
+          "form8850_signed_by_applicant_on",
+          certification.form8850_submitted_to_swa_on,
+        ],
+        [
+          "form8850_signed_by_employer_on",
+          certification.form8850_submitted_to_swa_on,
+        ],
+        ["form8850_submitted_to_swa_on", deadline],
+      ] as const
+    ) {
+      if (certification[field] > latest) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["certification", field],
+          message: `${field} is later than the permitted date`,
+        });
+      }
+    }
+    if (
+      certification.certification_received_on <
+        certification.form8850_submitted_to_swa_on
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["certification", "certification_received_on"],
+        message: "Certification cannot precede the prescreening submission",
+      });
+    }
+  }
   if (
     (item.target_group === TargetGroup.VeteranFoodStamp) !==
       (item.veteran_category !== undefined)

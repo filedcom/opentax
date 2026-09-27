@@ -163,8 +163,13 @@ a shared Form 3800 finalization. It also identifies Form 8912 as a separate line
 6k credit formerly misrouted to 6a. The other direct deposits remain in code and
 can still overstate filed credits. The Form 5884 source build pass now requires
 employee identity, pre-2026 hire, state-workforce certification, wage
-eligibility affirmations, and a single certified veteran category. It applies
-the missing $24,000 disabled-long-term-unemployed veteran cap and the 120-hour
+eligibility affirmations, and a single certified veteran category. The input
+now requires dated evidence for either certification received by the first workday or
+Form 8850 prescreening completed by the offer date, signed before submission,
+submitted to the state workforce agency within 28 calendar days of hire, and
+followed by certification before claiming. These timing cases are written but
+unrun; certification revocation and disaster postponement handling remain open.
+It applies the missing $24,000 disabled-long-term-unemployed veteran cap and the 120-hour
 minimum plus hours-based first-year rate to long-term family assistance
 recipients. Source and rejection cases
 are written but unrun. The current pass now forwards its nonpassive line 4b

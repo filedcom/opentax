@@ -8,7 +8,12 @@ const source = {
     employee_reference: "EMP-001",
     target_group: TargetGroup.TanfRecipient,
     hired_on: "2025-01-15",
-    swa_certification_reference: "SWA-001",
+    certification: {
+      path: "certified_by_start",
+      swa_certification_reference: "SWA-001",
+      certification_received_on: "2025-01-15",
+      certification_received_before_claim_confirmed: true,
+    },
     qualified_wages_confirmed: true,
     not_prior_employee_confirmed: true,
     not_related_or_dependent_confirmed: true,

@@ -15,7 +15,12 @@ function minimalItem(overrides: Partial<F5884Item> = {}): F5884Item {
     employee_reference: "EMP-001",
     target_group: TargetGroup.TanfRecipient,
     hired_on: "2025-01-15",
-    swa_certification_reference: "SWA-001",
+    certification: {
+      path: "certified_by_start",
+      swa_certification_reference: "SWA-001",
+      certification_received_on: "2025-01-15",
+      certification_received_before_claim_confirmed: true,
+    },
     qualified_wages_confirmed: true,
     not_prior_employee_confirmed: true,
     not_related_or_dependent_confirmed: true,
@@ -71,6 +76,48 @@ Deno.test("schema_accepts_valid_item", () => {
     subject_to_passive_activity_limit: false,
   });
   assertEquals(result.success, true);
+});
+
+Deno.test("certification by the first workday requires actual receipt by hire", () => {
+  const valid = minimalItem();
+  assertEquals(itemSchema.safeParse(valid).success, true);
+  assertEquals(
+    itemSchema.safeParse(minimalItem({
+      certification: {
+        path: "certified_by_start",
+        swa_certification_reference: "SWA-001",
+        certification_received_on: "2025-01-16",
+        certification_received_before_claim_confirmed: true,
+      },
+    })).success,
+    false,
+  );
+});
+
+Deno.test("Form 8850 prescreen path enforces offer, signatures, and SWA deadline", () => {
+  const certification = {
+    path: "form8850_prescreen" as const,
+    swa_certification_reference: "SWA-002",
+    certification_received_on: "2025-03-01",
+    certification_received_before_claim_confirmed: true as const,
+    job_offer_on: "2025-01-10",
+    prescreen_completed_on: "2025-01-10",
+    form8850_signed_by_applicant_on: "2025-01-10",
+    form8850_signed_by_employer_on: "2025-02-12",
+    form8850_submitted_to_swa_on: "2025-02-12",
+    eta_form: "9061" as const,
+  };
+  const parse = (updates: Partial<typeof certification>) =>
+    itemSchema.safeParse(minimalItem({
+      certification: { ...certification, ...updates },
+    })).success;
+  assertEquals(parse({}), true);
+  assertEquals(parse({ prescreen_completed_on: "2025-01-11" }), false);
+  assertEquals(parse({ job_offer_on: "2025-01-16" }), false);
+  assertEquals(parse({ form8850_signed_by_applicant_on: "2025-02-13" }), false);
+  assertEquals(parse({ form8850_signed_by_employer_on: "2025-02-13" }), false);
+  assertEquals(parse({ form8850_submitted_to_swa_on: "2025-02-13" }), false);
+  assertEquals(parse({ certification_received_on: "2025-02-11" }), false);
 });
 
 // ── Zero Output Cases ─────────────────────────────────────────────────────────
@@ -270,7 +317,7 @@ Deno.test("work opportunity credit requires certified, distinct, qualified emplo
   const valid = minimalItem({ first_year_wages: 6_000, hours_worked: 400 });
   for (
     const item of [
-      { ...valid, swa_certification_reference: undefined },
+      { ...valid, certification: undefined },
       { ...valid, hired_on: "2026-01-01" },
       { ...valid, not_prior_employee_confirmed: undefined },
       { ...valid, not_related_or_dependent_confirmed: undefined },
