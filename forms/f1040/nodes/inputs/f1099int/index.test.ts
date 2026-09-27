@@ -94,6 +94,29 @@ Deno.test("1099-INT routes adjusted investment-property interest to Form 4952 on
   );
 });
 
+Deno.test("1099-INT retains gross payer interest and labeled Schedule B adjustments", () => {
+  const result = compute([minimalItem({
+    box1: 1_000,
+    box11: 100,
+    elect_bond_premium_amortization: true,
+    nominee_interest: 50,
+  })]);
+  const detail = findOutput(result, "schedule_b")?.fields.interest_detail;
+  assertEquals(detail, {
+    payerName: "Test Bank",
+    gross: 1_000,
+    adjustments: [
+      { label: "Nominee Distribution", amount: 50 },
+      { label: "ABP Adjustment", amount: 100 },
+    ],
+    net: 850,
+    sellerFinanced: false,
+    buyerSsn: undefined,
+    buyerAddress: undefined,
+    buyerCityStateZip: undefined,
+  });
+});
+
 Deno.test("1099-INT routes affirmed private-activity-bond interest to AMT Form 4952", () => {
   const result = compute([minimalItem({
     box8: 500,

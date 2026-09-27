@@ -12,6 +12,9 @@ for the implementation contract.
 - [`PDF-SCHEDULE3A-MAP.md`](PDF-SCHEDULE3A-MAP.md) and
   `pdf-fields-f1040s3a.csv`: the new schedule's line/widget map and its
   orphaned-field issue.
+- [`PDF-SCHEDULEB-MAP.md`](PDF-SCHEDULEB-MAP.md) and
+  `pdf-fields-f1040sb.csv`: the 2026 Schedule B field map, including Part III
+  disclosures and supplemental statement requirements.
 - [`MEF-V1-DRIFT.md`](MEF-V1-DRIFT.md): why the downloaded May v1 1040 XSD
   cannot describe the September draft form, and the exact refresh/diff gate.
 - [`GRAPH-ROUTES.md`](GRAPH-ROUTES.md) and `graph-route-gaps.csv`: generated

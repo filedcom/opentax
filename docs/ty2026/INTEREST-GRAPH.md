@@ -10,7 +10,7 @@ before calling this an accepted return path.
 
 | Source fact or election | Existing route | TY2026 work to complete |
 | --- | --- | --- |
-| 1099-INT boxes 1, 3, 10, taxable bond premium election, nominee/accrued-interest/OID adjustments | `f1099int` → `schedule_b` → AGI line 2b and 1040 line 2b | Reconcile each payer, Schedule B lines 1–4, AGI, 1040, NIIT, and the filed attachment. Preserve the gross payer amount and separately labeled adjustment rows required by the instructions; the current print record nets them into one payer row. |
+| 1099-INT boxes 1, 3, 10, taxable bond premium election, nominee/accrued-interest/OID adjustments | `f1099int` → `schedule_b` → AGI line 2b and 1040 line 2b | The source now emits gross payer and labeled adjustment data; the 2026 Schedule B node reconciles and prints it. Finish the PDF, MeF, and user input route for filing and disclosures. |
 | Box 8 less box 13 tax-exempt bond premium | `f1099int` → 1040 line 2a and AGI Social Security worksheet input | Verify gross and net tax-exempt amounts and any 1099-OID or 1099-DIV contributions before calculating Social Security taxability. |
 | Box 2 early-withdrawal penalty | `f1099int` → Schedule 1 line 18 and AGI adjustments | Both destinations now receive box 2; test line 10, AGI, tax, and printed Schedule 1 in the registered graph. |
 | Box 4 federal withholding | `f1099int` → 1040 line 25b | Reconcile all 1099 withholding, line 25d, and refund or balance. |
@@ -24,11 +24,14 @@ for interest or dividends over $1,500 and for several other cases, including
 seller-financed mortgage interest, nominee or accrued-interest adjustments,
 amortizable bond premium, savings-bond exclusion, and foreign accounts or
 trusts. Part III must be answered when its conditions apply. The current
-`schedule_b` node can calculate interest totals but does not collect Part III
-answers or determine every attachment trigger. Its PDF print rows also need
-the adjustment disclosure described above. Registering 1099-INT as a public
-TY2026 input before those branches are handled would create silently incomplete
-returns.
+TY2025 `schedule_b` node calculates interest totals but lacks Part III and
+separate adjustment rows. The dedicated TY2026 node now accepts those facts,
+determines the modeled filing triggers, and emits separate adjustment rows.
+It is registered, but there is no product input path for 1099-INT or Schedule B
+disclosures yet. A temporary test graph proves wages plus interest through
+AGI, NIIT, Schedule 2, and Form 1040. The TY2026 public input must wait until
+the remaining Form 6251, Form 1116, Form 4952, disclosure, and attachment
+branches cannot silently strand data.
 
 ## Implementation sequence
 

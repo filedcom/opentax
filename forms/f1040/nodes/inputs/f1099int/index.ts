@@ -96,27 +96,49 @@ function validateIntItem(item: INTItem): void {
 }
 
 function computeTaxableInterestNet(item: INTItem): number {
-  // Box 11 (bond premium) only offsets interest when taxpayer has made the
-  // IRC §171 amortization election. Without the election, bond premium is not deductible.
-  const bondPremium = item.elect_bond_premium_amortization === true
-    ? (item.box11 ?? 0)
-    : 0;
-  return (item.box1 ?? 0) +
-    (item.box3 ?? 0) +
-    (item.box10 ?? 0) -
-    bondPremium -
-    (item.box12 ?? 0) -
-    (item.nominee_interest ?? 0) -
-    (item.accrued_interest_paid ?? 0) -
-    (item.non_taxable_oid_adjustment ?? 0);
+  const detail = taxableInterestDetail(item);
+  return detail.net;
+}
+
+function taxableInterestDetail(item: INTItem) {
+  const gross = (item.box1 ?? 0) + (item.box3 ?? 0) + (item.box10 ?? 0);
+  const adjustments = [
+    { label: "Nominee Distribution", amount: item.nominee_interest ?? 0 },
+    { label: "Accrued Interest", amount: item.accrued_interest_paid ?? 0 },
+    { label: "OID Adjustment", amount: item.non_taxable_oid_adjustment ?? 0 },
+    {
+      label: "ABP Adjustment",
+      amount: item.elect_bond_premium_amortization === true
+        ? item.box11 ?? 0
+        : 0,
+    },
+    { label: "Treasury ABP Adjustment", amount: item.box12 ?? 0 },
+  ].filter((entry) => entry.amount > 0);
+  return {
+    payerName: item.payer_name,
+    gross,
+    adjustments,
+    net: gross - adjustments.reduce((sum, entry) => sum + entry.amount, 0),
+    sellerFinanced: item.seller_financed === true,
+    buyerSsn: item.payer_ssn,
+    buyerAddress: item.payer_address,
+    buyerCityStateZip: item.payer_city_state_zip,
+  };
 }
 
 function scheduleBOutput(item: INTItem): NodeOutput {
-  return output(schedule_b, {
-    payer_name: item.payer_name,
-    taxable_interest_net: computeTaxableInterestNet(item),
-    box3_us_obligations: item.box3,
-  });
+  const detail = taxableInterestDetail(item);
+  return {
+    nodeType: schedule_b.nodeType,
+    fields: {
+      payer_name: item.payer_name,
+      taxable_interest_net: detail.net,
+      box3_us_obligations: item.box3,
+      // TY2026 Schedule B needs gross payer rows and labeled adjustments.
+      // The TY2025 node ignores this additional source detail.
+      interest_detail: detail,
+    },
+  };
 }
 
 class F1099intNode extends TaxNode<typeof inputSchema> {
