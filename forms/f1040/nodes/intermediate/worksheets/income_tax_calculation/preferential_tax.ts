@@ -113,26 +113,35 @@ export function preferentialTax(facts: PreferentialTaxFacts): number {
   );
 }
 
-// Form 1040 Foreign Earned Income Tax Worksheet, qualified-dividend route.
+// Form 1040 Foreign Earned Income Tax Worksheet preferential-income route.
 // Its capital-gain excess is removed from Schedule D gain first and then
 // qualified dividends before line 4 is calculated on stacked income.
-export function foreignEarnedIncomeQualifiedDividendTax(
+export function foreignEarnedIncomePreferentialTax(
   facts: PreferentialTaxFacts,
   taxableExcludedIncome: number,
 ): number {
-  if (
-    (facts.form4952Election ?? 0) > 0 ||
-    (facts.unrecaptured1250Gain ?? 0) > 0 ||
-    (facts.rate28Gain ?? 0) > 0
-  ) {
-    throw new Error(
-      "Form 2555 with Schedule D special-rate gain needs the Foreign Earned Income Tax Worksheet Schedule D refigure",
-    );
-  }
   const capitalGainExcess = Math.max(
     0,
     facts.qualifiedDividends + facts.netCapitalGain - facts.taxableIncome,
   );
+  const usesScheduleD = (facts.form4952Election ?? 0) > 0 ||
+    (facts.netCapitalGain > 0 &&
+      ((facts.unrecaptured1250Gain ?? 0) > 0 ||
+        (facts.rate28Gain ?? 0) > 0));
+  if (capitalGainExcess === 0 && usesScheduleD) {
+    return Math.max(
+      0,
+      scheduleDTax({
+        ...facts,
+        taxableIncome: facts.taxableIncome + taxableExcludedIncome,
+      }) - ordinaryTax2025(taxableExcludedIncome, facts.filingStatus),
+    );
+  }
+  if (usesScheduleD) {
+    throw new Error(
+      "Form 2555 with Schedule D special-rate gain needs the Foreign Earned Income Tax Worksheet Schedule D refigure",
+    );
+  }
   const adjustedNetCapitalGain = Math.max(
     0,
     facts.netCapitalGain - capitalGainExcess,

@@ -115,6 +115,62 @@ Deno.test("Form 1116 MeF line 18 carries the computed senior addback", () => {
   );
 });
 
+Deno.test("Form 1116 MeF places documented vehicle interest on line 4b, not 3b", () => {
+  const calculated = form1116Node.compute(
+    { taxYear: 2025, formType: "f1040" },
+    {
+      foreign_tax_items: [{
+        foreign_tax_paid: 3_000,
+        foreign_gross_income: 20_000,
+        income_category: IncomeCategory.Passive,
+        irs_country_code: "CA",
+        tax_paid_or_accrued_date: "2025-11-01",
+        tax_kind: ForeignTaxKind.Interest,
+        tax_credit_method: ForeignTaxCreditMethod.Paid,
+      }],
+      qualified_vehicle_loan_interest_deduction: 2_000,
+      vehicle_interest_asset_method: {
+        all_assets_included_verified: true,
+        assets: [
+          {
+            asset_id: "US-stock",
+            source_document_reference: "2025 broker tax-basis statement US",
+            beginning_tax_book_value: 40_000,
+            ending_tax_book_value: 40_000,
+            income_source: "us",
+          },
+          {
+            asset_id: "CA-stock",
+            source_document_reference: "2025 broker tax-basis statement CA",
+            beginning_tax_book_value: 60_000,
+            ending_tax_book_value: 60_000,
+            income_source: "foreign",
+            income_category: IncomeCategory.Passive,
+            irs_country_code: "CA",
+          },
+        ],
+      },
+      worldwide_taxable_income: 50_000,
+      us_tax_before_credits: 5_000,
+    },
+  );
+  const formFields = calculated.outputs.find((item) =>
+    item.nodeType === "form_1116"
+  )?.fields;
+  const [xml] = form1116.build(
+    (formFields ?? {}) as Parameters<typeof form1116.build>[0],
+  );
+  assertStringIncludes(
+    xml,
+    "<ApportionedOtherInterestExpAmt>1200</ApportionedOtherInterestExpAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<ForeignIncNetDeductAndLossAmt>1200</ForeignIncNetDeductAndLossAmt>",
+  );
+  assertEquals(xml.includes("<OtherDeductionsNotRelatedAmt>"), false);
+});
+
 Deno.test("Form 1116 source details must reconcile with category totals", () => {
   assertThrows(
     () =>

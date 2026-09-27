@@ -217,6 +217,23 @@ Deno.test("schedule1a: vehicle interest subtracts business use and allows MFS", 
   );
 });
 
+Deno.test("schedule1a: passes computed line 30 vehicle interest separately", () => {
+  const result = schedule1a.compute(ctx, {
+    vehicle_loans: [{
+      vin: "1HGCM82633A004352",
+      qualified_interest_paid: 4_000,
+      interest_deducted_on_business_schedules: 750,
+    }],
+    magi: 80_000,
+    filing_status: FilingStatus.MFS,
+  });
+  assertEquals(
+    fieldsOf(result.outputs, standard_deduction)
+      ?.qualified_vehicle_loan_interest_deduction,
+    3_250,
+  );
+});
+
 Deno.test("schedule1a: vehicle phaseout rounds excess MAGI up to $1,000", () => {
   assertEquals(
     deduction({

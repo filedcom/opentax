@@ -49,6 +49,8 @@ export const inputSchema = z.object({
 
   // Schedule 1-A line 37 is added back for Form 6251 line 1b only.
   enhanced_senior_deduction: z.number().nonnegative().optional(),
+  qualified_vehicle_loan_interest_deduction: z.number().nonnegative()
+    .optional(),
 
   // From nol_carryforward — NOL deduction (IRC §172) applied after standard/itemized deduction
   // Post-2017 NOLs limited to 80% of pre-NOL taxable income; pre-2018 NOLs limited to 100%.
@@ -146,15 +148,19 @@ class StandardDeductionNode extends TaxNode<typeof inputSchema> {
     const qbi = input.qbi_deduction ?? 0;
     const additionalDeductions = input.additional_deductions ?? 0;
     const enhancedSeniorDeduction = input.enhanced_senior_deduction ?? 0;
-    if (enhancedSeniorDeduction > additionalDeductions) {
+    const vehicleInterestDeduction =
+      input.qualified_vehicle_loan_interest_deduction ?? 0;
+    if (
+      enhancedSeniorDeduction + vehicleInterestDeduction > additionalDeductions
+    ) {
       throw new Error(
-        "Schedule 1-A senior deduction exceeds total additional deductions",
+        "Schedule 1-A senior and vehicle-interest deductions exceed total additional deductions",
       );
     }
     const nol = input.nol_deduction ?? 0;
     // The 2025 Form 1116 line 3b instructions exclude Schedule 1-A line 37.
     const form1116OtherDeductions = qbi + additionalDeductions -
-      enhancedSeniorDeduction + nol;
+      enhancedSeniorDeduction - vehicleInterestDeduction + nol;
     const taxableIncome = Math.max(
       0,
       Math.max(0, input.agi - deduction) - qbi - additionalDeductions - nol,
@@ -227,6 +233,7 @@ class StandardDeductionNode extends TaxNode<typeof inputSchema> {
         standard_or_itemized_deduction: deduction,
         other_deductions: form1116OtherDeductions,
         enhanced_senior_deduction: enhancedSeniorDeduction,
+        qualified_vehicle_loan_interest_deduction: vehicleInterestDeduction,
       }),
     );
 

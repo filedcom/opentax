@@ -437,14 +437,39 @@ Deno.test("form6251: Form 2555 AMT gain excess changes Part III preference but n
   assertEquals(filed?.fields.line27, 100_000);
 });
 
+Deno.test("form6251: Form 2555 Schedule D special-rate gain without capital gain excess uses Part III", () => {
+  const result = compute({
+    filing_status: "single",
+    regular_tax_income: 300_000,
+    regular_taxable_income: 300_000,
+    regular_tax: 40_000,
+    foreign_earned_income_exclusion: 100_000,
+    foreign_exclusion_disallowed_deductions: 0,
+    net_capital_gain: 5_000,
+    unrecaptured_1250_gain: 2_000,
+    must_file_for_credit: true,
+  });
+  const filed = result.outputs.find((output) => output.nodeType === "form6251");
+  assertEquals(filed?.fields.line12, 311_900);
+  assertEquals(filed?.fields.line13, 3_000);
+  assertEquals(filed?.fields.line14, 2_000);
+  assertEquals(filed?.fields.line15, 5_000);
+  assertEquals(filed?.fields.line20, 397_000);
+  assertEquals(filed?.fields.line27, 395_000);
+  assertEquals(
+    filed?.fields.tentative_tax,
+    (filed?.fields.line40 as number) - 26_000,
+  );
+});
+
 Deno.test("form6251: Form 2555 Schedule D special-rate gain still needs its Part III refigure", () => {
   assertThrows(
     () =>
       compute({
         filing_status: "single",
-        regular_tax_income: 300_000,
-        regular_taxable_income: 300_000,
-        regular_tax: 40_000,
+        regular_tax_income: 90_000,
+        regular_taxable_income: 500,
+        regular_tax: 0,
         foreign_earned_income_exclusion: 100_000,
         foreign_exclusion_disallowed_deductions: 0,
         net_capital_gain: 1_000,

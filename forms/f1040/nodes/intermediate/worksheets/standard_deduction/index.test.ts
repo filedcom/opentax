@@ -276,6 +276,22 @@ Deno.test("Form 6251 line 1b adds back only Schedule 1-A senior deduction", () =
   );
 });
 
+Deno.test("Form 1116 line 3b excludes Schedule 1-A vehicle interest for line 4b", () => {
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    agi: 50_000,
+    additional_deductions: 3_250,
+    qualified_vehicle_loan_interest_deduction: 3_250,
+  });
+  const foreignCredit = findOutput(result, "form_1116");
+  assertEquals(foreignCredit?.fields.other_deductions, 0);
+  assertEquals(foreignCredit?.fields.general_deductions, 15_750);
+  assertEquals(
+    foreignCredit?.fields.qualified_vehicle_loan_interest_deduction,
+    3_250,
+  );
+});
+
 Deno.test("Form 6251 line 1b keeps negative income before line 15's zero floor", () => {
   const result = compute({ filing_status: FilingStatus.Single, agi: 5_000 });
   const incomeTax = findOutput(result, "income_tax_calculation");

@@ -18,7 +18,7 @@ import { f8812 } from "../../../inputs/f8812/index.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 import { ordinaryTax2025 } from "../tax_table_2025.ts";
 import {
-  foreignEarnedIncomeQualifiedDividendTax,
+  foreignEarnedIncomePreferentialTax,
   preferentialTax,
 } from "./preferential_tax.ts";
 
@@ -171,7 +171,7 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
         tax = 0;
       } else {
         if (hasPrefIncome) {
-          tax = foreignEarnedIncomeQualifiedDividendTax({
+          tax = foreignEarnedIncomePreferentialTax({
             taxableIncome: input.taxable_income,
             qualifiedDividends: qualDiv,
             netCapitalGain: netCg,

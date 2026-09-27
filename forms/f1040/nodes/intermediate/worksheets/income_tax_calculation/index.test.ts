@@ -7,9 +7,14 @@ import { form_1116 } from "../../forms/form_1116/index.ts";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { FilingStatus } from "../../../types.ts";
 import {
+  QDCGT_TWENTY_FLOOR_2025,
+  QDCGT_ZERO_CEILING_2025,
+} from "../../../config/2025.ts";
+import {
   ordinaryTax2025,
   qualifiedDividendTax2025,
 } from "../tax_table_2025.ts";
+import { scheduleDTax } from "./preferential_tax.ts";
 
 function compute(input: Record<string, unknown>) {
   return income_tax_calculation.compute(
@@ -527,7 +532,7 @@ Deno.test("Form 2555 Schedule D special-rate route remains closed until its sepa
   assertThrows(
     () =>
       compute({
-        taxable_income: 40_000,
+        taxable_income: 4_000,
         filing_status: FilingStatus.Single,
         foreign_earned_income_exclusion: 20_000,
         foreign_exclusion_disallowed_deductions: 0,
@@ -536,6 +541,32 @@ Deno.test("Form 2555 Schedule D special-rate route remains closed until its sepa
       }),
     Error,
     "Schedule D refigure",
+  );
+});
+
+Deno.test("Form 2555 Schedule D special-rate tax uses the stacked worksheet when there is no capital gain excess", () => {
+  const result = compute({
+    taxable_income: 200_000,
+    filing_status: FilingStatus.Single,
+    foreign_earned_income_exclusion: 20_000,
+    foreign_exclusion_disallowed_deductions: 0,
+    net_capital_gain: 5_000,
+    unrecaptured_1250_gain: 2_000,
+  });
+  assertEquals(
+    f1040Fields(result)?.line16_income_tax,
+    Math.max(
+      0,
+      scheduleDTax({
+        taxableIncome: 220_000,
+        qualifiedDividends: 0,
+        netCapitalGain: 5_000,
+        filingStatus: FilingStatus.Single,
+        zeroCeiling: QDCGT_ZERO_CEILING_2025,
+        twentyFloor: QDCGT_TWENTY_FLOOR_2025,
+        unrecaptured1250Gain: 2_000,
+      }) - ordinaryTax2025(20_000, FilingStatus.Single),
+    ),
   );
 });
 

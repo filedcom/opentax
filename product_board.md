@@ -1505,9 +1505,12 @@ Foreign Earned Income Tax Worksheet's qualified-dividend route with its
 regular-tax capital-gain-excess adjustment, and Form 6251 Part III's separate
 AMT capital-gain-excess adjustment. Both retain the independently refigured
 regular-tax amounts for Form 6251 lines 20 and 27. These cases are written but
-unrun. Form 2555 combined with Schedule D special-rate gain or a Form 4952
-election still stops pending its distinct Schedule D refigure; broader AMT-basis
-gain differences and IRS business-rule verification also remain open.
+unrun. Form 2555 combined with Schedule D special-rate gain now uses the
+stacked Schedule D and AMT Part III worksheets when neither regular nor AMT
+capital-gain excess exists. A special-rate return with capital-gain excess,
+or an AMT Form 4952 election, still stops pending the distinct Schedule D
+refigure; broader AMT-basis gain differences and IRS business-rule verification
+also remain open.
 
 Build-pass addendum for GAP-1116 (unrun): unsupported section 951A, foreign
 branch, treaty-resourced, and section 901(j) categories now stop before any
@@ -1519,10 +1522,14 @@ Form 1040 lines 11b minus 14 before its line 15 zero floor, adds only Schedule
 1116 line 20 is checked against Form 1040 line 16 plus Schedule 2 line 1z.
 Nonzero line 1z currently fails closed because its source route would cycle
 through the AMT computation. The senior amount is excluded from line 3b
-apportionment, but Schedule 1-A qualified vehicle-loan interest still needs its
-separate line 4b treatment. Preferential-gain line 18 adjustments, AMT Form 1116
-sourcing, category-specific calculations, visual PDF review, full-batch
-validation, and IRS business rules remain open.
+apportionment. Schedule 1-A qualified vehicle-loan interest now uses a
+documented beginning/end tax-book asset inventory to allocate its line 4b
+foreign share by category and country; the same amount reduces line 7 and
+appears in native MeF line 4b. Missing inventory, mixed-source asset
+characterization, and the separate small-foreign-income election remain open.
+Preferential-gain line 18 adjustments, AMT Form 1116 sourcing,
+category-specific calculations, visual PDF review, full-batch validation, and
+IRS business rules remain open.
 
 Build-pass addendum for GAP-8814 (unrun): the 2025 parent Form 1040 PDF now
 marks the child dividend and direct child capital-gain boxes, while Schedule D

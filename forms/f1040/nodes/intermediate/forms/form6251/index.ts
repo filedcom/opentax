@@ -404,16 +404,9 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
     const foreignExclusion = input.foreign_earned_income_exclusion ?? 0;
     const hasPreferentialIncome = qualDiv > 0 || netCg > 0;
     const hasForeignWorksheet = foreignExclusion > 0 && taxableExcess > 0;
-    if (
-      hasForeignWorksheet && hasPreferentialIncome &&
-      ((input.form4952_amt_election ?? 0) > 0 ||
-        (input.unrecaptured_1250_gain ?? 0) > 0 ||
-        (input.rate_28_gain ?? 0) > 0)
-    ) {
-      throw new Error(
-        "Form 6251 with Form 2555 and Schedule D special-rate gain needs the Part III Schedule D refigure",
-      );
-    }
+    const hasSpecialRateGain = netCg > 0 &&
+      ((input.unrecaptured_1250_gain ?? 0) > 0 ||
+        (input.rate_28_gain ?? 0) > 0);
     if (
       taxableExcess > 0 && (qualDiv > 0 || netCg > 0) &&
       input.regular_taxable_income === undefined
@@ -452,11 +445,30 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
       0,
       qualDiv - Math.max(0, amtCapitalGainExcess - netCg),
     );
-    const partThree = taxableExcess > 0 && hasPreferentialIncome
-      ? computePartThree(
-        taxableExcess + (hasForeignWorksheet ? foreignLine2c : 0),
-        hasForeignWorksheet
-          ? {
+    if (
+      hasForeignWorksheet && hasPreferentialIncome &&
+      ((input.form4952_amt_election ?? 0) > 0 ||
+        (hasSpecialRateGain &&
+          (regularCapitalGainExcess > 0 || amtCapitalGainExcess > 0)))
+    ) {
+      throw new Error(
+        "Form 6251 with Form 2555 and Schedule D special-rate gain needs the Part III Schedule D refigure",
+      );
+    }
+    const partThreeWorksheet = taxableExcess > 0 && hasPreferentialIncome
+      ? hasForeignWorksheet
+        ? hasSpecialRateGain
+          ? partThreeWorksheetInputs(
+            input.regular_taxable_income! + foreignLine2c,
+            qualDiv,
+            netCg,
+            input.unrecaptured_1250_gain ?? 0,
+            input.rate_28_gain ?? 0,
+            input.filing_status,
+            0,
+            0,
+          )
+          : {
             ...partThreeWorksheetInputs(
               input.regular_taxable_income! + foreignLine2c,
               regularAdjustedQualDiv,
@@ -470,16 +482,21 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
             line13: amtAdjustedQualDiv + amtAdjustedNetCg,
             line15: amtAdjustedQualDiv + amtAdjustedNetCg,
           }
-          : partThreeWorksheetInputs(
-            input.regular_taxable_income!,
-            qualDiv,
-            netCg,
-            input.unrecaptured_1250_gain ?? 0,
-            input.rate_28_gain ?? 0,
-            input.filing_status,
-            input.form4952_amt_election ?? 0,
-            input.form4952_amt_elected_capital_gain ?? 0,
-          ),
+        : partThreeWorksheetInputs(
+          input.regular_taxable_income!,
+          qualDiv,
+          netCg,
+          input.unrecaptured_1250_gain ?? 0,
+          input.rate_28_gain ?? 0,
+          input.filing_status,
+          input.form4952_amt_election ?? 0,
+          input.form4952_amt_elected_capital_gain ?? 0,
+        )
+      : undefined;
+    const partThree = partThreeWorksheet
+      ? computePartThree(
+        taxableExcess + (hasForeignWorksheet ? foreignLine2c : 0),
+        partThreeWorksheet,
         input.filing_status,
         cfg.qdcgtZeroCeiling,
         cfg.qdcgtTwentyFloor,

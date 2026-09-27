@@ -17,6 +17,12 @@ Deno.test("form1116: no foreign tax items produces no output", () => {
     form1116.compute(ctx, { worldwide_taxable_income: 50_000 }).outputs,
     [],
   );
+  assertEquals(
+    form1116.compute(ctx, {
+      qualified_vehicle_loan_interest_deduction: 500,
+    }).outputs,
+    [],
+  );
 });
 
 Deno.test("form1116: missing return limitation inputs fail closed", () => {
@@ -58,6 +64,71 @@ Deno.test("form1116: line 18 adds back only Schedule 1-A senior deduction", () =
   assertEquals(
     fieldsOf(result.outputs, schedule3)?.line1_foreign_tax_credit,
     870,
+  );
+});
+
+Deno.test("form1116: documented all-asset method puts vehicle interest on line 4b", () => {
+  const result = form1116.compute(ctx, {
+    foreign_tax_items: [{
+      foreign_tax_paid: 3_000,
+      foreign_gross_income: 20_000,
+      income_category: IncomeCategory.Passive,
+      irs_country_code: "CA",
+    }],
+    qualified_vehicle_loan_interest_deduction: 2_000,
+    vehicle_interest_asset_method: {
+      all_assets_included_verified: true,
+      assets: [
+        {
+          asset_id: "US-stock",
+          source_document_reference: "2025 broker tax-basis statement US",
+          beginning_tax_book_value: 40_000,
+          ending_tax_book_value: 40_000,
+          income_source: "us",
+        },
+        {
+          asset_id: "CA-stock",
+          source_document_reference: "2025 broker tax-basis statement CA",
+          beginning_tax_book_value: 60_000,
+          ending_tax_book_value: 60_000,
+          income_source: "foreign",
+          income_category: IncomeCategory.Passive,
+          irs_country_code: "CA",
+        },
+      ],
+    },
+    worldwide_taxable_income: 50_000,
+    us_tax_before_credits: 5_000,
+  });
+  const summary = result.outputs.find((item) => item.nodeType === "form_1116")
+    ?.fields.category_summaries as Array<Record<string, unknown>>;
+  assertEquals(summary[0].vehicleInterestByCountry, [{
+    irsCountryCode: "CA",
+    amount: 1_200,
+  }]);
+  assertEquals(summary[0].foreignTaxableIncome, 18_800);
+  assertEquals(
+    fieldsOf(result.outputs, schedule3)?.line1_foreign_tax_credit,
+    1_880,
+  );
+});
+
+Deno.test("form1116: vehicle-interest claim without complete asset facts fails closed", () => {
+  assertThrows(
+    () =>
+      form1116.compute(ctx, {
+        foreign_tax_items: [{
+          foreign_tax_paid: 3_000,
+          foreign_gross_income: 20_000,
+          income_category: IncomeCategory.Passive,
+          irs_country_code: "CA",
+        }],
+        qualified_vehicle_loan_interest_deduction: 2_000,
+        worldwide_taxable_income: 50_000,
+        us_tax_before_credits: 5_000,
+      }),
+    Error,
+    "complete documented asset-method inventory",
   );
 });
 

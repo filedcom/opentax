@@ -46,11 +46,29 @@ export const foreignTaxItemSchema = z.object({
   tax_reported_on_1099: z.boolean().optional(),
 });
 
+const vehicleInterestAssetSchema = z.object({
+  asset_id: z.string().trim().min(1),
+  source_document_reference: z.string().trim().min(1),
+  beginning_tax_book_value: z.number().finite().nonnegative(),
+  ending_tax_book_value: z.number().finite().nonnegative(),
+  income_source: z.enum(["us", "foreign"]),
+  income_category: z.nativeEnum(IncomeCategory).optional(),
+  irs_country_code: z.string().length(2).optional(),
+});
+
+const vehicleInterestAssetMethodSchema = z.object({
+  all_assets_included_verified: z.literal(true),
+  assets: z.array(vehicleInterestAssetSchema).min(1),
+});
+
 export const inputSchema = z.object({
   foreign_tax_items: z.array(foreignTaxItemSchema).optional(),
   // Signed Form 1040 lines 11b minus 14, before the line 15 zero floor.
   worldwide_taxable_income: z.number().optional(),
   enhanced_senior_deduction: z.number().nonnegative().optional(),
+  qualified_vehicle_loan_interest_deduction: z.number().nonnegative()
+    .optional(),
+  vehicle_interest_asset_method: vehicleInterestAssetMethodSchema.optional(),
   worldwide_gross_income: z.number().nonnegative().optional(),
   general_deductions: z.number().nonnegative().optional(),
   standard_or_itemized_deduction: z.number().nonnegative().optional(),
@@ -74,6 +92,10 @@ export const categorySummarySchema = z.object({
   directlyAllocableDeductions: z.number().nonnegative(),
   explicitlyApportionedDeductions: z.number().nonnegative(),
   automaticallyApportionedDeductions: z.number().nonnegative(),
+  vehicleInterestByCountry: z.array(z.object({
+    irsCountryCode: z.string().length(2),
+    amount: z.number().nonnegative(),
+  })).optional(),
   foreignTaxableIncome: z.number(),
   allowedCredit: z.number().nonnegative(),
 });
@@ -84,6 +106,7 @@ function categoryTotals(
   items: ForeignTaxItem[],
   worldwideGrossIncome: number,
   generalDeductions: number,
+  vehicleInterestAllocations: Map<string, number>,
 ): Omit<CategorySummary, "allowedCredit">[] {
   const categories = [...new Set(items.map((item) => item.income_category))];
   return categories.map((category) => {
@@ -128,8 +151,19 @@ function categoryTotals(
         0,
       )
       : 0;
+    const vehicleInterestByCountry = [...vehicleInterestAllocations]
+      .filter(([key]) => key.startsWith(`${category}|`))
+      .map(([key, amount]) => ({
+        irsCountryCode: key.split("|")[1],
+        amount,
+      }));
+    const vehicleInterestDeduction = vehicleInterestByCountry.reduce(
+      (sum, row) => sum + row.amount,
+      0,
+    );
     const foreignTaxableIncome = includedForeignIncome -
-      directlyAllocableDeductions - explicitApportioned - automaticApportioned;
+      directlyAllocableDeductions - explicitApportioned - automaticApportioned -
+      vehicleInterestDeduction;
     return {
       category,
       items: matching,
@@ -139,9 +173,65 @@ function categoryTotals(
       directlyAllocableDeductions,
       explicitlyApportionedDeductions: explicitApportioned,
       automaticallyApportionedDeductions: automaticApportioned,
+      vehicleInterestByCountry,
       foreignTaxableIncome,
     };
   });
+}
+
+function allocateVehicleInterest(
+  input: Form1116Input,
+): Map<string, number> {
+  const interest = input.qualified_vehicle_loan_interest_deduction ?? 0;
+  if (interest === 0) return new Map();
+  const source = input.vehicle_interest_asset_method;
+  if (!source) {
+    throw new Error(
+      "Form 1116 vehicle-loan interest needs a complete documented asset-method inventory for line 4b",
+    );
+  }
+  const ids = new Set<string>();
+  const eligibleCountries = new Set((input.foreign_tax_items ?? []).map(
+    (item) => `${item.income_category}|${item.irs_country_code ?? ""}`,
+  ));
+  const allocations = new Map<string, number>();
+  let worldwideAssetValue = 0;
+  for (const asset of source.assets) {
+    if (ids.has(asset.asset_id)) {
+      throw new Error(
+        "Form 1116 vehicle-interest asset inventory has a duplicate asset",
+      );
+    }
+    ids.add(asset.asset_id);
+    const averageValue = (asset.beginning_tax_book_value +
+      asset.ending_tax_book_value) / 2;
+    worldwideAssetValue += averageValue;
+    if (asset.income_source === "us") {
+      if (asset.income_category || asset.irs_country_code) {
+        throw new Error(
+          "Form 1116 U.S. asset cannot carry a foreign category or country",
+        );
+      }
+      continue;
+    }
+    if (!asset.income_category || !asset.irs_country_code) {
+      throw new Error("Form 1116 foreign asset needs its category and country");
+    }
+    const key = `${asset.income_category}|${asset.irs_country_code}`;
+    if (!eligibleCountries.has(key)) {
+      throw new Error(
+        "Form 1116 vehicle-interest asset category and country must match a foreign-tax source",
+      );
+    }
+    allocations.set(key, (allocations.get(key) ?? 0) + averageValue);
+  }
+  if (worldwideAssetValue <= 0) {
+    throw new Error("Form 1116 vehicle-interest asset inventory has no value");
+  }
+  return new Map([...allocations].map(([key, value]) => [
+    key,
+    interest * value / worldwideAssetValue,
+  ]));
 }
 
 function fraction(
@@ -197,10 +287,15 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
         );
       }
     }
+    if ((input.foreign_tax_items?.length ?? 0) === 0) {
+      return { outputs: [] };
+    }
+    const vehicleInterestAllocations = allocateVehicleInterest(input);
     const totals = categoryTotals(
       input.foreign_tax_items ?? [],
       input.worldwide_gross_income ?? 0,
       input.general_deductions ?? 0,
+      vehicleInterestAllocations,
     );
     if (totals.length === 0) return { outputs: [] };
     if (

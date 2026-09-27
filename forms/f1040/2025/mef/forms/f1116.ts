@@ -50,6 +50,7 @@ function sourceXml(
   generalDeductions: number,
   standardOrItemizedDeduction: number,
   otherDeductions: number,
+  vehicleInterestAmount: number,
   directExpenseStatementId?: string,
   otherDeductionsStatementId?: string,
 ): string {
@@ -107,7 +108,7 @@ function sourceXml(
     : 0;
   const deductions = items.reduce(
     (sum, item) => sum + (item.apportioned_deductions ?? 0),
-    allocatedGeneralDeduction + directExpenses,
+    allocatedGeneralDeduction + directExpenses + vehicleInterestAmount,
   );
   return elements("ForeignTaxCreditSource", [
     element("ForeignCountryCd", first.irs_country_code),
@@ -152,6 +153,9 @@ function sourceXml(
       : "",
     generalDeductions > 0
       ? element("ProRataDeductionsNotRelatedAmt", allocatedGeneralDeduction)
+      : "",
+    vehicleInterestAmount > 0
+      ? element("ApportionedOtherInterestExpAmt", vehicleInterestAmount)
       : "",
     deductions > 0 ? element("ForeignIncNetDeductAndLossAmt", deductions) : "",
     first.tax_reported_on_1099
@@ -243,7 +247,11 @@ function categoryXml(
   }
   const deductions = summary.directlyAllocableDeductions +
     summary.explicitlyApportionedDeductions +
-    summary.automaticallyApportionedDeductions;
+    summary.automaticallyApportionedDeductions +
+    (summary.vehicleInterestByCountry ?? []).reduce(
+      (sum, item) => sum + item.amount,
+      0,
+    );
   const line19 = ratio(summary.foreignTaxableIncome, worldwideTaxableIncome);
   const line21 = Math.round(usTax * Number(line19));
   const line24 = Math.min(Math.round(summary.foreignTaxPaid), line21);
@@ -254,19 +262,29 @@ function categoryXml(
   }
   return elements("IRS1116", [
     element(categoryTag, "X"),
-    ...sourceGroups(summary).map((items) =>
-      sourceXml(
+    ...sourceGroups(summary).map((items, groupIndex, groups) => {
+      const country = items[0].irs_country_code;
+      const firstGroupForCountry = groups.findIndex((group) =>
+        group[0].irs_country_code === country
+      ) === groupIndex;
+      const vehicleInterestAmount = firstGroupForCountry
+        ? summary.vehicleInterestByCountry?.find((row) =>
+          row.irsCountryCode === country
+        )?.amount ?? 0
+        : 0;
+      return sourceXml(
         items,
         worldwideGrossIncome,
         generalDeductions,
         standardOrItemizedDeduction,
         otherDeductions,
+        vehicleInterestAmount,
         items.some((item) => (item.directly_allocable_deductions ?? 0) > 0)
           ? nextDirectExpenseStatementId()
           : undefined,
         otherDeductionsStatementId,
-      )
-    ),
+      );
+    }),
     element("TotalForeignGrossIncomeAmt", summary.includedForeignIncome),
     deductions > 0 ? element("TotalDeductionOrLossAmt", deductions) : "",
     element("NetForeignTaxableIncomeLossAmt", summary.foreignTaxableIncome),
