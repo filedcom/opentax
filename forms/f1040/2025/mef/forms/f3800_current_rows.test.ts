@@ -153,6 +153,45 @@ Deno.test("Form 3800 current-year rows keep gross credit separate from a transfe
   );
 });
 
+Deno.test("Form 3800 current-year rows reconcile cent-precision Form 8826 with whole-dollar passive credit", () => {
+  const [row] = combineForm3800CurrentCreditAmounts(
+    [{
+      line: "1e",
+      grossCredit: 1_250.25,
+      transferOutCredit: 0,
+      appliedCredit: 1_000.10,
+    }],
+    [{
+      line: "1e",
+      beforePassiveLimit: 150,
+      afterPassiveLimit: 100,
+      appliedCredit: 50,
+    }],
+  );
+  assertEquals(row, {
+    line: "1e",
+    nonpassiveCredit: 1_250.25,
+    transferOutCredit: 0,
+    passiveBeforeLimit: 150,
+    passiveAfterLimit: 100,
+    totalCredit: 1_350.25,
+    appliedCredit: 1_050.10,
+  });
+  const xml = buildForm3800CurrentCreditRowXml(row, { sourceCount: 2 });
+  assertStringIncludes(
+    xml,
+    "<GeneralBusCrFromNnPssvActyAmt>1250</GeneralBusCrFromNnPssvActyAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalGeneralBusCreditsAmt>1350</TotalGeneralBusCreditsAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalGeneralBusCreditsAppTxAmt>1050</TotalGeneralBusCreditsAppTxAmt>",
+  );
+});
+
 Deno.test("Form 3800 current-year XML keeps shared passive, nonpassive, and transfer columns on one row", () => {
   const [row] = combineForm3800CurrentCreditAmounts(
     [{

@@ -36,6 +36,20 @@ export type Form3800CurrentCreditRowMetadata = {
   readonly referenceDocumentName?: string;
 };
 
+function isCentMoney(amount: number): boolean {
+  return Number.isFinite(amount) &&
+    Number.isSafeInteger(Math.round(amount * 100)) &&
+    Math.abs(amount * 100 - Math.round(amount * 100)) < 0.000001;
+}
+
+function cents(amount: number): number {
+  return Math.round(amount * 100);
+}
+
+function dollars(amountInCents: number): number {
+  return amountInCents / 100;
+}
+
 /** Combine Part III columns (d), (e), (g), and (i) once per IRS credit line. */
 export function combineForm3800CurrentCreditAmounts(
   nonpassive: readonly Form3800CurrentNonpassiveAmount[],
@@ -51,12 +65,14 @@ export function combineForm3800CurrentCreditAmounts(
     if (
       !validLines.includes(row.line) ||
       !form3800PassiveXmlTags[row.line].current ||
-      !Number.isSafeInteger(row.grossCredit) ||
-      !Number.isSafeInteger(row.transferOutCredit) ||
-      !Number.isSafeInteger(row.appliedCredit) ||
+      !isCentMoney(row.grossCredit) ||
+      !isCentMoney(row.transferOutCredit) ||
+      !isCentMoney(row.appliedCredit) ||
       row.grossCredit < 0 || row.transferOutCredit < 0 ||
-      row.transferOutCredit > row.grossCredit || row.appliedCredit < 0 ||
-      row.appliedCredit > row.grossCredit - row.transferOutCredit ||
+      cents(row.transferOutCredit) > cents(row.grossCredit) ||
+      row.appliedCredit < 0 ||
+      cents(row.appliedCredit) >
+        cents(row.grossCredit) - cents(row.transferOutCredit) ||
       seenNonpassive.has(row.line)
     ) {
       throw new Error("Form 3800 current-year nonpassive row is invalid");
@@ -68,7 +84,9 @@ export function combineForm3800CurrentCreditAmounts(
       transferOutCredit: row.transferOutCredit,
       passiveBeforeLimit: 0,
       passiveAfterLimit: 0,
-      totalCredit: row.grossCredit - row.transferOutCredit,
+      totalCredit: dollars(
+        cents(row.grossCredit) - cents(row.transferOutCredit),
+      ),
       appliedCredit: row.appliedCredit,
     });
   }
@@ -90,12 +108,13 @@ export function combineForm3800CurrentCreditAmounts(
     const prior = byLine.get(row.line);
     const nonpassiveCredit = prior?.nonpassiveCredit ?? 0;
     const transferOutCredit = prior?.transferOutCredit ?? 0;
-    const appliedCredit = (prior?.appliedCredit ?? 0) + row.appliedCredit;
-    const totalCredit = nonpassiveCredit - transferOutCredit +
-      row.afterPassiveLimit;
+    const appliedCents = cents(prior?.appliedCredit ?? 0) +
+      cents(row.appliedCredit);
+    const totalCents = cents(nonpassiveCredit) - cents(transferOutCredit) +
+      cents(row.afterPassiveLimit);
     if (
-      !Number.isSafeInteger(totalCredit) ||
-      !Number.isSafeInteger(appliedCredit) || appliedCredit > totalCredit
+      !Number.isSafeInteger(totalCents) ||
+      !Number.isSafeInteger(appliedCents) || appliedCents > totalCents
     ) {
       throw new Error("Form 3800 current-year row totals do not reconcile");
     }
@@ -105,8 +124,8 @@ export function combineForm3800CurrentCreditAmounts(
       transferOutCredit,
       passiveBeforeLimit: row.beforePassiveLimit,
       passiveAfterLimit: row.afterPassiveLimit,
-      totalCredit,
-      appliedCredit,
+      totalCredit: dollars(totalCents),
+      appliedCredit: dollars(appliedCents),
     });
   }
   return validLines.flatMap((line) => {
@@ -129,19 +148,20 @@ export function buildForm3800CurrentCreditRowXml(
     (row.transferOutCredit > 0 && !metadata.transferRegistrationNumber) ||
     Boolean(metadata.referenceDocumentId) !==
       Boolean(metadata.referenceDocumentName) ||
-    !Number.isSafeInteger(row.nonpassiveCredit) ||
-    !Number.isSafeInteger(row.transferOutCredit) ||
+    !isCentMoney(row.nonpassiveCredit) ||
+    !isCentMoney(row.transferOutCredit) ||
     !Number.isSafeInteger(row.passiveBeforeLimit) ||
     !Number.isSafeInteger(row.passiveAfterLimit) ||
-    !Number.isSafeInteger(row.totalCredit) ||
-    !Number.isSafeInteger(row.appliedCredit) ||
+    !isCentMoney(row.totalCredit) ||
+    !isCentMoney(row.appliedCredit) ||
     row.nonpassiveCredit < 0 || row.transferOutCredit < 0 ||
-    row.transferOutCredit > row.nonpassiveCredit ||
+    cents(row.transferOutCredit) > cents(row.nonpassiveCredit) ||
     row.passiveBeforeLimit < 0 || row.passiveAfterLimit < 0 ||
     row.passiveAfterLimit > row.passiveBeforeLimit ||
-    row.totalCredit !== row.nonpassiveCredit - row.transferOutCredit +
-        row.passiveAfterLimit ||
-    row.appliedCredit < 0 || row.appliedCredit > row.totalCredit
+    cents(row.totalCredit) !== cents(row.nonpassiveCredit) -
+        cents(row.transferOutCredit) + cents(row.passiveAfterLimit) ||
+    row.appliedCredit < 0 ||
+    cents(row.appliedCredit) > cents(row.totalCredit)
   ) {
     throw new Error("Form 3800 current-year XML row does not reconcile");
   }

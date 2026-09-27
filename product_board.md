@@ -140,7 +140,9 @@ and a shared Part III serializer now keeps gross nonpassive credit, transfer-out
 passive before-limit credit, available credit, and tax use in separate columns.
 The passive rows and nontransferable Form 8820, 5884, and 8936 rows consume it;
 the mixed same-line case and local XSD case are written but unrun. The filed
-builder does not yet combine passive and nonpassive rows. Direct builder
+builder now uses that serializer for Form 8826 as well, with cent-precision
+source accounting and whole-dollar XML output; its mixed-cent case is written
+but unrun. It does not yet combine passive and nonpassive rows. Direct builder
 cases are written but unrun. The draft now indexes Part V facility allocations
 and linked source documents by entry position, so equal-valued or reused
 facility objects do not silently reuse the first allocation; that case is
