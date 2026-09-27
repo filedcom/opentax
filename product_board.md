@@ -240,9 +240,10 @@ Schedule 3 line 6a, and refuses missing or mismatched source facts. The current
 build pass also reconciles its Part II tax context against filed Form 1040,
 Schedule 3, and Form 6251 amounts; its mismatch cases are written but unrun. It
 has not passed the deferred full test batch, local XSD, or business-rule
-validation and does not cover passive credits, other business-credit sources, or
-carryovers. The current build pass also has an unrun pure bridge from finalized
-Form 1040, Schedules 2 and 3, and Form 6251 lines into the nonpassive Form 3800
+validation and does not cover every passive credit category, other
+business-credit sources, or carryovers. The current build pass also has an
+unrun pure bridge from finalized Form 1040, Schedules 2 and 3, and Form 6251
+lines into the nonpassive Form 3800
 limit. It subtracts the specific Form 3800 line 7 and 10b exclusions instead of
 letting the general business credit count against itself. The bridge is now
 wired to graph finalization for Form 8826 and Form 8835 and requires Form 6251
@@ -281,9 +282,10 @@ allocates credit pro rata in cents to each identified source before the Form
 sources. Part V retains the K-1 EIN, capped source credit, explicit
 applied-credit split, and remaining amount. Its Part III applied credit
 reconciles with Form 8835's line 1f and 4e groups and the shared Part II limit.
-The combined passive and nonpassive line 1e now rejects a current-year total
-above the IRS $5,000 limit; its case is written but unrun. Estate/trust K-1 code
-ZZ disabled-access amounts now enter the Form 3800 source graph when marked
+The combined passive and nonpassive line 1e now shares the $5,000 upstream cap;
+the filed builder still rejects a total above that limit. Those cases are
+written but unrun. Estate/trust K-1 code ZZ disabled-access amounts now enter
+the Form 3800 source graph when marked
 nonpassive, retaining separate K-1 and statement references. The input and graph
 cases are written but unrun. The filed Form 3800 XML path now reconciles direct
 estate/trust code ZZ source amounts against the entered K-1 and named statement,
@@ -297,13 +299,16 @@ allocate the Form 3800 line 1e cap among entered sources; the graph, filed
 source rows, and partial Part II use consume the same allocation. The IRS
 instructions state the line cap but do not specify this per-source allocation
 method, so it needs business-rule review. The combined passive and nonpassive
-line 1e cap still stops rather than reallocating between those categories.
-Input-to-input K-1 matching does not authenticate the K-1 or statement. The Part
-V draft now apportions whole-dollar source and applied amounts so the printed
+line 1e path now apportions the cap before either activity or tax limitation,
+but its whole-dollar passive versus cent-precision nonpassive rounding remains
+unverified. Input-to-input K-1 matching does not authenticate the K-1 or
+statement. The Part V draft now apportions whole-dollar source and applied
+amounts so the printed
 rows add back to the rounded Part III and Part II totals; its rounding case is
 written but unrun. Solo, combined, and negative cases are written but unrun.
-Estate/trust K-1 statement reconciliation, filed source attribution, and
-carryforward identity remain open. Its source graph now calculates the
+Estate/trust K-1 and statement values are reconciled as entered, but document
+authenticity, broader filed source attribution, and carryforward identity
+remain open. Its source graph now calculates the
 nonpassive limit, and the XML document bundle is linked but unverified. Schedule
 3 line 6a now requires and references the Form 3800 document in the linked MeF
 bundle. The

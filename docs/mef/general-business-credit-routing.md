@@ -61,25 +61,32 @@ paper Form 8820 PDF builder. Partnership K-1 box 15 code Z and S-corporation
 K-1 box 13 code Z amounts, plus estate/trust K-1 box 13 code M orphan-drug
 amounts, now reconcile to the claimed pass-through credit during MeF
 export, with written but unrun cases. This compares entered source facts;
-actual K-1 documents, automatic K-1 credit
-routing, passive credits, filled-PDF output, and IRS business rules remain open.
+actual K-1 documents, automatically derived passive activity tax facts,
+filled-PDF output, and IRS business rules remain open.
 
-`f8826` now forwards its line 8 source amount to `f3800` as a separate line 1e
-entry. A positive nonpassive credit is limited at final Form 1040 assembly; a
-passive credit stops for Form 8582-CR. The older `f3800s.disabled_access_credit`
-input still deposits a gross amount and is not a source-backed Form 8826 claim.
+`f8826` now forwards gross source amounts through the shared disabled-access
+cap before Form 8582-CR and `f3800`. A positive nonpassive credit is limited at
+final Form 1040 assembly; a passive credit requires public Form 8582-CR activity
+and tax facts. The older `f3800s.disabled_access_credit` input still deposits a
+gross amount and is not a source-backed Form 8826 claim.
 Identified partnership and S-corporation line 7 credits now combine with
 self-earned line 6 under one $5,000 cap. A pass-through-only credit can appear
 on Form 3800 without a Form 8826 document; the source amounts are allocated pro
-rata in cents when that cap binds. K-1 attachment reconciliation and filed
-source-attribution checks remain open. The registered Form 3800 XML path now
-emits Part V rows for multiple Form 8826 sources, retaining their EINs, capped
+rata in cents when that cap binds. K-1 amounts and references are reconciled as
+entered; document authenticity and broader filed source attribution remain
+open. The registered Form 3800 XML path now emits Part V rows for multiple Form
+8826 sources, retaining their EINs, capped
 amounts, explicit applied-credit split, and remaining amounts. This path has not
 passed the deferred full test batch, local XSD, or IRS business rules. The
 legacy gross-credit path remains unsupported. The self-earned Form 8826 XML is
 registered, while pass-through-only recipients do not attach their own
 Form 8826. Schedule 3 line 6a now requires a linked Form 3800 document before
-export.
+export. Mixed passive and nonpassive source amounts now share one upstream
+$5,000 cap. Self-earned passive credit and Form 8826 line 7 passive
+pass-through credit retain separate source markers, reconciled to Form 8582-CR
+activity rows and the filed Form 8826/K-1 inputs. The graph, MeF, and local XSD
+cases are written but unrun; the cap's per-source rounding remains under
+business-rule review.
 
 `f5884` now sends its identified self-earned and pass-through line 4b source
 credit through the nonpassive Form 3800 tax limit. Pass-through-only recipients
@@ -119,9 +126,9 @@ source cases and the stop are written but unrun in the current build pass.
    Form 1040, transfer statements, and any carryforward. Then run full-batch
    tests, local XSD, business rules, and ATS acceptance as separate gates.
 
-The current Form 8826/8835/Form 3800 path covers only a nonpassive slice of
-steps 1, 3, 4, and 5. Its native document is registered but unverified in the
-deferred full test batch and is not ATS accepted.
+The current Form 8826/8835/Form 3800 path covers named nonpassive and passive
+slices of steps 1, 3, 4, and 5. Its native document is registered but unverified
+in the deferred full test batch and is not ATS accepted.
 
 Form 8912's routing is confirmed by
 [Form 8912 line 12](https://www.irs.gov/pub/irs-pdf/f8912.pdf) and its
