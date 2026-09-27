@@ -13,7 +13,7 @@ function fieldPath(p: number, n: number): string {
   let line = "";
   let column = "";
   if (
-    p === 1 && n <= 8 || p === 2 && n === 41 ||
+    p === 1 && n <= 8 || p === 2 && (n === 41 || n === 56) ||
     p === 4 && (n === 17 || n === 39 || n === 40)
   ) {
     return `${page(p)}.f${p}_${n}[0]`;
@@ -55,6 +55,14 @@ function fieldPath(p: number, n: number): string {
       column = n >= 44 && n <= 45 || n >= 51 && n <= 52
         ? "ColD"
         : n >= 46 && n <= 47 || n >= 53 && n <= 54
+        ? "ColE"
+        : "";
+    } else if (n >= 57 && n <= 72) {
+      table = "Line7Table";
+      line = n <= 58 ? "Line7a" : n <= 65 ? "Line7b" : "Line7c";
+      column = n >= 61 && n <= 62 || n >= 68 && n <= 69
+        ? "ColD"
+        : n >= 63 && n <= 64 || n >= 70 && n <= 71
         ? "ColE"
         : "";
     }
@@ -157,6 +165,14 @@ const fields: PdfFieldEntry[] = [
   text("line6b_quantity", 2, 50),
   ...money("line6b_cost", 2, 51),
   ...money("line6b_credit", 2, 53),
+  text("line7_registration_number", 2, 56),
+  text("line7a_quantity", 2, 58),
+  text("line7b_quantity", 2, 60),
+  ...money("line7_cost", 2, 61),
+  ...money("line7_credit", 2, 63),
+  text("line7c_quantity", 2, 67),
+  ...money("line7c_cost", 2, 68),
+  ...money("line7c_credit", 2, 70),
   ...line11.flatMap((line, index) => {
     const base = 29 + index * 8;
     return [

@@ -108,7 +108,9 @@ Deno.test("Form 4136: registered vendor government diesel sales reconcile to lin
       buyer_ein: "123456789",
       gallons: 150,
       certificate_p_record_reference: "Certificate P-2025-1",
+      certificate_p_unexpired_at_claim_confirmed: true as const,
       certificate_information_believed_true: true as const,
+      state_credit_card_not_used_confirmed: true as const,
       exclusive_government_use_confirmed: true as const,
     }],
   };
@@ -135,6 +137,20 @@ Deno.test("Form 4136: registered vendor government diesel sales reconcile to lin
         government_sales: [{
           ...claim.government_sales[0],
           certificate_p_record_reference: " ",
+        }],
+      },
+      {
+        ...claim,
+        government_sales: [{
+          ...claim.government_sales[0],
+          certificate_p_unexpired_at_claim_confirmed: undefined,
+        }],
+      },
+      {
+        ...claim,
+        government_sales: [{
+          ...claim.government_sales[0],
+          state_credit_card_not_used_confirmed: undefined,
         }],
       },
       {
@@ -366,6 +382,143 @@ Deno.test("Form 4136: registered vendor line 6b reconciles bus sales and Model W
         }],
       }],
     }).success,
+    false,
+  );
+});
+
+Deno.test("Form 4136: registered kerosene vendors use distinct line 7 source routes", () => {
+  const vendorBusiness = {
+    qualifying_business_activity: true,
+    business_name: "Example Kerosene Vendor",
+    principal_activity_code: "457100",
+    equipment_make: "Example",
+    equipment_model: "Pump",
+    equipment_type: "kerosene dispenser",
+    sales_records_confirmed: true,
+    no_duplicate_excise_claim: true,
+  } as const;
+  const base = {
+    unit: "gallons" as const,
+    qualified_quantity: 100,
+    actual_fuel_cost: 300,
+    undyed_fuel_confirmed: true as const,
+    vendor_tax_settlement: "tax_excluded_price" as const,
+  };
+  const government = {
+    ...base,
+    line: "7a" as const,
+    vendor_registration_number: "UV123456789",
+    government_sales: [{
+      sale_date: "2025-06-12",
+      buyer_name: "Example City",
+      buyer_ein: "123456789",
+      gallons: 100,
+      certificate_p_record_reference: "Certificate P-2025-7",
+      certificate_p_unexpired_at_claim_confirmed: true as const,
+      certificate_information_believed_true: true as const,
+      state_credit_card_not_used_confirmed: true as const,
+      exclusive_government_use_confirmed: true as const,
+    }],
+  };
+  const smallSale = {
+    sale_date: "2025-06-13",
+    gallons: 4,
+    pump_location_reference: "Pump UP-1",
+    fixed_location_confirmed: true as const,
+    nontaxable_use_notice_confirmed: true as const,
+    pump_access_method: "cannot_fuel_highway_vehicle_or_train" as const,
+    buyer_nontaxable_use_confirmed: true as const,
+    no_reason_to_doubt_nontaxable_use_confirmed: true as const,
+  };
+  const blockedPump = {
+    ...base,
+    line: "7b" as const,
+    vendor_registration_number: "UP123456789",
+    blocked_pump_sales: [smallSale, {
+      ...smallSale,
+      sale_date: "2025-06-14",
+      buyer_name: "Example Home Heating",
+      buyer_address: "10 Main Street, Wilmington, DE 19801",
+      gallons: 96,
+      pump_access_method:
+        "locked_after_each_sale_and_unlocked_only_on_request" as const,
+    }],
+  };
+  const bus = {
+    ...base,
+    line: "7c" as const,
+    vendor_registration_number: "UB123456789",
+    intercity_local_bus_sales: [{
+      sale_date: "2025-07-15",
+      buyer_name: "Example Bus Operator",
+      buyer_address: "10 Transit Lane, Wilmington, DE 19801",
+      gallons: 100,
+      certain_intercity_or_local_bus_use_confirmed: true as const,
+      waiver_n: {
+        kind: "account_period" as const,
+        record_reference: "Waiver N-007",
+        account_or_order_number: "BUS-2025",
+        effective_date: "2025-07-01",
+        expiration_date: "2026-06-30",
+        signed_by_buyer_confirmed: true as const,
+        held_unexpired_when_claimed_confirmed: true as const,
+      },
+    }],
+  };
+  for (
+    const [claim, credit] of [
+      [government, 24.3],
+      [blockedPump, 24.3],
+      [bus, 17],
+    ] as const
+  ) {
+    assertEquals(
+      parseInput({ business: vendorBusiness, claims: [claim] }).success,
+      true,
+    );
+    assertEquals(
+      compute({ business: vendorBusiness, claims: [claim] }).outputs[0].fields
+        .line12_fuel_tax_credit,
+      credit,
+    );
+  }
+  for (
+    const invalid of [
+      { ...government, vendor_registration_number: "UP123456789" },
+      {
+        ...government,
+        government_sales: [{
+          ...government.government_sales[0],
+          state_credit_card_not_used_confirmed: undefined,
+        }],
+      },
+      { ...blockedPump, vendor_registration_number: "UV123456789" },
+      {
+        ...blockedPump,
+        blocked_pump_sales: [smallSale, {
+          ...blockedPump.blocked_pump_sales[1],
+          buyer_address: undefined,
+        }],
+      },
+      {
+        ...blockedPump,
+        blocked_pump_sales: [{
+          ...smallSale,
+          nontaxable_use_notice_confirmed: undefined,
+        }, blockedPump.blocked_pump_sales[1]],
+      },
+      { ...bus, vendor_registration_number: "UP123456789" },
+      { ...bus, intercity_local_bus_sales: undefined },
+    ]
+  ) {
+    assertEquals(
+      parseInput({ business: vendorBusiness, claims: [invalid] }).success,
+      false,
+    );
+  }
+  assertEquals(
+    parseInput({ business: vendorBusiness, claims: [government, blockedPump] })
+      .success,
     false,
   );
 });

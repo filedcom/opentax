@@ -46,6 +46,26 @@ Deno.test("Schedule A (Form 4136) has exact 2025 page and widget paths", () => {
     "topmostSubform[0].Page2[0].Line6Table[0].Line6b[0].ColE[0].f2_53[0]",
   );
   assertEquals(
+    names.line7_registration_number,
+    "topmostSubform[0].Page2[0].f2_56[0]",
+  );
+  assertEquals(
+    names.line7a_quantity,
+    "topmostSubform[0].Page2[0].Line7Table[0].Line7a[0].f2_58[0]",
+  );
+  assertEquals(
+    names.line7b_quantity,
+    "topmostSubform[0].Page2[0].Line7Table[0].Line7b[0].f2_60[0]",
+  );
+  assertEquals(
+    names.line7_credit_dollars,
+    "topmostSubform[0].Page2[0].Line7Table[0].Line7b[0].ColE[0].f2_63[0]",
+  );
+  assertEquals(
+    names.line7c_credit_dollars,
+    "topmostSubform[0].Page2[0].Line7Table[0].Line7c[0].ColE[0].f2_70[0]",
+  );
+  assertEquals(
     names.line11h_quantity,
     "topmostSubform[0].Page3[0].Line11Table[0].Line11h[0].f3_87[0]",
   );
@@ -78,6 +98,62 @@ Deno.test("Schedule A (Form 4136) has exact 2025 page and widget paths", () => {
     "topmostSubform[0].Page4[0].Line16Table[0].Line16b[0].f4_33[0]",
   );
   assertEquals(names.line17_total_cents, "topmostSubform[0].Page4[0].f4_40[0]");
+});
+
+Deno.test("Schedule A (Form 4136) keeps blocked-pump line 7b on its activity", () => {
+  const projected = form4136ScheduleAPdf.projectFields?.({
+    claimant_context: "business",
+    business: {
+      qualifying_business_activity: true,
+      business_name: "Example Kerosene Vendor",
+      principal_activity_code: "457100",
+      equipment_make: "Example",
+      equipment_model: "Pump",
+      equipment_type: "kerosene dispenser",
+      sales_records_confirmed: true,
+      no_duplicate_excise_claim: true,
+    },
+    claims: [{
+      line: "7b",
+      unit: "gallons",
+      qualified_quantity: 100,
+      actual_fuel_cost: 300,
+      undyed_fuel_confirmed: true,
+      vendor_registration_number: "UP123456789",
+      vendor_tax_settlement: "tax_excluded_price",
+      blocked_pump_sales: [{
+        sale_date: "2025-06-13",
+        buyer_name: "Example Home Heating",
+        buyer_address: "10 Main Street, Wilmington, DE 19801",
+        gallons: 100,
+        pump_location_reference: "Pump UP-1",
+        fixed_location_confirmed: true,
+        nontaxable_use_notice_confirmed: true,
+        pump_access_method:
+          "locked_after_each_sale_and_unlocked_only_on_request",
+        buyer_nontaxable_use_confirmed: true,
+        no_reason_to_doubt_nontaxable_use_confirmed: true,
+      }],
+    }],
+    additional_activities: [{
+      business,
+      claims: [{
+        line: "1a",
+        unit: "gallons",
+        qualified_quantity: 100,
+        actual_fuel_cost: 300,
+        not_highway_vehicle: true,
+        not_noncommercial_motorboat: true,
+      }],
+    }],
+    primary_activity_has_most_credit: true,
+  }, {});
+  const instances = form4136ScheduleAPdf.instances?.(projected ?? {}) ?? [];
+  assertEquals(instances.length, 2);
+  assertEquals(instances[0].line7_registration_number, "UP123456789");
+  assertEquals(instances[0].line7b_quantity, 100);
+  assertEquals(instances[0].line7_credit_dollars, "24");
+  assertEquals(instances[1].line7b_quantity, undefined);
 });
 
 Deno.test("Schedule A (Form 4136) keeps vendor bus line 6b on its activity", () => {
@@ -246,7 +322,9 @@ Deno.test("Schedule A (Form 4136) preserves vendor line 6a on its activity", () 
         buyer_ein: "123456789",
         gallons: 150,
         certificate_p_record_reference: "Certificate P-2025-1",
+        certificate_p_unexpired_at_claim_confirmed: true,
         certificate_information_believed_true: true,
+        state_credit_card_not_used_confirmed: true,
         exclusive_government_use_confirmed: true,
       }],
     }],

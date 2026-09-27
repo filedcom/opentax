@@ -13,6 +13,7 @@ import { form3800 } from "./f3800.ts";
 import { form4137 } from "./f4137.ts";
 import { form4136 } from "./f4136.ts";
 import { form4136DieselGovernmentSalesStatement } from "./f4136_diesel_government_sales_statement.ts";
+import { form4136KeroseneGovernmentSalesStatement } from "./f4136_kerosene_government_sales_statement.ts";
 import { form4136EmulsionBlendingStatement } from "./f4136_emulsion_blending_statement.ts";
 import { form4562 } from "./f4562.ts";
 import { form461 } from "./f461.ts";
@@ -236,6 +237,7 @@ export const ALL_MEF_FORMS = [
   form1116DirectExpenseStatement,
   form4136EmulsionBlendingStatement,
   form4136DieselGovernmentSalesStatement,
+  form4136KeroseneGovernmentSalesStatement,
   // Form 5695 supporting document follows W-2 in ReturnData1040.xsd.
   jointOccupancyStatement,
   // Form 8283 vehicle acknowledgment follows numbered forms and other

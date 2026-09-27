@@ -247,7 +247,9 @@ Deno.test({
           buyer_ein: "123456789",
           gallons: 150,
           certificate_p_record_reference: "Certificate P-2025-1",
+          certificate_p_unexpired_at_claim_confirmed: true,
           certificate_information_believed_true: true,
+          state_credit_card_not_used_confirmed: true,
           exclusive_government_use_confirmed: true,
         }],
       }],
@@ -358,6 +360,121 @@ Deno.test({
   }, extractFilerIdentity(singleGeneral()));
   assertStringIncludes(xml, "<SlsUndyedDieselUseBusesGrp>");
   await validateXsd(xml, "Form 4136 registered vendor line 6b");
+});
+
+Deno.test({
+  name:
+    "XSD: Form 4136 registered kerosene vendor lines 7a through 7c validate",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const base = {
+    unit: "gallons",
+    qualified_quantity: 100,
+    actual_fuel_cost: 300,
+    undyed_fuel_confirmed: true,
+    vendor_tax_settlement: "tax_excluded_price",
+  };
+  const cases = [
+    {
+      line: "7a",
+      registration: "UV123456789",
+      credit: 24.3,
+      expected: "<ToWhomKeroseneFuelSoldStmt ",
+      details: {
+        government_sales: [{
+          sale_date: "2025-06-12",
+          buyer_name: "Example City",
+          buyer_ein: "123456789",
+          gallons: 100,
+          certificate_p_record_reference: "Certificate P-2025-7",
+          certificate_p_unexpired_at_claim_confirmed: true,
+          certificate_information_believed_true: true,
+          state_credit_card_not_used_confirmed: true,
+          exclusive_government_use_confirmed: true,
+        }],
+      },
+    },
+    {
+      line: "7b",
+      registration: "UP123456789",
+      credit: 24.3,
+      expected:
+        "<SlsUndyedKrsnBlockPumpGalsQty>100</SlsUndyedKrsnBlockPumpGalsQty>",
+      details: {
+        blocked_pump_sales: [{
+          sale_date: "2025-06-13",
+          buyer_name: "Example Home Heating",
+          buyer_address: "10 Main Street, Wilmington, DE 19801",
+          gallons: 100,
+          pump_location_reference: "Pump UP-1",
+          fixed_location_confirmed: true,
+          nontaxable_use_notice_confirmed: true,
+          pump_access_method:
+            "locked_after_each_sale_and_unlocked_only_on_request",
+          buyer_nontaxable_use_confirmed: true,
+          no_reason_to_doubt_nontaxable_use_confirmed: true,
+        }],
+      },
+    },
+    {
+      line: "7c",
+      registration: "UB123456789",
+      credit: 17,
+      expected: "<SlsUndyedKrsnUseBusGalsQty>100</SlsUndyedKrsnUseBusGalsQty>",
+      details: {
+        intercity_local_bus_sales: [{
+          sale_date: "2025-07-15",
+          buyer_name: "Example Bus Operator",
+          buyer_address: "10 Transit Lane, Wilmington, DE 19801",
+          gallons: 100,
+          certain_intercity_or_local_bus_use_confirmed: true,
+          waiver_n: {
+            kind: "account_period",
+            record_reference: "Waiver N-007",
+            account_or_order_number: "BUS-2025",
+            effective_date: "2025-07-01",
+            expiration_date: "2026-06-30",
+            signed_by_buyer_confirmed: true,
+            held_unexpired_when_claimed_confirmed: true,
+          },
+        }],
+      },
+    },
+  ];
+  for (const scenario of cases) {
+    const xml = buildMefXml({
+      f1040: { line31_additional_payments: Math.round(scenario.credit) },
+      schedule3: {
+        line12_fuel_tax_credit: scenario.credit,
+        line15_total: scenario.credit,
+      },
+      f4136: {
+        claimant_context: "business",
+        additional_activities: [],
+        primary_activity_has_most_credit: true,
+        business: {
+          qualifying_business_activity: true,
+          business_name: "Example Kerosene Vendor",
+          principal_activity_code: "457100",
+          equipment_make: "Example",
+          equipment_model: "Pump",
+          equipment_type: "kerosene dispenser",
+          sales_records_confirmed: true,
+          no_duplicate_excise_claim: true,
+        },
+        claims: [{
+          ...base,
+          ...scenario.details,
+          line: scenario.line,
+          vendor_registration_number: scenario.registration,
+        }],
+      },
+    }, extractFilerIdentity(singleGeneral()));
+    assertStringIncludes(xml, scenario.expected);
+    await validateXsd(xml, `Form 4136 line ${scenario.line}`);
+  }
 });
 
 Deno.test({

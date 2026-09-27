@@ -2,7 +2,8 @@
 
 Source: [2025 Form 4136](https://www.irs.gov/pub/irs-pdf/f4136.pdf),
 [2025 Schedule A](https://www.irs.gov/pub/irs-prior/f4136sa--2025.pdf), and
-[2025 instructions](https://www.irs.gov/instructions/i4136), checked
+[2025 instructions](https://www.irs.gov/instructions/i4136), and
+[Publication 510](https://www.irs.gov/publications/p510), checked
 2026-09-27. The TY2025v5.4 `IRS4136.xsd` is the MeF field authority.
 
 The 2025 form added Part I business-activity questions and Part II column (d),
@@ -38,7 +39,19 @@ reconcile to the claim, and the native XML and both PDF forms map the $.17
 line 6b credit. The two line 6 routes cannot carry conflicting registrations
 because the printed form has one shared field. Source, XML, PDF, and local XSD
 cases are written but unrun; neither filled PDF nor IRS business rules have
-been verified. Vendor lines 7-8 remain open.
+been verified.
+Line 7 now has three registered-kerosene vendor routes. Line 7a requires a UV
+registration, state/local government sale records and unexpired Certificate P,
+then emits the linked native buyer statement and a PDF buyer list. Line 7b
+requires a UP registration and blocked-pump sale records, including fixed
+location, conspicuous nontaxable-use notice, qualifying pump access, and buyer
+name/address when a sale exceeds five gallons. Line 7c requires a UB
+registration and the same Model Waiver N sale facts as diesel bus line 6b.
+Government sales now also affirm that a state-issued credit card was not used.
+Lines 7a and 7b share the printed and MeF cost/credit group; line 7c has a
+separate $.17 group. Conflicting registrations on the one printed line 7 field
+are rejected. Source, XML, PDF, and local XSD cases are written but unrun;
+filled render and IRS business-rule review remain open. Vendor line 8 is open.
 Line 14a accepts the 2025 use codes for diesel-water emulsion and applies
 the reduced $.124 rate only to bus use (type 05); line 14b uses the export
 rate and requires retained proof. Both require the emulsion's water percentage

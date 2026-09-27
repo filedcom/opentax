@@ -34,6 +34,9 @@ export const FORM4136_RATES = {
   "5e": 0.001,
   "6a": 0.243,
   "6b": 0.17,
+  "7a": 0.243,
+  "7b": 0.243,
+  "7c": 0.17,
   "11a": 0.183,
   "11b": 0.183,
   "11c": 0.183,
@@ -88,6 +91,9 @@ const fuelLine = z.enum([
   "5e",
   "6a",
   "6b",
+  "7a",
+  "7b",
+  "7c",
   "11a",
   "11b",
   "11c",
@@ -200,7 +206,9 @@ export const fuelClaimSchema = z.object({
     buyer_ein: z.string().regex(/^\d{9}$/),
     gallons: z.number().int().positive(),
     certificate_p_record_reference: z.string().trim().min(1),
+    certificate_p_unexpired_at_claim_confirmed: z.literal(true),
     certificate_information_believed_true: z.literal(true),
+    state_credit_card_not_used_confirmed: z.literal(true),
     exclusive_government_use_confirmed: z.literal(true),
   })).min(1).optional(),
   intercity_local_bus_sales: z.array(z.object({
@@ -210,6 +218,21 @@ export const fuelClaimSchema = z.object({
     gallons: z.number().int().positive(),
     certain_intercity_or_local_bus_use_confirmed: z.literal(true),
     waiver_n: modelWaiverN,
+  })).min(1).optional(),
+  blocked_pump_sales: z.array(z.object({
+    sale_date: saleDate,
+    buyer_name: z.string().trim().min(1).optional(),
+    buyer_address: z.string().trim().min(1).optional(),
+    gallons: z.number().int().positive(),
+    pump_location_reference: z.string().trim().min(1),
+    fixed_location_confirmed: z.literal(true),
+    nontaxable_use_notice_confirmed: z.literal(true),
+    pump_access_method: z.enum([
+      "cannot_fuel_highway_vehicle_or_train",
+      "locked_after_each_sale_and_unlocked_only_on_request",
+    ]),
+    buyer_nontaxable_use_confirmed: z.literal(true),
+    no_reason_to_doubt_nontaxable_use_confirmed: z.literal(true),
   })).min(1).optional(),
   emulsion_water_percentage: z.number().finite().min(14).max(100).optional(),
   emulsion_epa_additive_record_reference: z.string().trim().min(1).max(100)
@@ -251,19 +274,20 @@ const activitySchema = z.object({
 }).superRefine((input, ctx) => {
   const seen = new Set<string>();
   input.claims.forEach((claim, index) => {
-    if (claim.line === "6a") {
+    if (claim.line === "6a" || claim.line === "7a") {
       if (!/^UV[A-Z0-9]{1,18}$/.test(claim.vendor_registration_number ?? "")) {
         ctx.addIssue({
           code: "custom",
           message:
-            "Form 4136 line 6a needs an IRS-issued UV registration number",
+            `Form 4136 line ${claim.line} needs an IRS-issued UV registration number`,
           path: ["claims", index, "vendor_registration_number"],
         });
       }
       if (!claim.vendor_tax_settlement) {
         ctx.addIssue({
           code: "custom",
-          message: "Form 4136 line 6a needs the vendor tax-settlement method",
+          message:
+            `Form 4136 line ${claim.line} needs the vendor tax-settlement method`,
           path: ["claims", index, "vendor_tax_settlement"],
         });
       }
@@ -275,30 +299,31 @@ const activitySchema = z.object({
         ctx.addIssue({
           code: "custom",
           message:
-            "Form 4136 line 6a government sales must reconcile to claimed gallons",
+            `Form 4136 line ${claim.line} government sales must reconcile to claimed gallons`,
           path: ["claims", index, "government_sales"],
         });
       }
       if (input.business.sales_records_confirmed !== true) {
         ctx.addIssue({
           code: "custom",
-          message: "Form 4136 line 6a needs confirmed sales records",
+          message: `Form 4136 line ${claim.line} needs confirmed sales records`,
           path: ["business", "sales_records_confirmed"],
         });
       }
-    } else if (claim.line === "6b") {
+    } else if (claim.line === "6b" || claim.line === "7c") {
       if (!/^UB[A-Z0-9]{1,18}$/.test(claim.vendor_registration_number ?? "")) {
         ctx.addIssue({
           code: "custom",
           message:
-            "Form 4136 line 6b needs an IRS-issued UB registration number",
+            `Form 4136 line ${claim.line} needs an IRS-issued UB registration number`,
           path: ["claims", index, "vendor_registration_number"],
         });
       }
       if (!claim.vendor_tax_settlement) {
         ctx.addIssue({
           code: "custom",
-          message: "Form 4136 line 6b needs the vendor tax-settlement method",
+          message:
+            `Form 4136 line ${claim.line} needs the vendor tax-settlement method`,
           path: ["claims", index, "vendor_tax_settlement"],
         });
       }
@@ -312,7 +337,7 @@ const activitySchema = z.object({
         ctx.addIssue({
           code: "custom",
           message:
-            "Form 4136 line 6b bus sales must reconcile to claimed gallons",
+            `Form 4136 line ${claim.line} bus sales must reconcile to claimed gallons`,
           path: ["claims", index, "intercity_local_bus_sales"],
         });
       }
@@ -327,7 +352,7 @@ const activitySchema = z.object({
             ctx.addIssue({
               code: "custom",
               message:
-                "Form 4136 line 6b single-purchase waiver gallons must match the sale",
+                `Form 4136 line ${claim.line} single-purchase waiver gallons must match the sale`,
               path: [
                 "claims",
                 index,
@@ -352,7 +377,7 @@ const activitySchema = z.object({
             ctx.addIssue({
               code: "custom",
               message:
-                "Form 4136 line 6b account waiver must cover the sale and last no longer than one year",
+                `Form 4136 line ${claim.line} account waiver must cover the sale and last no longer than one year`,
               path: [
                 "claims",
                 index,
@@ -367,7 +392,57 @@ const activitySchema = z.object({
       if (input.business.sales_records_confirmed !== true) {
         ctx.addIssue({
           code: "custom",
-          message: "Form 4136 line 6b needs confirmed sales records",
+          message: `Form 4136 line ${claim.line} needs confirmed sales records`,
+          path: ["business", "sales_records_confirmed"],
+        });
+      }
+    } else if (claim.line === "7b") {
+      if (!/^UP[A-Z0-9]{1,18}$/.test(claim.vendor_registration_number ?? "")) {
+        ctx.addIssue({
+          code: "custom",
+          message:
+            "Form 4136 line 7b needs an IRS-issued UP registration number",
+          path: ["claims", index, "vendor_registration_number"],
+        });
+      }
+      if (!claim.vendor_tax_settlement) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Form 4136 line 7b needs the vendor tax-settlement method",
+          path: ["claims", index, "vendor_tax_settlement"],
+        });
+      }
+      if (
+        !claim.blocked_pump_sales?.length ||
+        claim.blocked_pump_sales.reduce(
+            (sum, sale) => sum + sale.gallons,
+            0,
+          ) !==
+          claim.qualified_quantity
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          message:
+            "Form 4136 line 7b blocked-pump sales must reconcile to claimed gallons",
+          path: ["claims", index, "blocked_pump_sales"],
+        });
+      }
+      for (
+        const [saleIndex, sale] of (claim.blocked_pump_sales ?? []).entries()
+      ) {
+        if (sale.gallons > 5 && (!sale.buyer_name || !sale.buyer_address)) {
+          ctx.addIssue({
+            code: "custom",
+            message:
+              "Form 4136 line 7b sales over five gallons need buyer name and address",
+            path: ["claims", index, "blocked_pump_sales", saleIndex],
+          });
+        }
+      }
+      if (input.business.sales_records_confirmed !== true) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Form 4136 line 7b needs confirmed sales records",
           path: ["business", "sales_records_confirmed"],
         });
       }
@@ -505,6 +580,9 @@ const activitySchema = z.object({
           "4f",
           "6a",
           "6b",
+          "7a",
+          "7b",
+          "7c",
           "15a",
         ]
           .includes(claim.line)
@@ -718,6 +796,18 @@ export const inputSchema = z.discriminatedUnion("claimant_context", [
     ctx.addIssue({
       code: "custom",
       message: "Form 4136 line 6 has one registration-number field",
+      path: ["claims"],
+    });
+  }
+  const line7Registrations = new Set(
+    activities.flatMap((activity) => activity.claims)
+      .filter((claim) => ["7a", "7b", "7c"].includes(claim.line))
+      .map((claim) => claim.vendor_registration_number),
+  );
+  if (line7Registrations.size > 1) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Form 4136 line 7 has one registration-number field",
       path: ["claims"],
     });
   }

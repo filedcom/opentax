@@ -107,6 +107,26 @@ Deno.test("Form 4136 PDF maps page 1 business and page 4 total widgets", () => {
     "topmostSubform[0].Page2[0].Table_Line6[0].Line6b[0].ColE[0].f2_96[0]",
   );
   assertEquals(
+    names.line7_registration_number,
+    "topmostSubform[0].Page2[0].f2_99[0]",
+  );
+  assertEquals(
+    names.line7a_quantity,
+    "topmostSubform[0].Page2[0].Table_Line7[0].Line7a[0].f2_101[0]",
+  );
+  assertEquals(
+    names.line7b_quantity,
+    "topmostSubform[0].Page2[0].Table_Line7[0].Line7b[0].f2_103[0]",
+  );
+  assertEquals(
+    names.line7_credit_dollars,
+    "topmostSubform[0].Page2[0].Table_Line7[0].Line7b[0].ColE[0].f2_106[0]",
+  );
+  assertEquals(
+    names.line7c_credit_dollars,
+    "topmostSubform[0].Page2[0].Table_Line7[0].Line7c[0].ColE[0].f2_113[0]",
+  );
+  assertEquals(
     names.line11c_quantity,
     "topmostSubform[0].Page3[0].Table_Line11[0].Line11c[0].f3_97[0]",
   );
@@ -146,6 +166,99 @@ Deno.test("Form 4136 PDF maps page 1 business and page 4 total widgets", () => {
     names.line17_total_cents,
     "topmostSubform[0].Page4[0].f4_125[0]",
   );
+});
+
+Deno.test("Form 4136 PDF maps line 7a government kerosene and appends buyers", async () => {
+  const result = form4136Pdf.projectFields?.({
+    ...activityContext,
+    business: {
+      qualifying_business_activity: true,
+      business_name: "Example Kerosene Vendor",
+      principal_activity_code: "457100",
+      equipment_make: "Example",
+      equipment_model: "Pump",
+      equipment_type: "kerosene dispenser",
+      sales_records_confirmed: true,
+      no_duplicate_excise_claim: true,
+    },
+    claims: [{
+      line: "7a",
+      unit: "gallons",
+      qualified_quantity: 100,
+      actual_fuel_cost: 300,
+      undyed_fuel_confirmed: true,
+      vendor_registration_number: "UV123456789",
+      vendor_tax_settlement: "tax_excluded_price",
+      government_sales: [{
+        sale_date: "2025-06-12",
+        buyer_name: "Example City",
+        buyer_ein: "123456789",
+        gallons: 100,
+        certificate_p_record_reference: "Certificate P-2025-7",
+        certificate_p_unexpired_at_claim_confirmed: true,
+        certificate_information_believed_true: true,
+        state_credit_card_not_used_confirmed: true,
+        exclusive_government_use_confirmed: true,
+      }],
+    }],
+  }, { schedule3: { line12_fuel_tax_credit: 24.3 } });
+  assertEquals(result?.line7_registration_number, "UV123456789");
+  assertEquals(result?.line7a_quantity, 100);
+  assertEquals(result?.line7_credit_dollars, "24");
+  assertEquals(result?.line7_credit_cents, "30");
+  const document = await PDFDocument.create();
+  for (let i = 0; i < 4; i++) document.addPage([612, 792]);
+  await form4136Pdf.appendSupplementalPages?.(
+    document,
+    result ?? {},
+    undefined,
+  );
+  assertEquals(document.getPageCount(), 5);
+});
+
+Deno.test("Form 4136 PDF projects kerosene bus line 7c", () => {
+  const result = form4136Pdf.projectFields?.({
+    ...activityContext,
+    business: {
+      qualifying_business_activity: true,
+      business_name: "Example Kerosene Vendor",
+      principal_activity_code: "457100",
+      equipment_make: "Example",
+      equipment_model: "Pump",
+      equipment_type: "kerosene dispenser",
+      sales_records_confirmed: true,
+      no_duplicate_excise_claim: true,
+    },
+    claims: [{
+      line: "7c",
+      unit: "gallons",
+      qualified_quantity: 100,
+      actual_fuel_cost: 300,
+      undyed_fuel_confirmed: true,
+      vendor_registration_number: "UB123456789",
+      vendor_tax_settlement: "tax_excluded_price",
+      intercity_local_bus_sales: [{
+        sale_date: "2025-07-15",
+        buyer_name: "Example Bus Operator",
+        buyer_address: "10 Transit Lane, Wilmington, DE 19801",
+        gallons: 100,
+        certain_intercity_or_local_bus_use_confirmed: true,
+        waiver_n: {
+          kind: "account_period",
+          record_reference: "Waiver N-007",
+          account_or_order_number: "BUS-2025",
+          effective_date: "2025-07-01",
+          expiration_date: "2026-06-30",
+          signed_by_buyer_confirmed: true,
+          held_unexpired_when_claimed_confirmed: true,
+        },
+      }],
+    }],
+  }, { schedule3: { line12_fuel_tax_credit: 17 } });
+  assertEquals(result?.line7_registration_number, "UB123456789");
+  assertEquals(result?.line7c_quantity, 100);
+  assertEquals(result?.line7c_credit_dollars, "17");
+  assertEquals(result?.line7c_credit_cents, "00");
 });
 
 Deno.test("Form 4136 PDF projects registered vendor bus line 6b", () => {
@@ -340,7 +453,9 @@ Deno.test("Form 4136 PDF includes vendor line 6a and government-buyer detail", a
         buyer_ein: "123456789",
         gallons: 150,
         certificate_p_record_reference: "Certificate P-2025-1",
+        certificate_p_unexpired_at_claim_confirmed: true,
         certificate_information_believed_true: true,
+        state_credit_card_not_used_confirmed: true,
         exclusive_government_use_confirmed: true,
       }],
     }],

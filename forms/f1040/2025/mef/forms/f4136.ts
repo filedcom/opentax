@@ -173,6 +173,9 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
     const l5e = onLine(input, "5e");
     const l6a = onLine(input, "6a");
     const l6b = onLine(input, "6b");
+    const l7a = onLine(input, "7a");
+    const l7b = onLine(input, "7b");
+    const l7c = onLine(input, "7c");
     const l14a = onLine(input, "14a");
     const l14b = onLine(input, "14b");
     const l15a = onLine(input, "15a");
@@ -217,6 +220,14 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
       throw new Error(
         "Form 4136 line 15 needs a blending statement for each claim",
       );
+    }
+    const keroseneBuyerStatementIds = context.documentIdsByPendingKey
+      ?.f4136_kerosene_government_sales_statement ?? [];
+    if (
+      context.documentIdsByPendingKey &&
+      keroseneBuyerStatementIds.length !== (l7a.length ? 1 : 0)
+    ) {
+      throw new Error("Form 4136 line 7a needs one kerosene buyer statement");
     }
 
     return elements(
@@ -416,6 +427,40 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
           l6b.length ? element("ActualFuelCostAmt", cost(l6b)) : "",
           l6b.length
             ? credit("SlsUndyedDieselUseBusCrAmt", lineAmount(l6b), "350")
+            : "",
+        ]),
+        element(
+          "UndyedKeroseneRegistrationNum",
+          [...l7a, ...l7b, ...l7c][0]?.vendor_registration_number,
+        ),
+        elements("SlsUndyedKrsnGrp", [
+          element(
+            "SlsUndyedKrsnStLclGovtGalsQty",
+            qty(l7a),
+            keroseneBuyerStatementIds.length
+              ? {
+                referenceDocumentId: keroseneBuyerStatementIds[0],
+                referenceDocumentName: "ToWhomKeroseneFuelSoldStatement",
+              }
+              : undefined,
+          ),
+          element("SlsUndyedKrsnBlockPumpGalsQty", qty(l7b)),
+          l7a.length || l7b.length
+            ? element("ActualFuelCostAmt", cost([...l7a, ...l7b]))
+            : "",
+          l7a.length || l7b.length
+            ? credit(
+              "SlsUndyedKrsnBlockPumpCrAmt",
+              lineAmount([...l7a, ...l7b]),
+              "346",
+            )
+            : "",
+        ]),
+        elements("SlsUndyedKrsnUseBusesGrp", [
+          element("SlsUndyedKrsnUseBusGalsQty", qty(l7c)),
+          l7c.length ? element("ActualFuelCostAmt", cost(l7c)) : "",
+          l7c.length
+            ? credit("SlsUndyedKrsnUseBusCrAmt", lineAmount(l7c), "347")
             : "",
         ]),
         ...alternativeFuelTags.flatMap(

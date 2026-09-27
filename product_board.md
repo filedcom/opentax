@@ -304,7 +304,13 @@ are not verified. Line 6b now has a separate UB-registered vendor route with
 reconciled bus-sale records and invoice-specific or account-period Model Waiver
 N facts. The $.17 credit maps to native XML and both PDFs, and conflicting
 registrations on the form's shared line 6 field are rejected. Its source, XML,
-PDF, and local XSD cases are written but unrun; lines 7-8 remain open.
+PDF, and local XSD cases are written but unrun. Registered-kerosene vendor
+lines 7a-7c now have separate government, blocked-pump, and bus-waiver source
+routes, with UV/UP/UB registration checks, the linked line 7a buyer statement,
+and native XML and PDF mappings. Government-sale records now also require an
+unexpired Certificate P and an affirmation that a state-issued credit card was
+not used. Source, XML, PDF, and local XSD cases are written but unrun; line 8,
+filled rendering, and IRS business rules remain open.
 Diesel-water emulsion lines 14a and 14b now have ultimate-purchaser source
 facts, the standard and reduced bus-use rates, export-proof validation, MeF
 groups, and parent/Schedule A PDF fields. Source, XML, PDF, and XSD cases are

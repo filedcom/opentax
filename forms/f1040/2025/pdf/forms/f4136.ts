@@ -63,6 +63,9 @@ const creditReferenceNumber: Record<Line, string> = {
   "5e": "433",
   "6a": "360",
   "6b": "350",
+  "7a": "346",
+  "7b": "346",
+  "7c": "347",
   "11a": "419",
   "11b": "420",
   "11c": "421",
@@ -80,7 +83,7 @@ const creditReferenceNumber: Record<Line, string> = {
 const page = (number: number) => `topmostSubform[0].Page${number}[0]`;
 function fieldPath(p: number, n: number): string {
   if (
-    p === 1 && n <= 9 || p === 2 && n === 84 ||
+    p === 1 && n <= 9 || p === 2 && (n === 84 || n === 99) ||
     p === 4 && (n === 102 || n === 124 || n === 125)
   ) {
     return `${page(p)}.f${p}_${n}[0]`;
@@ -187,6 +190,14 @@ function fieldPath(p: number, n: number): string {
       column = n >= 87 && n <= 88 || n >= 94 && n <= 95
         ? "ColD"
         : n >= 89 && n <= 90 || n >= 96 && n <= 97
+        ? "ColE"
+        : "";
+    } else if (n >= 100 && n <= 115) {
+      table = "Table_Line7";
+      line = n <= 101 ? "Line7a" : n <= 108 ? "Line7b" : "Line7c";
+      column = n >= 104 && n <= 105 || n >= 111 && n <= 112
+        ? "ColD"
+        : n >= 106 && n <= 107 || n >= 113 && n <= 114
         ? "ColE"
         : "";
     }
@@ -337,6 +348,14 @@ const fields: PdfFieldEntry[] = [
   text("line6b_quantity", 2, 93),
   ...moneyFields("line6b_cost", 2, 94),
   ...moneyFields("line6b_credit", 2, 96),
+  text("line7_registration_number", 2, 99),
+  text("line7a_quantity", 2, 101),
+  text("line7b_quantity", 2, 103),
+  ...moneyFields("line7_cost", 2, 104),
+  ...moneyFields("line7_credit", 2, 106),
+  text("line7c_quantity", 2, 110),
+  ...moneyFields("line7c_cost", 2, 111),
+  ...moneyFields("line7c_credit", 2, 113),
   ...alternativeFuelLines.flatMap((line, index) => {
     const base = 79 + index * 8;
     return [
@@ -554,10 +573,11 @@ async function appendClaimStatement(
       },
     );
   }
-  const governmentSales = allForm4136Claims(input)
-    .filter((claim) => claim.line === "6a")
-    .flatMap((claim) => claim.government_sales ?? []);
-  if (governmentSales.length) {
+  for (const [line, fuel] of [["6a", "diesel"], ["7a", "kerosene"]] as const) {
+    const governmentSales = allForm4136Claims(input)
+      .filter((claim) => claim.line === line)
+      .flatMap((claim) => claim.government_sales ?? []);
+    if (!governmentSales.length) continue;
     const buyers = new Map<string, {
       name: string;
       ein: string;
@@ -575,7 +595,7 @@ async function appendClaimStatement(
     const buyerRows = [...buyers.values()];
     for (let offset = 0; offset < buyerRows.length; offset += 32) {
       const page = document.addPage([612, 792]);
-      page.drawText("2025 Form 4136 line 6a - Government diesel buyers", {
+      page.drawText(`2025 Form 4136 line ${line} - Government ${fuel} buyers`, {
         x: 36,
         y: 750,
         size: 12,
@@ -688,6 +708,9 @@ export function projectForm4136Fields(
       "5e",
       "6a",
       "6b",
+      "7a",
+      "7b",
+      "7c",
       "14a",
       "14b",
       "15a",
@@ -725,6 +748,8 @@ export function projectForm4136Fields(
   }
   putClaimGroup(out, input, ["6a"], "line6a");
   putClaimGroup(out, input, ["6b"], "line6b");
+  putClaimGroup(out, input, ["7a", "7b"], "line7");
+  putClaimGroup(out, input, ["7c"], "line7c");
   putClaimGroup(out, input, ["14a"], "line14a");
   putClaimGroup(out, input, ["14b"], "line14b");
   putClaimGroup(out, input, ["15a"], "line15a");
@@ -732,6 +757,9 @@ export function projectForm4136Fields(
   putClaimGroup(out, input, ["16b"], "line16b");
   out.line6_registration_number = allForm4136Claims(input).find((claim) =>
     claim.line === "6a" || claim.line === "6b"
+  )?.vendor_registration_number;
+  out.line7_registration_number = allForm4136Claims(input).find((claim) =>
+    claim.line === "7a" || claim.line === "7b" || claim.line === "7c"
   )?.vendor_registration_number;
   out.line15_registration_number = allForm4136Claims(input).find((claim) =>
     claim.line === "15a"

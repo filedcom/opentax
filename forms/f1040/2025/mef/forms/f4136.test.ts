@@ -2,6 +2,7 @@ import { assertStringIncludes, assertThrows } from "@std/assert";
 import { form4136 } from "./f4136.ts";
 import { form4136DieselGovernmentSalesStatement } from "./f4136_diesel_government_sales_statement.ts";
 import { form4136EmulsionBlendingStatement } from "./f4136_emulsion_blending_statement.ts";
+import { form4136KeroseneGovernmentSalesStatement } from "./f4136_kerosene_government_sales_statement.ts";
 const certifications = {
   undyed_fuel_confirmed: true,
   right_to_claim_not_waived: true,
@@ -289,7 +290,9 @@ Deno.test("Form 4136 XML and buyer statement reconcile registered vendor line 6a
         buyer_ein: "123456789",
         gallons: 150,
         certificate_p_record_reference: "Certificate P-2025-1",
+        certificate_p_unexpired_at_claim_confirmed: true as const,
         certificate_information_believed_true: true as const,
+        state_credit_card_not_used_confirmed: true as const,
         exclusive_government_use_confirmed: true as const,
       }],
     }],
@@ -373,6 +376,167 @@ Deno.test("Form 4136 XML maps registered vendor bus sales to line 6b", () => {
   assertStringIncludes(
     xml,
     '<SlsUndyedDieselUseBusCrAmt creditReferenceNum="350">170</SlsUndyedDieselUseBusCrAmt>',
+  );
+});
+
+Deno.test("Form 4136 XML links line 7a government kerosene buyer statement", () => {
+  const vendor = {
+    ...activityContext,
+    business: {
+      qualifying_business_activity: true as const,
+      business_name: "Example Kerosene Vendor",
+      principal_activity_code: "457100",
+      equipment_make: "Example",
+      equipment_model: "Pump",
+      equipment_type: "kerosene dispenser",
+      sales_records_confirmed: true as const,
+      no_duplicate_excise_claim: true as const,
+    },
+    claims: [{
+      line: "7a" as const,
+      unit: "gallons" as const,
+      qualified_quantity: 100,
+      actual_fuel_cost: 300,
+      undyed_fuel_confirmed: true as const,
+      vendor_registration_number: "UV123456789",
+      vendor_tax_settlement: "tax_excluded_price" as const,
+      government_sales: [{
+        sale_date: "2025-06-12",
+        buyer_name: "Example City",
+        buyer_ein: "123456789",
+        gallons: 100,
+        certificate_p_record_reference: "Certificate P-2025-7",
+        certificate_p_unexpired_at_claim_confirmed: true as const,
+        certificate_information_believed_true: true as const,
+        state_credit_card_not_used_confirmed: true as const,
+        exclusive_government_use_confirmed: true as const,
+      }],
+    }],
+  };
+  const xml = form4136.build(vendor, {
+    pending: { schedule3: { line12_fuel_tax_credit: 24.3 } },
+    documentIdsByPendingKey: {
+      f4136_kerosene_government_sales_statement: ["kerosene-buyers-1"],
+    },
+  });
+  assertStringIncludes(
+    xml,
+    "<UndyedKeroseneRegistrationNum>UV123456789</UndyedKeroseneRegistrationNum>",
+  );
+  assertStringIncludes(
+    xml,
+    'referenceDocumentId="kerosene-buyers-1" referenceDocumentName="ToWhomKeroseneFuelSoldStatement">100</SlsUndyedKrsnStLclGovtGalsQty>',
+  );
+  assertStringIncludes(
+    xml,
+    '<SlsUndyedKrsnBlockPumpCrAmt creditReferenceNum="346">24</SlsUndyedKrsnBlockPumpCrAmt>',
+  );
+  const statement = form4136KeroseneGovernmentSalesStatement.build(undefined, {
+    pending: { f4136: vendor },
+  });
+  assertStringIncludes(statement, "<ToWhomKeroseneFuelSoldStmt>");
+  assertStringIncludes(statement, "<EIN>123456789</EIN>");
+  assertStringIncludes(statement, "<GallonsBoughtQty>100</GallonsBoughtQty>");
+  assertThrows(
+    () =>
+      form4136.build(vendor, {
+        pending: { schedule3: { line12_fuel_tax_credit: 24.3 } },
+        documentIdsByPendingKey: {},
+      }),
+    Error,
+    "needs one kerosene buyer statement",
+  );
+});
+
+Deno.test("Form 4136 XML separates line 7b blocked pump from line 7c bus sales", () => {
+  const business = {
+    qualifying_business_activity: true as const,
+    business_name: "Example Kerosene Vendor",
+    principal_activity_code: "457100",
+    equipment_make: "Example",
+    equipment_model: "Pump",
+    equipment_type: "kerosene dispenser",
+    sales_records_confirmed: true as const,
+    no_duplicate_excise_claim: true as const,
+  };
+  const base = {
+    ...activityContext,
+    business,
+  };
+  const blockedPump = {
+    ...base,
+    claims: [{
+      line: "7b" as const,
+      unit: "gallons" as const,
+      qualified_quantity: 100,
+      actual_fuel_cost: 300,
+      undyed_fuel_confirmed: true as const,
+      vendor_registration_number: "UP123456789",
+      vendor_tax_settlement: "tax_excluded_price" as const,
+      blocked_pump_sales: [{
+        sale_date: "2025-06-13",
+        buyer_name: "Example Home Heating",
+        buyer_address: "10 Main Street, Wilmington, DE 19801",
+        gallons: 100,
+        pump_location_reference: "Pump UP-1",
+        fixed_location_confirmed: true as const,
+        nontaxable_use_notice_confirmed: true as const,
+        pump_access_method:
+          "locked_after_each_sale_and_unlocked_only_on_request" as const,
+        buyer_nontaxable_use_confirmed: true as const,
+        no_reason_to_doubt_nontaxable_use_confirmed: true as const,
+      }],
+    }],
+  };
+  const blockedXml = form4136.build(blockedPump, {
+    pending: { schedule3: { line12_fuel_tax_credit: 24.3 } },
+  });
+  assertStringIncludes(
+    blockedXml,
+    "<SlsUndyedKrsnBlockPumpGalsQty>100</SlsUndyedKrsnBlockPumpGalsQty>",
+  );
+  assertStringIncludes(
+    blockedXml,
+    "<UndyedKeroseneRegistrationNum>UP123456789</UndyedKeroseneRegistrationNum>",
+  );
+  const bus = {
+    ...base,
+    claims: [{
+      line: "7c" as const,
+      unit: "gallons" as const,
+      qualified_quantity: 100,
+      actual_fuel_cost: 300,
+      undyed_fuel_confirmed: true as const,
+      vendor_registration_number: "UB123456789",
+      vendor_tax_settlement: "tax_excluded_price" as const,
+      intercity_local_bus_sales: [{
+        sale_date: "2025-07-15",
+        buyer_name: "Example Bus Operator",
+        buyer_address: "10 Transit Lane, Wilmington, DE 19801",
+        gallons: 100,
+        certain_intercity_or_local_bus_use_confirmed: true as const,
+        waiver_n: {
+          kind: "account_period" as const,
+          record_reference: "Waiver N-007",
+          account_or_order_number: "BUS-2025",
+          effective_date: "2025-07-01",
+          expiration_date: "2026-06-30",
+          signed_by_buyer_confirmed: true as const,
+          held_unexpired_when_claimed_confirmed: true as const,
+        },
+      }],
+    }],
+  };
+  const busXml = form4136.build(bus, {
+    pending: { schedule3: { line12_fuel_tax_credit: 17 } },
+  });
+  assertStringIncludes(
+    busXml,
+    "<SlsUndyedKrsnUseBusGalsQty>100</SlsUndyedKrsnUseBusGalsQty>",
+  );
+  assertStringIncludes(
+    busXml,
+    '<SlsUndyedKrsnUseBusCrAmt creditReferenceNum="347">17</SlsUndyedKrsnUseBusCrAmt>',
   );
 });
 
