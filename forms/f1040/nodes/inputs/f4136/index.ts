@@ -12,7 +12,10 @@ export const FORM4136_RATES = {
   "1b": 0.183,
   "1c": 0.183,
   "1d": 0.184,
+  "2a": 0.15,
   "2b": 0.193,
+  "2c": 0.194,
+  "2d": 0.001,
   "3a": 0.243,
   "3b": 0.243,
   "4a": 0.243,
@@ -45,7 +48,10 @@ const fuelLine = z.enum([
   "1b",
   "1c",
   "1d",
+  "2a",
   "2b",
+  "2c",
+  "2d",
   "3a",
   "3b",
   "4a",
@@ -105,6 +111,8 @@ export const fuelClaimSchema = z.object({
   not_highway_vehicle: z.literal(true).optional(),
   not_noncommercial_motorboat: z.literal(true).optional(),
   exported_fuel_confirmed: z.literal(true).optional(),
+  commercial_aviation_nonforeign_trade_confirmed: z.literal(true).optional(),
+  foreign_trade_lust_tax_paid_confirmed: z.literal(true).optional(),
 });
 
 const businessSchema = z.object({
@@ -189,7 +197,15 @@ const activitySchema = z.object({
         ? ["credit_card_issuer_certificate_not_provided"] as const
         : []),
       ...(claim.line === "1c" ? ["not_noncommercial_motorboat"] as const : []),
-      ...(claim.line === "1d" ? ["exported_fuel_confirmed"] as const : []),
+      ...(claim.line === "1d" || claim.line === "2c"
+        ? ["exported_fuel_confirmed"] as const
+        : []),
+      ...(claim.line === "2a"
+        ? ["commercial_aviation_nonforeign_trade_confirmed"] as const
+        : []),
+      ...(claim.line === "2d"
+        ? ["foreign_trade_lust_tax_paid_confirmed"] as const
+        : []),
       ...(claim.line === "1a" || claim.type_of_use === "02"
         ? ["not_highway_vehicle"] as const
         : []),

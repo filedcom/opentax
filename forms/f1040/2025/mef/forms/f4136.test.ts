@@ -7,6 +7,8 @@ const certifications = {
   not_highway_vehicle: true,
   not_noncommercial_motorboat: true,
   exported_fuel_confirmed: true,
+  commercial_aviation_nonforeign_trade_confirmed: true,
+  foreign_trade_lust_tax_paid_confirmed: true,
 } as const;
 const activityContext = {
   claimant_context: "business" as const,
@@ -110,6 +112,31 @@ Deno.test("Form 4136 XML separates other-use and exported gasoline", () => {
   assertStringIncludes(
     xml,
     '<ExportedNontxUseOfGasCrAmt creditReferenceNum="411">18</ExportedNontxUseOfGasCrAmt>',
+  );
+});
+
+Deno.test("Form 4136 XML maps commercial, exported, and foreign-trade aviation gasoline", () => {
+  const xml = form4136.build({
+    ...activityContext,
+    business: fields.business,
+    claims: (["2a", "2c", "2d"] as const).map((line) => ({
+      ...certifications,
+      line,
+      unit: "gallons" as const,
+      qualified_quantity: 1_000,
+      actual_fuel_cost: 3_000,
+    })),
+  }, { pending: { schedule3: { line12_fuel_tax_credit: 345 } } });
+  assertStringIncludes(xml, "<CommercialAviationUseGasGrp>");
+  assertStringIncludes(
+    xml,
+    "<AviationGasolineGallonsQty>1000</AviationGasolineGallonsQty>",
+  );
+  assertStringIncludes(xml, "<ExportedNontaxAviationGasGrp>");
+  assertStringIncludes(xml, "<LUSTTxAvnFuelFrgnTradeGrp>");
+  assertStringIncludes(
+    xml,
+    "<TotalFuelTaxCreditAmt>345</TotalFuelTaxCreditAmt>",
   );
 });
 

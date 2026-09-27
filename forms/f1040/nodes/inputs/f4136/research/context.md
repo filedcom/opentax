@@ -20,7 +20,8 @@ certificate, and non-highway-vehicle certifications on affected claims.
 Gasoline line 1c now requires a permitted use code and a noncommercial-
 motorboat exclusion; types 13/14 also require no-waiver and no-credit-card-
 certificate confirmations. Export line 1d requires an export confirmation.
-The represented line rates are 1a/1b/1c $.183, 1d $.184, 2b $.193, 3a/3b $.243, 4a/4b
+The represented line rates are 1a/1b/1c $.183, 1d $.184, 2a $.150,
+2b $.193, 2c $.194, 2d $.001, 3a/3b $.243, 4a/4b
 $.243, 5c $.243, 5d $.218, 11a-d/11h $.183, and 11e-g $.243. IRS type-of-use codes are
 required and constrained to the local XSD for variable-use lines. This model
 does not assert eligibility solely from gallon quantities.
@@ -35,6 +36,7 @@ off-highway fuel and refundable farm fuel was wrong for the 2025 form.
 
 The native IRS4136 XML builder now serializes these represented claims, including
 separate gasoline line 1c detail and line 1d export groups,
+plus aviation-gasoline commercial-use, export, and foreign-trade LUST groups,
 all line 11 alternative fuels and the reduced-rate type 5 bus branch, and
 reconciles its line 17 source total against Schedule 3 line 12. The PDF
 descriptor maps the actual 2025 AcroForm widgets across all four pages,
@@ -54,6 +56,11 @@ calculated per-activity credit to enforce that ordering. The local schema
 contains no Schedule A XML root, so the binary route needs IRS business-rule
 and ATS verification. Exact source-PDF widget names have been mapped for both
 forms, but neither filled PDF has been rendered and checked yet. The
+2025 printed Form 4136 Part I says to show the activity generating the most
+credit, but the Schedule A section of the 2025 instructions says the activity
+generating the most qualifying fuel usage. The implementation follows the
+printed form; this conflict needs IRS business-rule or ATS resolution before
+claiming complete multi-activity support. The
 input rejects mixed measurement units on one combined fuel line until the
 source conversion and rounding can be verified against IRS rules. The
 other Part II lines, seller/purchase-date source identities, other rate-by-use
