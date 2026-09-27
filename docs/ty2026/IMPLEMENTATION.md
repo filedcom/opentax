@@ -49,6 +49,10 @@ The [Form 7206 contract](FORM7206-GRAPH.md) maps per-business health-plan
 limits, LTC age caps, Form 2555 and Marketplace PTC coordination, and all
 16 PDF fields. The shared node's aggregate profit/PTC shortcut and TY2025
 PDF mapping cannot produce a filed 2026 attachment.
+The [Form 8853 contract](FORM8853-GRAPH.md) maps Archer/Medicare Advantage
+MSA contributions/distributions, the 2026 $430 LTC per-diem amount and
+multi-payee statement, Form 8889 contribution handoff, Schedule 1/2 lines,
+and all 38 PDF fields. The shared node misses the prior-year MSA tax worksheet.
 The [scenario 12 contract](ATS-SCENARIO-12.md) and
 [business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
 broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800

@@ -86,6 +86,7 @@ inventory("f8936sa", ROOT / "corpus/draft/f8936sa.pdf")
 inventory("f8889", ROOT / "corpus/draft/f8889.pdf")
 inventory("f8959", ROOT / "corpus/draft/f8959.pdf")
 inventory("f7206", ROOT / "corpus/draft/f7206.pdf")
+inventory("f8853", ROOT / "corpus/draft/f8853.pdf")
 for slug, revision in (
     ("f3800a", "2025"), ("f7205", "2023"),
     ("f7207", "2025"), ("f7220", "2025"),

@@ -59,6 +59,9 @@ for the implementation contract.
 - [`FORM7206-GRAPH.md`](FORM7206-GRAPH.md) and `pdf-fields-f7206.csv`:
   per-business health-insurance earnings limits, LTC age caps, Form 2555 and
   Marketplace PTC dependencies, and full 2026 PDF field inventory.
+- [`FORM8853-GRAPH.md`](FORM8853-GRAPH.md) and `pdf-fields-f8853.csv`:
+  Archer/Medicare Advantage MSA and LTC source routes, 2026 Schedule 1/2
+  handoffs, repeated sections/statements, and all 38 PDF fields.
 - [`FORM8962-GRAPH.md`](FORM8962-GRAPH.md) and `pdf-fields-f8962.csv`:
   2026 premium tax credit line 27, 400% FPL boundary, Form 1095-A/allocations,
   143 PDF widgets, and MeF/graph acceptance order.
