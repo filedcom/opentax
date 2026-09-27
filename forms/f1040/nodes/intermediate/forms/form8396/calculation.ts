@@ -78,13 +78,35 @@ const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
     parsed.toISOString().slice(0, 10) === value;
 });
 
+export enum CertifiedInterestDocumentKind {
+  Form1098 = "form1098",
+  LenderStatement = "lender_statement",
+}
+
+const interestEvidenceSchema = z.object({
+  kind: z.nativeEnum(CertifiedInterestDocumentKind),
+  document_reference: z.string().trim().min(1),
+  reported_interest_paid: z.number().finite().nonnegative(),
+  taxpayer_interest_paid: z.number().finite().positive(),
+  original_mortgage_amount: z.number().finite().positive(),
+  certified_indebtedness_amount: z.number().finite().positive(),
+}).strict().refine(
+  (evidence) =>
+    evidence.taxpayer_interest_paid <= evidence.reported_interest_paid,
+  {
+    path: ["taxpayer_interest_paid"],
+    message: "Taxpayer interest cannot exceed the identified source document",
+  },
+);
+
 /** Source facts for the 2025 Form 8396, not a precomputed Schedule 3 credit. */
 export const form8396SourceSchema = z.object({
   qualified_home_address_if_different: qualifiedHomeAddressSchema.optional(),
   certificate_issuer_name: z.string().trim().min(1),
   certificate_number: z.string().trim().min(1).max(22),
   certificate_issue_date: date,
-  mortgage_interest_paid: wholeDollars,
+  current_year_claim: z.boolean(),
+  interest_evidence: interestEvidenceSchema.optional(),
   interest_reporting_line: z.enum(["8a", "8b"]).optional(),
   mcc_rate: z.number().finite().min(0.1).max(0.5).refine((rate) =>
     Math.abs(rate * 100_000 - Math.round(rate * 100_000)) < 0.000001
@@ -114,8 +136,9 @@ export const form8396SourceSchema = z.object({
       message: "The MCC must be issued by the 2025 tax year",
     });
   }
-  if (source.mortgage_interest_paid > 0) {
+  if (source.current_year_claim) {
     if (
+      source.interest_evidence === undefined ||
       source.mcc_rate === undefined ||
       source.interest_reporting_line === undefined ||
       source.home_is_main_residence !== true ||
@@ -126,11 +149,18 @@ export const form8396SourceSchema = z.object({
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        path: ["mortgage_interest_paid"],
+        path: ["current_year_claim"],
         message:
-          "Current-year MCC credit needs its rate, qualified-home, unrelated-lender, and refinance facts",
+          "Current-year MCC credit needs identified interest, its rate, qualified-home, unrelated-lender, and refinance facts",
       });
     }
+  } else if (source.interest_evidence !== undefined) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["interest_evidence"],
+      message:
+        "Carryforward-only Form 8396 cannot include current-year interest",
+    });
   }
   if (
     source.nonspouse_coowner === true &&
@@ -159,12 +189,28 @@ export const form8396SourceSchema = z.object({
 
 export type Form8396Source = z.infer<typeof form8396SourceSchema>;
 
+/** Publication 530: use the original loan's fixed certified fraction. */
+export function calculateForm8396Line1(raw: Form8396Source): number {
+  const source = form8396SourceSchema.parse(raw);
+  const evidence = source.interest_evidence;
+  if (!evidence) return 0;
+  return Math.round(
+    evidence.taxpayer_interest_paid *
+      Math.min(
+        1,
+        evidence.certified_indebtedness_amount /
+          evidence.original_mortgage_amount,
+      ),
+  );
+}
+
 export function calculateForm8396Line3(raw: Form8396Source): number {
   const source = form8396SourceSchema.parse(raw);
-  if (source.mortgage_interest_paid === 0) return 0;
+  const line1 = calculateForm8396Line1(source);
+  if (line1 === 0) return 0;
   const rate = source.mcc_rate;
   if (rate === undefined) throw new Error("Form 8396 MCC rate is missing");
-  const tentative = Math.round(source.mortgage_interest_paid * rate);
+  const tentative = Math.round(line1 * rate);
   const cap = rate > 0.2
     ? Math.round(2_000 * (source.nonspouse_coowner_share ?? 1))
     : Number.MAX_SAFE_INTEGER;
@@ -184,6 +230,7 @@ export function calculateForm8396(
     source.carryforward_vintages.find((vintage) =>
       vintage.originating_tax_year === year
     )?.amount ?? 0;
+  const line1 = calculateForm8396Line1(source);
   const line3 = calculateForm8396Line3(source);
   const line4 = carry(2022);
   const line5 = carry(2023);
@@ -196,7 +243,7 @@ export function calculateForm8396(
   }
   if (line9 >= line7) {
     return {
-      line1: source.mortgage_interest_paid,
+      line1,
       line2: source.mcc_rate,
       line3,
       line4,
@@ -217,7 +264,7 @@ export function calculateForm8396(
   const line16 = Math.min(line5, line15);
   const line17 = Math.max(0, line3 - line9);
   return {
-    line1: source.mortgage_interest_paid,
+    line1,
     line2: source.mcc_rate,
     line3,
     line4,

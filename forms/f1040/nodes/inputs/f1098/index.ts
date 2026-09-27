@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { form_8829 } from "../../intermediate/forms/form_8829/index.ts";
 import { scheduleA as schedule_a } from "../schedule_a/index.ts";
@@ -27,6 +27,7 @@ export const itemSchema = z.object({
   for_routing: z.nativeEnum(ForRouting).optional(),
   // Informational / routing helpers
   lender_name: z.string().optional(),
+  source_document_reference: z.string().trim().min(1).optional(),
   box2_outstanding_principal: z.number().nonnegative().optional(),
   box3_origination_date: z.string().optional(),
   box4_refund_overpaid: z.number().nonnegative().optional(),
@@ -124,7 +125,12 @@ function scheduleAOutput(items: F1098Items): NodeOutput[] {
   const points = aggregateScheduleAPoints(items);
 
   if (interest > 0 && points > 0) {
-    return [output(schedule_a, { line_8a_mortgage_interest_1098: interest, line_8c_points_no_1098: points })];
+    return [
+      output(schedule_a, {
+        line_8a_mortgage_interest_1098: interest,
+        line_8c_points_no_1098: points,
+      }),
+    ];
   }
   if (interest > 0) {
     return [output(schedule_a, { line_8a_mortgage_interest_1098: interest })];
@@ -162,7 +168,13 @@ function schedule1Output(items: F1098Items): NodeOutput[] {
 class F1098Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f1098";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule_a, schedule_c, schedule_e, form_8829, schedule1]);
+  readonly outputNodes = new OutputNodes([
+    schedule_a,
+    schedule_c,
+    schedule_e,
+    form_8829,
+    schedule1,
+  ]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { f1098s } = input;

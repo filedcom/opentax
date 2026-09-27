@@ -175,14 +175,19 @@ None of these changes has passed the deferred full test batch.
 
 The current Form 8396 build pass replaces a gross Schedule 3 deposit with
 source-backed certificate, optional different-home US address, and 2022-2024
-carryforward vintages. It computes
+carryforward vintages. It now derives current-year certified interest from a
+named Form 1098 or lender statement and the fixed original-loan certificate
+fraction. A referenced Form 1098 must match the entered box 1 amount and be
+unique in the filed input; the actual document has not been authenticated.
+The certified-loan allocation now has a full-return graph case written but
+unrun. It computes
 printed lines 1-17, limits line 9 after Form 1040 tax is known, and reduces
 Schedule A mortgage-interest deduction by the full line 3, not merely the
 allowed credit. Native MeF, source-to-XSD, and PDF field-map cases are written
 but unrun. The PDF descriptor now maps the certificate, lines 1-17, and the
 credit-limit worksheet to the 2025 AcroForm fields, but a filled-PDF render
-has not been inspected. Reissued MCCs, interest-document reconciliation,
-and IRS business-rule/ATS checks remain open.
+has not been inspected. Reissued MCCs, source-document authentication, and IRS
+business-rule/ATS checks remain open.
 
 The current Schedule 2 audit moves HSA distribution tax to the correct 2025 line
 17c, Form 8828 mortgage-subsidy recapture to 17b, and Form 8611

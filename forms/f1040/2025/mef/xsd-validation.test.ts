@@ -25,6 +25,7 @@ import { TargetGroup } from "../../nodes/inputs/f5884/index.ts";
 import { calculateForm8874Recapture } from "../../nodes/inputs/f8874/recapture_node.ts";
 import {
   calculateForm8396,
+  CertifiedInterestDocumentKind,
   form8396SourceSchema,
   QualifiedHomeState,
 } from "../../nodes/intermediate/forms/form8396/calculation.ts";
@@ -524,7 +525,15 @@ Deno.test({
     certificate_issuer_name: "Austin Housing Finance Corporation",
     certificate_number: "MCC-2022-104",
     certificate_issue_date: "2022-03-15",
-    mortgage_interest_paid: 15_000,
+    current_year_claim: true,
+    interest_evidence: {
+      kind: CertifiedInterestDocumentKind.Form1098,
+      document_reference: "2025 Form 1098 loan A",
+      reported_interest_paid: 15_000,
+      taxpayer_interest_paid: 15_000,
+      original_mortgage_amount: 200_000,
+      certified_indebtedness_amount: 200_000,
+    },
     interest_reporting_line: "8a",
     mcc_rate: 0.25,
     home_is_main_residence: true,
@@ -540,6 +549,12 @@ Deno.test({
   });
   const lines = calculateForm8396(source, 1_100);
   const xml = buildMefXml({
+    f1098: {
+      f1098s: [{
+        source_document_reference: "2025 Form 1098 loan A",
+        box1_mortgage_interest: 15_000,
+      }],
+    },
     f1040: {
       line12e_itemized_deductions: 13_000,
       line16_income_tax: 1_500,
@@ -571,6 +586,47 @@ Deno.test({
     "<RptHomeMortgIntAndPointsAmt>13000</RptHomeMortgIntAndPointsAmt>",
   );
   await validateXsd(xml, "Form 8396 with Schedule A interest reduction");
+});
+
+Deno.test("Form 8396 allocates a smaller certified loan through the full return graph", () => {
+  const source = form8396SourceSchema.parse({
+    certificate_issuer_name: "Austin Housing Finance Corporation",
+    certificate_number: "MCC-2025-101",
+    certificate_issue_date: "2025-01-15",
+    current_year_claim: true,
+    interest_evidence: {
+      kind: CertifiedInterestDocumentKind.Form1098,
+      document_reference: "2025 Form 1098 loan B",
+      reported_interest_paid: 7_500,
+      taxpayer_interest_paid: 7_500,
+      original_mortgage_amount: 125_000,
+      certified_indebtedness_amount: 100_000,
+    },
+    interest_reporting_line: "8a",
+    mcc_rate: 0.2,
+    home_is_main_residence: true,
+    home_in_issuer_jurisdiction: true,
+    interest_paid_to_related_person: false,
+    certificate_is_reissued: false,
+    nonspouse_coowner: false,
+    carryforward_vintages: [],
+  });
+  const result = runReturn({
+    general: singleGeneral(),
+    w2: [{ box1_wages: 60_000, box2_fed_withheld: 5_000 }],
+    f1098: [{
+      source_document_reference: "2025 Form 1098 loan B",
+      box1_mortgage_interest: 7_500,
+    }],
+    form8396: source,
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form8396?.line1, 6_000);
+  assertEquals(result.pending.form8396?.line3, 1_200);
+  assertEquals(
+    result.pending.schedule3?.line6g_mortgage_interest_credit,
+    1_200,
+  );
 });
 
 Deno.test({

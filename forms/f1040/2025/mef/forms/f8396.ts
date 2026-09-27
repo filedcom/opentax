@@ -1,6 +1,7 @@
 import { element, elements } from "../../../mef/xml.ts";
 import {
   calculateForm8396,
+  CertifiedInterestDocumentKind,
   type Form8396Source,
   form8396SourceSchema,
 } from "../../../nodes/intermediate/forms/form8396/calculation.ts";
@@ -34,7 +35,8 @@ const SOURCE_KEYS = [
   "certificate_issuer_name",
   "certificate_number",
   "certificate_issue_date",
-  "mortgage_interest_paid",
+  "current_year_claim",
+  "interest_evidence",
   "interest_reporting_line",
   "mcc_rate",
   "home_is_main_residence",
@@ -114,14 +116,44 @@ function checkFiledCredit(
   }
 }
 
+function reconcileInterestEvidence(
+  source: Form8396Source,
+  context: MefBuildContext | undefined,
+): void {
+  const evidence = source.interest_evidence;
+  if (!evidence || evidence.kind !== CertifiedInterestDocumentKind.Form1098) {
+    return;
+  }
+  const input = context?.pending?.f1098 as
+    | { f1098s?: unknown }
+    | undefined;
+  if (!Array.isArray(input?.f1098s)) {
+    throw new Error("Form 8396 needs its referenced Form 1098 input");
+  }
+  const matches = input.f1098s.filter((raw): raw is Record<string, unknown> =>
+    typeof raw === "object" && raw !== null &&
+    (raw as Record<string, unknown>).source_document_reference ===
+      evidence.document_reference
+  );
+  if (matches.length !== 1) {
+    throw new Error(
+      "Form 8396 interest needs one matching Form 1098 reference",
+    );
+  }
+  if (matches[0].box1_mortgage_interest !== evidence.reported_interest_paid) {
+    throw new Error("Form 8396 interest differs from Form 1098 box 1");
+  }
+}
+
 export const form8396: MefFormDescriptor<"form8396", Input> = {
   pendingKey: "form8396",
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8396.pdf",
   build(fields, context) {
-    if (fields.mortgage_interest_paid === undefined) return "";
+    if (fields.certificate_issuer_name === undefined) return "";
     const { source, lines } = reconciledLines(fields);
     checkFiledCredit(lines.line9, context);
+    reconcileInterestEvidence(source, context);
     return elements("IRS8396", [
       source.qualified_home_address_if_different
         ? elements("QlfyMortgageCertUSAddress", [

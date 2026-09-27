@@ -1,6 +1,7 @@
 import { assertStringIncludes, assertThrows } from "@std/assert";
 import {
   calculateForm8396,
+  CertifiedInterestDocumentKind,
   form8396SourceSchema,
   QualifiedHomeState,
 } from "../../../nodes/intermediate/forms/form8396/calculation.ts";
@@ -16,7 +17,15 @@ const source = form8396SourceSchema.parse({
   certificate_issuer_name: "Austin Housing Finance Corporation",
   certificate_number: "MCC-2022-104",
   certificate_issue_date: "2022-03-15",
-  mortgage_interest_paid: 15_000,
+  current_year_claim: true,
+  interest_evidence: {
+    kind: CertifiedInterestDocumentKind.Form1098,
+    document_reference: "2025 Form 1098 loan A",
+    reported_interest_paid: 15_000,
+    taxpayer_interest_paid: 15_000,
+    original_mortgage_amount: 200_000,
+    certified_indebtedness_amount: 200_000,
+  },
   interest_reporting_line: "8a",
   mcc_rate: 0.25,
   home_is_main_residence: true,
@@ -37,10 +46,19 @@ const fields = {
   credit_limit_worksheet_line1: 1_500,
   credit_limit_worksheet_line2: 400,
 };
+const matchedPending = {
+  schedule3: { line6g_mortgage_interest_credit: 1_100 },
+  f1098: {
+    f1098s: [{
+      source_document_reference: "2025 Form 1098 loan A",
+      box1_mortgage_interest: 15_000,
+    }],
+  },
+};
 
 Deno.test("Form 8396 XML carries source, allowed credit, and vintage carryforward", () => {
   const xml = form8396.build(fields, {
-    pending: { schedule3: { line6g_mortgage_interest_credit: 1_100 } },
+    pending: matchedPending,
   });
   assertStringIncludes(
     xml,
@@ -85,5 +103,69 @@ Deno.test("Form 8396 XML rejects line 9 and Schedule 3 mismatches", () => {
       }),
     Error,
     "differs from Schedule 3 line 6g",
+  );
+});
+
+Deno.test("Form 8396 XML rejects a missing or mismatched Form 1098", () => {
+  assertThrows(
+    () =>
+      form8396.build(fields, {
+        pending: { schedule3: matchedPending.schedule3 },
+      }),
+    Error,
+    "referenced Form 1098 input",
+  );
+  assertThrows(
+    () =>
+      form8396.build(fields, {
+        pending: {
+          ...matchedPending,
+          f1098: {
+            f1098s: [{
+              source_document_reference: "2025 Form 1098 loan A",
+              box1_mortgage_interest: 14_000,
+            }],
+          },
+        },
+      }),
+    Error,
+    "differs from Form 1098 box 1",
+  );
+  assertThrows(
+    () =>
+      form8396.build(fields, {
+        pending: {
+          ...matchedPending,
+          f1098: {
+            f1098s: [
+              matchedPending.f1098.f1098s[0],
+              matchedPending.f1098.f1098s[0],
+            ],
+          },
+        },
+      }),
+    Error,
+    "one matching Form 1098 reference",
+  );
+});
+
+Deno.test("Form 8396 accepts a named lender statement without an entered Form 1098", () => {
+  const statementSource = form8396SourceSchema.parse({
+    ...source,
+    interest_evidence: {
+      ...source.interest_evidence,
+      kind: CertifiedInterestDocumentKind.LenderStatement,
+      document_reference: "2025 lender annual statement",
+    },
+  });
+  const xml = form8396.build({
+    ...statementSource,
+    ...lines,
+    credit_limit_worksheet_line1: 1_500,
+    credit_limit_worksheet_line2: 400,
+  }, { pending: { schedule3: matchedPending.schedule3 } });
+  assertStringIncludes(
+    xml,
+    "<MortgageInterestCreditAmt>1100</MortgageInterestCreditAmt>",
   );
 });

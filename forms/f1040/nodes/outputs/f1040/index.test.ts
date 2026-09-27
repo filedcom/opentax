@@ -2,6 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { f1040 } from "./index.ts";
 import { FilingStatus } from "../../types.ts";
 import { ZERO_FORM3800_PASSIVE_ACTIVITY } from "../../inputs/f3800/calculation.ts";
+import { CertifiedInterestDocumentKind } from "../../intermediate/forms/form8396/calculation.ts";
 
 const ctx = {} as Parameters<typeof f1040.compute>[0];
 
@@ -55,7 +56,15 @@ Deno.test("f1040: Form 8396 uses its tax-liability worksheet before Schedule 3",
       certificate_issuer_name: "Austin Housing Finance Corporation",
       certificate_number: "MCC-2022-104",
       certificate_issue_date: "2022-03-15",
-      mortgage_interest_paid: 15_000,
+      current_year_claim: true,
+      interest_evidence: {
+        kind: CertifiedInterestDocumentKind.Form1098,
+        document_reference: "2025 Form 1098 loan A",
+        reported_interest_paid: 15_000,
+        taxpayer_interest_paid: 15_000,
+        original_mortgage_amount: 200_000,
+        certified_indebtedness_amount: 200_000,
+      },
       interest_reporting_line: "8a",
       mcc_rate: 0.25,
       home_is_main_residence: true,

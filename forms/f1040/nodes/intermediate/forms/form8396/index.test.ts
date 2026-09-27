@@ -1,7 +1,9 @@
 import { assertEquals } from "@std/assert";
 import {
   calculateForm8396,
+  calculateForm8396Line1,
   calculateForm8396Line3,
+  CertifiedInterestDocumentKind,
   form8396SourceSchema,
 } from "./calculation.ts";
 import { form8396 } from "./index.ts";
@@ -10,7 +12,15 @@ const source = {
   certificate_issuer_name: "Austin Housing Finance Corporation",
   certificate_number: "MCC-2022-104",
   certificate_issue_date: "2022-03-15",
-  mortgage_interest_paid: 15_000,
+  current_year_claim: true,
+  interest_evidence: {
+    kind: CertifiedInterestDocumentKind.Form1098,
+    document_reference: "2025 Form 1098 loan A",
+    reported_interest_paid: 15_000,
+    taxpayer_interest_paid: 15_000,
+    original_mortgage_amount: 200_000,
+    certified_indebtedness_amount: 200_000,
+  },
   interest_reporting_line: "8a",
   mcc_rate: 0.25,
   home_is_main_residence: true,
@@ -66,6 +76,32 @@ Deno.test("Form 8396 does not apply the high-rate cap at exactly 20 percent", ()
     })),
     3_000,
   );
+});
+
+Deno.test("Form 8396 allocates interest when the certified loan is smaller", () => {
+  const allocated = form8396SourceSchema.parse({
+    ...source,
+    interest_evidence: {
+      ...source.interest_evidence,
+      reported_interest_paid: 7_500,
+      taxpayer_interest_paid: 7_500,
+      original_mortgage_amount: 125_000,
+      certified_indebtedness_amount: 100_000,
+    },
+    mcc_rate: 0.2,
+  });
+  assertEquals(calculateForm8396Line1(allocated), 6_000);
+  assertEquals(calculateForm8396Line3(allocated), 1_200);
+});
+
+Deno.test("Form 8396 carryforward-only claim has no current-year interest", () => {
+  const carryOnly = form8396SourceSchema.parse({
+    ...source,
+    current_year_claim: false,
+    interest_evidence: undefined,
+  });
+  const lines = calculateForm8396(carryOnly, 200);
+  assertEquals([lines.line1, lines.line3, lines.line9], [0, 0, 200]);
 });
 
 Deno.test("Form 8396 prorates a high-rate cap for a nonspouse co-owner", () => {
@@ -131,6 +167,15 @@ Deno.test("Form 8396 rejects unsupported or incomplete MCC claims", () => {
       { ...source, home_in_issuer_jurisdiction: false },
       { ...source, interest_paid_to_related_person: true },
       { ...source, certificate_is_reissued: true },
+      { ...source, current_year_claim: true, interest_evidence: undefined },
+      { ...source, current_year_claim: false },
+      {
+        ...source,
+        interest_evidence: {
+          ...source.interest_evidence,
+          taxpayer_interest_paid: 16_000,
+        },
+      },
       { ...source, nonspouse_coowner: true },
       { ...source, certificate_issue_date: "2026-01-01" },
       {
