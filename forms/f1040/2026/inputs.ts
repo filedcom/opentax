@@ -19,6 +19,7 @@ import { schedule_d } from "../nodes/intermediate/aggregation/schedule_d/index.t
 import { f1099div_2026, f1099divItem2026Schema } from "./nodes/f1099div.ts";
 import { f1099b_2026, f1099bItem2026Schema } from "./nodes/f1099b.ts";
 import { f1099da_2026, f1099daItem2026Schema } from "./nodes/f1099da.ts";
+import { f8949_2026, f8949Item2026Schema } from "./nodes/f8949.ts";
 import { form4137 } from "../nodes/intermediate/forms/form4137/index.ts";
 import { f8812_2026 } from "./nodes/f8812.ts";
 import {
@@ -39,6 +40,7 @@ export const capitalActivityInput2026Schema = z.object({
   line_14_carryover: z.number().finite().nonnegative(),
   qof_disposition: z.boolean(),
   qof_deferral_or_inclusion: z.boolean(),
+  // Activity outside the explicit 1099-B, 1099-DA, 1099-DIV, and f8949 inputs.
   other_capital_activity: z.boolean(),
   form4952_filing: z.boolean(),
 }).strict();
@@ -52,6 +54,7 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f1099div_2026, itemSchema: f1099divItem2026Schema, isArray: true },
   { node: f1099b_2026, itemSchema: f1099bItem2026Schema, isArray: true },
   { node: f1099da_2026, itemSchema: f1099daItem2026Schema, isArray: true },
+  { node: f8949_2026, itemSchema: f8949Item2026Schema, isArray: true },
   {
     node: schedule_d,
     inputSchema: capitalActivityInput2026Schema,

@@ -7,6 +7,11 @@ baseline research. It is not a valid target for the current draft 1040. The
 [IRS September 24 v4 release memo](https://www.irs.gov/e-file-providers/release-memo-for-tax-year-2026-modernized-e-file-schema-and-business-rules-for-individual-tax-returns-version-4-point-0)
 says the current package is distributed through the registered e-Services
 mailbox. Keep raw packages and extracted XSD/rules out of this public repo.
+The [IRS version table](https://www.irs.gov/tax-professionals/tax-year-2026-modernized-e-file-schema-and-business-rules-for-individual-tax-returns-and-extensions)
+was rechecked on 2026-09-27: 1040 v4.0 became available in SOR on 2026-09-24,
+with ATS use beginning 2026-11-01; v3.0 starts ATS on 2026-10-13. The local
+research directory still contains only the May v1 package. Obtain the current
+SOR package before selecting XML field names or declaring ATS readiness.
 
 Observed in the v1 `IRS1040.xsd` versus the pinned September draft
 [`f1040.pdf`](corpus/draft/f1040.pdf):

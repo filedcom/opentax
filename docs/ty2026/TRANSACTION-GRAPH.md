@@ -30,8 +30,11 @@ The 2026 PDF builders exclude adjustment-free A/D/G/J trades from Form 8949,
 sum those on Schedule D lines 1a/8a, and group all other trades by A–L page
 and the six Schedule D summary rows. The combined PDF requires the Form 8949
 attachment whenever a filed trade needs it and checks the attachment records
-against Schedule D. The public input still needs source coverage for trades
-without a broker return, and MeF detail remains open.
+against Schedule D. The dedicated `f8949` input now covers plain security or
+digital-asset dispositions without a broker form, deriving C/F/I/L from asset
+kind and holding term. A mixed broker-plus-unreported return passes the graph
+and eight-page PDF test. Adjusted unreported dispositions and MeF detail
+remain open.
 
 ## Implementation order
 

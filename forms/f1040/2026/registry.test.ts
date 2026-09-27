@@ -8,6 +8,7 @@ import { DependentRelationship } from "../nodes/inputs/general/index.ts";
 import { form6251 } from "../nodes/intermediate/forms/form6251/index.ts";
 import { buildStartNode } from "../start.ts";
 import { inputNodes } from "./inputs.ts";
+import { f8949Item2026Schema } from "./nodes/f8949.ts";
 import { registry } from "./registry.ts";
 import { buildCorePdfBytes2026 } from "./pdf/core.ts";
 import { buildPdfBytes2026 } from "./pdf/builder.ts";
@@ -123,6 +124,59 @@ Deno.test("TY2026 broker and digital asset trades reach Schedule D and Form 8949
     Error,
     "needs Form 8949",
   );
+});
+
+Deno.test("TY2026 unreported capital trades file C/F/I/L Form 8949 pages", async () => {
+  const transactions = [
+    { asset_kind: "security", term: "short", description: "Private shares" },
+    { asset_kind: "security", term: "long", description: "Private land" },
+    {
+      asset_kind: "digital_asset",
+      term: "short",
+      description: "Digital token",
+    },
+    { asset_kind: "digital_asset", term: "long", description: "Digital token" },
+  ].map((trade) => ({
+    ...trade,
+    date_acquired: "2025-01-01",
+    date_sold: "2026-06-01",
+    proceeds: 1_200,
+    cost_basis: 1_000,
+  }));
+  assertEquals(f8949Item2026Schema.safeParse(transactions[0]).success, true);
+  assertEquals(
+    f8949Item2026Schema.safeParse({ ...transactions[0], part: "A" }).success,
+    false,
+  );
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: { ...filer, digital_assets: true },
+    schedule_d: {
+      line_6_carryover: 0,
+      line_14_carryover: 0,
+      qof_disposition: false,
+      qof_deferral_or_inclusion: false,
+      other_capital_activity: false,
+      form4952_filing: false,
+    },
+    w2: [{ box1_wages: 70_000, box2_fed_withheld: 8_000 }],
+    f8949: transactions,
+    f1099b: [{
+      payer_name: "Broker",
+      box1a_description: "Direct shares",
+      box1b_date_acquired: "2026-01-10",
+      box1c_date_sold: "2026-06-10",
+      box1d_proceeds: 1_200,
+      box1e_reported_basis: 1_000,
+      box2_term: "short",
+      box12_basis_reported_to_irs: true,
+    }],
+  }, context);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule_d.print_line7_st_total, 600);
+  assertEquals(result.pending.schedule_d.print_line15_lt_total, 400);
+  assertEquals(result.pending.f1040.line7a_capital_gain, 1_000);
+  const pdf = await PDFDocument.load(await buildPdfBytes2026(result.pending));
+  assertEquals(pdf.getPageCount(), 8);
 });
 
 Deno.test("TY2026 W-2 excess Social Security withholding reaches Schedule 3 and PDF", async () => {
