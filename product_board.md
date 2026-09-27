@@ -264,8 +264,10 @@ purchase-record and duplicate-claim confirmations, and line-indexed gallons,
 use codes, and actual fuel costs. Its calculation and rejection cases are
 written but unrun. Its `IRS4136` builder now maps the represented lines and
 reconciles line 17 with Schedule 3 line 12; local XSD and source cases are
-written but unrun. Multiple businesses require Schedule A (Form 4136), and PDF,
-additional claim lines, source evidence, and ATS acceptance remain open.
+written but unrun. Multiple businesses require Schedule A (Form 4136). The PDF
+descriptor now maps the four-page 2025 form and repeated-use statement, but
+filled rendering is unverified. Additional claim lines, source evidence, full
+test/XSD and IRS business rules, and ATS acceptance remain open.
 
 Form 8936 now enters the start graph as one singleton input containing both Part
 I MAGI breakdowns, both filing statuses, and its vehicle array. The old

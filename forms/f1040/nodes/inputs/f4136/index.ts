@@ -52,6 +52,10 @@ export const fuelClaimSchema = z.object({
   type_of_use: z.string().regex(/^\d{2}$/).optional(),
   qualified_gallons: z.number().int().positive().max(999_999_999),
   actual_fuel_cost: z.number().finite().positive(),
+  undyed_fuel_confirmed: z.literal(true).optional(),
+  right_to_claim_not_waived: z.literal(true).optional(),
+  credit_card_issuer_certificate_not_provided: z.literal(true).optional(),
+  not_highway_vehicle: z.literal(true).optional(),
 });
 
 export const inputSchema = z.object({
@@ -59,6 +63,7 @@ export const inputSchema = z.object({
     qualifying_business_activity: z.literal(true),
     activity_count: z.literal(1),
     business_name: z.string().trim().min(1),
+    business_ein: z.string().regex(/^\d{9}$/).optional(),
     principal_activity_code: z.string().regex(/^\d{6}$/),
     equipment_make: z.string().trim().min(1),
     equipment_model: z.string().trim().min(1),
@@ -92,6 +97,31 @@ export const inputSchema = z.object({
         message: `Form 4136 line ${claim.line} does not allow this type of use`,
         path: ["claims", index, "type_of_use"],
       });
+    }
+    const requiredFacts = [
+      ...(["3a", "3b", "4a", "4b"].includes(claim.line)
+        ? ["undyed_fuel_confirmed"] as const
+        : []),
+      ...(claim.line === "5c" || claim.line === "5d" ||
+          (claim.line === "2b" &&
+            ["13", "14"].includes(claim.type_of_use ?? ""))
+        ? ["right_to_claim_not_waived"] as const
+        : []),
+      ...(claim.line === "2b" && ["13", "14"].includes(claim.type_of_use ?? "")
+        ? ["credit_card_issuer_certificate_not_provided"] as const
+        : []),
+      ...(claim.line === "1a" || claim.type_of_use === "02"
+        ? ["not_highway_vehicle"] as const
+        : []),
+    ];
+    for (const fact of requiredFacts) {
+      if (claim[fact] !== true) {
+        ctx.addIssue({
+          code: "custom",
+          message: `Form 4136 line ${claim.line} requires ${fact}`,
+          path: ["claims", index, fact],
+        });
+      }
     }
     const key = `${claim.line}:${claim.type_of_use ?? ""}`;
     if (seen.has(key)) {
