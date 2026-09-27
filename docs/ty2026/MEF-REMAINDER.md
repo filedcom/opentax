@@ -31,8 +31,8 @@ MeF release before filing.
   only once in the return-wide credit resolver.
 - The shared [`f8911` node](../../forms/f1040/nodes/inputs/f8911/index.ts)
   accepts one property and blocks any business use. TY2025
-  [`IRS8911`](https://github.com/filedcom/opentax/blob/2ed64bdd639597466a903200bfee189d38a65e7f/forms/f1040/2025/mef/forms/f8911.ts) and
-  [`IRS8911ScheduleA`](https://github.com/filedcom/opentax/blob/2ed64bdd639597466a903200bfee189d38a65e7f/forms/f1040/2025/mef/forms/f8911_schedule_a.ts)
+  [`IRS8911`](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/2025/mef/forms/f8911.ts) and
+  [`IRS8911ScheduleA`](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/2025/mef/forms/f8911_schedule_a.ts)
   serialize that personal-only case. Replace the single-property input
   with property rows, derive credit limits from the 2026 return rather
   than caller-supplied tax totals, and add PDF/MeF per-property links.
@@ -67,8 +67,8 @@ timing separate from ordinary current-year income.
   for affected-year recomputation.
 - The shared [`f8978` node](../../forms/f1040/nodes/inputs/f8978/index.ts)
   already retains year columns and routes positive/negative totals through
-  different nodes. The TY2025 [`IRS8978`](https://github.com/filedcom/opentax/blob/2ed64bdd639597466a903200bfee189d38a65e7f/forms/f1040/2025/mef/forms/f8978.ts),
-  [`IRS8978ScheduleA`](https://github.com/filedcom/opentax/blob/2ed64bdd639597466a903200bfee189d38a65e7f/forms/f1040/2025/mef/forms/f8978_schedule_a.ts)
+  different nodes. The TY2025 [`IRS8978`](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/2025/mef/forms/f8978.ts),
+  [`IRS8978ScheduleA`](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/2025/mef/forms/f8978_schedule_a.ts)
   and tax-computation PDF statement need a current MeF parent/link check.
   Build both printable forms, one Schedule A and computation statement per
   filing, and validate their document IDs and amount sums. Test mixed

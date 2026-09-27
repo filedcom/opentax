@@ -30,19 +30,19 @@ inside basis, FMV, §732 adjustments and resulting partner basis.
 | 9–10 | Reduce outside basis by **cash** at line 9, with the printed §737 gain instruction, then allocate the resulting limit to distributed property. Non-liquidating and liquidating distributions use different line 10 caps. Part II line B column (e) must equal line 10. |
 | Part II | Keep each property separately, including description/code, inside basis, §732(d)/§732(f)/§734(b)/§743(b) adjustment boxes, FMV and partner's resulting basis. Continue beyond 30 printed rows with attached Parts II and line A totals. The resulting basis and holding/character facts feed later depreciation or disposition, including Forms 4562/4797/Schedule D/8949 as appropriate. |
 
-The [TY2025 ATS scenario 12 review](https://github.com/filedcom/opentax/blob/2ed64bdd639597466a903200bfee189d38a65e7f/docs/ats/ty2025.md) already identifies a
+The [TY2025 ATS scenario 12 review](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/docs/ats/ty2025.md) already identifies a
 source inconsistency: the packet prints Form 7217 line 10 as **$6,000**
 while Part II column (e) totals **$4,000**. Preserve this as a failing
 source fixture; do not make the 2026 engine silently accept the mismatch.
 
 ## Current code boundary
 
-- The shared [input node](https://github.com/filedcom/opentax/blob/2ed64bdd639597466a903200bfee189d38a65e7f/forms/f1040/nodes/inputs/f7217/index.ts)
+- The shared [input node](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/nodes/inputs/f7217/index.ts)
   calculates aggregate Part I values and refuses recognized gain because
   it has no Schedule D/Form 4797 route. It emits **no** downstream output,
   is absent from the 2026 registry, and treats property-level final bases
   as optional inputs instead of deriving/reconciling the allocation.
-- TY2025 [MeF `IRS7217`](https://github.com/filedcom/opentax/blob/2ed64bdd639597466a903200bfee189d38a65e7f/forms/f1040/2025/mef/forms/f7217.ts)
+- TY2025 [MeF `IRS7217`](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/2025/mef/forms/f7217.ts)
   emits one document per input item and has no TY2026 XSD/rule check. There
   is no Form 7217 PDF descriptor in the TY2025 PDF inventory and no 2026
   PDF/MeF route. The [306-widget inventory](pdf-fields-f7217.csv) is the

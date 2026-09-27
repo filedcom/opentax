@@ -39,8 +39,8 @@ the exact 2026 filing instruction before retaining or changing that gate.
   audit all Schedule E/K-1 producers before reusing it. The calculator
   returns no form when MAGI is at/below the threshold or NII is zero; this
   must be reconciled to the 2026 attachment instruction.
-- The 2026 [PDF descriptor](https://github.com/filedcom/opentax/blob/2ed64bdd639597466a903200bfee189d38a65e7f/forms/f1040/2026/pdf/forms/f8960.ts)
-  and [builder](https://github.com/filedcom/opentax/blob/2ed64bdd639597466a903200bfee189d38a65e7f/forms/f1040/2026/pdf/f8960.ts) fill 21 numeric lines
+- The 2026 [PDF descriptor](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/2026/pdf/forms/f8960.ts)
+  and [builder](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/2026/pdf/f8960.ts) fill 21 numeric lines
   but omit the election boxes and printed lines 5c, 6 and 9c. The PDF
   attachment gate requires line 17 > 0. The complete [draft field
   inventory](pdf-fields-f8960.csv) is the map for closing this gap.

@@ -25,7 +25,7 @@ issuance threshold is not a recipient deduction floor.
 ## Current implementation boundary
 
 The shared [`schedule1a` node](../../forms/f1040/nodes/intermediate/forms/schedule1a/index.ts)
-and dedicated [2026 PDF](https://github.com/filedcom/opentax/blob/2ed64bdd639597466a903200bfee189d38a65e7f/forms/f1040/2026/pdf/schedule1a.ts) already
+and dedicated [2026 PDF](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/2026/pdf/schedule1a.ts) already
 calculate the $10,000 cap, $200 phaseout and per-VIN form rows, including a
 continuation page test. The input only carries VIN, a caller-supplied
 `qualified_interest_paid`, an optional business deduction and optional

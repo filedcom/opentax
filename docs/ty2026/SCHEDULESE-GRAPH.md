@@ -70,7 +70,7 @@ Schedule F income. Schedule F line 34 remains the income-tax profit.
    Retain a filed-line record rather than only five downstream totals. Reject
    incomplete election history and incompatible source/owner combinations.
    The existing shared node uses only regular method and stops when its line
-   4a is below $400; [TY2026 registry](https://github.com/filedcom/opentax/blob/2ed64bdd639597466a903200bfee189d38a65e7f/forms/f1040/2026/registry.ts)
+   4a is below $400; [TY2026 registry](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/2026/registry.ts)
    does not yet contain Schedule SE.
 3. Route the calculated lines to the dedicated 2026 Schedule 1 and 2 sinks,
    AGI, Form 8959, QBI, and earned-income credit consumers. Reconcile a

@@ -50,7 +50,7 @@ source and MAGI checks for this intake row.
    [`f8994`](../../forms/f1040/nodes/inputs/f8994/index.ts). The 2026 route
    must build a Form 3800 source record and its filed evidence before the
    Schedule 3 total. The same audit applies to every named credit node.
-2. [`form8978_reporting_year`](https://github.com/filedcom/opentax/blob/2ed64bdd639597466a903200bfee189d38a65e7f/forms/f1040/nodes/intermediate/worksheets/form8978_reporting_year/index.ts)
+2. [`form8978_reporting_year`](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/nodes/intermediate/worksheets/form8978_reporting_year/index.ts)
    allocates negative affected-year tax among tax offsets, Schedule 2 and
    Schedule 3. Reconcile its current source totals with the [Form 8978
    contract](MEF-REMAINDER.md) and printed 2026 lines, including the

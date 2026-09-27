@@ -268,6 +268,22 @@ deno task bench
 deno task tax return create --year 2025
 ```
 
+### TY2026 research sources
+
+The [TY2026 research corpus](docs/ty2026/README.md) contains the implementation
+plans, source manifest, and pinned IRS PDFs. These PDFs use Git LFS so they do
+not become ordinary Git blobs. Install Git LFS before working with the corpus:
+
+```bash
+git lfs install
+git lfs pull
+```
+
+When refreshing IRS sources, follow the [corpus instructions](docs/ty2026/README.md#working-with-the-pinned-pdfs).
+Verify that new or changed PDFs appear in `git lfs ls-files` before pushing.
+Adding LFS tracking after a regular PDF commit does not remove that PDF from
+Git history.
+
 ### Contributing with Claude Code
 
 The repo includes four skills that automate the full development lifecycle. Open the project in [Claude Code](https://claude.ai/code) and invoke them with `/skill-name`.

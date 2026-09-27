@@ -28,7 +28,7 @@ are pinned. This is a current continuous-use authority, subject to a final
   Form 3800 applies the tax-liability limit and feeds Schedule 3 line 6a.
 - The shared [`f8826` node](../../forms/f1040/nodes/inputs/f8826/index.ts)
   calculates a capped source and blocks passive credits, but is not in the
-  TY2026 registry. The TY2025 [`IRS8826` serializer](https://github.com/filedcom/opentax/blob/2ed64bdd639597466a903200bfee189d38a65e7f/forms/f1040/2025/mef/forms/f8826_draft.ts)
+  TY2026 registry. The TY2025 [`IRS8826` serializer](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/2025/mef/forms/f8826_draft.ts)
   omits the direct pass-through-only document by design. Build the current
   PDF and MeF route, controlled-group attachment, Form 8582-CR handoff and
   explicit cost-basis/deduction reduction. Validate 0/$250/$10,250 costs,
@@ -58,7 +58,7 @@ the 2025 printed rates/calculation cannot be assumed for 2026 sales.
   eligible older facilities rather than deciding solely from TY2026.
 - The shared [`f8835` node](../../forms/f1040/nodes/inputs/f8835/index.ts)
   has a literal `calendar-year 2025` phaseout assumption and TY2025 rates;
-  the TY2025 [`IRS8835` serializer](https://github.com/filedcom/opentax/blob/2ed64bdd639597466a903200bfee189d38a65e7f/forms/f1040/2025/mef/forms/f8835.ts)
+  the TY2025 [`IRS8835` serializer](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/2025/mef/forms/f8835.ts)
   requires selected binary statements. Before coding, obtain the 2026 form,
   instructions, applicable 2026 rate notice, current Form 3800 and MeF
   schema/rules; map any changed lines and attachment types. Test multiple

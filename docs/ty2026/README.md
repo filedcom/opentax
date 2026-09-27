@@ -2,11 +2,32 @@
 
 Snapshot date: 2026-09-27. This is the source map for full TY2026 1040 end-to-end
 work. Start at the [implementation entry point](ENTRY-POINT.md).
-The code observations were captured from research commit `2ed64bdd` while
+The code observations were captured from research commit `b7c07b61` while
 TY2025/TY2026 work continued on a separate branch; compare them with the
 current checkout before implementing a route.
 The [research handoff audit](READINESS-AUDIT.md) records coverage and the
 remaining IRS publication, MeF and ATS gates.
+
+## Working with the pinned PDFs
+
+All 248 checked-in PDFs under `docs/ty2026` are tracked by Git LFS through
+the repository's `.gitattributes`. Install Git LFS before working with this
+corpus. After cloning or switching to a checkout that already has pointer
+files, fetch the PDF content with:
+
+```bash
+git lfs install
+git lfs pull
+```
+
+The [manifest](corpus/manifest.json) records each downloaded source's URL,
+byte length and SHA-256. To refresh the snapshot, run
+`python3 docs/ty2026/corpus/download.py` from the repository root, review
+the source and manifest changes, then verify that each new or changed PDF is
+listed by `git lfs ls-files` before pushing. Keep the LFS rule in
+`.gitattributes`; adding it after an ordinary PDF commit does not remove that
+PDF from Git history. The MeF inventory spreadsheets and text ledgers remain
+regular Git files.
 
 ## What is in this snapshot
 

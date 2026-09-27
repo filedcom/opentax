@@ -1,6 +1,6 @@
 # TY2026 Form 1040 entry point — implementation plan
 
-Status: research snapshot, 2026-09-27, from code commit `2ed64bdd`.
+Status: research snapshot, 2026-09-27, from code commit `b7c07b61`.
 The 2026 code snapshot had a calculation registry for a verified subset;
 `f1040_2026` was not registered in `catalog.ts` yet. This plan belongs with
 the corpus in `docs/ty2026`; compare code references with the current checkout

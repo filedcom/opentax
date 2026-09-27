@@ -32,7 +32,7 @@ reject the split if the refund is less than $1,000.
    does not reconcile account amounts to the computed refund, and still has
    savings-bond inputs absent from the pinned 2026 form. Model only current
    2026 account rows and connect them to the finalized 1040 line 35a.
-2. Add a refund-allocation stage after the existing [2026 settlement](https://github.com/filedcom/opentax/blob/2ed64bdd639597466a903200bfee189d38a65e7f/forms/f1040/2026/settlement.ts).
+2. Add a refund-allocation stage after the existing [2026 settlement](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/2026/settlement.ts).
    Require a positive refund, two or three complete deposit rows (a single
    deposit uses 1040 direct-deposit fields), at least $1 per row, valid
    routing and account data, account uniqueness under the selected MeF rules,

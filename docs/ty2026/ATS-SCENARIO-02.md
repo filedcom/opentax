@@ -63,7 +63,7 @@ derived expectations, and application output distinct.
    2026 line 16b/16c split before registration.
 2. Supply source-backed business receipts, expense classification, vehicle
    election, and Part IV facts. Confirm the W-2/landscaping activity link. The
-   existing [business-mileage function](https://github.com/filedcom/opentax/blob/2ed64bdd639597466a903200bfee189d38a65e7f/forms/f1040/nodes/shared/business-mileage.ts)
+   existing [business-mileage function](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/nodes/shared/business-mileage.ts)
    has the correct two 2026 periods; test this packet's $470 against its
    actual Schedule C route and PDF field.
 3. Build the joint [Schedule A/standard/QBI resolver](DEDUCTION-GRAPH.md),

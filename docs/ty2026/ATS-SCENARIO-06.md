@@ -48,7 +48,7 @@ from the cover's attachment list.
   It emits gambling to shared Schedule 1 line 8z and is not registered in the
   2026 graph. Create a dedicated 2026 W-2G record and emit to 2026 Schedule 1
   line 8b; reconcile Form 1040 line 25b without double counting.
-- The [2026 Schedule 1 sink](https://github.com/filedcom/opentax/blob/2ed64bdd639597466a903200bfee189d38a65e7f/forms/f1040/2026/nodes/schedule1.ts)
+- The [2026 Schedule 1 sink](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/2026/nodes/schedule1.ts)
   lacks `line8b_gambling`. Add it to its schema and line 9 sum, with distinct
   PDF and MeF field mapping. The sink explicitly rejects the stale
   `line8b_savings_bond_exclusion` key; do not reuse that key for gambling.
@@ -58,7 +58,7 @@ from the cover's attachment list.
   Schedule E columns (i)/(k), then aggregate Schedule E line 41 once. Keep
   the ATS row as a printed-summary fixture with missing K-1 provenance until
   underlying records can be supplied.
-- The dedicated [2026 standard deduction](https://github.com/filedcom/opentax/blob/2ed64bdd639597466a903200bfee189d38a65e7f/forms/f1040/2026/nodes/standard_deduction.ts)
+- The dedicated [2026 standard deduction](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/2026/nodes/standard_deduction.ts)
   already requires `dependent_earned_income`; this fixture must supply a
   source-backed value. The existing W-2 TT → Schedule 1-A graph is a useful
   route, but the final PDF and XML must include the schedule when claimed.

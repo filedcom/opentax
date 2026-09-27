@@ -26,9 +26,9 @@ business activity when there is more than one.
 
 The shared [`f4136` input node](../../forms/f1040/nodes/inputs/f4136/index.ts)
 models business and home-kerosene claims, rates, records, multiple activities,
-and the Schedule 3 line 12 output. The 2025 [main PDF descriptor](https://github.com/filedcom/opentax/blob/2ed64bdd639597466a903200bfee189d38a65e7f/forms/f1040/2025/pdf/forms/f4136.ts),
-[Schedule A PDF descriptor](https://github.com/filedcom/opentax/blob/2ed64bdd639597466a903200bfee189d38a65e7f/forms/f1040/2025/pdf/forms/f4136_schedule_a.ts),
-and [MeF descriptor](https://github.com/filedcom/opentax/blob/2ed64bdd639597466a903200bfee189d38a65e7f/forms/f1040/2025/mef/forms/f4136.ts) show the
+and the Schedule 3 line 12 output. The 2025 [main PDF descriptor](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/2025/pdf/forms/f4136.ts),
+[Schedule A PDF descriptor](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/2025/pdf/forms/f4136_schedule_a.ts),
+and [MeF descriptor](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/2025/mef/forms/f4136.ts) show the
 per-activity PDF/binary-attachment route. They are not registered TY2026
 serializers. Their fixed rates, form widgets, binary filenames, XSD element
 names, and reject rules must be checked against the 2026 authorities.
