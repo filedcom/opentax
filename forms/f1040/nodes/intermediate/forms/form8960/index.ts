@@ -185,10 +185,14 @@ function niitTax(base: number): number {
   return toCents(base * NIIT_RATE);
 }
 
-// Route NIIT to schedule2 line 12 when > 0
-function schedule2Output(niit: number): NodeOutput[] {
+// The printed Schedule 2 moved NIIT from line 12 to line 6 in TY2026.
+function schedule2Output(niit: number, taxYear: number): NodeOutput[] {
   if (niit <= 0) return [];
-  return [output(schedule2, { line12_niit: niit })];
+  if (taxYear === 2026) {
+    return [{ nodeType: schedule2.nodeType, fields: { line6_niit: niit } }];
+  }
+  if (taxYear === 2025) return [output(schedule2, { line12_niit: niit })];
+  throw new Error(`Form 8960 has no Schedule 2 NIIT route for TY${taxYear}`);
 }
 
 function formOutput(fields: Form8960PrintFields): NodeOutput {
@@ -238,7 +242,7 @@ class Form8960Node extends TaxNode<typeof inputSchema> {
 
     return {
       outputs: [
-        ...schedule2Output(niit),
+        ...schedule2Output(niit, ctx.taxYear),
         formOutput({
           line1_taxable_interest: input.line1_taxable_interest ?? 0,
           line2_ordinary_dividends: sumDividends(input),

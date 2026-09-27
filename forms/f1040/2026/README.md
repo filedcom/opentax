@@ -100,9 +100,11 @@ principal income amounts through 7a, including aggregate 1z wages,
 accumulated dividends, and printed 7a capital gain. A populated income page passed visual QA. Its
 source nodes and supporting schedules remain to join the 2026 registry.
 The generated [graph route inventory](../../../docs/ty2026/GRAPH-ROUTES.md)
-lists 39 declared edges from active nodes to targets outside this registry;
-the wages-only run deposits values in 13 absent target slots. It gives the
+lists 37 declared edges from active nodes to targets outside this registry;
+the wages-only run deposits values in 12 absent target slots. It gives the
 dependency order for expanding beyond the current calculation slice.
+Form 8960 is registered and sends TY2026 NIIT to the draft Schedule 2 line 6;
+the shared node retains its TY2025 line 12 route.
 The shared Form 8839 node now applies TY2026 adoption limits, emits the
 refundable per-child credit to 1040 line 30, and tracks nonrefundable
 carryforwards by origin year. Its full credit-limit worksheet and TY2026

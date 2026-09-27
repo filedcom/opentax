@@ -150,11 +150,14 @@ income amounts through line 7a. The node sums accumulated wage and dividend
 amounts for the printed lines, and a populated page-1 sample passed text extraction and
 visual inspection. The source income nodes and their required attachment
 routes still need to enter the dedicated 2026 registry.
-The [generated graph route inventory](GRAPH-ROUTES.md) records 39 declared
+The [generated graph route inventory](GRAPH-ROUTES.md) records 37 declared
 edges from the current 2026 registry to absent targets; a wages-only return
-actually deposits values into 13 of those pending slots. The 2025 registry
+actually deposits values into 12 of those pending slots. The 2025 registry
 contains each target, but each needs its own 2026 behavior and output audit
 before adding it to the dedicated graph.
+Form 8960 is now in the 2026 registry and emits NIIT on the draft Schedule 2
+line 6, while TY2025 keeps its line 12 route. The route to 2026 Form 1040 tax
+passes a focused test; the rest of the investment-income graph is still open.
 
 ## 0. Freeze source versions and establish the baseline
 

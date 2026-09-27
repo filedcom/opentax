@@ -1,6 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8960, inputSchema } from "./index.ts";
 import { FilingStatus } from "../../../types.ts";
+import { schedule2_2026 } from "../../../../2026/nodes/schedule2.ts";
 
 function compute(input: Record<string, unknown>) {
   return form8960.compute(
@@ -47,6 +48,28 @@ Deno.test("NII < MAGI excess → NIIT = NII × 3.8%", () => {
   });
   const sch2 = findOutput(result, "schedule2");
   assertEquals(sch2?.fields.line12_niit, 380);
+});
+
+Deno.test("TY2026 Form 8960 reaches Schedule 2 line 6 and Form 1040 tax", () => {
+  const result = form8960.compute(
+    { taxYear: 2026, formType: "f1040" },
+    inputSchema.parse({
+      filing_status: FilingStatus.Single,
+      magi: 300_000,
+      line1_taxable_interest: 10_000,
+    }),
+  );
+  const schedule = findOutput(result, "schedule2");
+  assertEquals(schedule?.fields, { line6_niit: 380 });
+  const finalized = schedule2_2026.compute(
+    { taxYear: 2026, formType: "f1040" },
+    { line6_niit: 380 },
+  );
+  assertEquals(
+    finalized.outputs.find((entry) => entry.nodeType === "f1040")?.fields
+      .line23_other_taxes,
+    380,
+  );
 });
 
 Deno.test("Form 8960 includes Form 8814 line 12 investment income on line 7", () => {

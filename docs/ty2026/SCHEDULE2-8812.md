@@ -21,7 +21,7 @@ source amounts and publish the actual 2026 lines below. Never serialize a
 | 1d–1f, 10 | Form 4255 net EPE recapture and excessive payments | Split the source by Form 4255 line and payment type; the old generic investment recapture amount is insufficient. |
 | 4 | Schedule SE tax | Map existing self-employment tax. |
 | 5 and 18 | Form 5329 early-distribution versus excess-contribution taxes | Split the old aggregate using the node's chapter 1 breakdown; reject missing breakdowns. |
-| 6, 9, 13b–13h, 13k, 13n, 13z | NIIT, LIHTC recapture, and other existing tax sources | Rebind each source to its filed 2026 line; audit types currently collapsed into the generic other-taxes field. |
+| 6, 9, 13b–13h, 13k, 13n, 13z | NIIT, LIHTC recapture, and other existing tax sources | Form 8960 NIIT now reaches line 6; rebind the other sources to their filed 2026 lines and audit types currently collapsed into the generic other-taxes field. |
 | 11 and 17b | Form 8959 Additional Medicare tax on self-employment versus wages/RRTA | Split the Form 8959 result; its old combined output cannot identify the new lines. |
 | 12 | Section 965 installment | The draft prints line 12 but says line 15 adds lines 4–11 and 14. The 2026 calculator rejects a positive line 12 until final placement is confirmed. |
 | 16a–16c | Form 4137 tips and Form 8919 wages | Form 4137 now routes to 16a and the 2026 node computes 16c and sends it to Schedule 8812. Form 8919 remains. |

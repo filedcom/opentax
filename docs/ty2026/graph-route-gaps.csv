@@ -4,7 +4,6 @@ agi_aggregator,f2441,yes
 agi_aggregator,f8812,yes
 agi_aggregator,form8582,yes
 agi_aggregator,form8880,yes
-agi_aggregator,form8960,yes
 agi_aggregator,form8962,yes
 agi_aggregator,form8995,yes
 agi_aggregator,form_1116,yes
@@ -13,7 +12,6 @@ general,eitc,yes
 general,f8812,yes
 general,form8582,yes
 general,form8959,yes
-general,form8960,yes
 general,form8962,yes
 general,form8995,yes
 general,schedule_a,yes
