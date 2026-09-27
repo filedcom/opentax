@@ -58,7 +58,7 @@ Deno.test("Form 3800 passive current-year XML keeps Part III and V source amount
   const xml = buildForm3800PassiveRowXml([
     currentOwn,
     currentPartnership,
-  ]);
+  ], {});
   assertEquals(xml.partIII.length, 1);
   assertEquals(xml.partIII[0].line, "1h");
   assertEquals(xml.partIII[0].metadata, {
@@ -106,7 +106,7 @@ Deno.test("Form 3800 passive current-year XML keeps Part III and V source amount
 });
 
 Deno.test("Form 3800 retains single passive current-year source detail for a mixed line", () => {
-  const xml = buildForm3800PassiveRowXml([currentOwn]);
+  const xml = buildForm3800PassiveRowXml([currentOwn], {});
   assertEquals(xml.partIII[0].metadata.sourceCount, 1);
   assertEquals(xml.partV.length, 1);
   assertStringIncludes(
@@ -115,8 +115,39 @@ Deno.test("Form 3800 retains single passive current-year source detail for a mix
   );
 });
 
+Deno.test("Form 3800 passive self-earned New Markets row links its IRS8874 source", () => {
+  const ownMarkets = {
+    ...currentOwn,
+    sourceKey: "own-markets-2025",
+    sourceForm: "Form 8874",
+    form3800CreditLine: "1i" as const,
+  };
+  const partnershipMarkets = {
+    ...currentPartnership,
+    sourceKey: "partnership-markets-2025",
+    sourceForm: "Form 8874",
+    form3800CreditLine: "1i" as const,
+  };
+  const rows = buildForm3800PassiveRowXml(
+    [ownMarkets, partnershipMarkets],
+    {
+      "Form 8874": {
+        documentId: "IRS8874_1",
+        documentName: "IRS8874",
+      },
+    },
+  );
+  assertEquals(rows.partIII[0].metadata.referenceDocumentId, "IRS8874_1");
+  assertStringIncludes(rows.partIII[0].xml, 'referenceDocumentId="IRS8874_1"');
+  assertStringIncludes(rows.partV[0].xml, 'referenceDocumentId="IRS8874_1"');
+  assertEquals(
+    rows.partV[1].xml.includes('referenceDocumentId="IRS8874_1"'),
+    false,
+  );
+});
+
 Deno.test("Form 3800 passive carryover XML keeps summary and source-year detail", () => {
-  const xml = buildForm3800PassiveRowXml([own, partnership]);
+  const xml = buildForm3800PassiveRowXml([own, partnership], {});
   assertEquals(xml.partIV.length, 1);
   assertEquals(xml.partIV[0].line, "1h");
   assertEquals(xml.partIV[0].amount, {
@@ -172,7 +203,7 @@ Deno.test("Form 3800 passive carryover XML preserves explicit missing-EIN reason
       missing_ein_reason: "APPLD FOR",
     },
   };
-  const xml = buildForm3800PassiveRowXml([source]);
+  const xml = buildForm3800PassiveRowXml([source], {});
   assertEquals(xml.partVI, []);
   assertStringIncludes(
     xml.partIV[0].xml,
@@ -210,7 +241,7 @@ Deno.test("Form 3800 passive summary EIN uses the entity's combined years", () =
     oldest,
     otherEntity,
     later,
-  ]);
+  ], {});
   assertStringIncludes(
     xml.partIV[0].xml,
     "<PassThroughEntityEIN>123456789</PassThroughEntityEIN>",
@@ -228,7 +259,7 @@ Deno.test("Form 3800 passive summary EIN uses the entity's combined years", () =
             ein: "111111111",
           },
         },
-      ]),
+      ], {}),
     Error,
     "entity identity does not reconcile",
   );
@@ -236,12 +267,12 @@ Deno.test("Form 3800 passive summary EIN uses the entity's combined years", () =
 
 Deno.test("Form 3800 passive carryover XML rejects unreconciled tax use", () => {
   assertThrows(
-    () => buildForm3800PassiveRowXml([{ ...own, unusedAfterTaxLimit: 1 }]),
+    () => buildForm3800PassiveRowXml([{ ...own, unusedAfterTaxLimit: 1 }], {}),
     Error,
     "do not reconcile",
   );
   assertThrows(
-    () => buildForm3800PassiveRowXml([own, { ...own }]),
+    () => buildForm3800PassiveRowXml([own, { ...own }], {}),
     Error,
     "must be unique",
   );
@@ -262,7 +293,7 @@ Deno.test("Form 3800 passive carryover fragments follow TY2025v5.4 IRS3800 XSD",
     partnership,
     currentOwn,
     currentPartnership,
-  ]);
+  ], {});
   const xml =
     `<IRS3800 xmlns="http://www.irs.gov/efile"><CAMTAndBEATInd>false</CAMTAndBEATInd>${
       fragments.partIII.map((row) => row.xml).join("")

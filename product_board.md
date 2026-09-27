@@ -42,10 +42,12 @@ again before Form 3800 receives the passive allocation. These cases are written
 but unrun. A self-earned passive QEI now deposits a source-specific Form
 8582-CR requirement, while only the nonpassive portion goes directly to Form
 3800. The filed Form 8874, Form 8582-CR activity, Form 3800 amount, and source
-document count are cross-checked, including passive-only and mixed-source
-cases written but unrun. Passive sources currently require whole-dollar credit
-amounts because the Form 8582-CR source model does; cent-bearing passive credit
-reporting remains open. Carryovers, recapture and sale events, leap-day
+document count are cross-checked. Passive-only Form 3800 line 1i and multi-source
+Part V rows now link back to the IRS8874 document, with passive-only and
+mixed-source cases written but unrun. Passive sources currently require
+whole-dollar credit amounts because the Form 8582-CR source model does;
+cent-bearing passive credit reporting remains open. Carryovers, recapture and sale
+events, leap-day
 allowance dates, filled PDF inspection, and IRS business-rule/ATS evidence also
 remain open. It is not filing ready.
 

@@ -45,6 +45,11 @@ export type Form3800PassiveRowXml = {
   readonly partVI: readonly Form3800PassiveXmlRow[];
 };
 
+export type Form3800PassiveSourceDocument = {
+  readonly documentId: string;
+  readonly documentName: string;
+};
+
 function sourceEntity(
   sources: readonly Form3800PassiveTaxUseVintage[],
 ): Form3800CurrentCreditRowMetadata["entity"] {
@@ -125,6 +130,7 @@ function sourceEntityCredits(
 /** Serialize passive Part III-VI source rows after Form 3800 tax-use allocation. */
 export function buildForm3800PassiveRowXml(
   vintages: readonly Form3800PassiveTaxUseVintage[],
+  selfSourceDocuments: Readonly<Record<string, Form3800PassiveSourceDocument>>,
 ): Form3800PassiveRowXml {
   if (
     new Set(vintages.map((source) => source.sourceKey)).size !== vintages.length
@@ -167,9 +173,30 @@ export function buildForm3800PassiveRowXml(
     if (!amount) {
       throw new Error("Form 3800 current-year passive row was not combined");
     }
+    const linkedDocuments = row.sources.flatMap((source) =>
+      source.sourceOrigin.kind === PassiveCreditSourceOrigin.Self &&
+        selfSourceDocuments[source.sourceForm]
+        ? [selfSourceDocuments[source.sourceForm]]
+        : []
+    );
+    const uniqueDocuments = new Map(
+      linkedDocuments.map((document) => [document.documentId, document]),
+    );
+    if (uniqueDocuments.size > 1) {
+      throw new Error(
+        `Form 3800 passive line ${row.form3800CreditLine} has multiple self-earned source documents`,
+      );
+    }
+    const linkedDocument = [...uniqueDocuments.values()][0];
     const metadata = {
       sourceCount: row.sources.length,
       entity: sourceEntity(row.sources),
+      ...(linkedDocument
+        ? {
+          referenceDocumentId: linkedDocument.documentId,
+          referenceDocumentName: linkedDocument.documentName,
+        }
+        : {}),
     };
     return {
       line: row.form3800CreditLine,
@@ -231,7 +258,18 @@ export function buildForm3800PassiveRowXml(
           source.appliedAgainstTax,
         ),
         element("CarryforwardGeneralBusCrAmt", source.unusedAfterTaxLimit),
-      ], { lineNumberTxt: `Part III Line ${row.form3800CreditLine}` }),
+      ], {
+        ...(source.sourceOrigin.kind === PassiveCreditSourceOrigin.Self &&
+            selfSourceDocuments[source.sourceForm]
+          ? {
+            referenceDocumentId:
+              selfSourceDocuments[source.sourceForm].documentId,
+            referenceDocumentName:
+              selfSourceDocuments[source.sourceForm].documentName,
+          }
+          : {}),
+        lineNumberTxt: `Part III Line ${row.form3800CreditLine}`,
+      }),
     }));
   });
   const partVI = carryover.flatMap((row) => {

@@ -1052,7 +1052,17 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
             {},
       })
       : undefined;
-    const passiveParts = buildForm3800PassiveRowXml(taxUse.passiveVintages);
+    const passiveParts = buildForm3800PassiveRowXml(
+      taxUse.passiveVintages,
+      filedForm8874
+        ? {
+          "Form 8874": {
+            documentId: form8874Ids[0],
+            documentName: "IRS8874",
+          },
+        }
+        : {},
+    );
     return buildIRS3800Document(
       joinForm3800DocumentParts(lines, nonpassiveParts, passiveParts),
     );

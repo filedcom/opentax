@@ -501,10 +501,9 @@ Deno.test("Form 3800 keeps the Form 8874 attachment for a passive-only QEI", () 
       form6251: ["IRS6251_1"],
     },
   };
-  assertStringIncludes(
-    form3800.build(input, context),
-    "<Form8874CYCreditsGrp",
-  );
+  const passiveXml = form3800.build(input, context);
+  assertStringIncludes(passiveXml, "<Form8874CYCreditsGrp");
+  assertStringIncludes(passiveXml, 'referenceDocumentId="IRS8874_1"');
   assertThrows(
     () =>
       form3800.build(input, {
