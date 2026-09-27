@@ -11,7 +11,8 @@ import {
   deriveForm3800NonpassiveInput,
   type Form3800NonpassiveInput,
   type Form3800NonpassiveLines,
-  ZERO_FORM3800_PASSIVE_ACTIVITY,
+  type Form3800PassiveActivityLines,
+  form3800PassiveActivityLinesSchema,
 } from "../../inputs/f3800/calculation.ts";
 import {
   calculateForm8912IndividualLimit,
@@ -149,6 +150,7 @@ const inputSchema = z.object({
   form3800_source_credits: z.object({
     standardCredit: z.number().finite().nonnegative(),
     specifiedCredit: z.number().finite().nonnegative(),
+    passiveLines: form3800PassiveActivityLinesSchema,
   }).optional(),
   credit_limit_form6251_line9: z.number().finite().nonnegative().optional(),
   credit_limit_form6251_line11: z.number().finite().nonnegative().optional(),
@@ -450,6 +452,7 @@ function homebuyerAllowance(
 
 type BusinessCreditAllowance = {
   readonly tax: Form3800NonpassiveInput;
+  readonly passiveLines: Form3800PassiveActivityLines;
   readonly lines: Form3800NonpassiveLines;
   readonly schedule3Line7: number;
   readonly schedule3Credits: number;
@@ -502,7 +505,9 @@ function businessCreditAllowance(
   const credits = input.form3800_source_credits;
   if (!credits) return undefined;
   if (
-    credits.standardCredit + credits.specifiedCredit <= 0 ||
+    credits.standardCredit + credits.specifiedCredit +
+          credits.passiveLines.line2 + credits.passiveLines.line23 +
+          credits.passiveLines.line32 <= 0 ||
     input.filing_status === undefined ||
     input.line16_income_tax === undefined ||
     input.credit_limit_form6251_line9 === undefined ||
@@ -547,13 +552,14 @@ function businessCreditAllowance(
   }, credits);
   const lines = calculateForm3800Nonpassive(
     tax,
-    ZERO_FORM3800_PASSIVE_ACTIVITY,
+    credits.passiveLines,
   );
   const originalSchedule3Credits = homebuyer?.schedule3Credits ??
     cleanVehicles?.schedule3Credits ?? electric?.schedule3Credits ??
     (input.line20_nonrefundable_credits ?? 0);
   return {
     tax,
+    passiveLines: credits.passiveLines,
     lines,
     schedule3Line7: schedule3Line7 + lines.line38,
     schedule3Credits: originalSchedule3Credits + lines.line38,
@@ -938,6 +944,7 @@ class F1040Node extends TaxNode<typeof inputSchema> {
             nodeType: "f3800",
             fields: {
               tax_context: businessCredit.tax,
+              passive_lines: businessCredit.passiveLines,
               allowed_credit: businessCredit.lines.line38,
               standard_credit_allowed: businessCredit.lines.line17,
               specified_credit_allowed: businessCredit.lines.line37,

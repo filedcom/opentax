@@ -9,7 +9,11 @@ import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
-import { classifyForm8835Credits } from "./calculation.ts";
+import {
+  classifyForm3800PassiveCredits,
+  classifyForm8835Credits,
+  ZERO_FORM3800_PASSIVE_ACTIVITY,
+} from "./calculation.ts";
 import { sourceAllocationSchema } from "../../intermediate/forms/form8582cr/source.ts";
 
 // TY2025 — Form 3800: General Business Credit.
@@ -188,6 +192,9 @@ function schedule3Output(
   f8936CommercialCredit:
     | z.infer<typeof f8936NewVehicleCreditSchema>
     | undefined,
+  passiveSources:
+    | z.infer<typeof sourceAllocationSchema>[]
+    | undefined,
 ): NodeOutput[] {
   const f8835Credit = f8835Entries.length > 0
     ? classifyForm8835Credits(f8835Entries)
@@ -242,13 +249,19 @@ function schedule3Output(
   if (form8826Credit > 5_000) {
     throw new Error("Form 8826 source credits exceed the $5,000 cap");
   }
+  const passiveLines = passiveSources
+    ? classifyForm3800PassiveCredits(passiveSources)
+    : ZERO_FORM3800_PASSIVE_ACTIVITY;
+  const hasPassiveSource = passiveLines.line2 + passiveLines.line23 +
+      passiveLines.line32 > 0;
   const hasSourceCredit = form8826Credit > 0 ||
     (f8835Credit?.standardCredit ?? 0) > 0 ||
     (f8835Credit?.specifiedCredit ?? 0) > 0 ||
     (f5884Credit?.credit_amount ?? 0) > 0 ||
     (f8820Credit?.credit_amount ?? 0) > 0 ||
     (f8936Credit?.credit_amount ?? 0) > 0 ||
-    (f8936CommercialCredit?.credit_amount ?? 0) > 0;
+    (f8936CommercialCredit?.credit_amount ?? 0) > 0 ||
+    hasPassiveSource;
   if (hasSourceCredit && totalGbc(items) > 0) {
     throw new Error(
       "Source-backed Form 3800 credit cannot mix with unbounded legacy f3800s credit",
@@ -265,6 +278,7 @@ function schedule3Output(
             (f8835Credit?.standardCredit ?? 0),
           specifiedCredit: (f8835Credit?.specifiedCredit ?? 0) +
             (f5884Credit?.credit_amount ?? 0),
+          passiveLines,
         },
       }),
       output(form6251, { must_file_for_gbc: true }),
@@ -283,11 +297,6 @@ class F3800Node extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
-    if (parsed.passive_source_allocations !== undefined) {
-      throw new Error(
-        "Form 3800 passive credit source rows need Part III/IV XML and the Part II tax limit before filing",
-      );
-    }
     return {
       outputs: schedule3Output(
         parsed.f3800s ?? [],
@@ -297,6 +306,7 @@ class F3800Node extends TaxNode<typeof inputSchema> {
         parsed.f8820_credit,
         parsed.f8936_new_vehicle_credit,
         parsed.f8936_commercial_vehicle_credit,
+        parsed.passive_source_allocations,
       ),
     };
   }

@@ -1,4 +1,5 @@
 /** TY2025 Form 3800 Part I and II for individual credits. */
+import { z } from "zod";
 import { FilingStatus } from "../../types.ts";
 import { PassiveCreditReportingRoute } from "../../intermediate/forms/form8582cr/credit-route.ts";
 import type { calculateForm8582CR } from "../../intermediate/forms/form8582cr/index.ts";
@@ -338,14 +339,29 @@ export function splitForm3800PassiveCreditVintages(
   );
 }
 
-export type Form3800PassiveActivityLines = {
-  readonly line2: number;
-  readonly line3: number;
-  readonly line23: number;
-  readonly line24: number;
-  readonly line32: number;
-  readonly line33: number;
-};
+export const form3800PassiveActivityLinesSchema = z.object({
+  line2: z.number().int().nonnegative(),
+  line3: z.number().int().nonnegative(),
+  line23: z.number().int().nonnegative(),
+  line24: z.number().int().nonnegative(),
+  line32: z.number().int().nonnegative(),
+  line33: z.number().int().nonnegative(),
+}).superRefine((lines, ctx) => {
+  if (
+    lines.line3 > lines.line2 || lines.line24 > lines.line23 ||
+    lines.line33 > lines.line32
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message:
+        "Form 3800 passive allowed credit exceeds credit before limitation",
+    });
+  }
+});
+
+export type Form3800PassiveActivityLines = z.infer<
+  typeof form3800PassiveActivityLinesSchema
+>;
 
 /** Pass explicitly when a source has no passive activity credits. */
 export const ZERO_FORM3800_PASSIVE_ACTIVITY: Form3800PassiveActivityLines = {
