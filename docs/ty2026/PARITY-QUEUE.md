@@ -29,6 +29,10 @@ changes; they are a snapshot, not a completion score.
 
 ## Remaining form groups outside the seven ATS packets
 
+The [Form 4562 asset-ledger contract](FORM4562-GRAPH.md) now covers the
+depreciation side of the business/property group, including the old Schedule
+1 route that must be replaced before the TY2026 calculation graph can use it.
+
 These are **work assignments**, not blanket approvals to reuse TY2025 code.
 The pinned draft/authority files and `instruction-coverage.csv` are the
 source-status starting points. A row's form list includes the related PDF

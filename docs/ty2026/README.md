@@ -65,6 +65,9 @@ for the implementation contract.
 - [`FORM8829-GRAPH.md`](FORM8829-GRAPH.md) and `pdf-fields-f8829.csv`:
   per-home Schedule C deduction, 2026 SALT/casualty/depreciation ordering,
   2027 carryforwards, QPP election gate, and 58 PDF fields.
+- [`FORM4562-GRAPH.md`](FORM4562-GRAPH.md) and `pdf-fields-f4562.csv`:
+  asset/activity §179, bonus, MACRS/ADS, listed-property and vehicle ledger;
+  correct 2026 destination, Form 4562-B split, and all 271 PDF widgets.
 - [`FORM8962-GRAPH.md`](FORM8962-GRAPH.md) and `pdf-fields-f8962.csv`:
   2026 premium tax credit line 27, 400% FPL boundary, Form 1095-A/allocations,
   143 PDF widgets, and MeF/graph acceptance order.

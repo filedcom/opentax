@@ -57,6 +57,11 @@ The [Form 8829 contract](FORM8829-GRAPH.md) maps each home to its Schedule C
 activity, the SALT/AGI iteration, casualty and depreciation order, 2027
 carryforwards and all 58 PDF fields. The shared node loses line 43/44
 carryforwards and its TY2025 PDF mapping reverses the area fields.
+The [Form 4562 contract](FORM4562-GRAPH.md) makes asset/activity depreciation
+and return-wide section 179 allocation explicit, maps all 271 draft widgets,
+and identifies the old Schedule 1 line 13 output as incompatible with 2026.
+Notice 2026-11, QPP guidance and prior-year comparators are pinned; final 2026
+instructions and current MeF remain gates.
 The [scenario 12 contract](ATS-SCENARIO-12.md) and
 [business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
 broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800

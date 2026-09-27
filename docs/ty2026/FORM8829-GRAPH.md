@@ -1,5 +1,10 @@
 # TY2026 home-office deduction and carryforward contract
 
+The home-office building, additions and qualified-production-property
+elections must share asset basis and activity identity with
+[Form 4562](FORM4562-GRAPH.md); its line 22 cannot be deducted again after
+Form 8829 depreciation has entered Schedule C line 30.
+
 Sources: pinned [2026 draft Form 8829](corpus/draft/f8829.pdf), SHA-256
 `90b84dd20515aa148e26b2c0f9b2c3a6d381475403d48bdd6a1f02aafeaac7e9`,
 and [2026 draft instructions](corpus/draft/i8829.pdf), SHA-256

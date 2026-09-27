@@ -94,6 +94,12 @@ The new [Form 4562-B contract](../../../docs/ty2026/FORM4562B-GRAPH.md)
 uses the pinned 2026 draft to map amortization cost rows, prior-year assets,
 activity destinations, and PDF/MeF work. Its 2026 instructions remain a
 source gate before the amortization calculation can be implemented.
+The [Form 4562 contract](../../../docs/ty2026/FORM4562-GRAPH.md) maps the
+return-wide section 179 election to asset/activity ledgers, the 2026 bonus
+and QPP rules, Part V listed property, correct source-schedule destinations,
+and all 271 draft PDF widgets. The shared node's old Schedule 1 line 13
+depreciation output conflicts with the 2026 HSA line; 2026 instructions and
+current MeF remain acceptance gates.
 The [Form 4835 contract](../../../docs/ty2026/FORM4835-GRAPH.md) and
 [ATS scenario 3 plan](../../../docs/ty2026/ATS-SCENARIO-03.md) connect
 production-based farm rent to Schedule E while keeping Schedule F farm profit
