@@ -11,6 +11,31 @@ Deno.test("ordinary W-2 wages below the threshold do not emit Form 8959", () => 
   assertEquals(result, "");
 });
 
+Deno.test("Form 8959 XML uses W-2 box 5 when it differs from box 1", () => {
+  const xml = form8959.build({
+    filing_status: "single",
+    medicare_wages: 190_000,
+    medicare_wages_box5: 198_000,
+    unreported_tips: 4_000,
+  });
+  assertStringIncludes(
+    xml,
+    "<TotalW2MedicareWagesAndTipsAmt>198000</TotalW2MedicareWagesAndTipsAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalUnreportedMedicareTipsAmt>4000</TotalUnreportedMedicareTipsAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalMedicareWagesAndTipsAmt>202000</TotalMedicareWagesAndTipsAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalAMRRTTaxAmt>18</TotalAMRRTTaxAmt>",
+  );
+});
+
 function assertNotIncludes(actual: string, expected: string) {
   assertEquals(
     actual.includes(expected),
@@ -50,44 +75,65 @@ Deno.test("medicare_wages at zero does not require Form 8959", () => {
 
 Deno.test("medicare_wages maps to TotalW2MedicareWagesAndTipsAmt inside AdditionalMedicareTaxGrp", () => {
   const result = form8959.build({ medicare_wages: 220000 });
-  assertStringIncludes(result, "<TotalW2MedicareWagesAndTipsAmt>220000</TotalW2MedicareWagesAndTipsAmt>");
+  assertStringIncludes(
+    result,
+    "<TotalW2MedicareWagesAndTipsAmt>220000</TotalW2MedicareWagesAndTipsAmt>",
+  );
   assertStringIncludes(result, "<AdditionalMedicareTaxGrp>");
 });
 
 Deno.test("unreported_tips maps to TotalUnreportedMedicareTipsAmt inside AdditionalMedicareTaxGrp", () => {
   const result = form8959.build({ unreported_tips: 205000 });
-  assertStringIncludes(result, "<TotalUnreportedMedicareTipsAmt>205000</TotalUnreportedMedicareTipsAmt>");
+  assertStringIncludes(
+    result,
+    "<TotalUnreportedMedicareTipsAmt>205000</TotalUnreportedMedicareTipsAmt>",
+  );
   assertStringIncludes(result, "<AdditionalMedicareTaxGrp>");
 });
 
 Deno.test("wages_8919 maps to TotalWagesWithNoWithholdingAmt inside AdditionalMedicareTaxGrp", () => {
   const result = form8959.build({ wages_8919: 208000 });
-  assertStringIncludes(result, "<TotalWagesWithNoWithholdingAmt>208000</TotalWagesWithNoWithholdingAmt>");
+  assertStringIncludes(
+    result,
+    "<TotalWagesWithNoWithholdingAmt>208000</TotalWagesWithNoWithholdingAmt>",
+  );
   assertStringIncludes(result, "<AdditionalMedicareTaxGrp>");
 });
 
 Deno.test("se_income maps to TotalSelfEmploymentIncomeAmt inside AddnlSelfEmploymentTaxGrp", () => {
   const result = form8959.build({ se_income: 245000 });
-  assertStringIncludes(result, "<TotalSelfEmploymentIncomeAmt>245000</TotalSelfEmploymentIncomeAmt>");
+  assertStringIncludes(
+    result,
+    "<TotalSelfEmploymentIncomeAmt>245000</TotalSelfEmploymentIncomeAmt>",
+  );
   assertStringIncludes(result, "<AddnlSelfEmploymentTaxGrp>");
 });
 
 Deno.test("rrta_wages maps to TotalRailroadRetirementCompAmt inside AddnlRailroadRetirementTaxGrp", () => {
   const result = form8959.build({ rrta_wages: 275000 });
-  assertStringIncludes(result, "<TotalRailroadRetirementCompAmt>275000</TotalRailroadRetirementCompAmt>");
+  assertStringIncludes(
+    result,
+    "<TotalRailroadRetirementCompAmt>275000</TotalRailroadRetirementCompAmt>",
+  );
   assertStringIncludes(result, "<AddnlRailroadRetirementTaxGrp>");
 });
 
 Deno.test("medicare_withheld maps to TotalW2MedicareTaxWithheldAmt at top level", () => {
   const result = form8959.build({ medicare_withheld: 1740 });
-  assertStringIncludes(result, "<TotalW2MedicareTaxWithheldAmt>1740</TotalW2MedicareTaxWithheldAmt>");
+  assertStringIncludes(
+    result,
+    "<TotalW2MedicareTaxWithheldAmt>1740</TotalW2MedicareTaxWithheldAmt>",
+  );
   // Must NOT be inside AdditionalTaxGrp
   assertNotIncludes(result, "<AdditionalTaxGrp>");
 });
 
 Deno.test("rrta_medicare_withheld maps to TotalW2AddlRRTTaxAmt at top level", () => {
   const result = form8959.build({ rrta_medicare_withheld: 900 });
-  assertStringIncludes(result, "<TotalW2AddlRRTTaxAmt>900</TotalW2AddlRRTTaxAmt>");
+  assertStringIncludes(
+    result,
+    "<TotalW2AddlRRTTaxAmt>900</TotalW2AddlRRTTaxAmt>",
+  );
   assertNotIncludes(result, "<AdditionalTaxGrp>");
 });
 
@@ -96,18 +142,36 @@ Deno.test("rrta_medicare_withheld maps to TotalW2AddlRRTTaxAmt at top level", ()
 // ---------------------------------------------------------------------------
 
 Deno.test("single filing status uses threshold code 200000", () => {
-  const result = form8959.build({ medicare_wages: 220000, filing_status: "single" });
-  assertStringIncludes(result, "<FilingStatusThresholdCd>200000</FilingStatusThresholdCd>");
+  const result = form8959.build({
+    medicare_wages: 220000,
+    filing_status: "single",
+  });
+  assertStringIncludes(
+    result,
+    "<FilingStatusThresholdCd>200000</FilingStatusThresholdCd>",
+  );
 });
 
 Deno.test("MFJ filing status uses threshold code 250000", () => {
-  const result = form8959.build({ medicare_wages: 270000, filing_status: "mfj" });
-  assertStringIncludes(result, "<FilingStatusThresholdCd>250000</FilingStatusThresholdCd>");
+  const result = form8959.build({
+    medicare_wages: 270000,
+    filing_status: "mfj",
+  });
+  assertStringIncludes(
+    result,
+    "<FilingStatusThresholdCd>250000</FilingStatusThresholdCd>",
+  );
 });
 
 Deno.test("MFS filing status uses threshold code 125000", () => {
-  const result = form8959.build({ medicare_wages: 130000, filing_status: "mfs" });
-  assertStringIncludes(result, "<FilingStatusThresholdCd>125000</FilingStatusThresholdCd>");
+  const result = form8959.build({
+    medicare_wages: 130000,
+    filing_status: "mfs",
+  });
+  assertStringIncludes(
+    result,
+    "<FilingStatusThresholdCd>125000</FilingStatusThresholdCd>",
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -116,16 +180,28 @@ Deno.test("MFS filing status uses threshold code 125000", () => {
 
 Deno.test("single known field emits only that element, absent fields omitted", () => {
   const result = form8959.build({ medicare_wages: 220000 });
-  assertStringIncludes(result, "<TotalW2MedicareWagesAndTipsAmt>220000</TotalW2MedicareWagesAndTipsAmt>");
+  assertStringIncludes(
+    result,
+    "<TotalW2MedicareWagesAndTipsAmt>220000</TotalW2MedicareWagesAndTipsAmt>",
+  );
   assertNotIncludes(result, "<TotalUnreportedMedicareTipsAmt>");
   assertNotIncludes(result, "<TotalSelfEmploymentIncomeAmt>");
   assertNotIncludes(result, "<TotalW2MedicareTaxWithheldAmt>");
 });
 
 Deno.test("medicare_wages and medicare_withheld: wages inside group, withheld outside", () => {
-  const result = form8959.build({ medicare_wages: 220000, medicare_withheld: 3190 });
-  assertStringIncludes(result, "<TotalW2MedicareWagesAndTipsAmt>220000</TotalW2MedicareWagesAndTipsAmt>");
-  assertStringIncludes(result, "<TotalW2MedicareTaxWithheldAmt>3190</TotalW2MedicareTaxWithheldAmt>");
+  const result = form8959.build({
+    medicare_wages: 220000,
+    medicare_withheld: 3190,
+  });
+  assertStringIncludes(
+    result,
+    "<TotalW2MedicareWagesAndTipsAmt>220000</TotalW2MedicareWagesAndTipsAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<TotalW2MedicareTaxWithheldAmt>3190</TotalW2MedicareTaxWithheldAmt>",
+  );
   assertNotIncludes(result, "<TotalUnreportedMedicareTipsAmt>");
   assertNotIncludes(result, "<TotalRailroadRetirementCompAmt>");
 });
@@ -154,18 +230,42 @@ Deno.test("all fields present: output wrapped in IRS8959 tag", () => {
 Deno.test("all fields present: correct nested structure", () => {
   const result = form8959.build(allFields);
   assertStringIncludes(result, "<AdditionalTaxGrp>");
-  assertStringIncludes(result, "<FilingStatusThresholdCd>200000</FilingStatusThresholdCd>");
+  assertStringIncludes(
+    result,
+    "<FilingStatusThresholdCd>200000</FilingStatusThresholdCd>",
+  );
   assertStringIncludes(result, "<AdditionalMedicareTaxGrp>");
-  assertStringIncludes(result, "<TotalW2MedicareWagesAndTipsAmt>100000</TotalW2MedicareWagesAndTipsAmt>");
-  assertStringIncludes(result, "<TotalUnreportedMedicareTipsAmt>500</TotalUnreportedMedicareTipsAmt>");
-  assertStringIncludes(result, "<TotalWagesWithNoWithholdingAmt>800</TotalWagesWithNoWithholdingAmt>");
+  assertStringIncludes(
+    result,
+    "<TotalW2MedicareWagesAndTipsAmt>100000</TotalW2MedicareWagesAndTipsAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<TotalUnreportedMedicareTipsAmt>500</TotalUnreportedMedicareTipsAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<TotalWagesWithNoWithholdingAmt>800</TotalWagesWithNoWithholdingAmt>",
+  );
   assertStringIncludes(result, "<AddnlSelfEmploymentTaxGrp>");
-  assertStringIncludes(result, "<TotalSelfEmploymentIncomeAmt>45000</TotalSelfEmploymentIncomeAmt>");
+  assertStringIncludes(
+    result,
+    "<TotalSelfEmploymentIncomeAmt>45000</TotalSelfEmploymentIncomeAmt>",
+  );
   assertStringIncludes(result, "<AddnlRailroadRetirementTaxGrp>");
-  assertStringIncludes(result, "<TotalRailroadRetirementCompAmt>75000</TotalRailroadRetirementCompAmt>");
+  assertStringIncludes(
+    result,
+    "<TotalRailroadRetirementCompAmt>75000</TotalRailroadRetirementCompAmt>",
+  );
   // Part V — outside AdditionalTaxGrp
-  assertStringIncludes(result, "<TotalW2MedicareTaxWithheldAmt>1450</TotalW2MedicareTaxWithheldAmt>");
-  assertStringIncludes(result, "<TotalW2AddlRRTTaxAmt>900</TotalW2AddlRRTTaxAmt>");
+  assertStringIncludes(
+    result,
+    "<TotalW2MedicareTaxWithheldAmt>1450</TotalW2MedicareTaxWithheldAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<TotalW2AddlRRTTaxAmt>900</TotalW2AddlRRTTaxAmt>",
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -173,8 +273,14 @@ Deno.test("all fields present: correct nested structure", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("filing_status does not appear as XML element", () => {
-  const result = form8959.build({ filing_status: "single", medicare_wages: 250000 });
-  assertStringIncludes(result, "<TotalW2MedicareWagesAndTipsAmt>250000</TotalW2MedicareWagesAndTipsAmt>");
+  const result = form8959.build({
+    filing_status: "single",
+    medicare_wages: 250000,
+  });
+  assertStringIncludes(
+    result,
+    "<TotalW2MedicareWagesAndTipsAmt>250000</TotalW2MedicareWagesAndTipsAmt>",
+  );
   assertNotIncludes(result, "<filing_status>");
   assertNotIncludes(result, "single</");
 });

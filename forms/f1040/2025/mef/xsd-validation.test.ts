@@ -4098,6 +4098,59 @@ Deno.test({
 });
 
 Deno.test({
+  name: "XSD: Form 4137 line 6 feeds Form 8959 line 2 and Schedule 2",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const result = runReturn({
+    general,
+    w2: [{
+      employer_name: "CAFE",
+      employer_ein: "123456789",
+      box1_wages: 190_000,
+      box2_fed_withheld: 30_000,
+      box3_ss_wages: 176_100,
+      box5_medicare_wages: 198_000,
+      box6_medicare_withheld: 2_871,
+      box8_allocated_tips: 4_000,
+    }],
+    form4137: {
+      forms: [{
+        recipient: "taxpayer",
+        employers: [{
+          name: "CAFE",
+          ein: "123456789",
+          tips_received: 4_000,
+          tips_reported: 0,
+        }],
+      }],
+    },
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form8959?.line2_unreported_tips, 4_000);
+  assertEquals(result.pending.form8959?.line7_wage_tax, 18);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalUnreportedMedicareTipsAmt>4000</TotalUnreportedMedicareTipsAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalW2MedicareWagesAndTipsAmt>198000</TotalW2MedicareWagesAndTipsAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<AdditionalMedicareTaxAmt>18</AdditionalMedicareTaxAmt>",
+  );
+  await validateXsd(xml, "Form 4137 to Form 8959 and Schedule 2");
+});
+
+Deno.test({
   name:
     "XSD: joint return has distinct taxpayer and spouse Form 4137 documents",
   sanitizeOps: false,

@@ -3,6 +3,7 @@ import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
+import { form8959 } from "../form8959/index.ts";
 import { calculateForm4137, form4137, inputSchema } from "./index.ts";
 
 const employer = {
@@ -56,6 +57,7 @@ Deno.test("Form 4137 calculates unreported income, SS tax and Medicare tax from 
     fieldsOf(result.outputs, schedule2)?.line5_unreported_tip_tax,
     230,
   );
+  assertEquals(fieldsOf(result.outputs, form8959)?.unreported_tips, 3_000);
 });
 
 Deno.test("Form 4137 line 5 tips remain income but are excluded from FICA", () => {
@@ -63,15 +65,44 @@ Deno.test("Form 4137 line 5 tips remain income but are excluded from FICA", () =
     forms: [{
       recipient: "taxpayer",
       employers: [employer],
-      sub_20_tips: 500,
+      below_20_tip_months: [
+        { employer_index: 1, month: 1, tips_received: 18, tips_reported: 0 },
+        { employer_index: 1, month: 2, tips_received: 15, tips_reported: 0 },
+      ],
       ss_wages_from_w2: 0,
     }],
   });
   assertEquals(fieldsOf(result.outputs, f1040)?.line1c_unreported_tips, 3_000);
   assertEquals(
     fieldsOf(result.outputs, schedule2)?.line5_unreported_tip_tax,
-    191,
+    227,
   );
+  assertEquals(fieldsOf(result.outputs, form8959)?.unreported_tips, 2_967);
+});
+
+Deno.test("Form 4137 applies the $20 test separately by employer and month", () => {
+  const [calculated] = calculateForm4137(
+    inputSchema.parse({
+      forms: [{
+        recipient: "taxpayer",
+        employers: [employer, {
+          name: "DINER",
+          ein: "98-7654321",
+          tips_received: 100,
+          tips_reported: 50,
+        }],
+        below_20_tip_months: [
+          { employer_index: 1, month: 1, tips_received: 18, tips_reported: 8 },
+          { employer_index: 2, month: 1, tips_received: 19, tips_reported: 0 },
+        ],
+        ss_wages_from_w2: 0,
+      }],
+    }),
+    176_100,
+  );
+  assertEquals(calculated.unreportedTips, 3_050);
+  assertEquals(calculated.incidentalTips, 29);
+  assertEquals(calculated.medicareTips, 3_021);
 });
 
 Deno.test("Form 4137 SS wage base caps only SS tax, not Medicare tax", () => {
@@ -119,6 +150,7 @@ Deno.test("Form 4137 keeps taxpayer and spouse computations separate", () => {
     fieldsOf(result.outputs, schedule2)?.line5_unreported_tip_tax,
     245,
   );
+  assertEquals(fieldsOf(result.outputs, form8959)?.unreported_tips, 4_000);
 });
 
 Deno.test("Form 4137 refuses duplicate recipients and inconsistent W-2 wages", () => {
@@ -169,7 +201,7 @@ Deno.test("Form 4137 lower reported tips require supporting records", () => {
   assertEquals(fieldsOf(result.outputs, f1040)?.line1c_unreported_tips, 500);
 });
 
-Deno.test("Form 4137 rejects impossible employer and incidental facts", () => {
+Deno.test("Form 4137 rejects impossible employer and below-$20 month facts", () => {
   assertEquals(
     inputSchema.safeParse({
       forms: [{
@@ -188,18 +220,64 @@ Deno.test("Form 4137 rejects impossible employer and incidental facts", () => {
     }).success,
     false,
   );
+  assertEquals(
+    inputSchema.safeParse({
+      forms: [{
+        recipient: "taxpayer",
+        employers: [employer],
+        below_20_tip_months: [{
+          employer_index: 1,
+          month: 1,
+          tips_received: 20,
+          tips_reported: 0,
+        }],
+      }],
+    }).success,
+    false,
+  );
   assertThrows(
     () =>
       compute({
         forms: [{
           recipient: "taxpayer",
           employers: [employer],
-          sub_20_tips: 3_001,
+          below_20_tip_months: [
+            {
+              employer_index: 1,
+              month: 1,
+              tips_received: 18,
+              tips_reported: 0,
+            },
+            {
+              employer_index: 1,
+              month: 1,
+              tips_received: 15,
+              tips_reported: 0,
+            },
+          ],
           ss_wages_from_w2: 0,
         }],
       }),
     Error,
-    "line 5 exceeds",
+    "duplicate employer/month",
+  );
+  assertThrows(
+    () =>
+      compute({
+        forms: [{
+          recipient: "taxpayer",
+          employers: [{ ...employer, tips_reported: 4_995 }],
+          below_20_tip_months: [{
+            employer_index: 1,
+            month: 1,
+            tips_received: 18,
+            tips_reported: 0,
+          }],
+          ss_wages_from_w2: 0,
+        }],
+      }),
+    Error,
+    "records exceed employer annual tips",
   );
 });
 

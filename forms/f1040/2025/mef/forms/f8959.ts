@@ -35,14 +35,18 @@ function thresholdCode(filingStatus: string | null | undefined): string {
 }
 
 // Build AdditionalMedicareTaxGrp (Part I) with all required computed fields
-function buildAdditionalMedicareTaxGrp(fields: Input, threshold: number): string {
-  const hasWages = typeof fields.medicare_wages === "number";
+function buildAdditionalMedicareTaxGrp(
+  fields: Input,
+  threshold: number,
+): string {
+  const hasWages = typeof fields.medicare_wages_box5 === "number" ||
+    typeof fields.medicare_wages === "number";
   const hasTips = typeof fields.unreported_tips === "number";
   const hasWages8919 = typeof fields.wages_8919 === "number";
   // Only emit if any Part I wage/tip source is explicitly provided
   if (!hasWages && !hasTips && !hasWages8919) return "";
 
-  const wages = hasWages ? (fields.medicare_wages as number) : 0;
+  const wages = fields.medicare_wages_box5 ?? fields.medicare_wages ?? 0;
   const tips = hasTips ? (fields.unreported_tips as number) : 0;
   const wages8919 = hasWages8919 ? (fields.wages_8919 as number) : 0;
 
@@ -56,7 +60,9 @@ function buildAdditionalMedicareTaxGrp(fields: Input, threshold: number): string
   const parts: string[] = [];
   if (hasWages) parts.push(element("TotalW2MedicareWagesAndTipsAmt", wages));
   if (hasTips) parts.push(element("TotalUnreportedMedicareTipsAmt", tips));
-  if (hasWages8919) parts.push(element("TotalWagesWithNoWithholdingAmt", wages8919));
+  if (hasWages8919) {
+    parts.push(element("TotalWagesWithNoWithholdingAmt", wages8919));
+  }
   parts.push(element("TotalMedicareWagesAndTipsAmt", line4));
   // FilingStatusThresholdCd is on AdditionalTaxGrp, not here
   parts.push(element("WagesTipsSubjToAddlMedcrTaxAmt", line6));
@@ -92,19 +98,27 @@ function buildAdditionalTaxGrp(fields: Input): string {
   // TotalAMRRTTaxAmt (line 18) = sum of part I line 7 + part II line 13 + part III line 17
   // For the MeF builder we approximate from available data (0 if not computable)
   const code = thresholdCode(fields.filing_status as string | null);
-  const wages = typeof fields.medicare_wages === "number" ? fields.medicare_wages : 0;
-  const tips = typeof fields.unreported_tips === "number" ? fields.unreported_tips : 0;
-  const wages8919 = typeof fields.wages_8919 === "number" ? fields.wages_8919 : 0;
+  const wages = fields.medicare_wages_box5 ?? fields.medicare_wages ?? 0;
+  const tips = typeof fields.unreported_tips === "number"
+    ? fields.unreported_tips
+    : 0;
+  const wages8919 = typeof fields.wages_8919 === "number"
+    ? fields.wages_8919
+    : 0;
   const line4 = wages + tips + wages8919;
   const medicareExcess = Math.max(0, line4 - threshold);
   const medicareTax = Math.round(medicareExcess * AMT_RATE * 100) / 100;
 
-  const seIncome = typeof fields.se_income === "number" ? Math.max(0, fields.se_income) : 0;
+  const seIncome = typeof fields.se_income === "number"
+    ? Math.max(0, fields.se_income)
+    : 0;
   const seThreshold = Math.max(0, threshold - line4);
   const seExcess = Math.max(0, seIncome - seThreshold);
   const seTax = Math.round(seExcess * AMT_RATE * 100) / 100;
 
-  const rrtaWages = typeof fields.rrta_wages === "number" ? fields.rrta_wages : 0;
+  const rrtaWages = typeof fields.rrta_wages === "number"
+    ? fields.rrta_wages
+    : 0;
   const rrtaExcess = Math.max(0, rrtaWages - threshold);
   const rrtaTax = Math.round(rrtaExcess * AMT_RATE * 100) / 100;
 
@@ -127,7 +141,8 @@ function buildIRS8959(fields: Input): string {
   const line4 = wages + tips + wages8919;
   const wageTax = Math.max(0, line4 - threshold) * AMT_RATE;
   const remainingThreshold = Math.max(0, threshold - line4);
-  const seTax = Math.max(0, (fields.se_income ?? 0) - remainingThreshold) * AMT_RATE;
+  const seTax = Math.max(0, (fields.se_income ?? 0) - remainingThreshold) *
+    AMT_RATE;
   const rrtaTax = Math.max(0, (fields.rrta_wages ?? 0) - threshold) * AMT_RATE;
   const additionalWithheld = Math.max(
     0,
@@ -138,10 +153,14 @@ function buildIRS8959(fields: Input): string {
   const additionalTaxGrp = buildAdditionalTaxGrp(fields);
   const withheldParts: string[] = [];
   if (typeof fields.medicare_withheld === "number") {
-    withheldParts.push(element("TotalW2MedicareTaxWithheldAmt", fields.medicare_withheld));
+    withheldParts.push(
+      element("TotalW2MedicareTaxWithheldAmt", fields.medicare_withheld),
+    );
   }
   if (typeof fields.rrta_medicare_withheld === "number") {
-    withheldParts.push(element("TotalW2AddlRRTTaxAmt", fields.rrta_medicare_withheld));
+    withheldParts.push(
+      element("TotalW2AddlRRTTaxAmt", fields.rrta_medicare_withheld),
+    );
   }
   const hasContent = additionalTaxGrp !== "" || withheldParts.length > 0;
   if (!hasContent) return "";

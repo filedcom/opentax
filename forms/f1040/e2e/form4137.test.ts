@@ -133,3 +133,46 @@ Deno.test("Joint return keeps taxpayer and spouse Form 4137 wage bases separate"
     { recipient: "spouse", allocated_tips: 500, ss_wages_and_tips: 176_100 },
   ]);
 });
+
+Deno.test("Form 4137 line 6 reaches Form 8959 line 2 and Additional Medicare Tax", () => {
+  const result = execute(plan, registry, {
+    general: {
+      filing_status: FilingStatus.Single,
+      taxpayer_first_name: "Alex",
+      taxpayer_last_name: "Tipper",
+      taxpayer_ssn: "123-45-6789",
+    },
+    w2: [{
+      employer_name: "CAFE",
+      employer_ein: "123456789",
+      box1_wages: 198_000,
+      box2_fed_withheld: 30_000,
+      box3_ss_wages: 176_100,
+      box5_medicare_wages: 198_000,
+      box6_medicare_withheld: 2_871,
+      box8_allocated_tips: 4_000,
+    }],
+    form4137: {
+      forms: [{
+        recipient: "taxpayer",
+        employers: [{
+          name: "CAFE",
+          ein: "123456789",
+          tips_received: 4_000,
+          tips_reported: 0,
+        }],
+      }],
+    },
+  }, ctx);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form4137?.w2_tip_sources, [{
+    recipient: "taxpayer",
+    allocated_tips: 4_000,
+    ss_wages_and_tips: 176_100,
+  }]);
+  assertEquals(result.pending.form8959?.line2_unreported_tips, 4_000);
+  assertEquals(result.pending.form8959?.line4_total_medicare_wages, 202_000);
+  assertEquals(result.pending.form8959?.line7_wage_tax, 18);
+  assertEquals(result.pending.schedule2?.line5_unreported_tip_tax, 58);
+  assertEquals(result.pending.schedule2?.line11_additional_medicare, 18);
+});

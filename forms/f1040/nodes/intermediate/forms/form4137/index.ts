@@ -7,6 +7,7 @@ import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
+import { form8959 } from "../form8959/index.ts";
 
 const employerSchema = z.object({
   name: z.string().min(1),
@@ -31,10 +32,19 @@ const employerSchema = z.object({
 
 const recipientSchema = z.enum(["taxpayer", "spouse"]);
 
+const below20TipMonthSchema = z.object({
+  employer_index: z.number().int().min(1),
+  month: z.number().int().min(1).max(12),
+  tips_received: z.number().positive().lt(20),
+  tips_reported: z.number().nonnegative(),
+}).strict().refine((month) => month.tips_reported <= month.tips_received, {
+  message: "Form 4137 below-$20 month reported tips exceed received tips",
+});
+
 const formSchema = z.object({
   recipient: recipientSchema,
   employers: z.array(employerSchema).min(1),
-  sub_20_tips: z.number().nonnegative().optional(),
+  below_20_tip_months: z.array(below20TipMonthSchema).optional(),
   government_employee_tips: z.number().nonnegative().optional(),
   ss_wages_from_w2: z.number().nonnegative().optional(),
   records_support_lower_tips: z.boolean().optional(),
@@ -110,7 +120,47 @@ export function calculateForm4137(
         `Form 4137 ${form.recipient} unreported tips are below W-2 allocated tips without supporting records`,
       );
     }
-    const incidentalTips = form.sub_20_tips ?? 0;
+    const below20Months = form.below_20_tip_months ?? [];
+    const seenMonths = new Set<string>();
+    const incidentalByEmployer = new Map<number, {
+      received: number;
+      reported: number;
+    }>();
+    for (const month of below20Months) {
+      if (month.employer_index > form.employers.length) {
+        throw new Error("Form 4137 below-$20 month has no employer row");
+      }
+      const key = `${month.employer_index}:${month.month}`;
+      if (seenMonths.has(key)) {
+        throw new Error("Form 4137 duplicate employer/month tip record");
+      }
+      seenMonths.add(key);
+      const prior = incidentalByEmployer.get(month.employer_index) ?? {
+        received: 0,
+        reported: 0,
+      };
+      incidentalByEmployer.set(month.employer_index, {
+        received: prior.received + month.tips_received,
+        reported: prior.reported + month.tips_reported,
+      });
+    }
+    for (const [index, monthly] of incidentalByEmployer) {
+      const employer = form.employers[index - 1];
+      if (
+        monthly.received > employer.tips_received ||
+        monthly.reported > employer.tips_reported ||
+        monthly.received - monthly.reported >
+          employer.tips_received - employer.tips_reported
+      ) {
+        throw new Error(
+          "Form 4137 below-$20 month records exceed employer annual tips",
+        );
+      }
+    }
+    const incidentalTips = below20Months.reduce(
+      (sum, month) => sum + month.tips_received - month.tips_reported,
+      0,
+    );
     if (incidentalTips > unreportedTips) {
       throw new Error("Form 4137 line 5 exceeds unreported tips");
     }
@@ -170,7 +220,12 @@ export function calculateForm4137(
 class Form4137Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form4137";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, schedule2, agi_aggregator]);
+  readonly outputNodes = new OutputNodes([
+    f1040,
+    schedule2,
+    agi_aggregator,
+    form8959,
+  ]);
 
   compute(ctx: NodeContext, rawInput: Form4137Input): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
@@ -178,6 +233,10 @@ class Form4137Node extends TaxNode<typeof inputSchema> {
     const input = inputSchema.parse(rawInput);
     const forms = calculateForm4137(input, cfg.ssWageBase);
     const tipIncome = forms.reduce((sum, form) => sum + form.unreportedTips, 0);
+    const medicareTips = forms.reduce(
+      (sum, form) => sum + form.medicareTips,
+      0,
+    );
     const tipTax = forms.reduce((sum, form) => sum + form.totalTax, 0);
     return {
       outputs: [
@@ -189,6 +248,9 @@ class Form4137Node extends TaxNode<typeof inputSchema> {
           : []),
         ...(tipTax > 0
           ? [output(schedule2, { line5_unreported_tip_tax: tipTax })]
+          : []),
+        ...(medicareTips > 0
+          ? [output(form8959, { unreported_tips: medicareTips })]
           : []),
       ],
     };
