@@ -9,6 +9,7 @@ import {
   calculateForm8826,
   type F8826Input,
   inputSchema as form8826InputSchema,
+  isEligible as isEligibleForForm8826,
 } from "../../../nodes/inputs/f8826/index.ts";
 
 /** Source-backed nonpassive Form 8826 and Form 8835 Part III credit rows. */
@@ -16,7 +17,8 @@ export type Form3800NonpassiveXmlInput = {
   readonly tax: Form3800NonpassiveInput;
   readonly form8826?: {
     readonly source: F8826Input;
-    readonly documentId: string;
+    /** Required when the taxpayer has a self-earned Form 8826 credit. */
+    readonly documentId?: string;
     readonly appliedCredit: number;
   };
   readonly facilities: readonly Form8835CreditEntry[];
@@ -37,10 +39,26 @@ export function buildIRS3800Nonpassive(
     ? calculateForm8826(form8826InputSchema.parse(input.form8826.source)).line8
     : 0;
   if (input.form8826) {
-    if (input.form8826.source.subject_to_passive_activity_limit) {
+    const source = input.form8826.source;
+    const selfEarned = calculateForm8826(source).line6 > 0;
+    if (
+      (selfEarned && source.subject_to_passive_activity_limit) ||
+      (source.pass_through_credits ?? []).some((entry) =>
+        entry.credit_amount > 0 && entry.subject_to_passive_activity_limit
+      )
+    ) {
       throw new Error("Form 8826 passive credit needs Form 8582-CR");
     }
-    if (!input.form8826.documentId || form8826Credit <= 0) {
+    if (source.eligible_expenditures > 0 && !isEligibleForForm8826(source)) {
+      throw new Error(
+        "Form 3800 has an ineligible self-earned Form 8826 credit",
+      );
+    }
+    if (
+      form8826Credit <= 0 ||
+      (selfEarned && !input.form8826.documentId) ||
+      (!selfEarned && input.form8826.documentId)
+    ) {
       throw new Error("Form 3800 needs an eligible Form 8826 source document");
     }
     const applied = input.form8826.appliedCredit;
@@ -265,14 +283,20 @@ export function buildIRS3800Nonpassive(
     element("SmllrGenBusCrOrTotGenEligCrAmt", lines.line37),
     element("CurrentYearCreditAllowedAmt", lines.line38),
     input.form8826
-      ? elements("Form8826CYCreditsGrp", [
-        element("GeneralBusCrFromNnPssvActyAmt", form8826Credit),
-        element("TotalGeneralBusCreditsAmt", form8826Credit),
-        element("TotalGeneralBusCreditsAppTxAmt", form8826Applied),
-      ], {
-        referenceDocumentId: input.form8826.documentId,
-        referenceDocumentName: "IRS8826",
-      })
+      ? elements(
+        "Form8826CYCreditsGrp",
+        [
+          element("GeneralBusCrFromNnPssvActyAmt", form8826Credit),
+          element("TotalGeneralBusCreditsAmt", form8826Credit),
+          element("TotalGeneralBusCreditsAppTxAmt", form8826Applied),
+        ],
+        input.form8826.documentId
+          ? {
+            referenceDocumentId: input.form8826.documentId,
+            referenceDocumentName: "IRS8826",
+          }
+          : undefined,
+      )
       : "",
     ordinaryGroup?.xml ?? "",
     ordinaryRow || input.form8826

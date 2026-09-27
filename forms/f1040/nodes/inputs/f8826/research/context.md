@@ -4,11 +4,12 @@
 
 Computes the Disabled Access Credit under IRC §44 for small businesses that
 incur eligible access expenditures to comply with the Americans with
-Disabilities Act (ADA). Eligibility: preceding-year gross receipts ≤$1M OR ≤30
-full-time employees (either condition suffices). Credit = 50% × (eligible
-expenditures − $250), capped at $5,000. The present graph routes the source
-credit directly to Schedule 3 line 6a; it still needs the Form 3800
-tax-liability limit before filing.
+Disabilities Act (ADA). Self-earned eligibility requires preceding-year gross
+receipts ≤$1M OR ≤30 full-time employees (either condition suffices). Line 6 is
+50% × (eligible expenditures − $250); line 7 adds partnership and S corporation
+credits; combined line 8 is capped at $5,000. The present graph routes the
+source amount to Form 3800, where a positive claim stops until its tax-liability
+limit is wired.
 
 **IRS Form:** 8826 **Drake Screen:** 8826 **Node Type:** input **Tax Year:**
 2025 **Drake Reference:** https://kb.drakesoftware.com/Site/Browse/14021
@@ -17,12 +18,13 @@ tax-liability limit before filing.
 
 ## Input Fields
 
-| Field                               | Type                | Required | Source / Label                              | Description                                                                      | IRS Reference                                   | URL                                       |
-| ----------------------------------- | ------------------- | -------- | ------------------------------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------- | ----------------------------------------- |
-| eligible_expenditures               | number (≥0)         | Yes      | Eligible expenditures                       | Amounts paid or incurred to comply with ADA (Line 1)                             | Form 8826 Line 1; IRC §44(c)                    | https://www.irs.gov/pub/irs-pdf/i8826.pdf |
-| prior_year_gross_receipts           | number (≥0)         | Yes      | Preceding-year gross receipts               | Include predecessor and common-control receipts; ≤$1M qualifies                  | Form 8826 instructions, Eligible Small Business | https://www.irs.gov/pub/irs-pdf/f8826.pdf |
-| prior_year_full_time_employee_count | nonnegative integer | Yes      | Preceding-year full-time employee headcount | An employee is full-time at ≥30 hours/week for ≥20 calendar weeks; ≤30 qualifies | Form 8826 instructions, Eligible Small Business | https://www.irs.gov/pub/irs-pdf/f8826.pdf |
-| subject_to_passive_activity_limit   | boolean             | Yes      | Passive-activity answer                     | Positive passive credit stops until Form 8582-CR is integrated                   | Form 3800 Part III column (d)                   | https://www.irs.gov/instructions/i3800    |
+| Field                               | Type                 | Required               | Source / Label                              | Description                                                                                                                                          | IRS Reference                                   | URL                                       |
+| ----------------------------------- | -------------------- | ---------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | ----------------------------------------- |
+| eligible_expenditures               | number (≥0)          | Yes                    | Eligible expenditures                       | Amounts paid or incurred to comply with ADA (Line 1)                                                                                                 | Form 8826 Line 1; IRC §44(c)                    | https://www.irs.gov/pub/irs-pdf/i8826.pdf |
+| prior_year_gross_receipts           | number (≥0)          | For self-earned credit | Preceding-year gross receipts               | Include predecessor and common-control receipts; ≤$1M qualifies                                                                                      | Form 8826 instructions, Eligible Small Business | https://www.irs.gov/pub/irs-pdf/f8826.pdf |
+| prior_year_full_time_employee_count | nonnegative integer  | For self-earned credit | Preceding-year full-time employee headcount | An employee is full-time at ≥30 hours/week for ≥20 calendar weeks; ≤30 qualifies                                                                     | Form 8826 instructions, Eligible Small Business | https://www.irs.gov/pub/irs-pdf/f8826.pdf |
+| subject_to_passive_activity_limit   | boolean              | Yes                    | Passive-activity answer                     | Positive passive credit stops until Form 8582-CR is integrated                                                                                       | Form 3800 Part III column (d)                   | https://www.irs.gov/instructions/i3800    |
+| pass_through_credits                | array of K-1 sources | No                     | Form 8826 line 7                            | Entity type, EIN, credit amount, and per-source passive classification. Pass-through-only claim goes directly on Form 3800 without filing Form 8826. | Form 8826 lines 7-8                             | https://www.irs.gov/pub/irs-pdf/f8826.pdf |
 
 ---
 
@@ -32,23 +34,27 @@ tax-liability limit before filing.
 
 `eligible = (prior_year_gross_receipts ≤ $1,000,000) OR (prior_year_full_time_employee_count ≤ 30)`
 Both facts are required to prevent missing information from being treated as
-eligibility. If neither qualifies, credit = 0. Source: IRC §44(b); Form 8826
-instructions — https://www.irs.gov/pub/irs-pdf/f8826.pdf
+eligibility for a self-earned credit. Pass-through-only credit does not need the
+recipient's own receipts or employee count. If neither qualifies, the
+self-earned credit = 0. Source: IRC §44(b); Form 8826 instructions —
+https://www.irs.gov/pub/irs-pdf/f8826.pdf
 
 ### Step 2 — Compute credit
 
 `cappedExpenses = min(eligible_expenditures, $10,250)`
-`credit = min((cappedExpenses − $250) × 50%, $5,000)` If eligible_expenditures ≤
-$250: credit = 0. Source: IRC §44(a); Form 8826 Line 4 —
+`line6 = max(0, min(eligible_expenditures − $250, $10,000)) × 50%`
+`line7 = sum(pass_through_credits)`
+`line8 = min(eligible_self_line6 + line7, $5,000)` If eligible_expenditures ≤
+$250: self-earned line 6 = 0. Source: IRC §44(a); Form 8826 lines 4-8 —
 https://www.irs.gov/pub/irs-pdf/i8826.pdf
 
 ---
 
 ## Output Routing
 
-| Output Field                   | Destination Node | Condition  | IRS Reference                                                                                            | URL                                         |
-| ------------------------------ | ---------------- | ---------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| line6a_general_business_credit | schedule3        | credit > 0 | Form 8826 line 8 → Form 3800 Part III line 1e → Schedule 3 line 6a after Form 3800 limit (not yet wired) | https://www.irs.gov/pub/irs-pdf/f1040s3.pdf |
+| Output Field         | Destination Node | Condition  | IRS Reference                                                                                                                                     | URL                                    |
+| -------------------- | ---------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| f8826_credit_entries | f3800            | line 8 > 0 | Form 8826 line 8 or direct pass-through source → Form 3800 Part III line 1e. Positive claims stop before Schedule 3 until Form 3800 is finalized. | https://www.irs.gov/instructions/i3800 |
 
 ---
 
@@ -96,6 +102,14 @@ gr & fte --> elig --> credit exp --> credit --> gbc
    credit reduce the §190 deduction.
 8. **Passive activity**: A positive source credit marked passive currently
    stops. It needs Form 8582-CR before the Form 3800 tax-liability limit.
+9. **Pass-through-only**: The IRS does not require a separate Form 8826 when the
+   taxpayer's only disabled-access credit comes from a partnership or S
+   corporation. The Form 3800 draft omits the Form 8826 document reference in
+   that case; the K-1 source-document bundle is still open.
+10. **Combined cap**: Line 8 caps self-earned plus pass-through credit at
+    $5,000. When that cap binds, source amounts are allocated pro rata in cents
+    using the largest remainders. Filed K-1 source reconciliation and
+    carryforward identity remain open.
 
 ---
 

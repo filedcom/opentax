@@ -121,22 +121,29 @@ specific Form 3800 line 7 and 10b exclusions instead of letting the general
 business credit count against itself. That bridge is not yet wired to graph
 finalization. Other GBC producers still send gross source credits straight to
 Schedule 3 line 6a and require a common limitation pass. The
-[Form 8826](https://www.irs.gov/pub/irs-pdf/f8826.pdf) source now requires both
-preceding-year receipts and full-time employee headcount instead of treating
-missing facts as eligibility; its cases are written but unrun. Its credit now
-enters Form 3800 instead of being deposited gross into Schedule 3, but a
-positive claim stops there until the tax-liability limit is wired. The legacy
-`f3800s.disabled_access_credit` input still deposits gross credit. These routing
-cases are written but unrun. A native `IRS8826` XML draft now shares the source
-calculation for lines 1, 3, 5, 6, and 8, with direct schema and reconciliation
-cases written but unrun. It remains unregistered until the Form 3800
-allowed-credit and source-document path is complete. Form 8826 now requires a
-passive-activity answer and stops a positive passive credit pending Form
-8582-CR, with unrun cases. The unregistered Form 3800 nonpassive XML draft now
-includes Form 8826's distinct Part III line 1e group and reconciles its explicit
-applied credit with Form 8835's line 1f and 4e groups and the shared Part II
-limit. Solo, combined, and negative cases are written but unrun. Its source
-graph and document bundle remain unconnected. The
+[Form 8826](https://www.irs.gov/pub/irs-pdf/f8826.pdf) self-earned source now
+requires both preceding-year receipts and full-time employee headcount instead
+of treating missing facts as eligibility; its cases are written but unrun. Its
+credit now enters Form 3800 instead of being deposited gross into Schedule 3,
+but a positive claim stops there until the tax-liability limit is wired. The
+legacy `f3800s.disabled_access_credit` input still deposits gross credit. These
+routing cases are written but unrun. A native `IRS8826` XML draft now shares the
+source calculation for lines 1, 3, 5, 6, 7, and 8, with direct schema and
+reconciliation cases written but unrun. It remains unregistered until the Form
+3800 allowed-credit and source-document path is complete. Form 8826 now requires
+a passive-activity answer and stops a positive passive credit pending Form
+8582-CR, with unrun cases. The build pass now accepts identified partnership and
+S-corporation line 7 sources, caps their combined line 8 with self-earned credit
+at $5,000, and lets pass-through-only credit reach Form 3800 without requiring
+the recipient's own eligibility facts or an `IRS8826` document. Passive K-1
+credits stop pending Form 8582-CR. Source and XML cases are written but unrun.
+The combined cap now allocates credit pro rata in cents to each identified
+source before the Form 3800 handoff; K-1 document reconciliation, filed source
+attribution, and carryforward identity remain open. The unregistered Form 3800
+nonpassive XML draft now includes Form 8826's distinct Part III line 1e group
+and reconciles its explicit applied credit with Form 8835's line 1f and 4e
+groups and the shared Part II limit. Solo, combined, and negative cases are
+written but unrun. Its source graph and document bundle remain unconnected. The
 [business-credit routing audit](docs/mef/general-business-credit-routing.md) now
 names the direct line 6a producers and the source classifications needed before
 a shared Form 3800 finalization. It also identifies Form 8912 as a separate line

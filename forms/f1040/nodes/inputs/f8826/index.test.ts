@@ -1,5 +1,5 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { f8826 } from "./index.ts";
+import { calculateForm8826, f8826 } from "./index.ts";
 import { f3800 } from "../f3800/index.ts";
 
 const eligibleFacts = {
@@ -36,6 +36,36 @@ Deno.test("schema_rejects_negative_expenditures", () => {
   assertEquals(result.success, false);
 });
 
+Deno.test("schema rejects sub-cent source amounts and calculation rounds a half-cent credit", () => {
+  assertEquals(
+    f8826.inputSchema.safeParse({
+      eligible_expenditures: 250.001,
+      ...eligibleFacts,
+    }).success,
+    false,
+  );
+  assertEquals(
+    f8826.inputSchema.safeParse({
+      eligible_expenditures: 0,
+      ...eligibleFacts,
+      pass_through_credits: [{
+        entity_type: "partnership",
+        entity_ein: "123456789",
+        credit_amount: 0.001,
+        subject_to_passive_activity_limit: false,
+      }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    calculateForm8826({
+      eligible_expenditures: 250.01,
+      ...eligibleFacts,
+    }).line6,
+    0.01,
+  );
+});
+
 Deno.test("schema_accepts_valid_input", () => {
   const result = f8826.inputSchema.safeParse({
     eligible_expenditures: 5000,
@@ -63,6 +93,99 @@ Deno.test("schema_requires_prior_year_receipts_and_full-time headcount", () => {
       prior_year_full_time_employee_count: 20.5,
     }).success,
     false,
+  );
+});
+
+Deno.test("pass-through-only credit does not require the recipient's self-earned eligibility facts", () => {
+  const input = {
+    eligible_expenditures: 0,
+    subject_to_passive_activity_limit: false,
+    pass_through_credits: [{
+      entity_type: "partnership" as const,
+      entity_ein: "123456789",
+      credit_amount: 1_250,
+      subject_to_passive_activity_limit: false,
+    }],
+  };
+  assertEquals(f8826.inputSchema.safeParse(input).success, true);
+  assertEquals(form3800Credit(compute(input)), 1_250);
+});
+
+Deno.test("pass-through credit keeps entity identity and rejects duplicates", () => {
+  const source = {
+    entity_type: "partnership" as const,
+    entity_ein: "123456789",
+    credit_amount: 1_250,
+    subject_to_passive_activity_limit: false,
+  };
+  assertEquals(
+    f8826.inputSchema.safeParse({
+      eligible_expenditures: 0,
+      subject_to_passive_activity_limit: false,
+      pass_through_credits: [source, source],
+    }).success,
+    false,
+  );
+  assertEquals(
+    f8826.inputSchema.safeParse({
+      eligible_expenditures: 0,
+      subject_to_passive_activity_limit: false,
+      pass_through_credits: [{ ...source, entity_ein: "12-3456789" }],
+    }).success,
+    false,
+  );
+});
+
+Deno.test("combined $5,000 cap allocates all source credits pro rata to cents", () => {
+  const input = {
+    eligible_expenditures: 2_250,
+    ...eligibleFacts,
+    pass_through_credits: [{
+      entity_type: "partnership" as const,
+      entity_ein: "123456789",
+      credit_amount: 2_000,
+      subject_to_passive_activity_limit: false,
+    }, {
+      entity_type: "s_corporation" as const,
+      entity_ein: "987654321",
+      credit_amount: 3_000,
+      subject_to_passive_activity_limit: false,
+    }],
+  };
+  const lines = calculateForm8826(input);
+  assertEquals(lines.line6, 1_000);
+  assertEquals(lines.line7, 5_000);
+  assertEquals(lines.line8, 5_000);
+  assertEquals(lines.selfCreditAfterCap, 833.33);
+  assertEquals(lines.passThroughCreditsAfterCap, [1_666.67, 2_500]);
+  assertEquals(
+    Math.round(
+      (lines.selfCreditAfterCap +
+        lines.passThroughCreditsAfterCap.reduce(
+          (sum, amount) => sum + amount,
+          0,
+        )) * 100,
+    ),
+    500_000,
+  );
+  assertEquals(
+    f3800.inputSchema.parse(compute(input).outputs[0]?.fields)
+      .f8826_credit_entries,
+    [{
+      source_type: "self",
+      credit_amount: 833.33,
+      subject_to_passive_activity_limit: false,
+    }, {
+      source_type: "partnership",
+      source_ein: "123456789",
+      credit_amount: 1_666.67,
+      subject_to_passive_activity_limit: false,
+    }, {
+      source_type: "s_corporation",
+      source_ein: "987654321",
+      credit_amount: 2_500,
+      subject_to_passive_activity_limit: false,
+    }],
   );
 });
 
@@ -183,6 +306,7 @@ Deno.test("routes_source_credit_to_Form_3800_without_claiming_Schedule_3", () =>
   const result = compute({ eligible_expenditures: 5000, ...eligibleFacts });
   assertEquals(result.outputs[0]?.nodeType, "f3800");
   assertEquals(result.outputs[0]?.fields.f8826_credit_entries, [{
+    source_type: "self",
     credit_amount: 2375,
     subject_to_passive_activity_limit: false,
   }]);

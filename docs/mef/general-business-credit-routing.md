@@ -48,7 +48,11 @@ Form 8911 business-use paths also need the shared Form 3800 treatment.
 entry. A positive nonpassive credit stops there until the Form 3800
 tax-liability limit is wired; a passive credit stops for Form 8582-CR. The older
 `f3800s.disabled_access_credit` input still deposits a gross amount and is not a
-source-backed Form 8826 claim.
+source-backed Form 8826 claim. Identified partnership and S-corporation line 7
+credits now combine with self-earned line 6 under one $5,000 cap. A
+pass-through-only credit can appear on Form 3800 without a Form 8826 document;
+the source amounts are allocated pro rata in cents when that cap binds. K-1
+attachment reconciliation and filed source-attribution checks remain open.
 
 Separate 2025 Schedule 3 corrections in the current build pass: `f8859` now
 deposits into line 6h, `f8834` into line 6i, and the combined Form 4136 fuel

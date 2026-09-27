@@ -96,6 +96,80 @@ Deno.test("Form 3800 XML: Form 8826 line 1e alone reconciles with Part II", () =
   );
 });
 
+Deno.test("Form 3800 XML: pass-through-only disabled-access credit has no Form 8826 document", () => {
+  const xml = buildIRS3800Nonpassive({
+    tax: { ...tax, standardCredit: 1_250, specifiedCredit: 0 },
+    form8826: {
+      source: {
+        eligible_expenditures: 0,
+        subject_to_passive_activity_limit: false,
+        pass_through_credits: [{
+          entity_type: "partnership",
+          entity_ein: "123456789",
+          credit_amount: 1_250,
+          subject_to_passive_activity_limit: false,
+        }],
+      },
+      appliedCredit: 1_250,
+    },
+    facilities: [],
+    form8835DocumentIds: [],
+    appliedCreditsByFacility: [],
+    transferStatementIdsByFileName: {},
+  });
+  assertStringIncludes(
+    xml,
+    "<Form8826CYCreditsGrp><GeneralBusCrFromNnPssvActyAmt>1250",
+  );
+  assertEquals(xml.includes('referenceDocumentName="IRS8826"'), false);
+  assertStringIncludes(
+    xml,
+    "<CurrentYearCreditAllowedAmt>1250</CurrentYearCreditAllowedAmt>",
+  );
+});
+
+Deno.test("Form 3800 XML: self-earned credit needs Form 8826 document, pass-through-only credit must omit it", () => {
+  const base = {
+    tax: { ...tax, standardCredit: 1_250, specifiedCredit: 0 },
+    facilities: [],
+    form8835DocumentIds: [],
+    appliedCreditsByFacility: [],
+    transferStatementIdsByFileName: {},
+  };
+  assertThrows(
+    () =>
+      buildIRS3800Nonpassive({
+        ...base,
+        tax: { ...base.tax, standardCredit: 5_000 },
+        form8826: { ...disabledAccess, documentId: undefined },
+      }),
+    Error,
+    "source document",
+  );
+  assertThrows(
+    () =>
+      buildIRS3800Nonpassive({
+        ...base,
+        form8826: {
+          source: {
+            eligible_expenditures: 0,
+            subject_to_passive_activity_limit: false,
+            pass_through_credits: [{
+              entity_type: "s_corporation",
+              entity_ein: "987654321",
+              credit_amount: 1_250,
+              subject_to_passive_activity_limit: false,
+            }],
+          },
+          documentId: "IRS8826_1",
+          appliedCredit: 1_250,
+        },
+      }),
+    Error,
+    "source document",
+  );
+});
+
 Deno.test("Form 3800 XML: Form 8826 and Form 8835 share the standard-credit limit", () => {
   const xml = buildIRS3800Nonpassive({
     tax: { ...tax, standardCredit: 23_000 },
@@ -172,27 +246,55 @@ Deno.test("Form 3800 XML: mixed Form 8826 and Form 8835 follows TY2025 source sc
   } catch {
     return;
   }
-  const xml = buildIRS3800Nonpassive({
-    tax: { ...tax, standardCredit: 23_000 },
-    form8826: disabledAccess,
-    facilities: [ordinary, specified],
-    form8835DocumentIds: ["IRS8835_1", "IRS8835_2"],
-    appliedCreditsByFacility: [15_000, 15_000],
-    transferStatementIdsByFileName: {
-      "Transfer Election Statement.pdf": "BinaryAttachment1",
-    },
-  }).replace("<IRS3800>", '<IRS3800 xmlns="http://www.irs.gov/efile">');
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
-  try {
-    await Deno.writeTextFile(path, xml);
-    const checked = await new Deno.Command("xmllint", {
-      args: ["--noout", "--schema", xsd, path],
-      stdout: "piped",
-      stderr: "piped",
-    }).output();
-    assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
-  } finally {
-    await Deno.remove(path);
+  const documents = [
+    buildIRS3800Nonpassive({
+      tax: { ...tax, standardCredit: 23_000 },
+      form8826: disabledAccess,
+      facilities: [ordinary, specified],
+      form8835DocumentIds: ["IRS8835_1", "IRS8835_2"],
+      appliedCreditsByFacility: [15_000, 15_000],
+      transferStatementIdsByFileName: {
+        "Transfer Election Statement.pdf": "BinaryAttachment1",
+      },
+    }),
+    buildIRS3800Nonpassive({
+      tax: { ...tax, standardCredit: 1_250, specifiedCredit: 0 },
+      form8826: {
+        source: {
+          eligible_expenditures: 0,
+          subject_to_passive_activity_limit: false,
+          pass_through_credits: [{
+            entity_type: "partnership",
+            entity_ein: "123456789",
+            credit_amount: 1_250,
+            subject_to_passive_activity_limit: false,
+          }],
+        },
+        appliedCredit: 1_250,
+      },
+      facilities: [],
+      form8835DocumentIds: [],
+      appliedCreditsByFacility: [],
+      transferStatementIdsByFileName: {},
+    }),
+  ];
+  for (const document of documents) {
+    const xml = document.replace(
+      "<IRS3800>",
+      '<IRS3800 xmlns="http://www.irs.gov/efile">',
+    );
+    const path = await Deno.makeTempFile({ suffix: ".xml" });
+    try {
+      await Deno.writeTextFile(path, xml);
+      const checked = await new Deno.Command("xmllint", {
+        args: ["--noout", "--schema", xsd, path],
+        stdout: "piped",
+        stderr: "piped",
+      }).output();
+      assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
+    } finally {
+      await Deno.remove(path);
+    }
   }
 });
 
