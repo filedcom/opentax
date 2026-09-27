@@ -1,4 +1,4 @@
-import { assertEquals, assertStringIncludes } from "@std/assert";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FIELD_MAP, schedule2 } from "./schedule2.ts";
 
 function assertNotIncludes(actual: string, expected: string) {
@@ -134,6 +134,25 @@ Deno.test("line17c_hsa_penalty maps to HSADistriAddnlPercentTaxAmt", () => {
   assertStringIncludes(
     result,
     "<HSADistriAddnlPercentTaxAmt>400</HSADistriAddnlPercentTaxAmt>",
+  );
+});
+
+Deno.test("Schedule 2 section 965 payment requires Form 965-A in a full bundle", () => {
+  assertThrows(
+    () =>
+      schedule2.build(
+        { line20_965_tax_installment: 8_000 },
+        { documentIdsByPendingKey: {} },
+      ),
+    Error,
+    "needs attached Form 965-A",
+  );
+  assertStringIncludes(
+    schedule2.build(
+      { line20_965_tax_installment: 8_000 },
+      { documentIdsByPendingKey: { f965: ["d1"] } },
+    ),
+    "<Section965TaxInstallmentAmt>8000</Section965TaxInstallmentAmt>",
   );
 });
 

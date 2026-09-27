@@ -72,18 +72,13 @@ Deno.test({
       uncollected_fica: 100,
       line17b_mortgage_subsidy_recapture: 1_000,
       line17c_hsa_penalty: 300,
-      line20_965_tax_installment: 8_000,
     },
   }, extractFilerIdentity(singleGeneral()));
   assertStringIncludes(
     xml,
     "<MortgSbsdyRecaptureTaxAmt>1000</MortgSbsdyRecaptureTaxAmt>",
   );
-  assertStringIncludes(
-    xml,
-    "<Section965TaxInstallmentAmt>8000</Section965TaxInstallmentAmt>",
-  );
-  await validateXsd(xml, "TY2025 Schedule 2 lines 16, 17b, and 17c");
+  await validateXsd(xml, "TY2025 Schedule 2 lines 17b and 17c");
 });
 
 Deno.test({
@@ -187,15 +182,38 @@ Deno.test("Form 8611 source reaches Schedule 2, Form 1040, and its MeF attachmen
   );
 });
 
-Deno.test("section 965 installment reaches Schedule 2 but not Form 1040 line 23", () => {
+const f965Source = {
+  reporting_year: 2025,
+  amended_report: false,
+  f965s: [{
+    entry_type: "original",
+    source_document_reference: "2018 filed Form 965-A and 2025 payment ledger",
+    tax_year_of_inclusion: 2018,
+    net_tax_with_965: 52_000,
+    net_tax_without_965: 20_000,
+    installment_election: true,
+    net_tax_adjustment: 0,
+    paid_by_installment_year: [
+      2_560,
+      2_560,
+      2_560,
+      2_560,
+      2_560,
+      4_800,
+      6_400,
+      8_000,
+    ],
+    current_year_payment: 8_000,
+    current_year_payment_reference: "2025 IRS payment confirmation",
+  }],
+  s_corp_calculations: [],
+  s_corp_deferred_rows: [],
+};
+
+Deno.test("section 965 payment reaches Schedule 2 but not Form 1040 line 23", () => {
   const result = runReturn({
     general: singleGeneral(),
-    f965: [{
-      tax_year_of_inclusion: "2017",
-      net_965_tax_liability: 32_000,
-      installment_election: true,
-      current_year_installment: 8_000,
-    }],
+    f965: f965Source,
   });
   assertEquals(result.diagnostics, []);
   assertEquals(
@@ -208,6 +226,22 @@ Deno.test("section 965 installment reaches Schedule 2 but not Form 1040 line 23"
       .line23_other_taxes ?? 0,
     0,
   );
+});
+
+Deno.test({
+  name: "XSD: Form 965-A cumulative payment record and Schedule 2 line 20",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const xml = buildMefXml({
+    f1040: { line23_other_taxes: 0 },
+    schedule2: { line20_965_tax_installment: 8_000 },
+    f965: f965Source,
+  }, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(xml, "<IRS965A ");
+  assertStringIncludes(xml, "<PaidYear8Amt>8000</PaidYear8Amt>");
+  await validateXsd(xml, "Form 965-A cumulative payment record");
 });
 
 Deno.test({

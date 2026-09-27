@@ -109,9 +109,14 @@ required source facts. Its written node, XML, and XSD cases are unrun; historic
 credit, qualified-basis, and interest amounts still require source-record
 verification. Other Schedule 2 routes still need audit. The section 965
 installment now goes to Schedule 2 line 20 and is excluded from line 21/Form
-1040 line 23, matching the printed 2025 line 21 sum. The Form 965-A attachment
-path is still open, so this is not a complete section 965 filing route. These
-cases are written but unrun.
+1040 line 23, matching the printed 2025 line 21 sum. A new Form 965-A source
+model and MeF descriptor now carry cumulative Part I/II liability and payments,
+Part III S-corporation computations, and Part IV deferred balances, and
+reconcile current-year payments to Schedule 2 line 20. The old assumption that
+a 2017 inclusion normally has its eighth installment in 2025 was incorrect;
+the normal eighth year was 2024. Transfer/adjustment supporting statements,
+consent-agreement attachments, historical tax computations, and IRS business
+rules remain open. These cases are written but unrun.
 
 The current untested Form 8936 commercial-vehicle pass replaces the new/used
 boolean with one three-way credit type and adds Schedule A Part V basis, Section

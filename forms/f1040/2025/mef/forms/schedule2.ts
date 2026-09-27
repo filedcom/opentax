@@ -129,17 +129,26 @@ function buildIRS1040Schedule2(
       if (context?.documentIdsByPendingKey && formIds.length === 0) {
         throw new Error("Schedule 2 line 16 needs attached Forms 8611");
       }
-      childrenByTag.set(tag, element(
+      childrenByTag.set(
         tag,
-        value,
-        formIds.length > 0
-          ? {
-            referenceDocumentId: formIds.join(" "),
-            referenceDocumentName: "IRS8611",
-          }
-          : undefined,
-      ));
+        element(
+          tag,
+          value,
+          formIds.length > 0
+            ? {
+              referenceDocumentId: formIds.join(" "),
+              referenceDocumentName: "IRS8611",
+            }
+            : undefined,
+        ),
+      );
       continue;
+    }
+    if (key === "line20_965_tax_installment" && value > 0) {
+      const formIds = context?.documentIdsByPendingKey?.f965 ?? [];
+      if (context?.documentIdsByPendingKey && formIds.length === 0) {
+        throw new Error("Schedule 2 line 20 needs attached Form 965-A");
+      }
     }
     childrenByTag.set(tag, element(tag, value));
   }

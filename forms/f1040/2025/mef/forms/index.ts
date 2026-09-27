@@ -18,6 +18,7 @@ import { form4136EmulsionBlendingStatement } from "./f4136_emulsion_blending_sta
 import { form4136CreditCardUsersStatement } from "./f4136_credit_card_users_statement.ts";
 import { form4562 } from "./f4562.ts";
 import { form461 } from "./f461.ts";
+import { form965a } from "./f965a.ts";
 import { form4684 } from "./f4684.ts";
 import { form4797 } from "./f4797.ts";
 import { form4835 } from "./f4835.ts";
@@ -123,6 +124,8 @@ export const ALL_MEF_FORMS = [
   scheduleSE,
   // 18. Form 461
   form461,
+  // Form 965-A is the cumulative section 965 liability and payment record.
+  form965a,
   // 22. Form 982
   form982,
   // 25. Form 1099-R (one document per distribution statement)
