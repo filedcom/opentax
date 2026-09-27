@@ -52,11 +52,11 @@ input surface, form-specific credit reconciliation, and MeF/PDF mappings.
 The CLI node list, inspect, and graph commands now accept `--year` and select
 the registered definition for that year. They still default to TY2025 for
 existing CLI calls; an unregistered year fails explicitly.
-Regression audit note: `deno test forms/f1040/2025/mef/builder.test.ts` currently
-fails in the Form 8283 serializer (`inputSchema.parse` receives an array where
-an object is expected; one isolated failure is the multiple-W-2 case near
-line 1400). This is independent of the year-aware `general` node edit and must
-be resolved before the TY2025 regression gate can be called green.
+The TY2025 MeF builder now skips absent optional form serializers instead of
+passing each an empty array. This resolved the Form 8283 parser failure;
+three builder fixtures were updated to give Form 1116 the matching Schedule 3
+foreign-tax-credit field. Its 130 tests pass. The complete TY2025 regression
+suite still needs a separate run before that release gate is green.
 
 ## 0. Freeze source versions and establish the baseline
 

@@ -112,8 +112,10 @@ function buildFragments(
   context: MefBuildContext,
 ): ReadonlyArray<{ pendingKey: string; tag: string; xml: string }> {
   return ALL_MEF_FORMS.flatMap((form) => {
+    const fields = pending[form.pendingKey as keyof MefFormsPending];
+    if (fields === undefined && form.pendingKey !== "f1040") return [];
     const built = form.build(
-      (pending[form.pendingKey as keyof MefFormsPending] ?? []) as never,
+      (fields ?? {}) as never,
       context,
     );
     const fragments = typeof built === "string" ? [built] : built;

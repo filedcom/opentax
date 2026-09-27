@@ -1041,7 +1041,7 @@ Deno.test("IRS8606 absent when form8606 missing from pending", () => {
 Deno.test("IRS1116 present when form_1116 has data", () => {
   const xml = buildMefXml({
     form_1116: sampleForm1116,
-    schedule3: { line1_total: 800 },
+    schedule3: { line1_foreign_tax_credit: 800 },
   });
   assertStringIncludes(xml, "<IRS1116 ");
 });
@@ -1234,7 +1234,7 @@ Deno.test("documentCnt=28 when all currently serializable forms have data", () =
     f1040: { line1a_wages: 50000 },
     schedule1: { line7_unemployment: 4800 },
     schedule2: { line2_amt: 5000 },
-    schedule3: { line1_total: 800, line2_childcare_credit: 0 },
+    schedule3: { line1_foreign_tax_credit: 800, line2_childcare_credit: 0 },
     schedule_d: { line_4_other_st: 1000 },
     form8889: { taxpayer_hsa_contributions: 3600 },
     form2441: sampleForm2441,
@@ -1292,7 +1292,7 @@ Deno.test("all 28 serializable forms populated: XML contains their document tags
     f1040: { line1a_wages: 50000 },
     schedule1: { line7_unemployment: 4800 },
     schedule2: { line2_amt: 5000 },
-    schedule3: { line1_total: 800, line2_childcare_credit: 0 },
+    schedule3: { line1_foreign_tax_credit: 800, line2_childcare_credit: 0 },
     schedule_d: { line_4_other_st: 1000 },
     form8889: { taxpayer_hsa_contributions: 3600 },
     form2441: sampleForm2441,
