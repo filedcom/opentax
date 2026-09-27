@@ -39,6 +39,11 @@ The [Form 8621 contract](../../../docs/ty2026/FORM8621-GRAPH.md) maps the
 current PFIC/QEF form revision and the 2026 Schedule 2 interest destinations
 at lines 19a/b. Its existing shared node uses old line 17p; 151 current PDF
 widgets, Part VI elections and current MeF are not yet in this registry.
+The [Form 4972 contract](../../../docs/ty2026/FORM4972-GRAPH.md) maps
+qualified lump-sum elections from Form 1099-R to 1040 line 16 box 2.
+The 2026 draft embeds its instructions and has 58 inventoried widgets;
+the Part II-only ordinary-income remainder, NUA and multiple-recipient
+paths still need graph and filing routes.
 The [Form 2555 contract](../../../docs/ty2026/FORM2555-GRAPH.md) maps the
 2026 $132,900 exclusion, location-specific housing limits, Schedule 1
 lines 8d/24j, SE tax and Form 1116 reductions. The structured shared

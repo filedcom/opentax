@@ -120,6 +120,11 @@ revision and the 2026 Schedule 2 draft to map PFIC/QEF ordinary and capital
 income, section 1291 tax, Part VI section 1294 deferred-tax interest and
 new Schedule 2 lines 19a/b. Its 151 widgets are inventoried; the shared
 node still routes interest to old line 17p and lacks the Part VI ledger.
+The [Form 4972 contract](FORM4972-GRAPH.md) uses the 2026 draft's embedded
+instructions to map per-participant lump-sum elections, the Part II-only
+ordinary-income remainder and the tax added to 1040 line 16 box 2. Its
+58 widgets are inventoried; NUA, multi-recipient allocation and current
+MeF remain.
 The [scenario 12 contract](ATS-SCENARIO-12.md) and
 [business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
 broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800
