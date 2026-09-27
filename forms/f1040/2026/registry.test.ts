@@ -1,4 +1,5 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertMatch } from "@std/assert";
+import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import type { InputNodeEntry } from "../../../core/types/form-definition.ts";
@@ -7,8 +8,73 @@ import { form6251 } from "../nodes/intermediate/forms/form6251/index.ts";
 import { buildStartNode } from "../start.ts";
 import { inputNodes } from "./inputs.ts";
 import { registry } from "./registry.ts";
+import { buildCorePdfBytes2026 } from "./pdf/core.ts";
 
 const context = { taxYear: 2026, formType: "f1040" };
+
+const filer = {
+  filing_status: FilingStatus.Single,
+  taxpayer_first_name: "Ada",
+  taxpayer_last_name: "Rivera",
+  taxpayer_ssn: "111223333",
+  taxpayer_dob: "1990-07-12",
+  taxpayer_tin_issued_by_due_date: true,
+  taxpayer_ssn_valid_for_employment: true,
+  taxpayer_ssn_issued_before_due_date: true,
+  taxpayer_citizen_national_or_work_authorized: true,
+  digital_assets: false,
+  address_line1: "10 Main St",
+  address_city: "Boston",
+  address_state: "MA",
+  address_zip: "02108",
+};
+
+Deno.test("TY2026 registered 1099-G reaches Schedule 1, 1040, and the PDF bundle", async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: filer,
+    f1099g: [{
+      box_1_unemployment: 9,
+      box_2_state_refund: 300,
+      box_2_taxable_amount: 80,
+      box_4_federal_withheld: 2,
+    }],
+  }, context);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule1.line1_state_refund, 80);
+  assertEquals(result.pending.schedule1.line7_unemployment, 9);
+  assertEquals(result.pending.schedule1.line10_total_additional_income, 89);
+  assertEquals(result.pending.f1040.line8_additional_income, 89);
+  assertEquals(result.pending.f1040.line11b_agi, 89);
+  assertEquals(result.pending.f1040.line25b_withheld_1099, 2);
+  const pdf = await PDFDocument.load(
+    await buildCorePdfBytes2026({
+      f1040: result.pending.f1040,
+      schedule1: result.pending.schedule1,
+    }),
+  );
+  assertEquals(pdf.getPageCount(), 4);
+});
+
+Deno.test("TY2026 1099-G rejects unfiled branches before routing any amounts", () => {
+  for (
+    const key of [
+      "box_1_repaid",
+      "box_5_rtaa",
+      "box_6_taxable_grants",
+      "box_7_agriculture",
+      "box_9_market_gain",
+    ]
+  ) {
+    const result = execute(buildExecutionPlan(registry), registry, {
+      general: filer,
+      f1099g: [{ box_1_unemployment: 200, [key]: 10 }],
+    }, context);
+    assertEquals(result.diagnostics.length, 1);
+    assertEquals(result.diagnostics[0].nodeType, "f1099g");
+    assertMatch(result.diagnostics[0].message, new RegExp(key));
+    assertEquals(result.pending.schedule1, undefined);
+  }
+});
 
 Deno.test("TY2026 registry executes a wages-only return", () => {
   const result = execute(buildExecutionPlan(registry), registry, {

@@ -172,6 +172,23 @@ class F1099gNode extends TaxNode<typeof inputSchema> {
     const { f1099gs: g99s } = parsed;
 
     if (g99s.length === 0) return { outputs: [] };
+    if (ctx.taxYear === 2026) {
+      for (const item of g99s) {
+        for (
+          const key of [
+            "box_1_repaid",
+            "box_5_rtaa",
+            "box_6_taxable_grants",
+            "box_7_agriculture",
+            "box_9_market_gain",
+          ] as const
+        ) {
+          if ((item[key] ?? 0) > 0) {
+            throw new Error(`TY2026 1099-G ${key} has no complete filed route`);
+          }
+        }
+      }
+    }
 
     const outputs: NodeOutput[] = [
       ...schedule1Output(g99s, ctx.taxYear),

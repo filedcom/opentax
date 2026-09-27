@@ -70,7 +70,12 @@ refund input requires `box_2_taxable_amount`, bounded by box 2; prior-year
 itemization alone does not determine how much tax benefit was received. The
 TY2025 `box_2_prior_year_itemized` behavior remains for existing callers,
 but should be replaced with an explicit tax-benefit calculation there too.
-This does not make 1099-G a registered TY2026 input yet: unemployment repayment
-metadata, typed line 8z amounts, and farm payments still need complete graph
-and print routes. IRS references: [Form 1099-G instructions](https://www.irs.gov/instructions/i1099g),
+Form 1099-G is now a registered TY2026 input for unemployment without a
+repayment, tax-benefit-adjusted state refunds, and federal withholding. Its
+unemployment repayment, RTAA, taxable-grant, agricultural-payment, and CCC
+market-gain branches raise a TY2026 diagnostic before routing any amount.
+Those branches still need complete graph and print routes. A registered
+integration test reconciles Schedule 1 line 10 to Form 1040 line 8, checks
+withholding on line 25b, and builds the four-page 1040/Schedule 1 PDF.
+IRS references: [Form 1099-G instructions](https://www.irs.gov/instructions/i1099g),
 [Publication 525](https://www.irs.gov/publications/p525).

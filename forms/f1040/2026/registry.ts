@@ -1,6 +1,7 @@
 import type { NodeRegistry } from "../../../core/types/node-registry.ts";
 import { general } from "../nodes/inputs/general/index.ts";
 import { f1098e } from "../nodes/inputs/f1098e/index.ts";
+import { f1099g } from "../nodes/inputs/f1099g/index.ts";
 import { w2 } from "../nodes/inputs/w2/index.ts";
 import { agi_aggregator } from "../nodes/intermediate/aggregation/agi_aggregator/index.ts";
 import { form4137 } from "../nodes/intermediate/forms/form4137/index.ts";
@@ -21,6 +22,7 @@ export const registry: NodeRegistry = {
   start,
   general,
   f1098e,
+  f1099g,
   w2,
   form4137,
   form8960,

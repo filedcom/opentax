@@ -5,6 +5,10 @@ import {
   f1098e,
   itemSchema as f1098eItemSchema,
 } from "../nodes/inputs/f1098e/index.ts";
+import {
+  f1099g,
+  itemSchema as f1099gItemSchema,
+} from "../nodes/inputs/f1099g/index.ts";
 import { form4137 } from "../nodes/intermediate/forms/form4137/index.ts";
 import {
   claimInputSchema as schedule1AClaimInputSchema,
@@ -16,6 +20,7 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: general, inputSchema: general.inputSchema, isArray: false },
   { node: w2, itemSchema: w2ItemSchema, isArray: true },
   { node: f1098e, itemSchema: f1098eItemSchema, isArray: true },
+  { node: f1099g, itemSchema: f1099gItemSchema, isArray: true },
   { node: form4137, inputSchema: form4137.inputSchema, isArray: false },
   { node: schedule1a, inputSchema: schedule1AClaimInputSchema, isArray: false },
 ];
