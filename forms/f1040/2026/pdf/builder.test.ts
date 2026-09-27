@@ -184,3 +184,23 @@ Deno.test("TY2026 PDF boundary includes Schedule 1-A non-W-2 overtime", async ()
   const pdf = await PDFDocument.load(await buildPdfBytes2026(result.pending));
   assertEquals(pdf.getPageCount(), 5);
 });
+
+Deno.test("TY2026 PDF boundary includes Schedule 1-A vehicle interest", async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: filer,
+    w2: [{ box1_wages: 50_000, box2_fed_withheld: 5_000 }],
+    schedule1a: {
+      vehicle_loans: [{
+        vin: "1HGCM82633A004352",
+        qualified_interest_paid: 2_000,
+        interest_deducted_on_business_schedules: 500,
+        original_use_started_with_filer: true,
+        final_assembly_us: true,
+      }],
+    },
+  }, { taxYear: 2026, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule1a.line36_vehicle_loan_interest, 1_500);
+  const pdf = await PDFDocument.load(await buildPdfBytes2026(result.pending));
+  assertEquals(pdf.getPageCount(), 5);
+});

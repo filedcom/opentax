@@ -124,6 +124,24 @@ Deno.test("schedule1a: TY2026 non-W-2 overtime rows calculate once", () => {
   );
 });
 
+Deno.test("schedule1a: TY2026 rejects ineligible vehicle answers", () => {
+  assertThrows(
+    () =>
+      schedule1a.compute({ taxYear: 2026, formType: "f1040" }, {
+        filing_status: FilingStatus.Single,
+        magi: 70_000,
+        vehicle_loans: [{
+          vin: "1HGCM82633A004352",
+          qualified_interest_paid: 1_000,
+          original_use_started_with_filer: false,
+          final_assembly_us: true,
+        }],
+      }),
+    Error,
+    "new US-assembled vehicle",
+  );
+});
+
 Deno.test("schedule1a: caps qualified tips at $25,000", () => {
   assertEquals(
     deduction({

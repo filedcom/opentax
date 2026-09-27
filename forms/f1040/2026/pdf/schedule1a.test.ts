@@ -86,7 +86,48 @@ Deno.test("TY2026 Schedule 1-A PDF continues non-W-2 overtime beyond five rows",
   assertEquals(pdf.getPageCount(), 4);
 });
 
+Deno.test("TY2026 Schedule 1-A PDF continues vehicle interest beyond two VINs", async () => {
+  const loans = ["1HGCM82633A004352", "1HGCM82633A004353", "1HGCM82633A004354"]
+    .map((vin) => ({
+      vin,
+      qualified_interest_paid: 1_000,
+      original_use_started_with_filer: true,
+      final_assembly_us: true,
+    }));
+  const pdf = await PDFDocument.load(
+    await buildSchedule1APdfBytes2026(
+      {
+        ...base,
+        vehicle_loans: loans,
+        line36_vehicle_loan_interest: 3_000,
+        line44_total_additional_deductions: 3_000,
+      },
+      { line11b_agi: 72_000, line13a_schedule1a: 3_000 },
+      filer,
+    ),
+  );
+  assertEquals(pdf.getPageCount(), 4);
+});
+
 Deno.test("TY2026 Schedule 1-A PDF rejects unsupported source detail", async () => {
+  await assertRejects(
+    () =>
+      buildSchedule1APdfBytes2026(
+        {
+          ...base,
+          vehicle_loans: [{
+            vin: "1HGCM82633A004352",
+            qualified_interest_paid: 1_000,
+          }],
+          line36_vehicle_loan_interest: 1_000,
+          line44_total_additional_deductions: 1_000,
+        },
+        { line11b_agi: 72_000, line13a_schedule1a: 1_000 },
+        filer,
+      ),
+    Error,
+    "needs vehicle eligibility answers",
+  );
   await assertRejects(
     () =>
       buildSchedule1APdfBytes2026(

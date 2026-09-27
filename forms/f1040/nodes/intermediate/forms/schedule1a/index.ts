@@ -19,6 +19,8 @@ const vehicleLoanSchema = z.object({
   ),
   qualified_interest_paid: z.number().nonnegative(),
   interest_deducted_on_business_schedules: z.number().nonnegative().optional(),
+  original_use_started_with_filer: z.boolean().optional(),
+  final_assembly_us: z.boolean().optional(),
 }).refine(
   (loan) =>
     (loan.interest_deducted_on_business_schedules ?? 0) <=
@@ -306,6 +308,18 @@ class Schedule1ANode extends TaxNode<typeof inputSchema> {
 
   compute(ctx: NodeContext, rawInput: Schedule1AInput): NodeResult {
     const input = inputSchema.parse(rawInput);
+    if (
+      ctx.taxYear === 2026 &&
+      (input.vehicle_loans ?? []).some((loan) =>
+        loan.qualified_interest_paid > 0 &&
+        (loan.original_use_started_with_filer === false ||
+          loan.final_assembly_us === false)
+      )
+    ) {
+      throw new Error(
+        "TY2026 qualified vehicle interest needs a new US-assembled vehicle",
+      );
+    }
     const enhancedSeniorDeduction = seniorDeduction(ctx, input);
     const qualifiedTips = qualifiedTipsDeduction(input, ctx.taxYear);
     const qualifiedOvertime = qualifiedOvertimeDeduction(input, ctx.taxYear);

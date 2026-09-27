@@ -51,6 +51,14 @@ const printSchema = z.object({
     payer_tin: z.string().trim().min(1),
     amount: z.number().finite().nonnegative(),
   })).optional(),
+  vehicle_loans: z.array(z.object({
+    vin: z.string(),
+    qualified_interest_paid: z.number().finite().nonnegative(),
+    interest_deducted_on_business_schedules: z.number().finite()
+      .nonnegative().optional(),
+    original_use_started_with_filer: z.boolean().optional(),
+    final_assembly_us: z.boolean().optional(),
+  })).optional(),
   magi: z.number().finite(),
   line15_qualified_tips: z.number().finite().nonnegative(),
   line27_qualified_overtime: z.number().finite().nonnegative(),
@@ -301,6 +309,76 @@ async function appendNonW2OvertimeContinuation(
   }
 }
 
+async function appendVehicleContinuation(
+  document: PDFDocument,
+  loans: readonly {
+    vin: string;
+    qualified_interest_paid: number;
+    interest_deducted_on_business_schedules?: number;
+  }[],
+  filer: { name: string; ssn: string },
+  total: number,
+): Promise<void> {
+  const extra = loans.slice(2);
+  if (extra.length === 0) return;
+  const regular = await document.embedFont(StandardFonts.Helvetica);
+  const bold = await document.embedFont(StandardFonts.HelveticaBold);
+  for (let offset = 0; offset < extra.length; offset += 29) {
+    const sheet = document.addPage([612, 792]);
+    sheet.drawText("Schedule 1-A (2026) - line 28 vehicle continuation", {
+      x: 36,
+      y: 748,
+      size: 11,
+      font: bold,
+    });
+    sheet.drawText(`Name: ${filer.name}    SSN: ${filer.ssn}`, {
+      x: 36,
+      y: 728,
+      size: 9,
+      font: regular,
+    });
+    for (
+      const [label, x] of [
+        ["VIN", 36],
+        ["Business", 200],
+        ["Schedule 1-A", 280],
+        ["Original use", 388],
+        ["US assembly", 485],
+      ] as const
+    ) {
+      sheet.drawText(label, { x, y: 694, size: 8, font: bold });
+    }
+    for (const [index, loan] of extra.slice(offset, offset + 29).entries()) {
+      const y = 674 - index * 19;
+      const business = loan.interest_deducted_on_business_schedules ?? 0;
+      sheet.drawText(loan.vin, { x: 36, y, size: 8, font: regular });
+      sheet.drawText(String(Math.round(business)), {
+        x: 200,
+        y,
+        size: 8,
+        font: regular,
+      });
+      sheet.drawText(
+        String(Math.round(loan.qualified_interest_paid - business)),
+        {
+          x: 280,
+          y,
+          size: 8,
+          font: regular,
+        },
+      );
+      sheet.drawText("Yes", { x: 388, y, size: 8, font: regular });
+      sheet.drawText("Yes", { x: 485, y, size: 8, font: regular });
+    }
+    sheet.drawText(`Line 29 total, all vehicles: ${Math.round(total)}`, {
+      x: 36,
+      y: 78,
+      size: 9,
+      font: bold,
+    });
+  }
+}
+
 /** Current filed 2026 Schedule 1-A PDF slice: employee tips and seniors. */
 export async function buildSchedule1APdfBytes2026(
   rawFields: Record<string, unknown>,
@@ -312,9 +390,15 @@ export async function buildSchedule1APdfBytes2026(
     throw new Error("TY2026 Schedule 1-A PDF needs filer name and SSN");
   }
   if (
-    fields.line36_vehicle_loan_interest > 0
+    fields.line36_vehicle_loan_interest > 0 &&
+    (fields.vehicle_loans ?? []).some((loan) =>
+      loan.original_use_started_with_filer !== true ||
+      loan.final_assembly_us !== true
+    )
   ) {
-    throw new Error("TY2026 Schedule 1-A PDF needs vehicle row details");
+    throw new Error(
+      "TY2026 Schedule 1-A PDF needs vehicle eligibility answers",
+    );
   }
   if (
     fields.line27_qualified_overtime > 0 &&
@@ -387,6 +471,21 @@ export async function buildSchedule1APdfBytes2026(
     : 12_500;
   const overtimeLimited = Math.min(overtimeTotal, overtimeCap);
   const expectedOvertime = Math.max(0, overtimeLimited - tipReduction);
+  const vehicleLoans = fields.vehicle_loans ?? [];
+  const vehicleTotal = vehicleLoans.reduce(
+    (sum, loan) =>
+      sum + loan.qualified_interest_paid -
+      (loan.interest_deducted_on_business_schedules ?? 0),
+    0,
+  );
+  const vehicleLimited = Math.min(vehicleTotal, 10_000);
+  const vehicleThreshold = fields.filing_status === FilingStatus.MFJ
+    ? 200_000
+    : 100_000;
+  const vehicleExcess = Math.max(0, fields.magi - vehicleThreshold);
+  const vehicleQuotient = Math.ceil(vehicleExcess / 1_000);
+  const vehicleReduction = vehicleQuotient * 200;
+  const expectedVehicle = Math.max(0, vehicleLimited - vehicleReduction);
   const taxpayerSenior = fields.taxpayer_age_65_or_older === true &&
     fields.taxpayer_has_valid_ssn;
   const spouseSenior = fields.filing_status === FilingStatus.MFJ &&
@@ -402,8 +501,9 @@ export async function buildSchedule1APdfBytes2026(
   if (
     expectedTips !== fields.line15_qualified_tips ||
     expectedOvertime !== fields.line27_qualified_overtime ||
+    expectedVehicle !== fields.line36_vehicle_loan_interest ||
     expectedSenior !== fields.line43_enhanced_senior ||
-    expectedTips + expectedOvertime + expectedSenior !==
+    expectedTips + expectedOvertime + expectedVehicle + expectedSenior !==
       fields.line44_total_additional_deductions ||
     fields.line44_total_additional_deductions !==
       amount(f1040, "line13a_schedule1a")
@@ -512,6 +612,46 @@ export async function buildSchedule1APdfBytes2026(
       fill(form, `${p2}f2_${String(number).padStart(2, "0")}[0]`, value);
     }
   }
+  if (fields.line36_vehicle_loan_interest > 0) {
+    for (const [index, loan] of vehicleLoans.slice(0, 2).entries()) {
+      const row = index === 0 ? "a" : "b";
+      const base = 1 + index * 3;
+      const prefix = `${p3}Table_Line28${row}[0].Line28${row}[0].`;
+      fill(
+        form,
+        `${prefix}VIN-${index + 1}_Comb[0].f3_${
+          String(base).padStart(2, "0")
+        }[0]`,
+        loan.vin,
+      );
+      fill(
+        form,
+        `${prefix}f3_${String(base + 1).padStart(2, "0")}[0]`,
+        loan.interest_deducted_on_business_schedules,
+      );
+      fill(
+        form,
+        `${prefix}f3_${String(base + 2).padStart(2, "0")}[0]`,
+        loan.qualified_interest_paid -
+          (loan.interest_deducted_on_business_schedules ?? 0),
+      );
+      form.getCheckBox(`${p3}c3_${index * 2 + 1}[0]`).check();
+      form.getCheckBox(`${p3}c3_${index * 2 + 2}[0]`).check();
+    }
+    const vehicleLines: readonly (readonly [number, number])[] = [
+      [7, vehicleTotal],
+      [8, vehicleLimited],
+      [9, fields.magi],
+      [10, vehicleThreshold],
+      [11, vehicleExcess],
+      [12, vehicleQuotient],
+      [13, vehicleReduction],
+      [14, expectedVehicle],
+    ];
+    for (const [number, value] of vehicleLines) {
+      fill(form, `${p3}f3_${String(number).padStart(2, "0")}[0]`, value);
+    }
+  }
   if (expectedSenior > 0) {
     const seniorLines: readonly (readonly [number, number])[] = [
       [15, fields.magi],
@@ -546,6 +686,14 @@ export async function buildSchedule1APdfBytes2026(
       nonW2Overtime,
       filer,
       nonW2OvertimeTotal,
+    );
+  }
+  if (fields.line36_vehicle_loan_interest > 0) {
+    await appendVehicleContinuation(
+      document,
+      vehicleLoans,
+      filer,
+      vehicleTotal,
     );
   }
   return document.save();

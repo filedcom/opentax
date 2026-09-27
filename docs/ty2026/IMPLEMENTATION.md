@@ -227,9 +227,13 @@ Positive W-2 overtime carries employer name and EIN; non-W-2 overtime has a
 2026 row input with recipient, business, payer TIN, and amount. The
 calculation rejects an amount-only claim for the same recipient alongside
 rows. Earlier amount-only overtime inputs remain calculable but cannot print
-a positive overtime deduction. The tip/Form 4137 example builds eight pages;
-senior-only and overtime examples build five pages. Vehicle interest and
-MAGI addback records still lack detail needed for their PDF sections.
+a positive overtime deduction. Vehicle-interest input now records original
+use and US assembly answers. Positive claims print VINs, interest allocation,
+and eligibility boxes; a statement carries rows beyond two VINs. Explicit
+negative eligibility answers fail calculation, and missing answers block the
+PDF. The tip/Form 4137 example builds eight pages; senior-only, overtime,
+and vehicle examples build five pages. MAGI addback records still lack the
+detail needed for their PDF section.
 
 ## 0. Freeze source versions and establish the baseline
 
