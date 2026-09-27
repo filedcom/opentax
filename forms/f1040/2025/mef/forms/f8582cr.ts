@@ -40,6 +40,7 @@ function reconcilePassiveDisabledAccessSources(
       source_type: origin.kind,
       entity_ein: origin.ein,
       source_document_reference: source.source_document_reference,
+      source_statement_reference: source.source_statement_reference,
       credit_amount: source.current_year_credit,
       subject_to_passive_activity_limit: true,
     }];

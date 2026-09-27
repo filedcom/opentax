@@ -268,7 +268,8 @@ Deno.test("Form 8582-CR passive disabled-access credit matches K-1 source eviden
           estate_trust_ein: "123456789",
           source_document_reference: "2025 Trust K-1",
           box13_code_zz_disabled_access_credit: 1_500,
-          box13_code_zz_disabled_access_statement_reference: "2025 access K-1",
+          box13_code_zz_disabled_access_statement_reference:
+            "2025 access statement",
           disabled_access_credit_subject_to_passive_activity_limit: true,
         },
       },
@@ -281,7 +282,8 @@ Deno.test("Form 8582-CR passive disabled-access credit matches K-1 source eviden
           estate_trust_ein: "123456789",
           source_document_reference: "2025 Estate K-1",
           box13_code_zz_disabled_access_credit: 1_500,
-          box13_code_zz_disabled_access_statement_reference: "2025 access K-1",
+          box13_code_zz_disabled_access_statement_reference:
+            "2025 access statement",
           disabled_access_credit_subject_to_passive_activity_limit: true,
         },
       },
@@ -291,7 +293,15 @@ Deno.test("Form 8582-CR passive disabled-access credit matches K-1 source eviden
       ...otherCredit,
       source_form: "Form 8826",
       form3800_credit_line: "1e",
-      source_document_reference: "2025 access K-1",
+      source_document_reference: entry.kind === PassiveCreditSourceOrigin.Trust
+        ? "2025 Trust K-1"
+        : entry.kind === PassiveCreditSourceOrigin.Estate
+        ? "2025 Estate K-1"
+        : "2025 access K-1",
+      ...(entry.kind === PassiveCreditSourceOrigin.Trust ||
+          entry.kind === PassiveCreditSourceOrigin.Estate
+        ? { source_statement_reference: "2025 access statement" }
+        : {}),
       source_origin: {
         kind: entry.kind,
         entity_reference: "Access entity",
@@ -325,6 +335,46 @@ Deno.test("Form 8582-CR passive disabled-access credit matches K-1 source eviden
       form8582cr.build(input, context),
       "<AllowedCreditsAmt>1000</AllowedCreditsAmt>",
     );
+    if (
+      entry.kind === PassiveCreditSourceOrigin.Trust ||
+      entry.kind === PassiveCreditSourceOrigin.Estate
+    ) {
+      assertThrows(
+        () =>
+          form8582cr.build(input, {
+            ...context,
+            pending: {
+              ...pending,
+              k1_trust: {
+                k1_trusts: [{
+                  ...entry.item,
+                  source_document_reference: "Unclaimed K-1",
+                }],
+              },
+            },
+          }),
+        Error,
+        "does not reconcile to K-1 box 13 code ZZ statement",
+      );
+      assertThrows(
+        () =>
+          form8582cr.build(input, {
+            ...context,
+            pending: {
+              ...pending,
+              k1_trust: {
+                k1_trusts: [{
+                  ...entry.item,
+                  box13_code_zz_disabled_access_statement_reference:
+                    "Unclaimed statement",
+                }],
+              },
+            },
+          }),
+        Error,
+        "does not reconcile to K-1 box 13 code ZZ statement",
+      );
+    }
     assertThrows(
       () =>
         form8582cr.build(input, {

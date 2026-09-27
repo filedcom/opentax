@@ -610,7 +610,9 @@ K-1 document authenticity, and missing-EIN source evidence still need
 reconciliation. Current-year passive disabled-access credits on line 1e now
 match partnership or S-corporation K-1 code K evidence, or a named estate/trust
 K-1 code ZZ statement. Its direct and full-return XSD cases are written but
-unrun; matching the statement reference is not proof its contents are attached.
+unrun. The estate/trust path now requires distinct K-1 and code ZZ statement
+references and matches both to the entered K-1 facts; this is not proof that
+the K-1 or statement contents are attached or authentic.
 Pass-through sources also carry a stable entity reference so the passive
 Part IV summary chooses the entity with the greatest combined credit across
 its source years. Conflicting EINs for one entity stop XML generation. The

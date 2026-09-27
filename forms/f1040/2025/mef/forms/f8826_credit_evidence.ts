@@ -6,6 +6,7 @@ export type DisabledAccessK1Credit = {
   readonly source_type: "partnership" | "s_corporation" | "estate" | "trust";
   readonly entity_ein: string;
   readonly source_document_reference: string;
+  readonly source_statement_reference?: string;
   readonly credit_amount: number;
   readonly subject_to_passive_activity_limit: boolean;
 };
@@ -15,7 +16,7 @@ function sameCents(left: number | undefined, right: number): boolean {
     Math.round(left * 100) === Math.round(right * 100);
 }
 
-/** Verify a disabled-access pass-through credit against box 15/13 code K. */
+/** Verify a disabled-access pass-through credit against the matching K-1 code. */
 export function reconcileDisabledAccessK1Credits(
   credits: readonly DisabledAccessK1Credit[],
   pending: Readonly<Record<string, unknown>>,
@@ -81,11 +82,12 @@ export function reconcileDisabledAccessK1Credits(
       const matches = estatesAndTrusts.filter((k1) =>
         k1.entity_type === credit.source_type &&
         k1.estate_trust_ein === credit.entity_ein &&
+        k1.source_document_reference === credit.source_document_reference &&
         k1.box13_code_zz_disabled_access_statement_reference ===
-          credit.source_document_reference
+          credit.source_statement_reference
       );
       if (
-        matches.length !== 1 ||
+        !credit.source_statement_reference || matches.length !== 1 ||
         !sameCents(
           matches[0].box13_code_zz_disabled_access_credit,
           credit.credit_amount,

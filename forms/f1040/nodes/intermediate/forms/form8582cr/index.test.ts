@@ -116,6 +116,34 @@ Deno.test("Form 8582-CR source origin requires pass-through EIN or missing-EIN r
   );
 });
 
+Deno.test("Form 8582-CR estate and trust disabled-access sources identify their code ZZ statement", () => {
+  for (
+    const kind of [
+      PassiveCreditSourceOrigin.Estate,
+      PassiveCreditSourceOrigin.Trust,
+    ]
+  ) {
+    const credit = {
+      ...other(100),
+      source_form: "Form 8826",
+      form3800_credit_line: "1e",
+      source_origin: {
+        kind,
+        entity_reference: "Access entity",
+        ein: "123456789",
+      },
+    };
+    assertEquals(creditSourceSchema.safeParse(credit).success, false);
+    assertEquals(
+      creditSourceSchema.safeParse({
+        ...credit,
+        source_statement_reference: "2025 code ZZ disabled-access statement",
+      }).success,
+      true,
+    );
+  }
+});
+
 function compute(input: Record<string, unknown>) {
   return form8582cr.compute(
     { taxYear: 2025, formType: "f1040" },
