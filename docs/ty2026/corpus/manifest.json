@@ -1640,6 +1640,24 @@
       "bytes": 170223,
       "sha256": "4df687daf79373c8c9ed96913ebe77ad49bbcc8fea122964dc6c7efc97b8d148",
       "retrieved_utc": "2026-09-27T14:42:43Z"
+    },
+    {
+      "path": "authorities/f8621--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/f8621.pdf",
+      "kind": "current-revision",
+      "status": "downloaded",
+      "bytes": 160310,
+      "sha256": "9c063d71a970eff604d9c3f05449422f86fbe29d99407282a87d94fc6c10a2d0",
+      "retrieved_utc": "2026-09-27T14:46:43Z"
+    },
+    {
+      "path": "authorities/i8621--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/i8621.pdf",
+      "kind": "current-revision-instructions",
+      "status": "downloaded",
+      "bytes": 254797,
+      "sha256": "f16061fd6ddd952a39f986bab7e7c561d25de61d2ed40938e5e560b9baba477b",
+      "retrieved_utc": "2026-09-27T14:46:43Z"
     }
   ]
 }

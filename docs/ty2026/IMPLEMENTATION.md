@@ -115,6 +115,11 @@ The [Form 8997 contract](FORM8997-GRAPH.md) uses the new draft and Notice
 period, split Part III A/B, reserved Part IV and post-deferral Part V.
 Its 461 widgets are inventoried; the two shared QOF nodes disagree on
 gain character and neither supplies a complete 2026 Form 8949/MeF route.
+The [Form 8621 contract](FORM8621-GRAPH.md) uses the current December 2025
+revision and the 2026 Schedule 2 draft to map PFIC/QEF ordinary and capital
+income, section 1291 tax, Part VI section 1294 deferred-tax interest and
+new Schedule 2 lines 19a/b. Its 151 widgets are inventoried; the shared
+node still routes interest to old line 17p and lacks the Part VI ledger.
 The [scenario 12 contract](ATS-SCENARIO-12.md) and
 [business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
 broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800

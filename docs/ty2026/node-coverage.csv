@@ -92,7 +92,7 @@ f8611,forms/f1040/nodes/inputs/f8611/index.ts,inputs,1,no,no,no,n/a,P1,audit-req
 f8082,forms/f1040/nodes/inputs/f8082/index.ts,inputs,1,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 f8873,forms/f1040/nodes/inputs/f8873/index.ts,inputs,2,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 f8288,forms/f1040/nodes/inputs/f8288/index.ts,inputs,1,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
-f8621,forms/f1040/nodes/inputs/f8621/index.ts,inputs,0,yes,yes,no,n/a,P2,audit-required,2026 event-year allocation updated; audit remaining rules
+f8621,forms/f1040/nodes/inputs/f8621/index.ts,inputs,0,yes,yes,no,n/a,P2,audit-required,"Current Dec 2025 Form 8621/instructions pinned; 2026 Schedule 2 routes line 16f/24 interest to 19a/19b, while shared node uses old 17p; complete PFIC elections/Part VI, 151 PDF widgets and current MeF; see FORM8621-GRAPH.md"
 household_wages,forms/f1040/nodes/inputs/household_wages/index.ts,inputs,0,no,no,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"
 f8828,forms/f1040/nodes/inputs/f8828/index.ts,inputs,1,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 f8835,forms/f1040/nodes/inputs/f8835/index.ts,inputs,3,no,yes,no,n/a,P0,audit-required,"verify 2026 law, node outputs, and graph route"

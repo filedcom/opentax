@@ -23,6 +23,10 @@ as a filing rule.
 The [Form 8997 contract](FORM8997-GRAPH.md) records the 2026 end of the
 legacy QOF deferral period, new Part III B inclusion and Part V basis ledger.
 Its source-keyed Form 8949 entries must precede Schedule D aggregation.
+The [Form 8621 contract](FORM8621-GRAPH.md) keeps QEF net capital gain on
+Schedule D separate from PFIC ordinary income, section 1291 additional
+tax/interest and mark-to-market basis. Its 2026 Schedule 2 interest route
+changes to lines 19a/b.
 
 The [Form 4797 disposition contract](FORM4797-GRAPH.md) specifies the
 asset-level §1231 net and five-year loss recapture that produce its

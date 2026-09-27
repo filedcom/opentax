@@ -35,6 +35,10 @@ The [Form 8997 contract](../../../docs/ty2026/FORM8997-GRAPH.md) maps the
 2026 end of the legacy QOF deferral, new Part III Section B, reserved Part IV
 and post-deferral Part V. The 461-widget draft form and paired Form 8949
 routes remain outside this registry.
+The [Form 8621 contract](../../../docs/ty2026/FORM8621-GRAPH.md) maps the
+current PFIC/QEF form revision and the 2026 Schedule 2 interest destinations
+at lines 19a/b. Its existing shared node uses old line 17p; 151 current PDF
+widgets, Part VI elections and current MeF are not yet in this registry.
 The [Form 2555 contract](../../../docs/ty2026/FORM2555-GRAPH.md) maps the
 2026 $132,900 exclusion, location-specific housing limits, Schedule 1
 lines 8d/24j, SE tax and Form 1116 reductions. The structured shared

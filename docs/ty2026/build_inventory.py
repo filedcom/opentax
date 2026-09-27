@@ -20,7 +20,7 @@ NODE_PROGRESS = {
     "w2": "2026 SIMPLE, TP/TT, and Schedule 2 box12 updated; ATS 2 statutory box13 must route to Schedule C once, not 1040 wages; see ATS-SCENARIO-02.md",
     "auto_expense": "2026 business mileage periods updated; audit remaining rules",
     "f2106": "2026 business mileage and AGI limit updated; audit remaining rules",
-    "f8621": "2026 event-year allocation updated; audit remaining rules",
+    "f8621": "Current Dec 2025 Form 8621/instructions pinned; 2026 Schedule 2 routes line 16f/24 interest to 19a/19b, while shared node uses old 17p; complete PFIC elections/Part VI, 151 PDF widgets and current MeF; see FORM8621-GRAPH.md",
     "form8962": "2026 percentage and repayment paths updated; verify final instructions",
     "form_1116": "2026 line 18 adds Schedule 1-A line 43 and line 20 needs Schedule 2 line 1z; shared node omits full category/carryover and new PDF/MeF route; see FORM1116-GRAPH.md",
     "form2555": "2026 form/instructions and Notice 2026-25 pinned; structured filing rejects 2026 and housing route uses legacy Schedule 1 key; see FORM2555-GRAPH.md",
