@@ -71,6 +71,8 @@ Deno.test({
         amount: 100,
       })),
       print_line6_total: 1_600,
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
     },
   }, filer);
   assertEquals((xml.match(/<Form1040SchBPartII>/g) ?? []).length, 16);

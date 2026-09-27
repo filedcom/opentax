@@ -56,7 +56,7 @@ Line 6 flows to Form 1040 line 3b (ordinary dividends).
 > **Source:** IRS Schedule B 2025 form, Part I Line 4 note; Part II Line 6 note — .research/docs/f1040sb.pdf
 
 ### Step 5 — Part III foreign accounts and trusts
-The `schedule_b_part_iii` input supplies the foreign-account answer, the separate FinCEN Form 114 filing answer, country codes plus names when FBAR filing is required, and the foreign-trust answer. An elected child's foreign account or trust forces the corresponding Yes answer and the MeF `FORM8814` literal. The child's account alone does not establish whether the taxpayer must file FinCEN Form 114; an explicit answer is required. Part III can file Schedule B without interest or dividends. Line 4 or line 6 over $1,500 also requires Part III to be answered, but a complete global answer gate remains open.
+The `schedule_b_part_iii` input supplies the foreign-account answer, the separate FinCEN Form 114 filing answer, country codes plus names when FBAR filing is required, and the foreign-trust answer. An elected child's foreign account or trust forces the corresponding Yes answer and the MeF `FORM8814` literal. The child's account alone does not establish whether the taxpayer must file FinCEN Form 114; an explicit answer is required. Part III can file Schedule B without interest or dividends. The calculation and MeF builder now refuse a required Schedule B when either Part III account/trust question is unanswered, including when line 4 or line 6 exceeds $1,500; the full test batch has not run.
 
 > **Source:** IRS Schedule B 2025 form, Part I/II Notes; Part III header — .research/docs/f1040sb.pdf
 

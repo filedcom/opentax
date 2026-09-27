@@ -105,6 +105,20 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
       input.form8814_foreign_account === true;
     const foreignTrust = input.foreign_trust_question === true ||
       input.form8814_foreign_trust === true;
+    const partIIIRequired = line4 > 1_500 || line6 > 1_500 ||
+      foreignAccount || foreignTrust;
+    if (
+      partIIIRequired && input.foreign_accounts_question === undefined &&
+      input.form8814_foreign_account !== true
+    ) {
+      throw new Error("Schedule B needs an explicit foreign-account answer");
+    }
+    if (
+      partIIIRequired && input.foreign_trust_question === undefined &&
+      input.form8814_foreign_trust !== true
+    ) {
+      throw new Error("Schedule B needs an explicit foreign-trust answer");
+    }
     if (foreignAccount && input.fincen_form114_required === undefined) {
       throw new Error(
         "Schedule B needs an explicit FinCEN Form 114 filing answer for foreign accounts",

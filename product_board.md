@@ -300,8 +300,10 @@ account, FBAR, country, and trust answers from a dedicated input into the MeF
 XML and PDF fields. An elected Form 8814 child's foreign-account or trust fact forces the matching
 Schedule B Yes answer and Form 8814 literal, but FBAR filing is never inferred
 from that fact. More than two country names get a PDF supplemental page. These
-cases are written but unrun; source PDF rendering and IRS business rules remain
-open. The PDF statements still need filled-render verification. The Schedule B
+cases are written but unrun; the calculation and MeF builder now require both
+Part III account/trust answers when either income line exceeds $1,500 or
+foreign activity requires the form. Source PDF rendering and IRS business rules
+remain open. The PDF statements still need filled-render verification. The Schedule B
 pass also removes the 15-dividend-payer cutoff: the Schedule B
 node retains every dividend payer, MeF emits every native Part II row, and the
 PDF builder appends a continuation statement after the 15 printed rows. Its

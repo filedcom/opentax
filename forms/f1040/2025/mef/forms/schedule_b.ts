@@ -104,6 +104,44 @@ function buildIRS1040ScheduleB(fields: Input): string {
   const dividends = typeof fields.print_line6_total === "number"
     ? fields.print_line6_total
     : sum(fields.ordinaryDividends);
+  const taxableInterest = typeof fields.print_line4_total === "number"
+    ? fields.print_line4_total
+    : interest === undefined
+    ? undefined
+    : Math.max(0, interest - (fields.ee_bond_exclusion ?? 0));
+  const partIIIRequired = (taxableInterest ?? 0) > 1_500 ||
+    (dividends ?? 0) > 1_500 ||
+    fields.foreign_accounts_question === true ||
+    fields.foreign_trust_question === true ||
+    fields.form8814_foreign_account === true ||
+    fields.form8814_foreign_trust === true;
+  if (
+    partIIIRequired &&
+    (fields.foreign_accounts_question === undefined ||
+      fields.foreign_trust_question === undefined)
+  ) {
+    throw new Error("Schedule B MeF needs both Part III Yes/No answers");
+  }
+  if (
+    fields.foreign_accounts_question === true &&
+    fields.fincen_form114_required === undefined
+  ) {
+    throw new Error("Schedule B MeF needs the separate FBAR Yes/No answer");
+  }
+  if (
+    fields.fincen_form114_required === true &&
+    (fields.foreign_accounts_question !== true ||
+      !fields.foreign_country_codes?.length)
+  ) {
+    throw new Error("Schedule B MeF FBAR Yes needs foreign country codes");
+  }
+  if (
+    (fields.foreign_country_codes?.length ?? 0) > 25 ||
+    (fields.foreign_country_codes?.length &&
+      fields.fincen_form114_required !== true)
+  ) {
+    throw new Error("Schedule B MeF foreign country codes are invalid");
+  }
   if (
     fields.taxable_interest_net === undefined &&
     fields.interest_rows === undefined &&

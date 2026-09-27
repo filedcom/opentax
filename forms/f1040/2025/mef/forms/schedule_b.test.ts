@@ -46,10 +46,24 @@ Deno.test("schedule_b: taxable_interest_net at zero is emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("schedule_b: taxable_interest_net maps to TaxableInterestSubtotalAmt", () => {
-  const result = scheduleB.build({ taxable_interest_net: 3000 });
+  const result = scheduleB.build({
+    taxable_interest_net: 3000,
+    foreign_accounts_question: false,
+    foreign_trust_question: false,
+  });
   assertStringIncludes(
     result,
     "<TaxableInterestSubtotalAmt>3000</TaxableInterestSubtotalAmt>",
+  );
+});
+
+Deno.test("schedule_b: MeF refuses a required Part III with unanswered questions", () => {
+  assertThrows(() => scheduleB.build({ taxable_interest_net: 1_501 }));
+  assertThrows(() =>
+    scheduleB.build({
+      ordinaryDividends: 1_501,
+      foreign_accounts_question: false,
+    })
   );
 });
 
@@ -78,6 +92,8 @@ Deno.test("schedule_b: combined parent and Form 8814 dividends include payer row
       { payerName: "Fund A", amount: 1_200 },
       { payerName: "Form 8814", amount: 500 },
     ],
+    foreign_accounts_question: false,
+    foreign_trust_question: false,
   });
   assertStringIncludes(
     xml,
@@ -100,6 +116,8 @@ Deno.test("schedule_b: all 16 dividend payer rows enter native MeF", () => {
       amount: 100,
     })),
     print_line6_total: 1_600,
+    foreign_accounts_question: false,
+    foreign_trust_question: false,
   });
   assertEquals((xml.match(/<Form1040SchBPartII>/g) ?? []).length, 16);
   assertStringIncludes(
@@ -191,10 +209,10 @@ Deno.test("schedule_b: FBAR Yes carries ordered IRS country codes", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("schedule_b: single known field emits only that element, absent fields omitted", () => {
-  const result = scheduleB.build({ taxable_interest_net: 3000 });
+  const result = scheduleB.build({ taxable_interest_net: 1000 });
   assertStringIncludes(
     result,
-    "<TaxableInterestSubtotalAmt>3000</TaxableInterestSubtotalAmt>",
+    "<TaxableInterestSubtotalAmt>1000</TaxableInterestSubtotalAmt>",
   );
   assertNotIncludes(result, "<ExcludableSavingsBondIntAmt>");
   assertNotIncludes(result, "<TotalOrdinaryDividendsAmt>");
@@ -208,6 +226,8 @@ const allFields = {
   taxable_interest_net: 3000,
   ee_bond_exclusion: 500,
   ordinaryDividends: 1200,
+  foreign_accounts_question: false,
+  foreign_trust_question: false,
 };
 
 Deno.test("schedule_b: all 3 fields present: output wrapped in IRS1040ScheduleB tag", () => {
@@ -240,6 +260,8 @@ Deno.test("schedule_b: payer name and amount emit an IRS interest row", () => {
   const result = scheduleB.build({
     payer_name: "Bank of America",
     taxable_interest_net: 3000,
+    foreign_accounts_question: false,
+    foreign_trust_question: false,
   });
   assertStringIncludes(
     result,

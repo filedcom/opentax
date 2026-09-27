@@ -35,11 +35,17 @@ Deno.test("foreign-account and trust facts file Schedule B without interest", ()
 });
 
 Deno.test("Schedule B requires an explicit FBAR decision and country codes", () => {
-  assertThrows(() => compute({ form8814_foreign_account: true }));
+  assertThrows(() =>
+    compute({
+      form8814_foreign_account: true,
+      foreign_trust_question: false,
+    })
+  );
   assertThrows(() =>
     compute({
       foreign_accounts_question: true,
       fincen_form114_required: true,
+      foreign_trust_question: false,
     })
   );
   assertEquals(
@@ -47,6 +53,7 @@ Deno.test("Schedule B requires an explicit FBAR decision and country codes", () 
       compute({
         foreign_accounts_question: true,
         fincen_form114_required: true,
+        foreign_trust_question: false,
         foreign_countries: [
           { irs_code: "CA", name: "Canada" },
           { irs_code: "FR", name: "France" },
@@ -124,6 +131,8 @@ Deno.test("Form 8814 and below-threshold parent dividends trigger Schedule B wit
   const result = compute({
     dividend_info: [{ payerName: "Fund A", amount: 1_200 }],
     form8814_dividends: 500,
+    foreign_accounts_question: false,
+    foreign_trust_question: false,
   });
   assertEquals(findOutput(result, "f1040"), undefined);
   assertEquals(findOutput(result, "agi_aggregator"), undefined);
@@ -142,12 +151,29 @@ Deno.test("Schedule B keeps all 16 dividend payers for MeF and PDF overflow", ()
   const result = compute({
     payerName: Array.from({ length: 16 }, (_, index) => `Fund ${index + 1}`),
     ordinaryDividends: Array(16).fill(100),
+    foreign_accounts_question: false,
+    foreign_trust_question: false,
   });
   const printable = findOutput(result, "schedule_b")?.fields;
   assertEquals((printable?.dividend_rows as unknown[]).length, 16);
   assertEquals(printable?.print_div_payer_15, "Fund 15");
   assertEquals(printable?.print_div_payer_16, undefined);
   assertEquals(printable?.print_line6_total, 1_600);
+});
+
+Deno.test("Schedule B demands Part III answers above the $1,500 threshold", () => {
+  assertThrows(() =>
+    compute({ payer_name: "Bank", taxable_interest_net: 1_501 })
+  );
+  assertThrows(() => compute({ payerName: "Fund", ordinaryDividends: 1_501 }));
+  const atThreshold = compute({
+    payer_name: "Bank",
+    taxable_interest_net: 1_500,
+  });
+  assertEquals(
+    findOutput(atThreshold, "f1040")?.fields.line2b_taxable_interest,
+    1_500,
+  );
 });
 
 Deno.test("zero ordinaryDividends produces no dividend output", () => {
