@@ -3,14 +3,16 @@ import { CONFIG_BY_YEAR } from "../../../nodes/config/index.ts";
 import {
   ExclusionType,
   inputSchema,
+  qpriExcludedAmount,
 } from "../../../nodes/intermediate/forms/form982/index.ts";
-import type { MefFormDescriptor } from "../form-descriptor.ts";
+import { FilingStatus } from "../types.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 type Input = Partial<typeof inputSchema._output> & Record<string, unknown>;
 
 export const FIELD_MAP: ReadonlyArray<readonly [string, string]> = [];
 
-function buildIRS982(raw: Input): string {
+function buildIRS982(raw: Input, context?: MefBuildContext): string {
   if (Array.isArray(raw) && raw.length === 0) return "";
   if (Object.keys(raw).length === 0) return "";
   const input = inputSchema.parse(raw);
@@ -34,10 +36,24 @@ function buildIRS982(raw: Input): string {
   ) {
     throw new Error("Form 982 retained residence needs its basis for line 10b");
   }
+  if (
+    context?.filer &&
+    input.qpri_mfs !==
+      (context.filer.filingStatus === FilingStatus.MarriedFilingSeparately)
+  ) {
+    throw new Error(
+      "Form 982 QPRI filing-status cap conflicts with the return",
+    );
+  }
   const cap = input.qpri_mfs
     ? CONFIG_BY_YEAR[2025].qpriCapMfs
     : CONFIG_BY_YEAR[2025].qpriCapStandard;
-  const excluded = Math.min(input.line2_excluded_cod, cap);
+  const excluded = qpriExcludedAmount(input, cap);
+  if (excluded === 0) {
+    throw new Error(
+      "Form 982 QPRI has no qualifying discharged debt to exclude",
+    );
+  }
   return elements("IRS982", [
     element("DischargeOfQualifiedPrinResInd", "X"),
     element("TotalDischargedIndebtednessAmt", excluded),

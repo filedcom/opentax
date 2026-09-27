@@ -17,16 +17,32 @@
 //   9. Smoke tests
 
 import { assertEquals, assertThrows } from "@std/assert";
-import { form982, ExclusionType, inputSchema } from "./index.ts";
+import { ExclusionType, form982, inputSchema } from "./index.ts";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
+import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return form982.compute({ taxYear: 2025, formType: "f1040" }, inputSchema.parse(input));
+  return form982.compute(
+    { taxYear: 2025, formType: "f1040" },
+    inputSchema.parse(input),
+  );
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
+}
+
+function fullyQualifiedQpri(discharge: number) {
+  return {
+    qpri_mfs: false,
+    discharge_date: "2025-06-15",
+    qpri_total_loan_balance_before_discharge: discharge,
+    qpri_qualified_loan_balance_before_discharge: discharge,
+    qpri_main_home_security_confirmed: true,
+    qpri_discharge_reason: "financial_condition" as const,
+    qpri_discharge_reason_source: "Lender workout letter",
+  };
 }
 
 // ============================================================
@@ -193,6 +209,7 @@ Deno.test("qpri: COD below standard cap — fully excluded", () => {
   const result = compute({
     line2_excluded_cod: 100000,
     exclusion_type: ExclusionType.Qpri,
+    ...fullyQualifiedQpri(100000),
   });
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1, undefined);
@@ -202,6 +219,7 @@ Deno.test("qpri: COD at exactly $750,000 — fully excluded", () => {
   const result = compute({
     line2_excluded_cod: 750000,
     exclusion_type: ExclusionType.Qpri,
+    ...fullyQualifiedQpri(750000),
   });
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1, undefined);
@@ -212,6 +230,7 @@ Deno.test("qpri: COD exceeds $750,000 — excess is taxable", () => {
   const result = compute({
     line2_excluded_cod: 900000,
     exclusion_type: ExclusionType.Qpri,
+    ...fullyQualifiedQpri(900000),
   });
   const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8c_cod_income, 150000);
@@ -222,6 +241,7 @@ Deno.test("qpri: MFS flag lowers cap to $375,000", () => {
   const result = compute({
     line2_excluded_cod: 500000,
     exclusion_type: ExclusionType.Qpri,
+    ...fullyQualifiedQpri(500000),
     qpri_mfs: true,
   });
   const input = fieldsOf(result.outputs, schedule1)!;
@@ -232,6 +252,7 @@ Deno.test("qpri: MFS flag, COD at exactly $375,000 — fully excluded", () => {
   const result = compute({
     line2_excluded_cod: 375000,
     exclusion_type: ExclusionType.Qpri,
+    ...fullyQualifiedQpri(375000),
     qpri_mfs: true,
   });
   const s1 = findOutput(result, "schedule1");
@@ -242,10 +263,97 @@ Deno.test("qpri: MFS=false uses standard $750,000 cap", () => {
   const result = compute({
     line2_excluded_cod: 600000,
     exclusion_type: ExclusionType.Qpri,
+    ...fullyQualifiedQpri(600000),
     qpri_mfs: false,
   });
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1, undefined);
+});
+
+Deno.test("qpri: mixed-use loan discharges nonqualified balance first", () => {
+  const result = compute({
+    line2_excluded_cod: 120_000,
+    exclusion_type: ExclusionType.Qpri,
+    qpri_mfs: false,
+    discharge_date: "2025-06-15",
+    qpri_total_loan_balance_before_discharge: 300_000,
+    qpri_qualified_loan_balance_before_discharge: 240_000,
+    qpri_main_home_security_confirmed: true,
+    qpri_discharge_reason: "financial_condition",
+    qpri_discharge_reason_source: "Lender workout letter",
+  });
+  // The first $60,000 of the discharge is nonqualified debt, leaving only
+  // $60,000 eligible for the principal-residence exclusion.
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)?.line8c_cod_income,
+    60_000,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, agi_aggregator)?.line8c_cod_income,
+    60_000,
+  );
+});
+
+Deno.test("qpri: Form 982 instructions ordering example keeps the pre-cap loan split", () => {
+  const result = compute({
+    line2_excluded_cod: 300_000,
+    exclusion_type: ExclusionType.Qpri,
+    qpri_mfs: false,
+    discharge_date: "2025-06-15",
+    qpri_total_loan_balance_before_discharge: 1_000_000,
+    qpri_qualified_loan_balance_before_discharge: 800_000,
+    qpri_main_home_security_confirmed: true,
+    qpri_discharge_reason: "financial_condition",
+    qpri_discharge_reason_source: "Lender workout letter",
+  });
+  // The IRS line 1e example subtracts $200,000 nonqualified debt first,
+  // leaving $100,000 excluded from a $300,000 discharge.
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)?.line8c_cod_income,
+    200_000,
+  );
+});
+
+Deno.test("qpri: missing tracing and impossible debt balances are rejected", () => {
+  assertThrows(
+    () =>
+      compute({
+        line2_excluded_cod: 120_000,
+        exclusion_type: ExclusionType.Qpri,
+      }),
+    Error,
+    "traced qualified and total pre-discharge loan balances",
+  );
+  assertThrows(
+    () =>
+      compute({
+        line2_excluded_cod: 120_000,
+        exclusion_type: ExclusionType.Qpri,
+        qpri_mfs: false,
+        discharge_date: "2025-06-15",
+        qpri_total_loan_balance_before_discharge: 100_000,
+        qpri_qualified_loan_balance_before_discharge: 110_000,
+        qpri_main_home_security_confirmed: true,
+        qpri_discharge_reason: "financial_condition",
+        qpri_discharge_reason_source: "Lender workout letter",
+      }),
+    Error,
+    "cannot exceed the pre-discharge loan balance",
+  );
+});
+
+Deno.test("qpri: discharge reason must be backed by a source", () => {
+  assertThrows(
+    () =>
+      compute({
+        line2_excluded_cod: 100_000,
+        exclusion_type: ExclusionType.Qpri,
+        ...fullyQualifiedQpri(100_000),
+        qpri_discharge_reason_source: undefined,
+      }),
+    Error,
+    "evidence that the discharge arose",
+  );
 });
 
 // ============================================================
@@ -369,6 +477,7 @@ Deno.test("smoke: QPRI — $300,000 mortgage discharged on principal residence, 
   const result = compute({
     line2_excluded_cod: 300000,
     exclusion_type: ExclusionType.Qpri,
+    ...fullyQualifiedQpri(300000),
   });
   assertEquals(result.outputs.length, 0);
 });
@@ -379,6 +488,7 @@ Deno.test("smoke: QPRI MFS — $450,000 discharged, MFS filer, $75,000 taxable e
   const result = compute({
     line2_excluded_cod: 450000,
     exclusion_type: ExclusionType.Qpri,
+    ...fullyQualifiedQpri(450000),
     qpri_mfs: true,
   });
   const input = fieldsOf(result.outputs, schedule1)!;

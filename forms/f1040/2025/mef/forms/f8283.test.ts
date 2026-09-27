@@ -83,7 +83,44 @@ async function acknowledgmentPdf(): Promise<Uint8Array> {
   return pdf.save();
 }
 
-Deno.test("Form 8283 Section A includes VIN and linked donee PDF for a vehicle claimed at $500 or less", async () => {
+function needyTransferVehicle(
+  vin = "1HGBH41JXMN109186",
+  fileName = "Form1098C-Civic.pdf",
+) {
+  return {
+    property_description: "2020 Honda Civic, good condition, 60,000 miles",
+    is_vehicle: true,
+    vehicle_vin: vin,
+    vehicle_acknowledgment_attachment_file_name: fileName,
+    date_contributed: "2025-06-01",
+    fmv: 20_000,
+    deduction_claimed: 4_500,
+    vehicle_needy_transfer_acknowledgment: {
+      copy_received_from_donee: true,
+      donee_certified: true,
+      donee_name: "City Charity",
+      donee_ein: "987654321",
+      donee_us_address: {
+        line1: "1 Main St",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+      },
+      acknowledgment_furnished_date: "2025-06-20",
+      vehicle_to_be_transferred_to_needy_confirmed: true,
+      transfer_for_significantly_below_fmv_confirmed: true,
+      direct_charitable_transportation_purpose_confirmed: true,
+      vehicle_year: 2020,
+      vehicle_make: "Honda",
+      vehicle_model: "Civic",
+      vehicle_condition: "Good condition",
+      odometer_miles: 60_000,
+      goods_or_services_received: false,
+    },
+  };
+}
+
+Deno.test("Form 8283 Section A includes VIN without a donee PDF for a vehicle claimed at $500 or less", async () => {
   const bundle = await buildMefBundle({
     f8283: {
       section_a_items: [{
@@ -91,16 +128,11 @@ Deno.test("Form 8283 Section A includes VIN and linked donee PDF for a vehicle c
         fmv: 500,
         is_vehicle: true,
         vehicle_vin: "1HGBH41JXMN109186",
-        vehicle_acknowledgment_attachment_file_name: "Form1098C-Sedan.pdf",
       }],
     },
   }, {
     filer: testFiler(),
-    attachments: [{
-      fileName: "Form1098C-Sedan.pdf",
-      description: "Form1098C Sedan acknowledgment",
-      bytes: await acknowledgmentPdf(),
-    }],
+    attachments: [],
   });
   const xml = bundle.xml;
   assertStringIncludes(
@@ -108,18 +140,14 @@ Deno.test("Form 8283 Section A includes VIN and linked donee PDF for a vehicle c
     "<DonatedPropertyVehicleInd>X</DonatedPropertyVehicleInd>",
   );
   assertStringIncludes(xml, "<VIN>1HGBH41JXMN109186</VIN>");
-  assertStringIncludes(xml, 'referenceDocumentId="BinaryAttachment');
-  assertStringIncludes(xml, "<Desc>Form1098C Sedan acknowledgment</Desc>");
+  assertEquals(bundle.attachments.length, 0);
 });
 
 Deno.test("Form 8283 vehicle rejects missing or misdescribed donee PDF", async () => {
-  const vehicle = {
-    property_description: "2014 sedan, fair condition, 90,000 miles",
-    fmv: 500,
-    is_vehicle: true,
-    vehicle_vin: "1HGBH41JXMN109186",
-    vehicle_acknowledgment_attachment_file_name: "Form1098C-Sedan.pdf",
-  };
+  const vehicle = needyTransferVehicle(
+    "1HGBH41JXMN109186",
+    "Form1098C-Sedan.pdf",
+  );
   const pending = { f8283: { section_a_items: [vehicle] } };
   assertThrows(
     () =>
@@ -166,25 +194,13 @@ Deno.test("Form 8283 vehicle rejects missing or misdescribed donee PDF", async (
   );
 });
 
-Deno.test("Form 8283 links a separate donee PDF for each Section A vehicle", async () => {
+Deno.test("Form 8283 links a separate donee PDF for each Section A vehicle over $500", async () => {
   const bytes = await acknowledgmentPdf();
   const xml = (await buildMefBundle({
     f8283: {
       section_a_items: [
-        {
-          property_description: "First vehicle",
-          fmv: 400,
-          is_vehicle: true,
-          vehicle_vin: "1HGBH41JXMN109186",
-          vehicle_acknowledgment_attachment_file_name: "Form1098C-First.pdf",
-        },
-        {
-          property_description: "Second vehicle",
-          fmv: 300,
-          is_vehicle: true,
-          vehicle_vin: "1HGBH41JXMN109187",
-          vehicle_acknowledgment_attachment_file_name: "Form1098C-Second.pdf",
-        },
+        needyTransferVehicle("1HGBH41JXMN109186", "Form1098C-First.pdf"),
+        needyTransferVehicle("1HGBH41JXMN109187", "Form1098C-Second.pdf"),
       ],
     },
   }, {
@@ -208,6 +224,32 @@ Deno.test("Form 8283 links a separate donee PDF for each Section A vehicle", asy
   );
   assertStringIncludes(xml, "<Desc>Form1098C First vehicle</Desc>");
   assertStringIncludes(xml, "<Desc>Form1098C Second vehicle</Desc>");
+});
+
+Deno.test("Form 8283 accepts a donee-issued written acknowledgment PDF instead of Form 1098-C", async () => {
+  const fileName = "DoneeAcknowledgment-Civic.pdf";
+  const xml = (await buildMefBundle({
+    f8283: {
+      section_a_items: [needyTransferVehicle(undefined, fileName)],
+    },
+  }, {
+    filer: testFiler(),
+    attachments: [{
+      fileName,
+      description:
+        "DoneeOrganizationContemporaneousWrittenAcknowledgment Civic needy transfer",
+      bytes: await acknowledgmentPdf(),
+    }],
+  })).xml;
+  assertStringIncludes(
+    xml,
+    '<BinaryAttachment documentId="BinaryAttachment2">',
+  );
+  assertStringIncludes(xml, 'referenceDocumentId="BinaryAttachment2"');
+  assertStringIncludes(
+    xml,
+    "<Desc>DoneeOrganizationContemporaneousWrittenAcknowledgment Civic needy transfer</Desc>",
+  );
 });
 
 Deno.test("Form 8283 Section B emits separate signed appraisal and donee documents", () => {
@@ -515,6 +557,36 @@ Deno.test("Form 8283 still rejects gifts needing unlinked evidence", () => {
     "claimed deduction",
   );
   assertEquals(form8283.build({}), []);
+});
+
+Deno.test("Form 8283 needy-transfer vehicle links Form 1098-C and emits native box 5b certification", async () => {
+  const bundle = await buildMefBundle({
+    f8283: { section_a_items: [needyTransferVehicle()] },
+  }, {
+    filer: testFiler(),
+    attachments: [{
+      fileName: "Form1098C-Civic.pdf",
+      description: "Form1098C Civic needy transfer certification",
+      bytes: await acknowledgmentPdf(),
+    }],
+  });
+  const xml = bundle.xml;
+  assertStringIncludes(
+    xml,
+    "<CertifiesVehTrnsfrToNeedyInd>X</CertifiesVehTrnsfrToNeedyInd>",
+  );
+  assertEquals(xml.includes("<CertifiesVehSoldToUnrltPrtyInd>"), false);
+  assertEquals(xml.includes("<GrossProceedsFromSaleOfVehAmt>"), false);
+  assertStringIncludes(xml, "<FairMarketValueAmt>20000</FairMarketValueAmt>");
+  assertStringIncludes(
+    xml,
+    "<Desc>Form1098C Civic needy transfer certification</Desc>",
+  );
+  assertStringIncludes(
+    xml,
+    "<AttachmentLocationTxt>Form1098C-Civic.pdf</AttachmentLocationTxt>",
+  );
+  assertEquals(bundle.attachments.length, 1);
 });
 
 Deno.test("Form 8283 links both native vehicle statement and donee-issued PDF", async () => {

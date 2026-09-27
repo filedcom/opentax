@@ -9,12 +9,11 @@ verified IRS acceptance.
 
 - Section A currently sends reported FMV to Schedule A line 12 for nonvehicle
   gifts. For vehicles, it sends `deduction_claimed` when supplied. A vehicle
-  claimed above $500 requires the donee's certified unrelated-party sale facts,
-  a contribution and sale date, a VIN, and a claimed amount no greater than FMV
-  or gross sale proceeds. This covers only the gross-sale-proceeds route, not
-  significant use, material improvement, needy-individual, or other special
-  routes. Ordinary-income-property reductions and AGI ceilings still need
-  source-level calculation.
+  claimed above $500 requires the donee's certified facts, a contribution date,
+  a VIN, and a claimed amount within the supported sale-proceeds or needy-person
+  transfer route. Significant use, material improvement, and other special
+  routes remain unsupported. Ordinary-income-property reductions and AGI
+  ceilings still need source-level calculation.
 - Section B requires separate `fmv` and `deduction_claimed` values. The
   calculation sends the claimed value to Schedule A line 12. Capital-gain
   property is **not** automatically capped at basis. FMV is usually available,
@@ -26,11 +25,14 @@ verified IRS acceptance.
   high-value art, Section B vehicles, and gifts above $500,000 until their
   attachment requirements are implemented. Section A vehicles claimed at $500 or
   less can include their VIN without a sale acknowledgment. For higher Section A
-  vehicle claims on the sale-proceeds route, a separate native MeF
-  `ContriVehicleBoatAirplaneStmt` is generated from the donee facts and linked
-  to the Form 8283 row. This structured statement is not verified as a
-  substitute for attaching the actual donee-provided Form 1098-C or written
-  acknowledgment.
+  vehicle claims on the supported sale-proceeds and needy-person transfer
+  routes, a separate native MeF `ContriVehicleBoatAirplaneStmt` is generated
+  from the donee facts and linked to the Form 8283 row. The actual donee-issued
+  Form 1098-C or equivalent contemporaneous written acknowledgment must also
+  be supplied as a PDF `BinaryAttachment` linked to `IRS8283`. The IRS 2025
+  instructions explicitly require the copy for vehicle deductions above $500;
+  the structured statement is supplemental, not a replacement. The local
+  TY2025v5.4 `IRS8283.xsd` permits the binary reference on the form document.
 - The serializer uses an array result for every call so one input can produce an
   optional Section A document and multiple Section B documents without a dual
   return shape.
@@ -39,10 +41,10 @@ verified IRS acceptance.
 
 1. Confirm each contribution's allowed deduction, including ordinary-income
    property reductions and 2025 Schedule A AGI limits, before totaling line 12.
-2. Verify whether IRS business rules require the actual donee-issued Form 1098-C
-   or written acknowledgment as a binary attachment in addition to the native
-   vehicle statement. Build that attachment path if required, and cover the
-   other vehicle certification routes and Section B vehicles.
+2. Cover the other vehicle certification routes and Section B vehicles. The
+   donee-issued acknowledgment attachment path for supported Section A routes
+   is implemented, but local code cannot authenticate PDF provenance or certify
+   that a user-supplied copy matches the donee's original.
 3. Build required appraisal, photograph, and special statements for high-value
    art, gifts over $500,000, certain clothing/household items, conservation
    easements, and pass-through contributions.

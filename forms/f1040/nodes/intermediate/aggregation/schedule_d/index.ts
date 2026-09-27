@@ -64,7 +64,6 @@ export const dScreenTransactionSchema = z.object({
 
 // Executor accumulation pattern: when multiple f8949 NodeOutputs deposit the
 // `transaction` key to this node, it accumulates from a scalar to an array.
-// Same applies to cod_property_fmv / cod_debt_cancelled from f1099c.
 const accumulable = <T extends z.ZodTypeAny>(schema: T) =>
   z.union([schema, z.array(schema)]);
 
@@ -76,7 +75,9 @@ export const inputSchema = z.object({
   line13_form8814: z.number().nonnegative().optional(),
   // QSBS amount from f1099div (box 2c) — informational subset of line13; not additive
   box2c_qsbs: z.number().nonnegative().optional(),
-  // COD property dispositions from f1099c — parallel arrays; gain = fmv - debt per pair
+  // Legacy Form 1099-C property fields remain recognized only so direct use
+  // fails explicitly. Box 7 FMV and canceled debt cannot establish a capital
+  // disposition, proceeds, basis, character, or holding period.
   cod_property_fmv: accumulable(z.number().nonnegative()).optional(),
   cod_debt_cancelled: accumulable(z.number().nonnegative()).optional(),
   // Computed carryforward from prior year — informational; not used in current-year calc
@@ -132,9 +133,6 @@ function sumAmounts(value: number | number[] | undefined): number {
 // Returns true if the input has any capital activity worth computing
 function hasCapitalActivity(input: ScheduleDInput): boolean {
   const txs = normalizeArray(input.transaction);
-  const fmvs = normalizeArray(input.cod_property_fmv);
-  const debts = normalizeArray(input.cod_debt_cancelled);
-  const codGain = computeCodGain(fmvs, debts);
   const dScreenTxs = input.transactions ?? [];
 
   // Aggregate d_screen lines (any non-zero value means activity)
@@ -155,7 +153,6 @@ function hasCapitalActivity(input: ScheduleDInput): boolean {
     txs.length > 0 ||
     (input.line13_cap_gain_distrib ?? 0) > 0 ||
     (input.line13_form8814 ?? 0) > 0 ||
-    codGain !== 0 ||
     dScreenTxs.length > 0 ||
     hasAggregateLines
   );
@@ -170,8 +167,6 @@ function hasOnlyCapitalGainDistributions(input: ScheduleDInput): boolean {
   if (distributions <= 0) return false;
   if (normalizeArray(input.transaction).length > 0) return false;
   if ((input.transactions ?? []).length > 0) return false;
-  if (normalizeArray(input.cod_property_fmv).length > 0) return false;
-  if (normalizeArray(input.cod_debt_cancelled).length > 0) return false;
   return [
     input.box2c_qsbs,
     input.capital_loss_carryover,
@@ -227,17 +222,6 @@ function computeDScreenTransactionGains(transactions: DScreenTransaction[]): {
     }
   }
   return { stGain, ltGain };
-}
-
-// Per-item COD property LT gain: amount realized (FMV) minus cancelled debt.
-// Each pair (fmvs[i], debts[i]) is one property disposition event.
-function computeCodGain(fmvs: number[], debts: number[]): number {
-  const count = Math.min(fmvs.length, debts.length);
-  let gain = 0;
-  for (let i = 0; i < count; i++) {
-    gain += fmvs[i] - debts[i];
-  }
-  return gain;
 }
 
 // Compute d_screen aggregate short-term net (contribution to line 7)
@@ -312,6 +296,15 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
   compute(_ctx: NodeContext, rawInput: ScheduleDInput): NodeResult {
     const input = inputSchema.parse(rawInput);
 
+    if (
+      input.cod_property_fmv !== undefined ||
+      input.cod_debt_cancelled !== undefined
+    ) {
+      throw new Error(
+        "Schedule D cannot derive property gain from Form 1099-C box 7 FMV and canceled debt; report a sourced disposition with transfer, recourse, basis, and holding facts",
+      );
+    }
+
     if (!hasCapitalActivity(input)) {
       return { outputs: [] };
     }
@@ -350,11 +343,6 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
     const { stGain: dScreenStTxGain, ltGain: dScreenLtTxGain } =
       computeDScreenTransactionGains(dScreenTxs);
 
-    // COD property gains (always LT)
-    const fmvs = normalizeArray(input.cod_property_fmv);
-    const debts = normalizeArray(input.cod_debt_cancelled);
-    const ltCodGain = computeCodGain(fmvs, debts);
-
     // d_screen aggregate line contributions
     const dScreenStAgg = computeDScreenStNet(input);
     const dScreenLtAgg = computeDScreenLtNet(input);
@@ -365,7 +353,7 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
 
     // Schedule D line 7 (net short-term) and line 15 (net long-term)
     const line7 = stTxGain + dScreenStTxGain + dScreenStAgg;
-    const line15 = ltTxGain + dScreenLtTxGain + dScreenLtAgg + ltCodGain +
+    const line15 = ltTxGain + dScreenLtTxGain + dScreenLtAgg +
       line13F1099div + line13Form8814;
 
     // Line 16: combined net capital gain or loss

@@ -217,6 +217,7 @@ export type FarmSource = z.infer<typeof farmSourceSchema>;
 
 export const inputSchema = z.object({
   schedule_fs: z.array(itemSchema),
+  farm_optional_method_elected: z.boolean().optional(),
   filing_status: filingStatusSchema.optional(),
   farm_sources: z.array(farmSourceSchema).optional(),
   wotc_wage_reductions: z.array(
@@ -574,11 +575,15 @@ export function calculateScheduleFAtRiskNet(
 }
 
 // Per-item routing outputs (SE, QBI, passive, at-risk)
-function perItemOutputs(item: ScheduleFItem, netProfit: number): NodeOutput[] {
+function perItemOutputs(
+  item: ScheduleFItem,
+  netProfit: number,
+  farmOptionalMethodElected: boolean,
+): NodeOutput[] {
   const outputs: NodeOutput[] = [];
 
-  // Schedule SE (line 1a): only when net profit >= $400
-  if (netProfit >= SE_TAX_THRESHOLD) {
+  // Schedule SE Part I line 1a is replaced by Part II line 15 when elected.
+  if (!farmOptionalMethodElected && netProfit >= SE_TAX_THRESHOLD) {
     outputs.push(output(schedule_se, { net_profit_schedule_f: netProfit }));
   }
 
@@ -661,7 +666,30 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
 
     // Per-item downstream routing
     for (let i = 0; i < input.schedule_fs.length; i++) {
-      outputs.push(...perItemOutputs(input.schedule_fs[i], netProfits[i]));
+      outputs.push(...perItemOutputs(
+        input.schedule_fs[i],
+        netProfits[i],
+        input.farm_optional_method_elected === true,
+      ));
+    }
+
+    if (input.farm_optional_method_elected === true) {
+      // 2025 Schedule SE Part II footnotes: gross farm income comes from
+      // Schedule F line 9, and net farm profit from line 34, before the
+      // subsequent at-risk limitation. One election covers all Schedule Fs.
+      const grossFarmIncome = input.schedule_fs.reduce(
+        (sum, item) => sum + computeGrossIncome(item),
+        0,
+      );
+      const line34NetFarmProfit = atRisk.reduce(
+        (sum, result) => sum + result.preliminaryNet,
+        0,
+      );
+      outputs.push(this.outputNodes.output(schedule_se, {
+        farm_optional_method_elected: true,
+        gross_farm_income: Math.max(0, grossFarmIncome),
+        net_profit_schedule_f: line34NetFarmProfit,
+      }));
     }
 
     // Excess business loss — Form 461 (IRC §461(l))

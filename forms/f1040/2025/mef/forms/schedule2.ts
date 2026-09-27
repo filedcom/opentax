@@ -297,6 +297,14 @@ function buildIRS1040Schedule2(
     amount("golden_parachute_excise") +
     amount("line17k_golden_parachute_excise") +
     amount("line17p_form8621_interest") + line17z;
+  if (line18 < 0) {
+    // IRS1040Schedule2.xsd declares line 18 as USAmountNNType even though
+    // the Form 8978 worksheet can place a negative amount on line 17z.
+    // Omitting a negative line 18 would also break business rule S2-F1040-004.
+    throw new Error(
+      "Schedule 2 negative Form 8978 adjustment makes line 18 negative; the TY2025 MeF schema cannot represent that result",
+    );
+  }
   if (line18 > 0) {
     childrenByTag.set(
       "TotalOtherAdditionalTaxesAmt",

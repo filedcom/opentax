@@ -12,7 +12,7 @@ const source: F8615Input = {
   parent_ssn: "987-65-4321",
   parent_filing_status: FilingStatus.MFJ,
   parent_taxable_income: 80_000,
-  parent_income_tax: 9_123,
+  parent_income_tax: 9_126,
   parent_tax_method: "ordinary",
   child_unearned_income: 5_000,
   other_children_line5: [],
@@ -40,12 +40,15 @@ const highChild = {
   childRegularTax: 45_000,
 };
 
-Deno.test("Form 8615 rejects low-income tax worksheets without the TY2025 Tax Table", () => {
-  assertThrows(
-    () => calculateForm8615(source, context),
-    Error,
-    "exact 2025 IRS Tax Table below $100,000",
-  );
+Deno.test("Form 8615 applies the TY2025 Tax Table to lines 9, 15, and 17", () => {
+  const result = calculateForm8615(source, context);
+  assertEquals(result.fields.line9_family_tax, 9_402);
+  assertEquals(result.fields.line10_parent_tax, 9_126);
+  assertEquals(result.fields.line13_allocable_tax, 276);
+  assertEquals(result.fields.line15_child_net_income_tax, 136);
+  assertEquals(result.fields.line17_child_regular_tax, 368);
+  assertEquals(result.fields.line18_child_tax, 412);
+  assertEquals(result.line18Tax, 412);
 });
 
 Deno.test("Form 8615 allocates parental-rate tax across other children above the table range", () => {
@@ -158,6 +161,19 @@ Deno.test("Form 8615 Line 5 Worksheet #1 allocates a child's qualified dividends
   );
   // $1,000 - $2,700 × ($1,000 / $5,000) = $460 on line 5.
   assertEquals(result, { qualifiedDividends: 460, netCapitalGain: 0 });
+});
+
+Deno.test("Form 8615 uses the Tax Table inside both preferential worksheets", () => {
+  const result = calculateForm8615(source, {
+    ...context,
+    childHasPreferentialIncome: true,
+    childQualifiedDividends: 1_000,
+    childNetCapitalGain: 0,
+  });
+  assertEquals(result.fields.line9_family_tax, 9_342);
+  assertEquals(result.fields.line15_child_net_income_tax, 81);
+  assertEquals(result.fields.line17_child_regular_tax, 266);
+  assertEquals(result.fields.line18_child_tax, 297);
 });
 
 Deno.test("Form 8615 Line 5 Worksheet #2 allocates connected itemized costs", () => {

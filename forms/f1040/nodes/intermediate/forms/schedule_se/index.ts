@@ -12,12 +12,14 @@ import { form8959 } from "../form8959/index.ts";
 import { form8995 } from "../form8995/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
+import {
+  farmOptionalMethodLines,
+  NET_EARNINGS_MULTIPLIER,
+} from "./calculation.ts";
 
 // ─── TY2025 Constants ──────────────────────────────────────────────────────────
 // IRC §1402(b) — minimum SE earnings to owe SE tax
 const SE_EARNINGS_THRESHOLD = 400;
-// IRC §1402(a)(12) — net-earnings multiplier (100% − employer SS/Medicare rate)
-const NET_EARNINGS_MULTIPLIER = 0.9235;
 // IRC §1401(a) — Social Security rate (employee + employer combined)
 const SS_RATE = 0.124;
 // IRC §1401(b) — Medicare rate (employee + employer combined)
@@ -32,6 +34,12 @@ export const inputSchema = z.object({
   net_profit_schedule_c: z.number().optional(),
   // Net farm profit from Schedule F, line 34 (Sch SE Line 1a)
   net_profit_schedule_f: z.number().optional(),
+  // An affirmative Part II farm optional method election. The farm profit is
+  // used for eligibility, but is omitted from Part I line 1a when elected.
+  farm_optional_method_elected: z.boolean().optional(),
+  // Gross farm income from Schedule F line 9 (and farm K-1 box 14 code B, if
+  // applicable), used for the Part II line 15 calculation.
+  gross_farm_income: z.number().nonnegative().optional(),
   // Unreported tips from Form 4137, line 10 — offsets SS wage base (Sch SE Line 8b)
   unreported_tips_4137: z.number().nonnegative().optional(),
   // Wages subject to SE from Form 8919, line 10 — offsets SS wage base (Sch SE Line 8c)
@@ -45,9 +53,11 @@ type ScheduleSEInput = z.infer<typeof inputSchema>;
 
 // ─── Pure helpers ──────────────────────────────────────────────────────────────
 
-// Line 3: total self-employment income (farm + nonfarm)
+// Line 3 for the regular method; the farm election uses the shared Part II
+// calculation, which skips Part I line 1a.
 function combinedNetProfit(input: ScheduleSEInput): number {
-  return (input.net_profit_schedule_c ?? 0) + (input.net_profit_schedule_f ?? 0);
+  return (input.net_profit_schedule_c ?? 0) +
+    (input.net_profit_schedule_f ?? 0);
 }
 
 // Line 4a: net earnings from self-employment
@@ -86,26 +96,31 @@ function medicareTax(line6: number): number {
 class ScheduleSENode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule_se";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule2, schedule1, agi_aggregator, form8959, form8995]);
+  readonly outputNodes = new OutputNodes([
+    schedule2,
+    schedule1,
+    agi_aggregator,
+    form8959,
+    form8995,
+  ]);
 
   compute(ctx: NodeContext, rawInput: ScheduleSEInput): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No schedule_se config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
 
-    // Line 3: combined farm + nonfarm net profit
-    const line3 = combinedNetProfit(input);
-
-    // Line 4a: net earnings from SE (92.35% multiplier when positive)
-    const line4a = netEarningsFromSE(line3);
-
-    // Line 4c: if < $400 → no SE tax owed (stop)
-    if (line4a < SE_EARNINGS_THRESHOLD) {
+    const optional = farmOptionalMethodLines(input);
+    // The shared Part II calculation owns the elected line 3/4a/4b/4c/6
+    // amounts. Without an election, use the regular farm-plus-nonfarm route.
+    const line3 = optional?.line3 ?? combinedNetProfit(input);
+    const line4a = optional?.line4a ?? netEarningsFromSE(line3);
+    const line4c = optional?.line4c ?? line4a;
+    if (line4c < SE_EARNINGS_THRESHOLD) {
       return { outputs: [] };
     }
 
-    // Line 6: total SE earnings (= line 4a; church employee income not in scope)
-    const line6 = line4a;
+    // Line 6: total SE earnings (= line 4c; church employee income not in scope)
+    const line6 = optional?.line6 ?? line4c;
 
     // Lines 8a–8d, 9: wage base offset and remaining base
     const line9 = remainingWageBase(cfg.ssWageBase, input);

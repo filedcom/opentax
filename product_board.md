@@ -12,8 +12,8 @@ source documents, and supporting statements. Separate 1040-NR, 1040-SS, and Form
 4868 return exporters and their ATS scenarios are out of scope here. Their
 source-fact inventory remains in `docs/ats/ty2025.md` as reference material, not
 as an unfinished gate on this board. This decision does not waive any required
-Form 1040 attachment or business rule.
-The 2025 dual-status Form 1040 route is also outside the e-file gate because
+Form 1040 attachment or business rule. The 2025 dual-status Form 1040 route is
+also outside the e-file gate because
 [IRS Publication 519](https://www.irs.gov/publications/p519) says dual-status
 taxpayers cannot e-file their 2025 returns; the product must not serialize one
 as an ordinary Form 1040 MeF return.
@@ -29,25 +29,25 @@ recorded for this work.
 The parallel 2026-09-27 build pass is still unverified. Schedule 2 now writes
 the calculated 2025 totals on lines 1z, 3, 7, 18, and 21 for its supported
 sources, including the negative Form 8978 adjustment and excluding the section
-965 installment from line 21. Source and XML cases are written but not run.
-Form 8283 Section A now routes the claimed deduction instead of FMV and
-requires a linked, donee-issued vehicle acknowledgment PDF with an IRS-approved
-MeF description when a vehicle row is filed. Form 1095-A has an explicit
-corrected monthly SLCSP path for coverage-family and related changes. Form 8582
-now rejects unsupported prior Form 4797 passive losses instead of routing them
-to Schedule 1, and reconciles identified activity amounts with its aggregate
-inputs. Form 8814 PDF dotted-line income annotations are being built. All
-these cases remain unrun under the agreed implementation-first test sequence;
-none closes its entire gap or clears the release gate.
+965 installment from line 21. Source and XML cases are written but not run. Form
+8283 Section A now routes the claimed deduction instead of FMV and requires a
+linked, donee-issued vehicle acknowledgment PDF with an IRS-approved MeF
+description when a vehicle row is filed. Form 1095-A has an explicit corrected
+monthly SLCSP path for coverage-family and related changes. Form 8582 now
+rejects unsupported prior Form 4797 passive losses instead of routing them to
+Schedule 1, and reconciles identified activity amounts with its aggregate
+inputs. Form 8814 PDF dotted-line income annotations are being built. All these
+cases remain unrun under the agreed implementation-first test sequence; none
+closes its entire gap or clears the release gate.
 
 The same parallel pass writes Form 8962's guarded alternative year-of-marriage
 calculation and native Part V groups, with line 26 zero on an election. It does
 not yet derive spouse-specific pre-marriage policy groups from 1095-A, map the
 Part V PDF, or handle the combined QSEHRA case. Form 4952 can now receive
-affirmed taxable market discount from 1099-B after the matching Form 8949
-code-D adjustment. Part-II-only Form 4972 federal estate tax now splits between
-capital-gain reduction and a Schedule A line 16 ordinary-income deduction.
-Form 1116 line 3b now has a linked other-deductions statement. Source cases are
+affirmed taxable market discount from 1099-B after the matching Form 8949 code-D
+adjustment. Part-II-only Form 4972 federal estate tax now splits between
+capital-gain reduction and a Schedule A line 16 ordinary-income deduction. Form
+1116 line 3b now has a linked other-deductions statement. Source cases are
 written for each route, but none has passed the deferred test or XSD batch.
 
 The Form 8949 MeF build pass now preserves all twelve TY2025 paper boxes
@@ -1060,12 +1060,66 @@ acceptance remain open.
 
 ### GAP-8283: Noncash contribution signatures
 
-The current build pass requires the actual appraiser-signature and donee-signature
-PDFs for Section B, checks the exact descriptions required by the 2025 MeF
-business rules F8283-041 and F8283-042, and links both binaries to the
-corresponding native `IRS8283` document. Missing or mismatched attachments stop
-export. The attachment and full-bundle cases are written but unrun. This does
-not settle other Form 8283 limits or attachment paths.
+The current build pass requires the actual appraiser-signature and
+donee-signature PDFs for Section B, checks the exact descriptions required by
+the 2025 MeF business rules F8283-041 and F8283-042, and links both binaries to
+the corresponding native `IRS8283` document. Missing or mismatched attachments
+stop export. The attachment and full-bundle cases are written but unrun. This
+does not settle other Form 8283 limits or attachment paths.
+
+The Section A vehicle build pass now requires the donee-issued PDF only for a
+claimed deduction above $500. For a $501-$5,000 claim it also supports the
+Form 1098-C box 5b needy-transfer route, with a timely donee certification,
+source facts, and the native MeF needy-transfer indicator. A larger claim
+stops pending the Section B appraisal route. The 2025 Form 8283 instructions
+confirm that a copy of the donee-issued Form 1098-C or equivalent written
+acknowledgment is required above $500. The existing MeF builder requires and
+links that PDF; a focused alternate-acknowledgment case is now written but
+unrun. Significant-use and material-improvement routes remain open.
+
+### GAP-982: Qualified principal residence debt
+
+The current build pass no longer treats an entire discharged mortgage as
+qualified principal-residence indebtedness solely from Form 1099-C box 2. It
+requires traced total and qualifying pre-discharge loan balances, main-home
+security confirmation, and an explicit filing-status cap answer. A mixed-use
+loan's nonqualified balance is discharged first for the exclusion calculation;
+the remainder feeds Schedule 1 and Form 1040 AGI, while the excluded portion
+feeds native Form 982 line 2.
+MeF export checks the MFS cap choice against the return. A Form 1099-C with
+undivided discharged interest stops pending a principal/interest split. QPRI
+also requires a sourced home-value-decline or financial-condition discharge
+reason, an actual discharge date separate from the 1099-C identifiable-event
+date, and confirmation that discharged principal equals box 2; other box 2
+components need separate classification. Box 7 FMV no longer invents a
+Schedule D gain: retained property does not route there, and a transfer stops
+until recourse, debt balance, basis, and holding facts support a disposition
+calculation. The legacy Schedule D COD fields now reject direct input. Source,
+calculation, XML, and local XSD cases are written but unrun. Interest,
+recourse/nonrecourse property disposition, multiple debts, evidence
+authentication, and non-QPRI Part II tax-attribute reductions remain open. See
+the [Form 982 instructions](https://www.irs.gov/instructions/i982) and
+[2025 Publication 4681](https://www.irs.gov/publications/p4681).
+
+### ATS-01: Form 1040 Scenario 13 source reconciliation
+
+A full source-fact input fixture for the nine-page [TY2025 Scenario 13
+PDF](https://www.irs.gov/pub/irs-efile/1040-mef-ats-scenario-13.pdf) now maps
+the joint filer, W-2, and Form 8911 charger facts. Its separate reconciliation
+records that the PDF prints a $30,000 joint standard deduction and $1,620 of
+taxable income, while the current TY2025 configuration applies $31,500 and
+leaves $120. The printed $162 Form 8911 tax limit cannot be reused as a
+current-law result. The fixture cases are written but unrun and are not an
+ATS-ready return or an acknowledgment.
+
+Scenario 3 now has a source-fact fixture and reconciliation cases for Schedule
+F and Form 4835. The IRS packet leaves the Form 1040 results blank. The current
+build pass calculates the elected Schedule SE farm optional method from
+Schedule F gross and net amounts, including farms with profit below $400 or a
+loss. One shared calculation feeds the tax node, native TY2025 MeF Part I/II
+fields, and PDF descriptor. Farm K-1 and CRP source facts, missing transaction
+and activity details, and blank Form 1040 results still prevent an ATS-ready
+return. Calculation, MeF, and PDF-field cases are written but unrun.
 
 ### GAP-8978: Partner's additional reporting year tax
 
@@ -1088,10 +1142,17 @@ attachments, and IRS business rules remain unverified. See the
 [2025 Form 1040 instructions](https://www.irs.gov/instructions/i1040gi).
 
 The current build pass also requires a distinct source explanation when Form
-8978 line 5 differs from lines 2 less 4 or line 11 differs from lines 8 less
-10. The generated tax-computation PDF prints each exceptional calculation in
-its own labeled section. These source and statement cases are written but
-unrun, and the entered recomputation still needs independent tax-year review.
+8978 line 5 differs from lines 2 less 4 or line 11 differs from lines 8 less 10.
+The generated tax-computation PDF prints each exceptional calculation in its own
+labeled section. These source and statement cases are written but unrun, and the
+entered recomputation still needs independent tax-year review.
+
+The Schedule 2 serializer now stops when a negative Form 8978 line 17z would
+make line 18 negative: the TY2025 MeF XSD declares line 18 nonnegative, while
+business rule S2-F1040-004 requires it to equal the sum of lines 17a through
+17z. Omitting it would silently produce an inconsistent return. This corner case
+needs an IRS-authorized filing treatment before it can be supported; its
+rejection case is written but unrun.
 
 ### GAP-8621: PFIC and QEF reporting
 
@@ -1111,15 +1172,15 @@ section 301 taxable part of nonexcess distributions routes to Schedule B and
 Form 8960 as a separate sourced fact. Native `IRS8621` and a holding-period
 statement builder are registered; calculation and source-to-XSD cases are
 written but unrun. The engine still needs mixed-currency distribution
-conversion, mixed lots and historical disposition basis reconciliation, historical interest
-computation, complete QEF/MTM elections and supporting facts, PDF verification,
-XSD/business-rule evidence, and ATS acceptance.
+conversion, mixed lots and historical disposition basis reconciliation,
+historical interest computation, complete QEF/MTM elections and supporting
+facts, PDF verification, XSD/business-rule evidence, and ATS acceptance.
 
 The current build pass adds same-currency section 1291 distributions in a
 non-USD currency. It computes the 125% threshold in that currency and converts
 each dated excess amount using an explicit spot rate and source. A disposition
-can instead derive its USD gain from foreign-currency net proceeds, a dated
-spot rate, and a supplied USD adjusted basis. The MeF currency code, line
+can instead derive its USD gain from foreign-currency net proceeds, a dated spot
+rate, and a supplied USD adjusted basis. The MeF currency code, line
 15e(1)/15e(2) values, and rate-source statement follow those facts. Focused
 calculation and MeF cases are written but unrun. Mixed currencies, historical
 basis derivation, and mixed or partial lots remain unsupported.
@@ -1146,15 +1207,22 @@ three Line 5 qualified-dividend/capital-gain allocation worksheets and the
 qualified-dividend/capital-gain tax calculation for family line 9 and child
 line 15. It carries explicit parent and sibling preferential-income facts and
 native MeF worksheet indicators. Focused and end-to-end cases are written but
-unrun. Schedule D special-gain and Form 4952 routes, Schedule J, and Form 2555
-still stop explicitly. The IRS Tax Table for amounts below $100,000 is not
-implemented, so affected positive-line-5 paths now stop rather than using
-bracket tax. Rounding and the shared preferential-tax helper's
-behavior-preserving extraction await the full test batch. Parent and
-child eligibility proof, dependent earned-income source derivation beyond the
-stated amount, exact Tax Table behavior, visual PDF verification, and IRS
-business rules remain open. Do not treat the ordinary slice as whole-form
-support.
+unrun. The current build pass also adds exact TY2025 Tax Table lookup for
+positive-line-5 Forms 8615 below $100,000, including both ordinary-tax
+comparisons inside the qualified-dividend worksheet. Its derivation was
+compared with all 8,248 cells of the published IRS table with zero mismatches;
+the repository tests and full graph have not yet run. Schedule D special-gain
+and Form 4952 routes, Schedule J, and Form 2555 still stop explicitly.
+The exact TY2025 Tax Table helper is now shared with general Form 1040 line 16
+and the qualified-dividend and Schedule D worksheet comparisons below
+$100,000. Form 2555 without preferential income uses table cells in its
+stacked comparison; Form 2555 with preferential income stops pending the
+capital-gain-excess adjustment. These cases are written but unrun. Rounding
+and the shared preferential-tax helper's behavior-preserving extraction await
+the full test batch. Parent and child
+eligibility proof, dependent earned-income source derivation beyond the stated
+amount, visual PDF verification, and IRS business
+rules remain open. Do not treat the ordinary slice as whole-form support.
 
 ### GAP-8854: Initial and annual expatriation statement
 
@@ -1162,12 +1230,11 @@ support.
 thresholds and treated deemed asset gain as a dollar-for-dollar Schedule 2 tax.
 That route has been removed. The 2025 covered-expatriate average-tax threshold
 is $206,000 and the mark-to-market exclusion is $890,000. Both initial and
-annual Form 8854 sources now record 2025 income-tax status.
-Their registered Form 1040 MeF paths require an asserted full-year U.S.
-citizen/resident tax period; nonresident and dual-status sources stop at those
-filing gates. The assertion is not independent residency evidence. An initial
-expatriation in 2025 does not by itself establish Form 1040 e-file eligibility.
-The source-identified
+annual Form 8854 sources now record 2025 income-tax status. Their registered
+Form 1040 MeF paths require an asserted full-year U.S. citizen/resident tax
+period; nonresident and dual-status sources stop at those filing gates. The
+assertion is not independent residency evidence. An initial expatriation in 2025
+does not by itself establish Form 1040 e-file eligibility. The source-identified
 asset calculation now allocates the exclusion proportionally to gain assets,
 without using losses to dilute it, and balances cents deterministically. The
 covered-expatriate test now recognizes qualifying dual-citizen and minor
@@ -1187,139 +1254,128 @@ when line 3 is yes. The node and MeF descriptors now emit an initial noncovered
 `IRS8854` and its needed native statements through explicit document-discovery
 and ID-linking passes. Covered Section C and deferral cases still reject filing.
 Full-return and local XSD cases for noncovered returns with and without native
-statements are written but unrun. Section B
-now takes balance-sheet categories and derives asset,
-liability, and net-worth totals instead of trusting a free-entered number. Its
-unregistered XML builder emits the form lines and native itemized statements for
-partnership interests, owned and nongrantor trusts, other assets, and other
-liabilities. Line 5a is checked as a subset of line 5 and excluded from line 20.
-These category values remain entered assertions without independent valuation
-evidence. Section C now has a separate, complete-inventory-confirmed source
-object for mark-to-market property, eligible and ineligible deferred
-compensation, specified tax-deferred accounts, and nongrantor trust interests.
-The old flat `assets` input is rejected. An unregistered Section C builder emits
-the ordered property rows, excluded-item indicators, totals, and native
-statements, and refuses to serialize over 20 property rows because the MeF
-schema has no demonstrated continuation path. It also requires a linked
-computation statement for property rows. These declarations do not yet prove
-that the deemed gains, losses, compensation, and account amounts are present on
-the correct income forms, so filing remains blocked. Section D now has an
-explicit no-election/election source. An elected deferral takes the line 24 tax
-from each of two distinct hypothetical returns, derives eligible tax, allocates
-it across all positive-gain properties before selecting deferred properties,
-and emits unregistered Section D, Section C column (g), and native per-property
-allocation XML. The document IDs, security, agent, and waiver confirmations are
-source assertions; the hypothetical return PDFs and agreement copy can now be
-attached in the registered bundle, but their content, original mailing, and
-IRS acceptance are not authenticated. A separate
-annual input and Part III XML builder now represent prior deferred
-properties, 2025 dispositions, and eligible-compensation and nongrantor-trust
-distributions. It rejects unsupported pre-June-17-2008 dates and more than
-three distinct Form 1042-S source groups per category. Eligible-compensation
-and trust distribution entries now reference structured 2025 Form 1042-S
-source rows with income codes 38 and 39, respectively, per the
+statements are written but unrun. Section B now takes balance-sheet categories
+and derives asset, liability, and net-worth totals instead of trusting a
+free-entered number. Its unregistered XML builder emits the form lines and
+native itemized statements for partnership interests, owned and nongrantor
+trusts, other assets, and other liabilities. Line 5a is checked as a subset of
+line 5 and excluded from line 20. These category values remain entered
+assertions without independent valuation evidence. Section C now has a separate,
+complete-inventory-confirmed source object for mark-to-market property, eligible
+and ineligible deferred compensation, specified tax-deferred accounts, and
+nongrantor trust interests. The old flat `assets` input is rejected. An
+unregistered Section C builder emits the ordered property rows, excluded-item
+indicators, totals, and native statements, and refuses to serialize over 20
+property rows because the MeF schema has no demonstrated continuation path. It
+also requires a linked computation statement for property rows. These
+declarations do not yet prove that the deemed gains, losses, compensation, and
+account amounts are present on the correct income forms, so filing remains
+blocked. Section D now has an explicit no-election/election source. An elected
+deferral takes the line 24 tax from each of two distinct hypothetical returns,
+derives eligible tax, allocates it across all positive-gain properties before
+selecting deferred properties, and emits unregistered Section D, Section C
+column (g), and native per-property allocation XML. The document IDs, security,
+agent, and waiver confirmations are source assertions; the hypothetical return
+PDFs and agreement copy can now be attached in the registered bundle, but their
+content, original mailing, and IRS acceptance are not authenticated. A separate
+annual input and Part III XML builder now represent prior deferred properties,
+2025 dispositions, and eligible-compensation and nongrantor-trust distributions.
+It rejects unsupported pre-June-17-2008 dates and more than three distinct Form
+1042-S source groups per category. Eligible-compensation and trust distribution
+entries now reference structured 2025 Form 1042-S source rows with income codes
+38 and 39, respectively, per the
 [2025 Form 1042-S instructions](https://www.irs.gov/pub/irs-pdf/i1042s--2025.pdf).
-Each source's rounded
-reportable amount and withholding must match its linked distributions; the
-Part III builder groups payments from one source into one MeF detail row.
-Source, mismatch, and grouping cases are written but unrun. This does not
-authenticate the payor statement or open the registered distribution filing
-gate. Annual input now records whether 2025 was a full-year U.S. citizen or
-resident period or a nonresident/dual-status year. The registered Form 1040
+Each source's rounded reportable amount and withholding must match its linked
+distributions; the Part III builder groups payments from one source into one MeF
+detail row. Source, mismatch, and grouping cases are written but unrun. This
+does not authenticate the payor statement or open the registered distribution
+filing gate. Annual input now records whether 2025 was a full-year U.S. citizen
+or resident period or a nonresident/dual-status year. The registered Form 1040
 MeF path admits only the full-year status; code 38/39 distributions are limited
-to the nonresident/dual-status source path. [Notice 2009-85](https://www.irs.gov/irb/2009-45_IRB)
-says the special
+to the nonresident/dual-status source path.
+[Notice 2009-85](https://www.irs.gov/irb/2009-45_IRB) says the special
 withholding does not apply during a later citizen/resident period, and
 [2025 Publication 519](https://www.irs.gov/publications/p519) says dual-status
 returns cannot be e-filed. The status is an assertion, not verified residency
 evidence. Zero-reportable distributions and other return families remain open.
-Annual eligible-compensation and nongrantor-trust items now require
-descriptions and explicit treaty-waiver confirmations, and the registered
-no-activity and capital-disposition bundles emit their item-level native waiver
-statements in ReturnData1040 order. Statement, missing-confirmation, and
-full-return XSD cases are written but unrun; the source confirmations do not
-authenticate the earlier Form W-8CE, trustee notice, or mailed original.
-Prior Form 8854 amounts, disposition
-reporting, and payment evidence remain entered source assertions. A registered
-annual node and MeF descriptor now file the no-disposition, no-distribution
-certification only with confirmed full-year Form 1040 tax status. The annual
-input also requires explicit confirmations that the
-original Form 8854 was mailed separately and the return-attached copy was
-marked “Copy,” as the 2025 instructions require. Those assertions do not prove
-mailing or the contents of the filed copy. Missing-confirmation cases are
-written but unrun. Its graph, full-return, and local XSD cases are written but
-unrun. An annual deferred-property disposition now has separate actual-sale,
-full-disposition, deferred-tax, interest, payment-date, and receipt-filename
-facts. For a disposition reported on Form 8949, a written one-to-one check
-matches the filed transaction ID, sale date, proceeds, basis, adjustments,
-gain, and term flag; it is unrun. Annual events still reject at the registered
-filing gate unless they are full-property Form 8949 dispositions without
-distributions. Those dispositions now reach the annual IRS8854 through the
-normal graph only when the filed Form 8949 row reconciles and the named
-payment-confirmation PDF is present in the bundle. Missing-row, missing-PDF,
-graph, and local XSD cases are written but unrun. The receipt's amounts and
-timeliness remain source assertions; non-Form 8949 dispositions and
-distributions still reject. Identified
-Form 8949 transactions now retain a source ID through calculation and MeF
-pending data. The unregistered initial bundle now checks the Form 8949 MeF
-filing rows, rather than a separate raw source, and requires a one-to-one match for
-Form 8854 gain properties marked `F8949`, including the deemed-sale date,
-whole-dollar proceeds and basis, and the exclusion adjustment. The same
-unregistered check now accepts a Form 8949 loss only with an explicit deductible
-capital-loss or nondeductible personal-use characterization, matching either
-the unadjusted loss or a code-L adjustment that zeroes it. It also checks the
-filed row's computed gain or loss and rejects a raw-input-shaped substitute.
-The Form 8949 match now also requires confirmation that the ordinary
-holding-period rule applies and checks the acquisition date against the
-deemed-sale date and short/long box; inherited property and other special
-holding-period rules remain blocked rather than inferred from a description.
-It also requires an explicit digital-asset classification and matches that to
-the TY2025 C/F versus I/L no-information-return boxes, without guessing from
-the property name. These category cases are written but unrun.
-These checks are
-written but unrun. This is a reconciliation check, not an automatic transaction
-route; other loss characters, Form 4797, direct Schedule D, and excluded-item
-income still need character and reporting checks. The registered initial
-builder now files a covered return when Section C contains only identified
-Form 8949 mark-to-market properties, each reconciled to its filed transaction,
-with no other Section C category. Its full-return
-XML, missing-source rejection, and local XSD cases are written but unrun. The
-normal Form 8854 calculation node now uses the same filing-scope gate, so this
-covered case can reach the MeF builder through the source graph; a source-to-
-return case is written but unrun.
-For a Section D election on those properties, the source now names the two
-hypothetical-return PDFs and the marked agreement-copy PDF by filename rather
-than inventing their MeF document IDs. The bundle validates each PDF and links
-it to the assembler-assigned ID. It requires source confirmations that the
-original request was marked Original and mailed, and the attached copy was
-marked Copy; it cannot
-authenticate that mailing, the agreement's acceptance, adequate security, or
-the tax calculations printed in the supplied hypothetical returns. Bundle,
-source-graph, missing-PDF, and local XSD cases are written but unrun. Other covered income
-categories and unsupported annual disposition or distribution events remain blocked.
-Exception source
-corroboration, PDF, broader source reconciliation, and IRS business rules
-remain open. An
-initial-form bundle now composes Parts I and II in XSD order and links native
-statement IDs with the required filename-to-binary-ID mapping, including
-deferral hypotheticals, agreement copy, and trust valuation rulings. It validates
-ID shape and uniqueness; the registered bundle also validates that named PDFs
-are present and readable.
-Local IRS8854 XSD cases for the unregistered initial and annual roots are
-written but unrun. Both root builders now leave `documentId` to the return
-assembler, and the initial builder accepts only IDs for linked native and
-binary documents. The registered bundle now generates those IDs from the
+Annual eligible-compensation and nongrantor-trust items now require descriptions
+and explicit treaty-waiver confirmations, and the registered no-activity and
+capital-disposition bundles emit their item-level native waiver statements in
+ReturnData1040 order. Statement, missing-confirmation, and full-return XSD cases
+are written but unrun; the source confirmations do not authenticate the earlier
+Form W-8CE, trustee notice, or mailed original. Prior Form 8854 amounts,
+disposition reporting, and payment evidence remain entered source assertions. A
+registered annual node and MeF descriptor now file the no-disposition,
+no-distribution certification only with confirmed full-year Form 1040 tax
+status. The annual input also requires explicit confirmations that the original
+Form 8854 was mailed separately and the return-attached copy was marked “Copy,”
+as the 2025 instructions require. Those assertions do not prove mailing or the
+contents of the filed copy. Missing-confirmation cases are written but unrun.
+Its graph, full-return, and local XSD cases are written but unrun. An annual
+deferred-property disposition now has separate actual-sale, full-disposition,
+deferred-tax, interest, payment-date, and receipt-filename facts. For a
+disposition reported on Form 8949, a written one-to-one check matches the filed
+transaction ID, sale date, proceeds, basis, adjustments, gain, and term flag; it
+is unrun. Annual events still reject at the registered filing gate unless they
+are full-property Form 8949 dispositions without distributions. Those
+dispositions now reach the annual IRS8854 through the normal graph only when the
+filed Form 8949 row reconciles and the named payment-confirmation PDF is present
+in the bundle. Missing-row, missing-PDF, graph, and local XSD cases are written
+but unrun. The receipt's amounts and timeliness remain source assertions;
+non-Form 8949 dispositions and distributions still reject. Identified Form 8949
+transactions now retain a source ID through calculation and MeF pending data.
+The unregistered initial bundle now checks the Form 8949 MeF filing rows, rather
+than a separate raw source, and requires a one-to-one match for Form 8854 gain
+properties marked `F8949`, including the deemed-sale date, whole-dollar proceeds
+and basis, and the exclusion adjustment. The same unregistered check now accepts
+a Form 8949 loss only with an explicit deductible capital-loss or nondeductible
+personal-use characterization, matching either the unadjusted loss or a code-L
+adjustment that zeroes it. It also checks the filed row's computed gain or loss
+and rejects a raw-input-shaped substitute. The Form 8949 match now also requires
+confirmation that the ordinary holding-period rule applies and checks the
+acquisition date against the deemed-sale date and short/long box; inherited
+property and other special holding-period rules remain blocked rather than
+inferred from a description. It also requires an explicit digital-asset
+classification and matches that to the TY2025 C/F versus I/L
+no-information-return boxes, without guessing from the property name. These
+category cases are written but unrun. These checks are written but unrun. This
+is a reconciliation check, not an automatic transaction route; other loss
+characters, Form 4797, direct Schedule D, and excluded-item income still need
+character and reporting checks. The registered initial builder now files a
+covered return when Section C contains only identified Form 8949 mark-to-market
+properties, each reconciled to its filed transaction, with no other Section C
+category. Its full-return XML, missing-source rejection, and local XSD cases are
+written but unrun. The normal Form 8854 calculation node now uses the same
+filing-scope gate, so this covered case can reach the MeF builder through the
+source graph; a source-to- return case is written but unrun. For a Section D
+election on those properties, the source now names the two hypothetical-return
+PDFs and the marked agreement-copy PDF by filename rather than inventing their
+MeF document IDs. The bundle validates each PDF and links it to the
+assembler-assigned ID. It requires source confirmations that the original
+request was marked Original and mailed, and the attached copy was marked Copy;
+it cannot authenticate that mailing, the agreement's acceptance, adequate
+security, or the tax calculations printed in the supplied hypothetical returns.
+Bundle, source-graph, missing-PDF, and local XSD cases are written but unrun.
+Other covered income categories and unsupported annual disposition or
+distribution events remain blocked. Exception source corroboration, PDF, broader
+source reconciliation, and IRS business rules remain open. An initial-form
+bundle now composes Parts I and II in XSD order and links native statement IDs
+with the required filename-to-binary-ID mapping, including deferral
+hypotheticals, agreement copy, and trust valuation rulings. It validates ID
+shape and uniqueness; the registered bundle also validates that named PDFs are
+present and readable. Local IRS8854 XSD cases for the unregistered initial and
+annual roots are written but unrun. Both root builders now leave `documentId` to
+the return assembler, and the initial builder accepts only IDs for linked native
+and binary documents. The registered bundle now generates those IDs from the
 actual document set and links its native statements and named binary
-attachments; the cases are written but unrun. The initial builder now exposes
-an ID-independent, stable native
-statement set for the assembler's first document-discovery pass, with its
-written case unrun. Its discovery order now follows the native Form 8854
-statement roots in ReturnData1040.xsd; the multi-statement order case is
-written but unrun. An ordered-ID linker maps assembler IDs back to the
-statement keys and rejects count or ID collisions. These are now used by the
-registered noncovered and reconciled capital-only covered paths; the cases
-remain unrun.
-The calculation and rejection cases are
+attachments; the cases are written but unrun. The initial builder now exposes an
+ID-independent, stable native statement set for the assembler's first
+document-discovery pass, with its written case unrun. Its discovery order now
+follows the native Form 8854 statement roots in ReturnData1040.xsd; the
+multi-statement order case is written but unrun. An ordered-ID linker maps
+assembler IDs back to the statement keys and rejects count or ID collisions.
+These are now used by the registered noncovered and reconciled capital-only
+covered paths; the cases remain unrun. The calculation and rejection cases are
 written but unrun. See the
 [2025 Form 8854 instructions](https://www.irs.gov/instructions/i8854).
 

@@ -64,6 +64,7 @@
 | line32_other_expenses | {description, amount}[]? | user | Itemized other farm expenses | Sch F Part II line 32 | https://www.irs.gov/pub/irs-pdf/f1040sf.pdf |
 | line36_at_risk | "a"\|"b"? | user | At-risk box (36a=all at risk, 36b=some not) | Sch F line 36 | https://www.irs.gov/pub/irs-pdf/i1040sf.pdf |
 | filing_status | FilingStatus? | user | Filing status (for EBL threshold) | Form 461 | https://www.irs.gov/pub/irs-pdf/f461.pdf |
+| farm_optional_method_elected | boolean? | user | Return-wide Schedule SE Part II farm optional-method election; route Schedule F line 9 gross and line 34 net even when net is below $400 or a loss | 2025 Schedule SE Part II line 15 and footnotes | https://www.irs.gov/pub/irs-prior/f1040sse--2025.pdf |
 | farm_sources | {farm_id, kind, amount, deferred?}[]? | 1099-G, 1099-MISC, 1099-NEC, auto-expense | Source amounts for per-farm reconciliation; not added a second time to income or expenses | Schedule F lines 4a, 6a, 8, 10 | https://www.irs.gov/instructions/i1040sf |
 
 ---
@@ -83,6 +84,13 @@ line 34 = line 9 − line 33
 ### Step 4 — Output Routing
 - When activity exists → Schedule 1 line 6 (even if the net result is zero)
 - If net profit ≥ $400 → Schedule SE (net_profit_schedule_f)
+- With an explicit farm optional-method election → one Schedule SE Part II route
+  with total Schedule F line 9 gross farm income (not less than zero) and
+  total line 34 net farm profit before any subsequent Form 6198 at-risk
+  limitation. This replaces the ordinary per-farm Schedule SE line 1a route,
+  including when the farm has a loss or less than $400 profit. Schedule 1 and
+  QBI still use their own existing calculations. The Schedule SE node decides
+  eligibility and computes line 15.
 - If net profit > 0 → Form 8995 (qbi_from_schedule_f)
 - If material_participation = false → Form 8582 (passive_schedule_f)
 - If at_risk = "b" and loss, the farm requires per-activity simplified Form 6198
@@ -97,6 +105,7 @@ line 34 = line 9 − line 33
 | ------------ | ---------------- | ------------ | --------- | ------------- | --- |
 | line6_schedule_f | schedule1 | Line 6 | always | IRC §61 | https://www.irs.gov/pub/irs-pdf/i1040s1.pdf |
 | net_profit_schedule_f | schedule_se | Line 1a | profit ≥ $400 | IRC §1402 | https://www.irs.gov/pub/irs-pdf/i1040sse.pdf |
+| farm_optional_method_elected, gross_farm_income, net_profit_schedule_f | schedule_se | Part II line 15 eligibility/input | election is true | 2025 Schedule SE Part II and footnotes | https://www.irs.gov/pub/irs-prior/f1040sse--2025.pdf |
 | qbi_from_schedule_f | form8995 | — | profit > 0 | IRC §199A | https://www.irs.gov/pub/irs-pdf/f8995.pdf |
 | passive_schedule_f | form8582 | — | not material participant | IRC §469 | https://www.irs.gov/pub/irs-pdf/f8582.pdf |
 | per-farm at-risk facts | form6198 | — | loss + not all at risk | IRC §465 | https://www.irs.gov/pub/irs-pdf/f6198.pdf |
@@ -147,7 +156,9 @@ flowchart LR
 ## Edge Cases & Special Rules
 1. **Zero income + zero expenses** — no outputs (nothing to report)
 2. **Loss → Schedule 1** — losses are reported (line 6 can be negative)
-3. **Loss → Schedule SE** — losses do NOT route to SE (only profits ≥ $400)
+3. **Loss → Schedule SE** — losses do not route under the ordinary method, but
+   an explicit farm optional-method election routes gross income and line 34
+   net profit for Schedule SE Part II eligibility and line 15.
 4. **Conservation limit** — capped at 25% of gross farm income
 5. **EBL** — uses same thresholds as Schedule C ($313k single / $626k MFJ)
 6. **Accrual method** — node does not recompute; input fields carry accrual-adjusted amounts

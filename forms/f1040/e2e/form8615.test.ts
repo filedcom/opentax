@@ -23,7 +23,7 @@ const parent = {
   parent_ssn: "987-65-4321",
   parent_filing_status: FilingStatus.MFJ,
   parent_taxable_income: 80_000,
-  parent_income_tax: 9_123,
+  parent_income_tax: 9_126,
   parent_tax_method: "ordinary" as const,
   child_unearned_income: 5_000,
   other_children_line5: [],
@@ -35,18 +35,18 @@ const parent = {
   parent_net_capital_gain: 0,
 };
 
-Deno.test("E2E: Form 8615 stops rather than estimating low-income tax", () => {
+Deno.test("E2E: Form 8615 uses the 2025 Tax Table for low-income tax", () => {
   const result = execute(plan, registry, {
     general: child,
     f1099int: [{ payer_name: "Bank", box1: 5_000 }],
     f8615: parent,
   }, { taxYear: 2025, formType: "f1040" });
-  assertEquals(
-    result.diagnostics.some((diagnostic) =>
-      String(diagnostic.message).includes("exact 2025 IRS Tax Table")
-    ),
-    true,
-  );
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form8615?.line9_family_tax, 9_402);
+  assertEquals(result.pending.form8615?.line15_child_net_income_tax, 136);
+  assertEquals(result.pending.form8615?.line17_child_regular_tax, 368);
+  assertEquals(result.pending.form8615?.line18_child_tax, 412);
+  assertEquals(result.pending.f1040?.line16_income_tax, 412);
 });
 
 Deno.test("E2E: Form 8615 still attaches below its line 3 threshold", () => {
@@ -81,7 +81,7 @@ Deno.test("E2E: Form 8615 rejects line 1 that disagrees with the child's income 
   );
 });
 
-Deno.test("E2E: qualified dividends also stop without the low-income Tax Table", () => {
+Deno.test("E2E: Form 8615 qualified dividends use Tax Table worksheet comparisons", () => {
   const result = execute(plan, registry, {
     general: child,
     f1099int: [{ payer_name: "Bank", box1: 4_000 }],
@@ -94,10 +94,10 @@ Deno.test("E2E: qualified dividends also stop without the low-income Tax Table",
     }],
     f8615: parent,
   }, { taxYear: 2025, formType: "f1040" });
-  assertEquals(
-    result.diagnostics.some((diagnostic) =>
-      String(diagnostic.message).includes("exact 2025 IRS Tax Table")
-    ),
-    true,
-  );
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form8615?.line9_family_tax, 9_342);
+  assertEquals(result.pending.form8615?.line15_child_net_income_tax, 81);
+  assertEquals(result.pending.form8615?.line17_child_regular_tax, 266);
+  assertEquals(result.pending.form8615?.line18_child_tax, 297);
+  assertEquals(result.pending.f1040?.line16_income_tax, 297);
 });

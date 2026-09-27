@@ -16,7 +16,7 @@ import { calculateForm8615 } from "../../forms/form8615/calculation.ts";
 import { inputSchema as form8615SourceSchema } from "../../../inputs/f8615/schema.ts";
 import { f8812 } from "../../../inputs/f8812/index.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
-import { bracketsForStatus, taxFromBrackets } from "../tax_brackets.ts";
+import { ordinaryTax2025 } from "../tax_table_2025.ts";
 import { preferentialTax } from "./preferential_tax.ts";
 
 // ─── Accumulable helper ───────────────────────────────────────────────────────
@@ -39,11 +39,11 @@ function sumField(value: number | number[] | undefined): number {
 
 // Income Tax Calculation — Form 1040 Line 16
 //
-// Phase 1: Bracket-table regular tax for all five filing statuses.
+// TY2025 Tax Table below $100,000, Tax Computation Worksheet above it.
 // Phase 2: Qualified Dividends and Capital Gain Tax Worksheet (QDCGTW).
 //   When qualified_dividends or net_capital_gain is provided, applies
 //   preferential 0%/15%/20% rates per IRC §1(h). The QDCGT result is
-//   always ≤ the regular bracket result (the worksheet yields the minimum).
+//   always ≤ regular tax (the worksheet yields the minimum).
 //
 // IRC §1; Rev. Proc. 2024-40, §3.01–§3.02
 export const inputSchema = z.object({
@@ -123,7 +123,6 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
 
     const input = inputSchema.parse(rawInput);
 
-    const brackets = bracketsForStatus(input.filing_status, cfg);
     const floor = input.foreign_earned_income_exclusion ?? 0;
 
     // Apply QDCGT / Schedule D Tax Worksheet when preferential income is present.
@@ -147,36 +146,32 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
     }
     const hasPrefIncome = qualDiv > 0 || netCg > 0;
 
-    // §911(f) stacking rule: tax on non-excluded income =
-    //   Tax(taxable + floor, with QDCGT) - Tax(floor, ordinary brackets)
-    // This ensures non-excluded income is taxed at the marginal rate above the exclusion.
+    // Form 2555's Foreign Earned Income Tax Worksheet uses the Tax Table on
+    // both the stacked income and excluded-income base below $100,000. A
+    // preferential return needs its capital-gain-excess adjustments first.
     let tax: number;
     if (floor > 0) {
-      const stackedIncome = input.taxable_income + floor;
-      const stackedTax = hasPrefIncome
-        ? preferentialTax({
-          taxableIncome: stackedIncome,
-          qualifiedDividends: qualDiv,
-          netCapitalGain: netCg,
-          filingStatus: input.filing_status,
-          brackets,
-          zeroCeiling: cfg.qdcgtZeroCeiling,
-          twentyFloor: cfg.qdcgtTwentyFloor,
-          unrecaptured1250Gain: unrecaptured1250,
-          rate28Gain: rate28,
-          form4952Election,
-          electedCapitalGain,
-        })
-        : taxFromBrackets(stackedIncome, brackets);
-      const floorTax = taxFromBrackets(floor, brackets);
-      tax = Math.max(0, stackedTax - floorTax);
+      if (input.taxable_income <= 0) {
+        tax = 0;
+      } else {
+        if (hasPrefIncome) {
+          throw new Error(
+            "Form 2555 with qualified dividends or capital gain needs the Foreign Earned Income Tax Worksheet capital-gain-excess adjustment",
+          );
+        }
+        const stackedTax = ordinaryTax2025(
+          input.taxable_income + floor,
+          input.filing_status,
+        );
+        const floorTax = ordinaryTax2025(floor, input.filing_status);
+        tax = Math.max(0, stackedTax - floorTax);
+      }
     } else if (hasPrefIncome) {
       tax = preferentialTax({
         taxableIncome: input.taxable_income,
         qualifiedDividends: qualDiv,
         netCapitalGain: netCg,
         filingStatus: input.filing_status,
-        brackets,
         zeroCeiling: cfg.qdcgtZeroCeiling,
         twentyFloor: cfg.qdcgtTwentyFloor,
         unrecaptured1250Gain: unrecaptured1250,
@@ -185,7 +180,7 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
         electedCapitalGain,
       });
     } else {
-      tax = taxFromBrackets(input.taxable_income, brackets);
+      tax = ordinaryTax2025(input.taxable_income, input.filing_status);
     }
 
     let form8615Result: ReturnType<typeof calculateForm8615> | undefined;

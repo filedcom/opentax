@@ -81,7 +81,8 @@ function buildSectionAItem(
     : item.fmv_method_description ??
       (item.fmv_method && FMV_METHOD_LABELS[item.fmv_method]);
   const address = item.donee_organization_us_address;
-  const acknowledgment = item.vehicle_sale_acknowledgment;
+  const acknowledgment = item.vehicle_sale_acknowledgment ??
+    item.vehicle_needy_transfer_acknowledgment;
   const vehicleDescription = acknowledgment
     ? `${acknowledgment.vehicle_year} ${acknowledgment.vehicle_make} ${acknowledgment.vehicle_model}, ${acknowledgment.vehicle_condition}, ${acknowledgment.odometer_miles} miles`
     : item.property_description;
@@ -126,10 +127,12 @@ export function buildVehicleStatement(
   item: SectionAItem,
   context: MefBuildContext,
 ): string {
-  const ack = item.vehicle_sale_acknowledgment;
+  const saleAck = item.vehicle_sale_acknowledgment;
+  const needyAck = item.vehicle_needy_transfer_acknowledgment;
+  const ack = saleAck ?? needyAck;
   if (!ack || !item.vehicle_vin || !item.date_contributed) {
     throw new Error(
-      "Form 8283 vehicle needs a contemporaneous donee sale acknowledgment",
+      "Form 8283 vehicle needs a contemporaneous donee acknowledgment",
     );
   }
   return elements("ContriVehicleBoatAirplaneStmt", [
@@ -147,9 +150,12 @@ export function buildVehicleStatement(
       element("VehicleModelNameTxt", ack.vehicle_model),
     ]),
     element("VIN", item.vehicle_vin),
-    element("CertifiesVehSoldToUnrltPrtyInd", "X"),
-    element("SaleDt", ack.sale_date),
-    element("GrossProceedsFromSaleOfVehAmt", ack.gross_proceeds),
+    saleAck ? element("CertifiesVehSoldToUnrltPrtyInd", "X") : "",
+    saleAck ? element("SaleDt", saleAck.sale_date) : "",
+    saleAck
+      ? element("GrossProceedsFromSaleOfVehAmt", saleAck.gross_proceeds)
+      : "",
+    needyAck ? element("CertifiesVehTrnsfrToNeedyInd", "X") : "",
     element("GoodsAndServicesInd", "false"),
   ]);
 }
@@ -343,7 +349,7 @@ export const form8283: MefFormDescriptor<
     const parsed = inputSchema.parse(fields);
     const sectionA = parsed.section_a_items ?? [];
     const sectionB = parsed.section_b_items ?? [];
-    const vehicleAttachmentNames = sectionA.filter((item) => item.is_vehicle)
+    const vehicleAttachmentNames = sectionA.filter(needsVehicleStatement)
       .map((item) => {
         const fileName = item.vehicle_acknowledgment_attachment_file_name;
         if (!fileName) {

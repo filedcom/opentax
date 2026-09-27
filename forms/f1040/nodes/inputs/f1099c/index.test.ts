@@ -6,7 +6,6 @@ import {
   form982,
 } from "../../intermediate/forms/form982/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
-import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
 
 function minimalItem(overrides: Record<string, unknown> = {}) {
   return {
@@ -72,16 +71,76 @@ Deno.test("QPRI 1099-C carries its exclusion and residence facts to Form 982", (
     box1_date: "2025-06-15",
     routing: "excluded",
     exclusion_type: ExclusionType.Qpri,
+    qpri_mfs: false,
+    qpri_actual_discharge_date: "2025-06-15",
+    qpri_discharged_principal_amount: 300_000,
+    qpri_total_loan_balance_before_discharge: 300_000,
+    qpri_qualified_loan_balance_before_discharge: 300_000,
+    qpri_main_home_security_confirmed: true,
+    qpri_discharge_reason: "financial_condition",
+    qpri_discharge_reason_source: "Lender workout letter",
     principal_residence_retained: true,
     principal_residence_basis: 220_000,
   })]);
   assertEquals(fieldsOf(result.outputs, form982), {
     line2_excluded_cod: 300_000,
     exclusion_type: ExclusionType.Qpri,
+    qpri_mfs: false,
+    qpri_discharge_reason: "financial_condition",
+    qpri_discharge_reason_source: "Lender workout letter",
+    qpri_total_loan_balance_before_discharge: 300_000,
+    qpri_qualified_loan_balance_before_discharge: 300_000,
+    qpri_main_home_security_confirmed: true,
     principal_residence_retained: true,
     principal_residence_basis: 220_000,
     discharge_date: "2025-06-15",
   });
+});
+
+Deno.test("QPRI 1099-C rejects undivided discharged interest", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box2_cod_amount: 30_000,
+        box3_interest: 2_000,
+        routing: "excluded",
+        exclusion_type: ExclusionType.Qpri,
+        qpri_discharged_principal_amount: 30_000,
+        qpri_actual_discharge_date: "2025-06-15",
+      })]),
+    Error,
+    "principal and interest reconciliation",
+  );
+});
+
+Deno.test("QPRI 1099-C requires principal to reconcile with box 2", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box2_cod_amount: 30_000,
+        routing: "excluded",
+        exclusion_type: ExclusionType.Qpri,
+        qpri_discharged_principal_amount: 27_000,
+        qpri_actual_discharge_date: "2025-06-15",
+      })]),
+    Error,
+    "box 2 reconciled to discharged principal",
+  );
+});
+
+Deno.test("QPRI 1099-C does not infer discharge date from box 1", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box1_date: "2025-06-15",
+        box2_cod_amount: 30_000,
+        routing: "excluded",
+        exclusion_type: ExclusionType.Qpri,
+        qpri_discharged_principal_amount: 30_000,
+      })]),
+    Error,
+    "actual discharge date separately from box 1",
+  );
 });
 
 Deno.test("multiple excluded debts with detail cannot be silently merged", () => {
@@ -118,52 +177,56 @@ Deno.test("routing=taxable does not emit form982", () => {
   assertEquals(f982, undefined);
 });
 
-Deno.test("box7_fmv_property > 0 routes to schedule_d with both fmv and cod_debt_cancelled", () => {
-  const result = compute([
-    minimalItem({
-      box2_cod_amount: 10000,
-      box7_fmv_property: 180000,
-      routing: "taxable",
-    }),
-  ]);
-  const input = fieldsOf(result.outputs, schedule_d)!;
-  assertEquals(input.cod_property_fmv, 180000);
-  assertEquals(input.cod_debt_cancelled, 10000);
+Deno.test("box7 FMV needs a property disposition answer", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box2_cod_amount: 10_000,
+        box7_fmv_property: 180_000,
+      })]),
+    Error,
+    "retained-or-transferred property answer",
+  );
 });
 
-Deno.test("box7_fmv_property = 0 does not route to schedule_d", () => {
+Deno.test("retained property with box7 FMV does not invent a capital gain", () => {
   const result = compute([
     minimalItem({
       box2_cod_amount: 3000,
-      box7_fmv_property: 0,
+      box7_fmv_property: 180_000,
+      property_disposition_status: "retained",
       routing: "taxable",
     }),
   ]);
-  const sd = findOutput(result, "schedule_d");
-  assertEquals(sd, undefined);
+  assertEquals(fieldsOf(result.outputs, schedule1)?.line8c_cod_income, 3000);
+  assertEquals(findOutput(result, "schedule_d"), undefined);
 });
 
-Deno.test("omitted box7_fmv_property does not route to schedule_d", () => {
-  const result = compute([
-    minimalItem({ box2_cod_amount: 3000, routing: "taxable" }),
-  ]);
-  const sd = findOutput(result, "schedule_d");
-  assertEquals(sd, undefined);
+Deno.test("transferred property stops pending a sourced disposition calculation", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box2_cod_amount: 10_000,
+        box7_fmv_property: 180_000,
+        property_disposition_status: "transferred",
+      })]),
+    Error,
+    "needs recourse, debt balance, adjusted basis, and holding facts",
+  );
 });
 
-Deno.test("excluded routing + box7 present emits both form982 and schedule_d", () => {
+Deno.test("excluded routing with a retained property does not invent a disposition", () => {
   const result = compute([
     minimalItem({
       box2_cod_amount: 50000,
       box7_fmv_property: 200000,
+      property_disposition_status: "retained",
       routing: "excluded",
     }),
   ]);
   const f982Input = fieldsOf(result.outputs, form982)!;
-  const sdInput = fieldsOf(result.outputs, schedule_d)!;
   assertEquals(f982Input.line2_excluded_cod, 50000);
-  assertEquals(sdInput.cod_property_fmv, 200000);
-  assertEquals(sdInput.cod_debt_cancelled, 50000);
+  assertEquals(findOutput(result, "schedule_d"), undefined);
 });
 
 Deno.test("empty array produces empty outputs", () => {
@@ -266,19 +329,19 @@ Deno.test("edge: large excluded amount ($750,000) routes full amount to form982"
   assertEquals(input.line2_excluded_cod, 750_000);
 });
 
-Deno.test("edge: two items with box7, each generates own schedule_d entry", () => {
+Deno.test("edge: mixed debts with one retained property keep only taxable COD", () => {
   const result = compute([
     minimalItem({ box2_cod_amount: 3000, routing: "taxable" }),
     minimalItem({
       box2_cod_amount: 5000,
       box7_fmv_property: 120000,
+      property_disposition_status: "retained",
       routing: "taxable",
     }),
   ]);
   const s1Input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(s1Input.line8c_cod_income, 8000);
-  const sd = findOutput(result, "schedule_d");
-  assertEquals(sd !== undefined, true);
+  assertEquals(findOutput(result, "schedule_d"), undefined);
 });
 
 // ============================================================
@@ -300,21 +363,20 @@ Deno.test("smoke: taxable personal debt — routes to schedule1, not form982 or 
   assertEquals(findOutput(result, "schedule_d"), undefined);
 });
 
-Deno.test("smoke: excluded QPRI debt with property — form982 and schedule_d, not schedule1", () => {
+Deno.test("smoke: excluded retained-home debt with box7 does not enter Schedule D", () => {
   const result = compute([
     minimalItem({
       creditor_name: "Wells Fargo Mortgage",
       box2_cod_amount: 50000,
       box7_fmv_property: 220000,
+      property_disposition_status: "retained",
       routing: "excluded",
     }),
   ]);
 
   const f982Input = fieldsOf(result.outputs, form982)!;
   assertEquals(f982Input.line2_excluded_cod, 50000);
-  const sdInput = fieldsOf(result.outputs, schedule_d)!;
-  assertEquals(sdInput.cod_property_fmv, 220000);
-  assertEquals(sdInput.cod_debt_cancelled, 50000);
+  assertEquals(findOutput(result, "schedule_d"), undefined);
   assertEquals(findOutput(result, "schedule1"), undefined);
 });
 

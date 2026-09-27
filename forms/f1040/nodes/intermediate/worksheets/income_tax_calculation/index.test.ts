@@ -52,17 +52,16 @@ Deno.test("Form 8814 tax remains on line 16 even with zero parent taxable income
   assertEquals(f6251Fields(result)?.regular_tax, 135);
 });
 
-// ─── Bracket Computation ─────────────────────────────────────────────────────
+// ─── 2025 Tax Table and Tax Computation Worksheet ────────────────────────────
 
-Deno.test("Single — $50,000 taxable income (22% bracket)", () => {
-  // Tax = $5,578.50 + ($50,000 − $48,475) × 22% = $5,578.50 + $335.50 = $5,914.00
+Deno.test("Single — $50,000 uses the Tax Table's $50,000–$50,050 row", () => {
   const result = compute({
     taxable_income: 50_000,
     filing_status: FilingStatus.Single,
   });
   assertAlmostEquals(
     f1040Fields(result)?.line16_income_tax as number,
-    5_914,
+    5_920,
     1,
   );
 });
@@ -80,28 +79,26 @@ Deno.test("MFJ — $100,000 taxable income (22% bracket)", () => {
   );
 });
 
-Deno.test("MFS — $50,000 taxable income (22% bracket)", () => {
-  // MFS lower brackets match Single at this income: $5,914
+Deno.test("MFS — $50,000 uses the same table cell as Single", () => {
   const result = compute({
     taxable_income: 50_000,
     filing_status: FilingStatus.MFS,
   });
   assertAlmostEquals(
     f1040Fields(result)?.line16_income_tax as number,
-    5_914,
+    5_920,
     1,
   );
 });
 
-Deno.test("HOH — $70,000 taxable income (22% bracket)", () => {
-  // Tax = $7,442 + ($70,000 − $64,850) × 22% = $7,442 + $1,133 = $8,575
+Deno.test("HOH — $70,000 uses the Tax Table's $70,000–$70,050 row", () => {
   const result = compute({
     taxable_income: 70_000,
     filing_status: FilingStatus.HOH,
   });
   assertAlmostEquals(
     f1040Fields(result)?.line16_income_tax as number,
-    8_575,
+    8_581,
     1,
   );
 });
@@ -121,29 +118,27 @@ Deno.test("QSS — $100,000 uses MFJ brackets", () => {
 
 // ─── Bracket Boundaries ───────────────────────────────────────────────────────
 
-Deno.test("Single — at 10% ceiling ($11,925) → 10% only", () => {
-  // Tax = $11,925 × 10% = $1,192.50
+Deno.test("Single — $11,925 uses the $11,900–$11,950 Tax Table row", () => {
   const result = compute({
     taxable_income: 11_925,
     filing_status: FilingStatus.Single,
   });
   assertAlmostEquals(
     f1040Fields(result)?.line16_income_tax as number,
-    1_192.50,
+    1_193,
     1,
   );
 });
 
-Deno.test("Single — $1 into 12% bracket ($11,926)", () => {
-  // Tax = $1,192.50 + $1 × 12% = $1,192.62
+Deno.test("Single — $11,926 stays in the same Tax Table row", () => {
   const result = compute({
     taxable_income: 11_926,
     filing_status: FilingStatus.Single,
   });
   assertAlmostEquals(
     f1040Fields(result)?.line16_income_tax as number,
-    1_192.62,
-    0.5,
+    1_193,
+    0.01,
   );
 });
 
@@ -194,14 +189,14 @@ Deno.test("HOH — $650,000 (37% bracket)", () => {
 // ─── Output Routing ───────────────────────────────────────────────────────────
 
 Deno.test("routes line16_income_tax to f1040", () => {
-  // $50k Single → $5,914 (same as bracket test above)
+  // $50k Single → $5,920 in the TY2025 Tax Table.
   const result = compute({
     taxable_income: 50_000,
     filing_status: FilingStatus.Single,
   });
   const fields = f1040Fields(result);
   assertEquals(typeof fields?.line16_income_tax, "number");
-  assertEquals(Math.round(fields!.line16_income_tax as number), 5_914);
+  assertEquals(Math.round(fields!.line16_income_tax as number), 5_920);
 });
 
 Deno.test("routes regular_tax, regular_tax_income, filing_status to form6251", () => {
@@ -210,7 +205,7 @@ Deno.test("routes regular_tax, regular_tax_income, filing_status to form6251", (
     filing_status: FilingStatus.Single,
   });
   const fields = f6251Fields(result)!;
-  assertAlmostEquals(fields.regular_tax as number, 5_914, 1);
+  assertAlmostEquals(fields.regular_tax as number, 5_920, 1);
   assertEquals(fields.regular_tax_income, 50_000);
   assertEquals(fields.filing_status, FilingStatus.Single);
 });
@@ -228,16 +223,35 @@ Deno.test("tax amounts agree between f1040 and form6251 outputs", () => {
 
 // ─── Small Income ─────────────────────────────────────────────────────────────
 
-Deno.test("$1 taxable income — 10% bracket", () => {
+Deno.test("$1 taxable income uses the Tax Table's $0–$5 row", () => {
   const result = compute({
     taxable_income: 1,
     filing_status: FilingStatus.Single,
   });
   assertAlmostEquals(
     f1040Fields(result)?.line16_income_tax as number,
-    0.10,
+    0,
     0.01,
   );
+});
+
+Deno.test("Tax Table range endpoints and qualifying surviving spouse column", () => {
+  for (
+    const [income, expected] of [
+      [4, 0],
+      [5, 1],
+      [2_999, 299],
+      [3_000, 303],
+      [25_300, 2_562],
+    ]
+  ) {
+    const status = income === 25_300 ? FilingStatus.QSS : FilingStatus.Single;
+    assertEquals(
+      f1040Fields(compute({ taxable_income: income, filing_status: status }))
+        ?.line16_income_tax,
+      expected,
+    );
+  }
 });
 
 // ─── Unknown Tax Year ─────────────────────────────────────────────────────────
@@ -266,7 +280,7 @@ Deno.test("QDCGT: qualified dividends entirely in 0% bracket (Single, low income
   // AGI below zero_ceiling ($48,350): all qual divs taxed at 0%
   // taxable_income = $40,000, qual_div = $5,000
   // ordinary = $35,000; in_zero = min($40k, $48,350) - $35k = $5k; pref_tax = 0
-  // ordinary_tax = $1,192.50 + ($35,000 - $11,925) × 12% = $1,192.50 + $2,769 = $3,961.50
+  // Ordinary $35,000 uses the $35,000–$35,050 Tax Table row: $3,965.
   const result = compute({
     taxable_income: 40_000,
     filing_status: FilingStatus.Single,
@@ -274,7 +288,7 @@ Deno.test("QDCGT: qualified dividends entirely in 0% bracket (Single, low income
   });
   assertAlmostEquals(
     f1040Fields(result)?.line16_income_tax as number,
-    3_961.50,
+    3_965,
     1,
   );
 });
@@ -283,8 +297,7 @@ Deno.test("QDCGT: qualified dividends in 15% bracket (Single, mid income)", () =
   // taxable_income = $100,000, qual_div = $10,000
   // ordinary = $90,000; in_zero = max(0, $48,350 - $90,000) = 0; all $10k in 15%
   // pref_tax = $10,000 × 15% = $1,500
-  // ordinary_tax = $5,578.50 + ($90,000 - $48,475) × 22% = $5,578.50 + $9,135.50 = $14,714
-  // total = $16,214
+  // Ordinary $90,000 uses the Tax Table's $14,720, plus $1,500 at 15%.
   const result = compute({
     taxable_income: 100_000,
     filing_status: FilingStatus.Single,
@@ -292,9 +305,20 @@ Deno.test("QDCGT: qualified dividends in 15% bracket (Single, mid income)", () =
   });
   assertAlmostEquals(
     f1040Fields(result)?.line16_income_tax as number,
-    16_214,
+    16_220,
     1,
   );
+});
+
+Deno.test("QDCGT: ordinary line 5 uses the table even when line 1 exceeds $100,000", () => {
+  const result = compute({
+    taxable_income: 120_000,
+    filing_status: FilingStatus.MFJ,
+    qualified_dividends: 30_000,
+  });
+  // Worksheet line 5 = $90,000; the MFJ Tax Table gives $10,326.
+  // $6,700 of dividends use 0% and $23,300 use 15% ($3,495).
+  assertEquals(f1040Fields(result)?.line16_income_tax, 13_821);
 });
 
 Deno.test("QDCGT: LTCG split across 15% and 20% brackets (Single, high income)", () => {
@@ -321,8 +345,7 @@ Deno.test("QDCGT: MFJ qualified dividends in 0% bracket", () => {
   // MFJ zero_ceiling = $96,700; taxable_income = $80,000, qual_div = $5,000
   // ordinary = $75,000; in_zero = min($80k, $96,700) - $75k = $5k; all in 0%
   // pref_tax = 0
-  // ordinary_tax = $11,157 + ($75,000 - $96,950) × ... wait, $75k < $96,950 → 22% bracket
-  // ordinary_tax = $2,385 + ($75,000 - $23,850) × 12% = $2,385 + $6,138 = $8,523
+  // Ordinary $75,000 uses the MFJ Tax Table row: $8,526.
   const result = compute({
     taxable_income: 80_000,
     filing_status: FilingStatus.MFJ,
@@ -330,20 +353,19 @@ Deno.test("QDCGT: MFJ qualified dividends in 0% bracket", () => {
   });
   assertAlmostEquals(
     f1040Fields(result)?.line16_income_tax as number,
-    8_523,
+    8_526,
     1,
   );
 });
 
-Deno.test("QDCGT: no qual div or LTCG — falls back to regular brackets", () => {
-  // Same as existing bracket tests
+Deno.test("QDCGT: no qualified dividends or gain uses the Tax Table", () => {
   const result = compute({
     taxable_income: 50_000,
     filing_status: FilingStatus.Single,
   });
   assertAlmostEquals(
     f1040Fields(result)?.line16_income_tax as number,
-    5_914,
+    5_920,
     1,
   );
 });
@@ -356,7 +378,7 @@ Deno.test("QDCGT: zero qualified dividends — no QDCGT applied", () => {
   });
   assertAlmostEquals(
     f1040Fields(result)?.line16_income_tax as number,
-    5_914,
+    5_920,
     1,
   );
 });
@@ -399,7 +421,7 @@ Deno.test("QDCGT: Form 6251 line 10 receives Form 1040 line 16 tax", () => {
   });
   const f1040Tax = f1040Fields(result)!.line16_income_tax as number;
   const f6251Tax = f6251Fields(result)!.regular_tax as number;
-  assertAlmostEquals(f1040Tax, 16_214, 1); // QDCGT-reduced (qual divs at 15%)
+  assertAlmostEquals(f1040Tax, 16_220, 1); // Tax Table ordinary base.
   assertEquals(f6251Tax, f1040Tax);
 });
 
@@ -441,6 +463,28 @@ Deno.test("Form 4952 election taxes elected qualified dividends at ordinary rate
     0.01,
   );
   assertEquals(f6251Fields(elected)?.form4952_amt_election, 1_000);
+  assertEquals(f1040Fields(elected)?.line16_income_tax, 4_565);
+});
+
+Deno.test("Form 2555 plain stacking uses Tax Table cells and stops for preferential income", () => {
+  const plain = compute({
+    taxable_income: 1,
+    filing_status: FilingStatus.Single,
+    foreign_earned_income_exclusion: 20_000,
+  });
+  // $20,001 and $20,000 occupy the same Tax Table range.
+  assertEquals(f1040Fields(plain)?.line16_income_tax, 0);
+  assertThrows(
+    () =>
+      compute({
+        taxable_income: 40_000,
+        filing_status: FilingStatus.Single,
+        foreign_earned_income_exclusion: 20_000,
+        qualified_dividends: 5_000,
+      }),
+    Error,
+    "capital-gain-excess adjustment",
+  );
 });
 
 Deno.test("Form 4952 elected gain leaves Form 1040 capital gain unchanged but changes its rate", () => {
@@ -492,7 +536,7 @@ Deno.test("QDCGT: HOH filing status uses HOH thresholds", () => {
   // HOH zero_ceiling = $64,750; taxable_income = $60,000, qual_div = $3,000
   // ordinary = $57,000; in_zero = min($60k, $64,750) - $57k = $3k; all in 0%
   // pref_tax = 0
-  // ordinary_tax = $1,700 + ($57,000 - $17,000) × 12% = $1,700 + $4,800 = $6,500
+  // Ordinary $57,000 uses the HOH Tax Table row: $6,503.
   const result = compute({
     taxable_income: 60_000,
     filing_status: FilingStatus.HOH,
@@ -500,7 +544,7 @@ Deno.test("QDCGT: HOH filing status uses HOH thresholds", () => {
   });
   assertAlmostEquals(
     f1040Fields(result)?.line16_income_tax as number,
-    6_500,
+    6_503,
     1,
   );
 });
@@ -511,14 +555,14 @@ Deno.test("QDCGT: HOH filing status uses HOH thresholds", () => {
 // limitation base is routed from here.
 
 Deno.test("form_1116: line 16 routes as us_tax_before_credits", () => {
-  // taxable $85,250 single = $5,578.50 + ($85,250 − $48,475) × 22% = $13,669
+  // $85,250 Single uses the Tax Table's $85,250–$85,300 row.
   const result = compute({
     taxable_income: 85_250,
     filing_status: FilingStatus.Single,
   });
   assertEquals(
     fieldsOf(result.outputs, form_1116)?.us_tax_before_credits,
-    13_669,
+    13_675,
   );
 });
 

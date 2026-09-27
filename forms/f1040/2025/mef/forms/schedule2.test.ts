@@ -352,6 +352,22 @@ Deno.test("negative Form 8978 adjustment reduces lines 17z, 18, and 21 together"
   assertStringIncludes(result, "<TotalOtherTaxesAmt>150</TotalOtherTaxesAmt>");
 });
 
+Deno.test("negative Form 8978 adjustment stops when Schedule 2 line 18 cannot be represented", () => {
+  assertThrows(
+    () =>
+      schedule2.build({ line8_form5329_tax: 100 }, {
+        pending: {
+          form8978_reporting_year: {
+            schedule2_line17z_reduction: 100,
+            schedule2_line21: 0,
+          },
+        },
+      }),
+    Error,
+    "the TY2025 MeF schema cannot represent that result",
+  );
+});
+
 Deno.test("every mapped Schedule 2 field survives the schema-order builder", () => {
   const fields = Object.fromEntries(FIELD_MAP.map(([key]) => [key, 1]));
   const result = schedule2.build(fields);

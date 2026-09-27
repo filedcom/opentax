@@ -2,10 +2,9 @@ import { FilingStatus } from "../../../types.ts";
 import type { Bracket } from "../../../../config/2025.ts";
 import type { F8615Input } from "../../../inputs/f8615/schema.ts";
 import {
-  bracketsForStatus,
-  taxFromBrackets,
-} from "../../worksheets/tax_brackets.ts";
-import { preferentialTax } from "../../worksheets/income_tax_calculation/preferential_tax.ts";
+  ordinaryTax2025,
+  qualifiedDividendTax2025,
+} from "../../worksheets/tax_table_2025.ts";
 
 export interface Form8615CalculationContext {
   childTaxableIncome: number;
@@ -350,50 +349,14 @@ export function calculateForm8615(
     0,
     (context.childNetCapitalGain ?? 0) - childPreferential.netCapitalGain,
   );
-  // The 2025 instructions send ordinary line 9/15/17 tax, including the
-  // ordinary portions of the QDCGT worksheet, to the Tax Table below $100k.
-  // This repository currently has brackets but no exact TY2025 table.
-  // https://www.irs.gov/instructions/i8615
-  const needsTaxTable = (taxableIncome: number, preferentialIncome: number) => {
-    if (taxableIncome <= 0) return false;
-    const ordinaryIncome = Math.max(
-      0,
-      taxableIncome - Math.min(taxableIncome, preferentialIncome),
-    );
-    return taxableIncome < 100_000 ||
-      (preferentialIncome > 0 && ordinaryIncome > 0 &&
-        ordinaryIncome < 100_000);
-  };
-  if (
-    needsTaxTable(line8, line8Qualified + line8Gain) ||
-    needsTaxTable(line14, childQualifiedOnLine14 + childGainOnLine14) ||
-    needsTaxTable(
-      line4,
-      (context.childQualifiedDividends ?? 0) +
-        (context.childNetCapitalGain ?? 0),
+  const line9 = line8Qualified + line8Gain > 0
+    ? qualifiedDividendTax2025(
+      line8,
+      line8Qualified,
+      line8Gain,
+      source.parent_filing_status,
     )
-  ) {
-    throw new Error(
-      "Form 8615 lines 9, 15, or 17 need the exact 2025 IRS Tax Table below $100,000; bracket tax cannot be used",
-    );
-  }
-  const parentBrackets = bracketsForStatus(
-    source.parent_filing_status,
-    context.brackets,
-  );
-  const line9 = Math.round(
-    line8Qualified + line8Gain > 0
-      ? preferentialTax({
-        taxableIncome: line8,
-        qualifiedDividends: line8Qualified,
-        netCapitalGain: line8Gain,
-        filingStatus: source.parent_filing_status,
-        brackets: parentBrackets,
-        zeroCeiling: context.brackets.qdcgtZeroCeiling,
-        twentyFloor: context.brackets.qdcgtTwentyFloor,
-      })
-      : taxFromBrackets(line8, parentBrackets),
-  );
+    : ordinaryTax2025(line8, source.parent_filing_status);
   const line10 = Math.round(source.parent_income_tax);
   if (line10 > line9) {
     throw new Error("Form 8615 parent line 10 tax exceeds family line 9 tax");
@@ -406,27 +369,27 @@ export function calculateForm8615(
   const line13 = Math.round(
     line12b === undefined ? line11 : line11 * line12b,
   );
-  const childBrackets = bracketsForStatus(
-    context.childFilingStatus,
-    context.brackets,
-  );
   const line15 = line14 > 0
-    ? Math.round(
-      childQualifiedOnLine14 + childGainOnLine14 > 0
-        ? preferentialTax({
-          taxableIncome: line14,
-          qualifiedDividends: childQualifiedOnLine14,
-          netCapitalGain: childGainOnLine14,
-          filingStatus: context.childFilingStatus,
-          brackets: childBrackets,
-          zeroCeiling: context.brackets.qdcgtZeroCeiling,
-          twentyFloor: context.brackets.qdcgtTwentyFloor,
-        })
-        : taxFromBrackets(line14, childBrackets),
-    )
+    ? childQualifiedOnLine14 + childGainOnLine14 > 0
+      ? qualifiedDividendTax2025(
+        line14,
+        childQualifiedOnLine14,
+        childGainOnLine14,
+        context.childFilingStatus,
+      )
+      : ordinaryTax2025(line14, context.childFilingStatus)
     : 0;
   const line16 = line13 + line15;
-  const line17 = Math.round(context.childRegularTax);
+  const childQualified = context.childQualifiedDividends ?? 0;
+  const childGain = context.childNetCapitalGain ?? 0;
+  const line17 = childQualified + childGain > 0
+    ? qualifiedDividendTax2025(
+      line4,
+      childQualified,
+      childGain,
+      context.childFilingStatus,
+    )
+    : ordinaryTax2025(line4, context.childFilingStatus);
   const line18 = Math.max(line16, line17);
   return {
     fields: {

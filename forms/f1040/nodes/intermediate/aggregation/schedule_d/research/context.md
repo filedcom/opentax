@@ -1,7 +1,7 @@
 # Schedule D — Capital Gains and Losses
 
 ## Overview
-Schedule D aggregates capital gains and losses from individual Form 8949 transactions, capital gain distributions (Form 1099-DIV), and COD property dispositions (Form 1099-C). It computes the net short-term and long-term capital gains or losses, applies the annual capital loss deduction limit, and routes the result to Form 1040 line 7a. When preferential long-term capital gain rates apply (line 17 = Yes), it also routes collectibles/QOF gain to the 28% Rate Gain Worksheet.
+Schedule D aggregates capital gains and losses from individual Form 8949 transactions and capital gain distributions (Form 1099-DIV). It computes the net short-term and long-term capital gains or losses, applies the annual capital loss deduction limit, and routes the result to Form 1040 line 7a. Form 1099-C box 7 FMV and canceled debt alone cannot establish a property disposition or capital gain; the old COD fields now fail explicitly. When preferential long-term capital gain rates apply (line 17 = Yes), it also routes collectibles/QOF gain to the 28% Rate Gain Worksheet.
 
 **IRS Form:** Schedule D (Form 1040)
 **Drake Screen:** D
@@ -20,8 +20,7 @@ Fields received from upstream NodeOutput objects.
 | `transaction` | `Transaction \| Transaction[]` | f8949 | Individual transaction (part, proceeds, cost, gain_loss, is_long_term). Accumulates to array via executor merge pattern. | Sch D lines 1b/2/3/8b/9/10 | One NodeOutput per transaction from f8949 |
 | `line13_cap_gain_distrib` | `number` | f1099div | Total capital gain distributions (box 2a of 1099-DIV) | Sch D line 13 | Instructions p.2: "total cap gain distributions paid, regardless of holding period" |
 | `box2c_qsbs` | `number` | f1099div | Section 1202 (QSBS) portion of cap gain distributions (box 2c) | Sch D line 13 footnote | Informational — subset of line13; 1202 exclusion not yet implemented |
-| `cod_property_fmv` | `number \| number[]` | f1099c | FMV of property in COD disposition. Accumulates to array when multiple items. | Sch D line 11 | Gain = FMV - debt_cancelled per item |
-| `cod_debt_cancelled` | `number \| number[]` | f1099c | Cancelled debt amount, paired with cod_property_fmv | Sch D line 11 | Parallel array with cod_property_fmv |
+| `cod_property_fmv`, `cod_debt_cancelled` | `number \| number[]` | legacy f1099c | Unsupported source facts retained in the schema only to reject direct use explicitly. | None | Box 7 FMV and canceled debt do not supply transfer, recourse, basis, character, or holding facts. |
 | `capital_loss_carryover` | `number` | d_screen | Computed carryforward from d_screen computation — informational, for next year | Sch D Capital Loss Carryover Worksheet | Not used in current-year computation |
 | `filing_status` | `FilingStatus` | (optional) | Determines capital loss deduction limit (MFS = $1,500, all others = $3,000) | Sch D line 21 | Optional; defaults to standard $3,000 limit |
 
@@ -44,7 +43,7 @@ Fields received from upstream NodeOutput objects.
 ## Calculation Logic
 
 ### Step 1 — Normalize inputs
-Executor accumulation pattern: when multiple f8949 NodeOutputs deposit to `schedule_d`, the `transaction` key accumulates from a scalar to an array. Same for `cod_property_fmv` and `cod_debt_cancelled`. Normalize each to array before processing.
+Executor accumulation pattern: when multiple f8949 NodeOutputs deposit to `schedule_d`, the `transaction` key accumulates from a scalar to an array. Normalize transaction inputs before processing. Direct COD legacy fields are rejected whether scalar or array.
 
 > **Source:** `core/runtime/executor.ts`, `mergePending()` — scalar + scalar → promoted to array
 
@@ -60,11 +59,10 @@ This covers lines 8b + 9 + 10 aggregated (each Part D/E/F/J/K/L transaction).
 
 > **Source:** Schedule D (Form 1040) 2025, Part II header; i1040sd.pdf p.1
 
-### Step 4 — Compute COD property LT gain (Line 11 contribution)
-For each paired (fmv, debt_cancelled) item: `gain = fmv - debt_cancelled`.
-Sum all such gains → contributes to long-term net (line 11 slot).
+### Step 4 — Reject unsupported COD property shortcuts
+Do not derive a Schedule D gain from Form 1099-C box 7 FMV and canceled debt. A foreclosure or repossession may create a distinct disposition, but its amount realized depends on whether the debt is recourse; gain or loss also requires adjusted basis, property character, and holding period. A loan workout with retained collateral need not be a disposition at all. Use a supported, sourced disposition route when those facts are available.
 
-> **Source:** IRS instructions — COD property dispositions reported on Schedule D; i1040sd.pdf p.3
+> **Source:** [2025 Publication 4681, Foreclosures and Repossessions](https://www.irs.gov/publications/p4681)
 
 ### Step 5 — Compute Net Short-Term (Line 7)
 `line7 = stTxGain`
@@ -72,7 +70,7 @@ Sum all such gains → contributes to long-term net (line 11 slot).
 > **Source:** Schedule D (Form 1040) 2025, line 7: "Combine lines 1a through 6"
 
 ### Step 6 — Compute Net Long-Term (Line 15)
-`line15 = ltTxGain + ltCodGain + (line13_cap_gain_distrib ?? 0)`
+`line15 = ltTxGain + (line13_cap_gain_distrib ?? 0)`
 
 > **Source:** Schedule D (Form 1040) 2025, line 15: "Combine lines 8a through 14"
 
@@ -144,7 +142,6 @@ flowchart LR
   subgraph inputs["Upstream Nodes"]
     f8949["f8949<br/>(transaction objects)"]
     f1099div["f1099div<br/>(line13_cap_gain_distrib)"]
-    f1099c["f1099c<br/>(cod_property_fmv/debt)"]
     d_screen["d_screen<br/>(capital_loss_carryover)"]
   end
   subgraph form["Schedule D"]
@@ -162,7 +159,6 @@ flowchart LR
   f8949 -->|"transaction[]"| stGain
   f8949 -->|"transaction[]"| ltGain
   f1099div -->|"line13"| ltGain
-  f1099c -->|"cod fmv/debt"| ltGain
   stGain --> total
   ltGain --> total
   total --> gate17
@@ -175,7 +171,7 @@ flowchart LR
 
 ## Edge Cases & Special Rules
 
-1. **No inputs at all** — if no transactions, no distributions, and no COD items, emit nothing (early return).
+1. **No inputs at all** — if no transactions or distributions, emit nothing (early return).
 
 2. **MFS filing status** — capital loss deduction capped at $1,500 instead of $3,000. Applies when `filing_status === FilingStatus.MFS`.
 
@@ -191,7 +187,7 @@ flowchart LR
 
 8. **QSBS box2c** — accepted but informational only; Section 1202 exclusion not yet implemented; box2c is a subset of line13_cap_gain_distrib (not additive).
 
-9. **COD property arrays** — `cod_property_fmv` and `cod_debt_cancelled` are parallel arrays; zip them for per-item gain computation.
+9. **COD property shortcuts** — scalar or array values in either `cod_property_fmv` or `cod_debt_cancelled` fail explicitly, including zero values. Neither a zero net difference nor an empty array establishes a valid disposition.
 
 10. **Executor accumulation** — `transaction` field arrives as single object for one f8949 output, auto-promoted to array for multiple; always normalize to array before processing.
 

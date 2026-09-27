@@ -233,25 +233,28 @@ Deno.test("LT: cap gain distrib absent contributes 0", () => {
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 600);
 });
 
-Deno.test("LT: COD property gain: fmv=5000, debt=3000 → LT gain=2000", () => {
-  const result = compute({ cod_property_fmv: 5000, cod_debt_cancelled: 3000 });
-  assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 2000);
+Deno.test("LT: Form 1099-C FMV and canceled debt cannot infer a disposition gain", () => {
+  assertThrows(
+    () => compute({ cod_property_fmv: 5000, cod_debt_cancelled: 3000 }),
+    Error,
+    "cannot derive property gain from Form 1099-C",
+  );
 });
 
-Deno.test("LT: COD property break-even (fmv=debt) → gain=0, emits nothing", () => {
-  const result = compute({ cod_property_fmv: 3000, cod_debt_cancelled: 3000 });
-  assertEquals(result.outputs.length, 0);
+Deno.test("LT: equal FMV and canceled debt is still not evidence of zero gain", () => {
+  assertThrows(
+    () => compute({ cod_property_fmv: 3000, cod_debt_cancelled: 3000 }),
+    Error,
+    "cannot derive property gain from Form 1099-C",
+  );
 });
 
-Deno.test("LT: all LT sources combined: tx + distrib + COD", () => {
+Deno.test("LT: transaction and distribution sources remain additive", () => {
   const result = compute({
     transaction: mkLtTx({ gain_loss: 500 }),
     line13_cap_gain_distrib: 300,
-    cod_property_fmv: 2000,
-    cod_debt_cancelled: 500,
   });
-  // line15 = 500 + 300 + 1500 = 2300; line7 = 0; total = 2300
-  assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 2300);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 800);
 });
 
 Deno.test("LT: box2c_qsbs is NOT additive — only line13 amount counts", () => {
@@ -457,25 +460,45 @@ Deno.test("accumulation: single transaction object (not array) normalized correc
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 750);
 });
 
-Deno.test("accumulation: COD scalar fmv/debt normalized to single-item array", () => {
-  const result = compute({ cod_property_fmv: 4000, cod_debt_cancelled: 1500 });
-  assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 2500);
+Deno.test("accumulation: even one legacy COD property field fails explicitly", () => {
+  assertThrows(
+    () => compute({ cod_property_fmv: 4000 }),
+    Error,
+    "cannot derive property gain from Form 1099-C",
+  );
+  assertThrows(
+    () => compute({ cod_debt_cancelled: 1500 }),
+    Error,
+    "cannot derive property gain from Form 1099-C",
+  );
+  assertThrows(
+    () => compute({ cod_property_fmv: 0, cod_debt_cancelled: 0 }),
+    Error,
+    "cannot derive property gain from Form 1099-C",
+  );
+  assertThrows(
+    () => compute({ cod_property_fmv: [], cod_debt_cancelled: [] }),
+    Error,
+    "cannot derive property gain from Form 1099-C",
+  );
 });
 
-Deno.test("accumulation: COD parallel arrays — two items summed", () => {
-  const result = compute({
-    cod_property_fmv: [5000, 3000],
-    cod_debt_cancelled: [2000, 1000],
-  });
-  // (5000-2000) + (3000-1000) = 3000 + 2000 = 5000
-  assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 5000);
+Deno.test("accumulation: legacy COD arrays fail instead of generating a synthetic gain", () => {
+  assertThrows(
+    () => compute({
+      cod_property_fmv: [5000, 3000],
+      cod_debt_cancelled: [2000, 1000],
+    }),
+    Error,
+    "cannot derive property gain from Form 1099-C",
+  );
 });
 
 // ---------------------------------------------------------------------------
 // 10. Smoke test — all major inputs combined
 // ---------------------------------------------------------------------------
 
-Deno.test("smoke: ST + LT + cap_gain_distrib + COD + collectibles", () => {
+Deno.test("smoke: ST + LT + cap_gain_distrib + collectibles", () => {
   const result = compute({
     transaction: [
       mkTx({ gain_loss: -200, is_long_term: false }),        // ST loss
@@ -484,19 +507,17 @@ Deno.test("smoke: ST + LT + cap_gain_distrib + COD + collectibles", () => {
       mkLtTx({ gain_loss: 600, adjustment_codes: "C", part: "E" }), // LT collectibles
     ],
     line13_cap_gain_distrib: 300,
-    cod_property_fmv: [4000, 2000],
-    cod_debt_cancelled: [1000, 500],
     filing_status: FilingStatus.Single,
   });
 
   // line7 (ST net) = -200 + 100 = -100
-  // line15 (LT net) = 1500 + 600 + 300 + (4000-1000) + (2000-500) = 1500+600+300+3000+1500 = 6900
-  // line16 = -100 + 6900 = 6800
+  // line15 (LT net) = 1500 + 600 + 300 = 2400
+  // line16 = -100 + 2400 = 2300
   // line17Yes = line15 > 0 && line16 > 0 → true
   // gain28Pct = 600 (only the "C" tx)
-  // capitalGainForReturn = 6800 (positive → no cap)
+  // capitalGainForReturn = 2300 (positive → no cap)
 
-  assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 6800);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 2300);
 
   assertEquals(fieldsOf(result.outputs, rate_28_gain_worksheet)!.collectibles_gain_from_8949, 600);
 

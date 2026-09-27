@@ -147,6 +147,86 @@ Deno.test("schedule_f: profit below $400 SE threshold — no schedule_se output"
   assertEquals(se, undefined);
 });
 
+Deno.test("schedule_f: elected farm optional method routes gross income below the ordinary $400 threshold", () => {
+  const result = compute({
+    farm_optional_method_elected: true,
+    schedule_fs: [minimalItem({
+      line2_sales_products_raised: 500,
+      line16_feed: 200,
+    })],
+  });
+  const se = result.outputs.filter((o) => o.nodeType === "schedule_se");
+  assertEquals(se.length, 1);
+  assertEquals(se[0].fields, {
+    farm_optional_method_elected: true,
+    gross_farm_income: 500,
+    net_profit_schedule_f: 300,
+  });
+  assertEquals(findOutput(result, "schedule1")?.fields.line6_schedule_f, 300);
+});
+
+Deno.test("schedule_f: elected farm optional method routes a farm loss without ordinary SE line 1a", () => {
+  const result = compute({
+    farm_optional_method_elected: true,
+    schedule_fs: [minimalItem({
+      line2_sales_products_raised: 5_000,
+      line16_feed: 20_000,
+    })],
+  });
+  const se = result.outputs.filter((o) => o.nodeType === "schedule_se");
+  assertEquals(se.length, 1);
+  assertEquals(se[0].fields, {
+    farm_optional_method_elected: true,
+    gross_farm_income: 5_000,
+    net_profit_schedule_f: -15_000,
+  });
+});
+
+Deno.test("schedule_f: one farm optional election aggregates multiple Schedule F line 9 and line 34 amounts", () => {
+  const result = compute({
+    farm_optional_method_elected: true,
+    schedule_fs: [
+      minimalItem({ line2_sales_products_raised: 8_000, line16_feed: 5_000 }),
+      minimalItem({ line2_sales_products_raised: 2_000, line16_feed: 7_000 }),
+    ],
+  });
+  const se = result.outputs.filter((o) => o.nodeType === "schedule_se");
+  assertEquals(se.length, 1);
+  assertEquals(se[0].fields, {
+    farm_optional_method_elected: true,
+    gross_farm_income: 10_000,
+    net_profit_schedule_f: -2_000,
+  });
+  assertEquals(
+    findOutput(result, "schedule1")?.fields.line6_schedule_f,
+    -2_000,
+  );
+});
+
+Deno.test("schedule_f: farm optional eligibility receives line 34 before Form 6198 loss limitation", () => {
+  const result = compute({
+    farm_optional_method_elected: true,
+    schedule_fs: [minimalItem({
+      line2_sales_products_raised: 5_000,
+      line16_feed: 15_000,
+      line36_at_risk: "b",
+      at_risk_simplified: {
+        opening_adjusted_basis: 4_000,
+        current_year_increases: 0,
+        line9_decreases_and_exclusions: 0,
+      },
+    })],
+  });
+  assertEquals(
+    findOutput(result, "schedule_se")?.fields.net_profit_schedule_f,
+    -10_000,
+  );
+  assertEquals(
+    findOutput(result, "schedule1")?.fields.line6_schedule_f,
+    -4_000,
+  );
+});
+
 // ── Material participation = false → form8582 ─────────────────────────────────
 
 Deno.test("schedule_f: non-material participation routes to form8582", () => {

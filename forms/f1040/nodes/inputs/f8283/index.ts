@@ -58,6 +58,26 @@ const vehicleSaleAcknowledgmentSchema = z.object({
   goods_or_services_received: z.literal(false),
 });
 
+// Form 1098-C box 5b: the donee certifies a below-FMV transfer to a needy
+// person in direct furtherance of its charitable transportation purpose.
+const vehicleNeedyTransferAcknowledgmentSchema = z.object({
+  copy_received_from_donee: z.literal(true),
+  donee_certified: z.literal(true),
+  donee_name: z.string().min(1),
+  donee_ein: z.string().regex(/^\d{9}$/),
+  donee_us_address: usAddressSchema,
+  acknowledgment_furnished_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  vehicle_to_be_transferred_to_needy_confirmed: z.literal(true),
+  transfer_for_significantly_below_fmv_confirmed: z.literal(true),
+  direct_charitable_transportation_purpose_confirmed: z.literal(true),
+  vehicle_year: z.number().int().min(1900).max(2100),
+  vehicle_make: z.string().min(1),
+  vehicle_model: z.string().min(1),
+  vehicle_condition: z.string().min(1),
+  odometer_miles: z.number().int().nonnegative(),
+  goods_or_services_received: z.literal(false),
+});
+
 // Section A — items ≤$5,000 each (or ≤$10,000 for closely held stock)
 const sectionAItemSchema = z.object({
   property_description: z.string().optional(),
@@ -81,6 +101,8 @@ const sectionAItemSchema = z.object({
   is_vehicle: z.boolean().optional(),
   vehicle_vin: z.string().regex(/^[A-Z0-9]{1,17}$|^[A-Z0-9]{19}$/).optional(),
   vehicle_sale_acknowledgment: vehicleSaleAcknowledgmentSchema.optional(),
+  vehicle_needy_transfer_acknowledgment:
+    vehicleNeedyTransferAcknowledgmentSchema.optional(),
   // Name of the actual donee-issued Form 1098-C or contemporaneous written
   // acknowledgment PDF supplied to the MeF bundle. The native statement is
   // not a substitute for this binary attachment under F8283-029/031/032/033.
@@ -115,16 +137,24 @@ const sectionAItemSchema = z.object({
   }
   const claimed = item.deduction_claimed ?? item.fmv;
   if (claimed <= 500) return;
-  const ack = item.vehicle_sale_acknowledgment;
-  if (!ack) {
+  const saleAck = item.vehicle_sale_acknowledgment;
+  const needyAck = item.vehicle_needy_transfer_acknowledgment;
+  if (Boolean(saleAck) === Boolean(needyAck)) {
     ctx.addIssue({
       code: "custom",
       message:
-        "Form 8283 vehicle above $500 needs the donee sale acknowledgment",
+        "Form 8283 vehicle above $500 needs exactly one donee sale or needy-transfer acknowledgment",
     });
     return;
   }
-  if (claimed > ack.gross_proceeds) {
+  if (needyAck && claimed > 5_000) {
+    ctx.addIssue({
+      code: "custom",
+      message:
+        "Form 8283 needy-transfer vehicle deduction above $5,000 needs Section B and a qualified appraisal",
+    });
+  }
+  if (saleAck && claimed > saleAck.gross_proceeds) {
     ctx.addIssue({
       code: "custom",
       message: "Form 8283 vehicle deduction exceeds gross sale proceeds",
@@ -136,27 +166,38 @@ const sectionAItemSchema = z.object({
       message: "Form 8283 vehicle acknowledgment needs contribution date",
     });
   }
-  const sale = Date.parse(`${ack.sale_date}T00:00:00Z`);
-  const received = Date.parse(
-    `${ack.acknowledgment_received_date}T00:00:00Z`,
+  const sale = saleAck ? Date.parse(`${saleAck.sale_date}T00:00:00Z`) : NaN;
+  const furnished = Date.parse(
+    `${saleAck?.acknowledgment_received_date ?? needyAck?.acknowledgment_furnished_date}T00:00:00Z`,
   );
   const contributed = item.date_contributed
     ? Date.parse(`${item.date_contributed}T00:00:00Z`)
     : NaN;
-  if (!Number.isFinite(contributed) || sale < contributed) {
+  if (saleAck && (!Number.isFinite(contributed) || sale < contributed)) {
     ctx.addIssue({
       code: "custom",
       message: "Form 8283 vehicle sale must follow its contribution",
     });
   }
-  if (
-    !Number.isFinite(sale) || !Number.isFinite(received) ||
-    received < sale || received - sale > 30 * 86_400_000
-  ) {
+  if (saleAck && (
+    !Number.isFinite(sale) || !Number.isFinite(furnished) ||
+    furnished < sale || furnished - sale > 30 * 86_400_000
+  )) {
     ctx.addIssue({
       code: "custom",
       message:
         "Form 8283 vehicle acknowledgment must arrive within 30 days of sale",
+    });
+  }
+  if (
+    needyAck &&
+    (!Number.isFinite(contributed) || !Number.isFinite(furnished) ||
+      furnished < contributed || furnished - contributed > 30 * 86_400_000)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message:
+        "Form 8283 needy-transfer acknowledgment must be furnished within 30 days of contribution",
     });
   }
 });

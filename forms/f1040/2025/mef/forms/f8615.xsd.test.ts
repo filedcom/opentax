@@ -64,8 +64,7 @@ Deno.test({
   sanitizeOps: false,
   sanitizeResources: false,
 }, async () => {
-  // Serialization fixture only. The calculator must reject this low-income
-  // example until the exact TY2025 Tax Table is available.
+  // Exact TY2025 Tax Table amounts for the low-income serialization case.
   const calculation = {
     fields: {
       parent_name: "Jane Parent",
@@ -79,15 +78,15 @@ Deno.test({
       line5_child_net_unearned_income: 2_300,
       line6_parent_taxable_income: 80_000,
       line8_family_income: 82_300,
-      line9_family_tax: 9_399,
-      line10_parent_tax: 9_123,
+      line9_family_tax: 9_402,
+      line10_parent_tax: 9_126,
       line11_children_tax: 276,
       line13_allocable_tax: 276,
       line14_child_net_income: 1_350,
-      line15_child_net_income_tax: 135,
-      line16_combined_child_tax: 411,
-      line17_child_regular_tax: 365,
-      line18_child_tax: 411,
+      line15_child_net_income_tax: 136,
+      line16_combined_child_tax: 412,
+      line17_child_regular_tax: 368,
+      line18_child_tax: 412,
     },
   };
   const xml = buildMefXml({
@@ -99,9 +98,9 @@ Deno.test({
       line11_agi: 5_000,
       line12c_deduction_total: 1_350,
       line15_taxable_income: 3_650,
-      line16_income_tax: 411,
-      line18_total_tax_before_credits: 411,
-      line24_total_tax: 411,
+      line16_income_tax: 412,
+      line18_total_tax_before_credits: 412,
+      line24_total_tax: 412,
     },
     form8615: calculation.fields,
   }, filer);
@@ -111,7 +110,7 @@ Deno.test({
   );
   assertStringIncludes(xml, "<IRS8615 documentId=");
   assertStringIncludes(xml, "<ParentNm>Jane Parent</ParentNm>");
-  assertStringIncludes(xml, "<KiddieTaxAmt>411</KiddieTaxAmt>");
+  assertStringIncludes(xml, "<KiddieTaxAmt>412</KiddieTaxAmt>");
   assertEquals(xml.includes("ChildNetUnearnedIncomeAmt"), false);
   const path = await Deno.makeTempFile({ suffix: ".xml" });
   try {

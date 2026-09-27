@@ -1,13 +1,14 @@
 import { FilingStatus } from "../../../types.ts";
-import type { Bracket } from "../../../config/2025.ts";
-import { taxFromBrackets } from "../tax_brackets.ts";
+import {
+  ordinaryTax2025,
+  qualifiedDividendTax2025,
+} from "../tax_table_2025.ts";
 
 export interface PreferentialTaxFacts {
   taxableIncome: number;
   qualifiedDividends: number;
   netCapitalGain: number;
   filingStatus: FilingStatus;
-  brackets: ReadonlyArray<Bracket>;
   zeroCeiling: Record<FilingStatus, number>;
   twentyFloor: Record<FilingStatus, number>;
   unrecaptured1250Gain?: number;
@@ -16,15 +17,14 @@ export interface PreferentialTaxFacts {
   electedCapitalGain?: number;
 }
 
-// TY2025 Schedule D Tax Worksheet, lines 1–47. Keep this shared with Form
-// 1040 so Form 8615 lines 9 and 15 use the same tax computation.
+// TY2025 Schedule D Tax Worksheet, lines 1–47. Lines 44/46 use the Tax Table
+// below $100,000, per https://www.irs.gov/instructions/i1040sd.
 export function scheduleDTax(facts: PreferentialTaxFacts): number {
   const {
     taxableIncome: line1,
     qualifiedDividends,
     netCapitalGain,
     filingStatus,
-    brackets,
     zeroCeiling,
     twentyFloor,
   } = facts;
@@ -54,8 +54,8 @@ export function scheduleDTax(facts: PreferentialTaxFacts): number {
   const line22 = line16 - line17;
   if (line1 === line16) {
     return Math.min(
-      taxFromBrackets(line21, brackets),
-      taxFromBrackets(line1, brackets),
+      ordinaryTax2025(line21, filingStatus),
+      ordinaryTax2025(line1, filingStatus),
     );
   }
   const line23 = Math.min(line1, line13);
@@ -68,10 +68,10 @@ export function scheduleDTax(facts: PreferentialTaxFacts): number {
   const line31 = line30 * 0.15;
   const line32 = line24 + line30;
   if (line1 === line32) {
-    return Math.min(
-      line31 + taxFromBrackets(line21, brackets),
-      taxFromBrackets(line1, brackets),
-    );
+    return Math.round(Math.min(
+      line31 + ordinaryTax2025(line21, filingStatus),
+      ordinaryTax2025(line1, filingStatus),
+    ));
   }
   const line33 = line23 - line32;
   const line34 = line33 * 0.20;
@@ -83,9 +83,9 @@ export function scheduleDTax(facts: PreferentialTaxFacts): number {
   const line41 = line21 + line22 + line30 + line33 + line39;
   const line42 = line1 - line41;
   const line43 = rate28Gain > 0 ? line42 * 0.28 : 0;
-  const line44 = taxFromBrackets(line21, brackets);
+  const line44 = ordinaryTax2025(line21, filingStatus);
   const line45 = line31 + line34 + line40 + line43 + line44;
-  return Math.min(line45, taxFromBrackets(line1, brackets));
+  return Math.round(Math.min(line45, ordinaryTax2025(line1, filingStatus)));
 }
 
 // TY2025 Qualified Dividends and Capital Gain Tax Worksheet. Schedule D's
@@ -96,9 +96,6 @@ export function preferentialTax(facts: PreferentialTaxFacts): number {
     qualifiedDividends,
     netCapitalGain,
     filingStatus,
-    brackets,
-    zeroCeiling,
-    twentyFloor,
   } = facts;
   if (
     (facts.form4952Election ?? 0) > 0 ||
@@ -108,27 +105,10 @@ export function preferentialTax(facts: PreferentialTaxFacts): number {
   ) {
     return scheduleDTax(facts);
   }
-  const prefIncome = Math.min(
-    qualifiedDividends + netCapitalGain,
+  return qualifiedDividendTax2025(
     taxableIncome,
-  );
-  if (prefIncome <= 0) return taxFromBrackets(taxableIncome, brackets);
-  const ordinary = taxableIncome - prefIncome;
-  const inZero = Math.max(
-    0,
-    Math.min(taxableIncome, zeroCeiling[filingStatus]) - ordinary,
-  );
-  const remaining = prefIncome - inZero;
-  const availFifteen = Math.max(
-    0,
-    twentyFloor[filingStatus] -
-      Math.max(ordinary, zeroCeiling[filingStatus]),
-  );
-  const inFifteen = Math.min(remaining, availFifteen);
-  const inTwenty = remaining - inFifteen;
-  return Math.min(
-    inFifteen * 0.15 + inTwenty * 0.20 +
-      taxFromBrackets(ordinary, brackets),
-    taxFromBrackets(taxableIncome, brackets),
+    qualifiedDividends,
+    netCapitalGain,
+    filingStatus,
   );
 }

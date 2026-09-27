@@ -8,7 +8,6 @@ import {
   ExclusionType,
   form982,
 } from "../../intermediate/forms/form982/index.ts";
-import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 export const itemSchema = z.object({
@@ -17,13 +16,26 @@ export const itemSchema = z.object({
   box2_cod_amount: z.number().nonnegative(),
   box3_interest: z.number().nonnegative().optional(),
   box4_debt_description: z.string().optional(),
-  box5_personal_use: z.boolean().optional(),
+  // Official box 5 asks whether the debtor was personally liable. It does
+  // not classify the property's personal or business use.
+  box5_personally_liable: z.boolean().optional(),
   box6_identifiable_event: z.string().optional(),
   box7_fmv_property: z.number().nonnegative().optional(),
+  property_disposition_status: z.enum(["retained", "transferred"]).optional(),
   routing: z.enum(["taxable", "excluded"]).optional(),
   exclusion_type: z.nativeEnum(ExclusionType).optional(),
   insolvency_amount: z.number().nonnegative().optional(),
   qpri_mfs: z.boolean().optional(),
+  qpri_total_loan_balance_before_discharge: z.number().nonnegative().optional(),
+  qpri_qualified_loan_balance_before_discharge: z.number().nonnegative()
+    .optional(),
+  qpri_main_home_security_confirmed: z.literal(true).optional(),
+  qpri_discharge_reason: z.enum(["home_value_decline", "financial_condition"])
+    .optional(),
+  qpri_discharge_reason_source: z.string().trim().min(1).optional(),
+  qpri_actual_discharge_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  qpri_discharged_principal_amount: z.number().nonnegative().optional(),
   principal_residence_retained: z.boolean().optional(),
   principal_residence_basis: z.number().nonnegative().optional(),
 });
@@ -43,11 +55,6 @@ function excludedItems(items: z.infer<typeof itemSchema>[]) {
   return items.filter((item) => item.routing === "excluded");
 }
 
-// Items that have a property FMV trigger a property gain/loss output.
-function propertyItems(items: z.infer<typeof itemSchema>[]) {
-  return items.filter((item) => (item.box7_fmv_property ?? 0) > 0);
-}
-
 class F1099cNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f1099c";
   readonly inputSchema = inputSchema;
@@ -55,7 +62,6 @@ class F1099cNode extends TaxNode<typeof inputSchema> {
     schedule1,
     agi_aggregator,
     form982,
-    schedule_d,
   ]);
 
   compute(_ctx: NodeContext, input: C99Input): NodeResult {
@@ -64,6 +70,40 @@ class F1099cNode extends TaxNode<typeof inputSchema> {
 
     if (c99s.length === 0) {
       return { outputs: [] };
+    }
+
+    for (const item of c99s) {
+      if (item.property_disposition_status === "transferred") {
+        throw new Error(
+          "Form 1099-C property transfer needs recourse, debt balance, adjusted basis, and holding facts before disposition reporting",
+        );
+      }
+      if (
+        (item.box7_fmv_property ?? 0) > 0 &&
+        item.property_disposition_status !== "retained"
+      ) {
+        throw new Error(
+          "Form 1099-C box 7 FMV needs an explicit retained-or-transferred property answer",
+        );
+      }
+      if (
+        item.exclusion_type === ExclusionType.Qpri &&
+        item.routing === "excluded"
+      ) {
+        if (
+          item.qpri_discharged_principal_amount === undefined ||
+          item.qpri_discharged_principal_amount !== item.box2_cod_amount
+        ) {
+          throw new Error(
+            "Form 1099-C QPRI needs box 2 reconciled to discharged principal, with fees and penalties classified separately",
+          );
+        }
+        if (!item.qpri_actual_discharge_date) {
+          throw new Error(
+            "Form 1099-C QPRI needs the actual discharge date separately from box 1 identifiable-event date",
+          );
+        }
+      }
     }
 
     const outputs = [];
@@ -86,6 +126,16 @@ class F1099cNode extends TaxNode<typeof inputSchema> {
 
     // Aggregate excluded COD income → Form 982 line 2
     const excluded = excludedItems(c99s);
+    if (
+      excluded.some((item) =>
+        item.exclusion_type === ExclusionType.Qpri &&
+        (item.box3_interest ?? 0) > 0
+      )
+    ) {
+      throw new Error(
+        "Form 1099-C QPRI with discharged interest needs a separate principal and interest reconciliation",
+      );
+    }
     const totalExcluded = excluded.reduce(
       (sum, item) => sum + item.box2_cod_amount,
       0,
@@ -111,6 +161,29 @@ class F1099cNode extends TaxNode<typeof inputSchema> {
         ...(detail?.qpri_mfs !== undefined
           ? { qpri_mfs: detail.qpri_mfs }
           : {}),
+        ...(detail?.qpri_total_loan_balance_before_discharge !== undefined
+          ? {
+            qpri_total_loan_balance_before_discharge:
+              detail.qpri_total_loan_balance_before_discharge,
+          }
+          : {}),
+        ...(detail?.qpri_qualified_loan_balance_before_discharge !== undefined
+          ? {
+            qpri_qualified_loan_balance_before_discharge:
+              detail.qpri_qualified_loan_balance_before_discharge,
+          }
+          : {}),
+        ...(detail?.qpri_main_home_security_confirmed === true
+          ? { qpri_main_home_security_confirmed: true }
+          : {}),
+        ...(detail?.qpri_discharge_reason
+          ? { qpri_discharge_reason: detail.qpri_discharge_reason }
+          : {}),
+        ...(detail?.qpri_discharge_reason_source
+          ? {
+            qpri_discharge_reason_source: detail.qpri_discharge_reason_source,
+          }
+          : {}),
         ...(detail?.principal_residence_retained !== undefined
           ? {
             principal_residence_retained: detail.principal_residence_retained,
@@ -119,15 +192,9 @@ class F1099cNode extends TaxNode<typeof inputSchema> {
         ...(detail?.principal_residence_basis !== undefined
           ? { principal_residence_basis: detail.principal_residence_basis }
           : {}),
-        ...(detail?.box1_date ? { discharge_date: detail.box1_date } : {}),
-      }));
-    }
-
-    // Per-item property disposition outputs — each property event is distinct
-    for (const item of propertyItems(c99s)) {
-      outputs.push(this.outputNodes.output(schedule_d, {
-        cod_property_fmv: item.box7_fmv_property,
-        cod_debt_cancelled: item.box2_cod_amount,
+        ...(detail?.qpri_actual_discharge_date
+          ? { discharge_date: detail.qpri_actual_discharge_date }
+          : {}),
       }));
     }
 

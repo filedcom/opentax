@@ -290,7 +290,7 @@ Deno.test("f8283.compute: sold vehicle is limited to acknowledged proceeds", () 
         section_a_items: [{ ...item, vehicle_sale_acknowledgment: undefined }],
       }),
     Error,
-    "needs the donee sale acknowledgment",
+    "needs exactly one donee sale or needy-transfer acknowledgment",
   );
   assertThrows(
     () =>
@@ -305,6 +305,75 @@ Deno.test("f8283.compute: sold vehicle is limited to acknowledged proceeds", () 
       }),
     Error,
     "vehicle sale must follow its contribution",
+  );
+});
+
+Deno.test("f8283.compute: needy-transfer certificate permits FMV but requires timely exclusive acknowledgment", () => {
+  const needy = {
+    property_description: "2020 Honda Civic, good condition, 60,000 miles",
+    is_vehicle: true,
+    vehicle_vin: "1HGBH41JXMN109186",
+    date_contributed: "2025-06-01",
+    fmv: 20_000,
+    deduction_claimed: 4_500,
+    vehicle_needy_transfer_acknowledgment: {
+      copy_received_from_donee: true,
+      donee_certified: true,
+      donee_name: "City Charity",
+      donee_ein: "987654321",
+      donee_us_address: {
+        line1: "1 Main St",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+      },
+      acknowledgment_furnished_date: "2025-06-20",
+      vehicle_to_be_transferred_to_needy_confirmed: true,
+      transfer_for_significantly_below_fmv_confirmed: true,
+      direct_charitable_transportation_purpose_confirmed: true,
+      vehicle_year: 2020,
+      vehicle_make: "Honda",
+      vehicle_model: "Civic",
+      vehicle_condition: "Good condition",
+      odometer_miles: 60_000,
+      goods_or_services_received: false,
+    },
+  };
+  assertEquals(
+    fieldsOf(compute({ section_a_items: [needy] }).outputs, schedule_a)
+      ?.line_12_noncash_contributions,
+    4_500,
+  );
+  assertThrows(
+    () => compute({ section_a_items: [{ ...needy, deduction_claimed: 20_001 }] }),
+    Error,
+    "deduction exceeds FMV",
+  );
+  assertThrows(
+    () => compute({ section_a_items: [{ ...needy, deduction_claimed: 5_001 }] }),
+    Error,
+    "needs Section B and a qualified appraisal",
+  );
+  assertThrows(
+    () => compute({ section_a_items: [{
+      ...needy,
+      vehicle_needy_transfer_acknowledgment: {
+        ...needy.vehicle_needy_transfer_acknowledgment,
+        acknowledgment_furnished_date: "2025-07-02",
+      },
+    }] }),
+    Error,
+    "furnished within 30 days of contribution",
+  );
+  assertThrows(
+    () => compute({ section_a_items: [{
+      ...needy,
+      vehicle_needy_transfer_acknowledgment: {
+        ...needy.vehicle_needy_transfer_acknowledgment,
+        direct_charitable_transportation_purpose_confirmed: false,
+      },
+    }] }),
+    Error,
   );
 });
 
