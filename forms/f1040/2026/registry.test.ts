@@ -60,6 +60,58 @@ const creditLimitWorksheet = {
   worksheet_b_applies: false,
 };
 
+Deno.test("TY2026 Form 5695 carryforward reaches Schedule 3, Form 1040, and PDFs", async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: filer,
+    w2: [{ box1_wages: 70_000, box2_fed_withheld: 8_000 }],
+    f5695: { source_tax_year: 2025, line16_unused_credit: 200 },
+  }, context);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form5695.line1_carryforward, 200);
+  assertEquals(result.pending.form5695.line3_credit, 200);
+  assertEquals(result.pending.form5695.line4_to_2027, 0);
+  assertEquals(result.pending.schedule3.line5a_residential_clean_energy, 200);
+  assertEquals(result.pending.schedule3.line8_total, 200);
+  assertEquals(result.pending.f1040.line20_nonrefundable_credits, 200);
+  const pdf = await PDFDocument.load(await buildPdfBytes2026(result.pending));
+  assertEquals(pdf.getPageCount(), 4);
+  assertEquals(pdf.getForm().getFields().length, 0);
+});
+
+Deno.test("TY2026 zero tax preserves the Form 5695 carryforward to 2027", async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: filer,
+    f5695: { source_tax_year: 2025, line16_unused_credit: 200 },
+  }, context);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form5695.line2_limit, 0);
+  assertEquals(result.pending.form5695.line3_credit, 0);
+  assertEquals(result.pending.form5695.line4_to_2027, 200);
+  assertEquals(
+    result.carryforwards.form5695_residential_clean_energy_to_2027,
+    200,
+  );
+  const pdf = await PDFDocument.load(await buildPdfBytes2026(result.pending));
+  assertEquals(pdf.getPageCount(), 4);
+});
+
+Deno.test("TY2026 Form 5695 with a dependent waits for provisional child credit", () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: { ...filer, dependents: [dependentChild] },
+    w2: [{ box1_wages: 70_000, box2_fed_withheld: 8_000 }],
+    f5695: { source_tax_year: 2025, line16_unused_credit: 200 },
+    f8812: { credit_limit_worksheet_2026: creditLimitWorksheet },
+  }, context);
+  assertEquals(
+    result.diagnostics.some((diagnostic) =>
+      diagnostic.nodeType === "credit_resolution" &&
+      diagnostic.message.includes("provisional Schedule 8812")
+    ),
+    true,
+  );
+  assertEquals(result.pending.form5695, undefined);
+});
+
 Deno.test("TY2026 broker and digital asset trades reach Schedule D and Form 8949 PDFs", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: { ...filer, digital_assets: true },

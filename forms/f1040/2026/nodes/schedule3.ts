@@ -16,6 +16,7 @@ export const schedule3Input2026Schema = sharedSchedule3InputSchema.omit({
   line5a_residential_clean_energy: true,
   line5b_energy_efficient_home: true,
 }).extend({
+  form5695_carryforward_pending: z.boolean().optional(),
   line13a_form2439: amount.optional(),
   line13b_section1341: amount.optional(),
   line13c_form3800_elective_payment: amount.optional(),
@@ -123,7 +124,9 @@ class Schedule3Node2026 extends TaxNode<typeof schedule3Input2026Schema> {
         },
       },
     )];
-    if (lines.line8 > 0 || lines.line15 > 0) {
+    if (
+      lines.line8 > 0 || lines.line15 > 0 || input.form5695_carryforward_pending
+    ) {
       outputs.push({
         nodeType: this.nodeType,
         fields: {

@@ -709,7 +709,7 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
   ]);
 
   override get outputNodeTypes(): readonly string[] {
-    return [...super.outputNodeTypes, "form4137"];
+    return [...super.outputNodeTypes, "form4137", "credit_resolution"];
   }
 
   compute(ctx: NodeContext, input: GeneralInput): NodeResult {
@@ -908,6 +908,16 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
       auto_other_dependents: counts.other_dependent_count,
       auto_filing_status: parsed.filing_status,
     }));
+
+    if (ctx.taxYear === 2026) {
+      outputs.push({
+        nodeType: "credit_resolution",
+        fields: {
+          qualifying_children_count: counts.qualifying_child_tax_credit_count,
+          other_dependents_count: counts.other_dependent_count,
+        },
+      });
+    }
 
     return { outputs };
   }

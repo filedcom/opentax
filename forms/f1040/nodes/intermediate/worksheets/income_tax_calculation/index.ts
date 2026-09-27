@@ -255,6 +255,10 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
     form8615,
   ]);
 
+  override get outputNodeTypes(): readonly string[] {
+    return [...super.outputNodeTypes, "credit_resolution"];
+  }
+
   compute(ctx: NodeContext, rawInput: IncomeTaxCalcInput): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
@@ -409,6 +413,12 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
       }),
       // Feed f8812 the income tax liability for CTC nonrefundable limit calculation.
       this.outputNodes.output(f8812, { auto_income_tax_liability: tax }),
+      ...(ctx.taxYear === 2026
+        ? [{
+          nodeType: "credit_resolution",
+          fields: { line16_income_tax: tax },
+        }]
+        : []),
       // Form 1116 Part III line 20 — the base the §904(a) limitation multiplies.
       this.outputNodes.output(form_1116, {
         us_tax_before_credits: tax,

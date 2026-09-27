@@ -51,14 +51,22 @@ Schedule 3 total, 1040 tax settlement, PDF and MeF attachments
 ```
 
 The current registry still expects a user-supplied
-`credit_limit_worksheet_2026`. Schedule 3 now passes its pre-5695 totals to
-the registered `credit_resolution` node, which sends the existing Form 1040
-and Schedule 8812 amounts onward. The stage reserves Schedule 3 line 5a for
-calculated Form 5695 and currently sends zero for that line. It does not yet
-receive the carryforward, tax, or provisional child-credit source facts.
-Feeding a Form 5695 credit directly into Schedule 3 without ordering the
-worksheet stages would make the credit limit depend on an unfinished
-child-credit calculation.
+`credit_limit_worksheet_2026` for Schedule 8812. Schedule 3 passes its
+pre-5695 totals to `credit_resolution`. The new `f5695` input carries the
+2025 Form 5695 line 16 amount, while the income-tax and Schedule 2 nodes
+supply Form 1040 line 18. For returns without dependent credits, the stage
+calculates lines 1–4, finalizes Schedule 3 lines 5a/8, sends the final line
+20 amount to Form 1040, and records the unused amount for 2027. Graph and
+PDF tests cover a $200 usable credit and a zero-tax full carryforward.
+The PDF bundle now includes Schedule 3 from the calculated pending record.
+
+A carryforward return with child or other dependent credits currently gets
+an explicit provisional-credit diagnostic. The next graph step is to feed
+dependent counts, AGI and the Earned Income Worksheet, payroll-tax, EIC, and
+Schedule 3 line 11 source values through Worksheet B line 14 before running
+Form 5695. Then Worksheet B line 15 and final Schedule 8812 line 19 can use
+the calculated Schedule 3 line 5a. Feeding Form 5695 directly into Schedule
+3 without this order would use an unfinished child-credit amount.
 `forms/f1040/2026/credit-resolution.ts` now calculates Worksheet B lines
 1–14 and the four Form 5695 carryforward lines from named, reconciled inputs.
 It covers the earned-income and payroll-tax branches, including Schedule 2

@@ -39,7 +39,13 @@ Deno.test("zero taxable income still sends Form 6251 its AMT base", () => {
   });
   assertEquals(f6251Fields(result)?.regular_tax_income, 0);
   assertEquals(f1040Fields(result)?.line16_income_tax, 0);
-  assertEquals(result.outputs.length, 4);
+  assertEquals(result.outputs.map((output) => output.nodeType), [
+    "f1040",
+    "form8978_reporting_year",
+    "form6251",
+    "f8812",
+    "form_1116",
+  ]);
 });
 
 Deno.test("Form 8814 tax remains on line 16 even with zero parent taxable income", () => {

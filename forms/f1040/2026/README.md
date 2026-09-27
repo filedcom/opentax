@@ -18,8 +18,10 @@ source-node inputs and graph execution before a carryforward return can
 produce the existing Form 5695 PDF from calculated facts.
 The registered `credit_resolution` node now receives the pre-5695 Schedule 3
 amounts and sends their totals to Form 1040 and Schedule 8812. Schedule 3
-line 5a can no longer be injected into that upstream node. Carryforward and
-tax sources still need to enter this stage before it can finalize line 5a.
+line 5a can no longer be injected into that upstream node. The `f5695` input
+now routes the 2025 line 16 carryforward to this stage, which calculates and
+prints the 2026 form for returns without dependent credits. The dependent
+credit ordering and MeF attachment remain open.
 
 The first executable 2026 calculation is `settlement.ts`: it assembles 1040
 lines 24a–c and 32a–c, Schedule 3-A Part I/II, payments, refund, and amount

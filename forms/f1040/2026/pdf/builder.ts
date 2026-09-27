@@ -25,6 +25,7 @@ export async function buildPdfBytes2026(pending: Pending): Promise<Uint8Array> {
 
   const schedule1a = record(pending, "schedule1a");
   const schedule2 = record(pending, "schedule2");
+  const schedule3 = record(pending, "schedule3");
 
   const schedule1 = record(pending, "schedule1");
   const scheduleB = record(pending, "schedule_b");
@@ -42,6 +43,7 @@ export async function buildPdfBytes2026(pending: Pending): Promise<Uint8Array> {
       ? schedule1a
       : undefined,
     schedule2: schedule2?.line3_part1_tax !== undefined ? schedule2 : undefined,
+    schedule3,
     schedule3a: record(pending, "schedule3a"),
     scheduleB: scheduleB?.file_schedule_b === true ? scheduleB : undefined,
     scheduleD: scheduleD?.print_line16_combined !== undefined
