@@ -203,10 +203,13 @@ The standalone TY2026 validation module now checks the calculated 1040's AGI,
 deductions, tax, payments, and required Schedule 1/2/B reconciliation using
 pending-field keys. It is a local calculation gate, not a 2026 MeF
 business-rule bundle. The standalone PDF builder selects only filed 2026
-attachments and rejects positive Schedule 1-A, Form 4137, and Form 8960 cases
+attachments and rejects positive Schedule 1-A and Form 4137 cases
 whose PDF attachments are not built yet. A wages-plus-interest graph produces
 the expected five-page PDF through this boundary. Catalog registration remains
 pending so `tax validate` does not report `canFile` from local-only rules.
+The pinned draft Form 8960 now fills and appends its individual page for a
+positive NIIT calculation. Its line 17 reconciles with Schedule 2 line 6, and
+a high-income wages-plus-interest graph produces a six-page PDF.
 
 ## 0. Freeze source versions and establish the baseline
 

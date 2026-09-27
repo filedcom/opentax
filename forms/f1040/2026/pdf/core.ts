@@ -1,6 +1,7 @@
 import { PDFDocument } from "pdf-lib";
 import { buildF1040PdfBytes2026 } from "./f1040.ts";
 import { buildForm6251PdfBytes2026 } from "./f6251.ts";
+import { buildForm8960PdfBytes2026 } from "./f8960.ts";
 import { buildSchedule1PdfBytes2026 } from "./schedule1.ts";
 import { buildScheduleBPdfBytes2026 } from "./schedule_b.ts";
 import { buildSchedule2PdfBytes2026 } from "./schedule2.ts";
@@ -21,6 +22,7 @@ interface CorePdfInput2026 {
   readonly schedule3a?: Record<string, unknown>;
   readonly scheduleB?: Record<string, unknown>;
   readonly form6251?: Record<string, unknown>;
+  readonly form8960?: Record<string, unknown>;
 }
 
 /** The current main-form and checked TY2026 attachment PDF slice. */
@@ -31,6 +33,7 @@ export async function buildCorePdfBytes2026({
   schedule3a,
   scheduleB,
   form6251,
+  form8960,
 }: CorePdfInput2026): Promise<Uint8Array> {
   const claimsRelevantCredit = [
     "line27a_eic",
@@ -124,6 +127,12 @@ export async function buildCorePdfBytes2026({
   ) {
     throw new Error("TY2026 core PDF Form 6251 disagrees with Schedule 2");
   }
+  if (
+    optionalAmount(schedule2 ?? {}, "line6_niit") !==
+      optionalAmount(form8960 ?? {}, "line17_niit")
+  ) {
+    throw new Error("TY2026 core PDF Form 8960 disagrees with Schedule 2");
+  }
 
   const name = [
     f1040.taxpayer_first_name,
@@ -149,6 +158,9 @@ export async function buildCorePdfBytes2026({
   }
   if (form6251) {
     parts.push(await buildForm6251PdfBytes2026(form6251, f1040, { name, ssn }));
+  }
+  if (form8960) {
+    parts.push(await buildForm8960PdfBytes2026(form8960, { name, ssn }));
   }
   const merged = await PDFDocument.create();
   for (const bytes of parts) {

@@ -35,7 +35,7 @@ Deno.test("TY2026 PDF boundary selects filed attachments from graph pending", as
   assertEquals(pdf.getPageCount(), 5);
 });
 
-Deno.test("TY2026 PDF boundary rejects calculations needing unbuilt attachments", async () => {
+Deno.test("TY2026 PDF boundary includes Form 8960 for investment income tax", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: filer,
     w2: [{ box1_wages: 300_000, box2_fed_withheld: 50_000 }],
@@ -43,9 +43,27 @@ Deno.test("TY2026 PDF boundary rejects calculations needing unbuilt attachments"
     schedule_b: { foreign_account: false, foreign_trust: false },
   }, { taxYear: 2026, formType: "f1040" });
   assertEquals(result.diagnostics, []);
+  const pdf = await PDFDocument.load(await buildPdfBytes2026(result.pending));
+  assertEquals(pdf.getPageCount(), 6);
   await assertRejects(
-    () => buildPdfBytes2026(result.pending),
+    () =>
+      buildPdfBytes2026({
+        ...result.pending,
+        form8960: { ...result.pending.form8960, line17_niit: 0 },
+      }),
     Error,
-    "Form 8960 attachment",
+    "Form 8960 disagrees with Schedule 2",
+  );
+  await assertRejects(
+    () =>
+      buildPdfBytes2026({
+        ...result.pending,
+        form8960: {
+          ...result.pending.form8960,
+          line8_total_investment_income: 1,
+        },
+      }),
+    Error,
+    "Form 8960 PDF lines do not reconcile",
   );
 });
