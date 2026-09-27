@@ -1365,36 +1365,48 @@ Deno.test({
     prior_unallowed_credits: [],
     publicly_traded_partnership: false,
   };
-  const xml = buildMefXml({
-    f1040: { line16_income_tax: 1_000 },
-    schedule3: { line6a_total: 500, line7_total: 500 },
-    form6251: { line11_amt: 0, net_tmt: 0 },
-    form8582cr: {
-      credit_sources: [source],
-      regular_tax_all_income: 1_000,
-      regular_tax_without_passive: 500,
-    },
-    f3800: {
-      passive_source_allocations: [{
-        ...source,
-        total_credit: 1_000,
-        special_allowed_credit: 0,
-        unallowed_credit: 500,
-        allowed_credit: 500,
-      }],
-      tax_context: {
-        filingStatus: FilingStatus.Single,
-        regularTax: 1_000,
-        alternativeMinimumTax: 0,
-        foreignTaxCredit: 0,
-        priorAllowableCredits: 0,
-        tentativeMinimumTax: 0,
-        standardCredit: 0,
-        specifiedCredit: 0,
+  const xml = buildMefXml(
+    {
+      f1040: { line16_income_tax: 1_000 },
+      schedule3: { line6a_total: 500, line7_total: 500 },
+      form6251: { line11_amt: 0, net_tmt: 0 },
+      form8582cr: {
+        credit_sources: [source],
+        regular_tax_all_income: 1_000,
+        regular_tax_without_passive: 500,
       },
-      allowed_credit: 500,
-    },
-  }, extractFilerIdentity(singleGeneral()));
+      k1_partnership: {
+        k1_partnerships: [{
+          partnership_name: "Clinical partnership",
+          partnership_ein: "123456789",
+          source_document_reference: "2025 clinical credit statement",
+          box15_code_z_orphan_drug_credit: 1_000,
+          orphan_drug_credit_subject_to_passive_activity_limit: true,
+        }],
+      },
+      f3800: {
+        passive_source_allocations: [{
+          ...source,
+          total_credit: 1_000,
+          special_allowed_credit: 0,
+          unallowed_credit: 500,
+          allowed_credit: 500,
+        }],
+        tax_context: {
+          filingStatus: FilingStatus.Single,
+          regularTax: 1_000,
+          alternativeMinimumTax: 0,
+          foreignTaxCredit: 0,
+          priorAllowableCredits: 0,
+          tentativeMinimumTax: 0,
+          standardCredit: 0,
+          specifiedCredit: 0,
+        },
+        allowed_credit: 500,
+      },
+    } satisfies MefFormsPending & { k1_partnership: unknown },
+    extractFilerIdentity(singleGeneral()),
+  );
   assertStringIncludes(xml, "<IRS8582CR ");
   assertStringIncludes(xml, "<IRS3800 ");
   await validateXsd(xml, "passive Form 8582-CR and Form 3800");
@@ -1426,47 +1438,59 @@ Deno.test({
     }],
     publicly_traded_partnership: false,
   };
-  const xml = buildMefXml({
-    f1040: { line16_income_tax: 250 },
-    schedule3: { line6a_total: 250, line7_total: 250 },
-    form6251: { line11_amt: 0, net_tmt: 0 },
-    form8582cr: {
-      credit_sources: [source],
-      regular_tax_all_income: 1_000,
-      regular_tax_without_passive: 700,
-    },
-    f8826: {
-      eligible_expenditures: 450,
-      prior_year_gross_receipts: 500_000,
-      prior_year_full_time_employee_count: 20,
-      subject_to_passive_activity_limit: false,
-    },
-    f3800: {
-      passive_source_allocations: [{
-        ...source,
-        total_credit: 500,
-        special_allowed_credit: 0,
-        unallowed_credit: 200,
-        allowed_credit: 300,
-      }],
-      f8826_credit_entries: [{
-        source_type: "self",
-        credit_amount: 100,
-        subject_to_passive_activity_limit: false,
-      }],
-      tax_context: {
-        filingStatus: FilingStatus.Single,
-        regularTax: 250,
-        alternativeMinimumTax: 0,
-        foreignTaxCredit: 0,
-        priorAllowableCredits: 0,
-        tentativeMinimumTax: 0,
-        standardCredit: 100,
-        specifiedCredit: 0,
+  const xml = buildMefXml(
+    {
+      f1040: { line16_income_tax: 250 },
+      schedule3: { line6a_total: 250, line7_total: 250 },
+      form6251: { line11_amt: 0, net_tmt: 0 },
+      form8582cr: {
+        credit_sources: [source],
+        regular_tax_all_income: 1_000,
+        regular_tax_without_passive: 700,
       },
-      allowed_credit: 250,
-    },
-  }, extractFilerIdentity(singleGeneral()));
+      k1_partnership: {
+        k1_partnerships: [{
+          partnership_name: "Clinical partnership",
+          partnership_ein: "123456789",
+          source_document_reference: "2025 clinical credit statement",
+          box15_code_z_orphan_drug_credit: 300,
+          orphan_drug_credit_subject_to_passive_activity_limit: true,
+        }],
+      },
+      f8826: {
+        eligible_expenditures: 450,
+        prior_year_gross_receipts: 500_000,
+        prior_year_full_time_employee_count: 20,
+        subject_to_passive_activity_limit: false,
+      },
+      f3800: {
+        passive_source_allocations: [{
+          ...source,
+          total_credit: 500,
+          special_allowed_credit: 0,
+          unallowed_credit: 200,
+          allowed_credit: 300,
+        }],
+        f8826_credit_entries: [{
+          source_type: "self",
+          credit_amount: 100,
+          subject_to_passive_activity_limit: false,
+        }],
+        tax_context: {
+          filingStatus: FilingStatus.Single,
+          regularTax: 250,
+          alternativeMinimumTax: 0,
+          foreignTaxCredit: 0,
+          priorAllowableCredits: 0,
+          tentativeMinimumTax: 0,
+          standardCredit: 100,
+          specifiedCredit: 0,
+        },
+        allowed_credit: 250,
+      },
+    } satisfies MefFormsPending & { k1_partnership: unknown },
+    extractFilerIdentity(singleGeneral()),
+  );
   assertStringIncludes(xml, "<IRS8582CR ");
   assertStringIncludes(xml, "<IRS3800 ");
   assertStringIncludes(xml, "<IRS8826 ");

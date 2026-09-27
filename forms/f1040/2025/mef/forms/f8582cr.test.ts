@@ -115,6 +115,69 @@ Deno.test("Form 8582-CR requires the same business sources on attached Form 3800
   );
 });
 
+Deno.test("Form 8582-CR passive orphan-drug credit matches the current K-1", () => {
+  const source = {
+    ...otherCredit,
+    source_origin: {
+      kind: PassiveCreditSourceOrigin.Partnership,
+      entity_reference: "Clinical partnership",
+      ein: "123456789",
+    },
+  };
+  const input = {
+    credit_sources: [source],
+    regular_tax_all_income: 10_000,
+    regular_tax_without_passive: 9_000,
+  };
+  const allocation = calculateForm8582CR(inputSchema.parse(input))
+    .sourceAllocations[0];
+  const context = {
+    documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
+    pending: {
+      f3800: { passive_source_allocations: [allocation] },
+      k1_partnership: {
+        k1_partnerships: [{
+          partnership_name: "Clinical partnership",
+          partnership_ein: "123456789",
+          source_document_reference: source.source_document_reference,
+          box15_code_z_orphan_drug_credit: 1_500,
+          orphan_drug_credit_subject_to_passive_activity_limit: true,
+        }],
+      },
+    },
+  };
+  assertStringIncludes(
+    form8582cr.build(input, context),
+    "<AllowedCreditsAmt>1000</AllowedCreditsAmt>",
+  );
+  assertThrows(
+    () =>
+      form8582cr.build(input, {
+        ...context,
+        pending: { f3800: context.pending.f3800 },
+      }),
+    Error,
+    "does not reconcile to K-1 box 15 code Z",
+  );
+  assertThrows(
+    () =>
+      form8582cr.build(input, {
+        ...context,
+        pending: {
+          ...context.pending,
+          k1_partnership: {
+            k1_partnerships: [{
+              ...context.pending.k1_partnership.k1_partnerships[0],
+              box15_code_z_orphan_drug_credit: 1_499,
+            }],
+          },
+        },
+      }),
+    Error,
+    "does not reconcile to K-1 box 15 code Z",
+  );
+});
+
 Deno.test("Form 8582-CR: active rental Part II serializes the tax limitation", () => {
   const xml = form8582cr.build({
     credit_sources: [rentalCredit],

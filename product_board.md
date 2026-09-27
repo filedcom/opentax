@@ -547,7 +547,7 @@ Form 8582-CR and compares every passive allocation before filing Form 3800;
 Form 8582-CR also requires the matching Form 3800 business-credit rows.
 Missing or changed linked documents stop export. These direct negative and
 full-return XSD cases are written but unrun. Credit-specific K-1 and other
-source-document reconciliation remains open. The handoff now retains the
+source-document reconciliation is partial, as detailed below. The handoff now retains the
 publicly traded partnership source flag. Current-year
 source details are now retained even when a standalone row has only one source,
 including Form 8936 lines 1y/1aa. The filed assembler emits Part V details
@@ -590,8 +590,12 @@ require either a nine-digit EIN or the explicit `APPLD FOR` reason. That
 provenance carries through the Form 3800 vintage plan instead of inferring an
 entity from a free-text source form. The source and propagation cases are
 written but unrun; the MeF builder now serializes the linked rows and checks
-their allocation against Form 8582-CR. Credit-specific source-document
-evidence still needs reconciliation.
+their allocation against Form 8582-CR. Current-year pass-through orphan-drug
+credits on line 1h now reconcile to one K-1 box 15/13 credit with matching EIN,
+reference, amount, and passive flag, using the same check as Form 8820.
+Those direct and full-return XSD cases are written but unrun. Other credit
+types, prior-year source documents, self-earned passive credits, and missing-EIN
+source evidence still need reconciliation.
 Pass-through sources also carry a stable entity reference so the passive
 Part IV summary chooses the entity with the greatest combined credit across
 its source years. Conflicting EINs for one entity stop XML generation. The
