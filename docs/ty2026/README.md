@@ -57,6 +57,9 @@ for the implementation contract.
   `pdf-fields-f1116sb.csv`, and `pdf-fields-f1116sc.csv`: category credit,
   2026 line 18/20 tax bases, carryovers and redeterminations, full PDF
   inventories, and MeF/graph acceptance order.
+- [`FORM2555-GRAPH.md`](FORM2555-GRAPH.md) and `pdf-fields-f2555.csv`:
+  2026 foreign earned income and housing exclusions/deduction, Notice
+  2026-25 limits, 160 PDF widgets, and Schedule 1/SE/1116/MeF handoffs.
 - [`FORM2441-GRAPH.md`](FORM2441-GRAPH.md): dependent-care benefits before
   AGI, 2026 credit phaseout and limit, provider detail, PDF, and MeF order.
 - [`FORM8862-8863-EIC-GRAPH.md`](FORM8862-8863-EIC-GRAPH.md),

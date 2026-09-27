@@ -22,6 +22,8 @@ NODE_PROGRESS = {
     "f2106": "2026 business mileage and AGI limit updated; audit remaining rules",
     "f8621": "2026 event-year allocation updated; audit remaining rules",
     "form8962": "2026 percentage and repayment paths updated; verify final instructions",
+    "form_1116": "2026 line 18 adds Schedule 1-A line 43 and line 20 needs Schedule 2 line 1z; shared node omits full category/carryover and new PDF/MeF route; see FORM1116-GRAPH.md",
+    "form2555": "2026 form/instructions and Notice 2026-25 pinned; structured filing rejects 2026 and housing route uses legacy Schedule 1 key; see FORM2555-GRAPH.md",
     "form2441": "2026 benefit and credit rules updated; verify final instructions",
     "form982": "2026 qualified-residence debt date gate updated; audit remaining rules",
     "form8839": "2025/2026 refundable split, indexed caps, and origin-year carryforward updated; add full credit-limit worksheet",
@@ -62,6 +64,7 @@ P0_NODES = {
     "form4562", "f1099patr", "form8995", "form8995a", "form_8829", "schedule_h",
     "f8835", "form1062",
 }
+P1_NODES = {"form_1116"}
 
 manifest = json.loads((OUT / "corpus/manifest.json").read_text())
 drafts = {Path(f["path"]).stem for f in manifest["files"]
@@ -152,7 +155,7 @@ for line in body.splitlines():
         "ty2025_mef_module": "yes" if component in mef_components else "no",
         "ty2025_pdf_descriptor": "yes" if pdf else "no",
         "ty2026_draft_snapshot": pdf["ty2026_draft_snapshot"] if pdf else "n/a",
-        "priority": "P0" if node_type in P0_NODES else "P1" if mentions else "P2",
+        "priority": "P0" if node_type in P0_NODES else "P1" if mentions or node_type in P1_NODES else "P2",
         "2026_disposition": "audit-required",
         "progress_or_next_action": NODE_PROGRESS.get(
             node_type, "verify 2026 law, node outputs, and graph route"

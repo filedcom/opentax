@@ -142,6 +142,7 @@ sources += [
     ("authorities/rp-25-25.pdf", IRS + "/pub/irs-drop/rp-25-25.pdf", "final-authority"),
     ("authorities/n-25-67.pdf", IRS + "/pub/irs-drop/n-25-67.pdf", "final-authority"),
     ("authorities/n-26-10.pdf", IRS + "/pub/irs-drop/n-26-10.pdf", "final-authority"),
+    ("authorities/n-26-25.pdf", IRS + "/pub/irs-drop/n-26-25.pdf", "final-authority"),
     ("authorities/irb26-29.pdf", IRS + "/pub/irs-irbs/irb26-29.pdf", "final-authority"),
 ]
 

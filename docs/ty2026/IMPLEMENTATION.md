@@ -29,6 +29,11 @@ handoff, full PDF field map, and the current-instruction/MeF gates.
 The [Form 1116 contract](FORM1116-GRAPH.md) pins its 2026 line 18
 Schedule 1-A addback and line 20 Schedule 2 tax base, continuous-use
 carryover/redetermination schedules, and the current graph/PDF/MeF gaps.
+The [Form 2555 contract](FORM2555-GRAPH.md) pins its 2026 $132,900
+exclusion, Notice 2026-25 housing limits, 160 PDF fields and distinct
+Schedule 1 line 8d/24j destinations. The shared structured filing path
+rejects TY2026 and the aggregate housing path conflicts with the 2026
+Schedule 1 node.
 The [scenario 12 contract](ATS-SCENARIO-12.md) and
 [business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
 broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800

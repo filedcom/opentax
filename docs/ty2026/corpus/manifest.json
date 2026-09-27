@@ -1432,6 +1432,15 @@
       "bytes": 137036,
       "sha256": "0ae29922efdd8e61bd9346856a82cafead43adda375a95a94cbb47df448c1fb0",
       "retrieved_utc": "2026-09-27T13:18:59.670838+00:00"
+    },
+    {
+      "path": "authorities/n-26-25.pdf",
+      "url": "https://www.irs.gov/pub/irs-drop/n-26-25.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 195723,
+      "sha256": "9a5657ed3162160a7ea011683e9a0b6ccb83a68e15eba9e57774e75d81ec736e",
+      "retrieved_utc": "2026-09-27T13:22:41.656551+00:00"
     }
   ]
 }
