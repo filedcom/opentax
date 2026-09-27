@@ -1109,10 +1109,11 @@ older annual-statement path still needs its own data model. Required Part I
 mailing, telephone, notification, citizenship, and resident dates now have a
 schema-ordered XML builder. Part II Section A now emits the five prior-year tax
 lines, covered-status answers, and a linked native change-explanation statement
-when line 3 is yes. The node and MeF descriptor now file an initial noncovered
-`IRS8854` only when no Section C property, deferral, or native statement needs
-linking. Covered and unlinked-statement cases still reject filing. Full-return
-and local XSD cases for the noncovered route are written but unrun. Section B
+when line 3 is yes. The node and MeF descriptors now emit an initial noncovered
+`IRS8854` and its needed native statements through explicit document-discovery
+and ID-linking passes. Covered Section C and deferral cases still reject filing.
+Full-return and local XSD cases for noncovered returns with and without native
+statements are written but unrun. Section B
 now takes balance-sheet categories and derives asset,
 liability, and net-worth totals instead of trusting a free-entered number. Its
 unregistered XML builder emits the form lines and native itemized statements for
@@ -1170,8 +1171,9 @@ are emitted. The initial builder now exposes an ID-independent, stable native
 statement set for the assembler's first document-discovery pass, with its
 written case unrun. Its discovery order now follows the native Form 8854
 statement roots in ReturnData1040.xsd; the multi-statement order case is
-written but unrun. An ordered-ID linker now maps assembler IDs back to the
-statement keys and rejects count or ID collisions, also with unrun cases.
+written but unrun. An ordered-ID linker maps assembler IDs back to the
+statement keys and rejects count or ID collisions. These are now used by the
+registered noncovered path; the cases remain unrun.
 The calculation and rejection cases are
 written but unrun. See the
 [2025 Form 8854 instructions](https://www.irs.gov/instructions/i8854).

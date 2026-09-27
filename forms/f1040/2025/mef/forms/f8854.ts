@@ -5,14 +5,16 @@ import {
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 import {
   buildForm8854InitialBundle,
+  buildForm8854InitialDocument,
   buildForm8854NativeStatementContents,
+  linkForm8854NativeStatementIds,
 } from "./f8854_initial.ts";
 
 export const form8854: MefFormDescriptor<"f8854", unknown> = {
   pendingKey: "f8854",
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8854.pdf",
-  build(fields) {
+  build(fields, context) {
     if (Array.isArray(fields) && fields.length === 0) return "";
     const input = inputSchema.parse(fields);
     if (
@@ -24,15 +26,25 @@ export const form8854: MefFormDescriptor<"f8854", unknown> = {
         "Form 8854 covered filing needs reconciled income forms and attachments",
       );
     }
-    if (buildForm8854NativeStatementContents(input).length > 0) {
-      throw new Error(
-        "Form 8854 native statements must be linked before filing",
+    const pending = { form8949: context?.pending?.form8949 };
+    const contents = buildForm8854NativeStatementContents(input);
+    if (!context?.documentIdsByPendingKey) {
+      return buildForm8854InitialDocument(
+        input,
+        {
+          balanceSheet: {},
+          sectionC: {},
+          binaryAttachments: [],
+        },
+        pending,
+        "discover",
       );
     }
-    return buildForm8854InitialBundle(input, {
-      balanceSheet: {},
-      sectionC: {},
-      binaryAttachments: [],
-    }, { form8949: undefined }).formXml;
+    const links = linkForm8854NativeStatementIds(
+      contents,
+      context.documentIdsByPendingKey.f8854_native_statements ?? [],
+      [],
+    );
+    return buildForm8854InitialBundle(input, links, pending).formXml;
   },
 };

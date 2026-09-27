@@ -61,8 +61,9 @@ function linkedAttrs(
   hasRows: boolean,
   id: string | undefined,
   name: string,
+  phase: "discover" | "link",
 ): Record<string, string> | undefined {
-  if (hasRows && !id) {
+  if (phase === "link" && hasRows && !id) {
     throw new Error(`Form 8854 ${name} requires a linked statement document`);
   }
   if (!hasRows && id) {
@@ -151,6 +152,7 @@ export function buildForm8854BalanceSheetStatements(rawSheet: BalanceSheet) {
 export function buildForm8854BalanceSheet(
   rawInput: F8854Input,
   statementIds: Form8854BalanceSheetStatementIds = {},
+  phase: "discover" | "link" = "link",
 ): string {
   const input = inputSchema.parse(rawInput);
   const sheet = input.balance_sheet;
@@ -159,26 +161,31 @@ export function buildForm8854BalanceSheet(
     sheet.partnership_interests.length > 0,
     statementIds.partnership,
     statementNames.partnership,
+    phase,
   );
   const ownedTrustAttrs = linkedAttrs(
     sheet.owned_trust_assets.length > 0,
     statementIds.ownedTrust,
     statementNames.ownedTrust,
+    phase,
   );
   const nongrantorTrustAttrs = linkedAttrs(
     sheet.nongrantor_trust_interests.length > 0,
     statementIds.nongrantorTrust,
     statementNames.nongrantorTrust,
+    phase,
   );
   const otherAssetsAttrs = linkedAttrs(
     sheet.other_assets.length > 0,
     statementIds.otherAssets,
     statementNames.otherAssets,
+    phase,
   );
   const otherLiabilitiesAttrs = linkedAttrs(
     sheet.other_liabilities.length > 0,
     statementIds.otherLiabilities,
     statementNames.otherLiabilities,
+    phase,
   );
   const simpleLines = [
     ["CashIncludingBankDepositsGrp", sheet.cash_and_bank_deposits],

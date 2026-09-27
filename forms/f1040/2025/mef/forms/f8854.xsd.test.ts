@@ -86,6 +86,21 @@ const noncoveredInput = initialSchema.parse({
   section_d: { elect_deferral: false },
 });
 
+const statementInput = initialSchema.parse({
+  ...noncoveredInput,
+  significant_asset_liability_changes_prior_5_years: true,
+  significant_change_explanation: "Partnership interest acquired.",
+  balance_sheet: {
+    ...noncoveredInput.balance_sheet,
+    partnership_interests: [{
+      partnership_name: "Example Partnership",
+      fair_market_value: 100,
+      us_adjusted_basis: 50,
+    }],
+    other_liabilities: [{ description: "Loan", amount: 20 }],
+  },
+});
+
 function withNamespace(xml: string): string {
   return xml.replace(
     "<IRS8854",
@@ -120,7 +135,7 @@ Deno.test("noncovered initial Form 8854 is attached to the Form 1040 return", ()
   );
 });
 
-Deno.test("registered Form 8854 path refuses covered and unlinked-statement cases", () => {
+Deno.test("registered Form 8854 path refuses covered cases", () => {
   assertThrows(
     () =>
       form8854.build({
@@ -136,17 +151,38 @@ Deno.test("registered Form 8854 path refuses covered and unlinked-statement case
     Error,
     "reconciled income forms and attachments",
   );
+});
+
+Deno.test("noncovered Form 8854 links its actual native statements in schema order", () => {
+  const xml = buildMefXml({
+    f1040: { filing_status: "single" },
+    f8854: statementInput,
+  }, filer);
+  assertStringIncludes(xml, "<IRS8854 documentId=");
+  assertStringIncludes(xml, "<ChangePrePostExptrtDateStmt documentId=");
+  assertStringIncludes(xml, "<OtherLiabilitiesStatement documentId=");
+  assertStringIncludes(xml, "<PartnershipInterestStatement documentId=");
+  assertEquals(
+    xml.indexOf("<ChangePrePostExptrtDateStmt documentId=") <
+      xml.indexOf("<OtherLiabilitiesStatement documentId="),
+    true,
+  );
+  assertEquals(
+    xml.indexOf("<OtherLiabilitiesStatement documentId=") <
+      xml.indexOf("<PartnershipInterestStatement documentId="),
+    true,
+  );
+});
+
+Deno.test("Form 8854 linking refuses a changed native statement set", () => {
   assertThrows(
     () =>
-      form8854.build({
-        ...noncoveredInput,
-        balance_sheet: {
-          ...noncoveredInput.balance_sheet,
-          other_liabilities: [{ description: "Loan", amount: 100 }],
-        },
+      form8854.build(statementInput, {
+        pending: { f8854: statementInput },
+        documentIdsByPendingKey: { f8854_native_statements: [] },
       }),
     Error,
-    "native statements must be linked",
+    "statement set changed",
   );
 });
 
@@ -159,6 +195,34 @@ Deno.test({
   const xml = buildMefXml({
     f1040: { filing_status: "single" },
     f8854: noncoveredInput,
+  }, filer);
+  const xsd = new URL(
+    "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    import.meta.url,
+  ).pathname;
+  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(path, xml);
+    const result = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsd, path],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
+  } finally {
+    await Deno.remove(path);
+  }
+});
+
+Deno.test({
+  name: "XSD: noncovered Form 8854 with linked native statements",
+  ignore: !xsdAvailable,
+  sanitizeOps: false,
+  sanitizeResources: false,
+}, async () => {
+  const xml = buildMefXml({
+    f1040: { filing_status: "single" },
+    f8854: statementInput,
   }, filer);
   const xsd = new URL(
     "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",

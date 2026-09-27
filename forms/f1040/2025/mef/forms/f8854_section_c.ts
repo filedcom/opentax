@@ -45,8 +45,9 @@ function linkedAttrs(
   populated: boolean,
   id: string | undefined,
   name: string,
+  phase: "discover" | "link",
 ): Record<string, string> | undefined {
-  if (populated && !id) {
+  if (phase === "link" && populated && !id) {
     throw new Error(`Form 8854 ${name} requires a linked statement document`);
   }
   if (!populated && id) {
@@ -163,6 +164,7 @@ export function buildForm8854SectionCStatements(rawSection: SectionC) {
 export function buildForm8854SectionC(
   rawInput: F8854Input,
   statementIds: Form8854SectionCStatementIds = {},
+  phase: "discover" | "link" = "link",
 ): string {
   const input = inputSchema.parse(rawInput);
   const covered = isCoveredExpatriate(input);
@@ -192,31 +194,37 @@ export function buildForm8854SectionC(
       section.eligible_deferred_compensation.length > 0,
       statementIds.eligibleDeferredCompensation,
       names.eligibleDeferredCompensation,
+      phase,
     ),
     ineligibleDeferredCompensation: linkedAttrs(
       section.ineligible_deferred_compensation.length > 0,
       statementIds.ineligibleDeferredCompensation,
       names.ineligibleDeferredCompensation,
+      phase,
     ),
     specifiedTaxDeferredAccounts: linkedAttrs(
       section.specified_tax_deferred_accounts.length > 0,
       statementIds.specifiedTaxDeferredAccounts,
       names.specifiedTaxDeferredAccounts,
+      phase,
     ),
     nongrantorTrust: linkedAttrs(
       section.nongrantor_trust_interests.length > 0,
       statementIds.nongrantorTrust,
       names.nongrantorTrust,
+      phase,
     ),
     computation: linkedAttrs(
       section.mark_to_market_assets.length > 0,
       statementIds.computation,
       names.computation,
+      phase,
     ),
     deferredPropertyTaxElection: linkedAttrs(
       input.section_d.elect_deferral,
       statementIds.deferredPropertyTaxElection,
       names.deferredPropertyTaxElection,
+      phase,
     ),
   };
   const assets = wholeDollarAssets(section);

@@ -61,6 +61,7 @@ import { form8839 } from "./f8839.ts";
 import { form8835 } from "./f8835.ts";
 import { form8853 } from "./f8853.ts";
 import { form8854 } from "./f8854.ts";
+import { form8854NativeStatements } from "./f8854_native_statements.ts";
 import { form8859 } from "./f8859.ts";
 import { form8862 } from "./f8862.ts";
 import { form8863 } from "./f8863.ts";
@@ -283,4 +284,6 @@ export const ALL_MEF_FORMS = [
   childTaxableInterestStatement,
   // Form 8820 controlled-group allocation follows Form 8814 statements.
   form8820ControlledGroupStatement,
+  // Form 8854 native roots follow Form 8820 controlled-group statements.
+  form8854NativeStatements,
 ] as const;

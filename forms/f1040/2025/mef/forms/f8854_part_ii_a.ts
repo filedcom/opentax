@@ -10,9 +10,11 @@ import { calculateBalanceSheet } from "../../../nodes/inputs/f8854/balance-sheet
 export function buildForm8854PartIISectionA(
   rawInput: F8854Input,
   changeStatementId?: string,
+  phase: "discover" | "link" = "link",
 ): string {
   const input = inputSchema.parse(rawInput);
   if (
+    phase === "link" &&
     input.significant_asset_liability_changes_prior_5_years &&
     !changeStatementId
   ) {

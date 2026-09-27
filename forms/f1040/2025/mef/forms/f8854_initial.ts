@@ -243,6 +243,33 @@ function validateIds(
   }
 }
 
+/** Build the root in document discovery or final reference-linking phase. */
+export function buildForm8854InitialDocument(
+  rawInput: F8854Input,
+  links: Form8854InitialDocumentLinks,
+  filingPending: { form8949: unknown },
+  phase: "discover" | "link",
+): string {
+  const input = inputSchema.parse(rawInput);
+  reconcileForm8854Form8949Properties(input, filingPending.form8949);
+  return elements(
+    "IRS8854",
+    [
+      buildForm8854PartI(input),
+      buildForm8854PartIISectionA(input, links.changeStatement, phase),
+      buildForm8854BalanceSheet(input, links.balanceSheet, phase),
+      buildForm8854SectionC(input, links.sectionC, phase),
+      buildForm8854SectionD(input),
+    ],
+    links.binaryAttachments.length
+      ? {
+        referenceDocumentId: links.binaryAttachments.join(" "),
+        referenceDocumentName: "BinaryAttachment",
+      }
+      : undefined,
+  );
+}
+
 /** Unregistered initial Form 8854 document and native statement fragments. */
 export function buildForm8854InitialBundle(
   rawInput: F8854Input,
@@ -267,21 +294,11 @@ export function buildForm8854InitialBundle(
     },
   );
   validateIds(ids, nativeStatements, requiredBinaryIds(input));
-  const formXml = elements(
-    "IRS8854",
-    [
-      buildForm8854PartI(input),
-      buildForm8854PartIISectionA(input, ids.changeStatement),
-      buildForm8854BalanceSheet(input, ids.balanceSheet),
-      buildForm8854SectionC(input, ids.sectionC),
-      buildForm8854SectionD(input),
-    ],
-    ids.binaryAttachments.length
-      ? {
-        referenceDocumentId: ids.binaryAttachments.join(" "),
-        referenceDocumentName: "BinaryAttachment",
-      }
-      : undefined,
+  const formXml = buildForm8854InitialDocument(
+    input,
+    ids,
+    filingPending,
+    "link",
   );
   return { formXml, nativeStatements };
 }
