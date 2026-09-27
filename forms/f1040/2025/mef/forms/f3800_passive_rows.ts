@@ -6,6 +6,7 @@ import {
   passiveCreditSourceOriginSchema,
 } from "../../../nodes/intermediate/forms/form8582cr/source.ts";
 import { planForm3800PassiveXmlRows } from "./f3800_passive_tags.ts";
+import { combineForm3800CurrentCreditAmounts } from "./f3800_current_rows.ts";
 
 export type Form3800PassiveRowXml = {
   readonly partIII: readonly string[];
@@ -82,23 +83,35 @@ export function buildForm3800PassiveRowXml(
   );
   const current = planned.filter((row) => row.part === "current");
   const carryover = planned.filter((row) => row.part === "carryover");
-  const partIII = current.map((row) =>
-    elements(row.tag, [
+  const currentAmounts = new Map(
+    combineForm3800CurrentCreditAmounts(
+      [],
+      current.map((row) => ({
+        line: row.form3800CreditLine,
+        beforePassiveLimit: row.beforePassiveLimit,
+        afterPassiveLimit: row.afterPassiveLimit,
+        appliedCredit: row.sources.reduce(
+          (sum, source) => sum + source.appliedAgainstTax,
+          0,
+        ),
+      })),
+    ).map((row) => [row.line, row] as const),
+  );
+  const partIII = current.map((row) => {
+    const amount = currentAmounts.get(row.form3800CreditLine);
+    if (!amount) {
+      throw new Error("Form 3800 current-year passive row was not combined");
+    }
+    return elements(row.tag, [
       row.requiresSourceBreakdown
         ? element("CYGeneralBusinessCrItemCnt", row.sources.length)
         : "",
       sourceEin(row.sources),
-      element("CrSubjToPassiveActyLmtAmt", row.beforePassiveLimit),
-      element("TotalGeneralBusCreditsAmt", row.afterPassiveLimit),
-      element(
-        "TotalGeneralBusCreditsAppTxAmt",
-        row.sources.reduce(
-          (sum, source) => sum + source.appliedAgainstTax,
-          0,
-        ),
-      ),
-    ])
-  );
+      element("CrSubjToPassiveActyLmtAmt", amount.passiveBeforeLimit),
+      element("TotalGeneralBusCreditsAmt", amount.totalCredit),
+      element("TotalGeneralBusCreditsAppTxAmt", amount.appliedCredit),
+    ]);
+  });
   const partIV = carryover.map((row) => {
     const applied = row.sources.reduce(
       (sum, source) => sum + source.appliedAgainstTax,

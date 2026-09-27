@@ -133,7 +133,10 @@ amount while the combined allocation still reconciles to Part II. A shared
 Part I/II serializer now keeps passive line 2/3/23/24/32/33 separate from
 nonpassive line 1/30 and writes the calculated totals in schema order; its
 passive case is written but unrun. The filed descriptor still stops on passive
-sources until source rows, tax use, and mixed-credit XML are joined. Direct builder
+sources until source rows, tax use, and mixed-credit XML are joined. A current-year
+row combiner now totals passive and nonpassive amounts once per credit line,
+including when both belong to the same line; its cases are written but unrun,
+and the filed builder does not yet consume the combined rows. Direct builder
 cases are written but unrun. The draft now indexes Part V facility allocations
 and linked source documents by entry position, so equal-valued or reused
 facility objects do not silently reuse the first allocation; that case is
