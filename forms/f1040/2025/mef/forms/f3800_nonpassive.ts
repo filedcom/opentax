@@ -12,7 +12,7 @@ import {
   inputSchema as form8826InputSchema,
   isEligible as isEligibleForForm8826,
 } from "../../../nodes/inputs/f8826/index.ts";
-import { buildIRS3800Document } from "./f3800_document.ts";
+import type { Form3800DocumentParts } from "./f3800_document.ts";
 import type { Form3800PassiveXmlRow } from "./f3800_passive_rows.ts";
 import {
   buildForm3800CurrentCreditRowXml,
@@ -177,9 +177,9 @@ function filedForm8826Sources(
   }));
 }
 
-export function buildIRS3800Nonpassive(
+export function buildForm3800NonpassiveParts(
   input: Form3800NonpassiveXmlInput,
-): string {
+): Form3800DocumentParts {
   const credits = classifyForm8835Credits(input.facilities);
   if (
     !input.form8826 && !input.form8820 && !input.form5884 && !input.form8936 &&
@@ -782,7 +782,7 @@ export function buildIRS3800Nonpassive(
       }]
       : []),
   ], []);
-  return buildIRS3800Document({
+  return {
     lines,
     transferStatementIds: statementIds,
     currentRows,
@@ -795,5 +795,5 @@ export function buildIRS3800Nonpassive(
       ...form5884PartVGroups.map((xml) => ({ line: "4b" as const, xml })),
     ],
     carryoverDetails: [],
-  });
+  };
 }

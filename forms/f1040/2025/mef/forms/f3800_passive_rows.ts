@@ -12,6 +12,7 @@ import {
 import {
   buildForm3800CurrentCreditRowXml,
   combineForm3800CurrentCreditAmounts,
+  type Form3800CurrentCreditAmount,
   type Form3800CurrentCreditRowMetadata,
 } from "./f3800_current_rows.ts";
 
@@ -36,6 +37,7 @@ export type Form3800CarryoverXmlRow = Form3800PassiveXmlRow & {
 
 export type Form3800PassiveRowXml = {
   readonly partIII: readonly Form3800PassiveXmlRow[];
+  readonly currentAmounts: readonly Form3800CurrentCreditAmount[];
   readonly partIV: readonly Form3800CarryoverXmlRow[];
   readonly partV: readonly Form3800PassiveXmlRow[];
   readonly partVI: readonly Form3800PassiveXmlRow[];
@@ -121,22 +123,21 @@ export function buildForm3800PassiveRowXml(
   );
   const current = planned.filter((row) => row.part === "current");
   const carryover = planned.filter((row) => row.part === "carryover");
-  const currentAmounts = new Map(
-    combineForm3800CurrentCreditAmounts(
-      [],
-      current.map((row) => ({
-        line: row.form3800CreditLine,
-        beforePassiveLimit: row.beforePassiveLimit,
-        afterPassiveLimit: row.afterPassiveLimit,
-        appliedCredit: row.sources.reduce(
-          (sum, source) => sum + source.appliedAgainstTax,
-          0,
-        ),
-      })),
-    ).map((row) => [row.line, row] as const),
+  const currentAmounts = combineForm3800CurrentCreditAmounts(
+    [],
+    current.map((row) => ({
+      line: row.form3800CreditLine,
+      beforePassiveLimit: row.beforePassiveLimit,
+      afterPassiveLimit: row.afterPassiveLimit,
+      appliedCredit: row.sources.reduce(
+        (sum, source) => sum + source.appliedAgainstTax,
+        0,
+      ),
+    })),
   );
+  const amountByLine = new Map(currentAmounts.map((row) => [row.line, row]));
   const partIII = current.map((row) => {
-    const amount = currentAmounts.get(row.form3800CreditLine);
+    const amount = amountByLine.get(row.form3800CreditLine);
     if (!amount) {
       throw new Error("Form 3800 current-year passive row was not combined");
     }
@@ -219,5 +220,11 @@ export function buildForm3800PassiveRowXml(
       ], { lineNumberTxt: `Part IV Line ${row.form3800CreditLine}` }),
     }));
   });
-  return { partIII, partIV, partV: currentDetail, partVI };
+  return {
+    partIII,
+    currentAmounts,
+    partIV,
+    partV: currentDetail,
+    partVI,
+  };
 }

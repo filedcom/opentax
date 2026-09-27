@@ -29,7 +29,8 @@ import {
 import { FilingStatus } from "../../../nodes/types.ts";
 import { FilingStatus as MefFilingStatus } from "../../../mef/header.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
-import { buildIRS3800Nonpassive } from "./f3800_nonpassive.ts";
+import { buildIRS3800Document } from "./f3800_document.ts";
+import { buildForm3800NonpassiveParts } from "./f3800_nonpassive.ts";
 
 const amount = z.number().finite().nonnegative();
 const taxBase = z.object({
@@ -693,7 +694,7 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
     if (!form5884 && parsed.form5884_applied_credit !== undefined) {
       throw new Error("Form 3800 has a Form 5884 allocation without a source");
     }
-    return buildIRS3800Nonpassive({
+    return buildIRS3800Document(buildForm3800NonpassiveParts({
       tax,
       form5884: form5884
         ? {
@@ -776,6 +777,6 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
       ),
       transferStatementIdsByFileName: context.documentIdsByAttachmentFileName ??
         {},
-    });
+    }));
   },
 };
