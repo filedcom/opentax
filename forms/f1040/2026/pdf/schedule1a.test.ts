@@ -109,6 +109,24 @@ Deno.test("TY2026 Schedule 1-A PDF continues vehicle interest beyond two VINs", 
   assertEquals(pdf.getPageCount(), 4);
 });
 
+Deno.test("TY2026 Schedule 1-A PDF prints Form 2555 MAGI addbacks", async () => {
+  const pdf = await PDFDocument.load(
+    await buildSchedule1APdfBytes2026(
+      {
+        ...base,
+        taxpayer_age_65_or_older: true,
+        form2555_line45_addback: 1_500,
+        form2555_line50_addback: 500,
+        line43_enhanced_senior: 6_000,
+        line44_total_additional_deductions: 6_000,
+      },
+      { line11b_agi: 70_000, line13a_schedule1a: 6_000 },
+      filer,
+    ),
+  );
+  assertEquals(pdf.getPageCount(), 3);
+});
+
 Deno.test("TY2026 Schedule 1-A PDF rejects unsupported source detail", async () => {
   await assertRejects(
     () =>

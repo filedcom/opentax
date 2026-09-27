@@ -583,6 +583,11 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
           ? agi + (input.line8d_foreign_earned_income_exclusion ?? 0) +
             (input.line8d_foreign_housing_deduction ?? 0)
           : agi,
+        ...(ctx.taxYear === 2026 && {
+          form2555_line45_addback:
+            input.line8d_foreign_earned_income_exclusion ?? 0,
+          form2555_line50_addback: input.line8d_foreign_housing_deduction ?? 0,
+        }),
       }),
       // Pass AGI and filing_status to form8880 for Saver's Credit rate determination (IRC §25B)
       this.outputNodes.output(form8880, {

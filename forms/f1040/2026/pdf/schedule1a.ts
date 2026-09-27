@@ -60,6 +60,8 @@ const printSchema = z.object({
     final_assembly_us: z.boolean().optional(),
   })).optional(),
   magi: z.number().finite(),
+  form2555_line45_addback: z.number().finite().nonnegative().optional(),
+  form2555_line50_addback: z.number().finite().nonnegative().optional(),
   line15_qualified_tips: z.number().finite().nonnegative(),
   line27_qualified_overtime: z.number().finite().nonnegative(),
   line36_vehicle_loan_interest: z.number().finite().nonnegative(),
@@ -410,7 +412,10 @@ export async function buildSchedule1APdfBytes2026(
     );
   }
   const agi = amount(f1040, "line11b_agi");
-  if (fields.magi !== agi) {
+  const form2555Line45 = fields.form2555_line45_addback ?? 0;
+  const form2555Line50 = fields.form2555_line50_addback ?? 0;
+  const addbacks = form2555Line45 + form2555Line50;
+  if (fields.magi !== agi + addbacks) {
     throw new Error("TY2026 Schedule 1-A PDF needs MAGI addback details");
   }
   const tips = reconcileEmployeeTips2026({
@@ -523,6 +528,9 @@ export async function buildSchedule1APdfBytes2026(
   fill(form, `${p1}f1_01[0]`, filer.name);
   fill(form, `${p1}f1_02[0]`, filer.ssn);
   fill(form, `${p1}f1_03[0]`, agi);
+  fill(form, `${p1}f1_05[0]`, form2555Line45);
+  fill(form, `${p1}f1_06[0]`, form2555Line50);
+  fill(form, `${p1}f1_08[0]`, addbacks);
   fill(form, `${p1}f1_09[0]`, fields.magi);
   for (const [index, row] of tips.slice(0, 5).entries()) {
     const base = 10 + index * 5;

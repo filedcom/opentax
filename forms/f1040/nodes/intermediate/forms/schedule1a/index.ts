@@ -66,6 +66,8 @@ export const inputSchema = claimInputSchema.extend({
     employer_ein: z.string().optional(),
   })).optional(),
   magi: z.number().optional(),
+  form2555_line45_addback: z.number().nonnegative().optional(),
+  form2555_line50_addback: z.number().nonnegative().optional(),
   filing_status: z.nativeEnum(FilingStatus).optional(),
   taxpayer_ssn: z.string().optional(),
   spouse_ssn: z.string().optional(),

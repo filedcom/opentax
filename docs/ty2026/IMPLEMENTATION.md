@@ -232,8 +232,10 @@ use and US assembly answers. Positive claims print VINs, interest allocation,
 and eligibility boxes; a statement carries rows beyond two VINs. Explicit
 negative eligibility answers fail calculation, and missing answers block the
 PDF. The tip/Form 4137 example builds eight pages; senior-only, overtime,
-and vehicle examples build five pages. MAGI addback records still lack the
-detail needed for their PDF section.
+and vehicle examples build five pages. The AGI node now passes Form 2555
+lines 45 and 50 separately, allowing Schedule 1-A Part I to print and
+reconcile those MAGI addbacks. Puerto Rico and Form 4563 addbacks still need
+source routes before their Part I fields can print.
 
 ## 0. Freeze source versions and establish the baseline
 

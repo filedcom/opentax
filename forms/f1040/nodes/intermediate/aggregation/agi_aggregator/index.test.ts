@@ -48,6 +48,8 @@ Deno.test("agi_aggregator: TY2026 Schedule 1-A MAGI adds Form 2555 exclusions", 
     item.nodeType === "schedule1a"
   );
   assertEquals(schedule?.fields.magi, 160_000);
+  assertEquals(schedule?.fields.form2555_line45_addback, 10_000);
+  assertEquals(schedule?.fields.form2555_line50_addback, 2_000);
   const deduction = result.outputs.find((item) =>
     item.nodeType === "standard_deduction"
   );
