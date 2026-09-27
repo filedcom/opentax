@@ -117,3 +117,11 @@ Deno.test("2026 SALT and FPL amounts use the pinned forms and guideline tables",
     36_980,
   );
 });
+
+Deno.test("2026 Medicare and household tax thresholds match draft forms", () => {
+  assertEquals(INDEXED_CONFIG_2026.additionalMedicareThresholdMfj, 250_000);
+  assertEquals(INDEXED_CONFIG_2026.additionalMedicareThresholdMfs, 125_000);
+  assertEquals(INDEXED_CONFIG_2026.additionalMedicareThresholdOther, 200_000);
+  assertEquals(INDEXED_CONFIG_2026.householdFicaThreshold, 3_000);
+  assertEquals(INDEXED_CONFIG_2026.householdFutaQuarterlyThreshold, 1_000);
+});

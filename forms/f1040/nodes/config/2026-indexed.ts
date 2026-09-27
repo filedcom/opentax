@@ -29,6 +29,9 @@ type IndexedKeys =
   | "amtBracketAdjustmentMfs"
   | "ssWageBase"
   | "ssTaxPerEmployer"
+  | "additionalMedicareThresholdMfj"
+  | "additionalMedicareThresholdMfs"
+  | "additionalMedicareThresholdOther"
   | "hsaSelfOnlyLimit"
   | "hsaFamilyLimit"
   | "hsaCatchup"
@@ -65,6 +68,8 @@ type IndexedKeys =
   | "feieHousingBase"
   | "section179Limit"
   | "section179PhaseoutThreshold"
+  | "householdFicaThreshold"
+  | "householdFutaQuarterlyThreshold"
   | "saltCap"
   | "saltPhaseoutThreshold"
   | "saltPhaseoutThresholdMfs"
@@ -190,6 +195,10 @@ export const INDEXED_CONFIG_2026 = {
   // IRS Publication 505 (2026), Worksheet 2-3, line 5; employee rate 6.2%.
   ssWageBase: 184_500,
   ssTaxPerEmployer: 11_439,
+  // Pinned draft Form 8959, lines 5, 9 and 14; IRC §3101(b)(2).
+  additionalMedicareThresholdMfj: 250_000,
+  additionalMedicareThresholdMfs: 125_000,
+  additionalMedicareThresholdOther: 200_000,
 
   // Rev. Proc. 2025-19 §3.01(1); §223(b)(3) catch-up remains $1,000.
   hsaSelfOnlyLimit: 4_400,
@@ -254,6 +263,9 @@ export const INDEXED_CONFIG_2026 = {
   feieHousingBase: 21_264, // §911(c)(1)(B): 16% × $132,900.
   section179Limit: 2_560_000,
   section179PhaseoutThreshold: 4_090_000,
+  // Pinned 2026 draft Schedule H, questions A and C.
+  householdFicaThreshold: 3_000,
+  householdFutaQuarterlyThreshold: 1_000,
   // Pinned 2026 draft Schedule A, line 5e.
   saltCap: 40_400,
   saltPhaseoutThreshold: 505_000,
