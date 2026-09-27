@@ -4,6 +4,7 @@ import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { balanceSheetSchema, calculateBalanceSheet } from "./balance-sheet.ts";
+import { sectionCSchema } from "./section-c.ts";
 
 // 2025 Form 8854 and instructions. The $206,000 average-tax threshold and
 // $890,000 mark-to-market exclusion apply to TY2025, not the 2024 amounts.
@@ -106,13 +107,6 @@ export const priorYearTaxSchema = z.object({
   year_2020: moneySchema,
 });
 
-export const assetSchema = z.object({
-  asset_id: z.string().trim().min(1),
-  description: z.string().trim().min(1),
-  fmv_at_expatriation: moneySchema,
-  basis: moneySchema,
-});
-
 export const inputSchema = z.object({
   expatriation_date: dateSchema.refine(
     (date) => date.startsWith("2025-"),
@@ -126,20 +120,8 @@ export const inputSchema = z.object({
   exception_facts: exceptionFactsSchema,
   significant_asset_liability_changes_prior_5_years: z.boolean(),
   significant_change_explanation: z.string().trim().min(1).optional(),
-  assets: z.array(assetSchema).superRefine((assets, ctx) => {
-    const ids = new Set<string>();
-    for (const [index, asset] of assets.entries()) {
-      if (ids.has(asset.asset_id)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `Duplicate Form 8854 asset ID: ${asset.asset_id}`,
-          path: [index, "asset_id"],
-        });
-      }
-      ids.add(asset.asset_id);
-    }
-  }).optional(),
-}).superRefine((input, ctx) => {
+  section_c: sectionCSchema.nullable(),
+}).strict().superRefine((input, ctx) => {
   const partI = input.part_i;
   const citizen = input.expatriate_type === ExpatriateType.CITIZEN;
   if (
@@ -172,6 +154,19 @@ export const inputSchema = z.object({
       code: z.ZodIssueCode.custom,
       message: "Long-term residents cannot claim U.S. citizenship acquisition",
       path: ["part_i", "us_citizenship_acquisition"],
+    });
+  }
+  if (
+    citizen && partI.us_citizenship_acquisition !== "NATURALIZATION" &&
+    input.section_c?.mark_to_market_assets.some((asset) =>
+      asset.basis_irrevocable_election_h2
+    )
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message:
+        "Section 877A(h)(2) basis election requires naturalization or long-term resident status",
+      path: ["section_c", "mark_to_market_assets"],
     });
   }
   const citizenshipCountryCodes = partI.citizenships.map((row) =>

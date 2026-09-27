@@ -1117,10 +1117,20 @@ unregistered XML builder emits the form lines and native itemized statements for
 partnership interests, owned and nongrantor trusts, other assets, and other
 liabilities. Line 5a is checked as a subset of line 5 and excluded from line 20.
 These category values remain entered assertions without independent valuation
-evidence. Annual statement facts, exception source corroboration, excluded asset
-classes, property-character gain/loss routing, deferral, remaining statements,
-PDF, complete MeF serialization, source reconciliation, and IRS business rules
-remain open. The calculation and rejection cases are written but unrun. See the
+evidence. Section C now has a separate, complete-inventory-confirmed source
+object for mark-to-market property, eligible and ineligible deferred
+compensation, specified tax-deferred accounts, and nongrantor trust interests.
+The old flat `assets` input is rejected. An unregistered Section C builder emits
+the ordered property rows, excluded-item indicators, totals, and native
+statements, and refuses to serialize over 20 property rows because the MeF
+schema has no demonstrated continuation path. It also requires a linked
+computation statement for property rows. These declarations do not yet prove
+that the deemed gains, losses, compensation, and account amounts are present on
+the correct income forms, so filing remains blocked. Annual statement facts,
+exception source corroboration, property-character gain/loss routing, deferral,
+remaining statements, PDF, complete MeF serialization, source reconciliation,
+and IRS business rules remain open. The calculation and rejection cases are
+written but unrun. See the
 [2025 Form 8854 instructions](https://www.irs.gov/instructions/i8854).
 
 ## Registered Form 1040 MeF documents to audit

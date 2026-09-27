@@ -21,6 +21,11 @@ import {
 } from "./index.ts";
 import { allocateMarkToMarketExclusion } from "./mark-to-market.ts";
 import { calculateBalanceSheet } from "./balance-sheet.ts";
+import { NongrantorTrustTreatment, ReportedFormCode } from "./section-c.ts";
+import {
+  buildForm8854SectionC,
+  buildForm8854SectionCStatements,
+} from "../../../2025/mef/forms/f8854_section_c.ts";
 
 function asset(
   assetId: string,
@@ -28,10 +33,24 @@ function asset(
   basis: number,
 ) {
   return {
-    asset_id: assetId,
+    item_id: assetId,
     description: `Property ${assetId}`,
-    fmv_at_expatriation: fmv,
-    basis,
+    fmv_day_before_expatriation: fmv,
+    us_adjusted_basis: basis,
+    basis_irrevocable_election_h2: false,
+    reported_form_code: ReportedFormCode.Form8949,
+    reported_transaction_id: `TX-${assetId}`,
+  };
+}
+
+function sectionC(markToMarketAssets: ReturnType<typeof asset>[] = []) {
+  return {
+    property_inventory_confirmed_complete: true,
+    mark_to_market_assets: markToMarketAssets,
+    eligible_deferred_compensation: [],
+    ineligible_deferred_compensation: [],
+    specified_tax_deferred_accounts: [],
+    nongrantor_trust_interests: [],
   };
 }
 
@@ -59,6 +78,7 @@ function input(overrides: Record<string, unknown> = {}) {
     significant_asset_liability_changes_prior_5_years: false,
     prior_year_us_income_tax_less_foreign_tax_credit: priorYearTax(0),
     balance_sheet: balanceSheetWithNetWorth(0),
+    section_c: null,
     certified_tax_compliance: true,
     ...overrides,
   };
@@ -298,25 +318,25 @@ Deno.test("Form 8854 validates its source date and asset amounts", () => {
   );
   assertEquals(
     inputSchema.safeParse(input({
-      assets: [asset("A", -1, 0)],
+      section_c: sectionC([asset("A", -1, 0)]),
     })).success,
     false,
   );
   assertEquals(
     inputSchema.safeParse(input({
-      assets: [asset("A", 1, -1)],
+      section_c: sectionC([asset("A", 1, -1)]),
     })).success,
     false,
   );
   assertEquals(
     inputSchema.safeParse(input({
-      assets: [asset("A", 1.001, 0)],
+      section_c: sectionC([asset("A", 1.001, 0)]),
     })).success,
     false,
   );
   assertEquals(
     inputSchema.safeParse(input({
-      assets: [asset("A", 1, 0), asset("A", 2, 0)],
+      section_c: sectionC([asset("A", 1, 0), asset("A", 2, 0)]),
     })).success,
     false,
   );
@@ -761,6 +781,174 @@ Deno.test("Form 8854 rejects duplicate asset IDs and invalid precision", () => {
   );
 });
 
+Deno.test("Form 8854 Section C separates excluded items and links native statements", () => {
+  const section = {
+    ...sectionC([asset("stock", 1_000_000, 100_000)]),
+    eligible_deferred_compensation: [{
+      item_id: "eligible",
+      description: "Eligible plan",
+      payor_eligible_under_877a_d1: true,
+      w8ce_payor_notification_confirmed: true,
+      irrevocable_treaty_waiver_confirmed: true,
+    }],
+    ineligible_deferred_compensation: [{
+      item_id: "ineligible",
+      description: "Ineligible plan",
+      present_value_day_before_expatriation: 10_000,
+      reported_transaction_id: "TX-INELIGIBLE",
+    }],
+    specified_tax_deferred_accounts: [{
+      item_id: "account",
+      description: "IRA",
+      entire_account_balance_day_before_expatriation: 20_000,
+      reported_transaction_id: "TX-IRA",
+    }],
+    nongrantor_trust_interests: [{
+      item_id: "trust",
+      description: "Trust interest",
+      treatment: NongrantorTrustTreatment.TreatyWaiver,
+    }],
+  };
+  const parsed = inputSchema.parse(input({
+    balance_sheet: balanceSheetWithNetWorth(2_000_000),
+    section_c: section,
+  }));
+  assertThrows(() => buildForm8854SectionC(parsed), Error, "linked statement");
+  const xml = buildForm8854SectionC(parsed, {
+    eligibleDeferredCompensation: "DOC-EDC",
+    ineligibleDeferredCompensation: "DOC-IDC",
+    specifiedTaxDeferredAccounts: "DOC-STDA",
+    nongrantorTrust: "DOC-NGT",
+    computation: "DOC-COMP",
+  });
+  assertStringIncludes(xml, "<EligibleDeferredCompItemsInd");
+  assertStringIncludes(xml, "<NongrantorTrustInterestInd");
+  assertStringIncludes(xml, "<GainOrLossAmt>900000</GainOrLossAmt>");
+  assertStringIncludes(
+    xml,
+    '<GainAfterAllocationExclAmt referenceDocumentId="DOC-COMP"',
+  );
+  assertStringIncludes(
+    xml,
+    "<FormOrSchGainAssetReportedCd>F8949</FormOrSchGainAssetReportedCd>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotGainAfterAllocationExclAmt>10000</TotGainAfterAllocationExclAmt>",
+  );
+  const statements = buildForm8854SectionCStatements(parsed.section_c!);
+  assertStringIncludes(
+    statements.eligibleDeferredCompensation,
+    "<EligDeferredCompItemStmt>",
+  );
+  assertStringIncludes(
+    statements.ineligibleDeferredCompensation,
+    "<Amt>10000</Amt>",
+  );
+  assertStringIncludes(
+    statements.specifiedTaxDeferredAccounts,
+    "<Amt>20000</Amt>",
+  );
+  assertStringIncludes(
+    statements.nongrantorTrust,
+    "<NongrantorTrustStatement>",
+  );
+  assertStringIncludes(
+    statements.computation,
+    "<ExclusionCalculationAmt>890000</ExclusionCalculationAmt>",
+  );
+});
+
+Deno.test("Form 8854 Section C rejects unsupported ownership and absent covered facts", () => {
+  assertEquals(
+    inputSchema.safeParse(input({
+      assets: [asset("legacy", 1, 0)],
+    })).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse(input({
+      section_c: {
+        ...sectionC(),
+        property_inventory_confirmed_complete: false,
+      },
+    })).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse(input({
+      section_c: sectionC([{
+        ...asset("stock", 1, 0),
+        basis_irrevocable_election_h2: true,
+      }]),
+    })).success,
+    false,
+  );
+  assertThrows(
+    () =>
+      buildForm8854SectionC(inputSchema.parse(input({
+        balance_sheet: balanceSheetWithNetWorth(2_000_000),
+      }))),
+    Error,
+    "require Form 8854 Section C",
+  );
+  assertThrows(
+    () =>
+      buildForm8854SectionC(inputSchema.parse(input({
+        section_c: sectionC(),
+      }))),
+    Error,
+    "only for covered expatriates",
+  );
+  assertThrows(
+    () =>
+      buildForm8854SectionC(
+        inputSchema.parse(input({
+          balance_sheet: balanceSheetWithNetWorth(2_000_000),
+          section_c: sectionC(
+            Array.from(
+              { length: 21 },
+              (_, index) => asset(String(index), 1, 0),
+            ),
+          ),
+        })),
+        { computation: "DOC-COMP" },
+      ),
+    Error,
+    "at most 20 property rows",
+  );
+});
+
+Deno.test("Form 8854 Section C XML uses consistent whole-dollar property math", () => {
+  const parsed = inputSchema.parse(input({
+    balance_sheet: balanceSheetWithNetWorth(2_000_000),
+    section_c: sectionC([
+      asset("one", 1_000_000.51, 100_000.49),
+      asset("two", 20.51, 10.49),
+    ]),
+  }));
+  const xml = buildForm8854SectionC(parsed, { computation: "DOC-COMP" });
+  assertStringIncludes(
+    xml,
+    "<FairMarketValueDayBfrExptrtAmt>1000001</FairMarketValueDayBfrExptrtAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<CostOrOtherBasisAmt>100000</CostOrOtherBasisAmt>",
+  );
+  assertStringIncludes(xml, "<GainOrLossAmt>900001</GainOrLossAmt>");
+  assertStringIncludes(xml, "<TotalGainOrLossAmt>900012</TotalGainOrLossAmt>");
+  assertStringIncludes(
+    xml,
+    "<TotGainAfterAllocationExclAmt>10012</TotGainAfterAllocationExclAmt>",
+  );
+  const statements = buildForm8854SectionCStatements(parsed.section_c!);
+  assertStringIncludes(
+    statements.computation,
+    "<TotalBuiltInGainAmt>900012</TotalBuiltInGainAmt>",
+  );
+});
+
 Deno.test("Form 8854 does not turn deemed gain into a dollar-for-dollar Schedule 2 tax", () => {
   assertThrows(
     () =>
@@ -768,7 +956,7 @@ Deno.test("Form 8854 does not turn deemed gain into a dollar-for-dollar Schedule
         { taxYear: 2025, formType: "f1040" },
         inputSchema.parse(input({
           balance_sheet: balanceSheetWithNetWorth(2_000_000),
-          assets: [asset("A", 2_000_000, 500_000)],
+          section_c: sectionC([asset("A", 2_000_000, 500_000)]),
         })),
       ),
     Error,

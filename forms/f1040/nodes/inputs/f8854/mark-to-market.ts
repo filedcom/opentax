@@ -1,7 +1,8 @@
-import type { z } from "zod";
-import { assetSchema, MARK_TO_MARKET_EXCLUSION_2025 } from "./index.ts";
-
-type Asset = z.infer<typeof assetSchema>;
+import { MARK_TO_MARKET_EXCLUSION_2025 } from "./index.ts";
+import {
+  type MarkToMarketAsset,
+  markToMarketAssetSchema,
+} from "./section-c.ts";
 
 export type MarkToMarketAssetAllocation = {
   assetId: string;
@@ -16,20 +17,20 @@ export type MarkToMarketAssetAllocation = {
 // eventual statement and income-form routing. It does not decide whether a
 // built-in loss is deductible or whether an asset is subject to mark-to-market.
 export function allocateMarkToMarketExclusion(
-  rawAssets: readonly Asset[],
+  rawAssets: readonly MarkToMarketAsset[],
 ): MarkToMarketAssetAllocation[] {
-  const assets = rawAssets.map((asset) => assetSchema.parse(asset));
+  const assets = rawAssets.map((asset) => markToMarketAssetSchema.parse(asset));
   const ids = new Set<string>();
   for (const asset of assets) {
-    if (ids.has(asset.asset_id)) {
-      throw new Error(`Duplicate Form 8854 asset ID: ${asset.asset_id}`);
+    if (ids.has(asset.item_id)) {
+      throw new Error(`Duplicate Form 8854 asset ID: ${asset.item_id}`);
     }
-    ids.add(asset.asset_id);
+    ids.add(asset.item_id);
   }
 
   const gainsCents = assets.map((asset) =>
-    Math.round(asset.fmv_at_expatriation * 100) -
-    Math.round(asset.basis * 100)
+    Math.round(asset.fmv_day_before_expatriation * 100) -
+    Math.round(asset.us_adjusted_basis * 100)
   );
   const positiveCents = gainsCents.map((gain) => Math.max(gain, 0));
   const totalPositiveCents = positiveCents.reduce((sum, gain) => sum + gain, 0);
@@ -68,7 +69,7 @@ export function allocateMarkToMarketExclusion(
   }
 
   return assets.map((asset, index) => ({
-    assetId: asset.asset_id,
+    assetId: asset.item_id,
     description: asset.description,
     builtInGainOrLoss: gainsCents[index] / 100,
     exclusionAllocated: allocatedCents[index] / 100,
