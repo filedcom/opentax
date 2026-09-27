@@ -6,6 +6,7 @@ import { buildStartNode } from "../../2025/start.ts";
 import { agi_aggregator } from "../../nodes/intermediate/aggregation/agi_aggregator/index.ts";
 import { schedule1a } from "../../nodes/intermediate/forms/schedule1a/index.ts";
 import { form4137 } from "../../nodes/intermediate/forms/form4137/index.ts";
+import { schedule2 } from "../../nodes/intermediate/aggregation/schedule2/index.ts";
 import { w2, w2ItemSchema } from "../../nodes/inputs/w2/index.ts";
 import { income_tax_calculation } from "../../nodes/intermediate/worksheets/income_tax_calculation/index.ts";
 import { FilingStatus } from "../../nodes/types.ts";
@@ -333,6 +334,7 @@ Deno.test("2026 W-2 TP and Form 4137 use larger employer tips once", () => {
     start,
     w2,
     form4137,
+    schedule2,
     agi_aggregator,
     schedule1a,
     standard_deduction: standard_deduction_2026,
@@ -375,4 +377,7 @@ Deno.test("2026 W-2 TP and Form 4137 use larger employer tips once", () => {
   assertEquals(result.pending.f1040.line1c_unreported_tips, 2_000);
   assertEquals(result.pending.f1040.line11a_agi, 72_000);
   assertEquals(result.pending.f1040.line13a_schedule1a, 5_000);
+  assertEquals(result.pending.schedule2.line5_unreported_tip_tax, 153);
+  assertEquals(result.pending.f1040.line23_other_taxes, 153);
+  assertEquals(result.pending.f1040.line24a_total_tax, 6_063);
 });

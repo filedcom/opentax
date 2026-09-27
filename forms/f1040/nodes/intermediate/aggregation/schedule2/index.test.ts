@@ -124,10 +124,14 @@ Deno.test("routing: no output to f1040 when total is zero", () => {
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("routing: output key is exactly line23_other_taxes", () => {
+Deno.test("routing: Part II sends line23 and a zero Part I credit limit", () => {
   const result = compute({ uncollected_fica: 100 });
   const keys = Object.keys(fieldsOf(result.outputs, f1040)!);
-  assertEquals(keys, ["line23_other_taxes"]);
+  assertEquals(keys, ["line23_other_taxes", "credit_limit_schedule2_line1z"]);
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.credit_limit_schedule2_line1z,
+    0,
+  );
 });
 
 // ── Edge cases ───────────────────────────────────────────────────────────────

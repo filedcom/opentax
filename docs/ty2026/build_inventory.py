@@ -28,7 +28,8 @@ NODE_PROGRESS = {
     "form4562": "2026 caps configured; choose passenger-auto cap by placed-in-service year",
     "f1040": "dedicated 2026 node begun; expand upstream surface and finalizations",
     "schedule1a": "2026 line 13a, TP/4137 employer reconciliation, TT updated; audit remaining sources",
-    "form4137": "2026 employer tip sources route to Schedule 1-A; audit complete tax path",
+    "form4137": "2026 tips reach Schedule 1-A, income, Schedule 2 tax; audit other cases",
+    "schedule2": "2026 Form 4137 tip tax reaches 1040 in focused graph; audit other lines",
 }
 
 P0_NODES = {

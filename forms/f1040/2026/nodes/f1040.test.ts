@@ -59,6 +59,20 @@ Deno.test("TY2026 1040 assembles deductions, Form 1062, and payments", () => {
   );
 });
 
+Deno.test("TY2026 1040 rejects unfinalized Schedule 2 credit-limit tax", () => {
+  assertThrows(
+    () =>
+      f1040_2026_node.compute(context, {
+        filing_status: FilingStatus.Single,
+        line9_total_income: 80_000,
+        deduction_method: "standard",
+        credit_limit_schedule2_line1z: 100,
+      }),
+    Error,
+    "credit finalization path",
+  );
+});
+
 Deno.test("TY2026 1040 allocates refund and rejects declining a claimed EIC", () => {
   const base = {
     filing_status: FilingStatus.Single,
@@ -72,11 +86,16 @@ Deno.test("TY2026 1040 allocates refund and rejects declining a claimed EIC", ()
   assertEquals(f1040.fields.line34_overpayment, 2_000);
   assertEquals(f1040.fields.line35a_refund, 1_500);
   assertEquals(f1040.fields.line36_apply_to_2027, 500);
-  assertThrows(() => f1040_2026_node.compute(context, {
-    ...base,
-    line27a_eic: 100,
-    line27c_declines_eic: true,
-  }), Error, "cannot decline");
+  assertThrows(
+    () =>
+      f1040_2026_node.compute(context, {
+        ...base,
+        line27a_eic: 100,
+        line27c_declines_eic: true,
+      }),
+    Error,
+    "cannot decline",
+  );
 });
 
 Deno.test("TY2026 1040 emits Schedule 3-A and reduces a declined benefit", () => {

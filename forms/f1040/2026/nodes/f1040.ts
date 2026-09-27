@@ -31,6 +31,7 @@ export const inputSchema = z.object({
   qbi_deduction: amount.default(0),
   line16_income_tax: amount.default(0),
   line17_additional_taxes: amount.default(0),
+  credit_limit_schedule2_line1z: amount.default(0),
   line19_child_tax_credit: amount.default(0),
   line20_nonrefundable_credits: amount.default(0),
   line23_other_taxes: amount.default(0),
@@ -63,6 +64,11 @@ class F10402026Node extends TaxNode<typeof inputSchema> {
       throw new Error("TY2026 Form 1040 node requires f1040:2026 context");
     }
     const input = inputSchema.parse(rawInput);
+    if (input.credit_limit_schedule2_line1z > 0) {
+      throw new Error(
+        "TY2026 Schedule 2 credit-limit tax needs the 2026 credit finalization path",
+      );
+    }
     if (input.line27c_declines_eic && input.line27a_eic > 0) {
       throw new Error("Form 1040 line 27c cannot decline a claimed EIC");
     }

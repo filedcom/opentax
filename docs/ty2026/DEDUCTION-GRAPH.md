@@ -72,8 +72,8 @@ for review, then emit a single finalized set of form lines.
    employer using the draft's larger-of rule. Mixed or unverified occupations
    require an explicit qualified-tip amount; they are not inferred. W-2 TT
    and the line 43/44 output route also exist; TY2025 output names remain
-   pinned. The focused graph covers tip income and the deduction, but its
-   Schedule 2 tax branch is not yet part of a registered TY2026 return.
+   pinned. The focused graph covers tip income, Schedule 2 tip tax, and the
+   deduction through 1040. It is not yet a registered TY2026 return.
 3. Extract QBI form calculations as pure functions parameterized by actual
    pre-QBI taxable income. Audit Form 8995-A thresholds and every 2025 literal.
 4. Implement and test the joint resolver. It must decide standard plus 12f

@@ -49,8 +49,10 @@ addbacks remain to implement. W-2 box 12 TP/TT now supplies employee tip and
 overtime facts, with an end-to-end calculation-graph test. Form 4137 line 1(c)
 now joins W-2 TP by filer and employer; Schedule 1-A takes the larger amount
 per employer. Mixed occupations require an explicit qualified amount. The
-focused graph also carries unreported tip income to 1040; complete Schedule 2
-tip-tax wiring remains for the registered return.
+focused graph also carries unreported tip income and Schedule 2 tip tax to
+1040. The 2026 final node explicitly rejects nonzero Schedule 2 credit-limit
+tax until its credit finalization path is built. The full return remains to
+register.
 The shared AGI aggregator now emits a TY2026 income/adjustment pair to this
 node while retaining its TY2025 output contract. A graph test runs income
 facts → AGI → deduction choice → tax → 1040 and checks Social Security and

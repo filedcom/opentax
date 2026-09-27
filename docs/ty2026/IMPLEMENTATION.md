@@ -88,8 +88,10 @@ tips/overtime into Schedule 1-A and through the 1040 calculation graph, with
 the official 2026 W-2 instructions pinned in the corpus. W-2 TP and Form 4137
 line 1(c) now reconcile by filer and employer with the larger-of rule. Mixed
 occupations require an explicit qualified amount, and a focused graph test
-carries the resulting deduction and unreported tip income to 1040. Puerto
-Rico/Form 4563 MAGI addbacks and the complete Schedule 2 tip-tax path remain.
+carries the resulting deduction, unreported tip income, and Schedule 2 tip
+tax to 1040. Puerto Rico/Form 4563 MAGI addbacks remain. The TY2026 1040 node
+rejects a nonzero Schedule 2 credit-limit amount until the 2026 credit
+finalization path exists; it does not silently discard that upstream field.
 The shared Form 8839 node now splits the credit into refundable 1040 line 30
 and nonrefundable Schedule 3 amounts for both TY2025 and TY2026, using each
 year’s per-child cap and MAGI phaseout. It now consumes and emits nonrefundable

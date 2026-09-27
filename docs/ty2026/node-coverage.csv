@@ -134,7 +134,7 @@ eitc,forms/f1040/nodes/intermediate/forms/eitc/index.ts,intermediate,0,yes,yes,y
 form8962,forms/f1040/nodes/intermediate/forms/form8962/index.ts,intermediate,2,yes,yes,yes,yes,P0,audit-required,2026 percentage and repayment paths updated; verify final instructions
 form2441,forms/f1040/nodes/intermediate/forms/form2441/index.ts,intermediate,0,yes,yes,yes,yes,P2,audit-required,2026 benefit and credit rules updated; verify final instructions
 form2555,forms/f1040/nodes/intermediate/forms/form2555/index.ts,intermediate,1,yes,yes,yes,yes,P1,audit-required,"verify 2026 law, node outputs, and graph route"
-form4137,forms/f1040/nodes/intermediate/forms/form4137/index.ts,intermediate,0,yes,yes,yes,yes,P2,audit-required,2026 employer tip sources route to Schedule 1-A; audit complete tax path
+form4137,forms/f1040/nodes/intermediate/forms/form4137/index.ts,intermediate,0,yes,yes,yes,yes,P2,audit-required,"2026 tips reach Schedule 1-A, income, Schedule 2 tax; audit other cases"
 form4562,forms/f1040/nodes/intermediate/forms/form4562/index.ts,intermediate,8,yes,yes,yes,yes,P0,audit-required,2026 caps configured; choose passenger-auto cap by placed-in-service year
 form461,forms/f1040/nodes/intermediate/forms/form461/index.ts,intermediate,0,no,yes,yes,yes,P2,audit-required,"verify 2026 law, node outputs, and graph route"
 form4684,forms/f1040/nodes/intermediate/forms/form4684/index.ts,intermediate,3,no,yes,yes,yes,P1,audit-required,"verify 2026 law, node outputs, and graph route"
@@ -173,7 +173,7 @@ form_1116,forms/f1040/nodes/intermediate/forms/form_1116/index.ts,intermediate,0
 form_8829,forms/f1040/nodes/intermediate/forms/form_8829/index.ts,intermediate,6,no,yes,yes,yes,P0,audit-required,"verify 2026 law, node outputs, and graph route"
 ira_deduction_worksheet,forms/f1040/nodes/intermediate/worksheets/ira_deduction_worksheet/index.ts,intermediate,0,yes,no,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"
 rate_28_gain_worksheet,forms/f1040/nodes/intermediate/worksheets/rate_28_gain_worksheet/index.ts,intermediate,0,no,no,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"
-schedule2,forms/f1040/nodes/intermediate/aggregation/schedule2/index.ts,intermediate,2,no,yes,yes,yes,P0,audit-required,"verify 2026 law, node outputs, and graph route"
+schedule2,forms/f1040/nodes/intermediate/aggregation/schedule2/index.ts,intermediate,2,no,yes,yes,yes,P0,audit-required,2026 Form 4137 tip tax reaches 1040 in focused graph; audit other lines
 schedule3,forms/f1040/nodes/intermediate/aggregation/schedule3/index.ts,intermediate,0,no,yes,yes,yes,P0,audit-required,"verify 2026 law, node outputs, and graph route"
 schedule_b,forms/f1040/nodes/intermediate/aggregation/schedule_b/index.ts,intermediate,0,no,yes,yes,yes,P2,audit-required,"verify 2026 law, node outputs, and graph route"
 schedule_d,forms/f1040/nodes/intermediate/aggregation/schedule_d/index.ts,intermediate,0,no,yes,yes,yes,P2,audit-required,"verify 2026 law, node outputs, and graph route"
