@@ -38,6 +38,14 @@ Deno.test("Schedule A (Form 4136) has exact 2025 page and widget paths", () => {
     "topmostSubform[0].Page2[0].Line6Table[0].Line6a[0].ColE[0].f2_46[0]",
   );
   assertEquals(
+    names.line6b_quantity,
+    "topmostSubform[0].Page2[0].Line6Table[0].Line6b[0].f2_50[0]",
+  );
+  assertEquals(
+    names.line6b_credit_dollars,
+    "topmostSubform[0].Page2[0].Line6Table[0].Line6b[0].ColE[0].f2_53[0]",
+  );
+  assertEquals(
     names.line11h_quantity,
     "topmostSubform[0].Page3[0].Line11Table[0].Line11h[0].f3_87[0]",
   );
@@ -70,6 +78,64 @@ Deno.test("Schedule A (Form 4136) has exact 2025 page and widget paths", () => {
     "topmostSubform[0].Page4[0].Line16Table[0].Line16b[0].f4_33[0]",
   );
   assertEquals(names.line17_total_cents, "topmostSubform[0].Page4[0].f4_40[0]");
+});
+
+Deno.test("Schedule A (Form 4136) keeps vendor bus line 6b on its activity", () => {
+  const projected = form4136ScheduleAPdf.projectFields?.({
+    claimant_context: "business",
+    business: {
+      qualifying_business_activity: true,
+      business_name: "Example Bus Fuel Vendor",
+      principal_activity_code: "457100",
+      equipment_make: "Example",
+      equipment_model: "Pump",
+      equipment_type: "diesel dispenser",
+      sales_records_confirmed: true,
+      no_duplicate_excise_claim: true,
+    },
+    claims: [{
+      line: "6b",
+      unit: "gallons",
+      qualified_quantity: 1_000,
+      actual_fuel_cost: 2_500,
+      undyed_fuel_confirmed: true,
+      vendor_registration_number: "UB123456789",
+      vendor_tax_settlement: "tax_excluded_price",
+      intercity_local_bus_sales: [{
+        sale_date: "2025-03-15",
+        buyer_name: "Example Bus Operator",
+        buyer_address: "10 Transit Lane, Wilmington, DE 19801",
+        gallons: 1_000,
+        certain_intercity_or_local_bus_use_confirmed: true,
+        waiver_n: {
+          kind: "single_purchase",
+          record_reference: "Waiver N-001",
+          invoice_or_delivery_ticket_number: "INV-001",
+          waived_gallons: 1_000,
+          signed_by_buyer_confirmed: true,
+          held_unexpired_when_claimed_confirmed: true,
+        },
+      }],
+    }],
+    additional_activities: [{
+      business,
+      claims: [{
+        line: "1a",
+        unit: "gallons",
+        qualified_quantity: 100,
+        actual_fuel_cost: 300,
+        not_highway_vehicle: true,
+        not_noncommercial_motorboat: true,
+      }],
+    }],
+    primary_activity_has_most_credit: true,
+  }, {});
+  const instances = form4136ScheduleAPdf.instances?.(projected ?? {}) ?? [];
+  assertEquals(instances.length, 2);
+  assertEquals(instances[0].line6_registration_number, "UB123456789");
+  assertEquals(instances[0].line6b_quantity, 1_000);
+  assertEquals(instances[0].line6b_credit_dollars, "170");
+  assertEquals(instances[1].line6b_quantity, undefined);
 });
 
 Deno.test("Schedule A (Form 4136) keeps blender line 15a on its activity", () => {

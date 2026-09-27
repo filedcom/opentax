@@ -236,6 +236,140 @@ Deno.test("Form 4136: registered blender line 15a uses taxed input diesel gallon
   );
 });
 
+Deno.test("Form 4136: registered vendor line 6b reconciles bus sales and Model Waiver N", () => {
+  const vendorBusiness = {
+    qualifying_business_activity: true,
+    business_name: "Example Bus Fuel Vendor",
+    principal_activity_code: "457100",
+    equipment_make: "Example",
+    equipment_model: "Pump",
+    equipment_type: "diesel dispenser",
+    sales_records_confirmed: true,
+    no_duplicate_excise_claim: true,
+  } as const;
+  const singleSale = {
+    sale_date: "2025-03-15",
+    buyer_name: "Example Bus Operator",
+    buyer_address: "10 Transit Lane, Wilmington, DE 19801",
+    gallons: 600,
+    certain_intercity_or_local_bus_use_confirmed: true as const,
+    waiver_n: {
+      kind: "single_purchase" as const,
+      record_reference: "Waiver N-001",
+      invoice_or_delivery_ticket_number: "INV-001",
+      waived_gallons: 600,
+      signed_by_buyer_confirmed: true as const,
+      held_unexpired_when_claimed_confirmed: true as const,
+    },
+  };
+  const accountSale = {
+    ...singleSale,
+    sale_date: "2025-07-15",
+    gallons: 400,
+    waiver_n: {
+      kind: "account_period" as const,
+      record_reference: "Waiver N-002",
+      account_or_order_number: "BUS-2025",
+      effective_date: "2025-07-01",
+      expiration_date: "2026-06-30",
+      signed_by_buyer_confirmed: true as const,
+      held_unexpired_when_claimed_confirmed: true as const,
+    },
+  };
+  const claim = {
+    line: "6b" as const,
+    unit: "gallons" as const,
+    qualified_quantity: 1_000,
+    actual_fuel_cost: 2_500,
+    undyed_fuel_confirmed: true as const,
+    vendor_registration_number: "UB123456789",
+    vendor_tax_settlement: "tax_excluded_price" as const,
+    intercity_local_bus_sales: [singleSale, accountSale],
+  };
+  assertEquals(
+    parseInput({ business: vendorBusiness, claims: [claim] }).success,
+    true,
+  );
+  assertEquals(
+    compute({ business: vendorBusiness, claims: [claim] }).outputs[0].fields
+      .line12_fuel_tax_credit,
+    170,
+  );
+  for (
+    const invalidClaim of [
+      { ...claim, vendor_registration_number: "UV123456789" },
+      { ...claim, vendor_tax_settlement: undefined },
+      { ...claim, intercity_local_bus_sales: [singleSale] },
+      {
+        ...claim,
+        intercity_local_bus_sales: [{
+          ...singleSale,
+          certain_intercity_or_local_bus_use_confirmed: undefined,
+        }, accountSale],
+      },
+      {
+        ...claim,
+        intercity_local_bus_sales: [{
+          ...singleSale,
+          waiver_n: { ...singleSale.waiver_n, waived_gallons: 599 },
+        }, accountSale],
+      },
+      {
+        ...claim,
+        intercity_local_bus_sales: [{
+          ...singleSale,
+          waiver_n: {
+            ...singleSale.waiver_n,
+            held_unexpired_when_claimed_confirmed: undefined,
+          },
+        }, accountSale],
+      },
+      {
+        ...claim,
+        intercity_local_bus_sales: [singleSale, {
+          ...accountSale,
+          waiver_n: { ...accountSale.waiver_n, expiration_date: "2025-07-14" },
+        }],
+      },
+      {
+        ...claim,
+        intercity_local_bus_sales: [singleSale, {
+          ...accountSale,
+          waiver_n: { ...accountSale.waiver_n, expiration_date: "2026-07-02" },
+        }],
+      },
+    ]
+  ) {
+    assertEquals(
+      parseInput({ business: vendorBusiness, claims: [invalidClaim] }).success,
+      false,
+    );
+  }
+  assertEquals(
+    parseInput({
+      business: { ...vendorBusiness, sales_records_confirmed: undefined },
+      claims: [claim],
+    }).success,
+    false,
+  );
+  assertEquals(
+    parseInput({
+      business: vendorBusiness,
+      claims: [claim],
+      additional_activities: [{
+        business: vendorBusiness,
+        claims: [{
+          ...claim,
+          qualified_quantity: 600,
+          vendor_registration_number: "UB987654321",
+          intercity_local_bus_sales: [singleSale],
+        }],
+      }],
+    }).success,
+    false,
+  );
+});
+
 Deno.test("Form 4136: represented 2025 Part II rates are line-specific", () => {
   const cases = [
     ["1a", undefined, 18.3],

@@ -300,7 +300,11 @@ an IRS-issued UV registration number, tax-settlement method, certificate P
 records, named government buyers, and gallon reconciliation. Its separate
 government-buyer MeF statement and page-2 PDF fields are built, with source,
 XML, PDF, and XSD cases written but unrun. The filled PDF and IRS business rules
-are not verified; line 6b and lines 7-8 remain open.
+are not verified. Line 6b now has a separate UB-registered vendor route with
+reconciled bus-sale records and invoice-specific or account-period Model Waiver
+N facts. The $.17 credit maps to native XML and both PDFs, and conflicting
+registrations on the form's shared line 6 field are rejected. Its source, XML,
+PDF, and local XSD cases are written but unrun; lines 7-8 remain open.
 Diesel-water emulsion lines 14a and 14b now have ultimate-purchaser source
 facts, the standard and reduced bus-use rates, export-proof validation, MeF
 groups, and parent/Schedule A PDF fields. Source, XML, PDF, and XSD cases are

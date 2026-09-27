@@ -172,6 +172,7 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
     const l5d = onLine(input, "5d");
     const l5e = onLine(input, "5e");
     const l6a = onLine(input, "6a");
+    const l6b = onLine(input, "6b");
     const l14a = onLine(input, "14a");
     const l14b = onLine(input, "14b");
     const l15a = onLine(input, "15a");
@@ -401,13 +402,20 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
         ]),
         element(
           "UndyedDieselRegistrationNum",
-          l6a[0]?.vendor_registration_number,
+          [...l6a, ...l6b][0]?.vendor_registration_number,
         ),
         elements("SlsUndyedDslStLclGovtGrp", [
           element("SlsUndyedDslStLclGovtGalsQty", qty(l6a)),
           l6a.length ? element("ActualFuelCostAmt", cost(l6a)) : "",
           l6a.length
             ? credit("SlsUndyedDslUseStLclGovtCrAmt", lineAmount(l6a), "360")
+            : "",
+        ]),
+        elements("SlsUndyedDieselUseBusesGrp", [
+          element("SlsUndyedDieselUseBusGalsQty", qty(l6b)),
+          l6b.length ? element("ActualFuelCostAmt", cost(l6b)) : "",
+          l6b.length
+            ? credit("SlsUndyedDieselUseBusCrAmt", lineAmount(l6b), "350")
             : "",
         ]),
         ...alternativeFuelTags.flatMap(

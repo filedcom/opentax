@@ -33,6 +33,7 @@ export const FORM4136_RATES = {
   "5d": 0.218,
   "5e": 0.001,
   "6a": 0.243,
+  "6b": 0.17,
   "11a": 0.183,
   "11b": 0.183,
   "11c": 0.183,
@@ -86,6 +87,7 @@ const fuelLine = z.enum([
   "5d",
   "5e",
   "6a",
+  "6b",
   "11a",
   "11b",
   "11c",
@@ -119,6 +121,25 @@ const saleDate = z.string().refine((value) => {
   return !Number.isNaN(date.getTime()) &&
     date.toISOString().slice(0, 10) === value;
 }, "Invalid sale date");
+const modelWaiverN = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("single_purchase"),
+    record_reference: z.string().trim().min(1),
+    invoice_or_delivery_ticket_number: z.string().trim().min(1),
+    waived_gallons: z.number().int().positive(),
+    signed_by_buyer_confirmed: z.literal(true),
+    held_unexpired_when_claimed_confirmed: z.literal(true),
+  }),
+  z.object({
+    kind: z.literal("account_period"),
+    record_reference: z.string().trim().min(1),
+    account_or_order_number: z.string().trim().min(1),
+    effective_date: saleDate,
+    expiration_date: saleDate,
+    signed_by_buyer_confirmed: z.literal(true),
+    held_unexpired_when_claimed_confirmed: z.literal(true),
+  }),
+]);
 const allowedUseCodes: Partial<
   Record<z.infer<typeof fuelLine>, readonly string[]>
 > = {
@@ -181,6 +202,14 @@ export const fuelClaimSchema = z.object({
     certificate_p_record_reference: z.string().trim().min(1),
     certificate_information_believed_true: z.literal(true),
     exclusive_government_use_confirmed: z.literal(true),
+  })).min(1).optional(),
+  intercity_local_bus_sales: z.array(z.object({
+    sale_date: saleDate,
+    buyer_name: z.string().trim().min(1),
+    buyer_address: z.string().trim().min(1),
+    gallons: z.number().int().positive(),
+    certain_intercity_or_local_bus_use_confirmed: z.literal(true),
+    waiver_n: modelWaiverN,
   })).min(1).optional(),
   emulsion_water_percentage: z.number().finite().min(14).max(100).optional(),
   emulsion_epa_additive_record_reference: z.string().trim().min(1).max(100)
@@ -254,6 +283,91 @@ const activitySchema = z.object({
         ctx.addIssue({
           code: "custom",
           message: "Form 4136 line 6a needs confirmed sales records",
+          path: ["business", "sales_records_confirmed"],
+        });
+      }
+    } else if (claim.line === "6b") {
+      if (!/^UB[A-Z0-9]{1,18}$/.test(claim.vendor_registration_number ?? "")) {
+        ctx.addIssue({
+          code: "custom",
+          message:
+            "Form 4136 line 6b needs an IRS-issued UB registration number",
+          path: ["claims", index, "vendor_registration_number"],
+        });
+      }
+      if (!claim.vendor_tax_settlement) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Form 4136 line 6b needs the vendor tax-settlement method",
+          path: ["claims", index, "vendor_tax_settlement"],
+        });
+      }
+      if (
+        !claim.intercity_local_bus_sales?.length ||
+        claim.intercity_local_bus_sales.reduce(
+            (sum, sale) => sum + sale.gallons,
+            0,
+          ) !== claim.qualified_quantity
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          message:
+            "Form 4136 line 6b bus sales must reconcile to claimed gallons",
+          path: ["claims", index, "intercity_local_bus_sales"],
+        });
+      }
+      for (
+        const [saleIndex, sale] of (
+          claim.intercity_local_bus_sales ?? []
+        ).entries()
+      ) {
+        const waiver = sale.waiver_n;
+        if (waiver.kind === "single_purchase") {
+          if (waiver.waived_gallons !== sale.gallons) {
+            ctx.addIssue({
+              code: "custom",
+              message:
+                "Form 4136 line 6b single-purchase waiver gallons must match the sale",
+              path: [
+                "claims",
+                index,
+                "intercity_local_bus_sales",
+                saleIndex,
+                "waiver_n",
+              ],
+            });
+          }
+        } else {
+          const latestExpiration = new Date(
+            `${waiver.effective_date}T00:00:00.000Z`,
+          );
+          latestExpiration.setUTCFullYear(
+            latestExpiration.getUTCFullYear() + 1,
+          );
+          if (
+            waiver.effective_date > sale.sale_date ||
+            sale.sale_date > waiver.expiration_date ||
+            waiver.expiration_date > latestExpiration.toISOString().slice(0, 10)
+          ) {
+            ctx.addIssue({
+              code: "custom",
+              message:
+                "Form 4136 line 6b account waiver must cover the sale and last no longer than one year",
+              path: [
+                "claims",
+                index,
+                "intercity_local_bus_sales",
+                saleIndex,
+                "waiver_n",
+              ],
+            });
+          }
+        }
+      }
+      if (input.business.sales_records_confirmed !== true) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Form 4136 line 6b needs confirmed sales records",
           path: ["business", "sales_records_confirmed"],
         });
       }
@@ -390,6 +504,7 @@ const activitySchema = z.object({
           "4e",
           "4f",
           "6a",
+          "6b",
           "15a",
         ]
           .includes(claim.line)
@@ -591,6 +706,18 @@ export const inputSchema = z.discriminatedUnion("claimant_context", [
     ctx.addIssue({
       code: "custom",
       message: "Form 4136 line 15 has one registration-number field",
+      path: ["claims"],
+    });
+  }
+  const line6Registrations = new Set(
+    activities.flatMap((activity) => activity.claims)
+      .filter((claim) => claim.line === "6a" || claim.line === "6b")
+      .map((claim) => claim.vendor_registration_number),
+  );
+  if (line6Registrations.size > 1) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Form 4136 line 6 has one registration-number field",
       path: ["claims"],
     });
   }

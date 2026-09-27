@@ -308,6 +308,59 @@ Deno.test({
 });
 
 Deno.test({
+  name: "XSD: Form 4136 registered vendor line 6b bus sales validate",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const xml = buildMefXml({
+    f1040: { line31_additional_payments: 170 },
+    schedule3: { line12_fuel_tax_credit: 170, line15_total: 170 },
+    f4136: {
+      claimant_context: "business",
+      additional_activities: [],
+      primary_activity_has_most_credit: true,
+      business: {
+        qualifying_business_activity: true,
+        business_name: "Example Bus Fuel Vendor",
+        principal_activity_code: "457100",
+        equipment_make: "Example",
+        equipment_model: "Pump",
+        equipment_type: "diesel dispenser",
+        sales_records_confirmed: true,
+        no_duplicate_excise_claim: true,
+      },
+      claims: [{
+        line: "6b",
+        unit: "gallons",
+        qualified_quantity: 1_000,
+        actual_fuel_cost: 2_500,
+        undyed_fuel_confirmed: true,
+        vendor_registration_number: "UB123456789",
+        vendor_tax_settlement: "tax_excluded_price",
+        intercity_local_bus_sales: [{
+          sale_date: "2025-03-15",
+          buyer_name: "Example Bus Operator",
+          buyer_address: "10 Transit Lane, Wilmington, DE 19801",
+          gallons: 1_000,
+          certain_intercity_or_local_bus_use_confirmed: true,
+          waiver_n: {
+            kind: "single_purchase",
+            record_reference: "Waiver N-001",
+            invoice_or_delivery_ticket_number: "INV-001",
+            waived_gallons: 1_000,
+            signed_by_buyer_confirmed: true,
+            held_unexpired_when_claimed_confirmed: true,
+          },
+        }],
+      }],
+    },
+  }, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(xml, "<SlsUndyedDieselUseBusesGrp>");
+  await validateXsd(xml, "Form 4136 registered vendor line 6b");
+});
+
+Deno.test({
   name:
     "XSD: Form 4136 exported dyed fuel and gasoline blendstock groups validate",
   sanitizeOps: false,

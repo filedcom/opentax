@@ -321,6 +321,61 @@ Deno.test("Form 4136 XML and buyer statement reconcile registered vendor line 6a
   assertStringIncludes(statement, "<GallonsBoughtQty>150</GallonsBoughtQty>");
 });
 
+Deno.test("Form 4136 XML maps registered vendor bus sales to line 6b", () => {
+  const vendor = {
+    ...activityContext,
+    business: {
+      qualifying_business_activity: true as const,
+      business_name: "Example Bus Fuel Vendor",
+      principal_activity_code: "457100",
+      equipment_make: "Example",
+      equipment_model: "Pump",
+      equipment_type: "diesel dispenser",
+      sales_records_confirmed: true as const,
+      no_duplicate_excise_claim: true as const,
+    },
+    claims: [{
+      line: "6b" as const,
+      unit: "gallons" as const,
+      qualified_quantity: 1_000,
+      actual_fuel_cost: 2_500,
+      undyed_fuel_confirmed: true as const,
+      vendor_registration_number: "UB123456789",
+      vendor_tax_settlement: "tax_excluded_price" as const,
+      intercity_local_bus_sales: [{
+        sale_date: "2025-03-15",
+        buyer_name: "Example Bus Operator",
+        buyer_address: "10 Transit Lane, Wilmington, DE 19801",
+        gallons: 1_000,
+        certain_intercity_or_local_bus_use_confirmed: true as const,
+        waiver_n: {
+          kind: "single_purchase" as const,
+          record_reference: "Waiver N-001",
+          invoice_or_delivery_ticket_number: "INV-001",
+          waived_gallons: 1_000,
+          signed_by_buyer_confirmed: true as const,
+          held_unexpired_when_claimed_confirmed: true as const,
+        },
+      }],
+    }],
+  };
+  const xml = form4136.build(vendor, {
+    pending: { schedule3: { line12_fuel_tax_credit: 170 } },
+  });
+  assertStringIncludes(
+    xml,
+    "<UndyedDieselRegistrationNum>UB123456789</UndyedDieselRegistrationNum>",
+  );
+  assertStringIncludes(
+    xml,
+    "<SlsUndyedDieselUseBusGalsQty>1000</SlsUndyedDieselUseBusGalsQty>",
+  );
+  assertStringIncludes(
+    xml,
+    '<SlsUndyedDieselUseBusCrAmt creditReferenceNum="350">170</SlsUndyedDieselUseBusCrAmt>',
+  );
+});
+
 Deno.test("Form 4136 XML separates other-use and exported gasoline", () => {
   const xml = form4136.build({
     ...activityContext,

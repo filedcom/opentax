@@ -49,10 +49,14 @@ function fieldPath(p: number, n: number): string {
         : n >= 22 && n <= 23 || n >= 30 && n <= 31
         ? "ColE"
         : "";
-    } else if (n >= 42 && n <= 48) {
+    } else if (n >= 42 && n <= 55) {
       table = "Line6Table";
-      line = "Line6a";
-      column = n >= 44 && n <= 45 ? "ColD" : n >= 46 && n <= 47 ? "ColE" : "";
+      line = n <= 48 ? "Line6a" : "Line6b";
+      column = n >= 44 && n <= 45 || n >= 51 && n <= 52
+        ? "ColD"
+        : n >= 46 && n <= 47 || n >= 53 && n <= 54
+        ? "ColE"
+        : "";
     }
   } else if (p === 3 && n >= 29 && n <= 92) {
     table = "Line11Table";
@@ -150,6 +154,9 @@ const fields: PdfFieldEntry[] = [
   text("line6a_quantity", 2, 43),
   ...money("line6a_cost", 2, 44),
   ...money("line6a_credit", 2, 46),
+  text("line6b_quantity", 2, 50),
+  ...money("line6b_cost", 2, 51),
+  ...money("line6b_credit", 2, 53),
   ...line11.flatMap((line, index) => {
     const base = 29 + index * 8;
     return [

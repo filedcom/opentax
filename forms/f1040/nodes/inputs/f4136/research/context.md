@@ -29,8 +29,16 @@ purchaser. Each government sale has a date, buyer name/EIN, gallons, and
 retained Model Certificate P reference. The sales total must equal the claim;
 the IRS-issued UV registration, tax-settlement method, undyed fuel, and sales
 records are required. The government-buyer MeF statement and PDF continuation
-are emitted from those rows. This route is unrun and awaits IRS business-rule
-review; other vendor lines remain open.
+are emitted from those rows. Line 6b is a separate UB-registered vendor route
+for undyed diesel sold for certain intercity and local buses. It requires sale
+date, buyer name/address, gallons, tax-settlement and sales records, and a
+signed, unexpired Model Waiver N retained for each sale. The waiver can be
+invoice-specific or cover an account for no more than one year. Its gallons
+reconcile to the claim, and the native XML and both PDF forms map the $.17
+line 6b credit. The two line 6 routes cannot carry conflicting registrations
+because the printed form has one shared field. Source, XML, PDF, and local XSD
+cases are written but unrun; neither filled PDF nor IRS business rules have
+been verified. Vendor lines 7-8 remain open.
 Line 14a accepts the 2025 use codes for diesel-water emulsion and applies
 the reduced $.124 rate only to bus use (type 05); line 14b uses the export
 rate and requires retained proof. Both require the emulsion's water percentage

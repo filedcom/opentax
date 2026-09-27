@@ -62,6 +62,7 @@ const creditReferenceNumber: Record<Line, string> = {
   "5d": "369",
   "5e": "433",
   "6a": "360",
+  "6b": "350",
   "11a": "419",
   "11b": "420",
   "11c": "421",
@@ -180,10 +181,14 @@ function fieldPath(p: number, n: number): string {
             n >= 81 && n <= 82
         ? "ColE"
         : "";
-    } else if (n >= 85 && n <= 91) {
+    } else if (n >= 85 && n <= 98) {
       table = "Table_Line6";
-      line = "Line6a";
-      column = n >= 87 && n <= 88 ? "ColD" : n >= 89 && n <= 90 ? "ColE" : "";
+      line = n <= 91 ? "Line6a" : "Line6b";
+      column = n >= 87 && n <= 88 || n >= 94 && n <= 95
+        ? "ColD"
+        : n >= 89 && n <= 90 || n >= 96 && n <= 97
+        ? "ColE"
+        : "";
     }
   } else if (p === 3 && n >= 79 && n <= 142) {
     table = "Table_Line11";
@@ -329,6 +334,9 @@ const fields: PdfFieldEntry[] = [
   text("line6a_quantity", 2, 86),
   ...moneyFields("line6a_cost", 2, 87),
   ...moneyFields("line6a_credit", 2, 89),
+  text("line6b_quantity", 2, 93),
+  ...moneyFields("line6b_cost", 2, 94),
+  ...moneyFields("line6b_credit", 2, 96),
   ...alternativeFuelLines.flatMap((line, index) => {
     const base = 79 + index * 8;
     return [
@@ -679,6 +687,7 @@ export function projectForm4136Fields(
       "5d",
       "5e",
       "6a",
+      "6b",
       "14a",
       "14b",
       "15a",
@@ -715,13 +724,14 @@ export function projectForm4136Fields(
     putClaimGroup(out, input, [line], `line${line}`);
   }
   putClaimGroup(out, input, ["6a"], "line6a");
+  putClaimGroup(out, input, ["6b"], "line6b");
   putClaimGroup(out, input, ["14a"], "line14a");
   putClaimGroup(out, input, ["14b"], "line14b");
   putClaimGroup(out, input, ["15a"], "line15a");
   putClaimGroup(out, input, ["16a"], "line16a");
   putClaimGroup(out, input, ["16b"], "line16b");
   out.line6_registration_number = allForm4136Claims(input).find((claim) =>
-    claim.line === "6a"
+    claim.line === "6a" || claim.line === "6b"
   )?.vendor_registration_number;
   out.line15_registration_number = allForm4136Claims(input).find((claim) =>
     claim.line === "15a"

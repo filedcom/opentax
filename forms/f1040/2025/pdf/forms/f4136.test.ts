@@ -99,6 +99,14 @@ Deno.test("Form 4136 PDF maps page 1 business and page 4 total widgets", () => {
     "topmostSubform[0].Page2[0].Table_Line6[0].Line6a[0].ColE[0].f2_89[0]",
   );
   assertEquals(
+    names.line6b_quantity,
+    "topmostSubform[0].Page2[0].Table_Line6[0].Line6b[0].f2_93[0]",
+  );
+  assertEquals(
+    names.line6b_credit_dollars,
+    "topmostSubform[0].Page2[0].Table_Line6[0].Line6b[0].ColE[0].f2_96[0]",
+  );
+  assertEquals(
     names.line11c_quantity,
     "topmostSubform[0].Page3[0].Table_Line11[0].Line11c[0].f3_97[0]",
   );
@@ -138,6 +146,50 @@ Deno.test("Form 4136 PDF maps page 1 business and page 4 total widgets", () => {
     names.line17_total_cents,
     "topmostSubform[0].Page4[0].f4_125[0]",
   );
+});
+
+Deno.test("Form 4136 PDF projects registered vendor bus line 6b", () => {
+  const result = form4136Pdf.projectFields?.({
+    ...activityContext,
+    business: {
+      qualifying_business_activity: true,
+      business_name: "Example Bus Fuel Vendor",
+      principal_activity_code: "457100",
+      equipment_make: "Example",
+      equipment_model: "Pump",
+      equipment_type: "diesel dispenser",
+      sales_records_confirmed: true,
+      no_duplicate_excise_claim: true,
+    },
+    claims: [{
+      line: "6b",
+      unit: "gallons",
+      qualified_quantity: 1_000,
+      actual_fuel_cost: 2_500,
+      undyed_fuel_confirmed: true,
+      vendor_registration_number: "UB123456789",
+      vendor_tax_settlement: "tax_excluded_price",
+      intercity_local_bus_sales: [{
+        sale_date: "2025-03-15",
+        buyer_name: "Example Bus Operator",
+        buyer_address: "10 Transit Lane, Wilmington, DE 19801",
+        gallons: 1_000,
+        certain_intercity_or_local_bus_use_confirmed: true,
+        waiver_n: {
+          kind: "single_purchase",
+          record_reference: "Waiver N-001",
+          invoice_or_delivery_ticket_number: "INV-001",
+          waived_gallons: 1_000,
+          signed_by_buyer_confirmed: true,
+          held_unexpired_when_claimed_confirmed: true,
+        },
+      }],
+    }],
+  }, { schedule3: { line12_fuel_tax_credit: 170 } });
+  assertEquals(result?.line6_registration_number, "UB123456789");
+  assertEquals(result?.line6b_quantity, 1_000);
+  assertEquals(result?.line6b_cost_dollars, "2500");
+  assertEquals(result?.line6b_credit_dollars, "170");
 });
 
 Deno.test("Form 4136 PDF projects blender line 15a and appends certification", async () => {
