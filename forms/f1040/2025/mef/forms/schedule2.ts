@@ -21,6 +21,7 @@ export interface Fields {
   line17k_golden_parachute_excise?: number | null;
   line17c_hsa_penalty?: number | null;
   line17a_investment_credit_recapture?: number | null;
+  line17a_new_markets_credit_recapture?: number | null;
   line17b_mortgage_subsidy_recapture?: number | null;
   line16_lihtc_recapture?: number | null;
   line17e_archer_msa_tax?: number | null;
@@ -168,17 +169,29 @@ function buildIRS1040Schedule2(
 
   const form8621Interest = fields.line17p_form8621_interest;
   const investmentRecapture = fields.line17a_investment_credit_recapture;
-  if (typeof investmentRecapture === "number" && investmentRecapture > 0) {
+  const newMarketsRecapture = fields.line17a_new_markets_credit_recapture;
+  const recaptureGroups = [
+    { code: "3468", amount: investmentRecapture },
+    { code: "NMCR", amount: newMarketsRecapture },
+  ].filter((group): group is { code: string; amount: number } =>
+    typeof group.amount === "number" && group.amount > 0
+  );
+  if (recaptureGroups.length > 0) {
     childrenByTag.set(
       "RecaptureOtherCreditsGrp",
-      elements("RecaptureOtherCreditsGrp", [
-        element("OtherCreditsCd", "3468"),
-        element("OtherCreditsAmt", investmentRecapture),
-      ]),
+      recaptureGroups.map((group) =>
+        elements("RecaptureOtherCreditsGrp", [
+          element("OtherCreditsCd", group.code),
+          element("OtherCreditsAmt", group.amount),
+        ])
+      ).join(""),
     );
     childrenByTag.set(
       "TotalRecaptureOtherCreditsAmt",
-      element("TotalRecaptureOtherCreditsAmt", investmentRecapture),
+      element(
+        "TotalRecaptureOtherCreditsAmt",
+        recaptureGroups.reduce((sum, group) => sum + group.amount, 0),
+      ),
     );
   }
   if (typeof form8621Interest === "number" && form8621Interest > 0) {

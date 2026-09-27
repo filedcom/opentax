@@ -21,4 +21,13 @@ Deno.test("2025 Schedule 2 PDF maps line 17a code and recapture amount", () => {
     )?.line17a_description,
     "3468",
   );
+  const combined = schedule2Pdf.projectFields?.(
+    {
+      line17a_investment_credit_recapture: 2_500,
+      line17a_new_markets_credit_recapture: 3_100,
+    },
+    {},
+  );
+  assertEquals(combined?.line17a_description, "3468, NMCR");
+  assertEquals(combined?.line17a_investment_credit_recapture, 5_600);
 });

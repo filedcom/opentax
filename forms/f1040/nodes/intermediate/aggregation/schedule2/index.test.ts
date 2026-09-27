@@ -217,6 +217,14 @@ Deno.test("calc: line17a_investment_credit_recapture alone routes to f1040 line2
   assertEquals(fieldsOf(result.outputs, f1040)!.line23_other_taxes, 3_000);
 });
 
+Deno.test("calc: New Markets and investment recapture share Schedule 2 line 17a", () => {
+  const result = compute({
+    line17a_investment_credit_recapture: 3_000,
+    line17a_new_markets_credit_recapture: 2_200,
+  });
+  assertEquals(fieldsOf(result.outputs, f1040)!.line23_other_taxes, 5_200);
+});
+
 Deno.test("calc: line17b_mortgage_subsidy_recapture alone routes to f1040 line23", () => {
   const result = compute({ line17b_mortgage_subsidy_recapture: 1_000 });
   assertEquals(fieldsOf(result.outputs, f1040)!.line23_other_taxes, 1_000);

@@ -218,6 +218,10 @@ import {
   inputSchema as f8874InputSchema,
 } from "../nodes/inputs/f8874/index.ts";
 import {
+  f8874_recapture,
+  inputSchema as f8874RecaptureInputSchema,
+} from "../nodes/inputs/f8874/recapture_node.ts";
+import {
   f8911,
   inputSchema as f8911InputSchema,
 } from "../nodes/inputs/f8911/index.ts";
@@ -652,6 +656,11 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f8941, inputSchema: f8941InputSchema, isArray: false },
   { node: f8834, itemSchema: f8834ItemSchema, isArray: true },
   { node: f8874, inputSchema: f8874InputSchema, isArray: false },
+  {
+    node: f8874_recapture,
+    inputSchema: f8874RecaptureInputSchema,
+    isArray: false,
+  },
   { node: f8911, inputSchema: f8911InputSchema, isArray: false },
   { node: f7217, inputSchema: f7217InputSchema, isArray: false },
   { node: f8826, inputSchema: f8826InputSchema, isArray: false },

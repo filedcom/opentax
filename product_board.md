@@ -41,21 +41,33 @@ S-corporation code AD credits, line 2 now includes the filed K-1 amounts and
 line 3 adds them to the own QEI credit. The line 2 sources must match their
 direct Form 3800 entries or passive Form 8582-CR activity sources. The native
 XML and mismatch cases are written but unrun; a pass-through-only claim still
-does not create a Form 8874 document.
-Passive K-1 code AD/ZZ amounts now deposit a required Form 8582-CR marker; the
-activity source must match the K-1 credit and the MeF builder reconciles it
-again before Form 3800 receives the passive allocation. These cases are written
-but unrun. A self-earned passive QEI now deposits a source-specific Form
-8582-CR requirement, while only the nonpassive portion goes directly to Form
-3800. The filed Form 8874, Form 8582-CR activity, Form 3800 amount, and source
-document count are cross-checked. Passive-only Form 3800 line 1i and multi-source
-Part V rows now link back to the IRS8874 document, with passive-only and
-mixed-source cases written but unrun. Passive sources currently require
-whole-dollar credit amounts because the Form 8582-CR source model does;
-cent-bearing passive credit reporting remains open. Carryovers, recapture and sale
-events, leap-day
-allowance dates, filled PDF inspection, and IRS business-rule/ATS evidence also
-remain open. It is not filing ready.
+does not create a Form 8874 document. Passive K-1 code AD/ZZ amounts now deposit
+a required Form 8582-CR marker; the activity source must match the K-1 credit
+and the MeF builder reconciles it again before Form 3800 receives the passive
+allocation. These cases are written but unrun. A self-earned passive QEI now
+deposits a source-specific Form 8582-CR requirement, while only the nonpassive
+portion goes directly to Form 3800. The filed Form 8874, Form 8582-CR activity,
+Form 3800 amount, and source document count are cross-checked. Passive-only Form
+3800 line 1i and multi-source Part V rows now link back to the IRS8874 document,
+with passive-only and mixed-source cases written but unrun. Passive sources
+currently require whole-dollar credit amounts because the Form 8582-CR source
+model does; cent-bearing passive credit reporting remains open. Carryovers,
+recapture and sale events, leap-day allowance dates, filled PDF inspection, and
+IRS business-rule/ATS evidence also remain open. It is not filing ready.
+
+The New Markets recapture build pass now has a separate Form 8874-B event input
+that works without a current-year Form 8874. It takes each prior year's Section
+38 allowed-credit recomputation and unused-QEI-credit balance, computes the
+allowed-credit decrease plus daily-compounded interest through the unextended
+2025 return due date from IRS quarterly underpayment rates, and routes the
+result to Schedule 2 line 17a. The MeF builder emits a separate `NMCR` group
+beside any `3468` group; the PDF projection totals both on line 17a. Source,
+routing, XML, and PDF projection cases are written but unrun. This is not a
+completed recapture audit: original return due dates and prior recomputations
+are still supplied facts, the Section 39 carryover/carryback adjustment is only
+surfaced for review rather than posted, interest rounding and leap-year handling
+need IRS example reconciliation, and filled PDF, local XSD, business-rule, and
+ATS checks remain open.
 
 The current build pass now routes nonpassive Schedule K-1 orphan-drug credits
 from partnerships (box 15 code Z), S corporations (box 13 code Z), and
@@ -154,36 +166,35 @@ line 13 aggregate in schema order. The existing Form 4255 recapture output now
 also reaches a line 17a MeF `3468` group and the printed line 17a code and
 amount fields, with XML, XSD, and PDF mapping cases written but unrun. Its
 source calculation and native Form 4255 attachment still need a separate audit.
-Form 5405 repayment is rejected for TY2025
-because the IRS ended that form after TY2024. The source and XSD cases are
-written but unrun. Form 8611 now has a per-building source model, printed-form
-line calculation including the per-year Form 8609-A line 2 worksheet, one
-`IRS8611` attachment per building, and Schedule 2 line 16 document links.
-Bond-financing details and a recapture-exception decision are required source
-facts. Its written node, XML, and XSD cases are unrun; historic credit,
-qualified-basis, and interest amounts still require source-record verification.
-Other Schedule 2 routes still need audit. The section 965 installment now goes
-to Schedule 2 line 20 and is excluded from line 21/Form 1040 line 23, matching
-the printed 2025 line 21 sum. A new Form 965-A source model and MeF descriptor
-now carry cumulative Part I/II liability and payments, Part III S-corporation
-computations, and Part IV deferred balances, and reconcile current-year payments
-to Schedule 2 line 20. The old assumption that a 2017 inclusion normally has its
-eighth installment in 2025 was incorrect; the normal eighth year was 2024.
-Native MeF statements now describe netted Part I adjustments/transfers and
-allocate Part IV transfers among multiple transferees, with required source
-facts, reconciliation, and parent document links. The build pass now takes
-source-provided signed Form 965-C, 965-D, and 965-E PDF copies for reported
-transfer or consent events, preserves their bytes in the MeF bundle, and links
-them from Form 965-A. Multiple partial Form 965-D transfers require one copy per
-transferee. The bundle case is written but unrun. It does not create, sign,
-mail, or authenticate an agreement. Consent-triggered Form 965-E installments
-now also require evidence of the separate section 965(h) election; the case is
-written but unrun. Part IV transfer-in rows now omit the beginning balance and
-retain the transferor's agreement link; those cases are also written but unrun.
-The triggered-liability case now distinguishes Part I's triggering-event year
-from Part IV's original deferral-election year and validates an event date;
-those cases are unrun. Historical tax computations and IRS business rules remain
-open.
+Form 5405 repayment is rejected for TY2025 because the IRS ended that form after
+TY2024. The source and XSD cases are written but unrun. Form 8611 now has a
+per-building source model, printed-form line calculation including the per-year
+Form 8609-A line 2 worksheet, one `IRS8611` attachment per building, and
+Schedule 2 line 16 document links. Bond-financing details and a
+recapture-exception decision are required source facts. Its written node, XML,
+and XSD cases are unrun; historic credit, qualified-basis, and interest amounts
+still require source-record verification. Other Schedule 2 routes still need
+audit. The section 965 installment now goes to Schedule 2 line 20 and is
+excluded from line 21/Form 1040 line 23, matching the printed 2025 line 21 sum.
+A new Form 965-A source model and MeF descriptor now carry cumulative Part I/II
+liability and payments, Part III S-corporation computations, and Part IV
+deferred balances, and reconcile current-year payments to Schedule 2 line 20.
+The old assumption that a 2017 inclusion normally has its eighth installment in
+2025 was incorrect; the normal eighth year was 2024. Native MeF statements now
+describe netted Part I adjustments/transfers and allocate Part IV transfers
+among multiple transferees, with required source facts, reconciliation, and
+parent document links. The build pass now takes source-provided signed Form
+965-C, 965-D, and 965-E PDF copies for reported transfer or consent events,
+preserves their bytes in the MeF bundle, and links them from Form 965-A.
+Multiple partial Form 965-D transfers require one copy per transferee. The
+bundle case is written but unrun. It does not create, sign, mail, or
+authenticate an agreement. Consent-triggered Form 965-E installments now also
+require evidence of the separate section 965(h) election; the case is written
+but unrun. Part IV transfer-in rows now omit the beginning balance and retain
+the transferor's agreement link; those cases are also written but unrun. The
+triggered-liability case now distinguishes Part I's triggering-event year from
+Part IV's original deferral-election year and validates an event date; those
+cases are unrun. Historical tax computations and IRS business rules remain open.
 
 The current untested Form 8936 commercial-vehicle pass replaces the new/used
 boolean with one three-way credit type and adds Schedule A Part V basis, Section

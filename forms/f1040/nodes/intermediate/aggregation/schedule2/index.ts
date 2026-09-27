@@ -88,6 +88,8 @@ export const inputSchema = z.object({
   // Line 17a — Recapture of investment credit (Form 4255)
   // IRC §50(a); Form 4255 → Schedule 2 line 17a
   line17a_investment_credit_recapture: z.number().nonnegative().optional(),
+  // Line 17a — New Markets Credit recapture under IRC 45D(g), code NMCR.
+  line17a_new_markets_credit_recapture: z.number().nonnegative().optional(),
   // Line 17b — Recapture of federal mortgage subsidy (Form 8828).
   line17b_mortgage_subsidy_recapture: z.number().nonnegative().optional(),
   // Line 16 — Recapture of low-income housing credit (Form 8611).
@@ -156,6 +158,7 @@ function part2Total(input: Schedule2Input): number {
     (input.line12_niit ?? 0) +
     (input.line9_household_employment ?? 0) +
     (input.line17a_investment_credit_recapture ?? 0) +
+    (input.line17a_new_markets_credit_recapture ?? 0) +
     (input.line17b_mortgage_subsidy_recapture ?? 0) +
     (input.line16_lihtc_recapture ?? 0) +
     (input.line17z_other_additional_taxes ?? 0) +
@@ -177,6 +180,7 @@ function part2Chapter1Tax(input: Schedule2Input): number {
     (input.line17f_medicare_advantage_msa_tax ?? 0) +
     (input.line17c_hsa_penalty ?? 0) +
     (input.line17a_investment_credit_recapture ?? 0) +
+    (input.line17a_new_markets_credit_recapture ?? 0) +
     (input.line17b_mortgage_subsidy_recapture ?? 0) +
     (input.line16_lihtc_recapture ?? 0) +
     (input.line17_exit_tax ?? 0);

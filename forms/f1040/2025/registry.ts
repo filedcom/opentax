@@ -57,6 +57,7 @@ import { f8908 } from "../nodes/inputs/f8908/index.ts";
 import { f8941 } from "../nodes/inputs/f8941/index.ts";
 import { f8834 } from "../nodes/inputs/f8834/index.ts";
 import { f8874 } from "../nodes/inputs/f8874/index.ts";
+import { f8874_recapture } from "../nodes/inputs/f8874/recapture_node.ts";
 import { f8911 } from "../nodes/inputs/f8911/index.ts";
 import { f8826 } from "../nodes/inputs/f8826/index.ts";
 import { f4136 } from "../nodes/inputs/f4136/index.ts";
@@ -262,6 +263,7 @@ export const registry: NodeRegistry = {
   f8941,
   f8834,
   f8874,
+  f8874_recapture,
   f8911,
   f8826,
   f4136,

@@ -211,6 +211,21 @@ Deno.test("2025 Schedule 2 line 17a identifies investment-credit recapture", () 
   );
 });
 
+Deno.test("2025 Schedule 2 keeps 3468 and NMCR recapture groups separate", () => {
+  const result = schedule2.build({
+    line17a_investment_credit_recapture: 2_500,
+    line17a_new_markets_credit_recapture: 3_100,
+  });
+  assertStringIncludes(
+    result,
+    "<RecaptureOtherCreditsGrp><OtherCreditsCd>3468</OtherCreditsCd><OtherCreditsAmt>2500</OtherCreditsAmt></RecaptureOtherCreditsGrp><RecaptureOtherCreditsGrp><OtherCreditsCd>NMCR</OtherCreditsCd><OtherCreditsAmt>3100</OtherCreditsAmt></RecaptureOtherCreditsGrp>",
+  );
+  assertStringIncludes(
+    result,
+    "<TotalRecaptureOtherCreditsAmt>5600</TotalRecaptureOtherCreditsAmt>",
+  );
+});
+
 Deno.test("section 965 installment stays on Schedule 2 line 20, outside line 21", () => {
   const result = schedule2.build({ line20_965_tax_installment: 8_000 });
   assertStringIncludes(

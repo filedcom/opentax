@@ -93,9 +93,26 @@ export const schedule2Pdf: PdfFormDescriptor = {
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040s2--2025.pdf",
   fields,
   projectFields(fields, allPending) {
-    const projected = typeof fields.line17a_investment_credit_recapture ===
-          "number" && fields.line17a_investment_credit_recapture > 0
-      ? { ...fields, line17a_description: "3468" }
+    const investmentRecapture =
+      typeof fields.line17a_investment_credit_recapture ===
+          "number"
+        ? fields.line17a_investment_credit_recapture
+        : 0;
+    const newMarketsRecapture =
+      typeof fields.line17a_new_markets_credit_recapture === "number"
+        ? fields.line17a_new_markets_credit_recapture
+        : 0;
+    const recaptureCodes = [
+      ...(investmentRecapture > 0 ? ["3468"] : []),
+      ...(newMarketsRecapture > 0 ? ["NMCR"] : []),
+    ];
+    const projected = recaptureCodes.length > 0
+      ? {
+        ...fields,
+        line17a_description: recaptureCodes.join(", "),
+        line17a_investment_credit_recapture: investmentRecapture +
+          newMarketsRecapture,
+      }
       : fields;
     const worksheet = allPending.form8978_reporting_year;
     const reduction = worksheet?.schedule2_line17z_reduction;

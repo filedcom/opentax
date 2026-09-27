@@ -67,10 +67,11 @@ Deno.test({
   ignore: !xsdAvailable,
 }, async () => {
   const xml = buildMefXml({
-    f1040: { line23_other_taxes: 1_650 },
+    f1040: { line23_other_taxes: 1_900 },
     schedule2: {
       uncollected_fica: 100,
       line17a_investment_credit_recapture: 250,
+      line17a_new_markets_credit_recapture: 250,
       line17b_mortgage_subsidy_recapture: 1_000,
       line17c_hsa_penalty: 300,
     },
@@ -80,6 +81,7 @@ Deno.test({
     "<MortgSbsdyRecaptureTaxAmt>1000</MortgSbsdyRecaptureTaxAmt>",
   );
   assertStringIncludes(xml, "<OtherCreditsCd>3468</OtherCreditsCd>");
+  assertStringIncludes(xml, "<OtherCreditsCd>NMCR</OtherCreditsCd>");
   await validateXsd(xml, "TY2025 Schedule 2 lines 17a through 17c");
 });
 
