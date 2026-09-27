@@ -1,4 +1,6 @@
 import { element, elements } from "../../../mef/xml.ts";
+import { calculateForm8874Recapture } from "../../../nodes/inputs/f8874/recapture_node.ts";
+import type { F8874RecaptureInput } from "../../../nodes/inputs/f8874/recapture_node.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 export interface Fields {
@@ -170,6 +172,18 @@ function buildIRS1040Schedule2(
   const form8621Interest = fields.line17p_form8621_interest;
   const investmentRecapture = fields.line17a_investment_credit_recapture;
   const newMarketsRecapture = fields.line17a_new_markets_credit_recapture;
+  const newMarketsSource = context?.pending?.f8874_recapture;
+  if (newMarketsSource !== undefined || (newMarketsRecapture ?? 0) > 0) {
+    if (newMarketsSource === undefined) {
+      throw new Error("Schedule 2 NMCR needs a Form 8874-B recapture source");
+    }
+    const calculated = calculateForm8874Recapture(
+      newMarketsSource as F8874RecaptureInput,
+    );
+    if (calculated !== (newMarketsRecapture ?? 0)) {
+      throw new Error("Schedule 2 NMCR does not match its recapture source");
+    }
+  }
   const recaptureGroups = [
     { code: "3468", amount: investmentRecapture },
     { code: "NMCR", amount: newMarketsRecapture },

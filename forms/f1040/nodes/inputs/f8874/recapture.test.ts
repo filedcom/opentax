@@ -1,12 +1,24 @@
 import { assertEquals } from "@std/assert";
+import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
+import { execute } from "../../../../../core/runtime/executor.ts";
+import { extractFilerIdentity } from "../../../mef/filer.ts";
+import { buildMefXml } from "../../../2025/mef/builder.ts";
+import type { MefFormsPending } from "../../../2025/mef/types.ts";
+import { inputNodes } from "../../../2025/inputs.ts";
+import { registry } from "../../../2025/registry.ts";
+import { FilingStatus } from "../../types.ts";
 import { calculateNewMarketsRecapture, recaptureSchema } from "./recapture.ts";
 import { f8874_recapture } from "./recapture_node.ts";
 
 const source = {
   notice_reference: "CDE 2025 Form 8874-B",
+  investment_reference: "2022 QEI designation",
   cde_name: "Community Development Entity",
   cde_ein: "123456789",
+  notice_taxpayer_tin: "111223333",
   initial_investment_date: "2022-05-01",
+  qualified_equity_investment_amount: 100_000,
+  notice_credit_amount: 25_000,
   recapture_event_date: "2025-06-01",
   recapture_event: "cde_redeemed_investment",
   prior_years: [{
@@ -75,6 +87,73 @@ Deno.test("New Markets recapture does not count one notice twice", () => {
     }).success,
     false,
   );
+});
+
+Deno.test("New Markets recapture totals separate investments once", () => {
+  const first = { ...source, prior_years: [...source.prior_years] };
+  const second = {
+    ...source,
+    notice_reference: "Second CDE 2025 Form 8874-B",
+    investment_reference: "Second 2022 QEI designation",
+    prior_years: [{
+      ...source.prior_years[0],
+      section38_credit_allowed_as_filed: 10_000,
+      section38_credit_allowed_without_this_qei: 9_500,
+      original_unused_qei_credit: 0,
+    }],
+  };
+  const result = f8874_recapture.compute(
+    { taxYear: 2025, formType: "f1040" },
+    { recaptures: [first, second] },
+  );
+  assertEquals(
+    result.outputs[0].fields.line17a_new_markets_credit_recapture,
+    calculateNewMarketsRecapture(first).schedule2Line17a +
+      calculateNewMarketsRecapture(second).schedule2Line17a,
+  );
+});
+
+Deno.test("New Markets recapture reaches a filed 1040 without Form 8874", () => {
+  const general = {
+    filing_status: FilingStatus.Single,
+    taxpayer_first_name: "Test",
+    taxpayer_last_name: "Taxpayer",
+    taxpayer_ssn: "111-22-3333",
+    taxpayer_dob: "1985-06-15",
+    address_line1: "1 Test Way",
+    address_city: "Austin",
+    address_state: "TX",
+    address_zip: "78701",
+  };
+  assertEquals(
+    inputNodes.some((entry) => entry.node.nodeType === "f8874_recapture"),
+    true,
+  );
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    {
+      general,
+      f8874_recapture: { recaptures: [source] },
+    },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  const expected = calculateNewMarketsRecapture({
+    ...source,
+    prior_years: [...source.prior_years],
+  }).schedule2Line17a;
+  assertEquals(
+    result.pending.schedule2?.line17a_new_markets_credit_recapture,
+    expected,
+  );
+  assertEquals(result.pending.f1040?.line23_other_taxes, expected);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertEquals(xml.includes("<IRS8874"), false);
+  assertEquals(xml.includes("<OtherCreditsCd>NMCR</OtherCreditsCd>"), true);
 });
 
 Deno.test("New Markets recapture requires a statutory event and prior-year proof", () => {

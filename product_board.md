@@ -56,12 +56,17 @@ recapture and sale events, leap-day allowance dates, filled PDF inspection, and
 IRS business-rule/ATS evidence also remain open. It is not filing ready.
 
 The New Markets recapture build pass now has a separate Form 8874-B event input
-that works without a current-year Form 8874. It takes each prior year's Section
-38 allowed-credit recomputation and unused-QEI-credit balance, computes the
-allowed-credit decrease plus daily-compounded interest through the unextended
-2025 return due date from IRS quarterly underpayment rates, and routes the
-result to Schedule 2 line 17a. The MeF builder emits a separate `NMCR` group
-beside any `3468` group; the PDF projection totals both on line 17a. Source,
+that works without a current-year Form 8874. It records the noticed taxpayer,
+CDE, QEI identity and amount, notice credit amount, and event reason without
+mistaking the notice amount for the taxpayer's tax. It takes each prior year's
+Section 38 allowed-credit recomputation and unused-QEI-credit balance, computes
+the allowed-credit decrease plus daily-compounded interest through the
+unextended 2025 return due date from IRS quarterly underpayment rates, and
+routes the result to Schedule 2 line 17a. The MeF builder emits a separate
+`NMCR` group beside any `3468` group; the PDF projection totals both on line
+17a. The filed Schedule 2 builder now requires the recapture input and
+recomputes its `NMCR` amount before XML, rejecting missing or mismatched source
+data. A full-return case covers recapture without an IRS8874 attachment. Source,
 routing, XML, and PDF projection cases are written but unrun. This is not a
 completed recapture audit: original return due dates and prior recomputations
 are still supplied facts, the Section 39 carryover/carryback adjustment is only

@@ -12,9 +12,13 @@ const dollars = z.number().finite().nonnegative().refine(Number.isSafeInteger);
 
 export const recaptureSchema = z.object({
   notice_reference: z.string().trim().min(1),
+  investment_reference: z.string().trim().min(1),
   cde_name: z.string().trim().min(1),
   cde_ein: z.string().regex(/^\d{9}$/),
+  notice_taxpayer_tin: z.string().regex(/^\d{9}$/),
   initial_investment_date: dateSchema,
+  qualified_equity_investment_amount: dollars.refine((amount) => amount > 0),
+  notice_credit_amount: dollars,
   recapture_event_date: dateSchema,
   recapture_event: z.enum([
     "cde_certification_revoked",

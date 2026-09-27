@@ -1,4 +1,5 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { calculateForm8874Recapture } from "../../../nodes/inputs/f8874/recapture_node.ts";
 import { FIELD_MAP, schedule2 } from "./schedule2.ts";
 
 function assertNotIncludes(actual: string, expected: string) {
@@ -212,17 +213,62 @@ Deno.test("2025 Schedule 2 line 17a identifies investment-credit recapture", () 
 });
 
 Deno.test("2025 Schedule 2 keeps 3468 and NMCR recapture groups separate", () => {
+  const source = {
+    recaptures: [{
+      notice_reference: "2025 CDE notice",
+      investment_reference: "2022 QEI designation",
+      cde_name: "Community Development Entity",
+      cde_ein: "123456789",
+      notice_taxpayer_tin: "111223333",
+      initial_investment_date: "2022-06-01",
+      qualified_equity_investment_amount: 100_000,
+      notice_credit_amount: 25_000,
+      recapture_event_date: "2025-07-01",
+      recapture_event: "cde_redeemed_investment",
+      prior_years: [{
+        tax_year: 2024,
+        original_return_due_date: "2025-04-15",
+        section38_credit_allowed_as_filed: 3_000,
+        section38_credit_allowed_without_this_qei: 0,
+        original_unused_qei_credit: 0,
+        recomputed_unused_qei_credit: 0,
+        recomputation_reference: "2024 Form 3800 recomputation",
+      }],
+    }],
+  } as const;
+  const nmcr = calculateForm8874Recapture({
+    recaptures: source.recaptures.map((recapture) => ({
+      ...recapture,
+      prior_years: [...recapture.prior_years],
+    })),
+  });
   const result = schedule2.build({
     line17a_investment_credit_recapture: 2_500,
-    line17a_new_markets_credit_recapture: 3_100,
-  });
+    line17a_new_markets_credit_recapture: nmcr,
+  }, { pending: { f8874_recapture: source } });
   assertStringIncludes(
     result,
-    "<RecaptureOtherCreditsGrp><OtherCreditsCd>3468</OtherCreditsCd><OtherCreditsAmt>2500</OtherCreditsAmt></RecaptureOtherCreditsGrp><RecaptureOtherCreditsGrp><OtherCreditsCd>NMCR</OtherCreditsCd><OtherCreditsAmt>3100</OtherCreditsAmt></RecaptureOtherCreditsGrp>",
+    `<RecaptureOtherCreditsGrp><OtherCreditsCd>3468</OtherCreditsCd><OtherCreditsAmt>2500</OtherCreditsAmt></RecaptureOtherCreditsGrp><RecaptureOtherCreditsGrp><OtherCreditsCd>NMCR</OtherCreditsCd><OtherCreditsAmt>${nmcr}</OtherCreditsAmt></RecaptureOtherCreditsGrp>`,
   );
   assertStringIncludes(
     result,
-    "<TotalRecaptureOtherCreditsAmt>5600</TotalRecaptureOtherCreditsAmt>",
+    `<TotalRecaptureOtherCreditsAmt>${
+      2_500 + nmcr
+    }</TotalRecaptureOtherCreditsAmt>`,
+  );
+  assertThrows(
+    () => schedule2.build({ line17a_new_markets_credit_recapture: nmcr }),
+    Error,
+    "Form 8874-B recapture source",
+  );
+  assertThrows(
+    () =>
+      schedule2.build(
+        { line17a_new_markets_credit_recapture: nmcr + 1 },
+        { pending: { f8874_recapture: source } },
+      ),
+    Error,
+    "does not match",
   );
 });
 

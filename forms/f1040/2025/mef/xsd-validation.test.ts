@@ -22,6 +22,7 @@ import {
   PassiveCreditSourceOrigin,
 } from "../../nodes/intermediate/forms/form8582cr/index.ts";
 import { TargetGroup } from "../../nodes/inputs/f5884/index.ts";
+import { calculateForm8874Recapture } from "../../nodes/inputs/f8874/recapture_node.ts";
 import { BondType } from "../../nodes/inputs/f8912/index.ts";
 import { SS_WAGE_BASE_2025 } from "../../nodes/config/2025.ts";
 import { extractFilerIdentity } from "../../mef/filer.ts";
@@ -67,11 +68,10 @@ Deno.test({
   ignore: !xsdAvailable,
 }, async () => {
   const xml = buildMefXml({
-    f1040: { line23_other_taxes: 1_900 },
+    f1040: { line23_other_taxes: 1_650 },
     schedule2: {
       uncollected_fica: 100,
       line17a_investment_credit_recapture: 250,
-      line17a_new_markets_credit_recapture: 250,
       line17b_mortgage_subsidy_recapture: 1_000,
       line17c_hsa_penalty: 300,
     },
@@ -81,8 +81,51 @@ Deno.test({
     "<MortgSbsdyRecaptureTaxAmt>1000</MortgSbsdyRecaptureTaxAmt>",
   );
   assertStringIncludes(xml, "<OtherCreditsCd>3468</OtherCreditsCd>");
-  assertStringIncludes(xml, "<OtherCreditsCd>NMCR</OtherCreditsCd>");
   await validateXsd(xml, "TY2025 Schedule 2 lines 17a through 17c");
+});
+
+Deno.test({
+  name: "XSD: New Markets recapture source reaches Schedule 2 NMCR",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const source = {
+    recaptures: [{
+      notice_reference: "2025 CDE notice",
+      investment_reference: "2022 QEI designation",
+      cde_name: "Community Development Entity",
+      cde_ein: "123456789",
+      notice_taxpayer_tin: "111223333",
+      initial_investment_date: "2022-06-01",
+      qualified_equity_investment_amount: 100_000,
+      notice_credit_amount: 25_000,
+      recapture_event_date: "2025-07-01",
+      recapture_event: "cde_redeemed_investment",
+      prior_years: [{
+        tax_year: 2024,
+        original_return_due_date: "2025-04-15",
+        section38_credit_allowed_as_filed: 3_000,
+        section38_credit_allowed_without_this_qei: 0,
+        original_unused_qei_credit: 0,
+        recomputed_unused_qei_credit: 0,
+        recomputation_reference: "2024 Form 3800 recomputation",
+      }],
+    }],
+  } as const;
+  const nmcr = calculateForm8874Recapture({
+    recaptures: source.recaptures.map((recapture) => ({
+      ...recapture,
+      prior_years: [...recapture.prior_years],
+    })),
+  });
+  const xml = buildMefXml({
+    f1040: { line23_other_taxes: nmcr },
+    schedule2: { line17a_new_markets_credit_recapture: nmcr },
+    f8874_recapture: source,
+  } as MefFormsPending, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(xml, "<OtherCreditsCd>NMCR</OtherCreditsCd>");
+  await validateXsd(xml, "TY2025 Schedule 2 NMCR");
 });
 
 Deno.test({

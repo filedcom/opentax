@@ -14,7 +14,7 @@ export const inputSchema = z.object({
     const key = [
       recapture.cde_ein,
       recapture.initial_investment_date,
-      recapture.notice_reference,
+      recapture.investment_reference,
     ].join(":");
     if (seen.has(key)) {
       ctx.addIssue({
@@ -29,21 +29,26 @@ export const inputSchema = z.object({
 
 export type F8874RecaptureInput = z.infer<typeof inputSchema>;
 
+export function calculateForm8874Recapture(raw: F8874RecaptureInput): number {
+  const input = inputSchema.parse(raw);
+  const total = input.recaptures.reduce(
+    (sum, recapture) =>
+      sum + calculateNewMarketsRecapture(recapture).schedule2Line17a,
+    0,
+  );
+  if (!Number.isSafeInteger(total)) {
+    throw new Error("New Markets recapture exceeds safe whole dollars");
+  }
+  return total;
+}
+
 class F8874RecaptureNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8874_recapture";
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule2]);
 
   compute(_ctx: NodeContext, rawInput: F8874RecaptureInput): NodeResult {
-    const input = inputSchema.parse(rawInput);
-    const total = input.recaptures.reduce(
-      (sum, recapture) =>
-        sum + calculateNewMarketsRecapture(recapture).schedule2Line17a,
-      0,
-    );
-    if (!Number.isSafeInteger(total)) {
-      throw new Error("New Markets recapture exceeds safe whole dollars");
-    }
+    const total = calculateForm8874Recapture(rawInput);
     return {
       outputs: total > 0
         ? [output(schedule2, { line17a_new_markets_credit_recapture: total })]
