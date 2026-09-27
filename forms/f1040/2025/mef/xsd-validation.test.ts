@@ -308,6 +308,54 @@ Deno.test({
 });
 
 Deno.test({
+  name:
+    "XSD: Form 4136 exported dyed fuel and gasoline blendstock groups validate",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const claims = [
+    { line: "16a", exported_fuel_kind: "dyed_diesel" },
+    { line: "16a", exported_fuel_kind: "gasoline_blendstock" },
+    { line: "16b", exported_fuel_kind: "dyed_kerosene" },
+  ].map((claim) => ({
+    ...claim,
+    unit: "gallons",
+    qualified_quantity: 1_000,
+    actual_fuel_cost: 2_500,
+    excise_tax_rate_per_gallon: 0.001,
+    exporter_of_record_confirmed: true,
+    export_proof: {
+      kind: "carrier_bill_of_lading",
+      record_reference: "Export file 2025-016",
+    },
+  }));
+  const xml = buildMefXml({
+    f1040: { line31_additional_payments: 3 },
+    schedule3: { line12_fuel_tax_credit: 3, line15_total: 3 },
+    f4136: {
+      claimant_context: "business",
+      additional_activities: [],
+      primary_activity_has_most_credit: true,
+      business: {
+        qualifying_business_activity: true,
+        business_name: "Example Fuel Exporter",
+        principal_activity_code: "424700",
+        equipment_make: "Example",
+        equipment_model: "Tanker",
+        equipment_type: "fuel transport",
+        export_records_confirmed: true,
+        no_duplicate_excise_claim: true,
+      },
+      claims,
+    },
+  }, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(xml, "<ExpDyedDieselGasTxdAt001Grp>");
+  assertStringIncludes(xml, "<ExportedDyedKeroseneGrp>");
+  await validateXsd(xml, "Form 4136 exported dyed fuel");
+});
+
+Deno.test({
   name: "XSD: Form 4136 all non-bus line 11 fuel groups validate",
   sanitizeOps: false,
   sanitizeResources: false,

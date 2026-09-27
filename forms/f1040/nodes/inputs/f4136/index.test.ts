@@ -272,6 +272,69 @@ Deno.test("Form 4136: diesel-water emulsion use and export require distinct sour
   );
 });
 
+Deno.test("Form 4136: exporter line 16 distinguishes dyed fuel and gasoline blendstock", () => {
+  const exporterBusiness = {
+    ...business,
+    claimant_is_ultimate_purchaser: undefined,
+    purchase_records_confirmed: undefined,
+    export_records_confirmed: true as const,
+  };
+  const base = {
+    ...certifications,
+    unit: "gallons" as const,
+    qualified_quantity: 1_000,
+    actual_fuel_cost: 2_500,
+    exporter_of_record_confirmed: true as const,
+    excise_tax_rate_per_gallon: 0.001,
+  };
+  const claims = [
+    {
+      ...base,
+      line: "16a" as const,
+      exported_fuel_kind: "dyed_diesel" as const,
+    },
+    {
+      ...base,
+      line: "16a" as const,
+      exported_fuel_kind: "gasoline_blendstock" as const,
+    },
+    {
+      ...base,
+      line: "16b" as const,
+      exported_fuel_kind: "dyed_kerosene" as const,
+    },
+  ];
+  assertEquals(
+    parseInput({ business: exporterBusiness, claims }).success,
+    true,
+  );
+  assertEquals(
+    compute({ business: exporterBusiness, claims }).outputs[0].fields
+      .line12_fuel_tax_credit,
+    3,
+  );
+  for (
+    const invalid of [
+      { ...claims[0], exported_fuel_kind: "dyed_kerosene" },
+      { ...claims[0], exporter_of_record_confirmed: undefined },
+      { ...claims[0], excise_tax_rate_per_gallon: 0.244 },
+      { ...claims[0], export_proof: undefined },
+    ]
+  ) {
+    assertEquals(
+      parseInput({ business: exporterBusiness, claims: [invalid] }).success,
+      false,
+    );
+  }
+  assertEquals(
+    parseInput({
+      business: { ...exporterBusiness, export_records_confirmed: undefined },
+      claims: [claims[0]],
+    }).success,
+    false,
+  );
+});
+
 Deno.test("Form 4136: kerosene bus, export, and reduced-tax claims require distinct proof", () => {
   const claim = {
     ...certifications,

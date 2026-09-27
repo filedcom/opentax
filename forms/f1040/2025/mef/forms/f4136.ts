@@ -174,6 +174,8 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
     const l6a = onLine(input, "6a");
     const l14a = onLine(input, "14a");
     const l14b = onLine(input, "14b");
+    const l16a = onLine(input, "16a");
+    const l16b = onLine(input, "16b");
     const business = input.claimant_context === "business"
       ? input.business
       : undefined;
@@ -426,6 +428,20 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
           l14b.length ? element("ActualFuelCostAmt", cost(l14b)) : "",
           l14b.length
             ? credit("ExpNontxUseDslWtrEmulsionCrAmt", lineAmount(l14b), "306")
+            : "",
+        ]),
+        elements("ExpDyedDieselGasTxdAt001Grp", [
+          element("ExportedDyedDieselFuelGalsQty", qty(l16a)),
+          l16a.length ? element("ActualFuelCostAmt", cost(l16a)) : "",
+          l16a.length
+            ? credit("ExportedDyedDieselFuelCrAmt", lineAmount(l16a), "415")
+            : "",
+        ]),
+        elements("ExportedDyedKeroseneGrp", [
+          element("ExportedDyedKeroseneGallonsQty", qty(l16b)),
+          l16b.length ? element("ActualFuelCostAmt", cost(l16b)) : "",
+          l16b.length
+            ? credit("ExportedDyedKeroseneCreditAmt", lineAmount(l16b), "416")
             : "",
         ]),
         element("TotalFuelTaxCreditAmt", amount),

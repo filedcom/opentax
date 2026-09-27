@@ -133,6 +133,62 @@ Deno.test("Form 4136 XML separates emulsion use, reduced-rate bus use, and expor
   );
 });
 
+Deno.test("Form 4136 XML combines line 16a fuel kinds and separates dyed kerosene", () => {
+  const exporter = {
+    ...activityContext,
+    business: {
+      ...fields.business,
+      claimant_is_ultimate_purchaser: undefined,
+      purchase_records_confirmed: undefined,
+      export_records_confirmed: true as const,
+    },
+    claims: [
+      {
+        ...certifications,
+        line: "16a" as const,
+        exported_fuel_kind: "dyed_diesel" as const,
+        exporter_of_record_confirmed: true as const,
+        excise_tax_rate_per_gallon: 0.001,
+        unit: "gallons" as const,
+        qualified_quantity: 1_000,
+        actual_fuel_cost: 2_500,
+      },
+      {
+        ...certifications,
+        line: "16a" as const,
+        exported_fuel_kind: "gasoline_blendstock" as const,
+        exporter_of_record_confirmed: true as const,
+        excise_tax_rate_per_gallon: 0.001,
+        unit: "gallons" as const,
+        qualified_quantity: 1_000,
+        actual_fuel_cost: 2_500,
+      },
+      {
+        ...certifications,
+        line: "16b" as const,
+        exported_fuel_kind: "dyed_kerosene" as const,
+        exporter_of_record_confirmed: true as const,
+        excise_tax_rate_per_gallon: 0.001,
+        unit: "gallons" as const,
+        qualified_quantity: 1_000,
+        actual_fuel_cost: 2_500,
+      },
+    ],
+  };
+  const xml = form4136.build(exporter, {
+    pending: { schedule3: { line12_fuel_tax_credit: 3 } },
+  });
+  assertStringIncludes(
+    xml,
+    "<ExportedDyedDieselFuelGalsQty>2000</ExportedDyedDieselFuelGalsQty>",
+  );
+  assertStringIncludes(
+    xml,
+    "<ExportedDyedKeroseneGallonsQty>1000</ExportedDyedKeroseneGallonsQty>",
+  );
+  assertStringIncludes(xml, "<TotalFuelTaxCreditAmt>3</TotalFuelTaxCreditAmt>");
+});
+
 Deno.test("Form 4136 XML and buyer statement reconcile registered vendor line 6a", () => {
   const vendor = {
     ...activityContext,

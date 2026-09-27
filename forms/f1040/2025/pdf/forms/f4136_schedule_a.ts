@@ -72,6 +72,14 @@ function fieldPath(p: number, n: number): string {
       : n >= 6 && n <= 7 || n >= 14 && n <= 15
       ? "ColE"
       : "";
+  } else if (p === 4 && n >= 25 && n <= 38) {
+    table = "Line16Table";
+    line = n <= 31 ? "Line16a" : "Line16b";
+    column = n >= 27 && n <= 28 || n >= 34 && n <= 35
+      ? "ColD"
+      : n >= 29 && n <= 30 || n >= 36 && n <= 37
+      ? "ColE"
+      : "";
   }
   if (!table || !line) {
     throw new Error(
@@ -154,6 +162,12 @@ const fields: PdfFieldEntry[] = [
   text("line14b_quantity", 4, 11),
   ...money("line14b_cost", 4, 12),
   ...money("line14b_credit", 4, 14),
+  text("line16a_quantity", 4, 26),
+  ...money("line16a_cost", 4, 27),
+  ...money("line16a_credit", 4, 29),
+  text("line16b_quantity", 4, 33),
+  ...money("line16b_cost", 4, 34),
+  ...money("line16b_credit", 4, 36),
   ...money("line17_total", 4, 39),
 ];
 

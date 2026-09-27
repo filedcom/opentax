@@ -36,6 +36,11 @@ the reduced $.124 rate only to bus use (type 05); line 14b uses the export
 rate and requires retained proof. Both require the emulsion's water percentage
 and a record reference for its EPA-registered additive under Pub. 510's fuel
 definition. Their source-to-MeF and PDF cases are written but unrun.
+Lines 16a and 16b allow an exporter who is not the ultimate purchaser. The
+source retains the exporter-of-record and export-record facts, typed export
+proof, the $.001 fuel-tax rate, and the exact fuel kind. Dyed diesel and
+gasoline blendstock share printed line 16a but stay distinct in source rows;
+dyed kerosene uses line 16b. Their XML and PDF cases are written but unrun.
 Gasoline line 1c now requires a permitted use code and a noncommercial-
 motorboat exclusion; types 13/14 also require no-waiver and no-credit-card-
 certificate confirmations. Export line 1d requires retained export proof.

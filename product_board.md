@@ -306,6 +306,12 @@ facts, the standard and reduced bus-use rates, export-proof validation, MeF
 groups, and parent/Schedule A PDF fields. Source, XML, PDF, and XSD cases are
 written but unrun. Emulsion composition and EPA additive records are required;
 filled-PDF rendering and IRS business-rule review remain open.
+Exported dyed-fuel lines 16a and 16b now have an exporter-specific source
+route, retained export proof, fuel-kind and $.001 tax-rate checks, MeF groups,
+and parent/Schedule A PDF fields. Line 16a can combine dyed diesel and
+gasoline blendstock source rows with a PDF detail page. Source, XML, PDF, and
+XSD cases are written but unrun; the filled PDF and IRS business rules remain
+unverified.
 The Schedule A section of the 2025 IRS instructions instead says to show the
 activity with the most qualifying fuel usage. That conflict is unresolved;
 the current code follows the printed Form 4136 and needs IRS business-rule

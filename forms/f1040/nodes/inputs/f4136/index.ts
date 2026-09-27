@@ -43,6 +43,8 @@ export const FORM4136_RATES = {
   "11h": 0.183,
   "14a": 0.197,
   "14b": 0.198,
+  "16a": 0.001,
+  "16b": 0.001,
 } as const;
 
 export const FORM4136_BUS_RATES = {
@@ -93,6 +95,8 @@ const fuelLine = z.enum([
   "11h",
   "14a",
   "14b",
+  "16a",
+  "16b",
 ]);
 
 const alternativeFuelUseCodes = [
@@ -178,6 +182,12 @@ export const fuelClaimSchema = z.object({
   })).min(1).optional(),
   emulsion_water_percentage: z.number().finite().min(14).max(100).optional(),
   emulsion_epa_additive_record_reference: z.string().trim().min(1).optional(),
+  exporter_of_record_confirmed: z.literal(true).optional(),
+  exported_fuel_kind: z.enum([
+    "dyed_diesel",
+    "gasoline_blendstock",
+    "dyed_kerosene",
+  ]).optional(),
 });
 
 const businessSchema = z.object({
@@ -191,6 +201,7 @@ const businessSchema = z.object({
   equipment_type: z.string().trim().min(1),
   purchase_records_confirmed: z.literal(true).optional(),
   sales_records_confirmed: z.literal(true).optional(),
+  export_records_confirmed: z.literal(true).optional(),
   no_duplicate_excise_claim: z.literal(true),
 });
 
@@ -233,6 +244,37 @@ const activitySchema = z.object({
           code: "custom",
           message: "Form 4136 line 6a needs confirmed sales records",
           path: ["business", "sales_records_confirmed"],
+        });
+      }
+    } else if (claim.line === "16a" || claim.line === "16b") {
+      if (
+        claim.exporter_of_record_confirmed !== true ||
+        input.business.export_records_confirmed !== true
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Form 4136 export claim needs exporter and export records",
+          path: ["claims", index, "exporter_of_record_confirmed"],
+        });
+      }
+      const allowedKinds = claim.line === "16a"
+        ? ["dyed_diesel", "gasoline_blendstock"]
+        : ["dyed_kerosene"];
+      if (
+        !claim.exported_fuel_kind ||
+        !allowedKinds.includes(claim.exported_fuel_kind)
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Form 4136 export claim needs the correct fuel kind",
+          path: ["claims", index, "exported_fuel_kind"],
+        });
+      }
+      if (claim.excise_tax_rate_per_gallon !== 0.001) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Form 4136 line 16 needs fuel taxed at $.001 per gallon",
+          path: ["claims", index, "excise_tax_rate_per_gallon"],
         });
       }
     } else if (
@@ -365,7 +407,7 @@ const activitySchema = z.object({
       }
     }
     if (
-      ["1d", "2c", "3e", "4d", "14b"].includes(claim.line) &&
+      ["1d", "2c", "3e", "4d", "14b", "16a", "16b"].includes(claim.line) &&
       !claim.export_proof
     ) {
       ctx.addIssue({
@@ -394,7 +436,9 @@ const activitySchema = z.object({
         path: ["claims", index, "excise_tax_rate_per_gallon"],
       });
     }
-    const key = `${claim.line}:${claim.type_of_use ?? ""}`;
+    const key = `${claim.line}:${claim.type_of_use ?? ""}:${
+      claim.line === "16a" ? claim.exported_fuel_kind ?? "" : ""
+    }`;
     if (seen.has(key)) {
       ctx.addIssue({
         code: "custom",

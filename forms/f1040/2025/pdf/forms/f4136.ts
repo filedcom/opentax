@@ -71,6 +71,8 @@ const creditReferenceNumber: Record<Line, string> = {
   "11h": "435",
   "14a": "309",
   "14b": "306",
+  "16a": "415",
+  "16b": "416",
 };
 const page = (number: number) => `topmostSubform[0].Page${number}[0]`;
 function fieldPath(p: number, n: number): string {
@@ -197,6 +199,14 @@ function fieldPath(p: number, n: number): string {
     column = n >= 89 && n <= 90 || n >= 97 && n <= 98
       ? "ColD"
       : n >= 91 && n <= 92 || n >= 99 && n <= 100
+      ? "ColE"
+      : "";
+  } else if (p === 4 && n >= 110 && n <= 123) {
+    table = "Table_Line16";
+    line = n <= 116 ? "Line16a" : "Line16b";
+    column = n >= 112 && n <= 113 || n >= 119 && n <= 120
+      ? "ColD"
+      : n >= 114 && n <= 115 || n >= 121 && n <= 122
       ? "ColE"
       : "";
   }
@@ -329,6 +339,12 @@ const fields: PdfFieldEntry[] = [
   text("line14b_quantity", 4, 96),
   ...moneyFields("line14b_cost", 4, 97),
   ...moneyFields("line14b_credit", 4, 99),
+  text("line16a_quantity", 4, 111),
+  ...moneyFields("line16a_cost", 4, 112),
+  ...moneyFields("line16a_credit", 4, 114),
+  text("line16b_quantity", 4, 118),
+  ...moneyFields("line16b_cost", 4, 119),
+  ...moneyFields("line16b_credit", 4, 121),
   ...moneyFields("line17_total", 4, 124),
 ];
 
@@ -482,11 +498,25 @@ async function appendClaimStatement(
         font: bold,
       },
     );
+    if (overflow.some((claim) => claim.line === "16a")) {
+      page.drawText(
+        "Use: dyedDs=dyed diesel; gasBl=gasoline blendstock",
+        { x: 36, y: 714, size: 8, font },
+      );
+    }
     overflow.slice(offset, offset + rowsPerPage).forEach((claim, index) => {
+      const useLabel = claim.exported_fuel_kind === "dyed_diesel"
+        ? "dyedDs"
+        : claim.exported_fuel_kind === "gasoline_blendstock"
+        ? "gasBl"
+        : claim.exported_fuel_kind === "dyed_kerosene"
+        ? "dyedKr"
+        : claim.type_of_use === "05"
+        ? "05 Bus"
+        : claim.type_of_use ?? "fixed";
       const row = [
         claim.line.padEnd(5),
-        (claim.type_of_use === "05" ? "05 Bus" : claim.type_of_use ?? "fixed")
-          .padEnd(7),
+        useLabel.padEnd(7),
         rateForForm4136Claim(claim).toFixed(3).padStart(5),
         String(claim.qualified_quantity).padStart(9),
         claim.unit.padEnd(7),
@@ -595,6 +625,8 @@ export function projectForm4136Fields(
       "6a",
       "14a",
       "14b",
+      "16a",
+      "16b",
       ...alternativeFuelLines,
     ] as const
   ) {
@@ -628,6 +660,8 @@ export function projectForm4136Fields(
   putClaimGroup(out, input, ["6a"], "line6a");
   putClaimGroup(out, input, ["14a"], "line14a");
   putClaimGroup(out, input, ["14b"], "line14b");
+  putClaimGroup(out, input, ["16a"], "line16a");
+  putClaimGroup(out, input, ["16b"], "line16b");
   out.line6_registration_number = allForm4136Claims(input).find((claim) =>
     claim.line === "6a"
   )?.vendor_registration_number;

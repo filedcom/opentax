@@ -49,6 +49,14 @@ Deno.test("Schedule A (Form 4136) has exact 2025 page and widget paths", () => {
     names.line14b_quantity,
     "topmostSubform[0].Page4[0].Line14Table[0].Line14b[0].f4_11[0]",
   );
+  assertEquals(
+    names.line16a_credit_dollars,
+    "topmostSubform[0].Page4[0].Line16Table[0].Line16a[0].ColE[0].f4_29[0]",
+  );
+  assertEquals(
+    names.line16b_quantity,
+    "topmostSubform[0].Page4[0].Line16Table[0].Line16b[0].f4_33[0]",
+  );
   assertEquals(names.line17_total_cents, "topmostSubform[0].Page4[0].f4_40[0]");
 });
 
