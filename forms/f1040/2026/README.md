@@ -12,16 +12,17 @@ routes household employment tax to Schedule 2 line 17a, and has a two-page
 draft PDF attachment. Its ATS line 9 No case reconciles $627 through Form
 1040 line 23. Section B, payroll-to-form wage derivation, and MeF remain open;
 see [the Schedule H contract](../../../docs/ty2026/SCHEDULEH-GRAPH.md).
-`credit-resolution.ts` now computes Schedule 8812 Worksheet B through line
-14 and 2026 Form 5695 lines 1–4 in the required order. It still needs
-source-node inputs and graph execution before a carryforward return can
-produce the existing Form 5695 PDF from calculated facts.
+`credit-resolution.ts` computes Schedule 8812 Worksheet B through line 14
+and 2026 Form 5695 lines 1–4 in the required order. The registered graph
+receives tax, dependent, AGI, Schedule 2, and Schedule 3 amounts.
 The registered `credit_resolution` node now receives the pre-5695 Schedule 3
 amounts and sends their totals to Form 1040 and Schedule 8812. Schedule 3
 line 5a can no longer be injected into that upstream node. The `f5695` input
-now routes the 2025 line 16 carryforward to this stage, which calculates and
-prints the 2026 form for returns without dependent credits. The dependent
-credit ordering and MeF attachment remain open.
+now routes the 2025 line 16 carryforward to this stage. One `f8812_facts`
+input supplies earned-income worksheet evidence and other credit facts to
+both provisional and final Schedule 8812. Graph and PDF tests cover a
+dependent with Worksheet B and Form 5695. MeF attachment and broader
+credit-source routing remain open.
 
 The first executable 2026 calculation is `settlement.ts`: it assembles 1040
 lines 24a–c and 32a–c, Schedule 3-A Part I/II, payments, refund, and amount
@@ -98,10 +99,10 @@ and W-2 box 12 A/B/M/N and K are routed; code Z requires its separate 409A
 tax and interest calculation. Schedule 8812's `part_iib_2026` input now uses
 Schedule 2 lines 16c and 17c and checks them against amounts calculated in
 the graph. The 2026 Credit Limit Worksheet A uses its draft-instruction
-Schedule 3 line list and rejects the TY2025 worksheet shape. Worksheet B now
-sums its four Schedule 3 credit lines. Their graph reconciliation,
-earned-income sources, and credit output still need a complete 2026 return
-path.
+Schedule 3 line list and rejects the TY2025 worksheet shape. Worksheet B
+sums its four Schedule 3 credit lines. The graph reconciles worksheet wages
+with W-2 wages and passes calculated Schedule 3 credit lines to final
+Schedule 8812; other earned-income sources still need routing.
 `inputs.ts`, `start.ts`, and `registry.ts` now define the first dedicated
 TY2026 calculation entry point. It executes wages-only and W-2/Form 4137 tip
 returns through the normal graph planner and executor. It is limited to nodes
