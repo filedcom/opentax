@@ -96,6 +96,43 @@ Deno.test("Form 3800 XML: Form 8826 line 1e alone reconciles with Part II", () =
   );
 });
 
+Deno.test("Form 3800 XML: Form 8820 line 1h reconciles with Part II", () => {
+  const xml = buildIRS3800Nonpassive({
+    tax: { ...tax, standardCredit: 19_750, specifiedCredit: 0 },
+    form8820: {
+      credit: 19_750,
+      documentId: "IRS8820_1",
+      appliedCredit: 19_750,
+    },
+    facilities: [],
+    form8835DocumentIds: [],
+    appliedCreditsByFacility: [],
+    transferStatementIdsByFileName: {},
+  });
+  assertStringIncludes(
+    xml,
+    '<Form8820CYCreditsGrp referenceDocumentId="IRS8820_1"',
+  );
+  assertStringIncludes(
+    xml,
+    "<CurrentYearCreditAllowedAmt>19750</CurrentYearCreditAllowedAmt>",
+  );
+  assertThrows(() =>
+    buildIRS3800Nonpassive({
+      tax: { ...tax, standardCredit: 19_750, specifiedCredit: 0 },
+      form8820: {
+        credit: 19_750,
+        documentId: "IRS8820_1",
+        appliedCredit: 20_000,
+      },
+      facilities: [],
+      form8835DocumentIds: [],
+      appliedCreditsByFacility: [],
+      transferStatementIdsByFileName: {},
+    })
+  );
+});
+
 Deno.test("Form 3800 XML: Form 8936 new-vehicle business credit uses line 1y", () => {
   const xml = buildIRS3800Nonpassive({
     tax: { ...tax, standardCredit: 1_875, specifiedCredit: 0 },
@@ -558,6 +595,18 @@ Deno.test("Form 3800 XML: mixed Form 8826 and Form 8835 follows TY2025 source sc
           }],
         },
         appliedCredit: 1_250,
+      },
+      facilities: [],
+      form8835DocumentIds: [],
+      appliedCreditsByFacility: [],
+      transferStatementIdsByFileName: {},
+    }),
+    buildIRS3800Nonpassive({
+      tax: { ...tax, standardCredit: 19_750, specifiedCredit: 0 },
+      form8820: {
+        credit: 19_750,
+        documentId: "IRS8820_1",
+        appliedCredit: 19_750,
       },
       facilities: [],
       form8835DocumentIds: [],

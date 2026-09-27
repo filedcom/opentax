@@ -1,164 +1,108 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { f8820 } from "./index.ts";
+import { calculateForm8820, f8820, inputSchema } from "./index.ts";
+import { f3800 } from "../f3800/index.ts";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
-import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 
-function minimalItem(overrides: Record<string, unknown> = {}) {
-  return { ...overrides };
+const drug = {
+  generic_name: "Test Orphan Drug",
+  designation_application_number: "FDA-123",
+  designation_date: "2024-03-15",
+  qualified_clinical_testing_expenses: 100_000,
+  qualifying_testing_confirmed: true,
+  expenses_exclude_third_party_funding: true,
+  expenses_not_used_for_research_credit: true,
+};
+
+function source(overrides: Record<string, unknown> = {}) {
+  return inputSchema.parse({
+    f8820s: [drug],
+    reduced_section280c_credit_election: true,
+    form8932_overlapping_wage_credit: 0,
+    subject_to_passive_activity_limit: false,
+    ...overrides,
+  });
 }
 
-function compute(items: ReturnType<typeof minimalItem>[]) {
-  return f8820.compute({ taxYear: 2025, formType: "f1040" }, { f8820s: items });
-}
-
-// =============================================================================
-// 1. Input Schema Validation
-// =============================================================================
-
-Deno.test("f8820.inputSchema: valid minimal item passes", () => {
-  const parsed = f8820.inputSchema.safeParse({ f8820s: [{}] });
-  assertEquals(parsed.success, true);
-});
-
-Deno.test("f8820.inputSchema: empty array fails (min 1)", () => {
-  const parsed = f8820.inputSchema.safeParse({ f8820s: [] });
-  assertEquals(parsed.success, false);
-});
-
-Deno.test("f8820.inputSchema: negative qualified_clinical_testing_expenses fails", () => {
-  const parsed = f8820.inputSchema.safeParse({
-    f8820s: [{ qualified_clinical_testing_expenses: -100 }],
+Deno.test("Form 8820 reduced section 280C election uses 19.75%", () => {
+  const lines = calculateForm8820(source());
+  assertEquals(lines, {
+    line1: 100_000,
+    line2a: 19_750,
+    line2b: 0,
+    line2c: 19_750,
+    line4: 19_750,
   });
-  assertEquals(parsed.success, false);
 });
 
-Deno.test("f8820.inputSchema: valid full item passes", () => {
-  const parsed = f8820.inputSchema.safeParse({
-    f8820s: [{
-      qualified_clinical_testing_expenses: 100000,
-      is_small_biotech: true,
-    }],
-  });
-  assertEquals(parsed.success, true);
+Deno.test("Form 8820 full credit uses 25% and needs the deduction statement", () => {
+  assertThrows(() =>
+    calculateForm8820(source({
+      reduced_section280c_credit_election: false,
+    }))
+  );
+  const lines = calculateForm8820(source({
+    reduced_section280c_credit_election: false,
+    expense_reduction_statement_file_name: "orphan-drug-deduction.pdf",
+  }));
+  assertEquals(lines.line2a, 25_000);
+  assertEquals(lines.line4, 25_000);
 });
 
-Deno.test("f8820.inputSchema: zero expenses passes", () => {
-  const parsed = f8820.inputSchema.safeParse({
-    f8820s: [{ qualified_clinical_testing_expenses: 0 }],
-  });
-  assertEquals(parsed.success, true);
+Deno.test("Form 8820 subtracts overlapping Form 8932 wage credit", () => {
+  const lines = calculateForm8820(source({
+    form8932_overlapping_wage_credit: 1_250,
+  }));
+  assertEquals(lines.line2b, 1_250);
+  assertEquals(lines.line2c, 18_500);
+  assertThrows(() =>
+    calculateForm8820(source({
+      form8932_overlapping_wage_credit: 20_000,
+    }))
+  );
 });
 
-// =============================================================================
-// 2. Per-Field Routing and Calculation (25% rate, IRC §45C(a))
-// =============================================================================
+Deno.test("Form 8820 requires identified, qualified drugs", () => {
+  assertEquals(
+    inputSchema.safeParse({
+      ...source(),
+      f8820s: [{ ...drug, qualifying_testing_confirmed: false }],
+    }).success,
+    false,
+  );
+  assertThrows(() =>
+    calculateForm8820(source({
+      f8820s: [{ ...drug, designation_date: "2025-02-30" }],
+    }))
+  );
+  assertThrows(() =>
+    calculateForm8820(source({
+      f8820s: [drug, { ...drug, generic_name: "Other Drug" }],
+    }))
+  );
+});
 
-Deno.test("f8820.compute: expenses route to schedule3 as GBC", () => {
-  const result = compute([minimalItem({ qualified_clinical_testing_expenses: 100000 })]);
+Deno.test("Form 8820 sends the classified source credit to Form 3800", () => {
+  const result = f8820.compute(
+    { taxYear: 2025, formType: "f1040" },
+    source(),
+  );
   assertEquals(result.outputs.length, 1);
-  assertEquals(result.outputs[0].nodeType, "schedule3");
+  assertEquals(fieldsOf(result.outputs, f3800)?.f8820_credit, {
+    credit_amount: 19_750,
+    subject_to_passive_activity_limit: false,
+  });
+  assertEquals(
+    result.outputs.some((output) => output.nodeType === "schedule3"),
+    false,
+  );
 });
 
-Deno.test("f8820.compute: credit = 25% of qualified expenses", () => {
-  const result = compute([minimalItem({ qualified_clinical_testing_expenses: 100000 })]);
-  const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6a_general_business_credit, 25000);
-});
-
-Deno.test("f8820.compute: zero expenses — no output", () => {
-  const result = compute([minimalItem({ qualified_clinical_testing_expenses: 0 })]);
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("f8820.compute: absent expenses — no output", () => {
-  const result = compute([minimalItem()]);
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("f8820.compute: is_small_biotech flag does not change 25% rate", () => {
-  const withSmallBiotech = compute([minimalItem({
-    qualified_clinical_testing_expenses: 200000,
-    is_small_biotech: true,
-  })]);
-  const withoutFlag = compute([minimalItem({
-    qualified_clinical_testing_expenses: 200000,
-    is_small_biotech: false,
-  })]);
-  const fieldsSmall = fieldsOf(withSmallBiotech.outputs, schedule3)!;
-  const fieldsNormal = fieldsOf(withoutFlag.outputs, schedule3)!;
-  assertEquals(fieldsSmall.line6a_general_business_credit, 50000);
-  assertEquals(fieldsNormal.line6a_general_business_credit, 50000);
-});
-
-// =============================================================================
-// 3. Aggregation — Multiple Items
-// =============================================================================
-
-Deno.test("f8820.compute: multiple items — expenses summed before applying 25%", () => {
-  const result = compute([
-    minimalItem({ qualified_clinical_testing_expenses: 100000 }),
-    minimalItem({ qualified_clinical_testing_expenses: 200000 }),
-  ]);
-  const fields = fieldsOf(result.outputs, schedule3)!;
-  // (100000 + 200000) × 0.25 = 75000
-  assertEquals(fields.line6a_general_business_credit, 75000);
-});
-
-Deno.test("f8820.compute: one zero + one nonzero — credit from nonzero only", () => {
-  const result = compute([
-    minimalItem({ qualified_clinical_testing_expenses: 0 }),
-    minimalItem({ qualified_clinical_testing_expenses: 80000 }),
-  ]);
-  const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6a_general_business_credit, 20000);
-});
-
-// =============================================================================
-// 4. Thresholds
-// =============================================================================
-
-Deno.test("f8820.compute: $1 of expenses produces $0.25 credit", () => {
-  const result = compute([minimalItem({ qualified_clinical_testing_expenses: 1 })]);
-  const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6a_general_business_credit, 0.25);
-});
-
-Deno.test("f8820.compute: large expenses — 25% rate applies consistently", () => {
-  const result = compute([minimalItem({ qualified_clinical_testing_expenses: 1000000 })]);
-  const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6a_general_business_credit, 250000);
-});
-
-// =============================================================================
-// 5. Output Count
-// =============================================================================
-
-Deno.test("f8820.compute: single output node when credit present", () => {
-  const result = compute([minimalItem({ qualified_clinical_testing_expenses: 100000 })]);
-  assertEquals(result.outputs.length, 1);
-});
-
-// =============================================================================
-// 6. Hard Validation
-// =============================================================================
-
-Deno.test("f8820.compute: throws on negative qualified_clinical_testing_expenses", () => {
-  assertThrows(() => compute([minimalItem({ qualified_clinical_testing_expenses: -100 })]), Error);
-});
-
-// =============================================================================
-// 7. Smoke Test
-// =============================================================================
-
-Deno.test("f8820.compute: smoke test — small biotech with large expenses", () => {
-  const result = compute([
-    minimalItem({
-      qualified_clinical_testing_expenses: 400000,
-      is_small_biotech: true,
+Deno.test("Form 8820 zero expenses produce no credit", () => {
+  const result = f8820.compute(
+    { taxYear: 2025, formType: "f1040" },
+    source({
+      f8820s: [{ ...drug, qualified_clinical_testing_expenses: 0 }],
     }),
-  ]);
-  // 400000 × 0.25 = 100000
-  const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6a_general_business_credit, 100000);
-  assertEquals(result.outputs.length, 1);
+  );
+  assertEquals(result.outputs, []);
 });

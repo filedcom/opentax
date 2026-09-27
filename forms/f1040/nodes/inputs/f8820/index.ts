@@ -1,60 +1,105 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
+import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import { f3800 } from "../f3800/index.ts";
 
-// Form 8820 — Orphan Drug Credit (IRC §45C).
-// Credit = 25% of qualified clinical testing expenses for FDA-designated orphan drugs.
-// Rate reduced from 50% to 25% by TCJA (P.L. 115-97, §13401), effective TY2018+.
-// Part of the General Business Credit (IRC §38(b)(20)).
-// Routes to Schedule 3 line 6z (general business credit aggregation).
-// Note: IRC §280C(b) requires reducing the expense deduction by the credit amount
-// (basis reduction handled in business expense computation, not this node).
-
-// TY2025 constant — IRC §45C(a); TCJA P.L. 115-97 §13401
-const CREDIT_RATE = 0.25;
-
-export const itemSchema = z.object({
-  // Qualified clinical testing expenses for FDA-designated orphan drugs — Form 8820 Line 1
-  qualified_clinical_testing_expenses: z.number().nonnegative().optional(),
-  // Whether the taxpayer is a qualified small biotech company — informational for TY2025
-  is_small_biotech: z.boolean().optional(),
+const drugSchema = z.object({
+  generic_name: z.string().min(1),
+  designation_application_number: z.string().min(1),
+  designation_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  qualified_clinical_testing_expenses: z.number().finite().nonnegative(),
+  qualifying_testing_confirmed: z.literal(true),
+  expenses_exclude_third_party_funding: z.literal(true),
+  expenses_not_used_for_research_credit: z.literal(true),
 });
 
 export const inputSchema = z.object({
-  f8820s: z.array(itemSchema).min(1),
+  f8820s: z.array(drugSchema).min(1),
+  reduced_section280c_credit_election: z.boolean(),
+  form8932_overlapping_wage_credit: z.number().int().nonnegative(),
+  subject_to_passive_activity_limit: z.boolean(),
+  expense_reduction_statement_file_name: z.string().min(1).optional(),
 });
 
-type F8820Items = z.infer<typeof itemSchema>[];
+export type F8820Input = z.infer<typeof inputSchema>;
 
-function totalExpenses(items: F8820Items): number {
-  return items.reduce(
-    (sum, item) => sum + (item.qualified_clinical_testing_expenses ?? 0),
+export interface Form8820Lines {
+  line1: number;
+  line2a: number;
+  line2b: number;
+  line2c: number;
+  line4: number;
+}
+
+function validDesignationDate(value: string): boolean {
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(date.getTime()) &&
+    date.toISOString().slice(0, 10) === value && value <= "2025-12-31";
+}
+
+export function calculateForm8820(raw: F8820Input): Form8820Lines {
+  const input = inputSchema.parse(raw);
+  const designations = new Set<string>();
+  for (const drug of input.f8820s) {
+    if (!validDesignationDate(drug.designation_date)) {
+      throw new Error("Form 8820 needs a valid orphan-drug designation date");
+    }
+    if (designations.has(drug.designation_application_number)) {
+      throw new Error("Form 8820 has a duplicate drug designation number");
+    }
+    designations.add(drug.designation_application_number);
+  }
+  const line1 = Math.round(input.f8820s.reduce(
+    (sum, drug) => sum + drug.qualified_clinical_testing_expenses,
     0,
+  ));
+  const line2a = Math.round(
+    line1 * (input.reduced_section280c_credit_election ? 0.1975 : 0.25),
   );
-}
-
-function computeCredit(expenses: number): number {
-  return expenses * CREDIT_RATE;
-}
-
-function buildOutputs(credit: number): NodeOutput[] {
-  if (credit <= 0) return [];
-  return [{ nodeType: schedule3.nodeType, fields: { line6a_general_business_credit: credit } }];
+  const line2b = input.form8932_overlapping_wage_credit;
+  if (line2b > line2a) {
+    throw new Error("Form 8820 overlapping wage credit exceeds line 2a");
+  }
+  if (
+    line2a > 0 && !input.reduced_section280c_credit_election &&
+    !input.expense_reduction_statement_file_name
+  ) {
+    throw new Error(
+      "Form 8820 non-reduced credit needs the expense-reduction statement",
+    );
+  }
+  if (
+    input.reduced_section280c_credit_election &&
+    input.expense_reduction_statement_file_name
+  ) {
+    throw new Error(
+      "Form 8820 reduced-credit election cannot claim an expense reduction",
+    );
+  }
+  const line2c = Math.max(0, line2a - line2b);
+  return { line1, line2a, line2b, line2c, line4: line2c };
 }
 
 class F8820Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8820";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule3]);
+  readonly outputNodes = new OutputNodes([f3800]);
 
-  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
-    const parsed = inputSchema.parse(input);
-    const expenses = totalExpenses(parsed.f8820s);
-    const credit = computeCredit(expenses);
-    return { outputs: buildOutputs(credit) };
+  compute(_ctx: NodeContext, raw: F8820Input): NodeResult {
+    const input = inputSchema.parse(raw);
+    const lines = calculateForm8820(input);
+    if (lines.line4 === 0) return { outputs: [] };
+    return {
+      outputs: [this.outputNodes.output(f3800, {
+        f8820_credit: {
+          credit_amount: lines.line4,
+          subject_to_passive_activity_limit:
+            input.subject_to_passive_activity_limit,
+        },
+      })],
+    };
   }
 }
 

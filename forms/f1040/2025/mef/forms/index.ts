@@ -48,6 +48,7 @@ import { childTaxableInterestStatement } from "./child_taxable_interest_statemen
 import { form8815 } from "./f8815.ts";
 import { form8824 } from "./f8824.ts";
 import { form8826 } from "./f8826_draft.ts";
+import { form8820 } from "./f8820.ts";
 import { form8829 } from "./f8829.ts";
 import { form8834 } from "./f8834.ts";
 import { form8839 } from "./f8839.ts";
@@ -181,6 +182,8 @@ export const ALL_MEF_FORMS = [
   form8814,
   // Form 8815
   form8815,
+  // Form 8820
+  form8820,
   // Form 8824
   form8824,
   // Form 8826 only for self-earned disabled access credit.

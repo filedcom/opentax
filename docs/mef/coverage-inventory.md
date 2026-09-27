@@ -117,6 +117,14 @@ amount, and remaining amount; their cases are unrun. The graph-level nonpassive
 allowed-credit route is written but unrun. No Form 8826 PDF, passive Form
 8582-CR path, K-1 document reconciliation, or ATS evidence exists yet.
 
+Form 8820 is also in scope outside the Scenario 4 rows. The current build pass
+registers an `IRS8820` document with identified orphan-drug details, the section
+280C election, Form 8932 wage-credit offset, and an unrun source-to-XSD case.
+Its source credit now enters the shared nonpassive Form 3800 line 1h and needs
+an attached source document. Expense or basis reduction, controlled groups,
+pass-through and passive credits, PDF output, business rules, and ATS evidence
+remain open.
+
 The ATS inventory in `docs/ats/ty2025.md` identifies other scenario-specific
 facts that remain incomplete. This file must be expanded after comparing IRS
 instructions and the full ReturnData1040 document list with the agreed product

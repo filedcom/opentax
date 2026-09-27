@@ -86,6 +86,11 @@ const f5884CreditSchema = z.object({
   subject_to_passive_activity_limit: z.boolean(),
 });
 
+const f8820CreditSchema = z.object({
+  credit_amount: z.number().finite().nonnegative(),
+  subject_to_passive_activity_limit: z.boolean(),
+});
+
 const f8936NewVehicleCreditSchema = z.object({
   credit_amount: z.number().finite().nonnegative(),
   subject_to_passive_activity_limit: z.boolean(),
@@ -103,10 +108,12 @@ export const inputSchema = z.object({
   f8835_credit_entries: z.array(f8835CreditEntrySchema).min(1).optional(),
   f8826_credit_entries: z.array(f8826CreditEntrySchema).min(1).optional(),
   f5884_credit: f5884CreditSchema.optional(),
+  f8820_credit: f8820CreditSchema.optional(),
   f8936_new_vehicle_credit: f8936NewVehicleCreditSchema.optional(),
   f8936_commercial_vehicle_credit: f8936NewVehicleCreditSchema.optional(),
   form8936_applied_credit: appliedSourceCreditSchema.optional(),
   form8936_commercial_applied_credit: appliedSourceCreditSchema.optional(),
+  form8820_applied_credit: appliedSourceCreditSchema.optional(),
   form5884_applied_credit: appliedSourceCreditSchema.optional(),
   form5884_applied_credits_by_source: z.array(appliedSourceCreditSchema)
     .optional(),
@@ -121,6 +128,7 @@ export const inputSchema = z.object({
     input.f3800s !== undefined || input.f8835_credit_entries !== undefined ||
     input.f8826_credit_entries !== undefined ||
     input.f5884_credit !== undefined ||
+    input.f8820_credit !== undefined ||
     input.f8936_new_vehicle_credit !== undefined ||
     input.f8936_commercial_vehicle_credit !== undefined,
   {
@@ -170,6 +178,7 @@ function schedule3Output(
   f8835Entries: z.infer<typeof f8835CreditEntrySchema>[],
   f8826Entries: z.infer<typeof f8826CreditEntrySchema>[],
   f5884Credit: z.infer<typeof f5884CreditSchema> | undefined,
+  f8820Credit: z.infer<typeof f8820CreditSchema> | undefined,
   f8936Credit: z.infer<typeof f8936NewVehicleCreditSchema> | undefined,
   f8936CommercialCredit:
     | z.infer<typeof f8936NewVehicleCreditSchema>
@@ -193,6 +202,14 @@ function schedule3Output(
   ) {
     throw new Error(
       "Form 5884 passive credit needs Form 8582-CR before Form 3800",
+    );
+  }
+  if (
+    f8820Credit && f8820Credit.credit_amount > 0 &&
+    f8820Credit.subject_to_passive_activity_limit
+  ) {
+    throw new Error(
+      "Form 8820 passive credit needs Form 8582-CR before Form 3800",
     );
   }
   if (
@@ -224,6 +241,7 @@ function schedule3Output(
     (f8835Credit?.standardCredit ?? 0) > 0 ||
     (f8835Credit?.specifiedCredit ?? 0) > 0 ||
     (f5884Credit?.credit_amount ?? 0) > 0 ||
+    (f8820Credit?.credit_amount ?? 0) > 0 ||
     (f8936Credit?.credit_amount ?? 0) > 0 ||
     (f8936CommercialCredit?.credit_amount ?? 0) > 0;
   if (hasSourceCredit && totalGbc(items) > 0) {
@@ -236,6 +254,7 @@ function schedule3Output(
       output(f1040, {
         form3800_source_credits: {
           standardCredit: form8826Credit +
+            (f8820Credit?.credit_amount ?? 0) +
             (f8936Credit?.credit_amount ?? 0) +
             (f8936CommercialCredit?.credit_amount ?? 0) +
             (f8835Credit?.standardCredit ?? 0),
@@ -265,6 +284,7 @@ class F3800Node extends TaxNode<typeof inputSchema> {
         parsed.f8835_credit_entries ?? [],
         parsed.f8826_credit_entries ?? [],
         parsed.f5884_credit,
+        parsed.f8820_credit,
         parsed.f8936_new_vehicle_credit,
         parsed.f8936_commercial_vehicle_credit,
       ),

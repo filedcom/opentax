@@ -93,6 +93,51 @@ Deno.test("Form 3800 descriptor stays empty without credit and rejects legacy gr
   );
 });
 
+Deno.test("Form 3800 links Form 8820 orphan-drug credit to line 1h", () => {
+  const source = {
+    f8820s: [{
+      generic_name: "Test Orphan Drug",
+      designation_application_number: "FDA-123",
+      designation_date: "2024-03-15",
+      qualified_clinical_testing_expenses: 100_000,
+      qualifying_testing_confirmed: true,
+      expenses_exclude_third_party_funding: true,
+      expenses_not_used_for_research_credit: true,
+    }],
+    reduced_section280c_credit_election: true,
+    form8932_overlapping_wage_credit: 0,
+    subject_to_passive_activity_limit: false,
+  };
+  const businessTax = { ...tax, standardCredit: 19_750 };
+  const fields = {
+    f8820_credit: {
+      credit_amount: 19_750,
+      subject_to_passive_activity_limit: false,
+    },
+    tax_context: businessTax,
+    allowed_credit: 19_750,
+  };
+  const context = {
+    pending: { ...filedPending(businessTax, 19_750), f8820: source },
+    documentIdsByPendingKey: {
+      f8820: ["IRS8820_1"],
+      form6251: ["IRS6251_1"],
+    },
+  };
+  const xml = form3800.build(fields, context);
+  assertStringIncludes(xml, "<Form8820CYCreditsGrp");
+  assertStringIncludes(xml, 'referenceDocumentId="IRS8820_1"');
+  assertThrows(
+    () =>
+      form3800.build({
+        ...fields,
+        f8820_credit: { ...fields.f8820_credit, credit_amount: 19_749 },
+      }, context),
+    Error,
+    "does not reconcile",
+  );
+});
+
 Deno.test("Form 3800 links Form 8936 business-use credit to line 1y", () => {
   const vehicle = {
     vin: "1HGCM82633A004352",

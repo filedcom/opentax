@@ -180,7 +180,18 @@ requires and references the Form 3800 document in the linked MeF bundle. The
 names the direct line 6a producers and the source classifications needed before
 a shared Form 3800 finalization. It also identifies Form 8912 as a separate line
 6k credit formerly misrouted to 6a. The other direct deposits remain in code and
-can still overstate filed credits. The Form 5884 source build pass now requires
+can still overstate filed credits. The current unrun Form 8820 pass replaces its
+flat 25% gross Schedule 3 deposit with identified orphan-drug source rows, the
+19.75% section 280C reduced-credit election or 25% full-credit calculation,
+the overlapping Form 8932 wage-credit offset, and a nonpassive Form 3800 line
+1h handoff. A native IRS8820 document and linked Form 3800 line 1h group are
+registered, with source, XML, and XSD cases written but unrun. The full-credit
+path requires a bundled expense-reduction statement, but reconciliation to the
+actual deduction or capitalized basis remains open. Controlled groups,
+pass-through credits, passive credits, an election with no current-year credit,
+eligibility-document verification,
+filled-PDF output, and IRS business rules remain open. The Form 5884 source
+build pass now requires
 employee identity, pre-2026 hire, state-workforce certification, wage
 eligibility affirmations, and a single certified veteran category. The input now
 requires dated evidence for either certification received by the first workday
