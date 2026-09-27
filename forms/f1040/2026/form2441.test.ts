@@ -1,5 +1,6 @@
 import { assertEquals, assertMatch, assertRejects } from "@std/assert";
 import { z } from "zod";
+import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { buildStartNode } from "../start.ts";
@@ -77,17 +78,17 @@ Deno.test("TY2026 Form 2441 credit uses calculated tax after AGI", async () => {
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.f2441.line8, 0.35);
   assertEquals(result.pending.f2441.line9a, 1_050);
+  assertEquals(result.pending.f2441.line9b, 0);
+  assertEquals(result.pending.f2441.line9c, 1_050);
   assertEquals(result.pending.f2441.line11, 1_050);
   assertEquals(result.pending.schedule3.line2_childcare_credit, 1_050);
   assertEquals(result.pending.f1040.line20_nonrefundable_credits, 1_050);
-  await assertRejects(
-    () => buildPdfBytes2026(result.pending),
-    Error,
-    "needs the Form 2441 attachment",
-  );
+  const pdf = await PDFDocument.load(await buildPdfBytes2026(result.pending));
+  assertEquals(pdf.getPageCount(), 4);
+  assertEquals(pdf.getForm().getFields().length, 0);
 });
 
-Deno.test("TY2026 W-2 box 10 taxable benefits enter AGI before the credit", () => {
+Deno.test("TY2026 W-2 box 10 taxable benefits enter AGI before the credit", async () => {
   const result = execute(plan, testRegistry, {
     general: filer,
     w2: [{
@@ -114,6 +115,8 @@ Deno.test("TY2026 W-2 box 10 taxable benefits enter AGI before the credit", () =
   assertEquals(result.pending.f1040.line11a_agi, 70_500);
   assertEquals(result.pending.f2441.line7, 70_500);
   assertEquals(result.pending.f2441.line11, 0);
+  const pdf = await PDFDocument.load(await buildPdfBytes2026(result.pending));
+  assertEquals(pdf.getPageCount(), 4);
 });
 
 Deno.test("TY2026 Form 2441 credit cannot exceed calculated line 18 tax", () => {
@@ -162,4 +165,43 @@ Deno.test("TY2026 Form 2441 rejects a filing status mismatch", () => {
   assertEquals(result.diagnostics.length, 1);
   assertEquals(result.diagnostics[0].nodeType, "form2441");
   assertMatch(result.diagnostics[0].message, /disagrees with Form 1040/);
+});
+
+Deno.test("TY2026 Form 2441 does not assume annual deemed income", () => {
+  const result = execute(plan, testRegistry, {
+    general: filer,
+    w2: [{ box1_wages: 70_000, box2_fed_withheld: 8_000 }],
+    form2441: {
+      filing_details: {
+        ...details,
+        student_or_disabled_deemed_income_used: true,
+      },
+    },
+  }, context);
+  assertEquals(result.diagnostics.length, 1);
+  assertMatch(result.diagnostics[0].message, /needs monthly facts/);
+});
+
+Deno.test("TY2026 Form 2441 PDF rejects a fourth provider until a statement exists", async () => {
+  const result = execute(plan, testRegistry, {
+    general: filer,
+    w2: [{ box1_wages: 70_000, box2_fed_withheld: 8_000 }],
+    form2441: {
+      filing_details: {
+        ...details,
+        care_providers: Array.from({ length: 4 }, (_, index) => ({
+          ...details.care_providers[0],
+          name: `Care Center ${index + 1}`,
+          ein: `12345678${index + 1}`,
+          amount_paid: 750,
+        })),
+      },
+    },
+  }, context);
+  assertEquals(result.diagnostics, []);
+  await assertRejects(
+    () => buildPdfBytes2026(result.pending),
+    Error,
+    "needs continuation statements",
+  );
 });

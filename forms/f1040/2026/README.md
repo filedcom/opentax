@@ -40,10 +40,12 @@ The shared Form 2441 calculations now select explicit TY2026 employer benefit
 limits and credit rates. The TY2026 registry now separates taxable benefits
 before AGI from the credit after calculated AGI and income tax; W-2 box 10,
 Form 1040 line 1e, Schedule 3 line 2, and the Form 1040 credit total pass
-focused graph checks. The Form 2441 filing input is not on the public start
-surface, and the TY2026 PDF builder rejects a calculated Form 2441 until its
-full attachment is implemented. Provider eligibility, prior-year expenses,
-self-employed benefits, PDF, MeF, and ATS remain to build.
+focused graph checks. The draft PDF builder fills one printed page for a
+credit-only return and two for an employee-benefit return, reconciling lines
+11/26 to Schedule 3/Form 1040. It rejects a fourth provider or qualifying
+person until continuation pages exist. The Form 2441 filing input is not on
+the public start surface. Provider eligibility, prior-year expenses,
+self-employed benefits, continuations, MeF, and ATS remain to build.
 The [Form 2441 contract](../../../docs/ty2026/FORM2441-GRAPH.md) uses the
 pinned draft instructions to specify provider/benefit facts, the pre-AGI
 benefit stage, post-AGI credit stage, and the full attachment work.

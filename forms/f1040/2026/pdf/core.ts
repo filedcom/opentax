@@ -2,6 +2,7 @@ import { PDFDocument } from "pdf-lib";
 import { buildF1040PdfBytes2026 } from "./f1040.ts";
 import { buildForm6251PdfBytes2026 } from "./f6251.ts";
 import { buildForm5695PdfBytes2026 } from "./form5695.ts";
+import { buildForm2441PdfBytes2026 } from "./form2441.ts";
 import { buildForm5329PdfBytes2026 } from "./form5329.ts";
 import { buildForm4137PdfBytes2026 } from "./f4137.ts";
 import { buildForm8960PdfBytes2026 } from "./f8960.ts";
@@ -41,6 +42,8 @@ interface CorePdfInput2026 {
   readonly form8949?: Record<string, unknown>;
   readonly form6251?: Record<string, unknown>;
   readonly form5695?: Record<string, unknown>;
+  readonly form2441?: Record<string, unknown>;
+  readonly f2441?: Record<string, unknown>;
   readonly form5329?: Record<string, unknown>;
   readonly form4137?: Record<string, unknown>;
   readonly form8960?: Record<string, unknown>;
@@ -61,6 +64,8 @@ export async function buildCorePdfBytes2026({
   form8949,
   form6251,
   form5695,
+  form2441,
+  f2441,
   form5329,
   form4137,
   form8960,
@@ -170,6 +175,9 @@ export async function buildCorePdfBytes2026({
       optionalAmount(f1040, "line31_other_payments") > 0)
   ) {
     throw new Error("TY2026 core PDF needs Schedule 3 for credits or payments");
+  }
+  if ((form2441 === undefined) !== (f2441 === undefined)) {
+    throw new Error("TY2026 core PDF needs both Form 2441 calculation stages");
   }
   if (
     schedule3 && (
@@ -298,6 +306,17 @@ export async function buildCorePdfBytes2026({
   if (schedule3) {
     parts.push(
       await buildSchedule3PdfBytes2026(schedule3, f1040, { name, ssn }),
+    );
+  }
+  if (form2441 && f2441) {
+    parts.push(
+      await buildForm2441PdfBytes2026(
+        form2441,
+        f2441,
+        f1040,
+        schedule3,
+        { name, ssn },
+      ),
     );
   }
   if (f8812?.file_schedule_8812 === true) {

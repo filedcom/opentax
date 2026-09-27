@@ -34,14 +34,16 @@ credit-limit resolution, without a cycle back through AGI.
   Worksheet amount, and sends line 11 to Schedule 3 line 2. Focused graph
   cases verify taxable line 1e, AGI, tax limitation, and a missing-detail
   diagnostic. The node is absent from the public start inputs while
-  eligibility facts, attachment output, and MeF remain incomplete; the PDF
-  builder rejects a calculated Form 2441 rather than omitting its pages.
+  eligibility facts and MeF remain incomplete. The draft PDF builder fills
+  one or two printed pages for employee cases, and rejects fourth-row
+  continuations until those pages are implemented.
 - The shared `form2441/year-rules.ts` already selects the 2026 50%–20%
   phaseout and $7,500/$3,750 exclusion ceiling. Retain its boundary tests
   and compare final instructions before using it in the public 2026 graph.
 - The shared detailed calculation has a pre-AGI benefits stage and post-AGI
-  credit stage. It does not currently calculate Part III lines 22/24 for
-  proprietor or partnership benefits or Part II line 9b/9c. Its line 10 is
+  credit stage. Part III lines 22/24 and Part II line 9b remain zero because
+  proprietor/partnership benefits and prior-year paid expenses lack source
+  facts; line 9c currently equals 9a. Its line 10 is
   supplied internally by the TY2026 graph, while TY2025 retains its existing
   input contract. The TY2026 graph has no producers for Schedule 3 lines 1
   and 6l yet; those earlier credits must route directly to `f2441` before
@@ -50,10 +52,12 @@ credit-limit resolution, without a cycle back through AGI.
   assumes 12 months of deemed student/disability income. It cannot print or
   validate the required provider/person rows, month detail, and benefit
   worksheet. Do not register that aggregate input as the TY2026 filing path.
-- The TY2025 PDF descriptor prints only one benefit field. Build a 2026
-  [AcroForm inventory](PDF-FORM2441-MAP.md) and fill both printed pages, including all required
-  Part I provider and Part II person fields and any continuation statement.
-  Reconcile line 26 to 1040 line 1e and line 11 to Schedule 3 line 2.
+- The TY2025 PDF descriptor prints only one benefit field. The 2026
+  [AcroForm inventory](PDF-FORM2441-MAP.md) now drives a one-page credit-only
+  or two-page employee-benefit attachment for up to three providers and
+  qualifying people. Add continuation statements and unsupported branches
+  before exposing the route publicly. The builder reconciles line 26 to
+  Form 1040 line 1e and line 11 to Schedule 3 line 2.
 
 ## Build and acceptance sequence
 

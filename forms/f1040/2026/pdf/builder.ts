@@ -28,9 +28,6 @@ export async function buildPdfBytes2026(pending: Pending): Promise<Uint8Array> {
   ) {
     throw new Error("TY2026 PDF needs a completed Form 2441 calculation");
   }
-  if (record(pending, "f2441")?.line11 !== undefined) {
-    throw new Error("TY2026 PDF needs the Form 2441 attachment");
-  }
 
   const schedule1a = record(pending, "schedule1a");
   const schedule2 = record(pending, "schedule2");
@@ -42,6 +39,8 @@ export async function buildPdfBytes2026(pending: Pending): Promise<Uint8Array> {
   const form8949 = record(pending, "form8949");
   const form6251 = record(pending, "form6251");
   const form5695 = record(pending, "form5695");
+  const form2441 = record(pending, "form2441");
+  const f2441 = record(pending, "f2441");
   const form5329 = record(pending, "form5329");
   const f8812 = record(pending, "f8812");
   const form8960 = record(pending, "form8960");
@@ -67,6 +66,8 @@ export async function buildPdfBytes2026(pending: Pending): Promise<Uint8Array> {
       ? form6251
       : undefined,
     form5695,
+    form2441: f2441?.line11 !== undefined ? form2441 : undefined,
+    f2441: f2441?.line11 !== undefined ? f2441 : undefined,
     form5329,
     f8812: f8812?.file_schedule_8812 !== undefined ? f8812 : undefined,
     form8960: amount(form8960, "line17_niit") > 0 ? form8960 : undefined,

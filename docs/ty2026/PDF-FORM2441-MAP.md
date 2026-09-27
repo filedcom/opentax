@@ -3,7 +3,8 @@
 Pinned source: [draft Form 2441](corpus/draft/f2441.pdf), SHA-256
 `67eca7567ce5ff06e72d40a07db487f406da33139e664c0c0d9c67a4e31e9385`.
 The source has three physical pages: a draft cover and two printed form pages.
-Retain source pages 1 and 2 (zero-based) when building the attachment. Its
+Retain source page 1 for a credit-only return and pages 1 and 2 when Part III
+benefits apply (zero-based indices). Its
 AcroForm has 72 terminal widgets on the printed pages; the complete field
 inventory is [`pdf-fields-f2441.csv`](pdf-fields-f2441.csv). The printed pages
 were rendered and visually inspected on 2026-09-27. Re-map against the final
@@ -16,7 +17,7 @@ IRS release before filing.
 | Name and SSN | `f1_1`, `f1_2` | Form 1040 filer identity. |
 | A and B | `c1_1`, `c1_2` | MFS considered-unmarried answer and student/disability deemed-income use. |
 | More than three providers | `c1_3` | Check only with a provider continuation statement. |
-| Part I provider names, addresses, TINs, paid amounts | `f1_3`–`f1_14` | Three columns. Address widgets `f1_6`–`f1_8` are multiline, covering street, unit, city, state, and ZIP rows. Preserve every provider beyond three on a continuation statement. |
+| Part I provider names, addresses, TINs, paid amounts | `f1_3`–`f1_14` | Three columns. Address widgets `f1_6`–`f1_8` have mismatched line spacing, so the current static builder draws street, unit, city, state, and ZIP directly on the printed rows. Preserve every provider beyond three on a continuation statement. |
 | Part I line 1d | `c1_4[0/1]`–`c1_6[0/1]` | Paired Yes/No checkboxes, `/1` and `/2` on-state values. Check exactly one per populated provider. Reconcile Yes providers with Schedule H facts. |
 | Dependent-care benefits question | **No widget** | The printed No/Yes lines after Part I are unfillable in the source AcroForm. Draw an overlay or use a verified static replacement and check its render. |
 | More than three qualifying people | `c1_7` | Check only with a qualifying-person continuation statement. |
@@ -44,11 +45,13 @@ IRS release before filing.
    line 9c to 9a+9b, and line 28 to 24+25 before rendering. The graph
    currently supports line 24 and 9b only as zero, so do not publicly file
    those cases yet.
-4. Check the canonical field values and widget appearances as well as the
-   rendered pages. Verify a no-benefit credit, excluded benefits, taxable
-   benefits, MFS, student/disability, prior-year expense, and more-than-three
-   row cases. Remove the PDF export gate only when the full attachment and
-   continuation paths pass.
+4. Check the field values and widget appearances before flattening, then
+   inspect rendered pages. The current builder fills the initial one- and
+   two-page employee cases, overlays the source's missing benefits answer,
+   and rejects more than three providers or qualifying people. Complete the
+   MFS, student/disability, prior-year expense, self-employed, and
+   continuation cases before exposing the filing input publicly.
 
-This map records the draft layout and field topology; it is not itself a
-filing-ready PDF implementation.
+This map records the draft layout and field topology. The current draft PDF
+builder covers only the graph's employee-benefit calculation slice; it is
+not a complete filing attachment for all Form 2441 cases.

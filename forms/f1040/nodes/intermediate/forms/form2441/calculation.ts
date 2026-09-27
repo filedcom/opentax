@@ -77,6 +77,8 @@ export interface Form2441Lines {
   readonly line7: number;
   readonly line8: number;
   readonly line9a: number;
+  readonly line9b: number;
+  readonly line9c: number;
   readonly line10: number;
   readonly line11: number;
   readonly line12: number;
@@ -89,7 +91,9 @@ export interface Form2441Lines {
   readonly line19: number;
   readonly line20: number;
   readonly line21: number;
+  readonly line22: number;
   readonly line23: number;
+  readonly line24: number;
   readonly line25: number;
   readonly line26: number;
   readonly line27: number;
@@ -111,7 +115,9 @@ export type Form2441BenefitLines = Pick<
   | "line19"
   | "line20"
   | "line21"
+  | "line22"
   | "line23"
+  | "line24"
   | "line25"
   | "line26"
   | "line27"
@@ -192,10 +198,14 @@ export function calculateForm2441Benefits(
     statutoryLimit,
     details.dependent_care_plan_limit ?? statutoryLimit,
   );
+  // The structured route currently accepts W-2 employee benefits only.
+  // Sole-proprietor and partnership benefits need separate line 22/24 facts.
+  const line22 = 0;
   const line23 = line15;
+  const line24 = 0;
   const line25 = Math.min(line20, line21);
   const line26 = Math.max(0, line23 - line25);
-  const line28 = line25;
+  const line28 = line24 + line25;
   const line29 = Math.max(0, line27 - line28);
   if (line30 + line28 > line16) {
     throw new Error(
@@ -214,7 +224,9 @@ export function calculateForm2441Benefits(
     line19,
     line20,
     line21,
+    line22,
     line23,
+    line24,
     line25,
     line26,
     line27,
@@ -253,11 +265,14 @@ export function calculateForm2441(
   const line7 = agi;
   const line8 = form2441CreditRate(taxYear, agi, details.filing_status);
   const line9a = Math.round(line6 * line8);
+  // Prior-year care expenses paid this year need Worksheet A source facts.
+  const line9b = 0;
+  const line9c = line9a + line9b;
   const line10 = tax_liability_limit;
   const line11 = details.filing_status === FilingStatus.MFS &&
       !details.mfs_eligibility_met
     ? 0
-    : Math.min(line9a, line10);
+    : Math.min(line9c, line10);
   return {
     line3,
     line4,
@@ -266,6 +281,8 @@ export function calculateForm2441(
     line7,
     line8,
     line9a,
+    line9b,
+    line9c,
     line10,
     line11,
     ...benefitLines,

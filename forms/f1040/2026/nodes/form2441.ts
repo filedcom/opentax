@@ -54,6 +54,11 @@ class Form2441Node2026 extends TaxNode<typeof form2441Input2026Schema> {
         "TY2026 Form 2441 filing status disagrees with Form 1040",
       );
     }
+    if (details.student_or_disabled_deemed_income_used === true) {
+      throw new Error(
+        "TY2026 Form 2441 student or disability income needs monthly facts",
+      );
+    }
     const lines = calculateForm2441Benefits(details, benefits, 2026);
     const outputs: NodeOutput[] = [];
     if (lines.line26 > 0) {
