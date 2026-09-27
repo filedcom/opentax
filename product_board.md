@@ -186,38 +186,38 @@ references within an employee, service periods outside the first year (or LTFA
 second year), rows crossing the anniversary without a split, and wages
 recognized after a false-information revocation notice. These source and
 dependent XML/PDF fixture cases are written but unrun; payroll-document
-reconciliation and deductions outside the linked Schedule C/F paths remain
-open. The
-Schedule C receiving path now treats `line_26_wages` as gross payroll and
+reconciliation and deductions outside the linked Schedule C/F paths remain open.
+The Schedule C receiving path now treats `line_26_wages` as gross payroll and
 derives its filed line 26 amount after a business-linked Form 5884 line 2
-reduction and separately entered other employment credits. It uses that same
-net wage amount for taxable business profit and MeF XML, and rejects unknown
+reduction and separately entered other employment credits. It uses that same net
+wage amount for taxable business profit and MeF XML, and rejects unknown
 businesses or credits exceeding gross wages. Source and XML cases are written
 but unrun. Schedule F now similarly derives line 22 labor hired after a
 farm-linked Form 5884 reduction and other employment credits; its calculation
 and MeF cases are also written but unrun. Form 5884 now requires an explicit
-business or farm destination on each claimed payroll row, allowing one
-employee to split wages between businesses. It allocates direct line 2 credit
-by capped wage contribution and a controlled-group taxpayer
-share by that member's capped wages, then routes whole-dollar reductions
-to Schedule C or F. The full MeF bundle reconciles the deduction to the
-source; line 3 pass-through credit and the Form 3800 tax limit do not alter the
-employer's reduction. The controlled-group taxpayer member must identify a
-Schedule C or F destination; other members may identify separate entity
-returns. Source-to-return, XML, and rejection cases are written
-but unrun. Mixed destinations with wages above a cap now stop pending exact
-row-level claimed-wage attribution. Capitalized inventory/asset costs,
-sold-versus-ending-inventory basis, other business forms, entity-return
-reconciliation, and payroll-document matching remain open. The
-controlled-group pass now allocates the group credit by members' capped
-qualified wages, requires a group-classification document reference, and sends
-only the taxpayer member's line 2 share to Form 3800. Native member-share and
-explanation statements are linked to Form 5884; the printed form gets a
-calculation page. Source, XML, PDF, and XSD cases are written but unrun. Shared
-employees paid by multiple members, entity-return wage reconciliation,
-filled-PDF inspection, and IRS business rules remain open. It applies the
-missing $24,000 disabled-long-term-unemployed veteran cap and the 120-hour
-minimum plus hours-based first-year rate to long-term family assistance
+business or farm destination on each claimed payroll row, allowing one employee
+to split wages between businesses. It allocates direct line 2 credit by capped
+wage contribution and a controlled-group taxpayer share by that member's capped
+wages, then routes whole-dollar reductions to Schedule C or F. The full MeF
+bundle reconciles the deduction to the source; line 3 pass-through credit and
+the Form 3800 tax limit do not alter the employer's reduction. The
+controlled-group taxpayer member must identify a Schedule C or F destination;
+other members may identify separate entity returns. Source-to-return, XML, and
+rejection cases are written but unrun. Mixed destinations with wages above a cap
+now require explicit `credited_wages` on every payroll row in the capped year,
+reconciled to the remaining wage cap. The calculated reduction follows those
+claimed amounts; allocation and rejection cases are written but unrun.
+Capitalized inventory/asset costs, sold-versus-ending-inventory basis, other
+business forms, entity-return reconciliation, and payroll-document matching
+remain open. The controlled-group pass now allocates the group credit by
+members' capped qualified wages, requires a group-classification document
+reference, and sends only the taxpayer member's line 2 share to Form 3800.
+Native member-share and explanation statements are linked to Form 5884; the
+printed form gets a calculation page. Source, XML, PDF, and XSD cases are
+written but unrun. Shared employees paid by multiple members, entity-return wage
+reconciliation, filled-PDF inspection, and IRS business rules remain open. It
+applies the missing $24,000 disabled-long-term-unemployed veteran cap and the
+120-hour minimum plus hours-based first-year rate to long-term family assistance
 recipients. Source and rejection cases are written but unrun. The current pass
 now forwards its nonpassive line 4b credit through the shared Form 3800 tax
 limit instead of depositing gross credit on Schedule 3. Native `IRS5884` source

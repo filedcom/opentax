@@ -97,6 +97,19 @@ const wageRecordSchema = z.object({
     },
   ),
   qualified_wages: z.number().positive(),
+  credited_wages: z.number().nonnegative().optional(),
+}).superRefine((record, ctx) => {
+  if (
+    record.credited_wages !== undefined &&
+    record.credited_wages > record.qualified_wages
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["credited_wages"],
+      message:
+        "Credited wages cannot exceed this payroll row's qualified wages",
+    });
+  }
 });
 
 function anniversary(firstWorkday: string, years: number): string {
@@ -243,46 +256,66 @@ export const itemSchema = z.object({
   });
   const combinedHours = item.hours_worked +
     (item.successor_employer?.predecessor_hours_worked ?? 0);
-  if (combinedHours >= 120) {
-    for (
-      const [records, cap] of [
-        [
-          item.wage_records.filter((record) =>
-            record.service_period_start_on < firstAnniversary
-          ),
-          Math.max(
-            0,
-            wageCap(item) -
-              (item.successor_employer
-                ?.predecessor_first_year_qualified_wages ?? 0),
-          ),
-        ],
-        [
-          item.wage_records.filter((record) =>
-            record.service_period_start_on >= firstAnniversary
-          ),
-          Math.max(
-            0,
-            WAGE_CAP_LTFA_SECOND -
-              (item.successor_employer
-                ?.predecessor_second_year_qualified_wages ?? 0),
-          ),
-        ],
-      ] as const
+  for (
+    const [records, cap] of [
+      [
+        item.wage_records.filter((record) =>
+          record.service_period_start_on < firstAnniversary
+        ),
+        Math.max(
+          0,
+          wageCap(item) -
+            (item.successor_employer
+              ?.predecessor_first_year_qualified_wages ?? 0),
+        ),
+      ],
+      [
+        item.wage_records.filter((record) =>
+          record.service_period_start_on >= firstAnniversary
+        ),
+        Math.max(
+          0,
+          WAGE_CAP_LTFA_SECOND -
+            (item.successor_employer
+              ?.predecessor_second_year_qualified_wages ?? 0),
+        ),
+      ],
+    ] as const
+  ) {
+    const qualified = records.reduce(
+      (sum, record) => sum + record.qualified_wages,
+      0,
+    );
+    const credited = records.filter((record) =>
+      record.credited_wages !== undefined
+    );
+    const mixedLocations = new Set(
+      records.map((record) => wageLocationKey(record.deduction_location)),
+    ).size > 1;
+    if (
+      (combinedHours >= 120 && cap > 0 && qualified > cap &&
+        mixedLocations && credited.length !== records.length) ||
+      (credited.length > 0 && credited.length !== records.length)
     ) {
-      if (
-        cap > 0 &&
-        records.reduce((sum, record) => sum + record.qualified_wages, 0) >
-          cap &&
-        new Set(
-            records.map((record) => wageLocationKey(record.deduction_location)),
-          ).size > 1
-      ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["wage_records"],
+        message:
+          "Every payroll row in a capped wage period needs explicit credited wages when destinations differ",
+      });
+    }
+    if (credited.length > 0 && credited.length === records.length) {
+      const expected = combinedHours >= 120 ? Math.min(qualified, cap) : 0;
+      const actual = credited.reduce(
+        (sum, record) => sum + record.credited_wages!,
+        0,
+      );
+      if (Math.abs(actual - expected) >= 0.005) {
         ctx.addIssue({
           code: "custom",
           path: ["wage_records"],
           message:
-            "Capped wages across deduction locations need row-level claimed-wage attribution",
+            "Credited payroll wages must reconcile to the eligible wage cap",
         });
       }
     }
@@ -727,7 +760,9 @@ export function calculateForm5884(input: z.infer<typeof inputSchema>) {
       );
       allocateWholeDollars(
         share,
-        records.map((record) => record.qualified_wages),
+        records.map((record) =>
+          record.credited_wages ?? record.qualified_wages
+        ),
       ).forEach((allocated, recordIndex) =>
         addDeduction(records[recordIndex].deduction_location, allocated)
       );

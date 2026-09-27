@@ -350,6 +350,64 @@ Deno.test("successor credit keeps predecessor wage cap and combined hours", () =
     }).success,
     false,
   );
+  const capped = {
+    ...item,
+    wage_records: [
+      { ...item.wage_records[0], credited_wages: 2_000 },
+      {
+        ...item.wage_records[1],
+        qualified_wages: 4_000,
+        credited_wages: 4_000,
+      },
+    ],
+  };
+  assertEquals(itemSchema.safeParse(capped).success, true);
+  assertEquals(
+    calculateForm5884({
+      f5884s: [capped],
+      subject_to_passive_activity_limit: false,
+    }).wageDeductionAllocations,
+    [
+      {
+        location: capped.wage_records[0].deduction_location,
+        credit_amount: 800,
+      },
+      {
+        location: capped.wage_records[1].deduction_location,
+        credit_amount: 1_600,
+      },
+    ],
+  );
+  assertEquals(
+    itemSchema.safeParse({
+      ...capped,
+      wage_records: [
+        capped.wage_records[0],
+        { ...capped.wage_records[1], credited_wages: undefined },
+      ],
+    }).success,
+    false,
+  );
+  assertEquals(
+    itemSchema.safeParse({
+      ...capped,
+      wage_records: [
+        capped.wage_records[0],
+        { ...capped.wage_records[1], credited_wages: 3_000 },
+      ],
+    }).success,
+    false,
+  );
+  assertEquals(
+    itemSchema.safeParse({
+      ...capped,
+      wage_records: [
+        { ...capped.wage_records[0], credited_wages: 4_000 },
+        capped.wage_records[1],
+      ],
+    }).success,
+    false,
+  );
 });
 
 Deno.test("successor long-term family assistance shares the second-year cap", () => {
