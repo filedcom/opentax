@@ -13,6 +13,15 @@ function dayBefore(isoDate: string): string {
   return date.toISOString().slice(0, 10);
 }
 
+function isLongTermStandardHoldingPeriod(
+  dateAcquired: string,
+  dateSold: string,
+): boolean {
+  const anniversary = new Date(`${dateAcquired}T00:00:00Z`);
+  anniversary.setUTCFullYear(anniversary.getUTCFullYear() + 1);
+  return dateSold > anniversary.toISOString().slice(0, 10);
+}
+
 /** Match each claimed Form 8949 deemed sale to one accumulated filing row. */
 export function reconcileForm8854Form8949Properties(
   raw8854: F8854Input,
@@ -33,6 +42,11 @@ export function reconcileForm8854Form8949Properties(
   const matches = assets.flatMap((asset, index) => {
     if (asset.reported_form_code !== ReportedFormCode.Form8949) return [];
     const allocation = allocations[index];
+    if (asset.form8949_standard_holding_period_confirmed !== true) {
+      throw new Error(
+        `Form 8854 property ${asset.item_id} needs confirmation of standard Form 8949 holding-period treatment`,
+      );
+    }
     if (
       allocation.builtInGainOrLoss < 0 &&
       asset.form8949_loss_treatment === undefined
@@ -64,8 +78,13 @@ export function reconcileForm8854Form8949Properties(
         `Form 8854 property ${asset.item_id} has inconsistent Form 8949 dates`,
       );
     }
+    const isLongTerm = isLongTermStandardHoldingPeriod(
+      transaction.date_acquired,
+      transaction.date_sold,
+    );
     if (
-      transaction.is_long_term !== ["F", "L"].includes(transaction.part)
+      transaction.is_long_term !== isLongTerm ||
+      ["F", "L"].includes(transaction.part) !== isLongTerm
     ) {
       throw new Error(
         `Form 8854 property ${asset.item_id} has inconsistent Form 8949 holding-period classification`,

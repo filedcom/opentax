@@ -387,6 +387,7 @@ Deno.test({
         basis_irrevocable_election_h2: false,
         reported_form_code: ReportedFormCode.Form8949,
         reported_transaction_id: "TX-STOCK",
+        form8949_standard_holding_period_confirmed: true,
       }],
       eligible_deferred_compensation: [],
       ineligible_deferred_compensation: [],

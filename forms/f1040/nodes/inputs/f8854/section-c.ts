@@ -36,6 +36,7 @@ export const markToMarketAssetSchema = z.object({
   reported_form_code: z.nativeEnum(ReportedFormCode),
   reported_transaction_id: z.string().trim().min(1),
   form8949_loss_treatment: z.nativeEnum(Form8949LossTreatment).optional(),
+  form8949_standard_holding_period_confirmed: z.literal(true).optional(),
 }).strict().superRefine((asset, ctx) => {
   if (
     asset.form8949_loss_treatment !== undefined &&
@@ -47,6 +48,17 @@ export const markToMarketAssetSchema = z.object({
       message:
         "Form 8949 loss treatment applies only to a loss property reported on Form 8949",
       path: ["form8949_loss_treatment"],
+    });
+  }
+  if (
+    asset.form8949_standard_holding_period_confirmed !== undefined &&
+    asset.reported_form_code !== ReportedFormCode.Form8949
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message:
+        "Form 8949 holding-period confirmation applies only to Form 8949 property",
+      path: ["form8949_standard_holding_period_confirmed"],
     });
   }
 });

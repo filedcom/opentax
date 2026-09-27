@@ -55,6 +55,7 @@ function asset(
     basis_irrevocable_election_h2: false,
     reported_form_code: ReportedFormCode.Form8949,
     reported_transaction_id: `TX-${assetId}`,
+    form8949_standard_holding_period_confirmed: true as const,
   };
 }
 
@@ -87,7 +88,17 @@ function filed8949(...transactions: Record<string, unknown>[]) {
   }));
 }
 
-function sectionC(markToMarketAssets: ReturnType<typeof asset>[] = []) {
+function sectionC(
+  markToMarketAssets: Array<
+    & Omit<
+      ReturnType<typeof asset>,
+      "form8949_standard_holding_period_confirmed"
+    >
+    & {
+      form8949_standard_holding_period_confirmed?: true;
+    }
+  > = [],
+) {
   return {
     property_inventory_confirmed_complete: true,
     mark_to_market_assets: markToMarketAssets,
@@ -1414,6 +1425,45 @@ Deno.test("Form 8854 gain property matches one identified Form 8949 deemed sale"
       ),
     Error,
     "exactly one identified Form 8949 transaction",
+  );
+});
+
+Deno.test("Form 8854 Form 8949 holding period follows acquisition and deemed-sale dates", () => {
+  const parsed = inputSchema.parse(input({
+    balance_sheet: balanceSheetWithNetWorth(2_000_000),
+    section_c: sectionC([asset("stock", 1_000_000, 100_000)]),
+  }));
+  const sale = deemedSale8949("stock", 1_000_000, 100_000, 890_000);
+  assertEquals(
+    reconcileForm8854Form8949Properties(
+      parsed,
+      filed8949({ ...sale, date_acquired: "2024-06-14", part: "C" }),
+    ).length,
+    1,
+  );
+  for (
+    const bad of [
+      { ...sale, date_acquired: "2024-06-14", part: "F" },
+      { ...sale, date_acquired: "2024-06-13", part: "C" },
+    ]
+  ) {
+    assertThrows(
+      () => reconcileForm8854Form8949Properties(parsed, filed8949(bad)),
+      Error,
+      "holding-period classification",
+    );
+  }
+  const unconfirmed = inputSchema.parse(input({
+    balance_sheet: balanceSheetWithNetWorth(2_000_000),
+    section_c: sectionC([{
+      ...asset("stock", 1_000_000, 100_000),
+      form8949_standard_holding_period_confirmed: undefined,
+    }]),
+  }));
+  assertThrows(
+    () => reconcileForm8854Form8949Properties(unconfirmed, filed8949(sale)),
+    Error,
+    "needs confirmation of standard Form 8949 holding-period treatment",
   );
 });
 

@@ -1155,6 +1155,10 @@ unregistered check now accepts a Form 8949 loss only with an explicit deductible
 capital-loss or nondeductible personal-use characterization, matching either
 the unadjusted loss or a code-L adjustment that zeroes it. It also checks the
 filed row's computed gain or loss and rejects a raw-input-shaped substitute.
+The Form 8949 match now also requires confirmation that the ordinary
+holding-period rule applies and checks the acquisition date against the
+deemed-sale date and short/long box; inherited property and other special
+holding-period rules remain blocked rather than inferred from a description.
 These checks are
 written but unrun. This is a reconciliation check, not an automatic transaction
 route; other loss characters, Form 4797, direct Schedule D, and excluded-item
