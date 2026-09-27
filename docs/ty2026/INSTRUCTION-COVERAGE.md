@@ -4,14 +4,15 @@ Snapshot: September 27, 2026. The [coverage ledger](instruction-coverage.csv)
 checks the expected IRS draft instruction URL for each form in the TY2025 PDF
 surface and additional active inputs. The form slug is a lookup aid, not
 proof that every form has its own instruction booklet. Current result across
-87 entries: **27 pinned 2026 drafts**, **21 URLs serving 2025 instructions**,
+89 entries: **27 pinned 2026 drafts**, **21 URLs serving 2025 instructions**,
 **9 with no draft at the expected URL**, **9 with 2026 instructions embedded
 in their form drafts**, **1 covered by a combined 2026 booklet**, **6 with
 current continuous-use instructions**, **5 current older-revision
 form/instruction pairs**, **2 current forms with embedded instructions**, and
 **2 2025 comparators awaiting 2026 revisions**, **1 current-guidance
 case with a prior-form comparator**, and **4 final 2026 information-return
-rows** (G/K plus one combined MISC/NEC booklet). The
+rows** (G/K plus one combined MISC/NEC booklet), and **2 final 2026
+Form 1098/1098-E source rows**. The
 missing and unverified groups are research gates, not unsupported-form
 decisions. Schedule A (Form 8936) is covered by the pinned Form 8936 booklet.
 Forms 4137, 4952, 4972, 6252, 6781, 8396, 8859, 8880, and 8919 embed their 2026 instructions
@@ -60,6 +61,11 @@ Schedule 1-A; see the [source plan](FORM1099MISC-NEC-GRAPH.md).
 Form 1099-G's final December 2026 instructions add box 10 state family
 leave and renumber its state-only boxes; Revenue Ruling 2025-4 distinguishes
 family from medical leave. See the [source plan](FORM1099G-GRAPH.md).
+The current Form 1098 is an April 2025 continuous-use statement with
+December 2026 instructions. Form 1098-E and its combined instructions are
+2026 revisions. Their [source plan](FORM1098-1098E-GRAPH.md) identifies
+Schedule A 8a/8c reported-points routing, the returned 8d mortgage
+insurance deduction, and Schedule 1 line 21 student-loan phaseout.
 Form 6252 has its instructions on pages 2–4 of the pinned 2026 draft form;
 some references there still name the old Form 4797 lines, so they need
 final-source reconciliation before coding.

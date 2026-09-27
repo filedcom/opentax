@@ -42,6 +42,9 @@ The [1099-MISC/NEC plan](FORM1099MISC-NEC-GRAPH.md) adds their 2026 tip
 and overtime boxes without duplicating the underlying activity receipt.
 The [Form 1099-G plan](FORM1099G-GRAPH.md) specifies the currently rejected
 family-leave, business-refund, agriculture and CCC branches.
+The [Forms 1098/1098-E plan](FORM1098-1098E-GRAPH.md) supplies mortgage
+debt/use, reported-points and 2026 MIP rules plus qualified student-loan
+source and MAGI checks for this intake row.
 
 1. The business credit group contains direct `schedule3` outputs, including
    [`f8994`](../../forms/f1040/nodes/inputs/f8994/index.ts). The 2026 route

@@ -38,6 +38,8 @@ The [Forms 1099-MISC/NEC plan](FORM1099MISC-NEC-GRAPH.md) maps their new
 included tip/occupation/overtime fields into that same source ledger.
 The [Form 1099-G plan](FORM1099G-GRAPH.md) closes the source-research gap
 for 2026 family leave, business tax recoveries and farm/CCC payments.
+The [Forms 1098/1098-E plan](FORM1098-1098E-GRAPH.md) adds the 2026
+Schedule A reported-points/MIP routes and qualified student-loan worksheet.
 
 ## Coding sequence
 

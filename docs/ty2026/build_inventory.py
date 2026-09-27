@@ -16,6 +16,8 @@ REGISTRY = ROOT / "forms/f1040/2025/registry.ts"
 # A node stays unverified until its 2026 behavior, outputs, and form route are
 # checked. These notes identify work already started without marking it done.
 NODE_PROGRESS = {
+    "f1098": "2025 continuous-use form and Dec 2026 instructions pinned; do not register until 8a/8c points correction, 2026 8d MIP, debt/use and mixed-activity allocation, box4 tax-benefit recovery, PDF/current MeF; see FORM1098-1098E-GRAPH.md",
+    "f1098e": "2026 form and combined instructions pinned; registered box1/AGI/line21 slice remains, add qualified-loan/borrower and box2 paid-interest facts, full MAGI/SSA audit, PDF/current MeF; see FORM1098-1098E-GRAPH.md",
     "start": "Use 2026 registry entry and per-return year guard; reconcile all input registration and absent output targets before enabling a complete return; see GRAPH-ROUTES.md and PARITY-QUEUE.md",
     "ext": "Route 2026 Form 4868 extension payment to Schedule 3 line 10 and 1040 settlement; keep extension application/ATS scenario 7 distinct from the final return; see PDF-SCHEDULE3-MAP.md and ATS.md",
     "f1099c": "Classify each debt cancellation as taxable Schedule 1 line 8c, Form 982 exclusion, or property-basis/capital event; preserve creditor/debt/source evidence and attachment route; see FORM982-GRAPH.md",

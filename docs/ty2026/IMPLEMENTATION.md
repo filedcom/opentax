@@ -65,6 +65,9 @@ Schedule C or 1099-K receipts.
 The [Form 1099-G contract](FORM1099G-GRAPH.md) pins final 2026 source
 authority and maps the currently rejected family-leave, business-refund,
 agricultural-payment and CCC-market-gain branches to return owners.
+The [Forms 1098/1098-E contract](FORM1098-1098E-GRAPH.md) pins current
+source statements and specifies 2026 Schedule A points/MIP, mortgage
+allocation, and student-loan eligibility/MAGI work.
 The [Form 8962 contract](FORM8962-GRAPH.md) identifies the 2026 line 27
 repayment and reserved lines 28/29, Form 1095-A and Schedule 2/3 graph
 handoff, full PDF field map, and the current-instruction/MeF gates.

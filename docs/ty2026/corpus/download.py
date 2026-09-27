@@ -99,6 +99,10 @@ for label, url in page_links(MEF_PAGE):
         sources.append(("mef/" + name, url, "mef-inventory"))
 
 sources += [
+    ("authorities/f1098--2025.pdf", IRS + "/pub/irs-prior/f1098--2025.pdf", "final-authority"),
+    ("authorities/i1098--2026.pdf", IRS + "/pub/irs-prior/i1098--2026.pdf", "final-authority"),
+    ("authorities/f1098e--2026.pdf", IRS + "/pub/irs-prior/f1098e--2026.pdf", "final-authority"),
+    ("authorities/i1098et--2026.pdf", IRS + "/pub/irs-prior/i1098et--2026.pdf", "final-authority"),
     ("authorities/hhs-2025-poverty-guidelines.pdf", "https://public-inspection.federalregister.gov/2025-01377.pdf", "final-authority"),
     ("authorities/iw2w3--2026.pdf", IRS + "/pub/irs-pdf/iw2w3.pdf", "final-authority"),
     ("authorities/fw2g--2026.pdf", IRS + "/pub/irs-prior/fw2g--2026.pdf", "final-authority"),

@@ -2073,6 +2073,42 @@
       "bytes": 841384,
       "sha256": "844470ed0f3172a774c20bdd661d30c6113778c0fb3a5bc1e8ab5a489541ae79",
       "year_check": "2025-current"
+    },
+    {
+      "path": "authorities/f1098--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/f1098--2025.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 501143,
+      "sha256": "304da9c0f67a46ff04ba831359185dc13dde335199cbf7c413dc879e5410dd87",
+      "year_check": "2025-current"
+    },
+    {
+      "path": "authorities/i1098--2026.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/i1098--2026.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 154262,
+      "sha256": "ad68e1d312b85a66601477014d1e933a8b0e9fa008fae3fdf04a889e755be20b",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "authorities/f1098e--2026.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/f1098e--2026.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 495874,
+      "sha256": "bffb9b5ec4f06d47391a5fa7b773d1c4197c587428ace03a96914a9038389602",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "authorities/i1098et--2026.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/i1098et--2026.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 155690,
+      "sha256": "a06256fece2bfc5352e8647856b3c1aca0a4c96a79a5a5dd1324f4049c2f5655",
+      "year_check": "2026-present"
     }
   ]
 }

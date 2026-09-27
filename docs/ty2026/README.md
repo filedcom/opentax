@@ -87,6 +87,8 @@ for the implementation contract.
 - [`FORM1099G-GRAPH.md`](FORM1099G-GRAPH.md): final 2026 government-payment
   form and instructions, family-leave authority, refund tax-benefit and
   farm/CCC route.
+- [`FORM1098-1098E-GRAPH.md`](FORM1098-1098E-GRAPH.md): mortgage and
+  student-loan statements, Schedule A points/MIP and Schedule 1 line 21.
 - [`PARITY-QUEUE.md`](PARITY-QUEUE.md): dependency-ordered full 1040 coding
   queue across the 2025 graph/PDF/MeF inventories and 2026-only attachments.
 - [`INSTRUCTION-COVERAGE.md`](INSTRUCTION-COVERAGE.md) and
