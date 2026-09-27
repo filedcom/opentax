@@ -7448,6 +7448,60 @@ function singleGeneral() {
 }
 
 Deno.test({
+  name:
+    "XSD: 1099-NEC Form 8919 firm reaches 1040, Schedule 2, Schedule SE and Form 8959",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const result = runReturn({
+    general,
+    f1099nec: [{
+      payer_name: "Employer Inc",
+      payer_tin: "12-3456789",
+      recipient_ssn: general.taxpayer_ssn,
+      box1_nec: 210_000,
+      for_routing: "form_8919",
+    }],
+    form8919: {
+      taxpayer_ssn: general.taxpayer_ssn,
+      forms: [{
+        recipient: "taxpayer",
+        employers: [{
+          name: "Employer Inc",
+          tin_type: "ein",
+          tin: "12-3456789",
+          reason_code: "G",
+          form1099_received: true,
+          wages: 210_000,
+          nec_payer_tin: "12-3456789",
+        }],
+        line8_prior_ss_wages_and_tips: 150_000,
+      }],
+    },
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040?.line1g_wages_8919, 210_000);
+  assertEquals(result.pending.schedule_se?.wages_8919, 26_100);
+  assertEquals(result.pending.form8959?.line3_wages_8919, 210_000);
+  assertEquals(result.pending.schedule2?.line6_uncollected_8919, 4_663);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalWagesWithNoWithholdingAmt>210000</TotalWagesWithNoWithholdingAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<WagesSubjectToSSTAmt>26100</WagesSubjectToSSTAmt>",
+  );
+  await validateXsd(xml, "Form 8919 1099-NEC wage routing");
+});
+
+Deno.test({
   name: "XSD: ATS Scenario 1 Schedule H source slice validates",
   sanitizeOps: false,
   sanitizeResources: false,

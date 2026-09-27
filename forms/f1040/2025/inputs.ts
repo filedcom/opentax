@@ -339,6 +339,10 @@ import {
   inputSchema as form4137InputSchema,
 } from "../nodes/intermediate/forms/form4137/index.ts";
 import {
+  form8919,
+  inputSchema as form8919InputSchema,
+} from "../nodes/intermediate/forms/form8919/index.ts";
+import {
   inputSchema as form8582crInputSchema,
 } from "../nodes/intermediate/forms/form8582cr/index.ts";
 import { disabledAccessLimit } from "../nodes/intermediate/forms/disabled_access_limit/index.ts";
@@ -701,6 +705,7 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: auto_expense, itemSchema: autoExpenseItemSchema, isArray: true },
   { node: schedule_f, inputSchema: scheduleFInputSchema, isArray: false },
   { node: form4137, inputSchema: form4137InputSchema, isArray: false },
+  { node: form8919, inputSchema: form8919InputSchema, isArray: false },
   {
     node: disabledAccessLimit,
     inputKey: "form8582cr",

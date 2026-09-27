@@ -115,6 +115,22 @@ const qualifiedForm4972 = {
   line7: 2000,
 };
 
+const sampleForm8919 = {
+  taxpayer_ssn: "123-45-6789",
+  forms: [{
+    recipient: "taxpayer" as const,
+    employers: [{
+      name: "Employer Inc",
+      tin_type: "ein" as const,
+      tin: "12-3456789",
+      reason_code: "G" as const,
+      form1099_received: false,
+      wages: 45_000,
+    }],
+    line8_prior_ss_wages_and_tips: 0,
+  }],
+};
+
 function buildMefXml(...args: Parameters<typeof rawBuildMefXml>): string {
   return rawBuildMefXml(
     args[0],
@@ -1018,7 +1034,7 @@ Deno.test("IRS4137 absent when form4137 missing from pending", () => {
 });
 
 Deno.test("IRS8919 present when form8919 has data", () => {
-  const xml = buildMefXml({ form8919: { wages: 45000 } });
+  const xml = buildMefXml({ form8919: sampleForm8919 });
   assertStringIncludes(xml, "<IRS8919 ");
 });
 
@@ -1299,7 +1315,7 @@ Deno.test("documentCnt=29 when all currently serializable forms have data", () =
         ss_wages_and_tips: 0,
       }],
     },
-    form8919: { wages: 45000 },
+    form8919: sampleForm8919,
     form4972: qualifiedForm4972,
     schedule_se: { net_profit_schedule_c: 30000 },
     form8606: { nondeductible_contributions: 6000 },
@@ -1368,7 +1384,7 @@ Deno.test("all 29 serializable documents populated: XML contains their tags", ()
         ss_wages_and_tips: 0,
       }],
     },
-    form8919: { wages: 45000 },
+    form8919: sampleForm8919,
     form4972: qualifiedForm4972,
     schedule_se: { net_profit_schedule_c: 30000 },
     form8606: { nondeductible_contributions: 6000 },

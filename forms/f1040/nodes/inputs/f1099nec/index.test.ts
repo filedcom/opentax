@@ -170,11 +170,19 @@ Deno.test("routing: box1_nec with schedule_f → schedule_f node", () => {
 
 Deno.test("routing: box1_nec with form_8919 → form8919 node", () => {
   const result = compute([
-    minimalItem({ box1_nec: 30000, for_routing: "form_8919" }),
+    minimalItem({
+      box1_nec: 30000,
+      for_routing: "form_8919",
+      recipient_ssn: "123-45-6789",
+    }),
   ]);
   const out = findOutput(result, "form8919");
   assertEquals(out !== undefined, true);
-  assertEquals(fieldsOf(result.outputs, form8919)!.wages, 30000);
+  assertEquals(fieldsOf(result.outputs, form8919)!.nec_sources, [{
+    recipient_ssn: "123-45-6789",
+    payer_tin: "12-3456789",
+    amount: 30000,
+  }]);
 });
 
 Deno.test("routing: box1_nec with schedule_1_line_8z → schedule1 node line8z_other", () => {
@@ -350,6 +358,7 @@ Deno.test("aggregation: mixed routing routes each item independently", () => {
     minimalItem({
       box1_nec: 3000,
       for_routing: "form_8919",
+      recipient_ssn: "123-45-6789",
       payer_name: "Employer Inc",
     }),
     minimalItem({
@@ -637,7 +646,11 @@ Deno.test("edge: multiple 1099-NECs for same schedule_c produce separate schedul
 
 Deno.test("edge: form_8919 routing excludes schedule_c output", () => {
   const result = compute([
-    minimalItem({ box1_nec: 50000, for_routing: "form_8919" }),
+    minimalItem({
+      box1_nec: 50000,
+      for_routing: "form_8919",
+      recipient_ssn: "123-45-6789",
+    }),
   ]);
   assertEquals(findOutput(result, "schedule_c"), undefined);
   assertEquals(findOutput(result, "form8919") !== undefined, true);
@@ -663,7 +676,11 @@ Deno.test("edge: box1_nec with schedule_1_line_8z produces no schedule2 output (
 Deno.test("edge: box1_nec with form_8919 routing produces no schedule_c output", () => {
   // Worker misclassification path: wages go to Form 8919 / Form 1040 Line 1g
   const result = compute([
-    minimalItem({ box1_nec: 75000, for_routing: "form_8919" }),
+    minimalItem({
+      box1_nec: 75000,
+      for_routing: "form_8919",
+      recipient_ssn: "123-45-6789",
+    }),
   ]);
   assertEquals(findOutput(result, "schedule_c"), undefined);
 });

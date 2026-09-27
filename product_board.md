@@ -969,6 +969,19 @@ unsupported pending an allocation rule. Actual CT-2 payment evidence,
 income-source reconciliation, and the Schedule 2 line 13 RRTA route still need
 review.
 
+The Form 8919 audit found that the prior flat wage input used obsolete reason
+codes, the 1099-NEC route omitted its required reason, and Form 8919 line 6
+never reached Form 8959 line 3. The current build pass replaces it with one
+recipient form containing identified firm rows and the 2025 A/C/G/H codes.
+Routed 1099-NEC income must match a firm row, so it is not counted twice.
+Line 6 now reaches Form 1040 and Form 8959, line 10 reaches Schedule SE, and
+line 13 reaches Schedule 2. The native IRS8919 XML now has identity, firm
+detail, and calculated lines. Node, MeF, full-return, and local XSD cases are
+written but unrun. This is not a completed audit: line 8 still needs direct
+W-2, RRTA, and Form 4137 source reconciliation; reason G needs Form SS-8
+filing evidence, reason H needs same-firm W-2 evidence; continuation and PDF
+projection need review. IRS business-rule and ATS acceptance are still open.
+
 ## Workstreams
 
 | ID       | Workstream                               | Current state                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Next evidence required                                                                                                                                                                                                                            |

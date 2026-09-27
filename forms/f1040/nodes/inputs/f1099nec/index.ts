@@ -16,6 +16,7 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 export const itemSchema = z.object({
   payer_name: z.string(),
   payer_tin: z.string(),
+  recipient_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
   box1_nec: z.number().nonnegative().optional(),
   box2_direct_sales: z.boolean().optional(),
   box3_golden_parachute: z.number().nonnegative().optional(),
@@ -62,7 +63,19 @@ function necIncomeOutput(item: NECItem): NodeOutput[] {
       })];
     }
     case "form_8919":
-      return [output(form8919, { wages: box1 })];
+      if (!item.recipient_ssn) {
+        throw new Error("1099-NEC routed to Form 8919 needs recipient_ssn");
+      }
+      if (!Number.isInteger(box1)) {
+        throw new Error("Form 8919 1099-NEC wages must use whole dollars");
+      }
+      return [output(form8919, {
+        nec_sources: [{
+          recipient_ssn: item.recipient_ssn,
+          payer_tin: item.payer_tin,
+          amount: box1,
+        }],
+      })];
     case "schedule_1_line_8z":
       return [output(schedule1, { line8z_other: box1 })];
     default:

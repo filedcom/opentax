@@ -1,91 +1,141 @@
-import { assertEquals, assertStringIncludes } from "@std/assert";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { testFiler } from "../test-filer.ts";
 import { form8919 } from "./f8919.ts";
 
-function assertNotIncludes(actual: string, expected: string) {
-  assertEquals(
-    actual.includes(expected),
-    false,
-    `Expected string NOT to include: ${expected}`,
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Section 1: Empty input
-// ---------------------------------------------------------------------------
-
-Deno.test("f8919: empty object returns empty string", () => {
-  assertEquals(form8919.build({}), "");
-});
-
-// ---------------------------------------------------------------------------
-// Section 2: Unknown keys ignored
-// ---------------------------------------------------------------------------
-
-Deno.test("f8919: all unknown keys returns empty string", () => {
-  assertEquals(form8919.build({ junk: 999, foo: "bar", baz: 0 }), "");
-});
-
-// ---------------------------------------------------------------------------
-// Section 3: Zero value emitted
-// ---------------------------------------------------------------------------
-
-Deno.test("f8919: wages at zero is emitted", () => {
-  const result = form8919.build({ wages: 0 });
-  assertStringIncludes(result, "<WagesReceivedAmt>0</WagesReceivedAmt>");
-});
-
-// ---------------------------------------------------------------------------
-// Section 4: Per-field mapping (one test per field, 2 fields)
-// ---------------------------------------------------------------------------
-
-Deno.test("f8919: wages maps to WagesReceivedAmt", () => {
-  const result = form8919.build({ wages: 45000 });
-  assertStringIncludes(result, "<WagesReceivedAmt>45000</WagesReceivedAmt>");
-});
-
-Deno.test("f8919: prior_ss_wages maps to PriorSSWagesAmt", () => {
-  const result = form8919.build({ prior_ss_wages: 20000 });
-  assertStringIncludes(result, "<PriorSSWagesAmt>20000</PriorSSWagesAmt>");
-});
-
-// ---------------------------------------------------------------------------
-// Section 5: Sparse output
-// ---------------------------------------------------------------------------
-
-Deno.test("f8919: single known field emits only that element, absent fields omitted", () => {
-  const result = form8919.build({ wages: 45000 });
-  assertStringIncludes(result, "<WagesReceivedAmt>45000</WagesReceivedAmt>");
-  assertNotIncludes(result, "<PriorSSWagesAmt>");
-});
-
-// ---------------------------------------------------------------------------
-// Section 6: All fields present
-// ---------------------------------------------------------------------------
-
-const allFields = {
-  wages: 45000,
-  prior_ss_wages: 20000,
+const base = {
+  taxpayer_ssn: "123-45-6789",
+  forms: [{
+    recipient: "taxpayer" as const,
+    employers: [{
+      name: "Employer Inc",
+      tin_type: "ein" as const,
+      tin: "12-3456789",
+      reason_code: "A" as const,
+      correspondence_received_date: "2025-06-01",
+      form1099_received: true,
+      wages: 50_000,
+      nec_payer_tin: "12-3456789",
+    }],
+    line8_prior_ss_wages_and_tips: 150_000,
+  }],
+  nec_sources: [{
+    recipient_ssn: "123-45-6789",
+    payer_tin: "12-3456789",
+    amount: 50_000,
+  }],
 };
 
-Deno.test("f8919: all 2 fields present: output wrapped in IRS8919 tag", () => {
-  const result = form8919.build(allFields);
-  assertStringIncludes(result, "<IRS8919>");
-  assertStringIncludes(result, "</IRS8919>");
+const pendingNec = {
+  f1099nec: {
+    f1099necs: [{
+      payer_name: "Employer Inc",
+      payer_tin: "12-3456789",
+      recipient_ssn: "123-45-6789",
+      box1_nec: 50_000,
+      for_routing: "form_8919" as const,
+    }],
+  },
+};
+
+Deno.test("Form 8919 emits no document without firms", () => {
+  assertEquals(form8919.build({}, { filer: testFiler() }), []);
 });
 
-Deno.test("f8919: all 2 fields present: all elements emitted", () => {
-  const result = form8919.build(allFields);
-  assertStringIncludes(result, "<WagesReceivedAmt>45000</WagesReceivedAmt>");
-  assertStringIncludes(result, "<PriorSSWagesAmt>20000</PriorSSWagesAmt>");
+Deno.test("Form 8919 emits firm detail and calculated 2025 line tags in XSD order", () => {
+  const [xml] = form8919.build(base, {
+    filer: testFiler(),
+    pending: pendingNec,
+  });
+  assertStringIncludes(xml, "<IRS8919><PersonNm>");
+  assertStringIncludes(xml, "<SSN>123456789</SSN>");
+  assertStringIncludes(xml, "<EmployerEIN>123456789</EmployerEIN>");
+  assertStringIncludes(
+    xml,
+    "<UncollectedSocSecMedReasonCd>A</UncollectedSocSecMedReasonCd>",
+  );
+  assertStringIncludes(
+    xml,
+    "<CorrespondenceReceivedDt>2025-06-01</CorrespondenceReceivedDt>",
+  );
+  assertStringIncludes(xml, "<Form1099ReceivedInd>X</Form1099ReceivedInd>");
+  assertStringIncludes(
+    xml,
+    "<TotalWagesWithNoWithholdingAmt>50000</TotalWagesWithNoWithholdingAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalWagesAndUnreportedTipsAmt>150000</TotalWagesAndUnreportedTipsAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<WagesSubjectToSSTAmt>26100</WagesSubjectToSSTAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<UncollectedSocSecMedTaxAmt>2343</UncollectedSocSecMedTaxAmt>",
+  );
 });
 
-// ---------------------------------------------------------------------------
-// Section 7: Non-numeric fields (reason_code enum) silently ignored
-// ---------------------------------------------------------------------------
+Deno.test("Form 8919 MeF rejects missing or changed filed 1099-NEC", () => {
+  assertThrows(() => form8919.build(base, { filer: testFiler() }));
+  assertThrows(() =>
+    form8919.build(base, {
+      filer: testFiler(),
+      pending: {
+        f1099nec: {
+          f1099necs: [{
+            ...pendingNec.f1099nec.f1099necs[0],
+            box1_nec: 49_999,
+          }],
+        },
+      },
+    })
+  );
+});
 
-Deno.test("f8919: reason_code string field is silently ignored", () => {
-  const result = form8919.build({ reason_code: "G", wages: 10000 });
-  assertStringIncludes(result, "<WagesReceivedAmt>10000</WagesReceivedAmt>");
-  assertNotIncludes(result, "reason_code");
-  assertNotIncludes(result, '"G"');
+Deno.test("Form 8919 MeF rejects a recipient SSN different from return header", () => {
+  assertThrows(() =>
+    form8919.build({ ...base, taxpayer_ssn: "999-99-9999" }, {
+      filer: testFiler(),
+      pending: pendingNec,
+    })
+  );
+});
+
+Deno.test("Form 8919 emits one document for each spouse", () => {
+  const forms = [
+    {
+      ...base.forms[0],
+      employers: [{ ...base.forms[0].employers[0], nec_payer_tin: undefined }],
+    },
+    {
+      recipient: "spouse" as const,
+      employers: [{
+        name: "Another Firm",
+        tin_type: "ssn" as const,
+        tin: "987-65-4321",
+        reason_code: "H" as const,
+        form1099_received: true,
+        wages: 20_000,
+      }],
+      line8_prior_ss_wages_and_tips: 0,
+    },
+  ];
+  const filer = {
+    ...testFiler(),
+    spouse: {
+      firstName: "Jane",
+      lastName: "Smith",
+      ssn: "987654321",
+      nameControl: "SMIT",
+    },
+  };
+  const xml = form8919.build({
+    taxpayer_ssn: "123-45-6789",
+    spouse_ssn: "987-65-4321",
+    forms,
+  }, { filer });
+  assertEquals(xml.length, 2);
+  assertStringIncludes(xml[1], "<SSN>987654321</SSN>");
+  assertStringIncludes(xml[1], "<SSN>987654321</SSN>");
 });
