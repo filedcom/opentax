@@ -44,6 +44,9 @@ The bundle preserves the supplied PDF bytes and links each attachment from
 `IRS965A`. It does not create, sign, mail, or independently authenticate an
 agreement. The original-mailing deadline and the source document's validity
 must be checked outside this exporter.
+Form 965-E consent alone does not make the separate section 965(h) election,
+so a consent-triggered installment also requires a source reference for that
+election.
 
 Open verification and coverage: the IRS TY2025 XSD and full return tests are
 written but unrun under the requested build-first workflow. Independent

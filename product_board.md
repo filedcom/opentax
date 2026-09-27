@@ -122,7 +122,9 @@ links. The build pass now takes source-provided signed Form 965-C, 965-D, and
 bytes in the MeF bundle, and links them from Form 965-A. Multiple partial
 Form 965-D transfers require one copy per transferee. The bundle case is
 written but unrun. It does not create, sign, mail, or authenticate an
-agreement. Historical tax computations and IRS business rules remain open.
+agreement. Consent-triggered Form 965-E installments now also require evidence
+of the separate section 965(h) election; the case is written but unrun.
+Historical tax computations and IRS business rules remain open.
 
 The current untested Form 8936 commercial-vehicle pass replaces the new/used
 boolean with one three-way credit type and adds Schedule A Part V basis, Section

@@ -169,6 +169,7 @@ const triggeredLiability = common.extend({
   triggered_liability: amount.positive(),
   requires_965e_consent: z.boolean(),
   consent_agreement_file_name: agreementFileName.optional(),
+  separate_965h_election_reference: z.string().trim().min(1).optional(),
 });
 
 export const itemSchema = z.discriminatedUnion("entry_type", [
@@ -259,6 +260,18 @@ export const inputSchema = z.object({
         path: ["f965s", index],
         message:
           "Form 965-A consent-triggered installment needs the signed Form 965-E copy",
+      });
+    }
+    if (
+      row.entry_type === "triggered_s_corp" &&
+      row.requires_965e_consent &&
+      (!row.installment_election || !row.separate_965h_election_reference)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["f965s", index],
+        message:
+          "Form 965-E consent does not replace the separate section 965(h) election",
       });
     }
     if (

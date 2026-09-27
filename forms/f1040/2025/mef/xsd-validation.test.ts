@@ -282,6 +282,7 @@ Deno.test({
       current_year_payment: 0,
       requires_965e_consent: true,
       consent_agreement_file_name: "Form965E.pdf",
+      separate_965h_election_reference: "2025 separate section 965(h) election",
     }],
     s_corp_deferred_rows: [{
       election_or_transfer_year: 2018,

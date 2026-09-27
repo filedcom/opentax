@@ -252,6 +252,7 @@ Deno.test("Form 965-A consent-triggered liability needs its signed Form 965-E co
     current_year_payment: 0,
     requires_965e_consent: true,
     consent_agreement_file_name: "Form965E.pdf",
+    separate_965h_election_reference: "2025 separate section 965(h) election",
   };
   const deferred = {
     election_or_transfer_year: 2025,
@@ -279,6 +280,15 @@ Deno.test("Form 965-A consent-triggered liability needs its signed Form 965-E co
     }],
   });
   assertEquals(input.f965s[1].entry_type, "triggered_s_corp");
+  assertThrows(() =>
+    source({
+      ...input,
+      f965s: [input.f965s[0], {
+        ...triggered,
+        separate_965h_election_reference: undefined,
+      }],
+    })
+  );
   assertThrows(() =>
     source({
       ...input,
