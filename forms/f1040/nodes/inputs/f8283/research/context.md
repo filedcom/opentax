@@ -42,6 +42,24 @@ descriptor in the repository, so native MeF documents are built but filled Form
   is at most $5,000; larger claims need Section B and a qualified appraisal.
   Ordinary-income-property reductions and AGI ceilings still need source-level
   calculation.
+- The 2025 Form 8283 Section A instructions for column (h) require the reduced
+  contribution amount, not the unreduced FMV, when the deduction is reduced
+  below FMV. The native `IRS8283` now uses the source `deduction_claimed` for
+  that column when supplied, including a sale-proceeds-capped vehicle, while
+  retaining `fmv` separately for validation. The MeF `FairMarketValueAmt`
+  references a separate native `FairMarketValueStatement` in the TY2025
+  ReturnData sequence. It gives unreduced FMV, reduction arithmetic, and the
+  reason. Certified unrelated-party sale proceeds supply the reason only when
+  the claimed deduction exactly equals the lesser of FMV and those proceeds and
+  sourced basis is at least FMV, so no appreciation reduction is also due; the
+  other supported route is purchased ordinary-income property held no more than
+  one year, with acquisition/contribution dates, basis below FMV, and a claimed
+  deduction exactly equal to basis. The statement derives the short-term
+  appreciation reduction under section 170(e)(1)(A). Voluntary underclaims,
+  unverifiable tax classifications, combined vehicle-sale/ordinary-income
+  reductions, and other reduction rules are rejected rather than accepted
+  through free-text reasons. See the
+  [2025 instructions, Section A column (h)](https://www.irs.gov/pub/irs-pdf/i8283.pdf).
 - Section B requires separate `fmv` and `deduction_claimed` values. The
   calculation sends the claimed value to Schedule A line 12. Capital-gain
   property is **not** automatically capped at basis. FMV is usually available,

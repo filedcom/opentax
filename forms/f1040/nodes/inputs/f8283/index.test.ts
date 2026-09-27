@@ -135,6 +135,11 @@ Deno.test("f8283.compute: Section A routes the claimed deduction, not the higher
       {
         fmv: 1_200,
         deduction_claimed: 700,
+        date_acquired: "2025-01-01",
+        date_contributed: "2025-06-01",
+        donor_acquisition_description: "Purchase",
+        cost_or_adjusted_basis: 700,
+        short_term_ordinary_income_reduction_confirmed: true,
         similar_item_group: "books",
         charitable_limit_category: "noncash_50",
         is_capital_gain_property: false,
@@ -142,6 +147,11 @@ Deno.test("f8283.compute: Section A routes the claimed deduction, not the higher
       {
         fmv: 400,
         deduction_claimed: 250,
+        date_acquired: "2025-01-01",
+        date_contributed: "2025-06-01",
+        donor_acquisition_description: "Purchase",
+        cost_or_adjusted_basis: 250,
+        short_term_ordinary_income_reduction_confirmed: true,
         similar_item_group: "books",
         charitable_limit_category: "noncash_50",
         is_capital_gain_property: false,
@@ -236,13 +246,61 @@ Deno.test("f8283.compute: a stated reduction is honored when below FMV", () => {
     section_a_items: [{
       fmv: 3000,
       deduction_claimed: 2500,
-      cost_or_adjusted_basis: 5000,
-      is_capital_gain_property: true,
-      charitable_limit_category: "capital_gain_30",
+      date_acquired: "2025-01-01",
+      date_contributed: "2025-06-01",
+      donor_acquisition_description: "Purchase",
+      cost_or_adjusted_basis: 2500,
+      short_term_ordinary_income_reduction_confirmed: true,
+      is_capital_gain_property: false,
+      charitable_limit_category: "noncash_50",
     }],
   });
   const fields = fieldsOf(result.outputs, schedule_a)!;
   assertEquals(fields.noncash_contribution_items?.[0]?.amount, 2500);
+});
+
+Deno.test("f8283.compute: a voluntary underclaim cannot masquerade as a required FMV reduction", () => {
+  const item = {
+    fmv: 3_000,
+    deduction_claimed: 2_500,
+    charitable_limit_category: "noncash_50" as const,
+    is_capital_gain_property: false,
+  };
+  assertThrows(
+    () => compute({ section_a_items: [item] }),
+    Error,
+    "needs certified sale proceeds or a sourced short-term ordinary-income reduction",
+  );
+  assertThrows(
+    () =>
+      compute({
+        section_a_items: [{
+          ...item,
+          date_acquired: "2025-01-01",
+          date_contributed: "2025-06-01",
+          donor_acquisition_description: "Purchase",
+          cost_or_adjusted_basis: 2_400,
+          short_term_ordinary_income_reduction_confirmed: true,
+        }],
+      }),
+    Error,
+    "claim equal to basis below FMV",
+  );
+  assertThrows(
+    () =>
+      compute({
+        section_a_items: [{
+          ...item,
+          date_acquired: "2023-01-01",
+          date_contributed: "2025-06-01",
+          donor_acquisition_description: "Purchase",
+          cost_or_adjusted_basis: 2_500,
+          short_term_ordinary_income_reduction_confirmed: true,
+        }],
+      }),
+    Error,
+    "held no more than one year",
+  );
 });
 
 Deno.test("f8283.compute: section B NOT capital gain property — uses full fmv", () => {
@@ -507,6 +565,20 @@ Deno.test("f8283.compute: sold vehicle is limited to acknowledged proceeds", () 
   assertThrows(
     () =>
       compute({
+        section_a_items: [{ ...item, cost_or_adjusted_basis: 10_000 }],
+      }),
+    Error,
+    "needs sourced basis at least FMV",
+  );
+  assertThrows(
+    () =>
+      compute({ section_a_items: [{ ...item, deduction_claimed: 14_000 }] }),
+    Error,
+    "combined reductions are not yet supported",
+  );
+  assertThrows(
+    () =>
+      compute({
         section_a_items: [{ ...item, vehicle_sale_acknowledgment: undefined }],
       }),
     Error,
@@ -528,7 +600,7 @@ Deno.test("f8283.compute: sold vehicle is limited to acknowledged proceeds", () 
   );
 });
 
-Deno.test("f8283.compute: needy-transfer certificate permits FMV but requires timely exclusive acknowledgment", () => {
+Deno.test("f8283.compute: needy-transfer certificate requires timely exclusive acknowledgment and source-backed reduction", () => {
   const needy = {
     property_description: "2020 Honda Civic, good condition, 60,000 miles",
     is_vehicle: true,
@@ -536,7 +608,10 @@ Deno.test("f8283.compute: needy-transfer certificate permits FMV but requires ti
     date_contributed: "2025-06-01",
     fmv: 20_000,
     deduction_claimed: 4_500,
-    cost_or_adjusted_basis: 25_000,
+    date_acquired: "2025-01-01",
+    donor_acquisition_description: "Purchase",
+    cost_or_adjusted_basis: 4_500,
+    short_term_ordinary_income_reduction_confirmed: true,
     charitable_limit_category: "noncash_50",
     is_capital_gain_property: false,
     vehicle_needy_transfer_acknowledgment: {

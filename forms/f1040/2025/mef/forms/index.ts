@@ -42,6 +42,7 @@ import { form7206 } from "./f7206.ts";
 import { form7217 } from "./f7217.ts";
 import { form8283 } from "./f8283.ts";
 import { form8283VehicleStatement } from "./f8283_vehicle_statement.ts";
+import { form8283FmvReductionStatement } from "./f8283_fmv_reduction_statement.ts";
 import { form8396 } from "./f8396.ts";
 import { form8582 } from "./f8582.ts";
 import { form8582cr } from "./f8582cr.ts";
@@ -285,6 +286,9 @@ export const ALL_MEF_FORMS = [
   // Form 8283 vehicle acknowledgment follows numbered forms and other
   // supporting statements in ReturnData1040.xsd.
   form8283VehicleStatement,
+  // Form 8283 Section A column (h) FMV-reduction explanations follow the
+  // vehicle statement in ReturnData1040.xsd.
+  form8283FmvReductionStatement,
   // Form 8621 Part V holding-period computation statements follow numbered forms.
   form8621ExcessStatement,
   // Form 8814 line 1a nominee and interest-adjustment statement.

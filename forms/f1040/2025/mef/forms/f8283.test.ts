@@ -117,8 +117,14 @@ function needyTransferVehicle(
     vehicle_vin: vin,
     vehicle_acknowledgment_attachment_file_name: fileName,
     date_contributed: "2025-06-01",
+    date_acquired: "2025-01-01",
+    donor_acquisition_description: "Purchase",
     fmv: 20_000,
     deduction_claimed: 4_500,
+    cost_or_adjusted_basis: 4_500,
+    charitable_limit_category: "noncash_50" as const,
+    is_capital_gain_property: false,
+    short_term_ordinary_income_reduction_confirmed: true as const,
     vehicle_needy_transfer_acknowledgment: {
       copy_received_from_donee: true,
       donee_certified: true,
@@ -1229,7 +1235,18 @@ Deno.test("Form 8283 needy-transfer vehicle links Form 1098-C and emits native b
   );
   assertEquals(xml.includes("<CertifiesVehSoldToUnrltPrtyInd>"), false);
   assertEquals(xml.includes("<GrossProceedsFromSaleOfVehAmt>"), false);
-  assertStringIncludes(xml, "<FairMarketValueAmt>20000</FairMarketValueAmt>");
+  assertStringIncludes(xml, ">4500</FairMarketValueAmt>");
+  const fmvStatementId = /<FairMarketValueStatement documentId="([^"]+)"/
+    .exec(xml)?.[1];
+  assertEquals(typeof fmvStatementId, "string");
+  assertStringIncludes(
+    xml,
+    `<FairMarketValueAmt referenceDocumentId="${fmvStatementId}" referenceDocumentName="FairMarketValueStatement QualifiedConservationContributionStmt">4500</FairMarketValueAmt>`,
+  );
+  assertStringIncludes(
+    xml,
+    "short-term appreciation of $15500.00",
+  );
   assertStringIncludes(
     xml,
     "<Desc>Form1098C Civic needy transfer certification</Desc>",
@@ -1245,6 +1262,7 @@ Deno.test("Form 8283 significant-use vehicle links donee PDF and emits boxes 5a 
   const item = {
     ...needyTransferVehicle(),
     deduction_claimed: 4_800,
+    cost_or_adjusted_basis: 4_800,
     vehicle_needy_transfer_acknowledgment: undefined,
     vehicle_significant_use_acknowledgment: {
       copy_received_from_donee: true,
@@ -1360,6 +1378,9 @@ Deno.test("Form 8283 links both native vehicle statement and donee-issued PDF", 
         date_contributed: "2025-06-01",
         fmv: 20_000,
         deduction_claimed: 15_000,
+        cost_or_adjusted_basis: 25_000,
+        charitable_limit_category: "noncash_50",
+        is_capital_gain_property: false,
         vehicle_sale_acknowledgment: {
           copy_received_from_donee: true,
           donee_certified: true,
@@ -1407,6 +1428,20 @@ Deno.test("Form 8283 links both native vehicle statement and donee-issued PDF", 
   assertStringIncludes(
     xml,
     "<GrossProceedsFromSaleOfVehAmt>15000</GrossProceedsFromSaleOfVehAmt>",
+  );
+  assertStringIncludes(xml, ">15000</FairMarketValueAmt>");
+  const fmvStatementId = /<FairMarketValueStatement documentId="([^"]+)"/
+    .exec(xml)?.[1];
+  assertEquals(typeof fmvStatementId, "string");
+  assertStringIncludes(
+    xml,
+    `<FairMarketValueAmt referenceDocumentId="${fmvStatementId}" referenceDocumentName="FairMarketValueStatement QualifiedConservationContributionStmt">15000</FairMarketValueAmt>`,
+  );
+  assertStringIncludes(xml, "unreduced FMV $20000.00");
+  assertStringIncludes(xml, "gross proceeds $15000.00");
+  assertEquals(
+    xml.includes("<FairMarketValueAmt>20000</FairMarketValueAmt>"),
+    false,
   );
   assertStringIncludes(xml, "<VIN>1HGBH41JXMN109186</VIN>");
   assertStringIncludes(

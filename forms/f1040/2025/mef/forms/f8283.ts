@@ -54,6 +54,59 @@ export function needsVehicleStatement(item: SectionAItem): boolean {
     (item.deduction_claimed ?? item.fmv ?? 0) > 500;
 }
 
+export function needsFmvReductionStatement(item: SectionAItem): boolean {
+  return item.fmv !== undefined && item.deduction_claimed !== undefined &&
+    Math.round((item.fmv - item.deduction_claimed) * 100) > 0;
+}
+
+function usd(amount: number): string {
+  return `$${amount.toFixed(2)}`;
+}
+
+export function buildFmvReductionStatement(
+  item: SectionAItem,
+  index: number,
+): string {
+  if (!needsFmvReductionStatement(item)) {
+    throw new Error("Form 8283 FMV-reduction statement needs a reduced claim");
+  }
+  const fmv = item.fmv!;
+  const claimed = item.deduction_claimed!;
+  const sale = item.vehicle_sale_acknowledgment;
+  const certifiedSaleCap = sale &&
+    Math.round(Math.min(fmv, sale.gross_proceeds) * 100) ===
+      Math.round(claimed * 100);
+  const reason = certifiedSaleCap && sale
+    ? `Donee-certified unrelated-party sale on ${sale.sale_date} produced gross proceeds ${
+      usd(sale.gross_proceeds)
+    }; the vehicle deduction is capped at the lesser of FMV and those proceeds.`
+    : item.short_term_ordinary_income_reduction_confirmed === true &&
+        item.date_acquired && item.date_contributed &&
+        item.cost_or_adjusted_basis !== undefined
+    ? `Purchased on ${item.date_acquired} and contributed on ${item.date_contributed}, after no more than one year; short-term appreciation of ${
+      usd(fmv - item.cost_or_adjusted_basis)
+    } would be ordinary income or short-term gain under section 170(e)(1)(A), so the contribution is reduced to adjusted basis ${
+      usd(item.cost_or_adjusted_basis)
+    }.`
+    : "";
+  if (!reason) {
+    throw new Error(
+      "Form 8283 reduced claim needs certified sale proceeds or a sourced short-term ordinary-income reduction",
+    );
+  }
+  const explanation = `Section A item ${propertyId(index)}: unreduced FMV ${
+    usd(fmv)
+  } minus ${usd(fmv - claimed)} (${reason}) equals claimed contribution ${
+    usd(claimed)
+  }.`;
+  if (explanation.length > 1_000) {
+    throw new Error("Form 8283 FMV-reduction explanation exceeds MeF limit");
+  }
+  return elements("FairMarketValueStatement", [
+    element("ShortExplanationTxt", explanation),
+  ]);
+}
+
 export function needsSectionBVehicleStatement(item: SectionBItem): boolean {
   return item.property_type === SectionBPropertyType.Vehicle;
 }
@@ -62,6 +115,7 @@ function buildSectionAItem(
   item: SectionAItem,
   index: number,
   statementId?: string,
+  fmvReductionStatementId?: string,
 ): string {
   if (item.is_vehicle && !item.vehicle_vin) {
     throw new Error(
@@ -126,7 +180,20 @@ function buildSectionAItem(
     item.is_vehicle ? element("VIN", item.vehicle_vin) : "",
     element("DonatedPropertyDesc", vehicleDescription),
     donorLineDetail(item),
-    element("FairMarketValueAmt", item.fmv),
+    // Form 8283 Section A column (h) takes the reduced contribution amount
+    // when it is lower than FMV. The original FMV remains a separate source
+    // fact for vehicle and other substantiation/limit checks.
+    element(
+      "FairMarketValueAmt",
+      item.deduction_claimed ?? item.fmv,
+      fmvReductionStatementId
+        ? {
+          referenceDocumentId: fmvReductionStatementId,
+          referenceDocumentName:
+            "FairMarketValueStatement QualifiedConservationContributionStmt",
+        }
+        : undefined,
+    ),
     element("FairMarketValueMethodDesc", method),
   ]);
 }
@@ -473,6 +540,8 @@ export const form8283: MefFormDescriptor<
     );
     const statementIds = context.documentIdsByPendingKey
       ?.form8283_vehicle_statement ?? [];
+    const fmvReductionStatementIds = context.documentIdsByPendingKey
+      ?.form8283_fmv_reduction_statement ?? [];
     const requiredStatements = sectionAVehicleAttachments.length +
       sectionBVehicleAttachments.length;
     if (
@@ -483,7 +552,18 @@ export const form8283: MefFormDescriptor<
         "Form 8283 vehicle statement count does not match linked documents",
       );
     }
+    const requiredFmvStatements = sectionA.filter(needsFmvReductionStatement)
+      .length;
+    if (
+      context.documentIdsByPendingKey &&
+      fmvReductionStatementIds.length !== requiredFmvStatements
+    ) {
+      throw new Error(
+        "Form 8283 FMV-reduction statement count does not match linked documents",
+      );
+    }
     let nextStatement = 0;
+    let nextFmvStatement = 0;
     return [
       ...(sectionA.length > 0
         ? [elements(
@@ -494,6 +574,9 @@ export const form8283: MefFormDescriptor<
               index,
               needsVehicleStatement(item)
                 ? statementIds[nextStatement++]
+                : undefined,
+              needsFmvReductionStatement(item)
+                ? fmvReductionStatementIds[nextFmvStatement++]
                 : undefined,
             )
           ),

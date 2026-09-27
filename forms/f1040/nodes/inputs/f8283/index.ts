@@ -138,6 +138,9 @@ const sectionAItemSchema = z.object({
   donor_acquisition_description: z.string().optional(),
   fmv: z.number().nonnegative().optional(),
   deduction_claimed: z.number().nonnegative().optional(),
+  // Narrow non-sale reduction route: purchased property held no more than one
+  // year whose appreciation would be short-term gain under section 170(e)(1)(A).
+  short_term_ordinary_income_reduction_confirmed: z.literal(true).optional(),
   // Taxpayer-supplied general property category (for example "books"). The
   // same category must be used for similar gifts to every donee this year.
   similar_item_group: z.string().trim().min(1).optional(),
@@ -179,6 +182,113 @@ const sectionAItemSchema = z.object({
     ctx.addIssue({
       code: "custom",
       message: "Form 8283 Section A deduction exceeds FMV",
+    });
+  }
+  if (
+    item.short_term_ordinary_income_reduction_confirmed &&
+    (item.fmv === undefined || item.deduction_claimed === undefined)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["short_term_ordinary_income_reduction_confirmed"],
+      message:
+        "Form 8283 short-term reduction needs both FMV and claimed deduction",
+    });
+  }
+  if (item.fmv !== undefined && item.deduction_claimed !== undefined) {
+    const reductionCents = Math.round(
+      (item.fmv - item.deduction_claimed) * 100,
+    );
+    const saleCapCents = item.vehicle_sale_acknowledgment
+      ? Math.round(
+        Math.min(item.fmv, item.vehicle_sale_acknowledgment.gross_proceeds) *
+          100,
+      )
+      : undefined;
+    const certifiedSaleReduction = reductionCents > 0 &&
+      saleCapCents === Math.round(item.deduction_claimed * 100);
+    if (
+      item.vehicle_sale_acknowledgment && reductionCents > 0 &&
+      !certifiedSaleReduction
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["deduction_claimed"],
+        message:
+          "Form 8283 sale-proceeds route needs claim equal to the lesser of FMV and certified proceeds; combined reductions are not yet supported",
+      });
+    }
+    if (
+      certifiedSaleReduction &&
+      (item.cost_or_adjusted_basis === undefined ||
+        Math.round(item.cost_or_adjusted_basis * 100) <
+          Math.round(item.fmv * 100))
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cost_or_adjusted_basis"],
+        message:
+          "Form 8283 certified sale-proceeds reduction needs sourced basis at least FMV; appreciated property needs its additional reduction route",
+      });
+    }
+    const shortTerm = item.short_term_ordinary_income_reduction_confirmed ===
+      true;
+    if (reductionCents > 0 && !certifiedSaleReduction && !shortTerm) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["short_term_ordinary_income_reduction_confirmed"],
+        message:
+          "Form 8283 reduced Section A claim needs certified sale proceeds or a sourced short-term ordinary-income reduction",
+      });
+    }
+    if (shortTerm) {
+      const acquired = item.date_acquired
+        ? Date.parse(`${item.date_acquired}T00:00:00Z`)
+        : NaN;
+      const contributed = item.date_contributed
+        ? Date.parse(`${item.date_contributed}T00:00:00Z`)
+        : NaN;
+      const acquiredDate = Number.isFinite(acquired)
+        ? new Date(acquired)
+        : undefined;
+      const anniversary = acquiredDate
+        ? Date.UTC(
+          acquiredDate.getUTCFullYear() + 1,
+          acquiredDate.getUTCMonth(),
+          acquiredDate.getUTCDate(),
+        )
+        : NaN;
+      const datesValid = item.date_acquired && item.date_contributed &&
+        Number.isFinite(contributed) &&
+        acquiredDate?.toISOString().slice(0, 10) === item.date_acquired &&
+        new Date(contributed).toISOString().slice(0, 10) ===
+          item.date_contributed &&
+        contributed > acquired && contributed <= anniversary;
+      if (
+        !datesValid ||
+        item.donor_acquisition_description?.trim().toLowerCase() !==
+          "purchase" ||
+        item.is_capital_gain_property !== false ||
+        item.cost_or_adjusted_basis === undefined ||
+        Math.round(item.cost_or_adjusted_basis * 100) !==
+          Math.round(item.deduction_claimed * 100) ||
+        item.cost_or_adjusted_basis >= item.fmv ||
+        certifiedSaleReduction
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["short_term_ordinary_income_reduction_confirmed"],
+          message:
+            "Form 8283 short-term reduction needs purchased property held no more than one year, ordinary-income classification, and a claim equal to basis below FMV",
+        });
+      }
+    }
+  }
+  if (item.vehicle_sale_acknowledgment && item.is_vehicle !== true) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["is_vehicle"],
+      message: "Form 8283 vehicle sale acknowledgment needs vehicle property",
     });
   }
   if (!item.is_vehicle || item.fmv === undefined) return;
