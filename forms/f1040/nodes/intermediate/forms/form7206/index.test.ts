@@ -188,13 +188,17 @@ Deno.test("Marketplace overlap is required and cannot use a raw PTC subtraction"
   );
 });
 
-Deno.test("Pub 974 full-year overlap routes final deduction and reconciles filed Form 8962", () => {
+Deno.test("Pub 974 full and partial-year overlap reconcile filed Form 8962", () => {
   const premiums = Array(12).fill(1_000);
   const slcsps = Array(12).fill(1_200);
   const aptcs = Array(12).fill(500);
   const source = {
     marketplace_ptc_premium_overlap: true,
-    pub974_full_year: {
+    pub974_single_business: {
+      form1095a_coverage_months: Array.from(
+        { length: 12 },
+        (_, index) => index + 1,
+      ),
       all_marketplace_enrollment_premiums_are_specified: true,
       no_other_se_income_sources_verified: true,
       worksheet_w: {
@@ -373,6 +377,94 @@ Deno.test("Pub 974 full-year overlap routes final deduction and reconciles filed
       }),
     Error,
     "does not reconcile to Publication 974 source",
+  );
+
+  const partialPremiums = [...Array(6).fill(1_000), ...Array(6).fill(0)];
+  const partialSlcsps = [...Array(6).fill(1_200), ...Array(6).fill(0)];
+  const partialAptcs = [...Array(6).fill(500), ...Array(6).fill(0)];
+  const partialResult = compute({
+    ...source,
+    pub974_single_business: {
+      ...source.pub974_single_business,
+      form1095a_coverage_months: [1, 2, 3, 4, 5, 6],
+      worksheet_w: {
+        ...source.pub974_single_business.worksheet_w,
+        specified_policy_months: source.pub974_single_business.worksheet_w
+          .specified_policy_months.slice(0, 6),
+      },
+      form8962_source: {
+        monthly_premiums: partialPremiums,
+        monthly_slcsps: partialSlcsps,
+        monthly_aptcs: partialAptcs,
+      },
+    },
+  });
+  const partialDeduction = findOutput(partialResult, "schedule1")?.fields
+    .line17_se_health_insurance as number;
+  const partialReconciliation = findOutput(partialResult, "form8962")?.fields
+    .pub974_reconciliation as typeof reconciliation;
+  assertEquals(partialReconciliation.form1095a_coverage_months, [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+  ]);
+  const partialFiled = form8962.compute(
+    { taxYear: 2025, formType: "f1040" },
+    {
+      ...filedInput,
+      monthly_premiums: partialPremiums,
+      monthly_slcsps: partialSlcsps,
+      monthly_aptcs: partialAptcs,
+      pub974_form1095a_policy_months: actualPolicyMonths.slice(0, 6),
+      pub974_income_audit: {
+        ...audit,
+        schedule1_line17_se_health_insurance: partialDeduction,
+      },
+      taxpayer_modified_agi: partialReconciliation
+        .taxpayer_modified_agi as number,
+      pub974_reconciliation: partialReconciliation as NonNullable<
+        Parameters<typeof form8962.compute>[1]["pub974_reconciliation"]
+      >,
+    },
+  );
+  assertEquals(
+    partialFiled.outputs.find((row) => row.nodeType === "form8962")?.fields
+      .total_premium_tax_credit,
+    partialReconciliation.total_premium_tax_credit,
+  );
+  const partialFields =
+    partialFiled.outputs.find((row) => row.nodeType === "form8962")?.fields ??
+      {};
+  assertStringIncludes(form8962Mef.build(partialFields), "<IRS8962>");
+  assertEquals(
+    form8962Pdf.projectFields?.(partialFields, {})?.total_premium_tax_credit,
+    partialReconciliation.total_premium_tax_credit,
+  );
+  assertThrows(
+    () =>
+      compute({
+        ...source,
+        marketplace_ptc_premium_overlap: false,
+        pub974_single_business: {
+          ...source.pub974_single_business,
+          form1095a_coverage_months: [1, 2, 3, 4, 5, 6],
+          worksheet_w: {
+            ...source.pub974_single_business.worksheet_w,
+            specified_policy_months: source.pub974_single_business.worksheet_w
+              .specified_policy_months.slice(0, 6),
+          },
+          form8962_source: {
+            monthly_premiums: partialPremiums,
+            monthly_slcsps: partialSlcsps,
+            monthly_aptcs: partialAptcs,
+          },
+        },
+      }),
+    Error,
+    "positive Marketplace overlap",
   );
 });
 

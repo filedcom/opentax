@@ -219,7 +219,9 @@ export const inputSchema = z.object({
         specified_premium: z.number().nonnegative(),
         attributable_aptc: z.number().nonnegative(),
       }).strict(),
-    ).min(12),
+    ).min(1),
+    form1095a_coverage_months: z.array(z.number().int().min(1).max(12))
+      .min(1).max(12),
     worksheet_x_source: z.object({
       form1040_line9_total_income: z.number().finite(),
       form1040_line2a_tax_exempt_interest: z.number().nonnegative(),
@@ -751,6 +753,7 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
         );
       const actualPolicyMonths = input.pub974_form1095a_policy_months ?? [];
       const expectedPolicyMonths = pub974.specified_policy_months;
+      const coverageMonths = new Set(pub974.form1095a_coverage_months);
       const expectedRows = new Map(expectedPolicyMonths.map((row) => [
         `${row.form1095a_policy_number}:${row.month}`,
         row,
@@ -759,7 +762,12 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
         `${row.form1095a_policy_number}:${row.month}`
       );
       const policyMonthsMatch =
+        coverageMonths.size === pub974.form1095a_coverage_months.length &&
         expectedRows.size === expectedPolicyMonths.length &&
+        expectedPolicyMonths.every((row) => coverageMonths.has(row.month)) &&
+        [...coverageMonths].every((month) =>
+          expectedPolicyMonths.some((row) => row.month === month)
+        ) &&
         actualKeys.length === expectedPolicyMonths.length &&
         new Set(actualKeys).size === actualKeys.length &&
         actualPolicyMonths.every((row) => {

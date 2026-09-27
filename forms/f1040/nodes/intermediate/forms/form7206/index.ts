@@ -12,8 +12,8 @@ import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 import { form8962 } from "../form8962/index.ts";
 import {
-  calculatePub974FullYearIterative,
-  pub974FullYearSourceSchema,
+  calculatePub974SingleBusinessIterative,
+  pub974SingleBusinessSourceSchema,
 } from "./pub974_worksheets.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
@@ -27,7 +27,7 @@ export const inputSchema = z.object({
   // Cannot include premiums paid through subsidized employer plan
   health_insurance_premiums: z.number().nonnegative().optional(),
   marketplace_ptc_premium_overlap: z.boolean().optional(),
-  pub974_full_year: pub974FullYearSourceSchema.optional(),
+  pub974_single_business: pub974SingleBusinessSourceSchema.optional(),
 
   // Long-term care insurance premiums paid
   ltc_premiums: z.number().nonnegative().optional(),
@@ -129,7 +129,7 @@ class Form7206Node extends TaxNode<typeof inputSchema> {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
-    if (input.pub974_full_year) {
+    if (input.pub974_single_business) {
       if (
         ctx.taxYear !== 2025 ||
         input.marketplace_ptc_premium_overlap !== true ||
@@ -140,17 +140,17 @@ class Form7206Node extends TaxNode<typeof inputSchema> {
         input.taxpayer_age !== undefined || input.spouse_age !== undefined
       ) {
         throw new Error(
-          "Form 7206 Publication 974 route needs only verified 2025 full-year source facts and positive Marketplace overlap",
+          "Form 7206 Publication 974 route needs only verified 2025 single-business source facts and positive Marketplace overlap",
         );
       }
-      const source = input.pub974_full_year;
+      const source = input.pub974_single_business;
       const business = source.worksheet_w.business;
       if (business.kind !== "self_employed") {
         throw new Error(
           "Form 7206 Publication 974 filed route needs one Schedule C business",
         );
       }
-      const result = calculatePub974FullYearIterative(source);
+      const result = calculatePub974SingleBusinessIterative(source);
       const f = source.form8962_source;
       return {
         outputs: [
@@ -162,6 +162,7 @@ class Form7206Node extends TaxNode<typeof inputSchema> {
               monthly_aptcs: f.monthly_aptcs!,
               specified_policy_months:
                 source.worksheet_w.specified_policy_months,
+              form1095a_coverage_months: source.form1095a_coverage_months,
               worksheet_x_source: {
                 form1040_line9_total_income:
                   source.worksheet_x.form1040_line9_total_income,
