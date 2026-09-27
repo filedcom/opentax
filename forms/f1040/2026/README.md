@@ -167,6 +167,8 @@ Single-code G pension-plan direct rollovers now retain separate gross and
 taxable totals, reach AGI and Form 1040 lines 5a/5b, and mark draft line
 5c(1) in the PDF. IRA and other rollover variants remain in the 1099-R
 contract.
+Normal code 7 pensions with a payer-determined taxable box 2a below the
+gross box 1 now use the same separate totals without the rollover box.
 An early SIMPLE IRA distribution in its first two years uses a dedicated
 Form 5329 Part I node at 25%, with its three printed draft pages attached
 to the return PDF. The [Form 5329 contract](../../../docs/ty2026/FORM5329-GRAPH.md)

@@ -122,6 +122,29 @@ Deno.test("TY2026 code G keeps pension rollover gross and taxable amounts separa
   }
 });
 
+Deno.test("TY2026 normal pension uses determined box 2a as taxable income", () => {
+  const result = f1099r_2026.compute(context, {
+    statements: [{
+      ...base,
+      payer_name: "Pension Plan",
+      box1_gross_distribution: 12_000,
+      box2a_taxable_amount: 9_000,
+      box5_employee_contributions_or_insurance_premiums: 3_000,
+      box7b_ira_sep_simple: false,
+    }],
+  });
+  assertEquals(
+    result.outputs.find((output) => output.nodeType === "agi_aggregator")
+      ?.fields.line5b_pension_taxable,
+    9_000,
+  );
+  const f1040 = result.outputs.find((output) => output.nodeType === "f1040")
+    ?.fields;
+  assertEquals(f1040?.line5a_pension_gross, 12_000);
+  assertEquals(f1040?.line5b_pension_taxable, 9_000);
+  assertEquals(f1040?.line5c_rollover, undefined);
+});
+
 Deno.test("TY2026 code 1 reports full early-distribution tax on Schedule 2", () => {
   const result = f1099r_2026.compute(context, {
     statements: [{

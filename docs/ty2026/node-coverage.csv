@@ -11,7 +11,7 @@ f1099k,forms/f1040/nodes/inputs/f1099k/index.ts,inputs,5,no,no,no,n/a,P1,audit-r
 f1099oid,forms/f1040/nodes/inputs/f1099oid/index.ts,inputs,2,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 f1099m,forms/f1040/nodes/inputs/f1099m/index.ts,inputs,1,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 f1099nec,forms/f1040/nodes/inputs/f1099nec/index.ts,inputs,0,no,no,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"
-f1099r,forms/f1040/nodes/inputs/f1099r/index.ts,inputs,1,yes,yes,no,n/a,P1,audit-required,"final 2026 form/instructions pinned; normal, code1 early tax, early SIMPLE Form5329 Part I, and pension code G rollover reach AGI/1040/PDF; add other codes, 8606/4972, current MeF; see FORM1099R-GRAPH.md"
+f1099r,forms/f1040/nodes/inputs/f1099r/index.ts,inputs,1,yes,yes,no,n/a,P1,audit-required,"final 2026 form/instructions pinned; fully and partially taxable normal pensions, code1 early tax, early SIMPLE Form5329 Part I, and pension code G rollover reach AGI/1040/PDF; add other codes, 8606/4972, current MeF; see FORM1099R-GRAPH.md"
 f1095a,forms/f1040/nodes/inputs/f1095a/index.ts,inputs,1,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 f4835,forms/f1040/nodes/inputs/f4835/index.ts,inputs,0,no,yes,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"
 f2441,forms/f1040/nodes/inputs/f2441/index.ts,inputs,0,yes,yes,yes,yes,P2,audit-required,"verify 2026 law, node outputs, and graph route"

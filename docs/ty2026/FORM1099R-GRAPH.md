@@ -54,6 +54,10 @@ input contract. A dedicated TY2026 node now handles normal, fully taxable
   reach the correct 1040/AGI lines and withholding totals from box facts.
   This graph and two-page PDF case now passes, including simultaneous
   SSA-1099 and W-2 withholding.
+- A normal code 7 pension with a determined box 2a below box 1 now reports
+  box 1 on Form 1040 line 5a and only box 2a on line 5b and in AGI. Box 5
+  contributions or insurance premiums are preserved as source data. IRA
+  distributions with basis still require Form 8606.
 - A single-code G pension-plan direct rollover now prints its box 1 gross on
   Form 1040 line 5a, box 2a taxable amount on line 5b, and checks 5c(1).
   A zero-taxable rollover and a taxable rollover to a Roth account can be

@@ -90,6 +90,8 @@ class F1099rNode2026 extends TaxNode<typeof f1099rInput2026Schema> {
       const code = statement.box7a_codes[0];
       const directPensionRollover = statement.box7a_codes.length === 1 &&
         code === "G" && !statement.box7b_ira_sep_simple;
+      const determinedPension = statement.box7a_codes.length === 1 &&
+        code === "7" && !statement.box7b_ira_sep_simple;
       if (
         statement.box7a_codes.length !== 1 ||
         !["1", "7", "G"].includes(code) ||
@@ -100,7 +102,7 @@ class F1099rNode2026 extends TaxNode<typeof f1099rInput2026Schema> {
         (statement.box8a_other ?? 0) > 0 ||
         statement.box8b_pct_annuity_contract !== undefined ||
         statement.box2b_taxable_not_determined === true ||
-        (directPensionRollover
+        (directPensionRollover || determinedPension
           ? statement.box2a_taxable_amount > statement.box1_gross_distribution
           : statement.box2a_taxable_amount !==
               statement.box1_gross_distribution ||
