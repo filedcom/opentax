@@ -39,6 +39,12 @@ export const physicalPresenceFilingSchema = z.object({
   no_other_foreign_earned_income: z.literal(true),
   claiming_housing_exclusion_or_deduction: z.literal(false),
   deductions_allocable_to_excluded_income: z.literal(0),
+  // Distinct Form 6251 Foreign Earned Income Tax Worksheet line 2b total:
+  // itemized deductions or exclusions not claimable because they relate to
+  // excluded income. The Form 2555 deduction fact above does not establish
+  // the total of this broader AMT worksheet line.
+  amt_line2b_disallowed_deductions_and_exclusions: z.number().nonnegative()
+    .optional(),
 }).strict();
 
 export type PhysicalPresenceFiling = z.infer<

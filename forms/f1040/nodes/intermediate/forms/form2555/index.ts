@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
@@ -72,13 +72,15 @@ type Form2555Input = z.infer<typeof inputSchema>;
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
 function qualifies(input: Form2555Input): boolean {
-  const physicalPresence = (input.days_in_foreign_country ?? 0) >= PHYSICAL_PRESENCE_DAYS;
+  const physicalPresence =
+    (input.days_in_foreign_country ?? 0) >= PHYSICAL_PRESENCE_DAYS;
   const bfr = input.bona_fide_resident === true;
   return physicalPresence || bfr;
 }
 
 function totalForeignEarnedIncome(input: Form2555Input): number {
-  return (input.foreign_wages ?? 0) + (input.foreign_self_employment_income ?? 0);
+  return (input.foreign_wages ?? 0) +
+    (input.foreign_self_employment_income ?? 0);
 }
 
 // Prorate FEIE limit per IRC §911(b)(2)(A): limit × (qualifying_days / 365).
@@ -152,14 +154,20 @@ class Form2555Node extends TaxNode<typeof inputSchema> {
           }),
           output(income_tax_calculation, {
             foreign_earned_income_exclusion: lines.line45,
+            ...(input.filing_details
+                .amt_line2b_disallowed_deductions_and_exclusions !== undefined
+              ? {
+                foreign_exclusion_disallowed_deductions: input.filing_details
+                  .amt_line2b_disallowed_deductions_and_exclusions,
+              }
+              : {}),
           }),
         ],
       };
     }
 
     const income = totalForeignEarnedIncome(input);
-    const hasHousingActivity =
-      (input.employer_housing_exclusion ?? 0) > 0 ||
+    const hasHousingActivity = (input.employer_housing_exclusion ?? 0) > 0 ||
       (input.foreign_housing_expenses ?? 0) > 0;
 
     if (income === 0 && !hasHousingActivity) {
@@ -176,15 +184,27 @@ class Form2555Node extends TaxNode<typeof inputSchema> {
     const feieLimit = proratedFeieLimit(input, cfg.feieLimit);
     const exclusion = earnedIncomeExclusion(income, feieLimit);
     if (exclusion > 0) {
-      outputs.push(output(schedule1, { line8d_foreign_earned_income_exclusion: exclusion }));
-      outputs.push(output(agi_aggregator, { line8d_foreign_earned_income_exclusion: exclusion }));
+      outputs.push(
+        output(schedule1, {
+          line8d_foreign_earned_income_exclusion: exclusion,
+        }),
+      );
+      outputs.push(
+        output(agi_aggregator, {
+          line8d_foreign_earned_income_exclusion: exclusion,
+        }),
+      );
     }
 
     // Housing deduction — IRC §911(a)(2), (c)
     const housing = housingAmount(input, cfg.feieHousingBase);
     if (housing > 0) {
-      outputs.push(output(schedule1, { line8d_foreign_housing_deduction: housing }));
-      outputs.push(output(agi_aggregator, { line8d_foreign_housing_deduction: housing }));
+      outputs.push(
+        output(schedule1, { line8d_foreign_housing_deduction: housing }),
+      );
+      outputs.push(
+        output(agi_aggregator, { line8d_foreign_housing_deduction: housing }),
+      );
     }
 
     // SE tax preservation — IRC §1401 applies to foreign SE income regardless of FEIE.
@@ -200,7 +220,9 @@ class Form2555Node extends TaxNode<typeof inputSchema> {
     // IRC §911(f); Form 2555 Instructions "Tax on Income Not Excluded".
     const totalExclusion = exclusion + housing;
     if (totalExclusion > 0) {
-      outputs.push(output(income_tax_calculation, { foreign_earned_income_exclusion: totalExclusion }));
+      outputs.push(output(income_tax_calculation, {
+        foreign_earned_income_exclusion: totalExclusion,
+      }));
     }
 
     return { outputs };

@@ -96,6 +96,10 @@ export const inputSchema = z.object({
   taking_standard_deduction: z.boolean().optional(),
   unrecaptured_1250_gain: z.number().nonnegative().optional(),
   rate_28_gain: z.number().nonnegative().optional(),
+  // Foreign Earned Income Tax Worksheet line 2b. This must be affirmed even
+  // when zero; the Form 2555 exclusions alone do not determine disallowed
+  // deductions or other exclusions related to excluded income.
+  foreign_exclusion_disallowed_deductions: z.number().nonnegative().optional(),
   foreign_earned_income_exclusion: z.number().nonnegative().optional(),
 });
 
@@ -170,6 +174,39 @@ function computeTentativeMinimumTax(
     return Math.floor(taxableExcess * 0.26);
   }
   return Math.floor(taxableExcess * 0.28 - adjustment);
+}
+
+// 2025 Form 6251 Foreign Earned Income Tax Worksheet, lines 2c through 6.
+// This is the ordinary-income branch only. Preferential income additionally
+// requires the AMT capital-gain-excess refigure of Part III.
+function computeForeignEarnedIncomeTax(
+  taxableExcess: number,
+  excludedIncome: number,
+  disallowedDeductions: number,
+  status: FilingStatus,
+  thresholdStandard: number,
+  thresholdMfs: number,
+  adjustmentStandard: number,
+  adjustmentMfs: number,
+): number {
+  if (taxableExcess === 0) return 0;
+  const line2c = Math.max(0, excludedIncome - disallowedDeductions);
+  const line3 = taxableExcess + line2c;
+  return computeTentativeMinimumTax(
+    line3,
+    status,
+    thresholdStandard,
+    thresholdMfs,
+    adjustmentStandard,
+    adjustmentMfs,
+  ) - computeTentativeMinimumTax(
+    line2c,
+    status,
+    thresholdStandard,
+    thresholdMfs,
+    adjustmentStandard,
+    adjustmentMfs,
+  );
 }
 
 // Form 6251 Line 9: TMT net of AMTFTC. Cannot be negative.
@@ -366,9 +403,13 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
     // Line 7 and Part III — use the IRS worksheet when preferential income is present.
     const qualDiv = input.qualified_dividends ?? 0;
     const netCg = input.net_capital_gain ?? 0;
-    if ((input.foreign_earned_income_exclusion ?? 0) > 0) {
+    const foreignExclusion = input.foreign_earned_income_exclusion ?? 0;
+    if (
+      taxableExcess > 0 && foreignExclusion > 0 &&
+      (qualDiv > 0 || netCg > 0)
+    ) {
       throw new Error(
-        "Form 6251 with Form 2555 requires the Foreign Earned Income Tax Worksheet",
+        "Form 6251 with Form 2555 and preferential income requires the Part III capital-gain-excess refigure",
       );
     }
     if (
@@ -401,14 +442,34 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
         cfg.amtBracketAdjustmentMfs,
       )
       : undefined;
-    const tmt = partThree?.line40 ?? computeTentativeMinimumTax(
-      taxableExcess,
-      input.filing_status,
-      cfg.amtBracket26ThresholdStandard,
-      cfg.amtBracket26ThresholdMfs,
-      cfg.amtBracketAdjustmentStandard,
-      cfg.amtBracketAdjustmentMfs,
-    );
+    let tmt: number;
+    if (foreignExclusion > 0 && taxableExcess > 0) {
+      const disallowed = input.foreign_exclusion_disallowed_deductions;
+      if (disallowed === undefined) {
+        throw new Error(
+          "Form 6251 Foreign Earned Income Tax Worksheet needs line 2b disallowed deductions, including an explicit zero",
+        );
+      }
+      tmt = computeForeignEarnedIncomeTax(
+        taxableExcess,
+        foreignExclusion,
+        disallowed,
+        input.filing_status,
+        cfg.amtBracket26ThresholdStandard,
+        cfg.amtBracket26ThresholdMfs,
+        cfg.amtBracketAdjustmentStandard,
+        cfg.amtBracketAdjustmentMfs,
+      );
+    } else {
+      tmt = partThree?.line40 ?? computeTentativeMinimumTax(
+        taxableExcess,
+        input.filing_status,
+        cfg.amtBracket26ThresholdStandard,
+        cfg.amtBracket26ThresholdMfs,
+        cfg.amtBracketAdjustmentStandard,
+        cfg.amtBracketAdjustmentMfs,
+      );
+    }
 
     // Line 9 — Net TMT after AMTFTC
     const netTmt = computeNetTmt(tmt, input.amtftc ?? 0);

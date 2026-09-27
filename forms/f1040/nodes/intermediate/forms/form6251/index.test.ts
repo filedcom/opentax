@@ -4,6 +4,8 @@ import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import { form6251 as mef6251 } from "../../../../2025/mef/forms/f6251.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
+import { form2555 } from "../form2555/index.ts";
+import { income_tax_calculation } from "../../worksheets/income_tax_calculation/index.ts";
 
 function compute(input: Record<string, unknown>) {
   return form6251.compute(
@@ -251,7 +253,7 @@ Deno.test("form6251: private-activity-bond interest from 1099-INT and 1099-DIV a
   assertEquals(filed?.fields.amti, 200_500);
 });
 
-Deno.test("form6251: Form 2555 requires its AMT foreign-earned-income worksheet", () => {
+Deno.test("form6251: Form 2555 worksheet requires an explicit line 2b fact", () => {
   assertThrows(
     () =>
       compute({
@@ -262,7 +264,148 @@ Deno.test("form6251: Form 2555 requires its AMT foreign-earned-income worksheet"
         foreign_earned_income_exclusion: 100_000,
       }),
     Error,
-    "Foreign Earned Income Tax Worksheet",
+    "line 2b disallowed deductions",
+  );
+});
+
+Deno.test("form6251: Form 2555 stacks ordinary income across the AMT 26% bracket", () => {
+  // Line 6 = $300,000 - $88,100 = $211,900.
+  // Worksheet 2c = $100,000; line 3 = $311,900.
+  // Worksheet 4 = $82,550; line 5 = $26,000; line 7 = $56,550.
+  const result = compute({
+    filing_status: "single",
+    regular_tax_income: 300_000,
+    regular_tax: 40_000,
+    foreign_earned_income_exclusion: 100_000,
+    foreign_exclusion_disallowed_deductions: 0,
+  });
+  const filed = result.outputs.find((output) => output.nodeType === "form6251");
+  assertEquals(filed?.fields.tentative_tax, 56_550);
+  assertEquals(fieldsOf(result.outputs, schedule2)?.line2_amt, 16_550);
+});
+
+Deno.test("form6251: Form 2555 worksheet subtracts denied deductions before stacking", () => {
+  // Worksheet line 2c = $100,000 - $40,000 = $60,000.
+  // Tax on $271,900 is $71,350; tax on $60,000 is $15,600.
+  const result = compute({
+    filing_status: "single",
+    regular_tax_income: 300_000,
+    regular_tax: 40_000,
+    foreign_earned_income_exclusion: 100_000,
+    foreign_exclusion_disallowed_deductions: 40_000,
+  });
+  const filed = result.outputs.find((output) => output.nodeType === "form6251");
+  assertEquals(filed?.fields.tentative_tax, 55_750);
+  assertEquals(fieldsOf(result.outputs, schedule2)?.line2_amt, 15_750);
+});
+
+Deno.test("form6251: Form 2555 line 2b source reaches the AMT worksheet", () => {
+  const ctx = { taxYear: 2025, formType: "f1040" } as const;
+  const source = form2555.compute(ctx, {
+    filing_details: {
+      foreign_address: {
+        line1: "1 Main Street",
+        city: "Stockholm",
+        country_code: "SE",
+      },
+      occupation: "Engineer",
+      employer_name: "Nordic AB",
+      employer_foreign_address: {
+        line1: "2 Main Street",
+        city: "Stockholm",
+        country_code: "SE",
+      },
+      employer_has_us_ein: false,
+      employer_issued_w2: false,
+      citizenship_country: "United States",
+      tax_home_description: "Stockholm, Sweden",
+      tax_home_established_date: "2024-12-31",
+      tax_home_foreign_entire_period: true,
+      physical_presence_begin: "2025-01-01",
+      physical_presence_end: "2025-12-31",
+      principal_employment_country: "Sweden",
+      no_travel_during_period: true,
+      employment_contract_terms: "Full-year employment",
+      visa_type: "Residence permit",
+      visa_limits_stay: false,
+      maintained_us_home: false,
+      no_prior_exclusion_claim: true,
+      exclusion_previously_revoked: false,
+      separate_foreign_residence: false,
+      foreign_wages: 100_000,
+      no_other_foreign_earned_income: true,
+      claiming_housing_exclusion_or_deduction: false,
+      deductions_allocable_to_excluded_income: 0,
+      amt_line2b_disallowed_deductions_and_exclusions: 0,
+    },
+  });
+  const incomeFacts = fieldsOf(source.outputs, income_tax_calculation);
+  assertEquals(incomeFacts?.foreign_earned_income_exclusion, 100_000);
+  assertEquals(incomeFacts?.foreign_exclusion_disallowed_deductions, 0);
+  const regular = income_tax_calculation.compute(ctx, {
+    ...incomeFacts,
+    taxable_income: 300_000,
+    form6251_line1b: 300_000,
+    form6251_line2a: 0,
+    filing_status: "single",
+  });
+  const amtFacts = fieldsOf(regular.outputs, form6251);
+  assertEquals(amtFacts?.foreign_earned_income_exclusion, 100_000);
+  assertEquals(amtFacts?.foreign_exclusion_disallowed_deductions, 0);
+  const filed = form6251.compute(
+    ctx,
+    inputSchema.parse({
+      ...amtFacts,
+      must_file_for_credit: true,
+    }),
+  );
+  assertEquals(
+    filed.outputs.find((output) => output.nodeType === "form6251")?.fields
+      .tentative_tax,
+    56_550,
+  );
+});
+
+Deno.test("form6251: Form 2555 worksheet uses the halved MFS bracket", () => {
+  const result = compute({
+    filing_status: "mfs",
+    regular_tax_income: 300_000,
+    regular_tax: 40_000,
+    foreign_earned_income_exclusion: 100_000,
+    foreign_exclusion_disallowed_deductions: 0,
+  });
+  const filed = result.outputs.find((output) => output.nodeType === "form6251");
+  assertEquals(filed?.fields.tentative_tax, 64_429);
+  assertEquals(fieldsOf(result.outputs, schedule2)?.line2_amt, 24_429);
+});
+
+Deno.test("form6251: zero line 6 skips the Form 2555 worksheet", () => {
+  const result = compute({
+    filing_status: "single",
+    regular_tax_income: 80_000,
+    regular_tax: 1_000,
+    foreign_earned_income_exclusion: 100_000,
+    must_file_for_credit: true,
+  });
+  const filed = result.outputs.find((output) => output.nodeType === "form6251");
+  assertEquals(filed?.fields.tentative_tax, 0);
+  assertEquals(filed?.fields.line11_amt, 0);
+});
+
+Deno.test("form6251: Form 2555 with preferred gain still needs Part III refigure", () => {
+  assertThrows(
+    () =>
+      compute({
+        filing_status: "single",
+        regular_tax_income: 300_000,
+        regular_taxable_income: 300_000,
+        regular_tax: 40_000,
+        foreign_earned_income_exclusion: 100_000,
+        foreign_exclusion_disallowed_deductions: 0,
+        qualified_dividends: 1_000,
+      }),
+    Error,
+    "Part III capital-gain-excess refigure",
   );
 });
 

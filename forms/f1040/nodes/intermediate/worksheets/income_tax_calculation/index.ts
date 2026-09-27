@@ -97,6 +97,7 @@ export const inputSchema = z.object({
   // which pushes non-excluded income into the correct marginal brackets.
   // IRC §911(f); Form 2555 Instructions "Tax on Income Not Excluded".
   foreign_earned_income_exclusion: z.number().nonnegative().optional(),
+  foreign_exclusion_disallowed_deductions: z.number().nonnegative().optional(),
 });
 
 type IncomeTaxCalcInput = z.infer<typeof inputSchema>;
@@ -269,6 +270,12 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
           ? { taking_standard_deduction: input.taking_standard_deduction }
           : {}),
         ...(floor > 0 ? { foreign_earned_income_exclusion: floor } : {}),
+        ...(input.foreign_exclusion_disallowed_deductions !== undefined
+          ? {
+            foreign_exclusion_disallowed_deductions:
+              input.foreign_exclusion_disallowed_deductions,
+          }
+          : {}),
       }),
       // Feed f8812 the income tax liability for CTC nonrefundable limit calculation.
       this.outputNodes.output(f8812, { auto_income_tax_liability: tax }),
