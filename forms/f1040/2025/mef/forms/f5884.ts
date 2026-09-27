@@ -30,6 +30,30 @@ export const form5884: MefFormDescriptor<"f5884", unknown> = {
     ) {
       throw new Error("Form 5884 source credit needs attached Form 3800");
     }
+    const memberStatementIds = context?.documentIdsByPendingKey
+      ?.f5884_controlled_group_statement;
+    const deductionStatementIds = context?.documentIdsByPendingKey
+      ?.f5884_deduction_differentiation_stmt;
+    if (
+      source.controlled_group && context?.documentIdsByPendingKey &&
+      (memberStatementIds?.length !== 1 ||
+        deductionStatementIds?.length !== 1)
+    ) {
+      throw new Error(
+        "Form 5884 controlled group needs both linked statements",
+      );
+    }
+    const line2Attributes = source.controlled_group &&
+        memberStatementIds?.length === 1 &&
+        deductionStatementIds?.length === 1
+      ? {
+        referenceDocumentId: `${memberStatementIds[0]} ${
+          deductionStatementIds[0]
+        }`,
+        referenceDocumentName:
+          "ControlledGroupMemberStatement DeductionDifferentiationStmt",
+      }
+      : undefined;
     return elements("IRS5884", [
       lines.line1aWages > 0
         ? element("WagesBetween120And399HrsAmt", lines.line1aWages)
@@ -49,7 +73,7 @@ export const form5884: MefFormDescriptor<"f5884", unknown> = {
       lines.line1cCredit > 0
         ? element("TotalSecondYearWagesAmt", lines.line1cCredit)
         : "",
-      element("TotalWagesAmt", lines.line2),
+      element("TotalWagesAmt", lines.line2, line2Attributes),
       lines.line3 > 0
         ? element("PassThruWorkOpportunityCrAmt", lines.line3)
         : "",

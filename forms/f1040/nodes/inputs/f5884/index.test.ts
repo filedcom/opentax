@@ -377,6 +377,134 @@ Deno.test("successor long-term family assistance shares the second-year cap", ()
   );
 });
 
+Deno.test("controlled group allocates line 2 by qualified wages", () => {
+  const first = minimalItem({
+    employee_reference: "GROUP-1",
+    employer_ein: "123456789",
+    first_year_wages: 6_000,
+    hours_worked: 200,
+  });
+  const second = minimalItem({
+    employee_reference: "GROUP-2",
+    employer_ein: "987654321",
+    first_year_wages: 6_000,
+    hours_worked: 400,
+  });
+  const group = {
+    kind: "controlled_corporations" as const,
+    group_classification_document_reference: "2025 group ownership schedule",
+    taxpayer_member_ein: "123456789",
+    members: [
+      { ein: "123456789", business_name: "Taxpayer Company" },
+      { ein: "987654321", business_name: "Affiliate Company" },
+    ],
+  };
+  const input = {
+    f5884s: [first, second],
+    controlled_group: group,
+    subject_to_passive_activity_limit: false,
+  };
+  assertEquals(f5884.inputSchema.safeParse(input).success, true);
+  const lines = calculateForm5884(input);
+  assertEquals(lines.line1aCredit, 1_500);
+  assertEquals(lines.line1bCredit, 2_400);
+  assertEquals(lines.groupCredit, 3_900);
+  assertEquals(
+    lines.controlledGroupShares.map((member) => member.credit_share),
+    [1_950, 1_950],
+  );
+  assertEquals(lines.line2, 1_950);
+  assertEquals(lines.line4, 1_950);
+  const routed = f5884.compute({ taxYear: 2025, formType: "f1040" }, input);
+  assertEquals(routed.outputs[0]?.fields.f5884_credit?.credit_amount, 1_950);
+  assertEquals(
+    f5884.inputSchema.safeParse({
+      ...input,
+      controlled_group: { ...group, taxpayer_member_ein: "111111111" },
+    }).success,
+    false,
+  );
+  assertEquals(
+    f5884.inputSchema.safeParse({
+      ...input,
+      controlled_group: {
+        ...group,
+        group_classification_document_reference: "",
+      },
+    }).success,
+    false,
+  );
+  assertEquals(
+    f5884.inputSchema.safeParse({
+      ...input,
+      controlled_group: {
+        ...group,
+        members: [group.members[0], group.members[0]],
+      },
+    }).success,
+    false,
+  );
+  assertEquals(
+    f5884.inputSchema.safeParse({
+      ...input,
+      controlled_group: {
+        ...group,
+        members: [
+          { ...group.members[0], business_name: "Taxpayer, Inc." },
+          group.members[1],
+        ],
+      },
+    }).success,
+    false,
+  );
+  assertEquals(
+    f5884.inputSchema.safeParse({
+      ...input,
+      f5884s: [first, { ...second, employer_ein: "111111111" }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    f5884.inputSchema.safeParse({
+      ...input,
+      controlled_group: undefined,
+    }).success,
+    false,
+  );
+});
+
+Deno.test("controlled-group whole-dollar remainder is assigned once", () => {
+  const eins = ["111111111", "222222222", "333333333"];
+  const input = {
+    f5884s: eins.map((ein, index) =>
+      minimalItem({
+        employee_reference: `GROUP-${index + 1}`,
+        employer_ein: ein,
+        first_year_wages: 1,
+        hours_worked: 400,
+      })
+    ),
+    controlled_group: {
+      kind: "businesses_under_common_control" as const,
+      group_classification_document_reference: "2025 common-control schedule",
+      taxpayer_member_ein: eins[0],
+      members: eins.map((ein, index) => ({
+        ein,
+        business_name: `Member ${index + 1}`,
+      })),
+    },
+    subject_to_passive_activity_limit: false,
+  };
+  assertEquals(f5884.inputSchema.safeParse(input).success, true);
+  const lines = calculateForm5884(input);
+  assertEquals(lines.groupCredit, 1);
+  assertEquals(
+    lines.controlledGroupShares.map((member) => member.credit_share),
+    [1, 0, 0],
+  );
+  assertEquals(lines.line2, 1);
+});
+
 // ── Zero Output Cases ─────────────────────────────────────────────────────────
 
 Deno.test("zero_wages_produces_no_output", () => {

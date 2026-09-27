@@ -104,6 +104,7 @@ const successorEmployerSchema = z.object({
 // Per-item schema — one entry per employee
 export const itemSchema = z.object({
   employee_reference: z.string().trim().min(1),
+  employer_ein: z.string().regex(/^\d{9}$/).optional(),
   target_group: z.nativeEnum(TargetGroup),
   hired_on: z.string().date().refine((date) => date < "2026-01-01", {
     message:
@@ -336,11 +337,42 @@ const passThroughCreditSchema = z.object({
   subject_to_passive_activity_limit: z.boolean(),
 });
 
+const controlledGroupSchema = z.object({
+  kind: z.enum(["controlled_corporations", "businesses_under_common_control"]),
+  group_classification_document_reference: z.string().trim().min(1).max(80),
+  taxpayer_member_ein: z.string().regex(/^\d{9}$/),
+  members: z.array(z.object({
+    ein: z.string().regex(/^\d{9}$/),
+    business_name: z.string().trim().min(1).max(75).regex(
+      /^([A-Za-z0-9#\-()&'] ?)*[A-Za-z0-9#\-()&']$/,
+    ),
+  })).min(2),
+});
+
 export const inputSchema = z.object({
   f5884s: z.array(itemSchema),
+  controlled_group: controlledGroupSchema.optional(),
   pass_through_credits: z.array(passThroughCreditSchema).optional(),
   subject_to_passive_activity_limit: z.boolean(),
 }).superRefine((input, ctx) => {
+  const group = input.controlled_group;
+  const memberEins = new Set(group?.members.map((member) => member.ein));
+  if (group) {
+    if (memberEins.size !== group.members.length) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["controlled_group", "members"],
+        message: "Controlled group member EINs must be distinct",
+      });
+    }
+    if (!memberEins.has(group.taxpayer_member_ein)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["controlled_group", "taxpayer_member_ein"],
+        message: "Taxpayer must be a listed controlled group member",
+      });
+    }
+  }
   if (
     input.f5884s.length === 0 &&
     (input.pass_through_credits?.length ?? 0) === 0
@@ -353,6 +385,20 @@ export const inputSchema = z.object({
   }
   const references = new Set<string>();
   input.f5884s.forEach((item, index) => {
+    if (group && (!item.employer_ein || !memberEins.has(item.employer_ein))) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["f5884s", index, "employer_ein"],
+        message: "Controlled group employee needs a listed employer EIN",
+      });
+    }
+    if (!group && item.employer_ein) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["f5884s", index, "employer_ein"],
+        message: "Employer EIN is for a controlled group claim only",
+      });
+    }
     if (references.has(item.employee_reference)) {
       ctx.addIssue({
         code: "custom",
@@ -396,6 +442,46 @@ function wageCap(item: F5884Item): number {
     return WAGE_CAP_VETERAN_DISABLED_1YR;
   }
   return WAGE_CAP_STANDARD;
+}
+
+// IRC 52(a)-(b): divide the group credit by each member's proportionate
+// qualified wages, then distribute whole-dollar rounding remainder once.
+function allocateControlledGroupCredit(
+  group: z.infer<typeof controlledGroupSchema>,
+  rows: readonly {
+    item: F5884Item;
+    firstYearWages: number;
+    secondYearWages: number;
+  }[],
+  groupCredit: number,
+) {
+  const wages = group.members.map((member) => ({
+    ...member,
+    qualified_wages: rows.filter((row) => row.item.employer_ein === member.ein)
+      .reduce((sum, row) => sum + row.firstYearWages + row.secondYearWages, 0),
+  }));
+  const totalWages = wages.reduce(
+    (sum, member) => sum + member.qualified_wages,
+    0,
+  );
+  const base = wages.map((member) =>
+    totalWages > 0
+      ? Math.floor(groupCredit * member.qualified_wages / totalWages)
+      : 0
+  );
+  const residual = groupCredit - base.reduce((sum, value) => sum + value, 0);
+  const rank = wages.map((member, index) => ({
+    index,
+    fraction: totalWages > 0
+      ? groupCredit * member.qualified_wages / totalWages - base[index]
+      : 0,
+    ein: member.ein,
+  })).sort((a, b) => b.fraction - a.fraction || a.ein.localeCompare(b.ein));
+  const extra = new Set(rank.slice(0, residual).map(({ index }) => index));
+  return wages.map((member, index) => ({
+    ...member,
+    credit_share: base[index] + Number(extra.has(index)),
+  }));
 }
 
 export function calculateForm5884(input: z.infer<typeof inputSchema>) {
@@ -445,7 +531,16 @@ export function calculateForm5884(input: z.infer<typeof inputSchema>) {
   const line1aCredit = Math.round(line1aWages * RATE_LOW_HOURS);
   const line1bCredit = Math.round(line1bWages * RATE_HIGH_HOURS);
   const line1cCredit = Math.round(line1cWages * RATE_LTFA_SECOND_YEAR);
-  const line2 = line1aCredit + line1bCredit + line1cCredit;
+  const groupCredit = line1aCredit + line1bCredit + line1cCredit;
+  const group = input.controlled_group;
+  const controlledGroupShares = group
+    ? allocateControlledGroupCredit(group, rows, groupCredit)
+    : [];
+  const line2 = group
+    ? controlledGroupShares.find((member) =>
+      member.ein === group.taxpayer_member_ein
+    )?.credit_share ?? 0
+    : groupCredit;
   const line3 = (input.pass_through_credits ?? []).reduce(
     (sum, entry) => sum + entry.credit_amount,
     0,
@@ -457,6 +552,8 @@ export function calculateForm5884(input: z.infer<typeof inputSchema>) {
     line1bCredit,
     line1cWages,
     line1cCredit,
+    groupCredit,
+    controlledGroupShares,
     line2,
     line3,
     line4: line2 + line3,

@@ -48,6 +48,21 @@ their own employees, Form 5884 line 3 combines the identified allocations
 with lines 1a-1c; line 4 forwards the total. A partly limited multi-source
 claim requires explicit Form 3800 Part V applied amounts for each source.
 
+For a controlled group or businesses under common control, `controlled_group`
+lists the member EINs and names and identifies the taxpayer member. Every
+employee row identifies its employer EIN, and a retained group-classification
+document reference is required. The group calculates the source
+credit once, then allocates the rounded line 2 amount by each member's share
+of capped qualified wages, with deterministic whole-dollar remainders. The
+taxpayer's share, not the gross group credit, goes to Form 3800. The MeF form
+links a native member-credit statement and an explanation with the wage and
+credit arithmetic. The PDF prints "See attached" by line 2 and appends the
+same calculation. These source, MeF, XSD, and PDF cases are written but unrun.
+An employee paid by more than one group member in the same wage period still
+needs a shared employee/payroll source model; the current distinct-employee
+rule rejects that situation. The wage-deduction adjustment on the underlying
+business schedule also remains open.
+
 Veterans require one `VeteranCategory`, rather than independent flags:
 
 | Certified category | First-year wage cap |
@@ -68,7 +83,7 @@ the 120-hour threshold.
 These checks are written but unrun under the requested build-first workflow.
 The row still accepts affirmed eligibility facts rather than reconciling
 certifications, payroll periods, and wage exclusions against primary source
-documents. Controlled-group allocations, pass-through
+documents. Shared employees across controlled-group members, pass-through
 credits, passive-activity limitations, carryovers, source-document
 reconciliation, filled-PDF inspection, and ATS acceptance remain open. The
 one-page PDF descriptor now maps the official fillable widgets for lines

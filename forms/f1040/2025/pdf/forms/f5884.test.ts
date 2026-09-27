@@ -1,4 +1,5 @@
 import { assertEquals, assertThrows } from "@std/assert";
+import { PDFDocument } from "pdf-lib";
 import { TargetGroup } from "../../../nodes/inputs/f5884/index.ts";
 import { form5884Pdf } from "./f5884.ts";
 
@@ -96,4 +97,65 @@ Deno.test("Form 5884 PDF projects source credit and requires Form 3800 reconcili
     Error,
     "does not reconcile",
   );
+});
+
+Deno.test("Form 5884 PDF prints controlled-group share and appends its calculation", async () => {
+  const groupSource = {
+    ...source,
+    controlled_group: {
+      kind: "controlled_corporations" as const,
+      group_classification_document_reference: "2025 group ownership schedule",
+      taxpayer_member_ein: "123456789",
+      members: [
+        { ein: "123456789", business_name: "Taxpayer Company" },
+        { ein: "987654321", business_name: "Affiliate Company" },
+      ],
+    },
+    f5884s: [
+      {
+        ...source.f5884s[0],
+        employee_reference: "GROUP-1",
+        employer_ein: "123456789",
+        hours_worked: 200,
+      },
+      {
+        ...source.f5884s[0],
+        employee_reference: "GROUP-2",
+        employer_ein: "987654321",
+        hours_worked: 400,
+      },
+    ],
+  };
+  const projected = form5884Pdf.projectFields?.(groupSource, {
+    f3800: { f5884_credit: { credit_amount: 1_950 } },
+  }) ?? {};
+  assertEquals(projected.line1aCredit, 1_500);
+  assertEquals(projected.line1bCredit, 2_400);
+  assertEquals(projected.line2, 1_950);
+  assertEquals(projected.line4, 1_950);
+  const document = await PDFDocument.create();
+  const page = document.addPage([612, 792]);
+  await form5884Pdf.decoratePages?.(document, [page], projected, undefined);
+  await form5884Pdf.appendSupplementalPages?.(document, projected, undefined);
+  assertEquals(document.getPageCount(), 2);
+  const manyMembers = {
+    ...projected,
+    controlled_group: {
+      ...groupSource.controlled_group,
+      members: [
+        ...groupSource.controlled_group.members,
+        ...Array.from({ length: 23 }, (_, index) => ({
+          ein: String(100_000_000 + index),
+          business_name: `Additional Group Member ${index + 1}`,
+        })),
+      ],
+    },
+  };
+  const paginated = await PDFDocument.create();
+  await form5884Pdf.appendSupplementalPages?.(
+    paginated,
+    manyMembers,
+    undefined,
+  );
+  assertEquals(paginated.getPageCount(), 2);
 });

@@ -1464,6 +1464,88 @@ Deno.test({
 });
 
 Deno.test({
+  name: "XSD: controlled-group Form 5884 links both share statements",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const employee = {
+    target_group: TargetGroup.TanfRecipient,
+    hired_on: "2025-01-15",
+    certification: {
+      path: "certified_by_start",
+      swa_certification_reference: "SWA-001",
+      certification_received_on: "2025-01-15",
+      certification_received_before_claim_confirmed: true,
+      revocation: { status: "no_notice_received" },
+    },
+    qualified_wages_confirmed: true,
+    not_prior_employee_confirmed: true,
+    not_related_or_dependent_confirmed: true,
+    more_than_half_wages_for_trade_or_business_confirmed: true,
+    excluded_wages_removed_confirmed: true,
+    first_year_wages: 6_000,
+  };
+  const xml = buildMefXml({
+    f1040: { line16_income_tax: 40_000 },
+    schedule3: { line6a_total: 1_950, line7_total: 1_950 },
+    form6251: { line11_amt: 0, net_tmt: 20_000 },
+    f5884: {
+      subject_to_passive_activity_limit: false,
+      controlled_group: {
+        kind: "controlled_corporations",
+        group_classification_document_reference:
+          "2025 group ownership schedule",
+        taxpayer_member_ein: "123456789",
+        members: [
+          { ein: "123456789", business_name: "Taxpayer Company" },
+          { ein: "987654321", business_name: "Affiliate Company" },
+        ],
+      },
+      f5884s: [
+        {
+          ...employee,
+          employee_reference: "GROUP-1",
+          employer_ein: "123456789",
+          hours_worked: 200,
+        },
+        {
+          ...employee,
+          employee_reference: "GROUP-2",
+          employer_ein: "987654321",
+          hours_worked: 400,
+        },
+      ],
+    },
+    f3800: {
+      f5884_credit: {
+        credit_amount: 1_950,
+        subject_to_passive_activity_limit: false,
+      },
+      tax_context: {
+        filingStatus: FilingStatus.Single,
+        regularTax: 40_000,
+        alternativeMinimumTax: 0,
+        foreignTaxCredit: 0,
+        priorAllowableCredits: 0,
+        tentativeMinimumTax: 20_000,
+        standardCredit: 0,
+        specifiedCredit: 1_950,
+      },
+      allowed_credit: 1_950,
+    },
+  }, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(xml, "<ControlledGroupMemberStatement ");
+  assertStringIncludes(xml, "<DeductionDifferentiationStmt ");
+  assertStringIncludes(xml, "<TotalWagesAmt referenceDocumentId=");
+  assertStringIncludes(
+    xml,
+    "<CurrentYearCreditAllowedAmt>1950</CurrentYearCreditAllowedAmt>",
+  );
+  await validateXsd(xml, "controlled-group Form 5884 share statements");
+});
+
+Deno.test({
   name:
     "XSD: pass-through-only work opportunity credit omits recipient IRS5884",
   sanitizeOps: false,

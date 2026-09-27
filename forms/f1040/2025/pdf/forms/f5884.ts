@@ -1,3 +1,4 @@
+import { rgb, StandardFonts } from "pdf-lib";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import {
   calculateForm5884,
@@ -65,6 +66,98 @@ export const form5884Pdf: PdfFormDescriptor = {
       throw new Error("Form 5884 PDF does not reconcile to Form 3800 source");
     }
     return { ...fields, ...lines };
+  },
+  decoratePages: async (document, pages, fields) => {
+    const source = inputSchema.parse(fields);
+    if (!source.controlled_group) return;
+    const page = pages[0];
+    if (!page) throw new Error("Form 5884 PDF is missing page 1");
+    const font = await document.embedFont(StandardFonts.HelveticaBold);
+    page.drawText("See attached", {
+      x: 430,
+      y: 507,
+      size: 7,
+      font,
+      color: rgb(0, 0, 0),
+    });
+  },
+  appendSupplementalPages: async (document, fields) => {
+    const source = inputSchema.parse(fields);
+    if (!source.controlled_group) return;
+    const lines = calculateForm5884(source);
+    const font = await document.embedFont(StandardFonts.Helvetica);
+    const bold = await document.embedFont(StandardFonts.HelveticaBold);
+    const totalWages = lines.controlledGroupShares.reduce(
+      (sum, member) => sum + member.qualified_wages,
+      0,
+    );
+    let page = document.addPage([612, 792]);
+    let y = 714;
+    const header = () => {
+      page.drawText("Form 5884 - Controlled-group line 2 allocation", {
+        x: 40,
+        y: 752,
+        size: 12,
+        font: bold,
+      });
+      page.drawText(
+        `Group qualified wages: ${totalWages.toFixed(0)}    Group credit: ${
+          lines.groupCredit.toFixed(0)
+        }`,
+        { x: 40, y: 730, size: 9, font },
+      );
+      page.drawText(
+        `Group basis: ${
+          source.controlled_group!.group_classification_document_reference
+        }`,
+        { x: 40, y: 712, size: 8, font, maxWidth: 530 },
+      );
+      page.drawText("Member", { x: 40, y: 695, size: 9, font: bold });
+      page.drawText("EIN", { x: 300, y: 695, size: 9, font: bold });
+      page.drawText("Wages", { x: 390, y: 695, size: 9, font: bold });
+      page.drawText("Credit share", {
+        x: 480,
+        y: 695,
+        size: 9,
+        font: bold,
+      });
+      y = 675;
+    };
+    header();
+    for (const member of lines.controlledGroupShares) {
+      if (y < 75) {
+        page = document.addPage([612, 792]);
+        header();
+      }
+      page.drawText(member.business_name, {
+        x: 40,
+        y,
+        size: 8,
+        font,
+        maxWidth: 245,
+        lineHeight: 10,
+      });
+      page.drawText(member.ein, { x: 300, y, size: 8, font });
+      page.drawText(member.qualified_wages.toFixed(0), {
+        x: 390,
+        y,
+        size: 8,
+        font,
+      });
+      page.drawText(member.credit_share.toFixed(0), {
+        x: 480,
+        y,
+        size: 8,
+        font,
+      });
+      y -= 30;
+    }
+    page.drawText(
+      `Taxpayer member ${source.controlled_group.taxpayer_member_ein}: Form 5884 line 2 = ${
+        lines.line2.toFixed(0)
+      }`,
+      { x: 40, y: Math.max(40, y - 12), size: 9, font: bold },
+    );
   },
   includeWhen(fields) {
     if (!Array.isArray(fields.f5884s) || fields.f5884s.length === 0) {

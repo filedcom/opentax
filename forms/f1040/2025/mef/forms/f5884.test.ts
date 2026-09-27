@@ -1,6 +1,8 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { TargetGroup } from "../../../nodes/inputs/f5884/index.ts";
 import { form5884 } from "./f5884.ts";
+import { form5884ControlledGroupStatement } from "./f5884_controlled_group_statement.ts";
+import { form5884DeductionDifferentiationStatement } from "./f5884_deduction_differentiation_stmt.ts";
 
 export const workOpportunitySource = {
   subject_to_passive_activity_limit: false,
@@ -86,4 +88,67 @@ Deno.test("Form 5884 omits the taxpayer form for pass-through-only credit and pr
     "<PassThruWorkOpportunityCrAmt>1250</PassThruWorkOpportunityCrAmt>",
   );
   assertStringIncludes(mixed, "<TotalCreditsAmt>3650</TotalCreditsAmt>");
+});
+
+Deno.test("Form 5884 controlled-group share links both calculation statements", () => {
+  const groupSource = {
+    ...workOpportunitySource,
+    controlled_group: {
+      kind: "controlled_corporations" as const,
+      group_classification_document_reference: "2025 group ownership schedule",
+      taxpayer_member_ein: "123456789",
+      members: [
+        { ein: "123456789", business_name: "Taxpayer Company" },
+        { ein: "987654321", business_name: "Affiliate Company" },
+      ],
+    },
+    f5884s: [
+      {
+        ...workOpportunitySource.f5884s[0],
+        employee_reference: "GROUP-1",
+        employer_ein: "123456789",
+        hours_worked: 200,
+      },
+      {
+        ...workOpportunitySource.f5884s[0],
+        employee_reference: "GROUP-2",
+        employer_ein: "987654321",
+        hours_worked: 400,
+      },
+    ],
+  };
+  const context = {
+    pending: { f5884: groupSource },
+    documentIdsByPendingKey: {
+      f3800: ["IRS3800_1"],
+      f5884_controlled_group_statement: ["ControlledGroupMemberStatement2"],
+      f5884_deduction_differentiation_stmt: ["DeductionDifferentiationStmt3"],
+    },
+  };
+  const xml = form5884.build(groupSource, context);
+  assertStringIncludes(xml, "<TotalWagesAmt referenceDocumentId=");
+  assertStringIncludes(
+    xml,
+    "ControlledGroupMemberStatement2 DeductionDifferentiationStmt3",
+  );
+  assertStringIncludes(xml, ">1950</TotalWagesAmt>");
+  assertStringIncludes(xml, "<TotalCreditsAmt>1950</TotalCreditsAmt>");
+  const members = form5884ControlledGroupStatement.build([], context);
+  assertStringIncludes(members, "<ShareOfCreditAmt>1950</ShareOfCreditAmt>");
+  assertStringIncludes(members, "Taxpayer Company");
+  assertStringIncludes(members, "Affiliate Company");
+  const explanation = form5884DeductionDifferentiationStatement.build(
+    [],
+    context,
+  );
+  assertStringIncludes(explanation, "group qualified wages 12000");
+  assertStringIncludes(explanation, "group credit 3900");
+  assertThrows(
+    () =>
+      form5884.build(groupSource, {
+        documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
+      }),
+    Error,
+    "needs both linked statements",
+  );
 });

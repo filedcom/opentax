@@ -26,6 +26,8 @@ import { form4972 } from "./f4972.ts";
 import { form5329 } from "./f5329.ts";
 import { form5695 } from "./f5695.ts";
 import { form5884 } from "./f5884.ts";
+import { form5884ControlledGroupStatement } from "./f5884_controlled_group_statement.ts";
+import { form5884DeductionDifferentiationStatement } from "./f5884_deduction_differentiation_stmt.ts";
 import { form6198 } from "./f6198.ts";
 import { form4835AtRisk } from "./f4835_at_risk.ts";
 import { form6251 } from "./f6251.ts";
@@ -245,6 +247,9 @@ export const ALL_MEF_FORMS = [
   form4136KeroseneGovernmentSalesStatement,
   // Form 5695 supporting document follows W-2 in ReturnData1040.xsd.
   jointOccupancyStatement,
+  // Form 5884 controlled-group statements follow the Form 5695 statement.
+  form5884ControlledGroupStatement,
+  form5884DeductionDifferentiationStatement,
   // Form 8283 vehicle acknowledgment follows numbered forms and other
   // supporting statements in ReturnData1040.xsd.
   form8283VehicleStatement,

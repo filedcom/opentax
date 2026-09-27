@@ -179,6 +179,14 @@ first- and second-year wage caps by predecessor qualified wages. It requires
 acquisition, continuous-employment, and retained-certification facts; source
 cases also reject wages when the successor starts after the applicable wage
 period. They are written but unrun and payroll records are not yet reconciled.
+The controlled-group pass now allocates the group credit by members' capped
+qualified wages, requires a group-classification document reference, and sends
+only the taxpayer member's line 2 share to Form
+3800. Native member-share and explanation statements are linked to Form 5884;
+the printed form gets a calculation page. Source, XML, PDF, and XSD cases are
+written but unrun. Shared employees paid by multiple members, the business
+wage-deduction adjustment, filled-PDF inspection, and IRS business rules remain
+open.
 It applies the missing $24,000 disabled-long-term-unemployed veteran cap and the 120-hour
 minimum plus hours-based first-year rate to long-term family assistance
 recipients. Source and rejection cases
