@@ -52,7 +52,10 @@ source-backed Form 8826 claim. Identified partnership and S-corporation line 7
 credits now combine with self-earned line 6 under one $5,000 cap. A
 pass-through-only credit can appear on Form 3800 without a Form 8826 document;
 the source amounts are allocated pro rata in cents when that cap binds. K-1
-attachment reconciliation and filed source-attribution checks remain open.
+attachment reconciliation and filed source-attribution checks remain open. The
+unregistered Form 3800 XML draft now emits Part V rows for multiple Form 8826
+sources, retaining their EINs, capped amounts, explicit applied-credit split,
+and remaining amounts. This draft is not connected to return assembly.
 
 Separate 2025 Schedule 3 corrections in the current build pass: `f8859` now
 deposits into line 6h, `f8834` into line 6i, and the combined Form 4136 fuel

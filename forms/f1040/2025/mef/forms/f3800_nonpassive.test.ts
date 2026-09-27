@@ -119,12 +119,143 @@ Deno.test("Form 3800 XML: pass-through-only disabled-access credit has no Form 8
   });
   assertStringIncludes(
     xml,
-    "<Form8826CYCreditsGrp><GeneralBusCrFromNnPssvActyAmt>1250",
+    "<Form8826CYCreditsGrp><PassThroughEntityEIN>123456789</PassThroughEntityEIN><GeneralBusCrFromNnPssvActyAmt>1250",
   );
   assertEquals(xml.includes('referenceDocumentName="IRS8826"'), false);
   assertStringIncludes(
     xml,
     "<CurrentYearCreditAllowedAmt>1250</CurrentYearCreditAllowedAmt>",
+  );
+});
+
+Deno.test("Form 3800 XML: Form 8826 source rows preserve capped K-1 identity and applied credit", () => {
+  const source = {
+    eligible_expenditures: 5_000,
+    prior_year_gross_receipts: 500_000,
+    prior_year_full_time_employee_count: 20,
+    subject_to_passive_activity_limit: false,
+    pass_through_credits: [{
+      entity_type: "partnership" as const,
+      entity_ein: "123456789",
+      credit_amount: 3_000,
+      subject_to_passive_activity_limit: false,
+    }],
+  };
+  const xml = buildIRS3800Nonpassive({
+    tax: {
+      ...tax,
+      regularTax: 22_000,
+      standardCredit: 5_000,
+      specifiedCredit: 0,
+    },
+    form8826: {
+      source,
+      documentId: "IRS8826_1",
+      appliedCredit: 2_000,
+      appliedCreditsBySource: [1_000, 1_000],
+    },
+    facilities: [],
+    form8835DocumentIds: [],
+    appliedCreditsByFacility: [],
+    transferStatementIdsByFileName: {},
+  });
+  assertStringIncludes(
+    xml,
+    '<Form8826CYCreditsGrp referenceDocumentId="IRS8826_1" referenceDocumentName="IRS8826"><CYGeneralBusinessCrItemCnt>2</CYGeneralBusinessCrItemCnt><PassThroughEntityEIN>123456789</PassThroughEntityEIN>',
+  );
+  assertStringIncludes(
+    xml,
+    '<Frm8826CYAggrgtAmtGrp referenceDocumentId="IRS8826_1" referenceDocumentName="IRS8826" lineNumberTxt="Part III Line 1e">',
+  );
+  assertStringIncludes(
+    xml,
+    '<Frm8826CYAggrgtAmtGrp lineNumberTxt="Part III Line 1e"><PassThroughEntityEIN>123456789</PassThroughEntityEIN>',
+  );
+  assertStringIncludes(
+    xml,
+    "<CarryforwardGeneralBusCrAmt>1209</CarryforwardGeneralBusCrAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<CarryforwardGeneralBusCrAmt>1791</CarryforwardGeneralBusCrAmt>",
+  );
+});
+
+Deno.test("Form 3800 XML: multiple Form 8826 K-1 sources need exact Part V applied amounts", () => {
+  const base = {
+    tax: {
+      ...tax,
+      regularTax: 23_000,
+      standardCredit: 5_000,
+      specifiedCredit: 0,
+    },
+    form8826: {
+      source: {
+        eligible_expenditures: 0,
+        subject_to_passive_activity_limit: false,
+        pass_through_credits: [{
+          entity_type: "partnership" as const,
+          entity_ein: "123456789",
+          credit_amount: 2_000,
+          subject_to_passive_activity_limit: false,
+        }, {
+          entity_type: "s_corporation" as const,
+          entity_ein: "987654321",
+          credit_amount: 3_000,
+          subject_to_passive_activity_limit: false,
+        }],
+      },
+      appliedCredit: 3_000,
+      appliedCreditsBySource: [1_000, 2_000],
+    },
+    facilities: [],
+    form8835DocumentIds: [],
+    appliedCreditsByFacility: [],
+    transferStatementIdsByFileName: {},
+  };
+  const xml = buildIRS3800Nonpassive(base);
+  assertStringIncludes(
+    xml,
+    "<CYGeneralBusinessCrItemCnt>2</CYGeneralBusinessCrItemCnt><PassThroughEntityEIN>987654321</PassThroughEntityEIN>",
+  );
+  assertStringIncludes(
+    xml,
+    "<PassThroughEntityEIN>123456789</PassThroughEntityEIN>",
+  );
+  assertStringIncludes(
+    xml,
+    "<PassThroughEntityEIN>987654321</PassThroughEntityEIN>",
+  );
+  assertEquals(
+    [...xml.matchAll(/<Frm8826CYAggrgtAmtGrp /g)].length,
+    2,
+  );
+  assertThrows(
+    () =>
+      buildIRS3800Nonpassive({
+        ...base,
+        form8826: { ...base.form8826, appliedCreditsBySource: undefined },
+      }),
+    Error,
+    "applied credit for each Form 8826 Part V source",
+  );
+  assertThrows(
+    () =>
+      buildIRS3800Nonpassive({
+        ...base,
+        form8826: { ...base.form8826, appliedCreditsBySource: [3_000, 0] },
+      }),
+    Error,
+    "invalid applied credit",
+  );
+  assertThrows(
+    () =>
+      buildIRS3800Nonpassive({
+        ...base,
+        form8826: { ...base.form8826, appliedCreditsBySource: [1_000, 1_000] },
+      }),
+    Error,
+    "do not reconcile",
   );
 });
 
@@ -271,6 +402,37 @@ Deno.test("Form 3800 XML: mixed Form 8826 and Form 8835 follows TY2025 source sc
           }],
         },
         appliedCredit: 1_250,
+      },
+      facilities: [],
+      form8835DocumentIds: [],
+      appliedCreditsByFacility: [],
+      transferStatementIdsByFileName: {},
+    }),
+    buildIRS3800Nonpassive({
+      tax: {
+        ...tax,
+        regularTax: 23_000,
+        standardCredit: 5_000,
+        specifiedCredit: 0,
+      },
+      form8826: {
+        source: {
+          eligible_expenditures: 0,
+          subject_to_passive_activity_limit: false,
+          pass_through_credits: [{
+            entity_type: "partnership",
+            entity_ein: "123456789",
+            credit_amount: 2_000,
+            subject_to_passive_activity_limit: false,
+          }, {
+            entity_type: "s_corporation",
+            entity_ein: "987654321",
+            credit_amount: 3_000,
+            subject_to_passive_activity_limit: false,
+          }],
+        },
+        appliedCredit: 3_000,
+        appliedCreditsBySource: [1_000, 2_000],
       },
       facilities: [],
       form8835DocumentIds: [],
