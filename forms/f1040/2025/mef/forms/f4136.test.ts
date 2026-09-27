@@ -200,3 +200,35 @@ Deno.test("Form 4136 XML covers all non-bus line 11 alternative fuels", () => {
     assertStringIncludes(xml, `<${tag}>`);
   }
 });
+
+Deno.test("Form 4136 XML separates reduced-rate bus use from standard use", () => {
+  const xml = form4136.build({
+    business: fields.business,
+    claims: [
+      {
+        ...certifications,
+        line: "11a",
+        type_of_use: "05",
+        unit: "GGE",
+        qualified_quantity: 100,
+        actual_fuel_cost: 300,
+      },
+      {
+        ...certifications,
+        line: "11a",
+        type_of_use: "02",
+        unit: "GGE",
+        qualified_quantity: 100,
+        actual_fuel_cost: 300,
+      },
+    ],
+  }, { pending: { schedule3: { line12_fuel_tax_credit: 29.2 } } });
+  assertStringIncludes(xml, "<BusNontxLiquifiedPetroleumGas>");
+  assertStringIncludes(xml, "<FuelTaxLocalBusCd>BUS</FuelTaxLocalBusCd>");
+  assertStringIncludes(xml, "<CreditRt>0.109</CreditRt>");
+  assertStringIncludes(xml, "<NontxLiquefiedPetroleumGasGrp>");
+  assertStringIncludes(
+    xml,
+    '<NontxLiquefiedPtrlmGasCrAmt creditReferenceNum="419">29</NontxLiquefiedPtrlmGasCrAmt>',
+  );
+});

@@ -26,14 +26,16 @@ Form 1040 line 31. The older research note's division between nonrefundable
 off-highway fuel and refundable farm fuel was wrong for the 2025 form.
 
 The native IRS4136 XML builder now serializes these represented claims, including
-all non-bus line 11 alternative fuels, and
+all line 11 alternative fuels and the reduced-rate type 5 bus branch, and
 reconciles its line 17 source total against Schedule 3 line 12. The PDF
 descriptor maps the actual 2025 AcroForm widgets across all four pages,
-including dollars/cents fields and a statement for repeated use codes. Its
+including dollars/cents fields and a statement for repeated use codes. It
+refuses bus claims because the preprinted rate is read-only and the required
+"Bus" and reduced-rate overlay has not been built or visually checked. Its
 direct and local XSD/PDF cases are written but unrun. Filled PDF rendering,
 the full test batch, TY2025v5.4 XSD, and 2025 business rules remain open.
 Multiple business activities require separate Schedule A (Form 4136)
 documents and are currently refused. The undyed-kerosene home-use exception,
-other Part II lines, seller/purchase-date source identities, rate-by-use
+other Part II lines, seller/purchase-date source identities, other rate-by-use
 exceptions, and cross-form duplicate claims are not modeled yet. No IRS ATS
 acknowledgment exists.

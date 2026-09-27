@@ -136,3 +136,22 @@ Deno.test("Form 4136 PDF carries line 11 LNG diesel-gallon equivalents", () => {
   assertEquals(result?.line11g_credit_dollars, "24");
   assertEquals(result?.line11g_credit_cents, "30");
 });
+
+Deno.test("Form 4136 PDF refuses bus claims until the reduced-rate overlay is verified", () => {
+  assertThrows(
+    () =>
+      form4136Pdf.projectFields?.({
+        business,
+        claims: [{
+          ...certifications,
+          line: "11a",
+          type_of_use: "05",
+          unit: "GGE",
+          qualified_quantity: 100,
+          actual_fuel_cost: 300,
+        }],
+      }, { schedule3: { line12_fuel_tax_credit: 10.9 } }),
+    Error,
+    "reduced-rate overlay",
+  );
+});

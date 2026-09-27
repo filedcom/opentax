@@ -5,8 +5,8 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
-// Represented 2025 Part II claims retain the IRS line, qualified gallons,
-// and new column (d) actual fuel cost for the eventual Form 4136 document.
+// Represented 2025 Part II claims retain the IRS line, qualified fuel quantity,
+// and column (d) actual fuel cost for the Form 4136 document.
 export const FORM4136_RATES = {
   "1a": 0.183,
   "1b": 0.183,
@@ -25,6 +25,17 @@ export const FORM4136_RATES = {
   "11f": 0.243,
   "11g": 0.243,
   "11h": 0.183,
+} as const;
+
+export const FORM4136_BUS_RATES = {
+  "11a": 0.109,
+  "11b": 0.110,
+  "11c": 0.109,
+  "11d": 0.110,
+  "11e": 0.170,
+  "11f": 0.170,
+  "11g": 0.169,
+  "11h": 0.110,
 } as const;
 
 const fuelLine = z.enum([
@@ -51,6 +62,7 @@ const alternativeFuelUseCodes = [
   "01",
   "02",
   "04",
+  "05",
   "06",
   "07",
   "11",
@@ -106,6 +118,27 @@ export const inputSchema = z.object({
 }).superRefine((input, ctx) => {
   const seen = new Set<string>();
   input.claims.forEach((claim, index) => {
+    if (claim.type_of_use === "05" && !(claim.line in FORM4136_BUS_RATES)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Form 4136 bus use is only represented for line 11",
+        path: ["claims", index, "type_of_use"],
+      });
+    }
+    if (claim.type_of_use === "05") {
+      const requiredUnit = claim.line === "11a" || claim.line === "11c"
+        ? "GGE"
+        : claim.line === "11g"
+        ? "DGE"
+        : "gallons";
+      if (claim.unit !== requiredUnit) {
+        ctx.addIssue({
+          code: "custom",
+          message: `Form 4136 bus line ${claim.line} must use ${requiredUnit}`,
+          path: ["claims", index, "unit"],
+        });
+      }
+    }
     if (
       !["11a", "11c", "11g"].includes(claim.line) &&
       claim.unit !== "gallons"
@@ -178,9 +211,19 @@ export const inputSchema = z.object({
 
 export type Form4136Input = z.infer<typeof inputSchema>;
 
+export function rateForForm4136Claim(
+  claim: Form4136Input["claims"][number],
+): number {
+  if (claim.type_of_use === "05" && claim.line in FORM4136_BUS_RATES) {
+    return FORM4136_BUS_RATES[claim.line as keyof typeof FORM4136_BUS_RATES];
+  }
+  return FORM4136_RATES[claim.line];
+}
+
 export function calculateForm4136(input: Form4136Input): number {
   const credit = input.claims.reduce(
-    (sum, claim) => sum + claim.qualified_quantity * FORM4136_RATES[claim.line],
+    (sum, claim) =>
+      sum + claim.qualified_quantity * rateForForm4136Claim(claim),
     0,
   );
   return Math.round(credit * 100) / 100;
