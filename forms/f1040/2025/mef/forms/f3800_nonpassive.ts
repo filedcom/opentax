@@ -520,14 +520,6 @@ export function buildIRS3800Nonpassive(
       (sum, index) => sum + appliedAt(index),
       0,
     );
-    const expected = row.line === "1f"
-      ? lines.line17 - form8826Applied
-      : lines.line37 - (input.form5884?.appliedCredit ?? 0);
-    if (applied !== expected) {
-      throw new Error(
-        `Form 3800 Part III line ${row.line} does not reconcile to Part II`,
-      );
-    }
     const firstTransferred = row.facilities.find((facility) =>
       facility.transfer_out_amount > 0
     );

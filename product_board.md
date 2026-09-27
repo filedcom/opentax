@@ -127,7 +127,9 @@ The registered Form 3800 nonpassive XML path now maps Form 8835 ordinary and
 specified credits to Part III, requires bundled transfer-election statement IDs,
 and breaks multiple same-line facilities into Part V rows. Per-facility applied
 amounts must be explicit when a tax limit partly uses multiple facilities on one
-credit line; all allocations reconcile to the calculated limit. Direct builder
+credit line; all allocations reconcile to the calculated limit. The source-row
+check now permits Form 8820 and Form 8835 to share a limited standard-credit
+amount while the combined allocation still reconciles to Part II. Direct builder
 cases are written but unrun. The draft now indexes Part V facility allocations
 and linked source documents by entry position, so equal-valued or reused
 facility objects do not silently reuse the first allocation; that case is

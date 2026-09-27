@@ -597,6 +597,32 @@ Deno.test("Form 3800 XML: Form 8826 and Form 8835 share the standard-credit limi
   );
 });
 
+Deno.test("Form 3800 XML: Form 8820 and Form 8835 share a limited standard-credit amount", () => {
+  const xml = buildIRS3800Nonpassive({
+    tax: { ...tax, standardCredit: 37_750, specifiedCredit: 0 },
+    form8820: {
+      credit: 19_750,
+      documentId: "IRS8820_1",
+      appliedCredit: 15_000,
+      sources: [{ credit: 19_750 }],
+    },
+    facilities: [ordinary],
+    form8835DocumentIds: ["IRS8835_1"],
+    appliedCreditsByFacility: [5_000],
+    transferStatementIdsByFileName: {},
+  });
+  assertStringIncludes(
+    xml,
+    "<CurrentYearCreditAllowedAmt>20000</CurrentYearCreditAllowedAmt>",
+  );
+  assertStringIncludes(xml, "<Form8820CYCreditsGrp");
+  assertStringIncludes(xml, "<Form8835PartIICYCreditsGrp");
+  assertStringIncludes(
+    xml,
+    "<TotalGeneralBusCreditsAppTxAmt>5000</TotalGeneralBusCreditsAppTxAmt>",
+  );
+});
+
 Deno.test("Form 3800 XML: Form 8826 rejects passive, unmatched, and over-applied credit", () => {
   const base = {
     tax: { ...tax, standardCredit: 5_000, specifiedCredit: 0 },
