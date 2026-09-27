@@ -355,7 +355,7 @@ Deno.test("Form 4137 refuses duplicate recipients and inconsistent W-2 wages", (
   );
 });
 
-Deno.test("Form 4137 lower reported tips require supporting records", () => {
+Deno.test("Form 4137 lower allocated tips require reconciled daily records", () => {
   const raw = {
     forms: [{
       recipient: "taxpayer",
@@ -368,12 +368,150 @@ Deno.test("Form 4137 lower reported tips require supporting records", () => {
       allocated_tips: 1_000,
     }],
   };
-  assertThrows(() => compute(raw), Error, "without supporting records");
+  assertThrows(() => compute(raw), Error, "without reconciled daily records");
+  const records = [{
+    employer_index: 1,
+    daily_records: [
+      {
+        date: "2025-01-03",
+        cash_charge_tips_received: 1_500,
+        tips_reported_to_employer: 1_200,
+        evidence_type: "daily_tip_diary",
+        evidence_reference: "diary-jan-page-1",
+      },
+      {
+        date: "2025-01-04",
+        cash_charge_tips_received: 1_000,
+        tips_reported_to_employer: 800,
+        evidence_type: "receipt_or_charge_slip",
+        evidence_reference: "receipt-set-jan-4",
+      },
+    ],
+  }];
   const result = compute({
     ...raw,
-    forms: [{ ...raw.forms[0], records_support_lower_tips: true }],
+    forms: [{ ...raw.forms[0], allocated_tip_records: records }],
   });
   assertEquals(fieldsOf(result.outputs, f1040)?.line1c_unreported_tips, 500);
+
+  assertThrows(
+    () =>
+      compute({
+        ...raw,
+        forms: [{
+          ...raw.forms[0],
+          allocated_tip_records: [{
+            ...records[0],
+            daily_records: [
+              {
+                ...records[0].daily_records[0],
+                cash_charge_tips_received: 900,
+              },
+              records[0].daily_records[1],
+            ],
+          }],
+        }],
+      }),
+    Error,
+    "daily tip records disagree with employer line 1 totals",
+  );
+  assertThrows(
+    () =>
+      compute({
+        ...raw,
+        forms: [{
+          ...raw.forms[0],
+          allocated_tip_records: [{
+            ...records[0],
+            daily_records: [
+              records[0].daily_records[0],
+              { ...records[0].daily_records[1], date: "2025-01-03" },
+            ],
+          }],
+        }],
+      }),
+    Error,
+    "duplicate daily tip record date",
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...raw,
+      forms: [{
+        ...raw.forms[0],
+        allocated_tip_records: [{
+          ...records[0],
+          daily_records: [{
+            ...records[0].daily_records[0],
+            date: "2025-02-30",
+          }],
+        }],
+      }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...raw,
+      forms: [{
+        ...raw.forms[0],
+        allocated_tip_records: [{
+          ...records[0],
+          daily_records: [{
+            ...records[0].daily_records[0],
+            evidence_reference: "   ",
+          }],
+        }],
+      }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...raw,
+      forms: [{
+        ...raw.forms[0],
+        allocated_tip_records: [{
+          ...records[0],
+          daily_records: [{
+            ...records[0].daily_records[0],
+            tips_reported_to_employer: 1_600,
+          }],
+        }],
+      }],
+    }).success,
+    false,
+  );
+  assertThrows(
+    () =>
+      compute({
+        ...raw,
+        forms: [{
+          ...raw.forms[0],
+          allocated_tip_records: [records[0], records[0]],
+        }],
+      }),
+    Error,
+    "duplicate employer tip record set",
+  );
+  assertThrows(
+    () =>
+      compute({
+        ...raw,
+        forms: [{
+          ...raw.forms[0],
+          allocated_tip_records: [{ ...records[0], employer_index: 2 }],
+        }],
+      }),
+    Error,
+    "allocated tip record has no employer row",
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...raw,
+      forms: [{ ...raw.forms[0], records_support_lower_tips: true }],
+    }).success,
+    false,
+  );
 });
 
 Deno.test("Form 4137 matches each allocated-tip W-2 to one exact employer row", () => {
@@ -485,7 +623,7 @@ Deno.test("Form 4137 compares allocated tips with the same employer, not a retur
         }],
       }),
     Error,
-    "without supporting records",
+    "without reconciled daily records",
   );
   const [appliedFor] = calculateForm4137(
     inputSchema.parse({

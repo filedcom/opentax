@@ -50,6 +50,62 @@ Deno.test("W-2 allocated tips are reconciled to Form 4137 and actual tip income 
   assertEquals(result.pending.schedule2?.line5_unreported_tip_tax, 230);
 });
 
+Deno.test("daily tip records support less unreported income than W-2 box 8", () => {
+  const input = {
+    general: {
+      filing_status: FilingStatus.Single,
+      taxpayer_first_name: "Sam",
+      taxpayer_last_name: "Tipper",
+      taxpayer_ssn: "123-45-6789",
+    },
+    w2: [{
+      employee_ssn: "123-45-6789",
+      employer_name: "CAFE",
+      employer_ein: "123456789",
+      box1_wages: 30_000,
+      box2_fed_withheld: 2_000,
+      box3_ss_wages: 30_000,
+      box7_ss_tips: 2_000,
+      box8_allocated_tips: 1_000,
+    }],
+    form4137: {
+      forms: [{
+        recipient: "taxpayer",
+        employers: [{
+          name: "CAFE",
+          ein: "123456789",
+          tips_received: 2_500,
+          tips_reported: 2_000,
+        }],
+        allocated_tip_records: [{
+          employer_index: 1,
+          daily_records: [
+            {
+              date: "2025-01-03",
+              cash_charge_tips_received: 1_500,
+              tips_reported_to_employer: 1_200,
+              evidence_type: "daily_tip_diary",
+              evidence_reference: "diary-jan-page-1",
+            },
+            {
+              date: "2025-01-04",
+              cash_charge_tips_received: 1_000,
+              tips_reported_to_employer: 800,
+              evidence_type: "receipt_or_charge_slip",
+              evidence_reference: "receipt-set-jan-4",
+            },
+          ],
+        }],
+      }],
+    },
+  };
+  const result = execute(plan, registry, input, ctx);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040?.line1c_unreported_tips, 500);
+  assertEquals(result.pending.f1040?.line11_agi, 30_500);
+  assertEquals(result.pending.schedule2?.line5_unreported_tip_tax, 38);
+});
+
 Deno.test("W-2 allocated tips without Form 4137 employer records fail calculation", () => {
   const result = execute(plan, registry, {
     general: {

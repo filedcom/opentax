@@ -59,10 +59,17 @@ III and Part V. The W-2 MeF serializer emits those box 14 entries in native
 from Form 4137. Calculation, full-return, and source-to-XSD cases are written
 but unrun.
 
-Still open: the `records_support_lower_tips` answer is not authenticated against
-actual tip records. The full test batch, filled-PDF visual check, IRS business
-rules, and ATS acceptance are still required. The W-2 match cases above are
-written but unrun.
+The former `records_support_lower_tips` boolean is removed. When a Form 4137
+employer's unreported tips are less than its W-2 box 8 allocation, the source
+now needs dated `allocated_tip_records` with cash-and-charge tips received, tips
+reported to the employer, evidence type, and a nonempty evidence reference.
+Dates must be valid TY2025 dates and unique per employer. The records must sum
+to that employer's line 1 totals. Missing, duplicate, or disagreeing records
+fail calculation. This is a mathematical/source-reference check, not a finding
+that the underlying diary or receipts are genuine or complete. Source review and
+the Form 4137 timing rule for December tips reported the next January remain
+open. The full test batch, filled-PDF visual check, IRS business rules, and ATS
+acceptance are still required. These cases are written but unrun.
 
 An "Applied For" employer EIN can be represented on Form 4137, but the local
 TY2025 v5.4 `IRSW2` schema requires `EmployerEIN`. A full MeF return with an
@@ -74,4 +81,6 @@ Primary sources:
 especially lines 1-13 and the separate-spouse/continuation instructions;
 [2025 Form 8959](https://www.irs.gov/pub/irs-pdf/f8959.pdf), line 2.
 [2025 W-2/W-3 instructions](https://www.irs.gov/pub/irs-prior/iw2w3--2025.pdf)
-describe the box 14 RRTA labels.
+describe the box 14 RRTA labels;
+[Publication 531](https://www.irs.gov/publications/p531) describes daily tip
+diaries, receipts, and reduced allocated tips backed by adequate records.

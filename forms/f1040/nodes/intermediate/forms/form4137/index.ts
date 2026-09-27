@@ -41,13 +41,39 @@ const below20TipMonthSchema = z.object({
   message: "Form 4137 below-$20 month reported tips exceed received tips",
 });
 
+const allocatedTipDailyRecordSchema = z.object({
+  date: z.string().refine((value) => {
+    if (!/^2025-\d{2}-\d{2}$/.test(value)) return false;
+    const date = new Date(`${value}T00:00:00Z`);
+    return !Number.isNaN(date.getTime()) &&
+      date.toISOString().slice(0, 10) === value;
+  }, "Form 4137 tip record date must be a valid 2025 date"),
+  cash_charge_tips_received: z.number().nonnegative(),
+  tips_reported_to_employer: z.number().nonnegative(),
+  evidence_type: z.enum([
+    "daily_tip_diary",
+    "receipt_or_charge_slip",
+    "employer_electronic_record",
+  ]),
+  evidence_reference: z.string().trim().min(1),
+}).strict().refine(
+  (record) =>
+    record.tips_reported_to_employer <= record.cash_charge_tips_received,
+  "Form 4137 daily reported tips exceed received tips",
+);
+
+const allocatedTipRecordSchema = z.object({
+  employer_index: z.number().int().min(1),
+  daily_records: z.array(allocatedTipDailyRecordSchema).min(1),
+}).strict();
+
 const formSchema = z.object({
   recipient: recipientSchema,
   employers: z.array(employerSchema).min(1),
   below_20_tip_months: z.array(below20TipMonthSchema).optional(),
+  allocated_tip_records: z.array(allocatedTipRecordSchema).optional(),
   government_employee_tips: z.number().nonnegative().optional(),
   ss_wages_from_w2: z.number().nonnegative().optional(),
-  records_support_lower_tips: z.boolean().optional(),
 }).strict();
 
 const w2TipSourceSchema = z.object({
@@ -205,14 +231,45 @@ export function calculateForm4137(
       0,
     );
     const unreportedTips = totalTipsReceived - totalTipsReported;
+    const allocatedRecordByEmployer = new Map<number, boolean>();
+    for (const records of form.allocated_tip_records ?? []) {
+      const index = records.employer_index - 1;
+      if (index >= form.employers.length) {
+        throw new Error("Form 4137 allocated tip record has no employer row");
+      }
+      if (allocatedRecordByEmployer.has(index)) {
+        throw new Error("Form 4137 duplicate employer tip record set");
+      }
+      const dates = new Set<string>();
+      let received = 0;
+      let reported = 0;
+      for (const record of records.daily_records) {
+        if (dates.has(record.date)) {
+          throw new Error("Form 4137 duplicate daily tip record date");
+        }
+        dates.add(record.date);
+        received += record.cash_charge_tips_received;
+        reported += record.tips_reported_to_employer;
+      }
+      const employer = form.employers[index];
+      if (
+        received !== employer.tips_received ||
+        reported !== employer.tips_reported
+      ) {
+        throw new Error(
+          "Form 4137 daily tip records disagree with employer line 1 totals",
+        );
+      }
+      allocatedRecordByEmployer.set(index, true);
+    }
     for (const [index, allocated] of allocatedByEmployer) {
       const employer = form.employers[index];
       if (
         allocated > employer.tips_received - employer.tips_reported &&
-        form.records_support_lower_tips !== true
+        !allocatedRecordByEmployer.has(index)
       ) {
         throw new Error(
-          `Form 4137 ${form.recipient} employer unreported tips are below W-2 allocated tips without supporting records`,
+          `Form 4137 ${form.recipient} employer unreported tips are below W-2 allocated tips without reconciled daily records`,
         );
       }
     }
