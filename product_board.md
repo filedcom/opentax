@@ -51,9 +51,9 @@ new clean vehicle 6f, mortgage interest 6g, and previously owned clean vehicle
 6m. It also moves Form 8805 withholding from the incorrect Schedule 3 line 13d
 route to Form 1040 line 25c. The personal-use Form 8936 credit is now limited
 after Form 1040 line 18 is known, then replaces the tentative Schedule 3 lines
-6f, 6m, 7, and 8. The Form 3800 business-use route and remaining Form 8936
-eligibility and source reconciliation remain open. None of these changes has
-passed the deferred full test batch.
+6f, 6m, 7, and 8. The new-vehicle nonpassive business-use slice now reaches Form
+3800 line 1y; other Form 8936 eligibility and source reconciliation remain open.
+None of these changes has passed the deferred full test batch.
 
 The Form 8936 calculation pass now distinguishes the $75,000/$112,500/$150,000
 previously owned vehicle MAGI limits from the new-vehicle limits, applies
@@ -61,16 +61,16 @@ current-or-prior-year MAGI with each year's filing status, and refuses to award
 a credit without a valid acquisition date. It excludes acquisitions after
 September 30, 2025 and stops reducing the previously owned credit by a
 business-use percentage. These cases are written but unrun. VIN/seller
-verification, placed-in-service and other recapture facts, business-use routing,
-and ATS evidence remain open.
+verification, placed-in-service and other recapture facts, remaining
+business-use classes, and ATS evidence remain open.
 
 The next Form 8936 input pass requires structured VIN/year/make/model, a valid
 2025 placed-in-service date, seller-report confirmation, 30-day resale and
 use-not-resale answers before awarding a credit. Previously owned vehicles also
 require dependent/prior-claim answers, dealer purchase, first eligible transfer,
 and a model year at least two years older than acquisition. The corresponding
-cases are written but unrun. These checks do not substitute for business-use
-processing, other recapture rules, or ATS acceptance.
+cases are written but unrun. These checks do not substitute for the remaining
+business-use classes, other recapture rules, or ATS acceptance.
 
 An `IRS8936ScheduleA` builder now writes one XML document per vehicle from the
 captured identity and credit facts, including new and previously owned groups
@@ -443,13 +443,18 @@ separate. The current build pass adds 2025 IRS PDF descriptors for the parent
 form and one Schedule A per personal-use or dealer-transferred vehicle, sharing
 the liability calculation with XML. These PDF mappings and source-to-XSD cases
 are written but unrun, and no filled PDF has been rendered for visual
-verification. Business-use Form 3800 routing and other recapture paths remain
-open. A shared new-vehicle calculation now splits the eligible whole-dollar
-credit into business and personal shares without rounding the two shares above
-the total. Schedule A is written for a fully business-use vehicle and carries
-its business amount. These cases are written but unrun; the parent Part II and
-Form 3800 line 1y route are still missing, as are source mileage and
-conversion-period substantiation.
+verification. Other recapture paths remain open. A shared new-vehicle
+calculation now splits the eligible whole-dollar credit into business and
+personal shares without rounding the two shares above the total. Schedule A is
+written for a fully business-use vehicle and carries its business amount. The
+parent Part II lines 6/8 and Form 3800 Part III line 1y now carry the same
+nonpassive source amount through the Form 3800 tax limit. Source-to-return,
+PDF-field, XML, local XSD, and mismatch cases are written but unrun. The current
+build pass replaces the free-form business-use percentage with source
+business/commuting/total miles and months in business use, or an employee-use
+wage/reimbursement assertion. The derived percentage feeds the shared split and
+Schedule A. These source and rejection cases are written but unrun; independent
+mileage/payroll matching is still open.
 
 ## Status definitions
 

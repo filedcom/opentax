@@ -1,5 +1,6 @@
 import { element, elements } from "../../../mef/xml.ts";
 import {
+  businessUsePercentage,
   computeNewVehicleCreditParts,
   computeVehiclePersonalCredit,
   type F8936Input,
@@ -59,7 +60,7 @@ function newVehicleGroup(
   personalCredit: number,
 ): string {
   const tentative = Math.min(item.credit_amount ?? 0, 7_500);
-  const businessUsePct = item.business_use_pct ?? 0;
+  const businessUsePct = businessUsePercentage(item);
   const businessPart = computeNewVehicleCreditParts(item, input).business;
   const { currentOver, priorOver } = incomeAnswers(input, false);
   const stopsAtIncome = currentOver && priorOver;

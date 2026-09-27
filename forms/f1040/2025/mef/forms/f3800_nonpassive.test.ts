@@ -96,6 +96,46 @@ Deno.test("Form 3800 XML: Form 8826 line 1e alone reconciles with Part II", () =
   );
 });
 
+Deno.test("Form 3800 XML: Form 8936 new-vehicle business credit uses line 1y", () => {
+  const xml = buildIRS3800Nonpassive({
+    tax: { ...tax, standardCredit: 1_875, specifiedCredit: 0 },
+    form8936: {
+      credit: 1_875,
+      documentId: "IRS8936_1",
+      appliedCredit: 1_875,
+    },
+    facilities: [],
+    form8835DocumentIds: [],
+    appliedCreditsByFacility: [],
+    transferStatementIdsByFileName: {},
+  });
+  assertStringIncludes(
+    xml,
+    '<Form8936PartIICYCreditsGrp referenceDocumentId="IRS8936_1" referenceDocumentName="IRS8936">',
+  );
+  assertStringIncludes(
+    xml,
+    "<CurrentYearCreditAllowedAmt>1875</CurrentYearCreditAllowedAmt>",
+  );
+  assertThrows(
+    () =>
+      buildIRS3800Nonpassive({
+        tax: { ...tax, standardCredit: 1_875, specifiedCredit: 0 },
+        form8936: {
+          credit: 1_875,
+          documentId: "IRS8936_1",
+          appliedCredit: 1_876,
+        },
+        facilities: [],
+        form8835DocumentIds: [],
+        appliedCreditsByFacility: [],
+        transferStatementIdsByFileName: {},
+      }),
+    Error,
+    "invalid Form 8936",
+  );
+});
+
 Deno.test("Form 3800 XML: pass-through-only disabled-access credit has no Form 8826 document", () => {
   const xml = buildIRS3800Nonpassive({
     tax: { ...tax, standardCredit: 1_250, specifiedCredit: 0 },

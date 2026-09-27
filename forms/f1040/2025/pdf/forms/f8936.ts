@@ -24,6 +24,8 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   text("line3e", "f1_13[0]"),
   text("line4", "f1_14[0]"),
   text("line5", "f1_15[0]"),
+  text("line6", "f1_16[0]"),
+  text("line8", "f1_18[0]"),
   text("line9", "f1_19[0]"),
   text("line10", "f1_20[0]"),
   text("line11", "f1_21[0]"),
@@ -95,6 +97,8 @@ export const form8936Pdf: PdfFormDescriptor = {
       line3e: prior.excluded_american_samoa_income,
       line4: modifiedAgi(prior),
       line5: printedStatus[source.prior_year_filing_status],
+      line6: lines.line6Business > 0 ? lines.line6Business : undefined,
+      line8: lines.line8Business > 0 ? lines.line8Business : undefined,
       ...(lines.line9TentativeNew > 0
         ? {
           line9: lines.line9TentativeNew,

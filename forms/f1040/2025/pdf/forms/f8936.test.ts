@@ -53,6 +53,57 @@ Deno.test("Form 8936 Schedule A PDF: one personal-use vehicle fills its Part II 
   assertEquals(instances[0].new_current_magi_over_limit, false);
 });
 
+Deno.test("Form 8936 Schedule A PDF: fully business-use vehicle retains Part II fields", () => {
+  const business = {
+    ...source,
+    f8936s: [{
+      ...vehicle,
+      business_use: {
+        kind: "mileage" as const,
+        business_miles: 1_000,
+        commuting_miles: 0,
+        total_miles: 1_000,
+        months_in_business_use: 12,
+      },
+    }],
+  };
+  const instances = form8936ScheduleAPdf.instances!(business);
+  assertEquals(instances.length, 1);
+  assertEquals(instances[0].new_business_use_pct, "100.00%");
+  assertEquals(instances[0].new_business_credit, 7_500);
+  assertEquals(instances[0].new_personal_credit, undefined);
+});
+
+Deno.test("Form 8936 PDF: parent Part II business fields match Form 3800 source", () => {
+  const business = {
+    ...source,
+    f8936s: [{
+      ...vehicle,
+      business_credit_subject_to_passive_activity_limit: false,
+      business_use: {
+        kind: "mileage" as const,
+        business_miles: 1_000,
+        commuting_miles: 0,
+        total_miles: 1_000,
+        months_in_business_use: 12,
+      },
+    }],
+  };
+  const fields = form8936Pdf.projectFields!(business, {
+    f1040: { line11_agi: 50_000, line18_total_tax_before_credits: 5_000 },
+    schedule3: { line6f_total: 0, line6m_total: 0 },
+    f3800: {
+      f8936_new_vehicle_credit: {
+        credit_amount: 7_500,
+        subject_to_passive_activity_limit: false,
+      },
+    },
+  });
+  assertEquals(fields.line6, 7_500);
+  assertEquals(fields.line8, 7_500);
+  assertEquals(fields.line9, undefined);
+});
+
 Deno.test("Form 8936 Schedule A PDF: one page per vehicle, with previously owned Part IV", () => {
   const used = {
     ...vehicle,

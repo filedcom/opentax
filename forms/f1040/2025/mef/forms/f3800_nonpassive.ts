@@ -12,7 +12,7 @@ import {
   isEligible as isEligibleForForm8826,
 } from "../../../nodes/inputs/f8826/index.ts";
 
-/** Source-backed nonpassive Form 8826, Form 8835, and Form 5884 rows. */
+/** Source-backed nonpassive Form 8826, 8835, 5884, and 8936 rows. */
 export type Form3800NonpassiveXmlInput = {
   readonly tax: Form3800NonpassiveInput;
   readonly form5884?: {
@@ -34,6 +34,11 @@ export type Form3800NonpassiveXmlInput = {
     readonly appliedCredit: number;
     /** Self-earned source first, then positive K-1 sources in input order. */
     readonly appliedCreditsBySource?: readonly number[];
+  };
+  readonly form8936?: {
+    readonly credit: number;
+    readonly documentId: string;
+    readonly appliedCredit: number;
   };
   readonly facilities: readonly Form8835CreditEntry[];
   readonly form8835DocumentIds: readonly string[];
@@ -127,7 +132,10 @@ export function buildIRS3800Nonpassive(
   input: Form3800NonpassiveXmlInput,
 ): string {
   const credits = classifyForm8835Credits(input.facilities);
-  if (!input.form8826 && !input.form5884 && input.facilities.length === 0) {
+  if (
+    !input.form8826 && !input.form5884 && !input.form8936 &&
+    input.facilities.length === 0
+  ) {
     throw new Error("Form 3800 needs a source credit document");
   }
   const form8826Lines = input.form8826
@@ -135,6 +143,17 @@ export function buildIRS3800Nonpassive(
     : undefined;
   const form8826Credit = form8826Lines?.line8 ?? 0;
   const form5884Credit = input.form5884?.credit ?? 0;
+  const form8936Credit = input.form8936?.credit ?? 0;
+  if (
+    input.form8936 &&
+    (!input.form8936.documentId ||
+      !Number.isInteger(form8936Credit) || form8936Credit <= 0 ||
+      !Number.isInteger(input.form8936.appliedCredit) ||
+      input.form8936.appliedCredit < 0 ||
+      input.form8936.appliedCredit > form8936Credit)
+  ) {
+    throw new Error("Form 3800 has an invalid Form 8936 line 1y allocation");
+  }
   if (input.form5884) {
     const source = input.form5884;
     const hasSelfEarned = source.sources.some((entry) => !entry.ein);
@@ -208,7 +227,8 @@ export function buildIRS3800Nonpassive(
     }
   }
   if (
-    credits.standardCredit + form8826Credit !== input.tax.standardCredit ||
+    credits.standardCredit + form8826Credit + form8936Credit !==
+      input.tax.standardCredit ||
     credits.specifiedCredit + form5884Credit !== input.tax.specifiedCredit
   ) {
     throw new Error(
@@ -332,7 +352,7 @@ export function buildIRS3800Nonpassive(
   const standardApplied = input.facilities.reduce(
     (sum, facility, index) =>
       sum + (facility.form3800_line === "1f" ? appliedAt(index) : 0),
-    form8826Applied,
+    form8826Applied + (input.form8936?.appliedCredit ?? 0),
   );
   const specifiedApplied = input.facilities.reduce(
     (sum, facility, index) =>
@@ -518,6 +538,7 @@ export function buildIRS3800Nonpassive(
   const form5884PassThroughSources =
     form5884?.sources.filter((source) => source.ein !== undefined) ?? [];
   const combinedSelfEarned = form8826Credit +
+    form8936Credit +
     (ordinaryRow?.selfEarnedCredit ?? 0) +
     (specifiedRow?.selfEarnedCredit ?? 0) + form5884Credit;
   const combinedTransferred = (ordinaryRow?.transferOutAmount ?? 0) +
@@ -581,12 +602,31 @@ export function buildIRS3800Nonpassive(
       )
       : "",
     ordinaryGroup?.xml ?? "",
-    ordinaryRow || input.form8826
+    input.form8936
+      ? elements(
+        "Form8936PartIICYCreditsGrp",
+        [
+          element("GeneralBusCrFromNnPssvActyAmt", form8936Credit),
+          element("TotalGeneralBusCreditsAmt", form8936Credit),
+          element(
+            "TotalGeneralBusCreditsAppTxAmt",
+            input.form8936.appliedCredit,
+          ),
+        ],
+        {
+          referenceDocumentId: input.form8936.documentId,
+          referenceDocumentName: "IRS8936",
+        },
+      )
+      : "",
+    ordinaryRow || input.form8826 || input.form8936
       ? totalRow(
         "GenBusCYCreditsSubTotGrp",
-        form8826Credit + (ordinaryRow?.selfEarnedCredit ?? 0),
+        form8826Credit + form8936Credit +
+          (ordinaryRow?.selfEarnedCredit ?? 0),
         ordinaryRow?.transferOutAmount ?? 0,
-        form8826Credit + (ordinaryRow?.availableCredit ?? 0),
+        form8826Credit + form8936Credit +
+          (ordinaryRow?.availableCredit ?? 0),
         lines.line17,
       )
       : "",
@@ -634,7 +674,8 @@ export function buildIRS3800Nonpassive(
       "TotGenBusCYCreditAmtGrp",
       combinedSelfEarned,
       combinedTransferred,
-      form8826Credit + credits.standardCredit + credits.specifiedCredit +
+      form8826Credit + form8936Credit + credits.standardCredit +
+        credits.specifiedCredit +
         form5884Credit,
       lines.line38,
     ),

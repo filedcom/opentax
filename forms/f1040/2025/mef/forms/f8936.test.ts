@@ -193,23 +193,103 @@ Deno.test("Form 8936: disqualified dealer transfer requires matching Schedule 2 
   assertStringIncludes(xml, "<IRS8936>");
 });
 
-Deno.test("Form 8936: business-use amount is held for Form 3800 routing", () => {
+Deno.test("Form 8936: business-use Part II reconciles to Form 3800", () => {
+  const businessSource = {
+    ...source,
+    f8936s: [{
+      ...vehicle,
+      business_credit_subject_to_passive_activity_limit: false,
+      business_use: {
+        kind: "mileage" as const,
+        business_miles: 250,
+        commuting_miles: 0,
+        total_miles: 1_000,
+        months_in_business_use: 12,
+      },
+    }],
+  };
   assertThrows(
-    () =>
-      form8936.build({
-        ...source,
-        f8936s: [{ ...vehicle, business_use_pct: 0.25 }],
-      }, context(10_000, 5_625)),
+    () => form8936.build(businessSource, context(10_000, 5_625)),
     Error,
-    "Form 3800 routing",
+    "does not reconcile to Form 3800",
+  );
+  const linked = {
+    pending: {
+      ...context(10_000, 5_625).pending,
+      f3800: {
+        f8936_new_vehicle_credit: {
+          credit_amount: 1_875,
+          subject_to_passive_activity_limit: false,
+        },
+      },
+    },
+    documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
+  };
+  const xml = form8936.build(businessSource, linked);
+  assertStringIncludes(
+    xml,
+    "<BusinessInvestmentUseAmt>1875</BusinessInvestmentUseAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<BusinessInvstUsePartOfCrAmt>1875</BusinessInvstUsePartOfCrAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<PrsnlUseNewCleanVehicleCrAmt>5625</PrsnlUseNewCleanVehicleCrAmt>",
   );
   assertThrows(
     () =>
       form8936.build({
-        ...source,
-        f8936s: [{ ...vehicle, business_use_pct: 1 }],
-      }, context(10_000, 0)),
+        ...businessSource,
+        f8936s: [{
+          ...businessSource.f8936s[0],
+          business_use: {
+            kind: "mileage",
+            business_miles: 1_000,
+            commuting_miles: 0,
+            total_miles: 1_000,
+            months_in_business_use: 12,
+          },
+        }],
+      }, linked),
     Error,
-    "Form 3800 routing",
+    "does not reconcile to Form 3800",
   );
+  assertThrows(
+    () =>
+      form8936.build(businessSource, {
+        ...linked,
+        documentIdsByPendingKey: { f3800: [] },
+      }),
+    Error,
+    "linked Form 3800",
+  );
+  const fullBusiness = {
+    ...businessSource,
+    f8936s: [{
+      ...businessSource.f8936s[0],
+      business_use: {
+        ...businessSource.f8936s[0].business_use,
+        business_miles: 1_000,
+      },
+    }],
+  };
+  const fullXml = form8936.build(fullBusiness, {
+    pending: {
+      ...context(10_000, 0).pending,
+      f3800: {
+        f8936_new_vehicle_credit: {
+          credit_amount: 7_500,
+          subject_to_passive_activity_limit: false,
+        },
+      },
+    },
+    documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
+  });
+  assertStringIncludes(
+    fullXml,
+    "<BusinessInvestmentUseAmt>7500</BusinessInvestmentUseAmt>",
+  );
+  assertEquals(fullXml.includes("<CrPrsnlUsePartNewCleanVehGrp>"), false);
 });

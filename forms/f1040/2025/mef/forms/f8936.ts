@@ -35,6 +35,12 @@ function magiGroup(tag: string, year: F8936MagiYear): string {
 function buildIRS8936(input: F8936Input, context?: MefBuildContext): string {
   const lines = form8936Lines(input, context?.pending);
   if (lines === undefined) return "";
+  if (
+    lines.line8Business > 0 && context?.documentIdsByPendingKey &&
+    context.documentIdsByPendingKey.f3800?.length !== 1
+  ) {
+    throw new Error("Form 8936 business credit needs a linked Form 3800");
+  }
 
   return elements("IRS8936", [
     magiGroup("CurrentYrMAGIAmountGrp", input.current_year_magi),
@@ -43,6 +49,12 @@ function buildIRS8936(input: F8936Input, context?: MefBuildContext): string {
       "PYIndivReturnFilingStatusCd",
       priorStatusCode[input.prior_year_filing_status],
     ),
+    lines.line6Business > 0
+      ? element("BusinessInvestmentUseAmt", lines.line6Business)
+      : "",
+    lines.line8Business > 0
+      ? element("BusinessInvstUsePartOfCrAmt", lines.line8Business)
+      : "",
     lines.line9TentativeNew > 0
       ? elements("CrPrsnlUsePartNewCleanVehGrp", [
         element("PrsnlUseNewCleanVehicleCrAmt", lines.line9TentativeNew),

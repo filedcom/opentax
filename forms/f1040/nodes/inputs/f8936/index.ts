@@ -7,6 +7,7 @@ import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
+import { f3800 } from "../f3800/index.ts";
 import { FilingStatus, filingStatusSchema } from "../../types.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
@@ -34,6 +35,33 @@ const USED_VEHICLE_PRICE_CAP = 25_000;
 
 // ─── Schema ──────────────────────────────────────────────────────────────────
 
+const businessUseSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("mileage"),
+    // For conversions, these miles cover only the months in business use.
+    business_miles: z.number().positive(),
+    commuting_miles: z.number().nonnegative(),
+    total_miles: z.number().positive(),
+    months_in_business_use: z.number().int().min(1).max(12),
+  }).strict(),
+  z.object({
+    kind: z.literal("employee_fringe"),
+    personal_use_handling: z.enum(["taxable_withholding", "reimbursed"]),
+    months_in_business_use: z.number().int().min(1).max(12),
+  }).strict(),
+]).superRefine((use, ctx) => {
+  if (
+    use.kind === "mileage" &&
+    use.business_miles + use.commuting_miles > use.total_miles
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["total_miles"],
+      message: "Business and commuting miles cannot exceed total miles",
+    });
+  }
+});
+
 export const itemSchema = z.object({
   vehicle_description: z.string().optional(),
   vin: z.string().optional(),
@@ -58,8 +86,9 @@ export const itemSchema = z.object({
   sale_price: z.number().nonnegative().optional(),
   msrp: z.number().nonnegative().optional(),
   vehicle_type: z.enum(["suv_van_truck", "other"]).optional(),
-  business_use_pct: z.number().min(0).max(1).optional(),
-});
+  business_use: businessUseSchema.optional(),
+  business_credit_subject_to_passive_activity_limit: z.boolean().optional(),
+}).strict();
 
 export const magiYearSchema = z.object({
   adjusted_gross_income: z.number(),
@@ -80,6 +109,15 @@ export const inputSchema = z.object({
 export type F8936Item = z.infer<typeof itemSchema>;
 export type F8936Input = z.infer<typeof inputSchema>;
 export type F8936MagiYear = z.infer<typeof magiYearSchema>;
+
+export function businessUsePercentage(item: F8936Item): number {
+  const use = item.business_use;
+  if (!use) return 0;
+  const annualPortion = use.months_in_business_use / 12;
+  return use.kind === "employee_fringe"
+    ? annualPortion
+    : use.business_miles / use.total_miles * annualPortion;
+}
 
 export function modifiedAgi(year: F8936MagiYear): number {
   return year.adjusted_gross_income +
@@ -187,7 +225,7 @@ export function computeNewVehicleCreditParts(
     throw new Error("f8936: business-use split requires a new clean vehicle");
   }
   const total = eligibleNewVehicleCredit(item, input);
-  const business = Math.round(total * (item.business_use_pct ?? 0));
+  const business = Math.round(total * businessUsePercentage(item));
   return { personal: total - business, business };
 }
 
@@ -266,7 +304,10 @@ function vehicleOutput(item: F8936Item, input: F8936Input): NodeOutput[] {
   // A dealer transfer is reconciled on Form 8936/Schedule A, not claimed
   // again as a personal credit on Schedule 3.
   if (item.transferred_to_dealer) {
-    if ((item.business_use_pct ?? 0) > 0) {
+    if (
+      item.is_new_vehicle === true &&
+      computeNewVehicleCreditParts(item, input).business > 0
+    ) {
       throw new Error(
         "f8936: dealer transfer with business use needs Form 3800 routing",
       );
@@ -295,7 +336,7 @@ function vehicleOutput(item: F8936Item, input: F8936Input): NodeOutput[] {
 class F8936Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8936";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule2, schedule3]);
+  readonly outputNodes = new OutputNodes([schedule2, schedule3, f3800]);
 
   compute(
     _ctx: NodeContext,
@@ -303,8 +344,38 @@ class F8936Node extends TaxNode<typeof inputSchema> {
   ): NodeResult {
     const input = inputSchema.parse(rawInput);
     if (input.f8936s.length === 0) return { outputs: [] };
+    const outputs = input.f8936s.flatMap((item) => vehicleOutput(item, input));
+    let businessCredit = 0;
+    for (const item of input.f8936s) {
+      if (item.is_new_vehicle !== true || item.transferred_to_dealer === true) {
+        continue;
+      }
+      const amount = computeNewVehicleCreditParts(item, input).business;
+      if (amount <= 0) continue;
+      if (
+        item.business_credit_subject_to_passive_activity_limit === undefined
+      ) {
+        throw new Error(
+          "f8936: business credit needs a passive-activity answer",
+        );
+      }
+      if (item.business_credit_subject_to_passive_activity_limit) {
+        throw new Error(
+          "f8936: passive business credit needs Form 8582-CR before Form 3800",
+        );
+      }
+      businessCredit += amount;
+    }
+    if (businessCredit > 0) {
+      outputs.push(output(f3800, {
+        f8936_new_vehicle_credit: {
+          credit_amount: businessCredit,
+          subject_to_passive_activity_limit: false,
+        },
+      }));
+    }
     return {
-      outputs: input.f8936s.flatMap((item) => vehicleOutput(item, input)),
+      outputs,
     };
   }
 }

@@ -1,5 +1,6 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import {
+  businessUsePercentage,
   computeNewVehicleCreditParts,
   f8936,
   type F8936Input,
@@ -7,6 +8,8 @@ import {
   modifiedAgi,
 } from "./index.ts";
 import { FilingStatus } from "../../types.ts";
+import { f3800 } from "../f3800/index.ts";
+import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 
 const newVehicle: F8936Item = {
   is_new_vehicle: true,
@@ -38,6 +41,16 @@ const usedVehicle: F8936Item = {
   purchased_from_dealer: true,
   previously_owned_first_eligible_transfer: true,
 };
+
+function mileageUse(businessMiles: number) {
+  return {
+    kind: "mileage" as const,
+    business_miles: businessMiles,
+    commuting_miles: 0,
+    total_miles: 1_000,
+    months_in_business_use: 12,
+  };
+}
 
 function source(
   vehicles: F8936Item[],
@@ -289,7 +302,11 @@ for (
   Deno.test(`Form 8936: ${businessUse * 100}% business use`, () => {
     assertEquals(
       amount(
-        source([{ ...newVehicle, business_use_pct: businessUse }]),
+        source([{
+          ...newVehicle,
+          business_use: mileageUse(businessUse * 1_000),
+          business_credit_subject_to_passive_activity_limit: false,
+        }]),
         "line6f_clean_vehicle_credit",
       ),
       expected,
@@ -301,7 +318,8 @@ Deno.test("Form 8936: new vehicle business and personal shares reconcile after r
   const vehicle = {
     ...newVehicle,
     credit_amount: 1_001,
-    business_use_pct: 0.5,
+    business_use: mileageUse(500),
+    business_credit_subject_to_passive_activity_limit: false,
   };
   assertEquals(computeNewVehicleCreditParts(vehicle, source([vehicle])), {
     personal: 500,
@@ -311,8 +329,88 @@ Deno.test("Form 8936: new vehicle business and personal shares reconcile after r
     amount(source([vehicle]), "line6f_clean_vehicle_credit"),
     500,
   );
+  assertEquals(fieldsOf(compute(source([vehicle])).outputs, f3800), {
+    f8936_new_vehicle_credit: {
+      credit_amount: 501,
+      subject_to_passive_activity_limit: false,
+    },
+  });
   assertThrows(() =>
     computeNewVehicleCreditParts(usedVehicle, source([usedVehicle]))
+  );
+});
+
+Deno.test("Form 8936: business credit needs a nonpassive source classification", () => {
+  const vehicle = { ...newVehicle, business_use: mileageUse(1_000) };
+  assertThrows(
+    () => compute(source([vehicle])),
+    Error,
+    "passive-activity answer",
+  );
+  assertThrows(
+    () =>
+      compute(source([{
+        ...vehicle,
+        business_credit_subject_to_passive_activity_limit: true,
+      }])),
+    Error,
+    "Form 8582-CR",
+  );
+  assertEquals(
+    fieldsOf(
+      compute(source([{
+        ...vehicle,
+        business_credit_subject_to_passive_activity_limit: false,
+      }])).outputs,
+      f3800,
+    )?.f8936_new_vehicle_credit?.credit_amount,
+    7_500,
+  );
+});
+
+Deno.test("Form 8936: business mileage excludes commuting and prorates conversions", () => {
+  const converted = {
+    ...newVehicle,
+    business_use: {
+      kind: "mileage" as const,
+      business_miles: 500,
+      commuting_miles: 200,
+      total_miles: 1_000,
+      months_in_business_use: 6,
+    },
+  };
+  assertEquals(f8936.inputSchema.safeParse(source([converted])).success, true);
+  assertEquals(businessUsePercentage(converted), 0.25);
+  assertEquals(computeNewVehicleCreditParts(converted, source([converted])), {
+    business: 1_875,
+    personal: 5_625,
+  });
+  assertEquals(
+    f8936.inputSchema.safeParse(source([{
+      ...converted,
+      business_use: { ...converted.business_use, business_miles: 900 },
+    }])).success,
+    false,
+  );
+  assertEquals(
+    f8936.inputSchema.safeParse(source([{
+      ...converted,
+      business_use: { ...converted.business_use, months_in_business_use: 13 },
+    }])).success,
+    false,
+  );
+  const employeeUse = {
+    ...newVehicle,
+    business_use: {
+      kind: "employee_fringe" as const,
+      personal_use_handling: "reimbursed" as const,
+      months_in_business_use: 12,
+    },
+  };
+  assertEquals(businessUsePercentage(employeeUse), 1);
+  assertEquals(
+    f8936.inputSchema.safeParse(source([employeeUse])).success,
+    true,
   );
 });
 
@@ -390,7 +488,7 @@ for (
 Deno.test("Form 8936: previously owned credit is not reduced by business-use percentage", () => {
   assertEquals(
     amount(
-      source([{ ...usedVehicle, business_use_pct: 0.25 }]),
+      source([{ ...usedVehicle, business_use: mileageUse(250) }]),
       "line6m_prev_owned_clean_vehicle_credit",
     ),
     4_000,

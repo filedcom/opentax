@@ -31,7 +31,13 @@ Deno.test("Form 8936 Schedule A: one new-vehicle document carries VIN, service d
       credit_amount: 7_500,
       msrp: 45_000,
       vehicle_type: "other",
-      business_use_pct: 0.25,
+      business_use: {
+        kind: "mileage",
+        business_miles: 250,
+        commuting_miles: 0,
+        total_miles: 1_000,
+        months_in_business_use: 12,
+      },
     }],
   });
   assertEquals(xml.length, 1);
@@ -64,7 +70,13 @@ Deno.test("Form 8936 Schedule A: fully business-use vehicle still has its own do
       credit_amount: 7_500,
       msrp: 45_000,
       vehicle_type: "other",
-      business_use_pct: 1,
+      business_use: {
+        kind: "mileage",
+        business_miles: 1_000,
+        commuting_miles: 0,
+        total_miles: 1_000,
+        months_in_business_use: 12,
+      },
     }],
   });
   assertEquals(xml.length, 1);
@@ -84,7 +96,13 @@ Deno.test("Form 8936 Schedule A: odd-dollar business split stays additive", () =
       credit_amount: 1_001,
       msrp: 45_000,
       vehicle_type: "other",
-      business_use_pct: 0.5,
+      business_use: {
+        kind: "mileage",
+        business_miles: 500,
+        commuting_miles: 0,
+        total_miles: 1_000,
+        months_in_business_use: 12,
+      },
     }],
   });
   assertStringIncludes(

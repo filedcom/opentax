@@ -25,9 +25,17 @@ const pendingSchema = z.object({
     line1b_new_clean_vehicle_repayment: z.number().optional(),
     line1c_prev_owned_clean_vehicle_repayment: z.number().optional(),
   }).optional(),
+  f3800: z.object({
+    f8936_new_vehicle_credit: z.object({
+      credit_amount: z.number().nonnegative(),
+      subject_to_passive_activity_limit: z.literal(false),
+    }).optional(),
+  }).optional(),
 });
 
 export type Form8936Lines = {
+  readonly line6Business: number;
+  readonly line8Business: number;
   readonly line9TentativeNew: number;
   readonly line10TaxBeforeCredits: number;
   readonly line11OtherCredits: number;
@@ -45,17 +53,11 @@ export function form8936Lines(
   input: F8936Input,
   pending: unknown,
 ): Form8936Lines | undefined {
-  if (
-    input.f8936s.some((item) =>
-      item.is_new_vehicle === true &&
-      computeNewVehicleCreditParts(item, input).business > 0
-    )
-  ) {
-    throw new Error("Form 8936 business-use credit needs Form 3800 routing");
-  }
   const active = input.f8936s.filter((item) =>
     item.transferred_to_dealer === true ||
-    computeVehiclePersonalCredit(item, input) > 0
+    computeVehiclePersonalCredit(item, input) > 0 ||
+    (item.is_new_vehicle === true &&
+      computeNewVehicleCreditParts(item, input).business > 0)
   );
   if (active.length === 0) return undefined;
   const transferred = active.filter((item) =>
@@ -70,6 +72,17 @@ export function form8936Lines(
     item.transferred_to_dealer !== true
   );
 
+  if (
+    transferred.some((item) =>
+      item.is_new_vehicle === true &&
+      computeNewVehicleCreditParts(item, input).business > 0
+    )
+  ) {
+    throw new Error(
+      "Form 8936 dealer transfer with business use is unsupported",
+    );
+  }
+
   const finalized = pendingSchema.parse(pending);
   const line18 = finalized.f1040.line18_total_tax_before_credits;
   if (
@@ -81,6 +94,31 @@ export function form8936Lines(
     );
   }
   const schedule3 = finalized.schedule3 ?? {};
+  const businessCredit = claimable.filter((item) =>
+    item.is_new_vehicle === true
+  ).reduce(
+    (sum, item) => {
+      const amount = computeNewVehicleCreditParts(item, input).business;
+      if (
+        amount > 0 &&
+        item.business_credit_subject_to_passive_activity_limit !== false
+      ) {
+        throw new Error(
+          "Form 8936 business credit needs a nonpassive activity source",
+        );
+      }
+      return sum + amount;
+    },
+    0,
+  );
+  if (
+    businessCredit > 0 &&
+    finalized.f3800?.f8936_new_vehicle_credit?.credit_amount !== businessCredit
+  ) {
+    throw new Error(
+      "Form 8936 business credit does not reconcile to Form 3800 line 1y source",
+    );
+  }
   const repaymentNew = transferred.filter((item) =>
     item.is_new_vehicle === true &&
     computeVehiclePersonalCredit(item, input) === 0
@@ -125,6 +163,8 @@ export function form8936Lines(
     );
   }
   return {
+    line6Business: businessCredit,
+    line8Business: businessCredit,
     line9TentativeNew: tentativeNew,
     line10TaxBeforeCredits: line18,
     line11OtherCredits: otherCredits + usedCredit,

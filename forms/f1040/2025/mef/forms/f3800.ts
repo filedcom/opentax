@@ -16,6 +16,10 @@ import {
   calculateForm5884,
   inputSchema as f5884InputSchema,
 } from "../../../nodes/inputs/f5884/index.ts";
+import {
+  computeNewVehicleCreditParts,
+  inputSchema as f8936InputSchema,
+} from "../../../nodes/inputs/f8936/index.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
 import { FilingStatus as MefFilingStatus } from "../../../mef/header.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
@@ -258,6 +262,44 @@ function sourceForm5884(
   return { source, lines, credit: lines.line4 };
 }
 
+function sourceForm8936(
+  fields: z.infer<typeof f3800InputSchema>,
+  context: MefBuildContext,
+) {
+  const claimed = fields.f8936_new_vehicle_credit;
+  if (!claimed || claimed.credit_amount <= 0) return undefined;
+  const raw = context.pending?.f8936;
+  if (!raw) {
+    throw new Error(
+      "Form 3800 clean vehicle credit needs Form 8936 source facts",
+    );
+  }
+  const source = f8936InputSchema.parse(raw);
+  const credit = source.f8936s.reduce((sum, item) => {
+    if (item.is_new_vehicle !== true) return sum;
+    const amount = computeNewVehicleCreditParts(item, source).business;
+    if (amount <= 0) return sum;
+    if (
+      item.transferred_to_dealer === true ||
+      item.business_credit_subject_to_passive_activity_limit !== false
+    ) {
+      throw new Error(
+        "Form 3800 clean vehicle source needs nontransferred nonpassive business use",
+      );
+    }
+    return sum + amount;
+  }, 0);
+  if (
+    claimed.subject_to_passive_activity_limit ||
+    !sameMoney(claimed.credit_amount, credit)
+  ) {
+    throw new Error(
+      "Form 3800 line 1y does not reconcile to Form 8936 business credit",
+    );
+  }
+  return { source, credit };
+}
+
 function form8826SourceAllocations(
   source: ReturnType<typeof sourceForm8826>,
   appliedCredit: number,
@@ -368,7 +410,8 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
     const hasSourceCredit = fields.allowed_credit !== undefined ||
       fields.f8826_credit_entries?.some((entry) => entry.credit_amount > 0) ||
       fields.f8835_credit_entries?.some((entry) => entry.credit_amount > 0) ||
-      (fields.f5884_credit?.credit_amount ?? 0) > 0;
+      (fields.f5884_credit?.credit_amount ?? 0) > 0 ||
+      (fields.f8936_new_vehicle_credit?.credit_amount ?? 0) > 0;
     if (!hasSourceCredit) return "";
     if (
       fields.tax_context === undefined || fields.allowed_credit === undefined
@@ -399,8 +442,34 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
     const form8826 = sourceForm8826(parsed, context);
     const facilities = sourceForm8835(parsed, context);
     const form5884 = sourceForm5884(parsed, context);
+    const form8936 = sourceForm8936(parsed, context);
     const form8826Credit = form8826?.lines.line8 ?? 0;
-    const form8826Applied = Math.min(form8826Credit, lines.line17);
+    const otherOrdinaryCredit = form8826Credit + facilities.reduce(
+      (sum, facility) =>
+        sum +
+        (facility.form3800_line === "1f"
+          ? facility.credit_amount - facility.transfer_out_amount
+          : 0),
+      0,
+    );
+    let form8936Applied = parsed.form8936_applied_credit;
+    if (form8936 && form8936Applied === undefined) {
+      const sharedPartialLimit = otherOrdinaryCredit > 0 &&
+        lines.line17 > 0 && !sameMoney(lines.line17, tax.standardCredit);
+      if (sharedPartialLimit) {
+        throw new Error(
+          "Form 3800 needs the applied-credit split for Form 8936 line 1y",
+        );
+      }
+      form8936Applied = Math.min(form8936.credit, lines.line17);
+    }
+    if (!form8936 && parsed.form8936_applied_credit !== undefined) {
+      throw new Error("Form 3800 has a Form 8936 allocation without a source");
+    }
+    const form8826Applied = Math.min(
+      form8826Credit,
+      Math.max(0, lines.line17 - (form8936Applied ?? 0)),
+    );
     const form8826Ids = context.documentIdsByPendingKey.f8826 ?? [];
     const selfEarned = (form8826?.lines.line6 ?? 0) > 0;
     if (selfEarned ? form8826Ids.length !== 1 : form8826Ids.length !== 0) {
@@ -419,6 +488,12 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
     ) {
       throw new Error(
         "Form 3800 Form 5884 document count does not match self-earned source",
+      );
+    }
+    const form8936Ids = context.documentIdsByPendingKey.f8936 ?? [];
+    if (form8936 && form8936Ids.length !== 1) {
+      throw new Error(
+        "Form 3800 Form 8936 document count does not match its source",
       );
     }
     const form5884Applied = form5884
@@ -473,11 +548,18 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
           ),
         }
         : undefined,
+      form8936: form8936
+        ? {
+          credit: form8936.credit,
+          documentId: form8936Ids[0],
+          appliedCredit: form8936Applied!,
+        }
+        : undefined,
       facilities,
       form8835DocumentIds: form8835Ids,
       appliedCreditsByFacility: form8835FacilityAllocations(
         facilities,
-        lines.line17 - form8826Applied,
+        lines.line17 - form8826Applied - (form8936Applied ?? 0),
         lines.line37 - (form5884Applied ?? 0),
         parsed.form8835_applied_credits_by_facility,
       ),

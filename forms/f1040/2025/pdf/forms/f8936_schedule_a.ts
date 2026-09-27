@@ -1,5 +1,7 @@
 import { form8936Lines } from "../../form8936_lines.ts";
 import {
+  businessUsePercentage,
+  computeNewVehicleCreditParts,
   computeVehiclePersonalCredit,
   incomeLimit,
   inputSchema,
@@ -89,7 +91,13 @@ export const form8936ScheduleAPdf: PdfFormDescriptor = {
     const input = source.data;
     return input.f8936s.flatMap((item) => {
       const personalCredit = computeVehiclePersonalCredit(item, input);
-      if (personalCredit === 0 && item.transferred_to_dealer !== true) {
+      const businessCredit = item.is_new_vehicle === true
+        ? computeNewVehicleCreditParts(item, input).business
+        : 0;
+      if (
+        personalCredit === 0 && businessCredit === 0 &&
+        item.transferred_to_dealer !== true
+      ) {
         return [];
       }
       if (
@@ -141,6 +149,12 @@ export const form8936ScheduleAPdf: PdfFormDescriptor = {
             new_tentative_credit: passesIncome &&
                 item.acquired_for_use_not_resale
               ? Math.min(item.credit_amount ?? 0, 7_500)
+              : undefined,
+            new_business_use_pct: businessCredit > 0
+              ? `${(businessUsePercentage(item) * 100).toFixed(2)}%`
+              : undefined,
+            new_business_credit: businessCredit > 0
+              ? businessCredit
               : undefined,
             new_personal_credit: personalCredit > 0
               ? personalCredit

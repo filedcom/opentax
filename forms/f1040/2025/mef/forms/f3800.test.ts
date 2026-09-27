@@ -93,6 +93,75 @@ Deno.test("Form 3800 descriptor stays empty without credit and rejects legacy gr
   );
 });
 
+Deno.test("Form 3800 links Form 8936 business-use credit to line 1y", () => {
+  const vehicle = {
+    vin: "1HGCM82633A004352",
+    vehicle_year: 2025,
+    vehicle_make: "Example",
+    vehicle_model: "EV",
+    acquisition_date: "2025-09-30",
+    placed_in_service_date: "2025-09-30",
+    seller_report_received: true,
+    transferred_to_dealer: false,
+    resold_within_30_days: false,
+    acquired_for_use_not_resale: true,
+    is_new_vehicle: true,
+    credit_amount: 7_500,
+    msrp: 45_000,
+    vehicle_type: "other" as const,
+    business_credit_subject_to_passive_activity_limit: false,
+    business_use: {
+      kind: "mileage" as const,
+      business_miles: 250,
+      commuting_miles: 0,
+      total_miles: 1_000,
+      months_in_business_use: 12,
+    },
+  };
+  const source = {
+    current_year_magi: { adjusted_gross_income: 50_000 },
+    prior_year_magi: { adjusted_gross_income: 48_000 },
+    filing_status: FilingStatus.Single,
+    prior_year_filing_status: FilingStatus.Single,
+    f8936s: [vehicle],
+  };
+  const businessTax = { ...tax, standardCredit: 1_875 };
+  const fields = {
+    f8936_new_vehicle_credit: {
+      credit_amount: 1_875,
+      subject_to_passive_activity_limit: false,
+    },
+    tax_context: businessTax,
+    allowed_credit: 1_875,
+  };
+  const context = {
+    pending: { ...filedPending(businessTax, 1_875), f8936: source },
+    documentIdsByPendingKey: {
+      f8936: ["IRS8936_1"],
+      form6251: ["IRS6251_1"],
+    },
+  };
+  const xml = form3800.build(fields, context);
+  assertStringIncludes(xml, "<Form8936PartIICYCreditsGrp");
+  assertStringIncludes(xml, 'referenceDocumentId="IRS8936_1"');
+  assertStringIncludes(
+    xml,
+    "<CurrentYearCreditAllowedAmt>1875</CurrentYearCreditAllowedAmt>",
+  );
+  assertThrows(
+    () =>
+      form3800.build({
+        ...fields,
+        f8936_new_vehicle_credit: {
+          ...fields.f8936_new_vehicle_credit,
+          credit_amount: 1_874,
+        },
+      }, context),
+    Error,
+    "does not reconcile",
+  );
+});
+
 Deno.test("Form 3800 links and limits a nonpassive Form 5884 line 4b credit", () => {
   const source = {
     subject_to_passive_activity_limit: false,
@@ -144,6 +213,7 @@ Deno.test("Form 3800 links and limits a nonpassive Form 5884 line 4b credit", ()
     documentIdsByPendingKey: {
       f5884: ["IRS5884_1"],
       f8835: [],
+      f8936: ["IRS8936_1"],
     },
   };
   const xml = form3800.build(fields, context);

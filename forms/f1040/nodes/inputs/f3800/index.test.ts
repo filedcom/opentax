@@ -86,6 +86,35 @@ Deno.test("f3800: Form 5884 specified credit waits for the shared limit", () => 
   );
 });
 
+Deno.test("f3800: new clean vehicle business credit enters the ordinary limit", () => {
+  const result = f3800.compute({ taxYear: 2025, formType: "f1040" }, {
+    f8936_new_vehicle_credit: {
+      credit_amount: 1_875,
+      subject_to_passive_activity_limit: false,
+    },
+  });
+  assertEquals(fieldsOf(result.outputs, f1040)?.form3800_source_credits, {
+    standardCredit: 1_875,
+    specifiedCredit: 0,
+  });
+  assertEquals(fieldsOf(result.outputs, form6251)?.must_file_for_gbc, true);
+  assertEquals(
+    fieldsOf(result.outputs, schedule3)?.line6a_general_business_credit,
+    undefined,
+  );
+  assertThrows(
+    () =>
+      f3800.compute({ taxYear: 2025, formType: "f1040" }, {
+        f8936_new_vehicle_credit: {
+          credit_amount: 1_875,
+          subject_to_passive_activity_limit: true,
+        },
+      }),
+    Error,
+    "8582-CR",
+  );
+});
+
 Deno.test("f3800: rejects transferred credit larger than its source credit", () => {
   assertThrows(() =>
     f3800.compute({ taxYear: 2025, formType: "f1040" }, {
