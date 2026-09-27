@@ -22,7 +22,7 @@ const certifications = {
 const activityContext = {
   claimant_context: "business",
   additional_activities: [],
-  primary_activity_has_most_qualified_fuel_usage: true,
+  primary_activity_has_most_credit: true,
 };
 
 Deno.test("Form 4136 PDF maps page 1 business and page 4 total widgets", () => {

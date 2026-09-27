@@ -215,14 +215,14 @@ const businessInputSchema = z.object({
   business: businessSchema,
   claims: z.array(fuelClaimSchema).min(1),
   additional_activities: z.array(activitySchema),
-  primary_activity_has_most_qualified_fuel_usage: z.literal(true),
+  primary_activity_has_most_credit: z.literal(true),
 });
 
 const homeKeroseneInputSchema = z.object({
   claimant_context: z.literal("home_kerosene"),
   business: z.never().optional(),
   additional_activities: z.never().optional(),
-  primary_activity_has_most_qualified_fuel_usage: z.never().optional(),
+  primary_activity_has_most_credit: z.never().optional(),
   claimant_is_ultimate_purchaser: z.literal(true),
   home_purchase_outside_blocked_pump: z.literal(true),
   home_use_heating_lighting_or_cooking: z.literal(true),
@@ -262,6 +262,24 @@ export const inputSchema = z.discriminatedUnion("claimant_context", [
     { claims: input.claims },
     ...input.additional_activities,
   ];
+  const primaryCreditCents = input.claims.reduce(
+    (sum, claim) => sum + form4136ClaimCreditCents(claim),
+    0,
+  );
+  input.additional_activities.forEach((activity, index) => {
+    const activityCreditCents = activity.claims.reduce(
+      (sum, claim) => sum + form4136ClaimCreditCents(claim),
+      0,
+    );
+    if (activityCreditCents > primaryCreditCents) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "Form 4136 Part I must identify the business activity generating the most credit",
+        path: ["additional_activities", index, "claims"],
+      });
+    }
+  });
   activities.forEach((activity, activityIndex) => {
     activity.claims.forEach((claim, claimIndex) => {
       const previousUnit = unitsByLine.get(claim.line);

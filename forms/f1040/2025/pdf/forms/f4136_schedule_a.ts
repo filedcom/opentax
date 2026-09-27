@@ -149,7 +149,7 @@ export const form4136ScheduleAPdf: PdfFormDescriptor = {
           ...activity,
           claimant_context: "business",
           additional_activities: [],
-          primary_activity_has_most_qualified_fuel_usage: true,
+          primary_activity_has_most_credit: true,
         })
       ),
     };

@@ -9,7 +9,7 @@ const certifications = {
 const activityContext = {
   claimant_context: "business" as const,
   additional_activities: [],
-  primary_activity_has_most_qualified_fuel_usage: true as const,
+  primary_activity_has_most_credit: true as const,
 };
 
 const fields = {
