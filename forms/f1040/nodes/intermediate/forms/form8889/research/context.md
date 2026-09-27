@@ -59,17 +59,28 @@ is `IRS8889.xsd` in the TY2025 v5.4 schema bundle.
   prior qualified HSA funding distribution after confirmation that death or
   disability does not excuse the testing-period failure. It sums lines 18 and 19
   into line 20 for Schedule 1 line 8f and computes line 21 at 10% for Schedule 2
-  line 17d. Prior-year source amounts are entered and identified, not
-  independently authenticated or reconstructed from the prior return.
+  line 17d. A positive line 19 now also needs all twelve 2025 monthly
+  eligible-HDHP facts and dated trustee-transfer evidence. For 2024 transfers,
+  the evidence total must equal filed 2024 Form 8889 line 10, and the taxpayer
+  must affirm continuous eligibility through 2024 year-end. For 2025 transfers,
+  the evidence must exactly match Part I's sourced line 10 transfers. The node
+  uses the first ineligible 2025 month to include only transfers whose testing
+  period is still open. The
+  [2025 Form 8889 instructions](https://www.irs.gov/instructions/i8889) define
+  each transfer's testing period as the transfer month through the last day of
+  the twelfth following month. This is reconciliation of supplied facts, not
+  authentication of the filed prior return or trustee confirmation. The separate
+  line 18 last-month-rule excess is still an identified input rather than
+  reconstructed from the prior return.
 - The tax node self-emits calculated print lines. Native MeF and PDF builders
   consume those same fields. The MeF form requires the primary beneficiary's
   SSN; a spouse's separate HSA form is not inferred from a joint filing.
 
 ## Still open
 
-The later-year last-month-rule testing-period ledger, evidence for monthly
-eligibility (including Medicare and other disqualifying coverage), source
-verification of the spouse allocation, separate spouse forms, source
+The later-year last-month-rule testing-period ledger, independent evidence for
+monthly eligibility (including Medicare and other disqualifying coverage),
+source verification of the spouse allocation, separate spouse forms, source
 classification of taxable distributions by exception, second qualified funding
 distributions, source authentication of employer contribution-year adjustments,
 withdrawals of prior-year excess, 2026 reporting of a post-year timely employer

@@ -132,10 +132,107 @@ export const inputSchema = z.object({
     qualified_funding_distribution_amount: z.number().nonnegative(),
     not_death_or_disability: z.literal(true),
     prior_year_source: z.string().trim().min(1),
+    // Required when line 19 is positive. Prior-year transfers reconcile to
+    // the filed Form 8889 line 10; current-year transfers reconcile to Part I.
+    qualified_funding_transfer_evidence: z.object({
+      transfer_year: z.number().int(),
+      transfers: z.array(z.object({
+        amount: z.number().positive(),
+        transfer_month: z.number().int().min(1).max(12),
+        source_reference: z.string().trim().min(1),
+      })).min(1).max(2),
+      filed_prior_year_form8889_line10: z.number().positive().optional(),
+      eligible_through_prior_year_end: z.literal(true).optional(),
+    }).optional(),
   }).optional(),
 }).strict();
 
 type Form8889Input = z.infer<typeof inputSchema>;
+
+function verifyFundingTestingPeriod(
+  input: Form8889Input,
+  taxYear: number,
+): void {
+  const failure = input.testing_period_failure;
+  if (!failure) return;
+  const claimed = failure.qualified_funding_distribution_amount;
+  const evidence = failure.qualified_funding_transfer_evidence;
+  if (claimed === 0) {
+    if (evidence) {
+      throw new Error(
+        "Form 8889 funding-transfer evidence requires a positive Part III line 19 amount",
+      );
+    }
+    return;
+  }
+  const coverage = input.eligible_hdhp_coverage_by_month;
+  if (!evidence || !coverage) {
+    throw new Error(
+      "Form 8889 Part III line 19 needs transfer evidence and twelve months of HDHP eligibility",
+    );
+  }
+  const priorYear = evidence.transfer_year === taxYear - 1;
+  if (!priorYear && evidence.transfer_year !== taxYear) {
+    throw new Error(
+      "Form 8889 Part III line 19 transfer must be from the current or preceding tax year",
+    );
+  }
+  const sourceTotal = evidence.transfers.reduce(
+    (sum, transfer) => sum + transfer.amount,
+    0,
+  );
+  if (priorYear) {
+    if (
+      input.qualified_hsa_funding_distributions ||
+      evidence.filed_prior_year_form8889_line10 !== sourceTotal ||
+      evidence.eligible_through_prior_year_end !== true
+    ) {
+      throw new Error(
+        "Form 8889 prior-year funding transfers need filed line 10, uninterrupted prior-year eligibility, and no later lifetime transfer",
+      );
+    }
+  } else {
+    const current = input.qualified_hsa_funding_distributions?.transfers;
+    if (
+      evidence.filed_prior_year_form8889_line10 !== undefined ||
+      evidence.eligible_through_prior_year_end !== undefined ||
+      current?.length !== evidence.transfers.length ||
+      !evidence.transfers.every((transfer) =>
+        current?.some((source) =>
+          source.amount === transfer.amount &&
+          source.transfer_month === transfer.transfer_month &&
+          source.source_reference === transfer.source_reference
+        )
+      )
+    ) {
+      throw new Error(
+        "Form 8889 current-year Part III transfers must match the sourced Part I line 10 transfers",
+      );
+    }
+  }
+  const references = evidence.transfers.map((transfer) =>
+    transfer.source_reference
+  );
+  if (new Set(references).size !== references.length) {
+    throw new Error(
+      "Form 8889 Part III transfer evidence needs distinct trustee sources",
+    );
+  }
+  const failedAmount = evidence.transfers.reduce((sum, transfer) => {
+    const firstTestingMonth = priorYear ? 1 : transfer.transfer_month;
+    const finalTestingMonth = priorYear ? transfer.transfer_month : 12;
+    const firstIneligible = coverage.findIndex((month, index) =>
+      index + 1 >= firstTestingMonth &&
+      index + 1 <= finalTestingMonth && month === null
+    );
+    return sum + (firstIneligible >= 0 ? transfer.amount : 0);
+  }, 0);
+  if (failedAmount !== claimed) {
+    throw new Error(
+      "Form 8889 Part III line 19 must equal transfers whose testing periods failed in this tax year",
+    );
+  }
+}
 
 // ─── Pure Helper Functions ────────────────────────────────────────────────────
 
@@ -499,6 +596,7 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
+    verifyFundingTestingPeriod(input, ctx.taxYear);
     if (
       (input.prior_year_hsa_excess?.form5329_line49 ?? 0) > 0 &&
       (input.prior_year_hsa_excess?.form5329_line48 ?? 0) === 0

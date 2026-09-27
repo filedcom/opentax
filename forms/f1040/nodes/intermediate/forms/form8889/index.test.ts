@@ -950,12 +950,23 @@ Deno.test("combined: deduction + non-qualified distribution both present", () =>
 
 Deno.test("part3: prior-year testing-period failure reaches Schedule 1 line 8f and Schedule 2 line 17d", () => {
   const result = compute({
+    eligible_hdhp_coverage_by_month: Array(12).fill(null),
     testing_period_failure: {
       last_month_rule_excess_amount: 1200,
       qualified_funding_distribution_amount: 800,
       not_death_or_disability: true,
       prior_year_source:
         "2024 Form 8889 line 3 worksheet and IRA-to-HSA transfer",
+      qualified_funding_transfer_evidence: {
+        transfer_year: 2024,
+        transfers: [{
+          amount: 800,
+          transfer_month: 6,
+          source_reference: "2024 IRA trustee transfer confirmation",
+        }],
+        filed_prior_year_form8889_line10: 800,
+        eligible_through_prior_year_end: true,
+      },
     },
   });
   assertEquals(fieldsOf(result.outputs, schedule1)?.line8f_hsa_income, 2000);
@@ -967,6 +978,124 @@ Deno.test("part3: prior-year testing-period failure reaches Schedule 1 line 8f a
   assertEquals(findOutput(result, "form8889")?.fields.print_line19, 800);
   assertEquals(findOutput(result, "form8889")?.fields.print_line20, 2000);
   assertEquals(findOutput(result, "form8889")?.fields.print_line21, 200);
+});
+
+Deno.test("part3: only prior-year transfers still in testing on first ineligible month reach line 19", () => {
+  const result = compute({
+    eligible_hdhp_coverage_by_month: [
+      ...Array(5).fill(CoverageType.Family),
+      null,
+      ...Array(6).fill(null),
+    ],
+    testing_period_failure: {
+      last_month_rule_excess_amount: 0,
+      qualified_funding_distribution_amount: 1_000,
+      not_death_or_disability: true,
+      prior_year_source: "Filed 2024 Form 8889 line 10",
+      qualified_funding_transfer_evidence: {
+        transfer_year: 2024,
+        transfers: [
+          {
+            amount: 500,
+            transfer_month: 3,
+            source_reference: "March 2024 IRA trustee confirmation",
+          },
+          {
+            amount: 1_000,
+            transfer_month: 8,
+            source_reference: "August 2024 IRA trustee confirmation",
+          },
+        ],
+        filed_prior_year_form8889_line10: 1_500,
+        eligible_through_prior_year_end: true,
+      },
+    },
+  });
+  assertEquals(findOutput(result, "form8889")?.fields.print_line19, 1_000);
+  assertEquals(fieldsOf(result.outputs, schedule1)?.line8f_hsa_income, 1_000);
+});
+
+Deno.test("part3: expired prior-year transfer cannot be recaptured on line 19", () => {
+  assertThrows(
+    () =>
+      compute({
+        eligible_hdhp_coverage_by_month: [
+          ...Array(6).fill(CoverageType.SelfOnly),
+          ...Array(6).fill(null),
+        ],
+        testing_period_failure: {
+          last_month_rule_excess_amount: 0,
+          qualified_funding_distribution_amount: 800,
+          not_death_or_disability: true,
+          prior_year_source: "Filed 2024 Form 8889 line 10",
+          qualified_funding_transfer_evidence: {
+            transfer_year: 2024,
+            transfers: [{
+              amount: 800,
+              transfer_month: 3,
+              source_reference: "March 2024 IRA trustee confirmation",
+            }],
+            filed_prior_year_form8889_line10: 800,
+            eligible_through_prior_year_end: true,
+          },
+        },
+      }),
+    Error,
+    "must equal transfers whose testing periods failed",
+  );
+});
+
+Deno.test("part3: a positive line 19 cannot use only a free-text source", () => {
+  assertThrows(
+    () =>
+      compute({
+        testing_period_failure: {
+          last_month_rule_excess_amount: 0,
+          qualified_funding_distribution_amount: 800,
+          not_death_or_disability: true,
+          prior_year_source: "IRA transfer",
+        },
+      }),
+    Error,
+    "needs transfer evidence and twelve months of HDHP eligibility",
+  );
+});
+
+Deno.test("part3: current-year line 19 must match the Part I funding transfer", () => {
+  const sourceReference = "March 2025 Roth IRA trustee confirmation";
+  const result = compute({
+    ...uniformSelfOnly,
+    eligible_hdhp_coverage_by_month: [
+      ...Array(6).fill(CoverageType.SelfOnly),
+      ...Array(6).fill(null),
+    ],
+    qualified_hsa_funding_distributions: {
+      no_prior_qualified_funding_distribution: true,
+      transfers: [{
+        amount: 1_000,
+        transfer_month: 3,
+        ira_type: "roth",
+        direct_trustee_transfer: true,
+        source_reference: sourceReference,
+      }],
+    },
+    testing_period_failure: {
+      last_month_rule_excess_amount: 0,
+      qualified_funding_distribution_amount: 1_000,
+      not_death_or_disability: true,
+      prior_year_source: sourceReference,
+      qualified_funding_transfer_evidence: {
+        transfer_year: 2025,
+        transfers: [{
+          amount: 1_000,
+          transfer_month: 3,
+          source_reference: sourceReference,
+        }],
+      },
+    },
+  });
+  assertEquals(findOutput(result, "form8889")?.fields.print_line10, 1_000);
+  assertEquals(findOutput(result, "form8889")?.fields.print_line19, 1_000);
 });
 
 Deno.test("part3: distribution and testing-period income share line 8f but keep both taxes", () => {
