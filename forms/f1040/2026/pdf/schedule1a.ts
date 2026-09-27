@@ -13,6 +13,7 @@ const pinnedDraft = new URL(
 const pinnedDraftSha256 =
   "e22aec7feb2f5b734e16ee74d70acfdfdc0d66a5292f69cf0ced3b87543d95ac";
 const p1 = "form1[0].Page1[0].";
+const p2 = "form1[0].Page2[0].";
 const p3 = "form1[0].Page3[0].";
 
 const tipSourceSchema = z.object({
@@ -35,6 +36,14 @@ const printSchema = z.object({
   taxpayer_age_65_or_older: z.boolean().optional(),
   spouse_age_65_or_older: z.boolean().optional(),
   qualified_employee_tip_sources_2026: z.array(tipSourceSchema).optional(),
+  qualified_employee_overtime: z.array(z.object({
+    employee_ssn: z.string(),
+    amount: z.number().finite().nonnegative(),
+    employer_name: z.string().optional(),
+    employer_ein: z.string().optional(),
+  })).optional(),
+  taxpayer_non_w2_qualified_overtime_compensation: z.number().optional(),
+  spouse_non_w2_qualified_overtime_compensation: z.number().optional(),
   magi: z.number().finite(),
   line15_qualified_tips: z.number().finite().nonnegative(),
   line27_qualified_overtime: z.number().finite().nonnegative(),
@@ -137,6 +146,78 @@ async function appendTipContinuation(
   }
 }
 
+async function appendOvertimeContinuation(
+  document: PDFDocument,
+  rows: readonly {
+    employer_name?: string;
+    employer_ein?: string;
+    amount: number;
+  }[],
+  filer: { name: string; ssn: string },
+  total: number,
+): Promise<void> {
+  const extra = rows.slice(5);
+  if (extra.length === 0) return;
+  const regular = await document.embedFont(StandardFonts.Helvetica);
+  const bold = await document.embedFont(StandardFonts.HelveticaBold);
+  for (let offset = 0; offset < extra.length; offset += 29) {
+    const sheet = document.addPage([612, 792]);
+    sheet.drawText("Schedule 1-A (2026) - line 16 overtime continuation", {
+      x: 36,
+      y: 748,
+      size: 11,
+      font: bold,
+    });
+    sheet.drawText(`Name: ${filer.name}    SSN: ${filer.ssn}`, {
+      x: 36,
+      y: 728,
+      size: 9,
+      font: regular,
+    });
+    for (
+      const [label, x] of [
+        ["Employer", 36],
+        ["EIN", 380],
+        ["W-2 code TT", 500],
+      ] as const
+    ) {
+      sheet.drawText(label, { x, y: 694, size: 8, font: bold });
+    }
+    for (const [index, row] of extra.slice(offset, offset + 29).entries()) {
+      const y = 674 - index * 19;
+      const name = row.employer_name!;
+      const size = Math.min(
+        9,
+        9 * 330 / regular.widthOfTextAtSize(name, 9),
+      );
+      if (size < 6) {
+        throw new Error(
+          "TY2026 Schedule 1-A overtime employer name is too long",
+        );
+      }
+      sheet.drawText(name, { x: 36, y, size, font: regular });
+      sheet.drawText(row.employer_ein!, {
+        x: 380,
+        y,
+        size: 8,
+        font: regular,
+      });
+      sheet.drawText(String(Math.round(row.amount)), {
+        x: 500,
+        y,
+        size: 8,
+        font: regular,
+      });
+    }
+    sheet.drawText(`Line 17 total, all employers: ${Math.round(total)}`, {
+      x: 36,
+      y: 78,
+      size: 9,
+      font: bold,
+    });
+  }
+}
+
 /** Current filed 2026 Schedule 1-A PDF slice: employee tips and seniors. */
 export async function buildSchedule1APdfBytes2026(
   rawFields: Record<string, unknown>,
@@ -148,11 +229,17 @@ export async function buildSchedule1APdfBytes2026(
     throw new Error("TY2026 Schedule 1-A PDF needs filer name and SSN");
   }
   if (
-    fields.line27_qualified_overtime > 0 ||
     fields.line36_vehicle_loan_interest > 0
   ) {
+    throw new Error("TY2026 Schedule 1-A PDF needs vehicle row details");
+  }
+  if (
+    fields.line27_qualified_overtime > 0 &&
+    ((fields.taxpayer_non_w2_qualified_overtime_compensation ?? 0) > 0 ||
+      (fields.spouse_non_w2_qualified_overtime_compensation ?? 0) > 0)
+  ) {
     throw new Error(
-      "TY2026 Schedule 1-A PDF needs overtime or vehicle row details",
+      "TY2026 Schedule 1-A PDF needs non-W-2 overtime business and payer details",
     );
   }
   const agi = amount(f1040, "line11b_agi");
@@ -178,6 +265,33 @@ export async function buildSchedule1APdfBytes2026(
   const tipsQuotient = Math.floor(tipsExcess / 1_000);
   const tipReduction = tipsQuotient * 100;
   const expectedTips = Math.max(0, line9 - tipReduction);
+  const overtime = (fields.qualified_employee_overtime ?? []).filter((row) => {
+    const employee = row.employee_ssn.replaceAll("-", "");
+    if (employee === fields.taxpayer_ssn.replaceAll("-", "")) {
+      return fields.taxpayer_has_valid_ssn;
+    }
+    if (
+      fields.filing_status === FilingStatus.MFJ && fields.spouse_ssn &&
+      employee === fields.spouse_ssn.replaceAll("-", "")
+    ) return fields.spouse_has_valid_ssn;
+    throw new Error("TY2026 Schedule 1-A overtime employee SSN is unmatched");
+  });
+  if (
+    fields.line27_qualified_overtime > 0 &&
+    overtime.some((row) =>
+      !row.employer_name?.trim() || !row.employer_ein?.trim()
+    )
+  ) {
+    throw new Error(
+      "TY2026 Schedule 1-A PDF needs W-2 overtime employer identity",
+    );
+  }
+  const overtimeTotal = overtime.reduce((sum, row) => sum + row.amount, 0);
+  const overtimeCap = fields.filing_status === FilingStatus.MFJ
+    ? 25_000
+    : 12_500;
+  const overtimeLimited = Math.min(overtimeTotal, overtimeCap);
+  const expectedOvertime = Math.max(0, overtimeLimited - tipReduction);
   const taxpayerSenior = fields.taxpayer_age_65_or_older === true &&
     fields.taxpayer_has_valid_ssn;
   const spouseSenior = fields.filing_status === FilingStatus.MFJ &&
@@ -192,8 +306,9 @@ export async function buildSchedule1APdfBytes2026(
     (Number(taxpayerSenior) + Number(spouseSenior));
   if (
     expectedTips !== fields.line15_qualified_tips ||
+    expectedOvertime !== fields.line27_qualified_overtime ||
     expectedSenior !== fields.line43_enhanced_senior ||
-    expectedTips + expectedSenior !==
+    expectedTips + expectedOvertime + expectedSenior !==
       fields.line44_total_additional_deductions ||
     fields.line44_total_additional_deductions !==
       amount(f1040, "line13a_schedule1a")
@@ -242,6 +357,41 @@ export async function buildSchedule1APdfBytes2026(
   for (const [number, value] of tipLines) {
     if (line5 > 0) fill(form, `${p1}f1_${number}[0]`, value);
   }
+  if (fields.line27_qualified_overtime > 0) {
+    for (const [index, row] of overtime.slice(0, 5).entries()) {
+      const base = 1 + index * 3;
+      const prefix = `${p2}Table_Line16[0].Row16${"abcde"[index]}[0].`;
+      fill(
+        form,
+        `${prefix}f2_${String(base).padStart(2, "0")}[0]`,
+        row.employer_name,
+      );
+      fill(
+        form,
+        `${prefix}f2_${String(base + 1).padStart(2, "0")}[0]`,
+        row.employer_ein,
+      );
+      fill(
+        form,
+        `${prefix}f2_${String(base + 2).padStart(2, "0")}[0]`,
+        row.amount,
+      );
+    }
+    const overtimeLines: readonly (readonly [number, number])[] = [
+      [16, overtimeTotal],
+      [38, overtimeTotal],
+      [39, overtimeLimited],
+      [40, fields.magi],
+      [41, tipsThreshold],
+      [42, tipsExcess],
+      [43, tipsQuotient],
+      [44, tipReduction],
+      [45, expectedOvertime],
+    ];
+    for (const [number, value] of overtimeLines) {
+      fill(form, `${p2}f2_${String(number).padStart(2, "0")}[0]`, value);
+    }
+  }
   if (expectedSenior > 0) {
     const seniorLines: readonly (readonly [number, number])[] = [
       [15, fields.magi],
@@ -264,5 +414,8 @@ export async function buildSchedule1APdfBytes2026(
   const pages = await document.copyPages(draft, [1, 2, 3]);
   for (const page of pages) document.addPage(page);
   await appendTipContinuation(document, tips, filer, line5);
+  if (fields.line27_qualified_overtime > 0) {
+    await appendOvertimeContinuation(document, overtime, filer, overtimeTotal);
+  }
   return document.save();
 }

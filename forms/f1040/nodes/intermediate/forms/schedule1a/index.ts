@@ -50,6 +50,8 @@ export const inputSchema = claimInputSchema.extend({
   qualified_employee_overtime: z.array(z.object({
     employee_ssn: z.string(),
     amount: z.number().nonnegative(),
+    employer_name: z.string().optional(),
+    employer_ein: z.string().optional(),
   })).optional(),
   magi: z.number().optional(),
   filing_status: z.nativeEnum(FilingStatus).optional(),

@@ -496,7 +496,12 @@ function qualifiedOvertimeOutput(w2s: W2Items, taxYear: number): NodeOutput[] {
     if (!item.employee_ssn) {
       throw new Error("W-2 code TT needs employee SSN");
     }
-    return [{ employee_ssn: item.employee_ssn, amount }];
+    return [{
+      employee_ssn: item.employee_ssn,
+      amount,
+      employer_name: item.employer_name,
+      employer_ein: item.employer_ein,
+    }];
   });
   return overtime.length > 0
     ? [output(schedule1a, { qualified_employee_overtime: overtime })]

@@ -146,3 +146,21 @@ Deno.test("TY2026 PDF boundary includes Schedule 1-A senior deduction", async ()
   const pdf = await PDFDocument.load(await buildPdfBytes2026(result.pending));
   assertEquals(pdf.getPageCount(), 5);
 });
+
+Deno.test("TY2026 PDF boundary includes Schedule 1-A W-2 overtime", async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: filer,
+    w2: [{
+      employee_ssn: "111223333",
+      employer_ein: "12-3456789",
+      employer_name: "CAFE",
+      box1_wages: 80_000,
+      box2_fed_withheld: 8_000,
+      box12_entries: [{ code: "TT", amount: 5_000 }],
+    }],
+  }, { taxYear: 2026, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule1a.line27_qualified_overtime, 5_000);
+  const pdf = await PDFDocument.load(await buildPdfBytes2026(result.pending));
+  assertEquals(pdf.getPageCount(), 5);
+});

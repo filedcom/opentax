@@ -150,7 +150,12 @@ Deno.test("TY2026 W-2 codes TP and TT route reported tips and overtime", () => {
     .flatMap((item) =>
       (item.fields.qualified_employee_overtime ?? []) as unknown[]
     );
-  assertEquals(overtime, [{ employee_ssn: "111223333", amount: 2_000 }]);
+  assertEquals(overtime, [{
+    employee_ssn: "111223333",
+    amount: 2_000,
+    employer_name: "CAFE",
+    employer_ein: "12-3456789",
+  }]);
 });
 
 Deno.test("TY2026 W-2 employment and parachute tax use Schedule 2 filed lines", () => {
