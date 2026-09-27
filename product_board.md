@@ -1142,8 +1142,9 @@ from each of two distinct hypothetical returns, derives eligible tax, allocates
 it across all positive-gain properties before selecting deferred properties,
 and emits unregistered Section D, Section C column (g), and native per-property
 allocation XML. The document IDs, security, agent, and waiver confirmations are
-source assertions; the hypothetical return PDFs, agreement copy, original
-mailing, and IRS acceptance are not authenticated or attached. A separate
+source assertions; the hypothetical return PDFs and agreement copy can now be
+attached in the registered bundle, but their content, original mailing, and
+IRS acceptance are not authenticated. A separate
 annual input and Part III XML builder now represent prior deferred
 properties, 2025 dispositions, and eligible-compensation and nongrantor-trust
 distributions. It rejects unsupported pre-June-17-2008 dates and more than
@@ -1152,7 +1153,13 @@ reporting, and payment evidence remain entered source assertions. A registered
 annual node and MeF descriptor now file the no-disposition, no-distribution
 certification only; events needing return reporting or payment evidence still
 reject filing. Its graph, full-return, and local XSD cases are written but
-unrun. Identified
+unrun. An annual deferred-property disposition now has separate actual-sale,
+full-disposition, deferred-tax, interest, payment-date, and receipt-filename
+facts. For a disposition reported on Form 8949, a written one-to-one check
+matches the filed transaction ID, sale date, proceeds, basis, adjustments,
+gain, and term flag; it is unrun. Annual events still reject at the registered
+filing gate until their payment attachment and remaining source routes are
+connected. Identified
 Form 8949 transactions now retain a source ID through calculation and MeF
 pending data. The unregistered initial bundle now checks the Form 8949 MeF
 filing rows, rather than a separate raw source, and requires a one-to-one match for
@@ -1201,9 +1208,10 @@ are present and readable.
 Local IRS8854 XSD cases for the unregistered initial and annual roots are
 written but unrun. Both root builders now leave `documentId` to the return
 assembler, and the initial builder accepts only IDs for linked native and
-binary documents. Registration still requires generating those IDs from the
-actual document set and proving its native statements and binary attachments
-are emitted. The initial builder now exposes an ID-independent, stable native
+binary documents. The registered bundle now generates those IDs from the
+actual document set and links its native statements and named binary
+attachments; the cases are written but unrun. The initial builder now exposes
+an ID-independent, stable native
 statement set for the assembler's first document-discovery pass, with its
 written case unrun. Its discovery order now follows the native Form 8854
 statement roots in ReturnData1040.xsd; the multi-statement order case is

@@ -117,6 +117,9 @@ shared filing-scope check and has a source-graph-to-return case written, unrun.
 Its Section D PDF references now use source filenames and assembler IDs, not
 hand-entered IDs; bundle, graph, and missing-file cases are written, unrun. The original
 agreement mailing and PDF tax calculations remain unverified assertions.
+Annual deferred-property sale inputs now carry actual Form 8949 sale facts and
+deferred-tax-plus-interest payment evidence, with a one-to-one filed-row
+reconciliation written but unrun. Annual events still reject at the filing gate.
 The `f8854` row has a registered initial `IRS8854` serializer for
 noncovered and Form 8949-only covered cases, including linked native statements,
 and a separate annual no-activity serializer. Other covered initial cases and

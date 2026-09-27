@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { dateSchema, ExpatriateType, partISchema } from "./index.ts";
+import { ReportedFormCode } from "./section-c.ts";
 
 const documentId = z.string().regex(/^[A-Za-z0-9:.\-]{1,30}$/);
 const dollars = z.number().int().nonnegative().refine(
@@ -48,12 +49,56 @@ const deferredPropertySchema = z.object({
     z.object({ disposed_in_2025: z.literal(false) }).strict(),
     z.object({
       disposed_in_2025: z.literal(true),
+      entire_deferred_property_disposed_confirmed: z.literal(true),
       disposition_date: annualDate,
+      reported_form_code: z.nativeEnum(ReportedFormCode),
       reported_transaction_id: z.string().trim().min(1),
-      deferred_tax_and_interest_payment_document_id: documentId,
+      actual_sale_proceeds: dollars,
+      adjusted_basis_at_disposition: dollars,
+      actual_sale_adjustment_codes: z.string().trim().min(1).optional(),
+      actual_sale_adjustment_amount: z.number().int().refine(
+        Number.isSafeInteger,
+      ).optional(),
+      deferred_tax_paid_amount: positiveDollars,
+      interest_paid_amount: positiveCents,
+      payment_date: dateSchema,
+      payment_by_unextended_due_date_confirmed: z.literal(true),
+      payment_confirmation_attachment_file_name: z.string().trim().min(1),
     }).strict(),
-  ]),
-}).strict();
+  ]).superRefine((disposition, ctx) => {
+    if (!disposition.disposed_in_2025) return;
+    if (
+      (disposition.actual_sale_adjustment_codes === undefined) !==
+        (disposition.actual_sale_adjustment_amount === undefined)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Annual Form 8854 sale adjustment needs both code and amount",
+        path: ["actual_sale_adjustment_amount"],
+      });
+    }
+    if (disposition.payment_date < disposition.disposition_date) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Deferred-tax payment cannot predate the disposition",
+        path: ["payment_date"],
+      });
+    }
+  }),
+}).strict().superRefine((property, ctx) => {
+  if (
+    property.disposition.disposed_in_2025 &&
+    property.disposition.deferred_tax_paid_amount !==
+      property.prior_deferred_tax_amount
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message:
+        "Fully disposed Form 8854 property must pay its prior deferred tax",
+      path: ["disposition", "deferred_tax_paid_amount"],
+    });
+  }
+});
 
 const annualItemSchema = z.object({
   item_id: z.string().trim().min(1),
@@ -134,6 +179,21 @@ export const annualInputSchema = z.object({
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: "Annual Form 8854 item IDs must be unique",
+      path: ["deferred_properties"],
+    });
+  }
+  const dispositionTransactionIds = input.deferred_properties.flatMap(
+    (property) =>
+      property.disposition.disposed_in_2025
+        ? [property.disposition.reported_transaction_id]
+        : [],
+  );
+  if (
+    new Set(dispositionTransactionIds).size !== dispositionTransactionIds.length
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Annual Form 8854 disposition transaction IDs must be unique",
       path: ["deferred_properties"],
     });
   }

@@ -5,7 +5,9 @@ import {
 } from "../../../2025/mef/forms/f8854_annual.ts";
 import { annualInputSchema } from "./annual.ts";
 import { f8854Annual } from "./annual_node.ts";
+import { reconcileAnnualForm8854Form8949Properties } from "./reconcile-annual-capital.ts";
 import { ExpatriateType } from "./index.ts";
+import { ReportedFormCode } from "./section-c.ts";
 
 function annualInput(overrides: Record<string, unknown> = {}) {
   return {
@@ -105,9 +107,17 @@ Deno.test("annual Form 8854 lists prior deferred property and 2025 distributions
       prior_deferred_tax_amount: 50_000,
       disposition: {
         disposed_in_2025: true,
+        entire_deferred_property_disposed_confirmed: true,
         disposition_date: "2025-05-20",
+        reported_form_code: ReportedFormCode.Form8949,
         reported_transaction_id: "TX-STOCK",
-        deferred_tax_and_interest_payment_document_id: "DOC-PAYMENT",
+        actual_sale_proceeds: 160_000,
+        adjusted_basis_at_disposition: 100_000,
+        deferred_tax_paid_amount: 50_000,
+        interest_paid_amount: 5_000,
+        payment_date: "2025-06-01",
+        payment_by_unextended_due_date_confirmed: true,
+        payment_confirmation_attachment_file_name: "deferred-tax-payment.pdf",
       },
     }],
     eligible_deferred_compensation_items: [{
@@ -145,6 +155,80 @@ Deno.test("annual Form 8854 lists prior deferred property and 2025 distributions
     "<NongrantorTrustDistriInd>true</NongrantorTrustDistriInd>",
   );
   assertEquals((xml.match(/<NongrantorTrustDistriDtl>/g) ?? []).length, 1);
+});
+
+Deno.test("annual Form 8854 disposition matches one filed Form 8949 sale and payment facts", () => {
+  const parsed = annualInputSchema.parse(annualInput({
+    deferred_properties: [{
+      item_id: "stock",
+      description: "Stock holding",
+      prior_form8854_document_id: "DOC-PRIOR",
+      prior_mark_to_market_gain_or_loss_amount: 111_000,
+      prior_deferred_tax_amount: 50_000,
+      disposition: {
+        disposed_in_2025: true,
+        entire_deferred_property_disposed_confirmed: true,
+        disposition_date: "2025-05-20",
+        reported_form_code: ReportedFormCode.Form8949,
+        reported_transaction_id: "TX-STOCK",
+        actual_sale_proceeds: 160_000,
+        adjusted_basis_at_disposition: 100_000,
+        deferred_tax_paid_amount: 50_000,
+        interest_paid_amount: 5_000,
+        payment_date: "2025-06-01",
+        payment_by_unextended_due_date_confirmed: true,
+        payment_confirmation_attachment_file_name: "deferred-tax-payment.pdf",
+      },
+    }],
+  }));
+  const transaction = {
+    part: "F",
+    description: "Stock holding",
+    source_transaction_id: "TX-STOCK",
+    date_acquired: "2020-01-01",
+    date_sold: "2025-05-20",
+    proceeds: 160_000,
+    cost_basis: 100_000,
+    gain_loss: 60_000,
+    is_long_term: true,
+  };
+  assertEquals(
+    reconcileAnnualForm8854Form8949Properties(parsed, [transaction]),
+    [{ itemId: "stock", transactionId: "TX-STOCK", gainOrLoss: 60_000 }],
+  );
+  for (
+    const bad of [
+      { ...transaction, date_sold: "2025-05-21" },
+      { ...transaction, date_acquired: "2025-05-21" },
+      { ...transaction, proceeds: 159_999 },
+      { ...transaction, gain_loss: 59_999 },
+      { ...transaction, is_long_term: false },
+    ]
+  ) {
+    assertThrows(() =>
+      reconcileAnnualForm8854Form8949Properties(parsed, [bad])
+    );
+  }
+  assertThrows(() =>
+    reconcileAnnualForm8854Form8949Properties(parsed, [
+      transaction,
+      transaction,
+    ])
+  );
+  assertThrows(() => reconcileAnnualForm8854Form8949Properties(parsed, []));
+  assertEquals(
+    annualInputSchema.safeParse({
+      ...parsed,
+      deferred_properties: [{
+        ...parsed.deferred_properties[0],
+        disposition: {
+          ...parsed.deferred_properties[0].disposition,
+          deferred_tax_paid_amount: 49_999,
+        },
+      }],
+    }).success,
+    false,
+  );
 });
 
 Deno.test("annual Form 8854 rejects missing obligations and unsupported years", () => {
