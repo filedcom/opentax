@@ -29,6 +29,14 @@ const vehicleLoanSchema = z.object({
   },
 );
 
+const nonW2OvertimeRow2026Schema = z.object({
+  recipient: z.enum(["taxpayer", "spouse"]),
+  business_name: z.string().trim().min(1),
+  business_ein: z.string().trim().min(1).optional(),
+  payer_tin: z.string().trim().min(1),
+  amount: z.number().finite().nonnegative(),
+}).strict();
+
 /** Fields a taxpayer supplies directly for Schedule 1-A. */
 export const claimInputSchema = z.object({
   taxpayer_qualified_overtime_compensation: z.number().nonnegative().optional(),
@@ -36,6 +44,8 @@ export const claimInputSchema = z.object({
   taxpayer_non_w2_qualified_overtime_compensation: z.number().nonnegative()
     .optional(),
   spouse_non_w2_qualified_overtime_compensation: z.number().nonnegative()
+    .optional(),
+  non_w2_qualified_overtime_rows_2026: z.array(nonW2OvertimeRow2026Schema)
     .optional(),
   vehicle_loans: z.array(vehicleLoanSchema).min(1).optional(),
 });
@@ -159,10 +169,22 @@ export function qualifiedOvertimeDeduction(
         "TY2026 overtime must distinguish W-2 code TT from non-W-2 compensation",
       );
     }
+    const rows = input.non_w2_qualified_overtime_rows_2026 ?? [];
+    if (
+      (input.taxpayer_non_w2_qualified_overtime_compensation ?? 0) > 0 &&
+        rows.some((row) => row.recipient === "taxpayer") ||
+      (input.spouse_non_w2_qualified_overtime_compensation ?? 0) > 0 &&
+        rows.some((row) => row.recipient === "spouse")
+    ) {
+      throw new Error(
+        "TY2026 non-W-2 overtime rows duplicate an amount-only claim",
+      );
+    }
   } else if (
     input.qualified_employee_overtime !== undefined ||
     input.taxpayer_non_w2_qualified_overtime_compensation !== undefined ||
-    input.spouse_non_w2_qualified_overtime_compensation !== undefined
+    input.spouse_non_w2_qualified_overtime_compensation !== undefined ||
+    input.non_w2_qualified_overtime_rows_2026 !== undefined
   ) {
     throw new Error("W-2 code TT and separated overtime require tax year 2026");
   }
@@ -198,13 +220,19 @@ export function qualifiedOvertimeDeduction(
   const taxpayerOvertime = input.taxpayer_has_valid_ssn === true
     ? taxYear === 2026
       ? taxpayerW2 +
-        (input.taxpayer_non_w2_qualified_overtime_compensation ?? 0)
+        (input.taxpayer_non_w2_qualified_overtime_compensation ?? 0) +
+        (input.non_w2_qualified_overtime_rows_2026 ?? []).filter((row) =>
+          row.recipient === "taxpayer"
+        ).reduce((sum, row) => sum + row.amount, 0)
       : input.taxpayer_qualified_overtime_compensation ?? 0
     : 0;
   const spouseOvertime = input.filing_status === FilingStatus.MFJ &&
       input.spouse_has_valid_ssn === true
     ? taxYear === 2026
-      ? spouseW2 + (input.spouse_non_w2_qualified_overtime_compensation ?? 0)
+      ? spouseW2 + (input.spouse_non_w2_qualified_overtime_compensation ?? 0) +
+        (input.non_w2_qualified_overtime_rows_2026 ?? []).filter((row) =>
+          row.recipient === "spouse"
+        ).reduce((sum, row) => sum + row.amount, 0)
       : input.spouse_qualified_overtime_compensation ?? 0
     : 0;
   const cap = input.filing_status === FilingStatus.MFJ

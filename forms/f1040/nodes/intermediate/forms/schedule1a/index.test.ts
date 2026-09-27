@@ -91,6 +91,39 @@ Deno.test("schedule1a: TY2026 combines W-2 code TT and separate non-W-2 overtime
   );
 });
 
+Deno.test("schedule1a: TY2026 non-W-2 overtime rows calculate once", () => {
+  const input = {
+    filing_status: FilingStatus.Single,
+    magi: 70_000,
+    taxpayer_ssn: TAXPAYER_SSN,
+    taxpayer_has_valid_ssn: true,
+    non_w2_qualified_overtime_rows_2026: [{
+      recipient: "taxpayer" as const,
+      business_name: "Consulting",
+      payer_tin: "12-3456789",
+      amount: 1_000,
+    }],
+  };
+  const result = schedule1a.compute(
+    { taxYear: 2026, formType: "f1040" },
+    input,
+  );
+  assertEquals(
+    result.outputs.find((item) => item.nodeType === "schedule1a")?.fields
+      .line27_qualified_overtime,
+    1_000,
+  );
+  assertThrows(
+    () =>
+      schedule1a.compute({ taxYear: 2026, formType: "f1040" }, {
+        ...input,
+        taxpayer_non_w2_qualified_overtime_compensation: 1_000,
+      }),
+    Error,
+    "duplicate an amount-only claim",
+  );
+});
+
 Deno.test("schedule1a: caps qualified tips at $25,000", () => {
   assertEquals(
     deduction({

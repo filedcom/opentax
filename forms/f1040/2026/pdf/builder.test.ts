@@ -164,3 +164,23 @@ Deno.test("TY2026 PDF boundary includes Schedule 1-A W-2 overtime", async () => 
   const pdf = await PDFDocument.load(await buildPdfBytes2026(result.pending));
   assertEquals(pdf.getPageCount(), 5);
 });
+
+Deno.test("TY2026 PDF boundary includes Schedule 1-A non-W-2 overtime", async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: filer,
+    w2: [{ box1_wages: 50_000, box2_fed_withheld: 5_000 }],
+    schedule1a: {
+      non_w2_qualified_overtime_rows_2026: [{
+        recipient: "taxpayer",
+        business_name: "Consulting",
+        business_ein: "12-3456789",
+        payer_tin: "98-7654321",
+        amount: 1_000,
+      }],
+    },
+  }, { taxYear: 2026, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule1a.line27_qualified_overtime, 1_000);
+  const pdf = await PDFDocument.load(await buildPdfBytes2026(result.pending));
+  assertEquals(pdf.getPageCount(), 5);
+});

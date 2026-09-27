@@ -44,6 +44,13 @@ const printSchema = z.object({
   })).optional(),
   taxpayer_non_w2_qualified_overtime_compensation: z.number().optional(),
   spouse_non_w2_qualified_overtime_compensation: z.number().optional(),
+  non_w2_qualified_overtime_rows_2026: z.array(z.object({
+    recipient: z.enum(["taxpayer", "spouse"]),
+    business_name: z.string().trim().min(1),
+    business_ein: z.string().optional(),
+    payer_tin: z.string().trim().min(1),
+    amount: z.number().finite().nonnegative(),
+  })).optional(),
   magi: z.number().finite(),
   line15_qualified_tips: z.number().finite().nonnegative(),
   line27_qualified_overtime: z.number().finite().nonnegative(),
@@ -218,6 +225,82 @@ async function appendOvertimeContinuation(
   }
 }
 
+async function appendNonW2OvertimeContinuation(
+  document: PDFDocument,
+  rows: readonly {
+    business_name: string;
+    business_ein?: string;
+    payer_tin: string;
+    amount: number;
+  }[],
+  filer: { name: string; ssn: string },
+  total: number,
+): Promise<void> {
+  const extra = rows.slice(5);
+  if (extra.length === 0) return;
+  const regular = await document.embedFont(StandardFonts.Helvetica);
+  const bold = await document.embedFont(StandardFonts.HelveticaBold);
+  for (let offset = 0; offset < extra.length; offset += 29) {
+    const sheet = document.addPage([612, 792]);
+    sheet.drawText("Schedule 1-A (2026) - line 18 overtime continuation", {
+      x: 36,
+      y: 748,
+      size: 11,
+      font: bold,
+    });
+    sheet.drawText(`Name: ${filer.name}    SSN: ${filer.ssn}`, {
+      x: 36,
+      y: 728,
+      size: 9,
+      font: regular,
+    });
+    for (
+      const [label, x] of [
+        ["Business", 36],
+        ["Business EIN", 290],
+        ["Payer TIN", 395],
+        ["Amount", 510],
+      ] as const
+    ) {
+      sheet.drawText(label, { x, y: 694, size: 8, font: bold });
+    }
+    for (const [index, row] of extra.slice(offset, offset + 29).entries()) {
+      const y = 674 - index * 19;
+      const size = Math.min(
+        9,
+        9 * 244 / regular.widthOfTextAtSize(row.business_name, 9),
+      );
+      if (size < 6) {
+        throw new Error(
+          "TY2026 Schedule 1-A overtime business name is too long",
+        );
+      }
+      sheet.drawText(row.business_name, { x: 36, y, size, font: regular });
+      if (row.business_ein) {
+        sheet.drawText(row.business_ein, {
+          x: 290,
+          y,
+          size: 8,
+          font: regular,
+        });
+      }
+      sheet.drawText(row.payer_tin, { x: 395, y, size: 8, font: regular });
+      sheet.drawText(String(Math.round(row.amount)), {
+        x: 510,
+        y,
+        size: 8,
+        font: regular,
+      });
+    }
+    sheet.drawText(`Line 19 total, all payers: ${Math.round(total)}`, {
+      x: 36,
+      y: 78,
+      size: 9,
+      font: bold,
+    });
+  }
+}
+
 /** Current filed 2026 Schedule 1-A PDF slice: employee tips and seniors. */
 export async function buildSchedule1APdfBytes2026(
   rawFields: Record<string, unknown>,
@@ -286,7 +369,19 @@ export async function buildSchedule1APdfBytes2026(
       "TY2026 Schedule 1-A PDF needs W-2 overtime employer identity",
     );
   }
-  const overtimeTotal = overtime.reduce((sum, row) => sum + row.amount, 0);
+  const w2OvertimeTotal = overtime.reduce((sum, row) => sum + row.amount, 0);
+  const nonW2Overtime = (fields.non_w2_qualified_overtime_rows_2026 ?? [])
+    .filter((row) =>
+      row.recipient === "taxpayer"
+        ? fields.taxpayer_has_valid_ssn
+        : fields.filing_status === FilingStatus.MFJ &&
+          fields.spouse_has_valid_ssn
+    );
+  const nonW2OvertimeTotal = nonW2Overtime.reduce(
+    (sum, row) => sum + row.amount,
+    0,
+  );
+  const overtimeTotal = w2OvertimeTotal + nonW2OvertimeTotal;
   const overtimeCap = fields.filing_status === FilingStatus.MFJ
     ? 25_000
     : 12_500;
@@ -377,8 +472,33 @@ export async function buildSchedule1APdfBytes2026(
         row.amount,
       );
     }
+    for (const [index, row] of nonW2Overtime.slice(0, 5).entries()) {
+      const base = 17 + index * 4;
+      const prefix = `${p2}Table_Ln18[0].Row18${"abcde"[index]}[0].`;
+      fill(
+        form,
+        `${prefix}f2_${String(base).padStart(2, "0")}[0]`,
+        row.business_name,
+      );
+      fill(
+        form,
+        `${prefix}f2_${String(base + 1).padStart(2, "0")}[0]`,
+        row.business_ein,
+      );
+      fill(
+        form,
+        `${prefix}f2_${String(base + 2).padStart(2, "0")}[0]`,
+        row.payer_tin,
+      );
+      fill(
+        form,
+        `${prefix}f2_${String(base + 3).padStart(2, "0")}[0]`,
+        row.amount,
+      );
+    }
     const overtimeLines: readonly (readonly [number, number])[] = [
-      [16, overtimeTotal],
+      [16, w2OvertimeTotal],
+      [37, nonW2OvertimeTotal],
       [38, overtimeTotal],
       [39, overtimeLimited],
       [40, fields.magi],
@@ -415,7 +535,18 @@ export async function buildSchedule1APdfBytes2026(
   for (const page of pages) document.addPage(page);
   await appendTipContinuation(document, tips, filer, line5);
   if (fields.line27_qualified_overtime > 0) {
-    await appendOvertimeContinuation(document, overtime, filer, overtimeTotal);
+    await appendOvertimeContinuation(
+      document,
+      overtime,
+      filer,
+      w2OvertimeTotal,
+    );
+    await appendNonW2OvertimeContinuation(
+      document,
+      nonW2Overtime,
+      filer,
+      nonW2OvertimeTotal,
+    );
   }
   return document.save();
 }

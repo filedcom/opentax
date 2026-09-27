@@ -220,16 +220,16 @@ with Form 1040 line 1c and Schedule 2 line 16a. The March 2026 draft
 Form 4137 still names Schedule 2 line 5 beside its line 13; the draft
 Schedule 2 itself places Form 4137 tax on line 16a. Keep that source
 inconsistency visible until the IRS publishes aligned final forms.
-The pinned draft Schedule 1-A now prints the employee-tip, W-2 overtime,
-and senior deduction paths, including row statements after five employers.
-It reconciles the final deduction with Form 1040 line 13a. Non-W-2 overtime, vehicle
-interest, and nonzero MAGI addbacks still raise explicit PDF errors when
-their source records lack the row or addback detail needed to print those
-parts accurately. Positive W-2 overtime now carries employer name and EIN;
-the older amount-only calculation input remains accepted but cannot produce
-a filed overtime PDF. The tip/Form 4137 example builds an eight-page PDF;
-senior-only and W-2 overtime examples build five pages. Non-W-2 overtime,
-vehicle interest, and MAGI addback source records remain to expand.
+The pinned draft Schedule 1-A now prints employee tips, W-2 and non-W-2
+overtime, and senior deductions. It reconciles the final deduction with Form
+1040 line 13a and appends row statements beyond five employers or payers.
+Positive W-2 overtime carries employer name and EIN; non-W-2 overtime has a
+2026 row input with recipient, business, payer TIN, and amount. The
+calculation rejects an amount-only claim for the same recipient alongside
+rows. Earlier amount-only overtime inputs remain calculable but cannot print
+a positive overtime deduction. The tip/Form 4137 example builds eight pages;
+senior-only and overtime examples build five pages. Vehicle interest and
+MAGI addback records still lack detail needed for their PDF sections.
 
 ## 0. Freeze source versions and establish the baseline
 

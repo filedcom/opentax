@@ -63,6 +63,29 @@ Deno.test("TY2026 Schedule 1-A PDF continues W-2 overtime beyond five rows", asy
   assertEquals(pdf.getPageCount(), 4);
 });
 
+Deno.test("TY2026 Schedule 1-A PDF continues non-W-2 overtime beyond five rows", async () => {
+  const rows = Array.from({ length: 6 }, (_, index) => ({
+    recipient: "taxpayer" as const,
+    business_name: `Business ${index + 1}`,
+    business_ein: `12345678${index}`,
+    payer_tin: `98765432${index}`,
+    amount: 500,
+  }));
+  const pdf = await PDFDocument.load(
+    await buildSchedule1APdfBytes2026(
+      {
+        ...base,
+        non_w2_qualified_overtime_rows_2026: rows,
+        line27_qualified_overtime: 3_000,
+        line44_total_additional_deductions: 3_000,
+      },
+      { line11b_agi: 72_000, line13a_schedule1a: 3_000 },
+      filer,
+    ),
+  );
+  assertEquals(pdf.getPageCount(), 4);
+});
+
 Deno.test("TY2026 Schedule 1-A PDF rejects unsupported source detail", async () => {
   await assertRejects(
     () =>
