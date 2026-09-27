@@ -98,6 +98,10 @@ The [Form 4952 contract](FORM4952-GRAPH.md) maps investment-interest income,
 the qualified-dividend/capital-gain tax election, AMT carryforwards and
 Schedule A/6198/E destinations. Its 2026 form embeds instructions and has
 17 PDF widgets; the shared node currently demands AMT inputs unconditionally.
+The [Form 6781 contract](FORM6781-GRAPH.md) maps section 1256 accounts,
+straddle positions, election boxes, current-year loss carryback and
+Schedule D/Form 8949 destinations. Its 2026 form embeds instructions and
+has 71 PDF widgets; the shared node covers only simple 60/40 totals.
 The [scenario 12 contract](ATS-SCENARIO-12.md) and
 [business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
 broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800

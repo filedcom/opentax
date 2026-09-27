@@ -95,6 +95,9 @@ for the implementation contract.
 - [`FORM4952-GRAPH.md`](FORM4952-GRAPH.md) and `pdf-fields-f4952.csv`:
   investment-interest limit, qualified-dividend/capital-gain election,
   Schedule A/6198/E and AMT routes, plus all 17 draft PDF widgets.
+- [`FORM6781-GRAPH.md`](FORM6781-GRAPH.md) and `pdf-fields-f6781.csv`:
+  section 1256 contracts, straddle loss deferral, elections/carryback,
+  Schedule D/8949 routes, and all 71 draft PDF widgets.
 - [`FORM8962-GRAPH.md`](FORM8962-GRAPH.md) and `pdf-fields-f8962.csv`:
   2026 premium tax credit line 27, 400% FPL boundary, Form 1095-A/allocations,
   143 PDF widgets, and MeF/graph acceptance order.

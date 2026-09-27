@@ -24,6 +24,9 @@ The [Form 4797 disposition contract](FORM4797-GRAPH.md) specifies the
 asset-level §1231 net and five-year loss recapture that produce its
 long-term Schedule D contribution, along with the separate unrecaptured
 §1250 worksheet source.
+The [Form 6781 contract](FORM6781-GRAPH.md) specifies §1256 60/40 amounts,
+straddle loss deferral, carryback elections, and Schedule D/Form 8949
+destinations. Its simple shared calculator cannot yet file the full form.
 
 The shared Schedule D calculator already distinguishes the direct
 distribution case from a filed schedule and routes net capital gain into the

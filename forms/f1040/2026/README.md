@@ -19,6 +19,10 @@ The [Form 1116 contract](../../../docs/ty2026/FORM1116-GRAPH.md) maps
 foreign-tax categories, carryovers, redeterminations and the revised line
 18/20 bases from 1040, Schedule 1-A and Schedule 2; its full attachment
 and MeF routes are still outside this registry.
+The [Form 6781 contract](../../../docs/ty2026/FORM6781-GRAPH.md) maps
+section 1256 accounts, straddle loss deferral, election/carryback facts,
+Schedule D/8949 routes, and the 71-widget 2026 form. The shared node,
+TY2025 PDF and MeF serializers do not yet cover that filed surface.
 The [Form 2555 contract](../../../docs/ty2026/FORM2555-GRAPH.md) maps the
 2026 $132,900 exclusion, location-specific housing limits, Schedule 1
 lines 8d/24j, SE tax and Form 1116 reductions. The structured shared
