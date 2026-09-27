@@ -27,6 +27,7 @@ const expenseReductionSchema = z.object({
   treatment: z.enum(["current_deduction", "capitalized_basis"]),
   return_form_or_schedule: z.string().trim().min(1),
   return_line: z.string().trim().min(1),
+  return_instance_reference: z.string().trim().min(1).optional(),
   expense_record_reference: z.string().trim().min(1),
   amount_before_reduction: z.number().int().nonnegative(),
   reduction_amount: z.number().int().positive(),
@@ -42,6 +43,17 @@ const expenseReductionSchema = z.object({
       message: "Form 8820 expense reduction must reconcile before and after",
     });
   }
+  if (
+    ["Schedule C", "Schedule F"].includes(entry.return_form_or_schedule) &&
+    !entry.return_instance_reference
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["return_instance_reference"],
+      message:
+        "Form 8820 Schedule C/F reduction needs the business or farm reference",
+    });
+  }
 });
 
 export const inputSchema = z.object({
@@ -50,7 +62,9 @@ export const inputSchema = z.object({
   reduced_section280c_credit_election: z.boolean(),
   form8932_overlapping_wage_credit: z.number().int().nonnegative(),
   subject_to_passive_activity_limit: z.boolean(),
-  expense_reduction_statement_file_name: z.string().min(1).optional(),
+  expense_reduction_statement_file_name: z.string().trim().regex(
+    /^[A-Za-z0-9][A-Za-z0-9._ -]*\.pdf$/i,
+  ).optional(),
   expense_reductions: z.array(expenseReductionSchema).optional(),
 }).superRefine((input, ctx) => {
   if (
@@ -86,6 +100,7 @@ export const inputSchema = z.object({
     entities.add(id);
   });
   const expenseRecords = new Set<string>();
+  const destinations = new Set<string>();
   input.expense_reductions?.forEach((entry, index) => {
     if (expenseRecords.has(entry.expense_record_reference)) {
       ctx.addIssue({
@@ -95,6 +110,19 @@ export const inputSchema = z.object({
       });
     }
     expenseRecords.add(entry.expense_record_reference);
+    const destination = [
+      entry.return_form_or_schedule,
+      entry.return_instance_reference ?? "",
+      entry.return_line,
+    ].join(":");
+    if (destinations.has(destination)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["expense_reductions", index, "return_line"],
+        message: "Form 8820 expense reductions need one row per filed line",
+      });
+    }
+    destinations.add(destination);
   });
 });
 

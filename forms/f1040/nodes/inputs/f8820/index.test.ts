@@ -48,6 +48,7 @@ Deno.test("Form 8820 full credit uses 25% and needs the deduction statement", ()
       treatment: "current_deduction",
       return_form_or_schedule: "Schedule C",
       return_line: "27b",
+      return_instance_reference: "BUSINESS-1",
       expense_record_reference: "2025 clinical testing ledger",
       amount_before_reduction: 100_000,
       reduction_amount: 25_000,
@@ -65,6 +66,7 @@ Deno.test("Form 8820 full credit uses 25% and needs the deduction statement", ()
           treatment: "current_deduction",
           return_form_or_schedule: "Schedule C",
           return_line: "27b",
+          return_instance_reference: "BUSINESS-1",
           expense_record_reference: "2025 clinical testing ledger",
           amount_before_reduction: 100_000,
           reduction_amount: 24_999,
@@ -97,6 +99,7 @@ Deno.test("Form 8820 full-credit reduction can split deductions and capitalized 
       treatment: "current_deduction",
       return_form_or_schedule: "Schedule C",
       return_line: "27b",
+      return_instance_reference: "BUSINESS-1",
       expense_record_reference: "CLINICAL-001",
       amount_before_reduction: 60_000,
       reduction_amount: 15_000,
@@ -132,6 +135,32 @@ Deno.test("Form 8820 full-credit reduction can split deductions and capitalized 
         ...input.expense_reductions![0],
         expense_amount_after_reduction: 44_999,
       }, input.expense_reductions![1]],
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...input,
+      expense_reductions: [{
+        ...input.expense_reductions![0],
+        return_instance_reference: undefined,
+      }, input.expense_reductions![1]],
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...input,
+      expense_reductions: [
+        input.expense_reductions![0],
+        {
+          ...input.expense_reductions![1],
+          treatment: "current_deduction",
+          return_form_or_schedule: "Schedule C",
+          return_line: "27b",
+          return_instance_reference: "BUSINESS-1",
+        },
+      ],
     }).success,
     false,
   );

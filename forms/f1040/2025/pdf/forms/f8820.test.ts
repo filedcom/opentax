@@ -135,6 +135,7 @@ Deno.test("Form 8820 PDF appends the unreduced-credit expense statement", async 
       treatment: "current_deduction" as const,
       return_form_or_schedule: "Schedule C",
       return_line: "27b",
+      return_instance_reference: "BUSINESS-1",
       expense_record_reference: "CLINICAL-001",
       amount_before_reduction: 100_000,
       reduction_amount: 25_000,

@@ -124,8 +124,11 @@ Its source credit now enters the shared nonpassive Form 3800 line 1h. Own credit
 needs an attached Form 8820, while pass-through-only credit does not. Mixed
 credit appears on Form 8820 line 3/4 and preserves source EIN and applied amount
 in Form 3800 Part V. The full-credit path requires itemized section 280C
-reductions that sum to line 2a and prints a PDF statement, but the reduction
-does not yet reconcile to each filed expense or basis line. Controlled groups, passive
+reductions that sum to line 2a and generates the MeF PDF statement from those
+same rows. MeF now compares
+Schedule C lines 11/27b and Schedule F lines 13/32 with their filed net amounts;
+unsupported deduction and capitalized-basis lines stop. Generated statement
+rendering still needs verification. Controlled groups, passive
 credits, K-1 document reconciliation, filled-PDF verification, business rules, and
 ATS evidence remain open. The official two-page PDF descriptor now maps Part I,
 the 26 Part II drug rows, and continuation pages for additional drugs. A

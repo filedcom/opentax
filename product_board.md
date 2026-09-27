@@ -189,8 +189,12 @@ registered, with source, XML, and XSD cases written but unrun. The full-credit
 path now requires a bundled expense-reduction statement and structured rows
 identifying each deduction or capitalized-basis form, line, and expense record.
 The rows' before/reduction/after math and total reduction reconcile to Form
-8820 line 2a; the PDF packet prints them. Their correspondence to the actual
-filed deduction or capitalized basis remains open. Controlled groups,
+8820 line 2a; the PDF packet prints them, and MeF generates the binary
+attachment from the same rows. MeF now cross-checks Schedule C
+lines 11/27b and Schedule F lines 13/32 against the net filed amount for the
+named business or farm. Other deduction lines and capitalized basis stop until
+their filed values can be reconciled. Filled statement rendering remains
+unverified. Controlled groups,
 passive credits, K-1 document reconciliation, eligibility-document verification,
 filled-PDF verification, and IRS business rules remain open. The reduced-credit
 election now retains an IRS8820 document and paper form even with no

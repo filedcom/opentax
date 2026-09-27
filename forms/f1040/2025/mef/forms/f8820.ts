@@ -1,10 +1,76 @@
+import { PDFDocument } from "pdf-lib";
 import { element, elements } from "../../../mef/xml.ts";
 import {
   calculateForm8820,
   type F8820Input,
   inputSchema,
 } from "../../../nodes/inputs/f8820/index.ts";
+import { inputSchema as scheduleCInputSchema } from "../../../nodes/inputs/schedule_c/index.ts";
+import { inputSchema as scheduleFInputSchema } from "../../../nodes/intermediate/forms/schedule_f/index.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
+import { appendForm8820ExpenseStatement } from "../../pdf/forms/f8820_expense_statement.ts";
+
+function reconcileFiledExpenseReductions(
+  input: F8820Input,
+  pending: Readonly<Record<string, unknown>>,
+): void {
+  for (const entry of input.expense_reductions ?? []) {
+    if (entry.treatment !== "current_deduction") {
+      throw new Error(
+        "Form 8820 capitalized-basis reduction needs a filed basis reconciliation",
+      );
+    }
+    let filed: number | undefined;
+    if (entry.return_form_or_schedule === "Schedule C") {
+      const schedule = scheduleCInputSchema.parse(pending.schedule_c);
+      const matches = schedule.schedule_cs.filter((item) =>
+        item.business_reference === entry.return_instance_reference
+      );
+      if (matches.length !== 1) {
+        throw new Error(
+          "Form 8820 reduction needs one linked Schedule C business",
+        );
+      }
+      const business = matches[0];
+      filed = entry.return_line === "11"
+        ? business.line_11_contract_labor ?? 0
+        : entry.return_line === "27b"
+        ? (business.line_27b_other_expenses ?? 0) +
+          (business.part_v_other_expenses ?? []).reduce(
+            (sum, other) => sum + other.amount,
+            0,
+          )
+        : undefined;
+    } else if (entry.return_form_or_schedule === "Schedule F") {
+      const schedule = scheduleFInputSchema.parse(pending.schedule_f);
+      const matches = schedule.schedule_fs.filter((item) =>
+        item.farm_id === entry.return_instance_reference
+      );
+      if (matches.length !== 1) {
+        throw new Error("Form 8820 reduction needs one linked Schedule F farm");
+      }
+      const farm = matches[0];
+      filed = entry.return_line === "13"
+        ? farm.line13_custom_hire ?? 0
+        : entry.return_line === "32"
+        ? (farm.line32_other_expenses ?? []).reduce(
+          (sum, other) => sum + other.amount,
+          0,
+        )
+        : undefined;
+    }
+    if (filed === undefined) {
+      throw new Error(
+        `Form 8820 reduction needs filed-line support for ${entry.return_form_or_schedule} ${entry.return_line}`,
+      );
+    }
+    if (filed !== entry.expense_amount_after_reduction) {
+      throw new Error(
+        `Form 8820 reduction does not reconcile to ${entry.return_form_or_schedule} ${entry.return_line}`,
+      );
+    }
+  }
+}
 
 export function buildForm8820Document(raw: unknown): string {
   const input = inputSchema.parse(raw);
@@ -69,6 +135,33 @@ export const form8820: MefFormDescriptor<"f8820", Input> = {
     ) {
       throw new Error("Form 8820 expense-reduction statement is not bundled");
     }
+    if (
+      lines.line2a > 0 && !source.reduced_section280c_credit_election &&
+      context?.pending
+    ) {
+      reconcileFiledExpenseReductions(source, context.pending);
+    }
     return buildForm8820Document(source);
+  },
+  async buildBinaryAttachments(fields, context) {
+    if (fields.f8820s === undefined) return [];
+    const source = inputSchema.parse(fields);
+    const lines = calculateForm8820(source);
+    if (source.reduced_section280c_credit_election || lines.line2a === 0) {
+      return [];
+    }
+    if (
+      !context?.filer?.primarySSN ||
+      !(context.filer.fullName ?? context.filer.nameLine1)
+    ) {
+      throw new Error("Form 8820 expense statement needs filer identity");
+    }
+    const document = await PDFDocument.create();
+    await appendForm8820ExpenseStatement(document, source, context.filer);
+    return [{
+      fileName: source.expense_reduction_statement_file_name!,
+      description: "Form 8820 section 280C expense reduction statement",
+      bytes: await document.save(),
+    }];
   },
 };
