@@ -344,19 +344,19 @@ export const SAVERS_CREDIT_AGI_HOH_2025 = { rate50: 34_500, rate20: 37_500, rate
 export const SAVERS_CREDIT_AGI_MFJ_2025 = { rate50: 46_000, rate20: 50_000, rate10: 76_500 } as const;
 
 // ─── EE/I Bond Interest Exclusion (Form 8815) ────────────────────────────────
-// Rev. Proc. 2024-40, §3.23; IRC §135(b)(2)(A)
+// 2025 Form 8815, lines 9-12; IRC §135(b)(2)(A)
 
-/** Form 8815 phase-out start — MFJ/QSS. */
-export const SAVINGS_BOND_PHASEOUT_START_MFJ_2025 = 145_200;
+/** Form 8815 phase-out start — MFJ. */
+export const SAVINGS_BOND_PHASEOUT_START_MFJ_2025 = 149_250;
 
-/** Form 8815 phase-out end — MFJ/QSS. */
-export const SAVINGS_BOND_PHASEOUT_END_MFJ_2025 = 175_200;
+/** Form 8815 phase-out end — MFJ. */
+export const SAVINGS_BOND_PHASEOUT_END_MFJ_2025 = 179_250;
 
-/** Form 8815 phase-out start — Single/HOH. */
-export const SAVINGS_BOND_PHASEOUT_START_SINGLE_2025 = 96_800;
+/** Form 8815 phase-out start — Single/HOH/QSS. */
+export const SAVINGS_BOND_PHASEOUT_START_SINGLE_2025 = 99_500;
 
-/** Form 8815 phase-out end — Single/HOH. */
-export const SAVINGS_BOND_PHASEOUT_END_SINGLE_2025 = 111_800;
+/** Form 8815 phase-out end — Single/HOH/QSS. */
+export const SAVINGS_BOND_PHASEOUT_END_SINGLE_2025 = 114_500;
 
 // ─── Kiddie Tax (Form 8615) ───────────────────────────────────────────────────
 // Rev. Proc. 2024-40, §3.10; IRC §1(g)

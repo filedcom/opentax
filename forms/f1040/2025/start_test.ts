@@ -44,6 +44,10 @@ Deno.test("inputNodes has expected structure (array + singleton entries)", () =>
     e.node.nodeType === "qbi_aggregation"
   );
   assertEquals(hasQbiAgg, true);
+  assertEquals(
+    singletonEntries.some((entry) => entry.node.nodeType === "form8815"),
+    true,
+  );
   // Total count must be array + singleton
   assertEquals(
     inputNodes.length,

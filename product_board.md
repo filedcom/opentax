@@ -1626,12 +1626,22 @@ reconcile. The source shape was renamed directly to
 specified/nonspecified premiums, other special ordering, and full validation
 remain open.
 
-Static GAP-MAP finding for Form 8815: its 2025 phaseout thresholds and QSS
-bracket are wrong, source facts and filed lines are missing, and its four
-emitted XML tags are not native TY2025 v5.4 Form 8815 elements. See
-`docs/mef/ty2025-form8815-gap.md`. No serializer-only patch or silent omission
-was made; rebuilding the source-to-return path or explicitly excluding claims
-requires a product decision before Form 8815 can be considered ready.
+Build-pass addendum for GAP-MAP / Form 8815 (unrun): its old 2025 phaseout,
+QSS bracket, guessed proceeds/MAGI, and nonnative XML tags were replaced by a
+bounded source-backed calculation and native line mapping. Explicit bond,
+education, interest, and MAGI worksheet facts are required. Schedule B, MeF,
+PDF, and filing-status business-rule cases are written but unrun. Coverdell/QTP,
+foreign institutions, royalty-interest adjustments, broader MAGI reconciliation,
+filled-PDF inspection, and IRS acceptance remain open; see
+`docs/mef/ty2025-form8815-gap.md`.
+
+Build-pass addendum for GAP-1116 (unrun): current-year passive/general excess
+foreign tax now requires sourced prior-year Form 1116 lines 23/24 and a zero
+prior Schedule B line 8 balance. A zero-capacity one-year carryback generates
+native Schedule B lines 6/8; missing, contradictory, or multi-category reviews
+stop clearly. Source-to-XML and negative cases are written but unrun. Other
+carrybacks/carryovers, Schedule B PDF mapping, full-batch/XSD, and IRS business
+rules remain open.
 
 Build-pass addendum for GAP-MAP / Form 8960 (unrun): eleven totals and tax
 lines already computed by the node now map to their native TY2025 MeF fields

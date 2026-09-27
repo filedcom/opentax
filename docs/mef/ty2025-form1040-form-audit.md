@@ -17,12 +17,23 @@ source provenance, and filing output have been audited. A registered serializer
 is not proof that a form's instructions are implemented.
 
 Schema-conformance alert from static comparison with the checked-in TY2025 v5.4
-form XSDs: the registered serializers for Forms 4562, 7206, 8606, 8815, 8829,
-8839, 8853, 8990, and 8995-A emit fields absent from, or incorrectly nested for,
-their native IRS form types. They are not ready to e-file. This is a structural
-finding, not a completed XML-validation run. Forms 461 and 8960 use some valid
-tags but omit material filed-form detail; their source and calculation paths
-also need a form-specific review before support is claimed.
+form XSDs: the registered serializers for Forms 4562, 7206, 8606, 8829, 8839,
+8853, 8990, and 8995-A emit fields absent from, or incorrectly nested for,
+their native IRS form types. They are not ready to e-file. Form 8815 had the
+same defect; a bounded source-to-native-XML rebuild is now written, but its XSD
+and business-rule validation remain unrun. This is a structural finding, not a
+completed XML-validation run. Forms 461 and 8960 use native tags but still
+omit or have only recently mapped material filed-form detail; their source and
+calculation paths also need a form-specific review before support is claimed.
+
+The eight remaining invalid serializers need a product disposition before filing readiness:
+rebuild each against the native TY2025 schema and its source calculations, or
+explicitly exclude its tax situations with an error. No silent skip or central
+special-case suppression has been approved or added. A static tag comparison
+found zero valid emitted native child tags for 4562, 7206, 8606, 8829, 8839,
+8853, and 8990; 8995-A has two valid child tags out of eleven but also uses
+the wrong nesting. The [Form 8815 audit](ty2025-form8815-gap.md) documents its
+bounded rebuild and remaining validation.
 
 ## Reading the matrix
 
@@ -63,7 +74,7 @@ also need a form-specific review before support is claimed.
 | Schedule H    | Household wage/payroll facts; P                      | `schedule_h.ts` R    | Y   | W     | Open: full tax-source audit and current-run verification.                            |
 | Schedule SE   | Self-employment profit/tax facts; P                  | `schedule_se.ts` R   | Y   | W     | Open: multiple businesses, clergy and cross-form wage-base audit.                    |
 
-### Numbered forms and distinct registered schedules (68 descriptors)
+### Numbered forms and distinct registered schedules (69 descriptors)
 
 | Document              | S/C                                                               | MeF                     | PDF | Tests | Disposition / known gap                                                                                    |
 | --------------------- | ----------------------------------------------------------------- | ----------------------- | --- | ----- | ---------------------------------------------------------------------------------------------------------- |
@@ -72,6 +83,7 @@ also need a form-specific review before support is claimed.
 | 982                   | Debt-discharge source and attributes; P                           | `f982.ts` R             | Y   | W     | Open: qualified-principal-residence and attribute reduction (`GAP-982`).                                   |
 | 1099-R                | Payer distribution statements; U                                  | `f1099r.ts` R           | N   | ?     | Open: recipient/source reconciliation; source document need not have a rendered tax-form PDF.              |
 | 1116                  | Foreign-tax basket and income/deduction facts; P                  | `f1116.ts` R            | Y   | W     | Open: special categories, carryovers, tax adjustments (`GAP-1116`).                                        |
+| 1116 Schedule B       | Reviewed current-year passive/general excess tax; P               | `f1116_schedule_b.ts` R | N   | W     | Open: other carryovers/carrybacks, multi-category, PDF and validation (`GAP-1116`).                        |
 | 2441                  | Care provider/dependent facts; P                                  | `f2441.ts` R            | Y   | W     | Open: all expense/election and provider paths.                                                             |
 | 2555                  | Physical-presence wages and structured employee housing; P        | `f2555.ts` R            | Y   | W     | Open: multiple residences, second household, self-employed housing, later-limit election and PDF render.   |
 | 3800                  | Identified business credits and tax limits; P                     | `f3800.ts` R            | N   | W     | Open: full credit inventory, passive limits, carryovers and PDF decision.                                  |
@@ -103,7 +115,7 @@ also need a form-specific review before support is claimed.
 | 8615                  | Child unearned-income and parent-tax facts; P                     | `f8615.ts` R            | Y   | W     | Open: sibling/election/tax worksheets and render (`GAP-8615`).                                             |
 | 8621                  | PFIC/QEF holding, election and gain facts; P                      | `f8621.ts` R            | N   | W     | Open: special elections, interest, source verification and PDF (`GAP-8621`).                               |
 | 8814                  | Child income and parent-election facts; P                         | `f8814.ts` R            | Y   | W     | Open: dotted-line PDF, election rules and output audit (`GAP-8814`).                                       |
-| 8815                  | Savings-bond education facts; P                                   | `f8815.ts` R            | Y   | ?     | Open: wrong 2025 phaseout/QSS, missing filed lines, invalid native XML; see [gap audit](ty2025-form8815-gap.md). |
+| 8815                  | Bounded savings-bond/education facts and lines; P                 | `f8815.ts` R            | Y   | W     | Open: native XML/PDF unvalidated, unsupported source paths; see [gap audit](ty2025-form8815-gap.md).       |
 | 8820                  | Orphan-drug expense/election facts; P                             | `f8820.ts` R            | Y   | W     | Open: source certification, passive limits and statement/PDF render.                                       |
 | 8824                  | Like-kind exchange assets/basis facts; P                          | `f8824.ts` R            | Y   | W     | Open: multi-asset, recapture and deferred-gain verification.                                               |
 | 8826                  | Disabled-access expenditure/K-1 facts; P                          | `f8826_draft.ts` R      | N   | W     | Open: full eligibility, passive/controlled-group and PDF decision.                                         |
@@ -138,7 +150,7 @@ also need a form-specific review before support is claimed.
 
 ### Registered wage and supporting descriptors (24)
 
-These are included in the 106 MeF registry entries, but are not 24 additional
+These are included in the 107 MeF registry entries, but are not 24 additional
 tax forms. Each is registered for an identified source or linked statement; all
 have current-run XSD, attachment, source-link, and business-rule status
 **open**. W-2 and the foreign-employer FEC record are source documents. The
@@ -155,8 +167,8 @@ these roots.
 
 | Static measure                               |                                      Count | What it means                                                                                                                 |
 | -------------------------------------------- | -----------------------------------------: | ----------------------------------------------------------------------------------------------------------------------------- |
-| MeF descriptors in `ALL_MEF_FORMS`           |                                        106 | Registration only: 82 main-return/numbered/schedule entries plus 24 wage/supporting entries.                                  |
-| Main-return/numbered/schedule descriptors    |                                         82 | 14 return/schedules plus 68 numbered/distinct schedules, including alternative initial/annual 8854 serializers.               |
+| MeF descriptors in `ALL_MEF_FORMS`           |                                        107 | Registration only: 83 main-return/numbered/schedule entries plus 24 wage/supporting entries.                                  |
+| Main-return/numbered/schedule descriptors    |                                         83 | 14 return/schedules plus 69 numbered/distinct schedules, including alternative initial/annual 8854 serializers.               |
 | Registered PDF descriptors                   |                                         58 | 57 corresponding to a main MeF entry plus the separate 4136 Schedule A PDF. This is presence, not a field-map or visual pass. |
 | Forms excluded from the agreed product scope | 1040-NR, 1040-SS, 4868; dual-status e-file | Not counted as open Form 1040-family serializers.                                                                             |
 | Whole-form verified on the current worktree  |                0 established by this audit | No deferred full batch, complete instruction matrix, IRS business rules or ATS acceptance is recorded.                        |
