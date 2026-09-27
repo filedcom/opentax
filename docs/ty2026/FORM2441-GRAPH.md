@@ -35,8 +35,8 @@ credit-limit resolution, without a cycle back through AGI.
   cases verify taxable line 1e, AGI, tax limitation, and a missing-detail
   diagnostic. The node is absent from the public start inputs while
   eligibility facts and MeF remain incomplete. The draft PDF builder fills
-  one or two printed pages for employee cases, and rejects fourth-row
-  continuations until those pages are implemented.
+  one or two printed pages for employee cases and appends provider/person
+  continuation statements when needed.
 - The shared `form2441/year-rules.ts` already selects the 2026 50%–20%
   phaseout and $7,500/$3,750 exclusion ceiling. Retain its boundary tests
   and compare final instructions before using it in the public 2026 graph.
@@ -54,9 +54,11 @@ credit-limit resolution, without a cycle back through AGI.
   worksheet. Do not register that aggregate input as the TY2026 filing path.
 - The TY2025 PDF descriptor prints only one benefit field. The 2026
   [AcroForm inventory](PDF-FORM2441-MAP.md) now drives a one-page credit-only
-  or two-page employee-benefit attachment for up to three providers and
-  qualifying people. Add continuation statements and unsupported branches
-  before exposing the route publicly. The builder reconciles line 26 to
+  or two-page employee-benefit attachment. For more than three providers or
+  qualifying people, it prints the three largest amounts on the form and
+  appends statements for the remaining rows, as the 2026 instructions require.
+  Complete unsupported tax branches before exposing the route publicly. The
+  builder reconciles line 26 to
   Form 1040 line 1e and line 11 to Schedule 3 line 2.
 
 ## Build and acceptance sequence

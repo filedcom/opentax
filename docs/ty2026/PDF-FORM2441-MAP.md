@@ -38,9 +38,11 @@ IRS release before filing.
    paid expenses and Worksheet A (9b/9c), proprietor/partner benefits
    (22/24), month-level deemed income, person eligibility, provider
    reconciliation, and earlier-credit inputs to line 10.
-2. Fill every populated provider/person row and both printed pages. Add
-   continuation pages for a fourth provider or qualifying person; a checked
-   continuation box without its statement must fail.
+2. Fill every populated provider/person row and the applicable printed pages.
+   The current builder prints the three highest-paid providers and three
+   people with the highest qualifying expenses on the IRS form, checks the
+   overflow boxes, and appends the remaining rows on statements. Both a
+   fourth-row case and the 25-row maximum were rendered and inspected.
 3. Reconcile line 26 to Form 1040 line 1e, line 11 to Schedule 3 line 2,
    line 9c to 9a+9b, and line 28 to 24+25 before rendering. The graph
    currently supports line 24 and 9b only as zero, so do not publicly file
@@ -48,9 +50,9 @@ IRS release before filing.
 4. Check the field values and widget appearances before flattening, then
    inspect rendered pages. The current builder fills the initial one- and
    two-page employee cases, overlays the source's missing benefits answer,
-   and rejects more than three providers or qualifying people. Complete the
-   MFS, student/disability, prior-year expense, self-employed, and
-   continuation cases before exposing the filing input publicly.
+   and paginates provider/person continuations. Complete the MFS,
+   student/disability, prior-year expense, and self-employed cases before
+   exposing the filing input publicly.
 
 This map records the draft layout and field topology. The current draft PDF
 builder covers only the graph's employee-benefit calculation slice; it is

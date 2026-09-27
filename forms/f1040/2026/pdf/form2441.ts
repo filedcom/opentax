@@ -1,4 +1,10 @@
-import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import {
+  PDFDocument,
+  type PDFFont,
+  type PDFPage,
+  rgb,
+  StandardFonts,
+} from "pdf-lib";
 import {
   benefitDetailsSchema,
   type Form2441Lines,
@@ -76,11 +82,6 @@ function validate(
   if (JSON.stringify(details) !== JSON.stringify(benefits.filing_details)) {
     throw new Error("TY2026 Form 2441 benefit and credit facts disagree");
   }
-  if (
-    details.care_providers.length > 3 || details.qualifying_people.length > 3
-  ) {
-    throw new Error("TY2026 Form 2441 PDF needs continuation statements");
-  }
   for (const line of [...partIILines, ...partIIILines]) amount(credit, line);
   for (const line of partIIILines) {
     if (amount(credit, line) !== amount(benefits, line)) {
@@ -120,6 +121,151 @@ function validate(
   return details;
 }
 
+function rankedRows<T>(
+  rows: readonly T[],
+  amountOf: (row: T) => number,
+): readonly T[] {
+  return rows.map((row, index) => ({ row, index }))
+    .sort((a, b) => amountOf(b.row) - amountOf(a.row) || a.index - b.index)
+    .map(({ row }) => row);
+}
+
+function wrapLine(font: PDFFont, value: string, maxWidth: number): string[] {
+  const words = value.trim().split(/\s+/);
+  const lines: string[] = [];
+  let current = "";
+  for (let word of words) {
+    while (font.widthOfTextAtSize(word, 9) > maxWidth) {
+      let length = 1;
+      while (
+        length < word.length &&
+        font.widthOfTextAtSize(word.slice(0, length + 1), 9) <= maxWidth
+      ) length++;
+      if (current) {
+        lines.push(current);
+        current = "";
+      }
+      lines.push(word.slice(0, length));
+      word = word.slice(length);
+    }
+    const candidate = current ? `${current} ${word}` : word;
+    if (current && font.widthOfTextAtSize(candidate, 9) > maxWidth) {
+      lines.push(current);
+      current = word;
+    } else {
+      current = candidate;
+    }
+  }
+  if (current) lines.push(current);
+  return lines;
+}
+
+function appendContinuationPages(
+  output: PDFDocument,
+  filer: Filer,
+  providers: ReturnType<typeof benefitDetailsSchema.parse>["care_providers"],
+  people: ReturnType<typeof benefitDetailsSchema.parse>["qualifying_people"],
+  font: PDFFont,
+  bold: PDFFont,
+): void {
+  if (providers.length === 0 && people.length === 0) return;
+  let page!: PDFPage;
+  let y = 0;
+  let currentSection: string | undefined;
+  const newPage = () => {
+    page = output.addPage([612, 792]);
+    page.drawText("Form 2441 (2026) - Continuation Statement", {
+      x: 54,
+      y: 742,
+      size: 14,
+      font: bold,
+    });
+    page.drawText(`Name: ${filer.name}    SSN: ${filer.ssn}`, {
+      x: 54,
+      y: 717,
+      size: 10,
+      font,
+    });
+    page.drawLine({ start: { x: 54, y: 704 }, end: { x: 558, y: 704 } });
+    y = 681;
+    if (currentSection) {
+      page.drawText(`${currentSection} (continued)`, {
+        x: 54,
+        y,
+        size: 9,
+        font: bold,
+      });
+      y -= 22;
+    }
+  };
+  const write = (value: string, emphasized = false) => {
+    const selectedFont = emphasized ? bold : font;
+    for (const line of wrapLine(selectedFont, value, 504)) {
+      if (y < 60) newPage();
+      page.drawText(line, { x: 54, y, size: 9, font: selectedFont });
+      y -= 14;
+    }
+  };
+  const section = (heading: string) => {
+    if (y < 130) {
+      currentSection = undefined;
+      newPage();
+    }
+    currentSection = heading;
+    write(heading, true);
+    y -= 8;
+  };
+  newPage();
+  if (providers.length > 0) {
+    section("Part I - Additional care providers (lines 1a-1e)");
+    providers.forEach((provider, index) => {
+      if (y < 135) newPage();
+      const name = provider.kind === "business"
+        ? provider.name
+        : `${provider.first_name} ${provider.last_name}`;
+      const address = provider.us_address;
+      write(`Provider ${index + 4}: ${name}`, true);
+      write(
+        `Address: ${
+          [
+            address.line1,
+            address.line2,
+            address.city,
+            address.state,
+            address.zip,
+          ].filter(Boolean).join(", ")
+        }`,
+      );
+      write(
+        `${provider.kind === "business" ? "EIN" : "SSN"}: ${
+          provider.kind === "business" ? provider.ein : provider.ssn
+        }    Household employee: ${
+          provider.household_employee ? "Yes" : "No"
+        }    Amount paid: $${provider.amount_paid}`,
+      );
+      y -= 10;
+    });
+  }
+  if (people.length > 0) {
+    section("Part II - Additional qualifying people (line 2)");
+    people.forEach((person, index) => {
+      if (y < 110) newPage();
+      write(
+        `Qualifying person ${
+          index + 4
+        }: ${person.first_name} ${person.last_name}`,
+        true,
+      );
+      write(
+        `SSN: ${person.ssn}    Over age 12 and disabled: ${
+          person.over_12_and_disabled ? "Yes" : "No"
+        }    2026 qualified expenses paid: $${person.credit_expenses_paid}`,
+      );
+      y -= 10;
+    });
+  }
+}
+
 /** Fill the applicable printed pages of the pinned TY2026 draft Form 2441. */
 export async function buildForm2441PdfBytes2026(
   benefits: Pending,
@@ -129,6 +275,14 @@ export async function buildForm2441PdfBytes2026(
   filer: Filer,
 ): Promise<Uint8Array> {
   const details = validate(benefits, credit, f1040, schedule3, filer);
+  const providers = rankedRows(
+    details.care_providers,
+    (provider) => provider.amount_paid,
+  );
+  const people = rankedRows(
+    details.qualifying_people,
+    (person) => person.credit_expenses_paid,
+  );
   const source = await Deno.readFile(pinnedDraft);
   const hash = [
     ...new Uint8Array(await crypto.subtle.digest("SHA-256", source)),
@@ -174,7 +328,9 @@ export async function buildForm2441PdfBytes2026(
   if (details.student_or_disabled_deemed_income_used === true) {
     check("c1_2[0]");
   }
-  details.care_providers.forEach((provider, index) => {
+  if (providers.length > 3) check("c1_3[0]");
+  if (people.length > 3) check("c1_7[0]");
+  providers.slice(0, 3).forEach((provider, index) => {
     const n = index + 1;
     const name = provider.kind === "business"
       ? provider.name
@@ -210,7 +366,7 @@ export async function buildForm2441PdfBytes2026(
     check(`c1_${3 + n}[${provider.household_employee ? 0 : 1}]`);
     setText(`f1_${12 + index}[0]`, provider.amount_paid);
   });
-  details.qualifying_people.forEach((person, index) => {
+  people.slice(0, 3).forEach((person, index) => {
     const base = 15 + index * 4;
     setText(`f1_${base}[0]`, person.first_name);
     setText(`f1_${base + 1}[0]`, person.last_name);
@@ -245,5 +401,15 @@ export async function buildForm2441PdfBytes2026(
   const output = await PDFDocument.create();
   const pages = await output.copyPages(draft, hasBenefits ? [1, 2] : [1]);
   for (const page of pages) output.addPage(page);
+  const statementFont = await output.embedFont(StandardFonts.Helvetica);
+  const statementBold = await output.embedFont(StandardFonts.HelveticaBold);
+  appendContinuationPages(
+    output,
+    filer,
+    providers.slice(3),
+    people.slice(3),
+    statementFont,
+    statementBold,
+  );
   return output.save();
 }

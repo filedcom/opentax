@@ -182,7 +182,7 @@ Deno.test("TY2026 Form 2441 does not assume annual deemed income", () => {
   assertMatch(result.diagnostics[0].message, /needs monthly facts/);
 });
 
-Deno.test("TY2026 Form 2441 PDF rejects a fourth provider until a statement exists", async () => {
+Deno.test("TY2026 Form 2441 PDF appends a fourth-provider statement", async () => {
   const result = execute(plan, testRegistry, {
     general: filer,
     w2: [{ box1_wages: 70_000, box2_fed_withheld: 8_000 }],
@@ -199,9 +199,61 @@ Deno.test("TY2026 Form 2441 PDF rejects a fourth provider until a statement exis
     },
   }, context);
   assertEquals(result.diagnostics, []);
-  await assertRejects(
-    () => buildPdfBytes2026(result.pending),
-    Error,
-    "needs continuation statements",
-  );
+  const pdf = await PDFDocument.load(await buildPdfBytes2026(result.pending));
+  assertEquals(pdf.getPageCount(), 5);
+  assertEquals(pdf.getForm().getFields().length, 0);
+});
+
+Deno.test("TY2026 Form 2441 PDF appends a fourth qualifying person", async () => {
+  const result = execute(plan, testRegistry, {
+    general: filer,
+    w2: [{ box1_wages: 70_000, box2_fed_withheld: 8_000 }],
+    form2441: {
+      filing_details: {
+        ...details,
+        care_providers: [{ ...details.care_providers[0], amount_paid: 4_000 }],
+        qualifying_people: [100, 100, 100, 3_700].map((expenses, index) => ({
+          ...details.qualifying_people[0],
+          first_name: `Child${index + 1}`,
+          ssn: `22233444${index + 1}`,
+          credit_expenses_paid: expenses,
+        })),
+      },
+    },
+  }, context);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f2441.line3, 4_000);
+  const pdf = await PDFDocument.load(await buildPdfBytes2026(result.pending));
+  assertEquals(pdf.getPageCount(), 5);
+  assertEquals(pdf.getForm().getFields().length, 0);
+});
+
+Deno.test("TY2026 Form 2441 continuation paginates the maximum row counts", async () => {
+  const result = execute(plan, testRegistry, {
+    general: filer,
+    w2: [{ box1_wages: 70_000, box2_fed_withheld: 8_000 }],
+    form2441: {
+      filing_details: {
+        ...details,
+        care_providers: Array.from({ length: 25 }, (_, index) => ({
+          ...details.care_providers[0],
+          name: `Care Center ${index + 1}`,
+          ein: String(123456780 + index),
+          amount_paid: 100,
+        })),
+        qualifying_people: Array.from({ length: 25 }, (_, index) => ({
+          ...details.qualifying_people[0],
+          first_name: `Child${index + 1}`,
+          ssn: String(222334440 + index),
+          credit_expenses_paid: 100,
+        })),
+      },
+    },
+  }, context);
+  assertEquals(result.diagnostics, []);
+  const pdf = await PDFDocument.load(await buildPdfBytes2026(result.pending));
+  if (pdf.getPageCount() < 7) {
+    throw new Error("Form 2441 continuation did not paginate both row lists");
+  }
+  assertEquals(pdf.getForm().getFields().length, 0);
 });
