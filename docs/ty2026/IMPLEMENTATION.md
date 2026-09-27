@@ -150,6 +150,11 @@ income amounts through line 7a. The node sums accumulated wage and dividend
 amounts for the printed lines, and a populated page-1 sample passed text extraction and
 visual inspection. The source income nodes and their required attachment
 routes still need to enter the dedicated 2026 registry.
+The [generated graph route inventory](GRAPH-ROUTES.md) records 39 declared
+edges from the current 2026 registry to absent targets; a wages-only return
+actually deposits values into 13 of those pending slots. The 2025 registry
+contains each target, but each needs its own 2026 behavior and output audit
+before adding it to the dedicated graph.
 
 ## 0. Freeze source versions and establish the baseline
 

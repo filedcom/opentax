@@ -99,6 +99,10 @@ The final 1040 node and draft PDF descriptor also retain and print the
 principal income amounts through 7a, including aggregate 1z wages,
 accumulated dividends, and printed 7a capital gain. A populated income page passed visual QA. Its
 source nodes and supporting schedules remain to join the 2026 registry.
+The generated [graph route inventory](../../../docs/ty2026/GRAPH-ROUTES.md)
+lists 39 declared edges from active nodes to targets outside this registry;
+the wages-only run deposits values in 13 absent target slots. It gives the
+dependency order for expanding beyond the current calculation slice.
 The shared Form 8839 node now applies TY2026 adoption limits, emits the
 refundable per-child credit to 1040 line 30, and tracks nonrefundable
 carryforwards by origin year. Its full credit-limit worksheet and TY2026

@@ -14,6 +14,8 @@ for the implementation contract.
   orphaned-field issue.
 - [`MEF-V1-DRIFT.md`](MEF-V1-DRIFT.md): why the downloaded May v1 1040 XSD
   cannot describe the September draft form, and the exact refresh/diff gate.
+- [`GRAPH-ROUTES.md`](GRAPH-ROUTES.md) and `graph-route-gaps.csv`: generated
+  inventory of declared 2026 edges whose downstream target is not registered.
 
 - [`corpus/manifest.json`](corpus/manifest.json): URL, SHA-256, byte length,
   and retrieval date for **57 TY2026 IRS draft forms**, the **2026 draft
