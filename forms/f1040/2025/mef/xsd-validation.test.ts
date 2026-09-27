@@ -264,6 +264,54 @@ Deno.test({
 });
 
 Deno.test({
+  name: "XSD: Form 4136 other-use and exported gasoline validate",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const xml = buildMefXml({
+    f1040: { line31_additional_payments: 37 },
+    schedule3: { line12_fuel_tax_credit: 36.7, line15_total: 36.7 },
+    f4136: {
+      claimant_context: "business",
+      additional_activities: [],
+      primary_activity_has_most_credit: true,
+      business: {
+        qualifying_business_activity: true,
+        claimant_is_ultimate_purchaser: true,
+        business_name: "Example Fuel Business",
+        principal_activity_code: "447100",
+        equipment_make: "Example",
+        equipment_model: "Equipment",
+        equipment_type: "business equipment",
+        purchase_records_confirmed: true,
+        no_duplicate_excise_claim: true,
+      },
+      claims: [
+        {
+          line: "1c",
+          type_of_use: "05",
+          unit: "gallons",
+          qualified_quantity: 100,
+          actual_fuel_cost: 300,
+          not_noncommercial_motorboat: true,
+        },
+        {
+          line: "1d",
+          unit: "gallons",
+          qualified_quantity: 100,
+          actual_fuel_cost: 300,
+          exported_fuel_confirmed: true,
+        },
+      ],
+    },
+  }, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(xml, "<OtherNontaxableUseGasolineDtl>");
+  assertStringIncludes(xml, "<ExportedNontaxableUseGasGrp>");
+  await validateXsd(xml, "Form 4136 other-use and exported gasoline");
+});
+
+Deno.test({
   name: "XSD: Form 4136 home kerosene exception has no business fields",
   sanitizeOps: false,
   sanitizeResources: false,

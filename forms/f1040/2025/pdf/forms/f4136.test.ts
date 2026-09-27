@@ -18,6 +18,8 @@ const certifications = {
   right_to_claim_not_waived: true,
   credit_card_issuer_certificate_not_provided: true,
   not_highway_vehicle: true,
+  not_noncommercial_motorboat: true,
+  exported_fuel_confirmed: true,
 } as const;
 const activityContext = {
   claimant_context: "business",
@@ -35,6 +37,14 @@ Deno.test("Form 4136 PDF maps page 1 business and page 4 total widgets", () => {
     "topmostSubform[0].Page1[0].Table_Line1[0].Line1a[0].f1_12[0]",
   );
   assertEquals(
+    names.line1c_type,
+    "topmostSubform[0].Page1[0].Table_Line1[0].Line1c[0].f1_17[0]",
+  );
+  assertEquals(
+    names.line1d_credit_dollars,
+    "topmostSubform[0].Page1[0].Table_Line1[0].Line1d[0].ColE[0].f1_29[0]",
+  );
+  assertEquals(
     names.line5d_credit_dollars,
     "topmostSubform[0].Page2[0].Table_Line5[0].Line5d[0].ColE[0].f2_73[0]",
   );
@@ -50,6 +60,37 @@ Deno.test("Form 4136 PDF maps page 1 business and page 4 total widgets", () => {
     names.line17_total_cents,
     "topmostSubform[0].Page4[0].f4_125[0]",
   );
+});
+
+Deno.test("Form 4136 PDF separates other-use and exported gasoline", () => {
+  const result = form4136Pdf.projectFields?.({
+    ...activityContext,
+    business,
+    claims: [
+      {
+        ...certifications,
+        line: "1c",
+        type_of_use: "05",
+        unit: "gallons",
+        qualified_quantity: 100,
+        actual_fuel_cost: 300,
+      },
+      {
+        ...certifications,
+        line: "1d",
+        unit: "gallons",
+        qualified_quantity: 100,
+        actual_fuel_cost: 300,
+      },
+    ],
+  }, { schedule3: { line12_fuel_tax_credit: 36.7 } });
+  assertEquals(result?.line1c_type, "05");
+  assertEquals(result?.line1c_quantity, 100);
+  assertEquals(result?.line1_credit_dollars, "18");
+  assertEquals(result?.line1_credit_cents, "30");
+  assertEquals(result?.line1d_quantity, 100);
+  assertEquals(result?.line1d_credit_dollars, "18");
+  assertEquals(result?.line1d_credit_cents, "40");
 });
 
 Deno.test("Form 4136 PDF projects gallons and split dollars/cents from source", () => {

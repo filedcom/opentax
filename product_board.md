@@ -274,7 +274,9 @@ statement. Multiple businesses now produce one official four-page Schedule A
 each attachment. Credits round by claim before the activity totals are
 combined. The primary activity is affirmed and checked as generating the most
 calculated credit, matching the form's Part I instruction; that case is written
-but unrun. Both PDF descriptors now use the actual nested AcroForm paths;
+but unrun. Gasoline line 1c other-use detail and line 1d export groups now
+have distinct input, MeF, and PDF paths with unrun source-to-XSD cases.
+Both PDF descriptors now use the actual nested AcroForm paths;
 all mapped widget names were found in the IRS PDFs. Filled rendering and the
 binary-attachment IRS business rule are unverified. Mixed units on one fuel
 line stop until conversion rules are verified. A tagged home-kerosene variant
