@@ -2,7 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import type { NodeRegistry } from "../../../../core/types/node-registry.ts";
-import { buildStartNode } from "../../2025/start.ts";
+import { buildStartNode } from "../../start.ts";
 import { agi_aggregator } from "../../nodes/intermediate/aggregation/agi_aggregator/index.ts";
 import { schedule1a } from "../../nodes/intermediate/forms/schedule1a/index.ts";
 import { form4137 } from "../../nodes/intermediate/forms/form4137/index.ts";

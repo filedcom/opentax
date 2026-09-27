@@ -1,7 +1,8 @@
 # TY2026 Form 1040 entry point — implementation plan
 
-Status: research snapshot, 2026-09-27. This directory is the planned home of
-`f1040_2026`; it is not registered in `catalog.ts` yet. **Goal: the same full
+Status: research snapshot, 2026-09-27. This directory now has a calculation
+registry for a verified subset; `f1040_2026` is not registered in `catalog.ts`
+yet. **Goal: the same full
 calculation → validation → MeF XML → PDF → ATS/XSD workflow as TY2025, across
 the supported 1040 form surface.** Do not call registration alone TY2026
 support.
@@ -77,6 +78,12 @@ Schedule 3 line list and rejects the TY2025 worksheet shape. Worksheet B now
 sums its four Schedule 3 credit lines. Their graph reconciliation,
 earned-income sources, and credit output still need a complete 2026 return
 path.
+`inputs.ts`, `start.ts`, and `registry.ts` now define the first dedicated
+TY2026 calculation entry point. It executes wages-only and W-2/Form 4137 tip
+returns through the normal graph planner and executor. It is limited to nodes
+whose TY2026 routes have been checked and is not a registered CLI product or
+an export path yet. The generic start-node factory lives in
+`forms/f1040/start.ts`, shared by both tax years.
 The shared Form 8839 node now applies TY2026 adoption limits, emits the
 refundable per-child credit to 1040 line 30, and tracks nonrefundable
 carryforwards by origin year. Its full credit-limit worksheet and TY2026
@@ -96,7 +103,7 @@ field set and also finalizes several credit worksheets. The new TY2026 node
 currently accepts final amounts only; placing it in the 2025 registry would
 discard the upstream detail needed to reproduce the existing credit paths.
 
-Build a 2026 `inputs.ts` and `registry.ts` explicitly. For each shared node,
+Expand the 2026 `inputs.ts` and `registry.ts` explicitly. For each shared node,
 confirm its TY2026 computation and output fields before adding it. Expand the
 TY2026 `f1040` input schema to accept those fields, retain the still-applicable
 credit finalizations, and map them to the revised 2026 line layout. Keep the

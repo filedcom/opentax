@@ -2,7 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { execute } from "../../../../core/runtime/executor.ts";
 import type { NodeRegistry } from "../../../../core/types/node-registry.ts";
-import { buildStartNode } from "../../2025/start.ts";
+import { buildStartNode } from "../../start.ts";
 import { FilingStatus } from "../../nodes/types.ts";
 import { f1040_2026_node } from "./f1040.ts";
 import { schedule3a } from "./schedule3a.ts";
