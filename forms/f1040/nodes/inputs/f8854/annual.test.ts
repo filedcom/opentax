@@ -1,6 +1,7 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   buildForm8854Annual,
+  buildForm8854AnnualNativeStatements,
   buildForm8854PartIII,
 } from "../../../2025/mef/forms/f8854_annual.ts";
 import { annualInputSchema } from "./annual.ts";
@@ -36,7 +37,9 @@ function annualInput(overrides: Record<string, unknown> = {}) {
     deferred_properties: [],
     eligible_deferred_compensation_items: [{
       item_id: "plan",
+      description: "Deferred plan",
       prior_form8854_document_id: "DOC-PRIOR",
+      irrevocable_treaty_reduction_waiver_confirmed: true,
       distributions: [],
     }],
     nongrantor_trust_interests: [],
@@ -72,6 +75,10 @@ function source1042s(
 Deno.test("annual Form 8854 certifies no distributions from a remaining eligible item", () => {
   const parsed = annualInputSchema.parse(annualInput());
   const xml = buildForm8854Annual(parsed);
+  const statements = buildForm8854AnnualNativeStatements(parsed);
+  assertEquals(statements.length, 1);
+  assertStringIncludes(statements[0], "<Desc>Deferred plan</Desc>");
+  assertStringIncludes(statements[0], "<IrrevocableWaiverCd>");
   assertStringIncludes(xml, "<IRS8854>");
   assertStringIncludes(
     xml,
@@ -90,6 +97,45 @@ Deno.test("annual Form 8854 certifies no distributions from a remaining eligible
   assertEquals(xml.includes("InitialExptrtStmtSpcfdYrInd"), false);
 });
 
+Deno.test("annual Form 8854 emits separate eligible-item and trust waiver statements", () => {
+  const parsed = annualInputSchema.parse(annualInput({
+    nongrantor_trust_interests: [{
+      item_id: "trust",
+      description: "Family trust",
+      prior_form8854_document_id: "DOC-PRIOR",
+      no_prior_full_value_election_confirmed: true,
+      treaty_reduction_waiver_confirmed: true,
+      distributions: [],
+    }],
+  }));
+  const statements = buildForm8854AnnualNativeStatements(parsed);
+  assertEquals(statements.length, 2);
+  assertStringIncludes(statements[0], "<EligDeferredCompItemStmt>");
+  assertStringIncludes(statements[1], "<NongrantorTrustStatement>");
+  assertStringIncludes(statements[1], "<Desc>Family trust</Desc>");
+  assertStringIncludes(statements[1], "<NongrantorTrustInterestCd>");
+  assertEquals(
+    annualInputSchema.safeParse({
+      ...parsed,
+      eligible_deferred_compensation_items: [{
+        ...parsed.eligible_deferred_compensation_items[0],
+        irrevocable_treaty_reduction_waiver_confirmed: false,
+      }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    annualInputSchema.safeParse({
+      ...parsed,
+      nongrantor_trust_interests: [{
+        ...parsed.nongrantor_trust_interests[0],
+        treaty_reduction_waiver_confirmed: false,
+      }],
+    }).success,
+    false,
+  );
+});
+
 Deno.test("annual Form 8854 no-activity certification reaches the filing graph", () => {
   assertEquals(
     f8854Annual.compute(
@@ -106,7 +152,9 @@ Deno.test("annual Form 8854 no-activity certification reaches the filing graph",
           source_1042s: [source1042s()],
           eligible_deferred_compensation_items: [{
             item_id: "plan",
+            description: "Deferred plan",
             prior_form8854_document_id: "DOC-PRIOR",
+            irrevocable_treaty_reduction_waiver_confirmed: true,
             distributions: [distribution()],
           }],
         })),
@@ -145,13 +193,17 @@ Deno.test("annual Form 8854 lists prior deferred property and 2025 distributions
     }],
     eligible_deferred_compensation_items: [{
       item_id: "plan",
+      description: "Deferred plan",
       prior_form8854_document_id: "DOC-PRIOR",
+      irrevocable_treaty_reduction_waiver_confirmed: true,
       distributions: [distribution()],
     }],
     nongrantor_trust_interests: [{
       item_id: "trust",
+      description: "Family trust",
       prior_form8854_document_id: "DOC-PRIOR",
       no_prior_full_value_election_confirmed: true,
+      treaty_reduction_waiver_confirmed: true,
       distributions: [{
         ...distribution(),
         source_document_id: "DOC-TRUST-PAYMENT",
@@ -331,7 +383,9 @@ Deno.test("annual Form 8854 enforces source and three-row distribution limits", 
     source_1042s: [source1042s("DOC-DISTRIBUTION", "38", 801, 240)],
     eligible_deferred_compensation_items: [{
       item_id: "plan",
+      description: "Deferred plan",
       prior_form8854_document_id: "DOC-PRIOR",
+      irrevocable_treaty_reduction_waiver_confirmed: true,
       distributions: [{
         ...distribution(),
         gross_distribution_amount: 1_000.51,
@@ -348,7 +402,9 @@ Deno.test("annual Form 8854 enforces source and three-row distribution limits", 
     source_1042s: [source1042s("DOC-DISTRIBUTION", "38", 3_200, 960)],
     eligible_deferred_compensation_items: [{
       item_id: "plan",
+      description: "Deferred plan",
       prior_form8854_document_id: "DOC-PRIOR",
+      irrevocable_treaty_reduction_waiver_confirmed: true,
       distributions: [
         distribution(),
         distribution(),
@@ -370,7 +426,9 @@ Deno.test("annual Form 8854 enforces source and three-row distribution limits", 
       ),
       eligible_deferred_compensation_items: [{
         item_id: "plan",
+        description: "Deferred plan",
         prior_form8854_document_id: "DOC-PRIOR",
+        irrevocable_treaty_reduction_waiver_confirmed: true,
         distributions: ["DOC-1", "DOC-2", "DOC-3", "DOC-4"].map((id) => ({
           ...distribution(),
           source_document_id: id,
@@ -384,7 +442,9 @@ Deno.test("annual Form 8854 enforces source and three-row distribution limits", 
       source_1042s: [source1042s("DOC-DISTRIBUTION", "38", 1_001, 240)],
       eligible_deferred_compensation_items: [{
         item_id: "plan",
+        description: "Deferred plan",
         prior_form8854_document_id: "DOC-PRIOR",
+        irrevocable_treaty_reduction_waiver_confirmed: true,
         distributions: [{
           ...distribution(),
           amount_includible_if_us_resident: 1_001,
@@ -397,8 +457,10 @@ Deno.test("annual Form 8854 enforces source and three-row distribution limits", 
     annualInputSchema.safeParse(annualInput({
       nongrantor_trust_interests: [{
         item_id: "trust",
+        description: "Family trust",
         prior_form8854_document_id: "DOC-PRIOR",
         no_prior_full_value_election_confirmed: false,
+        treaty_reduction_waiver_confirmed: true,
         distributions: [],
       }],
     })).success,
@@ -439,13 +501,17 @@ Deno.test("annual Form 8854 reconciles code 38 and 39 Form 1042-S sources", () =
     ],
     eligible_deferred_compensation_items: [{
       item_id: "plan",
+      description: "Deferred plan",
       prior_form8854_document_id: "DOC-PRIOR",
+      irrevocable_treaty_reduction_waiver_confirmed: true,
       distributions: [first, second],
     }],
     nongrantor_trust_interests: [{
       item_id: "trust",
+      description: "Family trust",
       prior_form8854_document_id: "DOC-PRIOR",
       no_prior_full_value_election_confirmed: true,
+      treaty_reduction_waiver_confirmed: true,
       distributions: [{
         ...distribution(),
         source_document_id: "DOC-TRUST-PAYMENT",

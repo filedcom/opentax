@@ -122,12 +122,18 @@ const deferredPropertySchema = z.object({
 
 const annualItemSchema = z.object({
   item_id: z.string().trim().min(1),
+  description: z.string().trim().min(1),
   prior_form8854_document_id: documentId,
   distributions: z.array(distributionSchema),
 }).strict();
 
+const annualEligibleCompensationSchema = annualItemSchema.extend({
+  irrevocable_treaty_reduction_waiver_confirmed: z.literal(true),
+}).strict();
+
 const annualTrustSchema = annualItemSchema.extend({
   no_prior_full_value_election_confirmed: z.literal(true),
+  treaty_reduction_waiver_confirmed: z.literal(true),
 }).strict();
 
 export const annualInputSchema = z.object({
@@ -142,7 +148,10 @@ export const annualInputSchema = z.object({
   attached_form8854_copy_marked_copy_confirmed: z.literal(true),
   source_1042s: z.array(source1042SSchema),
   deferred_properties: z.array(deferredPropertySchema).max(20),
-  eligible_deferred_compensation_items: z.array(annualItemSchema).max(1000),
+  eligible_deferred_compensation_items: z.array(
+    annualEligibleCompensationSchema,
+  )
+    .max(1000),
   nongrantor_trust_interests: z.array(annualTrustSchema).max(1000),
 }).strict().superRefine((input, ctx) => {
   const citizen = input.expatriate_type === ExpatriateType.CITIZEN;

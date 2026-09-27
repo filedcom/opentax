@@ -1158,7 +1158,13 @@ Part III builder groups payments from one source into one MeF detail row.
 Source, mismatch, and grouping cases are written but unrun. This does not
 authenticate the payor statement or open the registered distribution filing
 gate; zero-reportable distributions and separate 1040 income treatment still
-need review. Prior Form 8854 amounts, disposition
+need review. Annual eligible-compensation and nongrantor-trust items now require
+descriptions and explicit treaty-waiver confirmations, and the registered
+no-activity and capital-disposition bundles emit their item-level native waiver
+statements in ReturnData1040 order. Statement, missing-confirmation, and
+full-return XSD cases are written but unrun; the source confirmations do not
+authenticate the earlier Form W-8CE, trustee notice, or mailed original.
+Prior Form 8854 amounts, disposition
 reporting, and payment evidence remain entered source assertions. A registered
 annual node and MeF descriptor now file the no-disposition, no-distribution
 certification. The annual input also requires explicit confirmations that the

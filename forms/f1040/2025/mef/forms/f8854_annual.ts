@@ -6,7 +6,39 @@ import {
 import { validateAnnualForm8854Filing } from "../../../nodes/inputs/f8854/annual_node.ts";
 import { reconcileAnnualForm8854Form8949Properties } from "../../../nodes/inputs/f8854/reconcile-annual-capital.ts";
 import { buildForm8854PartIFields } from "./f8854_part_i.ts";
+import { eligibleWaiver, trustWaiver } from "./f8854_section_c.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
+
+/** Annual item-level waiver statements in ReturnData1040.xsd order. */
+export function buildForm8854AnnualNativeStatements(
+  rawInput: F8854AnnualInput,
+): string[] {
+  const input = annualInputSchema.parse(rawInput);
+  return [
+    input.eligible_deferred_compensation_items.length
+      ? elements(
+        "EligDeferredCompItemStmt",
+        input.eligible_deferred_compensation_items.map((item) =>
+          elements("EligDeferredCompItemGrp", [
+            element("Desc", item.description),
+            element("IrrevocableWaiverCd", eligibleWaiver),
+          ])
+        ),
+      )
+      : "",
+    input.nongrantor_trust_interests.length
+      ? elements(
+        "NongrantorTrustStatement",
+        input.nongrantor_trust_interests.map((item) =>
+          elements("NongrantorTrustInterestGrp", [
+            element("Desc", item.description),
+            element("NongrantorTrustInterestCd", trustWaiver),
+          ])
+        ),
+      )
+      : "",
+  ].filter((xml) => xml !== "");
+}
 
 /** IRS8854 Part III children in 2025v5.4 XSD order. */
 export function buildForm8854PartIII(rawInput: F8854AnnualInput): string {

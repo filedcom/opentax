@@ -218,8 +218,21 @@ const annualNoActivityInput = annualInputSchema.parse({
     prior_deferred_tax_amount: 50_000,
     disposition: { disposed_in_2025: false },
   }],
-  eligible_deferred_compensation_items: [],
-  nongrantor_trust_interests: [],
+  eligible_deferred_compensation_items: [{
+    item_id: "plan",
+    description: "Deferred plan",
+    prior_form8854_document_id: "DOC-PRIOR",
+    irrevocable_treaty_reduction_waiver_confirmed: true,
+    distributions: [],
+  }],
+  nongrantor_trust_interests: [{
+    item_id: "trust",
+    description: "Family trust",
+    prior_form8854_document_id: "DOC-PRIOR",
+    no_prior_full_value_election_confirmed: true,
+    treaty_reduction_waiver_confirmed: true,
+    distributions: [],
+  }],
 });
 
 const annualCapitalDispositionInput = annualInputSchema.parse({
@@ -518,6 +531,8 @@ Deno.test("annual Form 8854 no-activity certification is attached to Form 1040",
     xml,
     "<AnnualExptrtStmtBfrSpcfdYrInd>X</AnnualExptrtStmtBfrSpcfdYrInd>",
   );
+  assertStringIncludes(xml, "<EligDeferredCompItemStmt documentId=");
+  assertStringIncludes(xml, "<NongrantorTrustStatement documentId=");
 });
 
 Deno.test("annual Form 8854 source reaches the filed return through the graph", () => {
