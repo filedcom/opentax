@@ -113,6 +113,9 @@ for the implementation contract.
 - [`FORM4972-GRAPH.md`](FORM4972-GRAPH.md) and `pdf-fields-f4972.csv`:
   lump-sum election eligibility, 1099-R income split, line 16 box 2,
   embedded 2026 instructions, and all 58 draft PDF widgets.
+- [`FORM8815-GRAPH.md`](FORM8815-GRAPH.md) and `pdf-fields-f8815.csv`:
+  savings-bond education exclusion, QSS phaseout, Schedule B line 3,
+  and all 23 draft PDF widgets.
 - [`FORM8962-GRAPH.md`](FORM8962-GRAPH.md) and `pdf-fields-f8962.csv`:
   2026 premium tax credit line 27, 400% FPL boundary, Form 1095-A/allocations,
   143 PDF widgets, and MeF/graph acceptance order.

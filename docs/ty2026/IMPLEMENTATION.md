@@ -125,6 +125,11 @@ instructions to map per-participant lump-sum elections, the Part II-only
 ordinary-income remainder and the tax added to 1040 line 16 box 2. Its
 58 widgets are inventoried; NUA, multi-recipient allocation and current
 MeF remain.
+The [Form 8815 contract](FORM8815-GRAPH.md) pins the 2026 savings-bond
+education exclusion, Schedule B line 3 and 23 PDF widgets. The shared
+calculator uses MFJ thresholds for QSS despite the printed single/HOH/QSS
+range; the TY2025 PDF descriptor also maps amounts into line 1 identity
+fields, so both routes need correction before 2026 registration.
 The [scenario 12 contract](ATS-SCENARIO-12.md) and
 [business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
 broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800

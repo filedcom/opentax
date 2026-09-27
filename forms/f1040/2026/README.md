@@ -44,6 +44,10 @@ qualified lump-sum elections from Form 1099-R to 1040 line 16 box 2.
 The 2026 draft embeds its instructions and has 58 inventoried widgets;
 the Part II-only ordinary-income remainder, NUA and multiple-recipient
 paths still need graph and filing routes.
+The [Form 8815 contract](../../../docs/ty2026/FORM8815-GRAPH.md) maps
+Series EE/I savings-bond education interest exclusion through Schedule B
+line 3. The shared QSS phaseout and TY2025 PDF fields are wrong for its
+2026 draft; 23 widgets and a current MeF route remain to implement.
 The [Form 2555 contract](../../../docs/ty2026/FORM2555-GRAPH.md) maps the
 2026 $132,900 exclusion, location-specific housing limits, Schedule 1
 lines 8d/24j, SE tax and Form 1116 reductions. The structured shared
