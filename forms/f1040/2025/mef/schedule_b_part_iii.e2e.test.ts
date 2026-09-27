@@ -183,3 +183,51 @@ Deno.test("seller-financed buyer identity reaches Schedule B MeF", () => {
     "<TotalSellerFinancedMortgIntAmt>900</TotalSellerFinancedMortgIntAmt>",
   );
 });
+
+Deno.test("1099-OID premiums and nominee amount reach Schedule B adjustments", () => {
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    {
+      general,
+      f1099oid: [{
+        payer_name: "Bond Broker",
+        box1_oid: 1_000,
+        box2_other_interest: 500,
+        box6_acquisition_premium: 100,
+        box6_applies_to: "taxable_oid",
+        box10_bond_premium: 50,
+        box10_applies_to: "taxable_stated_interest",
+        nominee_oid: 100,
+      }],
+      schedule_b_part_iii: {
+        foreign_accounts_question: false,
+        foreign_trust_question: false,
+      },
+    },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule_b?.print_line2_total, 1_250);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(xml, "<InterestAmt>1500</InterestAmt>");
+  assertStringIncludes(
+    xml,
+    '<NomineeInterestAmt nomineeInterestLiteralCd="NOMINEE DISTRIBUTION">100</NomineeInterestAmt>',
+  );
+  assertStringIncludes(
+    xml,
+    '<OriginalIssueDiscountAdjAmt originalIssueDiscountAdjLitCd="OID ADJUSTMENT">100</OriginalIssueDiscountAdjAmt>',
+  );
+  assertStringIncludes(
+    xml,
+    '<AmortizableBondPremAdjAmt amortizableBondPremiumAdjLitCd="ABP ADJUSTMENT">50</AmortizableBondPremAdjAmt>',
+  );
+  assertStringIncludes(
+    xml,
+    "<TaxableInterestSubtotalAmt>1250</TaxableInterestSubtotalAmt>",
+  );
+});
