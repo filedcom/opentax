@@ -257,7 +257,10 @@ export async function buildPdfBytes(
       if (!filledBytes) continue;
 
       const filledDoc = await PDFDocument.load(filledBytes);
-      const pageIndices = filledDoc.getPageIndices();
+      const pageIndices = [
+        ...(descriptor.pageIndices?.(instance) ??
+          filledDoc.getPageIndices()),
+      ];
       const copiedPages = await merged.copyPages(filledDoc, pageIndices);
       await descriptor.decoratePages?.(merged, copiedPages, instance, filer);
       for (const page of copiedPages) {

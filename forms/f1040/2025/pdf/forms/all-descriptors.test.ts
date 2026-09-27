@@ -3,8 +3,8 @@
  *
  * These tests verify that each descriptor:
  *   1. Has a non-empty pendingKey string.
- *   2. Has a pdfUrl pinned to the 2025 revision, or the latest applicable
- *      revision where the IRS has not issued a 2025 form.
+ *   2. Has a pdfUrl pinned to the 2025 revision, or the current applicable
+ *      revision for forms the IRS no longer updates annually.
  *   3. Has non-empty fields OR a rows descriptor.
  *   4. Every field entry has a valid kind ("text" | "checkbox" | "radio").
  *   5. Every field entry has non-empty domainKey and pdfField.
@@ -30,29 +30,53 @@ for (const descriptor of ALL_PDF_FORMS) {
   });
 
   Deno.test(`${label}: pdfUrl is pinned to the applicable IRS revision`, () => {
+    if (label === "f8912") {
+      assertEquals(
+        descriptor.pdfUrl,
+        "https://www.irs.gov/pub/irs-pdf/f8912.pdf",
+      );
+      return;
+    }
     const revision = label === "form982" ? "2018" : "2025";
     assertMatch(
       descriptor.pdfUrl,
-      new RegExp(`^https://www\\.irs\\.gov/pub/irs-prior/.+--${revision}\\.pdf$`),
+      new RegExp(
+        `^https://www\\.irs\\.gov/pub/irs-prior/.+--${revision}\\.pdf$`,
+      ),
       `Expected IRS PDF URL, got: ${descriptor.pdfUrl}`,
     );
   });
 
   Deno.test(`${label}: has fields or rows`, () => {
     const hasFields = descriptor.fields.length > 0;
-    const hasRows = descriptor.rows !== undefined && descriptor.rows.rowFields.length > 0;
-    assertEquals(hasFields || hasRows, true, `${label} has no fields and no rows`);
+    const hasRows = descriptor.rows !== undefined &&
+      descriptor.rows.rowFields.length > 0;
+    assertEquals(
+      hasFields || hasRows,
+      true,
+      `${label} has no fields and no rows`,
+    );
   });
 
   Deno.test(`${label}: all field entries have valid kind`, () => {
-    for (const entry of [...descriptor.fields, ...(descriptor.filerFields ?? [])]) {
+    for (
+      const entry of [...descriptor.fields, ...(descriptor.filerFields ?? [])]
+    ) {
       assertEquals(
         VALID_KINDS.has(entry.kind),
         true,
         `Invalid kind "${entry.kind}" in ${label}`,
       );
-      assertEquals(entry.domainKey.length > 0, true, `Empty domainKey in ${label}`);
-      assertEquals(entry.pdfField.length > 0, true, `Empty pdfField in ${label}`);
+      assertEquals(
+        entry.domainKey.length > 0,
+        true,
+        `Empty domainKey in ${label}`,
+      );
+      assertEquals(
+        entry.pdfField.length > 0,
+        true,
+        `Empty pdfField in ${label}`,
+      );
     }
   });
 
@@ -119,7 +143,9 @@ for (const descriptor of ALL_PDF_FORMS) {
     },
     async () => {
       const realFields = await getRealFieldNames(descriptor.pdfUrl);
-      for (const entry of [...descriptor.fields, ...(descriptor.filerFields ?? [])]) {
+      for (
+        const entry of [...descriptor.fields, ...(descriptor.filerFields ?? [])]
+      ) {
         assertEquals(
           realFields.has(entry.pdfField),
           true,
@@ -128,7 +154,12 @@ for (const descriptor of ALL_PDF_FORMS) {
       }
       if (descriptor.rows) {
         for (const rf of descriptor.rows.rowFields) {
-          const firstRowField = rf.pdfFieldPattern.replace("{row}", "1").replace(/{field_num}/g, String((rf as { fieldNumBase?: number }).fieldNumBase ?? 1).padStart(2, "0"));
+          const firstRowField = rf.pdfFieldPattern.replace("{row}", "1")
+            .replace(
+              /{field_num}/g,
+              String((rf as { fieldNumBase?: number }).fieldNumBase ?? 1)
+                .padStart(2, "0"),
+            );
           assertEquals(
             realFields.has(firstRowField),
             true,

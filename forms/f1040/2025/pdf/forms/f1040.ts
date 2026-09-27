@@ -400,19 +400,6 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 
 export const irs1040Pdf: PdfFormDescriptor = {
   pendingKey: "f1040",
-  projectFields(fields) {
-    const bondCredit = fields.form8912_source_lines;
-    if (
-      bondCredit && typeof bondCredit === "object" &&
-      "line4" in bondCredit && typeof bondCredit.line4 === "number" &&
-      bondCredit.line4 > 0
-    ) {
-      throw new Error(
-        "Form 8912 credit cannot be printed until the matching Form 8912 PDF is available",
-      );
-    }
-    return fields;
-  },
   // Year-pinned: /pub/irs-pdf/f1040.pdf silently changes revision each filing
   // season; this module is the 2025 form and must always fetch the 2025 PDF.
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040--2025.pdf",

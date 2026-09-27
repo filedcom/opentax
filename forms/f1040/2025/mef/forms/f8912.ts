@@ -151,7 +151,7 @@ function sameMoney(a: number, b: number): boolean {
   return Math.round(a * 100) === Math.round(b * 100);
 }
 
-function finalizedReturnLines(
+export function finalizedReturnLines(
   context: MefBuildContext,
   source: ReturnType<typeof sourceLinesFromInput>,
 ): Form8912FinalizedReturnLines {
