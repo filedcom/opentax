@@ -2109,6 +2109,33 @@
       "bytes": 155690,
       "sha256": "a06256fece2bfc5352e8647856b3c1aca0a4c96a79a5a5dd1324f4049c2f5655",
       "year_check": "2026-present"
+    },
+    {
+      "path": "authorities/f1099oid--2024.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/f1099oid.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 537304,
+      "sha256": "cc88d18964125c3f69a6fd15afcb5cd8b90fb1c3ea68c7b3b7b91a106e17d756",
+      "year_check": "2024-current"
+    },
+    {
+      "path": "authorities/f1099int--2024.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/f1099int.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 538774,
+      "sha256": "ee7697c9b29374596fd9645b157b7312d121ae3c2f76bebf68908c3fc2b739e6",
+      "year_check": "2024-current"
+    },
+    {
+      "path": "authorities/i1099int--2024.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/i1099int.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 196656,
+      "sha256": "6f13ff025d4ab270ac53d9f1b60f7f354b1e558366b9d6bfd49cc60bf57fbc63",
+      "year_check": "2024-current"
     }
   ]
 }
