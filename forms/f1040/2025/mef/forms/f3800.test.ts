@@ -98,6 +98,10 @@ Deno.test("Form 3800 links and limits a nonpassive Form 5884 line 4b credit", ()
     subject_to_passive_activity_limit: false,
     f5884s: [{
       employee_reference: "EMP-001",
+      wage_deduction_location: {
+        kind: "schedule_c",
+        business_reference: "BUSINESS-1",
+      },
       target_group: TargetGroup.TanfRecipient,
       hired_on: "2025-01-15",
       certification: {
@@ -220,6 +224,10 @@ Deno.test("Form 3800 requires a Part V split when mixed Form 5884 sources are pa
     subject_to_passive_activity_limit: false,
     f5884s: [{
       employee_reference: "EMP-001",
+      wage_deduction_location: {
+        kind: "schedule_c",
+        business_reference: "BUSINESS-1",
+      },
       target_group: TargetGroup.TanfRecipient,
       hired_on: "2025-01-15",
       certification: {

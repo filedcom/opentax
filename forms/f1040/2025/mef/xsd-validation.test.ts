@@ -1414,10 +1414,29 @@ Deno.test({
     f1040: { line16_income_tax: 40_000 },
     schedule3: { line6a_total: 2_400, line7_total: 2_400 },
     form6251: { line11_amt: 0, net_tmt: 20_000 },
+    schedule_c: {
+      schedule_cs: [{
+        business_reference: "BUSINESS-1",
+        line_a_principal_business: "Retail store",
+        line_b_business_code: "459999",
+        line_f_accounting_method: "cash",
+        line_g_material_participation: true,
+        line_1_gross_receipts: 30_000,
+        line_26_wages: 6_000,
+      }],
+      wotc_wage_reductions: [{
+        business_reference: "BUSINESS-1",
+        credit_amount: 2_400,
+      }],
+    },
     f5884: {
       subject_to_passive_activity_limit: false,
       f5884s: [{
         employee_reference: "EMP-001",
+        wage_deduction_location: {
+          kind: "schedule_c",
+          business_reference: "BUSINESS-1",
+        },
         target_group: TargetGroup.TanfRecipient,
         hired_on: "2025-01-15",
         certification: {
@@ -1477,6 +1496,10 @@ Deno.test({
 }, async () => {
   const employee = {
     target_group: TargetGroup.TanfRecipient,
+    wage_deduction_location: {
+      kind: "schedule_c",
+      business_reference: "BUSINESS-1",
+    },
     hired_on: "2025-01-15",
     certification: {
       path: "certified_by_start",
@@ -1502,6 +1525,21 @@ Deno.test({
     f1040: { line16_income_tax: 40_000 },
     schedule3: { line6a_total: 1_950, line7_total: 1_950 },
     form6251: { line11_amt: 0, net_tmt: 20_000 },
+    schedule_c: {
+      schedule_cs: [{
+        business_reference: "BUSINESS-1",
+        line_a_principal_business: "Retail store",
+        line_b_business_code: "459999",
+        line_f_accounting_method: "cash",
+        line_g_material_participation: true,
+        line_1_gross_receipts: 30_000,
+        line_26_wages: 6_000,
+      }],
+      wotc_wage_reductions: [{
+        business_reference: "BUSINESS-1",
+        credit_amount: 1_950,
+      }],
+    },
     f5884: {
       subject_to_passive_activity_limit: false,
       controlled_group: {
@@ -1525,6 +1563,7 @@ Deno.test({
           ...employee,
           employee_reference: "GROUP-2",
           employer_ein: "987654321",
+          wage_deduction_location: { kind: "entity_return" },
           hours_worked: 400,
         },
       ],
@@ -1616,10 +1655,29 @@ Deno.test({
     f1040: { line16_income_tax: 1_000 },
     schedule3: { line6a_total: 1_000, line7_total: 1_000 },
     form6251: { line11_amt: 0, net_tmt: 0 },
+    schedule_c: {
+      schedule_cs: [{
+        business_reference: "BUSINESS-1",
+        line_a_principal_business: "Retail store",
+        line_b_business_code: "459999",
+        line_f_accounting_method: "cash",
+        line_g_material_participation: true,
+        line_1_gross_receipts: 30_000,
+        line_26_wages: 6_000,
+      }],
+      wotc_wage_reductions: [{
+        business_reference: "BUSINESS-1",
+        credit_amount: 2_400,
+      }],
+    },
     f5884: {
       subject_to_passive_activity_limit: false,
       f5884s: [{
         employee_reference: "EMP-001",
+        wage_deduction_location: {
+          kind: "schedule_c",
+          business_reference: "BUSINESS-1",
+        },
         target_group: TargetGroup.TanfRecipient,
         hired_on: "2025-01-15",
         certification: {

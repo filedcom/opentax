@@ -3,6 +3,14 @@ import {
   calculateForm5884,
   inputSchema,
 } from "../../../nodes/inputs/f5884/index.ts";
+import {
+  inputSchema as scheduleCInputSchema,
+  wotcReductionsByBusiness,
+} from "../../../nodes/inputs/schedule_c/index.ts";
+import {
+  inputSchema as scheduleFInputSchema,
+  wotcReductionsByFarm,
+} from "../../../nodes/intermediate/forms/schedule_f/index.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 
 export const form5884: MefFormDescriptor<"f5884", unknown> = {
@@ -14,6 +22,45 @@ export const form5884: MefFormDescriptor<"f5884", unknown> = {
     const source = inputSchema.parse(raw);
     const lines = calculateForm5884(source);
     if (lines.line2 <= 0) return "";
+    if (context?.pending) {
+      const expectedC = new Map<string, number>();
+      const expectedF = new Map<string, number>();
+      for (const allocation of lines.wageDeductionAllocations) {
+        if (allocation.location.kind === "schedule_c") {
+          expectedC.set(
+            allocation.location.business_reference,
+            allocation.credit_amount,
+          );
+        } else if (allocation.location.kind === "schedule_f") {
+          expectedF.set(allocation.location.farm_id, allocation.credit_amount);
+        }
+      }
+      const actualC = context.pending.schedule_c === undefined
+        ? new Map<string, number>()
+        : wotcReductionsByBusiness(
+          scheduleCInputSchema.parse(context.pending.schedule_c),
+        );
+      const actualF = context.pending.schedule_f === undefined
+        ? new Map<string, number>()
+        : wotcReductionsByFarm(
+          scheduleFInputSchema.parse(context.pending.schedule_f),
+        );
+      for (
+        const [expected, actual, schedule] of [
+          [expectedC, actualC, "Schedule C"],
+          [expectedF, actualF, "Schedule F"],
+        ] as const
+      ) {
+        if (
+          expected.size !== actual.size ||
+          [...expected].some(([key, amount]) => actual.get(key) !== amount)
+        ) {
+          throw new Error(
+            `Form 5884 line 2 does not reconcile to ${schedule} wages`,
+          );
+        }
+      }
+    }
     if (
       source.subject_to_passive_activity_limit ||
       (source.pass_through_credits ?? []).some((entry) =>

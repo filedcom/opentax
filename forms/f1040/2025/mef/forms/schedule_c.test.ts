@@ -68,6 +68,25 @@ Deno.test("Schedule C MeF wages match gross payroll less employment credits", ()
   assertStringIncludes(xml, "<NetProfitOrLossAmt>28135</NetProfitOrLossAmt>");
 });
 
+Deno.test("Schedule C rejects an unsourced WOTC wage reduction in a return bundle", () => {
+  const fields = {
+    schedule_cs: [item({
+      business_reference: "CONSULTING",
+      line_26_wages: 10_000,
+    })],
+    wotc_wage_reductions: [{
+      business_reference: "CONSULTING",
+      credit_amount: 2_400,
+    }],
+  };
+  assertThrows(() =>
+    scheduleC.build(fields, {
+      filer,
+      pending: { schedule_c: fields },
+    })
+  );
+});
+
 Deno.test("Schedule C emits inventory, cost of goods sold, and separate documents", () => {
   const xml = buildMefXml({
     schedule_c: {

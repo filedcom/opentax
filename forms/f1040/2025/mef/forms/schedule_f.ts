@@ -13,6 +13,10 @@ import {
 } from "../../../nodes/intermediate/forms/schedule_f/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import { inputSchema as form4835InputSchema } from "../../../nodes/inputs/f4835/index.ts";
+import {
+  calculateForm5884,
+  inputSchema as form5884InputSchema,
+} from "../../../nodes/inputs/f5884/index.ts";
 
 type Fields = Partial<ReturnType<typeof inputSchema.parse>>;
 
@@ -250,6 +254,25 @@ export const scheduleF: MefFormDescriptor<
     });
     reconcileFarmSources(input);
     const reductions = wotcReductionsByFarm(input);
+    if (reductions.size > 0 && context.pending) {
+      const source = form5884InputSchema.parse(context.pending.f5884);
+      const expected = new Map(
+        calculateForm5884(source).wageDeductionAllocations.flatMap(
+          (entry) =>
+            entry.location.kind === "schedule_f"
+              ? [[entry.location.farm_id, entry.credit_amount] as const]
+              : [],
+        ),
+      );
+      if (
+        expected.size !== reductions.size ||
+        [...reductions].some(([key, amount]) => expected.get(key) !== amount)
+      ) {
+        throw new Error(
+          "Schedule F WOTC reduction needs matching Form 5884 line 2",
+        );
+      }
+    }
     const rentalSource = context.pending?.f4835;
     const rentalItems = rentalSource === undefined
       ? []

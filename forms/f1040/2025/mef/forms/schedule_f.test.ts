@@ -91,6 +91,19 @@ Deno.test("Schedule F MeF labor matches gross payroll less employment credits", 
   );
 });
 
+Deno.test("Schedule F rejects an unsourced WOTC labor reduction in a return bundle", () => {
+  const fields = {
+    schedule_fs: [farm({ farm_id: "FARM-1", line22_labor_hired: 6_000 })],
+    wotc_wage_reductions: [{ farm_id: "FARM-1", credit_amount: 2_400 }],
+  };
+  assertThrows(() =>
+    scheduleF.build(fields, {
+      filer: testFiler(),
+      pending: { schedule_f: fields },
+    })
+  );
+});
+
 Deno.test("Schedule F reports preliminary farm loss and links at-risk computation separately", () => {
   const [xml] = scheduleF.build({
     schedule_fs: [farm({

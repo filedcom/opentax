@@ -11,6 +11,10 @@ import {
   wotcReductionsByBusiness,
 } from "../../../nodes/inputs/schedule_c/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
+import {
+  calculateForm5884,
+  inputSchema as form5884InputSchema,
+} from "../../../nodes/inputs/f5884/index.ts";
 
 interface Fields {
   readonly schedule_cs?: readonly ScheduleCItem[];
@@ -259,6 +263,30 @@ export const scheduleC: MefFormDescriptor<
       schedule_cs: items,
       wotc_wage_reductions: fields?.wotc_wage_reductions,
     });
+    if (reductions.size > 0 && context.pending) {
+      const source = form5884InputSchema.parse(context.pending.f5884);
+      const expected = new Map(
+        calculateForm5884(source).wageDeductionAllocations.flatMap(
+          (entry) =>
+            entry.location.kind === "schedule_c"
+              ? [
+                [
+                  entry.location.business_reference,
+                  entry.credit_amount,
+                ] as const,
+              ]
+              : [],
+        ),
+      );
+      if (
+        expected.size !== reductions.size ||
+        [...reductions].some(([key, amount]) => expected.get(key) !== amount)
+      ) {
+        throw new Error(
+          "Schedule C WOTC reduction needs matching Form 5884 line 2",
+        );
+      }
+    }
     return items.map((item, index) =>
       buildScheduleC(
         item,

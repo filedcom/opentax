@@ -33,6 +33,10 @@ function wageRecords(qualifiedWages: number) {
 function minimalItem(overrides: Partial<F5884Item> = {}): F5884Item {
   return {
     employee_reference: "EMP-001",
+    wage_deduction_location: {
+      kind: "schedule_c",
+      business_reference: "BUSINESS-1",
+    },
     target_group: TargetGroup.TanfRecipient,
     hired_on: "2025-01-15",
     certification: {
@@ -463,12 +467,17 @@ Deno.test("controlled group allocates line 2 by qualified wages", () => {
   const first = minimalItem({
     employee_reference: "GROUP-1",
     employer_ein: "123456789",
+    wage_deduction_location: {
+      kind: "schedule_c",
+      business_reference: "BUSINESS-1",
+    },
     wage_records: wageRecords(6_000),
     hours_worked: 200,
   });
   const second = minimalItem({
     employee_reference: "GROUP-2",
     employer_ein: "987654321",
+    wage_deduction_location: { kind: "entity_return" },
     wage_records: wageRecords(6_000),
     hours_worked: 400,
   });
@@ -497,8 +506,17 @@ Deno.test("controlled group allocates line 2 by qualified wages", () => {
   );
   assertEquals(lines.line2, 1_950);
   assertEquals(lines.line4, 1_950);
+  assertEquals(lines.wageDeductionAllocations, [{
+    location: first.wage_deduction_location,
+    credit_amount: 1_950,
+  }]);
   const routed = f5884.compute({ taxYear: 2025, formType: "f1040" }, input);
   assertEquals(routed.outputs[0]?.fields.f5884_credit?.credit_amount, 1_950);
+  assertEquals(
+    routed.outputs.find((row) => row.nodeType === "schedule_c")?.fields
+      .wotc_wage_reductions,
+    [{ business_reference: "BUSINESS-1", credit_amount: 1_950 }],
+  );
   assertEquals(
     f5884.inputSchema.safeParse({
       ...input,
@@ -549,6 +567,16 @@ Deno.test("controlled group allocates line 2 by qualified wages", () => {
   assertEquals(
     f5884.inputSchema.safeParse({
       ...input,
+      f5884s: [
+        { ...first, wage_deduction_location: { kind: "entity_return" } },
+        second,
+      ],
+    }).success,
+    false,
+  );
+  assertEquals(
+    f5884.inputSchema.safeParse({
+      ...input,
       controlled_group: undefined,
     }).success,
     false,
@@ -562,6 +590,9 @@ Deno.test("controlled-group whole-dollar remainder is assigned once", () => {
       minimalItem({
         employee_reference: `GROUP-${index + 1}`,
         employer_ein: ein,
+        wage_deduction_location: index === 0
+          ? { kind: "schedule_c", business_reference: "BUSINESS-1" }
+          : { kind: "entity_return" },
         wage_records: wageRecords(1),
         hours_worked: 400,
       })
@@ -585,6 +616,81 @@ Deno.test("controlled-group whole-dollar remainder is assigned once", () => {
     [1, 0, 0],
   );
   assertEquals(lines.line2, 1);
+});
+
+Deno.test("Form 5884 line 2 reduces only its linked employer wages", () => {
+  const first = minimalItem({
+    employee_reference: "C-1",
+    wage_records: wageRecords(6_000),
+    hours_worked: 400,
+  });
+  const second = minimalItem({
+    employee_reference: "C-2",
+    wage_deduction_location: {
+      kind: "schedule_c",
+      business_reference: "BUSINESS-2",
+    },
+    wage_records: wageRecords(6_000),
+    hours_worked: 200,
+  });
+  const farm = minimalItem({
+    employee_reference: "F-1",
+    wage_deduction_location: { kind: "schedule_f", farm_id: "FARM-1" },
+    wage_records: wageRecords(6_000),
+    hours_worked: 400,
+  });
+  const input = {
+    f5884s: [first, second, farm],
+    pass_through_credits: [{
+      source_type: "partnership" as const,
+      entity_ein: "123456789",
+      source_document_reference: "2025 K-1 box 15 code J",
+      credit_amount: 1_250,
+      subject_to_passive_activity_limit: false,
+    }],
+    subject_to_passive_activity_limit: false,
+  };
+  assertEquals(f5884.inputSchema.safeParse(input).success, true);
+  const lines = calculateForm5884(input);
+  assertEquals(lines.line2, 6_300);
+  assertEquals(lines.line3, 1_250);
+  assertEquals(lines.wageDeductionAllocations, [
+    { location: first.wage_deduction_location, credit_amount: 2_400 },
+    { location: second.wage_deduction_location, credit_amount: 1_500 },
+    { location: farm.wage_deduction_location, credit_amount: 2_400 },
+  ]);
+  assertEquals(
+    calculateForm5884({
+      ...input,
+      f5884s: [
+        first,
+        { ...second, wage_deduction_location: first.wage_deduction_location },
+        farm,
+      ],
+    }).wageDeductionAllocations,
+    [
+      { location: first.wage_deduction_location, credit_amount: 3_900 },
+      { location: farm.wage_deduction_location, credit_amount: 2_400 },
+    ],
+  );
+  const outputs =
+    f5884.compute({ taxYear: 2025, formType: "f1040" }, input).outputs;
+  assertEquals(
+    outputs.find((row) => row.nodeType === "schedule_c")?.fields
+      .wotc_wage_reductions,
+    [{
+      business_reference: "BUSINESS-1",
+      credit_amount: 2_400,
+    }],
+  );
+  assertEquals(
+    outputs.find((row) => row.nodeType === "schedule_f")?.fields
+      .wotc_wage_reductions,
+    [{
+      farm_id: "FARM-1",
+      credit_amount: 2_400,
+    }],
+  );
 });
 
 // ── Zero Output Cases ─────────────────────────────────────────────────────────
@@ -808,6 +914,8 @@ Deno.test("work opportunity credit requires certified, distinct, qualified emplo
   for (
     const item of [
       { ...valid, certification: undefined },
+      { ...valid, wage_deduction_location: undefined },
+      { ...valid, wage_deduction_location: { kind: "entity_return" } },
       { ...valid, hired_on: "2026-01-01" },
       { ...valid, not_prior_employee_confirmed: undefined },
       { ...valid, not_related_or_dependent_confirmed: undefined },
@@ -869,6 +977,7 @@ Deno.test("Form 5884 separates pass-through-only and mixed source credits", () =
     line2: 0,
     line3: 1_250,
     line4: 1_250,
+    wageDeductionAllocations: [],
   });
   const onlyOutput = f5884.compute(
     { taxYear: 2025, formType: "f1040" },

@@ -3,6 +3,8 @@ import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f3800 } from "../f3800/index.ts";
+import { scheduleC } from "../schedule_c/index.ts";
+import { schedule_f } from "../../intermediate/forms/schedule_f/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── TY2025 Constants (IRC §51) ───────────────────────────────────────────────
@@ -119,10 +121,23 @@ const successorEmployerSchema = z.object({
   wage_periods_start_at_predecessor_confirmed: z.literal(true),
 });
 
+const wageDeductionLocationSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("schedule_c"),
+    business_reference: z.string().trim().min(1),
+  }).strict(),
+  z.object({
+    kind: z.literal("schedule_f"),
+    farm_id: z.string().trim().min(1),
+  }).strict(),
+  z.object({ kind: z.literal("entity_return") }).strict(),
+]);
+
 // Per-item schema — one entry per employee
 export const itemSchema = z.object({
   employee_reference: z.string().trim().min(1),
   employer_ein: z.string().regex(/^\d{9}$/).optional(),
+  wage_deduction_location: wageDeductionLocationSchema,
   target_group: z.nativeEnum(TargetGroup),
   hired_on: z.string().date().refine((date) => date < "2026-01-01", {
     message:
@@ -396,6 +411,25 @@ export const inputSchema = z.object({
         message: "Employer EIN is for a controlled group claim only",
       });
     }
+    if (!group && item.wage_deduction_location.kind === "entity_return") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["f5884s", index, "wage_deduction_location"],
+        message:
+          "A direct Form 1040 employer credit needs its business wage deduction",
+      });
+    }
+    if (
+      group && item.employer_ein === group.taxpayer_member_ein &&
+      item.wage_deduction_location.kind === "entity_return"
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["f5884s", index, "wage_deduction_location"],
+        message:
+          "The Form 1040 taxpayer member needs a Schedule C or F wage deduction",
+      });
+    }
     if (references.has(item.employee_reference)) {
       ctx.addIssue({
         code: "custom",
@@ -439,6 +473,23 @@ function wageCap(item: F5884Item): number {
     return WAGE_CAP_VETERAN_DISABLED_1YR;
   }
   return WAGE_CAP_STANDARD;
+}
+
+function allocateWholeDollars(
+  total: number,
+  weights: readonly number[],
+): number[] {
+  const sum = weights.reduce((value, weight) => value + weight, 0);
+  if (total === 0 || sum === 0) return weights.map(() => 0);
+  const exact = weights.map((weight) => total * weight / sum);
+  const shares = exact.map(Math.floor);
+  const residual = total - shares.reduce((value, share) => value + share, 0);
+  const order = exact.map((value, index) => ({
+    index,
+    fraction: value - shares[index],
+  })).sort((a, b) => b.fraction - a.fraction || a.index - b.index);
+  for (const { index } of order.slice(0, residual)) shares[index]++;
+  return shares;
 }
 
 // IRC 52(a)-(b): divide the group credit by each member's proportionate
@@ -552,6 +603,60 @@ export function calculateForm5884(input: z.infer<typeof inputSchema>) {
     (sum, entry) => sum + entry.credit_amount,
     0,
   );
+  const deductionShares = rows.map(() => 0);
+  if (group) {
+    const shares = allocateWholeDollars(
+      line2,
+      rows.map((row) =>
+        row.item.employer_ein === group.taxpayer_member_ein
+          ? row.firstYearWages + row.secondYearWages
+          : 0
+      ),
+    );
+    shares.forEach((share, index) => deductionShares[index] += share);
+  } else {
+    for (
+      const [credit, weights] of [
+        [
+          line1aCredit,
+          rows.map((row) =>
+            row.totalHours >= 120 && row.totalHours < 400
+              ? row.firstYearWages
+              : 0
+          ),
+        ],
+        [
+          line1bCredit,
+          rows.map((row) => row.totalHours >= 400 ? row.firstYearWages : 0),
+        ],
+        [line1cCredit, rows.map((row) => row.secondYearWages)],
+      ] as const
+    ) {
+      allocateWholeDollars(credit, weights).forEach((share, index) =>
+        deductionShares[index] += share
+      );
+    }
+  }
+  const deductions = new Map<string, {
+    location: F5884Item["wage_deduction_location"];
+    credit_amount: number;
+  }>();
+  rows.forEach((row, index) => {
+    const share = deductionShares[index];
+    if (share === 0) return;
+    const location = row.item.wage_deduction_location;
+    const key = location.kind === "schedule_c"
+      ? `schedule_c:${location.business_reference}`
+      : location.kind === "schedule_f"
+      ? `schedule_f:${location.farm_id}`
+      : "entity_return";
+    const existing = deductions.get(key);
+    deductions.set(key, {
+      location,
+      credit_amount: (existing?.credit_amount ?? 0) + share,
+    });
+  });
+  const wageDeductionAllocations = [...deductions.values()];
   return {
     line1aWages,
     line1aCredit,
@@ -564,13 +669,14 @@ export function calculateForm5884(input: z.infer<typeof inputSchema>) {
     line2,
     line3,
     line4: line2 + line3,
+    wageDeductionAllocations,
   };
 }
 
 class F5884Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f5884";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f3800]);
+  readonly outputNodes = new OutputNodes([f3800, scheduleC, schedule_f]);
 
   compute(
     _ctx: NodeContext,
@@ -580,18 +686,34 @@ class F5884Node extends TaxNode<typeof inputSchema> {
     const lines = calculateForm5884(input);
     const credit = lines.line4;
     if (credit <= 0) return { outputs: [] };
-    return {
-      outputs: [output(f3800, {
-        f5884_credit: {
-          credit_amount: credit,
-          subject_to_passive_activity_limit:
-            (lines.line2 > 0 && input.subject_to_passive_activity_limit) ||
-            (input.pass_through_credits ?? []).some((entry) =>
-              entry.credit_amount > 0 && entry.subject_to_passive_activity_limit
-            ),
-        },
-      })],
-    };
+    const outputs = [output(f3800, {
+      f5884_credit: {
+        credit_amount: credit,
+        subject_to_passive_activity_limit:
+          (lines.line2 > 0 && input.subject_to_passive_activity_limit) ||
+          (input.pass_through_credits ?? []).some((entry) =>
+            entry.credit_amount > 0 && entry.subject_to_passive_activity_limit
+          ),
+      },
+    })];
+    for (const allocation of lines.wageDeductionAllocations) {
+      if (allocation.location.kind === "schedule_c") {
+        outputs.push(output(scheduleC, {
+          wotc_wage_reductions: [{
+            business_reference: allocation.location.business_reference,
+            credit_amount: allocation.credit_amount,
+          }],
+        }));
+      } else if (allocation.location.kind === "schedule_f") {
+        outputs.push(output(schedule_f, {
+          wotc_wage_reductions: [{
+            farm_id: allocation.location.farm_id,
+            credit_amount: allocation.credit_amount,
+          }],
+        }));
+      }
+    }
+    return { outputs };
   }
 }
 

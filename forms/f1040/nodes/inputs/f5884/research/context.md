@@ -31,7 +31,7 @@ affirmation that later wages were excluded. Each claimed payroll row records its
 service start and end dates, its 2025 paid-or-incurred date, the qualified
 amount, and a retained payroll reference. Rows dated after notice are rejected.
 This is a source assertion; it is not yet independently reconciled to payroll
-documents or the business wage deduction. For successor employment, the first
+documents. For successor employment, the first
 workday and Form 8850 deadline are measured from the predecessor's start, not
 the acquisition date. The successor record also requires the predecessor EIN,
 acquisition and continued-employment facts, prior qualified wages and hours, a
@@ -46,6 +46,19 @@ incurred in TY2025. A row crossing the first-year anniversary must be split.
 Only LTFA can have second-year wages. Duplicate payroll references within an
 employee claim are rejected. The previous undated year-one and year-two wage
 totals are no longer accepted as input.
+
+Each self-earned employee row now identifies the Schedule C business or
+Schedule F farm whose gross payroll contains the wages. Form 5884 allocates its
+whole-dollar line 2 credit across those destinations, passes the reduction to
+the business-profit graph, and reconciles the reduction in a full MeF bundle.
+Form 3800's current-year tax limit does not reduce this wage adjustment.
+Pass-through line 3 credit does not cause a wage reduction on the recipient's
+Schedule C or F. Controlled-group rows for other members may identify a
+separate entity return; the Form 1040 taxpayer member must identify Schedule C
+or F for its line 2 share. The
+business-location, graph, XML, and negative cases are written but unrun.
+Capitalized wage costs and wage deductions on business forms other than
+Schedules C and F still need a separate, source-backed destination.
 
 `pass_through_credits` separately identifies partnership, S corporation,
 cooperative, estate, and trust allocations by entity EIN, source document
@@ -68,8 +81,8 @@ arithmetic. The PDF prints "See attached" by line 2 and appends the same
 calculation. These source, MeF, XSD, and PDF cases are written but unrun. An
 employee paid by more than one group member in the same wage period still needs
 a shared employee/payroll source model; the current distinct-employee rule
-rejects that situation. The wage-deduction adjustment on the underlying business
-schedule also remains open.
+rejects that situation. An entity-return location is not a substitute for
+reconciling the wages on that separate entity return.
 
 Veterans require one `VeteranCategory`, rather than independent flags:
 

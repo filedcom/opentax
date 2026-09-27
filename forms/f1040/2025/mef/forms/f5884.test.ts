@@ -8,6 +8,10 @@ export const workOpportunitySource = {
   subject_to_passive_activity_limit: false,
   f5884s: [{
     employee_reference: "EMP-001",
+    wage_deduction_location: {
+      kind: "schedule_c",
+      business_reference: "BUSINESS-1",
+    },
     target_group: TargetGroup.TanfRecipient,
     hired_on: "2025-01-15",
     certification: {
@@ -66,6 +70,80 @@ Deno.test("Form 5884 emits source wages and credit only when bundled with Form 3
   );
 });
 
+Deno.test("Form 5884 full-return export reconciles its wage deduction", () => {
+  const business = {
+    schedule_cs: [{
+      business_reference: "BUSINESS-1",
+      line_a_principal_business: "Retail store",
+      line_b_business_code: "459999",
+      line_f_accounting_method: "cash",
+      line_g_material_participation: true,
+      line_1_gross_receipts: 30_000,
+      line_26_wages: 6_000,
+    }],
+    wotc_wage_reductions: [{
+      business_reference: "BUSINESS-1",
+      credit_amount: 2_400,
+    }],
+  };
+  assertStringIncludes(
+    form5884.build(workOpportunitySource, {
+      pending: { schedule_c: business },
+    }),
+    "<TotalWagesAmt>2400</TotalWagesAmt>",
+  );
+  assertThrows(
+    () =>
+      form5884.build(workOpportunitySource, {
+        pending: {},
+      }),
+    Error,
+    "does not reconcile to Schedule C wages",
+  );
+  assertThrows(
+    () =>
+      form5884.build(workOpportunitySource, {
+        pending: {
+          schedule_c: {
+            ...business,
+            wotc_wage_reductions: [{
+              business_reference: "BUSINESS-1",
+              credit_amount: 1_000,
+            }],
+          },
+        },
+      }),
+    Error,
+    "does not reconcile to Schedule C wages",
+  );
+  const farmSource = {
+    ...workOpportunitySource,
+    f5884s: [{
+      ...workOpportunitySource.f5884s[0],
+      wage_deduction_location: { kind: "schedule_f", farm_id: "FARM-1" },
+    }],
+  };
+  assertStringIncludes(
+    form5884.build(farmSource, {
+      pending: {
+        schedule_f: {
+          schedule_fs: [{
+            farm_id: "FARM-1",
+            line_a_principal_crop_activity: "GRAIN FARMING",
+            line_b_agricultural_activity_code: "111100",
+            line_e_material_participation: true,
+            accounting_method: "cash",
+            line1_sales_livestock_resale: 0,
+            line22_labor_hired: 6_000,
+          }],
+          wotc_wage_reductions: [{ farm_id: "FARM-1", credit_amount: 2_400 }],
+        },
+      },
+    }),
+    "<TotalWagesAmt>2400</TotalWagesAmt>",
+  );
+});
+
 Deno.test("Form 5884 omits the taxpayer form for pass-through-only credit and prints line 3 for mixed credit", () => {
   const passThrough = {
     source_type: "partnership" as const,
@@ -119,12 +197,30 @@ Deno.test("Form 5884 controlled-group share links both calculation statements", 
         ...workOpportunitySource.f5884s[0],
         employee_reference: "GROUP-2",
         employer_ein: "987654321",
+        wage_deduction_location: { kind: "entity_return" },
         hours_worked: 400,
       },
     ],
   };
   const context = {
-    pending: { f5884: groupSource },
+    pending: {
+      f5884: groupSource,
+      schedule_c: {
+        schedule_cs: [{
+          business_reference: "BUSINESS-1",
+          line_a_principal_business: "Retail store",
+          line_b_business_code: "459999",
+          line_f_accounting_method: "cash",
+          line_g_material_participation: true,
+          line_1_gross_receipts: 30_000,
+          line_26_wages: 6_000,
+        }],
+        wotc_wage_reductions: [{
+          business_reference: "BUSINESS-1",
+          credit_amount: 1_950,
+        }],
+      },
+    },
     documentIdsByPendingKey: {
       f3800: ["IRS3800_1"],
       f5884_controlled_group_statement: ["ControlledGroupMemberStatement2"],
