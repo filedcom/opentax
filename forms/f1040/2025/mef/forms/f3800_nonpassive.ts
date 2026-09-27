@@ -12,9 +12,7 @@ import {
   inputSchema as form8826InputSchema,
   isEligible as isEligibleForForm8826,
 } from "../../../nodes/inputs/f8826/index.ts";
-import { form3800PartIAndIIXml } from "./f3800_part_i_ii.ts";
-import { buildForm3800PartIIIXml } from "./f3800_part_iii.ts";
-import { buildForm3800PartVXml } from "./f3800_part_v.ts";
+import { buildIRS3800Document } from "./f3800_document.ts";
 import type { Form3800PassiveXmlRow } from "./f3800_passive_rows.ts";
 import {
   buildForm3800CurrentCreditRowXml,
@@ -784,26 +782,18 @@ export function buildIRS3800Nonpassive(
       }]
       : []),
   ], []);
-  const partIII = buildForm3800PartIIIXml({
-    rows: currentRows,
-    amounts: currentAmounts,
-  });
-  return elements("IRS3800", [
-    element("CAMTAndBEATInd", "false"),
-    element("CreditTransferElectionInd", String(statementIds.length > 0)),
-    statementIds.length > 0
-      ? element("TransferElectionStatementCnt", statementIds.length, {
-        referenceDocumentId: statementIds.join(" "),
-        referenceDocumentName: "BinaryAttachment",
-      })
-      : "",
-    ...form3800PartIAndIIXml(lines),
-    ...partIII,
-    buildForm3800PartVXml([
+  return buildIRS3800Document({
+    lines,
+    transferStatementIds: statementIds,
+    currentRows,
+    currentAmounts,
+    carryoverRows: [],
+    currentDetails: [
       ...form8826PartVGroups.map((xml) => ({ line: "1e" as const, xml })),
       ...partVGroups,
       ...form8820PartVGroups.map((xml) => ({ line: "1h" as const, xml })),
       ...form5884PartVGroups.map((xml) => ({ line: "4b" as const, xml })),
-    ]),
-  ]);
+    ],
+    carryoverDetails: [],
+  });
 }

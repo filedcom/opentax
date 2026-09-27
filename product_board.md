@@ -525,8 +525,14 @@ now carry structured Part IV amounts, and a shared Part IV assembler orders
 carryover rows and derives lines 5-7 from columns (d)-(i), including applied
 tax use and remaining carryforward. Its source and local XSD cases are written
 but unrun. The passive rows and Part IV assembler are not yet joined to the
-filed Form 3800, and complete source-document and Part II
-reconciliation remains open.
+filed Form 3800. The registered nonpassive builder now delegates final
+document ordering to a shared IRS3800 assembler that can place Parts III-VI
+and checks source-row tax use by limit bucket against Part II lines 17, 26,
+37, and 38. Its current-year, carryover-only, and mismatch cases are written
+but unrun. Part VI vintage
+details now pass through a schema-ordered assembler that retains multiple
+source years per credit line; its ordering case is written but unrun. Complete
+passive source-document and Part II reconciliation remains open.
 A pure tax-use allocator now reconciles the source totals with the three Part II
 caps and applies older credit years first. It stops a partially used year with
 multiple source rows unless their named credit types have an explicit IRS
