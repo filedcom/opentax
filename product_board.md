@@ -1673,6 +1673,23 @@ repair the overbroad mortgage-interest deduction, missing full form lines,
 non-native MeF tags, or absent visual check; see
 `docs/mef/ty2025-form8829-gap.md`.
 
+Build-pass addendum for GAP-MAP / Form 8853 (unrun): its 2025 PDF descriptor
+now points identified Archer, Medicare Advantage MSA, and LTC source amounts
+to their printed fields. A raw LTC day count is no longer written into the
+calculated line 21 dollar field. Focused field-name cases are written but
+unrun. The node still lacks complete exception/period calculations and its
+flat MeF tags do not match the native schema; see
+`docs/mef/ty2025-form8853-gap.md`.
+
+Build-pass addendum for GAP-MAP / Form 8839 (unrun): the 2025 per-child
+refundable portion now goes to Form 1040 line 30, with the current-year
+nonrefundable remainder limited by an explicitly entered Credit Limit
+Worksheet line 5. Missing MAGI or a needed limit stops rather than implying
+zero MAGI or unlimited tax capacity. Fully phased-out employer benefits still
+reach taxable Form 1040 line 1f. The old ambiguous `income_tax_liability`
+node input was directly renamed, with no alias. Written cases are unrun;
+child identity, prior carryforward, native XML/PDF, and IRS rules remain open.
+
 The following are registered in `forms/f1040/2025/mef/forms/index.ts`.
 **Registered means the builder can be invoked, not that the form is complete or
 approved.** Mark each row in the INV-01 matrix after checking calculations, XML,
@@ -1720,6 +1737,8 @@ dependencies, required statements, and tests.
 - Form 8995-A per-business QBI and native-filing audit: `docs/mef/ty2025-form8995a-gap.md`
 - Form 4972 multiple-recipient and PDF-annotation audit: `docs/mef/ty2025-form4972-gap.md`
 - Form 8829 home-office calculation, XML, and PDF audit: `docs/mef/ty2025-form8829-gap.md`
+- Form 8853 MSA/LTC calculation, XML, and PDF audit: `docs/mef/ty2025-form8853-gap.md`
+- Form 8839 refundable credit and native-filing audit: `docs/mef/ty2025-form8839-gap.md`
 - Return assembly: `forms/f1040/2025/mef/builder.ts`
 - Submission package: `forms/f1040/2025/mef/submission-archive.ts`
 - Local XSD scenarios: `forms/f1040/2025/mef/xsd-validation.test.ts`

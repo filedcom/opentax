@@ -34,9 +34,9 @@ export const inputSchema = z.object({
   children: z.array(childSchema).optional(),
   // Modified adjusted gross income — Line 7 (credit) and Line 25 (exclusion)
   magi: z.number().nonnegative().optional(),
-  // Income tax liability for credit limit worksheet (Line 17)
-  // If omitted, nonrefundable credit is not limited (treated as unconstrained)
-  income_tax_liability: z.number().nonnegative().optional(),
+  // Completed Credit Limit Worksheet line 5, entered on Form 8839 line 17.
+  // Required when a nonrefundable current-year credit remains after line 13.
+  credit_limit_worksheet_line5: z.number().nonnegative().optional(),
   // Filing status — MFS generally cannot claim credit or exclusion
   filing_status: filingStatusSchema.optional(),
 });
@@ -85,29 +85,8 @@ function perChildBaseline(child: ChildItem, maxCreditPerChild: number): number {
 // Per-child credit after phase-out (Part II Line 11a).
 function perChildAllowed(child: ChildItem, fraction: number, maxCreditPerChild: number): number {
   const baseline = perChildBaseline(child, maxCreditPerChild);
-  return Math.round(baseline * (1 - fraction) * 100) / 100;
-}
-
-// Total credit across all children (Part II Line 12 = sum of Line 11a).
-function totalCredit(
-  children: ChildItem[],
-  fraction: number,
-  maxCreditPerChild: number,
-): number {
-  return children.reduce(
-    (sum, child) => sum + perChildAllowed(child, fraction, maxCreditPerChild),
-    0,
-  );
-}
-
-// Nonrefundable credit limited by tax liability.
-// Part II Line 17 → Schedule 3 Line 6c.
-// The adoption credit has been entirely nonrefundable since TY2013 (ATRA §104).
-function nonrefundableCredit(total: number, taxLiability: number | undefined): number {
-  if (total <= 0) return 0;
-  // Credit limit worksheet: nonrefundable portion cannot exceed tax liability
-  const limit = taxLiability ?? Infinity;
-  return Math.min(total, limit);
+  const line10Phaseout = Math.round(baseline * fraction * 100) / 100;
+  return Math.max(0, Math.round((baseline - line10Phaseout) * 100) / 100);
 }
 
 // Employer-provided adoption benefits excluded from income (Part III).
@@ -134,8 +113,8 @@ function exclusionAmounts(
   return { excluded, taxable: Math.max(0, taxable) };
 }
 
-// Build credit outputs (Part II).
-// The adoption credit is entirely nonrefundable since TY2013 (ATRA §104).
+// Build the current-year Part II split. Line 11b is determined for each child
+// before line 11c/13 is summed; prior-year credit carryforwards are not included.
 function creditOutputs(
   input: Form8839Input,
   fraction: number,
@@ -144,11 +123,36 @@ function creditOutputs(
   const children = input.children ?? [];
   if (children.length === 0) return [];
 
-  const total = totalCredit(children, fraction, maxCreditPerChild);
-  const nonrefundable = nonrefundableCredit(total, input.income_tax_liability);
+  const perChildCredits = children.map((child) =>
+    perChildAllowed(child, fraction, maxCreditPerChild)
+  );
+  const total = perChildCredits.reduce((sum, amount) => sum + amount, 0);
+  if (total <= 0) return [];
 
-  if (nonrefundable <= 0) return [];
-  return [output(schedule3, { line6c_adoption_credit: nonrefundable })];
+  const refundable = perChildCredits.reduce(
+    (sum, amount) => sum + Math.min(amount, 5_000),
+    0,
+  );
+  const nonrefundableAvailable = Math.round((total - refundable) * 100) / 100;
+  if (
+    nonrefundableAvailable > 0 && input.credit_limit_worksheet_line5 === undefined
+  ) {
+    throw new Error(
+      "Form 8839 nonrefundable credit needs Credit Limit Worksheet line 5",
+    );
+  }
+  const nonrefundable = Math.min(
+    nonrefundableAvailable,
+    input.credit_limit_worksheet_line5 ?? 0,
+  );
+  return [
+    ...(refundable > 0
+      ? [output(f1040, { line30_refundable_adoption: refundable })]
+      : []),
+    ...(nonrefundable > 0
+      ? [output(schedule3, { line6c_adoption_credit: nonrefundable })]
+      : []),
+  ];
 }
 
 // Build exclusion output (Part III) — taxable employer benefits on f1040 line 1f.
@@ -199,19 +203,26 @@ class Form8839Node extends TaxNode<typeof inputSchema> {
     const input = inputSchema.parse(rawInput);
 
     const children = input.children ?? [];
+    if (
+      input.magi === undefined &&
+      (children.length > 0 || (input.adoption_benefits ?? 0) > 0)
+    ) {
+      throw new Error("Form 8839 credit or exclusion needs sourced MAGI");
+    }
     const magi = input.magi ?? 0;
 
-    // MFS filers cannot claim (without exception)
+    // MFS eligibility exceptions and taxable-benefit treatment need their
+    // separate source facts. Never silently discard an MFS adoption item.
     if (isBlockedByMfs(input)) {
+      if (children.length > 0 || (input.adoption_benefits ?? 0) > 0) {
+        throw new Error(
+          "Form 8839 MFS adoption credit and employer-benefit treatment need the supported separation exception route",
+        );
+      }
       return { outputs: [] };
     }
 
     const fraction = phaseOutFraction(magi, this.phaseOutStart, this.phaseOutRange);
-
-    // If fully phased out, no credit or exclusion benefit
-    if (fraction >= 1) {
-      return { outputs: [] };
-    }
 
     const normalized: Form8839Input = { ...input, children, magi };
 
