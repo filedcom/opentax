@@ -862,10 +862,6 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { k1_partnerships } = inputSchema.parse(input);
-    const investmentOrdinaryDividends = k1_partnerships.reduce((sum, item) =>
-      sum + (item.box6a_ordinary_dividends ?? 0) + (item.box6c_dividend_equivalents ?? 0), 0);
-    const investmentQualifiedDividends = k1_partnerships.reduce((sum, item) =>
-      sum + (item.box6b_qualified_dividends ?? 0), 0);
 
     const outputs: NodeOutput[] = [
       ...schedule1Output(k1_partnerships),

@@ -6,8 +6,6 @@ import type {
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { standard_deduction } from "../../intermediate/worksheets/standard_deduction/index.ts";
-import { income_tax_calculation } from "../../intermediate/worksheets/income_tax_calculation/index.ts";
-import { form4952, calculateInvestmentInterest } from "../../intermediate/forms/form4952/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { FilingStatus } from "../../types.ts";
 import { CONFIG_BY_YEAR } from "../../config/index.ts";
@@ -50,12 +48,6 @@ const capitalGainCarryoverSchema = z.object({
 
 // 7.5% AGI floor for medical deductions
 const MEDICAL_AGI_FLOOR_PCT = 0.075;
-const amounts = z.union([z.number().nonnegative(), z.array(z.number().nonnegative())]);
-
-function sumAmounts(value: number | number[] | undefined): number {
-  if (value === undefined) return 0;
-  return Array.isArray(value) ? value.reduce((sum, amount) => sum + amount, 0) : value;
-}
 
 export const inputSchema = z.object({
   // MFS filers receive $20,000 SALT cap (half of $40,000) per OBBBA §70002
@@ -294,25 +286,7 @@ function computeInterestTotal(input: ScheduleAInput): number {
       (input.form8396_interest_credit_reduction ?? 0),
   ) +
     (input.line_8c_points_no_1098 ?? 0) +
-    allowedInvestmentInterest;
-}
-
-function investmentIncome(input: ScheduleAInput): number {
-  const qualified = sumAmounts(input.investment_interest_qualified_dividends);
-  const ordinary = sumAmounts(input.investment_interest_ordinary_dividends);
-  const netGain = input.investment_net_gain ?? 0;
-  const netCapitalGain = Math.min(netGain, input.investment_net_capital_gain ?? 0);
-  if ((input.investment_net_capital_gain ?? 0) > (input.reported_net_capital_gain ?? 0)) {
-    throw new Error("Form 4952 elected net capital gain exceeds Schedule D net capital gain");
-  }
-  const electedDividends = input.elected_qualified_dividends ?? 0;
-  const electedGain = input.elected_net_capital_gain ?? 0;
-  if (electedDividends > qualified || electedGain > netCapitalGain) {
-    throw new Error("Form 4952 line 4g election exceeds qualified dividends or eligible net capital gain");
-  }
-  return Math.max(0,
-    sumAmounts(input.investment_interest_taxable_interest) + ordinary - qualified +
-    netGain - netCapitalGain + electedDividends + electedGain);
+    (input.line_9_investment_interest ?? 0);
 }
 
 function computeContributions(
@@ -491,20 +465,6 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
       : { allowed: 0, remaining: {} };
     const saltCapped = computeSALT(input, cfg);
     const taxesTotal = saltCapped + (input.line_6_other_taxes ?? 0);
-    const expense = input.line_9_investment_interest ?? 0;
-    const priorYear = input.prior_year_investment_interest_carryforward ?? 0;
-    if ((input.elected_qualified_dividends ?? 0) + (input.elected_net_capital_gain ?? 0) > 0 &&
-      expense + priorYear === 0) {
-      throw new Error("Form 4952 income election requires investment interest expense or carryforward");
-    }
-    const grossInvestmentIncome = investmentIncome(input);
-    const netIncome = Math.max(0, grossInvestmentIncome - (input.investment_expenses ?? 0));
-    const { allowed } = calculateInvestmentInterest(expense, netIncome, priorYear);
-    const niitTax = input.niit_allocable_state_local_tax ?? 0;
-    const eligibleTax = input.line_5a_state_income_tax ?? 0;
-    if (niitTax > Math.min(eligibleTax, saltCapped)) {
-      throw new Error("Form 8960 line 9b allocation exceeds deductible eligible state and local taxes");
-    }
     const totalItemized = computeMedicalDeduction(input, agi) +
       taxesTotal +
       computeInterestTotal(input) +

@@ -659,8 +659,6 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { k1_s_corps } = inputSchema.parse(input);
-    const ordinaryDividends = k1_s_corps.reduce((sum, item) => sum + (item.box5a_ordinary_dividends ?? 0), 0);
-    const qualifiedDividends = k1_s_corps.reduce((sum, item) => sum + (item.box5b_qualified_dividends ?? 0), 0);
 
     if (
       k1_s_corps.some((item) =>

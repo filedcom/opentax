@@ -12,7 +12,6 @@ import {
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import { agi_aggregator } from "../agi_aggregator/index.ts";
 import { form8960 } from "../../forms/form8960/index.ts";
-import { scheduleA } from "../../../inputs/schedule_a/index.ts";
 import { normalizeArray } from "../../../utils.ts";
 import { scheduleBFilingRequired } from "../../../../schedule_b_filing.ts";
 import { sellerFinancedBuyerSchema } from "../../../../seller_financed_buyer.ts";
@@ -122,7 +121,7 @@ function line6OrdinaryDividends(input: ScheduleBInput): number {
 class ScheduleBNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule_b";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, agi_aggregator, form8960, scheduleA]);
+  readonly outputNodes = new OutputNodes([f1040, agi_aggregator, form8960]);
 
   compute(_ctx: NodeContext, rawInput: ScheduleBInput): NodeResult {
     const input = inputSchema.parse(rawInput);

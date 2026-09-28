@@ -12,7 +12,6 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
-import { scheduleA } from "../schedule_a/index.ts";
 import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
 import { form4952 } from "../../intermediate/forms/form4952/index.ts";
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
@@ -585,8 +584,6 @@ class K1TrustNode extends TaxNode<typeof inputSchema> {
 
     // Apply DNI limitation per IRC §662 before routing any income
     const limitedItems = k1_trusts.map(applyDniLimit);
-    const ordinaryDividends = limitedItems.reduce((sum, item) => sum + (item.box2a_ordinary_dividends ?? 0), 0);
-    const qualifiedDividends = limitedItems.reduce((sum, item) => sum + (item.box2b_qualified_dividends ?? 0), 0);
 
     const outputs: NodeOutput[] = [
       ...scheduleBInterestOutputs(limitedItems),

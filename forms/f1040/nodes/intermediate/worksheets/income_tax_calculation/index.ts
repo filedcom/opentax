@@ -88,8 +88,6 @@ export const inputSchema = z.object({
   // Net capital gain for preferential rate purposes (from schedule_d line 19).
   // Equal to min(line15, line16) when both are positive (i.e., line17 = Yes).
   net_capital_gain: z.number().nonnegative().optional(),
-  form4952_elected_qualified_dividends: z.number().nonnegative().optional(),
-  form4952_elected_net_capital_gain: z.number().nonnegative().optional(),
   // Unrecaptured §1250 gain (from unrecaptured_1250_worksheet via schedule_d line 19).
   // Taxed at 25% rate per IRC §1(h)(1)(D).
   unrecaptured_1250_gain: z.number().nonnegative().optional(),

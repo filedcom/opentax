@@ -11,7 +11,6 @@ import { f1040 } from "../../../outputs/f1040/index.ts";
 import { income_tax_calculation } from "../income_tax_calculation/index.ts";
 import { schedule_j_calculation } from "../../forms/schedule_j/index.ts";
 import { form_1116 } from "../../forms/form_1116/index.ts";
-import { form8960 } from "../../forms/form8960/index.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
@@ -203,18 +202,6 @@ class StandardDeductionNode extends TaxNode<typeof inputSchema> {
           line12e_itemized_deductions: deduction,
         }),
       );
-    }
-    if (!takingStandard) {
-      if ((input.investment_interest_for_niit ?? 0) > 0) {
-        outputs.push(this.outputNodes.output(form8960, {
-          line9a_investment_interest_expense: input.investment_interest_for_niit!,
-        }));
-      }
-      if ((input.niit_allocable_state_local_tax ?? 0) > 0) {
-        outputs.push(this.outputNodes.output(form8960, {
-          line9b_state_local_tax: input.niit_allocable_state_local_tax!,
-        }));
-      }
     }
 
     outputs.push(

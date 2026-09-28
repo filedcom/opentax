@@ -469,7 +469,6 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
     // for the QDCGT / Schedule D Tax Worksheet (IRC §1(h)).
     if (line17Yes) {
       const netCapGain = Math.min(line15, line16);
-      outputs.push(this.outputNodes.output(scheduleA, { reported_net_capital_gain: netCapGain }));
 
       // Line 19: unrecaptured §1250 gain — include for 25% tier when present
       const unrecaptured1250 = input.line19_unrecaptured_1250 ?? 0;
