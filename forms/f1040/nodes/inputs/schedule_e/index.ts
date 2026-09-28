@@ -692,6 +692,11 @@ class ScheduleENode extends TaxNode<typeof inputSchema> {
     const parsed = inputSchema.parse(input);
     const { schedule_es, rental_income, royalty_income, farm_rental_net } =
       parsed;
+    if (schedule_es.length > 0 && (royalty_income ?? 0) > 0) {
+      throw new Error(
+        "Schedule E property royalties and 1099-MISC passthrough royalties need per-property reconciliation",
+      );
+    }
     const farms = parsed.farm_rental_activities ?? [];
     if (
       farms.length > 0 &&

@@ -85,5 +85,6 @@ export const form6251Pdf: PdfFormDescriptor = {
       fields["tentative_tax"] > fields["regular_tax"]) ||
     (typeof fields["line11_amt"] === "number" &&
       fields["line11_amt"] > 0) ||
-    fields["must_file_for_credit"] === true,
+    fields["must_file_for_credit"] === true ||
+    fields["must_file_for_negative_adjustments"] === true,
 };

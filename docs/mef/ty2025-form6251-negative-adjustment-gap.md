@@ -1,0 +1,7 @@
+# TY2025 Form 6251 negative-adjustment filing rule
+
+The [2025 IRS Form 6251 instructions](https://www.irs.gov/instructions/i6251) require attachment when the signed total of lines 2c through 3 is negative **and** line 7 would exceed line 10 without those adjustments. This can require a zero-AMT Form 6251 even when the normal line-7-versus-line-10 test does not.
+
+The current bounded route evaluates that counterfactual from modeled lines 2c, 2f, 2g, 2h, 2i, and 2l when `other_adjustments` is zero and neither a preferential-rate nor foreign-income worksheet changes line 7. It recomputes the MFS line-4 addition and exemption on the counterfactual AMTI. The resulting filing flag retains the form in both MeF and PDF without inventing AMT due on Schedule 2. Focused positive, inverse, and unsupported-shape cases are written but unrun.
+
+`other_adjustments` currently mixes line 2b, other line-2 items, and line 3, so a nonzero value cannot establish the required 2c-through-3 total. If no other rule already requires Form 6251, this route now stops instead of silently omitting it. A preferential-rate or Form 2555 case with known negative adjustments likewise stops when the counterfactual line 7 would need its own refigured worksheet. Complete coverage needs line-specific AMT sources, especially line 2b/2e/2j–2t/3, and the special-rate/foreign counterfactual. Tests, XSD, business rules, and filled-PDF checks remain pending the shared validation batch.

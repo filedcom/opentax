@@ -1,4 +1,4 @@
-import { assertEquals, assertStringIncludes } from "@std/assert";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form6251 } from "./f6251.ts";
 
 function filed(fields: Parameters<typeof form6251.build>[0]): string {
@@ -70,6 +70,34 @@ Deno.test("line 7 above line 10 attaches Form 6251 even when AMTFTC leaves zero 
       line11_amt: 0,
     }),
     "",
+  );
+});
+
+Deno.test("negative-adjustment filing attaches zero-AMT Form 6251 even when line 7 is below line 10", () => {
+  const xml = form6251.build({
+    regular_tax_income: 100_000,
+    line2c_investment_interest: -20_000,
+    tentative_tax: 0,
+    regular_tax: 2_000,
+    line11_amt: 0,
+    must_file_for_negative_adjustments: true,
+  });
+  assertStringIncludes(xml, "<IRS6251>");
+  assertStringIncludes(
+    xml,
+    "<InvestmentInterestAmt>-20000</InvestmentInterestAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<AlternativeMinimumTaxAmt>0</AlternativeMinimumTaxAmt>",
+  );
+});
+
+Deno.test("negative-adjustment filing trigger cannot emit an empty Form 6251", () => {
+  assertThrows(
+    () => form6251.build({ must_file_for_negative_adjustments: true }),
+    Error,
+    "needs calculated form lines",
   );
 });
 

@@ -27,8 +27,13 @@ const qualified = {
   prior_election_after_1986: false,
 };
 
-Deno.test("Form 4972 emits no XML for source facts without calculated form lines", () => {
-  assertEquals(form4972.build({ lump_sum_amount: 100_000 }), "");
+Deno.test("Form 4972 rejects source facts without calculated form lines", () => {
+  assertThrows(
+    () => form4972.build({ lump_sum_amount: 100_000 }),
+    Error,
+    "source facts but no calculated form lines",
+  );
+  assertEquals(form4972.build({}), "");
 });
 
 Deno.test("Form 4972 emits recipient identity and the 2025 Part II element names", () => {

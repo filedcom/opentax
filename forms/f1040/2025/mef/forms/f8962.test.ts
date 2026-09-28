@@ -33,6 +33,59 @@ Deno.test("Form 8962 does not file solely because AGI and family context exist",
   );
 });
 
+Deno.test("Form 8962 refuses to silently omit positive PTC, APTC, or allocation without policy source", () => {
+  assertThrows(
+    () => form8962.build({ total_advance_ptc: 1_000 }),
+    Error,
+    "needs annual or monthly 1095-A source amounts",
+  );
+  assertThrows(
+    () => form8962.build({ total_premium_tax_credit: 500 }),
+    Error,
+    "needs annual or monthly 1095-A source amounts",
+  );
+  assertThrows(
+    () =>
+      form8962.build({
+        shared_policy_allocations: [{
+          basis: "other_agreed",
+          policy_number: "POLICY-1",
+          other_taxpayer_ssn: "222334444",
+          start_month: 1,
+          end_month: 1,
+          premium_pct: 0.5,
+        }],
+      }),
+    Error,
+    "needs annual or monthly 1095-A source amounts",
+  );
+});
+
+Deno.test("Form 8962 rejects an empty monthly calculation branch", () => {
+  assertThrows(
+    () => form8962.build({ ...annual, monthly_ptc_rows: [] }),
+    Error,
+    "needs at least one month row",
+  );
+});
+
+Deno.test("Form 8962 rejects positive totals with only filtered-out zero policy months", () => {
+  assertThrows(
+    () =>
+      form8962.build({
+        ...annual,
+        monthly_ptc_rows: [{
+          month_code: "JANUARY",
+          premium: 0,
+          slcsp: 0,
+          aptc: 0,
+        }],
+      }),
+    Error,
+    "needs a reportable monthly policy row",
+  );
+});
+
 Deno.test("Form 8962 refuses raw premiums without its computed 2025 lines", () => {
   assertThrows(
     () => form8962.build({ annual_premium: 7_000 }),
@@ -235,7 +288,12 @@ Deno.test("Form 8962 carries five Part IV groups and marks line 34 No", () => {
   }));
   const xml = form8962.build({
     ...annual,
-    monthly_ptc_rows: [],
+    monthly_ptc_rows: [{
+      month_code: "JANUARY",
+      premium: 500,
+      slcsp: 600,
+      aptc: 0,
+    }],
     shared_policy_allocations: allocations,
   });
   assertEquals((xml.match(/<SharedPolicyAllocationGrp>/g) ?? []).length, 5);
@@ -247,7 +305,12 @@ Deno.test("Form 8962 carries five Part IV groups and marks line 34 No", () => {
     () =>
       form8962.build({
         ...annual,
-        monthly_ptc_rows: [],
+        monthly_ptc_rows: [{
+          month_code: "JANUARY",
+          premium: 500,
+          slcsp: 600,
+          aptc: 0,
+        }],
         shared_policy_allocations: Array.from({ length: 100 }, (_, index) => ({
           ...allocations[0],
           policy_number: `P${index}`,

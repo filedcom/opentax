@@ -60,7 +60,10 @@ export const carryoverReviewSchema = z.object({
 
 export const priorYearCarryoverSchema = z.object({
   income_category: z.nativeEnum(IncomeCategory),
-  prior_year_schedule_b_line8_current_year_amount: z.number().int().positive(),
+  // 2024 Schedule B line 8 current-year or first-preceding-year column.
+  // On the 2025 Schedule B these become first or second preceding year.
+  vintage_tax_year: z.union([z.literal(2023), z.literal(2024)]),
+  prior_year_schedule_b_line8_vintage_amount: z.number().int().positive(),
   prior_year_schedule_b_line8_other_vintages_total: z.literal(0),
   no_intervening_adjustments: z.literal(true),
   source_document_references: z.array(z.string().trim().min(1)).min(1),
@@ -509,7 +512,7 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
       );
       const priorYearCarryover = priorCarryovers[0];
       const priorYearAmount = priorYearCarryover
-        ?.prior_year_schedule_b_line8_current_year_amount ?? 0;
+        ?.prior_year_schedule_b_line8_vintage_amount ?? 0;
       const categoryLimit = Math.round(
         line20UsTax *
           fraction(category.foreignTaxableIncome, line18WorldwideTaxableIncome),

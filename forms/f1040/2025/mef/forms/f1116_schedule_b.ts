@@ -52,7 +52,7 @@ export const form1116ScheduleB: MefFormDescriptor<
         fields.prior_year_carryover_source.income_category !==
           fields.category ||
         fields.prior_year_carryover_source
-            .prior_year_schedule_b_line8_current_year_amount !==
+            .prior_year_schedule_b_line8_vintage_amount !==
           fields.prior_year_carryover ||
         fields.used_prior_year_carryover +
               fields.remaining_prior_year_carryover !==
@@ -65,24 +65,28 @@ export const form1116ScheduleB: MefFormDescriptor<
       const balance = fields.prior_year_carryover;
       const used = fields.used_prior_year_carryover;
       const remaining = fields.remaining_prior_year_carryover;
+      const vintageTag = fields.prior_year_carryover_source.vintage_tax_year ===
+          2023
+        ? "SecondPrecedingTYAmt"
+        : "FirstPrecedingTYAmt";
       return elements("IRS1116ScheduleB", [
         element(indicator, "X"),
         elements("ForeignTxCyovPrTYGrp", [
-          element("FirstPrecedingTYAmt", balance),
+          element(vintageTag, balance),
           element("TotalAmt", balance),
         ]),
         elements("AdjForeignTxCyovPrTYGrp", [
-          element("FirstPrecedingTYAmt", balance),
+          element(vintageTag, balance),
           element("TotalAmt", balance),
         ]),
         used > 0
           ? elements("ForeignTxCyovUsedCurrTYGrp", [
-            element("FirstPrecedingTYAmt", -used),
+            element(vintageTag, -used),
             element("TotalAmt", -used),
           ])
           : "",
         elements("ForeignTxCyovFollowingTYGrp", [
-          element("FirstPrecedingTYAmt", remaining),
+          element(vintageTag, remaining),
           element("TotalAmt", remaining),
         ]),
       ]);

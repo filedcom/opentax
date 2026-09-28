@@ -17,6 +17,7 @@ import { scheduleC as schedule_c } from "../schedule_c/index.ts";
 import { scheduleE as schedule_e } from "../schedule_e/index.ts";
 import { schedule_f } from "../../intermediate/forms/schedule_f/index.ts";
 import { form8960 } from "../../intermediate/forms/form8960/index.ts";
+import { form4952 } from "../../intermediate/forms/form4952/index.ts";
 import { form8919 } from "../../intermediate/forms/form8919/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
@@ -62,6 +63,10 @@ export const itemSchema = z.object({
   // Box 2 — Royalties
   box2_royalties: z.number().nonnegative().optional(),
   box2_royalties_routing: z.enum(ROYALTIES_ROUTING).optional(),
+  // Affirm portfolio investment property, not ordinary-course business or a
+  // passive activity. The same box 2 amount is reported on Schedule E.
+  box2_nonpassive_portfolio_investment_for_form4952_verified: z.literal(true)
+    .optional(),
   // Box 3 — Other income
   box3_other_income: z.number().nonnegative().optional(),
   box3_other_income_routing: z.enum(OTHER_INCOME_ROUTING).optional(),
@@ -233,6 +238,7 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
     agi_aggregator,
     f1040,
     form8960,
+    form4952,
     form8919,
   ]);
 
@@ -241,6 +247,27 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
     if (m99s.length === 0) return { outputs: [] };
 
     const outputs: NodeOutput[] = [];
+
+    const portfolioRoyalty = m99s.reduce((total, item) => {
+      if (
+        item.box2_nonpassive_portfolio_investment_for_form4952_verified !== true
+      ) return total;
+      const royalty = item.box2_royalties ?? 0;
+      if (
+        royalty <= 0 ||
+        item.box2_royalties_routing === "schedule_c"
+      ) {
+        throw new Error(
+          "1099-MISC Form 4952 portfolio royalty needs positive box 2 income routed to Schedule E",
+        );
+      }
+      return total + royalty;
+    }, 0);
+    if (portfolioRoyalty > 0) {
+      outputs.push(this.outputNodes.output(form4952, {
+        source_1099_royalties: portfolioRoyalty,
+      }));
+    }
 
     const form8919Sources = m99s.flatMap((item) => {
       const amount = item.box3_other_income ?? 0;

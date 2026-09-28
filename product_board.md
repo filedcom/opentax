@@ -1741,6 +1741,31 @@ dependencies, required statements, and tests.
 
 ## Release checklist
 
+Inventory checkpoint (2026-09-28): the registered-document audit now also
+records a first comparison against the 211 distinct `IRS...` references in
+the checked-in TY2025 v5.4 `ReturnData1040.xsd`. Unregistered 1040-family
+paths include Schedule 1-A, Schedules J/LEP/R, Forms 2210/2210-F and 8801,
+and Form 8995-A Schedules A-D. This does not mean every schema document is
+required for every return, and it does not complete `INV-01`. Applicability,
+source/calculation/output coverage, or an explicit user-approved exclusion is
+still needed for each relevant path. See
+`docs/mef/ty2025-form1040-form-audit.md`. A positive Schedule 1-A deduction
+currently reaches Form 1040 line 13b without an `IRS1040Schedule1A` document;
+the MeF exporter now rejects that line until the schedule is implemented.
+This guard and its focused case are written but unrun.
+
+Parallel second-pass checkpoint (2026-09-28, all unrun): Form 1116 now maps one
+sourced 2023 or 2024 carryover vintage to its year-specific Schedule B column;
+Form 4952 can receive an affirmatively classified portfolio 1099-MISC royalty
+with Schedule E overlap checks; Form 4972 rejects a zero-special-tax election;
+Form 6251 has a bounded negative-adjustment filing trigger; Form 8889 rejects
+two-spouse-HSA inputs until both forms can be filed; Form 8582 rejects ambiguous
+duplicate activity names; Form 8962 rejects positive PTC/APTC amounts without
+policy rows; and Schedule EIC now retains qualifying-child identity through
+node finalization into MeF. These are slices, not completed forms. The
+Schedule 1-A missing attachment has a dedicated gap audit and remains blocked.
+None of this changes the full-batch, XSD, visual PDF, ATS, PR, or release gates.
+
 - [x] Agree on SCOPE-01: TY2025 Form 1040 family only.
 - [ ] Complete INV-01. No completion percentage before this.
 - [ ] Resolve every in-scope known gap, or record a deliberate exclusion with

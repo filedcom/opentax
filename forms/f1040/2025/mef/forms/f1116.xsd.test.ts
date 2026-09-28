@@ -322,7 +322,8 @@ Deno.test({
       us_tax_before_credits: 2_500,
       prior_year_carryovers: [{
         income_category: IncomeCategory.Passive,
-        prior_year_schedule_b_line8_current_year_amount: 600,
+        vintage_tax_year: 2024,
+        prior_year_schedule_b_line8_vintage_amount: 600,
         prior_year_schedule_b_line8_other_vintages_total: 0,
         no_intervening_adjustments: true,
         source_document_references: [

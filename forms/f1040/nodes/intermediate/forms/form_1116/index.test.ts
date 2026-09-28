@@ -1,5 +1,5 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { form1116, IncomeCategory } from "./index.ts";
+import { form1116, IncomeCategory, priorYearCarryoverSchema } from "./index.ts";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { schedule3 } from "../../aggregation/schedule3/index.ts";
 import { form6251 } from "../form6251/index.ts";
@@ -473,7 +473,8 @@ Deno.test("form1116: sourced 2024 carryover is used only after 2025 foreign tax"
     worldwide_taxable_income: 50_000,
     prior_year_carryovers: [{
       income_category: IncomeCategory.Passive,
-      prior_year_schedule_b_line8_current_year_amount: 600,
+      vintage_tax_year: 2024 as const,
+      prior_year_schedule_b_line8_vintage_amount: 600,
       prior_year_schedule_b_line8_other_vintages_total: 0 as const,
       no_intervening_adjustments: true as const,
       source_document_references: [
@@ -514,10 +515,96 @@ Deno.test("form1116: sourced 2024 carryover is used only after 2025 foreign tax"
   assertEquals(fullyUsedScheduleB?.remaining_prior_year_carryover, 0);
 });
 
+Deno.test("form1116: sourced 2023 carryover feeds the credit and Schedule B", () => {
+  const result = form1116.compute(ctx, {
+    foreign_tax_items: [{
+      foreign_tax_paid: 200,
+      foreign_gross_income: 10_000,
+      income_category: IncomeCategory.General,
+    }],
+    worldwide_taxable_income: 50_000,
+    us_tax_before_credits: 2_500,
+    prior_year_carryovers: [{
+      income_category: IncomeCategory.General,
+      vintage_tax_year: 2023,
+      prior_year_schedule_b_line8_vintage_amount: 600,
+      prior_year_schedule_b_line8_other_vintages_total: 0,
+      no_intervening_adjustments: true,
+      source_document_references: [
+        "Filed 2024 Schedule B (Form 1116), general basket, line 8 first-preceding-year column",
+      ],
+    }],
+  });
+  const summary = result.outputs.find((row) => row.nodeType === "form_1116")
+    ?.fields.category_summaries as Array<{
+      allowedCredit: number;
+      priorYearCarryover: number;
+      usedPriorYearCarryover: number;
+    }>;
+  assertEquals(summary[0].priorYearCarryover, 600);
+  assertEquals(summary[0].usedPriorYearCarryover, 300);
+  assertEquals(summary[0].allowedCredit, 500);
+  assertEquals(
+    fieldsOf(result.outputs, schedule3)?.line1_foreign_tax_credit,
+    500,
+  );
+  const scheduleB = result.outputs.find((row) =>
+    row.nodeType === "form1116_schedule_b"
+  )?.fields;
+  assertEquals(scheduleB?.prior_year_carryover_source.vintage_tax_year, 2023);
+  assertEquals(scheduleB?.remaining_prior_year_carryover, 300);
+});
+
+Deno.test("form1116: rejects older, mixed, or unreviewed carryover vintages", () => {
+  const base = {
+    foreign_tax_items: [{
+      foreign_tax_paid: 200,
+      foreign_gross_income: 10_000,
+      income_category: IncomeCategory.Passive,
+    }],
+    worldwide_taxable_income: 50_000,
+    us_tax_before_credits: 2_500,
+  };
+  const source = {
+    income_category: IncomeCategory.Passive,
+    vintage_tax_year: 2023 as const,
+    prior_year_schedule_b_line8_vintage_amount: 600,
+    prior_year_schedule_b_line8_other_vintages_total: 0 as const,
+    no_intervening_adjustments: true as const,
+    source_document_references: [
+      "Filed 2024 Schedule B (Form 1116), passive basket, line 8 first-preceding-year column",
+    ],
+  };
+  assertThrows(
+    () =>
+      form1116.compute(ctx, {
+        ...base,
+        prior_year_carryovers: [source, { ...source, vintage_tax_year: 2024 }],
+      }),
+    Error,
+    "one matching passive or general income category",
+  );
+  assertEquals(
+    priorYearCarryoverSchema.safeParse({
+      ...source,
+      prior_year_schedule_b_line8_other_vintages_total: 100,
+    }).success,
+    false,
+  );
+  assertEquals(
+    priorYearCarryoverSchema.safeParse({
+      ...source,
+      vintage_tax_year: 2022,
+    }).success,
+    false,
+  );
+});
+
 Deno.test("form1116: 2024 carryover rejects mixed categories and 2025 excess", () => {
   const prior = {
     income_category: IncomeCategory.Passive,
-    prior_year_schedule_b_line8_current_year_amount: 600,
+    vintage_tax_year: 2024 as const,
+    prior_year_schedule_b_line8_vintage_amount: 600,
     prior_year_schedule_b_line8_other_vintages_total: 0 as const,
     no_intervening_adjustments: true as const,
     source_document_references: [

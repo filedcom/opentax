@@ -114,6 +114,42 @@ Deno.test("Form 4952 combines explicit other income with multiple affirmed 1099 
   assertEquals(lines.line8, 1_680);
 });
 
+Deno.test("Form 4952 line 4a includes sourced portfolio royalties once", () => {
+  const lines = calculateForm4952({
+    investment_interest_expense: 900,
+    investment_interest_expense_excludes_royalty_attributable_interest: true,
+    source_1099_royalties: [350, 450],
+  });
+  assertEquals(lines.line4a, 800);
+  assertEquals(lines.line8, 800);
+  assertThrows(
+    () =>
+      calculateForm4952({
+        investment_interest_expense: 900,
+        source_1099_royalties: 800,
+      }),
+    Error,
+    "excludes royalty-attributable interest",
+  );
+  assertThrows(
+    () =>
+      calculateForm4952({
+        source_1099_royalties: 800,
+        other_investment_property_gross_income: 800,
+      }),
+    Error,
+    "must exclude sourced 1099-MISC royalties",
+  );
+  assertEquals(
+    calculateForm4952({
+      source_1099_royalties: 800,
+      other_investment_property_gross_income: 100,
+      other_investment_property_gross_income_excludes_sourced_royalties: true,
+    }).line4a,
+    900,
+  );
+});
+
 Deno.test("Form 4952 line 5 includes separately sourced allowed K-1 expenses", () => {
   const lines = calculateForm4952({
     investment_interest_expense: 2_000,

@@ -130,7 +130,42 @@ function buildIRS8962(fields: Input): string {
     typeof fields.annual_premium === "number" ||
     typeof fields.annual_slcsp === "number" ||
     typeof fields.annual_aptc === "number";
-  if (!hasSource) return "";
+  if (!hasSource) {
+    const hasFilingAmount = [
+      fields.total_premium_tax_credit,
+      fields.total_advance_ptc,
+      fields.net_premium_tax_credit,
+      fields.excess_advance_payment,
+      fields.excess_advance_premium,
+      fields.annual_ptc_allowed,
+    ].some((value) => typeof value === "number" && value > 0);
+    if (
+      hasFilingAmount || allocations.length > 0 || marriagePrimary ||
+      marriageSpouse
+    ) {
+      throw new Error(
+        "Form 8962 calculated PTC, APTC, or allocation needs annual or monthly 1095-A source amounts",
+      );
+    }
+    return "";
+  }
+  if (Array.isArray(monthlyRows) && monthlyRows.length === 0) {
+    throw new Error(
+      "Form 8962 monthly calculation needs at least one month row",
+    );
+  }
+  if (
+    Array.isArray(monthlyRows) &&
+    !monthlyRows.some((row) =>
+      (row.premium ?? 0) > 0 || (row.slcsp ?? 0) > 0 || row.aptc > 0
+    ) &&
+    ((fields.total_premium_tax_credit ?? 0) > 0 ||
+      (fields.total_advance_ptc ?? 0) > 0 || allocations.length > 0)
+  ) {
+    throw new Error(
+      "Form 8962 positive credit, advance payment, or allocation needs a reportable monthly policy row",
+    );
+  }
   if (
     typeof fields.household_size !== "number" ||
     typeof fields.taxpayer_modified_agi !== "number" ||

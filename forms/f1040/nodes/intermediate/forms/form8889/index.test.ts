@@ -1419,61 +1419,7 @@ Deno.test("part1: married family catch-up prints on line 7, not line 3", () => {
   );
 });
 
-Deno.test("part1: separate spouses allocate the full-year family limit on line 6", () => {
-  const result = compute({
-    ...uniformFamily,
-    married_at_year_end: true,
-    spouse_has_separate_hsa: true,
-    spouse_allocated_family_limit: 4275,
-    taxpayer_hsa_contributions: 5000,
-    hsa_december_31_value: 5000,
-  });
-  const printed = findOutput(result, "form8889")?.fields;
-  assertEquals(printed?.print_line5, 8550);
-  assertEquals(printed?.print_line6, 4275);
-  assertEquals(printed?.print_line8, 4275);
-  assertEquals(fieldsOf(result.outputs, schedule1)?.line13_hsa_deduction, 4275);
-  assertEquals(
-    fieldsOf(result.outputs, form5329)?.hsa_part_vii
-      ?.line47_current_year_excess,
-    725,
-  );
-});
-
-Deno.test("part1: a partial-year family limit allocates only the family portion", () => {
-  const result = compute({
-    ...uniformFamily,
-    eligible_hdhp_coverage_by_month: [
-      ...Array(6).fill(CoverageType.Family),
-      ...Array(6).fill(null),
-    ],
-    married_at_year_end: true,
-    spouse_has_separate_hsa: true,
-    spouse_allocated_family_limit: 2000,
-    taxpayer_hsa_contributions: 2000,
-  });
-  const printed = findOutput(result, "form8889")?.fields;
-  assertEquals(printed?.print_line5, 4275);
-  assertEquals(printed?.print_line6, 2275);
-  assertEquals(printed?.print_line8, 2275);
-});
-
-Deno.test("part1: the spouse family allocation follows the Archer-adjusted limit", () => {
-  const result = compute({
-    ...uniformFamily,
-    married_at_year_end: true,
-    spouse_has_separate_hsa: true,
-    archer_msa_distributions: 1000,
-    spouse_allocated_family_limit: 3775,
-    taxpayer_hsa_contributions: 3000,
-  });
-  const printed = findOutput(result, "form8889")?.fields;
-  assertEquals(printed?.print_line5, 7550);
-  assertEquals(printed?.print_line6, 3775);
-  assertEquals(printed?.print_line13_deduction, 3000);
-});
-
-Deno.test("part1: separate spouses need an agreed allocation within the family limit", () => {
+Deno.test("part1: separate spouse HSAs stop until both Forms 8889 can be filed", () => {
   assertThrows(
     () =>
       compute({
@@ -1483,7 +1429,7 @@ Deno.test("part1: separate spouses need an agreed allocation within the family l
         taxpayer_hsa_contributions: 1000,
       }),
     Error,
-    "need the agreed family-limit allocation",
+    "both spouses' Forms 8889",
   );
   assertThrows(
     () =>
@@ -1495,7 +1441,29 @@ Deno.test("part1: separate spouses need an agreed allocation within the family l
         taxpayer_hsa_contributions: 1000,
       }),
     Error,
-    "exceeds the refigured family limit",
+    "both spouses' Forms 8889",
+  );
+  assertThrows(
+    () =>
+      compute({
+        hsa_distributions: 100,
+        qualified_medical_expenses: 100,
+        spouse_has_separate_hsa: true,
+      }),
+    Error,
+    "both spouses' Forms 8889",
+  );
+  assertThrows(
+    () =>
+      compute({
+        ...uniformFamily,
+        married_at_year_end: true,
+        spouse_has_separate_hsa: false,
+        spouse_allocated_family_limit: 100,
+        taxpayer_hsa_contributions: 1000,
+      }),
+    Error,
+    "spouse family-limit allocation needs both spouses' Forms 8889",
   );
 });
 

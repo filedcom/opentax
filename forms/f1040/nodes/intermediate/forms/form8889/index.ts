@@ -95,8 +95,8 @@ export const inputSchema = z.object({
   last_month_rule_elected: z.boolean().optional(),
   married_at_year_end: z.boolean().optional(),
   spouse_has_separate_hsa: z.boolean().optional(),
-  // Agreed allocation of the refigured family-coverage limit to the spouse's
-  // separate HSA (line 6 worksheet step 2). No assumed 50/50 allocation.
+  // Retained as an explicit unsupported source fact until the return can
+  // attach both spouses' Forms 8889 and combine their Schedule 1 deductions.
   spouse_allocated_family_limit: z.number().int().nonnegative().optional(),
   // Line 4: Archer MSA distributions received during the year (Form 8853).
   // IRC §223(b)(4)(B): Archer MSA distributions reduce the HSA contribution limit.
@@ -428,30 +428,6 @@ function contributionLimitLines(
       "Form 8889 married family coverage needs a separate-spouse-HSA answer",
     );
   }
-  if (
-    input.spouse_allocated_family_limit !== undefined &&
-    !(marriedFamily && input.spouse_has_separate_hsa === true)
-  ) {
-    throw new Error(
-      "Form 8889 spouse family-limit allocation requires married separate-HSA coverage",
-    );
-  }
-  if (
-    marriedFamily && input.spouse_has_separate_hsa === true &&
-    input.spouse_allocated_family_limit === undefined
-  ) {
-    throw new Error(
-      "Form 8889 married separate HSAs need the agreed family-limit allocation",
-    );
-  }
-  if (
-    marriedFamily && input.spouse_has_separate_hsa === true &&
-    input.last_month_rule_elected && december === CoverageType.SelfOnly
-  ) {
-    throw new Error(
-      "Form 8889 December self-only last-month rule needs separate spouse allocation treatment",
-    );
-  }
   const catchupOnLine7 = input.age_55_or_older === true && marriedFamily;
   const monthLimit = (month: CoverageType | null): number => {
     if (month === null) return 0;
@@ -473,22 +449,7 @@ function contributionLimitLines(
       : worksheet,
   );
   const line5 = Math.max(0, line3 - (input.archer_msa_distributions ?? 0));
-  const familyMonthsForAllocation = input.last_month_rule_elected &&
-      december === CoverageType.Family
-    ? 12
-    : familyMonths;
-  const familyPortion = Math.max(
-    0,
-    Math.round(familyLimit * familyMonthsForAllocation / 12) -
-      (input.archer_msa_distributions ?? 0),
-  );
-  const spouseAllocation = input.spouse_allocated_family_limit ?? 0;
-  if (spouseAllocation > familyPortion) {
-    throw new Error(
-      "Form 8889 spouse allocation exceeds the refigured family limit",
-    );
-  }
-  const line6 = line5 - spouseAllocation;
+  const line6 = line5;
   const catchupMonths = input.last_month_rule_elected ? 12 : eligible.length;
   const line7 = catchupOnLine7
     ? Math.round(catchupLimit * catchupMonths / 12)
@@ -716,6 +677,16 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
+    if (input.spouse_has_separate_hsa === true) {
+      throw new Error(
+        "Form 8889 separate spouse HSAs need both spouses' Forms 8889 and a combined Schedule 1 deduction",
+      );
+    }
+    if (input.spouse_allocated_family_limit !== undefined) {
+      throw new Error(
+        "Form 8889 spouse family-limit allocation needs both spouses' Forms 8889",
+      );
+    }
     verifyFundingTestingPeriod(input, ctx.taxYear);
     if (
       (input.prior_year_hsa_excess?.form5329_line49 ?? 0) > 0 &&

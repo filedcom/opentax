@@ -395,6 +395,11 @@ function dependentXml(fields: Input, context?: MefBuildContext): string[] {
 }
 
 function buildIRS1040(fields: Input, context?: MefBuildContext): string {
+  if ((resolveNumber(fields.line13b_additional_deductions) ?? 0) > 0) {
+    throw new Error(
+      "Form 1040 line 13b needs an attached Schedule 1-A, which this MeF exporter cannot yet emit",
+    );
+  }
   if ((fields.form8912_source_lines?.line4 ?? 0) > 0) {
     const bond = context?.pending?.f8912;
     const allowed = bond && typeof bond === "object" &&

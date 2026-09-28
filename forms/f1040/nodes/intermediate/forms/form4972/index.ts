@@ -308,12 +308,13 @@ class Form4972Node extends TaxNode<typeof inputSchema> {
       : undefined;
     const totalTax = Math.round(partIITaxAmt + (partIII?.line29 ?? 0));
 
-    // A rounded-zero Part II tax cannot erase ordinary income from line 5b.
-    if (
-      totalTax === 0 &&
-      !(electCapGain && !elect10yr && ordinaryIncomeOn1040 > 0)
-    ) {
-      return { outputs: [] };
+    // A zero-tax election cannot silently suppress a 1099-R distribution.
+    // The Part-II-only shape may also lack every nonzero line required by
+    // IRS business rule F4972-006 after rounding.
+    if (totalTax === 0) {
+      throw new Error(
+        "form4972: elected distribution has zero special tax; review ordinary-income treatment before filing",
+      );
     }
 
     const outputs: NodeOutput[] = [

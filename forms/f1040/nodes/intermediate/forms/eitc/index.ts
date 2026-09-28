@@ -186,7 +186,14 @@ class EitcNode extends TaxNode<typeof inputSchema> {
     return {
       outputs: [
         ...buildOutput(credit),
-        { nodeType: this.nodeType, fields: { credit_amount: credit } },
+        {
+          nodeType: this.nodeType,
+          fields: {
+            credit_amount: credit,
+            qualifying_children: input.qualifying_children ?? 0,
+            qualifying_child_details: input.qualifying_child_details ?? [],
+          },
+        },
       ],
     };
   }

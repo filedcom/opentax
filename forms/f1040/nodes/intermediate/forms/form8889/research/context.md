@@ -12,9 +12,11 @@ is `IRS8889.xsd` in the TY2025 v5.4 schema bundle.
   amount alone does not establish those facts. Mixed self-only/family and
   partial-year limits use the monthly worksheet; an elected last-month rule
   requires December eligibility and uses its coverage for the year. Married
-  family coverage with separate spouse HSAs now requires the agreed allocation
-  of the refigured family limit on line 6; no 50/50 default is assumed. A
-  spouse's own Form 8889 is not generated from the primary form's facts.
+  family coverage asks whether the spouse has a separate HSA. If so, the node
+  stops because the return currently emits only one Form 8889. The 2025 IRS
+  instructions require a separate Form 8889 for each spouse and the sum of
+  their line 13 deductions on Schedule 1. A supplied spouse allocation also
+  stops instead of being applied to one incomplete attachment.
 - The 2025 line 3 limitation uses the monthly worksheet amount, not an assumed
   full year. For an age-55 married family filer, the additional contribution
   belongs on line 7; otherwise eligible catch-up is included on line 3. The

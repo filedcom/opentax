@@ -62,7 +62,7 @@ below document each bounded route and its remaining evidence.
 | Schedule C    | Business income/expense facts; P                     | `schedule_c.ts` R    | N   | ?     | Open: full line-level source and PDF decision.                                       |
 | Schedule D    | Form 8949 and capital-gain worksheets; P             | `schedule_d.ts` R    | Y   | W     | Open: all special-rate, carryover and source-classification paths.                   |
 | Schedule E    | Rental/royalty and K-1 activity facts; P             | `schedule_e.ts` R    | N   | W     | Open: durable passive activity/carryforward and PDF decision (`RENT-01`).            |
-| Schedule EIC  | Child and earned-income facts; U                     | `eitc.ts` R          | Y   | ?     | Open: eligibility, child identity, source and output audit.                          |
+| Schedule EIC  | Child and earned-income facts; P                     | `eitc.ts` R          | Y   | W     | Qualifying-child details now survive node finalization and reach MeF; source eligibility, PDF child rows, and validation remain open. |
 | Schedule F    | Farm source facts and aggregation; P                 | `schedule_f.ts` R    | Y   | W     | Open: remaining elections, attachments and current-run verification (`FARM-01`).     |
 | Schedule H    | Household wage/payroll facts; P                      | `schedule_h.ts` R    | Y   | W     | Open: full tax-source audit and current-run verification.                            |
 | Schedule SE   | Self-employment profit/tax facts; P                  | `schedule_se.ts` R   | Y   | W     | Open: multiple businesses, clergy and cross-form wage-base audit.                    |
@@ -75,8 +75,8 @@ below document each bounded route and its remaining evidence.
 | 965-A                 | Section 965 history/payment facts; P                              | `f965a.ts` R            | N   | W     | Open: historical liabilities, agreements and authentication.                                               |
 | 982                   | Debt-discharge source and attributes; P                           | `f982.ts` R             | Y   | W     | Open: qualified-principal-residence and attribute reduction (`GAP-982`).                                   |
 | 1099-R                | Payer distribution statements; U                                  | `f1099r.ts` R           | N   | ?     | Open: recipient/source reconciliation; source document need not have a rendered tax-form PDF.              |
-| 1116                  | Foreign-tax basket and income/deduction facts; P                  | `f1116.ts` R            | Y   | W     | Open: special categories, carryovers, tax adjustments (`GAP-1116`).                                        |
-| 1116 Schedule B       | Reviewed current-year passive/general excess tax; P               | `f1116_schedule_b.ts` R | N   | W     | Open: other carryovers/carrybacks, multi-category, PDF and validation (`GAP-1116`).                        |
+| 1116                  | Foreign-tax basket and income/deduction facts; P                  | `f1116.ts` R            | Y   | W     | One sourced 2023 or 2024 carryover vintage now joins the passive/general route; other categories, vintages, tax adjustments and validation remain open (`GAP-1116`). |
+| 1116 Schedule B       | One sourced 2023/2024 passive/general vintage; P                   | `f1116_schedule_b.ts` R | N   | W     | Year-specific native columns written; mixed/older vintages, carrybacks, multi-category, PDF and validation remain open (`GAP-1116`). |
 | 2441                  | Care provider/dependent facts; P                                  | `f2441.ts` R            | Y   | W     | Open: all expense/election and provider paths.                                                             |
 | 2555                  | Physical-presence wages and structured employee housing; P        | `f2555.ts` R            | Y   | W     | Open: multiple residences, second household, self-employed housing, later-limit election and PDF render.   |
 | 3800                  | Identified business credits and tax limits; P                     | `f3800.ts` R            | N   | W     | Open: full credit inventory, passive limits, carryovers and PDF decision.                                  |
@@ -87,21 +87,21 @@ below document each bounded route and its remaining evidence.
 | 4684                  | Casualty/theft facts; P                                           | `f4684.ts` R            | Y   | ?     | Open: full event, insurance and limit audit.                                                               |
 | 4797                  | Identified business-property transactions; P                      | `f4797.ts` R            | Y   | W     | Open: recapture, PAL overlap and PDF mapping.                                                              |
 | 4835                  | Farm-rental income/expense facts; P                               | `f4835.ts` R            | N   | W     | Open: all at-risk/passive cases and PDF decision.                                                          |
-| 4952                  | Investment income, expense and AMT refigure facts; P              | `f4952.ts` R            | Y   | W     | Open: other source/AMT derivation and PDF (`GAP-4952`).                                                    |
-| 4972                  | Eligible lump-sum distribution/election facts; P                  | `f4972.ts` R            | Y   | W     | Open: multiple recipients/spouse forms, MRD, NUA PDF appearance; see [gap audit](ty2025-form4972-gap.md). |
+| 4952                  | Investment income, expense and AMT refigure facts; P              | `f4952.ts` R            | Y   | W     | Affirmed portfolio 1099-MISC royalties now source line 4a with Schedule E overlap guards; other source/AMT/PDF paths remain open; see [gap audit](ty2025-form4952-gap.md). |
+| 4972                  | Eligible lump-sum distribution/election facts; P                  | `f4972.ts` R            | Y   | W     | Zero-special-tax elections now stop; multiple recipients/spouse forms, MRD, NUA PDF appearance remain open; see [gap audit](ty2025-form4972-gap.md). |
 | 5329                  | Retirement/HSA excess and prior-year facts; P                     | `f5329.ts` R            | Y   | W     | Open: all penalties and carryover source verification.                                                     |
 | 5695                  | Energy improvement/property facts; P                              | `f5695.ts` R            | Y   | ?     | Open: all eligibility, limit and statement routes.                                                         |
 | 5884                  | Certified worker/group wage facts; P                              | `f5884.ts` R            | Y   | W     | Open: certification, passive limits, carryovers, statement render.                                         |
 | 6198                  | At-risk activity facts; P                                         | `f6198.ts` R            | Y   | ?     | Open: all activity types and carryforward audit.                                                           |
 | 4835 at-risk schedule | Farm-rental at-risk facts; P                                      | `f4835_at_risk.ts` R    | N   | W     | Open: relationship to 4835/6198 and PDF decision.                                                          |
-| 6251                  | AMT source/adjustment and rate-workbook facts; P                  | `f6251.ts` R            | Y   | W     | Open: remaining AMT refigures, special gain and tax interactions (`GAP-6251`).                             |
+| 6251                  | AMT source/adjustment and rate-workbook facts; P                  | `f6251.ts` R            | Y   | W     | Bounded negative-adjustment filing trigger now retains a zero-AMT form; line-specific and special-rate counterfactuals remain open; see [gap audit](ty2025-form6251-negative-adjustment-gap.md). |
 | 6252                  | Installment-sale contract/payment facts; P                        | `f6252.ts` R            | Y   | ?     | Open: all property, recapture and interest paths.                                                          |
 | 6781                  | Section 1256/straddle transactions; P                             | `f6781.ts` R            | Y   | W     | Open: special elections, loss deferral and PDF.                                                            |
 | 7206                  | Native one-plan calculator written; filing blocked; U              | `f7206.ts` R            | Y   | W     | Active one-plan deduction now fails closed in graph, MeF, and PDF because premium-month evidence and Schedule C ownership are unavailable; multiple plans/LTC/PTC and validation remain open; see [gap audit](ty2025-form7206-gap.md). |
 | 7217                  | Partnership property-distribution facts; P                        | `f7217.ts` R            | N   | ?     | Open: basis allocation, multiple events and PDF decision.                                                  |
 | 8283                  | Identified noncash gifts, acknowledgments and appraisals; P       | `f8283.ts` R            | N   | W     | Bounded Section A FMV reductions have a linked statement for certified vehicle sale proceeds or sourced short-term ordinary-income property. Other reduction causes, special gifts, carryovers, signatures, and PDF remain open (`GAP-8283`). |
 | 8396                  | Mortgage-credit-certificate facts; P                              | `f8396.ts` R            | Y   | ?     | Open: carryover and certificate audit.                                                                     |
-| 8582                  | Passive activity, income, loss and carryover facts; P             | `f8582.ts` R            | Y   | W     | Open: remaining dispositions/4797, activity identity and PDF (`GAP-8582`).                                 |
+| 8582                  | Passive activity, income, loss and carryover facts; P             | `f8582.ts` R            | Y   | W     | Duplicate/blank activity names now reject before per-activity matching; durable IDs, dispositions/4797, PDF and validation remain open (`GAP-8582`). |
 | 8582-CR               | Passive credit activity and tax-without-passive facts; P          | `f8582cr.ts` R          | N   | W     | Open: PTP, source authentication and PDF decision.                                                         |
 | 8606                  | Taxpayer nondeductible IRA, no activity; P                         | `f8606.ts` R            | Y   | W     | Bounded native Part I written; spouse, distributions/conversions, PDF, and validation remain open; see [gap audit](ty2025-form8606-gap.md). |
 | 8611                  | LIHTC building/recapture facts; P                                 | `f8611.ts` R            | N   | W     | Open: all building events, bond/interest evidence and PDF decision.                                        |
@@ -124,7 +124,7 @@ below document each bounded route and its remaining evidence.
 | 8863                  | Student/tuition and credit facts; P                               | `f8863.ts` R            | N   | ?     | Open: institution statements, phaseout and PDF decision.                                                   |
 | 8874                  | QEI/partner New Markets credit facts; P                           | `f8874.ts` R            | N   | W     | Open: carryovers, passive cents, recapture and PDF.                                                        |
 | 8880                  | Retirement contribution and eligibility facts; P                  | `f8880.ts` R            | Y   | ?     | Open: all eligible contribution/carryover paths.                                                           |
-| 8889                  | Monthly HDHP, contribution/distribution and prior-excess facts; P | `f8889.ts` R            | Y   | W     | Open: two spouse HSAs, mixed prior coverage, eligibility evidence and render (`GAP-8889`).                 |
+| 8889                  | Monthly HDHP, contribution/distribution and prior-excess facts; P | `f8889.ts` R            | Y   | W     | Two-spouse-HSA input now fails closed instead of emitting one form; actual paired forms, eligibility evidence, render and validation remain open (`GAP-8889`). |
 | 8911                  | Alternative-fuel refueling property facts; P                      | `f8911.ts` R            | N   | W     | Open: census, business-use and credit-limit audit.                                                         |
 | 8912                  | Credit to holders of tax-credit bonds; P                          | `f8912.ts` R            | Y   | W     | Open: source certificates/limits and PDF.                                                                  |
 | 8919                  | Identified firm, reason, W-2 and wage-base facts; P               | `f8919.ts` R            | Y   | W     | Open: correspondence authentication and filled PDF.                                                        |
@@ -134,7 +134,7 @@ below document each bounded route and its remaining evidence.
 | 8949                  | Transaction and 1099-B/DA classification facts; P                 | `f8949.ts` R            | Y   | W     | Open: box classification, holding period, wash sale and IRS rules.                                         |
 | 8959                  | Medicare/RRTA wages, withholding and CT-2 facts; P                | `f8959.ts` R            | Y   | W     | Open: payment evidence and cross-form reconciliation.                                                      |
 | 8960                  | Net-investment income source facts; P                             | `f8960.ts` R            | Y   | W     | Open: 11 computed total/tax lines now mapped; source inclusion/deduction and 8814 interaction remain.    |
-| 8962                  | 1095-A policies, SLCSP, PTC and Pub. 974 facts; P                 | `f8962.ts` R            | Y   | W     | Open: mixed annual/monthly QSEHRA, partial-year SEHI/PTC, source verification (`GAP-8962`).                |
+| 8962                  | 1095-A policies, SLCSP, PTC and Pub. 974 facts; P                 | `f8962.ts` R            | Y   | W     | MeF now rejects calculated credit/repayment without policy source or reportable month; full arithmetic, QSEHRA, Pub. 974, PDF and validation remain open (`GAP-8962`). |
 | 8978                  | Partnership adjustment and reporting-year tax facts; P            | `f8978.ts` R            | N   | W     | Open: partner source, tax year and negative offset (`GAP-8978`).                                           |
 | 8978 Schedule A       | Year-by-year adjustment facts; P                                  | `f8978_schedule_a.ts` R | N   | W     | Open: attachment/reconciliation and PDF decision.                                                          |
 | 8990                  | Native serializer written; filing route blocked; U                 | `f8990.ts` R            | Y   | W     | Positive Schedule C interest requires sourced small-business exemption; nonexempt Form 8990 fails closed until ATI components reconcile to the return. Passthroughs, full PDF, and validation remain open; see [gap audit](ty2025-form8990-gap.md). |
@@ -188,6 +188,31 @@ binary attachment are reconciled in the deferred batch and IRS business rules.
 
 This table is not a complete comparison of every TY2025 IRS-allowed document
 against product requirements. That comparison remains part of `INV-01`.
+
+### Unregistered TY2025 schema paths needing a product disposition
+
+The checked-in TY2025 v5.4 `ReturnData1040.xsd` has 211 distinct `IRS...`
+document references. That is a schema menu, **not** 211 documents required for
+every Form 1040 and not a support count. The registry audit above covers only
+what this exporter currently knows how to emit. A static spot comparison found
+at least these unregistered Form 1040-family paths; none is an agreed exclusion:
+
+| Path | Why it matters | Current disposition |
+| --- | --- | --- |
+| Schedule 1-A | Its current node can calculate positive tips, overtime, vehicle-interest, or senior deductions into Form 1040 line 13b. | Positive line 13b now fails closed at MeF export because there is no registered `IRS1040Schedule1A` serializer or PDF descriptor. Source and return-to-document reconciliation remain open; see [gap audit](ty2025-schedule1a-gap.md). The focused rejection case is written but unrun. |
+| Schedules J, LEP, and R | Farm averaging, limited-English-proficiency, and elderly/disabled-credit situations are separate Schedule 1040 documents. | J has a fail-closed input route above; LEP/R still need source and applicability review. |
+| Forms 1310, 2120, 8332, and 8379 | Representative, multiple-support, dependent-release, and injured-spouse facts can affect filing identity or claims. | No registered source/document audit; open. |
+| Forms 2106, 2210/2210-F, 3903, and 8801 | Employee expenses, estimated-tax penalty, moving expenses, and prior-year minimum-tax credit can alter return amounts. | No registered source/document audit; open. |
+| Forms 3468, 6765, 7203, 8938, and 8995-A Schedules A-D | Credit, S-corporation basis, foreign-asset, and QBI support may require additional native documents. | No registered source/document audit; open. |
+
+This is a **triage list, not the completed census**. The remaining schema
+references include corporate, partnership, trust, payment, disclosure, and
+other individual forms; each needs an applicability decision against actual
+Form 1040 situations and product requirements. Do not mark `INV-01` complete
+or quietly treat an unregistered path as excluded because it is absent from
+the registry. A supported situation needs source, calculation, native XML,
+attachments, PDF (when applicable), and test evidence; an unsupported one
+needs an explicit user-approved exclusion or a fail-closed boundary.
 
 ## Inventory totals and release implications
 

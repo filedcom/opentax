@@ -500,6 +500,29 @@ Deno.test("Form 8582 reconciles Schedule E and Form 4835 activity totals before 
   const result = compute(input);
   assertEquals(result.carryforwards, undefined);
   assertThrows(
+    () =>
+      compute({
+        ...input,
+        activities: [
+          ...activities,
+          {
+            ...activities[1],
+            name: " rental HOUSE ",
+            current_net: 0,
+          },
+        ],
+      }),
+    Error,
+    "distinct activity names",
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...input,
+      activities: [{ ...activities[0], name: "   " }, activities[1]],
+    }).success,
+    false,
+  );
+  assertThrows(
     () => compute({ ...input, prior_unallowed: 1_000 }),
     Error,
     "activity amounts do not reconcile",

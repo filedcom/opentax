@@ -142,7 +142,8 @@ Deno.test("Form 1116: public 2024 Schedule B input uses only available 2025 pass
     form1116_prior_carryover: {
       carryovers: [{
         income_category: "passive",
-        prior_year_schedule_b_line8_current_year_amount: 60,
+        vintage_tax_year: 2024,
+        prior_year_schedule_b_line8_vintage_amount: 60,
         prior_year_schedule_b_line8_other_vintages_total: 0,
         no_intervening_adjustments: true,
         source_document_references: [

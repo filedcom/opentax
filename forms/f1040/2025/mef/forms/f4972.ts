@@ -94,7 +94,10 @@ function recipientIdentity(fields: Input, context?: MefBuildContext) {
 }
 
 function buildIRS4972(fields: Input, context?: MefBuildContext): string {
-  if (!FIELD_MAP.some(([key]) => typeof fields[key] === "number")) return "";
+  if (!FIELD_MAP.some(([key]) => typeof fields[key] === "number")) {
+    if (Object.keys(fields).length === 0) return "";
+    throw new Error("Form 4972 has source facts but no calculated form lines");
+  }
   if (
     fields.born_before_1936 !== true ||
     fields.entire_balance_distributed !== true ||

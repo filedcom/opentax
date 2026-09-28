@@ -50,6 +50,23 @@ Deno.test("royalty property with zero rental days is not a short-term home renta
   assertEquals(findOutput(result, "schedule1")?.fields.line5_schedule_e, 4000);
 });
 
+Deno.test("Schedule E rejects 1099-MISC royalty passthrough hidden by a property item", () => {
+  assertThrows(
+    () =>
+      scheduleE.compute(
+        { taxYear: 2025, formType: "f1040" },
+        inputSchema.parse({
+          schedule_es: [
+            minimalItem({ property_type: 6, royalties_income: 800 }),
+          ],
+          royalty_income: 800,
+        }),
+      ),
+    Error,
+    "need per-property reconciliation",
+  );
+});
+
 Deno.test("input validation: missing required field (rent_income) throws", () => {
   assertThrows(() =>
     compute([

@@ -33,7 +33,7 @@ const MFS_MAGI_UPPER = 75_000;
 export const inputSchema = z.object({
   // Activity rows retained for Part IV/V and loss-allocation worksheets in MeF.
   activities: z.array(z.object({
-    name: z.string().min(1),
+    name: z.string().trim().min(1),
     activity_type: z.enum(["A", "B"]),
     property_type: z.number().int().min(1).max(8),
     reporting_form: z.enum(["schedule_e", "form4835"]).optional(),
@@ -46,7 +46,7 @@ export const inputSchema = z.object({
   // Positive, activity-linked Form 4797 gains. Keep Parts I and II separate
   // for Part IX same-part offsets and final reporting character.
   current_4797_sale_gains: z.array(z.object({
-    activity_name: z.string().min(1),
+    activity_name: z.string().trim().min(1),
     part: z.enum(["I", "II"]),
     gain: z.number().int().positive(),
   })).optional(),
@@ -324,6 +324,17 @@ function assertActivityTotals(input: Form8582Input): void {
   }
 
   const activities = input.activities;
+  // Part IV/V and the later loss-allocation worksheets are per activity.
+  // Without a durable source ID, duplicate display names cannot be safely
+  // matched to their prior losses or current Form 4797 gains.
+  const activityNames = activities.map((activity) =>
+    activity.name.trim().toLowerCase()
+  );
+  if (new Set(activityNames).size !== activityNames.length) {
+    throw new Error(
+      "Form 8582 needs distinct activity names to reconcile each loss and gain",
+    );
+  }
   const sales = input.current_4797_sale_gains ?? [];
   if (
     sales.length > 0 &&

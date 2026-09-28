@@ -121,7 +121,8 @@ Deno.test("Form 1116 refuses an excess-tax XML document without matching Schedul
 Deno.test("Form 1116 Schedule B reconciles a single 2024 vintage through lines 1, 3, 4, and 8", () => {
   const source = {
     income_category: IncomeCategory.Passive,
-    prior_year_schedule_b_line8_current_year_amount: 600,
+    vintage_tax_year: 2024 as const,
+    prior_year_schedule_b_line8_vintage_amount: 600,
     prior_year_schedule_b_line8_other_vintages_total: 0 as const,
     no_intervening_adjustments: true as const,
     source_document_references: [
@@ -209,4 +210,45 @@ Deno.test("Form 1116 Schedule B reconciles a single 2024 vintage through lines 1
     formXml,
     "<GrossForeignTaxCreditAmt>500</GrossForeignTaxCreditAmt>",
   );
+});
+
+Deno.test("Form 1116 Schedule B places a sourced 2023 vintage in the second-preceding column", () => {
+  const xml = form1116ScheduleB.build({
+    case: "prior_year_use",
+    category: IncomeCategory.General,
+    prior_year_carryover: 600,
+    used_prior_year_carryover: 300,
+    remaining_prior_year_carryover: 300,
+    prior_year_carryover_source: {
+      income_category: IncomeCategory.General,
+      vintage_tax_year: 2023,
+      prior_year_schedule_b_line8_vintage_amount: 600,
+      prior_year_schedule_b_line8_other_vintages_total: 0,
+      no_intervening_adjustments: true,
+      source_document_references: [
+        "Filed 2024 Schedule B (Form 1116), general basket, line 8 first-preceding-year column",
+      ],
+    },
+  });
+  assertStringIncludes(
+    xml,
+    "<ForeignIncGeneralCategoryInd>X</ForeignIncGeneralCategoryInd>",
+  );
+  assertStringIncludes(
+    xml,
+    "<ForeignTxCyovPrTYGrp><SecondPrecedingTYAmt>600</SecondPrecedingTYAmt><TotalAmt>600</TotalAmt></ForeignTxCyovPrTYGrp>",
+  );
+  assertStringIncludes(
+    xml,
+    "<AdjForeignTxCyovPrTYGrp><SecondPrecedingTYAmt>600</SecondPrecedingTYAmt><TotalAmt>600</TotalAmt></AdjForeignTxCyovPrTYGrp>",
+  );
+  assertStringIncludes(
+    xml,
+    "<ForeignTxCyovUsedCurrTYGrp><SecondPrecedingTYAmt>-300</SecondPrecedingTYAmt><TotalAmt>-300</TotalAmt></ForeignTxCyovUsedCurrTYGrp>",
+  );
+  assertStringIncludes(
+    xml,
+    "<ForeignTxCyovFollowingTYGrp><SecondPrecedingTYAmt>300</SecondPrecedingTYAmt><TotalAmt>300</TotalAmt></ForeignTxCyovFollowingTYGrp>",
+  );
+  assertEquals(xml.includes("FirstPrecedingTYAmt"), false);
 });

@@ -37,6 +37,14 @@ Deno.test("empty object still emits required IRS1040 fields", () => {
   );
 });
 
+Deno.test("Form 1040 MeF rejects a positive Schedule 1-A deduction without its document", () => {
+  assertThrows(
+    () => irs1040.build({ line13b_additional_deductions: 6_000 }),
+    Error,
+    "line 13b needs an attached Schedule 1-A",
+  );
+});
+
 Deno.test("Form 1040 MeF refuses an unresolved Form 8912 credit", () => {
   assertThrows(
     () => irs1040.build({ form8912_source_lines: { line4: 100 } }),

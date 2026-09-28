@@ -236,15 +236,25 @@ Deno.test("Form 4972 Part II rejects an election without box 3 capital gain", ()
   );
 });
 
-Deno.test("Form 4972 Part II retains ordinary income when the special tax rounds to zero", () => {
-  const result = calculated({
-    lump_sum_amount: 101,
-    capital_gain_amount: 1,
-    elect_capital_gain: true,
-  });
-  assertEquals(result.tax, 0);
-  assertEquals(result.agi?.line5b_form4972_ordinary, 100);
-  assertEquals(result.f1040?.line5b_form4972_ordinary, 100);
+Deno.test("Form 4972 rejects a rounded-zero Part II election before suppressing 1099-R income", () => {
+  assertThrows(
+    () =>
+      calculated({
+        lump_sum_amount: 101,
+        capital_gain_amount: 1,
+        elect_capital_gain: true,
+      }),
+    Error,
+    "zero special tax",
+  );
+});
+
+Deno.test("Form 4972 rejects a rounded-zero ten-year election before suppressing 1099-R income", () => {
+  assertThrows(
+    () => calculated({ lump_sum_amount: 4, elect_10yr_averaging: true }),
+    Error,
+    "zero special tax",
+  );
 });
 
 Deno.test("Form 4972 Part II allocates a death benefit between capital gain and ordinary income", () => {

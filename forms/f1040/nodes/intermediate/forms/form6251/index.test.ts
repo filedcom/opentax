@@ -93,6 +93,64 @@ Deno.test("form6251: no output when tentative minimum tax equals regular tax", (
   assertEquals(result.outputs.length, 0);
 });
 
+Deno.test("form6251: negative line 2c files when removing it would make line 7 exceed line 10", () => {
+  const result = compute({
+    filing_status: "single",
+    regular_tax_income: 100_000,
+    regular_tax: 2_000,
+    taking_standard_deduction: false,
+    form4952_amt_line2c_difference: -20_000,
+  });
+  const filed = result.outputs.find((item) => item.nodeType === "form6251");
+  assertEquals(filed?.fields.line2c_investment_interest, -20_000);
+  assertEquals(filed?.fields.tentative_tax, 0);
+  assertEquals(filed?.fields.line11_amt, 0);
+  assertEquals(filed?.fields.must_file_for_negative_adjustments, true);
+  assertEquals(fieldsOf(result.outputs, schedule2), undefined);
+});
+
+Deno.test("form6251: negative line 2c does not file when counterfactual line 7 stays below line 10", () => {
+  const result = compute({
+    filing_status: "single",
+    regular_tax_income: 100_000,
+    regular_tax: 4_000,
+    taking_standard_deduction: false,
+    form4952_amt_line2c_difference: -20_000,
+  });
+  assertEquals(result.outputs, []);
+});
+
+Deno.test("form6251: negative-adjustment filing with preferential income needs its refigured worksheet", () => {
+  assertThrows(
+    () =>
+      compute({
+        filing_status: "single",
+        regular_tax_income: 100_000,
+        regular_taxable_income: 100_000,
+        regular_tax: 4_000,
+        taking_standard_deduction: false,
+        form4952_amt_line2c_difference: -20_000,
+        qualified_dividends: 1_000,
+      }),
+    Error,
+    "negative-adjustment filing test needs a refigured special-rate",
+  );
+});
+
+Deno.test("form6251: mixed other adjustments cannot silently bypass the negative-adjustment filing test", () => {
+  assertThrows(
+    () =>
+      compute({
+        filing_status: "single",
+        regular_tax_income: 100_000,
+        regular_tax: 4_000,
+        other_adjustments: -20_000,
+      }),
+    Error,
+    "mixed other_adjustments",
+  );
+});
+
 // ─── AMT owed calculation ─────────────────────────────────────────────────────
 
 Deno.test("form6251: AMT owed routes to schedule2 line2_amt", () => {

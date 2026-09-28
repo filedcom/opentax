@@ -20,6 +20,7 @@ export interface Fields {
   net_tmt?: number | null;
   line11_amt?: number | null;
   must_file_for_credit?: boolean | null;
+  must_file_for_negative_adjustments?: boolean | null;
   line12?: number | null;
   line13?: number | null;
   line14?: number | null;
@@ -118,7 +119,9 @@ function buildIRS6251(fields: Input): string {
     fields.tentative_tax > fields.regular_tax;
   if (
     (typeof fields.line11_amt !== "number" || fields.line11_amt <= 0) &&
-    fields.must_file_for_credit !== true && !line7ExceedsLine10
+    fields.must_file_for_credit !== true &&
+    fields.must_file_for_negative_adjustments !== true &&
+    !line7ExceedsLine10
   ) {
     return "";
   }
@@ -128,7 +131,9 @@ function buildIRS6251(fields: Input): string {
     return element(tag, value);
   });
   const hasChildren = children.some((c) => c !== "");
-  if (!hasChildren) return "";
+  if (!hasChildren) {
+    throw new Error("Form 6251 filing trigger needs calculated form lines");
+  }
   return elements("IRS6251", children);
 }
 

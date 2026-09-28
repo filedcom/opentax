@@ -1,5 +1,6 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { eitc } from "./index.ts";
+import { eitc as scheduleEic } from "../../../../2025/mef/forms/eitc.ts";
 import { FilingStatus } from "../../../types.ts";
 
 // ─── Test Helpers ─────────────────────────────────────────────────────────────
@@ -46,6 +47,45 @@ Deno.test("computed EITC amount is retained for the MeF Schedule EIC builder", (
   });
   const filing = result.outputs.find((item) => item.nodeType === "eitc");
   assertEquals(filing?.fields.credit_amount, 4_328);
+});
+
+Deno.test("qualifying-child facts survive EIC finalization and reach Schedule EIC", () => {
+  const child = {
+    first_name: "Ada",
+    last_name: "Taxpayer",
+    name_control: "TAXP",
+    ssn: "111-22-3334",
+    ssn_valid_for_employment: true,
+    tin_issued_by_due_date: true,
+    dob: "2017-06-15",
+    irs_relationship_code: "DAUGHTER",
+    months_in_home: 12,
+  };
+  const result = compute({
+    earned_income: 12_730,
+    qualifying_children: 1,
+    qualifying_child_details: [child],
+    filing_status: FilingStatus.Single,
+  });
+  const filing = result.outputs.find((item) => item.nodeType === "eitc");
+  assertEquals(filing?.fields.qualifying_children, 1);
+  assertEquals(filing?.fields.qualifying_child_details, [child]);
+  const xml = scheduleEic.build(filing?.fields ?? {});
+  assertStringIncludes(xml, "<QualifyingChildSSN>111223334</QualifyingChildSSN>");
+});
+
+Deno.test("a positive child EIC without child rows cannot disappear from MeF", () => {
+  const result = compute({
+    earned_income: 12_730,
+    qualifying_children: 1,
+    filing_status: FilingStatus.Single,
+  });
+  const filing = result.outputs.find((item) => item.nodeType === "eitc");
+  assertThrows(
+    () => scheduleEic.build(filing?.fields ?? {}),
+    Error,
+    "count does not match child detail",
+  );
 });
 
 // ─── Investment Income Disqualifier ──────────────────────────────────────────

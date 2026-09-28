@@ -8,6 +8,14 @@ import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
 import { scheduleC } from "../schedule_c/index.ts";
 import { schedule_f } from "../../intermediate/forms/schedule_f/index.ts";
 import { form8919 } from "../../intermediate/forms/form8919/index.ts";
+import {
+  form4952,
+  inputSchema as form4952InputSchema,
+} from "../../intermediate/forms/form4952/index.ts";
+import {
+  inputSchema as scheduleEInputSchema,
+  scheduleE,
+} from "../schedule_e/index.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -207,6 +215,91 @@ Deno.test("f1099m.compute: box2_royalties defaults to schedule_e royalty_income"
     (findOutput(result, "schedule_e")!.fields as Record<string, unknown>)
       .royalty_income,
     5000,
+  );
+  assertEquals(findOutput(result, "form4952"), undefined);
+});
+
+Deno.test("f1099m.compute: affirmed portfolio royalty reaches Schedule E and Form 4952 from one box 2", () => {
+  const result = compute([minimalItem({
+    box2_royalties: 1_200,
+    box2_nonpassive_portfolio_investment_for_form4952_verified: true,
+  })]);
+  assertEquals(findOutput(result, "schedule_e")?.fields.royalty_income, 1_200);
+  assertEquals(
+    findOutput(result, "form4952")?.fields.source_1099_royalties,
+    1_200,
+  );
+  const scheduleEOutput = scheduleE.compute(
+    { taxYear: 2025, formType: "f1040" },
+    scheduleEInputSchema.parse(findOutput(result, "schedule_e")?.fields),
+  );
+  assertEquals(
+    scheduleEOutput.outputs.find((item) => item.nodeType === "schedule1")
+      ?.fields.line5_schedule_e,
+    1_200,
+  );
+  const form4952Output = form4952.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form4952InputSchema.parse({
+      ...findOutput(result, "form4952")?.fields,
+      investment_interest_expense: 900,
+      investment_interest_expense_excludes_royalty_attributable_interest: true,
+      amt_refigure: {
+        prior_year_disallowed_interest: 0,
+        interest_on_private_activity_bonds: 0,
+        other_gross_income_adjustment: 0,
+        qualified_dividends_adjustment: 0,
+        net_disposition_gain_adjustment: 0,
+        net_capital_gain_adjustment: 0,
+        investment_expenses_adjustment: 0,
+      },
+    }),
+  );
+  assertEquals(
+    form4952Output.outputs.find((item) => item.nodeType === "form4952")
+      ?.fields.line4a,
+    1_200,
+  );
+  assertEquals(
+    form4952Output.outputs.find((item) => item.nodeType === "schedule_a")
+      ?.fields.line_9_investment_interest,
+    900,
+  );
+});
+
+Deno.test("f1099m.compute: Form 4952 receives only affirmed portfolio royalties", () => {
+  const result = compute([
+    minimalItem({
+      box2_royalties: 1_200,
+      box2_nonpassive_portfolio_investment_for_form4952_verified: true,
+    }),
+    minimalItem({ box2_royalties: 600 }),
+  ]);
+  assertEquals(findOutput(result, "schedule_e")?.fields.royalty_income, 1_800);
+  assertEquals(
+    findOutput(result, "form4952")?.fields.source_1099_royalties,
+    1_200,
+  );
+});
+
+Deno.test("f1099m.compute: Form 4952 portfolio affirmation rejects Schedule C and missing royalty", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box2_royalties: 1_200,
+        box2_royalties_routing: "schedule_c",
+        box2_nonpassive_portfolio_investment_for_form4952_verified: true,
+      })]),
+    Error,
+    "needs positive box 2 income routed to Schedule E",
+  );
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box2_nonpassive_portfolio_investment_for_form4952_verified: true,
+      })]),
+    Error,
+    "needs positive box 2 income routed to Schedule E",
   );
 });
 

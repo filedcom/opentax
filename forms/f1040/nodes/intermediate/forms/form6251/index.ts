@@ -121,6 +121,34 @@ function privateActivityBondInterest(input: Form6251Input): number {
     );
 }
 
+// The fourth 2025 "Who Must File" test uses the signed total of lines 2c
+// through 3. The generic other_adjustments input mixes lines outside that
+// range, so this bounded calculation is used only when it is zero.
+function knownLine2cThrough3Total(input: Form6251Input): number {
+  return (input.taking_standard_deduction === true
+    ? 0
+    : (input.form4952_amt_line2c_difference ?? 0)) +
+    (input.iso_adjustment ?? 0) +
+    (input.depreciation_adjustment ?? 0) +
+    (input.nol_adjustment ?? 0) +
+    privateActivityBondInterest(input) +
+    (input.qsbs_adjustment ?? 0);
+}
+
+function amtiWithoutKnownLine2cThrough3(input: Form6251Input): number {
+  return computeAmti({
+    ...input,
+    form4952_amt_line2c_difference: 0,
+    iso_adjustment: 0,
+    depreciation_adjustment: 0,
+    nol_adjustment: 0,
+    private_activity_bond_interest: 0,
+    line2g_pab_interest: 0,
+    qsbs_adjustment: 0,
+    other_adjustments: 0,
+  });
+}
+
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
 // Form 6251 Line 4: Alternative Minimum Taxable Income (AMTI)
@@ -571,12 +599,58 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
     );
     const amt = computeAmt(netTmt, adjustedRegularTax);
 
+    const negativeKnownAdjustments = (input.other_adjustments ?? 0) === 0 &&
+      knownLine2cThrough3Total(input) < 0;
+    const alreadyMustFile = tmt > adjustedRegularTax ||
+      input.must_file_for_credit === true ||
+      input.must_file_for_gbc === true ||
+      input.must_compute_for_bond_credit === true;
+    if ((input.other_adjustments ?? 0) !== 0 && !alreadyMustFile) {
+      throw new Error(
+        "Form 6251 cannot assess negative-adjustment filing from mixed other_adjustments without line-specific AMT modeling",
+      );
+    }
+    if (
+      negativeKnownAdjustments && !alreadyMustFile &&
+      (hasPreferentialIncome || foreignExclusion > 0)
+    ) {
+      throw new Error(
+        "Form 6251 negative-adjustment filing test needs a refigured special-rate or foreign-income line 7",
+      );
+    }
+    const canComputeCounterfactual = negativeKnownAdjustments &&
+      !hasPreferentialIncome && foreignExclusion === 0;
+    const counterfactualAmti = canComputeCounterfactual
+      ? amtiWithoutKnownLine2cThrough3(input)
+      : 0;
+    const counterfactualExemption = canComputeCounterfactual
+      ? computeExemption(
+        counterfactualAmti,
+        input.filing_status,
+        cfg.amtExemption,
+        cfg.amtPhaseOutStart,
+      )
+      : 0;
+    const counterfactualLine7 = canComputeCounterfactual
+      ? computeTentativeMinimumTax(
+        computeTaxableExcess(counterfactualAmti, counterfactualExemption),
+        input.filing_status,
+        cfg.amtBracket26ThresholdStandard,
+        cfg.amtBracket26ThresholdMfs,
+        cfg.amtBracketAdjustmentStandard,
+        cfg.amtBracketAdjustmentMfs,
+      )
+      : 0;
+    const mustFileForNegativeAdjustments = canComputeCounterfactual &&
+      counterfactualLine7 > adjustedRegularTax;
+
     // 2025 instructions require attachment when line 7 exceeds line 10,
     // even if the AMT foreign tax credit reduces line 11 to zero.
     if (
       tmt <= adjustedRegularTax && input.must_file_for_credit !== true &&
       input.must_file_for_gbc !== true &&
-      input.must_compute_for_bond_credit !== true
+      input.must_compute_for_bond_credit !== true &&
+      !mustFileForNegativeAdjustments
     ) {
       return { outputs: [] };
     }
@@ -600,6 +674,7 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
           must_file_for_credit: input.must_file_for_credit === true ||
             input.must_file_for_gbc === true ||
             input.must_compute_for_bond_credit === true,
+          must_file_for_negative_adjustments: mustFileForNegativeAdjustments,
           regular_tax: adjustedRegularTax,
           ...(input.form4952_amt_line2c_difference !== undefined &&
               input.taking_standard_deduction !== true

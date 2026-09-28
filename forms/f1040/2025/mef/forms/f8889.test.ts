@@ -135,28 +135,23 @@ Deno.test("Form 8889 sums two permitted IRA-to-HSA transfers on native line 10",
   );
 });
 
-Deno.test("Form 8889 agreed spouse allocation reaches native line 6", () => {
-  const result = form8889Node.compute(
-    { taxYear: 2025, formType: "f1040" },
-    form8889InputSchema.parse({
-      eligible_hdhp_coverage_by_month: Array(12).fill(CoverageType.Family),
-      age_55_or_older: false,
-      last_month_rule_elected: false,
-      married_at_year_end: true,
-      spouse_has_separate_hsa: true,
-      spouse_allocated_family_limit: 4275,
-      taxpayer_hsa_contributions: 4000,
-    }),
-  );
-  const printed = result.outputs.find((entry) => entry.nodeType === "form8889");
-  const xml = form8889.build(printed?.fields ?? {}, context);
-  assertStringIncludes(
-    xml,
-    "<HSAFamilyDeductibleAmt>4275</HSAFamilyDeductibleAmt>",
-  );
-  assertStringIncludes(
-    xml,
-    "<HSALimitedGrossContributionAmt>4275</HSALimitedGrossContributionAmt>",
+Deno.test("Form 8889 source rejects one XML form for two spouse HSAs", () => {
+  assertThrows(
+    () =>
+      form8889Node.compute(
+        { taxYear: 2025, formType: "f1040" },
+        form8889InputSchema.parse({
+          eligible_hdhp_coverage_by_month: Array(12).fill(CoverageType.Family),
+          age_55_or_older: false,
+          last_month_rule_elected: false,
+          married_at_year_end: true,
+          spouse_has_separate_hsa: true,
+          spouse_allocated_family_limit: 4275,
+          taxpayer_hsa_contributions: 4000,
+        }),
+      ),
+    Error,
+    "both spouses' Forms 8889",
   );
 });
 
