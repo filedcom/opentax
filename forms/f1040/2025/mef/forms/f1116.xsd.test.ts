@@ -117,6 +117,10 @@ Deno.test("Form 1116 source edges remain acyclic before credit calculation", () 
     plan.indexOf("form1116_review") < plan.indexOf("form_1116"),
     true,
   );
+  assertEquals(
+    plan.indexOf("form1116_prior_carryover") < plan.indexOf("form_1116"),
+    true,
+  );
   assertEquals(plan.indexOf("form_1116") < plan.indexOf("f1040"), true);
 });
 
@@ -292,6 +296,61 @@ Deno.test({
     xml.indexOf("<IRS1116 ") < xml.indexOf("<IRS1116ScheduleB "),
     true,
   );
+  await validateXsd(xml);
+});
+
+Deno.test({
+  name:
+    "XSD: Form 1116 uses sourced 2024 carryover with Schedule B lines 1, 3, 4, and 8",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const result = form1116Node.compute(
+    { taxYear: 2025, formType: "f1040" },
+    {
+      foreign_tax_items: [{
+        foreign_tax_paid: 200,
+        foreign_gross_income: 10_000,
+        income_category: IncomeCategory.Passive,
+        irs_country_code: "CA",
+        tax_paid_or_accrued_date: "2025-11-01",
+        tax_kind: ForeignTaxKind.Interest,
+        tax_credit_method: ForeignTaxCreditMethod.Paid,
+      }],
+      worldwide_taxable_income: 50_000,
+      us_tax_before_credits: 2_500,
+      prior_year_carryovers: [{
+        income_category: IncomeCategory.Passive,
+        prior_year_schedule_b_line8_current_year_amount: 600,
+        prior_year_schedule_b_line8_other_vintages_total: 0,
+        no_intervening_adjustments: true,
+        source_document_references: [
+          "Filed 2024 Schedule B (Form 1116), passive line 8 columns xiii and xiv",
+        ],
+      }],
+    },
+  );
+  const formFields = result.outputs.find((output) =>
+    output.nodeType === "form_1116"
+  )?.fields;
+  const scheduleBFields = result.outputs.find((output) =>
+    output.nodeType === "form1116_schedule_b"
+  )?.fields;
+  assertEquals(scheduleBFields?.used_prior_year_carryover, 300);
+  const xml = buildMefXml({
+    form_1116: formFields as Parameters<typeof form1116.build>[0],
+    form1116_schedule_b: scheduleBFieldsSchema.parse(scheduleBFields),
+    schedule3: {
+      line1_foreign_tax_credit: 500,
+      line1_total: 500,
+    },
+  }, filer);
+  assertStringIncludes(
+    xml,
+    "<ForeignTaxCrCarrybackOrOverAmt>600</ForeignTaxCrCarrybackOrOverAmt>",
+  );
+  assertStringIncludes(xml, "<ForeignTxCyovUsedCurrTYGrp>");
   await validateXsd(xml);
 });
 

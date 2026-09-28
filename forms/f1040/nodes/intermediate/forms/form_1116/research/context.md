@@ -172,6 +172,28 @@ reductions, section 951A, and other category-specific rules remain open. Native
 Schedule B XML and focused cases are written; no test, XSD, business-rule, PDF,
 or ATS gate has run.
 
+### TY2025 single-vintage prior carryover use (written, unrun)
+
+The [2025 Form 1116](https://www.irs.gov/pub/irs-pdf/f1116.pdf) puts the
+adjusted prior carryover from Schedule B line 3 column (xiv) on line 10, adds it
+to current tax on line 11, and uses the resulting line 14 amount (absent lines
+12 and 13 adjustments) against the category line 23 limit on line 24. The
+[Schedule B instructions](https://www.irs.gov/instructions/i1116sb) carry 2024
+line 8 column (xiii) to 2025 line 1 column (xii), reconcile it on line 3, record
+actual 2025 use as a negative on line 4, and leave the unused 2024 vintage on
+line 8. The local TY2025 v5.4 IRS schema has the matching first-preceding and
+total elements in that order.
+
+The public `form1116_prior_carryover` input accepts only a sourced 2024 Schedule
+B current-year balance with zero older-vintage balance and a review that no
+intervening adjustment occurred. For a single passive or general category, 2025
+tax uses limitation first, then the 2024 balance fills any remaining capacity.
+The current-year and prior-year Schedule B cases are an explicit discriminated
+union, not an inferred zero or a silent fallback. Multi-category carryover use,
+older vintages, carryback adjustments, current excess in the same category, AMT,
+excluded income, and tax redeterminations remain unsupported.
+XML/PDF/full-batch/IRS-rule/ATS gates have not run.
+
 | Document                   | Year | Section        | URL                                            | Saved as  |
 | -------------------------- | ---- | -------------- | ---------------------------------------------- | --------- |
 | Instructions for Form 1116 | 2025 | All parts      | https://www.irs.gov/pub/irs-pdf/i1116.pdf      | i1116.pdf |

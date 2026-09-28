@@ -1643,6 +1643,15 @@ stop clearly. Source-to-XML and negative cases are written but unrun. Other
 carrybacks/carryovers, Schedule B PDF mapping, full-batch/XSD, and IRS business
 rules remain open.
 
+Build-pass addendum for GAP-1116 (unrun): a separate sourced 2024 Schedule B
+line 8 vintage now enters one passive or general basket's 2025 Form 1116 line
+10. Current-year tax uses the limitation first; the remainder uses that prior
+year's carryover, with native Schedule B lines 1/3/4/8 and Form 1116 line 24
+reconciled to Schedule 3. The source requires zero older-vintage balance and
+no intervening adjustments. Mixed baskets, current-year excess, AMT, excluded
+income, other vintages and PDF mapping remain open. Source, graph, XML, and
+local-XSD cases are written but unrun.
+
 Build-pass addendum for GAP-MAP / Form 8960 (unrun): eleven totals and tax
 lines already computed by the node now map to their native TY2025 MeF fields
 in filed order. Focused field and order cases are written but unrun. This does
@@ -1699,6 +1708,8 @@ dependencies, required statements, and tests.
 - Per-document audit index: `docs/mef/coverage-inventory.md`
 - Form 461 return-wide limitation audit: `docs/mef/ty2025-form461-gap.md`
 - Form 7206 source and native-filing audit: `docs/mef/ty2025-form7206-gap.md`
+- Form 8606 owner, calculation, and native-filing audit: `docs/mef/ty2025-form8606-gap.md`
+- Form 8990 interest limitation and native-filing audit: `docs/mef/ty2025-form8990-gap.md`
 - Return assembly: `forms/f1040/2025/mef/builder.ts`
 - Submission package: `forms/f1040/2025/mef/submission-archive.ts`
 - Local XSD scenarios: `forms/f1040/2025/mef/xsd-validation.test.ts`

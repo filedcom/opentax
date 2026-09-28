@@ -255,7 +255,11 @@ function categoryXml(
     );
   const line19 = ratio(summary.foreignTaxableIncome, worldwideTaxableIncome);
   const line21 = Math.round(usTax * Number(line19));
-  const line24 = Math.min(Math.round(summary.foreignTaxPaid), line21);
+  const carryover = summary.priorYearCarryover ?? 0;
+  const line24 = Math.min(
+    Math.round(summary.foreignTaxPaid) + carryover,
+    line21,
+  );
   if (summary.allowedCredit !== line24) {
     throw new Error(
       "Form 1116 category credit differs from its limitation lines",
@@ -296,8 +300,12 @@ function categoryXml(
       "X",
     ),
     element("TotalForeignTaxesPaidOrAccrAmt", summary.foreignTaxPaid),
+    carryover > 0 ? element("ForeignTaxCrCarrybackOrOverAmt", carryover) : "",
     element("ForeignGrossTaxPaidOrAccrAmt", summary.foreignTaxPaid),
-    element("ForeignTaxAvailableForCrRedAmt", summary.foreignTaxPaid),
+    element(
+      "ForeignTaxAvailableForCrRedAmt",
+      summary.foreignTaxPaid + carryover,
+    ),
     element("ForeignTaxableIncomeOrLossAmt", summary.foreignTaxableIncome),
     element("ForeignNetTaxableIncomeAmt", summary.foreignTaxableIncome),
     element("ForeignTxblIncomeAftrExemptAmt", worldwideTaxableIncome),
@@ -373,7 +381,11 @@ function buildIRS1116(
       Math.abs(summary.foreignGrossIncome - gross) > 0.01 ||
       Math.abs(summary.includedForeignIncome - (gross - excluded)) > 0.01 ||
       summary.currentYearExcessTax !==
-        Math.max(0, Math.round(paid) - summary.allowedCredit)
+        Math.max(
+          0,
+          Math.round(paid) - summary.allowedCredit +
+            (summary.usedPriorYearCarryover ?? 0),
+        )
     ) {
       throw new Error("Form 1116 category totals differ from source items");
     }
@@ -392,12 +404,39 @@ function buildIRS1116(
     );
     if (
       !companion.success ||
+      companion.data.case !== "current_year_excess" ||
       companion.data.category !== excess[0].category ||
       companion.data.current_year_excess_tax !==
         excess[0].currentYearExcessTax
     ) {
       throw new Error(
         "Form 1116 excess foreign tax needs the matching sourced Schedule B carryover",
+      );
+    }
+  }
+  const priorUse = summaries.filter((summary) =>
+    (summary.priorYearCarryover ?? 0) > 0
+  );
+  if (priorUse.length > 0) {
+    if (priorUse.length !== 1 || excess.length > 0) {
+      throw new Error(
+        "Form 1116 prior-year carryover needs one category without current-year excess",
+      );
+    }
+    const companion = scheduleBFieldsSchema.safeParse(
+      context?.pending?.form1116_schedule_b,
+    );
+    if (
+      !companion.success ||
+      companion.data.case !== "prior_year_use" ||
+      companion.data.category !== priorUse[0].category ||
+      companion.data.prior_year_carryover !==
+        priorUse[0].priorYearCarryover ||
+      companion.data.used_prior_year_carryover !==
+        priorUse[0].usedPriorYearCarryover
+    ) {
+      throw new Error(
+        "Form 1116 prior-year credit needs a matching sourced Schedule B reconciliation",
       );
     }
   }

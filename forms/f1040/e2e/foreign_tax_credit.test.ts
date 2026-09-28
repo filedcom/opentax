@@ -127,6 +127,47 @@ Deno.test("Form 1116: 1099-INT box 6 credit is capped by the §904 ratio, not ta
   );
 });
 
+Deno.test("Form 1116: public 2024 Schedule B input uses only available 2025 passive limitation", () => {
+  const result = runReturn({
+    general: singleGeneral(),
+    w2: [w2Item(100_000, 12_000)],
+    f1099int: [{
+      payer_name: "FOREIGN BANK",
+      box1: 1_000,
+      box6: 100,
+      box7: "Canada",
+      foreign_source_interest_usd: 1_000,
+      foreign_tax_irs_country_code: "CA",
+    }],
+    form1116_prior_carryover: {
+      carryovers: [{
+        income_category: "passive",
+        prior_year_schedule_b_line8_current_year_amount: 60,
+        prior_year_schedule_b_line8_other_vintages_total: 0,
+        no_intervening_adjustments: true,
+        source_document_references: [
+          "Filed 2024 Schedule B (Form 1116), passive line 8 columns xiii and xiv",
+        ],
+      }],
+    },
+  });
+  assertEquals(result.diagnostics, []);
+  const summary = result.pending.form_1116?.category_summaries as Array<{
+    allowedCredit: number;
+    usedPriorYearCarryover: number;
+  }>;
+  assertEquals(summary[0].allowedCredit, 135);
+  assertEquals(summary[0].usedPriorYearCarryover, 35);
+  assertEquals(
+    result.pending.form1116_schedule_b?.remaining_prior_year_carryover,
+    25,
+  );
+  assertEquals(
+    result.pending.schedule3?.line1_foreign_tax_credit,
+    135,
+  );
+});
+
 // ── General category: foreign tax on wages reaches Form 1116 ─────────────────
 //
 // Compensation for personal services as an employee is general category income

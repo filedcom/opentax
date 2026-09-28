@@ -58,6 +58,14 @@ export const carryoverReviewSchema = z.object({
   no_foreign_tax_redetermination_or_special_adjustment: z.literal(true),
 }).strict();
 
+export const priorYearCarryoverSchema = z.object({
+  income_category: z.nativeEnum(IncomeCategory),
+  prior_year_schedule_b_line8_current_year_amount: z.number().int().positive(),
+  prior_year_schedule_b_line8_other_vintages_total: z.literal(0),
+  no_intervening_adjustments: z.literal(true),
+  source_document_references: z.array(z.string().trim().min(1)).min(1),
+}).strict();
+
 const vehicleInterestAssetSchema = z.object({
   asset_id: z.string().trim().min(1),
   source_document_reference: z.string().trim().min(1),
@@ -76,6 +84,7 @@ const vehicleInterestAssetMethodSchema = z.object({
 export const inputSchema = z.object({
   foreign_tax_items: z.array(foreignTaxItemSchema).optional(),
   carryover_reviews: z.array(carryoverReviewSchema).optional(),
+  prior_year_carryovers: z.array(priorYearCarryoverSchema).optional(),
   // Signed Form 1040 lines 11b minus 14, before the line 15 zero floor.
   worldwide_taxable_income: z.number().optional(),
   enhanced_senior_deduction: z.number().nonnegative().optional(),
@@ -182,6 +191,8 @@ export const categorySummarySchema = z.object({
   foreignTaxableIncome: z.number(),
   allowedCredit: z.number().nonnegative(),
   currentYearExcessTax: z.number().nonnegative(),
+  priorYearCarryover: z.number().nonnegative().optional(),
+  usedPriorYearCarryover: z.number().nonnegative().optional(),
 });
 
 export type CategorySummary = z.infer<typeof categorySummarySchema>;
@@ -404,6 +415,11 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
       }
     }
     if ((input.foreign_tax_items?.length ?? 0) === 0) {
+      if ((input.prior_year_carryovers?.length ?? 0) > 0) {
+        throw new Error(
+          "Form 1116 prior-year carryover needs current-year foreign-source income and limitation facts",
+        );
+      }
       return { outputs: [] };
     }
     const vehicleInterestAllocations = allocateVehicleInterest(input);
@@ -414,6 +430,25 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
       vehicleInterestAllocations,
     );
     if (totals.length === 0) return { outputs: [] };
+    const priorCarryovers = input.prior_year_carryovers ?? [];
+    if (priorCarryovers.length > 0) {
+      if (
+        priorCarryovers.length !== 1 || totals.length !== 1 ||
+        priorCarryovers[0].income_category !== totals[0].category
+      ) {
+        throw new Error(
+          "Form 1116 prior-year carryover needs one matching passive or general income category",
+        );
+      }
+      if (
+        (input.tentative_minimum_tax ?? 0) > 0 ||
+        totals[0].items.some((item) => (item.excluded_income ?? 0) > 0)
+      ) {
+        throw new Error(
+          "Form 1116 prior-year carryover with AMT or excluded income needs separate limitation rules",
+        );
+      }
+    }
     if (
       input.worldwide_taxable_income === undefined ||
       input.us_tax_before_credits === undefined
@@ -465,19 +500,37 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
       );
     }
 
+    const line20UsTax = input.us_tax_before_credits;
     const categories: CategorySummary[] = totals.map((category) => {
-      const categoryCredit = allowedCredit(
+      const currentYearCredit = allowedCredit(
         category,
-        input.us_tax_before_credits,
+        line20UsTax,
         line18WorldwideTaxableIncome,
+      );
+      const priorYearCarryover = priorCarryovers[0];
+      const priorYearAmount = priorYearCarryover
+        ?.prior_year_schedule_b_line8_current_year_amount ?? 0;
+      const categoryLimit = Math.round(
+        line20UsTax *
+          fraction(category.foreignTaxableIncome, line18WorldwideTaxableIncome),
+      );
+      const usedPriorYearCarryover = Math.min(
+        priorYearAmount,
+        Math.max(0, categoryLimit - currentYearCredit),
       );
       return {
         ...category,
-        allowedCredit: categoryCredit,
+        allowedCredit: currentYearCredit + usedPriorYearCarryover,
         currentYearExcessTax: Math.max(
           0,
-          Math.round(category.foreignTaxPaid) - categoryCredit,
+          Math.round(category.foreignTaxPaid) - currentYearCredit,
         ),
+        ...(priorYearCarryover
+          ? {
+            priorYearCarryover: priorYearAmount,
+            usedPriorYearCarryover,
+          }
+          : {}),
       };
     });
     const excessCategories = categories.filter((category) =>
@@ -486,6 +539,11 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
     if (excessCategories.length > 1) {
       throw new Error(
         "Form 1116 current-year carryover with multiple income categories needs separate category reconciliation",
+      );
+    }
+    if (priorCarryovers.length > 0 && excessCategories.length > 0) {
+      throw new Error(
+        "Form 1116 prior-year carryover with current-year excess tax needs combined Schedule B reconciliation",
       );
     }
     const carryoverReview = excessCategories.length === 1
@@ -547,9 +605,25 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
       outputs.push({
         nodeType: "form1116_schedule_b",
         fields: {
+          case: "current_year_excess",
           category: excessCategories[0].category,
           current_year_excess_tax: excessCategories[0].currentYearExcessTax,
           prior_year_review: carryoverReview,
+        },
+      });
+    }
+    if (priorCarryovers.length === 1) {
+      outputs.push({
+        nodeType: "form1116_schedule_b",
+        fields: {
+          case: "prior_year_use",
+          category: priorCarryovers[0].income_category,
+          prior_year_carryover: categories[0].priorYearCarryover,
+          used_prior_year_carryover: categories[0].usedPriorYearCarryover,
+          remaining_prior_year_carryover:
+            (categories[0].priorYearCarryover ?? 0) -
+            (categories[0].usedPriorYearCarryover ?? 0),
+          prior_year_carryover_source: priorCarryovers[0],
         },
       });
     }

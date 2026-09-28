@@ -5,6 +5,7 @@ import { buildStartNode, inputNodes } from "./start.ts";
 import { ext } from "../nodes/inputs/ext/index.ts";
 import { form1116_review } from "../nodes/inputs/form1116_review/index.ts";
 import { form1116_carryover_review } from "../nodes/inputs/form1116_carryover_review/index.ts";
+import { form1116_prior_carryover } from "../nodes/inputs/form1116_prior_carryover/index.ts";
 import { f1098 } from "../nodes/inputs/f1098/index.ts";
 import { f1099b } from "../nodes/inputs/f1099b/index.ts";
 import { f1099c } from "../nodes/inputs/f1099c/index.ts";
@@ -235,6 +236,7 @@ export const registry: NodeRegistry = {
   general,
   form1116_review,
   form1116_carryover_review,
+  form1116_prior_carryover,
   k1_trust,
   k1_s_corp: k1SCorpNode,
   k1_partnership: k1Partnership,

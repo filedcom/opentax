@@ -463,6 +463,103 @@ Deno.test("form1116: current-year excess needs a sourced prior-year review", () 
   assertEquals(scheduleB?.category, IncomeCategory.Passive);
 });
 
+Deno.test("form1116: sourced 2024 carryover is used only after 2025 foreign tax", () => {
+  const base = {
+    foreign_tax_items: [{
+      foreign_tax_paid: 200,
+      foreign_gross_income: 10_000,
+      income_category: IncomeCategory.Passive,
+    }],
+    worldwide_taxable_income: 50_000,
+    prior_year_carryovers: [{
+      income_category: IncomeCategory.Passive,
+      prior_year_schedule_b_line8_current_year_amount: 600,
+      prior_year_schedule_b_line8_other_vintages_total: 0 as const,
+      no_intervening_adjustments: true as const,
+      source_document_references: [
+        "Filed 2024 Schedule B (Form 1116), passive basket, line 8 columns xiii and xiv",
+      ],
+    }],
+  };
+  const result = form1116.compute(ctx, {
+    ...base,
+    us_tax_before_credits: 2_500,
+  });
+  const summary = result.outputs.find((row) => row.nodeType === "form_1116")
+    ?.fields.category_summaries as Array<{
+      allowedCredit: number;
+      priorYearCarryover: number;
+      usedPriorYearCarryover: number;
+    }>;
+  assertEquals(summary[0].priorYearCarryover, 600);
+  assertEquals(summary[0].usedPriorYearCarryover, 300);
+  assertEquals(summary[0].allowedCredit, 500);
+  assertEquals(
+    fieldsOf(result.outputs, schedule3)?.line1_foreign_tax_credit,
+    500,
+  );
+  const scheduleB = result.outputs.find((row) =>
+    row.nodeType === "form1116_schedule_b"
+  )?.fields;
+  assertEquals(scheduleB?.used_prior_year_carryover, 300);
+  assertEquals(scheduleB?.remaining_prior_year_carryover, 300);
+  const fullyUsed = form1116.compute(ctx, {
+    ...base,
+    us_tax_before_credits: 5_000,
+  });
+  const fullyUsedScheduleB = fullyUsed.outputs.find((row) =>
+    row.nodeType === "form1116_schedule_b"
+  )?.fields;
+  assertEquals(fullyUsedScheduleB?.used_prior_year_carryover, 600);
+  assertEquals(fullyUsedScheduleB?.remaining_prior_year_carryover, 0);
+});
+
+Deno.test("form1116: 2024 carryover rejects mixed categories and 2025 excess", () => {
+  const prior = {
+    income_category: IncomeCategory.Passive,
+    prior_year_schedule_b_line8_current_year_amount: 600,
+    prior_year_schedule_b_line8_other_vintages_total: 0 as const,
+    no_intervening_adjustments: true as const,
+    source_document_references: [
+      "Filed 2024 Schedule B (Form 1116), passive basket, line 8",
+    ],
+  };
+  const base = {
+    foreign_tax_items: [{
+      foreign_tax_paid: 200,
+      foreign_gross_income: 10_000,
+      income_category: IncomeCategory.Passive,
+    }],
+    worldwide_taxable_income: 50_000,
+    us_tax_before_credits: 2_500,
+  };
+  assertThrows(
+    () =>
+      form1116.compute(ctx, {
+        ...base,
+        prior_year_carryovers: [{
+          ...prior,
+          income_category: IncomeCategory.General,
+        }],
+      }),
+    Error,
+    "one matching passive or general",
+  );
+  assertThrows(
+    () =>
+      form1116.compute(ctx, {
+        ...base,
+        foreign_tax_items: [{
+          ...base.foreign_tax_items[0],
+          foreign_tax_paid: 600,
+        }],
+        prior_year_carryovers: [prior],
+      }),
+    Error,
+    "current-year excess tax",
+  );
+});
+
 Deno.test("form1116: Part IV caps combined category credits at U.S. tax", () => {
   assertEquals(
     credit({
