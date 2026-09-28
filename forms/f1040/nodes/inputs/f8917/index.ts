@@ -7,8 +7,8 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 // TY2025 — Form 8917 Tuition and Fees Deduction is EXPIRED.
 // The Consolidated Appropriations Act of 2021 (P.L. 116-260, §104) permanently
 // repealed IRC §222, effective for tax years after December 31, 2020.
-// For TY2025, no federal deduction is available. The node captures data for
-// completeness (state return reference) but produces zero federal output.
+// For TY2025, no federal deduction is available. Reject this historical form
+// explicitly instead of accepting tuition facts and silently dropping them.
 
 export const itemSchema = z.object({
   // Total qualified tuition and fees paid to eligible institutions
@@ -41,11 +41,12 @@ class F8917Node extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
-    // Validates input (throws on negative values via Zod)
     inputSchema.parse(input);
-
-    // TY2025: IRC §222 repealed — no federal deduction output
-    return { outputs: [] };
+    throw new Error(
+      "Form 8917 is historical and cannot be filed for TY2025. " +
+        "Use a supported education-credit input where applicable; " +
+        "tuition facts supplied as Form 8917 cannot be silently ignored.",
+    );
   }
 }
 

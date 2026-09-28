@@ -53,6 +53,18 @@ const basicFields = {
   line18a_earned_income: 10_000,
 };
 
+const matchedContext = {
+  filer,
+  pending: {
+    f1040: {
+      line11_agi: 50_000,
+      line18_total_tax_before_credits: 1_000,
+      line19_child_tax_credit: 1_000,
+      line28_actc: 1_125,
+    },
+  },
+};
+
 async function validateXsd(xml: string): Promise<void> {
   const tmpPath = await Deno.makeTempFile({ suffix: ".xml" });
   try {
@@ -69,7 +81,7 @@ async function validateXsd(xml: string): Promise<void> {
 }
 
 Deno.test("Schedule 8812 XML uses paper lines and direct 1040 credits", () => {
-  const xml = schedule8812.build(basicFields);
+  const xml = schedule8812.build(basicFields, matchedContext);
   assert(
     xml.includes(
       "<QlfyChildUnderAgeSSNLimtAmt>2200</QlfyChildUnderAgeSSNLimtAmt>",
@@ -86,12 +98,118 @@ Deno.test("Schedule 8812 XML uses paper lines and direct 1040 credits", () => {
   );
 });
 
+Deno.test("Schedule 8812 MeF rejects explicit AGI or tax limit that differs from return-derived sources", () => {
+  assertThrows(
+    () =>
+      schedule8812.build({
+        ...basicFields,
+        auto_qualifying_children: 1,
+        auto_other_dependents: 1,
+        auto_filing_status: NodeFilingStatus.Single,
+        auto_agi: 250_000,
+        auto_income_tax_liability: 1_000,
+      }),
+    Error,
+    "AGI differs from Form 1040 line 11a",
+  );
+  assertThrows(
+    () =>
+      schedule8812.build({
+        ...basicFields,
+        auto_qualifying_children: 1,
+        auto_other_dependents: 1,
+        auto_filing_status: NodeFilingStatus.Single,
+        auto_agi: 50_000,
+        auto_income_tax_liability: 500,
+      }),
+    Error,
+    "tax limit differs from Form 1040 line 18",
+  );
+});
+
+Deno.test("Schedule 8812 MeF requires finalized return facts for a positive credit", () => {
+  assertThrows(
+    () => schedule8812.build(basicFields),
+    Error,
+    "needs finalized Form 1040 AGI, line 18 tax, and filer status",
+  );
+  assertThrows(
+    () => schedule8812.build(basicFields, { filer, pending: {} }),
+    Error,
+    "needs finalized Form 1040 AGI, line 18 tax, and filer status",
+  );
+  assertThrows(
+    () => schedule8812.build(basicFields, {
+      ...matchedContext,
+      pending: {
+        f1040: {
+          line11_agi: 50_000,
+          line19_child_tax_credit: 1_000,
+          line28_actc: 1_125,
+        },
+      },
+    }),
+    Error,
+    "needs finalized Form 1040 AGI, line 18 tax, and filer status",
+  );
+});
+
+Deno.test("Schedule 8812 MeF reconciles header, AGI, tax, and both credit lines", () => {
+  assertThrows(
+    () => schedule8812.build(basicFields, {
+      ...matchedContext,
+      filer: { ...filer, filingStatus: FilingStatus.MarriedFilingJointly },
+    }),
+    Error,
+    "filing status differs from the return header",
+  );
+  assertThrows(
+    () => schedule8812.build(basicFields, {
+      ...matchedContext,
+      pending: { f1040: { ...matchedContext.pending.f1040, line11_agi: 51_000 } },
+    }),
+    Error,
+    "AGI differs from finalized Form 1040 line 11a",
+  );
+  assertThrows(
+    () => schedule8812.build(basicFields, {
+      ...matchedContext,
+      pending: {
+        f1040: {
+          ...matchedContext.pending.f1040,
+          line18_total_tax_before_credits: 500,
+        },
+      },
+    }),
+    Error,
+    "tax limit differs from finalized Form 1040 line 18",
+  );
+  assertThrows(
+    () => schedule8812.build(basicFields, {
+      ...matchedContext,
+      pending: {
+        f1040: { ...matchedContext.pending.f1040, line19_child_tax_credit: 900 },
+      },
+    }),
+    Error,
+    "credits differ from finalized Form 1040 lines 19 and 28",
+  );
+  assertThrows(
+    () => schedule8812.build(basicFields, {
+      ...matchedContext,
+      pending: { f1040: { ...matchedContext.pending.f1040, line28_actc: 1_000 } },
+    }),
+    Error,
+    "credits differ from finalized Form 1040 lines 19 and 28",
+  );
+});
+
 Deno.test("Schedule 8812 XML accepts verified line 18a from the input item", () => {
   const xml = schedule8812.build({
     ...basicFields,
     line18a_earned_income: undefined,
     f8812s: [{ ...basicFields.f8812s[0], line18a_earned_income: 10_000 }],
-  });
+  }, matchedContext);
   assert(xml.includes("<TotalEarnedIncomeAmt>10000</TotalEarnedIncomeAmt>"));
 });
 
@@ -109,7 +227,7 @@ Deno.test("Schedule 8812 XML computes line 18a from the full worksheet", () => {
       excluded_medicaid_waiver_payments: 0,
       schedule1_line15_se_deduction: 0,
     },
-  });
+  }, matchedContext);
   assert(xml.includes("<TotalEarnedIncomeAmt>10000</TotalEarnedIncomeAmt>"));
 });
 
@@ -121,7 +239,7 @@ Deno.test("Schedule 8812 XML accepts credit-limit worksheet on input item", () =
       ...basicFields.f8812s[0],
       credit_limit_worksheet: worksheet,
     }],
-  });
+  }, matchedContext);
   assert(xml.includes("<CTCODCAmt>1000</CTCODCAmt>"));
 });
 
@@ -166,6 +284,11 @@ Deno.test({
   sanitizeResources: false,
 }, async () => {
   const xml = buildMefXml({
+    f1040: {
+      line11_agi: 50_000,
+      line18_total_tax_before_credits: 0,
+      line28_actc: 3_300,
+    },
     f8812: {
       ...basicFields,
       f8812s: [{

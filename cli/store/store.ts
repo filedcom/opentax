@@ -1,6 +1,7 @@
 import { ensureDir } from "@std/fs";
 import { join } from "@std/path";
 import type {
+  Form8990CalculatedWorkpaperRecord,
   InputsJson,
   MetaJson,
   NodeInputEntry,
@@ -66,10 +67,31 @@ async function writeReturnJson(
   returnPath: string,
   data: ReturnJson,
 ): Promise<void> {
-  await Deno.writeTextFile(
-    join(returnPath, RETURN_JSON),
-    JSON.stringify(data, null, 2),
-  );
+  const stagedPath = join(returnPath, `.return-${crypto.randomUUID()}.json`);
+  const file = await Deno.open(stagedPath, {
+    write: true,
+    createNew: true,
+    mode: 0o600,
+  });
+  try {
+    const bytes = new TextEncoder().encode(JSON.stringify(data, null, 2));
+    let offset = 0;
+    while (offset < bytes.length) {
+      offset += await file.write(bytes.subarray(offset));
+    }
+    await file.sync();
+  } catch (error) {
+    file.close();
+    await Deno.remove(stagedPath).catch(() => {});
+    throw error;
+  }
+  file.close();
+  try {
+    await Deno.rename(stagedPath, join(returnPath, RETURN_JSON));
+  } catch (error) {
+    await Deno.remove(stagedPath).catch(() => {});
+    throw error;
+  }
 }
 
 /**
@@ -117,12 +139,42 @@ export async function loadReturn(
   return { meta, inputs };
 }
 
+/** Save a calculated-only Form 8990 workpaper in the return's own record. */
+export async function saveForm8990CalculatedWorkpaper(
+  returnPath: string,
+  record: Form8990CalculatedWorkpaperRecord,
+): Promise<void> {
+  const current = await readReturnJson(returnPath);
+  if (current.meta.returnId !== record.returnId || current.meta.year !== 2025) {
+    throw new Error("Form 8990 workpaper return identity or year differs");
+  }
+  await writeReturnJson(returnPath, {
+    ...current,
+    form8990CalculatedWorkpaper: record,
+  });
+}
+
+export async function loadForm8990CalculatedWorkpaper(
+  returnPath: string,
+): Promise<ReturnJson["form8990CalculatedWorkpaper"]> {
+  return (await readReturnJson(returnPath)).form8990CalculatedWorkpaper;
+}
+
 export async function loadMeta(returnPath: string): Promise<MetaJson> {
   return (await readReturnJson(returnPath)).meta;
 }
 
 export async function loadInputs(returnPath: string): Promise<InputsJson> {
   return (await readReturnJson(returnPath)).inputs;
+}
+
+function withUpdatedInputs(
+  current: ReturnJson,
+  inputs: InputsJson,
+): ReturnJson {
+  // A calculated workpaper is a snapshot of the old sources, never a live input.
+  const { form8990CalculatedWorkpaper: _invalidated, ...unchanged } = current;
+  return { ...unchanged, inputs };
 }
 
 export async function appendInput(
@@ -138,18 +190,24 @@ export async function appendInput(
     ...returnData.inputs,
     [nodeType]: [...existing, entry],
   };
-  await writeReturnJson(returnPath, {
-    meta: returnData.meta,
-    inputs: updatedInputs,
-  });
+  await writeReturnJson(
+    returnPath,
+    withUpdatedInputs(returnData, updatedInputs),
+  );
   return { id };
 }
 
 export async function listInputs(
   returnPath: string,
-): Promise<{ nodeType: string; id: string; fields: Readonly<Record<string, unknown>> }[]> {
+): Promise<
+  { nodeType: string; id: string; fields: Readonly<Record<string, unknown>> }[]
+> {
   const { inputs } = await readReturnJson(returnPath);
-  const result: { nodeType: string; id: string; fields: Readonly<Record<string, unknown>> }[] = [];
+  const result: {
+    nodeType: string;
+    id: string;
+    fields: Readonly<Record<string, unknown>>;
+  }[] = [];
   for (const [nodeType, entries] of Object.entries(inputs)) {
     for (const entry of entries) {
       result.push({ nodeType, id: entry.id, fields: entry.fields });
@@ -161,7 +219,9 @@ export async function listInputs(
 export async function getInput(
   returnPath: string,
   entryId: string,
-): Promise<{ nodeType: string; id: string; fields: Readonly<Record<string, unknown>> }> {
+): Promise<
+  { nodeType: string; id: string; fields: Readonly<Record<string, unknown>> }
+> {
   const { inputs } = await readReturnJson(returnPath);
   for (const [nodeType, entries] of Object.entries(inputs)) {
     const entry = entries.find((e) => e.id === entryId);
@@ -189,10 +249,10 @@ export async function updateInput(
         ...returnData.inputs,
         [nodeType]: updatedEntries,
       };
-      await writeReturnJson(returnPath, {
-        meta: returnData.meta,
-        inputs: updatedInputs,
-      });
+      await writeReturnJson(
+        returnPath,
+        withUpdatedInputs(returnData, updatedInputs),
+      );
       return { id: entryId, nodeType };
     }
   }
@@ -215,10 +275,10 @@ export async function deleteInput(
         ...returnData.inputs,
         [nodeType]: updatedEntries,
       };
-      await writeReturnJson(returnPath, {
-        meta: returnData.meta,
-        inputs: updatedInputs,
-      });
+      await writeReturnJson(
+        returnPath,
+        withUpdatedInputs(returnData, updatedInputs),
+      );
       return { id: entryId, nodeType };
     }
   }

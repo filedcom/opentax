@@ -4,7 +4,6 @@ import { TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
-import { schedule_d } from "../../aggregation/schedule_d/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
@@ -17,7 +16,8 @@ import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 // and carried forward indefinitely (IRC §1366(d)(2)).
 //
 // Upstream sender: k1_s_corp (ordinary_income, ordinary_loss, distributions,
-//   nondeductible_expenses) plus user-entered beginning basis fields.
+//   nondeductible_expenses) plus user-entered beginning basis fields. The
+//   public K-1 route currently admits only reviewed, current-year stock losses.
 //
 // Ordering of basis adjustments per Reg. 1.1367-1(f):
 //   1. Increases for income items (Part I Lines 1–4)
@@ -91,7 +91,8 @@ function stockBasisAfterDistributions(basisAfterIncreases: number, input: Form72
 }
 
 // Excess distributions over stock basis = capital gain under IRC §1368(b)(2)
-// Treated as gain from sale of stock (long-term if held > 1 year)
+// Requires an identified Form 8949 transaction; this node currently rejects
+// excess gain rather than routing it to an unrelated Schedule D line.
 function excessDistributionGain(basisAfterIncreases: number, input: Form7203Input): number {
   return Math.max(0, (input.distributions ?? 0) - basisAfterIncreases);
 }
@@ -131,31 +132,30 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
   // Disallowed basis losses are added back to schedule1 as a positive adjustment,
   // reversing the upstream-posted S-corp loss (from k1_s_corp → schedule1 line5_schedule_e)
   // to the extent it exceeds the shareholder's adjusted stock + debt basis.
-  readonly outputNodes = new OutputNodes([schedule1, agi_aggregator, schedule_d]);
+  readonly outputNodes = new OutputNodes([schedule1, agi_aggregator]);
 
   compute(_ctx: NodeContext, rawInput: Form7203Input): NodeResult {
     const input = inputSchema.parse(rawInput);
+
+    if ((input.prior_year_unallowed_loss ?? 0) > 0) {
+      throw new Error(
+        "Form 7203 prior-year basis carryover needs a source-linked current/prior loss allocation before Schedule 1 adjustment",
+      );
+    }
 
     const pool = totalLossPool(input);
     const stockAfterIncreases = stockBasisAfterIncreases(input);
     const excessGain = excessDistributionGain(stockAfterIncreases, input);
 
-    // No losses and no excess distributions — nothing to do
-    if (pool === 0 && excessGain === 0) {
-      return { outputs: [] };
-    }
-
-    const outputs = [];
-
-    // Excess distributions over stock basis → capital gain (IRC §1368(b)(2))
-    // Treated as long-term gain from sale of stock; flows to Schedule D Line 11
     if (excessGain > 0) {
-      outputs.push(this.outputNodes.output(schedule_d, { line_11_form2439: excessGain }));
+      throw new Error(
+        "Form 7203 excess nondividend distribution needs Form 8949 transaction facts before capital-gain routing",
+      );
     }
 
-    // No losses to limit — only excess distribution output needed
+    // No current ordinary loss to limit in this bounded route.
     if (pool === 0) {
-      return { outputs };
+      return { outputs: [] };
     }
 
     const stockAfterDistrib = stockBasisAfterDistributions(stockAfterIncreases, input);
@@ -165,14 +165,13 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
 
     // Loss fully within basis — no further limitation outputs needed
     if (disallowed === 0) {
-      return { outputs };
+      return { outputs: [] };
     }
 
     // Disallowed portion: add back to schedule1 as a positive adjustment
     // (reduces the net S-corp loss already posted by the k1_s_corp upstream node)
     return {
       outputs: [
-        ...outputs,
         this.outputNodes.output(schedule1, { basis_disallowed_add_back: disallowed }),
         this.outputNodes.output(agi_aggregator, { basis_disallowed_add_back: disallowed }),
       ],

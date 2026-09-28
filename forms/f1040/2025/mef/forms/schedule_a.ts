@@ -1,5 +1,11 @@
 import { element, elements } from "../../../mef/xml.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
+import {
+  assertElectedSectionAReconciled,
+  assertElectedSectionBReconciled,
+} from "./f8283_election.ts";
+import { inputSchema as form8283InputSchema } from "../../../nodes/inputs/f8283/index.ts";
+import { reconcileForm8283Carryover } from "./f8283_carryover.ts";
 
 export interface Fields {
   line_1_medical?: number | null;
@@ -21,6 +27,7 @@ export interface Fields {
   line_12_noncash_contributions?: number | null;
   line_13_contribution_carryover?: number | null;
   charitable_limits_finalized?: boolean;
+  capital_gain_election_finalized?: boolean;
   line_15_casualty_theft_loss?: number | null;
   line_16_other_deductions?: number | null;
 }
@@ -67,6 +74,49 @@ function buildIRS1040ScheduleA(
     returnFields.line12e_itemized_deductions === undefined
   ) {
     return "";
+  }
+  // A section 170(d) noncash carryover needs Form 8283 in the carryover year.
+  // The 2025 instructions also require a completed copy from the previous
+  // year, plus any appraisal that had to accompany that earlier return. The
+  // amount-only ledger has neither those artifacts nor their gift/donee facts.
+  const sourceScheduleA = context?.pending?.schedule_a as
+    | Record<string, unknown>
+    | undefined;
+  const hasPriorCapitalGainProperty = [
+    fields.capital_gain_property_carryovers,
+    sourceScheduleA?.capital_gain_property_carryovers,
+  ].some((value) => Array.isArray(value) && value.length > 0);
+  if (hasPriorCapitalGainProperty) {
+    const rawForm8283 = context?.pending?.f8283;
+    if (rawForm8283 === undefined) {
+      throw new Error(
+        "Schedule A capital-gain property carryover needs a carryover-year Form 8283, the completed previous-year Form 8283 copy, any previously required appraisal, and original gift/donee facts; the current amount-only ledger cannot file it",
+      );
+    }
+    reconcileForm8283Carryover(
+      form8283InputSchema.parse(rawForm8283),
+      context ?? {},
+      fields,
+    );
+  }
+  if (fields.capital_gain_election_finalized === true &&
+    !hasPriorCapitalGainProperty) {
+    const form8283 = context?.pending?.f8283 as
+      | {
+        section_b_items?: readonly {
+          capital_gain_reduction_election_confirmed?: true;
+        }[];
+      }
+      | undefined;
+    if (
+      form8283?.section_b_items?.some((item) =>
+        item.capital_gain_reduction_election_confirmed === true
+      )
+    ) {
+      assertElectedSectionBReconciled(context, fields);
+    } else {
+      assertElectedSectionAReconciled(context, fields);
+    }
   }
   if (
     ((fields.line_11_cash_contributions ?? 0) > 0 ||

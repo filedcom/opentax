@@ -6,6 +6,7 @@ import {
   type RentedHomeSource,
 } from "../../../nodes/intermediate/forms/form_8829/index.ts";
 import { form8829 } from "./f8829.ts";
+import { scheduleC } from "./schedule_c.ts";
 
 const source: RentedHomeSource = {
   business_reference: "C-1",
@@ -24,6 +25,7 @@ const source: RentedHomeSource = {
   actual_expense_method_verified: true,
   rented_home_verified: true,
   sole_home_and_business_verified: true,
+  all_schedule_c_gross_income_attributable_to_home_verified: true,
   no_daycare_or_inventory_exception: true,
   no_home_business_gain_or_other_trade_loss: true,
   no_casualty_mortgage_tax_or_depreciation: true,
@@ -47,13 +49,25 @@ function context(sourceFacts: RentedHomeSource = source) {
       schedule_c: {
         schedule_cs: [{
           business_reference: "C-1",
+          proprietor_recipient: TS.T,
           line_a_principal_business: "Consulting",
           line_b_business_code: "541600",
           line_f_accounting_method: "cash",
           line_g_material_participation: true,
           line_1_gross_receipts: 5_000,
         }],
-        ...(lines.line36 > 0 ? { line_30_home_office: lines.line36 } : {}),
+        ...(lines.line36 > 0
+          ? {
+            form8829_line30: {
+              business_reference: sourceFacts.business_reference,
+              home_identifier: sourceFacts.home_identifier,
+              recipient: sourceFacts.recipient,
+              schedule_c_line29_tentative_profit:
+                sourceFacts.schedule_c_line29_tentative_profit,
+              line36: lines.line36,
+            },
+          }
+          : {}),
       },
     },
   };
@@ -63,15 +77,76 @@ Deno.test("2025 Form 8829 empty pending slice emits no document", () => {
   assertEquals(form8829.build({}), "");
 });
 
-Deno.test("2025 Form 8829 MeF rejects positive line 36 without item-linked Schedule C line 30", () => {
-  assertThrows(
-    () =>
-      form8829.build({
+Deno.test("2025 Form 8829 MeF files positive line 36 with matching Schedule C claim", () => {
+  const xml = form8829.build({
+    rented_home: source,
+    ...calculateRentedHomeForm8829(source),
+  }, context());
+  assertStringIncludes(
+    xml,
+    "<AllowableHomeBusExpnssSchCAmt>2900</AllowableHomeBusExpnssSchCAmt>",
+  );
+  const linked = context();
+  const [scheduleXml] = scheduleC.build(linked.pending.schedule_c, {
+    filer,
+    pending: {
+      schedule_c: linked.pending.schedule_c,
+      form_8829: {
         rented_home: source,
         ...calculateRentedHomeForm8829(source),
-      }, context()),
+      },
+    },
+  });
+  assertStringIncludes(
+    scheduleXml,
+    "<TentativeProfitOrLossAmt>5000</TentativeProfitOrLossAmt>",
+  );
+  assertStringIncludes(
+    scheduleXml,
+    "<HomeBusinessExpenseAmt>2900</HomeBusinessExpenseAmt>",
+  );
+  assertStringIncludes(
+    scheduleXml,
+    "<NetProfitOrLossAmt>2100</NetProfitOrLossAmt>",
+  );
+});
+
+Deno.test("2025 Form 8829 MeF rejects mismatched or duplicated Schedule C deduction", () => {
+  const fields = {
+    rented_home: source,
+    ...calculateRentedHomeForm8829(source),
+  };
+  const valid = context();
+  assertThrows(
+    () =>
+      form8829.build(fields, {
+        ...valid,
+        pending: {
+          schedule_c: {
+            ...valid.pending.schedule_c,
+            form8829_line30: {
+              ...valid.pending.schedule_c.form8829_line30,
+              line36: 1,
+            },
+          },
+        },
+      }),
     Error,
-    "cannot be reconciled to filed Schedule C item line 30",
+    "matching Schedule C claim",
+  );
+  assertThrows(
+    () =>
+      form8829.build(fields, {
+        ...valid,
+        pending: {
+          schedule_c: {
+            ...valid.pending.schedule_c,
+            line_30_home_office: 2_900,
+          },
+        },
+      }),
+    Error,
+    "one identified Schedule C business",
   );
 });
 

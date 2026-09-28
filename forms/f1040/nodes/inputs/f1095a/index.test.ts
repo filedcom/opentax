@@ -453,6 +453,88 @@ Deno.test("annual 1095-A total cannot disagree with its monthly column", () => {
   );
 });
 
+Deno.test("same issuer and policy month cannot be counted twice", () => {
+  assertThrows(
+    () =>
+      compute([
+        minimalItem({
+          policy_number: "POLICY-123",
+          monthly_premiums: Array(12).fill(500),
+          monthly_aptcs: Array(12).fill(100),
+        }),
+        minimalItem({
+          policy_number: " POLICY-123 ",
+          monthly_premiums: Array(12).fill(550),
+          monthly_aptcs: Array(12).fill(100),
+        }),
+      ]),
+    Error,
+    "repeats coverage for the same issuer, policy, and month",
+  );
+});
+
+Deno.test("same policy can have separate statements for disjoint months", () => {
+  const firstMonths = [...Array(6).fill(500), ...Array(6).fill(0)];
+  const secondMonths = [...Array(6).fill(0), ...Array(6).fill(600)];
+  const result = compute([
+    minimalItem({
+      policy_number: "POLICY-123",
+      coverage_state: "TX",
+      monthly_premiums: firstMonths,
+      monthly_slcsps: [...Array(6).fill(700), ...Array(6).fill(0)],
+      monthly_aptcs: [...Array(6).fill(100), ...Array(6).fill(0)],
+    }),
+    minimalItem({
+      policy_number: "POLICY-123",
+      coverage_state: "TX",
+      monthly_premiums: secondMonths,
+      monthly_slcsps: [...Array(6).fill(0), ...Array(6).fill(800)],
+      monthly_aptcs: [...Array(6).fill(0), ...Array(6).fill(120)],
+    }),
+  ]);
+  const fields = findOutput(result, "form8962")?.fields;
+  assertEquals(fields?.monthly_premiums, [
+    ...firstMonths.slice(0, 6),
+    ...secondMonths.slice(6),
+  ]);
+  assertEquals(fields?.monthly_slcsps, [
+    ...Array(6).fill(700),
+    ...Array(6).fill(800),
+  ]);
+});
+
+Deno.test("repeated policy with annual-only statements cannot establish disjoint months", () => {
+  assertThrows(
+    () =>
+      compute([
+        minimalItem({ policy_number: "POLICY-123", annual_premium: 6_000 }),
+        minimalItem({ policy_number: "POLICY-123", annual_premium: 6_500 }),
+      ]),
+    Error,
+    "needs monthly coverage for every statement",
+  );
+});
+
+Deno.test("different policy identities can aggregate annual premiums", () => {
+  const result = compute([
+    minimalItem({ policy_number: "POLICY-123", annual_premium: 6_000 }),
+    minimalItem({ policy_number: "POLICY-456", annual_premium: 6_500 }),
+  ]);
+  assertEquals(findOutput(result, "form8962")?.fields.annual_premium, 12_500);
+});
+
+Deno.test("different issuers may use the same policy number", () => {
+  const result = compute([
+    minimalItem({ policy_number: "POLICY-123", annual_premium: 6_000 }),
+    minimalItem({
+      issuer_name: "Second Marketplace",
+      policy_number: "POLICY-123",
+      annual_premium: 6_500,
+    }),
+  ]);
+  assertEquals(findOutput(result, "form8962")?.fields.annual_premium, 12_500);
+});
+
 Deno.test("multiple policies aggregate monthly arrays", () => {
   const result = compute([
     minimalItem({
@@ -503,6 +585,38 @@ Deno.test("same-state policies use one SLCSP while premiums and APTC add", () =>
   assertEquals(fields?.monthly_slcsps, Array(12).fill(600));
   assertEquals(fields?.monthly_aptcs, Array(12).fill(150));
   assertEquals(fields?.annual_line11_eligible, true);
+});
+
+Deno.test("overlapping same-state 1095-A line 33 SLCSP is selected once, not summed", () => {
+  const result = compute([
+    minimalItem({
+      policy_number: "POLICY-1",
+      coverage_state: "TX",
+      monthly_premiums: Array(12).fill(300),
+      monthly_slcsps: Array(12).fill(600),
+      monthly_aptcs: Array(12).fill(100),
+      annual_premium: 3_600,
+      annual_slcsp: 7_200,
+      annual_aptc: 1_200,
+    }),
+    minimalItem({
+      policy_number: "POLICY-2",
+      coverage_state: "TX",
+      monthly_premiums: Array(12).fill(200),
+      monthly_slcsps: Array(12).fill(600),
+      monthly_aptcs: Array(12).fill(50),
+      annual_premium: 2_400,
+      annual_slcsp: 7_200,
+      annual_aptc: 600,
+    }),
+  ]);
+  const fields = findOutput(result, "form8962")?.fields;
+  assertEquals(fields?.monthly_premiums, Array(12).fill(500));
+  assertEquals(fields?.monthly_slcsps, Array(12).fill(600));
+  assertEquals(fields?.monthly_aptcs, Array(12).fill(150));
+  assertEquals(fields?.annual_premium, 6_000);
+  assertEquals(fields?.annual_slcsp, 7_200);
+  assertEquals(fields?.annual_aptc, 1_800);
 });
 
 Deno.test("different-state policies add their SLCSP amounts", () => {

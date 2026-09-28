@@ -48,6 +48,23 @@ const studentFilingSchema = z.object({
   institutions: z.array(institutionFilingSchema).min(1),
 });
 
+// Actual 2025 payments may differ from Form 1098-T box 1. Keep the
+// substantiating document amounts separate from the credit workpaper.
+const educationExpenseWorkpaperSchema = z.object({
+  form1098t_box1_payments: z.number().finite().nonnegative(),
+  form1098t_box5_scholarships: z.number().finite().nonnegative(),
+  form1098t_document_id: z.string().trim().min(1),
+  payment_record_ids: z.array(z.string().trim().min(1)).min(1),
+  paid_tuition_required_fees: z.number().finite().nonnegative(),
+  paid_course_materials_to_institution: z.number().finite().nonnegative(),
+  paid_course_materials_elsewhere: z.number().finite().nonnegative(),
+  outside_materials_needed_for_course: z.boolean(),
+  institution_materials_required_for_enrollment: z.boolean(),
+  tax_free_assistance_applied_to_expenses: z.number().finite().nonnegative(),
+  qualified_expense_refunds: z.number().finite().nonnegative(),
+  expenses_used_for_other_tax_benefits: z.number().finite().nonnegative(),
+});
+
 // Per-student item schema (Part III of Form 8863).
 export const itemSchema = z.object({
   credit_type: z.enum(["aoc", "llc"]),
@@ -81,6 +98,7 @@ export const itemSchema = z.object({
   // Required by TY2025 MeF. The older display strings above are not parsed
   // into identity or institution addresses for filing.
   filing_details: studentFilingSchema.optional(),
+  education_expense_workpaper: educationExpenseWorkpaperSchema.optional(),
 });
 
 export const inputSchema = z.object({
@@ -101,6 +119,86 @@ export const inputSchema = z.object({
 export type F8863Item = z.infer<typeof itemSchema>;
 type F8863Items = F8863Item[];
 export type F8863Input = z.infer<typeof inputSchema>;
+
+// The bounded filing route is one U.S. institution that supplied the 2025
+// Form 1098-T. Other IRS-permitted 1098-T exceptions need their own evidence.
+export function validateForm8863FilingSource(
+  item: F8863Item,
+  credit: "aoc" | "llc",
+): void {
+  const institutions = item.filing_details?.institutions;
+  const workpaper = item.education_expense_workpaper;
+  if (
+    institutions?.length !== 1 || !institutions[0].us_address ||
+    institutions[0].current_year_1098t_received !== true || !workpaper
+  ) {
+    throw new Error(
+      "Form 8863 filing needs one U.S. institution, received 2025 Form 1098-T, and an education expense workpaper",
+    );
+  }
+  if (
+    workpaper.paid_course_materials_elsewhere > 0 &&
+    (credit === "llc" || !workpaper.outside_materials_needed_for_course)
+  ) {
+    throw new Error(
+      "Form 8863 outside-institution course materials do not qualify for this credit",
+    );
+  }
+  if (
+    credit === "llc" && workpaper.paid_course_materials_to_institution > 0 &&
+    !workpaper.institution_materials_required_for_enrollment
+  ) {
+    throw new Error(
+      "Form 8863 LLC institution materials must be required for enrollment",
+    );
+  }
+  if (
+    workpaper.tax_free_assistance_applied_to_expenses <
+      workpaper.form1098t_box5_scholarships
+  ) {
+    throw new Error(
+      "Form 8863 bounded filing route must reduce expenses by all Form 1098-T box 5 scholarships",
+    );
+  }
+  const paid = workpaper.paid_tuition_required_fees +
+    workpaper.paid_course_materials_to_institution +
+    workpaper.paid_course_materials_elsewhere;
+  const reductions = workpaper.tax_free_assistance_applied_to_expenses +
+    workpaper.qualified_expense_refunds +
+    workpaper.expenses_used_for_other_tax_benefits;
+  if (reductions > paid) {
+    throw new Error("Form 8863 education expense reductions exceed paid expenses");
+  }
+  const claimed = credit === "aoc"
+    ? item.aoc_adjusted_expenses
+    : item.llc_adjusted_expenses;
+  if (claimed !== paid - reductions) {
+    throw new Error(
+      "Form 8863 adjusted expenses do not reconcile to the education expense workpaper",
+    );
+  }
+}
+
+function assertDistinctEducationSourceReferences(items: F8863Items): void {
+  const documentIds = new Set<string>();
+  const paymentIds = new Set<string>();
+  for (const item of items) {
+    const workpaper = item.education_expense_workpaper;
+    if (!workpaper) continue;
+    const documentId = workpaper.form1098t_document_id.trim();
+    if (documentIds.has(documentId)) {
+      throw new Error("Form 8863 students cannot reuse a Form 1098-T document reference");
+    }
+    documentIds.add(documentId);
+    for (const rawPaymentId of workpaper.payment_record_ids) {
+      const paymentId = rawPaymentId.trim();
+      if (paymentIds.has(paymentId)) {
+        throw new Error("Form 8863 students cannot reuse an education payment reference");
+      }
+      paymentIds.add(paymentId);
+    }
+  }
+}
 type CreditLimitWorksheet = NonNullable<
   z.infer<typeof inputSchema>["credit_limit_worksheet"]
 >;
@@ -227,6 +325,32 @@ function validateReturnContext(items: F8863Items): void {
         "Form 8863 students have conflicting return-level MAGI or filing status",
       );
     }
+  }
+
+  // Form 8863 Part III permits a student only once on the return, whether
+  // that student's expense is used for AOC or LLC. Normalize punctuation so
+  // the same SSN cannot be entered twice in different display formats.
+  const studentSsns = new Set<string>();
+  for (const item of claiming) {
+    if (!item.student_ssn) continue;
+    const ssn = item.student_ssn.replaceAll("-", "");
+    if (studentSsns.has(ssn)) {
+      throw new Error("Form 8863 cannot claim the same student SSN twice");
+    }
+    studentSsns.add(ssn);
+  }
+
+  // Line 7 is a taxpayer-level answer. The current input repeats it on each
+  // student, so a conflict or partial answer must not silently make the first
+  // student determine the entire return's refundable credit.
+  const aocClaimants = eligibleAocStudents(items);
+  const under24Answers = new Set(
+    aocClaimants.map((item) => item.taxpayer_under_24_no_refundable_aoc),
+  );
+  if (under24Answers.size > 1) {
+    throw new Error(
+      "Form 8863 AOC students have conflicting taxpayer under-24 answers",
+    );
   }
 }
 
@@ -374,6 +498,15 @@ export function calculateForm8863Lines(rawInput: F8863Input) {
       input.credit_limit_worksheet,
     )
     : 0;
+  if (line8 > 0 || line19 > 0) {
+    for (const student of aocStudents) {
+      validateForm8863FilingSource(student, "aoc");
+    }
+    for (const student of llcStudents) {
+      validateForm8863FilingSource(student, "llc");
+    }
+    assertDistinctEducationSourceReferences([...aocStudents, ...llcStudents]);
+  }
   const context = returnContext([...aocStudents, ...llcStudents]);
   const upper = context.isMfj ? 180_000 : 90_000;
   const span = context.isMfj ? 20_000 : 10_000;

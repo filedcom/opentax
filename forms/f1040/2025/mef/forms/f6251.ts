@@ -1,4 +1,5 @@
 import { element, elements } from "../../../mef/xml.ts";
+import { assertForm6251Line8 } from "../../form6251_line8.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 
 export interface Fields {
@@ -10,7 +11,12 @@ export interface Fields {
   private_activity_bond_interest?: number | null;
   qsbs_adjustment?: number | null;
   line2a_taxes_paid?: number | null;
+  line2b_tax_refund?: number | null;
   line2c_investment_interest?: number | null;
+  line2d_depletion?: number | null;
+  line2j_estates_and_trusts?: number | null;
+  line2k_disposition?: number | null;
+  line2o_circulation_costs?: number | null;
   other_adjustments?: number | null;
   amtftc?: number | null;
   amti?: number | null;
@@ -57,24 +63,29 @@ type Input = Partial<Fields> & Record<string, unknown>;
 // Element order matches the XSD sequence (required for validation).
 // - regular_tax_income → AGILessTotDedLessEnhncSrDedAmt (line 1b)
 // - line2a_taxes_paid  → ScheduleATaxesAmt          (line 2a)
+// - line2b_tax_refund  → TotalRefundReceivedAmt     (line 2b; positive XML)
+// - line2d_depletion   → DepletionAmt              (line 2d; signed)
 // - nol_adjustment     → AltTaxNetOperatingLossDedAmt (line 2f)
 // - private_activity_bond_interest → ExemptPrivateActivityBondsAmt (line 2g)
 // - qsbs_adjustment    → Section1202ExclusionAmt    (line 2h)
 // - iso_adjustment     → IncentiveStockOptionsAmt   (line 2i)
 // - depreciation_adjustment → DepreciationAmt       (line 2l)
-// - other_adjustments  → RelatedAdjustmentAmt       (line 3)
 // - amtftc             → AMTForeignTaxCreditAmt     (line 8)
 // - regular_tax        → AdjustedRegularTaxAmt      (line 10)
 export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["regular_tax_income", "AGILessTotDedLessEnhncSrDedAmt"],
   ["line2a_taxes_paid", "ScheduleATaxesAmt"],
+  ["line2b_tax_refund", "TotalRefundReceivedAmt"],
   ["line2c_investment_interest", "InvestmentInterestAmt"],
+  ["line2d_depletion", "DepletionAmt"],
   ["nol_adjustment", "AltTaxNetOperatingLossDedAmt"],
   ["private_activity_bond_interest", "ExemptPrivateActivityBondsAmt"],
   ["qsbs_adjustment", "Section1202ExclusionAmt"],
   ["iso_adjustment", "IncentiveStockOptionsAmt"],
+  ["line2j_estates_and_trusts", "EstatesAndTrustsAmt"],
+  ["line2k_disposition", "PropertyDispositionAmt"],
   ["depreciation_adjustment", "DepreciationAmt"],
-  ["other_adjustments", "RelatedAdjustmentAmt"],
+  ["line2o_circulation_costs", "CirculationCostAmt"],
   ["amti", "AlternativeMinTaxableIncomeAmt"],
   ["exemption", "AlternativeMinimumTaxExemptAmt"],
   ["taxable_excess", "AdjAlternativeMinTaxableIncAmt"],
@@ -114,6 +125,23 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
 ];
 
 function buildIRS6251(fields: Input): string {
+  if (
+    typeof fields.nol_adjustment === "number" &&
+    fields.nol_adjustment !== 0
+  ) {
+    throw new Error(
+      "Form 6251 line 2f needs sourced regular NOL and AMT NOL refigures before filing",
+    );
+  }
+  if (
+    typeof fields.other_adjustments === "number" &&
+    fields.other_adjustments !== 0
+  ) {
+    throw new Error(
+      "Form 6251 mixed other_adjustments needs line-specific AMT modeling before filing",
+    );
+  }
+  assertForm6251Line8(fields);
   const line7ExceedsLine10 = typeof fields.tentative_tax === "number" &&
     typeof fields.regular_tax === "number" &&
     fields.tentative_tax > fields.regular_tax;
@@ -128,6 +156,7 @@ function buildIRS6251(fields: Input): string {
   const children = FIELD_MAP.map(([key, tag]) => {
     const value = fields[key];
     if (typeof value !== "number") return "";
+    if (key === "nol_adjustment") return element(tag, -value);
     return element(tag, value);
   });
   const hasChildren = children.some((c) => c !== "");

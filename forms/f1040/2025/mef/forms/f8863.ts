@@ -2,10 +2,43 @@ import { element, elements } from "../../../mef/xml.ts";
 import {
   calculateAocStudentLines,
   calculateForm8863Lines,
+  validateForm8863FilingSource,
   type F8863Input,
   type F8863Item,
 } from "../../../nodes/inputs/f8863/index.ts";
-import type { MefFormDescriptor } from "../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
+
+export function assertForm8863FinalizedReturn(
+  fields: F8863Input,
+  lines: NonNullable<ReturnType<typeof calculateForm8863Lines>>,
+  context?: MefBuildContext,
+): void {
+  const pending = context?.pending;
+  const filer = context?.filer;
+  const filingStatus = ["single", "mfj", "mfs", "hoh", "qss"][(filer?.filingStatus ?? 0) - 1];
+  const final1040 = pending?.f1040 as Record<string, unknown> | undefined;
+  const finalSchedule3 = pending?.schedule3 as Record<string, unknown> | undefined;
+  const worksheet = fields.credit_limit_worksheet;
+  if (
+    !filer || !final1040 || !worksheet ||
+    fields.f8863s.some((student) => student.filing_status !== filingStatus) ||
+    final1040.filing_status !== filingStatus ||
+    final1040.line11_agi !== lines.line3 ||
+    final1040.line18_total_tax_before_credits !== worksheet.form1040_line18_tax ||
+    (final1040.line29_refundable_aoc ?? 0) !== lines.line8 ||
+    (finalSchedule3?.line3_education_credit ?? 0) !== lines.line19 ||
+    (finalSchedule3?.line1_foreign_tax_credit ?? 0) !== worksheet.schedule3_line1_foreign_tax_credit ||
+    (finalSchedule3?.line1_foreign_tax_1099 ?? 0) !== 0 ||
+    (finalSchedule3?.line2_childcare_credit ?? 0) !== worksheet.schedule3_line2_dependent_care_credit ||
+    (finalSchedule3?.line6d_elderly_disabled_credit ?? 0) !== worksheet.schedule3_line6d ||
+    (finalSchedule3?.line6l_form8978_credit ?? 0) !== worksheet.schedule3_line6l ||
+    pending?.form2555 !== undefined || pending?.form4563 !== undefined
+  ) {
+    throw new Error(
+      "Form 8863 filing needs source MAGI, Credit Limit Worksheet, and finalized Form 1040/Schedule 3 credit lines to reconcile",
+    );
+  }
+}
 
 function boolElement(tag: string, value: boolean): string {
   return element(tag, String(value));
@@ -80,6 +113,7 @@ function studentXml(item: F8863Item, credit: "aoc" | "llc"): string {
       "Form 8863 AOC filing needs explicit eligibility and under-24 answers",
     );
   }
+  validateForm8863FilingSource(item, credit);
   const aoc = credit === "aoc"
     ? calculateAocStudentLines(item.aoc_adjusted_expenses ?? 0)
     : null;
@@ -115,7 +149,7 @@ export const form8863: MefFormDescriptor<"f8863", F8863Input> = {
   pendingKey: "f8863",
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8863.pdf",
-  build(fields) {
+  build(fields, context) {
     if (Object.keys(fields).length === 0) return "";
     const lines = calculateForm8863Lines(fields);
     if (!lines || (lines.line8 === 0 && lines.line19 === 0)) return "";
@@ -126,7 +160,7 @@ export const form8863: MefFormDescriptor<"f8863", F8863Input> = {
     if (students.length > 25) {
       throw new Error("Form 8863 supports at most 25 students per document");
     }
-    return elements("IRS8863", [
+    const xml = elements("IRS8863", [
       lines.aocStudents.length
         ? elements("RefundableAmerOppCreditGroup", [
           element("TentativeAmerOppCreditAmt", lines.line1),
@@ -165,5 +199,7 @@ export const form8863: MefFormDescriptor<"f8863", F8863Input> = {
       ]),
       ...students.map(({ item, credit }) => studentXml(item, credit)),
     ]);
+    assertForm8863FinalizedReturn(fields, lines, context);
+    return xml;
   },
 };

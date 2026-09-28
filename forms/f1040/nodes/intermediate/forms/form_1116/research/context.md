@@ -172,27 +172,64 @@ reductions, section 951A, and other category-specific rules remain open. Native
 Schedule B XML and focused cases are written; no test, XSD, business-rule, PDF,
 or ATS gate has run.
 
-### TY2025 single-vintage prior carryover use (written, unrun)
+### TY2025 reviewed 2023/2024 prior carryover use (written, unrun)
 
 The [2025 Form 1116](https://www.irs.gov/pub/irs-pdf/f1116.pdf) puts the
 adjusted prior carryover from Schedule B line 3 column (xiv) on line 10, adds it
 to current tax on line 11, and uses the resulting line 14 amount (absent lines
 12 and 13 adjustments) against the category line 23 limit on line 24. The
 [Schedule B instructions](https://www.irs.gov/instructions/i1116sb) carry 2024
-line 8 column (xiii) to 2025 line 1 column (xii), reconcile it on line 3, record
-actual 2025 use as a negative on line 4, and leave the unused 2024 vintage on
-line 8. The local TY2025 v5.4 IRS schema has the matching first-preceding and
-total elements in that order.
+line 8 columns (xii) and (xiii) into 2025 line 1 columns (xi) and (xii),
+reconcile them on line 3, record actual 2025 use oldest-first as a negative on
+line 4, and leave unused vintage balances on line 8. The local TY2025 v5.4 IRS
+schema has the matching second-preceding, first-preceding, and total elements in
+that order.
 
-The public `form1116_prior_carryover` input accepts only a sourced 2024 Schedule
-B current-year balance with zero older-vintage balance and a review that no
-intervening adjustment occurred. For a single passive or general category, 2025
-tax uses limitation first, then the 2024 balance fills any remaining capacity.
+The public `form1116_prior_carryover` input accepts one filed 2024 Schedule B
+line 8 balance for a passive or general category with one or both 2023/2024
+vintages. The vintage entries must add exactly to the filed line 8 total, all
+other vintages must be reviewed as zero, and no intervening adjustment may be
+unresolved. For one category, 2025 tax uses limitation first, then the older
+2023 balance before 2024, as the Schedule B line 4 instructions require. The
+native Schedule B emits both year columns and totals in checked-in XSD order.
 The current-year and prior-year Schedule B cases are an explicit discriminated
 union, not an inferred zero or a silent fallback. Multi-category carryover use,
 older vintages, carryback adjustments, current excess in the same category, AMT,
 excluded income, and tax redeterminations remain unsupported.
 XML/PDF/full-batch/IRS-rule/ATS gates have not run.
+
+### TY2025 foreign tax redetermination and Schedule C (reviewed, not filed)
+
+The
+[December 2025 Schedule C instructions](https://www.irs.gov/instructions/i1116sc)
+require Schedule C for a foreign tax redetermination occurring in 2025 even if
+it does not change U.S. tax. Parts I and II distinguish an increase in accrued
+tax from a decrease or refund; Parts III and IV track changes to taxes and U.S.
+liability in relation-back and affected years. A changed U.S. liability also
+requires an amended return for the affected year. Additional _paid_ tax under
+the cash method is instead current-year Form 1116 Part II, not Schedule C Part
+I. Contested provisional credits additionally implicate Form 7204 and Part V.
+
+The checked-in TY2025 v5.4 `IRS1116ScheduleC.xsd` has a native root and required
+nested relation-back-year and payor groups. The current foreign-tax item knows
+current amount, income category, country, tax date, and paid/accrued method, but
+not the foreign tax year, relation-back U.S. year, payor identity, original
+filed tax, local-currency change and conversion, affected-year U.S. tax
+recomputation, or filed/amended return evidence. Existing carryover sources
+assert no intervening redetermination and cannot substitute for those facts.
+The public `form1116_schedule_c_source` now accepts a category/relation-back
+ledger with payor tax changes, filed and redetermined Form 1116 totals, and
+affected-year U.S. liability reviews, each with source references. It checks
+the payor and category arithmetic, cash-method classification, and the
+24-month nonpayment date before routing to Form 1116. The node and direct
+MeF/PDF serializers still reject the event because no native Schedule C or
+amended-year package is produced. Omitting an event cannot be detected from
+today's source graph. Real filing support still needs the primary foreign
+assessment/refund/payment evidence, prior filed Form 1116/Schedule B, all
+affected returns and recalculations, and any Form 7204 contest history.
+The [Schedule C gap audit](../../../../../../../docs/mef/ty2025-form1116-schedule-c-gap.md)
+records the missing payor, currency, filed-return, and affected-year facts and
+the exact fail-closed validation boundary.
 
 | Document                   | Year | Section        | URL                                            | Saved as  |
 | -------------------------- | ---- | -------------- | ---------------------------------------------- | --------- |

@@ -1,102 +1,72 @@
-import { assertEquals } from "@std/assert";
-import { f6478, BiofuelType } from "./index.ts";
+import { assertEquals, assertThrows } from "@std/assert";
+import { BiofuelType, f6478 } from "./index.ts";
 
 function compute(input: Parameters<typeof f6478.compute>[1]) {
   return f6478.compute({ taxYear: 2025, formType: "f1040" }, input);
 }
 
-function findSchedule3(result: ReturnType<typeof compute>) {
-  return result.outputs.find((o) => o.nodeType === "schedule3");
-}
-
-// ── Schema Validation ────────────────────────────────────────────────────────
-
-Deno.test("schema_accepts_empty_fuel_entries", () => {
-  const result = f6478.inputSchema.safeParse({ fuel_entries: [] });
-  assertEquals(result.success, true);
+Deno.test("Form 6478 empty source makes no claim", () => {
+  assertEquals(compute({}).outputs, []);
+  assertEquals(compute({ fuel_entries: [] }).outputs, []);
 });
 
-Deno.test("schema_rejects_negative_gallons", () => {
-  const result = f6478.inputSchema.safeParse({
-    fuel_entries: [{ fuel_type: BiofuelType.BiodieselMixture, gallons: -1 }],
-  });
-  assertEquals(result.success, false);
+Deno.test("Form 6478 rejects 2025 production gallons rather than creating a credit", () => {
+  for (const fuel_type of Object.values(BiofuelType)) {
+    assertThrows(
+      () => compute({ fuel_entries: [{ fuel_type, gallons: 1_000 }] }),
+      Error,
+      "TY2025 Form 6478 production gallons are not eligible",
+    );
+  }
 });
 
-// ── Zero Cases ────────────────────────────────────────────────────────────────
-
-Deno.test("no_entries_produces_no_output", () => {
-  const result = compute({});
-  assertEquals(result.outputs.length, 0);
+Deno.test("Form 6478 rejects zero-gallon and overridden-rate entries instead of implying eligibility", () => {
+  assertThrows(
+    () =>
+      compute({
+        fuel_entries: [{
+          fuel_type: BiofuelType.SecondGenerationBiofuel,
+          gallons: 0,
+        }],
+      }),
+    Error,
+    "TY2025 Form 6478 production gallons are not eligible",
+  );
+  assertThrows(
+    () =>
+      compute({
+        fuel_entries: [{
+          fuel_type: BiofuelType.SecondGenerationBiofuel,
+          gallons: 100,
+          credit_rate_override: 2,
+        }],
+      }),
+    Error,
+    "TY2025 Form 6478 production gallons are not eligible",
+  );
 });
 
-Deno.test("zero_gallons_produces_no_output", () => {
-  const result = compute({ fuel_entries: [{ fuel_type: BiofuelType.BiodieselMixture, gallons: 0 }] });
-  assertEquals(result.outputs.length, 0);
+Deno.test("Form 6478 still rejects malformed gallons", () => {
+  assertEquals(
+    f6478.inputSchema.safeParse({
+      fuel_entries: [{
+        fuel_type: BiofuelType.SecondGenerationBiofuel,
+        gallons: -1,
+      }],
+    }).success,
+    false,
+  );
 });
 
-// ── Credit Rates ─────────────────────────────────────────────────────────────
-
-Deno.test("biodiesel_mixture_rate_1_per_gal", () => {
-  // 1000 gal × $1.00 = $1,000
-  const result = compute({ fuel_entries: [{ fuel_type: BiofuelType.BiodieselMixture, gallons: 1000 }] });
-  const out = findSchedule3(result);
-  assertEquals(out?.fields.line6a_general_business_credit, 1000);
-});
-
-Deno.test("alcohol_mixture_rate_045_per_gal", () => {
-  // 1000 gal × $0.45 = $450
-  const result = compute({ fuel_entries: [{ fuel_type: BiofuelType.AlcoholMixture, gallons: 1000 }] });
-  const out = findSchedule3(result);
-  assertEquals(out?.fields.line6a_general_business_credit, 450);
-});
-
-Deno.test("cellulosic_biofuel_rate_101_per_gal", () => {
-  // 1000 gal × $1.01 = $1,010
-  const result = compute({ fuel_entries: [{ fuel_type: BiofuelType.CellulosicBiofuel, gallons: 1000 }] });
-  const out = findSchedule3(result);
-  assertEquals(out?.fields.line6a_general_business_credit, 1010);
-});
-
-Deno.test("second_generation_biofuel_rate_101_per_gal", () => {
-  const result = compute({ fuel_entries: [{ fuel_type: BiofuelType.SecondGenerationBiofuel, gallons: 500 }] });
-  const out = findSchedule3(result);
-  assertEquals(out?.fields.line6a_general_business_credit, 505);
-});
-
-Deno.test("small_agri_producer_rate_010_per_gal", () => {
-  // 1000 gal × $0.10 = $100
-  const result = compute({ fuel_entries: [{ fuel_type: BiofuelType.SmallAgriProducer, gallons: 1000 }] });
-  const out = findSchedule3(result);
-  assertEquals(out?.fields.line6a_general_business_credit, 100);
-});
-
-// ── Override Rate ─────────────────────────────────────────────────────────────
-
-Deno.test("credit_rate_override_used_when_provided", () => {
-  // 1000 gal × $0.50 override = $500
-  const result = compute({
-    fuel_entries: [{ fuel_type: BiofuelType.BiodieselMixture, gallons: 1000, credit_rate_override: 0.50 }],
-  });
-  const out = findSchedule3(result);
-  assertEquals(out?.fields.line6a_general_business_credit, 500);
-});
-
-// ── Aggregation ───────────────────────────────────────────────────────────────
-
-Deno.test("multiple_fuel_types_aggregate", () => {
-  // 1000 biodiesel ($1,000) + 1000 alcohol ($450) = $1,450
-  const result = compute({
-    fuel_entries: [
-      { fuel_type: BiofuelType.BiodieselMixture, gallons: 1000 },
-      { fuel_type: BiofuelType.AlcoholMixture, gallons: 1000 },
-    ],
-  });
-  const out = findSchedule3(result);
-  assertEquals(out?.fields.line6a_general_business_credit, 1450);
-});
-
-Deno.test("routes_to_schedule3", () => {
-  const result = compute({ fuel_entries: [{ fuel_type: BiofuelType.BiodieselMixture, gallons: 100 }] });
-  assertEquals(result.outputs[0]?.nodeType, "schedule3");
+Deno.test("Form 6478 rejects an unmodeled pass-through line 3 instead of stripping it", () => {
+  assertThrows(
+    () =>
+      compute(
+        { line3_pass_through_credit: 2_000 } as Parameters<
+          typeof f6478.compute
+        >[1],
+      ),
+    Error,
+    "Unrecognized key",
+  );
 });

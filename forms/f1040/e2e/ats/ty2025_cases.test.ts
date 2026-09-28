@@ -250,6 +250,11 @@ Deno.test("1040 Scenario 1 source amounts and test SSN stay intact", () => {
   assertEquals(facts.scheduleH.employerEin, "000000029");
   assertEquals(facts.scheduleH.cashWagesOver2025Limit, true);
   assertEquals(facts.scheduleH.cashWagesOverQuarterLimit, false);
+  assertEquals(facts.taxpayer.filingStatus, "single");
+  assertEquals(facts.taxpayer.digitalAssets, false);
+  assertEquals(facts.w2[0].employerName, "The Green Ladies");
+  assertEquals(facts.w2[1].employerName, "C&R");
+  assertEquals(facts.w2[0].employerEin, facts.w2[1].employerEin);
   assertEquals(
     facts.form5695.exteriorDoors.reduce((sum, item) => sum + item.cost, 0),
     2_740,
@@ -552,7 +557,10 @@ Deno.test("1040 Scenario 12 Schedule SE reconciles cents and printed whole-dolla
   // IRS permits a consistent cents or whole-dollar convention. This node keeps
   // cents through line 12; the published fixture rounds lines 10 and 11 first.
   assertEquals(fieldsOf(result.outputs, schedule2)?.line4_se_tax, centsTotal);
-  assertEquals(fieldsOf(result.outputs, schedule1)?.line15_se_deduction, centsTotal * 0.5);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)?.line15_se_deduction,
+    centsTotal * 0.5,
+  );
   assertEquals(Math.round(centsTotal), 3_437);
   assertEquals(Math.round(ssTax), facts.scheduleSE.printedSocialSecurityTax);
   assertEquals(Math.round(medicareTax), facts.scheduleSE.printedMedicareTax);

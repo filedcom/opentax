@@ -6,9 +6,12 @@ import { jointOccupancyStatement } from "./joint_occupancy_statement.ts";
 import { irs1040 } from "./f1040.ts";
 import { f1099r } from "./f1099r.ts";
 import { form1116 } from "./f1116.ts";
+import { form2210f } from "./f2210f_box_b.ts";
 import { form1116ScheduleB } from "./f1116_schedule_b.ts";
+import { form2439 } from "./f2439.ts";
 import { form1116DirectExpenseStatement } from "./f1116_direct_expense_statement.ts";
 import { form1116OtherDeductionsStatement } from "./f1116_other_deductions_statement.ts";
+import { form1116AlternativeCompensationStatement } from "./f1116_alternative_compensation_statement.ts";
 import { form2441 } from "./f2441.ts";
 import { form2555 } from "./f2555.ts";
 import { form3800 } from "./f3800.ts";
@@ -41,6 +44,8 @@ import { form6252 } from "./f6252.ts";
 import { form6781 } from "./f6781.ts";
 import { form7206 } from "./f7206.ts";
 import { form7217 } from "./f7217.ts";
+import { form7203StockLoss } from "./f7203_stock_loss.ts";
+import { scheduleEStockLoss } from "./schedule_e_stock_loss.ts";
 import { form8283 } from "./f8283.ts";
 import { form8283VehicleStatement } from "./f8283_vehicle_statement.ts";
 import { form8283FmvReductionStatement } from "./f8283_fmv_reduction_statement.ts";
@@ -72,6 +77,7 @@ import { form8862 } from "./f8862.ts";
 import { form8863 } from "./f8863.ts";
 import { form8874 } from "./f8874.ts";
 import { form8880 } from "./f8880.ts";
+import { form8888 } from "./f8888.ts";
 import { form8889 } from "./f8889.ts";
 import { form8911 } from "./f8911.ts";
 import { form8912 } from "./f8912.ts";
@@ -86,11 +92,17 @@ import { form8962 } from "./f8962.ts";
 import { form8978 } from "./f8978.ts";
 import { form8978ScheduleA } from "./f8978_schedule_a.ts";
 import { anyOtherTaxesStatement } from "./any_other_taxes_statement.ts";
+import { schedule1OtherIncomeStatement } from "./schedule1_other_income_statement.ts";
 import { form8990 } from "./f8990.ts";
 import { form8995 } from "./f8995.ts";
 import { form8995a } from "./f8995a.ts";
+import { form8995aScheduleA } from "./f8995a_schedule_a.ts";
+import { form8995aScheduleB } from "./f8995a_schedule_b.ts";
+import { form8995aScheduleC } from "./f8995a_schedule_c.ts";
+import { form8995aScheduleD } from "./f8995a_schedule_d.ts";
 import { form982 } from "./f982.ts";
 import { schedule1 } from "./schedule1.ts";
+import { schedule1a } from "./schedule1a.ts";
 import { schedule2 } from "./schedule2.ts";
 import { schedule3 } from "./schedule3.ts";
 import { schedule8812 } from "./schedule_8812.ts";
@@ -101,8 +113,12 @@ import { scheduleD } from "./schedule_d.ts";
 import { scheduleE } from "./schedule_e.ts";
 import { scheduleF } from "./schedule_f.ts";
 import { scheduleH } from "./schedule_h.ts";
+import { scheduleJ } from "./schedule_j.ts";
+import { scheduleLep } from "./schedule_lep.ts";
+import { scheduleR } from "./schedule_r.ts";
 import { scheduleSE } from "./schedule_se.ts";
 import { w2 } from "./w2.ts";
+import { w2g } from "./w2g.ts";
 import { fecRecord, wagesNotShownSchedule } from "./foreign_employer_wages.ts";
 
 // XSD-required element sequence from ReturnData1040.xsd.
@@ -111,8 +127,9 @@ import { fecRecord, wagesNotShownSchedule } from "./foreign_employer_wages.ts";
 export const ALL_MEF_FORMS = [
   // 1. IRS1040 (required)
   irs1040,
-  // 2-4. Schedules 1-3
+  // Schedule 1-A follows Schedule 1 and precedes Schedule 2 in TY2025.
   schedule1,
+  schedule1a,
   schedule2,
   schedule3,
   schedule8812,
@@ -124,14 +141,22 @@ export const ALL_MEF_FORMS = [
   // 9. Schedule D
   scheduleD,
   scheduleE,
+  scheduleEStockLoss,
   // 11. Schedule EIC (eitc)
   eitc,
   // 12. Schedule F
   scheduleF,
   // 13. Schedule H
   scheduleH,
+  // Schedule J follows H and precedes LEP in TY2025 ReturnData1040.xsd.
+  scheduleJ,
+  // Schedule LEP follows H/J and precedes R in TY2025 ReturnData1040.xsd.
+  scheduleLep,
+  // Schedule R follows Schedule LEP and precedes Schedule SE in ReturnData.
+  scheduleR,
   // 16. Schedule SE
   scheduleSE,
+  form7203StockLoss,
   // 18. Form 461
   form461,
   // Form 965-A is the cumulative section 965 liability and payment record.
@@ -144,6 +169,10 @@ export const ALL_MEF_FORMS = [
   form1116,
   // Form 1116 Schedule B follows Form 1116 in ReturnData1040.xsd.
   form1116ScheduleB,
+  // Form 2210-F follows Form 2210 and precedes Form 2439 in ReturnData1040.xsd.
+  form2210f,
+  // One native document per payer-issued Form 2439 with positive box 2.
+  form2439,
   // Form 2441
   form2441,
   // Form 2555
@@ -232,6 +261,8 @@ export const ALL_MEF_FORMS = [
   form8874,
   // Form 8880
   form8880,
+  // Form 8888 refund allocation precedes Form 8889 in ReturnData1040.xsd.
+  form8888,
   // Form 8889
   form8889,
   // Form 8911
@@ -261,9 +292,17 @@ export const ALL_MEF_FORMS = [
   form8995,
   // Form 8995A
   form8995a,
+  form8995aScheduleA,
+  form8995aScheduleB,
+  form8995aScheduleC,
+  form8995aScheduleD,
   // Form W-2 wage statements (one document per employer)
   w2,
+  // Form W-2G withholding statements follow W-2 in ReturnData1040.xsd.
+  w2g,
   fecRecord,
+  // Schedule 1 line 8z statement precedes the Schedule 2 line 17z statement.
+  schedule1OtherIncomeStatement,
   // Schedule 2 line 17z statement precedes WagesNotShownSchedule in ReturnData.
   anyOtherTaxesStatement,
   wagesNotShownSchedule,
@@ -274,7 +313,8 @@ export const ALL_MEF_FORMS = [
   // Form 965-A native statements follow the farm statements in ReturnData.
   form965aNetAdjustmentTransferStatement,
   form965aMultipleTransfereeStatement,
-  // Form 1116 Part I line 2 statement precedes joint occupancy in ReturnData.
+  // Form 1116 line 1b and Part I deduction statements precede joint occupancy.
+  form1116AlternativeCompensationStatement,
   form1116DirectExpenseStatement,
   form1116OtherDeductionsStatement,
   form4136EmulsionBlendingStatement,

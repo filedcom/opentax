@@ -3,6 +3,7 @@ import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { scheduleE } from "../schedule_e/index.ts";
+import { priorYear8582SourceSchema } from "../../intermediate/forms/form8582/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import {
   calculateSimplifiedAtRiskLoss,
@@ -25,6 +26,7 @@ const otherExpenseSchema = z.object({
 }).strict();
 
 export const itemSchema = z.object({
+  activity_id: z.string().trim().min(1).max(64).optional(),
   activity_name: z.string().min(1),
   ein: z.string().regex(/^\d{9}$/).optional(),
   actively_participated: z.boolean().optional(),
@@ -71,6 +73,7 @@ export const itemSchema = z.object({
   expense_capitalized_263a: amount.optional(), // 30g, reduces expenses
   some_investment_not_at_risk: z.boolean().optional(), // 34b
   prior_unallowed_passive_operating: z.number().int().nonnegative().optional(),
+  prior_year_8582_source: priorYear8582SourceSchema.optional(),
   prior_passive_losses_active_when_incurred: z.boolean().optional(),
   at_risk_simplified: simplifiedAtRiskSchema.optional(),
 }).strict();
@@ -239,12 +242,14 @@ class F4835Node extends TaxNode<typeof inputSchema> {
         farm_rental_net: farmRentalNet,
         farm_rental_gross: farmRentalGross,
         farm_rental_activities: f4835s.map((item, index) => ({
+          activity_id: item.activity_id,
           name: item.activity_name,
           current_net: atRisk[index].atRiskNet,
           actively_participated: item.actively_participated === true,
           ...((item.prior_unallowed_passive_operating ?? 0) > 0
             ? {
               prior_unallowed_operating: item.prior_unallowed_passive_operating,
+              prior_year_8582_source: item.prior_year_8582_source,
               prior_active_participation:
                 item.prior_passive_losses_active_when_incurred,
             }

@@ -5,9 +5,10 @@ import { SCENARIO_1040_08_FACTS } from "./ty2025_cases.ts";
 /**
  * Source-backed calculation fixture for TY2025 Form 1040 ATS Scenario 8.
  *
- * The PDF checks 1040 QCD and rollover boxes without matching IRA/SEP/SIMPLE
- * source facts on either 1099-R. Those printed marks remain recorded in the
- * case facts. This input does not invent a QCD or a separate rollover amount.
+ * The code-Q 1099-R is a qualified Roth IRA distribution, not proof of the
+ * printed QCD election; no direct charitable payment or QCD amount is given.
+ * The code-G 1099-R supports the printed direct-rollover checkbox. The source
+ * facts retain both marks without inventing a QCD or a rollover destination.
  * It is not an IRS-accepted ATS transmission.
  */
 export function scenario104008Input(): Record<string, unknown> {
@@ -49,6 +50,8 @@ export function scenario104008Input(): Record<string, unknown> {
       box7_distribution_code: form.distributionCode === "Q"
         ? DistributionCode.CodeQ
         : DistributionCode.CodeG,
+      direct_rollover_confirmed: form.distributionCode === "G" &&
+        facts.form1040.line5cRolloverChecked,
     })),
     // The cover sheet reports this 1099-DIV amount but the PDF contains no
     // payer copy, so only the amount and no invented payer identity are used.

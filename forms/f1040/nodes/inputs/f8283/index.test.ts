@@ -122,11 +122,18 @@ Deno.test("f8283.compute: section A item routes categorized source to Schedule A
     }],
   });
   const fields = fieldsOf(result.outputs, schedule_a)!;
-  assertEquals(fields.noncash_contribution_items, [{
-    source: "Form 8283 item 1: property",
-    amount: 300,
-    category: "noncash_50",
-  }]);
+  assertEquals(
+    fields.noncash_contribution_items?.map((item) => ({
+      source: item.source,
+      amount: item.amount,
+      category: item.category,
+    })),
+    [{
+      source: "Form 8283 item 1: property",
+      amount: 300,
+      category: "noncash_50",
+    }],
+  );
 });
 
 Deno.test("f8283.compute: Section A routes the claimed deduction, not the higher FMV", () => {
@@ -159,7 +166,13 @@ Deno.test("f8283.compute: Section A routes the claimed deduction, not the higher
     ],
   });
   assertEquals(
-    fieldsOf(result.outputs, schedule_a)?.noncash_contribution_items,
+    fieldsOf(result.outputs, schedule_a)?.noncash_contribution_items?.map((
+      item,
+    ) => ({
+      source: item.source,
+      amount: item.amount,
+      category: item.category,
+    })),
     [
       {
         source: "Form 8283 item 1: property",
@@ -201,11 +214,18 @@ Deno.test("f8283.compute: section B item routes claimed deduction to schedule_a 
     }],
   });
   const fields = fieldsOf(result.outputs, schedule_a)!;
-  assertEquals(fields.noncash_contribution_items, [{
-    source: "Form 8283 item 1: property",
-    amount: 6000,
-    category: "noncash_50",
-  }]);
+  assertEquals(
+    fields.noncash_contribution_items?.map((item) => ({
+      source: item.source,
+      amount: item.amount,
+      category: item.category,
+    })),
+    [{
+      source: "Form 8283 item 1: property",
+      amount: 6000,
+      category: "noncash_50",
+    }],
+  );
 });
 
 Deno.test("f8283.compute: zero fmv — no schedule_a output", () => {
@@ -460,7 +480,7 @@ Deno.test("f8283.compute: section A + section B items combined", () => {
   );
 });
 
-Deno.test("f8283.compute: capital gain basis election combines with an unrelated Section A item", () => {
+Deno.test("f8283.compute: capital gain 50% election routes property facts for return-wide reconciliation", () => {
   const result = compute({
     section_a_items: [
       {
@@ -473,6 +493,9 @@ Deno.test("f8283.compute: capital gain basis election combines with an unrelated
         fmv: 8000,
         deduction_claimed: 3000,
         similar_item_group: "securities",
+        date_acquired: "2022-02-01",
+        date_contributed: "2025-06-01",
+        donor_acquisition_description: "Purchase",
         cost_or_adjusted_basis: 3000,
         is_capital_gain_property: true,
         charitable_limit_category: "noncash_50",
@@ -481,13 +504,84 @@ Deno.test("f8283.compute: capital gain basis election combines with an unrelated
     ],
   });
   const fields = fieldsOf(result.outputs, schedule_a)!;
-  // Explicitly reduced deduction, not an automatic capital-gain basis cap.
   assertEquals(
-    fields.noncash_contribution_items?.map((item: { amount: number }) =>
-      item.amount
-    ),
-    [500, 3000],
+    fields.noncash_contribution_items?.[1]?.contribution_id,
+    "f8283:2",
   );
+  assertEquals(fields.noncash_contribution_items?.[1]?.original_fmv, 8000);
+  assertEquals(fields.noncash_contribution_items?.[1]?.adjusted_basis, 3000);
+  assertEquals(schedule_a.inputSchema.safeParse(fields).success, false);
+});
+
+Deno.test("f8283.compute: two elected capital gifts retain distinct IDs and still need the carryover ledger", () => {
+  const gift = {
+    date_acquired: "2022-02-01",
+    date_contributed: "2025-06-01",
+    donor_acquisition_description: "Purchase",
+    fmv: 4_500,
+    deduction_claimed: 3_000,
+    cost_or_adjusted_basis: 3_000,
+    charitable_limit_category: "noncash_50" as const,
+    is_capital_gain_property: true,
+    capital_gain_reduction_election_confirmed: true,
+  };
+  const result = compute({
+    section_a_items: [
+      { ...gift, similar_item_group: "coins", property_description: "Coin" },
+      { ...gift, similar_item_group: "stamps", property_description: "Stamp" },
+    ],
+  });
+  const fields = fieldsOf(result.outputs, schedule_a)!;
+  assertEquals(
+    fields.noncash_contribution_items?.map((item) => item.contribution_id),
+    ["f8283:1", "f8283:2"],
+  );
+  assertEquals(schedule_a.inputSchema.safeParse(fields).success, false);
+});
+
+Deno.test("f8283.inputSchema: Section B election is limited to purchased unimproved investment land", () => {
+  const land = {
+    property_type: SectionBPropertyType.OtherRealEstate,
+    investment_land_unimproved_confirmed: true as const,
+    date_acquired: "2022-02-01",
+    date_contributed: "2025-06-01",
+    donor_acquisition_description: "Purchase",
+    fmv: 27_000,
+    deduction_claimed: 20_000,
+    cost_or_adjusted_basis: 20_000,
+    charitable_limit_category: "noncash_50" as const,
+    is_capital_gain_property: true,
+    capital_gain_reduction_election_confirmed: true as const,
+    reduction_statement_attachment_file_name: "LandReduction.pdf",
+    reduction_statement_source_review: {
+      reviewed_by: "Test reviewer",
+      reviewed_on: "2025-06-11",
+      pdf_sha256: "b".repeat(64),
+      original_fmv_matches_pdf_confirmed: true as const,
+      adjusted_basis_matches_pdf_confirmed: true as const,
+      appreciation_reduction_matches_pdf_confirmed: true as const,
+      election_reason_matches_pdf_confirmed: true as const,
+    },
+  };
+  assertEquals(
+    inputSchema.safeParse({ section_b_items: [land] }).success,
+    true,
+  );
+  for (
+    const changed of [
+      { ...land, property_type: SectionBPropertyType.Equipment },
+      { ...land, investment_land_unimproved_confirmed: undefined },
+      { ...land, date_acquired: "2025-01-01" },
+      { ...land, deduction_claimed: 21_000 },
+      { ...land, reduction_statement_attachment_file_name: undefined },
+      { ...land, reduction_statement_source_review: undefined },
+    ]
+  ) {
+    assertEquals(
+      inputSchema.safeParse({ section_b_items: [changed] }).success,
+      false,
+    );
+  }
 });
 
 // =============================================================================

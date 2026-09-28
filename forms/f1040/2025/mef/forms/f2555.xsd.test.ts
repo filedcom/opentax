@@ -136,6 +136,7 @@ Deno.test("Form 2555 derives qualifying days from the 12-month period", () => {
   const fullYear = calculatePhysicalPresence2555(filingDetails, 2025);
   assertEquals(fullYear.qualifyingDays, 365);
   assertEquals(fullYear.line42, 100_000);
+  assertEquals(fullYear.line50, 0);
   const partYear = calculatePhysicalPresence2555({
     ...filingDetails,
     tax_home_established_date: "2024-06-01",
@@ -166,6 +167,7 @@ Deno.test("Form 2555 employee housing follows Parts VI, VII, and VIII in order",
   assertEquals(lines.line34, 200_000);
   assertEquals(lines.line35, 1);
   assertEquals(lines.line36, 9_200);
+  assertEquals(lines.line50, 0);
   assertEquals(lines.line41, 190_800);
   assertEquals(lines.line42, 130_000);
   assertEquals(lines.line43, 139_200);

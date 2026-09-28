@@ -177,6 +177,73 @@ Deno.test("singleton Form 8824 exchange routes to its calculation node", () => {
   assertEquals(result.outputs, [{ nodeType: "form8824", fields: exchange }]);
 });
 
+Deno.test("Schedule LEP language request reaches its metadata node", () => {
+  const startNode = buildStartNode(inputNodes);
+  const source = {
+    requests: [{ person: "taxpayer", language_preference_code: "001" }],
+  };
+  assertEquals(startNode.inputSchema.safeParse({ schedule_lep: source }).success, true);
+  assertEquals(startNode.compute(
+    { taxYear: 2025, formType: "f1040" },
+    { schedule_lep: source },
+  ).outputs, [{ nodeType: "schedule_lep", fields: source }]);
+});
+
+Deno.test("Form 4797 investment property source enters the return plan without aggregate input", () => {
+  const startNode = buildStartNode(inputNodes);
+  const sale = {
+    property_id: "investment-asset-1",
+    property_description: "Investment equipment",
+    acquired_on: "2022-05-01",
+    sold_on: "2025-06-01",
+    gross_sales_price: 15_000,
+    cost_or_other_basis_plus_sale_expense: 12_000,
+    depreciation_allowed_or_allowable: 5_000,
+    property_held_for_investment_not_business: true,
+    section_1245_classification_reviewed: true,
+    direct_cash_sale_no_special_recapture_exception: true,
+    sale_document_reference: "SALE-2025-1",
+    basis_document_reference: "BASIS-2022-1",
+    depreciation_schedule_reference: "DEPR-2025-1",
+  };
+  const input = { investment_1245_dispositions: [sale] };
+  assertEquals(
+    startNode.inputSchema.safeParse({ form4797_investment_1245: input })
+      .success,
+    true,
+  );
+  assertEquals(
+    startNode.inputSchema.safeParse({
+      form4797_investment_1245: { ...input, ordinary_gain: 1 },
+    }).success,
+    false,
+  );
+  assertEquals(startNode.compute(
+    { taxYear: 2025, formType: "f1040" },
+    { form4797_investment_1245: input },
+  ).outputs, [{ nodeType: "form4797", fields: input }]);
+  const executed = execute(buildExecutionPlan(registry), registry, {
+    form4797_investment_1245: input,
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(
+    executed.diagnostics.filter((item) =>
+      ["start", "form4797", "form8949", "schedule_d", "schedule1"]
+        .includes(item.nodeType)
+    ),
+    [],
+  );
+  assertEquals(
+    executed.pending.form4797.investment_1245_dispositions,
+    [sale],
+  );
+  assertEquals(executed.pending.schedule1.line4_other_gains, 5_000);
+  assertEquals(
+    (executed.pending.form8949.transaction as Record<string, unknown>)
+      .proceeds,
+    3_000,
+  );
+});
+
 Deno.test("singleton Form 8936 keeps one MAGI record with its vehicle array", () => {
   const startNode = buildStartNode(inputNodes);
   const form = {

@@ -28,6 +28,7 @@ Deno.test("public Schedule E sale reaches Form 4797 and final Form 1040 once", (
   const result = execute(buildExecutionPlan(registry), registry, {
     schedule_e: [{
       tsj: "T",
+      activity_id: "rental-house",
       property_description: "Rental house",
       property_type: 1,
       activity_type: "A",
@@ -40,6 +41,7 @@ Deno.test("public Schedule E sale reaches Form 4797 and final Form 1040 once", (
       prior_unallowed_passive_4797_part2: 500,
       prior_passive_losses_active_when_incurred: true,
       passive_property_sales: [{
+        activity_id: "rental-house",
         activity_name: "Rental house",
         part: "I",
         property_description: "Retained rental parcel",
@@ -50,6 +52,7 @@ Deno.test("public Schedule E sale reaches Form 4797 and final Form 1040 once", (
         depreciation_allowed: 0,
         entire_activity_interest_disposed: false,
       }, {
+        activity_id: "rental-house",
         activity_name: "Rental house",
         part: "II",
         property_description: "Short-held rental parcel",

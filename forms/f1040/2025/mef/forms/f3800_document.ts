@@ -5,9 +5,18 @@ import type {
   Form3800CurrentXmlRow,
 } from "./f3800_current_rows.ts";
 import type {
-  Form3800CarryoverXmlRow,
+  Form3800CarryoverRow,
+  Form3800PassiveDetailRow,
   Form3800PassiveXmlRow,
 } from "./f3800_passive_rows.ts";
+import {
+  form3800PassiveCarryoverDetailXml,
+  form3800PassiveCurrentDetailXml,
+} from "./f3800_passive_rows.ts";
+import {
+  form3800NonpassiveCurrentDetailXml,
+  type Form3800NonpassiveDetailRow,
+} from "./f3800_nonpassive_details.ts";
 import { form3800PartIAndIIXml } from "./f3800_part_i_ii.ts";
 import { buildForm3800PartIIIXml } from "./f3800_part_iii.ts";
 import { buildForm3800PartIVXml } from "./f3800_part_iv.ts";
@@ -19,9 +28,11 @@ export type Form3800DocumentParts = {
   readonly transferStatementIds: readonly string[];
   readonly currentRows: readonly Form3800CurrentXmlRow[];
   readonly currentAmounts: readonly Form3800CurrentCreditAmount[];
-  readonly carryoverRows: readonly Form3800CarryoverXmlRow[];
-  readonly currentDetails: readonly Form3800PassiveXmlRow[];
+  readonly carryoverRows: readonly Form3800CarryoverRow[];
+  readonly currentDetails: readonly Form3800NonpassiveDetailRow[];
   readonly carryoverDetails: readonly Form3800PassiveXmlRow[];
+  readonly passiveCurrentDetails: readonly Form3800PassiveDetailRow[];
+  readonly passiveCarryoverDetails: readonly Form3800PassiveDetailRow[];
 };
 
 /** Assemble a filed IRS3800 document in TY2025 schema order. */
@@ -82,16 +93,33 @@ export function buildIRS3800Document(parts: Form3800DocumentParts): string {
   const detailCountByLine = new Map(
     parts.currentRows.map((row) => [row.line, row.metadata.sourceCount]),
   );
-  if (parts.currentDetails.some((row) => !detailCountByLine.has(row.line))) {
+  const currentDetails = [
+    ...parts.currentDetails.map((row) => ({
+      line: row.line,
+      xml: form3800NonpassiveCurrentDetailXml(row),
+    })),
+    ...parts.passiveCurrentDetails.map((row) => ({
+      line: row.line,
+      xml: form3800PassiveCurrentDetailXml(row),
+    })),
+  ];
+  const carryoverDetails = [
+    ...parts.carryoverDetails,
+    ...parts.passiveCarryoverDetails.map((row) => ({
+      line: row.line,
+      xml: form3800PassiveCarryoverDetailXml(row),
+    })),
+  ];
+  if (currentDetails.some((row) => !detailCountByLine.has(row.line))) {
     throw new Error("Form 3800 Part V detail has no Part III source row");
   }
-  const currentDetails = parts.currentDetails.filter((row) =>
+  const filedCurrentDetails = currentDetails.filter((row) =>
     (detailCountByLine.get(row.line) ?? 0) > 1
   );
   for (const [line, count] of detailCountByLine) {
     if (
       count > 1 &&
-      currentDetails.filter((row) => row.line === line).length !== count
+      filedCurrentDetails.filter((row) => row.line === line).length !== count
     ) {
       throw new Error(
         `Form 3800 Part V line ${line} source count does not reconcile`,
@@ -117,7 +145,7 @@ export function buildIRS3800Document(parts: Form3800DocumentParts): string {
     ...form3800PartIAndIIXml(parts.lines),
     ...partIII,
     ...partIV,
-    buildForm3800PartVXml(currentDetails),
-    ...buildForm3800PartVIXml(parts.carryoverDetails),
+    buildForm3800PartVXml(filedCurrentDetails),
+    ...buildForm3800PartVIXml(carryoverDetails),
   ]);
 }

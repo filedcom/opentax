@@ -4,6 +4,7 @@ import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
+import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
 import { form8949 } from "../../intermediate/forms/form8949/index.ts";
 
 // ---------------------------------------------------------------------------
@@ -50,6 +51,61 @@ Deno.test("direct Form 8949 input deposits an identified transaction for MeF bef
     unknown
   >;
   assertEquals(transaction.source_transaction_id, "deemed-sale-1");
+});
+
+Deno.test("Form 8949 market discount prints code D and reaches taxable interest", () => {
+  const source = f8949.compute(
+    { taxYear: 2025, formType: "f1040" },
+    inputSchema.parse({
+      f8949s: [minimalItem({
+        accrued_market_discount: 500,
+        market_discount_payer_name: "Test Brokerage",
+      })],
+    }),
+  );
+  const transaction = fieldsOf(source.outputs, form8949)!.transaction as Record<
+    string,
+    unknown
+  >;
+  assertEquals(transaction.adjustment_codes, "D");
+  assertEquals(transaction.adjustment_amount, -500);
+  assertEquals(transaction.gain_loss, 1_500);
+  const interest = fieldsOf(source.outputs, schedule_b)!;
+  assertEquals(interest.taxable_interest_net, 500);
+  assertEquals(interest.payer_name, "Test Brokerage");
+  const routed = form8949.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form8949.inputSchema.parse({ transaction }),
+  );
+  assertEquals(
+    (fieldsOf(routed.outputs, schedule_d)!.transaction as Record<
+      string,
+      unknown
+    >).gain_loss,
+    1_500,
+  );
+});
+
+Deno.test("Form 8949 rejects unsourced recapture and unpaired market discount", () => {
+  assertThrows(
+    () => compute([minimalItem({ ordinary_income_portion: 200 })]),
+    Error,
+    "sourced Form 4797 handoff",
+  );
+  assertThrows(
+    () => compute([minimalItem({ accrued_market_discount: 200 })]),
+    Error,
+    "needs a payer",
+  );
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        accrued_market_discount: 2_500,
+        market_discount_payer_name: "Test Brokerage",
+      })]),
+    Error,
+    "within the positive gain",
+  );
 });
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -573,21 +629,121 @@ Deno.test("collectibles: long-term Part D still produces schedule_d with correct
 });
 
 // ---------------------------------------------------------------------------
-// 10. AMT Cost Basis — amt_cost_basis routes to form6251 other_adjustments
+// 10. AMT Cost Basis — identified positive LT gain routes to Form 6251 line 2k
 // ---------------------------------------------------------------------------
 
-Deno.test("amt_cost_basis: differs from cost_basis routes to form6251 with other_adjustments", () => {
+Deno.test("amt_cost_basis: identified LT gain routes reconciled bases to Form 6251 line 2k", () => {
   const result = compute([
     minimalItem({
       part: "D",
+      source_transaction_id: "broker-2025-1",
       date_acquired: "2022-01-01",
       proceeds: 10000,
       cost_basis: 5000,
       amt_cost_basis: 7000,
     }),
   ]);
-  // amt_cost_basis - cost_basis = 7000 - 5000 = 2000 AMT adjustment
-  assertEquals(fieldsOf(result.outputs, form6251)!.other_adjustments, 2000);
+  assertEquals(
+    fieldsOf(result.outputs, form6251)!.line2k_8949_basis_dispositions,
+    {
+      source_transaction_id: "broker-2025-1",
+      part: "D",
+      proceeds: 10000,
+      regular_basis: 5000,
+      amt_basis: 7000,
+      regular_gain: 5000,
+      amt_gain: 3000,
+    },
+  );
+});
+
+Deno.test("amt_cost_basis: identified short-term gain routes to Form 6251 line 2k", () => {
+  const result = compute([minimalItem({
+    part: "A",
+    source_transaction_id: "broker-st-1",
+    proceeds: 10_000,
+    cost_basis: 5_000,
+    amt_cost_basis: 7_000,
+  })]);
+  assertEquals(
+    fieldsOf(result.outputs, form6251)!.line2k_8949_basis_dispositions,
+    {
+      source_transaction_id: "broker-st-1",
+      part: "A",
+      proceeds: 10_000,
+      regular_basis: 5_000,
+      amt_basis: 7_000,
+      regular_gain: 5_000,
+      amt_gain: 3_000,
+    },
+  );
+});
+
+Deno.test("amt_cost_basis: identified short-term loss routes signed bases to Form 6251", () => {
+  const result = compute([minimalItem({
+    part: "A",
+    source_transaction_id: "broker-st-loss",
+    proceeds: 5_000,
+    cost_basis: 6_000,
+    amt_cost_basis: 6_500,
+  })]);
+  assertEquals(
+    fieldsOf(result.outputs, form6251)!.line2k_8949_basis_dispositions,
+    {
+      source_transaction_id: "broker-st-loss",
+      part: "A",
+      proceeds: 5_000,
+      regular_basis: 6_000,
+      amt_basis: 6_500,
+      regular_gain: -1_000,
+      amt_gain: -1_500,
+    },
+  );
+});
+
+Deno.test("amt_cost_basis: identified long-term loss routes signed bases to Form 6251", () => {
+  const result = compute([minimalItem({
+    part: "D",
+    source_transaction_id: "broker-lt-loss",
+    proceeds: 5_000,
+    cost_basis: 6_000,
+    amt_cost_basis: 6_500,
+  })]);
+  assertEquals(
+    fieldsOf(result.outputs, form6251)!.line2k_8949_basis_dispositions,
+    {
+      source_transaction_id: "broker-lt-loss",
+      part: "D",
+      proceeds: 5_000,
+      regular_basis: 6_000,
+      amt_basis: 6_500,
+      regular_gain: -1_000,
+      amt_gain: -1_500,
+    },
+  );
+});
+
+Deno.test("amt_cost_basis: unsupported loss and digital cases fail closed", () => {
+  for (
+    const row of [
+      { part: "G", source_transaction_id: "digital-st" },
+      { part: "D", source_transaction_id: "adjusted", adjustment_codes: "B" },
+      { part: "D" },
+    ]
+  ) {
+    assertThrows(
+      () =>
+        compute([minimalItem({
+          part: "D",
+          proceeds: 10000,
+          cost_basis: 5000,
+          amt_cost_basis: 7000,
+          ...row,
+        })]),
+      Error,
+      "identified, unadjusted, whole-dollar Part I or Part II gain",
+    );
+  }
 });
 
 Deno.test("amt_cost_basis: equals cost_basis produces no form6251 output", () => {
@@ -666,23 +822,20 @@ Deno.test("loss_not_allowed: auto-creates L code and zeroes the loss", () => {
   assertEquals(tx.gain_loss, 0);
 });
 
-Deno.test("qsbs_code: Q1 with qsbs_amount forwarded in schedule_d transaction", () => {
-  const result = compute([
-    minimalItem({
-      part: "D",
-      date_acquired: "2015-01-01",
-      proceeds: 10000,
-      cost_basis: 1000,
-      qsbs_code: QsbsCode.Q1,
-      qsbs_amount: 9000,
-    }),
-  ]);
-  const tx = ((findOutput(result, "schedule_d")!.fields) as Record<
-    string,
-    unknown
-  >).transaction as Record<string, unknown>;
-  assertEquals(tx.qsbs_code, QsbsCode.Q1);
-  assertEquals(tx.qsbs_amount, 9000);
+Deno.test("QSBS source cannot bypass Form 6251 preference and Schedule D exclusion", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        part: "D",
+        date_acquired: "2008-01-01",
+        proceeds: 10_000,
+        cost_basis: 1_000,
+        qsbs_code: QsbsCode.Q1,
+        qsbs_amount: 9_000,
+      })]),
+    Error,
+    "Form 6251 line 2h preference",
+  );
 });
 
 Deno.test("state_tax_withheld: accepted by schema, does not route to f1040, schedule_d still present", () => {

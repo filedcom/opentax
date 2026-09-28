@@ -242,6 +242,97 @@ Deno.test({
 });
 
 Deno.test({
+  name: "Form 1116 line 1b rejects XML without its conversion explanation PDF",
+  sanitizeOps: false,
+  sanitizeResources: false,
+}, () => {
+  const currency = {
+    currency_code: "EUR",
+    amount: 1_600,
+    usd_per_foreign_unit: 1.25,
+    conversion_date: "2025-12-01",
+    conversion_rate_explanation:
+      "Employer receipt shows paid-date EUR/USD spot rate",
+    source_document_reference: "2025 German wage-tax receipt",
+  };
+  const result = form1116Node.compute(
+    { taxYear: 2025, formType: "f1040" },
+    {
+      foreign_tax_items: [{
+        foreign_tax_paid: 2_000,
+        foreign_gross_income: 140_000,
+        income_category: IncomeCategory.General,
+        irs_country_code: "GM",
+        tax_paid_or_accrued_date: "2025-12-01",
+        tax_kind: ForeignTaxKind.Other,
+        tax_credit_method: ForeignTaxCreditMethod.Paid,
+        foreign_tax_currency: currency,
+        foreign_income_source_document_reference:
+          "2025 employer project ledger",
+        alternative_compensation_sourcing: {
+          specific_compensation_description: "Consulting salary",
+          alternative_allocation_basis: "Client project locations",
+          alternative_allocation_computation:
+            "140,000 of 300,000 salary sourced to Germany",
+          geographical_comparison:
+            "Project locations better reflect service delivery than workdays",
+          compensation_item_total_usd: 300_000,
+          alternative_us_source_usd: 160_000,
+          alternative_foreign_source_usd: 140_000,
+          ordinary_us_source_usd: 180_000,
+          ordinary_foreign_source_usd: 120_000,
+          source_document_reference: "2025 employer project ledger",
+        },
+      }],
+      worldwide_taxable_income: 250_000,
+      us_tax_before_credits: 50_000,
+    },
+  );
+  const formFields = result.outputs.find((row) => row.nodeType === "form_1116")
+    ?.fields as Parameters<typeof form1116.build>[0];
+  assertThrows(
+    () =>
+      buildMefXml({
+        fec: {
+          fecs: [{
+            foreign_employer_name: "German Employer",
+            country_code: "DE",
+            compensation_amount: 300_000,
+            compensation_usd: 300_000,
+            foreign_tax_paid_usd: 2_000,
+            foreign_service_compensation_usd: 140_000,
+            foreign_tax_irs_country_code: "GM",
+            foreign_tax_paid_or_accrued_date: "2025-12-01",
+            foreign_tax_credit_method: ForeignTaxCreditMethod.Paid,
+            foreign_tax_currency: currency,
+            alternative_compensation_sourcing: {
+              specific_compensation_description: "Consulting salary",
+              alternative_allocation_basis: "Client project locations",
+              alternative_allocation_computation:
+                "140,000 of 300,000 salary sourced to Germany",
+              geographical_comparison:
+                "Project locations better reflect service delivery than workdays",
+              compensation_item_total_usd: 300_000,
+              alternative_us_source_usd: 160_000,
+              alternative_foreign_source_usd: 140_000,
+              ordinary_us_source_usd: 180_000,
+              ordinary_foreign_source_usd: 120_000,
+              source_document_reference: "2025 employer project ledger",
+            },
+          }],
+        },
+        form_1116: formFields,
+        schedule3: {
+          line1_foreign_tax_credit: 2_000,
+          line1_total: 2_000,
+        },
+      }, filer),
+    Error,
+    "detailed explanation PDF attachment",
+  );
+});
+
+Deno.test({
   name:
     "XSD: Form 1116 current-year excess includes native Schedule B lines 6 and 8",
   sanitizeOps: false,
@@ -301,7 +392,7 @@ Deno.test({
 
 Deno.test({
   name:
-    "XSD: Form 1116 uses sourced 2024 carryover with Schedule B lines 1, 3, 4, and 8",
+    "XSD: Form 1116 uses sourced 2021-2024 carryovers with Schedule B lines 1, 3, 4, and 8",
   sanitizeOps: false,
   sanitizeResources: false,
   ignore: !xsdAvailable,
@@ -322,12 +413,29 @@ Deno.test({
       us_tax_before_credits: 2_500,
       prior_year_carryovers: [{
         income_category: IncomeCategory.Passive,
-        vintage_tax_year: 2024,
-        prior_year_schedule_b_line8_vintage_amount: 600,
+        vintages: [
+          {
+            vintage_tax_year: 2021,
+            prior_year_schedule_b_line8_vintage_amount: 100,
+          },
+          {
+            vintage_tax_year: 2022,
+            prior_year_schedule_b_line8_vintage_amount: 100,
+          },
+          {
+            vintage_tax_year: 2023,
+            prior_year_schedule_b_line8_vintage_amount: 100,
+          },
+          {
+            vintage_tax_year: 2024,
+            prior_year_schedule_b_line8_vintage_amount: 500,
+          },
+        ],
+        prior_year_schedule_b_line8_total: 800,
         prior_year_schedule_b_line8_other_vintages_total: 0,
         no_intervening_adjustments: true,
         source_document_references: [
-          "Filed 2024 Schedule B (Form 1116), passive line 8 columns xiii and xiv",
+          "Filed 2024 Schedule B (Form 1116), passive line 8 2021-2024 columns and total",
         ],
       }],
     },
@@ -349,9 +457,10 @@ Deno.test({
   }, filer);
   assertStringIncludes(
     xml,
-    "<ForeignTaxCrCarrybackOrOverAmt>600</ForeignTaxCrCarrybackOrOverAmt>",
+    "<ForeignTaxCrCarrybackOrOverAmt>800</ForeignTaxCrCarrybackOrOverAmt>",
   );
   assertStringIncludes(xml, "<ForeignTxCyovUsedCurrTYGrp>");
+  assertStringIncludes(xml, "<FourthPrecedingTYAmt>100</FourthPrecedingTYAmt>");
   await validateXsd(xml);
 });
 

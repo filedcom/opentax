@@ -124,11 +124,36 @@ function buildIRS1040ScheduleD(fields: Input): string {
   return elements("IRS1040ScheduleD", children);
 }
 
+function hasUnsupportedQsbsTransaction(fields: Input): boolean {
+  const rows = [
+    ...(Array.isArray(fields.transaction)
+      ? fields.transaction
+      : fields.transaction ? [fields.transaction] : []),
+    ...(Array.isArray(fields.transactions) ? fields.transactions : []),
+  ];
+  return rows.some((row) =>
+    typeof row === "object" && row !== null &&
+    (("qsbs_code" in row && row.qsbs_code !== undefined) ||
+      ("qsbs_amount" in row && row.qsbs_amount !== undefined) ||
+      ("adjustment_codes" in row &&
+        typeof row.adjustment_codes === "string" &&
+        row.adjustment_codes.includes("Q")))
+  );
+}
+
 export const scheduleD: MefFormDescriptor<"schedule_d", Input> = {
   pendingKey: "schedule_d",
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040sd.pdf",
   build(fields, context) {
+    if (
+      (typeof fields.box2c_qsbs === "number" && fields.box2c_qsbs > 0) ||
+      hasUnsupportedQsbsTransaction(fields)
+    ) {
+      throw new Error(
+        "Schedule D section 1202 source needs a sourced Form 8949 exclusion and Form 6251 line 2h preference before filing",
+      );
+    }
     if (
       fields.pending_active_4797 === true &&
       context?.pending?.agi_final?.capital_finalized !== true

@@ -9,3 +9,9 @@ export type {
   NodeResult,
   NodeType,
 } from "./core/types/tax-node.ts";
+export {
+  buildForm8582Ledger,
+  form8582LedgerSchema,
+  readForm8582Ledger,
+} from "./forms/f1040/nodes/intermediate/forms/form8582/ledger.ts";
+export type { Form8582Ledger } from "./forms/f1040/nodes/intermediate/forms/form8582/ledger.ts";

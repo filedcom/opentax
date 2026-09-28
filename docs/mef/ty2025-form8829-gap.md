@@ -12,34 +12,42 @@ The node models one identified rented home used regularly and exclusively for
 one Schedule C business, with actual-method indirect insurance, rent, repairs,
 utilities, and other operating expenses. It requires explicit eligibility and
 exclusion facts. It calculates applicable 2025 lines 1–3, 7–8, 18b–28, 32–36,
-and 43–44. A positive line 36 is now blocked at the node and MeF boundaries: the
-executor cannot merge an output into one identified Schedule C item, so the
-prior top-level line 30 output did not change filed Schedule C line 30/31 or
-downstream SE tax and QBI. Zero-deduction Form 8829 still retains and emits line
-43 carryover. The old flat expense input is rejected. Form 1098's former
-full-box-1 routing to Form 8829 now fails explicitly because its
-mortgage-interest allocation is not modeled. The input is registered for the
-2025 filing graph.
+and 43–44. A positive line 36 now emits a business-referenced claim to Schedule
+C. That node projects it onto the sole item before line 31, SE tax, and QBI; the
+Schedule C and Form 8829 MeF builders independently reconcile the same claim,
+source line 29, and filed line 30/31. The positive route requires the sole
+Schedule C item to identify the taxpayer as proprietor, matching the primary
+filer identity emitted by MeF. Spouse-owned or unspecified-owner businesses fail
+closed. A prior top-level line 30 amount or an existing item line 30 is rejected
+for this route. The source additionally affirms that all Schedule C gross income
+is attributable to business use of the home, which is required for the bounded
+line 8 calculation. Zero-deduction Form 8829 still retains and emits line 43
+carryover. The old flat expense input is rejected. Form 1098's former full-box-1
+routing to Form 8829 now fails explicitly because its mortgage-interest
+allocation is not modeled. The input is registered for the 2025 filing graph.
 
 The MeF descriptor was rewritten for native TY2025 v5.4 `IRS8829` order. It
 requires proprietor name/SSN, recalculates every emitted line, and checks the
-identified Schedule C reference and line 29 for the zero-deduction route. The
-PDF descriptor maps the known bounded-route source fields to printed positions
-but does not yet fill the complete calculated form or identity.
+identified Schedule C reference and line 29. The PDF descriptor now projects
+proprietor identity and every calculated line of the bounded rented-home route,
+including the printed business percentages, line 15 limit, expense subtotal,
+allowance, and next-year carryover. Its projection recalculates the source and
+rejects mismatched amounts before printing.
 
 ## Bounded PDF correction
 
-The current PDF descriptor's Form 8829 line 1 and 2 fields were reversed.
-Several expenses, carryovers, and basis values were also mapped to different
-printed lines. The descriptor now points business area to line 1, total area to
-line 2, mortgage interest to line 10's indirect column, indirect operating
-expenses to lines 18–22, prior operating carryover to line 25, prior
-depreciation carryover to line 31, and basis/FMV to line 37. Focused field-name
-cases are written, but they have not yet been run and the filled form has not
-been visually inspected.
+The earlier field audit corrected reversed area fields and several printed-line
+positions. For the currently supported rented-home route, the descriptor now
+maps business and total area to lines 1 and 2, percentages to lines 3 and 7,
+indirect operating expenses to lines 18–23, the prior operating carryover to
+line 25, and all computed limits and carryovers through line 44. Unsupported
+owner-home fields, including mortgage interest and depreciation basis, remain
+unmapped for this route. Focused field-name and projection cases are written,
+but have not been run or visually inspected.
 
-This corrects field placement only. It does not establish that a complete or
-accurate Form 8829 can be filed from the current calculator and XML builder.
+This extends the bounded rented-home PDF projection only. It does not make an
+owned-home or another excluded route fileable, and the filled appearance is
+still unverified.
 
 ## Remaining end-to-end boundaries
 
@@ -47,19 +55,19 @@ accurate Form 8829 can be filed from the current calculator and XML builder.
   taxes, casualty losses, depreciation, direct expenses, daycare, inventory
   storage, and multiple homes or businesses. These need distinct sourced paths,
   not an inferred zero expense in otherwise applicable returns.
-- Positive actual-method deductions need an item-linked Schedule C projection
-  before line 31, SE tax, and QBI are computed. The runtime's shallow array
-  accumulation cannot safely patch one `schedule_cs` item, so this route fails
-  closed rather than filing inconsistent Forms 8829 and Schedule C.
+- The one-business taxpayer-owned projection is written but has not yet passed
+  the agreed consolidated test, XSD, filled-PDF, or IRS ATS acceptance gates.
+  Multiple businesses, multiple homes, or non-home business income remain
+  unsupported.
 - Eligibility, non-duplication of home costs in Schedule C expenses, and the
   prior-year line 25 operating carryover are verified source facts, not yet
   reconciled to independent use records, expense detail, or a prior-year return.
   Schedule C lacks an owner field, so proprietor-to-business linkage is not
   independently checked.
 - The native XML is written against v5.4 names and order but has not yet passed
-  local XSD or IRS business-rule validation. The registered PDF still lacks
-  identity and most computed fields; it must not be treated as a complete
-  filled-form validation.
+  local XSD or IRS business-rule validation. The registered PDF projects the
+  bounded rented-home lines and identity, but its widgets and actual filled
+  appearance have not been validated.
 - The node assumes `mortgage_interest` is already allocated to business use. The
   1098 router actually sends the full box 1 amount, and the IRS instructions put
   deductible home mortgage interest in Form 8829 line 10 column (b), apply the

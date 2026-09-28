@@ -1,5 +1,10 @@
 import { StandardFonts } from "pdf-lib";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
+import { reconcileForm4972Nua } from "../../form4972_nua_reconciliation.ts";
+import { reconcileForm4972MultipleRecipients } from "../../form4972_multiple_recipient_reconciliation.ts";
+import { reconcileForm4972EstatePartII } from "../../form4972_estate_part2_reconciliation.ts";
+import { reconcileForm4972FullShare } from "../../form4972_full_share_reconciliation.ts";
+import { inputSchema as f1099rSchema } from "../../../nodes/inputs/f1099r/index.ts";
 
 // Field positions checked against the 2025 IRS AcroForm. Only page 1 is filed;
 // the NUA and death-benefit worksheets on later pages are kept for records.
@@ -88,18 +93,192 @@ function projectedFields(
   allPending: Record<string, Record<string, unknown>>,
 ) {
   if (typeof fields.line6 !== "number" && typeof fields.line8 !== "number") {
-    return fields;
+    if (Object.keys(fields).length > 0) {
+      throw new Error(
+        "Form 4972 PDF has source facts but no elected printed part",
+      );
+    }
+    return {};
   }
+  const multipleRecipients = reconcileForm4972MultipleRecipients(
+    fields,
+    allPending,
+  );
+  assertElectedPdfShape(fields, allPending, multipleRecipients);
+  reconcileForm4972Nua(fields, allPending);
+  reconcileForm4972EstatePartII(fields, allPending);
+  reconcileForm4972FullShare(fields, allPending);
   const recipient = recipientIdentity(fields, allPending);
+  const printedFields = { ...fields };
+  if (fields.beneficiary_distribution === true) {
+    delete printedFields.prior_election_after_1986;
+  } else {
+    delete printedFields.prior_beneficiary_election_after_1986;
+  }
   const ratio = fields.line20;
-  if (typeof ratio !== "number") return { ...fields, ...recipient };
+  if (typeof ratio !== "number") return { ...printedFields, ...recipient };
   const [whole, fraction] = ratio.toFixed(5).split(".");
   return {
-    ...fields,
+    ...printedFields,
     ...recipient,
     line20_whole: whole,
     line20_fraction: fraction,
   };
+}
+
+function numberOn(fields: Record<string, unknown>, key: string): number {
+  const amount = fields[key];
+  if (typeof amount !== "number" || !Number.isFinite(amount)) {
+    throw new Error(`Form 4972 PDF elected form needs ${key}`);
+  }
+  return amount;
+}
+
+function assertElectedPdfShape(
+  fields: Record<string, unknown>,
+  allPending: Record<string, Record<string, unknown>>,
+  multipleRecipients: boolean,
+): void {
+  const capital = fields.elect_capital_gain === true;
+  const averaging = fields.elect_10yr_averaging === true;
+  if (
+    !capital && !averaging ||
+    capital !== (typeof fields.line6 === "number") ||
+    averaging !== (typeof fields.line8 === "number")
+  ) {
+    throw new Error("Form 4972 PDF election and printed Parts II/III differ");
+  }
+  if (
+    fields.born_before_1936 !== true ||
+    fields.entire_balance_distributed !== true ||
+    fields.rolled_over_any !== false ||
+    typeof fields.beneficiary_distribution !== "boolean" ||
+    typeof fields.participant_five_year_member !== "boolean" ||
+    (fields.beneficiary_distribution === true &&
+      fields.participant_five_year_member === true) ||
+    !(fields.beneficiary_distribution || fields.participant_five_year_member) ||
+    (fields.beneficiary_distribution === true
+      ? fields.prior_beneficiary_election_after_1986 !== false
+      : fields.prior_election_after_1986 !== false)
+  ) {
+    throw new Error("Form 4972 PDF needs qualifying printed Part I answers");
+  }
+  const source = f1099rSchema.safeParse(allPending.f1099r);
+  const elected = source.success
+    ? source.data.f1099rs.filter((item) =>
+      item.exclude_4972 === true && item.no_distribution_received !== true
+    )
+    : [];
+  const item = elected[0];
+  if (
+    elected.length !== 1 || !item || item.ts !== fields.recipient ||
+    item.box9a_pct_total !== undefined &&
+      item.box9a_pct_total !== 100 && !multipleRecipients ||
+    item.box2a_taxable_amount !== fields.lump_sum_amount ||
+    (item.box3_capital_gain ?? 0) !== (fields.capital_gain_amount ?? 0) ||
+    (item.box6_nua ?? 0) !== (fields.box6_nua ?? 0) ||
+    (item.box8_other ?? 0) !== (fields.annuity_actuarial_value ?? 0) ||
+    (item.box8_pct_total ?? null) !== (fields.annuity_share_pct ?? null)
+  ) {
+    throw new Error(
+      "Form 4972 PDF needs one matching Form 1099-R source and recipient share",
+    );
+  }
+  if (capital) {
+    if (
+      numberOn(fields, "line7") !== Math.round(numberOn(fields, "line6") * 0.2)
+    ) {
+      throw new Error("Form 4972 PDF Part II lines 6 and 7 do not reconcile");
+    }
+  } else if (typeof fields.line7 === "number") {
+    throw new Error("Form 4972 PDF has Part II tax without its election");
+  }
+  if (!averaging) {
+    if (typeof fields.line30 === "number") {
+      throw new Error("Form 4972 PDF has Part III tax without its election");
+    }
+    return;
+  }
+  for (
+    const key of [
+      "line8",
+      "line9",
+      "line10",
+      "line11",
+      "line12",
+      "line17",
+      "line18",
+      "line19",
+      "line23",
+      "line24",
+      "line25",
+      "line29",
+      "line30",
+    ]
+  ) numberOn(fields, key);
+  const annuity = numberOn(fields, "line11");
+  const taxable = numberOn(fields, "line12");
+  const allowance = taxable < 70_000 ? numberOn(fields, "line16") : 0;
+  if (taxable < 70_000) {
+    for (const key of ["line13", "line14", "line15"]) numberOn(fields, key);
+  } else if (
+    ["line13", "line14", "line15", "line16"].some((key) =>
+      typeof fields[key] === "number"
+    )
+  ) {
+    throw new Error("Form 4972 PDF printed skipped allowance lines");
+  }
+  if (annuity > 0) {
+    for (
+      const key of ["line20", "line21", "line22", "line26", "line27", "line28"]
+    ) {
+      numberOn(fields, key);
+    }
+  } else if (
+    ["line20", "line21", "line22", "line26", "line27", "line28"]
+      .some((key) => typeof fields[key] === "number")
+  ) {
+    throw new Error("Form 4972 PDF printed skipped annuity lines");
+  }
+  if (
+    numberOn(fields, "line10") !==
+      numberOn(fields, "line8") - numberOn(fields, "line9") ||
+    taxable !== numberOn(fields, "line10") + annuity ||
+    taxable < 70_000 &&
+      (numberOn(fields, "line13") !==
+          Math.round(Math.min(10_000, taxable * 0.5)) ||
+        numberOn(fields, "line14") !== Math.max(0, taxable - 20_000) ||
+        numberOn(fields, "line15") !==
+          Math.round(numberOn(fields, "line14") * 0.2) ||
+        allowance !==
+          numberOn(fields, "line13") - numberOn(fields, "line15")) ||
+    numberOn(fields, "line17") !== taxable - allowance ||
+    numberOn(fields, "line19") !==
+      numberOn(fields, "line17") - numberOn(fields, "line18") ||
+    numberOn(fields, "line23") !==
+      Math.round(numberOn(fields, "line19") * 0.1) ||
+    numberOn(fields, "line25") !== numberOn(fields, "line24") * 10 ||
+    annuity > 0 &&
+      (numberOn(fields, "line20") !==
+          Math.round(annuity / taxable * 100_000) / 100_000 ||
+        numberOn(fields, "line21") !==
+          Math.round(allowance * numberOn(fields, "line20")) ||
+        numberOn(fields, "line22") !== annuity - numberOn(fields, "line21") ||
+        numberOn(fields, "line26") !==
+          Math.round(numberOn(fields, "line22") * 0.1) ||
+        numberOn(fields, "line28") !== numberOn(fields, "line27") * 10) ||
+    numberOn(fields, "line29") !== Math.round(
+        (numberOn(fields, "line25") -
+          (annuity > 0 ? numberOn(fields, "line28") : 0)) *
+          (multipleRecipients
+            ? numberOn(fields, "recipient_share_pct") / 100
+            : 1),
+      ) ||
+    numberOn(fields, "line30") !== numberOn(fields, "line29") +
+        (capital ? numberOn(fields, "line7") : 0)
+  ) {
+    throw new Error("Form 4972 PDF elected Part III lines do not reconcile");
+  }
 }
 
 // The 2025 filing page has no AcroForm fields on the dotted lines beside
@@ -127,7 +306,9 @@ export const form4972Pdf: PdfFormDescriptor = {
   projectFields: projectedFields,
   decoratePages: async (document, pages, fields) => {
     const annotations = form4972NuaAnnotations(fields);
-    if (annotations.length === 0) return;
+    const multipleRecipients = typeof fields.recipient_share_pct === "number" &&
+      fields.recipient_share_pct < 100 && typeof fields.line29 === "number";
+    if (annotations.length === 0 && !multipleRecipients) return;
     const page = pages[0];
     if (!page) throw new Error("Form 4972 filing page is missing");
     const font = await document.embedFont(StandardFonts.Helvetica);
@@ -136,6 +317,10 @@ export const form4972Pdf: PdfFormDescriptor = {
       // Keep the notation inside the dotted line, clear of the numbered box.
       const x = 470 - font.widthOfTextAtSize(label, 8);
       page.drawText(label, { x, y, size: 8, font });
+    }
+    if (multipleRecipients) {
+      // Line 29's dotted-line baseline is at y≈90 in the 2025 source form.
+      page.drawText("MRD", { x: 445, y: 90, size: 8, font });
     }
   },
   includeWhen: (fields) =>

@@ -1,6 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   calculateCreditLimitWorksheetALine5,
+  calculateCreditLimitWorksheetBLines,
   calculateEarnedIncomeWorksheet,
   calculatePartIIBLines,
   calculateSchedule8812Lines,
@@ -899,6 +900,44 @@ Deno.test("Schedule 8812 rejects conflicting return facts", () => {
   );
 });
 
+Deno.test("Schedule 8812 explicit worksheet facts must match engine-derived return facts", () => {
+  const item = minimalItem({
+    qualifying_children_count: 1,
+    agi: 50_000,
+    income_tax_liability: 1_000,
+  });
+  const base = {
+    f8812s: [item],
+    auto_qualifying_children: 1,
+    auto_other_dependents: 0,
+    auto_filing_status: FilingStatus.Single,
+    auto_agi: 50_000,
+    auto_income_tax_liability: 1_000,
+    line18a_earned_income: 10_000,
+    credit_limit_worksheet: zeroCreditWorksheet,
+  };
+  const ctx = { taxYear: 2025, formType: "f1040" } as const;
+  assertEquals(
+    fieldsOf(f8812.compute(ctx, base).outputs, f1040)?.line19_child_tax_credit,
+    1_000,
+  );
+  assertThrows(
+    () => f8812.compute(ctx, { ...base, auto_agi: 250_000 }),
+    Error,
+    "AGI differs from Form 1040 line 11a",
+  );
+  assertThrows(
+    () => f8812.compute(ctx, { ...base, auto_filing_status: FilingStatus.MFJ }),
+    Error,
+    "filing status differs from the Form 1040 source",
+  );
+  assertThrows(
+    () => f8812.compute(ctx, { ...base, auto_income_tax_liability: 500 }),
+    Error,
+    "tax limit differs from Form 1040 line 18",
+  );
+});
+
 Deno.test("Schedule 8812 auto path does not guess filing status", () => {
   assertThrows(
     () =>
@@ -1175,20 +1214,111 @@ Deno.test("Schedule 8812 Worksheet A uses exactly the IRS-listed prior credits",
   );
 });
 
-Deno.test("Schedule 8812 makes Worksheet B line 14 available to Form 8859", () => {
+Deno.test("Schedule 8812 derives Worksheet B line 14 for Form 8859", () => {
   const result = f8812.compute({ taxYear: 2025, formType: "f1040" }, {
     f8812s: [minimalItem({ qualifying_children_count: 1 })],
-    line18a_earned_income: 0,
+    line18a_earned_income: 20_000,
+    earned_income_worksheet: {
+      form1040_line1z_wages: 20_000,
+      nontaxable_combat_pay: 0,
+      schedule_c_statutory_employee_income: 0,
+      nonfarm_schedule_c_and_k1_net: 0,
+      farm_schedule_f_and_k1_net: 0,
+      farm_optional_method_used: false,
+      excluded_medicaid_waiver_payments: 0,
+      schedule1_line15_se_deduction: 0,
+    },
     credit_limit_worksheet: {
       ...zeroCreditWorksheet,
       worksheet_b_applies: true,
-      worksheet_b_line14: 900,
       worksheet_b_line15: 100,
     },
   });
   const fields = fieldsOf(result.outputs, f1040);
   assertEquals(fields?.form8859_worksheet_b_applies, true);
-  assertEquals(fields?.form8859_worksheet_b_line14, 900);
+  assertEquals(fields?.form8859_worksheet_b_line14, 500);
+});
+
+Deno.test("Schedule 8812 Worksheet B calculates payroll branch and adoption/EIC subtraction", () => {
+  const earned = {
+    form1040_line1z_wages: 10_000,
+    nontaxable_combat_pay: 0,
+    schedule_c_statutory_employee_income: 0,
+    nonfarm_schedule_c_and_k1_net: 0,
+    farm_schedule_f_and_k1_net: 0,
+    farm_optional_method_used: false,
+    excluded_medicaid_waiver_payments: 0,
+    schedule1_line15_se_deduction: 0,
+  };
+  const payroll = {
+    line21_w2_withheld_social_security_medicare: 2_000,
+    schedule1_line15: 100,
+    schedule2_line5: 0,
+    schedule2_line6: 0,
+    schedule2_line13: 0,
+    form1040_line27a_eic: 500,
+    schedule3_line11_adoption_credit: 100,
+  };
+  const lines = calculateCreditLimitWorksheetBLines(
+    6_600,
+    3,
+    earned,
+    false,
+    payroll,
+  );
+  assertEquals(lines.line5, 1_125);
+  assertEquals(lines.usesPayrollBranch, true);
+  assertEquals(lines.line11, 1_500);
+  assertEquals(lines.line13, 1_500);
+  assertEquals(lines.line14, 5_100);
+  assertThrows(
+    () => calculateCreditLimitWorksheetBLines(6_600, 3, earned, false),
+    Error,
+    "lines 7-10 need",
+  );
+  assertEquals(
+    calculateCreditLimitWorksheetBLines(2_200, 1, earned, false).line14,
+    500,
+  );
+  assertEquals(
+    calculateCreditLimitWorksheetBLines(500, 1, earned, false).line14,
+    0,
+  );
+  assertEquals(
+    calculateCreditLimitWorksheetBLines(2_200, 1, earned, true, payroll)
+      .usesPayrollBranch,
+    true,
+  );
+});
+
+Deno.test("Schedule 8812 Worksheet B refuses caller line 14 and missing earned worksheet", () => {
+  const item = minimalItem({ qualifying_children_count: 1 });
+  const creditWorksheet = {
+    ...zeroCreditWorksheet,
+    worksheet_b_applies: true,
+    worksheet_b_line15: 0,
+  };
+  assertThrows(
+    () =>
+      calculateSchedule8812Lines(2025, {
+        f8812s: [item],
+        credit_limit_worksheet: creditWorksheet,
+      }),
+    Error,
+    "needs its earned-income worksheet",
+  );
+  assertThrows(
+    () =>
+      calculateSchedule8812Lines(2025, {
+        f8812s: [item],
+        credit_limit_worksheet: {
+          ...creditWorksheet,
+          worksheet_b_line14: 900,
+        } as unknown as NonNullable<F8812Input["credit_limit_worksheet"]>,
+      }),
+    Error,
+    "worksheet_b_line14",
+  );
 });
 
 Deno.test("Schedule 8812 rejects missing or duplicated credit-limit worksheets", () => {

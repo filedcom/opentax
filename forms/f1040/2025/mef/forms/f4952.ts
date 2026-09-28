@@ -1,4 +1,11 @@
 import { element, elements } from "../../../mef/xml.ts";
+import { reconcileForm4952DividendPath } from "../../form4952_dividend_reconciliation.ts";
+import { reconcileForm4952InterestPath } from "../../form4952_interest_reconciliation.ts";
+import { reconcileForm4952CombinedPath } from "../../form4952_combined_reconciliation.ts";
+import { reconcileForm4952PartnershipPath } from "../../form4952_partnership_reconciliation.ts";
+import { reconcileForm4952K1InterestAgainst1099Path } from "../../form4952_k1_1099int_reconciliation.ts";
+import { reconcileForm4952K1InterestAgainst1099DivPath } from "../../form4952_k1_1099div_reconciliation.ts";
+import { reconcileForm4952MiscRoyaltyPath } from "../../form4952_misc_royalty_reconciliation.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 
 export interface Fields {
@@ -44,7 +51,53 @@ export const form4952: MefFormDescriptor<"form4952", Input> = {
   pendingKey: "form4952",
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f4952--2025.pdf",
-  build(fields) {
+  build(fields, context) {
+    if (
+      fields.source_1099_royalties !== undefined
+    ) {
+      if (!context?.filer) {
+        throw new Error("Form 4952 linked royalty needs filer identity");
+      }
+      reconcileForm4952MiscRoyaltyPath(
+        fields,
+        context.pending ?? {},
+        context.filer,
+      );
+    } else if (
+      fields.source_1099_dividends !== undefined &&
+      fields.source_1099_interest !== undefined
+    ) {
+      reconcileForm4952CombinedPath(fields, context?.pending ?? {});
+    } else if (
+      fields.source_1099_dividends !== undefined &&
+      fields.source_k1_investment_interest !== undefined
+    ) {
+      reconcileForm4952K1InterestAgainst1099DivPath(
+        fields,
+        context?.pending ?? {},
+      );
+    } else if (fields.source_1099_dividends !== undefined) {
+      reconcileForm4952DividendPath(fields, context?.pending ?? {});
+    } else if (
+      fields.source_1099_interest !== undefined &&
+      fields.source_k1_investment_interest !== undefined
+    ) {
+      reconcileForm4952K1InterestAgainst1099Path(
+        fields,
+        context?.pending ?? {},
+      );
+    } else if (fields.source_1099_interest !== undefined) {
+      reconcileForm4952InterestPath(fields, context?.pending ?? {});
+    } else if (
+      fields.source_k1_interest !== undefined &&
+      fields.source_k1_investment_interest !== undefined
+    ) {
+      reconcileForm4952PartnershipPath(fields, context?.pending ?? {});
+    } else {
+      throw new Error(
+        "Form 4952 export needs a source-reconciled investment-income route",
+      );
+    }
     return elements(
       "IRS4952",
       FIELD_MAP.map(([key, tag]) => {

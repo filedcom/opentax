@@ -4,6 +4,7 @@ import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { form8919 } from "../../intermediate/forms/form8919/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
 import { scheduleC } from "../schedule_c/index.ts";
 import { schedule_f } from "../../intermediate/forms/schedule_f/index.ts";
@@ -187,13 +188,48 @@ Deno.test("routing: box1_nec with form_8919 → form8919 node", () => {
   }]);
 });
 
-Deno.test("routing: box1_nec with schedule_1_line_8z → schedule1 node line8z_other", () => {
+Deno.test("routing: nonbusiness 1099-NEC income reaches typed Schedule 1 line 8z and AGI", () => {
   const result = compute([
     minimalItem({ box1_nec: 1200, for_routing: "schedule_1_line_8z" }),
   ]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_other, 1200);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)!.line8z_f1099nec_nonbusiness,
+    1200,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, agi_aggregator)!.line8z_f1099nec_nonbusiness,
+    1200,
+  );
+});
+
+Deno.test("routing: multiple nonbusiness 1099-NEC payers combine once without losing AGI", () => {
+  const result = compute([
+    minimalItem({ box1_nec: 1_200, for_routing: "schedule_1_line_8z" }),
+    minimalItem({
+      payer_name: "Second Payer",
+      payer_tin: "98-7654321",
+      box1_nec: 800,
+      for_routing: "schedule_1_line_8z",
+    }),
+  ]);
+  assertEquals(
+    result.outputs.filter((o) => o.nodeType === schedule1.nodeType).length,
+    1,
+  );
+  assertEquals(
+    result.outputs.filter((o) => o.nodeType === agi_aggregator.nodeType).length,
+    1,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)?.line8z_f1099nec_nonbusiness,
+    2_000,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, agi_aggregator)?.line8z_f1099nec_nonbusiness,
+    2_000,
+  );
 });
 
 Deno.test("routing: omitting for_routing defaults to schedule_c", () => {

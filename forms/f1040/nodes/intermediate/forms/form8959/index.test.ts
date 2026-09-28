@@ -1,4 +1,4 @@
-import { assertAlmostEquals, assertEquals } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { form8959, inputSchema } from "./index.ts";
 import { FilingStatus } from "../../../types.ts";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
@@ -75,14 +75,24 @@ Deno.test("computed form lines use W-2 box 5 and expose the full Part I calculat
   });
   const form = findOutput(result, "form8959");
 
-  assertEquals(form?.fields.line1_medicare_wages, 367_934.84);
-  assertEquals(form?.fields.line4_total_medicare_wages, 367_934.84);
+  assertEquals(form?.fields.line1_medicare_wages, 367_935);
+  assertEquals(form?.fields.line4_total_medicare_wages, 367_935);
   assertEquals(form?.fields.line5_threshold, 200_000);
-  assertAlmostEquals(form?.fields.line6_wage_excess as number, 167_934.84);
-  assertAlmostEquals(form?.fields.line7_wage_tax as number, 1_511.41356);
-  assertEquals(form?.fields.line18_total_tax, 1_511.41);
-  assertEquals(form?.fields.line21_regular_medicare_tax, 5_335.06);
-  assertEquals(form?.fields.line22_additional_withheld, 1_511.41);
+  assertEquals(form?.fields.line6_wage_excess, 167_935);
+  assertEquals(form?.fields.line7_wage_tax, 1_511);
+  assertEquals(form?.fields.line18_total_tax, 1_511);
+  assertEquals(form?.fields.line19_medicare_withheld, 6_846);
+  assertEquals(form?.fields.line21_regular_medicare_tax, 5_335);
+  assertEquals(form?.fields.line22_additional_withheld, 1_511);
+  assertEquals(form?.fields.line24_total_withheld, 1_511);
+  assertEquals(
+    fieldsOf(result.outputs, schedule2)?.line11_additional_medicare,
+    1_511,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.line25c_additional_medicare_withheld,
+    1_511,
+  );
 });
 
 Deno.test("Form 8959 rejects the removed second wage field", () => {

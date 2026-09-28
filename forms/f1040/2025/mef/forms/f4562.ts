@@ -7,7 +7,7 @@ import {
 import {
   computeNetProfit,
   inputSchema as scheduleCInputSchema,
-} from "../../../nodes/inputs/schedule_c/index.ts";
+} from "../../../nodes/inputs/schedule_c/model.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 type Fields = z.infer<typeof filedForm4562Schema>;

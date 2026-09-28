@@ -1,6 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
 import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
 import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
@@ -90,7 +91,14 @@ Deno.test("Form 8621 Part V puts prior-year tax on line 16 and interest on Sched
     fieldsOf(result.outputs, schedule2)?.line17p_form8621_interest,
     Math.round(calculateSection1291Interest(2024, 5_006.84 * 0.37)),
   );
-  assertEquals(fieldsOf(result.outputs, schedule1)?.line8z_other, 4_993);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)?.line8z_form8621_section1291,
+    4_993,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, agi_aggregator)?.line8z_form8621_section1291,
+    4_993,
+  );
   assertEquals(
     fieldsOf(result.outputs, schedule2)?.line17z_other_additional_taxes,
     undefined,
@@ -118,7 +126,10 @@ Deno.test("Form 8621 routes taxable nonexcess distribution to dividends", () => 
     fieldsOf(result.outputs, form8960)?.line2_ordinary_dividends,
     5_000,
   );
-  assertEquals(fieldsOf(result.outputs, schedule1)?.line8z_other, 2_497);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)?.line8z_form8621_section1291,
+    2_497,
+  );
 });
 
 Deno.test("Form 8621 combines separate holdings without losing their filed documents", () => {
@@ -143,7 +154,10 @@ Deno.test("Form 8621 combines separate holdings without losing their filed docum
     Math.round(calculateSection1291Interest(2024, 5_006.84 * 0.37)) +
       Math.round(calculateSection1291Interest(2024, 2_503.42 * 0.37)),
   );
-  assertEquals(fieldsOf(result.outputs, schedule1)?.line8z_other, 7_490);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)?.line8z_form8621_section1291,
+    7_490,
+  );
   const filed = result.outputs.find((item) => item.nodeType === "form8621");
   assertEquals((filed?.fields as { items: Form8621Lines[] }).items.length, 2);
 });
@@ -182,7 +196,15 @@ Deno.test("Form 8621 keeps section 1291, QEF, and MTM amounts on their respectiv
       mtm_adjusted_basis_at_year_end: 10_000,
     }),
   ]);
-  assertEquals(fieldsOf(result.outputs, schedule1)?.line8z_other, 8_993);
+  assertEquals(fieldsOf(result.outputs, schedule1), {
+    line8z_form8621_qef: 2_000,
+    line8z_form8621_mtm: 2_000,
+    line8z_form8621_section1291: 4_993,
+  });
+  assertEquals(
+    fieldsOf(result.outputs, agi_aggregator),
+    fieldsOf(result.outputs, schedule1),
+  );
   assertEquals(fieldsOf(result.outputs, schedule_d)?.line_11_qef_lt, 1_000);
   assertEquals(
     fieldsOf(result.outputs, income_tax_calculation)?.form8621_tax,
@@ -202,7 +224,7 @@ Deno.test("Form 8621 QEF ordinary income and net long-term gain use different re
     qef_ordinary_income: 5_000,
     qef_capital_gain: 2_000,
   })]);
-  assertEquals(fieldsOf(result.outputs, schedule1)?.line8z_other, 5_000);
+  assertEquals(fieldsOf(result.outputs, schedule1)?.line8z_form8621_qef, 5_000);
   assertEquals(fieldsOf(result.outputs, schedule_d)?.line_11_qef_lt, 2_000);
 });
 
@@ -236,7 +258,7 @@ Deno.test("Form 8621 QEF section 951 and 1293(g) amounts reduce each inclusion",
     qef_capital_gain: 2_000,
     qef_capital_951_or_1293g_reduction: 500,
   })]);
-  assertEquals(fieldsOf(result.outputs, schedule1)?.line8z_other, 3_500);
+  assertEquals(fieldsOf(result.outputs, schedule1)?.line8z_form8621_qef, 3_500);
   assertEquals(fieldsOf(result.outputs, schedule_d)?.line_11_qef_lt, 1_500);
   assertThrows(
     () =>
@@ -256,7 +278,7 @@ Deno.test("Form 8621 mark-to-market gain comes from value less basis", () => {
     fmv_at_year_end: 15_000,
     mtm_adjusted_basis_at_year_end: 10_000,
   })]);
-  assertEquals(fieldsOf(result.outputs, schedule1)?.line8z_other, 5_000);
+  assertEquals(fieldsOf(result.outputs, schedule1)?.line8z_form8621_mtm, 5_000);
 });
 
 Deno.test("Form 8621 mark-to-market loss is limited to unreversed inclusions", () => {
@@ -266,7 +288,10 @@ Deno.test("Form 8621 mark-to-market loss is limited to unreversed inclusions", (
     mtm_adjusted_basis_at_year_end: 10_000,
     mtm_unreversed_inclusions: 1_200,
   })]);
-  assertEquals(fieldsOf(result.outputs, schedule1)?.line8z_other, -1_200);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)?.line8z_form8621_mtm,
+    -1_200,
+  );
   assertThrows(
     () =>
       compute([minimalItem({

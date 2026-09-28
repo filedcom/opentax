@@ -3,15 +3,17 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { scheduleC as schedule_c } from "../schedule_c/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
-// TY2025 TPSO reporting threshold per OBBBA (IRC §6050W as amended)
-const TPSO_GROSS_THRESHOLD = 5_000;
+// TY2025 issuer reporting threshold. This does not limit the recipient's
+// obligation to report taxable income from payments below the threshold.
+const TPSO_GROSS_THRESHOLD = 20_000;
 const MONTHLY_SUM_ROUNDING_TOLERANCE = 1;
 
 export const itemSchema = z.object({
@@ -50,10 +52,11 @@ export const itemSchema = z.object({
   box4_federal_withheld: z.number().nonnegative().optional(),
 
   // Routing — determines where box1a income is reported.
-  // When omitted, no income is routed (backward compatible).
+  // When omitted, the gross information-return amount is not presumed taxable.
   //   "schedule_c"       → business income (Schedule C line 1)
-  //   "schedule_1_line_8z" → other income (Schedule 1 line 8z)
-  for_routing: z.enum(["schedule_c", "schedule_1_line_8z"]).optional(),
+  //   "schedule_1_line_8j" → confirmed activity-not-for-profit income.
+  // Personal-item sales and erroneous Forms 1099-K need their own sources.
+  for_routing: z.enum(["schedule_c", "schedule_1_line_8j"]).optional(),
 
   // Boxes 5a–5l — Monthly gross payment amounts
   box5a_january: z.number().nonnegative().optional(),
@@ -104,7 +107,9 @@ const MONTHLY_FIELDS = [
 type MonthlyField = typeof MONTHLY_FIELDS[number];
 
 function allMonthlyFieldsPresent(item: K99Item): boolean {
-  return MONTHLY_FIELDS.every((field) => item[field as MonthlyField] !== undefined);
+  return MONTHLY_FIELDS.every((field) =>
+    item[field as MonthlyField] !== undefined
+  );
 }
 
 function sumMonthlyFields(item: K99Item): number {
@@ -129,30 +134,48 @@ function validateItem(item: K99Item): void {
 function federalWithholdingOutputs(k99s: K99Items): NodeOutput[] {
   return k99s
     .filter((item) => (item.box4_federal_withheld ?? 0) > 0)
-    .map((item) => (output(f1040, { line25b_withheld_1099: item.box4_federal_withheld! })));
+    .map((
+      item,
+    ) => (output(f1040, {
+      line25b_withheld_1099: item.box4_federal_withheld!,
+    })));
 }
 
-// Route box1a income when for_routing is set and amount exceeds TY2025 threshold.
+// The routing decision asserts that this gross amount belongs on the return.
+// The issuer's Form 1099-K reporting threshold is not a taxable-income floor.
 function incomeOutputs(k99s: K99Items): NodeOutput[] {
-  return k99s.flatMap((item) => {
+  const businessOutputs = k99s.flatMap((item) => {
     if (!item.for_routing) return [];
     const gross = item.box1a_gross_payments ?? 0;
-    if (gross <= TPSO_GROSS_THRESHOLD) return [];
+    if (gross <= 0) return [];
     switch (item.for_routing) {
       case "schedule_c":
         return [output(schedule_c, {
           schedule_cs: [{
-            line_a_principal_business: item.pse_name ?? "Payment network income",
+            line_a_principal_business: item.pse_name ??
+              "Payment network income",
             line_b_business_code: "999999",
             line_f_accounting_method: "cash",
             line_g_material_participation: true,
             line_1_gross_receipts: gross,
           }],
         })];
-      case "schedule_1_line_8z":
-        return [output(schedule1, { line8z_other: gross })];
+      case "schedule_1_line_8j":
+        return [];
     }
   });
+  const hobbyIncome = k99s.filter((item) =>
+    item.for_routing === "schedule_1_line_8j"
+  ).reduce((sum, item) => sum + (item.box1a_gross_payments ?? 0), 0);
+  return [
+    ...businessOutputs,
+    ...(hobbyIncome > 0
+      ? [
+        output(schedule1, { line8j_f1099k_hobby_income: hobbyIncome }),
+        output(agi_aggregator, { line8j_f1099k_hobby_income: hobbyIncome }),
+      ]
+      : []),
+  ];
 }
 
 // Exported for reference (TY2025 threshold)
@@ -163,7 +186,12 @@ export const TY2025 = {
 class F1099kNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f1099k";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, schedule_c, schedule1]);
+  readonly outputNodes = new OutputNodes([
+    f1040,
+    schedule_c,
+    schedule1,
+    agi_aggregator,
+  ]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);

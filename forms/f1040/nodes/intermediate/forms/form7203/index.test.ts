@@ -168,33 +168,26 @@ Deno.test("form7203 — omitted basis fields default to zero: entire loss disall
 
 // ─── 8. Prior year unallowed losses ──────────────────────────────────────────
 
-Deno.test("form7203 — prior year unallowed added to current loss", () => {
-  // stock = 3_000, current_loss = 1_000, prior = 4_000 → total = 5_000
-  // allowed_from_stock = 3_000, remaining = 2_000, debt = 0 → disallowed = 2_000
-  const result = compute({
+Deno.test("form7203 — prior-year loss cannot be added back as current disallowance", () => {
+  assertThrows(() => compute({
     stock_basis_beginning: 3_000,
     ordinary_loss: 1_000,
     prior_year_unallowed_loss: 4_000,
-  });
-  assertEquals(findOutput(result, "schedule1")!.fields.basis_disallowed_add_back, 2_000);
+  }), Error, "source-linked current/prior loss allocation");
 });
 
-Deno.test("form7203 — prior year unallowed only (no current loss), within basis: no output", () => {
-  // stock = 5_000, prior_unallowed = 3_000 → total = 3_000, allowed = 3_000 → disallowed = 0
-  const result = compute({
+Deno.test("form7203 — prior-year loss within basis still needs current return routing", () => {
+  assertThrows(() => compute({
     stock_basis_beginning: 5_000,
     prior_year_unallowed_loss: 3_000,
-  });
-  assertEquals(result.outputs.length, 0);
+  }), Error, "source-linked current/prior loss allocation");
 });
 
-Deno.test("form7203 — prior year unallowed only, exceeds basis: disallowed", () => {
-  // stock = 2_000, prior_unallowed = 4_000 → disallowed = 2_000
-  const result = compute({
+Deno.test("form7203 — prior-year loss exceeding basis cannot create current add-back", () => {
+  assertThrows(() => compute({
     stock_basis_beginning: 2_000,
     prior_year_unallowed_loss: 4_000,
-  });
-  assertEquals(findOutput(result, "schedule1")!.fields.basis_disallowed_add_back, 2_000);
+  }), Error, "source-linked current/prior loss allocation");
 });
 
 // ─── 9. Ordinary income increases stock basis ─────────────────────────────────
@@ -222,14 +215,12 @@ Deno.test("form7203 — distributions reduce stock basis before loss check", () 
   assertEquals(findOutput(result, "schedule1")!.fields.basis_disallowed_add_back, 3_000);
 });
 
-Deno.test("form7203 — distributions exceeding basis floored at zero, full loss disallowed", () => {
-  // stock = 3_000, distributions = 5_000 → basis_after_distrib = 0, loss = 4_000 → disallowed = 4_000
-  const result = compute({
+Deno.test("form7203 — excess distributions need Form 8949 facts", () => {
+  assertThrows(() => compute({
     stock_basis_beginning: 3_000,
     distributions: 5_000,
     ordinary_loss: 4_000,
-  });
-  assertEquals(findOutput(result, "schedule1")!.fields.basis_disallowed_add_back, 4_000);
+  }), Error, "needs Form 8949 transaction facts");
 });
 
 // ─── 11. Nondeductible expenses reduce stock basis ────────────────────────────
@@ -318,7 +309,7 @@ Deno.test("form7203 — spec: stock_basis=5000, debt_basis=3000, loss=9000 → d
 
 // ─── 16. Smoke test ───────────────────────────────────────────────────────────
 
-Deno.test("form7203 — smoke: complex scenario with all fields", () => {
+Deno.test("form7203 — mixed prior-year source stops before overstating current Schedule 1", () => {
   // stock = 5_000
   // + contributions = 2_000 → 7_000
   // + ordinary_income = 3_000 → 10_000
@@ -331,7 +322,7 @@ Deno.test("form7203 — smoke: complex scenario with all fields", () => {
   // current_loss = 6_000 + prior = 5_000 → total_pool = 11_000
   // allowed_from_stock = 5_000, remaining = 6_000
   // allowed_from_debt = 4_000, disallowed = 2_000
-  const result = compute({
+  assertThrows(() => compute({
     stock_basis_beginning: 5_000,
     additional_contributions: 2_000,
     ordinary_income: 3_000,
@@ -342,8 +333,5 @@ Deno.test("form7203 — smoke: complex scenario with all fields", () => {
     new_loans: 1_000,
     ordinary_loss: 6_000,
     prior_year_unallowed_loss: 5_000,
-  });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
-  assertEquals(s1!.fields.basis_disallowed_add_back, 2_000);
+  }), Error, "source-linked current/prior loss allocation");
 });

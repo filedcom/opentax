@@ -13,6 +13,34 @@ function assertNotIncludes(actual: string, expected: string) {
   );
 }
 
+Deno.test("line 2j estate/trust adjustment serializes signed in XSD order", () => {
+  const xml = filed({
+    iso_adjustment: 100,
+    line2j_estates_and_trusts: -800,
+    depreciation_adjustment: 50,
+  });
+  const line2i = xml.indexOf(
+    "<IncentiveStockOptionsAmt>100</IncentiveStockOptionsAmt>",
+  );
+  const line2j = xml.indexOf("<EstatesAndTrustsAmt>-800</EstatesAndTrustsAmt>");
+  const line2l = xml.indexOf("<DepreciationAmt>50</DepreciationAmt>");
+  assertEquals(line2i >= 0 && line2i < line2j && line2j < line2l, true);
+});
+
+Deno.test("line 2k Form 8949 AMT basis difference serializes signed in XSD order", () => {
+  const xml = filed({
+    line2j_estates_and_trusts: 100,
+    line2k_disposition: -10_000,
+    depreciation_adjustment: 200,
+  });
+  const line2j = xml.indexOf("<EstatesAndTrustsAmt>100</EstatesAndTrustsAmt>");
+  const line2k = xml.indexOf(
+    "<PropertyDispositionAmt>-10000</PropertyDispositionAmt>",
+  );
+  const line2l = xml.indexOf("<DepreciationAmt>200</DepreciationAmt>");
+  assertEquals(line2j >= 0 && line2j < line2k && line2k < line2l, true);
+});
+
 // ---------------------------------------------------------------------------
 // Section 1: Empty input
 // ---------------------------------------------------------------------------
@@ -40,6 +68,33 @@ Deno.test("regular_tax_income at zero does not file Form 6251 by itself", () => 
 
 Deno.test("an adjustment without AMT does not attach Form 6251", () => {
   assertEquals(form6251.build({ iso_adjustment: 5_000 }), "");
+});
+
+Deno.test("line 2d depletion serializes as a signed amount between lines 2c and 2g", () => {
+  const xml = filed({
+    line2c_investment_interest: 100,
+    line2d_depletion: -250,
+    private_activity_bond_interest: 500,
+  });
+  const line2c = xml.indexOf(
+    "<InvestmentInterestAmt>100</InvestmentInterestAmt>",
+  );
+  const line2d = xml.indexOf("<DepletionAmt>-250</DepletionAmt>");
+  const line2g = xml.indexOf(
+    "<ExemptPrivateActivityBondsAmt>500</ExemptPrivateActivityBondsAmt>",
+  );
+  assertEquals(line2c >= 0 && line2c < line2d && line2d < line2g, true);
+});
+
+Deno.test("line 2o circulation cost serializes signed after depreciation", () => {
+  const xml = filed({
+    depreciation_adjustment: 100,
+    line2o_circulation_costs: -250,
+  });
+  const line2l = xml.indexOf("<DepreciationAmt>100</DepreciationAmt>");
+  const line2o = xml.indexOf("<CirculationCostAmt>-250</CirculationCostAmt>");
+  const line4 = xml.indexOf("<AlternativeMinTaxableIncomeAmt>");
+  assertEquals(line2l >= 0 && line2l < line2o && line2o < line4, true);
 });
 
 Deno.test("a claimed Form 8911 credit attaches Form 6251 with zero AMT", () => {
@@ -76,6 +131,27 @@ Deno.test("line 7 above line 10 attaches Form 6251 even when AMTFTC leaves zero 
 Deno.test("negative-adjustment filing attaches zero-AMT Form 6251 even when line 7 is below line 10", () => {
   const xml = form6251.build({
     regular_tax_income: 100_000,
+    line2c_investment_interest: -20_000,
+    tentative_tax: 0,
+    regular_tax: 2_000,
+    line11_amt: 0,
+    must_file_for_negative_adjustments: true,
+  });
+  assertStringIncludes(xml, "<IRS6251>");
+  assertStringIncludes(
+    xml,
+    "<InvestmentInterestAmt>-20000</InvestmentInterestAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<AlternativeMinimumTaxAmt>0</AlternativeMinimumTaxAmt>",
+  );
+});
+
+Deno.test("domestic preferential-income counterfactual retains a zero-AMT filing form", () => {
+  const xml = form6251.build({
+    regular_tax_income: 100_000,
+    qualified_dividends: 1_000,
     line2c_investment_interest: -20_000,
     tentative_tax: 0,
     regular_tax: 2_000,
@@ -162,12 +238,14 @@ Deno.test("depreciation_adjustment maps to DepreciationAmt", () => {
   );
 });
 
-Deno.test("nol_adjustment maps to AltTaxNetOperatingLossDedAmt", () => {
-  const result = filed({ nol_adjustment: 2000 });
-  assertStringIncludes(
-    result,
-    "<AltTaxNetOperatingLossDedAmt>2000</AltTaxNetOperatingLossDedAmt>",
-  );
+Deno.test("unsourced direct ATNOLD cannot be serialized as Form 6251 line 2f", () => {
+  for (const adjustment of [-2_000, 2_000]) {
+    assertThrows(
+      () => filed({ nol_adjustment: adjustment }),
+      Error,
+      "sourced regular NOL and AMT NOL refigures",
+    );
+  }
 });
 
 Deno.test("private_activity_bond_interest maps to ExemptPrivateActivityBondsAmt", () => {
@@ -191,12 +269,22 @@ Deno.test("line2a_taxes_paid maps to ScheduleATaxesAmt", () => {
   assertStringIncludes(result, "<ScheduleATaxesAmt>15000</ScheduleATaxesAmt>");
 });
 
-Deno.test("other_adjustments maps to RelatedAdjustmentAmt", () => {
-  const result = filed({ other_adjustments: 1000 });
+Deno.test("line2b_tax_refund maps to positive TotalRefundReceivedAmt", () => {
+  const result = filed({ line2b_tax_refund: 1_000 });
   assertStringIncludes(
     result,
-    "<RelatedAdjustmentAmt>1000</RelatedAdjustmentAmt>",
+    "<TotalRefundReceivedAmt>1000</TotalRefundReceivedAmt>",
   );
+});
+
+Deno.test("mixed other_adjustments cannot be serialized as line 3", () => {
+  for (const adjustment of [-1000, 1000]) {
+    assertThrows(
+      () => filed({ other_adjustments: adjustment }),
+      Error,
+      "mixed other_adjustments needs line-specific AMT modeling",
+    );
+  }
 });
 
 Deno.test("amtftc maps to AMTForeignTaxCreditAmt", () => {
@@ -204,6 +292,22 @@ Deno.test("amtftc maps to AMTForeignTaxCreditAmt", () => {
   assertStringIncludes(
     result,
     "<AMTForeignTaxCreditAmt>4500</AMTForeignTaxCreditAmt>",
+  );
+});
+
+Deno.test("Form 6251 XML rejects a line 8 credit when line 10 reaches line 7", () => {
+  assertThrows(
+    () =>
+      form6251.build({
+        tentative_tax: 29_094,
+        regular_tax: 30_000,
+        amtftc: 5_000,
+        net_tmt: 24_094,
+        line11_amt: 0,
+        must_file_for_credit: true,
+      }),
+    Error,
+    "line 8 must be blank",
   );
 });
 
@@ -234,11 +338,9 @@ const allFields = {
   regular_tax: 12000,
   iso_adjustment: 5000,
   depreciation_adjustment: 3000,
-  nol_adjustment: 2000,
   private_activity_bond_interest: 800,
   qsbs_adjustment: 10000,
   line2a_taxes_paid: 15000,
-  other_adjustments: 1000,
   amtftc: 4500,
 };
 
@@ -268,10 +370,6 @@ Deno.test("base fields present: all elements emitted", () => {
   );
   assertStringIncludes(
     result,
-    "<AltTaxNetOperatingLossDedAmt>2000</AltTaxNetOperatingLossDedAmt>",
-  );
-  assertStringIncludes(
-    result,
     "<ExemptPrivateActivityBondsAmt>800</ExemptPrivateActivityBondsAmt>",
   );
   assertStringIncludes(
@@ -279,10 +377,6 @@ Deno.test("base fields present: all elements emitted", () => {
     "<Section1202ExclusionAmt>10000</Section1202ExclusionAmt>",
   );
   assertStringIncludes(result, "<ScheduleATaxesAmt>15000</ScheduleATaxesAmt>");
-  assertStringIncludes(
-    result,
-    "<RelatedAdjustmentAmt>1000</RelatedAdjustmentAmt>",
-  );
   assertStringIncludes(
     result,
     "<AMTForeignTaxCreditAmt>4500</AMTForeignTaxCreditAmt>",

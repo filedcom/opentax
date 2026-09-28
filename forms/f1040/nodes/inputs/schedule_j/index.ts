@@ -3,65 +3,57 @@ import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import { baseYearSourceSchema } from "./base_years.ts";
+import { schedule_j_calculation } from "../../intermediate/forms/schedule_j/index.ts";
+import { income_tax_calculation } from "../../intermediate/worksheets/income_tax_calculation/index.ts";
 
-// ─── Schema ───────────────────────────────────────────────────────────────────
+const ordinaryYearFactsSchema = z.object({
+  has_qualified_dividends: z.literal(false),
+  has_net_capital_gain: z.literal(false),
+  has_unrecaptured_section1250_gain: z.literal(false),
+  has_28_percent_rate_gain: z.literal(false),
+  filed_form2555: z.literal(false),
+}).strict();
 
-// TY2025: base years are 2022 (py1), 2023 (py2), 2024 (py3)
+// This is an election and filed-base-year source, never an asserted tax.
 export const inputSchema = z.object({
-  // Line 2a — Elected farm income: the amount of current-year taxable farm/fishing
-  // income the taxpayer elects to average across the three base years.
-  elected_farm_income: z.number().nonnegative(),
-
-  // Line 2b — Portion of elected farm income that is net capital gain from
-  // farming or fishing activities (optional; affects rate calculations in worksheets).
-  elected_farm_income_capital_gain: z.number().nonnegative().optional(),
-
-  // Line 5 — 2022 taxable income (base year 1).
-  prior_year_taxable_income_py1: z.number().nonnegative(),
-
-  // Line 9 — 2023 taxable income (base year 2).
-  prior_year_taxable_income_py2: z.number().nonnegative(),
-
-  // Line 13 — 2024 taxable income (base year 3).
-  prior_year_taxable_income_py3: z.number().nonnegative(),
-
-  // Line 23 — Schedule J computed tax result. The taxpayer calculates this amount
-  // using the IRS multi-year rate worksheets. This value replaces the regular
-  // Form 1040 line 16 tax computation when income averaging is elected.
-  schedule_j_tax: z.number().nonnegative(),
-});
-
-// ─── Type alias ───────────────────────────────────────────────────────────────
+  elected_farm_income: z.number().int().positive(),
+  elected_farm_income_net_capital_gain: z.literal(0),
+  base_year_source: baseYearSourceSchema,
+  tax_treatment: z.object({
+    year2025: ordinaryYearFactsSchema,
+    year2022: ordinaryYearFactsSchema,
+    year2023: ordinaryYearFactsSchema,
+    year2024: ordinaryYearFactsSchema,
+  }).strict(),
+}).strict();
 
 type ScheduleJInput = z.infer<typeof inputSchema>;
-
-// ─── Pure helpers ─────────────────────────────────────────────────────────────
-
-// Returns true when the taxpayer has a non-zero elected farm income, meaning
-// income averaging actually applies.
-function hasElectedFarmIncome(input: ScheduleJInput): boolean {
-  return input.elected_farm_income > 0;
-}
-
-// ─── Node class ───────────────────────────────────────────────────────────────
 
 class ScheduleJNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule_j";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([]);
+  readonly outputNodes = new OutputNodes([
+    schedule_j_calculation,
+    income_tax_calculation,
+  ]);
 
-  compute(_ctx: NodeContext, input: ScheduleJInput): NodeResult {
-    const parsed = inputSchema.parse(input);
-
-    if (!hasElectedFarmIncome(parsed)) {
-      return { outputs: [] };
-    }
-    throw new Error(
-      "Schedule J is not filing-ready: line 23 needs reconciliation to the 2022-2024 base-year tax worksheets before Form 1040 and Form 6251 can be filed",
-    );
+  compute(_ctx: NodeContext, rawInput: ScheduleJInput): NodeResult {
+    const input = inputSchema.parse(rawInput);
+    return {
+      outputs: [
+        this.outputNodes.output(schedule_j_calculation, {
+          elected_farm_income: input.elected_farm_income,
+          elected_farm_income_net_capital_gain: 0,
+          base_year_source: input.base_year_source,
+          tax_treatment: input.tax_treatment,
+        }),
+        this.outputNodes.output(income_tax_calculation, {
+          schedule_j_election_requested: true,
+        }),
+      ],
+    };
   }
 }
-
-// ─── Singleton export ─────────────────────────────────────────────────────────
 
 export const schedule_j = new ScheduleJNode();

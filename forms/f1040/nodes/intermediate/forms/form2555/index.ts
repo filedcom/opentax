@@ -138,6 +138,8 @@ class Form2555Node extends TaxNode<typeof inputSchema> {
         outputs: [
           output(f1040, {
             line1h_other_earned: lines.line19,
+            form8839_form2555_line45: lines.line45,
+            form8839_form2555_line50: lines.line50,
           }),
           output(agi_aggregator, {
             line1h_other_earned: lines.line19,
@@ -175,6 +177,9 @@ class Form2555Node extends TaxNode<typeof inputSchema> {
     const feieLimit = proratedFeieLimit(input, cfg.feieLimit);
     const exclusion = earnedIncomeExclusion(income, feieLimit);
     if (exclusion > 0) {
+      outputs.push(output(f1040, {
+        form8839_form2555_line45: exclusion,
+      }));
       outputs.push(
         output(schedule1, {
           line8d_foreign_earned_income_exclusion: exclusion,

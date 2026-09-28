@@ -1,32 +1,21 @@
-# NOL Carryforward — Scratchpad
+# TY2025 NOL carryforward research
 
-## Purpose
-Captures net operating loss (NOL) carryforward amounts from prior tax years.
-The NOL deduction reduces current-year income on Schedule 1, Line 8a (other income — negative deduction).
+The public `nol_carryforward` input has only a loss year, amount, broad
+pre-2018/post-2017 label, and an asserted current-year taxable-income amount.
+That is not enough to verify a surviving deduction. Positive inputs therefore
+reject at the node. A zero-valued populated source remains blocked at both
+exports; direct Schedule 1 line 8a and Form 6251 line 2f routes are guarded.
 
-## Fields identified
-Per-item (one per prior-year NOL):
-- year: number (the tax year the NOL arose)
-- nol_amount: number (the carryforward amount available)
-- nol_type: enum (PRE2018 | POST2017)
+The [Form 172 instructions](https://www.irs.gov/instructions/i172) require a
+loss-year calculation, each carryback/carryforward use and modified-taxable-
+income refigure, and earliest-vintage ordering. Applicable Form 172s attach to
+the carried-year 1040. The regular deduction appears as a negative Schedule 1
+entry. The [2025 Form 6251 instructions](https://www.irs.gov/pub/irs-prior/i6251--2025.pdf)
+require the regular NOL addback on line 2e and an independently refigured AMT
+NOL deduction on line 2f. A zero AMT deduction cannot be inferred from the
+regular loss amount.
 
-Top-level:
-- current_year_taxable_income: number (before NOL deduction; required for 80% limit on POST2017 NOLs)
-
-## Open Questions
-- [x] Q: What fields does this node capture?
-  → Per-year NOL items plus current_year_taxable_income
-- [x] Q: Where does each field flow on the 1040?
-  → Schedule 1, Line 8a as a negative deduction (other income)
-- [x] Q: What are the TY2025 constants?
-  → Post-2017: 80% of current taxable income; Pre-2018: 100%, 20-year carryforward
-- [x] Q: What edge cases exist?
-  → Multiple years; pre-2018 vs post-2017; ordering; 80% limitation
-- [x] Q: Upstream nodes?
-  → Input node, no upstream
-
-## Sources checked
-- [x] Drake KB: https://kb.drakesoftware.com/Site/Browse/12435 (NOL Carryforward worksheet)
-- [x] IRS Pub 536 (Net Operating Losses for Individuals, Estates, and Trusts)
-- [x] IRC §172; TCJA P.L. 115-97
-- [x] IRS Form 1045 (Application for Tentative Refund) Schedule A
+No source-backed native/PDF route is registered. See
+`docs/mef/ty2025-form172-nol-gap.md` for exact remaining evidence and graph
+requirements. The old local tests that treated asserted amounts as a proved
+deduction were replaced by unrun fail-closed cases.

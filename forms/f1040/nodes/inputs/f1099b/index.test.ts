@@ -44,6 +44,7 @@ type TxFields = {
   adjustment_amount?: number;
   gain_loss: number;
   is_long_term: boolean;
+  collectibles?: boolean;
 };
 
 function getTx(
@@ -351,6 +352,7 @@ Deno.test("1099-B market discount reduces Form 8949 gain and reaches Schedule B 
     proceeds: 1_000,
     cost_basis: 800,
     box1f_accrued_market_discount: 300,
+    market_discount_payer_name: "Test Brokerage",
   })]);
   assertEquals(getTx(result)?.adjustment_codes, "D");
   assertEquals(getTx(result)?.adjustment_amount, -200);
@@ -358,6 +360,10 @@ Deno.test("1099-B market discount reduces Form 8949 gain and reaches Schedule B 
   assertEquals(
     findOutput(result, "schedule_b")?.fields.taxable_interest_net,
     200,
+  );
+  assertEquals(
+    findOutput(result, "schedule_b")?.fields.payer_name,
+    "Test Brokerage",
   );
   assertEquals(findOutput(result, "form4952"), undefined);
 });
@@ -367,6 +373,7 @@ Deno.test("affirmed investment-property market discount reaches Form 4952 line 4
     proceeds: 1_000,
     cost_basis: 800,
     box1f_accrued_market_discount: 150,
+    market_discount_payer_name: "Test Brokerage",
     investment_property_for_form4952: true,
   })]);
   assertEquals(getTx(result)?.adjustment_amount, -150);
@@ -386,6 +393,7 @@ Deno.test("1099-B market discount on a loss creates no taxable interest or Form 
     proceeds: 700,
     cost_basis: 800,
     box1f_accrued_market_discount: 300,
+    market_discount_payer_name: "Test Brokerage",
     investment_property_for_form4952: true,
   })]);
   assertEquals(getTx(result)?.adjustment_codes, "D");
@@ -400,11 +408,20 @@ Deno.test("1099-B rejects duplicate manual code D with box 1f", () => {
     () =>
       compute([minimalItem({
         box1f_accrued_market_discount: 100,
+        market_discount_payer_name: "Test Brokerage",
         adjustment_codes: "D",
         adjustment_amount: -100,
       })]),
     Error,
     "already present",
+  );
+});
+
+Deno.test("1099-B positive market discount needs a real interest payer", () => {
+  assertThrows(
+    () => compute([minimalItem({ box1f_accrued_market_discount: 100 })]),
+    Error,
+    "needs the taxable-interest payer name",
   );
 });
 
@@ -605,6 +622,53 @@ Deno.test("edge: single item with withholding emits one form8949 and one f1040 o
   assertEquals(findAllOutputs(result, "f1040").length, 1);
 });
 
+Deno.test("1099-B box 12 records basis reporting, not a QOF investment", () => {
+  const result = compute([minimalItem({ box12_basis_reported_to_irs: true })]);
+  assertEquals(getTx(result)?.part, "A");
+  assertEquals(findAllOutputs(result, "form8997").length, 0);
+});
+
+Deno.test("1099-B box 12 conflicts with a noncovered Form 8949 category", () => {
+  assertThrows(
+    () => compute([minimalItem({ box12_basis_reported_to_irs: false })]),
+    Error,
+    "box 12 basis-reporting status conflicts",
+  );
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box12_basis_reported_to_irs: true,
+        noncovered_security: true,
+      })]),
+    Error,
+    "box 12 basis-reporting status conflicts",
+  );
+});
+
+Deno.test("1099-B box 3 collectibles and QOF dispositions are distinct", () => {
+  const collectible = compute([minimalItem({
+    part: "D",
+    box3_transaction_type: "collectibles",
+  })]);
+  assertEquals(getTx(collectible)?.collectibles, true);
+  assertThrows(
+    () => compute([minimalItem({ box3_transaction_type: "qof" })]),
+    Error,
+    "QOF disposition needs the Form 8997 annual statement",
+  );
+});
+
+Deno.test("old, misnamed 1099-B box fields are rejected", () => {
+  assertThrows(
+    () => compute([minimalItem({ box12_qof_investment: true })]),
+    Error,
+  );
+  assertThrows(
+    () => compute([minimalItem({ box3_collectibles: true })]),
+    Error,
+  );
+});
+
 // ─── 9. Smoke test ─────────────────────────────────────────────────────────
 
 Deno.test("smoke: comprehensive transaction with all major fields — all expected outputs present", () => {
@@ -678,15 +742,3 @@ Deno.test("smoke: comprehensive transaction with all major fields — all expect
   assertEquals(f1040Outputs.length, 1);
   assertEquals(fieldsOf(result.outputs, f1040)!.line25b_withheld_1099, 240);
 });
-
-// ─── Total: 56 tests ───────────────────────────────────────────────────────
-// Coverage breakdown:
-//   1. Input schema validation:       11 tests
-//   2. Per-box routing (A-F + withheld): 10 tests
-//   3. Aggregation:                    3 tests
-//   4. Gain/loss computation:          6 tests
-//   5. Hard validation (G-L rejected): 6 tests
-//   6. Warning-only (special dates):   6 tests
-//   7. Informational fields:           8 tests
-//   8. Edge cases:                     7 tests (wash sale, QSBS, home sale, LNA, QOF, counts)
-//   9. Smoke test:                     1 test

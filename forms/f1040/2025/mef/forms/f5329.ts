@@ -1,9 +1,16 @@
 import { element, elements } from "../../../mef/xml.ts";
-import { inputSchema } from "../../../nodes/intermediate/forms/form5329/index.ts";
+import {
+  calculateOwnerForms,
+  inputSchema,
+  ownerEntrySchema,
+  reconcileHsaOwnerForms,
+} from "../../../nodes/intermediate/forms/form5329/index.ts";
 import { TS } from "../../../nodes/types.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
-type Input = Partial<typeof inputSchema._output> & Record<string, unknown>;
+type Input = Partial<typeof inputSchema._output> & {
+  owner_forms?: unknown;
+};
 
 export const FIELD_MAP: ReadonlyArray<readonly [string, string]> = [];
 
@@ -16,7 +23,7 @@ function total(value: number | number[] | undefined): number {
 }
 
 function excessTax(
-  input: typeof inputSchema._output,
+  input: typeof ownerEntrySchema._output,
   excessKey:
     | "excess_traditional_ira"
     | "excess_roth_ira"
@@ -41,16 +48,11 @@ function excessTax(
   return Math.min(excess, value) * 0.06;
 }
 
-function buildIRS5329(raw: Input, context?: MefBuildContext): string {
-  if (Array.isArray(raw) && raw.length === 0) return "";
-  if ("excess_hsa" in raw || "hsa_value" in raw) {
-    throw new Error(
-      "Form 5329 HSA excess needs the source-linked Part VII line facts",
-    );
-  }
-  // The final node adds print-only line fields to pending for the PDF.
-  // MeF consumes only the source inputs, then computes its own totals.
-  const input = inputSchema.strip().parse(raw);
+function buildIRS5329One(
+  raw: typeof ownerEntrySchema._output,
+  context?: MefBuildContext,
+): string {
+  const input = ownerEntrySchema.strip().parse(raw);
   const regular = total(input.early_distribution);
   const simple = total(input.simple_ira_early_distribution);
   const early = regular + simple;
@@ -78,15 +80,7 @@ function buildIRS5329(raw: Input, context?: MefBuildContext): string {
   if (!early && !education && !excess) {
     return "";
   }
-  const subjects = input.subject_ts === undefined
-    ? []
-    : Array.isArray(input.subject_ts)
-    ? input.subject_ts
-    : [input.subject_ts];
-  if (new Set(subjects).size > 1) {
-    throw new Error("Form 5329 needs separate taxpayer and spouse forms");
-  }
-  const spouse = subjects[0] === TS.S;
+  const spouse = input.owner === TS.S;
   const personName = spouse
     ? context?.filer?.spouse &&
       `${context.filer.spouse.firstName} ${context.filer.spouse.lastName}`
@@ -174,7 +168,38 @@ function buildIRS5329(raw: Input, context?: MefBuildContext): string {
   ]);
 }
 
-export const form5329: MefFormDescriptor<"form5329", Input> = {
+function buildIRS5329(raw: Input, context?: MefBuildContext): readonly string[] {
+  if (Array.isArray(raw) && raw.length === 0) return [];
+  const unexpected = Object.keys(raw).filter((key) =>
+    key !== "owner_entries" && key !== "owner_forms"
+  );
+  if (unexpected.length > 0) {
+    throw new Error(`Form 5329 MeF requires owner entries: ${unexpected.join(", ")}`);
+  }
+  const parsed = inputSchema.parse({ owner_entries: raw.owner_entries });
+  const calculated = calculateOwnerForms(parsed);
+  if (calculated.forms.length === 0) {
+    if (raw.owner_forms !== undefined) {
+      throw new Error("Form 5329 MeF has forms without owner sources");
+    }
+    return [];
+  }
+  if (JSON.stringify(raw.owner_forms) !== JSON.stringify(calculated.forms)) {
+    throw new Error("Form 5329 MeF owner forms do not match source calculation");
+  }
+  reconcileHsaOwnerForms(calculated.forms, context?.pending?.form8889);
+  const schedule2 = context?.pending?.schedule2;
+  const line8 = schedule2 !== null && typeof schedule2 === "object"
+    ? (schedule2 as Record<string, unknown>).line8_form5329_tax
+    : undefined;
+  if (calculated.total > 0 && line8 !== calculated.total) {
+    throw new Error("Form 5329 owner taxes do not reconcile to Schedule 2 line 8");
+  }
+  return calculated.forms.map((form) => buildIRS5329One(form, context))
+    .filter((xml) => xml !== "");
+}
+
+export const form5329: MefFormDescriptor<"form5329", Input, readonly string[]> = {
   pendingKey: "form5329",
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f5329--2025.pdf",

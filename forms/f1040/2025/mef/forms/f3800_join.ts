@@ -111,10 +111,9 @@ export function joinForm3800DocumentParts(
     currentRows,
     currentAmounts,
     carryoverRows: [...(nonpassive?.carryoverRows ?? []), ...passive.partIV],
-    currentDetails: [...(nonpassive?.currentDetails ?? []), ...passive.partV],
-    carryoverDetails: [
-      ...(nonpassive?.carryoverDetails ?? []),
-      ...passive.partVI,
-    ],
+    currentDetails: nonpassive?.currentDetails ?? [],
+    carryoverDetails: nonpassive?.carryoverDetails ?? [],
+    passiveCurrentDetails: passive.partV,
+    passiveCarryoverDetails: passive.partVI,
   };
 }

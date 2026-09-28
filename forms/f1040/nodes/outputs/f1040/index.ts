@@ -7,6 +7,12 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { computeRegularMethodPenalty } from "../../inputs/f2210/calculation.ts";
 import {
+  calculateForm2210FBoxB,
+  type Form2210FBoxBInput,
+  form2210FBoxBInputSchema,
+  type Form2210FBoxBLines,
+} from "../../../2025/form2210f_box_b.ts";
+import {
   calculateForm3800Nonpassive,
   deriveForm3800NonpassiveInput,
   type Form3800NonpassiveInput,
@@ -24,6 +30,10 @@ import {
   form8396SourceSchema,
 } from "../../intermediate/forms/form8396/calculation.ts";
 import { FilingStatus } from "../../types.ts";
+import {
+  calculateForm8880,
+  inputSchema as form8880SourceSchema,
+} from "../../intermediate/forms/form8880/calculation.ts";
 
 // Fields that may arrive from multiple upstream nodes accumulate as arrays in the
 // executor pending dict. Declaring them accumulable prevents Zod parse failure.
@@ -85,6 +95,8 @@ const inputSchema = z.object({
   line5a_pension_gross: z.number().nonnegative().optional(),
   // Line 5b — Pensions and annuities, taxable amount
   line5b_pension_taxable: z.number().optional(),
+  // Line 5c(1) — payer-reported pension/plan direct rollover
+  line5c_pension_rollover: z.boolean().optional(),
   line5b_form4972_ordinary: z.number().nonnegative().optional(),
   // Line 6a — Social security benefits, gross
   line6a_ss_gross: z.number().nonnegative().optional(),
@@ -103,6 +115,9 @@ const inputSchema = z.object({
   line10_adjustments: z.number().nonnegative().optional(),
   // Line 11 — Adjusted gross income (line 9 - line 10)
   line11_agi: z.number().optional(),
+  // Form 8839 line 7 adds back the actual filed Form 2555 line 45.
+  form8839_form2555_line45: z.number().finite().nonnegative().optional(),
+  form8839_form2555_line50: z.number().finite().nonnegative().optional(),
   // Line 12a — Standard deduction
   line12a_standard_deduction: z.number().nonnegative().optional(),
   // Line 12b — Charitable contributions (if standard deduction)
@@ -134,6 +149,7 @@ const inputSchema = z.object({
   line19_child_tax_credit: z.number().nonnegative().optional(),
   // Line 20 — Nonrefundable credits from Schedule 3 Part I
   line20_nonrefundable_credits: z.number().nonnegative().optional(),
+  form8880_source: form8880SourceSchema.optional(),
   // Tentative Form 8936 amounts are finalized here after line 18 is known.
   form8936_tentative_new_credit: z.number().nonnegative().optional(),
   form8936_tentative_used_credit: z.number().nonnegative().optional(),
@@ -232,6 +248,7 @@ const inputSchema = z.object({
   // Line 38 — Estimated tax penalty (Form 2210) / amount paid with extension
   line38_amount_paid_extension: z.number().nonnegative().optional(),
   line38_underpayment_penalty: z.number().nonnegative().optional(),
+  f2210f_box_b_source: form2210FBoxBInputSchema.optional(),
   // Form 2210 regular-method inputs are carried here so the final return can
   // use its computed tax and withholding without creating a graph cycle.
   f2210_active: z.boolean().optional(),
@@ -728,6 +745,59 @@ function totalPayments(input: F1040Input): number {
   );
 }
 
+function reconciledForm2210FBoxB(
+  input: F1040Input,
+  line22: number,
+  line23: number,
+  line25d: number,
+  line32: number,
+): Form2210FBoxBLines | undefined {
+  const source: Form2210FBoxBInput | undefined = input.f2210f_box_b_source;
+  if (source === undefined) return undefined;
+  if (input.filing_status !== FilingStatus.MFJ) {
+    throw new Error(
+      "Form 2210-F box B needs the finalized joint Form 1040 filing status",
+    );
+  }
+  if (
+    input.f2210_active === true ||
+    input.line38_underpayment_penalty !== undefined
+  ) {
+    throw new Error(
+      "Form 2210 and Form 2210-F cannot both set Form 1040 line 38",
+    );
+  }
+  if (
+    line23 !== 0 || (input.line23_other_taxes ?? 0) !== 0 ||
+    (input.form8978_schedule2_line17z_reduction ?? 0) !== 0 ||
+    source.current_included_schedule2_taxes !== 0 ||
+    line32 !== 0 ||
+    source.current_line4_refundable_credits_excluding_schedule3_line11 !== 0 ||
+    (input.line26_estimated_tax ?? 0) !== 0 ||
+    source.estimated_payments_by_2026_01_15 !== 0 ||
+    source.current_excess_social_security_or_rrta_withholding !== 0
+  ) {
+    throw new Error(
+      "Form 2210-F box B public route currently needs no Schedule 2 other tax, refundable credit, estimated payment, or excess Social Security withholding",
+    );
+  }
+  if (
+    source.current_line22_tax_after_credits !== Math.round(line22) ||
+    source.current_withholding !== Math.round(line25d)
+  ) {
+    throw new Error(
+      "Form 2210-F current tax or withholding does not match the finalized Form 1040",
+    );
+  }
+  const lines = calculateForm2210FBoxB(source);
+  if (lines.line10 === 0) {
+    throw new Error(
+      "Form 2210-F public box B route excludes the no-2024-tax-liability exception",
+    );
+  }
+  return lines;
+}
+
 function assembleReturn(
   input: F1040Input,
   cleanVehicles: CleanVehicleAllowance | undefined,
@@ -767,7 +837,15 @@ function assembleReturn(
     sumField(input.line25c_other_withheld);
   const computed_line32 = refundableCreditsTotal(input);
   const computed_line33 = totalPayments(input);
-  const computed_line38 = input.line38_underpayment_penalty ??
+  const form2210f = reconciledForm2210FBoxB(
+    input,
+    computed_line22,
+    computed_line23,
+    computed_line25d,
+    computed_line32,
+  );
+  const computed_line38 = form2210f?.line16 ??
+    input.line38_underpayment_penalty ??
     (input.f2210_active === true
       ? computeRegularMethodPenalty({
         current_year_tax: computed_line24,
@@ -807,6 +885,7 @@ function assembleReturn(
   result.line14_deductions_qbi_total = computed_line14;
   result.line32_refundable_credits_total = computed_line32;
   if (
+    input.form8880_source !== undefined ||
     cleanVehicles !== undefined || homebuyer !== undefined ||
     mortgage !== undefined ||
     electric !== undefined ||
@@ -1001,46 +1080,114 @@ class F1040Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([]);
 
-  compute(_ctx: NodeContext, rawInput: F1040Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: F1040Input): NodeResult {
     const input = inputSchema.parse(rawInput);
-    const electric = qualifiedElectricAllowance(input);
-    const cleanVehicles = cleanVehicleAllowance(input);
-    const mortgage = mortgageAllowance(input, cleanVehicles);
-    const homebuyer = homebuyerAllowance(input, cleanVehicles, mortgage);
+    const schedule3 = input.credit_limit_schedule3_lines;
+    if (!input.form8880_source && (schedule3?.line4 ?? 0) > 0) {
+      throw new Error(
+        "Schedule 3 line 4 needs the Form 8880 contribution source",
+      );
+    }
+    if (input.form8880_source && (schedule3?.line4 ?? 0) > 0) {
+      throw new Error(
+        "Form 8880 source conflicts with a prefilled Schedule 3 line 4",
+      );
+    }
+    if (
+      input.form8880_source &&
+      (input.line16_income_tax === undefined || schedule3 === undefined)
+    ) {
+      throw new Error(
+        "Form 8880 needs sourced Form 1040 line 16 and Schedule 3 priority credits",
+      );
+    }
+    const source = input.form8880_source;
+    if (
+      source &&
+      (source.filing_status !== input.filing_status ||
+        source.agi !== (input.line11_agi ?? totalIncome(input) -
+              (input.line10_adjustments ?? 0)))
+    ) {
+      throw new Error(
+        "Form 8880 filing status and AGI differ from the finalized Form 1040 source",
+      );
+    }
+    const capacity = schedule3 === undefined ? 0 : Math.max(
+      0,
+      totalTaxBeforeCredits(input) - schedule3.line1 - schedule3.line2 -
+        schedule3.line3 - (schedule3.line6dElderlyDisabled ?? 0) -
+        (schedule3.line6lForm8978 ?? 0),
+    );
+    const retirement = source === undefined
+      ? undefined
+      : calculateForm8880(ctx, source, capacity);
+    const retirementCredit = retirement?.credit ?? 0;
+    const effectiveInput = retirementCredit === 0 ? input : {
+      ...input,
+      line20_nonrefundable_credits: (input.line20_nonrefundable_credits ?? 0) +
+        retirementCredit,
+      credit_limit_schedule3_lines: {
+        ...schedule3!,
+        line4: retirementCredit,
+      },
+      ...(input.form8936_priority_personal_credits === undefined ? {} : {
+        form8936_priority_personal_credits:
+          input.form8936_priority_personal_credits + retirementCredit,
+      }),
+    };
+    const electric = qualifiedElectricAllowance(effectiveInput);
+    const cleanVehicles = cleanVehicleAllowance(effectiveInput);
+    const mortgage = mortgageAllowance(effectiveInput, cleanVehicles);
+    const homebuyer = homebuyerAllowance(
+      effectiveInput,
+      cleanVehicles,
+      mortgage,
+    );
     const businessCredit = businessCreditAllowance(
-      input,
+      effectiveInput,
       cleanVehicles,
       mortgage,
       homebuyer,
       electric,
     );
     const bondCredit = bondCreditAllowance(
-      input,
+      effectiveInput,
       cleanVehicles,
       mortgage,
       homebuyer,
       electric,
       businessCredit,
     );
-    const assembled = assembleReturn(
-      input,
-      cleanVehicles,
-      mortgage,
-      homebuyer,
-      electric,
-      businessCredit,
-      bondCredit,
-    );
-    verifyForm1116Limitation(input, assembled);
+    const assembled = {
+      ...assembleReturn(
+        effectiveInput,
+        cleanVehicles,
+        mortgage,
+        homebuyer,
+        electric,
+        businessCredit,
+        bondCredit,
+      ),
+      ...(effectiveInput.line5c_pension_rollover === true
+        ? { line5c_pension_rollover: true }
+        : {}),
+    };
+    const form2210f = effectiveInput.f2210f_box_b_source === undefined
+      ? undefined
+      : calculateForm2210FBoxB(effectiveInput.f2210f_box_b_source);
+    verifyForm1116Limitation(effectiveInput, assembled);
     const schedule3Finalization = cleanVehicles === undefined &&
         mortgage === undefined &&
         homebuyer === undefined &&
-        electric === undefined &&
+        electric === undefined && retirementCredit === 0 &&
         businessCredit === undefined && bondCredit === undefined
       ? undefined
       : {
         nodeType: "schedule3",
         fields: {
+          ...(retirementCredit > 0
+            ? { line4_retirement_savings_credit: retirementCredit }
+            : {}),
           ...(businessCredit
             ? {
               line6a_total: businessCredit.lines.line38 > 0
@@ -1085,19 +1232,38 @@ class F1040Node extends TaxNode<typeof inputSchema> {
                 homebuyer?.schedule3Credits ??
                 mortgage?.schedule3Credits ??
                 electric?.schedule3Credits ??
-                cleanVehicles?.schedule3Credits ?? 0) > 0
+                cleanVehicles?.schedule3Credits ??
+                (effectiveInput.line20_nonrefundable_credits ?? 0)) > 0
               ? bondCredit?.schedule3Credits ??
                 businessCredit?.schedule3Credits ??
                 homebuyer?.schedule3Credits ??
                 mortgage?.schedule3Credits ??
                 electric?.schedule3Credits ??
-                cleanVehicles?.schedule3Credits
+                cleanVehicles?.schedule3Credits ??
+                effectiveInput.line20_nonrefundable_credits
               : undefined,
         },
       };
     return {
       outputs: [{ nodeType: this.nodeType, fields: assembled }],
       finalizations: [
+        ...(retirement
+          ? [{
+            nodeType: "form8880",
+            fields: retirement.calculatedZero
+              ? { calculated_zero_credit: true }
+              : retirement.printFields,
+          }]
+          : []),
+        ...(form2210f
+          ? [{
+            nodeType: "f2210f",
+            fields: {
+              source: input.f2210f_box_b_source,
+              filed_lines: form2210f,
+            },
+          }]
+          : []),
         ...(schedule3Finalization ? [schedule3Finalization] : []),
         ...(businessCredit
           ? [{

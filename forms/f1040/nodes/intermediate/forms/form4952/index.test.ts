@@ -138,7 +138,7 @@ Deno.test("Form 4952 line 4a includes sourced portfolio royalties once", () => {
         other_investment_property_gross_income: 800,
       }),
     Error,
-    "must exclude sourced 1099-MISC royalties",
+    "must exclude sourced royalties",
   );
   assertEquals(
     calculateForm4952({
@@ -147,6 +147,26 @@ Deno.test("Form 4952 line 4a includes sourced portfolio royalties once", () => {
       other_investment_property_gross_income_excludes_sourced_royalties: true,
     }).line4a,
     900,
+  );
+});
+
+Deno.test("Form 4952 keeps K-1 royalties distinct from 1099-MISC royalties", () => {
+  const lines = calculateForm4952({
+    source_k1_royalties: 1_000,
+    source_1099_royalties: 200,
+    source_k1_allowed_investment_expenses: 250,
+  });
+  assertEquals(lines.line4a, 1_200);
+  assertEquals(lines.line5, 250);
+  assertEquals(lines.line6, 950);
+  assertThrows(
+    () =>
+      calculateForm4952({
+        source_k1_royalties: 1_000,
+        other_investment_property_gross_income: 1_000,
+      }),
+    Error,
+    "must exclude sourced royalties",
   );
 });
 

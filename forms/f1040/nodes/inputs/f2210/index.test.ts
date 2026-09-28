@@ -4,7 +4,10 @@ import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return f2210.compute({ taxYear: 2025, formType: "f1040" }, input as Parameters<typeof f2210.compute>[1]);
+  return f2210.compute(
+    { taxYear: 2025, formType: "f1040" },
+    input as Parameters<typeof f2210.compute>[1],
+  );
 }
 
 function penaltyOutput(result: ReturnType<typeof compute>) {
@@ -17,8 +20,14 @@ function penaltyOutput(result: ReturnType<typeof compute>) {
 
 Deno.test("f2210.inputSchema: rejects negative values", () => {
   assertEquals(f2210.inputSchema.safeParse({ withholding: -1 }).success, false);
-  assertEquals(f2210.inputSchema.safeParse({ underpayment_penalty: -50 }).success, false);
-  assertEquals(f2210.inputSchema.safeParse({ q1_estimated_payment: -100 }).success, false);
+  assertEquals(
+    f2210.inputSchema.safeParse({ underpayment_penalty: -50 }).success,
+    false,
+  );
+  assertEquals(
+    f2210.inputSchema.safeParse({ q1_estimated_payment: -100 }).success,
+    false,
+  );
 });
 
 // =============================================================================
@@ -151,6 +160,19 @@ Deno.test("f2210.compute: quarterly payments contribute to 90% safe harbor", () 
 Deno.test("f2210.compute: waiver_requested suppresses penalty even when penalty is provided", () => {
   const result = compute({ underpayment_penalty: 500, waiver_requested: true });
   assertEquals(result.outputs, []);
+});
+
+Deno.test("f2210.compute: Part II B, D, and E reasons cannot be treated as a bare line 38 penalty", () => {
+  for (
+    const reason of [
+      "partial_waiver_requested",
+      "actual_withholding_dates_method",
+      "joint_filing_status_change",
+    ]
+  ) {
+    const result = compute({ [reason]: true, underpayment_penalty: 500 });
+    assertEquals(result.outputs, []);
+  }
 });
 
 // =============================================================================

@@ -29,6 +29,7 @@ import { FilingStatus } from "../../../types.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 import { schedule1a } from "../../forms/schedule1a/index.ts";
 import { agi_final } from "../agi_final/index.ts";
+import { schedule_j_calculation } from "../../forms/schedule_j/index.ts";
 
 // Fields that may arrive from multiple upstream nodes accumulate as arrays in the
 // executor pending dict. Declaring them accumulable prevents Zod parse failure.
@@ -151,9 +152,20 @@ export const inputSchema = z.object({
   line8f_hsa_income: z.number().nonnegative().optional(),
   // Line 8z — Other income (1099-NEC line 8z, etc.)
   line8z_other: z.number().optional(),
+  line8z_form8621_qef: z.number().optional(),
+  line8z_form8621_mtm: z.number().optional(),
+  line8z_form8621_section1291: z.number().optional(),
+  line8z_f1099nec_nonbusiness: z.number().nonnegative().optional(),
+  line8j_f1099k_hobby_income: z.number().nonnegative().optional(),
+  line8i_prizes_awards: z.number().nonnegative().optional(),
+  line8z_substitute_payments: z.number().nonnegative().optional(),
+  line8z_nqdc: z.number().nonnegative().optional(),
+  line8z_f1098_interest_recovery: z.number().nonnegative().optional(),
+  line8z_k1_s_corp_tax_benefit_recovery: z.number().nonnegative().optional(),
   line8z_form8814: z.number().nonnegative().optional(),
   line8z_hsa_excess_earnings: z.number().nonnegative().optional(),
   line8z_hsa_excess_employer: z.number().nonnegative().optional(),
+  line8b_gambling_winnings: z.number().nonnegative().optional(),
   // Line 8z — RTAA payments (Form 1099-G)
   line8z_rtaa: z.number().optional(),
   // Line 8z — Taxable grants (Form 1099-G)
@@ -164,7 +176,7 @@ export const inputSchema = z.object({
   at_risk_recapture: z.number().nonnegative().optional(),
   // Form 8990 §163(j) disallowed business interest add-back
   biz_interest_disallowed_add_back: z.number().nonnegative().optional(),
-  // Form 7203 S-corp basis disallowance add-back (IRC §1366(d)(1))
+  // Form 7203 basis disallowance adjusts Schedule 1 line 5 income.
   basis_disallowed_add_back: z.number().nonnegative().optional(),
 
   // ── Schedule 1 Part I — Exclusions ────────────────────────────────────────
@@ -172,8 +184,6 @@ export const inputSchema = z.object({
   line8d_foreign_earned_income_exclusion: z.number().nonnegative().optional(),
   // Line 8d — Foreign housing deduction (Form 2555)
   line8d_foreign_housing_deduction: z.number().nonnegative().optional(),
-  // Line 8b — Savings bond interest exclusion (Form 8815)
-  line8b_savings_bond_exclusion: z.number().nonnegative().optional(),
 
   // ── Schedule 1 Part II — Above-the-line deductions ────────────────────────
   // Line 13 — HSA deduction (Form 8889)
@@ -200,11 +210,26 @@ export const inputSchema = z.object({
   line12_business_expenses: z.number().nonnegative().optional(),
   // Line 16 — SEP, SIMPLE, and qualified plan deductions
   line16_sep_simple: z.number().nonnegative().optional(),
-  // Line 19 — Student loan interest deduction (Form 1098-E)
-  line19_student_loan_interest: z.number().nonnegative().optional(),
+  // Line 21 — Student loan interest deduction (Form 1098-E)
+  line21_student_loan_interest: z.number().nonnegative().optional(),
 });
 
 type AgiInput = z.infer<typeof inputSchema>;
+
+function farmOnlyIncomeVerified(input: AgiInput): boolean {
+  const allowed = new Set([
+    "filing_status",
+    "line6_schedule_f",
+    "line15_se_deduction",
+  ]);
+  return Object.entries(input).every(([key, value]) => {
+    if (allowed.has(key) || value === undefined) return true;
+    if (typeof value === "number") return value === 0;
+    if (typeof value === "boolean") return value === false;
+    if (Array.isArray(value)) return value.every((item) => item === 0);
+    return false;
+  });
+}
 
 // ─── SSA Taxability Worksheet (IRC §86) ───────────────────────────────────────
 // Computes the taxable portion of Social Security benefits.
@@ -279,12 +304,24 @@ function nonSsaIncomeBeforePal(input: AgiInput): number {
     (input.line3_schedule_c ?? 0) +
     (input.line4_other_gains ?? 0) +
     (input.line5_schedule_e ?? 0) +
+    (input.basis_disallowed_add_back ?? 0) +
     (input.line6_schedule_f ?? 0) +
     (input.line7_unemployment ?? 0) +
+    (input.line8b_gambling_winnings ?? 0) +
     (input.line8c_cod_income ?? 0) +
     (input.line8e_archer_msa_dist ?? 0) +
     (input.line8f_hsa_income ?? 0) +
     (input.line8z_other ?? 0) +
+    (input.line8z_form8621_qef ?? 0) +
+    (input.line8z_form8621_mtm ?? 0) +
+    (input.line8z_form8621_section1291 ?? 0) +
+    (input.line8z_f1099nec_nonbusiness ?? 0) +
+    (input.line8j_f1099k_hobby_income ?? 0) +
+    (input.line8i_prizes_awards ?? 0) +
+    (input.line8z_substitute_payments ?? 0) +
+    (input.line8z_nqdc ?? 0) +
+    (input.line8z_f1098_interest_recovery ?? 0) +
+    (input.line8z_k1_s_corp_tax_benefit_recovery ?? 0) +
     (input.line8z_form8814 ?? 0) +
     (input.line8z_hsa_excess_earnings ?? 0) +
     (input.line8z_hsa_excess_employer ?? 0) +
@@ -292,8 +329,7 @@ function nonSsaIncomeBeforePal(input: AgiInput): number {
     (input.line8z_taxable_grants ?? 0) +
     (input.at_risk_disallowed_add_back ?? 0) +
     (input.at_risk_recapture ?? 0) +
-    (input.biz_interest_disallowed_add_back ?? 0) +
-    (input.basis_disallowed_add_back ?? 0)
+    (input.biz_interest_disallowed_add_back ?? 0)
   );
 }
 
@@ -348,12 +384,12 @@ function grossIncome(
   );
 }
 
-// Sum IRC §911 exclusions and EE/I bond exclusion.
+// Sum IRC §911 exclusions. Form 8815 savings-bond interest is excluded
+// before taxable interest reaches this node, not on Schedule 1 line 8b.
 function exclusions(input: AgiInput): number {
   return (
     (input.line8d_foreign_earned_income_exclusion ?? 0) +
-    (input.line8d_foreign_housing_deduction ?? 0) +
-    (input.line8b_savings_bond_exclusion ?? 0)
+    (input.line8d_foreign_housing_deduction ?? 0)
   );
 }
 
@@ -382,7 +418,7 @@ function computeAdjustedSli(
   input: AgiInput,
   cfg: import("../../../config/index.ts").F1040Config,
 ): number {
-  const raw = input.line19_student_loan_interest ?? 0;
+  const raw = input.line21_student_loan_interest ?? 0;
   if (raw <= 0) return 0;
   // MFS cannot deduct student loan interest (IRC §221(b)(2)(B))
   if (input.filing_status === "mfs") return 0;
@@ -487,12 +523,24 @@ function scheduleOnePartI(input: AgiInput): number {
     (input.line3_schedule_c ?? 0) +
     (input.line4_other_gains ?? 0) +
     (input.line5_schedule_e ?? 0) +
+    (input.basis_disallowed_add_back ?? 0) +
     (input.line6_schedule_f ?? 0) +
     (input.line7_unemployment ?? 0) +
+    (input.line8b_gambling_winnings ?? 0) +
     (input.line8c_cod_income ?? 0) +
     (input.line8e_archer_msa_dist ?? 0) +
     (input.line8f_hsa_income ?? 0) +
     (input.line8z_other ?? 0) +
+    (input.line8z_form8621_qef ?? 0) +
+    (input.line8z_form8621_mtm ?? 0) +
+    (input.line8z_form8621_section1291 ?? 0) +
+    (input.line8z_f1099nec_nonbusiness ?? 0) +
+    (input.line8j_f1099k_hobby_income ?? 0) +
+    (input.line8i_prizes_awards ?? 0) +
+    (input.line8z_substitute_payments ?? 0) +
+    (input.line8z_nqdc ?? 0) +
+    (input.line8z_f1098_interest_recovery ?? 0) +
+    (input.line8z_k1_s_corp_tax_benefit_recovery ?? 0) +
     (input.line8z_form8814 ?? 0) +
     (input.line8z_hsa_excess_earnings ?? 0) +
     (input.line8z_hsa_excess_employer ?? 0) +
@@ -500,12 +548,10 @@ function scheduleOnePartI(input: AgiInput): number {
     (input.line8z_taxable_grants ?? 0) +
     (input.at_risk_disallowed_add_back ?? 0) +
     (input.at_risk_recapture ?? 0) +
-    (input.biz_interest_disallowed_add_back ?? 0) +
-    (input.basis_disallowed_add_back ?? 0) -
+    (input.biz_interest_disallowed_add_back ?? 0) -
     remainingAllowedPassiveLoss(input) -
     (input.line8d_foreign_earned_income_exclusion ?? 0) -
-    (input.line8d_foreign_housing_deduction ?? 0) -
-    (input.line8b_savings_bond_exclusion ?? 0)
+    (input.line8d_foreign_housing_deduction ?? 0)
   );
 }
 
@@ -538,6 +584,7 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
     form_1116,
     schedule1a,
     agi_final,
+    schedule_j_calculation,
   ]);
 
   compute(ctx: NodeContext, rawInput: AgiInput): NodeResult {
@@ -583,6 +630,11 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
           input.line18_early_withdrawal ?? 0,
         ),
       }),
+      this.outputNodes.output(schedule_j_calculation, {
+        farm_only_income_verified: farmOnlyIncomeVerified(input),
+        se_tax_deduction: input.line15_se_deduction ?? 0,
+        agi,
+      }),
       this.outputNodes.output(scheduleA, { agi }),
       this.outputNodes.output(eitc, { agi }),
       // Pass AGI to f8812 for CTC/ACTC phase-out computation
@@ -620,10 +672,9 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
             input.line17_se_health_insurance ?? 0,
           unsupported_adjustments_present:
             (input.line20_ira_deduction ?? 0) !== 0 ||
-            (input.line19_student_loan_interest ?? 0) !== 0 ||
+            (input.line21_student_loan_interest ?? 0) !== 0 ||
             (input.line23_archer_msa_deduction ?? 0) !== 0 ||
             (input.line24f_501c18d ?? 0) !== 0 ||
-            (input.line8b_savings_bond_exclusion ?? 0) !== 0 ||
             (input.line5_schedule_e ?? 0) !== 0 ||
             (input.line6_schedule_f ?? 0) !== 0 ||
             (input.pal_current_loss ?? 0) !== 0 ||
@@ -631,12 +682,12 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
         },
       }),
       this.outputNodes.output(schedule1a, { magi: agi }),
-      // Pass AGI and filing_status to form8880 for Saver's Credit rate determination (IRC §25B)
+      // General supplies filing status. Form 8880 line 8 adds Form 2555
+      // exclusions back to final AGI before applying its credit-rate table.
       this.outputNodes.output(form8880, {
         agi,
-        ...(input.filing_status !== undefined &&
-          { filing_status: input.filing_status as FilingStatus }),
-      } as AtLeastOne<z.infer<typeof form8880["inputSchema"]>>),
+        foreign_agi_addback: exclusions(input),
+      }),
     ];
 
     const gross = grossIncome(input, cfg);

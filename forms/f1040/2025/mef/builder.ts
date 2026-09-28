@@ -4,6 +4,7 @@ import { PDFDocument } from "pdf-lib";
 import { ALL_MEF_FORMS } from "./forms/index.ts";
 import type { MefBuildContext, MefPdfAttachment } from "./form-descriptor.ts";
 import type { FilerIdentity, MefFormsPending } from "./types.ts";
+import { assertAttachmentCoverage } from "../attachment-coverage.ts";
 
 export interface MefBundle {
   readonly xml: string;
@@ -163,10 +164,12 @@ function buildReturnXml(
   year: number,
   returnType: string,
   attachments: ReadonlyArray<MefPdfAttachment>,
+  attachmentSha256ByFileName?: Readonly<Record<string, string>>,
 ): string {
   if (!filer) {
     throw new Error("MeF export requires a real filer identity");
   }
+  assertAttachmentCoverage(pending, "mef");
   const binaryAttachmentFileNames = attachments.map((item) => item.fileName);
   const attachmentDescriptionsByFileName = Object.fromEntries(
     attachments.map((item) => [item.fileName, item.description]),
@@ -175,6 +178,7 @@ function buildReturnXml(
     filer,
     binaryAttachmentFileNames,
     attachmentDescriptionsByFileName,
+    attachmentSha256ByFileName,
     pending,
   });
   const documentIdsByPendingKey = Object.fromEntries(
@@ -205,6 +209,7 @@ function buildReturnXml(
     filer,
     binaryAttachmentFileNames,
     attachmentDescriptionsByFileName,
+    attachmentSha256ByFileName,
     documentIdsByPendingKey,
     documentIdsByTag,
     documentIdsByAttachmentFileName,
@@ -272,6 +277,14 @@ export async function buildMefBundle(
     ...options.attachments,
     ...generated.flat(),
   ]);
+  const attachmentSha256ByFileName = Object.fromEntries(
+    await Promise.all(attachments.map(async ({ fileName, bytes }) => {
+      const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+      return [fileName, Array.from(digest, (byte) =>
+        byte.toString(16).padStart(2, "0")
+      ).join("")] as const;
+    })),
+  );
   const xml = buildReturnXml(
     pending,
     options.filer,
@@ -279,6 +292,7 @@ export async function buildMefBundle(
     options.year ?? 2025,
     options.returnType ?? "1040",
     attachments,
+    attachmentSha256ByFileName,
   );
   return { xml, attachments };
 }

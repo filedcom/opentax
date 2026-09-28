@@ -16,14 +16,14 @@ type Input = F6252Input;
 // Most elements are derived form lines, not direct input-to-XML mappings.
 export const FIELD_MAP: ReadonlyArray<readonly [string, string]> = [];
 
-function buildIRS6252(input: F6252Item): string {
+export function validateFiledForm6252(input: F6252Item) {
   if (
     !input.property_description || !input.date_acquired || !input.date_sold ||
     input.selling_price_determinable !== true ||
     input.sold_to_related_party !== false
   ) {
     throw new Error(
-      "Form 6252 MeF needs property, dates, determinable price, and unrelated-party confirmation",
+      "Form 6252 needs property, dates, determinable price, and unrelated-party confirmation",
     );
   }
   if ((input.depreciation_recapture ?? 0) > 0) {
@@ -46,6 +46,18 @@ function buildIRS6252(input: F6252Item): string {
     );
   }
   const lines = calculateInstallmentSale(input);
+  if (sold.getUTCFullYear() === 2025) {
+    if (lines.line23 !== 0) {
+      throw new Error(
+        "Form 6252 year-of-sale filing cannot have prior-year payments",
+      );
+    }
+    if (lines.line22 >= lines.line18) {
+      throw new Error(
+        "Form 6252 year-of-sale filing needs a payment after the sale year",
+      );
+    }
+  }
   const isLongTerm = isLongTermInstallmentSale(input);
   if (input.is_long_term !== undefined && input.is_long_term !== isLongTerm) {
     throw new Error(
@@ -57,6 +69,11 @@ function buildIRS6252(input: F6252Item): string {
       "Form 6252 short-term business property needs Form 4797 Part II detail",
     );
   }
+  return lines;
+}
+
+function buildIRS6252(input: F6252Item): string {
+  const lines = validateFiledForm6252(input);
   return elements("IRS6252", [
     element("PropertyDesc", input.property_description),
     element("AcquiredDt", input.date_acquired),
@@ -88,7 +105,7 @@ function buildIRS6252(input: F6252Item): string {
   ]);
 }
 
-function validateDestinations(
+export function validateDestinations(
   items: readonly F6252Item[],
   context?: MefBuildContext,
 ): void {

@@ -61,6 +61,44 @@ Deno.test("Form 8814 tax remains on line 16 even with zero parent taxable income
   assertEquals(f6251Fields(result)?.regular_tax, 135);
 });
 
+Deno.test("Schedule J changes Form 1040 tax while Form 6251 receives the no-election refigure", () => {
+  const ordinary = compute({
+    taxable_income: 50_000,
+    filing_status: FilingStatus.Single,
+  });
+  const elected = compute({
+    taxable_income: 50_000,
+    filing_status: FilingStatus.Single,
+    schedule_j_election_requested: true,
+    schedule_j_calculated_tax: 5_000,
+  });
+  assertEquals(f1040Fields(elected)?.line16_income_tax, 5_000);
+  assertEquals(
+    f6251Fields(elected)?.regular_tax,
+    f6251Fields(ordinary)?.regular_tax,
+  );
+});
+
+Deno.test("Schedule J election cannot silently become ordinary tax or include line-16 add-ons", () => {
+  assertThrows(() => compute({
+    taxable_income: 50_000,
+    filing_status: FilingStatus.Single,
+    schedule_j_election_requested: true,
+  }), Error, "requires a reconciled calculated line 23");
+  assertThrows(() => compute({
+    taxable_income: 50_000,
+    filing_status: FilingStatus.Single,
+    schedule_j_calculated_tax: 5_000,
+  }), Error, "requires its source-backed election");
+  assertThrows(() => compute({
+    taxable_income: 50_000,
+    filing_status: FilingStatus.Single,
+    schedule_j_election_requested: true,
+    schedule_j_calculated_tax: 5_000,
+    form8814_tax: 135,
+  }), Error, "line 16 add-on");
+});
+
 // ─── 2025 Tax Table and Tax Computation Worksheet ────────────────────────────
 
 Deno.test("Single — $50,000 uses the Tax Table's $50,000–$50,050 row", () => {

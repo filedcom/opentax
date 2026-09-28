@@ -78,6 +78,10 @@ export const inputSchema = z.object({
   form4952_amt_elected_capital_gain: z.number().nonnegative().optional(),
   form4952_amt_line2c_difference: z.number().optional(),
   form8814_tax: z.number().nonnegative().optional(),
+  // Internal calculated Schedule J line 23, never a public asserted tax.
+  // Form 6251 still receives the tax refigured without this election.
+  schedule_j_election_requested: z.literal(true).optional(),
+  schedule_j_calculated_tax: z.number().int().nonnegative().optional(),
   form4972_tax: accumulable(z.number().nonnegative()).optional(),
   form8978_tax: accumulable(z.number().nonnegative()).optional(),
   form8621_tax: accumulable(z.number().nonnegative()).optional(),
@@ -125,6 +129,18 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
 
     const input = inputSchema.parse(rawInput);
+    if (input.schedule_j_election_requested === true &&
+        input.schedule_j_calculated_tax === undefined) {
+      throw new Error(
+        "Schedule J election requires a reconciled calculated line 23",
+      );
+    }
+    if (input.schedule_j_calculated_tax !== undefined &&
+        input.schedule_j_election_requested !== true) {
+      throw new Error(
+        "Calculated Schedule J tax requires its source-backed election",
+      );
+    }
 
     const foreignExclusion = input.foreign_earned_income_exclusion ?? 0;
     if (
@@ -161,6 +177,17 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
       );
     }
     const hasPrefIncome = qualDiv > 0 || netCg > 0;
+    if (input.schedule_j_calculated_tax !== undefined &&
+        (hasPrefIncome || unrecaptured1250 > 0 || rate28 > 0 ||
+          form4952Election > 0 || foreignExclusion > 0 ||
+          (input.form8814_tax ?? 0) > 0 ||
+          sumField(input.form4972_tax) > 0 ||
+          sumField(input.form8978_tax) > 0 ||
+          sumField(input.form8621_tax) > 0)) {
+      throw new Error(
+        "Schedule J ordinary-rate route cannot omit a current-year tax worksheet or line 16 add-on",
+      );
+    }
 
     // Form 2555's Foreign Earned Income Tax Worksheet uses the Tax Table on
     // both the stacked income and excluded-income base below $100,000. A
@@ -208,7 +235,7 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
     } else {
       tax = ordinaryTax2025(input.taxable_income, input.filing_status);
     }
-    const regularTaxBeforeAdditionalItems = tax;
+    let regularTaxBeforeAdditionalItems = tax;
 
     let form8615Result: ReturnType<typeof calculateForm8615> | undefined;
     if (input.form8615_source !== undefined) {
@@ -244,12 +271,27 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
     }
     if (form8615Result) tax = form8615Result.line18Tax;
 
+    const taxWithoutScheduleJ = tax;
+    if (input.schedule_j_calculated_tax !== undefined) {
+      if (form8615Result !== undefined) {
+        throw new Error(
+          "Schedule J with Form 8615 needs a separate reconciled tax worksheet",
+        );
+      }
+      tax = input.schedule_j_calculated_tax;
+      regularTaxBeforeAdditionalItems = tax;
+    }
+
     const childElectionTax = input.form8814_tax ?? 0;
     const lumpSumTax = sumField(input.form4972_tax);
     const additionalReportingYearTax = sumField(input.form8978_tax);
     const priorPficYearTax = sumField(input.form8621_tax);
     tax += childElectionTax + lumpSumTax + additionalReportingYearTax +
       priorPficYearTax;
+    const amtRefiguredTax = input.schedule_j_calculated_tax === undefined
+      ? tax
+      : taxWithoutScheduleJ + childElectionTax + lumpSumTax +
+        additionalReportingYearTax + priorPficYearTax;
 
     const outputs: NodeOutput[] = [
       this.outputNodes.output(f1040, {
@@ -261,11 +303,11 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
         ...(priorPficYearTax > 0 ? { form8621_tax: priorPficYearTax } : {}),
       }),
       this.outputNodes.output(form8978_reporting_year, { regular_tax: tax }),
-      // Form 6251 line 10 starts with Form 1040 line 16, including the
-      // qualified-dividend/capital-gain rate calculation. Other line 10
-      // adjustments still require their own source routing and audit.
+      // Form 6251 line 10 ordinarily starts from Form 1040 line 16. Schedule J
+      // is the exception: IRS instructions require tax refigured without the
+      // income-averaging election, including Form 8814, for this line.
       this.outputNodes.output(form6251, {
-        regular_tax: tax,
+        regular_tax: amtRefiguredTax,
         ...(lumpSumTax > 0 ? { form4972_tax: lumpSumTax } : {}),
         regular_tax_income: input.form6251_line1b,
         regular_taxable_income: input.taxable_income,
@@ -277,6 +319,14 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
           ? { unrecaptured_1250_gain: unrecaptured1250 }
           : {}),
         ...(rate28 > 0 ? { rate_28_gain: rate28 } : {}),
+        ...(input.form4952_election !== undefined
+          ? { form4952_regular_election: form4952Election }
+          : {}),
+        ...(input.form4952_elected_capital_gain !== undefined
+          ? {
+            form4952_regular_elected_capital_gain: electedCapitalGain,
+          }
+          : {}),
         ...(input.form4952_amt_election !== undefined
           ? { form4952_amt_election: input.form4952_amt_election }
           : {}),

@@ -25,6 +25,7 @@ export const rentedHome: RentedHomeSource = {
   actual_expense_method_verified: true,
   rented_home_verified: true,
   sole_home_and_business_verified: true,
+  all_schedule_c_gross_income_attributable_to_home_verified: true,
   no_daycare_or_inventory_exception: true,
   no_home_business_gain_or_other_trade_loss: true,
   no_casualty_mortgage_tax_or_depreciation: true,
@@ -38,7 +39,7 @@ Deno.test("2025 Form 8829 rented-home input is registered", () => {
   );
 });
 
-Deno.test("2025 Form 8829 calculates operating-only lines but blocks an unlinked Schedule C deduction", () => {
+Deno.test("2025 Form 8829 sends one business-linked line 36 claim to Schedule C", () => {
   const lines = calculateRentedHomeForm8829(rentedHome);
   assertEquals(lines.line3, 0.2);
   assertEquals(lines.line23b, 14_000);
@@ -47,14 +48,20 @@ Deno.test("2025 Form 8829 calculates operating-only lines but blocks an unlinked
   assertEquals(lines.line27, 2_900);
   assertEquals(lines.line36, 2_900);
   assertEquals(lines.line43, 0);
-  assertThrows(
-    () =>
-      form_8829.compute(
-        { taxYear: 2025, formType: "f1040" },
-        { rented_home: rentedHome },
-      ),
-    Error,
-    "cannot be linked to Schedule C item line 30",
+  const result = form_8829.compute(
+    { taxYear: 2025, formType: "f1040" },
+    { rented_home: rentedHome },
+  );
+  assertEquals(
+    result.outputs.find((item) => item.nodeType === "schedule_c")?.fields
+      .form8829_line30,
+    {
+      business_reference: "C-1",
+      home_identifier: "HOME-1",
+      recipient: TS.T,
+      schedule_c_line29_tentative_profit: 5_000,
+      line36: 2_900,
+    },
   );
 });
 

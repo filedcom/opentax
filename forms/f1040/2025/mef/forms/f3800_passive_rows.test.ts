@@ -2,7 +2,12 @@ import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { PassiveCreditReportingRoute } from "../../../nodes/intermediate/forms/form8582cr/credit-route.ts";
 import { PassiveCreditSourceOrigin } from "../../../nodes/intermediate/forms/form8582cr/source.ts";
 import type { Form3800PassiveTaxUseVintage } from "../../../nodes/inputs/f3800/calculation.ts";
-import { buildForm3800PassiveRowXml } from "./f3800_passive_rows.ts";
+import {
+  buildForm3800PassiveRowXml,
+  form3800CarryoverRowXml,
+  form3800PassiveCarryoverDetailXml,
+  form3800PassiveCurrentDetailXml,
+} from "./f3800_passive_rows.ts";
 import { buildForm3800PartIVXml } from "./f3800_part_iv.ts";
 import { buildForm3800PartVXml } from "./f3800_part_v.ts";
 
@@ -99,8 +104,28 @@ Deno.test("Form 3800 passive current-year XML keeps Part III and V source amount
     "<TotalGeneralBusCreditsAppTxAmt>160</TotalGeneralBusCreditsAppTxAmt>",
   );
   assertEquals(xml.partV.map((row) => row.line), ["1h", "1h"]);
+  assertEquals(xml.partV.map((row) => row.source.sourceKey), [
+    "own-2025",
+    "partnership-2025",
+  ]);
+  assertEquals(
+    xml.partV[1].source.sourceOrigin,
+    currentPartnership.sourceOrigin,
+  );
+  assertEquals(xml.partV[1].source.appliedAgainstTax, 100);
+  assertEquals(xml.partV[1].source.unusedAfterTaxLimit, 50);
+  assertEquals(
+    form3800PassiveCurrentDetailXml(xml.partV[0]),
+    '<Frm8820CYAggrgtAmtGrp lineNumberTxt="Part III Line 1h">' +
+      "<OthThnCrTrnsfrElectCrBfrLmtAmt>100</OthThnCrTrnsfrElectCrBfrLmtAmt>" +
+      "<CrTrnsfrElectCrAllwAftrLmtAmt>80</CrTrnsfrElectCrAllwAftrLmtAmt>" +
+      "<TotalGeneralBusCreditsAmt>80</TotalGeneralBusCreditsAmt>" +
+      "<TotalGBCLessGrossEPEAppTxAmt>60</TotalGBCLessGrossEPEAppTxAmt>" +
+      "<CarryforwardGeneralBusCrAmt>20</CarryforwardGeneralBusCrAmt>" +
+      "</Frm8820CYAggrgtAmtGrp>",
+  );
   assertStringIncludes(
-    xml.partV[1].xml,
+    form3800PassiveCurrentDetailXml(xml.partV[1]),
     "<CrTrnsfrElectCrAllwAftrLmtAmt>150</CrTrnsfrElectCrAllwAftrLmtAmt>",
   );
 });
@@ -110,7 +135,7 @@ Deno.test("Form 3800 retains single passive current-year source detail for a mix
   assertEquals(xml.partIII[0].metadata.sourceCount, 1);
   assertEquals(xml.partV.length, 1);
   assertStringIncludes(
-    xml.partV[0].xml,
+    form3800PassiveCurrentDetailXml(xml.partV[0]),
     "<TotalGeneralBusCreditsAmt>80</TotalGeneralBusCreditsAmt>",
   );
 });
@@ -138,10 +163,20 @@ Deno.test("Form 3800 passive self-earned New Markets row links its IRS8874 sourc
     },
   );
   assertEquals(rows.partIII[0].metadata.referenceDocumentId, "IRS8874_1");
+  assertEquals(rows.partV[0].sourceDocument, {
+    documentId: "IRS8874_1",
+    documentName: "IRS8874",
+  });
+  assertEquals(rows.partV[1].sourceDocument, undefined);
   assertStringIncludes(rows.partIII[0].xml, 'referenceDocumentId="IRS8874_1"');
-  assertStringIncludes(rows.partV[0].xml, 'referenceDocumentId="IRS8874_1"');
+  assertStringIncludes(
+    form3800PassiveCurrentDetailXml(rows.partV[0]),
+    'referenceDocumentId="IRS8874_1"',
+  );
   assertEquals(
-    rows.partV[1].xml.includes('referenceDocumentId="IRS8874_1"'),
+    form3800PassiveCurrentDetailXml(rows.partV[1]).includes(
+      'referenceDocumentId="IRS8874_1"',
+    ),
     false,
   );
 });
@@ -150,6 +185,10 @@ Deno.test("Form 3800 passive carryover XML keeps summary and source-year detail"
   const xml = buildForm3800PassiveRowXml([own, partnership], {});
   assertEquals(xml.partIV.length, 1);
   assertEquals(xml.partIV[0].line, "1h");
+  assertEquals(xml.partIV[0].sourceKeys, ["own-2023", "partnership-2024"]);
+  assertEquals(xml.partIV[0].originatingTaxYear, 2024);
+  assertEquals(xml.partIV[0].entity, { ein: "123456789" });
+  assertEquals(Object.hasOwn(xml.partIV[0], "xml"), false);
   assertEquals(xml.partIV[0].amount, {
     line: "1h",
     passiveBeforeLimit: 300,
@@ -159,37 +198,76 @@ Deno.test("Form 3800 passive carryover XML keeps summary and source-year detail"
     recapturedOrAdjusted: 0,
     carryforwardCredit: 50,
   });
+  assertEquals(
+    form3800CarryoverRowXml(xml.partIV[0]),
+    "<Frm8820CYCyovCrGrp>" +
+      "<CyovGeneralBusinessCrItemCnt>2</CyovGeneralBusinessCrItemCnt>" +
+      "<Yr>2024</Yr>" +
+      "<PassThroughEntityEIN>123456789</PassThroughEntityEIN>" +
+      "<CrSubjToPassiveActyLmtAmt>300</CrSubjToPassiveActyLmtAmt>" +
+      "<PassiveActivityCrAfterLmtAmt>230</PassiveActivityCrAfterLmtAmt>" +
+      "<TotalGeneralBusCreditsAppTxAmt>180</TotalGeneralBusCreditsAppTxAmt>" +
+      "<CarryforwardGeneralBusCrAmt>50</CarryforwardGeneralBusCrAmt>" +
+      "</Frm8820CYCyovCrGrp>",
+  );
   assertEquals(xml.partVI.length, 2);
+  assertEquals(xml.partVI.map((row) => row.source.sourceKey), [
+    "own-2023",
+    "partnership-2024",
+  ]);
+  assertEquals(xml.partVI.map((row) => row.source.originatingTaxYear), [
+    2023,
+    2024,
+  ]);
+  assertEquals(
+    form3800PassiveCarryoverDetailXml(xml.partVI[0]),
+    '<Frm8820CYCyovCrAggrgtGrp lineNumberTxt="Part IV Line 1h">' +
+      "<Yr>2023</Yr>" +
+      "<CrSubjToPassiveActyLmtAmt>100</CrSubjToPassiveActyLmtAmt>" +
+      "<PassiveActivityCrAfterLmtAmt>80</PassiveActivityCrAfterLmtAmt>" +
+      "<TotalGeneralBusCreditsAppTxAmt>80</TotalGeneralBusCreditsAppTxAmt>" +
+      "<CarryforwardGeneralBusCrAmt>0</CarryforwardGeneralBusCrAmt>" +
+      "</Frm8820CYCyovCrAggrgtGrp>",
+  );
   assertStringIncludes(
-    xml.partIV[0].xml,
+    form3800CarryoverRowXml(xml.partIV[0]),
     "<CyovGeneralBusinessCrItemCnt>2</CyovGeneralBusinessCrItemCnt>",
   );
-  assertStringIncludes(xml.partIV[0].xml, "<Yr>2024</Yr>");
+  assertStringIncludes(form3800CarryoverRowXml(xml.partIV[0]), "<Yr>2024</Yr>");
   assertStringIncludes(
-    xml.partIV[0].xml,
+    form3800CarryoverRowXml(xml.partIV[0]),
     "<PassThroughEntityEIN>123456789</PassThroughEntityEIN>",
   );
   assertStringIncludes(
-    xml.partIV[0].xml,
+    form3800CarryoverRowXml(xml.partIV[0]),
     "<CrSubjToPassiveActyLmtAmt>300</CrSubjToPassiveActyLmtAmt>",
   );
   assertStringIncludes(
-    xml.partIV[0].xml,
+    form3800CarryoverRowXml(xml.partIV[0]),
     "<PassiveActivityCrAfterLmtAmt>230</PassiveActivityCrAfterLmtAmt>",
   );
   assertStringIncludes(
-    xml.partIV[0].xml,
+    form3800CarryoverRowXml(xml.partIV[0]),
     "<TotalGeneralBusCreditsAppTxAmt>180</TotalGeneralBusCreditsAppTxAmt>",
   );
   assertStringIncludes(
-    xml.partIV[0].xml,
+    form3800CarryoverRowXml(xml.partIV[0]),
     "<CarryforwardGeneralBusCrAmt>50</CarryforwardGeneralBusCrAmt>",
   );
-  assertStringIncludes(xml.partVI[0].xml, 'lineNumberTxt="Part IV Line 1h"');
-  assertStringIncludes(xml.partVI[0].xml, "<Yr>2023</Yr>");
-  assertStringIncludes(xml.partVI[1].xml, "<Yr>2024</Yr>");
   assertStringIncludes(
-    xml.partVI[1].xml,
+    form3800PassiveCarryoverDetailXml(xml.partVI[0]),
+    'lineNumberTxt="Part IV Line 1h"',
+  );
+  assertStringIncludes(
+    form3800PassiveCarryoverDetailXml(xml.partVI[0]),
+    "<Yr>2023</Yr>",
+  );
+  assertStringIncludes(
+    form3800PassiveCarryoverDetailXml(xml.partVI[1]),
+    "<Yr>2024</Yr>",
+  );
+  assertStringIncludes(
+    form3800PassiveCarryoverDetailXml(xml.partVI[1]),
     "<CarryforwardGeneralBusCrAmt>50</CarryforwardGeneralBusCrAmt>",
   );
 });
@@ -206,7 +284,7 @@ Deno.test("Form 3800 passive carryover XML preserves explicit missing-EIN reason
   const xml = buildForm3800PassiveRowXml([source], {});
   assertEquals(xml.partVI, []);
   assertStringIncludes(
-    xml.partIV[0].xml,
+    form3800CarryoverRowXml(xml.partIV[0]),
     "<MissingEINReasonCd>APPLD FOR</MissingEINReasonCd>",
   );
 });
@@ -243,7 +321,7 @@ Deno.test("Form 3800 passive summary EIN uses the entity's combined years", () =
     later,
   ], {});
   assertStringIncludes(
-    xml.partIV[0].xml,
+    form3800CarryoverRowXml(xml.partIV[0]),
     "<PassThroughEntityEIN>123456789</PassThroughEntityEIN>",
   );
   assertEquals(xml.partVI.length, 3);
@@ -278,6 +356,27 @@ Deno.test("Form 3800 passive carryover XML rejects unreconciled tax use", () => 
   );
 });
 
+Deno.test("Form 3800 passive detail builders retain all source rows beyond one PDF page", () => {
+  const current = Array.from({ length: 16 }, (_, index) => ({
+    ...currentOwn,
+    sourceKey: `current-${index + 1}`,
+  }));
+  const carryover = Array.from({ length: 36 }, (_, index) => ({
+    ...own,
+    sourceKey: `carryover-${index + 1}`,
+  }));
+  const rows = buildForm3800PassiveRowXml([...current, ...carryover], {});
+  assertEquals(rows.partV.length, 16);
+  assertEquals(rows.partVI.length, 36);
+  assertEquals(new Set(rows.partV.map((row) => row.source.sourceKey)).size, 16);
+  assertEquals(
+    new Set(rows.partVI.map((row) => row.source.sourceKey)).size,
+    36,
+  );
+  assertEquals(rows.partV[15].source.sourceKey, "current-16");
+  assertEquals(rows.partVI[35].source.sourceKey, "carryover-36");
+});
+
 Deno.test("Form 3800 passive carryover fragments follow TY2025v5.4 IRS3800 XSD", async () => {
   const xsd = new URL(
     "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/CorporateIncomeTax/Corp1120/IRS3800/IRS3800.xsd",
@@ -298,8 +397,13 @@ Deno.test("Form 3800 passive carryover fragments follow TY2025v5.4 IRS3800 XSD",
     `<IRS3800 xmlns="http://www.irs.gov/efile"><CAMTAndBEATInd>false</CAMTAndBEATInd>${
       fragments.partIII.map((row) => row.xml).join("")
     }${buildForm3800PartIVXml(fragments.partIV).join("")}${
-      buildForm3800PartVXml(fragments.partV)
-    }${fragments.partVI.map((row) => row.xml).join("")}</IRS3800>`;
+      buildForm3800PartVXml(fragments.partV.map((row) => ({
+        line: row.line,
+        xml: form3800PassiveCurrentDetailXml(row),
+      })))
+    }${
+      fragments.partVI.map(form3800PassiveCarryoverDetailXml).join("")
+    }</IRS3800>`;
   const path = await Deno.makeTempFile({ suffix: ".xml" });
   try {
     await Deno.writeTextFile(path, xml);

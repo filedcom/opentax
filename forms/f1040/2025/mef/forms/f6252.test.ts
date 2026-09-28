@@ -59,6 +59,28 @@ Deno.test("Form 6252 prior-year sale does not repeat the debt-over-basis payment
   );
 });
 
+Deno.test("Form 6252 retains a prior-year obligation paid in full during 2025", () => {
+  const xml = buildSale({
+    ...sale,
+    date_sold: "2024-03-01",
+    mortgage_assumed: 0,
+    payments_received_prior_years: 80_000,
+    payments_received: 20_000,
+  });
+  assertStringIncludes(
+    xml,
+    "<PaymentsReceivedPriorYearsAmt>80000</PaymentsReceivedPriorYearsAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<PaymentsReceivedCurrentYearAmt>20000</PaymentsReceivedCurrentYearAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<InstallmentSaleIncomeAmt>12000</InstallmentSaleIncomeAmt>",
+  );
+});
+
 Deno.test("Form 6252 rejects incomplete or unsupported sale data", () => {
   assertThrows(
     () => buildSale({ ...sale, property_description: undefined }),
@@ -89,6 +111,21 @@ Deno.test("Form 6252 rejects incomplete or unsupported sale data", () => {
     () => buildSale({ ...sale, date_sold: "2024-03-01" }),
     Error,
     "prior-year payment history",
+  );
+  assertThrows(
+    () => buildSale({ ...sale, payments_received_prior_years: 1 }),
+    Error,
+    "cannot have prior-year payments",
+  );
+  assertThrows(
+    () =>
+      buildSale({
+        ...sale,
+        mortgage_assumed: 0,
+        payments_received: 100_000,
+      }),
+    Error,
+    "needs a payment after the sale year",
   );
   assertThrows(
     () =>
@@ -125,5 +162,41 @@ Deno.test("Form 6252 requires its destination gain in a complete return", () => 
       }, testFiler()),
     Error,
     "Form 4797 line 4",
+  );
+});
+
+Deno.test("Form 6252 reconciles two source sales to one Schedule D gain", () => {
+  const secondSale = {
+    ...sale,
+    property_description: "Second vacant lot",
+    mortgage_assumed: 0,
+    cost_basis: 80_000,
+    payments_received: 20_000,
+  };
+  const fields = { f6252s: [sale, secondSale] };
+  const documents = form6252.build(fields, {
+    pending: { schedule_d: { gain_form6252_lt: 34_000 } },
+  });
+  assertEquals(documents.length, 2);
+  assertStringIncludes(
+    documents[0],
+    "<PropertyDesc>Vacant land</PropertyDesc>",
+  );
+  assertStringIncludes(
+    documents[0],
+    "<InstalSaleLessOrdnryIncmAmt>30000</InstalSaleLessOrdnryIncmAmt>",
+  );
+  assertStringIncludes(
+    documents[1],
+    "<InstalSaleLessOrdnryIncmAmt>4000</InstalSaleLessOrdnryIncmAmt>",
+  );
+
+  assertThrows(
+    () =>
+      form6252.build(fields, {
+        pending: { schedule_d: { gain_form6252_lt: 33_999 } },
+      }),
+    Error,
+    "Schedule D gain source",
   );
 });

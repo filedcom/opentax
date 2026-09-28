@@ -28,7 +28,8 @@ Schedule K-1 (Form 1041) is issued by a trust or estate to each beneficiary, rep
 | box8_other_rental | number | no | Box 8 — Other rental income/loss | Other rental income → Schedule E | K-1 (1041) Box 8 → Schedule E | https://www.irs.gov/instructions/i1041sk1 |
 | box10_estate_tax_deduction | number | no | Box 10 — Estate tax deduction | IRD deduction → Schedule A line 16 | K-1 (1041) Box 10 → Sch A line 16 | https://www.irs.gov/instructions/i1041sk1 |
 | box11_final_year_deductions | number | no | Box 11 — Final year excess deductions | Excess deductions on termination → Sch 1 line 24k | K-1 (1041) Box 11 code A | https://www.irs.gov/instructions/i1041sk1 |
-| box12_amt | number | no | Box 12 — AMT adjustment | AMT preference/adjustment items → Form 6251 | K-1 (1041) Box 12 → Form 6251 | https://www.irs.gov/instructions/i1041sk1 |
+| box12_amt | number | no | Uncoded box 12 AMT amount | A nonzero value stops because the filed line is unknown | K-1 (1041) box 12 | https://www.irs.gov/instructions/i1041sk1 |
+| box12_code_a_amt_adjustment | signed integer | no | Box 12 code A adjustment | Form 6251 line 2j when source identity is present and codes B–I are affirmed absent | K-1 (1041) box 12 code A | https://www.irs.gov/instructions/i1041sk1 |
 | box14_foreign_tax | number | no | Box 14 — Foreign tax paid | Foreign taxes creditable → Form 1116 | K-1 (1041) Box 14 code ZZ → Form 1116 | https://www.irs.gov/instructions/i1041sk1 |
 | box14_foreign_income | number | no | Box 14 — Foreign source income | Foreign income for FTC limitation | K-1 (1041) Box 14 → Form 1116 | https://www.irs.gov/instructions/i1041sk1 |
 

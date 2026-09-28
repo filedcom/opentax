@@ -3,10 +3,10 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
-import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { schedule_f } from "../../intermediate/forms/schedule_f/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Per-entry schema — one 1099-PATR from one cooperative
@@ -16,21 +16,70 @@ export const itemSchema = z.object({
   box3_per_unit_retain: z.number().nonnegative().optional(),
   box4_federal_withheld: z.number().nonnegative().optional(),
   box5_redeemed_nonqualified: z.number().nonnegative().optional(),
-  // Box 6 — Domestic production activities deduction (DPAD) — expired after 2017
-  // May appear on historical forms; no current-year routing
-  box6_dpad: z.number().nonnegative().optional(),
+  // Box 6 — specified cooperative's section 199A(g) deduction passed to patron.
+  box6_section199ag_deduction: z.number().nonnegative().optional(),
   // Box 7 — Qualified payments (affects §199A QBI calculation)
   // Informational for Form 8995/8995-A; tracked here but no direct output
   box7_qualified_payments: z.number().nonnegative().optional(),
-  // Box 8 — Qualified written notice of allocation
-  box8_qualified_written_notice: z.number().nonnegative().optional(),
-  // Box 9 — Section 199A(g) deduction (cooperative-level deduction)
-  box9_section199a_deduction: z.number().nonnegative().optional(),
+  // Boxes 8 and 9 — informational section 199A(a) non-SSTB/SSTB items.
+  box8_section199aa_qualified_items: z.number().optional(),
+  box9_section199aa_sstb_items: z.number().optional(),
+  // Box 13 — payer is a specified agricultural or horticultural cooperative.
+  box13_specified_cooperative: z.boolean().optional(),
   payer_name: z.string().optional(),
   payer_tin: z.string().optional(),
   account_number: z.string().optional(),
-  // Whether income is from a trade or business (routes to Schedule C/F vs. other income)
+  // Retained for the specified-cooperative QBI source cross-check.
   trade_or_business: z.boolean().optional(),
+  distribution_treatment: z.discriminatedUnion("kind", [
+    z.object({
+      kind: z.literal("farm"),
+      farm_id: z.string().min(1),
+      verified_taxable_amount: z.number().nonnegative(),
+    }).strict(),
+    z.object({
+      kind: z.literal("personal_basis_adjustment"),
+      purchase_reference: z.string().min(1),
+      verified_basis_reduction: z.number().nonnegative(),
+    }).strict(),
+  ]).optional(),
+}).superRefine((item, ctx) => {
+  const gross = distributionTotal(item);
+  const treatment = item.distribution_treatment;
+  if (gross > 0 && !treatment) {
+    ctx.addIssue({
+      code: "custom",
+      message:
+        "1099-PATR distributions require a verified farm or personal-purchase treatment",
+    });
+  }
+  if (treatment?.kind === "farm") {
+    if (
+      item.trade_or_business === false ||
+      treatment.verified_taxable_amount > gross
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "1099-PATR farm taxable amount must not exceed gross distributions or contradict business classification",
+      });
+    }
+  }
+  if (treatment?.kind === "personal_basis_adjustment") {
+    if (
+      item.trade_or_business === true ||
+      (item.box2_nonpatronage_distributions ?? 0) > 0 ||
+      (item.box3_per_unit_retain ?? 0) > 0 ||
+      (item.box5_redeemed_nonqualified ?? 0) > 0 ||
+      treatment.verified_basis_reduction !== gross
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "1099-PATR personal treatment requires box 1 only and a matching verified basis reduction",
+      });
+    }
+  }
 });
 
 export const inputSchema = z.object({
@@ -40,41 +89,39 @@ export const inputSchema = z.object({
 type PATRItem = z.infer<typeof itemSchema>;
 type PATRItems = PATRItem[];
 
-function nonBusinessItems(items: PATRItems): PATRItems {
-  return items.filter((item) => item.trade_or_business !== true);
-}
-
-function totalPatronageDividends(items: PATRItems): number {
-  return items.reduce((sum, item) => sum + (item.box1_patronage_dividends ?? 0), 0);
-}
-
-function totalNonpatronage(items: PATRItems): number {
-  return items.reduce((sum, item) => sum + (item.box2_nonpatronage_distributions ?? 0), 0);
-}
-
-function totalPerUnitRetain(items: PATRItems): number {
-  return items.reduce((sum, item) => sum + (item.box3_per_unit_retain ?? 0), 0);
+function distributionTotal(item: {
+  box1_patronage_dividends?: number;
+  box2_nonpatronage_distributions?: number;
+  box3_per_unit_retain?: number;
+  box5_redeemed_nonqualified?: number;
+}): number {
+  return (item.box1_patronage_dividends ?? 0) +
+    (item.box2_nonpatronage_distributions ?? 0) +
+    (item.box3_per_unit_retain ?? 0) +
+    (item.box5_redeemed_nonqualified ?? 0);
 }
 
 function totalFederalWithheld(items: PATRItems): number {
-  return items.reduce((sum, item) => sum + (item.box4_federal_withheld ?? 0), 0);
+  return items.reduce(
+    (sum, item) => sum + (item.box4_federal_withheld ?? 0),
+    0,
+  );
 }
 
-function totalRedeemedNonqualified(items: PATRItems): number {
-  return items.reduce((sum, item) => sum + (item.box5_redeemed_nonqualified ?? 0), 0);
-}
-
-function schedule1Output(items: PATRItems): NodeOutput[] {
-  // Non-business patronage dividends + nonpatronage + per-unit retain + redeemed nonqualified → other income
-  // IRC §1385(a): all four amounts are gross income to the recipient
-  const nonBiz = nonBusinessItems(items);
-  const patronage = totalPatronageDividends(nonBiz);
-  const nonpatronage = totalNonpatronage(nonBiz);
-  const perUnit = totalPerUnitRetain(nonBiz);
-  const redeemed = totalRedeemedNonqualified(nonBiz);
-  const total = patronage + nonpatronage + perUnit + redeemed;
-  if (total === 0) return [];
-  return [output(schedule1, { line8z_other_income: total })];
+function farmOutputs(items: PATRItems): NodeOutput[] {
+  const farmSources = items.flatMap((item) => {
+    const treatment = item.distribution_treatment;
+    if (treatment?.kind !== "farm" || distributionTotal(item) === 0) return [];
+    return [{
+      farm_id: treatment.farm_id,
+      kind: "1099patr_cooperative" as const,
+      amount: distributionTotal(item),
+      taxable_amount: treatment.verified_taxable_amount,
+    }];
+  });
+  return farmSources.length > 0
+    ? [output(schedule_f, { farm_sources: farmSources })]
+    : [];
 }
 
 function f1040Output(items: PATRItems): NodeOutput[] {
@@ -86,16 +133,29 @@ function f1040Output(items: PATRItems): NodeOutput[] {
 class F1099PATRNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f1099patr";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1, f1040]);
+  readonly outputNodes = new OutputNodes([schedule_f, f1040]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
     const { f1099patrs } = parsed;
 
     const outputs: NodeOutput[] = [
-      ...schedule1Output(f1099patrs),
+      ...farmOutputs(f1099patrs),
       ...f1040Output(f1099patrs),
     ];
+
+    // Preserve specified-cooperative source for the Form 8995-A/Schedule D
+    // filing cross-check. This does not create a second tax or MeF document.
+    if (
+      f1099patrs.some((item) =>
+        (item.trade_or_business === true ||
+          item.distribution_treatment?.kind === "farm") &&
+        item.box13_specified_cooperative === true &&
+        (item.box7_qualified_payments ?? 0) > 0
+      )
+    ) {
+      outputs.push({ nodeType: this.nodeType, fields: parsed });
+    }
 
     return { outputs };
   }

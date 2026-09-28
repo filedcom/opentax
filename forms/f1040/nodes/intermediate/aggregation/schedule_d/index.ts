@@ -14,7 +14,7 @@ import { income_tax_calculation } from "../../worksheets/income_tax_calculation/
 import { rate_28_gain_worksheet } from "../../worksheets/rate_28_gain_worksheet/index.ts";
 import { form8960 } from "../../forms/form8960/index.ts";
 import { form8995 } from "../../forms/form8995/index.ts";
-import { scheduleA } from "../../../inputs/schedule_a/index.ts";
+import { form6251 } from "../../forms/form6251/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -25,8 +25,8 @@ const CAPITAL_LOSS_LIMIT_MFS = -1_500;
 
 // Form 8949 adjustment codes that trigger 28% Rate Gain Worksheet
 // C = collectibles gain (IRC §1(h)(5))
-// Q (QOF) removed: IRC §1400Z-2 inclusion events are taxed at ordinary/LTCG rates,
-// not 28% rate. Only collectibles trigger the 28% tier.
+// Section 1202 code Q needs its own exclusion and 28% worksheet refigure,
+// and is rejected below until those amounts are source-linked.
 const RATE_28_CODES = new Set(["C"]);
 
 // Long-term parts: D/J aggregate to Sch D Line 8b, E/K → Line 9, F/L → Line 10
@@ -49,6 +49,8 @@ const transactionSchema = z.object({
   is_long_term: z.boolean(),
   qsbs_code: z.enum(["Q1", "Q2", "Q3"]).optional(),
   qsbs_amount: z.number().nonnegative().optional(),
+  from_form4797_investment_1245: z.literal(true).optional(),
+  form4797_property_id: z.string().trim().min(1).optional(),
 });
 
 // d_screen transaction schema — gain_loss is computed from proceeds/cost/adjustment_amount
@@ -159,6 +161,37 @@ function hasCapitalActivity(input: ScheduleDInput): boolean {
     dScreenTxs.length > 0 ||
     hasAggregateLines
   );
+}
+
+// An AMT-basis Form 8949 line 2k refigure is supported only when its
+// identified rows are the complete capital-activity source. Check source
+// presence, not a net amount that unrelated rows could cancel to zero.
+function hasOtherAmtBasisCapitalActivity(input: ScheduleDInput): boolean {
+  return (input.transactions?.length ?? 0) > 0 ||
+    input.pending_active_4797 === true ||
+    [
+      input.line13_cap_gain_distrib,
+      input.line13_form8814,
+      input.box2c_qsbs,
+      input.capital_loss_carryover,
+      input.line_1a_proceeds,
+      input.line_1a_cost,
+      input.line_8a_proceeds,
+      input.line_8a_cost,
+      input.line_6_carryover,
+      input.line_14_carryover,
+      input.line_12_cap_gain_dist,
+      input.line_5_k1_st,
+      input.line_12_k1_lt,
+      input.line_11_qef_lt,
+      input.gain_form6252_lt,
+      input.gain_form8824_lt,
+      input.gain_form6252_st,
+      input.line19_unrecaptured_1250,
+      input.collectibles_gain_form2439,
+    ].some((amount) => amount !== undefined && amount !== 0) ||
+    normalizeArray(input.line_11_form2439).some((amount) => amount !== 0) ||
+    normalizeArray(input.line_4_other_st).some((amount) => amount !== 0);
 }
 
 // Form 1040 line 7a may report capital gain distributions directly when they
@@ -294,11 +327,26 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
     rate_28_gain_worksheet,
     form8960,
     form8995,
+    form6251,
     schedule_d_final,
   ]);
 
   compute(_ctx: NodeContext, rawInput: ScheduleDInput): NodeResult {
     const input = inputSchema.parse(rawInput);
+
+    if (
+      (input.box2c_qsbs ?? 0) > 0 ||
+      normalizeArray(input.transaction).some((tx) =>
+        tx.qsbs_code !== undefined ||
+          tx.qsbs_amount !== undefined ||
+          tx.adjustment_codes?.includes("Q")) ||
+      (input.transactions ?? []).some((tx) =>
+        tx.adjustment_codes?.includes("Q"))
+    ) {
+      throw new Error(
+        "Schedule D section 1202 gain needs a sourced Form 8949 exclusion, 28% Rate Gain Worksheet refigure, and Form 6251 line 2h preference before filing",
+      );
+    }
 
     if (
       input.cod_property_fmv !== undefined ||
@@ -392,6 +440,20 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
         line7_capital_gain: capitalGainForReturn,
       }),
     ];
+    outputs.push(this.outputNodes.output(form6251, {
+      line2k_8949_capital_audit: {
+        transactions: f8949Txs.map((tx) => ({
+          source_transaction_id: tx.source_transaction_id ?? "",
+          part: tx.part,
+          proceeds: tx.proceeds,
+          cost_basis: tx.cost_basis,
+          adjustment_codes: tx.adjustment_codes,
+          adjustment_amount: tx.adjustment_amount,
+          gain_loss: tx.gain_loss,
+        })),
+        has_other_capital_activity: hasOtherAmtBasisCapitalActivity(input),
+      },
+    }));
 
     // NII: net capital gain (not loss) is subject to NIIT (IRC §1411(c)(1)(A)(iii))
     if (capitalGainForReturn > 0) {

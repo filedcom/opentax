@@ -10,16 +10,10 @@ import {
   scheduleA as schedule_a,
 } from "../schedule_a/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import { form8283CarryoverEvidenceSchema } from "./carryover-source.ts";
+import { FMVMethod } from "./fmv-method.ts";
+export { FMVMethod } from "./fmv-method.ts";
 
-// Method used to determine FMV
-export enum FMVMethod {
-  Appraisal = "appraisal",
-  ThriftShopValue = "thrift_shop_value",
-  CatalogValue = "catalog_value",
-  ComparableSales = "comparable_sales",
-  Formula = "formula",
-  Other = "other",
-}
 
 export enum SectionBPropertyType {
   ArtUnder20000 = "art_under_20000",
@@ -195,6 +189,18 @@ const sectionAItemSchema = z.object({
         "Form 8283 short-term reduction needs both FMV and claimed deduction",
     });
   }
+  if (
+    item.capital_gain_reduction_election_confirmed === true &&
+    (item.fmv === undefined || item.deduction_claimed === undefined ||
+      Math.round((item.fmv - item.deduction_claimed) * 100) <= 0)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["capital_gain_reduction_election_confirmed"],
+      message:
+        "Form 8283 capital-gain election statement needs FMV and a claimed contribution reduced below FMV",
+    });
+  }
   if (item.fmv !== undefined && item.deduction_claimed !== undefined) {
     const reductionCents = Math.round(
       (item.fmv - item.deduction_claimed) * 100,
@@ -233,13 +239,63 @@ const sectionAItemSchema = z.object({
     }
     const shortTerm = item.short_term_ordinary_income_reduction_confirmed ===
       true;
-    if (reductionCents > 0 && !certifiedSaleReduction && !shortTerm) {
+    const capitalGainElection =
+      item.capital_gain_reduction_election_confirmed === true;
+    if (
+      reductionCents > 0 && !certifiedSaleReduction && !shortTerm &&
+      !capitalGainElection
+    ) {
       ctx.addIssue({
         code: "custom",
         path: ["short_term_ordinary_income_reduction_confirmed"],
         message:
-          "Form 8283 reduced Section A claim needs certified sale proceeds or a sourced short-term ordinary-income reduction",
+          "Form 8283 reduced Section A claim needs certified sale proceeds, a sourced short-term ordinary-income reduction, or a sourced capital-gain reduction election",
       });
+    }
+    if (capitalGainElection && reductionCents > 0) {
+      const acquired = item.date_acquired
+        ? Date.parse(`${item.date_acquired}T00:00:00Z`)
+        : NaN;
+      const contributed = item.date_contributed
+        ? Date.parse(`${item.date_contributed}T00:00:00Z`)
+        : NaN;
+      const acquiredDate = Number.isFinite(acquired)
+        ? new Date(acquired)
+        : undefined;
+      const anniversary = acquiredDate
+        ? Date.UTC(
+          acquiredDate.getUTCFullYear() + 1,
+          acquiredDate.getUTCMonth(),
+          acquiredDate.getUTCDate(),
+        )
+        : NaN;
+      const datesValid = item.date_acquired && item.date_contributed &&
+        item.date_contributed.startsWith("2025-") &&
+        Number.isFinite(contributed) &&
+        acquiredDate?.toISOString().slice(0, 10) === item.date_acquired &&
+        new Date(contributed).toISOString().slice(0, 10) ===
+          item.date_contributed &&
+        contributed > anniversary;
+      if (
+        !datesValid ||
+        item.donor_acquisition_description?.trim().toLowerCase() !==
+          "purchase" ||
+        item.is_vehicle === true ||
+        item.is_capital_gain_property !== true ||
+        item.charitable_limit_category !== "noncash_50" ||
+        item.cost_or_adjusted_basis === undefined ||
+        Math.round(item.cost_or_adjusted_basis * 100) !==
+          Math.round(item.deduction_claimed * 100) ||
+        item.cost_or_adjusted_basis >= item.fmv ||
+        shortTerm || certifiedSaleReduction
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["capital_gain_reduction_election_confirmed"],
+          message:
+            "Form 8283 capital-gain election reduction needs nonvehicle purchased capital property held more than one year, a 50% limit organization, and a claim equal to basis below FMV",
+        });
+      }
     }
     if (shortTerm) {
       const acquired = item.date_acquired
@@ -259,6 +315,7 @@ const sectionAItemSchema = z.object({
         )
         : NaN;
       const datesValid = item.date_acquired && item.date_contributed &&
+        item.date_contributed.startsWith("2025-") &&
         Number.isFinite(contributed) &&
         acquiredDate?.toISOString().slice(0, 10) === item.date_acquired &&
         new Date(contributed).toISOString().slice(0, 10) ===
@@ -394,6 +451,32 @@ const sectionBItemSchema = z.object({
   similar_item_group: z.string().trim().min(1).optional(),
   charitable_limit_category: noncashContributionCategorySchema.optional(),
   capital_gain_reduction_election_confirmed: z.literal(true).optional(),
+  // The supported Section B election is limited to purchased, unimproved
+  // investment land. Developed real estate can involve recapture.
+  investment_land_unimproved_confirmed: z.literal(true).optional(),
+  reduction_statement_attachment_file_name: z.string().min(1).optional(),
+  // A reviewer must verify the actual reduction computation in the PDF whose
+  // bytes are submitted. Merely naming an attachment does not substantiate it.
+  reduction_statement_source_review: z.object({
+    reviewed_by: z.string().trim().min(1),
+    reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+    original_fmv_matches_pdf_confirmed: z.literal(true),
+    adjusted_basis_matches_pdf_confirmed: z.literal(true),
+    appreciation_reduction_matches_pdf_confirmed: z.literal(true),
+    election_reason_matches_pdf_confirmed: z.literal(true),
+  }).optional(),
+  // The actual completed and signed Form 8283 is a separate filing artifact.
+  // Names of appraiser/donee signature excerpts do not substitute for it.
+  signed_form_attachment_file_name: z.string().min(1).optional(),
+  signed_form_source_review: z.object({
+    reviewed_by: z.string().trim().min(1),
+    reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+    appraiser_signature_present: z.literal(true),
+    donee_signature_present: z.literal(true),
+    matches_electronic_form_confirmed: z.literal(true),
+  }).optional(),
   cost_or_adjusted_basis: z.number().nonnegative().optional(),
   // An exception vehicle above $5,000 belongs in Section B, with its own
   // appraiser and donee signatures in addition to Form 1098-C evidence.
@@ -440,6 +523,61 @@ const sectionBItemSchema = z.object({
   is_capital_gain_property: z.boolean().optional(),
 }).superRefine((item, ctx) => {
   validateCharitableLimitCategory(item, ctx);
+  if (item.capital_gain_reduction_election_confirmed === true) {
+    const acquired = item.date_acquired &&
+        /^\d{4}-\d{2}-\d{2}$/.test(item.date_acquired)
+      ? Date.parse(`${item.date_acquired}T00:00:00Z`)
+      : NaN;
+    const contributed = item.date_contributed &&
+        /^\d{4}-\d{2}-\d{2}$/.test(item.date_contributed)
+      ? Date.parse(`${item.date_contributed}T00:00:00Z`)
+      : NaN;
+    const anniversary = item.date_acquired &&
+        /^\d{4}-\d{2}-\d{2}$/.test(item.date_acquired)
+      ? Date.parse(
+        `${Number(item.date_acquired.slice(0, 4)) + 1}${
+          item.date_acquired.slice(4)
+        }T00:00:00Z`,
+      )
+      : NaN;
+    if (
+      item.property_type !== SectionBPropertyType.OtherRealEstate ||
+      item.investment_land_unimproved_confirmed !== true ||
+      item.donor_acquisition_description?.toLowerCase() !== "purchase" ||
+      !Number.isFinite(acquired) || !Number.isFinite(contributed) ||
+      !Number.isFinite(anniversary) ||
+      new Date(acquired).toISOString().slice(0, 10) !== item.date_acquired ||
+      new Date(contributed).toISOString().slice(0, 10) !==
+        item.date_contributed ||
+      !item.date_contributed?.startsWith("2025-") ||
+      contributed <= anniversary ||
+      item.is_capital_gain_property !== true ||
+      item.charitable_limit_category !== "noncash_50" ||
+      item.cost_or_adjusted_basis === undefined ||
+      item.cost_or_adjusted_basis >= item.fmv ||
+      Math.round(item.deduction_claimed * 100) !==
+        Math.round(item.cost_or_adjusted_basis * 100) ||
+      !item.reduction_statement_attachment_file_name ||
+      !item.reduction_statement_source_review
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["capital_gain_reduction_election_confirmed"],
+        message:
+          "Form 8283 Section B election needs purchased unimproved investment land held more than one year, basis below appraised FMV, a claim equal to basis, and its reviewed FMV-reduction statement PDF",
+      });
+    }
+  } else if (
+    item.reduction_statement_attachment_file_name ||
+    item.reduction_statement_source_review
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["reduction_statement_attachment_file_name"],
+      message:
+        "Form 8283 Section B reduction statement PDF needs a supported election route",
+    });
+  }
   if (item.deduction_claimed > item.fmv) {
     ctx.addIssue({
       code: "custom",
@@ -572,9 +710,33 @@ const sectionBItemSchema = z.object({
 export const inputSchema = z.object({
   section_a_items: z.array(sectionAItemSchema).optional(),
   section_b_items: z.array(sectionBItemSchema).optional(),
+  carryover_evidence: z.array(form8283CarryoverEvidenceSchema).min(1)
+    .optional(),
 }).superRefine((input, ctx) => {
   const sectionA = input.section_a_items ?? [];
   const sectionB = input.section_b_items ?? [];
+  const hasCapitalGainElection = [...sectionA, ...sectionB].some((item) =>
+    item.capital_gain_reduction_election_confirmed === true
+  );
+  if (hasCapitalGainElection) {
+    for (
+      const [section, items] of [
+        ["section_a_items", sectionA],
+        ["section_b_items", sectionB],
+      ] as const
+    ) {
+      for (const [index, item] of items.entries()) {
+        if (item.charitable_limit_category === "capital_gain_30") {
+          ctx.addIssue({
+            code: "custom",
+            path: [section, index, "charitable_limit_category"],
+            message:
+              "Form 8283 capital-gain election applies to all current-year capital-gain property gifts to 50% limit organizations",
+          });
+        }
+      }
+    }
+  }
   const positive = [
     ...sectionA.map((item, index) => ({
       item,
@@ -797,8 +959,10 @@ function validateCharitableLimitCategory(
     });
   }
   if (item.is_capital_gain_property === true && category === "noncash_50") {
+    const noAppreciation = item.fmv !== undefined &&
+      item.cost_or_adjusted_basis === item.fmv && claimed === item.fmv;
     if (
-      !item.capital_gain_reduction_election_confirmed ||
+      (!item.capital_gain_reduction_election_confirmed && !noAppreciation) ||
       item.cost_or_adjusted_basis === undefined ||
       claimed > item.cost_or_adjusted_basis
     ) {
@@ -828,6 +992,12 @@ function scheduleAOutput(input: F8283Input): NodeOutput[] {
       }`,
       amount,
       category: item.charitable_limit_category,
+      contribution_id: `f8283:${index + 1}`,
+      is_capital_gain_property: item.is_capital_gain_property,
+      original_fmv: item.fmv,
+      adjusted_basis: item.cost_or_adjusted_basis,
+      capital_gain_reduction_election_confirmed:
+        item.capital_gain_reduction_election_confirmed,
     }];
   });
   if (items.length === 0) return [];
@@ -841,7 +1011,6 @@ class F8283Node extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
-
     const outputs: NodeOutput[] = [
       ...scheduleAOutput(parsed),
     ];

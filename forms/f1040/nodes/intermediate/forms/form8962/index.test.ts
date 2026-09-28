@@ -132,15 +132,10 @@ Deno.test("Pub 974 marriage Worksheets I-V elect beneficial pre-marriage credit"
     end_month: 6,
   });
   assertEquals(calculated?.alternative_marriage_spouse, undefined);
-  const xml = form8962Mef.build(calculated!);
-  assertStringIncludes(xml, "<AltCalcForMarriagePrimaryGrp>");
-  assertStringIncludes(
-    xml,
-    "<MonthlyContributionAmt>153</MonthlyContributionAmt>",
-  );
-  assertStringIncludes(
-    xml,
-    "<ReconciledPremiumTaxCreditAmt>0</ReconciledPremiumTaxCreditAmt>",
+  assertThrows(
+    () => form8962Mef.build(calculated!),
+    Error,
+    "needs Form 1095-A and finalized Form 1040 facts",
   );
   const pdf = form8962Pdf.projectFields?.(calculated!, {});
   assertEquals(pdf?.pdf_line9_yes, true);

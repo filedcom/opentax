@@ -59,6 +59,7 @@ export const inputSchema = z.object({
   investment_expenses_exclude_sourced_k1: z.literal(true).optional(),
   source_1099_interest: accumulableAmount.optional(),
   source_1099_royalties: accumulableAmount.optional(),
+  source_k1_royalties: accumulableAmount.optional(),
   source_1099_dividends: accumulableAmount.optional(),
   source_1099_qualified_dividends: accumulableAmount.optional(),
   source_1099_capital_gain_distributions: accumulableAmount.optional(),
@@ -107,7 +108,7 @@ interface Form4952Totals {
 
 function sourceTotals(input: Form4952Input): Form4952Totals {
   if (
-    sum(input.source_1099_royalties) > 0 &&
+    (sum(input.source_1099_royalties) + sum(input.source_k1_royalties)) > 0 &&
     ((input.investment_interest_expense ?? 0) +
         sum(input.source_k1_investment_interest)) > 0 &&
     input.investment_interest_expense_excludes_royalty_attributable_interest !==
@@ -119,12 +120,12 @@ function sourceTotals(input: Form4952Input): Form4952Totals {
   }
   if (
     (input.other_investment_property_gross_income ?? 0) > 0 &&
-    sum(input.source_1099_royalties) > 0 &&
+    (sum(input.source_1099_royalties) + sum(input.source_k1_royalties)) > 0 &&
     input.other_investment_property_gross_income_excludes_sourced_royalties !==
       true
   ) {
     throw new Error(
-      "Form 4952 manual investment property gross income must exclude sourced 1099-MISC royalties",
+      "Form 4952 manual investment property gross income must exclude sourced royalties",
     );
   }
   if (
@@ -153,6 +154,7 @@ function sourceTotals(input: Form4952Input): Form4952Totals {
     line2: input.prior_year_carryforward ?? 0,
     line4a: (input.other_investment_property_gross_income ?? 0) +
       sum(input.source_1099_interest) + sum(input.source_1099_royalties) +
+      sum(input.source_k1_royalties) +
       sum(input.source_1099_dividends) +
       sum(input.source_k1_interest) + sum(input.source_k1_dividends) +
       childDividends + (input.form8814_line12_investment_income ?? 0),

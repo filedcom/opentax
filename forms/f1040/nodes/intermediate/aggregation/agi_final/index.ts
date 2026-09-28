@@ -19,6 +19,7 @@ import { form8962 } from "../../forms/form8962/index.ts";
 import { form8880 } from "../../forms/form8880/index.ts";
 import { form_1116 } from "../../forms/form_1116/index.ts";
 import { schedule1a } from "../../forms/schedule1a/index.ts";
+import { schedule_j_calculation } from "../../forms/schedule_j/index.ts";
 
 export const inputSchema = z.object({
   pre_pal_input: agiInputSchema,
@@ -47,6 +48,7 @@ class AgiFinalNode extends TaxNode<typeof inputSchema> {
     form8880,
     form_1116,
     schedule1a,
+    schedule_j_calculation,
   ]);
 
   compute(ctx: NodeContext, rawInput: z.infer<typeof inputSchema>): NodeResult {

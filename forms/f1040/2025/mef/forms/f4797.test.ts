@@ -2,6 +2,58 @@ import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { buildMefXml } from "../builder.ts";
 import { testFiler } from "../test-filer.ts";
 import { form4797 } from "./f4797.ts";
+import { form8949 } from "./f8949.ts";
+
+Deno.test("Form 4797 investment recapture links Part III to the excess-gain Form 8949 row", () => {
+  const fields = { investment_1245_dispositions: [{
+    property_id: "investment-1245-1",
+    property_description: "Investment equipment",
+    acquired_on: "2022-05-01",
+    sold_on: "2025-06-01",
+    gross_sales_price: 15_000,
+    cost_or_other_basis_plus_sale_expense: 12_000,
+    depreciation_allowed_or_allowable: 5_000,
+    property_held_for_investment_not_business: true as const,
+    section_1245_classification_reviewed: true as const,
+    direct_cash_sale_no_special_recapture_exception: true as const,
+    sale_document_reference: "SALE-2025-1",
+    basis_document_reference: "BASIS-2022-1",
+    depreciation_schedule_reference: "DEPR-2025-1",
+  }] };
+  const row = {
+    part: "F",
+    description: "From Form 4797",
+    source_transaction_id: "investment-1245-1",
+    form4797_property_id: "investment-1245-1",
+    from_form4797_investment_1245: true as const,
+    date_acquired: "",
+    date_sold: "",
+    proceeds: 3_000,
+    cost_basis: 0,
+    gain_loss: 3_000,
+    is_long_term: true,
+  };
+  const context = { pending: {
+    form4797: fields,
+    form8949: [row],
+    schedule1: { line4_other_gains: 5_000 },
+  } };
+  const xml = form4797.build(fields, context);
+  assertStringIncludes(xml, "<Section1245PropertyAmt>5000</Section1245PropertyAmt>");
+  assertStringIncludes(xml, "<NetGainAmt>3000</NetGainAmt>");
+  const assetXml = form8949.build([row], context);
+  assertStringIncludes(assetXml, "<PropertyDesc>From Form 4797</PropertyDesc>");
+  assertEquals(assetXml.includes("<AcquiredDt>"), false);
+  assertEquals(assetXml.includes("<CostOrOtherBasisAmt>"), false);
+  assertThrows(() => form4797.build(fields, { pending: {
+    ...context.pending,
+    form8949: [{ ...row, proceeds: 2_999, gain_loss: 2_999 }],
+  } }), Error, "matching Form 8949 row");
+  assertThrows(() => form4797.build(fields, { pending: {
+    ...context.pending,
+    schedule1: { line4_other_gains: 5_001 },
+  } }), Error, "finalized Schedule 1 line 4");
+});
 
 Deno.test("Form 4797: no gain or loss does not emit a document", () => {
   assertEquals(form4797.build({}), "");
@@ -13,6 +65,7 @@ Deno.test("Form 4797: prior passive losses use finalized Form 8582 Part IX amoun
   const f8582 = {
     activities: [
       {
+        activity_id: "id-Rental A",
         name: "Rental A",
         activity_type: "B",
         property_type: 1,
@@ -21,8 +74,20 @@ Deno.test("Form 4797: prior passive losses use finalized Form 8582 Part IX amoun
         prior_unallowed_operating: 2_000,
         prior_unallowed_4797_part1: 6_000,
         prior_unallowed_4797_part2: 2_000,
+        prior_year_8582_source: {
+          tax_year: 2024,
+          activity_id: "id-Rental A",
+          filed_part_vii_column_c: 10_000,
+          source_document_reference: "2024 filed Form 8582 Part IX",
+          filed_part_ix_rows: [
+            { reporting_form: "schedule_e", filed_unallowed_loss: 2_000 },
+            { reporting_form: "form4797_part1", filed_unallowed_loss: 6_000 },
+            { reporting_form: "form4797_part2", filed_unallowed_loss: 2_000 },
+          ],
+        },
       },
       {
+        activity_id: "id-Rental B",
         name: "Rental B",
         activity_type: "B",
         property_type: 1,
@@ -76,6 +141,7 @@ Deno.test("Form 4797: section 1231 gain uses Part I line 7", () => {
 Deno.test("Form 4797: linked passive property sale rows populate native Parts I and II", () => {
   const rows = [
     {
+      activity_id: "id-Land rental",
       activity_name: "Land rental",
       part: "I",
       property_description: "Undeveloped parcel",
@@ -86,6 +152,7 @@ Deno.test("Form 4797: linked passive property sale rows populate native Parts I 
       depreciation_allowed: 0,
     },
     {
+      activity_id: "id-Land rental",
       activity_name: "Land rental",
       part: "II",
       property_description: "Short-held parcel",
@@ -98,6 +165,7 @@ Deno.test("Form 4797: linked passive property sale rows populate native Parts I 
   ];
   const scheduleEItem = {
     tsj: "T",
+    activity_id: "id-Land rental",
     property_description: "Land rental",
     property_type: 1,
     activity_type: "B",
@@ -154,6 +222,7 @@ Deno.test("Form 4797: linked passive property sale rows populate native Parts I 
 Deno.test("Form 4797: retained sale and prior PAL reconcile in both native parts", () => {
   const sales = [
     {
+      activity_id: "id-Land rental",
       activity_name: "Land rental",
       part: "I",
       property_description: "Long-held parcel",
@@ -165,6 +234,7 @@ Deno.test("Form 4797: retained sale and prior PAL reconcile in both native parts
       entire_activity_interest_disposed: false,
     },
     {
+      activity_id: "id-Land rental",
       activity_name: "Land rental",
       part: "II",
       property_description: "Short-held parcel",
@@ -181,6 +251,7 @@ Deno.test("Form 4797: retained sale and prior PAL reconcile in both native parts
       schedule_e: {
         schedule_es: [{
           tsj: "T",
+          activity_id: "id-Land rental",
           property_description: "Land rental",
           property_type: 1,
           activity_type: "B",
@@ -196,6 +267,7 @@ Deno.test("Form 4797: retained sale and prior PAL reconcile in both native parts
       },
       form8582: {
         activities: [{
+          activity_id: "id-Land rental",
           name: "Land rental",
           activity_type: "B",
           property_type: 1,
@@ -210,8 +282,18 @@ Deno.test("Form 4797: retained sale and prior PAL reconcile in both native parts
         has_other_passive: true,
         has_current_4797_transaction: true,
         current_4797_sale_gains: [
-          { activity_name: "Land rental", part: "I", gain: 8_000 },
-          { activity_name: "Land rental", part: "II", gain: 2_000 },
+          {
+            activity_id: "id-Land rental",
+            activity_name: "Land rental",
+            part: "I",
+            gain: 8_000,
+          },
+          {
+            activity_id: "id-Land rental",
+            activity_name: "Land rental",
+            part: "II",
+            gain: 2_000,
+          },
         ],
       },
     },
@@ -232,6 +314,7 @@ Deno.test("Form 4797: retained sale and prior PAL reconcile in both native parts
 
 Deno.test("Form 4797: active-rental PAL uses finalized Form 8582 allowance", () => {
   const sale = {
+    activity_id: "id-Rental house",
     activity_name: "Rental house",
     part: "I",
     property_description: "Retained rental parcel",
@@ -247,6 +330,7 @@ Deno.test("Form 4797: active-rental PAL uses finalized Form 8582 allowance", () 
       schedule_e: {
         schedule_es: [{
           tsj: "T",
+          activity_id: "id-Rental house",
           property_description: "Rental house",
           property_type: 1,
           activity_type: "A",
@@ -262,6 +346,7 @@ Deno.test("Form 4797: active-rental PAL uses finalized Form 8582 allowance", () 
       },
       form8582: {
         activities: [{
+          activity_id: "id-Rental house",
           name: "Rental house",
           activity_type: "A",
           property_type: 1,
@@ -278,6 +363,7 @@ Deno.test("Form 4797: active-rental PAL uses finalized Form 8582 allowance", () 
         active_participation: true,
         has_current_4797_transaction: true,
         current_4797_sale_gains: [{
+          activity_id: "id-Rental house",
           activity_name: "Rental house",
           part: "I",
           gain: 2_000,

@@ -27,7 +27,7 @@ Deno.test("missing group_name throws", () => {
   assertThrows(
     () =>
       compute([
-        { group_name: "", business_names: ["Biz A"], combined_for_limitation: true } as ReturnType<typeof minimalGroup>,
+        { group_name: "", business_names: ["Biz A", "Biz B"], combined_for_limitation: true } as ReturnType<typeof minimalGroup>,
       ]),
     Error,
   );
@@ -47,7 +47,7 @@ Deno.test("empty business name string throws", () => {
   assertThrows(
     () =>
       compute([
-        { group_name: "Group A", business_names: [""], combined_for_limitation: true } as ReturnType<typeof minimalGroup>,
+        { group_name: "Group A", business_names: ["", "Biz B"], combined_for_limitation: true } as ReturnType<typeof minimalGroup>,
       ]),
     Error,
   );
@@ -55,29 +55,37 @@ Deno.test("empty business name string throws", () => {
 
 // ── 2. Valid group configurations ─────────────────────────────────────────────
 
-Deno.test("single group with combined_for_limitation true produces no outputs", () => {
+Deno.test("single group with combined_for_limitation true reaches Form 8995-A", () => {
   const result = compute([minimalGroup()]);
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs, [{
+    nodeType: "form8995a",
+    fields: { aggregation_groups: [minimalGroup()] },
+  }]);
 });
 
-Deno.test("single group with combined_for_limitation false produces no outputs", () => {
+Deno.test("single group with combined_for_limitation false reaches Form 8995-A", () => {
   const result = compute([minimalGroup({ combined_for_limitation: false })]);
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs[0].fields, {
+    aggregation_groups: [minimalGroup({ combined_for_limitation: false })],
+  });
 });
 
-Deno.test("multiple aggregation groups produce no outputs", () => {
+Deno.test("multiple aggregation groups remain intact for the Form 8995-A guard", () => {
   const result = compute([
     minimalGroup({ group_name: "Group A", business_names: ["Biz 1", "Biz 2"] }),
-    minimalGroup({ group_name: "Group B", business_names: ["Biz 3"] }),
+    minimalGroup({ group_name: "Group B", business_names: ["Biz 3", "Biz 4"] }),
   ]);
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs[0].nodeType, "form8995a");
+  assertEquals(result.outputs[0].fields.aggregation_groups, [
+    minimalGroup({ group_name: "Group A", business_names: ["Biz 1", "Biz 2"] }),
+    minimalGroup({ group_name: "Group B", business_names: ["Biz 3", "Biz 4"] }),
+  ]);
 });
 
-Deno.test("single-business group is valid", () => {
-  const result = compute([
+Deno.test("single-business group is rejected as an aggregation", () => {
+  assertThrows(() => compute([
     minimalGroup({ business_names: ["Only Business"] }),
-  ]);
-  assertEquals(result.outputs.length, 0);
+  ]));
 });
 
 // ── 3. Schema captures aggregation election details correctly ─────────────────
@@ -106,7 +114,7 @@ Deno.test("multiple groups are all captured in order", () => {
   const parsed = qbiAggregation.inputSchema.parse({
     aggregation_groups: [
       minimalGroup({ group_name: "Group A", business_names: ["Biz 1", "Biz 2"], combined_for_limitation: true }),
-      minimalGroup({ group_name: "Group B", business_names: ["Biz 3"], combined_for_limitation: false }),
+      minimalGroup({ group_name: "Group B", business_names: ["Biz 3", "Biz 4"], combined_for_limitation: false }),
     ],
   });
   assertEquals(parsed.aggregation_groups.length, 2);

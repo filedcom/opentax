@@ -325,6 +325,40 @@ Deno.test("Form 6251 line 2a uses Schedule A line 7 when itemizing wins", () => 
   );
 });
 
+Deno.test("Form 6251 line 2a rejects missing or impossible Schedule A line 7 for itemizers", () => {
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.Single,
+        agi: 50_000,
+        itemized_deductions: 25_000,
+      }),
+    Error,
+    "needs reconciled Schedule A line 7 taxes",
+  );
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.Single,
+        agi: 50_000,
+        itemized_deductions: 25_000,
+        itemized_taxes: 26_000,
+      }),
+    Error,
+    "needs reconciled Schedule A line 7 taxes",
+  );
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.MFS,
+        agi: 50_000,
+        mfs_spouse_itemizing: true,
+      }),
+    Error,
+    "needs reconciled Schedule A line 7 taxes",
+  );
+});
+
 Deno.test("income_tax_calculation receives filing_status", () => {
   const result = compute({ filing_status: FilingStatus.MFJ, agi: 80_000 });
   const incTax = findOutput(result, "income_tax_calculation");
@@ -341,6 +375,7 @@ Deno.test("Takes itemized when itemized > standard", () => {
     filing_status: FilingStatus.Single,
     agi: 100_000,
     itemized_deductions: 25_000,
+    itemized_taxes: 0,
   });
   const f1040 = findOutput(result, "f1040");
   // Should NOT have line12a_standard_deduction
@@ -383,7 +418,8 @@ Deno.test("MFS spouse itemizing: taxpayer must itemize even if itemized is 0", (
     filing_status: FilingStatus.MFS,
     agi: 50_000,
     mfs_spouse_itemizing: true,
-    // No itemized_deductions provided
+    // Explicit Schedule A line 7 zero is still required for Form 6251.
+    itemized_taxes: 0,
   });
   const f1040 = findOutput(result, "f1040");
   // No standard deduction line (must itemize)
@@ -416,6 +452,7 @@ Deno.test("Itemizing: produces f1040 line15 output and income_tax_calculation, n
     filing_status: FilingStatus.Single,
     agi: 100_000,
     itemized_deductions: 20_000,
+    itemized_taxes: 0,
   });
   const f1040Out = result.outputs.filter((o) => o.nodeType === "f1040");
   const hasLine12a = f1040Out.some(

@@ -1,15 +1,16 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
+import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { f1040 } from "../../outputs/f1040/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Form 4970 — Tax on Accumulation Distribution of Trusts
 // IRC §665-668: Beneficiary reports tax on accumulation distributions from
 // certain domestic trusts. The "throwback rule" treats the distribution as
 // if it had been distributed in the year the income was accumulated.
-// The resulting additional tax flows to Form 1040 as additional taxes.
+// Form 4970 line 28 belongs on Schedule 2 line 17l, not directly on Form 1040
+// line 17. The complete throwback computation and native attachment are not
+// yet implemented, so a positive source cannot be filed safely.
 
 // Per-throwback-year schema — each prior year when income was accumulated
 export const throwbackYearSchema = z.object({
@@ -39,42 +40,28 @@ export const inputSchema = z.object({
   f4970s: z.array(itemSchema).min(1),
 });
 
-type F4970Item = z.infer<typeof itemSchema>;
-type F4970Items = F4970Item[];
-
-// Compute the additional tax for a single item
-// Uses tax_deemed_distributed if provided; otherwise uses a simplified
-// flat-rate estimate (21% — trust tax rate) applied to distribution_amount.
-// In a full implementation the throwback calculation requires per-year
-// marginal rate lookups; here we use the provided tax_deemed_distributed.
-function itemAdditionalTax(item: F4970Item): number {
-  if ((item.tax_deemed_distributed ?? 0) > 0) {
-    return item.tax_deemed_distributed!;
-  }
-  return 0;
-}
-
-function totalAdditionalTax(items: F4970Items): number {
-  return items.reduce((sum, item) => sum + itemAdditionalTax(item), 0);
-}
-
-function buildOutputs(items: F4970Items): NodeOutput[] {
-  const tax = totalAdditionalTax(items);
-  if (tax <= 0) return [];
-  return [{
-    nodeType: f1040.nodeType,
-    fields: { line17_additional_taxes: tax },
-  }];
-}
-
 class F4970Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f4970";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040]);
+  readonly outputNodes = new OutputNodes([]);
 
-  compute(_ctx: NodeContext, rawInput: z.infer<typeof inputSchema>): NodeResult {
+  compute(
+    _ctx: NodeContext,
+    rawInput: z.infer<typeof inputSchema>,
+  ): NodeResult {
     const input = inputSchema.parse(rawInput);
-    return { outputs: buildOutputs(input.f4970s) };
+    if (
+      input.f4970s.some((item) =>
+        item.distribution_amount > 0 ||
+        (item.tax_deemed_distributed ?? 0) > 0 ||
+        item.throwback_years?.some((year) => year.accumulated_income > 0)
+      )
+    ) {
+      throw new Error(
+        "Form 4970 accumulation distribution needs its 2025 throwback calculation, Schedule 2 line 17l, and native attachment before filing",
+      );
+    }
+    return { outputs: [] };
   }
 }
 

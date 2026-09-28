@@ -138,10 +138,12 @@ Deno.test("Form 3800 retains one Form 8936 source detail for a later mixed line"
     transferStatementIdsByFileName: {},
   });
   assertEquals(parts.currentDetails.length, 1);
-  assertStringIncludes(
-    parts.currentDetails[0].xml,
-    "Frm8936PartIICYAggrgtAmtGrp",
-  );
+  assertEquals(parts.currentDetails[0], {
+    line: "1y",
+    credit: 1_875,
+    appliedCredit: 1_875,
+    sourceDocumentId: "IRS8936_1",
+  });
   assertEquals(
     buildIRS3800Document(parts).includes("Frm8936PartIICYAggrgtAmtGrp"),
     false,

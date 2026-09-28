@@ -1,4 +1,7 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
+import { assertElectedSectionAReconciled } from "../../mef/forms/f8283_election.ts";
+import { inputSchema as form8283InputSchema } from "../../../nodes/inputs/f8283/index.ts";
+import { reconcileForm8283Carryover } from "../../mef/forms/f8283_carryover.ts";
 
 // IRS Schedule A (2025) AcroForm field names.
 // Verified layout from https://www.irs.gov/pub/irs-prior/f1040sa--2025.pdf
@@ -112,9 +115,35 @@ export const scheduleAPdf: PdfFormDescriptor = {
   pendingKey: "schedule_a",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040sa--2025.pdf",
   fields,
+  instances(input, filer, all) {
+    const hasPriorCarryover = [
+      input.capital_gain_property_carryovers,
+      all?.schedule_a?.capital_gain_property_carryovers,
+    ].some((value) => Array.isArray(value) && value.length > 0);
+    if (hasPriorCarryover) {
+      reconcileForm8283Carryover(
+        form8283InputSchema.parse(all?.f8283),
+        { pending: all, filer },
+        input,
+      );
+    }
+    return [input];
+  },
   // Schedule A is filed only when the return actually itemizes (1040 line 12
   // carries an itemized amount) — not merely because AGI was deposited here.
   includeWhen: (input, all) => {
+    const itemizes = (((all?.["f1040"]?.["line12e_itemized_deductions"]) as
+      | number
+      | undefined) ?? 0) > 0;
+    if (!itemizes) return false;
+    const hasPriorCarryover = [
+      input["capital_gain_property_carryovers"],
+      all?.schedule_a?.capital_gain_property_carryovers,
+    ].some((value) => Array.isArray(value) && value.length > 0);
+    if (input["capital_gain_election_finalized"] === true &&
+      !hasPriorCarryover) {
+      assertElectedSectionAReconciled({ pending: all }, input);
+    }
     const amount = (key: string) => Number(input[key] ?? 0);
     if (
       (amount("line_11_cash_contributions") > 0 ||
@@ -126,8 +155,6 @@ export const scheduleAPdf: PdfFormDescriptor = {
         "Schedule A PDF charitable lines require categorized-source AGI-limit finalization",
       );
     }
-    return (((all?.["f1040"]?.["line12e_itemized_deductions"]) as
-      | number
-      | undefined) ?? 0) > 0;
+    return true;
   },
 };

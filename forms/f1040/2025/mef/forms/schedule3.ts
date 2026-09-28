@@ -1,5 +1,6 @@
 import { element, elements } from "../../../mef/xml.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
+import { inputSchema as f2439InputSchema } from "../../../nodes/inputs/f2439/index.ts";
 
 export interface Fields {
   line1_total?: number | null;
@@ -28,6 +29,7 @@ export interface Fields {
   line10_amount_paid_extension?: number | null;
   line11_excess_ss?: number | null;
   line12_fuel_tax_credit?: number | null;
+  line13a_total?: number | null;
   line15_total?: number | null;
 }
 
@@ -66,6 +68,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line10_amount_paid_extension", "RequestForExtensionAmt"],
   ["line11_excess_ss", "ExcessSocSecAndTier1RRTATaxAmt"],
   ["line12_fuel_tax_credit", "TotalFuelTaxCreditAmt"],
+  ["line13a_total", "TaxPaidByRICOrREITAmt"],
   ["line15_total", "TotalOtherPaymentsRfdblCrAmt"],
 ];
 
@@ -79,6 +82,26 @@ function buildIRS1040Schedule3(
   for (const [key, tag] of FIELD_MAP) {
     const value = fields[key];
     if (typeof value !== "number") continue;
+    if (key === "line6d_elderly_disabled_credit" && value > 0) {
+      const ids = context?.documentIdsByPendingKey?.schedule_r;
+      if (
+        context?.documentIdsByPendingKey &&
+        (!ids || ids.length !== 1 || !ids[0].trim())
+      ) {
+        throw new Error("Schedule 3 line 6d needs one linked Schedule R");
+      }
+      children.push(element(
+        tag,
+        value,
+        ids?.[0]
+          ? {
+            referenceDocumentId: ids[0],
+            referenceDocumentName: "IRS1040ScheduleR",
+          }
+          : undefined,
+      ));
+      continue;
+    }
     if (key === "line6a_total" && value > 0) {
       const formIds = context?.documentIdsByPendingKey?.f3800 ?? [];
       if (context?.documentIdsByPendingKey && formIds.length !== 1) {
@@ -125,6 +148,44 @@ function buildIRS1040Schedule3(
           }
           : undefined,
       ));
+      continue;
+    }
+    if (key === "line13a_total") {
+      const source = context?.pending?.f2439;
+      if (!source) {
+        throw new Error("Schedule 3 line 13a needs sourced Form 2439");
+      }
+      const reportable = f2439InputSchema.parse(source).f2439s.filter((item) =>
+        (item.box1a ?? 0) > 0
+      );
+      const creditedIndices = reportable.flatMap((item, index) =>
+        (item.box2 ?? 0) > 0 ? [index] : []
+      );
+      const total = reportable.reduce((sum, item) => sum + (item.box2 ?? 0), 0);
+      if (total !== value || creditedIndices.length === 0) {
+        throw new Error(
+          "Schedule 3 line 13a must equal sourced Form 2439 box 2 amounts",
+        );
+      }
+      const allIds = context?.documentIdsByPendingKey?.f2439;
+      if (context?.documentIdsByPendingKey && allIds?.length !== reportable.length) {
+        throw new Error(
+          "Schedule 3 line 13a needs each linked IRS2439 document",
+        );
+      }
+      const ids = allIds && creditedIndices.map((index) => allIds[index]);
+      children.push(
+        element(
+          tag,
+          value,
+          ids?.length
+            ? {
+              referenceDocumentId: ids.join(" "),
+              referenceDocumentName: "IRS2439",
+            }
+            : undefined,
+        ),
+      );
       continue;
     }
     const sourceForm = sourceForms[key];

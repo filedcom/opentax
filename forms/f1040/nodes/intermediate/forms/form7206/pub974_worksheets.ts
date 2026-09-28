@@ -5,6 +5,7 @@ import {
   form8962,
   inputSchema as form8962InputSchema,
 } from "../form8962/index.ts";
+import { attributableSpecifiedPtc } from "./pub974_attribution.ts";
 
 // Publication 974 (2025), pp. 49-51. These are record-only calculations.
 // They do not route a deduction or an assumed MAGI into the tax graph.
@@ -232,13 +233,15 @@ export function calculateWorksheetX(
 export const pub974SingleBusinessSourceSchema = z.object({
   worksheet_w: worksheetWSourceSchema,
   worksheet_x: worksheetXSourceSchema,
-  // Months with Marketplace enrollment, taken from the source Form(s) 1095-A.
-  // Every such month must be a specified-premium month in this bounded route.
-  form1095a_coverage_months: z.array(z.number().int().min(1).max(12)).min(1)
-    .max(12),
-  // The supported route has no nonspecified Marketplace coverage.
-  // Form 8962 policy totals are reconciled month by month below.
-  all_marketplace_enrollment_premiums_are_specified: z.literal(true),
+  // Every Form 1095-A covered policy/month, including months that are not
+  // specified SEHI premiums. This bounded path allows one policy and only
+  // whole-month specified premiums, with no other SEHI premium deduction.
+  form1095a_policy_months: z.array(z.object({
+    form1095a_policy_number: z.string().trim().min(1),
+    month: z.number().int().min(1).max(12),
+    premium: money.positive(),
+    aptc: money,
+  }).strict()).min(1).max(12),
   no_other_se_income_sources_verified: z.literal(true),
   form8962_source: form8962InputSchema,
 }).strict();
@@ -252,6 +255,7 @@ export interface Pub974IterativeResult {
   worksheet_x: WorksheetXResult;
   schedule1_line17_deduction: number;
   form8962_fields: Record<string, unknown>;
+  attributable_specified_ptc: number;
   iterations: number;
 }
 
@@ -284,10 +288,15 @@ export function calculatePub974SingleBusinessIterative(
   const f = source.form8962_source;
   const premiums = f.monthly_premiums;
   const aptcs = f.monthly_aptcs;
-  const coverageMonths = new Set(source.form1095a_coverage_months);
-  if (coverageMonths.size !== source.form1095a_coverage_months.length) {
+  const policyMonths = source.form1095a_policy_months;
+  const coverageMonths = new Set(policyMonths.map((row) => row.month));
+  const policyNumbers = new Set(policyMonths.map((row) => row.form1095a_policy_number));
+  if (
+    coverageMonths.size !== policyMonths.length || policyNumbers.size !== 1 ||
+    policyMonths.some((row) => row.aptc > row.premium)
+  ) {
     throw new Error(
-      "Publication 974 Form 1095-A coverage months must be unique",
+      "Publication 974 bounded route needs one identified policy, unique coverage months, and APTC within premium",
     );
   }
   if (
@@ -312,24 +321,27 @@ export function calculatePub974SingleBusinessIterative(
       "Publication 974 single-business route needs monthly Form 8962 policy facts without other special branches or prefilled income",
     );
   }
-  const byMonth = Array.from({ length: 12 }, () => ({ premium: 0, aptc: 0 }));
-  for (const row of source.worksheet_w.specified_policy_months) {
-    byMonth[row.month - 1].premium += row.specified_premium;
-    byMonth[row.month - 1].aptc += row.attributable_aptc;
-  }
+  const specifiedMonths = new Set(source.worksheet_w.specified_policy_months.map((row) => row.month));
+  const policyByMonth = new Map(policyMonths.map((row) => [row.month, row]));
+  const specifiedMatch = source.worksheet_w.specified_policy_months.every((row) => {
+    const policy = policyByMonth.get(row.month);
+    return policy !== undefined &&
+      policy.form1095a_policy_number === row.form1095a_policy_number &&
+      cents(policy.premium) === cents(row.specified_premium) &&
+      cents(policy.aptc) === cents(row.attributable_aptc);
+  });
   if (
-    byMonth.some((row, index) =>
-      (coverageMonths.has(index + 1)
-        ? row.premium <= 0 || f.monthly_slcsps![index] <= 0
-        : row.premium !== 0 || row.aptc !== 0 ||
-          premiums[index] !== 0 || aptcs[index] !== 0 ||
-          f.monthly_slcsps![index] !== 0) ||
-      cents(row.premium) !== cents(premiums[index]) ||
-      cents(row.aptc) !== cents(aptcs[index])
-    )
+    !specifiedMatch || specifiedMonths.size !== source.worksheet_w.specified_policy_months.length ||
+    Array.from({ length: 12 }, (_, index) => {
+      const row = policyByMonth.get(index + 1);
+      return row
+        ? cents(row.premium) !== cents(premiums[index]) ||
+          cents(row.aptc) !== cents(aptcs[index]) || f.monthly_slcsps![index] <= 0
+        : premiums[index] !== 0 || aptcs[index] !== 0 || f.monthly_slcsps![index] !== 0;
+    }).some(Boolean)
   ) {
     throw new Error(
-      "Publication 974 specified policy months must reconcile to every Form 1095-A coverage, enrollment premium, SLCSP, and APTC month",
+      "Publication 974 policy and specified months must reconcile to Form 1095-A coverage, enrollment premium, SLCSP, and APTC month",
     );
   }
   const baselineTaxpayerMagi = cents(
@@ -342,6 +354,7 @@ export function calculatePub974SingleBusinessIterative(
   const maxSpecifiedDeduction = x.line30_max_specified_deduction;
   function trial(totalDeduction: number): {
     ptc: number;
+    specifiedPtc: number;
     fields: Record<string, unknown>;
   } {
     const result = form8962.compute({ taxYear: 2025, formType: "f1040" }, {
@@ -361,7 +374,16 @@ export function calculatePub974SingleBusinessIterative(
         "Publication 974 iteration could not compute Form 8962 PTC",
       );
     }
-    return { ptc: fields.total_premium_tax_credit, fields };
+    const monthlyRows = fields.monthly_ptc_rows as
+      { month_code: string; allowed_credit: number }[] | undefined;
+    if (!monthlyRows) {
+      throw new Error("Publication 974 needs monthly Form 8962 PTC rows");
+    }
+    return {
+      ptc: fields.total_premium_tax_credit,
+      specifiedPtc: attributableSpecifiedPtc(monthlyRows, specifiedMonths, coverageMonths),
+      fields,
+    };
   }
   let previous = trial(x.line31_max_total_deduction);
   if (previous.ptc === 0) {
@@ -370,10 +392,9 @@ export function calculatePub974SingleBusinessIterative(
     );
   }
   for (let iteration = 1; iteration <= 100; iteration++) {
-    // Every coverage month is specified, so Pub. 974 Step 3/5 attributes all
-    // PTC to these premiums, even when Marketplace coverage was partial-year.
+    // Pub. 974 Step 3/5 uses only PTC attributable to specified-premium months.
     const specified = cents(Math.min(
-      w.line1_specified_premiums - previous.ptc,
+      w.line1_specified_premiums - previous.specifiedPtc,
       maxSpecifiedDeduction,
     ));
     if (specified < 0) {
@@ -381,7 +402,7 @@ export function calculatePub974SingleBusinessIterative(
     }
     const next = trial(cents(w.line14_nonspecified_deduction + specified));
     const refiguredSpecified = cents(Math.min(
-      w.line1_specified_premiums - next.ptc,
+      w.line1_specified_premiums - next.specifiedPtc,
       maxSpecifiedDeduction,
     ));
     if (refiguredSpecified < 0) {
@@ -395,12 +416,20 @@ export function calculatePub974SingleBusinessIterative(
         w.line14_nonspecified_deduction + refiguredSpecified,
       );
       const final = trial(finalDeduction);
-      if (final.ptc === next.ptc) {
+      const finalSpecified = cents(Math.min(
+        w.line1_specified_premiums - final.specifiedPtc,
+        maxSpecifiedDeduction,
+      ));
+      if (
+        Math.abs(final.ptc - next.ptc) < 1 &&
+        Math.abs(finalSpecified - refiguredSpecified) < 1
+      ) {
         return {
           worksheet_w: w,
           worksheet_x: x,
           schedule1_line17_deduction: finalDeduction,
           form8962_fields: final.fields,
+          attributable_specified_ptc: final.specifiedPtc,
           iterations: iteration,
         };
       }

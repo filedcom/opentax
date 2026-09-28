@@ -11,6 +11,11 @@ import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import { allocateOtherPassivePrior4797, form8582 } from "../form8582/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { normalizeArray } from "../../../utils.ts";
+import { form8949, Form8949Part } from "../form8949/index.ts";
+import {
+  calculateInvestment1245Disposition,
+  investment1245DispositionSchema,
+} from "./investment_1245.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -30,6 +35,7 @@ export type K1Section1231Row = z.infer<typeof k1Section1231RowSchema>;
 // describes only direct, no-recapture sales on Form 4797 lines 2 and 10;
 // Part III recapture needs its own property-level calculation.
 export const passivePropertySaleSchema = z.object({
+  activity_id: z.string().trim().min(1).max(64),
   activity_name: z.string().min(1),
   part: z.enum(["I", "II"]),
   property_description: z.string().min(1),
@@ -40,7 +46,11 @@ export const passivePropertySaleSchema = z.object({
   depreciation_allowed: z.literal(0),
   // A complete disposition has separate §469(g) release rules. The mixed
   // current-gain/PAL path below is for a retained passive activity only.
-  entire_activity_interest_disposed: z.literal(false).optional(),
+  entire_activity_interest_disposed: z.boolean().optional(),
+  buyer_unrelated: z.boolean().optional(),
+  fully_taxable: z.boolean().optional(),
+  installment_method: z.boolean().optional(),
+  disposition_document_reference: z.string().trim().min(1).optional(),
 }).strict().superRefine((sale, ctx) => {
   const gain = sale.gross_sales_price - sale.cost_or_other_basis;
   const acquired = new Date(`${sale.acquired_on}T00:00:00Z`);
@@ -70,6 +80,39 @@ export function passiveSaleGain(sale: PassivePropertySale): number {
   return sale.gross_sales_price - sale.cost_or_other_basis;
 }
 
+export function samePassiveSale(
+  left: PassivePropertySale,
+  right: PassivePropertySale,
+): boolean {
+  return left.activity_id === right.activity_id &&
+    left.activity_name === right.activity_name &&
+    left.part === right.part &&
+    left.property_description === right.property_description &&
+    left.acquired_on === right.acquired_on &&
+    left.sold_on === right.sold_on &&
+    left.gross_sales_price === right.gross_sales_price &&
+    left.cost_or_other_basis === right.cost_or_other_basis &&
+    left.depreciation_allowed === right.depreciation_allowed &&
+    left.entire_activity_interest_disposed ===
+      right.entire_activity_interest_disposed &&
+    left.buyer_unrelated === right.buyer_unrelated &&
+    left.fully_taxable === right.fully_taxable &&
+    left.installment_method === right.installment_method &&
+    left.disposition_document_reference ===
+      right.disposition_document_reference;
+}
+
+/** The only complete-disposition sale currently supported is a single,
+ * direct, fully taxable no-recapture transaction. The Schedule E source must
+ * separately establish that all of the activity's interests were sold. */
+export function isQualifiedEntireSale(sale: PassivePropertySale): boolean {
+  return sale.entire_activity_interest_disposed === true &&
+    sale.buyer_unrelated === true &&
+    sale.fully_taxable === true &&
+    sale.installment_method === false &&
+    !!sale.disposition_document_reference;
+}
+
 export const inputSchema = z.object({
   // Indicator from schedule_e: count of rental properties marked disposed_of=true.
   // Does not drive computation on its own — actual sale data must also be present.
@@ -88,7 +131,10 @@ export const inputSchema = z.object({
   k1_1231_rows: z.array(k1Section1231RowSchema).optional(),
   passive_property_sales: z.array(passivePropertySaleSchema).optional(),
   passive_activity_sources: form8582.inputSchema.shape.activities,
-  passive_disposed_activity_names: z.array(z.string().min(1)).optional(),
+  passive_disposed_activity_ids: z.array(z.string().trim().min(1).max(64))
+    .optional(),
+  investment_1245_dispositions: z.array(investment1245DispositionSchema)
+    .min(1).max(4).optional(),
 
   // Part I line 8 — prior-year nonrecaptured §1231 losses that must be
   // recaptured as ordinary income before any remaining §1231 gain is treated
@@ -139,10 +185,11 @@ function activeRentalMixedSale(input: Form4797Input): boolean {
     activity.prior_active_participation !== true ||
     activity.reporting_form !== "schedule_e" ||
     sales.some((sale) =>
+      sale.activity_id !== activity.activity_id ||
       sale.activity_name !== activity.name ||
       sale.entire_activity_interest_disposed !== false ||
-      !(input.passive_disposed_activity_names ?? []).includes(
-        sale.activity_name,
+      !(input.passive_disposed_activity_ids ?? []).includes(
+        sale.activity_id,
       )
     ) ||
     (input.nonrecaptured_1231_loss ?? 0) !== 0 ||
@@ -166,14 +213,16 @@ function mixedPassiveAllocation(input: Form4797Input) {
   if (
     activities.length === 0 ||
     activities.some((activity) => activity.activity_type !== "B") ||
-    new Set(activities.map((activity) => activity.name)).size !==
+    new Set(activities.map((activity) => activity.activity_id)).size !==
       activities.length ||
     sales.some((sale) =>
       sale.entire_activity_interest_disposed !== false ||
-      activities.filter((activity) => activity.name === sale.activity_name)
-          .length !== 1 ||
-      !(input.passive_disposed_activity_names ?? []).includes(
-        sale.activity_name,
+      activities.filter((activity) =>
+          activity.activity_id === sale.activity_id &&
+          activity.name === sale.activity_name
+        ).length !== 1 ||
+      !(input.passive_disposed_activity_ids ?? []).includes(
+        sale.activity_id,
       )
     )
   ) {
@@ -182,6 +231,7 @@ function mixedPassiveAllocation(input: Form4797Input) {
     );
   }
   const currentSales = sales.map((sale) => ({
+    activity_id: sale.activity_id,
     activity_name: sale.activity_name,
     part: sale.part,
     gain: passiveSaleGain(sale),
@@ -297,11 +347,96 @@ class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
     schedule1,
     agi_aggregator,
     form8582,
+    form8949,
   ]);
 
   compute(_ctx: NodeContext, rawInput: Form4797Input): NodeResult {
     const input = inputSchema.parse(rawInput);
+    const investmentSales = input.investment_1245_dispositions ?? [];
+    if (investmentSales.length > 0) {
+      if (
+        new Set(investmentSales.map((sale) => sale.property_id)).size !==
+          investmentSales.length ||
+        Object.entries(input).some(([key, value]) =>
+          key !== "investment_1245_dispositions" && value !== undefined &&
+          (Array.isArray(value) ? value.length > 0 : value !== 0)
+        )
+      ) {
+        throw new Error(
+          "Form 4797 investment section 1245 dispositions need distinct properties and no overlapping aggregate or passive source",
+        );
+      }
+      const calculated = investmentSales.map(
+        calculateInvestment1245Disposition,
+      );
+      const ordinary = calculated.reduce(
+        (total, sale) => total + sale.ordinaryRecapture,
+        0,
+      );
+      return {
+        outputs: [
+          output(schedule1, { line4_other_gains: ordinary }),
+          output(agi_aggregator, { line4_other_gains: ordinary }),
+          ...calculated.filter((sale) => sale.excessCapitalGain > 0).map((
+            sale,
+          ) =>
+            output(form8949, {
+              transaction: {
+                part: Form8949Part.F,
+                description: "From Form 4797",
+                source_transaction_id: sale.sale.property_id,
+                form4797_property_id: sale.sale.property_id,
+                from_form4797_investment_1245: true,
+                date_acquired: "",
+                date_sold: "",
+                proceeds: sale.excessCapitalGain,
+                cost_basis: 0,
+                gain_loss: sale.excessCapitalGain,
+                is_long_term: true,
+              },
+            })
+          ),
+        ],
+      };
+    }
     const passiveSales = input.passive_property_sales ?? [];
+    const entireSale = passiveSales.find((sale) =>
+      sale.entire_activity_interest_disposed === true
+    );
+    if (
+      entireSale && (
+        passiveSales.length !== 1 || !isQualifiedEntireSale(entireSale) ||
+        entireSale.part !== "II" ||
+        (input.passive_activity_sources?.length ?? 0) > 1 ||
+        input.passive_activity_sources?.some((activity) =>
+          activity.activity_id !== entireSale.activity_id ||
+          activity.name !== entireSale.activity_name ||
+          activity.activity_type !== "B" ||
+          (activity.prior_unallowed_operating <= 0 &&
+            !(activity.prior_unallowed_operating === 0 &&
+              activity.current_net < 0 &&
+              activity.prior_year_8582_source === undefined &&
+              activity.prior_unallowed_4797_part1 === 0 &&
+              activity.prior_unallowed_4797_part2 === 0 &&
+              activity.first_year_activity_source?.activity_acquired_on ===
+                entireSale.acquired_on &&
+              activity.first_year_activity_source?.activity_id ===
+                entireSale.activity_id &&
+              activity.first_year_activity_source?.activity_name ===
+                entireSale.activity_name &&
+              entireSale.acquired_on >= "2025-01-01" &&
+              entireSale.acquired_on <= "2025-12-31")) ||
+          activity.prior_unallowed_4797_part1 !== 0 ||
+          activity.prior_unallowed_4797_part2 !== 0
+        ) ||
+        input.passive_disposed_activity_ids?.length !== 1 ||
+        input.passive_disposed_activity_ids[0] !== entireSale.activity_id
+      )
+    ) {
+      throw new Error(
+        "Form 4797 entire passive disposition needs one fully taxable unrelated-party Part II sale and its Schedule E source",
+      );
+    }
     if (
       new Set(passiveSales.map((sale) => JSON.stringify(sale))).size !==
         passiveSales.length
@@ -342,9 +477,16 @@ class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
       ? undefined
       : mixedPassiveAllocation(input);
     const saleGains = passiveSales.map((sale) => ({
+      activity_id: sale.activity_id,
       activity_name: sale.activity_name,
       part: sale.part,
       gain: passiveSaleGain(sale),
+      ...(sale.entire_activity_interest_disposed !== undefined
+        ? {
+          entire_activity_interest_disposed:
+            sale.entire_activity_interest_disposed,
+        }
+        : {}),
     }));
 
     const grossGain = totalSection1231(input) -
@@ -378,11 +520,16 @@ class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
       }));
       return { outputs };
     }
-    outputs.push(output(form8582, {
-      has_current_4797_transaction: true,
-      ...(saleGains.length > 0 ? { current_4797_sale_gains: saleGains } : {}),
-    }));
-    if (saleGains.length > 0) {
+    if (!entireSale || (input.passive_activity_sources?.length ?? 0) === 1) {
+      outputs.push(output(form8582, {
+        has_current_4797_transaction: true,
+        ...(saleGains.length > 0 ? { current_4797_sale_gains: saleGains } : {}),
+      }));
+    }
+    if (
+      saleGains.length > 0 &&
+      (!entireSale || (input.passive_activity_sources?.length ?? 0) === 1)
+    ) {
       outputs.push(output(agi_aggregator, {
         pal_current_4797_gain: saleGains.reduce(
           (sum, sale) => sum + sale.gain,

@@ -1,8 +1,14 @@
+import {
+  calculateOwnerForms,
+  inputSchema,
+  reconcileHsaOwnerForms,
+} from "../../../nodes/intermediate/forms/form5329/index.ts";
+import { TS } from "../../../nodes/types.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 
 // IRS Form 5329 (2025) AcroForm field names.
 // Multi-part form (Parts I–X). Each part has an "amount" field as the first
-// numeric entry. Name/SSN fields skipped.
+// numeric entry. The first two fields are the individual owner name and SSN.
 // Part I   — early distribution (IRA/qualified plan): line 1.
 // Part I   — SIMPLE IRA early distribution: line 1 (separate).
 // Part III — ESA/ABLE distribution: line 17.
@@ -18,6 +24,16 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 // Part IX  — excess ABLE: line 42.
 // Part IX  — ABLE FMV: line 45.
 const fields: ReadonlyArray<PdfFieldEntry> = [
+  {
+    kind: "text",
+    domainKey: "owner_name",
+    pdfField: "topmostSubform[0].Page1[0].f1_1[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "owner_ssn",
+    pdfField: "topmostSubform[0].Page1[0].f1_2[0]",
+  },
   {
     kind: "text",
     domainKey: "early_distribution",
@@ -128,5 +144,47 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 export const form5329Pdf: PdfFormDescriptor = {
   pendingKey: "form5329",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f5329--2025.pdf",
+  instances(pending, filer, allPending) {
+    const unexpected = Object.keys(pending).filter((key) =>
+      key !== "owner_entries" && key !== "owner_forms"
+    );
+    if (unexpected.length > 0) {
+      throw new Error(`Form 5329 PDF requires owner entries: ${unexpected.join(", ")}`);
+    }
+    const parsed = inputSchema.parse({ owner_entries: pending.owner_entries });
+    const calculated = calculateOwnerForms(parsed);
+    if (calculated.forms.length === 0) {
+      if (pending.owner_forms !== undefined) {
+        throw new Error("Form 5329 PDF has forms without owner sources");
+      }
+      return [];
+    }
+    if (JSON.stringify(pending.owner_forms) !== JSON.stringify(calculated.forms)) {
+      throw new Error("Form 5329 PDF owner forms do not match source calculation");
+    }
+    reconcileHsaOwnerForms(calculated.forms, allPending?.form8889);
+    if (
+      calculated.total > 0 &&
+      allPending?.schedule2?.line8_form5329_tax !== calculated.total
+    ) {
+      throw new Error("Form 5329 PDF owner taxes do not reconcile to Schedule 2 line 8");
+    }
+    return calculated.forms.map((form) => {
+      const name = form.owner === TS.S
+        ? filer?.spouse && `${filer.spouse.firstName} ${filer.spouse.lastName}`
+        : filer?.fullName;
+      const ssn = form.owner === TS.S
+        ? filer?.spouse?.ssn
+        : filer?.primarySSN;
+      if (!name || !ssn) {
+        throw new Error("Form 5329 PDF needs each owner's name and SSN");
+      }
+      return {
+        ...form,
+        owner_name: name,
+        owner_ssn: ssn.replaceAll("-", ""),
+      };
+    });
+  },
   fields,
 };

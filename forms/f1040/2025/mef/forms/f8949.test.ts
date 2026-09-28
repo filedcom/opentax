@@ -17,6 +17,58 @@ Deno.test("empty transactions array returns empty string", () => {
   assertEquals(form8949.build([]), "");
 });
 
+Deno.test("native Form 8949 rejects a gain that does not include column (g)", () => {
+  assertThrows(() => form8949.build([{
+    part: "A",
+    description: "Market discount bond",
+    date_acquired: "2024-01-01",
+    date_sold: "2025-06-20",
+    proceeds: 5_000,
+    cost_basis: 3_000,
+    adjustment_codes: "D",
+    adjustment_amount: -500,
+    gain_loss: 2_000,
+    is_long_term: false,
+  }]), Error, "does not reconcile to proceeds, basis, and column (g)");
+});
+
+Deno.test("direct Form 8949 XML rejects section 1202 markers instead of bypassing AMT", () => {
+  const ordinary = {
+    part: "D",
+    description: "QSB stock",
+    date_acquired: "2008-01-01",
+    date_sold: "2025-06-20",
+    proceeds: 10_000,
+    cost_basis: 2_000,
+    gain_loss: 8_000,
+    is_long_term: true,
+  };
+  for (const marked of [
+    { ...ordinary, adjustment_codes: "Q", adjustment_amount: -4_000 },
+    { ...ordinary, qsbs_code: "Q1" },
+    { ...ordinary, qsbs_amount: 4_000 },
+  ]) {
+    assertThrows(
+      () => form8949.build([marked]),
+      Error,
+      "Form 6251 line 2h preference",
+    );
+    assertThrows(
+      () => form8949.build([ordinary, marked]),
+      Error,
+      "Form 6251 line 2h preference",
+    );
+  }
+  assertStringIncludes(
+    form8949.build([{
+      ...ordinary,
+      adjustment_codes: "W",
+      adjustment_amount: 0,
+    }]),
+    "<AdjustmentsToGainOrLossCd>W</AdjustmentsToGainOrLossCd>",
+  );
+});
+
 // ---------------------------------------------------------------------------
 // Section 2: Single Box A short-term transaction — full XML structure
 // ---------------------------------------------------------------------------

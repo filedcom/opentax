@@ -54,6 +54,10 @@ export const inputSchema = z.object({
   nontaxable_pension: z.number().nonnegative().optional(),
   // Nontaxable VA benefits
   nontaxable_va: z.number().nonnegative().optional(),
+  // Provenance for the bounded age-65 taxpayer filing path. The source facts
+  // must be checked against the final Form 1040 before a native form is built.
+  age_65_source_reference: z.string().trim().min(1).optional(),
+  nontaxable_ssa_source_reference: z.string().trim().min(1).optional(),
 });
 
 type ScheduleRInput = z.infer<typeof inputSchema>;

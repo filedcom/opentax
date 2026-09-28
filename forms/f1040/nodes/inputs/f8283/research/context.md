@@ -27,9 +27,11 @@ the PDF covers every item, or that appraiser/donee signatures are valid. Mixed
 Section A exemption and ordinary Section B gifts above $500,000 are stopped
 pending the exception's treatment. Art, conservation, public securities,
 intellectual property, inventory, and other special routes remain outside this
-bounded group implementation. There is no registered Form 8283 filed-PDF
-descriptor in the repository, so native MeF documents are built but filled Form
-8283 PDF output and visual validation remain open.
+bounded group implementation. A registered Form 8283 PDF descriptor now covers
+up to four reconciled current-year Section A election gifts and one standalone
+current-year Section B unimproved investment-land election. The Section B PDF
+does not reproduce the separately supplied appraiser/donee signatures. Other
+routes and filled-PDF visual validation remain open.
 
 ## Calculation and document model
 

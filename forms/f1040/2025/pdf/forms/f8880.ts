@@ -1,4 +1,14 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
+import {
+  assertForm8880EligibleTotals,
+  assertForm8880FiledCalculation,
+  assertForm8880TaxLimit,
+} from "../../form8880_tax_limit.ts";
+import {
+  assertEligibleContributor,
+  inputSchema as calculatorInputSchema,
+  ownedDeferrals,
+} from "../../../nodes/intermediate/forms/form8880/index.ts";
 
 // IRS Form 8880 (2025) AcroForm field names.
 // Credit for Qualified Retirement Savings Contributions (Saver's Credit).
@@ -44,6 +54,54 @@ export const form8880Pdf: PdfFormDescriptor = {
   pendingKey: "form8880",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8880--2025.pdf",
   fields,
+  projectFields(raw, allPending) {
+    const credit = raw.print_line12_credit;
+    if (typeof credit !== "number" || credit <= 0) return raw;
+    const line11 = raw.print_line11_tax_liability;
+    if (typeof line11 !== "number") {
+      throw new Error("Form 8880 PDF needs calculated line 11");
+    }
+    assertForm8880EligibleTotals(
+      raw.print_line6a_eligible,
+      raw.print_line6b_eligible,
+      raw.print_line7_total_eligible,
+    );
+    const source = calculatorInputSchema.partial().parse(raw);
+    const owned = ownedDeferrals(source);
+    if (
+      raw.print_line1a_ira !== (source.ira_contributions_taxpayer ?? 0) ||
+      (raw.print_line1b_ira ?? 0) !==
+        (source.ira_contributions_spouse ?? 0) ||
+      raw.print_line2a_deferrals !== owned.taxpayer ||
+      (raw.print_line2b_deferrals ?? 0) !== owned.spouse ||
+      (source.ira_contributions_taxpayer ?? 0) +
+          (source.ira_contributions_spouse ?? 0) + owned.taxpayer +
+          owned.spouse <= 0
+    ) {
+      throw new Error("Form 8880 PDF contribution lines differ from owner source facts");
+    }
+    if (typeof raw.print_line6a_eligible === "number" &&
+      raw.print_line6a_eligible > 0) {
+      assertEligibleContributor(
+        "taxpayer",
+        source.taxpayer_dob,
+        source.taxpayer_student_five_months,
+        source.taxpayer_claimed_as_dependent,
+      );
+    }
+    if (typeof raw.print_line6b_eligible === "number" &&
+      raw.print_line6b_eligible > 0) {
+      assertEligibleContributor(
+        "spouse",
+        source.spouse_dob,
+        source.spouse_student_five_months,
+        source.spouse_claimed_as_dependent,
+      );
+    }
+    assertForm8880TaxLimit(line11, credit, allPending);
+    assertForm8880FiledCalculation(raw, allPending);
+    return raw;
+  },
   filerFields: [
     { kind: "text", domainKey: "fullName", pdfField: "topmostSubform[0].Page1[0].f1_1[0]" },
     { kind: "text", domainKey: "primarySSN", pdfField: "topmostSubform[0].Page1[0].f1_2[0]" },

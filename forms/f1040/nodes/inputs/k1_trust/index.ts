@@ -15,6 +15,7 @@ import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
 import { scheduleA } from "../schedule_a/index.ts";
 import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
 import { form4952 } from "../../intermediate/forms/form4952/index.ts";
+import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import { f3800 } from "../f3800/index.ts";
 import { form8582cr } from "../../intermediate/forms/form8582cr/index.ts";
 import { disabledAccessLimit } from "../../intermediate/forms/disabled_access_limit/index.ts";
@@ -112,8 +113,14 @@ export const itemSchema = z.object({
   // Box 11 — Final year deductions (excess deductions on termination)
   box11_final_year_deductions: z.number().nonnegative().optional(),
 
-  // Box 12 — Alternative minimum tax items (informational; Form 6251)
+  // Uncoded box 12 cannot identify a Form 6251 line.
   box12_amt: z.number().optional(),
+  // Box 12 code A is the signed estate/trust adjustment on Form 6251 line 2j.
+  // Codes B–F also affect the AMT preferential-rate worksheets; codes G–I
+  // belong on other Form 6251 lines. They are outside this bounded source route.
+  box12_code_a_amt_adjustment: z.number().int().finite().optional(),
+  box12_codes_b_through_f_absent: z.literal(true).optional(),
+  box12_codes_g_through_i_absent: z.literal(true).optional(),
 
   // Box 13 — Credits and credit recapture → applicable credit form
   // Beneficiary's share of credits passed through from the trust (e.g. foreign tax credit).
@@ -136,6 +143,29 @@ export const itemSchema = z.object({
   box14_foreign_tax_credit_method: z.nativeEnum(ForeignTaxCreditMethod)
     .optional(),
 }).superRefine((item, ctx) => {
+  if ((item.box12_amt ?? 0) !== 0) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["box12_amt"],
+      message: "Uncoded K-1 box 12 AMT amount needs its source code before filing",
+    });
+  }
+  if (item.box12_code_a_amt_adjustment !== undefined) {
+    for (const key of [
+      "estate_trust_ein",
+      "source_document_reference",
+      "box12_codes_b_through_f_absent",
+      "box12_codes_g_through_i_absent",
+    ] as const) {
+      if (item[key] === undefined) {
+        ctx.addIssue({
+          code: "custom",
+          path: [key],
+          message: `K-1 box 12 code A AMT adjustment needs ${key}`,
+        });
+      }
+    }
+  }
   if (item.box13_code_m_orphan_drug_credit !== undefined) {
     for (
       const key of [
@@ -544,6 +574,7 @@ class K1TrustNode extends TaxNode<typeof inputSchema> {
     schedule1,
     form_1116,
     form4952,
+    form6251,
     f3800,
     form8582cr,
     disabledAccessLimit,
@@ -568,6 +599,13 @@ class K1TrustNode extends TaxNode<typeof inputSchema> {
       ...disabledAccessCreditOutputs(limitedItems),
       ...orphanDrugCreditOutputs(limitedItems),
       ...newMarketsCreditOutputs(limitedItems),
+      ...limitedItems.flatMap((item) =>
+        (item.box12_code_a_amt_adjustment ?? 0) === 0
+          ? []
+          : [output(form6251, {
+            line2j_estates_and_trusts: item.box12_code_a_amt_adjustment!,
+          })]
+      ),
     ];
 
     for (const item of limitedItems) {

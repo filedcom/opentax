@@ -49,6 +49,59 @@ Deno.test("line2_childcare_credit maps to CreditForChildAndDepdCareAmt", () => {
   );
 });
 
+Deno.test("Schedule 3 line 13a links exactly the sourced Form 2439 documents", () => {
+  const source = {
+    f2439s: [
+      { box1a: 10_000, box2: 1_500 },
+      { box1a: 5_000, box2: 750 },
+    ],
+  };
+  assertThrows(
+    () =>
+      schedule3.build(
+        { line13a_total: 2_249 },
+        { pending: { f2439: source } },
+      ),
+    Error,
+    "must equal sourced Form 2439",
+  );
+  const xml = schedule3.build(
+    { line13a_total: 2_250 },
+    {
+      pending: { f2439: source },
+      documentIdsByPendingKey: { f2439: ["IRS2439_1", "IRS2439_2"] },
+    },
+  );
+  assertStringIncludes(
+    xml,
+    '<TaxPaidByRICOrREITAmt referenceDocumentId="IRS2439_1 IRS2439_2" referenceDocumentName="IRS2439">2250</TaxPaidByRICOrREITAmt>',
+  );
+});
+
+Deno.test("Schedule 3 line 13a skips a gain-only Form 2439 document ID", () => {
+  const xml = schedule3.build(
+    { line13a_total: 2_250 },
+    {
+      pending: {
+        f2439: {
+          f2439s: [
+            { box1a: 1_000 },
+            { box1a: 10_000, box2: 1_500 },
+            { box1a: 5_000, box2: 750 },
+          ],
+        },
+      },
+      documentIdsByPendingKey: {
+        f2439: ["IRS2439_gain_only", "IRS2439_credit_1", "IRS2439_credit_2"],
+      },
+    },
+  );
+  assertStringIncludes(
+    xml,
+    '<TaxPaidByRICOrREITAmt referenceDocumentId="IRS2439_credit_1 IRS2439_credit_2" referenceDocumentName="IRS2439">2250</TaxPaidByRICOrREITAmt>',
+  );
+});
+
 Deno.test("line3_education_credit maps to EducationCreditAmt", () => {
   const result = schedule3.build({ line3_education_credit: 2500 });
   assertStringIncludes(result, "<EducationCreditAmt>2500</EducationCreditAmt>");
@@ -146,6 +199,23 @@ Deno.test("Schedule 3 source-credit lines require their attached filing forms", 
   assertStringIncludes(
     form3800Xml,
     'referenceDocumentId="IRS3800_1" referenceDocumentName="IRS3800"',
+  );
+});
+
+Deno.test("Schedule 3 rejects elderly or disabled credit without native Schedule R", () => {
+  assertThrows(
+    () =>
+      schedule3.build({ line6d_elderly_disabled_credit: 750 }, {
+        documentIdsByPendingKey: { schedule_r: [] },
+      }),
+    Error,
+    "one linked Schedule R",
+  );
+  assertStringIncludes(
+    schedule3.build({ line6d_elderly_disabled_credit: 750 }, {
+      documentIdsByPendingKey: { schedule_r: ["IRS1040ScheduleR1"] },
+    }),
+    'referenceDocumentId="IRS1040ScheduleR1"',
   );
 });
 

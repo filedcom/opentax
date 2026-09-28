@@ -33,6 +33,213 @@ Deno.test("scheduleA.inputSchema: empty object is valid — all fields optional"
   assertEquals(parsed.success, true);
 });
 
+Deno.test("scheduleA.compute: Pub. 526 capital-gain election refigures older property carryover", () => {
+  const result = compute({
+    agi: 60_000,
+    capital_gain_50_percent_election_confirmed: true,
+    current_noncash_gift_inventory_complete_confirmed: true,
+    other_prior_charitable_carryovers_absent_confirmed: true,
+    noncash_contribution_items: [{
+      source: "2025 investment land to 50%-limit organization",
+      contribution_id: "land-2025",
+      amount: 24_000,
+      category: "noncash_50",
+      is_capital_gain_property: true,
+      original_fmv: 25_000,
+      adjusted_basis: 24_000,
+      capital_gain_reduction_election_confirmed: true,
+    }],
+    capital_gain_property_carryovers: [{
+      contribution_id: "land-2024",
+      contribution_year: 2024,
+      original_category: "capital_gain_30",
+      original_fmv: 27_000,
+      adjusted_basis: 20_000,
+      previously_deducted: 15_000,
+      ordinary_carryover_rules_confirmed: true,
+    }],
+  });
+  assertEquals(deductionInput(result).itemized_deductions, 29_000);
+  assertEquals(
+    result.finalizations?.[0]?.fields.line_12_noncash_contributions,
+    24_000,
+  );
+  assertEquals(
+    result.finalizations?.[0]?.fields.line_13_contribution_carryover,
+    5_000,
+  );
+  assertEquals(
+    result.carryforwards?.["charitable_capital_gain_2024_land-2024"],
+    0,
+  );
+});
+
+Deno.test("scheduleA.inputSchema: elected current gifts need complete item classification and an explicit prior ledger", () => {
+  const elected = {
+    source: "investment land",
+    contribution_id: "land",
+    amount: 24_000,
+    category: "noncash_50" as const,
+    is_capital_gain_property: true,
+    original_fmv: 25_000,
+    adjusted_basis: 24_000,
+    capital_gain_reduction_election_confirmed: true as const,
+  };
+  assertEquals(
+    scheduleA.inputSchema.safeParse({
+      noncash_contribution_items: [elected],
+    }).success,
+    false,
+  );
+  assertEquals(
+    scheduleA.inputSchema.safeParse({
+      noncash_contribution_items: [elected, {
+        source: "other capital property",
+        contribution_id: "other",
+        amount: 500,
+        category: "capital_gain_30",
+        is_capital_gain_property: true,
+      }],
+      capital_gain_property_carryovers: [],
+    }).success,
+    false,
+  );
+});
+
+Deno.test("scheduleA.compute: no-appreciation capital property still participates in a return-wide 50% election", () => {
+  const result = compute({
+    agi: 20_000,
+    current_noncash_gift_inventory_complete_confirmed: true,
+    other_prior_charitable_carryovers_absent_confirmed: true,
+    noncash_contribution_items: [{
+      source: "investment property at basis",
+      contribution_id: "property-at-basis",
+      amount: 3_000,
+      category: "noncash_50",
+      is_capital_gain_property: true,
+      original_fmv: 3_000,
+      adjusted_basis: 3_000,
+    }],
+    capital_gain_property_carryovers: [],
+  });
+  assertEquals(
+    result.finalizations?.[0]?.fields.line_12_noncash_contributions,
+    3_000,
+  );
+  assertEquals(
+    result.finalizations?.[0]?.fields.capital_gain_election_finalized,
+    true,
+  );
+});
+
+Deno.test("scheduleA.compute: fifth-year elected carryover expires after its last eligible deduction year", () => {
+  const result = compute({
+    agi: 0,
+    capital_gain_50_percent_election_confirmed: true,
+    current_noncash_gift_inventory_complete_confirmed: true,
+    other_prior_charitable_carryovers_absent_confirmed: true,
+    capital_gain_property_carryovers: [{
+      contribution_id: "old-land",
+      contribution_year: 2020,
+      original_category: "capital_gain_30",
+      original_fmv: 10_000,
+      adjusted_basis: 8_000,
+      previously_deducted: 2_000,
+      ordinary_carryover_rules_confirmed: true,
+    }],
+  });
+  assertEquals(
+    result.finalizations?.[0]?.fields.line_13_contribution_carryover,
+    0,
+  );
+  assertEquals(
+    result.carryforwards?.["charitable_capital_gain_2020_old-land"],
+    undefined,
+  );
+});
+
+Deno.test("scheduleA.compute: elected capital-gain carryovers use oldest property first", () => {
+  const result = compute({
+    agi: 20_000,
+    capital_gain_50_percent_election_confirmed: true,
+    current_noncash_gift_inventory_complete_confirmed: true,
+    other_prior_charitable_carryovers_absent_confirmed: true,
+    noncash_contribution_items: [{
+      source: "current clothing",
+      contribution_id: "clothing-2025",
+      amount: 5_000,
+      category: "noncash_50",
+      is_capital_gain_property: false,
+    }],
+    capital_gain_property_carryovers: [
+      {
+        contribution_id: "newer-land",
+        contribution_year: 2024,
+        original_category: "capital_gain_30",
+        original_fmv: 8_000,
+        adjusted_basis: 6_000,
+        previously_deducted: 1_000,
+        ordinary_carryover_rules_confirmed: true,
+      },
+      {
+        contribution_id: "older-land",
+        contribution_year: 2023,
+        original_category: "capital_gain_30",
+        original_fmv: 8_000,
+        adjusted_basis: 6_000,
+        previously_deducted: 1_000,
+        ordinary_carryover_rules_confirmed: true,
+      },
+    ],
+  });
+  assertEquals(
+    result.finalizations?.[0]?.fields.line_12_noncash_contributions,
+    5_000,
+  );
+  assertEquals(
+    result.finalizations?.[0]?.fields.line_13_contribution_carryover,
+    5_000,
+  );
+  assertEquals(
+    result.carryforwards?.["charitable_capital_gain_2023_older-land"],
+    0,
+  );
+  assertEquals(
+    result.carryforwards?.["charitable_capital_gain_2024_newer-land"],
+    5_000,
+  );
+});
+
+Deno.test("scheduleA.compute: elected carryover rejects mixed 30% current gifts pending full limit ordering", () => {
+  assertThrows(
+    () =>
+      compute({
+        agi: 30_000,
+        capital_gain_50_percent_election_confirmed: true,
+        current_noncash_gift_inventory_complete_confirmed: true,
+        other_prior_charitable_carryovers_absent_confirmed: true,
+        noncash_contribution_items: [{
+          source: "ordinary property for use of charity",
+          contribution_id: "other-gift",
+          amount: 1_000,
+          category: "other_30",
+          is_capital_gain_property: false,
+        }],
+        capital_gain_property_carryovers: [{
+          contribution_id: "old-land",
+          contribution_year: 2024,
+          original_category: "capital_gain_30",
+          original_fmv: 10_000,
+          adjusted_basis: 8_000,
+          previously_deducted: 2_000,
+          ordinary_carryover_rules_confirmed: true,
+        }],
+      }),
+    Error,
+    "full carryover-limit reconciliation",
+  );
+});
+
 Deno.test("scheduleA.inputSchema: negative numeric field rejected", () => {
   const parsed = scheduleA.inputSchema.safeParse({ line_1_medical: -1 });
   assertEquals(parsed.success, false);

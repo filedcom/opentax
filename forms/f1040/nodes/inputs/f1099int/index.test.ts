@@ -29,6 +29,7 @@ type ItemOverrides = Partial<{
   box7: string;
   foreign_source_interest_usd: number;
   foreign_tax_irs_country_code: string;
+  foreign_tax_source_document_reference: string;
   box8: number;
   box9: number;
   box10: number;
@@ -340,6 +341,17 @@ Deno.test("box6 below $300 still routes to Form 1116 without an election", () =>
     fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0]
       .foreign_tax_paid,
     200,
+  );
+});
+
+Deno.test("1099-INT foreign tax preserves its document reference for Form 1116", () => {
+  const result = compute([taxedInterest(50, 1_000, {
+    foreign_tax_source_document_reference: "Bank 1099-INT 2025",
+  })]);
+  assertEquals(
+    fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0]
+      .foreign_income_source_document_reference,
+    "Bank 1099-INT 2025",
   );
 });
 

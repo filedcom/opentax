@@ -346,13 +346,14 @@ Deno.test("box12_code_ff_preserves_the_W2_reported_QSEHRA_benefit", () => {
 Deno.test("box12_code_w_routes_to_form8889: Code W = $2,000 → employer_hsa_contributions = 2000", () => {
   const result = compute([
     minimalItem({
+      employee_ssn: "123456789",
       box1_wages: 60000,
       box12_entries: [{ code: Box12Code.W, amount: 2000 }],
     }),
   ]);
   assertEquals(
-    fieldsOf(result.outputs, form8889)!.employer_hsa_contributions,
-    2000,
+    fieldsOf(result.outputs, form8889)!.w2_code_w_entries,
+    [{ employee_ssn: "123456789", amount: 2000 }],
   );
 });
 
@@ -386,46 +387,152 @@ Deno.test("box12_code_r_routes_to_form8853: Code R = $1,500 → employer_archer_
   assertEquals(fieldsOf(result.outputs, form8853)!.employer_archer_msa, 1500);
 });
 
-Deno.test("box12_code_d_routes_to_form8880: Code D = $10,000 → elective_deferrals = 10000", () => {
+Deno.test("box12_code_d_routes_to_form8880 with employee ownership", () => {
   const result = compute([
     minimalItem({
+      employee_ssn: "123456789",
       box1_wages: 50000,
       box12_entries: [{ code: Box12Code.D, amount: 10000 }],
     }),
   ]);
-  assertEquals(fieldsOf(result.outputs, form8880)!.elective_deferrals, 10000);
+  assertEquals(fieldsOf(result.outputs, form8880)!.w2_deferral_entries, [{
+    employee_ssn: "123456789",
+    code: "D",
+    amount: 10000,
+  }]);
+});
+
+Deno.test("W-2 Form 8880 deferral cannot lose employee identity", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box1_wages: 20_000,
+        box12_entries: [{ code: Box12Code.D, amount: 1_000 }],
+      })]),
+    Error,
+    "need the employee's nine-digit SSN",
+  );
 });
 
 Deno.test("box12_code_e_routes_to_form8880: Code E = $8,000 → elective_deferrals = 8000", () => {
   const result = compute([
     minimalItem({
+      employee_ssn: "123456789",
       box1_wages: 50000,
       box12_entries: [{ code: Box12Code.E, amount: 8000 }],
     }),
   ]);
-  assertEquals(fieldsOf(result.outputs, form8880)!.elective_deferrals, 8000);
+  assertEquals(fieldsOf(result.outputs, form8880)!.w2_deferral_entries, [{
+    employee_ssn: "123456789",
+    code: "E",
+    amount: 8000,
+  }]);
 });
 
-Deno.test("box12_code_g_routes_to_form8880: Code G = $5,000 → elective_deferrals = 5000", () => {
-  const result = compute([
-    minimalItem({
-      box1_wages: 50000,
-      box12_entries: [{ code: Box12Code.G, amount: 5000 }],
-    }),
-  ]);
-  assertEquals(fieldsOf(result.outputs, form8880)!.elective_deferrals, 5000);
+for (
+  const code of [
+    Box12Code.F,
+    Box12Code.H,
+    Box12Code.S,
+    Box12Code.AA,
+    Box12Code.BB,
+    Box12Code.EE,
+  ]
+) {
+  Deno.test(`box12 code ${code} retains employee ownership for Form 8880 line 2`, () => {
+    const result = compute([minimalItem({
+      employee_ssn: "123456789",
+      box1_wages: 50_000,
+      box12_entries: [{ code, amount: 1_000 }],
+    })]);
+    assertEquals(fieldsOf(result.outputs, form8880)!.w2_deferral_entries, [{
+      employee_ssn: "123456789",
+      code,
+      amount: 1_000,
+    }]);
+  });
+}
+
+Deno.test("positive W-2 code G fails closed without employee-only source split", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        employee_ssn: "123456789",
+        box1_wages: 50_000,
+        box12_entries: [{ code: Box12Code.G, amount: 5_000 }],
+      })]),
+    Error,
+    "needs a reviewed governmental 457(b) employee-elective split",
+  );
 });
 
-Deno.test("box12_code_d_e_g_aggregate_to_form8880: D + E + G = 3000 + 2000 + 1000 → elective_deferrals = 6000", () => {
+Deno.test("reviewed governmental code G routes only the employee-elective share to Form 8880", () => {
   const result = compute([minimalItem({
+    employee_ssn: "123456789",
+    box1_wages: 50_000,
+    box12_entries: [{
+      code: Box12Code.G,
+      amount: 5_000,
+      code_g_governmental_457b: true,
+      code_g_employee_elective_amount: 1_200,
+      code_g_employee_split_review_ref: "2025 payroll 457b elective allocation",
+    }],
+  })]);
+  assertEquals(fieldsOf(result.outputs, form8880)!.w2_deferral_entries, [{
+    employee_ssn: "123456789",
+    code: "G",
+    amount: 5_000,
+    governmental_457b: true,
+    employee_elective_amount: 1_200,
+    employee_split_review_ref: "2025 payroll 457b elective allocation",
+  }]);
+});
+
+Deno.test("code G rejects an employee split exceeding the W-2 amount", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        employee_ssn: "123456789",
+        box12_entries: [{
+          code: Box12Code.G,
+          amount: 800,
+          code_g_governmental_457b: true,
+          code_g_employee_elective_amount: 900,
+          code_g_employee_split_review_ref: "payroll allocation",
+        }],
+      })]),
+    Error,
+    "employee-elective split",
+  );
+});
+
+Deno.test("code G employer-only amount does not create a saver-credit source", () => {
+  const result = compute([minimalItem({
+    employee_ssn: "123456789",
+    box12_entries: [{
+      code: Box12Code.G,
+      amount: 800,
+      code_g_governmental_457b: true,
+      code_g_employee_elective_amount: 0,
+      code_g_employee_split_review_ref: "payroll allocation",
+    }],
+  })]);
+  assertEquals(fieldsOf(result.outputs, form8880), undefined);
+});
+
+Deno.test("box12 codes D and E preserve separate W-2 entries", () => {
+  const result = compute([minimalItem({
+    employee_ssn: "123456789",
     box1_wages: 80000,
     box12_entries: [
       { code: Box12Code.D, amount: 3000 },
       { code: Box12Code.E, amount: 2000 },
-      { code: Box12Code.G, amount: 1000 },
     ],
   })]);
-  assertEquals(fieldsOf(result.outputs, form8880)!.elective_deferrals, 6000);
+  assertEquals(fieldsOf(result.outputs, form8880)!.w2_deferral_entries, [
+    { employee_ssn: "123456789", code: "D", amount: 3000 },
+    { employee_ssn: "123456789", code: "E", amount: 2000 },
+  ]);
 });
 
 Deno.test("box12_code_q_routes_to_f1040_line1i_combat_pay: Code Q = $3,000 → line1i_combat_pay = 3000", () => {
@@ -505,6 +612,7 @@ Deno.test("statutory employee box 12 A/B/M/N still reaches Schedule 2 line 13", 
 
 Deno.test("box12_multiple_entries_on_one_w2: D + W + T all route to separate nodes with exact amounts", () => {
   const result = compute([minimalItem({
+    employee_ssn: "123456789",
     box1_wages: 80000,
     box12_entries: [
       { code: Box12Code.D, amount: 5000 },
@@ -512,10 +620,14 @@ Deno.test("box12_multiple_entries_on_one_w2: D + W + T all route to separate nod
       { code: Box12Code.T, amount: 3000 },
     ],
   })]);
-  assertEquals(fieldsOf(result.outputs, form8880)!.elective_deferrals, 5000);
+  assertEquals(fieldsOf(result.outputs, form8880)!.w2_deferral_entries, [{
+    employee_ssn: "123456789",
+    code: "D",
+    amount: 5000,
+  }]);
   assertEquals(
-    fieldsOf(result.outputs, form8889)!.employer_hsa_contributions,
-    2500,
+    fieldsOf(result.outputs, form8889)!.w2_code_w_entries,
+    [{ employee_ssn: "123456789", amount: 2500 }],
   );
   assertEquals(fieldsOf(result.outputs, form8839)!.adoption_benefits, 3000);
 });
@@ -648,31 +760,41 @@ Deno.test("two_w2s_dep_care_aggregate_to_form2441: $2k + $1.5k = $3,500", () => 
 Deno.test("two_w2s_code_d_aggregate_to_form8880: $5k + $5k = $10,000 elective_deferrals", () => {
   const result = compute([
     minimalItem({
+      employee_ssn: "123456789",
       box1_wages: 50000,
       box12_entries: [{ code: Box12Code.D, amount: 5000 }],
     }),
     minimalItem({
+      employee_ssn: "987654321",
       box1_wages: 50000,
       box12_entries: [{ code: Box12Code.D, amount: 5000 }],
     }),
   ]);
-  assertEquals(fieldsOf(result.outputs, form8880)!.elective_deferrals, 10000);
+  assertEquals(fieldsOf(result.outputs, form8880)!.w2_deferral_entries, [
+    { employee_ssn: "123456789", code: "D", amount: 5000 },
+    { employee_ssn: "987654321", code: "D", amount: 5000 },
+  ]);
 });
 
 Deno.test("two_w2s_code_w_aggregate_to_form8889: $1,200 + $800 = $2,000 employer_hsa_contributions", () => {
   const result = compute([
     minimalItem({
+      employee_ssn: "123456789",
       box1_wages: 40000,
       box12_entries: [{ code: Box12Code.W, amount: 1200 }],
     }),
     minimalItem({
+      employee_ssn: "123456789",
       box1_wages: 40000,
       box12_entries: [{ code: Box12Code.W, amount: 800 }],
     }),
   ]);
   assertEquals(
-    fieldsOf(result.outputs, form8889)!.employer_hsa_contributions,
-    2000,
+    fieldsOf(result.outputs, form8889)!.w2_code_w_entries,
+    [
+      { employee_ssn: "123456789", amount: 1200 },
+      { employee_ssn: "123456789", amount: 800 },
+    ],
   );
 });
 
@@ -910,6 +1032,7 @@ Deno.test("ss_tax_withheld_above_per_employer_max_throws: $10,918.21 throws", ()
 Deno.test("401k_under50_at_limit_valid: age 40, D + AA = $23,500 is valid → form8880 receives only D amount", () => {
   // AA (Roth 401k) is counted against the 401k limit but only D routes to form8880 elective_deferrals
   const result = compute([minimalItem({
+    employee_ssn: "123456789",
     box1_wages: 80000,
     box12_entries: [{ code: Box12Code.D, amount: 15000 }, {
       code: Box12Code.AA,
@@ -917,7 +1040,10 @@ Deno.test("401k_under50_at_limit_valid: age 40, D + AA = $23,500 is valid → fo
     }],
     taxpayer_age: 40,
   })]);
-  assertEquals(fieldsOf(result.outputs, form8880)!.elective_deferrals, 15000);
+  assertEquals(
+    fieldsOf(result.outputs, form8880)!.w2_deferral_entries?.[0].amount,
+    15000,
+  );
 });
 
 Deno.test("401k_under50_above_limit_throws: age 40, D + AA = $23,501 throws", () => {
@@ -937,11 +1063,15 @@ Deno.test("401k_under50_above_limit_throws: age 40, D + AA = $23,501 throws", ()
 
 Deno.test("401k_age50_59_at_limit_valid: age 55, D = $31,000 is valid → elective_deferrals = 31000", () => {
   const result = compute([minimalItem({
+    employee_ssn: "123456789",
     box1_wages: 150000,
     box12_entries: [{ code: Box12Code.D, amount: 31000 }],
     taxpayer_age: 55,
   })]);
-  assertEquals(fieldsOf(result.outputs, form8880)!.elective_deferrals, 31000);
+  assertEquals(
+    fieldsOf(result.outputs, form8880)!.w2_deferral_entries?.[0].amount,
+    31000,
+  );
 });
 
 Deno.test("401k_age50_59_above_limit_throws: age 55, D = $31,001 throws", () => {
@@ -959,6 +1089,7 @@ Deno.test("401k_age50_59_above_limit_throws: age 55, D = $31,001 throws", () => 
 Deno.test("401k_age60_63_super_catchup_at_limit_valid: age 62, D + AA = $34,750 is valid → form8880 receives only D amount", () => {
   // AA (Roth) counted against limit but not routed to form8880; only D routes
   const result = compute([minimalItem({
+    employee_ssn: "123456789",
     box1_wages: 200000,
     box12_entries: [{ code: Box12Code.D, amount: 23500 }, {
       code: Box12Code.AA,
@@ -966,7 +1097,10 @@ Deno.test("401k_age60_63_super_catchup_at_limit_valid: age 62, D + AA = $34,750 
     }],
     taxpayer_age: 62,
   })]);
-  assertEquals(fieldsOf(result.outputs, form8880)!.elective_deferrals, 23500);
+  assertEquals(
+    fieldsOf(result.outputs, form8880)!.w2_deferral_entries?.[0].amount,
+    23500,
+  );
 });
 
 Deno.test("401k_age60_63_above_super_catchup_throws: age 62, D + AA = $34,751 throws", () => {
@@ -1002,6 +1136,7 @@ Deno.test("403b_under50_above_limit_throws: age 40, E + BB = $23,501 throws", ()
 Deno.test("403b_age60_63_at_limit_valid: age 61, E + BB = $34,750 → form8880 receives only E amount", () => {
   // BB (Roth 403b) counted against limit but not routed to form8880; only E routes
   const result = compute([minimalItem({
+    employee_ssn: "123456789",
     box1_wages: 200000,
     box12_entries: [{ code: Box12Code.E, amount: 23500 }, {
       code: Box12Code.BB,
@@ -1009,7 +1144,10 @@ Deno.test("403b_age60_63_at_limit_valid: age 61, E + BB = $34,750 → form8880 r
     }],
     taxpayer_age: 61,
   })]);
-  assertEquals(fieldsOf(result.outputs, form8880)!.elective_deferrals, 23500);
+  assertEquals(
+    fieldsOf(result.outputs, form8880)!.w2_deferral_entries?.[0].amount,
+    23500,
+  );
 });
 
 Deno.test("457b_under50_above_limit_throws: age 40, G + EE = $23,501 throws", () => {
@@ -1099,6 +1237,7 @@ Deno.test("dep_care_above_5000_is_warning_only: Box 10 = $5,001 still routes to 
 Deno.test("comprehensive_w2_full_workflow: two W-2s with all major boxes populate all expected outputs with exact values", () => {
   const result = compute([
     minimalItem({
+      employee_ssn: "123456789",
       box1_wages: 75000,
       box2_fed_withheld: 8000,
       box5_medicare_wages: 75000,
@@ -1121,6 +1260,7 @@ Deno.test("comprehensive_w2_full_workflow: two W-2s with all major boxes populat
       taxpayer_age: 45,
     }),
     minimalItem({
+      employee_ssn: "123456789",
       box1_wages: 25000,
       box2_fed_withheld: 2500,
       box5_medicare_wages: 25000,
@@ -1147,15 +1287,22 @@ Deno.test("comprehensive_w2_full_workflow: two W-2s with all major boxes populat
   assertEquals(fieldsOf(result.outputs, form2441)!.dep_care_benefits, 3000);
   // form8889 HSA: 2000 + 500
   assertEquals(
-    fieldsOf(result.outputs, form8889)!.employer_hsa_contributions,
-    2500,
+    fieldsOf(result.outputs, form8889)!.w2_code_w_entries,
+    [
+      { employee_ssn: "123456789", amount: 2000 },
+      { employee_ssn: "123456789", amount: 500 },
+    ],
   );
   // form8839 adoption
   assertEquals(fieldsOf(result.outputs, form8839)!.adoption_benefits, 3000);
   // form8853 archer MSA
   assertEquals(fieldsOf(result.outputs, form8853)!.employer_archer_msa, 1200);
   // form8880 elective deferrals
-  assertEquals(fieldsOf(result.outputs, form8880)!.elective_deferrals, 8000);
+  assertEquals(fieldsOf(result.outputs, form8880)!.w2_deferral_entries, [{
+    employee_ssn: "123456789",
+    code: "D",
+    amount: 8000,
+  }]);
   // IRA worksheet
   assertEquals(
     fieldsOf(result.outputs, ira_deduction_worksheet)!

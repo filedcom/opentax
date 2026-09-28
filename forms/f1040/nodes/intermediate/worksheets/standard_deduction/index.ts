@@ -9,6 +9,7 @@ import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { FilingStatus } from "../../../types.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import { income_tax_calculation } from "../income_tax_calculation/index.ts";
+import { schedule_j_calculation } from "../../forms/schedule_j/index.ts";
 import { form_1116 } from "../../forms/form_1116/index.ts";
 import { form8960 } from "../../forms/form8960/index.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
@@ -136,6 +137,7 @@ class StandardDeductionNode extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([
     f1040,
     income_tax_calculation,
+    schedule_j_calculation,
     form_1116,
   ]);
 
@@ -145,6 +147,18 @@ class StandardDeductionNode extends TaxNode<typeof inputSchema> {
     const input = inputSchema.parse(rawInput);
 
     const { deduction, takingStandard } = resolveDeduction(input, cfg);
+    // Form 6251 line 2a must use Schedule A line 7 whenever the taxpayer
+    // itemizes. Schedule A deposits this amount even when it is zero; an
+    // absent deposit cannot be silently treated as zero.
+    if (
+      !takingStandard &&
+      (input.itemized_taxes === undefined ||
+        input.itemized_taxes > (input.itemized_deductions ?? 0))
+    ) {
+      throw new Error(
+        "Form 6251 line 2a needs reconciled Schedule A line 7 taxes when itemizing",
+      );
+    }
     const qbi = input.qbi_deduction ?? 0;
     const additionalDeductions = input.additional_deductions ?? 0;
     const enhancedSeniorDeduction = input.enhanced_senior_deduction ?? 0;
@@ -224,6 +238,14 @@ class StandardDeductionNode extends TaxNode<typeof inputSchema> {
             ),
           }
           : {}),
+      }),
+      this.outputNodes.output(schedule_j_calculation, {
+        taxable_income_2025: taxableIncome,
+        filing_status_2025: input.filing_status,
+        taking_standard_deduction: takingStandard,
+        qbi_deduction: qbi,
+        additional_deductions: additionalDeductions,
+        nol_deduction: nol,
       }),
       this.outputNodes.output(form_1116, {
         // Form 1116 starts from the filed whole-dollar lines 11b and 14.

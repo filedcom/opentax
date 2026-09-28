@@ -1,53 +1,192 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { FilingStatus as HeaderStatus } from "../../../mef/header.ts";
+import { FilingStatus as NodeStatus } from "../../../nodes/types.ts";
+import {
+  form8959 as form8959Node,
+  type Form8959PrintFields,
+  inputSchema,
+} from "../../../nodes/intermediate/forms/form8959/index.ts";
+import type { MefBuildContext } from "../form-descriptor.ts";
 import { form8959 } from "./f8959.ts";
 
-Deno.test("ordinary W-2 wages below the threshold do not emit Form 8959", () => {
-  const result = form8959.build({
-    filing_status: "single",
-    medicare_wages: 30_000,
-    medicare_withheld: 435,
-  });
-  assertEquals(result, "");
-});
+const headerStatus: Readonly<Record<NodeStatus, HeaderStatus>> = {
+  [NodeStatus.Single]: HeaderStatus.Single,
+  [NodeStatus.MFJ]: HeaderStatus.MarriedFilingJointly,
+  [NodeStatus.MFS]: HeaderStatus.MarriedFilingSeparately,
+  [NodeStatus.HOH]: HeaderStatus.HeadOfHousehold,
+  [NodeStatus.QSS]: HeaderStatus.QualifyingSurvivingSpouse,
+};
 
-Deno.test("a single W-2 over $200k emits Form 8959 even below the MFJ threshold", () => {
-  const fields = {
-    filing_status: "mfj",
-    medicare_wages: 220_000,
-    medicare_withheld: 3_190,
+function fixture(
+  status: NodeStatus,
+  source: Record<string, unknown>,
+): { fields: Form8959PrintFields; context: MefBuildContext } {
+  const result = form8959Node.compute(
+    { taxYear: 2025, formType: "f1040" },
+    inputSchema.parse({ filing_status: status, ...source }),
+  );
+  const form = result.outputs.find((output) => output.nodeType === "form8959");
+  if (!form) throw new Error("Expected calculated Form 8959 print lines");
+  const schedule2 = result.outputs.find((output) =>
+    output.nodeType === "schedule2"
+  );
+  const f1040 = result.outputs.find((output) => output.nodeType === "f1040");
+  const pending: Record<string, unknown> = { f1040: f1040?.fields ?? {} };
+  if (schedule2) pending.schedule2 = schedule2.fields;
+  return {
+    fields: {
+      filing_status: status,
+      ...source,
+      ...form.fields,
+    } as Form8959PrintFields,
+    context: {
+      filer: {
+        primarySSN: "123456789",
+        nameLine1: "SMITH JOHN",
+        nameControl: "SMIT",
+        fullName: "John Smith",
+        address: {
+          line1: "1 MAIN ST",
+          city: "AUSTIN",
+          state: "TX",
+          zip: "78701",
+        },
+        filingStatus: headerStatus[status],
+      },
+      pending,
+    },
   };
-  assertEquals(form8959.build(fields), "");
-  const xml = form8959.build({
-    ...fields,
-    single_w2_over_withholding_threshold: true,
-  });
-  assertStringIncludes(xml, "<IRS8959>");
-  assertStringIncludes(
-    xml,
-    "<FilingStatusThresholdCd>250000</FilingStatusThresholdCd>",
+}
+
+Deno.test("Form 8959 accepts only a complete calculated print record", () => {
+  assertEquals(form8959.build([]), "");
+  assertEquals(
+    form8959.build({
+      filing_status: NodeStatus.Single,
+      w2_medicare_wages: 100,
+    }),
+    "",
   );
-  assertStringIncludes(xml, "<TotalAMRRTTaxAmt>0</TotalAMRRTTaxAmt>");
-  const rrtaXml = form8959.build({
-    filing_status: "mfj",
-    rrta_wages: 220_000,
-    single_w2_over_withholding_threshold: true,
-  });
-  assertStringIncludes(
-    rrtaXml,
-    "<TotalRailroadRetirementCompAmt>220000</TotalRailroadRetirementCompAmt>",
+  assertThrows(
+    () =>
+      form8959.build({
+        filing_status: NodeStatus.Single,
+        w2_medicare_wages: 250_000,
+      }),
+    Error,
+    "filing trigger exists without print lines",
   );
-  assertStringIncludes(rrtaXml, "<TotalAMRRTTaxAmt>0</TotalAMRRTTaxAmt>");
+  assertThrows(
+    () =>
+      form8959.build({
+        filing_status: NodeStatus.MFJ,
+        w2_medicare_wages: 220_000,
+        w2_single_over_withholding_threshold: true,
+      }),
+    Error,
+    "filing trigger exists without print lines",
+  );
+  assertThrows(
+    () => form8959.build({ medicare_wages: 250_000 }),
+    Error,
+  );
+  assertThrows(
+    () => form8959.build({ medicare_wages_box5: 250_000 }),
+    Error,
+  );
+  assertThrows(
+    () =>
+      form8959.build({
+        filing_status: NodeStatus.Single,
+        line4_total_medicare_wages: 250_000,
+      }),
+    Error,
+  );
 });
 
-Deno.test("Form 8959 XML uses its canonical W-2 box 5 amount", () => {
-  const xml = form8959.build({
-    filing_status: "single",
-    medicare_wages: 198_000,
+Deno.test("Form 8959 source-only omission checks original W-2 and substitute triggers", () => {
+  const w2 = {
+    w2s: [{
+      box1_wages: 210_000,
+      box2_fed_withheld: 0,
+      box5_medicare_wages: 210_000,
+      box6_medicare_withheld: 3_045,
+    }],
+  };
+  assertThrows(
+    () =>
+      form8959.build({ filing_status: NodeStatus.MFJ }, {
+        pending: { w2 },
+      }),
+    Error,
+    "original source records",
+  );
+  assertThrows(
+    () => form8959.build({}, { pending: { w2 } }),
+    Error,
+    "original source records",
+  );
+  assertThrows(
+    () => form8959.build([], { pending: { w2 } }),
+    Error,
+    "original source records",
+  );
+  const f4852 = {
+    f4852s: [{
+      form_type: "W2",
+      payer_name: "Employer",
+      wages: 210_000,
+      medicare_wages: 210_000,
+      medicare_withheld: 3_045,
+    }],
+  };
+  assertThrows(
+    () =>
+      form8959.build({ filing_status: NodeStatus.MFJ }, {
+        pending: { f4852 },
+      }),
+    Error,
+    "original source records",
+  );
+  assertEquals(
+    form8959.build({
+      filing_status: NodeStatus.Single,
+      w2_medicare_wages: 100,
+      w2_medicare_withheld: 1.45,
+    }, {
+      pending: {
+        w2: {
+          w2s: [{
+            box1_wages: 100,
+            box2_fed_withheld: 0,
+            box5_medicare_wages: 100,
+            box6_medicare_withheld: 1.45,
+          }],
+        },
+      },
+    }),
+    "",
+  );
+});
+
+Deno.test("Form 8959 emits exact Part I, II, III, IV and V print lines", () => {
+  const { fields, context } = fixture(NodeStatus.Single, {
+    w2_medicare_wages: 210_000,
     unreported_tips: 4_000,
+    wages_8919: 2_000,
+    se_income: 30_000,
+    w2_rrta_wages: 250_000,
+    w2_medicare_withheld: 3_500,
+    w2_rrta_medicare_withheld: 60,
   });
+  const xml = form8959.build(fields, context);
   assertStringIncludes(
     xml,
-    "<TotalW2MedicareWagesAndTipsAmt>198000</TotalW2MedicareWagesAndTipsAmt>",
+    "<FilingStatusThresholdCd>200000</FilingStatusThresholdCd>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalW2MedicareWagesAndTipsAmt>210000</TotalW2MedicareWagesAndTipsAmt>",
   );
   assertStringIncludes(
     xml,
@@ -55,271 +194,278 @@ Deno.test("Form 8959 XML uses its canonical W-2 box 5 amount", () => {
   );
   assertStringIncludes(
     xml,
-    "<TotalMedicareWagesAndTipsAmt>202000</TotalMedicareWagesAndTipsAmt>",
+    "<TotalWagesWithNoWithholdingAmt>2000</TotalWagesWithNoWithholdingAmt>",
   );
   assertStringIncludes(
     xml,
-    "<TotalAMRRTTaxAmt>18</TotalAMRRTTaxAmt>",
+    `<TotalMedicareWagesAndTipsAmt>${fields.line4_total_medicare_wages}</TotalMedicareWagesAndTipsAmt>`,
   );
-});
-
-Deno.test("Form 8959 XML rejects the removed second wage field", () => {
-  assertThrows(
-    () =>
-      form8959.build({
-        medicare_wages: 198_000,
-        medicare_wages_box5: 198_000,
-      }),
-    Error,
-    "medicare_wages_box5 is not supported",
+  assertStringIncludes(
+    xml,
+    `<AdditionalMedicareTaxAmt>${fields.line7_wage_tax}</AdditionalMedicareTaxAmt>`,
   );
-});
-
-function assertNotIncludes(actual: string, expected: string) {
+  assertStringIncludes(
+    xml,
+    `<MedcrWagesTipsBelowThrshldAmt>${fields.line11_reduced_se_threshold}</MedcrWagesTipsBelowThrshldAmt>`,
+  );
+  assertStringIncludes(
+    xml,
+    `<SEIncomeSubjToAddSETaxAmt>${fields.line12_se_excess}</SEIncomeSubjToAddSETaxAmt>`,
+  );
+  assertStringIncludes(
+    xml,
+    `<AddlSelfEmploymentTaxAmt>${fields.line13_se_tax}</AddlSelfEmploymentTaxAmt>`,
+  );
+  assertStringIncludes(
+    xml,
+    `<RRTCompSubjToAddRRTTaxAmt>${fields.line16_rrta_excess}</RRTCompSubjToAddRRTTaxAmt>`,
+  );
+  assertStringIncludes(
+    xml,
+    `<AddlRailroadRetirementTaxAmt>${fields.line17_rrta_tax}</AddlRailroadRetirementTaxAmt>`,
+  );
+  assertStringIncludes(
+    xml,
+    `<TotalAMRRTTaxAmt>${fields.line18_total_tax}</TotalAMRRTTaxAmt>`,
+  );
+  assertStringIncludes(
+    xml,
+    `<TotalMedicareTaxAmt>${fields.line21_regular_medicare_tax}</TotalMedicareTaxAmt>`,
+  );
+  assertStringIncludes(
+    xml,
+    `<AddnlMedicareTaxWithholdingAmt>${fields.line22_additional_withheld}</AddnlMedicareTaxWithholdingAmt>`,
+  );
+  assertStringIncludes(
+    xml,
+    `<TotalW2AddlRRTTaxAmt>${fields.line23_rrta_withheld}</TotalW2AddlRRTTaxAmt>`,
+  );
+  assertStringIncludes(
+    xml,
+    `<AddlMedcrRRTTaxWithholdingAmt>${fields.line24_total_withheld}</AddlMedcrRRTTaxWithholdingAmt>`,
+  );
   assertEquals(
-    actual.includes(expected),
-    false,
-    `Expected string NOT to include: ${expected}`,
+    xml.indexOf("<AdditionalTaxGrp>") <
+      xml.indexOf("<TotalW2MedicareTaxWithheldAmt>"),
+    true,
   );
-}
-
-// ---------------------------------------------------------------------------
-// Section 1: Empty input
-// ---------------------------------------------------------------------------
-
-Deno.test("empty object returns empty string", () => {
-  assertEquals(form8959.build({}), "");
 });
 
-// ---------------------------------------------------------------------------
-// Section 2: Unknown keys ignored
-// ---------------------------------------------------------------------------
-
-Deno.test("all unknown keys returns empty string", () => {
-  assertEquals(form8959.build({ junk: 999, foo: "bar", baz: 0 }), "");
-});
-
-// ---------------------------------------------------------------------------
-// Section 3: Zero value emitted
-// ---------------------------------------------------------------------------
-
-Deno.test("medicare_wages at zero does not require Form 8959", () => {
-  const result = form8959.build({ medicare_wages: 0 });
-  assertEquals(result, "");
-});
-
-// ---------------------------------------------------------------------------
-// Section 4: Per-field mapping — correct nesting per XSD
-// ---------------------------------------------------------------------------
-
-Deno.test("medicare_wages maps to TotalW2MedicareWagesAndTipsAmt inside AdditionalMedicareTaxGrp", () => {
-  const result = form8959.build({ medicare_wages: 220000 });
-  assertStringIncludes(
-    result,
-    "<TotalW2MedicareWagesAndTipsAmt>220000</TotalW2MedicareWagesAndTipsAmt>",
-  );
-  assertStringIncludes(result, "<AdditionalMedicareTaxGrp>");
-});
-
-Deno.test("unreported_tips maps to TotalUnreportedMedicareTipsAmt inside AdditionalMedicareTaxGrp", () => {
-  const result = form8959.build({ unreported_tips: 205000 });
-  assertStringIncludes(
-    result,
-    "<TotalUnreportedMedicareTipsAmt>205000</TotalUnreportedMedicareTipsAmt>",
-  );
-  assertStringIncludes(result, "<AdditionalMedicareTaxGrp>");
-});
-
-Deno.test("wages_8919 maps to TotalWagesWithNoWithholdingAmt inside AdditionalMedicareTaxGrp", () => {
-  const result = form8959.build({ wages_8919: 208000 });
-  assertStringIncludes(
-    result,
-    "<TotalWagesWithNoWithholdingAmt>208000</TotalWagesWithNoWithholdingAmt>",
-  );
-  assertStringIncludes(result, "<AdditionalMedicareTaxGrp>");
-});
-
-Deno.test("se_income maps to TotalSelfEmploymentIncomeAmt inside AddnlSelfEmploymentTaxGrp", () => {
-  const result = form8959.build({ se_income: 245000 });
-  assertStringIncludes(
-    result,
-    "<TotalSelfEmploymentIncomeAmt>245000</TotalSelfEmploymentIncomeAmt>",
-  );
-  assertStringIncludes(result, "<AddnlSelfEmploymentTaxGrp>");
-});
-
-Deno.test("rrta_wages maps to TotalRailroadRetirementCompAmt inside AddnlRailroadRetirementTaxGrp", () => {
-  const result = form8959.build({ rrta_wages: 275000 });
-  assertStringIncludes(
-    result,
-    "<TotalRailroadRetirementCompAmt>275000</TotalRailroadRetirementCompAmt>",
-  );
-  assertStringIncludes(result, "<AddnlRailroadRetirementTaxGrp>");
-});
-
-Deno.test("medicare_withheld maps to TotalW2MedicareTaxWithheldAmt at top level", () => {
-  const result = form8959.build({ medicare_withheld: 1740 });
-  assertStringIncludes(
-    result,
-    "<TotalW2MedicareTaxWithheldAmt>1740</TotalW2MedicareTaxWithheldAmt>",
-  );
-  // Must NOT be inside AdditionalTaxGrp
-  assertNotIncludes(result, "<AdditionalTaxGrp>");
-});
-
-Deno.test("rrta_medicare_withheld maps to TotalW2AddlRRTTaxAmt at top level", () => {
-  const result = form8959.build({ rrta_medicare_withheld: 900 });
-  assertStringIncludes(
-    result,
-    "<TotalW2AddlRRTTaxAmt>900</TotalW2AddlRRTTaxAmt>",
-  );
-  assertNotIncludes(result, "<AdditionalTaxGrp>");
-});
-
-// ---------------------------------------------------------------------------
-// Section 5: AdditionalTaxGrp includes FilingStatusThresholdCd
-// ---------------------------------------------------------------------------
-
-Deno.test("single filing status uses threshold code 200000", () => {
-  const result = form8959.build({
-    medicare_wages: 220000,
-    filing_status: "single",
+Deno.test("Form 8959 files a zero-tax joint return for a single W-2 trigger", () => {
+  const { fields, context } = fixture(NodeStatus.MFJ, {
+    w2_medicare_wages: 220_000,
+    w2_single_over_withholding_threshold: true,
+    w2_medicare_withheld: 3_190,
   });
+  const xml = form8959.build(fields, context);
+  assertEquals(fields.line18_total_tax, 0);
   assertStringIncludes(
-    result,
-    "<FilingStatusThresholdCd>200000</FilingStatusThresholdCd>",
-  );
-});
-
-Deno.test("MFJ filing status uses threshold code 250000", () => {
-  const result = form8959.build({
-    medicare_wages: 270000,
-    filing_status: "mfj",
-  });
-  assertStringIncludes(
-    result,
+    xml,
     "<FilingStatusThresholdCd>250000</FilingStatusThresholdCd>",
   );
+  assertStringIncludes(xml, "<TotalAMRRTTaxAmt>0</TotalAMRRTTaxAmt>");
 });
 
-Deno.test("MFS filing status uses threshold code 125000", () => {
-  const result = form8959.build({
-    medicare_wages: 130000,
-    filing_status: "mfs",
+Deno.test("Form 8959 files additional withholding with zero tax", () => {
+  const { fields, context } = fixture(NodeStatus.Single, {
+    w2_medicare_wages: 150_000,
+    w2_medicare_withheld: 2_200,
   });
+  const xml = form8959.build(fields, context);
+  assertEquals(fields.line18_total_tax, 0);
+  assertEquals(fields.line24_total_withheld, 25);
   assertStringIncludes(
-    result,
-    "<FilingStatusThresholdCd>125000</FilingStatusThresholdCd>",
+    xml,
+    "<AddlMedcrRRTTaxWithholdingAmt>25</AddlMedcrRRTTaxWithholdingAmt>",
   );
 });
 
-// ---------------------------------------------------------------------------
-// Section 6: Sparse output
-// ---------------------------------------------------------------------------
-
-Deno.test("single known field emits only that element, absent fields omitted", () => {
-  const result = form8959.build({ medicare_wages: 220000 });
-  assertStringIncludes(
-    result,
-    "<TotalW2MedicareWagesAndTipsAmt>220000</TotalW2MedicareWagesAndTipsAmt>",
-  );
-  assertNotIncludes(result, "<TotalUnreportedMedicareTipsAmt>");
-  assertNotIncludes(result, "<TotalSelfEmploymentIncomeAmt>");
-  assertNotIncludes(result, "<TotalW2MedicareTaxWithheldAmt>");
-});
-
-Deno.test("medicare_wages and medicare_withheld: wages inside group, withheld outside", () => {
-  const result = form8959.build({
-    medicare_wages: 220000,
-    medicare_withheld: 3190,
+Deno.test("Form 8959 rounds aggregate source cents once before native projection", () => {
+  const { fields, context } = fixture(NodeStatus.Single, {
+    w2_medicare_wages: 367_934.84,
+    w2_medicare_withheld: 6_846.47,
   });
-  assertStringIncludes(
-    result,
-    "<TotalW2MedicareWagesAndTipsAmt>220000</TotalW2MedicareWagesAndTipsAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<TotalW2MedicareTaxWithheldAmt>3190</TotalW2MedicareTaxWithheldAmt>",
-  );
-  assertNotIncludes(result, "<TotalUnreportedMedicareTipsAmt>");
-  assertNotIncludes(result, "<TotalRailroadRetirementCompAmt>");
+  assertEquals(fields.line1_medicare_wages, 367_935);
+  assertEquals(fields.line7_wage_tax, 1_511);
+  assertEquals(fields.line18_total_tax, 1_511);
+  assertEquals(fields.line24_total_withheld, 1_511);
+  const xml = form8959.build(fields, context);
+  assertStringIncludes(xml, "<TotalAMRRTTaxAmt>1511</TotalAMRRTTaxAmt>");
+  assertEquals(xml.includes("367934.84"), false);
 });
 
-// ---------------------------------------------------------------------------
-// Section 7: All fields present
-// ---------------------------------------------------------------------------
-
-const allFields = {
-  filing_status: "single",
-  medicare_wages: 100000,
-  unreported_tips: 500,
-  wages_8919: 800,
-  se_income: 45000,
-  rrta_wages: 75000,
-  medicare_withheld: 1450,
-  rrta_medicare_withheld: 900,
-};
-
-Deno.test("all fields present: output wrapped in IRS8959 tag", () => {
-  const result = form8959.build(allFields);
-  assertStringIncludes(result, "<IRS8959>");
-  assertStringIncludes(result, "</IRS8959>");
-});
-
-Deno.test("all fields present: correct nested structure", () => {
-  const result = form8959.build(allFields);
-  assertStringIncludes(result, "<AdditionalTaxGrp>");
-  assertStringIncludes(
-    result,
-    "<FilingStatusThresholdCd>200000</FilingStatusThresholdCd>",
-  );
-  assertStringIncludes(result, "<AdditionalMedicareTaxGrp>");
-  assertStringIncludes(
-    result,
-    "<TotalW2MedicareWagesAndTipsAmt>100000</TotalW2MedicareWagesAndTipsAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<TotalUnreportedMedicareTipsAmt>500</TotalUnreportedMedicareTipsAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<TotalWagesWithNoWithholdingAmt>800</TotalWagesWithNoWithholdingAmt>",
-  );
-  assertStringIncludes(result, "<AddnlSelfEmploymentTaxGrp>");
-  assertStringIncludes(
-    result,
-    "<TotalSelfEmploymentIncomeAmt>45000</TotalSelfEmploymentIncomeAmt>",
-  );
-  assertStringIncludes(result, "<AddnlRailroadRetirementTaxGrp>");
-  assertStringIncludes(
-    result,
-    "<TotalRailroadRetirementCompAmt>75000</TotalRailroadRetirementCompAmt>",
-  );
-  // Part V — outside AdditionalTaxGrp
-  assertStringIncludes(
-    result,
-    "<TotalW2MedicareTaxWithheldAmt>1450</TotalW2MedicareTaxWithheldAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<TotalW2AddlRRTTaxAmt>900</TotalW2AddlRRTTaxAmt>",
-  );
-});
-
-// ---------------------------------------------------------------------------
-// Section 8: Non-number fields (filing_status) are passed through, not emitted as element
-// ---------------------------------------------------------------------------
-
-Deno.test("filing_status does not appear as XML element", () => {
-  const result = form8959.build({
-    filing_status: "single",
-    medicare_wages: 250000,
+Deno.test("Form 8959 rejects changed print lines and return joins", () => {
+  const { fields, context } = fixture(NodeStatus.Single, {
+    w2_medicare_wages: 250_000,
+    w2_medicare_withheld: 4_075,
   });
-  assertStringIncludes(
-    result,
-    "<TotalW2MedicareWagesAndTipsAmt>250000</TotalW2MedicareWagesAndTipsAmt>",
+  for (
+    const key of [
+      "line4_total_medicare_wages",
+      "line11_reduced_se_threshold",
+      "line18_total_tax",
+      "line21_regular_medicare_tax",
+      "line24_total_withheld",
+    ] as const
+  ) {
+    assertThrows(
+      () => form8959.build({ ...fields, [key]: fields[key] + 1 }, context),
+      Error,
+      key,
+    );
+  }
+  assertThrows(
+    () => form8959.build({ ...fields, line7_wage_tax: 450.5 }, context),
+    Error,
   );
-  assertNotIncludes(result, "<filing_status>");
-  assertNotIncludes(result, "single</");
+  assertThrows(
+    () => form8959.build({ ...fields, medicare_wages: 249_999 }, context),
+    Error,
+    "medicare_wages",
+  );
+  assertThrows(
+    () =>
+      form8959.build(fields, {
+        ...context,
+        pending: {
+          ...context.pending,
+          schedule2: { line11_additional_medicare: 0 },
+        },
+      }),
+    Error,
+    "Schedule 2 line 11",
+  );
+  assertThrows(
+    () =>
+      form8959.build(fields, {
+        ...context,
+        pending: {
+          ...context.pending,
+          f1040: { line25c_additional_medicare_withheld: 0 },
+        },
+      }),
+    Error,
+    "Form 1040 line 25c",
+  );
+  assertThrows(
+    () => form8959.build(fields, { ...context, filer: undefined }),
+    Error,
+    "finalized filer",
+  );
+});
+
+Deno.test("Form 8959 rejects changed upstream source deposits", () => {
+  const { fields, context } = fixture(NodeStatus.Single, {
+    w2_medicare_wages: 160_000,
+    f4852_medicare_wages: 20_000,
+    household_medicare_wages: 25_000,
+    unreported_tips: 1_000,
+    wages_8919: 2_000,
+    se_income: 5_000,
+    w2_rrta_wages: 210_000,
+    ct2_rrta_wages: 10_000,
+    taxpayer_ssn: "123456789",
+    ct2_taxpayer_ssn: "123456789",
+    w2_medicare_withheld: 2_400,
+    f4852_medicare_withheld: 300,
+    household_medicare_withheld: 400,
+    w2_rrta_medicare_withheld: 90,
+    ct2_rrta_medicare_tax_paid: 90,
+  });
+  for (
+    const sourceKey of [
+      "w2_medicare_wages",
+      "f4852_medicare_wages",
+      "household_medicare_wages",
+      "unreported_tips",
+      "wages_8919",
+      "se_income",
+      "w2_rrta_wages",
+      "ct2_rrta_wages",
+      "w2_medicare_withheld",
+      "f4852_medicare_withheld",
+      "household_medicare_withheld",
+      "w2_rrta_medicare_withheld",
+      "ct2_rrta_medicare_tax_paid",
+    ] as const
+  ) {
+    assertThrows(
+      () =>
+        form8959.build(
+          {
+            ...fields,
+            [sourceKey]:
+              (fields as Record<string, unknown>)[sourceKey] as number +
+              1,
+          },
+          context,
+        ),
+      Error,
+      "upstream source deposits",
+    );
+  }
+  assertThrows(
+    () => form8959.build({ ...fields, line2_unreported_tips: 1_001 }, context),
+    Error,
+    "upstream source deposits",
+  );
+});
+
+Deno.test("Form 8959 rejects substitute and household source-record drift", () => {
+  const { fields, context } = fixture(NodeStatus.Single, {
+    f4852_medicare_wages: 210_000,
+    household_medicare_wages: 10_000,
+    f4852_medicare_withheld: 3_100,
+    household_medicare_withheld: 150,
+    f4852_single_over_withholding_threshold: true,
+  });
+  const f4852 = {
+    f4852s: [{
+      form_type: "W2",
+      payer_name: "Employer",
+      wages: 210_000,
+      medicare_wages: 210_000,
+      medicare_withheld: 3_100,
+    }],
+  };
+  const household = {
+    household_wages: [{
+      wages_received: 10_000,
+      medicare_wages: 10_000,
+      medicare_tax_withheld: 150,
+    }],
+  };
+  const pending = { ...context.pending, f4852, household_wages: household };
+  form8959.build(fields, { ...context, pending });
+  assertThrows(
+    () =>
+      form8959.build(fields, {
+        ...context,
+        pending: {
+          ...pending,
+          f4852: {
+            f4852s: [{ ...f4852.f4852s[0], medicare_wages: 209_999 }],
+          },
+        },
+      }),
+    Error,
+    "original source records",
+  );
+  assertThrows(
+    () =>
+      form8959.build(fields, {
+        ...context,
+        pending: {
+          ...pending,
+          household_wages: {
+            household_wages: [{
+              ...household.household_wages[0],
+              medicare_tax_withheld: 149,
+            }],
+          },
+        },
+      }),
+    Error,
+    "original source records",
+  );
 });

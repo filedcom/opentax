@@ -7,16 +7,26 @@ is `IRS8889.xsd` in the TY2025 v5.4 schema bundle.
 
 ## Current build pass
 
-- Part I supports one primary-taxpayer HSA with twelve monthly eligible-HDHP
-  coverage facts, age-55 status, and a last-month-rule answer. The W-2 code W
-  amount alone does not establish those facts. Mixed self-only/family and
-  partial-year limits use the monthly worksheet; an elected last-month rule
-  requires December eligibility and uses its coverage for the year. Married
-  family coverage asks whether the spouse has a separate HSA. If so, the node
-  stops because the return currently emits only one Form 8889. The 2025 IRS
-  instructions require a separate Form 8889 for each spouse and the sum of
-  their line 13 deductions on Schedule 1. A supplied spouse allocation also
-  stops instead of being applied to one incomplete attachment.
+- Part I requires an identified HSA beneficiary. W-2 code W deposits retain each
+  employee SSN and must match exactly one filed beneficiary; direct and W-2
+  employer amounts for the same person cannot both be used. Mixed
+  self-only/family and partial-year limits still use the monthly worksheet for
+  one HSA. A bounded two-spouse route accepts two identified account sources
+  only with twelve months of family coverage for each, no last-month election, a
+  documented agreed line 6 allocation totaling the $8,550 family limit, and no
+  owner-level excess requiring Form 5329. The node computes each Form 8889
+  separately and sums their line 13 deductions on Schedule 1 and AGI. MeF emits
+  two native IRS8889 documents, and the PDF descriptor fills two pages with each
+  beneficiary's own name and SSN. The MeF route also compares combined
+  deductions and income/tax lines to Schedule 1, Schedule 2, and Form 1040
+  line 10. The [2025 instructions](https://www.irs.gov/instructions/i8889)
+  require separate spouse forms and their combined line 13 amount. The export
+  guard now recomputes each owner's printed lines from both source records for
+  full-year family coverage and the documented $8,550 allocation, as it already
+  did for full-year separate self-only coverage. This is bounded to positive
+  personal contributions without employer funding, distributions, funding
+  transfers, testing-period income, or excess requiring Form 5329. Tampered
+  allocation or owner lines stop before either MeF or PDF output.
 - The 2025 line 3 limitation uses the monthly worksheet amount, not an assumed
   full year. For an age-55 married family filer, the additional contribution
   belongs on line 7; otherwise eligible catch-up is included on line 3. The
@@ -64,29 +74,35 @@ is `IRS8889.xsd` in the TY2025 v5.4 schema bundle.
   line 17d. A positive line 19 now also needs all twelve 2025 monthly
   eligible-HDHP facts and dated trustee-transfer evidence. For 2024 transfers,
   the evidence total must equal filed 2024 Form 8889 line 10, and the taxpayer
-  must affirm continuous eligibility through 2024 year-end. For 2025 transfers,
+  must supply a referenced 2024 monthly eligibility record showing no gap from
+  each transfer month through year-end. For 2025 transfers,
   the evidence must exactly match Part I's sourced line 10 transfers. The node
   uses the first ineligible 2025 month to include only transfers whose testing
   period is still open. The
   [2025 Form 8889 instructions](https://www.irs.gov/instructions/i8889) define
   each transfer's testing period as the transfer month through the last day of
   the twelfth following month. This is reconciliation of supplied facts, not
-  authentication of the filed prior return or trustee confirmation. The separate
+  authentication of HDHP enrollment, the filed prior return, or trustee
+  confirmation. The separate
   line 18 last-month-rule excess is still an identified input rather than
   reconstructed from the prior return.
-- The tax node self-emits calculated print lines. Native MeF and PDF builders
-  consume those same fields. The MeF form requires the primary beneficiary's
-  SSN; a spouse's separate HSA form is not inferred from a joint filing.
+- The tax node self-emits one or two owner-labeled computed form instances.
+  Native MeF and PDF builders consume those same fields, including each
+  beneficiary's name and SSN. A spouse form is emitted only from a separate
+  sourced spouse account, never inferred from a joint filing.
 
 ## Still open
 
-The later-year last-month-rule testing-period ledger, independent evidence for
-monthly eligibility (including Medicare and other disqualifying coverage),
-source verification of the spouse allocation, separate spouse forms, source
-classification of taxable distributions by exception, second qualified funding
-distributions, source authentication of employer contribution-year adjustments,
-withdrawals of prior-year excess, 2026 reporting of a post-year timely employer
-withdrawal, related income outside the current-year personal 2025 route, source
+The paired export route still rejects partial-year or mixed family/self-only
+allocation, last-month-rule use, employer-only or distribution-only filings, and
+either owner's excess that would require separate Forms 5329. The later-year
+last-month-rule testing-period ledger, independent evidence for monthly
+eligibility (including Medicare and other disqualifying coverage), source
+verification of the spouse allocation, source classification of taxable
+distributions by exception, second qualified funding distributions, source
+authentication of employer contribution-year adjustments, withdrawals of
+prior-year excess, 2026 reporting of a post-year timely employer withdrawal,
+related income outside the current-year personal 2025 route, source
 authentication, PDF visual verification, IRS business rules, and ATS acceptance
 remain unverified. All newly written cases await the one full test batch
 requested by the user.

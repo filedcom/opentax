@@ -4,6 +4,7 @@ import { TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { TS } from "../../../types.ts";
+import { scheduleC } from "../../../inputs/schedule_c/index.ts";
 
 const amount = z.number().int().finite().nonnegative().max(999_999_999_999_999);
 const area = z.number().int().positive().max(999_999);
@@ -30,6 +31,7 @@ export const rentedHomeSourceSchema = z.object({
   actual_expense_method_verified: z.literal(true),
   rented_home_verified: z.literal(true),
   sole_home_and_business_verified: z.literal(true),
+  all_schedule_c_gross_income_attributable_to_home_verified: z.literal(true),
   no_daycare_or_inventory_exception: z.literal(true),
   no_home_business_gain_or_other_trade_loss: z.literal(true),
   no_casualty_mortgage_tax_or_depreciation: z.literal(true),
@@ -122,24 +124,31 @@ export function calculateRentedHomeForm8829(
 class Form8829Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form_8829";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([]);
+  readonly outputNodes = new OutputNodes([scheduleC]);
 
   compute(ctx: NodeContext, rawInput: z.infer<typeof inputSchema>): NodeResult {
     if (ctx.taxYear !== 2025) throw new Error("Form 8829 route is TY2025 only");
     const input = inputSchema.parse(rawInput);
     if (!input.rented_home) return { outputs: [] };
     const lines = calculateRentedHomeForm8829(input.rented_home);
-    if (lines.line36 > 0) {
-      throw new Error(
-        "Form 8829 positive line 36 cannot be linked to Schedule C item line 30 before profit, SE tax, and QBI calculation",
-      );
-    }
     return {
       outputs: [
         {
           nodeType: this.nodeType,
           fields: { rented_home: input.rented_home, ...lines },
         },
+        ...(lines.line36 > 0
+          ? [this.outputNodes.output(scheduleC, {
+            form8829_line30: {
+              business_reference: input.rented_home.business_reference,
+              home_identifier: input.rented_home.home_identifier,
+              recipient: input.rented_home.recipient,
+              schedule_c_line29_tentative_profit:
+                input.rented_home.schedule_c_line29_tentative_profit,
+              line36: lines.line36,
+            },
+          })]
+          : []),
       ],
     };
   }

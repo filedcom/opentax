@@ -28,6 +28,24 @@ const noncashContributionItemSchema = z.object({
   source: z.string().trim().min(1),
   amount: z.number().nonnegative(),
   category: noncashContributionCategorySchema,
+  // Item-level facts are required when the return elects the 50% limit for
+  // capital-gain property; amount alone cannot prove the FMV reduction.
+  contribution_id: z.string().trim().min(1).optional(),
+  is_capital_gain_property: z.boolean().optional(),
+  original_fmv: z.number().nonnegative().optional(),
+  adjusted_basis: z.number().nonnegative().optional(),
+  capital_gain_reduction_election_confirmed: z.literal(true).optional(),
+});
+const capitalGainCarryoverSchema = z.object({
+  contribution_id: z.string().trim().min(1),
+  contribution_year: z.number().int().min(2000).max(2024),
+  original_category: z.literal("capital_gain_30"),
+  original_fmv: z.number().nonnegative(),
+  adjusted_basis: z.number().nonnegative(),
+  previously_deducted: z.number().nonnegative(),
+  // Pub. 526 names status changes, NOLs, standard-deduction years, and
+  // surviving-spouse cases as requiring special carryover treatment.
+  ordinary_carryover_rules_confirmed: z.literal(true),
 });
 
 // 7.5% AGI floor for medical deductions
@@ -70,6 +88,15 @@ export const inputSchema = z.object({
   cash_contributions_other_30: z.number().nonnegative().optional(),
   qualified_conservation_contributions: z.number().nonnegative().optional(),
   noncash_contribution_items: z.array(noncashContributionItemSchema).optional(),
+  capital_gain_50_percent_election_confirmed: z.literal(true).optional(),
+  current_noncash_gift_inventory_complete_confirmed: z.literal(true)
+    .optional(),
+  other_prior_charitable_carryovers_absent_confirmed: z.literal(true)
+    .optional(),
+  // Explicit [] is needed for an election: absence is not proof of no older
+  // capital-gain property carryovers to 50%-limit organizations.
+  capital_gain_property_carryovers: z.array(capitalGainCarryoverSchema)
+    .optional(),
   // Filed values. Nonzero direct input is rejected; this node finalizes them.
   line_11_cash_contributions: z.number().nonnegative().optional(),
   line_12_noncash_contributions: z.number().nonnegative().optional(),
@@ -77,6 +104,115 @@ export const inputSchema = z.object({
   line_15_casualty_theft_loss: z.number().nonnegative().optional(),
   line_16_other_deductions: z.number().nonnegative().optional(),
 }).superRefine((data, ctx) => {
+  const gifts = data.noncash_contribution_items ?? [];
+  const election = data.capital_gain_50_percent_election_confirmed === true ||
+    gifts.some((item) =>
+      item.capital_gain_reduction_election_confirmed === true ||
+      (item.is_capital_gain_property === true &&
+        item.category === "noncash_50")
+    );
+  if (!election && (data.capital_gain_property_carryovers?.length ?? 0) > 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["capital_gain_property_carryovers"],
+      message:
+        "Prior capital-gain property carryovers need a return-wide election or the separate 30% carryover path",
+    });
+  }
+  if (election) {
+    if (data.current_noncash_gift_inventory_complete_confirmed !== true) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["current_noncash_gift_inventory_complete_confirmed"],
+        message:
+          "Capital-gain election requires a complete return-wide current noncash gift inventory",
+      });
+    }
+    if (data.other_prior_charitable_carryovers_absent_confirmed !== true) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["other_prior_charitable_carryovers_absent_confirmed"],
+        message:
+          "Bounded capital-gain election requires source confirmation that no other prior charitable carryovers affect the limits",
+      });
+    }
+    if (!data.capital_gain_property_carryovers) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["capital_gain_property_carryovers"],
+        message:
+          "Capital-gain 50% election requires an explicit prior-property carryover ledger, including an empty ledger when none exist",
+      });
+    }
+    const ids = new Set<string>();
+    for (const [index, item] of gifts.entries()) {
+      if (!item.contribution_id || ids.has(item.contribution_id)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["noncash_contribution_items", index, "contribution_id"],
+          message:
+            "Capital-gain election needs a unique ID for every current noncash gift",
+        });
+      }
+      if (item.contribution_id) ids.add(item.contribution_id);
+      if (item.is_capital_gain_property === undefined) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [
+            "noncash_contribution_items",
+            index,
+            "is_capital_gain_property",
+          ],
+          message:
+            "Capital-gain election needs property classification for every current noncash gift",
+        });
+      }
+      if (
+        item.category === "capital_gain_30" ||
+        (item.category === "noncash_50" &&
+          item.is_capital_gain_property === true)
+      ) {
+        const noAppreciation = item.original_fmv !== undefined &&
+          item.original_fmv === item.adjusted_basis &&
+          item.amount === item.adjusted_basis;
+        if (
+          (item.capital_gain_reduction_election_confirmed !== true &&
+            !noAppreciation) ||
+          item.category !== "noncash_50" ||
+          item.original_fmv === undefined ||
+          item.adjusted_basis === undefined ||
+          item.original_fmv < item.adjusted_basis ||
+          item.amount !== item.adjusted_basis
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["noncash_contribution_items", index],
+            message:
+              "Every current capital-gain gift to a 50%-limit organization must use reduced basis under the return-wide election",
+          });
+        }
+      }
+    }
+    for (
+      const [index, item] of (
+        data.capital_gain_property_carryovers ?? []
+      ).entries()
+    ) {
+      if (
+        ids.has(item.contribution_id) ||
+        item.adjusted_basis > item.original_fmv ||
+        item.previously_deducted > item.original_fmv
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["capital_gain_property_carryovers", index],
+          message:
+            "Capital-gain carryover needs a distinct property ID and valid original FMV, basis, and prior deductions",
+        });
+      }
+      ids.add(item.contribution_id);
+    }
+  }
   if ((data.qualified_conservation_contributions ?? 0) > 0) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -264,6 +400,58 @@ function computeContributions(
   };
 }
 
+function computeElectedCapitalGainCarryovers(
+  input: ScheduleAInput,
+  agi: number,
+  taxYear: number,
+  currentCash: number,
+  currentNoncash: number,
+) {
+  const carryovers = input.capital_gain_property_carryovers ?? [];
+  if (carryovers.length === 0) return { allowed: 0, remaining: {} };
+  if (
+    (input.cash_contributions_other_30 ?? 0) > 0 ||
+    (input.noncash_contribution_items ?? []).some((item) =>
+      item.category !== "noncash_50" && item.amount > 0
+    )
+  ) {
+    throw new Error(
+      "Elected capital-gain carryovers with other 20% or 30% contribution categories need a full carryover-limit reconciliation",
+    );
+  }
+  const ordered = [...carryovers].sort((a, b) =>
+    a.contribution_year - b.contribution_year ||
+    a.contribution_id.localeCompare(b.contribution_id)
+  );
+  let available = Math.max(0, agi * .5 - currentCash - currentNoncash);
+  let allowed = 0;
+  const remaining: Record<string, number> = {};
+  for (const item of ordered) {
+    if (
+      item.contribution_year < taxYear - 5 || item.contribution_year >= taxYear
+    ) {
+      throw new Error(
+        "Capital-gain carryover contribution year exceeds the five-year carryover window",
+      );
+    }
+    // Pub. 526: original FMV less long-term appreciation, then prior
+    // deductions actually used. A negative refigured carryover is zero.
+    const refigured = Math.max(
+      0,
+      item.adjusted_basis - item.previously_deducted,
+    );
+    const used = Math.min(refigured, available);
+    available -= used;
+    allowed += used;
+    if (item.contribution_year > taxYear - 5) {
+      remaining[
+        `charitable_capital_gain_${item.contribution_year}_${item.contribution_id}`
+      ] = refigured - used;
+    }
+  }
+  return { allowed, remaining };
+}
+
 class ScheduleANode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule_a";
   readonly inputSchema = inputSchema;
@@ -277,11 +465,30 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
     const hasContributions =
       (input.cash_contributions_to_50_percent_organizations ?? 0) > 0 ||
       (input.cash_contributions_other_30 ?? 0) > 0 ||
-      (input.noncash_contribution_items ?? []).some((item) => item.amount > 0);
+      (input.noncash_contribution_items ?? []).some((item) =>
+        item.amount > 0
+      ) ||
+      (input.capital_gain_property_carryovers?.length ?? 0) > 0;
     if (hasContributions && input.agi === undefined) {
       throw new Error("Schedule A charitable limits require computed AGI");
     }
     const contributions = computeContributions(input, agi, ctx.taxYear);
+    const election =
+      input.capital_gain_50_percent_election_confirmed === true ||
+      (input.noncash_contribution_items ?? []).some((item) =>
+        item.capital_gain_reduction_election_confirmed === true ||
+        (item.is_capital_gain_property === true &&
+          item.category === "noncash_50")
+      );
+    const electedCarryovers = election
+      ? computeElectedCapitalGainCarryovers(
+        input,
+        agi,
+        ctx.taxYear,
+        contributions.cash,
+        contributions.noncash,
+      )
+      : { allowed: 0, remaining: {} };
     const saltCapped = computeSALT(input, cfg);
     const taxesTotal = saltCapped + (input.line_6_other_taxes ?? 0);
     const expense = input.line_9_investment_interest ?? 0;
@@ -302,6 +509,7 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
       taxesTotal +
       computeInterestTotal(input) +
       contributions.cash + contributions.noncash +
+      electedCarryovers.allowed +
       (input.line_15_casualty_theft_loss ?? 0) +
       (input.line_16_other_deductions ?? 0);
 
@@ -318,11 +526,15 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
         fields: {
           line_11_cash_contributions: contributions.cash,
           line_12_noncash_contributions: contributions.noncash,
-          line_13_contribution_carryover: 0,
+          line_13_contribution_carryover: electedCarryovers.allowed,
           charitable_limits_finalized: true,
+          capital_gain_election_finalized: election,
         },
       }],
-      carryforwards: contributions.carryforwards,
+      carryforwards: {
+        ...contributions.carryforwards,
+        ...electedCarryovers.remaining,
+      },
     };
   }
 }

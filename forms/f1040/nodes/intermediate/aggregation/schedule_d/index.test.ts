@@ -41,6 +41,38 @@ Deno.test("multiple Form 6252 and 4797 line 11 sources sum before filing", () =>
   assertEquals(findOutput(result, "schedule_d")?.fields.line_11_form2439, 21_000);
 });
 
+Deno.test("Schedule D audits all capital sources for Form 6251 AMT-basis refigure", () => {
+  const basisRow = mkLtTx({
+    source_transaction_id: "broker-2025-1",
+    proceeds: 75_000,
+    cost_basis: 25_000,
+    gain_loss: 50_000,
+  });
+  const onlyBasis = compute({ transaction: basisRow });
+  assertEquals(findOutput(onlyBasis, "form6251")?.fields.line2k_8949_capital_audit, {
+    transactions: [{
+      source_transaction_id: "broker-2025-1",
+      part: "D",
+      proceeds: 75_000,
+      cost_basis: 25_000,
+      adjustment_codes: undefined,
+      adjustment_amount: undefined,
+      gain_loss: 50_000,
+    }],
+    has_other_capital_activity: false,
+  });
+  const offsettingSources = compute({
+    transaction: basisRow,
+    line_4_other_st: [1_000, -1_000],
+  });
+  assertEquals(
+    (findOutput(offsettingSources, "form6251")?.fields
+      .line2k_8949_capital_audit as { has_other_capital_activity: boolean })
+      .has_other_capital_activity,
+    true,
+  );
+});
+
 // ---------------------------------------------------------------------------
 // Helpers (from d_screen tests)
 // ---------------------------------------------------------------------------
@@ -257,10 +289,12 @@ Deno.test("LT: transaction and distribution sources remain additive", () => {
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 800);
 });
 
-Deno.test("LT: box2c_qsbs is NOT additive — only line13 amount counts", () => {
-  const result = compute({ line13_cap_gain_distrib: 500, box2c_qsbs: 200 });
-  // line15 = 500 (not 700); box2c is a subset of line13
-  assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 500);
+Deno.test("LT: 1099-DIV box 2c stops until section 1202 eligibility and preference are sourced", () => {
+  assertThrows(
+    () => compute({ line13_cap_gain_distrib: 500, box2c_qsbs: 200 }),
+    Error,
+    "Form 6251 line 2h preference",
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -356,10 +390,9 @@ Deno.test("28pct: routes to rate_28_gain_worksheet when line17=Yes and code C pr
   assertEquals(fieldsOf(result.outputs, rate_28_gain_worksheet)!.collectibles_gain_from_8949, 1000);
 });
 
-Deno.test("28pct: code Q (QOF) does NOT trigger 28% rate (IRC §1400Z-2 not a collectibles gain)", () => {
-  // QOF inclusion events are taxed at ordinary/LTCG rates per IRC §1400Z-2 — not 28% rate
+Deno.test("28pct: code Y (QOF inclusion) does not trigger collectibles rate", () => {
   const result = compute({
-    transaction: mkLtTx({ gain_loss: 800, adjustment_codes: "Q" }),
+    transaction: mkLtTx({ gain_loss: 800, adjustment_codes: "Y" }),
   });
   const out = findOutput(result, "rate_28_gain_worksheet");
   assertEquals(out, undefined);
@@ -372,12 +405,14 @@ Deno.test("28pct: code C embedded in multi-character adjustment_codes", () => {
   assertEquals(fieldsOf(result.outputs, rate_28_gain_worksheet)!.collectibles_gain_from_8949, 500);
 });
 
-Deno.test("28pct: code Q embedded in multi-char codes does NOT trigger 28% rate", () => {
-  const result = compute({
-    transaction: mkLtTx({ gain_loss: 400, adjustment_codes: "QZ" }),
-  });
-  const out = findOutput(result, "rate_28_gain_worksheet");
-  assertEquals(out, undefined);
+Deno.test("28pct: embedded code Q also stops before Schedule D tax calculation", () => {
+  assertThrows(
+    () => compute({
+      transaction: mkLtTx({ gain_loss: 400, adjustment_codes: "BQ" }),
+    }),
+    Error,
+    "Form 6251 line 2h preference",
+  );
 });
 
 Deno.test("28pct: does NOT route when no special codes on LT transaction", () => {
@@ -1136,19 +1171,21 @@ Deno.test("adjustment code C (collectible, LT part E): triggers 28% rate gain wo
   assertEquals(fieldsOf(result.outputs, rate_28_gain_worksheet)!.collectibles_gain_from_8949, 10_000);
 });
 
-// Code Q (QSB exclusion) — triggers 28% rate gain worksheet
-Deno.test("adjustment code Q (QSB exclusion): triggers 28% rate gain worksheet output", () => {
-  const result = computeWithTransactions([
-    makeTransaction({
-      part: "D",
-      proceeds: 50_000,
-      cost_basis: 10_000,
-      adjustment_codes: "Q",
-      adjustment_amount: -20_000, // 50% exclusion amount for net gain 40000; exclusion = 20000
-    }),
-  ]);
-  // col(h) = 50000 - 10000 + (-20000) = 20000
-  assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 20_000);
+// Code Q is section 1202 exclusion, not a QOF code.
+Deno.test("adjustment code Q cannot file without section 1202 Schedule D and AMT refigure", () => {
+  assertThrows(
+    () => computeWithTransactions([
+      makeTransaction({
+        part: "D",
+        proceeds: 50_000,
+        cost_basis: 10_000,
+        adjustment_codes: "Q",
+        adjustment_amount: -20_000,
+      }),
+    ]),
+    Error,
+    "Form 6251 line 2h preference",
+  );
 });
 
 // ---------------------------------------------------------------------------

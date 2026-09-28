@@ -42,6 +42,82 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
+Deno.test("general gives Form 8880 filing status and both return SSNs", () => {
+  const result = compute({ filing_status: FilingStatus.MFJ });
+  assertEquals(findOutput(result, "form8880")?.fields, {
+    filing_status: FilingStatus.MFJ,
+    taxpayer_ssn: "111-22-3333",
+    spouse_ssn: "222-33-4444",
+  });
+});
+
+Deno.test("general sends each Form 8880 contributor's eligibility facts", () => {
+  const result = compute({
+    filing_status: FilingStatus.MFJ,
+    taxpayer_dob: "1980-01-01",
+    spouse_dob: "1981-01-01",
+    taxpayer_form8880_student_five_months: false,
+    spouse_form8880_student_five_months: true,
+    taxpayer_form8880_claimed_as_dependent: false,
+    spouse_form8880_claimed_as_dependent: false,
+  });
+  assertEquals(findOutput(result, "form8880")?.fields, {
+    filing_status: FilingStatus.MFJ,
+    taxpayer_ssn: "111-22-3333",
+    spouse_ssn: "222-33-4444",
+    taxpayer_dob: "1980-01-01",
+    spouse_dob: "1981-01-01",
+    taxpayer_student_five_months: false,
+    spouse_student_five_months: true,
+    taxpayer_claimed_as_dependent: false,
+    spouse_claimed_as_dependent: false,
+  });
+});
+
+Deno.test("general forwards one complete Form 8880 joint distribution review", () => {
+  const review = {
+    filing_due_date: "2026-04-15" as const,
+    reviewed_distribution_sources_ref: "2023-2026 IRA and plan review",
+    entries: [
+      {
+        recipient: "S" as const,
+        received_date: "2023-07-01",
+        qualifying_amount: 1_000,
+        source_document_ref: "2023-1099-R-spouse-1",
+        filed_jointly_in_distribution_year: false,
+        distribution_year_return_ref: "2023-spouse-filed-return",
+      },
+      {
+        recipient: "S" as const,
+        received_date: "2025-07-01",
+        qualifying_amount: 500,
+        source_document_ref: "2025-1099-R-spouse-1",
+      },
+    ],
+    no_other_qualifying_distributions_in_lookback: true as const,
+  };
+  const result = compute({
+    filing_status: FilingStatus.MFJ,
+    form8880_joint_distribution_review: review,
+  });
+  assertEquals(
+    findOutput(result, "form8880")?.fields.joint_distribution_review,
+    review,
+  );
+});
+
+Deno.test("general rejects the removed partial Form 8880 distribution input", () => {
+  assertThrows(() =>
+    compute({
+      filing_status: FilingStatus.MFJ,
+      form8880_joint_2025_distribution_review: {
+        entries: [],
+        no_other_qualifying_distributions_in_lookback: true,
+      },
+    })
+  );
+});
+
 Deno.test("general passes Form 461 filing status and documented C/F scope review", () => {
   const review = {
     only_schedule_c_and_f_business_items: true,
@@ -106,16 +182,34 @@ Deno.test("general routes required-filing dependent modified AGI to Form 8962", 
     dependents: [qualifyingChildDep({
       ptc_tax_return: {
         filing: "required",
-        agi: 12_000,
-        tax_exempt_interest: 500,
-        social_security_gross: 1_000,
-        social_security_taxable: 200,
+        filed_form1040: {
+          source_document_id: "dependent-2025-1040",
+          tax_year: 2025,
+          filing_status: "single",
+          blind: false,
+          line1z_wages: 0,
+          line2a_tax_exempt_interest: 500,
+          line2b_taxable_interest: 12_000,
+          line3b_dividends: 0,
+          line4b_ira: 0,
+          line5b_pensions: 0,
+          line6b_social_security: 0,
+          line7a_capital_gain: 0,
+          line8_additional_income: 0,
+          line10_adjustments: 0,
+          line11b_agi: 12_000,
+        },
+        interest_forms1099: [{
+          source_document_id: "dependent-2025-1099-int",
+          box1_taxable_interest: 12_000,
+          box8_tax_exempt_interest: 500,
+        }],
       },
     })],
   });
   const fields = findOutput(result, "form8962")?.fields;
   assertEquals(fields?.dependent_income_complete, true);
-  assertEquals(fields?.dependents_modified_agi, 13_300);
+  assertEquals(fields?.dependents_modified_agi, 12_500);
 });
 
 Deno.test("general routes below-100%-FPL Marketplace eligibility to Form 8962", () => {

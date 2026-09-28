@@ -41,7 +41,9 @@ import { f7217 } from "../nodes/inputs/f7217/index.ts";
 import { f9465 } from "../nodes/inputs/f9465/index.ts";
 import { f8888 } from "../nodes/inputs/f8888/index.ts";
 import { schedule_r } from "../nodes/inputs/schedule_r/index.ts";
+import { schedule_lep } from "../nodes/inputs/schedule_lep/index.ts";
 import { f2210 } from "../nodes/inputs/f2210/index.ts";
+import { f2210f } from "../nodes/inputs/f2210f/index.ts";
 import { f3903 } from "../nodes/inputs/f3903/index.ts";
 import { f5695 } from "../nodes/inputs/f5695/index.ts";
 import { f8936 } from "../nodes/inputs/f8936/index.ts";
@@ -72,8 +74,10 @@ import { f8332 } from "../nodes/inputs/f8332/index.ts";
 import { f8822 } from "../nodes/inputs/f8822/index.ts";
 import { f1310 } from "../nodes/inputs/f1310/index.ts";
 import { f2439 } from "../nodes/inputs/f2439/index.ts";
+import { f3921 } from "../nodes/inputs/f3921/index.ts";
 import { f8997 } from "../nodes/inputs/f8997/index.ts";
 import { schedule_j } from "../nodes/inputs/schedule_j/index.ts";
+import { schedule_j_calculation } from "../nodes/intermediate/forms/schedule_j/index.ts";
 import { f8609 } from "../nodes/inputs/f8609/index.ts";
 import { f4852 } from "../nodes/inputs/f4852/index.ts";
 import { clergy } from "../nodes/inputs/clergy/index.ts";
@@ -179,7 +183,7 @@ import { form8959 } from "../nodes/intermediate/forms/form8959/index.ts";
 import { form8960 } from "../nodes/intermediate/forms/form8960/index.ts";
 import { form8990 } from "../nodes/intermediate/forms/form8990/index.ts";
 import { form8995 } from "../nodes/intermediate/forms/form8995/index.ts";
-import { form8995a } from "../nodes/intermediate/forms/form8995a/index.ts";
+import { form8995a, form8995aScheduleA, form8995aScheduleC, form8995aScheduleD } from "../nodes/intermediate/forms/form8995a/index.ts";
 import { form982 } from "../nodes/intermediate/forms/form982/index.ts";
 import { form_1116 } from "../nodes/intermediate/forms/form_1116/index.ts";
 import { form_8829 } from "../nodes/intermediate/forms/form_8829/index.ts";
@@ -254,7 +258,9 @@ export const registry: NodeRegistry = {
   f9465,
   f8888,
   schedule_r,
+  schedule_lep,
   f2210,
+  f2210f,
   f3903,
   f5695,
   f8936,
@@ -285,8 +291,10 @@ export const registry: NodeRegistry = {
   f8822,
   f1310,
   f2439,
+  f3921,
   f8997,
   schedule_j,
+  schedule_j_calculation,
   f8609,
   f4852,
   sep_retirement,
@@ -393,6 +401,9 @@ export const registry: NodeRegistry = {
   form8990,
   form8995,
   form8995a,
+  form8995aScheduleA,
+  form8995aScheduleC,
+  form8995aScheduleD,
   form982,
   form_1116,
   form_8829,

@@ -1,4 +1,7 @@
 import type { InputNodeEntry } from "../../../core/types/form-definition.ts";
+import { z } from "zod";
+import { form4797 } from "../nodes/intermediate/forms/form4797/index.ts";
+import { investment1245DispositionSchema } from "../nodes/intermediate/forms/form4797/investment_1245.ts";
 import {
   form4562,
   publicInputSchema as form4562InputSchema,
@@ -15,6 +18,10 @@ import {
   form1116_review,
   inputSchema as form1116ReviewInputSchema,
 } from "../nodes/inputs/form1116_review/index.ts";
+import {
+  form1116_schedule_c_source,
+  inputSchema as form1116ScheduleCSourceInputSchema,
+} from "../nodes/inputs/form1116_schedule_c_source/index.ts";
 import {
   ext,
   inputSchema as extInputSchema,
@@ -151,9 +158,17 @@ import {
   schedule_r,
 } from "../nodes/inputs/schedule_r/index.ts";
 import {
+  inputSchema as scheduleLepInputSchema,
+  schedule_lep,
+} from "../nodes/inputs/schedule_lep/index.ts";
+import {
   f2210,
   inputSchema as f2210InputSchema,
 } from "../nodes/inputs/f2210/index.ts";
+import {
+  f2210f,
+  inputSchema as f2210fInputSchema,
+} from "../nodes/inputs/f2210f/index.ts";
 import {
   f3903,
   itemSchema as f3903ItemSchema,
@@ -282,6 +297,10 @@ import {
   f2439,
   itemSchema as f2439ItemSchema,
 } from "../nodes/inputs/f2439/index.ts";
+import {
+  f3921,
+  itemSchema as f3921ItemSchema,
+} from "../nodes/inputs/f3921/index.ts";
 import {
   f8997,
   inputSchema as f8997InputSchema,
@@ -595,6 +614,10 @@ import {
   inputSchema as form4952InputSchema,
 } from "../nodes/intermediate/forms/form4952/index.ts";
 import {
+  form4972,
+  publicElectionSchema as form4972PublicElectionSchema,
+} from "../nodes/intermediate/forms/form4972/index.ts";
+import {
   form8815,
   inputSchema as form8815InputSchema,
 } from "../nodes/intermediate/forms/form8815/index.ts";
@@ -608,7 +631,7 @@ import {
 } from "../nodes/intermediate/forms/form_8829/index.ts";
 import {
   form8990,
-  inputSchema as form8990InputSchema,
+  publicInputSchema as form8990InputSchema,
 } from "../nodes/intermediate/forms/form8990/index.ts";
 import {
   form8396,
@@ -676,6 +699,15 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: general, inputSchema: generalInputSchema, isArray: false },
   { node: form4562, inputSchema: form4562InputSchema, isArray: false },
   {
+    node: form4797,
+    inputKey: "form4797_investment_1245",
+    inputSchema: z.object({
+      investment_1245_dispositions: z.array(investment1245DispositionSchema)
+        .min(1).max(4),
+    }).strict(),
+    isArray: false,
+  },
+  {
     node: form1116_review,
     inputSchema: form1116ReviewInputSchema,
     isArray: false,
@@ -690,11 +722,21 @@ export const inputNodes: readonly InputNodeEntry[] = [
     inputSchema: form1116PriorCarryoverInputSchema,
     isArray: false,
   },
+  {
+    node: form1116_schedule_c_source,
+    inputSchema: form1116ScheduleCSourceInputSchema,
+    isArray: false,
+  },
   { node: schedule1a, inputSchema: schedule1AClaimInputSchema, isArray: false },
   { node: form4684, inputSchema: form4684InputSchema, isArray: false },
   { node: form8824, inputSchema: form8824InputSchema, isArray: false },
   { node: form6781, inputSchema: form6781InputSchema, isArray: false },
   { node: form5329, inputSchema: form5329InputSchema, isArray: false },
+  {
+    node: form4972,
+    inputSchema: form4972PublicElectionSchema,
+    isArray: false,
+  },
   { node: form4952, inputSchema: form4952InputSchema, isArray: false },
   { node: form8815, inputSchema: form8815InputSchema, isArray: false },
   { node: form7206, inputSchema: form7206InputSchema, isArray: false },
@@ -706,7 +748,9 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f9465, inputSchema: f9465InputSchema, isArray: false },
   { node: f8888, inputSchema: f8888InputSchema, isArray: false },
   { node: schedule_r, inputSchema: scheduleRInputSchema, isArray: false },
+  { node: schedule_lep, inputSchema: scheduleLepInputSchema, isArray: false },
   { node: f2210, inputSchema: f2210InputSchema, isArray: false },
+  { node: f2210f, inputSchema: f2210fInputSchema, isArray: false },
   { node: f5695, inputSchema: f5695InputSchema, isArray: false },
   { node: f8862, inputSchema: f8862InputSchema, isArray: false },
   { node: f8958, inputSchema: f8958InputSchema, isArray: false },
@@ -733,6 +777,7 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f3468, inputSchema: f3468InputSchema, isArray: false },
   { node: f4255, inputSchema: f4255InputSchema, isArray: false },
   { node: f2439, itemSchema: f2439ItemSchema, isArray: true },
+  { node: f3921, itemSchema: f3921ItemSchema, isArray: true },
   { node: f8801, inputSchema: f8801InputSchema, isArray: false },
   { node: f8332, inputSchema: f8332InputSchema, isArray: false },
   { node: f8822, inputSchema: f8822InputSchema, isArray: false },

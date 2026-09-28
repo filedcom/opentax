@@ -47,6 +47,48 @@ Deno.test("schema: invalid part value is rejected", () => {
   );
 });
 
+Deno.test("Form 8949 rejects a column (h) amount that omits column (g)", () => {
+  assertThrows(
+    () => compute({ transaction: minimalTransaction({
+      adjustment_codes: "D",
+      adjustment_amount: -50,
+      gain_loss: 200,
+    }) }),
+    Error,
+    "does not reconcile to proceeds, basis, and column (g)",
+  );
+});
+
+Deno.test("section 1202 exclusion rows stop until Schedule D and Form 6251 are sourced", () => {
+  for (const transaction of [
+    minimalTransaction({
+      part: Form8949Part.D,
+      is_long_term: true,
+      qsbs_code: "Q1",
+      qsbs_amount: 100,
+    }),
+    minimalTransaction({
+      part: Form8949Part.D,
+      is_long_term: true,
+      adjustment_codes: "Q",
+      adjustment_amount: -100,
+      gain_loss: 100,
+    }),
+  ]) {
+    assertThrows(
+      () => compute({ transaction }),
+      Error,
+      "Form 6251 line 2h preference",
+    );
+  }
+  assertEquals(
+    findOutput(compute({
+      transaction: minimalTransaction({ adjustment_codes: "W" }),
+    }), "schedule_d") !== undefined,
+    true,
+  );
+});
+
 // ─── 2. Zero transactions — no output ────────────────────────────────────────
 
 Deno.test("zero transactions: no transaction field returns empty outputs", () => {

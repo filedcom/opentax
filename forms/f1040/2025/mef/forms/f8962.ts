@@ -1,5 +1,19 @@
+import { z } from "zod";
 import { element, elements } from "../../../mef/xml.ts";
-import type { MefFormDescriptor } from "../form-descriptor.ts";
+import { FilingStatus } from "../../../mef/header.ts";
+import { FilingStatus as SourceFilingStatus } from "../../../nodes/types.ts";
+import {
+  current1095AStatements,
+  f1095a,
+  inputSchema as form1095aSchema,
+} from "../../../nodes/inputs/f1095a/index.ts";
+import {
+  form8962 as form8962Calculation,
+  inputSchema as form8962InputSchema,
+} from "../../../nodes/intermediate/forms/form8962/index.ts";
+import { inputSchema as generalSchema } from "../../../nodes/inputs/general/index.ts";
+import { reconcileDependentMagi } from "../../form8962-dependent-magi.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 interface MonthlyRow {
   month_code: string;
@@ -68,6 +82,1431 @@ export interface Fields {
 
 type Input = Partial<Fields> & Record<string, unknown>;
 
+const MONTH_CODES = [
+  "JANUARY",
+  "FEBRUARY",
+  "MARCH",
+  "APRIL",
+  "MAY",
+  "JUNE",
+  "JULY",
+  "AUGUST",
+  "SEPTEMBER",
+  "OCTOBER",
+  "NOVEMBER",
+  "DECEMBER",
+] as const;
+
+const returnSchema = z.object({
+  line11_agi: z.number(),
+  line2a_tax_exempt: z.number().nonnegative().optional(),
+  line6a_ss_gross: z.number().nonnegative().optional(),
+  line6b_ss_taxable: z.number().nonnegative().optional(),
+  line17_additional_taxes: z.number().nonnegative().optional(),
+  line31_additional_payments: z.number().nonnegative().optional(),
+});
+const schedule2Schema = z.object({
+  line1a_excess_advance_premium: z.number().nonnegative().optional(),
+});
+const schedule3Schema = z.object({
+  line9_premium_tax_credit: z.number().nonnegative().optional(),
+});
+
+function reconcileSinglePersonPolicyIdentity(
+  policies: ReturnType<typeof current1095AStatements>,
+  primarySSN: string,
+): void {
+  const filerSSN = primarySSN.replaceAll("-", "");
+  if (
+    policies.some((policy) =>
+      policy.covered_individual_ssns?.length !== 1 ||
+      policy.covered_individual_ssns[0].replaceAll("-", "") !== filerSSN
+    )
+  ) {
+    throw new Error(
+      "Form 8962 one-person policy needs the filer as its sole covered individual",
+    );
+  }
+}
+
+function reconcileOnePolicyDependentIdentity(
+  policies: ReturnType<typeof current1095AStatements>,
+  householdSize: number | null | undefined,
+  generalSource: unknown,
+  primarySSN: string,
+): void {
+  if (policies.length !== 1 || householdSize === 1) return;
+  const general = generalSchema.safeParse(generalSource);
+  const dependents = general.success
+    ? (general.data.dependents ?? []).filter((dependent) =>
+      dependent.dependent_on_another_return !== true
+    )
+    : [];
+  const allowed = new Set([
+    primarySSN.replaceAll("-", ""),
+    ...dependents.map((dependent) => dependent.ssn?.replaceAll("-", "")),
+  ]);
+  const covered = policies[0].covered_individual_ssns?.map((ssn) =>
+    ssn.replaceAll("-", "")
+  );
+  if (
+    !general.success || householdSize === undefined || householdSize === null ||
+    dependents.length !== householdSize - 1 ||
+    (general.data.taxpayer_ssn !== undefined &&
+      general.data.taxpayer_ssn.replaceAll("-", "") !==
+        primarySSN.replaceAll("-", "")) ||
+    !covered?.length || covered.length > householdSize ||
+    new Set(covered).size !== covered.length ||
+    covered.some((ssn) => !allowed.has(ssn))
+  ) {
+    throw new Error(
+      "Form 8962 one-policy dependent filing needs distinct covered people from the verified tax family; other-family enrollees require shared-policy allocation",
+    );
+  }
+}
+
+function reconcilePovertyTable(
+  fields: Input,
+  context: MefBuildContext,
+): number {
+  const state = context.filer?.address.state;
+  if (!state || !/^[A-Z]{2}$/.test(state)) {
+    throw new Error("Form 8962 poverty table needs a US residence state");
+  }
+  const general = generalSchema.safeParse(context.pending?.general);
+  const residenceStates = general.success
+    ? general.data.ptc_residence_states_2025
+    : undefined;
+  const residenceMonths = general.success
+    ? general.data.ptc_residence_months_2025
+    : undefined;
+  const generalAddressState = general.success
+    ? general.data.address_state
+    : undefined;
+  if (
+    residenceStates !== undefined &&
+    (new Set(residenceStates).size !== residenceStates.length ||
+      !residenceStates.includes(state) ||
+      generalAddressState !== state)
+  ) {
+    throw new Error(
+      "Form 8962 residence states must be distinct and include the filing residence",
+    );
+  }
+  if (residenceStates !== undefined && residenceStates.length > 1) {
+    if (
+      residenceStates.length !== 2 ||
+      residenceMonths === undefined ||
+      residenceMonths[11] !== state ||
+      new Set(residenceMonths).size !== 2 ||
+      residenceStates.some((candidate) =>
+        !residenceMonths.includes(candidate)
+      ) ||
+      residenceMonths.filter((monthState, month) =>
+          month > 0 && monthState !== residenceMonths[month - 1]
+        ).length !== 1
+    ) {
+      throw new Error(
+        "Form 8962 interstate move needs twelve residence months with one state switch ending in the filing state",
+      );
+    }
+  } else if (
+    residenceMonths !== undefined &&
+    (residenceMonths.some((monthState) => monthState !== state) ||
+      residenceStates?.[0] !== state)
+  ) {
+    throw new Error(
+      "Form 8962 residence months disagree with the single-state filing route",
+    );
+  }
+  const statesForTable = residenceStates ?? [state];
+  const expectedRegion = statesForTable.includes("AK")
+    ? "alaska"
+    : statesForTable.includes("HI")
+    ? "hawaii"
+    : "contiguous";
+  if (fields.fpl_region !== expectedRegion) {
+    throw new Error(
+      "Form 8962 poverty table must match the verified residence state",
+    );
+  }
+  if (expectedRegion !== "contiguous") {
+    if (
+      !general.success || general.data.address_state !== state ||
+      !residenceStates?.includes(state)
+    ) {
+      throw new Error(
+        "Form 8962 Alaska/Hawaii poverty table needs verified 2025 residence states",
+      );
+    }
+  }
+  const familySize = fields.household_size;
+  if (familySize !== 1 && familySize !== 2 && familySize !== 3) {
+    throw new Error(
+      "Form 8962 bounded poverty table needs family size 1, 2, or 3",
+    );
+  }
+  return expectedRegion === "alaska"
+    ? 18_810 + (familySize - 1) * 6_730
+    : expectedRegion === "hawaii"
+    ? 17_310 + (familySize - 1) * 6_190
+    : 15_060 + (familySize - 1) * 5_380;
+}
+
+// Independently check Form 8962 Table 2 and Table 5 at the filing boundary.
+// This route is limited to one filer on one nonshared Marketplace policy.
+function simplePolicyIncomeAmounts(
+  householdIncome: number,
+  povertyLine: number,
+  householdSize: number | null | undefined,
+  policyCount: number,
+): { povertyPct: number; figure: number; repaymentCap: number | undefined } {
+  const actualPct = Math.floor(householdIncome / povertyLine * 100);
+  if (
+    actualPct < 100 ||
+    (actualPct < 400 && (householdSize !== 1 || policyCount !== 1))
+  ) {
+    throw new Error(
+      "Form 8962 below-400%-FPL filing needs one filer and one identified policy",
+    );
+  }
+  const povertyPct = householdIncome > 4 * povertyLine ? 401 : actualPct;
+  const figure = actualPct <= 150
+    ? 0
+    : actualPct <= 300
+    ? (actualPct - 150) * 4 / 10_000
+    : actualPct < 400
+    ? Math.round(600 + (actualPct - 300) * 2.5) / 10_000
+    : 0.085;
+  const repaymentCap = actualPct < 200
+    ? 375
+    : actualPct < 300
+    ? 975
+    : actualPct < 400
+    ? 1_625
+    : undefined;
+  return { povertyPct, figure, repaymentCap };
+}
+
+function reconcileSimpleAnnualPolicy(
+  fields: Input,
+  context?: MefBuildContext,
+): void {
+  const pending = context?.pending;
+  const source = form1095aSchema.safeParse(pending?.f1095a);
+  const form1040 = returnSchema.safeParse(pending?.f1040);
+  if (!context?.filer || !source.success || !form1040.success) {
+    throw new Error(
+      "Form 8962 positive annual filing needs Form 1095-A and finalized Form 1040 facts",
+    );
+  }
+  const policies = current1095AStatements(source.data.f1095as);
+  const multiplePolicies = policies.length > 1;
+  const twoStateFamilyPolicies = policies.length === 2 &&
+    new Set(policies.map((policy) => policy.coverage_state)).size === 2;
+  const general = generalSchema.safeParse(pending?.general);
+  const dependentMagi = reconcileDependentMagi(
+    fields.household_size,
+    fields.dependents_modified_agi,
+    pending?.general,
+  );
+  const householdIncome = form1040.data.line11_agi + dependentMagi;
+  const povertyLine = reconcilePovertyTable(fields, context);
+  const incomeAmounts = simplePolicyIncomeAmounts(
+    householdIncome,
+    povertyLine,
+    fields.household_size,
+    policies.length,
+  );
+  if (
+    context.filer.filingStatus !== FilingStatus.Single ||
+    context.filer.address.foreignCountry ||
+    policies.length < 1 || policies.length > 3 ||
+    policies.some((policy) =>
+      !policy.policy_number ||
+      (!twoStateFamilyPolicies &&
+        policy.coverage_state !== context.filer?.address.state) ||
+      policy.alternative_marriage_owner !== undefined ||
+      policy.shared_policy_periods || policy.slcsp_corrections ||
+      policy.slcsp_review_periods ||
+      !policy.monthly_premiums || !policy.monthly_slcsps ||
+      !policy.monthly_aptcs ||
+      policy.annual_premium === undefined ||
+      policy.annual_slcsp === undefined ||
+      policy.annual_aptc === undefined
+    ) ||
+    (general.success &&
+      (general.data.ptc_residence_states_2025?.length ?? 1) > 1) ||
+    source.data.alternative_marriage_month !== undefined ||
+    fields.monthly_ptc_rows != null ||
+    (fields.household_size !== 1 && fields.household_size !== 2 &&
+      fields.household_size !== 3) ||
+    (fields.household_size === 3 && policies.length !== 3) ||
+    (policies.length === 3 && fields.household_size !== 3) ||
+    fields.qsehra_ind === true || fields.mfs_exception_ind === true ||
+    (fields.shared_policy_allocations?.length ?? 0) > 0 ||
+    fields.alternative_marriage_primary || fields.alternative_marriage_spouse ||
+    pending?.form2555 !== undefined
+  ) {
+    throw new Error(
+      "Form 8962 annual line 11 needs identified full-year unchanged Marketplace policies and a one- to three-person return",
+    );
+  }
+  const policyNumbers = policies.map((policy) => policy.policy_number);
+  if (new Set(policyNumbers).size !== policies.length) {
+    throw new Error("Form 8962 annual policies need distinct policy numbers");
+  }
+  if (multiplePolicies) {
+    const dependents = general.success ? general.data.dependents ?? [] : [];
+    const generalTaxpayerSsn = general.success
+      ? general.data.taxpayer_ssn?.replaceAll("-", "")
+      : undefined;
+    const expectedSsns = [
+      context.filer.primarySSN.replaceAll("-", ""),
+      ...dependents.map((dependent) => dependent.ssn?.replaceAll("-", "")),
+    ];
+    const actualSsns = policies.flatMap((policy) =>
+      policy.covered_individual_ssns?.map((ssn) => ssn.replaceAll("-", "")) ??
+        []
+    );
+    if (
+      fields.household_size !== policies.length ||
+      dependents.length !== policies.length - 1 ||
+      dependents.some((dependent) =>
+        !dependent.ssn || dependent.dependent_on_another_return === true
+      ) ||
+      generalTaxpayerSsn !== context.filer.primarySSN.replaceAll("-", "") ||
+      new Set(expectedSsns).size !== policies.length ||
+      policies.some((policy) => policy.covered_individual_ssns?.length !== 1) ||
+      new Set(actualSsns).size !== policies.length ||
+      actualSsns.some((ssn) => !expectedSsns.includes(ssn)) ||
+      (!twoStateFamilyPolicies &&
+        policies.some((policy) =>
+          policy.monthly_slcsps?.[0] !== policies[0].monthly_slcsps?.[0]
+        ))
+    ) {
+      throw new Error(
+        policies.length === 3
+          ? "Form 8962 annual three-policy route needs distinct taxpayer and two claimed-dependent covered people with one same-state SLCSP"
+          : "Form 8962 annual two-policy route needs distinct taxpayer/dependent covered people and one same-state SLCSP",
+      );
+    }
+    if (twoStateFamilyPolicies) {
+      const taxpayerPolicy = policies.find((policy) =>
+        policy.covered_individual_ssns?.[0]?.replaceAll("-", "") ===
+          context.filer?.primarySSN.replaceAll("-", "")
+      );
+      if (
+        taxpayerPolicy?.coverage_state !== context.filer.address.state ||
+        policies.some((policy) =>
+          !CONTIGUOUS_STATES.has(policy.coverage_state ?? "")
+        ) || fields.fpl_region !== "contiguous"
+      ) {
+        throw new Error(
+          "Form 8962 annual different-state family policies need the taxpayer policy in the filing state and both states on the contiguous poverty table",
+        );
+      }
+    }
+  }
+  if (fields.household_size === 1) {
+    reconcileSinglePersonPolicyIdentity(policies, context.filer.primarySSN);
+  } else {
+    reconcileOnePolicyDependentIdentity(
+      policies,
+      fields.household_size,
+      pending?.general,
+      context.filer.primarySSN,
+    );
+  }
+  if (
+    policies.some((policy) =>
+      policy.monthly_premiums!.some((value) =>
+        value <= 0 || value !== policy.monthly_premiums![0]
+      ) ||
+      policy.monthly_slcsps!.some((value) =>
+        value <= 0 || value !== policy.monthly_slcsps![0]
+      ) ||
+      policy.monthly_aptcs!.some((value) => value <= 0) ||
+      Math.abs(
+          policy.annual_premium! -
+            policy.monthly_premiums!.reduce((a, b) => a + b, 0),
+        ) > 0.01 ||
+      Math.abs(
+          policy.annual_slcsp! -
+            policy.monthly_slcsps!.reduce((a, b) => a + b, 0),
+        ) > 0.01 ||
+      Math.abs(
+          policy.annual_aptc! -
+            policy.monthly_aptcs!.reduce((a, b) => a + b, 0),
+        ) > 0.01
+    )
+  ) {
+    throw new Error(
+      "Form 8962 annual line 11 needs unchanged monthly premiums and SLCSP with reconciled Form 1095-A line 33 totals",
+    );
+  }
+  const annualPremium = policies.reduce(
+    (sum, policy) => sum + policy.annual_premium!,
+    0,
+  );
+  const annualSlcsp = twoStateFamilyPolicies
+    ? policies.reduce((sum, policy) => sum + policy.annual_slcsp!, 0)
+    : policies[0].annual_slcsp!;
+  const annualAptc = policies.reduce(
+    (sum, policy) => sum + policy.annual_aptc!,
+    0,
+  );
+  if (
+    (form1040.data.line2a_tax_exempt ?? 0) !== 0 ||
+    (form1040.data.line6a_ss_gross ?? 0) !==
+      (form1040.data.line6b_ss_taxable ?? 0) ||
+    fields.taxpayer_modified_agi !== form1040.data.line11_agi ||
+    fields.household_income !== householdIncome ||
+    fields.federal_poverty_line !== povertyLine ||
+    fields.federal_poverty_pct !== incomeAmounts.povertyPct ||
+    fields.applicable_figure !== incomeAmounts.figure
+  ) {
+    throw new Error(
+      "Form 8962 annual line 11 household income must reconcile to finalized Form 1040",
+    );
+  }
+  const annualContribution = Math.round(householdIncome * incomeAmounts.figure);
+  const annualMaxAssistance = Math.max(
+    0,
+    annualSlcsp - annualContribution,
+  );
+  const credit = Math.round(
+    Math.min(annualPremium, annualMaxAssistance),
+  );
+  const advance = Math.round(annualAptc);
+  const net = Math.max(0, credit - advance);
+  const excess = Math.max(0, advance - credit);
+  const repayment = Math.min(excess, incomeAmounts.repaymentCap ?? excess);
+  if (
+    fields.annual_applicable_contribution !== annualContribution ||
+    fields.monthly_applicable_contribution !==
+      Math.round(annualContribution / 12) ||
+    fields.annual_premium !== annualPremium ||
+    fields.annual_slcsp !== annualSlcsp ||
+    fields.annual_aptc !== annualAptc ||
+    fields.annual_max_ptc !== annualMaxAssistance ||
+    fields.annual_ptc_allowed !== credit ||
+    fields.total_premium_tax_credit !== credit ||
+    fields.total_advance_ptc !== advance ||
+    (fields.net_premium_tax_credit ?? 0) !== net ||
+    (fields.excess_advance_payment ?? 0) !== excess ||
+    (fields.excess_advance_premium ?? 0) !== repayment ||
+    fields.repayment_limitation !==
+      (excess > 0 ? incomeAmounts.repaymentCap : undefined)
+  ) {
+    throw new Error(
+      "Form 8962 annual line 11 and lines 24 through 29 differ from Form 1095-A and calculated contribution",
+    );
+  }
+  const schedule2 = schedule2Schema.safeParse(pending?.schedule2);
+  const schedule3 = schedule3Schema.safeParse(pending?.schedule3);
+  if (
+    (repayment > 0 && (
+      !schedule2.success ||
+      schedule2.data.line1a_excess_advance_premium !== repayment ||
+      form1040.data.line17_additional_taxes !== repayment
+    )) ||
+    (net > 0 && (
+      !schedule3.success ||
+      schedule3.data.line9_premium_tax_credit !== net ||
+      form1040.data.line31_additional_payments !== net
+    )) ||
+    (repayment === 0 && schedule2.success &&
+      (schedule2.data.line1a_excess_advance_premium ?? 0) !== 0) ||
+    (net === 0 && schedule3.success &&
+      (schedule3.data.line9_premium_tax_credit ?? 0) !== 0)
+  ) {
+    throw new Error(
+      "Form 8962 annual net credit or repayment differs from finalized Schedule 2/3 and Form 1040",
+    );
+  }
+}
+
+const CONTIGUOUS_STATES = new Set([
+  "AL",
+  "AZ",
+  "AR",
+  "CA",
+  "CO",
+  "CT",
+  "DE",
+  "DC",
+  "FL",
+  "GA",
+  "ID",
+  "IL",
+  "IN",
+  "IA",
+  "KS",
+  "KY",
+  "LA",
+  "ME",
+  "MD",
+  "MA",
+  "MI",
+  "MN",
+  "MS",
+  "MO",
+  "MT",
+  "NE",
+  "NV",
+  "NH",
+  "NJ",
+  "NM",
+  "NY",
+  "NC",
+  "ND",
+  "OH",
+  "OK",
+  "OR",
+  "PA",
+  "RI",
+  "SC",
+  "SD",
+  "TN",
+  "TX",
+  "UT",
+  "VT",
+  "VA",
+  "WA",
+  "WV",
+  "WI",
+  "WY",
+]);
+
+const TY2025_UNEXTENDED_DUE_DATE = "2026-04-15";
+
+function validIsoDate(value: string): boolean {
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(date.getTime()) &&
+    date.toISOString().slice(0, 10) === value;
+}
+
+function isNoAptcClaim(context?: MefBuildContext): boolean {
+  const source = form1095aSchema.safeParse(context?.pending?.f1095a);
+  if (!source.success) return false;
+  return current1095AStatements(source.data.f1095as).some((policy) =>
+    policy.monthly_premiums?.some((premium) => premium > 0) &&
+    policy.monthly_aptcs?.every((aptc) => aptc === 0)
+  );
+}
+
+function reconcileNoAptcPolicyMonths(
+  fields: Input,
+  context?: MefBuildContext,
+): void {
+  const pending = context?.pending;
+  const source = form1095aSchema.safeParse(pending?.f1095a);
+  const general = generalSchema.safeParse(pending?.general);
+  const form1040 = returnSchema.safeParse(pending?.f1040);
+  if (
+    !context?.filer || !source.success || !general.success ||
+    !form1040.success
+  ) {
+    throw new Error(
+      "Form 8962 no-APTC PTC needs Form 1095-A, taxpayer identity, and finalized Form 1040",
+    );
+  }
+  const policies = current1095AStatements(source.data.f1095as);
+  const policy = policies[0];
+  const rows = fields.monthly_ptc_rows;
+  const coveredMonths =
+    policy?.monthly_premiums?.flatMap((premium, index) =>
+      premium > 0 ? [index + 1] : []
+    ) ?? [];
+  if (
+    context.filer.filingStatus !== FilingStatus.Single ||
+    context.filer.address.foreignCountry ||
+    policies.length !== 1 || !policy?.policy_number ||
+    policy.coverage_state !== context.filer.address.state ||
+    policy.covered_individual_ssns?.length !== 1 ||
+    (policy.covered_individual_ssns?.[0] ?? "").replaceAll("-", "") !==
+      context.filer.primarySSN.replaceAll("-", "") ||
+    general.data.taxpayer_ssn?.replaceAll("-", "") !==
+      context.filer.primarySSN.replaceAll("-", "") ||
+    general.data.filing_status !== SourceFilingStatus.Single ||
+    general.data.taxpayer_can_be_claimed_as_dependent !== false ||
+    (general.data.dependents?.length ?? 0) !== 0 ||
+    policy.shared_policy_periods || policy.slcsp_review_periods ||
+    policy.alternative_marriage_owner ||
+    source.data.alternative_marriage_month !== undefined ||
+    !policy.monthly_premiums || !policy.monthly_aptcs ||
+    !policy.slcsp_corrections || !policy.no_aptc_monthly_evidence ||
+    coveredMonths.length === 0 ||
+    policy.monthly_slcsps?.some((slcsp, index) =>
+      policy.monthly_premiums?.[index] === 0 && slcsp !== 0
+    ) ||
+    policy.monthly_aptcs.some((aptc) => aptc !== 0) ||
+    fields.household_size !== 1 || fields.dependents_modified_agi !== 0 ||
+    fields.qsehra_ind === true || fields.mfs_exception_ind === true ||
+    (fields.shared_policy_allocations?.length ?? 0) !== 0 ||
+    fields.alternative_marriage_primary || fields.alternative_marriage_spouse ||
+    fields.annual_premium !== undefined ||
+    fields.annual_slcsp !== undefined ||
+    fields.annual_aptc !== undefined ||
+    fields.annual_ptc_allowed !== undefined ||
+    !Array.isArray(rows) || rows.length !== 12 ||
+    pending?.form2555 !== undefined
+  ) {
+    throw new Error(
+      "Form 8962 no-APTC PTC supports one fully paid, nonshared Marketplace policy and a one-person single return",
+    );
+  }
+  const povertyLine = reconcilePovertyTable(fields, context);
+  const income = form1040.data.line11_agi;
+  const incomeAmounts = simplePolicyIncomeAmounts(
+    income,
+    povertyLine,
+    fields.household_size,
+    policies.length,
+  );
+  if (
+    (form1040.data.line2a_tax_exempt ?? 0) !== 0 ||
+    (form1040.data.line6a_ss_gross ?? 0) !==
+      (form1040.data.line6b_ss_taxable ?? 0) ||
+    fields.taxpayer_modified_agi !== income ||
+    fields.household_income !== income ||
+    fields.federal_poverty_line !== povertyLine ||
+    fields.federal_poverty_pct !== incomeAmounts.povertyPct ||
+    fields.applicable_figure !== incomeAmounts.figure
+  ) {
+    throw new Error(
+      "Form 8962 no-APTC household income and poverty table differ from Form 1040",
+    );
+  }
+  const annualContribution = Math.round(income * incomeAmounts.figure);
+  const monthlyContribution = Math.round(annualContribution / 12);
+  if (
+    fields.annual_applicable_contribution !== annualContribution ||
+    fields.monthly_applicable_contribution !== monthlyContribution ||
+    (policy.annual_premium !== undefined &&
+      policy.annual_premium !==
+        policy.monthly_premiums.reduce((sum, premium) => sum + premium, 0)) ||
+    (policy.annual_aptc ?? 0) !== 0 ||
+    (policy.monthly_slcsps && policy.annual_slcsp !== undefined &&
+      policy.annual_slcsp !== policy.monthly_slcsps.reduce(
+          (sum, slcsp) => sum + slcsp,
+          0,
+        )) ||
+    (!policy.monthly_slcsps && (policy.annual_slcsp ?? 0) !== 0)
+  ) {
+    throw new Error(
+      "Form 8962 no-APTC Form 1095-A totals or contribution do not reconcile",
+    );
+  }
+  const corrections = new Map(policy.slcsp_corrections.map((item) => [
+    item.month,
+    item,
+  ]));
+  const evidence = new Map(policy.no_aptc_monthly_evidence.map((item) => [
+    item.month,
+    item,
+  ]));
+  if (
+    corrections.size !== coveredMonths.length ||
+    evidence.size !== coveredMonths.length ||
+    policy.slcsp_corrections.length !== coveredMonths.length ||
+    policy.no_aptc_monthly_evidence.length !== coveredMonths.length ||
+    coveredMonths.some((month) =>
+      !corrections.has(month) || !evidence.has(month)
+    )
+  ) {
+    throw new Error(
+      "Form 8962 no-APTC needs one Marketplace determination and payment record for every covered month",
+    );
+  }
+  const credit = rows.reduce((total, row, index) => {
+    const month = index + 1;
+    const correction = corrections.get(month);
+    const proof = evidence.get(month);
+    const premium = policy.monthly_premiums![index];
+    if (premium === 0) {
+      if (
+        row.month_code !== MONTH_CODES[index] || row.premium !== 0 ||
+        row.slcsp !== 0 || row.aptc !== 0 ||
+        row.contribution !== monthlyContribution ||
+        row.max_assistance !== 0 || row.allowed_credit !== 0
+      ) {
+        throw new Error(
+          `Form 8962 no-APTC uncovered month ${month} must have zero policy and credit amounts`,
+        );
+      }
+      return total;
+    }
+    if (
+      !correction || !proof || correction.basis !== "no_aptc" ||
+      correction.corrected_slcsp <= 0 ||
+      proof.marketplace_slcsp !== correction.corrected_slcsp ||
+      proof.marketplace_method !== correction.determination_source ||
+      !validIsoDate(proof.marketplace_determined_on) ||
+      !validIsoDate(proof.premium_paid_in_full_on) ||
+      proof.premium_paid_in_full_on > TY2025_UNEXTENDED_DUE_DATE ||
+      proof.premium_paid < premium
+    ) {
+      throw new Error(
+        `Form 8962 no-APTC month ${month} lacks matching Marketplace SLCSP and timely full premium-payment evidence`,
+      );
+    }
+    const slcsp = correction.corrected_slcsp;
+    const maxAssistance = Math.max(0, slcsp - monthlyContribution);
+    const allowed = Math.min(premium, maxAssistance);
+    if (
+      row.month_code !== MONTH_CODES[index] || row.premium !== premium ||
+      row.slcsp !== slcsp || row.aptc !== 0 ||
+      row.contribution !== monthlyContribution ||
+      row.max_assistance !== maxAssistance ||
+      row.allowed_credit !== allowed
+    ) {
+      throw new Error(
+        `Form 8962 no-APTC month ${month} differs from source premiums, determined SLCSP, or calculated credit`,
+      );
+    }
+    return total + allowed;
+  }, 0);
+  const roundedCredit = Math.round(credit);
+  const schedule3 = schedule3Schema.safeParse(pending?.schedule3);
+  const schedule2 = schedule2Schema.safeParse(pending?.schedule2);
+  if (
+    roundedCredit <= 0 ||
+    fields.total_premium_tax_credit !== roundedCredit ||
+    fields.total_advance_ptc !== 0 ||
+    fields.net_premium_tax_credit !== roundedCredit ||
+    (fields.excess_advance_payment ?? 0) !== 0 ||
+    (fields.excess_advance_premium ?? 0) !== 0 ||
+    fields.repayment_limitation !== undefined ||
+    (schedule2.success &&
+      (schedule2.data.line1a_excess_advance_premium ?? 0) !== 0) ||
+    !schedule3.success ||
+    schedule3.data.line9_premium_tax_credit !== roundedCredit ||
+    form1040.data.line31_additional_payments !== roundedCredit
+  ) {
+    throw new Error(
+      "Form 8962 no-APTC positive credit differs from Schedule 3 or finalized Form 1040",
+    );
+  }
+}
+
+function reconcileNoAptcAnnualPolicy(
+  fields: Input,
+  context?: MefBuildContext,
+): void {
+  const pending = context?.pending;
+  const source = form1095aSchema.safeParse(pending?.f1095a);
+  const general = generalSchema.safeParse(pending?.general);
+  const form1040 = returnSchema.safeParse(pending?.f1040);
+  if (
+    !context?.filer || !source.success || !general.success ||
+    !form1040.success
+  ) {
+    throw new Error(
+      "Form 8962 no-APTC annual PTC needs Form 1095-A, taxpayer identity, and finalized Form 1040",
+    );
+  }
+  const policies = current1095AStatements(source.data.f1095as);
+  const policy = policies[0];
+  if (
+    context.filer.filingStatus !== FilingStatus.Single ||
+    context.filer.address.foreignCountry ||
+    policies.length !== 1 || !policy?.policy_number ||
+    policy.coverage_state !== context.filer.address.state ||
+    policy.covered_individual_ssns?.length !== 1 ||
+    policy.covered_individual_ssns[0].replaceAll("-", "") !==
+      context.filer.primarySSN.replaceAll("-", "") ||
+    general.data.taxpayer_ssn?.replaceAll("-", "") !==
+      context.filer.primarySSN.replaceAll("-", "") ||
+    general.data.filing_status !== SourceFilingStatus.Single ||
+    general.data.taxpayer_can_be_claimed_as_dependent !== false ||
+    (general.data.dependents?.length ?? 0) !== 0 ||
+    policy.shared_policy_periods || policy.slcsp_review_periods ||
+    policy.alternative_marriage_owner ||
+    source.data.alternative_marriage_month !== undefined ||
+    !policy.monthly_premiums || !policy.monthly_aptcs ||
+    !policy.slcsp_corrections || !policy.no_aptc_monthly_evidence ||
+    policy.monthly_premiums.some((premium) =>
+      premium <= 0 || premium !== policy.monthly_premiums![0]
+    ) ||
+    policy.monthly_aptcs.some((aptc) => aptc !== 0) ||
+    fields.monthly_ptc_rows != null || fields.household_size !== 1 ||
+    fields.dependents_modified_agi !== 0 ||
+    fields.qsehra_ind === true || fields.mfs_exception_ind === true ||
+    (fields.shared_policy_allocations?.length ?? 0) !== 0 ||
+    fields.alternative_marriage_primary || fields.alternative_marriage_spouse ||
+    pending?.form2555 !== undefined
+  ) {
+    throw new Error(
+      "Form 8962 no-APTC annual PTC supports one full-year unchanged nonshared policy and a one-person single return",
+    );
+  }
+  const povertyLine = reconcilePovertyTable(fields, context);
+  const income = form1040.data.line11_agi;
+  const incomeAmounts = simplePolicyIncomeAmounts(
+    income,
+    povertyLine,
+    fields.household_size,
+    policies.length,
+  );
+  if (
+    (form1040.data.line2a_tax_exempt ?? 0) !== 0 ||
+    (form1040.data.line6a_ss_gross ?? 0) !==
+      (form1040.data.line6b_ss_taxable ?? 0) ||
+    fields.taxpayer_modified_agi !== income ||
+    fields.household_income !== income ||
+    fields.federal_poverty_line !== povertyLine ||
+    fields.federal_poverty_pct !== incomeAmounts.povertyPct ||
+    fields.applicable_figure !== incomeAmounts.figure
+  ) {
+    throw new Error(
+      "Form 8962 no-APTC annual household income and poverty table differ from Form 1040",
+    );
+  }
+  const annualContribution = Math.round(income * incomeAmounts.figure);
+  const monthlyContribution = Math.round(annualContribution / 12);
+  const reportedPremium = policy.monthly_premiums.reduce(
+    (total, premium) => total + premium,
+    0,
+  );
+  const reportedSlcsp = policy.monthly_slcsps?.reduce(
+    (total, slcsp) => total + slcsp,
+    0,
+  );
+  if (
+    fields.annual_applicable_contribution !== annualContribution ||
+    fields.monthly_applicable_contribution !== monthlyContribution ||
+    policy.annual_premium !== reportedPremium ||
+    (policy.annual_slcsp !== undefined &&
+      policy.annual_slcsp !== (reportedSlcsp ?? 0)) ||
+    (policy.annual_aptc ?? 0) !== 0
+  ) {
+    throw new Error(
+      "Form 8962 no-APTC annual Form 1095-A totals or contribution do not reconcile",
+    );
+  }
+  const corrections = new Map(policy.slcsp_corrections.map((item) => [
+    item.month,
+    item,
+  ]));
+  const evidence = new Map(policy.no_aptc_monthly_evidence.map((item) => [
+    item.month,
+    item,
+  ]));
+  if (
+    corrections.size !== 12 || evidence.size !== 12 ||
+    policy.slcsp_corrections.length !== 12 ||
+    policy.no_aptc_monthly_evidence.length !== 12
+  ) {
+    throw new Error(
+      "Form 8962 no-APTC annual PTC needs twelve Marketplace determinations and premium-payment records",
+    );
+  }
+  const monthlySlcsp = corrections.get(1)?.corrected_slcsp;
+  if (!monthlySlcsp || monthlySlcsp <= 0) {
+    throw new Error(
+      "Form 8962 no-APTC annual PTC needs a positive determined SLCSP",
+    );
+  }
+  for (let month = 1; month <= 12; month++) {
+    const correction = corrections.get(month);
+    const proof = evidence.get(month);
+    if (
+      !correction || !proof || correction.basis !== "no_aptc" ||
+      correction.corrected_slcsp !== monthlySlcsp ||
+      proof.marketplace_slcsp !== monthlySlcsp ||
+      proof.marketplace_method !== correction.determination_source ||
+      !validIsoDate(proof.marketplace_determined_on) ||
+      !validIsoDate(proof.premium_paid_in_full_on) ||
+      proof.premium_paid_in_full_on > TY2025_UNEXTENDED_DUE_DATE ||
+      proof.premium_paid < policy.monthly_premiums[month - 1]
+    ) {
+      throw new Error(
+        `Form 8962 no-APTC annual month ${month} lacks matching SLCSP and timely full premium-payment evidence`,
+      );
+    }
+  }
+  const annualPremium = reportedPremium;
+  const annualSlcsp = monthlySlcsp * 12;
+  const annualMaxAssistance = Math.max(0, annualSlcsp - annualContribution);
+  const credit = Math.round(Math.min(annualPremium, annualMaxAssistance));
+  const schedule3 = schedule3Schema.safeParse(pending?.schedule3);
+  const schedule2 = schedule2Schema.safeParse(pending?.schedule2);
+  if (
+    credit <= 0 || fields.annual_premium !== annualPremium ||
+    fields.annual_slcsp !== annualSlcsp || fields.annual_aptc !== 0 ||
+    fields.annual_max_ptc !== annualMaxAssistance ||
+    fields.annual_ptc_allowed !== credit ||
+    fields.total_premium_tax_credit !== credit ||
+    fields.total_advance_ptc !== 0 ||
+    fields.net_premium_tax_credit !== credit ||
+    (fields.excess_advance_payment ?? 0) !== 0 ||
+    (fields.excess_advance_premium ?? 0) !== 0 ||
+    fields.repayment_limitation !== undefined ||
+    (schedule2.success &&
+      (schedule2.data.line1a_excess_advance_premium ?? 0) !== 0) ||
+    !schedule3.success ||
+    schedule3.data.line9_premium_tax_credit !== credit ||
+    form1040.data.line31_additional_payments !== credit
+  ) {
+    throw new Error(
+      "Form 8962 no-APTC annual positive credit differs from source, Schedule 3, or Form 1040",
+    );
+  }
+}
+
+function reconcileSimplePolicyMonths(
+  fields: Input,
+  context?: MefBuildContext,
+): void {
+  const pending = context?.pending;
+  const source = form1095aSchema.safeParse(pending?.f1095a);
+  const form1040 = returnSchema.safeParse(pending?.f1040);
+  if (!context?.filer || !source.success || !form1040.success) {
+    throw new Error(
+      "Form 8962 positive monthly filing needs Form 1095-A and finalized Form 1040 facts",
+    );
+  }
+  const policies = current1095AStatements(source.data.f1095as);
+  const policyNumbers = policies.map((policy) => policy.policy_number);
+  const rows = fields.monthly_ptc_rows;
+  const general = generalSchema.safeParse(pending?.general);
+  const residenceStates = general.success
+    ? general.data.ptc_residence_states_2025
+    : undefined;
+  const residenceMonths = residenceStates?.length === 2 && general.success
+    ? general.data.ptc_residence_months_2025
+    : undefined;
+  const interstateMove = residenceMonths !== undefined;
+  const twoPersonPolicies = fields.household_size === 2 &&
+    policies.length === 2;
+  const threePersonPolicies = fields.household_size === 3 &&
+    policies.length === 3;
+  const twoStateFamilyPolicies = twoPersonPolicies &&
+    new Set(policies.map((policy) => policy.coverage_state)).size === 2;
+  const dependentMagi = reconcileDependentMagi(
+    fields.household_size,
+    fields.dependents_modified_agi,
+    pending?.general,
+  );
+  const householdIncome = form1040.data.line11_agi + dependentMagi;
+  const povertyLine = reconcilePovertyTable(fields, context);
+  const incomeAmounts = simplePolicyIncomeAmounts(
+    householdIncome,
+    povertyLine,
+    fields.household_size,
+    policies.length,
+  );
+  if (
+    context.filer.filingStatus !== FilingStatus.Single ||
+    context.filer.address.foreignCountry ||
+    policies.length < 1 ||
+    policies.length > 3 ||
+    (policies.length === 3 && !threePersonPolicies) ||
+    (interstateMove &&
+      (fields.household_size !== 1 || policies.length !== 2)) ||
+    policyNumbers.some((number) => !number) ||
+    new Set(policyNumbers).size !== policyNumbers.length ||
+    source.data.alternative_marriage_month !== undefined ||
+    policies.some((policy) =>
+      policy.alternative_marriage_owner !== undefined ||
+      (interstateMove
+        ? !residenceStates?.includes(policy.coverage_state ?? "")
+        : twoPersonPolicies
+        ? !policy.coverage_state
+        : policy.coverage_state !== context.filer?.address.state) ||
+      !policy.monthly_premiums || !policy.monthly_slcsps ||
+      !policy.monthly_aptcs || policy.shared_policy_periods ||
+      policy.slcsp_corrections ||
+      (!interstateMove && policy.slcsp_review_periods)
+    ) ||
+    fields.qsehra_ind === true || fields.mfs_exception_ind === true ||
+    (fields.shared_policy_allocations?.length ?? 0) > 0 ||
+    fields.alternative_marriage_primary || fields.alternative_marriage_spouse ||
+    rows == null || rows.length !== 12 ||
+    (fields.household_size !== 1 && fields.household_size !== 2 &&
+      fields.household_size !== 3) ||
+    (fields.household_size === 3 && !threePersonPolicies) ||
+    fields.annual_premium !== undefined ||
+    fields.annual_slcsp !== undefined ||
+    fields.annual_aptc !== undefined ||
+    fields.annual_ptc_allowed !== undefined ||
+    pending?.form2555 !== undefined
+  ) {
+    throw new Error(
+      "Form 8962 monthly filing supports identified family policies, same-state one-person policies, or a verified interstate move",
+    );
+  }
+  if (twoPersonPolicies) {
+    const dependent = general.success && general.data.dependents?.length === 1
+      ? general.data.dependents[0]
+      : undefined;
+    const taxpayerSsn = general.success
+      ? general.data.taxpayer_ssn?.replaceAll("-", "")
+      : undefined;
+    const coveredSsns = policies.flatMap((policy) =>
+      policy.covered_individual_ssns?.map((ssn) => ssn.replaceAll("-", "")) ??
+        []
+    );
+    if (
+      !dependent?.ssn || dependent.dependent_on_another_return === true ||
+      taxpayerSsn !== context.filer.primarySSN.replaceAll("-", "") ||
+      policies.some((policy) => policy.covered_individual_ssns?.length !== 1) ||
+      new Set(coveredSsns).size !== 2 ||
+      !coveredSsns.includes(taxpayerSsn) ||
+      !coveredSsns.includes(dependent.ssn.replaceAll("-", ""))
+    ) {
+      throw new Error(
+        "Form 8962 monthly two-person policies need distinct taxpayer and claimed-dependent covered people",
+      );
+    }
+    const taxpayerPolicy = policies.find((policy) =>
+      policy.covered_individual_ssns?.[0]?.replaceAll("-", "") === taxpayerSsn
+    );
+    if (
+      taxpayerPolicy?.coverage_state !== context.filer.address.state ||
+      (twoStateFamilyPolicies &&
+        (policies.some((policy) =>
+          !CONTIGUOUS_STATES.has(policy.coverage_state ?? "")
+        ) || fields.fpl_region !== "contiguous"))
+    ) {
+      throw new Error(
+        "Form 8962 different-state family policies need the taxpayer policy in the filing state and both states on the contiguous poverty table",
+      );
+    }
+  }
+  if (threePersonPolicies) {
+    const dependents = general.success ? general.data.dependents ?? [] : [];
+    const taxpayerSsn = general.success
+      ? general.data.taxpayer_ssn?.replaceAll("-", "")
+      : undefined;
+    const familySsns = [
+      taxpayerSsn,
+      ...dependents.map((dependent) => dependent.ssn?.replaceAll("-", "")),
+    ];
+    const coveredSsns = policies.flatMap((policy) =>
+      policy.covered_individual_ssns?.map((ssn) => ssn.replaceAll("-", "")) ??
+        []
+    );
+    if (
+      dependents.length !== 2 ||
+      dependents.some((dependent) =>
+        !dependent.ssn || dependent.dependent_on_another_return === true
+      ) ||
+      !taxpayerSsn ||
+      taxpayerSsn !== context.filer.primarySSN.replaceAll("-", "") ||
+      new Set(familySsns).size !== 3 ||
+      policies.some((policy) =>
+        policy.coverage_state !== context.filer?.address.state ||
+        policy.covered_individual_ssns?.length !== 1
+      ) ||
+      new Set(coveredSsns).size !== 3 ||
+      familySsns.some((ssn) => !ssn || !coveredSsns.includes(ssn))
+    ) {
+      throw new Error(
+        "Form 8962 monthly three-person policies need distinct taxpayer and two claimed-dependent covered people in one state",
+      );
+    }
+  }
+  if (fields.household_size === 1) {
+    reconcileSinglePersonPolicyIdentity(policies, context.filer.primarySSN);
+  } else {
+    reconcileOnePolicyDependentIdentity(
+      policies,
+      fields.household_size,
+      pending?.general,
+      context.filer.primarySSN,
+    );
+  }
+  if (
+    (form1040.data.line2a_tax_exempt ?? 0) !== 0 ||
+    (form1040.data.line6a_ss_gross ?? 0) !==
+      (form1040.data.line6b_ss_taxable ?? 0) ||
+    fields.taxpayer_modified_agi !== form1040.data.line11_agi ||
+    fields.household_income !== householdIncome ||
+    fields.federal_poverty_line !== povertyLine ||
+    fields.federal_poverty_pct !== incomeAmounts.povertyPct ||
+    fields.applicable_figure !== incomeAmounts.figure
+  ) {
+    throw new Error(
+      "Form 8962 household income and above-400%-FPL contribution must reconcile to finalized Form 1040",
+    );
+  }
+  if (interstateMove) {
+    const moveIndex = residenceMonths.findIndex((monthState, index) =>
+      index > 0 && monthState !== residenceMonths[index - 1]
+    );
+    const arrivalState = residenceMonths[moveIndex];
+    const arrivalPolicy = policies.find((policy) =>
+      policy.coverage_state === arrivalState
+    );
+    const reviews = arrivalPolicy?.slcsp_review_periods;
+    const review = reviews?.[0];
+    if (
+      moveIndex < 1 || reviews?.length !== 1 ||
+      review?.reason !== "move" ||
+      review?.reported_to_marketplace !== true ||
+      review?.start_month !== moveIndex + 1 ||
+      review?.end_month !== 12 ||
+      policies.some((policy) =>
+        policy !== arrivalPolicy && policy.slcsp_review_periods !== undefined
+      )
+    ) {
+      throw new Error(
+        "Form 8962 interstate move needs a reported Marketplace move review on the arrival policy",
+      );
+    }
+  }
+  const annualContribution = Math.round(householdIncome * incomeAmounts.figure);
+  const monthlyContribution = Math.round(annualContribution / 12);
+  if (
+    fields.annual_applicable_contribution !== annualContribution ||
+    fields.monthly_applicable_contribution !== monthlyContribution
+  ) {
+    throw new Error(
+      "Form 8962 applicable contribution differs from finalized household income",
+    );
+  }
+  for (const policy of policies) {
+    for (
+      const [monthlyKey, annualKey] of [
+        ["monthly_premiums", "annual_premium"],
+        ["monthly_slcsps", "annual_slcsp"],
+        ["monthly_aptcs", "annual_aptc"],
+      ] as const
+    ) {
+      const reported = policy[annualKey];
+      const monthly = policy[monthlyKey];
+      if (!monthly) {
+        throw new Error(
+          "Form 8962 needs all three Form 1095-A monthly columns",
+        );
+      }
+      if (
+        reported !== undefined &&
+        Math.abs(reported - monthly.reduce((sum, amount) => sum + amount, 0)) >
+          0.01
+      ) {
+        throw new Error(
+          `Form 8962 Form 1095-A ${annualKey} differs from its monthly column`,
+        );
+      }
+    }
+  }
+  const activePolicyNumbers = new Set<string>();
+  let previousPolicyNumber: string | undefined;
+  let switches = 0;
+  let hasUncoveredMonth = false;
+  for (const [index, row] of rows.entries()) {
+    const active = policies.filter((policy) =>
+      (policy.monthly_premiums?.[index] ?? 0) > 0 ||
+      (policy.monthly_slcsps?.[index] ?? 0) > 0 ||
+      (policy.monthly_aptcs?.[index] ?? 0) > 0
+    );
+    // A month with no Marketplace coverage is blank even when two policies
+    // cover different portions of the year. The chronological switch and
+    // policy-identity checks below still apply to every covered month.
+    if (active.length === 0) {
+      hasUncoveredMonth = true;
+      if (
+        row.month_code !== MONTH_CODES[index] || row.premium !== 0 ||
+        row.slcsp !== 0 || row.aptc !== 0 ||
+        row.contribution !== monthlyContribution ||
+        row.max_assistance !== 0 || row.allowed_credit !== 0
+      ) {
+        throw new Error(
+          `Form 8962 uncovered month ${
+            index + 1
+          } must have zero policy and credit amounts`,
+        );
+      }
+      continue;
+    }
+    // This three-person route covers the whole verified family together in
+    // each active month. A partial family enrollment changes the applicable
+    // SLCSP and needs a separately verified coverage-family calculation.
+    if (threePersonPolicies && active.length !== 3) {
+      throw new Error(
+        `Form 8962 month ${
+          index + 1
+        } three-person policies must cover the same months`,
+      );
+    }
+    if (
+      active.length !== 1 &&
+      !(twoPersonPolicies && active.length === 2) &&
+      !(threePersonPolicies && active.length === 3)
+    ) {
+      throw new Error(
+        `Form 8962 month ${
+          index + 1
+        } needs exactly one active Marketplace policy in this bounded route`,
+      );
+    }
+    const policy = active[0];
+    if (!policy?.policy_number) {
+      throw new Error(
+        "Form 8962 needs an identified active Marketplace policy",
+      );
+    }
+    if (
+      interstateMove &&
+      (policy.coverage_state !== residenceMonths?.[index] ||
+        !residenceStates?.includes(policy.coverage_state ?? ""))
+    ) {
+      throw new Error(
+        `Form 8962 month ${
+          index + 1
+        } policy state differs from verified residence`,
+      );
+    }
+    if (!twoPersonPolicies && !threePersonPolicies) {
+      if (
+        previousPolicyNumber && previousPolicyNumber !== policy.policy_number
+      ) {
+        switches += 1;
+      }
+      previousPolicyNumber = policy.policy_number;
+    }
+    for (const activePolicy of active) {
+      activePolicyNumbers.add(activePolicy.policy_number!);
+    }
+    const premium = active.reduce(
+      (sum, activePolicy) =>
+        sum + (activePolicy.monthly_premiums?.[index] ?? 0),
+      0,
+    );
+    const slcsp = twoStateFamilyPolicies && active.length === 2
+      ? active.reduce(
+        (sum, activePolicy) =>
+          sum + (activePolicy.monthly_slcsps?.[index] ?? 0),
+        0,
+      )
+      : policy.monthly_slcsps?.[index];
+    const aptc = active.reduce(
+      (sum, activePolicy) => sum + (activePolicy.monthly_aptcs?.[index] ?? 0),
+      0,
+    );
+    if (premium === undefined || slcsp === undefined || aptc === undefined) {
+      throw new Error("Form 8962 needs all three Form 1095-A monthly columns");
+    }
+    if (
+      active.length > 1 &&
+      active.some((activePolicy) =>
+        (twoStateFamilyPolicies
+          ? (activePolicy.monthly_slcsps?.[index] ?? 0) <= 0
+          : activePolicy.monthly_slcsps?.[index] !== slcsp) ||
+        (activePolicy.monthly_premiums?.[index] ?? 0) <= 0 ||
+        (activePolicy.monthly_aptcs?.[index] ?? 0) <= 0
+      )
+    ) {
+      throw new Error(
+        `Form 8962 month ${
+          index + 1
+        } overlapping family policies need positive premiums and APTC, and the same positive SLCSP within a state`,
+      );
+    }
+    const maxAssistance = Math.max(0, slcsp - monthlyContribution);
+    if (
+      row.month_code !== MONTH_CODES[index] || row.premium !== premium ||
+      row.slcsp !== slcsp || row.aptc !== aptc ||
+      row.contribution !== monthlyContribution ||
+      row.max_assistance !== maxAssistance ||
+      row.allowed_credit !== Math.min(premium, maxAssistance) ||
+      premium <= 0 || slcsp <= 0 || aptc <= 0
+    ) {
+      throw new Error(
+        `Form 8962 month ${
+          index + 1
+        } differs from its Form 1095-A policy or calculated PTC`,
+      );
+    }
+  }
+  if (activePolicyNumbers.size !== policies.length) {
+    throw new Error(
+      "Form 8962 monthly filing needs a covered month for every source policy",
+    );
+  }
+  if (interstateMove && switches !== 1) {
+    throw new Error(
+      "Form 8962 interstate move needs one chronological policy switch",
+    );
+  }
+  if (
+    !interstateMove && fields.household_size === 1 && switches > 1 &&
+    hasUncoveredMonth
+  ) {
+    throw new Error(
+      "Form 8962 alternating same-state policies need twelve covered months",
+    );
+  }
+  const credit = Math.round(rows.reduce(
+    (sum, row) => sum + (row.allowed_credit ?? 0),
+    0,
+  ));
+  const advance = Math.round(
+    policies.reduce(
+      (sum, policy) =>
+        sum +
+        (policy.monthly_aptcs?.reduce(
+          (subtotal, amount) => subtotal + amount,
+          0,
+        ) ?? 0),
+      0,
+    ),
+  );
+  const net = Math.max(0, credit - advance);
+  const excess = Math.max(0, advance - credit);
+  const repayment = Math.min(excess, incomeAmounts.repaymentCap ?? excess);
+  if (
+    fields.total_premium_tax_credit !== credit ||
+    fields.total_advance_ptc !== advance ||
+    (fields.net_premium_tax_credit ?? 0) !== net ||
+    (fields.excess_advance_payment ?? 0) !== excess ||
+    (fields.excess_advance_premium ?? 0) !== repayment ||
+    fields.repayment_limitation !==
+      (excess > 0 ? incomeAmounts.repaymentCap : undefined)
+  ) {
+    throw new Error(
+      "Form 8962 lines 24 through 29 differ from sourced monthly policy totals",
+    );
+  }
+  const schedule2 = schedule2Schema.safeParse(pending?.schedule2);
+  const schedule3 = schedule3Schema.safeParse(pending?.schedule3);
+  if (
+    (repayment > 0 && (
+      !schedule2.success ||
+      schedule2.data.line1a_excess_advance_premium !== repayment ||
+      form1040.data.line17_additional_taxes !== repayment
+    )) ||
+    (net > 0 && (
+      !schedule3.success ||
+      schedule3.data.line9_premium_tax_credit !== net ||
+      form1040.data.line31_additional_payments !== net
+    )) ||
+    (repayment === 0 && schedule2.success &&
+      (schedule2.data.line1a_excess_advance_premium ?? 0) !== 0) ||
+    (net === 0 && schedule3.success &&
+      (schedule3.data.line9_premium_tax_credit ?? 0) !== 0)
+  ) {
+    throw new Error(
+      "Form 8962 net credit or repayment differs from finalized Schedule 2/3 and Form 1040",
+    );
+  }
+}
+
+function reconcileAgreedSharedPolicy(
+  fields: Input,
+  context?: MefBuildContext,
+): void {
+  const pending = context?.pending;
+  const source = form1095aSchema.safeParse(pending?.f1095a);
+  const form1040 = returnSchema.safeParse(pending?.f1040);
+  const general = generalSchema.safeParse(pending?.general);
+  const allocations = fields.shared_policy_allocations ?? [];
+  const rows = fields.monthly_ptc_rows;
+  if (
+    !context?.filer || !source.success || !form1040.success ||
+    !general.success || !Array.isArray(rows) || rows.length !== 12 ||
+    context.filer.filingStatus !== FilingStatus.Single ||
+    context.filer.address.foreignCountry ||
+    fields.household_size !== 1 ||
+    general.data.taxpayer_ssn?.replaceAll("-", "") !==
+      context.filer.primarySSN.replaceAll("-", "") ||
+    (general.data.dependents?.length ?? 0) !== 0 ||
+    source.data.alternative_marriage_month !== undefined ||
+    fields.qsehra_ind === true || fields.mfs_exception_ind === true ||
+    fields.alternative_marriage_primary || fields.alternative_marriage_spouse ||
+    pending?.form2555 !== undefined ||
+    allocations.length !== 1 || allocations[0].basis !== "other_agreed" ||
+    allocations[0].premium_pct === undefined ||
+    allocations[0].premium_pct <= 0 ||
+    allocations[0].premium_pct !== allocations[0].slcsp_pct ||
+    allocations[0].premium_pct !== allocations[0].aptc_pct
+  ) {
+    throw new Error(
+      "Form 8962 shared filing needs one agreed Situation 4 policy, two covered taxpayers, and a finalized one-person single return",
+    );
+  }
+  const policies = current1095AStatements(source.data.f1095as);
+  const policy = policies[0];
+  const filerSsn = context.filer.primarySSN.replaceAll("-", "");
+  const covered = policy?.covered_individual_ssns?.map((ssn) =>
+    ssn.replaceAll("-", "")
+  );
+  if (
+    policies.length !== 1 || !policy?.policy_number ||
+    policy.policy_number.slice(-15) !== allocations[0].policy_number ||
+    policy.coverage_state !== context.filer.address.state ||
+    policy.alternative_marriage_owner !== undefined ||
+    policy.slcsp_corrections || policy.slcsp_review_periods ||
+    !policy.monthly_premiums || !policy.monthly_slcsps ||
+    !policy.monthly_aptcs ||
+    policy.shared_policy_periods?.length !== 1 ||
+    policy.shared_policy_periods[0].basis !== "other_agreed" ||
+    covered?.length !== 2 || new Set(covered).size !== 2 ||
+    !covered.includes(filerSsn) ||
+    !covered.includes(allocations[0].other_taxpayer_ssn) ||
+    allocations[0].other_taxpayer_ssn === filerSsn
+  ) {
+    throw new Error(
+      "Form 8962 agreed shared policy must match the source policy and both covered taxpayers",
+    );
+  }
+  const povertyLine = reconcilePovertyTable(fields, context);
+  const derivedSource = f1095a.compute(
+    { taxYear: 2025, formType: "f1040" },
+    source.data,
+  ).outputs.find((item) => item.nodeType === "form8962")?.fields;
+  if (!derivedSource) {
+    throw new Error("Form 8962 shared policy has no allocated source amounts");
+  }
+  const derivedInput = form8962InputSchema.parse({
+    ...derivedSource,
+    taxpayer_modified_agi: form1040.data.line11_agi,
+    dependents_modified_agi: 0,
+    household_size: 1,
+    fpl_region: fields.fpl_region,
+    filing_status: SourceFilingStatus.Single,
+    dependent_income_complete: true,
+  });
+  const expected = form8962Calculation.compute(
+    { taxYear: 2025, formType: "f1040" },
+    derivedInput,
+  ).outputs.find((item) => item.nodeType === "form8962")?.fields;
+  if (
+    !expected || fields.federal_poverty_line !== povertyLine ||
+    Object.entries(expected).some(([key, value]) =>
+      JSON.stringify(fields[key]) !== JSON.stringify(value)
+    )
+  ) {
+    throw new Error(
+      "Form 8962 shared policy amounts differ from source allocation and calculated credit",
+    );
+  }
+  const net = typeof expected.net_premium_tax_credit === "number"
+    ? expected.net_premium_tax_credit
+    : 0;
+  const excess = typeof expected.excess_advance_premium === "number"
+    ? expected.excess_advance_premium
+    : 0;
+  const schedule2 = schedule2Schema.safeParse(pending?.schedule2);
+  const schedule3 = schedule3Schema.safeParse(pending?.schedule3);
+  if (
+    (net > 0 && (!schedule3.success ||
+      schedule3.data.line9_premium_tax_credit !== net ||
+      form1040.data.line31_additional_payments !== net)) ||
+    (excess > 0 && (!schedule2.success ||
+      schedule2.data.line1a_excess_advance_premium !== excess ||
+      form1040.data.line17_additional_taxes !== excess))
+  ) {
+    throw new Error(
+      "Form 8962 shared policy credit or repayment differs from finalized return",
+    );
+  }
+}
+
 export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["mfs_exception_ind", "MarriedFilingSeparatelyExcInd"],
   ["household_size", "TotalExemptionsCnt"],
@@ -121,7 +1560,7 @@ function alternativeMarriageXml(
   ]);
 }
 
-function buildIRS8962(fields: Input): string {
+function buildIRS8962(fields: Input, context?: MefBuildContext): string {
   const monthlyRows = fields.monthly_ptc_rows;
   const allocations = fields.shared_policy_allocations ?? [];
   const marriagePrimary = fields.alternative_marriage_primary;
@@ -138,6 +1577,8 @@ function buildIRS8962(fields: Input): string {
       fields.excess_advance_payment,
       fields.excess_advance_premium,
       fields.annual_ptc_allowed,
+      fields.annual_aptc,
+      fields.repayment_limitation,
     ].some((value) => typeof value === "number" && value > 0);
     if (
       hasFilingAmount || allocations.length > 0 || marriagePrimary ||
@@ -198,6 +1639,35 @@ function buildIRS8962(fields: Input): string {
     throw new Error(
       "Form 8962 household income must reconcile to taxpayer and dependent modified AGI",
     );
+  }
+  if (
+    (fields.total_premium_tax_credit ?? 0) > 0 ||
+    (fields.total_advance_ptc ?? 0) > 0 ||
+    (fields.annual_ptc_allowed ?? 0) > 0 ||
+    (fields.annual_aptc ?? 0) > 0 ||
+    (fields.net_premium_tax_credit ?? 0) > 0 ||
+    (fields.excess_advance_payment ?? 0) > 0 ||
+    (fields.excess_advance_premium ?? 0) > 0 ||
+    (fields.repayment_limitation ?? 0) > 0 ||
+    (monthlyRows?.some((row) =>
+      (row.allowed_credit ?? 0) > 0 || row.aptc > 0
+    ) ?? false)
+  ) {
+    if (Array.isArray(monthlyRows)) {
+      if (allocations.length > 0) {
+        reconcileAgreedSharedPolicy(fields, context);
+      } else if (isNoAptcClaim(context)) {
+        reconcileNoAptcPolicyMonths(fields, context);
+      } else {
+        reconcileSimplePolicyMonths(fields, context);
+      }
+    } else {
+      if (isNoAptcClaim(context)) {
+        reconcileNoAptcAnnualPolicy(fields, context);
+      } else {
+        reconcileSimpleAnnualPolicy(fields, context);
+      }
+    }
   }
 
   const location = fields.fpl_region === "alaska"
@@ -296,7 +1766,7 @@ export const form8962: MefFormDescriptor<"form8962", Input> = {
   pendingKey: "form8962",
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8962.pdf",
-  build(fields) {
-    return buildIRS8962(fields);
+  build(fields, context) {
+    return buildIRS8962(fields, context);
   },
 };

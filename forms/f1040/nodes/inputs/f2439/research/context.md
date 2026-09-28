@@ -39,15 +39,19 @@ Per IRS Schedule D Instructions (2025) and confirmed by i1040sd:
 
 3. **Box 1c → QSB Stock Exclusion Worksheet** (not routed in current engine)
    Requires separate Form 8949 exclusion worksheet. No current receiving node in engine.
-   Captured in itemSchema but not routed until QSB node is implemented.
+   Positive box 1c is rejected at the source and at direct MeF/PDF export until its
+   section 1202 exclusion is modeled.
 
 4. **Box 1d → 28% Rate Gain Worksheet Line 4** (`collectibles_gain_form2439` on schedule_d)
    Flows into the 28% Rate Gain Worksheet via schedule_d's new field.
-   Field must be added to schedule_d.inputSchema.
+   The field is present in `schedule_d.inputSchema`.
 
 5. **Box 2 → Schedule 3 Line 13a → Form 1040 Line 31** (`line31_additional_payments` on f1040)
    Tax paid by the fund becomes a refundable-style credit on Schedule 3 Part II, line 13a.
-   In our engine, this aggregates into f1040 `line31_additional_payments`.
+   The sourced amount enters `schedule3.line13a_tax_paid_by_ric_or_reit`;
+   Schedule 3 totals Part II and sends line 15 to Form 1040 line 31. The
+   TY2025 MeF line 13a carries references to every credited `IRS2439`
+   information document.
 
 ## TY2025 Relevant Constants
 
@@ -67,5 +71,12 @@ Per IRS Schedule D Instructions (2025) and confirmed by i1040sd:
 | 1a  | `line_11_form2439` | schedule_d (exists) |
 | 1b  | `line19_unrecaptured_1250` | schedule_d (exists) |
 | 1c  | (not routed) | — |
-| 1d  | `collectibles_gain_form2439` | schedule_d (ADD THIS FIELD) |
-| 2   | `line31_additional_payments` | f1040 (exists) |
+| 1d  | `collectibles_gain_form2439` | schedule_d |
+| 2   | `line13a_tax_paid_by_ric_or_reit` | schedule3, then f1040 line 31 |
+
+The bounded positive box 2 route requires payer Copy B name, EIN and US
+address, the selected taxpayer or spouse name and SSN last four, and the
+issuer tax period ending in 2025. The payer-issued facts are checked again
+at native MeF and Copy B PDF export, and the source sum must match Schedule 3
+line 13a; Schedule 3 line 15 must match Form 1040 line 31. The written cases
+have not yet been run in the agreed full batch.

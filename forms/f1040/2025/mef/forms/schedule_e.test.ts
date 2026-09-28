@@ -6,6 +6,7 @@ function property(overrides: Record<string, unknown> = {}) {
   return itemSchema.parse({
     tsj: "T",
     property_description: "Rental house",
+    activity_id: "rental-house",
     property_type: 1,
     activity_type: "A",
     fair_rental_days: 365,
@@ -164,6 +165,7 @@ Deno.test("Schedule E emits active rental loss for linked Form 8582 reconciliati
       schedule_e: { schedule_es: [rental] },
       form8582: {
         activities: [{
+          activity_id: "rental-house",
           name: "Rental house",
           activity_type: "A",
           property_type: 1,

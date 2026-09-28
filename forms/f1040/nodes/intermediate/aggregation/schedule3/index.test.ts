@@ -32,6 +32,16 @@ Deno.test("validation: all-zero fields produce no output", () => {
   assertEquals(result.outputs.length, 0);
 });
 
+Deno.test("Form 2439 box 2 reaches Schedule 3 line 13a, line 15 and Form 1040 line 31 once", () => {
+  const result = compute({ line13a_tax_paid_by_ric_or_reit: [1_500, 750] });
+  assertEquals(findOutput(result, "schedule3")?.fields.line13a_total, 2_250);
+  assertEquals(findOutput(result, "schedule3")?.fields.line15_total, 2_250);
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.line31_additional_payments,
+    2_250,
+  );
+});
+
 Deno.test("Schedule 3: Form 3800 pending source keeps the schedule available without gross credit", () => {
   const result = compute({ form3800_source_credit_pending: true });
   assertEquals(result.outputs.length, 1);
@@ -48,7 +58,16 @@ Deno.test("Schedule 3: Form 3800 pending source keeps the schedule available wit
     line5b: 0,
     line6aGbc: 0,
     line6bPriorMinimumTax: 0,
+    line6cAdoption: 0,
+    line6dElderlyDisabled: 0,
+    line6fCleanVehicle: 0,
+    line6gMortgage: 0,
+    line6hHomebuyer: 0,
+    line6iElectricVehicle: 0,
+    line6jRefueling: 0,
     line6kBondCredit: 0,
+    line6lForm8978: 0,
+    line6mUsedCleanVehicle: 0,
     line7: 0,
   });
 });
@@ -85,6 +104,23 @@ Deno.test("calc: line1_foreign_tax_credit alone → f1040 line20", () => {
     fieldsOf(result.outputs, f1040)!.line20_nonrefundable_credits,
     400,
   );
+  assertEquals(
+    fieldsOf(result.outputs, f1040)!.credit_limit_schedule3_lines?.line1,
+    400,
+  );
+});
+
+Deno.test("Schedule 3 deposits adoption-priority lines without another late credit", () => {
+  const result = compute({
+    line1_foreign_tax_credit: 120,
+    line5b_energy_efficient_home: 80,
+    line6c_adoption_credit: 500,
+  });
+  const lines = fieldsOf(result.outputs, f1040)!.credit_limit_schedule3_lines;
+  assertEquals(lines?.line1, 120);
+  assertEquals(lines?.line5b, 80);
+  assertEquals(lines?.line6cAdoption, 500);
+  assertEquals(lines?.line7, 500);
 });
 
 Deno.test("calc: line1_foreign_tax_1099 alone → f1040 line20", () => {

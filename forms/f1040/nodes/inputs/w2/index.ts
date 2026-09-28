@@ -32,6 +32,11 @@ import { f8812 } from "../f8812/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../config/index.ts";
 import { schedule1a } from "../../intermediate/forms/schedule1a/index.ts";
+import {
+  AllocationBasis,
+  Form8958Line,
+  inputSchema as form8958InputSchema,
+} from "../f8958/source.ts";
 
 export enum Box12Code {
   A = "A", // Uncollected SS tax on tips
@@ -70,6 +75,9 @@ const box12EntrySchema = z.object({
     "Box 12 code (see enum for descriptions)",
   ),
   amount: z.number().nonnegative().describe("Dollar amount for this code"),
+  code_g_governmental_457b: z.literal(true).optional(),
+  code_g_employee_elective_amount: z.number().nonnegative().optional(),
+  code_g_employee_split_review_ref: z.string().trim().min(1).optional(),
 });
 
 const box14EntrySchema = z.object({
@@ -98,7 +106,7 @@ export const w2ItemSchema = z.object({
   ),
   employer_address_zip: z.string().optional().describe("Employer ZIP code"),
   employee_ssn: z.string().optional().describe(
-    "Employee SSN when this W-2 belongs to the spouse",
+    "Employee SSN; required for W-2 retirement deferrals and spouse ownership",
   ),
   box1_wages: z.number().nonnegative().describe(
     "Wages, tips, other compensation",
@@ -169,6 +177,7 @@ export const w2ItemSchema = z.object({
 // Node inputSchema — receives all W-2s for this return as a single array.
 export const inputSchema = z.object({
   w2s: z.array(w2ItemSchema).min(1).describe("All W-2 forms for this return"),
+  f8958_allocation: form8958InputSchema.optional(),
 });
 
 type F1040Input = z.infer<typeof f1040.inputSchema>;
@@ -316,6 +325,57 @@ function wageFields(w2s: W2Items): F1040Input {
     0,
   );
   return total > 0 ? { line1a_wages: total } : {};
+}
+
+function communityW2Fields(
+  w2s: W2Items,
+  allocation: NonNullable<z.infer<typeof inputSchema>["f8958_allocation"]>,
+): F1040Input {
+  const item = w2s[0];
+  const wages = allocation.rows.find((row) =>
+    row.form_line === Form8958Line.Wages
+  );
+  const withholding = allocation.rows.find((row) =>
+    row.form_line === Form8958Line.Withholding
+  );
+  if (
+    w2s.length !== 1 || !item || !wages || !withholding ||
+    allocation.rows.length !== 2 ||
+    allocation.community_property_period.from !== "2025-01-01" ||
+    allocation.community_property_period.through !== "2025-12-31" ||
+    wages.allocation_basis !== AllocationBasis.CommunityEqual ||
+    withholding.allocation_basis !== AllocationBasis.CommunityEqual ||
+    wages.source_document_id !== withholding.source_document_id ||
+    wages.description !== withholding.description ||
+    item.employee_ssn !== allocation.taxpayer.ssn ||
+    item.employer_name !== wages.description ||
+    !Number.isSafeInteger(item.box1_wages) ||
+    !Number.isSafeInteger(item.box2_fed_withheld) ||
+    item.box1_wages <= 0 ||
+    item.box1_wages !== wages.total_amount ||
+    item.box2_fed_withheld !== withholding.total_amount ||
+    (item.box7_ss_tips ?? 0) !== 0 ||
+    (item.box8_allocated_tips ?? 0) !== 0 ||
+    (item.box10_dep_care ?? 0) !== 0 ||
+    (item.box11_nonqual_plans ?? 0) !== 0 ||
+    (item.box12_entries?.length ?? 0) !== 0 ||
+    item.box13_statutory_employee === true ||
+    item.box13_retirement_plan === true ||
+    item.box13_third_party_sick === true ||
+    (item.box14_entries?.length ?? 0) !== 0 ||
+    item.box14b_tipped_code !== undefined ||
+    (item.box17_state_withheld ?? 0) !== 0 ||
+    (item.box19_local_withheld ?? 0) !== 0 ||
+    item.taxpayer_age !== undefined
+  ) {
+    throw new Error(
+      "Form 8958 W-2 allocation requires one taxpayer-owned ordinary W-2 with matching wage/withholding rows and no unsupported box routes",
+    );
+  }
+  return {
+    line1a_wages: wages.taxpayer_share,
+    line25a_w2_withheld: withholding.taxpayer_share,
+  };
 }
 
 function combatPayFields(w2s: W2Items): F1040Input {
@@ -540,8 +600,21 @@ function box12NodeOutputs(w2s: W2Items): NodeOutput[] {
   const h = sum(Box12Code.H);
   if (h > 0) outputs.push(output(schedule1, { line24f_501c18d: h }));
 
-  const w = sum(Box12Code.W);
-  if (w > 0) outputs.push(output(form8889, { employer_hsa_contributions: w }));
+  const codeW = regularItems(w2s).flatMap((item) =>
+    (item.box12_entries ?? []).filter((entry) =>
+      entry.code === Box12Code.W && entry.amount > 0
+    ).map((entry) => {
+      if (!item.employee_ssn) {
+        throw new Error(
+          "W-2 box 12 code W needs the employee SSN to identify the HSA beneficiary",
+        );
+      }
+      return { employee_ssn: item.employee_ssn, amount: entry.amount };
+    })
+  );
+  if (codeW.length > 0) {
+    outputs.push(output(form8889, { w2_code_w_entries: codeW }));
+  }
 
   const r = sum(Box12Code.R);
   if (r > 0) outputs.push(output(form8853, { employer_archer_msa: r }));
@@ -549,8 +622,75 @@ function box12NodeOutputs(w2s: W2Items): NodeOutput[] {
   const t = sum(Box12Code.T);
   if (t > 0) outputs.push(output(form8839, { adoption_benefits: t }));
 
-  const deg = sum(Box12Code.D, Box12Code.E, Box12Code.G);
-  if (deg > 0) outputs.push(output(form8880, { elective_deferrals: deg }));
+  // Code G may combine elective and nonelective 457(b) amounts. Only the
+  // reviewed employee-elective portion of a governmental plan qualifies.
+  for (const item of w2s) {
+    for (const entry of item.box12_entries ?? []) {
+      const hasSplit = entry.code_g_governmental_457b !== undefined ||
+        entry.code_g_employee_elective_amount !== undefined ||
+        entry.code_g_employee_split_review_ref !== undefined;
+      if (entry.code !== Box12Code.G && hasSplit) {
+        throw new Error("W-2 code G split facts belong only on code G");
+      }
+      if (
+        entry.code === Box12Code.G && entry.amount > 0 && (
+          entry.code_g_governmental_457b !== true ||
+          entry.code_g_employee_elective_amount === undefined ||
+          entry.code_g_employee_elective_amount > entry.amount ||
+          !entry.code_g_employee_split_review_ref
+        )
+      ) {
+        throw new Error(
+          "W-2 box 12 code G needs a reviewed governmental 457(b) employee-elective split before Form 8880",
+        );
+      }
+    }
+  }
+  const saverCreditCodes = [
+    Box12Code.D,
+    Box12Code.E,
+    Box12Code.F,
+    Box12Code.H,
+    Box12Code.S,
+    Box12Code.AA,
+    Box12Code.BB,
+    Box12Code.EE,
+  ] as const;
+  const isSaverCreditCode = (
+    code: Box12Code,
+  ): code is (typeof saverCreditCodes)[number] =>
+    saverCreditCodes.some((qualifiedCode) => qualifiedCode === code);
+  const deferralEntries = w2s.flatMap((item) =>
+    (item.box12_entries ?? []).filter((entry) =>
+      (isSaverCreditCode(entry.code) && entry.amount > 0) ||
+      (entry.code === Box12Code.G &&
+        (entry.code_g_employee_elective_amount ?? 0) > 0)
+    ).map((entry) => {
+      if (
+        !item.employee_ssn ||
+        !/^(?:\d{9}|\d{3}-\d{2}-\d{4})$/.test(item.employee_ssn)
+      ) {
+        throw new Error(
+          "W-2 saver-credit box 12 deferrals need the employee's nine-digit SSN for Form 8880",
+        );
+      }
+      return {
+        employee_ssn: item.employee_ssn,
+        code: entry.code as (typeof saverCreditCodes)[number] | Box12Code.G,
+        amount: entry.amount,
+        ...(entry.code === Box12Code.G
+          ? {
+            governmental_457b: true as const,
+            employee_elective_amount: entry.code_g_employee_elective_amount!,
+            employee_split_review_ref: entry.code_g_employee_split_review_ref!,
+          }
+          : {}),
+      };
+    })
+  );
+  if (deferralEntries.length > 0) {
+    outputs.push(output(form8880, { w2_deferral_entries: deferralEntries }));
+  }
 
   const schedule2Input: Partial<z.infer<typeof schedule2["inputSchema"]>> = {};
   const ab = sumUncollected(Box12Code.A, Box12Code.B);
@@ -618,9 +758,11 @@ class W2Node extends TaxNode<typeof inputSchema> {
       );
     }
 
+    const incomeTaxFields = input.f8958_allocation
+      ? communityW2Fields(input.w2s, input.f8958_allocation)
+      : { ...withholdingFields(input.w2s), ...wageFields(input.w2s) };
     const f1040Fields: F1040Input = {
-      ...withholdingFields(input.w2s),
-      ...wageFields(input.w2s),
+      ...incomeTaxFields,
       ...combatPayFields(input.w2s),
     };
 
@@ -644,9 +786,8 @@ class W2Node extends TaxNode<typeof inputSchema> {
     const agiWageFields: Partial<
       z.infer<typeof agi_aggregator["inputSchema"]>
     > = {};
-    const wages = wageFields(input.w2s);
-    if (wages.line1a_wages !== undefined) {
-      agiWageFields.line1a_wages = wages.line1a_wages;
+    if (incomeTaxFields.line1a_wages !== undefined) {
+      agiWageFields.line1a_wages = incomeTaxFields.line1a_wages;
     }
     const entries = regularItems(input.w2s).flatMap((item) =>
       item.box12_entries ?? []

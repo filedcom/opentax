@@ -595,6 +595,40 @@ Deno.test("line5b_pension_taxable maps to TotalTaxablePensionsAmt", () => {
   );
 });
 
+Deno.test("payer code G reconciles to Form 1040 line 5c in native MeF sequence", () => {
+  const source = { f1099rs: [{
+    payer_name: "Jubilee",
+    payer_ein: "12-3456789",
+    box1_gross_distribution: 20_300,
+    box2a_taxable_amount: 10_300,
+    box7_distribution_code: "G",
+    box7_ira_simple_indicator: false,
+    direct_rollover_confirmed: true,
+  }] };
+  const fields = {
+    line5a_pension_gross: 20_300,
+    line5b_pension_taxable: 10_300,
+    line5c_pension_rollover: true,
+  };
+  const result = irs1040.build(fields, { pending: { f1099r: source } });
+  assertStringIncludes(
+    result,
+    "<PensionsAnnuitiesAmt>20300</PensionsAnnuitiesAmt><TotalTaxablePensionsAmt>10300</TotalTaxablePensionsAmt><PensionsAnnuitiesRolloverInd>X</PensionsAnnuitiesRolloverInd>",
+  );
+  assertThrows(
+    () => irs1040.build(fields),
+    Error,
+    "needs valid Form 1099-R source facts",
+  );
+  assertThrows(
+    () => irs1040.build({ ...fields, line5c_pension_rollover: false }, {
+      pending: { f1099r: source },
+    }),
+    Error,
+    "does not match the payer-reported",
+  );
+});
+
 Deno.test("line25a_w2_withheld maps to FormW2WithheldTaxAmt", () => {
   const result = irs1040.build({ line25a_w2_withheld: 8000 });
   assertStringIncludes(
@@ -862,6 +896,30 @@ Deno.test("line25c_total maps to TaxWithheldOtherAmt", () => {
   assertStringIncludes(
     result,
     "<TaxWithheldOtherAmt>900</TaxWithheldOtherAmt>",
+  );
+});
+
+Deno.test("Form 1040 MeF requires the native W-2G link for withholding", () => {
+  assertThrows(
+    () => irs1040.build({ line25c_total: 250 }, {
+      pending: { w2g: { w2gs: [{ box1_winnings: 1_000, box4_federal_withheld: 250 }] } },
+      documentIdsByPendingKey: { w2g: [] },
+    }),
+    Error,
+    "needs each linked payer-issued W-2G document",
+  );
+  assertStringIncludes(
+    irs1040.build({ line25c_total: 250 }, {
+      pending: { w2g: { w2gs: [{ box1_winnings: 1_000, box4_federal_withheld: 0 }] } },
+    }),
+    "<TaxWithheldOtherAmt>250</TaxWithheldOtherAmt>",
+  );
+  assertStringIncludes(
+    irs1040.build({ line25c_total: 250 }, {
+      pending: { w2g: { w2gs: [{ box1_winnings: 1_000, box4_federal_withheld: 250 }] } },
+      documentIdsByPendingKey: { w2g: ["IRSW2G1"] },
+    }),
+    "<TaxWithheldOtherAmt>250</TaxWithheldOtherAmt>",
   );
 });
 

@@ -1,155 +1,142 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { CommunityPropertyState, f8958, inputSchema } from "./index.ts";
+import { FilingStatus } from "../../types.ts";
+import {
+  AllocationBasis,
+  CommunityPropertyState,
+  f8958,
+  Form8958Line,
+  inputSchema,
+  prepareF8958Allocation,
+} from "./index.ts";
 
-function compute(input: Parameters<typeof f8958.compute>[1]) {
-  return f8958.compute({ taxYear: 2025, formType: "f1040" }, input);
-}
+const source = {
+  domicile_state: CommunityPropertyState.CA,
+  federal_filing_status: FilingStatus.MFS,
+  taxpayer: { first_name: "Alex", last_name: "Example", ssn: "111223333" },
+  spouse: { first_name: "Blair", last_name: "Example", ssn: "222334444" },
+  community_property_period: {
+    from: "2025-01-01",
+    through: "2025-12-31",
+    domicile_workpaper_reference: "CA-domicile-review",
+  },
+  reviewed_by: "Reviewer",
+  reviewed_on: "2026-04-01",
+  return_wide_items_review_reference: "both-spouses-return-review",
+  rows: [{
+    item_id: "wage-1",
+    form_line: Form8958Line.Wages,
+    description: "Employer A",
+    source_document_id: "w2-A",
+    source_record_reference: "w2-A-box1",
+    allocation_basis: AllocationBasis.CommunityEqual,
+    state_law_workpaper_reference: "CA-wages",
+    total_amount: 100_001,
+    taxpayer_share: 50_001,
+    other_person_share: 50_000,
+  }, {
+    item_id: "withholding-1",
+    form_line: Form8958Line.Withholding,
+    description: "Employer A",
+    source_document_id: "w2-A",
+    source_record_reference: "w2-A-box2",
+    allocation_basis: AllocationBasis.CommunityEqual,
+    state_law_workpaper_reference: "CA-withholding",
+    total_amount: 10_000,
+    taxpayer_share: 5_000,
+    other_person_share: 5_000,
+  }],
+};
 
-// =============================================================================
-// 1. Schema Validation — state enum
-// =============================================================================
+Deno.test("f8958 stages item-level allocations with exact A=B+C arithmetic", () => {
+  const result = prepareF8958Allocation(source);
+  assertEquals(result.totalsByLine.find((item) => item.line === 1), {
+    line: Form8958Line.Wages,
+    total: 100_001,
+    taxpayer: 50_001,
+    spouse: 50_000,
+  });
+  const outputs =
+    f8958.compute({ taxYear: 2025, formType: "f1040" }, source).outputs;
+  assertEquals(outputs.length, 1);
+  assertEquals(outputs[0].nodeType, "w2");
+  assertEquals(outputs[0].fields.f8958_allocation, source);
+});
 
-Deno.test("f8958: all nine community property states accepted", () => {
-  const states: CommunityPropertyState[] = [
-    CommunityPropertyState.AZ,
-    CommunityPropertyState.CA,
-    CommunityPropertyState.ID,
-    CommunityPropertyState.LA,
-    CommunityPropertyState.NM,
-    CommunityPropertyState.NV,
-    CommunityPropertyState.TX,
-    CommunityPropertyState.WA,
-    CommunityPropertyState.WI,
-  ];
-  for (const state of states) {
-    const parsed = inputSchema.safeParse({ state });
-    assertEquals(parsed.success, true, `State ${state} should be valid`);
+Deno.test("f8958 rejects old amount-only and empty allocation shapes", () => {
+  for (
+    const input of [
+      {},
+      { state: CommunityPropertyState.CA },
+      { allocation_items: [{ total_amount: 100 }] },
+    ]
+  ) {
+    assertEquals(inputSchema.safeParse(input).success, false);
   }
 });
 
-Deno.test("f8958: non-community-property state rejected", () => {
-  const parsed = inputSchema.safeParse({ state: "FL" });
-  assertEquals(parsed.success, false);
-});
-
-Deno.test("f8958: empty object is valid — all fields optional", () => {
-  const parsed = inputSchema.safeParse({});
-  assertEquals(parsed.success, true);
-});
-
-// =============================================================================
-// 2. Schema Validation — withholding fields
-// =============================================================================
-
-Deno.test("f8958: negative taxpayer_withholding rejected", () => {
-  const parsed = inputSchema.safeParse({ taxpayer_withholding: -1 });
-  assertEquals(parsed.success, false);
-});
-
-Deno.test("f8958: negative spouse_withholding rejected", () => {
-  const parsed = inputSchema.safeParse({ spouse_withholding: -100 });
-  assertEquals(parsed.success, false);
-});
-
-Deno.test("f8958: zero withholding accepted", () => {
-  const parsed = inputSchema.safeParse({
-    taxpayer_withholding: 0,
-    spouse_withholding: 0,
-  });
-  assertEquals(parsed.success, true);
-});
-
-// =============================================================================
-// 3. Schema Validation — allocation_items shape
-// =============================================================================
-
-Deno.test("f8958: allocation_items with valid shape accepted", () => {
-  const parsed = inputSchema.safeParse({
-    state: CommunityPropertyState.CA,
-    allocation_items: [
-      { description: "Wages", total_amount: 100_000, taxpayer_share: 60_000, spouse_share: 40_000 },
-      { description: "Interest", total_amount: 2_000, taxpayer_share: 1_000, spouse_share: 1_000 },
-    ],
-  });
-  assertEquals(parsed.success, true);
-});
-
-Deno.test("f8958: allocation_items with all optional sub-fields omitted accepted", () => {
-  const parsed = inputSchema.safeParse({
-    allocation_items: [{}],
-  });
-  assertEquals(parsed.success, true);
-});
-
-// =============================================================================
-// 4. Allocation math — taxpayer + spouse shares sum to total
-// =============================================================================
-
-Deno.test("f8958: taxpayer_share + spouse_share equals total_amount for each item", () => {
-  // The form requires spouses to split total income between them.
-  // Verify that the test data is self-consistent (the schema doesn't enforce this —
-  // it's a preparer responsibility verified by the IRS).
-  const items = [
-    { description: "Wages", total_amount: 120_000, taxpayer_share: 70_000, spouse_share: 50_000 },
-    { description: "Interest", total_amount: 4_000, taxpayer_share: 2_000, spouse_share: 2_000 },
-    { description: "Business income", total_amount: 30_000, taxpayer_share: 30_000, spouse_share: 0 },
-  ];
-  for (const item of items) {
-    assertEquals(
-      (item.taxpayer_share ?? 0) + (item.spouse_share ?? 0),
-      item.total_amount ?? 0,
-      `Shares must sum to total for: ${item.description}`,
-    );
+Deno.test("f8958 rejects mismatched sums, unjustified splits and duplicate rows", () => {
+  const wage = source.rows[0];
+  for (
+    const rows of [
+      [{ ...wage, other_person_share: 49_999 }],
+      [{ ...wage, taxpayer_share: 60_001, other_person_share: 40_000 }],
+      [{ ...wage, allocation_basis: AllocationBasis.TaxpayerSeparate }],
+      [wage, { ...wage }],
+      [{ ...wage, allocation_basis: AllocationBasis.ReviewedException }],
+    ]
+  ) {
+    assertThrows(() => prepareF8958Allocation({ ...source, rows }));
   }
-  // Confirm these items are accepted by schema
-  const parsed = inputSchema.safeParse({
-    state: CommunityPropertyState.CA,
-    allocation_items: items,
-  });
-  assertEquals(parsed.success, true);
 });
 
-Deno.test("f8958: taxpayer_total_income + spouse_total_income represents combined income split", () => {
-  // Verify the summary totals correctly reflect the per-spouse allocated amounts.
-  const taxpayerTotal = 70_000;
-  const spouseTotal = 50_000;
-  const combinedIncome = 120_000;
-  assertEquals(taxpayerTotal + spouseTotal, combinedIncome);
-
-  const parsed = inputSchema.safeParse({
-    state: CommunityPropertyState.CA,
-    taxpayer_total_income: taxpayerTotal,
-    spouse_total_income: spouseTotal,
-  });
-  assertEquals(parsed.success, true);
-});
-
-// =============================================================================
-// 5. Outputs — always empty (informational/disclosure only)
-// =============================================================================
-
-Deno.test("f8958: disclosure-only form always produces no tax outputs", () => {
-  const result = compute({
-    state: CommunityPropertyState.CA,
-    taxpayer_total_income: 60_000,
-    spouse_total_income: 40_000,
-    taxpayer_withholding: 8_000,
-    spouse_withholding: 5_000,
-    allocation_items: [
-      { description: "Wages", total_amount: 100_000, taxpayer_share: 60_000, spouse_share: 40_000 },
-    ],
-  });
-  assertEquals(result.outputs.length, 0);
-});
-
-// =============================================================================
-// 6. Compute — invalid state throws
-// =============================================================================
-
-Deno.test("f8958: compute throws on invalid state", () => {
+Deno.test("f8958 rejects inferred equal spouse self-employment tax", () => {
   assertThrows(() =>
-    f8958.compute({ taxYear: 2025, formType: "f1040" }, {
-      state: "NY" as CommunityPropertyState,
+    prepareF8958Allocation({
+      ...source,
+      rows: [{
+        ...source.rows[0],
+        form_line: Form8958Line.SelfEmploymentTax,
+      }],
     })
+  );
+});
+
+Deno.test("f8958 rejects more than 40 rows for one native line", () => {
+  assertEquals(
+    inputSchema.safeParse({
+      ...source,
+      rows: Array.from({ length: 41 }, (_, index) => ({
+        ...source.rows[0],
+        item_id: `wage-${index}`,
+      })),
+    }).success,
+    false,
+  );
+});
+
+Deno.test("f8958 requires distinct MFS spouses and a 2025 period", () => {
+  assertEquals(
+    inputSchema.safeParse({
+      ...source,
+      federal_filing_status: FilingStatus.Single,
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...source,
+      spouse: { ...source.spouse, ssn: source.taxpayer.ssn },
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...source,
+      community_property_period: {
+        ...source.community_property_period,
+        from: "2024-12-31",
+      },
+    }).success,
+    false,
   );
 });

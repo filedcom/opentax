@@ -200,7 +200,8 @@ Deno.test({
 });
 
 Deno.test({
-  name: "XSD: household wages and Schedule 1 income reach Form 1040 lines 1b, 1z, and 8",
+  name:
+    "XSD: household wages and Schedule 1 income reach Form 1040 lines 1b, 1z, and 8",
   ignore: !xsdAvailable,
 }, async () => {
   const result = runReturn({
@@ -210,9 +211,18 @@ Deno.test({
   });
   assertEquals(result.diagnostics, []);
   const xml = buildXml(result);
-  assertStringIncludes(xml, "<HouseholdEmployeeWagesAmt>2000</HouseholdEmployeeWagesAmt>");
-  assertStringIncludes(xml, "<WagesSalariesAndTipsAmt>2000</WagesSalariesAndTipsAmt>");
-  assertStringIncludes(xml, "<TotalAdditionalIncomeAmt>1000</TotalAdditionalIncomeAmt>");
+  assertStringIncludes(
+    xml,
+    "<HouseholdEmployeeWagesAmt>2000</HouseholdEmployeeWagesAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<WagesSalariesAndTipsAmt>2000</WagesSalariesAndTipsAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalAdditionalIncomeAmt>1000</TotalAdditionalIncomeAmt>",
+  );
   const { success, stderr } = await validateXml(xml);
   assertEquals(success, true, `xmllint errors:\n${stderr}`);
 });
@@ -389,14 +399,18 @@ Deno.test({
   );
   const xml = buildXmlSlice(result, ["f1040", "w2"]);
   assertEquals((xml.match(/<IRSW2 documentId=/g) ?? []).length, 1);
-  assertEquals((xml.match(/<DependentDetail>/g) ?? []).length, facts.dependents.length);
+  assertEquals(
+    (xml.match(/<DependentDetail>/g) ?? []).length,
+    facts.dependents.length,
+  );
   assertStringIncludes(xml, "<DependentNameControlTxt>");
   const { success, stderr } = await validateXml(xml);
   assertEquals(success, true, `xmllint errors:\n${stderr}`);
 });
 
 Deno.test({
-  name: "XSD: qualifying relatives retain grandparent and in-law relationship codes",
+  name:
+    "XSD: qualifying relatives retain grandparent and in-law relationship codes",
   ignore: !xsdAvailable,
 }, async () => {
   const result = runReturn({
@@ -438,8 +452,14 @@ Deno.test({
     w2: [w2Item(75_000, 10_000)],
   });
   const xml = buildXmlSlice(result, ["f1040", "w2"]);
-  assertStringIncludes(xml, "<DependentRelationshipCd>GRANDPARENT</DependentRelationshipCd>");
-  assertStringIncludes(xml, "<DependentRelationshipCd>OTHER</DependentRelationshipCd>");
+  assertStringIncludes(
+    xml,
+    "<DependentRelationshipCd>GRANDPARENT</DependentRelationshipCd>",
+  );
+  assertStringIncludes(
+    xml,
+    "<DependentRelationshipCd>OTHER</DependentRelationshipCd>",
+  );
   assertEquals((xml.match(/<EligibleForODCInd>/g) ?? []).length, 2);
   const { success, stderr } = await validateXml(xml);
   assertEquals(success, true, `xmllint errors:\n${stderr}`);
@@ -605,11 +625,15 @@ Deno.test({
         distributed_properties: facts.form7217.distributedProperties.map((
           property,
         ) => ({
-          description: property.description,
+          // The ATS printout's CASH Part II row totals 4,000 against line 10's
+          // 6,000; use a separately reconciled noncash property for this XSD case.
+          description: "EQUIPMENT",
+          property_treatment: "section732_property",
           partnership_basis_before_distribution:
             property.partnershipBasisBeforeDistribution,
           section_734b_basis_adjustment: property.section734bBasisAdjustment,
-          partner_basis_after_section_732: property.partnerBasisAfterSection732,
+          fair_market_value: 9_000,
+          partner_basis_after_section_732: 6_000,
         })),
       }],
     },
@@ -709,7 +733,9 @@ Deno.test({
     true,
   );
   assertEquals(
-    xml.includes("<TotalItemizedOrStandardDedAmt>17350</TotalItemizedOrStandardDedAmt>"),
+    xml.includes(
+      "<TotalItemizedOrStandardDedAmt>17350</TotalItemizedOrStandardDedAmt>",
+    ),
     true,
   );
   assertEquals(xml.includes("<TaxableIncomeAmt>450</TaxableIncomeAmt>"), true);
@@ -852,7 +878,10 @@ Deno.test({
   assertEquals((xml.match(/<IRS1040ScheduleEIC documentId=/g) ?? []).length, 1);
   assertEquals((xml.match(/<QualifyingChildInformation>/g) ?? []).length, 2);
   assertStringIncludes(xml, 'referenceDocumentName="IRS1040ScheduleEIC"');
-  assertStringIncludes(xml, "<ChldWhoLivedWithYouCnt>2</ChldWhoLivedWithYouCnt>");
+  assertStringIncludes(
+    xml,
+    "<ChldWhoLivedWithYouCnt>2</ChldWhoLivedWithYouCnt>",
+  );
   const { success, stderr } = await validateXml(xml);
   assertEquals(success, true, `xmllint errors:\n${stderr}`);
 });
@@ -868,7 +897,10 @@ Deno.test({
   const xml = buildXmlSlice(result, ["f1040", "eitc", "w2"]);
   assertStringIncludes(xml, "<EarnedIncomeCreditAmt>");
   assertEquals(xml.includes("<IRS1040ScheduleEIC"), false);
-  assertEquals(xml.includes('referenceDocumentName="IRS1040ScheduleEIC"'), false);
+  assertEquals(
+    xml.includes('referenceDocumentName="IRS1040ScheduleEIC"'),
+    false,
+  );
   const { success, stderr } = await validateXml(xml);
   assertEquals(success, true, `xmllint errors:\n${stderr}`);
 });

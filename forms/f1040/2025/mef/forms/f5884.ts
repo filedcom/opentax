@@ -6,7 +6,7 @@ import {
 import {
   inputSchema as scheduleCInputSchema,
   wotcReductionsByBusiness,
-} from "../../../nodes/inputs/schedule_c/index.ts";
+} from "../../../nodes/inputs/schedule_c/model.ts";
 import {
   inputSchema as scheduleFInputSchema,
   wotcReductionsByFarm,

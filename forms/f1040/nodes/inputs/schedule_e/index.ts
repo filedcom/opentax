@@ -14,11 +14,17 @@ import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import { form8995 } from "../../intermediate/forms/form8995/index.ts";
 import { scheduleA as schedule_a } from "../schedule_a/index.ts";
-import { form8582 } from "../../intermediate/forms/form8582/index.ts";
+import {
+  firstYearActivitySourceSchema,
+  form8582,
+  priorYear8582SourceSchema,
+} from "../../intermediate/forms/form8582/index.ts";
 import { form8960 } from "../../intermediate/forms/form8960/index.ts";
 import {
   form4797,
+  isQualifiedEntireSale,
   passivePropertySaleSchema,
+  passiveSaleGain,
 } from "../../intermediate/forms/form4797/index.ts";
 import { form4562 } from "../../intermediate/forms/form4562/index.ts";
 import { form8990 } from "../../intermediate/forms/form8990/index.ts";
@@ -57,6 +63,7 @@ const otherExpenseLineSchema = z.object({
 export const itemSchema = z.object({
   // --- Required identification fields ---
   tsj: tsjSchema,
+  activity_id: z.string().trim().min(1).max(64).optional(),
   property_description: z.string().min(1),
   property_type: z.number().int().min(1).max(8),
   activity_type: z.enum(["A", "B", "C", "D"]),
@@ -92,12 +99,17 @@ export const itemSchema = z.object({
   // Dated sales of property in this rental activity. Form 4797 calculates
   // the gain from these same canonical rows and Form 8582 allocates its PAL.
   passive_property_sales: z.array(passivePropertySaleSchema).optional(),
+  // Evidence that an entire-disposition activity first existed in TY2025.
+  // A property acquired in 2025 alone does not prove it was not grouped with
+  // an older passive activity.
+  first_year_activity_source: firstYearActivitySourceSchema.optional(),
   carry_to_8960: z.boolean().optional(),
   main_home_or_second_home: z.boolean().optional(),
   occupancy_percent: z.number().min(0).max(100).optional(),
 
   // --- Passive activity carryovers ---
   prior_unallowed_passive_operating: z.number().nonnegative().optional(),
+  prior_year_8582_source: priorYear8582SourceSchema.optional(),
   // True only when the taxpayer actively participated in every year that
   // produced this prior operating loss, as required for Form 8582 Part IV.
   prior_passive_losses_active_when_incurred: z.boolean().optional(),
@@ -127,6 +139,21 @@ export const itemSchema = z.object({
 
   // --- Income fields ---
   royalties_income: z.number().nonnegative().optional(),
+  k1_royalty_source: z.object({
+    partnership_ein: z.string().regex(/^\d{9}$/),
+    source_document_reference: z.string().trim().min(1),
+    box7_gross_royalties: z.number().positive(),
+    box13_code_i_allowed_deduction: z.number().nonnegative().optional(),
+    box13_code_i_statement_reference: z.string().trim().min(1).optional(),
+  }).strict().optional(),
+  // One reviewed 1099-MISC box 2 mapped to this royalty property. The
+  // passthrough amount is the same income, not a second Schedule E receipt.
+  f1099m_royalty_source: z.object({
+    payer_name: z.string().min(1),
+    payer_tin: z.string().regex(/^\d{9}$/),
+    recipient_tin: z.string().regex(/^\d{9}$/),
+    box2_gross_royalties: z.number().positive(),
+  }).strict().optional(),
 
   // --- Expense lines ---
   expense_advertising: z.number().nonnegative().optional(),
@@ -146,6 +173,15 @@ export const itemSchema = z.object({
   expense_depreciation_amt: z.number().nonnegative().optional(),
   expense_depletion: z.number().nonnegative().optional(),
   expense_other_lines: z.array(otherExpenseLineSchema).max(6).optional(),
+}).superRefine((item, ctx) => {
+  if (item.qbi_aggregation_number !== undefined) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["qbi_aggregation_number"],
+      message:
+        "Schedule E QBI aggregation number needs Form 8995-A Schedule B member and election evidence",
+    });
+  }
 });
 
 export const inputSchema = z.object({
@@ -165,10 +201,12 @@ export const inputSchema = z.object({
   farm_rental_gross: z.number().nonnegative().optional(),
   farm_rental_net: z.number().optional(),
   farm_rental_activities: z.array(z.object({
+    activity_id: z.string().trim().min(1).max(64).optional(),
     name: z.string().min(1),
     current_net: z.number(),
     actively_participated: z.boolean(),
     prior_unallowed_operating: z.number().int().nonnegative().optional(),
+    prior_year_8582_source: priorYear8582SourceSchema.optional(),
     prior_active_participation: z.boolean().optional(),
   })).optional(),
 });
@@ -179,9 +217,175 @@ type FarmActivity = NonNullable<
   z.infer<typeof inputSchema>["farm_rental_activities"]
 >[number];
 
+/** Section 469(g) overall-loss route. A complete disposition with overall
+ * gain belongs on Form 8582 instead. */
+export function qualifiedEntireDispositionLoss(
+  item: EItem,
+): number | undefined {
+  const sale = item.passive_property_sales?.[0];
+  if (
+    item.activity_type !== "B" || item.disposed_of !== true ||
+    !item.activity_id || item.passive_property_sales?.length !== 1 ||
+    !sale || sale.part !== "II" || !isQualifiedEntireSale(sale) ||
+    sale.activity_id !== item.activity_id ||
+    sale.activity_name !== item.property_description ||
+    (item.prior_unallowed_passive_4797_part1 ?? 0) !== 0 ||
+    (item.prior_unallowed_passive_4797_part2 ?? 0) !== 0 ||
+    (item.prior_unallowed_passive_operating ?? 0) <= 0 ||
+    item.prior_year_8582_source?.activity_id !== item.activity_id ||
+    item.prior_year_8582_source.filed_part_vii_column_c !==
+      item.prior_unallowed_passive_operating ||
+    item.prior_year_8582_source.filed_part_ix_rows !== undefined ||
+    item.prior_year_8582_source.filed_part_viii_row !== undefined ||
+    (item.ownership_percent ?? 100) !== 100 ||
+    (item.section_1231_gain_loss ?? 0) !== 0
+  ) return undefined;
+  const currentNet = computePropertyNet(item);
+  if (!Number.isSafeInteger(currentNet)) return undefined;
+  const currentLoss = Math.max(0, -currentNet);
+  const totalLoss = currentLoss + item.prior_unallowed_passive_operating;
+  return currentLoss > 0 && totalLoss > passiveSaleGain(sale)
+    ? totalLoss
+    : undefined;
+}
+
+/** A sourced complete disposition with an overall gain stays in Form 8582
+ * Part IV for an active rental or Part V for another passive rental. */
+export function qualifiedEntireDispositionGain(
+  item: EItem,
+): number | undefined {
+  const sale = item.passive_property_sales?.[0];
+  const priorOperating = item.prior_unallowed_passive_operating ?? 0;
+  const firstYear = item.first_year_activity_source;
+  const sourcedPriorLoss = firstYear === undefined && priorOperating > 0 &&
+    item.prior_year_8582_source?.activity_id === item.activity_id &&
+    item.prior_year_8582_source.filed_part_vii_column_c === priorOperating &&
+    item.prior_year_8582_source.filed_part_ix_rows === undefined &&
+    item.prior_year_8582_source.filed_part_viii_row === undefined;
+  const sourcedFirstYear = item.activity_type === "B" &&
+    firstYear !== undefined && sale !== undefined &&
+    firstYear.activity_id === item.activity_id &&
+    firstYear.activity_name === item.property_description &&
+    firstYear.activity_acquired_on === sale.acquired_on &&
+    firstYear.activity_acquired_on >= "2025-01-01" &&
+    firstYear.activity_acquired_on <= "2025-12-31" &&
+    priorOperating === 0 &&
+    item.prior_unallowed_passive_operating === undefined &&
+    item.prior_year_8582_source === undefined &&
+    item.prior_unallowed_passive_4797_part1 === undefined &&
+    item.prior_unallowed_passive_4797_part2 === undefined &&
+    item.prior_passive_losses_active_when_incurred === undefined &&
+    item.prior_unallowed_at_risk === undefined &&
+    item.operating_expenses_carryover === undefined &&
+    item.disallowed_mortgage_interest_8990 === undefined &&
+    item.disallowed_other_interest_8990 === undefined;
+  if (
+    (item.activity_type !== "B" &&
+      !(item.activity_type === "A" &&
+        item.property_type !== 6 &&
+        item.prior_passive_losses_active_when_incurred === true)) ||
+    item.disposed_of !== true ||
+    !item.activity_id || item.passive_property_sales?.length !== 1 ||
+    !sale || sale.part !== "II" || !isQualifiedEntireSale(sale) ||
+    sale.activity_id !== item.activity_id ||
+    sale.activity_name !== item.property_description ||
+    (item.prior_unallowed_passive_4797_part1 ?? 0) !== 0 ||
+    (item.prior_unallowed_passive_4797_part2 ?? 0) !== 0 ||
+    (!sourcedPriorLoss && !sourcedFirstYear) ||
+    (item.ownership_percent ?? 100) !== 100 ||
+    (item.section_1231_gain_loss ?? 0) !== 0
+  ) return undefined;
+  const currentNet = computePropertyNet(item);
+  if (!Number.isSafeInteger(currentNet) || currentNet >= 0) return undefined;
+  const loss = -currentNet + priorOperating;
+  return Number.isSafeInteger(loss) && passiveSaleGain(sale) > loss
+    ? loss
+    : undefined;
+}
+
+/** A retained rental's short-held property gain remains passive activity
+ * income; it does not release every prior operating PAL under §469(g). */
+export function qualifiedRetainedPartIISale(item: EItem): boolean {
+  const sale = item.passive_property_sales?.[0];
+  if (
+    (item.activity_type !== "A" && item.activity_type !== "B") ||
+    !sale || item.disposed_of !== true ||
+    !item.activity_id ||
+    item.passive_property_sales?.length !== 1 ||
+    sale.part !== "II" ||
+    sale.entire_activity_interest_disposed !== false ||
+    sale.activity_id !== item.activity_id ||
+    sale.activity_name !== item.property_description ||
+    (item.prior_unallowed_passive_operating ?? 0) <= 0 ||
+    (item.prior_unallowed_passive_4797_part1 ?? 0) !== 0 ||
+    (item.prior_unallowed_passive_4797_part2 ?? 0) !== 0 ||
+    item.prior_year_8582_source?.activity_id !== item.activity_id ||
+    item.prior_year_8582_source.filed_part_vii_column_c !==
+      item.prior_unallowed_passive_operating ||
+    item.prior_year_8582_source.filed_part_ix_rows !== undefined ||
+    item.prior_year_8582_source.filed_part_viii_row !== undefined ||
+    (item.ownership_percent ?? 100) !== 100 ||
+    (item.section_1231_gain_loss ?? 0) !== 0 ||
+    !Number.isSafeInteger(computePropertyNet(item)) ||
+    sale.buyer_unrelated !== true || sale.fully_taxable !== true ||
+    sale.installment_method !== false ||
+    !sale.disposition_document_reference
+  ) return false;
+  if (item.activity_type === "B") return true;
+  return item.property_type !== 6 &&
+    item.prior_passive_losses_active_when_incurred === true &&
+    computePropertyNet(item) < 0 &&
+    passiveSaleGain(sale) <
+      -computePropertyNet(item) +
+        (item.prior_unallowed_passive_operating ?? 0);
+}
+
 // ─── Validation ──────────────────────────────────────────────────────────────
 
 function validateItem(item: EItem): void {
+  const k1Royalty = item.k1_royalty_source;
+  const miscRoyalty = item.f1099m_royalty_source;
+  if (
+    miscRoyalty && (
+      item.k1_royalty_source !== undefined ||
+      item.property_type !== 6 || item.activity_type !== "D" ||
+      item.form_1099_payments_made !== false ||
+      item.royalties_income !== miscRoyalty.box2_gross_royalties ||
+      item.rent_income !== 0 || item.fair_rental_days !== 0 ||
+      item.personal_use_days !== 0 ||
+      (item.ownership_percent ?? 100) !== 100 ||
+      computeExpenses(item) !== 0
+    )
+  ) {
+    throw new Error(
+      "Schedule E 1099-MISC royalty row must be one nonbusiness, expense-free box 2 property",
+    );
+  }
+  if (
+    k1Royalty && (
+      item.property_type !== 6 || item.activity_type !== "D" ||
+      item.form_1099_payments_made !== false ||
+      item.royalties_income !== k1Royalty.box7_gross_royalties ||
+      item.rent_income !== 0 || item.fair_rental_days !== 0 ||
+      item.personal_use_days !== 0 ||
+      (item.ownership_percent ?? 100) !== 100 ||
+      computeExpenses(item) !==
+        (k1Royalty.box13_code_i_allowed_deduction ?? 0) ||
+      (item.expense_other_lines?.length ?? 0) !==
+        (k1Royalty.box13_code_i_allowed_deduction === undefined ? 0 : 1) ||
+      (k1Royalty.box13_code_i_allowed_deduction === undefined) !==
+        (k1Royalty.box13_code_i_statement_reference === undefined) ||
+      (k1Royalty.box13_code_i_allowed_deduction !== undefined &&
+        (item.expense_other_lines?.[0]?.description !==
+            "From Schedule K-1 (Form 1065)" ||
+          item.expense_other_lines?.[0]?.amount !==
+            k1Royalty.box13_code_i_allowed_deduction))
+    )
+  ) {
+    throw new Error(
+      "Schedule E K-1 royalty row must match box 7 and code I sources",
+    );
+  }
   if (item.property_type === 8 && !item.property_type_other_desc) {
     throw new Error(
       "Schedule E validation: property_type_other_desc is required when property_type = 8",
@@ -199,6 +403,28 @@ function validateItem(item: EItem): void {
   ) {
     throw new Error(
       "Schedule E prior passive operating loss needs prior-year active participation answer",
+    );
+  }
+  if (
+    item.passive_property_sales?.some((sale) =>
+      sale.entire_activity_interest_disposed === true
+    ) &&
+    qualifiedEntireDispositionLoss(item) === undefined &&
+    qualifiedEntireDispositionGain(item) === undefined
+  ) {
+    throw new Error(
+      "Schedule E entire passive disposition needs section 469(g) review",
+    );
+  }
+  if (
+    (item.prior_unallowed_passive_operating ?? 0) > 0 &&
+    item.disposed_of === true &&
+    qualifiedEntireDispositionLoss(item) === undefined &&
+    qualifiedEntireDispositionGain(item) === undefined &&
+    !qualifiedRetainedPartIISale(item)
+  ) {
+    throw new Error(
+      "Schedule E prior passive loss with current disposition needs section 469(g) review",
     );
   }
 }
@@ -357,6 +583,24 @@ function form8582Outputs(
 ): NodeOutput[] {
   if (!hasPassiveLoss(items, farms)) return [];
 
+  const reportedProperties = passiveItems(items).filter((item) =>
+    computePropertyNet(item) !== 0 ||
+    (item.prior_unallowed_passive_operating ?? 0) > 0 ||
+    (item.prior_unallowed_passive_4797_part1 ?? 0) > 0 ||
+    (item.prior_unallowed_passive_4797_part2 ?? 0) > 0
+  );
+  const reportedFarms = farms.filter((farm) =>
+    farm.current_net !== 0 || (farm.prior_unallowed_operating ?? 0) > 0
+  );
+  if (
+    reportedProperties.some((item) => !item.activity_id) ||
+    reportedFarms.some((farm) => !farm.activity_id)
+  ) {
+    throw new Error(
+      "Form 8582 passive Schedule E and Form 4835 activities need durable activity IDs",
+    );
+  }
+
   const f8582Input: Partial<z.infer<typeof form8582["inputSchema"]>> = {};
   const currentNetLoss = passiveCurrentLoss(items) + farmCurrentLoss(farms);
   const currentNetIncome = passiveCurrentIncome(items) +
@@ -373,32 +617,30 @@ function form8582Outputs(
     ).reduce((sum, farm) => sum + (farm.prior_unallowed_operating ?? 0), 0);
 
   f8582Input.activities = [
-    ...passiveItems(items).filter((item) =>
-      computePropertyNet(item) !== 0 ||
-      (item.prior_unallowed_passive_operating ?? 0) > 0 ||
-      (item.prior_unallowed_passive_4797_part1 ?? 0) > 0 ||
-      (item.prior_unallowed_passive_4797_part2 ?? 0) > 0
-    ).map((item) => ({
+    ...reportedProperties.map((item) => ({
+      activity_id: item.activity_id!,
       name: item.property_description,
       activity_type: item.activity_type as "A" | "B",
       property_type: item.property_type,
       reporting_form: "schedule_e" as const,
       current_net: computePropertyNet(item),
       prior_unallowed_operating: item.prior_unallowed_passive_operating ?? 0,
+      prior_year_8582_source: item.prior_year_8582_source,
+      first_year_activity_source: item.first_year_activity_source,
       prior_active_participation:
         item.prior_passive_losses_active_when_incurred,
       prior_unallowed_4797_part1: item.prior_unallowed_passive_4797_part1 ?? 0,
       prior_unallowed_4797_part2: item.prior_unallowed_passive_4797_part2 ?? 0,
     })),
-    ...farms.filter((farm) =>
-      farm.current_net !== 0 || (farm.prior_unallowed_operating ?? 0) > 0
-    ).map((farm) => ({
+    ...reportedFarms.map((farm) => ({
+      activity_id: farm.activity_id!,
       name: farm.name,
       activity_type: farm.actively_participated ? "A" as const : "B" as const,
       property_type: 5,
       reporting_form: "form4835" as const,
       current_net: farm.current_net,
       prior_unallowed_operating: farm.prior_unallowed_operating ?? 0,
+      prior_year_8582_source: farm.prior_year_8582_source,
       prior_active_participation: farm.prior_active_participation,
       prior_unallowed_4797_part1: 0,
       prior_unallowed_4797_part2: 0,
@@ -588,6 +830,7 @@ function form4797Outputs(
       item.disposed_of !== true ||
       (item.activity_type !== "A" && item.activity_type !== "B") ||
       item.passive_property_sales.some((sale) =>
+        sale.activity_id !== item.activity_id ||
         sale.activity_name !== item.property_description
       )
     ) {
@@ -599,22 +842,33 @@ function form4797Outputs(
   });
   if (
     sales.length > 0 &&
-    new Set(items.map((item) => item.property_description)).size !==
-      items.length
+    new Set(
+        items.filter((item) => item.activity_id).map((item) =>
+          item.activity_id
+        ),
+      ).size !== items.filter((item) => item.activity_id).length
   ) {
     throw new Error(
-      "Schedule E passive property sales require unique activity names",
+      "Schedule E passive property sales require unique durable activity IDs",
     );
   }
-  if (disposedItems.length === 0) return [];
-  const passiveLedger = form8582Outputs(items, farms)[0]?.fields;
+  const passiveLedger = items.length === 1 && farms.length === 0 &&
+      qualifiedEntireDispositionLoss(items[0]) !== undefined
+    ? undefined
+    : form8582Outputs(items, farms)[0]?.fields;
   const activities = passiveLedger?.activities as
     | z.infer<typeof form8582.inputSchema>["activities"]
     | undefined;
+  const hasPrior4797 =
+    activities?.some((activity) =>
+      activity.prior_unallowed_4797_part1 > 0 ||
+      activity.prior_unallowed_4797_part2 > 0
+    ) ?? false;
+  if (disposedItems.length === 0 && !hasPrior4797) return [];
   return [output(form4797, {
     disposed_properties: disposedItems.length,
-    passive_disposed_activity_names: disposedItems.map((item) =>
-      item.property_description
+    passive_disposed_activity_ids: disposedItems.flatMap((item) =>
+      item.activity_id ? [item.activity_id] : []
     ),
     ...(sales.length ? { passive_property_sales: sales } : {}),
     ...(activities ? { passive_activity_sources: activities } : {}),
@@ -692,7 +946,14 @@ class ScheduleENode extends TaxNode<typeof inputSchema> {
     const parsed = inputSchema.parse(input);
     const { schedule_es, rental_income, royalty_income, farm_rental_net } =
       parsed;
-    if (schedule_es.length > 0 && (royalty_income ?? 0) > 0) {
+    const linkedMiscRoyalty = schedule_es.length === 1 &&
+      schedule_es[0].f1099m_royalty_source !== undefined &&
+      royalty_income ===
+        schedule_es[0].f1099m_royalty_source.box2_gross_royalties;
+    if (
+      schedule_es.length > 0 && (royalty_income ?? 0) > 0 &&
+      !linkedMiscRoyalty
+    ) {
       throw new Error(
         "Schedule E property royalties and 1099-MISC passthrough royalties need per-property reconciliation",
       );
@@ -750,15 +1011,19 @@ class ScheduleENode extends TaxNode<typeof inputSchema> {
       (farm_rental_net ?? 0);
     // Schedule E line 26 carries income plus DEDUCTIBLE losses: a passive loss is held
     // back here and the part Form 8582 allows comes back on Schedule 1 (IRC §469(a)).
-    const deductibleNet = totalNet + passiveCurrentLoss(schedule_es) +
-      farmCurrentLoss(farms);
+    const entireLoss = schedule_es.length === 1 && farms.length === 0
+      ? qualifiedEntireDispositionLoss(schedule_es[0])
+      : undefined;
+    const deductibleNet = entireLoss === undefined
+      ? totalNet + passiveCurrentLoss(schedule_es) + farmCurrentLoss(farms)
+      : totalNet - (schedule_es[0].prior_unallowed_passive_operating ?? 0);
     const outputs: NodeOutput[] = [
       output(schedule1, { line5_schedule_e: deductibleNet }),
       this.outputNodes.output(agi_aggregator, {
         line5_schedule_e: deductibleNet,
-        ...palFields(schedule_es, farms),
+        ...(entireLoss === undefined ? palFields(schedule_es, farms) : {}),
       }),
-      ...form8582Outputs(schedule_es, farms),
+      ...(entireLoss === undefined ? form8582Outputs(schedule_es, farms) : []),
       ...form8960Outputs(schedule_es),
       ...scheduleAOutputs(schedule_es),
       ...form8995Outputs(schedule_es),

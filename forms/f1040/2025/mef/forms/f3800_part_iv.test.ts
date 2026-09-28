@@ -1,10 +1,12 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
-import type { Form3800CarryoverXmlRow } from "./f3800_passive_rows.ts";
+import type { Form3800CarryoverRow } from "./f3800_passive_rows.ts";
 import { buildForm3800PartIVXml } from "./f3800_part_iv.ts";
 
-const standard: Form3800CarryoverXmlRow = {
+const standard: Form3800CarryoverRow = {
   line: "1h",
-  xml: "<OrphanDrugCarryover/>",
+  sourceKeys: ["form8820-2024"],
+  originatingTaxYear: 2024,
+  entity: { ein: "123456789" },
   amount: {
     line: "1h",
     passiveBeforeLimit: 300,
@@ -16,9 +18,10 @@ const standard: Form3800CarryoverXmlRow = {
   },
 };
 
-const empowerment: Form3800CarryoverXmlRow = {
+const empowerment: Form3800CarryoverRow = {
   line: "3",
-  xml: "<EmpowermentCarryover/>",
+  sourceKeys: ["form8844-2024"],
+  originatingTaxYear: 2024,
   amount: {
     line: "3",
     passiveBeforeLimit: 100,
@@ -30,9 +33,10 @@ const empowerment: Form3800CarryoverXmlRow = {
   },
 };
 
-const specified: Form3800CarryoverXmlRow = {
+const specified: Form3800CarryoverRow = {
   line: "4e",
-  xml: "<ProductionCarryover/>",
+  sourceKeys: ["form8835-2023"],
+  originatingTaxYear: 2023,
   amount: {
     line: "4e",
     passiveBeforeLimit: 200,
@@ -47,9 +51,9 @@ const specified: Form3800CarryoverXmlRow = {
 Deno.test("Form 3800 Part IV orders carryover rows and derives lines 5-7", () => {
   const rows = buildForm3800PartIVXml([specified, empowerment, standard]);
   assertEquals(rows.map((row) => row.match(/^<[^\s/>]+/)?.[0]), [
-    "<OrphanDrugCarryover",
-    "<EmpowermentCarryover",
-    "<ProductionCarryover",
+    "<Frm8820CYCyovCrGrp",
+    "<Frm8844CYCrovCrGrp",
+    "<Frm8835CYSpcfdCrGrp",
     "<CYOtherSpcfdCreditsSubTotGrp",
     "<TotCYGBCOrESBCAmtGrp",
     "<Tot8844OthSpcfdGBCOrESBCAmtGrp",
@@ -87,6 +91,24 @@ Deno.test("Form 3800 Part IV rejects duplicate and unreconciled carryovers", () 
       }]),
     Error,
     "source amount does not reconcile",
+  );
+  assertThrows(
+    () =>
+      buildForm3800PartIVXml([{
+        ...standard,
+        sourceKeys: ["same", "same"],
+      }]),
+    Error,
+    "typed source identity is invalid",
+  );
+  assertThrows(
+    () =>
+      buildForm3800PartIVXml([{
+        ...standard,
+        originatingTaxYear: 2025,
+      }]),
+    Error,
+    "typed source identity is invalid",
   );
 });
 

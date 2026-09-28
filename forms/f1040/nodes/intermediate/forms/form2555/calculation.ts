@@ -119,6 +119,7 @@ export interface PhysicalPresenceLines {
   readonly line43: number;
   readonly line44: 0;
   readonly line45: number;
+  readonly line50: 0;
 }
 
 function utcDay(raw: string): number {
@@ -239,6 +240,16 @@ export function calculatePhysicalPresence2555(
   const line43 = line36 + line42;
   const line44 = 0;
   const line45 = line43;
+  // Part IX applies only when line 33 exceeds line 36 and line 27 exceeds
+  // line 43. This strict employee-only source allocates the entire housing
+  // amount to employer wages, so line 36 equals line 33 and no housing
+  // deduction can be entered on line 50.
+  if (line33 > line36) {
+    throw new Error(
+      "Form 2555 employee-only source cannot support a Part IX housing deduction",
+    );
+  }
+  const line50 = 0 as const;
   return {
     qualifyingDays,
     line19,
@@ -263,5 +274,6 @@ export function calculatePhysicalPresence2555(
     line43,
     line44,
     line45,
+    line50,
   };
 }

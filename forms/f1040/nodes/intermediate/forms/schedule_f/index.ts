@@ -17,6 +17,7 @@ import {
   simplifiedAtRiskSchema,
 } from "../form6198/simplified.ts";
 import { form461 } from "../form461/index.ts";
+import { schedule_j_calculation } from "../schedule_j/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 import {
@@ -207,11 +208,31 @@ export const farmSourceSchema = z.object({
     "1099g_ccc_market_gain",
     "1099m_crop_insurance",
     "1099nec_farm_income",
+    "1099patr_cooperative",
     "auto_expense",
   ]),
   amount: z.number().nonnegative(),
+  taxable_amount: z.number().nonnegative().optional(),
   deferred: z.boolean().optional(),
-}).strict();
+}).strict().superRefine((source, ctx) => {
+  if (source.kind === "1099patr_cooperative") {
+    if (
+      source.taxable_amount === undefined ||
+      source.taxable_amount > source.amount
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "1099-PATR farm source requires a verified taxable amount no greater than gross",
+      });
+    }
+  } else if (source.taxable_amount !== undefined) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Taxable amount is only allowed for 1099-PATR farm sources",
+    });
+  }
+});
 
 export type FarmSource = z.infer<typeof farmSourceSchema>;
 
@@ -288,7 +309,12 @@ export function reconcileFarmSources(
     }
     farms.set(item.farm_id, item);
   }
-  const totals = new Map<string, Record<FarmSource["kind"], number>>();
+  const totals = new Map<
+    string,
+    Record<FarmSource["kind"], number> & {
+      patrTaxable: number;
+    }
+  >();
   for (const source of sources) {
     if (!farms.has(source.farm_id)) {
       throw new Error(
@@ -300,9 +326,14 @@ export function reconcileFarmSources(
       "1099g_ccc_market_gain": 0,
       "1099m_crop_insurance": 0,
       "1099nec_farm_income": 0,
+      "1099patr_cooperative": 0,
       auto_expense: 0,
+      patrTaxable: 0,
     };
     current[source.kind] += source.amount;
+    if (source.kind === "1099patr_cooperative") {
+      current.patrTaxable += source.taxable_amount ?? 0;
+    }
     totals.set(source.farm_id, current);
   }
   for (const [farmId, source] of totals) {
@@ -313,6 +344,16 @@ export function reconcileFarmSources(
     const accrual = farm.part_iii;
     const checks = farm.accounting_method === "cash"
       ? [
+        [
+          "line 3a",
+          farm.line3a_cooperative_distributions ?? 0,
+          source["1099patr_cooperative"],
+        ],
+        [
+          "line 3b",
+          farm.line3b_cooperative_distributions_taxable ?? 0,
+          source.patrTaxable,
+        ],
         [
           "line 4a",
           farm.line4a_ag_program_payments ?? 0,
@@ -327,6 +368,16 @@ export function reconcileFarmSources(
         ["line 10", farm.line10_car_truck ?? 0, source.auto_expense],
       ] as const
       : [
+        [
+          "line 38a",
+          accrual?.line38a_cooperative_distributions ?? 0,
+          source["1099patr_cooperative"],
+        ],
+        [
+          "line 38b",
+          accrual?.line38b_cooperative_distributions_taxable ?? 0,
+          source.patrTaxable,
+        ],
         [
           "line 39a",
           accrual?.line39a_ag_program_payments ?? 0,
@@ -612,6 +663,7 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
     form8995,
     form8582,
     form461,
+    schedule_j_calculation,
   ]);
 
   compute(ctx: NodeContext, rawInput: z.infer<typeof inputSchema>): NodeResult {
@@ -654,6 +706,9 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
         line6_schedule_f: totalNetProfit,
       }),
     );
+    outputs.push(this.outputNodes.output(schedule_j_calculation, {
+      farm_net_profit: totalNetProfit,
+    }));
 
     // Per-item downstream routing
     for (let i = 0; i < input.schedule_fs.length; i++) {

@@ -16,6 +16,7 @@ Deno.test("ATS 1040 Scenario 8: source-backed return calculates age deduction an
   const form = result.pending.f1040;
   assertEquals(form?.line5a_pension_gross, 20_300);
   assertEquals(form?.line5b_pension_taxable, 10_300);
+  assertEquals(form?.line5c_pension_rollover, true);
   assertEquals(form?.line6a_ss_gross, 1_000);
   assertEquals(form?.line6b_ss_taxable ?? 0, 0);
   assertEquals(form?.mfs_spouse_lived_with_taxpayer, false);
@@ -46,7 +47,7 @@ Deno.test("ATS 1040 Scenario 8: MFS cohabitation answer changes Social Security 
   assertEquals(result.pending.f1040?.mfs_spouse_lived_with_taxpayer, true);
 });
 
-Deno.test("ATS 1040 Scenario 8: printed QCD and rollover marks stay distinct from 1099-R source codes", () => {
+Deno.test("ATS 1040 Scenario 8: code G and printed mark confirm rollover but code Q does not prove QCD", () => {
   const facts = SCENARIO_1040_08_FACTS;
   assertEquals(facts.form1040.line4cQcdChecked, true);
   assertEquals(facts.form1040.line5cRolloverChecked, true);
@@ -59,4 +60,9 @@ Deno.test("ATS 1040 Scenario 8: printed QCD and rollover marks stay distinct fro
     forms.some((form) => form.box7_ira_simple_indicator === true),
     false,
   );
+  assertEquals(forms[0].qcd_full, undefined);
+  assertEquals(forms[0].qcd_partial_amount, undefined);
+  assertEquals(forms[1].box7_distribution_code, "G");
+  assertEquals(forms[1].direct_rollover_confirmed, true);
+  assertEquals(forms[1].box2a_taxable_amount, 10_300);
 });

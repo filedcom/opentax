@@ -1,4 +1,10 @@
+import { z } from "zod";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
+import {
+  reconcileCode2Form8889,
+  reconcilePairedForm8889,
+  reconcileSpouseOnlyForm8889,
+} from "../../form8889_spouse_reconciliation.ts";
 
 // IRS Form 8889 (2025) AcroForm field names.
 // Verified against the f8889--2025.pdf AcroForm field dump (single page,
@@ -13,6 +19,16 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 // and 13 print an explicit "0" when only employer funding exists.
 
 const fields: ReadonlyArray<PdfFieldEntry> = [
+  {
+    kind: "text",
+    domainKey: "beneficiary_name",
+    pdfField: "topmostSubform[0].Page1[0].f1_1[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "beneficiary_ssn",
+    pdfField: "topmostSubform[0].Page1[0].f1_2[0]",
+  },
   // ── Line 1: HDHP coverage type ──────────────────────────────────────────────
   {
     kind: "checkboxWhen",
@@ -154,17 +170,48 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 export const form8889Pdf: PdfFormDescriptor = {
   pendingKey: "form8889",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8889--2025.pdf",
+  instances(pending, filer, allPending) {
+    if (pending.forms === undefined) {
+      if (Object.keys(pending).length > 0) {
+        throw new Error("Form 8889 PDF needs owner-labeled computed forms");
+      }
+      return [];
+    }
+    const forms = z.array(
+      z.object({
+        owner: z.enum(["primary", "spouse"]),
+        beneficiary_name: z.string().trim().min(1),
+        beneficiary_ssn: z.string().regex(/^\d{9}$/),
+      }).passthrough(),
+    ).min(1).max(2).parse(pending.forms);
+    if (
+      (forms.length === 2 &&
+        (forms[0]?.owner !== "primary" || forms[1]?.owner !== "spouse"))
+    ) {
+      throw new Error(
+        "Form 8889 PDF needs one identified owner or taxpayer-then-spouse forms",
+      );
+    }
+    const supportedKeys = new Set([
+      "owner",
+      ...fields.map((entry) => entry.domainKey),
+    ]);
+    for (const form of forms) {
+      const unsupported = Object.keys(form).filter((key) =>
+        !supportedKeys.has(key)
+      );
+      if (unsupported.length > 0) {
+        throw new Error(
+          `Form 8889 PDF does not accept uncomputed owner fields: ${
+            unsupported.join(", ")
+          }`,
+        );
+      }
+    }
+    reconcileSpouseOnlyForm8889(forms, allPending, filer);
+    reconcileCode2Form8889(forms, allPending, filer);
+    reconcilePairedForm8889(forms, allPending, filer);
+    return forms;
+  },
   fields,
-  filerFields: [
-    {
-      kind: "text",
-      domainKey: "fullName",
-      pdfField: "topmostSubform[0].Page1[0].f1_1[0]",
-    },
-    {
-      kind: "text",
-      domainKey: "primarySSN",
-      pdfField: "topmostSubform[0].Page1[0].f1_2[0]",
-    },
-  ],
 };

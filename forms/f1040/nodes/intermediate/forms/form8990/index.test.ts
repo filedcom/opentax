@@ -1,61 +1,74 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { inputNodes } from "../../../../2025/inputs.ts";
-import { CONFIG_BY_YEAR } from "../../../config/index.ts";
-import {
-  calculateDirectScheduleCForm8990,
-  type DirectScheduleCSource,
-  form8990,
-  inputSchema,
-} from "./index.ts";
+import { form8990, publicInputSchema } from "./index.ts";
 
-const source: DirectScheduleCSource = {
-  business_reference: "C-1",
-  current_year_business_interest_expense: 8_000,
-  tentative_taxable_income: 100_000,
-  section172_nol_deduction: 0,
-  section199a_qbi_deduction: 5_000,
-  business_depreciation_amortization_depletion: 2_000,
-  current_year_business_interest_income: 500,
-  average_prior_three_year_gross_receipts: 32_000_000,
-  not_a_tax_shelter_verified: true,
-  sole_direct_non_passthrough_business_verified: true,
-  no_prior_disallowed_interest: true,
-  no_floor_plan_financing_interest: true,
-  no_other_ati_additions_or_reductions: true,
-  no_nonbusiness_items_in_tentative_income: true,
-  no_pass_through_excess_items: true,
+const sourceRecords = {
+  receipts: [{ source_reference: "sale-1", kind: "sale", amount: 200_000 }],
+  interestExpenseRecords: [{
+    interest_payment_reference: "interest-statement-1",
+    debt_proceeds_tracing_reference: "business-loan-ledger-1",
+    business_reference: "C-1",
+    allocation: "nonexcepted_schedule_c_business",
+    interest_paid_amount: 100_000,
+    line16b_business_interest_amount: 100_000,
+  }],
+  priorFiledScheduleCs: [2022, 2023, 2024].map((taxYear) => ({
+    tax_year: taxYear,
+    business_reference: "C-1",
+    filed_schedule_c_document_reference: `filed-${taxYear}-schedule-c`,
+    filed_tax_period_start: `${taxYear}-01-01`,
+    filed_tax_period_end: `${taxYear}-12-31`,
+    filed_line1_gross_receipts: 33_000_000,
+    filed_line2_returns_and_allowances: 1_000_000,
+    filed_line3_net_receipts: 32_000_000,
+  })),
+  priorFiledForm8990: {
+    tax_year: 2024,
+    filed_form8990_document_reference: "filed-2024-form8990",
+    filed_taxpayer_ssn: "123456789",
+    filed_line31_disallowed_business_interest: 0,
+  },
 };
 
-Deno.test("2025 Form 8990 source remains registered for explicit rejection", () => {
+Deno.test("2025 Form 8990 has one public source-record shape", () => {
   assertEquals(
     inputNodes.some((entry) => entry.node.nodeType === "form8990"),
     true,
   );
+  assertEquals(publicInputSchema.safeParse(sourceRecords).success, true);
+  assertEquals(
+    publicInputSchema.safeParse({
+      ...sourceRecords,
+      interestExpenseRecords: undefined,
+    }).success,
+    false,
+  );
+  assertEquals(
+    publicInputSchema.safeParse({ direct_schedule_c: {} }).success,
+    false,
+  );
+  assertEquals(
+    publicInputSchema.safeParse({ ...sourceRecords, line30: 8_000 }).success,
+    false,
+  );
+  assertEquals(
+    publicInputSchema.safeParse({ business_interest_expense: 8_000 }).success,
+    false,
+  );
 });
 
-Deno.test("2025 Form 8990 rejects unverified ATI even when interest appears fully allowed", () => {
+Deno.test("2025 Form 8990 ordinary one-pass node rejects active source records", () => {
+  assertEquals(
+    form8990.compute({ taxYear: 2025, formType: "f1040" }, {}),
+    { outputs: [] },
+  );
   assertThrows(
     () =>
-      calculateDirectScheduleCForm8990(
-        source,
-        CONFIG_BY_YEAR[2025].smallBizGrossReceipts,
+      form8990.compute(
+        { taxYear: 2025, formType: "f1040" },
+        publicInputSchema.parse(sourceRecords),
       ),
     Error,
-    "ATI components are not reconciled",
-  );
-  assertThrows(
-    () =>
-      form8990.compute({ taxYear: 2025, formType: "f1040" }, {
-        direct_schedule_c: source,
-      }),
-    Error,
-    "ATI components are not reconciled",
-  );
-});
-
-Deno.test("2025 Form 8990 rejects old aggregate input", () => {
-  assertThrows(
-    () => inputSchema.parse({ business_interest_expense: 8_000 }),
-    Error,
+    "require the Form 1040 two-pass execution path",
   );
 });

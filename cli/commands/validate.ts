@@ -6,16 +6,21 @@
  */
 
 import { join } from "@std/path";
-import { execute } from "../../core/runtime/executor.ts";
 import type { ExecutorDiagnosticEntry } from "../../core/runtime/executor.ts";
-import { buildExecutionPlan } from "../../core/runtime/planner.ts";
 import { catalog } from "../../catalog.ts";
 import { buildEngineInputs, loadReturn } from "../store/store.ts";
 import { extractFilerIdentity } from "../../forms/f1040/mef/filer.ts";
 import { createReturnContext } from "../../core/validation/context.ts";
 import { evaluateRules } from "../../core/validation/engine.ts";
-import { formatDiagnosticsJson, formatDiagnosticsText } from "../../core/validation/report.ts";
-import type { DiagnosticEntry, DiagnosticsReport, ErrorCategory } from "../../core/validation/types.ts";
+import {
+  formatDiagnosticsJson,
+  formatDiagnosticsText,
+} from "../../core/validation/report.ts";
+import type {
+  DiagnosticEntry,
+  DiagnosticsReport,
+  ErrorCategory,
+} from "../../core/validation/types.ts";
 import { FIELD_REGISTRY } from "../../forms/f1040/validation/field-registry.ts";
 import { ALL_RULES } from "../../forms/f1040/validation/rules/index.ts";
 
@@ -47,12 +52,11 @@ export async function validateReturnCommand(
   const returnPath = join(args.baseDir, args.returnId);
   const { meta, inputs } = await loadReturn(returnPath);
   const def = getCatalogEntry(meta.formType ?? "f1040", meta.year);
-  const executionPlan = buildExecutionPlan(def.registry);
   const singletonNodeTypes = new Set(
     def.inputNodes.filter((e) => !e.isArray).map((e) => e.node.nodeType),
   );
   const engineInputs = buildEngineInputs(inputs, singletonNodeTypes);
-  const result = execute(executionPlan, def.registry, engineInputs, { taxYear: meta.year, formType: meta.formType ?? "f1040" });
+  const result = def.executeReturn(engineInputs);
 
   // Extract filer identity for header field access
   const f1040 = (result.pending["f1040"] ?? {}) as Record<string, unknown>;

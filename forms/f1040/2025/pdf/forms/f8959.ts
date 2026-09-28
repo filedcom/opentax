@@ -1,4 +1,10 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
+import {
+  assertForm8959Absent,
+  assertForm8959Sources,
+  hasForm8959Print,
+} from "../../form8959-source.ts";
+import { printFieldsSchema } from "../../../nodes/intermediate/forms/form8959/index.ts";
 
 // IRS Form 8959 (2025) AcroForm field names.
 // Additional Medicare Tax.
@@ -44,6 +50,15 @@ export const form8959Pdf: PdfFormDescriptor = {
   pendingKey: "form8959",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8959--2025.pdf",
   fields,
+  projectFields: (raw, all) => {
+    if (!hasForm8959Print(raw)) {
+      assertForm8959Absent(raw, all);
+      return raw;
+    }
+    const printed = printFieldsSchema.parse(raw);
+    assertForm8959Sources(raw, printed, all);
+    return printed;
+  },
   // A single W-2 above the employer withholding trigger requires filing even
   // when the return-wide threshold leaves tax at zero.
   includeWhen: (fields, all) =>

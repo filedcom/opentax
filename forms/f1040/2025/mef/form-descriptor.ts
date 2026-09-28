@@ -48,6 +48,8 @@ export interface MefBuildContext {
   readonly documentIdsByTag?: Readonly<Record<string, readonly string[]>>;
   readonly documentIdsByAttachmentFileName?: Readonly<Record<string, string>>;
   readonly attachmentDescriptionsByFileName?: Readonly<Record<string, string>>;
+  /** SHA-256 of each validated PDF's exact submitted bytes, lowercase hex. */
+  readonly attachmentSha256ByFileName?: Readonly<Record<string, string>>;
 }
 
 export interface MefPdfAttachment {

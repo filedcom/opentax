@@ -6,7 +6,10 @@ import {
   passiveCreditSourceOriginSchema,
 } from "../../../nodes/intermediate/forms/form8582cr/source.ts";
 import {
+  form3800CarryoverDetailXmlTags,
   type Form3800CreditLine,
+  form3800CurrentDetailXmlTags,
+  form3800PassiveXmlTags,
   planForm3800PassiveXmlRows,
 } from "./f3800_passive_tags.ts";
 import {
@@ -23,6 +26,13 @@ export type Form3800PassiveXmlRow = {
   readonly xml: string;
 };
 
+/** Source-backed Part V/VI detail retained before native XML serialization. */
+export type Form3800PassiveDetailRow = {
+  readonly line: Form3800CreditLine;
+  readonly source: Form3800PassiveTaxUseVintage;
+  readonly sourceDocument?: Form3800PassiveSourceDocument;
+};
+
 export type Form3800CarryoverAmount = {
   readonly line: Form3800CreditLine;
   readonly passiveBeforeLimit: number;
@@ -33,22 +43,76 @@ export type Form3800CarryoverAmount = {
   readonly carryforwardCredit: number;
 };
 
-export type Form3800CarryoverXmlRow = Form3800PassiveXmlRow & {
+export type Form3800CarryoverRow = {
+  readonly line: Form3800CreditLine;
+  readonly sourceKeys: readonly string[];
+  readonly originatingTaxYear: number;
+  readonly entity?: Form3800CurrentCreditRowMetadata["entity"];
   readonly amount: Form3800CarryoverAmount;
 };
 
 export type Form3800PassiveRowXml = {
   readonly partIII: readonly Form3800CurrentXmlRow[];
   readonly currentAmounts: readonly Form3800CurrentCreditAmount[];
-  readonly partIV: readonly Form3800CarryoverXmlRow[];
-  readonly partV: readonly Form3800PassiveXmlRow[];
-  readonly partVI: readonly Form3800PassiveXmlRow[];
+  readonly partIV: readonly Form3800CarryoverRow[];
+  readonly partV: readonly Form3800PassiveDetailRow[];
+  readonly partVI: readonly Form3800PassiveDetailRow[];
 };
 
 export type Form3800PassiveSourceDocument = {
   readonly documentId: string;
   readonly documentName: string;
 };
+
+export function form3800PassiveCurrentDetailXml(
+  row: Form3800PassiveDetailRow,
+): string {
+  const { source, sourceDocument } = row;
+  const tag = form3800CurrentDetailXmlTags[row.line];
+  if (
+    !tag || row.line !== source.form3800CreditLine ||
+    source.originatingTaxYear !== 2025
+  ) {
+    throw new Error("Form 3800 Part V detail source does not match its line");
+  }
+  return elements(tag, [
+    sourceEin([source]),
+    element("OthThnCrTrnsfrElectCrBfrLmtAmt", source.beforePassiveLimit),
+    element("CrTrnsfrElectCrAllwAftrLmtAmt", source.afterPassiveLimit),
+    element("TotalGeneralBusCreditsAmt", source.afterPassiveLimit),
+    element("TotalGBCLessGrossEPEAppTxAmt", source.appliedAgainstTax),
+    element("CarryforwardGeneralBusCrAmt", source.unusedAfterTaxLimit),
+  ], {
+    ...(sourceDocument
+      ? {
+        referenceDocumentId: sourceDocument.documentId,
+        referenceDocumentName: sourceDocument.documentName,
+      }
+      : {}),
+    lineNumberTxt: `Part III Line ${row.line}`,
+  });
+}
+
+export function form3800PassiveCarryoverDetailXml(
+  row: Form3800PassiveDetailRow,
+): string {
+  const { source } = row;
+  const tag = form3800CarryoverDetailXmlTags[row.line];
+  if (
+    !tag || row.line !== source.form3800CreditLine ||
+    source.originatingTaxYear >= 2025
+  ) {
+    throw new Error("Form 3800 Part VI detail source does not match its line");
+  }
+  return elements(tag, [
+    element("Yr", source.originatingTaxYear),
+    sourceEin([source]),
+    element("CrSubjToPassiveActyLmtAmt", source.beforePassiveLimit),
+    element("PassiveActivityCrAfterLmtAmt", source.afterPassiveLimit),
+    element("TotalGeneralBusCreditsAppTxAmt", source.appliedAgainstTax),
+    element("CarryforwardGeneralBusCrAmt", source.unusedAfterTaxLimit),
+  ], { lineNumberTxt: `Part IV Line ${row.line}` });
+}
 
 function selfSourceDocument(
   source: Form3800PassiveTaxUseVintage,
@@ -111,6 +175,45 @@ function sourceEin(
   return "ein" in entity
     ? element("PassThroughEntityEIN", entity.ein)
     : element("MissingEINReasonCd", entity.missingEinReason);
+}
+
+/** Serialize the typed Part IV aggregate at the native document boundary. */
+export function form3800CarryoverRowXml(row: Form3800CarryoverRow): string {
+  const tag = form3800PassiveXmlTags[row.line]?.carryover;
+  const amount = row.amount;
+  if (
+    !tag || amount.line !== row.line ||
+    row.sourceKeys.length < 1 || row.sourceKeys.length > 999 ||
+    row.sourceKeys.some((key) => !key) ||
+    new Set(row.sourceKeys).size !== row.sourceKeys.length ||
+    !Number.isInteger(row.originatingTaxYear) ||
+    row.originatingTaxYear < 1900 || row.originatingTaxYear >= 2025 ||
+    (row.entity && "ein" in row.entity &&
+      !/^\d{9}$/.test(row.entity.ein))
+  ) {
+    throw new Error("Form 3800 Part IV typed source identity is invalid");
+  }
+  return elements(tag, [
+    row.sourceKeys.length > 1
+      ? element("CyovGeneralBusinessCrItemCnt", row.sourceKeys.length)
+      : "",
+    element("Yr", row.originatingTaxYear),
+    row.entity
+      ? "ein" in row.entity
+        ? element("PassThroughEntityEIN", row.entity.ein)
+        : element("MissingEINReasonCd", row.entity.missingEinReason)
+      : "",
+    element("CrSubjToPassiveActyLmtAmt", amount.passiveBeforeLimit),
+    element("PassiveActivityCrAfterLmtAmt", amount.passiveAfterLimit),
+    amount.nonpassiveCredit > 0
+      ? element("GeneralBusCrFromNnPssvActyAmt", amount.nonpassiveCredit)
+      : "",
+    element("TotalGeneralBusCreditsAppTxAmt", amount.appliedCredit),
+    amount.recapturedOrAdjusted !== 0
+      ? element("GeneralBusCrCyovRcptrAdjAmt", amount.recapturedOrAdjusted)
+      : "",
+    element("CarryforwardGeneralBusCrAmt", amount.carryforwardCredit),
+  ]);
 }
 
 function sourceEntityCredits(
@@ -224,6 +327,9 @@ export function buildForm3800PassiveRowXml(
     );
     return {
       line: row.form3800CreditLine,
+      sourceKeys: row.sources.map((source) => source.sourceKey),
+      originatingTaxYear: row.latestOriginatingTaxYear,
+      entity: sourceEntity(row.sources),
       amount: {
         line: row.form3800CreditLine,
         passiveBeforeLimit: row.beforePassiveLimit,
@@ -233,17 +339,6 @@ export function buildForm3800PassiveRowXml(
         recapturedOrAdjusted: 0,
         carryforwardCredit: unused,
       },
-      xml: elements(row.tag, [
-        row.requiresSourceBreakdown
-          ? element("CyovGeneralBusinessCrItemCnt", row.sources.length)
-          : "",
-        element("Yr", row.latestOriginatingTaxYear),
-        sourceEin(row.sources),
-        element("CrSubjToPassiveActyLmtAmt", row.beforePassiveLimit),
-        element("PassiveActivityCrAfterLmtAmt", row.afterPassiveLimit),
-        element("TotalGeneralBusCreditsAppTxAmt", applied),
-        element("CarryforwardGeneralBusCrAmt", unused),
-      ]),
     };
   });
   const currentDetail = current.flatMap((row) => {
@@ -255,45 +350,24 @@ export function buildForm3800PassiveRowXml(
       );
     }
     return row.sources.map((source) => {
-      const document = selfSourceDocument(source, selfSourceDocuments);
-      return {
+      const detail: Form3800PassiveDetailRow = {
         line: row.form3800CreditLine,
-        xml: elements(tag, [
-          sourceEin([source]),
-          element("OthThnCrTrnsfrElectCrBfrLmtAmt", source.beforePassiveLimit),
-          element("CrTrnsfrElectCrAllwAftrLmtAmt", source.afterPassiveLimit),
-          element("TotalGeneralBusCreditsAmt", source.afterPassiveLimit),
-          element(
-            "TotalGBCLessGrossEPEAppTxAmt",
-            source.appliedAgainstTax,
-          ),
-          element("CarryforwardGeneralBusCrAmt", source.unusedAfterTaxLimit),
-        ], {
-          ...(document
-            ? {
-              referenceDocumentId: document.documentId,
-              referenceDocumentName: document.documentName,
-            }
-            : {}),
-          lineNumberTxt: `Part III Line ${row.form3800CreditLine}`,
-        }),
+        source,
+        sourceDocument: selfSourceDocument(source, selfSourceDocuments),
       };
+      return detail;
     });
   });
   const partVI = carryover.flatMap((row) => {
     const tag = row.carryoverDetailTag;
     if (!row.requiresSourceBreakdown || !tag) return [];
-    return row.sources.map((source) => ({
-      line: row.form3800CreditLine,
-      xml: elements(tag, [
-        element("Yr", source.originatingTaxYear),
-        sourceEin([source]),
-        element("CrSubjToPassiveActyLmtAmt", source.beforePassiveLimit),
-        element("PassiveActivityCrAfterLmtAmt", source.afterPassiveLimit),
-        element("TotalGeneralBusCreditsAppTxAmt", source.appliedAgainstTax),
-        element("CarryforwardGeneralBusCrAmt", source.unusedAfterTaxLimit),
-      ], { lineNumberTxt: `Part IV Line ${row.form3800CreditLine}` }),
-    }));
+    return row.sources.map((source) => {
+      const detail: Form3800PassiveDetailRow = {
+        line: row.form3800CreditLine,
+        source,
+      };
+      return detail;
+    });
   });
   return {
     partIII,

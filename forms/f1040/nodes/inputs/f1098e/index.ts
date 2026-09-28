@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
@@ -26,7 +26,9 @@ export const itemSchema = z.object({
   // Box 2 — If checked, box 1 does NOT include loan origination fees paid before September 1, 2004
   // IRC §221(d)(2): origination fees paid before 9/1/2004 are separately deductible as interest
   // when this box is checked, taxpayer may have additional deductible interest not captured in box1
-  box2_origination_fees_excluded: z.boolean().optional().describe("If checked, box 1 does not include loan origination fees paid before September 1, 2004"),
+  box2_origination_fees_excluded: z.boolean().optional().describe(
+    "If checked, box 1 does not include loan origination fees paid before September 1, 2004",
+  ),
   // Optional lender name for identification
   lender_name: z.string().optional(),
 });
@@ -57,13 +59,13 @@ function allowedDeduction(items: F1098EItems): number {
 function schedule1Output(items: F1098EItems): NodeOutput[] {
   const deduction = allowedDeduction(items);
   if (deduction === 0) return [];
-  return [output(schedule1, { line19_student_loan_interest: deduction })];
+  return [output(schedule1, { line21_student_loan_interest: deduction })];
 }
 
 function agiOutput(items: F1098EItems): NodeOutput[] {
   const deduction = allowedDeduction(items);
   if (deduction === 0) return [];
-  return [output(agi_aggregator, { line19_student_loan_interest: deduction })];
+  return [output(agi_aggregator, { line21_student_loan_interest: deduction })];
 }
 
 // ── Node class ────────────────────────────────────────────────────────────────

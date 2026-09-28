@@ -1,8 +1,9 @@
 import { element, elements } from "../../../mef/xml.ts";
 import type {
   Form3800CarryoverAmount,
-  Form3800CarryoverXmlRow,
+  Form3800CarryoverRow,
 } from "./f3800_passive_rows.ts";
+import { form3800CarryoverRowXml } from "./f3800_passive_rows.ts";
 import {
   type Form3800CreditLine,
   form3800PassiveXmlTags,
@@ -57,7 +58,7 @@ function subtotalXml(
 
 /** Order Part IV source rows and derive lines 5, 6, and 7 from them. */
 export function buildForm3800PartIVXml(
-  rows: readonly Form3800CarryoverXmlRow[],
+  rows: readonly Form3800CarryoverRow[],
 ): string[] {
   const orderedLines = Object.keys(
     form3800PassiveXmlTags,
@@ -66,7 +67,7 @@ export function buildForm3800PartIVXml(
   if (
     byLine.size !== rows.length ||
     rows.some((row) =>
-      !orderedLines.includes(row.line) || !row.xml ||
+      !orderedLines.includes(row.line) ||
       row.amount.line !== row.line
     )
   ) {
@@ -94,12 +95,12 @@ export function buildForm3800PartIVXml(
   return [
     ...standard.flatMap((line) => {
       const row = byLine.get(line);
-      return row ? [row.xml] : [];
+      return row ? [form3800CarryoverRowXml(row)] : [];
     }),
-    byLine.get("3")?.xml ?? "",
+    byLine.get("3") ? form3800CarryoverRowXml(byLine.get("3")!) : "",
     ...specified.flatMap((line) => {
       const row = byLine.get(line);
-      return row ? [row.xml] : [];
+      return row ? [form3800CarryoverRowXml(row)] : [];
     }),
     subtotalXml(
       "CYOtherSpcfdCreditsSubTotGrp",

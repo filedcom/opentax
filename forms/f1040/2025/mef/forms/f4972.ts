@@ -1,6 +1,10 @@
 import { element, elements } from "../../../mef/xml.ts";
 import { TS } from "../../../nodes/types.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
+import { reconcileForm4972Nua } from "../../form4972_nua_reconciliation.ts";
+import { reconcileForm4972MultipleRecipients } from "../../form4972_multiple_recipient_reconciliation.ts";
+import { reconcileForm4972EstatePartII } from "../../form4972_estate_part2_reconciliation.ts";
+import { reconcileForm4972FullShare } from "../../form4972_full_share_reconciliation.ts";
 
 export interface Fields {
   recipient?: TS;
@@ -104,6 +108,8 @@ function buildIRS4972(fields: Input, context?: MefBuildContext): string {
     fields.rolled_over_any !== false ||
     typeof fields.beneficiary_distribution !== "boolean" ||
     typeof fields.participant_five_year_member !== "boolean" ||
+    (fields.beneficiary_distribution === true &&
+      fields.participant_five_year_member === true) ||
     fields.beneficiary_distribution !== true &&
       fields.participant_five_year_member !== true ||
     (fields.beneficiary_distribution === true
@@ -125,6 +131,13 @@ function buildIRS4972(fields: Input, context?: MefBuildContext): string {
   ) {
     throw new Error("Form 4972 ordinary NUA needs line 8");
   }
+  reconcileForm4972Nua(fields, context?.pending);
+  reconcileForm4972EstatePartII(fields, context?.pending);
+  reconcileForm4972FullShare(fields, context?.pending);
+  const multipleRecipients = reconcileForm4972MultipleRecipients(
+    fields,
+    context?.pending,
+  );
   return elements("IRS4972", [
     element("PersonNm", recipient.name),
     element("SSN", recipient.ssn.replaceAll("-", "")),
@@ -138,7 +151,8 @@ function buildIRS4972(fields: Input, context?: MefBuildContext): string {
       "QualifyingAge5YearMemberInd",
       String(fields.participant_five_year_member === true),
     ),
-    fields.prior_election_after_1986 !== undefined
+    fields.beneficiary_distribution !== true &&
+      fields.prior_election_after_1986 !== undefined
       ? element(
         "PriorYearDistributionInd",
         String(fields.prior_election_after_1986),
@@ -150,24 +164,29 @@ function buildIRS4972(fields: Input, context?: MefBuildContext): string {
         String(fields.prior_beneficiary_election_after_1986),
       )
       : "",
-    ...FIELD_MAP.map(([key, tag]) => {
+    ...FIELD_MAP.flatMap(([key, tag]) => {
       const value = fields[key];
-      if (typeof value !== "number") return "";
+      if (typeof value !== "number") return [];
       const capitalNua = fields.line6_nua_capital_gain ?? 0;
       if (key === "line6" && capitalNua > 0) {
-        return element(tag, value, {
+        return [element(tag, value, {
           capitalGainElectionNUAAmt: String(Math.round(capitalNua)),
           capitalGainElectionNUACd: "NUA",
-        });
+        })];
       }
       const ordinaryNua = fields.line8_nua_included ?? 0;
       if (key === "line8" && ordinaryNua > 0) {
-        return element(tag, value, {
+        return [element(tag, value, {
           netUnrealizedAppreciationAmt: String(Math.round(ordinaryNua)),
           netUnrealizedAppreciationCd: "NUA",
-        });
+        })];
       }
-      return element(tag, key === "line20" ? value.toFixed(5) : value);
+      return [
+        element(tag, key === "line20" ? value.toFixed(5) : value),
+        ...(key === "line29" && multipleRecipients
+          ? [element("LumpSumDistriMultRecipientsCd", "MRD")]
+          : []),
+      ];
     }),
   ]);
 }

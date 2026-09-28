@@ -10,6 +10,7 @@ import { FilingStatus } from "./types.ts";
 import type { FilerIdentity } from "./types.ts";
 import { additionalQmidLines } from "./forms/f5695_qmid_attachment.ts";
 import { FilingStatus as NodeFilingStatus, TS } from "../../nodes/types.ts";
+import { calculateOwnerForms } from "../../nodes/intermediate/forms/form5329/index.ts";
 import {
   ForeignTaxCreditMethod,
   ForeignTaxKind,
@@ -58,14 +59,58 @@ const sampleScheduleF = {
 };
 
 const sampleForm8889 = {
-  print_line1_coverage: "self_only",
-  print_line2_taxpayer_contributions: 3_600,
-  print_line3_limit: 4_300,
-  print_line5: 4_300,
-  print_line6: 4_300,
-  print_line8: 4_300,
-  print_line12: 4_300,
-  print_line13_deduction: 3_600,
+  forms: [{
+    owner: "primary" as const,
+    beneficiary_name: "John A Smith",
+    beneficiary_ssn: "123456789",
+    print_line1_coverage: "self_only",
+    print_line2_taxpayer_contributions: 3_600,
+    print_line3_limit: 4_300,
+    print_line5: 4_300,
+    print_line6: 4_300,
+    print_line8: 4_300,
+    print_line12: 4_300,
+    print_line13_deduction: 3_600,
+  }],
+};
+
+// Complete graph print output for one single-filer $250,000 Medicare W-2.
+// Form 8959 no longer accepts a sparse summary in native XML tests.
+const sampleForm8959 = {
+  filing_status: NodeFilingStatus.Single,
+  w2_medicare_wages: 250_000,
+  medicare_wages: 250_000,
+  line1_medicare_wages: 250_000,
+  line2_unreported_tips: 0,
+  line3_wages_8919: 0,
+  line4_total_medicare_wages: 250_000,
+  line5_threshold: 200_000,
+  line6_wage_excess: 50_000,
+  line7_wage_tax: 450,
+  line8_se_income: 0,
+  line9_threshold: 200_000,
+  line10_medicare_wages: 250_000,
+  line11_reduced_se_threshold: 0,
+  line12_se_excess: 0,
+  line13_se_tax: 0,
+  line14_rrta_wages: 0,
+  line15_threshold: 200_000,
+  line16_rrta_excess: 0,
+  line17_rrta_tax: 0,
+  line18_total_tax: 450,
+  line19_medicare_withheld: 0,
+  line20_medicare_wages: 250_000,
+  line21_regular_medicare_tax: 3_625,
+  line22_additional_withheld: 0,
+  line23_rrta_withheld: 0,
+  line24_total_withheld: 0,
+};
+
+const sampleForm5329 = {
+  owner_entries: [{ owner: TS.T, early_distribution: 5_000 }],
+  owner_forms: calculateOwnerForms({
+    owner_entries: [{ owner: TS.T, early_distribution: 5_000 }],
+  }).forms,
 };
 
 const sampleForm2441 = {
@@ -103,22 +148,25 @@ const sampleForm2441 = {
 
 const sampleForm8839 = {
   children: [{
-    qualified_expenses: 15_000,
-    special_needs: false,
-    adoption_is_final: true,
-    is_foreign_child: false,
-    filing_details: {
-      first_name: "Maya",
-      last_name: "Smith",
-      birth_year: 2020,
-      ssn: "123456780",
+    first_name: "Maya",
+    last_name: "Smith",
+    birth_year: 2020,
+    ssn: "123456780",
+    final_decree: {
+      source_document_id: "decree-maya-2025",
       finalization_date: "2025-07-15",
-      expenses_paid_in_2025_confirmed: true as const,
-      no_employer_reimbursement_confirmed: true as const,
+      issuing_jurisdiction: "TX",
+      child_origin: "US" as const,
     },
+    expenses: [{
+      source_document_id: "invoice-maya-2025",
+      paid_date: "2025-03-12",
+      category: "attorney_fee" as const,
+      payee: "Adoption Counsel",
+      amount: 15_000,
+      reimbursed_amount: 0,
+    }],
   }],
-  magi: 200_000,
-  credit_limit_worksheet_line5: 12_000,
   filing_status: NodeFilingStatus.Single,
 };
 
@@ -194,6 +242,28 @@ Deno.test("MeF export rejects Form 3800 credit without finalized source facts", 
     Error,
     "legacy credit cannot be exported",
   );
+});
+
+Deno.test("MeF export rejects source-only Schedule R, Form 7203, and Form 9465", () => {
+  for (
+    const [pending, formName] of [
+      [{
+        schedule_r: { filing_status: "single", taxpayer_age_65_or_older: true },
+      }, "Schedule R"],
+      [
+        { form7203: { stock_basis_beginning: 1000, ordinary_loss: 500 } },
+        "Form 7203",
+      ],
+      [{ f9465: { monthly_payment: 100 } }, "Form 9465"],
+    ] as const
+  ) {
+    assertThrows(
+      () =>
+        buildMefXml(pending as unknown as Parameters<typeof buildMefXml>[0]),
+      Error,
+      `${formName} requires a native MeF document`,
+    );
+  }
 });
 
 async function sampleAttachmentBytes(): Promise<Uint8Array> {
@@ -889,7 +959,11 @@ Deno.test("IRS8949 absent when form8949 missing from pending", () => {
 });
 
 Deno.test("IRS8959 present when form8959 has data", () => {
-  const xml = buildMefXml({ form8959: { medicare_wages: 250000 } });
+  const xml = buildMefXml({
+    f1040: {},
+    schedule2: { line11_additional_medicare: 450 },
+    form8959: sampleForm8959,
+  });
   assertStringIncludes(xml, "<IRS8959 ");
 });
 
@@ -914,7 +988,7 @@ Deno.test("documentCnt=10 when all 10 forms have data", () => {
   const xml = buildMefXml({
     f1040: { line1a_wages: 50000 },
     schedule1: { line7_unemployment: 4800 },
-    schedule2: { line2_amt: 5000 },
+    schedule2: { line2_amt: 5000, line11_additional_medicare: 450 },
     schedule3: { line2_childcare_credit: 0 },
     schedule_d: { line_4_other_st: 1000 },
     form8889: sampleForm8889,
@@ -929,7 +1003,7 @@ Deno.test("documentCnt=10 when all 10 forms have data", () => {
       gain_loss: 2000,
       is_long_term: false,
     }],
-    form8959: { medicare_wages: 250000 },
+    form8959: sampleForm8959,
     form8960: { line1_taxable_interest: 1200 },
   });
   assertStringIncludes(xml, 'documentCnt="10"');
@@ -939,7 +1013,7 @@ Deno.test("all 10 forms populated: XML contains all 10 document tags", () => {
   const xml = buildMefXml({
     f1040: { line1a_wages: 50000 },
     schedule1: { line7_unemployment: 4800 },
-    schedule2: { line2_amt: 5000 },
+    schedule2: { line2_amt: 5000, line11_additional_medicare: 450 },
     schedule3: { line2_childcare_credit: 0 },
     schedule_d: { line_4_other_st: 1000 },
     form8889: sampleForm8889,
@@ -954,7 +1028,7 @@ Deno.test("all 10 forms populated: XML contains all 10 document tags", () => {
       gain_loss: 2000,
       is_long_term: false,
     }],
-    form8959: { medicare_wages: 250000 },
+    form8959: sampleForm8959,
     form8960: { line1_taxable_interest: 1200 },
   });
   assertStringIncludes(xml, "IRS1040");
@@ -1013,7 +1087,11 @@ Deno.test("form2441 DependentCareBenefitsAmt value appears in assembled output",
 });
 
 Deno.test("form8959 emits XML with TotalW2MedicareWagesAndTipsAmt", () => {
-  const xml = buildMefXml({ form8959: { medicare_wages: 250000 } });
+  const xml = buildMefXml({
+    f1040: {},
+    schedule2: { line11_additional_medicare: 450 },
+    form8959: sampleForm8959,
+  });
   assertStringIncludes(xml, "<IRS8959 ");
   assertStringIncludes(xml, "TotalW2MedicareWagesAndTipsAmt");
 });
@@ -1144,6 +1222,7 @@ Deno.test("IRS8582 property loss cannot be filed without its Schedule E property
       buildMefXml({
         form8582: {
           activities: [{
+            activity_id: "rental-house",
             name: "Rental house",
             activity_type: "A",
             property_type: 1,
@@ -1211,7 +1290,35 @@ Deno.test("IRS4797 absent when form4797 missing from pending", () => {
 });
 
 Deno.test("IRS8880 present when form8880 has data", () => {
-  const xml = buildMefXml({ form8880: { contributions_taxpayer: 3000 } });
+  const xml = buildMefXml({
+    f1040: {
+      filing_status: "single",
+      line11_agi: 20_000,
+      line18_total_tax_before_credits: 1_000,
+    },
+    schedule3: { line4_retirement_savings_credit: 1_000 },
+    form8880: {
+      ira_contributions_taxpayer: 1_000,
+      elective_deferrals_taxpayer: 1_000,
+      agi: 20_000,
+      filing_status: NodeFilingStatus.Single,
+      print_line1a_ira: 1_000,
+      print_line2a_deferrals: 1_000,
+      print_line3a_total: 2_000,
+      print_line4a_distributions: 0,
+      print_line5a: 2_000,
+      print_line6a_eligible: 2_000,
+      print_line7_total_eligible: 2_000,
+      print_line8_agi: 20_000,
+      print_line9_rate: "0.5",
+      print_line10_raw_credit: 1_000,
+      print_line11_tax_liability: 1_000,
+      print_line12_credit: 1_000,
+      taxpayer_dob: "1980-01-01",
+      taxpayer_student_five_months: false,
+      taxpayer_claimed_as_dependent: false,
+    },
+  });
   assertStringIncludes(xml, "<IRS8880 ");
 });
 
@@ -1220,9 +1327,12 @@ Deno.test("IRS8880 absent when form8880 missing from pending", () => {
   assertNotIncludes(xml, "<IRS8880>");
 });
 
-Deno.test("IRS8995 present when form8995 has data", () => {
-  const xml = buildMefXml({ form8995: { qbi: 50000, qbi_deduction: 10000 } });
-  assertStringIncludes(xml, "<IRS8995 ");
+Deno.test("IRS8995 positive aggregate-only claim stops the MeF bundle", () => {
+  assertThrows(
+    () => buildMefXml({ form8995: { qbi: 50000, qbi_deduction: 10000 } }),
+    Error,
+    "needs identified business rows and full source-to-return reconciliation",
+  );
 });
 
 Deno.test("IRS8995 absent when form8995 missing from pending", () => {
@@ -1272,7 +1382,10 @@ Deno.test("IRS6251 absent when form6251 missing from pending", () => {
 
 Deno.test("IRS5329 present when form5329 has data", () => {
   const xml = buildMefXml(
-    { form5329: { early_distribution: 5000 } },
+    {
+      form5329: sampleForm5329,
+      schedule2: { line8_form5329_tax: 500 },
+    },
     sampleFiler(),
   );
   assertStringIncludes(xml, "<IRS5329 ");
@@ -1329,10 +1442,23 @@ Deno.test("IRS8839 absent when form8839 missing from pending", () => {
 Deno.test("document count for independently sourced smoke forms", () => {
   const xml = buildMefXml({
     w2: { w2s: [form4137W2] },
-    f1040: { line1a_wages: 50000 },
+    f1040: {
+      filing_status: "single",
+      line1a_wages: 50000,
+      line11_agi: 20_000,
+      line18_total_tax_before_credits: 1_800,
+    },
     schedule1: { line7_unemployment: 4800 },
-    schedule2: { line2_amt: 5000 },
-    schedule3: { line1_total: 800, line2_childcare_credit: 0 },
+    schedule2: {
+      line2_amt: 5000,
+      line8_form5329_tax: 500,
+      line11_additional_medicare: 450,
+    },
+    schedule3: {
+      line1_total: 800,
+      line2_childcare_credit: 0,
+      line4_retirement_savings_credit: 1_000,
+    },
     schedule_d: { line_4_other_st: 1000 },
     form8889: sampleForm8889,
     form2441: sampleForm2441,
@@ -1346,7 +1472,7 @@ Deno.test("document count for independently sourced smoke forms", () => {
       gain_loss: 2000,
       is_long_term: false,
     }],
-    form8959: { medicare_wages: 250000 },
+    form8959: sampleForm8959,
     form8960: { line1_taxable_interest: 1200 },
     form4137: {
       forms: [{
@@ -1377,25 +1503,57 @@ Deno.test("document count for independently sourced smoke forms", () => {
       foreign_trust_question: false,
     },
     form4797: { section_1231_gain: 12000 },
-    form8880: { contributions_taxpayer: 3000 },
-    form8995: { qbi: 50000, qbi_deduction: 10000 },
+    form8880: {
+      ira_contributions_taxpayer: 1_000,
+      elective_deferrals_taxpayer: 1_000,
+      agi: 20_000,
+      filing_status: NodeFilingStatus.Single,
+      print_line1a_ira: 1_000,
+      print_line2a_deferrals: 1_000,
+      print_line3a_total: 2_000,
+      print_line4a_distributions: 0,
+      print_line5a: 2_000,
+      print_line6a_eligible: 2_000,
+      print_line7_total_eligible: 2_000,
+      print_line8_agi: 20_000,
+      print_line9_rate: "0.5",
+      print_line10_raw_credit: 1_000,
+      print_line11_tax_liability: 1_000,
+      print_line12_credit: 1_000,
+      taxpayer_dob: "1980-01-01",
+      taxpayer_student_five_months: false,
+      taxpayer_claimed_as_dependent: false,
+    },
     form6251: {
       regular_tax_income: 80000,
       iso_adjustment: 5000,
       line11_amt: 100,
     },
-    form5329: { early_distribution: 5000 },
+    form5329: sampleForm5329,
   }, sampleFiler());
-  assertStringIncludes(xml, 'documentCnt="23"');
+  assertStringIncludes(xml, 'documentCnt="22"');
 });
 
 Deno.test("independently sourced smoke forms emit their document tags", () => {
   const xml = buildMefXml({
     w2: { w2s: [form4137W2] },
-    f1040: { line1a_wages: 50000 },
+    f1040: {
+      filing_status: "single",
+      line1a_wages: 50000,
+      line11_agi: 20_000,
+      line18_total_tax_before_credits: 1_800,
+    },
     schedule1: { line7_unemployment: 4800 },
-    schedule2: { line2_amt: 5000 },
-    schedule3: { line1_total: 800, line2_childcare_credit: 0 },
+    schedule2: {
+      line2_amt: 5000,
+      line8_form5329_tax: 500,
+      line11_additional_medicare: 450,
+    },
+    schedule3: {
+      line1_total: 800,
+      line2_childcare_credit: 0,
+      line4_retirement_savings_credit: 1_000,
+    },
     schedule_d: { line_4_other_st: 1000 },
     form8889: sampleForm8889,
     form2441: sampleForm2441,
@@ -1409,7 +1567,7 @@ Deno.test("independently sourced smoke forms emit their document tags", () => {
       gain_loss: 2000,
       is_long_term: false,
     }],
-    form8959: { medicare_wages: 250000 },
+    form8959: sampleForm8959,
     form8960: { line1_taxable_interest: 1200 },
     form4137: {
       forms: [{
@@ -1440,14 +1598,33 @@ Deno.test("independently sourced smoke forms emit their document tags", () => {
       foreign_trust_question: false,
     },
     form4797: { section_1231_gain: 12000 },
-    form8880: { contributions_taxpayer: 3000 },
-    form8995: { qbi: 50000, qbi_deduction: 10000 },
+    form8880: {
+      ira_contributions_taxpayer: 1_000,
+      elective_deferrals_taxpayer: 1_000,
+      agi: 20_000,
+      filing_status: NodeFilingStatus.Single,
+      print_line1a_ira: 1_000,
+      print_line2a_deferrals: 1_000,
+      print_line3a_total: 2_000,
+      print_line4a_distributions: 0,
+      print_line5a: 2_000,
+      print_line6a_eligible: 2_000,
+      print_line7_total_eligible: 2_000,
+      print_line8_agi: 20_000,
+      print_line9_rate: "0.5",
+      print_line10_raw_credit: 1_000,
+      print_line11_tax_liability: 1_000,
+      print_line12_credit: 1_000,
+      taxpayer_dob: "1980-01-01",
+      taxpayer_student_five_months: false,
+      taxpayer_claimed_as_dependent: false,
+    },
     form6251: {
       regular_tax_income: 80000,
       iso_adjustment: 5000,
       line11_amt: 100,
     },
-    form5329: { early_distribution: 5000 },
+    form5329: sampleForm5329,
   }, sampleFiler());
   assertStringIncludes(xml, "<IRS1040 ");
   assertStringIncludes(xml, "<IRS1040Schedule1 ");
@@ -1468,7 +1645,6 @@ Deno.test("independently sourced smoke forms emit their document tags", () => {
   assertStringIncludes(xml, "<IRS1040ScheduleB ");
   assertStringIncludes(xml, "<IRS4797 ");
   assertStringIncludes(xml, "<IRS8880 ");
-  assertStringIncludes(xml, "<IRS8995 ");
   assertStringIncludes(xml, "<IRS6251 ");
   assertStringIncludes(xml, "<IRS5329 ");
 });
@@ -1525,7 +1701,7 @@ Deno.test("context-only supporting forms are not emitted", () => {
   const xml = buildMefXml({
     schedule_a: { agi: 30_000 },
     form6251: { regular_tax_income: 14_250, regular_tax: 1_472 },
-    form8880: { agi: 30_000 },
+    form8880: {},
   });
 
   assertStringIncludes(xml, 'documentCnt="1"');

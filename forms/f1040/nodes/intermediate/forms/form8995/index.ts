@@ -8,6 +8,7 @@ import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import { standard_deduction } from "../../worksheets/standard_deduction/index.ts";
 import { form8995a } from "../form8995a/index.ts";
+import { scheduleCQbiBusinessSchema } from "../form8995a/index.ts";
 import { FilingStatus } from "../../../types.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR, type F1040Config } from "../../../config/index.ts";
@@ -65,6 +66,9 @@ export const inputSchema = z.object({
   retirement_plan_deduction: accumulable(z.number().nonnegative()).optional(),
   // Prior-year QBI net loss carryforward (must be zero or negative)
   qbi_loss_carryforward: z.number().nonpositive().optional(),
+  schedule_c_qbi_businesses: z.array(scheduleCQbiBusinessSchema).optional(),
+  qbi_no_prior_loss_or_suspended_loss_confirmed: z.literal(true).optional(),
+  qbi_not_patron_of_specified_cooperative_confirmed: z.literal(true).optional(),
   // Prior-year REIT/PTP net loss carryforward (must be zero or negative)
   reit_loss_carryforward: z.number().nonpositive().optional(),
   // AGI — used to compute pre-QBI taxable income when taxable_income is not yet known
@@ -201,6 +205,8 @@ function qbiDeduction(
 
 function hasQbiActivity(input: Form8995Input): boolean {
   return (
+    input.schedule_c_qbi_businesses?.some((business) => business.qbi < 0) ===
+      true ||
     sumField(input.qbi_from_schedule_c) !== 0 ||
     sumField(input.qbi_from_schedule_f) !== 0 ||
     sumField(input.qbi) !== 0 ||
@@ -238,6 +244,31 @@ function advancedFormOutput(
   const nonSstbQbi = sumField(input.qbi_from_schedule_c) +
     sumField(input.qbi_from_schedule_f) + sumField(input.qbi);
   const sstbQbi = sumField(input.sstb_qbi);
+  if (input.schedule_c_qbi_businesses?.some((business) => business.qbi < 0)) {
+    if (
+      sumField(input.qbi_from_schedule_f) !== 0 || sumField(input.qbi) !== 0 ||
+      sstbQbi !== 0 || businessDeductions(input) !== 0 ||
+      sumField(input.qbi_from_schedule_c) !==
+        input.schedule_c_qbi_businesses.reduce(
+          (sum, business) => sum + business.qbi,
+          0,
+        ) ||
+      sumField(input.w2_wages) !==
+        input.schedule_c_qbi_businesses.reduce(
+          (sum, business) => sum + business.w2_wages,
+          0,
+        ) ||
+      sumField(input.unadjusted_basis) !==
+        input.schedule_c_qbi_businesses.reduce(
+          (sum, business) => sum + business.ubia,
+          0,
+        )
+    ) {
+      throw new Error(
+        "Form 8995-A Schedule C bounded route needs only its identified Schedule C QBI businesses and no separately attributable business deductions",
+      );
+    }
+  }
   const deductions = businessDeductions(input);
   const positiveTotal = Math.max(0, nonSstbQbi) + Math.max(0, sstbQbi);
   const nonSstbShare = positiveTotal > 0
@@ -260,7 +291,66 @@ function advancedFormOutput(
     line6_sec199a_dividends: sumField(input.line6_sec199a_dividends),
     qbi_loss_carryforward: input.qbi_loss_carryforward ?? 0,
     reit_loss_carryforward: input.reit_loss_carryforward ?? 0,
+    ...(input.schedule_c_qbi_businesses?.some((business) => business.qbi < 0) &&
+      {
+        schedule_c_qbi_businesses: input.schedule_c_qbi_businesses,
+        qbi_no_prior_loss_or_suspended_loss_confirmed:
+          input.qbi_no_prior_loss_or_suspended_loss_confirmed,
+      }),
   });
+}
+
+// The simplified return currently supports one positively identified Schedule C
+// business with no other section 199A sources or adjustments. Other positive
+// deductions remain in the pending graph but cannot be exported as Form 8995.
+function oneScheduleCLines(
+  input: Form8995Input,
+  cfg: F1040Config,
+): (Record<string, string | number> & { line15: number }) | undefined {
+  const businesses = input.schedule_c_qbi_businesses;
+  if (businesses?.length !== 1) return undefined;
+  const business = businesses[0];
+  if (
+    !business.business_reference || !business.business_name || !business.ein ||
+    business.no_other_adjustments_confirmed !== true ||
+    input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
+    input.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
+    !Number.isInteger(business.qbi) || business.qbi <= 0 ||
+    sumField(input.qbi_from_schedule_c) !== business.qbi ||
+    sumField(input.qbi_from_schedule_f) !== 0 || sumField(input.qbi) !== 0 ||
+    sumField(input.sstb_qbi) !== 0 || businessDeductions(input) !== 0 ||
+    sumField(input.line6_sec199a_dividends) !== 0 ||
+    sumField(input.net_capital_gain) !== 0 ||
+    (input.qbi_loss_carryforward ?? 0) !== 0 ||
+    (input.reit_loss_carryforward ?? 0) !== 0 ||
+    input.agi === undefined || !Number.isInteger(input.agi) ||
+    input.filing_status === undefined
+  ) return undefined;
+  const line11 = Math.max(0, input.agi - standardDeductionAmount(input, cfg));
+  const line5 = Math.round(business.qbi * QBI_RATE);
+  const line14 = Math.round(line11 * QBI_RATE);
+  return {
+    line1_business_reference: business.business_reference,
+    line1_business_name: business.business_name,
+    line1_ein: business.ein,
+    line1_qbi: business.qbi,
+    line2: business.qbi,
+    line3: 0,
+    line4: business.qbi,
+    line5,
+    line6: 0,
+    line7: 0,
+    line8: 0,
+    line9: 0,
+    line10: line5,
+    line11,
+    line12: 0,
+    line13: line11,
+    line14,
+    line15: Math.min(line5, line14),
+    line16: 0,
+    line17: 0,
+  };
 }
 
 // ── Node class ────────────────────────────────────────────────────────────────
@@ -291,7 +381,18 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
       return { outputs: [advancedFormOutput(input, taxableIncome)] };
     }
 
-    const deduction = qbiDeduction(input, cfg);
+    if (netQbi(input) < 0) {
+      throw new Error(
+        "Form 8995 net QBI loss needs a sourced carryforward filing route",
+      );
+    }
+
+    const simplifiedLines = oneScheduleCLines(input, cfg);
+    // The bounded filed route carries the form's whole-dollar line 15 exactly
+    // into Form 1040. Other QBI routes retain their existing calculation.
+    const deduction = simplifiedLines === undefined
+      ? qbiDeduction(input, cfg)
+      : simplifiedLines.line15;
     if (deduction <= 0) {
       return { outputs: [] };
     }
@@ -301,7 +402,13 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
       // Route QBI deduction to standard_deduction so it is subtracted from taxable income
       // before routing to income_tax_calculation (Form 1040 lines 13 → 14 → 15).
       this.outputNodes.output(standard_deduction, { qbi_deduction: deduction }),
-      { nodeType: this.nodeType, fields: { qbi_deduction: deduction } },
+      {
+        nodeType: this.nodeType,
+        fields: {
+          qbi_deduction: deduction,
+          ...simplifiedLines,
+        },
+      },
     ];
 
     return { outputs };

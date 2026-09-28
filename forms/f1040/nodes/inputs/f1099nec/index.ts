@@ -7,6 +7,7 @@ import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
 import { scheduleC as schedule_c } from "../schedule_c/index.ts";
 import { schedule_f } from "../../intermediate/forms/schedule_f/index.ts";
@@ -76,10 +77,15 @@ function necIncomeOutput(item: NECItem): NodeOutput[] {
         }],
       })];
     case "schedule_1_line_8z":
-      return [output(schedule1, { line8z_other: box1 })];
+      return [];
     default:
       return [];
   }
+}
+
+function nonbusinessOtherIncome(items: readonly NECItem[]): number {
+  return items.filter((item) => item.for_routing === "schedule_1_line_8z")
+    .reduce((sum, item) => sum + (item.box1_nec ?? 0), 0);
 }
 
 class F1099necNode extends TaxNode<typeof inputSchema> {
@@ -90,6 +96,7 @@ class F1099necNode extends TaxNode<typeof inputSchema> {
     schedule_f,
     form8919,
     schedule1,
+    agi_aggregator,
     schedule2,
     f1040,
   ]);
@@ -111,8 +118,21 @@ class F1099necNode extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
+    const nonbusinessIncome = nonbusinessOtherIncome(parsed.f1099necs);
     return {
-      outputs: parsed.f1099necs.flatMap((item) => this.processItem(item)),
+      outputs: [
+        ...parsed.f1099necs.flatMap((item) => this.processItem(item)),
+        ...(nonbusinessIncome > 0
+          ? [
+            output(schedule1, {
+              line8z_f1099nec_nonbusiness: nonbusinessIncome,
+            }),
+            output(agi_aggregator, {
+              line8z_f1099nec_nonbusiness: nonbusinessIncome,
+            }),
+          ]
+          : []),
+      ],
     };
   }
 }

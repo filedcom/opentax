@@ -2,6 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import type { z } from "zod";
 import type { NodeOutput } from "../../../../../core/types/tax-node.ts";
 import { f4852, FormType, itemSchema } from "./index.ts";
+import { TS } from "../../types.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -303,6 +304,31 @@ Deno.test("f4852: R_1099 item zero withholding → no line25b in output", () => 
   ]);
   const fields = f1040Fields(result);
   assertEquals(fields["line25b_withheld_1099"], undefined);
+});
+
+Deno.test("f4852: code-1 substitute identifies the recipient of Form 5329", () => {
+  const result = compute([r1099Item({
+    gross_distribution: 5_000,
+    taxable_amount: 4_000,
+    distribution_code: "1",
+    subject_ts: TS.S,
+  })]);
+  const owned = findOutput(result, "form5329")?.fields.owner_entries as Array<
+    Record<string, unknown>
+  >;
+  assertEquals(owned[0]?.early_distribution, 4_000);
+  assertEquals(owned[0]?.owner, TS.S);
+});
+
+Deno.test("f4852: code-1 substitute without a recipient fails closed", () => {
+  assertThrows(
+    () => compute([r1099Item({
+      gross_distribution: 5_000,
+      distribution_code: "1",
+    })]),
+    Error,
+    "Form 5329 recipient",
+  );
 });
 
 // ---------------------------------------------------------------------------

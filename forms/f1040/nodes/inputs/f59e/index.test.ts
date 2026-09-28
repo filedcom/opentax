@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { ExpenditureType, f59e } from "./index.ts";
 
 function minimalItem(overrides: Record<string, unknown> = {}) {
@@ -77,12 +77,109 @@ Deno.test("f59e.compute: intangible drilling routes correctly", () => {
   assertEquals(out!.fields.other_adjustments, 20000);
 });
 
-Deno.test("f59e.compute: smoke test — multiple types summed", () => {
+Deno.test("f59e.compute: circulation costs use current-year deduction difference, not unamortized balance", () => {
+  const result = compute([
+    minimalItem({
+      expenditure_type: ExpenditureType.Circulation,
+      remaining_unamortized: 25_000,
+      regular_tax_deduction: 9_000,
+      amt_deduction: 3_000,
+      regular_three_year_writeoff_elected: false,
+      circulation_reviewed_workpaper_reference: "2025 circulation worksheet A",
+      circulation_no_unamortized_property_loss: true,
+    }),
+  ]);
+  assertEquals(findOutput(result, "form6251")?.fields, {
+    line2o_circulation_costs: 6_000,
+  });
+});
+
+Deno.test("f59e.compute: circulation amortization can create a negative line 2o", () => {
+  const result = compute([
+    minimalItem({
+      expenditure_type: ExpenditureType.Circulation,
+      remaining_unamortized: 5_000,
+      regular_tax_deduction: 0,
+      amt_deduction: 2_000,
+      regular_three_year_writeoff_elected: false,
+      circulation_reviewed_workpaper_reference: "2025 circulation worksheet B",
+      circulation_no_unamortized_property_loss: true,
+    }),
+  ]);
+  assertEquals(findOutput(result, "form6251")?.fields.line2o_circulation_costs, -2_000);
+});
+
+Deno.test("f59e.compute: circulation route requires deduction and election facts", () => {
+  assertThrows(
+    () => compute([minimalItem({ expenditure_type: ExpenditureType.Circulation })]),
+    Error,
+    "need reviewed current-year deductions",
+  );
+  assertThrows(
+    () => compute([minimalItem({
+      expenditure_type: ExpenditureType.Circulation,
+      regular_tax_deduction: 5_000,
+      amt_deduction: 1_000,
+      regular_three_year_writeoff_elected: true,
+      circulation_reviewed_workpaper_reference: "2025 circulation worksheet C",
+      circulation_no_unamortized_property_loss: true,
+    })]),
+    Error,
+    "cannot differ",
+  );
+});
+
+Deno.test("f59e.compute: circulation route rejects an unreviewed or loss-bearing pool", () => {
+  const reviewed = {
+    expenditure_type: ExpenditureType.Circulation,
+    regular_tax_deduction: 9_000,
+    amt_deduction: 3_000,
+    regular_three_year_writeoff_elected: false,
+    circulation_reviewed_workpaper_reference: "2025 circulation worksheet F",
+    circulation_no_unamortized_property_loss: true,
+  };
+  assertThrows(
+    () => compute([minimalItem({ ...reviewed, circulation_reviewed_workpaper_reference: undefined })]),
+    Error,
+    "need reviewed current-year deductions",
+  );
+  assertThrows(
+    () => compute([minimalItem({ ...reviewed, circulation_no_unamortized_property_loss: false })]),
+  );
+  assertThrows(
+    () => compute([minimalItem({ ...reviewed, amt_deduction: 50_001 })]),
+    Error,
+    "cannot exceed the original expenditure",
+  );
+});
+
+Deno.test("f59e.compute: elected three-year write-off has no circulation adjustment", () => {
+  const result = compute([minimalItem({
+    expenditure_type: ExpenditureType.Circulation,
+    regular_tax_deduction: 3_000,
+    amt_deduction: 3_000,
+    regular_three_year_writeoff_elected: true,
+    circulation_reviewed_workpaper_reference: "2025 circulation worksheet D",
+    circulation_no_unamortized_property_loss: true,
+  })]);
+  assertEquals(result.outputs, []);
+});
+
+Deno.test("f59e.compute: unsupported non-circulation items remain separate from line 2o", () => {
   const result = compute([
     minimalItem({ expenditure_type: ExpenditureType.ResearchExperimental, remaining_unamortized: 10000 }),
-    minimalItem({ expenditure_type: ExpenditureType.Circulation, remaining_unamortized: 2500 }),
+    minimalItem({
+      expenditure_type: ExpenditureType.Circulation,
+      remaining_unamortized: 2500,
+      regular_tax_deduction: 4_000,
+      amt_deduction: 1_000,
+      regular_three_year_writeoff_elected: false,
+      circulation_reviewed_workpaper_reference: "2025 circulation worksheet E",
+      circulation_no_unamortized_property_loss: true,
+    }),
     minimalItem({ expenditure_type: ExpenditureType.Development, remaining_unamortized: 0 }),
   ]);
   const out = findOutput(result, "form6251");
-  assertEquals(out!.fields.other_adjustments, 12500);
+  assertEquals(out!.fields.other_adjustments, 10000);
+  assertEquals(out!.fields.line2o_circulation_costs, 3000);
 });

@@ -31,12 +31,14 @@ exclude passive-activity deductions, and disallow miscellaneous itemized
 deductions for 2025. The partnership feeder therefore accepts only a
 payer-identified code B amount with a separately established, no-greater allowed
 amount for nonpassive investment-property depreciation or depletion. Only that
-allowed amount reaches `source_k1_allowed_investment_expenses` and line 5. This
-does not itself establish the deduction on another return line; that must be
-supported independently. Other code B categories and broker expenses remain
-outside this narrow source route. If separate manual line 5 expenses are also
-entered, the filer must affirm they exclude the sourced K-1 amount so the two
-fields do not count the same expense twice.
+allowed amount reaches `source_k1_allowed_investment_expenses` and line 5 in
+the calculation. This does not itself establish the deduction on another
+return line. Until a source-linked return deduction can be reconciled to that
+amount, positive code B inputs are rejected from MeF and PDF export. Other
+code B categories and broker expenses remain outside this narrow source route.
+If separate manual line 5 expenses are also entered, the filer must affirm
+they exclude the sourced K-1 amount so the two fields do not count the same
+expense twice.
 
 For any claimed interest expense, `amt_refigure` is required. Its prior-year AMT
 disallowed interest is an independent source fact. Specific signed adjustments
@@ -56,6 +58,14 @@ and 4g. The regular election routes to the Schedule D Tax Worksheet. AMT Form
 4952 line 4g is separately capped at the smaller of the regular election and AMT
 lines 4b plus 4e; its attribution routes to Form 6251 Part III. Elected amounts
 lose their preferential tax rates without changing Form 1040 lines 3a or 7.
+
+The no-election 1099-DIV export route now accepts affirmed investment-property
+box 1b qualified dividends when each box 1b is no greater than its box 1a. It
+matches every payer amount to the Form 4952 source fields, reconciles line 4b
+and all numbered lines, and checks Form 1040 lines 3a/3b and Schedule A line 9
+before MeF or PDF projection. This does not open the line 4g election, capital
+gain distributions, foreign-source dividends, or Form 1116 allocation paths;
+those still stop at export. The focused cases are written but unrun.
 
 This is not whole-form verification. The user requested a single full test batch
 after the build pass, so these new cases are written but unrun. Broker and

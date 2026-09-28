@@ -10,6 +10,14 @@ import {
   similarItemGroupTotals,
 } from "../../../nodes/inputs/f8283/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
+import {
+  assertElectedSectionAReconciled,
+  assertElectedSectionBReconciled,
+} from "./f8283_election.ts";
+import {
+  carriedSectionAItem,
+  reconcileForm8283Carryover,
+} from "./f8283_carryover.ts";
 
 const FMV_METHOD_LABELS: Readonly<Record<FMVMethod, string>> = {
   [FMVMethod.Appraisal]: "Appraisal",
@@ -19,6 +27,15 @@ const FMV_METHOD_LABELS: Readonly<Record<FMVMethod, string>> = {
   [FMVMethod.Formula]: "Formula",
   [FMVMethod.Other]: "Other",
 };
+
+export function sectionAFmvMethodDescription(
+  item: SectionAItem,
+): string | undefined {
+  return item.fmv_method === FMVMethod.Other
+    ? item.fmv_method_description
+    : item.fmv_method_description ??
+      (item.fmv_method && FMV_METHOD_LABELS[item.fmv_method]);
+}
 
 function propertyId(index: number): string {
   let value = index + 1;
@@ -59,11 +76,65 @@ export function needsFmvReductionStatement(item: SectionAItem): boolean {
     Math.round((item.fmv - item.deduction_claimed) * 100) > 0;
 }
 
+export function assertShortTermReductionSource(item: SectionAItem): void {
+  if (
+    item.short_term_ordinary_income_reduction_confirmed !== true ||
+    item.is_vehicle === true
+  ) return;
+  const address = item.donee_organization_us_address;
+  if (
+    !item.donee_organization_name?.trim() || !address?.line1.trim() ||
+    !address.city.trim() || !address.state.trim() || !address.zip.trim() ||
+    !item.property_description?.trim() || !item.date_acquired ||
+    !item.date_contributed ||
+    !item.donor_acquisition_description?.trim() ||
+    item.cost_or_adjusted_basis === undefined ||
+    (!item.fmv_method && !item.fmv_method_description?.trim())
+  ) {
+    throw new Error(
+      "Form 8283 short-term reduction needs complete donee, property, dates, basis, and valuation-method facts",
+    );
+  }
+}
+
+export function assertVehicleSaleReductionSource(item: SectionAItem): void {
+  if (!item.vehicle_sale_acknowledgment || !needsFmvReductionStatement(item)) {
+    return;
+  }
+  const acknowledgment = item.vehicle_sale_acknowledgment;
+  const address = item.donee_organization_us_address;
+  const certifiedAddress = acknowledgment.donee_us_address;
+  if (
+    !item.donee_organization_name?.trim() || !address?.line1.trim() ||
+    !address.city.trim() || !address.state.trim() || !address.zip.trim() ||
+    !item.property_description?.trim() || !item.date_contributed ||
+    !item.date_acquired || !item.donor_acquisition_description?.trim() ||
+    item.cost_or_adjusted_basis === undefined ||
+    (!item.fmv_method && !item.fmv_method_description?.trim())
+  ) {
+    throw new Error(
+      "Form 8283 vehicle-sale reduction needs complete donee, property, dates, basis, and valuation-method facts",
+    );
+  }
+  if (
+    item.donee_organization_name.trim() !== acknowledgment.donee_name.trim() ||
+    address.line1.trim() !== certifiedAddress.line1.trim() ||
+    (address.line2?.trim() ?? "") !== (certifiedAddress.line2?.trim() ?? "") ||
+    address.city.trim() !== certifiedAddress.city.trim() ||
+    address.state.trim() !== certifiedAddress.state.trim() ||
+    address.zip.trim() !== certifiedAddress.zip.trim()
+  ) {
+    throw new Error(
+      "Form 8283 vehicle-sale reduction donee differs from the certified acknowledgment",
+    );
+  }
+}
+
 function usd(amount: number): string {
   return `$${amount.toFixed(2)}`;
 }
 
-export function buildFmvReductionStatement(
+export function fmvReductionExplanation(
   item: SectionAItem,
   index: number,
 ): string {
@@ -88,10 +159,16 @@ export function buildFmvReductionStatement(
     } would be ordinary income or short-term gain under section 170(e)(1)(A), so the contribution is reduced to adjusted basis ${
       usd(item.cost_or_adjusted_basis)
     }.`
+    : item.capital_gain_reduction_election_confirmed === true &&
+        item.date_acquired && item.date_contributed &&
+        item.cost_or_adjusted_basis !== undefined
+    ? `Purchased on ${item.date_acquired} and contributed on ${item.date_contributed}, after more than one year; the election to use the 50% AGI limit reduces long-term capital appreciation of ${
+      usd(fmv - item.cost_or_adjusted_basis)
+    } from FMV, leaving adjusted basis ${usd(item.cost_or_adjusted_basis)}.`
     : "";
   if (!reason) {
     throw new Error(
-      "Form 8283 reduced claim needs certified sale proceeds or a sourced short-term ordinary-income reduction",
+      "Form 8283 reduced claim needs certified sale proceeds, a sourced short-term ordinary-income reduction, or a sourced capital-gain reduction election",
     );
   }
   const explanation = `Section A item ${propertyId(index)}: unreduced FMV ${
@@ -102,8 +179,17 @@ export function buildFmvReductionStatement(
   if (explanation.length > 1_000) {
     throw new Error("Form 8283 FMV-reduction explanation exceeds MeF limit");
   }
+  return explanation;
+}
+
+export function buildFmvReductionStatement(
+  item: SectionAItem,
+  index: number,
+): string {
+  assertShortTermReductionSource(item);
+  assertVehicleSaleReductionSource(item);
   return elements("FairMarketValueStatement", [
-    element("ShortExplanationTxt", explanation),
+    element("ShortExplanationTxt", fmvReductionExplanation(item, index)),
   ]);
 }
 
@@ -136,10 +222,7 @@ function buildSectionAItem(
       } needs the fair-market-value method description`,
     );
   }
-  const method = item.fmv_method === FMVMethod.Other
-    ? item.fmv_method_description
-    : item.fmv_method_description ??
-      (item.fmv_method && FMV_METHOD_LABELS[item.fmv_method]);
+  const method = sectionAFmvMethodDescription(item);
   const address = item.donee_organization_us_address;
   const acknowledgment = item.vehicle_sale_acknowledgment ??
     item.vehicle_needy_transfer_acknowledgment ??
@@ -196,6 +279,46 @@ function buildSectionAItem(
     ),
     element("FairMarketValueMethodDesc", method),
   ]);
+}
+
+function buildCarryoverDocuments(
+  form: F8283Input,
+  context: MefBuildContext,
+): readonly string[] {
+  const reconciled = reconcileForm8283Carryover(
+    form,
+    context,
+  );
+  const items = reconciled.map(({ evidence }) => carriedSectionAItem(evidence));
+  const reducedCount = items.filter(needsFmvReductionStatement).length;
+  const statementIds = context.documentIdsByTag?.FairMarketValueStatement ?? [];
+  if (
+    context.documentIdsByPendingKey &&
+    (statementIds.length !== reducedCount ||
+      statementIds.some((id) => !id.trim()) ||
+      new Set(statementIds).size !== statementIds.length)
+  ) {
+    throw new Error(
+      "Form 8283 carryover FMV reductions need distinct linked native statements",
+    );
+  }
+  let statementIndex = 0;
+  return reconciled.map(({ priorFormAttachmentId }, index) => {
+    const item = items[index];
+    const statementId = needsFmvReductionStatement(item)
+      ? statementIds[statementIndex++]
+      : undefined;
+    return elements(
+      "IRS8283",
+      [buildSectionAItem(item, 0, undefined, statementId)],
+      priorFormAttachmentId
+        ? {
+          referenceDocumentId: priorFormAttachmentId,
+          referenceDocumentName: BINARY_REFERENCE_NAME,
+        }
+        : undefined,
+    );
+  });
 }
 
 export function buildVehicleStatement(
@@ -365,6 +488,94 @@ function requiredQualifiedAppraisalAttachment(
   return id;
 }
 
+function requiredReductionAttachment(
+  item: SectionBItem,
+  context: MefBuildContext,
+): string | undefined {
+  const fileName = item.reduction_statement_attachment_file_name;
+  if (!fileName) {
+    throw new Error(
+      "Form 8283 Section B election needs its FMV-reduction statement PDF",
+    );
+  }
+  if (
+    context.attachmentDescriptionsByFileName?.[fileName] !==
+      "Form 8283 Section B FMV reduction statement"
+  ) {
+    throw new Error(
+      "Form 8283 Section B election needs its matching FMV-reduction statement PDF",
+    );
+  }
+  const review = item.reduction_statement_source_review;
+  if (!review) {
+    throw new Error(
+      "Form 8283 Section B election needs documented review of its FMV-reduction statement PDF",
+    );
+  }
+  if (context.documentIdsByPendingKey) {
+    if (context.attachmentSha256ByFileName?.[fileName] !== review.pdf_sha256) {
+      throw new Error(
+        "Form 8283 Section B FMV-reduction statement PDF bytes do not match the reviewed source SHA-256",
+      );
+    }
+    if (
+      fileName === item.signed_form_attachment_file_name ||
+      fileName === item.qualified_appraisal?.signature_attachment_file_name ||
+      fileName === item.donee_acknowledgment?.signature_attachment_file_name
+    ) {
+      throw new Error(
+        "Form 8283 Section B FMV-reduction statement must be a separate PDF",
+      );
+    }
+  }
+  const id = context.documentIdsByAttachmentFileName?.[fileName];
+  if (context.documentIdsByPendingKey && !id) {
+    throw new Error(
+      "Form 8283 Section B FMV-reduction statement PDF has no linked MeF document",
+    );
+  }
+  return id;
+}
+
+function requiredSignedFormAttachment(
+  item: SectionBItem,
+  context: MefBuildContext,
+): string | undefined {
+  // The descriptor is built once to allocate document IDs and again to link
+  // validated binary documents. The first pass has no attachment identities.
+  if (!context.documentIdsByPendingKey) return undefined;
+  const fileName = item.signed_form_attachment_file_name;
+  const review = item.signed_form_source_review;
+  if (!fileName || !review) {
+    throw new Error(
+      "Form 8283 Section B needs the completed signed Form 8283 PDF and documented source review; signature excerpts alone are insufficient",
+    );
+  }
+  if (
+    !/^Form 8283 completed signed Section B(?:$|: .+$)/.test(
+      context.attachmentDescriptionsByFileName?.[fileName] ?? "",
+    )
+  ) {
+    throw new Error(
+      "Form 8283 Section B needs its matching completed signed Form 8283 PDF",
+    );
+  }
+  if (
+    context.attachmentSha256ByFileName?.[fileName] !== review.pdf_sha256
+  ) {
+    throw new Error(
+      "Form 8283 completed signed Section B PDF bytes do not match the reviewed source SHA-256",
+    );
+  }
+  const id = context.documentIdsByAttachmentFileName?.[fileName];
+  if (context.documentIdsByPendingKey && !id) {
+    throw new Error(
+      "Form 8283 completed signed Section B PDF has no linked MeF document",
+    );
+  }
+  return id;
+}
+
 function buildSectionBItem(
   item: SectionBItem,
   index: number,
@@ -372,6 +583,7 @@ function buildSectionBItem(
   context: MefBuildContext,
   vehicleStatementId?: string,
   vehicleAttachmentId?: string,
+  reductionAttachmentId?: string,
 ): string {
   if (
     !item.property_description || !item.property_type ||
@@ -430,6 +642,14 @@ function buildSectionBItem(
       "Form 8283 Section B donee receipt date differs from contribution date",
     );
   }
+  if (
+    Math.round((item.fmv - item.deduction_claimed) * 100) > 0 &&
+    item.capital_gain_reduction_election_confirmed !== true
+  ) {
+    throw new Error(
+      "Form 8283 Section B reduced claim needs a sourced FMV-reduction computation and statement; only the reviewed capital-gain election route is supported",
+    );
+  }
   const appraisal = item.qualified_appraisal;
   const donee = item.donee_acknowledgment;
   const appraiserId = requiredSignatureAttachment(
@@ -445,13 +665,20 @@ function buildSectionBItem(
   const signatureIds = [appraiserId, doneeId].filter(
     (id): id is string => id !== undefined,
   );
+  const signedFormId = requiredSignedFormAttachment(item, context);
   const qualifiedAppraisalId = similarGroupTotal > 500_000
     ? requiredQualifiedAppraisalAttachment(
       appraisal.attachment_file_name,
       context,
     )
     : undefined;
-  const binaryIds = [vehicleAttachmentId, qualifiedAppraisalId, ...signatureIds]
+  const binaryIds = [
+    vehicleAttachmentId,
+    qualifiedAppraisalId,
+    reductionAttachmentId,
+    signedFormId,
+    ...signatureIds,
+  ]
     .filter(
       (id): id is string => id !== undefined,
     );
@@ -516,11 +743,55 @@ export const form8283: MefFormDescriptor<
 > = {
   pendingKey: "f8283",
   FIELD_MAP: [],
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8283.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f8283--2025.pdf",
   build(fields, context = {}) {
     const parsed = inputSchema.parse(fields);
+    if (parsed.carryover_evidence !== undefined) {
+      return buildCarryoverDocuments(parsed, context);
+    }
+    if (
+      (parsed.section_a_items ?? []).some(needsFmvReductionStatement) &&
+      context.pending?.f8283 !== undefined &&
+      JSON.stringify(parsed) !==
+        JSON.stringify(inputSchema.parse(context.pending.f8283))
+    ) {
+      throw new Error(
+        "Form 8283 reduction differs from the pending source used by its statement",
+      );
+    }
+    for (const item of parsed.section_a_items ?? []) {
+      assertShortTermReductionSource(item);
+      assertVehicleSaleReductionSource(item);
+    }
+    const elected = (parsed.section_a_items ?? []).some((item) =>
+      item.capital_gain_reduction_election_confirmed === true
+    );
+    const electedB = (parsed.section_b_items ?? []).some((item) =>
+      item.capital_gain_reduction_election_confirmed === true
+    );
+    if (elected || electedB) {
+      if (electedB) {
+        assertElectedSectionBReconciled(context);
+      } else {
+        assertElectedSectionAReconciled(context);
+      }
+      if (
+        JSON.stringify(parsed) !==
+          JSON.stringify(inputSchema.parse(context.pending?.f8283))
+      ) {
+        throw new Error("Form 8283 election differs from the pending source");
+      }
+    }
     const sectionA = parsed.section_a_items ?? [];
     const sectionB = parsed.section_b_items ?? [];
+    const signedFormFiles = sectionB.map((item) =>
+      item.signed_form_attachment_file_name
+    ).filter((fileName): fileName is string => fileName !== undefined);
+    if (new Set(signedFormFiles).size !== signedFormFiles.length) {
+      throw new Error(
+        "Form 8283 Section B needs a separate completed signed form PDF for each electronic Section B document",
+      );
+    }
     const similarGroupTotals = similarItemGroupTotals(parsed);
     const sectionAVehicleAttachments = sectionA.filter(needsVehicleStatement)
       .map((item) => requiredVehicleAttachment(item, context));
@@ -554,6 +825,17 @@ export const form8283: MefFormDescriptor<
     }
     const requiredFmvStatements = sectionA.filter(needsFmvReductionStatement)
       .length;
+    if (
+      context.documentIdsByPendingKey && (
+        fmvReductionStatementIds.some((id) => !id.trim()) ||
+        new Set(fmvReductionStatementIds).size !==
+          fmvReductionStatementIds.length
+      )
+    ) {
+      throw new Error(
+        "Form 8283 Section A reductions need distinct native FMV-reduction statement IDs",
+      );
+    }
     if (
       context.documentIdsByPendingKey &&
       fmvReductionStatementIds.length !== requiredFmvStatements
@@ -605,6 +887,9 @@ export const form8283: MefFormDescriptor<
             ? sectionBAttachmentIdsByFileName[
               item.vehicle_acknowledgment_attachment_file_name
             ]
+            : undefined,
+          item.capital_gain_reduction_election_confirmed === true
+            ? requiredReductionAttachment(item, context)
             : undefined,
         )
       ),

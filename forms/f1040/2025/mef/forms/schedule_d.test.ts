@@ -369,17 +369,26 @@ Deno.test("filing_status is silently ignored", () => {
   assertNotIncludes(result, "MFJ");
 });
 
-Deno.test("box2c_qsbs boolean field is silently ignored", () => {
-  const result = scheduleD.build({
-    box2c_qsbs: 5000,
-    line_14_carryover: 1000,
-  });
-  assertStringIncludes(
-    result,
-    "<LTCapitalLossCarryoverAmt>1000</LTCapitalLossCarryoverAmt>",
+Deno.test("positive Form 1099-DIV box 2c cannot silently disappear from Schedule D XML", () => {
+  assertThrows(
+    () => scheduleD.build({
+      box2c_qsbs: 5_000,
+      line_14_carryover: 1_000,
+    }),
+    Error,
+    "Form 6251 line 2h preference",
   );
-  assertNotIncludes(result, "box2c_qsbs");
-  assertNotIncludes(result, "5000");
+  assertThrows(
+    () => scheduleD.build({
+      transaction: {
+        adjustment_codes: "Q",
+        gain_loss: 1_000,
+      },
+      line_14_carryover: 1_000,
+    }),
+    Error,
+    "Form 6251 line 2h preference",
+  );
 });
 
 Deno.test("capital_loss_carryover is silently ignored", () => {

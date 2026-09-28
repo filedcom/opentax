@@ -1,9 +1,16 @@
-import { assertEquals, assertGreater, assertRejects } from "@std/assert";
+import {
+  assertEquals,
+  assertGreater,
+  assertRejects,
+  assertThrows,
+} from "@std/assert";
 import { join } from "@std/path";
 import { PDFDocument } from "pdf-lib";
-import { buildPdfBytes } from "./builder.ts";
+import { buildPdfBytes, fillFormPdf } from "./builder.ts";
+import { assertAttachmentCoverage } from "../attachment-coverage.ts";
 import type { FilerIdentity } from "../../mef/header.ts";
 import { FilingStatus } from "../../mef/header.ts";
+import { form6251Pdf } from "./forms/f6251.ts";
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -23,6 +30,37 @@ const mockFiler: FilerIdentity = {
   },
   filingStatus: FilingStatus.Single,
 };
+
+Deno.test("PDF export rejects active attachments without complete PDF maps", () => {
+  const active: Array<[Record<string, Record<string, unknown>>, string]> = [
+    [{ f8997: { investment_lots: [{}] } }, "Form 8997"],
+    [{ f8958: { state: "CA" } }, "Form 8958"],
+    [{ f2106: { f2106s: [{}] } }, "Form 2106"],
+  ];
+  for (const [pending, name] of active) {
+    assertThrows(() => assertAttachmentCoverage(pending, "pdf"), Error, name);
+  }
+  assertAttachmentCoverage({
+    f8283: { section_a_items: [], section_b_items: [] },
+    f7217: { form7217s: [] },
+    f8862: { claim_eitc: false, claim_ctc: false, claim_aotc: false },
+    f8863: { f8863s: [] },
+    form6252: { f6252s: [] },
+  }, "pdf");
+  // Form 7217 now has a descriptor. Its own instance gate validates source.
+  assertAttachmentCoverage({ f7217: { form7217s: [{}] } }, "pdf");
+  // Form 6252 has a complete bounded descriptor. Its instance gate validates
+  // the required sale facts, calculations, and return destinations.
+  assertAttachmentCoverage({ form6252: { f6252s: [{}] } }, "pdf");
+  // Form 8283 now reaches a strict descriptor-level source/continuation gate.
+  assertAttachmentCoverage({ f8283: { section_a_items: [{}] } }, "pdf");
+  assertAttachmentCoverage({ f8283: { section_b_items: [{}] } }, "pdf");
+  // Form 8863 is now guarded by its source-reconciled PDF descriptor.
+  assertAttachmentCoverage({ f8863: { f8863s: [{}] } }, "pdf");
+  // Form 8862 now reaches a descriptor that validates the filing source and
+  // rejects unsupported overflow statements before any PDF is emitted.
+  assertAttachmentCoverage({ f8862: { claim_eitc: true } }, "pdf");
+});
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -84,6 +122,93 @@ Deno.test("buildPdfBytes: fills wage field and returns valid PDF bytes", async (
     const header = new TextDecoder().decode(result.slice(0, 5));
     assertEquals(header, "%PDF-");
     assertGreater(result.length, 100);
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
+Deno.test("buildPdfBytes: a missing AcroForm field stops the export", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  try {
+    await seedCache(
+      tmpDir,
+      F1040_PDF_URL,
+      await makeMinimalF1040Pdf(["unrelated_field"]),
+    );
+    await assertRejects(
+      () =>
+        buildPdfBytes({ f1040: { line1a_wages: 75_000 } }, mockFiler, tmpDir),
+      Error,
+      'failed to fill field "topmostSubform[0].Page1[0].f1_47[0]"',
+    );
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
+Deno.test("fillFormPdf: a missing row AcroForm field stops the export", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  try {
+    await seedCache(
+      tmpDir,
+      F1040_PDF_URL,
+      await makeMinimalF1040Pdf(["unrelated_field"]),
+    );
+    await assertRejects(
+      () =>
+        fillFormPdf(
+          {
+            pendingKey: "sample_rows",
+            pdfUrl: F1040_PDF_URL,
+            fields: [],
+            rows: {
+              domainKey: "items",
+              maxRows: 1,
+              rowFields: [{
+                kind: "text",
+                domainKey: "amount",
+                pdfFieldPattern: "missing_row_field",
+              }],
+            },
+          },
+          { items: [{ amount: 25 }] },
+          undefined,
+          tmpDir,
+        ),
+      Error,
+      'failed to fill row 1 field "missing_row_field"',
+    );
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
+Deno.test("fillFormPdf: required all-zero Form 6251 is retained but an unrequired blank is omitted", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  try {
+    const widgets = form6251Pdf.fields.map((field) => field.pdfField);
+    await seedCache(
+      tmpDir,
+      form6251Pdf.pdfUrl,
+      await makeMinimalF1040Pdf(widgets),
+    );
+    const zeros = Object.fromEntries(
+      form6251Pdf.fields.map((field) => [field.domainKey, 0]),
+    );
+    const required = await fillFormPdf(
+      form6251Pdf,
+      { ...zeros, must_file_for_credit: true },
+      undefined,
+      tmpDir,
+    );
+    assertEquals(required !== undefined, true);
+    const notRequired = await fillFormPdf(
+      form6251Pdf,
+      zeros,
+      undefined,
+      tmpDir,
+    );
+    assertEquals(notRequired, undefined);
   } finally {
     await Deno.remove(tmpDir, { recursive: true });
   }
@@ -234,17 +359,29 @@ Deno.test("buildPdfBytes: emits one Form 1116 copy per income category", async (
     ]);
     await seedCache(tmpDir, F1116_PDF_URL, stubPdf);
 
-    const result = await buildPdfBytes({
-      form_1116: {
-        foreign_tax_paid: 1_400,
-        total_income: 85_000,
-        us_tax_before_credits: 13_000,
-        category_summaries: [
-          { category: "passive", foreignTaxPaid: 500, foreignGrossIncome: 1_000 },
-          { category: "general", foreignTaxPaid: 900, foreignGrossIncome: 8_000 },
-        ],
+    const result = await buildPdfBytes(
+      {
+        form_1116: {
+          foreign_tax_paid: 1_400,
+          total_income: 85_000,
+          us_tax_before_credits: 13_000,
+          category_summaries: [
+            {
+              category: "passive",
+              foreignTaxPaid: 500,
+              foreignGrossIncome: 1_000,
+            },
+            {
+              category: "general",
+              foreignTaxPaid: 900,
+              foreignGrossIncome: 8_000,
+            },
+          ],
+        },
       },
-    }, mockFiler, tmpDir);
+      mockFiler,
+      tmpDir,
+    );
 
     const pdf = await PDFDocument.load(result);
     assertEquals(pdf.getPageCount(), 2);

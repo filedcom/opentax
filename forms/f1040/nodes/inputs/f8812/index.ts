@@ -53,9 +53,8 @@ export const creditLimitWorksheetSchema = z.object({
   schedule3_line6l: z.number().nonnegative(),
   schedule3_line6m: z.number().nonnegative(),
   worksheet_b_applies: z.boolean(),
-  worksheet_b_line14: z.number().nonnegative().optional(),
   worksheet_b_line15: z.number().nonnegative().optional(),
-}).superRefine((value, ctx) => {
+}).strict().superRefine((value, ctx) => {
   if (value.worksheet_b_applies && value.worksheet_b_line15 === undefined) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -66,12 +65,6 @@ export const creditLimitWorksheetSchema = z.object({
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: "Schedule 8812 Worksheet B line 15 requires Worksheet B",
-    });
-  }
-  if (!value.worksheet_b_applies && value.worksheet_b_line14 !== undefined) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Schedule 8812 Worksheet B line 14 requires Worksheet B",
     });
   }
 });
@@ -219,6 +212,61 @@ export function calculatePartIIBLines(
   return { line21, line22, line23, line24, line25, line26 };
 }
 
+/** IRS TY2025 Schedule 8812 Credit Limit Worksheet B, lines 1 through 14. */
+export function calculateCreditLimitWorksheetBLines(
+  line12: number,
+  qualifyingChildren: number,
+  earnedIncomeWorksheet: EarnedIncomeWorksheet,
+  bonaFidePrResident: boolean,
+  payrollAndCredits?: PartIIBDetails,
+) {
+  const line1 = line12;
+  const line2 = qualifyingChildren * 1_700;
+  const line3 = calculateEarnedIncomeWorksheet(earnedIncomeWorksheet).line7;
+  const line4 = Math.max(0, line3 - 2_500);
+  const line5 = line4 * ACTC_EARNED_INCOME_RATE;
+  const usesPayrollBranch = line2 < 5_100
+    ? bonaFidePrResident && line5 < line1
+    : line5 < line1;
+  if (usesPayrollBranch && !payrollAndCredits) {
+    throw new Error(
+      "Schedule 8812 Worksheet B lines 7-10 need W-2, Schedule 1, Schedule 2, EIC, and Schedule 3 line 11 sources",
+    );
+  }
+  const line7 = usesPayrollBranch
+    ? payrollAndCredits!.line21_w2_withheld_social_security_medicare
+    : 0;
+  const line8 = usesPayrollBranch
+    ? payrollAndCredits!.schedule1_line15 + payrollAndCredits!.schedule2_line5 +
+      payrollAndCredits!.schedule2_line6 + payrollAndCredits!.schedule2_line13
+    : 0;
+  const line9 = line7 + line8;
+  const line10 = usesPayrollBranch
+    ? payrollAndCredits!.form1040_line27a_eic +
+      payrollAndCredits!.schedule3_line11_adoption_credit
+    : 0;
+  const line11 = Math.max(0, line9 - line10);
+  const line12Worksheet = Math.max(line5, line11);
+  const line13 = Math.min(line2, line12Worksheet);
+  const line14 = Math.max(0, line1 - line13);
+  return {
+    line1,
+    line2,
+    line3,
+    line4,
+    line5,
+    usesPayrollBranch,
+    line7,
+    line8,
+    line9,
+    line10,
+    line11,
+    line12: line12Worksheet,
+    line13,
+    line14,
+  };
+}
+
 export function calculateCreditLimitWorksheetALine5(
   form1040Line18Tax: number,
   worksheet: CreditLimitWorksheet,
@@ -355,6 +403,25 @@ export function calculateSchedule8812Lines(
   const filingStatus = returnValue(items, "filing_status");
   const line1 = returnValue(items, "agi");
   const tax = returnValue(items, "income_tax_liability");
+  if (explicitItems.length > 0) {
+    if (
+      input.auto_filing_status !== undefined &&
+      filingStatus !== input.auto_filing_status
+    ) {
+      throw new Error(
+        "Schedule 8812 filing status differs from the Form 1040 source",
+      );
+    }
+    if (input.auto_agi !== undefined && line1 !== input.auto_agi) {
+      throw new Error("Schedule 8812 AGI differs from Form 1040 line 11a");
+    }
+    if (
+      input.auto_income_tax_liability !== undefined &&
+      tax !== input.auto_income_tax_liability
+    ) {
+      throw new Error("Schedule 8812 tax limit differs from Form 1040 line 18");
+    }
+  }
   if (filingStatus === undefined || line1 === undefined) {
     throw new Error("Schedule 8812 needs filing status and Form 1040 AGI");
   }
@@ -421,13 +488,6 @@ export function calculateSchedule8812Lines(
       "Schedule 8812 needs Form 1040 line 18 tax before calculating line 14",
     );
   }
-  const line13 = calculateCreditLimitWorksheetALine5(tax, creditWorksheet);
-  const line14 = Math.min(line12, line13);
-
-  const canClaimActc = line4 > 0 && !doNotClaimActc && !hasFEIE;
-  const line16a = canClaimActc ? Math.max(0, line12 - line14) : 0;
-  const line16b = canClaimActc ? line4 * cfg.actcMaxPerChild : 0;
-  const line17 = Math.min(line16a, line16b);
   const itemWorksheets = items.flatMap((item) =>
     item.earned_income_worksheet ? [item.earned_income_worksheet] : []
   );
@@ -442,6 +502,27 @@ export function calculateSchedule8812Lines(
     );
   }
   const worksheetInput = input.earned_income_worksheet ?? itemWorksheets[0];
+  if (creditWorksheet.worksheet_b_applies && !worksheetInput) {
+    throw new Error(
+      "Schedule 8812 Worksheet B needs its earned-income worksheet line 7 sources",
+    );
+  }
+  const worksheetBLines = creditWorksheet.worksheet_b_applies
+    ? calculateCreditLimitWorksheetBLines(
+      line12,
+      line4,
+      worksheetInput!,
+      isPrResident,
+      input.part_iib,
+    )
+    : null;
+  const line13 = calculateCreditLimitWorksheetALine5(tax, creditWorksheet);
+  const line14 = Math.min(line12, line13);
+
+  const canClaimActc = line4 > 0 && !doNotClaimActc && !hasFEIE;
+  const line16a = canClaimActc ? Math.max(0, line12 - line14) : 0;
+  const line16b = canClaimActc ? line4 * cfg.actcMaxPerChild : 0;
+  const line17 = Math.min(line16a, line16b);
   const worksheet = worksheetInput
     ? calculateEarnedIncomeWorksheet(worksheetInput)
     : null;
@@ -497,6 +578,8 @@ export function calculateSchedule8812Lines(
     partIIBLines ? partIIBLines.line26 : line20,
   );
   return {
+    filingStatus,
+    line18Tax: tax,
     line1,
     line2a,
     line2b,
@@ -525,7 +608,7 @@ export function calculateSchedule8812Lines(
     needsPartIIB,
     line27,
     worksheetBApplies: creditWorksheet.worksheet_b_applies,
-    worksheetBLine14: creditWorksheet.worksheet_b_line14,
+    worksheetBLine14: worksheetBLines?.line14,
   };
 }
 

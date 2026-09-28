@@ -7,10 +7,18 @@ Build-first progress: Schedule C and F now pass signed source amounts into one
 Form 461 calculation, with a required sourced C/F-only scope review for loss
 cases. Unresolved passive losses fail closed. The MeF builder emits native
 TY2025 line-level XML, but it is not yet validated in the agreed batch. The
-registered PDF descriptor's old `excess_business_loss` mapping was stale. That
-dead mapping has been removed, but no 2025 AcroForm line mapping has been
-verified, so the descriptor intentionally fills no fields. It must be mapped and
-visually verified before this path can be called filing ready.
+registered PDF descriptor's old `excess_business_loss` mapping was stale. The
+current build pass maps the December 2025 one-page AcroForm header and all 14
+active numbered lines, accounting for reserved lines 1 and 7. It parses the
+bounded C/F filed-form schema and runs the same return reconciliation as the
+native document before projecting a page. The mapping and focused cases are
+written but unrun; the filled page has not been visually verified.
+
+The former blanket Form 461 PDF preflight has been removed now that the
+descriptor projects the bounded C/F form. Unsupported source and
+return-reconciliation cases still reject before PDF rendering. The native MeF
+route remains subject to the same constraints. Neither route is filing-ready
+until the full test, XSD, filled-page and IRS-rule checks run.
 
 The MeF builder now requires pending Form 1040 and Schedule 1, reconciles the
 C/F lines and line 8p addback, and rejects nonzero Form 1040 line 7a, Schedule 1
@@ -49,23 +57,20 @@ limits, which precede Form 461. Capital-loss exclusions and business capital
 gain ceilings need sourced line 10/11 adjustments; they cannot be inferred from
 the Schedule D total alone.
 
-## Current implementation mismatch
+## Historical implementation mismatch, addressed in the bounded C/F route
 
-- `nodes/inputs/schedule_c/index.ts` and
-  `nodes/intermediate/forms/schedule_f/index.ts` each compare their own net loss
-  with the full annual threshold and send only their respective excess.
-  `nodes/intermediate/forms/form461/index.ts` then sums the per-source excesses.
-  This can apply the threshold more than once and cannot offset a loss in one
-  business with a profit in another.
-- The Form 461 node accepts only a precomputed excess and emits Schedule 1 line
-  8p. It has no underlying signed line 2-14 amounts and cannot apply the
-  separate per-line filing trigger.
-- `2025/mef/forms/f461.ts` emits only `ExcessBusinessLossAmt`; it cannot
-  establish the complete filed 2025 form or reconcile it to the return. The
-  registered PDF descriptor likewise cannot demonstrate filled line detail.
-- Existing node tests assert precomputed per-source excesses and are not
-  evidence of the return-wide rule. They need replacement with cross-source
-  cases and a required-form/no-addback case, all in the agreed later batch.
+- Schedule C and F previously applied the threshold separately, so one
+  business's profit could not offset another's loss. The current node combines
+  signed C/F amounts once before applying the threshold and per-line trigger.
+- The former node accepted a precomputed excess without underlying lines. The
+  current bounded route calculates lines 2–16 and Schedule 1 line 8p from signed
+  C/F inputs after a sourced scope review.
+- The former MeF output contained only `ExcessBusinessLossAmt`. The current
+  native builder emits the line-level form and checks it against the return. The
+  PDF maps the same bounded C/F values, pending filled-page inspection.
+- Historical tests for the old excess shortcut are not current evidence. New
+  cross-source and required-form/no-addback cases are written but await the
+  agreed full batch.
 
 ## Required build boundary
 

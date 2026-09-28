@@ -9,6 +9,11 @@ import {
   IRSDependentRelationshipCode,
 } from "../../../nodes/inputs/general/index.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
+import { inputSchema as w2gInputSchema } from "../../../nodes/inputs/w2g/index.ts";
+import {
+  inputSchema as f1099rInputSchema,
+  isPensionDirectRollover,
+} from "../../../nodes/inputs/f1099r/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 export interface Fields {
@@ -44,6 +49,7 @@ export interface Fields {
   line4b_ira_taxable?: number | null;
   line5a_pension_gross?: number | null;
   line5b_pension_taxable?: number | null;
+  line5c_pension_rollover?: boolean;
   line6a_ss_gross?: number | null;
   line6b_ss_taxable?: number | null;
   mfs_spouse_lived_with_taxpayer?: boolean;
@@ -395,10 +401,71 @@ function dependentXml(fields: Input, context?: MefBuildContext): string[] {
 }
 
 function buildIRS1040(fields: Input, context?: MefBuildContext): string {
-  if ((resolveNumber(fields.line13b_additional_deductions) ?? 0) > 0) {
-    throw new Error(
-      "Form 1040 line 13b needs an attached Schedule 1-A, which this MeF exporter cannot yet emit",
+  const rollover = fields.line5c_pension_rollover === true;
+  if (fields.line5c_pension_rollover !== undefined &&
+      typeof fields.line5c_pension_rollover !== "boolean") {
+    throw new Error("Form 1040 line 5c rollover must be a boolean");
+  }
+  const f1099rSource = context?.pending?.f1099r;
+  if (rollover || f1099rSource !== undefined) {
+    const parsed = f1099rInputSchema.safeParse(f1099rSource);
+    if (!parsed.success) {
+      throw new Error("Form 1040 line 5c needs valid Form 1099-R source facts");
+    }
+    if (rollover !== parsed.data.f1099rs.some(isPensionDirectRollover)) {
+      throw new Error(
+        "Form 1040 line 5c rollover does not match the payer-reported Form 1099-R code G",
+      );
+    }
+  }
+  if (context?.pending?.w2g !== undefined) {
+    const source = w2gInputSchema.safeParse(context.pending.w2g);
+    if (!source.success) {
+      throw new Error(
+        "Form 1040 W-2G withholding needs valid payer-issued source facts",
+      );
+    }
+    const withheld = source.data.w2gs.filter((item) =>
+      (item.box4_federal_withheld ?? 0) > 0
     );
+    if (withheld.length > 0) {
+      const withheldTotal = withheld.reduce(
+        (sum, item) => sum + (item.box4_federal_withheld ?? 0),
+        0,
+      );
+      if ((fields.line25c_total ?? 0) < withheldTotal) {
+        throw new Error(
+          "Form 1040 line 25c is less than sourced W-2G federal withholding",
+        );
+      }
+      const ids = context.documentIdsByPendingKey?.w2g;
+      if (
+        context.documentIdsByPendingKey &&
+        (!ids || ids.length !== withheld.length || ids.some((id) =>
+          !id.trim()
+        ) ||
+          new Set(ids).size !== ids.length)
+      ) {
+        throw new Error(
+          "Form 1040 W-2G withholding needs each linked payer-issued W-2G document",
+        );
+      }
+    }
+  }
+  if ((resolveNumber(fields.line13b_additional_deductions) ?? 0) > 0) {
+    const schedule = context?.pending?.schedule1a;
+    if (
+      !schedule || typeof schedule !== "object" ||
+      Array.isArray(schedule) ||
+      !("senior_zero_exclusions_review" in schedule) ||
+      !schedule.senior_zero_exclusions_review ||
+      (context?.documentIdsByPendingKey &&
+        context.documentIdsByPendingKey.schedule1a?.length !== 1)
+    ) {
+      throw new Error(
+        "Form 1040 line 13b needs an attached senior-only Schedule 1-A",
+      );
+    }
   }
   if ((fields.form8912_source_lines?.line4 ?? 0) > 0) {
     const bond = context?.pending?.f8912;
@@ -511,6 +578,16 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
     }
     return element(tag, value);
   });
+  if (rollover) {
+    const pensionIndex = FIELD_MAP.findIndex(([key]) =>
+      key === "line5b_pension_taxable"
+    );
+    incomeChildren.splice(
+      pensionIndex + 1,
+      0,
+      element("PensionsAnnuitiesRolloverInd", "X"),
+    );
+  }
   if (typeof fields.form8814_tax === "number" && fields.form8814_tax > 0) {
     const formIds = context?.documentIdsByPendingKey?.form8814 ?? [];
     if (context?.documentIdsByPendingKey && formIds.length === 0) {

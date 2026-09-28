@@ -11,9 +11,10 @@ requires source references and the taxpayer-level business-income limit, and
 computes lines 1-13 and 22. The MeF builder requires an exact Schedule C
 activity reference and line-13 depreciation reconciliation. Older aggregate
 inputs from Schedule E and K-1 sources now fail explicitly; they are not a
-fallback. The existing PDF descriptor remains stale and unverified, so this path
-cannot be called PDF-ready. No tests, XSD validation, PDF rendering, or ATS
-acceptance has run for this new path.
+fallback. The PDF descriptor has since been replaced with the bounded Part I
+mapping described below, but filled-page appearance and validation are still
+unverified. No tests, XSD validation, PDF rendering, or ATS acceptance has run
+for this new path.
 
 The MeF builder now also checks line 11 against the filed sole Schedule C profit
 recomputed without this asset's section 179 deduction. This narrower route
@@ -31,7 +32,27 @@ and no married-filing-separately allocation. The Schedule C input must already
 include the computed Form 4562 line 22 amount on its line 13; Form 4562 does not
 add a second deduction to Schedule 1. Residual-basis MACRS, bonus depreciation,
 listed property, multiple assets or activities, pass-through elections, and the
-PDF remain unsupported.
+other asset classes remain unsupported.
+
+## Bounded TY2025 PDF mapping (build-first, unrendered)
+
+The [official 2025 Form 4562](https://www.irs.gov/pub/irs-prior/f4562--2025.pdf)
+has three pages. Its canonical AcroForm positions put page-1 lines 1-5 in
+`f1_4`–`f1_8`, the single elected-property row 6(a)-(c) in
+`Table_Ln6.BodyRow1.f1_9`–`f1_11`, lines 8-13 in `f1_16`–`f1_21`, and Part IV
+line 22 in page-2 `f2_2`. The rebuilt descriptor fills those fields, the filer
+name/identifying number, and the business activity. It leaves line 7 and Parts
+II, III, V, and VI blank because the only accepted asset is nonlisted, fully
+elected under section 179, with no other depreciation. It no longer prints raw
+bonus *basis* as line-14 allowance or generic MACRS values in a 19a row.
+
+Before projecting any active PDF, it parses the finalized `filedForm4562Schema`
+and runs the same asset, Schedule C line-13, active-business-income, and Form
+1040/Schedule 1 source checks as the native MeF builder. Aggregate-only inputs
+and unmatched filed lines therefore fail closed. Focused field-path,
+source-reconciliation, and missing-source cases are written but unrun. The
+cached form's AcroForm tree was inspected read-only; no filled PDF or visual
+appearance was rendered in this build pass.
 
 ## Source and schema check
 
@@ -40,9 +61,8 @@ PDF remain unsupported.
   nested GDS/ADS rows, Part IV totals, and Parts V-VI. Its corresponding native
   fields include `Section179ExpenseDeductionAmt` (line 12),
   `SpecialAllowanceAmt` (line 14), and `MACRSDedForAstInSrvcBfrPYAmt` (line 17).
-  None of the 12 tags in `forms/f1040/2025/mef/forms/f4562.ts` appears as a
-  direct child of `IRS4562` in this schema. Even a single populated field from
-  the current builder therefore yields structurally invalid native XML.
+  The original flat serializer used non-native direct children; it has been
+  replaced with the Part I sequence, but local XSD validation is still pending.
 - The [2025 Form 4562](https://www.irs.gov/pub/irs-pdf/f4562.pdf) distinguishes
   cost, elected cost, current deduction, and next-year carryover on lines 2,
   6-13; line 14 is the _allowance_, not its qualifying basis; and Part III
@@ -90,7 +110,7 @@ route was replaced. They are retained as the original audit record.
 The first source path now covers one fully elected nonlisted Schedule C asset
 with no residual MACRS or bonus basis, and reconciles the deduction to that
 activity's Schedule C line 13. It still needs the single full test batch, local
-XSD validation, and a mapped and visually checked PDF. The next asset path needs
+XSD validation, and a visually checked filled PDF. The next asset path needs
 separate source facts for residual basis, MACRS class/convention, and bonus
 eligibility. K-1 passthrough, multiple assets or activities, listed property,
 and ADS remain outside the bounded path until their source and allocation models

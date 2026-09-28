@@ -59,6 +59,9 @@ export const inputSchema = z.object({
   claim_eitc: z.boolean().optional(),
   claim_ctc: z.boolean().optional(), // Child Tax Credit / ACTC (Form 8812)
   claim_aotc: z.boolean().optional(), // American Opportunity Tax Credit (Form 8863)
+  // An active 2- or 10-year credit ban can be contested only on a mailed return.
+  // A filing claim must explicitly state this status; absence is not "no ban".
+  credit_disallowance_ban_active: z.boolean().optional(),
 
   // Internal prior-disallowance metadata. Part I line 1 is the filing year,
   // not any of these years; the TY2025 MeF document does not serialize them.

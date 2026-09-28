@@ -13,6 +13,16 @@ general input. Missing or positive lived-with facts still provide no special
 allowance. Focused source, phaseout, and XML cases are written but have not been
 run.
 
+The storage-ready single active-rental ledger now also accepts MFS only when
+`mfs_lived_apart_all_year` is explicitly true. It passes that fact to the
+existing Part II calculation and records the resulting allowed and suspended
+Schedule E operating loss. For a $40,000 rental loss, whole-dollar MAGI of
+$50,000, $60,000, and $75,000 produces $12,500, $7,500, and $0 allowed,
+respectively. Missing or false lived-apart facts still reject ledger creation;
+the stored ledger read recomputes against the original source. Focused ledger
+cases are written but unrun. This covers one identified Schedule E active
+rental with no prior PAL or sale.
+
 This does not complete GAP-8582. Per-activity source allocation, prior passive
 loss character, dispositions, complex Part IX rows, filled PDF inspection, local
 XSD, and IRS ATS acceptance remain their separate gates. The PDF descriptor

@@ -7,6 +7,7 @@ import {
   type WorksheetWSource,
   type WorksheetXSource,
 } from "./pub974_worksheets.ts";
+import { attributableSpecifiedPtc } from "./pub974_attribution.ts";
 
 const policyMonths = [
   {
@@ -155,11 +156,12 @@ Deno.test("Pub 974 Steps 1-6 converge on reconciled full-year policy rows", () =
       })),
     },
     worksheet_x: xSource,
-    form1095a_coverage_months: Array.from(
-      { length: 12 },
-      (_, index) => index + 1,
-    ),
-    all_marketplace_enrollment_premiums_are_specified: true,
+    form1095a_policy_months: Array.from({ length: 12 }, (_, index) => ({
+      form1095a_policy_number: "FULL-YEAR-2025",
+      month: index + 1,
+      premium: 1_000,
+      aptc: 500,
+    })),
     no_other_se_income_sources_verified: true,
     form8962_source: {
       monthly_premiums: Array(12).fill(1_000),
@@ -192,9 +194,12 @@ Deno.test("Pub 974 single-business route rejects non-reconciled policy months", 
           },
         },
         worksheet_x: xSource,
-        form1095a_coverage_months: Array.from({ length: 12 }, (_, index) =>
-          index + 1),
-        all_marketplace_enrollment_premiums_are_specified: true,
+        form1095a_policy_months: Array.from({ length: 12 }, (_, index) => ({
+          form1095a_policy_number: "SIX-MONTH-2025",
+          month: index + 1,
+          premium: 1_000,
+          aptc: 500,
+        })),
         no_other_se_income_sources_verified: true,
         form8962_source: {
           monthly_premiums: Array(12).fill(1_000),
@@ -203,7 +208,7 @@ Deno.test("Pub 974 single-business route rejects non-reconciled policy months", 
         },
       }),
     Error,
-    "must reconcile to every Form 1095-A coverage",
+    "must reconcile to Form 1095-A coverage",
   );
 });
 
@@ -228,8 +233,12 @@ Deno.test("Pub 974 iterative route accepts six verified Marketplace coverage mon
       })),
     },
     worksheet_x: xSource,
-    form1095a_coverage_months: [1, 2, 3, 4, 5, 6],
-    all_marketplace_enrollment_premiums_are_specified: true,
+    form1095a_policy_months: Array.from({ length: 6 }, (_, index) => ({
+      form1095a_policy_number: "SIX-MONTH-2025",
+      month: index + 1,
+      premium: 1_000,
+      aptc: 500,
+    })),
     no_other_se_income_sources_verified: true,
     form8962_source: {
       monthly_premiums: [...Array(6).fill(1_000), ...Array(6).fill(0)],
@@ -268,8 +277,12 @@ Deno.test("Pub 974 partial-year route rejects uncovered and duplicate source mon
       })),
     },
     worksheet_x: xSource,
-    form1095a_coverage_months: [1, 2, 3, 4, 5, 6],
-    all_marketplace_enrollment_premiums_are_specified: true as const,
+    form1095a_policy_months: Array.from({ length: 6 }, (_, index) => ({
+      form1095a_policy_number: "SIX-MONTH-2025",
+      month: index + 1,
+      premium: 1_000,
+      aptc: 500,
+    })),
     no_other_se_income_sources_verified: true as const,
     form8962_source: {
       monthly_premiums: [...Array(6).fill(1_000), ...Array(6).fill(0)],
@@ -281,10 +294,13 @@ Deno.test("Pub 974 partial-year route rejects uncovered and duplicate source mon
     () =>
       calculatePub974SingleBusinessIterative({
         ...base,
-        form1095a_coverage_months: [1, 2, 3, 4, 5, 5],
+        form1095a_policy_months: [
+          ...base.form1095a_policy_months.slice(0, 5),
+          base.form1095a_policy_months[4],
+        ],
       }),
     Error,
-    "coverage months must be unique",
+    "unique coverage months",
   );
   assertThrows(
     () =>
@@ -300,6 +316,65 @@ Deno.test("Pub 974 partial-year route rejects uncovered and duplicate source mon
         },
       }),
     Error,
-    "must reconcile to every Form 1095-A coverage",
+    "must reconcile to Form 1095-A coverage",
+  );
+});
+
+Deno.test("Pub 974 mixed coverage attributes only specified-month Form 8962 PTC", () => {
+  const result = calculatePub974SingleBusinessIterative({
+    worksheet_w: {
+      ...wSource,
+      nonspecified_premium_deduction: 0,
+      business: {
+        kind: "self_employed",
+        establishing_business_earned_income: 50_000,
+        all_profitable_business_earned_income: 50_000,
+        schedule1_line15_se_tax_deduction: 5_000,
+        establishing_business_schedule1_line16_retirement_deduction: 2_000,
+        form2555_attributable_exclusion: 0,
+      },
+      specified_policy_months: Array.from({ length: 6 }, (_, index) => ({
+        form1095a_policy_number: "MIXED-2025",
+        month: index + 1,
+        specified_premium: 1_000,
+        attributable_aptc: 500,
+      })),
+    },
+    worksheet_x: xSource,
+    form1095a_policy_months: Array.from({ length: 12 }, (_, index) => ({
+      form1095a_policy_number: "MIXED-2025",
+      month: index + 1,
+      premium: 1_000,
+      aptc: 500,
+    })),
+    no_other_se_income_sources_verified: true,
+    form8962_source: {
+      monthly_premiums: Array(12).fill(1_000),
+      monthly_slcsps: [...Array(6).fill(1_200), ...Array(6).fill(1_400)],
+      monthly_aptcs: Array(12).fill(500),
+    },
+  });
+  const rows = result.form8962_fields.monthly_ptc_rows as
+    { month_code: string; allowed_credit: number }[];
+  const specifiedPtc = rows.slice(0, 6).reduce(
+    (sum, row) => sum + row.allowed_credit,
+    0,
+  );
+  assertEquals(result.attributable_specified_ptc, specifiedPtc);
+  assert(
+    result.attributable_specified_ptc <
+      (result.form8962_fields.total_premium_tax_credit as number),
+  );
+  assert(result.schedule1_line17_deduction + specifiedPtc <= 6_000);
+});
+
+Deno.test("Pub 974 attribution uses monthly column (e) when amounts vary", () => {
+  const rows = Array.from({ length: 12 }, (_, index) => ({
+    month_code: String(index + 1),
+    allowed_credit: index < 6 ? 100 : 200,
+  }));
+  assertEquals(
+    attributableSpecifiedPtc(rows, new Set([1, 2, 3, 4, 5, 6]), new Set(Array.from({ length: 12 }, (_, i) => i + 1))),
+    600,
   );
 });

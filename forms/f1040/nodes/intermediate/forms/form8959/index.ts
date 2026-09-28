@@ -70,40 +70,43 @@ export const inputSchema = z.object({
   f4852_single_over_withholding_threshold: z.boolean().optional(),
 }).strict();
 
-const printFieldsSchema = z.object({
-  medicare_wages: z.number().optional(),
-  medicare_withheld: z.number().optional(),
-  rrta_wages: z.number().optional(),
-  rrta_medicare_withheld: z.number().optional(),
+const printDollar = z.number().int().nonnegative().max(999_999_999_999_999);
+
+export const printFieldsSchema = z.object({
+  medicare_wages: printDollar.optional(),
+  medicare_withheld: printDollar.optional(),
+  rrta_wages: printDollar.optional(),
+  rrta_medicare_withheld: printDollar.optional(),
   single_w2_over_withholding_threshold: z.boolean().optional(),
-  line1_medicare_wages: z.number(),
-  line2_unreported_tips: z.number(),
-  line3_wages_8919: z.number(),
-  line4_total_medicare_wages: z.number(),
-  line5_threshold: z.number(),
-  line6_wage_excess: z.number(),
-  line7_wage_tax: z.number(),
-  line8_se_income: z.number(),
-  line9_threshold: z.number(),
-  line10_medicare_wages: z.number(),
-  line11_reduced_se_threshold: z.number(),
-  line12_se_excess: z.number(),
-  line13_se_tax: z.number(),
-  line14_rrta_wages: z.number(),
-  line15_threshold: z.number(),
-  line16_rrta_excess: z.number(),
-  line17_rrta_tax: z.number(),
-  line18_total_tax: z.number(),
-  line19_medicare_withheld: z.number(),
-  line20_medicare_wages: z.number(),
-  line21_regular_medicare_tax: z.number(),
-  line22_additional_withheld: z.number(),
-  line23_rrta_withheld: z.number(),
-  line24_total_withheld: z.number(),
-});
+  line1_medicare_wages: printDollar,
+  line2_unreported_tips: printDollar,
+  line3_wages_8919: printDollar,
+  line4_total_medicare_wages: printDollar,
+  line5_threshold: printDollar,
+  line6_wage_excess: printDollar,
+  line7_wage_tax: printDollar,
+  line8_se_income: printDollar,
+  line9_threshold: printDollar,
+  line10_medicare_wages: printDollar,
+  line11_reduced_se_threshold: printDollar,
+  line12_se_excess: printDollar,
+  line13_se_tax: printDollar,
+  line14_rrta_wages: printDollar,
+  line15_threshold: printDollar,
+  line16_rrta_excess: printDollar,
+  line17_rrta_tax: printDollar,
+  line18_total_tax: printDollar,
+  line19_medicare_withheld: printDollar,
+  line20_medicare_wages: printDollar,
+  line21_regular_medicare_tax: printDollar,
+  line22_additional_withheld: printDollar,
+  line23_rrta_withheld: printDollar,
+  line24_total_withheld: printDollar,
+}).strict();
+
+export type Form8959PrintFields = z.infer<typeof printFieldsSchema>;
 
 type Form8959Input = z.infer<typeof inputSchema>;
-type Form8959PrintFields = z.infer<typeof printFieldsSchema>;
 
 // ─── Pure helpers ──────────────────────────────────────────────────────────────
 
@@ -132,14 +135,6 @@ function singleW2FilingRequired(input: Form8959Input): boolean {
     input.f4852_single_over_withholding_threshold === true;
 }
 
-// Part I, Line 4: total Medicare wages + tips (all sources)
-// Form 8959 line 4
-function totalMedicareWages(input: Form8959Input): number {
-  return medicareWages(input) +
-    (input.unreported_tips ?? 0) +
-    (input.wages_8919 ?? 0);
-}
-
 // Part I, Line 6: excess Medicare wages above threshold
 // Form 8959 line 6
 function medicareWageExcess(line4: number, limit: number): number {
@@ -149,7 +144,7 @@ function medicareWageExcess(line4: number, limit: number): number {
 // Part I, Line 7: Additional Medicare Tax on wages
 // Form 8959 line 7
 function partITax(line6: number): number {
-  return line6 * AMT_RATE;
+  return Math.round(line6 * AMT_RATE);
 }
 
 // Part II, Line 10: reduced SE income threshold
@@ -170,7 +165,7 @@ function seIncomeExcess(seIncome: number, line10: number): number {
 // Part II, Line 13: Additional Medicare Tax on SE income
 // Form 8959 line 13
 function partIITax(seExcess: number): number {
-  return seExcess * AMT_RATE;
+  return Math.round(seExcess * AMT_RATE);
 }
 
 // Part III, Line 16: excess RRTA compensation above threshold
@@ -183,24 +178,26 @@ function rrtaExcess(rrtaWages: number, limit: number): number {
 // Part III, Line 17: Additional Medicare Tax on RRTA compensation
 // Form 8959 line 17
 function partIIITax(line16: number): number {
-  return line16 * AMT_RATE;
+  return Math.round(line16 * AMT_RATE);
 }
 
-// Round to cents to avoid IEEE-754 floating point drift
-function toCents(n: number): number {
-  return Math.round(n * 100) / 100;
+// The TY2025 IRS8959 XSD uses whole-dollar integer types. Keep cents while
+// summing source records, then round each printed line once, as the Form 1040
+// instructions direct when filing whole-dollar amounts.
+function wholeDollar(amount: number): number {
+  return Math.round(amount);
 }
 
 // Part IV, Line 18: total Additional Medicare Tax
 // Form 8959 line 18 → Schedule 2 line 11
 function totalAmtTax(p1: number, p2: number, p3: number): number {
-  return toCents(p1 + p2 + p3);
+  return p1 + p2 + p3;
 }
 
 // Part V, Line 21: regular Medicare tax on W-2 box 5 wages = line20 × 1.45%
 // Form 8959 line 21
 function regularMedicareOnWages(line4: number): number {
-  return toCents(line4 * 0.0145);
+  return wholeDollar(line4 * 0.0145);
 }
 
 // Part V, Line 22: Additional Medicare Tax withheld from W-2 wages
@@ -210,22 +207,10 @@ function additionalMedicareFromWages(
   medicareWithheld: number,
   wagesForLine20: number,
 ): number {
-  return toCents(
-    Math.max(0, medicareWithheld - regularMedicareOnWages(wagesForLine20)),
+  return Math.max(
+    0,
+    medicareWithheld - regularMedicareOnWages(wagesForLine20),
   );
-}
-
-// Part V, Line 24: total Additional Medicare Tax withheld
-// = line22 (wages additional) + line23 (RRTA additional)
-// Form 8959 line 24 → Form 1040 line 25c
-function totalAdditionalWithheld(input: Form8959Input): number {
-  const line22 = additionalMedicareFromWages(
-    medicareWithheld(input),
-    medicareWages(input),
-  );
-  const line23 = (input.w2_rrta_medicare_withheld ?? 0) +
-    (input.ct2_rrta_medicare_tax_paid ?? 0);
-  return toCents(line22 + line23);
 }
 
 // Route total AMT to schedule2 line 11 when > 0
@@ -287,21 +272,23 @@ class Form8959Node extends TaxNode<typeof inputSchema> {
     const limit = threshold(input.filing_status, cfg);
 
     // Part I
-    const line1 = medicareWages(input);
-    const line2 = input.unreported_tips ?? 0;
-    const line3 = input.wages_8919 ?? 0;
-    const line4 = totalMedicareWages(input);
+    const line1 = wholeDollar(medicareWages(input));
+    const line2 = wholeDollar(input.unreported_tips ?? 0);
+    const line3 = wholeDollar(input.wages_8919 ?? 0);
+    const line4 = line1 + line2 + line3;
     const line6 = medicareWageExcess(line4, limit);
     const line7 = partITax(line6);
 
     // Part II
-    const line8 = Math.max(0, input.se_income ?? 0);
+    const line8 = wholeDollar(Math.max(0, input.se_income ?? 0));
     const line10 = reducedSeThreshold(limit, line4);
     const line12 = seIncomeExcess(line8, line10);
     const line13 = partIITax(line12);
 
     // Part III
-    const line14 = (input.w2_rrta_wages ?? 0) + (input.ct2_rrta_wages ?? 0);
+    const line14 = wholeDollar(
+      (input.w2_rrta_wages ?? 0) + (input.ct2_rrta_wages ?? 0),
+    );
     const line16 = rrtaExcess(line14, limit);
     const line17 = partIIITax(line16);
 
@@ -309,13 +296,15 @@ class Form8959Node extends TaxNode<typeof inputSchema> {
     const line18 = totalAmtTax(line7, line13, line17);
 
     // Part V
-    const line19 = medicareWithheld(input);
+    const line19 = wholeDollar(medicareWithheld(input));
     const line20 = line1;
     const line21 = regularMedicareOnWages(line20);
     const line22 = additionalMedicareFromWages(line19, line20);
-    const line23 = (input.w2_rrta_medicare_withheld ?? 0) +
-      (input.ct2_rrta_medicare_tax_paid ?? 0);
-    const line24 = totalAdditionalWithheld(input);
+    const line23 = wholeDollar(
+      (input.w2_rrta_medicare_withheld ?? 0) +
+        (input.ct2_rrta_medicare_tax_paid ?? 0),
+    );
+    const line24 = line22 + line23;
 
     const outputs: NodeOutput[] = [
       ...schedule2Output(line18),

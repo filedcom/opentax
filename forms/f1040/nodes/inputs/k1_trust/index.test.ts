@@ -18,6 +18,38 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
+Deno.test("trust K-1 box 12 code A routes signed line 2j amounts per source", () => {
+  const source = {
+    estate_trust_ein: "123456789",
+    source_document_reference: "2025 K-1 box 12",
+    box12_codes_b_through_f_absent: true,
+    box12_codes_g_through_i_absent: true,
+  };
+  const outputs = compute([
+    minimalItem({ ...source, box12_code_a_amt_adjustment: 3_000 }),
+    minimalItem({ ...source, box12_code_a_amt_adjustment: -800 }),
+  ]).outputs.filter((row) => row.nodeType === "form6251");
+  assertEquals(outputs.map((row) => row.fields.line2j_estates_and_trusts), [
+    3_000,
+    -800,
+  ]);
+});
+
+Deno.test("trust K-1 rejects uncoded or incomplete box 12 AMT source", () => {
+  assertThrows(() => compute([minimalItem({ box12_amt: 500 })]));
+  assertThrows(() => compute([minimalItem({
+    box12_code_a_amt_adjustment: 500,
+    estate_trust_ein: "123456789",
+    source_document_reference: "2025 K-1",
+  })]));
+  assertThrows(() => compute([minimalItem({
+    box12_code_a_amt_adjustment: 500,
+    estate_trust_ein: "123456789",
+    source_document_reference: "2025 K-1",
+    box12_codes_b_through_f_absent: true,
+  })]));
+});
+
 Deno.test("trust K-1 uses DNI-limited portfolio income for affirmed Form 4952 source", () => {
   const item = minimalItem({
     distributable_net_income: 300,

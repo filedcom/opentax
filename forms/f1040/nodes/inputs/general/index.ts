@@ -14,6 +14,10 @@ import { eitc } from "../../intermediate/forms/eitc/index.ts";
 import { f8812 } from "../f8812/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { form8959 } from "../../intermediate/forms/form8959/index.ts";
+import {
+  form8880,
+  jointDistributionReviewSchema,
+} from "../../intermediate/forms/form8880/index.ts";
 import { form8919 } from "../../intermediate/forms/form8919/index.ts";
 import { form4137 } from "../../intermediate/forms/form4137/index.ts";
 import { form8960 } from "../../intermediate/forms/form8960/index.ts";
@@ -115,13 +119,33 @@ export const dependentSchema = z.object({
     z.object({ filing: z.literal("form8814") }),
     z.object({
       filing: z.literal("required"),
-      agi: z.number(),
-      tax_exempt_interest: z.number().nonnegative().optional(),
-      foreign_earned_income_exclusion: z.number().nonnegative().optional(),
-      foreign_housing_deduction: z.number().nonnegative().optional(),
-      social_security_gross: z.number().nonnegative().optional(),
-      social_security_taxable: z.number().nonnegative().optional(),
-    }),
+      filed_form1040: z.object({
+        source_document_id: z.string().min(1),
+        taxpayer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
+        tax_year: z.literal(2025),
+        filing_status: z.literal("single"),
+        blind: z.boolean(),
+        line1z_wages: z.literal(0),
+        line2a_tax_exempt_interest: z.number().nonnegative(),
+        line2b_taxable_interest: z.number().positive(),
+        line3b_dividends: z.literal(0),
+        line4b_ira: z.literal(0),
+        line5b_pensions: z.literal(0),
+        line6b_social_security: z.literal(0),
+        line7a_capital_gain: z.literal(0),
+        line8_additional_income: z.literal(0),
+        line10_adjustments: z.literal(0),
+        line11b_agi: z.number().positive(),
+      }).strict(),
+      interest_forms1099: z.array(
+        z.object({
+          source_document_id: z.string().min(1),
+          recipient_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
+          box1_taxable_interest: z.number().nonnegative(),
+          box8_tax_exempt_interest: z.number().nonnegative(),
+        }).strict(),
+      ).min(1),
+    }).strict(),
   ]).optional(),
   taxpayer_provided_over_half_support: z.boolean().optional(),
   dependent_on_another_return: z.boolean().optional(), // Disqualifies dependent entirely
@@ -150,6 +174,8 @@ export const inputSchema = z.object({
   taxpayer_ssn_issued_before_due_date: z.boolean().optional(),
   taxpayer_tin_issued_by_due_date: z.boolean().optional(),
   taxpayer_dob: z.string().optional(),
+  taxpayer_form8880_student_five_months: z.boolean().optional(),
+  taxpayer_form8880_claimed_as_dependent: z.boolean().optional(),
   taxpayer_blind: z.boolean().optional(),
   taxpayer_age_65_or_older: z.boolean().optional(),
   taxpayer_can_be_claimed_as_dependent: z.boolean().optional(),
@@ -171,6 +197,11 @@ export const inputSchema = z.object({
   spouse_ssn_issued_before_due_date: z.boolean().optional(),
   spouse_tin_issued_by_due_date: z.boolean().optional(),
   spouse_dob: z.string().optional(),
+  spouse_form8880_student_five_months: z.boolean().optional(),
+  spouse_form8880_claimed_as_dependent: z.boolean().optional(),
+  form8880_joint_distribution_review: jointDistributionReviewSchema.optional(),
+  form8880_joint_2025_distribution_review: z.never().optional(),
+  form8880_joint_prior_year_distribution_review: z.never().optional(),
   spouse_blind: z.boolean().optional(),
   spouse_age_65_or_older: z.boolean().optional(),
   spouse_occupation: z.string().optional(),
@@ -186,6 +217,13 @@ export const inputSchema = z.object({
   address_in_care_of: z.string().optional(),
   address_city: z.string().optional(),
   address_state: z.string().optional(),
+  // Distinct 2025 residence states for the Form 8962 poverty table.
+  ptc_residence_states_2025: z.array(z.string().regex(/^[A-Z]{2}$/)).min(1)
+    .optional(),
+  // January through December residence. Required with a multi-state list so
+  // a policy switch can be tied to the taxpayer's actual state each month.
+  ptc_residence_months_2025: z.array(z.string().regex(/^[A-Z]{2}$/)).length(12)
+    .optional(),
   address_zip: z.string().optional(),
   address_foreign_country: z.string().optional(),
   address_foreign_province_state: z.string().optional(),
@@ -222,6 +260,49 @@ export const inputSchema = z.object({
 
 type GeneralInput = z.infer<typeof inputSchema>;
 type DependentItem = z.infer<typeof dependentSchema>;
+
+export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
+  return dependents.reduce((total, dep) => {
+    const taxReturn = dep.ptc_tax_return;
+    if (!taxReturn || taxReturn.filing !== "required") return total;
+    const filed = taxReturn.filed_form1040;
+    const taxableInterest = taxReturn.interest_forms1099.reduce(
+      (sum, source) => sum + source.box1_taxable_interest,
+      0,
+    );
+    const exemptInterest = taxReturn.interest_forms1099.reduce(
+      (sum, source) => sum + source.box8_tax_exempt_interest,
+      0,
+    );
+    if (
+      filed.line2a_tax_exempt_interest !== exemptInterest ||
+      filed.line2b_taxable_interest !== taxableInterest ||
+      filed.line11b_agi !== taxableInterest
+    ) {
+      throw new Error(
+        "Form 8962 dependent filed Form 1040 interest and AGI must reconcile to Forms 1099-INT",
+      );
+    }
+    const birth = /^\d{4}-\d{2}-\d{2}$/.test(dep.dob)
+      ? new Date(`${dep.dob}T00:00:00Z`)
+      : new Date(Number.NaN);
+    if (
+      Number.isNaN(birth.getTime()) ||
+      birth.toISOString().slice(0, 10) !== dep.dob
+    ) {
+      throw new Error("Form 8962 dependent needs a valid birth date");
+    }
+    const age65 = birth.getTime() < Date.UTC(1961, 0, 2);
+    const unearnedThreshold = 1_350 +
+      (age65 ? 2_000 : 0) + (filed.blind ? 2_000 : 0);
+    if (taxableInterest <= unearnedThreshold) {
+      throw new Error(
+        "Form 8962 dependent 1099-INT income does not establish the 2025 filing requirement",
+      );
+    }
+    return total + filed.line11b_agi + exemptInterest;
+  }, 0);
+}
 export type FilerCreditFacts = Pick<
   GeneralInput,
   | "filing_status"
@@ -683,6 +764,7 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
     form4137,
     form8919,
     form8959,
+    form8880,
     form8960,
     form8962,
     form8995,
@@ -752,19 +834,7 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
     const dependentIncomeComplete = claimedDeps.every((dep) =>
       dep.ptc_tax_return !== undefined
     );
-    const dependentsModifiedAgi = claimedDeps.reduce((total, dep) => {
-      const taxReturn = dep.ptc_tax_return;
-      if (!taxReturn || taxReturn.filing !== "required") return total;
-      return total + taxReturn.agi +
-        (taxReturn.tax_exempt_interest ?? 0) +
-        (taxReturn.foreign_earned_income_exclusion ?? 0) +
-        (taxReturn.foreign_housing_deduction ?? 0) +
-        Math.max(
-          0,
-          (taxReturn.social_security_gross ?? 0) -
-            (taxReturn.social_security_taxable ?? 0),
-        );
-    }, 0);
+    const dependentsModifiedAgi = ptcDependentsModifiedAgi(claimedDeps);
     const eitcChildren = eitcQualifyingChildren(deps);
     const filer = filerCreditEligibility(parsed);
     const counts = dependentCounts(deps, filer);
@@ -812,6 +882,32 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
         ...(parsed.taxpayer_ssn && { taxpayer_ssn: parsed.taxpayer_ssn }),
         ...(parsed.spouse_ssn && { spouse_ssn: parsed.spouse_ssn }),
       }),
+      this.outputNodes.output(form8880, {
+        filing_status: parsed.filing_status,
+        ...(parsed.taxpayer_ssn && { taxpayer_ssn: parsed.taxpayer_ssn }),
+        ...(parsed.spouse_ssn && { spouse_ssn: parsed.spouse_ssn }),
+        ...(parsed.taxpayer_dob && { taxpayer_dob: parsed.taxpayer_dob }),
+        ...(parsed.spouse_dob && { spouse_dob: parsed.spouse_dob }),
+        ...(parsed.taxpayer_form8880_student_five_months !== undefined && {
+          taxpayer_student_five_months:
+            parsed.taxpayer_form8880_student_five_months,
+        }),
+        ...(parsed.spouse_form8880_student_five_months !== undefined && {
+          spouse_student_five_months:
+            parsed.spouse_form8880_student_five_months,
+        }),
+        ...(parsed.taxpayer_form8880_claimed_as_dependent !== undefined && {
+          taxpayer_claimed_as_dependent:
+            parsed.taxpayer_form8880_claimed_as_dependent,
+        }),
+        ...(parsed.spouse_form8880_claimed_as_dependent !== undefined && {
+          spouse_claimed_as_dependent:
+            parsed.spouse_form8880_claimed_as_dependent,
+        }),
+        ...(parsed.form8880_joint_distribution_review && {
+          joint_distribution_review: parsed.form8880_joint_distribution_review,
+        }),
+      }),
       // Pass filing_status to form8960 so NIIT MAGI threshold is known
       this.outputNodes.output(form8960, {
         filing_status: parsed.filing_status,
@@ -828,9 +924,13 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
           .filter((dep) => dep.ptc_tax_return?.filing === "form8814")
           .map((dep) => dep.ssn?.replaceAll("-", "") ?? ""),
         dependent_income_complete: dependentIncomeComplete,
-        fpl_region: parsed.address_state === "AK"
+        fpl_region: parsed.ptc_residence_states_2025?.includes("AK") ||
+            parsed.ptc_residence_months_2025?.includes("AK") ||
+            parsed.address_state === "AK"
           ? "alaska"
-          : parsed.address_state === "HI"
+          : parsed.ptc_residence_states_2025?.includes("HI") ||
+              parsed.ptc_residence_months_2025?.includes("HI") ||
+              parsed.address_state === "HI"
           ? "hawaii"
           : "contiguous",
       }),

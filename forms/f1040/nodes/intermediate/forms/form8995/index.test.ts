@@ -10,13 +10,59 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
+Deno.test("calc: one confirmed Schedule C business rounds fractional 20% to the filed line 15", () => {
+  const result = compute({
+    qbi_from_schedule_c: 301,
+    filing_status: FilingStatus.Single,
+    agi: 50_000,
+    qbi_no_prior_loss_or_suspended_loss_confirmed: true,
+    qbi_not_patron_of_specified_cooperative_confirmed: true,
+    schedule_c_qbi_businesses: [{
+      business_reference: "c-1",
+      business_name: "Example Repairs",
+      ein: "123456789",
+      qbi: 301,
+      w2_wages: 0,
+      ubia: 0,
+      no_other_adjustments_confirmed: true,
+      source_schedule_c: {
+        business_reference: "c-1",
+        line_a_principal_business: "Repairs",
+        line_b_business_code: "811490",
+        line_c_business_name: "Example Repairs",
+        line_d_ein: "12-3456789",
+        line_f_accounting_method: "cash",
+        line_g_material_participation: true,
+        line_1_gross_receipts: 301,
+        qbi_no_other_adjustments_confirmed: true,
+      },
+    }],
+  });
+  const form = findOutput(result, "form8995");
+  assertEquals(form?.fields.line1_business_name, "Example Repairs");
+  assertEquals(form?.fields.line1_qbi, 301);
+  assertEquals(form?.fields.line5, 60);
+  assertEquals(form?.fields.line11, 34_250);
+  assertEquals(form?.fields.line15, 60);
+  assertEquals(form?.fields.line17, 0);
+  assertEquals(form?.fields.qbi_deduction, 60);
+  assertEquals(findOutput(result, "f1040")?.fields.line13_qbi_deduction, 60);
+  assertEquals(
+    findOutput(result, "standard_deduction")?.fields.qbi_deduction,
+    60,
+  );
+});
+
 // ── Input validation ─────────────────────────────────────────────────────────
 
-Deno.test("validation: accepts negative qbi_from_schedule_c — Line 1(c) holds net QBI or (loss)", () => {
+Deno.test("validation: a net QBI loss cannot disappear without a carryforward filing route", () => {
   // i8995, Line 1: "Enter on line 1(c) the net QBI or (loss) for the trade, business,
-  // or aggregation reported in the corresponding row."
-  const result = compute({ qbi_from_schedule_c: -1000, taxable_income: 50000 });
-  assertEquals(findOutput(result, "f1040"), undefined);
+  // or aggregation reported in the corresponding row." The loss must carry forward.
+  assertThrows(
+    () => compute({ qbi_from_schedule_c: -1000, taxable_income: 50000 }),
+    Error,
+    "sourced carryforward filing route",
+  );
 });
 
 Deno.test("validation: rejects negative line6_sec199a_dividends", () => {
@@ -33,7 +79,11 @@ Deno.test("validation: rejects negative taxable_income", () => {
 
 Deno.test("validation: rejects negative net_capital_gain", () => {
   assertThrows(() =>
-    compute({ qbi_from_schedule_c: 10000, taxable_income: 50000, net_capital_gain: -100 })
+    compute({
+      qbi_from_schedule_c: 10000,
+      taxable_income: 50000,
+      net_capital_gain: -100,
+    })
   );
 });
 
@@ -132,33 +182,43 @@ Deno.test("calc: all three attributable deductions stack on Line 1(c)", () => {
   assertEquals(out?.fields.line13_qbi_deduction, 15800);
 });
 
-Deno.test("calc: SE tax deduction larger than QBI — net loss, no deduction", () => {
-  const result = compute({
-    qbi_from_schedule_c: 5000,
-    se_tax_deduction: 8000,
-    taxable_income: 100000,
-  });
-  assertEquals(findOutput(result, "f1040"), undefined);
+Deno.test("calc: attributable deduction creating net QBI loss needs carryforward route", () => {
+  assertThrows(
+    () =>
+      compute({
+        qbi_from_schedule_c: 5000,
+        se_tax_deduction: 8000,
+        taxable_income: 100000,
+      }),
+    Error,
+    "sourced carryforward filing route",
+  );
 });
 
-Deno.test("calc: net Schedule C loss kills the QBI component but not the REIT component", () => {
+Deno.test("calc: net Schedule C loss and REIT deduction still need QBI carryforward filing", () => {
   // i8995, Line 4: a qualified business net loss allows no QBI deduction "unless you have
   // qualified REIT dividends or qualified PTP income".
   // Line 4 = −20000 → Line 5 = 0; Line 8 = 5000 → Line 9 = 1000
-  const result = compute({
-    qbi_from_schedule_c: -20000,
-    line6_sec199a_dividends: 5000,
-    taxable_income: 100000,
-  });
-  const out = findOutput(result, "f1040");
-  assertEquals(out?.fields.line13_qbi_deduction, 1000);
+  assertThrows(
+    () =>
+      compute({
+        qbi_from_schedule_c: -20000,
+        line6_sec199a_dividends: 5000,
+        taxable_income: 100000,
+      }),
+    Error,
+    "sourced carryforward filing route",
+  );
 });
 
 // ── Per-field calculation — REIT/PTP component ───────────────────────────────
 
 Deno.test("calc: line6_sec199a_dividends only — 20% applied", () => {
   // Line 6 = 5000, Line 8 = 5000, Line 9 = 1000; Line 10 = 1000; limit = 20% × 50000 = 10000
-  const result = compute({ line6_sec199a_dividends: 5000, taxable_income: 50000 });
+  const result = compute({
+    line6_sec199a_dividends: 5000,
+    taxable_income: 50000,
+  });
   const out = findOutput(result, "f1040");
   assertEquals(out?.fields.line13_qbi_deduction, 1000);
 });
@@ -175,7 +235,11 @@ Deno.test("calc: both QBI and REIT dividends — components summed on Line 10", 
 });
 
 Deno.test("calc: zero line6_sec199a_dividends — REIT component is zero", () => {
-  const result = compute({ qbi_from_schedule_c: 10000, line6_sec199a_dividends: 0, taxable_income: 80000 });
+  const result = compute({
+    qbi_from_schedule_c: 10000,
+    line6_sec199a_dividends: 0,
+    taxable_income: 80000,
+  });
   const out = findOutput(result, "f1040");
   assertEquals(out?.fields.line13_qbi_deduction, 2000);
 });
@@ -193,19 +257,27 @@ Deno.test("calc: qbi_loss_carryforward reduces current QBI", () => {
   assertEquals(out?.fields.line13_qbi_deduction, 1400);
 });
 
-Deno.test("calc: qbi_loss_carryforward larger than current QBI → net loss, no deduction, carryforward emitted", () => {
-  // qbi = 5000, carryforward = -8000 → net = -3000 → deduction = 0; no f1040 output
-  const result = compute({
-    qbi_from_schedule_c: 5000,
-    qbi_loss_carryforward: -8000,
-    taxable_income: 100000,
-  });
-  assertEquals(findOutput(result, "f1040"), undefined);
+Deno.test("calc: prior loss larger than current QBI needs sourced remaining carryforward", () => {
+  // qbi = 5000, carryforward = -8000 → net = -3000; the remaining loss cannot disappear.
+  assertThrows(
+    () =>
+      compute({
+        qbi_from_schedule_c: 5000,
+        qbi_loss_carryforward: -8000,
+        taxable_income: 100000,
+      }),
+    Error,
+    "sourced carryforward filing route",
+  );
 });
 
 Deno.test("calc: positive qbi_loss_carryforward throws (must be zero or negative)", () => {
   assertThrows(() =>
-    compute({ qbi_from_schedule_c: 10000, qbi_loss_carryforward: 1000, taxable_income: 50000 })
+    compute({
+      qbi_from_schedule_c: 10000,
+      qbi_loss_carryforward: 1000,
+      taxable_income: 50000,
+    })
   );
 });
 
@@ -337,7 +409,10 @@ Deno.test("routing: no QBI and no REIT dividends → no f1040 output", () => {
 });
 
 Deno.test("routing: only REIT dividends → routes to f1040", () => {
-  const result = compute({ line6_sec199a_dividends: 10000, taxable_income: 100000 });
+  const result = compute({
+    line6_sec199a_dividends: 10000,
+    taxable_income: 100000,
+  });
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
   assertEquals(out?.fields.line13_qbi_deduction, 2000);

@@ -6,12 +6,14 @@
 
 import { assertEquals, assertThrows } from "@std/assert";
 import { inputSchema, scheduleE } from "./index.ts";
+import { form8582 } from "../../intermediate/forms/form8582/index.ts";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
 function minimalItem(overrides: Record<string, unknown> = {}) {
   return {
     tsj: "T",
+    activity_id: "rental-test",
     property_description: "123 Main St, Anytown, CA 90210",
     property_type: 1,
     activity_type: "A",
@@ -39,6 +41,365 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 Deno.test("input validation: empty array produces no outputs", () => {
   const result = compute([]);
   assertEquals(result.outputs.length, 0);
+});
+
+Deno.test("Schedule E retains a sourced prior operating PAL for a partial Part II property sale", () => {
+  const sale = {
+    activity_id: "rental-retained",
+    activity_name: "Retained rental",
+    part: "II",
+    property_description: "Short-held parcel",
+    acquired_on: "2025-01-01",
+    sold_on: "2025-06-01",
+    gross_sales_price: 9_000,
+    cost_or_other_basis: 5_000,
+    depreciation_allowed: 0,
+    entire_activity_interest_disposed: false,
+    buyer_unrelated: true,
+    fully_taxable: true,
+    installment_method: false,
+    disposition_document_reference: "2025 retained parcel closing statement",
+  };
+  const activity = minimalItem({
+    activity_id: "rental-retained",
+    property_description: "Retained rental",
+    activity_type: "B",
+    disposed_of: true,
+    expense_taxes: 2_000,
+    prior_unallowed_passive_operating: 3_000,
+    prior_year_8582_source: {
+      tax_year: 2024,
+      activity_id: "rental-retained",
+      filed_part_vii_column_c: 3_000,
+      source_document_reference: "2024 filed Form 8582 Part VII",
+    },
+    passive_property_sales: [sale],
+  });
+  const result = compute([activity]);
+  assertEquals(findOutput(result, "form8582")?.fields.prior_unallowed, 3_000);
+  assertEquals(
+    findOutput(result, "form4797")?.fields.passive_property_sales,
+    [sale],
+  );
+  assertThrows(
+    () =>
+      compute([{
+        ...activity,
+        passive_property_sales: [{
+          ...sale,
+          entire_activity_interest_disposed: undefined,
+        }],
+      }]),
+    Error,
+    "section 469(g) review",
+  );
+  for (
+    const changedSale of [
+      { activity_id: "another-rental" },
+      { activity_name: "Another rental" },
+      { buyer_unrelated: false },
+      { fully_taxable: false },
+      { installment_method: true },
+      { disposition_document_reference: undefined },
+    ]
+  ) {
+    assertThrows(
+      () =>
+        compute([{
+          ...activity,
+          passive_property_sales: [{ ...sale, ...changedSale }],
+        }]),
+      Error,
+    );
+  }
+  for (
+    const changedActivity of [
+      { prior_year_8582_source: undefined },
+      { ownership_percent: 50 },
+      { section_1231_gain_loss: 1 },
+      { expense_taxes: 2_000.5 },
+    ]
+  ) {
+    assertThrows(
+      () => compute([{ ...activity, ...changedActivity }]),
+      Error,
+    );
+  }
+});
+
+Deno.test("Schedule E links active-rental prior PAL to a sourced retained Part II gain", () => {
+  const sale = {
+    activity_id: "active-retained",
+    activity_name: "Active retained rental",
+    part: "II",
+    property_description: "Short-held rental property",
+    acquired_on: "2025-01-01",
+    sold_on: "2025-06-01",
+    gross_sales_price: 8_000,
+    cost_or_other_basis: 5_000,
+    depreciation_allowed: 0,
+    entire_activity_interest_disposed: false,
+    buyer_unrelated: true,
+    fully_taxable: true,
+    installment_method: false,
+    disposition_document_reference: "2025 partial property closing statement",
+  } as const;
+  const activity = minimalItem({
+    activity_id: sale.activity_id,
+    property_description: sale.activity_name,
+    activity_type: "A",
+    disposed_of: true,
+    expense_taxes: 5_000,
+    prior_unallowed_passive_operating: 8_000,
+    prior_passive_losses_active_when_incurred: true,
+    prior_year_8582_source: {
+      tax_year: 2024,
+      activity_id: sale.activity_id,
+      filed_part_vii_column_c: 8_000,
+      source_document_reference: "2024 filed Form 8582 Part VII",
+    },
+    passive_property_sales: [sale],
+  });
+  const result = compute([activity]);
+  assertEquals(findOutput(result, "form8582")?.fields.current_loss, 5_000);
+  assertEquals(findOutput(result, "form8582")?.fields.prior_unallowed, 8_000);
+  assertEquals(
+    findOutput(result, "form8582")?.fields.rental_prior_eligible_loss,
+    8_000,
+  );
+  assertEquals(findOutput(result, "form4797")?.fields.passive_property_sales, [
+    sale,
+  ]);
+  for (
+    const changed of [
+      { prior_passive_losses_active_when_incurred: false },
+      {
+        passive_property_sales: [{
+          ...sale,
+          disposition_document_reference: undefined,
+        }],
+      },
+      { passive_property_sales: [{ ...sale, installment_method: true }] },
+    ]
+  ) {
+    assertThrows(
+      () => compute([{ ...activity, ...changed }]),
+      Error,
+      "section 469(g) review",
+    );
+  }
+});
+
+Deno.test("Schedule E sends a sourced overall-gain entire sale to Form 8582 Part V", () => {
+  const sale = {
+    activity_id: "entire-gain-rental",
+    activity_name: "Entire gain rental",
+    part: "II",
+    property_description: "Short-held rental property",
+    acquired_on: "2025-01-01",
+    sold_on: "2025-06-01",
+    gross_sales_price: 30_000,
+    cost_or_other_basis: 15_000,
+    depreciation_allowed: 0,
+    entire_activity_interest_disposed: true,
+    buyer_unrelated: true,
+    fully_taxable: true,
+    installment_method: false,
+    disposition_document_reference: "2025 closing statement",
+  } as const;
+  const activity = minimalItem({
+    activity_id: sale.activity_id,
+    property_description: sale.activity_name,
+    activity_type: "B",
+    disposed_of: true,
+    expense_taxes: 2_000,
+    prior_unallowed_passive_operating: 8_000,
+    prior_year_8582_source: {
+      tax_year: 2024,
+      activity_id: sale.activity_id,
+      filed_part_vii_column_c: 8_000,
+      source_document_reference: "2024 filed Form 8582 Part VII",
+    },
+    passive_property_sales: [sale],
+  });
+  const result = compute([activity]);
+  assertEquals(findOutput(result, "form8582")?.fields.prior_unallowed, 8_000);
+  assertEquals(findOutput(result, "form4797")?.fields.passive_property_sales, [
+    sale,
+  ]);
+  assertEquals(findOutput(result, "schedule1")?.fields.line5_schedule_e, 0);
+  assertThrows(
+    () =>
+      compute([{
+        ...activity,
+        passive_property_sales: [{
+          ...sale,
+          gross_sales_price: 25_000,
+        }],
+      }]),
+    Error,
+    "section 469(g) review",
+  );
+});
+
+Deno.test("Schedule E first-year entire sale sends current loss and gain to Form 8582 Part V", () => {
+  const sale = {
+    activity_id: "first-year-entire-gain",
+    activity_name: "First year rental",
+    part: "II" as const,
+    property_description: "Short-held rental property",
+    acquired_on: "2025-02-01",
+    sold_on: "2025-08-01",
+    gross_sales_price: 30_000,
+    cost_or_other_basis: 20_000,
+    depreciation_allowed: 0 as const,
+    entire_activity_interest_disposed: true,
+    buyer_unrelated: true,
+    fully_taxable: true,
+    installment_method: false,
+    disposition_document_reference: "2025 sale closing statement",
+  };
+  const activity = minimalItem({
+    activity_id: sale.activity_id,
+    property_description: sale.activity_name,
+    activity_type: "B",
+    disposed_of: true,
+    expense_taxes: 2_000,
+    first_year_activity_source: {
+      activity_id: sale.activity_id,
+      activity_name: sale.activity_name,
+      activity_acquired_on: sale.acquired_on,
+      acquisition_document_reference: "2025 purchase closing statement",
+      not_grouped_with_prior_activity: true,
+    },
+    passive_property_sales: [sale],
+  });
+  const result = compute([activity]);
+  assertEquals(findOutput(result, "form8582")?.fields.current_loss, 2_000);
+  assertEquals(
+    findOutput(result, "form8582")?.fields.prior_unallowed,
+    undefined,
+  );
+  assertEquals(findOutput(result, "form4797")?.fields.passive_property_sales, [
+    sale,
+  ]);
+  assertEquals(findOutput(result, "schedule1")?.fields.line5_schedule_e, 0);
+  for (
+    const change of [
+      { first_year_activity_source: undefined },
+      {
+        first_year_activity_source: {
+          activity_id: "different-rental",
+          activity_name: sale.activity_name,
+          activity_acquired_on: sale.acquired_on,
+          acquisition_document_reference: "2025 purchase closing statement",
+          not_grouped_with_prior_activity: true,
+        },
+      },
+      { prior_unallowed_passive_operating: 0 },
+      { prior_unallowed_passive_operating: 100 },
+      {
+        prior_year_8582_source: {
+          tax_year: 2024,
+          activity_id: sale.activity_id,
+          filed_part_vii_column_c: 100,
+          source_document_reference: "2024 Form 8582",
+        },
+      },
+      { passive_property_sales: [{ ...sale, buyer_unrelated: false }] },
+      { passive_property_sales: [{ ...sale, acquired_on: "2024-02-01" }] },
+    ]
+  ) {
+    assertThrows(
+      () => compute([{ ...activity, ...change }]),
+      Error,
+      "section 469(g) review",
+    );
+  }
+});
+
+Deno.test("Schedule E sends an active-rental entire sale with overall gain to Form 8582 Part IV", () => {
+  const sale = {
+    activity_id: "active-entire-gain",
+    activity_name: "Active entire rental",
+    part: "II",
+    property_description: "Short-held rental property",
+    acquired_on: "2025-01-01",
+    sold_on: "2025-06-01",
+    gross_sales_price: 30_000,
+    cost_or_other_basis: 15_000,
+    depreciation_allowed: 0,
+    entire_activity_interest_disposed: true,
+    buyer_unrelated: true,
+    fully_taxable: true,
+    installment_method: false,
+    disposition_document_reference: "2025 active rental closing statement",
+  } as const;
+  const activity = minimalItem({
+    activity_id: sale.activity_id,
+    property_description: sale.activity_name,
+    activity_type: "A",
+    disposed_of: true,
+    expense_taxes: 2_000,
+    prior_unallowed_passive_operating: 8_000,
+    prior_passive_losses_active_when_incurred: true,
+    prior_year_8582_source: {
+      tax_year: 2024,
+      activity_id: sale.activity_id,
+      filed_part_vii_column_c: 8_000,
+      source_document_reference: "2024 filed Form 8582 Part VII",
+    },
+    passive_property_sales: [sale],
+  });
+  const result = compute([activity]);
+  const ledger = form8582.inputSchema.parse(
+    findOutput(result, "form8582")?.fields,
+  );
+  assertEquals(ledger?.activities?.[0]?.activity_type, "A");
+  assertEquals(ledger?.activities?.[0]?.prior_active_participation, true);
+  assertEquals(ledger?.prior_unallowed, 8_000);
+  assertEquals(findOutput(result, "form4797")?.fields.passive_property_sales, [
+    sale,
+  ]);
+  assertEquals(findOutput(result, "schedule1")?.fields.line5_schedule_e, 0);
+  assertThrows(
+    () =>
+      compute([{
+        ...activity,
+        prior_passive_losses_active_when_incurred: false,
+      }]),
+    Error,
+    "section 469(g) review",
+  );
+});
+
+Deno.test("Schedule E routes filed Part IX Form 4797 carryovers without a current sale", () => {
+  const result = compute([minimalItem({
+    activity_type: "B",
+    activity_id: "passive-rental-part-ix",
+    property_description: "Passive rental",
+    rent_income: 4_000,
+    prior_unallowed_passive_operating: 2_000,
+    prior_unallowed_passive_4797_part1: 6_000,
+    prior_unallowed_passive_4797_part2: 2_000,
+    prior_year_8582_source: {
+      tax_year: 2024,
+      activity_id: "passive-rental-part-ix",
+      filed_part_vii_column_c: 10_000,
+      source_document_reference: "2024 filed Form 8582 Part IX",
+      filed_part_ix_rows: [
+        { reporting_form: "schedule_e", filed_unallowed_loss: 2_000 },
+        { reporting_form: "form4797_part1", filed_unallowed_loss: 6_000 },
+        { reporting_form: "form4797_part2", filed_unallowed_loss: 2_000 },
+      ],
+    },
+  })]);
+  assertEquals(findOutput(result, "form8582")?.fields.prior_unallowed, 10_000);
+  assertEquals(findOutput(result, "form4797")?.fields.disposed_properties, 0);
+  assertEquals(
+    findOutput(result, "form4797")?.fields.passive_activity_sources?.length,
+    1,
+  );
 });
 
 Deno.test("royalty property with zero rental days is not a short-term home rental", () => {
@@ -299,12 +660,18 @@ Deno.test("routing: activity_type=A with net loss routes to form8582 with correc
 
 Deno.test("rental profit is identified separately from other passive activity amounts", () => {
   const result = compute([
-    minimalItem({ property_description: "Rental profit", rent_income: 10_000 }),
     minimalItem({
+      activity_id: "rental-profit",
+      property_description: "Rental profit",
+      rent_income: 10_000,
+    }),
+    minimalItem({
+      activity_id: "rental-loss",
       property_description: "Rental loss",
       expense_repairs: 20_000,
     }),
     minimalItem({
+      activity_id: "other-passive-loss",
       property_description: "Other passive loss",
       activity_type: "B",
       expense_repairs: 10_000,
@@ -344,10 +711,22 @@ Deno.test("routing: activity_type=B with net loss routes to form8582 with has_ot
   assertEquals(f8582Fields.has_other_passive, true);
 });
 
+Deno.test("a passive loss cannot enter Form 8582 without a durable source activity ID", () => {
+  assertThrows(
+    () =>
+      compute([
+        minimalItem({ activity_id: undefined, expense_repairs: 2_000 }),
+      ]),
+    Error,
+    "durable activity IDs",
+  );
+});
+
 Deno.test("zero active rental does not reclassify another passive loss", () => {
   const result = compute([
     minimalItem({ property_description: "Empty active rental" }),
     minimalItem({
+      activity_id: "passive-loss",
       property_description: "Passive loss",
       activity_type: "B",
       expense_repairs: 10_000,
@@ -407,6 +786,7 @@ Deno.test("routing: disposed_of=false produces no form4797 output", () => {
 
 Deno.test("routing: a retained-activity sale reaches Form 4797 from its Schedule E property", () => {
   const sale = {
+    activity_id: "rental-sale",
     activity_name: "Rental house",
     part: "I",
     property_description: "Retained rental parcel",
@@ -418,6 +798,7 @@ Deno.test("routing: a retained-activity sale reaches Form 4797 from its Schedule
     entire_activity_interest_disposed: false,
   };
   const result = compute([minimalItem({
+    activity_id: "rental-sale",
     property_description: "Rental house",
     disposed_of: true,
     passive_property_sales: [sale],
@@ -428,6 +809,7 @@ Deno.test("routing: a retained-activity sale reaches Form 4797 from its Schedule
   assertThrows(
     () =>
       compute([minimalItem({
+        activity_id: "rental-sale",
         property_description: "Rental house",
         disposed_of: true,
         passive_property_sales: [{ ...sale, activity_name: "Other rental" }],
@@ -515,6 +897,12 @@ Deno.test("routing: prior_unallowed_passive_operating routes to form8582 with pr
       activity_type: "A",
       rent_income: 5_000,
       prior_unallowed_passive_operating: 2_000,
+      prior_year_8582_source: {
+        tax_year: 2024,
+        activity_id: "rental-test",
+        filed_part_vii_column_c: 2_000,
+        source_document_reference: "2024 filed Form 8582 Part VII, rental-test",
+      },
       prior_passive_losses_active_when_incurred: true,
     }),
   ]);
@@ -538,7 +926,30 @@ Deno.test("prior rental operating loss needs prior-year participation fact", () 
   const result = compute([minimalItem({
     prior_unallowed_passive_operating: 2_000,
     prior_passive_losses_active_when_incurred: false,
+    prior_year_8582_source: {
+      tax_year: 2024,
+      activity_id: "rental-test",
+      filed_part_vii_column_c: 2_000,
+      source_document_reference: "2024 filed Form 8582 Part VII, rental-test",
+    },
   })]);
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        prior_unallowed_passive_operating: 2_000,
+        prior_passive_losses_active_when_incurred: false,
+        disposed_of: true,
+        prior_year_8582_source: {
+          tax_year: 2024,
+          activity_id: "rental-test",
+          filed_part_vii_column_c: 2_000,
+          source_document_reference:
+            "2024 filed Form 8582 Part VII, rental-test",
+        },
+      })]),
+    Error,
+    "section 469(g) review",
+  );
   const f8582Fields = findOutput(result, "form8582")!.fields as Record<
     string,
     unknown
@@ -831,35 +1242,19 @@ Deno.test("threshold §280A: personal_use_days=0 — pure rental, no vacation ho
   assertEquals(input.line5_schedule_e, 9_000);
 });
 
-Deno.test("threshold §199A: qbi_aggregation_number boundary values (1 and 99) accepted without throw", () => {
-  const r1 = compute([
-    minimalItem({
-      rent_income: 10_000,
-      qbi_trade_or_business: "Y",
-      qbi_aggregation_number: 1,
-    }),
-  ]);
-  const r99 = compute([
-    minimalItem({
-      rent_income: 10_000,
-      qbi_trade_or_business: "Y",
-      qbi_aggregation_number: 99,
-    }),
-  ]);
-  assertEquals(
-    (r1.outputs.find((o) => o.nodeType === "form8995")!.fields as Record<
-      string,
-      number
-    >).qbi,
-    10_000,
-  );
-  assertEquals(
-    (r99.outputs.find((o) => o.nodeType === "form8995")!.fields as Record<
-      string,
-      number
-    >).qbi,
-    10_000,
-  );
+Deno.test("Schedule E positive QBI aggregation number fails closed without Schedule B member evidence", () => {
+  for (const number of [1, 99]) {
+    assertThrows(
+      () =>
+        compute([minimalItem({
+          rent_income: 10_000,
+          qbi_trade_or_business: "Y",
+          qbi_aggregation_number: number,
+        })]),
+      Error,
+      "Schedule E QBI aggregation number needs Form 8995-A Schedule B",
+    );
+  }
 });
 
 Deno.test("threshold §179: section_179=$2,500,000 with activity_type=C routes full amount to form4562", () => {

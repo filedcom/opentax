@@ -7,6 +7,122 @@ import {
   inputSchema as form8889InputSchema,
 } from "../../../nodes/intermediate/forms/form8889/index.ts";
 import { form8889 } from "./f8889.ts";
+import { form8889Pdf } from "../../pdf/forms/f8889.ts";
+
+Deno.test("Form 8889 code-2 timely personal excess reconciles box 1, box 2, MeF, PDF, and Schedule 1", () => {
+  const source = {
+    beneficiary_identity: {
+      owner: "T" as const,
+      name: "Alex Taxpayer",
+      ssn: "123456789",
+    },
+    eligible_hdhp_coverage_by_month: Array(12).fill(CoverageType.SelfOnly),
+    age_55_or_older: false,
+    last_month_rule_elected: false,
+    married_at_year_end: false,
+    taxpayer_hsa_contributions: 5_200,
+    hsa_distributions: 1_000,
+    form1099_sa_distributions: [{
+      tax_year: 2025,
+      recipient_ssn: "123456789",
+      box1_gross_distribution: 1_000,
+      box2_earnings_on_excess: 100,
+      box3_distribution_code: "2" as const,
+      source_reference: "1099-SA-code-2",
+    }],
+    hsa_excluded_distributions: {
+      timely_excess_withdrawal: {
+        source: "current_year_personal" as const,
+        amount_including_earnings: 1_000,
+        included_earnings: 100,
+        form1099_sa_source_reference: "1099-SA-code-2",
+        withdrawn_by_return_due_date: true as const,
+      },
+    },
+  };
+  const result = form8889Node.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form8889InputSchema.parse(source),
+  );
+  const forms = result.outputs.find((row) => row.nodeType === "form8889")
+    ?.fields.forms as Form8889Owner[];
+  const pending = {
+    form8889: { ...source, forms },
+    schedule1: {
+      line13_hsa_deduction: 4_300,
+      line8z_hsa_excess_earnings: 100,
+      line10_total_additional_income: 100,
+      line26_total_adjustments: 4_300,
+    },
+    schedule2: {},
+    f1040: { line8_additional_income: 100, line10_adjustments: 4_300 },
+  };
+  const buildContext = { ...context, pending };
+  const xml = form8889.build({ forms }, buildContext);
+  assertStringIncludes(
+    xml[0],
+    "<HSADistributionRolloverAmt>1000</HSADistributionRolloverAmt>",
+  );
+  assertEquals(forms[0].print_line14c, 0);
+  assertEquals(forms[0].print_line16_taxable, 0);
+  const [printed] = form8889Pdf.instances!(
+    pending.form8889,
+    context.filer,
+    pending,
+  );
+  assertEquals(printed?.print_line14b_excluded_distributions, 1_000);
+  assertThrows(
+    () =>
+      form8889.build({
+        forms: [{
+          ...forms[0],
+          print_line14b_excluded_distributions: 900,
+        }],
+      }, buildContext),
+    Error,
+    "printed lines differ",
+  );
+  assertThrows(
+    () =>
+      form8889.build({ forms }, {
+        ...context,
+        pending: {
+          ...pending,
+          form8889: {
+            ...source,
+            forms,
+            form1099_sa_distributions: [{
+              ...source.form1099_sa_distributions[0],
+              box2_earnings_on_excess: 99,
+            }],
+          },
+        },
+      }),
+    Error,
+    "matching code-2 Form 1099-SA",
+  );
+  assertThrows(
+    () =>
+      form8889Pdf.instances!(pending.form8889, context.filer, {
+        ...pending,
+        schedule1: { ...pending.schedule1, line8z_hsa_excess_earnings: 99 },
+      }),
+    Error,
+    "amounts differ",
+  );
+  assertThrows(
+    () =>
+      form8889.build({ forms }, {
+        ...context,
+        pending: {
+          ...pending,
+          f1040: { ...pending.f1040, line8_additional_income: 99 },
+        },
+      }),
+    Error,
+    "amounts differ",
+  );
+});
 
 const context: MefBuildContext = {
   filer: {
@@ -24,43 +140,306 @@ const context: MefBuildContext = {
   },
 };
 
+type Form8889Owner = Extract<
+  Parameters<typeof form8889.build>[0],
+  { forms: unknown }
+>["forms"][number];
+
+function buildPrimary(
+  fields: Partial<
+    Omit<Form8889Owner, "owner" | "beneficiary_name" | "beneficiary_ssn">
+  >,
+  buildContext: MefBuildContext = context,
+): string {
+  return form8889.build({
+    forms: [{
+      owner: "primary",
+      beneficiary_name: "Alex Taxpayer",
+      beneficiary_ssn: "123456789",
+      ...fields,
+    }],
+  }, buildContext).join("");
+}
+
+function buildInvalid(raw: unknown, buildContext: MefBuildContext = context) {
+  return form8889.build(
+    raw as Parameters<typeof form8889.build>[0],
+    buildContext,
+  );
+}
+
+Deno.test("Form 8889 rollover plus age-65 exception serializes distinct 14b, 16, and 17b amounts", () => {
+  const result = form8889Node.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form8889InputSchema.parse({
+      beneficiary_identity: {
+        owner: "T",
+        name: "Alex Taxpayer",
+        ssn: "123456789",
+      },
+      hsa_distributions: 2000,
+      form1099_sa_distributions: [{
+        tax_year: 2025,
+        recipient_ssn: "123456789",
+        box1_gross_distribution: 2000,
+        box3_distribution_code: "1",
+        source_reference: "2025 Form 1099-SA",
+      }],
+      hsa_excluded_distributions: {
+        rollover: {
+          amount: 1000,
+          distribution_date: "2025-05-01",
+          contribution_date: "2025-05-30",
+          distribution_source_reference: "May trustee transaction",
+          contribution_source_reference: "Receiving HSA deposit",
+          same_beneficiary: true,
+          receiving_hsa_no_other_rollover_in_preceding_12_months: true,
+          not_direct_trustee_transfer: true,
+        },
+      },
+      qualified_medical_expenses: 100,
+      exception_qualified_taxable_amount: 500,
+      age_65_exception_evidence: {
+        date_of_birth: "1960-04-01",
+        birth_date_source_reference: "Beneficiary birth record",
+        distributions: [{
+          distribution_date: "2025-01-10",
+          gross_amount: 400,
+          qualified_medical_amount: 0,
+          rollover_excluded_amount: 0,
+          source_reference: "January trustee transaction",
+          form1099_sa_source_reference: "2025 Form 1099-SA",
+        }, {
+          distribution_date: "2025-05-01",
+          gross_amount: 1600,
+          qualified_medical_amount: 100,
+          rollover_excluded_amount: 1000,
+          source_reference: "May trustee transaction",
+          form1099_sa_source_reference: "2025 Form 1099-SA",
+        }],
+      },
+    }),
+  );
+  const printed = result.outputs.find((entry) => entry.nodeType === "form8889");
+  const xml = form8889.build(
+    (printed?.fields ?? {}) as Parameters<typeof form8889.build>[0],
+    context,
+  ).join("");
+  assertStringIncludes(
+    xml,
+    "<HSADistributionRolloverAmt>1000</HSADistributionRolloverAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TaxableHSADistributionAmt>900</TaxableHSADistributionAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<HSADistriAddnlPercentTaxExcInd>X</HSADistriAddnlPercentTaxExcInd>",
+  );
+  assertStringIncludes(
+    xml,
+    "<HSADistriAddnlPercentTaxAmt>80</HSADistriAddnlPercentTaxAmt>",
+  );
+});
+
+Deno.test("Form 8889 emits two owner documents and reconciles the combined deduction", () => {
+  const pairedContext: MefBuildContext = {
+    filer: {
+      ...context.filer!,
+      filingStatus: FilingStatus.MarriedFilingJointly,
+      spouse: {
+        ssn: "987654321",
+        firstName: "Sam",
+        lastName: "Taxpayer",
+        nameControl: "TAXP",
+      },
+    },
+    pending: {
+      schedule1: {
+        line13_hsa_deduction: 6_000,
+        line26_total_adjustments: 6_000,
+      },
+      schedule2: {},
+      f1040: { line10_adjustments: 6_000 },
+    },
+  };
+  const forms = [
+    {
+      owner: "primary" as const,
+      beneficiary_name: "Alex Taxpayer",
+      beneficiary_ssn: "123456789",
+      print_line6: 4_275,
+      print_line13_deduction: 4_000,
+    },
+    {
+      owner: "spouse" as const,
+      beneficiary_name: "Sam Taxpayer",
+      beneficiary_ssn: "987654321",
+      print_line6: 4_275,
+      print_line13_deduction: 2_000,
+    },
+  ];
+  const xml = form8889.build({ forms }, pairedContext);
+  assertEquals(xml.length, 2);
+  assertStringIncludes(xml[0], "<RecipientSSN>123456789</RecipientSSN>");
+  assertStringIncludes(xml[1], "<RecipientSSN>987654321</RecipientSSN>");
+  assertThrows(
+    () =>
+      form8889.build({ forms }, {
+        ...pairedContext,
+        pending: {
+          ...pairedContext.pending,
+          schedule1: {
+            line13_hsa_deduction: 5_999,
+            line26_total_adjustments: 6_000,
+          },
+        },
+      }),
+    Error,
+    "owner totals do not reconcile",
+  );
+});
+
+function spouseOnlyCase() {
+  const source = {
+    beneficiary_identity: {
+      owner: "S" as const,
+      name: "Sam Taxpayer",
+      ssn: "987654321",
+    },
+    eligible_hdhp_coverage_by_month: Array(12).fill(CoverageType.SelfOnly),
+    age_55_or_older: false,
+    married_at_year_end: true,
+    spouse_has_separate_hsa: false,
+    taxpayer_hsa_contributions: 2_000,
+  };
+  const result = form8889Node.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form8889InputSchema.parse(source),
+  );
+  const forms = result.outputs.find((row) => row.nodeType === "form8889")
+    ?.fields.forms as Form8889Owner[];
+  const pending = {
+    form8889: { ...source, forms },
+    schedule1: {
+      line13_hsa_deduction: 2_000,
+      line26_total_adjustments: 2_000,
+    },
+    schedule2: {},
+    f1040: { line10_adjustments: 2_000 },
+  };
+  const buildContext: MefBuildContext = {
+    filer: {
+      ...context.filer!,
+      filingStatus: FilingStatus.MarriedFilingJointly,
+      spouse: {
+        ssn: "987654321",
+        firstName: "Sam",
+        lastName: "Taxpayer",
+        nameControl: "TAXP",
+      },
+    },
+    pending,
+  };
+  return { forms, pending, buildContext };
+}
+
+Deno.test("Form 8889 spouse-only MeF uses spouse identity and reconciled deduction", () => {
+  const { forms, buildContext } = spouseOnlyCase();
+  const xml = form8889.build({ forms }, buildContext);
+  assertEquals(xml.length, 1);
+  assertStringIncludes(xml[0], "<PersonNm>Sam Taxpayer</PersonNm>");
+  assertStringIncludes(xml[0], "<RecipientSSN>987654321</RecipientSSN>");
+  assertThrows(
+    () =>
+      form8889.build({
+        forms: [{ ...forms[0], print_line13_deduction: 1_999 }],
+      }, buildContext),
+    Error,
+    "printed lines differ",
+  );
+});
+
+Deno.test("Form 8889 spouse-only excess retains a matching spouse Form 5329 source", () => {
+  const { buildContext } = spouseOnlyCase();
+  const source = {
+    beneficiary_identity: {
+      owner: "S" as const,
+      name: "Sam Taxpayer",
+      ssn: "987654321",
+    },
+    eligible_hdhp_coverage_by_month: Array(12).fill(CoverageType.SelfOnly),
+    age_55_or_older: false,
+    married_at_year_end: true,
+    spouse_has_separate_hsa: false,
+    taxpayer_hsa_contributions: 5_000,
+    hsa_december_31_value: 500,
+  };
+  const result = form8889Node.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form8889InputSchema.parse(source),
+  );
+  const forms = result.outputs.find((row) => row.nodeType === "form8889")
+    ?.fields.forms as Form8889Owner[];
+  const entries = result.outputs.find((row) => row.nodeType === "form5329")
+    ?.fields.owner_entries;
+  const pending = {
+    form8889: { ...source, forms },
+    form5329: { owner_entries: entries },
+    schedule1: {
+      line13_hsa_deduction: 4_300,
+      line26_total_adjustments: 4_300,
+    },
+    schedule2: {},
+    f1040: { line10_adjustments: 4_300 },
+  };
+  assertEquals(
+    form8889.build({ forms }, { ...buildContext, pending }).length,
+    1,
+  );
+  assertThrows(
+    () =>
+      form8889.build({ forms }, {
+        ...buildContext,
+        pending: { ...pending, form5329: { owner_entries: [] } },
+      }),
+    Error,
+    "excess differs from owner Form 5329",
+  );
+});
+
 Deno.test("Form 8889 omits an empty pending slot", () => {
-  assertEquals(form8889.build({}, context), "");
-  assertEquals(form8889.build({ unrelated: 10 }, context), "");
+  assertEquals(form8889.build({}, context), []);
+  assertThrows(() => buildInvalid({ unrelated: 10 }));
 });
 
 Deno.test("Form 8889 rejects raw HSA values without computed form lines", () => {
   assertThrows(
-    () => form8889.build({ taxpayer_hsa_contributions: 3_000 }, context),
+    () => buildInvalid({ taxpayer_hsa_contributions: 3_000 }),
     Error,
-    "requires computed print_line fields",
   );
   assertThrows(
     () =>
-      form8889.build(
+      buildInvalid(
         {
           qualified_hsa_funding_distributions: {
             transfers: [{ amount: 1000 }],
           },
         },
-        context,
       ),
     Error,
-    "requires computed print_line fields",
   );
   assertThrows(
     () =>
-      form8889.build(
+      buildInvalid(
         { hsa_excluded_distributions: { rollover_amount: 500 } },
-        context,
       ),
     Error,
-    "requires computed print_line fields",
   );
   assertThrows(
-    () => form8889.build({ qualified_hsa_funding_distribution: {} }, context),
+    () => buildInvalid({ qualified_hsa_funding_distribution: {} }),
     Error,
-    "requires computed print_line fields",
   );
 });
 
@@ -68,6 +447,11 @@ Deno.test("Form 8889 calculated IRA-to-HSA transfer reaches native line 10", () 
   const result = form8889Node.compute(
     { taxYear: 2025, formType: "f1040" },
     form8889InputSchema.parse({
+      beneficiary_identity: {
+        owner: "T",
+        name: "Alex Taxpayer",
+        ssn: "123456789",
+      },
       eligible_hdhp_coverage_by_month: Array(12).fill(CoverageType.SelfOnly),
       age_55_or_older: false,
       last_month_rule_elected: false,
@@ -84,7 +468,10 @@ Deno.test("Form 8889 calculated IRA-to-HSA transfer reaches native line 10", () 
     }),
   );
   const printed = result.outputs.find((entry) => entry.nodeType === "form8889");
-  const xml = form8889.build(printed?.fields ?? {}, context);
+  const xml = form8889.build(
+    (printed?.fields ?? {}) as Parameters<typeof form8889.build>[0],
+    context,
+  ).join("");
   assertStringIncludes(
     xml,
     "<HSAQualifiedFundingDistriAmt>1000</HSAQualifiedFundingDistriAmt>",
@@ -99,6 +486,11 @@ Deno.test("Form 8889 sums two permitted IRA-to-HSA transfers on native line 10",
   const result = form8889Node.compute(
     { taxYear: 2025, formType: "f1040" },
     form8889InputSchema.parse({
+      beneficiary_identity: {
+        owner: "T",
+        name: "Alex Taxpayer",
+        ssn: "123456789",
+      },
       eligible_hdhp_coverage_by_month: [
         ...Array(6).fill(CoverageType.SelfOnly),
         ...Array(6).fill(CoverageType.Family),
@@ -128,19 +520,27 @@ Deno.test("Form 8889 sums two permitted IRA-to-HSA transfers on native line 10",
     }),
   );
   const printed = result.outputs.find((entry) => entry.nodeType === "form8889");
-  const xml = form8889.build(printed?.fields ?? {}, context);
+  const xml = form8889.build(
+    (printed?.fields ?? {}) as Parameters<typeof form8889.build>[0],
+    context,
+  ).join("");
   assertStringIncludes(
     xml,
     "<HSAQualifiedFundingDistriAmt>8000</HSAQualifiedFundingDistriAmt>",
   );
 });
 
-Deno.test("Form 8889 source rejects one XML form for two spouse HSAs", () => {
+Deno.test("Form 8889 source rejects the obsolete spouse allocation field", () => {
   assertThrows(
     () =>
       form8889Node.compute(
         { taxYear: 2025, formType: "f1040" },
         form8889InputSchema.parse({
+          beneficiary_identity: {
+            owner: "T",
+            name: "Alex Taxpayer",
+            ssn: "123456789",
+          },
           eligible_hdhp_coverage_by_month: Array(12).fill(CoverageType.Family),
           age_55_or_older: false,
           last_month_rule_elected: false,
@@ -151,26 +551,25 @@ Deno.test("Form 8889 source rejects one XML form for two spouse HSAs", () => {
         }),
       ),
     Error,
-    "both spouses' Forms 8889",
   );
 });
 
 Deno.test("Form 8889 requires the beneficiary SSN for every filed form", () => {
   assertThrows(
-    () => form8889.build({ print_line14a_distributions: 500 }),
+    () => buildPrimary({ print_line14a_distributions: 500 }, {}),
     Error,
     "beneficiary SSN",
   );
 });
 
 Deno.test("Form 8889 distribution-only filing has no invented HDHP coverage", () => {
-  const xml = form8889.build({
+  const xml = buildPrimary({
     print_line14a_distributions: 800,
     print_line14c: 800,
     print_line15_qualified: 300,
     print_line16_taxable: 500,
     print_line17b_penalty: 100,
-  }, context);
+  });
   assertStringIncludes(xml, "<RecipientSSN>123456789</RecipientSSN>");
   assertStringIncludes(
     xml,
@@ -189,7 +588,7 @@ Deno.test("Form 8889 distribution-only filing has no invented HDHP coverage", ()
 });
 
 Deno.test("Form 8889 serializes all calculated 2025 lines in XSD order", () => {
-  const xml = form8889.build({
+  const xml = buildPrimary({
     print_line1_coverage: "family",
     print_line2_taxpayer_contributions: 2_000,
     print_line3_limit: 8_550,
@@ -214,7 +613,7 @@ Deno.test("Form 8889 serializes all calculated 2025 lines in XSD order", () => {
     print_line19: 200,
     print_line20: 500,
     print_line21: 50,
-  }, context);
+  });
 
   const tags = [
     "PersonNm",
@@ -264,12 +663,12 @@ Deno.test("Form 8889 serializes all calculated 2025 lines in XSD order", () => {
 });
 
 Deno.test("Form 8889 self-only line 1 and explicit zero deduction", () => {
-  const xml = form8889.build({
+  const xml = buildPrimary({
     print_line1_coverage: "self_only",
     print_line2_taxpayer_contributions: 0,
     print_line9_employer: 1_000,
     print_line13_deduction: 0,
-  }, context);
+  });
   assertStringIncludes(
     xml,
     "<HDHPSelfOnlyCoverageInd>X</HDHPSelfOnlyCoverageInd>",
@@ -280,22 +679,22 @@ Deno.test("Form 8889 self-only line 1 and explicit zero deduction", () => {
 
 Deno.test("Form 8889 rejects invalid coverage, exception, and amounts", () => {
   assertThrows(
-    () => form8889.build({ print_line1_coverage: "both" }, context),
+    () => buildPrimary({ print_line1_coverage: "both" }),
     Error,
     "line 1",
   );
   assertThrows(
-    () => form8889.build({ print_line17a_exception: "yes" }, context),
+    () => buildPrimary({ print_line17a_exception: "yes" }),
     Error,
     "line 17a",
   );
   assertThrows(
-    () => form8889.build({ print_line16_taxable: -1 }, context),
+    () => buildPrimary({ print_line16_taxable: -1 }),
     Error,
     "nonnegative amount",
   );
   assertThrows(
-    () => form8889.build({ print_line16_taxable: Number.NaN }, context),
+    () => buildPrimary({ print_line16_taxable: Number.NaN }),
     Error,
     "nonnegative amount",
   );

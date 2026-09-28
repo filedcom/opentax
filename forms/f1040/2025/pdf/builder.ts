@@ -4,6 +4,7 @@ import { normalizeAllPending } from "../pending.ts";
 import { ALL_PDF_FORMS } from "./forms/index.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "./form-descriptor.ts";
 import type { FilerIdentity } from "../../mef/header.ts";
+import { assertAttachmentCoverage } from "../attachment-coverage.ts";
 
 async function fetchWithCache(
   url: string,
@@ -62,7 +63,10 @@ function fillEntry(
       }
     } else if (entry.kind === "radio") {
       const mapped = entry.valueMap[String(value)];
-      if (mapped) form.getRadioGroup(entry.pdfField).select(mapped);
+      if (!mapped) {
+        throw new Error(`unmapped radio value ${String(value)}`);
+      }
+      form.getRadioGroup(entry.pdfField).select(mapped);
     }
     // Fill any additional PDF fields that share the same domain value
     if ("extraPdfFields" in entry && entry.extraPdfFields) {
@@ -82,15 +86,17 @@ function fillEntry(
             value ? box.check() : box.uncheck();
           }
         } catch (extraErr) {
-          console.error(
-            `[PDF] ${formKey}: failed to fill extra field "${extraField}" (${entry.kind}) — ${extraErr}`,
+          throw new Error(
+            `[PDF] ${formKey}: failed to fill extra field "${extraField}" (${entry.kind})`,
+            { cause: extraErr },
           );
         }
       }
     }
   } catch (err) {
-    console.error(
-      `[PDF] ${formKey}: failed to fill field "${entry.pdfField}" (${entry.kind}) — ${err}`,
+    throw new Error(
+      `[PDF] ${formKey}: failed to fill field "${entry.pdfField}" (${entry.kind})`,
+      { cause: err },
     );
   }
 }
@@ -126,13 +132,12 @@ export async function fillFormPdf(
       Array.isArray(fields[descriptor.rows.domainKey]) &&
       (fields[descriptor.rows.domainKey] as unknown[]).length > 0);
 
-  if (!hasData) return undefined;
+  if (!hasData && descriptor.includeWhenNoMappedData !== true) return undefined;
+  if (descriptor.includeWhen === undefined && !hasData) return undefined;
   if (
     descriptor.includeWhen !== undefined &&
     !descriptor.includeWhen(fields, allPending)
-  ) {
-    return undefined;
-  }
+  ) return undefined;
 
   const pdfBytes = await fetchWithCache(descriptor.pdfUrl, cacheDir);
   const doc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
@@ -194,10 +199,11 @@ export async function fillFormPdf(
               );
             }
           } catch (err) {
-            console.error(
-              `[PDF] ${descriptor.pendingKey}: row ${
+            throw new Error(
+              `[PDF] ${descriptor.pendingKey}: failed to fill row ${
                 i + 1
-              } field "${pdfField}" — ${err}`,
+              } field "${pdfField}"`,
+              { cause: err },
             );
           }
         }
@@ -229,6 +235,7 @@ export async function buildPdfBytes(
   cacheDir = ".pdf-cache",
 ): Promise<Uint8Array> {
   const normalized = normalizeAllPending(pending);
+  assertAttachmentCoverage(normalized, "pdf");
   const merged = await PDFDocument.create();
 
   for (const descriptor of ALL_PDF_FORMS) {
@@ -247,8 +254,9 @@ export async function buildPdfBytes(
       }
       : projectedFields;
 
-    const instances = descriptor.instances?.(effectiveFields) ??
-      [effectiveFields];
+    const instances =
+      descriptor.instances?.(effectiveFields, filer, normalized) ??
+        [effectiveFields];
     for (const instance of instances) {
       const filledBytes = await fillFormPdf(
         descriptor,

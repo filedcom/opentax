@@ -61,6 +61,7 @@ export function farmAllowedLosses(
       (farm.prior_unallowed_passive_operating ?? 0) === 0
     ) return 0;
     const activityIndex = activities.findIndex((activity) =>
+      activity.activity_id === farm.activity_id &&
       activity.name === farm.activity_name
     );
     if (

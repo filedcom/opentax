@@ -1,5 +1,6 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { itemSchema, scheduleC } from "./index.ts";
+import { TS } from "../../types.ts";
 import type { z } from "zod";
 
 // ============================================================
@@ -68,9 +69,179 @@ Deno.test("Schedule C reduces gross wages by linked Form 5884 line 2 credit", ()
   );
 });
 
+Deno.test("Form 8829 line 36 reduces the same Schedule C profit used by Schedule SE and QBI", () => {
+  const result = scheduleC.compute({ taxYear: 2025, formType: "f1040" }, {
+    schedule_cs: [minimalItem({
+      business_reference: "C-1",
+      proprietor_recipient: TS.T,
+      line_1_gross_receipts: 5_000,
+    })],
+    form8829_line30: {
+      business_reference: "C-1",
+      home_identifier: "HOME-1",
+      recipient: TS.T,
+      schedule_c_line29_tentative_profit: 5_000,
+      line36: 2_900,
+    },
+  });
+  assertEquals(findOutput(result, "schedule1")?.fields.line3_schedule_c, 2_100);
+  assertEquals(
+    findOutput(result, "schedule_se")?.fields.net_profit_schedule_c,
+    2_100,
+  );
+  assertEquals(
+    findOutput(result, "form8995")?.fields.qbi_from_schedule_c,
+    2_100,
+  );
+});
+
+Deno.test("Form 8829 rejects a second home-office deduction or mismatched line 29", () => {
+  const claim = {
+    business_reference: "C-1",
+    home_identifier: "HOME-1",
+    recipient: TS.T,
+    schedule_c_line29_tentative_profit: 5_000,
+    line36: 2_900,
+  };
+  const base = minimalItem({
+    business_reference: "C-1",
+    proprietor_recipient: TS.T,
+    line_1_gross_receipts: 5_000,
+  });
+  assertThrows(
+    () =>
+      scheduleC.compute({ taxYear: 2025, formType: "f1040" }, {
+        schedule_cs: [{ ...base, line_30_home_office: 2_900 }],
+        form8829_line30: claim,
+      }),
+    Error,
+    "no duplicated home expenses",
+  );
+  assertThrows(
+    () =>
+      scheduleC.compute({ taxYear: 2025, formType: "f1040" }, {
+        schedule_cs: [base],
+        form8829_line30: {
+          ...claim,
+          schedule_c_line29_tentative_profit: 5_001,
+        },
+      }),
+    Error,
+    "matching business, line 29",
+  );
+  assertThrows(
+    () =>
+      scheduleC.compute({ taxYear: 2025, formType: "f1040" }, {
+        schedule_cs: [{ ...base, line_20b_rent_other: 100 }],
+        form8829_line30: {
+          ...claim,
+          schedule_c_line29_tentative_profit: 4_900,
+        },
+      }),
+    Error,
+    "no duplicated home expenses",
+  );
+  assertThrows(
+    () =>
+      scheduleC.compute({ taxYear: 2025, formType: "f1040" }, {
+        schedule_cs: [base],
+        form8829_line30: claim,
+        line_30_home_office: 2_900,
+      }),
+    Error,
+    "no top-level home-office deduction",
+  );
+  assertThrows(
+    () =>
+      scheduleC.compute({ taxYear: 2025, formType: "f1040" }, {
+        filing_status: "mfj",
+        schedule_cs: [{ ...base, proprietor_recipient: undefined }],
+        form8829_line30: claim,
+      }),
+    Error,
+    "matching business, line 29",
+  );
+});
+
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
+
+Deno.test("Form 3115 positive and negative adjustments change the linked business profit once", () => {
+  const result = scheduleC.compute({ taxYear: 2025, formType: "f1040" }, {
+    schedule_cs: [minimalItem({
+      business_reference: "CONSULTING",
+      line_1_gross_receipts: 20_000,
+    })],
+    section481a_adjustments: [
+      {
+        business_reference: "CONSULTING",
+        designated_change_number: "222",
+        year_of_change: 2025,
+        amount: 3_000,
+      },
+      {
+        business_reference: "CONSULTING",
+        designated_change_number: "333",
+        year_of_change: 2025,
+        amount: -1_000,
+      },
+    ],
+  });
+  assertEquals(
+    findOutput(result, "schedule1")?.fields.line3_schedule_c,
+    22_000,
+  );
+  assertEquals(
+    findOutput(result, "schedule_se")?.fields.net_profit_schedule_c,
+    22_000,
+  );
+  assertEquals(
+    findOutput(result, "form8995")?.fields.qbi_from_schedule_c,
+    22_000,
+  );
+});
+
+Deno.test("Form 3115 Schedule C projection rejects unknown, repeated, or potentially duplicated adjustments", () => {
+  const source = {
+    business_reference: "CONSULTING",
+    designated_change_number: "222",
+    year_of_change: 2025,
+    amount: 3_000,
+  };
+  const base = minimalItem({
+    business_reference: "CONSULTING",
+    line_1_gross_receipts: 20_000,
+  });
+  const run = (
+    schedule_cs: Array<z.infer<typeof itemSchema>>,
+    section481a_adjustments: Array<typeof source>,
+  ) =>
+    scheduleC.compute({ taxYear: 2025, formType: "f1040" }, {
+      schedule_cs,
+      section481a_adjustments,
+    });
+  assertThrows(
+    () => run([base], [{ ...source, business_reference: "OTHER" }]),
+    Error,
+    "matching Schedule C business",
+  );
+  assertThrows(() => run([base], [source, source]), Error, "duplicated");
+  assertThrows(
+    () => run([{ ...base, line_6_other_income: 3_000 }], [source]),
+    Error,
+    "unverified duplicate",
+  );
+  assertThrows(
+    () =>
+      run([{ ...base, line_27b_other_expenses: 1_000 }], [{
+        ...source,
+        amount: -1_000,
+      }]),
+    Error,
+    "unverified duplicate",
+  );
+});
 
 // ============================================================
 // 1. Input Schema Validation
@@ -135,6 +306,17 @@ Deno.test("schema_empty_array: empty schedule_cs array does not throw", () => {
 Deno.test("schema_valid_minimal: valid minimal item passes schema", () => {
   const parsed = scheduleC.inputSchema.safeParse({
     schedule_cs: [minimalItem({ line_1_gross_receipts: 10000 })],
+  });
+  assertEquals(parsed.success, true);
+});
+
+Deno.test("Schedule C spouse proprietor remains parseable without Form 8829", () => {
+  const parsed = scheduleC.inputSchema.safeParse({
+    schedule_cs: [minimalItem({
+      business_reference: "S-1",
+      proprietor_recipient: TS.S,
+      line_1_gross_receipts: 5_000,
+    })],
   });
   assertEquals(parsed.success, true);
 });
@@ -314,14 +496,128 @@ Deno.test("routing_at_risk_a_with_loss_no_form6198: loss + at_risk=a → no form
   assertEquals(f6198, undefined);
 });
 
-Deno.test("routing_depletion_nonzero_routes_form6251: depletion=1000 → form6251 with exact adjustment", () => {
+Deno.test("Schedule C property-level AMT depletion refigure routes signed line 2d", () => {
   const result = compute([
-    minimalItem({ line_1_gross_receipts: 50000, line_12_depletion: 1000 }),
+    minimalItem({
+      line_1_gross_receipts: 50_000,
+      line_12_depletion: 1_000,
+      amt_depletion_worksheet: {
+        source_reference: "2025 AMT depletion worksheet C-1",
+        all_property_income_and_basis_limits_applied_verified: true,
+        no_at_risk_or_basis_limitation_verified: true,
+        properties: [{
+          property_reference: "MINE-1",
+          regular_allowed_depletion: 1_000,
+          amt_allowed_depletion: 600,
+        }],
+      },
+    }),
   ]);
   const f6251 = findOutput(result, "form6251");
   assertEquals(
-    (f6251!.fields as Record<string, number>).other_adjustments,
-    1000,
+    (f6251!.fields as Record<string, number>).line2d_depletion,
+    400,
+  );
+  assertEquals(
+    findOutput(result, "schedule1")?.fields.line3_schedule_c,
+    49_000,
+  );
+});
+
+Deno.test("Schedule C AMT depletion can produce a negative line 2d", () => {
+  const result = compute([minimalItem({
+    line_1_gross_receipts: 50_000,
+    line_12_depletion: 1_000,
+    amt_depletion_worksheet: {
+      source_reference: "2025 AMT depletion worksheet C-1",
+      all_property_income_and_basis_limits_applied_verified: true,
+      no_at_risk_or_basis_limitation_verified: true,
+      properties: [{
+        property_reference: "MINE-1",
+        regular_allowed_depletion: 1_000,
+        amt_allowed_depletion: 1_200,
+      }],
+    },
+  })]);
+  assertEquals(findOutput(result, "form6251")?.fields.line2d_depletion, -200);
+});
+
+Deno.test("Schedule C depletion rejects missing, mismatched, and duplicate AMT property evidence", () => {
+  const base = {
+    line_1_gross_receipts: 50_000,
+    line_12_depletion: 1_000,
+  };
+  assertThrows(() => compute([minimalItem(base)]), Error, "needs a reviewed");
+  const worksheet = {
+    source_reference: "2025 AMT depletion worksheet C-1",
+    all_property_income_and_basis_limits_applied_verified: true,
+    no_at_risk_or_basis_limitation_verified: true,
+    properties: [{
+      property_reference: "MINE-1",
+      regular_allowed_depletion: 900,
+      amt_allowed_depletion: 600,
+    }],
+  };
+  assertThrows(
+    () =>
+      compute([minimalItem({ ...base, amt_depletion_worksheet: worksheet })]),
+    Error,
+    "regular total must match line 12",
+  );
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        ...base,
+        amt_depletion_worksheet: {
+          ...worksheet,
+          properties: [
+            { ...worksheet.properties[0], regular_allowed_depletion: 500 },
+            { ...worksheet.properties[0], regular_allowed_depletion: 500 },
+          ],
+        },
+      })]),
+    Error,
+    "property references must be unique",
+  );
+});
+
+Deno.test("Schedule C passive and at-risk-limited depletion needs the AMT activity refigure", () => {
+  const item = {
+    line_1_gross_receipts: 50_000,
+    line_12_depletion: 1_000,
+    amt_depletion_worksheet: {
+      source_reference: "2025 AMT depletion worksheet C-1",
+      all_property_income_and_basis_limits_applied_verified: true,
+      no_at_risk_or_basis_limitation_verified: true,
+      properties: [{
+        property_reference: "MINE-1",
+        regular_allowed_depletion: 1_000,
+        amt_allowed_depletion: 600,
+      }],
+    },
+  };
+  assertThrows(
+    () =>
+      compute([minimalItem({ ...item, line_g_material_participation: false })]),
+    Error,
+    "AMT activity refigure",
+  );
+  assertThrows(
+    () => compute([minimalItem({ ...item, line_32_at_risk: "b" })]),
+    Error,
+    "AMT activity refigure",
+  );
+});
+
+Deno.test("unlinked depletion worksheet amount cannot disappear from Schedule C", () => {
+  assertThrows(
+    () =>
+      scheduleC.compute({ taxYear: 2025, formType: "f1040" }, {
+        schedule_cs: [minimalItem({ line_1_gross_receipts: 50_000 })],
+        line_12_depletion: 1_000,
+      }),
+    Error,
+    "Unlinked depletion worksheet amount",
   );
 });
 
@@ -387,6 +683,20 @@ Deno.test("routing_qbi_nets_loss_business: a loss in one Schedule C reduces the 
   assertEquals(
     (qbiOutputs[0].fields as Record<string, number>).qbi_from_schedule_c,
     120000,
+  );
+});
+
+Deno.test("routing_qbi_offsetting_businesses: zero aggregate still retains the current-loss ledger", () => {
+  const result = compute([
+    minimalItem({ business_reference: "gain", line_1_gross_receipts: 1_000 }),
+    minimalItem({ business_reference: "loss", line_11_contract_labor: 1_000 }),
+  ]);
+  const qbi = findOutput(result, "form8995");
+  assertEquals(qbi?.fields.qbi_from_schedule_c, 0);
+  assertEquals(
+    (qbi?.fields.schedule_c_qbi_businesses as { qbi: number }[])
+      .map((business) => business.qbi),
+    [1_000, -1_000],
   );
 });
 

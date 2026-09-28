@@ -4,6 +4,8 @@
 
 This node captures the inputs needed to determine whether a taxpayer owes a penalty for underpaying estimated taxes during the year, and routes the resulting penalty amount to Form 1040. It models the safe-harbor tests of IRC §6654 (90% of current-year tax; 100%/110% of prior-year tax), accepts a pre-computed penalty amount, and records waiver and annualized-income-method elections. The per-quarter penalty computation (Form 2210 Part III / Schedule AI) is **not** fully implemented inside the node — the `underpayment_penalty` field accepts an externally computed value when the full calculation has been done upstream.
 
+**TY2025 filing boundary:** This is not a native Form 2210 calculation. An optional penalty without Part II filing reasons may be sent to Form 1040 line 38. Any selected waiver, partial-waiver box B, annualized box C, actual-withholding box D, or changed-joint-status box E reason suppresses that bare output and blocks MeF and PDF export. The existing `waiver_requested` flag does not distinguish full box A from partial box B; `partial_waiver_requested` identifies B explicitly. `box_e_source` can calculate narrow page-1 Part I lines but also blocks both exports because 2024 document bytes and finalized 2025 Form 1040 values are not verified against it. See the [gap](../../../../../../docs/mef/ty2025-form2210-gap.md) for the required source and line reconciliation.
+
 **IRS Form:** 2210
 **Drake Screen:** 2210
 **Node Type:** input

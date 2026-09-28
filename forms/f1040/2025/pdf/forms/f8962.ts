@@ -1,6 +1,13 @@
 import { rgb, StandardFonts } from "pdf-lib";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
+import {
+  current1095AStatements,
+  inputSchema as form1095aSchema,
+} from "../../../nodes/inputs/f1095a/index.ts";
+import { inputSchema as generalSchema } from "../../../nodes/inputs/general/index.ts";
+import { form8962 as form8962Mef } from "../../mef/forms/f8962.ts";
 import { appendForm8962AllocationStatement } from "./f8962_allocation_statement.ts";
+import { reconcileDependentMagi } from "../../form8962-dependent-magi.ts";
 
 // TY2025 Form 8962 AcroForm fields, verified against the year-pinned IRS PDF.
 const PAGE1 = "topmostSubform[0].Page1[0]";
@@ -200,7 +207,63 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 
 function projectFields(
   fields: Record<string, unknown>,
+  allPending: Record<string, Record<string, unknown>>,
 ): Record<string, unknown> {
+  const hasPolicy = fields.annual_premium !== undefined ||
+    fields.annual_aptc !== undefined || fields.annual_slcsp !== undefined ||
+    Array.isArray(fields.monthly_ptc_rows);
+  if (hasPolicy && allPending.f1095a !== undefined) {
+    const policies = current1095AStatements(
+      form1095aSchema.parse(allPending.f1095a).f1095as,
+    );
+    if (
+      Array.isArray(fields.monthly_ptc_rows) &&
+      Array.from(
+        { length: 12 },
+        (_, month) =>
+          policies.filter((policy) =>
+            (policy.monthly_premiums?.[month] ?? 0) > 0 ||
+            (policy.monthly_slcsps?.[month] ?? 0) > 0 ||
+            (policy.monthly_aptcs?.[month] ?? 0) > 0
+          ).length > 1,
+      ).some(Boolean) && fields.household_size !== 2 &&
+      fields.household_size !== 3
+    ) {
+      throw new Error(
+        "Form 8962 PDF overlapping policies need enrollee and coverage-family source reconciliation",
+      );
+    }
+  }
+  if (
+    hasPolicy &&
+    typeof fields.dependents_modified_agi === "number" &&
+    fields.dependents_modified_agi !== 0 &&
+    fields.household_size !== 2 && fields.household_size !== 3
+  ) {
+    throw new Error(
+      "Form 8962 PDF dependent MAGI needs the bounded dependent source route",
+    );
+  }
+  if (
+    hasPolicy &&
+    (fields.household_size === 2 || fields.household_size === 3)
+  ) {
+    const dependentMagi = reconcileDependentMagi(
+      fields.household_size,
+      typeof fields.dependents_modified_agi === "number"
+        ? fields.dependents_modified_agi
+        : undefined,
+      allPending.general,
+    );
+    if (
+      typeof fields.taxpayer_modified_agi !== "number" ||
+      fields.household_income !== fields.taxpayer_modified_agi + dependentMagi
+    ) {
+      throw new Error(
+        "Form 8962 PDF household income differs from taxpayer and verified dependent MAGI",
+      );
+    }
+  }
   const projected: Record<string, unknown> = { ...fields };
   projected.pdf_fpl_alaska = fields.fpl_region === "alaska";
   projected.pdf_fpl_hawaii = fields.fpl_region === "hawaii";
@@ -249,10 +312,18 @@ function projectFields(
       }
       if (
         (row.premium ?? 0) === 0 && (row.slcsp ?? 0) === 0 &&
-        (row.contribution ?? 0) === 0 &&
-        (row.max_assistance ?? 0) === 0 &&
-        (row.allowed_credit ?? 0) === 0 && (row.aptc ?? 0) === 0
-      ) continue;
+        (row.aptc ?? 0) === 0
+      ) {
+        if (
+          (row.max_assistance ?? 0) !== 0 ||
+          (row.allowed_credit ?? 0) !== 0
+        ) {
+          throw new Error(
+            "Form 8962 PDF uncovered month cannot claim premium assistance or credit",
+          );
+        }
+        continue;
+      }
       for (const column of MONTH_COLUMNS) {
         const value = row[column];
         if (typeof value === "number") {
@@ -348,6 +419,48 @@ export const form8962Pdf: PdfFormDescriptor = {
     { kind: "text", domainKey: "primarySSN", pdfField: `${PAGE1}.f1_2[0]` },
   ],
   projectFields,
+  instances(projected, filer, allPending) {
+    const general = generalSchema.safeParse(allPending?.general);
+    const source = allPending?.f1095a;
+    const policies = source === undefined
+      ? []
+      : current1095AStatements(form1095aSchema.parse(source).f1095as);
+    if (
+      projected.fpl_region === "alaska" ||
+      projected.fpl_region === "hawaii" ||
+      (Array.isArray(projected.shared_policy_allocations) &&
+        projected.shared_policy_allocations.length > 0) ||
+      (general.success &&
+        (general.data.ptc_residence_states_2025?.length ?? 1) > 1) ||
+      ((projected.annual_premium !== undefined ||
+        Array.isArray(projected.monthly_ptc_rows)) && policies.length > 1) ||
+      ((projected.household_size === 2 || projected.household_size === 3) &&
+        Array.isArray(projected.monthly_ptc_rows)) ||
+      (typeof projected.federal_poverty_pct === "number" &&
+        projected.federal_poverty_pct < 400)
+    ) {
+      form8962Mef.build(projected, { filer, pending: allPending });
+    }
+    if (source !== undefined) {
+      const premiumMonths = policies.length === 1
+        ? policies[0]?.monthly_premiums
+        : undefined;
+      const coveredCount = premiumMonths?.filter((amount) => amount > 0).length;
+      const noAptcPositiveClaim = policies.some((policy) =>
+        policy.monthly_premiums?.some((premium) => premium > 0) &&
+        policy.monthly_aptcs?.every((aptc) => aptc === 0)
+      );
+      if (
+        noAptcPositiveClaim ||
+        ((projected.annual_premium !== undefined ||
+          Array.isArray(projected.monthly_ptc_rows)) &&
+          coveredCount !== undefined && coveredCount > 0 && coveredCount < 12)
+      ) {
+        form8962Mef.build(projected, { filer, pending: allPending });
+      }
+    }
+    return [projected];
+  },
   decoratePages: async (document, pages, formFields) => {
     if (formFields.qsehra_ind !== true) return;
     const page = pages[0];

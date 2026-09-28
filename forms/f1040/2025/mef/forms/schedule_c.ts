@@ -8,19 +8,34 @@ import {
   computeGrossIncome,
   computeTotalExpenses,
   homeOfficeDeduction,
+  inputSchema as scheduleCInputSchema,
   mealsDeductiblePct,
+  projectScheduleCItems,
   type ScheduleCItem,
   wagesLessEmploymentCredits,
   wotcReductionsByBusiness,
-} from "../../../nodes/inputs/schedule_c/index.ts";
+} from "../../../nodes/inputs/schedule_c/model.ts";
+import {
+  calculateRentedHomeForm8829,
+  rentedHomeSourceSchema,
+} from "../../../nodes/intermediate/forms/form_8829/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
+import { FilingStatus, TS } from "../../../nodes/types.ts";
 import {
   calculateForm5884,
   inputSchema as form5884InputSchema,
 } from "../../../nodes/inputs/f5884/index.ts";
+import { assertCurrentYearSection481aMatches } from "../../../nodes/inputs/f3115/index.ts";
 
 interface Fields {
   readonly schedule_cs?: readonly ScheduleCItem[];
+  readonly section481a_adjustments?: z.infer<
+    typeof scheduleCInputSchema
+  >["section481a_adjustments"];
+  readonly form8829_line30?: z.infer<
+    typeof scheduleCInputSchema
+  >["form8829_line30"];
+  readonly line_30_home_office?: number;
   readonly line16a_interest_mortgage?: number;
   readonly wotc_wage_reductions?: ReadonlyArray<{
     business_reference: string;
@@ -127,6 +142,30 @@ function buildScheduleC(
 ): string {
   const filer = context.filer;
   if (!filer) throw new Error(`Schedule C ${index + 1} needs filer identity`);
+  if (
+    item.proprietor_recipient === undefined &&
+    filer.filingStatus === FilingStatus.MFJ
+  ) {
+    throw new Error(
+      `Schedule C ${index + 1} joint return needs an explicit proprietor`,
+    );
+  }
+  const spouse = item.proprietor_recipient === TS.S ? filer.spouse : undefined;
+  if (
+    item.proprietor_recipient === TS.S &&
+    (filer.filingStatus !== FilingStatus.MFJ || !spouse)
+  ) {
+    throw new Error(
+      `Schedule C ${
+        index + 1
+      } spouse proprietor needs a joint return and spouse identity`,
+    );
+  }
+  const proprietorName = spouse
+    ? [spouse.firstName, spouse.middleInitial, spouse.lastName, spouse.suffix]
+      .filter(Boolean).join(" ")
+    : filer.fullName ?? filer.nameLine1;
+  const proprietorSSN = spouse?.ssn ?? filer.primarySSN;
   if (item.line_f_accounting_method === "other") {
     throw new Error(
       `Schedule C ${index + 1} needs an accounting-method description for MeF`,
@@ -145,7 +184,10 @@ function buildScheduleC(
   const grossIncome = computeGrossIncome(item);
   const expenses = computeTotalExpenses(item, wotcReduction);
   const tentativeProfit = grossIncome - expenses;
-  const netProfit = calculateScheduleCAtRiskNet(item, wotcReduction).atRiskNet;
+  // Schedule C line 31 is the pre-Form-6198 result. The at-risk limit changes
+  // the loss carried to Schedule 1, not the amount printed on Schedule C.
+  const netProfit = calculateScheduleCAtRiskNet(item, wotcReduction)
+    .preliminaryNet;
   const otherExpenses = (item.part_v_other_expenses ?? []).reduce(
     (sum, entry) => sum + entry.amount,
     item.line_27b_other_expenses ?? 0,
@@ -153,8 +195,8 @@ function buildScheduleC(
   const hasOtherExpenses = item.line_27b_other_expenses !== undefined ||
     (item.part_v_other_expenses?.length ?? 0) > 0;
   return elements("IRS1040ScheduleC", [
-    element("ProprietorNm", filer.fullName ?? filer.nameLine1),
-    element("SSN", filer.primarySSN.replace(/\D/g, "")),
+    element("ProprietorNm", proprietorName),
+    element("SSN", proprietorSSN.replace(/\D/g, "")),
     element("PrincipalBusinessActivityDesc", item.line_a_principal_business),
     element("PrincipalBusinessActivityCd", item.line_b_business_code),
     element("BusinessNameLine1Txt", item.line_c_business_name),
@@ -259,7 +301,46 @@ export const scheduleC: MefFormDescriptor<
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040sc.pdf",
   build(fields, context = {}) {
-    const items = fields?.schedule_cs ?? [];
+    const input = scheduleCInputSchema.parse({
+      ...fields,
+      schedule_cs: fields?.schedule_cs ?? [],
+    });
+    if (
+      context.pending?.f3115 ||
+      (input.section481a_adjustments?.length ?? 0) > 0
+    ) {
+      if (!context.pending?.f3115) {
+        throw new Error(
+          "Schedule C section 481(a) adjustments need Form 3115 source",
+        );
+      }
+      assertCurrentYearSection481aMatches(
+        context.pending.f3115,
+        input.section481a_adjustments ?? [],
+        2025,
+      );
+    }
+    const claim = input.form8829_line30;
+    if (claim) {
+      if (!context.pending?.form_8829) {
+        throw new Error("Schedule C home-office deduction needs Form 8829");
+      }
+      const source = z.object({ rented_home: rentedHomeSourceSchema }).parse(
+        context.pending.form_8829,
+      ).rented_home;
+      const lines = calculateRentedHomeForm8829(source);
+      if (
+        source.business_reference !== claim.business_reference ||
+        source.home_identifier !== claim.home_identifier ||
+        source.recipient !== TS.T || claim.recipient !== TS.T ||
+        source.schedule_c_line29_tentative_profit !==
+          claim.schedule_c_line29_tentative_profit ||
+        lines.line36 !== claim.line36
+      ) {
+        throw new Error("Schedule C home-office claim differs from Form 8829");
+      }
+    }
+    const items = projectScheduleCItems(input);
     if (items.length > 8) {
       throw new Error("MeF allows at most eight Schedule C documents");
     }

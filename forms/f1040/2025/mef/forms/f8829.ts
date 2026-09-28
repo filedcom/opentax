@@ -9,7 +9,8 @@ import {
 import {
   computeNetProfit,
   inputSchema as scheduleCInputSchema,
-} from "../../../nodes/inputs/schedule_c/index.ts";
+  projectForm8829ScheduleCItems,
+} from "../../../nodes/inputs/schedule_c/model.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 type Input = Partial<Form8829Lines & { rented_home: RentedHomeSource }>;
@@ -81,7 +82,7 @@ function checkScheduleC(
     (scheduleC.line16a_interest_mortgage ?? 0) > 0 ||
     (scheduleC.line_9_car_truck_expenses ?? 0) > 0 ||
     (scheduleC.line_12_depletion ?? 0) > 0 ||
-    (scheduleC.line_30_home_office ?? 0) !== lines.line36 ||
+    (scheduleC.line_30_home_office ?? 0) > 0 ||
     (scheduleC.schedule_cs[0].line_30_home_office ?? 0) > 0 ||
     scheduleC.schedule_cs[0].home_office_method === "simplified" ||
     scheduleC.schedule_cs[0].home_office_sq_ft !== undefined
@@ -96,6 +97,30 @@ function checkScheduleC(
   ) {
     throw new Error("Form 8829 line 8 differs from Schedule C line 29");
   }
+  const claim = scheduleC.form8829_line30;
+  if (lines.line36 > 0) {
+    if (
+      !claim || claim.business_reference !== source.business_reference ||
+      claim.home_identifier !== source.home_identifier ||
+      claim.recipient !== TS.T || source.recipient !== TS.T ||
+      claim.schedule_c_line29_tentative_profit !==
+        source.schedule_c_line29_tentative_profit ||
+      claim.line36 !== lines.line36
+    ) {
+      throw new Error("Form 8829 line 36 needs matching Schedule C claim");
+    }
+    const projected = projectForm8829ScheduleCItems(scheduleC)[0];
+    if (
+      projected.proprietor_recipient !== TS.T ||
+      projected.line_30_home_office !== lines.line36 ||
+      computeNetProfit(projected) !==
+        source.schedule_c_line29_tentative_profit - lines.line36
+    ) {
+      throw new Error("Form 8829 line 36 differs from filed Schedule C");
+    }
+  } else if (claim) {
+    throw new Error("Form 8829 zero line 36 cannot claim Schedule C line 30");
+  }
 }
 
 function buildIRS8829(fields: Input, context?: MefBuildContext): string {
@@ -106,11 +131,6 @@ function buildIRS8829(fields: Input, context?: MefBuildContext): string {
     if (fields[key] !== lines[key]) {
       throw new Error(`Form 8829 ${key} differs from source calculation`);
     }
-  }
-  if (lines.line36 > 0) {
-    throw new Error(
-      "Form 8829 positive line 36 cannot be reconciled to filed Schedule C item line 30",
-    );
   }
   checkScheduleC(source, lines, context);
   const proprietor = identity(source, context);

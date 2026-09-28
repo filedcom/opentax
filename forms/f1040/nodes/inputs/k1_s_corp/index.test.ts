@@ -8,6 +8,40 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function stockLossLedger(beginningStockBasis: number) {
+  return {
+    shareholder_ssn: "123456789",
+    shareholder_name_as_on_k1: "Alex Taxpayer",
+    corporation_ein: "123456789",
+    beginning_stock_basis: beginningStockBasis,
+    beginning_basis_workpaper_reference: "2024 shareholder stock ledger",
+    original_shareholder: true,
+    all_shares_one_stock_block: true,
+    no_current_year_stock_transactions: true,
+    no_section_1367_1_g_election: true,
+    no_other_2025_stock_basis_changes: true,
+    no_other_schedule_e_activity: true,
+    materially_participated_in_s_corporation: true,
+    material_participation_workpaper_reference:
+      "2025 shareholder participation log",
+    no_shareholder_debt_or_repayments: true,
+    no_prior_year_suspended_losses: true,
+    no_at_risk_or_passive_limitation: true,
+  };
+}
+
+function reviewedLossItem(
+  beginningStockBasis: number,
+  overrides: Record<string, unknown> = {},
+) {
+  return minimalItem({
+    corporation_ein: "123456789",
+    source_document_reference: "2025 S corporation K-1",
+    form7203_stock_loss_ledger: stockLossLedger(beginningStockBasis),
+    ...overrides,
+  });
+}
+
 function compute(items: ReturnType<typeof minimalItem>[]) {
   return k1SCorpNode.compute({ taxYear: 2025, formType: "f1040" }, {
     k1_s_corps: items,
@@ -266,9 +300,19 @@ Deno.test("box1_ordinary_business routes to schedule1 line5_schedule_e", () => {
 });
 
 Deno.test("negative box1 (loss) routes to schedule1 line5_schedule_e", () => {
-  const result = compute([minimalItem({ box1_ordinary_business: -2000 })]);
+  const result = compute([reviewedLossItem(3000, {
+    box1_ordinary_business: -2000,
+  })]);
   const out = findOutput(result, "schedule1");
   assertEquals(out?.fields.line5_schedule_e, -2000);
+});
+
+Deno.test("negative S corporation box1 without basis facts rejects before a loss can file", () => {
+  assertThrows(
+    () => compute([minimalItem({ box1_ordinary_business: -2000 })]),
+    Error,
+    "ordinary loss needs shareholder basis facts and Form 7203 filing review",
+  );
 });
 
 Deno.test("zero box1 does not route to schedule1", () => {
@@ -350,7 +394,9 @@ Deno.test("positive box1 routes to form8995 as qbi", () => {
 });
 
 Deno.test("negative box1 does not route to form8995", () => {
-  const result = compute([minimalItem({ box1_ordinary_business: -5000 })]);
+  const result = compute([reviewedLossItem(6000, {
+    box1_ordinary_business: -5000,
+  })]);
   const out = findOutput(result, "form8995");
   assertEquals(out, undefined);
 });
@@ -565,7 +611,7 @@ Deno.test("no basis fields does not route to form7203", () => {
 
 Deno.test("loss with stock basis routes ordinary_loss to form7203", () => {
   const result = compute([
-    minimalItem({ box1_ordinary_business: -4000, stock_basis_beginning: 3000 }),
+    reviewedLossItem(3000, { box1_ordinary_business: -4000 }),
   ]);
   const out = findOutput(result, "form7203");
   assertEquals(out?.fields.ordinary_loss, 4000);
@@ -573,16 +619,123 @@ Deno.test("loss with stock basis routes ordinary_loss to form7203", () => {
 
 // ── 6. Pre-2018 carryover fields ──────────────────────────────────────────────
 
-Deno.test("pre2018_suspended_losses routes to form7203 as prior_year_unallowed_loss", () => {
-  const result = compute([minimalItem({ pre2018_suspended_losses: 7000 })]);
-  const out = findOutput(result, "form7203");
-  assertEquals(out?.fields.prior_year_unallowed_loss, 7000);
+Deno.test("pre2018 basis carryover stops before an unsupported current-year add-back", () => {
+  assertThrows(
+    () => compute([minimalItem({ pre2018_suspended_losses: 7000 })]),
+    Error,
+    "need separate reviewed loss routes",
+  );
 });
 
-Deno.test("pre2018_at_risk_suspended routes to form7203 as prior_year_unallowed_loss", () => {
-  const result = compute([minimalItem({ pre2018_at_risk_suspended: 2500 })]);
-  const out = findOutput(result, "form7203");
-  assertEquals(out?.fields.prior_year_unallowed_loss, 2500);
+Deno.test("pre2018 at-risk carryover does not masquerade as basis carryover", () => {
+  assertThrows(
+    () => compute([minimalItem({ pre2018_at_risk_suspended: 2500 })]),
+    Error,
+    "need separate reviewed loss routes",
+  );
+});
+
+Deno.test("ordinary-loss stock route rejects absent ledger and debt basis", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        corporation_ein: "123456789",
+        source_document_reference: "2025 S corporation K-1",
+        box1_ordinary_business: -4000,
+        stock_basis_beginning: 3000,
+      })]),
+    Error,
+    "reviewed stock-only beginning basis",
+  );
+  assertThrows(
+    () =>
+      compute([reviewedLossItem(3000, {
+        box1_ordinary_business: -4000,
+        debt_basis_beginning: 500,
+      })]),
+    Error,
+    "reviewed stock-only beginning basis",
+  );
+});
+
+Deno.test("ordinary-loss ledger EIN must match the issued K-1", () => {
+  const item = reviewedLossItem(3000, { box1_ordinary_business: -4000 });
+  assertThrows(
+    () =>
+      compute([{
+        ...item,
+        form7203_stock_loss_ledger: {
+          ...stockLossLedger(3000),
+          corporation_ein: "999999999",
+        },
+      }]),
+    Error,
+    "reviewed stock-only beginning basis",
+  );
+});
+
+Deno.test("ordinary-loss ledger rejects undeclared basis fields", () => {
+  const item = reviewedLossItem(3000, { box1_ordinary_business: -4000 });
+  assertThrows(() =>
+    compute([{
+      ...item,
+      form7203_stock_loss_ledger: {
+        ...stockLossLedger(3000),
+        unreviewed_extra_basis: 400,
+      },
+    }])
+  );
+});
+
+Deno.test("ordinary-loss ledger does not merge two corporations", () => {
+  assertThrows(
+    () =>
+      compute([
+        reviewedLossItem(3000, { box1_ordinary_business: -4000 }),
+        minimalItem({
+          corporation_name: "Another S Corp",
+          box1_ordinary_business: 1000,
+        }),
+      ]),
+    Error,
+    "exactly one S-corporation K-1",
+  );
+});
+
+Deno.test("ordinary-loss ledger is not a generic no-loss basis record", () => {
+  assertThrows(
+    () => compute([reviewedLossItem(3000)]),
+    Error,
+    "needs a current K-1 box-1 ordinary loss",
+  );
+});
+
+Deno.test("ordinary-loss stock route accepts reviewed explicit zero basis", () => {
+  const result = compute([reviewedLossItem(0, {
+    box1_ordinary_business: -4000,
+  })]);
+  assertEquals(findOutput(result, "form7203")?.fields.ordinary_loss, 4000);
+  assertEquals(findOutput(result, "form7203")?.fields.stock_basis_beginning, 0);
+});
+
+Deno.test("ordinary-loss stock route rejects a contradictory other K-1 basis item", () => {
+  assertThrows(
+    () =>
+      compute([reviewedLossItem(3000, {
+        box1_ordinary_business: -4000,
+        box4_interest: 250,
+      })]),
+    Error,
+    "no other changes",
+  );
+});
+
+Deno.test("misidentified box 17 distribution cannot bypass Form 7203 filing review", () => {
+  assertThrows(
+    () => compute([minimalItem({ box17_distributions: 500 })]),
+    Error,
+    "box 16 code D source",
+  );
 });
 
 Deno.test("negative pre2018_suspended_losses throws", () => {
@@ -600,6 +753,129 @@ Deno.test("negative pre2018_at_risk_suspended throws", () => {
 });
 
 // ── 9. Smoke test ─────────────────────────────────────────────────────────────
+
+Deno.test("untyped S-corporation box 10 is rejected, even when zero", () => {
+  for (const amount of [0, 450]) {
+    assertThrows(
+      () => compute([minimalItem({ box10_other_income: amount })]),
+      Error,
+      "Untyped S-corporation K-1 box 10",
+    );
+  }
+});
+
+Deno.test("box 10 code J routes only reviewed taxable recovery to line 8z and AGI", () => {
+  const result = compute([minimalItem({
+    corporation_ein: "123456789",
+    source_document_reference:
+      "2025 K-1 box 10 code J and prior-year tax workpaper",
+    box10_code_j_recovery: 1000,
+    box10_code_j_taxable_recovery: 650,
+    box10_code_j_tax_benefit_workpaper_reference:
+      "2024 deduction and tax-benefit reconciliation",
+    box10_code_j_prior_year_tax_benefit_reviewed: true,
+  })]);
+  assertEquals(
+    findOutput(result, "schedule1")?.fields
+      .line8z_k1_s_corp_tax_benefit_recovery,
+    650,
+  );
+  assertEquals(
+    findOutput(result, "agi_aggregator")?.fields
+      .line8z_k1_s_corp_tax_benefit_recovery,
+    650,
+  );
+});
+
+Deno.test("box 10 code J recovery requires source and prior-year benefit review", () => {
+  const base = {
+    box10_code_j_recovery: 1000,
+    box10_code_j_taxable_recovery: 650,
+  };
+  assertThrows(
+    () => compute([minimalItem(base)]),
+    Error,
+    "corporation_ein",
+  );
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        ...base,
+        corporation_ein: "123456789",
+        source_document_reference: "2025 K-1 box 10 code J",
+      })]),
+    Error,
+    "box10_code_j_tax_benefit_workpaper_reference",
+  );
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        ...base,
+        corporation_ein: "123456789",
+        source_document_reference: "2025 K-1 box 10 code J",
+        box10_code_j_tax_benefit_workpaper_reference: "2024 tax workpaper",
+      })]),
+    Error,
+    "box10_code_j_prior_year_tax_benefit_reviewed",
+  );
+});
+
+Deno.test("box 10 code J taxable subset cannot exceed K-1 recovery", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        corporation_ein: "123456789",
+        source_document_reference: "2025 K-1 box 10 code J",
+        box10_code_j_recovery: 500,
+        box10_code_j_taxable_recovery: 600,
+        box10_code_j_tax_benefit_workpaper_reference: "2024 tax workpaper",
+        box10_code_j_prior_year_tax_benefit_reviewed: true,
+      })]),
+    Error,
+    "taxable recovery exceeds K-1 recovery",
+  );
+});
+
+Deno.test("box 10 code J taxable recoveries aggregate without losing other Schedule E income", () => {
+  const result = compute([
+    minimalItem({
+      corporation_ein: "123456789",
+      source_document_reference: "2025 K-1 A code J",
+      box1_ordinary_business: 800,
+      box10_code_j_recovery: 400,
+      box10_code_j_taxable_recovery: 250,
+      box10_code_j_tax_benefit_workpaper_reference: "2024 tax workpaper A",
+      box10_code_j_prior_year_tax_benefit_reviewed: true,
+    }),
+    minimalItem({
+      corporation_name: "Second S Corp",
+      corporation_ein: "987654321",
+      source_document_reference: "2025 K-1 B code J",
+      box10_code_j_recovery: 200,
+      box10_code_j_taxable_recovery: 150,
+      box10_code_j_tax_benefit_workpaper_reference: "2024 tax workpaper B",
+      box10_code_j_prior_year_tax_benefit_reviewed: true,
+    }),
+  ]);
+  const schedule1Outputs = result.outputs.filter((o) =>
+    o.nodeType === "schedule1"
+  );
+  assertEquals(
+    schedule1Outputs.some((o) => o.fields.line5_schedule_e === 800),
+    true,
+  );
+  assertEquals(
+    schedule1Outputs.some((o) =>
+      o.fields.line8z_k1_s_corp_tax_benefit_recovery === 400
+    ),
+    true,
+  );
+  assertEquals(
+    findOutput(result, "agi_aggregator")?.fields
+      .line8z_k1_s_corp_tax_benefit_recovery,
+    400,
+  );
+});
 
 Deno.test("smoke test — K-1 with all major boxes", () => {
   const result = compute([

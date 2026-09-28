@@ -3,6 +3,7 @@ import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
 import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
 import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
@@ -189,6 +190,7 @@ class F8621Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([
     schedule1,
+    agi_aggregator,
     schedule2,
     schedule_b,
     schedule_d,
@@ -213,8 +215,17 @@ class F8621Node extends TaxNode<typeof inputSchema> {
       (event) => event.line16f_interest,
     );
 
-    const ordinaryIncome = totalMtmGainLoss(f8621s) +
-      totalQefOrdinaryIncome(f8621s) + currentAndPrePficIncome;
+    const mtmIncome = totalMtmGainLoss(f8621s);
+    const qefOrdinaryIncome = totalQefOrdinaryIncome(f8621s);
+    const otherIncomeFields = {
+      ...(qefOrdinaryIncome !== 0
+        ? { line8z_form8621_qef: qefOrdinaryIncome }
+        : {}),
+      ...(mtmIncome !== 0 ? { line8z_form8621_mtm: mtmIncome } : {}),
+      ...(currentAndPrePficIncome !== 0
+        ? { line8z_form8621_section1291: currentAndPrePficIncome }
+        : {}),
+    };
     const capitalGain = qefItems(f8621s).reduce(
       (sum, item) =>
         sum + (item.qef_capital_gain ?? 0) -
@@ -245,8 +256,11 @@ class F8621Node extends TaxNode<typeof inputSchema> {
             ),
           })]
           : []),
-        ...(ordinaryIncome !== 0
-          ? [output(schedule1, { line8z_other: ordinaryIncome })]
+        ...(Object.keys(otherIncomeFields).length > 0
+          ? [
+            output(schedule1, otherIncomeFields),
+            output(agi_aggregator, otherIncomeFields),
+          ]
           : []),
         ...(capitalGain > 0
           ? [output(schedule_d, { line_11_qef_lt: capitalGain })]

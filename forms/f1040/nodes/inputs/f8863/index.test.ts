@@ -11,6 +11,47 @@ import {
 
 type F8863Item = z.infer<typeof itemSchema>;
 
+let nextEducationSourceFixtureId = 1;
+
+function educationSource(
+  expenses: number,
+  sourceId = String(nextEducationSourceFixtureId++),
+) {
+  return {
+    filing_details: {
+      first_name: "Test",
+      last_name: "Student",
+      name_control: "STUD",
+      institutions: [{
+        name: "Test University",
+        us_address: {
+          line1: "1 College Way",
+          city: "Austin",
+          state: "TX",
+          zip: "78701",
+        },
+        current_year_1098t_received: true,
+        prior_year_1098t_received: false,
+        ein: "12-3456789",
+      }],
+    },
+    education_expense_workpaper: {
+      form1098t_box1_payments: expenses,
+      form1098t_box5_scholarships: 0,
+      form1098t_document_id: `1098T-TEST-${sourceId}`,
+      payment_record_ids: [`PAYMENT-TEST-${sourceId}`],
+      paid_tuition_required_fees: expenses,
+      paid_course_materials_to_institution: 0,
+      paid_course_materials_elsewhere: 0,
+      outside_materials_needed_for_course: false,
+      institution_materials_required_for_enrollment: false,
+      tax_free_assistance_applied_to_expenses: 0,
+      qualified_expense_refunds: 0,
+      expenses_used_for_other_tax_benefits: 0,
+    },
+  };
+}
+
 // ============================================================
 // Helpers
 // ============================================================
@@ -20,6 +61,7 @@ type F8863Item = z.infer<typeof itemSchema>;
  * with zero expenses so no credit is produced unless overridden.
  */
 function minimalAocItem(overrides: Partial<F8863Item> = {}): F8863Item {
+  const expenses = overrides.aoc_adjusted_expenses ?? 0;
   return {
     credit_type: "aoc",
     student_name: "Test Student",
@@ -30,6 +72,7 @@ function minimalAocItem(overrides: Partial<F8863Item> = {}): F8863Item {
     aoc_adjusted_expenses: 0,
     filer_magi: 0,
     filing_status: FilingStatus.Single,
+    ...educationSource(expenses),
     ...overrides,
   };
 }
@@ -38,12 +81,14 @@ function minimalAocItem(overrides: Partial<F8863Item> = {}): F8863Item {
  * Minimal LLC student item — no AOC eligibility flags required.
  */
 function minimalLlcItem(overrides: Partial<F8863Item> = {}): F8863Item {
+  const expenses = overrides.llc_adjusted_expenses ?? 0;
   return {
     credit_type: "llc",
     student_name: "Test Student",
     llc_adjusted_expenses: 0,
     filer_magi: 0,
     filing_status: FilingStatus.Single,
+    ...educationSource(expenses),
     ...overrides,
   };
 }
@@ -86,6 +131,65 @@ function computeWithTaxCapacity(
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
+
+Deno.test("positive Form 8863 calculation needs sourced education expenses", () => {
+  assertThrows(
+    () => compute([minimalAocItem({
+      aoc_adjusted_expenses: 4_000,
+      education_expense_workpaper: undefined,
+    })]),
+    Error,
+    "education expense workpaper",
+  );
+  assertThrows(
+    () => compute([minimalLlcItem({
+      llc_adjusted_expenses: 5_000,
+      education_expense_workpaper: {
+        ...educationSource(5_000).education_expense_workpaper,
+        qualified_expense_refunds: 500,
+      },
+    })]),
+    Error,
+    "do not reconcile to the education expense workpaper",
+  );
+});
+
+Deno.test("Form 8863 cannot claim the same education source for two students", () => {
+  const first = minimalAocItem({
+    student_name: "First Student",
+    student_ssn: "111-22-3333",
+    aoc_adjusted_expenses: 4_000,
+  });
+  const second = minimalLlcItem({
+    student_name: "Second Student",
+    student_ssn: "444-55-6666",
+    llc_adjusted_expenses: 5_000,
+  });
+  const firstSource = first.education_expense_workpaper!;
+  const secondSource = second.education_expense_workpaper!;
+  assertThrows(
+    () => compute([first, {
+      ...second,
+      education_expense_workpaper: {
+        ...secondSource,
+        form1098t_document_id: firstSource.form1098t_document_id,
+      },
+    }]),
+    Error,
+    "cannot reuse a Form 1098-T document reference",
+  );
+  assertThrows(
+    () => compute([first, {
+      ...second,
+      education_expense_workpaper: {
+        ...secondSource,
+        payment_record_ids: firstSource.payment_record_ids,
+      },
+    }]),
+    Error,
+    "cannot reuse an education payment reference",
+  );
+});
 
 // ============================================================
 // 1. Input Schema Validation
@@ -796,6 +900,62 @@ Deno.test("kiddie_rule_false_allows_refundable: taxpayer_under_24_no_refundable_
         .line3_education_credit,
     ),
     1500,
+  );
+});
+
+Deno.test("return-level under-24 answer cannot conflict between AOC students", () => {
+  assertThrows(
+    () =>
+      compute([
+        minimalAocItem({
+          student_name: "Alice",
+          aoc_adjusted_expenses: 4_000,
+          taxpayer_under_24_no_refundable_aoc: true,
+        }),
+        minimalAocItem({
+          student_name: "Bob",
+          aoc_adjusted_expenses: 4_000,
+          taxpayer_under_24_no_refundable_aoc: false,
+        }),
+      ]),
+    Error,
+    "conflicting taxpayer under-24 answers",
+  );
+  assertThrows(
+    () =>
+      compute([
+        minimalAocItem({
+          student_name: "Alice",
+          aoc_adjusted_expenses: 4_000,
+          taxpayer_under_24_no_refundable_aoc: true,
+        }),
+        minimalAocItem({
+          student_name: "Bob",
+          aoc_adjusted_expenses: 4_000,
+        }),
+      ]),
+    Error,
+    "conflicting taxpayer under-24 answers",
+  );
+});
+
+Deno.test("same student SSN cannot claim AOC and LLC on one return", () => {
+  assertThrows(
+    () =>
+      compute([
+        minimalAocItem({
+          student_name: "Alice",
+          student_ssn: "222-33-4444",
+          aoc_adjusted_expenses: 4_000,
+        }),
+        minimalLlcItem({
+          student_name: "Alice",
+          student_ssn: "222334444",
+          llc_adjusted_expenses: 2_000,
+        }),
+      ]),
+    Error,
+    "same student SSN twice",
   );
 });
 

@@ -21,19 +21,40 @@ import {
 
 const money = z.number().finite().nonnegative();
 
+const premiumMonthSchema = z.object({
+  month: z.number().int().min(1).max(12),
+  paid_premium: money,
+  policy_source_reference: z.string().trim().min(1),
+  payment_source_reference: z.string().trim().min(1),
+  // The bounded path covers only the taxpayer. Other covered people require
+  // separate employer-plan eligibility facts for each person.
+  covered_person: z.literal("taxpayer"),
+  eligible_for_subsidized_employer_plan: z.boolean(),
+  employer_plan_review_reference: z.string().trim().min(1),
+  marketplace_policy: z.boolean(),
+  long_term_care_policy: z.boolean(),
+  public_safety_officer_excluded_amount: money,
+  public_safety_officer_exclusion_source_reference: z.string().trim().min(1)
+    .optional(),
+}).strict();
+
 export const singleScheduleCPlanSchema = z.object({
   business_reference: z.string().trim().min(1),
   plan_identifier: z.string().trim().min(1),
-  recipient: z.nativeEnum(TS),
-  eligible_health_premiums: money.positive(),
+  recipient: z.literal(TS.T),
+  taxpayer_identity: z.object({
+    name: z.string().trim().min(1),
+    ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+  }).strict(),
+  premium_months: z.array(premiumMonthSchema).length(12).refine(
+    (months) => months.every((record, index) => record.month === index + 1),
+    "Form 7206 needs January through December premium records in order",
+  ),
   schedule_c_line31_net_profit: money.positive(),
   schedule1_line15_se_tax_deduction: money,
   schedule1_line16_retirement_deduction: money,
   plan_established_under_business: z.literal(true),
-  eligible_premium_months_verified: z.literal(true),
   sole_positive_business_verified: z.literal(true),
-  no_marketplace_overlap: z.literal(true),
-  no_ltc_premiums: z.literal(true),
   no_form2555: z.literal(true),
   no_schedule_se_optional_method: z.literal(true),
   no_other_earned_income: z.literal(true),
@@ -61,6 +82,23 @@ export type Form7206Lines = z.infer<typeof form7206LinesSchema>;
 
 export const inputSchema = z.object({
   single_schedule_c_plan: singleScheduleCPlanSchema.optional(),
+  schedule_c_source: z.object({
+    unadjusted_source: z.boolean(),
+    businesses: z.array(
+      z.object({
+        business_reference: z.string().trim().min(1).optional(),
+        proprietor_recipient: z.nativeEnum(TS).optional(),
+        line31_net_profit: z.number().finite(),
+      }).strict(),
+    ).min(1),
+  }).strict().optional(),
+  schedule_se_source: z.object({
+    net_profit_schedule_c: z.number().finite(),
+    net_profit_schedule_f: z.number().finite(),
+    farm_optional_method_elected: z.boolean(),
+    line13_deduction: money,
+  }).strict().optional(),
+  schedule1_line16_source: money.optional(),
   marketplace_ptc_premium_overlap: z.boolean().optional(),
   pub974_single_business: pub974SingleBusinessSourceSchema.optional(),
 }).strict();
@@ -73,6 +111,42 @@ export function calculateSingleScheduleCForm7206(
   raw: SingleScheduleCPlan,
 ): Form7206Lines {
   const source = singleScheduleCPlanSchema.parse(raw);
+  const totalPublicSafetyExclusion = source.premium_months.reduce(
+    (sum, month) => sum + month.public_safety_officer_excluded_amount,
+    0,
+  );
+  if (totalPublicSafetyExclusion > 3_000) {
+    throw new Error(
+      "Form 7206 public-safety-officer exclusion exceeds the annual $3,000 limit",
+    );
+  }
+  const eligiblePremiums = source.premium_months.reduce((sum, month) => {
+    if (month.marketplace_policy || month.long_term_care_policy) {
+      throw new Error(
+        "Form 7206 bounded one-plan calculation excludes Marketplace and long-term-care premiums",
+      );
+    }
+    if (month.public_safety_officer_excluded_amount > month.paid_premium) {
+      throw new Error(
+        "Form 7206 public-safety-officer exclusion exceeds the paid monthly premium",
+      );
+    }
+    if (
+      month.public_safety_officer_excluded_amount > 0 &&
+      !month.public_safety_officer_exclusion_source_reference
+    ) {
+      throw new Error(
+        "Form 7206 public-safety-officer exclusion needs a source reference",
+      );
+    }
+    return sum +
+      (month.eligible_for_subsidized_employer_plan
+        ? 0
+        : month.paid_premium - month.public_safety_officer_excluded_amount);
+  }, 0);
+  if (eligiblePremiums <= 0) {
+    throw new Error("Form 7206 needs positive eligible insurance premiums");
+  }
   const profit = source.schedule_c_line31_net_profit;
   const seTax = source.schedule1_line15_se_tax_deduction;
   const retirement = source.schedule1_line16_retirement_deduction;
@@ -83,9 +157,9 @@ export function calculateSingleScheduleCForm7206(
   }
   const line10 = profit - seTax - retirement;
   return form7206LinesSchema.parse({
-    line1: source.eligible_health_premiums,
+    line1: eligiblePremiums,
     line2: 0,
-    line3: source.eligible_health_premiums,
+    line3: eligiblePremiums,
     line4: profit,
     line5: profit,
     line6: 1,
@@ -95,7 +169,7 @@ export function calculateSingleScheduleCForm7206(
     line10,
     line12: 0,
     line13: line10,
-    line14: Math.min(source.eligible_health_premiums, line10),
+    line14: Math.min(eligiblePremiums, line10),
   });
 }
 
@@ -156,7 +230,7 @@ class Form7206Node extends TaxNode<typeof inputSchema> {
               monthly_aptcs: f.monthly_aptcs!,
               specified_policy_months:
                 source.worksheet_w.specified_policy_months,
-              form1095a_coverage_months: source.form1095a_coverage_months,
+              form1095a_policy_months: source.form1095a_policy_months,
               worksheet_x_source: {
                 form1040_line9_total_income:
                   source.worksheet_x.form1040_line9_total_income,
@@ -193,6 +267,7 @@ class Form7206Node extends TaxNode<typeof inputSchema> {
               total_premium_tax_credit: result.form8962_fields
                 .total_premium_tax_credit as number,
               specified_premiums: result.worksheet_w.line1_specified_premiums,
+              attributable_specified_ptc: result.attributable_specified_ptc,
               specified_deduction: result.schedule1_line17_deduction -
                 result.worksheet_w.line14_nonspecified_deduction,
             },
@@ -202,7 +277,10 @@ class Form7206Node extends TaxNode<typeof inputSchema> {
     }
     const source = input.single_schedule_c_plan;
     if (!source) {
-      if (Object.keys(input).length === 0) return { outputs: [] };
+      if (
+        input.pub974_single_business === undefined &&
+        input.marketplace_ptc_premium_overlap === undefined
+      ) return { outputs: [] };
       throw new Error("Form 7206 requires one identified Schedule C plan");
     }
     if (input.marketplace_ptc_premium_overlap !== false) {
@@ -210,9 +288,42 @@ class Form7206Node extends TaxNode<typeof inputSchema> {
         "Form 7206 Marketplace PTC overlap requires Publication 974 deduction calculation",
       );
     }
-    throw new Error(
-      "Form 7206 one-plan filing is not source-reconciled: premium-month records, Schedule C owner, Schedule 1 lines 15-16, and return-wide exclusions are required",
-    );
+    const businesses = input.schedule_c_source?.businesses;
+    const business = businesses?.[0];
+    const se = input.schedule_se_source;
+    if (
+      input.schedule_c_source?.unadjusted_source !== true ||
+      businesses?.length !== 1 || !business ||
+      business.business_reference !== source.business_reference ||
+      business.proprietor_recipient !== TS.T ||
+      business.line31_net_profit <= 0 ||
+      business.line31_net_profit !== source.schedule_c_line31_net_profit ||
+      !se || se.net_profit_schedule_c !== business.line31_net_profit ||
+      se.net_profit_schedule_f !== 0 || se.farm_optional_method_elected ||
+      se.line13_deduction !== source.schedule1_line15_se_tax_deduction ||
+      (input.schedule1_line16_source ?? 0) !==
+        source.schedule1_line16_retirement_deduction ||
+      (input.schedule1_line16_source ?? 0) !== 0
+    ) {
+      throw new Error(
+        "Form 7206 one-plan filing needs one taxpayer-owned Schedule C, its computed Schedule SE line 13, and zero retirement deduction",
+      );
+    }
+    const lines = calculateSingleScheduleCForm7206(source);
+    return {
+      outputs: [
+        ...buildOutput(lines.line14),
+        {
+          nodeType: this.nodeType,
+          fields: {
+            single_schedule_c_plan: source,
+            recipient_name: source.taxpayer_identity.name,
+            recipient_ssn: source.taxpayer_identity.ssn.replaceAll("-", ""),
+            ...lines,
+          },
+        },
+      ],
+    };
   }
 }
 

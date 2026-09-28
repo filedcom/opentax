@@ -11,6 +11,7 @@ import {
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
 import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
 import { form8995 } from "../../intermediate/forms/form8995/index.ts";
@@ -19,8 +20,10 @@ import {
   ForeignTaxKind,
   form_1116,
   IncomeCategory,
+  sCorpK3PassiveInterestSchema,
 } from "../../intermediate/forms/form_1116/index.ts";
 import { form7203 } from "../../intermediate/forms/form7203/index.ts";
+import { reviewedStockLossLedgerSchema } from "../../intermediate/forms/form7203/stock-ledger.ts";
 import { form4797 } from "../../intermediate/forms/form4797/index.ts";
 import { rate_28_gain_worksheet } from "../../intermediate/worksheets/rate_28_gain_worksheet/index.ts";
 import { unrecaptured_1250_worksheet } from "../../intermediate/worksheets/unrecaptured_1250_worksheet/index.ts";
@@ -104,10 +107,17 @@ export const itemSchema = z.object({
   // Box 9 — Net §1231 gain/loss (informational; full computation requires Form 4797)
   box9_net_1231: z.number().optional(),
 
-  // Box 10 — Other income (loss) → Schedule 1 line 8z (various codes A–E)
+  // Box 10 codes have different destinations. Reject the former untyped total.
   box10_other_income: z.number().optional().describe(
-    "Box 10 — Other income (loss)",
+    "Unsupported untyped box 10 other income (loss)",
   ),
+  // Code J is a recovery only to the extent a prior-year deduction produced a
+  // tax benefit. The reviewed taxable amount may be less than the K-1 amount.
+  box10_code_j_recovery: z.number().finite().positive().optional(),
+  box10_code_j_taxable_recovery: z.number().finite().positive().optional(),
+  box10_code_j_tax_benefit_workpaper_reference: z.string().trim().min(1)
+    .optional(),
+  box10_code_j_prior_year_tax_benefit_reviewed: z.literal(true).optional(),
 
   // Box 11 — Section 179 deduction → Form 4562
   box11_section_179: z.number().nonnegative().optional().describe(
@@ -131,7 +141,8 @@ export const itemSchema = z.object({
     "Box 16 — Tax-exempt income and nondeductible expenses",
   ),
 
-  // Box 17 — Distributions (code A: cash/property; code B: dividend distributions)
+  // Previously mislabeled distribution field. TY2025 nondividend distributions
+  // are box 16 code D; this field is rejected until that source is modeled.
   box17_distributions: z.number().nonnegative().optional().describe(
     "Box 17 — Distributions",
   ),
@@ -150,6 +161,8 @@ export const itemSchema = z.object({
   box14_foreign_tax_kind: z.nativeEnum(ForeignTaxKind).optional(),
   box14_foreign_tax_credit_method: z.nativeEnum(ForeignTaxCreditMethod)
     .optional(),
+  // One 2025 Schedule K-3 (Form 1120-S) passive-interest source.
+  schedule_k3_passive_interest: sCorpK3PassiveInterestSchema.optional(),
 
   // Box 17 — QBI/W-2 wages/UBIA for §199A deduction (legacy fields retained for compat)
   box17_w2_wages: z.number().nonnegative().optional(),
@@ -168,15 +181,60 @@ export const itemSchema = z.object({
   // ── Form 7203 basis fields (K1S > "Basis (7203)" tab) ────────────────────
   // Shareholder's stock basis at beginning of the tax year
   stock_basis_beginning: z.number().nonnegative().optional(),
+  // Direct reviewed per-corporation source for the bounded current box-1 loss.
+  form7203_stock_loss_ledger: reviewedStockLossLedgerSchema.optional(),
   // Shareholder's debt basis at beginning of the tax year
   debt_basis_beginning: z.number().nonnegative().optional(),
 
-  // ── Pre-2018 carryover fields ─────────────────────────────────────────────
+  // ── Pre-2018 carryover fields (currently rejected pending separate routes) ──
   // Losses suspended in pre-2018 years (K1S > "Pre-2018 Basis" tab)
   pre2018_suspended_losses: z.number().nonnegative().optional(),
   // At-risk suspended losses from pre-2018 years (K1S > "Pre-2018 At-Risk" tab)
   pre2018_at_risk_suspended: z.number().nonnegative().optional(),
 }).superRefine((item, ctx) => {
+  if (item.box10_other_income !== undefined) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["box10_other_income"],
+      message:
+        "Untyped S-corporation K-1 box 10 cannot be routed to Schedule 1 line 8z; supply a supported box 10 code and reviewed source facts",
+    });
+  }
+  if (
+    item.box10_code_j_recovery !== undefined ||
+    item.box10_code_j_taxable_recovery !== undefined ||
+    item.box10_code_j_tax_benefit_workpaper_reference !== undefined ||
+    item.box10_code_j_prior_year_tax_benefit_reviewed !== undefined
+  ) {
+    for (
+      const key of [
+        "corporation_ein",
+        "source_document_reference",
+        "box10_code_j_recovery",
+        "box10_code_j_taxable_recovery",
+        "box10_code_j_tax_benefit_workpaper_reference",
+        "box10_code_j_prior_year_tax_benefit_reviewed",
+      ] as const
+    ) {
+      if (item[key] === undefined) {
+        ctx.addIssue({
+          code: "custom",
+          path: [key],
+          message: `K-1 box 10 code J taxable recovery needs ${key}`,
+        });
+      }
+    }
+    if (
+      (item.box10_code_j_taxable_recovery ?? 0) >
+        (item.box10_code_j_recovery ?? 0)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["box10_code_j_taxable_recovery"],
+        message: "K-1 box 10 code J taxable recovery exceeds K-1 recovery",
+      });
+    }
+  }
   if (item.box13_code_z_orphan_drug_credit !== undefined) {
     for (
       const key of [
@@ -401,23 +459,27 @@ function form4797Outputs(items: K1SCorpItems): NodeOutput[] {
   return [output(form4797, { section_1231_gain: total, k1_1231_rows: rows })];
 }
 
-// Route Box 10 other income/loss → schedule1 line 8z (catch-all "other income" line)
-function schedule1OtherIncomeOutput(items: K1SCorpItems): NodeOutput[] {
+// Only reviewed box 10 code J tax-benefit recoveries belong on line 8z.
+function codeJTaxBenefitRecoveryOutputs(items: K1SCorpItems): NodeOutput[] {
   const total = items.reduce(
-    (sum, item) => sum + (item.box10_other_income ?? 0),
+    (sum, item) => sum + (item.box10_code_j_taxable_recovery ?? 0),
     0,
   );
   if (total === 0) return [];
-  return [output(schedule1, { line8z_other_income: total })];
+  return [
+    output(schedule1, { line8z_k1_s_corp_tax_benefit_recovery: total }),
+    output(agi_aggregator, {
+      line8z_k1_s_corp_tax_benefit_recovery: total,
+    }),
+  ];
 }
 
 // Route Form 7203 basis data when stock or debt basis fields are provided
 function hasBasisData(item: K1SCorpItem): boolean {
   return (
-    (item.stock_basis_beginning ?? 0) > 0 ||
-    (item.debt_basis_beginning ?? 0) > 0 ||
-    (item.pre2018_suspended_losses ?? 0) > 0 ||
-    (item.pre2018_at_risk_suspended ?? 0) > 0
+    item.stock_basis_beginning !== undefined ||
+    item.debt_basis_beginning !== undefined ||
+    item.form7203_stock_loss_ledger !== undefined
   );
 }
 
@@ -425,16 +487,22 @@ function buildForm7203Fields(
   item: K1SCorpItem,
 ): Parameters<typeof output<typeof form7203>>[1] {
   const loss = Math.max(0, -(item.box1_ordinary_business ?? 0));
-  // Pre-2018 suspended losses and at-risk suspended losses both map to
-  // form7203 prior_year_unallowed_loss (Part III column b)
-  const priorLoss = (item.pre2018_suspended_losses ?? 0) +
-    (item.pre2018_at_risk_suspended ?? 0);
-  // hasBasisData guarantees at least one field is set; cast satisfies AtLeastOne
+  const beginningBasis = loss > 0
+    ? item.form7203_stock_loss_ledger?.beginning_stock_basis
+    : item.stock_basis_beginning;
+  if (loss > 0 && beginningBasis === undefined) {
+    throw new Error("Form 7203 ordinary loss needs its reviewed stock ledger");
+  }
+  // Prior-year basis and at-risk carryovers are not interchangeable. Both
+  // require separate source-linked routes before they can affect the return.
   return {
-    stock_basis_beginning: item.stock_basis_beginning,
-    debt_basis_beginning: item.debt_basis_beginning,
-    ordinary_loss: loss > 0 ? loss : undefined,
-    prior_year_unallowed_loss: priorLoss > 0 ? priorLoss : undefined,
+    ...(beginningBasis !== undefined
+      ? { stock_basis_beginning: beginningBasis }
+      : {}),
+    ...(item.debt_basis_beginning !== undefined
+      ? { debt_basis_beginning: item.debt_basis_beginning }
+      : {}),
+    ...(loss > 0 ? { ordinary_loss: loss } : {}),
   } as Parameters<typeof output<typeof form7203>>[1];
 }
 
@@ -446,6 +514,37 @@ function form7203Outputs(items: K1SCorpItems): NodeOutput[] {
 
 // Route foreign taxes → form_1116
 function form1116Outputs(items: K1SCorpItems): NodeOutput[] {
+  for (const item of items) {
+    const k3 = item.schedule_k3_passive_interest;
+    if (!k3) continue;
+    if (
+      item.corporation_ein !== k3.corporation_ein ||
+      item.source_document_reference !== k3.k1_source_document_reference ||
+      item.box4_interest !== k3.part_ii_section_1_line_6_passive_interest ||
+      item.box14_foreign_income !==
+        k3.part_ii_section_1_line_24_passive_total ||
+      item.box14_foreign_income !== item.box4_interest ||
+      item.box14_foreign_tax !==
+        k3.part_iii_section_3_line_1_foreign_tax ||
+      item.box14_foreign_income_category !== IncomeCategory.Passive ||
+      item.box14_foreign_tax_irs_country_code !== k3.irs_country_code ||
+      item.box14_foreign_tax_paid_or_accrued_date !== k3.tax_paid_date ||
+      item.box14_foreign_tax_kind !== ForeignTaxKind.Interest ||
+      item.box14_foreign_tax_credit_method !== ForeignTaxCreditMethod.Paid ||
+      k3.part_iii_section_3_line_2_tax_reduction >
+        k3.part_iii_section_3_line_1_foreign_tax ||
+      Math.round(
+          k3.foreign_tax_currency.amount *
+            k3.foreign_tax_currency.usd_per_foreign_unit * 100,
+        ) !== Math.round(k3.part_iii_section_3_line_1_foreign_tax * 100) ||
+      k3.foreign_tax_currency.source_document_reference !==
+        k3.k3_source_document_reference
+    ) {
+      throw new Error(
+        "S-corporation K-3 passive interest, foreign tax, and reduction must match its K-1 and Form 1116 source",
+      );
+    }
+  }
   return items
     .filter((item) =>
       (item.box14_foreign_tax ?? 0) > 0 &&
@@ -464,6 +563,19 @@ function form1116Outputs(items: K1SCorpItems): NodeOutput[] {
           tax_paid_or_accrued_date: item.box14_foreign_tax_paid_or_accrued_date,
           tax_kind: item.box14_foreign_tax_kind,
           tax_credit_method: item.box14_foreign_tax_credit_method,
+          foreign_income_source_document_reference: item
+            .schedule_k3_passive_interest?.k3_source_document_reference,
+          foreign_tax_currency: item.schedule_k3_passive_interest
+            ?.foreign_tax_currency,
+          schedule_k3_line12_reduction: item.schedule_k3_passive_interest
+            ? {
+              amount: item.schedule_k3_passive_interest
+                .part_iii_section_3_line_2_tax_reduction,
+              source_document_reference: item.schedule_k3_passive_interest
+                .k3_source_document_reference,
+            }
+            : undefined,
+          s_corp_k3_passive_interest: item.schedule_k3_passive_interest,
         }],
       })
     );
@@ -526,6 +638,7 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([
     schedule1,
+    agi_aggregator,
     schedule_b,
     f1040,
     schedule_d,
@@ -549,6 +662,80 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
     const ordinaryDividends = k1_s_corps.reduce((sum, item) => sum + (item.box5a_ordinary_dividends ?? 0), 0);
     const qualifiedDividends = k1_s_corps.reduce((sum, item) => sum + (item.box5b_qualified_dividends ?? 0), 0);
 
+    if (
+      k1_s_corps.some((item) =>
+        (item.pre2018_suspended_losses ?? 0) > 0 ||
+        (item.pre2018_at_risk_suspended ?? 0) > 0
+      )
+    ) {
+      throw new Error(
+        "S corporation prior-year basis and at-risk carryovers need separate reviewed loss routes",
+      );
+    }
+    if (k1_s_corps.some((item) => (item.box17_distributions ?? 0) > 0)) {
+      throw new Error(
+        "S corporation distributions need box 16 code D source and Form 7203/8949 filing review",
+      );
+    }
+    if (
+      k1_s_corps.length !== 1 &&
+      k1_s_corps.some((item) => (item.box1_ordinary_business ?? 0) < 0)
+    ) {
+      throw new Error(
+        "Form 7203 ordinary-loss route currently needs exactly one S-corporation K-1",
+      );
+    }
+    if (
+      k1_s_corps.some((item) =>
+        item.form7203_stock_loss_ledger !== undefined &&
+        (item.box1_ordinary_business ?? 0) >= 0
+      )
+    ) {
+      throw new Error(
+        "Form 7203 stock-loss ledger needs a current K-1 box-1 ordinary loss",
+      );
+    }
+    if (
+      k1_s_corps.some((item) =>
+        (item.box1_ordinary_business ?? 0) < 0 && !hasBasisData(item)
+      )
+    ) {
+      throw new Error(
+        "S corporation K-1 ordinary loss needs shareholder basis facts and Form 7203 filing review",
+      );
+    }
+    if (
+      k1_s_corps.some((item) =>
+        (item.box1_ordinary_business ?? 0) < 0 &&
+        (!Number.isSafeInteger(item.box1_ordinary_business ?? 0) ||
+          !item.corporation_ein || !item.source_document_reference ||
+          !item.form7203_stock_loss_ledger ||
+          item.form7203_stock_loss_ledger.corporation_ein !==
+            item.corporation_ein ||
+          item.stock_basis_beginning !== undefined ||
+          item.debt_basis_beginning !== undefined ||
+          [
+            item.box2_rental_re,
+            item.box3_other_rental,
+            item.box4_interest,
+            item.box5a_ordinary_dividends,
+            item.box6_royalties,
+            item.box7_net_st_cap_gain,
+            item.box8a_net_lt_cap_gain,
+            item.box9_net_1231,
+            item.box10_code_j_taxable_recovery,
+            item.box11_section_179,
+            item.box12_other_deductions,
+            item.box12_code_h_investment_interest,
+            item.box16_tax_exempt_income,
+          ].some((amount) => (amount ?? 0) !== 0))
+      )
+    ) {
+      throw new Error(
+        "S corporation ordinary-loss basis route needs an identified K-1 and reviewed stock-only beginning basis with no other changes",
+      );
+    }
+
     const outputs: NodeOutput[] = [
       ...schedule1Output(k1_s_corps),
       ...scheduleBInterestOutputs(k1_s_corps),
@@ -559,7 +746,7 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
       ...form1116Outputs(k1_s_corps),
       ...form7203Outputs(k1_s_corps),
       ...form4797Outputs(k1_s_corps),
-      ...schedule1OtherIncomeOutput(k1_s_corps),
+      ...codeJTaxBenefitRecoveryOutputs(k1_s_corps),
       ...collectiblesGainOutput(k1_s_corps),
       ...unrecaptured1250Output(k1_s_corps),
       ...section179Output(k1_s_corps),
@@ -648,7 +835,7 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
         })];
       }),
       // box16_tax_exempt_income: intentionally not routed — tax-exempt income does not flow to taxable income
-      // box17_distributions: intentionally not routed — not taxable within basis; no basis-tracking node declared
+      // box17_distributions is rejected above: actual source is box 16 code D.
     ];
 
     for (const item of k1_s_corps) {

@@ -11,7 +11,6 @@ import {
   type Form8949Part,
 } from "../../intermediate/forms/form8949/index.ts";
 import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
-import { form8997 } from "../../intermediate/forms/form8997/index.ts";
 import { form4952 } from "../../intermediate/forms/form4952/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
@@ -40,6 +39,7 @@ export const itemSchema = z.object({
   // When present, this amount should be treated as interest income on Schedule B,
   // and the corresponding capital gain reduced by this amount.
   box1f_accrued_market_discount: z.number().nonnegative().optional(),
+  market_discount_payer_name: z.string().trim().min(1).optional(),
   // Affirm that this bond was held for investment and that its market
   // discount is not already included in Form 4952's manual other income.
   investment_property_for_form4952: z.boolean().optional(),
@@ -49,17 +49,14 @@ export const itemSchema = z.object({
   box1g_wash_sale_loss_disallowed: z.number().nonnegative().optional().describe(
     "Box 1g: wash sale loss disallowed (IRC §1091) — increases cost basis via adjustment code W",
   ),
-  // Box 3: indicates proceeds are from collectibles (28% rate assets per IRC §1(h)(5))
-  // or from a QOF investment (IRC §1400Z-2). Collectibles are taxed at a max 28% rate
-  // rather than the standard 0/15/20% long-term capital gains rates.
-  box3_collectibles: z.boolean().optional().describe(
-    "Box 3: collectibles gain subject to 28% maximum rate (IRC §1(h)(5))",
-  ),
-  // Box 12: indicates this is a QOF (Qualified Opportunity Fund) investment
-  // under IRC §1400Z-2. Gain may be deferred and is reported on Form 8997.
-  box12_qof_investment: z.boolean().optional().describe(
-    "Box 12: proceeds from QOF (Qualified Opportunity Fund) — deferred gain per IRC §1400Z-2",
-  ),
+  // Box 3 is shared by collectibles and QOF dispositions. Its checked state
+  // alone cannot distinguish the two tax treatments.
+  box3_transaction_type: z.enum(["collectibles", "qof"]).optional(),
+  box3_collectibles: z.never().optional(),
+  // Box 12 says whether basis was reported to the IRS, not whether the sale
+  // involves a QOF.
+  box12_basis_reported_to_irs: z.boolean().optional(),
+  box12_qof_investment: z.never().optional(),
   // Noncovered security flag — basis was NOT reported to IRS (broker not required to report).
   // Transactions involving noncovered securities must use Form 8949 Part B (short-term)
   // or Part E (long-term) rather than Parts A/D.
@@ -100,6 +97,22 @@ function resolvedPart(item: B99Item): Form8949Part {
 }
 
 function processItem(item: B99Item): NodeOutput[] {
+  if (item.box3_transaction_type === "qof") {
+    throw new Error(
+      "1099-B QOF disposition needs the Form 8997 annual statement and reconciled Form 8949 reporting",
+    );
+  }
+  const part = resolvedPart(item);
+  if (
+    item.box12_basis_reported_to_irs === true &&
+      (item.noncovered_security === true || !["A", "D"].includes(part)) ||
+    item.box12_basis_reported_to_irs === false &&
+      !["B", "E"].includes(part)
+  ) {
+    throw new Error(
+      "1099-B box 12 basis-reporting status conflicts with its Form 8949 category",
+    );
+  }
   const washSale = resolveWashSale(item);
   const hasMarketDiscount = (item.box1f_accrued_market_discount ?? 0) > 0;
   if (hasMarketDiscount && washSale.codes?.includes("D")) {
@@ -115,13 +128,17 @@ function processItem(item: B99Item): NodeOutput[] {
       item.box1f_accrued_market_discount!,
     )
     : 0;
+  if (taxableMarketDiscount > 0 && !item.market_discount_payer_name) {
+    throw new Error(
+      "1099-B market discount needs the taxable-interest payer name",
+    );
+  }
   const adjustmentCodes = hasMarketDiscount
     ? `${washSale.codes ?? ""}D`
     : washSale.codes;
   const adjustmentAmount = hasMarketDiscount
     ? (washSale.amount ?? 0) - taxableMarketDiscount
     : washSale.amount;
-  const part = resolvedPart(item);
   const gainLoss = item.proceeds - item.cost_basis + (adjustmentAmount ?? 0);
   const isLongTerm = LONG_TERM_PARTS.has(part);
 
@@ -138,7 +155,7 @@ function processItem(item: B99Item): NodeOutput[] {
         adjustment_amount: adjustmentAmount,
         gain_loss: gainLoss,
         is_long_term: isLongTerm,
-        collectibles: item.box3_collectibles,
+        collectibles: item.box3_transaction_type === "collectibles",
       },
     }),
   ];
@@ -152,7 +169,7 @@ function processItem(item: B99Item): NodeOutput[] {
   // Code D removes this ordinary-interest share from Form 8949 capital gain.
   if (taxableMarketDiscount > 0) {
     outputs.push(output(schedule_b, {
-      payer_name: item.description,
+      payer_name: item.market_discount_payer_name,
       taxable_interest_net: taxableMarketDiscount,
     }));
     if (item.investment_property_for_form4952 === true) {
@@ -160,23 +177,6 @@ function processItem(item: B99Item): NodeOutput[] {
         source_1099_interest: taxableMarketDiscount,
       }));
     }
-  }
-
-  // box3_collectibles: wired — collectibles flag is passed to form8949's transactionSchema,
-  // which routes long-term collectibles gains to rate_28_gain_worksheet.
-
-  // box12_qof_investment: deferred gain per IRC §1400Z-2.
-  // A QOF deferral means the taxpayer elected to roll the capital gain into a QOF
-  // within 180 days. The 1099-B flags this with box 12; the actual gain amount is
-  // proceeds - cost_basis (the gain being deferred). Form 8997 tracks the investment
-  // lifecycle; we seed it here with the deferred gain amount.
-  if (item.box12_qof_investment === true && gainLoss > 0) {
-    outputs.push(output(form8997, {
-      investments: [{
-        deferred_gain: gainLoss,
-        investment_date: item.date_sold,
-      }],
-    }));
   }
 
   return outputs;
@@ -189,7 +189,6 @@ class F1099bNode extends TaxNode<typeof inputSchema> {
     form8949,
     f1040,
     schedule_b,
-    form8997,
     form4952,
   ]);
 

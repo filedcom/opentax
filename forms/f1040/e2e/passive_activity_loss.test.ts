@@ -71,6 +71,7 @@ function w2Item(wages: number) {
 function rental(rentIncome: number, repairs: number) {
   return {
     tsj: "T",
+    activity_id: "rental-one",
     property_description: "Rental One",
     property_type: 1,
     activity_type: "A",
@@ -98,7 +99,8 @@ Deno.test("§469: MAGI $200,000 — entire $20,000 rental loss suspended, AGI un
   assertEquals(agi(result), 200_000, "no part of the loss is deductible");
   assertEquals(suspendedPal(result), 20_000, "whole loss carries forward");
   assertEquals(
-    result.pending["schedule1"]?.["line10_total_additional_income"], 0,
+    result.pending["schedule1"]?.["line10_total_additional_income"],
+    0,
     "Schedule 1 shows no net rental loss",
   );
 });
@@ -132,7 +134,11 @@ Deno.test("§469: MAGI $120,000 — allowance phased down to $15,000", () => {
     schedule_e: [rental(10_000, 40_000)],
   });
 
-  assertEquals(agi(result), 105_000, "half the MAGI excess reduces the allowance");
+  assertEquals(
+    agi(result),
+    105_000,
+    "half the MAGI excess reduces the allowance",
+  );
   assertEquals(suspendedPal(result), 15_000, "disallowed half carries forward");
 });
 
@@ -168,7 +174,11 @@ Deno.test("§469: passive income releases part of a rental loss above the allowa
     f1099int: [{ payer_name: "Bank", box1: 200_000 }],
     schedule_e: [
       rental(20_000, 5_000),
-      { ...rental(10_000, 30_000), property_description: "Rental Two" },
+      {
+        ...rental(10_000, 30_000),
+        activity_id: "rental-two",
+        property_description: "Rental Two",
+      },
     ],
   });
 

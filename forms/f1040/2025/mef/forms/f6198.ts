@@ -2,10 +2,13 @@ import { element, elements } from "../../../mef/xml.ts";
 import {
   calculateScheduleCAtRiskNet,
   inputSchema as scheduleCInputSchema,
-} from "../../../nodes/inputs/schedule_c/index.ts";
+  projectForm8829ScheduleCItems,
+  wotcReductionsByBusiness,
+} from "../../../nodes/inputs/schedule_c/model.ts";
 import {
   calculateScheduleFAtRiskNet,
   inputSchema as scheduleFInputSchema,
+  wotcReductionsByFarm,
 } from "../../../nodes/intermediate/forms/schedule_f/index.ts";
 import type { SimplifiedAtRiskFacts } from "../../../nodes/intermediate/forms/form6198/simplified.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
@@ -53,19 +56,35 @@ export const form6198: MefFormDescriptor<
       );
     }
     const scheduleC = context?.pending?.schedule_c;
-    const businesses = scheduleC === undefined || scheduleC === null ||
+    const businessSource = scheduleC === undefined || scheduleC === null ||
         typeof scheduleC !== "object" ||
         !("schedule_cs" in scheduleC)
-      ? []
-      : scheduleCInputSchema.parse(scheduleC).schedule_cs;
+      ? undefined
+      : scheduleCInputSchema.parse(scheduleC);
+    const businesses = businessSource
+      ? projectForm8829ScheduleCItems(businessSource)
+      : [];
+    const businessReductions = businessSource
+      ? wotcReductionsByBusiness({
+        ...businessSource,
+        schedule_cs: businesses,
+      })
+      : new Map<string, number>();
     const scheduleF = context?.pending?.schedule_f;
-    const farms = scheduleF === undefined || scheduleF === null ||
+    const farmSource = scheduleF === undefined || scheduleF === null ||
         typeof scheduleF !== "object" ||
         !("schedule_fs" in scheduleF)
-      ? []
-      : scheduleFInputSchema.parse(scheduleF).schedule_fs;
+      ? undefined
+      : scheduleFInputSchema.parse(scheduleF);
+    const farms = farmSource?.schedule_fs ?? [];
+    const farmReductions = farmSource
+      ? wotcReductionsByFarm(farmSource)
+      : new Map<string, number>();
     const businessForms = businesses.flatMap((item) => {
-      const result = calculateScheduleCAtRiskNet(item);
+      const result = calculateScheduleCAtRiskNet(
+        item,
+        businessReductions.get(item.business_reference ?? "") ?? 0,
+      );
       if (result.preliminaryNet >= 0 || item.line_32_at_risk !== "b") return [];
       if (!item.at_risk_simplified || result.amountAtRisk === undefined) {
         throw new Error("Schedule C line 32b needs Form 6198 facts");
@@ -79,7 +98,10 @@ export const form6198: MefFormDescriptor<
       )];
     });
     const farmForms = farms.flatMap((item) => {
-      const result = calculateScheduleFAtRiskNet(item);
+      const result = calculateScheduleFAtRiskNet(
+        item,
+        farmReductions.get(item.farm_id ?? "") ?? 0,
+      );
       if (result.preliminaryNet >= 0 || item.line36_at_risk !== "b") return [];
       if (!item.at_risk_simplified || result.amountAtRisk === undefined) {
         throw new Error("Schedule F line 36b needs Form 6198 facts");

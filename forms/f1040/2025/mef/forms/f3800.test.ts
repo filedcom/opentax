@@ -8,7 +8,8 @@ import {
   sourceAllocationSchema,
 } from "../../../nodes/intermediate/forms/form8582cr/source.ts";
 import { PassiveCreditReportingRoute } from "../../../nodes/intermediate/forms/form8582cr/credit-route.ts";
-import { form3800 } from "./f3800.ts";
+import { form3800, prepareForm3800DocumentParts } from "./f3800.ts";
+import { buildIRS3800Document } from "./f3800_document.ts";
 
 Deno.test("Form 3800 files a source-backed passive-only current-year credit", () => {
   const source = sourceAllocationSchema.parse({
@@ -337,6 +338,10 @@ Deno.test("Form 3800 merges passive and nonpassive Form 8826 on one current-year
 
 Deno.test("Form 3800 descriptor stays empty without credit and rejects legacy gross credit", () => {
   assertEquals(form3800.build({}), "");
+  assertEquals(
+    prepareForm3800DocumentParts({}, { documentIdsByPendingKey: {} }),
+    undefined,
+  );
   assertEquals(form3800.build({ f3800s: [{}] }), "");
   assertThrows(
     () => form3800.build({ f3800s: [{ research_credit: 500 }] }),
@@ -377,11 +382,33 @@ Deno.test("Form 3800 links Form 8820 orphan-drug credit to line 1h", () => {
     },
   };
   const xml = form3800.build(fields, context);
+  const parts = prepareForm3800DocumentParts(fields, context);
+  if (!parts) throw new Error("Form 3800 source parts were not prepared");
+  assertEquals(buildIRS3800Document(parts), xml);
+  assertEquals(parts.currentRows[0].metadata.referenceDocumentId, "IRS8820_1");
   assertStringIncludes(xml, "<Form8820CYCreditsGrp");
   assertStringIncludes(xml, 'referenceDocumentId="IRS8820_1"');
+  assertEquals(
+    form3800.build(fields, { pending: context.pending }),
+    "<IRS3800><CAMTAndBEATInd>false</CAMTAndBEATInd></IRS3800>",
+  );
+  assertThrows(
+    () => prepareForm3800DocumentParts(fields, { pending: context.pending }),
+    Error,
+    "needs reserved document IDs",
+  );
   assertThrows(
     () =>
       form3800.build({
+        ...fields,
+        f8820_credit: { ...fields.f8820_credit, credit_amount: 19_749 },
+      }, context),
+    Error,
+    "does not reconcile",
+  );
+  assertThrows(
+    () =>
+      prepareForm3800DocumentParts({
         ...fields,
         f8820_credit: { ...fields.f8820_credit, credit_amount: 19_749 },
       }, context),

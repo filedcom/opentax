@@ -16,6 +16,7 @@ import {
   ForeignTaxKind,
   form_1116,
   IncomeCategory,
+  partnershipK3PassiveInterestSchema,
 } from "../../intermediate/forms/form_1116/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { unrecaptured_1250_worksheet } from "../../intermediate/worksheets/unrecaptured_1250_worksheet/index.ts";
@@ -29,6 +30,8 @@ import { form4952 } from "../../intermediate/forms/form4952/index.ts";
 import { f3800 } from "../f3800/index.ts";
 import { form8582cr } from "../../intermediate/forms/form8582cr/index.ts";
 import { disabledAccessLimit } from "../../intermediate/forms/disabled_access_limit/index.ts";
+import { scheduleE } from "../schedule_e/index.ts";
+import { tsjSchema } from "../../types.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Schedule K-1 (Form 1065) — Partner's Share of Income, Deductions, Credits
@@ -98,7 +101,27 @@ export const itemSchema = z.object({
   ),
 
   // Box 7 — Royalties → Schedule E line 4
-  box7_royalties: z.number().optional(),
+  box7_royalties: z.number().nonnegative().optional(),
+  // Owner and royalty-property identity are needed for the separate Schedule E
+  // Part I row. Box 7 is not posted directly to Schedule 1.
+  box7_royalty_reporting: z.object({
+    tsj: tsjSchema,
+    property_description: z.string().trim().min(1),
+    portfolio_nonpassive: z.literal(true),
+    form_1099_payments_made: z.literal(false),
+  }).strict().optional(),
+  box13_code_i_royalty_deduction: z.object({
+    reported_amount: z.number().positive(),
+    allowed_amount: z.number().nonnegative(),
+    statement_reference: z.string().trim().min(1),
+    expense_kind: z.enum([
+      "depreciation",
+      "depletion",
+      "other_royalty_expense",
+    ]),
+    basis_workpaper_reference: z.string().trim().min(1),
+    at_risk_workpaper_reference: z.string().trim().min(1),
+  }).strict().optional(),
 
   // Box 8 — Net STCG/loss → Schedule D line 5
   box8_net_st_cap_gain: z.number().optional(),
@@ -155,6 +178,8 @@ export const itemSchema = z.object({
   box16_foreign_tax_kind: z.nativeEnum(ForeignTaxKind).optional(),
   box16_foreign_tax_credit_method: z.nativeEnum(ForeignTaxCreditMethod)
     .optional(),
+  // A single 2025 Schedule K-3 (Form 1065) passive-interest source.
+  schedule_k3_passive_interest: partnershipK3PassiveInterestSchema.optional(),
 
   // Box 18 — Tax-exempt income and nondeductible expenses (various codes A–C)
   // Code A: tax-exempt interest income; Code B: other tax-exempt income
@@ -178,6 +203,13 @@ export const itemSchema = z.object({
     allowed_deduction_amount: z.number().positive(),
     allowed_deduction_kind: z.enum(["depreciation", "depletion"]),
     nonpassive_investment_property: z.literal(true),
+    issuer_crosswalk: z.object({
+      issuer_supplement_reference: z.string().trim().min(1),
+      issuer_reported_amount: z.number().positive(),
+      same_expense_as_box13_code_i_confirmed: z.literal(true),
+      box13_code_i_statement_reference: z.string().trim().min(1),
+      royalty_property_description: z.string().trim().min(1),
+    }).strict(),
   }).refine(
     (value) => value.allowed_deduction_amount <= value.reported_amount,
     {
@@ -274,6 +306,45 @@ export const itemSchema = z.object({
   // Pre-2018 other losses suspended under at-risk rules
   pre2018_atrisk_other_loss: z.number().nonnegative().optional(),
 }).superRefine((item, ctx) => {
+  if (
+    (item.box7_royalties ?? 0) > 0 || item.box7_royalty_reporting ||
+    item.box13_code_i_royalty_deduction
+  ) {
+    for (
+      const key of [
+        "partnership_ein",
+        "source_document_reference",
+        "box7_royalty_reporting",
+      ] as const
+    ) {
+      if (item[key] === undefined) {
+        ctx.addIssue({
+          code: "custom",
+          path: [key],
+          message: `K-1 box 7 royalty needs ${key}`,
+        });
+      }
+    }
+    if ((item.box7_royalties ?? 0) <= 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["box7_royalties"],
+        message: "K-1 royalty route needs positive box 7 gross income",
+      });
+    }
+    const codeI = item.box13_code_i_royalty_deduction;
+    if (
+      codeI && (codeI.allowed_amount !== codeI.reported_amount ||
+        codeI.allowed_amount > (item.box7_royalties ?? 0))
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["box13_code_i_royalty_deduction"],
+        message:
+          "K-1 code I route needs the fully allowed statement amount within box 7 gross income",
+      });
+    }
+  }
   if (item.box15_code_z_orphan_drug_credit !== undefined) {
     for (
       const key of [
@@ -337,6 +408,29 @@ export const itemSchema = z.object({
         });
       }
     }
+    const codeB = item.box20_code_b_investment_expenses;
+    const codeI = item.box13_code_i_royalty_deduction;
+    const royalty = item.box7_royalty_reporting;
+    if (
+      !codeI || !royalty ||
+      item.investment_property_for_form4952 !== true ||
+      (item.box7_royalties ?? 0) <= 0 ||
+      codeB.reported_amount !== codeI.reported_amount ||
+      codeB.allowed_deduction_amount !== codeI.allowed_amount ||
+      codeB.allowed_deduction_kind !== codeI.expense_kind ||
+      codeB.issuer_crosswalk.issuer_reported_amount !== codeB.reported_amount ||
+      codeB.issuer_crosswalk.box13_code_i_statement_reference !==
+        codeI.statement_reference ||
+      codeB.issuer_crosswalk.royalty_property_description !==
+        royalty.property_description
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["box20_code_b_investment_expenses"],
+        message:
+          "K-1 box 20 code B needs the same issuer-identified and fully allowed box 13 code I royalty expense",
+      });
+    }
   }
   if (item.box13_code_h_investment_interest !== undefined) {
     for (
@@ -361,7 +455,7 @@ type K1PartnershipItem = z.infer<typeof itemSchema>;
 type K1PartnershipItems = K1PartnershipItem[];
 
 // Aggregate Schedule E income → schedule1 line5_schedule_e
-// Includes: Box 1 + 2 + 3 + 4a + 4b + 7
+// Includes: Box 1 + 2 + 3 + 4a + 4b. Box 7 goes through Schedule E Part I.
 function schedule1Output(items: K1PartnershipItems): NodeOutput[] {
   const total = items.reduce(
     (sum, item) =>
@@ -370,8 +464,7 @@ function schedule1Output(items: K1PartnershipItems): NodeOutput[] {
       (item.box2_rental_re ?? 0) +
       (item.box3_other_rental ?? 0) +
       (item.box4a_guaranteed_services ?? 0) +
-      (item.box4b_guaranteed_capital ?? 0) +
-      (item.box7_royalties ?? 0),
+      (item.box4b_guaranteed_capital ?? 0),
     0,
   );
   if (total === 0) return [];
@@ -379,6 +472,45 @@ function schedule1Output(items: K1PartnershipItems): NodeOutput[] {
     output(schedule1, { line5_schedule_e: total }),
     output(agi_aggregator, { line5_schedule_e: total }),
   ];
+}
+
+function royaltyScheduleEOutputs(items: K1PartnershipItems): NodeOutput[] {
+  return items.filter((item) => (item.box7_royalties ?? 0) > 0).map((item) => {
+    const reporting = item.box7_royalty_reporting!;
+    const deduction = item.box13_code_i_royalty_deduction;
+    return output(scheduleE, {
+      schedule_es: [{
+        tsj: reporting.tsj,
+        property_description: reporting.property_description,
+        property_type: 6,
+        activity_type: "D",
+        fair_rental_days: 0,
+        personal_use_days: 0,
+        rent_income: 0,
+        royalties_income: item.box7_royalties!,
+        form_1099_payments_made: reporting.form_1099_payments_made,
+        ...(deduction
+          ? {
+            expense_other_lines: [{
+              description: "From Schedule K-1 (Form 1065)",
+              amount: deduction.allowed_amount,
+            }],
+          }
+          : {}),
+        k1_royalty_source: {
+          partnership_ein: item.partnership_ein!,
+          source_document_reference: item.source_document_reference!,
+          box7_gross_royalties: item.box7_royalties!,
+          ...(deduction
+            ? {
+              box13_code_i_allowed_deduction: deduction.allowed_amount,
+              box13_code_i_statement_reference: deduction.statement_reference,
+            }
+            : {}),
+        },
+      }],
+    });
+  });
 }
 
 // Per-payer schedule_b entries for interest (Box 5)
@@ -481,7 +613,8 @@ function form8960Output(items: K1PartnershipItems): NodeOutput[] {
         box1Passive +
         (item.box2_rental_re ?? 0) +
         (item.box3_other_rental ?? 0) +
-        (item.box7_royalties ?? 0);
+        (item.box7_royalties ?? 0) -
+        (item.box13_code_i_royalty_deduction?.allowed_amount ?? 0);
     },
     0,
   );
@@ -635,6 +768,36 @@ function form6251Outputs(items: K1PartnershipItems): NodeOutput[] {
 
 // Route foreign taxes → form_1116
 function form1116Outputs(items: K1PartnershipItems): NodeOutput[] {
+  for (const item of items) {
+    const k3 = item.schedule_k3_passive_interest;
+    if (!k3) continue;
+    if (
+      item.partnership_ein !== k3.partnership_ein ||
+      item.source_document_reference !== k3.k1_source_document_reference ||
+      item.box5_interest !== k3.part_ii_section_1_line_6_passive_interest ||
+      item.box16_foreign_income !==
+        k3.part_ii_section_1_line_24_passive_total ||
+      item.box16_foreign_income !== item.box5_interest ||
+      item.box16_foreign_tax !== k3.part_iii_section_4_line_1_foreign_tax ||
+      item.box16_foreign_income_category !== IncomeCategory.Passive ||
+      item.box16_foreign_tax_irs_country_code !== k3.irs_country_code ||
+      item.box16_foreign_tax_paid_or_accrued_date !== k3.tax_paid_date ||
+      item.box16_foreign_tax_kind !== ForeignTaxKind.Interest ||
+      item.box16_foreign_tax_credit_method !== ForeignTaxCreditMethod.Paid ||
+      k3.part_iii_section_4_line_2_tax_reduction >
+        k3.part_iii_section_4_line_1_foreign_tax ||
+      Math.round(
+          k3.foreign_tax_currency.amount *
+            k3.foreign_tax_currency.usd_per_foreign_unit * 100,
+        ) !== Math.round(k3.part_iii_section_4_line_1_foreign_tax * 100) ||
+      k3.foreign_tax_currency.source_document_reference !==
+        k3.k3_source_document_reference
+    ) {
+      throw new Error(
+        "Partnership K-3 passive interest, foreign tax, and reduction must match its K-1 and Form 1116 source",
+      );
+    }
+  }
   return items
     .filter((item) =>
       (item.box16_foreign_tax ?? 0) > 0 &&
@@ -653,6 +816,19 @@ function form1116Outputs(items: K1PartnershipItems): NodeOutput[] {
           tax_paid_or_accrued_date: item.box16_foreign_tax_paid_or_accrued_date,
           tax_kind: item.box16_foreign_tax_kind,
           tax_credit_method: item.box16_foreign_tax_credit_method,
+          foreign_income_source_document_reference: item
+            .schedule_k3_passive_interest?.k3_source_document_reference,
+          foreign_tax_currency: item.schedule_k3_passive_interest
+            ?.foreign_tax_currency,
+          schedule_k3_line12_reduction: item.schedule_k3_passive_interest
+            ? {
+              amount: item.schedule_k3_passive_interest
+                .part_iii_section_4_line_2_tax_reduction,
+              source_document_reference: item.schedule_k3_passive_interest
+                .k3_source_document_reference,
+            }
+            : undefined,
+          partnership_k3_passive_interest: item.schedule_k3_passive_interest,
         }],
       })
     );
@@ -681,6 +857,7 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
     f3800,
     form8582cr,
     disabledAccessLimit,
+    scheduleE,
   ]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
@@ -692,6 +869,7 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
 
     const outputs: NodeOutput[] = [
       ...schedule1Output(k1_partnerships),
+      ...royaltyScheduleEOutputs(k1_partnerships),
       ...scheduleBInterestOutputs(k1_partnerships),
       ...scheduleBDividendOutputs(k1_partnerships),
       // Box 6c — dividend equivalents treated as ordinary dividends on Schedule B
@@ -812,6 +990,11 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
       if ((item.box5_interest ?? 0) > 0) {
         outputs.push(output(form4952, {
           source_k1_interest: item.box5_interest!,
+        }));
+      }
+      if ((item.box7_royalties ?? 0) > 0) {
+        outputs.push(output(form4952, {
+          source_k1_royalties: item.box7_royalties!,
         }));
       }
       if ((item.box6a_ordinary_dividends ?? 0) > 0) {

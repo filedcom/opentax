@@ -14,7 +14,7 @@
 | regular_tax | number | (upstream) | Regular tax liability (Form 1040 line 16 minus Form 4972) | Form 6251 Line 10 | https://www.irs.gov/pub/irs-pdf/i6251.pdf |
 | iso_adjustment | number | upstream | ISO exercise adjustment (FMV − exercise price) | Form 6251 Line 2i | https://www.irs.gov/pub/irs-pdf/i6251.pdf |
 | depreciation_adjustment | number | form4562 | Post-1986 depreciation AMT adjustment | Form 6251 Line 2l | https://www.irs.gov/pub/irs-pdf/i6251.pdf |
-| nol_adjustment | number | upstream | AMT NOL deduction (ATNOLD) | Form 6251 Line 2f | https://www.irs.gov/pub/irs-pdf/i6251.pdf |
+| nol_adjustment | number | unsupported direct input | Nonzero AMT NOL deduction rejects until Schedule 1 line 8a, Form 6251 line 2e, and a sourced AMT NOL refigure reconcile | Form 6251 Line 2f | https://www.irs.gov/instructions/i6251 |
 | private_activity_bond_interest | number | f1099int | Tax-exempt interest from private activity bonds | Form 6251 Line 2g | https://www.irs.gov/pub/irs-pdf/i6251.pdf |
 | qsbs_adjustment | number | upstream | 7% of excluded QSBS gain (section 1202) | Form 6251 Line 2h | https://www.irs.gov/pub/irs-pdf/i6251.pdf |
 | other_adjustments | number | upstream | Net of all other Part I adjustments/preferences | Form 6251 Lines 2a–2e, 2j–2t, 3 | https://www.irs.gov/pub/irs-pdf/i6251.pdf |
@@ -26,6 +26,8 @@
 ## Calculation Logic
 ### Step 1 — AMTI (Line 4)
 AMTI = regular_tax_income + iso_adjustment + depreciation_adjustment + nol_adjustment + private_activity_bond_interest + qsbs_adjustment + other_adjustments
+
+This is a historical sketch, not the complete TY2025 line-by-line calculation. Nonzero `nol_adjustment` and mixed `other_adjustments` currently stop before AMTI is filed.
 
 ### Step 2 — Exemption (Line 5)
 Full exemption from table: Single/HOH=$88,100, MFJ/QSS=$137,000, MFS=$68,500
@@ -98,6 +100,7 @@ flowchart LR
 - ISO exercise: for AMT, income = FMV − exercise price (not recognized for regular tax)
 - The ordinary-income Form 2555 AMT stacking worksheet has focused cases but has not been run in the requested full-batch test. Preferential-income Form 2555 returns and the Part III capital-gain-excess refigure remain unsupported.
 - Part III source and MeF paths for other qualified-dividend and capital-gain cases have been built elsewhere, but the full batch and IRS acceptance remain unverified. Do not claim complete AMT support based on this document.
+- The bounded identified Form 8949 AMT-basis gain paths now cover separate unadjusted long-term-only and short-term-only positive-gain rows. The signed line 2k, long-term Part III refigure, short-term ordinary-rate path, MeF element, PDF widget, and remaining exclusions are documented in `docs/mef/ty2025-form6251-8949-basis-gap.md`. Their tests are written but unrun.
 
 ---
 ## Sources

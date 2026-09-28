@@ -11,20 +11,27 @@
 | ----- | ---- | ----------- | ----------- | ------------- | --- |
 | adoption_benefits | number | w2 (Box12T) | Employer-provided adoption benefits | Part III Line 22 | i8839 p7 |
 | children | array | direct | Per-child adoption data | Part I/II | i8839 p3 |
-| children[].qualified_expenses | number | direct | Qualified adoption expenses paid | Part II Line 5 | i8839 p7 |
-| children[].special_needs | boolean | direct | Child is US special needs | Part I Col (d) | i8839 p4 |
-| children[].prior_year_credit | number | direct | Credit claimed in prior years for same child | Part II Line 3 | i8839 p7 |
-| magi | number | direct | Modified adjusted gross income | Part II Line 7 / Line 25 | i8839 p9 |
+| children[].final_decree | record reference | direct | Dated 2025 U.S. final decree and issuing jurisdiction; contents still need review | Part I Col (e) | i8839 2025 |
+| children[].expenses[] | receipt/reimbursement ledger | direct | Dated 2024/2025 payment, category, payee and separate reimbursement reference | Part II Line 5 | i8839 2025 |
+| children[].special_needs_determination | record reference | direct | State/tribal determination; contents still need review | Part I Col (d) | i8839 2025 |
+| children[].prior_filed_form8839 | filed-return reference | direct | Last filed Form 8839 lines 3 and 6 for the same child | Part II Line 3 | i8839 2025 |
 | filing_status | enum | direct | Filing status (MFS restricted) | General Instructions | i8839 p2 |
-| credit_limit_worksheet_line5 | number | direct | Completed Credit Limit Worksheet line 5, after specified other credits | Part II line 17 | i8839 p7 |
+
+`magi` and `credit_limit_worksheet_line5` are no longer source inputs.
+`prepareForm8839Credit` computes child Part II lines 2–6 from the source
+ledger. `settleForm8839Credit` consumes a typed pre-adoption-credit return
+snapshot with Form 1040 lines 11b and 18, all four MAGI additions, the
+Form 1040 line 19 / Schedule 8812 Worksheet B line 14 branch, and the
+specified Schedule 3 priority credit lines. The executor does not yet provide
+that snapshot to Form 8839, so active filing remains closed.
 
 ---
 ## Calculation Logic
 
 ### Step 1 — Per-Child Credit (Part II Lines 2-11b)
 - Line 2: $17,280 (max credit per child)
-- Line 3: prior_year_credit for same child
-- Line 5: qualified_expenses (or $17,280 for special needs, minus prior_year_credit)
+- Line 3: last filed Form 8839 lines 3 + 6 for the same child
+- Line 5: sum of eligible 2024/2025 paid receipts less documented reimbursements (or $17,280 less line 3 for a 2025-final U.S. special-needs adoption)
 - Line 6: min(line2 - line3, line5), clamped to >= 0
 - Phase-out fraction = clamp((magi - 259190) / 40000, 0, 1), rounded to 3 decimal places
 - Line 11a: line6 × (1 - phase_out_fraction)
@@ -39,7 +46,7 @@
 ### Step 3 — Nonrefundable Credit (Lines 15-18)
 - Line 15: prior nonrefundable credit carryforward (not yet modeled)
 - Line 16: line14 + line15
-- Line 17: completed Credit Limit Worksheet line 5
+- Line 17: smaller of line 16 and the nonnegative Form 1040 line 18 capacity after the 2025 worksheet's named prior credits; calculated only by pure settlement until a finalized-return stage is connected
 - Line 18: min(line16, line17); current code includes only current-year line14
 - → Schedule 3 line 6c
 

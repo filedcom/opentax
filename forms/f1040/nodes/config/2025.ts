@@ -13,49 +13,54 @@ import { FilingStatus } from "../types.ts";
 // ─── Tax Brackets ─────────────────────────────────────────────────────────────
 // Rev. Proc. 2024-40, §3.01; IRC §1(a)–(d)
 
-export type Bracket = { over: number; upTo: number; rate: number; base: number };
+export type Bracket = {
+  over: number;
+  upTo: number;
+  rate: number;
+  base: number;
+};
 
 /** IRC §1(a) — Married Filing Jointly / Qualifying Surviving Spouse */
 export const BRACKETS_MFJ_2025: ReadonlyArray<Bracket> = [
-  { over: 0,       upTo: 23_850,   rate: 0.10, base: 0 },
-  { over: 23_850,  upTo: 96_950,   rate: 0.12, base: 2_385 },
-  { over: 96_950,  upTo: 206_700,  rate: 0.22, base: 11_157 },
-  { over: 206_700, upTo: 394_600,  rate: 0.24, base: 35_302 },
-  { over: 394_600, upTo: 501_050,  rate: 0.32, base: 80_398 },
-  { over: 501_050, upTo: 751_600,  rate: 0.35, base: 114_462 },
+  { over: 0, upTo: 23_850, rate: 0.10, base: 0 },
+  { over: 23_850, upTo: 96_950, rate: 0.12, base: 2_385 },
+  { over: 96_950, upTo: 206_700, rate: 0.22, base: 11_157 },
+  { over: 206_700, upTo: 394_600, rate: 0.24, base: 35_302 },
+  { over: 394_600, upTo: 501_050, rate: 0.32, base: 80_398 },
+  { over: 501_050, upTo: 751_600, rate: 0.35, base: 114_462 },
   { over: 751_600, upTo: Infinity, rate: 0.37, base: 202_154.50 },
 ] as const;
 
 /** IRC §1(c) — Single */
 export const BRACKETS_SINGLE_2025: ReadonlyArray<Bracket> = [
-  { over: 0,       upTo: 11_925,   rate: 0.10, base: 0 },
-  { over: 11_925,  upTo: 48_475,   rate: 0.12, base: 1_192.50 },
-  { over: 48_475,  upTo: 103_350,  rate: 0.22, base: 5_578.50 },
-  { over: 103_350, upTo: 197_300,  rate: 0.24, base: 17_651 },
-  { over: 197_300, upTo: 250_525,  rate: 0.32, base: 40_199 },
-  { over: 250_525, upTo: 626_350,  rate: 0.35, base: 57_231 },
+  { over: 0, upTo: 11_925, rate: 0.10, base: 0 },
+  { over: 11_925, upTo: 48_475, rate: 0.12, base: 1_192.50 },
+  { over: 48_475, upTo: 103_350, rate: 0.22, base: 5_578.50 },
+  { over: 103_350, upTo: 197_300, rate: 0.24, base: 17_651 },
+  { over: 197_300, upTo: 250_525, rate: 0.32, base: 40_199 },
+  { over: 250_525, upTo: 626_350, rate: 0.35, base: 57_231 },
   { over: 626_350, upTo: Infinity, rate: 0.37, base: 188_769.75 },
 ] as const;
 
 /** IRC §1(b) — Head of Household */
 export const BRACKETS_HOH_2025: ReadonlyArray<Bracket> = [
-  { over: 0,       upTo: 17_000,   rate: 0.10, base: 0 },
-  { over: 17_000,  upTo: 64_850,   rate: 0.12, base: 1_700 },
-  { over: 64_850,  upTo: 103_350,  rate: 0.22, base: 7_442 },
-  { over: 103_350, upTo: 197_300,  rate: 0.24, base: 15_912 },
-  { over: 197_300, upTo: 250_500,  rate: 0.32, base: 38_460 },
-  { over: 250_500, upTo: 626_350,  rate: 0.35, base: 55_484 },
+  { over: 0, upTo: 17_000, rate: 0.10, base: 0 },
+  { over: 17_000, upTo: 64_850, rate: 0.12, base: 1_700 },
+  { over: 64_850, upTo: 103_350, rate: 0.22, base: 7_442 },
+  { over: 103_350, upTo: 197_300, rate: 0.24, base: 15_912 },
+  { over: 197_300, upTo: 250_500, rate: 0.32, base: 38_460 },
+  { over: 250_500, upTo: 626_350, rate: 0.35, base: 55_484 },
   { over: 626_350, upTo: Infinity, rate: 0.37, base: 187_031.50 },
 ] as const;
 
 /** IRC §1(d) — Married Filing Separately */
 export const BRACKETS_MFS_2025: ReadonlyArray<Bracket> = [
-  { over: 0,       upTo: 11_925,   rate: 0.10, base: 0 },
-  { over: 11_925,  upTo: 48_475,   rate: 0.12, base: 1_192.50 },
-  { over: 48_475,  upTo: 103_350,  rate: 0.22, base: 5_578.50 },
-  { over: 103_350, upTo: 197_300,  rate: 0.24, base: 17_651 },
-  { over: 197_300, upTo: 250_525,  rate: 0.32, base: 40_199 },
-  { over: 250_525, upTo: 375_800,  rate: 0.35, base: 57_231 },
+  { over: 0, upTo: 11_925, rate: 0.10, base: 0 },
+  { over: 11_925, upTo: 48_475, rate: 0.12, base: 1_192.50 },
+  { over: 48_475, upTo: 103_350, rate: 0.22, base: 5_578.50 },
+  { over: 103_350, upTo: 197_300, rate: 0.24, base: 17_651 },
+  { over: 197_300, upTo: 250_525, rate: 0.32, base: 40_199 },
+  { over: 250_525, upTo: 375_800, rate: 0.35, base: 57_231 },
   { over: 375_800, upTo: Infinity, rate: 0.37, base: 101_077.25 },
 ] as const;
 
@@ -66,10 +71,10 @@ export const BRACKETS_MFS_2025: ReadonlyArray<Bracket> = [
 /** Base standard deduction by filing status (TY2025, post-OBBBA). */
 export const STANDARD_DEDUCTION_BASE_2025: Record<FilingStatus, number> = {
   [FilingStatus.Single]: 15_750,
-  [FilingStatus.MFJ]:    31_500,
-  [FilingStatus.MFS]:    15_750,
-  [FilingStatus.HOH]:    23_625,
-  [FilingStatus.QSS]:    31_500,
+  [FilingStatus.MFJ]: 31_500,
+  [FilingStatus.MFS]: 15_750,
+  [FilingStatus.HOH]: 23_625,
+  [FilingStatus.QSS]: 31_500,
 } as const;
 
 /**
@@ -77,13 +82,14 @@ export const STANDARD_DEDUCTION_BASE_2025: Record<FilingStatus, number> = {
  * Single/HOH: $2,000 per factor; MFJ/MFS/QSS: $1,600 per factor.
  * IRC §63(f); IRS Rev. Proc. 2024-40, §3.14 (updated for TY2025)
  */
-export const STANDARD_DEDUCTION_ADDITIONAL_2025: Record<FilingStatus, number> = {
-  [FilingStatus.Single]: 2_000,
-  [FilingStatus.MFJ]:    1_600,
-  [FilingStatus.MFS]:    1_600,
-  [FilingStatus.HOH]:    2_000,
-  [FilingStatus.QSS]:    1_600,
-} as const;
+export const STANDARD_DEDUCTION_ADDITIONAL_2025: Record<FilingStatus, number> =
+  {
+    [FilingStatus.Single]: 2_000,
+    [FilingStatus.MFJ]: 1_600,
+    [FilingStatus.MFS]: 1_600,
+    [FilingStatus.HOH]: 2_000,
+    [FilingStatus.QSS]: 1_600,
+  } as const;
 
 // ─── Senior Deduction (Schedule 1-A, OBBBA §70302) ───────────────────────────
 // P.L. 119-21 (OBBBA), §70302; IRC §62(a)(22) (new)
@@ -109,19 +115,19 @@ export const SENIOR_DEDUCTION_PHASEOUT_RATE_2025 = 0.06;
 /** Top of 0% LTCG/QD bracket (income at or below this → 0% rate). */
 export const QDCGT_ZERO_CEILING_2025: Record<FilingStatus, number> = {
   [FilingStatus.Single]: 48_350,
-  [FilingStatus.MFJ]:    96_700,
-  [FilingStatus.MFS]:    48_350,
-  [FilingStatus.HOH]:    64_750,
-  [FilingStatus.QSS]:    96_700,
+  [FilingStatus.MFJ]: 96_700,
+  [FilingStatus.MFS]: 48_350,
+  [FilingStatus.HOH]: 64_750,
+  [FilingStatus.QSS]: 96_700,
 } as const;
 
 /** Bottom of 20% LTCG/QD bracket (income above this → 20% rate). */
 export const QDCGT_TWENTY_FLOOR_2025: Record<FilingStatus, number> = {
   [FilingStatus.Single]: 533_400,
-  [FilingStatus.MFJ]:    600_050,
-  [FilingStatus.MFS]:    300_025,
-  [FilingStatus.HOH]:    566_700,
-  [FilingStatus.QSS]:    600_050,
+  [FilingStatus.MFJ]: 600_050,
+  [FilingStatus.MFS]: 300_025,
+  [FilingStatus.HOH]: 566_700,
+  [FilingStatus.QSS]: 600_050,
 } as const;
 
 // ─── AMT — Form 6251 ──────────────────────────────────────────────────────────
@@ -130,19 +136,19 @@ export const QDCGT_TWENTY_FLOOR_2025: Record<FilingStatus, number> = {
 /** AMT exemption amounts by filing status (TY2025). */
 export const AMT_EXEMPTION_2025: Record<FilingStatus, number> = {
   [FilingStatus.Single]: 88_100,
-  [FilingStatus.HOH]:    88_100,
-  [FilingStatus.MFJ]:    137_000,
-  [FilingStatus.QSS]:    137_000,
-  [FilingStatus.MFS]:    68_500,
+  [FilingStatus.HOH]: 88_100,
+  [FilingStatus.MFJ]: 137_000,
+  [FilingStatus.QSS]: 137_000,
+  [FilingStatus.MFS]: 68_500,
 } as const;
 
 /** AMT phase-out start thresholds by filing status (TY2025). */
 export const AMT_PHASE_OUT_START_2025: Record<FilingStatus, number> = {
   [FilingStatus.Single]: 626_350,
-  [FilingStatus.HOH]:    626_350,
-  [FilingStatus.MFJ]:    1_252_700,
-  [FilingStatus.QSS]:    1_252_700,
-  [FilingStatus.MFS]:    626_350,
+  [FilingStatus.HOH]: 626_350,
+  [FilingStatus.MFJ]: 1_252_700,
+  [FilingStatus.QSS]: 1_252_700,
+  [FilingStatus.MFS]: 626_350,
 } as const;
 
 /**
@@ -329,19 +335,31 @@ export const CTC_PHASE_OUT_THRESHOLD_OTHER_2025 = 200_000;
 export const ACTC_EARNED_INCOME_FLOOR_2025 = 2_500;
 
 // ─── Saver's Credit (Form 8880) ───────────────────────────────────────────────
-// Rev. Proc. 2024-40, §3.43; IRC §25B
+// 2025 Form 8880 line 9 table; IRC §25B
 
 /** Maximum contribution eligible for Saver's Credit per person. */
 export const SAVERS_CREDIT_CONTRIBUTION_CAP_2025 = 2_000;
 
 /** Saver's Credit AGI thresholds — Single/MFS/QSS: [50% rate, 20% rate, 10% rate]. */
-export const SAVERS_CREDIT_AGI_SINGLE_2025 = { rate50: 23_000, rate20: 25_000, rate10: 38_250 } as const;
+export const SAVERS_CREDIT_AGI_SINGLE_2025 = {
+  rate50: 23_750,
+  rate20: 25_500,
+  rate10: 39_500,
+} as const;
 
 /** Saver's Credit AGI thresholds — HOH. */
-export const SAVERS_CREDIT_AGI_HOH_2025 = { rate50: 34_500, rate20: 37_500, rate10: 57_375 } as const;
+export const SAVERS_CREDIT_AGI_HOH_2025 = {
+  rate50: 35_625,
+  rate20: 38_250,
+  rate10: 59_250,
+} as const;
 
 /** Saver's Credit AGI thresholds — MFJ. */
-export const SAVERS_CREDIT_AGI_MFJ_2025 = { rate50: 46_000, rate20: 50_000, rate10: 76_500 } as const;
+export const SAVERS_CREDIT_AGI_MFJ_2025 = {
+  rate50: 47_500,
+  rate20: 51_000,
+  rate10: 79_000,
+} as const;
 
 // ─── EE/I Bond Interest Exclusion (Form 8815) ────────────────────────────────
 // 2025 Form 8815, lines 9-12; IRC §135(b)(2)(A)
@@ -610,11 +628,13 @@ export const F2106_PERFORMING_ARTIST_AGI_LIMIT = 16_000;
  * `maxAge` is the inclusive upper bound for each bracket; Infinity = age 71+.
  * Source: Rev. Proc. 2024-40, §3.34.
  */
-export const LTC_PREMIUM_LIMITS_2025: ReadonlyArray<{ readonly maxAge: number; readonly limit: number }> = [
-  { maxAge: 40,       limit:   480 },
-  { maxAge: 50,       limit:   900 },
-  { maxAge: 60,       limit: 1_800 },
-  { maxAge: 70,       limit: 4_810 },
+export const LTC_PREMIUM_LIMITS_2025: ReadonlyArray<
+  { readonly maxAge: number; readonly limit: number }
+> = [
+  { maxAge: 40, limit: 480 },
+  { maxAge: 50, limit: 900 },
+  { maxAge: 60, limit: 1_800 },
+  { maxAge: 70, limit: 4_810 },
   { maxAge: Infinity, limit: 6_020 },
 ] as const;
 
@@ -622,117 +642,117 @@ export const LTC_PREMIUM_LIMITS_2025: ReadonlyArray<{ readonly maxAge: number; r
 import type { F1040Config } from "./types.ts";
 
 export const config2025: F1040Config = {
-  bracketsMfj:                  BRACKETS_MFJ_2025,
-  bracketsSingle:               BRACKETS_SINGLE_2025,
-  bracketsHoh:                  BRACKETS_HOH_2025,
-  bracketsMfs:                  BRACKETS_MFS_2025,
-  standardDeductionBase:        STANDARD_DEDUCTION_BASE_2025,
-  standardDeductionAdditional:  STANDARD_DEDUCTION_ADDITIONAL_2025,
-  seniorDeductionMax:           SENIOR_DEDUCTION_MAX_2025,
+  bracketsMfj: BRACKETS_MFJ_2025,
+  bracketsSingle: BRACKETS_SINGLE_2025,
+  bracketsHoh: BRACKETS_HOH_2025,
+  bracketsMfs: BRACKETS_MFS_2025,
+  standardDeductionBase: STANDARD_DEDUCTION_BASE_2025,
+  standardDeductionAdditional: STANDARD_DEDUCTION_ADDITIONAL_2025,
+  seniorDeductionMax: SENIOR_DEDUCTION_MAX_2025,
   seniorDeductionPhaseoutSingle: SENIOR_DEDUCTION_PHASEOUT_SINGLE_2025,
-  seniorDeductionPhaseoutMfj:   SENIOR_DEDUCTION_PHASEOUT_MFJ_2025,
-  seniorDeductionPhaseoutRate:  SENIOR_DEDUCTION_PHASEOUT_RATE_2025,
-  qdcgtZeroCeiling:             QDCGT_ZERO_CEILING_2025,
-  qdcgtTwentyFloor:             QDCGT_TWENTY_FLOOR_2025,
-  amtExemption:                 AMT_EXEMPTION_2025,
-  amtPhaseOutStart:             AMT_PHASE_OUT_START_2025,
+  seniorDeductionPhaseoutMfj: SENIOR_DEDUCTION_PHASEOUT_MFJ_2025,
+  seniorDeductionPhaseoutRate: SENIOR_DEDUCTION_PHASEOUT_RATE_2025,
+  qdcgtZeroCeiling: QDCGT_ZERO_CEILING_2025,
+  qdcgtTwentyFloor: QDCGT_TWENTY_FLOOR_2025,
+  amtExemption: AMT_EXEMPTION_2025,
+  amtPhaseOutStart: AMT_PHASE_OUT_START_2025,
   amtBracket26ThresholdStandard: AMT_BRACKET_26_THRESHOLD_STANDARD_2025,
-  amtBracket26ThresholdMfs:     AMT_BRACKET_26_THRESHOLD_MFS_2025,
+  amtBracket26ThresholdMfs: AMT_BRACKET_26_THRESHOLD_MFS_2025,
   amtBracketAdjustmentStandard: AMT_BRACKET_ADJUSTMENT_STANDARD_2025,
-  amtBracketAdjustmentMfs:      AMT_BRACKET_ADJUSTMENT_MFS_2025,
-  ssWageBase:                   SS_WAGE_BASE_2025,
-  ssTaxPerEmployer:             SS_MAX_TAX_PER_EMPLOYER_2025,
-  additionalMedicareThresholdMfj:   ADDITIONAL_MEDICARE_THRESHOLD_MFJ,
-  additionalMedicareThresholdMfs:   ADDITIONAL_MEDICARE_THRESHOLD_MFS,
+  amtBracketAdjustmentMfs: AMT_BRACKET_ADJUSTMENT_MFS_2025,
+  ssWageBase: SS_WAGE_BASE_2025,
+  ssTaxPerEmployer: SS_MAX_TAX_PER_EMPLOYER_2025,
+  additionalMedicareThresholdMfj: ADDITIONAL_MEDICARE_THRESHOLD_MFJ,
+  additionalMedicareThresholdMfs: ADDITIONAL_MEDICARE_THRESHOLD_MFS,
   additionalMedicareThresholdOther: ADDITIONAL_MEDICARE_THRESHOLD_OTHER,
-  niitThresholdMfj:             NIIT_THRESHOLD_MFJ,
-  niitThresholdMfs:             NIIT_THRESHOLD_MFS,
-  niitThresholdOther:           NIIT_THRESHOLD_OTHER,
-  hsaSelfOnlyLimit:             HSA_SELF_ONLY_LIMIT_2025,
-  hsaFamilyLimit:               HSA_FAMILY_LIMIT_2025,
-  hsaCatchup:                   HSA_CATCHUP_2025,
-  iraContributionLimit:         IRA_CONTRIBUTION_LIMIT_2025,
-  iraContributionLimitAge50:    IRA_CONTRIBUTION_LIMIT_AGE50_2025,
-  iraPhaseoutSingleLower:       IRA_PHASEOUT_SINGLE_LOWER_2025,
-  iraPhaseoutSingleUpper:       IRA_PHASEOUT_SINGLE_UPPER_2025,
-  iraPhaseoutMfjLower:          IRA_PHASEOUT_MFJ_LOWER_2025,
-  iraPhaseoutMfjUpper:          IRA_PHASEOUT_MFJ_UPPER_2025,
+  niitThresholdMfj: NIIT_THRESHOLD_MFJ,
+  niitThresholdMfs: NIIT_THRESHOLD_MFS,
+  niitThresholdOther: NIIT_THRESHOLD_OTHER,
+  hsaSelfOnlyLimit: HSA_SELF_ONLY_LIMIT_2025,
+  hsaFamilyLimit: HSA_FAMILY_LIMIT_2025,
+  hsaCatchup: HSA_CATCHUP_2025,
+  iraContributionLimit: IRA_CONTRIBUTION_LIMIT_2025,
+  iraContributionLimitAge50: IRA_CONTRIBUTION_LIMIT_AGE50_2025,
+  iraPhaseoutSingleLower: IRA_PHASEOUT_SINGLE_LOWER_2025,
+  iraPhaseoutSingleUpper: IRA_PHASEOUT_SINGLE_UPPER_2025,
+  iraPhaseoutMfjLower: IRA_PHASEOUT_MFJ_LOWER_2025,
+  iraPhaseoutMfjUpper: IRA_PHASEOUT_MFJ_UPPER_2025,
   iraPhaseoutNoncoveredMfjLower: IRA_PHASEOUT_NONCOVERED_MFJ_LOWER_2025,
   iraPhaseoutNoncoveredMfjUpper: IRA_PHASEOUT_NONCOVERED_MFJ_UPPER_2025,
-  iraPhaseoutMfsLower:          IRA_PHASEOUT_MFS_LOWER_2025,
-  iraPhaseoutMfsUpper:          IRA_PHASEOUT_MFS_UPPER_2025,
-  qbiThresholdSingle:           QBI_THRESHOLD_SINGLE_2025,
-  qbiThresholdMfj:              QBI_THRESHOLD_MFJ_2025,
-  qbiPhaseInRange:              QBI_PHASE_IN_RANGE_2025,
-  eitcMaxCredit:                EITC_MAX_CREDIT_2025,
-  eitcPhaseInEnd:               EITC_PHASE_IN_END_2025,
-  eitcPhaseoutStart:            EITC_PHASEOUT_START_2025,
-  eitcIncomeLimit:              EITC_INCOME_LIMIT_2025,
-  eitcInvestmentIncomeLimit:    EITC_INVESTMENT_INCOME_LIMIT_2025,
-  ctcPerChild:                  CTC_PER_CHILD_2025,
-  odcPerDependent:              ODC_PER_DEPENDENT_2025,
-  actcMaxPerChild:              ACTC_MAX_PER_CHILD_2025,
-  ctcPhaseOutThresholdMfj:      CTC_PHASE_OUT_THRESHOLD_MFJ_2025,
-  ctcPhaseOutThresholdOther:    CTC_PHASE_OUT_THRESHOLD_OTHER_2025,
-  actcEarnedIncomeFloor:        ACTC_EARNED_INCOME_FLOOR_2025,
-  saversCreditContributionCap:  SAVERS_CREDIT_CONTRIBUTION_CAP_2025,
-  saversCreditAgiSingle:        SAVERS_CREDIT_AGI_SINGLE_2025,
-  saversCreditAgiHoh:           SAVERS_CREDIT_AGI_HOH_2025,
-  saversCreditAgiMfj:           SAVERS_CREDIT_AGI_MFJ_2025,
-  savingsBondPhaseoutStartMfj:  SAVINGS_BOND_PHASEOUT_START_MFJ_2025,
-  savingsBondPhaseoutEndMfj:    SAVINGS_BOND_PHASEOUT_END_MFJ_2025,
+  iraPhaseoutMfsLower: IRA_PHASEOUT_MFS_LOWER_2025,
+  iraPhaseoutMfsUpper: IRA_PHASEOUT_MFS_UPPER_2025,
+  qbiThresholdSingle: QBI_THRESHOLD_SINGLE_2025,
+  qbiThresholdMfj: QBI_THRESHOLD_MFJ_2025,
+  qbiPhaseInRange: QBI_PHASE_IN_RANGE_2025,
+  eitcMaxCredit: EITC_MAX_CREDIT_2025,
+  eitcPhaseInEnd: EITC_PHASE_IN_END_2025,
+  eitcPhaseoutStart: EITC_PHASEOUT_START_2025,
+  eitcIncomeLimit: EITC_INCOME_LIMIT_2025,
+  eitcInvestmentIncomeLimit: EITC_INVESTMENT_INCOME_LIMIT_2025,
+  ctcPerChild: CTC_PER_CHILD_2025,
+  odcPerDependent: ODC_PER_DEPENDENT_2025,
+  actcMaxPerChild: ACTC_MAX_PER_CHILD_2025,
+  ctcPhaseOutThresholdMfj: CTC_PHASE_OUT_THRESHOLD_MFJ_2025,
+  ctcPhaseOutThresholdOther: CTC_PHASE_OUT_THRESHOLD_OTHER_2025,
+  actcEarnedIncomeFloor: ACTC_EARNED_INCOME_FLOOR_2025,
+  saversCreditContributionCap: SAVERS_CREDIT_CONTRIBUTION_CAP_2025,
+  saversCreditAgiSingle: SAVERS_CREDIT_AGI_SINGLE_2025,
+  saversCreditAgiHoh: SAVERS_CREDIT_AGI_HOH_2025,
+  saversCreditAgiMfj: SAVERS_CREDIT_AGI_MFJ_2025,
+  savingsBondPhaseoutStartMfj: SAVINGS_BOND_PHASEOUT_START_MFJ_2025,
+  savingsBondPhaseoutEndMfj: SAVINGS_BOND_PHASEOUT_END_MFJ_2025,
   savingsBondPhaseoutStartSingle: SAVINGS_BOND_PHASEOUT_START_SINGLE_2025,
   savingsBondPhaseoutEndSingle: SAVINGS_BOND_PHASEOUT_END_SINGLE_2025,
   kiddieUnearnedIncomeThreshold: KIDDIE_TAX_UNEARNED_INCOME_THRESHOLD_2025,
   kiddieStandardDeductionFloor: KIDDIE_TAX_STANDARD_DEDUCTION_FLOOR_2025,
-  feieLimit:                    FEIE_LIMIT_2025,
-  feieHousingBase:              FEIE_HOUSING_BASE_2025,
-  section179Limit:              SECTION_179_LIMIT_2025,
-  section179PhaseoutThreshold:  SECTION_179_PHASEOUT_THRESHOLD_2025,
-  luxuryAutoYear1NoBonus:       LUXURY_AUTO_YEAR1_NO_BONUS_2025,
-  luxuryAutoYear1WithBonus:     LUXURY_AUTO_YEAR1_WITH_BONUS_2025,
-  luxuryAutoYear2:              LUXURY_AUTO_YEAR2_2025,
-  luxuryAutoYear3Plus:          LUXURY_AUTO_YEAR3_PLUS_2025,
-  householdFicaThreshold:       HOUSEHOLD_FICA_THRESHOLD_2025,
+  feieLimit: FEIE_LIMIT_2025,
+  feieHousingBase: FEIE_HOUSING_BASE_2025,
+  section179Limit: SECTION_179_LIMIT_2025,
+  section179PhaseoutThreshold: SECTION_179_PHASEOUT_THRESHOLD_2025,
+  luxuryAutoYear1NoBonus: LUXURY_AUTO_YEAR1_NO_BONUS_2025,
+  luxuryAutoYear1WithBonus: LUXURY_AUTO_YEAR1_WITH_BONUS_2025,
+  luxuryAutoYear2: LUXURY_AUTO_YEAR2_2025,
+  luxuryAutoYear3Plus: LUXURY_AUTO_YEAR3_PLUS_2025,
+  householdFicaThreshold: HOUSEHOLD_FICA_THRESHOLD_2025,
   householdFutaQuarterlyThreshold: HOUSEHOLD_FUTA_QUARTERLY_THRESHOLD,
-  saltCap:                      SALT_CAP_2025,
-  saltPhaseoutThreshold:        SALT_PHASEOUT_THRESHOLD_2025,
-  saltPhaseoutThresholdMfs:     SALT_PHASEOUT_THRESHOLD_MFS_2025,
-  saltPhaseoutRate:             SALT_PHASEOUT_RATE_2025,
-  saltFloor:                    SALT_FLOOR_2025,
-  saltFloorMfs:                 SALT_FLOOR_MFS_2025,
-  depCareExpenseCapOne:         DEP_CARE_EXPENSE_CAP_ONE_2025,
-  depCareExpenseCapTwoPlus:     DEP_CARE_EXPENSE_CAP_TWO_PLUS_2025,
-  depCareEmployerExclusion:     DEP_CARE_EMPLOYER_EXCLUSION_2025,
-  depCareEmployerExclusionMfs:  DEP_CARE_EMPLOYER_EXCLUSION_MFS_2025,
+  saltCap: SALT_CAP_2025,
+  saltPhaseoutThreshold: SALT_PHASEOUT_THRESHOLD_2025,
+  saltPhaseoutThresholdMfs: SALT_PHASEOUT_THRESHOLD_MFS_2025,
+  saltPhaseoutRate: SALT_PHASEOUT_RATE_2025,
+  saltFloor: SALT_FLOOR_2025,
+  saltFloorMfs: SALT_FLOOR_MFS_2025,
+  depCareExpenseCapOne: DEP_CARE_EXPENSE_CAP_ONE_2025,
+  depCareExpenseCapTwoPlus: DEP_CARE_EXPENSE_CAP_TWO_PLUS_2025,
+  depCareEmployerExclusion: DEP_CARE_EMPLOYER_EXCLUSION_2025,
+  depCareEmployerExclusionMfs: DEP_CARE_EMPLOYER_EXCLUSION_MFS_2025,
   depCareCreditRateAgiThreshold: DEP_CARE_CREDIT_RATE_AGI_THRESHOLD_2025,
   depCareCreditRateBracketSize: DEP_CARE_CREDIT_RATE_BRACKET_SIZE_2025,
-  fplBase:                      FPL_BASE_2025,
-  fplIncrement:                 FPL_INCREMENT_2025,
-  qcdAnnualLimit:               QCD_ANNUAL_LIMIT_2025,
-  psoExclusionLimit:            PSO_EXCLUSION_LIMIT_2025,
-  eblThresholdSingle:           EBL_THRESHOLD_SINGLE_2025,
-  eblThresholdMfj:              EBL_THRESHOLD_MFJ_2025,
-  smallBizGrossReceipts:        SMALL_BIZ_GROSS_RECEIPTS_2025,
-  retirementLimits:             RETIREMENT_LIMITS_2025,
-  ltcPerDiemDailyLimit:         LTC_PER_DIEM_DAILY_LIMIT_2025,
-  mdaMax:                       MDA_MAX_2025,
-  mdaPhaseOutThreshold:         MDA_PHASE_OUT_THRESHOLD_2025,
-  mdaZeroThreshold:             MDA_ZERO_THRESHOLD_2025,
-  deathBenefitMax:              DEATH_BENEFIT_MAX_2025,
-  qpriCapStandard:              QPRI_CAP_STANDARD_2025,
-  qpriCapMfs:                   QPRI_CAP_MFS_2025,
-  scheduleBDividendThreshold:   SCHEDULE_B_DIVIDEND_THRESHOLD,
-  sec199aSingleThreshold:       SEC199A_SINGLE_THRESHOLD_2025,
-  sec199aMfjThreshold:          SEC199A_MFJ_THRESHOLD_2025,
-  sliPhaseOutStartSingle:       SLI_PHASE_OUT_START_SINGLE_2025,
-  sliPhaseOutEndSingle:         SLI_PHASE_OUT_END_SINGLE_2025,
-  sliPhaseOutStartMfj:          SLI_PHASE_OUT_START_MFJ_2025,
-  sliPhaseOutEndMfj:            SLI_PHASE_OUT_END_MFJ_2025,
+  fplBase: FPL_BASE_2025,
+  fplIncrement: FPL_INCREMENT_2025,
+  qcdAnnualLimit: QCD_ANNUAL_LIMIT_2025,
+  psoExclusionLimit: PSO_EXCLUSION_LIMIT_2025,
+  eblThresholdSingle: EBL_THRESHOLD_SINGLE_2025,
+  eblThresholdMfj: EBL_THRESHOLD_MFJ_2025,
+  smallBizGrossReceipts: SMALL_BIZ_GROSS_RECEIPTS_2025,
+  retirementLimits: RETIREMENT_LIMITS_2025,
+  ltcPerDiemDailyLimit: LTC_PER_DIEM_DAILY_LIMIT_2025,
+  mdaMax: MDA_MAX_2025,
+  mdaPhaseOutThreshold: MDA_PHASE_OUT_THRESHOLD_2025,
+  mdaZeroThreshold: MDA_ZERO_THRESHOLD_2025,
+  deathBenefitMax: DEATH_BENEFIT_MAX_2025,
+  qpriCapStandard: QPRI_CAP_STANDARD_2025,
+  qpriCapMfs: QPRI_CAP_MFS_2025,
+  scheduleBDividendThreshold: SCHEDULE_B_DIVIDEND_THRESHOLD,
+  sec199aSingleThreshold: SEC199A_SINGLE_THRESHOLD_2025,
+  sec199aMfjThreshold: SEC199A_MFJ_THRESHOLD_2025,
+  sliPhaseOutStartSingle: SLI_PHASE_OUT_START_SINGLE_2025,
+  sliPhaseOutEndSingle: SLI_PHASE_OUT_END_SINGLE_2025,
+  sliPhaseOutStartMfj: SLI_PHASE_OUT_START_MFJ_2025,
+  sliPhaseOutEndMfj: SLI_PHASE_OUT_END_MFJ_2025,
   f2106PerformingArtistAgiLimit: F2106_PERFORMING_ARTIST_AGI_LIMIT,
-  ltcPremiumLimits:             LTC_PREMIUM_LIMITS_2025,
-  mccMaxCreditHighRate:         MCC_MAX_CREDIT_HIGH_RATE_2025,
-  sepContributionRate:          SEP_CONTRIBUTION_RATE_2025,
-  sepMaxContribution:           SEP_MAX_CONTRIBUTION_2025,
-  simpleEmployerMatchRate:      SIMPLE_EMPLOYER_MATCH_RATE_2025,
+  ltcPremiumLimits: LTC_PREMIUM_LIMITS_2025,
+  mccMaxCreditHighRate: MCC_MAX_CREDIT_HIGH_RATE_2025,
+  sepContributionRate: SEP_CONTRIBUTION_RATE_2025,
+  sepMaxContribution: SEP_MAX_CONTRIBUTION_2025,
+  simpleEmployerMatchRate: SIMPLE_EMPLOYER_MATCH_RATE_2025,
 };

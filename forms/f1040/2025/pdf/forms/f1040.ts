@@ -1,6 +1,12 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { rgb, StandardFonts } from "pdf-lib";
 import { form8814ParentPrintAmounts } from "./f8814.ts";
+import { schedule1aPdf } from "./schedule1a.ts";
+import { inputSchema as w2gInputSchema } from "../../../nodes/inputs/w2g/index.ts";
+import {
+  inputSchema as f1099rInputSchema,
+  isPensionDirectRollover,
+} from "../../../nodes/inputs/f1099r/index.ts";
 
 // IRS Form 1040 (2025) AcroForm field names.
 // Verified empirically by filling each field with a unique value and inspecting the output.
@@ -189,6 +195,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "text",
     domainKey: "line5b_pension_taxable",
     pdfField: "topmostSubform[0].Page1[0].f1_66[0]",
+  },
+  {
+    kind: "checkbox",
+    domainKey: "line5c_pension_rollover",
+    pdfField: "topmostSubform[0].Page1[0].c1_38[0]",
   },
   // f1_67 skipped (PSO sub-field)
   {
@@ -403,7 +414,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     pdfField: "topmostSubform[0].Page2[0].f2_29[0]",
   },
 
-  // ── Page 2: Refund / Amount Owed (Lines 34–37) ────────────────────────────
+  // ── Page 2: Refund / Amount Owed / Penalty (Lines 34–38) ───────────────────
   {
     kind: "text",
     domainKey: "line34_overpayment",
@@ -419,6 +430,12 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     domainKey: "line37_amount_owed",
     pdfField: "topmostSubform[0].Page2[0].f2_35[0]",
   },
+  {
+    kind: "text",
+    domainKey: "line38_underpayment_penalty",
+    // 2025 canonical field and widget: f2_36, x=410.4–481.65, y=216–228.
+    pdfField: "topmostSubform[0].Page2[0].f2_36[0]",
+  },
 ];
 
 export const irs1040Pdf: PdfFormDescriptor = {
@@ -427,6 +444,47 @@ export const irs1040Pdf: PdfFormDescriptor = {
   // season; this module is the 2025 form and must always fetch the 2025 PDF.
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040--2025.pdf",
   projectFields(fields, allPending) {
+    const rollover = fields.line5c_pension_rollover === true;
+    if (fields.line5c_pension_rollover !== undefined &&
+        typeof fields.line5c_pension_rollover !== "boolean") {
+      throw new Error("Form 1040 PDF line 5c rollover must be a boolean");
+    }
+    if (rollover || allPending.f1099r !== undefined) {
+      const source = f1099rInputSchema.safeParse(allPending.f1099r);
+      if (!source.success) {
+        throw new Error("Form 1040 PDF line 5c needs valid Form 1099-R source facts");
+      }
+      if (rollover !== source.data.f1099rs.some(isPensionDirectRollover)) {
+        throw new Error(
+          "Form 1040 PDF line 5c rollover does not match the payer-reported Form 1099-R code G",
+        );
+      }
+    }
+    if (allPending.w2g !== undefined) {
+      const source = w2gInputSchema.safeParse(allPending.w2g);
+      if (!source.success) {
+        throw new Error("Form 1040 W-2G withholding needs valid payer-issued source facts");
+      }
+      if (source.data.w2gs.some((item) => (item.box4_federal_withheld ?? 0) > 0)) {
+        throw new Error(
+          "Form 1040 W-2G withholding cannot render until its payer-issued W-2G attachment is supported",
+        );
+      }
+    }
+    if (
+      typeof fields.line13b_additional_deductions === "number" &&
+      fields.line13b_additional_deductions > 0
+    ) {
+      const projected = schedule1aPdf.projectFields?.(
+        allPending.schedule1a ?? {},
+        allPending,
+      );
+      if (projected?.line38_total !== fields.line13b_additional_deductions) {
+        throw new Error(
+          "Form 1040 PDF line 13b needs a reconciled Schedule 1-A page",
+        );
+      }
+    }
     const child = form8814ParentPrintAmounts(allPending);
     return {
       ...fields,

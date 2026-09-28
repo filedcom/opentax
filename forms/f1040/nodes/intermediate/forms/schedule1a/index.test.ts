@@ -312,6 +312,18 @@ Deno.test("schedule1a: senior phaseout is calculated per eligible person", () =>
   );
 });
 
+Deno.test("schedule1a: senior phaseout rounds the printed 6 percent amount once", () => {
+  assertEquals(
+    deduction({
+      taxpayer_age_65_or_older: true,
+      taxpayer_has_valid_ssn: true,
+      magi: 75_010,
+      filing_status: FilingStatus.Single,
+    }),
+    5_999,
+  );
+});
+
 Deno.test("schedule1a: senior deduction requires a valid SSN and a joint return when married", () => {
   assertEquals(
     deduction({

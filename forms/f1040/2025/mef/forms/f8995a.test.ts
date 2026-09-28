@@ -25,7 +25,7 @@ const oneBusiness = {
     business_w2_wages: 20_000,
     business_ubia: 200_000,
     one_non_sstb_business_confirmed: true as const,
-    no_aggregation_or_patron_status_confirmed: true as const,
+    no_aggregation_confirmed: true as const,
     no_reit_ptp_or_loss_carryforward_confirmed: true as const,
     qualified_dividends_zero_confirmed: true as const,
     qbi_wages_ubia_sources_confirmed: true as const,
@@ -153,6 +153,15 @@ Deno.test("Form 8995-A: SSTB, gain, REIT, and aggregation paths reject", () => {
       }, context),
     Error,
     "aggregation",
+  );
+  assertThrows(
+    () =>
+      form8995a.build(
+        { ...oneBusiness, patron_of_specified_cooperative: true },
+        context,
+      ),
+    Error,
+    "patron",
   );
 });
 

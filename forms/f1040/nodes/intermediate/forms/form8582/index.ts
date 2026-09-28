@@ -30,15 +30,47 @@ const MFS_MAGI_UPPER = 75_000;
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
+export const priorYear8582SourceSchema = z.object({
+  tax_year: z.literal(2024),
+  activity_id: z.string().trim().min(1).max(64),
+  filed_part_vii_column_c: z.number().int().positive(),
+  source_document_reference: z.string().trim().min(1),
+  filed_part_ix_rows: z.array(
+    z.object({
+      reporting_form: z.enum([
+        "schedule_e",
+        "form4797_part1",
+        "form4797_part2",
+      ]),
+      filed_unallowed_loss: z.number().int().positive(),
+    }).strict(),
+  ).min(2).max(3).optional(),
+  filed_part_viii_row: z.object({
+    reporting_form: z.enum(["form4797_part1", "form4797_part2"]),
+    filed_unallowed_loss: z.number().int().positive(),
+  }).strict().optional(),
+}).strict();
+
+export const firstYearActivitySourceSchema = z.object({
+  activity_id: z.string().trim().min(1).max(64),
+  activity_name: z.string().trim().min(1),
+  activity_acquired_on: z.string().date(),
+  acquisition_document_reference: z.string().trim().min(1),
+  not_grouped_with_prior_activity: z.literal(true),
+}).strict();
+
 export const inputSchema = z.object({
   // Activity rows retained for Part IV/V and loss-allocation worksheets in MeF.
   activities: z.array(z.object({
+    activity_id: z.string().trim().min(1).max(64),
     name: z.string().trim().min(1),
     activity_type: z.enum(["A", "B"]),
     property_type: z.number().int().min(1).max(8),
     reporting_form: z.enum(["schedule_e", "form4835"]).optional(),
     current_net: z.number(),
     prior_unallowed_operating: z.number().nonnegative(),
+    prior_year_8582_source: priorYear8582SourceSchema.optional(),
+    first_year_activity_source: firstYearActivitySourceSchema.optional(),
     prior_active_participation: z.boolean().optional(),
     prior_unallowed_4797_part1: z.number().nonnegative(),
     prior_unallowed_4797_part2: z.number().nonnegative(),
@@ -46,9 +78,13 @@ export const inputSchema = z.object({
   // Positive, activity-linked Form 4797 gains. Keep Parts I and II separate
   // for Part IX same-part offsets and final reporting character.
   current_4797_sale_gains: z.array(z.object({
+    activity_id: z.string().trim().min(1).max(64),
     activity_name: z.string().trim().min(1),
     part: z.enum(["I", "II"]),
     gain: z.number().int().positive(),
+    // A prior operating PAL may coexist only with the narrow retained-activity
+    // sale below. Absence is not proof that the entire interest was retained.
+    entire_activity_interest_disposed: z.boolean().optional(),
   })).optional(),
   // Form 4797 reports this source fact before Form 8582 runs.
   has_current_4797_transaction: z.boolean().optional(),
@@ -313,6 +349,137 @@ function totalPassiveLoss(input: Form8582Input): number {
   return (input.current_loss ?? 0) + (input.prior_unallowed ?? 0);
 }
 
+export function assertPriorYear8582Evidence(input: Form8582Input): void {
+  const sales = input.current_4797_sale_gains ?? [];
+  const activities = input.activities ?? [];
+  const retainedOperatingSale = activities.length === 1 &&
+    (activities[0].activity_type === "B" ||
+      (activities[0].activity_type === "A" &&
+        activities[0].property_type !== 6 &&
+        activities[0].current_net < 0 &&
+        activities[0].prior_active_participation === true &&
+        input.active_participation === true &&
+        input.has_active_rental === true &&
+        input.modified_agi !== undefined &&
+        input.filing_status !== undefined &&
+        (sales[0]?.gain ?? 0) <
+          -activities[0].current_net +
+            activities[0].prior_unallowed_operating)) &&
+    activities[0].reporting_form === "schedule_e" &&
+    activities[0].prior_unallowed_operating > 0 &&
+    activities[0].prior_unallowed_4797_part1 === 0 &&
+    activities[0].prior_unallowed_4797_part2 === 0 &&
+    sales.length === 1 &&
+    sales[0].activity_id === activities[0].activity_id &&
+    sales[0].part === "II" &&
+    sales[0].entire_activity_interest_disposed === false;
+  const entireOverallGainSale = activities.length === 1 &&
+    (activities[0].activity_type === "B" ||
+      (activities[0].activity_type === "A" &&
+        activities[0].property_type !== 6 &&
+        activities[0].prior_active_participation === true &&
+        input.active_participation === true &&
+        input.has_active_rental === true)) &&
+    activities[0].reporting_form === "schedule_e" &&
+    activities[0].current_net < 0 &&
+    activities[0].prior_unallowed_operating > 0 &&
+    activities[0].prior_unallowed_4797_part1 === 0 &&
+    activities[0].prior_unallowed_4797_part2 === 0 &&
+    activities[0].prior_year_8582_source?.activity_id ===
+      activities[0].activity_id &&
+    activities[0].prior_year_8582_source.filed_part_vii_column_c ===
+      activities[0].prior_unallowed_operating &&
+    activities[0].prior_year_8582_source.filed_part_ix_rows === undefined &&
+    activities[0].prior_year_8582_source.filed_part_viii_row === undefined &&
+    sales.length === 1 &&
+    sales[0].activity_id === activities[0].activity_id &&
+    sales[0].activity_name === activities[0].name &&
+    sales[0].part === "II" &&
+    sales[0].entire_activity_interest_disposed === true &&
+    sales[0].gain >
+      -activities[0].current_net + activities[0].prior_unallowed_operating;
+  if (
+    (input.prior_unallowed ?? 0) > 0 &&
+    (input.activities === undefined || input.activities.length === 0)
+  ) {
+    throw new Error(
+      "Form 8582 prior loss needs activity rows and filed 2024 Part VII evidence",
+    );
+  }
+  if (
+    input.has_current_4797_transaction === true &&
+    (input.prior_unallowed ?? 0) > 0 &&
+    !retainedOperatingSale && !entireOverallGainSale
+  ) {
+    throw new Error(
+      "Form 8582 prior loss with current Form 4797 transaction needs disposition review",
+    );
+  }
+  if (
+    (input.activities ?? []).some((activity) => {
+      const prior = activity.prior_unallowed_operating +
+        activity.prior_unallowed_4797_part1 +
+        activity.prior_unallowed_4797_part2;
+      const source = activity.prior_year_8582_source;
+      const prior4797 = activity.prior_unallowed_4797_part1 > 0 ||
+        activity.prior_unallowed_4797_part2 > 0;
+      const expectedRows = [
+        ["schedule_e", activity.prior_unallowed_operating],
+        ["form4797_part1", activity.prior_unallowed_4797_part1],
+        ["form4797_part2", activity.prior_unallowed_4797_part2],
+      ] as const;
+      const filedRows = source?.filed_part_ix_rows ?? [];
+      const filedPartVIII = source?.filed_part_viii_row;
+      const validPartIX = !prior4797 ||
+        (activity.activity_type === "B" &&
+          activity.reporting_form === "schedule_e" &&
+          sales.length === 0 &&
+          input.has_current_4797_transaction !== true &&
+          filedPartVIII === undefined &&
+          filedRows.length ===
+            expectedRows.filter(([, amount]) => amount > 0).length &&
+          new Set(filedRows.map((row) => row.reporting_form)).size ===
+            filedRows.length &&
+          expectedRows.every(([form, amount]) =>
+            amount === 0
+              ? !filedRows.some((row) => row.reporting_form === form)
+              : filedRows.some((row) =>
+                row.reporting_form === form &&
+                row.filed_unallowed_loss === amount
+              )
+          ));
+      const solePartI = activity.prior_unallowed_4797_part1 > 0 &&
+        activity.prior_unallowed_4797_part2 === 0;
+      const solePartII = activity.prior_unallowed_4797_part2 > 0 &&
+        activity.prior_unallowed_4797_part1 === 0;
+      const validPartVIII = prior4797 &&
+        (solePartI || solePartII) &&
+        activity.prior_unallowed_operating === 0 &&
+        activity.current_net >= 0 &&
+        activity.activity_type === "B" &&
+        activity.reporting_form === "schedule_e" &&
+        sales.length === 0 &&
+        input.has_current_4797_transaction !== true &&
+        filedRows.length === 0 &&
+        filedPartVIII?.reporting_form ===
+          (solePartI ? "form4797_part1" : "form4797_part2") &&
+        filedPartVIII?.filed_unallowed_loss === prior;
+      return !(validPartIX || validPartVIII) ||
+        (!prior4797 && (filedRows.length > 0 || filedPartVIII !== undefined)) ||
+        (prior > 0 &&
+          (source?.activity_id !== activity.activity_id ||
+            source.filed_part_vii_column_c !== prior)) ||
+        (prior === 0 && source !== undefined) ||
+        (prior > 0 && !retainedOperatingSale && !entireOverallGainSale &&
+          sales.some((sale) => sale.activity_id === activity.activity_id));
+    })
+  ) {
+    throw new Error(
+      "Form 8582 prior loss needs matching filed 2024 Part VII evidence; prior Form 4797 character and current sale dispositions need separate review",
+    );
+  }
+}
+
 function assertActivityTotals(input: Form8582Input): void {
   if (input.activities === undefined) {
     if ((input.current_4797_sale_gains?.length ?? 0) > 0) {
@@ -325,14 +492,10 @@ function assertActivityTotals(input: Form8582Input): void {
 
   const activities = input.activities;
   // Part IV/V and the later loss-allocation worksheets are per activity.
-  // Without a durable source ID, duplicate display names cannot be safely
-  // matched to their prior losses or current Form 4797 gains.
-  const activityNames = activities.map((activity) =>
-    activity.name.trim().toLowerCase()
-  );
-  if (new Set(activityNames).size !== activityNames.length) {
+  const activityIds = activities.map((activity) => activity.activity_id);
+  if (new Set(activityIds).size !== activityIds.length) {
     throw new Error(
-      "Form 8582 needs distinct activity names to reconcile each loss and gain",
+      "Form 8582 needs distinct durable activity IDs to reconcile each loss and gain",
     );
   }
   const sales = input.current_4797_sale_gains ?? [];
@@ -340,8 +503,10 @@ function assertActivityTotals(input: Form8582Input): void {
     sales.length > 0 &&
     (input.has_current_4797_transaction !== true ||
       sales.some((sale) =>
-        activities.filter((activity) => activity.name === sale.activity_name)
-          .length !== 1
+        activities.filter((activity) =>
+          activity.activity_id === sale.activity_id &&
+          activity.name === sale.activity_name
+        ).length !== 1
       ))
   ) {
     throw new Error(
@@ -412,6 +577,7 @@ export type OtherPassivePrior4797Allocation = {
   readonly allowedTotal: number;
   readonly suspendedTotal: number;
   readonly byActivity: readonly {
+    readonly activityId: string;
     readonly name: string;
     readonly grossOperating: number;
     readonly grossPartI: number;
@@ -435,7 +601,7 @@ export function allocateOtherPassivePrior4797(
       activity.prior_unallowed_4797_part1 > 0 ||
       activity.prior_unallowed_4797_part2 > 0
     ) ||
-    new Set(activities.map((activity) => activity.name)).size !==
+    new Set(activities.map((activity) => activity.activity_id)).size !==
       activities.length ||
     activities.some((activity) =>
       activity.activity_type !== "B" && activity.activity_type !== "A"
@@ -454,17 +620,18 @@ export function allocateOtherPassivePrior4797(
       "Form 8582 prior Form 4797 loss route needs identified activities and sourced current Form 4797 gains",
     );
   }
-  const gainsFor = (name: string, part: "I" | "II") =>
+  const gainsFor = (activityId: string, part: "I" | "II") =>
     (input.current_4797_sale_gains ?? [])
-      .filter((sale) => sale.activity_name === name && sale.part === part)
+      .filter((sale) => sale.activity_id === activityId && sale.part === part)
       .reduce((sum, sale) => sum + sale.gain, 0);
   const limit = passiveLossLimit(passiveActivity(input));
   const allocation = allocatePassiveActivityLosses(
     activities.map((activity) => ({
-      currentNet: activity.current_net + gainsFor(activity.name, "I") +
-        gainsFor(activity.name, "II"),
+      currentNet: activity.current_net + gainsFor(activity.activity_id, "I") +
+        gainsFor(activity.activity_id, "II"),
       currentIncome: Math.max(0, activity.current_net) +
-        gainsFor(activity.name, "I") + gainsFor(activity.name, "II"),
+        gainsFor(activity.activity_id, "I") +
+        gainsFor(activity.activity_id, "II"),
       currentLoss: Math.max(0, -activity.current_net),
       priorUnallowed: activity.prior_unallowed_operating +
         activity.prior_unallowed_4797_part1 +
@@ -479,8 +646,8 @@ export function allocateOtherPassivePrior4797(
       activity.prior_unallowed_operating;
     const grossPartI = activity.prior_unallowed_4797_part1;
     const grossPartII = activity.prior_unallowed_4797_part2;
-    const currentPartIGain = gainsFor(activity.name, "I");
-    const currentPartIIGain = gainsFor(activity.name, "II");
+    const currentPartIGain = gainsFor(activity.activity_id, "I");
+    const currentPartIIGain = gainsFor(activity.activity_id, "II");
     const lines: PartIXLossLine[] = [
       ...(grossOperating > 0
         ? [{
@@ -513,6 +680,7 @@ export function allocateOtherPassivePrior4797(
       ? allocatePartIXLosses(lines, allocation.suspended[index])
       : [];
     return {
+      activityId: activity.activity_id,
       name: activity.name,
       grossOperating,
       grossPartI,
@@ -587,15 +755,19 @@ function specialAllowance(
   rentalNetLoss: number,
 ): number {
   // Must be an active rental real estate activity the taxpayer participated in
-  if (!activity.activeParticipation) return 0;
+  if (!activity.activeParticipation || rentalNetLoss === 0) return 0;
 
   // MFS filers who lived with spouse at any time are ineligible (§469(i)(5)(A))
   // Missing or nonqualifying lived-apart proof remains ineligible.
   if (isMfsIneligible(activity)) return 0;
 
-  // Modified AGI must be provided to apply the phase-out
+  // Missing modified AGI cannot establish whether any allowance is available.
   const magi = activity.modifiedAgi;
-  if (magi === undefined) return 0;
+  if (magi === undefined) {
+    throw new Error(
+      "Form 8582 active rental loss needs modified AGI for the special allowance",
+    );
+  }
 
   const { lower, upper, max } = allowanceThresholds(activity);
 
@@ -656,10 +828,10 @@ function passiveActivity(input: Form8582Input): PassiveActivity {
   const activeNames = new Set(
     (input.activities ?? [])
       .filter((activity) => activity.activity_type === "A")
-      .map((activity) => activity.name),
+      .map((activity) => activity.activity_id),
   );
   const activeSaleIncome = (input.current_4797_sale_gains ?? [])
-    .filter((sale) => activeNames.has(sale.activity_name))
+    .filter((sale) => activeNames.has(sale.activity_id))
     .reduce((sum, sale) => sum + sale.gain, 0);
   return {
     currentIncome: totalPassiveIncome(input),
@@ -682,6 +854,91 @@ function schedule1Output(allowedLoss: number): NodeOutput[] {
   return [output(schedule1, { line5_schedule_e: -allowedLoss })];
 }
 
+function activityCarryforwards(
+  activities: NonNullable<Form8582Input["activities"]>,
+  suspended: readonly number[],
+): Record<string, number> {
+  if (
+    activities.length !== suspended.length ||
+    suspended.some((amount) => !Number.isSafeInteger(amount) || amount < 0)
+  ) {
+    throw new Error("Form 8582 activity carryforwards do not reconcile");
+  }
+  return Object.fromEntries(
+    activities.flatMap((activity, index) =>
+      suspended[index] > 0
+        ? [[`suspended_pal_8582:${activity.activity_id}`, suspended[index]]]
+        : []
+    ),
+  );
+}
+
+/** Preserve Part VIII or IX reporting character in the numeric year-end workpaper. */
+export function characterCarryforwards(
+  allocation: OtherPassivePrior4797Allocation,
+): Record<string, number> {
+  const character = {
+    "Sch E, line 22": "schedule_e",
+    "4835, line 34c": "form4835",
+    "Form 4797, Part I": "form4797_part1",
+    "Form 4797, Part II": "form4797_part2",
+  } as const;
+  const rows = allocation.byActivity.flatMap((activity) =>
+    activity.partIX.filter((line) => line.suspended > 0).map((line) => {
+      const form = character[line.reportingForm as keyof typeof character];
+      if (form === undefined) {
+        throw new Error(
+          "Form 8582 character carryforward has unknown reporting form",
+        );
+      }
+      const part = activity.partIX.length === 1 ? "partviii" : "partix";
+      return [
+        `suspended_pal_8582_${part}:${
+          encodeURIComponent(activity.activityId)
+        }:${form}`,
+        line.suspended,
+      ] as const;
+    })
+  );
+  if (
+    new Set(rows.map(([key]) => key)).size !== rows.length ||
+    rows.reduce((sum, [, amount]) => sum + amount, 0) !==
+      allocation.suspendedTotal
+  ) {
+    throw new Error("Form 8582 character carryforwards do not reconcile");
+  }
+  return Object.fromEntries(rows);
+}
+
+function allocatedSuspensions(
+  input: Form8582Input,
+  allowed: number,
+): readonly number[] {
+  const activities = input.activities ?? [];
+  const sales = input.current_4797_sale_gains ?? [];
+  const gainsFor = (activityId: string) =>
+    sales.filter((sale) => sale.activity_id === activityId).reduce(
+      (sum, sale) => sum + sale.gain,
+      0,
+    );
+  return allocatePassiveActivityLosses(
+    activities.map((activity) => {
+      const gain = gainsFor(activity.activity_id);
+      return {
+        currentNet: activity.current_net + gain,
+        currentIncome: Math.max(0, activity.current_net) + gain,
+        currentLoss: Math.max(0, -activity.current_net),
+        priorUnallowed: activity.prior_unallowed_operating +
+          activity.prior_unallowed_4797_part1 +
+          activity.prior_unallowed_4797_part2,
+        specialEligible: activity.activity_type === "A",
+        priorSpecialEligible: activity.prior_active_participation === true,
+      };
+    }),
+    allowed,
+  ).suspended;
+}
+
 // ─── Node class ───────────────────────────────────────────────────────────────
 
 class Form8582Node extends TaxNode<typeof inputSchema> {
@@ -696,6 +953,7 @@ class Form8582Node extends TaxNode<typeof inputSchema> {
   compute(_ctx: NodeContext, rawInput: Form8582Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
+    assertPriorYear8582Evidence(input);
     assertActivityTotals(input);
 
     const hasPrior4797 =
@@ -746,7 +1004,14 @@ class Form8582Node extends TaxNode<typeof inputSchema> {
           ],
           ...(allocation.suspendedTotal > 0
             ? {
-              carryforwards: { suspended_pal_8582: allocation.suspendedTotal },
+              carryforwards: {
+                suspended_pal_8582: allocation.suspendedTotal,
+                ...activityCarryforwards(
+                  input.activities ?? [],
+                  allocation.byActivity.map((activity) => activity.suspended),
+                ),
+                ...characterCarryforwards(allocation),
+              },
             }
             : {}),
         };
@@ -764,7 +1029,16 @@ class Form8582Node extends TaxNode<typeof inputSchema> {
           })]
           : [],
         ...(allocation.suspendedTotal > 0
-          ? { carryforwards: { suspended_pal_8582: allocation.suspendedTotal } }
+          ? {
+            carryforwards: {
+              suspended_pal_8582: allocation.suspendedTotal,
+              ...activityCarryforwards(
+                input.activities ?? [],
+                allocation.byActivity.map((activity) => activity.suspended),
+              ),
+              ...characterCarryforwards(allocation),
+            },
+          }
           : {}),
       };
     }
@@ -800,7 +1074,17 @@ class Form8582Node extends TaxNode<typeof inputSchema> {
     return {
       outputs: schedule1Output(allowed),
       ...(suspended > 0
-        ? { carryforwards: { suspended_pal_8582: suspended } }
+        ? {
+          carryforwards: {
+            suspended_pal_8582: suspended,
+            ...(input.activities
+              ? activityCarryforwards(
+                input.activities,
+                allocatedSuspensions(input, allowed),
+              )
+              : {}),
+          },
+        }
         : {}),
     };
   }

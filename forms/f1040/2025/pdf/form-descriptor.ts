@@ -79,6 +79,8 @@ export interface PdfFormDescriptor {
    */
   readonly instances?: (
     fields: Record<string, unknown>,
+    filer?: FilerIdentity,
+    allPending?: Record<string, Record<string, unknown>>,
   ) => ReadonlyArray<Record<string, unknown>>;
   /** Zero-based source PDF pages to retain for a particular instance. */
   readonly pageIndices?: (fields: Record<string, unknown>) => readonly number[];
@@ -112,4 +114,6 @@ export interface PdfFormDescriptor {
     fields: Record<string, unknown>,
     allPending?: Record<string, Record<string, unknown>>,
   ) => boolean;
+  /** Emit a required zero-value form when includeWhen is explicitly true. */
+  readonly includeWhenNoMappedData?: boolean;
 }

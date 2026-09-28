@@ -47,10 +47,12 @@ export const transactionSchema = z.object({
   gain_loss: z.number(),
   is_long_term: z.boolean(),
   // Collectibles flag (IRC §1(h)(5)) — gain is taxable at 28% max rate.
-  // Set when the upstream 1099-B has box3_collectibles=true.
+  // Set when the upstream 1099-B box 3 transaction is classified as collectibles.
   collectibles: z.boolean().optional(),
   qsbs_code: z.enum(["Q1", "Q2", "Q3"]).optional(),
   qsbs_amount: z.number().nonnegative().optional(),
+  from_form4797_investment_1245: z.literal(true).optional(),
+  form4797_property_id: z.string().trim().min(1).optional(),
 });
 
 // Executor accumulation pattern: the engine merges repeated NodeOutputs targeting
@@ -80,6 +82,38 @@ export const inputSchema = z.object({
 
 type Form8949Input = z.infer<typeof inputSchema>;
 type Transaction = z.infer<typeof transactionSchema>;
+
+export function assertForm8949TransactionMath(
+  tx: Pick<Transaction, "proceeds" | "cost_basis" | "adjustment_amount" | "gain_loss">,
+): void {
+  const expected = tx.proceeds - tx.cost_basis + (tx.adjustment_amount ?? 0);
+  if (!Number.isFinite(expected) || Math.abs(tx.gain_loss - expected) > 0.000001) {
+    throw new Error(
+      "Form 8949 gain or loss does not reconcile to proceeds, basis, and column (g)",
+    );
+  }
+}
+
+export function assertForm4797ExcessGainRow(
+  tx: z.infer<typeof transactionSchema>,
+): void {
+  if (!tx.from_form4797_investment_1245) return;
+  if (
+    tx.part !== Form8949Part.F || !tx.is_long_term ||
+    tx.description !== "From Form 4797" ||
+    !tx.source_transaction_id || !tx.form4797_property_id ||
+    tx.date_acquired !== "" || tx.date_sold !== "" ||
+    tx.cost_basis !== 0 || tx.proceeds <= 0 ||
+    tx.adjustment_codes !== undefined ||
+    tx.adjustment_amount !== undefined || tx.gain_loss !== tx.proceeds ||
+    tx.collectibles !== undefined || tx.qsbs_code !== undefined ||
+    tx.qsbs_amount !== undefined
+  ) {
+    throw new Error(
+      "Form 8949 excess gain from Form 4797 needs the sourced Part II box F row with blank dates, basis, and adjustments",
+    );
+  }
+}
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
@@ -163,6 +197,20 @@ class Form8949IntermediateNode extends TaxNode<typeof inputSchema> {
       ...normalizeTransactions(input.transaction),
       ...flatFieldsToTransaction(input),
     ];
+    if (
+      transactions.some((tx) =>
+        tx.qsbs_code !== undefined || tx.qsbs_amount !== undefined ||
+        tx.adjustment_codes?.includes("Q")
+      )
+    ) {
+      throw new Error(
+        "Form 8949 section 1202 gain needs a sourced exclusion, Schedule D 28% rate refigure, and Form 6251 line 2h preference before filing",
+      );
+    }
+    for (const transaction of transactions) {
+      assertForm4797ExcessGainRow(transaction);
+      assertForm8949TransactionMath(transaction);
+    }
     return {
       outputs: [
         ...transactions.map(routeTransaction),

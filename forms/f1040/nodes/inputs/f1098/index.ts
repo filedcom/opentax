@@ -6,14 +6,13 @@ import type {
 import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { scheduleA as schedule_a } from "../schedule_a/index.ts";
-import { scheduleC as schedule_c } from "../schedule_c/index.ts";
-import { scheduleE as schedule_e } from "../schedule_e/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // FOR dropdown: destination schedule/form
-// A = Schedule A, C = Schedule C, E = Schedule E. The 8829 selection fails
-// until homeowner interest and Schedule A allocation facts are modeled.
+// A = Schedule A, C = Schedule C, E = Schedule E. Positive C/E box 1 and
+// Form 8829 claims fail until business/property allocation facts are modeled.
 export enum ForRouting {
   A = "A",
   C = "C",
@@ -30,12 +29,23 @@ export const itemSchema = z.object({
   source_document_reference: z.string().trim().min(1).optional(),
   box2_outstanding_principal: z.number().nonnegative().optional(),
   box3_origination_date: z.string().optional(),
+  // Reviewed Pub. 936 amount before any separate Form 8396 credit reduction.
+  box1_current_year_deductible_interest: z.number().nonnegative().optional(),
+  box1_deduction_workpaper_reference: z.string().trim().min(1).optional(),
   box4_refund_overpaid: z.number().nonnegative().optional(),
-  // box4 prior-year flag: true = Scenario B (income on Sch 1 line 8z, do not reduce box1)
+  // Form 1098 box 4 is a recovery of earlier-year interest, not a reduction
+  // of the current-year box 1 deduction. A Pub. 525 tax-benefit workpaper
+  // determines any income included in 2025.
   box4_prior_year_refund: z.boolean().optional(),
+  box4_taxable_recovery_verified_amount: z.number().nonnegative().optional(),
+  box4_recovery_workpaper_reference: z.string().trim().min(1).optional(),
   // box5: MIP — NOT deductible for TY2025. Collected for informational purposes only.
   box5_mip: z.number().nonnegative().optional(),
   box6_points_paid: z.number().nonnegative().optional(),
+  // Box 6 is a source amount, not necessarily the current-year deduction.
+  // The reviewed Pub. 936 workpaper determines the deductible portion.
+  box6_current_year_deductible_points: z.number().nonnegative().optional(),
+  box6_deduction_workpaper_reference: z.string().trim().min(1).optional(),
   // box7–box11: informational only, no tax routing
   box7_property_address_same: z.boolean().optional(),
   box8_property_address: z.string().optional(),
@@ -51,6 +61,138 @@ export const itemSchema = z.object({
   binding_contract_exception: z.boolean().optional(),
   // Refinance flag: box6 points must be amortized, not fully deducted in year paid
   refinance: z.boolean().optional(),
+}).superRefine((item, ctx) => {
+  const reportedInterest = item.box1_mortgage_interest;
+  const deductibleInterest = item.box1_current_year_deductible_interest;
+  const personalRoute = (item.for_routing ?? ForRouting.A) === ForRouting.A;
+  if (
+    reportedInterest > 0 &&
+    (item.for_routing === ForRouting.C || item.for_routing === ForRouting.E)
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["box1_mortgage_interest"],
+      message:
+        "Form 1098 business or rental box 1 needs a business/property-linked current-year interest and allocation workpaper",
+    });
+  }
+  if (item.dedm_override === true && reportedInterest > 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["dedm_override"],
+      message:
+        "Form 1098 DEDM override has no linked deductible-interest source and cannot silently suppress box 1",
+    });
+  }
+  if (reportedInterest > 0 && personalRoute) {
+    if (
+      deductibleInterest === undefined || deductibleInterest > reportedInterest
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["box1_current_year_deductible_interest"],
+        message:
+          "Form 1098 box 1 needs reviewed TY2025 Schedule A deductible interest from zero through reported interest",
+      });
+    }
+    if (!item.box1_deduction_workpaper_reference) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["box1_deduction_workpaper_reference"],
+        message:
+          "Form 1098 box 1 needs a reviewed Pub. 936 deduction workpaper reference",
+      });
+    }
+  } else if ((deductibleInterest ?? 0) > 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["box1_current_year_deductible_interest"],
+      message:
+        "Form 1098 Schedule A box 1 deduction needs positive box 1 interest and personal routing",
+    });
+  }
+  const refund = item.box4_refund_overpaid ?? 0;
+  const taxableRecovery = item.box4_taxable_recovery_verified_amount;
+  if (refund > 0) {
+    if ((item.for_routing ?? ForRouting.A) !== ForRouting.A) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["box4_refund_overpaid"],
+        message:
+          "Form 1098 box 4 business or rental recovery needs its own prior-year tax-benefit route",
+      });
+    }
+    if (item.box4_prior_year_refund !== true) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["box4_prior_year_refund"],
+        message:
+          "Form 1098 box 4 reports an earlier-year interest refund; same-year netting is unsupported",
+      });
+    }
+    if (taxableRecovery === undefined || taxableRecovery > refund) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["box4_taxable_recovery_verified_amount"],
+        message:
+          "Form 1098 box 4 needs a reviewed taxable recovery amount from zero through the refund",
+      });
+    }
+    if (!item.box4_recovery_workpaper_reference) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["box4_recovery_workpaper_reference"],
+        message:
+          "Form 1098 box 4 needs a reviewed Pub. 525 prior-year tax-benefit workpaper reference",
+      });
+    }
+  } else if ((taxableRecovery ?? 0) > 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["box4_taxable_recovery_verified_amount"],
+      message:
+        "Form 1098 box 4 taxable recovery cannot exceed zero reported refund",
+    });
+  }
+  const points = item.box6_points_paid ?? 0;
+  const deductible = item.box6_current_year_deductible_points;
+  if (points === 0) {
+    if ((deductible ?? 0) > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["box6_current_year_deductible_points"],
+        message: "Form 1098 box 6 deduction cannot exceed zero reported points",
+      });
+    }
+    return;
+  }
+  if (
+    (item.for_routing ?? ForRouting.A) !== ForRouting.A ||
+    item.refinance === true || item.dedm_override === true
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["box6_points_paid"],
+      message:
+        "Form 1098 box 6 points need an unambiguous Schedule A purchase route; business, rental, refinance, and DEDM allocations are unsupported",
+    });
+  }
+  if (deductible === undefined || deductible > points) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["box6_current_year_deductible_points"],
+      message:
+        "Form 1098 box 6 needs a current-year deductible amount from zero through the reported points",
+    });
+  }
+  if (!item.box6_deduction_workpaper_reference) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["box6_deduction_workpaper_reference"],
+      message:
+        "Form 1098 box 6 needs a reviewed Pub. 936 deduction workpaper reference",
+    });
+  }
 });
 
 export const inputSchema = z.object({
@@ -60,19 +202,9 @@ export const inputSchema = z.object({
 type F1098Item = z.infer<typeof itemSchema>;
 type F1098Items = F1098Item[];
 
-// Net interest for a single item (Scenario A: same-year refund reduces box1)
-function netInterestForItem(item: F1098Item): number {
-  const box1 = item.box1_mortgage_interest;
-  const box4 = item.box4_refund_overpaid ?? 0;
-  const isPriorYear = item.box4_prior_year_refund === true;
-  if (isPriorYear) return box1; // do NOT reduce box1 for prior-year refunds
-  return box1 - box4;
-}
-
 // Interest routed to Schedule A from a single item
 function scheduleAInterestForItem(item: F1098Item): number {
-  if (item.dedm_override) return 0; // DEDM provides deductible amount; ignore 1098 box1
-  return netInterestForItem(item);
+  return item.box1_current_year_deductible_interest ?? 0;
 }
 
 // Aggregate Schedule A mortgage interest across all for_routing=A items
@@ -86,70 +218,38 @@ function aggregateScheduleAInterest(items: F1098Items): number {
 function aggregateScheduleAPoints(items: F1098Items): number {
   return items
     .filter((item) => (item.for_routing ?? ForRouting.A) === ForRouting.A)
-    .reduce((sum, item) => {
-      if (item.dedm_override) return sum;
-      return sum + (item.box6_points_paid ?? 0);
-    }, 0);
-}
-
-// Aggregate Schedule E mortgage interest
-function aggregateScheduleEInterest(items: F1098Items): number {
-  return items
-    .filter((item) => item.for_routing === ForRouting.E)
-    .reduce((sum, item) => sum + netInterestForItem(item), 0);
-}
-
-// Aggregate Schedule C mortgage interest
-function aggregateScheduleCInterest(items: F1098Items): number {
-  return items
-    .filter((item) => item.for_routing === ForRouting.C)
-    .reduce((sum, item) => sum + netInterestForItem(item), 0);
+    .reduce(
+      (sum, item) => sum + (item.box6_current_year_deductible_points ?? 0),
+      0,
+    );
 }
 
 // Aggregate prior-year refund income (Scenario B → Schedule 1 line 8z)
 function aggregatePriorYearRefundIncome(items: F1098Items): number {
   return items
-    .filter((item) => item.box4_prior_year_refund === true)
-    .reduce((sum, item) => sum + (item.box4_refund_overpaid ?? 0), 0);
+    .reduce(
+      (sum, item) => sum + (item.box4_taxable_recovery_verified_amount ?? 0),
+      0,
+    );
 }
 
 function scheduleAOutput(items: F1098Items): NodeOutput[] {
   const interest = aggregateScheduleAInterest(items);
   const points = aggregateScheduleAPoints(items);
-
-  if (interest > 0 && points > 0) {
-    return [
+  const reportedInterestAndPoints = interest + points;
+  return reportedInterestAndPoints > 0
+    ? [
       output(schedule_a, {
-        line_8a_mortgage_interest_1098: interest,
-        line_8c_points_no_1098: points,
+        line_8a_mortgage_interest_1098: reportedInterestAndPoints,
       }),
-    ];
-  }
-  if (interest > 0) {
-    return [output(schedule_a, { line_8a_mortgage_interest_1098: interest })];
-  }
-  if (points > 0) {
-    return [output(schedule_a, { line_8c_points_no_1098: points })];
-  }
-  return [];
-}
-
-function scheduleEOutput(items: F1098Items): NodeOutput[] {
-  const interest = aggregateScheduleEInterest(items);
-  if (interest <= 0) return [];
-  return [output(schedule_e, { mortgage_interest: interest })];
-}
-
-function scheduleCOutput(items: F1098Items): NodeOutput[] {
-  const interest = aggregateScheduleCInterest(items);
-  if (interest <= 0) return [];
-  return [output(schedule_c, { line16a_interest_mortgage: interest })];
+    ]
+    : [];
 }
 
 function schedule1Output(items: F1098Items): NodeOutput[] {
   const income = aggregatePriorYearRefundIncome(items);
   if (income <= 0) return [];
-  return [output(schedule1, { line8z_other_income: income })];
+  return [output(schedule1, { line8z_f1098_interest_recovery: income })];
 }
 
 class F1098Node extends TaxNode<typeof inputSchema> {
@@ -157,13 +257,12 @@ class F1098Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([
     schedule_a,
-    schedule_c,
-    schedule_e,
     schedule1,
+    agi_aggregator,
   ]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
-    const { f1098s } = input;
+    const { f1098s } = inputSchema.parse(input);
     if (f1098s.some((item) => item.for_routing === ForRouting.F8829)) {
       throw new Error(
         "Form 1098 mortgage interest routed to Form 8829 needs homeowner interest and Schedule A allocation facts",
@@ -172,10 +271,15 @@ class F1098Node extends TaxNode<typeof inputSchema> {
 
     const outputs: NodeOutput[] = [
       ...scheduleAOutput(f1098s),
-      ...scheduleEOutput(f1098s),
-      ...scheduleCOutput(f1098s),
       ...schedule1Output(f1098s),
     ];
+
+    const taxableRecovery = aggregatePriorYearRefundIncome(f1098s);
+    if (taxableRecovery > 0) {
+      outputs.push(output(agi_aggregator, {
+        line8z_f1098_interest_recovery: taxableRecovery,
+      }));
+    }
 
     return { outputs };
   }

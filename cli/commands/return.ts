@@ -1,6 +1,4 @@
 import { join } from "@std/path";
-import { execute } from "../../core/runtime/executor.ts";
-import { buildExecutionPlan } from "../../core/runtime/planner.ts";
 import { catalog } from "../../catalog.ts";
 import { buildEngineInputs, createReturn, loadReturn } from "../store/store.ts";
 
@@ -20,7 +18,11 @@ export type CreateReturnArgs = {
 export async function createReturnCommand(
   args: CreateReturnArgs,
 ): Promise<{ returnId: string }> {
-  const { returnId } = await createReturn(args.year, args.baseDir, args.formType);
+  const { returnId } = await createReturn(
+    args.year,
+    args.baseDir,
+    args.formType,
+  );
   return { returnId };
 }
 
@@ -71,7 +73,9 @@ function extractSummary(f1040: Record<string, unknown>): ReturnSummary {
   return summary;
 }
 
-function collectForms(pending: Readonly<Record<string, Record<string, unknown>>>): string[] {
+function collectForms(
+  pending: Readonly<Record<string, Record<string, unknown>>>,
+): string[] {
   return Object.keys(pending)
     .filter((k) => k !== "start" && Object.keys(pending[k]).length > 0)
     .sort();
@@ -86,7 +90,9 @@ function softValidationWarnings(
 
   // Schedule C present without Schedule SE
   if (pending["schedule_c"] && !pending["schedule_se"]) {
-    warnings.push("Schedule C is present but Schedule SE is missing — self-employment tax may not be computed.");
+    warnings.push(
+      "Schedule C is present but Schedule SE is missing — self-employment tax may not be computed.",
+    );
   }
 
   // EITC claimed but no qualifying children or earned income context
@@ -97,7 +103,9 @@ function softValidationWarnings(
   // Itemized deductions > 50% of AGI
   const itemized = num(f1040["line12e_itemized_deductions"]);
   if (agi > 0 && itemized > agi * 0.5) {
-    warnings.push(`Itemized deductions ($${itemized.toLocaleString()}) exceed 50% of AGI ($${agi.toLocaleString()}) — verify deduction amounts.`);
+    warnings.push(
+      `Itemized deductions ($${itemized.toLocaleString()}) exceed 50% of AGI ($${agi.toLocaleString()}) — verify deduction amounts.`,
+    );
   }
 
   // Charitable contributions > 60% of AGI (would be disallowed)
@@ -106,7 +114,9 @@ function softValidationWarnings(
   const noncashContributions = num(scheduleA["line_12_noncash_contributions"]);
   const totalContributions = cashContributions + noncashContributions;
   if (agi > 0 && totalContributions > agi * 0.6) {
-    warnings.push(`Charitable contributions ($${totalContributions.toLocaleString()}) exceed 60% of AGI — verify contribution limits.`);
+    warnings.push(
+      `Charitable contributions ($${totalContributions.toLocaleString()}) exceed 60% of AGI — verify contribution limits.`,
+    );
   }
 
   // Schedule D present but no Form 8949 transactions
@@ -114,14 +124,19 @@ function softValidationWarnings(
   const scheduleD = pending["schedule_d"] ?? {};
   const hasCapGainDistrib = num(scheduleD["line13_cap_gain_distrib"]) > 0;
   if (pending["schedule_d"] && !pending["form8949"] && !hasCapGainDistrib) {
-    warnings.push("Schedule D is present but no Form 8949 transactions found — capital gains may be incomplete.");
+    warnings.push(
+      "Schedule D is present but no Form 8949 transactions found — capital gains may be incomplete.",
+    );
   }
 
   // Refund > total withholding + estimated payments (unusually large refundable credits)
-  const withholding = num(f1040["line25a_w2_withheld"]) + num(f1040["line25b_withheld_1099"]);
+  const withholding = num(f1040["line25a_w2_withheld"]) +
+    num(f1040["line25b_withheld_1099"]);
   const refund = num(f1040["line35a_refund"]);
   if (refund > 0 && refund > withholding * 2 && withholding > 0) {
-    warnings.push("Refund is more than double total withholding — verify refundable credits.");
+    warnings.push(
+      "Refund is more than double total withholding — verify refundable credits.",
+    );
   }
 
   // HSA distributions without qualified expenses
@@ -129,13 +144,17 @@ function softValidationWarnings(
   const hsaDist = num(form8889["hsa_distributions"]);
   const hsaExpenses = num(form8889["qualified_medical_expenses"]);
   if (hsaDist > 0 && hsaExpenses === 0) {
-    warnings.push("HSA distributions reported but no qualified medical expenses — distributions may be taxable.");
+    warnings.push(
+      "HSA distributions reported but no qualified medical expenses — distributions may be taxable.",
+    );
   }
 
   // Medical deductions claimed but below 7.5% AGI floor
   const medical = num(scheduleA["line_1_medical"]);
   if (medical > 0 && agi > 0 && medical <= agi * 0.075) {
-    warnings.push(`Medical expenses ($${medical.toLocaleString()}) are at or below the 7.5% AGI floor — no deduction will result.`);
+    warnings.push(
+      `Medical expenses ($${medical.toLocaleString()}) are at or below the 7.5% AGI floor — no deduction will result.`,
+    );
   }
 
   return warnings;
@@ -148,12 +167,11 @@ export async function getReturnCommand(
   const { meta, inputs } = await loadReturn(returnPath);
 
   const def = getCatalogEntry(meta.formType ?? "f1040", meta.year);
-  const executionPlan = buildExecutionPlan(def.registry);
   const singletonNodeTypes = new Set(
     def.inputNodes.filter((e) => !e.isArray).map((e) => e.node.nodeType),
   );
   const engineInputs = buildEngineInputs(inputs, singletonNodeTypes);
-  const result = execute(executionPlan, def.registry, engineInputs, { taxYear: meta.year, formType: meta.formType ?? "f1040" });
+  const result = def.executeReturn(engineInputs);
 
   const f1040 = result.pending["f1040"] ?? {};
 

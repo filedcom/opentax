@@ -18,6 +18,20 @@ institutions.
 Both credits are phased out by MAGI. Only one credit may be claimed per student
 per year; both may appear on the same return for different students.
 
+The TY2025 PDF build pass now maps the canonical two-page AcroForm: page 1
+contains return totals, and one copy of page 2 is printed for each claimed
+student. It reuses the native MeF source validation and recalculates student and
+return lines before projecting PDF fields. It also requires final Form 1040
+MAGI, tax-before-credits, and refundable AOC, plus Schedule 3 education and
+Credit Limit Worksheet priority-credit amounts to agree. This bounded PDF route
+supports one or two U.S. institutions per student with two-line printed
+addresses. It rejects foreign addresses, more than two institutions, and a
+positive `prior_year_1098t_received` source because that field does not prove
+the narrower printed question of whether the 2024 Form 1098-T had box 7 checked.
+Multi-institution continuation beyond two, that box 7 distinction, foreign
+address layout, special MAGI addbacks, and final visual PDF checks remain open.
+Focused cases are written but unrun.
+
 **Form 8863 feeds two downstream destinations:**
 
 - Refundable AOC → **Form 1040, Line 29**

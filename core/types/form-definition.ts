@@ -1,6 +1,7 @@
 import type { ZodTypeAny } from "zod";
 import type { TaxNode } from "./tax-node.ts";
 import type { FilerIdentity } from "../../forms/f1040/mef/header.ts";
+import type { ExecuteResult } from "../runtime/executor.ts";
 
 export type InputNodeEntry =
   | {
@@ -22,6 +23,8 @@ export interface FormDefinition {
   readonly mefSchemaVersion: string; // e.g. "2025v3.0"
   readonly inputNodes: readonly InputNodeEntry[];
   readonly registry: Record<string, TaxNode>;
+  /** Single form-owned execution entrypoint for validated source inputs. */
+  readonly executeReturn: (inputs: Record<string, unknown>) => ExecuteResult;
   readonly buildMefXml: (
     pending: Record<string, unknown>,
     filer?: FilerIdentity,

@@ -6,6 +6,7 @@ import { form6251 } from "../form6251/index.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import { FilingStatus } from "../../../types.ts";
 import { qualifiedDividendTax2025 } from "../../worksheets/tax_table_2025.ts";
+import { scheduleCLedger } from "../../../inputs/form1116_schedule_c_source/test-fixture.ts";
 
 const ctx = { taxYear: 2025, formType: "f1040" };
 const zeroPriorPassive = {
@@ -41,6 +42,132 @@ Deno.test("form1116: no foreign tax items produces no output", () => {
       qualified_vehicle_loan_interest_deduction: 500,
     }).outputs,
     [],
+  );
+});
+
+Deno.test("form1116: sourced Schedule K-3 line 12 reduces the credit and current excess, not Part II tax", () => {
+  const result = form1116.compute(ctx, {
+    foreign_tax_items: [{
+      foreign_tax_paid: 500,
+      foreign_gross_income: 10_000,
+      income_category: IncomeCategory.Passive,
+      schedule_k3_line12_reduction: {
+        amount: 100,
+        source_document_reference: "2025 Schedule K-3 Part III, section 4",
+      },
+    }],
+    worldwide_taxable_income: 10_000,
+    us_tax_before_credits: 300,
+    carryover_reviews: [zeroPriorPassive],
+  });
+  assertEquals(
+    fieldsOf(result.outputs, schedule3)?.line1_foreign_tax_credit,
+    300,
+  );
+  const summary = result.outputs.find((row) => row.nodeType === "form_1116")
+    ?.fields.category_summaries as Array<{
+      foreignTaxPaid: number;
+      foreignTaxReduction: number;
+      currentYearExcessTax: number;
+    }>;
+  assertEquals(summary[0].foreignTaxPaid, 500);
+  assertEquals(summary[0].foreignTaxReduction, 100);
+  assertEquals(summary[0].currentYearExcessTax, 100);
+  assertEquals(
+    result.outputs.find((row) => row.nodeType === "form1116_schedule_b")
+      ?.fields.current_year_excess_tax,
+    100,
+  );
+});
+
+Deno.test("form1116: Schedule K-3 line 12 cannot exceed its sourced tax", () => {
+  assertThrows(
+    () =>
+      form1116.compute(ctx, {
+        foreign_tax_items: [{
+          foreign_tax_paid: 50,
+          foreign_gross_income: 10_000,
+          income_category: IncomeCategory.Passive,
+          schedule_k3_line12_reduction: {
+            amount: 60,
+            source_document_reference: "2025 Schedule K-3 Part III, section 4",
+          },
+        }],
+        worldwide_taxable_income: 10_000,
+        us_tax_before_credits: 300,
+      }),
+    Error,
+    "exceeds its sourced foreign tax",
+  );
+});
+
+Deno.test("form1116: line 1b source split must agree with line 1a", () => {
+  assertThrows(
+    () =>
+      form1116.compute(ctx, {
+        foreign_tax_items: [{
+          foreign_tax_paid: 2_000,
+          foreign_gross_income: 139_000,
+          income_category: IncomeCategory.General,
+          alternative_compensation_sourcing: {
+            specific_compensation_description: "Consulting salary",
+            alternative_allocation_basis: "Project locations",
+            alternative_allocation_computation: "Project fee allocation",
+            geographical_comparison: "Project location is more accurate",
+            compensation_item_total_usd: 300_000,
+            alternative_us_source_usd: 160_000,
+            alternative_foreign_source_usd: 140_000,
+            ordinary_us_source_usd: 180_000,
+            ordinary_foreign_source_usd: 120_000,
+            source_document_reference: "2025 project ledger",
+          },
+        }],
+      }),
+    Error,
+    "must equal line 1a",
+  );
+});
+
+Deno.test("form1116: disclosed 2025 foreign tax redetermination fails before credit or carryover", () => {
+  assertThrows(
+    () =>
+      form1116.compute(ctx, {
+        foreign_tax_redeterminations: [scheduleCLedger()],
+      }),
+    Error,
+    "needs native Schedule C",
+  );
+  assertThrows(
+    () =>
+      form1116.compute(ctx, {
+        foreign_tax_redeterminations: [scheduleCLedger(
+          IncomeCategory.General,
+          "additional_accrued_tax",
+        )],
+        foreign_tax_items: [{
+          foreign_tax_paid: 500,
+          foreign_gross_income: 1_000,
+          income_category: IncomeCategory.General,
+        }],
+      }),
+    Error,
+    "needs native Schedule C",
+  );
+});
+
+Deno.test("form1116: an unpaid-accrual event cannot disappear when the current-year credit is zero", () => {
+  assertThrows(
+    () =>
+      form1116.compute(ctx, {
+        foreign_tax_redeterminations: [scheduleCLedger(
+          IncomeCategory.Passive,
+          "accrued_tax_unpaid_after_24_months",
+        )],
+        worldwide_taxable_income: 0,
+        us_tax_before_credits: 0,
+      }),
+    Error,
+    "needs native Schedule C",
   );
 });
 
@@ -473,8 +600,11 @@ Deno.test("form1116: sourced 2024 carryover is used only after 2025 foreign tax"
     worldwide_taxable_income: 50_000,
     prior_year_carryovers: [{
       income_category: IncomeCategory.Passive,
-      vintage_tax_year: 2024 as const,
-      prior_year_schedule_b_line8_vintage_amount: 600,
+      vintages: [{
+        vintage_tax_year: 2024 as const,
+        prior_year_schedule_b_line8_vintage_amount: 600,
+      }],
+      prior_year_schedule_b_line8_total: 600,
       prior_year_schedule_b_line8_other_vintages_total: 0 as const,
       no_intervening_adjustments: true as const,
       source_document_references: [
@@ -526,8 +656,11 @@ Deno.test("form1116: sourced 2023 carryover feeds the credit and Schedule B", ()
     us_tax_before_credits: 2_500,
     prior_year_carryovers: [{
       income_category: IncomeCategory.General,
-      vintage_tax_year: 2023,
-      prior_year_schedule_b_line8_vintage_amount: 600,
+      vintages: [{
+        vintage_tax_year: 2023,
+        prior_year_schedule_b_line8_vintage_amount: 600,
+      }],
+      prior_year_schedule_b_line8_total: 600,
       prior_year_schedule_b_line8_other_vintages_total: 0,
       no_intervening_adjustments: true,
       source_document_references: [
@@ -551,11 +684,58 @@ Deno.test("form1116: sourced 2023 carryover feeds the credit and Schedule B", ()
   const scheduleB = result.outputs.find((row) =>
     row.nodeType === "form1116_schedule_b"
   )?.fields;
-  assertEquals(scheduleB?.prior_year_carryover_source.vintage_tax_year, 2023);
+  assertEquals(
+    scheduleB?.prior_year_carryover_source.vintages[0].vintage_tax_year,
+    2023,
+  );
   assertEquals(scheduleB?.remaining_prior_year_carryover, 300);
 });
 
-Deno.test("form1116: rejects older, mixed, or unreviewed carryover vintages", () => {
+Deno.test("form1116: two sourced vintages use the oldest balance first", () => {
+  const result = form1116.compute(ctx, {
+    foreign_tax_items: [{
+      foreign_tax_paid: 200,
+      foreign_gross_income: 10_000,
+      income_category: IncomeCategory.Passive,
+    }],
+    worldwide_taxable_income: 50_000,
+    us_tax_before_credits: 2_500,
+    prior_year_carryovers: [{
+      income_category: IncomeCategory.Passive,
+      vintages: [
+        {
+          vintage_tax_year: 2023,
+          prior_year_schedule_b_line8_vintage_amount: 100,
+        },
+        {
+          vintage_tax_year: 2024,
+          prior_year_schedule_b_line8_vintage_amount: 500,
+        },
+      ],
+      prior_year_schedule_b_line8_total: 600,
+      prior_year_schedule_b_line8_other_vintages_total: 0,
+      no_intervening_adjustments: true,
+      source_document_references: [
+        "Filed 2024 passive Schedule B line 8, 2023/2024 columns and total",
+      ],
+    }],
+  });
+  const summary = result.outputs.find((row) => row.nodeType === "form_1116")
+    ?.fields.category_summaries as Array<{
+      allowedCredit: number;
+      priorYearCarryover: number;
+      usedPriorYearCarryover: number;
+    }>;
+  assertEquals(summary[0].priorYearCarryover, 600);
+  assertEquals(summary[0].usedPriorYearCarryover, 300);
+  assertEquals(summary[0].allowedCredit, 500);
+  assertEquals(
+    fieldsOf(result.outputs, schedule3)?.line1_foreign_tax_credit,
+    500,
+  );
+});
+
+Deno.test("form1116: rejects unmodeled older, mixed, or unreviewed carryover vintages", () => {
   const base = {
     foreign_tax_items: [{
       foreign_tax_paid: 200,
@@ -567,8 +747,11 @@ Deno.test("form1116: rejects older, mixed, or unreviewed carryover vintages", ()
   };
   const source = {
     income_category: IncomeCategory.Passive,
-    vintage_tax_year: 2023 as const,
-    prior_year_schedule_b_line8_vintage_amount: 600,
+    vintages: [{
+      vintage_tax_year: 2023 as const,
+      prior_year_schedule_b_line8_vintage_amount: 600,
+    }],
+    prior_year_schedule_b_line8_total: 600,
     prior_year_schedule_b_line8_other_vintages_total: 0 as const,
     no_intervening_adjustments: true as const,
     source_document_references: [
@@ -579,7 +762,13 @@ Deno.test("form1116: rejects older, mixed, or unreviewed carryover vintages", ()
     () =>
       form1116.compute(ctx, {
         ...base,
-        prior_year_carryovers: [source, { ...source, vintage_tax_year: 2024 }],
+        prior_year_carryovers: [source, {
+          ...source,
+          vintages: [{
+            vintage_tax_year: 2024,
+            prior_year_schedule_b_line8_vintage_amount: 600,
+          }],
+        }],
       }),
     Error,
     "one matching passive or general income category",
@@ -594,17 +783,90 @@ Deno.test("form1116: rejects older, mixed, or unreviewed carryover vintages", ()
   assertEquals(
     priorYearCarryoverSchema.safeParse({
       ...source,
-      vintage_tax_year: 2022,
+      vintages: [source.vintages[0], source.vintages[0]],
+      prior_year_schedule_b_line8_total: 1_200,
     }).success,
     false,
+  );
+  assertEquals(
+    priorYearCarryoverSchema.safeParse({
+      ...source,
+      prior_year_schedule_b_line8_total: 599,
+    }).success,
+    false,
+  );
+  assertEquals(
+    priorYearCarryoverSchema.safeParse({
+      ...source,
+      vintages: [{
+        vintage_tax_year: 2020,
+        prior_year_schedule_b_line8_vintage_amount: 600,
+      }],
+    }).success,
+    false,
+  );
+});
+
+Deno.test("form1116: reviewed 2021-2024 vintages feed one oldest-first credit", () => {
+  const result = form1116.compute(ctx, {
+    foreign_tax_items: [{
+      foreign_tax_paid: 200,
+      foreign_gross_income: 10_000,
+      income_category: IncomeCategory.Passive,
+    }],
+    worldwide_taxable_income: 50_000,
+    us_tax_before_credits: 2_500,
+    prior_year_carryovers: [{
+      income_category: IncomeCategory.Passive,
+      vintages: [
+        {
+          vintage_tax_year: 2024,
+          prior_year_schedule_b_line8_vintage_amount: 400,
+        },
+        {
+          vintage_tax_year: 2021,
+          prior_year_schedule_b_line8_vintage_amount: 100,
+        },
+        {
+          vintage_tax_year: 2023,
+          prior_year_schedule_b_line8_vintage_amount: 300,
+        },
+        {
+          vintage_tax_year: 2022,
+          prior_year_schedule_b_line8_vintage_amount: 200,
+        },
+      ],
+      prior_year_schedule_b_line8_total: 1_000,
+      prior_year_schedule_b_line8_other_vintages_total: 0,
+      no_intervening_adjustments: true,
+      source_document_references: [
+        "Filed 2024 passive Schedule B line 8, 2021-2024 columns and total",
+      ],
+    }],
+  });
+  const summary = result.outputs.find((row) => row.nodeType === "form_1116")
+    ?.fields.category_summaries as Array<{
+      allowedCredit: number;
+      priorYearCarryover: number;
+      usedPriorYearCarryover: number;
+    }>;
+  assertEquals(summary[0].priorYearCarryover, 1_000);
+  assertEquals(summary[0].usedPriorYearCarryover, 300);
+  assertEquals(summary[0].allowedCredit, 500);
+  assertEquals(
+    fieldsOf(result.outputs, schedule3)?.line1_foreign_tax_credit,
+    500,
   );
 });
 
 Deno.test("form1116: 2024 carryover rejects mixed categories and 2025 excess", () => {
   const prior = {
     income_category: IncomeCategory.Passive,
-    vintage_tax_year: 2024 as const,
-    prior_year_schedule_b_line8_vintage_amount: 600,
+    vintages: [{
+      vintage_tax_year: 2024 as const,
+      prior_year_schedule_b_line8_vintage_amount: 600,
+    }],
+    prior_year_schedule_b_line8_total: 600,
     prior_year_schedule_b_line8_other_vintages_total: 0 as const,
     no_intervening_adjustments: true as const,
     source_document_references: [

@@ -1,8 +1,11 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   calculateForm3800Nonpassive,
+  type Form3800PassiveTaxUseVintage,
   ZERO_FORM3800_PASSIVE_ACTIVITY,
 } from "../../../nodes/inputs/f3800/calculation.ts";
+import { PassiveCreditReportingRoute } from "../../../nodes/intermediate/forms/form8582cr/credit-route.ts";
+import { PassiveCreditSourceOrigin } from "../../../nodes/intermediate/forms/form8582cr/source.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
 import {
   buildForm3800CurrentCreditRowXml,
@@ -11,7 +14,7 @@ import {
 import type { Form3800DocumentParts } from "./f3800_document.ts";
 import { buildIRS3800Document } from "./f3800_document.ts";
 import { joinForm3800DocumentParts } from "./f3800_join.ts";
-import type { Form3800PassiveRowXml } from "./f3800_passive_rows.ts";
+import { buildForm3800PassiveRowXml } from "./f3800_passive_rows.ts";
 
 const tax = {
   filingStatus: FilingStatus.Single as const,
@@ -50,37 +53,53 @@ const nonpassive: Form3800DocumentParts = {
   }],
   currentAmounts: [ordinaryAmount],
   carryoverRows: [],
-  currentDetails: [{ line: "1h", xml: "<Frm8820CYAggrgtAmtGrp/>" }],
-  carryoverDetails: [],
-};
-const passiveAmount = combineForm3800CurrentCreditAmounts([], [{
-  line: "1h",
-  beforePassiveLimit: 400,
-  afterPassiveLimit: 300,
-  appliedCredit: 100,
-}])[0];
-const passiveMetadata = {
-  sourceCount: 2,
-  entity: { ein: "987654321" },
-};
-const passive: Form3800PassiveRowXml = {
-  partIII: [{
+  currentDetails: [{
     line: "1h",
-    metadata: passiveMetadata,
-    entityCredits: [
-      { entity: { ein: "123456789" }, credit: 100 },
-      { entity: { ein: "987654321" }, credit: 300 },
-    ],
-    xml: buildForm3800CurrentCreditRowXml(passiveAmount, passiveMetadata),
+    credit: 300,
+    appliedCredit: 200,
+    passThroughEin: "123456789",
   }],
-  currentAmounts: [passiveAmount],
-  partIV: [],
-  partV: [
-    { line: "1h", xml: "<Frm8820CYAggrgtAmtGrp/>" },
-    { line: "1h", xml: "<Frm8820CYAggrgtAmtGrp/>" },
-  ],
-  partVI: [],
+  carryoverDetails: [],
+  passiveCurrentDetails: [],
+  passiveCarryoverDetails: [],
 };
+const firstPassiveSource: Form3800PassiveTaxUseVintage = {
+  sourceKey: "partnership-123",
+  activityReference: "Clinical activity 123",
+  sourceForm: "Form 8820",
+  sourceDocumentReference: "Clinical K-1 123",
+  sourceOrigin: {
+    kind: PassiveCreditSourceOrigin.Partnership,
+    entity_reference: "Clinical partnership 123",
+    ein: "123456789",
+  },
+  form3800CreditLine: "1h",
+  reportingRoute: PassiveCreditReportingRoute.Form3800Line3,
+  originatingTaxYear: 2025,
+  beforePassiveLimit: 100,
+  afterPassiveLimit: 100,
+  availableAfterPassiveLimit: 100,
+  appliedAgainstTax: 50,
+  unusedAfterTaxLimit: 50,
+};
+const passive = buildForm3800PassiveRowXml([
+  firstPassiveSource,
+  {
+    ...firstPassiveSource,
+    sourceKey: "partnership-987",
+    activityReference: "Clinical activity 987",
+    sourceDocumentReference: "Clinical K-1 987",
+    sourceOrigin: {
+      kind: PassiveCreditSourceOrigin.Partnership,
+      entity_reference: "Clinical partnership 987",
+      ein: "987654321",
+    },
+    beforePassiveLimit: 300,
+    afterPassiveLimit: 200,
+    availableAfterPassiveLimit: 200,
+    unusedAfterTaxLimit: 150,
+  },
+], {});
 
 Deno.test("Form 3800 joins same-line sources and selects the largest combined EIN", () => {
   const parts = joinForm3800DocumentParts(lines, nonpassive, passive);
@@ -89,7 +108,12 @@ Deno.test("Form 3800 joins same-line sources and selects the largest combined EI
   assertEquals(parts.currentRows[0].metadata.entity, { ein: "123456789" });
   assertEquals(parts.currentAmounts[0].totalCredit, 600);
   assertEquals(parts.currentAmounts[0].appliedCredit, 300);
-  assertEquals(parts.currentDetails.length, 3);
+  assertEquals(parts.currentDetails.length, 1);
+  assertEquals(parts.passiveCurrentDetails.length, 2);
+  assertEquals(parts.passiveCurrentDetails.map((row) => row.source.sourceKey), [
+    "partnership-123",
+    "partnership-987",
+  ]);
   const xml = buildIRS3800Document(parts);
   assertStringIncludes(
     xml,
@@ -98,6 +122,14 @@ Deno.test("Form 3800 joins same-line sources and selects the largest combined EI
   assertStringIncludes(
     xml,
     "<TotalGeneralBusCreditsAmt>600</TotalGeneralBusCreditsAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<PassThroughEntityEIN>123456789</PassThroughEntityEIN>",
+  );
+  assertStringIncludes(
+    xml,
+    "<PassThroughEntityEIN>987654321</PassThroughEntityEIN>",
   );
 });
 
@@ -109,7 +141,8 @@ Deno.test("Form 3800 joins a passive-only current-year source", () => {
   const only = joinForm3800DocumentParts(passiveOnlyLines, undefined, passive);
   assertEquals(only.currentRows.length, 1);
   assertEquals(only.currentAmounts[0].passiveAfterLimit, 300);
-  assertEquals(only.currentDetails.length, 2);
+  assertEquals(only.currentDetails.length, 0);
+  assertEquals(only.passiveCurrentDetails.length, 2);
   assertStringIncludes(
     buildIRS3800Document(only),
     "<CurrentYearCreditAllowedAmt>100</CurrentYearCreditAllowedAmt>",

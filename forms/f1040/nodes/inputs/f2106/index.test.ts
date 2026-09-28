@@ -1,415 +1,331 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { f2106, EmployeeType, VehicleMethod } from "./index.ts";
-import { fieldsOf } from "../../../../../core/test-utils/output.ts";
-import { schedule1 } from "../../outputs/schedule1/index.ts";
-
 import type { z } from "zod";
-import { itemSchema } from "./index.ts";
+import { fieldsOf } from "../../../../../core/test-utils/output.ts";
+import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
+import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { schedule_a } from "../schedule_a/index.ts";
+import {
+  calculateForm2106Lines,
+  EmployeeType,
+  f2106,
+  itemSchema,
+  VehicleMethod,
+} from "./index.ts";
 
-type F2106Item = Partial<z.infer<typeof itemSchema>> & { employee_type: EmployeeType };
+type Item = z.infer<typeof itemSchema>;
 
-function minimalItem(overrides: Partial<z.infer<typeof itemSchema>> = {}): F2106Item {
-  return { employee_type: EmployeeType.RESERVIST, ...overrides };
+function feeJob(): Item {
+  return {
+    job: {
+      tax_year: 2025,
+      owner: "taxpayer",
+      employee_name: "Casey Rivera",
+      employee_ssn: "123-45-6789",
+      occupation: "County hearing officer",
+      employer_name: "Sample County",
+      employer_ein: "12-3456789",
+      employment_record_reference: "2025 county appointment and W-2",
+    },
+    qualification: {
+      kind: EmployeeType.FEE_BASIS_OFFICIAL,
+      state_or_local_government_employer: true,
+      compensated_on_fee_basis: true,
+      qualifying_service_reference: "2025 county fee schedule",
+    },
+    vehicle: { method: VehicleMethod.NONE },
+    expenses: {
+      line2_parking_tolls_local_transportation: 0,
+      line3_overnight_travel_excluding_meals: 0,
+      line4_other_business_expenses: 1_200,
+      line5_meals: 0,
+      standard_50_percent_meal_limit_confirmed: true,
+      expense_records_reference: "2025 county expense ledger",
+      job_business_purpose: "Hearing preparation",
+    },
+    reimbursements: {
+      line7_column_a_nonmeals: 0,
+      line7_column_b_meals: 0,
+      employer_reimbursement_record_reference:
+        "2025 county reimbursement ledger",
+      excluded_from_w2_box1_confirmed: true,
+    },
+  };
 }
 
-function compute(items: F2106Item[], agi?: number) {
-  return f2106.compute({ taxYear: 2025, formType: "f1040" }, { f2106s: items as z.infer<typeof itemSchema>[], agi });
+function compute(items: Item[]) {
+  return f2106.compute(
+    { taxYear: 2025, formType: "f1040" },
+    { f2106s: items },
+  );
 }
 
-function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
-  return result.outputs.find((o: { nodeType: string }) => o.nodeType === nodeType);
-}
-
-// =============================================================================
-// 1. Input Schema Validation
-// =============================================================================
-
-Deno.test("f2106.inputSchema: empty array fails (min 1)", () => {
-  const parsed = f2106.inputSchema.safeParse({ f2106s: [] });
-  assertEquals(parsed.success, false);
-});
-
-Deno.test("f2106.inputSchema: valid minimal item with RESERVIST passes", () => {
-  const parsed = f2106.inputSchema.safeParse({ f2106s: [{ employee_type: EmployeeType.RESERVIST }] });
-  assertEquals(parsed.success, true);
-});
-
-Deno.test("f2106.inputSchema: valid PERFORMING_ARTIST employee type passes", () => {
-  const parsed = f2106.inputSchema.safeParse({ f2106s: [{ employee_type: EmployeeType.PERFORMING_ARTIST }] });
-  assertEquals(parsed.success, true);
-});
-
-Deno.test("f2106.inputSchema: valid FEE_BASIS_OFFICIAL employee type passes", () => {
-  const parsed = f2106.inputSchema.safeParse({ f2106s: [{ employee_type: EmployeeType.FEE_BASIS_OFFICIAL }] });
-  assertEquals(parsed.success, true);
-});
-
-Deno.test("f2106.inputSchema: valid DISABLED_IMPAIRMENT employee type passes", () => {
-  const parsed = f2106.inputSchema.safeParse({ f2106s: [{ employee_type: EmployeeType.DISABLED_IMPAIRMENT }] });
-  assertEquals(parsed.success, true);
-});
-
-Deno.test("f2106.inputSchema: invalid employee_type string fails", () => {
-  const parsed = f2106.inputSchema.safeParse({ f2106s: [{ employee_type: "CIVILIAN" }] });
-  assertEquals(parsed.success, false);
-});
-
-Deno.test("f2106.inputSchema: negative business_miles fails", () => {
-  const parsed = f2106.inputSchema.safeParse({
-    f2106s: [{ employee_type: EmployeeType.RESERVIST, business_miles: -10 }],
-  });
-  assertEquals(parsed.success, false);
-});
-
-Deno.test("f2106.inputSchema: negative travel_expenses fails", () => {
-  const parsed = f2106.inputSchema.safeParse({
-    f2106s: [{ employee_type: EmployeeType.RESERVIST, travel_expenses: -100 }],
-  });
-  assertEquals(parsed.success, false);
-});
-
-Deno.test("f2106.inputSchema: negative meals_expenses fails", () => {
-  const parsed = f2106.inputSchema.safeParse({
-    f2106s: [{ employee_type: EmployeeType.RESERVIST, meals_expenses: -50 }],
-  });
-  assertEquals(parsed.success, false);
-});
-
-Deno.test("f2106.inputSchema: negative employer_reimbursements fails", () => {
-  const parsed = f2106.inputSchema.safeParse({
-    f2106s: [{ employee_type: EmployeeType.RESERVIST, employer_reimbursements: -200 }],
-  });
-  assertEquals(parsed.success, false);
-});
-
-Deno.test("f2106.inputSchema: business_use_pct > 100 fails", () => {
-  const parsed = f2106.inputSchema.safeParse({
-    f2106s: [{ employee_type: EmployeeType.RESERVIST, business_use_pct: 110 }],
-  });
-  assertEquals(parsed.success, false);
-});
-
-Deno.test("f2106.inputSchema: valid full item passes", () => {
-  const parsed = f2106.inputSchema.safeParse({
-    f2106s: [{
-      employee_type: EmployeeType.RESERVIST,
-      vehicle_expense_method: VehicleMethod.STANDARD_MILEAGE,
-      business_miles: 1000,
-      parking_tolls_transportation: 200,
-      travel_expenses: 800,
-      other_expenses: 150,
-      meals_expenses: 400,
-      employer_reimbursements: 500,
-    }],
-  });
-  assertEquals(parsed.success, true);
-});
-
-// =============================================================================
-// 2. Employee Type Gating
-// =============================================================================
-
-Deno.test("f2106.compute: RESERVIST with expenses routes to schedule1.line12_business_expenses", () => {
-  const result = compute([minimalItem({ travel_expenses: 1000 })]);
-  const fields = fieldsOf(result.outputs, schedule1)!;
-  assertEquals(fields.line12_business_expenses, 1000);
-});
-
-Deno.test("f2106.compute: PERFORMING_ARTIST with expenses routes to schedule1", () => {
-  const result = compute([{ employee_type: EmployeeType.PERFORMING_ARTIST, other_expenses: 500 }]);
-  const fields = fieldsOf(result.outputs, schedule1)!;
-  assertEquals(fields.line12_business_expenses, 500);
-});
-
-Deno.test("f2106.compute: FEE_BASIS_OFFICIAL with expenses routes to schedule1", () => {
-  const result = compute([{ employee_type: EmployeeType.FEE_BASIS_OFFICIAL, other_expenses: 750 }]);
-  const fields = fieldsOf(result.outputs, schedule1)!;
-  assertEquals(fields.line12_business_expenses, 750);
-});
-
-Deno.test("f2106.compute: DISABLED_IMPAIRMENT with expenses routes to schedule1", () => {
-  const result = compute([{ employee_type: EmployeeType.DISABLED_IMPAIRMENT, other_expenses: 1200 }]);
-  const fields = fieldsOf(result.outputs, schedule1)!;
-  assertEquals(fields.line12_business_expenses, 1200);
-});
-
-Deno.test("f2106.compute: qualifying type with all zero expenses — no output", () => {
-  const result = compute([minimalItem({ travel_expenses: 0, other_expenses: 0 })]);
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("f2106.compute: qualifying type with no expense fields — no output", () => {
-  const result = compute([minimalItem()]);
-  assertEquals(result.outputs.length, 0);
-});
-
-// =============================================================================
-// 3. Vehicle Expenses — Standard Mileage Method
-// =============================================================================
-
-Deno.test("f2106.compute: standard mileage 100 miles = $70 (0.70/mile)", () => {
-  const result = compute([minimalItem({
-    vehicle_expense_method: VehicleMethod.STANDARD_MILEAGE,
-    business_miles: 100,
-  })]);
-  const fields = fieldsOf(result.outputs, schedule1)!;
-  assertEquals(fields.line12_business_expenses, 70);
-});
-
-Deno.test("f2106.compute: standard mileage 1000 miles = $700", () => {
-  const result = compute([minimalItem({
-    vehicle_expense_method: VehicleMethod.STANDARD_MILEAGE,
-    business_miles: 1000,
-  })]);
-  const fields = fieldsOf(result.outputs, schedule1)!;
-  assertEquals(fields.line12_business_expenses, 700);
-});
-
-Deno.test("f2106.compute: standard mileage 0 miles = no vehicle expense", () => {
-  const result = compute([minimalItem({
-    vehicle_expense_method: VehicleMethod.STANDARD_MILEAGE,
-    business_miles: 0,
-    other_expenses: 100,
-  })]);
-  const fields = fieldsOf(result.outputs, schedule1)!;
-  assertEquals(fields.line12_business_expenses, 100);
-});
-
-// =============================================================================
-// 4. Vehicle Expenses — Actual Expense Method
-// =============================================================================
-
-Deno.test("f2106.compute: actual expenses × business_use_pct", () => {
-  // $2000 × 80% = $1600
-  const result = compute([minimalItem({
-    vehicle_expense_method: VehicleMethod.ACTUAL_EXPENSE,
-    actual_vehicle_expenses: 2000,
-    business_use_pct: 80,
-  })]);
-  const fields = fieldsOf(result.outputs, schedule1)!;
-  assertEquals(fields.line12_business_expenses, 1600);
-});
-
-Deno.test("f2106.compute: actual expenses 100% business use", () => {
-  const result = compute([minimalItem({
-    vehicle_expense_method: VehicleMethod.ACTUAL_EXPENSE,
-    actual_vehicle_expenses: 3000,
-    business_use_pct: 100,
-  })]);
-  const fields = fieldsOf(result.outputs, schedule1)!;
-  assertEquals(fields.line12_business_expenses, 3000);
-});
-
-// =============================================================================
-// 5. Meals — 50% Limitation
-// =============================================================================
-
-Deno.test("f2106.compute: meals_expenses subject to 50% limitation", () => {
-  // $400 meals × 50% = $200
-  const result = compute([minimalItem({ meals_expenses: 400 })]);
-  const fields = fieldsOf(result.outputs, schedule1)!;
-  assertEquals(fields.line12_business_expenses, 200);
-});
-
-Deno.test("f2106.compute: meals combined with other expenses", () => {
-  // travel $500 + meals $200 × 50% = 500 + 100 = $600
-  const result = compute([minimalItem({
-    travel_expenses: 500,
-    meals_expenses: 200,
-  })]);
-  const fields = fieldsOf(result.outputs, schedule1)!;
-  assertEquals(fields.line12_business_expenses, 600);
-});
-
-// =============================================================================
-// 6. Employer Reimbursements
-// =============================================================================
-
-Deno.test("f2106.compute: reimbursements reduce deduction", () => {
-  // travel $1000 - reimbursement $300 = $700
-  const result = compute([minimalItem({
-    travel_expenses: 1000,
-    employer_reimbursements: 300,
-  })]);
-  const fields = fieldsOf(result.outputs, schedule1)!;
-  assertEquals(fields.line12_business_expenses, 700);
-});
-
-Deno.test("f2106.compute: reimbursements equal expenses — no deduction", () => {
-  const result = compute([minimalItem({
-    travel_expenses: 500,
-    employer_reimbursements: 500,
-  })]);
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("f2106.compute: reimbursements exceed expenses — no deduction (floors at 0)", () => {
-  const result = compute([minimalItem({
-    travel_expenses: 300,
-    employer_reimbursements: 1000,
-  })]);
-  assertEquals(result.outputs.length, 0);
-});
-
-// =============================================================================
-// 7. Aggregation — Multiple Items (Multiple Form 2106s)
-// =============================================================================
-
-Deno.test("f2106.compute: multiple items summed", () => {
-  const result = compute([
-    minimalItem({ travel_expenses: 1000 }),
-    { employee_type: EmployeeType.PERFORMING_ARTIST, other_expenses: 500 },
-  ]);
-  const fields = fieldsOf(result.outputs, schedule1)!;
-  assertEquals(fields.line12_business_expenses, 1500);
-});
-
-Deno.test("f2106.compute: multiple items produce exactly one schedule1 output", () => {
-  const result = compute([
-    minimalItem({ travel_expenses: 800 }),
-    minimalItem({ other_expenses: 200 }),
-  ]);
-  const schedule1Outputs = result.outputs.filter((o: { nodeType: string }) => o.nodeType === "schedule1");
-  assertEquals(schedule1Outputs.length, 1);
-  const fields = fieldsOf(result.outputs, schedule1)!;
-  assertEquals(fields.line12_business_expenses, 1000);
-});
-
-Deno.test("f2106.compute: one item with zero expenses in multi-item — only non-zero sums", () => {
-  const result = compute([
-    minimalItem({ other_expenses: 0 }),
-    { employee_type: EmployeeType.FEE_BASIS_OFFICIAL, other_expenses: 900 },
-  ]);
-  const fields = fieldsOf(result.outputs, schedule1)!;
-  assertEquals(fields.line12_business_expenses, 900);
-});
-
-// =============================================================================
-// 8. Hard Validation
-// =============================================================================
-
-Deno.test("f2106.compute: throws on negative travel_expenses", () => {
-  assertThrows(() => compute([minimalItem({ travel_expenses: -100 })]), Error);
-});
-
-Deno.test("f2106.compute: throws on negative meals_expenses", () => {
-  assertThrows(() => compute([minimalItem({ meals_expenses: -50 })]), Error);
-});
-
-Deno.test("f2106.compute: throws on negative employer_reimbursements", () => {
-  assertThrows(() => compute([minimalItem({ employer_reimbursements: -200 })]), Error);
-});
-
-Deno.test("f2106.compute: throws on invalid employee_type", () => {
-  assertThrows(
-    () => f2106.compute({ taxYear: 2025, formType: "f1040" }, { f2106s: [{ employee_type: "NOT_A_TYPE" as EmployeeType }] }),
-    Error,
+Deno.test("Form 2106 rejects old category-only and unallocated-reimbursement shapes", () => {
+  assertEquals(
+    itemSchema.safeParse({ employee_type: EmployeeType.RESERVIST }).success,
+    false,
+  );
+  assertEquals(
+    itemSchema.safeParse({
+      ...feeJob(),
+      employer_reimbursements: 100,
+    }).success,
+    false,
   );
 });
 
-Deno.test("f2106.compute: zero expenses do not throw", () => {
-  const result = compute([minimalItem({ travel_expenses: 0 })]);
-  assertEquals(result.outputs.length, 0);
+Deno.test("Form 2106 fee-basis job calculates Part I line 4 and Schedule 1 only", () => {
+  const item = feeJob();
+  assertEquals(calculateForm2106Lines(item).line10_deduction, 1_200);
+  const result = compute([item]);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)?.line12_business_expenses,
+    1_200,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, agi_aggregator)?.line12_business_expenses,
+    1_200,
+  );
+  assertEquals(fieldsOf(result.outputs, schedule_a), undefined);
 });
 
-// =============================================================================
-// 9. Edge Cases
-// =============================================================================
-
-Deno.test("f2106.compute: all expense types combined correctly", () => {
-  // vehicle (std mileage) 200mi × 0.70 = 140
-  // parking = 50
-  // travel = 300
-  // other = 100
-  // meals 200 × 50% = 100
-  // total = 140 + 50 + 300 + 100 + 100 = 690
-  // reimbursements = 100
-  // net = 590
-  const result = compute([minimalItem({
-    vehicle_expense_method: VehicleMethod.STANDARD_MILEAGE,
-    business_miles: 200,
-    parking_tolls_transportation: 50,
-    travel_expenses: 300,
-    other_expenses: 100,
-    meals_expenses: 200,
-    employer_reimbursements: 100,
-  })]);
-  const fields = fieldsOf(result.outputs, schedule1)!;
-  assertEquals(fields.line12_business_expenses, 590);
-});
-
-Deno.test("f2106.compute: parking_tolls_transportation alone routes correctly", () => {
-  const result = compute([minimalItem({ parking_tolls_transportation: 250 })]);
-  const fields = fieldsOf(result.outputs, schedule1)!;
-  assertEquals(fields.line12_business_expenses, 250);
-});
-
-// =============================================================================
-// 10. Smoke Test
-// =============================================================================
-
-Deno.test("f2106.compute: smoke test — two qualifying employees with different expense types", () => {
-  const result = compute([
-    // Reservist: standard mileage + travel + meals
-    {
-      employee_type: EmployeeType.RESERVIST,
-      vehicle_expense_method: VehicleMethod.STANDARD_MILEAGE,
-      business_miles: 500,    // 500 × 0.70 = 350
-      travel_expenses: 1200,  // 1200
-      meals_expenses: 600,    // 600 × 50% = 300
-      employer_reimbursements: 200,
-      // total before reimbursement: 350 + 1200 + 300 = 1850
-      // net: 1850 - 200 = 1650
+Deno.test("Form 2106 impairment line 4 routes to Schedule A, not Schedule 1 or AGI", () => {
+  const item: Item = {
+    ...feeJob(),
+    qualification: {
+      kind: EmployeeType.DISABLED_IMPAIRMENT,
+      physical_or_mental_disability: true,
+      costs_enable_work_at_place_of_employment: true,
+      impairment_work_expense_reference:
+        "2025 workplace attendant-care records",
     },
-    // Performing artist: actual vehicle + other expenses
-    {
-      employee_type: EmployeeType.PERFORMING_ARTIST,
-      vehicle_expense_method: VehicleMethod.ACTUAL_EXPENSE,
-      actual_vehicle_expenses: 1000, // 1000 × 75% = 750
-      business_use_pct: 75,
-      other_expenses: 400,  // 400
-      // total: 750 + 400 = 1150, no reimbursements
+  };
+  const result = compute([item]);
+  assertEquals(
+    fieldsOf(result.outputs, schedule_a)?.line_16_other_deductions,
+    1_200,
+  );
+  assertEquals(fieldsOf(result.outputs, schedule1), undefined);
+  assertEquals(fieldsOf(result.outputs, agi_aggregator), undefined);
+});
+
+Deno.test("Form 2106 mixed jobs keep Schedule A and Schedule 1 amounts separate", () => {
+  const impairment: Item = {
+    ...feeJob(),
+    job: {
+      ...feeJob().job,
+      employment_record_reference: "2025 separate workplace job record",
     },
-  ]);
-
-  // Reservist: 1650, Performing artist: 1150, total = 2800
-  const fields = fieldsOf(result.outputs, schedule1)!;
-  assertEquals(fields.line12_business_expenses, 2800);
-  assertEquals(result.outputs.filter((o: { nodeType: string }) => o.nodeType === "schedule1").length, 1);
+    qualification: {
+      kind: EmployeeType.DISABLED_IMPAIRMENT,
+      physical_or_mental_disability: true,
+      costs_enable_work_at_place_of_employment: true,
+      impairment_work_expense_reference: "2025 workplace service invoice",
+    },
+    expenses: { ...feeJob().expenses, line4_other_business_expenses: 600 },
+  };
+  const result = compute([feeJob(), impairment]);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)?.line12_business_expenses,
+    1_200,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, schedule_a)?.line_16_other_deductions,
+    600,
+  );
 });
 
-// =============================================================================
-// AGI limit for performing artists (IRC §62(b)(1)(C))
-// =============================================================================
-
-Deno.test("f2106: performing artist with AGI ≤ $16,000 — deduction allowed", () => {
-  const result = compute([
-    minimalItem({ employee_type: EmployeeType.PERFORMING_ARTIST, other_expenses: 1000 }),
-  ], 15_000);
-  const fields = fieldsOf(result.outputs, schedule1)!;
-  assertEquals(fields.line12_business_expenses, 1000);
+Deno.test("Form 2106 requires distinct job records and consistent owner SSN", () => {
+  const first = feeJob();
+  assertEquals(
+    f2106.inputSchema.safeParse({ f2106s: [first, first] }).success,
+    false,
+  );
+  assertEquals(
+    f2106.inputSchema.safeParse({
+      f2106s: [first, {
+        ...first,
+        job: {
+          ...first.job,
+          employee_ssn: "987-65-4321",
+          employment_record_reference: "2025 second job",
+        },
+      }],
+    }).success,
+    false,
+  );
 });
 
-Deno.test("f2106: performing artist with AGI > $16,000 — deduction disallowed", () => {
-  const result = compute([
-    minimalItem({ employee_type: EmployeeType.PERFORMING_ARTIST, other_expenses: 1000 }),
-  ], 20_000);
-  assertEquals(result.outputs.length, 0);
+Deno.test("Form 2106 reimbursement columns are applied before the 50% meals limit", () => {
+  const item: Item = {
+    ...feeJob(),
+    expenses: {
+      ...feeJob().expenses,
+      line4_other_business_expenses: 500,
+      line5_meals: 300,
+    },
+    reimbursements: {
+      ...feeJob().reimbursements,
+      line7_column_a_nonmeals: 100,
+      line7_column_b_meals: 100,
+    },
+  };
+  const lines = calculateForm2106Lines(item);
+  assertEquals(lines.line8_column_a, 400);
+  assertEquals(lines.line8_column_b, 200);
+  assertEquals(lines.line9_column_b, 100);
+  assertEquals(lines.line10_deduction, 500);
 });
 
-Deno.test("f2106: performing artist AGI > $16,000 but reservist present — reservist deduction retained", () => {
-  const result = compute([
-    minimalItem({ employee_type: EmployeeType.PERFORMING_ARTIST, other_expenses: 500 }),
-    minimalItem({ employee_type: EmployeeType.RESERVIST, other_expenses: 800 }),
-  ], 25_000);
-  const fields = fieldsOf(result.outputs, schedule1)!;
-  assertEquals(fields.line12_business_expenses, 800);
+Deno.test("Form 2106 excess nonmeal reimbursement refuses tax routing until W-2/1040 line 1a joins", () => {
+  const item: Item = {
+    ...feeJob(),
+    reimbursements: {
+      ...feeJob().reimbursements,
+      line7_column_a_nonmeals: 1_500,
+    },
+  };
+  assertEquals(
+    calculateForm2106Lines(item).excess_nonmeal_reimbursement_to_1040_line1a,
+    300,
+  );
+  assertThrows(() => compute([item]), Error, "line 1a");
 });
 
-Deno.test("f2106: no AGI provided — performing artist deduction allowed (no limit enforced)", () => {
-  const result = compute([
-    minimalItem({ employee_type: EmployeeType.PERFORMING_ARTIST, other_expenses: 600 }),
-  ]);
-  const fields = fieldsOf(result.outputs, schedule1)!;
-  assertEquals(fields.line12_business_expenses, 600);
+Deno.test("Form 2106 standard-mileage source calculates line 22 and rejects inconsistent Part II miles", () => {
+  const vehicle: Item["vehicle"] = {
+    method: VehicleMethod.STANDARD_MILEAGE,
+    placed_in_service_date: "2025-02-01",
+    total_miles: 10_000,
+    business_miles: 1_000,
+    average_daily_roundtrip_commuting_miles: 20,
+    commuting_miles: 4_000,
+    available_for_personal_use_off_duty: true,
+    other_personal_vehicle_available: false,
+    written_mileage_evidence_reference: "2025 mileage log",
+    no_personal_to_business_conversion_during_year_confirmed: true,
+    standard_mileage_eligibility: {
+      ownership: "owned",
+      used_standard_mileage_first_business_year: true,
+      method_history_reference: "2025 vehicle election record",
+    },
+  };
+  const lines = calculateForm2106Lines({ ...feeJob(), vehicle });
+  assertEquals(lines.line1_vehicle, 700);
+  assertEquals(lines.vehicle_part_ii?.line14_business_use_percent, 10);
+  assertEquals(lines.vehicle_part_ii?.line17_other_personal_miles, 5_000);
+  assertEquals(lines.vehicle_part_ii?.line22_standard_mileage_deduction, 700);
+  assertEquals(
+    itemSchema.safeParse({
+      ...feeJob(),
+      vehicle: { ...vehicle, business_miles: 7_000 },
+    }).success,
+    false,
+  );
+  assertEquals(
+    itemSchema.safeParse({
+      ...feeJob(),
+      vehicle: { ...vehicle, placed_in_service_date: "2025-02-30" },
+    }).success,
+    false,
+  );
+});
+
+Deno.test("Form 2106 actual vehicle and reservist branches fail closed", () => {
+  assertThrows(
+    () =>
+      calculateForm2106Lines({
+        ...feeJob(),
+        vehicle: {
+          method: VehicleMethod.ACTUAL_EXPENSE,
+          placed_in_service_date: "2025-02-01",
+          total_miles: 10_000,
+          business_miles: 1_000,
+          average_daily_roundtrip_commuting_miles: 20,
+          commuting_miles: 4_000,
+          available_for_personal_use_off_duty: true,
+          other_personal_vehicle_available: false,
+          written_mileage_evidence_reference: "2025 mileage log",
+          operating_costs_line23: 1_000,
+          rentals_line24a: 0,
+          inclusion_amount_line24b: 0,
+          employer_vehicle_value_line25: 0,
+          depreciation_line28: 0,
+          depreciation_workpaper_reference: "2025 depreciation worksheet",
+        },
+      }),
+    Error,
+    "actual vehicle",
+  );
+  assertThrows(
+    () =>
+      calculateForm2106Lines({
+        ...feeJob(),
+        qualification: {
+          kind: EmployeeType.RESERVIST,
+          reserve_component_reference: "2025 reserve orders",
+          travel_more_than_100_miles_from_home: true,
+          federal_per_diem_limit_workpaper_reference:
+            "2025 travel cap worksheet",
+        },
+      }),
+    Error,
+    "reservist",
+  );
+});
+
+Deno.test("Form 2106 impairment source refuses unrelated travel and meals", () => {
+  const item = feeJob();
+  assertEquals(
+    itemSchema.safeParse({
+      ...item,
+      qualification: {
+        kind: EmployeeType.DISABLED_IMPAIRMENT,
+        physical_or_mental_disability: true,
+        costs_enable_work_at_place_of_employment: true,
+        impairment_work_expense_reference: "2025 workplace invoice",
+      },
+      expenses: {
+        ...item.expenses,
+        line3_overnight_travel_excluding_meals: 100,
+      },
+    }).success,
+    false,
+  );
+});
+
+Deno.test("Form 2106 performing-artist source remains fail-closed until owner-wide qualification", () => {
+  const item = feeJob();
+  const artist: Item = {
+    ...item,
+    qualification: {
+      kind: EmployeeType.PERFORMING_ARTIST,
+      employers: [
+        { employer_ein: "12-3456789", wages: 500, w2_reference: "2025 W-2 A" },
+        { employer_ein: "98-7654321", wages: 500, w2_reference: "2025 W-2 B" },
+      ],
+      performing_arts_gross_income: 5_000,
+      adjusted_gross_income_before_artist_deduction: 15_000,
+      filing_status: "single",
+      married_at_year_end: false,
+      lived_apart_from_spouse_all_year: false,
+    },
+  };
+  if (artist.qualification.kind !== EmployeeType.PERFORMING_ARTIST) {
+    throw new Error("Expected performing-artist test source");
+  }
+  assertEquals(itemSchema.safeParse(artist).success, true);
+  assertThrows(() => calculateForm2106Lines(artist), Error, "owner-wide");
+  assertEquals(
+    itemSchema.safeParse({
+      ...artist,
+      qualification: {
+        ...artist.qualification,
+        employers: [
+          artist.qualification.employers[0],
+          artist.qualification.employers[0],
+        ],
+      },
+    }).success,
+    false,
+  );
 });

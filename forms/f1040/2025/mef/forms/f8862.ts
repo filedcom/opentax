@@ -3,7 +3,8 @@ import {
   type F8862Input,
   inputSchema,
 } from "../../../nodes/inputs/f8862/index.ts";
-import type { MefFormDescriptor } from "../form-descriptor.ts";
+import { inputSchema as form8863InputSchema } from "../../../nodes/inputs/f8863/index.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 function boolElement(tag: string, value: boolean | undefined): string {
   return element(tag, value === undefined ? undefined : String(value));
@@ -77,6 +78,16 @@ function validateDetail(fields: F8862Input): void {
       );
     }
     if (
+      fields.eitc_without_child &&
+      (fields.eitc_without_child.primary.main_home_us_days < 183 ||
+        (fields.eitc_without_child.spouse !== undefined &&
+          fields.eitc_without_child.spouse.main_home_us_days < 183))
+    ) {
+      throw new Error(
+        "Form 8862 childless EITC needs at least 183 US-home days for each claimant",
+      );
+    }
+    if (
       fields.eitc_qualifying_children_count !== undefined &&
       fields.eitc_qualifying_children_count !== eitcChildren.length
     ) {
@@ -140,17 +151,71 @@ function validateDetail(fields: F8862Input): void {
   }
 }
 
+function validateFinalizedCreditClaims(
+  fields: F8862Input,
+  context: MefBuildContext | undefined,
+): void {
+  const pending = context?.pending;
+  const form1040 = pending?.f1040 as Record<string, unknown> | undefined;
+  if (!form1040) {
+    throw new Error("Form 8862 needs finalized Form 1040 credit lines");
+  }
+  const positive = (value: unknown) =>
+    typeof value === "number" && Number.isFinite(value) && value > 0;
+  if (fields.claim_eitc && !positive(form1040.line27_eitc)) {
+    throw new Error(
+      "Form 8862 EITC claim needs positive finalized Form 1040 line 27",
+    );
+  }
+  if (
+    fields.claim_ctc &&
+    !(positive(form1040.line19_child_tax_credit) ||
+      positive(form1040.line28_actc))
+  ) {
+    throw new Error(
+      "Form 8862 CTC/ODC claim needs a finalized Form 1040 line 19 or 28 credit",
+    );
+  }
+  if (fields.claim_aotc) {
+    const form8863 = form8863InputSchema.safeParse(pending?.f8863);
+    if (!form8863.success) {
+      throw new Error(
+        "Form 8862 AOTC students and credit must reconcile to Form 8863 and the finalized return",
+      );
+    }
+    const names = new Set(
+      form8863.data.f8863s.filter((student) => student.credit_type === "aoc")
+        .map((student) => student.student_name.trim().toUpperCase()),
+    );
+    const schedule3 = pending?.schedule3 as Record<string, unknown> | undefined;
+    if (
+      fields.aotc_students?.some((student) =>
+        !names.has(`${student.first_name} ${student.last_name}`.toUpperCase())
+      ) || !names.size ||
+      !(positive(form1040.line29_refundable_aoc) ||
+        positive(schedule3?.line3_education_credit)) ||
+      (context?.documentIdsByPendingKey &&
+        (context.documentIdsByPendingKey.f8863?.length ?? 0) === 0)
+    ) {
+      throw new Error(
+        "Form 8862 AOTC students and credit must reconcile to Form 8863 and the finalized return",
+      );
+    }
+  }
+}
+
 export const form8862: MefFormDescriptor<"f8862", F8862Input> = {
   pendingKey: "f8862",
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8862.pdf",
-  build(rawFields) {
+  build(rawFields, context) {
     if (Object.keys(rawFields).length === 0) return "";
     const fields = inputSchema.parse(rawFields);
     validateDetail(fields);
     if (!fields.claim_eitc && !fields.claim_ctc && !fields.claim_aotc) {
       return "";
     }
+    validateFinalizedCreditClaims(fields, context);
 
     return elements("IRS8862", [
       element("TaxYr", 2025),

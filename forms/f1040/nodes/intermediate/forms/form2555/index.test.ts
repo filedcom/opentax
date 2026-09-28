@@ -33,6 +33,10 @@ Deno.test("physical presence — exactly 330 days qualifies", () => {
   });
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1?.fields.line8d_foreign_earned_income_exclusion, 50_000);
+  assertEquals(
+    findOutput(result, "f1040")?.fields.form8839_form2555_line45,
+    50_000,
+  );
 });
 
 Deno.test("physical presence — 329 days does not qualify", () => {

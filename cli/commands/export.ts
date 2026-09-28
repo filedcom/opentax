@@ -1,7 +1,5 @@
 import { join } from "@std/path";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
-import { execute } from "../../core/runtime/executor.ts";
-import { buildExecutionPlan } from "../../core/runtime/planner.ts";
 import { catalog } from "../../catalog.ts";
 import { buildEngineInputs, loadReturn } from "../store/store.ts";
 import { extractFilerIdentity } from "../../forms/f1040/mef/filer.ts";
@@ -175,15 +173,11 @@ async function runReturnPipeline(
   const returnPath = join(args.baseDir, args.returnId);
   const { meta, inputs } = await loadReturn(returnPath);
   const def = getCatalogEntry(meta.formType ?? "f1040", meta.year);
-  const executionPlan = buildExecutionPlan(def.registry);
   const singletonNodeTypes = new Set(
     def.inputNodes.filter((e) => !e.isArray).map((e) => e.node.nodeType),
   );
   const engineInputs = buildEngineInputs(inputs, singletonNodeTypes);
-  const result = execute(executionPlan, def.registry, engineInputs, {
-    taxYear: meta.year,
-    formType: meta.formType ?? "f1040",
-  });
+  const result = def.executeReturn(engineInputs);
 
   // Warn about executor node failures before building output
   for (const d of result.diagnostics) {

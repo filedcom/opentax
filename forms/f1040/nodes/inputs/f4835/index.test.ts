@@ -8,7 +8,12 @@ import {
 import { scheduleE } from "../schedule_e/index.ts";
 
 function item(overrides: Record<string, unknown> = {}) {
-  return { activity_name: "Test Farm", livestock_crop_income: 0, ...overrides };
+  return {
+    activity_id: "farm-test",
+    activity_name: "Test Farm",
+    livestock_crop_income: 0,
+    ...overrides,
+  };
 }
 
 function compute(items: ReturnType<typeof item>[]) {
@@ -190,12 +195,24 @@ Deno.test("Form 4835 retains prior passive losses by farm and checks participati
   const result = compute([item({
     livestock_crop_income: 1000,
     prior_unallowed_passive_operating: 1500,
+    prior_year_8582_source: {
+      tax_year: 2024,
+      activity_id: "farm-test",
+      filed_part_vii_column_c: 1500,
+      source_document_reference: "2024 filed Form 8582 Part VII, farm-test",
+    },
   })]);
   assertEquals(result.outputs[0].fields.farm_rental_activities, [{
     name: "Test Farm",
     current_net: 1000,
     actively_participated: false,
     prior_unallowed_operating: 1500,
+    prior_year_8582_source: {
+      tax_year: 2024,
+      activity_id: "farm-test",
+      filed_part_vii_column_c: 1500,
+      source_document_reference: "2024 filed Form 8582 Part VII, farm-test",
+    },
     prior_active_participation: undefined,
   }]);
   assertThrows(
@@ -212,6 +229,12 @@ Deno.test("Form 4835 retains prior passive losses by farm and checks participati
     livestock_crop_income: 1000,
     actively_participated: true,
     prior_unallowed_passive_operating: 500,
+    prior_year_8582_source: {
+      tax_year: 2024,
+      activity_id: "farm-test",
+      filed_part_vii_column_c: 500,
+      source_document_reference: "2024 filed Form 8582 Part VII, farm-test",
+    },
     prior_passive_losses_active_when_incurred: false,
   })]);
   assertEquals(changedParticipation.outputs[0].fields.farm_rental_activities, [{
@@ -219,6 +242,12 @@ Deno.test("Form 4835 retains prior passive losses by farm and checks participati
     current_net: 1000,
     actively_participated: true,
     prior_unallowed_operating: 500,
+    prior_year_8582_source: {
+      tax_year: 2024,
+      activity_id: "farm-test",
+      filed_part_vii_column_c: 500,
+      source_document_reference: "2024 filed Form 8582 Part VII, farm-test",
+    },
     prior_active_participation: false,
   }]);
 });

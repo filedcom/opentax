@@ -10,6 +10,7 @@ import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import { form8959 } from "../form8959/index.ts";
 import { form8995 } from "../form8995/index.ts";
+import { form7206 } from "../form7206/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 import {
@@ -102,6 +103,7 @@ class ScheduleSENode extends TaxNode<typeof inputSchema> {
     agi_aggregator,
     form8959,
     form8995,
+    form7206,
   ]);
 
   compute(ctx: NodeContext, rawInput: ScheduleSEInput): NodeResult {
@@ -115,8 +117,18 @@ class ScheduleSENode extends TaxNode<typeof inputSchema> {
     const line3 = optional?.line3 ?? combinedNetProfit(input);
     const line4a = optional?.line4a ?? netEarningsFromSE(line3);
     const line4c = optional?.line4c ?? line4a;
+    const source = (line13Deduction: number) =>
+      this.outputNodes.output(form7206, {
+        schedule_se_source: {
+          net_profit_schedule_c: input.net_profit_schedule_c ?? 0,
+          net_profit_schedule_f: input.net_profit_schedule_f ?? 0,
+          farm_optional_method_elected:
+            input.farm_optional_method_elected === true,
+          line13_deduction: line13Deduction,
+        },
+      });
     if (line4c < SE_EARNINGS_THRESHOLD) {
-      return { outputs: [] };
+      return { outputs: [source(0)] };
     }
 
     // Line 6: total SE earnings (= line 4c; church employee income not in scope)
@@ -138,6 +150,7 @@ class ScheduleSENode extends TaxNode<typeof inputSchema> {
     const line13 = line12 * SE_DEDUCTION_RATE;
 
     const outputs: NodeOutput[] = [
+      source(line13),
       this.outputNodes.output(schedule2, { line4_se_tax: line12 }),
       this.outputNodes.output(schedule1, { line15_se_deduction: line13 }),
       this.outputNodes.output(agi_aggregator, { line15_se_deduction: line13 }),

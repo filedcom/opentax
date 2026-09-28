@@ -5,6 +5,7 @@ import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
+import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { scheduleC } from "../schedule_c/index.ts";
 import { schedule_f } from "../../intermediate/forms/schedule_f/index.ts";
 import { form8919 } from "../../intermediate/forms/form8919/index.ts";
@@ -317,10 +318,33 @@ Deno.test("f1099m.compute: box2_royalties = 0 produces no royalty routing output
   assertEquals(findOutput(result, "schedule_e"), undefined);
 });
 
-// Box 3 — Other Income → Schedule 1 Line 8i (prizes/awards, default)
-Deno.test("f1099m.compute: box3_other_income routes to schedule1 line8i_prizes_awards by default", () => {
-  const result = compute([minimalItem({ box3_other_income: 500 })]);
+// Box 3 covers multiple income types; only an explicit prize classification
+// belongs on Schedule 1 line 8i.
+Deno.test("f1099m: positive unclassified box 3 fails schema and direct compute", () => {
+  const item = minimalItem({ box3_other_income: 500 });
+  const parsed = f1099m.inputSchema.safeParse({ f1099ms: [item] });
+  assertEquals(parsed.success, false);
+  assertThrows(
+    () => compute([item]),
+    Error,
+    "requires an explicit income classification",
+  );
+});
+
+Deno.test("f1099m.compute: explicitly classified box 3 prize routes to Schedule 1 line 8i", () => {
+  const result = compute([minimalItem({
+    box3_other_income: 500,
+    box3_other_income_routing: "prizes_awards",
+  })]);
   assertEquals(fieldsOf(result.outputs, schedule1)!.line8i_prizes_awards, 500);
+  assertEquals(
+    fieldsOf(result.outputs, agi_aggregator)!.line8i_prizes_awards,
+    500,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, agi_aggregator)!.line8z_other,
+    undefined,
+  );
 });
 
 // Box 3 — Other Income → Schedule 1 Line 8z (non-prize other income)
@@ -410,6 +434,10 @@ Deno.test("f1099m.compute: box8_substitute_payments routes to schedule1 line8z_s
     fieldsOf(result.outputs, schedule1)!.line8z_substitute_payments,
     300,
   );
+  assertEquals(
+    fieldsOf(result.outputs, agi_aggregator)!.line8z_substitute_payments,
+    300,
+  );
 });
 
 // Box 8 — zero value produces no schedule1 substitute_payments output
@@ -463,6 +491,7 @@ Deno.test("f1099m.compute: box11_fish_purchased = 0 produces no schedule_c outpu
 Deno.test("f1099m.compute: box15_nqdc routes to schedule1 line8z_nqdc and schedule2 line17h at 20%", () => {
   const result = compute([minimalItem({ box15_nqdc: 50000 })]);
   assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_nqdc, 50000);
+  assertEquals(fieldsOf(result.outputs, agi_aggregator)!.line8z_nqdc, 50000);
   assertEquals(fieldsOf(result.outputs, schedule2)!.line17h_nqdc_tax, 10000);
 });
 
@@ -553,11 +582,13 @@ Deno.test("f1099m.compute: box3_other_income summed across multiple items to pri
   const result = compute([
     minimalItem({
       box3_other_income: 1000,
+      box3_other_income_routing: "prizes_awards",
       payer_name: "Contest A",
       payer_tin: "111111111",
     }),
     minimalItem({
       box3_other_income: 2000,
+      box3_other_income_routing: "prizes_awards",
       payer_name: "Contest B",
       payer_tin: "222222222",
     }),
@@ -916,6 +947,7 @@ Deno.test("f1099m.compute: smoke test — all major income boxes populate correc
       box1_rents: 18000,
       box2_royalties: 3600,
       box3_other_income: 750,
+      box3_other_income_routing: "prizes_awards",
       box4_federal_withheld: 2400,
       box5_fishing_boat: 5000,
       box6_medical_payments: 12000,
@@ -945,7 +977,7 @@ Deno.test("f1099m.compute: smoke test — all major income boxes populate correc
     (schedE!.fields as Record<string, unknown>).royalty_income;
   assertEquals(schedERoyalty, 3600);
 
-  // box3_other_income → schedule1 line8i (default: prizes)
+  // box3_other_income → schedule1 line8i (explicitly classified prize)
   const sched1 = findOutput(result, "schedule1");
   assertEquals(sched1 !== undefined, true);
   assertEquals(fieldsOf(result.outputs, schedule1)!.line8i_prizes_awards, 750);

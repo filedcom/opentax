@@ -1,10 +1,12 @@
 import { element, elements } from "../../../mef/xml.ts";
 import {
-  assertNoUnroutedGain,
+  assertForm7217FilingSource,
   computeForm7217Amounts,
   type Form7217Input,
   type Form7217Item,
+  inputSchema,
 } from "../../../nodes/inputs/f7217/index.ts";
+import { assertForm7217GainFiling } from "../../form7217_gain_filing.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 type Input = Partial<Form7217Input> & Record<string, unknown>;
@@ -28,7 +30,7 @@ function businessName(tag: string, name: string): string {
 function buildForm7217(item: Form7217Item, context: MefBuildContext): string {
   const filer = context.filer;
   if (!filer) throw new Error("Form 7217 needs the partner's filer identity");
-  assertNoUnroutedGain(item);
+  assertForm7217GainFiling(item, filer, context.pending);
   const amounts = computeForm7217Amounts(item);
   return elements("IRS7217", [
     element("PartnerPersonNm", filer.fullName ?? filer.nameLine1),
@@ -89,7 +91,8 @@ export const form7217: MefFormDescriptor<"f7217", Input, readonly string[]> = {
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f7217.pdf",
   build(fields, context = {}) {
     if (Object.keys(fields).length === 0) return [];
-    const input = fields as Form7217Input;
-    return (input.form7217s ?? []).map((item) => buildForm7217(item, context));
+    const input = inputSchema.parse(fields);
+    assertForm7217FilingSource(input);
+    return input.form7217s.map((item) => buildForm7217(item, context));
   },
 };

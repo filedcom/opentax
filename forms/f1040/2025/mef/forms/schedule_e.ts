@@ -6,6 +6,8 @@ import {
   isVacationHomeExcluded,
   isVacationHomeLimited,
   itemSchema,
+  qualifiedEntireDispositionGain,
+  qualifiedEntireDispositionLoss,
 } from "../../../nodes/inputs/schedule_e/index.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 import type { MefBuildContext } from "../form-descriptor.ts";
@@ -21,10 +23,16 @@ import {
   inputSchema as form4835InputSchema,
 } from "../../../nodes/inputs/f4835/index.ts";
 import type { z } from "zod";
+import type { FilerIdentity } from "../../../mef/header.ts";
+import { inputSchema as partnershipK1InputSchema } from "../../../nodes/inputs/k1_partnership/index.ts";
+import { inputSchema as miscInputSchema } from "../../../nodes/inputs/f1099m/index.ts";
+import {
+  passivePropertySaleSchema,
+  samePassiveSale,
+} from "../../../nodes/intermediate/forms/form4797/index.ts";
 
 type Fields = Partial<z.infer<typeof inputSchema>>;
 type Property = z.infer<typeof itemSchema>;
-
 const propertyTypes = [
   "SINGLE FAMILY RESIDENCE",
   "MULTI-FAMILY RESIDENCE",
@@ -62,6 +70,98 @@ interface PropertyLines {
   readonly net: number;
   readonly deductibleLoss: number;
   readonly realEstateProfessionalNet: number;
+}
+
+export function verifyPartnershipRoyaltySource(
+  item: Property,
+  pendingK1: unknown,
+): void {
+  const source = item.k1_royalty_source;
+  if (!source) return;
+  const parsed = partnershipK1InputSchema.safeParse(pendingK1);
+  const matching = parsed.success
+    ? parsed.data.k1_partnerships.filter((k1) =>
+      k1.partnership_ein === source.partnership_ein &&
+      k1.source_document_reference === source.source_document_reference
+    )
+    : [];
+  const k1 = matching[0];
+  const codeI = k1?.box13_code_i_royalty_deduction;
+  const allowed = source.box13_code_i_allowed_deduction ?? 0;
+  if (
+    matching.length !== 1 || !k1 ||
+    item.property_type !== 6 || item.activity_type !== "D" ||
+    item.rent_income !== 0 ||
+    item.royalties_income !== source.box7_gross_royalties ||
+    item.fair_rental_days !== 0 || item.personal_use_days !== 0 ||
+    (item.ownership_percent ?? 100) !== 100 ||
+    computeExpenses(item) !== allowed ||
+    (item.expense_other_lines?.length ?? 0) !== (codeI ? 1 : 0) ||
+    (codeI && (item.expense_other_lines?.[0]?.description !==
+        "From Schedule K-1 (Form 1065)" ||
+      item.expense_other_lines?.[0]?.amount !== allowed)) ||
+    k1.box7_royalties !== source.box7_gross_royalties ||
+    k1.box7_royalty_reporting?.property_description !==
+      item.property_description ||
+    k1.box7_royalty_reporting?.tsj !== item.tsj ||
+    k1.box7_royalty_reporting?.portfolio_nonpassive !== true ||
+    k1.box7_royalty_reporting?.form_1099_payments_made !==
+      item.form_1099_payments_made ||
+    (codeI?.allowed_amount) !== source.box13_code_i_allowed_deduction ||
+    (codeI?.statement_reference) !== source.box13_code_i_statement_reference
+  ) {
+    throw new Error(
+      "Schedule E royalty row needs its matching partnership K-1 box 7 and code I source",
+    );
+  }
+}
+
+const permittedMiscRoyaltyFields = new Set([
+  "payer_name",
+  "payer_tin",
+  "recipient_tin",
+  "account_number",
+  "multi_form_code",
+  "box2_royalties",
+  "box2_royalties_routing",
+  "box2_nonpassive_portfolio_investment_for_form4952_verified",
+]);
+
+export function verifyMiscRoyaltySource(
+  item: Property,
+  pendingMisc: unknown,
+  filer?: FilerIdentity,
+): void {
+  const source = item.f1099m_royalty_source;
+  if (!source) return;
+  const parsed = miscInputSchema.safeParse(pendingMisc);
+  const items = parsed.success ? parsed.data.f1099ms : [];
+  const misc = items[0];
+  if (
+    items.length !== 1 || !misc ||
+    misc.payer_name !== source.payer_name ||
+    misc.payer_tin !== source.payer_tin ||
+    misc.recipient_tin !== source.recipient_tin ||
+    misc.box2_royalties !== source.box2_gross_royalties ||
+    misc.box2_nonpassive_portfolio_investment_for_form4952_verified !== true ||
+    misc.box2_royalties_routing === "schedule_c" ||
+    Object.keys(misc).some((key) => !permittedMiscRoyaltyFields.has(key)) ||
+    item.k1_royalty_source !== undefined ||
+    item.tsj !== "T" ||
+    (filer !== undefined &&
+      source.recipient_tin !== filer.primarySSN.replaceAll("-", "")) ||
+    item.property_type !== 6 || item.activity_type !== "D" ||
+    item.rent_income !== 0 ||
+    item.royalties_income !== source.box2_gross_royalties ||
+    item.fair_rental_days !== 0 || item.personal_use_days !== 0 ||
+    (item.ownership_percent ?? 100) !== 100 ||
+    item.form_1099_payments_made !== false ||
+    computeExpenses(item) !== 0
+  ) {
+    throw new Error(
+      "Schedule E royalty row needs its one matching nonbusiness 1099-MISC box 2 source",
+    );
+  }
 }
 
 function failUnsupportedFacts(item: Property): void {
@@ -251,6 +351,48 @@ function validatePassiveActivityLink(
   items: readonly Property[],
   context: MefBuildContext | undefined,
 ): ReadonlyMap<number, number> {
+  const entireLoss = items.length === 1
+    ? qualifiedEntireDispositionLoss(items[0])
+    : undefined;
+  if (entireLoss !== undefined) {
+    const sale = items[0].passive_property_sales?.[0];
+    const pendingSales = (context?.pending?.form4797 as
+      | { passive_property_sales?: unknown[] }
+      | undefined)?.passive_property_sales;
+    const pendingSale = passivePropertySaleSchema.safeParse(pendingSales?.[0]);
+    if (
+      context?.pending?.form8582 !== undefined || !sale ||
+      pendingSales?.length !== 1 ||
+      !pendingSale.success || !samePassiveSale(pendingSale.data, sale)
+    ) {
+      throw new Error(
+        "Schedule E entire-disposition loss needs its matching Form 4797 and no Form 8582 activity",
+      );
+    }
+    return new Map([[0, entireLoss]]);
+  }
+  const entireGain = items.length === 1
+    ? qualifiedEntireDispositionGain(items[0])
+    : undefined;
+  if (entireGain !== undefined) {
+    const sale = items[0].passive_property_sales?.[0];
+    const pendingSales = (context?.pending?.form4797 as
+      | { passive_property_sales?: unknown[] }
+      | undefined)?.passive_property_sales;
+    const pendingSale = passivePropertySaleSchema.safeParse(pendingSales?.[0]);
+    const ledger = context?.pending?.form8582;
+    if (
+      !sale || pendingSales?.length !== 1 || !pendingSale.success ||
+      !samePassiveSale(pendingSale.data, sale) || !ledger ||
+      typeof ledger !== "object" || Array.isArray(ledger)
+    ) {
+      throw new Error(
+        "Schedule E entire-disposition gain needs matching Form 4797 and Form 8582 sources",
+      );
+    }
+    form8582.build(ledger as Record<string, unknown>, context);
+    return new Map([[0, entireGain]]);
+  }
   const needsLimitation = items.some((item) =>
     (item.activity_type === "A" || item.activity_type === "B") &&
     (computePropertyNet(item) < 0 ||
@@ -333,18 +475,58 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
       );
     }
     const itemList = fields.schedule_es ?? [];
+    const royaltyKeys = itemList.flatMap((item) =>
+      item.k1_royalty_source
+        ? [
+          `${item.k1_royalty_source.partnership_ein}:${item.k1_royalty_source.source_document_reference}`,
+        ]
+        : []
+    );
+    if (new Set(royaltyKeys).size !== royaltyKeys.length) {
+      throw new Error(
+        "Schedule E partnership K-1 royalty source cannot be duplicated",
+      );
+    }
+    itemList.forEach((item) =>
+      verifyPartnershipRoyaltySource(item, context?.pending?.k1_partnership)
+    );
+    itemList.forEach((item) =>
+      verifyMiscRoyaltySource(item, context?.pending?.f1099m, context?.filer)
+    );
     const allowedPassiveLosses = validatePassiveActivityLink(itemList, context);
     const properties = itemList.map((item, index) =>
       buildProperty(item, allowedPassiveLosses.get(index))
     ).filter(
       (line): line is PropertyLines => line !== undefined,
     );
+    const linkedMiscRoyalty = itemList.length === 1 &&
+      itemList[0].f1099m_royalty_source !== undefined &&
+      fields.royalty_income ===
+        itemList[0].f1099m_royalty_source.box2_gross_royalties;
+    if (
+      itemList.some((item) => item.f1099m_royalty_source !== undefined) &&
+      !linkedMiscRoyalty
+    ) {
+      throw new Error(
+        "Schedule E 1099-MISC royalty needs exactly one matched property and passthrough",
+      );
+    }
+    if (linkedMiscRoyalty && !context?.filer) {
+      throw new Error(
+        "Schedule E linked 1099-MISC royalty needs filer identity",
+      );
+    }
     if (
       properties.length === 0 &&
       (fields.rental_income !== undefined ||
         fields.royalty_income !== undefined)
     ) {
       throw new Error("Schedule E 1099-MISC income needs a property row");
+    }
+    if (fields.royalty_income !== undefined && !linkedMiscRoyalty) {
+      throw new Error(
+        "Schedule E 1099-MISC royalty needs its linked property row",
+      );
     }
     const farmNet = fields.farm_rental_net;
     const farmGross = fields.farm_rental_gross;
@@ -392,6 +574,21 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
     );
     const losses = sum(properties, "deductibleLoss");
     const propertyNet = income - losses;
+    if (royaltyKeys.length > 0 || linkedMiscRoyalty) {
+      const pendingLine5 = context?.pending?.schedule1?.line5_schedule_e;
+      const line5 = Array.isArray(pendingLine5)
+        ? pendingLine5.reduce((sum: number, amount: number) => sum + amount, 0)
+        : pendingLine5;
+      if (
+        (royaltyKeys.length > 0 && royaltyKeys.length !== 1) ||
+        itemList.length !== 1 ||
+        farmNet !== undefined || line5 !== propertyNet
+      ) {
+        throw new Error(
+          "Schedule E sourced royalty net must match finalized Schedule 1 line 5",
+        );
+      }
+    }
     return elements("IRS1040ScheduleE", [
       itemList.length > 0
         ? element("PaymentRqrFilingForm1099Ind", String(payments))

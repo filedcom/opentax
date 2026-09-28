@@ -167,6 +167,28 @@ export const scheduleDPdf: PdfFormDescriptor = {
   pendingKey: "schedule_d",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040sd--2025.pdf",
   projectFields(fields, allPending) {
+    const rows = [
+      ...(Array.isArray(fields.transaction)
+        ? fields.transaction
+        : fields.transaction ? [fields.transaction] : []),
+      ...(Array.isArray(fields.transactions) ? fields.transactions : []),
+    ];
+    const hasQsbsRow = rows.some((row) =>
+      typeof row === "object" && row !== null &&
+      (("qsbs_code" in row && row.qsbs_code !== undefined) ||
+        ("qsbs_amount" in row && row.qsbs_amount !== undefined) ||
+        ("adjustment_codes" in row &&
+          typeof row.adjustment_codes === "string" &&
+          row.adjustment_codes.includes("Q")))
+    );
+    if (
+      (typeof fields.box2c_qsbs === "number" && fields.box2c_qsbs > 0) ||
+      hasQsbsRow
+    ) {
+      throw new Error(
+        "Schedule D section 1202 source needs a sourced Form 8949 exclusion and Form 6251 line 2h preference before filing",
+      );
+    }
     const child = form8814ParentPrintAmounts(allPending);
     return {
       ...fields,

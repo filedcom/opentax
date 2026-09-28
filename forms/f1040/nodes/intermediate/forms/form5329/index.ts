@@ -32,11 +32,11 @@ function sumAmounts(value: number | number[] | undefined): number {
     : value;
 }
 
-export const inputSchema = z.object({
+export const ownerEntrySchema = z.object({
+  owner: tsSchema,
   // ── Part I: Early Distributions (line 1–4) ──────────────────────────────
   // Distribution code from 1099-R Box 7 (informational, passed through from f1099r)
   distribution_code: accumulable(z.string()).optional(),
-  subject_ts: accumulable(tsSchema).optional(),
   // Line 1: Early distributions includible in income (from f1099r, code 1)
   early_distribution: accumulable(z.number().nonnegative()).optional(),
   // Line 2: Exception amount (portion not subject to tax)
@@ -119,7 +119,61 @@ export const inputSchema = z.object({
   able_value: z.number().nonnegative().optional(),
 }).strict();
 
-type Form5329Input = z.infer<typeof inputSchema>;
+export const inputSchema = z.object({
+  owner_entries: z.array(ownerEntrySchema).optional(),
+}).strict();
+
+type Form5329Input = z.infer<typeof ownerEntrySchema>;
+type Form5329Collection = z.infer<typeof inputSchema>;
+
+function entriesOf(input: Form5329Collection): Form5329Input[] {
+  return input.owner_entries ?? [];
+}
+
+function mergeOwnerEntries(entries: Form5329Input[]): Form5329Input[] {
+  const owners: TS[] = [TS.T, TS.S];
+  return owners.flatMap((owner) => {
+    const owned = entries.filter((entry) => entry.owner === owner);
+    if (owned.length === 0) return [];
+    const merged: Record<string, unknown> = { owner };
+    for (const entry of owned) {
+      for (const [key, value] of Object.entries(entry)) {
+        if (key === "owner" || value === undefined) continue;
+        const existing = merged[key];
+        if (existing === undefined) {
+          merged[key] = value;
+        } else if (key === "early_distribution" ||
+          key === "simple_ira_early_distribution" ||
+          key === "distribution_code") {
+          merged[key] = [
+            ...(Array.isArray(existing) ? existing : [existing]),
+            ...(Array.isArray(value) ? value : [value]),
+          ];
+        } else {
+          throw new Error(
+            `Form 5329 ${owner} has duplicate ${key} owner sources`,
+          );
+        }
+      }
+    }
+    return [ownerEntrySchema.parse(merged)];
+  });
+}
+
+function hasFilingActivity(input: Form5329Input): boolean {
+  return sumAmounts(input.early_distribution) > 0 ||
+    sumAmounts(input.simple_ira_early_distribution) > 0 ||
+    (input.early_distribution_exception ?? 0) > 0 ||
+    (input.esa_able_distribution ?? 0) > 0 ||
+    (input.esa_able_exception ?? 0) > 0 ||
+    (input.excess_traditional_ira ?? 0) > 0 ||
+    (input.excess_roth_ira ?? 0) > 0 ||
+    (input.excess_coverdell_esa ?? 0) > 0 ||
+    (input.excess_archer_msa ?? 0) > 0 ||
+    (input.hsa_part_vii?.line42_prior_excess ?? 0) > 0 ||
+    (input.hsa_part_vii?.line47_current_year_excess ?? 0) > 0 ||
+    (input.excess_able ?? 0) > 0;
+}
 
 // ─── Pure Helper Functions ────────────────────────────────────────────────────
 
@@ -247,38 +301,48 @@ class Form5329Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule2]);
 
-  compute(_ctx: NodeContext, rawInput: Form5329Input): NodeResult {
-    const input = inputSchema.parse(rawInput);
-    const subjects = input.subject_ts === undefined
-      ? []
-      : Array.isArray(input.subject_ts)
-      ? input.subject_ts
-      : [input.subject_ts];
-    if (new Set(subjects).size > 1) {
-      throw new Error("Form 5329 needs separate taxpayer and spouse forms");
-    }
+  compute(_ctx: NodeContext, rawInput: Form5329Collection): NodeResult {
+    const result = calculateOwnerForms(inputSchema.parse(rawInput));
+    return {
+      outputs: [
+        ...schedule2Output(result.total, result.chapter1Tax),
+        ...(result.forms.length > 0
+          ? [{
+            nodeType: this.nodeType,
+            fields: {
+              owner_entries: entriesOf(rawInput),
+              owner_forms: result.forms,
+            },
+          }]
+          : []),
+      ],
+    };
+  }
+}
+
+export function calculateOwnerForms(rawInput: Form5329Collection) {
+  const input = inputSchema.parse(rawInput);
+  const owners = mergeOwnerEntries(entriesOf(input)).filter(hasFilingActivity);
+  const forms = owners.map((ownerInput) => {
     if (
-      (input.early_distribution_exception ?? 0) >
-        sumAmounts(input.early_distribution)
+      (ownerInput.early_distribution_exception ?? 0) >
+        sumAmounts(ownerInput.early_distribution)
     ) {
       throw new Error(
         "Form 5329 early-distribution exception exceeds regular distributions",
       );
     }
-    if ((input.esa_able_exception ?? 0) > (input.esa_able_distribution ?? 0)) {
+    if (
+      (ownerInput.esa_able_exception ?? 0) >
+        (ownerInput.esa_able_distribution ?? 0)
+    ) {
       throw new Error(
         "Form 5329 education-account exception exceeds distributions",
       );
     }
-    const total = totalTax(input);
-    const chapter1Tax = partI_regularTax(input) + partI_simpleTax(input) +
-      partII_tax(input);
-    // Preserve the full taxable distribution total for MeF/PDF. The generic
-    // pending normalizer treats numeric arrays as successive snapshots, while
-    // these arrays are independent 1099-R distributions that must be summed.
-    const regular = sumAmounts(input.early_distribution);
-    const simple = sumAmounts(input.simple_ira_early_distribution);
-    const hsa = input.hsa_part_vii;
+    const regular = sumAmounts(ownerInput.early_distribution);
+    const simple = sumAmounts(ownerInput.simple_ira_early_distribution);
+    const hsa = ownerInput.hsa_part_vii;
     const hsaLine45 = hsa
       ? hsa.line43_unused_contribution_room + hsa.line44_taxable_distributions
       : 0;
@@ -286,10 +350,10 @@ class Form5329Node extends TaxNode<typeof inputSchema> {
       ? Math.max(0, hsa.line42_prior_excess - hsaLine45)
       : 0;
     const hsaLine48 = hsa ? hsaLine46 + hsa.line47_current_year_excess : 0;
-    const printFields = {
+    return {
+      ...ownerInput,
       ...(regular > 0 ? { early_distribution: regular } : {}),
       ...(simple > 0 ? { simple_ira_early_distribution: simple } : {}),
-      ...(subjects.length > 0 ? { subject_ts: subjects[0] ?? TS.T } : {}),
       ...(hsa
         ? {
           print_hsa_line42: hsa.line42_prior_excess,
@@ -299,18 +363,56 @@ class Form5329Node extends TaxNode<typeof inputSchema> {
           print_hsa_line46: hsaLine46,
           print_hsa_line47: hsa.line47_current_year_excess,
           print_hsa_line48: hsaLine48,
-          print_hsa_line49: partVII_tax(input),
+          print_hsa_line49: partVII_tax(ownerInput),
         }
         : {}),
+      print_total_tax: totalTax(ownerInput),
+      print_chapter1_tax: partI_regularTax(ownerInput) +
+        partI_simpleTax(ownerInput) + partII_tax(ownerInput),
     };
-    return {
-      outputs: [
-        ...schedule2Output(total, chapter1Tax),
-        ...(Object.keys(printFields).length > 0
-          ? [{ nodeType: this.nodeType, fields: printFields }]
-          : []),
-      ],
-    };
+  });
+  return {
+    forms,
+    total: forms.reduce((sum, form) => sum + form.print_total_tax, 0),
+    chapter1Tax: forms.reduce(
+      (sum, form) => sum + form.print_chapter1_tax,
+      0,
+    ),
+  };
+}
+
+export function reconcileHsaOwnerForms(
+  forms: ReturnType<typeof calculateOwnerForms>["forms"],
+  raw8889: unknown,
+): void {
+  if (!forms.some((form) => form.hsa_part_vii !== undefined)) return;
+  const hsaForms = z.object({
+    forms: z.array(z.object({
+      owner: z.enum(["primary", "spouse"]),
+      print_line2_taxpayer_contributions: z.number().nonnegative().optional(),
+      print_line12: z.number().nonnegative().optional(),
+      print_line16_taxable: z.number().nonnegative().optional(),
+    }).passthrough()).min(1).max(2),
+  }).passthrough().parse(raw8889).forms;
+  for (const form of forms) {
+    const hsa = form.hsa_part_vii;
+    if (!hsa) continue;
+    const owner = form.owner === TS.T ? "primary" : "spouse";
+    const source = hsaForms.find((entry) => entry.owner === owner);
+    if (!source || source.print_line12 === undefined) {
+      throw new Error(`Form 5329 ${owner} HSA needs its Form 8889`);
+    }
+    if (
+      hsa.line43_unused_contribution_room !== Math.max(
+        0,
+        source.print_line12 -
+          (source.print_line2_taxpayer_contributions ?? 0),
+      ) ||
+      hsa.line44_taxable_distributions !==
+        (source.print_line16_taxable ?? 0)
+    ) {
+      throw new Error(`Form 5329 ${owner} HSA source does not reconcile to Form 8889`);
+    }
   }
 }
 

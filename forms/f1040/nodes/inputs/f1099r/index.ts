@@ -18,7 +18,7 @@ import {
   type Form8606Input,
   taxableTraditionalDistribution,
 } from "../../intermediate/forms/form8606/index.ts";
-import { TS, tsSchema } from "../../types.ts";
+import { tsSchema } from "../../types.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../config/index.ts";
 
@@ -229,6 +229,9 @@ export const itemSchema = z.object({
 
   // Box 8: Other
   box8_other: z.number().nonnegative().optional(),
+  // Percentage printed alongside box 8's annuity actuarial value. This can
+  // differ from box 9a and is required for a shared Form 4972 distribution.
+  box8_pct_total: z.number().min(0).max(100).optional(),
 
   // Box 9a: Percentage of total distribution
   box9a_pct_total: z.number().min(0).max(100).optional(),
@@ -259,6 +262,9 @@ export const itemSchema = z.object({
   // Rollover treatment dropdown
   rollover_code: z.nativeEnum(RolloverCode).optional(),
   partial_rollover_amount: z.number().nonnegative().optional(),
+  // Code G also covers designated Roth employer contributions. A confirmed
+  // direct-rollover fact is needed before checking Form 1040 line 5c(1).
+  direct_rollover_confirmed: z.boolean().optional(),
 
   // Disability flags
   disability_flag: z.boolean().optional(),
@@ -308,8 +314,34 @@ export const inputSchema = z.object({
 type R1099Item = z.infer<typeof itemSchema>;
 type R1099Items = R1099Item[];
 
+// Form 1040 line 5c(1) follows a payer-reported pension/plan direct rollover,
+// not an IRA distribution, an excluded Form 4972 distribution, or a disability
+// payment reported as wages. Code G can have a taxable Roth portion in box 2a.
+export function isPensionDirectRollover(item: R1099Item): boolean {
+  return item.box7_distribution_code === DistributionCode.CodeG &&
+    item.direct_rollover_confirmed === true &&
+    item.box7_ira_simple_indicator !== true &&
+    item.box1_gross_distribution > 0 &&
+    item.no_distribution_received !== true &&
+    item.exclude_4972 !== true &&
+    item.exclude_8606_roth !== true &&
+    !(item.disability_flag === true && item.disability_as_wages === true);
+}
+
 // Cross-field validation for a single item
 function validateItem(item: R1099Item): void {
+  if (item.exclude_4972 === true && item.no_distribution_received === true) {
+    throw new Error(
+      "Form 4972 election conflicts with Form 1099-R no_distribution_received",
+    );
+  }
+  if (
+    item.no_distribution_received !== true &&
+    EARLY_DIST_CODES.has(item.box7_distribution_code) &&
+    item.ts === undefined
+  ) {
+    throw new Error("Form 1099-R early distribution needs its Form 5329 owner");
+  }
   const cap3 = item.box3_capital_gain ?? 0;
   const taxable = item.box2a_taxable_amount ?? item.box1_gross_distribution;
   if (cap3 > taxable) {
@@ -481,11 +513,13 @@ function form5329Outputs(items: R1099Items): NodeOutput[] {
       ? taxableTraditionalDistribution(form8606PartIInput(item))
       : item.box2a_taxable_amount ?? item.box1_gross_distribution;
     return output(form5329, {
-      ...(item.box7_distribution_code === "S"
-        ? { simple_ira_early_distribution: taxable }
-        : { early_distribution: taxable }),
-      distribution_code: item.box7_distribution_code as string,
-      subject_ts: item.ts ?? TS.T,
+      owner_entries: [{
+        owner: item.ts!,
+        ...(item.box7_distribution_code === "S"
+          ? { simple_ira_early_distribution: taxable }
+          : { early_distribution: taxable }),
+        distribution_code: item.box7_distribution_code as string,
+      }],
     });
   });
 }
@@ -497,11 +531,14 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
   const lumpItems = activeItems(items).filter(
     (item) => item.exclude_4972 === true,
   );
+  if (lumpItems.length > 1) {
+    throw new Error(
+      "Form 4972 needs plan-participant identity and separate forms for multiple elected Form 1099-R distributions",
+    );
+  }
   return lumpItems.map((item) => {
-    if (item.box9a_pct_total !== undefined && item.box9a_pct_total < 100) {
-      throw new Error(
-        "Form 4972 election with multiple recipients needs the distribution-share worksheet; a partial box 9a share is not supported",
-      );
+    if (item.box9a_pct_total === 0) {
+      throw new Error("Form 4972 box 9a recipient share must be positive");
     }
     if (item.box2a_taxable_amount === undefined) {
       throw new Error(
@@ -510,6 +547,9 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
     }
     return output(form4972, {
       lump_sum_amount: item.box2a_taxable_amount,
+      ...(item.box9a_pct_total !== undefined && item.box9a_pct_total < 100
+        ? { recipient_share_pct: item.box9a_pct_total }
+        : {}),
       ...(item.ts !== undefined ? { recipient: item.ts } : {}),
       ...(item.box3_capital_gain !== undefined
         ? { capital_gain_amount: item.box3_capital_gain }
@@ -517,6 +557,9 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
       ...(item.box6_nua !== undefined ? { box6_nua: item.box6_nua } : {}),
       ...(item.box8_other !== undefined
         ? { annuity_actuarial_value: item.box8_other }
+        : {}),
+      ...(item.box8_pct_total !== undefined
+        ? { annuity_share_pct: item.box8_pct_total }
         : {}),
     });
   });
@@ -595,6 +638,9 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
       ...disWagesFields,
       ...withholdingFields,
     };
+    if (r1099s.some(isPensionDirectRollover)) {
+      f1040Fields.line5c_pension_rollover = true;
+    }
     if (Object.keys(f1040Fields).length > 0) {
       outputs.push(
         this.outputNodes.output(

@@ -21,6 +21,7 @@ function minimalIraItem(overrides: Partial<Item> = {}): Item {
     box1_gross_distribution: 10000,
     box7_distribution_code: DistributionCode.Code7,
     box7_ira_simple_indicator: true,
+    ts: TS.T,
     ...overrides,
   };
 }
@@ -32,6 +33,7 @@ function minimalPensionItem(overrides: Partial<Item> = {}): Item {
     box1_gross_distribution: 10000,
     box7_distribution_code: DistributionCode.Code7,
     box7_ira_simple_indicator: false,
+    ts: TS.T,
     ...overrides,
   };
 }
@@ -160,13 +162,26 @@ Deno.test("f1099r.compute: distribution code 1 routes to form5329 with exact amo
     box7_distribution_code: DistributionCode.Code1,
   })]);
   const form5329Out = result.outputs.find((o) => o.nodeType === "form5329");
-  const f5329Fields = form5329Out!.fields as Record<string, unknown>;
+  const f5329Fields =
+    (form5329Out!.fields.owner_entries as Array<Record<string, unknown>>)[0]!;
   assertEquals(f5329Fields.early_distribution, 15000);
   assertEquals(f5329Fields.distribution_code, "1");
   // Code 1 still routes to income lines (IRA taxable = 15000)
   const input = f1040Input(result);
   assertEquals(input.line4a_ira_gross, 15000);
   assertEquals(input.line4b_ira_taxable, 15000);
+});
+
+Deno.test("f1099r.compute: early distribution without an owner fails closed", () => {
+  assertThrows(
+    () =>
+      compute([minimalIraItem({
+        box7_distribution_code: DistributionCode.Code1,
+        ts: undefined,
+      })]),
+    Error,
+    "Form 5329 owner",
+  );
 });
 
 Deno.test("f1099r.compute: code 1 IRA with basis sends the Form 8606 taxable amount to form5329", () => {
@@ -181,7 +196,8 @@ Deno.test("f1099r.compute: code 1 IRA with basis sends the Form 8606 taxable amo
   // so line 15c taxable = 20,000 - 5,000 = 15,000. Form 5329 line 1 takes the amount
   // "includible in income", which is that 15,000, not the 20,000 gross.
   const form5329Out = result.outputs.find((o) => o.nodeType === "form5329");
-  const f5329Fields = form5329Out!.fields as Record<string, unknown>;
+  const f5329Fields =
+    (form5329Out!.fields.owner_entries as Array<Record<string, unknown>>)[0]!;
   assertEquals(f5329Fields.early_distribution, 15000);
   assertEquals(f5329Fields.distribution_code, "1");
 });
@@ -197,7 +213,8 @@ Deno.test("f1099r.compute: code 1 IRA fully covered by basis sends 0 to form5329
   // Basis covers the whole distribution, so Form 8606 line 15c is 0 and nothing is
   // includible in income for the 10% additional tax.
   const form5329Out = result.outputs.find((o) => o.nodeType === "form5329");
-  const f5329Fields = form5329Out!.fields as Record<string, unknown>;
+  const f5329Fields =
+    (form5329Out!.fields.owner_entries as Array<Record<string, unknown>>)[0]!;
   assertEquals(f5329Fields.early_distribution, 0);
 });
 
@@ -255,19 +272,32 @@ Deno.test("f1099r.compute: explicit Form 4972 choice carries boxes 2a, 3, and 6"
   assertEquals(fields.recipient, TS.T);
 });
 
-Deno.test("f1099r.compute: Form 4972 rejects a partial multiple-recipient share", () => {
-  assertThrows(
-    () =>
-      compute([minimalPensionItem({
-        box1_gross_distribution: 100_000,
-        box2a_taxable_amount: 80_000,
-        box9a_pct_total: 50,
-        exclude_4972: true,
-        ts: TS.T,
-      })]),
-    Error,
-    "multiple recipients needs the distribution-share worksheet",
-  );
+Deno.test("f1099r.compute: Form 4972 retains a partial box 9a share", () => {
+  const result = compute([minimalPensionItem({
+    box1_gross_distribution: 20_000,
+    box2a_taxable_amount: 20_000,
+    box9a_pct_total: 50,
+    exclude_4972: true,
+    ts: TS.T,
+  })]);
+  const form4972Out = result.outputs.find((o) => o.nodeType === "form4972");
+  assertEquals(form4972Out?.fields.recipient_share_pct, 50);
+});
+
+Deno.test("f1099r.compute: Form 4972 retains the separate box 8 percentage", () => {
+  const result = compute([minimalPensionItem({
+    box1_gross_distribution: 20_000,
+    box2a_taxable_amount: 20_000,
+    box8_other: 2_000,
+    box8_pct_total: 25,
+    box9a_pct_total: 50,
+    exclude_4972: true,
+    ts: TS.T,
+  })]);
+  const fields = result.outputs.find((o) => o.nodeType === "form4972")?.fields;
+  assertEquals(fields?.annuity_actuarial_value, 2_000);
+  assertEquals(fields?.annuity_share_pct, 25);
+  assertEquals(fields?.recipient_share_pct, 50);
 });
 
 Deno.test("f1099r.compute: Form 4972 accepts an explicit full distribution share", () => {
@@ -280,6 +310,41 @@ Deno.test("f1099r.compute: Form 4972 accepts an explicit full distribution share
   })]);
   const form4972Out = result.outputs.find((o) => o.nodeType === "form4972");
   assertEquals(form4972Out?.fields.lump_sum_amount, 80_000);
+});
+
+Deno.test("f1099r.compute: multiple elected Form 4972 distributions need participant identity", () => {
+  const elected = minimalPensionItem({
+    box1_gross_distribution: 80_000,
+    box2a_taxable_amount: 80_000,
+    exclude_4972: true,
+    ts: TS.T,
+  });
+  for (const secondRecipient of [TS.T, TS.S]) {
+    assertThrows(
+      () =>
+        compute([elected, {
+          ...elected,
+          payer_name: "Second Plan",
+          payer_ein: "11-2233445",
+          ts: secondRecipient,
+        }]),
+      Error,
+      "needs plan-participant identity and separate forms",
+    );
+  }
+});
+
+Deno.test("f1099r.compute: an elected Form 4972 source cannot also deny receipt", () => {
+  assertThrows(
+    () =>
+      compute([minimalPensionItem({
+        box2a_taxable_amount: 80_000,
+        exclude_4972: true,
+        no_distribution_received: true,
+      })]),
+    Error,
+    "election conflicts with Form 1099-R no_distribution_received",
+  );
 });
 
 Deno.test("f1099r.compute: distribution code 7 does not route to form4972", () => {
@@ -716,7 +781,8 @@ Deno.test("f1099r.compute: distribution code 1 uses gross when box2a absent for 
     box7_distribution_code: DistributionCode.Code1,
   })]);
   const form5329 = result.outputs.find((o) => o.nodeType === "form5329");
-  const input = form5329!.fields as Record<string, unknown>;
+  const input =
+    (form5329!.fields.owner_entries as Array<Record<string, unknown>>)[0]!;
   assertEquals(input.early_distribution, 7000);
 });
 
@@ -871,10 +937,39 @@ Deno.test("f1099r.compute: code G without box 2a stays a non-taxable direct roll
   const result = compute([minimalPensionItem({
     box1_gross_distribution: 20_300,
     box7_distribution_code: DistributionCode.CodeG,
+    direct_rollover_confirmed: true,
   })]);
   const input = f1040Input(result);
   assertEquals(input.line5a_pension_gross, undefined);
   assertEquals(input.line5b_pension_taxable, 0);
+  assertEquals(input.line5c_pension_rollover, true);
+});
+
+Deno.test("f1099r.compute: taxable pension code G checks line 5c without changing box 2a income", () => {
+  const input = f1040Input(compute([minimalPensionItem({
+    box1_gross_distribution: 20_300,
+    box2a_taxable_amount: 10_300,
+    box7_distribution_code: DistributionCode.CodeG,
+    direct_rollover_confirmed: true,
+  })]));
+  assertEquals(input.line5a_pension_gross, 20_300);
+  assertEquals(input.line5b_pension_taxable, 10_300);
+  assertEquals(input.line5c_pension_rollover, true);
+});
+
+Deno.test("f1099r.compute: IRA code G and pension code 7 do not check pension rollover", () => {
+  const ira = f1040Input(compute([minimalIraItem({
+    box7_distribution_code: DistributionCode.CodeG,
+    direct_rollover_confirmed: true,
+  })]));
+  const pension = f1040Input(compute([minimalPensionItem()]));
+  const unconfirmed = f1040Input(compute([minimalPensionItem({
+    box7_distribution_code: DistributionCode.CodeG,
+    box2a_taxable_amount: 10_000,
+  })]));
+  assertEquals(ira.line5c_pension_rollover, undefined);
+  assertEquals(pension.line5c_pension_rollover, undefined);
+  assertEquals(unconfirmed.line5c_pension_rollover, undefined);
 });
 
 Deno.test("f1099r.compute: code S rollover produces zero taxable", () => {
@@ -894,7 +989,8 @@ Deno.test("f1099r.compute: code S taxable SIMPLE IRA distribution reaches the 25
     box2a_taxable_amount: 8_000,
     box7_distribution_code: DistributionCode.CodeS,
   })]);
-  const fields = result.outputs.find((o) => o.nodeType === "form5329")?.fields;
+  const fields = (result.outputs.find((o) => o.nodeType === "form5329")
+    ?.fields.owner_entries as Array<Record<string, unknown>> | undefined)?.[0];
   assertEquals(fields?.simple_ira_early_distribution, 8_000);
   assertEquals(fields?.early_distribution, undefined);
 });
@@ -1093,6 +1189,7 @@ Deno.test("f1099r.compute: smoke test — IRA + pension + withholding + QCD + PS
   assertEquals(input.line25b_withheld_1099, 14600);
 
   // form5329 early distribution = 15000
-  const f5329Fields = form5329!.fields as Record<string, unknown>;
+  const f5329Fields =
+    (form5329!.fields.owner_entries as Array<Record<string, unknown>>)[0]!;
   assertEquals(f5329Fields.early_distribution, 15000);
 });

@@ -15,10 +15,8 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 // W-2 wages and UBIA of the combined group are compared against the
 // combined QBI of the group.
 //
-// This node is informational: it captures the aggregation groupings
-// declared on the BAN screen. The actual §199A limitation computation
-// is performed by form8995a. Form 8995-A Schedule B (Aggregation) must
-// be attached when this election is made.
+// This node forwards the election to Form 8995-A. Until Schedule B has a
+// source-backed filing route, Form 8995-A rejects it rather than dropping it.
 //
 // IRS Form 8995-A Schedule B: https://www.irs.gov/pub/irs-pdf/f8995as.pdf
 // Reg. §1.199A-4 — Aggregation of trades or businesses
@@ -32,7 +30,7 @@ const aggregationGroupSchema = z.object({
   // Names of the individual businesses included in this group.
   // Each business must separately qualify under §199A (must be a QTB, not an SSTB
   // above the threshold, and must meet the aggregation criteria in Reg. §1.199A-4(b)).
-  business_names: z.array(z.string().min(1)).min(1),
+  business_names: z.array(z.string().min(1)).min(2),
 
   // True when this group is aggregated to meet the W-2 wage / UBIA limitation
   // (the most common aggregation purpose per IRC §199A(b)(1)).
@@ -60,11 +58,11 @@ class QbiAggregationNode extends TaxNode<typeof inputSchema> {
   compute(_ctx: NodeContext, rawInput: QbiAggregationInput): NodeResult {
     const input = inputSchema.parse(rawInput);
 
-    // Aggregation data is captured at the engine level. No financial output
-    // is emitted from this node — the aggregation election is recorded in
-    // the taxpayer's return and referenced by form8995a during computation.
-    void input;
-    return { outputs: [] };
+    return {
+      outputs: [this.outputNodes.output(form8995a, {
+        aggregation_groups: input.aggregation_groups,
+      })],
+    };
   }
 }
 

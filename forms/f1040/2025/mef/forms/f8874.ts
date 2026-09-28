@@ -54,7 +54,7 @@ function filedForm8874K1Credits(
   ];
 }
 
-function reconciledForm8874K1Line2(
+export function reconciledForm8874K1Line2(
   context: MefBuildContext | undefined,
 ): number {
   const pending = context?.pending;

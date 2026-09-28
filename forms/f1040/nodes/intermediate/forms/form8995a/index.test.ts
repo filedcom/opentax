@@ -21,7 +21,7 @@ Deno.test("bounded source: one identified non-SSTB business retains its filing f
     business_w2_wages: 20_000,
     business_ubia: 200_000,
     one_non_sstb_business_confirmed: true,
-    no_aggregation_or_patron_status_confirmed: true,
+    no_aggregation_confirmed: true,
     no_reit_ptp_or_loss_carryforward_confirmed: true,
     qualified_dividends_zero_confirmed: true,
     qbi_wages_ubia_sources_confirmed: true,
@@ -52,15 +52,17 @@ Deno.test("bounded source: one identified non-SSTB business retains its filing f
 
 // ── Input validation ─────────────────────────────────────────────────────────
 
-Deno.test("validation: accepts negative qbi (net loss — produces no deduction)", () => {
-  // Negative QBI = net loss; no deduction but not a validation error
-  const result = compute({
-    filing_status: FilingStatus.Single,
-    taxable_income: 300_000,
-    qbi: -1000,
-  });
-  assertEquals(result.outputs.length, 1);
-  assertEquals(findOutput(result, "form8995a")?.fields.qbi, -1_000);
+Deno.test("Schedule C rejects current-year QBI loss before routing", () => {
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.Single,
+        taxable_income: 300_000,
+        qbi: -1000,
+      }),
+    Error,
+    "Schedule C",
+  );
 });
 
 Deno.test("validation: rejects negative w2_wages", () => {
@@ -219,100 +221,214 @@ Deno.test("phase-in: MFJ 50% through range ($444,600) — partial limitation", (
   assertEquals(out?.fields.line13_qbi_deduction, 40_000);
 });
 
-// ── SSTB phase-out ────────────────────────────────────────────────────────────
+// ── Required Schedule A ──────────────────────────────────────────────────────
 
-Deno.test("SSTB: fully phased out above range (single > $247,300)", () => {
-  // TI = $350,000 (above $247,300) → SSTB entirely excluded
-  // Only SSTB income provided → no QBI deduction
-  const result = compute({
-    filing_status: FilingStatus.Single,
-    taxable_income: 350_000,
-    sstb_qbi: 200_000,
-    sstb_w2_wages: 50_000,
-    sstb_unadjusted_basis: 500_000,
-  });
-  assertEquals(findOutput(result, "f1040"), undefined);
+Deno.test("Schedule A rejects fully phased-out SSTB source", () => {
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.Single,
+        taxable_income: 350_000,
+        sstb_qbi: 200_000,
+        sstb_w2_wages: 50_000,
+        sstb_unadjusted_basis: 500_000,
+      }),
+    Error,
+    "Schedule A",
+  );
 });
 
-Deno.test("SSTB: partially phased out in range (single at $222,300 — 50% through)", () => {
-  // ratio = 0.5 → adjusted_sstb_qbi = 100,000 × 0.5 = 50,000
-  // adjusted_sstb_w2 = 30,000 × 0.5 = 15,000
-  // net_qbi = 50,000; 20% = 10,000
-  // W-2 limit (full limit since ratio=1 after SSTB adjustment? no — phase-in of limitation):
-  // ratio=0.5, wage_limit = 50% × 15,000 = 7,500
-  // phase_in_amount = 0.5 × (10,000 - 7,500) = 1,250
-  // qbi_component = 10,000 - 1,250 = 8,750
-  // income cap = 20% × 222,300 = 44,460 → not binding
-  const result = compute({
-    filing_status: FilingStatus.Single,
-    taxable_income: 222_300,
-    sstb_qbi: 100_000,
-    sstb_w2_wages: 30_000,
-    sstb_unadjusted_basis: 0,
-  });
-  const out = findOutput(result, "f1040");
-  assertEquals(out?.fields.line13_qbi_deduction, 8_750);
+Deno.test("Schedule A rejects an SSTB within the phase-in range", () => {
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.Single,
+        taxable_income: 222_300,
+        sstb_qbi: 100_000,
+        sstb_w2_wages: 30_000,
+        sstb_unadjusted_basis: 0,
+      }),
+    Error,
+    "Schedule A",
+  );
 });
 
-Deno.test("SSTB: below threshold — not phased out, treated like regular QBI", () => {
-  // Below threshold → no SSTB phase-out, no wage limitation
-  // sstb_qbi = 50,000 → 20% = 10,000; income cap = 20% × 100,000 = 20,000
-  const result = compute({
-    filing_status: FilingStatus.Single,
-    taxable_income: 100_000,
-    sstb_qbi: 50_000,
-    sstb_w2_wages: 500,
-  });
-  const out = findOutput(result, "f1040");
-  assertEquals(out?.fields.line13_qbi_deduction, 10_000);
+Deno.test("Schedule A source cannot use Form 8995-A below threshold", () => {
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.Single,
+        taxable_income: 100_000,
+        sstb_qbi: 50_000,
+        sstb_w2_wages: 500,
+      }),
+    Error,
+    "Schedule A",
+  );
 });
 
-// ── Non-SSTB not affected by SSTB rules ──────────────────────────────────────
+// ── Mixed qualified businesses ───────────────────────────────────────────────
 
-Deno.test("non-SSTB unaffected: SSTB fully phased out but non-SSTB QBI remains", () => {
-  // TI = $350,000 (above single $247,300) → SSTB phased out entirely
-  // Non-SSTB QBI = 100,000 → 20% = 20,000
-  // W-2 wages (non-SSTB) = 50,000 → 50% = 25,000; full limit applies
-  // deduction = min(20,000, 25,000) = 20,000
-  const result = compute({
-    filing_status: FilingStatus.Single,
-    taxable_income: 350_000,
-    qbi: 100_000,
-    w2_wages: 50_000,
-    sstb_qbi: 200_000,
-    sstb_w2_wages: 80_000,
-  });
-  const out = findOutput(result, "f1040");
-  assertEquals(out?.fields.line13_qbi_deduction, 20_000);
+Deno.test("Schedule A rejects a fully phased-out SSTB beside non-SSTB QBI", () => {
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.Single,
+        taxable_income: 350_000,
+        qbi: 100_000,
+        w2_wages: 50_000,
+        sstb_qbi: 200_000,
+        sstb_w2_wages: 80_000,
+      }),
+    Error,
+    "Schedule A",
+  );
 });
 
 // ── QBI loss carryforward ─────────────────────────────────────────────────────
 
-Deno.test("carryforward: qbi_loss_carryforward reduces net QBI", () => {
-  // TI = $300,000 (above threshold → full limit)
-  // QBI = 100,000; loss_carryforward = -20,000 → net = 80,000
-  // 20% = 16,000; W-2 wages = 60,000 → 50% = 30,000 → limit = 30,000
-  // deduction = min(16,000, 30,000) = 16,000
-  const result = compute({
+Deno.test("Schedule C rejects prior-year QBI loss before routing", () => {
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.Single,
+        taxable_income: 300_000,
+        qbi: 100_000,
+        w2_wages: 60_000,
+        qbi_loss_carryforward: -20_000,
+      }),
+    Error,
+    "Schedule C",
+  );
+});
+
+Deno.test("Schedule C rejects excess prior loss even with zero deduction", () => {
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.Single,
+        taxable_income: 300_000,
+        qbi: 30_000,
+        w2_wages: 60_000,
+        qbi_loss_carryforward: -50_000,
+      }),
+    Error,
+    "Schedule C",
+  );
+});
+
+Deno.test("Schedule B rejects an aggregation election before routing", () => {
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.Single,
+        taxable_income: 300_000,
+        qbi: 100_000,
+        w2_wages: 60_000,
+        aggregation_groups: [{
+          group_name: "Group 1",
+          business_names: ["Shop A", "Shop B"],
+          combined_for_limitation: true,
+        }],
+      }),
+    Error,
+    "Schedule B",
+  );
+});
+
+Deno.test("Schedule D rejects an affirmative specified cooperative patron", () => {
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.Single,
+        taxable_income: 300_000,
+        qbi: 100_000,
+        w2_wages: 60_000,
+        patron_of_specified_cooperative: true,
+      }),
+    Error,
+    "Schedule D",
+  );
+});
+
+Deno.test("Schedule D patron source emits a paired companion and reduced Form 1040 amount", () => {
+  const base = {
+    filing_status: FilingStatus.Single,
+    taxable_income: 300_000,
+    net_capital_gain: 0,
+    qbi: 100_000,
+    w2_wages: 40_000,
+    unadjusted_basis: 0,
+    patron_of_specified_cooperative: true,
+    business_filing_details: {
+      business_name: "Smith Farm",
+      ein: "123456789",
+      business_qbi: 100_000,
+      business_w2_wages: 40_000,
+      business_ubia: 0,
+      one_non_sstb_business_confirmed: true,
+      no_aggregation_confirmed: true,
+      no_reit_ptp_or_loss_carryforward_confirmed: true,
+      qualified_dividends_zero_confirmed: true,
+      qbi_wages_ubia_sources_confirmed: true,
+      taxable_income_before_qbi_confirmed: true,
+    },
+    patron_filing_details: {
+      source_1099patr: {
+        payer_name: "Farm Coop", payer_tin: "987654321",
+        box7_qualified_payments: 60_000,
+        box6_section199ag_deduction: 0,
+        box13_specified_cooperative: true,
+        trade_or_business: true,
+      },
+      qbi_allocable_to_qualified_payments: 50_000,
+      w2_wages_allocable_to_qualified_payments: 10_000,
+      one_cooperative_confirmed: true,
+      allocation_worksheet_reference: "farm-qbi-allocation-2025",
+      allocation_worksheet_reviewed_by: "Tax Reviewer",
+      allocation_worksheet_review_date: "2026-01-30",
+    },
+  };
+  // Parent line 13 = min(20,000, 20,000), Schedule D line 6 = min(4,500, 5,000).
+  const result = compute(base);
+  assertEquals(findOutput(result, "f1040")?.fields.line13_qbi_deduction, 15_500);
+  assertEquals(findOutput(result, "form8995a")?.fields, inputSchema.parse(base));
+  assertEquals(findOutput(result, "form8995a_schedule_d")?.fields, inputSchema.parse(base));
+});
+
+Deno.test("Schedule D rejects allocations beyond the identified business", () => {
+  assertThrows(() => compute({
     filing_status: FilingStatus.Single,
     taxable_income: 300_000,
     qbi: 100_000,
-    w2_wages: 60_000,
-    qbi_loss_carryforward: -20_000,
-  });
-  const out = findOutput(result, "f1040");
-  assertEquals(out?.fields.line13_qbi_deduction, 16_000);
-});
-
-Deno.test("carryforward: loss exceeds current QBI — no deduction", () => {
-  const result = compute({
-    filing_status: FilingStatus.Single,
-    taxable_income: 300_000,
-    qbi: 30_000,
-    w2_wages: 60_000,
-    qbi_loss_carryforward: -50_000,
-  });
-  assertEquals(findOutput(result, "f1040"), undefined);
+    w2_wages: 40_000,
+    unadjusted_basis: 0,
+    patron_of_specified_cooperative: true,
+    business_filing_details: {
+      business_name: "Smith Farm", ein: "123456789",
+      business_qbi: 100_000, business_w2_wages: 40_000, business_ubia: 0,
+      one_non_sstb_business_confirmed: true, no_aggregation_confirmed: true,
+      no_reit_ptp_or_loss_carryforward_confirmed: true,
+      qualified_dividends_zero_confirmed: true,
+      qbi_wages_ubia_sources_confirmed: true,
+      taxable_income_before_qbi_confirmed: true,
+    },
+    patron_filing_details: {
+      source_1099patr: {
+        payer_name: "Farm Coop", payer_tin: "987654321",
+        box7_qualified_payments: 60_000,
+        box6_section199ag_deduction: 0,
+        box13_specified_cooperative: true,
+        trade_or_business: true,
+      },
+      qbi_allocable_to_qualified_payments: 100_001,
+      w2_wages_allocable_to_qualified_payments: 10_000,
+      one_cooperative_confirmed: true,
+      allocation_worksheet_reference: "farm-qbi-allocation-2025",
+      allocation_worksheet_reviewed_by: "Tax Reviewer",
+      allocation_worksheet_review_date: "2026-01-30",
+    },
+  }), Error, "allocations exceed");
 });
 
 // ── Taxable income overall cap ────────────────────────────────────────────────
@@ -399,49 +515,24 @@ Deno.test("routing: no QBI activity — no outputs", () => {
   assertEquals(result.outputs.length, 0);
 });
 
-// ── Smoke test ────────────────────────────────────────────────────────────────
+// ── Mixed unsupported source ────────────────────────────────────────────────
 
-Deno.test("smoke: mixed QBI + SSTB + REIT, above threshold, partial phase-in MFJ", () => {
-  // MFJ threshold = $394,600; TI = $444,600 → ratio = 0.5
-  //
-  // Non-SSTB: qbi = 80,000; w2 = 40,000; ubia = 200,000
-  // SSTB: sstb_qbi = 60,000; sstb_w2 = 20,000; sstb_ubia = 0
-  //   → adjusted_sstb_qbi = 60,000 × 0.5 = 30,000
-  //   → adjusted_sstb_w2 = 20,000 × 0.5 = 10,000
-  //
-  // total_qbi = 80,000 + 30,000 = 110,000 (no carryforward)
-  // 20% × 110,000 = 22,000
-  // total_w2 = 40,000 + 10,000 = 50,000
-  // total_ubia = 200,000 + 0 = 200,000
-  // wage_limit_a = 50% × 50,000 = 25,000
-  // wage_limit_b = 25% × 50,000 + 2.5% × 200,000 = 12,500 + 5,000 = 17,500
-  // applicable_limit = max(25,000, 17,500) = 25,000
-  // phase_in_amount = 0.5 × (22,000 - 25,000) = 0.5 × (-3,000) = -1,500 → max(0, -1500) = 0
-  // qbi_component = 22,000 - 0 = 22,000
-  //
-  // REIT: 20,000 + (-5,000) = 15,000 → 20% = 3,000
-  //
-  // total_before_cap = 22,000 + 3,000 = 25,000
-  // income_cap = 20% × (444,600 - 0) = 88,920 → not binding
-  // final_deduction = 25,000
-  const result = compute({
-    filing_status: FilingStatus.MFJ,
-    taxable_income: 444_600,
-    qbi: 80_000,
-    w2_wages: 40_000,
-    unadjusted_basis: 200_000,
-    sstb_qbi: 60_000,
-    sstb_w2_wages: 20_000,
-    sstb_unadjusted_basis: 0,
-    line6_sec199a_dividends: 20_000,
-    reit_loss_carryforward: -5_000,
-  });
-  const out = findOutput(result, "f1040");
-  assertEquals(out !== undefined, true);
-  assertEquals(out?.fields.line13_qbi_deduction, 25_000);
-  assertEquals(
-    findOutput(result, "standard_deduction")?.fields.qbi_deduction,
-    25_000,
+Deno.test("Schedule A rejects mixed SSTB before any deduction output", () => {
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.MFJ,
+        taxable_income: 444_600,
+        qbi: 80_000,
+        w2_wages: 40_000,
+        unadjusted_basis: 200_000,
+        sstb_qbi: 60_000,
+        sstb_w2_wages: 20_000,
+        sstb_unadjusted_basis: 0,
+        line6_sec199a_dividends: 20_000,
+        reit_loss_carryforward: -5_000,
+      }),
+    Error,
+    "Schedule A",
   );
-  assertEquals(result.outputs.length, 3);
 });

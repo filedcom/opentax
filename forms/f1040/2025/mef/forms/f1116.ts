@@ -5,12 +5,27 @@ import {
   ForeignTaxCreditMethod,
   ForeignTaxKind,
   IncomeCategory,
+  type RedeterminationDisclosure,
 } from "../../../nodes/intermediate/forms/form_1116/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
-import { scheduleBFieldsSchema } from "./f1116_schedule_b.ts";
+import {
+  scheduleBFieldsSchema,
+  scheduleBPresentation,
+} from "./f1116_schedule_b.ts";
+import {
+  alternativeCompensationStatementId,
+  assertAlternativeCompensationSources,
+} from "./f1116_alternative_compensation_source.ts";
+import {
+  buildConversionExplanation,
+  conversionExplanationAttachmentId,
+} from "./f1116_conversion_explanation.ts";
+import { inputSchema as k1PartnershipInputSchema } from "../../../nodes/inputs/k1_partnership/index.ts";
+import { inputSchema as k1SCorpInputSchema } from "../../../nodes/inputs/k1_s_corp/index.ts";
 
 interface Fields {
   category_summaries?: readonly CategorySummary[];
+  foreign_tax_redeterminations?: readonly RedeterminationDisclosure[];
   total_income?: number;
   worldwide_gross_income?: number;
   general_deductions?: number;
@@ -206,6 +221,8 @@ function categoryXml(
   partIV: string[],
   nextDirectExpenseStatementId: () => string | undefined,
   otherDeductionsStatementId?: string,
+  alternativeCompensationStatementId?: string,
+  conversionExplanationId?: string,
 ): string {
   const categoryTag = CATEGORY_INDICATOR[summary.category];
   if (!categoryTag) {
@@ -257,7 +274,8 @@ function categoryXml(
   const line21 = Math.round(usTax * Number(line19));
   const carryover = summary.priorYearCarryover ?? 0;
   const line24 = Math.min(
-    Math.round(summary.foreignTaxPaid) + carryover,
+    Math.round(summary.foreignTaxPaid - (summary.foreignTaxReduction ?? 0)) +
+      carryover,
     line21,
   );
   if (summary.allowedCredit !== line24) {
@@ -265,63 +283,95 @@ function categoryXml(
       "Form 1116 category credit differs from its limitation lines",
     );
   }
-  return elements("IRS1116", [
-    element(categoryTag, "X"),
-    ...sourceGroups(summary).map((items, groupIndex, groups) => {
-      const country = items[0].irs_country_code;
-      const firstGroupForCountry = groups.findIndex((group) =>
-        group[0].irs_country_code === country
-      ) === groupIndex;
-      const vehicleInterestAmount = firstGroupForCountry
-        ? summary.vehicleInterestByCountry?.find((row) =>
-          row.irsCountryCode === country
-        )?.amount ?? 0
-        : 0;
-      return sourceXml(
-        items,
-        worldwideGrossIncome,
-        generalDeductions,
-        standardOrItemizedDeduction,
-        otherDeductions,
-        vehicleInterestAmount,
-        items.some((item) => (item.directly_allocable_deductions ?? 0) > 0)
-          ? nextDirectExpenseStatementId()
-          : undefined,
-        otherDeductionsStatementId,
-      );
-    }),
-    element("TotalForeignGrossIncomeAmt", summary.includedForeignIncome),
-    deductions > 0 ? element("TotalDeductionOrLossAmt", deductions) : "",
-    element("NetForeignTaxableIncomeLossAmt", summary.foreignTaxableIncome),
-    element(
-      method === ForeignTaxCreditMethod.Accrued
-        ? "ForeignTaxesAccruedCreditInd"
-        : "ForeignTaxesPaidCreditInd",
-      "X",
-    ),
-    element("TotalForeignTaxesPaidOrAccrAmt", summary.foreignTaxPaid),
-    carryover > 0 ? element("ForeignTaxCrCarrybackOrOverAmt", carryover) : "",
-    element("ForeignGrossTaxPaidOrAccrAmt", summary.foreignTaxPaid),
-    element(
-      "ForeignTaxAvailableForCrRedAmt",
-      summary.foreignTaxPaid + carryover,
-    ),
-    element("ForeignTaxableIncomeOrLossAmt", summary.foreignTaxableIncome),
-    element("ForeignNetTaxableIncomeAmt", summary.foreignTaxableIncome),
-    element("ForeignTxblIncomeAftrExemptAmt", worldwideTaxableIncome),
-    element("ForeignTxblIncomeAftrExemptRt", line19),
-    element("TaxFromTaxReturnAmt", usTax),
-    element("MaxAllowedForeignTaxCreditAmt", line21),
-    element("CreditLimitationAmt", line21),
-    element("GrossForeignTaxCreditAmt", line24),
-    ...partIV,
-  ]);
+  return elements(
+    "IRS1116",
+    [
+      element(categoryTag, "X"),
+      ...sourceGroups(summary).map((items, groupIndex, groups) => {
+        const country = items[0].irs_country_code;
+        const firstGroupForCountry = groups.findIndex((group) =>
+          group[0].irs_country_code === country
+        ) === groupIndex;
+        const vehicleInterestAmount = firstGroupForCountry
+          ? summary.vehicleInterestByCountry?.find((row) =>
+            row.irsCountryCode === country
+          )?.amount ?? 0
+          : 0;
+        return sourceXml(
+          items,
+          worldwideGrossIncome,
+          generalDeductions,
+          standardOrItemizedDeduction,
+          otherDeductions,
+          vehicleInterestAmount,
+          items.some((item) => (item.directly_allocable_deductions ?? 0) > 0)
+            ? nextDirectExpenseStatementId()
+            : undefined,
+          otherDeductionsStatementId,
+        );
+      }),
+      element("TotalForeignGrossIncomeAmt", summary.includedForeignIncome),
+      summary.items.some((item) => item.alternative_compensation_sourcing)
+        ? element("AltBasisCompensationSourceInd", "X", {
+          ...(alternativeCompensationStatementId
+            ? {
+              referenceDocumentId: alternativeCompensationStatementId,
+              referenceDocumentName: "AltBasisCompensationSourceStatement",
+            }
+            : {}),
+        })
+        : "",
+      deductions > 0 ? element("TotalDeductionOrLossAmt", deductions) : "",
+      element("NetForeignTaxableIncomeLossAmt", summary.foreignTaxableIncome),
+      element(
+        method === ForeignTaxCreditMethod.Accrued
+          ? "ForeignTaxesAccruedCreditInd"
+          : "ForeignTaxesPaidCreditInd",
+        "X",
+      ),
+      element("TotalForeignTaxesPaidOrAccrAmt", summary.foreignTaxPaid),
+      carryover > 0 ? element("ForeignTaxCrCarrybackOrOverAmt", carryover) : "",
+      element(
+        "ForeignGrossTaxPaidOrAccrAmt",
+        summary.foreignTaxPaid + carryover,
+      ),
+      (summary.foreignTaxReduction ?? 0) > 0
+        ? element("ForeignTaxReductionAmt", summary.foreignTaxReduction)
+        : "",
+      element(
+        "ForeignTaxAvailableForCrRedAmt",
+        summary.foreignTaxPaid + carryover -
+          (summary.foreignTaxReduction ?? 0),
+      ),
+      element("ForeignTaxableIncomeOrLossAmt", summary.foreignTaxableIncome),
+      element("ForeignNetTaxableIncomeAmt", summary.foreignTaxableIncome),
+      element("ForeignTxblIncomeAftrExemptAmt", worldwideTaxableIncome),
+      element("ForeignTxblIncomeAftrExemptRt", line19),
+      element("TaxFromTaxReturnAmt", usTax),
+      element("MaxAllowedForeignTaxCreditAmt", line21),
+      element("CreditLimitationAmt", line21),
+      element("GrossForeignTaxCreditAmt", line24),
+      ...partIV,
+    ],
+    conversionExplanationId
+      ? {
+        referenceDocumentId: conversionExplanationId,
+        referenceDocumentName:
+          "BinaryAttachment FinancialServicesActiveFinancingIncomeStatement ElectionToUseExchangeRateStatement ForeignAuditExplanationStatement IRS1116ScheduleB IRS1116ScheduleC",
+      }
+      : undefined,
+  );
 }
 
 function buildIRS1116(
   fields: Fields,
   context?: MefBuildContext,
 ): readonly string[] {
+  if (fields.foreign_tax_redeterminations !== undefined) {
+    throw new Error(
+      "Form 1116 foreign tax redetermination needs native Schedule C and amended-year handling",
+    );
+  }
   const rawSummaries = fields.category_summaries;
   if (!rawSummaries || rawSummaries.length === 0) {
     if (typeof fields.foreign_tax_paid === "number") {
@@ -332,6 +382,169 @@ function buildIRS1116(
   const summaries = rawSummaries.map((summary) =>
     categorySummarySchema.parse(summary)
   );
+  const k3Items = summaries.flatMap((summary) => summary.items).filter((item) =>
+    item.schedule_k3_line12_reduction !== undefined ||
+    item.partnership_k3_passive_interest !== undefined ||
+    item.s_corp_k3_passive_interest !== undefined
+  );
+  if (k3Items.length > 0) {
+    const k3SourceKeys = k3Items.map((item) => {
+      const partnership = item.partnership_k3_passive_interest;
+      const sCorp = item.s_corp_k3_passive_interest;
+      return partnership
+        ? `p:${partnership.partnership_ein}:${partnership.k3_source_document_reference}`
+        : `s:${sCorp?.corporation_ein}:${sCorp?.k3_source_document_reference}`;
+    });
+    if (new Set(k3SourceKeys).size !== k3SourceKeys.length) {
+      throw new Error(
+        "Form 1116 K-3 source cannot be credited twice",
+      );
+    }
+    const source = k1PartnershipInputSchema.safeParse(
+      context?.pending?.k1_partnership,
+    );
+    const partnerships = source.success ? source.data.k1_partnerships : [];
+    const sCorpSource = k1SCorpInputSchema.safeParse(
+      context?.pending?.k1_s_corp,
+    );
+    const sCorps = sCorpSource.success ? sCorpSource.data.k1_s_corps : [];
+    for (const item of k3Items) {
+      const sCorpK3 = item.s_corp_k3_passive_interest;
+      if (sCorpK3) {
+        const matches = sCorps.filter((sCorp) =>
+          sCorp.corporation_ein === sCorpK3.corporation_ein &&
+          sCorp.source_document_reference ===
+            sCorpK3.k1_source_document_reference &&
+          sCorp.schedule_k3_passive_interest?.k3_source_document_reference ===
+            sCorpK3.k3_source_document_reference
+        );
+        if (
+          item.partnership_k3_passive_interest !== undefined ||
+          matches.length !== 1 ||
+          item.tax_reported_on_1099 === true ||
+          item.income_category !== IncomeCategory.Passive ||
+          item.tax_kind !== ForeignTaxKind.Interest ||
+          item.tax_credit_method !== ForeignTaxCreditMethod.Paid ||
+          item.foreign_income_source_document_reference !==
+            sCorpK3.k3_source_document_reference ||
+          item.foreign_gross_income !==
+            sCorpK3.part_ii_section_1_line_6_passive_interest ||
+          item.foreign_gross_income !==
+            sCorpK3.part_ii_section_1_line_24_passive_total ||
+          item.foreign_tax_paid !==
+            sCorpK3.part_iii_section_3_line_1_foreign_tax ||
+          item.schedule_k3_line12_reduction?.amount !==
+            sCorpK3.part_iii_section_3_line_2_tax_reduction ||
+          item.schedule_k3_line12_reduction?.source_document_reference !==
+            sCorpK3.k3_source_document_reference ||
+          item.irs_country_code !== sCorpK3.irs_country_code ||
+          item.tax_paid_or_accrued_date !== sCorpK3.tax_paid_date ||
+          JSON.stringify(item.foreign_tax_currency) !==
+            JSON.stringify(sCorpK3.foreign_tax_currency) ||
+          matches[0].box4_interest !== item.foreign_gross_income ||
+          matches[0].box14_foreign_income !== item.foreign_gross_income ||
+          matches[0].box14_foreign_tax !== item.foreign_tax_paid ||
+          matches[0].box14_foreign_income_category !== IncomeCategory.Passive ||
+          matches[0].box14_foreign_tax_irs_country_code !==
+            item.irs_country_code ||
+          matches[0].box14_foreign_tax_paid_or_accrued_date !==
+            item.tax_paid_or_accrued_date ||
+          matches[0].box14_foreign_tax_kind !== ForeignTaxKind.Interest ||
+          matches[0].box14_foreign_tax_credit_method !==
+            ForeignTaxCreditMethod.Paid ||
+          JSON.stringify(matches[0].schedule_k3_passive_interest) !==
+            JSON.stringify(sCorpK3)
+        ) {
+          throw new Error(
+            "Form 1116 K-3 line 12 reduction needs the matching S-corporation K-1 and K-3 source",
+          );
+        }
+        continue;
+      }
+      const k3 = item.partnership_k3_passive_interest;
+      const matches = partnerships.filter((partnership) =>
+        k3 !== undefined &&
+        partnership.partnership_ein === k3.partnership_ein &&
+        partnership.source_document_reference ===
+          k3.k1_source_document_reference &&
+        partnership.schedule_k3_passive_interest
+            ?.k3_source_document_reference ===
+          k3.k3_source_document_reference
+      );
+      if (
+        !k3 || matches.length !== 1 ||
+        item.tax_reported_on_1099 === true ||
+        item.income_category !== IncomeCategory.Passive ||
+        item.tax_kind !== ForeignTaxKind.Interest ||
+        item.tax_credit_method !== ForeignTaxCreditMethod.Paid ||
+        item.foreign_income_source_document_reference !==
+          k3.k3_source_document_reference ||
+        item.foreign_gross_income !==
+          k3.part_ii_section_1_line_6_passive_interest ||
+        item.foreign_gross_income !==
+          k3.part_ii_section_1_line_24_passive_total ||
+        item.foreign_tax_paid !==
+          k3.part_iii_section_4_line_1_foreign_tax ||
+        item.schedule_k3_line12_reduction?.amount !==
+          k3.part_iii_section_4_line_2_tax_reduction ||
+        item.schedule_k3_line12_reduction?.source_document_reference !==
+          k3.k3_source_document_reference ||
+        item.irs_country_code !== k3.irs_country_code ||
+        item.tax_paid_or_accrued_date !== k3.tax_paid_date ||
+        JSON.stringify(item.foreign_tax_currency) !==
+          JSON.stringify(k3.foreign_tax_currency) ||
+        matches[0].box5_interest !== item.foreign_gross_income ||
+        matches[0].box16_foreign_income !== item.foreign_gross_income ||
+        matches[0].box16_foreign_tax !== item.foreign_tax_paid ||
+        matches[0].box16_foreign_income_category !== IncomeCategory.Passive ||
+        matches[0].box16_foreign_tax_irs_country_code !==
+          item.irs_country_code ||
+        matches[0].box16_foreign_tax_paid_or_accrued_date !==
+          item.tax_paid_or_accrued_date ||
+        matches[0].box16_foreign_tax_kind !== ForeignTaxKind.Interest ||
+        matches[0].box16_foreign_tax_credit_method !==
+          ForeignTaxCreditMethod.Paid ||
+        JSON.stringify(matches[0].schedule_k3_passive_interest) !==
+          JSON.stringify(k3)
+      ) {
+        throw new Error(
+          "Form 1116 K-3 line 12 reduction needs the matching partnership K-1 and K-3 source",
+        );
+      }
+    }
+  }
+  for (const item of summaries.flatMap((summary) => summary.items)) {
+    if (
+      (item.schedule_k3_line12_reduction?.amount ?? 0) >
+        item.foreign_tax_paid
+    ) {
+      throw new Error(
+        "Form 1116 Schedule K-3 line 12 reduction exceeds its sourced foreign tax",
+      );
+    }
+    const currency = item.foreign_tax_currency;
+    if (
+      currency &&
+      Math.round(currency.amount * currency.usd_per_foreign_unit * 100) !==
+        Math.round(item.foreign_tax_paid * 100)
+    ) {
+      throw new Error(
+        "Form 1116 foreign-currency source does not convert to its U.S.-dollar tax",
+      );
+    }
+  }
+  const alternativeCompensationItems = summaries.flatMap((summary) =>
+    summary.items.filter((item) => item.alternative_compensation_sourcing)
+  );
+  assertAlternativeCompensationSources(summaries, context);
+  const conversionExplanationId = alternativeCompensationItems.length > 0
+    ? conversionExplanationAttachmentId(context)
+    : undefined;
+  const linkedAlternativeCompensationStatementId =
+    alternativeCompensationStatementId(
+      alternativeCompensationItems.length,
+      context,
+    );
   const directExpenseGroups = summaries.flatMap(sourceGroups).filter((items) =>
     items.some((item) => (item.directly_allocable_deductions ?? 0) > 0)
   );
@@ -368,6 +581,10 @@ function buildIRS1116(
       (sum, item) => sum + item.foreign_tax_paid,
       0,
     );
+    const reduction = summary.items.reduce(
+      (sum, item) => sum + (item.schedule_k3_line12_reduction?.amount ?? 0),
+      0,
+    );
     const gross = summary.items.reduce(
       (sum, item) => sum + item.foreign_gross_income,
       0,
@@ -378,12 +595,14 @@ function buildIRS1116(
     );
     if (
       Math.abs(summary.foreignTaxPaid - paid) > 0.01 ||
+      Math.abs((summary.foreignTaxReduction ?? 0) - reduction) > 0.01 ||
+      reduction > paid ||
       Math.abs(summary.foreignGrossIncome - gross) > 0.01 ||
       Math.abs(summary.includedForeignIncome - (gross - excluded)) > 0.01 ||
       summary.currentYearExcessTax !==
         Math.max(
           0,
-          Math.round(paid) - summary.allowedCredit +
+          Math.round(paid - reduction) - summary.allowedCredit +
             (summary.usedPriorYearCarryover ?? 0),
         )
     ) {
@@ -404,7 +623,8 @@ function buildIRS1116(
     );
     if (
       !companion.success ||
-      companion.data.case !== "current_year_excess" ||
+      (companion.data.case !== "current_year_excess" &&
+        companion.data.case !== "combined_current_excess_prior_balance") ||
       companion.data.category !== excess[0].category ||
       companion.data.current_year_excess_tax !==
         excess[0].currentYearExcessTax
@@ -413,14 +633,18 @@ function buildIRS1116(
         "Form 1116 excess foreign tax needs the matching sourced Schedule B carryover",
       );
     }
+    scheduleBPresentation(companion.data);
   }
   const priorUse = summaries.filter((summary) =>
     (summary.priorYearCarryover ?? 0) > 0
   );
   if (priorUse.length > 0) {
-    if (priorUse.length !== 1 || excess.length > 0) {
+    if (
+      priorUse.length !== 1 ||
+      (excess.length > 0 && excess[0].category !== priorUse[0].category)
+    ) {
       throw new Error(
-        "Form 1116 prior-year carryover needs one category without current-year excess",
+        "Form 1116 prior-year carryover needs one matching category",
       );
     }
     const companion = scheduleBFieldsSchema.safeParse(
@@ -428,17 +652,28 @@ function buildIRS1116(
     );
     if (
       !companion.success ||
-      companion.data.case !== "prior_year_use" ||
+      (companion.data.case !== "prior_year_use" &&
+        companion.data.case !== "combined_current_excess_prior_balance") ||
+      (excess.length > 0 &&
+        companion.data.case !== "combined_current_excess_prior_balance") ||
+      (excess.length === 0 && companion.data.case !== "prior_year_use") ||
       companion.data.category !== priorUse[0].category ||
       companion.data.prior_year_carryover !==
         priorUse[0].priorYearCarryover ||
       companion.data.used_prior_year_carryover !==
-        priorUse[0].usedPriorYearCarryover
+        priorUse[0].usedPriorYearCarryover ||
+      companion.data.prior_year_carryover_source
+          .prior_year_schedule_b_line8_total !==
+        priorUse[0].priorYearCarryover ||
+      companion.data.used_prior_year_carryover +
+            companion.data.remaining_prior_year_carryover !==
+        priorUse[0].priorYearCarryover
     ) {
       throw new Error(
         "Form 1116 prior-year credit needs a matching sourced Schedule B reconciliation",
       );
     }
+    scheduleBPresentation(companion.data);
   }
   const methodSet = new Set(
     summaries.flatMap((summary) =>
@@ -501,6 +736,10 @@ function buildIRS1116(
       index === mainIndex ? partIV : [],
       () => statementIds[nextStatement++],
       otherDeductionsStatementIds[0],
+      linkedAlternativeCompensationStatementId,
+      summary.items.some((item) => item.alternative_compensation_sourcing)
+        ? conversionExplanationId
+        : undefined,
     )
   );
 }
@@ -514,4 +753,14 @@ export const form1116: MefFormDescriptor<
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1116.pdf",
   build: buildIRS1116,
+  async buildBinaryAttachments(fields, context) {
+    const summaries = (fields.category_summaries ?? []).map((summary) =>
+      categorySummarySchema.parse(summary)
+    );
+    const statement = await buildConversionExplanation(
+      summaries,
+      context?.filer,
+    );
+    return statement ? [statement] : [];
+  },
 };

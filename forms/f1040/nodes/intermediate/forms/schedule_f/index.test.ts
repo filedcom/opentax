@@ -352,6 +352,102 @@ Deno.test("schedule_f: cooperative distributions and CCC loans are included in g
   assertEquals(s1?.fields.line6_schedule_f, 10_000);
 });
 
+Deno.test("Schedule F reconciles 1099-PATR gross and taxable cash lines without adding income twice", () => {
+  const result = compute({
+    schedule_fs: [minimalItem({
+      farm_id: "FARM-1",
+      line3a_cooperative_distributions: 900,
+      line3b_cooperative_distributions_taxable: 700,
+    })],
+    farm_sources: [{
+      farm_id: "FARM-1",
+      kind: "1099patr_cooperative",
+      amount: 900,
+      taxable_amount: 700,
+    }],
+  });
+  assertEquals(findOutput(result, "schedule1")?.fields.line6_schedule_f, 700);
+});
+
+Deno.test("Schedule F rejects an omitted 1099-PATR gross or taxable cash line", () => {
+  const source = {
+    farm_id: "FARM-1",
+    kind: "1099patr_cooperative",
+    amount: 900,
+    taxable_amount: 700,
+  };
+  assertThrows(() =>
+    compute({
+      schedule_fs: [minimalItem({
+        farm_id: "FARM-1",
+        line3a_cooperative_distributions: 899,
+        line3b_cooperative_distributions_taxable: 700,
+      })],
+      farm_sources: [source],
+    })
+  );
+  assertThrows(() =>
+    compute({
+      schedule_fs: [minimalItem({
+        farm_id: "FARM-1",
+        line3a_cooperative_distributions: 900,
+        line3b_cooperative_distributions_taxable: 699,
+      })],
+      farm_sources: [source],
+    })
+  );
+});
+
+Deno.test("Schedule F reconciles 1099-PATR with accrual lines 38a and 38b", () => {
+  const result = compute({
+    schedule_fs: [minimalItem({
+      farm_id: "FARM-1",
+      accounting_method: "accrual",
+      line1_sales_livestock_resale: undefined,
+      part_iii: {
+        line37_sales_products: 0,
+        line38a_cooperative_distributions: 900,
+        line38b_cooperative_distributions_taxable: 700,
+        line45_beginning_inventory: 0,
+        line46_products_purchased: 0,
+        line48_ending_inventory: 0,
+        inventory_method: "cost",
+      },
+    })],
+    farm_sources: [{
+      farm_id: "FARM-1",
+      kind: "1099patr_cooperative",
+      amount: 900,
+      taxable_amount: 700,
+    }],
+  });
+  assertEquals(findOutput(result, "schedule1")?.fields.line6_schedule_f, 700);
+});
+
+Deno.test("Schedule F rejects 1099-PATR without verified taxable amount or a matching farm", () => {
+  assertThrows(() =>
+    compute({
+      schedule_fs: [minimalItem({ farm_id: "FARM-1" })],
+      farm_sources: [{
+        farm_id: "FARM-1",
+        kind: "1099patr_cooperative",
+        amount: 900,
+      }],
+    })
+  );
+  assertThrows(() =>
+    compute({
+      schedule_fs: [minimalItem({ farm_id: "FARM-1" })],
+      farm_sources: [{
+        farm_id: "FARM-2",
+        kind: "1099patr_cooperative",
+        amount: 900,
+        taxable_amount: 700,
+      }],
+    })
+  );
+});
+
 Deno.test("schedule_f: raised-product sales and line 5c taxable CCC amount enter gross income", () => {
   const result = compute({
     schedule_fs: [minimalItem({

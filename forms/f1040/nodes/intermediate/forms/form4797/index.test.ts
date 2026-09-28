@@ -23,6 +23,31 @@ Deno.test("smoke: disposed_properties alone produces no outputs (indicator only)
   assertEquals(result.outputs.length, 0);
 });
 
+Deno.test("investment section 1245 recapture and excess gain take separate return paths", () => {
+  const result = compute({ investment_1245_dispositions: [{
+    property_id: "investment-1245-1",
+    property_description: "Investment equipment",
+    acquired_on: "2022-05-01",
+    sold_on: "2025-06-01",
+    gross_sales_price: 15_000,
+    cost_or_other_basis_plus_sale_expense: 12_000,
+    depreciation_allowed_or_allowable: 5_000,
+    property_held_for_investment_not_business: true,
+    section_1245_classification_reviewed: true,
+    direct_cash_sale_no_special_recapture_exception: true,
+    sale_document_reference: "SALE-2025-1",
+    basis_document_reference: "BASIS-2022-1",
+    depreciation_schedule_reference: "DEPR-2025-1",
+  }] });
+  assertEquals(findOutput(result, "schedule1")?.fields.line4_other_gains, 5_000);
+  assertEquals(findOutput(result, "agi_aggregator")?.fields.line4_other_gains, 5_000);
+  const transaction = findOutput(result, "form8949")?.fields.transaction as Record<string, unknown>;
+  assertEquals(transaction.description, "From Form 4797");
+  assertEquals(transaction.proceeds, 3_000);
+  assertEquals(transaction.cost_basis, 0);
+  assertEquals(transaction.date_acquired, "");
+});
+
 // ─── Part I — Section 1231 long-term gain ─────────────────────────────────────
 
 Deno.test("Part I: pure §1231 gain routes to schedule_d line_11_form2439", () => {
@@ -35,6 +60,7 @@ Deno.test("passive property sale source routes dated Part I and Part II gains", 
   const result = compute({
     passive_property_sales: [
       {
+        activity_id: "id-Land rental",
         activity_name: "Land rental",
         part: "I",
         property_description: "Undeveloped parcel",
@@ -45,6 +71,7 @@ Deno.test("passive property sale source routes dated Part I and Part II gains", 
         depreciation_allowed: 0,
       },
       {
+        activity_id: "id-Land rental",
         activity_name: "Land rental",
         part: "II",
         property_description: "Short-held parcel",
@@ -70,8 +97,81 @@ Deno.test("passive property sale source routes dated Part I and Part II gains", 
   );
 });
 
+Deno.test("Form 4797 carries the retained-activity fact with a Part II sale gain", () => {
+  const result = compute({ passive_property_sales: [{
+    activity_id: "rental-retained",
+    activity_name: "Retained rental",
+    part: "II",
+    property_description: "Short-held parcel",
+    acquired_on: "2025-01-01",
+    sold_on: "2025-06-01",
+    gross_sales_price: 9_000,
+    cost_or_other_basis: 5_000,
+    depreciation_allowed: 0,
+    entire_activity_interest_disposed: false,
+  }] });
+  assertEquals(findOutput(result, "form8582")?.fields.current_4797_sale_gains, [{
+    activity_id: "rental-retained",
+    activity_name: "Retained rental",
+    part: "II",
+    gain: 4_000,
+    entire_activity_interest_disposed: false,
+  }]);
+});
+
+Deno.test("Form 4797 carries an entire overall-gain sale to Form 8582 and AGI", () => {
+  const activity = {
+    activity_id: "entire-gain-rental",
+    name: "Entire gain rental",
+    activity_type: "B",
+    property_type: 1,
+    reporting_form: "schedule_e",
+    current_net: -2_000,
+    prior_unallowed_operating: 8_000,
+    prior_unallowed_4797_part1: 0,
+    prior_unallowed_4797_part2: 0,
+    prior_year_8582_source: {
+      tax_year: 2024,
+      activity_id: "entire-gain-rental",
+      filed_part_vii_column_c: 8_000,
+      source_document_reference: "2024 filed Form 8582 Part VII",
+    },
+  };
+  const sale = {
+    activity_id: activity.activity_id,
+    activity_name: activity.name,
+    part: "II",
+    property_description: "Short-held rental property",
+    acquired_on: "2025-01-01",
+    sold_on: "2025-06-01",
+    gross_sales_price: 30_000,
+    cost_or_other_basis: 15_000,
+    depreciation_allowed: 0,
+    entire_activity_interest_disposed: true,
+    buyer_unrelated: true,
+    fully_taxable: true,
+    installment_method: false,
+    disposition_document_reference: "2025 closing statement",
+  };
+  const result = compute({
+    passive_activity_sources: [activity],
+    passive_disposed_activity_ids: [activity.activity_id],
+    passive_property_sales: [sale],
+  });
+  assertEquals(findOutput(result, "form8582")?.fields.current_4797_sale_gains, [{
+    activity_id: activity.activity_id,
+    activity_name: activity.name,
+    part: "II",
+    gain: 15_000,
+    entire_activity_interest_disposed: true,
+  }]);
+  assertEquals(findOutput(result, "agi_aggregator")?.fields.pal_current_4797_gain, 15_000);
+  assertEquals(findOutput(result, "schedule1")?.fields.line4_other_gains, 15_000);
+});
+
 Deno.test("mixed retained passive sale nets prior Part I and II PAL once", () => {
   const activity = {
+    activity_id: "id-Land rental",
     name: "Land rental",
     activity_type: "B",
     property_type: 1,
@@ -83,9 +183,10 @@ Deno.test("mixed retained passive sale nets prior Part I and II PAL once", () =>
   };
   const result = compute({
     passive_activity_sources: [activity],
-    passive_disposed_activity_names: [activity.name],
+    passive_disposed_activity_ids: [activity.activity_id],
     passive_property_sales: [
       {
+        activity_id: activity.activity_id,
         activity_name: activity.name,
         part: "I",
         property_description: "Long-held parcel",
@@ -97,6 +198,7 @@ Deno.test("mixed retained passive sale nets prior Part I and II PAL once", () =>
         entire_activity_interest_disposed: false,
       },
       {
+        activity_id: activity.activity_id,
         activity_name: activity.name,
         part: "II",
         property_description: "Short-held parcel",
@@ -126,14 +228,25 @@ Deno.test("mixed retained passive sale nets prior Part I and II PAL once", () =>
     10_000,
   );
   assertEquals(findOutput(result, "form8582")?.fields.current_4797_sale_gains, [
-    { activity_name: activity.name, part: "I", gain: 8_000 },
-    { activity_name: activity.name, part: "II", gain: 2_000 },
+    {
+      activity_id: activity.activity_id,
+      activity_name: activity.name,
+      part: "I",
+      gain: 8_000,
+    },
+    {
+      activity_id: activity.activity_id,
+      activity_name: activity.name,
+      part: "II",
+      gain: 2_000,
+    },
   ]);
 });
 
 Deno.test("active rental sale defers Part I and II PAL until modified AGI is known", () => {
   const input = {
     passive_activity_sources: [{
+      activity_id: "id-Rental house",
       name: "Rental house",
       activity_type: "A",
       property_type: 1,
@@ -144,8 +257,9 @@ Deno.test("active rental sale defers Part I and II PAL until modified AGI is kno
       prior_unallowed_4797_part1: 3_000,
       prior_unallowed_4797_part2: 1_000,
     }],
-    passive_disposed_activity_names: ["Rental house"],
+    passive_disposed_activity_ids: ["id-Rental house"],
     passive_property_sales: [{
+      activity_id: "id-Rental house",
       activity_name: "Rental house",
       part: "I",
       property_description: "Retained rental parcel",
@@ -156,6 +270,7 @@ Deno.test("active rental sale defers Part I and II PAL until modified AGI is kno
       depreciation_allowed: 0,
       entire_activity_interest_disposed: false,
     }, {
+      activity_id: "id-Rental house",
       activity_name: "Rental house",
       part: "II",
       property_description: "Short-held rental parcel",
@@ -205,10 +320,23 @@ Deno.test("active rental sale defers Part I and II PAL until modified AGI is kno
       }, input.passive_property_sales[1]],
     })
   );
+  assertThrows(
+    () =>
+      compute({
+        ...input,
+        passive_property_sales: [{
+          ...input.passive_property_sales[0],
+          activity_id: "different-rental",
+        }, input.passive_property_sales[1]],
+      }),
+    Error,
+    "linked Schedule E activity",
+  );
 });
 
 Deno.test("the same sale from Schedule E and direct Form 4797 cannot be counted twice", () => {
   const sale = {
+    activity_id: "id-Rental house",
     activity_name: "Rental house",
     part: "I",
     property_description: "Retained rental parcel",
@@ -228,6 +356,7 @@ Deno.test("the same sale from Schedule E and direct Form 4797 cannot be counted 
 
 Deno.test("passive property sale source rejects duplicate aggregate and unsupported sale facts", () => {
   const sale = {
+    activity_id: "id-Land rental",
     activity_name: "Land rental",
     part: "I",
     property_description: "Undeveloped parcel",

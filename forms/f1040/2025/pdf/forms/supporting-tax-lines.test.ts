@@ -1,6 +1,10 @@
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { form8962 } from "../../../nodes/intermediate/forms/form8962/index.ts";
+import {
+  form8959 as form8959Node,
+  inputSchema as form8959InputSchema,
+} from "../../../nodes/intermediate/forms/form8959/index.ts";
 import { FilingStatus } from "../../../types.ts";
 import type { PdfFormDescriptor } from "../form-descriptor.ts";
 import { form8959Pdf } from "./f8959.ts";
@@ -51,6 +55,60 @@ Deno.test("Form 8959 PDF includes a single-W-2 filing trigger with zero tax", ()
   assertEquals(
     form8959Pdf.includeWhen?.({ line24_total_withheld: 45 }, {}),
     true,
+  );
+});
+
+Deno.test("Form 8959 PDF rejects a print line that differs from upstream deposits", () => {
+  const source = {
+    filing_status: FilingStatus.Single,
+    w2_medicare_wages: 230_000,
+    w2_medicare_withheld: 3_635,
+  };
+  const result = form8959Node.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form8959InputSchema.parse(source),
+  );
+  const printed = result.outputs.find((entry) => entry.nodeType === "form8959")
+    ?.fields;
+  assert(printed);
+  const pending = { ...source, ...printed };
+  assertEquals(
+    form8959Pdf.projectFields?.(pending, {}),
+    printed,
+  );
+  assertThrows(
+    () =>
+      form8959Pdf.projectFields?.(
+        { ...pending, w2_medicare_wages: 229_999 },
+        {},
+      ),
+    Error,
+    "upstream source deposits",
+  );
+  assertThrows(
+    () => form8959Pdf.projectFields?.(source, {}),
+    Error,
+    "filing trigger exists without print lines",
+  );
+  const noTrigger = {
+    filing_status: FilingStatus.Single,
+    w2_medicare_wages: 100_000,
+  };
+  assertEquals(form8959Pdf.projectFields?.(noTrigger, {}), noTrigger);
+  assertThrows(
+    () =>
+      form8959Pdf.projectFields?.({}, {
+        w2: {
+          w2s: [{
+            box1_wages: 210_000,
+            box2_fed_withheld: 0,
+            box5_medicare_wages: 210_000,
+            box6_medicare_withheld: 3_045,
+          }],
+        },
+      }),
+    Error,
+    "original source records",
   );
 });
 

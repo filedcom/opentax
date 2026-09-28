@@ -9,23 +9,19 @@ Form 2106 — Employee Business Expenses. Post-TCJA, available ONLY to 4 categor
 
 Standard mileage rate 2025: $0.70/mile (Notice 2025-05)
 
-## Fields identified
-- employee_type (enum): RESERVIST | PERFORMING_ARTIST | FEE_BASIS_OFFICIAL | DISABLED_IMPAIRMENT
-- vehicle_expenses: standard mileage OR actual
-- business_miles (for standard mileage method)
-- parking_tolls_transportation
-- travel_expenses (lodging/transport away from home)
-- other_expenses (line 4)
-- meals_expenses (line 5, subject to 50% limit)
-- employer_reimbursements (line 7, reduces deduction)
+## Current source shape
+- `qualification.kind`: RESERVIST | PERFORMING_ARTIST | FEE_BASIS_OFFICIAL | DISABLED_IMPAIRMENT, with category-specific source facts
+- `job`: employee/owner identity, occupation, employer, employment record
+- `expenses`: Form 2106 Part I lines 2-5, with a job business purpose and record reference
+- `reimbursements`: separately allocated Form 2106 line 7 columns A/B
+- `vehicle`: no vehicle, a complete standard-mileage Part II source, or a staged actual-expense source that calculation rejects
 
 ## Open Questions
 - [x] Q: Who qualifies? — 4 categories per IRC §67(h)
-- [x] Q: Where does it flow? → Schedule 1 line 12 (all 4 categories route there as above-the-line)
-  NOTE: The IRS instructions say disabled employees flow to Schedule A line 16, but the engine's schedule1 has line12_business_expenses. Need to check — the IRC §67(b) exception means disability deduction is NOT subject to the 2% floor, so it DOES go above-the-line for disabled employees per §62(a)(2)(E) — correct, all 4 flow to Schedule 1 line 12.
+- [x] Q: Where does it flow? Fee-basis officials, qualifying performing artists, and qualifying reservists use Schedule 1 line 12. Disabled employees' impairment-related work expenses use Schedule A line 16, not Schedule 1 or AGI. The current calculator only activates fee-basis and narrow impairment internal routes; all Form 2106 exports remain blocked.
 - [x] Q: 2025 mileage rate? — $0.70/mile per Notice 2025-05
 - [x] Q: Edge cases? — Meals 50% limit, qualified performing artist AGI test, reservist >100 miles test
-- [x] Q: Multiple 2106s? — Yes, per-item (array) — one 2106 per job/employer pair
+- [x] Q: Multiple 2106s? — Yes, one strict item per job with distinct employment record references
 
 ## Sources checked
 - [x] IRS Form 2106 Instructions: https://www.irs.gov/instructions/i2106

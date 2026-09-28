@@ -1,4 +1,5 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
+import { scheduleR } from "../../mef/forms/schedule_r.ts";
 
 // IRS Schedule 3 (2025) AcroForm field names.
 // Verified against the f1040s3--2025.pdf AcroForm field dump (37 fields, one
@@ -149,6 +150,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "text",
+    domainKey: "line13a_total",
+    pdfField: "topmostSubform[0].Page1[0].f1_30[0]",
+  },
+  {
+    kind: "text",
     domainKey: "line15_total",
     pdfField: "topmostSubform[0].Page1[0].f1_37[0]",
   },
@@ -159,6 +165,16 @@ export const schedule3Pdf: PdfFormDescriptor = {
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040s3--2025.pdf",
   fields,
   projectFields(fields, allPending) {
+    if (
+      typeof fields.line6d_elderly_disabled_credit === "number" &&
+      fields.line6d_elderly_disabled_credit > 0
+    ) {
+      if (
+        !scheduleR.build(allPending.schedule_r ?? {}, { pending: allPending })
+      ) {
+        throw new Error("Schedule 3 PDF line 6d needs a filed Schedule R");
+      }
+    }
     const worksheet = allPending.form8978_reporting_year;
     const line6l = worksheet?.schedule3_line6l;
     return typeof line6l === "number" && line6l > 0

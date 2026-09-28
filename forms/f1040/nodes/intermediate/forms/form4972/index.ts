@@ -73,11 +73,34 @@ export const inputSchema = z.object({
 
   // Part III, Line 10: death benefit exclusion (pre-1984 plans, max $5,000)
   death_benefit_exclusion: z.number().nonnegative().optional(),
+  // For a partial-share Part-III-only beneficiary, line 9 uses the full
+  // allowable exclusion, not just this recipient's allocated share.
+  death_benefit_exclusion_source_reference: z.string().trim().min(1).optional(),
+  death_benefit_recipient_allocated_amount: z.number().int().nonnegative()
+    .optional(),
   // Form 4972 lines 11 and 18.
   annuity_actuarial_value: z.number().nonnegative().optional(),
+  // Form 1099-R box 8 percentage, distinct from the box 9a distribution share.
+  annuity_share_pct: z.number().positive().max(100).optional(),
   federal_estate_tax: z.number().nonnegative().optional(),
+  // Recipient's Form 1099-R box 9a percentage. Part III grosses up the
+  // ordinary amount; Part-II-only uses the recipient's own distribution.
+  recipient_share_pct: z.number().positive().max(100).optional(),
   recipient: tsSchema.optional(),
 });
+
+// The public election supplies only facts not printed in the elected 1099-R.
+// Distribution amounts, box 8/9a shares, and recipient identity must arrive
+// through that document, so an election cannot replace or override them.
+export const publicElectionSchema = inputSchema.omit({
+  lump_sum_amount: true,
+  capital_gain_amount: true,
+  box6_nua: true,
+  annuity_actuarial_value: true,
+  annuity_share_pct: true,
+  recipient_share_pct: true,
+  recipient: true,
+}).strict();
 
 type Form4972Input = z.infer<typeof inputSchema>;
 
@@ -87,6 +110,54 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
   if (!input.recipient) {
     throw new Error(
       "form4972: elected distribution needs a taxpayer or spouse recipient",
+    );
+  }
+  const partialShare = (input.recipient_share_pct ?? 100) < 100;
+  const deathBenefit = input.death_benefit_exclusion ?? 0;
+  const partialDeathBenefit = partialShare && deathBenefit > 0;
+  const recipientShare = (input.recipient_share_pct ?? 100) / 100;
+  if (
+    !partialDeathBenefit &&
+    (input.death_benefit_exclusion_source_reference !== undefined ||
+      input.death_benefit_recipient_allocated_amount !== undefined)
+  ) {
+    throw new Error(
+      "form4972: partial-share death-benefit source facts need a positive full allowable exclusion",
+    );
+  }
+  if (
+    partialDeathBenefit &&
+    (input.elect_10yr_averaging !== true ||
+      (input.box6_nua ?? 0) > 0 || input.elect_include_nua === true ||
+      (input.annuity_actuarial_value ?? 0) > 0 ||
+      (input.federal_estate_tax ?? 0) > 0 ||
+      !input.death_benefit_exclusion_source_reference ||
+      !Number.isSafeInteger(deathBenefit * recipientShare) ||
+      input.death_benefit_recipient_allocated_amount !==
+        deathBenefit * recipientShare)
+  ) {
+    throw new Error(
+      "form4972: partial-share death benefit needs Part III and an administrator source matching the full exclusion and recipient allocation, without NUA, annuity, or estate tax",
+    );
+  }
+  if (
+    partialShare &&
+    ((input.elect_10yr_averaging !== true &&
+      input.elect_capital_gain !== true) ||
+      ((input.elect_include_nua === true || (input.box6_nua ?? 0) > 0) &&
+        !(input.elect_include_nua === true &&
+          (input.box6_nua ?? 0) > 0)) ||
+      ((input.annuity_actuarial_value ?? 0) > 0 &&
+        (input.elect_10yr_averaging !== true ||
+          input.annuity_share_pct === undefined)) ||
+      ((input.federal_estate_tax ?? 0) > 0 &&
+        (input.elect_10yr_averaging !== true ||
+          input.elect_capital_gain === true ||
+          (input.box6_nua ?? 0) > 0 ||
+          (input.annuity_actuarial_value ?? 0) > 0)))
+  ) {
+    throw new Error(
+      "form4972: partial box 9a share supports Part II or III with optional elected NUA, Part III with an annuity and its separate box 8 percentage, or sourced Part-III-only death benefit or estate tax; other combinations remain unsupported",
     );
   }
   if (input.alternate_payee_distribution === true) {
@@ -100,6 +171,8 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
     input.rolled_over_any !== false ||
     typeof input.beneficiary_distribution !== "boolean" ||
     typeof input.participant_five_year_member !== "boolean" ||
+    (input.beneficiary_distribution === true &&
+      input.participant_five_year_member === true) ||
     !(
       input.beneficiary_distribution === true ||
       input.alternate_payee_distribution === true ||
@@ -119,16 +192,16 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
       `form4972: capital_gain_amount (${capGain}) cannot exceed lump_sum_amount (${input.lump_sum_amount})`,
     );
   }
-  const deathBenefit = input.death_benefit_exclusion ?? 0;
   if (deathBenefit > deathBenefitMax) {
     throw new Error(
       `form4972: death_benefit_exclusion (${deathBenefit}) cannot exceed ${deathBenefitMax}`,
     );
   }
-  if (
-    deathBenefit > input.lump_sum_amount +
-        (input.elect_include_nua === true ? input.box6_nua ?? 0 : 0)
-  ) {
+  const taxableDistributionForDeathBenefit = partialDeathBenefit
+    ? input.lump_sum_amount / recipientShare
+    : input.lump_sum_amount +
+      (input.elect_include_nua === true ? input.box6_nua ?? 0 : 0);
+  if (deathBenefit > taxableDistributionForDeathBenefit) {
     throw new Error(
       "form4972: death benefit exclusion cannot exceed the taxable distribution",
     );
@@ -259,7 +332,18 @@ class Form4972Node extends TaxNode<typeof inputSchema> {
     const nuaCapitalGain = includedNua > 0 && box2aTaxable > 0
       ? Math.round(includedNua * box3CapitalGain / box2aTaxable)
       : 0;
-    const taxableAmount = box2aTaxable + includedNua;
+    const partialShare = (input.recipient_share_pct ?? 100) < 100;
+    const recipientShare = (input.recipient_share_pct ?? 100) / 100;
+    const annuityShare =
+      partialShare && (input.annuity_actuarial_value ?? 0) > 0
+        ? input.annuity_share_pct! / 100
+        : 1;
+    const annuityValue = Math.round(
+      (input.annuity_actuarial_value ?? 0) / annuityShare,
+    );
+    const taxableAmount = partialShare
+      ? Math.round((box2aTaxable + includedNua) / recipientShare)
+      : box2aTaxable + includedNua;
     const capitalGain = box3CapitalGain + nuaCapitalGain;
     const deathBenefit = Math.round(input.death_benefit_exclusion ?? 0);
     if (electCapGain && capitalGain === 0) {
@@ -270,7 +354,15 @@ class Form4972Node extends TaxNode<typeof inputSchema> {
     const deathBenefitCapitalShare = electCapGain && taxableAmount > 0
       ? Math.round(deathBenefit * capitalGain / taxableAmount)
       : 0;
-    const ordinaryDeathBenefit = deathBenefit - deathBenefitCapitalShare;
+    // The Death Benefit Worksheet reduces the recipient's Part II capital
+    // amount by their allocated exclusion. For multiple recipients, line 9
+    // instead starts with the full allowable exclusion before line 29 prorates
+    // Part III tax. Its capital fraction uses this recipient's box 3 / box 2a.
+    const fullDeathBenefitCapitalShare = partialShare && electCapGain &&
+        box2aTaxable > 0
+      ? Math.round(deathBenefit * box3CapitalGain / box2aTaxable)
+      : deathBenefitCapitalShare;
+    const ordinaryDeathBenefit = deathBenefit - fullDeathBenefitCapitalShare;
     const federalEstateTax = Math.round(input.federal_estate_tax ?? 0);
     const estateTaxCapitalShare = electCapGain && taxableAmount > 0
       ? Math.round(federalEstateTax * capitalGain / taxableAmount)
@@ -292,8 +384,18 @@ class Form4972Node extends TaxNode<typeof inputSchema> {
       : 0;
     const partIITaxAmt = electCapGain ? partIITax(capitalGainElected) : 0;
 
-    const ordinaryIncome = taxableAmount -
-      (electCapGain ? capitalGain : 0);
+    // 2025 multiple-recipient Steps 2-3 gross up the ordinary portion for
+    // Part III. A Part-II-only election instead reports the recipient's own
+    // ordinary portion on Form 1040 line 5b; line 6/7 remain their own share.
+    const ordinaryIncome = partialShare && elect10yr && electCapGain
+      ? Math.round(
+        (box2aTaxable - box3CapitalGain + includedNua - nuaCapitalGain) /
+          recipientShare,
+      )
+      : partialShare && !elect10yr
+      ? box2aTaxable - (electCapGain ? box3CapitalGain : 0) +
+        includedNua - (electCapGain ? nuaCapitalGain : 0)
+      : taxableAmount - (electCapGain ? capitalGain : 0);
     const ordinaryIncomeOn1040 = Math.max(
       0,
       ordinaryIncome - ordinaryDeathBenefit,
@@ -302,11 +404,14 @@ class Form4972Node extends TaxNode<typeof inputSchema> {
       ? partIIILines(
         ordinaryIncome,
         ordinaryDeathBenefit,
-        Math.round(input.annuity_actuarial_value ?? 0),
+        annuityValue,
         ordinaryEstateTax,
       )
       : undefined;
-    const totalTax = Math.round(partIITaxAmt + (partIII?.line29 ?? 0));
+    const recipientPartIIITax = partialShare
+      ? Math.round((partIII?.line29 ?? 0) * recipientShare)
+      : partIII?.line29 ?? 0;
+    const totalTax = Math.round(partIITaxAmt + recipientPartIIITax);
 
     // A zero-tax election cannot silently suppress a 1099-R distribution.
     // The Part-II-only shape may also lack every nonzero line required by
@@ -336,14 +441,17 @@ class Form4972Node extends TaxNode<typeof inputSchema> {
               line8: ordinaryIncome,
               ...(includedNua > 0
                 ? {
-                  line8_nua_included: electCapGain
-                    ? includedNua - nuaCapitalGain
-                    : includedNua,
+                  line8_nua_included: Math.round(
+                    (electCapGain
+                      ? includedNua - nuaCapitalGain
+                      : includedNua) /
+                      recipientShare,
+                  ),
                 }
                 : {}),
-              line9: deathBenefit - deathBenefitCapitalShare,
+              line9: ordinaryDeathBenefit,
               line10: partIII.line10,
-              line11: Math.round(input.annuity_actuarial_value ?? 0),
+              line11: annuityValue,
               line12: partIII.line12,
               ...(partIII.line12 < 70_000
                 ? {
@@ -367,7 +475,7 @@ class Form4972Node extends TaxNode<typeof inputSchema> {
                 ? { line26: partIII.line26, line27: partIII.line27 }
                 : {}),
               ...(partIII.line20 > 0 ? { line28: partIII.line28 } : {}),
-              line29: partIII.line29,
+              line29: recipientPartIIITax,
               line30: totalTax,
             }
             : {}),

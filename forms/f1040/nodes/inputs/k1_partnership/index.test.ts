@@ -1,5 +1,11 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { k1Partnership } from "./index.ts";
+import {
+  ForeignTaxCreditMethod,
+  foreignTaxItemSchema,
+  ForeignTaxKind,
+  IncomeCategory,
+} from "../../intermediate/forms/form_1116/index.ts";
 
 function minimalItem(overrides: Record<string, unknown> = {}) {
   return {
@@ -17,6 +23,63 @@ function compute(items: ReturnType<typeof minimalItem>[]) {
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
+
+Deno.test("partnership K-3 passive interest and line 12 reduction reconcile to K-1", () => {
+  const k3 = {
+    partnership_ein: "123456789",
+    k1_source_document_reference: "2025 K-1",
+    k3_source_document_reference: "2025 K-3",
+    part_ii_section_1_line_6_passive_interest: 1_000,
+    part_ii_section_1_line_24_passive_total: 1_000,
+    part_iii_section_4_line_1_foreign_tax: 50,
+    part_iii_section_4_line_2_tax_reduction: 10,
+    irs_country_code: "DE",
+    tax_paid_date: "2025-06-15",
+    foreign_tax_currency: {
+      currency_code: "EUR",
+      amount: 40,
+      usd_per_foreign_unit: 1.25,
+      source_document_reference: "2025 K-3",
+    },
+    no_other_income_tax_or_reduction_on_k3_confirmed: true as const,
+  };
+  const source = {
+    partnership_ein: "123456789",
+    source_document_reference: "2025 K-1",
+    box5_interest: 1_000,
+    box16_foreign_income: 1_000,
+    box16_foreign_tax: 50,
+    box16_foreign_income_category: IncomeCategory.Passive,
+    box16_foreign_tax_irs_country_code: "DE",
+    box16_foreign_tax_paid_or_accrued_date: "2025-06-15",
+    box16_foreign_tax_kind: ForeignTaxKind.Interest,
+    box16_foreign_tax_credit_method: ForeignTaxCreditMethod.Paid,
+    schedule_k3_passive_interest: k3,
+  };
+  const output = findOutput(compute([minimalItem(source)]), "form_1116");
+  const item = foreignTaxItemSchema.parse(
+    (output?.fields.foreign_tax_items as unknown[])[0],
+  );
+  assertEquals(item?.schedule_k3_line12_reduction?.amount, 10);
+  assertEquals(item?.partnership_k3_passive_interest, k3);
+  assertThrows(
+    () => compute([minimalItem({ ...source, box5_interest: 999 })]),
+    Error,
+    "must match its K-1",
+  );
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        ...source,
+        schedule_k3_passive_interest: {
+          ...k3,
+          part_iii_section_4_line_2_tax_reduction: 60,
+        },
+      })]),
+    Error,
+    "must match its K-1",
+  );
+});
 
 Deno.test("partnership K-1 portfolio boxes feed Form 4952 only when affirmed", () => {
   const item = minimalItem({
@@ -38,19 +101,79 @@ Deno.test("partnership K-1 portfolio boxes feed Form 4952 only when affirmed", (
 });
 
 Deno.test("partnership K-1 box 20 code B routes only allowed investment depreciation to Form 4952", () => {
+  const codeB = {
+    reported_amount: 600,
+    allowed_deduction_amount: 600,
+    allowed_deduction_kind: "depreciation",
+    nonpassive_investment_property: true,
+    issuer_crosswalk: {
+      issuer_supplement_reference: "2025 K-1 investment supplement",
+      issuer_reported_amount: 600,
+      same_expense_as_box13_code_i_confirmed: true,
+      box13_code_i_statement_reference: "2025 code I statement",
+      royalty_property_description: "Partnership mineral royalty",
+    },
+  };
   const item = minimalItem({
     partnership_ein: "123456789",
     source_document_reference: "2025 K-1 and investment-property statement",
-    box20_code_b_investment_expenses: {
-      reported_amount: 1_000,
-      allowed_deduction_amount: 600,
-      allowed_deduction_kind: "depreciation",
-      nonpassive_investment_property: true,
+    investment_property_for_form4952: true,
+    box7_royalties: 1_000,
+    box7_royalty_reporting: {
+      tsj: "T",
+      property_description: "Partnership mineral royalty",
+      portfolio_nonpassive: true,
+      form_1099_payments_made: false,
     },
+    box13_code_i_royalty_deduction: {
+      reported_amount: 600,
+      allowed_amount: 600,
+      statement_reference: "2025 code I statement",
+      expense_kind: "depreciation",
+      basis_workpaper_reference: "2025 basis review",
+      at_risk_workpaper_reference: "2025 at-risk review",
+    },
+    box20_code_b_investment_expenses: codeB,
   });
-  assertEquals(findOutput(compute([item]), "form4952")?.fields, {
-    source_k1_allowed_investment_expenses: 600,
-  });
+  const result = compute([item]);
+  assertEquals(
+    result.outputs.filter((entry) => entry.nodeType === "form4952").map(
+      (entry) => entry.fields,
+    ),
+    [
+      { source_k1_royalties: 1_000 },
+      { source_k1_allowed_investment_expenses: 600 },
+    ],
+  );
+  const scheduleERows = findOutput(result, "schedule_e")?.fields.schedule_es as
+    | unknown[]
+    | undefined;
+  assertEquals(scheduleERows?.length, 1);
+  assertEquals(findOutput(compute([item]), "schedule1"), undefined);
+  assertThrows(
+    () =>
+      compute([{
+        ...item,
+        box20_code_b_investment_expenses: {
+          ...codeB,
+          issuer_crosswalk: {
+            ...codeB.issuer_crosswalk,
+            box13_code_i_statement_reference: "different code I item",
+          },
+        },
+      }]),
+    Error,
+    "same issuer-identified",
+  );
+  assertThrows(
+    () =>
+      compute([{
+        ...item,
+        box13_code_i_royalty_deduction: undefined,
+      }]),
+    Error,
+    "same issuer-identified",
+  );
 });
 
 Deno.test("partnership K-1 box 13 code H routes separately stated investment interest", () => {
@@ -356,10 +479,56 @@ Deno.test("box4b_guaranteed_capital routes to schedule1 but not schedule_se", ()
   assertEquals(schSe, undefined);
 });
 
-Deno.test("box7_royalties routes to schedule1 line5_schedule_e", () => {
-  const result = compute([minimalItem({ box7_royalties: 700 })]);
-  const out = findOutput(result, "schedule1");
-  assertEquals(out?.fields.line5_schedule_e, 700);
+Deno.test("box 7 and box 13 code I reach one sourced Schedule E royalty row", () => {
+  const result = compute([minimalItem({
+    partnership_ein: "123456789",
+    source_document_reference: "2025 K-1 source A",
+    box7_royalties: 700,
+    box7_royalty_reporting: {
+      tsj: "T",
+      property_description: "Partnership mineral royalty",
+      portfolio_nonpassive: true,
+      form_1099_payments_made: false,
+    },
+    box13_code_i_royalty_deduction: {
+      reported_amount: 100,
+      allowed_amount: 100,
+      statement_reference: "2025 K-1 code I statement",
+      expense_kind: "depletion",
+      basis_workpaper_reference: "2025 outside-basis worksheet",
+      at_risk_workpaper_reference: "2025 at-risk worksheet",
+    },
+  })]);
+  assertEquals(findOutput(result, "schedule1"), undefined);
+  const row = findOutput(result, "schedule_e")?.fields.schedule_es?.[0];
+  assertEquals(row?.royalties_income, 700);
+  assertEquals(row?.expense_other_lines?.[0], {
+    description: "From Schedule K-1 (Form 1065)",
+    amount: 100,
+  });
+  assertEquals(row?.k1_royalty_source?.box13_code_i_allowed_deduction, 100);
+  assertThrows(() => compute([minimalItem({ box7_royalties: 700 })]));
+  assertThrows(() =>
+    compute([minimalItem({
+      partnership_ein: "123456789",
+      source_document_reference: "2025 K-1 source A",
+      box7_royalties: 700,
+      box7_royalty_reporting: {
+        tsj: "T",
+        property_description: "Partnership mineral royalty",
+        portfolio_nonpassive: true,
+        form_1099_payments_made: false,
+      },
+      box13_code_i_royalty_deduction: {
+        reported_amount: 100,
+        allowed_amount: 90,
+        statement_reference: "2025 K-1 code I statement",
+        expense_kind: "depletion",
+        basis_workpaper_reference: "2025 outside-basis worksheet",
+        at_risk_workpaper_reference: "2025 at-risk worksheet",
+      },
+    })])
+  );
 });
 
 Deno.test("box5_interest routes to schedule_b taxable_interest_net", () => {
@@ -506,10 +675,18 @@ Deno.test("box1+box2+box3+box4a+box4b+box7 combined in schedule1", () => {
       box4a_guaranteed_services: 3000,
       box4b_guaranteed_capital: 500,
       box7_royalties: 400,
+      partnership_ein: "123456789",
+      source_document_reference: "2025 K-1 source B",
+      box7_royalty_reporting: {
+        tsj: "T",
+        property_description: "Partnership mineral royalty",
+        portfolio_nonpassive: true,
+        form_1099_payments_made: false,
+      },
     }),
   ]);
   const out = findOutput(result, "schedule1");
-  assertEquals(out?.fields.line5_schedule_e, 7400); // 2000+1000+500+3000+500+400
+  assertEquals(out?.fields.line5_schedule_e, 7000); // Box 7 flows through Schedule E Part I.
 });
 
 // ── 5. QBI extended fields (K199 screen) ─────────────────────────────────────

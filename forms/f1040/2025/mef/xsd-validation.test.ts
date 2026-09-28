@@ -56,6 +56,15 @@ try {
 
 // ── Shared helpers ───────────────────────────────────────────────────────────
 
+function filedPrior8582(activityId: string, amount: number) {
+  return {
+    tax_year: 2024,
+    activity_id: activityId,
+    filed_part_vii_column_c: amount,
+    source_document_reference: `2024 filed Form 8582 Part VII, ${activityId}`,
+  };
+}
+
 const plan = buildExecutionPlan(registry);
 const nonApplicableBelowFpl = {
   basis: "not_applicable",
@@ -628,6 +637,9 @@ Deno.test("Form 8396 allocates a smaller certified loan through the full return 
     f1098: [{
       source_document_reference: "2025 Form 1098 loan B",
       box1_mortgage_interest: 7_500,
+      box1_current_year_deductible_interest: 7_500,
+      box1_deduction_workpaper_reference:
+        "2025 Pub. 936 loan B workpaper before Form 8396 reduction",
     }],
     form8396: source,
   });
@@ -4080,8 +4092,30 @@ Deno.test({
       months_in_home: 12,
       ptc_tax_return: {
         filing: "required",
-        agi: 12_000,
-        tax_exempt_interest: 500,
+        filed_form1040: {
+          source_document_id: "child-2025-1040",
+          taxpayer_ssn: "222-33-4444",
+          tax_year: 2025,
+          filing_status: "single",
+          blind: false,
+          line1z_wages: 0,
+          line2a_tax_exempt_interest: 500,
+          line2b_taxable_interest: 12_000,
+          line3b_dividends: 0,
+          line4b_ira: 0,
+          line5b_pensions: 0,
+          line6b_social_security: 0,
+          line7a_capital_gain: 0,
+          line8_additional_income: 0,
+          line10_adjustments: 0,
+          line11b_agi: 12_000,
+        },
+        interest_forms1099: [{
+          source_document_id: "child-2025-1099-int",
+          recipient_ssn: "222-33-4444",
+          box1_taxable_interest: 12_000,
+          box8_tax_exempt_interest: 500,
+        }],
       },
     }],
   };
@@ -5180,6 +5214,7 @@ Deno.test({
     schedule_e: { farm_rental_net: 11300, farm_rental_gross: 12100 },
     f4835: {
       f4835s: [{
+        activity_id: "fixture-Farm",
         activity_name: "Farm",
         livestock_crop_income: 10000,
         cooperative_distributions_gross: 1000,
@@ -5207,6 +5242,7 @@ Deno.test({
   const result = runReturn({
     general,
     f4835: [{
+      activity_id: "fixture-Farm",
       activity_name: "Farm",
       livestock_crop_income: 8000,
       expense_feed: 1000,
@@ -5238,6 +5274,7 @@ Deno.test({
   const result = runReturn({
     general,
     f4835: [{
+      activity_id: "fixture-Farm",
       activity_name: "Farm",
       livestock_crop_income: 1000,
       ccc_loans_reported_election: 4000,
@@ -5281,6 +5318,7 @@ Deno.test({
   const result = runReturn({
     general,
     f4835: [{
+      activity_id: "fixture-Farm",
       activity_name: "Farm",
       defer_crop_insurance: true,
       crop_insurance_disaster_received: 5000,
@@ -5341,8 +5379,13 @@ Deno.test({
   const result = runReturn({
     general,
     f4835: [
-      { activity_name: "Profitable farm", livestock_crop_income: 3000 },
       {
+        activity_id: "fixture-Profitable farm",
+        activity_name: "Profitable farm",
+        livestock_crop_income: 3000,
+      },
+      {
+        activity_id: "fixture-Loss farm",
         activity_name: "Loss farm",
         livestock_crop_income: 0,
         expense_feed: 2000,
@@ -5384,6 +5427,7 @@ Deno.test({
   const result = runReturn({
     general,
     f4835: [{
+      activity_id: "fixture-Loss farm",
       activity_name: "Loss farm",
       livestock_crop_income: 0,
       expense_feed: 2000,
@@ -5417,6 +5461,7 @@ Deno.test({
   const result = runReturn({
     general,
     f4835: [{
+      activity_id: "fixture-Active farm",
       activity_name: "Active farm",
       livestock_crop_income: 0,
       expense_feed: 2000,
@@ -5455,6 +5500,7 @@ Deno.test({
     general,
     schedule_e: [{
       tsj: "T",
+      activity_id: "fixture-Rental land",
       property_description: "Rental land",
       property_type: 5,
       activity_type: "B",
@@ -5468,6 +5514,7 @@ Deno.test({
       zip: "78701",
     }],
     f4835: [{
+      activity_id: "fixture-Loss farm",
       activity_name: "Loss farm",
       livestock_crop_income: 0,
       expense_feed: 2000,
@@ -5504,8 +5551,13 @@ Deno.test({
   const result = runReturn({
     general,
     f4835: [
-      { activity_name: "Profit farm", livestock_crop_income: 1000 },
       {
+        activity_id: "fixture-Profit farm",
+        activity_name: "Profit farm",
+        livestock_crop_income: 1000,
+      },
+      {
+        activity_id: "fixture-Risk-limited farm",
         activity_name: "Risk-limited farm",
         livestock_crop_income: 0,
         expense_feed: 2000,
@@ -5558,6 +5610,7 @@ Deno.test({
   const result = runReturn({
     general,
     f4835: [{
+      activity_id: "fixture-No-risk farm",
       activity_name: "No-risk farm",
       livestock_crop_income: 0,
       expense_feed: 2000,
@@ -5599,6 +5652,7 @@ Deno.test({
     general,
     f4835: [
       {
+        activity_id: "fixture-North farm",
         activity_name: "North farm",
         livestock_crop_income: 0,
         expense_feed: 1000,
@@ -5610,6 +5664,7 @@ Deno.test({
         },
       },
       {
+        activity_id: "fixture-South farm",
         activity_name: "South farm",
         livestock_crop_income: 0,
         expense_feed: 2000,
@@ -5654,11 +5709,17 @@ Deno.test({
     general,
     f4835: [
       {
+        activity_id: "fixture-Prior-loss farm",
         activity_name: "Prior-loss farm",
         livestock_crop_income: 1000,
         prior_unallowed_passive_operating: 1500,
+        prior_year_8582_source: filedPrior8582("fixture-Prior-loss farm", 1500),
       },
-      { activity_name: "Current-profit farm", livestock_crop_income: 500 },
+      {
+        activity_id: "fixture-Current-profit farm",
+        activity_name: "Current-profit farm",
+        livestock_crop_income: 500,
+      },
     ],
   });
   assertEquals(result.diagnostics, []);
@@ -5691,9 +5752,11 @@ Deno.test({
   const result = runReturn({
     general,
     f4835: [{
+      activity_id: "fixture-Prior-loss farm",
       activity_name: "Prior-loss farm",
       livestock_crop_income: 1000,
       prior_unallowed_passive_operating: 1500,
+      prior_year_8582_source: filedPrior8582("fixture-Prior-loss farm", 1500),
     }],
   });
   assertEquals(result.diagnostics, []);
@@ -5721,8 +5784,13 @@ Deno.test({
   const result = runReturn({
     general,
     f4835: [
-      { activity_name: "Profit farm", livestock_crop_income: 1100 },
       {
+        activity_id: "fixture-Profit farm",
+        activity_name: "Profit farm",
+        livestock_crop_income: 1100,
+      },
+      {
+        activity_id: "fixture-Limited farm",
         activity_name: "Limited farm",
         expense_feed: 2000,
         some_investment_not_at_risk: true,
@@ -5732,6 +5800,7 @@ Deno.test({
           line9_decreases_and_exclusions: 0,
         },
         prior_unallowed_passive_operating: 500,
+        prior_year_8582_source: filedPrior8582("fixture-Limited farm", 500),
       },
     ],
   });
@@ -5763,10 +5832,12 @@ Deno.test({
   const result = runReturn({
     general,
     f4835: [{
+      activity_id: "fixture-Active farm",
       activity_name: "Active farm",
       livestock_crop_income: 1000,
       actively_participated: true,
       prior_unallowed_passive_operating: 1500,
+      prior_year_8582_source: filedPrior8582("fixture-Active farm", 1500),
       prior_passive_losses_active_when_incurred: true,
     }],
   });
@@ -5798,6 +5869,7 @@ Deno.test({
     schedule_e: [
       {
         tsj: "T",
+        activity_id: "fixture-Rental house",
         property_description: "Rental house",
         property_type: 1,
         activity_type: "A",
@@ -5814,6 +5886,7 @@ Deno.test({
       },
       {
         tsj: "T",
+        activity_id: "fixture-Mineral royalties",
         property_description: "Mineral royalties",
         property_type: 6,
         activity_type: "B",
@@ -5856,6 +5929,7 @@ Deno.test({
     general,
     schedule_e: [{
       tsj: "T",
+      activity_id: "fixture-Rental property",
       property_description: "Rental property",
       property_type: 1,
       activity_type: "C",
@@ -5903,6 +5977,7 @@ Deno.test({
     general,
     schedule_e: [{
       tsj: "T",
+      activity_id: "fixture-Rental house",
       property_description: "Rental house",
       property_type: 1,
       activity_type: "A",
@@ -5962,12 +6037,14 @@ Deno.test({
     schedule_e: [
       {
         ...base,
+        activity_id: "fixture-First house",
         property_description: "First house",
         street_address: "1 Main St",
         expense_taxes: 2_000,
       },
       {
         ...base,
+        activity_id: "fixture-Second house",
         property_description: "Second house",
         street_address: "2 Main St",
         expense_taxes: 3_000,
@@ -6001,6 +6078,7 @@ Deno.test({
     w2: [w2Item(140_000, 20_000)],
     schedule_e: [{
       tsj: "T",
+      activity_id: "fixture-Rental house",
       property_description: "Rental house",
       property_type: 1,
       activity_type: "A",
@@ -6053,6 +6131,7 @@ Deno.test({
     w2: [w2Item(150_000, 20_000)],
     schedule_e: [{
       tsj: "T",
+      activity_id: "fixture-Rental house",
       property_description: "Rental house",
       property_type: 1,
       activity_type: "A",
@@ -6112,12 +6191,14 @@ Deno.test({
     schedule_e: [
       {
         ...base,
+        activity_id: "fixture-First house",
         property_description: "First house",
         street_address: "1 Main St",
         expense_taxes: 20_000,
       },
       {
         ...base,
+        activity_id: "fixture-Second house",
         property_description: "Second house",
         street_address: "2 Main St",
         expense_taxes: 30_000,
@@ -6163,6 +6244,7 @@ Deno.test({
     w2: [w2Item(50_000, 8_000)],
     schedule_e: [{
       tsj: "T",
+      activity_id: "fixture-Rental house",
       property_description: "Rental house",
       property_type: 1,
       activity_type: "A",
@@ -6171,6 +6253,7 @@ Deno.test({
       rent_income: 10_000,
       expense_taxes: 18_000,
       prior_unallowed_passive_operating: 3_000,
+      prior_year_8582_source: filedPrior8582("fixture-Rental house", 3_000),
       prior_passive_losses_active_when_incurred: true,
       form_1099_payments_made: false,
       street_address: "12 Main Street",
@@ -6215,6 +6298,7 @@ Deno.test({
     w2: [w2Item(140_000, 20_000)],
     schedule_e: [{
       tsj: "T",
+      activity_id: "fixture-Rental house",
       property_description: "Rental house",
       property_type: 1,
       activity_type: "A",
@@ -6223,6 +6307,7 @@ Deno.test({
       rent_income: 10_000,
       expense_taxes: 10_000,
       prior_unallowed_passive_operating: 8_000,
+      prior_year_8582_source: filedPrior8582("fixture-Rental house", 8_000),
       prior_passive_losses_active_when_incurred: true,
       form_1099_payments_made: false,
       street_address: "12 Main Street",
@@ -6270,6 +6355,7 @@ Deno.test({
     w2: [w2Item(135_000, 20_000)],
     schedule_e: [{
       tsj: "T",
+      activity_id: "fixture-Rental house",
       property_description: "Rental house",
       property_type: 1,
       activity_type: "A",
@@ -6278,6 +6364,7 @@ Deno.test({
       rent_income: 10_000,
       expense_taxes: 5_000,
       prior_unallowed_passive_operating: 20_000,
+      prior_year_8582_source: filedPrior8582("fixture-Rental house", 20_000),
       prior_passive_losses_active_when_incurred: true,
       form_1099_payments_made: false,
       street_address: "12 Main Street",
@@ -6344,12 +6431,14 @@ Deno.test({
     schedule_e: [
       {
         ...base,
+        activity_id: "fixture-Profit house",
         property_description: "Profit house",
         street_address: "1 Main Street",
         rent_income: 10_000,
       },
       {
         ...base,
+        activity_id: "fixture-Loss house",
         property_description: "Loss house",
         street_address: "2 Main Street",
         rent_income: 0,
@@ -6403,6 +6492,7 @@ Deno.test({
     w2: [w2Item(135_000, 20_000)],
     schedule_e: [{
       tsj: "T",
+      activity_id: "fixture-Rental house",
       property_description: "Rental house",
       property_type: 1,
       activity_type: "A",
@@ -6410,6 +6500,7 @@ Deno.test({
       personal_use_days: 0,
       rent_income: 10_000,
       prior_unallowed_passive_operating: 8_000,
+      prior_year_8582_source: filedPrior8582("fixture-Rental house", 8_000),
       prior_passive_losses_active_when_incurred: true,
       form_1099_payments_made: false,
       street_address: "12 Main Street",
@@ -6448,6 +6539,7 @@ Deno.test({
     w2: [w2Item(50_000, 8_000)],
     schedule_e: [{
       tsj: "T",
+      activity_id: "fixture-Passive rental",
       property_description: "Passive rental",
       property_type: 1,
       activity_type: "B",
@@ -6511,12 +6603,14 @@ Deno.test({
     schedule_e: [
       {
         ...base,
+        activity_id: "fixture-Active rental",
         property_description: "Active rental",
         activity_type: "A",
         street_address: "1 Main Street",
       },
       {
         ...base,
+        activity_id: "fixture-Other rental",
         property_description: "Other rental",
         activity_type: "B",
         street_address: "2 Main Street",
@@ -6577,6 +6671,7 @@ Deno.test({
     schedule_e: [
       {
         ...base,
+        activity_id: "fixture-Active loss",
         property_description: "Active loss",
         activity_type: "A",
         street_address: "1 Main Street",
@@ -6585,6 +6680,7 @@ Deno.test({
       },
       {
         ...base,
+        activity_id: "fixture-Other loss",
         property_description: "Other loss",
         activity_type: "B",
         street_address: "2 Main Street",
@@ -6593,6 +6689,7 @@ Deno.test({
       },
       {
         ...base,
+        activity_id: "fixture-Other profit",
         property_description: "Other profit",
         activity_type: "B",
         street_address: "3 Main Street",
@@ -6653,17 +6750,20 @@ Deno.test({
     schedule_e: [
       {
         ...base,
+        activity_id: "fixture-Profit rental",
         property_description: "Profit rental",
         street_address: "1 Main Street",
         rent_income: 6_000,
       },
       {
         ...base,
+        activity_id: "fixture-Loss rental",
         property_description: "Loss rental",
         street_address: "2 Main Street",
         rent_income: 10_000,
         expense_taxes: 20_000,
         prior_unallowed_passive_operating: 2_000,
+        prior_year_8582_source: filedPrior8582("fixture-Loss rental", 2_000),
       },
     ],
   });
@@ -6713,6 +6813,7 @@ Deno.test({
     w2: [w2Item(50_000, 8_000)],
     schedule_e: [{
       tsj: "T",
+      activity_id: "fixture-Passive rental",
       property_description: "Passive rental",
       property_type: 1,
       activity_type: "B",
@@ -6720,6 +6821,7 @@ Deno.test({
       personal_use_days: 0,
       rent_income: 10_000,
       prior_unallowed_passive_operating: 8_000,
+      prior_year_8582_source: filedPrior8582("fixture-Passive rental", 8_000),
       form_1099_payments_made: false,
       street_address: "12 Main Street",
       city: "Austin",
@@ -6747,6 +6849,142 @@ Deno.test({
 
 Deno.test({
   name:
+    "XSD: entire other-passive Part II sale with overall gain uses Form 8582 Part V",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const sale = {
+    activity_id: "fixture-Entire gain rental",
+    activity_name: "Entire gain rental",
+    part: "II" as const,
+    property_description: "Short-held rental property",
+    acquired_on: "2025-01-01",
+    sold_on: "2025-06-01",
+    gross_sales_price: 30_000,
+    cost_or_other_basis: 15_000,
+    depreciation_allowed: 0 as const,
+    entire_activity_interest_disposed: true,
+    buyer_unrelated: true,
+    fully_taxable: true,
+    installment_method: false,
+    disposition_document_reference: "2025 closing statement",
+  };
+  const result = runReturn({
+    general,
+    w2: [w2Item(50_000, 8_000)],
+    schedule_e: [{
+      tsj: "T",
+      activity_id: sale.activity_id,
+      property_description: sale.activity_name,
+      property_type: 1,
+      activity_type: "B",
+      fair_rental_days: 150,
+      personal_use_days: 0,
+      rent_income: 0,
+      expense_taxes: 2_000,
+      prior_unallowed_passive_operating: 8_000,
+      prior_year_8582_source: filedPrior8582(sale.activity_id, 8_000),
+      form_1099_payments_made: false,
+      street_address: "12 Main Street",
+      city: "Austin",
+      state: "TX",
+      zip: "78701",
+      disposed_of: true,
+      passive_property_sales: [sale],
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(xml, "<OverallGainAmt>5000</OverallGainAmt>");
+  assertStringIncludes(
+    xml,
+    "<DedRentalRealEstateLossAmt>10000</DedRentalRealEstateLossAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<AdjustedGrossIncomeAmt>55000</AdjustedGrossIncomeAmt>",
+  );
+  await validateXsd(xml, "entire passive overall-gain disposition");
+});
+
+Deno.test({
+  name:
+    "XSD: first-year entire passive sale with overall gain has no prior PAL",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const sale = {
+    activity_id: "fixture-first-year-gain",
+    activity_name: "First year rental",
+    part: "II" as const,
+    property_description: "Short-held rental property",
+    acquired_on: "2025-02-01",
+    sold_on: "2025-08-01",
+    gross_sales_price: 30_000,
+    cost_or_other_basis: 20_000,
+    depreciation_allowed: 0 as const,
+    entire_activity_interest_disposed: true,
+    buyer_unrelated: true,
+    fully_taxable: true,
+    installment_method: false,
+    disposition_document_reference: "2025 sale closing statement",
+  };
+  const result = runReturn({
+    general,
+    w2: [w2Item(50_000, 8_000)],
+    schedule_e: [{
+      tsj: "T",
+      activity_id: sale.activity_id,
+      property_description: sale.activity_name,
+      property_type: 1,
+      activity_type: "B",
+      fair_rental_days: 180,
+      personal_use_days: 0,
+      rent_income: 0,
+      expense_taxes: 2_000,
+      form_1099_payments_made: false,
+      street_address: "12 Main Street",
+      city: "Austin",
+      state: "TX",
+      zip: "78701",
+      disposed_of: true,
+      first_year_activity_source: {
+        activity_id: sale.activity_id,
+        activity_name: sale.activity_name,
+        activity_acquired_on: sale.acquired_on,
+        acquisition_document_reference: "2025 purchase closing statement",
+        not_grouped_with_prior_activity: true,
+      },
+      passive_property_sales: [sale],
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(xml, "<OverallGainAmt>8000</OverallGainAmt>");
+  assertEquals(xml.includes("<PriorYearUnallowedOtherLossAmt>"), false);
+  assertStringIncludes(
+    xml,
+    "<DedRentalRealEstateLossAmt>2000</DedRentalRealEstateLossAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<AdjustedGrossIncomeAmt>58000</AdjustedGrossIncomeAmt>",
+  );
+  await validateXsd(xml, "first-year entire passive disposition");
+});
+
+Deno.test({
+  name:
     "XSD: prior rental loss without past active participation stays in Part V",
   sanitizeOps: false,
   sanitizeResources: false,
@@ -6758,6 +6996,7 @@ Deno.test({
     w2: [w2Item(50_000, 8_000)],
     schedule_e: [{
       tsj: "T",
+      activity_id: "fixture-Rental house",
       property_description: "Rental house",
       property_type: 1,
       activity_type: "A",
@@ -6766,6 +7005,7 @@ Deno.test({
       rent_income: 10_000,
       expense_taxes: 10_000,
       prior_unallowed_passive_operating: 8_000,
+      prior_year_8582_source: filedPrior8582("fixture-Rental house", 8_000),
       prior_passive_losses_active_when_incurred: false,
       form_1099_payments_made: false,
       street_address: "12 Main Street",

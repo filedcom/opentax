@@ -1,39 +1,43 @@
 import { z } from "zod";
-import type { NodeResult } from "../../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
-import { CONFIG_BY_YEAR } from "../../../config/index.ts";
+import {
+  assertReviewedZeroPriorForm8990Carryforward,
+  priorCarryforwardSchema,
+  type ReviewedZeroPriorForm8990Carryforward,
+} from "./carryforward.ts";
+import {
+  assertCalculatedLimitForBusiness,
+  type CalculatedBoundedForm8990Limit,
+} from "./limit.ts";
+import {
+  assertFinalizedBoundedForm8990Return,
+  type FinalizedBoundedForm8990Return,
+} from "./final-reconciliation.ts";
+import { priorFiledScheduleCSchema } from "./nonexempt-receipts.ts";
+import { receiptSchema } from "./provisional-ati.ts";
+import { businessInterestExpenseRecordSchema } from "./interest-expense.ts";
 
 const amount = z.number().int().finite().nonnegative().max(999_999_999_999_999);
 
-// This direct Schedule C route files Form 8990 only when all business interest
-// remains deductible. A disallowance changes Schedule C, SE tax, and QBI; an
-// add-back on Schedule 1 alone would not be a valid replacement.
-export const directScheduleCSourceSchema = z.object({
-  business_reference: z.string().trim().min(1),
-  current_year_business_interest_expense: amount.positive(),
-  tentative_taxable_income: z.number().int().finite().min(-999_999_999_999_999)
-    .max(999_999_999_999_999),
-  section172_nol_deduction: amount,
-  section199a_qbi_deduction: amount,
-  business_depreciation_amortization_depletion: amount,
-  current_year_business_interest_income: amount,
-  average_prior_three_year_gross_receipts: amount,
-  not_a_tax_shelter_verified: z.literal(true),
-  sole_direct_non_passthrough_business_verified: z.literal(true),
-  no_prior_disallowed_interest: z.literal(true),
-  no_floor_plan_financing_interest: z.literal(true),
-  no_other_ati_additions_or_reductions: z.literal(true),
-  no_nonbusiness_items_in_tentative_income: z.literal(true),
-  no_pass_through_excess_items: z.literal(true),
+/** The only TY2025 public Form 8990 input is reviewed source records. */
+export const publicInputSchema = z.object({
+  receipts: z.array(receiptSchema).min(1),
+  interestExpenseRecords: z.array(businessInterestExpenseRecordSchema).min(1),
+  priorFiledScheduleCs: z.array(priorFiledScheduleCSchema).length(3),
+  priorFiledForm8990: priorCarryforwardSchema,
 }).strict();
 
-export type DirectScheduleCSource = z.infer<typeof directScheduleCSourceSchema>;
+export type Form8990PublicSource = z.infer<typeof publicInputSchema>;
 
-export const inputSchema = z.object({
-  direct_schedule_c: directScheduleCSourceSchema.optional(),
-}).strict();
+// Optional fields let the ordinary DAG visit this node when no Form 8990
+// source is present. Active sources must use the Form 1040 two-pass entrypoint.
+export const inputSchema = publicInputSchema.partial();
 
 export const form8990LinesSchema = z.object({
   line1: amount,
@@ -41,6 +45,7 @@ export const form8990LinesSchema = z.object({
   line4: amount,
   line5: amount,
   line6: z.number().int().finite(),
+  line7: amount,
   line8: amount,
   line9: amount,
   line10: amount,
@@ -59,14 +64,52 @@ export const form8990LinesSchema = z.object({
 
 export type Form8990Lines = z.infer<typeof form8990LinesSchema>;
 
-export function calculateDirectScheduleCForm8990(
-  raw: DirectScheduleCSource,
-  _smallBusinessGrossReceiptsThreshold: number,
-): Form8990Lines {
-  directScheduleCSourceSchema.parse(raw);
-  throw new Error(
-    "Form 8990 ATI components are not reconciled to the filed return",
+/** Internal post-finalization node output; not accepted as a raw filing input. */
+export function projectCalculatedBoundedForm8990Node(args: {
+  readonly limit: CalculatedBoundedForm8990Limit;
+  readonly finalized: FinalizedBoundedForm8990Return;
+  readonly prior: ReviewedZeroPriorForm8990Carryforward;
+}): NodeOutput {
+  const { limit, finalized, prior } = args;
+  assertReviewedZeroPriorForm8990Carryforward(prior);
+  assertFinalizedBoundedForm8990Return(finalized);
+  assertCalculatedLimitForBusiness(
+    limit,
+    finalized.businessReference,
+    finalized.originalInterestExpense,
   );
+  if (
+    limit.line2 !== prior.targetLine2 ||
+    limit.line30 !== finalized.allowedInterestExpense ||
+    limit.line31 !== finalized.disallowedInterestExpense
+  ) {
+    throw new Error(
+      "Form 8990 calculated node does not match finalized interest",
+    );
+  }
+  const fields = form8990LinesSchema.parse({
+    line1: limit.line1,
+    line2: limit.line2,
+    line4: limit.line4,
+    line5: limit.line5,
+    line6: limit.line6,
+    line7: limit.line7,
+    line8: limit.line8,
+    line9: limit.line9,
+    line10: limit.line10,
+    line11: limit.line11,
+    line16: limit.line16,
+    line18: limit.line18,
+    line21: limit.line21,
+    line22: limit.line22,
+    line23: limit.line23,
+    line25: limit.line25,
+    line26: limit.line26,
+    line29: limit.line29,
+    line30: limit.line30,
+    line31: limit.line31,
+  });
+  return { nodeType: "form8990", fields };
 }
 
 class Form8990Node extends TaxNode<typeof inputSchema> {
@@ -77,18 +120,10 @@ class Form8990Node extends TaxNode<typeof inputSchema> {
   compute(ctx: NodeContext, rawInput: z.infer<typeof inputSchema>): NodeResult {
     if (ctx.taxYear !== 2025) throw new Error("Form 8990 route is TY2025 only");
     const input = inputSchema.parse(rawInput);
-    if (!input.direct_schedule_c) return { outputs: [] };
-    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
-    const lines = calculateDirectScheduleCForm8990(
-      input.direct_schedule_c,
-      cfg.smallBizGrossReceipts,
+    if (Object.keys(input).length === 0) return { outputs: [] };
+    throw new Error(
+      "Form 8990 active sources require the Form 1040 two-pass execution path",
     );
-    return {
-      outputs: [{
-        nodeType: this.nodeType,
-        fields: { direct_schedule_c: input.direct_schedule_c, ...lines },
-      }],
-    };
   }
 }
 

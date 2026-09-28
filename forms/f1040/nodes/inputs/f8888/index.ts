@@ -1,7 +1,5 @@
 import { z } from "zod";
-import type {
-  NodeResult,
-} from "../../../../../core/types/tax-node.ts";
+import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
@@ -13,26 +11,29 @@ export enum AccountType {
 }
 
 const accountSchema = z.object({
-  routing_number: z.string().optional(),
-  account_number: z.string().optional(),
-  account_type: z.nativeEnum(AccountType).optional(),
-  amount: z.number().nonnegative().optional(),
-});
+  routing_number: z.string().regex(/^(0[1-9]|1[0-2]|2[1-9]|3[0-2])\d{7}$/),
+  account_number: z.string().regex(/^[A-Za-z0-9-]{1,17}$/),
+  account_type: z.nativeEnum(AccountType),
+  amount: z.number().int().positive(),
+  // Preflight ownership fact. It is not printed on Form 8888.
+  owner_name: z.string().trim().min(1),
+}).strict();
 
 // Form 8888 — Allocation of Refund
 // Metadata only — no tax computation outputs.
-// Refund routing info for direct deposit split (up to 3 accounts + savings bonds).
+// TY2025 refund routing info for direct deposit split (2 or 3 accounts).
 
 export const inputSchema = z.object({
-  account_1: accountSchema.optional(),
-  account_2: accountSchema.optional(),
+  account_1: accountSchema,
+  account_2: accountSchema,
   account_3: accountSchema.optional(),
-  // Amount to purchase savings bonds (Form 8888 Part II)
-  savings_bond_amount: z.number().nonnegative().optional(),
-  // Bond owner first name
-  bond_owner_name: z.string().optional(),
-  // Co-owner or beneficiary name
-  bond_coowner_name: z.string().optional(),
+}).strict().refine((accounts) =>
+  new Set(
+    [accounts.account_1, accounts.account_2, accounts.account_3]
+      .filter((account) => account !== undefined)
+      .map((account) => `${account.routing_number}:${account.account_number}`),
+  ).size === (accounts.account_3 === undefined ? 2 : 3), {
+  message: "Form 8888 requires distinct deposit accounts",
 });
 
 class F8888Node extends TaxNode<typeof inputSchema> {

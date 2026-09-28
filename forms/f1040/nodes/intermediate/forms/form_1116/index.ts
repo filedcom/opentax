@@ -34,10 +34,110 @@ export enum ForeignTaxCreditMethod {
   Accrued = "accrued",
 }
 
+export const foreignTaxCurrencySchema = z.object({
+  currency_code: z.string().regex(/^[A-Z]{3}$/),
+  amount: z.number().finite().positive(),
+  usd_per_foreign_unit: z.number().finite().positive(),
+  conversion_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  conversion_rate_explanation: z.string().trim().min(1).optional(),
+  source_document_reference: z.string().trim().min(1),
+}).strict();
+
+export const singleSourcePdfReviewSchema = z.object({
+  source_document_reference: z.string().trim().min(1),
+  all_foreign_tax_items_identified_confirmed: z.literal(true),
+  all_worldwide_income_sources_identified_confirmed: z.literal(true),
+  all_part_i_deductions_and_losses_except_standard_zero_confirmed: z.literal(
+    true,
+  ),
+  no_foreign_tax_reduction_confirmed: z.literal(true),
+  no_high_tax_kickout_confirmed: z.literal(true),
+  no_foreign_income_adjustment_confirmed: z.literal(true),
+  no_section_960c_increase_confirmed: z.literal(true),
+  no_international_boycott_confirmed: z.literal(true),
+  no_prior_year_carryover_or_carryback_confirmed: z.literal(true),
+  no_preferential_rate_income_confirmed: z.literal(true),
+  no_other_category_credit_confirmed: z.literal(true),
+}).strict();
+
+export const singleSourceK3PdfReviewSchema = singleSourcePdfReviewSchema.omit({
+  no_foreign_tax_reduction_confirmed: true,
+}).extend({
+  only_identified_k3_line12_reduction_confirmed: z.literal(true),
+}).strict();
+
+export const partnershipK3PassiveInterestSchema = z.object({
+  partnership_ein: z.string().regex(/^\d{9}$/),
+  k1_source_document_reference: z.string().trim().min(1),
+  k3_source_document_reference: z.string().trim().min(1),
+  part_ii_section_1_line_6_passive_interest: z.number().finite().positive(),
+  part_ii_section_1_line_24_passive_total: z.number().finite().positive(),
+  part_iii_section_4_line_1_foreign_tax: z.number().finite().positive(),
+  part_iii_section_4_line_2_tax_reduction: z.number().finite().positive(),
+  irs_country_code: z.string().length(2),
+  tax_paid_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
+  foreign_tax_currency: foreignTaxCurrencySchema,
+  no_other_income_tax_or_reduction_on_k3_confirmed: z.literal(true),
+}).strict();
+
+export const sCorpK3PassiveInterestSchema = z.object({
+  corporation_ein: z.string().regex(/^\d{9}$/),
+  k1_source_document_reference: z.string().trim().min(1),
+  k3_source_document_reference: z.string().trim().min(1),
+  part_ii_section_1_line_6_passive_interest: z.number().finite().positive(),
+  part_ii_section_1_line_24_passive_total: z.number().finite().positive(),
+  part_iii_section_3_line_1_foreign_tax: z.number().finite().positive(),
+  part_iii_section_3_line_2_tax_reduction: z.number().finite().positive(),
+  irs_country_code: z.string().length(2),
+  tax_paid_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
+  foreign_tax_currency: foreignTaxCurrencySchema,
+  no_other_income_tax_or_reduction_on_k3_confirmed: z.literal(true),
+}).strict();
+
+export const alternativeCompensationSourcingSchema = z.object({
+  specific_compensation_description: z.string().trim().min(1).max(100),
+  alternative_allocation_basis: z.string().trim().min(1).max(100),
+  alternative_allocation_computation: z.string().trim().min(1).max(100),
+  geographical_comparison: z.string().trim().min(1).max(100),
+  compensation_item_total_usd: z.number().finite().positive(),
+  alternative_us_source_usd: z.number().finite().nonnegative(),
+  alternative_foreign_source_usd: z.number().finite().nonnegative(),
+  ordinary_us_source_usd: z.number().finite().nonnegative(),
+  ordinary_foreign_source_usd: z.number().finite().nonnegative(),
+  source_document_reference: z.string().trim().min(1),
+}).strict().superRefine((item, ctx) => {
+  const cents = (amount: number) => Math.round(amount * 100);
+  const total = cents(item.compensation_item_total_usd);
+  if (
+    cents(item.alternative_us_source_usd) +
+          cents(item.alternative_foreign_source_usd) !== total ||
+    cents(item.ordinary_us_source_usd) +
+          cents(item.ordinary_foreign_source_usd) !== total
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["compensation_item_total_usd"],
+      message:
+        "Form 1116 line 1b ordinary and alternative U.S./foreign amounts must each equal the specific compensation total",
+    });
+  }
+});
+
 export const foreignTaxItemSchema = z.object({
   foreign_tax_paid: z.number().nonnegative(),
+  // Schedule K-3 has already apportioned this line-12 reduction by category.
+  // It is not a reduction to the gross foreign tax shown in Part II.
+  schedule_k3_line12_reduction: z.object({
+    amount: z.number().finite().positive(),
+    source_document_reference: z.string().trim().min(1),
+  }).strict().optional(),
+  partnership_k3_passive_interest: partnershipK3PassiveInterestSchema
+    .optional(),
+  s_corp_k3_passive_interest: sCorpK3PassiveInterestSchema.optional(),
   income_category: z.nativeEnum(IncomeCategory),
   foreign_gross_income: z.number().nonnegative(),
+  foreign_income_source_document_reference: z.string().trim().min(1)
+    .optional(),
   directly_allocable_deductions: z.number().nonnegative().optional(),
   direct_expense_explanation: z.string().trim().min(1).max(9000).optional(),
   apportioned_deductions: z.number().nonnegative().optional(),
@@ -47,27 +147,300 @@ export const foreignTaxItemSchema = z.object({
   tax_kind: z.nativeEnum(ForeignTaxKind).optional(),
   tax_credit_method: z.nativeEnum(ForeignTaxCreditMethod).optional(),
   tax_reported_on_1099: z.boolean().optional(),
+  foreign_tax_currency: foreignTaxCurrencySchema.optional(),
+  alternative_compensation_sourcing: alternativeCompensationSourcingSchema
+    .optional(),
 });
+
+const taxDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(
+  (value) => {
+    const date = new Date(`${value}T00:00:00Z`);
+    return !Number.isNaN(date.valueOf()) &&
+      date.toISOString().slice(0, 10) === value;
+  },
+  "Form 1116 Schedule C needs a real calendar date",
+);
+const taxYearEndSchema = taxDateSchema.refine(
+  (value) => value < "2025-01-01",
+  "Form 1116 Schedule C relation-back year must precede 2025",
+);
+const affectedYearEndSchema = taxDateSchema.refine(
+  (value) => value <= "2025-12-31",
+  "Form 1116 Schedule C affected year cannot follow the current return",
+);
+const moneySchema = z.number().finite().nonnegative();
+function twoYearNonpaymentDate(foreignTaxYearEnd: string): string {
+  const date = new Date(`${foreignTaxYearEnd}T00:00:00Z`);
+  const year = date.getUTCFullYear() + 2;
+  const month = date.getUTCMonth();
+  const lastDay = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+  return new Date(Date.UTC(
+    year,
+    month,
+    Math.min(date.getUTCDate(), lastDay),
+  )).toISOString().slice(0, 10);
+}
+const payorIdentifierSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("ein"),
+    value: z.string().regex(/^[0-9]{9}$/),
+  }).strict(),
+  z.object({
+    kind: z.literal("foreign_reference"),
+    value: z.string().regex(/^[A-Za-z0-9]{1,50}$/),
+  }).strict(),
+]);
+const payorRedeterminationSchema = z.object({
+  payor_name: z.string().trim().min(1),
+  payor_identifier: payorIdentifierSchema,
+  irs_country_code: z.string().regex(/^[A-Z]{2}$/),
+  foreign_tax_year_end: taxDateSchema,
+  payor_foreign_income_subject_to_tax: moneySchema,
+  local_currency_code: z.string().regex(/^[A-Z]{3}$/),
+  functional_currency_code: z.string().regex(/^[A-Z]{3}$/),
+  tax_change_local_currency: z.number().finite().positive(),
+  tax_change_functional_currency: z.number().finite().positive(),
+  // The printed schedule divides local tax by this rate for column 10.
+  original_local_units_per_usd: z.number().finite().positive(),
+  tax_change_usd: z.number().finite().positive(),
+  payor_tax_usd_on_filed_return: moneySchema,
+  payor_revised_tax_usd: moneySchema,
+  event_date: taxDateSchema,
+  event_kind: z.enum([
+    "additional_accrued_tax",
+    "foreign_tax_refund_or_reduction",
+    "accrued_tax_unpaid_after_24_months",
+  ]),
+  source_document_references: z.array(z.string().trim().min(1)).min(1),
+}).strict().superRefine((event, ctx) => {
+  const rounded = (amount: number) => Math.round(amount * 100);
+  const decrease = event.event_kind !== "additional_accrued_tax";
+  const expected = event.payor_tax_usd_on_filed_return +
+    (decrease ? -event.tax_change_usd : event.tax_change_usd);
+  if (rounded(expected) !== rounded(event.payor_revised_tax_usd)) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["payor_revised_tax_usd"],
+      message:
+        "Form 1116 Schedule C payor original tax and change do not reconcile to revised tax",
+    });
+  }
+  if (
+    rounded(
+      event.tax_change_local_currency /
+        event.original_local_units_per_usd,
+    ) !==
+      rounded(event.tax_change_usd)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["tax_change_usd"],
+      message:
+        "Form 1116 Schedule C local tax and original conversion rate do not reconcile to U.S. dollars",
+    });
+  }
+  if (event.event_date.slice(0, 4) !== "2025") {
+    ctx.addIssue({
+      code: "custom",
+      path: ["event_date"],
+      message: "Form 1116 Schedule C source must describe a 2025 event",
+    });
+  }
+});
+
+// A category/year ledger ties each payor row to the filed Form 1116 and every
+// reviewed affected return. It is source evidence, not permission to file a
+// Schedule C until native Part I-IV and amended-year handling are complete.
+export const redeterminationDisclosureSchema = z.object({
+  income_category: z.nativeEnum(IncomeCategory),
+  relation_back_tax_year: z.number().int().min(1900).max(2024),
+  relation_back_year_end: taxYearEndSchema,
+  tax_credit_method_in_relation_back_year: z.nativeEnum(
+    ForeignTaxCreditMethod,
+  ),
+  payor_events: z.array(payorRedeterminationSchema).min(1),
+  filed_form1116: z.object({
+    foreign_taxes_paid_or_accrued_usd: moneySchema,
+    foreign_tax_credit_claimed_usd: moneySchema,
+    source_document_reference: z.string().trim().min(1),
+  }).strict(),
+  redetermined_form1116: z.object({
+    foreign_taxes_paid_or_accrued_usd: moneySchema,
+    foreign_tax_credit_claimed_usd: moneySchema,
+    calculation_document_reference: z.string().trim().min(1),
+  }).strict(),
+  affected_years: z.array(
+    z.object({
+      tax_year_end: affectedYearEndSchema,
+      us_tax_liability_on_filed_return_usd: moneySchema,
+      redetermined_us_tax_liability_usd: moneySchema,
+      filed_return_document_reference: z.string().trim().min(1),
+      recalculation_document_reference: z.string().trim().min(1),
+    }).strict(),
+  ).min(1),
+  all_affected_years_reviewed: z.literal(true),
+  source_document_references: z.array(z.string().trim().min(1)).min(1),
+}).strict().superRefine((ledger, ctx) => {
+  const rounded = (amount: number) => Math.round(amount * 100);
+  if (
+    Number(ledger.relation_back_year_end.slice(0, 4)) !==
+      ledger.relation_back_tax_year
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["relation_back_year_end"],
+      message:
+        "Form 1116 Schedule C relation-back year end does not match its tax year",
+    });
+  }
+  if (
+    ledger.tax_credit_method_in_relation_back_year ===
+      ForeignTaxCreditMethod.Paid &&
+    ledger.payor_events.some((event) =>
+      event.event_kind === "additional_accrued_tax"
+    )
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["payor_events"],
+      message:
+        "Additional prior-year tax paid on the cash method belongs on current-year Form 1116 Part II, not Schedule C Part I",
+    });
+  }
+  if (
+    ledger.tax_credit_method_in_relation_back_year ===
+      ForeignTaxCreditMethod.Paid &&
+    ledger.payor_events.some((event) =>
+      event.event_kind === "accrued_tax_unpaid_after_24_months"
+    )
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["payor_events"],
+      message:
+        "Form 1116 Schedule C 24-month deemed refund applies to accrued foreign taxes, not paid-method credits",
+    });
+  }
+  if (
+    ledger.payor_events.some((event) =>
+      event.event_kind === "accrued_tax_unpaid_after_24_months" &&
+      event.event_date !== twoYearNonpaymentDate(event.foreign_tax_year_end)
+    )
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["payor_events"],
+      message:
+        "Form 1116 Schedule C two-year nonpayment date must be 24 months after the foreign tax year end",
+    });
+  }
+  const change = ledger.payor_events.reduce(
+    (sum, event) =>
+      sum +
+      (event.event_kind === "additional_accrued_tax"
+        ? event.tax_change_usd
+        : -event.tax_change_usd),
+    0,
+  );
+  if (
+    rounded(
+      ledger.filed_form1116.foreign_taxes_paid_or_accrued_usd +
+        change,
+    ) !==
+      rounded(
+        ledger.redetermined_form1116.foreign_taxes_paid_or_accrued_usd,
+      )
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["redetermined_form1116"],
+      message:
+        "Form 1116 Schedule C payor changes do not reconcile filed and redetermined category tax",
+    });
+  }
+  if (
+    ledger.filed_form1116.foreign_tax_credit_claimed_usd >
+      ledger.filed_form1116.foreign_taxes_paid_or_accrued_usd ||
+    ledger.redetermined_form1116.foreign_tax_credit_claimed_usd >
+      ledger.redetermined_form1116.foreign_taxes_paid_or_accrued_usd
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["filed_form1116"],
+      message:
+        "Form 1116 Schedule C category credit cannot exceed its foreign tax",
+    });
+  }
+  const years = ledger.affected_years.map((year) => year.tax_year_end);
+  if (
+    !years.includes(ledger.relation_back_year_end) ||
+    new Set(years).size !== years.length
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["affected_years"],
+      message:
+        "Form 1116 Schedule C needs one unique review for each affected year, including the relation-back year",
+    });
+  }
+});
+export type RedeterminationDisclosure = z.infer<
+  typeof redeterminationDisclosureSchema
+>;
 
 export const carryoverReviewSchema = z.object({
   income_category: z.nativeEnum(IncomeCategory),
   prior_year_form1116_line23_limit: z.number().nonnegative(),
   prior_year_form1116_line24_allowed_credit: z.number().nonnegative(),
-  prior_year_schedule_b_line8_balance: z.literal(0),
+  prior_year_schedule_b_line8_balance: z.number().int().nonnegative(),
   source_document_references: z.array(z.string().trim().min(1)).min(1),
   no_foreign_tax_redetermination_or_special_adjustment: z.literal(true),
 }).strict();
 
+const priorYearCarryoverVintageSchema = z.object({
+  vintage_tax_year: z.union([
+    z.literal(2020),
+    z.literal(2021),
+    z.literal(2022),
+    z.literal(2023),
+    z.literal(2024),
+  ]),
+  prior_year_schedule_b_line8_vintage_amount: z.number().int().positive(),
+}).strict();
+
 export const priorYearCarryoverSchema = z.object({
   income_category: z.nativeEnum(IncomeCategory),
-  // 2024 Schedule B line 8 current-year or first-preceding-year column.
-  // On the 2025 Schedule B these become first or second preceding year.
-  vintage_tax_year: z.union([z.literal(2023), z.literal(2024)]),
-  prior_year_schedule_b_line8_vintage_amount: z.number().int().positive(),
+  // Filed 2024 Schedule B line 8: reviewed 2020-2024 columns and total.
+  // In 2025 these shift to the fifth- through first-preceding columns.
+  vintages: z.array(priorYearCarryoverVintageSchema).min(1).max(5),
+  prior_year_schedule_b_line8_total: z.number().int().positive(),
   prior_year_schedule_b_line8_other_vintages_total: z.literal(0),
   no_intervening_adjustments: z.literal(true),
   source_document_references: z.array(z.string().trim().min(1)).min(1),
-}).strict();
+}).strict().superRefine((source, ctx) => {
+  if (
+    new Set(source.vintages.map((v) => v.vintage_tax_year)).size !==
+      source.vintages.length
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Form 1116 prior-year Schedule B has a duplicate vintage",
+      path: ["vintages"],
+    });
+  }
+  const total = source.vintages.reduce(
+    (sum, v) => sum + v.prior_year_schedule_b_line8_vintage_amount,
+    0,
+  );
+  if (total !== source.prior_year_schedule_b_line8_total) {
+    ctx.addIssue({
+      code: "custom",
+      message:
+        "Form 1116 prior-year Schedule B line 8 vintages do not match its total",
+      path: ["prior_year_schedule_b_line8_total"],
+    });
+  }
+});
 
 const vehicleInterestAssetSchema = z.object({
   asset_id: z.string().trim().min(1),
@@ -86,6 +459,8 @@ const vehicleInterestAssetMethodSchema = z.object({
 
 export const inputSchema = z.object({
   foreign_tax_items: z.array(foreignTaxItemSchema).optional(),
+  foreign_tax_redeterminations: z.array(redeterminationDisclosureSchema).min(1)
+    .optional(),
   carryover_reviews: z.array(carryoverReviewSchema).optional(),
   prior_year_carryovers: z.array(priorYearCarryoverSchema).optional(),
   // Signed Form 1040 lines 11b minus 14, before the line 15 zero floor.
@@ -123,6 +498,10 @@ export const inputSchema = z.object({
     source_document_references: z.array(z.string().trim().min(1)).min(1),
     no_amt_liability_verified: z.literal(true),
   }).strict().optional(),
+  single_source_pdf_review: z.union([
+    singleSourcePdfReviewSchema,
+    singleSourceK3PdfReviewSchema,
+  ]).optional(),
 });
 
 type ForeignTaxItem = z.infer<typeof foreignTaxItemSchema>;
@@ -182,6 +561,7 @@ export const categorySummarySchema = z.object({
   category: z.nativeEnum(IncomeCategory),
   items: z.array(foreignTaxItemSchema).min(1),
   foreignTaxPaid: z.number().nonnegative(),
+  foreignTaxReduction: z.number().nonnegative().optional(),
   foreignGrossIncome: z.number().nonnegative(),
   includedForeignIncome: z.number(),
   directlyAllocableDeductions: z.number().nonnegative(),
@@ -213,6 +593,15 @@ function categoryTotals(
       (sum, item) => sum + item.foreign_tax_paid,
       0,
     );
+    const foreignTaxReduction = matching.reduce(
+      (sum, item) => sum + (item.schedule_k3_line12_reduction?.amount ?? 0),
+      0,
+    );
+    if (foreignTaxReduction > foreignTaxPaid) {
+      throw new Error(
+        "Form 1116 Schedule K-3 line 12 reduction exceeds category foreign tax",
+      );
+    }
     const foreignGrossIncome = matching.reduce(
       (sum, item) => sum + item.foreign_gross_income,
       0,
@@ -220,6 +609,14 @@ function categoryTotals(
     for (const item of matching) {
       if ((item.excluded_income ?? 0) > item.foreign_gross_income) {
         throw new Error("Form 1116 excluded income exceeds foreign income");
+      }
+      if (
+        (item.schedule_k3_line12_reduction?.amount ?? 0) >
+          item.foreign_tax_paid
+      ) {
+        throw new Error(
+          "Form 1116 Schedule K-3 line 12 reduction exceeds its sourced foreign tax",
+        );
       }
     }
     const excludedIncome = matching.reduce(
@@ -266,6 +663,7 @@ function categoryTotals(
       category,
       items: matching,
       foreignTaxPaid,
+      foreignTaxReduction,
       foreignGrossIncome,
       includedForeignIncome,
       directlyAllocableDeductions,
@@ -350,7 +748,10 @@ function allowedCredit(
 ): number {
   const limit = line20UsTax *
     fraction(category.foreignTaxableIncome, line18WorldwideTaxableIncome);
-  return Math.min(Math.round(category.foreignTaxPaid), Math.round(limit));
+  return Math.min(
+    Math.round(category.foreignTaxPaid - (category.foreignTaxReduction ?? 0)),
+    Math.round(limit),
+  );
 }
 
 function allowedAmtCredit(
@@ -365,7 +766,10 @@ function allowedAmtCredit(
   }
   const limit = input.tentative_minimum_tax *
     fraction(category.foreignTaxableIncome, input.worldwide_taxable_income);
-  return Math.min(Math.round(category.foreignTaxPaid), Math.round(limit));
+  return Math.min(
+    Math.round(category.foreignTaxPaid - (category.foreignTaxReduction ?? 0)),
+    Math.round(limit),
+  );
 }
 
 function reviewedZeroCarryback(
@@ -407,7 +811,31 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, rawInput: Form1116Input): NodeResult {
     const input = inputSchema.parse(rawInput);
+    if ((input.foreign_tax_redeterminations?.length ?? 0) > 0) {
+      throw new Error(
+        "Form 1116 foreign tax redetermination needs native Schedule C and amended-year handling",
+      );
+    }
     for (const item of input.foreign_tax_items ?? []) {
+      if (
+        item.alternative_compensation_sourcing &&
+        item.income_category !== IncomeCategory.General
+      ) {
+        throw new Error(
+          "Form 1116 alternative employee compensation sourcing belongs in the general category",
+        );
+      }
+      if (
+        item.alternative_compensation_sourcing &&
+        Math.round(
+            item.alternative_compensation_sourcing
+              .alternative_foreign_source_usd * 100,
+          ) !== Math.round(item.foreign_gross_income * 100)
+      ) {
+        throw new Error(
+          "Form 1116 line 1b alternative foreign-service amount must equal line 1a gross income",
+        );
+      }
       if (
         item.income_category !== IncomeCategory.Passive &&
         item.income_category !== IncomeCategory.General
@@ -512,7 +940,7 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
       );
       const priorYearCarryover = priorCarryovers[0];
       const priorYearAmount = priorYearCarryover
-        ?.prior_year_schedule_b_line8_vintage_amount ?? 0;
+        ?.prior_year_schedule_b_line8_total ?? 0;
       const categoryLimit = Math.round(
         line20UsTax *
           fraction(category.foreignTaxableIncome, line18WorldwideTaxableIncome),
@@ -526,7 +954,10 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
         allowedCredit: currentYearCredit + usedPriorYearCarryover,
         currentYearExcessTax: Math.max(
           0,
-          Math.round(category.foreignTaxPaid) - currentYearCredit,
+          Math.round(
+            category.foreignTaxPaid - (category.foreignTaxReduction ?? 0),
+          ) -
+            currentYearCredit,
         ),
         ...(priorYearCarryover
           ? {
@@ -544,9 +975,14 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
         "Form 1116 current-year carryover with multiple income categories needs separate category reconciliation",
       );
     }
-    if (priorCarryovers.length > 0 && excessCategories.length > 0) {
+    if (
+      priorCarryovers.length > 0 && excessCategories.length > 0 &&
+      (excessCategories.length !== 1 ||
+        excessCategories[0].category !== priorCarryovers[0].income_category ||
+        (excessCategories[0].usedPriorYearCarryover ?? 0) !== 0)
+    ) {
       throw new Error(
-        "Form 1116 prior-year carryover with current-year excess tax needs combined Schedule B reconciliation",
+        "Form 1116 prior-year carryover with current-year excess tax needs one category and zero prior-year use",
       );
     }
     const carryoverReview = excessCategories.length === 1
@@ -555,6 +991,15 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
         input.carryover_reviews ?? [],
       )
       : undefined;
+    if (
+      carryoverReview &&
+      carryoverReview.prior_year_schedule_b_line8_balance !==
+        (priorCarryovers[0]?.prior_year_schedule_b_line8_total ?? 0)
+    ) {
+      throw new Error(
+        "Form 1116 current excess carryback review must reconcile the filed prior-year Schedule B balance",
+      );
+    }
 
     const summedCredit = categories.reduce(
       (sum, category) => sum + category.allowedCredit,
@@ -602,9 +1047,25 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
         other_deductions_explanation: input.other_deductions_explanation,
         us_tax_before_credits: input.us_tax_before_credits,
         category_summaries: categories,
+        single_source_pdf_review: input.single_source_pdf_review,
+        regular_tax_preference_facts: input.regular_tax_preference_facts,
       },
     });
-    if (carryoverReview) {
+    if (carryoverReview && priorCarryovers.length === 1) {
+      outputs.push({
+        nodeType: "form1116_schedule_b",
+        fields: {
+          case: "combined_current_excess_prior_balance",
+          category: excessCategories[0].category,
+          current_year_excess_tax: excessCategories[0].currentYearExcessTax,
+          prior_year_review: carryoverReview,
+          prior_year_carryover: categories[0].priorYearCarryover,
+          used_prior_year_carryover: 0,
+          remaining_prior_year_carryover: categories[0].priorYearCarryover,
+          prior_year_carryover_source: priorCarryovers[0],
+        },
+      });
+    } else if (carryoverReview) {
       outputs.push({
         nodeType: "form1116_schedule_b",
         fields: {
@@ -615,7 +1076,7 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
         },
       });
     }
-    if (priorCarryovers.length === 1) {
+    if (priorCarryovers.length === 1 && !carryoverReview) {
       outputs.push({
         nodeType: "form1116_schedule_b",
         fields: {

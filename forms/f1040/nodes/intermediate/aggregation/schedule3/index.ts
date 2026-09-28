@@ -10,6 +10,7 @@ import {
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import { inputSchema as form8880SourceSchema } from "../../forms/form8880/calculation.ts";
 
 // Executor accumulation pattern: multiple upstream nodes (f1099int, f1099div) may
 // each deposit line1_foreign_tax_1099, causing it to accumulate as an array.
@@ -28,6 +29,7 @@ function sumAccumulable(value: number | number[] | undefined): number {
 // and additional payments (Part II → line 15 → f1040 line 31).
 // All fields are optional — any subset may be present on a given return.
 export const inputSchema = z.object({
+  form8880_source: form8880SourceSchema.optional(),
   // Source-backed Form 3800 will finalize line 6a after the return tax and
   // all credits ahead of it are known. This signal does not deposit gross credit.
   form3800_source_credit_pending: z.boolean().optional(),
@@ -110,6 +112,9 @@ export const inputSchema = z.object({
   line9_premium_tax_credit: z.number().nonnegative().optional(),
   // Line 12 — refundable federal fuel tax credit (Form 4136 line 17).
   line12_fuel_tax_credit: z.number().nonnegative().optional(),
+  // Form 2439 box 2, supported only with the payer-issued source document.
+  line13a_tax_paid_by_ric_or_reit: accumulable(z.number().nonnegative())
+    .optional(),
 
   // Line 6a — General business credit (from Form 3800).
   line6a_general_business_credit: accumulable(z.number().nonnegative())
@@ -179,7 +184,8 @@ function partIITotal(input: Schedule3Input): number {
     (input.line9_premium_tax_credit ?? 0) +
     (input.line10_amount_paid_extension ?? 0) +
     (input.line11_excess_ss ?? 0) +
-    (input.line12_fuel_tax_credit ?? 0)
+    (input.line12_fuel_tax_credit ?? 0) +
+    sumAccumulable(input.line13a_tax_paid_by_ric_or_reit)
   );
 }
 
@@ -202,46 +208,45 @@ class Schedule3Node extends TaxNode<typeof inputSchema> {
       input.form8912_source_credit_pending !== true &&
       input.form8859_source_credit_pending !== true &&
       input.form8834_source_credit_pending !== true &&
-      input.form8396_source_credit_pending !== true
+      input.form8396_source_credit_pending !== true &&
+      input.form8880_source === undefined
     ) return { outputs: [] };
 
     const f1040Input: Partial<z.infer<typeof f1040["inputSchema"]>> = {};
+    if (input.form8880_source !== undefined) {
+      f1040Input.form8880_source = input.form8880_source;
+    }
     if (credits > 0) f1040Input.line20_nonrefundable_credits = credits;
     if (payments > 0) f1040Input.line31_additional_payments = payments;
     const cleanNew = sumAccumulable(input.line6f_clean_vehicle_credit);
     const cleanUsed = sumAccumulable(
       input.line6m_prev_owned_clean_vehicle_credit,
     );
-    if (
-      input.form3800_source_credit_pending === true ||
-      input.form8912_source_credit_pending === true ||
-      input.form8859_source_credit_pending === true ||
-      input.form8834_source_credit_pending === true ||
-      input.form8396_source_credit_pending === true
-    ) {
-      f1040Input.credit_limit_schedule3_lines = {
-        line1: line1(input),
-        line2: input.line2_childcare_credit ?? 0,
-        line3: input.line3_education_credit ?? 0,
-        line4: input.line4_retirement_savings_credit ?? 0,
-        line5a: input.line5a_residential_clean_energy ?? 0,
-        line5b: input.line5b_energy_efficient_home ?? 0,
-        line6aGbc: line6a(input),
-        line6bPriorMinimumTax: input.line6b_prior_year_min_tax_credit ?? 0,
-        line6cAdoption: input.line6c_adoption_credit ?? 0,
-        line6dElderlyDisabled: input.line6d_elderly_disabled_credit ?? 0,
-        line6fCleanVehicle: cleanNew,
-        line6gMortgage: input.line6g_mortgage_interest_credit ?? 0,
-        line6hHomebuyer: input.line6h_dc_homebuyer_credit ?? 0,
-        line6iElectricVehicle: input.line6i_qualified_electric_vehicle_credit ??
-          0,
-        line6jRefueling: input.line6j_alt_fuel_vehicle_refueling ?? 0,
-        line6kBondCredit: input.line6k_tax_credit_bonds ?? 0,
-        line6lForm8978: input.line6l_form8978_credit ?? 0,
-        line6mUsedCleanVehicle: cleanUsed,
-        line7: line7(input),
-      };
-    }
+    // The final return may need these filed, pre-adoption priority credits
+    // even when none of the other late-settled credit forms is present.
+    // Deposit the calculator's typed lines for every active Schedule 3.
+    f1040Input.credit_limit_schedule3_lines = {
+      line1: line1(input),
+      line2: input.line2_childcare_credit ?? 0,
+      line3: input.line3_education_credit ?? 0,
+      line4: input.line4_retirement_savings_credit ?? 0,
+      line5a: input.line5a_residential_clean_energy ?? 0,
+      line5b: input.line5b_energy_efficient_home ?? 0,
+      line6aGbc: line6a(input),
+      line6bPriorMinimumTax: input.line6b_prior_year_min_tax_credit ?? 0,
+      line6cAdoption: input.line6c_adoption_credit ?? 0,
+      line6dElderlyDisabled: input.line6d_elderly_disabled_credit ?? 0,
+      line6fCleanVehicle: cleanNew,
+      line6gMortgage: input.line6g_mortgage_interest_credit ?? 0,
+      line6hHomebuyer: input.line6h_dc_homebuyer_credit ?? 0,
+      line6iElectricVehicle: input.line6i_qualified_electric_vehicle_credit ??
+        0,
+      line6jRefueling: input.line6j_alt_fuel_vehicle_refueling ?? 0,
+      line6kBondCredit: input.line6k_tax_credit_bonds ?? 0,
+      line6lForm8978: input.line6l_form8978_credit ?? 0,
+      line6mUsedCleanVehicle: cleanUsed,
+      line7: line7(input),
+    };
     if (cleanNew > 0 || cleanUsed > 0) {
       f1040Input.form8936_tentative_new_credit = cleanNew;
       f1040Input.form8936_tentative_used_credit = cleanUsed;
@@ -268,6 +273,8 @@ class Schedule3Node extends TaxNode<typeof inputSchema> {
     const line1Total = line1(input);
     if (line1Total > 0) printFields.line1_total = line1Total;
     if (line6a(input) > 0) printFields.line6a_total = line6a(input);
+    const line13a = sumAccumulable(input.line13a_tax_paid_by_ric_or_reit);
+    if (line13a > 0) printFields.line13a_total = line13a;
     if (cleanNew > 0) printFields.line6f_total = cleanNew;
     if (cleanUsed > 0) printFields.line6m_total = cleanUsed;
     if (line7(input) > 0) printFields.line7_total = line7(input);

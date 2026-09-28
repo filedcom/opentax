@@ -83,6 +83,35 @@ async function acknowledgmentPdf(): Promise<Uint8Array> {
   return pdf.save();
 }
 
+async function signedFormSourceReview(bytes: Uint8Array) {
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+  return {
+    reviewed_by: "Test reviewer",
+    reviewed_on: "2025-09-01",
+    pdf_sha256: Array.from(digest, (byte) => byte.toString(16).padStart(2, "0"))
+      .join(""),
+    appraiser_signature_present: true as const,
+    donee_signature_present: true as const,
+    matches_electronic_form_confirmed: true as const,
+  };
+}
+
+function signedFormAttachment(bytes: Uint8Array) {
+  return {
+    fileName: "CompletedSignedForm8283.pdf",
+    description: "Form 8283 completed signed Section B",
+    bytes,
+  };
+}
+
+async function withSignedForm<T extends object>(item: T, bytes: Uint8Array) {
+  return {
+    ...item,
+    signed_form_attachment_file_name: "CompletedSignedForm8283.pdf",
+    signed_form_source_review: await signedFormSourceReview(bytes),
+  };
+}
+
 async function assertVehicleBundleXsd(xml: string): Promise<void> {
   const xsdPath = new URL(
     "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
@@ -158,7 +187,7 @@ function sectionBMaterialImprovementVehicle() {
     date_acquired: "2018-05-15",
     donor_acquisition_description: "Purchase",
     date_contributed: "2025-06-01",
-    fmv: 20_000,
+    fmv: 15_000,
     deduction_claimed: 15_000,
     cost_or_adjusted_basis: 18_000,
     vehicle_vin: "1HGBH41JXMN109186",
@@ -227,7 +256,7 @@ function sectionBHighValueEquipmentGift() {
     date_acquired: "2018-05-15",
     donor_acquisition_description: "Purchase",
     date_contributed: "2025-06-01",
-    fmv: 650_000,
+    fmv: 600_000,
     deduction_claimed: 600_000,
     cost_or_adjusted_basis: 620_000,
     qualified_appraisal: {
@@ -237,6 +266,21 @@ function sectionBHighValueEquipmentGift() {
     donee_acknowledgment: vehicle.donee_acknowledgment,
   };
 }
+
+Deno.test("Form 8283 Section B does not file an unexplained reduction below appraised FMV", () => {
+  const gift = sectionBHighValueEquipmentGift();
+  assertThrows(
+    () =>
+      form8283.build({
+        section_b_items: [{
+          ...gift,
+          fmv: 650_000,
+        }],
+      }),
+    Error,
+    "needs a sourced FMV-reduction computation and statement",
+  );
+});
 
 Deno.test("Form 8283 similar books across three donees need three Section B documents", () => {
   const base = sectionBHighValueEquipmentGift();
@@ -525,16 +569,50 @@ Deno.test("Form 8283 Section B emits separate signed appraisal and donee documen
     },
   };
   const docs = form8283.build({
-    section_b_items: [gift, { ...gift, property_description: "Antique chair" }],
+    section_b_items: [
+      {
+        ...gift,
+        signed_form_attachment_file_name: "SignedDesk8283.pdf",
+        signed_form_source_review: {
+          reviewed_by: "Test reviewer",
+          reviewed_on: "2025-09-01",
+          pdf_sha256: "a".repeat(64),
+          appraiser_signature_present: true,
+          donee_signature_present: true,
+          matches_electronic_form_confirmed: true,
+        },
+      },
+      {
+        ...gift,
+        property_description: "Antique chair",
+        signed_form_attachment_file_name: "SignedChair8283.pdf",
+        signed_form_source_review: {
+          reviewed_by: "Test reviewer",
+          reviewed_on: "2025-09-01",
+          pdf_sha256: "b".repeat(64),
+          appraiser_signature_present: true,
+          donee_signature_present: true,
+          matches_electronic_form_confirmed: true,
+        },
+      },
+    ],
   }, {
     attachmentDescriptionsByFileName: {
       "Form8283AppraiserSignature.pdf":
         "Form 8283 appraiser signature document",
       "Form8283DoneeSignature.pdf": "Form 8283 Donee signature document",
+      "SignedDesk8283.pdf": "Form 8283 completed signed Section B",
+      "SignedChair8283.pdf": "Form 8283 completed signed Section B",
     },
     documentIdsByAttachmentFileName: {
       "Form8283AppraiserSignature.pdf": "BinaryAttachmentAppraiser",
       "Form8283DoneeSignature.pdf": "BinaryAttachmentDonee",
+      "SignedDesk8283.pdf": "SignedDesk",
+      "SignedChair8283.pdf": "SignedChair",
+    },
+    attachmentSha256ByFileName: {
+      "SignedDesk8283.pdf": "a".repeat(64),
+      "SignedChair8283.pdf": "b".repeat(64),
     },
     documentIdsByPendingKey: {},
   });
@@ -552,12 +630,12 @@ Deno.test("Form 8283 Section B emits separate signed appraisal and donee documen
   assertStringIncludes(docs[0], "<DoneeEIN>987654321</DoneeEIN>");
   assertStringIncludes(
     docs[0],
-    'referenceDocumentId="BinaryAttachmentAppraiser BinaryAttachmentDonee"',
+    'referenceDocumentId="SignedDesk BinaryAttachmentAppraiser BinaryAttachmentDonee"',
   );
   assertStringIncludes(docs[1], "Antique chair");
   assertStringIncludes(
     docs[1],
-    'referenceDocumentId="BinaryAttachmentAppraiser BinaryAttachmentDonee"',
+    'referenceDocumentId="SignedChair BinaryAttachmentAppraiser BinaryAttachmentDonee"',
   );
   assertThrows(
     () =>
@@ -575,6 +653,7 @@ Deno.test("Form 8283 Section B emits separate signed appraisal and donee documen
 });
 
 Deno.test("Form 8283 Section B return validates against TY2025 IRS XSD", async () => {
+  const signedBytes = await acknowledgmentPdf();
   const bundle = await buildMefBundle({
     f8283: {
       section_b_items: [{
@@ -587,6 +666,8 @@ Deno.test("Form 8283 Section B return validates against TY2025 IRS XSD", async (
         fmv: 8_000,
         deduction_claimed: 8_000,
         cost_or_adjusted_basis: 2_500,
+        signed_form_attachment_file_name: "CompletedSignedForm8283.pdf",
+        signed_form_source_review: await signedFormSourceReview(signedBytes),
         qualified_appraisal: {
           appraiser_first_name: "Jane",
           appraiser_last_name: "Smith",
@@ -630,13 +711,14 @@ Deno.test("Form 8283 Section B return validates against TY2025 IRS XSD", async (
         description: "Form 8283 Donee signature document",
         bytes: await acknowledgmentPdf(),
       },
+      signedFormAttachment(signedBytes),
     ],
   });
   const xml = bundle.xml;
-  assertEquals(bundle.attachments.length, 2);
+  assertEquals(bundle.attachments.length, 3);
   assertStringIncludes(
     xml,
-    'referenceDocumentId="BinaryAttachment2 BinaryAttachment3"',
+    'referenceDocumentId="BinaryAttachment4 BinaryAttachment2 BinaryAttachment3"',
   );
   assertStringIncludes(
     xml,
@@ -677,7 +759,7 @@ Deno.test("Form 8283 Section B material-improvement vehicle links appraisal, don
   const vehicle = sectionBMaterialImprovementVehicle();
   const bytes = await acknowledgmentPdf();
   const bundle = await buildMefBundle({
-    f8283: { section_b_items: [vehicle] },
+    f8283: { section_b_items: [await withSignedForm(vehicle, bytes)] },
   }, {
     filer: testFiler(),
     attachments: [
@@ -696,14 +778,15 @@ Deno.test("Form 8283 Section B material-improvement vehicle links appraisal, don
         description: "Form 8283 Donee signature document",
         bytes,
       },
+      signedFormAttachment(bytes),
     ],
   });
   const xml = bundle.xml;
-  assertEquals(bundle.attachments.length, 3);
+  assertEquals(bundle.attachments.length, 4);
   assertStringIncludes(xml, "<VehicleInd>X</VehicleInd>");
   assertStringIncludes(
     xml,
-    "<AppraisedFairMarketValueAmt>20000</AppraisedFairMarketValueAmt>",
+    "<AppraisedFairMarketValueAmt>15000</AppraisedFairMarketValueAmt>",
   );
   assertStringIncludes(xml, "<DeductionClaimedAmt>15000</DeductionClaimedAmt>");
   assertStringIncludes(
@@ -721,7 +804,7 @@ Deno.test("Form 8283 Section B material-improvement vehicle links appraisal, don
   );
   assertStringIncludes(
     xml,
-    'referenceDocumentId="BinaryAttachment3 BinaryAttachment4 BinaryAttachment5"',
+    'referenceDocumentId="BinaryAttachment3 BinaryAttachment6 BinaryAttachment4 BinaryAttachment5"',
   );
   assertStringIncludes(
     xml,
@@ -779,7 +862,7 @@ for (const certification of ["significant use", "needy transfer"] as const) {
       };
     const bytes = await acknowledgmentPdf();
     const bundle = await buildMefBundle({
-      f8283: { section_b_items: [item] },
+      f8283: { section_b_items: [await withSignedForm(item, bytes)] },
     }, {
       filer: testFiler(),
       attachments: [
@@ -798,6 +881,7 @@ for (const certification of ["significant use", "needy transfer"] as const) {
           description: "Form 8283 Donee signature document",
           bytes,
         },
+        signedFormAttachment(bytes),
       ],
     });
     const certificationTag = certification === "significant use"
@@ -912,7 +996,7 @@ Deno.test("Form 8283 Section B over $500,000 attaches the complete qualified app
   const gift = sectionBHighValueEquipmentGift();
   const bytes = await acknowledgmentPdf();
   const bundle = await buildMefBundle({
-    f8283: { section_b_items: [gift] },
+    f8283: { section_b_items: [await withSignedForm(gift, bytes)] },
   }, {
     filer: testFiler(),
     attachments: [
@@ -931,10 +1015,11 @@ Deno.test("Form 8283 Section B over $500,000 attaches the complete qualified app
         description: "Form 8283 Donee signature document",
         bytes,
       },
+      signedFormAttachment(bytes),
     ],
   });
   const xml = bundle.xml;
-  assertEquals(bundle.attachments.length, 3);
+  assertEquals(bundle.attachments.length, 4);
   assertStringIncludes(xml, "<EquipmentInd>X</EquipmentInd>");
   assertStringIncludes(
     xml,
@@ -942,7 +1027,7 @@ Deno.test("Form 8283 Section B over $500,000 attaches the complete qualified app
   );
   assertStringIncludes(
     xml,
-    'referenceDocumentId="BinaryAttachment2 BinaryAttachment3 BinaryAttachment4"',
+    'referenceDocumentId="BinaryAttachment2 BinaryAttachment5 BinaryAttachment3 BinaryAttachment4"',
   );
   assertStringIncludes(
     xml,
@@ -959,7 +1044,7 @@ Deno.test("Form 8283 Section B high-value vehicle requires both its donee copy a
     physical_condition: "Excellent condition",
     date_acquired: "2022-05-15",
     cost_or_adjusted_basis: 700_000,
-    fmv: 650_000,
+    fmv: 600_000,
     deduction_claimed: 600_000,
     vehicle_vin: "ZFF95NLA0N0275432",
     vehicle_material_improvement_acknowledgment: {
@@ -977,7 +1062,7 @@ Deno.test("Form 8283 Section B high-value vehicle requires both its donee copy a
   };
   const bytes = await acknowledgmentPdf();
   const bundle = await buildMefBundle({
-    f8283: { section_b_items: [gift] },
+    f8283: { section_b_items: [await withSignedForm(gift, bytes)] },
   }, {
     filer: testFiler(),
     attachments: [
@@ -1001,12 +1086,13 @@ Deno.test("Form 8283 Section B high-value vehicle requires both its donee copy a
         description: "Form 8283 Donee signature document",
         bytes,
       },
+      signedFormAttachment(bytes),
     ],
   });
-  assertEquals(bundle.attachments.length, 4);
+  assertEquals(bundle.attachments.length, 5);
   assertStringIncludes(
     bundle.xml,
-    'referenceDocumentId="BinaryAttachment3 BinaryAttachment4 BinaryAttachment5 BinaryAttachment6"',
+    'referenceDocumentId="BinaryAttachment3 BinaryAttachment4 BinaryAttachment7 BinaryAttachment5 BinaryAttachment6"',
   );
   assertStringIncludes(
     bundle.xml,
@@ -1067,6 +1153,7 @@ Deno.test("Form 8283 $500,000 boundary does not require a full appraisal attachm
   const highValue = sectionBHighValueEquipmentGift();
   const gift = {
     ...highValue,
+    fmv: 500_000,
     deduction_claimed: 500_000,
     qualified_appraisal: {
       ...highValue.qualified_appraisal,
@@ -1075,7 +1162,7 @@ Deno.test("Form 8283 $500,000 boundary does not require a full appraisal attachm
   };
   const bytes = await acknowledgmentPdf();
   const bundle = await buildMefBundle({
-    f8283: { section_b_items: [gift] },
+    f8283: { section_b_items: [await withSignedForm(gift, bytes)] },
   }, {
     filer: testFiler(),
     attachments: [
@@ -1089,9 +1176,10 @@ Deno.test("Form 8283 $500,000 boundary does not require a full appraisal attachm
         description: "Form 8283 Donee signature document",
         bytes,
       },
+      signedFormAttachment(bytes),
     ],
   });
-  assertEquals(bundle.attachments.length, 2);
+  assertEquals(bundle.attachments.length, 3);
   assertEquals(bundle.xml.includes("Qualified Appraisal"), false);
   assertStringIncludes(
     bundle.xml,
@@ -1372,15 +1460,25 @@ Deno.test("Form 8283 links both native vehicle statement and donee-issued PDF", 
     f8283: {
       section_a_items: [{
         property_description: "2020 Honda Civic, good condition, 60,000 miles",
+        donee_organization_name: "City Charity",
+        donee_organization_us_address: {
+          line1: "1 Main St",
+          city: "Austin",
+          state: "TX",
+          zip: "78701",
+        },
         is_vehicle: true,
         vehicle_vin: "1HGBH41JXMN109186",
         vehicle_acknowledgment_attachment_file_name: "Form1098C-Civic.pdf",
         date_contributed: "2025-06-01",
+        date_acquired: "2020-01-01",
+        donor_acquisition_description: "Purchase",
         fmv: 20_000,
         deduction_claimed: 15_000,
         cost_or_adjusted_basis: 25_000,
         charitable_limit_category: "noncash_50",
         is_capital_gain_property: false,
+        fmv_method: FMVMethod.ComparableSales,
         vehicle_sale_acknowledgment: {
           copy_received_from_donee: true,
           donee_certified: true,

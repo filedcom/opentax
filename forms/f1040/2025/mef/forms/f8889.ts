@@ -1,5 +1,11 @@
+import { z } from "zod";
 import { element, elements } from "../../../mef/xml.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
+import {
+  reconcileCode2Form8889,
+  reconcilePairedForm8889,
+  reconcileSpouseOnlyForm8889,
+} from "../../form8889_spouse_reconciliation.ts";
 
 // The Form 8889 node emits the completed 2025 form lines. Serialize those
 // lines rather than reinterpreting raw HSA contributions in the MeF layer.
@@ -29,7 +35,15 @@ export const FIELD_MAP: ReadonlyArray<readonly [string, string]> = [
   ["print_line21", "HDHPCoverageAddnlTaxAmt"],
 ];
 
-type Input = Record<string, unknown>;
+const ownerFormSchema = z.object({
+  owner: z.enum(["primary", "spouse"]),
+  beneficiary_name: z.string().trim().min(1),
+  beneficiary_ssn: z.string().regex(/^\d{9}$/),
+}).passthrough();
+const inputSchema = z.object({
+  forms: z.array(ownerFormSchema).min(1).max(2),
+}).strict();
+type Input = z.infer<typeof inputSchema> | readonly [];
 
 const LINE_KEYS = new Set([
   "print_line1_coverage",
@@ -37,23 +51,11 @@ const LINE_KEYS = new Set([
   ...FIELD_MAP.map(([key]) => key),
 ]);
 
-const RAW_HSA_KEYS = [
-  "taxpayer_hsa_contributions",
-  "employer_hsa_contributions",
-  "employer_contribution_years",
-  "employer_excess_treatment",
-  "hsa_december_31_value",
-  "post_year_personal_excess_withdrawal",
-  "prior_year_hsa_excess",
-  "qualified_hsa_funding_distributions",
-  "qualified_hsa_funding_distribution",
-  "hsa_distributions",
-  "hsa_excluded_distributions",
-  "qualified_medical_expenses",
-  "testing_period_failure",
-];
-
-function amount(fields: Input, key: string, tag: string): string {
+function amount(
+  fields: z.infer<typeof ownerFormSchema>,
+  key: string,
+  tag: string,
+): string {
   const value = fields[key];
   if (value === undefined || value === null) return "";
   if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
@@ -62,18 +64,59 @@ function amount(fields: Input, key: string, tag: string): string {
   return element(tag, value);
 }
 
-function buildIRS8889(fields: Input, context?: MefBuildContext): string {
+function buildOwner8889(
+  fields: z.infer<typeof ownerFormSchema>,
+  context?: MefBuildContext,
+): string {
+  const unsupported = Object.keys(fields).filter((key) =>
+    key !== "owner" && key !== "beneficiary_name" &&
+    key !== "beneficiary_ssn" && !LINE_KEYS.has(key)
+  );
+  if (unsupported.length > 0) {
+    throw new Error(
+      `Form 8889 MeF does not accept uncomputed owner fields: ${
+        unsupported.join(", ")
+      }`,
+    );
+  }
   const hasLines = Object.keys(fields).some((key) => LINE_KEYS.has(key));
   if (!hasLines) {
-    if (RAW_HSA_KEYS.some((key) => fields[key] !== undefined)) {
-      throw new Error("Form 8889 MeF requires computed print_line fields");
-    }
-    return "";
+    throw new Error("Form 8889 owner needs computed print_line fields");
   }
 
-  const ssn = context?.filer?.primarySSN.replace(/\D/g, "");
-  if (!ssn || !/^\d{9}$/.test(ssn)) {
+  const owner = fields.owner;
+  const name = fields.beneficiary_name;
+  const ssn = typeof fields.beneficiary_ssn === "string"
+    ? fields.beneficiary_ssn.replace(/\D/g, "")
+    : "";
+  const expectedSsn = owner === "primary"
+    ? context?.filer?.primarySSN
+    : owner === "spouse"
+    ? context?.filer?.spouse?.ssn
+    : undefined;
+  if (
+    !expectedSsn || typeof name !== "string" || !name.trim() ||
+    !/^\d{9}$/.test(ssn) || ssn !== expectedSsn.replace(/\D/g, "")
+  ) {
     throw new Error("Form 8889 MeF requires the HSA beneficiary SSN");
+  }
+  if (
+    owner === "primary" && context?.filer?.fullName &&
+    name.trim().toUpperCase() !== context.filer.fullName.trim().toUpperCase()
+  ) {
+    throw new Error(
+      "Form 8889 primary beneficiary name does not match the return",
+    );
+  }
+  if (
+    owner === "spouse" && context?.filer?.spouse &&
+    name.trim().toUpperCase() !==
+      `${context.filer.spouse.firstName} ${context.filer.spouse.lastName}`
+        .toUpperCase()
+  ) {
+    throw new Error(
+      "Form 8889 spouse beneficiary name does not match the return",
+    );
   }
   const coverage = fields.print_line1_coverage;
   if (
@@ -90,7 +133,7 @@ function buildIRS8889(fields: Input, context?: MefBuildContext): string {
   const beforeException = FIELD_MAP.slice(0, 17);
   const afterException = FIELD_MAP.slice(17);
   return elements("IRS8889", [
-    element("PersonNm", context?.filer?.fullName),
+    element("PersonNm", name.trim()),
     element("RecipientSSN", ssn),
     coverage === "self_only" ? element("HDHPSelfOnlyCoverageInd", "X") : "",
     coverage === "family" ? element("HDHPFamilyCoverageInd", "X") : "",
@@ -100,9 +143,83 @@ function buildIRS8889(fields: Input, context?: MefBuildContext): string {
   ]);
 }
 
-export const form8889: MefFormDescriptor<"form8889", Input> = {
-  pendingKey: "form8889",
-  FIELD_MAP,
-  pdfUrl: "https://www.irs.gov/pub/irs-prior/f8889--2025.pdf",
-  build: buildIRS8889,
-};
+function buildIRS8889(
+  raw: Input,
+  context?: MefBuildContext,
+): readonly string[] {
+  if (Array.isArray(raw) && raw.length === 0) return [];
+  if (Array.isArray(raw)) {
+    throw new Error("Form 8889 MeF needs owner-labeled computed forms");
+  }
+  if (Object.keys(raw).length === 0) return [];
+  const fields = inputSchema.parse(raw);
+  if (
+    fields.forms.length < 1 || fields.forms.length > 2 ||
+    (fields.forms.length === 2 &&
+      (fields.forms[0]?.owner !== "primary" ||
+        fields.forms[1]?.owner !== "spouse"))
+  ) {
+    throw new Error(
+      "Form 8889 MeF needs one identified owner or taxpayer-then-spouse forms",
+    );
+  }
+  reconcileSpouseOnlyForm8889(
+    fields.forms,
+    context?.pending,
+    context?.filer,
+  );
+  reconcileCode2Form8889(fields.forms, context?.pending, context?.filer);
+  reconcilePairedForm8889(
+    fields.forms,
+    context?.pending,
+    context?.filer,
+  );
+  if (fields.forms.length === 2) {
+    const sum = (key: string) =>
+      fields.forms.reduce((total, form) => {
+        const value = form[key];
+        if (value === undefined) return total;
+        if (typeof value !== "number" || !Number.isFinite(value)) {
+          throw new Error(`Form 8889 ${key} needs a numeric owner amount`);
+        }
+        return total + value;
+      }, 0);
+    const pendingSchedule1 = z.object({
+      line13_hsa_deduction: z.number().optional(),
+      line8f_hsa_income: z.number().optional(),
+      line26_total_adjustments: z.number().optional(),
+    }).passthrough().parse(context?.pending?.schedule1 ?? {});
+    const pendingSchedule2 = z.object({
+      line17c_hsa_penalty: z.number().optional(),
+      line17d_hsa_eligibility_tax: z.number().optional(),
+    }).passthrough().parse(context?.pending?.schedule2 ?? {});
+    const pending1040 = z.object({
+      line10_adjustments: z.number().optional(),
+    }).passthrough().parse(context?.pending?.f1040);
+    if (
+      (pendingSchedule1?.line13_hsa_deduction ?? 0) !==
+        sum("print_line13_deduction") ||
+      (pendingSchedule1?.line8f_hsa_income ?? 0) !==
+        sum("print_line16_taxable") + sum("print_line20") ||
+      (pendingSchedule2?.line17c_hsa_penalty ?? 0) !==
+        sum("print_line17b_penalty") ||
+      (pendingSchedule2?.line17d_hsa_eligibility_tax ?? 0) !==
+        sum("print_line21") ||
+      (pendingSchedule1?.line26_total_adjustments ?? 0) !==
+        (pending1040?.line10_adjustments ?? 0)
+    ) {
+      throw new Error(
+        "Form 8889 owner totals do not reconcile to Schedule 1, Schedule 2, and Form 1040",
+      );
+    }
+  }
+  return fields.forms.map((form) => buildOwner8889(form, context));
+}
+
+export const form8889: MefFormDescriptor<"form8889", Input, readonly string[]> =
+  {
+    pendingKey: "form8889",
+    FIELD_MAP,
+    pdfUrl: "https://www.irs.gov/pub/irs-prior/f8889--2025.pdf",
+    build: buildIRS8889,
+  };

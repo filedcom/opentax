@@ -1,5 +1,6 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import type { ScheduleCItem } from "../../../nodes/inputs/schedule_c/index.ts";
+import { TS } from "../../../nodes/types.ts";
 import { type FilerIdentity, FilingStatus } from "../types.ts";
 import { buildMefXml } from "../builder.ts";
 import { scheduleC } from "./schedule_c.ts";
@@ -29,6 +30,58 @@ function item(overrides: Partial<ScheduleCItem> = {}): ScheduleCItem {
   };
 }
 
+Deno.test("Form 3115 adjustments print on the same Schedule C MeF income and expense lines", () => {
+  const [xml] = scheduleC.build({
+    schedule_cs: [
+      item({ business_reference: "DESIGN", line_1_gross_receipts: 20_000 }),
+    ],
+    section481a_adjustments: [
+      {
+        business_reference: "DESIGN",
+        designated_change_number: "222",
+        year_of_change: 2025,
+        amount: 3_000,
+      },
+      {
+        business_reference: "DESIGN",
+        designated_change_number: "333",
+        year_of_change: 2025,
+        amount: -1_000,
+      },
+    ],
+  }, {
+    filer,
+    pending: {
+      f3115: {
+        f3115s: [
+          {
+            business_reference: "DESIGN",
+            designated_change_number: "222",
+            filing_type: "automatic",
+            reporting_schedule: "schedule_c",
+            year_of_change: 2025,
+            section_481_adjustment: 12_000,
+          },
+          {
+            business_reference: "DESIGN",
+            designated_change_number: "333",
+            filing_type: "automatic",
+            reporting_schedule: "schedule_c",
+            year_of_change: 2025,
+            section_481_adjustment: -1_000,
+          },
+        ],
+      },
+    },
+  });
+  assertStringIncludes(xml, "<OtherIncomeAmt>3000</OtherIncomeAmt>");
+  assertStringIncludes(
+    xml,
+    "<TotalOtherExpensesAmt>1000</TotalOtherExpensesAmt>",
+  );
+  assertStringIncludes(xml, "<NetProfitOrLossAmt>22000</NetProfitOrLossAmt>");
+});
+
 Deno.test("Schedule C emits sourced income and expense totals as its own MeF document", () => {
   const [xml] = scheduleC.build({
     schedule_cs: [item({
@@ -47,6 +100,57 @@ Deno.test("Schedule C emits sourced income and expense totals as its own MeF doc
   );
   assertStringIncludes(xml, "<TotalExpensesAmt>10907</TotalExpensesAmt>");
   assertStringIncludes(xml, "<NetProfitOrLossAmt>24328</NetProfitOrLossAmt>");
+});
+
+Deno.test("Schedule C uses the spouse proprietor identity on a joint return", () => {
+  const jointFiler: FilerIdentity = {
+    ...filer,
+    filingStatus: FilingStatus.MFJ,
+    spouse: {
+      ssn: "400009999",
+      firstName: "Avery",
+      lastName: "Gardenia",
+      nameControl: "GARD",
+    },
+  };
+  const [xml] = scheduleC.build({
+    schedule_cs: [item({ proprietor_recipient: TS.S })],
+  }, { filer: jointFiler });
+  assertStringIncludes(xml, "<ProprietorNm>Avery Gardenia</ProprietorNm>");
+  assertStringIncludes(xml, "<SSN>400009999</SSN>");
+  assertThrows(
+    () =>
+      scheduleC.build({
+        schedule_cs: [item({ proprietor_recipient: TS.S })],
+      }, { filer }),
+    Error,
+    "spouse proprietor needs a joint return and spouse identity",
+  );
+  assertThrows(
+    () => scheduleC.build({ schedule_cs: [item()] }, { filer: jointFiler }),
+    Error,
+    "joint return needs an explicit proprietor",
+  );
+});
+
+Deno.test("Schedule C line 31 retains the loss before Form 6198 limits Schedule 1", () => {
+  const [xml] = scheduleC.build({
+    schedule_cs: [item({
+      line_1_gross_receipts: 0,
+      line_8_advertising: 1_000,
+      line_32_at_risk: "b",
+      at_risk_simplified: {
+        opening_adjusted_basis: 200,
+        current_year_increases: 0,
+        line9_decreases_and_exclusions: 0,
+      },
+    })],
+  }, { filer });
+  assertStringIncludes(xml, "<NetProfitOrLossAmt>-1000</NetProfitOrLossAmt>");
+  assertStringIncludes(
+    xml,
+    "<SomeInvestmentIsNotAtRiskInd>X</SomeInvestmentIsNotAtRiskInd>",
+  );
 });
 
 Deno.test("Schedule C MeF wages match gross payroll less employment credits", () => {

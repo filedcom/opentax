@@ -104,6 +104,15 @@ export const itemSchema = z.object({
   box16_state_tax_withheld: z.number().nonnegative().optional(),
   box17_state_payer_id: z.string().optional(),
   box18_state_income: z.number().nonnegative().optional(),
+}).superRefine((item, ctx) => {
+  if ((item.box3_other_income ?? 0) > 0 && !item.box3_other_income_routing) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["box3_other_income_routing"],
+      message:
+        "Positive 1099-MISC box 3 income requires an explicit income classification",
+    });
+  }
 });
 
 export const inputSchema = z.object({
@@ -152,9 +161,7 @@ function royaltiesForScheduleC(items: M99Item[]): number {
 
 function prizesAwardsTotal(items: M99Item[]): number {
   return items
-    .filter((i) =>
-      (i.box3_other_income_routing ?? "prizes_awards") === "prizes_awards"
-    )
+    .filter((i) => i.box3_other_income_routing === "prizes_awards")
     .reduce((s, i) => s + (i.box3_other_income ?? 0), 0);
 }
 
@@ -246,6 +253,18 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
     const { f1099ms: m99s } = input;
     if (m99s.length === 0) return { outputs: [] };
 
+    // Direct node callers can bypass inputSchema, so do not silently turn an
+    // unidentified box 3 amount into prizes and awards.
+    if (
+      m99s.some((item) =>
+        (item.box3_other_income ?? 0) > 0 && !item.box3_other_income_routing
+      )
+    ) {
+      throw new Error(
+        "Positive 1099-MISC box 3 income requires an explicit income classification",
+      );
+    }
+
     const outputs: NodeOutput[] = [];
 
     const portfolioRoyalty = m99s.reduce((total, item) => {
@@ -321,18 +340,20 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
     const sched1 = schedule1Output(m99s);
     if (sched1) outputs.push(sched1);
 
-    // agi_aggregator — schedule1 is a print-only sink; all line 8 income must also route here
-    const totalLine8Income = prizesAwardsTotal(m99s) +
-      otherIncomeTotal(m99s) +
-      totalOf(m99s, "box8_substitute_payments") +
-      taxableAttorneyTotal(m99s) +
-      totalOf(m99s, "box15_nqdc");
-    if (totalLine8Income > 0) {
-      outputs.push(
-        this.outputNodes.output(agi_aggregator, {
-          line8z_other: totalLine8Income,
-        }),
-      );
+    // Schedule 1 is a print-only sink, so the same classified income must
+    // reach AGI without collapsing line 8i prizes into line 8z other income.
+    const prizes = prizesAwardsTotal(m99s);
+    const substitute = totalOf(m99s, "box8_substitute_payments");
+    const nqdc = totalOf(m99s, "box15_nqdc");
+    const other = otherIncomeTotal(m99s) + taxableAttorneyTotal(m99s);
+    const agiIncome = {
+      ...(prizes > 0 ? { line8i_prizes_awards: prizes } : {}),
+      ...(substitute > 0 ? { line8z_substitute_payments: substitute } : {}),
+      ...(nqdc > 0 ? { line8z_nqdc: nqdc } : {}),
+      ...(other > 0 ? { line8z_other: other } : {}),
+    };
+    if (Object.keys(agiIncome).length > 0) {
+      outputs.push(this.outputNodes.output(agi_aggregator, agiIncome));
     }
 
     // Schedule F line 6a shows received proceeds even when tax is deferred.

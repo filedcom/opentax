@@ -1,8 +1,7 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
+import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { schedule1 } from "../../outputs/schedule1/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Form 8697 — Interest Computation Under the Look-Back Method
@@ -10,9 +9,9 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 //
 // When a long-term contract is completed, the taxpayer recomputes income
 // using actual (not estimated) progress completion percentages for each
-// prior year. If tax was underpaid → interest owed to IRS (additional income).
-// If tax was overpaid → interest receivable (deduction from income).
-// Net interest routes to Schedule 1.
+// prior year. Interest owed belongs on Schedule 2 line 17n with an attached
+// Form 8697. A refund claim is filed separately, not deducted on Schedule 1.
+// The complete look-back computation and filing branches remain open.
 
 export enum ContractType {
   Regular = "regular",
@@ -49,41 +48,16 @@ export const inputSchema = z.object({
   f8697s: z.array(itemSchema).min(1),
 });
 
-type F8697Item = z.infer<typeof itemSchema>;
-type F8697Items = F8697Item[];
-
-// Total net interest across all contracts
-function totalNetInterest(items: F8697Items): number {
-  return items.reduce((sum, item) => sum + (item.net_interest ?? 0), 0);
-}
-
-function buildOutputs(items: F8697Items): NodeOutput[] {
-  const net = totalNetInterest(items);
-  if (net === 0) return [];
-
-  if (net > 0) {
-    // Interest owed to IRS — additional income on Schedule 1
-    return [{
-      nodeType: schedule1.nodeType,
-      fields: { line8z_other_income: net },
-    }];
-  }
-
-  // Interest receivable from IRS — deduction on Schedule 1
-  return [{
-    nodeType: schedule1.nodeType,
-    fields: { line8z_other: net },
-  }];
-}
-
 class F8697Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8697";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1]);
+  readonly outputNodes = new OutputNodes([]);
 
   compute(_ctx: NodeContext, rawInput: z.infer<typeof inputSchema>): NodeResult {
-    const input = inputSchema.parse(rawInput);
-    return { outputs: buildOutputs(input.f8697s) };
+    inputSchema.parse(rawInput);
+    throw new Error(
+      "Form 8697 look-back interest needs its Schedule 2 line 17n or separate-refund filing branch before filing",
+    );
   }
 }
 

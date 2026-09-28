@@ -13,14 +13,12 @@ import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/in
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule_f } from "../../intermediate/forms/schedule_f/index.ts";
+import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import type { FarmSource } from "../../intermediate/forms/schedule_f/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
-// TY2025 thresholds from IRS Form 1099-G instructions
-const UNEMPLOYMENT_MIN_THRESHOLD = 10;
-const STATE_REFUND_MIN_THRESHOLD = 10;
-const RTAA_MIN_THRESHOLD = 600;
-const GRANTS_MIN_THRESHOLD = 600;
+// Form 1099-G issuer reporting thresholds do not create recipient-side
+// taxable-income exclusions. Route any positive amount designated taxable.
 
 export const itemSchema = z.object({
   box_1_unemployment: z.number().nonnegative().optional(),
@@ -28,6 +26,8 @@ export const itemSchema = z.object({
   box_1_railroad: z.boolean().optional(),
   box_2_state_refund: z.number().nonnegative().optional(),
   box_2_prior_year_itemized: z.boolean().optional(),
+  box_2_taxable_recovery_verified_amount: z.number().nonnegative().optional(),
+  box_2_recovery_workpaper_reference: z.string().trim().min(1).optional(),
   box_3_tax_year: z.number().int().optional(),
   box_4_federal_withheld: z.number().nonnegative().optional(),
   box_5_rtaa: z.number().nonnegative().optional(),
@@ -42,6 +42,34 @@ export const itemSchema = z.object({
   payer_name: z.string().optional(),
   payer_tin: z.string().optional(),
   account_number: z.string().optional(),
+}).superRefine((item, ctx) => {
+  const refund = item.box_2_state_refund ?? 0;
+  const taxable = item.box_2_taxable_recovery_verified_amount;
+  if (refund === 0) {
+    if ((taxable ?? 0) > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["box_2_taxable_recovery_verified_amount"],
+        message: "Form 1099-G taxable recovery cannot exceed zero box 2 refund",
+      });
+    }
+    return;
+  }
+  if (taxable === undefined || taxable > refund ||
+    (item.box_2_prior_year_itemized === false && (taxable ?? 0) > 0)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["box_2_taxable_recovery_verified_amount"],
+      message: "Form 1099-G box 2 needs a reviewed taxable recovery from zero through the refund, consistent with the prior-year deduction",
+    });
+  }
+  if (!item.box_2_recovery_workpaper_reference) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["box_2_recovery_workpaper_reference"],
+      message: "Form 1099-G box 2 needs a reviewed prior-year tax-benefit workpaper reference",
+    });
+  }
 });
 
 export const inputSchema = z.object({
@@ -65,10 +93,10 @@ function netUnemployment(g99s: G99Items): number {
 }
 
 function totalStateRefundTaxable(g99s: G99Items): number {
-  return g99s.reduce((sum, item) => {
-    const refund = item.box_2_state_refund ?? 0;
-    return sum + (item.box_2_prior_year_itemized === true ? refund : 0);
-  }, 0);
+  return g99s.reduce(
+    (sum, item) => sum + (item.box_2_taxable_recovery_verified_amount ?? 0),
+    0,
+  );
 }
 
 function totalFederalWithheld(g99s: G99Items): number {
@@ -93,16 +121,16 @@ function schedule1Output(g99s: G99Items): NodeOutput[] {
   const grants = totalTaxableGrants(g99s);
 
   const fields: Record<string, number> = {};
-  if (unemploymentNet >= UNEMPLOYMENT_MIN_THRESHOLD) {
+  if (unemploymentNet > 0) {
     fields.line7_unemployment = unemploymentNet;
   }
-  if (stateRefund >= STATE_REFUND_MIN_THRESHOLD) {
+  if (stateRefund > 0) {
     fields.line1_state_refund = stateRefund;
   }
-  if (rtaa >= RTAA_MIN_THRESHOLD) {
+  if (rtaa > 0) {
     fields.line8z_rtaa = rtaa;
   }
-  if (grants >= GRANTS_MIN_THRESHOLD) {
+  if (grants > 0) {
     fields.line8z_taxable_grants = grants;
   }
 
@@ -160,6 +188,7 @@ class F1099gNode extends TaxNode<typeof inputSchema> {
     agi_aggregator,
     f1040,
     schedule_f,
+    form6251,
   ]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
@@ -174,6 +203,15 @@ class F1099gNode extends TaxNode<typeof inputSchema> {
       ...scheduleFOutput(g99s),
     ];
 
+    // Use the same taxable amount reported on Schedule 1 line 1. Form 6251
+    // line 2b reverses that regular-tax income for AMT.
+    const taxableStateRefund = totalStateRefundTaxable(g99s);
+    if (taxableStateRefund > 0) {
+      outputs.push(this.outputNodes.output(form6251, {
+        line2b_tax_refund: taxableStateRefund,
+      }));
+    }
+
     // Route income items to AGI aggregator
     const unemploymentNet = netUnemployment(g99s);
     const stateRefund = totalStateRefundTaxable(g99s);
@@ -181,14 +219,14 @@ class F1099gNode extends TaxNode<typeof inputSchema> {
     const grants = totalTaxableGrants(g99s);
     const agiFields: Partial<z.infer<typeof agi_aggregator["inputSchema"]>> =
       {};
-    if (unemploymentNet >= UNEMPLOYMENT_MIN_THRESHOLD) {
+    if (unemploymentNet > 0) {
       agiFields.line7_unemployment = unemploymentNet;
     }
-    if (stateRefund >= STATE_REFUND_MIN_THRESHOLD) {
+    if (stateRefund > 0) {
       agiFields.line1_state_refund = stateRefund;
     }
-    if (rtaa >= RTAA_MIN_THRESHOLD) agiFields.line8z_rtaa = rtaa;
-    if (grants >= GRANTS_MIN_THRESHOLD) {
+    if (rtaa > 0) agiFields.line8z_rtaa = rtaa;
+    if (grants > 0) {
       agiFields.line8z_taxable_grants = grants;
     }
     if (Object.keys(agiFields).length > 0) {

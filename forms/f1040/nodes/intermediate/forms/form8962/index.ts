@@ -12,6 +12,7 @@ import { FilingStatus, filingStatusSchema } from "../../../types.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 import type { F1040Config } from "../../../config/index.ts";
+import { attributableSpecifiedPtc } from "../form7206/pub974_attribution.ts";
 
 // 2025 Form 8962 instructions, Table 2: line 5 is an integer percentage.
 // Through 150% FPL the applicable figure is zero; it rises by 0.0004 per
@@ -220,8 +221,12 @@ export const inputSchema = z.object({
         attributable_aptc: z.number().nonnegative(),
       }).strict(),
     ).min(1),
-    form1095a_coverage_months: z.array(z.number().int().min(1).max(12))
-      .min(1).max(12),
+    form1095a_policy_months: z.array(z.object({
+      form1095a_policy_number: z.string().trim().min(1),
+      month: z.number().int().min(1).max(12),
+      premium: z.number().positive(),
+      aptc: z.number().nonnegative(),
+    }).strict()).min(1).max(12),
     worksheet_x_source: z.object({
       form1040_line9_total_income: z.number().finite(),
       form1040_line2a_tax_exempt_interest: z.number().nonnegative(),
@@ -241,6 +246,7 @@ export const inputSchema = z.object({
     filing_status: filingStatusSchema,
     total_premium_tax_credit: z.number().nonnegative(),
     specified_premiums: z.number().nonnegative(),
+    attributable_specified_ptc: z.number().nonnegative(),
     specified_deduction: z.number().nonnegative(),
   }).strict().optional(),
 
@@ -753,8 +759,9 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
         );
       const actualPolicyMonths = input.pub974_form1095a_policy_months ?? [];
       const expectedPolicyMonths = pub974.specified_policy_months;
-      const coverageMonths = new Set(pub974.form1095a_coverage_months);
-      const expectedRows = new Map(expectedPolicyMonths.map((row) => [
+      const allPolicyMonths = pub974.form1095a_policy_months;
+      const coverageMonths = new Set(allPolicyMonths.map((row) => row.month));
+      const expectedRows = new Map(allPolicyMonths.map((row) => [
         `${row.form1095a_policy_number}:${row.month}`,
         row,
       ]));
@@ -762,21 +769,23 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
         `${row.form1095a_policy_number}:${row.month}`
       );
       const policyMonthsMatch =
-        coverageMonths.size === pub974.form1095a_coverage_months.length &&
-        expectedRows.size === expectedPolicyMonths.length &&
-        expectedPolicyMonths.every((row) => coverageMonths.has(row.month)) &&
-        [...coverageMonths].every((month) =>
-          expectedPolicyMonths.some((row) => row.month === month)
-        ) &&
-        actualKeys.length === expectedPolicyMonths.length &&
+        coverageMonths.size === allPolicyMonths.length &&
+        expectedRows.size === allPolicyMonths.length &&
+        expectedPolicyMonths.every((row) => {
+          const policy = expectedRows.get(`${row.form1095a_policy_number}:${row.month}`);
+          return policy !== undefined &&
+            Math.abs(policy.premium - row.specified_premium) < 0.01 &&
+            Math.abs(policy.aptc - row.attributable_aptc) < 0.01;
+        }) &&
+        actualKeys.length === allPolicyMonths.length &&
         new Set(actualKeys).size === actualKeys.length &&
         actualPolicyMonths.every((row) => {
           const expected = expectedRows.get(
             `${row.form1095a_policy_number}:${row.month}`,
           );
           return expected !== undefined &&
-            Math.abs(row.premium - expected.specified_premium) < 0.01 &&
-            Math.abs(row.aptc - expected.attributable_aptc) < 0.01;
+            Math.abs(row.premium - expected.premium) < 0.01 &&
+            Math.abs(row.aptc - expected.aptc) < 0.01;
         });
       const audit = input.pub974_income_audit;
       const xSource = pub974.worksheet_x_source;
@@ -1166,7 +1175,13 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
     if (
       pub974 && (
         line24 !== pub974.total_premium_tax_credit ||
-        pub974.specified_deduction + line24 >
+        !monthlyRows ||
+        Math.abs(attributableSpecifiedPtc(
+            monthlyRows,
+            new Set(pub974.specified_policy_months.map((row) => row.month)),
+            new Set(pub974.form1095a_policy_months.map((row) => row.month)),
+          ) - pub974.attributable_specified_ptc) >= 0.01 ||
+        pub974.specified_deduction + pub974.attributable_specified_ptc >
           pub974.specified_premiums + 0.01
       )
     ) {

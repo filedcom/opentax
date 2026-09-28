@@ -4,11 +4,15 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { computeRegularMethodPenalty } from "./calculation.ts";
+import {
+  calculateForm2210BoxEPage1,
+  form2210BoxEInputSchema,
+} from "../../../2025/form2210_box_e.ts";
 
 export const inputSchema = z.object({
   // Required annual payment — IRS computes this; user may override
@@ -30,8 +34,20 @@ export const inputSchema = z.object({
   underpayment_penalty: z.number().nonnegative().optional(),
   // Waiver requested (farmer/fisherman, casualty, other)
   waiver_requested: z.boolean().optional(),
+  // Part II box B: partial waiver requires a calculated penalty and attached
+  // Form 2210 plus explanation/evidence, not just an asserted penalty amount.
+  partial_waiver_requested: z.boolean().optional(),
   // Annualized income installment method elected
   annualized_method: z.boolean().optional(),
+  // Part II box D: actual withholding-date method requires dated source
+  // withholding and the filed Part III computation.
+  actual_withholding_dates_method: z.boolean().optional(),
+  // Part II box E: joint filing status changed between 2024 and 2025, and
+  // the prior-year payment is the smaller safe-harbor amount. Page 1 attaches.
+  joint_filing_status_change: z.boolean().optional(),
+  // Staged page-1 box E source. Calculates Part I only; export remains blocked
+  // until prior returns are bound to reviewed bytes and current lines finalized.
+  box_e_source: form2210BoxEInputSchema.optional(),
 });
 
 type F2210Input = z.infer<typeof inputSchema>;
@@ -55,7 +71,17 @@ class F2210Node extends TaxNode<typeof inputSchema> {
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
     if (Object.keys(parsed).length === 0) return { outputs: [] };
-    if (parsed.waiver_requested === true) return { outputs: [] };
+    if (parsed.box_e_source !== undefined) {
+      calculateForm2210BoxEPage1(parsed.box_e_source);
+      return { outputs: [] };
+    }
+    if (
+      parsed.waiver_requested === true ||
+      parsed.partial_waiver_requested === true ||
+      parsed.annualized_method === true ||
+      parsed.actual_withholding_dates_method === true ||
+      parsed.joint_filing_status_change === true
+    ) return { outputs: [] };
     if (parsed.underpayment_penalty !== undefined) {
       if (parsed.underpayment_penalty === 0) return { outputs: [] };
       return {
@@ -64,8 +90,6 @@ class F2210Node extends TaxNode<typeof inputSchema> {
         })],
       };
     }
-    if (parsed.annualized_method === true) return { outputs: [] };
-
     if (parsed.current_year_tax !== undefined) {
       const penalty = computePenalty(parsed);
       if (penalty === 0) return { outputs: [] };

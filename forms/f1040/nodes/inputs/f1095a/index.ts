@@ -87,8 +87,16 @@ const sharedPolicySchema = z.discriminatedUnion("basis", [
 
 export const itemSchema = z.object({
   // Part I — Issuer / Marketplace information
-  issuer_name: z.string().min(1),
-  policy_number: z.string().optional(),
+  issuer_name: z.string().trim().min(1),
+  policy_number: z.string().trim().min(1).optional(),
+  // The Marketplace checked CORRECTED on this source statement. When both
+  // versions are retained, only this statement supplies Form 8962 amounts.
+  corrected_box_checked: z.literal(true).optional(),
+  // Part II covered individuals. Required by the bounded two-policy annual
+  // filing route to prove both policies belong to this tax family.
+  covered_individual_ssns: z.array(
+    z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+  ).min(1).optional(),
   // Identify which spouse's Pub. 974 pre-marriage worksheet receives this
   // 1095-A policy. A policy may continue after the marriage month.
   alternative_marriage_owner: z.enum(["primary", "spouse"]).optional(),
@@ -128,6 +136,23 @@ export const itemSchema = z.object({
       ]),
     }).strict(),
   ).min(1).optional(),
+  // Separate source records for a no-APTC positive PTC claim. The Marketplace
+  // determination and premium-payment record must each be reviewed outside
+  // this calculation; their facts are reconciled at filing projection.
+  no_aptc_monthly_evidence: z.array(
+    z.object({
+      month: z.number().int().min(1).max(12),
+      marketplace_slcsp: z.number().positive(),
+      marketplace_method: z.enum(["marketplace_tool", "marketplace_contact"]),
+      marketplace_reference: z.string().trim().min(1),
+      marketplace_determined_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      marketplace_record_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+      premium_paid: z.number().nonnegative(),
+      premium_paid_in_full_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      premium_payment_reference: z.string().trim().min(1),
+      premium_payment_record_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+    }).strict(),
+  ).min(1).max(12).optional(),
   // Known changes that can make reported column B inaccurate. A change not
   // reported to the Marketplace needs a month-by-month determination.
   slcsp_review_periods: z.array(
@@ -153,6 +178,80 @@ export const inputSchema = z.object({
 
 type F1095AItem = z.infer<typeof itemSchema>;
 type F1095AItems = F1095AItem[];
+
+export function current1095AStatements(items: F1095AItems): F1095AItems {
+  for (const corrected of items.filter((item) => item.corrected_box_checked)) {
+    if (!corrected.policy_number) {
+      throw new Error(
+        "Corrected Form 1095-A needs a policy number to identify the superseded statement",
+      );
+    }
+    if (
+      items.some((item) =>
+        item !== corrected &&
+        ((item.policy_number === corrected.policy_number &&
+          item.issuer_name !== corrected.issuer_name) ||
+          (!item.policy_number && item.issuer_name === corrected.issuer_name))
+      )
+    ) {
+      throw new Error(
+        "Corrected Form 1095-A has ambiguous issuer and policy identity",
+      );
+    }
+  }
+  return items.filter((item) => {
+    if (!item.policy_number) {
+      return true;
+    }
+    const samePolicy = items.filter((candidate) =>
+      candidate.issuer_name === item.issuer_name &&
+      candidate.policy_number === item.policy_number
+    );
+    const corrected = samePolicy.filter((candidate) =>
+      candidate.corrected_box_checked === true
+    );
+    if (
+      corrected.length > 1 || (corrected.length === 1 && samePolicy.length > 2)
+    ) {
+      throw new Error(
+        "Form 1095-A policy has ambiguous corrected statement versions",
+      );
+    }
+    if (corrected.length === 1) return item === corrected[0];
+    return true;
+  });
+}
+
+function verifyPolicyCoverageIdentities(items: F1095AItems): void {
+  const identified = items.filter((item) => item.policy_number !== undefined);
+  const byIdentity = new Map<string, F1095AItems>();
+  for (const item of identified) {
+    const identity = `${item.issuer_name}\u0000${item.policy_number}`;
+    byIdentity.set(identity, [...(byIdentity.get(identity) ?? []), item]);
+  }
+  for (const statements of byIdentity.values()) {
+    if (statements.length < 2) continue;
+    if (
+      statements.some((item) =>
+        item.monthly_premiums === undefined || item.monthly_aptcs === undefined
+      )
+    ) {
+      throw new Error(
+        "Form 1095-A repeated issuer and policy needs monthly coverage for every statement",
+      );
+    }
+    for (let month = 0; month < 12; month++) {
+      const coveredStatements = statements.filter((item) =>
+        item.monthly_premiums![month] > 0 || item.monthly_aptcs![month] > 0
+      );
+      if (coveredStatements.length > 1) {
+        throw new Error(
+          "Form 1095-A repeats coverage for the same issuer, policy, and month; use the current statement",
+        );
+      }
+    }
+  }
+}
 
 // Sum a scalar field across all items (used for annual totals aggregation)
 function sumField(items: F1095AItems, field: keyof F1095AItem): number {
@@ -229,8 +328,13 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([form8962]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
-    const { f1095as, alternative_marriage_month: marriageMonth } = inputSchema
+    const {
+      f1095as: sourceStatements,
+      alternative_marriage_month: marriageMonth,
+    } = inputSchema
       .parse(input);
+    const f1095as = current1095AStatements(sourceStatements);
+    verifyPolicyCoverageIdentities(f1095as);
     const hasMarriageOwner = f1095as.some((item) =>
       item.alternative_marriage_owner !== undefined
     );
@@ -673,7 +777,11 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
     if (totalAnnualPremium > 0) {
       form8962Fields.annual_premium = totalAnnualPremium;
     }
-    if (marriageMonth !== undefined && mergedSlcsps !== null) {
+    if (
+      mergedSlcsps !== null &&
+      (allocatedItems.length > 1 ||
+        allocatedItems.some((item) => item.slcsp_corrections?.length))
+    ) {
       form8962Fields.annual_slcsp = mergedSlcsps.reduce(
         (sum, amount) => sum + amount,
         0,

@@ -42,6 +42,7 @@ export const itemSchema = z.object({
   box7: z.string().optional(),
   foreign_source_interest_usd: z.number().nonnegative().optional(),
   foreign_tax_irs_country_code: z.string().length(2).optional(),
+  foreign_tax_source_document_reference: z.string().trim().min(1).optional(),
   box8: z.number().nonnegative().optional(),
   box9: z.number().nonnegative().optional(),
   box10: z.number().nonnegative().optional(),
@@ -257,6 +258,8 @@ class F1099intNode extends TaxNode<typeof inputSchema> {
           foreign_gross_income: item.foreign_source_interest_usd!,
           income_category: IncomeCategory.Passive,
           irs_country_code: item.foreign_tax_irs_country_code,
+          foreign_income_source_document_reference:
+            item.foreign_tax_source_document_reference,
           tax_kind: ForeignTaxKind.Interest,
           tax_credit_method: ForeignTaxCreditMethod.Paid,
           tax_reported_on_1099: true,

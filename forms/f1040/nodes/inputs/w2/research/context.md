@@ -153,7 +153,7 @@ any limits.
 | D    | 401(k) elective deferrals                                      | Retirement limit tracking + Form 8880 Line 2 | Pre-tax; NOT on 1040. Used to verify deferral ≤ limit. Code D flows to Form 8880 Line 2 (elective deferrals) for Saver's Credit if eligible.                                                  | $23,500 (combined D+AA); catch-up 50+ $7,500; 60-63 $11,250         | IRS Notice 2024-80; Form 8880 Line 2                           | https://www.irs.gov/pub/irs-drop/n-24-80.pdf                                                                                                                       |
 | E    | 403(b) elective deferrals                                      | Retirement limit tracking + Form 8880 Line 2 | Same as D for 403(b) plans. Code E flows to Form 8880 Line 2 for Saver's Credit if eligible.                                                                                                  | $23,500 (combined E+BB); catch-up 50+ $7,500; 60-63 $11,250         | IRS Notice 2024-80; Form 8880 Line 2                           | https://www.irs.gov/pub/irs-drop/n-24-80.pdf                                                                                                                       |
 | F    | 408(k)(6) SEP deferrals                                        | Retirement limit tracking                    | SAR-SEP deferrals; plan must have been in existence before 12/31/96                                                                                                                           | $16,500 (same as SIMPLE)                                            | IRS Notice 2024-80                                             | https://www.irs.gov/pub/irs-drop/n-24-80.pdf                                                                                                                       |
-| G    | 457(b) plan deferrals                                          | Retirement limit tracking + Form 8880 Line 2 | Government and non-government 457(b) plans. Code G flows to Form 8880 Line 2 for Saver's Credit if eligible.                                                                                  | $23,500 (combined G+EE); catch-up 50+ $7,500; 60-63 $11,250         | IRS Notice 2024-80; Form 8880 Line 2                           | https://www.irs.gov/pub/irs-drop/n-24-80.pdf                                                                                                                       |
+| G    | 457(b) deferrals and employer nonelective contributions        | Retirement limit tracking; Form 8880 blocked | Positive code G fails closed for Form 8880 until an independently sourced employee-only amount can be reconciled to the W-2 total.                                                           | $23,500 (combined G+EE); catch-up 50+ $7,500; 60-63 $11,250         | 2025 W-2 instructions, box 12 code G; Form 8880 line 2         | https://www.irs.gov/pub/irs-prior/iw2w3--2025.pdf                                                                                                                  |
 | H    | 501(c)(18)(D) plan deferrals                                   | Schedule 1, Line 24f                         | Deductible by employee as above-the-line adjustment; reduces AGI. Confirmed TY2025.                                                                                                           | Lesser of $7,000 or 25% of includible compensation                  | iw2w3, Box 12, Code H; Schedule 1 Part II Line 24f             | https://www.irs.gov/instructions/iw2w3                                                                                                                             |
 | J    | Nontaxable sick pay                                            | Informational only                           | NOT in Box 1; no tax entry needed                                                                                                                                                             | —                                                                   | iw2w3, Box 12, Code J                                          | https://www.irs.gov/instructions/iw2w3                                                                                                                             |
 | K    | 20% excise tax on excess golden parachute                      | Schedule 2, Line 17k                         | 20% excise tax on "excess parachute payments" above 3× base amount. Confirmed TY2025 line = 17k.                                                                                              | —                                                                   | iw2w3, Box 12, Code K; Schedule 2 Line 17k                     | https://www.irs.gov/instructions/iw2w3                                                                                                                             |
@@ -566,52 +566,27 @@ For special needs adoptions: full exclusion ($17,280) is allowed regardless of a
 
 ---
 
-### Step 11 — Saver's Credit (Box 12 Codes D/E/G → Form 8880)
+### Step 11 — Saver's Credit (Form 8880)
 
-Triggered when any of these conditions are met:
+The W-2 router sends each positive box 12 D/E amount with that W-2's
+employee SSN, rather than combining amounts across employees. Form 8880
+matches each SSN to the return's taxpayer or joint-filing spouse before
+placing it in line 2 column (a) or (b). A missing or unmatched employee SSN
+rejects the route. The former combined amount is not accepted.
 
-- Box 12 Code D, E, G, AA, BB, EE (retirement deferrals) and AGI is within
-  Saver's Credit range
-- Taxpayer made IRA contributions
-- Box 13 retirement plan checkbox does NOT prevent eligibility (separate
-  determination)
+The official 2025 Form 8880 has line 1 IRA/ABLE contributions, line 2
+qualified employer-plan contributions, line 3 their sum, line 4 distribution
+lookback, line 5 net, line 6 the per-person $2,000 cap, line 7 combined
+eligible contributions, line 9 rate, line 10 tentative credit, line 11 tax
+capacity, and line 12 credit to Schedule 3 line 4. Column (b) is MFJ only.
 
-```
-Form 8880 — Credit for Qualified Retirement Savings Contributions:
-
-  Eligibility requirements (ALL must be met):
-    1. Age 18 or older
-    2. Not a full-time student
-    3. Not claimed as a dependent on another return
-
-  AGI thresholds to QUALIFY (credit = 0% if AGI exceeds):
-    Single / MFS / QSS: $39,500
-    Head of Household: $59,250
-    Married Filing Jointly: $79,000
-
-  Credit rate tiers (TY2025):
-    Filing Status      | 50%        | 20%              | 10%              | 0%
-    Single/MFS/QSS     | ≤$23,750   | $23,751–$25,500  | $25,501–$39,500  | >$39,500
-    Head of Household  | ≤$35,625   | $35,626–$38,250  | $38,251–$59,250  | >$59,250
-    MFJ                | ≤$47,500   | $47,501–$51,000  | $51,001–$79,000  | >$79,000
-
-  Form 8880 line flow:
-    Line 1 = Total qualified retirement contributions (IRA + employer plan)
-    Line 2 = Elective deferrals from W-2 Box 12:
-             Codes D (401k), E (403b), G (457b), AA (Roth 401k),
-             BB (Roth 403b), EE (Roth 457b), S (SIMPLE), F (SAR-SEP)
-             + voluntary employee contributions to defined contribution plans
-    Line 3 = Distributions from qualified plans in testing period
-             (2 years before + current year)
-    Line 4 = Net contributions = Line 1 + Line 2 - Line 3
-    Line 5 = Amount of line 4 for taxpayer (max $2,000)
-    Line 6 = Amount of line 4 for spouse (max $2,000, MFJ only)
-    Line 7 = Credit rate from table above (0.5, 0.2, or 0.1)
-    Line 8 = Credit = (Line 5 + Line 6) × Line 7 rate
-
-  Maximum credit: $1,000 per person ($2,000 for MFJ)
-  This is a NONREFUNDABLE credit → flows to Schedule 3, Line 4
-```
+This W-2 route does not prove all qualified line 2 sources. Designated Roth
+and SEP/SIMPLE/501(c)(18)(D) codes AA/BB/EE/F/S/H, voluntary employee
+contributions, and TSP contributions need a separate sourced path. Positive
+code G is rejected because it can include employer nonelective contributions;
+the employee-only portion needs an independent source and reconciliation.
+Eligibility (age, student, dependent),
+the joint distribution lookback, and tax capacity are independent gates.
 
 > **Source:** IRS Form 8880 (TY2025) —
 > https://www.irs.gov/pub/irs-pdf/f8880.pdf; IRS retirement savings credit page
@@ -687,7 +662,7 @@ flowchart LR
     B8[Box 8: Allocated Tips]
     B10[Box 10: Dep Care]
     B12W[Box 12 Code W: HSA]
-    B12D[Box 12 Codes D/E/G: Deferrals]
+    B12D[Box 12 Codes D/E: Employee deferrals]
     B12H[Box 12 Code H: 501c18]
     B12AB[Box 12 Codes A/B/M/N: Uncollected]
     B12K[Box 12 Code K: Parachute]

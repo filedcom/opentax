@@ -3,9 +3,24 @@ import { f1099g } from "./index.ts";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 
 function minimalItem(overrides: Record<string, unknown> = {}) {
   return { farm_id: "farm-1", ...overrides };
+}
+
+function reviewedRefund(
+  refund: number,
+  taxable: number,
+  overrides: Record<string, unknown> = {},
+) {
+  return minimalItem({
+    box_2_state_refund: refund,
+    box_2_prior_year_itemized: taxable > 0,
+    box_2_taxable_recovery_verified_amount: taxable,
+    box_2_recovery_workpaper_reference: "reviewed-2024-state-refund-workpaper",
+    ...overrides,
+  });
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
@@ -59,15 +74,16 @@ Deno.test("f1099g.compute: box_1_repaid reduces unemployment on schedule1 line7"
 
 Deno.test("f1099g.compute: box_2_state_refund taxable when prior year itemized routes to schedule1 line1", () => {
   const result = compute([
-    minimalItem({ box_2_state_refund: 300, box_2_prior_year_itemized: true }),
+    reviewedRefund(300, 300),
   ]);
   const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line1_state_refund, 300);
+  assertEquals(fieldsOf(result.outputs, form6251)?.line2b_tax_refund, 300);
 });
 
 Deno.test("f1099g.compute: box_2_state_refund not taxable when not itemized — no line1 output", () => {
   const result = compute([
-    minimalItem({ box_2_state_refund: 300, box_2_prior_year_itemized: false }),
+    reviewedRefund(300, 0),
   ]);
   const out = result.outputs.find(
     (o) =>
@@ -75,11 +91,34 @@ Deno.test("f1099g.compute: box_2_state_refund not taxable when not itemized — 
       (o.fields as Record<string, unknown>).line1_state_refund !== undefined,
   );
   assertEquals(out, undefined);
+  assertEquals(fieldsOf(result.outputs, form6251), undefined);
+});
+
+Deno.test("f1099g.compute: partial taxable state refund uses reviewed amount on Schedule 1, AGI, and AMT", () => {
+  const result = compute([reviewedRefund(500, 180)]);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line1_state_refund, 180);
+  assertEquals((findOutput(result, "agi_aggregator")!.fields as Record<string, unknown>).line1_state_refund, 180);
+  assertEquals(fieldsOf(result.outputs, form6251)!.line2b_tax_refund, 180);
+});
+
+Deno.test("f1099g.compute: state refund above box 2 or inconsistent with no itemization is rejected", () => {
+  assertThrows(() => compute([reviewedRefund(500, 501)]), Error);
+  assertThrows(
+    () => compute([reviewedRefund(500, 100, { box_2_prior_year_itemized: false })]),
+    Error,
+  );
+});
+
+Deno.test("f1099g.compute: positive state refund without workpaper reference is rejected", () => {
+  assertThrows(
+    () => compute([reviewedRefund(500, 100, { box_2_recovery_workpaper_reference: undefined })]),
+    Error,
+  );
 });
 
 Deno.test("f1099g.compute: box_2_state_refund zero with itemized — no line1 output", () => {
   const result = compute([
-    minimalItem({ box_2_state_refund: 0, box_2_prior_year_itemized: true }),
+    reviewedRefund(0, 0, { box_2_prior_year_itemized: true }),
   ]);
   const out = result.outputs.find(
     (o) =>
@@ -214,8 +253,8 @@ Deno.test("f1099g.compute: multiple items — box_5_rtaa summed on schedule1 lin
 
 Deno.test("f1099g.compute: multiple items — box_2_state_refund summed when both itemized", () => {
   const result = compute([
-    minimalItem({ box_2_state_refund: 100, box_2_prior_year_itemized: true }),
-    minimalItem({ box_2_state_refund: 200, box_2_prior_year_itemized: true }),
+    reviewedRefund(100, 100),
+    reviewedRefund(200, 200),
   ]);
   const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line1_state_refund, 300);
@@ -236,7 +275,7 @@ Deno.test("f1099g.compute: multiple agricultural payments retain separate source
 Deno.test("f1099g.compute: mixed items — unemployment and state refund both routed correctly", () => {
   const result = compute([
     minimalItem({ box_1_unemployment: 6000 }),
-    minimalItem({ box_2_state_refund: 400, box_2_prior_year_itemized: true }),
+    reviewedRefund(400, 400),
   ]);
   const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line7_unemployment, 6000);
@@ -244,18 +283,14 @@ Deno.test("f1099g.compute: mixed items — unemployment and state refund both ro
 });
 
 // =============================================================================
-// 4. Thresholds
+// 4. Issuer reporting thresholds do not limit recipient income
 // =============================================================================
 
-// Box 1 unemployment — minimum reporting threshold $10
-Deno.test("f1099g.compute: box_1_unemployment $9 (below $10 threshold) — does not route", () => {
+// Box 1 unemployment — the $10 payer threshold is not an income exclusion.
+Deno.test("f1099g.compute: box_1_unemployment $9 routes to Schedule 1 and AGI", () => {
   const result = compute([minimalItem({ box_1_unemployment: 9 })]);
-  const out = result.outputs.find(
-    (o) =>
-      o.nodeType === "schedule1" &&
-      (o.fields as Record<string, unknown>).line7_unemployment !== undefined,
-  );
-  assertEquals(out, undefined);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line7_unemployment, 9);
+  assertEquals((findOutput(result, "agi_aggregator")!.fields as Record<string, unknown>).line7_unemployment, 9);
 });
 
 Deno.test("f1099g.compute: box_1_unemployment $10 (at threshold) — routes to schedule1", () => {
@@ -270,36 +305,29 @@ Deno.test("f1099g.compute: box_1_unemployment $11 (above threshold) — routes t
   assertEquals(input.line7_unemployment, 11);
 });
 
-// Box 2 state refund — minimum reporting threshold $10
-Deno.test("f1099g.compute: box_2_state_refund $9 (below $10 threshold) with itemized — does not route", () => {
+// Box 2 state refund — this fixture designates the prior-year refund taxable.
+Deno.test("f1099g.compute: taxable $9 state refund routes to Schedule 1, AGI, and AMT reversal", () => {
   const result = compute([
-    minimalItem({ box_2_state_refund: 9, box_2_prior_year_itemized: true }),
+    reviewedRefund(9, 9),
   ]);
-  const out = result.outputs.find(
-    (o) =>
-      o.nodeType === "schedule1" &&
-      (o.fields as Record<string, unknown>).line1_state_refund !== undefined,
-  );
-  assertEquals(out, undefined);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line1_state_refund, 9);
+  assertEquals((findOutput(result, "agi_aggregator")!.fields as Record<string, unknown>).line1_state_refund, 9);
+  assertEquals(fieldsOf(result.outputs, form6251)!.line2b_tax_refund, 9);
 });
 
 Deno.test("f1099g.compute: box_2_state_refund $10 (at threshold) with itemized — routes to schedule1", () => {
   const result = compute([
-    minimalItem({ box_2_state_refund: 10, box_2_prior_year_itemized: true }),
+    reviewedRefund(10, 10),
   ]);
   const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line1_state_refund, 10);
 });
 
-// Box 5 RTAA — minimum reporting threshold $600
-Deno.test("f1099g.compute: box_5_rtaa $599 (below $600 threshold) — does not route", () => {
+// Box 5 RTAA — the $600 payer threshold is not an income exclusion.
+Deno.test("f1099g.compute: box_5_rtaa $599 routes to Schedule 1 and AGI", () => {
   const result = compute([minimalItem({ box_5_rtaa: 599 })]);
-  const out = result.outputs.find(
-    (o) =>
-      o.nodeType === "schedule1" &&
-      (o.fields as Record<string, unknown>).line8z_rtaa !== undefined,
-  );
-  assertEquals(out, undefined);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_rtaa, 599);
+  assertEquals((findOutput(result, "agi_aggregator")!.fields as Record<string, unknown>).line8z_rtaa, 599);
 });
 
 Deno.test("f1099g.compute: box_5_rtaa $600 (at threshold) — routes to schedule1", () => {
@@ -314,15 +342,11 @@ Deno.test("f1099g.compute: box_5_rtaa $601 (above threshold) — routes to sched
   assertEquals(input.line8z_rtaa, 601);
 });
 
-// Box 6 taxable grants — minimum reporting threshold $600
-Deno.test("f1099g.compute: box_6_taxable_grants $599 (below $600 threshold) — does not route", () => {
+// Box 6 taxable grants — the $600 payer threshold is not an income exclusion.
+Deno.test("f1099g.compute: taxable $599 grant routes to Schedule 1 and AGI", () => {
   const result = compute([minimalItem({ box_6_taxable_grants: 599 })]);
-  const out = result.outputs.find(
-    (o) =>
-      o.nodeType === "schedule1" &&
-      (o.fields as Record<string, unknown>).line8z_taxable_grants !== undefined,
-  );
-  assertEquals(out, undefined);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_taxable_grants, 599);
+  assertEquals((findOutput(result, "agi_aggregator")!.fields as Record<string, unknown>).line8z_taxable_grants, 599);
 });
 
 Deno.test("f1099g.compute: box_6_taxable_grants $600 (at threshold) — routes to schedule1", () => {
@@ -420,21 +444,18 @@ Deno.test("f1099g.compute: repaid exceeds unemployment — net floors at $0, no 
   assertEquals(out, undefined);
 });
 
-Deno.test("f1099g.compute: state refund when prior_year_itemized omitted defaults to not taxable", () => {
-  const result = compute([minimalItem({ box_2_state_refund: 300 })]);
-  const out = result.outputs.find(
-    (o) =>
-      o.nodeType === "schedule1" &&
-      (o.fields as Record<string, unknown>).line1_state_refund !== undefined,
+Deno.test("f1099g.compute: positive state refund without tax-benefit workpaper fails closed", () => {
+  assertThrows(
+    () => compute([minimalItem({ box_2_state_refund: 300 })]),
+    Error,
+    "reviewed taxable recovery",
   );
-  assertEquals(out, undefined);
 });
 
-Deno.test("f1099g.compute: mixed itemized and non-itemized refunds — only itemized refund included", () => {
-  // Two 1099-Gs: $200 itemized (taxable) + $500 non-itemized (not taxable)
+Deno.test("f1099g.compute: mixed reviewed taxable and nontaxable refunds — only taxable recovery included", () => {
   const result = compute([
-    minimalItem({ box_2_state_refund: 200, box_2_prior_year_itemized: true }),
-    minimalItem({ box_2_state_refund: 500, box_2_prior_year_itemized: false }),
+    reviewedRefund(200, 200),
+    reviewedRefund(500, 0),
   ]);
   const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line1_state_refund, 200);
@@ -459,6 +480,8 @@ Deno.test("f1099g.compute: smoke test — all major boxes populated produces cor
       box_1_railroad: false,
       box_2_state_refund: 500,
       box_2_prior_year_itemized: true,
+      box_2_taxable_recovery_verified_amount: 500,
+      box_2_recovery_workpaper_reference: "reviewed-2024-state-refund-workpaper",
       box_3_tax_year: 2024,
       box_4_federal_withheld: 800,
       box_5_rtaa: 1200,

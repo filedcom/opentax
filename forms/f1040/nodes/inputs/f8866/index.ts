@@ -1,8 +1,7 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
+import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { schedule1 } from "../../outputs/schedule1/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Form 8866 — Interest Computation Under the Look-Back Method
@@ -10,9 +9,9 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 //
 // After the 3rd and 10th tax year following the year property was placed in
 // service, the taxpayer recomputes depreciation using actual income versus
-// forecasted income. If depreciation was over-claimed → interest owed to IRS
-// (additional income on Schedule 1). If under-claimed → interest receivable
-// (deduction on Schedule 1).
+// forecasted income. Interest owed belongs on Schedule 2 line 17n with an
+// attached Form 8866; a refund claim is filed separately. Neither branch is
+// Schedule 1 income or a Schedule 1 deduction.
 
 export enum LookbackYear {
   Third = "3rd",
@@ -43,40 +42,16 @@ export const inputSchema = z.object({
   f8866s: z.array(itemSchema).min(1),
 });
 
-type F8866Item = z.infer<typeof itemSchema>;
-type F8866Items = F8866Item[];
-
-function totalInterest(items: F8866Items): number {
-  return items.reduce((sum, item) => sum + (item.interest_owed_or_due ?? 0), 0);
-}
-
-function buildOutputs(items: F8866Items): NodeOutput[] {
-  const net = totalInterest(items);
-  if (net === 0) return [];
-
-  if (net > 0) {
-    // Interest owed to IRS — additional income
-    return [{
-      nodeType: schedule1.nodeType,
-      fields: { line8z_other_income: net },
-    }];
-  }
-
-  // Interest receivable from IRS — deduction
-  return [{
-    nodeType: schedule1.nodeType,
-    fields: { line8z_other: net },
-  }];
-}
-
 class F8866Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8866";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1]);
+  readonly outputNodes = new OutputNodes([]);
 
   compute(_ctx: NodeContext, rawInput: z.infer<typeof inputSchema>): NodeResult {
-    const input = inputSchema.parse(rawInput);
-    return { outputs: buildOutputs(input.f8866s) };
+    inputSchema.parse(rawInput);
+    throw new Error(
+      "Form 8866 look-back interest needs its Schedule 2 line 17n or separate-refund filing branch before filing",
+    );
   }
 }
 
