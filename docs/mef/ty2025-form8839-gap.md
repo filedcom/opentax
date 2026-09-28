@@ -1,72 +1,15 @@
 # TY2025 Form 8839 coverage gap
 
-Status: bounded calculation correction written but unrun. Native `IRS8839`
-MeF and filled-PDF output remain unsupported. This work did not run tests,
-local XSD validation, PDF rendering, or IRS ATS.
+Status: **active filing fails closed** in the tax node, MeF descriptor, and PDF descriptor. The pure Part II calculation helper remains for future source-backed work, but it does not emit Form 1040, Schedule 3, IRS8839 XML, or a filled PDF. No tests, typecheck, XSD validation, PDF rendering, or IRS ATS were run for this change.
 
-## 2025 credit correction
+## Why the former bounded route was not filing-ready
 
-The [2025 Form 8839](https://www.irs.gov/pub/irs-pdf/f8839.pdf) and
-[instructions](https://www.irs.gov/pub/irs-pdf/i8839.pdf) added a refundable
-credit of up to $5,000 **per eligible child**. Part II line 11b takes the
-smaller of each child's post-phaseout line 11a and $5,000; line 11c totals
-those amounts; line 13 goes to Form 1040 line 30. Line 14 is line 12 minus
-line 13, line 15 is any prior nonrefundable carryforward, and line 18 is
-limited by Credit Limit Worksheet line 5 (shown on line 17).
+The [2025 Form 8839](https://www.irs.gov/pub/irs-pdf/f8839.pdf) and [instructions](https://www.irs.gov/pub/irs-pdf/i8839.pdf) require child eligibility and timing, qualified unreimbursed expenses, modified AGI, and a completed Credit Limit Worksheet. A plausible child identity and self-attested confirmation of finalization/payment are not evidence of an adoption decree, payment ledger, or employer reimbursement. The current graph does not reconcile those asserted facts to primary records.
 
-`forms/f1040/nodes/intermediate/forms/form8839/index.ts` formerly routed
-all adoption credit to nonrefundable Schedule 3 line 6c. It also treated
-missing tax liability as unlimited and returned no outputs when MAGI was
-fully phased out, losing taxable W-2 adoption benefits from Form 1040
-line 1f. The current bounded correction computes the $5,000 amount for
-each child, sends the refundable total to Form 1040 line 30, limits the
-current-year nonrefundable remainder using an explicitly entered Credit
-Limit Worksheet line-5 result, requires sourced MAGI, and preserves full
-taxability of benefits above the MAGI phaseout. Focused cases were updated
-and added, but not run.
+The input `magi` also is not reconciled to finalized Form 1040 line 11b plus any Puerto Rico, Form 2555, and Form 4563 additions required by the instructions. The supplied `credit_limit_worksheet_line5` is not derived from finalized Form 1040 line 18 after the worksheet's listed other credits. A return could therefore overstate the refundable or nonrefundable credit even if the native XML and Form 1040/Schedule 3 amounts match each other. A matching pair of self-generated amounts is not independent validation.
 
-This is **not** a complete adoption-credit path. The child input has no
-name, birth year, identifying number, adoption-final year, or expense
-payment-year ledger. The existing `prior_year_credit` reduces the current
-child maximum; it is not the separate prior-year nonrefundable carryforward
-on Form 8839 line 15. No line-15 carryforward is accepted or routed. The
-`credit_limit_worksheet_line5` is the required *completed* worksheet
-result after other specified credits, not gross Form 1040 tax. The former
-`income_tax_liability` node input was removed without an alias. Source
-provenance and that worksheet's interaction with
-other credits remain to be implemented. The MFS eligibility exception and
-taxable-benefit treatment need a separate source-backed route. The node now
-throws when an MFS return has adoption credit or employer-benefit facts
-rather than silently dropping them.
+The helper now rejects a Credit Limit Worksheet line 5 greater than Form 8839 line 16 (line 14 when carryforwards are absent). A former positive MeF fixture had line 16 of $10,000 and asserted worksheet line 5 of $12,000, which is impossible under the 2025 worksheet. This guard is a necessary arithmetic check, not a substitute for source reconciliation.
 
-## Native XML and PDF blockers
+## Reopening the route
 
-The checked-in TY2025 v5.4 `IRS8839.xsd` requires at least one
-`AdoptedChild` group before top-level lines. That group carries the child's
-identity and per-child Part II/III values. Top-level native fields include
-`AdoptionCreditModifiedAGIAmt` (line 7),
-`RefundableAdoptionCreditAmt` (line 11c),
-`NonrefundableAdoptionCreditAmt` (line 18), and
-`TaxableBenefitsForm8839Amt` (line 31). None of the three flat tags in
-`forms/f1040/2025/mef/forms/f8839.ts` is a direct child matching these
-native fields. The current node also does not emit a Form 8839 print-field
-record for the MeF builder, so simply renaming tags would not recover
-the per-child calculations.
-
-`forms/f1040/2025/pdf/forms/f8839.ts` maps only three raw inputs and skips
-the mandatory child rows and both credit outputs. Its comments also label
-the 2025 MAGI and credit-limit lines incorrectly. It needs an independently
-verified AcroForm map and filled-render check after the line-level model
-is available.
-
-## Smallest safe filing slice
-
-Start with one finalized, domestic adoption with documented child identity,
-2024/2025 expense timing, no employer benefits, no prior-year credit or
-carryforward, and an explicit completed Credit Limit Worksheet line 5.
-Compute and retain that child's Part II lines 2-11b and top-level lines
-7-18; emit the required nested native `AdoptedChild` group and checked
-Form 1040/Schedule 3 values. Add benefits, multiple children, special
-needs, foreign adoptions, prior carryforwards, and MFS exceptions only
-after their distinct source and attachment rules are modeled. Do not
-retain the current flat XML as a compatibility fallback.
+Source child finalization/eligibility and eligible unreimbursed payments from documents or a reviewed ledger. Derive MAGI from finalized return and foreign-income/Puerto Rico adjustments. Compute Credit Limit Worksheet line 5 from finalized Form 1040 line 18 and the worksheet's prescribed prior credits; preserve its ordering with the adoption credit itself. Then reconcile each per-child refundable amount, the Schedule 3 nonrefundable amount, and the native `AdoptedChild` group. The PDF needs a verified 2025 AcroForm field map and visual filled-PDF check. Separate routes are still needed for employer benefits, multiple children, special needs, foreign adoptions, prior-year credit/carryforward, ATIN, and MFS exceptions. Do not restore the old flat XML or add an asserted-facts bypass.

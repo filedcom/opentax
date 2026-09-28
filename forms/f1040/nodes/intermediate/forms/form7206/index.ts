@@ -11,6 +11,7 @@ import { form8995 } from "../form8995/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 import { form8962 } from "../form8962/index.ts";
+import { TS } from "../../../types.ts";
 import {
   calculatePub974SingleBusinessIterative,
   pub974SingleBusinessSourceSchema,
@@ -18,87 +19,84 @@ import {
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
-export const inputSchema = z.object({
-  // Net profit from self-employment (from Schedule C/F/SE) before this deduction
-  // Used to cap the deduction — cannot exceed net SE profit
-  se_net_profit: z.number().nonnegative().optional(),
+const money = z.number().finite().nonnegative();
 
-  // Self-employed health insurance premiums paid (medical, dental, vision)
-  // Cannot include premiums paid through subsidized employer plan
-  health_insurance_premiums: z.number().nonnegative().optional(),
+export const singleScheduleCPlanSchema = z.object({
+  business_reference: z.string().trim().min(1),
+  plan_identifier: z.string().trim().min(1),
+  recipient: z.nativeEnum(TS),
+  eligible_health_premiums: money.positive(),
+  schedule_c_line31_net_profit: money.positive(),
+  schedule1_line15_se_tax_deduction: money,
+  schedule1_line16_retirement_deduction: money,
+  plan_established_under_business: z.literal(true),
+  eligible_premium_months_verified: z.literal(true),
+  sole_positive_business_verified: z.literal(true),
+  no_marketplace_overlap: z.literal(true),
+  no_ltc_premiums: z.literal(true),
+  no_form2555: z.literal(true),
+  no_schedule_se_optional_method: z.literal(true),
+  no_other_earned_income: z.literal(true),
+}).strict();
+
+export type SingleScheduleCPlan = z.infer<typeof singleScheduleCPlanSchema>;
+
+export const form7206LinesSchema = z.object({
+  line1: money,
+  line2: money,
+  line3: money,
+  line4: money,
+  line5: money,
+  line6: z.number().min(0).max(1),
+  line7: money,
+  line8: money,
+  line9: money,
+  line10: money,
+  line12: money,
+  line13: money,
+  line14: money,
+});
+
+export type Form7206Lines = z.infer<typeof form7206LinesSchema>;
+
+export const inputSchema = z.object({
+  single_schedule_c_plan: singleScheduleCPlanSchema.optional(),
   marketplace_ptc_premium_overlap: z.boolean().optional(),
   pub974_single_business: pub974SingleBusinessSourceSchema.optional(),
-
-  // Long-term care insurance premiums paid
-  ltc_premiums: z.number().nonnegative().optional(),
-
-  // Age of taxpayer (for LTC premium age-based limit)
-  taxpayer_age: z.number().int().nonnegative().optional(),
-
-  // Long-term care insurance premiums for spouse
-  ltc_premiums_spouse: z.number().nonnegative().optional(),
-
-  // Age of spouse (for LTC premium age-based limit)
-  spouse_age: z.number().int().nonnegative().optional(),
 }).strict();
 
 type Form7206Input = z.infer<typeof inputSchema>;
 
 // ─── Pure Helpers ─────────────────────────────────────────────────────────────
 
-function ltcLimit(
-  age: number,
-  limits: import("../../../config/index.ts").F1040Config["ltcPremiumLimits"],
-): number {
-  for (const bracket of limits) {
-    if (age <= bracket.maxAge) return bracket.limit;
+export function calculateSingleScheduleCForm7206(
+  raw: SingleScheduleCPlan,
+): Form7206Lines {
+  const source = singleScheduleCPlanSchema.parse(raw);
+  const profit = source.schedule_c_line31_net_profit;
+  const seTax = source.schedule1_line15_se_tax_deduction;
+  const retirement = source.schedule1_line16_retirement_deduction;
+  if (seTax > profit || retirement > profit - seTax) {
+    throw new Error(
+      "Form 7206 Schedule 1 lines 15-16 exceed the establishing business income",
+    );
   }
-  return limits[limits.length - 1].limit;
-}
-
-// Eligible LTC premiums — capped by age-based limit
-function eligibleLtcPremiums(
-  premiums: number,
-  age: number,
-  limits: import("../../../config/index.ts").F1040Config["ltcPremiumLimits"],
-): number {
-  return Math.min(premiums, ltcLimit(age, limits));
-}
-
-// Total deductible premiums before profit cap and PTC reduction
-function totalEligiblePremiums(
-  input: Form7206Input,
-  limits: import("../../../config/index.ts").F1040Config["ltcPremiumLimits"],
-): number {
-  const healthPremiums = input.health_insurance_premiums ?? 0;
-
-  // LTC for taxpayer
-  const ltcTaxpayer = input.ltc_premiums ?? 0;
-  const ageTaxpayer = input.taxpayer_age ?? 0;
-  const eligibleLtcTaxpayer = ltcTaxpayer > 0
-    ? eligibleLtcPremiums(ltcTaxpayer, ageTaxpayer, limits)
-    : 0;
-
-  // LTC for spouse
-  const ltcSpouse = input.ltc_premiums_spouse ?? 0;
-  const ageSpouse = input.spouse_age ?? 0;
-  const eligibleLtcSpouse = ltcSpouse > 0
-    ? eligibleLtcPremiums(ltcSpouse, ageSpouse, limits)
-    : 0;
-
-  return healthPremiums + eligibleLtcTaxpayer + eligibleLtcSpouse;
-}
-
-function computeDeduction(
-  input: Form7206Input,
-  limits: import("../../../config/index.ts").F1040Config["ltcPremiumLimits"],
-): number {
-  const eligible = totalEligiblePremiums(input, limits);
-  if (eligible <= 0) return 0;
-
-  // Cap at net SE profit (deduction cannot create a loss from SE)
-  const seProfit = input.se_net_profit ?? 0;
-  return Math.min(eligible, seProfit);
+  const line10 = profit - seTax - retirement;
+  return form7206LinesSchema.parse({
+    line1: source.eligible_health_premiums,
+    line2: 0,
+    line3: source.eligible_health_premiums,
+    line4: profit,
+    line5: profit,
+    line6: 1,
+    line7: seTax,
+    line8: profit - seTax,
+    line9: retirement,
+    line10,
+    line12: 0,
+    line13: line10,
+    line14: Math.min(source.eligible_health_premiums, line10),
+  });
 }
 
 function buildOutput(deduction: number): NodeOutput[] {
@@ -133,11 +131,7 @@ class Form7206Node extends TaxNode<typeof inputSchema> {
       if (
         ctx.taxYear !== 2025 ||
         input.marketplace_ptc_premium_overlap !== true ||
-        input.se_net_profit !== undefined ||
-        input.health_insurance_premiums !== undefined ||
-        input.ltc_premiums !== undefined ||
-        input.ltc_premiums_spouse !== undefined ||
-        input.taxpayer_age !== undefined || input.spouse_age !== undefined
+        input.single_schedule_c_plan !== undefined
       ) {
         throw new Error(
           "Form 7206 Publication 974 route needs only verified 2025 single-business source facts and positive Marketplace overlap",
@@ -204,27 +198,21 @@ class Form7206Node extends TaxNode<typeof inputSchema> {
             },
           }),
         ],
-        finalizations: [{
-          nodeType: this.nodeType,
-          fields: { pub974_form7206_omit: true },
-        }],
       };
     }
-    if (
-      input.health_insurance_premiums &&
-      input.marketplace_ptc_premium_overlap === undefined
-    ) {
-      throw new Error(
-        "Form 7206 health premiums require Marketplace PTC overlap review",
-      );
+    const source = input.single_schedule_c_plan;
+    if (!source) {
+      if (Object.keys(input).length === 0) return { outputs: [] };
+      throw new Error("Form 7206 requires one identified Schedule C plan");
     }
-    if (input.marketplace_ptc_premium_overlap) {
+    if (input.marketplace_ptc_premium_overlap !== false) {
       throw new Error(
         "Form 7206 Marketplace PTC overlap requires Publication 974 deduction calculation",
       );
     }
-    const deduction = computeDeduction(input, cfg.ltcPremiumLimits);
-    return { outputs: buildOutput(deduction) };
+    throw new Error(
+      "Form 7206 one-plan filing is not source-reconciled: premium-month records, Schedule C owner, Schedule 1 lines 15-16, and return-wide exclusions are required",
+    );
   }
 }
 

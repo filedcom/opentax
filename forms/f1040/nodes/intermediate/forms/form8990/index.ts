@@ -2,177 +2,94 @@ import { z } from "zod";
 import type { NodeResult } from "../../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
-import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
-import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
-// ─── TY2025 Constants ─────────────────────────────────────────────────────────
+const amount = z.number().int().finite().nonnegative().max(999_999_999_999_999);
 
-// IRC §163(j)(1)(B): applicable percentage for ATI limitation
-const ATI_APPLICABLE_PERCENTAGE = 0.30;
+// This direct Schedule C route files Form 8990 only when all business interest
+// remains deductible. A disallowance changes Schedule C, SE tax, and QBI; an
+// add-back on Schedule 1 alone would not be a valid replacement.
+export const directScheduleCSourceSchema = z.object({
+  business_reference: z.string().trim().min(1),
+  current_year_business_interest_expense: amount.positive(),
+  tentative_taxable_income: z.number().int().finite().min(-999_999_999_999_999)
+    .max(999_999_999_999_999),
+  section172_nol_deduction: amount,
+  section199a_qbi_deduction: amount,
+  business_depreciation_amortization_depletion: amount,
+  current_year_business_interest_income: amount,
+  average_prior_three_year_gross_receipts: amount,
+  not_a_tax_shelter_verified: z.literal(true),
+  sole_direct_non_passthrough_business_verified: z.literal(true),
+  no_prior_disallowed_interest: z.literal(true),
+  no_floor_plan_financing_interest: z.literal(true),
+  no_other_ati_additions_or_reductions: z.literal(true),
+  no_nonbusiness_items_in_tentative_income: z.literal(true),
+  no_pass_through_excess_items: z.literal(true),
+}).strict();
 
-// ─── Schema ───────────────────────────────────────────────────────────────────
+export type DirectScheduleCSource = z.infer<typeof directScheduleCSourceSchema>;
 
-const inputSchema = z.object({
-  // Part I, Line 1: Current year business interest expense (not including floor plan)
-  // IRC §163(j)(5); excludes disallowed carryforwards and floor plan financing interest
-  business_interest_expense: z.number().nonnegative().optional(),
+export const inputSchema = z.object({
+  direct_schedule_c: directScheduleCSourceSchema.optional(),
+}).strict();
 
-  // Part I, Line 2: Disallowed BIE carryforward from prior year Form 8990, line 31
-  // Note: does not apply to partnerships (per line 2 instructions)
-  prior_disallowed_carryforward: z.number().nonnegative().optional(),
-
-  // Part I, Line 4: Floor plan financing interest expense
-  // IRC §163(j)(9): floor plan interest is not subject to the §163(j) limitation;
-  // it is separately deductible and also expands the line 29 cap
-  floor_plan_interest: z.number().nonnegative().optional(),
-
-  // Part II, Line 6: Tentative taxable income (computed as if all BIE were deductible)
-  // May be negative (net operating loss situation)
-  tentative_taxable_income: z.number().optional(),
-
-  // Part II, Line 9: NOL deduction under §172 carried forward or carried back
-  nol_deduction: z.number().nonnegative().optional(),
-
-  // Part II, Line 10: QBI deduction allowed under §199A (Form 8990 add-back for ATI)
-  qbi_deduction: z.number().nonnegative().optional(),
-
-  // Part II, Line 11: Depreciation/amortization/depletion attributable to a trade or business
-  // TY2025: reinstated by P.L. 119-21 (OBBBA) for tax years beginning after 2024
-  depreciation_amortization: z.number().nonnegative().optional(),
-
-  // Part III, Line 23: Current year business interest income (directly paid to taxpayer)
-  // Does not include interest from excepted trades/businesses or investment income
-  business_interest_income: z.number().nonnegative().optional(),
-
-  // Average annual gross receipts for 3 prior tax years (§448(c) gross receipts test)
-  // Used to determine small business taxpayer exemption under §163(j)(3)
-  // When omitted, taxpayer is treated as subject to the limitation (conservative)
-  avg_gross_receipts: z.number().nonnegative().optional(),
-
-  // Whether the taxpayer is a tax shelter as defined in §448(d)(3)
-  // Tax shelters cannot use the small business exemption
-  is_tax_shelter: z.boolean().optional(),
-
-  // Passthrough from schedule_e: disallowed §163(j) interest carryforwards from rental properties
-  // IRC §163(j)(4)(B)(ii): disallowed BIE allocated to rental real estate activities
-  disallowed_mortgage_interest_carryforward: z.number().nonnegative().optional(),
-  disallowed_other_interest_carryforward: z.number().nonnegative().optional(),
+export const form8990LinesSchema = z.object({
+  line1: amount,
+  line2: amount,
+  line4: amount,
+  line5: amount,
+  line6: z.number().int().finite(),
+  line8: amount,
+  line9: amount,
+  line10: amount,
+  line11: amount,
+  line16: amount,
+  line18: amount,
+  line21: amount,
+  line22: amount,
+  line23: amount,
+  line25: amount,
+  line26: amount,
+  line29: amount,
+  line30: amount,
+  line31: amount,
 });
 
-type Form8990Input = z.infer<typeof inputSchema>;
+export type Form8990Lines = z.infer<typeof form8990LinesSchema>;
 
-// ─── Pure helpers ─────────────────────────────────────────────────────────────
-
-// §163(j)(3): small business taxpayer exemption
-// Exempt if avg gross receipts <= threshold AND not a tax shelter
-function isSmallBusinessExempt(input: Form8990Input, smallBizThreshold: number): boolean {
-  if (input.is_tax_shelter === true) return false;
-  const avgReceipts = input.avg_gross_receipts;
-  if (avgReceipts === undefined) return false;
-  return avgReceipts <= smallBizThreshold;
+export function calculateDirectScheduleCForm8990(
+  raw: DirectScheduleCSource,
+  _smallBusinessGrossReceiptsThreshold: number,
+): Form8990Lines {
+  directScheduleCSourceSchema.parse(raw);
+  throw new Error(
+    "Form 8990 ATI components are not reconciled to the filed return",
+  );
 }
-
-// Part I, Line 5: Total BIE subject to limitation
-// = current year BIE + prior year disallowed carryforward + rental property disallowed interest
-function totalBie(input: Form8990Input): number {
-  return (input.business_interest_expense ?? 0) +
-    (input.prior_disallowed_carryforward ?? 0) +
-    (input.disallowed_mortgage_interest_carryforward ?? 0) +
-    (input.disallowed_other_interest_carryforward ?? 0);
-}
-
-// Part II, Line 22: Adjusted Taxable Income (ATI)
-// = tentative taxable income
-//   + BIE (line 8 — add back current year only, not carryforward)
-//   + NOL deduction (line 9)
-//   + QBI deduction §199A (line 10)
-//   + depreciation/amortization/depletion (line 11 — TY2025 reinstated)
-//   - business interest income (line 18)
-// Floored at zero for individuals and corporations (per line 22 instructions)
-function computeAti(input: Form8990Input): number {
-  const tti = input.tentative_taxable_income ?? 0;
-  const bie = input.business_interest_expense ?? 0;
-  const nol = input.nol_deduction ?? 0;
-  const qbi = input.qbi_deduction ?? 0;
-  const dep = input.depreciation_amortization ?? 0;
-  const bii = input.business_interest_income ?? 0;
-
-  const raw = tti + bie + nol + qbi + dep - bii;
-  return Math.max(0, raw);
-}
-
-// Part IV, Line 26: ATI × applicable percentage (30%)
-function atiLimit(ati: number): number {
-  return ati * ATI_APPLICABLE_PERCENTAGE;
-}
-
-// Part IV, Line 29: Maximum deductible BIE
-// = 30% × ATI + floor plan interest + business interest income
-function maxDeductible(input: Form8990Input, atiLimitAmt: number): number {
-  return atiLimitAmt + (input.floor_plan_interest ?? 0) + (input.business_interest_income ?? 0);
-}
-
-// Part IV, Line 30: Allowed BIE deduction = min(total BIE, max deductible)
-function allowedBie(total: number, maxDeduct: number): number {
-  return Math.min(total, maxDeduct);
-}
-
-// Part IV, Line 31: Disallowed BIE (carries forward to next year)
-function disallowedBie(total: number, allowed: number): number {
-  return Math.max(0, total - allowed);
-}
-
-// ─── Node class ───────────────────────────────────────────────────────────────
 
 class Form8990Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form8990";
   readonly inputSchema = inputSchema;
-  // Disallowed BIE routes to Schedule 1 as a positive add-back,
-  // reversing the upstream-posted deduction to the extent it exceeds the §163(j) cap.
-  readonly outputNodes = new OutputNodes([schedule1, agi_aggregator]);
+  readonly outputNodes = new OutputNodes([]);
 
-  compute(ctx: NodeContext, rawInput: Form8990Input): NodeResult {
-    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
-    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
+  compute(ctx: NodeContext, rawInput: z.infer<typeof inputSchema>): NodeResult {
+    if (ctx.taxYear !== 2025) throw new Error("Form 8990 route is TY2025 only");
     const input = inputSchema.parse(rawInput);
-
-    // §163(j)(3): small business taxpayers are fully exempt — no limitation
-    if (isSmallBusinessExempt(input, cfg.smallBizGrossReceipts)) {
-      return { outputs: [] };
-    }
-
-    const total = totalBie(input);
-
-    // No BIE to limit
-    if (total === 0) {
-      return { outputs: [] };
-    }
-
-    const ati = computeAti(input);
-    const atiLimitAmt = atiLimit(ati);
-    const maxDeduct = maxDeductible(input, atiLimitAmt);
-    const allowed = allowedBie(total, maxDeduct);
-    const disallowed = disallowedBie(total, allowed);
-
-    // BIE fully within allowable amount — no add-back needed
-    if (disallowed === 0) {
-      return { outputs: [] };
-    }
-
-    // Route disallowed amount to Schedule 1 as a positive add-back
-    // (reduces the net deduction already posted by upstream node)
+    if (!input.direct_schedule_c) return { outputs: [] };
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    const lines = calculateDirectScheduleCForm8990(
+      input.direct_schedule_c,
+      cfg.smallBizGrossReceipts,
+    );
     return {
-      outputs: [
-        this.outputNodes.output(schedule1, { biz_interest_disallowed_add_back: disallowed }),
-        this.outputNodes.output(agi_aggregator, { biz_interest_disallowed_add_back: disallowed }),
-      ],
-      carryforwards: { disallowed_bie_8990: disallowed },
+      outputs: [{
+        nodeType: this.nodeType,
+        fields: { direct_schedule_c: input.direct_schedule_c, ...lines },
+      }],
     };
   }
 }
-
-// ─── Singleton export ─────────────────────────────────────────────────────────
 
 export const form8990 = new Form8990Node();

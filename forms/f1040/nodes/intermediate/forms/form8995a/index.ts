@@ -32,10 +32,24 @@ const aggregationGroupSchema = z.object({
   combined_for_limitation: z.boolean(),
 });
 
+export const businessFilingDetailsSchema = z.object({
+  business_name: z.string().min(1).max(75),
+  ein: z.string().regex(/^\d{9}$/),
+  business_qbi: z.number().nonnegative(),
+  business_w2_wages: z.number().nonnegative(),
+  business_ubia: z.number().nonnegative(),
+  one_non_sstb_business_confirmed: z.literal(true),
+  no_aggregation_or_patron_status_confirmed: z.literal(true),
+  no_reit_ptp_or_loss_carryforward_confirmed: z.literal(true),
+  qualified_dividends_zero_confirmed: z.literal(true),
+  qbi_wages_ubia_sources_confirmed: z.literal(true),
+  taxable_income_before_qbi_confirmed: z.literal(true),
+});
+
 export const inputSchema = z.object({
   // Filing status — determines income threshold for wage limitation phase-in
   filing_status: filingStatusSchema,
-  // Taxable income before QBI deduction (Form 1040 line 11)
+  // Taxable income before QBI deduction (Form 8995-A line 33)
   taxable_income: z.number().nonnegative(),
   // Net capital gain — reduces income limitation base
   net_capital_gain: z.number().nonnegative().optional(),
@@ -66,9 +80,57 @@ export const inputSchema = z.object({
   // Non-empty signals that Schedule B must be attached and grouped limitation
   // treatment applied. Omit when no aggregation election has been made.
   aggregation_groups: z.array(aggregationGroupSchema).optional(),
+
+  // Business identity and source attestations for the bounded native filing route.
+  business_filing_details: businessFilingDetailsSchema.optional(),
 });
 
-type Form8995AInput = z.infer<typeof inputSchema>;
+export type Form8995AInput = z.infer<typeof inputSchema>;
+
+export function calculateOneBusiness8995ALines(input: Form8995AInput) {
+  const line2 = input.qbi ?? 0;
+  const line3 = line2 * QBI_RATE;
+  const line4 = input.w2_wages ?? 0;
+  const line5 = line4 * W2_LIMIT_A_RATE;
+  const line6 = line4 * W2_LIMIT_B_WAGE_RATE;
+  const line7 = input.unadjusted_basis ?? 0;
+  const line8 = line7 * UBIA_RATE;
+  const line9 = line6 + line8;
+  const line10 = Math.max(line5, line9);
+  const line11 = Math.min(line3, line10);
+  const line13 = line11;
+  const line15 = line13;
+  const line16 = line15;
+  const line32 = line16;
+  const line33 = input.taxable_income;
+  const line34 = input.net_capital_gain ?? 0;
+  const line35 = Math.max(0, line33 - line34);
+  const line36 = line35 * QBI_RATE;
+  const line37 = Math.min(line32, line36);
+  const line39 = line37;
+  return {
+    line2,
+    line3,
+    line4,
+    line5,
+    line6,
+    line7,
+    line8,
+    line9,
+    line10,
+    line11,
+    line13,
+    line15,
+    line16,
+    line32,
+    line33,
+    line34,
+    line35,
+    line36,
+    line37,
+    line39,
+  };
+}
 
 // ── Threshold helpers ─────────────────────────────────────────────────────────
 
@@ -76,7 +138,9 @@ function threshold(
   filingStatus: FilingStatus,
   cfg: import("../../../config/index.ts").F1040Config,
 ): number {
-  return filingStatus === FilingStatus.MFJ ? cfg.qbiThresholdMfj : cfg.qbiThresholdSingle;
+  return filingStatus === FilingStatus.MFJ
+    ? cfg.qbiThresholdMfj
+    : cfg.qbiThresholdSingle;
 }
 
 /**
@@ -108,7 +172,10 @@ type SstbAmounts = {
   readonly unadjustedBasis: number;
 };
 
-function adjustedSstbAmounts(input: Form8995AInput, ratio: number): SstbAmounts {
+function adjustedSstbAmounts(
+  input: Form8995AInput,
+  ratio: number,
+): SstbAmounts {
   const scale = 1 - ratio;
   return {
     qbi: (input.sstb_qbi ?? 0) * scale,
@@ -125,7 +192,10 @@ type CombinedTotals = {
   readonly unadjustedBasis: number;
 };
 
-function combinedTotals(input: Form8995AInput, sstb: SstbAmounts): CombinedTotals {
+function combinedTotals(
+  input: Form8995AInput,
+  sstb: SstbAmounts,
+): CombinedTotals {
   const grossQbi = (input.qbi ?? 0) + sstb.qbi;
   const netQbi = grossQbi + (input.qbi_loss_carryforward ?? 0);
   const w2Wages = (input.w2_wages ?? 0) + sstb.w2Wages;
@@ -168,7 +238,8 @@ function qbiComponent(totals: CombinedTotals, ratio: number): number {
 // ── REIT/PTP component ────────────────────────────────────────────────────────
 
 function reitComponent(input: Form8995AInput): number {
-  const netReit = (input.line6_sec199a_dividends ?? 0) + (input.reit_loss_carryforward ?? 0);
+  const netReit = (input.line6_sec199a_dividends ?? 0) +
+    (input.reit_loss_carryforward ?? 0);
   if (netReit <= 0) return 0;
   return netReit * QBI_RATE;
 }
@@ -185,6 +256,7 @@ function incomeCap(input: Form8995AInput): number {
 
 function hasQbiActivity(input: Form8995AInput): boolean {
   return (
+    input.business_filing_details !== undefined ||
     (input.qbi ?? 0) !== 0 ||
     (input.sstb_qbi ?? 0) !== 0 ||
     (input.line6_sec199a_dividends ?? 0) > 0 ||
@@ -209,7 +281,11 @@ class Form8995ANode extends TaxNode<typeof inputSchema> {
       return { outputs: [] };
     }
 
-    const ratio = reductionRatio(input.taxable_income, input.filing_status, cfg);
+    const ratio = reductionRatio(
+      input.taxable_income,
+      input.filing_status,
+      cfg,
+    );
     const sstb = adjustedSstbAmounts(input, ratio);
     const totals = combinedTotals(input, sstb);
 
@@ -218,19 +294,20 @@ class Form8995ANode extends TaxNode<typeof inputSchema> {
     const totalBeforeCap = qbi + reit;
 
     if (totalBeforeCap <= 0) {
-      return { outputs: [] };
+      return { outputs: [{ nodeType: this.nodeType, fields: input }] };
     }
 
     const cap = incomeCap(input);
     const deduction = Math.min(totalBeforeCap, cap);
 
     if (deduction <= 0) {
-      return { outputs: [] };
+      return { outputs: [{ nodeType: this.nodeType, fields: input }] };
     }
 
     const outputs: NodeOutput[] = [
       this.outputNodes.output(f1040, { line13_qbi_deduction: deduction }),
       this.outputNodes.output(standard_deduction, { qbi_deduction: deduction }),
+      { nodeType: this.nodeType, fields: input },
     ];
 
     return { outputs };

@@ -1,8 +1,8 @@
 # TY2025 Form 8995-A coverage gap
 
-Status: audit only. The registered `IRS8995A` field-map builder is not a
-supported native MeF filing path. No tests, local XSD validation, filled-PDF
-rendering, or IRS ATS were run for this audit.
+Status: bounded one-business native `IRS8995A` MeF route written but unrun.
+Local tests, XSD validation, filled-PDF rendering, and IRS ATS remain
+outstanding.
 
 ## Schema and form check
 
@@ -16,11 +16,10 @@ The top-level form then carries line 16 and lines 21-40, including
 `TaxableIncomeBeforeQBIDedAmt` (line 33), `NetCapitalGainAmt` (line 34),
 and `QualifiedBusinessIncomeDedAmt` (line 39).
 
-`forms/f1040/2025/mef/forms/f8995a.ts` instead emits 11 flat fields. Most
-tags do not exist in the native form at all. `QualifiedBusinessIncomeAmt`
-exists only inside a business row, and `NetCapitalGainAmt` is a top-level
-field but is emitted before the required schema sequence. The builder
-cannot be repaired by renaming a few tags.
+The former 11 flat fields in `forms/f1040/2025/mef/forms/f8995a.ts` were
+removed. The new descriptor emits a native business row followed by ordered
+Part IV fields for one explicitly identified business. It rejects the old
+aggregate-only payload rather than treating it as another API shape.
 
 The [2025 Form 8995-A](https://www.irs.gov/pub/irs-pdf/f8995a.pdf) requires
 one Part I and Part II column per trade, business, or aggregation. Its
@@ -31,13 +30,18 @@ threshold normally use Form 8995 instead of 8995-A.
 
 ## Source and calculation blockers
 
-1. `forms/f1040/nodes/intermediate/forms/form8995a/index.ts` combines all
-   non-SSTB QBI, SSTB QBI, wages, UBIA, and carryforwards into aggregate
-   numbers. It emits only a Form 1040 deduction and a standard-deduction
-   input, not a `form8995a` print-field record. The native builder therefore
-   does not receive calculated lines 2-40.
-2. The calculator has no per-business name, EIN/SSN, patron status, separate
-   QBI, W-2 wages, UBIA, or per-business wage-limit result. Aggregation
+1. The node now retains a `form8995a` pending record whenever QBI activity is
+   present, even when its deduction is zero. The bounded descriptor requires
+   a sourced business name and EIN, explicit per-business QBI, W-2 wages,
+   and UBIA matching the aggregate calculator inputs, confirmation that
+   this is the only non-SSTB non-patron business and that taxable income is
+   the return-wide pre-QBI amount, and
+   a single filer fully above the wage-limit phase-in range. It computes
+   row lines 2-15 and top-level lines 16 and 28-40, skipping Part III as
+   the printed form directs above the range. It reconciles line 39 to Form
+   1040 line 13 and rejects simultaneous Form 8995 pending.
+2. The broader calculator still aggregates non-SSTB QBI, SSTB QBI, wages,
+   UBIA, and carryforwards. Aggregation
    input lists group names and business names but not the amounts or tax IDs
    needed for the required XML rows and Schedule B.
 3. SSTB values are scaled in aggregate, but no source-backed Schedule A
@@ -49,23 +53,20 @@ threshold normally use Form 8995 instead of 8995-A.
    combined amount, so using it unadjusted could overstate the income
    limitation. The node also does not prove Form 8995-A rather than the
    simpler Form 8995 is required in every direct-call case.
-5. Existing `f8995a.test.ts` cases assert the flat, non-native tags. A
-   rebuilt form needs source-to-business-row and source-to-final-line tests,
-   plus explicit negative cases for missing identity or schedules. Do not
-   retain the flat field map as a compatibility fallback or silently skip
-   one of the two QBI forms in a central builder.
+5. Focused node and serializer cases now assert a native row, final-line
+   calculation, and missing-identity, alternate-schedule, and reconciliation
+   failures. They are written but unrun. The shared MeF builder still has
+   three old aggregate-only Form 8995-A fixtures for central reconciliation.
+   No flat fallback or silent Form 8995/8995-A selection is provided.
 
 ## Smallest safe rebuild boundary
 
-Start with one identified non-SSTB, non-aggregated qualified trade or
-business above the Form 8995-A filing threshold, with no prior QBI loss,
-REIT/PTP loss, agricultural patron status, or pass-through special items.
-Capture its legal name and tax ID, source-backed QBI, W-2 wages, UBIA,
-taxable income before the QBI deduction, net capital gain plus qualified
-dividends, and evidence that no other qualified business is present.
-Calculate and retain Part II, applicable phase-in, and Part IV lines.
-Emit the required nested native business group and ordered top-level
-fields. Add the corresponding PDF row and verify its rendered values.
+The written slice uses one identified non-SSTB, non-aggregated trade or
+business above the entire phase-in range, with no prior loss, REIT/PTP,
+agricultural patron, or pass-through special items. It requires explicit
+zero net capital gain and confirmation of zero qualified dividends, so line
+34 is not guessed from the older ambiguous aggregate input. Add the
+corresponding PDF row and verify its rendered values.
 Broader SSTB, aggregation, loss-netting, and patron paths need their own
 schedule models and attachments before filing.
 

@@ -87,6 +87,46 @@ Deno.test("Schedule C rejects an unsourced WOTC wage reduction in a return bundl
   );
 });
 
+Deno.test("Schedule C interest without section 163(j) exemption fails closed", () => {
+  const fields = {
+    schedule_cs: [item({
+      business_reference: "C-1",
+      line_16b_interest_other: 8_000,
+    })],
+  };
+  assertThrows(
+    () => scheduleC.build(fields, { filer, pending: { schedule_c: fields } }),
+    Error,
+    "documented section 163(j) exemption",
+  );
+});
+
+Deno.test("Schedule C MeF accepts documented small-business-exempt interest", () => {
+  const fields = {
+    schedule_cs: [item({
+      line_16b_interest_other: 8_000,
+      section163j_small_business_exemption: {
+        prior_three_year_gross_receipts: [
+          10_000_000,
+          11_000_000,
+          12_000_000,
+        ] as [number, number, number],
+        all_required_aggregated_receipts_included_verified: true,
+        business_existed_for_all_three_prior_tax_years_verified: true,
+        not_a_tax_shelter_verified: true,
+      },
+    })],
+  };
+  const [xml] = scheduleC.build(fields, {
+    filer,
+    pending: { schedule_c: fields },
+  });
+  assertStringIncludes(
+    xml,
+    "<MortgageInterestPaidOtherAmt>8000</MortgageInterestPaidOtherAmt>",
+  );
+});
+
 Deno.test("Schedule C emits inventory, cost of goods sold, and separate documents", () => {
   const xml = buildMefXml({
     schedule_c: {

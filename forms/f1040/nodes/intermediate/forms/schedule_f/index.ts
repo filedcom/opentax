@@ -5,7 +5,7 @@ import type {
 } from "../../../../../../core/types/tax-node.ts";
 import { output, TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
-import { FilingStatus, filingStatusSchema } from "../../../types.ts";
+import { filingStatusSchema } from "../../../types.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import { schedule_se } from "../schedule_se/index.ts";
@@ -600,15 +600,6 @@ function perItemOutputs(
   return outputs;
 }
 
-// EBL threshold based on filing status
-function eblThreshold(
-  filingStatus: FilingStatus | undefined,
-  thresholdSingle: number,
-  thresholdMfj: number,
-): number {
-  return filingStatus === FilingStatus.MFJ ? thresholdMfj : thresholdSingle;
-}
-
 // ── Node class ────────────────────────────────────────────────────────────────
 
 class ScheduleFNode extends TaxNode<typeof inputSchema> {
@@ -692,22 +683,14 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
       }));
     }
 
-    // Excess business loss — Form 461 (IRC §461(l))
-    if (totalNetProfit < 0) {
-      const loss = Math.abs(totalNetProfit);
-      const threshold = eblThreshold(
-        input.filing_status,
-        cfg.eblThresholdSingle,
-        cfg.eblThresholdMfj,
-      );
-      if (loss > threshold) {
-        outputs.push(
-          this.outputNodes.output(form461, {
-            excess_business_loss: loss - threshold,
-          }),
-        );
-      }
-    }
+    // Form 461 line 6 uses signed Schedule 1 line 6 after at-risk limits.
+    // The return-wide threshold is applied by Form 461, not per farm.
+    outputs.push(this.outputNodes.output(form461, {
+      line6_schedule_f: totalNetProfit,
+      passive_loss_unresolved: input.schedule_fs.some((item, index) =>
+        item.line_e_material_participation === false && netProfits[index] < 0
+      ),
+    }));
 
     return {
       outputs,

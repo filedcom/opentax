@@ -583,7 +583,8 @@ export const form8582: MefFormDescriptor<"form8582", Input> = {
       (input.has_other_passive === true) !== (otherActivities.length > 0) ||
       input.has_active_rental !== true ||
       input.active_participation !== true ||
-      input.filing_status === "mfs" ||
+      (input.filing_status === "mfs" &&
+        input.mfs_lived_apart_all_year !== true) ||
       magi === undefined || !Number.isInteger(magi)
     ) {
       throw new Error(
@@ -593,6 +594,17 @@ export const form8582: MefFormDescriptor<"form8582", Input> = {
 
     assertLinkedActivities(activities, context);
     assertLinkedSales(input, context);
+    if (input.filing_status === "mfs") {
+      if (!context?.pending?.general) {
+        throw new Error(
+          "Form 8582 MFS allowance needs general lived-apart source",
+        );
+      }
+      z.object({
+        filing_status: z.literal("mfs"),
+        mfs_spouse_lived_with_taxpayer: z.literal(false),
+      }).parse(context.pending.general);
+    }
     const prior4797Allocation =
       activities.some((activity) =>
           activity.prior_unallowed_4797_part1 > 0 ||
@@ -639,8 +651,11 @@ export const form8582: MefFormDescriptor<"form8582", Input> = {
     } = allocation;
 
     const overallNet = currentIncome - loss;
-    const difference = Math.max(0, 150_000 - magi);
-    const phasedMaximum = Math.min(25_000, difference * 0.5);
+    const mfsApart = input.filing_status === "mfs";
+    const upper = mfsApart ? 75_000 : 150_000;
+    const maximum = mfsApart ? 12_500 : 25_000;
+    const difference = Math.max(0, upper - magi);
+    const phasedMaximum = Math.min(maximum, difference * 0.5);
     const specialAllowance = overallNet < 0
       ? Math.max(0, limit.allowed - currentIncome)
       : 0;
@@ -710,7 +725,7 @@ export const form8582: MefFormDescriptor<"form8582", Input> = {
         ? element("RentalRealtyLossLimitAmt", Math.min(-rentalNet, -overallNet))
         : "",
       overallNet < 0 && rentalNet < 0
-        ? element("MaximumAllowedIncomeAmt", 150_000)
+        ? element("MaximumAllowedIncomeAmt", upper)
         : "",
       overallNet < 0 && rentalNet < 0 ? element("ModifiedAGIAmt", magi) : "",
       overallNet < 0 && rentalNet < 0

@@ -1,19 +1,15 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
-
-// IRS Form 8839 (2025) AcroForm field names.
-// Qualified Adoption Expenses.
-// Name/SSN/child info fields skipped.
-// adoption_benefits    → line 22 (employer-provided adoption benefits)
-// magi                 → line 23 (modified adjusted gross income)
-// income_tax_liability → line 27 (income tax liability)
-const fields: ReadonlyArray<PdfFieldEntry> = [
-  { kind: "text", domainKey: "adoption_benefits", pdfField: "topmostSubform[0].Page2[0].Child3[0].f2_3[0]" },
-  { kind: "text", domainKey: "magi", pdfField: "topmostSubform[0].Page2[0].f2_4[0]" },
-  { kind: "text", domainKey: "income_tax_liability", pdfField: "topmostSubform[0].Page2[0].f2_8[0]" },
-];
+import type { PdfFormDescriptor } from "../form-descriptor.ts";
 
 export const form8839Pdf: PdfFormDescriptor = {
   pendingKey: "form8839",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8839--2025.pdf",
-  fields,
+  fields: [],
+  projectFields(fields) {
+    if (Object.keys(fields).length > 0) {
+      throw new Error(
+        "Form 8839 PDF filing needs source-verified adoption facts and finalized-return reconciliation",
+      );
+    }
+    return fields;
+  },
 };

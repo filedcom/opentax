@@ -101,6 +101,27 @@ const sampleForm2441 = {
   },
 };
 
+const sampleForm8839 = {
+  children: [{
+    qualified_expenses: 15_000,
+    special_needs: false,
+    adoption_is_final: true,
+    is_foreign_child: false,
+    filing_details: {
+      first_name: "Maya",
+      last_name: "Smith",
+      birth_year: 2020,
+      ssn: "123456780",
+      finalization_date: "2025-07-15",
+      expenses_paid_in_2025_confirmed: true as const,
+      no_employer_reimbursement_confirmed: true as const,
+    },
+  }],
+  magi: 200_000,
+  credit_limit_worksheet_line5: 12_000,
+  filing_status: NodeFilingStatus.Single,
+};
+
 function sampleFiler(): FilerIdentity {
   return {
     primarySSN: "123456789",
@@ -1076,9 +1097,11 @@ Deno.test("IRS1040ScheduleSE absent when schedule_se missing from pending", () =
   assertNotIncludes(xml, "<IRS1040ScheduleSE>");
 });
 
-Deno.test("IRS8606 present when form8606 has data", () => {
-  const xml = buildMefXml({ form8606: { nondeductible_contributions: 6000 } });
-  assertStringIncludes(xml, "<IRS8606 ");
+Deno.test("IRS8606 rejects an aggregate-only pending record", () => {
+  assertThrows(
+    () => buildMefXml({ form8606: { nondeductible_contributions: 6000 } }),
+    Error,
+  );
 });
 
 Deno.test("IRS8606 absent when form8606 missing from pending", () => {
@@ -1207,9 +1230,11 @@ Deno.test("IRS8995 absent when form8995 missing from pending", () => {
   assertNotIncludes(xml, "<IRS8995>");
 });
 
-Deno.test("IRS4562 present when form4562 has data", () => {
-  const xml = buildMefXml({ form4562: { section_179_deduction: 10000 } });
-  assertStringIncludes(xml, "<IRS4562 ");
+Deno.test("IRS4562 rejects an aggregate-only pending record", () => {
+  assertThrows(
+    () => buildMefXml({ form4562: { section_179_deduction: 10000 } }),
+    Error,
+  );
 });
 
 Deno.test("IRS4562 absent when form4562 missing from pending", () => {
@@ -1217,9 +1242,11 @@ Deno.test("IRS4562 absent when form4562 missing from pending", () => {
   assertNotIncludes(xml, "<IRS4562>");
 });
 
-Deno.test("IRS8995A present when form8995a has data", () => {
-  const xml = buildMefXml({ form8995a: { qbi: 75000 } });
-  assertStringIncludes(xml, "<IRS8995A ");
+Deno.test("IRS8995A rejects an aggregate-only pending record", () => {
+  assertThrows(
+    () => buildMefXml({ form8995a: { qbi: 75000 } }),
+    Error,
+  );
 });
 
 Deno.test("IRS8995A absent when form8995a missing from pending", () => {
@@ -1256,9 +1283,11 @@ Deno.test("IRS5329 absent when form5329 missing from pending", () => {
   assertNotIncludes(xml, "<IRS5329>");
 });
 
-Deno.test("IRS8853 present when form8853 has data", () => {
-  const xml = buildMefXml({ form8853: { employer_archer_msa: 3650 } });
-  assertStringIncludes(xml, "<IRS8853 ");
+Deno.test("IRS8853 rejects an employer-only pending record", () => {
+  assertThrows(
+    () => buildMefXml({ form8853: { employer_archer_msa: 3650 } }),
+    Error,
+  );
 });
 
 Deno.test("IRS8853 absent when form8853 missing from pending", () => {
@@ -1266,9 +1295,11 @@ Deno.test("IRS8853 absent when form8853 missing from pending", () => {
   assertNotIncludes(xml, "<IRS8853>");
 });
 
-Deno.test("IRS8829 present when form_8829 has data", () => {
-  const xml = buildMefXml({ form_8829: { mortgage_interest: 12000 } });
-  assertStringIncludes(xml, "<IRS8829 ");
+Deno.test("IRS8829 rejects a mortgage-interest-only pending record", () => {
+  assertThrows(
+    () => buildMefXml({ form_8829: { mortgage_interest: 12000 } }),
+    Error,
+  );
 });
 
 Deno.test("IRS8829 absent when form_8829 missing from pending", () => {
@@ -1276,9 +1307,16 @@ Deno.test("IRS8829 absent when form_8829 missing from pending", () => {
   assertNotIncludes(xml, "<IRS8829>");
 });
 
-Deno.test("IRS8839 present when form8839 has data", () => {
-  const xml = buildMefXml({ form8839: { adoption_benefits: 14890 } });
-  assertStringIncludes(xml, "<IRS8839 ");
+Deno.test("IRS8839 rejects a credit without verified adoption sources", () => {
+  assertThrows(
+    () =>
+      buildMefXml({
+        form8839: sampleForm8839,
+        f1040: { line30_refundable_adoption: 5_000 },
+        schedule3: { line6c_adoption_credit: 10_000 },
+      }),
+    Error,
+  );
 });
 
 Deno.test("IRS8839 absent when form8839 missing from pending", () => {
@@ -1288,7 +1326,7 @@ Deno.test("IRS8839 absent when form8839 missing from pending", () => {
 
 // ─── 25. Full document smoke test ─────────────────────────────────────────────
 
-Deno.test("documentCnt=29 when all currently serializable forms have data", () => {
+Deno.test("document count for independently sourced smoke forms", () => {
   const xml = buildMefXml({
     w2: { w2s: [form4137W2] },
     f1040: { line1a_wages: 50000 },
@@ -1331,7 +1369,6 @@ Deno.test("documentCnt=29 when all currently serializable forms have data", () =
     form8919: sampleForm8919,
     form4972: qualifiedForm4972,
     schedule_se: { net_profit_schedule_c: 30000 },
-    form8606: { nondeductible_contributions: 6000 },
     form_1116: sampleForm1116,
     schedule_f: sampleScheduleF,
     schedule_b: {
@@ -1342,22 +1379,17 @@ Deno.test("documentCnt=29 when all currently serializable forms have data", () =
     form4797: { section_1231_gain: 12000 },
     form8880: { contributions_taxpayer: 3000 },
     form8995: { qbi: 50000, qbi_deduction: 10000 },
-    form4562: { section_179_deduction: 10000 },
-    form8995a: { qbi: 75000 },
     form6251: {
       regular_tax_income: 80000,
       iso_adjustment: 5000,
       line11_amt: 100,
     },
     form5329: { early_distribution: 5000 },
-    form8853: { employer_archer_msa: 3650 },
-    form_8829: { mortgage_interest: 12000 },
-    form8839: { adoption_benefits: 14890 },
   }, sampleFiler());
-  assertStringIncludes(xml, 'documentCnt="29"');
+  assertStringIncludes(xml, 'documentCnt="23"');
 });
 
-Deno.test("all 29 serializable documents populated: XML contains their tags", () => {
+Deno.test("independently sourced smoke forms emit their document tags", () => {
   const xml = buildMefXml({
     w2: { w2s: [form4137W2] },
     f1040: { line1a_wages: 50000 },
@@ -1400,7 +1432,6 @@ Deno.test("all 29 serializable documents populated: XML contains their tags", ()
     form8919: sampleForm8919,
     form4972: qualifiedForm4972,
     schedule_se: { net_profit_schedule_c: 30000 },
-    form8606: { nondeductible_contributions: 6000 },
     form_1116: sampleForm1116,
     schedule_f: sampleScheduleF,
     schedule_b: {
@@ -1411,17 +1442,12 @@ Deno.test("all 29 serializable documents populated: XML contains their tags", ()
     form4797: { section_1231_gain: 12000 },
     form8880: { contributions_taxpayer: 3000 },
     form8995: { qbi: 50000, qbi_deduction: 10000 },
-    form4562: { section_179_deduction: 10000 },
-    form8995a: { qbi: 75000 },
     form6251: {
       regular_tax_income: 80000,
       iso_adjustment: 5000,
       line11_amt: 100,
     },
     form5329: { early_distribution: 5000 },
-    form8853: { employer_archer_msa: 3650 },
-    form_8829: { mortgage_interest: 12000 },
-    form8839: { adoption_benefits: 14890 },
   }, sampleFiler());
   assertStringIncludes(xml, "<IRS1040 ");
   assertStringIncludes(xml, "<IRS1040Schedule1 ");
@@ -1437,20 +1463,14 @@ Deno.test("all 29 serializable documents populated: XML contains their tags", ()
   assertStringIncludes(xml, "<IRS8919 ");
   assertStringIncludes(xml, "<IRS4972 ");
   assertStringIncludes(xml, "<IRS1040ScheduleSE ");
-  assertStringIncludes(xml, "<IRS8606 ");
   assertStringIncludes(xml, "<IRS1116 ");
   assertStringIncludes(xml, "<IRS1040ScheduleF ");
   assertStringIncludes(xml, "<IRS1040ScheduleB ");
   assertStringIncludes(xml, "<IRS4797 ");
   assertStringIncludes(xml, "<IRS8880 ");
   assertStringIncludes(xml, "<IRS8995 ");
-  assertStringIncludes(xml, "<IRS4562 ");
-  assertStringIncludes(xml, "<IRS8995A ");
   assertStringIncludes(xml, "<IRS6251 ");
   assertStringIncludes(xml, "<IRS5329 ");
-  assertStringIncludes(xml, "<IRS8853 ");
-  assertStringIncludes(xml, "<IRS8829 ");
-  assertStringIncludes(xml, "<IRS8839 ");
 });
 
 Deno.test("empty MefFormsPending: IRS1040 still emits, no other form tags present", () => {

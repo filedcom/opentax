@@ -1,311 +1,180 @@
 import { z } from "zod";
-import type {
-  NodeOutput,
-  NodeResult,
-} from "../../../../../../core/types/tax-node.ts";
+import type { NodeResult } from "../../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
-import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
-import { schedule1 } from "../../../outputs/schedule1/index.ts";
-import { form6251 } from "../form6251/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
+import { FilingStatus } from "../../../types.ts";
 
-// ── TY2025 Constants ──────────────────────────────────────────────────────────
+// A first source-to-filing path: one fully elected, nonlisted Schedule C asset.
+// Other asset classes need their own rows and depreciation calculations.
+export const singleAssetSchema = z.object({
+  business_reference: z.string().trim().min(1),
+  activity_description: z.string().trim().min(1).max(40),
+  asset_description: z.string().trim().min(1).max(100),
+  source_document_ref: z.string().trim().min(1),
+  placed_in_service_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
+  cost: z.number().int().positive(),
+  elected_cost: z.number().int().nonnegative(),
+  taxpayer_active_business_income: z.number().int().nonnegative(),
+  taxpayer_active_business_income_source_ref: z.string().trim().min(1),
+  prior_year_carryover: z.literal(0),
+  prior_year_carryover_source_ref: z.string().trim().min(1),
+  business_use_pct: z.literal(100),
+  is_listed_property: z.literal(false),
+  bonus_elected_out: z.literal(true),
+  no_other_depreciation_for_activity: z.literal(true),
+  no_other_depreciation_assets_on_return: z.literal(true),
+  return_asset_inventory_source_ref: z.string().trim().min(1),
+  filing_status: z.nativeEnum(FilingStatus),
+}).strict();
 
-// Bonus depreciation rates
-const BONUS_RATE_PRE_JAN20 = 0.40;   // Property placed in service before Jan 20, 2025
-const BONUS_RATE_POST_JAN19 = 1.00;  // Property placed in service after Jan 19, 2025
-const BONUS_RATE_ELECT_40PCT = 0.40; // Taxpayer elects 40% instead of 100%
+export const publicInputSchema = z.object({
+  asset: singleAssetSchema,
+}).strict();
 
-// Business-use threshold for listed property bonus/§179 eligibility
-const LISTED_PROPERTY_QUALIFIED_USE_THRESHOLD = 50;
-
-// ── Real property MACRS periods using straight-line / mid-month convention ────
-// IRC §168(b)(3)(A): residential rental property — 27.5-year SL
-// IRC §168(b)(3)(B): nonresidential real property — 39-year SL
-const MACRS_SL_MIDMONTH_PERIODS = new Set([27.5, 39]);
-
-// ── MACRS Table A — 200% Declining Balance / Half-Year Convention ─────────────
-// Source: IRS Form 4562 Instructions TY2025, Table A (page 20)
-// Array indexed by year-of-service (0-based); length = recovery period + 1 (HY adds final year)
-const MACRS_200DB_RATES: Record<number, readonly number[]> = {
-  3: [0.3333, 0.4445, 0.1481, 0.0741],
-  5: [0.2000, 0.3200, 0.1920, 0.1152, 0.1152, 0.0576],
-  7: [0.1429, 0.2449, 0.1749, 0.1249, 0.0893, 0.0892, 0.0893, 0.0446],
-  10: [0.1000, 0.1800, 0.1440, 0.1152, 0.0922, 0.0737, 0.0655, 0.0655, 0.0656, 0.0655, 0.0328],
-};
-
-// ── MACRS Table B — 150% Declining Balance / Half-Year Convention ─────────────
-// Source: IRS Form 4562 Instructions TY2025, Table B (page 20)
-// Used for 15-year and 20-year property
-const MACRS_150DB_RATES: Record<number, readonly number[]> = {
-  5: [0.1500, 0.2550, 0.1785, 0.1666, 0.1666, 0.0833],
-  7: [0.1071, 0.1913, 0.1503, 0.1225, 0.1225, 0.1225, 0.0613],
-  10: [0.0750, 0.1388, 0.1179, 0.1002, 0.0874, 0.0874, 0.0874, 0.0874, 0.0874, 0.0873, 0.0437],
-  12: [0.0625, 0.1172, 0.1025, 0.0897, 0.0785, 0.0733, 0.0733, 0.0733, 0.0733, 0.0733, 0.0732,
-    0.0733, 0.0366],
-  15: [0.0500, 0.0950, 0.0855, 0.0770, 0.0693, 0.0623, 0.0590, 0.0590, 0.0591, 0.0590, 0.0591,
-    0.0590, 0.0591, 0.0590, 0.0591, 0.0295],
-  20: [0.0375, 0.0722, 0.0668, 0.0618, 0.0571, 0.0528, 0.0489, 0.0452, 0.0446, 0.0446, 0.0446,
-    0.0446, 0.0446, 0.0446, 0.0446, 0.0446, 0.0446, 0.0446, 0.0446, 0.0446, 0.0223],
-};
-
-// Recovery periods that use 150DB (instead of 200DB)
-const MACRS_150DB_PERIODS = new Set([15, 20]);
-
-// ── Schema ────────────────────────────────────────────────────────────────────
-
+// These upstream aggregate deposits are still recognized solely so the node
+// can reject them with a specific error. They are never a filing route.
 export const inputSchema = z.object({
-  // §179 Election (Part I)
-  // Pre-computed §179 deduction from upstream node (e.g. schedule_e)
+  asset: singleAssetSchema.optional(),
   section_179_deduction: z.number().nonnegative().optional(),
-  // Direct §179 inputs for assets entered on this form
   section_179_cost: z.number().nonnegative().optional(),
   section_179_elected: z.number().nonnegative().optional(),
   section_179_carryover: z.number().nonnegative().optional(),
-  // Business income limit (Line 11) — taxable income from active trade/business
   business_income_limit: z.number().optional(),
-
-  // Bonus Depreciation (Part II, Line 14)
-  // Depreciable basis for property placed in service before Jan 20, 2025 (40% rate)
   bonus_depreciation_basis: z.number().nonnegative().optional(),
-  // Depreciable basis for property placed in service after Jan 19, 2025 (100% rate)
   bonus_depreciation_basis_post_jan19: z.number().nonnegative().optional(),
-  // Elections
   elect_out_bonus: z.boolean().optional(),
   elect_40pct_bonus: z.boolean().optional(),
-
-  // MACRS GDS (Part III-A, Lines 19a-19j) — single asset entry
   macrs_gds_basis: z.number().nonnegative().optional(),
-  // Recovery period — use 27.5 for residential rental, 39 for nonresidential real property
   macrs_gds_recovery_period: z.number().positive().optional(),
   macrs_gds_year_of_service: z.number().int().min(1).optional(),
-  // Month placed in service (1–12) — required for 27.5-year and 39-year real property
-  // (mid-month convention per IRC §168(d)(2)). Ignored for personal property.
   macrs_gds_month_placed_in_service: z.number().int().min(1).max(12).optional(),
-  // MACRS prior-year depreciation (Line 17) — assets placed in service before 2025
   macrs_prior_depreciation: z.number().nonnegative().optional(),
-
-  // Listed property flags (Part V)
   is_listed_property: z.boolean().optional(),
   business_use_pct: z.number().min(0).max(100).optional(),
-
-  // Luxury automobile limits (Part V, Lines 26/27)
   is_luxury_auto: z.boolean().optional(),
   luxury_auto_year: z.number().int().min(1).optional(),
-});
+}).strict();
 
 type Form4562Input = z.infer<typeof inputSchema>;
 
-// ── Pure helpers ──────────────────────────────────────────────────────────────
+export const filedForm4562Schema = z.object({
+  filing_status: z.nativeEnum(FilingStatus),
+  business_reference: z.string().trim().min(1),
+  activity_description: z.string().trim().min(1).max(40),
+  asset_description: z.string().trim().min(1).max(100),
+  source_document_ref: z.string().trim().min(1),
+  taxpayer_active_business_income_source_ref: z.string().trim().min(1),
+  taxpayer_active_business_income: z.number().int().nonnegative(),
+  line1_maximum_dollar_limitation: z.number().int().nonnegative(),
+  line2_total_cost: z.number().int().nonnegative(),
+  line3_threshold_cost: z.number().int().nonnegative(),
+  line4_reduction: z.number().int().nonnegative(),
+  line5_dollar_limitation: z.number().int().nonnegative(),
+  line6_elected_cost: z.number().int().nonnegative(),
+  line8_total_elected_cost: z.number().int().nonnegative(),
+  line9_tentative_deduction: z.number().int().nonnegative(),
+  line10_prior_carryover: z.literal(0),
+  line11_business_income_limitation: z.number().int().nonnegative(),
+  line12_section179_expense_deduction: z.number().int().nonnegative(),
+  line13_next_year_carryover: z.number().int().nonnegative(),
+  line22_total_depreciation: z.number().int().nonnegative(),
+});
 
-function section179PhaseOutLimit(cost: number, limit: number, phaseoutThreshold: number): number {
-  const excess = Math.max(0, cost - phaseoutThreshold);
-  return Math.max(0, limit - excess);
+function hasLegacyAggregate(input: Form4562Input): boolean {
+  return Object.entries(input).some(([key, value]) =>
+    key !== "asset" && value !== undefined
+  );
 }
 
-function computeSection179(input: Form4562Input, cfg: import("../../../config/index.ts").F1040Config): number {
-  // Pre-computed upstream deduction (e.g. from schedule_e) — already validated upstream
-  const upstream = input.section_179_deduction ?? 0;
-
-  // Direct §179 election on assets entered here
-  const cost = input.section_179_cost ?? 0;
-  const elected = input.section_179_elected ?? 0;
-  const carryover = input.section_179_carryover ?? 0;
-
-  let directAllowed = 0;
-  if (elected > 0 && cost > 0) {
-    const limit = section179PhaseOutLimit(cost, cfg.section179Limit, cfg.section179PhaseoutThreshold);
-    directAllowed = Math.min(elected, limit);
-  }
-
-  const total = upstream + directAllowed + carryover;
-  if (total === 0) return 0;
-
-  // Business income limitation (Line 11/12)
-  const incomeLimit = input.business_income_limit;
-  if (incomeLimit !== undefined && incomeLimit >= 0) {
-    return Math.min(total, incomeLimit);
-  }
-  return total;
+function validServiceDate(value: string): boolean {
+  const date = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) &&
+    date.toISOString().startsWith(value);
 }
-
-function isListedPropertyQualified(input: Form4562Input): boolean {
-  if (!input.is_listed_property) return true;
-  const pct = input.business_use_pct ?? 100;
-  return pct > LISTED_PROPERTY_QUALIFIED_USE_THRESHOLD;
-}
-
-function computeBonusDepreciation(input: Form4562Input): number {
-  if (input.elect_out_bonus === true) return 0;
-  if (!isListedPropertyQualified(input)) return 0;
-
-  const preJan20Basis = input.bonus_depreciation_basis ?? 0;
-  const postJan19Basis = input.bonus_depreciation_basis_post_jan19 ?? 0;
-
-  const preJan20Bonus = preJan20Basis * BONUS_RATE_PRE_JAN20;
-
-  const postRate = input.elect_40pct_bonus === true
-    ? BONUS_RATE_ELECT_40PCT
-    : BONUS_RATE_POST_JAN19;
-  const postJan19Bonus = postJan19Basis * postRate;
-
-  return preJan20Bonus + postJan19Bonus;
-}
-
-// Straight-line depreciation rate using mid-month convention.
-// Applies to 27.5-year (residential) and 39-year (nonresidential) real property.
-// IRC §168(b)(3), §168(d)(2); Rev. Proc. 87-57, Table A-6/A-7.
-//
-// Formula:
-//   year 1:   (12.5 - month) / 12 / period
-//   full years: 1 / period  (years 2 through 1 + floor(period - year1Fraction))
-//   last year:  remaining fraction / period
-//   beyond:     0
-function computeSLMidMonthRate(
-  period: number,
-  yearOfService: number,
-  month: number,
-): number {
-  const year1Fraction = (12.5 - month) / 12;
-  const fullRate = 1 / period;
-
-  if (yearOfService === 1) {
-    return year1Fraction * fullRate;
-  }
-
-  const remainingAfterYear1 = period - year1Fraction;
-  const fullYearsCount = Math.floor(remainingAfterYear1);
-  const lastYearFraction = remainingAfterYear1 - fullYearsCount;
-
-  // Years 2 through 1 + fullYearsCount are full depreciation years
-  if (yearOfService <= 1 + fullYearsCount) return fullRate;
-
-  // Final partial year (yearOfService = fullYearsCount + 2)
-  if (lastYearFraction > 0 && yearOfService === fullYearsCount + 2) {
-    return lastYearFraction * fullRate;
-  }
-
-  return 0;
-}
-
-function macrsPct(
-  period: number,
-  yearOfService: number,
-): { rate: number; is200db: boolean } {
-  const use150db = MACRS_150DB_PERIODS.has(period);
-  const table = use150db ? MACRS_150DB_RATES : MACRS_200DB_RATES;
-  const rates = table[period];
-  if (!rates) return { rate: 0, is200db: false };
-  const idx = yearOfService - 1;
-  const rate = idx < rates.length ? rates[idx] : 0;
-  return { rate, is200db: !use150db };
-}
-
-function macrs150dbRate(period: number, yearOfService: number): number {
-  const rates = MACRS_150DB_RATES[period];
-  if (!rates) return 0;
-  const idx = yearOfService - 1;
-  return idx < rates.length ? rates[idx] : 0;
-}
-
-function computeMacrsGds(
-  input: Form4562Input,
-): { depreciation: number; amtAdjustment: number } {
-  const basis = input.macrs_gds_basis ?? 0;
-  const period = input.macrs_gds_recovery_period;
-  const yearOfService = input.macrs_gds_year_of_service;
-
-  if (basis === 0 || period === undefined || yearOfService === undefined) {
-    return { depreciation: 0, amtAdjustment: 0 };
-  }
-
-  const businessUsePct = (input.business_use_pct ?? 100) / 100;
-  const effectiveBasis = basis * businessUsePct;
-
-  // 27.5-year (residential) and 39-year (nonresidential): straight-line, mid-month convention
-  // IRC §168(b)(3), §168(d)(2) — no AMT adjustment for SL real property
-  if (MACRS_SL_MIDMONTH_PERIODS.has(period)) {
-    const month = input.macrs_gds_month_placed_in_service ?? 1;
-    const rate = computeSLMidMonthRate(period, yearOfService, month);
-    const depreciation = Math.round(effectiveBasis * rate);
-    return { depreciation, amtAdjustment: 0 };
-  }
-
-  const { rate, is200db } = macrsPct(period, yearOfService);
-  const depreciation = Math.round(effectiveBasis * rate);
-
-  // AMT adjustment: excess of 200DB depreciation over 150DB (IRC §56(a)(1))
-  let amtAdjustment = 0;
-  if (is200db) {
-    const rate150 = macrs150dbRate(period, yearOfService);
-    amtAdjustment = Math.round(effectiveBasis * (rate - rate150));
-  }
-
-  return { depreciation, amtAdjustment };
-}
-
-function luxuryAutoLimit(year: number, hasBonusDep: boolean, cfg: import("../../../config/index.ts").F1040Config): number {
-  if (year === 1) {
-    return hasBonusDep ? cfg.luxuryAutoYear1WithBonus : cfg.luxuryAutoYear1NoBonus;
-  }
-  if (year === 2) return cfg.luxuryAutoYear2;
-  return cfg.luxuryAutoYear3Plus;
-}
-
-function applyLuxuryAutoLimit(
-  input: Form4562Input,
-  computed: number,
-  hasBonusDep: boolean,
-  cfg: import("../../../config/index.ts").F1040Config,
-): number {
-  if (!input.is_luxury_auto) return computed;
-  const year = input.luxury_auto_year ?? 1;
-  return Math.min(computed, luxuryAutoLimit(year, hasBonusDep, cfg));
-}
-
-// ── Node class ────────────────────────────────────────────────────────────────
 
 class Form4562Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form4562";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1, agi_aggregator, form6251]);
+  readonly outputNodes = new OutputNodes([]);
 
-  compute(ctx: NodeContext, input: Form4562Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: Form4562Input): NodeResult {
+    const input = inputSchema.parse(rawInput);
+    if (hasLegacyAggregate(input)) {
+      throw new Error(
+        "Form 4562 aggregate-only inputs cannot establish native asset rows or a valid Schedule C deduction",
+      );
+    }
+    if (!input.asset) return { outputs: [] };
+    const asset = input.asset;
+    if (
+      ctx.taxYear !== 2025 || !validServiceDate(asset.placed_in_service_date)
+    ) {
+      throw new Error(
+        "Form 4562 single-asset path needs a valid 2025 placed-in-service date",
+      );
+    }
+    if (asset.filing_status === FilingStatus.MFS) {
+      throw new Error(
+        "Form 4562 married-filing-separately section 179 allocation is not supported",
+      );
+    }
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
-    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
-    const parsed = inputSchema.parse(input);
-
-    const s179 = computeSection179(parsed, cfg);
-    const bonus = computeBonusDepreciation(parsed);
-    const { depreciation: macrsGds, amtAdjustment } = computeMacrsGds(parsed);
-    const macrs_prior = parsed.macrs_prior_depreciation ?? 0;
-
-    const hasBonusDep = bonus > 0;
-    const rawDepreciation = s179 + bonus + macrsGds + macrs_prior;
-
-    if (rawDepreciation === 0 && amtAdjustment === 0) {
-      return { outputs: [] };
+    if (!cfg) {
+      throw new Error(`No Form 4562 limits for tax year ${ctx.taxYear}`);
+    }
+    if (asset.elected_cost !== asset.cost) {
+      throw new Error(
+        "Form 4562 single-asset path requires full-cost section 179 election; residual bonus/MACRS basis is not modeled",
+      );
+    }
+    if (asset.cost > cfg.section179Limit) {
+      throw new Error(
+        "Form 4562 single-asset cost exceeds the bounded section 179 dollar limit",
+      );
     }
 
-    const totalDepreciation = applyLuxuryAutoLimit(parsed, rawDepreciation, hasBonusDep, cfg);
-
-    const outputs: NodeOutput[] = [];
-
-    if (totalDepreciation > 0) {
-      outputs.push(this.outputNodes.output(schedule1, { line13_depreciation: totalDepreciation }));
-      outputs.push(this.outputNodes.output(agi_aggregator, { line13_depreciation: totalDepreciation }));
-    }
-
-    if (amtAdjustment > 0) {
-      outputs.push(this.outputNodes.output(form6251, { depreciation_adjustment: amtAdjustment }));
-    }
-
-    return { outputs };
+    const line1 = Math.min(asset.cost, cfg.section179Limit);
+    const line2 = asset.cost;
+    const line3 = cfg.section179PhaseoutThreshold;
+    const line4 = Math.max(0, line2 - line3);
+    const line5 = Math.max(0, line1 - line4);
+    const line8 = asset.elected_cost;
+    const line9 = Math.min(line5, line8);
+    const line11 = Math.min(asset.taxpayer_active_business_income, line5);
+    const line12 = Math.min(line9, line11);
+    const line13 = line9 - line12;
+    const fields = filedForm4562Schema.parse({
+      filing_status: asset.filing_status,
+      business_reference: asset.business_reference,
+      activity_description: asset.activity_description,
+      asset_description: asset.asset_description,
+      source_document_ref: asset.source_document_ref,
+      taxpayer_active_business_income_source_ref:
+        asset.taxpayer_active_business_income_source_ref,
+      taxpayer_active_business_income: asset.taxpayer_active_business_income,
+      line1_maximum_dollar_limitation: line1,
+      line2_total_cost: line2,
+      line3_threshold_cost: line3,
+      line4_reduction: line4,
+      line5_dollar_limitation: line5,
+      line6_elected_cost: asset.elected_cost,
+      line8_total_elected_cost: line8,
+      line9_tentative_deduction: line9,
+      line10_prior_carryover: 0,
+      line11_business_income_limitation: line11,
+      line12_section179_expense_deduction: line12,
+      line13_next_year_carryover: line13,
+      line22_total_depreciation: line12,
+    });
+    return {
+      outputs: [{ nodeType: this.nodeType, fields }],
+      ...(line13 > 0
+        ? { carryforwards: { section179_disallowed_next_year: line13 } }
+        : {}),
+    };
   }
 }
-
-// ── Singleton export ──────────────────────────────────────────────────────────
 
 export const form4562 = new Form4562Node();

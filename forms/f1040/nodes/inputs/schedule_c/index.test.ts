@@ -1,5 +1,5 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { type itemSchema, scheduleC } from "./index.ts";
+import { itemSchema, scheduleC } from "./index.ts";
 import type { z } from "zod";
 
 // ============================================================
@@ -421,28 +421,47 @@ Deno.test("routing_gambler_with_profit_routes_normally: professional_gambler, pr
   assertEquals(input.line3_schedule_c, 1000);
 });
 
-Deno.test("routing_interest_small_biz_no_form8990: interest expense, no large_business flag → no form8990", () => {
-  // AMBIGUITY: small business is default; no large_business flag → form8990 should not appear
-  const result = compute([
-    minimalItem({
-      line_1_gross_receipts: 50000,
-      line_16b_interest_other: 5000,
-    }),
-  ]);
-  const f8990 = findOutput(result, "form8990");
-  assertEquals(f8990, undefined);
+Deno.test("Schedule C positive interest requires a documented section 163(j) exemption", () => {
+  const business = minimalItem({
+    line_1_gross_receipts: 50_000,
+    line_16b_interest_other: 5_000,
+  });
+  assertThrows(
+    () => compute([business]),
+    Error,
+    "documented section 163(j) exemption",
+  );
+  assertThrows(
+    () => itemSchema.parse({ ...business, subject_to_163j: false }),
+    Error,
+  );
 });
 
-Deno.test("routing_interest_large_biz_triggers_form8990: §163(j) applicable → form8990 with exact interest", () => {
-  const result = compute([minimalItem({
-    line_1_gross_receipts: 50000,
-    line_16b_interest_other: 5000,
-    subject_to_163j: true,
-  })]);
-  const f8990 = findOutput(result, "form8990");
-  assertEquals(
-    (f8990!.fields as Record<string, number>).business_interest_expense,
-    5000,
+Deno.test("Schedule C accepts only documented small-business-exempt interest", () => {
+  const exemption = {
+    prior_three_year_gross_receipts: [15_000_000, 16_000_000, 17_000_000],
+    business_existed_for_all_three_prior_tax_years_verified: true,
+    all_required_aggregated_receipts_included_verified: true,
+    not_a_tax_shelter_verified: true,
+  } as const;
+  const business = minimalItem({
+    line_1_gross_receipts: 50_000,
+    line_16b_interest_other: 5_000,
+    section163j_small_business_exemption: exemption,
+  });
+  const result = compute([business]);
+  assertEquals(findOutput(result, "form8990"), undefined);
+  assertThrows(
+    () =>
+      compute([{
+        ...business,
+        section163j_small_business_exemption: {
+          ...exemption,
+          prior_three_year_gross_receipts: [32_000_000, 32_000_000, 32_000_000],
+        },
+      }]),
+    Error,
+    "exceeds section 163(j)",
   );
 });
 
@@ -669,51 +688,56 @@ Deno.test("threshold_home_office_gross_income_cap: home_office > tentative_profi
   assertEquals(input.line3_schedule_c, 0);
 });
 
-Deno.test("threshold_excess_business_loss_single_313k: loss > $313k single → routes to form461", () => {
-  // Single EBL threshold = $313,000; $400k loss → excess = $87k
+Deno.test("Form 461 receives signed Schedule C loss for return-wide calculation", () => {
   const result = compute(
     [minimalItem({ line_1_gross_receipts: 0, line_8_advertising: 400000 })],
     { filing_status: "single" },
   );
   const f461 = findOutput(result, "form461");
   assertEquals(f461 !== undefined, true);
-  assertEquals(
-    (f461!.fields as Record<string, number>).excess_business_loss,
-    87000,
-  );
+  assertEquals(f461!.fields.line2_schedule_c, -400_000);
 });
 
-Deno.test("threshold_excess_business_loss_below_313k: loss < $313k single → no form461", () => {
+Deno.test("Form 461 receives a smaller Schedule C loss without applying its own threshold", () => {
   const result = compute(
     [minimalItem({ line_1_gross_receipts: 0, line_8_advertising: 100000 })],
     { filing_status: "single" },
   );
   const f461 = findOutput(result, "form461");
-  assertEquals(f461, undefined);
+  assertEquals(f461?.fields.line2_schedule_c, -100_000);
 });
 
-Deno.test("threshold_excess_business_loss_mfj_626k: loss > $626k MFJ → routes to form461", () => {
-  // MFJ EBL threshold = $626,000; $700k loss → excess = $74k
+Deno.test("Form 461 receives MFJ Schedule C source before the joint threshold", () => {
   const result = compute(
     [minimalItem({ line_1_gross_receipts: 0, line_8_advertising: 700000 })],
     { filing_status: "mfj" },
   );
   const f461 = findOutput(result, "form461");
   assertEquals(f461 !== undefined, true);
-  assertEquals(
-    (f461!.fields as Record<string, number>).excess_business_loss,
-    74000,
-  );
+  assertEquals(f461!.fields.line2_schedule_c, -700_000);
 });
 
-Deno.test("threshold_excess_business_loss_mfj_below_626k: loss < $626k MFJ → no form461", () => {
-  // $400k loss is below MFJ $626k threshold → no EBL
+Deno.test("Form 461 receives MFJ Schedule C loss below joint threshold", () => {
   const result = compute(
     [minimalItem({ line_1_gross_receipts: 0, line_8_advertising: 400000 })],
     { filing_status: "mfj" },
   );
   const f461 = findOutput(result, "form461");
-  assertEquals(f461, undefined);
+  assertEquals(f461?.fields.line2_schedule_c, -400_000);
+});
+
+Deno.test("Form 461 sees unresolved passive Schedule C loss", () => {
+  const result = compute([
+    minimalItem({
+      line_1_gross_receipts: 0,
+      line_8_advertising: 200_000,
+      line_g_material_participation: false,
+    }),
+  ]);
+  assertEquals(
+    findOutput(result, "form461")?.fields.passive_loss_unresolved,
+    true,
+  );
 });
 
 // ============================================================

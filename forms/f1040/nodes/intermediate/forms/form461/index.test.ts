@@ -1,170 +1,123 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { form461, inputSchema } from "./index.ts";
 
+const review = {
+  only_schedule_c_and_f_business_items: true,
+  other_part_i_lines_zero: true,
+  part_ii_adjustments_zero: true,
+  post_at_risk_and_passive_limits_confirmed: true,
+  source_document_refs: ["reviewed Schedule 1 and Form 1040 workpapers"],
+} as const;
+
 function compute(input: Record<string, unknown>) {
-  return form461.compute({ taxYear: 2025, formType: "f1040" }, inputSchema.parse(input));
+  return form461.compute(
+    { taxYear: 2025, formType: "f1040" },
+    inputSchema.parse(input),
+  );
 }
 
-function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
-  return result.outputs.find((o) => o.nodeType === nodeType);
+function fields(result: ReturnType<typeof compute>) {
+  return result.outputs.find((item) => item.nodeType === "form461")?.fields;
 }
 
-// ─── Input Validation ────────────────────────────────────────────────────────
-
-Deno.test("validation: rejects negative excess_business_loss", () => {
-  assertThrows(() => compute({ excess_business_loss: -1 }));
-});
-
-Deno.test("validation: rejects invalid filing_status", () => {
-  assertThrows(() => compute({ excess_business_loss: 1000, filing_status: "invalid" }));
-});
-
-Deno.test("validation: accepts valid filing_status values", () => {
-  for (const status of ["single", "mfj", "mfs", "hoh", "qss"]) {
-    const result = compute({ excess_business_loss: 50_000, filing_status: status });
-    assertEquals(result.outputs.length, 1);
-  }
-});
-
-// ─── Zero / Below Threshold ──────────────────────────────────────────────────
-
-Deno.test("zero_loss: no excess → no outputs", () => {
-  const result = compute({ excess_business_loss: 0 });
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("empty_input: no excess_business_loss field → no outputs", () => {
-  const result = compute({});
-  assertEquals(result.outputs.length, 0);
-});
-
-// ─── Routing to Schedule 1 Line 8p ──────────────────────────────────────────
-
-Deno.test("routing: positive excess routes to schedule1 line8p", () => {
-  const excess = 50_000;
-  const result = compute({ excess_business_loss: excess });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1?.fields.line8p_excess_business_loss, excess);
-});
-
-Deno.test("routing: exactly 1 output when excess > 0", () => {
-  const result = compute({ excess_business_loss: 1 });
-  assertEquals(result.outputs.length, 1);
-  assertEquals(result.outputs[0].nodeType, "schedule1");
-});
-
-// ─── Accumulation Pattern ────────────────────────────────────────────────────
-
-Deno.test("accumulation: array of excess_business_loss values are summed", () => {
-  const result = compute({ excess_business_loss: [30_000, 20_000] });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1?.fields.line8p_excess_business_loss, 50_000);
-});
-
-Deno.test("accumulation: array with zero entries sums correctly", () => {
-  const result = compute({ excess_business_loss: [0, 0, 0] });
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("accumulation: single-element array treated same as scalar", () => {
-  const scalar = compute({ excess_business_loss: 25_000 });
-  const arr = compute({ excess_business_loss: [25_000] });
+Deno.test("Form 461 combines signed C and F losses before one single threshold", () => {
+  const result = compute({
+    filing_status: "single",
+    line2_schedule_c: -200_000,
+    line6_schedule_f: -200_000,
+    scope_review: review,
+  });
+  assertEquals(fields(result)?.line9_total_income_loss, -400_000);
+  assertEquals(fields(result)?.line15_threshold, 313_000);
+  assertEquals(fields(result)?.line16_excess_business_loss, -87_000);
   assertEquals(
-    findOutput(scalar, "schedule1")?.fields.line8p_excess_business_loss,
-    findOutput(arr, "schedule1")?.fields.line8p_excess_business_loss,
+    result.outputs.find((item) => item.nodeType === "schedule1")?.fields
+      .line8p_excess_business_loss,
+    87_000,
+  );
+  assertEquals(result.carryforwards?.excess_business_loss_nol_origin, 87_000);
+});
+
+Deno.test("Form 461 offsets a C loss with F profit before the threshold", () => {
+  const result = compute({
+    filing_status: "single",
+    line2_schedule_c: -400_000,
+    line6_schedule_f: 300_000,
+    scope_review: review,
+  });
+  // A line 2 loss above $156,500 still requires a filed Form 461.
+  assertEquals(fields(result)?.line9_total_income_loss, -100_000);
+  assertEquals(fields(result)?.line16_excess_business_loss, 213_000);
+  assertEquals(
+    result.outputs.some((item) => item.nodeType === "schedule1"),
+    false,
   );
 });
 
-// ─── Filing Status (informational — threshold applied upstream) ──────────────
-
-Deno.test("filing_status_single: excess passes through correctly", () => {
-  const result = compute({ excess_business_loss: 100_000, filing_status: "single" });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1?.fields.line8p_excess_business_loss, 100_000);
-});
-
-Deno.test("filing_status_mfj: excess passes through correctly", () => {
-  const result = compute({ excess_business_loss: 200_000, filing_status: "mfj" });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1?.fields.line8p_excess_business_loss, 200_000);
-});
-
-Deno.test("filing_status_mfs: excess passes through correctly", () => {
-  const result = compute({ excess_business_loss: 50_000, filing_status: "mfs" });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1?.fields.line8p_excess_business_loss, 50_000);
-});
-
-Deno.test("filing_status_hoh: excess passes through correctly", () => {
-  const result = compute({ excess_business_loss: 75_000, filing_status: "hoh" });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1?.fields.line8p_excess_business_loss, 75_000);
-});
-
-// ─── NOL Carryforward (informational — no current-year deduction) ────────────
-
-Deno.test("nol_carryforward: excess business loss treated as positive income on return", () => {
-  // Per IRC §461(l): excess becomes NOL; on Form 1040, it's added back as other income
-  // The value must be positive (increases taxable income in current year as add-back)
-  const result = compute({ excess_business_loss: 313_001 });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1?.fields.line8p_excess_business_loss, 313_001);
-});
-
-// ─── Edge Cases ──────────────────────────────────────────────────────────────
-
-Deno.test("edge_case: large excess business loss (single near threshold)", () => {
-  // Typical: single filer, loss was $500k → threshold $313k → excess = $187k
-  const excess = 187_000;
-  const result = compute({ excess_business_loss: excess, filing_status: "single" });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1?.fields.line8p_excess_business_loss, excess);
-});
-
-Deno.test("edge_case: large excess business loss (MFJ)", () => {
-  // MFJ filer, loss was $1M → threshold $626k → excess = $374k
-  const excess = 374_000;
-  const result = compute({ excess_business_loss: excess, filing_status: "mfj" });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1?.fields.line8p_excess_business_loss, excess);
-});
-
-Deno.test("edge_case: fractional dollar amounts", () => {
-  const result = compute({ excess_business_loss: 1_234.56 });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1?.fields.line8p_excess_business_loss, 1_234.56);
-});
-
-// ─── Spec scenario: single filer excess loss ─────────────────────────────────
-
-Deno.test("spec_scenario: single filer, total_losses=400k, gains=50k, net=350k > 289k → excess=61000 to NOL", () => {
-  // The threshold enforcement and net computation happens upstream.
-  // form461 receives the pre-computed excess ($350k - $289k = $61k) and routes it.
-  const result = compute({ excess_business_loss: 61_000, filing_status: "single" });
-  assertEquals(findOutput(result, "schedule1")?.fields.line8p_excess_business_loss, 61_000);
-});
-
-// ─── Smoke Test ───────────────────────────────────────────────────────────────
-
-Deno.test("smoke: typical single filer with $187k excess business loss", () => {
-  // Schedule C had $500k loss, threshold $313k → excess $187k fed into form461
+Deno.test("Form 461 MFJ uses one $626,000 threshold, not one per source", () => {
   const result = compute({
-    excess_business_loss: 187_000,
-    filing_status: "single",
-  });
-  assertEquals(result.outputs.length, 1);
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1?.nodeType, "schedule1");
-  assertEquals(s1?.fields.line8p_excess_business_loss, 187_000);
-});
-
-Deno.test("smoke: MFJ with multiple upstream sources (schedule_c + schedule_e)", () => {
-  // schedule_c contributed $200k excess, schedule_e contributed $50k excess
-  const result = compute({
-    excess_business_loss: [200_000, 50_000],
     filing_status: "mfj",
+    line2_schedule_c: -400_000,
+    line6_schedule_f: -300_000,
+    scope_review: review,
   });
-  assertEquals(result.outputs.length, 1);
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1?.fields.line8p_excess_business_loss, 250_000);
+  assertEquals(fields(result)?.line15_threshold, 626_000);
+  assertEquals(fields(result)?.line16_excess_business_loss, -74_000);
+});
+
+Deno.test("Form 461 per-line $156,500 trigger applies to MFJ without an addback", () => {
+  const result = compute({
+    filing_status: "mfj",
+    line2_schedule_c: -156_501,
+    line6_schedule_f: 156_501,
+    scope_review: review,
+  });
+  assertEquals(fields(result)?.line9_total_income_loss, 0);
+  assertEquals(fields(result)?.line16_excess_business_loss, 626_000);
+});
+
+Deno.test("Form 461 omits the form at the exact per-line and net thresholds", () => {
+  assertEquals(
+    fields(compute({
+      filing_status: "single",
+      line2_schedule_c: -156_500,
+      line6_schedule_f: 0,
+      scope_review: review,
+    })),
+    undefined,
+  );
+});
+
+Deno.test("Form 461 rejects C/F source data without a sourced scope review", () => {
+  assertThrows(() =>
+    compute({
+      filing_status: "single",
+      line2_schedule_c: -400_000,
+    })
+  );
+  assertThrows(() =>
+    compute({
+      filing_status: "single",
+      line2_schedule_c: -400_000,
+      scope_review: { ...review, source_document_refs: [] },
+    })
+  );
+});
+
+Deno.test("Form 461 rejects old precomputed excess input and missing status", () => {
+  assertThrows(() => compute({ excess_business_loss: 87_000 }));
+  assertThrows(() =>
+    compute({ line2_schedule_c: -400_000, scope_review: review })
+  );
+});
+
+Deno.test("Form 461 rejects unresolved passive losses before filing", () => {
+  assertThrows(() =>
+    compute({
+      filing_status: "single",
+      line2_schedule_c: -400_000,
+      passive_loss_unresolved: true,
+      scope_review: review,
+    })
+  );
 });

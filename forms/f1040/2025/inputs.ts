@@ -1,5 +1,9 @@
 import type { InputNodeEntry } from "../../../core/types/form-definition.ts";
 import {
+  form4562,
+  publicInputSchema as form4562InputSchema,
+} from "../nodes/intermediate/forms/form4562/index.ts";
+import {
   form1116_prior_carryover,
   inputSchema as form1116PriorCarryoverInputSchema,
 } from "../nodes/inputs/form1116_prior_carryover/index.ts";
@@ -595,6 +599,18 @@ import {
   inputSchema as form8815InputSchema,
 } from "../nodes/intermediate/forms/form8815/index.ts";
 import {
+  form7206,
+  inputSchema as form7206InputSchema,
+} from "../nodes/intermediate/forms/form7206/index.ts";
+import {
+  form_8829,
+  inputSchema as form8829InputSchema,
+} from "../nodes/intermediate/forms/form_8829/index.ts";
+import {
+  form8990,
+  inputSchema as form8990InputSchema,
+} from "../nodes/intermediate/forms/form8990/index.ts";
+import {
   form8396,
   inputSchema as form8396InputSchema,
 } from "../nodes/intermediate/forms/form8396/index.ts";
@@ -658,6 +674,7 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: schedule_d, inputSchema: scheduleDInputSchema, isArray: false },
   { node: ext, inputSchema: extInputSchema, isArray: false },
   { node: general, inputSchema: generalInputSchema, isArray: false },
+  { node: form4562, inputSchema: form4562InputSchema, isArray: false },
   {
     node: form1116_review,
     inputSchema: form1116ReviewInputSchema,
@@ -680,6 +697,9 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: form5329, inputSchema: form5329InputSchema, isArray: false },
   { node: form4952, inputSchema: form4952InputSchema, isArray: false },
   { node: form8815, inputSchema: form8815InputSchema, isArray: false },
+  { node: form7206, inputSchema: form7206InputSchema, isArray: false },
+  { node: form_8829, inputSchema: form8829InputSchema, isArray: false },
+  { node: form8990, inputSchema: form8990InputSchema, isArray: false },
   { node: form8396, inputSchema: form8396InputSchema, isArray: false },
   { node: f8283, inputSchema: f8283InputSchema, isArray: false },
   { node: f8936, inputSchema: f8936InputSchema, isArray: false },

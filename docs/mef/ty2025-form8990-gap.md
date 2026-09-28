@@ -1,61 +1,42 @@
-# TY2025 Form 8990 coverage gap
+# TY2025 Form 8990 coverage boundary
 
-Status: audit only. Do not treat the registered `IRS8990` builder as a
-supported native MeF filing path. No test, local XSD, filled-PDF, or IRS ATS
-validation was run for this audit.
+Sources: [2025 Form 8990](https://www.irs.gov/pub/irs-prior/f8990--2025.pdf),
+[2025 instructions](https://www.irs.gov/pub/irs-prior/i8990--2025.pdf), and
+checked-in TY2025 v5.4 `Shared/IRS8990/IRS8990.xsd`.
 
-## Native schema mismatch
+Status: Form 8990 filing is deliberately blocked. No test, local XSD,
+filled-PDF, IRS business-rule, or ATS validation has been run for it.
 
-The checked-in TY2025 v5.4 `Shared/IRS8990/IRS8990.xsd` uses ordered form
-lines, including `CYBusIntExpnsBfr163jLmtAmt` (line 1),
-`CfwdPrevDsallwIntExpenseAmt` (line 2),
-`FlrPlanFinancingIntExpnsAmt` (line 4), `TaxableIncomeAmt` (line 6),
-`DeprecAmortzDpltnDedTakenAmt` (line 11),
-`CYBusinessInterestIncomeAmt` (line 23), and
-`DisallowedBusInterestExpnsAmt` (line 31). None of the seven tags in
-`forms/f1040/2025/mef/forms/f8990.ts` is a direct child of `IRS8990` in
-that schema. `avg_gross_receipts` is an exemption-test input, not a field
-on the [2025 Form 8990](https://www.irs.gov/pub/irs-pdf/f8990.pdf).
+The prior asserted-ATI source could make interest appear fully allowed without
+reconciling tentative taxable income, NOL/QBI, depreciation, business interest
+income, and other ATI components to the filed return. Both the tax node and
+native MeF builder now reject that source before producing Form 8990. The
+line-calculation and v5.4 tag map remain for a future return-reconciled source,
+but they are not a filing route.
 
-## Why a tag-only replacement is unsafe
+Positive Schedule C interest now requires an explicit small-business-exemption
+source: all three prior-year gross-receipts amounts for a business existing all
+three years, including required aggregation, affirmative non-tax-shelter
+verification, and average gross receipts no higher than the TY2025 $31 million
+threshold. The optional `subject_to_163j` flag no longer establishes eligibility
+and is rejected. Nonexempt and unknown-status Schedule C interest fails before
+net profit, SE tax, and QBI are computed. Unlinked upstream Form 1098 interest
+also fails.
 
-1. `forms/f1040/nodes/intermediate/forms/form8990/index.ts` never emits a
-   `form8990` print-field output. It returns an add-back to Schedule 1 and
-   the AGI aggregator only when it computes disallowed interest. The MeF
-   builder therefore does not receive reconciled lines 5, 16, 21-22,
-   25-26, or 29-31.
-2. The calculator treats omitted `tentative_taxable_income` and other ATI
-   components as zero, but the [2025 instructions](https://www.irs.gov/pub/irs-pdf/i8990.pdf)
-   require a taxable-income and business-allocation calculation. Zero cannot
-   stand in for a missing source without potentially changing the limit.
-3. The form distinguishes current-year interest expense, prior disallowed
-   carryforward, partner excess interest treated as paid/accrued, and floor
-   plan financing interest on lines 1-5. The node has no named partnership
-   Schedule A rows or S-corporation Schedule B rows, but it sums generic
-   rental carryforwards into its total and cannot prove their line-3 or
-   Schedule A treatment.
-4. Part II adjusted taxable income uses additions and reductions on lines
-   7-21. The node has only a few aggregate inputs. It cannot establish that
-   nonbusiness items, pass-through items, and other additions/reductions are
-   absent, nor can it emit their schedules when present.
-5. The current MeF builder reads raw input keys, not calculated `ati`,
-   `allowed`, or `disallowed` values. Renaming its seven tags would produce
-   a syntactically different but unreconciled Form 8990. The PDF descriptor
-   also maps raw amounts without the calculated line-level record.
+## Still blocked
 
-## Smallest safe rebuild boundary
+- A positive line 31 changes the interest deductible on Schedule C, then
+  self-employment tax and QBI. The former Schedule 1 other-income add-back did
+  not recompute those items. The bounded calculator throws before filing if
+  interest would be disallowed.
+- Tentative taxable income, the ATI adjustments, and nonbusiness/pass-through
+  exclusions are sourced assertions, not independently reconciled to final
+  return lines and workpapers. No Form 8990 document can yet be produced.
+- Prior-year interest carryforwards, partner/S-corporation excess items,
+  floor-plan financing, rental interest, CFC groups, and multiple businesses
+  need separate source models and Schedule A/B rows.
+- The registered PDF descriptor still maps old raw amounts and does not fill the
+  calculated form. Native XML has not passed the single agreed XSD/full test
+  batch or the IRS ATS gate.
 
-Use a nonexempt individual with one directly operated, non-pass-through
-trade or business, no floor-plan interest, no prior disallowed interest,
-and no Schedule A/B excess items. Require source-backed current business
-interest expense, tentative taxable income, every applicable ATI adjustment
-or explicit zero/nonapplicability facts, and current business interest
-income. Calculate and retain individual lines 1-31, check that the
-business-schedule deduction and add-back reconcile, then serialize native
-XSD fields and fill the matching PDF. Model partnership and S-corporation
-excess-item tables separately; do not use the old flat builder as a
-compatibility fallback.
-
-Before claiming coverage, write positive and negative source-to-line tests,
-calculation-to-XML tests, local XSD cases, PDF field/render checks, and IRS
-business-rule/ATS cases for the agreed single full batch.
+No compatibility layer, fallback serializer, or temporary add-back is included.

@@ -1,255 +1,198 @@
-import { assertEquals, assertStringIncludes } from "@std/assert";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form4562 } from "./f4562.ts";
+import { filedForm4562Schema } from "../../../nodes/intermediate/forms/form4562/index.ts";
 
-function assertNotIncludes(actual: string, expected: string) {
-  assertEquals(
-    actual.includes(expected),
-    false,
-    `Expected string NOT to include: ${expected}`,
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Section 1: Empty input
-// ---------------------------------------------------------------------------
-
-Deno.test("empty object returns empty string", () => {
-  assertEquals(form4562.build({}), "");
-});
-
-// ---------------------------------------------------------------------------
-// Section 2: Unknown keys ignored
-// ---------------------------------------------------------------------------
-
-Deno.test("all unknown keys returns empty string", () => {
-  assertEquals(form4562.build({ junk: 999, foo: "bar", baz: 0 }), "");
-});
-
-// ---------------------------------------------------------------------------
-// Section 3: Zero value emitted
-// ---------------------------------------------------------------------------
-
-Deno.test("section_179_deduction at zero is emitted", () => {
-  const result = form4562.build({ section_179_deduction: 0 });
-  assertStringIncludes(
-    result,
-    "<Section179DeductionAmt>0</Section179DeductionAmt>",
-  );
-});
-
-// ---------------------------------------------------------------------------
-// Section 4: Per-field mapping (one test per field, 12 fields)
-// ---------------------------------------------------------------------------
-
-Deno.test("section_179_deduction maps to Section179DeductionAmt", () => {
-  const result = form4562.build({ section_179_deduction: 10000 });
-  assertStringIncludes(
-    result,
-    "<Section179DeductionAmt>10000</Section179DeductionAmt>",
-  );
-});
-
-Deno.test("section_179_cost maps to Section179CostAmt", () => {
-  const result = form4562.build({ section_179_cost: 25000 });
-  assertStringIncludes(
-    result,
-    "<Section179CostAmt>25000</Section179CostAmt>",
-  );
-});
-
-Deno.test("section_179_elected maps to Section179ElectedCostAmt", () => {
-  const result = form4562.build({ section_179_elected: 20000 });
-  assertStringIncludes(
-    result,
-    "<Section179ElectedCostAmt>20000</Section179ElectedCostAmt>",
-  );
-});
-
-Deno.test("section_179_carryover maps to Section179CarryoverAmt", () => {
-  const result = form4562.build({ section_179_carryover: 5000 });
-  assertStringIncludes(
-    result,
-    "<Section179CarryoverAmt>5000</Section179CarryoverAmt>",
-  );
-});
-
-Deno.test("business_income_limit maps to BusinessIncomeLimitAmt", () => {
-  const result = form4562.build({ business_income_limit: 80000 });
-  assertStringIncludes(
-    result,
-    "<BusinessIncomeLimitAmt>80000</BusinessIncomeLimitAmt>",
-  );
-});
-
-Deno.test("bonus_depreciation_basis maps to BonusDepreciationBasisAmt", () => {
-  const result = form4562.build({ bonus_depreciation_basis: 50000 });
-  assertStringIncludes(
-    result,
-    "<BonusDepreciationBasisAmt>50000</BonusDepreciationBasisAmt>",
-  );
-});
-
-Deno.test("bonus_depreciation_basis_post_jan19 maps to BonusDeprecBasisPostJan19Amt", () => {
-  const result = form4562.build({ bonus_depreciation_basis_post_jan19: 30000 });
-  assertStringIncludes(
-    result,
-    "<BonusDeprecBasisPostJan19Amt>30000</BonusDeprecBasisPostJan19Amt>",
-  );
-});
-
-Deno.test("macrs_gds_basis maps to MACRSGDSBasisAmt", () => {
-  const result = form4562.build({ macrs_gds_basis: 40000 });
-  assertStringIncludes(
-    result,
-    "<MACRSGDSBasisAmt>40000</MACRSGDSBasisAmt>",
-  );
-});
-
-Deno.test("macrs_gds_recovery_period maps to MACRSGDSRecoveryPeriodAmt", () => {
-  const result = form4562.build({ macrs_gds_recovery_period: 7 });
-  assertStringIncludes(
-    result,
-    "<MACRSGDSRecoveryPeriodAmt>7</MACRSGDSRecoveryPeriodAmt>",
-  );
-});
-
-Deno.test("macrs_gds_year_of_service maps to MACRSGDSYearOfServiceAmt", () => {
-  const result = form4562.build({ macrs_gds_year_of_service: 3 });
-  assertStringIncludes(
-    result,
-    "<MACRSGDSYearOfServiceAmt>3</MACRSGDSYearOfServiceAmt>",
-  );
-});
-
-Deno.test("macrs_prior_depreciation maps to MACRSPriorDepreciationAmt", () => {
-  const result = form4562.build({ macrs_prior_depreciation: 12000 });
-  assertStringIncludes(
-    result,
-    "<MACRSPriorDepreciationAmt>12000</MACRSPriorDepreciationAmt>",
-  );
-});
-
-Deno.test("business_use_pct maps to BusinessUsePct", () => {
-  const result = form4562.build({ business_use_pct: 80 });
-  assertStringIncludes(result, "<BusinessUsePct>80</BusinessUsePct>");
-});
-
-// ---------------------------------------------------------------------------
-// Section 5: Sparse output
-// ---------------------------------------------------------------------------
-
-Deno.test("single known field emits only that element, absent fields omitted", () => {
-  const result = form4562.build({ section_179_deduction: 10000 });
-  assertStringIncludes(
-    result,
-    "<Section179DeductionAmt>10000</Section179DeductionAmt>",
-  );
-  assertNotIncludes(result, "<Section179CostAmt>");
-  assertNotIncludes(result, "<BonusDepreciationBasisAmt>");
-  assertNotIncludes(result, "<MACRSGDSBasisAmt>");
-});
-
-Deno.test("two fields present: only those two elements emitted", () => {
-  const result = form4562.build({
-    section_179_deduction: 10000,
-    business_use_pct: 80,
-  });
-  assertStringIncludes(
-    result,
-    "<Section179DeductionAmt>10000</Section179DeductionAmt>",
-  );
-  assertStringIncludes(result, "<BusinessUsePct>80</BusinessUsePct>");
-  assertNotIncludes(result, "<Section179CostAmt>");
-  assertNotIncludes(result, "<BonusDepreciationBasisAmt>");
-});
-
-// ---------------------------------------------------------------------------
-// Section 6: All fields present
-// ---------------------------------------------------------------------------
-
-const allFields = {
-  section_179_deduction: 10000,
-  section_179_cost: 25000,
-  section_179_elected: 20000,
-  section_179_carryover: 5000,
-  business_income_limit: 80000,
-  bonus_depreciation_basis: 50000,
-  bonus_depreciation_basis_post_jan19: 30000,
-  macrs_gds_basis: 40000,
-  macrs_gds_recovery_period: 7,
-  macrs_gds_year_of_service: 3,
-  macrs_prior_depreciation: 12000,
-  business_use_pct: 80,
+const filed = {
+  filing_status: "single" as const,
+  business_reference: "CONSULTING",
+  activity_description: "Software consulting",
+  asset_description: "Computer server",
+  source_document_ref: "2025 equipment invoice 24",
+  taxpayer_active_business_income_source_ref:
+    "2025 active-business income workpaper",
+  taxpayer_active_business_income: 100_000,
+  line1_maximum_dollar_limitation: 100_000,
+  line2_total_cost: 100_000,
+  line3_threshold_cost: 4_000_000,
+  line4_reduction: 0,
+  line5_dollar_limitation: 100_000,
+  line6_elected_cost: 100_000,
+  line8_total_elected_cost: 100_000,
+  line9_tentative_deduction: 100_000,
+  line10_prior_carryover: 0 as const,
+  line11_business_income_limitation: 100_000,
+  line12_section179_expense_deduction: 100_000,
+  line13_next_year_carryover: 0,
+  line22_total_depreciation: 100_000,
 };
 
-Deno.test("all 12 fields present: output wrapped in IRS4562 tag", () => {
-  const result = form4562.build(allFields);
-  assertStringIncludes(result, "<IRS4562>");
-  assertStringIncludes(result, "</IRS4562>");
+const asset = {
+  business_reference: "CONSULTING",
+  activity_description: "Software consulting",
+  asset_description: "Computer server",
+  source_document_ref: "2025 equipment invoice 24",
+  placed_in_service_date: "2025-03-01",
+  cost: 100_000,
+  elected_cost: 100_000,
+  taxpayer_active_business_income: 100_000,
+  taxpayer_active_business_income_source_ref:
+    "2025 active-business income workpaper",
+  prior_year_carryover: 0,
+  prior_year_carryover_source_ref: "2024 Form 4562 line 13 review",
+  business_use_pct: 100,
+  is_listed_property: false,
+  bonus_elected_out: true,
+  no_other_depreciation_for_activity: true,
+  no_other_depreciation_assets_on_return: true,
+  return_asset_inventory_source_ref: "2025 fixed asset register",
+  filing_status: "single",
+};
+
+const context = {
+  pending: {
+    form4562: { asset },
+    general: { filing_status: "single" },
+    f1040: { filing_status: "single" },
+    schedule1: { line3_schedule_c: 0 },
+    schedule_c: {
+      schedule_cs: [{
+        business_reference: "CONSULTING",
+        line_a_principal_business: "Software consulting",
+        line_b_business_code: "541511",
+        line_f_accounting_method: "cash",
+        line_g_material_participation: true,
+        line_32_at_risk: "a",
+        line_1_gross_receipts: 100_000,
+        line_13_depreciation: 100_000,
+      }],
+    },
+  },
+};
+
+Deno.test("Form 4562 is absent when no source was filed", () => {
+  assertEquals(form4562.build([]), "");
 });
 
-Deno.test("all 12 fields present: all elements emitted", () => {
-  const result = form4562.build(allFields);
+Deno.test("Form 4562 emits native TY2025 section 179 tags and one asset row", () => {
+  const xml = form4562.build(filed, context);
   assertStringIncludes(
-    result,
-    "<Section179DeductionAmt>10000</Section179DeductionAmt>",
+    xml,
+    "<BusinessOrActivityTxt>Software consulting</BusinessOrActivityTxt>",
   );
   assertStringIncludes(
-    result,
-    "<Section179CostAmt>25000</Section179CostAmt>",
+    xml,
+    "<MaximumDollarLimitationAmt>100000</MaximumDollarLimitationAmt>",
+  );
+  assertStringIncludes(xml, "<PropertyDesc>Computer server</PropertyDesc>");
+  assertStringIncludes(
+    xml,
+    "<CostForBusinessUseOnlyAmt>100000</CostForBusinessUseOnlyAmt>",
   );
   assertStringIncludes(
-    result,
-    "<Section179ElectedCostAmt>20000</Section179ElectedCostAmt>",
+    xml,
+    "<Section179ExpenseDeductionAmt>100000</Section179ExpenseDeductionAmt>",
   );
   assertStringIncludes(
-    result,
-    "<Section179CarryoverAmt>5000</Section179CarryoverAmt>",
+    xml,
+    "<TotalDepreciationAmt>100000</TotalDepreciationAmt>",
   );
-  assertStringIncludes(
-    result,
-    "<BusinessIncomeLimitAmt>80000</BusinessIncomeLimitAmt>",
+  assertEquals(
+    xml.indexOf("<DollarLimitationForTaxYearAmt>") <
+      xml.indexOf("<ElectedProperty>"),
+    true,
   );
-  assertStringIncludes(
-    result,
-    "<BonusDepreciationBasisAmt>50000</BonusDepreciationBasisAmt>",
+  assertEquals(
+    xml.indexOf("</ElectedProperty>") <
+      xml.indexOf("<TotalElectedCostSect179PropAmt>"),
+    true,
   );
-  assertStringIncludes(
-    result,
-    "<BonusDeprecBasisPostJan19Amt>30000</BonusDeprecBasisPostJan19Amt>",
-  );
-  assertStringIncludes(
-    result,
-    "<MACRSGDSBasisAmt>40000</MACRSGDSBasisAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<MACRSGDSRecoveryPeriodAmt>7</MACRSGDSRecoveryPeriodAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<MACRSGDSYearOfServiceAmt>3</MACRSGDSYearOfServiceAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<MACRSPriorDepreciationAmt>12000</MACRSPriorDepreciationAmt>",
-  );
-  assertStringIncludes(result, "<BusinessUsePct>80</BusinessUsePct>");
+  assertEquals(xml.includes("<Section179DeductionAmt>"), false);
 });
 
-// ---------------------------------------------------------------------------
-// Section 7: Boolean fields silently skipped
-// ---------------------------------------------------------------------------
-
-Deno.test("boolean field is silently ignored", () => {
-  const result = form4562.build({
-    listed_property: true,
-    section_179_deduction: 10000,
-  });
-  assertStringIncludes(
-    result,
-    "<Section179DeductionAmt>10000</Section179DeductionAmt>",
+Deno.test("Form 4562 rejects Schedule C line 13 mismatch or missing activity", () => {
+  assertThrows(() =>
+    form4562.build(filed, {
+      pending: {
+        ...context.pending,
+        schedule_c: {
+          schedule_cs: [{
+            business_reference: "CONSULTING",
+            line_13_depreciation: 90_000,
+          }],
+        },
+      },
+    })
   );
-  assertNotIncludes(result, "listed_property");
-  assertNotIncludes(result, "true");
+  assertThrows(() =>
+    form4562.build(filed, {
+      pending: { ...context.pending, schedule_c: { schedule_cs: [] } },
+    })
+  );
+});
+
+Deno.test("Form 4562 line 11 rejects asserted income above the filed pre-section-179 Schedule C profit", () => {
+  assertThrows(
+    () =>
+      form4562.build(filed, {
+        pending: {
+          ...context.pending,
+          schedule_c: {
+            schedule_cs: [{
+              ...context.pending.schedule_c.schedule_cs[0],
+              line_1_gross_receipts: 90_000,
+            }],
+          },
+          schedule1: { line3_schedule_c: -10_000 },
+        },
+      }),
+    Error,
+    "active-business income does not reconcile",
+  );
+});
+
+Deno.test("Form 4562 bounded income route rejects wages and another business source", () => {
+  assertThrows(
+    () =>
+      form4562.build(filed, {
+        pending: {
+          ...context.pending,
+          f1040: { filing_status: "single", line1a_wages: 10_000 },
+        },
+      }),
+    Error,
+    "needs employee compensation included",
+  );
+  assertThrows(
+    () =>
+      form4562.build(filed, {
+        pending: { ...context.pending, schedule_f: {} },
+      }),
+    Error,
+    "cannot include another business-income",
+  );
+});
+
+Deno.test("Form 4562 rejects inconsistent lines and MFS allocation", () => {
+  assertThrows(() =>
+    form4562.build({ ...filed, line22_total_depreciation: 99_999 }, context)
+  );
+  assertThrows(() =>
+    form4562.build(filed, {
+      pending: { ...context.pending, general: { filing_status: "mfs" } },
+    })
+  );
+  assertThrows(() =>
+    form4562.build(filed, {
+      pending: {
+        ...context.pending,
+        form4562: { asset: { ...asset, cost: 99_000 } },
+      },
+    })
+  );
+});
+
+Deno.test("Form 4562 no longer accepts aggregate-only XML fields", () => {
+  assertThrows(() =>
+    filedForm4562Schema.parse({ section_179_deduction: 100_000 })
+  );
 });

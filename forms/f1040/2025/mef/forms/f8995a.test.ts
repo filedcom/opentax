@@ -1,209 +1,197 @@
-import { assertEquals, assertStringIncludes } from "@std/assert";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { FilingStatus as HeaderFilingStatus } from "../../../mef/header.ts";
+import { FilingStatus as NodeFilingStatus } from "../../../nodes/types.ts";
 import { form8995a } from "./f8995a.ts";
 
-function assertNotIncludes(actual: string, expected: string) {
-  assertEquals(
-    actual.includes(expected),
-    false,
-    `Expected string NOT to include: ${expected}`,
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Section 1: Empty input
-// ---------------------------------------------------------------------------
-
-Deno.test("empty object returns empty string", () => {
-  assertEquals(form8995a.build({}), "");
-});
-
-// ---------------------------------------------------------------------------
-// Section 2: Unknown keys ignored
-// ---------------------------------------------------------------------------
-
-Deno.test("all unknown keys returns empty string", () => {
-  assertEquals(form8995a.build({ junk: 999, foo: "bar", baz: 0 }), "");
-});
-
-// ---------------------------------------------------------------------------
-// Section 3: Zero value emitted
-// ---------------------------------------------------------------------------
-
-Deno.test("taxable_income at zero is emitted", () => {
-  const result = form8995a.build({ taxable_income: 0 });
-  assertStringIncludes(result, "<TaxableIncomeAmt>0</TaxableIncomeAmt>");
-});
-
-// ---------------------------------------------------------------------------
-// Section 4: Per-field mapping (one test per field, 11 fields)
-// ---------------------------------------------------------------------------
-
-Deno.test("taxable_income maps to TaxableIncomeAmt", () => {
-  const result = form8995a.build({ taxable_income: 80000 });
-  assertStringIncludes(result, "<TaxableIncomeAmt>80000</TaxableIncomeAmt>");
-});
-
-Deno.test("net_capital_gain maps to NetCapitalGainAmt", () => {
-  const result = form8995a.build({ net_capital_gain: 5000 });
-  assertStringIncludes(result, "<NetCapitalGainAmt>5000</NetCapitalGainAmt>");
-});
-
-Deno.test("qbi maps to QualifiedBusinessIncomeAmt", () => {
-  const result = form8995a.build({ qbi: 40000 });
-  assertStringIncludes(
-    result,
-    "<QualifiedBusinessIncomeAmt>40000</QualifiedBusinessIncomeAmt>",
-  );
-});
-
-Deno.test("w2_wages maps to W2WagesAmt", () => {
-  const result = form8995a.build({ w2_wages: 60000 });
-  assertStringIncludes(result, "<W2WagesAmt>60000</W2WagesAmt>");
-});
-
-Deno.test("unadjusted_basis maps to UnadjustedBasisAmt", () => {
-  const result = form8995a.build({ unadjusted_basis: 200000 });
-  assertStringIncludes(
-    result,
-    "<UnadjustedBasisAmt>200000</UnadjustedBasisAmt>",
-  );
-});
-
-Deno.test("sstb_qbi maps to SSTBQBIAmt", () => {
-  const result = form8995a.build({ sstb_qbi: 30000 });
-  assertStringIncludes(result, "<SSTBQBIAmt>30000</SSTBQBIAmt>");
-});
-
-Deno.test("sstb_w2_wages maps to SSTBW2WagesAmt", () => {
-  const result = form8995a.build({ sstb_w2_wages: 25000 });
-  assertStringIncludes(result, "<SSTBW2WagesAmt>25000</SSTBW2WagesAmt>");
-});
-
-Deno.test("sstb_unadjusted_basis maps to SSTBUnadjustedBasisAmt", () => {
-  const result = form8995a.build({ sstb_unadjusted_basis: 150000 });
-  assertStringIncludes(
-    result,
-    "<SSTBUnadjustedBasisAmt>150000</SSTBUnadjustedBasisAmt>",
-  );
-});
-
-Deno.test("line6_sec199a_dividends maps to Section199ADividendsAmt", () => {
-  const result = form8995a.build({ line6_sec199a_dividends: 1200 });
-  assertStringIncludes(
-    result,
-    "<Section199ADividendsAmt>1200</Section199ADividendsAmt>",
-  );
-});
-
-Deno.test("qbi_loss_carryforward maps to QBILossCarryforwardAmt", () => {
-  const result = form8995a.build({ qbi_loss_carryforward: 8000 });
-  assertStringIncludes(
-    result,
-    "<QBILossCarryforwardAmt>8000</QBILossCarryforwardAmt>",
-  );
-});
-
-Deno.test("reit_loss_carryforward maps to REITLossCarryforwardAmt", () => {
-  const result = form8995a.build({ reit_loss_carryforward: 3000 });
-  assertStringIncludes(
-    result,
-    "<REITLossCarryforwardAmt>3000</REITLossCarryforwardAmt>",
-  );
-});
-
-// ---------------------------------------------------------------------------
-// Section 5: Sparse output
-// ---------------------------------------------------------------------------
-
-Deno.test("single known field emits only that element, absent fields omitted", () => {
-  const result = form8995a.build({ qbi: 40000 });
-  assertStringIncludes(
-    result,
-    "<QualifiedBusinessIncomeAmt>40000</QualifiedBusinessIncomeAmt>",
-  );
-  assertNotIncludes(result, "<TaxableIncomeAmt>");
-  assertNotIncludes(result, "<W2WagesAmt>");
-  assertNotIncludes(result, "<SSTBQBIAmt>");
-});
-
-Deno.test("two fields present: only those two elements emitted", () => {
-  const result = form8995a.build({ taxable_income: 80000, qbi: 40000 });
-  assertStringIncludes(result, "<TaxableIncomeAmt>80000</TaxableIncomeAmt>");
-  assertStringIncludes(
-    result,
-    "<QualifiedBusinessIncomeAmt>40000</QualifiedBusinessIncomeAmt>",
-  );
-  assertNotIncludes(result, "<W2WagesAmt>");
-  assertNotIncludes(result, "<SSTBQBIAmt>");
-});
-
-// ---------------------------------------------------------------------------
-// Section 6: All fields present
-// ---------------------------------------------------------------------------
-
-const allFields = {
-  taxable_income: 80000,
-  net_capital_gain: 5000,
-  qbi: 40000,
-  w2_wages: 60000,
-  unadjusted_basis: 200000,
-  sstb_qbi: 30000,
-  sstb_w2_wages: 25000,
-  sstb_unadjusted_basis: 150000,
-  line6_sec199a_dividends: 1200,
-  qbi_loss_carryforward: 8000,
-  reit_loss_carryforward: 3000,
+const filer = {
+  primarySSN: "123456789",
+  nameLine1: "SMITH JOHN A",
+  nameControl: "SMIT",
+  address: { line1: "1 MAIN ST", city: "AUSTIN", state: "TX", zip: "78701" },
+  filingStatus: HeaderFilingStatus.Single,
 };
 
-Deno.test("all 11 fields present: output wrapped in IRS8995A tag", () => {
-  const result = form8995a.build(allFields);
-  assertStringIncludes(result, "<IRS8995A>");
-  assertStringIncludes(result, "</IRS8995A>");
+const oneBusiness = {
+  filing_status: NodeFilingStatus.Single,
+  taxable_income: 300_000,
+  net_capital_gain: 0,
+  qbi: 100_000,
+  w2_wages: 20_000,
+  unadjusted_basis: 200_000,
+  business_filing_details: {
+    business_name: "Smith Design LLC",
+    ein: "123456789",
+    business_qbi: 100_000,
+    business_w2_wages: 20_000,
+    business_ubia: 200_000,
+    one_non_sstb_business_confirmed: true as const,
+    no_aggregation_or_patron_status_confirmed: true as const,
+    no_reit_ptp_or_loss_carryforward_confirmed: true as const,
+    qualified_dividends_zero_confirmed: true as const,
+    qbi_wages_ubia_sources_confirmed: true as const,
+    taxable_income_before_qbi_confirmed: true as const,
+  },
+};
+
+const context = {
+  filer,
+  pending: { f1040: { line13_qbi_deduction: 10_000 } },
+};
+
+Deno.test("Form 8995-A: absent pending produces no document", () => {
+  assertEquals(form8995a.build([]), "");
 });
 
-Deno.test("all 11 fields present: all elements emitted", () => {
-  const result = form8995a.build(allFields);
-  assertStringIncludes(result, "<TaxableIncomeAmt>80000</TaxableIncomeAmt>");
-  assertStringIncludes(result, "<NetCapitalGainAmt>5000</NetCapitalGainAmt>");
+Deno.test("Form 8995-A: one identified business emits native row and Part IV in XSD order", () => {
+  const xml = form8995a.build(oneBusiness, context);
+  assertStringIncludes(xml, "<IRS8995A><QBIDeductionInformationGrp>");
   assertStringIncludes(
-    result,
-    "<QualifiedBusinessIncomeAmt>40000</QualifiedBusinessIncomeAmt>",
-  );
-  assertStringIncludes(result, "<W2WagesAmt>60000</W2WagesAmt>");
-  assertStringIncludes(
-    result,
-    "<UnadjustedBasisAmt>200000</UnadjustedBasisAmt>",
-  );
-  assertStringIncludes(result, "<SSTBQBIAmt>30000</SSTBQBIAmt>");
-  assertStringIncludes(result, "<SSTBW2WagesAmt>25000</SSTBW2WagesAmt>");
-  assertStringIncludes(
-    result,
-    "<SSTBUnadjustedBasisAmt>150000</SSTBUnadjustedBasisAmt>",
+    xml,
+    "<TradeOrBusinessName><BusinessNameLine1Txt>Smith Design LLC</BusinessNameLine1Txt></TradeOrBusinessName><EIN>123456789</EIN>",
   );
   assertStringIncludes(
-    result,
-    "<Section199ADividendsAmt>1200</Section199ADividendsAmt>",
+    xml,
+    "<QualifiedBusinessIncomeAmt>100000</QualifiedBusinessIncomeAmt>",
   );
   assertStringIncludes(
-    result,
-    "<QBILossCarryforwardAmt>8000</QBILossCarryforwardAmt>",
+    xml,
+    "<QlfyBusinessIncome20PctAmt>20000</QlfyBusinessIncome20PctAmt>",
   );
   assertStringIncludes(
-    result,
-    "<REITLossCarryforwardAmt>3000</REITLossCarryforwardAmt>",
+    xml,
+    "<AllocableShareW2WagesAmt>20000</AllocableShareW2WagesAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<AllocableShareUBIAQlfyPropAmt>200000</AllocableShareUBIAQlfyPropAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<GrtrAllcblShrW2WageQlfyPropAmt>10000</GrtrAllcblShrW2WageQlfyPropAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<QBIComponentAmt>10000</QBIComponentAmt></QBIDeductionInformationGrp><TotalQBIComponentAmt>10000</TotalQBIComponentAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TaxableIncomeBeforeQBIDedAmt>300000</TaxableIncomeBeforeQBIDedAmt>",
+  );
+  assertStringIncludes(xml, "<NetCapitalGainAmt>0</NetCapitalGainAmt>");
+  assertStringIncludes(
+    xml,
+    "<QualifiedBusinessIncomeDedAmt>10000</QualifiedBusinessIncomeDedAmt>",
+  );
+  assertEquals(xml.includes("<TaxableIncomeAmt>"), false);
+  assertEquals(xml.includes("<PhaseInPct>"), false);
+});
+
+Deno.test("Form 8995-A: aggregate-only legacy shape and explicit empty record reject", () => {
+  assertThrows(
+    () => form8995a.build({} as typeof oneBusiness),
+    Error,
+    "empty pending record",
+  );
+  const legacy: unknown = { qbi: 75_000 };
+  assertThrows(
+    () =>
+      form8995a.build(legacy as Parameters<typeof form8995a.build>[0], context),
   );
 });
 
-// ---------------------------------------------------------------------------
-// Section 7: Non-number fields (filing_status) are ignored
-// ---------------------------------------------------------------------------
-
-Deno.test("filing_status string field is silently ignored", () => {
-  const result = form8995a.build({ filing_status: "MFJ", qbi: 40000 });
-  assertStringIncludes(
-    result,
-    "<QualifiedBusinessIncomeAmt>40000</QualifiedBusinessIncomeAmt>",
+Deno.test("Form 8995-A: missing business identity or lower income rejects", () => {
+  assertThrows(
+    () =>
+      form8995a.build(
+        { ...oneBusiness, business_filing_details: undefined },
+        context,
+      ),
+    Error,
+    "per-business QBI source details",
   );
-  assertNotIncludes(result, "filing_status");
-  assertNotIncludes(result, "MFJ");
+  assertThrows(
+    () => form8995a.build({ ...oneBusiness, taxable_income: 230_000 }, context),
+    Error,
+    "fully above",
+  );
+  assertThrows(
+    () => form8995a.build({ ...oneBusiness, qbi: 99_000 }, context),
+    Error,
+    "matching whole-dollar per-business QBI",
+  );
+});
+
+Deno.test("Form 8995-A: SSTB, gain, REIT, and aggregation paths reject", () => {
+  assertThrows(
+    () => form8995a.build({ ...oneBusiness, sstb_qbi: 10_000 }, context),
+    Error,
+    "SSTB",
+  );
+  assertThrows(
+    () => form8995a.build({ ...oneBusiness, net_capital_gain: 1_000 }, context),
+    Error,
+    "capital-gain",
+  );
+  assertThrows(
+    () =>
+      form8995a.build(
+        { ...oneBusiness, line6_sec199a_dividends: 100 },
+        context,
+      ),
+    Error,
+    "REIT/PTP",
+  );
+  assertThrows(
+    () =>
+      form8995a.build({
+        ...oneBusiness,
+        aggregation_groups: [{
+          group_name: "Combined",
+          business_names: ["Smith Design LLC"],
+          combined_for_limitation: true,
+        }],
+      }, context),
+    Error,
+    "aggregation",
+  );
+});
+
+Deno.test("Form 8995-A: Form 1040 mismatch and concurrent Form 8995 reject", () => {
+  assertThrows(
+    () =>
+      form8995a.build(oneBusiness, {
+        filer,
+        pending: { f1040: { line13_qbi_deduction: 9_999 } },
+      }),
+    Error,
+    "Form 1040 line 13",
+  );
+  assertThrows(
+    () =>
+      form8995a.build(oneBusiness, {
+        filer,
+        pending: {
+          f1040: { line13_qbi_deduction: 10_000 },
+          form8995: { qbi: 1 },
+        },
+      }),
+    Error,
+    "cannot both be pending",
+  );
+});
+
+Deno.test("Form 8995-A: fractional source that XML would round rejects", () => {
+  assertThrows(
+    () =>
+      form8995a.build({
+        ...oneBusiness,
+        w2_wages: 20_001,
+        business_filing_details: {
+          ...oneBusiness.business_filing_details,
+          business_w2_wages: 20_001,
+        },
+      }, context),
+    Error,
+    "whole-dollar calculated",
+  );
 });

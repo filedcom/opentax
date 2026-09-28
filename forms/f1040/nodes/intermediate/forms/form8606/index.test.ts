@@ -1,16 +1,46 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { form8606, type inputSchema } from "./index.ts";
+import { form8606, type inputSchema, IraOwner } from "./index.ts";
 import type { z } from "zod";
 
 type Form8606Input = z.infer<typeof inputSchema>;
 
 function compute(input: Partial<Form8606Input> & Record<string, unknown>) {
-  return form8606.compute({ taxYear: 2025, formType: "f1040" }, input as Form8606Input);
+  return form8606.compute(
+    { taxYear: 2025, formType: "f1040" },
+    input as Form8606Input,
+  );
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
+
+Deno.test("form8606: sourced taxpayer no-activity basis reaches native print record", () => {
+  const result = compute({
+    nondeductible_contributions: 6_000,
+    prior_basis: 5_000,
+    traditional_distributions: 0,
+    roth_conversion: 0,
+    roth_distribution: 0,
+    filing_details: {
+      owner: IraOwner.Taxpayer,
+      prior_basis_documented_from_2024_form8606: true,
+      no_ira_distributions_or_conversions_confirmed: true,
+    },
+  });
+  const print = findOutput(result, "form8606");
+  assertEquals(print?.fields.print_line1_nondeductible, 6_000);
+  assertEquals(print?.fields.print_line2_prior_basis, 5_000);
+  assertEquals(print?.fields.print_line3_total_basis, 11_000);
+  assertEquals(print?.fields.print_line14_remaining_basis, 11_000);
+  assertEquals(print?.fields.source_roth_distribution, 0);
+  assertEquals(print?.fields.filing_details, {
+    owner: IraOwner.Taxpayer,
+    prior_basis_documented_from_2024_form8606: true,
+    no_ira_distributions_or_conversions_confirmed: true,
+  });
+  assertEquals(findOutput(result, "f1040"), undefined);
+});
 
 // ---------------------------------------------------------------------------
 // 1. Schema validation
@@ -73,7 +103,10 @@ Deno.test("form8606: nondeductible basis with distribution — pro-rata exclusio
   const f1040 = findOutput(result, "f1040");
   const taxable = f1040?.fields?.line4b_ira_taxable as number;
   // Allow for floating-point: should be approximately 8888.89
-  assertEquals(Math.round(taxable * 100) / 100, Math.round((10_000 - 6_000 / 54_000 * 10_000) * 100) / 100);
+  assertEquals(
+    Math.round(taxable * 100) / 100,
+    Math.round((10_000 - 6_000 / 54_000 * 10_000) * 100) / 100,
+  );
 });
 
 // ---------------------------------------------------------------------------

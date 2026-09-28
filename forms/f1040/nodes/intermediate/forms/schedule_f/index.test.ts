@@ -465,8 +465,7 @@ Deno.test("schedule_f: line 1b cost basis of livestock resale is subtracted from
 
 // ── Excess business loss (Form 461) ──────────────────────────────────────────
 
-Deno.test("schedule_f: large loss exceeding EBL threshold single routes to form461", () => {
-  // Single filer threshold = $313,000; loss = $400,000 → excess = $87,000
+Deno.test("schedule_f: signed loss routes to Form 461 before return-wide threshold", () => {
   const result = compute({
     schedule_fs: [
       minimalItem({
@@ -477,10 +476,10 @@ Deno.test("schedule_f: large loss exceeding EBL threshold single routes to form4
     filing_status: "single",
   });
   const ebl = findOutput(result, "form461");
-  assertEquals(ebl?.fields.excess_business_loss, 87_000);
+  assertEquals(ebl?.fields.line6_schedule_f, -400_000);
 });
 
-Deno.test("schedule_f: loss below EBL threshold — no form461 output", () => {
+Deno.test("schedule_f: smaller loss still routes to Form 461 for aggregation", () => {
   const result = compute({
     schedule_fs: [
       minimalItem({
@@ -491,7 +490,21 @@ Deno.test("schedule_f: loss below EBL threshold — no form461 output", () => {
     filing_status: "single",
   });
   const ebl = findOutput(result, "form461");
-  assertEquals(ebl, undefined);
+  assertEquals(ebl?.fields.line6_schedule_f, -100_000);
+});
+
+Deno.test("schedule_f: unresolved passive loss is flagged for Form 461", () => {
+  const result = compute({
+    schedule_fs: [minimalItem({
+      line1_sales_livestock_resale: 0,
+      line16_feed: 200_000,
+      line_e_material_participation: false,
+    })],
+  });
+  assertEquals(
+    findOutput(result, "form461")?.fields.passive_loss_unresolved,
+    true,
+  );
 });
 
 // ── Output routing completeness ───────────────────────────────────────────────

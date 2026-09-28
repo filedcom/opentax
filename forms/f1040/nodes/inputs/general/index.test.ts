@@ -42,6 +42,43 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
+Deno.test("general passes Form 461 filing status and documented C/F scope review", () => {
+  const review = {
+    only_schedule_c_and_f_business_items: true,
+    other_part_i_lines_zero: true,
+    part_ii_adjustments_zero: true,
+    post_at_risk_and_passive_limits_confirmed: true,
+    source_document_refs: ["return-wide business income workpaper"],
+  };
+  const result = compute({
+    filing_status: FilingStatus.MFJ,
+    form461_scope_review: review,
+  });
+  assertEquals(findOutput(result, "form461")?.fields, {
+    filing_status: FilingStatus.MFJ,
+    scope_review: review,
+  });
+});
+
+Deno.test("general passes MFS lived-apart proof to Form 8582", () => {
+  const apart = compute({
+    filing_status: FilingStatus.MFS,
+    mfs_spouse_lived_with_taxpayer: false,
+  });
+  assertEquals(
+    findOutput(apart, "form8582")?.fields.mfs_lived_apart_all_year,
+    true,
+  );
+  const together = compute({
+    filing_status: FilingStatus.MFS,
+    mfs_spouse_lived_with_taxpayer: true,
+  });
+  assertEquals(
+    findOutput(together, "form8582")?.fields.mfs_lived_apart_all_year,
+    false,
+  );
+});
+
 // A minimal dependent who qualifies for CTC:
 // - has SSN, no ITIN, DOB puts them under 17 at Dec 31 2025, >6 months in home
 function qualifyingChildDep(overrides: Record<string, unknown> = {}) {

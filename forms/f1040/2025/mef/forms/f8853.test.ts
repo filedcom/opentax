@@ -1,297 +1,167 @@
-import { assertEquals, assertStringIncludes } from "@std/assert";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { FilingStatus } from "../../../mef/header.ts";
+import { MsaOwner } from "../../../nodes/intermediate/forms/form8853/index.ts";
 import { form8853 } from "./f8853.ts";
 
-function assertNotIncludes(actual: string, expected: string) {
-  assertEquals(
-    actual.includes(expected),
-    false,
-    `Expected string NOT to include: ${expected}`,
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Section 1: Empty input
-// ---------------------------------------------------------------------------
-
-Deno.test("empty object returns empty string", () => {
-  assertEquals(form8853.build({}), "");
-});
-
-// ---------------------------------------------------------------------------
-// Section 2: Unknown keys ignored
-// ---------------------------------------------------------------------------
-
-Deno.test("all unknown keys returns empty string", () => {
-  assertEquals(form8853.build({ junk: 999, foo: "bar", baz: 0 }), "");
-});
-
-// ---------------------------------------------------------------------------
-// Section 3: Zero value emitted
-// ---------------------------------------------------------------------------
-
-Deno.test("employer_archer_msa at zero is emitted", () => {
-  const result = form8853.build({ employer_archer_msa: 0 });
-  assertStringIncludes(
-    result,
-    "<EmployerArcherMSAContriAmt>0</EmployerArcherMSAContriAmt>",
-  );
-});
-
-// ---------------------------------------------------------------------------
-// Section 4: Per-field mapping (one test per field, 15 fields)
-// ---------------------------------------------------------------------------
-
-Deno.test("employer_archer_msa maps to EmployerArcherMSAContriAmt", () => {
-  const result = form8853.build({ employer_archer_msa: 1000 });
-  assertStringIncludes(
-    result,
-    "<EmployerArcherMSAContriAmt>1000</EmployerArcherMSAContriAmt>",
-  );
-});
-
-Deno.test("taxpayer_archer_msa_contributions maps to TxpyrArcherMSAContriAmt", () => {
-  const result = form8853.build({ taxpayer_archer_msa_contributions: 2000 });
-  assertStringIncludes(
-    result,
-    "<TxpyrArcherMSAContriAmt>2000</TxpyrArcherMSAContriAmt>",
-  );
-});
-
-Deno.test("line3_limitation_amount maps to ArcherMSALimitationAmt", () => {
-  const result = form8853.build({ line3_limitation_amount: 3000 });
-  assertStringIncludes(
-    result,
-    "<ArcherMSALimitationAmt>3000</ArcherMSALimitationAmt>",
-  );
-});
-
-Deno.test("compensation maps to CompensationAmt", () => {
-  const result = form8853.build({ compensation: 50000 });
-  assertStringIncludes(result, "<CompensationAmt>50000</CompensationAmt>");
-});
-
-Deno.test("archer_msa_distributions maps to ArcherMSADistributionAmt", () => {
-  const result = form8853.build({ archer_msa_distributions: 1500 });
-  assertStringIncludes(
-    result,
-    "<ArcherMSADistributionAmt>1500</ArcherMSADistributionAmt>",
-  );
-});
-
-Deno.test("archer_msa_rollover maps to ArcherMSARolloverAmt", () => {
-  const result = form8853.build({ archer_msa_rollover: 500 });
-  assertStringIncludes(
-    result,
-    "<ArcherMSARolloverAmt>500</ArcherMSARolloverAmt>",
-  );
-});
-
-Deno.test("archer_msa_qualified_expenses maps to ArcherMSAQualifiedExpnsAmt", () => {
-  const result = form8853.build({ archer_msa_qualified_expenses: 800 });
-  assertStringIncludes(
-    result,
-    "<ArcherMSAQualifiedExpnsAmt>800</ArcherMSAQualifiedExpnsAmt>",
-  );
-});
-
-Deno.test("medicare_advantage_distributions maps to MedcrAdvntageMSADistriAmt", () => {
-  const result = form8853.build({ medicare_advantage_distributions: 1200 });
-  assertStringIncludes(
-    result,
-    "<MedcrAdvntageMSADistriAmt>1200</MedcrAdvntageMSADistriAmt>",
-  );
-});
-
-Deno.test("medicare_advantage_qualified_expenses maps to MedcrAdvntageMSAQlfyExpnsAmt", () => {
-  const result = form8853.build({ medicare_advantage_qualified_expenses: 900 });
-  assertStringIncludes(
-    result,
-    "<MedcrAdvntageMSAQlfyExpnsAmt>900</MedcrAdvntageMSAQlfyExpnsAmt>",
-  );
-});
-
-Deno.test("ltc_gross_payments maps to LTCGrossPaymentsAmt", () => {
-  const result = form8853.build({ ltc_gross_payments: 4000 });
-  assertStringIncludes(
-    result,
-    "<LTCGrossPaymentsAmt>4000</LTCGrossPaymentsAmt>",
-  );
-});
-
-Deno.test("ltc_qualified_contract_amount maps to LTCQualifiedContractAmt", () => {
-  const result = form8853.build({ ltc_qualified_contract_amount: 5000 });
-  assertStringIncludes(
-    result,
-    "<LTCQualifiedContractAmt>5000</LTCQualifiedContractAmt>",
-  );
-});
-
-Deno.test("ltc_accelerated_death_benefits maps to LTCAcceleratedDeathBnftAmt", () => {
-  const result = form8853.build({ ltc_accelerated_death_benefits: 6000 });
-  assertStringIncludes(
-    result,
-    "<LTCAcceleratedDeathBnftAmt>6000</LTCAcceleratedDeathBnftAmt>",
-  );
-});
-
-Deno.test("ltc_period_days maps to LTCPeriodDaysCnt", () => {
-  const result = form8853.build({ ltc_period_days: 30 });
-  assertStringIncludes(result, "<LTCPeriodDaysCnt>30</LTCPeriodDaysCnt>");
-});
-
-Deno.test("ltc_actual_costs maps to LTCActualCostsAmt", () => {
-  const result = form8853.build({ ltc_actual_costs: 2500 });
-  assertStringIncludes(result, "<LTCActualCostsAmt>2500</LTCActualCostsAmt>");
-});
-
-Deno.test("ltc_reimbursements maps to LTCReimbursementsAmt", () => {
-  const result = form8853.build({ ltc_reimbursements: 1800 });
-  assertStringIncludes(
-    result,
-    "<LTCReimbursementsAmt>1800</LTCReimbursementsAmt>",
-  );
-});
-
-// ---------------------------------------------------------------------------
-// Section 5: Sparse output
-// ---------------------------------------------------------------------------
-
-Deno.test("single known field emits only that element, absent fields omitted", () => {
-  const result = form8853.build({ employer_archer_msa: 1000 });
-  assertStringIncludes(
-    result,
-    "<EmployerArcherMSAContriAmt>1000</EmployerArcherMSAContriAmt>",
-  );
-  assertNotIncludes(result, "<TxpyrArcherMSAContriAmt>");
-  assertNotIncludes(result, "<CompensationAmt>");
-  assertNotIncludes(result, "<LTCGrossPaymentsAmt>");
-});
-
-Deno.test("two fields present: only those two elements emitted", () => {
-  const result = form8853.build({
-    employer_archer_msa: 1000,
-    ltc_reimbursements: 1800,
-  });
-  assertStringIncludes(
-    result,
-    "<EmployerArcherMSAContriAmt>1000</EmployerArcherMSAContriAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<LTCReimbursementsAmt>1800</LTCReimbursementsAmt>",
-  );
-  assertNotIncludes(result, "<CompensationAmt>");
-  assertNotIncludes(result, "<ArcherMSADistributionAmt>");
-});
-
-// ---------------------------------------------------------------------------
-// Section 6: All fields present
-// ---------------------------------------------------------------------------
-
-const allFields = {
-  employer_archer_msa: 1000,
-  taxpayer_archer_msa_contributions: 2000,
-  line3_limitation_amount: 3000,
-  compensation: 50000,
-  archer_msa_distributions: 1500,
-  archer_msa_rollover: 500,
-  archer_msa_qualified_expenses: 800,
-  medicare_advantage_distributions: 1200,
-  medicare_advantage_qualified_expenses: 900,
-  ltc_gross_payments: 4000,
-  ltc_qualified_contract_amount: 5000,
-  ltc_accelerated_death_benefits: 6000,
-  ltc_period_days: 30,
-  ltc_actual_costs: 2500,
-  ltc_reimbursements: 1800,
+const filer = {
+  primarySSN: "123456789",
+  nameLine1: "SMITH JOHN A",
+  nameControl: "SMIT",
+  address: { line1: "1 MAIN ST", city: "AUSTIN", state: "TX", zip: "78701" },
+  filingStatus: FilingStatus.Single,
 };
 
-Deno.test("all 15 fields present: output wrapped in IRS8853 tag", () => {
-  const result = form8853.build(allFields);
-  assertStringIncludes(result, "<IRS8853>");
-  assertStringIncludes(result, "</IRS8853>");
+const source = {
+  archer_msa_distributions: 3_000,
+  archer_msa_rollover: 0,
+  archer_msa_qualified_expenses: 3_000,
+  archer_msa_exception: false,
+  archer_distribution_filing_details: {
+    owner: MsaOwner.Taxpayer,
+    single_archer_msa_distribution_confirmed: true as const,
+    gross_amount_confirmed_from_1099sa: true as const,
+    qualified_expenses_unreimbursed_confirmed: true as const,
+    no_other_form8853_activity_confirmed: true as const,
+  },
+};
+
+const context = { filer, pending: {} };
+
+Deno.test("Form 8853: absent pending produces no document", () => {
+  assertEquals(form8853.build([]), "");
 });
 
-Deno.test("all 15 fields present: all elements emitted", () => {
-  const result = form8853.build(allFields);
+Deno.test("Form 8853: fully qualified Archer distribution emits native group even with zero tax", () => {
+  const xml = form8853.build(source, context);
+  assertStringIncludes(xml, "<IRS8853><ArcherMSAAndMedcrAdvntgMSAGrp>");
+  assertStringIncludes(xml, "<MSAHolderSSN>123456789</MSAHolderSSN>");
   assertStringIncludes(
-    result,
-    "<EmployerArcherMSAContriAmt>1000</EmployerArcherMSAContriAmt>",
+    xml,
+    "<TotalArcherMSADistributionAmt>3000</TotalArcherMSADistributionAmt>",
   );
   assertStringIncludes(
-    result,
-    "<TxpyrArcherMSAContriAmt>2000</TxpyrArcherMSAContriAmt>",
+    xml,
+    "<ArcherMSADistriRollOverAmt>0</ArcherMSADistriRollOverAmt>",
   );
   assertStringIncludes(
-    result,
-    "<ArcherMSALimitationAmt>3000</ArcherMSALimitationAmt>",
-  );
-  assertStringIncludes(result, "<CompensationAmt>50000</CompensationAmt>");
-  assertStringIncludes(
-    result,
-    "<ArcherMSADistributionAmt>1500</ArcherMSADistributionAmt>",
+    xml,
+    "<ArcherMSANetDistributionAmt>3000</ArcherMSANetDistributionAmt>",
   );
   assertStringIncludes(
-    result,
-    "<ArcherMSARolloverAmt>500</ArcherMSARolloverAmt>",
+    xml,
+    "<ArcherMSAUnreimbQualMedExpAmt>3000</ArcherMSAUnreimbQualMedExpAmt>",
   );
   assertStringIncludes(
-    result,
-    "<ArcherMSAQualifiedExpnsAmt>800</ArcherMSAQualifiedExpnsAmt>",
+    xml,
+    "<TaxableArcherMSADistriAmt>0</TaxableArcherMSADistriAmt>",
   );
-  assertStringIncludes(
-    result,
-    "<MedcrAdvntageMSADistriAmt>1200</MedcrAdvntageMSADistriAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<MedcrAdvntageMSAQlfyExpnsAmt>900</MedcrAdvntageMSAQlfyExpnsAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<LTCGrossPaymentsAmt>4000</LTCGrossPaymentsAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<LTCQualifiedContractAmt>5000</LTCQualifiedContractAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<LTCAcceleratedDeathBnftAmt>6000</LTCAcceleratedDeathBnftAmt>",
-  );
-  assertStringIncludes(result, "<LTCPeriodDaysCnt>30</LTCPeriodDaysCnt>");
-  assertStringIncludes(result, "<LTCActualCostsAmt>2500</LTCActualCostsAmt>");
-  assertStringIncludes(
-    result,
-    "<LTCReimbursementsAmt>1800</LTCReimbursementsAmt>",
+  assertEquals(xml.includes("SectCLTCInsuranceCntrctGrp"), false);
+  assertEquals(xml.includes("EmployerArcherMSAContriAmt"), false);
+});
+
+Deno.test("Form 8853: flat source and explicit empty records reject", () => {
+  assertThrows(() => form8853.build({}), Error, "empty pending record");
+  assertThrows(
+    () => form8853.build({ employer_archer_msa: 3_650 }, context),
+    Error,
+    "source confirmations",
   );
 });
 
-// ---------------------------------------------------------------------------
-// Section 7: Non-numeric fields (booleans) are silently ignored
-// ---------------------------------------------------------------------------
-
-Deno.test("archer_msa_exception boolean field is silently ignored", () => {
-  const result = form8853.build({
-    archer_msa_exception: true,
-    employer_archer_msa: 1000,
-  });
-  assertStringIncludes(
-    result,
-    "<EmployerArcherMSAContriAmt>1000</EmployerArcherMSAContriAmt>",
+Deno.test("Form 8853: missing source attestations and owner reject", () => {
+  assertThrows(
+    () =>
+      form8853.build({
+        ...source,
+        archer_distribution_filing_details: undefined,
+      }, context),
+    Error,
+    "source confirmations",
   );
-  assertNotIncludes(result, "archer_msa_exception");
-  assertNotIncludes(result, "true");
+  assertThrows(
+    () =>
+      form8853.build({
+        ...source,
+        archer_distribution_filing_details: {
+          ...source.archer_distribution_filing_details,
+          owner: MsaOwner.Spouse,
+        },
+      }, context),
+    Error,
+    "spouse-owned MSA",
+  );
 });
 
-Deno.test("medicare_advantage_exception boolean field is silently ignored", () => {
-  const result = form8853.build({
-    medicare_advantage_exception: false,
-    ltc_gross_payments: 4000,
-  });
-  assertStringIncludes(
-    result,
-    "<LTCGrossPaymentsAmt>4000</LTCGrossPaymentsAmt>",
+Deno.test("Form 8853: partial medical use, rollover, and exception paths reject", () => {
+  assertThrows(
+    () =>
+      form8853.build(
+        { ...source, archer_msa_qualified_expenses: 2_000 },
+        context,
+      ),
+    Error,
+    "fully matched",
   );
-  assertNotIncludes(result, "medicare_advantage_exception");
+  assertThrows(
+    () => form8853.build({ ...source, archer_msa_rollover: 500 }, context),
+    Error,
+    "no rollover",
+  );
+  assertThrows(
+    () => form8853.build({ ...source, archer_msa_exception: true }, context),
+    Error,
+    "no rollover or tax exception",
+  );
+});
+
+Deno.test("Form 8853: contribution, Medicare, and LTC activity reject", () => {
+  assertThrows(
+    () =>
+      form8853.build(
+        { ...source, taxpayer_archer_msa_contributions: 1_000 },
+        context,
+      ),
+    Error,
+    "without contributions",
+  );
+  assertThrows(
+    () =>
+      form8853.build(
+        { ...source, medicare_advantage_distributions: 1_000 },
+        context,
+      ),
+    Error,
+    "Medicare MSA",
+  );
+  assertThrows(
+    () => form8853.build({ ...source, ltc_gross_payments: 1_000 }, context),
+    Error,
+    "LTC activity",
+  );
+});
+
+Deno.test("Form 8853: joint header and conflicting schedules reject", () => {
+  assertThrows(
+    () =>
+      form8853.build(source, {
+        filer: { ...filer, filingStatus: FilingStatus.MarriedFilingJointly },
+        pending: {},
+      }),
+    Error,
+    "joint returns",
+  );
+  assertThrows(
+    () =>
+      form8853.build(source, {
+        filer,
+        pending: { schedule1: { line8e_archer_msa_dist: 100 } },
+      }),
+    Error,
+    "conflicts with Schedule 1 or 2",
+  );
+  assertThrows(
+    () => form8853.build(source, { filer }),
+    Error,
+    "pending return reconciliation context",
+  );
 });

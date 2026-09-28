@@ -23,6 +23,10 @@ import {
   mfsPtcStatusSchema,
 } from "../../intermediate/forms/form8962/index.ts";
 import { form8582 } from "../../intermediate/forms/form8582/index.ts";
+import {
+  form461,
+  form461ScopeReviewSchema,
+} from "../../intermediate/forms/form461/index.ts";
 import { form8995 } from "../../intermediate/forms/form8995/index.ts";
 import { scheduleA } from "../schedule_a/index.ts";
 import { FilingStatus } from "../../types.ts";
@@ -133,6 +137,7 @@ export type DependentFiling = z.infer<typeof dependentFilingSchema>;
 
 export const inputSchema = z.object({
   filing_status: z.nativeEnum(FilingStatus),
+  form461_scope_review: form461ScopeReviewSchema.optional(),
   // Required for the Form 3800 line 13 limit when filing separately.
   spouse_has_business_credit: z.boolean().optional(),
   // Taxpayer identity
@@ -682,6 +687,7 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
     form8962,
     form8995,
     form8582,
+    form461,
     scheduleA,
     schedule1a,
   ]);
@@ -828,9 +834,20 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
           ? "hawaii"
           : "contiguous",
       }),
-      // Pass filing_status to form8582 — an MFS filer gets no §469(i) special allowance
+      // MFS special allowance requires proof the spouses lived apart all year.
       this.outputNodes.output(form8582, {
         filing_status: parsed.filing_status,
+        ...(parsed.filing_status === "mfs" &&
+            parsed.mfs_spouse_lived_with_taxpayer !== undefined
+          ? {
+            mfs_lived_apart_all_year:
+              parsed.mfs_spouse_lived_with_taxpayer === false,
+          }
+          : {}),
+      }),
+      this.outputNodes.output(form461, {
+        filing_status: parsed.filing_status,
+        scope_review: parsed.form461_scope_review,
       }),
       // Pass filing_status to schedule_a for OBBBA SALT phase-out threshold
       this.outputNodes.output(scheduleA, {

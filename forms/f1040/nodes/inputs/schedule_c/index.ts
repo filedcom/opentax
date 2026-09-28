@@ -16,7 +16,6 @@ import {
   simplifiedAtRiskSchema,
 } from "../../intermediate/forms/form6198/simplified.ts";
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
-import { form8990 } from "../../intermediate/forms/form8990/index.ts";
 import { form461 } from "../../intermediate/forms/form461/index.ts";
 import { eitc } from "../../intermediate/forms/eitc/index.ts";
 import { f8812 } from "../f8812/index.ts";
@@ -69,7 +68,19 @@ export const itemSchema = z.object({
   disposed_of_business: z.boolean().optional(),
   multi_form_code: z.string().optional(),
   llc_number: z.number().int().min(1).max(999).optional(),
-  subject_to_163j: z.boolean().optional(), // §163(j) business interest limitation
+  // A positive interest deduction needs an affirmative section 163(j)
+  // determination. An absent flag is not evidence of an exemption.
+  subject_to_163j: z.never().optional(),
+  section163j_small_business_exemption: z.object({
+    prior_three_year_gross_receipts: z.tuple([
+      z.number().int().finite().nonnegative(),
+      z.number().int().finite().nonnegative(),
+      z.number().int().finite().nonnegative(),
+    ]),
+    business_existed_for_all_three_prior_tax_years_verified: z.literal(true),
+    all_required_aggregated_receipts_included_verified: z.literal(true),
+    not_a_tax_shelter_verified: z.literal(true),
+  }).strict().optional(),
 
   // Section 199A information used when taxable income exceeds the QBI threshold.
   qbi_specified_service: z.boolean().optional(),
@@ -170,6 +181,29 @@ export const inputSchema = z.object({
 });
 
 export type ScheduleCItem = z.infer<typeof itemSchema>;
+
+export function assertScheduleCInterestExempt(
+  item: ScheduleCItem,
+  threshold: number,
+): void {
+  itemSchema.parse(item);
+  const interest = (item.line_16a_interest_mortgage ?? 0) +
+    (item.line_16b_interest_other ?? 0);
+  if (interest === 0) return;
+  const exemption = item.section163j_small_business_exemption;
+  if (!exemption) {
+    throw new Error(
+      "Schedule C interest needs documented section 163(j) exemption; Form 8990 ATI is not yet reconciled",
+    );
+  }
+  const receipts = exemption.prior_three_year_gross_receipts;
+  const average = (receipts[0] + receipts[1] + receipts[2]) / 3;
+  if (average > threshold) {
+    throw new Error(
+      "Schedule C interest exceeds section 163(j) small-business gross-receipts threshold",
+    );
+  }
+}
 
 // ── Pure helpers ────────────────────────────────────────────────────────────
 
@@ -361,16 +395,6 @@ function deductionOutputs(
   if (item.line_g_material_participation === false) {
     outputs.push(output(form8582, { passive_schedule_c: netProfit }));
   }
-  if (
-    item.subject_to_163j === true &&
-    ((item.line_16a_interest_mortgage ?? 0) +
-        (item.line_16b_interest_other ?? 0)) > 0
-  ) {
-    outputs.push(output(form8990, {
-      business_interest_expense: (item.line_16a_interest_mortgage ?? 0) +
-        (item.line_16b_interest_other ?? 0),
-    }));
-  }
   return outputs;
 }
 
@@ -386,7 +410,6 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
     form8995,
     form8582,
     form6251,
-    form8990,
     form461,
     eitc,
     f8812,
@@ -397,6 +420,15 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     // Validate schema — throws on invalid data (negative amounts, bad enums)
     inputSchema.parse(input);
+
+    if ((input.line16a_interest_mortgage ?? 0) > 0) {
+      throw new Error(
+        "Schedule C upstream mortgage interest needs a business-linked section 163(j) exemption",
+      );
+    }
+    input.schedule_cs.forEach((item) =>
+      assertScheduleCInterestExempt(item, cfg.smallBizGrossReceipts)
+    );
 
     if (input.schedule_cs.length === 0) {
       return { outputs: [] };
@@ -513,20 +545,14 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
       outputs.push(...deductionOutputs(input.schedule_cs[i], netProfits[i]));
     }
 
-    // Excess business loss — aggregate all net profits
-    if (totalNetProfit < 0) {
-      const loss = Math.abs(totalNetProfit);
-      const threshold = input.filing_status === "mfj"
-        ? cfg.eblThresholdMfj
-        : cfg.eblThresholdSingle;
-      if (loss > threshold) {
-        outputs.push(
-          this.outputNodes.output(form461, {
-            excess_business_loss: loss - threshold,
-          }),
-        );
-      }
-    }
+    // Form 461 line 2 uses signed Schedule 1 line 3 after at-risk limits.
+    // Its threshold is applied once after Schedule C and F are combined.
+    outputs.push(this.outputNodes.output(form461, {
+      line2_schedule_c: totalNetProfit,
+      passive_loss_unresolved: input.schedule_cs.some((item, index) =>
+        !item.line_g_material_participation && netProfits[index] < 0
+      ),
+    }));
 
     return {
       outputs,

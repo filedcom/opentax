@@ -1,45 +1,45 @@
-import { element, elements } from "../../../mef/xml.ts";
+import {
+  type Form7206Lines,
+  type SingleScheduleCPlan,
+  singleScheduleCPlanSchema,
+} from "../../../nodes/intermediate/forms/form7206/index.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 
-export interface Fields {
-  se_net_profit?: number | null;
-  health_insurance_premiums?: number | null;
-  ltc_premiums?: number | null;
-  taxpayer_age?: number | null;
-  ltc_premiums_spouse?: number | null;
-  spouse_age?: number | null;
-  premium_tax_credit?: number | null;
-}
+type Input = Partial<
+  Form7206Lines & {
+    single_schedule_c_plan: SingleScheduleCPlan;
+  }
+>;
 
-type Input = Partial<Fields> & Record<string, unknown>;
-
-export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
-  ["se_net_profit", "SENetProfitLossAmt"],
-  ["health_insurance_premiums", "HealthInsPremPdAmt"],
-  ["ltc_premiums", "LTCInsurancePremAmt"],
-  ["taxpayer_age", "TaxpayerAgeNum"],
-  ["ltc_premiums_spouse", "SpouseLTCInsurancePremAmt"],
-  ["spouse_age", "SpouseAgeNum"],
-  ["premium_tax_credit", "PremiumTaxCreditAmt"],
-];
+// TY2025 v5.4 IRS7206.xsd sequence. Line 11 is blank for a Schedule C plan.
+export const FIELD_MAP: ReadonlyArray<readonly [keyof Form7206Lines, string]> =
+  [
+    ["line1", "TotalHealthInsurancePaidAmt"],
+    ["line2", "TotQlfyLTCareInsDedAmt"],
+    ["line3", "TotHlthInsQlfyLTCareInsDedAmt"],
+    ["line4", "NetPrftOthEarnedIncmAmt"],
+    ["line5", "TotNetPrftIncmAmt"],
+    ["line6", "OthEarnedIncmDivTotNetPrftPct"],
+    ["line7", "DedSETaxMultiplyPctAmt"],
+    ["line8", "PctLessNetPrftOthEarnedIncmAmt"],
+    ["line9", "SelfEmpldSepSimpleQlfyPlansAmt"],
+    ["line10", "PctMinusSEQlfyPlansAmt"],
+    ["line12", "Form2555Amt"],
+    ["line13", "SubtractForm2555Amt"],
+    ["line14", "SelfEmpldHealthInsDedAmt"],
+  ];
 
 function buildIRS7206(fields: Input): string {
-  const children = FIELD_MAP.map(([key, tag]) => {
-    const value = fields[key];
-    if (typeof value !== "number") return "";
-    return element(tag, value);
-  });
-  return elements("IRS7206", children);
+  if (Object.keys(fields).length === 0) return "";
+  singleScheduleCPlanSchema.parse(fields.single_schedule_c_plan);
+  throw new Error(
+    "Form 7206 one-plan MeF filing needs primary premium-month, business-owner, and return deduction reconciliation",
+  );
 }
 
 export const form7206: MefFormDescriptor<"form7206", Input> = {
   pendingKey: "form7206",
   FIELD_MAP,
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f7206.pdf",
-  build(fields) {
-    // Pub. 974's single-source, non-LTC, no-Form-2555 route uses the Form 1040
-    // deduction worksheet; it must not emit an empty legacy Form 7206 XML.
-    if (fields.pub974_form7206_omit === true) return "";
-    return buildIRS7206(fields);
-  },
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f7206--2025.pdf",
+  build: buildIRS7206,
 };

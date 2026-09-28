@@ -195,15 +195,9 @@ function verifyPriorYearSpouseFacts(evidence: LastMonthEvidence): void {
     );
   }
   if (!evidence.married_at_year_end) return;
-  if (
-    evidence.eligible_hdhp_coverage_by_month.some((month) =>
-      month !== null && month !== CoverageType.Family
-    )
-  ) {
-    throw new Error(
-      "Form 8889 married 2024 recapture needs family-only eligible months in this bounded path",
-    );
-  }
+  // December family coverage makes the elected 2024 line 3 the $8,300 family
+  // limit even when earlier eligible months were self-only. The redetermined
+  // limitation below uses each month's actual coverage instead of that election.
   const familyLimit = 8_300;
   const catchup = evidence.age_55_or_older ? 1_000 : 0;
   if (

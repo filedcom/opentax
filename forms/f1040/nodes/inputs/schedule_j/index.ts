@@ -1,8 +1,7 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
+import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { f1040 } from "../../outputs/f1040/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
@@ -44,19 +43,12 @@ function hasElectedFarmIncome(input: ScheduleJInput): boolean {
   return input.elected_farm_income > 0;
 }
 
-// Builds the f1040 output fields for Schedule J.
-// Schedule J line 23 routes to Form 1040 line 16 (income tax), replacing the
-// regular tax table / qualified dividends worksheet computation.
-function buildF1040Fields(input: ScheduleJInput): { line16_income_tax: number } {
-  return { line16_income_tax: input.schedule_j_tax };
-}
-
 // ─── Node class ───────────────────────────────────────────────────────────────
 
 class ScheduleJNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule_j";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040]);
+  readonly outputNodes = new OutputNodes([]);
 
   compute(_ctx: NodeContext, input: ScheduleJInput): NodeResult {
     const parsed = inputSchema.parse(input);
@@ -64,12 +56,9 @@ class ScheduleJNode extends TaxNode<typeof inputSchema> {
     if (!hasElectedFarmIncome(parsed)) {
       return { outputs: [] };
     }
-
-    const outputs: NodeOutput[] = [
-      this.outputNodes.output(f1040, buildF1040Fields(parsed)),
-    ];
-
-    return { outputs };
+    throw new Error(
+      "Schedule J is not filing-ready: line 23 needs reconciliation to the 2022-2024 base-year tax worksheets before Form 1040 and Form 6251 can be filed",
+    );
   }
 }
 

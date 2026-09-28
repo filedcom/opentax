@@ -1,203 +1,138 @@
-import { assertEquals, assertStringIncludes } from "@std/assert";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { FilingStatus } from "../../../mef/header.ts";
+import { IraOwner } from "../../../nodes/intermediate/forms/form8606/index.ts";
 import { form8606 } from "./f8606.ts";
 
-function assertNotIncludes(actual: string, expected: string) {
-  assertEquals(
-    actual.includes(expected),
-    false,
-    `Expected string NOT to include: ${expected}`,
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Section 1: Empty input
-// ---------------------------------------------------------------------------
-
-Deno.test("f8606: empty object returns empty string", () => {
-  assertEquals(form8606.build({}), "");
-});
-
-// ---------------------------------------------------------------------------
-// Section 2: Unknown keys ignored
-// ---------------------------------------------------------------------------
-
-Deno.test("f8606: all unknown keys returns empty string", () => {
-  assertEquals(form8606.build({ junk: 999, foo: "bar", baz: 0 }), "");
-});
-
-// ---------------------------------------------------------------------------
-// Section 3: Zero value emitted
-// ---------------------------------------------------------------------------
-
-Deno.test("f8606: nondeductible_contributions at zero is emitted", () => {
-  const result = form8606.build({ nondeductible_contributions: 0 });
-  assertStringIncludes(
-    result,
-    "<NondeductibleContriAmt>0</NondeductibleContriAmt>",
-  );
-});
-
-// ---------------------------------------------------------------------------
-// Section 4: Per-field mapping (one test per field, 8 fields)
-// ---------------------------------------------------------------------------
-
-Deno.test("f8606: nondeductible_contributions maps to NondeductibleContriAmt", () => {
-  const result = form8606.build({ nondeductible_contributions: 6000 });
-  assertStringIncludes(
-    result,
-    "<NondeductibleContriAmt>6000</NondeductibleContriAmt>",
-  );
-});
-
-Deno.test("f8606: prior_basis maps to TotalBasisInTraditionalIRAAmt", () => {
-  const result = form8606.build({ prior_basis: 12000 });
-  assertStringIncludes(
-    result,
-    "<TotalBasisInTraditionalIRAAmt>12000</TotalBasisInTraditionalIRAAmt>",
-  );
-});
-
-Deno.test("f8606: year_end_ira_value maps to TraditionalIRAValueAmt", () => {
-  const result = form8606.build({ year_end_ira_value: 80000 });
-  assertStringIncludes(
-    result,
-    "<TraditionalIRAValueAmt>80000</TraditionalIRAValueAmt>",
-  );
-});
-
-Deno.test("f8606: traditional_distributions maps to TraditionalIRADistriAmt", () => {
-  const result = form8606.build({ traditional_distributions: 5000 });
-  assertStringIncludes(
-    result,
-    "<TraditionalIRADistriAmt>5000</TraditionalIRADistriAmt>",
-  );
-});
-
-Deno.test("f8606: roth_conversion maps to RothConversionAmt", () => {
-  const result = form8606.build({ roth_conversion: 20000 });
-  assertStringIncludes(result, "<RothConversionAmt>20000</RothConversionAmt>");
-});
-
-Deno.test("f8606: roth_distribution maps to RothIRADistributionAmt", () => {
-  const result = form8606.build({ roth_distribution: 3000 });
-  assertStringIncludes(
-    result,
-    "<RothIRADistributionAmt>3000</RothIRADistributionAmt>",
-  );
-});
-
-Deno.test("f8606: roth_basis_contributions maps to RothContributionsBasisAmt", () => {
-  const result = form8606.build({ roth_basis_contributions: 18000 });
-  assertStringIncludes(
-    result,
-    "<RothContributionsBasisAmt>18000</RothContributionsBasisAmt>",
-  );
-});
-
-Deno.test("f8606: roth_basis_conversions maps to RothConversionBasisAmt", () => {
-  const result = form8606.build({ roth_basis_conversions: 10000 });
-  assertStringIncludes(
-    result,
-    "<RothConversionBasisAmt>10000</RothConversionBasisAmt>",
-  );
-});
-
-// ---------------------------------------------------------------------------
-// Section 5: Sparse output
-// ---------------------------------------------------------------------------
-
-Deno.test("f8606: single known field emits only that element, absent fields omitted", () => {
-  const result = form8606.build({ nondeductible_contributions: 6000 });
-  assertStringIncludes(
-    result,
-    "<NondeductibleContriAmt>6000</NondeductibleContriAmt>",
-  );
-  assertNotIncludes(result, "<TotalBasisInTraditionalIRAAmt>");
-  assertNotIncludes(result, "<TraditionalIRAValueAmt>");
-  assertNotIncludes(result, "<RothConversionAmt>");
-});
-
-Deno.test("f8606: two fields present: only those two elements emitted", () => {
-  const result = form8606.build({
-    nondeductible_contributions: 6000,
-    roth_conversion: 20000,
-  });
-  assertStringIncludes(
-    result,
-    "<NondeductibleContriAmt>6000</NondeductibleContriAmt>",
-  );
-  assertStringIncludes(result, "<RothConversionAmt>20000</RothConversionAmt>");
-  assertNotIncludes(result, "<TotalBasisInTraditionalIRAAmt>");
-  assertNotIncludes(result, "<TraditionalIRAValueAmt>");
-});
-
-// ---------------------------------------------------------------------------
-// Section 6: All fields present
-// ---------------------------------------------------------------------------
-
-const allFields = {
-  nondeductible_contributions: 6000,
-  prior_basis: 12000,
-  year_end_ira_value: 80000,
-  traditional_distributions: 5000,
-  roth_conversion: 20000,
-  roth_distribution: 3000,
-  roth_basis_contributions: 18000,
-  roth_basis_conversions: 10000,
+const filer = {
+  primarySSN: "123456789",
+  nameLine1: "SMITH JOHN A",
+  nameControl: "SMIT",
+  fullName: "John A Smith",
+  address: { line1: "1 MAIN ST", city: "AUSTIN", state: "TX", zip: "78701" },
+  filingStatus: FilingStatus.Single,
 };
 
-Deno.test("f8606: all 8 fields present: output wrapped in IRS8606 tag", () => {
-  const result = form8606.build(allFields);
-  assertStringIncludes(result, "<IRS8606>");
-  assertStringIncludes(result, "</IRS8606>");
+const partI = {
+  print_line1_nondeductible: 6_000,
+  print_line2_prior_basis: 5_000,
+  print_line3_total_basis: 11_000,
+  print_line14_remaining_basis: 11_000,
+  source_traditional_distributions: 0,
+  source_roth_conversion: 0,
+  source_roth_distribution: 0,
+  source_roth_basis_contributions: 0,
+  source_roth_basis_conversions: 0,
+  filing_details: {
+    owner: IraOwner.Taxpayer,
+    prior_basis_documented_from_2024_form8606: true as const,
+    no_ira_distributions_or_conversions_confirmed: true as const,
+  },
+};
+
+Deno.test("Form 8606: absent pending produces no document", () => {
+  assertEquals(form8606.build([]), "");
 });
 
-Deno.test("f8606: all 8 fields present: all elements emitted", () => {
-  const result = form8606.build(allFields);
+Deno.test("Form 8606: taxpayer-owned no-activity Part I uses native ordered fields", () => {
+  const xml = form8606.build(partI, { filer });
   assertStringIncludes(
-    result,
-    "<NondeductibleContriAmt>6000</NondeductibleContriAmt>",
+    xml,
+    "<IRS8606><Form8606IRANamelineTxt>John A Smith</Form8606IRANamelineTxt>",
   );
   assertStringIncludes(
-    result,
-    "<TotalBasisInTraditionalIRAAmt>12000</TotalBasisInTraditionalIRAAmt>",
+    xml,
+    "<NondedIRATxpyrWithIRASSN>123456789</NondedIRATxpyrWithIRASSN>",
   );
   assertStringIncludes(
-    result,
-    "<TraditionalIRAValueAmt>80000</TraditionalIRAValueAmt>",
+    xml,
+    "<NondedIRACurrTYNondedContriAmt>6000</NondedIRACurrTYNondedContriAmt>",
   );
   assertStringIncludes(
-    result,
-    "<TraditionalIRADistriAmt>5000</TraditionalIRADistriAmt>",
-  );
-  assertStringIncludes(result, "<RothConversionAmt>20000</RothConversionAmt>");
-  assertStringIncludes(
-    result,
-    "<RothIRADistributionAmt>3000</RothIRADistributionAmt>",
+    xml,
+    "<NondedIRABasisForPYAmt>5000</NondedIRABasisForPYAmt>",
   );
   assertStringIncludes(
-    result,
-    "<RothContributionsBasisAmt>18000</RothContributionsBasisAmt>",
+    xml,
+    "<NondedIRATotalIRAValueAmt>11000</NondedIRATotalIRAValueAmt>",
   );
   assertStringIncludes(
-    result,
-    "<RothConversionBasisAmt>10000</RothConversionBasisAmt>",
+    xml,
+    "<NondedIRATotalIRABasisAmt>11000</NondedIRATotalIRABasisAmt>",
+  );
+  assertEquals(xml.includes("NondeductibleContriAmt"), false);
+});
+
+Deno.test("Form 8606: flat legacy and explicit empty records cannot file", () => {
+  const emptyRecord: unknown = {};
+  const legacyRecord: unknown = { nondeductible_contributions: 6_000 };
+  assertThrows(
+    () => form8606.build(emptyRecord as Parameters<typeof form8606.build>[0]),
+    Error,
+    "empty pending record",
+  );
+  assertThrows(() =>
+    form8606.build(
+      legacyRecord as Parameters<typeof form8606.build>[0],
+      { filer },
+    )
   );
 });
 
-// ---------------------------------------------------------------------------
-// Section 7: Non-numeric fields silently ignored
-// ---------------------------------------------------------------------------
-
-Deno.test("f8606: string field is silently ignored", () => {
-  const result = form8606.build({
-    filing_status: "S",
-    nondeductible_contributions: 6000,
-  });
-  assertStringIncludes(
-    result,
-    "<NondeductibleContriAmt>6000</NondeductibleContriAmt>",
+Deno.test("Form 8606: spouse owner and joint return reject instead of guessing", () => {
+  assertThrows(
+    () =>
+      form8606.build({
+        ...partI,
+        filing_details: { ...partI.filing_details, owner: IraOwner.Spouse },
+      }, { filer }),
+    Error,
+    "spouse-owned IRA",
   );
-  assertNotIncludes(result, "filing_status");
-  assertNotIncludes(result, '"S"');
+  assertThrows(
+    () =>
+      form8606.build(partI, {
+        filer: { ...filer, filingStatus: FilingStatus.MarriedFilingJointly },
+      }),
+    Error,
+    "joint returns",
+  );
+});
+
+Deno.test("Form 8606: distributions, conversions, and Roth activity reject", () => {
+  for (
+    const sourceField of [
+      "source_traditional_distributions",
+      "source_roth_conversion",
+      "source_roth_distribution",
+      "source_roth_basis_contributions",
+      "source_roth_basis_conversions",
+    ] as const
+  ) {
+    assertThrows(
+      () => form8606.build({ ...partI, [sourceField]: 1 }, { filer }),
+      Error,
+      "no-distribution, no-conversion",
+    );
+  }
+});
+
+Deno.test("Form 8606: line arithmetic and owner source confirmations are required", () => {
+  assertThrows(
+    () =>
+      form8606.build({ ...partI, print_line14_remaining_basis: 10_000 }, {
+        filer,
+      }),
+    Error,
+    "line 3 = line 14",
+  );
+  assertThrows(
+    () => form8606.build({ ...partI, filing_details: undefined }, { filer }),
+    Error,
+    "IRA owner",
+  );
+  assertThrows(
+    () => form8606.build(partI),
+    Error,
+    "return header",
+  );
 });

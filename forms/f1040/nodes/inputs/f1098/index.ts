@@ -5,7 +5,6 @@ import type {
 } from "../../../../../core/types/tax-node.ts";
 import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { form_8829 } from "../../intermediate/forms/form_8829/index.ts";
 import { scheduleA as schedule_a } from "../schedule_a/index.ts";
 import { scheduleC as schedule_c } from "../schedule_c/index.ts";
 import { scheduleE as schedule_e } from "../schedule_e/index.ts";
@@ -13,7 +12,8 @@ import { schedule1 } from "../../outputs/schedule1/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // FOR dropdown: destination schedule/form
-// A = Schedule A, C = Schedule C, E = Schedule E, 8829 = Form 8829
+// A = Schedule A, C = Schedule C, E = Schedule E. The 8829 selection fails
+// until homeowner interest and Schedule A allocation facts are modeled.
 export enum ForRouting {
   A = "A",
   C = "C",
@@ -106,13 +106,6 @@ function aggregateScheduleCInterest(items: F1098Items): number {
     .reduce((sum, item) => sum + netInterestForItem(item), 0);
 }
 
-// Aggregate Form 8829 mortgage interest
-function aggregateForm8829Interest(items: F1098Items): number {
-  return items
-    .filter((item) => item.for_routing === ForRouting.F8829)
-    .reduce((sum, item) => sum + netInterestForItem(item), 0);
-}
-
 // Aggregate prior-year refund income (Scenario B → Schedule 1 line 8z)
 function aggregatePriorYearRefundIncome(items: F1098Items): number {
   return items
@@ -153,12 +146,6 @@ function scheduleCOutput(items: F1098Items): NodeOutput[] {
   return [output(schedule_c, { line16a_interest_mortgage: interest })];
 }
 
-function form8829Output(items: F1098Items): NodeOutput[] {
-  const interest = aggregateForm8829Interest(items);
-  if (interest <= 0) return [];
-  return [output(form_8829, { mortgage_interest: interest })];
-}
-
 function schedule1Output(items: F1098Items): NodeOutput[] {
   const income = aggregatePriorYearRefundIncome(items);
   if (income <= 0) return [];
@@ -172,18 +159,21 @@ class F1098Node extends TaxNode<typeof inputSchema> {
     schedule_a,
     schedule_c,
     schedule_e,
-    form_8829,
     schedule1,
   ]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { f1098s } = input;
+    if (f1098s.some((item) => item.for_routing === ForRouting.F8829)) {
+      throw new Error(
+        "Form 1098 mortgage interest routed to Form 8829 needs homeowner interest and Schedule A allocation facts",
+      );
+    }
 
     const outputs: NodeOutput[] = [
       ...scheduleAOutput(f1098s),
       ...scheduleEOutput(f1098s),
       ...scheduleCOutput(f1098s),
-      ...form8829Output(f1098s),
       ...schedule1Output(f1098s),
     ];
 

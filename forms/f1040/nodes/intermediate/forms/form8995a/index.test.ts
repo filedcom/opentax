@@ -3,12 +3,52 @@ import { form8995a, inputSchema } from "./index.ts";
 import { FilingStatus } from "../../../types.ts";
 
 function compute(input: Record<string, unknown>) {
-  return form8995a.compute({ taxYear: 2025, formType: "f1040" }, inputSchema.parse(input));
+  return form8995a.compute(
+    { taxYear: 2025, formType: "f1040" },
+    inputSchema.parse(input),
+  );
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
+
+Deno.test("bounded source: one identified non-SSTB business retains its filing facts", () => {
+  const details = {
+    business_name: "Smith Design LLC",
+    ein: "123456789",
+    business_qbi: 100_000,
+    business_w2_wages: 20_000,
+    business_ubia: 200_000,
+    one_non_sstb_business_confirmed: true,
+    no_aggregation_or_patron_status_confirmed: true,
+    no_reit_ptp_or_loss_carryforward_confirmed: true,
+    qualified_dividends_zero_confirmed: true,
+    qbi_wages_ubia_sources_confirmed: true,
+    taxable_income_before_qbi_confirmed: true,
+  };
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    taxable_income: 300_000,
+    net_capital_gain: 0,
+    qbi: 100_000,
+    w2_wages: 20_000,
+    unadjusted_basis: 200_000,
+    business_filing_details: details,
+  });
+  assertEquals(
+    findOutput(result, "f1040")?.fields.line13_qbi_deduction,
+    10_000,
+  );
+  assertEquals(
+    findOutput(result, "standard_deduction")?.fields.qbi_deduction,
+    10_000,
+  );
+  assertEquals(
+    findOutput(result, "form8995a")?.fields.business_filing_details,
+    details,
+  );
+});
 
 // ── Input validation ─────────────────────────────────────────────────────────
 
@@ -19,7 +59,8 @@ Deno.test("validation: accepts negative qbi (net loss — produces no deduction)
     taxable_income: 300_000,
     qbi: -1000,
   });
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs.length, 1);
+  assertEquals(findOutput(result, "form8995a")?.fields.qbi, -1_000);
 });
 
 Deno.test("validation: rejects negative w2_wages", () => {
@@ -45,7 +86,10 @@ Deno.test("validation: rejects positive qbi_loss_carryforward", () => {
 });
 
 Deno.test("validation: accepts all-absent inputs — no outputs", () => {
-  const result = compute({ filing_status: FilingStatus.Single, taxable_income: 300_000 });
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    taxable_income: 300_000,
+  });
   assertEquals(result.outputs.length, 0);
 });
 
@@ -344,7 +388,7 @@ Deno.test("routing: both f1040 and standard_deduction outputs present when deduc
     taxable_income: 100_000,
     qbi: 50_000,
   });
-  assertEquals(result.outputs.length, 2);
+  assertEquals(result.outputs.length, 3);
 });
 
 Deno.test("routing: no QBI activity — no outputs", () => {
@@ -395,6 +439,9 @@ Deno.test("smoke: mixed QBI + SSTB + REIT, above threshold, partial phase-in MFJ
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
   assertEquals(out?.fields.line13_qbi_deduction, 25_000);
-  assertEquals(findOutput(result, "standard_deduction")?.fields.qbi_deduction, 25_000);
-  assertEquals(result.outputs.length, 2);
+  assertEquals(
+    findOutput(result, "standard_deduction")?.fields.qbi_deduction,
+    25_000,
+  );
+  assertEquals(result.outputs.length, 3);
 });

@@ -1098,16 +1098,66 @@ Deno.test("part3: married 2024 last-month evidence cannot guess spouse allocatio
           ...failure,
           last_month_rule_evidence: {
             ...prior2024MarriedFamily,
+            spouse_has_separate_hsa: true,
+          },
+        },
+      }),
+    Error,
+  );
+});
+
+Deno.test("part3: married one-HSA 2024 mixed coverage uses each actual month for recapture", () => {
+  const result = compute({
+    eligible_hdhp_coverage_by_month: Array(12).fill(null),
+    testing_period_failure: {
+      last_month_rule_evidence: {
+        ...prior2024MarriedFamily,
+        eligible_hdhp_coverage_by_month: [
+          ...Array(6).fill(CoverageType.SelfOnly),
+          ...Array(5).fill(null),
+          CoverageType.Family,
+        ],
+        filed_form8889_line2: 5_000,
+        filed_form8889_line13: 5_000,
+      },
+      qualified_funding_distribution_amount: 0,
+      not_death_or_disability: true,
+      prior_year_source: "Filed 2024 Form 8889 and monthly HDHP records",
+    },
+  });
+  // $5,150 for six self-only months plus $9,300 for December: $3,350
+  // redetermined 2024 limit. The other five months had no eligibility.
+  assertEquals(findOutput(result, "form8889")?.fields.print_line18, 1_650);
+  assertEquals(findOutput(result, "form8889")?.fields.print_line21, 165);
+  assertEquals(fieldsOf(result.outputs, schedule1)?.line8f_hsa_income, 1_650);
+  assertEquals(
+    fieldsOf(result.outputs, schedule2)?.line17d_hsa_eligibility_tax,
+    165,
+  );
+});
+
+Deno.test("part3: mixed 2024 coverage rejects a filed limit inconsistent with December family HDHP", () => {
+  assertThrows(
+    () =>
+      compute({
+        eligible_hdhp_coverage_by_month: Array(12).fill(null),
+        testing_period_failure: {
+          last_month_rule_evidence: {
+            ...prior2024MarriedFamily,
             eligible_hdhp_coverage_by_month: [
               CoverageType.SelfOnly,
               ...Array(10).fill(null),
               CoverageType.Family,
             ],
+            filed_form8889_line3: 4_150,
           },
+          qualified_funding_distribution_amount: 0,
+          not_death_or_disability: true,
+          prior_year_source: "Filed 2024 Form 8889 and monthly HDHP records",
         },
       }),
     Error,
-    "family-only eligible months",
+    "filed lines 3-8",
   );
 });
 

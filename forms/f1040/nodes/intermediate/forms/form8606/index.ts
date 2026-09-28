@@ -3,13 +3,24 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
 // ─── Input Schema ─────────────────────────────────────────────────────────────
+
+export enum IraOwner {
+  Taxpayer = "taxpayer",
+  Spouse = "spouse",
+}
+
+export const filingDetailsSchema = z.object({
+  owner: z.nativeEnum(IraOwner),
+  prior_basis_documented_from_2024_form8606: z.literal(true),
+  no_ira_distributions_or_conversions_confirmed: z.literal(true),
+});
 
 export const inputSchema = z.object({
   // Part I — Nondeductible Traditional IRA Contributions
@@ -41,9 +52,32 @@ export const inputSchema = z.object({
 
   // Line 24: cumulative basis in Roth IRA conversions and QRP rollovers (carry-forward)
   roth_basis_conversions: z.number().nonnegative().optional(),
+
+  // Required source attestations and owner for the bounded no-activity MeF path.
+  filing_details: filingDetailsSchema.optional(),
 });
 
 export type Form8606Input = z.infer<typeof inputSchema>;
+
+export const printSchema = z.object({
+  print_line1_nondeductible: z.number().nonnegative(),
+  print_line2_prior_basis: z.number().nonnegative(),
+  print_line3_total_basis: z.number().nonnegative(),
+  print_line14_remaining_basis: z.number().nonnegative(),
+  print_line6_year_end_value: z.number().nonnegative().optional(),
+  print_line7_distributions: z.number().nonnegative().optional(),
+  print_line8_conversions: z.number().nonnegative().optional(),
+  print_line13_nontaxable: z.number().nonnegative().optional(),
+  print_line15c_taxable: z.number().nonnegative().optional(),
+  print_line16_converted: z.number().nonnegative().optional(),
+  print_line18_taxable_conversion: z.number().nonnegative().optional(),
+  source_traditional_distributions: z.number().nonnegative(),
+  source_roth_conversion: z.number().nonnegative(),
+  source_roth_distribution: z.number().nonnegative(),
+  source_roth_basis_contributions: z.number().nonnegative(),
+  source_roth_basis_conversions: z.number().nonnegative(),
+  filing_details: filingDetailsSchema.optional(),
+});
 
 // ─── Part I Helpers ───────────────────────────────────────────────────────────
 
@@ -63,7 +97,11 @@ function basisRatioDenominator(input: Form8606Input): number {
 }
 
 // Line 10: nontaxable portion of distributions + conversions combined
-function nontaxableTotal(basis: number, denominator: number, distributed: number): number {
+function nontaxableTotal(
+  basis: number,
+  denominator: number,
+  distributed: number,
+): number {
   if (denominator <= 0) return 0;
   // Ratio × total distributed; capped at total basis
   const ratio = Math.min(1, basis / denominator);
@@ -82,17 +120,26 @@ function nontaxableConversions(
 }
 
 // Line 12: nontaxable portion allocable to traditional distributions only
-function nontaxableDistributions(nontaxableAmt: number, nontaxableConv: number): number {
+function nontaxableDistributions(
+  nontaxableAmt: number,
+  nontaxableConv: number,
+): number {
   return nontaxableAmt - nontaxableConv;
 }
 
 // Line 13: taxable traditional IRA distributions
-function taxableTraditional(distributions: number, nontaxableDist: number): number {
+function taxableTraditional(
+  distributions: number,
+  nontaxableDist: number,
+): number {
   return Math.max(0, distributions - nontaxableDist);
 }
 
 // Line 18: taxable Roth conversion (Part II)
-function taxableConversion(conversions: number, nontaxableConv: number): number {
+function taxableConversion(
+  conversions: number,
+  nontaxableConv: number,
+): number {
   return Math.max(0, conversions - nontaxableConv);
 }
 
@@ -119,7 +166,11 @@ function computePartI(input: Form8606Input): PartIResult {
 
   // No distributions or conversions — Part I produces nothing taxable, but basis carries forward
   if (totalDistributed <= 0) {
-    return { taxableTraditionalDist: 0, taxableConversionAmt: conversions, line14RemainingBasis: basis };
+    return {
+      taxableTraditionalDist: 0,
+      taxableConversionAmt: conversions,
+      line14RemainingBasis: basis,
+    };
   }
 
   // No basis — all distributions are fully taxable, no carryforward
@@ -133,7 +184,11 @@ function computePartI(input: Form8606Input): PartIResult {
 
   const denominator = basisRatioDenominator(input);
   const nontaxableAmt = nontaxableTotal(basis, denominator, totalDistributed);
-  const nontaxableConv = nontaxableConversions(nontaxableAmt, distributions, conversions);
+  const nontaxableConv = nontaxableConversions(
+    nontaxableAmt,
+    distributions,
+    conversions,
+  );
   const nontaxableDist = nontaxableDistributions(nontaxableAmt, nontaxableConv);
 
   return {
@@ -171,7 +226,8 @@ function buildF1040Output(
   taxableConversionAmt: number,
   taxableRoth: number,
 ): NodeOutput | null {
-  const totalTaxable = taxableTraditionalDist + taxableConversionAmt + taxableRoth;
+  const totalTaxable = taxableTraditionalDist + taxableConversionAmt +
+    taxableRoth;
   if (totalTaxable <= 0) return null;
 
   return output(f1040, { line4b_ira_taxable: totalTaxable });
@@ -187,7 +243,11 @@ class Form8606Node extends TaxNode<typeof inputSchema> {
   compute(_ctx: NodeContext, rawInput: Form8606Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
-    const { taxableTraditionalDist, taxableConversionAmt, line14RemainingBasis } = computePartI(input);
+    const {
+      taxableTraditionalDist,
+      taxableConversionAmt,
+      line14RemainingBasis,
+    } = computePartI(input);
     const taxableRoth = computePartIII(input);
 
     const f1040Output = buildF1040Output(
@@ -200,8 +260,13 @@ class Form8606Node extends TaxNode<typeof inputSchema> {
     if (f1040Output !== null) {
       outputs.push(f1040Output);
       // Also route taxable IRA amount to agi_aggregator so AGI reflects Form 8606 computation.
-      const totalTaxable = taxableTraditionalDist + taxableConversionAmt + taxableRoth;
-      outputs.push(this.outputNodes.output(agi_aggregator, { line4b_ira_taxable: totalTaxable }));
+      const totalTaxable = taxableTraditionalDist + taxableConversionAmt +
+        taxableRoth;
+      outputs.push(
+        this.outputNodes.output(agi_aggregator, {
+          line4b_ira_taxable: totalTaxable,
+        }),
+      );
     }
 
     // ── Self-emit Form 8606 Part I line values for the PDF builder ───────────
@@ -211,28 +276,40 @@ class Form8606Node extends TaxNode<typeof inputSchema> {
     const basis = totalBasis(input);
     const distributions = input.traditional_distributions ?? 0;
     const conversions = input.roth_conversion ?? 0;
-    const printFields: Record<string, number> = {
+    const printFields = printSchema.parse({
       print_line1_nondeductible: input.nondeductible_contributions,
       print_line2_prior_basis: input.prior_basis ?? 0,
       print_line3_total_basis: basis,
       print_line14_remaining_basis: line14RemainingBasis,
-    };
-    if (distributions + conversions > 0) {
-      printFields.print_line6_year_end_value = input.year_end_ira_value ?? 0;
-      printFields.print_line7_distributions = distributions;
-      printFields.print_line8_conversions = conversions;
-      printFields.print_line13_nontaxable = Math.max(0, basis - line14RemainingBasis);
-      printFields.print_line15c_taxable = taxableTraditionalDist;
-      if (conversions > 0) {
-        printFields.print_line16_converted = conversions;
-        printFields.print_line18_taxable_conversion = taxableConversionAmt;
-      }
-    }
+      source_traditional_distributions: distributions,
+      source_roth_conversion: conversions,
+      source_roth_distribution: input.roth_distribution ?? 0,
+      source_roth_basis_contributions: input.roth_basis_contributions ?? 0,
+      source_roth_basis_conversions: input.roth_basis_conversions ?? 0,
+      filing_details: input.filing_details,
+      ...(distributions + conversions > 0
+        ? {
+          print_line6_year_end_value: input.year_end_ira_value ?? 0,
+          print_line7_distributions: distributions,
+          print_line8_conversions: conversions,
+          print_line13_nontaxable: Math.max(0, basis - line14RemainingBasis),
+          print_line15c_taxable: taxableTraditionalDist,
+        }
+        : {}),
+      ...(conversions > 0
+        ? {
+          print_line16_converted: conversions,
+          print_line18_taxable_conversion: taxableConversionAmt,
+        }
+        : {}),
+    });
     outputs.push({ nodeType: this.nodeType, fields: printFields });
 
     return {
       outputs,
-      ...(line14RemainingBasis > 0 ? { carryforwards: { ira_remaining_basis_8606: line14RemainingBasis } } : {}),
+      ...(line14RemainingBasis > 0
+        ? { carryforwards: { ira_remaining_basis_8606: line14RemainingBasis } }
+        : {}),
     };
   }
 }

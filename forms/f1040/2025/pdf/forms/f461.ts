@@ -1,11 +1,10 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
-
-const fields: ReadonlyArray<PdfFieldEntry> = [
-  { kind: "text", domainKey: "excess_business_loss", pdfField: "topmostSubform[0].Page1[0].f1_1[0]" },
-];
+import type { PdfFormDescriptor } from "../form-descriptor.ts";
 
 export const form461Pdf: PdfFormDescriptor = {
   pendingKey: "form461",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f461--2025.pdf",
-  fields,
+  // No verified line-to-AcroForm mapping. The former domainKey was removed by
+  // the line-level Form 461 model, and f1_1 has not been verified as line 16.
+  // Keep PDF coverage explicitly open until the filled-page inspection batch.
+  fields: [],
 };

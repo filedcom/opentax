@@ -1,155 +1,148 @@
 import { z } from "zod";
-import type {
-  NodeOutput,
-  NodeResult,
-} from "../../../../../../core/types/tax-node.ts";
+import type { NodeResult } from "../../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
-import { scheduleC as schedule_c } from "../../../inputs/schedule_c/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import { TS } from "../../../types.ts";
 
-// ─── TY2025 Depreciation Rate Table (MACRS 39-year, mid-month convention) ─────
-// Source: IRS Instructions for Form 8829, Part III Line 41
-// Index 0 = January, Index 11 = December (first year of business use in TY2025)
-const DEPRECIATION_RATES_TY2025 = [
-  0.02461, // January
-  0.02247, // February
-  0.02033, // March
-  0.01819, // April
-  0.01605, // May
-  0.01391, // June
-  0.01177, // July
-  0.00963, // August
-  0.00749, // September
-  0.00535, // October
-  0.00321, // November
-  0.00107, // December
-];
+const amount = z.number().int().finite().nonnegative().max(999_999_999_999_999);
+const area = z.number().int().positive().max(999_999);
 
-// Rate for homes where business use began before 2025 (full-year mid-month convention)
-const DEPRECIATION_RATE_PRIOR_YEAR = 0.02564;
+// One rented home, one Schedule C business, and operating expenses only.
+// Owned homes, mortgage interest, taxes, casualty losses, and depreciation
+// require additional primary-source and cross-form reconciliation.
+export const rentedHomeSourceSchema = z.object({
+  business_reference: z.string().trim().min(1),
+  home_identifier: z.string().trim().min(1),
+  recipient: z.nativeEnum(TS),
+  business_area_sqft: area,
+  total_area_sqft: area,
+  schedule_c_line29_tentative_profit: z.number().int().finite().min(
+    -999_999_999_999_999,
+  ).max(999_999_999_999_999),
+  insurance_indirect: amount,
+  rent_indirect: amount,
+  repairs_indirect: amount,
+  utilities_indirect: amount,
+  other_indirect: amount,
+  prior_operating_carryover: amount,
+  regular_exclusive_use_verified: z.literal(true),
+  actual_expense_method_verified: z.literal(true),
+  rented_home_verified: z.literal(true),
+  sole_home_and_business_verified: z.literal(true),
+  no_daycare_or_inventory_exception: z.literal(true),
+  no_home_business_gain_or_other_trade_loss: z.literal(true),
+  no_casualty_mortgage_tax_or_depreciation: z.literal(true),
+  home_expenses_excluded_from_schedule_c_verified: z.literal(true),
+}).strict();
 
-// ─── Input Schema ─────────────────────────────────────────────────────────────
+export type RentedHomeSource = z.infer<typeof rentedHomeSourceSchema>;
 
 export const inputSchema = z.object({
-  // Part I: Business percentage inputs
-  total_area: z.number().nonnegative().optional(),
-  business_area: z.number().nonnegative().optional(),
+  rented_home: rentedHomeSourceSchema.optional(),
+}).strict();
 
-  // From f1098: mortgage interest already allocated to business use
-  mortgage_interest: z.number().nonnegative().optional(),
-
-  // Part II: Indirect expenses (business portion calculated via business_pct)
-  insurance: z.number().nonnegative().optional(),
-  rent: z.number().nonnegative().optional(),
-  repairs_maintenance: z.number().nonnegative().optional(),
-  utilities: z.number().nonnegative().optional(),
-  other_expenses: z.number().nonnegative().optional(),
-
-  // Gross income limitation (Schedule C tentative profit before home office)
-  gross_income_limit: z.number().nonnegative().optional(),
-
-  // Prior year unallowed operating expenses (Form 8829 Line 43 from prior year)
-  prior_year_operating_carryover: z.number().nonnegative().optional(),
-
-  // Part III: Depreciation inputs
-  home_fmv_or_basis: z.number().nonnegative().optional(),
-  // Month home first used for business: 1–12 for TY2025 first use, 0 for prior-year use
-  first_business_use_month: z.number().int().min(0).max(12).optional(),
-
-  // Prior year unallowed excess depreciation (Form 8829 Line 44 from prior year)
-  prior_year_depreciation_carryover: z.number().nonnegative().optional(),
+export const form8829LinesSchema = z.object({
+  line1: amount,
+  line2: amount,
+  line3: z.number().min(0).max(1),
+  line7: z.number().min(0).max(1),
+  line8: z.number().int().finite(),
+  line18b: amount,
+  line19b: amount,
+  line20b: amount,
+  line21b: amount,
+  line22b: amount,
+  line23b: amount,
+  line24: amount,
+  line25: amount,
+  line26: amount,
+  line27: amount,
+  line28: amount,
+  line32: amount,
+  line33: amount,
+  line34: amount,
+  line35: amount,
+  line36: amount,
+  line43: amount,
+  line44: amount,
 });
 
-type Form8829Input = z.infer<typeof inputSchema>;
+export type Form8829Lines = z.infer<typeof form8829LinesSchema>;
 
-// ─── Pure helpers ─────────────────────────────────────────────────────────────
-
-function businessPct(total: number, business: number): number {
-  return Math.min(1, business / total);
-}
-
-function computeDepreciation(input: Form8829Input, pct: number): number {
-  const basis = input.home_fmv_or_basis;
-  if (basis === undefined) return 0;
-
-  const month = input.first_business_use_month;
-  if (month === undefined) return 0;
-
-  let rate: number;
-  if (month === 0) {
-    rate = DEPRECIATION_RATE_PRIOR_YEAR;
-  } else {
-    rate = DEPRECIATION_RATES_TY2025[month - 1];
+export function calculateRentedHomeForm8829(
+  raw: RentedHomeSource,
+): Form8829Lines {
+  const source = rentedHomeSourceSchema.parse(raw);
+  if (source.business_area_sqft > source.total_area_sqft) {
+    throw new Error("Form 8829 business area exceeds total home area");
   }
-
-  return Math.round(basis * pct * rate);
+  const pct = Number(
+    (source.business_area_sqft / source.total_area_sqft).toFixed(5),
+  );
+  const line23b = source.insurance_indirect + source.rent_indirect +
+    source.repairs_indirect + source.utilities_indirect + source.other_indirect;
+  const line24 = Math.round(line23b * pct);
+  const line26 = line24 + source.prior_operating_carryover;
+  const line27 = Math.min(
+    Math.max(0, source.schedule_c_line29_tentative_profit),
+    line26,
+  );
+  const line28 = Math.max(
+    0,
+    source.schedule_c_line29_tentative_profit - line27,
+  );
+  return form8829LinesSchema.parse({
+    line1: source.business_area_sqft,
+    line2: source.total_area_sqft,
+    line3: pct,
+    line7: pct,
+    line8: source.schedule_c_line29_tentative_profit,
+    line18b: source.insurance_indirect,
+    line19b: source.rent_indirect,
+    line20b: source.repairs_indirect,
+    line21b: source.utilities_indirect,
+    line22b: source.other_indirect,
+    line23b,
+    line24,
+    line25: source.prior_operating_carryover,
+    line26,
+    line27,
+    line28,
+    line32: 0,
+    line33: 0,
+    line34: line27,
+    line35: 0,
+    line36: line27,
+    line43: line26 - line27,
+    line44: 0,
+  });
 }
-
-function computeOperatingExpenses(input: Form8829Input, pct: number): number {
-  const indirect =
-    (input.insurance ?? 0) +
-    (input.rent ?? 0) +
-    (input.repairs_maintenance ?? 0) +
-    (input.utilities ?? 0) +
-    (input.other_expenses ?? 0);
-
-  // Mortgage interest is already business-allocated — no further pct multiplication
-  return indirect * pct + (input.mortgage_interest ?? 0);
-}
-
-function computeAllowableDeduction(input: Form8829Input): number {
-  const total = input.total_area ?? 0;
-  const business = input.business_area ?? 0;
-
-  if (total === 0 || business === 0) return 0;
-
-  const pct = businessPct(total, business);
-  const incomeLimit = input.gross_income_limit ?? 0;
-
-  if (incomeLimit === 0) return 0;
-
-  // Step 1: Operating expenses (indirect × pct + mortgage_interest)
-  const operatingCurrent = computeOperatingExpenses(input, pct);
-  const operatingPool = operatingCurrent + (input.prior_year_operating_carryover ?? 0);
-
-  // Step 2: Apply income limit to operating expenses
-  const allowableOperating = Math.min(operatingPool, incomeLimit);
-
-  // Step 3: Remaining limit for depreciation
-  const remainingLimit = Math.max(0, incomeLimit - allowableOperating);
-
-  // Step 4: Depreciation pool
-  const depreciationCurrent = computeDepreciation(input, pct);
-  const depreciationPool = depreciationCurrent + (input.prior_year_depreciation_carryover ?? 0);
-
-  // Step 5: Apply remaining limit to depreciation
-  const allowableDepreciation = Math.min(depreciationPool, remainingLimit);
-
-  return allowableOperating + allowableDepreciation;
-}
-
-// ─── Node class ───────────────────────────────────────────────────────────────
 
 class Form8829Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form_8829";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule_c]);
+  readonly outputNodes = new OutputNodes([]);
 
-  compute(_ctx: NodeContext, rawInput: Form8829Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: z.infer<typeof inputSchema>): NodeResult {
+    if (ctx.taxYear !== 2025) throw new Error("Form 8829 route is TY2025 only");
     const input = inputSchema.parse(rawInput);
-    const deduction = computeAllowableDeduction(input);
-
-    if (deduction <= 0) return { outputs: [] };
-
-    const outputs: NodeOutput[] = [
-      this.outputNodes.output(schedule_c, { line_30_home_office: deduction }),
-    ];
-
-    return { outputs };
+    if (!input.rented_home) return { outputs: [] };
+    const lines = calculateRentedHomeForm8829(input.rented_home);
+    if (lines.line36 > 0) {
+      throw new Error(
+        "Form 8829 positive line 36 cannot be linked to Schedule C item line 30 before profit, SE tax, and QBI calculation",
+      );
+    }
+    return {
+      outputs: [
+        {
+          nodeType: this.nodeType,
+          fields: { rented_home: input.rented_home, ...lines },
+        },
+      ],
+    };
   }
 }
-
-// ─── Singleton export ─────────────────────────────────────────────────────────
 
 export const form_8829 = new Form8829Node();

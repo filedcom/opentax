@@ -20,18 +20,29 @@ identity, elections, and native XML are not filing-ready.
 
 ## End-to-end blockers
 
-- The node emits Schedule 1, the AGI aggregator, and Schedule 2 outputs, but no
-  `form8853` output containing computed lines 5, 6c, 8, 9b, 12, 13b, 20, 21, 23,
-  25, or 26. Thus the form descriptor receives at most raw source facts. Form
-  8853 must still be filed for MSA distributions even when taxable income is
-  zero.
-- The native builder writes flat, non-schema tags. The v5.4 XSD nests Section
+### Bounded native Archer MSA path now written
+
+One narrow source-to-filing route is now implemented but unrun: a single
+taxpayer-owned Archer MSA distribution whose whole-dollar gross amount is
+confirmed from Form 1099-SA and is fully matched by unreimbursed qualified
+medical expenses. The source must explicitly confirm no rollover, no tax
+exception, and no other Form 8853 activity. The node retains a Form 8853
+pending record even when lines 8 and 9b are zero. The MeF descriptor emits
+the native `ArcherMSAAndMedcrAdvntgMSAGrp` with required `MSAHolderSSN` and
+calculated lines 6a, 6b, 6c, 7, and 8 in XSD order. It rejects spouse/joint
+ambiguity and Schedule 1/2 conflicts. It does not emit flat legacy tags.
+
+This does not establish general Form 8853 support. The remaining paths below
+are still blocked, and neither the new XML nor the filled PDF has been run
+through the agreed full batch, local XSD validation, visual review, or ATS.
+
+- Other taxable Archer, Medicare, LTC, and contribution paths still lack a
+  complete node print record and source model. The v5.4 XSD nests Section
   A/B in `ArcherMSAAndMedcrAdvntgMSAGrp` with required `MSAHolderSSN`, and
   Section C in `SectCLTCInsuranceCntrctGrp` with required policyholder/insured
-  identity and line 15/16 answers. For example, `EmployerArcherMSAContriAmt` and
-  `LTCPeriodDaysCnt` in the builder are not the XSD's
-  `ArcherMSAEmployerContriAmt` and computed `LTCDaysMultiplyByPerDiemAmt`.
-  Existing unit tests assert the flat tags rather than schema-valid XML.
+  identity and line 15/16 answers. Section C remains unsupported; for example,
+  raw `ltc_period_days` is not the XSD's computed
+  `LTCDaysMultiplyByPerDiemAmt`. Focused native XML cases are written but unrun.
 - One boolean `archer_msa_exception` or `medicare_advantage_exception` currently
   removes the additional tax from **all** taxable distributions. IRS
   instructions say to check line 9a or 13a if **any** distribution qualifies,

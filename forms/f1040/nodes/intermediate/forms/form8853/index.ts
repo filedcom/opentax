@@ -3,7 +3,11 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../../core/types/tax-node.ts";
-import { TaxNode, output, type AtLeastOne } from "../../../../../../core/types/tax-node.ts";
+import {
+  type AtLeastOne,
+  output,
+  TaxNode,
+} from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
@@ -19,6 +23,19 @@ const ARCHER_MSA_PENALTY_RATE = 0.20;
 const MEDICARE_ADVANTAGE_PENALTY_RATE = 0.50;
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
+
+export enum MsaOwner {
+  Taxpayer = "taxpayer",
+  Spouse = "spouse",
+}
+
+export const archerDistributionFilingDetailsSchema = z.object({
+  owner: z.nativeEnum(MsaOwner),
+  single_archer_msa_distribution_confirmed: z.literal(true),
+  gross_amount_confirmed_from_1099sa: z.literal(true),
+  qualified_expenses_unreimbursed_confirmed: z.literal(true),
+  no_other_form8853_activity_confirmed: z.literal(true),
+});
 
 export const inputSchema = z.object({
   // ── Section A Part I: Archer MSA Contributions and Deductions ───────────
@@ -80,9 +97,13 @@ export const inputSchema = z.object({
   // Line 24: Reimbursements for qualified LTC services received
   // IRC §7702B; Form 8853 Section C line 24
   ltc_reimbursements: z.number().nonnegative().optional(),
+
+  // Source attestations and owner for the bounded fully qualified Archer MSA route.
+  archer_distribution_filing_details: archerDistributionFilingDetailsSchema
+    .optional(),
 });
 
-type Form8853Input = z.infer<typeof inputSchema>;
+export type Form8853Input = z.infer<typeof inputSchema>;
 
 // ─── Section A Part I: Archer MSA Deduction ──────────────────────────────────
 
@@ -128,6 +149,16 @@ function archerMsaPenaltyTax(input: Form8853Input): number {
   return taxable * ARCHER_MSA_PENALTY_RATE;
 }
 
+export function calculateArcherMsaDistribution(input: Form8853Input) {
+  const line6a = input.archer_msa_distributions ?? 0;
+  const line6b = input.archer_msa_rollover ?? 0;
+  const line6c = archerMsaNetDistributions(input);
+  const line7 = input.archer_msa_qualified_expenses ?? 0;
+  const line8 = archerMsaTaxableDist(input);
+  const line9b = archerMsaPenaltyTax(input);
+  return { line6a, line6b, line6c, line7, line8, line9b };
+}
+
 // ─── Section B: Medicare Advantage MSA Distributions ─────────────────────────
 
 // Line 12: Taxable Medicare Advantage MSA distributions = max(0, line10 - line11)
@@ -151,7 +182,8 @@ function medicareAdvantagePenaltyTax(input: Form8853Input): number {
 
 // Line 20: Total per diem LTC and accelerated death benefit payments
 function ltcTotalPerDiemPayments(input: Form8853Input): number {
-  return (input.ltc_qualified_contract_amount ?? 0) + (input.ltc_accelerated_death_benefits ?? 0);
+  return (input.ltc_qualified_contract_amount ?? 0) +
+    (input.ltc_accelerated_death_benefits ?? 0);
 }
 
 // Line 21: Per diem limit = daily limit × number of days in LTC period
@@ -162,14 +194,20 @@ function ltcPerDiemLimit(input: Form8853Input, ltcDailyLimit: number): number {
 }
 
 // Line 23: Exclusion amount = max(line21_per_diem_limit, line22_actual_costs)
-function ltcExclusionAmount(input: Form8853Input, ltcDailyLimit: number): number {
+function ltcExclusionAmount(
+  input: Form8853Input,
+  ltcDailyLimit: number,
+): number {
   const perDiemLimit = ltcPerDiemLimit(input, ltcDailyLimit);
   const actualCosts = input.ltc_actual_costs ?? 0;
   return Math.max(perDiemLimit, actualCosts);
 }
 
 // Line 25: Per diem limitation = max(0, line23 - line24_reimbursements)
-function ltcPerDiemLimitation(input: Form8853Input, ltcDailyLimit: number): number {
+function ltcPerDiemLimitation(
+  input: Form8853Input,
+  ltcDailyLimit: number,
+): number {
   const exclusion = ltcExclusionAmount(input, ltcDailyLimit);
   const reimbursements = input.ltc_reimbursements ?? 0;
   return Math.max(0, exclusion - reimbursements);
@@ -177,7 +215,10 @@ function ltcPerDiemLimitation(input: Form8853Input, ltcDailyLimit: number): numb
 
 // Line 26: Taxable LTC payments = max(0, line20 - line25)
 // IRC §7702B(d); Form 8853 Section C line 26 → Schedule 1 line 8e
-function ltcTaxablePayments(input: Form8853Input, ltcDailyLimit: number): number {
+function ltcTaxablePayments(
+  input: Form8853Input,
+  ltcDailyLimit: number,
+): number {
   const total = ltcTotalPerDiemPayments(input);
   if (total <= 0) return 0;
   const limitation = ltcPerDiemLimitation(input, ltcDailyLimit);
@@ -187,7 +228,10 @@ function ltcTaxablePayments(input: Form8853Input, ltcDailyLimit: number): number
 // ─── Output Builders ─────────────────────────────────────────────────────────
 
 // Schedule 1 output: line 8e (taxable MSA/LTC income) and line 23 (Archer MSA deduction)
-function schedule1Output(input: Form8853Input, ltcDailyLimit: number): NodeOutput[] {
+function schedule1Output(
+  input: Form8853Input,
+  ltcDailyLimit: number,
+): NodeOutput[] {
   const deduction = archerMsaDeduction(input);
   const taxableArcher = archerMsaTaxableDist(input);
   const taxableMedicareAdv = medicareAdvantaxableDist(input);
@@ -197,15 +241,29 @@ function schedule1Output(input: Form8853Input, ltcDailyLimit: number): NodeOutpu
   if (deduction <= 0 && totalTaxableIncome <= 0) return [];
 
   const s1Input: Partial<z.infer<typeof schedule1["inputSchema"]>> = {};
-  if (totalTaxableIncome > 0) s1Input.line8e_archer_msa_dist = totalTaxableIncome;
+  if (totalTaxableIncome > 0) {
+    s1Input.line8e_archer_msa_dist = totalTaxableIncome;
+  }
   if (deduction > 0) s1Input.line23_archer_msa_deduction = deduction;
 
   const agiInput: Partial<z.infer<typeof agi_aggregator["inputSchema"]>> = {};
-  if (totalTaxableIncome > 0) agiInput.line8e_archer_msa_dist = totalTaxableIncome;
+  if (totalTaxableIncome > 0) {
+    agiInput.line8e_archer_msa_dist = totalTaxableIncome;
+  }
   if (deduction > 0) agiInput.line23_archer_msa_deduction = deduction;
-  const results: NodeOutput[] = [output(schedule1, s1Input as AtLeastOne<z.infer<typeof schedule1["inputSchema"]>>)];
+  const results: NodeOutput[] = [
+    output(
+      schedule1,
+      s1Input as AtLeastOne<z.infer<typeof schedule1["inputSchema"]>>,
+    ),
+  ];
   if (Object.keys(agiInput).length > 0) {
-    results.push(output(agi_aggregator, agiInput as AtLeastOne<z.infer<typeof agi_aggregator["inputSchema"]>>));
+    results.push(
+      output(
+        agi_aggregator,
+        agiInput as AtLeastOne<z.infer<typeof agi_aggregator["inputSchema"]>>,
+      ),
+    );
   }
   return results;
 }
@@ -221,7 +279,20 @@ function schedule2Output(input: Form8853Input): NodeOutput[] {
   if (archerTax > 0) s2Input.line17e_archer_msa_tax = archerTax;
   if (medicareTax > 0) s2Input.line17f_medicare_advantage_msa_tax = medicareTax;
 
-  return [output(schedule2, s2Input as AtLeastOne<z.infer<typeof schedule2["inputSchema"]>>)];
+  return [
+    output(
+      schedule2,
+      s2Input as AtLeastOne<z.infer<typeof schedule2["inputSchema"]>>,
+    ),
+  ];
+}
+
+function hasForm8853Activity(input: Form8853Input): boolean {
+  return Object.values(input).some((value) =>
+    (typeof value === "number" && value > 0) ||
+    value === true ||
+    (typeof value === "object" && value !== null)
+  );
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────
@@ -229,7 +300,11 @@ function schedule2Output(input: Form8853Input): NodeOutput[] {
 class Form8853Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form8853";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1, agi_aggregator, schedule2]);
+  readonly outputNodes = new OutputNodes([
+    schedule1,
+    agi_aggregator,
+    schedule2,
+  ]);
 
   compute(ctx: NodeContext, rawInput: Form8853Input): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
@@ -239,6 +314,9 @@ class Form8853Node extends TaxNode<typeof inputSchema> {
       outputs: [
         ...schedule1Output(input, cfg.ltcPerDiemDailyLimit),
         ...schedule2Output(input),
+        ...(hasForm8853Activity(input)
+          ? [{ nodeType: this.nodeType, fields: input }]
+          : []),
       ],
     };
   }

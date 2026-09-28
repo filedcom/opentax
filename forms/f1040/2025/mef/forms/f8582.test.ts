@@ -23,6 +23,81 @@ Deno.test("Form 8582: rental classification alone is insufficient", () => {
   );
 });
 
+Deno.test("Form 8582: MFS lived apart prints the $75,000 phaseout and $7,500 allowance", () => {
+  const input = {
+    activities: [{
+      name: "Rental home",
+      activity_type: "A" as const,
+      property_type: 1,
+      reporting_form: "schedule_e" as const,
+      current_net: -20_000,
+      prior_unallowed_operating: 0,
+      prior_unallowed_4797_part1: 0,
+      prior_unallowed_4797_part2: 0,
+    }],
+    current_loss: 20_000,
+    rental_current_loss: 20_000,
+    has_active_rental: true,
+    active_participation: true,
+    filing_status: "mfs" as const,
+    mfs_lived_apart_all_year: true,
+    modified_agi: 60_000,
+  };
+  const context = {
+    pending: {
+      general: {
+        filing_status: "mfs",
+        mfs_spouse_lived_with_taxpayer: false,
+      },
+      schedule_e: {
+        schedule_es: [{
+          tsj: "T",
+          property_description: "Rental home",
+          property_type: 1,
+          activity_type: "A",
+          fair_rental_days: 365,
+          personal_use_days: 0,
+          rent_income: 0,
+          form_1099_payments_made: false,
+          expense_utilities: 20_000,
+        }],
+      },
+    },
+  };
+  const xml = form8582.build(input, context);
+  assertStringIncludes(
+    xml,
+    "<MaximumAllowedIncomeAmt>75000</MaximumAllowedIncomeAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<PercentNetSpecialAllowanceAmt>7500</PercentNetSpecialAllowanceAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<AllowedRentalRealtyLossAmt>7500</AllowedRentalRealtyLossAmt>",
+  );
+  assertThrows(
+    () =>
+      form8582.build({ ...input, mfs_lived_apart_all_year: false }, context),
+    Error,
+    "requires per-activity allocation",
+  );
+  assertThrows(
+    () =>
+      form8582.build(input, {
+        pending: {
+          ...context.pending,
+          general: {
+            filing_status: "mfs",
+            mfs_spouse_lived_with_taxpayer: true,
+          },
+        },
+      }),
+    Error,
+  );
+});
+
 Deno.test("Form 8582: prior-year suspended losses require activity allocation", () => {
   assertThrows(
     () => form8582.build({ prior_unallowed: 2_000 }),

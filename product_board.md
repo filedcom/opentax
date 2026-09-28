@@ -1698,6 +1698,27 @@ reach taxable Form 1040 line 1f. The old ambiguous `income_tax_liability`
 node input was directly renamed, with no alias. Written cases are unrun;
 child identity, prior carryforward, native XML/PDF, and IRS rules remain open.
 
+Parallel build-pass checkpoint, 2026-09-28, **unrun**: the
+[form-by-form audit](docs/mef/ty2025-form1040-form-audit.md) now names all 107
+registered MeF descriptors individually and records their open source and
+validation evidence. Static TY2025 native XML replacements and focused cases
+were written for Forms 4562, 7206, 8606, 8829, 8839, 8853, 8990, and
+8995-A. They are bounded paths, not whole-form support or an XSD pass.
+Cross-review found that positive Form 7206 health-insurance deductions lack
+primary premium-month and owner evidence, positive Form 8829 deductions do
+not reach the actual Schedule C item, nonexempt Form 8990 ATI is not
+return-reconciled, and Form 8839 credit inputs lack finalized MAGI, remaining
+tax, and adoption evidence. Those paths now fail closed rather than file a
+plausible but wrong deduction or credit. Active Schedule J also fails closed
+until its base-year tax worksheet is calculated. Form 461 C/F-only and Form
+4562 one-asset routes now
+reconcile against narrowly permitted filed-return sources; their filled PDFs
+remain unverified. New
+Form 8582 MFS-lived-apart and Form 8889 mixed-prior-coverage cases are written
+but unrun. No full test batch, TY2025 XSD execution, visual PDF check, IRS
+business-rule pass, ATS acceptance, PR, merge, or release has happened in this
+checkpoint. No path is promoted to verified by this note.
+
 The following are registered in `forms/f1040/2025/mef/forms/index.ts`.
 **Registered means the builder can be invoked, not that the form is complete or
 approved.** Mark each row in the INV-01 matrix after checking calculations, XML,

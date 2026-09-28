@@ -1,5 +1,8 @@
 import { element, elements } from "../../../mef/xml.ts";
+import { z } from "zod";
+import { CONFIG_BY_YEAR } from "../../../nodes/config/index.ts";
 import {
+  assertScheduleCInterestExempt,
   calculateScheduleCAtRiskNet,
   computeCOGS,
   computeGrossIncome,
@@ -18,6 +21,7 @@ import {
 
 interface Fields {
   readonly schedule_cs?: readonly ScheduleCItem[];
+  readonly line16a_interest_mortgage?: number;
   readonly wotc_wage_reductions?: ReadonlyArray<{
     business_reference: string;
     credit_amount: number;
@@ -259,6 +263,17 @@ export const scheduleC: MefFormDescriptor<
     if (items.length > 8) {
       throw new Error("MeF allows at most eight Schedule C documents");
     }
+    if ((fields?.line16a_interest_mortgage ?? 0) > 0) {
+      throw new Error(
+        "Schedule C upstream mortgage interest needs a business-linked section 163(j) exemption",
+      );
+    }
+    items.forEach((item) =>
+      assertScheduleCInterestExempt(
+        item,
+        CONFIG_BY_YEAR[2025].smallBizGrossReceipts,
+      )
+    );
     const reductions = wotcReductionsByBusiness({
       schedule_cs: items,
       wotc_wage_reductions: fields?.wotc_wage_reductions,

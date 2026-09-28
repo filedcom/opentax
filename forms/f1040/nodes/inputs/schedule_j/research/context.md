@@ -43,18 +43,21 @@ their prior years had lower (or zero) income that did not fully utilize lower ta
 | prior_year_taxable_income_py3 | Line 13 | 2024 taxable income (base year 3) |
 | schedule_j_tax | Line 23 | Computed Schedule J tax (taxpayer calculates using IRS worksheets) |
 
-## How It Flows to Form 1040
+## Filing status
 
-- Schedule J line 23 → Form 1040 line 16 (income tax)
-- This REPLACES the regular tax computation (qualified dividends/capital gain worksheet or tax tables)
-- The f1040 output node field is `line16_income_tax` (to be added)
+Active Schedule J elections currently fail closed. The supplied `schedule_j_tax` is
+not reconciled to the three base-year tax worksheets, so it must not be routed
+to Form 1040 line 16 as if verified. The [2025 Form 6251 instructions](https://www.irs.gov/instructions/i6251)
+also require line 10 tax to be refigured without Schedule J.
 
 ## Computation Architecture
 
-The engine captures the taxpayer's completed Schedule J inputs and routes the pre-computed
-`schedule_j_tax` (line 23) directly to `f1040.line16_income_tax`. The actual multi-year tax
-table lookups are done offline (by the taxpayer using IRS worksheets), consistent with how
-other complex IRS worksheets are handled in this engine.
+The input schema captures Schedule J facts, but the graph has no source-backed
+2022-2024 base-year tax computation or reconciliation of line 23. The preparatory
+input node therefore throws for a nonzero elected farm income rather than
+emitting an unverified tax amount. Future work must calculate or verify lines
+4, 8, 12, 16, and 19-23, including prior-year Schedule J use and special-rate
+worksheets, then route Form 1040 line 16 and the Form 6251 non-Schedule-J refigure.
 
 ## Sources
 - IRS Instructions for Schedule J (Form 1040) (2025): https://www.irs.gov/instructions/i1040sj

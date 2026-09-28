@@ -868,6 +868,55 @@ Deno.test("mfs_gets_zero_allowance: MFS, active rental, MAGI=40000, loss=20000 �
   assertEquals(findOutput(result, "schedule1"), undefined);
 });
 
+Deno.test("MFS lived apart all year uses the $12,500 rental allowance", () => {
+  const result = compute({
+    filing_status: FilingStatus.MFS,
+    mfs_lived_apart_all_year: true,
+    has_active_rental: true,
+    active_participation: true,
+    modified_agi: 40_000,
+    current_loss: 20_000,
+    rental_current_loss: 20_000,
+    current_income: 0,
+    prior_unallowed: 0,
+  });
+  assertEquals(
+    findOutput(result, "schedule1")?.fields.line5_schedule_e,
+    -12_500,
+  );
+  assertEquals(result.carryforwards?.suspended_pal_8582, 7_500);
+});
+
+Deno.test("MFS lived-apart allowance phases out between $50,000 and $75,000", () => {
+  const result = compute({
+    filing_status: FilingStatus.MFS,
+    mfs_lived_apart_all_year: true,
+    has_active_rental: true,
+    active_participation: true,
+    modified_agi: 60_000,
+    current_loss: 20_000,
+    rental_current_loss: 20_000,
+    current_income: 0,
+    prior_unallowed: 0,
+  });
+  assertEquals(
+    findOutput(result, "schedule1")?.fields.line5_schedule_e,
+    -7_500,
+  );
+  const ineligible = compute({
+    filing_status: FilingStatus.MFS,
+    mfs_lived_apart_all_year: false,
+    has_active_rental: true,
+    active_participation: true,
+    modified_agi: 60_000,
+    current_loss: 20_000,
+    rental_current_loss: 20_000,
+    current_income: 0,
+    prior_unallowed: 0,
+  });
+  assertEquals(findOutput(ineligible, "schedule1"), undefined);
+});
+
 // ─── 4. Hard Validation Rules ─────────────────────────────────────────────────
 
 Deno.test("mfs_ineligible_for_special_allowance: MFS gets $0 allowance, only income offsets → schedule1=-5000", () => {

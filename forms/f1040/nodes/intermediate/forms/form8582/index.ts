@@ -93,6 +93,9 @@ export const inputSchema = z.object({
 
   // Filing status — MFS filers who lived with spouse are ineligible for Part II
   filing_status: filingStatusSchema.optional(),
+  // IRC §469(i)(5)(B): MFS special allowance applies only when spouses lived
+  // apart at all times during the tax year. Missing proof stays ineligible.
+  mfs_lived_apart_all_year: z.boolean().optional(),
 });
 
 type Form8582Input = z.infer<typeof inputSchema>;
@@ -113,6 +116,7 @@ export type PassiveActivity = {
   readonly activeParticipation: boolean;
   readonly modifiedAgi?: number;
   readonly filingStatus?: FilingStatus;
+  readonly mfsLivedApartAllYear?: boolean;
 };
 
 export type PassiveLossLimit = {
@@ -541,7 +545,8 @@ export function allocateOtherPassivePrior4797(
 
 // MFS filer who lived with spouse any time during the year cannot use Part II
 function isMfsIneligible(activity: PassiveActivity): boolean {
-  return activity.filingStatus === FilingStatus.MFS;
+  return activity.filingStatus === FilingStatus.MFS &&
+    activity.mfsLivedApartAllYear !== true;
 }
 
 function allowanceThresholds(activity: PassiveActivity): {
@@ -549,11 +554,8 @@ function allowanceThresholds(activity: PassiveActivity): {
   upper: number;
   max: number;
 } {
-  if (isMfsIneligible(activity)) {
-    // MFS lived apart uses halved thresholds per IRC §469(i)(5)(B)
-    // Note: MFS who lived with spouse at ANY time gets $0 — that's handled
-    // by isMfsIneligible check before calling this. If we reach here, MFS
-    // already returned $0. This is only for documentation clarity.
+  if (activity.filingStatus === FilingStatus.MFS) {
+    // Reached only for an MFS filer verified as living apart all year.
     return {
       lower: MFS_MAGI_LOWER,
       upper: MFS_MAGI_UPPER,
@@ -577,8 +579,7 @@ function specialAllowance(
   if (!activity.activeParticipation) return 0;
 
   // MFS filers who lived with spouse at any time are ineligible (§469(i)(5)(A))
-  // We treat filing_status=mfs as ineligible (conservative — actual determination
-  // requires lived-apart determination which would require additional input).
+  // Missing or nonqualifying lived-apart proof remains ineligible.
   if (isMfsIneligible(activity)) return 0;
 
   // Modified AGI must be provided to apply the phase-out
@@ -661,6 +662,7 @@ function passiveActivity(input: Form8582Input): PassiveActivity {
       (input.active_participation ?? false),
     modifiedAgi: input.modified_agi,
     filingStatus: input.filing_status,
+    mfsLivedApartAllYear: input.mfs_lived_apart_all_year,
   };
 }
 

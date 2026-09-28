@@ -6,6 +6,27 @@ and
 Native XML must match the checked-in TY2025 v5.4 `Common/IRS8829/IRS8829.xsd`
 schema.
 
+## Bounded rented-home route written
+
+The node models one identified rented home used regularly and exclusively for
+one Schedule C business, with actual-method indirect insurance, rent, repairs,
+utilities, and other operating expenses. It requires explicit eligibility and
+exclusion facts. It calculates applicable 2025 lines 1–3, 7–8, 18b–28, 32–36,
+and 43–44. A positive line 36 is now blocked at the node and MeF boundaries: the
+executor cannot merge an output into one identified Schedule C item, so the
+prior top-level line 30 output did not change filed Schedule C line 30/31 or
+downstream SE tax and QBI. Zero-deduction Form 8829 still retains and emits line
+43 carryover. The old flat expense input is rejected. Form 1098's former
+full-box-1 routing to Form 8829 now fails explicitly because its
+mortgage-interest allocation is not modeled. The input is registered for the
+2025 filing graph.
+
+The MeF descriptor was rewritten for native TY2025 v5.4 `IRS8829` order. It
+requires proprietor name/SSN, recalculates every emitted line, and checks the
+identified Schedule C reference and line 29 for the zero-deduction route. The
+PDF descriptor maps the known bounded-route source fields to printed positions
+but does not yet fill the complete calculated form or identity.
+
 ## Bounded PDF correction
 
 The current PDF descriptor's Form 8829 line 1 and 2 fields were reversed.
@@ -20,20 +41,25 @@ been visually inspected.
 This corrects field placement only. It does not establish that a complete or
 accurate Form 8829 can be filed from the current calculator and XML builder.
 
-## Why the end-to-end route is not yet safe
+## Remaining end-to-end boundaries
 
-- The node emits only a Schedule C line 30 amount. It does not emit Form 8829's
-  computed lines 3, 7, 9–36, 37–44 or preserve the Part IV carryovers when the
-  current deduction is zero. The PDF and XML descriptors therefore receive
-  source amounts without the calculated form, even though the IRS form requires
-  the line-by-line computation.
-- The native builder's element names do not match v5.4 XSD. For example, its
-  `BusinessAreaOfHomeSqFtCnt`, `TotalAreaOfHomeSqFtCnt`, `InsuranceAmt`, and
-  `PYOperatingExpensesCyovAmt` are not schema elements. The schema instead
-  defines `BusinessUseSquareFeetCnt`, `TotalAreaOfHomeCnt`,
-  `InsuranceIndirectAmt`, and `OperatingExpensesCarryoverAmt`, in a fixed
-  sequence. The builder also omits proprietor name and SSN. Its existing unit
-  tests assert these non-schema names, not XSD-valid XML.
+- The bounded path excludes owned homes, all mortgage interest and real estate
+  taxes, casualty losses, depreciation, direct expenses, daycare, inventory
+  storage, and multiple homes or businesses. These need distinct sourced paths,
+  not an inferred zero expense in otherwise applicable returns.
+- Positive actual-method deductions need an item-linked Schedule C projection
+  before line 31, SE tax, and QBI are computed. The runtime's shallow array
+  accumulation cannot safely patch one `schedule_cs` item, so this route fails
+  closed rather than filing inconsistent Forms 8829 and Schedule C.
+- Eligibility, non-duplication of home costs in Schedule C expenses, and the
+  prior-year line 25 operating carryover are verified source facts, not yet
+  reconciled to independent use records, expense detail, or a prior-year return.
+  Schedule C lacks an owner field, so proprietor-to-business linkage is not
+  independently checked.
+- The native XML is written against v5.4 names and order but has not yet passed
+  local XSD or IRS business-rule validation. The registered PDF still lacks
+  identity and most computed fields; it must not be treated as a complete
+  filled-form validation.
 - The node assumes `mortgage_interest` is already allocated to business use. The
   1098 router actually sends the full box 1 amount, and the IRS instructions put
   deductible home mortgage interest in Form 8829 line 10 column (b), apply the
@@ -49,18 +75,12 @@ accurate Form 8829 can be filed from the current calculator and XML builder.
   current `first_business_use_month = 0` rate applies 2.564% to all prior years,
   but the instructions list exceptions requiring Pub. 946 or Pub. 534 rates.
   First use in 2025 can also require Form 4562.
-- The calculator omits direct expenses, excess mortgage interest and real estate
-  taxes, casualty losses, and the separate line 14/15/27/28/33 limitation order.
-  It caps an impossible business-area ratio above 100% instead of rejecting the
-  source facts. Daycare hours (lines 4–7), business-use eligibility,
-  simplified-method exclusion, and separate forms for multiple homes are not
-  represented.
-- Form 8829 line 8 is not simply an arbitrary nonnegative limit: the
-  instructions derive it from Schedule C line 29 with specified home-use gains
-  and other trade/business losses. The present manually supplied
-  `gross_income_limit` is not tied to that source calculation. A zero or absent
-  limit currently suppresses all outputs, including carryovers that must flow to
-  the next year.
+- The bounded calculator rejects a business area greater than the total area and
+  excludes daycare, direct expenses, excess interest and tax, casualty losses,
+  and depreciation rather than guessing those calculations.
+- Form 8829 line 8 is sourced from Schedule C line 29 only for the explicitly
+  excluded no-home-gain/no-other-trade-loss case. A zero or negative line 8 does
+  not suppress the filed Form 8829 or line 43 carryover.
 
 ## Required acceptance cases
 
@@ -78,6 +98,6 @@ accurate Form 8829 can be filed from the current calculator and XML builder.
    against the printed IRS form, including the 2025 line numbers and both
    expense columns.
 
-No compatibility layer or temporary calculator fallback is proposed. The PDF
-field correction is a bounded build change; a full Form 8829 filing claim must
-wait for the calculation, source routing, XSD, and visual gates.
+No compatibility layer or temporary calculator fallback was added. Full Form
+8829 coverage remains open until the excluded situations, local XSD, filled PDF,
+and IRS acceptance gates are satisfied.
