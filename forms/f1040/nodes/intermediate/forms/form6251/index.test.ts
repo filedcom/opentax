@@ -580,6 +580,58 @@ Deno.test("form6251: MFS has halved rate bracket threshold ($119,550 vs $239,100
   assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 22_429);
 });
 
+Deno.test("form6251: MFS line 4 adds 25% above the 2025 $900,350 threshold", () => {
+  const result = compute({
+    filing_status: "mfs",
+    regular_tax_income: 920_350,
+    regular_tax: 0,
+  });
+  const filed = result.outputs.find((item) => item.nodeType === "form6251");
+  assertEquals(filed?.fields.amti, 925_350);
+  assertEquals(filed?.fields.exemption, 0);
+  assertEquals(filed?.fields.taxable_excess, 925_350);
+  assertEquals(filed?.fields.tentative_tax, 256_707);
+  assertEquals(
+    mef6251.build(filed!.fields).includes(
+      "<AlternativeMinTaxableIncomeAmt>925350</AlternativeMinTaxableIncomeAmt>",
+    ),
+    true,
+  );
+});
+
+Deno.test("form6251: MFS line 4 addition stops at $68,500", () => {
+  const result = compute({
+    filing_status: "mfs",
+    regular_tax_income: 1_174_350,
+    regular_tax: 0,
+  });
+  const filed = result.outputs.find((item) => item.nodeType === "form6251");
+  assertEquals(filed?.fields.amti, 1_242_850);
+  assertEquals(filed?.fields.tentative_tax, 345_607);
+});
+
+Deno.test("form6251: MFS line 4 addition does not apply at threshold or to single filers", () => {
+  const atThreshold = compute({
+    filing_status: "mfs",
+    regular_tax_income: 900_350,
+    regular_tax: 0,
+  });
+  const single = compute({
+    filing_status: "single",
+    regular_tax_income: 920_350,
+    regular_tax: 0,
+  });
+  assertEquals(
+    atThreshold.outputs.find((item) => item.nodeType === "form6251")?.fields
+      .amti,
+    900_350,
+  );
+  assertEquals(
+    single.outputs.find((item) => item.nodeType === "form6251")?.fields.amti,
+    920_350,
+  );
+});
+
 Deno.test("form6251: HOH uses same exemption as single ($88,100)", () => {
   // HOH: AMTI = $200,000; exemption = $88,100; line6 = $111,900
   // TMT = floor($111,900 × 0.26) = $29,094; regular_tax = $15,000
@@ -728,8 +780,7 @@ Deno.test("form6251: throws on negative regular_tax", () => {
 
 // ─── Output routing ───────────────────────────────────────────────────────────
 
-Deno.test("form6251: line2g_pab_interest alias produces same AMTI as private_activity_bond_interest", () => {
-  // Both fields represent line 2g — only the larger should count (no double-count).
+Deno.test("form6251: either PAB source channel contributes to line 2g", () => {
   const via_primary = compute({
     filing_status: "single",
     regular_tax_income: 200_000,
@@ -748,16 +799,31 @@ Deno.test("form6251: line2g_pab_interest alias produces same AMTI as private_act
   );
 });
 
-Deno.test("form6251: both PAB fields set to same value — no double-count", () => {
-  // Setting both to 20_000 should produce same result as setting either alone.
+Deno.test("form6251: distinct PAB source channels add on line 2g", () => {
+  // 1099-DIV and 1099-INT/OID amounts are separate source channels.
   const result = compute({
     filing_status: "single",
     regular_tax_income: 200_000,
     private_activity_bond_interest: 20_000,
-    line2g_pab_interest: 20_000,
+    line2g_pab_interest: 5_000,
     regular_tax: 15_000,
   });
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 19_294);
+  const filed = result.outputs.find((item) => item.nodeType === "form6251");
+  assertEquals(filed?.fields.private_activity_bond_interest, 25_000);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 20_594);
+});
+
+Deno.test("form6251: multiple 1099 and child PAB deposits accumulate on line 2g", () => {
+  const result = compute({
+    filing_status: "single",
+    regular_tax_income: 200_000,
+    private_activity_bond_interest: 25,
+    line2g_pab_interest: [100, 200, 50],
+    regular_tax: 15_000,
+  });
+  const filed = result.outputs.find((item) => item.nodeType === "form6251");
+  assertEquals(filed?.fields.private_activity_bond_interest, 375);
+  assertEquals(filed?.fields.amti, 200_375);
 });
 
 Deno.test("form6251: routes AMT to Schedule 2 and its filed form", () => {

@@ -10,9 +10,13 @@ import { FilingStatus } from "../../../types.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
+import { normalizeArray } from "../../../utils.ts";
 
 // Phase-out rate: 25% of excess above threshold (IRC §55(d); Form 6251 Line 5 Worksheet, Step 5)
 const PHASE_OUT_RATE = 0.25;
+// 2025 Form 6251 line 4, married filing separately addition.
+const MFS_LINE4_ADDITION_START = 900_350;
+const MFS_LINE4_ADDITION_CAP = 68_500;
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -54,8 +58,12 @@ export const inputSchema = z.object({
   // Must be included in AMTI even though excluded for regular tax.
   // IRC §57(a)(5); Form 6251 Line 2g
   private_activity_bond_interest: z.number().nonnegative().optional(),
-  // Line 2g — Private activity bond interest (alias used by f1099int and f1099div)
-  line2g_pab_interest: z.number().nonnegative().optional(),
+  // Line 2g — Private activity bond interest from 1099-INT/OID and 8814.
+  // The other input receives 1099-DIV box 13; distinct source amounts add.
+  line2g_pab_interest: z.union([
+    z.number().nonnegative(),
+    z.array(z.number().nonnegative()),
+  ]).optional(),
 
   // Line 2h — 7% of qualified small business stock gain excluded under §1202.
   // IRC §57(a)(7); Form 6251 Line 2h
@@ -105,14 +113,21 @@ export const inputSchema = z.object({
 
 type Form6251Input = z.infer<typeof inputSchema>;
 
+function privateActivityBondInterest(input: Form6251Input): number {
+  return (input.private_activity_bond_interest ?? 0) +
+    normalizeArray(input.line2g_pab_interest).reduce(
+      (sum, amount) => sum + amount,
+      0,
+    );
+}
+
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
 // Form 6251 Line 4: Alternative Minimum Taxable Income (AMTI)
 // AMTI = regular_tax_income + all adjustments and preference items
 // IRC §55(b)(2); Form 6251 Lines 1–4
 function computeAmti(input: Form6251Input): number {
-  return (
-    input.regular_tax_income +
+  const base = input.regular_tax_income +
     (input.line2a_taxes_paid ?? 0) +
     (input.taking_standard_deduction === true
       ? 0
@@ -120,11 +135,15 @@ function computeAmti(input: Form6251Input): number {
     (input.iso_adjustment ?? 0) +
     (input.depreciation_adjustment ?? 0) +
     (input.nol_adjustment ?? 0) +
-    (input.private_activity_bond_interest ?? 0) +
-    (input.line2g_pab_interest ?? 0) +
+    privateActivityBondInterest(input) +
     (input.qsbs_adjustment ?? 0) +
-    (input.other_adjustments ?? 0)
+    (input.other_adjustments ?? 0);
+  if (input.filing_status !== FilingStatus.MFS) return base;
+  const addition = Math.min(
+    MFS_LINE4_ADDITION_CAP,
+    Math.max(0, Math.round((base - MFS_LINE4_ADDITION_START) * 0.25)),
   );
+  return base + addition;
 }
 
 // Form 6251 Line 5 Worksheet: compute the exemption amount with phase-out
@@ -588,9 +607,7 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
               line2c_investment_interest: input.form4952_amt_line2c_difference,
             }
             : {}),
-          private_activity_bond_interest:
-            (input.private_activity_bond_interest ?? 0) +
-            (input.line2g_pab_interest ?? 0),
+          private_activity_bond_interest: privateActivityBondInterest(input),
           amti,
           exemption,
           taxable_excess: taxableExcess,

@@ -1612,6 +1612,14 @@ credit makes line 11 zero. The inverse no-filing path and credit-driven filing
 have written cases. Other who-must-file triggers, AMT refigures, full-batch
 validation, IRS business rules, and PDF appearance remain open.
 
+Build-pass addendum for GAP-6251 (unrun): married-filing-separately line 4 now
+adds 25% of pre-addition AMTI above $900,350, capped at $68,500 from
+$1,174,350. Boundary and MeF line-4 cases are written but unrun. The two PAB
+input channels are documented and tested as distinct 1099 sources whose
+amounts add, including multiple 1099/child deposits in the executor's array
+shape; duplicate-source identification across documents remains open.
+Other filing triggers, REMIC, Schedule J, and AMT refigures remain open.
+
 Build-pass addendum for GAP-4952 (unrun): TY2025 partnership K-1 box 13 code H
 and S-corporation K-1 box 12 code H now feed line 1 from identified payers.
 Duplicate assertions guard manual interest and ambiguous aggregate S-corp
