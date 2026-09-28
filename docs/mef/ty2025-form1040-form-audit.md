@@ -95,7 +95,7 @@ bounded rebuild and remaining validation.
 | 4797                  | Identified business-property transactions; P                      | `f4797.ts` R            | Y   | W     | Open: recapture, PAL overlap and PDF mapping.                                                              |
 | 4835                  | Farm-rental income/expense facts; P                               | `f4835.ts` R            | N   | W     | Open: all at-risk/passive cases and PDF decision.                                                          |
 | 4952                  | Investment income, expense and AMT refigure facts; P              | `f4952.ts` R            | Y   | W     | Open: other source/AMT derivation and PDF (`GAP-4952`).                                                    |
-| 4972                  | Eligible lump-sum distribution/election facts; P                  | `f4972.ts` R            | Y   | W     | Open: multiple recipients are rejected for box 9a under 100%; NUA annotations and PDF render (`GAP-4972`). |
+| 4972                  | Eligible lump-sum distribution/election facts; P                  | `f4972.ts` R            | Y   | W     | Open: multiple recipients/spouse forms, MRD, NUA PDF appearance; see [gap audit](ty2025-form4972-gap.md). |
 | 5329                  | Retirement/HSA excess and prior-year facts; P                     | `f5329.ts` R            | Y   | W     | Open: all penalties and carryover source verification.                                                     |
 | 5695                  | Energy improvement/property facts; P                              | `f5695.ts` R            | Y   | ?     | Open: all eligibility, limit and statement routes.                                                         |
 | 5884                  | Certified worker/group wage facts; P                              | `f5884.ts` R            | Y   | W     | Open: certification, passive limits, carryovers, statement render.                                         |
@@ -119,7 +119,7 @@ bounded rebuild and remaining validation.
 | 8820                  | Orphan-drug expense/election facts; P                             | `f8820.ts` R            | Y   | W     | Open: source certification, passive limits and statement/PDF render.                                       |
 | 8824                  | Like-kind exchange assets/basis facts; P                          | `f8824.ts` R            | Y   | W     | Open: multi-asset, recapture and deferred-gain verification.                                               |
 | 8826                  | Disabled-access expenditure/K-1 facts; P                          | `f8826_draft.ts` R      | N   | W     | Open: full eligibility, passive/controlled-group and PDF decision.                                         |
-| 8829                  | Home-office area/expense facts; P                                 | `f8829.ts` R            | Y   | ?     | Open: simplified/actual methods, business-use substantiation.                                              |
+| 8829                  | Home-office source/deduction incomplete; U                        | `f8829.ts` R            | Y   | W     | Open: native XML, full line calculation and mortgage split; see [gap audit](ty2025-form8829-gap.md).      |
 | 8834                  | Plug-in electric vehicle facts; P                                 | `f8834.ts` R            | Y   | W     | Open: legacy eligibility, recapture and PDF.                                                               |
 | 8835                  | Renewable facility/credit-transfer facts; P                       | `f8835.ts` R            | N   | W     | Open: fiscal years, statements and transfer-election PDF.                                                  |
 | 8839                  | Adoption expense/credit facts; P                                  | `f8839.ts` R            | Y   | W     | Open: special needs, employer benefits and exclusion audit.                                                |
@@ -146,7 +146,7 @@ bounded rebuild and remaining validation.
 | 8978 Schedule A       | Year-by-year adjustment facts; P                                  | `f8978_schedule_a.ts` R | N   | W     | Open: attachment/reconciliation and PDF decision.                                                          |
 | 8990                  | Aggregate interest/ATI facts only; U                              | `f8990.ts` R            | Y   | W     | Open: native XML, ATI lines and passthrough schedules; see [gap audit](ty2025-form8990-gap.md).            |
 | 8995                  | QBI/source income facts; P                                        | `f8995.ts` R            | Y   | ?     | Open: all threshold and loss/carryover cases.                                                              |
-| 8995-A                | Advanced QBI/activity facts; P                                    | `f8995a.ts` R           | Y   | ?     | Open: wage/property limitation and aggregation statements.                                                 |
+| 8995-A                | Aggregate QBI lacks per-business rows; U                          | `f8995a.ts` R           | Y   | W     | Open: native nested XML, business identity and Schedules A-D; see [gap audit](ty2025-form8995a-gap.md).   |
 
 ### Registered wage and supporting descriptors (24)
 

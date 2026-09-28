@@ -1666,6 +1666,13 @@ than guessing the spouse allocation. Positive and rejection cases are written
 but unrun. Two spouse HSAs and mixed 2024 coverage remain unsupported, and
 the full calculation/XML/PDF/IRS-rule gates remain open.
 
+Build-pass addendum for GAP-MAP / Form 8829 (unrun): its 2025 PDF descriptor
+now points area, indirect expenses, prior carryovers, and basis/FMV at their
+printed fields. Focused field-name cases are written but unrun. This does not
+repair the overbroad mortgage-interest deduction, missing full form lines,
+non-native MeF tags, or absent visual check; see
+`docs/mef/ty2025-form8829-gap.md`.
+
 The following are registered in `forms/f1040/2025/mef/forms/index.ts`.
 **Registered means the builder can be invoked, not that the form is complete or
 approved.** Mark each row in the INV-01 matrix after checking calculations, XML,
@@ -1710,6 +1717,9 @@ dependencies, required statements, and tests.
 - Form 7206 source and native-filing audit: `docs/mef/ty2025-form7206-gap.md`
 - Form 8606 owner, calculation, and native-filing audit: `docs/mef/ty2025-form8606-gap.md`
 - Form 8990 interest limitation and native-filing audit: `docs/mef/ty2025-form8990-gap.md`
+- Form 8995-A per-business QBI and native-filing audit: `docs/mef/ty2025-form8995a-gap.md`
+- Form 4972 multiple-recipient and PDF-annotation audit: `docs/mef/ty2025-form4972-gap.md`
+- Form 8829 home-office calculation, XML, and PDF audit: `docs/mef/ty2025-form8829-gap.md`
 - Return assembly: `forms/f1040/2025/mef/builder.ts`
 - Submission package: `forms/f1040/2025/mef/submission-archive.ts`
 - Local XSD scenarios: `forms/f1040/2025/mef/xsd-validation.test.ts`
