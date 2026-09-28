@@ -136,10 +136,17 @@ export const inputSchema = z.object({
         z.nativeEnum(CoverageType).nullable(),
       ).length(12),
       age_55_or_older: z.boolean(),
-      married_at_year_end: z.literal(false),
+      married_at_year_end: z.boolean(),
+      // With one Form 8889, no family limit is allocated to another HSA.
+      // Separate spouse HSAs require both filed forms and remain unsupported.
+      spouse_has_separate_hsa: z.literal(false).optional(),
       last_month_rule_elected: z.literal(true),
       filed_form8889_line2: z.number().int().nonnegative(),
+      filed_form8889_line3: z.number().int().nonnegative().optional(),
       filed_form8889_line4_archer: z.literal(0),
+      filed_form8889_line5: z.number().int().nonnegative().optional(),
+      filed_form8889_line6: z.number().int().nonnegative().optional(),
+      filed_form8889_line7: z.number().int().nonnegative().optional(),
       filed_form8889_line8: z.number().int().nonnegative(),
       filed_form8889_line9: z.number().int().nonnegative(),
       filed_form8889_line10: z.literal(0),
@@ -164,11 +171,59 @@ export const inputSchema = z.object({
 }).strict();
 
 type Form8889Input = z.infer<typeof inputSchema>;
+type LastMonthEvidence = NonNullable<
+  NonNullable<
+    Form8889Input["testing_period_failure"]
+  >["last_month_rule_evidence"]
+>;
+
+function verifyPriorYearSpouseFacts(evidence: LastMonthEvidence): void {
+  if (
+    evidence.married_at_year_end &&
+    evidence.spouse_has_separate_hsa !== false
+  ) {
+    throw new Error(
+      "Form 8889 married 2024 last-month-rule recapture needs confirmation the spouse had no separate HSA",
+    );
+  }
+  if (
+    !evidence.married_at_year_end &&
+    evidence.spouse_has_separate_hsa !== undefined
+  ) {
+    throw new Error(
+      "Form 8889 unmarried 2024 last-month-rule evidence cannot include a spouse HSA answer",
+    );
+  }
+  if (!evidence.married_at_year_end) return;
+  if (
+    evidence.eligible_hdhp_coverage_by_month.some((month) =>
+      month !== null && month !== CoverageType.Family
+    )
+  ) {
+    throw new Error(
+      "Form 8889 married 2024 recapture needs family-only eligible months in this bounded path",
+    );
+  }
+  const familyLimit = 8_300;
+  const catchup = evidence.age_55_or_older ? 1_000 : 0;
+  if (
+    evidence.filed_form8889_line3 !== familyLimit ||
+    evidence.filed_form8889_line5 !== familyLimit ||
+    evidence.filed_form8889_line6 !== familyLimit ||
+    evidence.filed_form8889_line7 !== catchup ||
+    evidence.filed_form8889_line8 !== familyLimit + catchup
+  ) {
+    throw new Error(
+      "Form 8889 married 2024 recapture needs filed lines 3-8 showing the family limit and catch-up without spouse allocation",
+    );
+  }
+}
 
 // 2025 Part III line 18 uses the 2024 Line 3 Limitation Chart and Worksheet.
-// This bounded path supports a single, unmarried beneficiary with no Archer
-// MSA or IRA funding contribution in 2024; those distinct reductions/allocation
-// need their own source records rather than an inferred amount.
+// This bounded path supports one beneficiary, including a married taxpayer
+// whose spouse had no separate HSA. A second HSA needs both spouses' filed
+// allocations rather than an inferred amount. Archer MSA or IRA funding in
+// 2024 also need separate source reconciliation.
 function lastMonthRuleIncome(input: Form8889Input): number {
   const evidence = input.testing_period_failure?.last_month_rule_evidence;
   if (!evidence) return 0;
@@ -179,6 +234,7 @@ function lastMonthRuleIncome(input: Form8889Input): number {
     );
   }
   const priorCoverage = evidence.eligible_hdhp_coverage_by_month;
+  verifyPriorYearSpouseFacts(evidence);
   const december = priorCoverage[11];
   if (
     december === null || !priorCoverage.slice(0, 11).includes(null)

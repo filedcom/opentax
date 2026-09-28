@@ -35,6 +35,27 @@ const prior2024LastMonth = {
   filed_form8889_line10: 0,
   filed_form8889_line13: 1_546,
 };
+const prior2024MarriedFamily = {
+  contribution_year: 2024,
+  eligible_hdhp_coverage_by_month: [
+    ...Array(11).fill(null),
+    CoverageType.Family,
+  ],
+  age_55_or_older: true,
+  married_at_year_end: true,
+  spouse_has_separate_hsa: false,
+  last_month_rule_elected: true,
+  filed_form8889_line2: 1_025,
+  filed_form8889_line3: 8_300,
+  filed_form8889_line4_archer: 0,
+  filed_form8889_line5: 8_300,
+  filed_form8889_line6: 8_300,
+  filed_form8889_line7: 1_000,
+  filed_form8889_line8: 9_300,
+  filed_form8889_line9: 0,
+  filed_form8889_line10: 0,
+  filed_form8889_line13: 1_025,
+};
 
 function compute(input: Record<string, unknown>) {
   return form8889.compute(
@@ -983,6 +1004,111 @@ Deno.test("part3: 2024 last-month-rule coverage and filed contributions reconstr
   assertEquals(findOutput(result, "form8889")?.fields.print_line19, 0);
   assertEquals(findOutput(result, "form8889")?.fields.print_line20, 1200);
   assertEquals(findOutput(result, "form8889")?.fields.print_line21, 120);
+});
+
+Deno.test("part3: married 2024 family last-month rule includes own age-55 catch-up", () => {
+  const result = compute({
+    eligible_hdhp_coverage_by_month: Array(12).fill(null),
+    testing_period_failure: {
+      last_month_rule_evidence: prior2024MarriedFamily,
+      qualified_funding_distribution_amount: 0,
+      not_death_or_disability: true,
+      prior_year_source: "Filed 2024 Form 8889 and monthly HDHP records",
+    },
+  });
+  // A single eligible family month would allow $9,300 / 12 = $775 without
+  // the 2024 last-month rule, so $1,025 - $775 = $250 is recaptured in 2025.
+  assertEquals(findOutput(result, "form8889")?.fields.print_line18, 250);
+  assertEquals(findOutput(result, "form8889")?.fields.print_line20, 250);
+  assertEquals(findOutput(result, "form8889")?.fields.print_line21, 25);
+  assertEquals(fieldsOf(result.outputs, schedule1)?.line8f_hsa_income, 250);
+  assertEquals(
+    fieldsOf(result.outputs, schedule2)?.line17d_hsa_eligibility_tax,
+    25,
+  );
+});
+
+Deno.test("part3: married 2024 family months redetermine the no-catch-up limit", () => {
+  const result = compute({
+    eligible_hdhp_coverage_by_month: Array(12).fill(null),
+    testing_period_failure: {
+      last_month_rule_evidence: {
+        ...prior2024MarriedFamily,
+        eligible_hdhp_coverage_by_month: [
+          ...Array(6).fill(null),
+          ...Array(6).fill(CoverageType.Family),
+        ],
+        age_55_or_older: false,
+        filed_form8889_line2: 5_000,
+        filed_form8889_line7: 0,
+        filed_form8889_line8: 8_300,
+        filed_form8889_line13: 5_000,
+      },
+      qualified_funding_distribution_amount: 0,
+      not_death_or_disability: true,
+      prior_year_source: "Filed 2024 Form 8889 and monthly HDHP records",
+    },
+  });
+  assertEquals(findOutput(result, "form8889")?.fields.print_line18, 850);
+  assertEquals(findOutput(result, "form8889")?.fields.print_line21, 85);
+});
+
+Deno.test("part3: married 2024 last-month evidence cannot guess spouse allocation", () => {
+  const failure = {
+    last_month_rule_evidence: prior2024MarriedFamily,
+    qualified_funding_distribution_amount: 0,
+    not_death_or_disability: true,
+    prior_year_source: "Filed 2024 Form 8889",
+  };
+  assertThrows(
+    () =>
+      compute({
+        eligible_hdhp_coverage_by_month: Array(12).fill(null),
+        testing_period_failure: {
+          ...failure,
+          last_month_rule_evidence: {
+            ...prior2024MarriedFamily,
+            spouse_has_separate_hsa: undefined,
+          },
+        },
+      }),
+    Error,
+    "confirmation the spouse had no separate HSA",
+  );
+  assertThrows(
+    () =>
+      compute({
+        eligible_hdhp_coverage_by_month: Array(12).fill(null),
+        testing_period_failure: {
+          ...failure,
+          last_month_rule_evidence: {
+            ...prior2024MarriedFamily,
+            filed_form8889_line7: 0,
+          },
+        },
+      }),
+    Error,
+    "filed lines 3-8",
+  );
+  assertThrows(
+    () =>
+      compute({
+        eligible_hdhp_coverage_by_month: Array(12).fill(null),
+        testing_period_failure: {
+          ...failure,
+          last_month_rule_evidence: {
+            ...prior2024MarriedFamily,
+            eligible_hdhp_coverage_by_month: [
+              CoverageType.SelfOnly,
+              ...Array(10).fill(null),
+              CoverageType.Family,
+            ],
+          },
+        },
+      }),
+    Error,
+    "family-only eligible months",
+  );
 });
 
 Deno.test("part3: last-month rule produces no recapture when 2024 contributions fit the monthly limit", () => {

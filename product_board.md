@@ -1649,6 +1649,14 @@ in filed order. Focused field and order cases are written but unrun. This does
 not settle the source inclusion/deduction audit, the 8814 interaction, local
 XSD validation, PDF appearance, or IRS business rules.
 
+Build-pass addendum for GAP-8889 (unrun): a bounded 2024 last-month-rule
+testing-period recapture now supports a married taxpayer with one HSA and
+family-only eligible months. It requires the filed 2024 Form 8889 lines 3-8,
+an explicit no-separate-spouse-HSA answer, and monthly coverage facts rather
+than guessing the spouse allocation. Positive and rejection cases are written
+but unrun. Two spouse HSAs and mixed 2024 coverage remain unsupported, and
+the full calculation/XML/PDF/IRS-rule gates remain open.
+
 The following are registered in `forms/f1040/2025/mef/forms/index.ts`.
 **Registered means the builder can be invoked, not that the form is complete or
 approved.** Mark each row in the INV-01 matrix after checking calculations, XML,
@@ -1689,6 +1697,8 @@ dependencies, required statements, and tests.
 
 - Registered documents: `forms/f1040/2025/mef/forms/index.ts`
 - Per-document audit index: `docs/mef/coverage-inventory.md`
+- Form 461 return-wide limitation audit: `docs/mef/ty2025-form461-gap.md`
+- Form 7206 source and native-filing audit: `docs/mef/ty2025-form7206-gap.md`
 - Return assembly: `forms/f1040/2025/mef/builder.ts`
 - Submission package: `forms/f1040/2025/mef/submission-archive.ts`
 - Local XSD scenarios: `forms/f1040/2025/mef/xsd-validation.test.ts`
