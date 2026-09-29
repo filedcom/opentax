@@ -212,7 +212,7 @@ Deno.test("Form 6198 MeF and PDF use linked Form 5884 farm labor reduction", () 
   );
 });
 
-Deno.test("Form 6198 MeF and PDF use linked Form 8829 line 30", () => {
+Deno.test("Form 6198 MeF and PDF reject home-office-only at-risk loss", () => {
   const pending = {
     schedule_c: {
       schedule_cs: [{
@@ -236,15 +236,16 @@ Deno.test("Form 6198 MeF and PDF use linked Form 8829 line 30", () => {
       },
     },
   };
-  const [pdf] = instances(pending);
-  const [xml] = form6198Mef.build({}, { pending });
-  assertEquals(pdf.line1_ordinary_loss, -200);
-  assertEquals(pdf.line21_deductible_loss_display, 100);
-  assertStringIncludes(
-    xml,
-    "<OrdinaryIncomeLossAmt>-200</OrdinaryIncomeLossAmt>",
+  assertThrows(
+    () => instances(pending),
+    Error,
+    "Form 6198 facts require a current-year loss",
   );
-  assertStringIncludes(xml, "<DeductibleLossAmt>-100</DeductibleLossAmt>");
+  assertThrows(
+    () => form6198Mef.build({}, { pending }),
+    Error,
+    "Form 6198 facts require a current-year loss",
+  );
 });
 
 Deno.test("Form 6198 rejects an unreconciled Form 5884 reduction in both serializers", () => {
