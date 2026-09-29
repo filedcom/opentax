@@ -164,6 +164,23 @@ reported, in 20m30s. Deno was 2.7.7, `xmllint` used libxml 2.9.13, and
 Poppler was 26.03.0. Its retained log is
 `.state/research/ty2025-full-test-f0839295.log`.
 
+One further synthetic return combines a $600 geothermal Form 8835 and a
+$500 New Markets Form 8874 on separate prepared Form 3800 Part III lines 4e
+and 1i. The prior Form 8835 PDF guard incorrectly equated its source amount
+with the whole return credit; it now requires exact prepared line 4e source
+and applied amounts and checks the parent total separately. A changed
+prepared line 4e test rejects the packet. Local TY2025 v5.4 XML validation
+and focused PDF tests pass. The 18-page packet's Form 3800 Part III, Form
+8835, and Form 8874 pages were rendered and reviewed; Schedule 3 line 6a
+and Form 1040 line 20 each print $1,100. The
+`2026-09-29-v26` review directory holds 24 PDFs (218 pages) and 24 XML files.
+The fixed-source `deno task test` run on `81a2c713` completed at 2026-09-29
+13:37 UTC: 8,869/8,869 passed, zero failed, no ignored tests reported, in
+20m35s. Deno was 2.7.7, `xmllint` used libxml 2.9.13, and Poppler was
+26.03.0. Its retained log is
+`.state/research/ty2025-full-test-81a2c713.log`. The final release batch
+remains open.
+
 ## XML evidence
 
 For each supported positive filing route in the completed coverage inventory,

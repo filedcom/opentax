@@ -69,3 +69,15 @@ SHA-256 values are `1c11943707c83a04b2d764b17943340322737afd772749c1d94c84797194
 The fixed-source `deno task test` run on `f0839295` passed 8,866/8,866,
 zero failed, with no ignored tests reported in 20m30s; its log is
 `.state/research/ty2025-full-test-f0839295.log`.
+
+The next synthetic return combines one $500 Form 8874 investment with a
+separate $600 geothermal Form 8835 credit. The prepared Form 3800 parent
+retains distinct source IDs and prints the New Markets amount on Part III
+line 1i, the geothermal amount on line 4e, and $1,100 on line 38. The source
+forms and parent Part III pages in the 18-page packet were visually reviewed;
+local TY2025 v5.4 XML validation passes. Other mixed credit combinations and
+external QEI source authentication remain open.
+
+The fixed-source `81a2c713` repository-wide run passed 8,869/8,869,
+zero failed, with no ignored tests reported in 20m35s. Its log is
+`.state/research/ty2025-full-test-81a2c713.log`.

@@ -123,6 +123,20 @@ both native returns pass local TY2025 v5.4 XSD. The expanded review set now
 has 23 PDFs (200 pages) and 23 XML files under
 `.state/research/ty2025-filled-pdf-review/2026-09-29-v25/`.
 
+One further source-backed return combines a $600 geothermal Form 8835 and a
+$500 New Markets Form 8874. The prepared parent keeps their separate native
+document IDs and prints $600 on Part III line 4e, $500 on line 1i, and $1,100
+on line 38, Schedule 3 line 6a, and Form 1040 line 20. The Form 8835 PDF
+guard now checks its own fully used prepared line 4e source instead of
+requiring the facility amount to equal the return-wide credit. The 18-page
+packet's source forms and Part III pages were visually inspected, and local
+TY2025 v5.4 XSD passes. The review set has 24 PDFs (218 pages) and 24 XML
+files under `.state/research/ty2025-filled-pdf-review/2026-09-29-v26/`.
+
+The fixed-source `81a2c713` repository-wide run passed 8,869/8,869,
+zero failed, with no ignored tests reported in 20m35s. Its log is
+`.state/research/ty2025-full-test-81a2c713.log`.
+
 The fixed-source `f0839295` repository-wide run passed 8,866/8,866,
 zero failed, with no ignored tests reported in 20m30s. Its log is
 `.state/research/ty2025-full-test-f0839295.log`.
