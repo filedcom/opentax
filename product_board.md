@@ -32,6 +32,13 @@ XSD pass, or an ignored test.
 
 ### Latest validation attempt
 
+After the fixed-source full run below, a return-graph Schedule R tax-limit guard
+and its tests were added. The focused Form 1040 and source-only export files pass
+**61/61** with zero failures. A full batch on this newer source has not run yet.
+The earlier Schedule R $750 native/PDF fixture supplies $900 of tax at $7,000
+AGI directly to the descriptor; it does not prove a positive credit can be
+reached through the TY2025 return graph.
+
 The 2026-09-29 20:16–20:32 UTC `deno task test` run on fixed source commit
 `664679b2` passed **8,914/8,914**, zero failed, in 15m56s; Deno reported no
 ignored tests. It includes the Form 8888, Schedule R, Form 7203, Form 1040
@@ -357,7 +364,8 @@ including a two-gift return with two linked native forms and attachments.
 - [ ] Decide conditional filer ownership individually for entity-associated roots, including Forms 8858/Schedule M and 1118, entity-issued 1065 Schedule D and 8825, and trust K-1 box 13 code B backup withholding. Build any individual Form 1040 attachment that remains required; do not blanket-exclude an entity-root family.
 - [ ] Audit [source-only and sparsely mapped forms](docs/mef/ty2025-source-only-and-sparse-map-gap.md): identify every positive filing trigger, confirm each emitted field and required statement/attachment, and replace any optimistic mapping with a verified route or explicit rejection.
   - [x] Form 8888 focused and synthetic full-return check: two- and three-account XML passes local TY2025 v5.4 `IRS8888` XSD; ten focused cases pass. A W-2 source produced full-return XML that passes `Return1040.xsd` and a three-page PDF packet. Form 1040 line 35a and Form 8888 line 5 both print $1,525; account lines print $300 checking and $1,225 savings. Visual review caught and repaired the omitted Form 1040 line 35a attachment checkbox. Retain `.state/research/ty2025-form8888-full-return.xml` and `.state/research/ty2025-form8888-full-return.pdf`. Current-source full-batch, bank/source evidence, other business rules, and ATS gates remain open.
-  - [x] Schedule R bounded single-filer age-65 check: native XML passes local TY2025 v5.4 `IRS1040ScheduleR` XSD; seven focused cases pass. Both filled PDF pages were rendered and inspected for identity, box 1, lines 10/12/13c/14-22, and the $750 Schedule 3 credit. Retain `.state/research/ty2025-schedule-r-filled-review.pdf`. Disability, spouse, other-benefit, full-return, current-source full-batch, and ATS gates remain open.
+  - [x] Schedule R bounded descriptor check: native XML passes local TY2025 v5.4 `IRS1040ScheduleR` XSD; seven focused cases pass. Both filled PDF pages were rendered and inspected for identity, box 1, lines 10/12/13c/14-22, and the $750 Schedule 3 credit. Retain `.state/research/ty2025-schedule-r-filled-review.pdf`. This fixture supplies the final tax amount directly; positive source-to-return proof remains open.
+  - [x] Reconcile Schedule R line 22 against the 2025 credit-limit worksheet during Form 1040 finalization. A sourced $10,000-wage single age-65 case has $0 line 18 tax and now fails before a completed return or MeF export; focused Form 1040 and source-only export files pass 61/61. Disability, spouse, other-benefit, a genuine positive full-return case, current-source full-batch, and ATS gates remain open.
   - [x] Form 7203 bounded stock-only ordinary-loss check: native XML passes local TY2025 v5.4 `IRS7203` XSD; ten focused cases pass. The filled two-page PDF was inspected for shareholder/corporation identity, original-shareholder box, $3,000 basis, $4,000 current loss, $3,000 allowed stock loss, and $1,000 carryover. A synthetic reviewed K-1 and general taxpayer source also produced a seven-page PDF packet and full-return XML that passes `Return1040.xsd`; Schedule E line 41, Schedule 1 lines 5/10, and Form 1040 line 8 each show the $3,000 allowed loss. Retain `.state/research/ty2025-form7203-full-return.xml` and `.state/research/ty2025-form7203-full-return.pdf`. Other basis paths, authenticated K-1 bytes, current-source full-batch, business-rule, and ATS gates remain open.
 - [ ] Audit return-wide ordering and reconciliation across Form 1040, Schedules 1/1-A/2/3, income, deductions, tax, credits, withholding, payments, carryovers, and multiple copies of the same form. Check positive, zero, negative, amended-source, joint-owner, and conflicting-source cases.
 - [ ] Decide whether structured reviewed facts alone are acceptable filing evidence for complex forms or whether executor-bound uploaded document bytes must be verified. Apply one consistent evidence standard to external records, signed forms, carryovers, appraisals, source K-1s, and ATS fixtures.

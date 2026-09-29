@@ -1089,6 +1089,19 @@ class F1040Node extends TaxNode<typeof inputSchema> {
   compute(ctx: NodeContext, rawInput: F1040Input): NodeResult {
     const input = inputSchema.parse(rawInput);
     const schedule3 = input.credit_limit_schedule3_lines;
+    const elderlyCredit = schedule3?.line6dElderlyDisabled ?? 0;
+    if (schedule3 && elderlyCredit > 0) {
+      const limit = Math.max(
+        0,
+        totalTaxBeforeCredits(input) - schedule3.line1 - schedule3.line2 -
+          (schedule3.line6lForm8978 ?? 0),
+      );
+      if (elderlyCredit > limit) {
+        throw new Error(
+          "Schedule R line 22 exceeds the 2025 credit-limit worksheet from Form 1040 line 18 and Schedule 3 lines 1, 2, and 6l",
+        );
+      }
+    }
     if (!input.form8880_source && (schedule3?.line4 ?? 0) > 0) {
       throw new Error(
         "Schedule 3 line 4 needs the Form 8880 contribution source",

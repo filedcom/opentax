@@ -203,6 +203,53 @@ Deno.test("Schedule R stays blocked and reviewed S-corporation stock loss emits 
   }
 });
 
+Deno.test("age-65 Schedule R cannot create a credit on a zero-tax Form 1040", () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: {
+      ...stockLossInputs.general,
+      taxpayer_dob: "1950-06-15",
+      taxpayer_age_65_or_older: true,
+    },
+    w2: [{
+      employer_ein: "12-3456789",
+      employer_name: "ACME CORP",
+      employer_address_line1: "500 Market St",
+      employer_address_city: "Austin",
+      employer_address_state: "TX",
+      employer_address_zip: "78701",
+      box1_wages: 10_000,
+      box2_fed_withheld: 0,
+      box3_ss_wages: 10_000,
+      box4_ss_withheld: 620,
+      box5_medicare_wages: 10_000,
+      box6_medicare_withheld: 145,
+    }],
+    schedule_r: {
+      filing_status: "single",
+      taxpayer_age_65_or_older: true,
+      age_65_source_reference: "1950-06-15 date of birth",
+      agi: 10_000,
+      nontaxable_ssa: 0,
+    },
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(
+    result.diagnostics.some((diagnostic) =>
+      diagnostic.nodeType === "f1040" &&
+      diagnostic.message.includes("Schedule R line 22 exceeds")
+    ),
+    true,
+  );
+  assertEquals(
+    Object.hasOwn(buildPending(result.pending).f1040 ?? {}, "line21_credits_total"),
+    false,
+  );
+  assertThrows(
+    () => buildMefXml(buildPending(result.pending), filer),
+    Error,
+    "Schedule R credit and tax limit",
+  );
+});
+
 Deno.test({
   name:
     "XSD: reviewed Form 7203 loss joins full Form 1040, Schedule 1 and Schedule E",

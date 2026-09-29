@@ -47,6 +47,42 @@ Deno.test("f1040: empty input emits zeros for computed lines", () => {
   assertEquals(f.line35a_refund, 0);
 });
 
+Deno.test("f1040: Schedule R credit cannot exceed its filed tax-limit worksheet", () => {
+  const schedule3 = {
+    ...emptySchedule3ForBusinessCredit,
+    line6dElderlyDisabled: 750,
+    line7: 750,
+  };
+  assertThrows(
+    () =>
+      fields({
+        line16_income_tax: 0,
+        line20_nonrefundable_credits: 750,
+        credit_limit_schedule3_lines: schedule3,
+      }),
+    Error,
+    "Schedule R line 22 exceeds",
+  );
+  assertThrows(
+    () =>
+      fields({
+        line16_income_tax: 900,
+        line20_nonrefundable_credits: 950,
+        credit_limit_schedule3_lines: { ...schedule3, line1: 200 },
+      }),
+    Error,
+    "Schedule R line 22 exceeds",
+  );
+  assertEquals(
+    fields({
+      line16_income_tax: 900,
+      line20_nonrefundable_credits: 750,
+      credit_limit_schedule3_lines: schedule3,
+    }).line22_tax_after_credits,
+    150,
+  );
+});
+
 Deno.test("f1040: verifies Form 1116 lines 18 and 20 against filed return sources", () => {
   const f = fields({
     line11_agi: 80_000,
