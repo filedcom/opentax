@@ -235,7 +235,7 @@ Deno.test("2025 Form 4972 PDF projects a shared annuity from box 8 percentage", 
         },
       }),
     Error,
-    "box 8 amount/percentage",
+    "partial share differs from Form 1099-R boxes",
   );
 });
 
@@ -735,7 +735,7 @@ Deno.test("2025 Form 4972 PDF reconciles full-share NUA and beneficiary allocati
   assertThrows(
     () => form4972Pdf.projectFields?.({ ...fields, line18: 2_799 }, allPending),
     Error,
-    "NUA death/estate allocation differs",
+    "PDF elected Part III lines do not reconcile",
   );
 });
 
