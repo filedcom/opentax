@@ -117,7 +117,7 @@ Deno.test("Form 8621 routes taxable nonexcess distribution to dividends", () => 
   const result = compute([minimalItem({
     excess_events: [{
       ...event,
-      currency_code: "USD",
+      currency_code: "EUR",
       prior_year_distributions: [{ tax_year: 2024, amount_foreign: 4_000 }],
       current_year_distributions: event.current_year_distributions.map((
         distribution,
@@ -127,7 +127,7 @@ Deno.test("Form 8621 routes taxable nonexcess distribution to dividends", () => 
           ? distribution.amount_usd
           : distribution.amount_foreign,
         spot_usd_per_unit: 1,
-        spot_rate_source: "USD-denominated distribution",
+        spot_rate_source: "Documented EUR/USD spot rate",
         year_charges: distribution.year_charges,
       })),
       taxable_nonexcess_dividend_usd: 5_000,
@@ -277,6 +277,7 @@ Deno.test("Form 8621 QEF section 951 and 1293(g) amounts reduce each inclusion",
       compute([minimalItem({
         regime: PficRegime.QEF,
         qef_ordinary_income: 100,
+        qef_capital_gain: 0,
         qef_ordinary_951_or_1293g_reduction: 200,
       })]),
     Error,
@@ -326,6 +327,8 @@ Deno.test("Form 8621 rejects Part V events on a different regime", () => {
     () =>
       compute([minimalItem({
         regime: PficRegime.QEF,
+        qef_ordinary_income: 0,
+        qef_capital_gain: 0,
         excess_events: [excessEvent()],
       })]),
     Error,
