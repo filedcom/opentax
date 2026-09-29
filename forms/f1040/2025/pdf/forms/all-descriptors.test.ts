@@ -185,18 +185,21 @@ for (const descriptor of ALL_PDF_FORMS) {
         );
       }
       if (descriptor.rows) {
-        for (const rf of descriptor.rows.rowFields) {
-          const firstRowField = rf.pdfFieldPattern.replace("{row}", "1")
-            .replace(
-              /{field_num}/g,
-              String((rf as { fieldNumBase?: number }).fieldNumBase ?? 1)
-                .padStart(2, "0"),
+        for (let row = 1; row <= descriptor.rows.maxRows; row++) {
+          for (const rf of descriptor.rows.rowFields) {
+            const fieldNumber = (rf.fieldNumBase ?? 1) +
+              (row - 1) * (descriptor.rows.rowStride ?? 0);
+            const pdfField = rf.pdfFieldPattern.replace("{row}", String(row))
+              .replace(
+                /{field_num}/g,
+                String(fieldNumber).padStart(2, "0"),
+              );
+            assertEquals(
+              realFields.has(pdfField),
+              true,
+              `[${label}] row field (row ${row}) not found in real PDF: "${pdfField}"`,
             );
-          assertEquals(
-            realFields.has(firstRowField),
-            true,
-            `[${label}] row field (row 1) not found in real PDF: "${firstRowField}"`,
-          );
+          }
         }
       }
     },

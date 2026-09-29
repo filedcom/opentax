@@ -139,6 +139,15 @@ export async function fillFormPdf(
     !descriptor.includeWhen(fields, allPending)
   ) return undefined;
 
+  if (descriptor.rows) {
+    const items = fields[descriptor.rows.domainKey];
+    if (Array.isArray(items) && items.length > descriptor.rows.maxRows) {
+      throw new Error(
+        `[PDF] ${descriptor.pendingKey}: ${items.length} rows exceed the printable row limit of ${descriptor.rows.maxRows}`,
+      );
+    }
+  }
+
   const pdfBytes = await fetchWithCache(descriptor.pdfUrl, cacheDir);
   const doc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
   const form = doc.getForm();
@@ -167,11 +176,7 @@ export async function fillFormPdf(
   if (descriptor.rows) {
     const items = fields[descriptor.rows.domainKey];
     if (Array.isArray(items)) {
-      for (
-        let i = 0;
-        i < Math.min(items.length, descriptor.rows.maxRows);
-        i++
-      ) {
+      for (let i = 0; i < items.length; i++) {
         const row = items[i] as Record<string, unknown>;
         for (const rf of descriptor.rows.rowFields) {
           let pdfField = rf.pdfFieldPattern.replace("{row}", String(i + 1));

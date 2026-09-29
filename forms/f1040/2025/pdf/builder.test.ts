@@ -183,6 +183,33 @@ Deno.test("fillFormPdf: a missing row AcroForm field stops the export", async ()
   }
 });
 
+Deno.test("fillFormPdf: row overflow stops export before truncating the form", async () => {
+  await assertRejects(
+    () =>
+      fillFormPdf(
+        {
+          pendingKey: "sample_rows",
+          pdfUrl: F1040_PDF_URL,
+          fields: [],
+          rows: {
+            domainKey: "items",
+            maxRows: 1,
+            rowFields: [{
+              kind: "text",
+              domainKey: "amount",
+              pdfFieldPattern: "row_{row}",
+            }],
+          },
+        },
+        { items: [{ amount: 25 }, { amount: 50 }] },
+        undefined,
+        "/tmp/no-pdf-needed-for-overflow",
+      ),
+    Error,
+    "2 rows exceed the printable row limit of 1",
+  );
+});
+
 Deno.test("fillFormPdf: required all-zero Form 6251 is retained but an unrequired blank is omitted", async () => {
   const tmpDir = await Deno.makeTempDir();
   try {
