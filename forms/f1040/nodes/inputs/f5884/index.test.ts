@@ -360,11 +360,14 @@ Deno.test("successor credit keeps predecessor wage cap and combined hours", () =
   const capped = {
     ...item,
     wage_records: [
-      { ...item.wage_records[0], credited_wages: 2_000 },
+      { ...wageRecord(2_000, "2025-04-01", "2025-04-15"), credited_wages: 2_000 },
       {
-        ...item.wage_records[1],
+        ...wageRecord(4_000, "2025-04-16", "2025-04-30", "2025-04-30", {
+          kind: "schedule_c",
+          business_reference: "BUSINESS-2",
+        }),
         qualified_wages: 4_000,
-        credited_wages: 4_000,
+        credited_wages: 2_000,
       },
     ],
   };
@@ -381,7 +384,7 @@ Deno.test("successor credit keeps predecessor wage cap and combined hours", () =
       },
       {
         location: capped.wage_records[1].deduction_location,
-        credit_amount: 1_600,
+        credit_amount: 800,
       },
     ],
   );
