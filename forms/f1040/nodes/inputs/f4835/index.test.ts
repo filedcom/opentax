@@ -83,6 +83,7 @@ Deno.test("Form 4835 income routes to Schedule E rather than Schedule 1 directly
       farm_rental_net: 5000,
       farm_rental_gross: 5000,
       farm_rental_activities: [{
+        activity_id: "farm-test",
         name: "Test Farm",
         current_net: 5000,
         actively_participated: false,
@@ -104,6 +105,7 @@ Deno.test("Form 4835 passes each preliminary farm result for passive allocation"
   const result = compute([
     item({ livestock_crop_income: 3000 }),
     item({
+      activity_id: "farm-second",
       activity_name: "Second farm",
       livestock_crop_income: 500,
       expense_feed: 2000,
@@ -114,8 +116,18 @@ Deno.test("Form 4835 passes each preliminary farm result for passive allocation"
     farm_rental_net: 1500,
     farm_rental_gross: 3500,
     farm_rental_activities: [
-      { name: "Test Farm", current_net: 3000, actively_participated: false },
-      { name: "Second farm", current_net: -1500, actively_participated: false },
+      {
+        activity_id: "farm-test",
+        name: "Test Farm",
+        current_net: 3000,
+        actively_participated: false,
+      },
+      {
+        activity_id: "farm-second",
+        name: "Second farm",
+        current_net: -1500,
+        actively_participated: false,
+      },
     ],
   });
 });
@@ -204,6 +216,7 @@ Deno.test("Form 4835 retains prior passive losses by farm and checks participati
     },
   })]);
   assertEquals(result.outputs[0].fields.farm_rental_activities, [{
+    activity_id: "farm-test",
     name: "Test Farm",
     current_net: 1000,
     actively_participated: false,
@@ -239,6 +252,7 @@ Deno.test("Form 4835 retains prior passive losses by farm and checks participati
     prior_passive_losses_active_when_incurred: false,
   })]);
   assertEquals(changedParticipation.outputs[0].fields.farm_rental_activities, [{
+    activity_id: "farm-test",
     name: "Test Farm",
     current_net: 1000,
     actively_participated: true,
@@ -276,6 +290,7 @@ Deno.test("Form 4835 CCC election needs loan details matching line 4a", () => {
     farm_rental_net: 100,
     farm_rental_gross: 100,
     farm_rental_activities: [{
+      activity_id: "farm-test",
       name: "Test Farm",
       current_net: 100,
       actively_participated: false,
@@ -310,6 +325,7 @@ Deno.test("Form 4835 defers eligible crop insurance but taxes current and prior-
     farm_rental_net: 1700,
     farm_rental_gross: 1700,
     farm_rental_activities: [{
+      activity_id: "farm-test",
       name: "Test Farm",
       current_net: 1700,
       actively_participated: false,
