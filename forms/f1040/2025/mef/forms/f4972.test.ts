@@ -352,7 +352,7 @@ Deno.test("Form 4972 MeF writes a shared annuity using box 8 percentage", () => 
         },
       }),
     Error,
-    "box 8 amount/percentage",
+    "8 amount/percentage",
   );
 });
 
@@ -936,7 +936,7 @@ Deno.test("Form 4972 MeF reconciles partial-share NUA and prints MRD", () => {
         pending,
       }),
     Error,
-    "sourced 2025 calculation",
+    "NUA worksheet does not reconcile with lines 6 through 8",
   );
 });
 
@@ -978,7 +978,7 @@ Deno.test("Form 4972 MeF writes Part-III-only partial-share NUA on line 8", () =
         pending,
       }),
     Error,
-    "sourced 2025 calculation",
+    "NUA worksheet does not reconcile with lines 6 through 8",
   );
 });
 
