@@ -260,10 +260,11 @@ function simplePolicyIncomeAmounts(
   povertyLine: number,
   householdSize: number | null | undefined,
   policyCount: number,
+  below100MarketplaceException = false,
 ): { povertyPct: number; figure: number; repaymentCap: number | undefined } {
   const actualPct = Math.floor(householdIncome / povertyLine * 100);
   if (
-    actualPct < 100 ||
+    (actualPct < 100 && !below100MarketplaceException) ||
     (actualPct < 400 && (householdSize !== 1 || policyCount !== 1))
   ) {
     throw new Error(
@@ -317,6 +318,10 @@ function reconcileSimpleAnnualPolicy(
     povertyLine,
     fields.household_size,
     policies.length,
+    general.success &&
+      general.data.ptc_below_100_fpl_status?.basis ===
+        "marketplace_estimate" &&
+      (fields.total_advance_ptc ?? 0) > 0,
   );
   if (
     context.filer.filingStatus !== FilingStatus.Single ||
@@ -1001,6 +1006,10 @@ function reconcileSimplePolicyMonths(
     povertyLine,
     fields.household_size,
     policies.length,
+    general.success &&
+      general.data.ptc_below_100_fpl_status?.basis ===
+        "marketplace_estimate" &&
+      (fields.total_advance_ptc ?? 0) > 0,
   );
   if (
     context.filer.filingStatus !== FilingStatus.Single ||

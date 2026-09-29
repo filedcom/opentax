@@ -3435,9 +3435,15 @@ Deno.test({
     w2: [w2Item(10_000, 0)],
     f1095a: [{
       issuer_name: "Marketplace Plan",
+      policy_number: "POLICY-BELOW-100",
+      coverage_state: "TX",
+      covered_individual_ssns: ["111223333"],
       monthly_premiums: Array(12).fill(250),
       monthly_slcsps: Array(12).fill(350),
       monthly_aptcs: Array(12).fill(100),
+      annual_premium: 3_000,
+      annual_slcsp: 4_200,
+      annual_aptc: 1_200,
     }],
   });
   assertEquals(result.diagnostics, []);
