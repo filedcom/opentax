@@ -12,6 +12,11 @@ import { additionalQmidLines } from "./forms/f5695_qmid_attachment.ts";
 import { FilingStatus as NodeFilingStatus, TS } from "../../nodes/types.ts";
 import { calculateOwnerForms } from "../../nodes/intermediate/forms/form5329/index.ts";
 import {
+  form4972 as form4972Node,
+  inputSchema as form4972InputSchema,
+} from "../../nodes/intermediate/forms/form4972/index.ts";
+import { DistributionCode } from "../../nodes/inputs/f1099r/index.ts";
+import {
   ForeignTaxCreditMethod,
   ForeignTaxKind,
   IncomeCategory,
@@ -186,7 +191,7 @@ function sampleFiler(): FilerIdentity {
   };
 }
 
-const qualifiedForm4972 = {
+const qualifiedForm4972Input = {
   recipient: TS.T,
   born_before_1936: true,
   beneficiary_distribution: false,
@@ -194,7 +199,32 @@ const qualifiedForm4972 = {
   rolled_over_any: false,
   participant_five_year_member: true,
   prior_election_after_1986: false,
-  line7: 2000,
+  lump_sum_amount: 30_000,
+  capital_gain_amount: 5_000,
+  elect_capital_gain: true,
+  elect_10yr_averaging: true,
+};
+const qualifiedForm4972 = form4972Node.compute(
+  { taxYear: 2025, formType: "f1040" },
+  form4972InputSchema.parse(qualifiedForm4972Input),
+).outputs[0].fields;
+const qualifiedForm4972Source = {
+  f1099r: {
+    f1099rs: [{
+      payer_name: "Qualified Plan",
+      payer_ein: "123456789",
+      box1_gross_distribution: 30_000,
+      box2a_taxable_amount: 30_000,
+      box3_capital_gain: 5_000,
+      box7_distribution_code: DistributionCode.CodeA,
+      ts: TS.T,
+      exclude_4972: true,
+    }],
+  },
+  f1040: {
+    form4972_tax: qualifiedForm4972.line30 as number,
+    line16_income_tax: qualifiedForm4972.line30 as number,
+  },
 };
 
 const sampleForm8919 = {
@@ -1157,7 +1187,10 @@ Deno.test("IRS8919 absent when form8919 missing from pending", () => {
 });
 
 Deno.test("IRS4972 present when form4972 has data", () => {
-  const xml = buildMefXml({ form4972: qualifiedForm4972 });
+  const xml = buildMefXml({
+    ...qualifiedForm4972Source,
+    form4972: qualifiedForm4972,
+  });
   assertStringIncludes(xml, "<IRS4972 ");
 });
 

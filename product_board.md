@@ -38,6 +38,17 @@ Form 6251 native map (31/31),
 Form 4952 royalty (2/2), Form 8582 native map (30/30), Form 8863 native/XSD
 (7/7), and Form 8874 XSD (1/1) files. Form 8962 source-evidence cases,
 PDF-builder test fixtures, ATS source gaps, and other full-batch failures remain.
+Additional focused reruns passed Form 4972 MeF/PDF (51/51), Form 982 native/PDF
+(9/9), Schedule F (8/8), Form 4835 (7/7), and Schedule B Part III with a
+Form 8814 child election (9/9). The Schedule F fix activates its own CCC loan
+and crop-insurance statement descriptors; the Form 8814 route uses the
+production pending adapter so a calculation-only Form 4952 slice is not filed.
+The standalone Form 4972 builder assertion now uses calculated form lines,
+one matching elected 1099-R, and the corresponding Form 1040 tax; its focused
+case passes. The two aggregate builder smoke cases still fail because their
+Form 2441 AGI differs from the synthetic Form 1040 AGI, and may contain further
+source inconsistencies.
+These focused passes do not establish the full-batch or source-evidence gates.
 
 The 2026-09-29 moving-worktree diagnostic `deno task test` run finished with
 8,609 passed and 205 failed in 11m18s. It is not the agreed fixed-commit
