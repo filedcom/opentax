@@ -38,6 +38,14 @@ cases pass. The reconciled ledger is not yet a public `f3800` input or a source
 of the Part I/II/IV/VI filing amounts. No positive carryover filing claim
 follows from this module alone.
 
+`f3800_carryover_statement.ts` can now append a standalone PDF history page
+from those checked vintages. It prints the originating credit and amount
+allowed, the original/revised 2025 balance, each carryback and carryforward
+use, and prior/current adjustments. It keeps a credit together across ordinary
+page breaks and repeats source identity if a single history needs a continuation.
+A two-page nine-vintage diagnostic was rendered and visually checked. The
+statement is not yet connected to a prepared return or native attachment.
+
 ## New Markets recapture boundary
 
 The `f8874_recapture` input computes the tax and interest from a Form 8874-B
@@ -62,9 +70,10 @@ credit.
 2. Derive Form 3800 Part I lines 4/5, Part II lines 34/35, and Part IV/VI
    amounts from that ledger and the tax-use ordering, including recapture in
    column (h). Ensure a recaptured QEI cannot be applied to 2025 tax.
-3. Build the required changed-carryforward statement from the same source
-   data, then verify the full return, local TY2025 schema, IRS business rules,
-   and ATS behavior in the requested full test batch and acceptance work.
+3. Bind the PDF history statement to the same prepared source ledger and any
+   required native attachment, including the additional Form 6765 details for
+   revised research credits. Verify the full return, local TY2025 schema, IRS
+   business rules, and ATS behavior in the requested full batch.
 
 ## Primary sources
 

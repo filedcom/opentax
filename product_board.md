@@ -30,11 +30,13 @@ XSD pass, or an ignored test.
 
 ### Latest validation attempt
 
-The 2026-09-29 16:27 UTC fixed-source `deno task test` run on commit
-`c6e844d8` passed **8,884/8,884**, zero failed, in 16m5s; its Deno summary
+The 2026-09-29 16:48 UTC fixed-source `deno task test` run on commit
+`500bd115` passed **8,886/8,886**, zero failed, in 15m51s; its Deno summary
 reported no ignored tests. Tool versions were Deno 2.7.7, libxml 2.9.13, and
 Poppler 26.03.0. The log is retained at
-`.state/research/ty2025-full-test-c6e844d8.log`. This includes the prepared
+`.state/research/ty2025-full-test-500bd115.log`. A later type-only PDF import
+correction on `1087f488` passed focused lint and the two statement tests; it
+did not change runtime behavior. The full run includes the prepared
 Form 3800 nine-page PDF, ZIP/source drift checks, separate geothermal and
 wind/geothermal Form 8835 copies, rejection of contradictory no-increase
 source facts, and one-, two-, and six-investment Form 8874 return/packet cases.
@@ -50,10 +52,12 @@ source-to-return credit join. A schema-valid long CDE name and address now print
 on a wrapped statement page without clipping and reconcile $500 through the
 parent return. A source-vintage Form 3800 carryover arithmetic module now
 checks origin credit, prior uses, incoming balance, and 2025 adjustment, but
-does not yet feed a filing route. Broader source/ATS coverage and final release
-validation remain open. The preceding fixed-source run on `7318ed47` passed
-8,880/8,880, zero failed; its log is retained at
-`.state/research/ty2025-full-test-7318ed47.log`.
+does not yet feed a filing route. A separate two-page carryover history
+statement was rendered and reviewed; it is not attached to a return. Broader
+source/ATS coverage and final release
+validation remain open. The preceding fixed-source run on `c6e844d8` passed
+8,884/8,884, zero failed; its log is retained at
+`.state/research/ty2025-full-test-c6e844d8.log`.
 
 The 2026-09-29 06:03 UTC local `deno task test` run on source commit
 `cabcfdca703c6fb581dfee8b817afdb7c8f73f4f` passed **8,835/8,835**
@@ -302,6 +306,7 @@ including a two-gift return with two linked native forms and attachments.
   - [x] Print a schema-valid long CDE name and address on a wrapped Form 8874 statement page using the prescribed last-row "See attached" subtotal; reconcile $500 through Form 3800, Schedule 3, Form 1040, local XSD, and reviewed pages in the 16-page packet.
   - [x] Print a mixed geothermal Form 8835 and New Markets Form 8874 return with separate Form 3800 lines 4e and 1i; reconcile $600 plus $500 through line 38, Schedule 3, Form 1040, local XSD, distinct source IDs, and the reviewed 18-page packet.
   - [x] Add cent-precise source-vintage carryover arithmetic that reconciles origin credit, earlier allowed uses and adjustments, 2025 opening balance, and current recapture reduction; reject duplicate sources and unsupported year direction. Four focused cases pass. This is a calculation prerequisite only.
+  - [x] Render a separate source-vintage Form 3800 carryover history statement with origin-year credit and allowed amount, each carryback/forward use, original versus revised balance, and adjustment details. A two-page nine-vintage diagnostic preserves every credit heading and was visually checked; it is not attached to a prepared filing yet.
   - [ ] Join those vintages to authenticated prior returns and source records, Form 8582-CR, Form 3800 Parts I/II/IV/VI, the revised-carryforward statement, native XML, and the printable packet; prove source-to-Form 1040 totals and local XSD/business-rule results.
   - [ ] Cover transfer and passive credits, carryover vintages, mixed and other source credits, row overflow, required external attachments, cross-route archive evidence, business rules, and ATS acceptance.
 - [ ] **Form 8835:** extend the bounded filer-owned wind/geothermal route to every retained credit, owner, facility, election, and source combination in the [form audit](docs/mef/ty2025-form1040-form-audit.md). Keep duplicate physical-facility records rejected and verify every native/PDF copy against its source and Form 3800 row.
@@ -324,7 +329,7 @@ including a two-gift return with two linked native forms and attachments.
 
 - [ ] Finish implementation and coverage decisions above before the agreed single full-batch gate. Existing focused cases and historical passes are not evidence for the current worktree.
 - [x] Confirm Deno, `xmllint`, `pdftoppm`, and `pdfinfo` are available. Provision and verify the TY2025 v5.4 `Return1040.xsd` / `ReturnData1040.xsd` bundle under `.state/research/docs/`; it is Git-ignored, not checked in. On 2026-09-29, Deno 2.7.7, libxml 2.9.13, and Poppler 26.03.0 were present with both schema files. A filtered MeF Schedule 2 XSD test and a filtered full-return Single W-2 XSD test each ran and passed (1 pass, 0 ignored per command), proving both test files used the local `Return1040.xsd` bundle. This checks the preflight only; the full schema matrix remains open.
-- [ ] Run `deno task test` as the final full batch after the retained routes and scope decisions are complete; record commit, command, tool versions, timestamp, pass/fail/ignored totals, failures, and ignored-test reasons. Fix failures, then rerun the same full command until the release batch passes. The current source commit passed 8,884/8,884 locally as recorded above; implementation and external gates remain open.
+- [ ] Run `deno task test` as the final full batch after the retained routes and scope decisions are complete; record commit, command, tool versions, timestamp, pass/fail/ignored totals, failures, and ignored-test reasons. Fix failures, then rerun the same full command until the release batch passes. The latest full source run passed 8,886/8,886 locally as recorded above; the subsequent type-only edit passed focused checks. Implementation and external gates remain open.
   - [x] Rerun the full command after correcting the three repeated-facility fixtures; `15d5430d` passed 8,855/8,855 with no ignored tests reported. Retain `.state/research/ty2025-full-test-15d5430d.log` as local regression evidence.
   - [x] Rerun the full command after adding mixed wind/geothermal copies and the no-increase source guard; `08786417` passed 8,860/8,860 with no ignored tests reported. Retain `.state/research/ty2025-full-test-08786417.log` as local regression evidence.
   - [x] Rerun the full command after adding the Form 8874 source-backed packet and fixing its CDE address layout; `5eeb5e6b` passed 8,862/8,862 with no ignored tests reported. Retain `.state/research/ty2025-full-test-5eeb5e6b.log` as local regression evidence.
@@ -334,6 +339,7 @@ including a two-gift return with two linked native forms and attachments.
   - [x] Rerun the full command after the 24-investment two-page Form 8874 statement packet; `9175f7c1` passed 8,875/8,875 with no ignored tests reported. Retain `.state/research/ty2025-full-test-9175f7c1.log` as local regression evidence.
   - [x] Rerun the full command after preserving a long Form 8874 CDE identity on a wrapped statement page; `7318ed47` passed 8,880/8,880 with no ignored tests reported. Retain `.state/research/ty2025-full-test-7318ed47.log` as local regression evidence.
   - [x] Rerun the full command after adding source-specific Form 3800 carryover arithmetic; `c6e844d8` passed 8,884/8,884 with no ignored tests reported. Retain `.state/research/ty2025-full-test-c6e844d8.log` as local regression evidence.
+  - [x] Rerun the full command after adding the Form 3800 carryover history renderer; `500bd115` passed 8,886/8,886 with no ignored tests reported. Retain `.state/research/ty2025-full-test-500bd115.log` as local regression evidence. The later type-only `1087f488` edit passed focused lint and two statement tests.
 - [x] Run the live canonical-PDF field-name checks in the normal test suite. On 2026-09-29, after correcting the Schedule 3 line 13a AcroForm path, `deno test --allow-read --allow-net=www.irs.gov --filter 'all mapped pdfField names exist in real IRS PDF' forms/f1040/2025/pdf/forms/all-descriptors.test.ts` passed all then-86 checks. The `08786417` full run passed all 87 current descriptor field-name checks, including Form 8835's wind fields. The earlier full descriptor file passed 605/605 checks, including the pinned-revision checks that had failed in the earlier diagnostic batch. This proves mapped field names exist in the referenced IRS PDFs; filled-output visual review remains a separate gate below.
 - [ ] For every retained positive filing route, generate a full return from a source-backed fixture and validate emitted XML against the checked-in TY2025 IRS schema. Check source-to-calculation-to-Form-1040 totals, required references/attachments, negative and conflicting cases, and IRS business rules separately from structural XSD success.
 - [ ] Generate the twenty-seven prepared synthetic filled-PDF cases through the real graph and PDF builder as described in the [validation batch](docs/mef/ty2025-form1040-validation-batch.md); render and inspect every page, mark checkboxes/amounts/owner identity/page order/continuations, and add cases for each uncovered descriptor or branch.

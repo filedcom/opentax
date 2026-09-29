@@ -15,6 +15,23 @@ and its four focused cases pass. The module is not yet joined to the prepared
 return, Part IV/VI native and PDF rows, or a transmitted statement. Positive
 nonpassive carryforwards and later-year carrybacks remain unsupported.
 
+The standalone carryover statement renderer now prints each source vintage's
+origin-year credit, allowed amount, historical use by year, original versus
+revised balance, and adjustment detail. It rejects revised research credits
+without the additional Form 6765 statement facts. A nine-vintage synthetic
+statement occupies two letter-size pages, with all nine headings preserved and
+no visual clipping. Its retained diagnostic is
+`.state/research/form3800-carryover-statement-diagnostic.pdf` (SHA-256
+`073b959868dc8f016b5657633646b1a9b6a23913010b6bf4f61a5f254df941d8`).
+The renderer is not registered with the prepared Form 3800 PDF descriptor;
+filing integration and external source verification remain open.
+
+The fixed-source `500bd115` repository-wide run completed at 2026-09-29
+16:48 UTC: 8,886/8,886 passed, zero failed, with no ignored tests reported,
+in 15m51s. Its log is
+`.state/research/ty2025-full-test-500bd115.log`. A subsequent type-only
+import correction on `1087f488` passed focused lint and both statement tests.
+
 The fixed-source `c6e844d8` repository-wide run completed at 2026-09-29
 16:27 UTC: 8,884/8,884 passed, zero failed, with no ignored tests reported,
 in 16m5s. Its log is

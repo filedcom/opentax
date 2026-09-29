@@ -224,6 +224,17 @@ The fixed-source `deno task test` run on `7318ed47` completed at 2026-09-29
 26.03.0. Its retained log is
 `.state/research/ty2025-full-test-7318ed47.log`.
 
+A separate Form 3800 carryover-history diagnostic now renders nine checked
+synthetic credit vintages over two letter-size pages. Both pages were visually
+inspected, and text extraction finds all nine source headings. It is a
+standalone statement proof, not one of the 27 prepared return packets; a
+carryover return still needs source binding, native Part IV/VI rows, and a
+linked attachment. The fixed-source `deno task test` run on `500bd115`
+completed at 2026-09-29 16:48 UTC: 8,886/8,886 passed, zero failed, no
+ignored tests reported, in 15m51s. Its retained log is
+`.state/research/ty2025-full-test-500bd115.log`. The later type-only import
+correction on `1087f488` passed focused lint and the two statement tests.
+
 The fixed-source `deno task test` run on `9175f7c1` completed at 2026-09-29
 14:29 UTC: 8,875/8,875 passed, zero failed, no ignored tests reported, in
 15m57s. Deno was 2.7.7, `xmllint` used libxml 2.9.13, and Poppler was
