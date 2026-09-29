@@ -53,8 +53,8 @@ Deno.test("qualified tips: flows from W-2 through Schedule 1-A to tax and refund
   assertEquals(f1040.line13b_additional_deductions, 5_000);
   assertEquals(f1040.line14_deductions_qbi_total, 20_750);
   assertEquals(finalValue(f1040.line15_taxable_income), 9_250);
-  assertEquals(f1040.line24_total_tax, 925);
-  assertEquals(f1040.line35a_refund, 1_575);
+  assertEquals(f1040.line24_total_tax, 928);
+  assertEquals(f1040.line35a_refund, 1_572);
 });
 
 Deno.test("qualified tips: no occupation code leaves taxable income unchanged", () => {

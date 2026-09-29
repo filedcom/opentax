@@ -66,6 +66,9 @@ The Form 1116 foreign-tax-credit end-to-end file passes 5/5 after its
 $85,250 single-filer line 16 expectation was aligned with the
 [2025 IRS Tax Table](https://www.irs.gov/publications/p1040): $13,675 tax,
 $135 allowed foreign tax credit, and $13,540 total tax in that fixture.
+The qualified-tips W-2 to Schedule 1-A return passes 6/6 after its $9,250
+single-filer taxable income was checked against the same 2025 Tax Table:
+$928 tax and a $1,572 refund in the synthetic case.
 
 The 2026-09-29 moving-worktree diagnostic `deno task test` run finished with
 8,609 passed and 205 failed in 11m18s. It is not the agreed fixed-commit
