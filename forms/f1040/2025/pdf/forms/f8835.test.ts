@@ -81,6 +81,8 @@ function pending(
       form3800_source_credits: {
         standardCredit: 0,
         specifiedCredit: totalCredit,
+        standardCarryforward: 0,
+        specifiedCarryforward: 0,
         passiveLines,
       },
       line20_nonrefundable_credits: totalCredit,

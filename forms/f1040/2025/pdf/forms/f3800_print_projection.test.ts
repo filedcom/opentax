@@ -26,6 +26,8 @@ const parts = buildForm3800NonpassiveParts({
     tentativeMinimumTax: 0,
     standardCredit: 100,
     specifiedCredit: 0,
+    standardCarryforward: 0,
+    specifiedCarryforward: 0,
   },
   passiveActivity: ZERO_FORM3800_PASSIVE_ACTIVITY,
   passiveApplied: { standard: 0, specified: 0 },

@@ -140,6 +140,8 @@ Deno.test({
         tentativeMinimumTax: 0,
         standardCredit: 1_875,
         specifiedCredit: 0,
+        standardCarryforward: 0,
+        specifiedCarryforward: 0,
       },
       allowed_credit: 1_875,
     },

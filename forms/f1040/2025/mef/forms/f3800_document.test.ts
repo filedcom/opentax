@@ -19,6 +19,8 @@ const tax = {
   tentativeMinimumTax: 0,
   standardCredit: 100,
   specifiedCredit: 0,
+  standardCarryforward: 0,
+  specifiedCarryforward: 0,
 };
 
 const lines = calculateForm3800Nonpassive(

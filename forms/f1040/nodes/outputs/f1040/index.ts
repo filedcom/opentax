@@ -172,6 +172,8 @@ const inputSchema = z.object({
   form3800_source_credits: z.object({
     standardCredit: z.number().finite().nonnegative(),
     specifiedCredit: z.number().finite().nonnegative(),
+    standardCarryforward: z.number().finite().nonnegative(),
+    specifiedCarryforward: z.number().finite().nonnegative(),
     passiveLines: form3800PassiveActivityLinesSchema,
   }).optional(),
   credit_limit_form6251_line9: z.number().finite().nonnegative().optional(),

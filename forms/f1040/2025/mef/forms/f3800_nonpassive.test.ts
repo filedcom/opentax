@@ -81,6 +81,8 @@ const tax = {
   tentativeMinimumTax: 20_000,
   standardCredit: 18_000,
   specifiedCredit: 15_000,
+  standardCarryforward: 0,
+  specifiedCarryforward: 0,
 };
 
 Deno.test("Form 3800 nonpassive source builder exposes structured document parts", () => {
@@ -526,6 +528,8 @@ Deno.test("Form 3800 XML: direct estate and trust disabled-access sources share 
       regularTax: 22_500,
       standardCredit: 3_000,
       specifiedCredit: 0,
+      standardCarryforward: 0,
+      specifiedCarryforward: 0,
     },
     disabledAccess: {
       credit: 3_000,
@@ -570,6 +574,8 @@ Deno.test("Form 3800 XML: Form 8826 source rows preserve capped K-1 identity and
       regularTax: 22_000,
       standardCredit: 5_000,
       specifiedCredit: 0,
+      standardCarryforward: 0,
+      specifiedCarryforward: 0,
     },
     disabledAccess: disabledAccessFromForm(
       source,
@@ -611,6 +617,8 @@ Deno.test("Form 3800 XML: multiple Form 8826 K-1 sources need exact Part V appli
       regularTax: 23_000,
       standardCredit: 5_000,
       specifiedCredit: 0,
+      standardCarryforward: 0,
+      specifiedCarryforward: 0,
     },
     disabledAccess: disabledAccessFromForm(
       {
@@ -702,6 +710,8 @@ Deno.test("Form 3800 XML: whole-dollar Form 8826 Part V rows reconcile after sou
       tentativeMinimumTax: 20_000,
       standardCredit: 4.47,
       specifiedCredit: 0,
+      standardCarryforward: 0,
+      specifiedCarryforward: 0,
     },
     disabledAccess: disabledAccessFromForm(
       {
@@ -994,6 +1004,8 @@ Deno.test("Form 3800 XML: mixed Form 8826 and Form 8835 follows TY2025 source sc
         regularTax: 23_000,
         standardCredit: 5_000,
         specifiedCredit: 0,
+        standardCarryforward: 0,
+        specifiedCarryforward: 0,
       },
       disabledAccess: disabledAccessFromForm(
         {

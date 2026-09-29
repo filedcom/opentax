@@ -59,6 +59,8 @@ function pending() {
       form3800_source_credits: {
         standardCredit: 0,
         specifiedCredit: 600,
+        standardCarryforward: 0,
+        specifiedCarryforward: 0,
         passiveLines: {
           line2: 0,
           line3: 0,
@@ -91,6 +93,8 @@ function pending() {
         tentativeMinimumTax: 20_000,
         standardCredit: 0,
         specifiedCredit: 600,
+        standardCarryforward: 0,
+        specifiedCarryforward: 0,
       },
       allowed_credit: 600,
       specified_credit_allowed: 600,

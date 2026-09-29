@@ -66,6 +66,8 @@ const taxBase = z.object({
   tentativeMinimumTax: amount,
   standardCredit: amount,
   specifiedCredit: amount,
+  standardCarryforward: amount,
+  specifiedCarryforward: amount,
 });
 const taxContextSchema = z.union([
   taxBase.extend({
@@ -737,6 +739,7 @@ function prepareForm3800Base(fields: PendingForm3800) {
     (fields.f5884_credit?.credit_amount ?? 0) > 0 ||
     (fields.f8936_new_vehicle_credit?.credit_amount ?? 0) > 0 ||
     (fields.f8936_commercial_vehicle_credit?.credit_amount ?? 0) > 0 ||
+    Boolean(fields.carryforward_vintages?.length) ||
     Boolean(fields.passive_source_allocations?.length);
   if (!hasSourceCredit) return undefined;
   if (fields.tax_context === undefined || fields.allowed_credit === undefined) {
@@ -775,6 +778,11 @@ export function prepareForm3800DocumentParts(
     throw new Error("Form 3800 preparation needs reserved document IDs");
   }
   const { tax, parsed, passiveActivity, lines, allowedCredit } = base;
+  if (parsed.carryforward_vintages?.length) {
+    throw new Error(
+      "Form 3800 carryforward needs linked prior-return evidence, Part IV and VI rows, and a filed history statement",
+    );
+  }
   reconcileFiledTaxContext(tax, allowedCredit, context);
   reconcilePassiveSources(parsed, context);
   if (

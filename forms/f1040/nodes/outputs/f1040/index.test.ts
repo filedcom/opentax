@@ -428,6 +428,8 @@ Deno.test("f1040: Form 8912 uses tax remaining after allowed Form 3800 credit", 
     form3800_source_credits: {
       standardCredit: 200,
       specifiedCredit: 0,
+      standardCarryforward: 0,
+      specifiedCarryforward: 0,
       passiveLines: ZERO_FORM3800_PASSIVE_ACTIVITY,
     },
     form8912_source_lines: {
@@ -471,6 +473,8 @@ Deno.test("f1040: source-backed Form 3800 posts only its allowed ordinary credit
     form3800_source_credits: {
       standardCredit: 25_000,
       specifiedCredit: 0,
+      standardCarryforward: 0,
+      specifiedCarryforward: 0,
       passiveLines: ZERO_FORM3800_PASSIVE_ACTIVITY,
     },
     credit_limit_form6251_line9: 20_000,
@@ -501,6 +505,8 @@ Deno.test("f1040: passive Form 3800 credit is limited again by available tax", (
     form3800_source_credits: {
       standardCredit: 0,
       specifiedCredit: 0,
+      standardCarryforward: 0,
+      specifiedCarryforward: 0,
       passiveLines,
     },
     credit_limit_form6251_line9: 0,
@@ -526,6 +532,8 @@ Deno.test("f1040: specified Form 3800 credit uses its separate AMT limit", () =>
     form3800_source_credits: {
       standardCredit: 0,
       specifiedCredit: 10_000,
+      standardCarryforward: 0,
+      specifiedCarryforward: 0,
       passiveLines: ZERO_FORM3800_PASSIVE_ACTIVITY,
     },
     credit_limit_form6251_line9: 25_000,
@@ -552,6 +560,8 @@ Deno.test("f1040: Form 3800 follows finalized personal clean-vehicle credit", ()
     form3800_source_credits: {
       standardCredit: 5_000,
       specifiedCredit: 0,
+      standardCarryforward: 0,
+      specifiedCarryforward: 0,
       passiveLines: ZERO_FORM3800_PASSIVE_ACTIVITY,
     },
     credit_limit_form6251_line9: 0,
@@ -574,6 +584,8 @@ Deno.test("f1040: Form 3800 needs AMT evidence and does not mix legacy gross GBC
     form3800_source_credits: {
       standardCredit: 1_000,
       specifiedCredit: 0,
+      standardCarryforward: 0,
+      specifiedCarryforward: 0,
       passiveLines: ZERO_FORM3800_PASSIVE_ACTIVITY,
     },
     credit_limit_schedule3_lines: emptySchedule3ForBusinessCredit,
@@ -607,6 +619,8 @@ Deno.test("f1040: MFS Form 3800 requires the spouse business-credit answer", () 
     form3800_source_credits: {
       standardCredit: 5_000,
       specifiedCredit: 0,
+      standardCarryforward: 0,
+      specifiedCarryforward: 0,
       passiveLines: ZERO_FORM3800_PASSIVE_ACTIVITY,
     },
     credit_limit_form6251_line9: 0,

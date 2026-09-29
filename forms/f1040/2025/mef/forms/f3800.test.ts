@@ -11,6 +11,48 @@ import { PassiveCreditReportingRoute } from "../../../nodes/intermediate/forms/f
 import { form3800, prepareForm3800DocumentParts } from "./f3800.ts";
 import { buildIRS3800Document } from "./f3800_document.ts";
 
+Deno.test("Form 3800 rejects carryforward export until source rows and history evidence are linked", () => {
+  assertThrows(
+    () =>
+      form3800.build({
+        carryforward_vintages: [{
+          vintage: {
+            source_key: "2024-new-markets-1",
+            credit_type: "New markets credit",
+            form3800_credit_line: "1i",
+            originating_tax_year: 2024,
+            source_document_reference: "2024 filed Form 8874",
+            originating_return_reference:
+              "2024 accepted Form 1040 and Form 3800",
+            permitted_carryback_years: 1,
+            credit_generated_as_filed: 1_000,
+            credit_allowed_origin_year: 400,
+            historical_uses: [],
+            prior_adjustments: [],
+            balance_carried_to_2025: 600,
+            original_reported_balance_carried_to_2025: 600,
+          },
+          subject_to_passive_activity_limit: false,
+        }],
+        tax_context: {
+          filingStatus: FilingStatus.Single,
+          regularTax: 40_000,
+          alternativeMinimumTax: 0,
+          foreignTaxCredit: 0,
+          priorAllowableCredits: 0,
+          tentativeMinimumTax: 20_000,
+          standardCredit: 0,
+          specifiedCredit: 0,
+          standardCarryforward: 600,
+          specifiedCarryforward: 0,
+        },
+        allowed_credit: 600,
+      }, { documentIdsByPendingKey: {} }),
+    Error,
+    "needs linked prior-return evidence",
+  );
+});
+
 Deno.test("Form 3800 files a source-backed passive-only current-year credit", () => {
   const source = sourceAllocationSchema.parse({
     activity_reference: "Clinical activity",
@@ -41,6 +83,8 @@ Deno.test("Form 3800 files a source-backed passive-only current-year credit", ()
     tentativeMinimumTax: 0,
     standardCredit: 0,
     specifiedCredit: 0,
+    standardCarryforward: 0,
+    specifiedCarryforward: 0,
   };
   const xml = form3800.build({
     passive_source_allocations: [source],
@@ -129,6 +173,8 @@ const tax = {
   tentativeMinimumTax: 20_000,
   standardCredit: 5_000,
   specifiedCredit: 0,
+  standardCarryforward: 0,
+  specifiedCarryforward: 0,
 };
 
 const selfEarned = {
@@ -1147,6 +1193,8 @@ Deno.test("Form 3800 links and limits a nonpassive Form 5884 line 4b credit", ()
     ...tax,
     standardCredit: 0,
     specifiedCredit: 2_400,
+    standardCarryforward: 0,
+    specifiedCarryforward: 0,
   };
   const fields = {
     f5884_credit: {
@@ -1218,6 +1266,8 @@ Deno.test("Form 3800 reports pass-through-only Form 5884 credit without a recipi
     ...tax,
     standardCredit: 0,
     specifiedCredit: 1_250,
+    standardCarryforward: 0,
+    specifiedCarryforward: 0,
   };
   const xml = form3800.build({
     f5884_credit: {
@@ -1281,6 +1331,8 @@ Deno.test("Form 3800 requires a Part V split when mixed Form 5884 sources are pa
     ...tax,
     standardCredit: 0,
     specifiedCredit: 3_650,
+    standardCarryforward: 0,
+    specifiedCarryforward: 0,
     regularTax: 1_000,
     tentativeMinimumTax: 0,
   };
@@ -1851,6 +1903,8 @@ Deno.test("Form 3800 descriptor links a specified Form 8835 facility", () => {
       ...tax,
       standardCredit: 0,
       specifiedCredit: 6_000,
+      standardCarryforward: 0,
+      specifiedCarryforward: 0,
     },
     allowed_credit: 6_000,
   };
@@ -1899,6 +1953,8 @@ Deno.test("Form 3800 descriptor needs explicit Part V use for partly limited sam
       tentativeMinimumTax: 0,
       standardCredit: 0,
       specifiedCredit: 12_000,
+      standardCarryforward: 0,
+      specifiedCarryforward: 0,
     },
     allowed_credit: 7_000,
   };
@@ -1963,6 +2019,8 @@ Deno.test("Form 3800 descriptor requires a bundled transfer-election statement",
       ...tax,
       standardCredit: 0,
       specifiedCredit: 4_000,
+      standardCarryforward: 0,
+      specifiedCarryforward: 0,
     },
     allowed_credit: 4_000,
   };

@@ -16,6 +16,10 @@ import {
 } from "./calculation.ts";
 import { sourceAllocationSchema } from "../../intermediate/forms/form8582cr/source.ts";
 import { allocateDisabledAccessLine1eCredits } from "./disabled-access.ts";
+import {
+  form3800CarryoverVintageSchema,
+  reconcileForm3800CarryoverLedger,
+} from "./carryover-ledger.ts";
 
 // TY2025 — Form 3800: General Business Credit.
 // Source-backed Form 8826, Form 8835, and Form 5884 entries pass classified source
@@ -169,6 +173,12 @@ const appliedSourceCreditSchema = z.number().finite().nonnegative().refine(
 
 export const inputSchema = z.object({
   f3800s: z.array(itemSchema).min(1).optional(),
+  carryforward_vintages: z.array(
+    z.object({
+      vintage: form3800CarryoverVintageSchema,
+      subject_to_passive_activity_limit: z.boolean(),
+    }).strict(),
+  ).min(1).optional(),
   f8835_credit_entries: z.array(f8835CreditEntrySchema).min(1).optional(),
   f8826_credit_entries: z.array(f8826CreditEntrySchema).min(1).optional(),
   f5884_credit: f5884CreditSchema.optional(),
@@ -198,6 +208,7 @@ export const inputSchema = z.object({
 }).refine(
   (input) =>
     input.f3800s !== undefined || input.f8835_credit_entries !== undefined ||
+    input.carryforward_vintages !== undefined ||
     input.f8826_credit_entries !== undefined ||
     input.f5884_credit !== undefined ||
     input.f8820_credit !== undefined ||
@@ -264,6 +275,9 @@ function schedule3Output(
     | undefined,
   passiveSources:
     | z.infer<typeof sourceAllocationSchema>[]
+    | undefined,
+  carryforwardVintages:
+    | NonNullable<z.infer<typeof inputSchema>["carryforward_vintages"]>
     | undefined,
 ): NodeOutput[] {
   const f8835Credit = f8835Entries.length > 0
@@ -351,6 +365,32 @@ function schedule3Output(
   const passiveLines = passiveSources
     ? classifyForm3800PassiveCredits(passiveSources)
     : ZERO_FORM3800_PASSIVE_ACTIVITY;
+  const carryforward = reconcileForm3800CarryoverLedger(
+    carryforwardVintages?.map((entry) => entry.vintage) ?? [],
+  );
+  for (const [index, entry] of (carryforwardVintages ?? []).entries()) {
+    if (entry.subject_to_passive_activity_limit) {
+      throw new Error(
+        "Form 3800 passive carryforward needs linked Form 8582-CR source allocation",
+      );
+    }
+    if (carryforward[index].adjustment2025 > 0) {
+      throw new Error(
+        "Form 3800 adjusted carryforward needs Part IV recapture reconciliation",
+      );
+    }
+    if (entry.vintage.form3800_credit_line === "3") {
+      throw new Error(
+        "Form 3800 empowerment-zone carryforward needs Part II line 22 allocation",
+      );
+    }
+  }
+  const standardCarryforward = carryforward.filter((entry) =>
+    !entry.form3800CreditLine.startsWith("4")
+  ).reduce((sum, entry) => sum + entry.availableAfterAdjustment, 0);
+  const specifiedCarryforward = carryforward.filter((entry) =>
+    entry.form3800CreditLine.startsWith("4")
+  ).reduce((sum, entry) => sum + entry.availableAfterAdjustment, 0);
   const hasPassiveSource = passiveLines.line2 + passiveLines.line23 +
       passiveLines.line32 > 0;
   const hasSourceCredit = form8826Credit > 0 ||
@@ -363,7 +403,7 @@ function schedule3Output(
     orphanDrugK1Credit > 0 ||
     (f8936Credit?.credit_amount ?? 0) > 0 ||
     (f8936CommercialCredit?.credit_amount ?? 0) > 0 ||
-    hasPassiveSource;
+    hasPassiveSource || carryforward.length > 0;
   if (hasSourceCredit && totalGbc(items) > 0) {
     throw new Error(
       "Source-backed Form 3800 credit cannot mix with unbounded legacy f3800s credit",
@@ -384,6 +424,8 @@ function schedule3Output(
           specifiedCredit: (f8835Credit?.specifiedCredit ?? 0) +
             (f5884Credit?.credit_amount ?? 0),
           passiveLines,
+          standardCarryforward,
+          specifiedCarryforward,
         },
       }),
       output(form6251, { must_file_for_gbc: true }),
@@ -415,6 +457,7 @@ class F3800Node extends TaxNode<typeof inputSchema> {
         parsed.f8936_new_vehicle_credit,
         parsed.f8936_commercial_vehicle_credit,
         parsed.passive_source_allocations,
+        parsed.carryforward_vintages,
       ),
     };
   }

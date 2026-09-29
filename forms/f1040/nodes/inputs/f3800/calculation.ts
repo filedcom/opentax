@@ -603,6 +603,10 @@ type Form3800TaxContext = {
   standardCredit: number;
   /** Part II line 36: non-passive specified credits. */
   specifiedCredit: number;
+  /** Part I line 4: source-vintage non-passive carryforwards. */
+  standardCarryforward: number;
+  /** Part II line 34: source-vintage specified carryforwards. */
+  specifiedCarryforward: number;
 };
 
 export type Form3800NonpassiveInput =
@@ -688,8 +692,11 @@ export type Form3800IndividualReturnContext = {
 export function deriveForm3800NonpassiveInput(
   returnLines: Form3800IndividualReturnContext,
   credits: Pick<
-    Form3800CreditClassification,
-    "standardCredit" | "specifiedCredit"
+    Form3800TaxContext,
+    | "standardCredit"
+    | "specifiedCredit"
+    | "standardCarryforward"
+    | "specifiedCarryforward"
   >,
 ): Form3800NonpassiveInput {
   for (const [name, amount] of Object.entries(returnLines)) {
@@ -735,6 +742,8 @@ export function deriveForm3800NonpassiveInput(
     tentativeMinimumTax: returnLines.form6251Line9,
     standardCredit: credits.standardCredit,
     specifiedCredit: credits.specifiedCredit,
+    standardCarryforward: credits.standardCarryforward,
+    specifiedCarryforward: credits.specifiedCarryforward,
   };
   return returnLines.filingStatus === FilingStatus.MFS
     ? {
@@ -758,6 +767,8 @@ export function calculateForm3800Nonpassive(
       tentativeMinimumTax: input.tentativeMinimumTax,
       standardCredit: input.standardCredit,
       specifiedCredit: input.specifiedCredit,
+      standardCarryforward: input.standardCarryforward,
+      specifiedCarryforward: input.specifiedCarryforward,
     })
   ) {
     if (!Number.isFinite(amount) || amount < 0) {
@@ -782,7 +793,7 @@ export function calculateForm3800Nonpassive(
   const line1 = input.standardCredit;
   const line2 = passive.line2;
   const line3 = passive.line3;
-  const line4 = 0;
+  const line4 = input.standardCarryforward;
   const line5 = 0;
   const line6 = line1 + line3 + line4 + line5;
   const line7 = input.regularTax;
@@ -817,7 +828,7 @@ export function calculateForm3800Nonpassive(
   const line30 = input.specifiedCredit;
   const line32 = passive.line32;
   const line33 = passive.line33;
-  const line34 = 0;
+  const line34 = input.specifiedCarryforward;
   const line35 = 0;
   const line36 = line30 + line33 + line34 + line35;
   const line37 = Math.min(line29, line36);

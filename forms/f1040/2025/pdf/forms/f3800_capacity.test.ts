@@ -16,6 +16,8 @@ const lines = calculateForm3800Nonpassive({
   tentativeMinimumTax: 0,
   standardCredit: 100,
   specifiedCredit: 0,
+  standardCarryforward: 0,
+  specifiedCarryforward: 0,
 }, ZERO_FORM3800_PASSIVE_ACTIVITY);
 
 function printableParts(partV: number, partVI: number): Form3800DocumentParts {
