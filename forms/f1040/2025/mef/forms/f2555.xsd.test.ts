@@ -60,6 +60,7 @@ const filingDetails: PhysicalPresenceFiling = {
   no_other_foreign_earned_income: true,
   claiming_housing_exclusion_or_deduction: false,
   deductions_allocable_to_excluded_income: 0,
+  amt_line2b_disallowed_deductions_and_exclusions: 0,
 };
 
 const employeeHousingDetails: PhysicalPresenceFiling = {

@@ -594,13 +594,27 @@ export const form8582: MefFormDescriptor<"form8582", Input> = {
       );
     if (!hasActivity) return "";
 
+    const input = inputSchema.parse(fields);
+    const hasPassiveLoss = (input.current_loss ?? 0) > 0 ||
+      (input.prior_unallowed ?? 0) > 0 ||
+      (input.rental_current_loss ?? 0) > 0 ||
+      (input.rental_prior_eligible_loss ?? 0) > 0 ||
+      (input.passive_schedule_c ?? 0) > 0 ||
+      (input.passive_schedule_f ?? 0) > 0 ||
+      (input.activities ?? []).some((activity) =>
+        activity.current_net < 0 ||
+        activity.prior_unallowed_operating > 0 ||
+        activity.prior_unallowed_4797_part1 > 0 ||
+        activity.prior_unallowed_4797_part2 > 0
+      );
+    if (!hasPassiveLoss) return "";
+
     if (!context?.pending) {
       throw new Error(
         "Form 8582 active filing needs linked Schedule E or Form 4835 source context",
       );
     }
 
-    const input = inputSchema.parse(fields);
     assertPriorYear8582Evidence(input);
     const activities = input.activities ?? [];
     if (

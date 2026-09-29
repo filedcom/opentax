@@ -1,5 +1,5 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
-import { FilingStatus } from "../../../mef/header.ts";
+import { FilingStatus } from "../../../nodes/types.ts";
 import { scheduleR } from "./schedule_r.ts";
 
 const source = {

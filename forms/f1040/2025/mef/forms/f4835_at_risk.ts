@@ -11,6 +11,7 @@ export const form4835AtRisk: MefFormDescriptor<
   readonly string[]
 > = {
   pendingKey: "f4835_at_risk",
+  sourcePendingKeys: ["f4835"],
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f6198.pdf",
   build(_fields, context) {

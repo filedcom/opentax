@@ -5,9 +5,13 @@ import {
 } from "../../../nodes/intermediate/forms/form2555/calculation.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
-function filingDetails(context?: MefBuildContext): PhysicalPresenceFiling | null {
+function filingDetails(
+  context?: MefBuildContext,
+): PhysicalPresenceFiling | null {
   const pending = context?.pending?.form2555;
-  if (!pending || typeof pending !== "object" || !("filing_details" in pending)) {
+  if (
+    !pending || typeof pending !== "object" || !("filing_details" in pending)
+  ) {
     return null;
   }
   return physicalPresenceFilingSchema.parse(pending.filing_details);
@@ -29,6 +33,7 @@ function foreignAddress(
 
 export const fecRecord: MefFormDescriptor<"fec_record", unknown> = {
   pendingKey: "fec_record",
+  sourcePendingKeys: ["form2555"],
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/p4164.pdf",
   build(_fields, context) {
@@ -57,6 +62,7 @@ export const wagesNotShownSchedule: MefFormDescriptor<
   unknown
 > = {
   pendingKey: "wages_not_shown_schedule",
+  sourcePendingKeys: ["form2555"],
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/p4164.pdf",
   build(_fields, context) {

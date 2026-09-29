@@ -60,7 +60,11 @@ const context = {
   },
   pending: {
     f1095a: source,
-    general: { taxpayer_ssn: "123456789", address_state: "TX" },
+    general: {
+      filing_status: "single",
+      taxpayer_ssn: "123456789",
+      address_state: "TX",
+    },
     f1040: { line11_agi: 75_300, line17_additional_taxes: 1_200 },
     schedule2: { line1a_excess_advance_premium: 1_200 },
   },

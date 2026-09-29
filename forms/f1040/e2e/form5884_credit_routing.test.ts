@@ -52,7 +52,7 @@ const business = {
     line_b_business_code: "459999",
     line_f_accounting_method: "cash",
     line_g_material_participation: true,
-    line_1_gross_receipts: 0,
+    line_1_gross_receipts: 6_000,
     line_26_wages: 6_000,
   }],
 };
@@ -61,14 +61,14 @@ Deno.test("Form 5884 source reaches Form 3800 but posts no credit without tax", 
   const result = execute(plan, registry, {
     general,
     f5884: source,
-    schedule_c: business,
+    schedule_c: business.schedule_cs,
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.pending.f3800?.f5884_credit, {
     credit_amount: 2_400,
     subject_to_passive_activity_limit: false,
   });
   assertEquals(result.pending.f3800?.allowed_credit, 0);
-  assertEquals(result.pending.schedule1?.line3_schedule_c, -3_600);
+  assertEquals(result.pending.schedule1?.line3_schedule_c, 2_400);
   assertEquals(result.pending.schedule_c?.wotc_wage_reductions, [{
     business_reference: "BUSINESS-1",
     credit_amount: 2_400,
@@ -95,7 +95,7 @@ Deno.test("Form 5884 allowed credit reaches Schedule 3 after Form 3800 Part II",
       box12_entries: [],
     }],
     f5884: source,
-    schedule_c: business,
+    schedule_c: business.schedule_cs,
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
   const allowed = Number(result.pending.f3800?.allowed_credit);
@@ -151,13 +151,13 @@ Deno.test("Form 5884 line 2 reduces Schedule F labor even when credit is tax-lim
         line_b_agricultural_activity_code: "111100",
         line_e_material_participation: true,
         accounting_method: "cash",
-        line1_sales_livestock_resale: 0,
+        line1_sales_livestock_resale: 6_000,
         line22_labor_hired: 6_000,
       }],
     },
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
-  assertEquals(result.pending.schedule1?.line6_schedule_f, -3_600);
+  assertEquals(result.pending.schedule1?.line6_schedule_f, 2_400);
   assertEquals(result.pending.schedule_f?.wotc_wage_reductions, [{
     farm_id: "FARM-1",
     credit_amount: 2_400,

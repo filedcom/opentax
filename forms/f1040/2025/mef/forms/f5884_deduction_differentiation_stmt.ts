@@ -10,6 +10,7 @@ export const form5884DeductionDifferentiationStatement: MefFormDescriptor<
   unknown
 > = {
   pendingKey: "f5884_deduction_differentiation_stmt",
+  sourcePendingKeys: ["f5884"],
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f5884.pdf",
   build(_fields, context = {}) {

@@ -105,7 +105,7 @@ Deno.test("Schedule 1 emits the TY2025 NOL and foreign exclusion as negative", (
   );
   assertStringIncludes(
     xml,
-    '<TotalIncomeExclusionAmt referenceDocumentId="IRS2555-1" referenceDocumentName="IRS2555">-200</TotalIncomeExclusionAmt>',
+    '<TotalIncomeExclusionAmt referenceDocumentId="IRS2555-1" referenceDocumentName="IRS2555">200</TotalIncomeExclusionAmt>',
   );
   assertEquals(
     xml.indexOf("<NetOperatingLossDeductionAmt>") <

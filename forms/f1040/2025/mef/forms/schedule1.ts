@@ -131,7 +131,7 @@ function buildIRS1040Schedule1(
       const formId = context?.documentIdsByPendingKey?.form2555?.[0];
       return element(
         tag,
-        -value,
+        value,
         formId
           ? { referenceDocumentId: formId, referenceDocumentName: "IRS2555" }
           : undefined,

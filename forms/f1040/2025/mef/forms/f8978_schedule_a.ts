@@ -58,6 +58,7 @@ export const form8978ScheduleA: MefFormDescriptor<
   readonly string[]
 > = {
   pendingKey: "form8978_schedule_a",
+  sourcePendingKeys: ["f8978"],
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8978sa.pdf",
   build(_fields, context) {

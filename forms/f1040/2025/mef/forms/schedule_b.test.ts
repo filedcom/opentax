@@ -545,7 +545,7 @@ Deno.test("schedule_b: source interest detail follows the IRS 2025 schema", asyn
     foreign_trust_question: true,
   }).replace(
     "<IRS1040ScheduleB>",
-    '<IRS1040ScheduleB xmlns="http://www.irs.gov/efile">',
+    '<IRS1040ScheduleB xmlns="http://www.irs.gov/efile" documentId="IRS1040ScheduleB1">',
   );
   const path = await Deno.makeTempFile({ suffix: ".xml" });
   try {

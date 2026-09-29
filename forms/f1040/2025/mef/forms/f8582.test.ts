@@ -62,6 +62,27 @@ const reorderedActivityCase = {
   },
 };
 
+Deno.test("Form 8582 omits a gain-only activity with no passive loss", () => {
+  assertEquals(
+    form8582.build({
+      activities: [{
+        activity_id: "gain-only",
+        name: "Gain only activity",
+        activity_type: "B",
+        property_type: 1,
+        reporting_form: "schedule_e",
+        current_net: 5_000,
+        prior_unallowed_operating: 0,
+        prior_unallowed_4797_part1: 0,
+        prior_unallowed_4797_part2: 0,
+      }],
+      current_income: 5_000,
+      has_other_passive: true,
+    }),
+    "",
+  );
+});
+
 Deno.test("Form 8582 MeF joins reordered source activities by durable ID", () => {
   const { fields, pending } = reorderedActivityCase;
   const xml = form8582.build(fields, { pending });
