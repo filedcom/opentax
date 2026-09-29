@@ -142,7 +142,7 @@ Deno.test("shared-policy filing rejects allocation and covered-person drift", ()
         }],
       }, context),
     Error,
-    "one agreed Situation 4 policy",
+    "reviewed nonoverlapping periods",
   );
   assertThrows(
     () =>
