@@ -147,6 +147,23 @@ reported, in 20m21s. Deno was 2.7.7, `xmllint` used libxml 2.9.13, and
 Poppler was 26.03.0. Its retained log is
 `.state/research/ty2025-full-test-5eeb5e6b.log`.
 
+The next two New Markets review cases use two and six direct investments.
+The two-row case prints a first-year 5% $500 credit and fourth-year 6% $600
+credit; the full-capacity case prints six $500 rows. Their $1,100 and $3,000
+totals reach Form 3800 Part III line 1i and line 38, Schedule 3 line 6a,
+and Form 1040 line 20. The focused prepared-return and 23-fixture local
+TY2025 v5.4 XSD suite passed 30/30. Both Form 8874 pages and the parent
+Part III page were rendered and visually checked, including row 6. The
+`2026-09-29-v25` review directory holds 23 PDFs (200 pages) and 23 XML files.
+Long CDE text, passive combinations, source authentication, and the final
+release batch remain open.
+
+The fixed-source `deno task test` run on `f0839295` completed at
+2026-09-29 12:39 UTC: 8,866/8,866 passed, zero failed, no ignored tests
+reported, in 20m30s. Deno was 2.7.7, `xmllint` used libxml 2.9.13, and
+Poppler was 26.03.0. Its retained log is
+`.state/research/ty2025-full-test-f0839295.log`.
+
 ## XML evidence
 
 For each supported positive filing route in the completed coverage inventory,

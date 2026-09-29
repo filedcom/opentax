@@ -116,6 +116,16 @@ Form 1040. Its 15-page packet and local TY2025 v5.4 XML pass the bounded
 source-to-return check; Form 8874 and Part III were visually inspected. The
 expanded review set has 21 PDFs (170 pages) and 21 XML files under
 `.state/research/ty2025-filled-pdf-review/2026-09-29-v23/`.
+The next two Form 8874 returns print two and six qualified equity investments
+on one source form each, with $1,100 and $3,000 on Part III line 1i and
+line 38. Their Form 8874 pages and one Part III page were visually checked;
+both native returns pass local TY2025 v5.4 XSD. The expanded review set now
+has 23 PDFs (200 pages) and 23 XML files under
+`.state/research/ty2025-filled-pdf-review/2026-09-29-v25/`.
+
+The fixed-source `f0839295` repository-wide run passed 8,866/8,866,
+zero failed, with no ignored tests reported in 20m30s. Its log is
+`.state/research/ty2025-full-test-f0839295.log`.
 
 The fixed-source `5eeb5e6b` repository-wide run passed 8,862/8,862,
 zero failed, with no ignored tests reported in 20m21s. Its log is

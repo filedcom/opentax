@@ -31,8 +31,8 @@ Still unsupported or unverified:
   qualification/holding assertions, but does not contain independently verified
   Form 8874-A or Form 8874-B documents. Eligibility and recapture evidence still
   need human review before filing.
-- Longer CDE names or addresses and multi-row combinations still need filled
-  output review for clipping and source-to-print reconciliation.
+- Longer CDE names or addresses, mixed passive/nonpassive rows, and more than
+  six rows still need filled-output or attachment review.
 
 One fully synthetic nonpassive source return now supplies a $10,000 qualified
 equity investment with a 2025 initial investment and credit allowance date.
@@ -51,3 +51,21 @@ The focused Form 8874/Form 3800/review-fixture tests passed 31/31. The
 fixed-source `deno task test` run on `5eeb5e6b` passed 8,862/8,862, zero
 failed, with no ignored tests reported in 20m21s; its log is
 `.state/research/ty2025-full-test-5eeb5e6b.log`.
+
+Two additional fully synthetic nonpassive returns exercise multiple printed
+investment rows. One uses a first-year $10,000 investment at 5% and a
+fourth-year $10,000 investment at 6%; the two $500/$600 Form 8874 rows and
+$1,100 line 3 reconcile to Form 3800, Schedule 3, and Form 1040. Another
+fills all six physical rows with $500 each and reconciles $3,000 across the
+same return. Their native documents contain two and six
+`CurrentYearCreditInfo` groups, respectively, and their full returns pass
+local TY2025 v5.4 XSD. Both Form 8874 pages were rendered and visually
+checked, including the last row. The 15-page packets are retained under
+`.state/research/ty2025-filled-pdf-review/2026-09-29-v25/`; their PDF
+SHA-256 values are `1c11943707c83a04b2d764b17943340322737afd772749c1d94c84797194a050`
+(two rows) and `18297b5ffd6ffb8c58e07a0f15539dd247008397045a9a9006e0f4cc3bb1d9f4`
+(six rows). The focused prepared-return and 23-fixture XSD suite passes 30/30.
+
+The fixed-source `deno task test` run on `f0839295` passed 8,866/8,866,
+zero failed, with no ignored tests reported in 20m30s; its log is
+`.state/research/ty2025-full-test-f0839295.log`.
