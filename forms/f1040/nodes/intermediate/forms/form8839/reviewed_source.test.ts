@@ -102,7 +102,7 @@ Deno.test("Form 8839 reviewed source rejects changed decree or payment details",
         }],
       }),
     Error,
-    "payment does not match",
+    "reviewed expense documents must match uniquely",
   );
 });
 
