@@ -67,7 +67,7 @@ Deno.test("Schedule 1 PDF combines identified line 8z sources once", () => {
   assertEquals(projected?.line8z_other, 600);
   assertEquals(
     projected?.line8z_description,
-    "FORM 8814, HSA excess earnings, Trade adjustment assistance",
+    "Form 8814, HSA excess earnings, Trade adjustment assistance",
   );
 });
 

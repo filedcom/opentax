@@ -56,6 +56,9 @@ pass with explicit similar-property groups in the synthetic multi-gift facts;
 the divergence case still reaches the Schedule A source-reconciliation guard.
 The Form 8283 input/calculation file also passes 43/43 after updating its
 expected reduced-claim error text to the current guard.
+Schedule 1's PDF description for Form 8814 now uses the wording in the
+[2025 IRS Form 8814 instructions](https://www.irs.gov/instructions/i8814);
+the Form 8814, Schedule 1, and Form 8889 PDF files pass 19/19 focused checks.
 
 The 2026-09-29 moving-worktree diagnostic `deno task test` run finished with
 8,609 passed and 205 failed in 11m18s. It is not the agreed fixed-commit

@@ -213,7 +213,9 @@ export const schedule1Pdf: PdfFormDescriptor = {
     return [{
       ...fields,
       line8z_other: rows.reduce((sum, row) => sum + row.amount, 0),
-      line8z_description: rows.map((row) => row.label).join(", "),
+      line8z_description: rows.map((row) =>
+        row.label === "FORM 8814" ? "Form 8814" : row.label
+      ).join(", "),
     }];
   },
   fields,

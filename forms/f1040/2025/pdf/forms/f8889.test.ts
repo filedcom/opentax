@@ -223,7 +223,7 @@ Deno.test("Schedule 1 PDF identifies HSA excess-withdrawal earnings on line 8z",
   assertEquals(combined.line8z_other, 150);
   assertEquals(
     combined.line8z_description,
-    "FORM 8814, HSA excess earnings",
+    "Form 8814, HSA excess earnings",
   );
 });
 
