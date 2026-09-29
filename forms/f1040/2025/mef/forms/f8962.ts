@@ -397,6 +397,14 @@ function reconcileSimpleAnnualPolicy(
   const twoStateFamilyPolicies = policies.length === 2 &&
     new Set(policies.map((policy) => policy.coverage_state)).size === 2;
   const general = generalSchema.safeParse(pending?.general);
+  const mfsException = general.success &&
+    general.data.filing_status === SourceFilingStatus.MFS &&
+    (general.data.ptc_mfs_status?.basis === "domestic_abuse" ||
+      general.data.ptc_mfs_status?.basis === "spousal_abandonment") &&
+    general.data.ptc_mfs_status.policy_scope === "family_only" &&
+    context.filer.filingStatus === FilingStatus.MarriedFilingSeparately &&
+    fields.mfs_exception_ind === true && fields.household_size === 1 &&
+    policies.length === 1;
   const dependentMagi = reconcileDependentMagi(
     fields.household_size,
     fields.dependents_modified_agi,
@@ -415,7 +423,8 @@ function reconcileSimpleAnnualPolicy(
       (fields.total_advance_ptc ?? 0) > 0,
   );
   if (
-    context.filer.filingStatus !== FilingStatus.Single ||
+    !((context.filer.filingStatus === FilingStatus.Single &&
+        fields.mfs_exception_ind !== true) || mfsException) ||
     context.filer.address.foreignCountry ||
     policies.length < 1 || policies.length > 3 ||
     policies.some((policy) =>
@@ -439,7 +448,7 @@ function reconcileSimpleAnnualPolicy(
       fields.household_size !== 3) ||
     (fields.household_size === 3 && policies.length !== 3) ||
     (policies.length === 3 && fields.household_size !== 3) ||
-    fields.qsehra_ind === true || fields.mfs_exception_ind === true ||
+    fields.qsehra_ind === true ||
     (fields.shared_policy_allocations?.length ?? 0) > 0 ||
     fields.alternative_marriage_primary || fields.alternative_marriage_spouse ||
     pending?.form2555 !== undefined

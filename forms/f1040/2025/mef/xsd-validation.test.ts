@@ -3633,9 +3633,15 @@ Deno.test({
     w2: [w2Item(30_000, 0)],
     f1095a: [{
       issuer_name: "Marketplace Plan",
+      policy_number: "POLICY-MFS-EXCEPTION",
+      coverage_state: "TX",
+      covered_individual_ssns: ["111223333"],
       monthly_premiums: Array(12).fill(500),
       monthly_slcsps: Array(12).fill(600),
       monthly_aptcs: Array(12).fill(100),
+      annual_premium: 6_000,
+      annual_slcsp: 7_200,
+      annual_aptc: 1_200,
     }],
   });
   assertEquals(result.diagnostics, []);
