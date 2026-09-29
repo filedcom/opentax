@@ -208,7 +208,7 @@ Deno.test("MeF disabled-access ledger ties passive pass-through evidence to Form
     pass_through_credits: [{
       entity_type: "partnership",
       entity_ein: "123456789",
-      source_document_reference: "2025 access partnership K-1",
+      source_document_reference: "2025 passive access K-1",
       credit_amount: 3_000,
       subject_to_passive_activity_limit: true,
     }],
@@ -217,7 +217,7 @@ Deno.test("MeF disabled-access ledger ties passive pass-through evidence to Form
     required_form8826_pass_through_credits: [{
       source_type: "partnership",
       source_ein: "123456789",
-      source_document_reference: "2025 access partnership K-1",
+      source_document_reference: "2025 passive access K-1",
       credit_amount: 3_000,
     }],
     credit_sources: [raw.credit_sources[0]],

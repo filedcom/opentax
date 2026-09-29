@@ -75,6 +75,8 @@ passes source-to-profit, native Schedule C XML, and PDF projection (1/1).
 The Form 8582-CR source/allocation file passes 29/29 after its Form 8834
 negative case removed an invalid Form 3800 line from the synthetic source,
 allowing the intended separate-filing-route guard to run.
+The Form 8826 cap ledger passes 4/4 after the passive pass-through fixture's
+K-1 source reference was reconciled across Form 8826 and Form 8582-CR.
 
 The 2026-09-29 moving-worktree diagnostic `deno task test` run finished with
 8,609 passed and 205 failed in 11m18s. It is not the agreed fixed-commit
