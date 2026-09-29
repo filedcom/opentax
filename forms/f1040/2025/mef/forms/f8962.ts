@@ -2124,16 +2124,18 @@ function reconcileAgreedSharedPolicy(
     fields.qsehra_ind === true || fields.mfs_exception_ind === true ||
     fields.alternative_marriage_primary || fields.alternative_marriage_spouse ||
     pending?.form2555 !== undefined ||
-    allocations.length !== 1 ||
-    (allocations[0].basis !== "other_agreed" &&
-      allocations[0].basis !== "divorce_agreed") ||
-    allocations[0].premium_pct === undefined ||
-    allocations[0].premium_pct <= 0 ||
-    allocations[0].premium_pct !== allocations[0].slcsp_pct ||
-    allocations[0].premium_pct !== allocations[0].aptc_pct
+    allocations.length < 1 || allocations.length > 5 ||
+    allocations.some((allocation) =>
+      (allocation.basis !== "other_agreed" &&
+        allocation.basis !== "divorce_agreed") ||
+      allocation.premium_pct === undefined ||
+      allocation.premium_pct <= 0 ||
+      allocation.premium_pct !== allocation.slcsp_pct ||
+      allocation.premium_pct !== allocation.aptc_pct
+    )
   ) {
     throw new Error(
-      "Form 8962 shared filing needs one agreed Situation 4 policy, two covered taxpayers, and a finalized one-person single return",
+      "Form 8962 shared filing needs reviewed nonoverlapping periods, two covered taxpayers, and a finalized one-person single return",
     );
   }
   const policies = current1095AStatements(source.data.f1095as);
@@ -2142,20 +2144,36 @@ function reconcileAgreedSharedPolicy(
   const covered = policy?.covered_individual_ssns?.map((ssn) =>
     ssn.replaceAll("-", "")
   );
+  const sharedSourcePeriods = policy?.shared_policy_periods?.filter((period) =>
+    period.basis !== "family_only"
+  );
+  const familyOnlyPeriods = policy?.shared_policy_periods?.filter((period) =>
+    period.basis === "family_only"
+  );
   if (
     policies.length !== 1 || !policy?.policy_number ||
-    policy.policy_number.slice(-15) !== allocations[0].policy_number ||
+    allocations.some((allocation) =>
+      policy.policy_number!.slice(-15) !== allocation.policy_number
+    ) ||
     policy.coverage_state !== context.filer.address.state ||
     policy.alternative_marriage_owner !== undefined ||
     policy.slcsp_corrections || policy.slcsp_review_periods ||
     !policy.monthly_premiums || !policy.monthly_slcsps ||
     !policy.monthly_aptcs ||
-    policy.shared_policy_periods?.length !== 1 ||
-    policy.shared_policy_periods[0].basis !== allocations[0].basis ||
+    sharedSourcePeriods?.length !== allocations.length ||
+    sharedSourcePeriods.some((period, index) =>
+      period.basis !== allocations[index].basis
+    ) ||
+    (familyOnlyPeriods?.length ?? 0) > 1 ||
+    familyOnlyPeriods?.some((period) =>
+      period.only_tax_family_covered !== true
+    ) ||
     covered?.length !== 2 || new Set(covered).size !== 2 ||
     !covered.includes(filerSsn) ||
-    !covered.includes(allocations[0].other_taxpayer_ssn) ||
-    allocations[0].other_taxpayer_ssn === filerSsn
+    allocations.some((allocation) =>
+      !covered.includes(allocation.other_taxpayer_ssn) ||
+      allocation.other_taxpayer_ssn === filerSsn
+    )
   ) {
     throw new Error(
       "Form 8962 agreed shared policy must match the source policy and both covered taxpayers",

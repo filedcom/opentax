@@ -3984,6 +3984,8 @@ Deno.test({
     f1095a: [{
       issuer_name: "Marketplace Plan",
       policy_number: "SPLIT-POLICY",
+      coverage_state: "TX",
+      covered_individual_ssns: ["111223333", "222334444"],
       monthly_premiums: Array(12).fill(1_200),
       monthly_slcsps: Array(12).fill(1_500),
       monthly_aptcs: Array(12).fill(800),
@@ -4018,6 +4020,8 @@ Deno.test({
     f1095a: [{
       issuer_name: "Marketplace Plan",
       policy_number: "MIXED-POLICY",
+      coverage_state: "TX",
+      covered_individual_ssns: ["111223333", "222334444"],
       monthly_premiums: Array(12).fill(1_200),
       monthly_slcsps: Array(12).fill(1_500),
       monthly_aptcs: Array(12).fill(800),
@@ -4072,6 +4076,8 @@ Deno.test({
     f1095a: [{
       issuer_name: "Marketplace Plan",
       policy_number: "FIVE-PERIODS",
+      coverage_state: "TX",
+      covered_individual_ssns: ["111223333", "222334444"],
       monthly_premiums: [...Array(5).fill(1_200), ...Array(7).fill(0)],
       monthly_slcsps: [...Array(5).fill(1_500), ...Array(7).fill(0)],
       monthly_aptcs: [...Array(5).fill(800), ...Array(7).fill(0)],
