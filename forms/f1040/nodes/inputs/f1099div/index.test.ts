@@ -246,8 +246,12 @@ Deno.test("schema: normalizes box2e exceeding box1a — clamps box2e to box1a", 
 Deno.test("box1a above threshold routes to schedule_b with correct payer and amount", () => {
   const result = compute([minimalItem({ payerName: "Vanguard", box1a: 2000 })]);
   const sbFields = fieldsOf(result.outputs, schedule_b);
-  assertEquals(sbFields?.payerName, "Vanguard");
-  assertEquals(sbFields?.ordinaryDividends, 2000);
+  assertEquals(sbFields?.dividend_detail, {
+    payer_name: "Vanguard",
+    gross: 2000,
+    net: 2000,
+    nominee: 0,
+  });
 });
 
 Deno.test("box1a below threshold routes directly to f1040 and records Schedule B payer facts", () => {
@@ -509,8 +513,14 @@ Deno.test("multiple payers — each listed separately on schedule_b when above t
   ]);
   const sbOutputs = result.outputs.filter((o) => o.nodeType === "schedule_b");
   assertEquals(sbOutputs.length, 3);
+  assertEquals(sbOutputs.map((output) => output.fields.dividend_detail), [
+    { payer_name: "Alpha Fund", gross: 700, net: 700, nominee: 0 },
+    { payer_name: "Beta Fund", gross: 800, net: 800, nominee: 0 },
+    { payer_name: "Gamma Fund", gross: 600, net: 600, nominee: 0 },
+  ]);
   const total = sbOutputs.reduce(
-    (sum, o) => sum + ((o.fields.ordinaryDividends as number) ?? 0),
+    (sum, o) =>
+      sum + ((o.fields.dividend_detail as { net: number }).net),
     0,
   );
   assertEquals(total, 2100);
@@ -1010,7 +1020,7 @@ Deno.test("smoke: two payers, all major boxes populated — correct routing thro
   const sbOutputs = result.outputs.filter((o) => o.nodeType === "schedule_b");
   assertEquals(sbOutputs.length, 2, "two Schedule B payer entries");
   const sbTotal = sbOutputs.reduce(
-    (s, o) => s + ((o.fields.ordinaryDividends as number) ?? 0),
+    (s, o) => s + ((o.fields.dividend_detail as { net: number }).net),
     0,
   );
   assertEquals(sbTotal, 1700, "Schedule B total = box1a sum");
