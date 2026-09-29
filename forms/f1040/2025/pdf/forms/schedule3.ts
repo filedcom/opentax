@@ -151,7 +151,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   {
     kind: "text",
     domainKey: "line13a_total",
-    pdfField: "topmostSubform[0].Page1[0].f1_30[0]",
+    pdfField: "topmostSubform[0].Page1[0].Line13_ReadOrder[0].f1_30[0]",
   },
   {
     kind: "text",

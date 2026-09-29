@@ -12,8 +12,8 @@
  *   7. No duplicate domainKeys within fields of a single form.
  *   8. Row descriptors have {row} placeholder in pdfFieldPattern.
  *
- * Network existence tests (require --allow-net=www.irs.gov) are marked
- * ignore: true until all descriptors are reconciled — remove ignore to enable.
+ * Network existence tests require --allow-net=www.irs.gov and validate the
+ * mapped fields against the referenced IRS PDFs.
  */
 import { assertEquals, assertMatch } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
@@ -124,7 +124,7 @@ for (const descriptor of ALL_PDF_FORMS) {
 
 // ---------------------------------------------------------------------------
 // Field existence tests (network — verifies real IRS PDF field names)
-// Remove `ignore: true` after all descriptors are verified against real PDFs.
+// These checks must run in the normal batch so stale mappings cannot pass.
 // ---------------------------------------------------------------------------
 
 async function getRealFieldNames(url: string): Promise<Set<string>> {
@@ -141,7 +141,6 @@ for (const descriptor of ALL_PDF_FORMS) {
   Deno.test(
     {
       name: `${label}: all mapped pdfField names exist in real IRS PDF`,
-      ignore: true,
       sanitizeResources: false,
       sanitizeOps: false,
     },

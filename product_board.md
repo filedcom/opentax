@@ -5,8 +5,9 @@
 This is an open release gate, not a list of completed forms. The current source
 registries contain 123 native MeF descriptors and 86 PDF descriptors; the
 [coverage decision queue](docs/mef/ty2025-form1040-coverage-decisions.md) records
-the limits of those counts. All 50 tasks below remain unchecked because a
-registered route or focused test does not establish source-to-filing coverage.
+the limits of those counts. A registered route or focused test does not
+establish source-to-filing coverage; check off only the specific gate proven by
+its recorded evidence.
 
 The work proceeds in this order:
 
@@ -85,7 +86,7 @@ XSD pass, or an ignored test.
 - [ ] Finish implementation and coverage decisions above before the agreed single full-batch gate. Existing focused cases and historical passes are not evidence for the current worktree.
 - [ ] Confirm Deno, `xmllint`, `pdftoppm`, and `pdfinfo` are available. Provision and verify the TY2025 v5.4 `Return1040.xsd` / `ReturnData1040.xsd` bundle under `.state/research/docs/`; it is Git-ignored, not checked in. Confirm the XSD tests use that bundle and did not silently skip.
 - [ ] Run `deno task test` once as the initial full batch; record commit, command, tool versions, timestamp, pass/fail/ignored totals, failures, and ignored-test reasons. Fix failures, then rerun the same full command until the final batch passes.
-- [ ] Run or explicitly disposition the live canonical-PDF field checks currently ignored by the normal batch; do not count an ignored field check as PDF validation.
+- [x] Run the live canonical-PDF field-name checks in the normal test suite. On 2026-09-29, after correcting the Schedule 3 line 13a AcroForm path, `deno test --allow-read --allow-net=www.irs.gov --filter 'all mapped pdfField names exist in real IRS PDF' forms/f1040/2025/pdf/forms/all-descriptors.test.ts` passed all 86 checks. This proves mapped field names exist in the referenced IRS PDFs; filled-output visual review remains a separate gate below.
 - [ ] For every retained positive filing route, generate a full return from a source-backed fixture and validate emitted XML against the checked-in TY2025 IRS schema. Check source-to-calculation-to-Form-1040 totals, required references/attachments, negative and conflicting cases, and IRS business rules separately from structural XSD success.
 - [ ] Generate the eleven prepared synthetic filled-PDF cases through the real graph and PDF builder as described in the [validation batch](docs/mef/ty2025-form1040-validation-batch.md); render and inspect every page, mark checkboxes/amounts/owner identity/page order/continuations, and add cases for each uncovered descriptor or branch.
 - [ ] Compare each filled PDF to its source, calculated pending data, native XML, and Form 1040 totals. Retain review artifacts and record each discrepancy and fix; blank templates and ATS source PDFs do not count as filled-output review.
