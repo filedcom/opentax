@@ -129,6 +129,18 @@ The fixed-source `deno task test` run on `08786417` completed at 2026-09-29
 26.03.0. Its retained log is `.state/research/ty2025-full-test-08786417.log`.
 The final release batch still follows the unresolved source and ATS gates.
 
+The next fully synthetic nonpassive New Markets case supplies a $10,000
+qualified equity investment and computes $500 on Form 8874. The same amount
+prints on Form 3800 Part III line 1i and line 38, Schedule 3 line 6a, and
+Form 1040 line 20. Its native `IRS8874` and parent return pass the local
+TY2025 v5.4 XSD; focused Form 8874 projection and prepared-return checks pass.
+The first filled Form 8874 render exposed a three-line CDE address that crossed
+the row boundary. The corrected two-line name/address field was rendered and
+visually checked with Form 3800 Part III. The corrected
+`2026-09-29-v23` directory holds 21 PDFs (170 pages) and 21 XML files. Longer
+CDE text, multiple investments, other credit combinations, and the final
+release batch remain open.
+
 ## XML evidence
 
 For each supported positive filing route in the completed coverage inventory,

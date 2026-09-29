@@ -48,7 +48,9 @@ bonus, passive, other energy sources, and broader multi-facility combinations
 remain open. See `ty2025-form8835-pdf-gap.md`. The supported packets include
 the registered Form 3800 parent PDF. Form 8874 now has a
 bounded PDF for up to six identified investments and a reconciled pass-through
-line 2; wider rows still stop. See `ty2025-form8874-pdf-gap.md`. A
+line 2; one nonpassive investment now has a reviewed filled Form 8874 and
+Form 3800 parent packet. Wider rows still stop. See
+`ty2025-form8874-pdf-gap.md`. A
 pass-through-only K-1 recipient does not create its own Form 8874, but still
 needs the Form 3800 parent in the print packet.
 

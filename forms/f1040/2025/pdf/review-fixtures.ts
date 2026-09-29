@@ -361,6 +361,46 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-new-markets-business-credit",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(150_000, 30_000, "Example Employer", "12-3456789")],
+      f8874: {
+        investments: [{
+          cde_name: "Community Development Entity",
+          cde_ein: "123456789",
+          cde_address: {
+            line1: "10 Community Way",
+            city: "Wilmington",
+            state: "DE",
+            zip: "19801",
+          },
+          initial_investment_date: "2025-04-15",
+          credit_allowance_date: "2025-04-15",
+          qualified_equity_investment_amount: 10_000,
+          designation_notice_reference: "Synthetic 2025 QEI notice",
+          held_on_credit_allowance_date: true,
+          qualified_on_credit_allowance_date: true,
+          recapture_notice_received: false,
+          subject_to_passive_activity_limit: false,
+        }],
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: [
+      "f1040",
+      "schedule3",
+      "form6251",
+      "form3800",
+      "form8874",
+    ],
+    reviewFocus: [
+      "One sourced 10,000 qualified equity investment prints at 5% and a 500 credit on Form 8874",
+      "The same 500 credit reaches Form 3800 Part III line 1i and line 38, Schedule 3 line 6a, and Form 1040 line 20",
+      "One source stays on Form 3800 Part III line 1i; Part V remains blank because no same-line aggregate breakdown is required",
+    ],
+  },
+  {
     id: "joint-two-w2s",
     inputs: {
       general: jointGeneral,

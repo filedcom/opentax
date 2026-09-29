@@ -110,6 +110,12 @@ Form 8835 copies and Part V page were visually reviewed. The 20-return PDF
 review set contains 155 pages and 20 XML files under
 `.state/research/ty2025-filled-pdf-review/2026-09-29-v20/`. Focused
 prepared-return, source-drift, field-map, projection, and local XSD cases pass.
+The next source-backed nonpassive New Markets case prints a $500 Form 8874
+credit on Part III line 1i and line 38 and carries it through Schedule 3 and
+Form 1040. Its 15-page packet and local TY2025 v5.4 XML pass the bounded
+source-to-return check; Form 8874 and Part III were visually inspected. The
+expanded review set has 21 PDFs (170 pages) and 21 XML files under
+`.state/research/ty2025-filled-pdf-review/2026-09-29-v23/`.
 The `98466597` repository-wide run passed 8,851/8,851 after the archive
 change, zero failed, in 13m37s; its summary reported no ignored tests. The
 focused PDF/archive tests passed 13/13 before that run. The log is retained at

@@ -36,7 +36,7 @@ Deno.test("Form 8874 PDF projects the six-column investment row and direct Form 
   });
   assertEquals(
     fields.row_1_cde,
-    "Community Development Entity\n10 Main Street\nWilmington, DE 19801",
+    "Community Development Entity\n10 Main Street, Wilmington, DE 19801",
   );
   assertEquals(fields.row_1_ein, "12-3456789");
   assertEquals(fields.row_1_date, "04/15/2023");

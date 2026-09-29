@@ -31,7 +31,18 @@ Still unsupported or unverified:
   qualification/holding assertions, but does not contain independently verified
   Form 8874-A or Form 8874-B documents. Eligibility and recapture evidence still
   need human review before filing.
-- The filled PDF's multiline CDE/address appearance and all field values remain
-  unrendered and unverified in the agreed later visual batch. The focused
-  projection cases are added but unrun under the current build-first
-  instruction.
+- Longer CDE names or addresses and multi-row combinations still need filled
+  output review for clipping and source-to-print reconciliation.
+
+One fully synthetic nonpassive source return now supplies a $10,000 qualified
+equity investment with a 2025 initial investment and credit allowance date.
+It computes a $500 credit, prints the CDE identity and address on two lines
+within Form 8874 row 1, and prints $500 on line 3. The same amount reaches
+Form 3800 Part III line 1i and line 38, Schedule 3 line 6a, and Form 1040
+line 20. The native `IRS8874` and parent return pass local TY2025 v5.4 XSD.
+The 15-page packet was rendered; the Form 8874 and Form 3800 Part III pages
+were visually checked. The retained PDF is
+`.state/research/ty2025-filled-pdf-review/2026-09-29-v23/single-new-markets-business-credit.pdf`
+(SHA-256 `0ad4dd7eed0449163cd5c8903f90a546b88dbc6b9de4f25ebf634e2af76faec0`).
+This is local source-to-return evidence, not external eligibility proof or IRS
+acceptance.

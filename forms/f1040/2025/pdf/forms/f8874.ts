@@ -96,8 +96,7 @@ export const form8874Pdf: PdfFormDescriptor = {
       const { investment } = row;
       printed[`${prefix}cde`] = [
         investment.cde_name,
-        investment.cde_address.line1,
-        `${investment.cde_address.city}, ${investment.cde_address.state} ${investment.cde_address.zip}`,
+        `${investment.cde_address.line1}, ${investment.cde_address.city}, ${investment.cde_address.state} ${investment.cde_address.zip}`,
       ].join("\n");
       printed[`${prefix}ein`] = printedEin(investment.cde_ein);
       printed[`${prefix}date`] = printedDate(

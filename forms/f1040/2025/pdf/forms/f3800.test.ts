@@ -10,6 +10,7 @@ import { buildMefBundle } from "../../mef/builder.ts";
 import { testFiler } from "../../mef/test-filer.ts";
 import { form3800Pdf } from "./f3800.ts";
 import { form8835Pdf } from "./f8835.ts";
+import { form8874Pdf } from "./f8874.ts";
 import { buildPdfBytes } from "../builder.ts";
 import { PDFDocument } from "pdf-lib";
 import { pdfReviewFixtures } from "../review-fixtures.ts";
@@ -275,5 +276,51 @@ Deno.test("wind and geothermal facilities keep separate Form 8835 lines and Form
   assertEquals(
     (await PDFDocument.load(await prepared.renderPdf())).getPageCount(),
     20,
+  );
+});
+
+Deno.test("source-backed New Markets credit prints Form 8874 with its prepared Form 3800 parent", async () => {
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-new-markets-business-credit"
+  )!;
+  const result = f1040_2025.executeReturn({ ...fixture.inputs });
+  assertEquals(result.diagnostics, []);
+  const prepared = await f1040_2025.prepareReturn(
+    result.pending,
+    fixture.filer,
+  );
+  const parts = prepared.bundle.form3800Parts!;
+  assertEquals(parts.lines.line38, 500);
+  const sourceRow = parts.currentRows.find((row) => row.line === "1i")!;
+  assertEquals(sourceRow.metadata.sourceCount, 1);
+  assertEquals(
+    parts.currentDetails.find((row) => row.line === "1i")?.credit,
+    500,
+  );
+  assertStringIncludes(prepared.bundle.xml, "<IRS8874 ");
+  assertStringIncludes(
+    prepared.bundle.xml,
+    "<CDETotalCreditAmt>500</CDETotalCreditAmt>",
+  );
+  assertStringIncludes(
+    prepared.bundle.xml,
+    "<TotalGeneralBusCreditsAppTxAmt>500</TotalGeneralBusCreditsAppTxAmt>",
+  );
+  const allPending = normalizeAllPending(prepared.bundle.pending);
+  const printed8874 = form8874Pdf.projectFields!(allPending.f8874, allPending);
+  assertEquals(printed8874.row_1_investment, 10_000);
+  assertEquals(printed8874.row_1_rate, 5);
+  assertEquals(printed8874.row_1_credit, 500);
+  assertEquals(printed8874.line3, 500);
+  const printed3800 = form3800Pdf.instances?.(
+    allPending.f3800,
+    fixture.filer,
+    allPending,
+    parts,
+  )?.[0];
+  assertEquals(printed3800?.[form3800PartIIIFields("1i").g], 500);
+  assertEquals(
+    (await PDFDocument.load(await prepared.renderPdf())).getPageCount(),
+    15,
   );
 });

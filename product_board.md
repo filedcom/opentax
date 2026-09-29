@@ -38,10 +38,10 @@ Poppler 26.03.0. The log is retained at
 Form 3800 nine-page PDF, ZIP/source drift checks, separate geothermal and
 wind/geothermal Form 8835 copies, and rejection of contradictory no-increase
 source facts.
-The filled review now has 20 packets (155 pages) and 20 XML files under
-`.state/research/ty2025-filled-pdf-review/2026-09-29-v20/`; the geothermal
-Form 3800 pages, two geothermal copies, and mixed wind/geothermal copies were
-visually checked.
+The filled review now has 21 packets (170 pages) and 21 XML files under
+`.state/research/ty2025-filled-pdf-review/2026-09-29-v23/`; the geothermal
+Form 3800 pages, two geothermal copies, mixed wind/geothermal copies, and the
+new source-backed Form 8874/parent pages were visually checked.
 Broader source/ATS coverage and final release validation remain open. The
 preceding fixed-source run on `15d5430d` passed 8,855/8,855, zero failed; its
 log is retained at `.state/research/ty2025-full-test-15d5430d.log`.
@@ -183,7 +183,10 @@ line 38, Schedule 3 line 6a, and Form 1040 line 20. It passes local v5.4 XSD;
 the 20-page packet was rendered and inspected. The next mixed wind/geothermal
 packet prints wind on Form 8835 line 1a, geothermal on line 1c, two $600 Part V
 rows, and $1,200 through Schedule 3 and Form 1040; local XSD and filled-page
-review pass. The review set has 20 packets (155 pages). Transfer, passive,
+review pass. One source-backed nonpassive Form 8874 now prints its $500 credit
+on the Form 8874 row and Form 3800 Part III line 1i, then reconciles through
+Schedule 3 and Form 1040. Its local XSD and selected filled-page review pass.
+The review set has 21 packets (170 pages). Transfer, passive,
 carryover, other credit combinations, external
 credit-attachment, and ATS gates remain open. The submission ZIP consumes the
 same prepared bundle as the PDF and rejects source, filer, XML, or attachment
@@ -283,6 +286,7 @@ including a two-gift return with two linked native forms and attachments.
   - [x] Print the prepared nine-page parent with its native instance IDs; reconcile one sourced geothermal Form 8835 credit through Schedule 3 and Form 1040, local XSD, and a visually reviewed filled packet.
   - [x] Print two distinct geothermal Form 8835 copies and two Part V source rows; reconcile their $1,200 total through Form 3800, Schedule 3, Form 1040, native XML, and the reviewed 20-page packet.
   - [x] Print mixed wind and geothermal Form 8835 copies with separate Part II production lines and two Part V source rows; reconcile the $1,200 total through local XSD, the reviewed packet, Schedule 3, and Form 1040.
+  - [x] Print one source-backed nonpassive Form 8874 investment and its Form 3800 Part III line 1i credit; reconcile $500 through Schedule 3, Form 1040, local XSD, and the reviewed 15-page packet.
   - [ ] Cover transfer and passive credits, carryover vintages, mixed and other source credits, row overflow, required external attachments, cross-route archive evidence, business rules, and ATS acceptance.
 - [ ] **Form 8835:** extend the bounded filer-owned wind/geothermal route to every retained credit, owner, facility, election, and source combination in the [form audit](docs/mef/ty2025-form1040-form-audit.md). Keep duplicate physical-facility records rejected and verify every native/PDF copy against its source and Form 3800 row.
 - [ ] **Forms 8995/8995-A:** finish positive QBI export and all conditional Schedule A/B/C/D paths beyond the bounded two-business Schedule B route, including election, aggregation relationship, RPE statements, owner data, and return-wide QBI totals. See [8995](docs/mef/ty2025-form8995-positive-export-gap.md) and [8995-A](docs/mef/ty2025-form8995a-gap.md).
@@ -309,7 +313,7 @@ including a two-gift return with two linked native forms and attachments.
   - [x] Rerun the full command after adding mixed wind/geothermal copies and the no-increase source guard; `08786417` passed 8,860/8,860 with no ignored tests reported. Retain `.state/research/ty2025-full-test-08786417.log` as local regression evidence.
 - [x] Run the live canonical-PDF field-name checks in the normal test suite. On 2026-09-29, after correcting the Schedule 3 line 13a AcroForm path, `deno test --allow-read --allow-net=www.irs.gov --filter 'all mapped pdfField names exist in real IRS PDF' forms/f1040/2025/pdf/forms/all-descriptors.test.ts` passed all then-86 checks. The `08786417` full run passed all 87 current descriptor field-name checks, including Form 8835's wind fields. The earlier full descriptor file passed 605/605 checks, including the pinned-revision checks that had failed in the earlier diagnostic batch. This proves mapped field names exist in the referenced IRS PDFs; filled-output visual review remains a separate gate below.
 - [ ] For every retained positive filing route, generate a full return from a source-backed fixture and validate emitted XML against the checked-in TY2025 IRS schema. Check source-to-calculation-to-Form-1040 totals, required references/attachments, negative and conflicting cases, and IRS business rules separately from structural XSD success.
-- [ ] Generate the twenty prepared synthetic filled-PDF cases through the real graph and PDF builder as described in the [validation batch](docs/mef/ty2025-form1040-validation-batch.md); render and inspect every page, mark checkboxes/amounts/owner identity/page order/continuations, and add cases for each uncovered descriptor or branch.
+- [ ] Generate the twenty-one prepared synthetic filled-PDF cases through the real graph and PDF builder as described in the [validation batch](docs/mef/ty2025-form1040-validation-batch.md); render and inspect every page, mark checkboxes/amounts/owner identity/page order/continuations, and add cases for each uncovered descriptor or branch.
 - [ ] Compare each filled PDF to its source, calculated pending data, native XML, and Form 1040 totals. Retain review artifacts and record each discrepancy and fix; blank templates and ATS source PDFs do not count as filled-output review.
 
 ## IRS ATS and delivery
