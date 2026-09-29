@@ -415,10 +415,15 @@ Deno.test("negative Form 8978 adjustment stops when Schedule 2 line 18 cannot be
   );
 });
 
-Deno.test("every mapped Schedule 2 field survives the schema-order builder", () => {
-  const fields = Object.fromEntries(FIELD_MAP.map(([key]) => [key, 1]));
+Deno.test("source-free mapped Schedule 2 fields survive the schema-order builder", () => {
+  // Form 4255 amounts need their own source rows and are tested separately.
+  const mappings = FIELD_MAP.filter(([key]) =>
+    key !== "line1d_form4255_net_epe" &&
+    key !== "line19_form4255_net_epe"
+  );
+  const fields = Object.fromEntries(mappings.map(([key]) => [key, 1]));
   const result = schedule2.build(fields);
-  for (const [, tag] of FIELD_MAP) {
+  for (const [, tag] of mappings) {
     assertStringIncludes(result, `<${tag}>1</${tag}>`);
   }
 });
