@@ -38,6 +38,7 @@ export interface SpouseIdentity {
   readonly nameControl: string;
   readonly ipPin?: string;
   readonly signaturePin?: string;
+  readonly signatureDate?: string;
   readonly deceased?: boolean;
   readonly deathDate?: string;
   readonly occupation?: string;
@@ -95,6 +96,7 @@ export interface FilerIdentity {
   readonly occupation?: string;
   readonly ipPin?: string;
   readonly signaturePin?: string;
+  readonly signatureDate?: string;
   readonly priorYearAgi?: number;
 
   // Spouse (MFJ / MFS)
@@ -119,6 +121,18 @@ export interface FilerIdentity {
 
   // Timestamp
   readonly timestamp?: string;
+}
+
+/** IRS header name uses < separators; keep nameLine1 readable for PDFs. */
+export function returnHeaderNameLine1(filer: FilerIdentity): string {
+  const last = filer.lastName?.trim().toUpperCase();
+  const first = filer.firstName?.trim().toUpperCase();
+  if (last && first) {
+    return [last, first, filer.middleInitial?.trim().toUpperCase()]
+      .filter(Boolean).join("<");
+  }
+  // Direct FilerIdentity callers can supply only a display name.
+  return filer.nameLine1.trim().replace(/\s+/g, "<");
 }
 
 // ─── Address builders ─────────────────────────────────────────────────────────
@@ -164,7 +178,7 @@ function buildFilerBlock(filer: FilerIdentity): string {
   const children = [
     element("PrimarySSN", filer.primarySSN),
     element("SpouseSSN", filer.spouse?.ssn),
-    element("NameLine1Txt", filer.nameLine1),
+    element("NameLine1Txt", returnHeaderNameLine1(filer)),
     element("PrimaryNameControlTxt", filer.nameControl),
     element("SpouseNameControlTxt", filer.spouse?.nameControl),
     buildAddress(filer.address),
@@ -270,10 +284,14 @@ export function buildReturnHeader(
     throw new Error("MeF return header requires a real filer identity");
   }
   if (!/^\d{9}$/.test(filer.primarySSN) || filer.primarySSN === "000000000") {
-    throw new Error("MeF return header requires a nine-digit filer SSN or ITIN");
+    throw new Error(
+      "MeF return header requires a nine-digit filer SSN or ITIN",
+    );
   }
   if (!filer.nameLine1.trim() || !filer.nameControl.trim()) {
-    throw new Error("MeF return header requires the filer's name and name control");
+    throw new Error(
+      "MeF return header requires the filer's name and name control",
+    );
   }
   const address = filer.address;
   if (
@@ -321,6 +339,18 @@ export function buildReturnHeader(
     ]),
     element("PINTypeCd", "Self-Select On-Line"),
     element("JuratDisclosureCd", "Online Self Select PIN"),
+    element(
+      "PrimaryPINEnteredByCd",
+      filer.signaturePin ? filer.pinEnteredBy : undefined,
+    ),
+    element(
+      "SpousePINEnteredByCd",
+      filer.spouse?.signaturePin ? filer.pinEnteredBy : undefined,
+    ),
+    element("PrimarySignaturePIN", filer.signaturePin),
+    element("SpouseSignaturePIN", filer.spouse?.signaturePin),
+    element("PrimarySignatureDt", filer.signatureDate),
+    element("SpouseSignatureDt", filer.spouse?.signatureDate),
     element("ReturnTypeCd", returnType),
   ];
 

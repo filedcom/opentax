@@ -53,7 +53,7 @@ export const IND_RULES: readonly RuleDef[] = [
     "IND-001-01",
     "reject",
     "incorrect_data",
-    validSSN("PreparerSSN"),
+    ifThen(hasValue("PreparerSSN"), validSSN("PreparerSSN")),
     "'PreparerSSN' in the Return Header must not be all zeros or all nines.",
   ),
   rule(
@@ -130,7 +130,10 @@ export const IND_RULES: readonly RuleDef[] = [
     "IND-020-01",
     "reject",
     "incorrect_data",
-    ifThen(hasValue("PaidPreparerInformationGrp"), noValue("NonPaidPreparerCd")),
+    ifThen(
+      hasValue("PaidPreparerInformationGrp"),
+      noValue("NonPaidPreparerCd"),
+    ),
     "If 'PaidPreparerInformationGrp' is present in the Return Header, then 'NonPaidPreparerCd' must not have a value in the return.",
   ),
   rule(
@@ -138,7 +141,10 @@ export const IND_RULES: readonly RuleDef[] = [
     "reject",
     "missing_data",
     ifThen(
-      all(eqStr("PINTypeCd", "Self-Select On-Line"), hasValue("PrimarySignaturePIN")),
+      all(
+        eqStr("PINTypeCd", "Self-Select On-Line"),
+        hasValue("PrimarySignaturePIN"),
+      ),
       hasValue("PrimaryBirthDt"),
     ),
     "If 'PINTypeCd' in the Return Header has the value \"Self-Select On-Line\" and 'PrimarySignaturePIN' has a value, then 'PrimaryBirthDt' must have a value.",
@@ -148,7 +154,10 @@ export const IND_RULES: readonly RuleDef[] = [
     "reject",
     "missing_data",
     ifThen(
-      all(eqStr("PINTypeCd", "Self-Select On-Line"), hasValue("SpouseSignaturePIN")),
+      all(
+        eqStr("PINTypeCd", "Self-Select On-Line"),
+        hasValue("SpouseSignaturePIN"),
+      ),
       hasValue("SpouseBirthDt"),
     ),
     "If 'PINTypeCd' in the Return Header has the value \"Self-Select On-Line\" and 'SpouseSignaturePIN' has a value, then 'SpouseBirthDt' must have a value.",
@@ -158,7 +167,10 @@ export const IND_RULES: readonly RuleDef[] = [
     "reject",
     "missing_data",
     ifThen(
-      all(eqStr("PINTypeCd", "Self-Select Practitioner"), hasValue("PrimarySignaturePIN")),
+      all(
+        eqStr("PINTypeCd", "Self-Select Practitioner"),
+        hasValue("PrimarySignaturePIN"),
+      ),
       hasValue("PrimaryBirthDt"),
     ),
     "If 'PINTypeCd' in the Return Header has the value \"Self-Select Practitioner\" and 'PrimarySignaturePIN' has a value, then 'PrimaryBirthDt' must have a value.",
@@ -168,7 +180,10 @@ export const IND_RULES: readonly RuleDef[] = [
     "reject",
     "missing_data",
     ifThen(
-      all(eqStr("PINTypeCd", "Self-Select Practitioner"), hasValue("SpouseSignaturePIN")),
+      all(
+        eqStr("PINTypeCd", "Self-Select Practitioner"),
+        hasValue("SpouseSignaturePIN"),
+      ),
       hasValue("SpouseBirthDt"),
     ),
     "If 'PINTypeCd' in the Return Header has the value \"Self-Select Practitioner\" and 'SpouseSignaturePIN' has a value, then 'SpouseBirthDt' must have a value.",
@@ -178,8 +193,15 @@ export const IND_RULES: readonly RuleDef[] = [
     "reject",
     "missing_data",
     ifThen(
-      all(eqStr("PINTypeCd", "Self-Select On-Line"), hasValue("PrimaryBirthDt")),
-      any(hasValue("PrimaryPriorYearAGIAmt"), hasValue("PrimaryPriorYearPIN"), hasValue("IdentityProtectionPIN")),
+      all(
+        eqStr("PINTypeCd", "Self-Select On-Line"),
+        hasValue("PrimaryBirthDt"),
+      ),
+      any(
+        hasValue("PrimaryPriorYearAGIAmt"),
+        hasValue("PrimaryPriorYearPIN"),
+        hasValue("IdentityProtectionPIN"),
+      ),
     ),
     "If 'PINTypeCd' in the Return Header has the value \"Self-Select On-Line\" and 'PrimaryBirthDt' has a value, then 'PrimaryPriorYearAGIAmt' or 'PrimaryPriorYearPIN' or 'IdentityProtectionPIN' must have a value.",
   ),
@@ -188,8 +210,15 @@ export const IND_RULES: readonly RuleDef[] = [
     "reject",
     "missing_data",
     ifThen(
-      all(eqStr("PINTypeCd", "Self-Select Practitioner"), hasValue("PrimaryBirthDt")),
-      any(hasValue("PrimaryPriorYearAGIAmt"), hasValue("PrimaryPriorYearPIN"), hasValue("IdentityProtectionPIN")),
+      all(
+        eqStr("PINTypeCd", "Self-Select Practitioner"),
+        hasValue("PrimaryBirthDt"),
+      ),
+      any(
+        hasValue("PrimaryPriorYearAGIAmt"),
+        hasValue("PrimaryPriorYearPIN"),
+        hasValue("IdentityProtectionPIN"),
+      ),
     ),
     "If 'PINTypeCd' in the Return Header has the value \"Self-Select Practitioner\" and 'PrimaryBirthDt' has a value, then 'PrimaryPriorYearAGIAmt' or 'PrimaryPriorYearPIN' or 'IdentityProtectionPIN' must have a value.",
   ),
@@ -199,7 +228,11 @@ export const IND_RULES: readonly RuleDef[] = [
     "missing_data",
     ifThen(
       all(eqStr("PINTypeCd", "Self-Select On-Line"), hasValue("SpouseBirthDt")),
-      any(hasValue("SpousePriorYearAGIAmt"), hasValue("SpousePriorYearPIN"), hasValue("SpouseIdentityProtectionPIN")),
+      any(
+        hasValue("SpousePriorYearAGIAmt"),
+        hasValue("SpousePriorYearPIN"),
+        hasValue("SpouseIdentityProtectionPIN"),
+      ),
     ),
     "If 'PINTypeCd' in the Return Header has the value \"Self-Select On-Line\" and 'SpouseBirthDt' has a value, then 'SpousePriorYearAGIAmt' or 'SpousePriorYearPIN' or 'SpouseIdentityProtectionPIN' must have a value.",
   ),
@@ -208,8 +241,15 @@ export const IND_RULES: readonly RuleDef[] = [
     "reject",
     "missing_data",
     ifThen(
-      all(eqStr("PINTypeCd", "Self-Select Practitioner"), hasValue("SpouseBirthDt")),
-      any(hasValue("SpousePriorYearAGIAmt"), hasValue("SpousePriorYearPIN"), hasValue("SpouseIdentityProtectionPIN")),
+      all(
+        eqStr("PINTypeCd", "Self-Select Practitioner"),
+        hasValue("SpouseBirthDt"),
+      ),
+      any(
+        hasValue("SpousePriorYearAGIAmt"),
+        hasValue("SpousePriorYearPIN"),
+        hasValue("SpouseIdentityProtectionPIN"),
+      ),
     ),
     "If 'PINTypeCd' in the Return Header has the value \"Self-Select Practitioner\" and 'SpouseBirthDt' has a value, then 'SpousePriorYearAGIAmt' or 'SpousePriorYearPIN' or 'SpouseIdentityProtectionPIN' must have a value.",
   ),
@@ -259,35 +299,50 @@ export const IND_RULES: readonly RuleDef[] = [
     "IND-039-01",
     "reject",
     "incorrect_data",
-    ifThen(eqStr("ThirdPartyDesigneeInd", "Yes"), hasValue("ThirdPartyDesigneeNm")),
+    ifThen(
+      eqStr("ThirdPartyDesigneeInd", "Yes"),
+      hasValue("ThirdPartyDesigneeNm"),
+    ),
     "If 'ThirdPartyDesigneeInd' in the return has a choice of 'Yes' indicated, then 'ThirdPartyDesigneeNm' must have a value.",
   ),
   rule(
     "IND-040-01",
     "reject",
     "incorrect_data",
-    ifThen(eqStr("ThirdPartyDesigneeInd", "Yes"), hasValue("ThirdPartyDesigneePhoneNum")),
+    ifThen(
+      eqStr("ThirdPartyDesigneeInd", "Yes"),
+      hasValue("ThirdPartyDesigneePhoneNum"),
+    ),
     "If 'ThirdPartyDesigneeInd' in the return has a choice of \"Yes\" indicated, then Third Party Designee Phone Number must have a value.",
   ),
   rule(
     "IND-041",
     "reject",
     "incorrect_data",
-    ifThen(eqStr("ThirdPartyDesigneeInd", "Yes"), hasValue("ThirdPartyDesigneePIN")),
+    ifThen(
+      eqStr("ThirdPartyDesigneeInd", "Yes"),
+      hasValue("ThirdPartyDesigneePIN"),
+    ),
     "If 'ThirdPartyDesigneeInd' in the return has a choice of 'Yes' indicated, then 'ThirdPartyDesigneePIN' must have a value.",
   ),
   rule(
     "IND-042-01",
     "reject",
     "incorrect_data",
-    ifThen(hasValue("PowerOfAttorneySignedByInd"), noValue("SurvivingSpouseInd")),
+    ifThen(
+      hasValue("PowerOfAttorneySignedByInd"),
+      noValue("SurvivingSpouseInd"),
+    ),
     "If checkbox 'PowerOfAttorneySignedByInd' is checked in the return, then checkbox 'SurvivingSpouseInd' must not be checked.",
   ),
   rule(
     "IND-043-01",
     "reject",
     "incorrect_data",
-    ifThen(hasValue("PowerOfAttorneySignedByInd"), noValue("PersonalRepresentativeInd")),
+    ifThen(
+      hasValue("PowerOfAttorneySignedByInd"),
+      noValue("PersonalRepresentativeInd"),
+    ),
     "If checkbox 'PowerOfAttorneySignedByInd' is checked in the return, then checkbox 'PersonalRepresentativeInd' must not be checked.",
   ),
   rule(
@@ -301,7 +356,7 @@ export const IND_RULES: readonly RuleDef[] = [
     "IND-052",
     "reject_and_stop",
     "data_mismatch",
-    eqField("ManifestTIN", "PrimarySSN"),
+    ifThen(hasValue("ManifestTIN"), eqField("ManifestTIN", "PrimarySSN")),
     "The TIN present in the IRS Submission Manifest must be equal to the Primary SSN in the Return Header.",
   ),
   rule(
@@ -324,7 +379,10 @@ export const IND_RULES: readonly RuleDef[] = [
     "missing_data",
     ifThen(
       hasValue("PrimarySignaturePIN"),
-      any(hasValue("PrimaryPINEnteredByCd"), hasValue("ParentGrdnLegalResponsibleGrp")),
+      any(
+        hasValue("PrimaryPINEnteredByCd"),
+        hasValue("ParentGrdnLegalResponsibleGrp"),
+      ),
     ),
     "If 'PrimarySignaturePIN' in the Return Header has a value, then 'PrimaryPINEnteredByCd' or 'ParentGrdnLegalResponsibleGrp' must have a value.",
   ),
@@ -396,7 +454,11 @@ export const IND_RULES: readonly RuleDef[] = [
     "reject",
     "incorrect_data",
     ifThen(
-      all(hasNonZero("OverpaidAmt"), gt("EsPenaltyAmt", 0), not(notGtField("EsPenaltyAmt", "OverpaidAmt"))),
+      all(
+        hasNonZero("OverpaidAmt"),
+        gt("EsPenaltyAmt", 0),
+        not(notGtField("EsPenaltyAmt", "OverpaidAmt")),
+      ),
       hasNonZero("OwedAmt"),
     ),
     "If 'OverpaidAmt' in the return has a non-zero value and 'EsPenaltyAmt' is greater than 'OverpaidAmt', then 'OwedAmt' must have a non-zero value.",
@@ -427,7 +489,12 @@ export const IND_RULES: readonly RuleDef[] = [
     "missing_data",
     ifThen(
       not(eqField("TotalPaymentsAmt", "TotalTaxAmt")),
-      any(hasNonZero("OverpaidAmt"), hasNonZero("RefundAmt"), hasNonZero("AppliedToEsTaxAmt"), hasNonZero("OwedAmt")),
+      any(
+        hasNonZero("OverpaidAmt"),
+        hasNonZero("RefundAmt"),
+        hasNonZero("AppliedToEsTaxAmt"),
+        hasNonZero("OwedAmt"),
+      ),
     ),
     "If 'TotalPaymentsAmt' in the return is not equal to 'TotalTaxAmt', then one of the following must have a non-zero value: 'OverpaidAmt' or 'RefundAmt' or 'AppliedToEsTaxAmt' or 'OwedAmt'.",
   ),
@@ -473,7 +540,11 @@ export const IND_RULES: readonly RuleDef[] = [
     "incorrect_data",
     ifThen(
       eqField("TotalPaymentsAmt", "TotalTaxAmt"),
-      all(isZero("OverpaidAmt"), isZero("RefundAmt"), isZero("AppliedToEsTaxAmt")),
+      all(
+        isZero("OverpaidAmt"),
+        isZero("RefundAmt"),
+        isZero("AppliedToEsTaxAmt"),
+      ),
     ),
     "If 'TotalPaymentsAmt' in the return is equal to 'TotalTaxAmt', then the following must be equal to zero if an amount is entered: 'OverpaidAmt' and 'RefundAmt' and 'AppliedToEsTaxAmt'.",
   ),
@@ -502,7 +573,10 @@ export const IND_RULES: readonly RuleDef[] = [
     "reject",
     "incorrect_data",
     ifThen(
-      all(hasNonZero("OwedAmt"), any(isZero("EsPenaltyAmt"), noValue("EsPenaltyAmt"))),
+      all(
+        hasNonZero("OwedAmt"),
+        any(isZero("EsPenaltyAmt"), noValue("EsPenaltyAmt")),
+      ),
       not(notGtField("TotalTaxAmt", "TotalPaymentsAmt")),
     ),
     "If 'OwedAmt' in the return has a non-zero value and 'EsPenaltyAmt' has a zero value or is not provided, then 'TotalTaxAmt' must be greater than 'TotalPaymentsAmt'.",
@@ -519,8 +593,16 @@ export const IND_RULES: readonly RuleDef[] = [
     "reject",
     "missing_data",
     any(
-      all(hasValue("RoutingTransitNum"), hasValue("BankAccountTypeCd"), hasValue("DepositorAccountNum")),
-      all(noValue("RoutingTransitNum"), noValue("BankAccountTypeCd"), noValue("DepositorAccountNum")),
+      all(
+        hasValue("RoutingTransitNum"),
+        hasValue("BankAccountTypeCd"),
+        hasValue("DepositorAccountNum"),
+      ),
+      all(
+        noValue("RoutingTransitNum"),
+        noValue("BankAccountTypeCd"),
+        noValue("DepositorAccountNum"),
+      ),
     ),
     "If any of the following fields have a value in the return, then all of the other fields must have a value: 'RoutingTransitNum' and 'BankAccountTypeCd' and 'DepositorAccountNum'.",
   ),
@@ -530,7 +612,11 @@ export const IND_RULES: readonly RuleDef[] = [
     "incorrect_data",
     ifThen(
       formPresent("form8888"),
-      all(noValue("RoutingTransitNum"), noValue("BankAccountTypeCd"), noValue("DepositorAccountNum")),
+      all(
+        noValue("RoutingTransitNum"),
+        noValue("BankAccountTypeCd"),
+        noValue("DepositorAccountNum"),
+      ),
     ),
     "If Form 8888 is present in the return, then the following must not have a value in the return: 'RoutingTransitNum' and 'BankAccountTypeCd' and 'DepositorAccountNum'.",
   ),
@@ -553,13 +639,21 @@ export const IND_RULES: readonly RuleDef[] = [
     "reject",
     "incorrect_data",
     alwaysPass,
-    "For each dependent in 'DependentDetail' in the return, if 'EligibleForChildTaxCreditInd' is checked, then the corresponding 'DependentRelationshipCd' must have one of the following values: \"STEPCHILD\" or \"HALF BROTHER\" or \"HALF SISTER\" or \"STEPBROTHER\" or \"STEPSISTER\" or \"FOSTER CHILD\" or \"GRANDCHILD\" or \"BROTHER\" or \"SISTER\" or \"NEPHEW\" or \"NIECE\" or \"SON\" or \"DAUGHTER\".",
+    'For each dependent in \'DependentDetail\' in the return, if \'EligibleForChildTaxCreditInd\' is checked, then the corresponding \'DependentRelationshipCd\' must have one of the following values: "STEPCHILD" or "HALF BROTHER" or "HALF SISTER" or "STEPBROTHER" or "STEPSISTER" or "FOSTER CHILD" or "GRANDCHILD" or "BROTHER" or "SISTER" or "NEPHEW" or "NIECE" or "SON" or "DAUGHTER".',
   ),
   rule(
     "IND-089-01",
     "reject",
     "incorrect_data",
-    eqSum("TotalExemptionsCnt", "TotalExemptPrimaryAndSpouseCnt", "ChldWhoLivedWithYouCnt", "OtherDependentsListedCnt"),
+    ifThen(
+      hasValue("TotalExemptPrimaryAndSpouseCnt"),
+      eqSum(
+        "TotalExemptionsCnt",
+        "TotalExemptPrimaryAndSpouseCnt",
+        "ChldWhoLivedWithYouCnt",
+        "OtherDependentsListedCnt",
+      ),
+    ),
     "'TotalExemptionsCnt' in the return must be equal to the sum of the following: 'TotalExemptPrimaryAndSpouseCnt' and 'ChldWhoLivedWithYouCnt' and 'OtherDependentsListedCnt'.",
   ),
   rule(
@@ -580,7 +674,10 @@ export const IND_RULES: readonly RuleDef[] = [
     "IND-096",
     "reject",
     "incorrect_data",
-    ifThen(hasValue("CapitalDistributionInd"), hasNonZero("CapitalGainLossAmt")),
+    ifThen(
+      hasValue("CapitalDistributionInd"),
+      hasNonZero("CapitalGainLossAmt"),
+    ),
     "If 'CapitalDistributionInd' is checked in the return, then 'CapitalGainLossAmt' must have a non-zero value.",
   ),
   rule(
@@ -609,7 +706,10 @@ export const IND_RULES: readonly RuleDef[] = [
     "reject",
     "missing_document",
     ifThen(
-      all(not(hasValue("CapitalDistributionInd")), hasNonZero("CapitalGainLossAmt")),
+      all(
+        not(hasValue("CapitalDistributionInd")),
+        hasNonZero("CapitalGainLossAmt"),
+      ),
       formPresent("schedule_d"),
     ),
     "If 'CapitalDistributionInd' in the return is not checked and 'CapitalGainLossAmt' has a non-zero value, then Schedule D (Form 1040) must be attached to 'CapitalGainLossAmt'.",
@@ -625,7 +725,10 @@ export const IND_RULES: readonly RuleDef[] = [
     "IND-117",
     "reject",
     "incorrect_data",
-    ifThen(isZero("TotalTaxBeforeCrAndOthTaxesAmt"), isZero("CreditForChildAndDepdCareAmt")),
+    ifThen(
+      isZero("TotalTaxBeforeCrAndOthTaxesAmt"),
+      isZero("CreditForChildAndDepdCareAmt"),
+    ),
     "If 'TotalTaxBeforeCrAndOthTaxesAmt' in the return has a zero value or is not provided, then Form 2441, 'CreditForChildAndDepdCareAmt' must be zero if an amount is entered.",
   ),
   rule(
@@ -642,7 +745,10 @@ export const IND_RULES: readonly RuleDef[] = [
     "IND-126",
     "reject",
     "incorrect_data",
-    ifThen(hasValue("Form8814Ind"), hasNonZero("ChildInterestAndDividendTaxAmt")),
+    ifThen(
+      hasValue("Form8814Ind"),
+      hasNonZero("ChildInterestAndDividendTaxAmt"),
+    ),
     "If 'Form8814Ind' in the return is checked, then 'childInterestAndDividendTaxAmt' must have a non-zero value.",
   ),
   rule(
@@ -685,7 +791,7 @@ export const IND_RULES: readonly RuleDef[] = [
     "reject",
     "missing_document",
     alwaysPass,
-    "For each dependent in 'DependentDetail' in the return, if 'DiedLiteralCd' has the value \"DIED\", then a binary attachment with Description beginning with \"BirthCertificate\" or \"DeathCertificate\" or \"HospitalMedicalRecords\" must be present in the return.",
+    'For each dependent in \'DependentDetail\' in the return, if \'DiedLiteralCd\' has the value "DIED", then a binary attachment with Description beginning with "BirthCertificate" or "DeathCertificate" or "HospitalMedicalRecords" must be present in the return.',
   ),
   rule(
     "IND-140",
@@ -705,7 +811,10 @@ export const IND_RULES: readonly RuleDef[] = [
     "IND-153-01",
     "reject",
     "data_mismatch",
-    ifThen(hasValue("AdditionalChildTaxCreditAmt"), eqField("AdditionalChildTaxCreditAmt", "AdditionalChildTaxCreditAmt")),
+    ifThen(
+      hasValue("AdditionalChildTaxCreditAmt"),
+      eqField("AdditionalChildTaxCreditAmt", "AdditionalChildTaxCreditAmt"),
+    ),
     "'AdditionalChildTaxCreditAmt' in the return must be equal to Schedule 8812 (Form 1040), 'AdditionalChildTaxCreditAmt'.",
   ),
   rule(
@@ -912,7 +1021,10 @@ export const IND_RULES: readonly RuleDef[] = [
     "reject",
     "missing_data",
     ifThen(
-      any(hasNonZero("Form8697NetAmtOfInterestOwedAmt"), hasNonZero("Form8866NetAmtOfInterestOwedAmt")),
+      any(
+        hasNonZero("Form8697NetAmtOfInterestOwedAmt"),
+        hasNonZero("Form8866NetAmtOfInterestOwedAmt"),
+      ),
       hasNonZero("LookBackIntSect167gOr460bAmt"),
     ),
     "If Form 8697, 'NetAmtOfInterestOwedAmt' in 'TotLookBackRegularMethodGrp', or Form 8866, 'NetAmtOfInterestOwedAmt' has a non-zero value, then Schedule 2 (Form 1040), 'LookBackIntSect167gOr460bAmt' must have a non-zero value.",
@@ -921,28 +1033,40 @@ export const IND_RULES: readonly RuleDef[] = [
     "IND-288",
     "reject",
     "data_mismatch",
-    ifThen(hasValue("TotalAdditionalIncomeAmt"), eqField("TotalAdditionalIncomeAmt", "TotalAdditionalIncomeAmt")),
+    ifThen(
+      hasValue("TotalAdditionalIncomeAmt"),
+      eqField("TotalAdditionalIncomeAmt", "TotalAdditionalIncomeAmt"),
+    ),
     "'TotalAdditionalIncomeAmt' in the return must be equal to Schedule 1 (Form 1040), 'TotalAdditionalIncomeAmt'.",
   ),
   rule(
     "IND-289",
     "reject",
     "data_mismatch",
-    ifThen(hasValue("TotalAdjustmentsAmt"), eqField("TotalAdjustmentsAmt", "TotalAdjustmentsAmt")),
+    ifThen(
+      hasValue("TotalAdjustmentsAmt"),
+      eqField("TotalAdjustmentsAmt", "TotalAdjustmentsAmt"),
+    ),
     "'TotalAdjustmentsAmt' in the return must be equal to Schedule 1 (Form 1040), 'TotalAdjustmentsAmt'.",
   ),
   rule(
     "IND-290",
     "reject",
     "data_mismatch",
-    ifThen(hasValue("TotalOtherTaxesAmt"), eqField("TotalOtherTaxesAmt", "TotalOtherTaxesAmt")),
+    ifThen(
+      hasValue("TotalOtherTaxesAmt"),
+      eqField("TotalOtherTaxesAmt", "TotalOtherTaxesAmt"),
+    ),
     "'TotalOtherTaxesAmt' in the return must be equal to Schedule 2 (Form 1040), 'TotalOtherTaxesAmt'.",
   ),
   rule(
     "IND-291",
     "reject",
     "data_mismatch",
-    ifThen(hasValue("TotalOtherPaymentsRfdblCrAmt"), eqField("TotalOtherPaymentsRfdblCrAmt", "TotalOtherPaymentsRfdblCrAmt")),
+    ifThen(
+      hasValue("TotalOtherPaymentsRfdblCrAmt"),
+      eqField("TotalOtherPaymentsRfdblCrAmt", "TotalOtherPaymentsRfdblCrAmt"),
+    ),
     "'TotalOtherPaymentsRfdblCrAmt' in the return must be equal to Schedule 3 (Form 1040), 'TotalOtherPaymentsRfdblCrAmt'.",
   ),
   rule(
@@ -967,7 +1091,11 @@ export const IND_RULES: readonly RuleDef[] = [
     "reject",
     "multiple_documents",
     ifThen(
-      all(hasNonZero("RefundAmt"), filingStatusNot(2), hasValue("PrimaryDeathDt")),
+      all(
+        hasNonZero("RefundAmt"),
+        filingStatusNot(2),
+        hasValue("PrimaryDeathDt"),
+      ),
       formPresent("form1310"),
     ),
     "If 'RefundAmt' in the return has a non-zero value and the filing status of the return is not married filing jointly and 'PrimaryDeathDt' has a value, then no more than one Form 1310 must be present.",
@@ -977,7 +1105,11 @@ export const IND_RULES: readonly RuleDef[] = [
     "reject",
     "missing_document",
     ifThenUnless(
-      all(hasNonZero("RefundAmt"), filingStatusNot(2), hasValue("PrimaryDeathDt")),
+      all(
+        hasNonZero("RefundAmt"),
+        filingStatusNot(2),
+        hasValue("PrimaryDeathDt"),
+      ),
       formPresent("form1310"),
       hasValue("PersonalRepresentativeCourtCertificate"),
     ),
@@ -1021,7 +1153,7 @@ export const IND_RULES: readonly RuleDef[] = [
     "IND-412",
     "reject",
     "incorrect_data",
-    ifThen(hasValue("RefundAmt"), eqField("RefundAmt", "OwedAmt")),
+    ifThen(hasNonZero("RefundAmt"), isZero("OwedAmt")),
     "If 'RefundAmt' in the return has a value greater than zero, then 'OwedAmt' must be equal to zero if an amount is entered.",
   ),
   rule(
@@ -1036,7 +1168,10 @@ export const IND_RULES: readonly RuleDef[] = [
     "reject",
     "missing_data",
     ifThen(
-      all(filingStatusIs(2), any(hasValue("PrimaryDeathDt"), hasValue("SpouseDeathDt"))),
+      all(
+        filingStatusIs(2),
+        any(hasValue("PrimaryDeathDt"), hasValue("SpouseDeathDt")),
+      ),
       hasValue("SurvivingSpouseInd"),
     ),
     "If the filing status of the return is married filing jointly and either 'PrimaryDeathDt' or 'SpouseDeathDt' has a value, then 'SurvivingSpouseInd' must be checked.",
@@ -1056,7 +1191,11 @@ export const IND_RULES: readonly RuleDef[] = [
     "reject",
     "missing_data",
     ifThen(
-      all(filingStatusIs(2), hasValue("PrimaryDeathDt"), hasValue("SpouseDeathDt")),
+      all(
+        filingStatusIs(2),
+        hasValue("PrimaryDeathDt"),
+        hasValue("SpouseDeathDt"),
+      ),
       hasValue("PersonalRepresentativeInd"),
     ),
     "If the filing status of the return is married filing jointly and both 'PrimaryDeathDt' and 'SpouseDeathDt' have values, then 'PersonalRepresentativeInd' must be checked.",
@@ -1141,7 +1280,7 @@ export const IND_RULES: readonly RuleDef[] = [
     "reject_and_stop",
     "incorrect_data",
     alwaysPass,
-    "An amended, superseded or corrected return filed after the due date of the original return cannot have filing status \"Married filing separately\" if the filing status of the original return was \"Married filing jointly\".",
+    'An amended, superseded or corrected return filed after the due date of the original return cannot have filing status "Married filing separately" if the filing status of the original return was "Married filing jointly".',
   ),
   rule(
     "IND-452",
@@ -1205,14 +1344,20 @@ export const IND_RULES: readonly RuleDef[] = [
     "IND-468",
     "reject",
     "data_mismatch",
-    ifThen(hasValue("TaxableBenefitsAmt"), eqField("TaxableBenefitsAmt", "TaxableBenefitsAmt")),
+    ifThen(
+      hasValue("TaxableBenefitsAmt"),
+      eqField("TaxableBenefitsAmt", "TaxableBenefitsAmt"),
+    ),
     "'TaxableBenefitsAmt' in the return must be equal to Form 2441, 'TaxableBenefitsAmt'.",
   ),
   rule(
     "IND-469-01",
     "reject",
     "data_mismatch",
-    ifThen(hasValue("TaxableBenefitsForm8839Amt"), eqField("TaxableBenefitsForm8839Amt", "TaxableBenefitsForm8839Amt")),
+    ifThen(
+      hasValue("TaxableBenefitsForm8839Amt"),
+      eqField("TaxableBenefitsForm8839Amt", "TaxableBenefitsForm8839Amt"),
+    ),
     "'TaxableBenefitsForm8839Amt' in the return must be equal to Form 8839, 'TaxableBenefitsForm8839Amt'.",
   ),
   rule(
@@ -1244,7 +1389,7 @@ export const IND_RULES: readonly RuleDef[] = [
     "reject",
     "missing_document",
     alwaysPass,
-    "For each instance of Form 8332 present in the return, there must be a corresponding binary attachment with description \"8332 Signature Document\" present.",
+    'For each instance of Form 8332 present in the return, there must be a corresponding binary attachment with description "8332 Signature Document" present.',
   ),
   rule(
     "IND-507-01",
@@ -1405,7 +1550,10 @@ export const IND_RULES: readonly RuleDef[] = [
     "reject",
     "missing_data",
     ifThen(
-      any(eqStr("PINTypeCd", "Practitioner"), eqStr("PINTypeCd", "Self-Select Practitioner")),
+      any(
+        eqStr("PINTypeCd", "Practitioner"),
+        eqStr("PINTypeCd", "Self-Select Practitioner"),
+      ),
       hasValue("PractitionerPINGrp"),
     ),
     "In the Return Header, if 'PINTypeCd' has the value \"Practitioner\" or \"Self-Select Practitioner\", then 'PractitionerPINGrp' must have a value.",

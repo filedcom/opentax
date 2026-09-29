@@ -3,6 +3,7 @@ import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import { catalog } from "../../catalog.ts";
 import { buildEngineInputs, loadReturn } from "../store/store.ts";
 import { extractFilerIdentity } from "../../forms/f1040/mef/filer.ts";
+import { returnHeaderNameLine1 } from "../../forms/f1040/mef/header.ts";
 import { createReturnContext } from "../../core/validation/context.ts";
 import { evaluateRules } from "../../core/validation/engine.ts";
 import { FIELD_REGISTRY } from "../../forms/f1040/validation/field-registry.ts";
@@ -68,9 +69,39 @@ type PipelineResult = {
 const ALWAYS_APPLICABLE_RULE_PREFIXES = [
   "IND",
   "R0000",
-  "T0000",
-  "X0000",
 ] as const;
+
+// These checks require transmitter/session metadata that is absent from a
+// return-only XML or PDF export. They belong to the later A2A submission gate.
+const TRANSMISSION_ONLY_RULES = new Set([
+  "IND-062", // transmitter IP address
+  "IND-063", // transmitter timestamp
+  "R0000-051-01",
+  "R0000-052-01",
+  "R0000-054-01",
+  "R0000-060",
+  "R0000-080-01",
+  "R0000-081-01",
+  "R0000-082",
+  "R0000-114",
+  "R0000-115",
+  "R0000-118-01",
+  "R0000-119-01",
+  "R0000-143",
+  "R0000-180",
+  "R0000-228",
+  "R0000-229",
+]);
+
+function isTransmissionOnlyRule(ruleNumber: string): boolean {
+  if (TRANSMISSION_ONLY_RULES.has(ruleNumber)) return true;
+  const indNumber = /^IND-(\d+)/.exec(ruleNumber);
+  if (!indNumber) return false;
+  const number = Number(indNumber[1]);
+  // IND-189 through IND-203 require filing security or additional filer
+  // metadata gathered by a transmitter, not by the return-only exporters.
+  return number >= 189 && number <= 203;
+}
 
 function rulePrefixForDocumentTag(tag: string): string | undefined {
   if (tag === "IRS1040") return "F1040";
@@ -100,6 +131,7 @@ function pendingFormIdsForPrefix(prefix: string): readonly string[] {
 interface EmittedValidationScope {
   readonly rulePrefixes: ReadonlySet<string>;
   readonly formCounts: ReadonlyMap<string, number>;
+  readonly returnVersion?: string;
 }
 
 function emittedValidationScope(xml: string): EmittedValidationScope {
@@ -113,7 +145,9 @@ function emittedValidationScope(xml: string): EmittedValidationScope {
       formCounts.set(formId, (formCounts.get(formId) ?? 0) + 1);
     }
   }
-  return { rulePrefixes: prefixes, formCounts };
+  const returnVersion = /<Return\b[^>]*\breturnVersion="([^"]+)"/.exec(xml)
+    ?.[1];
+  return { rulePrefixes: prefixes, formCounts, returnVersion };
 }
 
 function validateBusinessRules(
@@ -130,6 +164,8 @@ function validateBusinessRules(
       ? f1040["filing_status"] as number
       : 0,
     ...filer,
+    NameLine1Txt: filer ? returnHeaderNameLine1(filer) : undefined,
+    returnVersion: emittedScope?.returnVersion,
   };
   const ctx = createReturnContext(
     pending,
@@ -138,7 +174,7 @@ function validateBusinessRules(
     emittedScope?.formCounts,
   );
   const report = evaluateRules(
-    ALL_RULES,
+    ALL_RULES.filter((rule) => !isTransmissionOnlyRule(rule.ruleNumber)),
     ctx,
     emittedScope?.rulePrefixes,
   );
@@ -263,11 +299,19 @@ export async function exportPdfCommand(
   const { pending, def, filer } = await runReturnPipeline(
     args,
   );
-  validateBusinessRules(pending, filer, args.force);
   // An unidentified draft is a PDF preview; it has no fileable MeF return.
-  const pdfBytes = args.draft && !filer
-    ? await def.buildPdfBytes(def.buildPending(pending), filer)
-    : await (await def.prepareReturn(pending, filer)).renderPdf();
+  const prepared = args.draft && !filer
+    ? undefined
+    : await def.prepareReturn(pending, filer);
+  validateBusinessRules(
+    pending,
+    filer,
+    args.force,
+    prepared ? emittedValidationScope(prepared.bundle.xml) : undefined,
+  );
+  const pdfBytes = prepared
+    ? await prepared.renderPdf()
+    : await def.buildPdfBytes(def.buildPending(pending), filer);
   const outputBytes = args.draft ? await addDraftWatermark(pdfBytes) : pdfBytes;
   const outPath = args.outputPath ??
     join(args.baseDir, args.returnId, "export.pdf");

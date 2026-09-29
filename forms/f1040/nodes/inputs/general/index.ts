@@ -238,7 +238,9 @@ export const inputSchema = z.object({
   // Filing/return metadata
   extension_filed: z.boolean().optional(),
   taxpayer_signature_pin: z.string().length(5).optional(),
+  taxpayer_signature_date: z.string().date().optional(),
   spouse_signature_pin: z.string().length(5).optional(),
+  spouse_signature_date: z.string().date().optional(),
   // MFS-specific
   mfs_spouse_itemizing: z.boolean().optional(), // MFS: spouse is itemizing
   mfs_spouse_lived_with_taxpayer: z.boolean().optional(),
@@ -743,7 +745,13 @@ function buildF1040Input(input: GeneralInput): Record<string, unknown> {
 
   // Signature PINs
   addIfDefined(fields, "taxpayer_signature_pin", input.taxpayer_signature_pin);
+  addIfDefined(
+    fields,
+    "taxpayer_signature_date",
+    input.taxpayer_signature_date,
+  );
   addIfDefined(fields, "spouse_signature_pin", input.spouse_signature_pin);
+  addIfDefined(fields, "spouse_signature_date", input.spouse_signature_date);
 
   // Refund direct deposit
   addIfDefined(fields, "bank_routing_number", input.bank_routing_number);
