@@ -30,7 +30,14 @@ XSD pass, or an ignored test.
 
 ### Latest validation attempt
 
-The later 2026-09-29 diagnostic `deno task test` run on the moving worktree
+The 2026-09-29 moving-worktree diagnostic `deno task test` run finished with
+8,609 passed and 205 failed in 11m18s. It is not the agreed fixed-commit
+release gate. A subsequent focused Form 8615 end-to-end rerun passed 4/4 after
+the synthetic Schedule B foreign-account and trust answers were supplied and
+its $650 single taxable-income expectation was aligned with the official 2025
+IRS Tax Table ($66).
+
+An earlier 2026-09-29 diagnostic `deno task test` run on the moving worktree
 reported 8,535 passed and 277 failed, improved from 8,453/348 in the earlier
 diagnostic. Neither is a release-gate pass; the full run must be repeated on a
 fixed commit after the route work is complete. All eleven

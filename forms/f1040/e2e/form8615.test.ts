@@ -38,6 +38,10 @@ const parent = {
 Deno.test("E2E: Form 8615 uses the 2025 Tax Table for low-income tax", () => {
   const result = execute(plan, registry, {
     general: child,
+    schedule_b_part_iii: {
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    },
     f1099int: [{ payer_name: "Bank", box1: 5_000 }],
     f8615: parent,
   }, { taxYear: 2025, formType: "f1040" });
@@ -52,6 +56,10 @@ Deno.test("E2E: Form 8615 uses the 2025 Tax Table for low-income tax", () => {
 Deno.test("E2E: Form 8615 still attaches below its line 3 threshold", () => {
   const result = execute(plan, registry, {
     general: child,
+    schedule_b_part_iii: {
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    },
     f1099int: [{ payer_name: "Bank", box1: 2_000 }],
     f8615: { ...parent, child_unearned_income: 2_000 },
   }, { taxYear: 2025, formType: "f1040" });
@@ -64,12 +72,18 @@ Deno.test("E2E: Form 8615 still attaches below its line 3 threshold", () => {
     undefined,
   );
   assertEquals(result.pending.form8615?.line18_child_tax, undefined);
-  assertEquals(result.pending.f1040?.line16_income_tax, 65);
+  // The 2025 IRS Tax Table assigns $66 to the single $650-$675 interval:
+  // https://www.irs.gov/publications/p1040
+  assertEquals(result.pending.f1040?.line16_income_tax, 66);
 });
 
 Deno.test("E2E: Form 8615 rejects line 1 that disagrees with the child's income sources", () => {
   const result = execute(plan, registry, {
     general: child,
+    schedule_b_part_iii: {
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    },
     f1099int: [{ payer_name: "Bank", box1: 5_000 }],
     f8615: { ...parent, child_unearned_income: 6_000 },
   }, { taxYear: 2025, formType: "f1040" });
@@ -84,6 +98,10 @@ Deno.test("E2E: Form 8615 rejects line 1 that disagrees with the child's income 
 Deno.test("E2E: Form 8615 qualified dividends use Tax Table worksheet comparisons", () => {
   const result = execute(plan, registry, {
     general: child,
+    schedule_b_part_iii: {
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    },
     f1099int: [{ payer_name: "Bank", box1: 4_000 }],
     f1099div: [{
       payerName: "Broker",
