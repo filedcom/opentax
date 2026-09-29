@@ -190,6 +190,68 @@ Deno.test("Form 8874 PDF prints the IRS last-row attachment total for seven inve
   assertEquals((fields.print_overflow_rows as unknown[]).length, 2);
 });
 
+Deno.test("Form 8874 PDF attaches long CDE identity instead of clipping its form row", async () => {
+  const long = {
+    investments: [{
+      ...source.investments[0],
+      cde_name:
+        "Greater Wilmington Community Development And Neighborhood Equity Fund",
+      cde_address: {
+        ...source.investments[0].cde_address,
+        line1: "12345 Community Boulevard Ste 5",
+      },
+    }],
+  };
+  const fields = form8874Pdf.projectFields!(long, {
+    f8874: long,
+    f3800: directClaim,
+  });
+  assertEquals(fields.row_1_cde, undefined);
+  assertEquals(fields.row_6_cde, "See attached");
+  assertEquals(fields.row_6_credit, 50_000);
+  assertEquals((fields.print_overflow_rows as unknown[]).length, 1);
+  const document = await PDFDocument.create();
+  await form8874Pdf.appendSupplementalPages!(
+    document,
+    fields,
+    pdfReviewFixtures[0].filer,
+  );
+  assertEquals(document.getPageCount(), 1);
+});
+
+Deno.test("Form 8874 attachment keeps long and excess investments exactly once", () => {
+  const investments = Array.from({ length: 7 }, (_, index) => ({
+    ...source.investments[0],
+    cde_name: index === 0
+      ? "Greater Wilmington Community Development And Neighborhood Equity Fund"
+      : `Community Entity ${index + 1}`,
+    cde_ein: String(123456780 + index),
+    designation_notice_reference: `QEI notice ${index + 1}`,
+  }));
+  const filing = { investments };
+  const fields = form8874Pdf.projectFields!(filing, {
+    f8874: filing,
+    f3800: {
+      f8874_credit: {
+        credit_amount: 350_000,
+        subject_to_passive_activity_limit: false,
+      },
+    },
+  });
+  assertEquals(
+    fields.row_1_cde,
+    "Community Entity 2\n10 Main Street, Wilmington, DE 19801",
+  );
+  assertEquals(fields.row_6_cde, "See attached");
+  assertEquals(fields.row_6_credit, 100_000);
+  assertEquals(
+    (fields.print_overflow_rows as Array<{ cdeName: string }>).map(
+      (row) => row.cdeName,
+    ),
+    [investments[0].cde_name, investments[6].cde_name],
+  );
+});
+
 Deno.test("Form 8874 overflow statement spans pages and rejects a changed last-row total", async () => {
   const overflow = {
     investments: Array.from({ length: 24 }, (_, index) => ({

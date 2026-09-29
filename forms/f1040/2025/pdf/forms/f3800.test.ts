@@ -327,6 +327,30 @@ Deno.test("source-backed New Markets credit prints Form 8874 with its prepared F
   );
 });
 
+Deno.test("long New Markets CDE identity prints on an attached page without losing its credit", async () => {
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-long-name-new-markets-investment"
+  )!;
+  const result = f1040_2025.executeReturn({ ...fixture.inputs });
+  assertEquals(result.diagnostics, []);
+  const prepared = await f1040_2025.prepareReturn(
+    result.pending,
+    fixture.filer,
+  );
+  assertEquals(prepared.bundle.form3800Parts?.lines.line38, 500);
+  const allPending = normalizeAllPending(prepared.bundle.pending);
+  const printed8874 = form8874Pdf.projectFields!(allPending.f8874, allPending);
+  assertEquals(printed8874.row_1_cde, undefined);
+  assertEquals(printed8874.row_6_cde, "See attached");
+  assertEquals(printed8874.row_6_credit, 500);
+  assertEquals(printed8874.line3, 500);
+  assertEquals((printed8874.print_overflow_rows as unknown[]).length, 1);
+  assertEquals(
+    (await PDFDocument.load(await prepared.renderPdf())).getPageCount(),
+    16,
+  );
+});
+
 Deno.test("two New Markets investments retain separate Form 8874 rows and one parent credit", async () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-two-new-markets-investments"

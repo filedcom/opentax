@@ -20,10 +20,10 @@ const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
 });
 
 export const investmentSchema = z.object({
-  cde_name: z.string().trim().min(1),
+  cde_name: z.string().trim().min(1).max(75),
   cde_ein: z.string().regex(/^\d{9}$/),
   cde_address: z.object({
-    line1: z.string().trim().min(1),
+    line1: z.string().trim().min(1).max(35),
     city: z.string().trim().min(1),
     state: z.string().length(2),
     zip: z.string().regex(/^\d{5}(?:\d{4})?$/),

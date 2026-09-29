@@ -58,6 +58,32 @@ Deno.test("Form 8874 rejects duplicate direct and precomputed legacy amounts", (
   );
 });
 
+Deno.test("Form 8874 CDE identity fits the native MeF name and street limits", () => {
+  const atLimit = {
+    ...investment,
+    cde_name: "N".repeat(75),
+    cde_address: { ...investment.cde_address, line1: "A".repeat(35) },
+  };
+  assertEquals(
+    f8874.inputSchema.safeParse({ investments: [atLimit] }).success,
+    true,
+  );
+  for (
+    const source of [
+      { ...atLimit, cde_name: "N".repeat(76) },
+      {
+        ...atLimit,
+        cde_address: { ...atLimit.cde_address, line1: "A".repeat(36) },
+      },
+    ]
+  ) {
+    assertEquals(
+      f8874.inputSchema.safeParse({ investments: [source] }).success,
+      false,
+    );
+  }
+});
+
 Deno.test("Form 8874 requires allowance-date and qualification evidence", () => {
   for (
     const source of [

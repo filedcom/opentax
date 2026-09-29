@@ -401,6 +401,47 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-long-name-new-markets-investment",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(150_000, 30_000, "Example Employer", "12-3456789")],
+      f8874: {
+        investments: [{
+          cde_name:
+            "Greater Wilmington Community Development And Neighborhood Equity Fund",
+          cde_ein: "123456789",
+          cde_address: {
+            line1: "12345 Community Boulevard Ste 5",
+            city: "Wilmington",
+            state: "DE",
+            zip: "19801",
+          },
+          initial_investment_date: "2025-04-15",
+          credit_allowance_date: "2025-04-15",
+          qualified_equity_investment_amount: 10_000,
+          designation_notice_reference: "Synthetic long CDE QEI notice",
+          held_on_credit_allowance_date: true,
+          qualified_on_credit_allowance_date: true,
+          recapture_notice_received: false,
+          subject_to_passive_activity_limit: false,
+        }],
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: [
+      "f1040",
+      "schedule3",
+      "form6251",
+      "form3800",
+      "form8874",
+    ],
+    reviewFocus: [
+      "The long CDE name and address move to a wrapped supplemental page without clipping",
+      "Form 8874 last row says See attached and carries the single 500 source credit",
+      "Form 3800, Schedule 3, and Form 1040 each use the same 500 credit",
+    ],
+  },
+  {
     id: "single-two-new-markets-investments",
     inputs: {
       general: singleGeneral,
