@@ -43,7 +43,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 
 export const form7203StockLossPdf: PdfFormDescriptor = {
   pendingKey: "form7203",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f7203.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f7203--2022.pdf",
   pageIndices: () => [0, 1],
   fields,
   instances(raw, filer, allPending) {

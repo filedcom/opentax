@@ -50,7 +50,7 @@ function printedEin(ein: string): string {
 
 export const form8874Pdf: PdfFormDescriptor = {
   pendingKey: "f8874",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8874.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f8874--2021.pdf",
   fields,
   filerFields: [
     text("nameLine1", `${page}.f1_01[0]`),

@@ -130,7 +130,7 @@ function partIVPage(
 
 export const form8912Pdf: PdfFormDescriptor = {
   pendingKey: "f8912",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8912.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f8912--2024.pdf",
   fields,
   filerFields: [
     {

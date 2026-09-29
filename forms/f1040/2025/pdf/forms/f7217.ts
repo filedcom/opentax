@@ -97,7 +97,7 @@ function filerIdentity(filer: FilerIdentity | undefined): {
 
 export const form7217Pdf = {
   pendingKey: "f7217",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f7217.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f7217--2024.pdf",
   instances(
     source: Record<string, unknown>,
     filer?: FilerIdentity,

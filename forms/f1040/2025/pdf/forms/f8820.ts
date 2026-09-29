@@ -33,7 +33,7 @@ function printedDate(value: string): string {
 
 export const form8820Pdf: PdfFormDescriptor = {
   pendingKey: "f8820",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8820.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f8820--2018.pdf",
   pageIndices: () => [0, 1],
   fields: [
     text("line1", `${page1}.f1_3[0]`),

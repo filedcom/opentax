@@ -1,10 +1,15 @@
 # TY2025 Form 8911 PDF boundary
 
-The December 2025 IRS [Form 8911](https://www.irs.gov/pub/irs-pdf/f8911.pdf)
+The December 2025 IRS [Form 8911](https://www.irs.gov/pub/irs-prior/f8911--2025.pdf)
 requires Item A to count qualifying properties, and each property needs a
 separate [Schedule A](https://www.irs.gov/pub/irs-pdf/f8911sa.pdf). The
 [instructions](https://www.irs.gov/instructions/i8911) direct Schedule A line 21
 to parent line 4, then parent line 10 to Schedule 3 line 6j.
+
+The parent PDF now uses the archived 2025 IRS URL. Schedule A's current IRS PDF
+is marked December 2025, but no 2025 archive URL is available yet. Its field
+names passed the live IRS AcroForm check on 2026-09-29; the mutable URL still
+needs a pinned source before the PDF release gate is complete.
 
 The PDF build pass projects one sourced, personal-use electric charger and
 exactly one matching Schedule A. It checks the property cost, dates, address,

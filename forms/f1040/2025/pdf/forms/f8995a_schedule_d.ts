@@ -23,7 +23,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 
 export const form8995aScheduleDPdf: PdfFormDescriptor = {
   pendingKey: "form8995a_schedule_d",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8995ad.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f8995ad--2022.pdf",
   filerFields: [
     { kind: "text", domainKey: "nameLine1", pdfField: `${page}f1_01[0]` },
     { kind: "text", domainKey: "primarySSN", pdfField: `${page}f1_02[0]` },

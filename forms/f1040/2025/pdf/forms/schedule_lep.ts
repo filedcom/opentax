@@ -37,7 +37,7 @@ const codeGroup: readonly (readonly [LanguagePreferenceCode, string])[] = [
 
 export const scheduleLepPdf: PdfFormDescriptor = {
   pendingKey: "schedule_lep",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040lep.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040lep--2024.pdf",
   pageIndices: () => [0],
   fields: [
     { kind: "text", domainKey: "name", pdfField: `${page}.f1_1[0]` },

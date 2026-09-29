@@ -65,7 +65,7 @@ function owner(item: Record<string, unknown>, filer: FilerIdentity) {
 
 export const form2439Pdf: PdfFormDescriptor = {
   pendingKey: "f2439",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f2439.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f2439--2021.pdf",
   fields,
   pageIndices: () => [2],
   instances(raw, filer, allPending) {

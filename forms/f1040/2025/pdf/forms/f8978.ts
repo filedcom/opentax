@@ -36,7 +36,7 @@ const lineFields: ReadonlyArray<[string, string, number]> = [
 
 export const form8978Pdf: PdfFormDescriptor = {
   pendingKey: "f8978",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8978.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f8978--2023.pdf",
   fields: [
     text("partner_name", "f1_01[0]"),
     text("partner_tin", "f1_02[0]"),

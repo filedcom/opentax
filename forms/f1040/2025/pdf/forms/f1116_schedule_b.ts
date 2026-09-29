@@ -89,7 +89,7 @@ const fields: readonly PdfFieldEntry[] = [
 
 export const form1116ScheduleBPdf: PdfFormDescriptor = {
   pendingKey: "form1116_schedule_b",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1116sb.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f1116sb--2022.pdf",
   pageIndices: () => [0, 1],
   projectFields(raw, allPending) {
     if (Object.keys(raw).length === 0) return {};
