@@ -11,6 +11,9 @@ const filer: FilerIdentity = {
   primarySSN: "111223333",
   nameLine1: "TEST TAXPAYER",
   nameControl: "TEST",
+  firstName: "Test",
+  lastName: "Taxpayer",
+  firstNameWithInitial: "Test",
   fullName: "Test Taxpayer",
   address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
   filingStatus: FilingStatus.Single,
@@ -40,6 +43,58 @@ const attached9465 = {
   payment_due_day: 15,
   payment_method: "manual_monthly_payment",
 };
+
+const stockLossInputs = {
+  general: {
+    filing_status: "single",
+    taxpayer_first_name: "Test",
+    taxpayer_last_name: "Taxpayer",
+    taxpayer_ssn: "111-22-3333",
+    taxpayer_dob: "1985-06-15",
+    address_line1: "1 Test Way",
+    address_city: "Austin",
+    address_state: "TX",
+    address_zip: "78701",
+    digital_assets: false,
+  },
+  k1_s_corp: [{
+    corporation_name: "Test S Corp",
+    box1_ordinary_business: -4_000,
+    corporation_ein: "123456789",
+    source_document_reference: "2025 S corporation K-1",
+    form7203_stock_loss_ledger: {
+      shareholder_ssn: "111223333",
+      shareholder_name_as_on_k1: "TEST TAXPAYER",
+      corporation_ein: "123456789",
+      beginning_stock_basis: 3_000,
+      beginning_basis_workpaper_reference: "2024 shareholder stock ledger",
+      original_shareholder: true,
+      all_shares_one_stock_block: true,
+      no_current_year_stock_transactions: true,
+      no_section_1367_1_g_election: true,
+      no_other_2025_stock_basis_changes: true,
+      no_other_schedule_e_activity: true,
+      materially_participated_in_s_corporation: true,
+      material_participation_workpaper_reference:
+        "2025 shareholder participation log",
+      no_shareholder_debt_or_repayments: true,
+      no_prior_year_suspended_losses: true,
+      no_at_risk_or_passive_limitation: true,
+    },
+  }],
+};
+
+const RETURN_XSD_PATH = new URL(
+  "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+  import.meta.url,
+).pathname;
+let returnXsdAvailable = false;
+try {
+  Deno.statSync(RETURN_XSD_PATH);
+  returnXsdAvailable = true;
+} catch {
+  // The official IRS schema bundle is local-only.
+}
 
 Deno.test("Form 8888 split refund cannot export without a matching final refund", () => {
   const fields = {
@@ -101,34 +156,7 @@ Deno.test("Schedule R stays blocked and reviewed S-corporation stock loss emits 
         "Schedule R",
       ],
       [
-        {
-          k1_s_corp: [{
-            corporation_name: "Test S Corp",
-            box1_ordinary_business: -4000,
-            corporation_ein: "123456789",
-            source_document_reference: "2025 S corporation K-1",
-            form7203_stock_loss_ledger: {
-              shareholder_ssn: "111223333",
-              shareholder_name_as_on_k1: "TEST TAXPAYER",
-              corporation_ein: "123456789",
-              beginning_stock_basis: 3000,
-              beginning_basis_workpaper_reference:
-                "2024 shareholder stock ledger",
-              original_shareholder: true,
-              all_shares_one_stock_block: true,
-              no_current_year_stock_transactions: true,
-              no_section_1367_1_g_election: true,
-              no_other_2025_stock_basis_changes: true,
-              no_other_schedule_e_activity: true,
-              materially_participated_in_s_corporation: true,
-              material_participation_workpaper_reference:
-                "2025 shareholder participation log",
-              no_shareholder_debt_or_repayments: true,
-              no_prior_year_suspended_losses: true,
-              no_at_risk_or_passive_limitation: true,
-            },
-          }],
-        },
+        stockLossInputs,
         "form7203",
         "Form 7203",
       ],
@@ -172,5 +200,121 @@ Deno.test("Schedule R stays blocked and reviewed S-corporation stock loss emits 
         ? "Schedule R native filing needs sourced single-taxpayer age-65 facts"
         : `${formName} requires a native filing document`,
     );
+  }
+});
+
+Deno.test({
+  name:
+    "XSD: reviewed Form 7203 loss joins full Form 1040, Schedule 1 and Schedule E",
+  ignore: !returnXsdAvailable,
+  sanitizeOps: false,
+  sanitizeResources: false,
+}, async () => {
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    stockLossInputs,
+    { taxYear: 2025, formType: "f1040" },
+  );
+  const pending = buildPending(result.pending);
+  const xml = buildMefXml(pending, filer);
+  for (
+    const value of [
+      "<IRS1040 documentId=",
+      "<IRS1040Schedule1 documentId=",
+      "<IRS1040ScheduleE documentId=",
+      "<IRS7203 documentId=",
+      "<TotalAdditionalIncomeAmt>-3000</TotalAdditionalIncomeAmt>",
+      "<TotalSuppIncomeOrLossAmt>-3000</TotalSuppIncomeOrLossAmt>",
+      "<ShrCarryoverAmountsGrp><OrdinaryBusinessLossAmt>1000</OrdinaryBusinessLossAmt>",
+    ]
+  ) {
+    assertEquals(xml.includes(value), true, value);
+  }
+  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(path, xml);
+    const checked = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", RETURN_XSD_PATH, path],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
+  } finally {
+    await Deno.remove(path);
+  }
+});
+
+Deno.test({
+  name: "XSD: split Form 8888 refund matches a W-2 Form 1040 refund",
+  ignore: !returnXsdAvailable,
+  sanitizeOps: false,
+  sanitizeResources: false,
+}, async () => {
+  const inputs = {
+    general: stockLossInputs.general,
+    w2: [{
+      employer_ein: "12-3456789",
+      employer_name: "ACME CORP",
+      employer_address_line1: "500 Market St",
+      employer_address_city: "Austin",
+      employer_address_state: "TX",
+      employer_address_zip: "78701",
+      box1_wages: 30_000,
+      box2_fed_withheld: 3_000,
+      box3_ss_wages: 30_000,
+      box4_ss_withheld: 1_860,
+      box5_medicare_wages: 30_000,
+      box6_medicare_withheld: 435,
+    }],
+    f8888: {
+      account_1: {
+        routing_number: "021000021",
+        account_number: "111222333",
+        account_type: AccountType.Checking,
+        amount: 300,
+        owner_name: "Test Taxpayer",
+      },
+      account_2: {
+        routing_number: "021000021",
+        account_number: "444555666",
+        account_type: AccountType.Savings,
+        amount: 1_225,
+        owner_name: "Test Taxpayer",
+      },
+    },
+  };
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    inputs,
+    { taxYear: 2025, formType: "f1040" },
+  );
+  const pending = buildPending(result.pending);
+  assertEquals(pending.f1040?.line34_overpayment, 1_525);
+  assertEquals(pending.f1040?.line35a_refund, 1_525);
+  const xml = buildMefXml(pending, filer);
+  for (
+    const value of [
+      "<RefundAmt>1525</RefundAmt>",
+      "<IRS8888 documentId=",
+      "<DirectDepositRefundAmt>300</DirectDepositRefundAmt>",
+      "<DirectDepositRefundAmt>1225</DirectDepositRefundAmt>",
+      "<TotalAllocationOfRefundAmt>1525</TotalAllocationOfRefundAmt>",
+    ]
+  ) {
+    assertEquals(xml.includes(value), true, value);
+  }
+  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(path, xml);
+    const checked = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", RETURN_XSD_PATH, path],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
+  } finally {
+    await Deno.remove(path);
   }
 });

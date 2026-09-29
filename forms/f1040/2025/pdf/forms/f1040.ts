@@ -426,6 +426,12 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     pdfField: "topmostSubform[0].Page2[0].f2_31[0]",
   },
   {
+    kind: "checkbox",
+    domainKey: "print_form8888_attached",
+    // The 2025 line 35a attachment box is c2_15 at x467.2, y290.
+    pdfField: "topmostSubform[0].Page2[0].c2_15[0]",
+  },
+  {
     kind: "text",
     domainKey: "line37_amount_owed",
     pdfField: "topmostSubform[0].Page2[0].f2_35[0]",
@@ -445,14 +451,18 @@ export const irs1040Pdf: PdfFormDescriptor = {
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040--2025.pdf",
   projectFields(fields, allPending) {
     const rollover = fields.line5c_pension_rollover === true;
-    if (fields.line5c_pension_rollover !== undefined &&
-        typeof fields.line5c_pension_rollover !== "boolean") {
+    if (
+      fields.line5c_pension_rollover !== undefined &&
+      typeof fields.line5c_pension_rollover !== "boolean"
+    ) {
       throw new Error("Form 1040 PDF line 5c rollover must be a boolean");
     }
     if (rollover || allPending.f1099r !== undefined) {
       const source = f1099rInputSchema.safeParse(allPending.f1099r);
       if (!source.success) {
-        throw new Error("Form 1040 PDF line 5c needs valid Form 1099-R source facts");
+        throw new Error(
+          "Form 1040 PDF line 5c needs valid Form 1099-R source facts",
+        );
       }
       if (rollover !== source.data.f1099rs.some(isPensionDirectRollover)) {
         throw new Error(
@@ -463,9 +473,13 @@ export const irs1040Pdf: PdfFormDescriptor = {
     if (allPending.w2g !== undefined) {
       const source = w2gInputSchema.safeParse(allPending.w2g);
       if (!source.success) {
-        throw new Error("Form 1040 W-2G withholding needs valid payer-issued source facts");
+        throw new Error(
+          "Form 1040 W-2G withholding needs valid payer-issued source facts",
+        );
       }
-      if (source.data.w2gs.some((item) => (item.box4_federal_withheld ?? 0) > 0)) {
+      if (
+        source.data.w2gs.some((item) => (item.box4_federal_withheld ?? 0) > 0)
+      ) {
         throw new Error(
           "Form 1040 W-2G withholding cannot render until its payer-issued W-2G attachment is supported",
         );
@@ -488,6 +502,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
     const child = form8814ParentPrintAmounts(allPending);
     return {
       ...fields,
+      print_form8888_attached: Object.keys(allPending.f8888 ?? {}).length > 0,
       print_form8814_line3a_included: child.dividends > 0,
       print_form8814_line3b_included: child.dividends > 0,
       print_form8814_line7a_included: child.capitalGain > 0,

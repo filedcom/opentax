@@ -50,11 +50,19 @@ $3,000 basis and allowed reduction, and Part III $4,000 current loss, $3,000
 stock-allowed loss, and $1,000 carryover land in the correct columns. The
 artifact is `.state/research/ty2025-form7203-filled-review.pdf`. The native
 case passes the local TY2025 v5.4 `IRS7203` XSD; ten focused native/PDF tests
-pass.
+pass. A separate synthetic reviewed K-1 and general taxpayer source was run
+through the executor, MeF bundle, and real PDF packet builder. Its full return
+XML passes the local TY2025 v5.4 `Return1040.xsd`, and the seven-page packet
+visually ties Form 7203's $3,000 allowed loss to Schedule E line 41,
+Schedule 1 lines 5/10, and Form 1040 line 8. The full XML and packet are at
+`.state/research/ty2025-form7203-full-return.xml` and
+`.state/research/ty2025-form7203-full-return.pdf`. This is synthetic reviewed
+source evidence, not authenticated uploaded K-1 bytes or IRS acceptance.
 
 This is a registered source-backed route, but it is **not yet filing-verified**.
-The current-source full batch, full-return and Schedule E/1/1040 checks,
-IRS business-rule validation, and ATS acceptance remain open. The MeF/PDF preflight
+The current-source full batch, other full-return combinations, authenticated
+source bytes, IRS business-rule validation, and ATS acceptance remain open.
+The MeF/PDF preflight
 still blocks other Form 7203 shapes. Actual box-16 code-D/E transactions,
 multiple corporations,
 stock blocks or shareholders, purchased/inherited/gift shares, contributions,

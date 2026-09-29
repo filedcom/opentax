@@ -67,15 +67,19 @@ Deno.test("irs1040Pdf: line 5c rollover checks the 2025 pension checkbox with co
     entry?.pdfField,
     "topmostSubform[0].Page1[0].c1_38[0]",
   );
-  const source = { f1099r: { f1099rs: [{
-    payer_name: "Jubilee",
-    payer_ein: "12-3456789",
-    box1_gross_distribution: 20_300,
-    box2a_taxable_amount: 10_300,
-    box7_distribution_code: "G",
-    box7_ira_simple_indicator: false,
-    direct_rollover_confirmed: true,
-  }] } };
+  const source = {
+    f1099r: {
+      f1099rs: [{
+        payer_name: "Jubilee",
+        payer_ein: "12-3456789",
+        box1_gross_distribution: 20_300,
+        box2a_taxable_amount: 10_300,
+        box7_distribution_code: "G",
+        box7_ira_simple_indicator: false,
+        direct_rollover_confirmed: true,
+      }],
+    },
+  };
   const fields = { line5c_pension_rollover: true };
   assertEquals(
     irs1040Pdf.projectFields?.(fields, source)?.line5c_pension_rollover,
@@ -98,6 +102,25 @@ Deno.test("irs1040Pdf.fields: contains expected payment fields", () => {
   for (const key of expected) {
     assertEquals(domainKeys.has(key), true, `Missing domain key: ${key}`);
   }
+});
+
+Deno.test("Form 1040 line 35a marks an attached Form 8888", () => {
+  const entry = irs1040Pdf.fields.find((field) =>
+    field.domainKey === "print_form8888_attached"
+  );
+  assertEquals(entry?.kind, "checkbox");
+  assertEquals(entry?.pdfField, "topmostSubform[0].Page2[0].c2_15[0]");
+  assertEquals(
+    irs1040Pdf.projectFields?.({ line35a_refund: 1_525 }, {
+      f8888: { account_1: {}, account_2: {} },
+    })?.print_form8888_attached,
+    true,
+  );
+  assertEquals(
+    irs1040Pdf.projectFields?.({ line35a_refund: 1_525 }, {})
+      ?.print_form8888_attached,
+    false,
+  );
 });
 
 Deno.test("irs1040Pdf.fields: no empty domain keys or PDF field names", () => {

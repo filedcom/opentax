@@ -52,6 +52,8 @@ const facility = {
 function pending() {
   return {
     f1040: {
+      filing_status: "single",
+      digital_assets: false,
       line11_agi: 50_000,
       line14_deductions_qbi_total: 15_000,
       line16_income_tax: 40_000,
@@ -105,7 +107,11 @@ function pending() {
 
 Deno.test("Form 3800 PDF uses the exact parts captured during MeF serialization", async () => {
   const source = pending();
-  const filer = testFiler();
+  const filer = {
+    ...testFiler(),
+    firstNameWithInitial: "Test",
+    lastName: "Taxpayer",
+  };
   const bundle = await buildMefBundle(source, { filer, attachments: [] });
   assertStringIncludes(bundle.xml, "<IRS3800 ");
   assertEquals(bundle.form3800Parts?.lines.line38, 600);

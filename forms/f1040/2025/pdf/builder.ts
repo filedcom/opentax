@@ -3,7 +3,7 @@ import { join } from "@std/path";
 import { normalizeAllPending } from "../pending.ts";
 import { ALL_PDF_FORMS } from "./forms/index.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "./form-descriptor.ts";
-import type { FilerIdentity } from "../../mef/header.ts";
+import { type FilerIdentity, FilingStatus } from "../../mef/header.ts";
 import { assertAttachmentCoverage } from "../attachment-coverage.ts";
 import type { MefBundle } from "../mef/builder.ts";
 import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
@@ -243,6 +243,35 @@ export async function buildPdfBytes(
   preparedBundle?: MefBundle,
 ): Promise<Uint8Array> {
   const normalized = normalizeAllPending(pending);
+  if (normalized.f1040) {
+    if (
+      !filer || !/^[0-9]{9}$/.test(filer.primarySSN) ||
+      !filer.firstNameWithInitial?.trim() || !filer.lastName?.trim()
+    ) {
+      throw new Error(
+        "Form 1040 PDF needs the identified taxpayer's SSN, first-name field, and last name",
+      );
+    }
+    const statusCodes: Readonly<Record<string, FilingStatus>> = {
+      single: FilingStatus.Single,
+      mfj: FilingStatus.MarriedFilingJointly,
+      mfs: FilingStatus.MarriedFilingSeparately,
+      hoh: FilingStatus.HeadOfHousehold,
+      qss: FilingStatus.QualifyingSurvivingSpouse,
+    };
+    const status = normalized.f1040.filing_status;
+    if (
+      typeof status !== "string" || statusCodes[status] === undefined ||
+      statusCodes[status] !== filer.filingStatus
+    ) {
+      throw new Error(
+        "Form 1040 PDF filing status must match the identified filer",
+      );
+    }
+    if (typeof normalized.f1040.digital_assets !== "boolean") {
+      throw new Error("Form 1040 PDF needs the digital-assets answer");
+    }
+  }
   if (
     preparedBundle &&
     await preparedSourceSha256(normalized, filer) !==
