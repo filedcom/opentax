@@ -72,6 +72,9 @@ $928 tax and a $1,572 refund in the synthetic case.
 The Form 3115-to-Schedule C end-to-end fixture now uses the public executor's
 array input shape and explicit Schedule C Form 1099 answer. Its focused case
 passes source-to-profit, native Schedule C XML, and PDF projection (1/1).
+The Form 8582-CR source/allocation file passes 29/29 after its Form 8834
+negative case removed an invalid Form 3800 line from the synthetic source,
+allowing the intended separate-filing-route guard to run.
 
 The 2026-09-29 moving-worktree diagnostic `deno task test` run finished with
 8,609 passed and 205 failed in 11m18s. It is not the agreed fixed-commit

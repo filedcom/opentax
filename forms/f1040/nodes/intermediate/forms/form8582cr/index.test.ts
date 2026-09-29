@@ -992,11 +992,12 @@ Deno.test("Form 8582-CR keeps allowed credits in their explicit filing routes", 
 });
 
 Deno.test("Form 8582-CR does not send Form 8834 allowed credit to Schedule 3 line 6a", () => {
+  const { form3800_credit_line: _line, ...creditSource } = other(100);
   assertThrows(
     () =>
       compute({
         credit_sources: [{
-          ...other(100),
+          ...creditSource,
           source_form: "Form 8834",
           source_origin: { kind: PassiveCreditSourceOrigin.Self },
           reporting_route: PassiveCreditReportingRoute.Form8834,
