@@ -17,6 +17,16 @@ Deno.test("2025 Form 8990 bounded two-pass recomputes Schedule C after a sourced
         line_g_material_participation: true,
         line_1_gross_receipts: 200_000,
         line_12_depletion: 1_000,
+        amt_depletion_worksheet: {
+          source_reference: "2025 AMT depletion worksheet C-1",
+          all_property_income_and_basis_limits_applied_verified: true,
+          no_at_risk_or_basis_limitation_verified: true,
+          properties: [{
+            property_reference: "PROPERTY-1",
+            regular_allowed_depletion: 1_000,
+            amt_allowed_depletion: 1_000,
+          }],
+        },
         line_13_depreciation: 7_500,
         line_16b_interest_other: 100_000,
       }],

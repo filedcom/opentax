@@ -17,6 +17,16 @@ const business = {
   line_g_material_participation: true,
   line_1_gross_receipts: 200_000,
   line_12_depletion: 1_000,
+  amt_depletion_worksheet: {
+    source_reference: "2025 AMT depletion worksheet C-1",
+    all_property_income_and_basis_limits_applied_verified: true,
+    no_at_risk_or_basis_limitation_verified: true,
+    properties: [{
+      property_reference: "PROPERTY-1",
+      regular_allowed_depletion: 1_000,
+      amt_allowed_depletion: 1_000,
+    }],
+  },
   line_13_depreciation: 7_500,
   line_16b_interest_other: 8_000,
 };
@@ -27,7 +37,9 @@ function schedule1Profit(result: ReturnType<typeof scheduleC.compute>): number {
 }
 
 Deno.test("2025 Form 8990 internal contexts permit exact provisional and finalized Schedule C passes", () => {
-  const provisional = stageProvisionalScheduleCInterest({ schedule_cs: [business] });
+  const provisional = stageProvisionalScheduleCInterest({
+    schedule_cs: [business],
+  });
   const first = scheduleC.compute(
     provisionalScheduleCContext(provisional),
     provisional.source,
@@ -40,18 +52,25 @@ Deno.test("2025 Form 8990 internal contexts permit exact provisional and finaliz
   );
   assertEquals(schedule1Profit(second), 188_500);
   assertThrows(
-    () => scheduleC.compute({ taxYear: 2025, formType: "f1040" }, provisional.source),
+    () =>
+      scheduleC.compute(
+        { taxYear: 2025, formType: "f1040" },
+        provisional.source,
+      ),
     Error,
     "documented section 163(j) exemption",
   );
 });
 
 Deno.test("2025 Form 8990 internal context cannot approve a different Schedule C", () => {
-  const provisional = stageProvisionalScheduleCInterest({ schedule_cs: [business] });
+  const provisional = stageProvisionalScheduleCInterest({
+    schedule_cs: [business],
+  });
   assertThrows(
-    () => scheduleC.compute(provisionalScheduleCContext(provisional), {
-      schedule_cs: [{ ...business, line_1_gross_receipts: 250_000 }],
-    }),
+    () =>
+      scheduleC.compute(provisionalScheduleCContext(provisional), {
+        schedule_cs: [{ ...business, line_1_gross_receipts: 250_000 }],
+      }),
     Error,
     "exact internally staged business source",
   );
