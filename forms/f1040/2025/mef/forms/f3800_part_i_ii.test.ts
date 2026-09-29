@@ -27,7 +27,11 @@ Deno.test("Form 3800 XML: Parts I and II keep passive and nonpassive credits on 
     standardCarryforward: 0,
     specifiedCarryforward: 0,
   }, passive);
-  const xml = form3800PartIAndIIXml(lines).join("");
+  const xml = form3800PartIAndIIXml(lines, {
+    standardDocumentIds: [],
+    standardRevised: false,
+    specifiedRevised: false,
+  }).join("");
   assertStringIncludes(
     xml,
     "<GeneralBusCrFromNnPssvActyAmt>1000</GeneralBusCrFromNnPssvActyAmt>",

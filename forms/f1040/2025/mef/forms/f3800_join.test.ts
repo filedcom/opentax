@@ -47,6 +47,7 @@ const ordinaryMetadata = {
 const nonpassive: Form3800DocumentParts = {
   lines: calculateForm3800Nonpassive(tax, ZERO_FORM3800_PASSIVE_ACTIVITY),
   transferStatementIds: [],
+  carryforwardSources: [],
   currentRows: [{
     line: "1h",
     metadata: ordinaryMetadata,

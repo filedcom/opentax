@@ -2,6 +2,7 @@ import type { Form3800DocumentParts } from "../../mef/forms/f3800_document.ts";
 import type { FilerIdentity } from "../../../mef/header.ts";
 import type { Form3800CurrentCreditAmount } from "../../mef/forms/f3800_current_rows.ts";
 import type { Form3800CarryoverAmount } from "../../mef/forms/f3800_passive_rows.ts";
+import { reconcileForm3800CarryforwardLinks } from "../../mef/forms/f3800_carryforward_link.ts";
 import {
   form3800HeaderFields,
   form3800PartIAndIIFields,
@@ -33,11 +34,11 @@ export function projectForm3800HeaderFields(
       "Form 3800 printable transfer election does not reconcile to source rows",
     );
   }
-  if (parts.lines.line4 !== 0 || parts.lines.line34 !== 0) {
-    throw new Error(
-      "Form 3800 revised carryforward answer lacks a typed source",
-    );
-  }
+  const carryforward = reconcileForm3800CarryforwardLinks(
+    parts.lines,
+    parts.carryoverRows,
+    parts.carryforwardSources,
+  );
   return {
     [form3800HeaderFields.filerName]: name,
     [form3800HeaderFields.filerTin]: tin,
@@ -49,6 +50,12 @@ export function projectForm3800HeaderFields(
     ]: true,
     ...(transferred
       ? { [form3800HeaderFields.transferStatementCount]: ids.length }
+      : {}),
+    ...(carryforward.standardRevised
+      ? { [form3800HeaderFields.line4RevisedCarryforward]: true }
+      : {}),
+    ...(carryforward.specifiedRevised
+      ? { [form3800HeaderFields.line34RevisedCarryforward]: true }
       : {}),
   };
 }
@@ -69,6 +76,11 @@ export function projectForm3800PartIAndIIFields(
   parts: Form3800DocumentParts,
   schedule3Line6a: number,
 ): Readonly<Record<string, number>> {
+  reconcileForm3800CarryforwardLinks(
+    parts.lines,
+    parts.carryoverRows,
+    parts.carryforwardSources,
+  );
   if (cents(parts.lines.line38) !== cents(schedule3Line6a)) {
     throw new Error(
       "Form 3800 printed line 38 does not match Schedule 3 line 6a",

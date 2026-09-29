@@ -24,6 +24,7 @@ function printableParts(partV: number, partVI: number): Form3800DocumentParts {
   return {
     lines,
     transferStatementIds: [],
+    carryforwardSources: [],
     currentRows: [{
       line: "1h" as const,
       metadata: { sourceCount: partV },

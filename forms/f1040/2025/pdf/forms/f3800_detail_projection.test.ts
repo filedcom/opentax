@@ -31,6 +31,7 @@ const lines = calculateForm3800Nonpassive({
 const current: Form3800DocumentParts = {
   lines,
   transferStatementIds: [],
+  carryforwardSources: [],
   currentRows: [{
     line: "1f",
     xml: "<Form8835PartIICYCreditsGrp/>",

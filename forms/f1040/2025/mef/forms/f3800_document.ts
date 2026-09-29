@@ -22,10 +22,15 @@ import { buildForm3800PartIIIXml } from "./f3800_part_iii.ts";
 import { buildForm3800PartIVXml } from "./f3800_part_iv.ts";
 import { buildForm3800PartVXml } from "./f3800_part_v.ts";
 import { buildForm3800PartVIXml } from "./f3800_part_vi.ts";
+import {
+  type Form3800CarryforwardDocumentSource,
+  reconcileForm3800CarryforwardLinks,
+} from "./f3800_carryforward_link.ts";
 
 export type Form3800DocumentParts = {
   readonly lines: Form3800NonpassiveLines;
   readonly transferStatementIds: readonly string[];
+  readonly carryforwardSources: readonly Form3800CarryforwardDocumentSource[];
   readonly currentRows: readonly Form3800CurrentXmlRow[];
   readonly currentAmounts: readonly Form3800CurrentCreditAmount[];
   readonly carryoverRows: readonly Form3800CarryoverRow[];
@@ -74,6 +79,11 @@ export function buildIRS3800Document(parts: Form3800DocumentParts): string {
   const empowermentUsed = usedFor("empowerment");
   const specifiedUsed = usedFor("specified");
   const appliedCents = standardUsed + empowermentUsed + specifiedUsed;
+  const carryforward = reconcileForm3800CarryforwardLinks(
+    parts.lines,
+    parts.carryoverRows,
+    parts.carryforwardSources,
+  );
   if (
     !Number.isSafeInteger(appliedCents) ||
     standardUsed !== toCents(parts.lines.line17) ||
@@ -142,7 +152,7 @@ export function buildIRS3800Document(parts: Form3800DocumentParts): string {
         },
       )
       : "",
-    ...form3800PartIAndIIXml(parts.lines),
+    ...form3800PartIAndIIXml(parts.lines, carryforward),
     ...partIII,
     ...partIV,
     buildForm3800PartVXml(filedCurrentDetails),

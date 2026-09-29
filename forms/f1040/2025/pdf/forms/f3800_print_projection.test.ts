@@ -94,7 +94,7 @@ Deno.test("Form 3800 printable header rejects missing filer, unbound transfer an
         lines: { ...parts.lines, line4: 1 },
       }, testFiler()),
     Error,
-    "revised carryforward answer lacks a typed source",
+    "carryforward computation totals do not reconcile",
   );
 });
 

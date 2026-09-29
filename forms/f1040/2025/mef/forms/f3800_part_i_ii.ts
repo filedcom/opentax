@@ -1,15 +1,31 @@
 import { element } from "../../../mef/xml.ts";
 import type { Form3800NonpassiveLines } from "../../../nodes/inputs/f3800/calculation.ts";
+import type { reconcileForm3800CarryforwardLinks } from "./f3800_carryforward_link.ts";
+
+type CarryforwardLink = ReturnType<typeof reconcileForm3800CarryforwardLinks>;
 
 /** Form 3800 Parts I and II in the element order of TY2025 IRS3800.xsd. */
 export function form3800PartIAndIIXml(
   lines: Form3800NonpassiveLines,
+  carryforward: CarryforwardLink,
 ): string[] {
+  if (lines.line4 > 0 && carryforward.standardDocumentIds.length === 0) {
+    throw new Error("Form 3800 line 4 needs its carryforward computation");
+  }
   return [
     element("GeneralBusCrFromNnPssvActyAmt", lines.line1),
     lines.line2 > 0 ? element("CrSubjToPassiveActyLmtAmt", lines.line2) : "",
     lines.line3 > 0
       ? element("PssvActyForGenBusCrAllowedAmt", lines.line3)
+      : "",
+    lines.line4 > 0
+      ? element("CYGeneralBusCrCarryforwardAmt", lines.line4, {
+        referenceDocumentId: carryforward.standardDocumentIds.join(" "),
+        referenceDocumentName: "CarryforwardGeneralBusinessCr",
+        ...(carryforward.standardRevised
+          ? { carryforwardChgdOrRevsInd: "X" }
+          : {}),
+      })
       : "",
     element("CYCreditsNotAllwAgainstTMTAmt", lines.line6),
     element("RegularTaxBeforeCreditsAmt", lines.line7),
@@ -56,6 +72,13 @@ export function form3800PartIAndIIXml(
       : "",
     lines.line33 > 0
       ? element("OtherSpecifiedAllwGenBusCrAmt", lines.line33)
+      : "",
+    lines.line34 > 0
+      ? element("AllwGenAndEligSmllBusCfwdCrAmt", lines.line34, {
+        ...(carryforward.specifiedRevised
+          ? { carryforwardChgdOrRevsInd: "X" }
+          : {}),
+      })
       : "",
     element("TotAllwGenAndEligSmllBusCrAmt", lines.line36),
     element("SmllrGenBusCrOrTotGenEligCrAmt", lines.line37),

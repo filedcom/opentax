@@ -108,6 +108,7 @@ export function joinForm3800DocumentParts(
   return {
     lines,
     transferStatementIds: nonpassive?.transferStatementIds ?? [],
+    carryforwardSources: nonpassive?.carryforwardSources ?? [],
     currentRows,
     currentAmounts,
     carryoverRows: [...(nonpassive?.carryoverRows ?? []), ...passive.partIV],

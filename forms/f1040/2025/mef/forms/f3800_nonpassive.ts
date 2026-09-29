@@ -871,6 +871,7 @@ export function buildForm3800NonpassiveParts(
   return {
     lines,
     transferStatementIds: statementIds,
+    carryforwardSources: [],
     currentRows,
     currentAmounts,
     carryoverRows: [],

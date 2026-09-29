@@ -104,6 +104,7 @@ function preparedParts(
   return {
     lines: { line37: total, line38: total } as Form3800DocumentParts["lines"],
     transferStatementIds: [],
+    carryforwardSources: [],
     currentRows: [{
       line: "4e",
       xml: "",
