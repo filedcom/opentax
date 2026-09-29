@@ -141,6 +141,20 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-high-wage-no-niit",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(220_000, 40_000, "Example Employer", "12-3456789")],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule2", "form8959", "form8960"],
+    reviewFocus: [
+      "Form 8960 prints 220,000 MAGI above the 200,000 filing threshold despite zero NII and NIIT",
+      "Form 8959 and Schedule 2 carry Additional Medicare Tax without a Schedule 2 NIIT amount",
+      "Form 1040 tax and payments reconcile with the 220,000 W-2 wages and withholding",
+    ],
+  },
+  {
     id: "single-w2-refund",
     inputs: {
       general: singleGeneral,

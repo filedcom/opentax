@@ -35,6 +35,14 @@ for (const fixture of pdfReviewFixtures) {
         assertStringIncludes(xml, "<IRS8615 ");
         assertEquals(xml.includes("<IRS8960 "), false);
       }
+      if (fixture.id === "single-high-wage-no-niit") {
+        assertStringIncludes(xml, "<IRS8960 ");
+        assertStringIncludes(xml, "<ModifiedAGIAmt>220000</ModifiedAGIAmt>");
+        assertStringIncludes(
+          xml,
+          "<IndivNetInvstIncomeTaxAmt>0</IndivNetInvstIncomeTaxAmt>",
+        );
+      }
       const path = await Deno.makeTempFile({ suffix: ".xml" });
       try {
         await Deno.writeTextFile(path, xml);

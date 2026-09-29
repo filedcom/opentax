@@ -50,12 +50,29 @@ export const form8959Pdf: PdfFormDescriptor = {
   pendingKey: "form8959",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8959--2025.pdf",
   fields,
+  filerFields: [
+    {
+      kind: "text",
+      domainKey: "fullName",
+      pdfField: "topmostSubform[0].Page1[0].f1_1[0]",
+    },
+    {
+      kind: "text",
+      domainKey: "primarySSN",
+      pdfField: "topmostSubform[0].Page1[0].f1_2[0]",
+    },
+  ],
   projectFields: (raw, all) => {
     if (!hasForm8959Print(raw)) {
       assertForm8959Absent(raw, all);
       return raw;
     }
-    const printed = printFieldsSchema.parse(raw);
+    const printValues = Object.fromEntries(
+      Object.keys(printFieldsSchema.shape)
+        .filter((key) => key in raw)
+        .map((key) => [key, raw[key]]),
+    );
+    const printed = printFieldsSchema.parse(printValues);
     assertForm8959Sources(raw, printed, all);
     return printed;
   },

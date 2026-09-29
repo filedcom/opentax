@@ -233,25 +233,31 @@ Deno.test("line10 additional modifications reduces NII", () => {
   assertEquals(sch2?.fields.line12_niit, 570);
 });
 
-Deno.test("deductions exceeding NII gross → NII = 0, no output", () => {
-  // NII gross=5k; deductions=10k; NII=max(0,...)=0 → no output
+Deno.test("deductions exceeding NII gross → Form 8960 with zero tax above threshold", () => {
+  // NII gross=5k; deductions=10k; NII=max(0,...)=0
   const result = compute({
     filing_status: FilingStatus.Single,
     magi: 300_000,
     line1_taxable_interest: 5_000,
     line9a_investment_interest_expense: 10_000,
   });
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs.map((output) => output.nodeType), ["form8960"]);
+  assertEquals(
+    findOutput(result, "form8960")?.fields.line12_net_investment_income,
+    0,
+  );
+  assertEquals(findOutput(result, "form8960")?.fields.line17_niit, 0);
 });
 
 // ─── Zero NII ──────────────────────────────────────────────────────────────────
 
-Deno.test("zero NII (no income fields) → no output even with MAGI above threshold", () => {
+Deno.test("zero NII above threshold → Form 8960 without Schedule 2 NIIT", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     magi: 500_000,
   });
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs.map((output) => output.nodeType), ["form8960"]);
+  assertEquals(findOutput(result, "form8960")?.fields.line17_niit, 0);
 });
 
 // ─── Output routing ────────────────────────────────────────────────────────────

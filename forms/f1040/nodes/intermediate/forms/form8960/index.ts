@@ -222,9 +222,6 @@ class Form8960Node extends TaxNode<typeof inputSchema> {
     // Part III
     const nii = netInvestmentIncome(gross, deductions);
 
-    // Early return: no NII → no NIIT
-    if (nii <= 0) return { outputs: [] };
-
     const base = taxableBase(nii, excess);
     const niit = niitTax(base);
 

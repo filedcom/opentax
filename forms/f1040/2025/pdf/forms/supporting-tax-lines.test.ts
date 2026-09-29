@@ -145,6 +145,29 @@ Deno.test("Form 8960 maps computed NIIT through line 17", () => {
   );
 });
 
+Deno.test("Form 8960 PDF follows the MAGI filing threshold even with zero NIIT", () => {
+  assertEquals(
+    form8960Pdf.includeWhen?.({
+      line13_magi: 300_000,
+      line14_threshold: 200_000,
+      line17_niit: 0,
+    }),
+    true,
+  );
+  assertEquals(
+    form8960Pdf.includeWhen?.({
+      line13_magi: 200_000,
+      line14_threshold: 200_000,
+      line17_niit: 0,
+    }),
+    false,
+  );
+  assertEquals(
+    form8960Pdf.includeWhen?.({ line1_taxable_interest: 5_000 }),
+    false,
+  );
+});
+
 Deno.test("Form 6251 maps the AMT investment-interest difference to line 2c", () => {
   assertEquals(
     mappedField(form6251Pdf, "line2c_investment_interest"),
