@@ -1,4 +1,4 @@
-import { PDFDocument, type PDFFont, StandardFonts } from "pdf-lib";
+import { type PDFDocument, type PDFFont, StandardFonts } from "pdf-lib";
 import type { FilerIdentity } from "../../../mef/header.ts";
 import {
   form3800CarryoverLedgerSchema,
