@@ -87,6 +87,7 @@ export function buildIRS3800Document(parts: Form3800DocumentParts): string {
     parts.carryoverRows,
     parts.carryforwardSources,
     parts.carryoverDetails,
+    parts.passiveCarryoverDetails,
   );
   if (
     !Number.isSafeInteger(appliedCents) ||

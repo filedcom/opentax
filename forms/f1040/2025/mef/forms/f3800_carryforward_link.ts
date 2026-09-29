@@ -1,5 +1,8 @@
 import type { Form3800NonpassiveLines } from "../../../nodes/inputs/f3800/calculation.ts";
-import type { Form3800CarryoverRow } from "./f3800_passive_rows.ts";
+import type {
+  Form3800CarryoverRow,
+  Form3800PassiveDetailRow,
+} from "./f3800_passive_rows.ts";
 import type { Form3800CreditLine } from "./f3800_passive_tags.ts";
 import type { Form3800NonpassiveCarryoverDetailRow } from "./f3800_carryover_details.ts";
 import { validateForm3800NonpassiveCarryoverDetail } from "./f3800_carryover_details.ts";
@@ -30,6 +33,7 @@ export function reconcileForm3800CarryforwardLinks(
   rows: readonly Form3800CarryoverRow[],
   sources: readonly Form3800CarryforwardDocumentSource[],
   details: readonly Form3800NonpassiveCarryoverDetailRow[],
+  passiveDetails: readonly Form3800PassiveDetailRow[],
 ) {
   const keys = new Set<string>();
   const ids = new Set<string>();
@@ -123,6 +127,128 @@ export function reconcileForm3800CarryforwardLinks(
       throw new Error(
         `Form 3800 Part IV line ${row.line} nonpassive sources do not reconcile`,
       );
+    }
+  }
+  const detailsByLine = new Map<string, {
+    keys: string[];
+    before: number;
+    after: number;
+    nonpassive: number;
+    applied: number;
+    adjusted: number;
+    unused: number;
+    latestYear: number;
+  }>();
+  for (const detail of details) {
+    const total = detailsByLine.get(detail.line) ?? {
+      keys: [],
+      before: 0,
+      after: 0,
+      nonpassive: 0,
+      applied: 0,
+      adjusted: 0,
+      unused: 0,
+      latestYear: 0,
+    };
+    total.keys.push(detail.sourceKey);
+    total.nonpassive += cents(detail.nonpassiveCredit);
+    total.applied += cents(detail.appliedCredit);
+    total.adjusted += cents(detail.recapturedOrAdjusted);
+    total.unused += cents(detail.carryforwardCredit);
+    total.latestYear = Math.max(total.latestYear, detail.originatingTaxYear);
+    detailsByLine.set(detail.line, total);
+  }
+  for (const detail of passiveDetails) {
+    const source = detail.source;
+    if (
+      source.form3800CreditLine !== detail.line ||
+      !Number.isInteger(source.originatingTaxYear) ||
+      source.originatingTaxYear < 1900 || source.originatingTaxYear >= 2025 ||
+      cents(source.beforePassiveLimit) < 0 ||
+      cents(source.afterPassiveLimit) < 0 ||
+      cents(source.appliedAgainstTax) < 0 ||
+      cents(source.unusedAfterTaxLimit) < 0 ||
+      cents(source.afterPassiveLimit) > cents(source.beforePassiveLimit) ||
+      cents(source.appliedAgainstTax) +
+            cents(source.unusedAfterTaxLimit) !==
+        cents(source.afterPassiveLimit)
+    ) {
+      throw new Error("Form 3800 Part VI passive source is invalid");
+    }
+    const total = detailsByLine.get(detail.line) ?? {
+      keys: [],
+      before: 0,
+      after: 0,
+      nonpassive: 0,
+      applied: 0,
+      adjusted: 0,
+      unused: 0,
+      latestYear: 0,
+    };
+    total.keys.push(source.sourceKey);
+    total.before += cents(source.beforePassiveLimit);
+    total.after += cents(source.afterPassiveLimit);
+    total.applied += cents(source.appliedAgainstTax);
+    total.unused += cents(source.unusedAfterTaxLimit);
+    total.latestYear = Math.max(total.latestYear, source.originatingTaxYear);
+    detailsByLine.set(detail.line, total);
+  }
+  for (const row of rows) {
+    const total = detailsByLine.get(row.line);
+    if (row.sourceKeys.length === 1) {
+      if (total) {
+        throw new Error(
+          `Form 3800 Part VI line ${row.line} has unexpected detail`,
+        );
+      }
+      const source = sources.find((source) =>
+        source.sourceKey === row.sourceKeys[0]
+      );
+      if (
+        source && (
+          cents(row.amount.passiveBeforeLimit) !== 0 ||
+          cents(row.amount.passiveAfterLimit) !== 0 ||
+          cents(row.amount.appliedCredit) < 0 ||
+          cents(row.amount.recapturedOrAdjusted) !== 0 ||
+          cents(row.amount.appliedCredit) +
+                cents(row.amount.carryforwardCredit) !==
+            cents(source.availableCredit)
+        )
+      ) {
+        throw new Error(
+          `Form 3800 Part IV line ${row.line} does not reconcile to its source`,
+        );
+      }
+      continue;
+    }
+    if (
+      !total || total.keys.length !== row.sourceKeys.length ||
+      new Set(total.keys).size !== total.keys.length ||
+      total.keys.some((key) => !row.sourceKeys.includes(key)) ||
+      ![
+        total.before,
+        total.after,
+        total.nonpassive,
+        total.applied,
+        total.adjusted,
+        total.unused,
+      ].every(Number.isSafeInteger) ||
+      total.latestYear !== row.originatingTaxYear ||
+      total.before !== cents(row.amount.passiveBeforeLimit) ||
+      total.after !== cents(row.amount.passiveAfterLimit) ||
+      total.nonpassive !== cents(row.amount.nonpassiveCredit) ||
+      total.applied !== cents(row.amount.appliedCredit) ||
+      total.adjusted !== cents(row.amount.recapturedOrAdjusted) ||
+      total.unused !== cents(row.amount.carryforwardCredit)
+    ) {
+      throw new Error(
+        `Form 3800 Part VI line ${row.line} sources do not reconcile`,
+      );
+    }
+  }
+  for (const line of detailsByLine.keys()) {
+    if (!byLine.has(line as Form3800CreditLine)) {
+      throw new Error(`Form 3800 Part VI line ${line} has no Part IV row`);
     }
   }
   const standard = sources.filter((source) => !source.line.startsWith("4"));

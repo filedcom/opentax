@@ -269,6 +269,50 @@ Deno.test("Form 3800 Part VI prints and serializes each nonpassive carryforward 
   );
 });
 
+Deno.test("Form 3800 native carryover rejects unreconciled Part IV and VI tax use", () => {
+  assertThrows(
+    () =>
+      buildIRS3800Document({
+        ...aggregateParts,
+        carryoverDetails: [{
+          ...aggregateParts.carryoverDetails[0],
+          appliedCredit: 299,
+          carryforwardCredit: 1,
+        }, aggregateParts.carryoverDetails[1]],
+      }),
+    Error,
+    "Part VI line 1i sources do not reconcile",
+  );
+  assertThrows(
+    () =>
+      buildIRS3800Document({
+        ...aggregateParts,
+        carryoverRows: [{
+          ...aggregateParts.carryoverRows[0],
+          sourceKeys: ["2022-new-markets-1", "unlinked-vintage"],
+      }],
+    }),
+    Error,
+    "carryforward computation source does not match Part IV",
+  );
+  assertThrows(
+    () =>
+      buildIRS3800Document({
+        ...parts,
+        carryoverRows: [{
+          ...parts.carryoverRows[0],
+          amount: {
+            ...parts.carryoverRows[0].amount,
+            appliedCredit: 599,
+            carryforwardCredit: 0,
+          },
+        }, parts.carryoverRows[1]],
+      }),
+    Error,
+    "Part IV line 1i does not reconcile to its source",
+  );
+});
+
 Deno.test({
   name:
     "Form 3800 linked carryforward lines and Part IV/VI rows validate against TY2025 v5.4 XSD",

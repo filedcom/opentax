@@ -181,6 +181,7 @@ export function projectForm3800PartVIFields(
     parts.carryoverRows,
     parts.carryforwardSources,
     parts.carryoverDetails,
+    parts.passiveCarryoverDetails,
   );
   const lineOrder = Object.keys(form3800CarryoverDetailXmlTags);
   const details = [

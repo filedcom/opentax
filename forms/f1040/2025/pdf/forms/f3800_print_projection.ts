@@ -39,6 +39,7 @@ export function projectForm3800HeaderFields(
     parts.carryoverRows,
     parts.carryforwardSources,
     parts.carryoverDetails,
+    parts.passiveCarryoverDetails,
   );
   return {
     [form3800HeaderFields.filerName]: name,
@@ -82,6 +83,7 @@ export function projectForm3800PartIAndIIFields(
     parts.carryoverRows,
     parts.carryforwardSources,
     parts.carryoverDetails,
+    parts.passiveCarryoverDetails,
   );
   if (cents(parts.lines.line38) !== cents(schedule3Line6a)) {
     throw new Error(

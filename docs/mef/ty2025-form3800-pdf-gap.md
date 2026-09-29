@@ -50,6 +50,13 @@ source-to-Part IV/VI assembly, authenticated prior-return evidence, filed histor
 attachment, and any additional revised-credit facts remain open; native export
 still rejects carryforwards.
 
+The native parent and PDF projectors now call one Part IV/VI reconciliation
+that checks aggregate source keys, latest year, passive and nonpassive amounts,
+tax use, adjustments, and remaining credit. It also checks the tax-use balance
+for a single nonpassive carryforward source. A 137-case focused Form 3800
+native/PDF run passed. This closes a cross-output consistency gap while the
+production carryforward route remains blocked.
+
 The fixed-source `99243afd` repository-wide rerun completed at 2026-09-29
 18:13 UTC: 8,894/8,894 passed, zero failed, in 15m46s, with no ignored tests
 reported. Its log is `.state/research/ty2025-full-test-99243afd-rerun.log`.
