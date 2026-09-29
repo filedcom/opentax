@@ -6,7 +6,7 @@ import {
   qualifiedEntireDispositionGain,
   qualifiedEntireDispositionLoss,
 } from "../../../nodes/inputs/schedule_e/index.ts";
-import { scheduleE } from "../../mef/forms/schedule_e.ts";
+import { scheduleE, validatePassiveActivityLink } from "../../mef/forms/schedule_e.ts";
 import { verifyMiscRoyaltySource } from "../../mef/forms/schedule_e.ts";
 
 // 2025 Schedule E AcroForm, Part I property A. This descriptor deliberately
@@ -147,16 +147,9 @@ export const scheduleEPdf: PdfFormDescriptor = {
         "Schedule E PDF disposition needs the sourced entire-interest overall-loss route",
       );
     }
-    if (
-      entireLoss === undefined && entireGain === undefined &&
-      (computePropertyNet(item) < 0 ||
-        (item.prior_unallowed_passive_operating ?? 0) > 0 ||
-        allPending.form8582 !== undefined)
-    ) {
-      throw new Error(
-        "Schedule E PDF passive or nonpassive loss needs its allowed-loss worksheet",
-      );
-    }
+    const allowedByActivity = validatePassiveActivityLink(input.schedule_es, {
+      pending: allPending,
+    });
     // The native descriptor checks address, allocation, whole-dollar lines,
     // and the matching Form 4797 sale before the PDF projects the same source.
     if (item.f1099m_royalty_source) {
@@ -175,8 +168,12 @@ export const scheduleEPdf: PdfFormDescriptor = {
     const other = item.expense_other_lines?.[0];
     const expenseTotal = Math.round(computeExpenses(item) * fraction);
     const net = Math.round(computePropertyNet(item));
+    const allowedLoss = entireLoss ?? entireGain ??
+      (item.activity_type === "A" || item.activity_type === "B"
+        ? allowedByActivity.get(0) ?? 0
+        : Math.max(0, -net));
     const deductibleNet = entireLoss === undefined && entireGain === undefined
-      ? net
+      ? Math.max(0, net) - allowedLoss
       : net - (item.prior_unallowed_passive_operating ?? 0);
     const schedule1Line5 = allPending.schedule1?.line5_schedule_e;
     if (schedule1Line5 !== deductibleNet) {
@@ -214,14 +211,14 @@ export const scheduleEPdf: PdfFormDescriptor = {
       line19: amount(other?.amount),
       line20: expenseTotal,
       line21: net,
-      line22: entireLoss ?? entireGain,
+      line22: allowedLoss > 0 ? allowedLoss : undefined,
       line23a: rent,
       line23b: royalty,
       line23c: amount(item.expense_mortgage_interest),
       line23d: depreciation,
       line23e: expenseTotal,
       line24: Math.max(0, net),
-      line25: entireLoss ?? entireGain,
+      line25: allowedLoss > 0 ? allowedLoss : undefined,
       line26: deductibleNet,
     };
   },

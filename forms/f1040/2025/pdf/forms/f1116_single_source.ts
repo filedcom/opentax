@@ -374,7 +374,8 @@ export function projectSingleSourceForm1116Pdf(
     f1040.line14_deductions_qbi_total !== standardDeduction ||
     f1040.line15_taxable_income !== line18 ||
     f1040.line16_income_tax !== line20 ||
-    pending.schedule1a !== undefined ||
+    !zero(f1040.line13b_additional_deductions) ||
+    pending.schedule1a?.senior_zero_exclusions_review === true ||
     otherIncomeLines.some((key) => !zero(f1040[key])) ||
     (!reportedOn1099 && pending.f1099int !== undefined) ||
     pending.f1099oid !== undefined ||

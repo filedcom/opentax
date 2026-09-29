@@ -15,6 +15,34 @@ import {
 import { scheduleCLedger } from "../../../nodes/inputs/form1116_schedule_c_source/test-fixture.ts";
 import { k1Partnership } from "../../../nodes/inputs/k1_partnership/index.ts";
 import { k1SCorpNode } from "../../../nodes/inputs/k1_s_corp/index.ts";
+import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
+import { execute } from "../../../../../core/runtime/executor.ts";
+import { registry } from "../../registry.ts";
+import { pdfReviewFixtures } from "../review-fixtures.ts";
+
+Deno.test("Form 1116 PDF accepts context-only Schedule 1-A on the sourced interest return", () => {
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-foreign-interest-current-excess"
+  );
+  if (!fixture) throw new Error("missing foreign-interest review fixture");
+  const result = execute(buildExecutionPlan(registry), registry, {
+    ...fixture.inputs,
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule1a?.senior_zero_exclusions_review, undefined);
+  const projected = form1116Pdf.projectFields?.(
+    result.pending.form_1116,
+    result.pending,
+  );
+  assertEquals(projected?.pdf_line24, 3_875);
+  assertThrows(() => form1116Pdf.projectFields?.(
+    result.pending.form_1116,
+    {
+      ...result.pending,
+      f1040: { ...result.pending.f1040, line13b_additional_deductions: 1 },
+    },
+  ), Error, "only identified foreign interest");
+});
 
 Deno.test("Form 1116 PDF rejects disclosed redetermination without Schedule C", () => {
   assertThrows(

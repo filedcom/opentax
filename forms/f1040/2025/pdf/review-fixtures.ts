@@ -376,6 +376,12 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     id: "single-foreign-interest-current-excess",
     inputs: {
       general: singleGeneral,
+      schedule_b_part_iii: {
+        foreign_accounts_question: true,
+        fincen_form114_required: true,
+        foreign_countries: [{ irs_code: "CA", name: "Canada" }],
+        foreign_trust_question: false,
+      },
       f1099int: [{
         payer_name: "Canadian Bank",
         box1: 50_000,

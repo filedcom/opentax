@@ -203,6 +203,10 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 export const schedule1Pdf: PdfFormDescriptor = {
   pendingKey: "schedule1",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040s1--2025.pdf",
+  filerFields: [
+    { kind: "text", domainKey: "nameLine1", pdfField: "topmostSubform[0].Page1[0].f1_01[0]" },
+    { kind: "text", domainKey: "primarySSN", pdfField: "topmostSubform[0].Page1[0].f1_02[0]" },
+  ],
   instances(fields) {
     const rows = schedule1OtherIncomeRows(fields);
     if (rows.length === 0) return [fields];

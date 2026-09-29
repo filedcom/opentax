@@ -347,7 +347,7 @@ function sum(
   return lines.reduce((total, line) => total + line[key], 0);
 }
 
-function validatePassiveActivityLink(
+export function validatePassiveActivityLink(
   items: readonly Property[],
   context: MefBuildContext | undefined,
 ): ReadonlyMap<number, number> {

@@ -32,15 +32,17 @@ XSD pass, or an ignored test.
 
 The 2026-09-29 diagnostic `deno task test` run on the moving worktree reported
 8,453 passed and 348 failed. It is not a release-gate pass; the full run must
-be repeated on a fixed commit after the route work is complete. The synthetic
-filled-PDF batch currently generates eight of eleven cases. The first blocking
-case is the nonparticipating rental loss: Schedule E PDF rejects a passive loss
-despite a Form 8582 source in the finalized graph. Subsequent cases have not
-yet been generated in that batch. Visual inspection of the generated Schedule 2
-page found missing filer identity; its descriptor now maps those fields, pending
-a fresh full-batch review. The profitable Schedule C case reaches Form 8995 XML
-and PDF with a sourced half-SE-tax QBI reduction, but its broader support gate
-remains open.
+be repeated on a fixed commit after the route work is complete. All eleven
+prepared synthetic returns now generate filled PDFs through the real graph and
+builder: 57 pages total, with PDFs, source/pending JSON, page counts, and hashes
+retained under `.state/research/ty2025-filled-pdf-review/2026-09-29/`.
+Contact-sheet review found and led to fixes for Schedule 1 and Schedule 2
+identity fields; the current Schedule 1 rerender shows both fields. The rental
+case now prints its suspended loss from the same Form 8582 allocation used by
+native MeF. The detailed source-to-XML comparison for every page and descriptor,
+additional route fixtures, and the full release batch remain open. The
+profitable Schedule C case reaches Form 8995 XML and PDF with a sourced
+half-SE-tax QBI reduction, but its broader support gate remains open.
 
 ## Scope and completion rules
 

@@ -1,6 +1,13 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { schedule1Pdf } from "./schedule1.ts";
 
+Deno.test("Schedule 1 PDF includes filer identity on page 1", () => {
+  assertEquals(schedule1Pdf.filerFields?.map((entry) => entry.domainKey), [
+    "nameLine1",
+    "primarySSN",
+  ]);
+});
+
 Deno.test("Schedule 1 PDF puts Form 2106 deductions on line 12", () => {
   const line12 = schedule1Pdf.fields.find((entry) =>
     entry.domainKey === "line12_business_expenses"

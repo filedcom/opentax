@@ -110,6 +110,52 @@ const rental = {
   expense_other_lines: [{ description: "Bank fees", amount: 50 }],
 };
 
+Deno.test("Schedule E PDF prints a Form 8582 suspended rental loss without a current deduction", () => {
+  const item = {
+    ...rental,
+    activity_type: "B" as const,
+    rent_income: 5_000,
+    expense_advertising: undefined,
+    expense_mortgage_interest: undefined,
+    expense_depreciation: undefined,
+    expense_other_lines: undefined,
+    expense_repairs: 10_000,
+  };
+  const raw = { schedule_es: [item] };
+  const linked = {
+    schedule_e: raw,
+    schedule1: { line5_schedule_e: 0 },
+    form8582: {
+      filing_status: "single",
+      activities: [{
+        activity_id: item.activity_id,
+        name: item.property_description,
+        activity_type: "B",
+        property_type: item.property_type,
+        reporting_form: "schedule_e",
+        current_net: -5_000,
+        prior_unallowed_operating: 0,
+        prior_unallowed_4797_part1: 0,
+        prior_unallowed_4797_part2: 0,
+      }],
+      current_loss: 5_000,
+      has_other_passive: true,
+      modified_agi: 90_000,
+    },
+  };
+  const projected = scheduleEPdf.projectFields?.(raw, linked);
+  assertEquals(projected?.line21, -5_000);
+  assertEquals(projected?.line22, undefined);
+  assertEquals(projected?.line25, undefined);
+  assertEquals(projected?.line26, 0);
+  assertThrows(() => scheduleEPdf.projectFields?.(raw, {
+    ...linked,
+    form8582: { ...linked.form8582, activities: [{
+      ...linked.form8582.activities[0], current_net: -4_999,
+    }] },
+  }), Error, "does not match Form 8582 activity");
+});
+
 Deno.test("Schedule E PDF maps one rental to the official 2025 Part I property A widgets", () => {
   const raw = { schedule_es: [rental] };
   const projected = scheduleEPdf.projectFields?.(raw, {
@@ -225,7 +271,7 @@ Deno.test("Schedule E PDF fails closed on unprojected paths and Schedule 1 misma
     () =>
       scheduleEPdf.projectFields?.({ schedule_es: [rental, rental] }, linked),
     Error,
-    "one simple US rental",
+    "one supported Part I rental",
   );
   assertThrows(
     () =>
@@ -235,7 +281,7 @@ Deno.test("Schedule E PDF fails closed on unprojected paths and Schedule 1 misma
         farm_rental_gross: 100,
       }, linked),
     Error,
-    "one simple US rental",
+    "one supported Part I rental",
   );
   assertThrows(
     () =>
@@ -243,7 +289,7 @@ Deno.test("Schedule E PDF fails closed on unprojected paths and Schedule 1 misma
         schedule_es: [{ ...rental, rent_income: 1_000, expense_taxes: 2_000 }],
       }, linked),
     Error,
-    "allowed-loss worksheet",
+    "matching Form 8582",
   );
   assertThrows(
     () =>

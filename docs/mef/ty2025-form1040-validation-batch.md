@@ -81,11 +81,14 @@ The workspace has blank IRS PDF templates in `.state/field-dumps/cache` and
 source ATS scenario PDFs in `.state/research/docs/ats-ty2025`. These are not
 filled-output fixtures. `forms/f1040/2025/pdf/review-fixtures.ts` now holds
 eleven synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts` can
-run them through the real return graph and PDF builder. This is preparation
-only: the generator has not been run and no generated PDF has been reviewed. It
-refuses to overwrite an existing output directory and stops on executor
-diagnostics. Run it only after the build/scope checkpoint, using a new output
-directory:
+run them through the real return graph and PDF builder. On 2026-09-29, all eleven
+generated successfully. The 57-page PDFs, source/pending JSON, page-count and
+SHA-256 manifest are retained locally at
+`.state/research/ty2025-filled-pdf-review/2026-09-29/`; see the
+[first review notes](ty2025-filled-pdf-review-2026-09-29.md). This is a starting
+review batch, not the completed PDF gate. The generator refuses to overwrite an
+existing output directory and stops on executor diagnostics. Rerun it after
+changes using a new output directory:
 
 ```sh
 deno run --allow-read --allow-write --allow-net=www.irs.gov scripts/generate-ty2025-pdf-review.ts /absolute/new/review-directory
@@ -110,7 +113,14 @@ coverage of all registered PDF descriptors:
 | `single-elected-lump-sum-part-ii`        | Form 4972 Part-II-only capital-gain election from a matching 1099-R; ordinary share and special tax on Form 1040   |
 | `single-foreign-interest-current-excess` | Source-joined 1099-INT, standard-deduction Form 1116 Part I/III/IV, current-year excess Schedule B, Schedule 3     |
 
-These five added cases are written, not generated or visually checked. The
+All eleven cases were rendered into page contact sheets for the first visual
+pass. Schedule 1 and Schedule 2 blank filer headers were found and fixed;
+the latest Schedule 1 page was rerendered and checked at higher resolution.
+The Schedule E loss case now uses its linked Form 8582 allowed-loss allocation
+to print line 22 and line 26, with the disallowed amount absent from Schedule
+1. The first pass checked page order, form/year, visible identity, and major
+amount placement. A per-page source-to-XML amount/checkbox review is still
+needed, so this is not a completed visual signoff. The
 `single-marketplace-aptc-repayment` source is one supported policy; it does not
 cover shared-policy allocations, interstate moves, multiple policies or
 same-state alternating policy years. The rental case does not cover prior PAL
@@ -123,13 +133,14 @@ covers one passive interest source and a reviewed 2024 zero-carryback position
 only; it does not cover mixed income, multiple payers or countries, itemized
 deductions, or prior carryover use.
 
-Do not claim Form 1116 Schedule B filled-output coverage from its
-node/descriptor tests or the new unrun fixture. The public
+Do not claim general Form 1116 Schedule B filled-output coverage from this
+one-source fixture. The public
 `form1116_review.single_source_pdf_review` intake now joins the one-source
 parent Form 1116 and Schedule B to a synthetic 1099-INT and prior-year review,
-but neither page has been generated or visually inspected. The fixture must run
-through the public graph; do not inject calculated pending values or silently
-drop the parent page. The remaining registered descriptors also need
+Both Schedule B pages and the parent Form 1116 now generate through the public
+graph and were viewed in the contact sheets; the detailed cross-check is still
+open. Do not inject calculated pending values or silently drop the parent page.
+The remaining registered descriptors also need
 representative filled-output fixtures before this visual gate can close.
 
 Expand this matrix to every supported active PDF route in the final coverage
