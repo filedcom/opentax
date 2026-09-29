@@ -44,9 +44,19 @@ an offsetting profitable business and low wages so unrelated Form 461 and net
 QBI-loss filing boundaries do not block this Form 6198 check. Focused native
 serializer tests pass 2/2.
 
-No filled-PDF appearance, full XML/PDF joint, business-rule, or ATS gate has
-run for this two-activity return. This covers the existing simplified Schedule
-C/F/Form 4835 source routes.
+The same two-activity return is now a filled-PDF review fixture. All 16
+synthetic review sources passed TY2025 v5.4 XML validation, and the generated
+16-page packet under
+`.state/research/ty2025-filled-pdf-review/2026-09-29-v10/` was
+rendered. Both Form 6198 pages were visually inspected: North prints a $2,000
+source loss, $500 amount at risk, and $500 deductible loss; South prints
+$3,000, $900, and $900, respectively. Schedule 1 line 3 prints $1,600 after
+the $3,000 offsetting business profit. The reviewed PDF SHA-256 is
+`2aa20d7bd7f99bc249686074f85bd2f89e4f7587bc030c28e33a24e5abbf0a5e`.
+
+The full XML/PDF joint, business-rule, and ATS gates remain open. This
+focused fixture covers the simplified Schedule C route, not the other
+Schedule F/Form 4835 or detailed at-risk situations.
 Other rental and pass-through activities, detailed Part III, prior suspended
 losses, gain/loss allocation, and source-to-return loss reconciliation remain
 open.

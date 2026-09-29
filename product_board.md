@@ -46,7 +46,7 @@ Focused Form 8962 shared-MFS no-exception and exception XSD cases now pass
 2/2 with source identity, allocation, and return-drift rejection checks; the
 remaining shared-policy combinations and full release gate stay open.
 The synthetic PDF-review set now has two source-backed shared-MFS returns;
-all 15 sources pass TY2025 v5.4 XSD. Both generated Form 8962 pages were
+all 16 current review sources pass TY2025 v5.4 XSD. Both generated Form 8962 pages were
 rendered and visually checked for allocation percentages, monthly amounts,
 and Schedule 2/3 joins, with PDF hashes in the [policy-month
 note](docs/mef/ty2025-form8962-policy-month-gap.md).
@@ -55,6 +55,10 @@ five shared-policy cases failed before their subsequent source-route commits,
 and the sixth exposed a missing Schedule C/F trigger on derived Form 6198
 documents. Focused reruns of the shared-policy cases and the two-activity Form
 6198 return now pass. A fixed-commit full XSD run is still needed.
+The two-activity Form 6198 return also generates a filled 16-page PDF packet.
+Both distinct Form 6198 pages were rendered and checked against their $500 and
+$900 allowed losses and the $1,600 Schedule 1 total; the packet hash is in the
+[Form 6198 PDF note](docs/mef/ty2025-form6198-pdf-gap.md).
 Additional focused reruns passed Form 4972 MeF/PDF (51/51), Form 982 native/PDF
 (9/9), Schedule F (8/8), Form 4835 (7/7), and Schedule B Part III with a
 Form 8814 child election (9/9). The Schedule F fix activates its own CCC loan
