@@ -3862,6 +3862,8 @@ Deno.test({
     f1095a: [{
       issuer_name: "Marketplace Plan",
       policy_number: "DIV-POLICY-1",
+      coverage_state: "TX",
+      covered_individual_ssns: ["111223333", "222334444"],
       monthly_premiums: [1_200, ...Array(11).fill(0)],
       monthly_slcsps: [1_500, ...Array(11).fill(0)],
       monthly_aptcs: [800, ...Array(11).fill(0)],
@@ -3898,6 +3900,23 @@ Deno.test({
   assertStringIncludes(
     xml,
     "<MonthlyAdvancedPTCAmt>536</MonthlyAdvancedPTCAmt>",
+  );
+  assertThrows(
+    () =>
+      buildMefXml({
+        ...result.pending,
+        form8962: {
+          ...result.pending.form8962,
+          shared_policy_allocations: [{
+            ...(result.pending.form8962?.shared_policy_allocations as Record<
+              string,
+              unknown
+            >[])[0],
+            premium_pct: 0.66,
+          }],
+        },
+      } as unknown as MefFormsPending, extractFilerIdentity(general)),
+    Error,
   );
   await validateXsd(xml, "divorce agreed policy allocation");
 });

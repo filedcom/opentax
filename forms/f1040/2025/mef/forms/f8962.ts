@@ -2124,7 +2124,9 @@ function reconcileAgreedSharedPolicy(
     fields.qsehra_ind === true || fields.mfs_exception_ind === true ||
     fields.alternative_marriage_primary || fields.alternative_marriage_spouse ||
     pending?.form2555 !== undefined ||
-    allocations.length !== 1 || allocations[0].basis !== "other_agreed" ||
+    allocations.length !== 1 ||
+    (allocations[0].basis !== "other_agreed" &&
+      allocations[0].basis !== "divorce_agreed") ||
     allocations[0].premium_pct === undefined ||
     allocations[0].premium_pct <= 0 ||
     allocations[0].premium_pct !== allocations[0].slcsp_pct ||
@@ -2149,7 +2151,7 @@ function reconcileAgreedSharedPolicy(
     !policy.monthly_premiums || !policy.monthly_slcsps ||
     !policy.monthly_aptcs ||
     policy.shared_policy_periods?.length !== 1 ||
-    policy.shared_policy_periods[0].basis !== "other_agreed" ||
+    policy.shared_policy_periods[0].basis !== allocations[0].basis ||
     covered?.length !== 2 || new Set(covered).size !== 2 ||
     !covered.includes(filerSsn) ||
     !covered.includes(allocations[0].other_taxpayer_ssn) ||
