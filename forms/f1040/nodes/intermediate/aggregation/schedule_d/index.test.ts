@@ -461,7 +461,7 @@ Deno.test("28pct: ST transaction with code C does NOT trigger 28% routing", () =
 // ---------------------------------------------------------------------------
 
 // Every activity case also self-emits one print-line output for the PDF builder.
-Deno.test("output count: gain also routes the investment-interest capital-gain ceiling", () => {
+Deno.test("output count: gain routes preferential tax and NIIT", () => {
   const result = compute({ transaction: mkLtTx({ gain_loss: 1000 }) });
   assertEquals(result.outputs.length, 7);
   assert(result.outputs.some((o) => o.nodeType === "f1040"));
@@ -469,7 +469,7 @@ Deno.test("output count: gain also routes the investment-interest capital-gain c
   assert(result.outputs.some((o) => o.nodeType === "income_tax_calculation"));
   assert(result.outputs.some((o) => o.nodeType === "form8960"));
   assert(result.outputs.some((o) => o.nodeType === "form8995"));
-  assertEquals(result.outputs.find((o) => o.nodeType === "schedule_a")?.fields.reported_net_capital_gain, 1_000);
+  assertEquals(result.outputs.find((o) => o.nodeType === "schedule_a"), undefined);
 });
 
 Deno.test("output count: gain + 28pct → exactly 8 outputs", () => {
@@ -479,9 +479,9 @@ Deno.test("output count: gain + 28pct → exactly 8 outputs", () => {
   assertEquals(result.outputs.length, 8);
 });
 
-Deno.test("output count: pure loss → exactly 2 outputs (f1040 + agi_aggregator, capped)", () => {
+Deno.test("output count: pure loss retains the AMT audit and printable Schedule D", () => {
   const result = compute({ transaction: mkTx({ gain_loss: -5000, is_long_term: false }) });
-  assertEquals(result.outputs.length, 3);
+  assertEquals(result.outputs.length, 4);
   assert(result.outputs.some((o) => o.nodeType === "f1040"));
   assert(result.outputs.some((o) => o.nodeType === "agi_aggregator"));
 });
