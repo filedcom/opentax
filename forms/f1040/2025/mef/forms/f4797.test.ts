@@ -53,6 +53,13 @@ Deno.test("Form 4797 investment recapture links Part III to the excess-gain Form
     ...context.pending,
     schedule1: { line4_other_gains: 5_001 },
   } }), Error, "finalized Schedule 1 line 4");
+  assertThrows(() => form4797.build({
+    ...fields,
+    investment_1245_dispositions: [{
+      ...fields.investment_1245_dispositions[0],
+      property_description: "Rental property longer",
+    }],
+  }, context), Error, "20-character MeF limit");
 });
 
 Deno.test("Form 4797: no gain or loss does not emit a document", () => {
@@ -287,12 +294,14 @@ Deno.test("Form 4797: retained sale and prior PAL reconcile in both native parts
             activity_name: "Land rental",
             part: "I",
             gain: 8_000,
+            entire_activity_interest_disposed: false,
           },
           {
             activity_id: "id-Land rental",
             activity_name: "Land rental",
             part: "II",
             gain: 2_000,
+            entire_activity_interest_disposed: false,
           },
         ],
       },
@@ -317,7 +326,7 @@ Deno.test("Form 4797: active-rental PAL uses finalized Form 8582 allowance", () 
     activity_id: "id-Rental house",
     activity_name: "Rental house",
     part: "I",
-    property_description: "Retained rental parcel",
+    property_description: "Retained parcel",
     acquired_on: "2023-04-01",
     sold_on: "2025-05-01",
     gross_sales_price: 12_000,
@@ -367,6 +376,7 @@ Deno.test("Form 4797: active-rental PAL uses finalized Form 8582 allowance", () 
           activity_name: "Rental house",
           part: "I",
           gain: 2_000,
+          entire_activity_interest_disposed: false,
         }],
         modified_agi: 200_000,
       },
@@ -378,7 +388,7 @@ Deno.test("Form 4797: active-rental PAL uses finalized Form 8582 allowance", () 
   );
   assertStringIncludes(
     xml,
-    "<PropertyDesc>Retained rental parcel</PropertyDesc>",
+    "<PropertyDesc>Retained parcel</PropertyDesc>",
   );
   assertStringIncludes(
     xml,

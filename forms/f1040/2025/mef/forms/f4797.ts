@@ -64,6 +64,13 @@ function wholeDollar(value: unknown, name: string): number {
   return value;
 }
 
+function propertyDesc(value: string): string {
+  if (value.length > 20) {
+    throw new Error("Form 4797 property description exceeds the 20-character MeF limit");
+  }
+  return value;
+}
+
 function buildIRS4797(fields: Input, context?: MefBuildContext): string {
   if (fields.investment_1245_dispositions !== undefined) {
     const sales = z.array(investment1245DispositionSchema).min(1).max(4)
@@ -98,7 +105,7 @@ function buildIRS4797(fields: Input, context?: MefBuildContext): string {
       element("TotalOrdinaryGainLossAmt", ordinary),
       element("OtherGainLossAmt", ordinary),
       ...calculated.map((item) => elements("PropertyDispositionGain", [
-        element("PropertyDesc", item.sale.property_description),
+        element("PropertyDesc", propertyDesc(item.sale.property_description)),
         element("AcquiredDt", item.sale.acquired_on),
         element("SoldDt", item.sale.sold_on),
         element("GrossSalesPriceAmt", item.sale.gross_sales_price),
@@ -428,7 +435,7 @@ function buildIRS4797(fields: Input, context?: MefBuildContext): string {
       : []),
     ...passivePartI.map((sale) =>
       elements("PropertySaleOrExchange", [
-        element("PropertyDesc", sale.property_description),
+        element("PropertyDesc", propertyDesc(sale.property_description)),
         element("AcquiredDt", sale.acquired_on),
         element("SoldDt", sale.sold_on),
         element("GrossSalesPriceAmt", sale.gross_sales_price),
@@ -469,7 +476,7 @@ function buildIRS4797(fields: Input, context?: MefBuildContext): string {
       : "",
     ...passivePartII.map((sale) =>
       elements("OrdinaryGainLoss", [
-        element("PropertyDesc", sale.property_description),
+        element("PropertyDesc", propertyDesc(sale.property_description)),
         element("AcquiredDt", sale.acquired_on),
         element("SoldDt", sale.sold_on),
         element("GrossSalesPriceAmt", sale.gross_sales_price),
