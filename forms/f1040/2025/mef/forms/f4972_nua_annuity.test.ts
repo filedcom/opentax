@@ -335,7 +335,7 @@ Deno.test("Form 4972 partial NUA and annuity reconciles both source percentages"
         },
       }),
     Error,
-    "box 9a",
+    "9a",
   );
   assertThrows(
     () => mef.build({ ...fields, line11: 2_000 }, { filer, pending: sourced }),

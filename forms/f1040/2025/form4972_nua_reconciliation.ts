@@ -55,14 +55,20 @@ export function reconcileForm4972Nua(
           fields.elect_10yr_averaging !== true))) ||
     (item.box8_other ?? 0) !== (fields.annuity_actuarial_value ?? 0) ||
     ((item.box8_other ?? 0) > 0 &&
-      (fields.elect_10yr_averaging !== true ||
-        (sharePct < 100 && item.box8_pct_total === undefined) ||
-        (sharePct === 100 && (item.box8_pct_total ?? 100) !== 100) ||
-        (item.box8_pct_total ?? 100) !==
-          (fields.annuity_share_pct ?? 100)))
+      fields.elect_10yr_averaging !== true)
   ) {
     throw new Error(
       "Form 4972 NUA requires a sourced Part II or III; death/estate allocation needs a full-share beneficiary and Part III when an annuity is present",
+    );
+  }
+  if (
+    (item.box8_other ?? 0) > 0 &&
+    ((sharePct < 100 && item.box8_pct_total === undefined) ||
+      (sharePct === 100 && (item.box8_pct_total ?? 100) !== 100) ||
+      (item.box8_pct_total ?? 100) !== (fields.annuity_share_pct ?? 100))
+  ) {
+    throw new Error(
+      "Form 4972 NUA annuity box 8 percentage differs from Form 1099-R",
     );
   }
   const taxable = item.box2a_taxable_amount;
