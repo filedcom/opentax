@@ -20,13 +20,12 @@ The [native/PDF registry parity audit](ty2025-native-pdf-registry-parity.md)
 lists registered positive taxpayer forms with no corresponding printable
 descriptor. Form 3800 now has a bounded nine-page parent PDF with one- and
 two-geothermal-source filled returns, a mixed wind/geothermal return, and a
-mixed geothermal/New Markets return;
-Form 965-A, Form 8582-CR, Form 8621,
+mixed geothermal/New Markets return. Form 965-A, Form 8582-CR, Form 8621,
 and the other listed roots remain packet-completeness gaps. Form 8911 and
-Schedule A, one or two fully used Form 8835 wind/geothermal facilities, and up to
-six sourced Form 8874 investments have bounded PDF routes. One-, two-, and
-six-investment nonpassive Form 8874 returns now have reviewed filled Form 8874
-and Form 3800 pages with local TY2025 v5.4 XSD evidence. A mixed
+Schedule A, one or two fully used Form 8835 wind/geothermal facilities, and
+source-backed Form 8874 investments have bounded PDF routes. One-, two-, six-,
+and seven-investment nonpassive Form 8874 returns now have reviewed filled
+Form 8874 and Form 3800 pages with local TY2025 v5.4 XSD evidence. A mixed
 geothermal/New Markets return also has local filled-page and XSD evidence.
 The older matrix below is not a current validation result or an approved
 exclusion.
@@ -354,7 +353,7 @@ end-to-end, and business-rule tests before it can become a whole-form claim.
 | `f8820`                             | `IRS8820`                                                        | P: own-expense and pass-through inputs; nonpassive partnership/S-corp/trust K-1 direct; passive K-1 requires matching Form 8582-CR facts; auto facts open                                                | R                                                                                                                                                                  | P: controlled-group statement; render open                                                                                                                     | P: cases written, unrun                                                                         | P: cases written, unrun                                                                                               | ?                  |
 | `f8826`                             | `IRS8826`                                                        | P: own, pass-through, and direct K-1 code K/ZZ inputs; passive self and line 7 credits require matching Form 8582-CR facts; mixed $5,000 cap and MeF provenance written, unrun                           | R                                                                                                                                                                  | ?                                                                                                                                                              | P: mixed passive/nonpassive and pass-through cases written, unrun                               | P: graph and source-to-return cases written, unrun                                                                    | ?                  |
 | `f8835`                             | `IRS8835`                                                        | P: facility credit and transfer inputs; full eligibility and carryovers open | P: geothermal and New Markets Form 3800 lines reconcile separately | P: mixed source packet rendered and Form 8835 pages reviewed; other statements open | P: mixed local TY2025 v5.4 XSD passed; broader routes open | P: mixed source-to-return case passed; broader routes open | ? |
-| `f8874`                             | `IRS8874`                                                        | P: own passive and nonpassive QEI, partnership/S-corporation AD, and estate/trust ZZ activity facts; carryover, recapture, leap-day and passive cents open | P: one-, two-, and six-investment nonpassive source-to-Form 3800 line 1i returns passed; passive and other mixed combinations open | P: one-, two-, and six-row plus mixed Form 8874/parent packets rendered and selected pages reviewed; long CDE text open | P: four full-return local TY2025 v5.4 XSD cases passed; broader routes open | P: four source and reconciliation full-return cases passed; broader routes open | ? |
+| `f8874`                             | `IRS8874`                                                        | P: own passive and nonpassive QEI, partnership/S-corporation AD, and estate/trust ZZ activity facts; carryover, recapture, leap-day and passive cents open | P: one-, two-, six-, and seven-investment nonpassive source-to-Form 3800 line 1i returns passed; passive and other mixed combinations open | P: seven-row packet with supplemental page rendered and reviewed; long CDE text and broader overflow open | P: five full-return local TY2025 v5.4 XSD cases passed; broader routes open | P: five source and reconciliation full-return cases passed; broader routes open | ? |
 
 The `f8854` Form 8949 reconciliation now checks a confirmed ordinary holding
 period against the filed acquisition and deemed-sale dates. Inherited and other

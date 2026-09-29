@@ -181,6 +181,23 @@ The fixed-source `deno task test` run on `81a2c713` completed at 2026-09-29
 `.state/research/ty2025-full-test-81a2c713.log`. The final release batch
 remains open.
 
+The 25th synthetic return has seven $10,000 New Markets investments. Its
+Form 8874 last row points to a supplemental page listing the sixth and
+seventh investments; the $1,000 attached subtotal joins five direct $500
+credits to make $3,500 on Form 8874, Form 3800, Schedule 3, and Form 1040.
+The Form 8874 and statement pages were rendered and reviewed, its 16-page
+PDF has SHA-256
+`7d277794aea0a0e8667f6020a28083f653cb0eea3d97b3cb6565c2884a0824cd`,
+and all 25 review fixtures pass local TY2025 v5.4 XSD. The
+`2026-09-29-v27` review directory holds 25 PDFs (234 pages) and 25 XML files.
+The final all-routes PDF and release batch gates remain open.
+
+The fixed-source `deno task test` run on `bc556b01` completed at 2026-09-29
+14:05 UTC: 8,873/8,873 passed, zero failed, no ignored tests reported, in
+16m39s. Deno was 2.7.7, `xmllint` used libxml 2.9.13, and Poppler was
+26.03.0. Its retained log is
+`.state/research/ty2025-full-test-bc556b01.log`.
+
 ## XML evidence
 
 For each supported positive filing route in the completed coverage inventory,
@@ -203,8 +220,9 @@ scenario packet PDF as if it were a generated return.
 The workspace has blank IRS PDF templates in `.state/field-dumps/cache` and
 source ATS scenario PDFs in `.state/research/docs/ats-ty2025`. These are not
 filled-output fixtures. `forms/f1040/2025/pdf/review-fixtures.ts` now holds
-sixteen synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts` can
-run them through the real return graph and PDF builder. On 2026-09-29, all sixteen
+twenty-five synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts`
+can run them through the real return graph and PDF builder. Earlier on
+2026-09-29, the first sixteen
 generated 94 pages successfully under
 `.state/research/ty2025-filled-pdf-review/2026-09-29-v10/`
 and all sixteen source returns passed TY2025 v5.4 XSD validation. The earlier

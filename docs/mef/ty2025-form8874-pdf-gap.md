@@ -10,8 +10,12 @@ instructions, not filed form pages. The source PDF AcroForm has fields
 `f1_03`-`f1_38` for those six rows and `f1_39`/`f1_40` for lines 2/3.
 
 The bounded PDF route prints one source-backed `f8874` investment form when
-every active investment fits the six rows and the investment/credit amounts
-retain whole-dollar print precision. The structured source supplies CDE
+the investment/credit amounts retain whole-dollar print precision. For more
+than six investments, the first five print directly; the sixth row says
+"See attached" in column (a) and reports the attached credit total in column
+(f), as the [IRS instructions](https://www.irs.gov/pub/irs-pdf/f8874.pdf)
+require. A supplemental PDF page lists every remaining investment with all
+six columns and carries the filer identity. The structured source supplies CDE
 identity, address, date, and investment amount; `calculateForm8874` supplies the
 correct fifth/sixth-year rate and each credit. The PDF invokes the native Form
 8874 builder to check the direct Form 3800 credit and any passive Form 8582-CR
@@ -22,8 +26,8 @@ Form 8874.
 
 Still unsupported or unverified:
 
-- More than six source investment rows require an attached overflow statement.
-  The PDF fails closed rather than truncating rows.
+- More than six source investment rows use the attached detail page. Rows with
+  names, addresses, or amounts that cannot fit the statement still fail closed.
 - Fractional-dollar investment or credit values are refused, because the current
   PDF writer rounds numeric fields to whole dollars and could make printed
   column (d) times rate (e) disagree with printed credit (f).
@@ -31,8 +35,8 @@ Still unsupported or unverified:
   qualification/holding assertions, but does not contain independently verified
   Form 8874-A or Form 8874-B documents. Eligibility and recapture evidence still
   need human review before filing.
-- Longer CDE names or addresses, mixed passive/nonpassive rows, and more than
-  six rows still need filled-output or attachment review.
+- Longer CDE names or addresses, mixed passive/nonpassive rows, and broader
+  overflow combinations still need filled-output or attachment review.
 
 One fully synthetic nonpassive source return now supplies a $10,000 qualified
 equity investment with a 2025 initial investment and credit allowance date.
@@ -81,3 +85,20 @@ external QEI source authentication remain open.
 The fixed-source `81a2c713` repository-wide run passed 8,869/8,869,
 zero failed, with no ignored tests reported in 20m35s. Its log is
 `.state/research/ty2025-full-test-81a2c713.log`.
+
+The next synthetic return prints seven $10,000 qualified equity investments.
+Five $500 rows appear directly on Form 8874; the last printed row says "See
+attached" and carries $1,000 for investments six and seven. The appended
+six-column detail page prints both CDE identities, EINs, dates, $10,000
+investments, 5% rates, and $500 credits. Form 8874 line 3, Form 3800 line
+1i/38, Schedule 3 line 6a, and Form 1040 line 20 each print $3,500. The
+16-page packet and local TY2025 v5.4 XSD pass; the Form 8874 and statement
+pages were rendered and visually checked. A separate 24-investment unit case
+verifies two statement pages and rejection of a changed attachment total.
+The retained packet is
+`.state/research/ty2025-filled-pdf-review/2026-09-29-v27/single-seven-new-markets-investments.pdf`
+(SHA-256 `7d277794aea0a0e8667f6020a28083f653cb0eea3d97b3cb6565c2884a0824cd`).
+
+The fixed-source `bc556b01` repository-wide run passed 8,873/8,873,
+zero failed, with no ignored tests reported in 16m39s. Its log is
+`.state/research/ty2025-full-test-bc556b01.log`.

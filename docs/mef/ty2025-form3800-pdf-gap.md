@@ -133,6 +133,18 @@ packet's source forms and Part III pages were visually inspected, and local
 TY2025 v5.4 XSD passes. The review set has 24 PDFs (218 pages) and 24 XML
 files under `.state/research/ty2025-filled-pdf-review/2026-09-29-v26/`.
 
+The seven-investment New Markets return prints $3,500 on Form 3800 Part III
+line 1i and line 38, Schedule 3 line 6a, and Form 1040 line 20. Form 8874
+uses the required last-row "See attached" convention and an additional
+six-column investment page. The 16-page packet's source and statement pages
+were visually reviewed; its native XML passes local TY2025 v5.4 XSD. The
+review set now has 25 PDFs (234 pages) and 25 XML files under
+`.state/research/ty2025-filled-pdf-review/2026-09-29-v27/`.
+
+The fixed-source `bc556b01` repository-wide run passed 8,873/8,873,
+zero failed, with no ignored tests reported in 16m39s. Its log is
+`.state/research/ty2025-full-test-bc556b01.log`.
+
 The fixed-source `81a2c713` repository-wide run passed 8,869/8,869,
 zero failed, with no ignored tests reported in 20m35s. Its log is
 `.state/research/ty2025-full-test-81a2c713.log`.
