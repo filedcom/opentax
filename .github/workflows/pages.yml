@@ -5,6 +5,9 @@ on:
     branches: [main]
     paths:
       - "docs/**"
+      - "forms/**"
+      - "catalog.ts"
+      - "scripts/site-stats.ts"
   workflow_dispatch:
 
 permissions:
@@ -24,6 +27,14 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Update node and input counts on the site
+        run: deno run --allow-read --allow-write scripts/site-stats.ts
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

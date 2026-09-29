@@ -560,7 +560,7 @@
       "name": "Which forms and tax years does OpenTax support?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Form 1040 for tax year 2025, across 186 registered nodes and 131 input types. That covers W-2s, the 1099 series, K-1s, and Schedules A, C and E, along with the major credits and capital transactions. Additional forms and state returns are planned but not implemented. Run opentax node list to see everything currently registered."
+        "text": "Form 1040 for tax year 2025, across 208 registered nodes and 165 input types. That covers W-2s, the 1099 series, K-1s, and Schedules A, C and E, along with the major credits and capital transactions. Additional forms and state returns are planned but not implemented. Run opentax node list to see everything currently registered."
       }
     },
     {
@@ -592,7 +592,7 @@
       "name": "What is Open Tax Document?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Open Tax Document is a free YAML standard for creating and reading Schedule K-1 data, published as a public draft at opentaxdocument/otd-spec. It is the second Alliance initiative, separate from the engine. Anyone can read and implement it, with no licence to acquire and no vendor to go through."
+        "text": "Open Tax Document is a free, YAML-based standard for Schedule K-1 and K-3 data and their footnotes, published as a public draft at opentaxdocument/otd-spec. K-1 is fully specified and K-3 support is still in progress. It is the second Alliance initiative, separate from the engine. Anyone can read and implement it, with no licence to acquire and no vendor to go through."
       }
     },
     {
@@ -648,7 +648,7 @@
     "price": "0",
     "priceCurrency": "USD"
   },
-  "description": "Free, open source federal 1040 tax calculation engine. 186 registered nodes and 131 input types for tax year 2025, MeF business-rule validation and MeF XML export. Runs locally as a single binary with no account and no cloud dependency.",
+  "description": "Free, open source federal 1040 tax calculation engine. 208 registered nodes and 165 input types for tax year 2025, MeF business-rule validation and MeF XML export. Runs locally as a single binary with no account and no cloud dependency.",
   "author": {
     "@type": "Organization",
     "name": "Open Tax Technology Alliance",
@@ -704,8 +704,8 @@
     <a href="build/" class="hero-guide">Tax professional? Build on OpenTax, no code needed&nbsp;<span aria-hidden="true">&rarr;</span></a>
     <p style="font-family:var(--font-mono);font-size:12px;color:var(--flint);margin-bottom:18px;letter-spacing:0.02em;">Built and maintained by <a href="https://filed.com" target="_blank" rel="noopener" style="color:var(--ash);text-decoration:none;border-bottom:1px solid var(--timber-dark);">Filed</a> and <a href="https://www.crimsontreesoftware.com" target="_blank" rel="noopener" style="color:var(--ash);text-decoration:none;border-bottom:1px solid var(--timber-dark);">Crimson Tree Software</a></p>
     <div class="fact-strip">
-      <span><b>186</b> registered nodes</span>
-      <span><b>131</b> input types</span>
+      <span><b>208</b> registered nodes</span>
+      <span><b>165</b> input types</span>
       <span>Tax year <b>2025</b></span>
       <span>macOS, Linux, Windows</span>
       <span>AGPL v3</span>
@@ -722,7 +722,7 @@
   <div class="init-grid">
     <div class="init-card">
       <p class="init-name">OpenTax</p>
-      <p>A complete federal 1040 calculation engine, free under AGPL v3. One binary, 186 registered nodes and 131 input types, covering W-2s, the 1099 series, K-1s and Schedules A, C and E. It checks returns against the IRS MeF business rule set and exports Modernized e-File XML.</p>
+      <p>A complete federal 1040 calculation engine, free under AGPL v3. One binary, 208 registered nodes and 165 input types, covering W-2s, the 1099 series, K-1s and Schedules A, C and E. It checks returns against the IRS MeF business rule set and exports Modernized e-File XML.</p>
       <div class="init-foot">
         <span class="pill">AGPL v3 + commercial</span>
         <span class="pill">Tax year 2025</span>
@@ -732,7 +732,7 @@
 
     <div class="init-card">
       <p class="init-name">Open Tax Document</p>
-      <p>A free YAML standard for creating and reading Schedule K-1 data, published as a public draft. Readable and implementable by anyone. There is no licence to acquire and no vendor to go through.</p>
+      <p>A free, YAML-based standard for Schedule K-1 and K-3 data and their footnotes, published as a public draft. K-1 is fully specified and K-3 is in progress. Readable and implementable by anyone, with no licence to acquire and no vendor to go through.</p>
       <div class="init-foot">
         <span class="pill">Public draft</span>
         <span class="pill">Free standard</span>
@@ -879,7 +879,7 @@
           <span style="font-size:12px;color:#555;">Ran 2 commands</span>
           <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M4.5 3L7.5 6L4.5 9" stroke="#555" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
-        <p style="font-size:14px;color:#e0e0e0;line-height:1.7;margin:0;">opentax 1.0.2 installed and ready.</p>
+        <p style="font-size:14px;color:#e0e0e0;line-height:1.7;margin:0;">opentax installed and ready.</p>
       </div>
 
       <!-- Claude: prompt to upload docs -->
@@ -1207,7 +1207,7 @@
 <!-- cli example -->
 <div style="max-width:960px;margin:0 auto;padding:0 32px 96px;">
   <h2 class="sec" style="margin-bottom:8px;">Entire tax calculation engine as a CLI</h2>
-  <p style="font-family:var(--font-sans);font-size:15px;color:rgba(244,236,222,0.55);margin-bottom:32px;line-height:1.7;">186 registered nodes. Every IRS form piped as JSON. Inspect schemas, create returns, compute taxes — all from your terminal.</p>
+  <p style="font-family:var(--font-sans);font-size:15px;color:rgba(244,236,222,0.55);margin-bottom:32px;line-height:1.7;">208 registered nodes. Every IRS form piped as JSON. Inspect schemas, create returns, compute taxes — all from your terminal.</p>
 
   <!-- Terminal 1: --help -->
   <div style="position:relative;margin-bottom:24px;">
@@ -1534,7 +1534,7 @@ Output Nodes (6):
 
     <details class="faq">
       <summary>Which forms and tax years does OpenTax support?</summary>
-      <div class="faq-a"><p>Form 1040 for tax year 2025, across 186 registered nodes and 131 input types. That covers W-2s, the 1099 series, K-1s, and Schedules A, C and E, along with the major credits and capital transactions. Additional forms and state returns are planned but not implemented. Run <code>opentax node list</code> to see everything currently registered.</p></div>
+      <div class="faq-a"><p>Form 1040 for tax year 2025, across 208 registered nodes and 165 input types. That covers W-2s, the 1099 series, K-1s, and Schedules A, C and E, along with the major credits and capital transactions. Additional forms and state returns are planned but not implemented. Run <code>opentax node list</code> to see everything currently registered.</p></div>
     </details>
 
     <details class="faq">
@@ -1554,7 +1554,7 @@ Output Nodes (6):
 
     <details class="faq">
       <summary>What is Open Tax Document?</summary>
-      <div class="faq-a"><p>Open Tax Document is a free YAML standard for creating and reading Schedule K-1 data, published as a public draft at <a href="https://github.com/opentaxdocument/otd-spec" target="_blank" rel="noopener">opentaxdocument/otd-spec</a>. It is the second Alliance initiative, separate from the engine. Anyone can read and implement it, with no licence to acquire and no vendor to go through.</p></div>
+      <div class="faq-a"><p>Open Tax Document is a free, YAML-based standard for Schedule K-1 and K-3 data and their footnotes, published as a public draft at <a href="https://github.com/opentaxdocument/otd-spec" target="_blank" rel="noopener">opentaxdocument/otd-spec</a>. K-1 is fully specified and K-3 support is still in progress. It is the second Alliance initiative, separate from the engine. Anyone can read and implement it, with no licence to acquire and no vendor to go through.</p></div>
     </details>
 
     <details class="faq">
