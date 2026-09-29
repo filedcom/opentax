@@ -65,7 +65,7 @@ Deno.test("Form 1116 MeF carries sourced Schedule K-3 reduction on line 12 and n
       usd_per_foreign_unit: 1,
       source_document_reference: "2025 partnership K-3",
     },
-    no_other_income_tax_or_reduction_on_k3_confirmed: true,
+    no_other_income_tax_or_reduction_on_k3_confirmed: true as const,
   };
   const k1 = {
     partnership_name: "Test Partnership",
@@ -81,7 +81,12 @@ Deno.test("Form 1116 MeF carries sourced Schedule K-3 reduction on line 12 and n
     box16_foreign_tax_credit_method: ForeignTaxCreditMethod.Paid,
     schedule_k3_passive_interest: k3,
   };
-  const context = { pending: { k1_partnership: { k1_partnerships: [k1] } } };
+  const context = {
+    pending: {
+      k1_partnership: { k1_partnerships: [k1] },
+      schedule3: { line1_foreign_tax_credit: 350 },
+    },
+  };
   const reduced = {
     ...fields,
     category_summaries: [{
@@ -332,7 +337,11 @@ Deno.test("Form 1116 line 1b reconciles paid-tax currency and requires its linke
   assertEquals(attachment.description, CONVERSION_EXPLANATION_DESCRIPTION);
   assertEquals(attachment.bytes[0], 37);
   const linkedContext = {
-    pending: { form_1116: formFields, fec: fecSource },
+    pending: {
+      form_1116: formFields,
+      fec: fecSource,
+      schedule3: { line1_foreign_tax_credit: 2_000 },
+    },
     filer,
     binaryAttachmentFileNames: [CONVERSION_EXPLANATION_FILE],
     attachmentDescriptionsByFileName: {

@@ -1,7 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { calculateOwnerForms } from "../../../nodes/intermediate/forms/form5329/index.ts";
 import { TS } from "../../../nodes/types.ts";
-import { FilingStatus } from "../../mef/header.ts";
+import { FilingStatus } from "../../mef/types.ts";
 import { form5329Pdf } from "./f5329.ts";
 
 const filer = {
@@ -10,7 +10,7 @@ const filer = {
   nameLine1: "TAXPAYER PAT",
   nameControl: "TAXP",
   address: { line1: "1 Main St", city: "Austin", state: "TX", zip: "78701" },
-  filingStatus: FilingStatus.MFJ,
+  filingStatus: FilingStatus.MarriedFilingJointly,
   spouse: {
     firstName: "Alex",
     lastName: "Taxpayer",
@@ -39,12 +39,14 @@ Deno.test("Form 5329 PDF instances keep each owner's identity and Part VII", () 
     filer,
     {
       schedule2: { line8_form5329_tax: 560 },
-      form8889: { forms: [{
-        owner: "spouse",
-        print_line2_taxpayer_contributions: 1_000,
-        print_line12: 0,
-        print_line16_taxable: 0,
-      }] },
+      form8889: {
+        forms: [{
+          owner: "spouse",
+          print_line2_taxpayer_contributions: 1_000,
+          print_line12: 0,
+          print_line16_taxable: 0,
+        }],
+      },
     },
   );
   assertEquals(copies?.length, 2);
@@ -54,19 +56,22 @@ Deno.test("Form 5329 PDF instances keep each owner's identity and Part VII", () 
   ]);
   assertEquals(copies?.[1]?.print_hsa_line49, 60);
   assertThrows(
-    () => form5329Pdf.instances?.(
-      { owner_entries, owner_forms },
-      filer,
-      {
-        schedule2: { line8_form5329_tax: 500 },
-        form8889: { forms: [{
-          owner: "spouse",
-          print_line2_taxpayer_contributions: 1_000,
-          print_line12: 0,
-          print_line16_taxable: 0,
-        }] },
-      },
-    ),
+    () =>
+      form5329Pdf.instances?.(
+        { owner_entries, owner_forms },
+        filer,
+        {
+          schedule2: { line8_form5329_tax: 500 },
+          form8889: {
+            forms: [{
+              owner: "spouse",
+              print_line2_taxpayer_contributions: 1_000,
+              print_line12: 0,
+              print_line16_taxable: 0,
+            }],
+          },
+        },
+      ),
     Error,
     "Schedule 2 line 8",
   );

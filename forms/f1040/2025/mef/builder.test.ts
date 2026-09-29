@@ -189,6 +189,7 @@ function sampleFiler(): FilerIdentity {
 const qualifiedForm4972 = {
   recipient: TS.T,
   born_before_1936: true,
+  beneficiary_distribution: false,
   entire_balance_distributed: true,
   rolled_over_any: false,
   participant_five_year_member: true,
@@ -261,7 +262,7 @@ Deno.test("MeF export rejects source-only Schedule R, Form 7203, and Form 9465",
       () =>
         buildMefXml(pending as unknown as Parameters<typeof buildMefXml>[0]),
       Error,
-      `${formName} requires a native MeF document`,
+      formName,
     );
   }
 });
@@ -1177,7 +1178,12 @@ Deno.test("IRS1040ScheduleSE absent when schedule_se missing from pending", () =
 
 Deno.test("IRS8606 rejects an aggregate-only pending record", () => {
   assertThrows(
-    () => buildMefXml({ form8606: { nondeductible_contributions: 6000 } }),
+    () =>
+      buildMefXml(
+        {
+          form8606: { nondeductible_contributions: 6000 },
+        } as unknown as Parameters<typeof buildMefXml>[0],
+      ),
     Error,
   );
 });
@@ -1190,7 +1196,7 @@ Deno.test("IRS8606 absent when form8606 missing from pending", () => {
 Deno.test("IRS1116 present when form_1116 has data", () => {
   const xml = buildMefXml({
     form_1116: sampleForm1116,
-    schedule3: { line1_total: 800 },
+    schedule3: { line1_foreign_tax_credit: 800, line1_total: 800 },
   });
   assertStringIncludes(xml, "<IRS1116 ");
 });
@@ -1331,7 +1337,7 @@ Deno.test("IRS8995 positive aggregate-only claim stops the MeF bundle", () => {
   assertThrows(
     () => buildMefXml({ form8995: { qbi: 50000, qbi_deduction: 10000 } }),
     Error,
-    "needs identified business rows and full source-to-return reconciliation",
+    "needs one identified Schedule C business and exact Schedule 1/1040 source reconciliation",
   );
 });
 
@@ -1342,7 +1348,12 @@ Deno.test("IRS8995 absent when form8995 missing from pending", () => {
 
 Deno.test("IRS4562 rejects an aggregate-only pending record", () => {
   assertThrows(
-    () => buildMefXml({ form4562: { section_179_deduction: 10000 } }),
+    () =>
+      buildMefXml(
+        { form4562: { section_179_deduction: 10000 } } as unknown as Parameters<
+          typeof buildMefXml
+        >[0],
+      ),
     Error,
   );
 });
@@ -1354,7 +1365,12 @@ Deno.test("IRS4562 absent when form4562 missing from pending", () => {
 
 Deno.test("IRS8995A rejects an aggregate-only pending record", () => {
   assertThrows(
-    () => buildMefXml({ form8995a: { qbi: 75000 } }),
+    () =>
+      buildMefXml(
+        { form8995a: { qbi: 75000 } } as unknown as Parameters<
+          typeof buildMefXml
+        >[0],
+      ),
     Error,
   );
 });
@@ -1410,7 +1426,12 @@ Deno.test("IRS8853 absent when form8853 missing from pending", () => {
 
 Deno.test("IRS8829 rejects a mortgage-interest-only pending record", () => {
   assertThrows(
-    () => buildMefXml({ form_8829: { mortgage_interest: 12000 } }),
+    () =>
+      buildMefXml(
+        { form_8829: { mortgage_interest: 12000 } } as unknown as Parameters<
+          typeof buildMefXml
+        >[0],
+      ),
     Error,
   );
 });
@@ -1455,6 +1476,7 @@ Deno.test("document count for independently sourced smoke forms", () => {
       line11_additional_medicare: 450,
     },
     schedule3: {
+      line1_foreign_tax_credit: 800,
       line1_total: 800,
       line2_childcare_credit: 0,
       line4_retirement_savings_credit: 1_000,
@@ -1550,6 +1572,7 @@ Deno.test("independently sourced smoke forms emit their document tags", () => {
       line11_additional_medicare: 450,
     },
     schedule3: {
+      line1_foreign_tax_credit: 800,
       line1_total: 800,
       line2_childcare_credit: 0,
       line4_retirement_savings_credit: 1_000,

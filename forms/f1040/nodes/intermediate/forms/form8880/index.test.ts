@@ -121,7 +121,7 @@ Deno.test("form8880: pre-tax and designated Roth W-2 deferrals share line 2 with
       { employee_ssn: "987654321", code: "EE", amount: 200 },
     ],
   });
-  const lines = fieldsOf(result.outputs, form8880)!;
+  const lines = fieldsOf(result.outputs, form8880) as Record<string, unknown>;
   assertEquals(lines.print_line2a_deferrals, 1_000);
   assertEquals(lines.print_line2b_deferrals, 500);
   assertEquals(lines.print_line12_credit, 750);
@@ -192,7 +192,7 @@ Deno.test("form8880: reviewed 2025 spouse distribution reduces both joint column
       no_other_qualifying_distributions_in_lookback: true,
     },
   });
-  const lines = fieldsOf(result.outputs, form8880)!;
+  const lines = fieldsOf(result.outputs, form8880) as Record<string, unknown>;
   assertEquals(lines.print_line4a_distributions, 1_000);
   assertEquals(lines.print_line4b_distributions, 1_000);
   assertEquals(lines.print_line6a_eligible, 1_000);
@@ -220,7 +220,7 @@ Deno.test("form8880: 2023 nonjoint spouse distribution reduces only spouse colum
       no_other_qualifying_distributions_in_lookback: true,
     },
   });
-  const lines = fieldsOf(result.outputs, form8880)!;
+  const lines = fieldsOf(result.outputs, form8880) as Record<string, unknown>;
   assertEquals(lines.print_line4a_distributions, 0);
   assertEquals(lines.print_line4b_distributions, 1_000);
   assertEquals(lines.print_line6a_eligible, 2_000);
@@ -248,7 +248,7 @@ Deno.test("form8880: 2024 joint distribution reduces both columns", () => {
       no_other_qualifying_distributions_in_lookback: true,
     },
   });
-  const lines = fieldsOf(result.outputs, form8880)!;
+  const lines = fieldsOf(result.outputs, form8880) as Record<string, unknown>;
   assertEquals(lines.print_line4a_distributions, 500);
   assertEquals(lines.print_line4b_distributions, 500);
   assertEquals(lines.print_line12_credit, 1_500);
@@ -300,7 +300,7 @@ Deno.test("form8880: combined review rejects conflicting joint status", () => {
       }],
     },
   });
-  const lines = fieldsOf(combined.outputs, form8880)!;
+  const lines = fieldsOf(combined.outputs, form8880) as Record<string, unknown>;
   assertEquals(lines.print_line4a_distributions, 200);
   assertEquals(lines.print_line4b_distributions, 200);
 });
@@ -326,7 +326,7 @@ Deno.test("form8880: prefiling 2026 distributions use the documented joint-retur
       no_other_qualifying_distributions_in_lookback: true,
     },
   });
-  const lines = fieldsOf(result.outputs, form8880)!;
+  const lines = fieldsOf(result.outputs, form8880) as Record<string, unknown>;
   assertEquals(lines.print_line4a_distributions, 0);
   assertEquals(lines.print_line4b_distributions, 500);
 });
@@ -684,7 +684,7 @@ Deno.test("form8880: sourced foreign exclusion is added back for line 8 and the 
     foreign_agi_addback: 5_000,
     filing_status: FilingStatus.Single,
   });
-  const lines = fieldsOf(result.outputs, form8880)!;
+  const lines = fieldsOf(result.outputs, form8880) as Record<string, unknown>;
   assertEquals(lines.print_line8_agi, 25_000);
   assertEquals(lines.print_line9_rate, "0.2");
   assertEquals(lines.print_line12_credit, 400);

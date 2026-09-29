@@ -410,7 +410,10 @@ Deno.test("Form 8889 spouse-only excess retains a matching spouse Form 5329 sour
 });
 
 Deno.test("Form 8889 omits an empty pending slot", () => {
-  assertEquals(form8889.build({}, context), []);
+  assertEquals(
+    form8889.build({} as Parameters<typeof form8889.build>[0], context),
+    [],
+  );
   assertThrows(() => buildInvalid({ unrelated: 10 }));
 });
 

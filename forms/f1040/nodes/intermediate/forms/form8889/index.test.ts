@@ -60,11 +60,7 @@ const prior2024MarriedFamily = {
 
 type HsaInput = z.input<typeof inputSchema>;
 
-function compute(
-  input:
-    & Omit<HsaInput, "beneficiary_identity">
-    & Partial<Pick<HsaInput, "beneficiary_identity">>,
-) {
+function compute(input: Record<string, unknown>) {
   return form8889.compute(
     { taxYear: 2025, formType: "f1040" },
     inputSchema.parse({

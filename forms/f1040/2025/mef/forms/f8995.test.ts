@@ -63,8 +63,8 @@ function oneBusinessClaim(qbi = 300) {
   const deduction = Math.round(qbi * 0.2);
   const fields = {
     qbi_from_schedule_c: qbi,
-    qbi_no_prior_loss_or_suspended_loss_confirmed: true,
-    qbi_not_patron_of_specified_cooperative_confirmed: true,
+    qbi_no_prior_loss_or_suspended_loss_confirmed: true as const,
+    qbi_not_patron_of_specified_cooperative_confirmed: true as const,
     schedule_c_qbi_businesses: [{
       business_reference: "c-1",
       business_name: "Example Repairs",
@@ -72,7 +72,7 @@ function oneBusinessClaim(qbi = 300) {
       qbi,
       w2_wages: 0,
       ubia: 0,
-      no_other_adjustments_confirmed: true,
+      no_other_adjustments_confirmed: true as const,
       source_schedule_c: source,
     }],
     line1_business_reference: "c-1",
@@ -188,7 +188,7 @@ Deno.test("Form 8995 blocks a source or final-return change after calculation", 
     assertThrows(() => form8995Pdf.projectFields?.(fields, altered), Error);
   }
   assertThrows(
-    () => form8995.build({ ...fields, line12: 1 }, { pending }),
+    () => form8995.build({ ...fields, qbi_deduction: 1 }, { pending }),
     Error,
     "lines 1-17 must reconcile",
   );

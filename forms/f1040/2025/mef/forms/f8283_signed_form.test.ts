@@ -11,7 +11,9 @@ async function pdfBytes(): Promise<Uint8Array> {
 }
 
 async function sha256(bytes: Uint8Array): Promise<string> {
-  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+  const digest = new Uint8Array(
+    await crypto.subtle.digest("SHA-256", Uint8Array.from(bytes)),
+  );
   return Array.from(digest, (byte) => byte.toString(16).padStart(2, "0"))
     .join("");
 }
@@ -89,13 +91,17 @@ function attachments(bytes: Uint8Array) {
 
 Deno.test("Form 8283 Section B rejects signature excerpts without a reviewed completed signed form", async () => {
   const bytes = await pdfBytes();
-  const { signed_form_attachment_file_name: _file, signed_form_source_review: _review, ...unsigned } =
-    gift(await sha256(bytes));
+  const {
+    signed_form_attachment_file_name: _file,
+    signed_form_source_review: _review,
+    ...unsigned
+  } = gift(await sha256(bytes));
   await assertRejects(
-    () => buildMefBundle({ f8283: { section_b_items: [unsigned] } }, {
-      filer: testFiler(),
-      attachments: attachments(bytes).slice(0, 2),
-    }),
+    () =>
+      buildMefBundle({ f8283: { section_b_items: [unsigned] } }, {
+        filer: testFiler(),
+        attachments: attachments(bytes).slice(0, 2),
+      }),
     Error,
     "completed signed Form 8283 PDF and documented source review",
   );
@@ -108,12 +114,13 @@ Deno.test("Form 8283 Section B rejects a PDF whose bytes differ from the reviewe
   const submitted = await changed.save();
   const reviewedSha = await sha256(reviewed);
   await assertRejects(
-    () => buildMefBundle({
-      f8283: { section_b_items: [gift(reviewedSha)] },
-    }, {
-      filer: testFiler(),
-      attachments: attachments(submitted),
-    }),
+    () =>
+      buildMefBundle({
+        f8283: { section_b_items: [gift(reviewedSha)] },
+      }, {
+        filer: testFiler(),
+        attachments: attachments(submitted),
+      }),
     Error,
     "do not match the reviewed source SHA-256",
   );
@@ -129,7 +136,10 @@ Deno.test("Form 8283 Section B links the reviewed completed signed form as a dis
     filer: testFiler(),
     attachments: attachments(bytes),
   });
-  assertStringIncludes(bundle.xml, "<Desc>Form 8283 completed signed Section B</Desc>");
+  assertStringIncludes(
+    bundle.xml,
+    "<Desc>Form 8283 completed signed Section B</Desc>",
+  );
   assertStringIncludes(
     bundle.xml,
     'referenceDocumentId="BinaryAttachment4 BinaryAttachment2 BinaryAttachment3"',

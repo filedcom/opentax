@@ -43,7 +43,9 @@ Deno.test("TY2025 HSA prior excess reaches Form 8889, Form 5329, and Schedule 2 
 
   assertEquals(result.diagnostics, []);
   assertEquals(
-    result.pending.form8889?.forms?.[0]?.print_line13_deduction,
+    (result.pending.form8889?.forms as
+      | Array<{ print_line13_deduction: number }>
+      | undefined)?.[0]?.print_line13_deduction,
     4_300,
   );
   const ownerForms = result.pending.form5329?.owner_forms as Array<

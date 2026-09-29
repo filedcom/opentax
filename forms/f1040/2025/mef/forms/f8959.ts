@@ -215,7 +215,7 @@ function buildIRS8959(raw: unknown, context?: MefBuildContext): string {
     assertForm8959Absent(raw, context?.pending);
     return "";
   }
-  const fields = printFieldsSchema.parse(raw);
+  const fields = printFieldsSchema.passthrough().parse(raw);
   assertForm8959Sources(raw, fields, context?.pending);
   if (!context) {
     throw new Error("Form 8959 needs finalized filer and return context");

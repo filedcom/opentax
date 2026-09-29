@@ -42,10 +42,11 @@ function reviewedLossItem(
   });
 }
 
-function compute(items: ReturnType<typeof minimalItem>[]) {
-  return k1SCorpNode.compute({ taxYear: 2025, formType: "f1040" }, {
-    k1_s_corps: items,
-  });
+function compute(items: Record<string, unknown>[]) {
+  return k1SCorpNode.compute(
+    { taxYear: 2025, formType: "f1040" },
+    k1SCorpNode.inputSchema.parse({ k1_s_corps: items }),
+  );
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

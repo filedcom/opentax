@@ -16,6 +16,7 @@ import { buildMefBundle, buildMefXml } from "./builder.ts";
 import type { MefFormsPending } from "./types.ts";
 import { FilingStatus } from "../../nodes/types.ts";
 import { EnergyType } from "../../nodes/inputs/f8835/index.ts";
+import { fuelClaimSchema } from "../../nodes/inputs/f4136/index.ts";
 import {
   PassiveCreditCategory,
   PassiveCreditReportingRoute,
@@ -470,7 +471,7 @@ Deno.test({
     f1040: {
       line16_income_tax: 1_000,
       line20_nonrefundable_credits: 100,
-      form8912_source_lines: { line1: 100, line2: 0, line3: 0, line4: 100 },
+      form8912_source_lines: { line4: 100 },
     },
     schedule3: { line6k_tax_credit_bonds: 100, line8_total: 100 },
     form6251: { line11_amt: 0 },
@@ -830,7 +831,7 @@ Deno.test({
         purchase_records_confirmed: true,
         no_duplicate_excise_claim: true,
       },
-      claims,
+      claims: fuelClaimSchema.array().parse(claims),
     },
   }, extractFilerIdentity(singleGeneral()));
   assertStringIncludes(xml, "<BusNontxUseDieselWtrEmlsnGrp>");
@@ -993,12 +994,12 @@ Deno.test({
           sales_records_confirmed: true,
           no_duplicate_excise_claim: true,
         },
-        claims: [{
+        claims: [fuelClaimSchema.parse({
           ...base,
           ...scenario.details,
           line: scenario.line,
           vendor_registration_number: scenario.registration,
-        }],
+        })],
       },
     }, extractFilerIdentity(singleGeneral()));
     assertStringIncludes(xml, scenario.expected);
@@ -1056,7 +1057,7 @@ Deno.test({
         sales_records_confirmed: true,
         no_duplicate_excise_claim: true,
       },
-      claims,
+      claims: fuelClaimSchema.array().parse(claims),
     },
   }, extractFilerIdentity(singleGeneral()));
   assertStringIncludes(xml, "<KrsnUseCmrclAvnTxdAt219Grp>");
@@ -1173,7 +1174,7 @@ Deno.test({
         sales_records_confirmed: true,
         no_duplicate_excise_claim: true,
       },
-      claims: [...claims, {
+      claims: fuelClaimSchema.array().parse([...claims, {
         line: "8f",
         unit: "gallons",
         qualified_quantity: 1_000,
@@ -1182,7 +1183,7 @@ Deno.test({
         vendor_tax_settlement: "tax_excluded_price",
         foreign_trade_lust_tax_paid_confirmed: true,
         foreign_trade_aviation_sale_references: ["AV-1"],
-      }],
+      }]),
     },
   }, extractFilerIdentity(singleGeneral()));
   assertStringIncludes(xml, "<KrsnOthNontxTxdAt244Grp>");
@@ -1310,7 +1311,7 @@ Deno.test({
         sales_records_confirmed: true,
         no_duplicate_excise_claim: true,
       },
-      claims,
+      claims: fuelClaimSchema.array().parse(claims),
     },
   }, extractFilerIdentity(singleGeneral()));
   assertStringIncludes(xml, "<NontxUseFuelsCrCardUsersStmt ");
@@ -1359,7 +1360,7 @@ Deno.test({
         export_records_confirmed: true,
         no_duplicate_excise_claim: true,
       },
-      claims,
+      claims: fuelClaimSchema.array().parse(claims),
     },
   }, extractFilerIdentity(singleGeneral()));
   assertStringIncludes(xml, "<ExpDyedDieselGasTxdAt001Grp>");
@@ -1827,7 +1828,7 @@ Deno.test({
     equipment_type: "farm tractor",
     purchase_records_confirmed: true,
     no_duplicate_excise_claim: true,
-  };
+  } as const;
   const claim = {
     line: "1a" as const,
     unit: "gallons" as const,
@@ -1835,7 +1836,7 @@ Deno.test({
     actual_fuel_cost: 300,
     not_highway_vehicle: true,
     not_noncommercial_motorboat: true,
-  };
+  } as const;
   const bundle = await buildMefBundle({
     f1040: { line31_additional_payments: 27 },
     schedule3: { line12_fuel_tax_credit: 27.45, line15_total: 27.45 },
@@ -1882,7 +1883,7 @@ Deno.test({
     },
     source_document_reference: "2025 clinical credit statement",
     category: PassiveCreditCategory.Other,
-    reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+    reporting_route: PassiveCreditReportingRoute.Form3800Line3 as const,
     form3800_credit_line: "1h" as const,
     current_year_credit: 1_000,
     prior_unallowed_credits: [],
@@ -1951,7 +1952,7 @@ Deno.test({
     },
     source_document_reference: "2025 clinical credit statement",
     category: PassiveCreditCategory.Other,
-    reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+    reporting_route: PassiveCreditReportingRoute.Form3800Line3 as const,
     form3800_credit_line: "1h" as const,
     current_year_credit: 300,
     prior_unallowed_credits: [{
@@ -2036,7 +2037,7 @@ Deno.test({
     },
     source_document_reference: "2025 Schedule K-1 access credit",
     category: PassiveCreditCategory.Other,
-    reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+    reporting_route: PassiveCreditReportingRoute.Form3800Line3 as const,
     form3800_credit_line: "1e" as const,
     current_year_credit: 500,
     prior_unallowed_credits: [],
@@ -2121,7 +2122,7 @@ Deno.test({
     source_document_reference: "2025 Trust K-1",
     source_statement_reference: "2025 trust access statement",
     category: PassiveCreditCategory.Other,
-    reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+    reporting_route: PassiveCreditReportingRoute.Form3800Line3 as const,
     form3800_credit_line: "1e" as const,
     current_year_credit: 500,
     prior_unallowed_credits: [],
@@ -2299,7 +2300,9 @@ Deno.test("nonpassive partnership and S-corporation code K route through a norma
   });
   assertEquals(result.diagnostics, []);
   const entries = (result.pending.f3800 as {
-    f8826_credit_entries?: Array<{ source_type: string }>;
+    f8826_credit_entries?: Array<
+      { source_type: string; [key: string]: unknown }
+    >;
   }).f8826_credit_entries ?? [];
   assertEquals(
     [...entries].sort((left, right) =>
@@ -2517,7 +2520,7 @@ Deno.test({
           ein: "123456789",
         },
         category: PassiveCreditCategory.Other,
-        reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+        reporting_route: PassiveCreditReportingRoute.Form3800Line3 as const,
         form3800_credit_line: "1e",
         current_year_credit: 500,
         prior_unallowed_credits: [],
@@ -2579,7 +2582,7 @@ Deno.test({
           ein: "123456789",
         },
         category: PassiveCreditCategory.Other,
-        reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+        reporting_route: PassiveCreditReportingRoute.Form3800Line3 as const,
         form3800_credit_line: "1e",
         current_year_credit: 3_000,
         prior_unallowed_credits: [],
@@ -2661,7 +2664,7 @@ Deno.test({
           ein: "123456789",
         },
         category: PassiveCreditCategory.Other,
-        reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+        reporting_route: PassiveCreditReportingRoute.Form3800Line3 as const,
         form3800_credit_line: "1e",
         current_year_credit: 3_000,
         prior_unallowed_credits: [],
@@ -2713,7 +2716,7 @@ Deno.test({
         source_document_reference: "2025 self-earned Form 8826",
         source_origin: { kind: PassiveCreditSourceOrigin.Self },
         category: PassiveCreditCategory.Other,
-        reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+        reporting_route: PassiveCreditReportingRoute.Form3800Line3 as const,
         form3800_credit_line: "1e",
         current_year_credit: 3_000,
         prior_unallowed_credits: [],
@@ -2775,7 +2778,7 @@ Deno.test({
           ein: "123456789",
         },
         category: PassiveCreditCategory.Other,
-        reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+        reporting_route: PassiveCreditReportingRoute.Form3800Line3 as const,
         form3800_credit_line: "1h",
         current_year_credit: 500,
         prior_unallowed_credits: [],

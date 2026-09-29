@@ -50,8 +50,8 @@ Deno.test("E2E: Form 4952 election changes tax rate without changing dividend in
   assertEquals(elected.pending.f1040?.line3b_ordinary_dividends, 100_000);
   assertEquals(elected.pending.f1040?.line15_taxable_income, 80_000);
   assertEquals(
-    (elected.pending.f1040?.line16_income_tax ?? 0) -
-      (ordinary.pending.f1040?.line16_income_tax ?? 0),
+    Number(elected.pending.f1040?.line16_income_tax ?? 0) -
+      Number(ordinary.pending.f1040?.line16_income_tax ?? 0),
     70,
   );
 });

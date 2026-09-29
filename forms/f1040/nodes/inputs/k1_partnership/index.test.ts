@@ -14,10 +14,11 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function compute(items: ReturnType<typeof minimalItem>[]) {
-  return k1Partnership.compute({ taxYear: 2025, formType: "f1040" }, {
-    k1_partnerships: items,
-  });
+function compute(items: Record<string, unknown>[]) {
+  return k1Partnership.compute(
+    { taxYear: 2025, formType: "f1040" },
+    k1Partnership.inputSchema.parse({ k1_partnerships: items }),
+  );
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -500,7 +501,13 @@ Deno.test("box 7 and box 13 code I reach one sourced Schedule E royalty row", ()
     },
   })]);
   assertEquals(findOutput(result, "schedule1"), undefined);
-  const row = findOutput(result, "schedule_e")?.fields.schedule_es?.[0];
+  const row = (findOutput(result, "schedule_e")?.fields.schedule_es as
+    | Array<{
+      royalties_income: number;
+      expense_other_lines: Array<{ description: string; amount: number }>;
+      k1_royalty_source: { box13_code_i_allowed_deduction: number };
+    }>
+    | undefined)?.[0];
   assertEquals(row?.royalties_income, 700);
   assertEquals(row?.expense_other_lines?.[0], {
     description: "From Schedule K-1 (Form 1065)",

@@ -1,5 +1,6 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { k1Partnership } from "../../../nodes/inputs/k1_partnership/index.ts";
+import { TSJ } from "../../../nodes/types.ts";
 import {
   calculateForm4952,
   form4952 as form4952Node,
@@ -222,10 +223,10 @@ Deno.test("Form 4952 calculates K-1 code B line 5 but blocks unverified XML and 
     ...partnership,
     box7_royalties: 600,
     box7_royalty_reporting: {
-      tsj: "T",
+      tsj: TSJ.T,
       property_description: "Partnership mineral royalty",
-      portfolio_nonpassive: true,
-      form_1099_payments_made: false,
+      portfolio_nonpassive: true as const,
+      form_1099_payments_made: false as const,
     },
     box13_code_i_royalty_deduction: {
       reported_amount: 350,

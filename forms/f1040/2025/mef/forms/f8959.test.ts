@@ -38,7 +38,7 @@ function fixture(
       filing_status: status,
       ...source,
       ...form.fields,
-    } as Form8959PrintFields,
+    } as unknown as Form8959PrintFields,
     context: {
       filer: {
         primarySSN: "123456789",

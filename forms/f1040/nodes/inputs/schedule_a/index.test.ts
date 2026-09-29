@@ -405,7 +405,6 @@ Deno.test("scheduleA.compute: interest aggregates all four interest lines", () =
     line_8b_mortgage_interest_no_1098: 3_000,
     line_8c_points_no_1098: 800,
     line_9_investment_interest: 2_200,
-    investment_interest_taxable_interest: 2_200,
   });
   assertEquals(deductionInput(result).itemized_deductions, 18_000);
 });

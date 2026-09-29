@@ -46,6 +46,9 @@ Deno.test("Form 1116 Schedule B carries current excess after a sourced zero carr
     outputs.find((item) => item.nodeType === "form1116_schedule_b")?.fields,
   );
   const form = outputs.find((item) => item.nodeType === "form_1116")?.fields;
+  if (scheduleB.case !== "current_year_excess") {
+    throw new Error(`Unexpected Schedule B case: ${scheduleB.case}`);
+  }
   assertEquals(scheduleB?.current_year_excess_tax, 50);
   assertEquals(form !== undefined, true);
 });
@@ -99,7 +102,7 @@ Deno.test("Form 1116 Schedule B combines a reviewed 2024 balance with 2025 exces
   assertEquals(scheduleB?.case, "combined_current_excess_prior_balance");
   assertEquals(scheduleB?.current_year_excess_tax, 50);
   assertEquals(scheduleB?.used_prior_year_carryover, 0);
-  const xml = form1116ScheduleB.build(scheduleB);
+  const xml = form1116ScheduleB.build(scheduleBFieldsSchema.parse(scheduleB));
   assertStringIncludes(
     xml,
     "<ForeignTxCyovPrTYGrp><FirstPrecedingTYAmt>600</FirstPrecedingTYAmt><TotalAmt>600</TotalAmt></ForeignTxCyovPrTYGrp>",
@@ -113,7 +116,10 @@ Deno.test("Form 1116 Schedule B combines a reviewed 2024 balance with 2025 exces
     "<ForeignTxCyovFollowingTYGrp><FirstPrecedingTYAmt>600</FirstPrecedingTYAmt><CurrentTaxYearAmt>50</CurrentTaxYearAmt><TotalAmt>650</TotalAmt></ForeignTxCyovFollowingTYGrp>",
   );
   const [formXml] = form1116.build(formFields, {
-    pending: { form1116_schedule_b: scheduleB },
+    pending: {
+      form1116_schedule_b: scheduleB,
+      schedule3: { line1_foreign_tax_credit: 450 },
+    },
   });
   assertStringIncludes(
     formXml,
@@ -220,6 +226,7 @@ Deno.test("Form 1116 refuses an excess-tax XML document without matching Schedul
     us_tax_before_credits: 7_200,
   }, {
     pending: {
+      schedule3: { line1_foreign_tax_credit: 450 },
       form1116_schedule_b: {
         case: "current_year_excess",
         category: IncomeCategory.Passive,
@@ -312,7 +319,10 @@ Deno.test("Form 1116 Schedule B reconciles a single 2024 vintage through lines 1
     "matching sourced Schedule B reconciliation",
   );
   const [formXml] = form1116.build(formFields, {
-    pending: { form1116_schedule_b: fields },
+    pending: {
+      form1116_schedule_b: fields,
+      schedule3: { line1_foreign_tax_credit: 500 },
+    },
   });
   assertStringIncludes(
     formXml,

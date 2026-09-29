@@ -3,8 +3,8 @@ import {
   form3800SpecifiedCreditLineSchema,
   form3800StandardCreditLineSchema,
   PassiveCreditReportingRoute,
-  PassiveCreditSourceOrigin,
 } from "../../../nodes/intermediate/forms/form8582cr/credit-route.ts";
+import { PassiveCreditSourceOrigin } from "../../../nodes/intermediate/forms/form8582cr/index.ts";
 import { groupForm3800PassiveCreditVintages } from "../../../nodes/inputs/f3800/calculation.ts";
 import {
   form3800CarryoverDetailXmlTags,

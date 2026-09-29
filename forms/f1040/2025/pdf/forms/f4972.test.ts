@@ -1,9 +1,4 @@
-import {
-  assertEquals,
-  assertInstanceOf,
-  assertMatch,
-  assertThrows,
-} from "@std/assert";
+import { assert, assertEquals, assertMatch, assertThrows } from "@std/assert";
 import {
   decodePDFRawStream,
   PDFArray,
@@ -56,7 +51,7 @@ Deno.test("2025 Form 4972 PDF prints a sourced partial-share Part III and MRD", 
   );
   const saved = await PDFDocument.load(await document.save());
   const contents = saved.getPage(0).node.Contents();
-  assertInstanceOf(contents, PDFArray);
+  assert(contents instanceof PDFArray);
   const stream = contents.lookup(contents.size() - 1, PDFRawStream);
   const operators = new TextDecoder().decode(
     decodePDFRawStream(stream).decode(),
@@ -290,7 +285,7 @@ Deno.test("2025 Form 4972 PDF reconciles partial-share NUA, MRD, and the grossed
   );
   const saved = await PDFDocument.load(await document.save());
   const contents = saved.getPage(0).node.Contents();
-  assertInstanceOf(contents, PDFArray);
+  assert(contents instanceof PDFArray);
   const stream = contents.lookup(contents.size() - 1, PDFRawStream);
   const operators = new TextDecoder().decode(
     decodePDFRawStream(stream).decode(),
@@ -785,7 +780,7 @@ Deno.test("2025 Form 4972 PDF keeps partial-share Part-II-only NUA but omits MRD
   );
   const saved = await PDFDocument.load(await document.save());
   const contents = saved.getPage(0).node.Contents();
-  assertInstanceOf(contents, PDFArray);
+  assert(contents instanceof PDFArray);
   const stream = contents.lookup(contents.size() - 1, PDFRawStream);
   const operators = new TextDecoder().decode(
     decodePDFRawStream(stream).decode(),
@@ -850,7 +845,7 @@ Deno.test("2025 Form 4972 PDF writes both NUA labels into the filing page", asyn
 
   const saved = await PDFDocument.load(await document.save());
   const contents = saved.getPage(0).node.Contents();
-  assertInstanceOf(contents, PDFArray);
+  assert(contents instanceof PDFArray);
   const stream = contents.lookup(contents.size() - 1, PDFRawStream);
   const operators = new TextDecoder().decode(
     decodePDFRawStream(stream).decode(),

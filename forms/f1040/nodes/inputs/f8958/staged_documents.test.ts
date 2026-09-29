@@ -10,7 +10,7 @@ import { projectStagedForm8958Documents } from "./staged_documents.ts";
 
 const source = {
   domicile_state: CommunityPropertyState.CA,
-  federal_filing_status: FilingStatus.MFS,
+  federal_filing_status: FilingStatus.MFS as const,
   taxpayer: { first_name: "Alex", last_name: "Example", ssn: "111223333" },
   spouse: { first_name: "Blair", last_name: "Example", ssn: "222334444" },
   community_property_period: {
@@ -47,7 +47,7 @@ const source = {
 };
 const start = {
   general: {
-    filing_status: FilingStatus.MFS,
+    filing_status: FilingStatus.MFS as const,
     taxpayer_first_name: "Alex",
     taxpayer_last_name: "Example",
     taxpayer_ssn: "111223333",

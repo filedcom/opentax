@@ -117,7 +117,19 @@ Deno.test("Form 8621 routes taxable nonexcess distribution to dividends", () => 
   const result = compute([minimalItem({
     excess_events: [{
       ...event,
-      prior_year_distributions: [{ tax_year: 2024, amount_usd: 4_000 }],
+      currency_code: "USD",
+      prior_year_distributions: [{ tax_year: 2024, amount_foreign: 4_000 }],
+      current_year_distributions: event.current_year_distributions.map((
+        distribution,
+      ) => ({
+        date: distribution.date,
+        amount_foreign: "amount_usd" in distribution
+          ? distribution.amount_usd
+          : distribution.amount_foreign,
+        spot_usd_per_unit: 1,
+        spot_rate_source: "USD-denominated distribution",
+        year_charges: distribution.year_charges,
+      })),
       taxable_nonexcess_dividend_usd: 5_000,
     }],
   })]);
@@ -201,7 +213,7 @@ Deno.test("Form 8621 keeps section 1291, QEF, and MTM amounts on their respectiv
     line8z_form8621_mtm: 2_000,
     line8z_form8621_section1291: 4_993,
   });
-  assertEquals(
+  assertEquals<unknown>(
     fieldsOf(result.outputs, agi_aggregator),
     fieldsOf(result.outputs, schedule1),
   );

@@ -1,9 +1,10 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form4562 } from "./f4562.ts";
 import { filedForm4562Schema } from "../../../nodes/intermediate/forms/form4562/index.ts";
+import { FilingStatus } from "../../../nodes/types.ts";
 
 const filed = {
-  filing_status: "single" as const,
+  filing_status: FilingStatus.Single,
   business_reference: "CONSULTING",
   activity_description: "Software consulting",
   asset_description: "Computer server",

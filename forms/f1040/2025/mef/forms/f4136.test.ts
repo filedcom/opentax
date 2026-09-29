@@ -4,6 +4,10 @@ import { form4136DieselGovernmentSalesStatement } from "./f4136_diesel_governmen
 import { form4136EmulsionBlendingStatement } from "./f4136_emulsion_blending_statement.ts";
 import { form4136KeroseneGovernmentSalesStatement } from "./f4136_kerosene_government_sales_statement.ts";
 import { form4136CreditCardUsersStatement } from "./f4136_credit_card_users_statement.ts";
+import {
+  fuelClaimSchema,
+  inputSchema,
+} from "../../../nodes/inputs/f4136/index.ts";
 const certifications = {
   undyed_fuel_confirmed: true,
   right_to_claim_not_waived: true,
@@ -52,7 +56,7 @@ const fields = {
     {
       ...certifications,
       line: "3b" as const,
-      unit: "gallons",
+      unit: "gallons" as const,
       qualified_quantity: 100,
       actual_fuel_cost: 400,
     },
@@ -792,39 +796,41 @@ Deno.test("Form 4136 XML links line 8f LUST credit to foreign-trade line 8d sale
 });
 
 Deno.test("Form 4136 XML emits registered card issuer lines 13a-13c and linked high-rate statement", () => {
-  const claims = ["13a", "13b", "13c"].map((line, index) => ({
-    line,
-    unit: "gallons",
-    qualified_quantity: 1_000,
-    actual_fuel_cost: 3_000,
-    undyed_fuel_confirmed: true,
-    excise_tax_rate_per_gallon: 0.244,
-    credit_card_issuer_registration_number: "CC123456789",
-    credit_card_sales: [{
-      sale_record_reference: `CARD-${index + 1}`,
-      purchase_date: "2025-06-12",
-      buyer_name: "Example City",
-      buyer_address: "20 City Hall Road, Wilmington, DE 19801",
-      buyer_ein: "123456789",
-      card_account_number: "CITY-2025",
-      gallons: 1_000,
+  const claims = ["13a", "13b", "13c"].map((line, index) =>
+    fuelClaimSchema.parse({
+      line,
+      unit: "gallons",
+      qualified_quantity: 1_000,
       actual_fuel_cost: 3_000,
-      card_issued_to_government_buyer_confirmed: true,
-      exclusive_government_use_confirmed: true,
-      buyer_tax_arrangement: "tax_not_collected",
-      vendor_tax_arrangement: "tax_repaid",
-      certificate_r: {
-        record_reference: "Certificate R-001",
-        account_number: "CITY-2025",
-        effective_date: "2025-01-01",
-        expiration_date: "2026-12-31",
-        signed_by_buyer_confirmed: true,
-        held_unexpired_when_claimed_confirmed: true,
-        information_believed_true_confirmed: true,
-      },
-    }],
-  }));
-  const issuer = {
+      undyed_fuel_confirmed: true,
+      excise_tax_rate_per_gallon: 0.244,
+      credit_card_issuer_registration_number: "CC123456789",
+      credit_card_sales: [{
+        sale_record_reference: `CARD-${index + 1}`,
+        purchase_date: "2025-06-12",
+        buyer_name: "Example City",
+        buyer_address: "20 City Hall Road, Wilmington, DE 19801",
+        buyer_ein: "123456789",
+        card_account_number: "CITY-2025",
+        gallons: 1_000,
+        actual_fuel_cost: 3_000,
+        card_issued_to_government_buyer_confirmed: true,
+        exclusive_government_use_confirmed: true,
+        buyer_tax_arrangement: "tax_not_collected",
+        vendor_tax_arrangement: "tax_repaid",
+        certificate_r: {
+          record_reference: "Certificate R-001",
+          account_number: "CITY-2025",
+          effective_date: "2025-01-01",
+          expiration_date: "2026-12-31",
+          signed_by_buyer_confirmed: true,
+          held_unexpired_when_claimed_confirmed: true,
+          information_believed_true_confirmed: true,
+        },
+      }],
+    })
+  );
+  const issuer = inputSchema.parse({
     ...activityContext,
     business: {
       qualifying_business_activity: true,
@@ -838,7 +844,7 @@ Deno.test("Form 4136 XML emits registered card issuer lines 13a-13c and linked h
       no_duplicate_excise_claim: true,
     },
     claims,
-  };
+  });
   const xml = form4136.build(issuer, {
     pending: { schedule3: { line12_fuel_tax_credit: 729 } },
     documentIdsByPendingKey: {

@@ -21,6 +21,9 @@ import type { ALL_MEF_FORMS } from "./forms/index.ts";
 import type { z } from "zod";
 import type { inputSchema as fecInputSchema } from "../../nodes/inputs/fec/index.ts";
 import type { inputSchema as patrInputSchema } from "../../nodes/inputs/f1099patr/index.ts";
+import type { inputSchema as partnershipK1InputSchema } from "../../nodes/inputs/k1_partnership/index.ts";
+import type { inputSchema as sCorpK1InputSchema } from "../../nodes/inputs/k1_s_corp/index.ts";
+import type { inputSchema as trustK1InputSchema } from "../../nodes/inputs/k1_trust/index.ts";
 
 type AnyForm = (typeof ALL_MEF_FORMS)[number];
 
@@ -40,4 +43,8 @@ export type MefFormsPending =
     fec?: z.infer<typeof fecInputSchema>;
     // Retained 1099-PATR source for the Form 8995-A Schedule D filing check.
     f1099patr?: z.infer<typeof patrInputSchema>;
+    // K-1 source records are retained for downstream credit reconciliation.
+    k1_partnership?: z.infer<typeof partnershipK1InputSchema>;
+    k1_s_corp?: z.infer<typeof sCorpK1InputSchema>;
+    k1_trust?: z.infer<typeof trustK1InputSchema>;
   };

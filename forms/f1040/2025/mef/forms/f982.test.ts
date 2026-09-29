@@ -62,7 +62,10 @@ Deno.test("Form 982 cannot omit an original excluded 1099-C", () => {
     "source exists without its required filing form",
   );
   assertThrows(
-    () => form982.build([], { pending: source }),
+    () =>
+      form982.build([] as unknown as Parameters<typeof form982.build>[0], {
+        pending: source,
+      }),
     Error,
     "source exists without its required filing form",
   );

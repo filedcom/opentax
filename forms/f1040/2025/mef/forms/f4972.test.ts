@@ -383,7 +383,7 @@ const filer: FilerIdentity = {
   fullName: "Alex Taxpayer",
   nameLine1: "TAXPAYER ALEX",
   nameControl: "TAXP",
-  filingStatus: FilingStatus.MFJ,
+  filingStatus: FilingStatus.MarriedFilingJointly,
   address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
   spouse: {
     ssn: "987654321",

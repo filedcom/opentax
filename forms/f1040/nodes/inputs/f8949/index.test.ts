@@ -734,7 +734,6 @@ Deno.test("amt_cost_basis: unsupported loss and digital cases fail closed", () =
     assertThrows(
       () =>
         compute([minimalItem({
-          part: "D",
           proceeds: 10000,
           cost_basis: 5000,
           amt_cost_basis: 7000,

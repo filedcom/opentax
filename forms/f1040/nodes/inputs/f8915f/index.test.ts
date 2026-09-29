@@ -56,7 +56,7 @@ Deno.test("Form 8915-F retains numeric validation and rejects unmodeled source f
   assertThrows(
     () =>
       compute(
-        { f8915fs: [{ fema_number: "DR-1234" }] } as Parameters<
+        { f8915fs: [{ fema_number: "DR-1234" }] } as unknown as Parameters<
           typeof f8915f.compute
         >[1],
       ),

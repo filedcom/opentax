@@ -178,10 +178,13 @@ Deno.test("Pub 974 marriage worksheet keeps line 12-23 contribution through an e
   });
   const form = fields(result, "form8962");
   const rows = form?.monthly_ptc_rows as Array<{
+    month_code: string;
     premium: number;
     slcsp: number;
     contribution: number;
+    max_assistance: number;
     allowed_credit: number;
+    aptc: number;
   }>;
   assertEquals(form?.alternative_marriage_primary, {
     family_size: 1,

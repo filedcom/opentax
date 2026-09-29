@@ -121,7 +121,12 @@ Deno.test("pass-through-only work opportunity credit reaches Form 3800 without e
       }],
     },
   }, { taxYear: 2025, formType: "f1040" });
-  assertEquals(result.pending.f3800?.f5884_credit?.credit_amount, 1_250);
+  assertEquals(
+    (result.pending.f3800?.f5884_credit as
+      | { credit_amount: number }
+      | undefined)?.credit_amount,
+    1_250,
+  );
   assertEquals(result.pending.f3800?.allowed_credit, 0);
   assertEquals(result.diagnostics, []);
 });

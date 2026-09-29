@@ -54,7 +54,10 @@ Deno.test("E2E: Form 8621 sends prior PFIC-year tax to 1040 line 16 and interest
   assertEquals(result.pending.schedule2?.line17p_form8621_interest, interest);
   assertEquals(result.pending.f1040?.line23_other_taxes, interest);
   assertEquals(result.pending.f1040?.line24_total_tax, 1_853 + interest);
-  assertEquals((result.pending.form8621?.items ?? []).length, 1);
+  assertEquals(
+    (result.pending.form8621?.items as unknown[] | undefined)?.length,
+    1,
+  );
 });
 
 Deno.test("E2E: Form 8621 separates excess income from section 301 nonexcess dividends", () => {

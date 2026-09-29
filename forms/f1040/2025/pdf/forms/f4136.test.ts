@@ -633,6 +633,7 @@ Deno.test("Form 4136 PDF projects emulsion bus and export rows", async () => {
     document,
     document.getPages(),
     result ?? {},
+    undefined,
   );
   assertEquals(document.getPageCount(), 4);
 });

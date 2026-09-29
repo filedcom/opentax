@@ -105,7 +105,7 @@ Deno.test("Schedule C emits sourced income and expense totals as its own MeF doc
 Deno.test("Schedule C uses the spouse proprietor identity on a joint return", () => {
   const jointFiler: FilerIdentity = {
     ...filer,
-    filingStatus: FilingStatus.MFJ,
+    filingStatus: FilingStatus.MarriedFilingJointly,
     spouse: {
       ssn: "400009999",
       firstName: "Avery",

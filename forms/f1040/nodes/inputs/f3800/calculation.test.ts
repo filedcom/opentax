@@ -547,6 +547,10 @@ Deno.test("Form 3800 passive source years reconcile with nonpassive credit order
     unallowed_credit: 200,
     allowed_credit: 300,
   });
+  const reconciledSource = {
+    ...source,
+    source_statement_reference: source.source_statement_reference,
+  } as Parameters<typeof allocateForm3800SourceTaxUse>[0][number];
   const lines = calculateForm3800Nonpassive({
     filingStatus: FilingStatus.Single,
     regularTax: 250,
@@ -564,7 +568,8 @@ Deno.test("Form 3800 passive source years reconcile with nonpassive credit order
     availableAfterPassiveLimit: 100,
   }];
   assertEquals(
-    allocateForm3800SourceTaxUse([source], otherSources, lines).passiveVintages
+    allocateForm3800SourceTaxUse([reconciledSource], otherSources, lines)
+      .passiveVintages
       .map(
         (row) => ({
           year: row.originatingTaxYear,
@@ -603,12 +608,12 @@ Deno.test("Form 3800 passive source years reconcile with nonpassive credit order
     ],
   );
   assertEquals(
-    allocateForm3800SourceTaxUse([source], otherSources, lines)
+    allocateForm3800SourceTaxUse([reconciledSource], otherSources, lines)
       .nonpassiveSources.map((row) => row.appliedAgainstTax),
     [50],
   );
   assertThrows(
-    () => allocateForm3800SourceTaxUse([source], [], lines),
+    () => allocateForm3800SourceTaxUse([reconciledSource], [], lines),
     Error,
     "does not reconcile",
   );
@@ -623,14 +628,14 @@ Deno.test("Form 3800 passive source years reconcile with nonpassive credit order
     specifiedCredit: 0,
   }, classifyForm3800PassiveCredits([source]));
   assertEquals(
-    allocateForm3800SourceTaxUse([source], [{
+    allocateForm3800SourceTaxUse([reconciledSource], [{
       ...otherSources[0],
       availableAfterPassiveLimit: 100.25,
     }], centLines).passiveVintages.map((row) => row.appliedAgainstTax),
     [200, 0],
   );
   assertEquals(
-    allocateForm3800SourceTaxUse([source], [{
+    allocateForm3800SourceTaxUse([reconciledSource], [{
       ...otherSources[0],
       availableAfterPassiveLimit: 100.25,
     }], centLines).nonpassiveSources[0].appliedAgainstTax,

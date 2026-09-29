@@ -102,9 +102,13 @@ Deno.test("Form 965-A rejects unsourced payments and overpaid balances", () => {
 });
 
 Deno.test("Form 965-A S corporation deferral reduces installment-eligible liability", () => {
+  const original = source().f965s[0];
+  if (original.entry_type !== "original") {
+    throw new Error("Original Form 965 entry required");
+  }
   const input = source({
     f965s: [{
-      ...source().f965s[0],
+      ...original,
       net_tax_with_965: 62_000,
       paid_by_installment_year: [
         2_560,

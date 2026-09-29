@@ -1,8 +1,12 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
-import { scheduleE as scheduleENode, inputSchema as scheduleEInput } from
-  "../../../nodes/inputs/schedule_e/index.ts";
-import { form4797 as form4797Node, inputSchema as form4797Input } from
-  "../../../nodes/intermediate/forms/form4797/index.ts";
+import {
+  inputSchema as scheduleEInput,
+  scheduleE as scheduleENode,
+} from "../../../nodes/inputs/schedule_e/index.ts";
+import {
+  form4797 as form4797Node,
+  inputSchema as form4797Input,
+} from "../../../nodes/intermediate/forms/form4797/index.ts";
 import { scheduleE as scheduleEMef } from "./schedule_e.ts";
 import { form4797 as form4797Mef } from "./f4797.ts";
 import { form4797Pdf } from "../../pdf/forms/f4797.ts";
@@ -62,27 +66,54 @@ Deno.test("complete passive disposition with overall loss releases sourced PAL o
     { taxYear: 2025, formType: "f1040" },
     scheduleEInput.parse(scheduleEPending),
   );
-  assertEquals(eResult.outputs.find((row) => row.nodeType === "schedule1")
-    ?.fields.line5_schedule_e, -8_000);
-  assertEquals(eResult.outputs.some((row) => row.nodeType === "form8582"), false);
-  assertEquals(eResult.outputs.find((row) => row.nodeType === "form4797")
-    ?.fields.passive_property_sales, [sale]);
+  assertEquals(
+    eResult.outputs.find((row) => row.nodeType === "schedule1")
+      ?.fields.line5_schedule_e,
+    -8_000,
+  );
+  assertEquals(
+    eResult.outputs.some((row) => row.nodeType === "form8582"),
+    false,
+  );
+  assertEquals(
+    eResult.outputs.find((row) => row.nodeType === "form4797")
+      ?.fields.passive_property_sales,
+    [sale],
+  );
 
   const saleResult = form4797Node.compute(
     { taxYear: 2025, formType: "f1040" },
     form4797Input.parse(form4797Pending),
   );
-  assertEquals(saleResult.outputs.find((row) => row.nodeType === "schedule1")
-    ?.fields.line4_other_gains, 2_000);
-  assertEquals(saleResult.outputs.some((row) => row.nodeType === "form8582"), false);
+  assertEquals(
+    saleResult.outputs.find((row) => row.nodeType === "schedule1")
+      ?.fields.line4_other_gains,
+    2_000,
+  );
+  assertEquals(
+    saleResult.outputs.some((row) => row.nodeType === "form8582"),
+    false,
+  );
 
   const pending = { schedule_e: scheduleEPending, form4797: form4797Pending };
   const eXml = scheduleEMef.build(scheduleEPending, { pending });
-  const saleXml = form4797Mef.build(form4797Pending, { pending });
-  assertStringIncludes(eXml, "<DedRentalRealEstateLossAmt>8000</DedRentalRealEstateLossAmt>");
-  assertStringIncludes(eXml, "<TotalIncomeOrLossAmt>-8000</TotalIncomeOrLossAmt>");
+  const saleXml = form4797Mef.build(
+    form4797Pending as Parameters<typeof form4797Mef.build>[0],
+    { pending },
+  );
+  assertStringIncludes(
+    eXml,
+    "<DedRentalRealEstateLossAmt>8000</DedRentalRealEstateLossAmt>",
+  );
+  assertStringIncludes(
+    eXml,
+    "<TotalIncomeOrLossAmt>-8000</TotalIncomeOrLossAmt>",
+  );
   assertStringIncludes(saleXml, "<GainOrLossAmt>2000</GainOrLossAmt>");
-  assertStringIncludes(saleXml, "<TotalOrdinaryGainLossAmt>2000</TotalOrdinaryGainLossAmt>");
+  assertStringIncludes(
+    saleXml,
+    "<TotalOrdinaryGainLossAmt>2000</TotalOrdinaryGainLossAmt>",
+  );
 
   const pdfFields = form4797Pdf.projectFields!(form4797Pending, pending);
   assertEquals(pdfFields.pdf_sale_description, sale.property_description);
@@ -90,53 +121,111 @@ Deno.test("complete passive disposition with overall loss releases sourced PAL o
   assertEquals(pdfFields.pdf_sale_sold, "06/01/2025");
   assertEquals(pdfFields.pdf_sale_gain, 2_000);
   assertEquals(pdfFields.ordinary_gain, 2_000);
-  assertEquals(form4797Pdf.fields.some((field) =>
-    field.kind === "text" && field.domainKey === "pdf_sale_gain" &&
-    field.pdfField.endsWith("Row1[0].f1_47[0]")
-  ), true);
+  assertEquals(
+    form4797Pdf.fields.some((field) =>
+      field.kind === "text" && field.domainKey === "pdf_sale_gain" &&
+      field.pdfField.endsWith("Row1[0].f1_47[0]")
+    ),
+    true,
+  );
 });
 
 Deno.test("complete disposition requires unrelated fully taxable buyer, filed PAL and overall loss", () => {
-  for (const changedSale of [
-    { ...sale, buyer_unrelated: false },
-    { ...sale, fully_taxable: false },
-    { ...sale, installment_method: true },
-    { ...sale, entire_activity_interest_disposed: false },
-    { ...sale, gross_sales_price: 16_000 },
-  ]) {
-    assertThrows(() => scheduleENode.compute(
-      { taxYear: 2025, formType: "f1040" },
-      scheduleEInput.parse({ schedule_es: [{
-        ...property,
-        passive_property_sales: [changedSale],
-      }] }),
-    ), Error, "section 469(g) review");
+  for (
+    const changedSale of [
+      { ...sale, buyer_unrelated: false },
+      { ...sale, fully_taxable: false },
+      { ...sale, installment_method: true },
+      { ...sale, entire_activity_interest_disposed: false },
+      { ...sale, gross_sales_price: 16_000 },
+    ]
+  ) {
+    assertThrows(
+      () =>
+        scheduleENode.compute(
+          { taxYear: 2025, formType: "f1040" },
+          scheduleEInput.parse({
+            schedule_es: [{
+              ...property,
+              passive_property_sales: [changedSale],
+            }],
+          }),
+        ),
+      Error,
+      "section 469(g) review",
+    );
   }
-  assertThrows(() => scheduleENode.compute(
-    { taxYear: 2025, formType: "f1040" },
-    scheduleEInput.parse({ schedule_es: [{
-      ...property,
-      prior_year_8582_source: {
-        ...property.prior_year_8582_source,
-        filed_part_vii_column_c: 2_000,
-      },
-    }] }),
-  ), Error, "section 469(g) review");
-  assertThrows(() => scheduleEMef.build(scheduleEPending, {
-    pending: { schedule_e: scheduleEPending, form4797: form4797Pending,
-      form8582: {} },
-  }), Error, "no Form 8582 activity");
-  assertThrows(() => form4797Mef.build(form4797Pending, {
-    pending: { schedule_e: { schedule_es: [{ ...property,
-      passive_property_sales: [{ ...sale, gross_sales_price: 9_001 }],
-    }] }, form4797: form4797Pending },
-  }), Error, "linked overall-loss Schedule E source");
-  assertThrows(() => form4797Mef.build(form4797Pending), Error,
-    "linked Schedule E source");
-  assertThrows(() => form4797Pdf.projectFields!(form4797Pending, {
-    schedule_e: { schedule_es: [{ ...property, passive_property_sales: [{
-      ...sale, buyer_unrelated: false,
-    }] }] },
-    form4797: form4797Pending,
-  }), Error, "linked Schedule E overall-loss sale");
+  assertThrows(
+    () =>
+      scheduleENode.compute(
+        { taxYear: 2025, formType: "f1040" },
+        scheduleEInput.parse({
+          schedule_es: [{
+            ...property,
+            prior_year_8582_source: {
+              ...property.prior_year_8582_source,
+              filed_part_vii_column_c: 2_000,
+            },
+          }],
+        }),
+      ),
+    Error,
+    "section 469(g) review",
+  );
+  assertThrows(
+    () =>
+      scheduleEMef.build(scheduleEPending, {
+        pending: {
+          schedule_e: scheduleEPending,
+          form4797: form4797Pending,
+          form8582: {},
+        },
+      }),
+    Error,
+    "no Form 8582 activity",
+  );
+  assertThrows(
+    () =>
+      form4797Mef.build(
+        form4797Pending as Parameters<typeof form4797Mef.build>[0],
+        {
+          pending: {
+            schedule_e: {
+              schedule_es: [{
+                ...property,
+                passive_property_sales: [{ ...sale, gross_sales_price: 9_001 }],
+              }],
+            },
+            form4797: form4797Pending,
+          },
+        },
+      ),
+    Error,
+    "linked overall-loss Schedule E source",
+  );
+  assertThrows(
+    () =>
+      form4797Mef.build(
+        form4797Pending as Parameters<typeof form4797Mef.build>[0],
+      ),
+    Error,
+    "linked Schedule E source",
+  );
+  assertThrows(
+    () =>
+      form4797Pdf.projectFields!(form4797Pending, {
+        schedule_e: {
+          schedule_es: [{
+            ...property,
+            passive_property_sales: [{
+              ...sale,
+              buyer_unrelated: false,
+            }],
+          }],
+        },
+        form4797: form4797Pending,
+      }),
+    Error,
+    "linked Schedule E overall-loss sale",
+  );
 });

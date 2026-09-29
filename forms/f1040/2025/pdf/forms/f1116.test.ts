@@ -875,10 +875,14 @@ Deno.test("Form 1116 PDF prints a reviewed one-source current-year excess with S
   );
   assertThrows(
     () =>
-      form1116Pdf.projectFields?.(fields, {
-        ...pending,
-        form1116_schedule_b: undefined,
-      }),
+      form1116Pdf.projectFields?.(
+        fields,
+        Object.fromEntries(
+          Object.entries(pending).filter(([key]) =>
+            key !== "form1116_schedule_b"
+          ),
+        ),
+      ),
     Error,
     "needs the matching sourced Schedule B",
   );

@@ -122,7 +122,9 @@ Deno.test("f3800: passive source waits for the shared tax limit without depositi
     regular_tax_without_passive: 9_500,
   }));
   const result = f3800.compute({ taxYear: 2025, formType: "f1040" }, {
-    passive_source_allocations: pac.sourceAllocations,
+    passive_source_allocations: f3800.inputSchema.parse({
+      passive_source_allocations: pac.sourceAllocations,
+    }).passive_source_allocations,
   });
   assertEquals(fieldsOf(result.outputs, f1040)?.form3800_source_credits, {
     standardCredit: 0,

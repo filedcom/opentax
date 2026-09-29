@@ -397,7 +397,9 @@ Deno.test("Schedule E routes filed Part IX Form 4797 carryovers without a curren
   assertEquals(findOutput(result, "form8582")?.fields.prior_unallowed, 10_000);
   assertEquals(findOutput(result, "form4797")?.fields.disposed_properties, 0);
   assertEquals(
-    findOutput(result, "form4797")?.fields.passive_activity_sources?.length,
+    (findOutput(result, "form4797")?.fields.passive_activity_sources as
+      | unknown[]
+      | undefined)?.length,
     1,
   );
 });

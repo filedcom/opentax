@@ -1,4 +1,5 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { FilingStatus } from "../../../types.ts";
 import { form6251, inputSchema } from "./index.ts";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
@@ -29,7 +30,7 @@ const amtBasisCapitalAudit = {
 
 Deno.test("form6251: identified Form 8949 basis gain refigures line 2k and Part III", () => {
   const result = compute({
-    filing_status: "single",
+    filing_status: FilingStatus.Single,
     regular_tax_income: 200_000,
     regular_taxable_income: 200_000,
     regular_tax: 10_000,
@@ -55,7 +56,7 @@ Deno.test("form6251: identified Form 8949 basis gain refigures line 2k and Part 
 
 Deno.test("form6251: Form 8949 AMT basis requires intact rows and regular Schedule D reconciliation", () => {
   const base = {
-    filing_status: "single",
+    filing_status: FilingStatus.Single,
     regular_tax_income: 200_000,
     regular_taxable_income: 200_000,
     regular_tax: 10_000,
@@ -1531,7 +1532,7 @@ Deno.test("form6251: Form 2555 line 2b source reaches the AMT worksheet", () => 
     taxable_income: 300_000,
     form6251_line1b: 300_000,
     form6251_line2a: 0,
-    filing_status: "single",
+    filing_status: FilingStatus.Single,
   });
   const amtFacts = fieldsOf(regular.outputs, form6251);
   assertEquals(amtFacts?.foreign_earned_income_exclusion, 100_000);
@@ -1707,7 +1708,7 @@ Deno.test("form6251: sourced Form 2555 and matching Form 4952 election reach Par
     taxable_income: 300_000,
     form6251_line1b: 300_000,
     form6251_line2a: 0,
-    filing_status: "single",
+    filing_status: FilingStatus.Single,
     taking_standard_deduction: false,
     qualified_dividends: 300,
   });

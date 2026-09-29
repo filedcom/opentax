@@ -221,7 +221,6 @@ Deno.test("Form 4952 sources plain taxable 1099-OID box 1 through MeF and PDF", 
   );
   const oidPending = {
     ...pending,
-    f1099int: undefined,
     f1099oid: { f1099oids: [oid] },
   };
   const xml = form4952.build(fields, { pending: oidPending });
@@ -239,8 +238,9 @@ Deno.test("Form 4952 OID route rejects adjusted and tax-exempt sources", () => {
     investment_property_for_form4952: true,
   };
   const oidPending = {
-    ...pending,
-    f1099int: undefined,
+    ...Object.fromEntries(
+      Object.entries(pending).filter(([key]) => key !== "f1099int"),
+    ),
     f1099oid: { f1099oids: [oid] },
   };
   for (
@@ -346,8 +346,9 @@ Deno.test("Form 4952 matches every plain 1099-OID payer before export", () => {
   const multiInputs = { ...inputs, source_1099_interest: [500, 250] };
   const multiFields = { ...multiInputs, ...calculateForm4952(multiInputs) };
   const oidPending = {
-    ...pending,
-    f1099int: undefined,
+    ...Object.fromEntries(
+      Object.entries(pending).filter(([key]) => key !== "f1099int"),
+    ),
     f1099oid: { f1099oids: oidPayers },
     f1040: { ...pending.f1040, line2b_taxable_interest: 750 },
   };

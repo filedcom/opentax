@@ -24,7 +24,9 @@ async function reviewedSource() {
   const pdf = await PDFDocument.create();
   pdf.addPage([612, 792]);
   const bytes = await pdf.save();
-  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+  const digest = new Uint8Array(
+    await crypto.subtle.digest("SHA-256", Uint8Array.from(bytes)),
+  );
   const pdfSha256 = Array.from(
     digest,
     (byte) => byte.toString(16).padStart(2, "0"),
@@ -147,7 +149,7 @@ Deno.test("Form 8283 multiple carried gifts each have a native form, statement, 
   secondPdf.addPage([612, 792]);
   const secondBytes = await secondPdf.save();
   const secondDigest = new Uint8Array(
-    await crypto.subtle.digest("SHA-256", secondBytes),
+    await crypto.subtle.digest("SHA-256", Uint8Array.from(secondBytes)),
   );
   const secondSha256 = Array.from(
     secondDigest,

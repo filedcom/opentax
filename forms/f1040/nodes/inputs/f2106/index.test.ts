@@ -3,7 +3,7 @@ import type { z } from "zod";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
-import { schedule_a } from "../schedule_a/index.ts";
+import { scheduleA } from "../schedule_a/index.ts";
 import {
   calculateForm2106Lines,
   EmployeeType,
@@ -85,7 +85,7 @@ Deno.test("Form 2106 fee-basis job calculates Part I line 4 and Schedule 1 only"
     fieldsOf(result.outputs, agi_aggregator)?.line12_business_expenses,
     1_200,
   );
-  assertEquals(fieldsOf(result.outputs, schedule_a), undefined);
+  assertEquals(fieldsOf(result.outputs, scheduleA), undefined);
 });
 
 Deno.test("Form 2106 impairment line 4 routes to Schedule A, not Schedule 1 or AGI", () => {
@@ -101,7 +101,7 @@ Deno.test("Form 2106 impairment line 4 routes to Schedule A, not Schedule 1 or A
   };
   const result = compute([item]);
   assertEquals(
-    fieldsOf(result.outputs, schedule_a)?.line_16_other_deductions,
+    fieldsOf(result.outputs, scheduleA)?.line_16_other_deductions,
     1_200,
   );
   assertEquals(fieldsOf(result.outputs, schedule1), undefined);
@@ -129,7 +129,7 @@ Deno.test("Form 2106 mixed jobs keep Schedule A and Schedule 1 amounts separate"
     1_200,
   );
   assertEquals(
-    fieldsOf(result.outputs, schedule_a)?.line_16_other_deductions,
+    fieldsOf(result.outputs, scheduleA)?.line_16_other_deductions,
     600,
   );
 });

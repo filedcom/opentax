@@ -1,7 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../core/runtime/executor.ts";
-import { registry } from "../../../../2025/registry.ts";
+import { registry } from "../../../2025/registry.ts";
 import { reconcileForm8997Pending } from "./reconciliation.ts";
 
 const source = {
@@ -67,8 +67,14 @@ Deno.test("Form 8997 reconciles code Z to actual executor Form 8949 and Schedule
     ),
     true,
   );
-  assertEquals(reconcileForm8997Pending(result.pending).part_ii.totals.short_term, 20_000);
-  const changed = structuredClone(result.pending) as Record<string, Record<string, unknown>>;
+  assertEquals(
+    reconcileForm8997Pending(result.pending).part_ii.totals.short_term,
+    20_000,
+  );
+  const changed = structuredClone(result.pending) as Record<
+    string,
+    Record<string, unknown>
+  >;
   const rows = changed.schedule_d.transaction as Array<Record<string, unknown>>;
   rows[1].part = "F";
   assertThrows(

@@ -1,7 +1,10 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { buildMefXml } from "../builder.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
-import type { FilerIdentity } from "../types.ts";
+import {
+  type FilerIdentity,
+  FilingStatus as MefFilingStatus,
+} from "../types.ts";
 
 const XSD_PATH = new URL(
   "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
@@ -22,7 +25,7 @@ const filer: FilerIdentity = {
   nameLine1: "TAXPAYER ALEX",
   nameControl: "TAXP",
   address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
-  filingStatus: FilingStatus.Single,
+  filingStatus: MefFilingStatus.Single,
   softwareId: "12345678",
   originator: { efin: "123456", originatorType: "ERO" },
 };

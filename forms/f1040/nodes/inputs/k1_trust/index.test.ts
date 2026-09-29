@@ -8,10 +8,11 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function compute(items: ReturnType<typeof minimalItem>[]) {
-  return k1_trust.compute({ taxYear: 2025, formType: "f1040" }, {
-    k1_trusts: items,
-  });
+function compute(items: Record<string, unknown>[]) {
+  return k1_trust.compute(
+    { taxYear: 2025, formType: "f1040" },
+    k1_trust.inputSchema.parse({ k1_trusts: items }),
+  );
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -37,17 +38,21 @@ Deno.test("trust K-1 box 12 code A routes signed line 2j amounts per source", ()
 
 Deno.test("trust K-1 rejects uncoded or incomplete box 12 AMT source", () => {
   assertThrows(() => compute([minimalItem({ box12_amt: 500 })]));
-  assertThrows(() => compute([minimalItem({
-    box12_code_a_amt_adjustment: 500,
-    estate_trust_ein: "123456789",
-    source_document_reference: "2025 K-1",
-  })]));
-  assertThrows(() => compute([minimalItem({
-    box12_code_a_amt_adjustment: 500,
-    estate_trust_ein: "123456789",
-    source_document_reference: "2025 K-1",
-    box12_codes_b_through_f_absent: true,
-  })]));
+  assertThrows(() =>
+    compute([minimalItem({
+      box12_code_a_amt_adjustment: 500,
+      estate_trust_ein: "123456789",
+      source_document_reference: "2025 K-1",
+    })])
+  );
+  assertThrows(() =>
+    compute([minimalItem({
+      box12_code_a_amt_adjustment: 500,
+      estate_trust_ein: "123456789",
+      source_document_reference: "2025 K-1",
+      box12_codes_b_through_f_absent: true,
+    })])
+  );
 });
 
 Deno.test("trust K-1 uses DNI-limited portfolio income for affirmed Form 4952 source", () => {

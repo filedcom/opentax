@@ -52,7 +52,7 @@ function context(sourceFacts: RentedHomeSource = source) {
           proprietor_recipient: TS.T,
           line_a_principal_business: "Consulting",
           line_b_business_code: "541600",
-          line_f_accounting_method: "cash",
+          line_f_accounting_method: "cash" as const,
           line_g_material_participation: true,
           line_1_gross_receipts: 5_000,
         }],

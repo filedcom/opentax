@@ -1,10 +1,13 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
-import { CONFIG_BY_YEAR } from "../../../config/index.ts";
+import { CONFIG_BY_YEAR } from "../../../nodes/config/index.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
 import { calculateForm8615 } from "../../../nodes/intermediate/forms/form8615/calculation.ts";
 import { buildMefXml } from "../builder.ts";
 import { form8615 } from "./f8615.ts";
-import { type FilerIdentity } from "../types.ts";
+import {
+  type FilerIdentity,
+  FilingStatus as MefFilingStatus,
+} from "../types.ts";
 
 const XSD_PATH = new URL(
   "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
@@ -25,7 +28,7 @@ const filer: FilerIdentity = {
   nameLine1: "CHILD ALEX",
   nameControl: "CHIL",
   address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
-  filingStatus: FilingStatus.Single,
+  filingStatus: MefFilingStatus.Single,
   softwareId: "12345678",
   originator: { efin: "123456", originatorType: "ERO" },
 };

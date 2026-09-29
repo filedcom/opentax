@@ -16,6 +16,16 @@ const baseInputs = {
     line_g_material_participation: true,
     line_1_gross_receipts: 200_000,
     line_12_depletion: 1_000,
+    amt_depletion_worksheet: {
+      source_reference: "2025 C-1 AMT depletion review",
+      all_property_income_and_basis_limits_applied_verified: true,
+      no_at_risk_or_basis_limitation_verified: true,
+      properties: [{
+        property_reference: "C-1-depletion-property",
+        regular_allowed_depletion: 1_000,
+        amt_allowed_depletion: 1_000,
+      }],
+    },
     line_13_depreciation: 7_500,
     line_16b_interest_other: 100_000,
   }],

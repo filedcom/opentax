@@ -87,7 +87,12 @@ Deno.test("agi_aggregator: Pub 974 one-business audit rejects other business sch
     line6_schedule_f: 5_000,
   });
   const audit = result.outputs.find((item) => item.nodeType === "form8962")
-    ?.fields.pub974_income_audit;
+    ?.fields.pub974_income_audit as
+      | {
+        schedule1_line3_schedule_c: number;
+        unsupported_adjustments_present: boolean;
+      }
+      | undefined;
   assertEquals(audit?.schedule1_line3_schedule_c, 50_000);
   assertEquals(audit?.unsupported_adjustments_present, true);
 });

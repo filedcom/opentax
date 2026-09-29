@@ -109,8 +109,10 @@ function reviewedCase() {
 async function reviewedPdf(reference: string) {
   const pdf = await PDFDocument.create();
   pdf.addPage().drawText(reference);
-  const bytes = await pdf.save();
-  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+  const bytes = Uint8Array.from(await pdf.save());
+  const digest = new Uint8Array(
+    await crypto.subtle.digest("SHA-256", Uint8Array.from(bytes)),
+  );
   return {
     bytes,
     reviewed_sha256: Array.from(

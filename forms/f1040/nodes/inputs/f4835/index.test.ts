@@ -158,6 +158,7 @@ Deno.test("Form 4835 loss requires at-risk facts and does not trust a supplied d
 
 Deno.test("Form 4835 limits each farm loss to its computed Form 6198 amount at risk", () => {
   const farm = itemSchema.parse(item({
+    activity_id: "farm-at-risk",
     expense_feed: 2000,
     some_investment_not_at_risk: true,
     at_risk_simplified: {
@@ -172,7 +173,7 @@ Deno.test("Form 4835 limits each farm loss to its computed Form 6198 amount at r
     suspended: 1400,
     amountAtRisk: 600,
   });
-  const result = compute([farm]);
+  const result = compute([{ ...farm, activity_id: "farm-at-risk" }]);
   assertEquals(result.outputs[0].fields.farm_rental_net, -600);
   assertEquals(result.carryforwards?.f4835_at_risk_suspended_1, 1400);
   assertThrows(

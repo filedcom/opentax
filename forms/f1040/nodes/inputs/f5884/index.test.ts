@@ -73,7 +73,14 @@ function compute(items: F5884Item[]) {
 }
 
 function findForm3800(result: ReturnType<typeof compute>) {
-  return result.outputs.find((o) => o.nodeType === "f3800");
+  return result.outputs.find((o) => o.nodeType === "f3800") as
+    | (typeof result.outputs[number] & {
+      fields: {
+        f5884_credit?: { credit_amount: number };
+        subject_to_passive_activity_limit?: boolean;
+      };
+    })
+    | undefined;
 }
 
 // ── Schema Validation ────────────────────────────────────────────────────────
@@ -572,7 +579,7 @@ Deno.test("controlled group allocates line 2 by qualified wages", () => {
     credit_amount: 1_950,
   }]);
   const routed = f5884.compute({ taxYear: 2025, formType: "f1040" }, input);
-  assertEquals(routed.outputs[0]?.fields.f5884_credit?.credit_amount, 1_950);
+  assertEquals(findForm3800(routed)?.fields.f5884_credit?.credit_amount, 1_950);
   assertEquals(
     routed.outputs.find((row) => row.nodeType === "schedule_c")?.fields
       .wotc_wage_reductions,
@@ -1165,7 +1172,9 @@ Deno.test("Form 5884 separates pass-through-only and mixed source credits", () =
   );
   assertEquals(onlyOutput.outputs[0]?.nodeType, "f3800");
   assertEquals(
-    onlyOutput.outputs[0]?.fields.f5884_credit?.credit_amount,
+    (onlyOutput.outputs[0]?.fields.f5884_credit as
+      | { credit_amount: number }
+      | undefined)?.credit_amount,
     1_250,
   );
   const mixed = {
@@ -1186,13 +1195,15 @@ Deno.test("Form 5884 separates pass-through-only and mixed source credits", () =
     false,
   );
   assertEquals(
-    f5884.compute({ taxYear: 2025, formType: "f1040" }, {
+    (f5884.compute({ taxYear: 2025, formType: "f1040" }, {
       ...passThroughOnly,
       pass_through_credits: [{
         ...partnership,
         subject_to_passive_activity_limit: true,
       }],
-    }).outputs[0]?.fields.f5884_credit?.subject_to_passive_activity_limit,
+    }).outputs[0]?.fields.f5884_credit as {
+      subject_to_passive_activity_limit: boolean;
+    } | undefined)?.subject_to_passive_activity_limit,
     true,
   );
 });

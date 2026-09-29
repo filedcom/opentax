@@ -685,7 +685,9 @@ Deno.test("form1116: sourced 2023 carryover feeds the credit and Schedule B", ()
     row.nodeType === "form1116_schedule_b"
   )?.fields;
   assertEquals(
-    scheduleB?.prior_year_carryover_source.vintages[0].vintage_tax_year,
+    (scheduleB?.prior_year_carryover_source as {
+      vintages: Array<{ vintage_tax_year: number }>;
+    } | undefined)?.vintages[0].vintage_tax_year,
     2023,
   );
   assertEquals(scheduleB?.remaining_prior_year_carryover, 300);

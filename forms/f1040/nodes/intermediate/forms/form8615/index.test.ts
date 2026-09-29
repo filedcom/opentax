@@ -1,5 +1,5 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { CONFIG_BY_YEAR } from "../../../../config/index.ts";
+import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 import { FilingStatus } from "../../../types.ts";
 import { type F8615Input } from "../../../inputs/f8615/schema.ts";
 import { calculateForm8615, line5PreferentialIncome } from "./calculation.ts";

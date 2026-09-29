@@ -437,7 +437,7 @@ for (
     Box12Code.AA,
     Box12Code.BB,
     Box12Code.EE,
-  ]
+  ] as const
 ) {
   Deno.test(`box12 code ${code} retains employee ownership for Form 8880 line 2`, () => {
     const result = compute([minimalItem({

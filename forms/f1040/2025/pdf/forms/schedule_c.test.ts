@@ -76,7 +76,10 @@ Deno.test("Form 3115 adjustments print on the same Schedule C PDF income and Par
   assertEquals(copy.line6, 3_000);
   assertEquals(copy.line27b, 1_000);
   assertEquals(copy.line31, 22_000);
-  assertEquals(copy.part_v_other_expenses[0].amount, 1_000);
+  assertEquals(
+    (copy.part_v_other_expenses as Array<{ amount: number }>)[0].amount,
+    1_000,
+  );
 });
 
 Deno.test("2025 Schedule C PDF creates one two-page copy per taxpayer business and maps actual line amounts", () => {

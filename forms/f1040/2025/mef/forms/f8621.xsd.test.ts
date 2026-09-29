@@ -7,7 +7,10 @@ import {
   ExcessEventKind,
 } from "../../../nodes/inputs/f8621/excess_distribution.ts";
 import { itemSchema, PficRegime } from "../../../nodes/inputs/f8621/index.ts";
-import type { FilerIdentity } from "../types.ts";
+import {
+  type FilerIdentity,
+  FilingStatus as MefFilingStatus,
+} from "../types.ts";
 
 const XSD_PATH = new URL(
   "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
@@ -28,7 +31,7 @@ const filer: FilerIdentity = {
   nameLine1: "TAXPAYER ALEX",
   nameControl: "TAXP",
   address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
-  filingStatus: FilingStatus.Single,
+  filingStatus: MefFilingStatus.Single,
   softwareId: "12345678",
   originator: { efin: "123456", originatorType: "ERO" },
 };
@@ -41,7 +44,8 @@ Deno.test({
   sanitizeResources: false,
 }, async () => {
   const event = {
-    kind: ExcessEventKind.Distribution,
+    kind: ExcessEventKind.Distribution as const,
+    currency_code: "USD",
     holding_period_start: "2024-01-01",
     first_pfic_tax_year: 2024,
     shares_in_block: 100,

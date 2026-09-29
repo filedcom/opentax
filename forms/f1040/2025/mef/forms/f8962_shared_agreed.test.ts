@@ -131,7 +131,9 @@ Deno.test("shared-policy filing rejects allocation and covered-person drift", ()
       form8962.build({
         ...calculated,
         shared_policy_allocations: [{
-          ...(calculated.shared_policy_allocations as object[])[0],
+          ...(calculated.shared_policy_allocations as NonNullable<
+            Parameters<typeof form8962.build>[0]["shared_policy_allocations"]
+          >)[0],
           premium_pct: 0.6,
         }],
       }, context),

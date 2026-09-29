@@ -1,5 +1,10 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { f8283, FMVMethod, SectionBPropertyType } from "./index.ts";
+import {
+  f8283,
+  FMVMethod,
+  inputSchema,
+  SectionBPropertyType,
+} from "./index.ts";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { scheduleA as schedule_a } from "../schedule_a/index.ts";
 

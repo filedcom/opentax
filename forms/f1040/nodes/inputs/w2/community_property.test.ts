@@ -9,7 +9,7 @@ import { Box12Code, w2 } from "./index.ts";
 
 const allocation = {
   domicile_state: CommunityPropertyState.CA,
-  federal_filing_status: FilingStatus.MFS,
+  federal_filing_status: FilingStatus.MFS as const,
   taxpayer: { first_name: "Alex", last_name: "Example", ssn: "111223333" },
   spouse: { first_name: "Blair", last_name: "Example", ssn: "222334444" },
   community_property_period: {

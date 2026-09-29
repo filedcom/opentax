@@ -111,7 +111,11 @@ Deno.test("community-property Form 8958 allocation cannot disappear from MeF", (
   const pending = buildPending(result.pending);
   assertEquals(Object.hasOwn(pending, "f8958"), true);
   assertThrows(
-    () => buildMefXml(pending, { ...filer, filingStatus: FilingStatus.MFS }),
+    () =>
+      buildMefXml(pending, {
+        ...filer,
+        filingStatus: FilingStatus.MarriedFilingSeparately,
+      }),
     Error,
     "Form 8958 requires a native community-property allocation document",
   );

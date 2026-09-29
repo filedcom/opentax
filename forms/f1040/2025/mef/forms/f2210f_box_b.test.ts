@@ -1,9 +1,12 @@
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import { buildForm2210FBoxB, form2210f } from "./f2210f_box_b.ts";
-import { calculateForm2210FBoxB } from "../../form2210f_box_b.ts";
+import {
+  calculateForm2210FBoxB,
+  form2210FBoxBInputSchema,
+} from "../../form2210f_box_b.ts";
 
 function source() {
-  return {
+  return form2210FBoxBInputSchema.parse({
     gross_income_years: [
       {
         tax_year: 2024,
@@ -47,14 +50,18 @@ function source() {
     current_excess_social_security_or_rrta_withholding: 0,
     estimated_payments_by_2026_01_15: 1_000,
     full_underpayment_paid_on: null,
-  };
+  });
 }
 
 Deno.test("Form 2210-F box B local XML follows TY2025 element order and amounts", () => {
   const xml = buildForm2210FBoxB(source());
   assert(xml.startsWith("<IRS2210F>"));
   assert(xml.includes("<JointReturnInd>X</JointReturnInd>"));
-  assert(xml.includes("<CurrentYearTaxCalculatedAmt>11339</CurrentYearTaxCalculatedAmt>"));
+  assert(
+    xml.includes(
+      "<CurrentYearTaxCalculatedAmt>11339</CurrentYearTaxCalculatedAmt>",
+    ),
+  );
   assert(xml.includes("<PriorYearTaxAmt>9000</PriorYearTaxAmt>"));
   assert(xml.includes("<PenaltyDayCnt>90</PenaltyDayCnt>"));
   assert(xml.includes("<PenaltyAmt>121</PenaltyAmt>"));
@@ -70,13 +77,18 @@ Deno.test("Form 2210-F box B local XML omits Part III when no penalty is due", (
 
 Deno.test("Form 2210-F box B local XML rejects unsourced eligibility", () => {
   const input = source();
-  assertThrows(() => buildForm2210FBoxB({
-    ...input,
-    gross_income_years: [
-      { ...input.gross_income_years[0], farming_fishing_gross_income: 10_000 },
-      input.gross_income_years[1],
-    ],
-  }));
+  assertThrows(() =>
+    buildForm2210FBoxB({
+      ...input,
+      gross_income_years: [
+        {
+          ...input.gross_income_years[0],
+          farming_fishing_gross_income: 10_000,
+        },
+        input.gross_income_years[1],
+      ],
+    })
+  );
 });
 
 Deno.test("registered Form 2210-F checks finalized 1040 and filed worksheet", () => {
@@ -99,10 +111,16 @@ Deno.test("registered Form 2210-F checks finalized 1040 and filed worksheet", ()
     },
   };
   assert(form2210f.build(fields, context).includes("<IRS2210F>"));
-  assertThrows(() => form2210f.build(fields, {
-    pending: { f1040: { ...context.pending.f1040, line38_underpayment_penalty: 1 } },
-  }));
-  assertThrows(() => form2210f.build(fields, {
-    pending: { ...context.pending, f2210: { underpayment_penalty: 1 } },
-  }));
+  assertThrows(() =>
+    form2210f.build(fields, {
+      pending: {
+        f1040: { ...context.pending.f1040, line38_underpayment_penalty: 1 },
+      },
+    })
+  );
+  assertThrows(() =>
+    form2210f.build(fields, {
+      pending: { ...context.pending, f2210: { underpayment_penalty: 1 } },
+    })
+  );
 });

@@ -99,7 +99,9 @@ Deno.test("paired self-only Form 8889 MeF/PDF reconcile each source and owner", 
   assertThrows(
     () =>
       form8889Mef.build(
-        { forms: swappedLimits } as Parameters<typeof form8889Mef.build>[0],
+        { forms: swappedLimits } as unknown as Parameters<
+          typeof form8889Mef.build
+        >[0],
         { filer, pending },
       ),
     Error,
@@ -121,10 +123,13 @@ Deno.test("paired self-only Form 8889 MeF/PDF reconcile each source and owner", 
   );
   assertThrows(
     () =>
-      form8889Pdf.instances?.({ forms }, filer, {
-        ...pending,
-        form8889: undefined,
-      }),
+      form8889Pdf.instances?.(
+        { forms },
+        filer,
+        Object.fromEntries(
+          Object.entries(pending).filter(([key]) => key !== "form8889"),
+        ),
+      ),
     Error,
     "needs both owner sources",
   );
@@ -201,6 +206,7 @@ Deno.test("paired partial-year self-only Forms 8889 reconcile distinct owner mon
           ...pending.form8889,
           spouse_hsa: {
             ...source.spouse_hsa!,
+            hsa_december_31_value: 0,
             eligible_hdhp_coverage_by_month: [
               ...Array(4).fill(null),
               ...Array(8).fill(CoverageType.SelfOnly),
@@ -395,7 +401,7 @@ Deno.test("paired other-coverage loss allocates family months and reconciles MeF
         },
       ),
     Error,
-    "onset must match",
+    "needs one sourced onset",
   );
   assertThrows(() =>
     inputSchema.parse({
@@ -541,7 +547,7 @@ Deno.test("paired family Form 8889 reconciles the sourced 2025 allocation throug
         },
       ),
     Error,
-    "sourced full-year family allocation",
+    "paired export needs sourced",
   );
 });
 
@@ -630,7 +636,7 @@ Deno.test("paired mixed-coverage Form 8889 reconciles both owner forms through M
         },
       ),
     Error,
-    "sourced full-year family allocation",
+    "paired export needs sourced",
   );
 });
 
@@ -968,7 +974,7 @@ Deno.test("paired Form 8889 rejects missing or mismatched 1099-SA evidence", () 
               ...source.spouse_hsa!.form1099_sa_distributions![0],
               ...changed,
             }],
-          },
+          } as NonNullable<typeof source.spouse_hsa>,
         },
       )
     );
@@ -994,7 +1000,7 @@ Deno.test("paired Form 8889 rejects reused receipts and return totals that omit 
         },
       }),
     Error,
-    "cannot reuse a Form 1099-SA or qualified medical expense reference",
+    "cannot reuse a Form 1099-SA, qualified medical expense, or dated distribution reference",
   );
   assertThrows(
     () =>

@@ -1,5 +1,6 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../mef/header.ts";
+import { TSJ } from "../../../nodes/types.ts";
 import { f1099m } from "../../../nodes/inputs/f1099m/index.ts";
 import { scheduleE as scheduleENode } from "../../../nodes/inputs/schedule_e/index.ts";
 import { calculateForm4952 } from "../../../nodes/intermediate/forms/form4952/index.ts";
@@ -17,7 +18,7 @@ const misc = {
   box2_nonpassive_portfolio_investment_for_form4952_verified: true as const,
 };
 const property = {
-  tsj: "T" as const,
+  tsj: TSJ.T,
   property_description: "Patent royalty property",
   property_type: 6,
   activity_type: "D" as const,
@@ -113,7 +114,7 @@ Deno.test("one 1099-MISC portfolio royalty posts once to Schedule E and Form 495
   );
   assertEquals(
     scheduleEPdf.instances?.(pdf ?? {}, filer, pending),
-    [pdf],
+    [pdf!],
   );
 });
 

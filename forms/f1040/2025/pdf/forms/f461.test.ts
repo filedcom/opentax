@@ -1,5 +1,5 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { type FilerIdentity, FilingStatus } from "../../types.ts";
+import { type FilerIdentity, FilingStatus } from "../../mef/types.ts";
 import { assertAttachmentCoverage } from "../../attachment-coverage.ts";
 import { form461Pdf } from "./f461.ts";
 

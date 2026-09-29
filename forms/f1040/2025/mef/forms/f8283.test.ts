@@ -84,7 +84,9 @@ async function acknowledgmentPdf(): Promise<Uint8Array> {
 }
 
 async function signedFormSourceReview(bytes: Uint8Array) {
-  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+  const digest = new Uint8Array(
+    await crypto.subtle.digest("SHA-256", Uint8Array.from(bytes)),
+  );
   return {
     reviewed_by: "Test reviewer",
     reviewed_on: "2025-09-01",
@@ -155,8 +157,8 @@ function needyTransferVehicle(
     is_capital_gain_property: false,
     short_term_ordinary_income_reduction_confirmed: true as const,
     vehicle_needy_transfer_acknowledgment: {
-      copy_received_from_donee: true,
-      donee_certified: true,
+      copy_received_from_donee: true as const,
+      donee_certified: true as const,
       donee_name: "City Charity",
       donee_ein: "987654321",
       donee_us_address: {
@@ -176,7 +178,7 @@ function needyTransferVehicle(
       odometer_miles: 60_000,
       goods_or_services_received: false,
     },
-  };
+  } as const;
 }
 
 function sectionBMaterialImprovementVehicle() {
@@ -244,7 +246,7 @@ function sectionBMaterialImprovementVehicle() {
         zip: "78701",
       },
     },
-  };
+  } as const;
 }
 
 function sectionBHighValueEquipmentGift() {
@@ -264,7 +266,7 @@ function sectionBHighValueEquipmentGift() {
       attachment_file_name: "QualifiedAppraisal-Press.pdf",
     },
     donee_acknowledgment: vehicle.donee_acknowledgment,
-  };
+  } as const;
 }
 
 Deno.test("Form 8283 Section B does not file an unexplained reduction below appraised FMV", () => {
@@ -834,7 +836,7 @@ for (const certification of ["significant use", "needy transfer"] as const) {
       vehicle_condition: "Fair condition",
       odometer_miles: 90_000,
       goods_or_services_received: false,
-    };
+    } as const;
     const item = certification === "significant use"
       ? {
         ...vehicle,
@@ -842,11 +844,11 @@ for (const certification of ["significant use", "needy transfer"] as const) {
         vehicle_material_improvement_acknowledgment: undefined,
         vehicle_significant_use_acknowledgment: {
           ...shared,
-          no_transfer_before_completion_confirmed: true,
+          no_transfer_before_completion_confirmed: true as const,
           intended_use_description: "Deliver meals to needy residents daily",
           intended_use_duration: "one year",
-          regularly_conducted_charitable_activity_confirmed: true,
-          substantial_nonincidental_use_confirmed: true,
+          regularly_conducted_charitable_activity_confirmed: true as const,
+          substantial_nonincidental_use_confirmed: true as const,
         },
       }
       : {
@@ -855,9 +857,9 @@ for (const certification of ["significant use", "needy transfer"] as const) {
         vehicle_material_improvement_acknowledgment: undefined,
         vehicle_needy_transfer_acknowledgment: {
           ...shared,
-          vehicle_to_be_transferred_to_needy_confirmed: true,
-          transfer_for_significantly_below_fmv_confirmed: true,
-          direct_charitable_transportation_purpose_confirmed: true,
+          vehicle_to_be_transferred_to_needy_confirmed: true as const,
+          transfer_for_significantly_below_fmv_confirmed: true as const,
+          direct_charitable_transportation_purpose_confirmed: true as const,
         },
       };
     const bytes = await acknowledgmentPdf();
@@ -1353,8 +1355,8 @@ Deno.test("Form 8283 significant-use vehicle links donee PDF and emits boxes 5a 
     cost_or_adjusted_basis: 4_800,
     vehicle_needy_transfer_acknowledgment: undefined,
     vehicle_significant_use_acknowledgment: {
-      copy_received_from_donee: true,
-      donee_certified: true,
+      copy_received_from_donee: true as const,
+      donee_certified: true as const,
       donee_name: "Meals Charity",
       donee_ein: "987654321",
       donee_us_address: {
@@ -1376,7 +1378,7 @@ Deno.test("Form 8283 significant-use vehicle links donee PDF and emits boxes 5a 
       odometer_miles: 60_000,
       goods_or_services_received: false,
     },
-  };
+  } as const;
   const bundle = await buildMefBundle({
     f8283: { section_a_items: [item] },
   }, {
@@ -1432,7 +1434,7 @@ Deno.test("Form 8283 material-improvement vehicle emits donee's box 5c detail", 
       odometer_miles: 60_000,
       goods_or_services_received: false,
     },
-  };
+  } as const;
   const bundle = await buildMefBundle({
     f8283: { section_a_items: [item] },
   }, {

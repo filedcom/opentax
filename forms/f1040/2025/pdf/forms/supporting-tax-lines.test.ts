@@ -5,7 +5,7 @@ import {
   form8959 as form8959Node,
   inputSchema as form8959InputSchema,
 } from "../../../nodes/intermediate/forms/form8959/index.ts";
-import { FilingStatus } from "../../../types.ts";
+import { FilingStatus } from "../../../nodes/types.ts";
 import type { PdfFormDescriptor } from "../form-descriptor.ts";
 import { form8959Pdf } from "./f8959.ts";
 import { form8960Pdf } from "./f8960.ts";
@@ -399,10 +399,17 @@ Deno.test("Form 8962 marriage calculation reaches printed Part V line 35", () =>
       marriage_month: 6,
       primary: {
         family_size: 1,
-        monthly_premiums: [...Array(6).fill(1_000), ...Array(6).fill(0)],
-        monthly_slcsps: [...Array(6).fill(1_200), ...Array(6).fill(0)],
+        policy_numbers: ["PRIMARY-1095A"],
       },
     },
+    alternative_marriage_policies: [{
+      policy_number: "PRIMARY-1095A",
+      owner: "primary",
+      coverage_state: "TX",
+      monthly_premiums: [...Array(6).fill(1_000), ...Array(6).fill(0)],
+      monthly_slcsps: [...Array(6).fill(1_200), ...Array(6).fill(0)],
+      monthly_aptcs: [...Array(6).fill(1_000), ...Array(6).fill(0)],
+    }],
   });
   const formFields = result.outputs.find((item) => item.nodeType === "form8962")
     ?.fields;

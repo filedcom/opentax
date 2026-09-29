@@ -151,25 +151,26 @@ Deno.test("Form 8962 monthly same-state family overlap combines A/C once and B o
 
 Deno.test("Form 8962 monthly family overlap rejects missing enrollee ownership, divergent B and final return", () => {
   assertThrows(
-    () => form8962.build(fields, {
-      filer,
-      pending: {
-        ...pending,
-        general: {
-          ...pending.general,
-          dependents: [{
-            ...dependent,
-            ptc_tax_return: {
-              ...dependent.ptc_tax_return,
-              interest_forms1099: [{
-                ...dependent.ptc_tax_return.interest_forms1099[0],
-                recipient_ssn: "111223333",
-              }],
-            },
-          }],
+    () =>
+      form8962.build(fields, {
+        filer,
+        pending: {
+          ...pending,
+          general: {
+            ...pending.general,
+            dependents: [{
+              ...dependent,
+              ptc_tax_return: {
+                ...dependent.ptc_tax_return,
+                interest_forms1099: [{
+                  ...dependent.ptc_tax_return.interest_forms1099[0],
+                  recipient_ssn: "111223333",
+                }],
+              },
+            }],
+          },
         },
-      },
-    }),
+      }),
     Error,
     "filed return and interest forms naming the covered person",
   );
@@ -232,9 +233,10 @@ Deno.test("Form 8962 monthly different-state family overlap adds both Marketplac
     monthly_aptcs: Array<number>(12).fill(100),
   };
   const differentStatePending = {
-    ...pending,
+    ...Object.fromEntries(
+      Object.entries(pending).filter(([key]) => key !== "schedule2"),
+    ),
     f1095a: { f1095as: [taxpayerPolicy, outOfStatePolicy] },
-    schedule2: undefined,
     schedule3: { line9_premium_tax_credit: 6_816 },
     f1040: { line11_agi: 90_000, line31_additional_payments: 6_816 },
   };
@@ -324,9 +326,10 @@ Deno.test("Form 8962 monthly different-state family overlap adds both Marketplac
     () =>
       form8962.build({
         ...differentStateFields,
-        monthly_ptc_rows: differentStateFields.monthly_ptc_rows.map((row, index) =>
-          index === 0 ? { ...row, slcsp: 1_000 } : row
-        ),
+        monthly_ptc_rows: differentStateFields.monthly_ptc_rows.map((
+          row,
+          index,
+        ) => index === 0 ? { ...row, slcsp: 1_000 } : row),
       }, { filer, pending: differentStatePending }),
     Error,
     "differs from its Form 1095-A policy",

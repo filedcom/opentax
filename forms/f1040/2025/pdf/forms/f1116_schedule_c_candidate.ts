@@ -150,10 +150,12 @@ export function projectScheduleCPdfCandidate(
         payor.payor_tax_usd_on_filed_return,
       ],
       [`part${part}_row${index + 1}_col12`, payor.payor_revised_tax_usd],
-      ...(part === 1 ? [] : [[
-        `part2_row${index + 1}_two_year_rule`,
-        payor.event_kind === "accrued_tax_unpaid_after_24_months",
-      ]]),
+      ...(part === 1 ? [] : [
+        [
+          `part2_row${index + 1}_two_year_rule`,
+          payor.event_kind === "accrued_tax_unpaid_after_24_months",
+        ] as const,
+      ]),
     ]);
   const payors = Object.fromEntries(
     [...payorRows(1, increases), ...payorRows(2, decreases)],
