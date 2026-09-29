@@ -22,6 +22,18 @@ const pending = {
   schedule3: { line6d_elderly_disabled_credit: 750 },
 };
 
+const XSD_PATH = new URL(
+  "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Common/IRS1040ScheduleR/IRS1040ScheduleR.xsd",
+  import.meta.url,
+).pathname;
+let xsdAvailable = false;
+try {
+  Deno.statSync(XSD_PATH);
+  xsdAvailable = true;
+} catch {
+  // The official IRS schema bundle is local-only.
+}
+
 Deno.test("Schedule R emits the bounded 65-plus single-taxpayer form", () => {
   const xml = scheduleR.build({}, { pending });
   assertStringIncludes(xml, "<Primary65OrOlderInd>X</Primary65OrOlderInd>");
@@ -39,6 +51,30 @@ Deno.test("Schedule R emits the bounded 65-plus single-taxpayer form", () => {
     xml.indexOf("<Primary65OrOlderInd>") < xml.indexOf("<FilingStatusAmt>"),
     true,
   );
+});
+
+Deno.test({
+  name: "XSD: Schedule R sourced single age-65 credit",
+  ignore: !xsdAvailable,
+  sanitizeOps: false,
+  sanitizeResources: false,
+}, async () => {
+  const xml = scheduleR.build({}, { pending }).replace(
+    "<IRS1040ScheduleR>",
+    '<IRS1040ScheduleR xmlns="http://www.irs.gov/efile" documentId="IRS1040ScheduleR1">',
+  );
+  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(path, xml);
+    const result = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", XSD_PATH, path],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
+  } finally {
+    await Deno.remove(path);
+  }
 });
 
 Deno.test("Schedule R rejects missing age evidence, wrong AGI, and a tax-limited credit", () => {
