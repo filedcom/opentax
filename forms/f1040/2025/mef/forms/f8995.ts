@@ -22,7 +22,7 @@ export const form8995: MefFormDescriptor<"form8995", Input> = {
     ) {
       throw new Error("Form 8995 needs a valid nonnegative QBI deduction");
     }
-    const { businessName, ein, qbi, lines } = assertOneBusiness8995(
+    const { businessName, tin, qbi, lines } = assertOneBusiness8995(
       fields as Record<string, unknown>,
       context?.pending,
     );
@@ -31,7 +31,7 @@ export const form8995: MefFormDescriptor<"form8995", Input> = {
         elements("TradeOrBusinessName", [
           element("BusinessNameLine1Txt", businessName),
         ]),
-        element("EIN", ein),
+        element(tin.kind === "ein" ? "EIN" : "SSN", tin.value),
         element("QlfyBusinessIncomeOrLossAmt", qbi),
       ]),
       element("TotQlfyBusinessIncomeOrLossAmt", lines[2]),

@@ -79,6 +79,7 @@ export const inputSchema = z.object({
   schedule_f_qbi_businesses: z.array(scheduleFQbiBusinessSchema).optional(),
   qbi_no_prior_loss_or_suspended_loss_confirmed: z.literal(true).optional(),
   qbi_not_patron_of_specified_cooperative_confirmed: z.literal(true).optional(),
+  taxpayer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
   // Prior-year REIT/PTP net loss carryforward (must be zero or negative)
   reit_loss_carryforward: z.number().nonpositive().optional(),
   // AGI — used to compute pre-QBI taxable income when taxable_income is not yet known
@@ -378,8 +379,12 @@ function oneScheduleFLines(
   if (businesses?.length !== 1) return undefined;
   const business = businesses[0];
   const seDeduction = sumField(input.se_tax_deduction);
+  const usesSsn = !business.ein &&
+    input.filing_status === FilingStatus.Single &&
+    input.taxpayer_ssn !== undefined;
   if (
-    !business.business_reference || !business.business_name || !business.ein ||
+    !business.business_reference || !business.business_name ||
+    (!business.ein && !usesSsn) ||
     business.no_other_adjustments_confirmed !== true ||
     input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
     input.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
@@ -407,7 +412,9 @@ function oneScheduleFLines(
   return {
     line1_business_reference: business.business_reference,
     line1_business_name: business.business_name,
-    line1_ein: business.ein,
+    ...(usesSsn
+      ? { line1_ssn: input.taxpayer_ssn!.replace(/\D/g, "") }
+      : { line1_ein: business.ein! }),
     line1_qbi: qbi,
     line2: qbi,
     line3: 0,

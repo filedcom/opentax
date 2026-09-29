@@ -96,6 +96,9 @@ the graph, reconciles Schedule F and Schedule SE to Form 1040, and emits MeF and
 PDF. Its synthetic $80,000 cash-farm full return passed TY2025 XSD validation;
 the generated nine-page PDF packet's Form 8995 page was visually checked
 against the $74,348 QBI row and $11,720 Form 1040 deduction. The
+single-filer no-EIN farm variant now uses the sourced taxpayer SSN in MeF and
+the PDF TIN column; its full return passed XSD and its filled Form 8995 page
+was visually checked. Joint-filer farm ownership remains unresolved. The
 [Form 8995 gap](docs/mef/ty2025-form8995-positive-export-gap.md) retains the
 multi-farm, cooperative, other-adjustment, and ATS gates.
 Read-only text extraction across the locally retained TY2025 Form 1040 ATS

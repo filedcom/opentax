@@ -55,7 +55,7 @@ half-SE-tax route through calculation, native XML, and PDF projection.
 
 The Schedule F node now retains an identified farm row with the source Schedule
 F item and its computed profit. A positive Form 8995 claim requires one farm ID,
-farm name, nine-digit EIN, material participation, and an explicit confirmation
+farm name, a sourced line 1(b) TIN, material participation, and an explicit confirmation
 that there are no other attributable QBI adjustments. The return must also
 confirm no prior or suspended QBI loss and no patronage of a specified
 cooperative. The exporter rechecks linked farm source amounts, recalculates the
@@ -82,9 +82,23 @@ The reviewed Form 8995 PDF SHA-256 is
 the nine-page packet SHA-256 is
 `640c25a118d1d88494c481c135a003f21f010d18499e211f69a8934f6b173ad7`.
 
+The [IRS 2025 Form 8995 instructions](https://www.irs.gov/instructions/i8995)
+allow the owner SSN in line 1(b) when a sole proprietor has no EIN. The
+single-filer farm route now carries the sourced taxpayer SSN through the
+Form 8995 node. MeF emits the TY2025 `SSN` choice and the PDF prints that SSN in
+the TIN column; the exporter rejects a missing or changed SSN and a joint
+filing-status claim without an identified farm owner. The no-EIN synthetic
+return passed graph, full-return XSD, and filled-PDF visual checks. Its review
+artifacts are in `.state/research/review/ty2025-form8995-farm-ssn/`; the
+Form 8995 PDF SHA-256 is
+`c3e1764f0b91d9db34b8e992f5773857c2f69a1e01e9ddf673fad9515dec7983`,
+and the nine-page packet SHA-256 is
+`90d5b9d11aee66e6d09c5d5efff8b41f132c93b9966512a2c78bdef0066aa9d1`.
+
 ## Remaining gaps
 
-- Multi-farm returns, farms without an EIN or separate farm name, cooperative
+- Multi-farm returns, joint-filer farms without owner identity, farms without a
+  separate farm name, cooperative
   patrons, and returns with other attributable QBI deductions remain outside
   the bounded one-farm exporter. The accrual Schedule F source case with $12,100
   of profit still exercises a zero-claim return because its taxable income is

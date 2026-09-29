@@ -54,13 +54,13 @@ export const form8995Pdf: PdfFormDescriptor = {
     ) {
       throw new Error("Form 8995 PDF needs a valid nonnegative QBI deduction");
     }
-    const { businessName, ein, qbi, lines } = assertOneBusiness8995(
+    const { businessName, tin, qbi, lines } = assertOneBusiness8995(
       fields,
       allPending,
     );
     return {
       line1_business_name: businessName,
-      line1_ein: ein,
+      line1_ein: tin.value,
       line1_qbi: qbi,
       ...Object.fromEntries(
         Object.entries(lines).map(([line, amount]) => [`line${line}`, amount]),

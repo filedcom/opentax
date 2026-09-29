@@ -8,6 +8,30 @@ import { pdfReviewFixtures } from "../../pdf/review-fixtures.ts";
 import { buildMefXml } from "../builder.ts";
 import { testFiler } from "../test-filer.ts";
 
+const return1040Xsd = new URL(
+  "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+  import.meta.url,
+).pathname;
+
+async function assertReturnXsd(xml: string): Promise<void> {
+  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(xmlPath, xml);
+    const validation = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", return1040Xsd, xmlPath],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(
+      validation.code,
+      0,
+      new TextDecoder().decode(validation.stderr),
+    );
+  } finally {
+    await Deno.remove(xmlPath);
+  }
+}
+
 Deno.test("profitable Schedule C with half-SE deduction reaches Form 8995 MeF and PDF", () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-schedule-c"
@@ -101,26 +125,7 @@ Deno.test("one sourced Schedule F farm reaches Form 8995 MeF, PDF, and full-retu
   assertEquals(pdf?.line15, fields?.line15);
   const returnXml = buildMefXml(pending, testFiler());
   assertEquals(returnXml.includes("<IRS8995 documentId="), true);
-  const schemaPath = new URL(
-    "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
-    import.meta.url,
-  ).pathname;
-  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
-  try {
-    await Deno.writeTextFile(xmlPath, returnXml);
-    const validation = await new Deno.Command("xmllint", {
-      args: ["--noout", "--schema", schemaPath, xmlPath],
-      stdout: "piped",
-      stderr: "piped",
-    }).output();
-    assertEquals(
-      validation.code,
-      0,
-      new TextDecoder().decode(validation.stderr),
-    );
-  } finally {
-    await Deno.remove(xmlPath);
-  }
+  await assertReturnXsd(returnXml);
   assertThrows(
     () =>
       form8995.build(fields, {
@@ -194,6 +199,70 @@ Deno.test("one sourced Schedule F farm reaches Form 8995 MeF, PDF, and full-retu
         },
       },
     }), Error);
+});
+
+Deno.test("single-filer farm without EIN uses the sourced SSN on Form 8995", async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: {
+      filing_status: "single",
+      taxpayer_first_name: "Sam",
+      taxpayer_last_name: "Farmer",
+      taxpayer_ssn: "123-45-6789",
+      qbi_no_prior_loss_or_suspended_loss_confirmed: true,
+      qbi_not_patron_of_specified_cooperative_confirmed: true,
+    },
+    schedule_f: {
+      schedule_fs: [{
+        farm_id: "north",
+        line_a_principal_crop_activity: "GRAIN FARMING",
+        line_b_agricultural_activity_code: "111100",
+        line_c_farm_name: "North Farm",
+        line_e_material_participation: true,
+        accounting_method: "cash",
+        line1_sales_livestock_resale: 0,
+        line2_sales_products_raised: 80_000,
+        ccc_loan_election_in_effect: false,
+        qbi_no_other_adjustments_confirmed: true,
+      }],
+    },
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const pending = result.pending;
+  const fields = pending.form8995;
+  assertEquals(fields?.line1_ein, undefined);
+  assertEquals(fields?.line1_ssn, "123456789");
+  const fragment = form8995.build(fields, { pending });
+  assertEquals(fragment.includes("<SSN>123456789</SSN>"), true);
+  assertEquals(fragment.includes("<EIN>"), false);
+  const projected = form8995Pdf.projectFields?.(fields, pending);
+  assertEquals(projected?.line1_ein, "123456789");
+  const xml = buildMefXml(pending, testFiler());
+  await assertReturnXsd(xml);
+  assertThrows(
+    () =>
+      form8995.build(fields, {
+        pending: {
+          ...pending,
+          general: {
+            ...pending.general,
+            filing_status: "married_filing_jointly",
+          },
+        },
+      }),
+    Error,
+    "source reconciliation",
+  );
+  assertThrows(
+    () =>
+      form8995.build(fields, {
+        pending: {
+          ...pending,
+          general: { ...pending.general, taxpayer_ssn: "987-65-4321" },
+        },
+      }),
+    Error,
+    "source reconciliation",
+  );
 });
 
 Deno.test("Form 8995 omits no-claim tracking fields in both exports", () => {

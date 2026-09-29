@@ -32,9 +32,9 @@ const lineNumbers = [
   17,
 ] as const;
 
-export type OneScheduleC8995 = {
+export type OneBusiness8995 = {
   readonly businessName: string;
-  readonly ein: string;
+  readonly tin: { readonly kind: "ein" | "ssn"; readonly value: string };
   readonly qbi: number;
   readonly lines: Readonly<Record<(typeof lineNumbers)[number], number>>;
 };
@@ -42,7 +42,7 @@ export type OneScheduleC8995 = {
 function assertFiledLines(
   fields: Record<string, unknown>,
   f1040: Record<string, unknown>,
-): OneScheduleC8995["lines"] {
+): OneBusiness8995["lines"] {
   const qbi = fields.line1_qbi as number;
   const line11 = fields.line11 as number;
   const line5 = Math.round(qbi * 0.2);
@@ -87,7 +87,7 @@ function zeroOrAbsent(value: unknown): boolean {
 export function assertOneScheduleC8995(
   fields: Record<string, unknown>,
   rawPending: Readonly<Record<string, unknown>> | undefined,
-): OneScheduleC8995 {
+): OneBusiness8995 {
   if (!rawPending) {
     throw new Error(
       "Form 8995 needs its complete source and final return pending graph",
@@ -200,7 +200,7 @@ export function assertOneScheduleC8995(
   const expected = assertFiledLines(fields, f1040);
   return {
     businessName: sourceBusiness.line_c_business_name,
-    ein,
+    tin: { kind: "ein", value: ein },
     qbi,
     lines: expected,
   };
@@ -210,7 +210,7 @@ export function assertOneScheduleC8995(
 export function assertOneScheduleF8995(
   fields: Record<string, unknown>,
   rawPending: Readonly<Record<string, unknown>> | undefined,
-): OneScheduleC8995 {
+): OneBusiness8995 {
   if (!rawPending) {
     throw new Error(
       "Form 8995 needs its complete source and final return pending graph",
@@ -242,6 +242,10 @@ export function assertOneScheduleF8995(
   const ein = typeof fields.line1_ein === "string"
     ? fields.line1_ein.replace(/\D/g, "")
     : "";
+  const ssn = typeof fields.line1_ssn === "string"
+    ? fields.line1_ssn.replace(/\D/g, "")
+    : "";
+  const usesSsn = !farm?.line_d_ein;
   const otherSourceKeys = [
     "schedule_c",
     "schedule_e",
@@ -280,9 +284,18 @@ export function assertOneScheduleF8995(
       farm.line_c_farm_name,
     ) ||
     fields.line1_business_name !== farm.line_c_farm_name ||
-    !farm.line_d_ein || ein.length !== 9 ||
-    ein !== farm.line_d_ein.replace(/\D/g, "") ||
-    row.ein !== ein || row.qbi !== rawQbi ||
+    (usesSsn
+      ? fields.line1_ein !== undefined || row.ein !== undefined ||
+        ssn.length !== 9 ||
+        general?.filing_status !== "single" ||
+        fields.filing_status !== "single" ||
+        ssn !== String(general.taxpayer_ssn ?? "").replace(/\D/g, "") ||
+        ssn !== String(fields.taxpayer_ssn ?? "").replace(/\D/g, "")
+      : fields.line1_ssn !== undefined || ssn !== "" ||
+        ein.length !== 9 ||
+        ein !== farm.line_d_ein!.replace(/\D/g, "") ||
+        row.ein !== ein) ||
+    row.qbi !== rawQbi ||
     fields.qbi_from_schedule_f !== rawQbi ||
     typeof fields.line1_qbi !== "number" ||
     !Number.isInteger(fields.line1_qbi) || fields.line1_qbi <= 0 ||
@@ -323,7 +336,7 @@ export function assertOneScheduleF8995(
   }
   return {
     businessName: farm.line_c_farm_name,
-    ein,
+    tin: usesSsn ? { kind: "ssn", value: ssn } : { kind: "ein", value: ein },
     qbi: fields.line1_qbi as number,
     lines: assertFiledLines(fields, f1040),
   };
@@ -332,7 +345,7 @@ export function assertOneScheduleF8995(
 export function assertOneBusiness8995(
   fields: Record<string, unknown>,
   pending: Readonly<Record<string, unknown>> | undefined,
-): OneScheduleC8995 {
+): OneBusiness8995 {
   if (fields.schedule_f_qbi_businesses !== undefined) {
     return assertOneScheduleF8995(fields, pending);
   }
