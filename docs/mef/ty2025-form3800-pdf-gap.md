@@ -14,8 +14,8 @@ needed for the [required Form 3800 statement](https://www.irs.gov/instructions/i
 and its four focused cases pass. Reconciled nonpassive vintages now feed the
 Part I line 4 and Part II line 34 calculations, with separate ordinary and
 specified tax limits. The native builder explicitly rejects their export
-until prior-return evidence, Part IV/VI native and PDF rows, and a transmitted
-statement are joined. Research-credit vintages are rejected before calculation
+until prior-return evidence and the complete prepared packet are verified.
+Research-credit vintages are rejected before calculation
 until their Form 6765 business-income limitation can be applied. Later-year
 carrybacks remain unsupported.
 
@@ -27,8 +27,8 @@ statement occupies two letter-size pages, with all nine headings preserved and
 no visual clipping. Its retained diagnostic is
 `.state/research/form3800-carryover-statement-diagnostic.pdf` (SHA-256
 `073b959868dc8f016b5657633646b1a9b6a23913010b6bf4f61a5f254df941d8`).
-The renderer is not registered with the prepared Form 3800 PDF descriptor;
-filing integration and external source verification remain open.
+The renderer was subsequently wired into the Form 3800 PDF descriptor, as
+recorded below; external source verification remains open.
 
 The local TY2025 v5.4 schema also defines a structured
 `CarryforwardGeneralBusinessCr` document with credit identity, origin year,
@@ -47,7 +47,7 @@ keys, originating years, amounts and tax use to Part IV and the native
 computation links; both native XML and PDF columns use those typed rows, and
 the synthetic parent passes local TY2025 v5.4 XSD. Production assembly was
 subsequently connected, as recorded below. Authenticated prior-return
-evidence, the filed history attachment, and any additional revised-credit facts
+evidence, positive filed-packet proof, and any additional revised-credit facts
 remain open; native export still rejects carryforwards.
 
 The native parent and PDF projectors now call one Part IV/VI reconciliation
@@ -87,6 +87,15 @@ carryforward-only prepared case reaches that guard with reserved computation
 and Form 6251 IDs and reconciled Form 1040/Schedule 3 tax facts. The 243-case
 focused rerun is recorded in
 `.state/research/ty2025-form3800-focused-preparation-integration.log`.
+The Form 3800 PDF descriptor now appends the carryover history after its filled
+form pages using the builder's prepared MeF parts and normalized source input.
+Before appending it checks each vintage's source key, credit line, originating
+year, available amount, and revised status against those prepared parts. A
+component case places the history after nine form pages and rejects changed
+source facts. The PDF builder and Form 3800 focused run passed 257/257; its
+log is `.state/research/ty2025-form3800-focused-history-attachment.log`.
+The prepared production packet still cannot pass the authenticated prior-return
+evidence gate.
 The updated one-page history layout was rendered and visually checked with a
 long partnership entity reference; its EIN label and value stay together after
 word wrapping. The review PDF and PNG are retained under `.state/research/`

@@ -304,7 +304,13 @@ export async function buildPdfBytes(
       for (const page of copiedPages) {
         merged.addPage(page);
       }
-      await descriptor.appendSupplementalPages?.(merged, instance, filer);
+      await descriptor.appendSupplementalPages?.(
+        merged,
+        instance,
+        filer,
+        normalized,
+        preparedBundle?.form3800Parts,
+      );
     }
   }
 

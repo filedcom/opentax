@@ -1,5 +1,10 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import {
+  inputSchema as f3800InputSchema,
+  reconcileForm3800NonpassiveCarryforwards,
+} from "../../../nodes/inputs/f3800/index.ts";
+import { appendForm3800CarryoverStatement } from "./f3800_carryover_statement.ts";
+import {
   form3800HeaderFields,
   form3800PartIAndIIFields,
   form3800PartIIIFields,
@@ -81,5 +86,54 @@ export const form3800Pdf: PdfFormDescriptor = {
       }
     }
     return [projected];
+  },
+  async appendSupplementalPages(document, _fields, filer, all, prepared) {
+    const entries = all?.f3800
+      ? f3800InputSchema.parse(all.f3800).carryforward_vintages ?? []
+      : [];
+    if (entries.length === 0) {
+      if (prepared?.carryforwardSources.length) {
+        throw new Error(
+          "Form 3800 printable carryforward source lacks ledger history",
+        );
+      }
+      return;
+    }
+    if (!prepared) {
+      throw new Error(
+        "Form 3800 carryforward history needs prepared MeF parts",
+      );
+    }
+    const reconciled = reconcileForm3800NonpassiveCarryforwards(entries);
+    if (prepared.carryforwardSources.length !== reconciled.length) {
+      throw new Error(
+        "Form 3800 printable carryforward history source count differs from MeF",
+      );
+    }
+    for (const vintage of reconciled) {
+      const source = prepared.carryforwardSources.find((source) =>
+        source.sourceKey === `carryforward:${vintage.sourceKey}`
+      );
+      const sourceCents = Math.round((source?.availableCredit ?? NaN) * 100);
+      if (
+        !source || source.line !== vintage.form3800CreditLine ||
+        source.originatingTaxYear !== vintage.originatingTaxYear ||
+        !source.documentId.trim() ||
+        !Number.isSafeInteger(sourceCents) ||
+        Math.abs(source.availableCredit * 100 - sourceCents) > 0.000001 ||
+        sourceCents !==
+          Math.round(vintage.availableAfterAdjustment * 100) ||
+        source.revisedFromOriginal !== vintage.revisedFromOriginal
+      ) {
+        throw new Error(
+          "Form 3800 printable carryforward history differs from prepared MeF source",
+        );
+      }
+    }
+    await appendForm3800CarryoverStatement(
+      document,
+      entries.map((entry) => entry.vintage),
+      filer,
+    );
   },
 };
