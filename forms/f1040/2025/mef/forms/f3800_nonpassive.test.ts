@@ -263,7 +263,7 @@ Deno.test("Form 3800 XML: Form 8874 line 1i links native source and tax use", ()
     xml,
     '<Form8874CYCreditsGrp referenceDocumentId="IRS8874_1"',
   );
-  assertStringIncludes(xml, "<Frm8874CYAggrgtAmtGrp");
+  assertStringIncludes(xml, "<GenBusCYCreditsSubTotGrp>");
   assertStringIncludes(
     xml,
     "<CurrentYearCreditAllowedAmt>5000</CurrentYearCreditAllowedAmt>",
@@ -920,9 +920,9 @@ Deno.test("Form 3800 XML: mixed Form 8826 and Form 8835 follows TY2025 source sc
   const documents = [
     buildFiledNonpassive({
       tax: { ...tax, standardCredit: 23_000 },
-      disabledAccess: disabledAccess,
+      disabledAccess: { ...disabledAccess, documentId: "IRS8826-1" },
       facilities: [ordinary, specified],
-      form8835DocumentIds: ["IRS8835_1", "IRS8835_2"],
+      form8835DocumentIds: ["IRS8835-1", "IRS8835-2"],
       appliedCreditsByFacility: [15_000, 15_000],
       transferStatementIdsByFileName: {
         "Transfer Election Statement.pdf": "BinaryAttachment1",
@@ -962,7 +962,7 @@ Deno.test("Form 3800 XML: mixed Form 8826 and Form 8835 follows TY2025 source sc
       tax: { ...tax, standardCredit: 19_750, specifiedCredit: 0 },
       form8820: {
         credit: 19_750,
-        documentId: "IRS8820_1",
+        documentId: "IRS8820-1",
         appliedCredit: 19_750,
         sources: [
           { credit: 18_500 },
@@ -979,7 +979,7 @@ Deno.test("Form 3800 XML: mixed Form 8826 and Form 8835 follows TY2025 source sc
       tax: { ...tax, standardCredit: 19_750, specifiedCredit: 0 },
       form8820: {
         credit: 19_750,
-        documentId: "IRS8820_1",
+        documentId: "IRS8820-1",
         appliedCredit: 19_750,
         sources: [{ credit: 19_750 }],
       },
@@ -1026,7 +1026,7 @@ Deno.test("Form 3800 XML: mixed Form 8826 and Form 8835 follows TY2025 source sc
   for (const document of documents) {
     const xml = document.replace(
       "<IRS3800>",
-      '<IRS3800 xmlns="http://www.irs.gov/efile">',
+      '<IRS3800 xmlns="http://www.irs.gov/efile" documentId="IRS3800-1">',
     );
     const path = await Deno.makeTempFile({ suffix: ".xml" });
     try {
@@ -1147,7 +1147,7 @@ Deno.test("Form 3800 XML: rejects unmatched allocation and absent transfer state
         appliedCreditsByFacility: [17_000, 15_000],
       }),
     Error,
-    "does not reconcile",
+    "do not reconcile to Part II",
   );
   assertThrows(
     () => buildFiledNonpassive({ ...base, transferStatementIdsByFileName: {} }),
