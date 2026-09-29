@@ -8294,12 +8294,19 @@ Deno.test(
   },
   async () => {
     const result = runReturn({
-      general: singleGeneral(),
+      general: {
+        ...singleGeneral(),
+        qbi_no_prior_loss_or_suspended_loss_confirmed: true,
+        qbi_not_patron_of_specified_cooperative_confirmed: true,
+      },
       schedule_c: [
         {
+          business_reference: "consulting-2025",
           line_a_principal_business: "Consulting",
           line_b_business_code: "541600",
           line_c_business_name: "Test LLC",
+          line_d_ein: "123456789",
+          qbi_no_other_adjustments_confirmed: true,
           line_e_business_address: {
             line1: "1 Business Way",
             city: "Austin",
@@ -8336,10 +8343,18 @@ Deno.test(
   },
   async () => {
     const result = runReturn({
-      general: singleGeneral(),
+      general: {
+        ...singleGeneral(),
+        qbi_no_prior_loss_or_suspended_loss_confirmed: true,
+        qbi_not_patron_of_specified_cooperative_confirmed: true,
+      },
       schedule_c: [{
+        business_reference: "retail-2025",
         line_a_principal_business: "Retail",
         line_b_business_code: "449110",
+        line_c_business_name: "Retail Shop",
+        line_d_ein: "987654321",
+        qbi_no_other_adjustments_confirmed: true,
         line_f_accounting_method: "cash",
         line_g_material_participation: true,
         line_1_gross_receipts: 60_000,
