@@ -24,24 +24,33 @@ Deno.test("smoke: disposed_properties alone produces no outputs (indicator only)
 });
 
 Deno.test("investment section 1245 recapture and excess gain take separate return paths", () => {
-  const result = compute({ investment_1245_dispositions: [{
-    property_id: "investment-1245-1",
-    property_description: "Investment equipment",
-    acquired_on: "2022-05-01",
-    sold_on: "2025-06-01",
-    gross_sales_price: 15_000,
-    cost_or_other_basis_plus_sale_expense: 12_000,
-    depreciation_allowed_or_allowable: 5_000,
-    property_held_for_investment_not_business: true,
-    section_1245_classification_reviewed: true,
-    direct_cash_sale_no_special_recapture_exception: true,
-    sale_document_reference: "SALE-2025-1",
-    basis_document_reference: "BASIS-2022-1",
-    depreciation_schedule_reference: "DEPR-2025-1",
-  }] });
-  assertEquals(findOutput(result, "schedule1")?.fields.line4_other_gains, 5_000);
-  assertEquals(findOutput(result, "agi_aggregator")?.fields.line4_other_gains, 5_000);
-  const transaction = findOutput(result, "form8949")?.fields.transaction as Record<string, unknown>;
+  const result = compute({
+    investment_1245_dispositions: [{
+      property_id: "investment-1245-1",
+      property_description: "Investment equipment",
+      acquired_on: "2022-05-01",
+      sold_on: "2025-06-01",
+      gross_sales_price: 15_000,
+      cost_or_other_basis_plus_sale_expense: 12_000,
+      depreciation_allowed_or_allowable: 5_000,
+      property_held_for_investment_not_business: true,
+      section_1245_classification_reviewed: true,
+      direct_cash_sale_no_special_recapture_exception: true,
+      sale_document_reference: "SALE-2025-1",
+      basis_document_reference: "BASIS-2022-1",
+      depreciation_schedule_reference: "DEPR-2025-1",
+    }],
+  });
+  assertEquals(
+    findOutput(result, "schedule1")?.fields.line4_other_gains,
+    5_000,
+  );
+  assertEquals(
+    findOutput(result, "agi_aggregator")?.fields.line4_other_gains,
+    5_000,
+  );
+  const transaction = findOutput(result, "form8949")?.fields
+    .transaction as Record<string, unknown>;
   assertEquals(transaction.description, "From Form 4797");
   assertEquals(transaction.proceeds, 3_000);
   assertEquals(transaction.cost_basis, 0);
@@ -92,31 +101,38 @@ Deno.test("passive property sale source routes dated Part I and Part II gains", 
     2_000,
   );
   assertEquals(
-    findOutput(result, "agi_aggregator")?.fields.line4_other_gains,
+    result.outputs.find((row) =>
+      row.nodeType === "agi_aggregator" &&
+      row.fields.line4_other_gains !== undefined
+    )?.fields.line4_other_gains,
     2_000,
   );
 });
 
 Deno.test("Form 4797 carries the retained-activity fact with a Part II sale gain", () => {
-  const result = compute({ passive_property_sales: [{
-    activity_id: "rental-retained",
-    activity_name: "Retained rental",
-    part: "II",
-    property_description: "Short-held parcel",
-    acquired_on: "2025-01-01",
-    sold_on: "2025-06-01",
-    gross_sales_price: 9_000,
-    cost_or_other_basis: 5_000,
-    depreciation_allowed: 0,
-    entire_activity_interest_disposed: false,
-  }] });
-  assertEquals(findOutput(result, "form8582")?.fields.current_4797_sale_gains, [{
-    activity_id: "rental-retained",
-    activity_name: "Retained rental",
-    part: "II",
-    gain: 4_000,
-    entire_activity_interest_disposed: false,
-  }]);
+  const result = compute({
+    passive_property_sales: [{
+      activity_id: "rental-retained",
+      activity_name: "Retained rental",
+      part: "II",
+      property_description: "Short-held parcel",
+      acquired_on: "2025-01-01",
+      sold_on: "2025-06-01",
+      gross_sales_price: 9_000,
+      cost_or_other_basis: 5_000,
+      depreciation_allowed: 0,
+      entire_activity_interest_disposed: false,
+    }],
+  });
+  assertEquals(findOutput(result, "form8582")?.fields.current_4797_sale_gains, [
+    {
+      activity_id: "rental-retained",
+      activity_name: "Retained rental",
+      part: "II",
+      gain: 4_000,
+      entire_activity_interest_disposed: false,
+    },
+  ]);
 });
 
 Deno.test("Form 4797 carries an entire overall-gain sale to Form 8582 and AGI", () => {
@@ -158,15 +174,23 @@ Deno.test("Form 4797 carries an entire overall-gain sale to Form 8582 and AGI", 
     passive_disposed_activity_ids: [activity.activity_id],
     passive_property_sales: [sale],
   });
-  assertEquals(findOutput(result, "form8582")?.fields.current_4797_sale_gains, [{
-    activity_id: activity.activity_id,
-    activity_name: activity.name,
-    part: "II",
-    gain: 15_000,
-    entire_activity_interest_disposed: true,
-  }]);
-  assertEquals(findOutput(result, "agi_aggregator")?.fields.pal_current_4797_gain, 15_000);
-  assertEquals(findOutput(result, "schedule1")?.fields.line4_other_gains, 15_000);
+  assertEquals(findOutput(result, "form8582")?.fields.current_4797_sale_gains, [
+    {
+      activity_id: activity.activity_id,
+      activity_name: activity.name,
+      part: "II",
+      gain: 15_000,
+      entire_activity_interest_disposed: true,
+    },
+  ]);
+  assertEquals(
+    findOutput(result, "agi_aggregator")?.fields.pal_current_4797_gain,
+    15_000,
+  );
+  assertEquals(
+    findOutput(result, "schedule1")?.fields.line4_other_gains,
+    15_000,
+  );
 });
 
 Deno.test("mixed retained passive sale nets prior Part I and II PAL once", () => {
@@ -233,12 +257,14 @@ Deno.test("mixed retained passive sale nets prior Part I and II PAL once", () =>
       activity_name: activity.name,
       part: "I",
       gain: 8_000,
+      entire_activity_interest_disposed: false,
     },
     {
       activity_id: activity.activity_id,
       activity_name: activity.name,
       part: "II",
       gain: 2_000,
+      entire_activity_interest_disposed: false,
     },
   ]);
 });
