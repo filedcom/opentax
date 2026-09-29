@@ -92,21 +92,48 @@ Deno.test("Form 8889 PDF retains separate rollover and age-65 exception print li
 });
 
 Deno.test("Form 8889 PDF creates one correctly identified page per HSA beneficiary", () => {
-  const instances = form8889Pdf.instances?.({
-    forms: [
-      {
-        owner: "primary",
-        beneficiary_name: "Alex Taxpayer",
-        beneficiary_ssn: "123456789",
-        print_line13_deduction: 4_000,
-      },
-      {
-        owner: "spouse",
-        beneficiary_name: "Sam Taxpayer",
-        beneficiary_ssn: "987654321",
-        print_line13_deduction: 2_000,
-      },
-    ],
+  const source = {
+    beneficiary_identity: { owner: "T" as const, name: "Alex Taxpayer", ssn: "123456789" },
+    eligible_hdhp_coverage_by_month: Array(12).fill(CoverageType.Family),
+    allocated_family_limit: 4_275,
+    family_allocation_source_reference: "2025 HSA allocation agreement",
+    age_55_or_older: false,
+    last_month_rule_elected: false,
+    married_at_year_end: true,
+    spouse_has_separate_hsa: true,
+    taxpayer_hsa_contributions: 4_000,
+    spouse_hsa: {
+      beneficiary_identity: { owner: "S" as const, name: "Sam Taxpayer", ssn: "987654321" },
+      eligible_hdhp_coverage_by_month: Array(12).fill(CoverageType.Family),
+      allocated_family_limit: 4_275,
+      family_allocation_source_reference: "2025 HSA allocation agreement",
+      age_55_or_older: false,
+      last_month_rule_elected: false,
+      married_at_year_end: true,
+      spouse_has_separate_hsa: true,
+      taxpayer_hsa_contributions: 2_000,
+    },
+  };
+  const result = form8889Node.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form8889InputSchema.parse(source),
+  );
+  const forms = result.outputs.find((row) => row.nodeType === "form8889")
+    ?.fields.forms as Record<string, unknown>[];
+  const filer: FilerIdentity = {
+    primarySSN: "123456789",
+    fullName: "Alex Taxpayer",
+    nameLine1: "TAXPAYER ALEX",
+    nameControl: "TAXP",
+    filingStatus: FilingStatus.MarriedFilingJointly,
+    address: { line1: "1 Main St", city: "Austin", state: "TX", zip: "78701" },
+    spouse: { ssn: "987654321", firstName: "Sam", lastName: "Taxpayer", nameControl: "TAXP" },
+  };
+  const instances = form8889Pdf.instances?.({ forms }, filer, {
+    form8889: { ...source, forms },
+    schedule1: { line13_hsa_deduction: 6_000, line26_total_adjustments: 6_000 },
+    schedule2: {},
+    f1040: { line10_adjustments: 6_000 },
   }) ?? [];
   assertEquals(instances.length, 2);
   assertEquals(instances.map((instance) => instance.beneficiary_ssn), [
@@ -130,6 +157,7 @@ Deno.test("Form 8889 PDF accepts one sourced spouse account and rejects changed 
     },
     eligible_hdhp_coverage_by_month: Array(12).fill(CoverageType.SelfOnly),
     age_55_or_older: false,
+    last_month_rule_elected: false,
     married_at_year_end: true,
     spouse_has_separate_hsa: false,
     taxpayer_hsa_contributions: 2_000,
@@ -191,12 +219,11 @@ Deno.test("Schedule 1 PDF identifies HSA excess-withdrawal earnings on line 8z",
   const [combined] = schedule1Pdf.instances?.({
     line8z_hsa_excess_earnings: 100,
     line8z_form8814: 50,
-    line8z_other: 25,
   }) ?? [];
-  assertEquals(combined.line8z_other, 175);
+  assertEquals(combined.line8z_other, 150);
   assertEquals(
     combined.line8z_description,
-    "Form 8814, HSA excess earnings, other income",
+    "FORM 8814, HSA excess earnings",
   );
 });
 
