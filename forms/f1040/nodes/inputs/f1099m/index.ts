@@ -352,9 +352,23 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
       ...(nqdc > 0 ? { line8z_nqdc: nqdc } : {}),
       ...(other > 0 ? { line8z_other: other } : {}),
     };
-    if (Object.keys(agiIncome).length > 0) {
+    if (prizes > 0) {
       outputs.push(this.outputNodes.output(agi_aggregator, {
         ...agiIncome,
+        line8i_prizes_awards: prizes,
+      }));
+    } else if (substitute > 0) {
+      outputs.push(this.outputNodes.output(agi_aggregator, {
+        ...agiIncome,
+        line8z_substitute_payments: substitute,
+      }));
+    } else if (nqdc > 0) {
+      outputs.push(this.outputNodes.output(agi_aggregator, {
+        ...agiIncome,
+        line8z_nqdc: nqdc,
+      }));
+    } else if (other > 0) {
+      outputs.push(this.outputNodes.output(agi_aggregator, {
         line8z_other: other,
       }));
     }
