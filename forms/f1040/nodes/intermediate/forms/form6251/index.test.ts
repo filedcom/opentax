@@ -92,7 +92,7 @@ Deno.test("form6251: Form 8949 AMT basis requires intact rows and regular Schedu
   assertThrows(
     () => compute({ ...base, form4952_amt_election: 1_000 }),
     Error,
-    "without Form 4952",
+    "with no other capital activity, Form 4952",
   );
   assertThrows(
     () =>
@@ -579,12 +579,12 @@ Deno.test("form6251: short-term AMT basis rejects unaudited capital activity and
   assertThrows(
     () => compute({ ...base, net_capital_gain: 50_000 }),
     Error,
-    "long-term gains to equal",
+    "identified rows to reconcile with regular Schedule D net capital gain",
   );
   assertThrows(
     () => compute({ ...base, form4952_regular_election: 100 }),
     Error,
-    "without Form 4952",
+    "with no other capital activity, Form 4952",
   );
   assertThrows(
     () =>
@@ -692,7 +692,7 @@ Deno.test("form6251: negative trust K-1 code A with qualified dividends refigure
         regular_taxable_income: undefined,
       }),
     Error,
-    "counterfactual needs Form 1040 line 15 taxable income",
+    "needs a refigured special-rate line 7",
   );
   assertThrows(
     () => compute({ ...base, regular_tax: 4_000, qualified_dividends: 15_000 }),
@@ -983,7 +983,7 @@ Deno.test("form6251: circulation-cost preferential counterfactual respects line 
         regular_taxable_income: undefined,
       }),
     Error,
-    "counterfactual needs Form 1040 line 15 taxable income",
+    "needs a refigured special-rate line 7",
   );
   assertThrows(
     () => compute({ ...base, regular_tax: 4_000, qualified_dividends: 15_000 }),
@@ -1837,7 +1837,7 @@ Deno.test("form6251: line 2l needs distinct reviewed post-1998 property deductio
   const base = {
     filing_status: "single",
     regular_tax_income: 200_000,
-    regular_tax: 30_000,
+    regular_tax: 10_000,
     depreciation_adjustment: 1_000,
   };
   const second = {
