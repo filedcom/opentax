@@ -22,6 +22,11 @@ function filing(election: number) {
       box1b: 1_000,
       investment_property_for_form4952: true,
     }],
+    schedule_b_part_iii: {
+      foreign_accounts_question: false,
+      fincen_form114_required: false,
+      foreign_trust_question: false,
+    },
     form4952: {
       investment_interest_expense: 20_000,
       investment_income_election: election,
