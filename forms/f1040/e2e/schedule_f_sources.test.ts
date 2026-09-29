@@ -113,11 +113,12 @@ Deno.test("accrual Schedule F reconciles farm source forms to Part III", () => {
           inventory_method: "cost",
         },
         line10_car_truck: 3_500,
+        line17_fertilizers: 20_000,
       }],
     },
   }, ctx);
   assertEquals(result.diagnostics, []);
-  assertEquals(result.pending.schedule1?.line6_schedule_f, 32_100);
+  assertEquals(result.pending.schedule1?.line6_schedule_f, 12_100);
   const xml = buildMefXml(result.pending as MefFormsPending, testFiler());
   assertStringIncludes(
     xml,
@@ -129,7 +130,7 @@ Deno.test("accrual Schedule F reconciles farm source forms to Part III", () => {
   );
   assertStringIncludes(
     xml,
-    "<NetFarmProfitLossAmt>32100</NetFarmProfitLossAmt>",
+    "<NetFarmProfitLossAmt>12100</NetFarmProfitLossAmt>",
   );
 });
 
