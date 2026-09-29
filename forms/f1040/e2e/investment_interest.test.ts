@@ -22,7 +22,11 @@ function run(inputs: Record<string, unknown>) {
 
 Deno.test("Form 4952 limits the reported Schedule A deduction and carries excess", () => {
   const result = run({
-    f1099int: [{ payer_name: "Example Bank", box1: 2_000 }],
+    f1099int: [{
+      payer_name: "Example Bank",
+      box1: 2_000,
+      investment_property_for_form4952: true,
+    }],
     schedule_a: {
       line_9_investment_interest: 50_000,
       line_8a_mortgage_interest_1098: 20_000,
@@ -58,6 +62,7 @@ Deno.test("Form 8960 receives allowed interest and taxpayer-allocated state tax"
     f1099div: [{
       payerName: "Broker",
       box1a: 50_000,
+      investment_property_for_form4952: true,
       box1b: 0,
       box11: false,
       isNominee: false,
@@ -98,7 +103,11 @@ Deno.test("Form 8960 receives allowed interest and taxpayer-allocated state tax"
 
 Deno.test("Form 8960 does not deduct investment interest when standard deduction wins", () => {
   const result = run({
-    f1099int: [{ payer_name: "Example Bank", box1: 2_000 }],
+    f1099int: [{
+      payer_name: "Example Bank",
+      box1: 2_000,
+      investment_property_for_form4952: true,
+    }],
     schedule_a: { line_9_investment_interest: 1_000 },
   });
   assertEquals(result.diagnostics, []);
@@ -111,6 +120,7 @@ Deno.test("Form 4952 uses prior carryforward and an explicit qualified-dividend 
     f1099div: [{
       payerName: "Broker",
       box1a: 10_000,
+      investment_property_for_form4952: true,
       box1b: 10_000,
       box11: false,
       isNominee: false,
@@ -131,7 +141,11 @@ Deno.test("Form 4952 uses prior carryforward and an explicit qualified-dividend 
 
 Deno.test("Form 4952 subtracts investment expenses before limiting interest", () => {
   const result = run({
-    f1099int: [{ payer_name: "Example Bank", box1: 2_000 }],
+    f1099int: [{
+      payer_name: "Example Bank",
+      box1: 2_000,
+      investment_property_for_form4952: true,
+    }],
     schedule_a: {
       line_9_investment_interest: 5_000,
       investment_expenses: 1_500,
@@ -147,16 +161,22 @@ Deno.test("Form 4952 subtracts investment expenses before limiting interest", ()
 
 Deno.test("Form 4952 pools interest and nonqualified dividends without counting qualified amounts", () => {
   const result = run({
-    f1099int: [{ payer_name: "Bank", box1: 1_000 }],
+    f1099int: [{
+      payer_name: "Bank",
+      box1: 1_000,
+      investment_property_for_form4952: true,
+    }],
     f1099div: [{
       payerName: "Broker",
       box1a: 2_000,
+      investment_property_for_form4952: true,
       box1b: 500,
       box11: false,
       isNominee: false,
     }],
     k1_partnership: [{
       partnership_name: "Partnership",
+      investment_property_for_form4952: true,
       box5_interest: 1_000,
       box6a_ordinary_dividends: 1_000,
       box6b_qualified_dividends: 500,
