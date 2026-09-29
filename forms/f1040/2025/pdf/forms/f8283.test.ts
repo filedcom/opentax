@@ -94,6 +94,38 @@ function electedPending() {
   };
 }
 
+function ordinaryPending() {
+  const item = {
+    ...shortTermGift,
+    property_description: "Purchased used books",
+    fmv: 700,
+    deduction_claimed: 700,
+    cost_or_adjusted_basis: 900,
+    short_term_ordinary_income_reduction_confirmed: undefined,
+  };
+  const form = { section_a_items: [item] };
+  const items = f8283.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form8283InputSchema.parse(form),
+  ).outputs[0].fields.noncash_contribution_items;
+  const source = {
+    agi: 100_000,
+    current_noncash_gift_inventory_complete_confirmed: true as const,
+    other_prior_charitable_carryovers_absent_confirmed: true as const,
+    capital_gain_property_carryovers: [],
+    noncash_contribution_items: items,
+  };
+  const finalized = scheduleA.compute(
+    { taxYear: 2025, formType: "f1040" },
+    scheduleAInputSchema.parse(source),
+  ).finalizations![0].fields;
+  return {
+    f8283: form,
+    schedule_a: { ...source, ...finalized },
+    f1040: { line11_agi: 100_000, line12e_itemized_deductions: 700 },
+  };
+}
+
 const electedLand = {
   property_description: "Unimproved investment land",
   property_type: SectionBPropertyType.OtherRealEstate,
@@ -198,7 +230,7 @@ Deno.test("Form 8283 PDF prints reconciled Section A and carries the FMV explana
   assertEquals(instance?.filer_name, "ALEX DONOR");
   assertEquals(
     instance?.row1_donee,
-    "Community Museum\n1 Museum Way\nAlbany, NY 12201",
+    "Community Museum\n1 Museum Way, Albany, NY 12201",
   );
   assertEquals(instance?.row1_contribution_date, "06/01/2025");
   assertEquals(instance?.row1_acquired_date, "02/2022");
@@ -208,6 +240,38 @@ Deno.test("Form 8283 PDF prints reconciled Section A and carries the FMV explana
   assertStringIncludes(
     (instance?.reduction_statements as string[])[0],
     "unreduced FMV $4500.00 minus $1500.00",
+  );
+});
+
+Deno.test("Form 8283 PDF prints one reconciled ordinary Section A gift", () => {
+  const pending = ordinaryPending();
+  const [instance] = form8283Pdf.instances?.(pending.f8283, filer, pending) ??
+    [];
+  assertEquals(instance?.row1_description, "Purchased used books");
+  assertEquals(instance?.row1_claim, 700);
+  assertEquals(instance?.row1_basis, 900);
+  assertEquals(instance?.row1_fmv_method, "Comparable sales");
+  assertEquals(instance?.reduction_statements, []);
+  assertThrows(
+    () =>
+      form8283Pdf.instances?.(pending.f8283, filer, {
+        ...pending,
+        f1040: { ...pending.f1040, line12e_itemized_deductions: 701 },
+      }),
+    Error,
+    "differs from recomputed Schedule A",
+  );
+  assertThrows(
+    () =>
+      form8283Pdf.instances?.(pending.f8283, filer, {
+        ...pending,
+        schedule_a: {
+          ...pending.schedule_a,
+          current_noncash_gift_inventory_complete_confirmed: undefined,
+        },
+      }),
+    Error,
+    "complete current-gift inventory",
   );
 });
 
@@ -246,7 +310,10 @@ Deno.test("Form 8283 mixed Section A preview keeps its sole reduction on item B"
     short_term_ordinary_income_reduction_confirmed: undefined,
   };
   const form = {
-    section_a_items: [companion, { ...shortTermGift, similar_item_group: "prints" }],
+    section_a_items: [companion, {
+      ...shortTermGift,
+      similar_item_group: "prints",
+    }],
   };
   const pending = { f8283: form };
   const [instance] = form8283Pdf.instances?.(form, filer, pending) ?? [];
@@ -286,13 +353,18 @@ Deno.test("Form 8283 mixed Section A preview rejects an unsourced unreduced comp
     cost_or_adjusted_basis: 800,
     short_term_ordinary_income_reduction_confirmed: undefined,
   };
-  for (const incomplete of [
-    { ...companion, cost_or_adjusted_basis: 500 },
-    { ...companion, donee_organization_us_address: undefined },
-    { ...companion, date_contributed: "2024-06-01" },
-  ]) {
+  for (
+    const incomplete of [
+      { ...companion, cost_or_adjusted_basis: 500 },
+      { ...companion, donee_organization_us_address: undefined },
+      { ...companion, date_contributed: "2024-06-01" },
+    ]
+  ) {
     const form = {
-      section_a_items: [incomplete, { ...shortTermGift, similar_item_group: "prints" }],
+      section_a_items: [incomplete, {
+        ...shortTermGift,
+        similar_item_group: "prints",
+      }],
     };
     assertThrows(
       () => form8283Pdf.instances?.(form, filer, { f8283: form }),
@@ -323,7 +395,10 @@ Deno.test("Form 8283 PDF rejects incomplete or divergent short-term reductions",
   const mixed = {
     section_a_items: [
       shortTermGift,
-      { ...shortTermGift, short_term_ordinary_income_reduction_confirmed: undefined },
+      {
+        ...shortTermGift,
+        short_term_ordinary_income_reduction_confirmed: undefined,
+      },
     ],
   };
   assertThrows(

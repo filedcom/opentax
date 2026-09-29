@@ -181,6 +181,48 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-ordinary-noncash-gift",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(100_000, 16_000, "Example Employer", "12-3456789")],
+      schedule_a: {
+        line_5a_state_income_tax: 24_000,
+        line_8a_mortgage_interest_1098: 12_000,
+        current_noncash_gift_inventory_complete_confirmed: true,
+        other_prior_charitable_carryovers_absent_confirmed: true,
+        capital_gain_property_carryovers: [],
+      },
+      f8283: {
+        section_a_items: [{
+          property_description: "Purchased used books",
+          donee_organization_name: "Community Library",
+          donee_organization_us_address: {
+            line1: "12 Library Lane",
+            city: "Austin",
+            state: "TX",
+            zip: "78701",
+          },
+          date_acquired: "2025-02-01",
+          date_contributed: "2025-11-13",
+          donor_acquisition_description: "Purchase",
+          fmv: 1_200,
+          deduction_claimed: 1_200,
+          cost_or_adjusted_basis: 1_800,
+          fmv_method: "thrift_shop_value",
+          charitable_limit_category: "noncash_50",
+          is_capital_gain_property: false,
+        }],
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule_a", "form8283"],
+    reviewFocus: [
+      "Form 8283 Section A prints the fully sourced ordinary gift without a reduction statement",
+      "Schedule A line 12 includes the 1,200 gift once and reconciles with Form 1040 itemized deductions",
+      "Native Form 8283 and the filled PDF identify the same donee, property, dates, basis, and claim",
+    ],
+  },
+  {
     id: "joint-two-w2s",
     inputs: {
       general: jointGeneral,

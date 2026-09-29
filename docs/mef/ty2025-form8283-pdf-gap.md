@@ -8,8 +8,8 @@ A rows A–D for up to four nonvehicle current-year gifts on the reconciled
 capital-gain election route. It prints the reduced claimed amount in column (h)
 and appends an FMV-reduction explanation page using the same text as the linked
 native MeF statement. The Form 8283 and Schedule A source must agree with the
-finalized itemized Form 1040 before PDF projection. Focused cases are written
-but unrun.
+finalized itemized Form 1040 before PDF projection. Focused descriptor cases
+pass locally.
 
 It also projects the bounded one-item current-year Section B unimproved
 investment-land capital-gain election onto both official pages. Page 1 prints
@@ -21,8 +21,8 @@ donee signature, and FMV-reduction statement are called out on a supplemental
 preview page. The renderer does not import or reproduce those signed PDFs, and
 the generated form must not be used as a signed paper Form 8283. Native MeF
 still requires those exact linked binary attachments. The field map was checked
-against the cached official AcroForm; filled appearance and fit await the one
-agreed PDF batch.
+against the cached official AcroForm; Section B signature and attachment review
+remains a filing prerequisite.
 
 The
 [December 2025 instructions](https://www.irs.gov/pub/irs-prior/i8283--2025.pdf)
@@ -51,11 +51,28 @@ starting `Form 8283 completed signed Section B`. The bundle rejects missing,
 misdescribed, unreadable, or digest-mismatched PDFs. It does not inspect ink or
 digital signatures by itself.
 
+The 2026-09-29 filled-output pass also added one ordinary current-year Section A
+gift claimed at its $1,200 FMV. This route requires a purchased noncapital
+nonvehicle item, full donee/property/acquisition/valuation facts, FMV no more
+than $5,000, basis at least FMV, a complete current-gift Schedule A inventory,
+an empty prior-carryover ledger, and an itemized Form 1040 with matching AGI and
+deductions. Its synthetic four-page return validates against the local TY2025
+v5.4 XSD. The rendered Form 8283 row was visually checked after condensing the
+donee address to two lines; all city/state/ZIP text now fits. Schedule A line
+12 and the native Form 8283 each carry the $1,200 gift once, and Form 1040 line
+12e carries the $37,200 itemized total. This filled-packet review also exposed
+a Schedule A AcroForm numbering error: the old map put amounts in unrelated
+fields. The corrected map was checked against widget positions and the
+rerendered page now prints $1,200 on line 12 and $37,200 on line 17, with
+matching name and SSN. The synthetic source and corrected packet are retained
+under `.state/research/ty2025-filled-pdf-review/2026-09-29-v15/`.
+
 This is not whole-form support. Other Section B property and multi-item routes,
 actual appraiser/donee signatures in the PDF, mixed Section A/B forms, more than
 four Section A rows, vehicles, carryover-year Form 8283 filings, and other
 non-election routes still stop rather than producing an incomplete PDF. The
-verified field map does not prove that filled text fits or that the supplemental
-page is visually correct. AcroForm data, page appearance, and the complete
-return must be checked in the agreed PDF/full-test batch; local XSD, IRS
+verified field map does not prove that every filled text variant fits or that
+every supplemental page is visually correct. Other AcroForm data, page
+appearance, and complete returns must be checked in the agreed PDF/full-test
+batch; local XSD, IRS
 business rules, and ATS acceptance remain separate gates.

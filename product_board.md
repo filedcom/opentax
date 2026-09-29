@@ -146,6 +146,16 @@ $3,470 donor cost and $700 fair market value. The packet does not state the
 application's charitable-limit category or a reviewed similar-property
 classification, so the Scenario 2 Form 8283 source gate remains open rather
 than assigning those facts from an assumption.
+One separate, fully synthetic ordinary Section A gift now reaches the shared
+return graph, local TY2025 v5.4 native XML, and a filled four-page PDF packet.
+The $1,200 gift appears once on Schedule A line 12 and Form 8283; Form 1040
+line 12e is $37,200. Visual review caught and repaired a clipped donee address
+in the official Form 8283 row and a Schedule A PDF field-numbering error; the
+corrected page prints $1,200 on line 12 and $37,200 on line 17. The local
+source-reconciliation guard requires
+a complete current-gift inventory and matching itemized return. This bounded
+case does not establish the missing ATS Scenario 2 source classification or
+the other Form 8283 filing paths.
 
 The 2026-09-29 moving-worktree diagnostic `deno task test` run finished with
 8,609 passed and 205 failed in 11m18s. It is not the agreed fixed-commit

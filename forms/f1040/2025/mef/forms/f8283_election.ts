@@ -23,6 +23,100 @@ function hasCompleteSectionAColumns(item: SectionAItem): boolean {
     item.cost_or_adjusted_basis !== undefined;
 }
 
+/** Reconcile one ordinary, unreduced Section A gift before printing its PDF. */
+export function assertOrdinarySectionAReconciled(
+  context: MefBuildContext | undefined,
+): void {
+  const pending = context?.pending;
+  const returnFields = pending?.f1040 as Record<string, unknown> | undefined;
+  const scheduleFields = pending?.schedule_a as
+    | Record<string, unknown>
+    | undefined;
+  if (
+    !pending?.f8283 || !scheduleFields || !returnFields ||
+    returnFields.line12e_itemized_deductions === undefined ||
+    returnFields.line12a_standard_deduction !== undefined
+  ) {
+    throw new Error(
+      "Form 8283 ordinary Section A needs a complete Schedule A source and itemized Form 1040",
+    );
+  }
+  const form = form8283InputSchema.parse(pending.f8283);
+  if (
+    (form.section_a_items ?? []).length !== 1 ||
+    (form.section_b_items ?? []).length !== 0 ||
+    !hasCompleteSectionAColumns(form.section_a_items![0])
+  ) {
+    throw new Error(
+      "Form 8283 ordinary Section A needs one fully sourced current-year gift",
+    );
+  }
+  if (
+    scheduleFields.charitable_limits_finalized !== true ||
+    scheduleFields.current_noncash_gift_inventory_complete_confirmed !== true ||
+    scheduleFields.other_prior_charitable_carryovers_absent_confirmed !==
+      true ||
+    !Array.isArray(scheduleFields.capital_gain_property_carryovers) ||
+    scheduleFields.capital_gain_property_carryovers.length !== 0 ||
+    scheduleFields.line_13_contribution_carryover !== 0
+  ) {
+    throw new Error(
+      "Form 8283 ordinary Section A needs a complete current-gift inventory and empty carryover ledger",
+    );
+  }
+  const {
+    line_11_cash_contributions: _line11,
+    line_12_noncash_contributions: _line12,
+    line_13_contribution_carryover: _line13,
+    charitable_limits_finalized: _limits,
+    capital_gain_election_finalized: _election,
+    ...source
+  } = scheduleFields;
+  const parsedScheduleA = scheduleAInputSchema.parse(source);
+  const expectedItems = f8283.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form,
+  ).outputs.flatMap((output) =>
+    output.nodeType === "schedule_a"
+      ? (output.fields.noncash_contribution_items as readonly unknown[] ?? [])
+      : []
+  );
+  const actualItems = (parsedScheduleA.noncash_contribution_items ?? [])
+    .filter((item) => item.contribution_id?.startsWith("f8283:"));
+  if (
+    JSON.stringify(expectedItems) !== JSON.stringify(actualItems) ||
+    parsedScheduleA.agi !== returnFields.line11_agi
+  ) {
+    throw new Error(
+      "Form 8283 ordinary Section A differs from Schedule A's gift inventory or Form 1040 AGI",
+    );
+  }
+  const recomputed = scheduleA.compute(
+    { taxYear: 2025, formType: "f1040" },
+    parsedScheduleA,
+  );
+  const computed = recomputed.finalizations?.find((output) =>
+    output.nodeType === "schedule_a"
+  )?.fields;
+  const itemizedTotal = recomputed.outputs.find((output) =>
+    output.nodeType === "standard_deduction"
+  )?.fields.itemized_deductions;
+  if (
+    !computed ||
+    itemizedTotal !== returnFields.line12e_itemized_deductions ||
+    computed.line_11_cash_contributions !==
+      scheduleFields.line_11_cash_contributions ||
+    computed.line_12_noncash_contributions !==
+      scheduleFields.line_12_noncash_contributions ||
+    computed.line_13_contribution_carryover !==
+      scheduleFields.line_13_contribution_carryover
+  ) {
+    throw new Error(
+      "Form 8283 ordinary Section A differs from recomputed Schedule A or Form 1040 itemized deductions",
+    );
+  }
+}
+
 /** Prove the bounded current-year Section A election against the source graph. */
 export function assertElectedSectionAReconciled(
   context: MefBuildContext | undefined,

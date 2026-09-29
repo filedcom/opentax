@@ -15,6 +15,7 @@ import {
 import {
   assertElectedSectionAReconciled,
   assertElectedSectionBReconciled,
+  assertOrdinarySectionAReconciled,
 } from "../../mef/forms/f8283_election.ts";
 import {
   carriedSectionAItem,
@@ -178,8 +179,9 @@ function doneeLine(item: {
   if (!address) throw new Error("Form 8283 PDF needs a donee address");
   return [
     item.donee_organization_name,
-    [address.line1, address.line2].filter(Boolean).join(" "),
-    `${address.city}, ${address.state} ${address.zip}`,
+    `${
+      [address.line1, address.line2].filter(Boolean).join(" ")
+    }, ${address.city}, ${address.state} ${address.zip}`,
   ].join("\n");
 }
 
@@ -400,18 +402,23 @@ export const form8283Pdf: PdfFormDescriptor = {
     const elected = sectionA.some((item) =>
       item.capital_gain_reduction_election_confirmed === true
     );
+    const shortTermReduction = sectionA.some((item) =>
+      item.short_term_ordinary_income_reduction_confirmed === true &&
+      needsFmvReductionStatement(item)
+    );
     if (
       !elected &&
-      !sectionA.some((item) =>
-        item.short_term_ordinary_income_reduction_confirmed === true &&
-        needsFmvReductionStatement(item)
-      )
+      !shortTermReduction && sectionA.length !== 1
     ) {
       throw new Error(
-        "Form 8283 PDF needs a reconciled Section A election or a sourced short-term reduction",
+        "Form 8283 PDF needs a reconciled Section A election, sourced short-term reduction, or one ordinary gift",
       );
     }
     if (elected) assertElectedSectionAReconciled({ pending: allPending });
+    if (!elected && !shortTermReduction) {
+      assertUnreducedSectionACompanion(sectionA[0]);
+      assertOrdinarySectionAReconciled({ pending: allPending });
+    }
     for (const item of sectionA) {
       if (!elected && !needsFmvReductionStatement(item)) {
         assertUnreducedSectionACompanion(item);
