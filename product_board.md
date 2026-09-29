@@ -30,6 +30,17 @@ XSD pass, or an ignored test.
 
 ### Latest validation attempt
 
+The 2026-09-29 17:20 UTC fixed-source `deno task test` run on commit
+`453259a2` passed **8,890/8,890**, zero failed, in 16m10s; its Deno summary
+reported no ignored tests. The log is retained at
+`.state/research/ty2025-full-test-453259a2.log`. A subsequent source guard
+rejects research-credit carryforward lines 1c and 4i until their separate
+Form 6765 business-income limitation is modeled; its focused source test
+passes 58/58 and lint passes. That guard has not had a full-suite rerun.
+The native carryforward filing route, authenticated prior-return evidence,
+structured `CarryforwardGeneralBusinessCr` statement, printable history
+attachment, business rules, and ATS gates remain open.
+
 The 2026-09-29 16:48 UTC fixed-source `deno task test` run on commit
 `500bd115` passed **8,886/8,886**, zero failed, in 15m51s; its Deno summary
 reported no ignored tests. Tool versions were Deno 2.7.7, libxml 2.9.13, and
@@ -62,8 +73,8 @@ validation remain open. The preceding fixed-source run on `c6e844d8` passed
 After rebasing this branch onto `origin/main` at `46910f50`, a source-vintage
 input now reconciles nonpassive carryforwards into Form 3800 Part I line 4 and
 Part II line 34, with separate ordinary and specified-credit tax limits.
-Passive, current-year-adjusted, and empowerment-zone vintages are rejected by
-this bounded calculation path. Native filing rejects positive carryforwards
+Passive, current-year-adjusted, empowerment-zone, and research vintages are
+rejected by this bounded calculation path. Native filing rejects positive carryforwards
 until prior-return evidence, Part IV/VI source rows, and the history statement
 are linked. Focused calculation/native tests passed 120/120, the neighboring
 Form 3800 native/PDF tests passed 66/68 with two missing test permissions; the
@@ -320,8 +331,8 @@ including a two-gift return with two linked native forms and attachments.
   - [x] Print a mixed geothermal Form 8835 and New Markets Form 8874 return with separate Form 3800 lines 4e and 1i; reconcile $600 plus $500 through line 38, Schedule 3, Form 1040, local XSD, distinct source IDs, and the reviewed 18-page packet.
   - [x] Add cent-precise source-vintage carryover arithmetic that reconciles origin credit, earlier allowed uses and adjustments, 2025 opening balance, and current recapture reduction; reject duplicate sources and unsupported year direction. Four focused cases pass. This is a calculation prerequisite only.
   - [x] Render a separate source-vintage Form 3800 carryover history statement with origin-year credit and allowed amount, each carryback/forward use, original versus revised balance, and adjustment details. A two-page nine-vintage diagnostic preserves every credit heading and was visually checked; it is not attached to a prepared filing yet.
-  - [x] Route reconciled nonpassive ordinary and specified vintages into the separate Form 3800 Part I line 4 and Part II line 34 tax calculations, and explicitly reject native export until source rows and prior-return history evidence are linked. Focused source/calculation/native tests pass; this is not a filing route.
-  - [ ] Join those vintages to authenticated prior returns and source records, Form 8582-CR, Form 3800 Parts I/II/IV/VI, the revised-carryforward statement, native XML, and the printable packet; prove source-to-Form 1040 totals and local XSD/business-rule results.
+  - [x] Route reconciled nonpassive ordinary and specified vintages into the separate Form 3800 Part I line 4 and Part II line 34 tax calculations, and explicitly reject native export until source rows and prior-return history evidence are linked. Reject research carryforwards pending the Form 6765 business-income limitation. Focused source/calculation/native tests pass; this is not a filing route.
+  - [ ] Join those vintages to authenticated prior returns and source records, Form 8582-CR, Form 3800 Parts I/II/IV/VI, the native `CarryforwardGeneralBusinessCr` computation, the revised-carryforward history statement, native XML, and the printable packet; prove source-to-Form 1040 totals and local XSD/business-rule results.
   - [ ] Cover transfer and passive credits, carryover vintages, mixed and other source credits, row overflow, required external attachments, cross-route archive evidence, business rules, and ATS acceptance.
 - [ ] **Form 8835:** extend the bounded filer-owned wind/geothermal route to every retained credit, owner, facility, election, and source combination in the [form audit](docs/mef/ty2025-form1040-form-audit.md). Keep duplicate physical-facility records rejected and verify every native/PDF copy against its source and Form 3800 row.
 - [ ] **Forms 8995/8995-A:** finish positive QBI export and all conditional Schedule A/B/C/D paths beyond the bounded two-business Schedule B route, including election, aggregation relationship, RPE statements, owner data, and return-wide QBI totals. See [8995](docs/mef/ty2025-form8995-positive-export-gap.md) and [8995-A](docs/mef/ty2025-form8995a-gap.md).

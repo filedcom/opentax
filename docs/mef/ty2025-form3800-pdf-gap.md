@@ -11,9 +11,13 @@ A source-vintage reconciliation module now checks cent-precise origin credit,
 origin-year and subsequent allowed uses, prior adjustments, the 2025 opening
 balance, and any 2025 recapture reduction. It retains the year-by-year facts
 needed for the [required Form 3800 statement](https://www.irs.gov/instructions/i3800),
-and its four focused cases pass. The module is not yet joined to the prepared
-return, Part IV/VI native and PDF rows, or a transmitted statement. Positive
-nonpassive carryforwards and later-year carrybacks remain unsupported.
+and its four focused cases pass. Reconciled nonpassive vintages now feed the
+Part I line 4 and Part II line 34 calculations, with separate ordinary and
+specified tax limits. The native builder explicitly rejects their export
+until prior-return evidence, Part IV/VI native and PDF rows, and a transmitted
+statement are joined. Research-credit vintages are rejected before calculation
+until their Form 6765 business-income limitation can be applied. Later-year
+carrybacks remain unsupported.
 
 The standalone carryover statement renderer now prints each source vintage's
 origin-year credit, allowed amount, historical use by year, original versus
@@ -25,6 +29,14 @@ no visual clipping. Its retained diagnostic is
 `073b959868dc8f016b5657633646b1a9b6a23913010b6bf4f61a5f254df941d8`).
 The renderer is not registered with the prepared Form 3800 PDF descriptor;
 filing integration and external source verification remain open.
+
+The local TY2025 v5.4 schema also defines a structured
+`CarryforwardGeneralBusinessCr` document with credit identity, origin year,
+origin amount and allowed amount, plus repeated carryback and carryforward
+year/use groups. Form 3800 Part I line 4 can reference its reserved document
+ID. A printable history page alone does not satisfy this native link; the
+structured document, its reference, and any required additional revised-credit
+facts still need a source-backed builder and XSD check.
 
 The fixed-source `500bd115` repository-wide run completed at 2026-09-29
 16:48 UTC: 8,886/8,886 passed, zero failed, with no ignored tests reported,

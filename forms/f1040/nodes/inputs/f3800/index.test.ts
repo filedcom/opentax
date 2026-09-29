@@ -105,6 +105,19 @@ Deno.test("f3800: passive and adjusted carryforward vintages stay outside the bo
     Error,
     "needs Part IV recapture reconciliation",
   );
+  for (const line of ["1c", "4i"] as const) {
+    assertThrows(
+      () =>
+        f3800.compute({ taxYear: 2025, formType: "f1040" }, {
+          carryforward_vintages: [{
+            vintage: { ...carriedCredit, form3800_credit_line: line },
+            subject_to_passive_activity_limit: false,
+          }],
+        }),
+      Error,
+      "needs the Form 6765 business-income limitation",
+    );
+  }
 });
 
 Deno.test("f3800: estate/trust orphan-drug K-1 sources reach the tax limit", () => {

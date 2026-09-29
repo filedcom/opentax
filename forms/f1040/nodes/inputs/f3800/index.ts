@@ -384,6 +384,14 @@ function schedule3Output(
         "Form 3800 empowerment-zone carryforward needs Part II line 22 allocation",
       );
     }
+    if (
+      entry.vintage.form3800_credit_line === "1c" ||
+      entry.vintage.form3800_credit_line === "4i"
+    ) {
+      throw new Error(
+        "Form 3800 research carryforward needs the Form 6765 business-income limitation before Part I line 4 or Part II line 34",
+      );
+    }
   }
   const standardCarryforward = carryforward.filter((entry) =>
     !entry.form3800CreditLine.startsWith("4")

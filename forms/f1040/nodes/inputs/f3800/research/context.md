@@ -19,14 +19,18 @@ prior-year credits, Part IV/VI rows. See `calculation.ts`,
 `forms/f1040/nodes/outputs/f1040/index.ts`, and
 `forms/f1040/2025/mef/forms/f3800.ts`.
 
-The source-backed calculation still hardcodes Part I lines 4 and 5 and Part II
-lines 34 and 35 to zero. Therefore it does not claim a general nonpassive
-carryforward or later-year carryback even though the XML row types include
-Part IV. The passive path can carry prior-year Form 8582-CR credits by source
-and year, but that is not a substitute for a complete Section 39 carryover
-ledger. The tax-use allocator orders supplied vintages before current-year
-credits, yet only vintages actually supplied by the supported source paths can
-participate.
+The source-backed calculation now accepts reconciled nonpassive Section 39
+vintages and places ordinary carryforwards on Part I line 4 and specified
+carryforwards on Part II line 34. Part I line 5 and Part II line 35 remain zero;
+later-year carrybacks are unsupported. The input rejects passive,
+current-year-adjusted, empowerment-zone, and research-credit vintages pending
+their distinct allocation and limitation paths. The native builder rejects every positive carryforward
+because its prior-return evidence, Part IV/VI rows, and filed history statement
+are not yet linked. The passive path can carry prior-year Form 8582-CR credits
+by source and year, but that is not a substitute for a complete Section 39
+carryover ledger. The tax-use allocator orders supplied vintages before
+current-year credits, yet only vintages actually supplied by the supported
+source paths can participate.
 
 `carryover-ledger.ts` now provides a separate cent-precise reconciliation for
 one origin-year credit per source. It checks originating credit against the
@@ -34,9 +38,9 @@ amount allowed in that year, subsequent return uses, earlier downward changes,
 and the balance entering 2025. It also keeps a 2025 recapture adjustment out
 of the available balance, requires evidence for an extended carryback window,
 and retains the facts needed for the required statement. Its four focused
-cases pass. The reconciled ledger is not yet a public `f3800` input or a source
-of the Part I/II/IV/VI filing amounts. No positive carryover filing claim
-follows from this module alone.
+cases pass. The reconciled ledger is now a public `f3800` calculation input and
+supplies Part I/II amounts, but it does not yet supply Part IV/VI filing rows.
+No positive carryover filing claim follows from the input alone.
 
 `f3800_carryover_statement.ts` can now append a standalone PDF history page
 from those checked vintages. It prints the originating credit and amount
@@ -45,6 +49,10 @@ use, and prior/current adjustments. It keeps a credit together across ordinary
 page breaks and repeats source identity if a single history needs a continuation.
 A two-page nine-vintage diagnostic was rendered and visually checked. The
 statement is not yet connected to a prepared return or native attachment.
+The TY2025 v5.4 schema has a separate `CarryforwardGeneralBusinessCr`
+document for origin and year-by-year use facts; Part I line 4 can reference
+its document ID. The filing route must build and reconcile this structured
+document as well as print the history page.
 
 ## New Markets recapture boundary
 
