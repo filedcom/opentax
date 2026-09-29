@@ -15,6 +15,12 @@ export const form1116OtherDeductionsStatement: MefFormDescriptor<
   build(_fields, context = {}) {
     const raw = context.pending?.form_1116;
     if (!raw || typeof raw !== "object") return "";
+    const categories = "category_summaries" in raw
+      ? raw.category_summaries
+      : undefined;
+    if (!Array.isArray(categories) || categories.length === 0) {
+      return "";
+    }
     if (!("other_deductions" in raw)) return "";
     const amount = raw.other_deductions;
     if (typeof amount !== "number" || amount <= 0) return "";

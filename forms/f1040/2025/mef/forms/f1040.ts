@@ -725,10 +725,20 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
       ? element("TotalBoxesCheckedCnt", checkedAgeBoxes.length)
       : "",
   ];
-  const deductionIndex = FIELD_MAP.findIndex(([key]) =>
+  const deductionMapIndex = FIELD_MAP.findIndex(([key]) =>
     key === "line12c_deduction_total"
   );
-  incomeChildren.splice(deductionIndex, 0, ...deductionIndicators);
+  const deductionTags = FIELD_MAP.slice(deductionMapIndex).map(([, tag]) =>
+    tag
+  );
+  const firstDeductionOrTax = incomeChildren.findIndex((xml) =>
+    deductionTags.some((tag) => xml.startsWith(`<${tag}>`))
+  );
+  incomeChildren.splice(
+    firstDeductionOrTax < 0 ? incomeChildren.length : firstDeductionOrTax,
+    0,
+    ...deductionIndicators,
+  );
 
   // RefundProductCd is REQUIRED by IRS1040.xsd §1894 (minOccurs defaults to 1).
   // "NO FINANCIAL PRODUCT" indicates the filer is not using a refund anticipation

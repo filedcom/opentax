@@ -734,6 +734,17 @@ Deno.test("Form 1116 line 3b uses a linked source-specific deductions statement"
   );
 });
 
+Deno.test("Form 1116 other-deductions statement omits return context without a credit claim", () => {
+  assertEquals(form1116OtherDeductionsStatement.build({}, {
+    pending: { form_1116: { other_deductions: 5_652 } },
+  }), "");
+  assertThrows(() => form1116OtherDeductionsStatement.build({}, {
+    pending: {
+      form_1116: { ...fields, other_deductions: 2_000 },
+    },
+  }), Error, "need a source explanation");
+});
+
 Deno.test("Form 1116 line 3b rejects a missing explanation or missing linked document", () => {
   const withOther = {
     ...fields,

@@ -4,6 +4,7 @@ import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { registry } from "../../2025/registry.ts";
 import { SCENARIO_1040_08_FACTS } from "./ty2025_cases.ts";
 import { scenario104008Input } from "./scenario_1040_08_input.ts";
+import { scheduleD } from "../../2025/mef/forms/schedule_d.ts";
 
 const plan = buildExecutionPlan(registry);
 
@@ -31,7 +32,8 @@ Deno.test("ATS 1040 Scenario 8: source-backed return calculates age deduction an
   assertEquals(form?.line25b_withheld_1099, 2_555);
   assertEquals(form?.line33_total_payments, 2_555);
   assertEquals(form?.line35a_refund, 2_555);
-  assertEquals(result.pending.schedule_d, undefined);
+  assertEquals(result.pending.schedule_d?.line13_cap_gain_distrib, 7_500);
+  assertEquals(scheduleD.build(result.pending.schedule_d), "");
 });
 
 Deno.test("ATS 1040 Scenario 8: MFS cohabitation answer changes Social Security taxability", () => {

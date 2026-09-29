@@ -87,7 +87,7 @@ eleven synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts` can
 run them through the real return graph and PDF builder. On 2026-09-29, all eleven
 generated successfully. The 57-page PDFs, source/pending JSON, page-count and
 SHA-256 manifest are retained locally at
-`.state/research/ty2025-filled-pdf-review/2026-09-29/`; see the
+`.state/research/ty2025-filled-pdf-review/2026-09-29-v2/`; see the
 [first review notes](ty2025-filled-pdf-review-2026-09-29.md). This is a starting
 review batch, not the completed PDF gate. The generator refuses to overwrite an
 existing output directory and stops on executor diagnostics. Rerun it after

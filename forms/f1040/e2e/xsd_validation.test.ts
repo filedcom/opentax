@@ -31,6 +31,7 @@ import {
   SCENARIO_1040_13_FACTS,
 } from "./ats/ty2025_cases.ts";
 import { scenario104008Input } from "./ats/scenario_1040_08_input.ts";
+import { pdfReviewFixtures } from "../2025/pdf/review-fixtures.ts";
 
 // ── XSD paths ────────────────────────────────────────────────────────────────
 
@@ -237,7 +238,7 @@ Deno.test({
       taxpayer_dob: "1950-06-15",
       taxpayer_blind: true,
     },
-    w2: [w2Item(75_000, 11_000)],
+    w2: [w2Item(180_000, 20_000)],
   });
   assertEquals(result.diagnostics, []);
   const xml = buildXml(result);
@@ -773,17 +774,10 @@ Deno.test({
     "XSD: Single self-employed Schedule C $80K — conforms to Return1040.xsd",
   ignore: !xsdAvailable,
 }, async () => {
-  const result = runReturn({
-    general: singleGeneral(),
-    schedule_c: [{
-      line_a_principal_business: "Consulting",
-      line_b_business_code: "541600",
-      line_c_business_name: "Test LLC",
-      line_f_accounting_method: "cash",
-      line_g_material_participation: true,
-      line_1_gross_receipts: 80_000,
-    }],
-  });
+  const fixture = pdfReviewFixtures.find((item) => item.id === "single-schedule-c");
+  if (!fixture) throw new Error("missing sourced Schedule C fixture");
+  const result = runReturn({ ...fixture.inputs });
+  assertEquals(result.diagnostics, []);
   const xml = buildXml(result);
   const { success, stderr } = await validateXml(xml);
   assertEquals(success, true, `xmllint errors:\n${stderr}`);
@@ -800,7 +794,7 @@ Deno.test({
     schedule_a: {
       line_5a_state_income_tax: 10_000,
       line_8a_mortgage_interest_1098: 18_000,
-      line_11_cash_contributions: 5_000,
+      cash_contributions_to_50_percent_organizations: 5_000,
     },
   });
   const xml = buildXml(result);

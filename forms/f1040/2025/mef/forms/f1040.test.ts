@@ -840,6 +840,33 @@ Deno.test("age and blindness boxes carry a matching count before the deduction",
   );
 });
 
+Deno.test("age boxes follow AGI when rollover and MFS indicators add XML fields", () => {
+  const source = { f1099rs: [{
+    payer_name: "Jubilee",
+    payer_ein: "12-3456789",
+    box1_gross_distribution: 20_300,
+    box2a_taxable_amount: 10_300,
+    box7_distribution_code: "G",
+    box7_ira_simple_indicator: false,
+    direct_rollover_confirmed: true,
+  }] };
+  const result = irs1040.build({
+    filing_status: "mfs",
+    line5a_pension_gross: 20_300,
+    line5b_pension_taxable: 10_300,
+    line5c_pension_rollover: true,
+    mfs_spouse_lived_with_taxpayer: false,
+    line7a_cap_gain_distrib: 7_500,
+    line11_agi: 17_800,
+    taxpayer_age_65_or_older: true,
+    line12c_deduction_total: 17_350,
+  }, { pending: { f1099r: source } });
+  const agi = result.indexOf("<AdjustedGrossIncomeAmt>");
+  const age = result.indexOf("<Primary65OrOlderInd>");
+  const deduction = result.indexOf("<TotalItemizedOrStandardDedAmt>");
+  assertEquals(agi >= 0 && agi < age && age < deduction, true);
+});
+
 Deno.test("MFS spouse-itemizes indicator is kept and cannot be used for another status", () => {
   const result = irs1040.build({
     filing_status: "mfs",
