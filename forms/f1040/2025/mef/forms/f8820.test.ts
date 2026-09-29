@@ -244,6 +244,7 @@ Deno.test("Form 8820 MeF includes mixed line 3 but omits a pass-through-only for
     form8820.build({
       ...mixed,
       f8820s: [],
+      form8932_overlapping_wage_credit: 0,
       reduced_section280c_credit_election: false,
     }),
     "",
