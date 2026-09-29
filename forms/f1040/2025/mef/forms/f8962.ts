@@ -310,6 +310,14 @@ function isMfsNoExceptionAptcOnly(context?: MefBuildContext): boolean {
     general.data.ptc_mfs_status.policy_scope === "family_only";
 }
 
+function isMfsSharedNoException(context?: MefBuildContext): boolean {
+  const general = generalSchema.safeParse(context?.pending?.general);
+  return general.success &&
+    general.data.filing_status === SourceFilingStatus.MFS &&
+    general.data.ptc_mfs_status?.basis === "no_exception" &&
+    general.data.ptc_mfs_status.policy_scope === "shared_with_spouse";
+}
+
 function sourcedTaxExemptInterest(
   pending: Readonly<Record<string, unknown>> | undefined,
   reported: number,
@@ -1187,6 +1195,152 @@ function reconcileNoAptcAnnualPolicy(
   }
 }
 
+function reconcileTwoNoAptcAnnualPolicies(
+  fields: Input,
+  context?: MefBuildContext,
+): void {
+  const pending = context?.pending;
+  const source = form1095aSchema.safeParse(pending?.f1095a);
+  const general = generalSchema.safeParse(pending?.general);
+  const form1040 = returnSchema.safeParse(pending?.f1040);
+  if (
+    !context?.filer || !source.success || !general.success || !form1040.success
+  ) {
+    throw new Error(
+      "Form 8962 two-policy annual PTC needs verified return and Marketplace sources",
+    );
+  }
+  const policies = current1095AStatements(source.data.f1095as);
+  const ssn = context.filer.primarySSN.replaceAll("-", "");
+  if (
+    context.filer.filingStatus !== FilingStatus.Single ||
+    context.filer.address.foreignCountry ||
+    general.data.filing_status !== SourceFilingStatus.Single ||
+    general.data.taxpayer_ssn?.replaceAll("-", "") !== ssn ||
+    general.data.taxpayer_can_be_claimed_as_dependent !== false ||
+    (general.data.dependents?.length ?? 0) !== 0 ||
+    policies.length !== 2 ||
+    new Set(policies.map((policy) => policy.policy_number)).size !== 2 ||
+    policies.some((policy) =>
+      !policy.policy_number ||
+      policy.coverage_state !== context.filer?.address.state ||
+      policy.covered_individual_ssns?.length !== 1 ||
+      policy.covered_individual_ssns[0].replaceAll("-", "") !== ssn ||
+      policy.shared_policy_periods || policy.slcsp_review_periods ||
+      policy.alternative_marriage_owner ||
+      !policy.monthly_premiums || !policy.monthly_slcsps ||
+      !policy.monthly_aptcs || !policy.slcsp_corrections ||
+      !policy.no_aptc_monthly_evidence ||
+      policy.monthly_premiums.some((amount) =>
+        amount <= 0 || amount !== policy.monthly_premiums![0]
+      ) ||
+      policy.monthly_slcsps.some((amount) =>
+        amount <= 0 || amount !== policy.monthly_slcsps![0]
+      ) ||
+      policy.monthly_aptcs.some((amount) => amount !== 0) ||
+      policy.annual_premium !==
+        policy.monthly_premiums.reduce((sum, amount) => sum + amount, 0) ||
+      policy.annual_slcsp !==
+        policy.monthly_slcsps.reduce((sum, amount) => sum + amount, 0) ||
+      (policy.annual_aptc ?? 0) !== 0
+    ) ||
+    policies[0].monthly_slcsps?.[0] !== policies[1].monthly_slcsps?.[0] ||
+    fields.monthly_ptc_rows != null || fields.household_size !== 1 ||
+    fields.dependents_modified_agi !== 0 ||
+    fields.qsehra_ind === true || fields.mfs_exception_ind === true ||
+    (fields.shared_policy_allocations?.length ?? 0) !== 0 ||
+    fields.alternative_marriage_primary || fields.alternative_marriage_spouse ||
+    source.data.alternative_marriage_month !== undefined ||
+    pending?.form2555 !== undefined
+  ) {
+    throw new Error(
+      "Form 8962 two-policy annual PTC needs distinct full-year same-state policies for one filer",
+    );
+  }
+  const povertyLine = reconcilePovertyTable(fields, context);
+  const income = form1040.data.line11_agi + sourcedTaxExemptInterest(
+    pending,
+    form1040.data.line2a_tax_exempt ?? 0,
+  );
+  const incomeAmounts = simplePolicyIncomeAmounts(income, povertyLine, 1, 1);
+  const contribution = Math.round(income * incomeAmounts.figure);
+  const monthlyContribution = Math.round(contribution / 12);
+  const slcsp = policies[0].monthly_slcsps![0];
+  for (const policy of policies) {
+    const corrections = new Map(
+      policy.slcsp_corrections!.map((item) => [item.month, item]),
+    );
+    const evidence = new Map(
+      policy.no_aptc_monthly_evidence!.map((item) => [item.month, item]),
+    );
+    if (
+      corrections.size !== 12 || evidence.size !== 12 ||
+      policy.slcsp_corrections!.length !== 12 ||
+      policy.no_aptc_monthly_evidence!.length !== 12
+    ) {
+      throw new Error(
+        "Form 8962 two-policy annual PTC needs twelve determinations and payments per policy",
+      );
+    }
+    for (let month = 1; month <= 12; month++) {
+      const correction = corrections.get(month);
+      const proof = evidence.get(month);
+      if (
+        !correction || !proof || correction.basis !== "no_aptc" ||
+        correction.corrected_slcsp !== slcsp ||
+        proof.marketplace_slcsp !== slcsp ||
+        proof.marketplace_method !== correction.determination_source ||
+        !validIsoDate(proof.marketplace_determined_on) ||
+        !validIsoDate(proof.premium_paid_in_full_on) ||
+        proof.premium_paid_in_full_on > TY2025_UNEXTENDED_DUE_DATE ||
+        proof.premium_paid < policy.monthly_premiums![month - 1]
+      ) {
+        throw new Error(
+          `Form 8962 two-policy annual month ${month} lacks matching SLCSP or full payment evidence`,
+        );
+      }
+    }
+  }
+  const premium = policies.reduce(
+    (sum, policy) => sum + policy.annual_premium!,
+    0,
+  );
+  const annualSlcsp = slcsp * 12;
+  const assistance = Math.max(0, annualSlcsp - contribution);
+  const credit = Math.round(Math.min(premium, assistance));
+  const schedule3 = schedule3Schema.safeParse(pending?.schedule3);
+  const schedule2 = schedule2Schema.safeParse(pending?.schedule2);
+  if (
+    (form1040.data.line6a_ss_gross ?? 0) !==
+      (form1040.data.line6b_ss_taxable ?? 0) ||
+    fields.taxpayer_modified_agi !== income ||
+    fields.household_income !== income ||
+    fields.federal_poverty_line !== povertyLine ||
+    fields.federal_poverty_pct !== incomeAmounts.povertyPct ||
+    fields.applicable_figure !== incomeAmounts.figure ||
+    fields.annual_applicable_contribution !== contribution ||
+    fields.monthly_applicable_contribution !== monthlyContribution ||
+    fields.annual_premium !== premium || fields.annual_slcsp !== annualSlcsp ||
+    fields.annual_aptc !== 0 || fields.annual_max_ptc !== assistance ||
+    fields.annual_ptc_allowed !== credit ||
+    fields.total_premium_tax_credit !== credit ||
+    fields.total_advance_ptc !== 0 ||
+    fields.net_premium_tax_credit !== credit ||
+    (fields.excess_advance_payment ?? 0) !== 0 ||
+    (fields.excess_advance_premium ?? 0) !== 0 ||
+    fields.repayment_limitation !== undefined ||
+    (schedule2.success &&
+      (schedule2.data.line1a_excess_advance_premium ?? 0) !== 0) ||
+    !schedule3.success ||
+    schedule3.data.line9_premium_tax_credit !== credit ||
+    form1040.data.line31_additional_payments !== credit
+  ) {
+    throw new Error(
+      "Form 8962 two-policy annual credit differs from sources or finalized return",
+    );
+  }
+}
+
 function reconcileSimplePolicyMonths(
   fields: Input,
   context?: MefBuildContext,
@@ -1902,7 +2056,15 @@ function buildIRS8962(fields: Input, context?: MefBuildContext): string {
       }
     } else {
       if (isNoAptcClaim(context)) {
-        reconcileNoAptcAnnualPolicy(fields, context);
+        const policyCount = form1095aSchema.safeParse(context?.pending?.f1095a);
+        if (
+          policyCount.success &&
+          current1095AStatements(policyCount.data.f1095as).length === 2
+        ) {
+          reconcileTwoNoAptcAnnualPolicies(fields, context);
+        } else {
+          reconcileNoAptcAnnualPolicy(fields, context);
+        }
       } else {
         reconcileSimpleAnnualPolicy(fields, context);
       }

@@ -4088,14 +4088,22 @@ Deno.test({
   sanitizeResources: false,
   ignore: !xsdAvailable,
 }, async () => {
-  const general = singleGeneral();
+  const general = {
+    ...singleGeneral(),
+    taxpayer_can_be_claimed_as_dependent: false,
+  };
   const result = runReturn({
     general,
     w2: [w2Item(30_120, 3_000)],
     f1095a: [
       {
         issuer_name: "First Marketplace Plan",
+        policy_number: "POLICY-TWO-ANNUAL-1",
         coverage_state: "TX",
+        covered_individual_ssns: ["111223333"],
+        annual_premium: 6_000,
+        annual_slcsp: 7_200,
+        annual_aptc: 0,
         monthly_premiums: Array(12).fill(500),
         monthly_slcsps: Array(12).fill(600),
         monthly_aptcs: Array(12).fill(0),
@@ -4103,14 +4111,27 @@ Deno.test({
           Array(12).fill(500),
           Array(12).fill(600),
         ),
+        no_aptc_monthly_evidence: noAptcPaymentEvidence(
+          Array(12).fill(500),
+          Array(12).fill(600),
+        ),
       },
       {
         issuer_name: "Second Marketplace Plan",
+        policy_number: "POLICY-TWO-ANNUAL-2",
         coverage_state: "TX",
+        covered_individual_ssns: ["111223333"],
+        annual_premium: 3_600,
+        annual_slcsp: 7_200,
+        annual_aptc: 0,
         monthly_premiums: Array(12).fill(300),
         monthly_slcsps: Array(12).fill(600),
         monthly_aptcs: Array(12).fill(0),
         slcsp_corrections: noAptcSlcspDeterminations(
+          Array(12).fill(300),
+          Array(12).fill(600),
+        ),
+        no_aptc_monthly_evidence: noAptcPaymentEvidence(
           Array(12).fill(300),
           Array(12).fill(600),
         ),
@@ -4125,6 +4146,18 @@ Deno.test({
   );
   assertStringIncludes(xml, "<AnnualPTCCalculationGrp>");
   assertEquals(xml.includes("<MonthlyPTCCalculationGrp>"), false);
+  assertThrows(
+    () =>
+      buildMefXml({
+        ...result.pending,
+        form8962: {
+          ...result.pending.form8962,
+          annual_slcsp: 14_400,
+        },
+      } as MefFormsPending, extractFilerIdentity(general)),
+    Error,
+    "two-policy annual credit differs",
+  );
   await validateXsd(xml, "two unchanged full-year policies on line 11");
 });
 
