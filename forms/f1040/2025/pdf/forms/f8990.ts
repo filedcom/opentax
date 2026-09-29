@@ -1,5 +1,6 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { reconcileForm8990Projection } from "../../form8990_projection.ts";
+import { buildPending } from "../../mef/pending.ts";
 
 // Canonical AcroForm /Fields and page /Widget positions of the Rev. Dec. 2025
 // PDF, Part I only. Page 1 f1_1..5 are identity/foreign-entity header fields,
@@ -58,7 +59,10 @@ export const form8990Pdf: PdfFormDescriptor = {
   ],
   projectFields(fields, allPending) {
     if (Object.keys(fields).length === 0) return fields;
-    const projected = reconcileForm8990Projection(fields, allPending);
+    const projected = reconcileForm8990Projection(
+      fields,
+      buildPending(allPending),
+    );
     return {
       ...projected,
       // Printed 2025 lines 27 and 28 explicitly repeat lines 25 and 4.
@@ -69,7 +73,7 @@ export const form8990Pdf: PdfFormDescriptor = {
   },
   includeWhen(fields, allPending) {
     if (Object.keys(fields).length === 0) return false;
-    reconcileForm8990Projection(fields, allPending ?? {});
+    reconcileForm8990Projection(fields, buildPending(allPending ?? {}));
     return true;
   },
   fields,

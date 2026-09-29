@@ -7,7 +7,7 @@ import {
   type BoundedForm8990TwoPassResult,
   runBoundedForm8990TwoPass,
 } from "../nodes/intermediate/forms/form8990/run-two-pass.ts";
-import { normalizePendingDict } from "./pending.ts";
+import { buildPending } from "./mef/pending.ts";
 
 const sourceRecordsSchema = z.object({
   returnInputs: z.object({
@@ -97,7 +97,12 @@ export function reconcileForm8990Projection(
       "Form 8990 projected lines or carryforward changed after finalization",
     );
   }
-  const expectedPending = result.internalProjectedPending;
+  const expectedPending = buildPending(
+    result.internalProjectedPending,
+  ) as Record<
+    string,
+    unknown
+  >;
   const actualKeys = Object.keys(allPending).filter((key) =>
     key !== "form8990" && allPending[key] !== undefined
   ).sort();
@@ -113,7 +118,7 @@ export function reconcileForm8990Projection(
     if (
       !same(
         allPending[key],
-        normalizePendingDict(expectedPending[key]),
+        expectedPending[key],
       )
     ) {
       throw new Error(
