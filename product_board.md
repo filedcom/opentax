@@ -39,6 +39,9 @@ subsequently updated. Deno 2.7.7, libxml 2.9.13, and Poppler 26.03.0 were
 present. The log is retained at
 `.state/research/ty2025-full-test-carryforward-link.log`. The source-to-
 filing and external release gates remain open.
+The subsequent source-key uniqueness guard rejects a carryforward source
+listed on two Part IV rows. Its 15 focused Form 3800 native/PDF/XSD cases pass;
+the 8,897-test full run predates that guard.
 
 The 2026-09-29 18:13 UTC fixed-source `deno task test` rerun on commit
 `99243afd` passed **8,894/8,894**, zero failed, in 15m46s; its Deno

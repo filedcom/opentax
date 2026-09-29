@@ -30,8 +30,19 @@ export function reconcileForm3800CarryforwardLinks(
   const keys = new Set<string>();
   const ids = new Set<string>();
   const byLine = new Map(rows.map((row) => [row.line, row] as const));
+  const rowSourceKeys = new Set<string>();
   if (byLine.size !== rows.length) {
     throw new Error("Form 3800 carryforward Part IV lines are duplicated");
+  }
+  for (const row of rows) {
+    for (const key of row.sourceKeys) {
+      if (!key.trim() || rowSourceKeys.has(key)) {
+        throw new Error(
+          "Form 3800 carryforward source appears on multiple Part IV rows",
+        );
+      }
+      rowSourceKeys.add(key);
+    }
   }
   for (const source of sources) {
     if (

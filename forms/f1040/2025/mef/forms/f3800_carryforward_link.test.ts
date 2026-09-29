@@ -142,6 +142,18 @@ Deno.test("Form 3800 rejects unlinked or changed carryforward source rows", () =
     Error,
     "does not match Part IV",
   );
+  assertThrows(
+    () =>
+      buildIRS3800Document({
+        ...parts,
+        carryoverRows: [{
+          ...parts.carryoverRows[0],
+          sourceKeys: ["2024-new-markets-1", "2024-work-opportunity-1"],
+        }, parts.carryoverRows[1]],
+      }),
+    Error,
+    "appears on multiple Part IV rows",
+  );
 });
 
 Deno.test({
