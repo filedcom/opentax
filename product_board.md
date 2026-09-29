@@ -414,7 +414,8 @@ including a two-gift return with two linked native forms and attachments.
 
 ## IRS ATS and delivery
 
-- [ ] Complete the Publication 1436 Form 1040 ATS scenario matrix, source-backed expected outputs, required supporting forms and attachments, and scenario-specific assertions in [ATS preparation](docs/ats/ty2025.md). Resolve the known Scenario 1 Form 5695 door-cost conflict and rerun the Scenario 8 code-G rollover/line 5c path.
+- [ ] Complete the Publication 1436 Form 1040 ATS scenario matrix, source-backed expected outputs, required supporting forms and attachments, and scenario-specific assertions in [ATS preparation](docs/ats/ty2025.md). Resolve the known Scenario 1 Form 5695 door-cost conflict and Scenario 8 printed QCD mark before submission.
+  - [x] Rerun the Scenario 8 code-G rollover/line 5c path through source, native Form 1040 and PDF checks: 111/111 focused tests passed on 2026-09-29, and the local Scenario 8 return XSD case passed 1/1. This is not ATS acceptance.
 - [ ] Obtain and verify the issued ATS certificate, enrolled ASID/Test ETIN, current IRS ATS endpoint/WSDL/trust package, and authorized transmission credentials. Do not put private keys or certificate secrets in the repository.
 - [ ] Submit each required Form 1040-family ATS scenario only after its source, XML, PDF, and package checks pass; retain transmitted package, IRS acknowledgment, acceptance/rejection details, and repair/retest evidence. No local test or XSD pass substitutes for an accepted IRS acknowledgment.
 - [ ] Review the completed diff, user-approved scope decisions, security/privacy implications, and test/ATS evidence; then create a PR with a precise description and linked test evidence. Do not merge merely because code is written.
