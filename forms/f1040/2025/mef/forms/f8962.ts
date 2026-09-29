@@ -262,11 +262,14 @@ function simplePolicyIncomeAmounts(
   householdSize: number | null | undefined,
   policyCount: number,
   below100MarketplaceException = false,
+  verifiedDependent = false,
 ): { povertyPct: number; figure: number; repaymentCap: number | undefined } {
   const actualPct = Math.floor(householdIncome / povertyLine * 100);
   if (
     (actualPct < 100 && !below100MarketplaceException) ||
-    (actualPct < 400 && (householdSize !== 1 || policyCount !== 1))
+    (actualPct < 400 &&
+      (policyCount !== 1 ||
+        (householdSize !== 1 && !(verifiedDependent && householdSize === 2))))
   ) {
     throw new Error(
       "Form 8962 below-400%-FPL filing needs one filer and one identified policy",
@@ -1015,19 +1018,27 @@ function reconcileNoAptcAnnualPolicy(
   }
   const policies = current1095AStatements(source.data.f1095as);
   const policy = policies[0];
+  const dependentMagi = reconcileDependentMagi(
+    fields.household_size,
+    fields.dependents_modified_agi,
+    pending?.general,
+  );
+  const hasVerifiedDependent = fields.household_size === 2 &&
+    (general.data.dependents?.length ?? 0) === 1;
   if (
     context.filer.filingStatus !== FilingStatus.Single ||
     context.filer.address.foreignCountry ||
     policies.length !== 1 || !policy?.policy_number ||
     policy.coverage_state !== context.filer.address.state ||
-    policy.covered_individual_ssns?.length !== 1 ||
-    policy.covered_individual_ssns[0].replaceAll("-", "") !==
-      context.filer.primarySSN.replaceAll("-", "") ||
+    (fields.household_size === 1 &&
+      (policy.covered_individual_ssns?.length !== 1 ||
+        policy.covered_individual_ssns[0].replaceAll("-", "") !==
+          context.filer.primarySSN.replaceAll("-", ""))) ||
     general.data.taxpayer_ssn?.replaceAll("-", "") !==
       context.filer.primarySSN.replaceAll("-", "") ||
     general.data.filing_status !== SourceFilingStatus.Single ||
     general.data.taxpayer_can_be_claimed_as_dependent !== false ||
-    (general.data.dependents?.length ?? 0) !== 0 ||
+    (!hasVerifiedDependent && (general.data.dependents?.length ?? 0) !== 0) ||
     policy.shared_policy_periods || policy.slcsp_review_periods ||
     policy.alternative_marriage_owner ||
     source.data.alternative_marriage_month !== undefined ||
@@ -1037,32 +1048,44 @@ function reconcileNoAptcAnnualPolicy(
       premium <= 0 || premium !== policy.monthly_premiums![0]
     ) ||
     policy.monthly_aptcs.some((aptc) => aptc !== 0) ||
-    fields.monthly_ptc_rows != null || fields.household_size !== 1 ||
-    fields.dependents_modified_agi !== 0 ||
+    fields.monthly_ptc_rows != null ||
+    (fields.household_size !== 1 && !hasVerifiedDependent) ||
+    fields.dependents_modified_agi !== dependentMagi ||
     fields.qsehra_ind === true || fields.mfs_exception_ind === true ||
     (fields.shared_policy_allocations?.length ?? 0) !== 0 ||
     fields.alternative_marriage_primary || fields.alternative_marriage_spouse ||
     pending?.form2555 !== undefined
   ) {
     throw new Error(
-      "Form 8962 no-APTC annual PTC supports one full-year unchanged nonshared policy and a one-person single return",
+      "Form 8962 no-APTC annual PTC needs one full-year nonshared policy and a verified one- or two-person single return",
+    );
+  }
+  if (hasVerifiedDependent) {
+    reconcileOnePolicyDependentIdentity(
+      policies,
+      fields.household_size,
+      pending?.general,
+      context.filer.primarySSN,
     );
   }
   const povertyLine = reconcilePovertyTable(fields, context);
-  const income = form1040.data.line11_agi + sourcedTaxExemptInterest(
+  const taxpayerIncome = form1040.data.line11_agi + sourcedTaxExemptInterest(
     pending,
     form1040.data.line2a_tax_exempt ?? 0,
   );
+  const income = taxpayerIncome + dependentMagi;
   const incomeAmounts = simplePolicyIncomeAmounts(
     income,
     povertyLine,
     fields.household_size,
     policies.length,
+    false,
+    hasVerifiedDependent,
   );
   if (
     (form1040.data.line6a_ss_gross ?? 0) !==
       (form1040.data.line6b_ss_taxable ?? 0) ||
-    fields.taxpayer_modified_agi !== income ||
+    fields.taxpayer_modified_agi !== taxpayerIncome ||
     fields.household_income !== income ||
     fields.federal_poverty_line !== povertyLine ||
     fields.federal_poverty_pct !== incomeAmounts.povertyPct ||

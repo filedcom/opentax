@@ -4196,6 +4196,7 @@ Deno.test({
 }, async () => {
   const general = {
     ...singleGeneral(),
+    taxpayer_can_be_claimed_as_dependent: false,
     dependents: [{
       first_name: "Child",
       last_name: "Taxpayer",
@@ -4241,10 +4242,20 @@ Deno.test({
     w2: [w2Item(30_120, 3_000)],
     f1095a: [{
       issuer_name: "Marketplace Plan",
+      policy_number: "POLICY-DEPENDENT-MAGI",
+      coverage_state: "TX",
+      covered_individual_ssns: ["111223333"],
+      annual_premium: 6_000,
+      annual_slcsp: 7_200,
+      annual_aptc: 0,
       monthly_premiums: Array(12).fill(500),
       monthly_slcsps: Array(12).fill(600),
       monthly_aptcs: Array(12).fill(0),
       slcsp_corrections: noAptcSlcspDeterminations(
+        Array(12).fill(500),
+        Array(12).fill(600),
+      ),
+      no_aptc_monthly_evidence: noAptcPaymentEvidence(
         Array(12).fill(500),
         Array(12).fill(600),
       ),
@@ -4264,6 +4275,19 @@ Deno.test({
     "<TotalDependentsModifiedAGIAmt>12500</TotalDependentsModifiedAGIAmt>",
   );
   assertStringIncludes(xml, "<HouseholdIncomeAmt>42620</HouseholdIncomeAmt>");
+  assertThrows(
+    () =>
+      buildMefXml({
+        ...result.pending,
+        form8962: {
+          ...result.pending.form8962,
+          dependents_modified_agi: 12_501,
+          household_income: 42_621,
+        },
+      } as MefFormsPending, extractFilerIdentity(general)),
+    Error,
+    "dependent",
+  );
   await validateXsd(xml, "Form 8962 dependent modified AGI");
 });
 
