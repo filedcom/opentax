@@ -1803,7 +1803,7 @@ Deno.test("Form 8962 rejects annual and special positive routes without bounded 
         }],
       }, matchedContext),
     Error,
-    "shared filing needs one agreed Situation 4 policy",
+    "shared filing needs reviewed nonoverlapping periods",
   );
   assertThrows(
     () =>

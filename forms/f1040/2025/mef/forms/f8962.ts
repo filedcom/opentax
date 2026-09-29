@@ -2110,6 +2110,10 @@ function reconcileAgreedSharedPolicy(
   const form1040 = returnSchema.safeParse(pending?.f1040);
   const general = generalSchema.safeParse(pending?.general);
   const allocations = fields.shared_policy_allocations ?? [];
+  if (allocations.length === 1 && allocations[0].basis === "no_aptc") {
+    reconcileNoAptcSharedPolicy(fields, context);
+    return;
+  }
   const rows = fields.monthly_ptc_rows;
   if (
     !context?.filer || !source.success || !form1040.success ||
@@ -2228,6 +2232,177 @@ function reconcileAgreedSharedPolicy(
   ) {
     throw new Error(
       "Form 8962 shared policy credit or repayment differs from finalized return",
+    );
+  }
+}
+
+function reconcileNoAptcSharedPolicy(
+  fields: Input,
+  context?: MefBuildContext,
+): void {
+  const pending = context?.pending;
+  const source = form1095aSchema.safeParse(pending?.f1095a);
+  const general = generalSchema.safeParse(pending?.general);
+  const form1040 = returnSchema.safeParse(pending?.f1040);
+  const allocations = fields.shared_policy_allocations ?? [];
+  const allocation = allocations[0];
+  const rows = fields.monthly_ptc_rows;
+  if (
+    !context?.filer || !source.success || !general.success ||
+    !form1040.success || !Array.isArray(rows) || rows.length !== 12 ||
+    context.filer.filingStatus !== FilingStatus.Single ||
+    context.filer.address.foreignCountry ||
+    general.data.filing_status !== SourceFilingStatus.Single ||
+    general.data.taxpayer_ssn?.replaceAll("-", "") !==
+      context.filer.primarySSN.replaceAll("-", "") ||
+    (general.data.dependents?.length ?? 0) !== 0 ||
+    fields.household_size !== 1 || fields.dependents_modified_agi !== 0 ||
+    fields.qsehra_ind === true || fields.mfs_exception_ind === true ||
+    allocations.length !== 1 || allocation?.basis !== "no_aptc" ||
+    allocation.premium_pct === undefined ||
+    allocation.premium_pct <= 0 ||
+    allocation.slcsp_pct !== undefined || allocation.aptc_pct !== undefined ||
+    fields.alternative_marriage_primary || fields.alternative_marriage_spouse ||
+    source.data.alternative_marriage_month !== undefined ||
+    pending?.form2555 !== undefined
+  ) {
+    throw new Error(
+      "Form 8962 no-APTC shared filing needs one reviewed policy and a finalized one-person return",
+    );
+  }
+  const policies = current1095AStatements(source.data.f1095as);
+  const policy = policies[0];
+  const ssn = context.filer.primarySSN.replaceAll("-", "");
+  const covered = policy?.covered_individual_ssns?.map((value) =>
+    value.replaceAll("-", "")
+  );
+  const period = policy?.shared_policy_periods?.[0];
+  const coveredMonths =
+    policy?.monthly_premiums?.flatMap((amount, index) =>
+      amount > 0 ? [index + 1] : []
+    ) ?? [];
+  if (
+    policies.length !== 1 || !policy?.policy_number ||
+    policy.policy_number.slice(-15) !== allocation.policy_number ||
+    policy.coverage_state !== context.filer.address.state ||
+    covered?.length !== 2 || new Set(covered).size !== 2 ||
+    !covered.includes(ssn) ||
+    !covered.includes(allocation.other_taxpayer_ssn) ||
+    allocation.other_taxpayer_ssn === ssn ||
+    policy.shared_policy_periods?.length !== 1 ||
+    period?.basis !== "no_aptc" ||
+    period.other_taxpayer_ssn?.replaceAll("-", "") !==
+      allocation.other_taxpayer_ssn ||
+    policy.alternative_marriage_owner || policy.slcsp_review_periods ||
+    !policy.monthly_premiums || !policy.monthly_aptcs ||
+    policy.monthly_aptcs.some((amount) => amount !== 0) ||
+    coveredMonths.length === 0 ||
+    !policy.slcsp_corrections || !policy.no_aptc_monthly_evidence
+  ) {
+    throw new Error(
+      "Form 8962 no-APTC shared allocation differs from its identified policy",
+    );
+  }
+  const corrections = new Map(
+    policy.slcsp_corrections.map((item) => [item.month, item]),
+  );
+  const payments = new Map(
+    policy.no_aptc_monthly_evidence.map((item) => [item.month, item]),
+  );
+  if (
+    corrections.size !== coveredMonths.length ||
+    payments.size !== coveredMonths.length ||
+    policy.slcsp_corrections.length !== coveredMonths.length ||
+    policy.no_aptc_monthly_evidence.length !== coveredMonths.length ||
+    coveredMonths.some((month) =>
+      !corrections.has(month) || !payments.has(month)
+    )
+  ) {
+    throw new Error(
+      "Form 8962 no-APTC shared policy needs reviewed SLCSP and payment evidence for every covered month",
+    );
+  }
+  for (const month of coveredMonths) {
+    const correction = corrections.get(month);
+    const proof = payments.get(month);
+    if (
+      !correction || !proof || correction.basis !== "no_aptc" ||
+      correction.corrected_slcsp <= 0 ||
+      proof.marketplace_slcsp !== correction.corrected_slcsp ||
+      proof.marketplace_method !== correction.determination_source ||
+      !validIsoDate(proof.marketplace_determined_on) ||
+      !validIsoDate(proof.premium_paid_in_full_on) ||
+      proof.premium_paid_in_full_on > TY2025_UNEXTENDED_DUE_DATE ||
+      proof.premium_paid < policy.monthly_premiums[month - 1]
+    ) {
+      throw new Error(
+        `Form 8962 no-APTC shared month ${month} lacks matching SLCSP or timely full payment`,
+      );
+    }
+  }
+  const povertyLine = reconcilePovertyTable(fields, context);
+  const income = form1040.data.line11_agi + sourcedTaxExemptInterest(
+    pending,
+    form1040.data.line2a_tax_exempt ?? 0,
+  );
+  if (
+    (form1040.data.line6a_ss_gross ?? 0) !==
+      (form1040.data.line6b_ss_taxable ?? 0) ||
+    fields.taxpayer_modified_agi !== income ||
+    fields.household_income !== income
+  ) {
+    throw new Error(
+      "Form 8962 no-APTC shared income differs from finalized Form 1040",
+    );
+  }
+  const derivedSource = f1095a.compute(
+    { taxYear: 2025, formType: "f1040" },
+    source.data,
+  ).outputs.find((item) => item.nodeType === "form8962")?.fields;
+  if (!derivedSource) {
+    throw new Error(
+      "Form 8962 no-APTC shared policy has no allocated source amounts",
+    );
+  }
+  const derivedInput = form8962InputSchema.parse({
+    ...derivedSource,
+    taxpayer_modified_agi: income,
+    dependents_modified_agi: 0,
+    household_size: 1,
+    fpl_region: fields.fpl_region,
+    filing_status: SourceFilingStatus.Single,
+    dependent_income_complete: true,
+  });
+  const expected = form8962Calculation.compute(
+    { taxYear: 2025, formType: "f1040" },
+    derivedInput,
+  ).outputs.find((item) => item.nodeType === "form8962")?.fields;
+  if (
+    !expected || fields.federal_poverty_line !== povertyLine ||
+    Object.entries(expected).some(([key, value]) =>
+      JSON.stringify(fields[key]) !== JSON.stringify(value)
+    )
+  ) {
+    throw new Error(
+      "Form 8962 no-APTC shared amounts differ from source allocation or calculated credit",
+    );
+  }
+  const net = typeof expected.net_premium_tax_credit === "number"
+    ? expected.net_premium_tax_credit
+    : 0;
+  const schedule3 = schedule3Schema.safeParse(pending?.schedule3);
+  const schedule2 = schedule2Schema.safeParse(pending?.schedule2);
+  if (
+    net <= 0 || fields.total_advance_ptc !== 0 ||
+    (fields.excess_advance_premium ?? 0) !== 0 ||
+    (schedule2.success &&
+      (schedule2.data.line1a_excess_advance_premium ?? 0) !== 0) ||
+    !schedule3.success ||
+    schedule3.data.line9_premium_tax_credit !== net ||
+    form1040.data.line31_additional_payments !== net
+  ) {
+    throw new Error(
+      "Form 8962 no-APTC shared credit differs from finalized return",
     );
   }
 }

@@ -3934,9 +3934,15 @@ Deno.test({
     f1095a: [{
       issuer_name: "Marketplace Plan",
       policy_number: "NO-APTC-POLICY",
+      coverage_state: "TX",
+      covered_individual_ssns: ["111223333", "222334444"],
       monthly_premiums: [15_000, ...Array(11).fill(0)],
       monthly_aptcs: Array(12).fill(0),
       slcsp_corrections: noAptcSlcspDeterminations(
+        [15_000, ...Array(11).fill(0)],
+        [12_000, ...Array(11).fill(0)],
+      ),
+      no_aptc_monthly_evidence: noAptcPaymentEvidence(
         [15_000, ...Array(11).fill(0)],
         [12_000, ...Array(11).fill(0)],
       ),
@@ -3962,6 +3968,25 @@ Deno.test({
   assertStringIncludes(
     xml,
     "<MonthlyPremiumSLCSPAmt>12000</MonthlyPremiumSLCSPAmt>",
+  );
+  assertThrows(
+    () =>
+      buildMefXml({
+        ...result.pending,
+        f1095a: {
+          f1095as: [{
+            ...(result.pending.f1095a?.f1095as as Record<string, unknown>[])[0],
+            no_aptc_monthly_evidence: [{
+              ...((result.pending.f1095a?.f1095as as Record<string, unknown>[])[
+                0
+              ].no_aptc_monthly_evidence as Record<string, unknown>[])[0],
+              premium_paid: 14_999,
+            }],
+          }],
+        },
+      } as MefFormsPending, extractFilerIdentity(general)),
+    Error,
+    "timely full payment",
   );
   await validateXsd(xml, "no-APTC shared policy allocation");
 });
