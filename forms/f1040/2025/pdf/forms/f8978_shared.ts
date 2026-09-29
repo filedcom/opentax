@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from "node:util";
 import type { FilerIdentity } from "../../../mef/header.ts";
 import {
   calculateFiling,
@@ -31,7 +32,7 @@ export function form8978PdfSource(
   if (
     !Array.isArray(raw.calculated_filings) ||
     raw.calculated_filings.length !== 1 ||
-    JSON.stringify(raw.calculated_filings[0]) !== JSON.stringify(filing) ||
+    !isDeepStrictEqual(raw.calculated_filings[0], filing) ||
     raw.line14 !== filing.line14
   ) {
     throw new Error(
