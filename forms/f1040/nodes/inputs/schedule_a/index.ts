@@ -72,6 +72,7 @@ export const inputSchema = z.object({
     .optional(),
   form8396_interest_reporting_line: z.enum(["8a", "8b"]).optional(),
   line_9_investment_interest: z.number().nonnegative().optional(),
+  niit_allocable_state_local_tax: z.number().nonnegative().optional(),
   // Source amounts must be classified before the filed Schedule A lines are set.
   cash_contributions_to_50_percent_organizations: z.number().nonnegative()
     .optional(),
@@ -464,6 +465,15 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
       )
       : { allowed: 0, remaining: {} };
     const saltCapped = computeSALT(input, cfg);
+    const niitAllocatedTax = input.niit_allocable_state_local_tax ?? 0;
+    if (
+      niitAllocatedTax >
+        Math.min(input.line_5a_state_income_tax ?? 0, saltCapped)
+    ) {
+      throw new Error(
+        "Form 8960 state tax allocation exceeds deductible state income tax",
+      );
+    }
     const taxesTotal = saltCapped + (input.line_6_other_taxes ?? 0);
     const totalItemized = computeMedicalDeduction(input, agi) +
       taxesTotal +
@@ -477,6 +487,8 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
       this.outputNodes.output(standard_deduction, {
         itemized_deductions: totalItemized,
         itemized_taxes: taxesTotal,
+        itemized_investment_interest: input.line_9_investment_interest ?? 0,
+        niit_allocable_state_local_tax: niitAllocatedTax,
       }),
     ];
     return {

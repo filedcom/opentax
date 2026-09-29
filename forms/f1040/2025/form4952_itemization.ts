@@ -16,7 +16,22 @@ export function reconcileForm4952Itemization(
   pending: Readonly<Record<string, unknown>>,
   form4952Deduction: number,
 ): void {
-  if (pending.form_1116 !== undefined) {
+  const foreignTax = pending.form_1116;
+  const foreignTaxFields = foreignTax && typeof foreignTax === "object" &&
+      !Array.isArray(foreignTax)
+    ? foreignTax as Record<string, unknown>
+    : undefined;
+  if (
+    foreignTax !== undefined && (
+      !foreignTaxFields ||
+      foreignTaxFields.foreign_tax_paid !== undefined ||
+      foreignTaxFields.foreign_tax_redeterminations !== undefined ||
+      (Array.isArray(foreignTaxFields.foreign_tax_items) &&
+        foreignTaxFields.foreign_tax_items.length > 0) ||
+      (Array.isArray(foreignTaxFields.category_summaries) &&
+        foreignTaxFields.category_summaries.length > 0)
+    )
+  ) {
     throw new Error(
       "Form 4952 with independent Form 1116 needs source-backed investment-interest allocation before export",
     );

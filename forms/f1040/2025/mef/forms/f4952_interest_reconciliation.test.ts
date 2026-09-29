@@ -370,6 +370,15 @@ Deno.test("Form 4952 matches every plain 1099-OID payer before export", () => {
 });
 
 Deno.test("Form 4952 interest route rejects foreign-tax and adjusted-interest branches", () => {
+  assertStringIncludes(
+    form4952.build(fields, {
+      pending: {
+        ...pending,
+        form_1116: { worldwide_gross_income: 500 },
+      },
+    }),
+    "<InvestmentInterestExpDeductAmt>300</InvestmentInterestExpDeductAmt>",
+  );
   assertThrows(
     () =>
       form4952.build(fields, {

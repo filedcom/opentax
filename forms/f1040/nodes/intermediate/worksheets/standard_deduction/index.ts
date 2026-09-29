@@ -11,6 +11,7 @@ import { f1040 } from "../../../outputs/f1040/index.ts";
 import { income_tax_calculation } from "../income_tax_calculation/index.ts";
 import { schedule_j_calculation } from "../../forms/schedule_j/index.ts";
 import { form_1116 } from "../../forms/form_1116/index.ts";
+import { form8960 } from "../../forms/form8960/index.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
@@ -40,6 +41,8 @@ export const inputSchema = z.object({
   itemized_deductions: z.number().nonnegative().optional(),
   // Schedule A line 7, used for Form 6251 line 2a only if itemizing wins.
   itemized_taxes: z.number().nonnegative().optional(),
+  itemized_investment_interest: z.number().nonnegative().optional(),
+  niit_allocable_state_local_tax: z.number().nonnegative().optional(),
 
   // From form8995 / form8995a — qualified business income deduction (Form 1040 Line 13)
   qbi_deduction: z.number().nonnegative().optional(),
@@ -138,6 +141,7 @@ class StandardDeductionNode extends TaxNode<typeof inputSchema> {
     income_tax_calculation,
     schedule_j_calculation,
     form_1116,
+    form8960,
   ]);
 
   compute(ctx: NodeContext, rawInput: StandardDeductionInput): NodeResult {
@@ -202,6 +206,18 @@ class StandardDeductionNode extends TaxNode<typeof inputSchema> {
           line12e_itemized_deductions: deduction,
         }),
       );
+      if (
+        (input.itemized_investment_interest ?? 0) > 0 ||
+        (input.niit_allocable_state_local_tax ?? 0) > 0
+      ) {
+        outputs.push(
+          this.outputNodes.output(form8960, {
+            line9a_investment_interest_expense:
+              input.itemized_investment_interest ?? 0,
+            line9b_state_local_tax: input.niit_allocable_state_local_tax ?? 0,
+          }),
+        );
+      }
     }
 
     outputs.push(
