@@ -67,7 +67,8 @@ const scheduleD: ScheduleJPreferentialLine4Facts = {
 };
 
 Deno.test("2025 Schedule J line 4 computes Schedule D special-rate tax", () => {
-  assertEquals(calculateScheduleJPreferentialLine4(scheduleD), 16_230);
+  // The 2025 Tax Table gives $14,720 at $90,000, plus $1,500 at 15%.
+  assertEquals(calculateScheduleJPreferentialLine4(scheduleD), 16_220);
 });
 
 Deno.test("2025 Schedule J line 4 closes elected capital-gain cases without a source rule", () => {
