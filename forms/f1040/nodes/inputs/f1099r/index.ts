@@ -392,12 +392,19 @@ export function iraDistributionExplanation(
       ? `${rollover.destination_name} IRA`
       : "another IRA";
     const owner = item.ts === "S" ? "Spouse" : "Taxpayer";
-    return [
-      `Distribution ${index + 1}: ${owner} received ${
+    const opening = item.box7_distribution_code === DistributionCode.CodeG
+      ? `${owner}'s IRA custodian paid ${
+        Math.round(item.box1_gross_distribution)
+      } directly to ${destination} on ${rollover.distributed_on}; ${
+        Math.round(rolled)
+      } was received by the destination on ${rollover.completed_on}.`
+      : `${owner} received ${
         Math.round(item.box1_gross_distribution)
       } from an IRA on ${rollover.distributed_on}; ${
         Math.round(rolled)
-      } was rolled into ${destination} on ${rollover.completed_on}.`,
+      } was rolled into ${destination} on ${rollover.completed_on}.`;
+    return [
+      `Distribution ${index + 1}: ${opening}`,
     ];
   });
   if (rows.length === 0) return undefined;
@@ -509,13 +516,17 @@ function validateIraRolloverEvidence(item: R1099Item): void {
     const elapsedDays =
       (Date.parse(completed_on) - Date.parse(distributed_on)) /
       86_400_000;
-    if (
-      !distributed_on.startsWith("2025-") || elapsedDays < 0 ||
-      elapsedDays > 60
-    ) {
+    if (!distributed_on.startsWith("2025-") || elapsedDays < 0) {
       throw new Error(
-        "IRA rollover needs a 2025 distribution completed within 60 days",
+        "IRA rollover needs a 2025 distribution completed after payment",
       );
+    }
+    if (
+      elapsedDays > 60 &&
+      !(destination === "qualified_plan" &&
+        item.box7_distribution_code === DistributionCode.CodeG)
+    ) {
+      throw new Error("IRA rollover needs completion within 60 days");
     }
     if (
       destination === "qualified_plan" &&

@@ -196,7 +196,9 @@ circumstances:
   prior IRA-to-IRA rollover date or explicit none. Two IRA-to-IRA rollovers by
   the same owner within one year are rejected; an IRA code-G direct payment is
   accepted only for an employer-plan destination. Roth and SIMPLE IRA source
-  rollovers remain outside this bounded route.
+  rollovers remain outside this bounded route. A payer code-G direct IRA-to-plan
+  payment skips the 60-day receipt deadline and the statement describes the
+  custodian's direct payment; a taxpayer-received rollover retains the deadline.
   A qualified-plan destination or completion in 2026 also generates a linked
   native `IRADistributionStatement` and a matching supplemental PDF page from
   the reviewed destination, amount, and dates. Source-document authentication,

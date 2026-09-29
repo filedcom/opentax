@@ -922,7 +922,7 @@ Deno.test("f1099r.compute: box9b_total_employee_contributions without simplified
 // ---------------------------------------------------------------------------
 
 Deno.test("f1099r.compute: code G IRA payment to plan reports gross and zero taxable", () => {
-  const result = compute([minimalIraItem({
+  const item = minimalIraItem({
     box1_gross_distribution: 5000,
     box2a_taxable_amount: 0,
     box7_distribution_code: DistributionCode.CodeG,
@@ -935,11 +935,26 @@ Deno.test("f1099r.compute: code G IRA payment to plan reports gross and zero tax
       completed_on: "2025-06-02",
       last_ira_to_ira_rollover_on: null,
     },
-  })]);
+  });
+  const result = compute([item]);
   const input = f1040Input(result);
   assertEquals(input.line4a_ira_gross, 5000);
   assertEquals(input.line4b_ira_taxable, 0);
   assertEquals(input.line4c_ira_rollover, true);
+  assertStringIncludes(
+    iraDistributionExplanation([item]) ?? "",
+    "IRA custodian paid 5000 directly to Example 401(k) qualified plan",
+  );
+  assertEquals(
+    f1040Input(compute([{
+      ...item,
+      ira_rollover: {
+        ...item.ira_rollover!,
+        completed_on: "2025-09-01",
+      },
+    }])).line4c_ira_rollover,
+    true,
+  );
 });
 
 Deno.test("f1099r.compute: code G without box 2a stays a non-taxable direct rollover", () => {
@@ -1067,6 +1082,18 @@ Deno.test("f1099r.compute: IRA rollover needs dated destination evidence", () =>
     },
   };
   assertEquals(f1040Input(compute([qualified])).line4c_ira_rollover, true);
+  assertThrows(
+    () =>
+      compute([{
+        ...qualified,
+        ira_rollover: {
+          ...qualified.ira_rollover,
+          completed_on: "2026-02-15",
+        },
+      }]),
+    Error,
+    "completion within 60 days",
+  );
   assertEquals(
     iraDistributionExplanation([qualified]),
     "Distribution 1: Taxpayer received 10000 from an IRA on 2025-12-01; 10000 was rolled into Example 401(k) qualified plan on 2025-12-15.",
