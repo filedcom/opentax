@@ -360,6 +360,7 @@ Deno.test("box12_code_w_routes_to_form8889: Code W = $2,000 → employer_hsa_con
 Deno.test("box12_code_h_routes_to_schedule1_line24f: Code H = $1,500 → line24f_501c18d = 1500", () => {
   const result = compute([
     minimalItem({
+      employee_ssn: "123456789",
       box1_wages: 60000,
       box12_entries: [{ code: Box12Code.H, amount: 1500 }],
     }),
@@ -632,9 +633,10 @@ Deno.test("box12_multiple_entries_on_one_w2: D + W + T all route to separate nod
   assertEquals(fieldsOf(result.outputs, form8839)!.adoption_benefits, 3000);
 });
 
-Deno.test("box12_informational_codes_produce_no_routing: codes C, F, J, L, P, S do not create extra outputs", () => {
+Deno.test("box12 informational codes F and S reach Form 8880 deferral evidence", () => {
   const baseline = compute([minimalItem({ box1_wages: 60000 })]);
   const withInfoCodes = compute([minimalItem({
+    employee_ssn: "123456789",
     box1_wages: 60000,
     box12_entries: [
       { code: Box12Code.C, amount: 300 },
@@ -645,7 +647,11 @@ Deno.test("box12_informational_codes_produce_no_routing: codes C, F, J, L, P, S 
       { code: Box12Code.S, amount: 8000 },
     ],
   })]);
-  assertEquals(withInfoCodes.outputs.length, baseline.outputs.length);
+  assertEquals(withInfoCodes.outputs.length, baseline.outputs.length + 1);
+  assertEquals(fieldsOf(withInfoCodes.outputs, form8880)?.w2_deferral_entries, [
+    { employee_ssn: "123456789", code: Box12Code.F, amount: 5_000 },
+    { employee_ssn: "123456789", code: Box12Code.S, amount: 8_000 },
+  ]);
 });
 
 // ============================================================
@@ -1168,6 +1174,7 @@ Deno.test("457b_under50_above_limit_throws: age 40, G + EE = $23,501 throws", ()
 Deno.test("simple_ira_under50_at_limit_valid: age 40, S = $16,500 → no route but no error", () => {
   // Code S is informational (SIMPLE IRA) — validated but not routed
   const result = compute([minimalItem({
+    employee_ssn: "123456789",
     box1_wages: 60000,
     box12_entries: [{ code: Box12Code.S, amount: 16500 }],
     taxpayer_age: 40,
@@ -1189,6 +1196,7 @@ Deno.test("simple_ira_under50_above_limit_throws: age 40, S = $16,501 throws", (
 
 Deno.test("simple_ira_age60_63_at_super_catchup_valid: age 62, S = $21,750 is valid", () => {
   const result = compute([minimalItem({
+    employee_ssn: "123456789",
     box1_wages: 60000,
     box12_entries: [{ code: Box12Code.S, amount: 21750 }],
     taxpayer_age: 62,
