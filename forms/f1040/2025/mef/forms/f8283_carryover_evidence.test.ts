@@ -1,5 +1,8 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { reviewForm8283CarryoverAttachment } from "./f8283_carryover_evidence.ts";
+import {
+  form8283CarryoverAttachmentDescription,
+  reviewForm8283CarryoverAttachment,
+} from "./f8283_carryover_evidence.ts";
 import { FMVMethod } from "../../../nodes/inputs/f8283/index.ts";
 
 const digest = "a".repeat(64);
@@ -58,7 +61,9 @@ function attachmentContext() {
   return {
     attachmentSha256ByFileName: { "filed-2024-form-8283.pdf": digest },
     attachmentDescriptionsByFileName: {
-      "filed-2024-form-8283.pdf": "Completed prior-year Form 8283 Section A",
+      "filed-2024-form-8283.pdf": form8283CarryoverAttachmentDescription(
+        "filed-2024-form-8283.pdf",
+      ),
     },
     documentIdsByAttachmentFileName: {
       "filed-2024-form-8283.pdf": "BinaryAttachment0001",
@@ -79,91 +84,109 @@ Deno.test("Form 8283 prior-year Section A review joins ledger, taxpayer, PDF byt
 });
 
 Deno.test("Form 8283 prior-year Section A review rejects a different gift, taxpayer or PDF", () => {
-  assertThrows(() => reviewForm8283CarryoverAttachment(
-    evidence(),
-    { ...carryover(), previously_deducted: 600 },
-    "123456789",
-    attachmentContext(),
-  ));
-  assertThrows(() => reviewForm8283CarryoverAttachment(
-    evidence(),
-    carryover(),
-    "987654321",
-    attachmentContext(),
-  ));
-  assertThrows(() => reviewForm8283CarryoverAttachment(
-    evidence(),
-    carryover(),
-    "123456789",
-    {
-      ...attachmentContext(),
-      attachmentSha256ByFileName: {
-        "filed-2024-form-8283.pdf": "b".repeat(64),
+  assertThrows(() =>
+    reviewForm8283CarryoverAttachment(
+      evidence(),
+      { ...carryover(), previously_deducted: 600 },
+      "123456789",
+      attachmentContext(),
+    )
+  );
+  assertThrows(() =>
+    reviewForm8283CarryoverAttachment(
+      evidence(),
+      carryover(),
+      "987654321",
+      attachmentContext(),
+    )
+  );
+  assertThrows(() =>
+    reviewForm8283CarryoverAttachment(
+      evidence(),
+      carryover(),
+      "123456789",
+      {
+        ...attachmentContext(),
+        attachmentSha256ByFileName: {
+          "filed-2024-form-8283.pdf": "b".repeat(64),
+        },
       },
-    },
-  ));
+    )
+  );
 });
 
 Deno.test("Form 8283 prior-year Section A review rejects invalid date, value or appraisal branch", () => {
   const source = evidence();
-  assertThrows(() => reviewForm8283CarryoverAttachment(
-    {
-      ...source,
-      prior_form_8283: {
-        ...source.prior_form_8283,
-        original_donation_date: "2023-02-30",
+  assertThrows(() =>
+    reviewForm8283CarryoverAttachment(
+      {
+        ...source,
+        prior_form_8283: {
+          ...source.prior_form_8283,
+          original_donation_date: "2023-02-30",
+        },
       },
-    },
-    carryover(),
-    "123456789",
-    attachmentContext(),
-  ));
-  assertThrows(() => reviewForm8283CarryoverAttachment(
-    { ...source, original_section_a_similar_items_total: 3_000 },
-    carryover(),
-    "123456789",
-    attachmentContext(),
-  ));
-  assertThrows(() => reviewForm8283CarryoverAttachment(
-    { ...source, appraisal_required_with_2024_return: true },
-    carryover(),
-    "123456789",
-    attachmentContext(),
-  ));
-  assertThrows(() => reviewForm8283CarryoverAttachment(
-    {
-      ...source,
-      prior_form_8283: {
-        ...source.prior_form_8283,
-        donor_acquired_date: "2023-12-01",
+      carryover(),
+      "123456789",
+      attachmentContext(),
+    )
+  );
+  assertThrows(() =>
+    reviewForm8283CarryoverAttachment(
+      { ...source, original_section_a_similar_items_total: 3_000 },
+      carryover(),
+      "123456789",
+      attachmentContext(),
+    )
+  );
+  assertThrows(() =>
+    reviewForm8283CarryoverAttachment(
+      { ...source, appraisal_required_with_2024_return: true },
+      carryover(),
+      "123456789",
+      attachmentContext(),
+    )
+  );
+  assertThrows(() =>
+    reviewForm8283CarryoverAttachment(
+      {
+        ...source,
+        prior_form_8283: {
+          ...source.prior_form_8283,
+          donor_acquired_date: "2023-12-01",
+        },
       },
-    },
-    carryover(),
-    "123456789",
-    attachmentContext(),
-  ));
-  assertThrows(() => reviewForm8283CarryoverAttachment(
-    {
-      ...source,
-      prior_form_8283: {
-        ...source.prior_form_8283,
-        donor_acquired_date: "2022-11-15",
+      carryover(),
+      "123456789",
+      attachmentContext(),
+    )
+  );
+  assertThrows(() =>
+    reviewForm8283CarryoverAttachment(
+      {
+        ...source,
+        prior_form_8283: {
+          ...source.prior_form_8283,
+          donor_acquired_date: "2022-11-15",
+        },
       },
-    },
-    carryover(),
-    "123456789",
-    attachmentContext(),
-  ));
-  assertThrows(() => reviewForm8283CarryoverAttachment(
-    {
-      ...source,
-      prior_form_8283: {
-        ...source.prior_form_8283,
-        fmv_method: FMVMethod.Other,
+      carryover(),
+      "123456789",
+      attachmentContext(),
+    )
+  );
+  assertThrows(() =>
+    reviewForm8283CarryoverAttachment(
+      {
+        ...source,
+        prior_form_8283: {
+          ...source.prior_form_8283,
+          fmv_method: FMVMethod.Other,
+        },
       },
-    },
-    carryover(),
-    "123456789",
-    attachmentContext(),
-  ));
+      carryover(),
+      "123456789",
+      attachmentContext(),
+    )
+  );
 });

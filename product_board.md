@@ -72,6 +72,9 @@ The aggregate-only Form 2441 input now fails during MeF export instead of
 leaving a Schedule 3 credit without its required Form 2441 document; its 15
 focused MeF/XSD tests pass. A standalone Form 3800 current-year row fixture
 now uses XSD-valid document IDs and passes all eight tests in its file.
+The Form 8283 carried-gift route now gives each prior-year PDF a distinct
+filename-bound description; its five route cases and three evidence cases pass,
+including a two-gift return with two linked native forms and attachments.
 
 ## Scope and completion rules
 

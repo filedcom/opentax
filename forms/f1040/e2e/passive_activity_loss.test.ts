@@ -92,6 +92,10 @@ function rental(rentIncome: number, repairs: number) {
 Deno.test("§469: MAGI $200,000 — entire $20,000 rental loss suspended, AGI unchanged", () => {
   const result = runReturn({
     general: mfjGeneral(),
+    schedule_b_part_iii: {
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    },
     f1099int: [{ payer_name: "Bank", box1: 200_000 }],
     schedule_e: [rental(10_000, 30_000)],
   });
@@ -171,6 +175,10 @@ Deno.test("§469: rental net income is not limited", () => {
 Deno.test("§469: passive income releases part of a rental loss above the allowance cutoff", () => {
   const result = runReturn({
     general: singleGeneral(),
+    schedule_b_part_iii: {
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    },
     f1099int: [{ payer_name: "Bank", box1: 200_000 }],
     schedule_e: [
       rental(20_000, 5_000),

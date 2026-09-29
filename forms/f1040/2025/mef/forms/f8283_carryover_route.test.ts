@@ -16,9 +16,12 @@ import { form8283 } from "./f8283.ts";
 import { scheduleA as scheduleAMef } from "./schedule_a.ts";
 import { form8283Pdf } from "../../pdf/forms/f8283.ts";
 import { scheduleAPdf } from "../../pdf/forms/schedule_a.ts";
+import { form8283CarryoverAttachmentDescription } from "./f8283_carryover_evidence.ts";
 
 const attachmentFile = "filed-2024-form-8283.pdf";
-const attachmentDescription = "Completed prior-year Form 8283 Section A";
+const attachmentDescription = form8283CarryoverAttachmentDescription(
+  attachmentFile,
+);
 
 async function reviewedSource() {
   const pdf = await PDFDocument.create();
@@ -206,7 +209,9 @@ Deno.test("Form 8283 multiple carried gifts each have a native form, statement, 
   };
   const attachments = [attachment, {
     fileName: "filed-2024-form-8283-second.pdf",
-    description: attachmentDescription,
+    description: form8283CarryoverAttachmentDescription(
+      "filed-2024-form-8283-second.pdf",
+    ),
     bytes: secondBytes,
   }];
   const bundle = await buildMefBundle(multiple, {

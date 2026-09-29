@@ -21,7 +21,9 @@ method, and valuation method so the native Section A document is not
 built from amounts alone. For this purchased-stock capital-gain category, the
 acquisition and contribution dates must also establish a holding period of
 more than one year, following [2025 Publication 526](https://www.irs.gov/publications/p526).
-Focused positive and mismatch cases are written but unrun.
+The retained prior-year PDF description now includes its unique attachment
+filename, so two carried gifts can each have an independently identified binary
+attachment without weakening the bundle's duplicate-description check.
 
 The public `f8283` input now accepts this reviewed carryover evidence directly.
 For one or more distinct purchased, long-held publicly traded securities gifts
@@ -42,8 +44,8 @@ The Schedule A and Form 8283 MeF descriptors independently require the same
 source and attachment join in the linked pass. Bounded Form 8283 and Schedule A
 PDF previews also use the same source reconciliation, including the real filer
 identity through their existing instance hooks; they emit one preview page per
-carried gift. Focused single/multiple-gift and rejection cases are written but
-unrun.
+carried gift. On 2026-09-29, the five single/multiple-gift route cases and
+three evidence cases passed, including the two-attachment return.
 
 This is a wired bounded export route, not verified filing readiness. The code
 checks the PDF's SHA-256 and a named human review, but does not parse its

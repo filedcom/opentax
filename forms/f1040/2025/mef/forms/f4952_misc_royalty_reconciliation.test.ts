@@ -167,7 +167,7 @@ Deno.test("1099-MISC portfolio royalty rejects source, property, deduction, and 
   );
   assertThrows(() =>
     form4952.build(fields, {
-      pending: { ...pending, form_1116: {} },
+      pending: { ...pending, form_1116: { foreign_tax_paid: 100 } },
       filer,
     })
   );

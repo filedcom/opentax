@@ -90,6 +90,7 @@ Deno.test("line 2o circulation cost serializes signed after depreciation", () =>
   const xml = filed({
     depreciation_adjustment: 100,
     line2o_circulation_costs: -250,
+    amti: 1_000,
   });
   const line2l = xml.indexOf("<DepreciationAmt>100</DepreciationAmt>");
   const line2o = xml.indexOf("<CirculationCostAmt>-250</CirculationCostAmt>");

@@ -24,6 +24,12 @@ export type ReviewedForm8283CarryoverAttachment = Readonly<{
   filed2024ReturnReference: string;
 }>;
 
+export function form8283CarryoverAttachmentDescription(
+  fileName: string,
+): string {
+  return `Completed prior-year Form 8283 Section A: ${fileName}`;
+}
+
 /** Bind the reviewed prior-year Section A PDF to the carried gift, taxpayer,
  * exact submitted bytes, and the MeF binary document. */
 export function reviewForm8283CarryoverAttachment(
@@ -41,7 +47,8 @@ export function reviewForm8283CarryoverAttachment(
     evidence.contribution_year !== carryover.contribution_year ||
     previous.original_fmv !== carryover.original_fmv ||
     previous.adjusted_basis !== carryover.adjusted_basis ||
-    evidence.prior_deduction_workpaper.total_previously_deducted_through_2024 !==
+    evidence.prior_deduction_workpaper
+        .total_previously_deducted_through_2024 !==
       carryover.previously_deducted ||
     previous.filed_taxpayer_ssn !== taxpayerSsn
   ) {
@@ -53,14 +60,13 @@ export function reviewForm8283CarryoverAttachment(
   if (
     context.attachmentSha256ByFileName?.[file] !== previous.pdf_sha256 ||
     context.attachmentDescriptionsByFileName?.[file] !==
-      "Completed prior-year Form 8283 Section A"
+      form8283CarryoverAttachmentDescription(file)
   ) {
     throw new Error(
       "Form 8283 prior-year completed PDF bytes or description do not match the reviewed source",
     );
   }
-  const attachmentDocumentId =
-    context.documentIdsByAttachmentFileName?.[file];
+  const attachmentDocumentId = context.documentIdsByAttachmentFileName?.[file];
   if (!attachmentDocumentId) {
     throw new Error(
       "Form 8283 prior-year completed PDF needs a linked MeF binary document",

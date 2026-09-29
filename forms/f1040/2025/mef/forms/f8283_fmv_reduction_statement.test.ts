@@ -552,6 +552,8 @@ Deno.test("Form 8283 vehicle-sale reduction statement needs complete, matching d
     fmv: 20_000,
     deduction_claimed: 15_000,
     cost_or_adjusted_basis: 25_000,
+    charitable_limit_category: "noncash_50" as const,
+    is_capital_gain_property: false,
     fmv_method: FMVMethod.ComparableSales,
     vehicle_sale_acknowledgment: {
       copy_received_from_donee: true as const,
