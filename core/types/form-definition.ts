@@ -2,6 +2,12 @@ import type { ZodTypeAny } from "zod";
 import type { TaxNode } from "./tax-node.ts";
 import type { FilerIdentity } from "../../forms/f1040/mef/header.ts";
 import type { ExecuteResult } from "../runtime/executor.ts";
+import type { MefBundle } from "../../forms/f1040/2025/mef/builder.ts";
+
+export interface PreparedFormReturn {
+  readonly bundle: MefBundle;
+  readonly renderPdf: () => Promise<Uint8Array>;
+}
 
 export type InputNodeEntry =
   | {
@@ -25,6 +31,11 @@ export interface FormDefinition {
   readonly registry: Record<string, TaxNode>;
   /** Single form-owned execution entrypoint for validated source inputs. */
   readonly executeReturn: (inputs: Record<string, unknown>) => ExecuteResult;
+  /** Build linked native documents once and retain their printable source. */
+  readonly prepareReturn: (
+    pending: Record<string, unknown>,
+    filer: FilerIdentity | undefined,
+  ) => Promise<PreparedFormReturn>;
   readonly buildMefXml: (
     pending: Record<string, unknown>,
     filer?: FilerIdentity,

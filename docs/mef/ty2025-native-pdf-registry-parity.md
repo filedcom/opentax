@@ -17,7 +17,6 @@ found expenditure-level evidence and no-double-benefit checks still missing.
 
 | Native pending key      | Native root(s)              | Current PDF gap / decision                                                                                                                                 |
 | ----------------------- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `f3800`                 | `IRS3800`                   | No parent Form 3800 PDF. Prioritize because several registered direct and pass-through credit forms depend on it.                                          |
 | `f965`                  | `IRS965A`                   | No Form 965-A PDF. Source includes prior-year liability/payment and transfer history that still needs independent review.                                  |
 | `form8582cr`            | `IRS8582CR`                 | No passive-credit limitation PDF, including when its native document is linked to Form 3800.                                                               |
 | `form8621`              | `IRS8621`                   | No PFIC Form 8621 PDF or Part V excess-distribution statement print route.                                                                                 |
@@ -34,6 +33,10 @@ priority-1 count. The table is an exact list of the _parent taxpayer-form_
 parity gaps found in this comparison, not every difference between pending-key
 lists.
 
+Form 3800 was on the initial parity list. Its nine-page parent descriptor now
+uses the native prepared parts; one geothermal credit return has local XSD and
+filled-PDF evidence. Transfer, passive, carryover, and multiple-source routes
+remain coverage gates. See `ty2025-form3800-pdf-gap.md`.
 Form 8911 and Schedule A were on the initial parity list. They now have
 registered, bounded PDF descriptors for one personal-use charger. Their fields
 and cross-return checks are written but unrun, and broader business or

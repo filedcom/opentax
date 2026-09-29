@@ -21,11 +21,6 @@ const nonempty = (value: unknown): boolean =>
   Array.isArray(value) && value.length > 0;
 const positive = (value: unknown): boolean =>
   typeof value === "number" && value > 0;
-const positiveCredit = (value: unknown): boolean =>
-  value !== null && typeof value === "object" &&
-  "credit_amount" in value && positive(value.credit_amount);
-const positiveCredits = (value: unknown): boolean =>
-  Array.isArray(value) && value.some(positiveCredit);
 
 const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
   {
@@ -296,24 +291,6 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
     exportKinds: ["mef", "pdf"],
     reason: "Form 970 LIFO election needs a native filing review",
     isActive: (fields) => nonempty(fields.f970s),
-  },
-  {
-    pendingKey: "f3800",
-    exportKinds: ["pdf"],
-    reason:
-      "Form 3800 has a native filing but no complete printable parent form",
-    isActive: (fields) =>
-      fields.allowed_credit !== undefined ||
-      positiveCredits(fields.f8826_credit_entries) ||
-      positiveCredit(fields.f8820_credit) ||
-      positiveCredit(fields.f8874_credit) ||
-      positiveCredits(fields.f8874_k1_credit_entries) ||
-      positiveCredits(fields.f8820_k1_credit_entries) ||
-      positiveCredits(fields.f8835_credit_entries) ||
-      positiveCredit(fields.f5884_credit) ||
-      positiveCredit(fields.f8936_new_vehicle_credit) ||
-      positiveCredit(fields.f8936_commercial_vehicle_credit) ||
-      nonempty(fields.passive_source_allocations),
   },
   {
     pendingKey: "f965",

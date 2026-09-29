@@ -9,7 +9,7 @@ import type { MefFormsPending } from "./mef/types.ts";
 import { F1040_2025_CONFIG } from "./config.ts";
 import { inputNodes } from "./inputs.ts";
 import { registry } from "./registry.ts";
-import { buildMefXml } from "./mef/builder.ts";
+import { buildMefBundle, buildMefXml } from "./mef/builder.ts";
 import { buildPending } from "./mef/pending.ts";
 import { buildPdfBytes } from "./pdf/builder.ts";
 
@@ -63,6 +63,20 @@ export const f1040_2025: FormDefinition = {
   inputNodes,
   registry,
   executeReturn,
+  prepareReturn: async (pending, filer) => {
+    const normalized = buildPending(pending) as MefFormsPending;
+    const bundle = await buildMefBundle(normalized, {
+      filer,
+      attachments: [],
+      schemaVersion: F1040_2025_CONFIG.mefSchemaVersion,
+      year: F1040_2025_CONFIG.taxYear,
+      returnType: "1040",
+    });
+    return {
+      bundle,
+      renderPdf: () => buildPdfBytes(normalized, filer, ".pdf-cache", bundle),
+    };
+  },
   buildMefXml: (pending, filer) =>
     buildMefXml(
       pending as MefFormsPending,

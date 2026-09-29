@@ -158,7 +158,6 @@ Deno.test("PDF-only coverage gaps do not suppress a native MeF form", () => {
 
 Deno.test("active native-only taxpayer forms cannot disappear from the PDF packet", () => {
   const active = [
-    { f3800: { allowed_credit: 0 } },
     { f965: { f965s: [{}] } },
     { form8582cr: { credit_sources: [{}] } },
     { f4255: { rows: [{}] } },
@@ -183,14 +182,9 @@ Deno.test("active native-only taxpayer forms cannot disappear from the PDF packe
       "native filing but no",
     );
   }
-  assertThrows(
-    () =>
-      assertAttachmentCoverage(
-        { f3800: { f8826_credit_entries: [{ credit_amount: 500 }] } },
-        "pdf",
-      ),
-    Error,
-    "Form 3800",
+  assertAttachmentCoverage(
+    { f3800: { f8826_credit_entries: [{ credit_amount: 500 }] } },
+    "pdf",
   );
   assertAttachmentCoverage({ f3800: { tax_context: {} } }, "pdf");
   assertAttachmentCoverage({ f965: { f965s: [] } }, "pdf");

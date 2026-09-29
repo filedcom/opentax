@@ -241,8 +241,8 @@ export async function exportMefCommand(
   const { pending, def, filer, executorDiagnostics } = await runReturnPipeline(
     args,
   );
-  const normalized = def.buildPending(pending);
-  const xml = def.buildMefXml(normalized, filer);
+  const prepared = await def.prepareReturn(pending, filer);
+  const xml = prepared.bundle.xml;
   validateBusinessRules(
     pending,
     filer,
@@ -264,7 +264,8 @@ export async function exportPdfCommand(
     args,
   );
   validateBusinessRules(pending, filer, args.force);
-  const pdfBytes = await def.buildPdfBytes(pending, filer);
+  const prepared = await def.prepareReturn(pending, filer);
+  const pdfBytes = await prepared.renderPdf();
   const outputBytes = args.draft ? await addDraftWatermark(pdfBytes) : pdfBytes;
   const outPath = args.outputPath ??
     join(args.baseDir, args.returnId, "export.pdf");

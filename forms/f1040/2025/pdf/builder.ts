@@ -5,6 +5,8 @@ import { ALL_PDF_FORMS } from "./forms/index.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "./form-descriptor.ts";
 import type { FilerIdentity } from "../../mef/header.ts";
 import { assertAttachmentCoverage } from "../attachment-coverage.ts";
+import type { MefBundle } from "../mef/builder.ts";
+import { preparedSourceSha256 } from "../prepared-source.ts";
 
 async function fetchWithCache(
   url: string,
@@ -238,8 +240,16 @@ export async function buildPdfBytes(
   pending: Record<string, unknown>,
   filer: FilerIdentity | undefined,
   cacheDir = ".pdf-cache",
+  preparedBundle?: MefBundle,
 ): Promise<Uint8Array> {
   const normalized = normalizeAllPending(pending);
+  if (
+    preparedBundle &&
+    await preparedSourceSha256(normalized, filer) !==
+      preparedBundle.sourceSha256
+  ) {
+    throw new Error("PDF source differs from the prepared MeF return");
+  }
   assertAttachmentCoverage(normalized, "pdf");
   const merged = await PDFDocument.create();
 
@@ -259,9 +269,13 @@ export async function buildPdfBytes(
       }
       : projectedFields;
 
-    const instances =
-      descriptor.instances?.(effectiveFields, filer, normalized) ??
-        [effectiveFields];
+    const instances = descriptor.instances?.(
+      effectiveFields,
+      filer,
+      normalized,
+      preparedBundle?.form3800Parts,
+    ) ??
+      [effectiveFields];
     for (const instance of instances) {
       const filledBytes = await fillFormPdf(
         descriptor,

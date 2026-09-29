@@ -4,7 +4,7 @@ import { buildExecutionPlan } from "../core/runtime/planner.ts";
 import { execute } from "../core/runtime/executor.ts";
 import { registry } from "../forms/f1040/2025/registry.ts";
 import { buildPdfBytes } from "../forms/f1040/2025/pdf/builder.ts";
-import { buildMefXml } from "../forms/f1040/2025/mef/builder.ts";
+import { buildMefBundle } from "../forms/f1040/2025/mef/builder.ts";
 import { buildPending } from "../forms/f1040/2025/mef/pending.ts";
 import { pdfReviewFixtures } from "../forms/f1040/2025/pdf/review-fixtures.ts";
 
@@ -32,8 +32,17 @@ for (const fixture of pdfReviewFixtures) {
       }`,
     );
   }
-  const pdf = await buildPdfBytes(result.pending, fixture.filer, cacheDir);
-  const xml = buildMefXml(buildPending(result.pending), fixture.filer);
+  const bundle = await buildMefBundle(buildPending(result.pending), {
+    filer: fixture.filer,
+    attachments: [],
+  });
+  const pdf = await buildPdfBytes(
+    bundle.pending,
+    fixture.filer,
+    cacheDir,
+    bundle,
+  );
+  const xml = bundle.xml;
   await Deno.writeFile(join(outputDir, `${fixture.id}.pdf`), pdf);
   await Deno.writeTextFile(join(outputDir, `${fixture.id}.xml`), xml + "\n");
   await Deno.writeTextFile(

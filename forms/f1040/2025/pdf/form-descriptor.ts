@@ -1,5 +1,6 @@
 import type { PDFDocument, PDFPage } from "pdf-lib";
 import type { FilerIdentity } from "../../mef/header.ts";
+import type { Form3800DocumentParts } from "../mef/forms/f3800_document.ts";
 
 export type PdfFieldEntry =
   /** `printZero` prints an explicit "0" instead of the default blank-when-zero convention
@@ -81,6 +82,7 @@ export interface PdfFormDescriptor {
     fields: Record<string, unknown>,
     filer?: FilerIdentity,
     allPending?: Record<string, Record<string, unknown>>,
+    preparedForm3800?: Form3800DocumentParts,
   ) => ReadonlyArray<Record<string, unknown>>;
   /** Zero-based source PDF pages to retain for a particular instance. */
   readonly pageIndices?: (fields: Record<string, unknown>) => readonly number[];

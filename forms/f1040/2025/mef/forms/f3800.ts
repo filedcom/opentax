@@ -1089,6 +1089,7 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
         : "";
     }
     const parts = prepareForm3800DocumentParts(fields, context);
+    if (parts) context.onPreparedForm3800?.(parts);
     return parts ? buildIRS3800Document(parts) : "";
   },
 };

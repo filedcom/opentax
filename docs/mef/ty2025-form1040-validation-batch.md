@@ -73,6 +73,13 @@ Form 8283 return passes local v5.4 XSD; its Form 8283 and corrected Schedule A
 pages were visually reviewed. This packet count is coverage evidence for the
 held review matrix, not closure of the route and IRS acceptance gates.
 
+The Form 3800 prepared-return integration adds an eighteenth synthetic source
+return. The generator now consumes the prepared MeF bundle for its PDF, and
+the 2026-09-29-v17 review directory contains 18 PDFs (115 pages) and 18 native
+XML files. The geothermal case's native return passes local v5.4 XSD, and all
+nine filled Form 3800 pages were rendered and inspected. This code postdates
+the `21457b7e` full-test pass, so another repository-wide run is due.
+
 ## XML evidence
 
 For each supported positive filing route in the completed coverage inventory,

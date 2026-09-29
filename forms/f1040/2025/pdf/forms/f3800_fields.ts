@@ -70,6 +70,7 @@ const partIIIPage4 = [
   "5",
   "6",
 ];
+export const form3800PartIIILines = [...partIIIPage3, ...partIIIPage4] as const;
 const partIVPage5 = [
   ...letters.map((letter) => `1${letter}`),
   ...["aa", "bb", "cc", "dd", "ee", "ff", "gg", "hh", "ii", "jj"]
@@ -89,6 +90,11 @@ const partIVPage7 = [
   "6",
   "7",
 ];
+export const form3800PartIVLines = [
+  ...partIVPage5,
+  ...partIVPage6,
+  ...partIVPage7,
+] as const;
 
 function rowFields(
   line: string,

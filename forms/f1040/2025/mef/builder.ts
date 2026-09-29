@@ -5,10 +5,15 @@ import { ALL_MEF_FORMS } from "./forms/index.ts";
 import type { MefBuildContext, MefPdfAttachment } from "./form-descriptor.ts";
 import type { FilerIdentity, MefFormsPending } from "./types.ts";
 import { assertAttachmentCoverage } from "../attachment-coverage.ts";
+import type { Form3800DocumentParts } from "./forms/f3800_document.ts";
+import { preparedSourceSha256 } from "../prepared-source.ts";
 
 export interface MefBundle {
   readonly xml: string;
   readonly attachments: ReadonlyArray<MefPdfAttachment>;
+  readonly pending: MefFormsPending;
+  readonly sourceSha256: string;
+  readonly form3800Parts?: Form3800DocumentParts;
 }
 
 export interface MefBundleOptions {
@@ -173,7 +178,7 @@ function buildReturnXml(
   returnType: string,
   attachments: ReadonlyArray<MefPdfAttachment>,
   attachmentSha256ByFileName?: Readonly<Record<string, string>>,
-): string {
+): { readonly xml: string; readonly form3800Parts?: Form3800DocumentParts } {
   if (!filer) {
     throw new Error("MeF export requires a real filer identity");
   }
@@ -213,6 +218,7 @@ function buildReturnXml(
       `BinaryAttachment${initial.length + index}`,
     ]),
   );
+  let form3800Parts: Form3800DocumentParts | undefined;
   const linked = buildFragments(pending, {
     filer,
     binaryAttachmentFileNames,
@@ -222,6 +228,12 @@ function buildReturnXml(
     documentIdsByTag,
     documentIdsByAttachmentFileName,
     pending,
+    onPreparedForm3800(parts) {
+      if (form3800Parts) {
+        throw new Error("Form 3800 prepared more than once in one return");
+      }
+      form3800Parts = parts;
+    },
   });
   if (
     linked.length !== initial.length ||
@@ -253,7 +265,11 @@ function buildReturnXml(
     attachments.length,
   );
 
-  return `<Return returnVersion="${schemaVersion}" xmlns="http://www.irs.gov/efile" xmlns:efile="http://www.irs.gov/efile">${returnHeader}${returnData}</Return>`;
+  return {
+    xml:
+      `<Return returnVersion="${schemaVersion}" xmlns="http://www.irs.gov/efile" xmlns:efile="http://www.irs.gov/efile">${returnHeader}${returnData}</Return>`,
+    form3800Parts,
+  };
 }
 
 export function buildMefXml(
@@ -263,7 +279,8 @@ export function buildMefXml(
   year = 2025,
   returnType = "1040",
 ): string {
-  return buildReturnXml(pending, filer, schemaVersion, year, returnType, []);
+  return buildReturnXml(pending, filer, schemaVersion, year, returnType, [])
+    .xml;
 }
 
 /** XML and PDF files that must later be placed in a MeF submission ZIP. */
@@ -298,7 +315,7 @@ export async function buildMefBundle(
       ] as const;
     })),
   );
-  const xml = buildReturnXml(
+  const prepared = buildReturnXml(
     pending,
     options.filer,
     options.schemaVersion ?? "2025v5.4",
@@ -307,5 +324,10 @@ export async function buildMefBundle(
     attachments,
     attachmentSha256ByFileName,
   );
-  return { xml, attachments };
+  return {
+    ...prepared,
+    attachments,
+    pending,
+    sourceSha256: await preparedSourceSha256(pending, options.filer),
+  };
 }
