@@ -575,6 +575,9 @@ function hasPassiveLoss(
 ): boolean {
   return passiveCurrentLoss(items) + farmCurrentLoss(farms) > 0 ||
     priorUnallowedPassive(items) > 0 ||
+    passiveItems(items).some((item) =>
+      (item.passive_property_sales?.length ?? 0) > 0
+    ) ||
     farms.some((farm) => (farm.prior_unallowed_operating ?? 0) > 0);
 }
 
@@ -586,6 +589,7 @@ function form8582Outputs(
 
   const reportedProperties = passiveItems(items).filter((item) =>
     computePropertyNet(item) !== 0 ||
+    (item.passive_property_sales?.length ?? 0) > 0 ||
     (item.prior_unallowed_passive_operating ?? 0) > 0 ||
     (item.prior_unallowed_passive_4797_part1 ?? 0) > 0 ||
     (item.prior_unallowed_passive_4797_part2 ?? 0) > 0

@@ -26,6 +26,12 @@ Deno.test("active-rental PAL stages remain acyclic and finalize after Form 8582"
 
 Deno.test("public Schedule E sale reaches Form 4797 and final Form 1040 once", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
+    general: {
+      filing_status: "single",
+      taxpayer_first_name: "Alex",
+      taxpayer_last_name: "Taxpayer",
+      taxpayer_ssn: "123-45-6789",
+    },
     schedule_e: [{
       tsj: "T",
       activity_id: "rental-house",
@@ -37,9 +43,6 @@ Deno.test("public Schedule E sale reaches Form 4797 and final Form 1040 once", (
       rent_income: 0,
       form_1099_payments_made: false,
       disposed_of: true,
-      prior_unallowed_passive_4797_part1: 1_000,
-      prior_unallowed_passive_4797_part2: 500,
-      prior_passive_losses_active_when_incurred: true,
       passive_property_sales: [{
         activity_id: "rental-house",
         activity_name: "Rental house",
@@ -70,6 +73,6 @@ Deno.test("public Schedule E sale reaches Form 4797 and final Form 1040 once", (
     (result.pending.form4797.passive_property_sales as unknown[]).length,
     2,
   );
-  assertEquals(result.pending.schedule_d.line_11_form2439, 1_000);
-  assertEquals(result.pending.f1040.line11_agi, 1_000);
+  assertEquals(result.pending.schedule_d.line_11_form2439, 2_000);
+  assertEquals(result.pending.f1040.line11_agi, 2_500);
 });
