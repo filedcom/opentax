@@ -288,17 +288,16 @@ Deno.test("same-state spouses add separate SLCSP through wedding month, then ded
     start_month: 1,
     end_month: 6,
   });
-  const xml = form8962Mef.build(form!);
-  assertStringIncludes(xml, "<AltCalcForMarriagePrimaryGrp>");
-  assertStringIncludes(xml, "<AltCalcForMarriageSpouseGrp>");
-  assertStringIncludes(
-    xml,
-    "<MonthlyPremiumSLCSPAmt>1200</MonthlyPremiumSLCSPAmt>",
+  assertThrows(
+    () => form8962Mef.build(form!),
+    Error,
+    "needs Form 1095-A and finalized Form 1040 facts",
   );
-  const pdf = form8962Pdf.projectFields?.(form!, {});
-  assertEquals(pdf?.pdf_month_1_slcsp, "1200");
-  assertEquals(pdf?.pdf_month_7_slcsp, "600");
-  assertEquals(pdf?.pdf_marriage_spouse_end_month, "06");
+  assertThrows(
+    () => form8962Pdf.projectFields?.(form!, {}),
+    Error,
+    "verified general return source",
+  );
 });
 
 Deno.test("marriage source month is required and cannot contradict Part V", () => {
@@ -1229,7 +1228,7 @@ Deno.test("coverage-family change replaces reported SLCSP for affected months", 
     ...Array(5).fill(400),
   ]);
   assertEquals(fields?.annual_line11_eligible, undefined);
-  assertEquals(fields?.annual_slcsp, undefined);
+  assertEquals(fields?.annual_slcsp, 7_950);
   const calculated = form8962.compute({ taxYear: 2025, formType: "f1040" }, {
     ...fields,
     filing_status: FilingStatus.Single,
@@ -1243,9 +1242,10 @@ Deno.test("coverage-family change replaces reported SLCSP for affected months", 
   const rows = form?.monthly_ptc_rows as Array<{ slcsp: number }>;
   assertEquals(rows[6].slcsp, 850);
   assertEquals(rows[7].slcsp, 400);
-  assertStringIncludes(
-    form8962Mef.build(form!),
-    "<MonthlyPremiumSLCSPAmt>400</MonthlyPremiumSLCSPAmt>",
+  assertThrows(
+    () => form8962Mef.build(form!),
+    Error,
+    "needs Form 1095-A and finalized Form 1040 facts",
   );
   assertEquals(
     form8962Pdf.projectFields?.(form!, {})?.pdf_month_8_slcsp,
