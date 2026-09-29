@@ -305,7 +305,7 @@ Deno.test("Form 1116 PDF projects reviewed one-employer general wages", () => {
         fec: { fecs: [{ ...pending.fec.fecs[0], compensation_usd: 310_000 }] },
       }),
     Error,
-    "source amounts must match",
+    "must match each sourced foreign-employer compensation item",
   );
 });
 
@@ -338,7 +338,7 @@ Deno.test("Form 1116 PDF fails closed for a positive tax without category summar
   assertThrows(
     () => form1116Pdf.projectFields?.(active, {}),
     Error,
-    "cannot render an active category",
+    "supports one reviewed passive category",
   );
   assertThrows(
     () => form1116Pdf.instances?.(active),
@@ -1117,7 +1117,7 @@ Deno.test("Form 1116 PDF keeps a dated non-1099 category closed without foreign-
   assertThrows(
     () => form1116Pdf.projectFields?.(active, {}),
     Error,
-    "cannot render an active category",
+    "supports one reviewed passive tax item",
   );
 });
 
@@ -1130,12 +1130,12 @@ Deno.test("Form 1116 PDF line 18 source is the computed senior-adjusted amount",
     }],
     worldwide_taxable_income: 40_000,
     enhanced_senior_deduction: 6_000,
-    us_tax_before_credits: 4_000,
+    us_tax_before_credits: 5_000,
   });
   const fields = result.outputs.find((item) => item.nodeType === "form_1116")
     ?.fields;
   assertEquals(fields?.total_income, 46_000);
-  assertEquals(fields?.us_tax_before_credits, 4_000);
+  assertEquals(fields?.us_tax_before_credits, 5_000);
   assertEquals(
     form1116Pdf.fields.find((field) => field.domainKey === "total_income")
       ?.pdfField,
