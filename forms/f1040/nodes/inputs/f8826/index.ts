@@ -142,9 +142,15 @@ export function isEligible(input: F8826Input): boolean {
 /** Form 8826 lines 1, 3, 5, 6, 7, and 8 before the Form 3800 tax limit. */
 export function calculateForm8826(input: F8826Input): F8826Lines {
   const line1 = input.eligible_expenditures;
-  const line3 = Math.max(0, line1 - EXPENDITURE_FLOOR);
-  const line5 = Math.min(line3, EXPENDITURE_CAP - EXPENDITURE_FLOOR);
-  const line6 = Math.round(line5 * CREDIT_RATE * 100) / 100;
+  const eligibleCents = Math.round(line1 * 100);
+  const line3Cents = Math.max(0, eligibleCents - EXPENDITURE_FLOOR * 100);
+  const line5Cents = Math.min(
+    line3Cents,
+    (EXPENDITURE_CAP - EXPENDITURE_FLOOR) * 100,
+  );
+  const line3 = line3Cents / 100;
+  const line5 = line5Cents / 100;
+  const line6 = Math.round(line5Cents * CREDIT_RATE) / 100;
   const line7 = (input.pass_through_credits ?? []).reduce(
     (sum, source) => sum + source.credit_amount,
     0,
