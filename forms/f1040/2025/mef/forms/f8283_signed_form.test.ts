@@ -28,6 +28,8 @@ function gift(pdfSha256: string) {
     date_contributed: "2025-08-21",
     fmv: 8_000,
     deduction_claimed: 8_000,
+    charitable_limit_category: "capital_gain_30" as const,
+    is_capital_gain_property: true,
     cost_or_adjusted_basis: 2_500,
     signed_form_attachment_file_name: "CompletedSignedForm8283.pdf",
     signed_form_source_review: {
