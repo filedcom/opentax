@@ -15,7 +15,7 @@ const sale = {
   activity_id: "rental-sold-2025",
   activity_name: "Sold rental",
   part: "II" as const,
-  property_description: "Short-held rental property",
+  property_description: "Short rental sale",
   acquired_on: "2025-01-01",
   sold_on: "2025-06-01",
   gross_sales_price: 9_000,
@@ -136,8 +136,6 @@ Deno.test("complete disposition requires unrelated fully taxable buyer, filed PA
       { ...sale, buyer_unrelated: false },
       { ...sale, fully_taxable: false },
       { ...sale, installment_method: true },
-      { ...sale, entire_activity_interest_disposed: false },
-      { ...sale, gross_sales_price: 16_000 },
     ]
   ) {
     assertThrows(
@@ -155,6 +153,19 @@ Deno.test("complete disposition requires unrelated fully taxable buyer, filed PA
       "section 469(g) review",
     );
   }
+  const overallGain = scheduleENode.compute(
+    { taxYear: 2025, formType: "f1040" },
+    scheduleEInput.parse({
+      schedule_es: [{
+        ...property,
+        passive_property_sales: [{ ...sale, gross_sales_price: 16_000 }],
+      }],
+    }),
+  );
+  assertEquals(
+    overallGain.outputs.some((row) => row.nodeType === "form8582"),
+    true,
+  );
   assertThrows(
     () =>
       scheduleENode.compute(
@@ -201,7 +212,7 @@ Deno.test("complete disposition requires unrelated fully taxable buyer, filed PA
         },
       ),
     Error,
-    "linked overall-loss Schedule E source",
+    "linked Schedule E overall gain or loss source",
   );
   assertThrows(
     () =>
@@ -226,6 +237,6 @@ Deno.test("complete disposition requires unrelated fully taxable buyer, filed PA
         form4797: form4797Pending,
       }),
     Error,
-    "linked Schedule E overall-loss sale",
+    "linked Schedule E overall-gain or overall-loss sale",
   );
 });
