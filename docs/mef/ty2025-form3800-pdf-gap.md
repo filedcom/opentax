@@ -35,8 +35,10 @@ The local TY2025 v5.4 schema also defines a structured
 origin amount and allowed amount, plus repeated carryback and carryforward
 year/use groups. Form 3800 Part I line 4 can reference its reserved document
 ID. A printable history page alone does not satisfy this native link; the
-structured document, its reference, and any required additional revised-credit
-facts still need a source-backed builder and XSD check.
+structured descriptor now emits one computation per reconciled vintage using
+explicit origin and prior-use tax-year-end dates. Its standalone TY2025 v5.4
+XSD case passes. The parent reference, Part IV/VI joins, and any additional
+revised-credit facts remain open; native export still rejects carryforwards.
 
 The fixed-source `500bd115` repository-wide run completed at 2026-09-29
 16:48 UTC: 8,886/8,886 passed, zero failed, with no ignored tests reported,

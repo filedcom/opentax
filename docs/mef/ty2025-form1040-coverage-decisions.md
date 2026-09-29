@@ -22,6 +22,11 @@ schema census, intersects them with unique `IRS[A-Za-z0-9]+` matches from
 non-test MeF form source files, and subtracts the intersection from 211. It does
 not count a staged source as registered.
 
+This is a dated 123-descriptor snapshot. The Form 3800 carryforward
+computation descriptor was registered on 2026-09-29, bringing the current MeF
+registry to 124. It passes a standalone schema check but remains unlinked to
+the parent filing and does not change any disposition below.
+
 ## What can be decided from current evidence
 
 | Disposition                                 | Exact boundary                                                                                                                                                                                                                                                                                                                                                  | What remains                                                                                                                                                                                               |

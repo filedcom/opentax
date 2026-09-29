@@ -9,6 +9,12 @@ const dollars = z.number().finite().nonnegative().refine((amount) =>
   Math.abs(amount * 100 - Math.round(amount * 100)) < 0.000001
 );
 const reference = z.string().trim().min(1);
+const taxYearEndDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(
+  (value) =>
+    !Number.isNaN(Date.parse(value)) &&
+    new Date(value).toISOString().slice(0, 10) === value,
+  "Form 3800 tax year end must be a calendar date",
+);
 const cents = (amount: number): number => Math.round(amount * 100);
 const creditLine = z.union([
   form3800StandardCreditLineSchema,
@@ -22,6 +28,7 @@ export const form3800CarryoverVintageSchema = z.object({
   credit_type: reference,
   form3800_credit_line: creditLine,
   originating_tax_year: z.number().int().min(2005).max(2024),
+  originating_tax_year_end_date: taxYearEndDate,
   source_document_reference: reference,
   originating_return_reference: reference,
   permitted_carryback_years: z.union([
@@ -36,6 +43,7 @@ export const form3800CarryoverVintageSchema = z.object({
   historical_uses: z.array(
     z.object({
       tax_year: z.number().int().min(2000).max(2024),
+      tax_year_end_date: taxYearEndDate,
       credit_allowed: dollars.refine((amount) => amount > 0),
       return_reference: reference,
       kind: z.enum(["carryback", "carryforward"]),
@@ -60,6 +68,16 @@ export const form3800CarryoverVintageSchema = z.object({
   }).strict().optional(),
 }).strict().superRefine((vintage, ctx) => {
   if (
+    Number(vintage.originating_tax_year_end_date.slice(0, 4)) !==
+      vintage.originating_tax_year
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["originating_tax_year_end_date"],
+      message: "Form 3800 origin year and year-end date do not reconcile",
+    });
+  }
+  if (
     (vintage.permitted_carryback_years > 1) !==
       Boolean(vintage.extended_carryback_eligibility_reference)
   ) {
@@ -72,6 +90,13 @@ export const form3800CarryoverVintageSchema = z.object({
   const seenUseYears = new Set<number>();
   let historicalUse = cents(vintage.credit_allowed_origin_year);
   for (const [index, use] of vintage.historical_uses.entries()) {
+    if (Number(use.tax_year_end_date.slice(0, 4)) !== use.tax_year) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["historical_uses", index, "tax_year_end_date"],
+        message: "Form 3800 use year and year-end date do not reconcile",
+      });
+    }
     if (seenUseYears.has(use.tax_year)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -164,6 +189,7 @@ export function reconcileForm3800CarryoverLedger(
     creditType: vintage.credit_type,
     form3800CreditLine: vintage.form3800_credit_line,
     originatingTaxYear: vintage.originating_tax_year,
+    originatingTaxYearEndDate: vintage.originating_tax_year_end_date,
     statementFacts: {
       sourceDocumentReference: vintage.source_document_reference,
       originatingReturnReference: vintage.originating_return_reference,

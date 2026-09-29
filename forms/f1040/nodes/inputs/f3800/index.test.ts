@@ -33,6 +33,7 @@ const carriedCredit: Form3800CarryoverVintage = {
   credit_type: "New markets credit",
   form3800_credit_line: "1i",
   originating_tax_year: 2024,
+  originating_tax_year_end_date: "2024-12-31",
   source_document_reference: "2024 filed Form 8874",
   originating_return_reference: "2024 accepted Form 1040 and Form 3800",
   permitted_carryback_years: 1,

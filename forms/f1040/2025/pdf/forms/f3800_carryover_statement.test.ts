@@ -9,6 +9,7 @@ const vintage: Form3800CarryoverVintage = {
   credit_type: "New markets credit",
   form3800_credit_line: "1i",
   originating_tax_year: 2022,
+  originating_tax_year_end_date: "2022-12-31",
   source_document_reference: "2022 Form 8874 QEI 1",
   originating_return_reference: "2022 filed return",
   permitted_carryback_years: 1,
@@ -16,6 +17,7 @@ const vintage: Form3800CarryoverVintage = {
   credit_allowed_origin_year: 2_000,
   historical_uses: [{
     tax_year: 2023,
+    tax_year_end_date: "2023-12-31",
     credit_allowed: 1_000,
     return_reference: "2023 filed return",
     kind: "carryforward",

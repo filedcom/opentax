@@ -51,8 +51,10 @@ A two-page nine-vintage diagnostic was rendered and visually checked. The
 statement is not yet connected to a prepared return or native attachment.
 The TY2025 v5.4 schema has a separate `CarryforwardGeneralBusinessCr`
 document for origin and year-by-year use facts; Part I line 4 can reference
-its document ID. The filing route must build and reconcile this structured
-document as well as print the history page.
+its document ID. A registered descriptor now builds one computation per
+reconciled vintage with explicit tax-year-end dates and passes a standalone
+TY2025 v5.4 XSD check. The parent reference, Part IV/VI source rows, printable
+history page, and external source verification are still missing.
 
 ## New Markets recapture boundary
 

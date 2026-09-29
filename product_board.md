@@ -3,9 +3,10 @@
 ## Current checkpoint (2026-09-29)
 
 This is an open release gate, not a list of completed forms. The current source
-registries contain 123 native MeF descriptors and 87 PDF descriptors; the
+registries contain 124 native MeF descriptors and 87 PDF descriptors; the
 [coverage decision queue](docs/mef/ty2025-form1040-coverage-decisions.md) records
-the limits of those counts. A registered route or focused test does not
+the preceding 123-descriptor audit and its limits. The newly registered
+`CarryforwardGeneralBusinessCr` descriptor remains filing-blocked. A registered route or focused test does not
 establish source-to-filing coverage; check off only the specific gate proven by
 its recorded evidence.
 
@@ -38,8 +39,14 @@ rejects research-credit carryforward lines 1c and 4i until their separate
 Form 6765 business-income limitation is modeled; its focused source test
 passes 58/58 and lint passes. That guard has not had a full-suite rerun.
 The native carryforward filing route, authenticated prior-return evidence,
-structured `CarryforwardGeneralBusinessCr` statement, printable history
+structured `CarryforwardGeneralBusinessCr` linkage, printable history
 attachment, business rules, and ATS gates remain open.
+The structured computation descriptor has since been registered with explicit
+origin and prior-use tax-year-end dates. Its three focused cases pass, including
+standalone TY2025 v5.4 XSD validation; 68 source/statement tests, 30 parent
+Form 3800 native tests, and nine existing Form 3800 XSD cases also pass. The
+parent still rejects positive carryforwards, and these later edits have not
+had a full-suite rerun.
 
 The 2026-09-29 16:48 UTC fixed-source `deno task test` run on commit
 `500bd115` passed **8,886/8,886**, zero failed, in 15m51s; its Deno summary
@@ -332,6 +339,7 @@ including a two-gift return with two linked native forms and attachments.
   - [x] Add cent-precise source-vintage carryover arithmetic that reconciles origin credit, earlier allowed uses and adjustments, 2025 opening balance, and current recapture reduction; reject duplicate sources and unsupported year direction. Four focused cases pass. This is a calculation prerequisite only.
   - [x] Render a separate source-vintage Form 3800 carryover history statement with origin-year credit and allowed amount, each carryback/forward use, original versus revised balance, and adjustment details. A two-page nine-vintage diagnostic preserves every credit heading and was visually checked; it is not attached to a prepared filing yet.
   - [x] Route reconciled nonpassive ordinary and specified vintages into the separate Form 3800 Part I line 4 and Part II line 34 tax calculations, and explicitly reject native export until source rows and prior-return history evidence are linked. Reject research carryforwards pending the Form 6765 business-income limitation. Focused source/calculation/native tests pass; this is not a filing route.
+  - [x] Preserve explicit origin and historical-use tax-year-end dates in each carryforward vintage, and register a `CarryforwardGeneralBusinessCr` native computation per vintage. Its origin/allowed amount and carryback/forward use groups pass standalone TY2025 v5.4 XSD; the parent has no document reference or Part IV/VI join yet.
   - [ ] Join those vintages to authenticated prior returns and source records, Form 8582-CR, Form 3800 Parts I/II/IV/VI, the native `CarryforwardGeneralBusinessCr` computation, the revised-carryforward history statement, native XML, and the printable packet; prove source-to-Form 1040 totals and local XSD/business-rule results.
   - [ ] Cover transfer and passive credits, carryover vintages, mixed and other source credits, row overflow, required external attachments, cross-route archive evidence, business rules, and ATS acceptance.
 - [ ] **Form 8835:** extend the bounded filer-owned wind/geothermal route to every retained credit, owner, facility, election, and source combination in the [form audit](docs/mef/ty2025-form1040-form-audit.md). Keep duplicate physical-facility records rejected and verify every native/PDF copy against its source and Form 3800 row.

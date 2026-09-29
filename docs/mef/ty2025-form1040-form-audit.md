@@ -28,6 +28,12 @@ attachments, source provenance, executed XSD/filled-PDF tests, IRS business
 rules and ATS acceptance remain open per row; no `U` or `?` is promoted to
 whole-form support by this census.
 
+On 2026-09-29, `f3800_carryforward_statement.ts` became the 124th registered
+descriptor after this static census. It emits a source-vintage computation
+whose standalone TY2025 v5.4 XSD case passes; the Form 3800 parent still
+rejects a positive carryforward. The 123-row census and its counts need a
+fresh crosswalk before they describe the current registry.
+
 The [unregistered-root crosswalk](ty2025-unregistered-root-applicability.md)
 groups the historical review, now 114 roots without a MeF source literal, into
 applicable candidates, undecided individual paths, and possible separate-entity

@@ -9,6 +9,7 @@ const vintage: Form3800CarryoverVintage = {
   credit_type: "New markets credit",
   form3800_credit_line: "1i",
   originating_tax_year: 2022,
+  originating_tax_year_end_date: "2022-12-31",
   source_document_reference: "2022 filed Form 8874 investment 1",
   originating_return_reference: "2022 accepted Form 1040 and Form 3800",
   permitted_carryback_years: 1,
@@ -16,11 +17,13 @@ const vintage: Form3800CarryoverVintage = {
   credit_allowed_origin_year: 2_000,
   historical_uses: [{
     tax_year: 2023,
+    tax_year_end_date: "2023-12-31",
     credit_allowed: 500,
     return_reference: "2023 accepted Form 1040 and Form 3800",
     kind: "carryforward",
   }, {
     tax_year: 2024,
+    tax_year_end_date: "2024-12-31",
     credit_allowed: 500,
     return_reference: "2024 accepted Form 1040 and Form 3800",
     kind: "carryforward",
@@ -76,6 +79,7 @@ Deno.test("Form 3800 carryover ledger rejects changed balance, unsupported carry
         ...vintage,
         historical_uses: [{
           tax_year: 2020,
+          tax_year_end_date: "2020-12-31",
           credit_allowed: 500,
           return_reference: "2020 return",
           kind: "carryback" as const,
@@ -95,4 +99,17 @@ Deno.test("Form 3800 carryover ledger rejects missing extended carryback evidenc
     }])
   );
   assertThrows(() => reconcileForm3800CarryoverLedger([vintage, vintage]));
+});
+
+Deno.test("Form 3800 carryover ledger rejects an invented or mismatched tax year end", () => {
+  assertThrows(() =>
+    reconcileForm3800CarryoverLedger([{
+      ...vintage,
+      originating_tax_year_end_date: "2023-12-31",
+    }]), Error, "origin year and year-end date");
+  assertThrows(() =>
+    reconcileForm3800CarryoverLedger([{
+      ...vintage,
+      originating_tax_year_end_date: "2022-02-30",
+    }]), Error);
 });

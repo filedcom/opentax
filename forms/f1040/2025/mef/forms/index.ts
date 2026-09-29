@@ -15,6 +15,7 @@ import { form1116AlternativeCompensationStatement } from "./f1116_alternative_co
 import { form2441 } from "./f2441.ts";
 import { form2555 } from "./f2555.ts";
 import { form3800 } from "./f3800.ts";
+import { form3800CarryforwardStatement } from "./f3800_carryforward_statement.ts";
 import { form4137 } from "./f4137.ts";
 import { form4255 } from "./f4255.ts";
 import { form4136 } from "./f4136.ts";
@@ -317,6 +318,8 @@ export const ALL_MEF_FORMS = [
   form1116AlternativeCompensationStatement,
   form1116DirectExpenseStatement,
   form1116OtherDeductionsStatement,
+  // Native Form 3800 carryforward computations follow Form 1116 statements.
+  form3800CarryforwardStatement,
   form4136EmulsionBlendingStatement,
   form4136CreditCardUsersStatement,
   form4136DieselGovernmentSalesStatement,

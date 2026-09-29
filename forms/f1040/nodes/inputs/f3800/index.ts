@@ -226,6 +226,41 @@ export const inputSchema = z.object({
 type F3800Item = z.infer<typeof itemSchema>;
 type F3800Items = F3800Item[];
 
+/** Reconcile the current nonpassive calculation intake before any filing use. */
+export function reconcileForm3800NonpassiveCarryforwards(
+  entries: NonNullable<z.infer<typeof inputSchema>["carryforward_vintages"]>,
+) {
+  const carryforward = reconcileForm3800CarryoverLedger(
+    entries.map((entry) => entry.vintage),
+  );
+  for (const [index, entry] of entries.entries()) {
+    if (entry.subject_to_passive_activity_limit) {
+      throw new Error(
+        "Form 3800 passive carryforward needs linked Form 8582-CR source allocation",
+      );
+    }
+    if (carryforward[index].adjustment2025 > 0) {
+      throw new Error(
+        "Form 3800 adjusted carryforward needs Part IV recapture reconciliation",
+      );
+    }
+    if (entry.vintage.form3800_credit_line === "3") {
+      throw new Error(
+        "Form 3800 empowerment-zone carryforward needs Part II line 22 allocation",
+      );
+    }
+    if (
+      entry.vintage.form3800_credit_line === "1c" ||
+      entry.vintage.form3800_credit_line === "4i"
+    ) {
+      throw new Error(
+        "Form 3800 research carryforward needs the Form 6765 business-income limitation before Part I line 4 or Part II line 34",
+      );
+    }
+  }
+  return carryforward;
+}
+
 // Compute the total current-year GBC for one item.
 // Uses total_gbc override if provided; otherwise sums named component credits.
 function currentYearGbc(item: F3800Item): number {
@@ -365,34 +400,9 @@ function schedule3Output(
   const passiveLines = passiveSources
     ? classifyForm3800PassiveCredits(passiveSources)
     : ZERO_FORM3800_PASSIVE_ACTIVITY;
-  const carryforward = reconcileForm3800CarryoverLedger(
-    carryforwardVintages?.map((entry) => entry.vintage) ?? [],
+  const carryforward = reconcileForm3800NonpassiveCarryforwards(
+    carryforwardVintages ?? [],
   );
-  for (const [index, entry] of (carryforwardVintages ?? []).entries()) {
-    if (entry.subject_to_passive_activity_limit) {
-      throw new Error(
-        "Form 3800 passive carryforward needs linked Form 8582-CR source allocation",
-      );
-    }
-    if (carryforward[index].adjustment2025 > 0) {
-      throw new Error(
-        "Form 3800 adjusted carryforward needs Part IV recapture reconciliation",
-      );
-    }
-    if (entry.vintage.form3800_credit_line === "3") {
-      throw new Error(
-        "Form 3800 empowerment-zone carryforward needs Part II line 22 allocation",
-      );
-    }
-    if (
-      entry.vintage.form3800_credit_line === "1c" ||
-      entry.vintage.form3800_credit_line === "4i"
-    ) {
-      throw new Error(
-        "Form 3800 research carryforward needs the Form 6765 business-income limitation before Part I line 4 or Part II line 34",
-      );
-    }
-  }
   const standardCarryforward = carryforward.filter((entry) =>
     !entry.form3800CreditLine.startsWith("4")
   ).reduce((sum, entry) => sum + entry.availableAfterAdjustment, 0);
