@@ -41,7 +41,12 @@ XSD case passes. A typed source-to-computation link can now reconcile a
 synthetic parent Part I line 4 reference and Part IV nonpassive totals with
 the same source facts used for the PDF revised-carryforward checkboxes. That
 two-vintage parent passes local TY2025 v5.4 `IRS3800` XSD. The production
-source-to-Part IV/VI join, authenticated prior-return evidence, filed history
+parent now also accepts typed nonpassive Part VI source-vintage rows in place of
+the unused raw XML detail field. A two-year aggregate reconciles its source
+keys, originating years, amounts and tax use to Part IV and the native
+computation links; both native XML and PDF columns use those typed rows, and
+the synthetic parent passes local TY2025 v5.4 XSD. The production
+source-to-Part IV/VI assembly, authenticated prior-return evidence, filed history
 attachment, and any additional revised-credit facts remain open; native export
 still rejects carryforwards.
 
@@ -58,6 +63,12 @@ passed 8,897/8,897 with zero failures in 16m49s. It includes the synthetic
 two-vintage parent XSD check and the source-link negative tests. The log is
 `.state/research/ty2025-full-test-carryforward-link.log`. This still does
 not exercise a production positive carryforward filing path.
+
+The 2026-09-29 19:10 UTC full run on source commit `efac9046` passed
+8,898/8,898 with zero failures in 15m20s. It covers the typed nonpassive
+Part VI native/PDF component and the aggregate two-year XSD case. Its log is
+`.state/research/ty2025-full-test-efac9046.log`. The production positive
+carryforward path remains blocked.
 
 The fixed-source `500bd115` repository-wide run completed at 2026-09-29
 16:48 UTC: 8,886/8,886 passed, zero failed, with no ignored tests reported,
