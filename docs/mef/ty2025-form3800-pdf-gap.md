@@ -7,6 +7,19 @@ geothermal and mixed wind/geothermal credit returns have local XSD and
 filled-PDF evidence. Other credit sources, transfers, carryovers, row
 combinations, and ATS acceptance remain open.
 
+A source-vintage reconciliation module now checks cent-precise origin credit,
+origin-year and subsequent allowed uses, prior adjustments, the 2025 opening
+balance, and any 2025 recapture reduction. It retains the year-by-year facts
+needed for the [required Form 3800 statement](https://www.irs.gov/instructions/i3800),
+and its four focused cases pass. The module is not yet joined to the prepared
+return, Part IV/VI native and PDF rows, or a transmitted statement. Positive
+nonpassive carryforwards and later-year carrybacks remain unsupported.
+
+The fixed-source `c6e844d8` repository-wide run completed at 2026-09-29
+16:27 UTC: 8,884/8,884 passed, zero failed, with no ignored tests reported,
+in 16m5s. Its log is
+`.state/research/ty2025-full-test-c6e844d8.log`.
+
 The [official 2025 Form 3800](https://www.irs.gov/pub/irs-pdf/f3800.pdf) says to
 include all nine pages with the return. Pages 1-2 carry Parts I and II and the
 allowed credit on line 38. Pages 3-4 carry current-year credit rows in Part III.

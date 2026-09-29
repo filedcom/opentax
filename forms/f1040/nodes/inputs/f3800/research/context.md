@@ -28,6 +28,16 @@ ledger. The tax-use allocator orders supplied vintages before current-year
 credits, yet only vintages actually supplied by the supported source paths can
 participate.
 
+`carryover-ledger.ts` now provides a separate cent-precise reconciliation for
+one origin-year credit per source. It checks originating credit against the
+amount allowed in that year, subsequent return uses, earlier downward changes,
+and the balance entering 2025. It also keeps a 2025 recapture adjustment out
+of the available balance, requires evidence for an extended carryback window,
+and retains the facts needed for the required statement. Its four focused
+cases pass. The reconciled ledger is not yet a public `f3800` input or a source
+of the Part I/II/IV/VI filing amounts. No positive carryover filing claim
+follows from this module alone.
+
 ## New Markets recapture boundary
 
 The `f8874_recapture` input computes the tax and interest from a Form 8874-B
@@ -45,10 +55,10 @@ credit.
 
 ## Completion work
 
-1. Build one source-specific Section 39 ledger for nonpassive and passive
-   carryovers, with credit type, originating year, source document/entity,
-   earlier uses and revisions, current-year recapture adjustment, and
-   remaining balance. Reconcile it to prior returns and Form 8582-CR.
+1. Connect the source-specific Section 39 vintage reconciliation to prepared
+   nonpassive and passive carryovers, source documents, prior filed returns,
+   and Form 8582-CR. Verify source/credit identity, the statutory carryback
+   period, and all revised balances against authenticated evidence.
 2. Derive Form 3800 Part I lines 4/5, Part II lines 34/35, and Part IV/VI
    amounts from that ledger and the tax-use ordering, including recapture in
    column (h). Ensure a recaptured QEI cannot be applied to 2025 tax.
