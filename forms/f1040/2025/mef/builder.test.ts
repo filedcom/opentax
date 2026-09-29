@@ -5,6 +5,10 @@ import {
   assertThrows,
 } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
+import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
+import { execute } from "../../../../core/runtime/executor.ts";
+import { registry } from "../registry.ts";
+import { pdfReviewFixtures } from "../pdf/review-fixtures.ts";
 import { buildMefBundle, buildMefXml as rawBuildMefXml } from "./builder.ts";
 import { FilingStatus } from "./types.ts";
 import type { FilerIdentity } from "./types.ts";
@@ -1493,216 +1497,32 @@ Deno.test("IRS8839 absent when form8839 missing from pending", () => {
 
 // ─── 25. Full document smoke test ─────────────────────────────────────────────
 
-Deno.test("document count for independently sourced smoke forms", () => {
-  const xml = buildMefXml({
-    w2: { w2s: [form4137W2] },
-    f1040: {
-      filing_status: "single",
-      line1a_wages: 50000,
-      line11_agi: 20_000,
-      line18_total_tax_before_credits: 1_800,
-    },
-    schedule1: { line7_unemployment: 4800 },
-    schedule2: {
-      line2_amt: 5000,
-      line8_form5329_tax: 500,
-      line11_additional_medicare: 450,
-    },
-    schedule3: {
-      line1_foreign_tax_credit: 800,
-      line1_total: 800,
-      line2_childcare_credit: 0,
-      line4_retirement_savings_credit: 1_000,
-    },
-    schedule_d: { line_4_other_st: 1000 },
-    form8889: sampleForm8889,
-    form2441: sampleForm2441,
-    form8949: [{
-      part: "A",
-      description: "AAPL",
-      date_acquired: "2024-01-15",
-      date_sold: "2025-06-01",
-      proceeds: 5000,
-      cost_basis: 3000,
-      gain_loss: 2000,
-      is_long_term: false,
-    }],
-    form8959: sampleForm8959,
-    form8960: { line1_taxable_interest: 1200 },
-    form4137: {
-      forms: [{
-        recipient: "taxpayer",
-        employers: [{
-          name: "CAFE",
-          ein: "123456789",
-          tips_received: 500,
-          tips_reported: 0,
-        }],
-        ss_wages_from_w2: 0,
-      }],
-      w2_tip_sources: [{
-        employer_name: "CAFE",
-        employer_ein: "123456789",
-        allocated_tips: 0,
-        ss_wages_and_tips: 0,
-      }],
-    },
-    form8919: sampleForm8919,
-    form4972: qualifiedForm4972,
-    schedule_se: { net_profit_schedule_c: 30000 },
-    form_1116: sampleForm1116,
-    schedule_f: sampleScheduleF,
-    schedule_b: {
-      taxable_interest_net: 1501,
-      foreign_accounts_question: false,
-      foreign_trust_question: false,
-    },
-    form4797: { section_1231_gain: 12000 },
-    form8880: {
-      ira_contributions_taxpayer: 1_000,
-      elective_deferrals_taxpayer: 1_000,
-      agi: 20_000,
-      filing_status: NodeFilingStatus.Single,
-      print_line1a_ira: 1_000,
-      print_line2a_deferrals: 1_000,
-      print_line3a_total: 2_000,
-      print_line4a_distributions: 0,
-      print_line5a: 2_000,
-      print_line6a_eligible: 2_000,
-      print_line7_total_eligible: 2_000,
-      print_line8_agi: 20_000,
-      print_line9_rate: "0.5",
-      print_line10_raw_credit: 1_000,
-      print_line11_tax_liability: 1_000,
-      print_line12_credit: 1_000,
-      taxpayer_dob: "1980-01-01",
-      taxpayer_student_five_months: false,
-      taxpayer_claimed_as_dependent: false,
-    },
-    form6251: {
-      regular_tax_income: 80000,
-      iso_adjustment: 5000,
-      line11_amt: 100,
-    },
-    form5329: sampleForm5329,
-  }, sampleFiler());
-  assertStringIncludes(xml, 'documentCnt="22"');
-});
-
-Deno.test("independently sourced smoke forms emit their document tags", () => {
-  const xml = buildMefXml({
-    w2: { w2s: [form4137W2] },
-    f1040: {
-      filing_status: "single",
-      line1a_wages: 50000,
-      line11_agi: 20_000,
-      line18_total_tax_before_credits: 1_800,
-    },
-    schedule1: { line7_unemployment: 4800 },
-    schedule2: {
-      line2_amt: 5000,
-      line8_form5329_tax: 500,
-      line11_additional_medicare: 450,
-    },
-    schedule3: {
-      line1_foreign_tax_credit: 800,
-      line1_total: 800,
-      line2_childcare_credit: 0,
-      line4_retirement_savings_credit: 1_000,
-    },
-    schedule_d: { line_4_other_st: 1000 },
-    form8889: sampleForm8889,
-    form2441: sampleForm2441,
-    form8949: [{
-      part: "A",
-      description: "AAPL",
-      date_acquired: "2024-01-15",
-      date_sold: "2025-06-01",
-      proceeds: 5000,
-      cost_basis: 3000,
-      gain_loss: 2000,
-      is_long_term: false,
-    }],
-    form8959: sampleForm8959,
-    form8960: { line1_taxable_interest: 1200 },
-    form4137: {
-      forms: [{
-        recipient: "taxpayer",
-        employers: [{
-          name: "CAFE",
-          ein: "123456789",
-          tips_received: 500,
-          tips_reported: 0,
-        }],
-        ss_wages_from_w2: 0,
-      }],
-      w2_tip_sources: [{
-        employer_name: "CAFE",
-        employer_ein: "123456789",
-        allocated_tips: 0,
-        ss_wages_and_tips: 0,
-      }],
-    },
-    form8919: sampleForm8919,
-    form4972: qualifiedForm4972,
-    schedule_se: { net_profit_schedule_c: 30000 },
-    form_1116: sampleForm1116,
-    schedule_f: sampleScheduleF,
-    schedule_b: {
-      taxable_interest_net: 1501,
-      foreign_accounts_question: false,
-      foreign_trust_question: false,
-    },
-    form4797: { section_1231_gain: 12000 },
-    form8880: {
-      ira_contributions_taxpayer: 1_000,
-      elective_deferrals_taxpayer: 1_000,
-      agi: 20_000,
-      filing_status: NodeFilingStatus.Single,
-      print_line1a_ira: 1_000,
-      print_line2a_deferrals: 1_000,
-      print_line3a_total: 2_000,
-      print_line4a_distributions: 0,
-      print_line5a: 2_000,
-      print_line6a_eligible: 2_000,
-      print_line7_total_eligible: 2_000,
-      print_line8_agi: 20_000,
-      print_line9_rate: "0.5",
-      print_line10_raw_credit: 1_000,
-      print_line11_tax_liability: 1_000,
-      print_line12_credit: 1_000,
-      taxpayer_dob: "1980-01-01",
-      taxpayer_student_five_months: false,
-      taxpayer_claimed_as_dependent: false,
-    },
-    form6251: {
-      regular_tax_income: 80000,
-      iso_adjustment: 5000,
-      line11_amt: 100,
-    },
-    form5329: sampleForm5329,
-  }, sampleFiler());
-  assertStringIncludes(xml, "<IRS1040 ");
-  assertStringIncludes(xml, "<IRS1040Schedule1 ");
-  assertStringIncludes(xml, "<IRS1040Schedule2 ");
-  assertStringIncludes(xml, "<IRS1040Schedule3 ");
-  assertStringIncludes(xml, "<IRS1040ScheduleD ");
-  assertStringIncludes(xml, "<IRS8889 ");
-  assertStringIncludes(xml, "<IRS2441 ");
-  assertStringIncludes(xml, "<IRS8949 ");
-  assertStringIncludes(xml, "<IRS8959 ");
-  assertStringIncludes(xml, "<IRS8960 ");
-  assertStringIncludes(xml, "<IRS4137 ");
-  assertStringIncludes(xml, "<IRS8919 ");
-  assertStringIncludes(xml, "<IRS4972 ");
-  assertStringIncludes(xml, "<IRS1040ScheduleSE ");
-  assertStringIncludes(xml, "<IRS1116 ");
-  assertStringIncludes(xml, "<IRS1040ScheduleF ");
-  assertStringIncludes(xml, "<IRS1040ScheduleB ");
-  assertStringIncludes(xml, "<IRS4797 ");
-  assertStringIncludes(xml, "<IRS8880 ");
-  assertStringIncludes(xml, "<IRS6251 ");
-  assertStringIncludes(xml, "<IRS5329 ");
+Deno.test("source-backed Schedule C return emits six reconciled native documents", () => {
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-schedule-c"
+  );
+  if (!fixture) throw new Error("missing Schedule C review fixture");
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    { ...fixture.inputs },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  const xml = buildMefXml(result.pending, fixture.filer);
+  assertStringIncludes(xml, 'documentCnt="6"');
+  for (
+    const tag of [
+      "IRS1040",
+      "IRS1040Schedule1",
+      "IRS1040Schedule2",
+      "IRS1040ScheduleC",
+      "IRS1040ScheduleSE",
+      "IRS8995",
+    ]
+  ) {
+    assertStringIncludes(xml, `<${tag} documentId=`);
+  }
 });
 
 Deno.test("empty MefFormsPending: IRS1040 still emits, no other form tags present", () => {

@@ -49,11 +49,13 @@ and crop-insurance statement descriptors; the Form 8814 route uses the
 production pending adapter so a calculation-only Form 4952 slice is not filed.
 The standalone Form 4972 builder assertion now uses calculated form lines,
 one matching elected 1099-R, and the corresponding Form 1040 tax; its focused
-case passes. The two aggregate builder smoke cases still fail because their
-Form 2441 AGI differs from the synthetic Form 1040 AGI. Read-only staged
-reconciliation also exposed an unsourced Form 4972 election, a Form 8880
-credit-limit mismatch, and Form 8919 W-2 source disagreement; the aggregate
-fixture needs coherent return facts or independent route cases.
+case passes. The former 22-form aggregate builder smoke fixture combined
+inconsistent Form 2441 AGI, Form 4972 election, Form 8880 credit capacity, and
+Form 8919 W-2 facts. Each descriptor has an independent builder case; the
+invalid aggregate fixture was replaced with an executor-produced Schedule C
+return that emits six reconciled native documents. The full builder file now
+passes 131/131, and this six-document source fixture also passes TY2025 v5.4
+XSD validation. These checks do not prove a 22-form same-return combination.
 The Schedule J Form 4835 passive-loss case now passes 7/7 after its at-risk
 fixture was corrected. The two Schedule C positive-profit XSD fixtures now
 carry explicit QBI source confirmations and business identities: the $80,000
