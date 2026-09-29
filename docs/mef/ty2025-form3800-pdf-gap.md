@@ -3,8 +3,9 @@
 Status: the native `IRS3800` builder and a nine-page PDF descriptor are
 registered. The PDF consumes typed parts captured during the same linked MeF
 pass, including reserved source and attachment IDs. One- and two-facility
-geothermal credit returns have local XSD and filled-PDF evidence. Other credit
-sources, transfers, carryovers, row combinations, and ATS acceptance remain open.
+geothermal and mixed wind/geothermal credit returns have local XSD and
+filled-PDF evidence. Other credit sources, transfers, carryovers, row
+combinations, and ATS acceptance remain open.
 
 The [official 2025 Form 3800](https://www.irs.gov/pub/irs-pdf/f3800.pdf) says to
 include all nine pages with the return. Pages 1-2 carry Parts I and II and the
@@ -102,8 +103,12 @@ IDs and three-page PDF copies, two $600 Form 3800 Part V rows, and $1,200 on
 line 38, Schedule 3 line 6a, and Form 1040 line 20. Its native XML passes
 local TY2025 v5.4 XSD. The 20-page packet was rendered and inspected; its PDF
 SHA-256 is `6136172eee20ac9e9ac76b139102547eb4ee4f4a55c0d25927fdb5e4aa1dd78f`.
-The full 19-return PDF review set contains 135 pages and 19 XML files under
-`.state/research/ty2025-filled-pdf-review/2026-09-29-v18/`. Focused
+The next mixed wind/geothermal source return prints wind on Form 8835 line 1a,
+geothermal on line 1c, two $600 Part V rows, and $1,200 through line 38,
+Schedule 3, and Form 1040. Its local TY2025 v5.4 XML check passes; the two
+Form 8835 copies and Part V page were visually reviewed. The 20-return PDF
+review set contains 155 pages and 20 XML files under
+`.state/research/ty2025-filled-pdf-review/2026-09-29-v20/`. Focused
 prepared-return, source-drift, field-map, projection, and local XSD cases pass.
 The `98466597` repository-wide run passed 8,851/8,851 after the archive
 change, zero failed, in 13m37s; its summary reported no ignored tests. The
@@ -114,10 +119,13 @@ their fixtures were corrected. The fixed-source `15d5430d` repository-wide
 run then passed 8,855/8,855, zero failed, with no ignored tests reported in
 14m11s. Its log is `.state/research/ty2025-full-test-15d5430d.log`.
 
-The remaining gate includes transfer elections with exact attachment bytes and
+The corrected fixed-source `08786417` repository-wide run passed
+8,860/8,860, zero failed, with no ignored tests reported in 15m48s. Its log is
+`.state/research/ty2025-full-test-08786417.log`. The remaining gate includes
+transfer elections with exact attachment bytes and
 statement IDs; passive and carryover vintages; mixed and wider same-line
 sources and Parts V/VI overflow; unsourced revised-carryforward checkboxes;
 all applicable credit combinations; external credit attachments and
 cross-route archive checks; source-backed IRS business-rule checks; and ATS
-acceptance. Passing one- and two-facility packets does not establish those
+acceptance. Passing these one- and two-facility packets does not establish those
 branches.

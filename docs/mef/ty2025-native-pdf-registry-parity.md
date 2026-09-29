@@ -34,17 +34,19 @@ parity gaps found in this comparison, not every difference between pending-key
 lists.
 
 Form 3800 was on the initial parity list. Its nine-page parent descriptor now
-uses the native prepared parts; one- and two-facility geothermal returns have
-local XSD and filled-PDF evidence. Transfer, passive, carryover, and mixed
-credit-source routes remain coverage gates. See `ty2025-form3800-pdf-gap.md`.
+uses the native prepared parts; one- and two-facility geothermal returns and a
+mixed wind/geothermal return have local XSD and filled-PDF evidence. Transfer,
+passive, carryover, and other mixed credit-source routes remain coverage gates.
+See `ty2025-form3800-pdf-gap.md`.
 Form 8911 and Schedule A were on the initial parity list. They now have
 registered, bounded PDF descriptors for one personal-use charger. Their fields
 and cross-return checks are written but unrun, and broader business or
 multi-property situations remain unsupported. See `ty2025-form8911-pdf-gap.md`.
-Form 8835 now has a bounded three-page PDF for one fully used geothermal
-facility; transfer, bonus, passive, and multi-facility situations remain open.
-See `ty2025-form8835-pdf-gap.md`. Its credit-bearing return still needs the Form
-3800 parent PDF before the printable packet is complete. Form 8874 now has a
+Form 8835 now has a bounded three-page PDF per fully used wind or geothermal
+facility; one- and two-facility packets have local rendered evidence. Transfer,
+bonus, passive, other energy sources, and broader multi-facility combinations
+remain open. See `ty2025-form8835-pdf-gap.md`. The supported packets include
+the registered Form 3800 parent PDF. Form 8874 now has a
 bounded PDF for up to six identified investments and a reconciled pass-through
 line 2; wider rows still stop. See `ty2025-form8874-pdf-gap.md`. A
 pass-through-only K-1 recipient does not create its own Form 8874, but still

@@ -111,6 +111,24 @@ ignored tests reported, in 14m11s. Deno was 2.7.7, `xmllint` used libxml
 `.state/research/ty2025-full-test-15d5430d.log`. Wider source and ATS gates
 remain open.
 
+The next synthetic review adds a wind facility and a geothermal facility on
+separate Form 8835 copies. Wind uses line 1a and geothermal line 1c; each
+contributes $600 to a separate Form 3800 Part V row and the $1,200 return-wide
+credit. The mixed return passes local TY2025 v5.4 XSD, the canonical IRS
+Form 8835 field-name check, and focused source/PDF cases. Its 20-page PDF was
+rendered; both Form 8835 copies and the Form 3800 Part V page were inspected.
+The corrected 2026-09-29-v20 directory holds 20 PDFs (155 pages) and 20 XML
+files. Its geothermal and wind sources have reviewed 1.5 MW maximum net output,
+1,500 kW AC capacity, and post-January-2023 construction dates consistent with
+their no-increase answers. This set supersedes the earlier Form 8835 samples
+whose pre-cutoff construction dates and sub-1-MW AC capacities conflicted with
+those answers; the earlier generated packets remain diagnostic artifacts.
+The fixed-source `deno task test` run on `08786417` completed at 2026-09-29
+11:04 UTC: 8,860/8,860 passed, zero failed, no ignored tests reported, in
+15m48s. Deno was 2.7.7, `xmllint` used libxml 2.9.13, and Poppler was
+26.03.0. Its retained log is `.state/research/ty2025-full-test-08786417.log`.
+The final release batch still follows the unresolved source and ATS gates.
+
 ## XML evidence
 
 For each supported positive filing route in the completed coverage inventory,
