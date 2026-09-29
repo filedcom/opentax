@@ -16,6 +16,9 @@ export function projectReviewedStockLoss7203(
   if (!filer) {
     throw new Error("Form 7203 stock-loss projection needs the identified filer");
   }
+  if (!allPending.k1_s_corp) {
+    throw new Error("Form 7203 stock-loss projection needs a reviewed S-corporation K-1");
+  }
   const k1Sources = k1SCorpInputSchema.parse(allPending.k1_s_corp).k1_s_corps;
   if (k1Sources.length !== 1) {
     throw new Error(
