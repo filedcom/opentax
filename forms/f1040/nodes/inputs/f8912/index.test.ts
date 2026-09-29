@@ -2,6 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { execute } from "../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
 import { registry } from "../../../2025/registry.ts";
+import { FilingStatus } from "../../types.ts";
 import {
   BondType,
   f8912,
@@ -592,8 +593,9 @@ Deno.test("Form 8912: interest already reported by another source is not deposit
   );
 });
 
-Deno.test("Form 8912: graph carries taxable interest but stops unresolved credit", () => {
+Deno.test("Form 8912: graph carries taxable interest and defers credit without tax", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
+    general: { filing_status: FilingStatus.Single },
     f8912: [item({
       unreported_bonds: [],
       reported_bonds: [{
@@ -602,19 +604,16 @@ Deno.test("Form 8912: graph carries taxable interest but stops unresolved credit
       }],
     })],
   }, { taxYear: 2025, formType: "f1040" });
-  assertEquals(result.pending.schedule_b?.print_line4_total, 60);
+  assertEquals(result.pending.schedule_b?.taxable_interest_net, 60);
   assertEquals(result.pending.f1040?.line2b_taxable_interest, 60);
-  assertEquals(
-    result.diagnostics.some((diagnostic) =>
-      diagnostic.nodeType === "f1040" &&
-      diagnostic.message.includes("Part II tax limit and source document")
-    ),
-    true,
-  );
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f8912?.allowed_credit, 0);
+  assertEquals(result.pending.f8912?.unused_credit, 100);
 });
 
 Deno.test("Form 8912: zero-credit sale interest reaches finalized Form 1040 line 2b", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
+    general: { filing_status: FilingStatus.Single },
     f8912: [item({
       unreported_bonds: [],
       reported_bonds: [{
@@ -627,7 +626,7 @@ Deno.test("Form 8912: zero-credit sale interest reaches finalized Form 1040 line
     })],
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
-  assertEquals(result.pending.schedule_b?.print_line4_total, 5);
+  assertEquals(result.pending.schedule_b?.taxable_interest_net, 5);
   assertEquals(result.pending.f1040?.line2b_taxable_interest, 5);
   assertEquals(result.pending.f1040?.line9_total_income, 5);
 });

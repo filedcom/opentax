@@ -38,7 +38,15 @@ function buildInputSchema(
 function getArrayNodeKey(
   entry: Extract<InputNodeEntry, { isArray: true }>,
 ): string {
-  const nodeInputSchema = entry.node.inputSchema as z.ZodObject<z.ZodRawShape>;
+  const schema = entry.node.inputSchema;
+  const nodeInputSchema = schema instanceof z.ZodEffects
+    ? schema.innerType()
+    : schema;
+  if (!(nodeInputSchema instanceof z.ZodObject)) {
+    throw new Error(
+      `Array input node ${entry.node.nodeType} needs an object schema`,
+    );
+  }
   const keys = Object.keys(nodeInputSchema.shape);
   return keys[0];
 }

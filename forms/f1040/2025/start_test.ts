@@ -79,6 +79,17 @@ Deno.test("single w2 item routes to w2 node", () => {
   assertEquals(result.outputs[0].nodeType, "w2");
 });
 
+Deno.test("refined Form 8912 array input routes to its declared field", () => {
+  const startNode = buildStartNode(inputNodes);
+  const result = startNode.compute({ taxYear: 2025, formType: "f1040" }, {
+    f8912: [{}],
+  });
+  assertEquals(result.outputs, [{
+    nodeType: "f8912",
+    fields: { f8912s: [{}] },
+  }]);
+});
+
 Deno.test("singleton general entry routes to general node", () => {
   const startNode = buildStartNode(inputNodes);
   const generalInput = { filing_status: "single" as const };
@@ -182,11 +193,17 @@ Deno.test("Schedule LEP language request reaches its metadata node", () => {
   const source = {
     requests: [{ person: "taxpayer", language_preference_code: "001" }],
   };
-  assertEquals(startNode.inputSchema.safeParse({ schedule_lep: source }).success, true);
-  assertEquals(startNode.compute(
-    { taxYear: 2025, formType: "f1040" },
-    { schedule_lep: source },
-  ).outputs, [{ nodeType: "schedule_lep", fields: source }]);
+  assertEquals(
+    startNode.inputSchema.safeParse({ schedule_lep: source }).success,
+    true,
+  );
+  assertEquals(
+    startNode.compute(
+      { taxYear: 2025, formType: "f1040" },
+      { schedule_lep: source },
+    ).outputs,
+    [{ nodeType: "schedule_lep", fields: source }],
+  );
 });
 
 Deno.test("Form 4797 investment property source enters the return plan without aggregate input", () => {
@@ -218,10 +235,13 @@ Deno.test("Form 4797 investment property source enters the return plan without a
     }).success,
     false,
   );
-  assertEquals(startNode.compute(
-    { taxYear: 2025, formType: "f1040" },
-    { form4797_investment_1245: input },
-  ).outputs, [{ nodeType: "form4797", fields: input }]);
+  assertEquals(
+    startNode.compute(
+      { taxYear: 2025, formType: "f1040" },
+      { form4797_investment_1245: input },
+    ).outputs,
+    [{ nodeType: "form4797", fields: input }],
+  );
   const executed = execute(buildExecutionPlan(registry), registry, {
     form4797_investment_1245: input,
   }, { taxYear: 2025, formType: "f1040" });
