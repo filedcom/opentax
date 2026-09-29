@@ -142,7 +142,9 @@ export function reconcileForm8854Form8949Properties(
       expectedAdjustment;
     if (
       gainOrLoss !==
-        (nondeductibleLoss ? 0 : allocation.gainAfterExclusion) ||
+        (nondeductibleLoss
+          ? 0
+          : allocation.builtInGainOrLoss - allocation.exclusionAllocated) ||
       transaction.gain_loss !== gainOrLoss
     ) {
       throw new Error(

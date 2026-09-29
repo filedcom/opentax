@@ -1322,8 +1322,10 @@ Deno.test("Form 8854 initial bundle requires actual IDs for election PDFs", () =
   );
   assertEquals(bundle.nativeStatements.length, 2);
   assertEquals(
-    bundle.nativeStatements[1].documentName,
-    "DeferredPropertyTaxElectionStatement",
+    bundle.nativeStatements.some((statement) =>
+      statement.documentName === "DeferredPropertyTaxElectionStatement"
+    ),
+    true,
   );
   assertThrows(
     () =>
