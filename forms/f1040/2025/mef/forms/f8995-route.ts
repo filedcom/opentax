@@ -125,6 +125,14 @@ export function assertOneScheduleC8995(
   const ein = typeof fields.line1_ein === "string"
     ? fields.line1_ein.replace(/\D/g, "")
     : "";
+  const ssn = typeof fields.line1_ssn === "string"
+    ? fields.line1_ssn.replace(/\D/g, "")
+    : "";
+  const sourceEin = sourceBusiness?.line_d_ein?.replace(/\D/g, "") ?? "";
+  const usesSsn = sourceEin.length === 0;
+  const filerSsn = typeof general?.taxpayer_ssn === "string"
+    ? general.taxpayer_ssn.replace(/\D/g, "")
+    : "";
   if (
     businesses.length !== 1 || !sourceBusiness || !row || !f1040 ||
     !schedule1 || pending.form8995a !== undefined ||
@@ -150,10 +158,13 @@ export function assertOneScheduleC8995(
       sourceBusiness.line_c_business_name,
     ) ||
     fields.line1_business_name !== sourceBusiness.line_c_business_name ||
-    !sourceBusiness.line_d_ein ||
-    ein.length !== 9 ||
-    ein !== sourceBusiness.line_d_ein.replace(/\D/g, "") ||
-    row.ein !== ein ||
+    (usesSsn
+      ? ssn.length !== 9 || ssn !== filerSsn ||
+        ssn !== fields.taxpayer_ssn?.toString().replace(/\D/g, "") ||
+        ssn !== f1040.taxpayer_ssn?.toString().replace(/\D/g, "") ||
+        ein !== "" || row.ein !== undefined
+      : ein.length !== 9 || ein !== sourceEin ||
+        row.ein !== ein || ssn !== "") ||
     typeof fields.line1_qbi !== "number" ||
     !Number.isInteger(fields.line1_qbi) ||
     fields.line1_qbi <= 0 ||
@@ -200,7 +211,7 @@ export function assertOneScheduleC8995(
   const expected = assertFiledLines(fields, f1040);
   return {
     businessName: sourceBusiness.line_c_business_name,
-    tin: { kind: "ein", value: ein },
+    tin: usesSsn ? { kind: "ssn", value: ssn } : { kind: "ein", value: ein },
     qbi,
     lines: expected,
   };

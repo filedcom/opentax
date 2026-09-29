@@ -1,4 +1,4 @@
-import { assertEquals, assertThrows } from "@std/assert";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form8995Pdf } from "../../pdf/forms/f8995.ts";
 import { form8995 } from "./f8995.ts";
 import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
@@ -251,6 +251,52 @@ Deno.test("single-filer farm without EIN uses the sourced SSN on Form 8995", asy
       }),
     Error,
     "source reconciliation",
+  );
+  assertThrows(
+    () =>
+      form8995.build(fields, {
+        pending: {
+          ...pending,
+          general: { ...pending.general, taxpayer_ssn: "987-65-4321" },
+        },
+      }),
+    Error,
+    "source reconciliation",
+  );
+});
+
+Deno.test("sole Schedule C business without EIN uses the filed taxpayer SSN", () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: {
+      filing_status: "single",
+      taxpayer_first_name: "Sam",
+      taxpayer_last_name: "Builder",
+      taxpayer_ssn: "123-45-6789",
+      qbi_no_prior_loss_or_suspended_loss_confirmed: true,
+      qbi_not_patron_of_specified_cooperative_confirmed: true,
+    },
+    schedule_c: [{
+      business_reference: "builder-c",
+      line_a_principal_business: "Repairs",
+      line_b_business_code: "811490",
+      line_c_business_name: "Builder Repairs",
+      line_f_accounting_method: "cash",
+      line_g_material_participation: true,
+      line_1_gross_receipts: 80_000,
+      qbi_no_other_adjustments_confirmed: true,
+    }],
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const pending = result.pending;
+  const fields = pending.form8995;
+  assertEquals(fields?.line1_ein, undefined);
+  assertEquals(fields?.line1_ssn, "123456789");
+  const fragment = form8995.build(fields, { pending });
+  assertStringIncludes(fragment, "<SSN>123456789</SSN>");
+  assertEquals(fragment.includes("<EIN>"), false);
+  assertEquals(
+    form8995Pdf.projectFields?.(fields, pending)?.line1_ein,
+    "123456789",
   );
   assertThrows(
     () =>

@@ -322,7 +322,8 @@ function oneScheduleCLines(
   const business = businesses[0];
   const seDeduction = input.se_tax_deduction ?? 0;
   if (
-    !business.business_reference || !business.business_name || !business.ein ||
+    !business.business_reference || !business.business_name ||
+    (!business.ein && !input.taxpayer_ssn) ||
     business.no_other_adjustments_confirmed !== true ||
     input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
     input.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
@@ -350,7 +351,9 @@ function oneScheduleCLines(
   return {
     line1_business_reference: business.business_reference,
     line1_business_name: business.business_name,
-    line1_ein: business.ein,
+    ...(business.ein
+      ? { line1_ein: business.ein }
+      : { line1_ssn: input.taxpayer_ssn!.replace(/\D/g, "") }),
     line1_qbi: qbi,
     line2: qbi,
     line3: 0,

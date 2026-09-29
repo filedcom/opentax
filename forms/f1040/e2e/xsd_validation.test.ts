@@ -580,6 +580,8 @@ Deno.test({
       address_zip: facts.taxpayer.address.zip,
       filing_status: FilingStatus.Single,
       digital_assets: facts.taxpayer.digitalAssets,
+      qbi_no_prior_loss_or_suspended_loss_confirmed: true,
+      qbi_not_patron_of_specified_cooperative_confirmed: true,
     },
     w2: [{
       box1_wages: facts.w2.box1Wages,
@@ -601,6 +603,8 @@ Deno.test({
       box17_state_withheld: facts.w2.stateWithholding,
     }],
     schedule_c: [{
+      business_reference: "ATS12-SCHEDULE-C",
+      qbi_no_other_adjustments_confirmed: true,
       line_a_principal_business: facts.scheduleC.principalBusiness,
       line_b_business_code: facts.scheduleC.businessCode,
       line_c_business_name: facts.scheduleC.businessName,
@@ -650,6 +654,8 @@ Deno.test({
   assertEquals((xml.match(/<IRSW2 documentId=/g) ?? []).length, 1);
   assertEquals((xml.match(/<IRS1040ScheduleC documentId=/g) ?? []).length, 1);
   assertEquals((xml.match(/<IRS7217 documentId=/g) ?? []).length, 1);
+  const qbiXml = xml.match(/<IRS8995[^>]*>[\s\S]*?<\/IRS8995>/)?.[0] ?? "";
+  assertStringIncludes(qbiXml, "<SSN>400001212</SSN>");
   assertEquals(
     xml.includes("<NetProfitOrLossAmt>24328</NetProfitOrLossAmt>"),
     true,
