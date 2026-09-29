@@ -77,6 +77,29 @@ Deno.test("f8835: sold kilowatt-hours must be whole units", () => {
   );
 });
 
+Deno.test("f8835: repeated physical facility cannot double the credit", () => {
+  const first = item({
+    facility_us_address: {
+      line1: "10 Plant Rd",
+      city: "Wilmington",
+      state: "DE",
+      zip: "19801",
+    },
+    facility_latitude: 39.123456,
+    facility_longitude: -75.123456,
+  });
+  assertEquals(
+    f8835.inputSchema.safeParse({ f8835s: [first, { ...first }] }).success,
+    false,
+  );
+  assertEquals(
+    f8835.inputSchema.safeParse({
+      f8835s: [first, { ...first, facility_latitude: 39.223456 }],
+    }).success,
+    true,
+  );
+});
+
 Deno.test("f8835: validates increased-credit evidence and transferred credit", () => {
   assertThrows(() => lines({ increased_credit_reason: "under_one_mw" }));
   assertThrows(() =>

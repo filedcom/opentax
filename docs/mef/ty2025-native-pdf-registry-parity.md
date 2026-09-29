@@ -34,9 +34,9 @@ parity gaps found in this comparison, not every difference between pending-key
 lists.
 
 Form 3800 was on the initial parity list. Its nine-page parent descriptor now
-uses the native prepared parts; one geothermal credit return has local XSD and
-filled-PDF evidence. Transfer, passive, carryover, and multiple-source routes
-remain coverage gates. See `ty2025-form3800-pdf-gap.md`.
+uses the native prepared parts; one- and two-facility geothermal returns have
+local XSD and filled-PDF evidence. Transfer, passive, carryover, and mixed
+credit-source routes remain coverage gates. See `ty2025-form3800-pdf-gap.md`.
 Form 8911 and Schedule A were on the initial parity list. They now have
 registered, bounded PDF descriptors for one personal-use charger. Their fields
 and cross-return checks are written but unrun, and broader business or

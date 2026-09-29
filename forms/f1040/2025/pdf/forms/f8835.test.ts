@@ -50,9 +50,11 @@ function facility(): F8835Item {
 }
 
 function pending(
-  item: F8835Item = facility(),
+  item: F8835Item | readonly F8835Item[] = facility(),
 ): Record<string, Record<string, unknown>> {
-  const lines = calculateForm8835(item);
+  const items = Array.isArray(item) ? item : [item];
+  const lines = items.map(calculateForm8835);
+  const totalCredit = lines.reduce((sum, row) => sum + row.line15, 0);
   const passiveLines = {
     line2: 0,
     line3: 0,
@@ -62,34 +64,38 @@ function pending(
     line33: 0,
   };
   return {
-    f8835: { f8835s: [item] },
+    f8835: { f8835s: items },
     f3800: {
-      f8835_credit_entries: [{
-        form3800_line: lines.form3800Line,
-        credit_amount: lines.line15,
+      f8835_credit_entries: lines.map((row) => ({
+        form3800_line: row.form3800Line,
+        credit_amount: row.line15,
         transfer_out_amount: 0,
         subject_to_passive_activity_limit: false,
-      }],
-      allowed_credit: lines.line15,
-      specified_credit_allowed: lines.line15,
+      })),
+      allowed_credit: totalCredit,
+      specified_credit_allowed: totalCredit,
     },
     f1040: {
       form3800_source_credits: {
         standardCredit: 0,
-        specifiedCredit: lines.line15,
+        specifiedCredit: totalCredit,
         passiveLines,
       },
-      line20_nonrefundable_credits: lines.line15,
+      line20_nonrefundable_credits: totalCredit,
     },
     schedule3: {
-      line6a_total: lines.line15,
-      line8_total: lines.line15,
+      line6a_total: totalCredit,
+      line8_total: totalCredit,
     },
   };
 }
 
 function projected(allPending: Record<string, Record<string, unknown>>) {
   return form8835Pdf.instances?.({}, filer, allPending)?.[0];
+}
+
+function projectedAll(allPending: Record<string, Record<string, unknown>>) {
+  return form8835Pdf.instances?.({}, filer, allPending) ?? [];
 }
 
 Deno.test("Form 8835 PDF prints one fully used geothermal facility across all three pages", () => {
@@ -139,18 +145,49 @@ Deno.test("Form 8835 PDF rejects source-only and overstated final credit", () =>
   );
 });
 
-Deno.test("Form 8835 PDF stops for bonus, other facilities, and zero credit", () => {
+Deno.test("Form 8835 PDF prints two distinct facility copies and rejects a mismatched second credit", () => {
+  const second = {
+    ...facility(),
+    facility_description: "Second geothermal production site",
+    facility_us_address: {
+      line1: "20 Plant Rd",
+      city: "Wilmington",
+      state: "DE",
+      zip: "19801",
+    },
+    facility_latitude: 39.223456,
+    facility_longitude: -75.223456,
+  };
+  const source = pending([facility(), second]);
+  const copies = projectedAll(source);
+  assertEquals(copies.length, 2);
+  assertEquals(copies.map((copy) => copy.facility_description), [
+    "Geothermal production site",
+    "Second geothermal production site",
+  ]);
+  assertEquals(copies.map((copy) => copy.line15), [600, 600]);
+  const changed = pending([facility(), second]);
+  (changed.f3800.f8835_credit_entries as Array<Record<string, unknown>>)[1]
+    .credit_amount = 500;
+  assertThrows(
+    () => projectedAll(changed),
+    Error,
+    "disagrees with native Form 3800",
+  );
+});
+
+Deno.test("Form 8835 PDF stops for bonus, duplicate facilities, and zero credit", () => {
   assertThrows(
     () => projected(pending({ ...facility(), domestic_content_bonus: true })),
     Error,
-    "one filer-owned nonpassive geothermal facility",
+    "filer-owned nonpassive geothermal facilities",
   );
   const multiple = pending();
   multiple.f8835.f8835s = [facility(), facility()];
   assertThrows(
     () => projected(multiple),
     Error,
-    "one facility per return",
+    "repeats the same facility",
   );
   const zero = facility();
   zero.kwh_sold = 0;

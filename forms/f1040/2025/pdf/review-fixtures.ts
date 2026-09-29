@@ -108,6 +108,39 @@ function wage(
   };
 }
 
+function geothermalFacility(
+  description: string,
+  addressLine1: string,
+  latitude: number,
+  longitude: number,
+) {
+  return {
+    energy_type: EnergyType.Geothermal,
+    subject_to_passive_activity_limit: false,
+    kwh_produced: 100_000,
+    kwh_sold: 100_000,
+    facility_description: description,
+    facility_us_address: {
+      line1: addressLine1,
+      city: "Wilmington",
+      state: "DE",
+      zip: "19801",
+    },
+    facility_latitude: latitude,
+    facility_longitude: longitude,
+    facility_owned_by_filer: true,
+    ac_nameplate_kw: 500,
+    facility_placed_in_service_date: "2023-01-01",
+    facility_construction_start_date: "2022-12-01",
+    production_period_start_date: "2025-01-01",
+    production_period_end_date: "2025-12-31",
+    increased_credit_reason: "none" as const,
+    domestic_content_bonus: false,
+    energy_community_bonus: false,
+    is_fiscal_year: false,
+  };
+}
+
 export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
   {
     id: "single-child-unearned-income",
@@ -228,31 +261,12 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     inputs: {
       general: singleGeneral,
       w2: [wage(150_000, 30_000, "Example Employer", "12-3456789")],
-      f8835: [{
-        energy_type: EnergyType.Geothermal,
-        subject_to_passive_activity_limit: false,
-        kwh_produced: 100_000,
-        kwh_sold: 100_000,
-        facility_description: "Geothermal production site",
-        facility_us_address: {
-          line1: "10 Plant Rd",
-          city: "Wilmington",
-          state: "DE",
-          zip: "19801",
-        },
-        facility_latitude: 39.123456,
-        facility_longitude: -75.123456,
-        facility_owned_by_filer: true,
-        ac_nameplate_kw: 500,
-        facility_placed_in_service_date: "2023-01-01",
-        facility_construction_start_date: "2022-12-01",
-        production_period_start_date: "2025-01-01",
-        production_period_end_date: "2025-12-31",
-        increased_credit_reason: "none",
-        domestic_content_bonus: false,
-        energy_community_bonus: false,
-        is_fiscal_year: false,
-      }],
+      f8835: [geothermalFacility(
+        "Geothermal production site",
+        "10 Plant Rd",
+        39.123456,
+        -75.123456,
+      )],
     },
     filer: singleFiler,
     expectedPdfForms: [
@@ -266,6 +280,41 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "One $600 geothermal credit flows from Form 8835 to Form 3800 line 38, Schedule 3 line 6a, and Form 1040 line 20",
       "All nine official Form 3800 pages print from the same typed parts and reserved IDs as native XML",
       "Form 3800 Parts III and V identify the same facility source and its $600 tax use",
+    ],
+  },
+  {
+    id: "single-two-geothermal-business-credits",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(150_000, 30_000, "Example Employer", "12-3456789")],
+      f8835: [
+        geothermalFacility(
+          "Geothermal production site",
+          "10 Plant Rd",
+          39.123456,
+          -75.123456,
+        ),
+        geothermalFacility(
+          "Second geothermal production site",
+          "20 Plant Rd",
+          39.223456,
+          -75.223456,
+        ),
+      ],
+    },
+    filer: singleFiler,
+    expectedPdfForms: [
+      "f1040",
+      "schedule3",
+      "form6251",
+      "form3800",
+      "form8835",
+      "form8835",
+    ],
+    reviewFocus: [
+      "Two distinct Form 8835 facilities contribute $600 each to Form 3800 line 4e and line 38",
+      "Both three-page Form 8835 copies print distinct source identities and the same taxpayer identity",
+      "Form 3800's Part V source rows and $1,200 Schedule 3/Form 1040 joins match the two native Form 8835 documents",
     ],
   },
   {

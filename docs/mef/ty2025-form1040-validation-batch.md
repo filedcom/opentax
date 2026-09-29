@@ -95,6 +95,14 @@ run includes the archive's direct use of the prepared MeF bundle and the
 source, XML, typed Form 3800 parts, and attachment drift checks. It does not
 replace the final release batch after the remaining route and scope decisions.
 
+The next synthetic review adds two distinct geothermal facilities in one
+return. Both source credits reach separate native Form 8835 documents and
+three-page PDF copies, Form 3800 Part V rows, the $1,200 allowed credit, and
+Schedule 3/Form 1040. Its native XML passes local TY2025 v5.4 XSD, and the
+20-page PDF was rendered and inspected. The 2026-09-29-v18 directory now has
+19 PDFs (135 pages) and 19 XML files. This route postdates `98466597`, so the
+next full batch must include it.
+
 ## XML evidence
 
 For each supported positive filing route in the completed coverage inventory,

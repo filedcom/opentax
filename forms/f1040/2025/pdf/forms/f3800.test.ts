@@ -9,13 +9,16 @@ import { EnergyType } from "../../../nodes/inputs/f8835/index.ts";
 import { buildMefBundle } from "../../mef/builder.ts";
 import { testFiler } from "../../mef/test-filer.ts";
 import { form3800Pdf } from "./f3800.ts";
+import { form8835Pdf } from "./f8835.ts";
 import { buildPdfBytes } from "../builder.ts";
 import { PDFDocument } from "pdf-lib";
 import { pdfReviewFixtures } from "../review-fixtures.ts";
 import { f1040_2025 } from "../../index.ts";
+import { normalizeAllPending } from "../../pending.ts";
 import {
   form3800PartIAndIIFields,
   form3800PartIIIFields,
+  form3800PartVFields,
 } from "./f3800_fields.ts";
 
 const facility = {
@@ -187,4 +190,47 @@ Deno.test("prepared return prints the graph's geothermal credit on all nine Form
   );
   const pdf = await prepared.renderPdf();
   assertEquals((await PDFDocument.load(pdf)).getPageCount(), 17);
+});
+
+Deno.test("two geothermal facilities print two Form 8835 copies and distinct Form 3800 Part V sources", async () => {
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-two-geothermal-business-credits"
+  )!;
+  const result = f1040_2025.executeReturn({ ...fixture.inputs });
+  assertEquals(result.diagnostics, []);
+  const prepared = await f1040_2025.prepareReturn(
+    result.pending,
+    fixture.filer,
+  );
+  const parts = prepared.bundle.form3800Parts!;
+  assertEquals(parts.lines.line38, 1_200);
+  assertEquals(parts.currentRows[0].metadata.sourceCount, 2);
+  const ids = parts.currentRows[0].metadata.referenceDocumentId!.split(" ");
+  assertEquals(ids.length, 2);
+  assertEquals(parts.currentDetails.map((row) => row.sourceDocumentId), ids);
+  assertEquals((prepared.bundle.xml.match(/<IRS8835\b/g) ?? []).length, 2);
+  const allPending = normalizeAllPending(prepared.bundle.pending);
+  const form3800 = form3800Pdf.instances?.(
+    allPending.f3800,
+    fixture.filer,
+    allPending,
+    parts,
+  )?.[0];
+  assertEquals(form3800?.[form3800PartIIIFields("4e").g], 1_200);
+  assertEquals(form3800?.[form3800PartVFields(1).e], 600);
+  assertEquals(form3800?.[form3800PartVFields(2).e], 600);
+  const copies = form8835Pdf.instances?.(
+    allPending.f8835,
+    fixture.filer,
+    allPending,
+  ) ?? [];
+  assertEquals(copies.map((copy) => copy.facility_description), [
+    "Geothermal production site",
+    "Second geothermal production site",
+  ]);
+  assertEquals(copies.map((copy) => copy.line15), [600, 600]);
+  assertEquals(
+    (await PDFDocument.load(await prepared.renderPdf())).getPageCount(),
+    20,
+  );
 });

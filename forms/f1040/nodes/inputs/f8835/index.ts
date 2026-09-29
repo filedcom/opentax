@@ -75,7 +75,31 @@ export const itemSchema = z.object({
     /^[CPT][A-M][A-Za-z0-9]{3}[0-9]{2}[A-Za-z0-9]{5}$/,
   ).optional(),
 });
-export const inputSchema = z.object({ f8835s: z.array(itemSchema).min(1) });
+export const inputSchema = z.object({ f8835s: z.array(itemSchema).min(1) })
+  .superRefine((input, ctx) => {
+    const seen = new Set<string>();
+    input.f8835s.forEach((item, index) => {
+      if (
+        !item.facility_us_address ||
+        item.facility_latitude === undefined ||
+        item.facility_longitude === undefined
+      ) return;
+      const identity = JSON.stringify([
+        item.facility_us_address,
+        item.facility_latitude,
+        item.facility_longitude,
+        item.facility_placed_in_service_date,
+      ]);
+      if (seen.has(identity)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["f8835s", index],
+          message: "Form 8835 repeats the same facility in one return",
+        });
+      }
+      seen.add(identity);
+    });
+  });
 export type F8835Item = z.infer<typeof itemSchema>;
 export type F8835Input = z.infer<typeof inputSchema>;
 

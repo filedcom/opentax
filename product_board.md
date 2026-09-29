@@ -37,11 +37,11 @@ Poppler 26.03.0. The log is retained at
 `.state/research/ty2025-full-test-98466597.log`. This includes the
 prepared Form 3800 nine-page PDF, a ZIP built from the same native bundle,
 post-preparation drift rejection, and the unidentified draft-PDF preview fix.
-The filled review generated 18 packets
-(115 pages) and 18 XML files under
-`.state/research/ty2025-filled-pdf-review/2026-09-29-v17/`; the geothermal
-packet's Form 3800 pages were visually checked. Broader source/ATS coverage
-and final release validation remain open. The preceding fixed-source run on
+The filled review now has 19 packets (135 pages) and 19 XML files under
+`.state/research/ty2025-filled-pdf-review/2026-09-29-v18/`; the geothermal
+Form 3800 pages and the new two-facility Form 8835 copies were visually checked.
+The two-facility route postdates this fixed-commit batch. Broader source/ATS
+coverage and final release validation remain open. The preceding fixed-source run on
 `b32aa0ce` passed 8,849/8,849, zero failed; its log is retained at
 `.state/research/ty2025-full-test-b32aa0ce.log`.
 
@@ -176,12 +176,15 @@ MeF document linking. A synthetic geothermal source returns a $600 credit on
 Form 8835, Form 3800 Part III line 4e and line 38, Schedule 3 line 6a, and Form
 1040 line 20. Its native XML passes local TY2025 v5.4 XSD; the 17-page packet
 includes all nine official Form 3800 pages, which were rendered and inspected.
-The corrected review set has 18 packets (115 pages). Transfer, passive,
-carryover, multiple-source, external credit-attachment, and ATS gates remain
-open. The submission ZIP now consumes the same prepared bundle as the PDF and
-rejects source, filer, XML, or attachment drift; one geothermal ZIP/PDF case
-passes locally. Other filing routes and the full regression batch still need
-review after that archive change.
+The new two-facility packet adds two distinct three-page Form 8835 copies, two
+$600 Part V rows with separate native document IDs, and $1,200 on Form 3800
+line 38, Schedule 3 line 6a, and Form 1040 line 20. It passes local v5.4 XSD;
+the 20-page packet was rendered and inspected. The review set has 19 packets
+(135 pages). Transfer, passive, carryover, other credit combinations, external
+credit-attachment, and ATS gates remain open. The submission ZIP consumes the
+same prepared bundle as the PDF and rejects source, filer, XML, or attachment
+drift; one geothermal ZIP/PDF case passes locally. The two-facility route
+still needs the repository-wide regression batch.
 
 The 2026-09-29 moving-worktree diagnostic `deno task test` run finished with
 8,609 passed and 205 failed in 11m18s. It is not the agreed fixed-commit
@@ -267,7 +270,7 @@ including a two-gift return with two linked native forms and attachments.
 - [ ] **Form 8582:** finish activity-ID provenance, referenced 2024 carryover imports, retained gain character, entire dispositions, active-rental/MFS boundaries, aggregate reconciliation, a durable 2025 ledger and next-year import contract. Verify worksheet Parts I-IX and overflow in filled PDF, plus Schedule E/Form 4835/4797 and Form 1040 joins. See [activity ledger](docs/mef/ty2025-form8582-activity-id-gap.md), [entire gain](docs/mef/ty2025-form8582-entire-overall-gain-gap.md), and [MFS](docs/mef/ty2025-form8582-mfs-boundary.md).
 - [ ] **Form 4952:** finish debt/expense tracing, K-1 box 20 code B's permitted deduction destination, royalty and Schedule E ownership, investment-income elections, carryover ledger, and Form 6251 interaction. Ensure calculation, native document, PDF projectors, and final filer identity use one consistent validated source path. See [main gap](docs/mef/ty2025-form4952-gap.md), [K-1 code B](docs/mef/ty2025-form4952-k1-code-b-gap.md), and [Treasury dividend](docs/mef/ty2025-form4952-treasury-dividend-slice.md).
 - [ ] **Form 4972:** complete beneficiary/partial-share, NUA, estate/death allocations and combinations, separate spouse elections, multiple 1099-R distributions, eligibility evidence, and the Form 6251/1040 tax join. Keep unsupported combinations blocked until their source records are verified. See the [Form 4972 gap](docs/mef/ty2025-form4972-gap.md).
-- [ ] **Form 3800:** extend the registered nine-page parent PDF beyond the source-backed geothermal case using the same prepared native document/instance IDs and credit attachments; reconcile every eligible business-credit source and Form 1040 tax. Complete transfer, passive, carryover, multiple-source, external-attachment, cross-route archive, and ATS evidence. See the [Form 3800 PDF gap](docs/mef/ty2025-form3800-pdf-gap.md).
+- [ ] **Form 3800:** extend the registered nine-page parent PDF beyond the source-backed one- and two-geothermal cases using the same prepared native document/instance IDs and credit attachments; reconcile every eligible business-credit source and Form 1040 tax. Complete transfer, passive, carryover, mixed-source, external-attachment, cross-route archive, and ATS evidence. See the [Form 3800 PDF gap](docs/mef/ty2025-form3800-pdf-gap.md).
 - [ ] **Forms 8995/8995-A:** finish positive QBI export and all conditional Schedule A/B/C/D paths beyond the bounded two-business Schedule B route, including election, aggregation relationship, RPE statements, owner data, and return-wide QBI totals. See [8995](docs/mef/ty2025-form8995-positive-export-gap.md) and [8995-A](docs/mef/ty2025-form8995a-gap.md).
 - [ ] **Form 8990:** obtain authenticated debt tracing and filed-year interest/ATI inputs, reconcile its return-wide ordering, and design a durable accepted-filing carryforward ledger before allowing a positive nonexcepted-interest export. See the [Form 8990 gap](docs/mef/ty2025-form8990-gap.md).
 - [ ] **Form 8839:** obtain adoption decree, expense/reimbursement, exclusion, Form 2555, and credit-ordering evidence before allowing a positive adoption-credit filing. See the [Form 8839 gap](docs/mef/ty2025-form8839-gap.md).
@@ -290,7 +293,7 @@ including a two-gift return with two linked native forms and attachments.
 - [ ] Run `deno task test` as the final full batch after the retained routes and scope decisions are complete; record commit, command, tool versions, timestamp, pass/fail/ignored totals, failures, and ignored-test reasons. Fix failures, then rerun the same full command until the release batch passes. The current source commit passed 8,851/8,851 locally as recorded above; implementation and external gates remain open.
 - [x] Run the live canonical-PDF field-name checks in the normal test suite. On 2026-09-29, after correcting the Schedule 3 line 13a AcroForm path, `deno test --allow-read --allow-net=www.irs.gov --filter 'all mapped pdfField names exist in real IRS PDF' forms/f1040/2025/pdf/forms/all-descriptors.test.ts` passed all 86 checks. The full descriptor file was rerun with the repository test permissions and passed 605/605 checks, including the pinned-revision checks that had failed in the earlier diagnostic batch. This proves mapped field names exist in the referenced IRS PDFs; filled-output visual review remains a separate gate below.
 - [ ] For every retained positive filing route, generate a full return from a source-backed fixture and validate emitted XML against the checked-in TY2025 IRS schema. Check source-to-calculation-to-Form-1040 totals, required references/attachments, negative and conflicting cases, and IRS business rules separately from structural XSD success.
-- [ ] Generate the eighteen prepared synthetic filled-PDF cases through the real graph and PDF builder as described in the [validation batch](docs/mef/ty2025-form1040-validation-batch.md); render and inspect every page, mark checkboxes/amounts/owner identity/page order/continuations, and add cases for each uncovered descriptor or branch.
+- [ ] Generate the nineteen prepared synthetic filled-PDF cases through the real graph and PDF builder as described in the [validation batch](docs/mef/ty2025-form1040-validation-batch.md); render and inspect every page, mark checkboxes/amounts/owner identity/page order/continuations, and add cases for each uncovered descriptor or branch.
 - [ ] Compare each filled PDF to its source, calculated pending data, native XML, and Form 1040 totals. Retain review artifacts and record each discrepancy and fix; blank templates and ATS source PDFs do not count as filled-output review.
 
 ## IRS ATS and delivery

@@ -18,12 +18,12 @@ is not an execution or filing-readiness result.
 
 The [native/PDF registry parity audit](ty2025-native-pdf-registry-parity.md)
 lists registered positive taxpayer forms with no corresponding printable
-descriptor. Form 3800, Form 965-A, Form 8582-CR, Form 8621, and the other listed
-roots remain packet-completeness gaps even where bounded native XML exists. Form
-8911 and Schedule A, one fully used Form 8835 geothermal facility, and up to six
-sourced Form 8874 investments now have bounded, unrun PDF routes. This is static
-evidence, not a filled-PDF failure or an approved exclusion; the credit forms
-still need Form 3800 in the printable packet.
+descriptor. Form 3800 now has a bounded nine-page parent PDF with one- and
+two-geothermal-source filled returns; Form 965-A, Form 8582-CR, Form 8621,
+and the other listed roots remain packet-completeness gaps. Form 8911 and
+Schedule A, one or two fully used Form 8835 geothermal facilities, and up to
+six sourced Form 8874 investments have bounded PDF routes. The older matrix
+below is not a current validation result or an approved exclusion.
 
 Seven conditional-root tranches now inspect 84 distinct TY2025 document roots
 without approving exclusions. The latest

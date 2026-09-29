@@ -1,5 +1,5 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
-import { form8835PdfSource } from "./f8835_source.ts";
+import { form8835PdfSources } from "./f8835_source.ts";
 
 // Original TY2025 IRS Form 8835 AcroForm. Only the source-gated geothermal
 // line 1c path is populated; the printed rate cell is read-only in the PDF.
@@ -77,44 +77,44 @@ export const form8835Pdf: PdfFormDescriptor = {
   ],
   instances(_fields, filer, allPending) {
     if (!allPending?.f8835) return [];
-    const source = form8835PdfSource(allPending, filer);
-    if (!source) return [];
-    const { item, lines, filerName, filerTin } = source;
-    const lat = parts(item.facility_latitude!, 2);
-    const long = parts(item.facility_longitude!, 3);
-    return [{
-      filer_name: filerName,
-      filer_tin: filerTin,
-      facility_type: "Geothermal",
-      facility_description: item.facility_description,
-      address_line1: source.addressLine1,
-      address_line2: source.addressLine2,
-      lat_sign: lat.sign,
-      lat_degrees: lat.degrees,
-      lat_fraction: lat.fraction,
-      long_sign: long.sign,
-      long_degrees: long.degrees,
-      long_fraction: long.fraction,
-      construction_date: usDate(item.facility_construction_start_date),
-      service_date: usDate(item.facility_placed_in_service_date),
-      no_increased_credit: true,
-      no_domestic_bonus: true,
-      no_energy_community_bonus: true,
-      dc_not_applicable: true,
-      ac_other: true,
-      ac_nameplate_kw: item.ac_nameplate_kw,
-      line1c_quantity: item.kwh_sold,
-      line1c_credit: lines.line1,
-      line2: lines.line2,
-      line4: lines.line4,
-      line6: lines.line6,
-      line8: lines.line8,
-      line9: lines.line9,
-      line10: lines.line10,
-      line11: lines.line11,
-      line12: lines.line12,
-      line13: lines.line13,
-      line15: lines.line15,
-    }];
+    return form8835PdfSources(allPending, filer).map((source) => {
+      const { item, lines, filerName, filerTin } = source;
+      const lat = parts(item.facility_latitude!, 2);
+      const long = parts(item.facility_longitude!, 3);
+      return {
+        filer_name: filerName,
+        filer_tin: filerTin,
+        facility_type: "Geothermal",
+        facility_description: item.facility_description,
+        address_line1: source.addressLine1,
+        address_line2: source.addressLine2,
+        lat_sign: lat.sign,
+        lat_degrees: lat.degrees,
+        lat_fraction: lat.fraction,
+        long_sign: long.sign,
+        long_degrees: long.degrees,
+        long_fraction: long.fraction,
+        construction_date: usDate(item.facility_construction_start_date),
+        service_date: usDate(item.facility_placed_in_service_date),
+        no_increased_credit: true,
+        no_domestic_bonus: true,
+        no_energy_community_bonus: true,
+        dc_not_applicable: true,
+        ac_other: true,
+        ac_nameplate_kw: item.ac_nameplate_kw,
+        line1c_quantity: item.kwh_sold,
+        line1c_credit: lines.line1,
+        line2: lines.line2,
+        line4: lines.line4,
+        line6: lines.line6,
+        line8: lines.line8,
+        line9: lines.line9,
+        line10: lines.line10,
+        line11: lines.line11,
+        line12: lines.line12,
+        line13: lines.line13,
+        line15: lines.line15,
+      };
+    });
   },
 };
