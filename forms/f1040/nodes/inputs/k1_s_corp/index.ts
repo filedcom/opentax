@@ -328,7 +328,10 @@ function schedule1Output(items: K1SCorpItems): NodeOutput[] {
     0,
   );
   if (total === 0) return [];
-  return [output(schedule1, { line5_schedule_e: total })];
+  return [
+    output(schedule1, { line5_schedule_e: total }),
+    output(agi_aggregator, { line5_schedule_e: total }),
+  ];
 }
 
 // Per-payer schedule_b entries for interest (Box 4)

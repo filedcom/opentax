@@ -10,6 +10,7 @@ const filer: FilerIdentity = {
   primarySSN: "111223333",
   nameLine1: "TEST TAXPAYER",
   nameControl: "TEST",
+  fullName: "Test Taxpayer",
   address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
   filingStatus: FilingStatus.Single,
   softwareId: "12345678",
@@ -39,27 +40,46 @@ const attached9465 = {
   payment_method: "manual_monthly_payment",
 };
 
-Deno.test("source-only refund and installment inputs survive execution and cannot export silently", () => {
-  for (
-    const [key, fields, formName] of [
-      ["f8888", { account_1: { amount: 500 } }, "Form 8888"],
-      ["f9465", attached9465, "Form 9465"],
-    ] as const
-  ) {
-    const result = execute(
-      buildExecutionPlan(registry),
-      registry,
-      { [key]: fields },
-      { taxYear: 2025, formType: "f1040" },
-    );
-    const pending = buildPending(result.pending);
-    assertEquals((pending as Record<string, unknown>)[key], fields);
-    assertThrows(
-      () => buildMefXml(pending, filer),
-      Error,
-      `${formName} requires a native filing document`,
-    );
-  }
+Deno.test("Form 8888 split refund cannot export without a matching final refund", () => {
+  const fields = {
+    account_1: {
+      routing_number: "021000021",
+      account_number: "111222333",
+      account_type: "checking",
+      amount: 300,
+      owner_name: "Test Taxpayer",
+    },
+    account_2: {
+      routing_number: "021000021",
+      account_number: "444555666",
+      account_type: "savings",
+      amount: 700,
+      owner_name: "Test Taxpayer",
+    },
+  };
+  const result = execute(buildExecutionPlan(registry), registry, {
+    f8888: fields,
+  }, { taxYear: 2025, formType: "f1040" });
+  const pending = buildPending(result.pending);
+  assertEquals(pending.f8888, fields);
+  assertThrows(
+    () => buildMefXml(pending, filer),
+    Error,
+    "Form 8888 line 5 must equal finalized Form 1040 line 35a refund",
+  );
+});
+
+Deno.test("Form 9465 installment request cannot disappear from MeF", () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    f9465: attached9465,
+  }, { taxYear: 2025, formType: "f1040" });
+  const pending = buildPending(result.pending);
+  assertEquals(pending.f9465, attached9465);
+  assertThrows(
+    () => buildMefXml(pending, filer),
+    Error,
+    "Form 9465 requires a native filing document",
+  );
 });
 
 Deno.test("Schedule R stays blocked and reviewed S-corporation stock loss emits its native forms", () => {
@@ -135,7 +155,9 @@ Deno.test("Schedule R stays blocked and reviewed S-corporation stock loss emits 
     assertThrows(
       () => buildMefXml(pending, filer),
       Error,
-      `${formName} requires a native filing document`,
+      key === "schedule_r"
+        ? "Schedule R native filing needs sourced single-taxpayer age-65 facts"
+        : `${formName} requires a native filing document`,
     );
   }
 });

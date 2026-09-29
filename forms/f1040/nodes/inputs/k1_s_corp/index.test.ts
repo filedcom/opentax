@@ -298,6 +298,10 @@ Deno.test("box1_ordinary_business routes to schedule1 line5_schedule_e", () => {
   const result = compute([minimalItem({ box1_ordinary_business: 5000 })]);
   const out = findOutput(result, "schedule1");
   assertEquals(out?.fields.line5_schedule_e, 5000);
+  assertEquals(
+    findOutput(result, "agi_aggregator")?.fields.line5_schedule_e,
+    5000,
+  );
 });
 
 Deno.test("negative box1 (loss) routes to schedule1 line5_schedule_e", () => {
@@ -871,10 +875,18 @@ Deno.test("box 10 code J taxable recoveries aggregate without losing other Sched
     ),
     true,
   );
+  const agiOutputs = result.outputs.filter((o) =>
+    o.nodeType === "agi_aggregator"
+  );
   assertEquals(
-    findOutput(result, "agi_aggregator")?.fields
-      .line8z_k1_s_corp_tax_benefit_recovery,
-    400,
+    agiOutputs.some((o) => o.fields.line5_schedule_e === 800),
+    true,
+  );
+  assertEquals(
+    agiOutputs.some((o) =>
+      o.fields.line8z_k1_s_corp_tax_benefit_recovery === 400
+    ),
+    true,
   );
 });
 
