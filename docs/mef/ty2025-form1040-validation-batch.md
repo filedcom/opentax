@@ -100,8 +100,16 @@ return. Both source credits reach separate native Form 8835 documents and
 three-page PDF copies, Form 3800 Part V rows, the $1,200 allowed credit, and
 Schedule 3/Form 1040. Its native XML passes local TY2025 v5.4 XSD, and the
 20-page PDF was rendered and inspected. The 2026-09-29-v18 directory now has
-19 PDFs (135 pages) and 19 XML files. This route postdates `98466597`, so the
-next full batch must include it.
+19 PDFs (135 pages) and 19 XML files. The first repository-wide diagnostic
+after this route passed 8,852 tests and failed three older fixtures that
+repeated one physical facility identity; its log is
+`.state/research/ty2025-full-test-ecf61f3d.log`. The fixtures now use
+distinct facilities. The fixed-source `deno task test` run on `15d5430d`
+completed at 2026-09-29 08:38 UTC: 8,855/8,855 passed, zero failed, no
+ignored tests reported, in 14m11s. Deno was 2.7.7, `xmllint` used libxml
+2.9.13, and Poppler was 26.03.0. Its retained log is
+`.state/research/ty2025-full-test-15d5430d.log`. Wider source and ATS gates
+remain open.
 
 ## XML evidence
 

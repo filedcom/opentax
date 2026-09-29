@@ -30,20 +30,19 @@ XSD pass, or an ignored test.
 
 ### Latest validation attempt
 
-The 2026-09-29 07:53 UTC fixed-source `deno task test` run on commit
-`98466597` passed **8,851/8,851**, zero failed, in 13m37s; its Deno summary
+The 2026-09-29 08:38 UTC fixed-source `deno task test` run on commit
+`15d5430d` passed **8,855/8,855**, zero failed, in 14m11s; its Deno summary
 reported no ignored tests. Tool versions were Deno 2.7.7, libxml 2.9.13, and
 Poppler 26.03.0. The log is retained at
-`.state/research/ty2025-full-test-98466597.log`. This includes the
-prepared Form 3800 nine-page PDF, a ZIP built from the same native bundle,
-post-preparation drift rejection, and the unidentified draft-PDF preview fix.
+`.state/research/ty2025-full-test-15d5430d.log`. This includes the
+prepared Form 3800 nine-page PDF, ZIP/source drift checks, and two distinct
+Form 8835 geothermal facilities with separate native and printed copies.
 The filled review now has 19 packets (135 pages) and 19 XML files under
 `.state/research/ty2025-filled-pdf-review/2026-09-29-v18/`; the geothermal
 Form 3800 pages and the new two-facility Form 8835 copies were visually checked.
-The two-facility route postdates this fixed-commit batch. Broader source/ATS
-coverage and final release validation remain open. The preceding fixed-source run on
-`b32aa0ce` passed 8,849/8,849, zero failed; its log is retained at
-`.state/research/ty2025-full-test-b32aa0ce.log`.
+Broader source/ATS coverage and final release validation remain open. The
+preceding fixed-source run on `98466597` passed 8,851/8,851, zero failed; its
+log is retained at `.state/research/ty2025-full-test-98466597.log`.
 
 The 2026-09-29 06:03 UTC local `deno task test` run on source commit
 `cabcfdca703c6fb581dfee8b817afdb7c8f73f4f` passed **8,835/8,835**
@@ -183,8 +182,7 @@ the 20-page packet was rendered and inspected. The review set has 19 packets
 (135 pages). Transfer, passive, carryover, other credit combinations, external
 credit-attachment, and ATS gates remain open. The submission ZIP consumes the
 same prepared bundle as the PDF and rejects source, filer, XML, or attachment
-drift; one geothermal ZIP/PDF case passes locally. The two-facility route
-still needs the repository-wide regression batch.
+drift; one geothermal ZIP/PDF case passes locally.
 
 The 2026-09-29 moving-worktree diagnostic `deno task test` run finished with
 8,609 passed and 205 failed in 11m18s. It is not the agreed fixed-commit
@@ -270,13 +268,17 @@ including a two-gift return with two linked native forms and attachments.
 - [ ] **Form 8582:** finish activity-ID provenance, referenced 2024 carryover imports, retained gain character, entire dispositions, active-rental/MFS boundaries, aggregate reconciliation, a durable 2025 ledger and next-year import contract. Verify worksheet Parts I-IX and overflow in filled PDF, plus Schedule E/Form 4835/4797 and Form 1040 joins. See [activity ledger](docs/mef/ty2025-form8582-activity-id-gap.md), [entire gain](docs/mef/ty2025-form8582-entire-overall-gain-gap.md), and [MFS](docs/mef/ty2025-form8582-mfs-boundary.md).
 - [ ] **Form 4952:** finish debt/expense tracing, K-1 box 20 code B's permitted deduction destination, royalty and Schedule E ownership, investment-income elections, carryover ledger, and Form 6251 interaction. Ensure calculation, native document, PDF projectors, and final filer identity use one consistent validated source path. See [main gap](docs/mef/ty2025-form4952-gap.md), [K-1 code B](docs/mef/ty2025-form4952-k1-code-b-gap.md), and [Treasury dividend](docs/mef/ty2025-form4952-treasury-dividend-slice.md).
 - [ ] **Form 4972:** complete beneficiary/partial-share, NUA, estate/death allocations and combinations, separate spouse elections, multiple 1099-R distributions, eligibility evidence, and the Form 6251/1040 tax join. Keep unsupported combinations blocked until their source records are verified. See the [Form 4972 gap](docs/mef/ty2025-form4972-gap.md).
-- [ ] **Form 3800:** extend the registered nine-page parent PDF beyond the source-backed one- and two-geothermal cases using the same prepared native document/instance IDs and credit attachments; reconcile every eligible business-credit source and Form 1040 tax. Complete transfer, passive, carryover, mixed-source, external-attachment, cross-route archive, and ATS evidence. See the [Form 3800 PDF gap](docs/mef/ty2025-form3800-pdf-gap.md).
+- [ ] **Form 3800:** extend the registered nine-page parent PDF to every retained business-credit source and reconcile Form 1040 tax. See the [Form 3800 PDF gap](docs/mef/ty2025-form3800-pdf-gap.md).
+  - [x] Print the prepared nine-page parent with its native instance IDs; reconcile one sourced geothermal Form 8835 credit through Schedule 3 and Form 1040, local XSD, and a visually reviewed filled packet.
+  - [x] Print two distinct geothermal Form 8835 copies and two Part V source rows; reconcile their $1,200 total through Form 3800, Schedule 3, Form 1040, native XML, and the reviewed 20-page packet.
+  - [ ] Cover transfer and passive credits, carryover vintages, mixed and other source credits, row overflow, required external attachments, cross-route archive evidence, business rules, and ATS acceptance.
+- [ ] **Form 8835:** extend the bounded filer-owned geothermal route to every retained credit, owner, facility, election, and source combination in the [form audit](docs/mef/ty2025-form1040-form-audit.md). Keep duplicate physical-facility records rejected and verify every native/PDF copy against its source and Form 3800 row.
 - [ ] **Forms 8995/8995-A:** finish positive QBI export and all conditional Schedule A/B/C/D paths beyond the bounded two-business Schedule B route, including election, aggregation relationship, RPE statements, owner data, and return-wide QBI totals. See [8995](docs/mef/ty2025-form8995-positive-export-gap.md) and [8995-A](docs/mef/ty2025-form8995a-gap.md).
 - [ ] **Form 8990:** obtain authenticated debt tracing and filed-year interest/ATI inputs, reconcile its return-wide ordering, and design a durable accepted-filing carryforward ledger before allowing a positive nonexcepted-interest export. See the [Form 8990 gap](docs/mef/ty2025-form8990-gap.md).
 - [ ] **Form 8839:** obtain adoption decree, expense/reimbursement, exclusion, Form 2555, and credit-ordering evidence before allowing a positive adoption-credit filing. See the [Form 8839 gap](docs/mef/ty2025-form8839-gap.md).
 - [ ] **Form 7203 / Form 9465 / Schedule J:** complete shareholder debt and other basis paths beyond the bounded stock-only loss; decide and implement the installment-agreement filing boundary; complete Schedule J beyond its bounded Schedule F-only election where applicable. See [7203](docs/mef/ty2025-form7203-stock-loss-gap.md), [9465](docs/mef/ty2025-form9465-filing-boundary.md), and [Schedule J](docs/mef/ty2025-schedule-j-integration-gap.md).
 - [ ] **Forms 2210/2210-F, 8801, 172, 461, 4562, 4797, 6252, 7206, 7217, 8829, 8606, 8815, 8915-F:** review their applicable public inputs, computations, source proof, Form 1040 joins, native/PDF documents, and conditional attachments; finish all positive routes or obtain a named fail-closed decision. Use the matching form gap notes under [docs/mef](docs/mef/) and the [form audit](docs/mef/ty2025-form1040-form-audit.md).
-- [ ] **Forms 2106, 8853, 8863, 8880, 8886, 8941, 8958, 8959, 8978, 8997, 982, 3115, 4255, 6478, 8621, 8835, 8864, 8874, 8911, 965-A, 8582-CR, 8611, 8826:** resolve the per-form unsupported branches, source/owner evidence, PDF parity, and required schedules or statements listed in the [form audit](docs/mef/ty2025-form1040-form-audit.md) and corresponding [gap notes](docs/mef/). Do not infer whole-form support from a bounded slice.
+- [ ] **Forms 2106, 8853, 8863, 8880, 8886, 8941, 8958, 8959, 8978, 8997, 982, 3115, 4255, 6478, 8621, 8864, 8874, 8911, 965-A, 8582-CR, 8611, 8826:** resolve the per-form unsupported branches, source/owner evidence, PDF parity, and required schedules or statements listed in the [form audit](docs/mef/ty2025-form1040-form-audit.md) and corresponding [gap notes](docs/mef/). Do not infer whole-form support from a bounded slice.
 - [ ] **Foreign/entity and special attachments:** resolve applicable Forms 5471, 8858/Schedule M, 1118, trust K-1 backup withholding, section 965, and every other individual-filer root flagged in the [unregistered-root crosswalk](docs/mef/ty2025-unregistered-root-applicability.md), including source copy versus transmitted attachment ownership.
 - [ ] **Source/statement exceptions:** finish W-2G withholding attachments, Form 1098 box 6 points, Schedule LEP/R, Form 8814 child-income notation, Form 8862 credit-reinstatement links, Schedule H FUTA continuation, and any required signed/byte-bound statements and source copies identified by the [form audit](docs/mef/ty2025-form1040-form-audit.md).
 
@@ -290,7 +292,8 @@ including a two-gift return with two linked native forms and attachments.
 
 - [ ] Finish implementation and coverage decisions above before the agreed single full-batch gate. Existing focused cases and historical passes are not evidence for the current worktree.
 - [x] Confirm Deno, `xmllint`, `pdftoppm`, and `pdfinfo` are available. Provision and verify the TY2025 v5.4 `Return1040.xsd` / `ReturnData1040.xsd` bundle under `.state/research/docs/`; it is Git-ignored, not checked in. On 2026-09-29, Deno 2.7.7, libxml 2.9.13, and Poppler 26.03.0 were present with both schema files. A filtered MeF Schedule 2 XSD test and a filtered full-return Single W-2 XSD test each ran and passed (1 pass, 0 ignored per command), proving both test files used the local `Return1040.xsd` bundle. This checks the preflight only; the full schema matrix remains open.
-- [ ] Run `deno task test` as the final full batch after the retained routes and scope decisions are complete; record commit, command, tool versions, timestamp, pass/fail/ignored totals, failures, and ignored-test reasons. Fix failures, then rerun the same full command until the release batch passes. The current source commit passed 8,851/8,851 locally as recorded above; implementation and external gates remain open.
+- [ ] Run `deno task test` as the final full batch after the retained routes and scope decisions are complete; record commit, command, tool versions, timestamp, pass/fail/ignored totals, failures, and ignored-test reasons. Fix failures, then rerun the same full command until the release batch passes. The current source commit passed 8,855/8,855 locally as recorded above; implementation and external gates remain open.
+  - [x] Rerun the full command after correcting the three repeated-facility fixtures; `15d5430d` passed 8,855/8,855 with no ignored tests reported. Retain `.state/research/ty2025-full-test-15d5430d.log` as local regression evidence.
 - [x] Run the live canonical-PDF field-name checks in the normal test suite. On 2026-09-29, after correcting the Schedule 3 line 13a AcroForm path, `deno test --allow-read --allow-net=www.irs.gov --filter 'all mapped pdfField names exist in real IRS PDF' forms/f1040/2025/pdf/forms/all-descriptors.test.ts` passed all 86 checks. The full descriptor file was rerun with the repository test permissions and passed 605/605 checks, including the pinned-revision checks that had failed in the earlier diagnostic batch. This proves mapped field names exist in the referenced IRS PDFs; filled-output visual review remains a separate gate below.
 - [ ] For every retained positive filing route, generate a full return from a source-backed fixture and validate emitted XML against the checked-in TY2025 IRS schema. Check source-to-calculation-to-Form-1040 totals, required references/attachments, negative and conflicting cases, and IRS business rules separately from structural XSD success.
 - [ ] Generate the nineteen prepared synthetic filled-PDF cases through the real graph and PDF builder as described in the [validation batch](docs/mef/ty2025-form1040-validation-batch.md); render and inspect every page, mark checkboxes/amounts/owner identity/page order/continuations, and add cases for each uncovered descriptor or branch.

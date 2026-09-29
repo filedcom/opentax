@@ -108,8 +108,11 @@ prepared-return, source-drift, field-map, projection, and local XSD cases pass.
 The `98466597` repository-wide run passed 8,851/8,851 after the archive
 change, zero failed, in 13m37s; its summary reported no ignored tests. The
 focused PDF/archive tests passed 13/13 before that run. The log is retained at
-`.state/research/ty2025-full-test-98466597.log`. The two-facility route
-postdates that batch and needs a new repository-wide run.
+`.state/research/ty2025-full-test-98466597.log`. The subsequent two-facility
+diagnostic found three older tests reusing one physical facility identity;
+their fixtures were corrected. The fixed-source `15d5430d` repository-wide
+run then passed 8,855/8,855, zero failed, with no ignored tests reported in
+14m11s. Its log is `.state/research/ty2025-full-test-15d5430d.log`.
 
 The remaining gate includes transfer elections with exact attachment bytes and
 statement IDs; passive and carryover vintages; mixed and wider same-line

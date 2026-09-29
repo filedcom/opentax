@@ -332,7 +332,7 @@ builder rejects positive claims.
 | -------------------------------------------- | -----------------------------------------: | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | MeF descriptors in `ALL_MEF_FORMS`           |                                        123 | Registration only: 96 main-return/numbered/schedule entries plus 27 wage/supporting entries.                                                  |
 | Main-return/numbered/schedule descriptors    |                                         96 | 19 return/schedules plus 77 numbered/distinct schedules, including alternative initial/annual 8854 serializers.                               |
-| Registered PDF descriptors                   |                                         86 | Registration only, including the bounded Forms 8835/8874/8911/8978 and 8911/8978 companion additions. This is not a field-map or visual pass. |
+| Registered PDF descriptors                   |                                         87 | Registration only, including the bounded Forms 3800/8835/8874/8911/8978 and 8911/8978 companion additions. This is not a field-map or visual pass. |
 | Forms excluded from the agreed product scope | 1040-NR, 1040-SS, 4868; dual-status e-file | Not counted as open Form 1040-family serializers.                                                                                             |
 | Whole-form verified on the current worktree  |                0 established by this audit | No deferred full batch, complete instruction matrix, IRS business rules or ATS acceptance is recorded.                                        |
 
