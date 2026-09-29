@@ -67,7 +67,7 @@ export const cropInsuranceDeferralStatement: MefFormDescriptor<
   readonly string[]
 > = {
   pendingKey: "crop_insurance_deferral_statement",
-  sourcePendingKeys: ["f4835"],
+  sourcePendingKeys: ["f4835", "schedule_f"],
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/publications/p225",
   build(_fields, context) {

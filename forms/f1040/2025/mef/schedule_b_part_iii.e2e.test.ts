@@ -6,6 +6,7 @@ import { FilingStatus } from "../../nodes/types.ts";
 import { inputNodes } from "../inputs.ts";
 import { registry } from "../registry.ts";
 import { buildMefXml } from "./builder.ts";
+import { buildPending } from "./pending.ts";
 import type { MefFormsPending } from "./types.ts";
 
 const general = {
@@ -42,7 +43,7 @@ Deno.test("Schedule B Part III taxpayer input reaches the filed return", () => {
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.schedule_b?.foreign_country_codes, ["CA"]);
   const xml = buildMefXml(
-    result.pending as MefFormsPending,
+    buildPending(result.pending),
     extractFilerIdentity(general),
   );
   assertStringIncludes(xml, "<IRS1040ScheduleB ");
@@ -83,7 +84,7 @@ Deno.test("Form 8814 child facts force Schedule B foreign answers and literals",
   assertEquals(result.pending.schedule_b?.foreign_accounts_question, true);
   assertEquals(result.pending.schedule_b?.foreign_trust_question, true);
   const xml = buildMefXml(
-    result.pending as MefFormsPending,
+    buildPending(result.pending),
     extractFilerIdentity(general),
   );
   assertStringIncludes(xml, "<Form8814LiteralCd>FORM8814</Form8814LiteralCd>");

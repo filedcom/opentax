@@ -174,7 +174,7 @@ Deno.test("Form 982 refuses unverified exclusion details", () => {
       form982.build({
         line2_excluded_cod: 5_000,
         exclusion_type: ExclusionType.Bankruptcy,
-      }),
+      }, { pending: {} }),
     Error,
     "tax-attribute reduction details",
   );
