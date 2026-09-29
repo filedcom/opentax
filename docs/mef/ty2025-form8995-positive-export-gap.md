@@ -70,7 +70,9 @@ attributable health insurance or
 retirement deductions. Missing or conflicting facts stop MeF and PDF export.
 
 A synthetic $80,000 cash-farm return passed graph execution, native full-return
-TY2025 XSD validation, and Form 8995 MeF/PDF reconciliation. The filled
+TY2025 XSD validation, and Form 8995 MeF/PDF reconciliation. A separate
+$80,000 accrual-farm case also passes graph execution, Form 8995 MeF/PDF
+reconciliation, and full-return XSD validation with explicit zero inventory. The filled
 nine-page PDF packet was generated; visual review of its Form 8995 page matched
 the farm row ($74,348 QBI), line 15 ($11,720), and Form 1040 line 13a ($11,720).
 Local review artifacts are in

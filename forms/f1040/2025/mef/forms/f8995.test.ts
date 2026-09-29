@@ -201,6 +201,55 @@ Deno.test("one sourced Schedule F farm reaches Form 8995 MeF, PDF, and full-retu
     }), Error);
 });
 
+Deno.test("profitable accrual Schedule F farm reaches Form 8995 MeF, PDF, and full-return XSD", async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: {
+      filing_status: "single",
+      taxpayer_first_name: "Sam",
+      taxpayer_last_name: "Farmer",
+      taxpayer_ssn: "123-45-6789",
+      qbi_no_prior_loss_or_suspended_loss_confirmed: true,
+      qbi_not_patron_of_specified_cooperative_confirmed: true,
+    },
+    schedule_f: {
+      schedule_fs: [{
+        farm_id: "accrual-north",
+        line_a_principal_crop_activity: "GRAIN FARMING",
+        line_b_agricultural_activity_code: "111100",
+        line_c_farm_name: "North Accrual Farm",
+        line_d_ein: "123456789",
+        line_e_material_participation: true,
+        accounting_method: "accrual",
+        part_iii: {
+          line37_sales_products: 80_000,
+          line45_beginning_inventory: 0,
+          line46_products_purchased: 0,
+          line48_ending_inventory: 0,
+          inventory_method: "cost",
+        },
+        qbi_no_other_adjustments_confirmed: true,
+      }],
+    },
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const pending = result.pending;
+  const fields = pending.form8995;
+  assertEquals(pending.schedule1?.line6_schedule_f, 80_000);
+  assertEquals(fields?.line15, pending.f1040?.line13_qbi_deduction);
+  const fragment = form8995.build(fields, { pending });
+  assertStringIncludes(
+    fragment,
+    "<BusinessNameLine1Txt>North Accrual Farm</BusinessNameLine1Txt>",
+  );
+  assertStringIncludes(fragment, "<EIN>123456789</EIN>");
+  const projected = form8995Pdf.projectFields?.(fields, pending);
+  assertEquals(projected?.line1_qbi, fields?.line1_qbi);
+  assertEquals(projected?.line15, fields?.line15);
+  const xml = buildMefXml(pending, testFiler());
+  assertStringIncludes(xml, "<IRS8995 documentId=");
+  await assertReturnXsd(xml);
+});
+
 Deno.test("single-filer farm without EIN uses the sourced SSN on Form 8995", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
