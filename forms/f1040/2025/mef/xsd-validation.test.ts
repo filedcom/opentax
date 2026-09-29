@@ -8248,6 +8248,8 @@ Deno.test(
           date_contributed: donation.donationDate,
           cost_or_adjusted_basis: donation.costBasis,
           fmv: donation.fairMarketValue,
+          charitable_limit_category: "noncash_50",
+          is_capital_gain_property: false,
         }],
       },
     }, extractFilerIdentity(singleGeneral()));
