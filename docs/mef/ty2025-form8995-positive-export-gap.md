@@ -16,6 +16,15 @@ group has `minOccurs="0"`, so an aggregate-only XML fragment can be
 syntactically accepted by the schema while still failing to represent a complete
 claimed calculation. Schema permissiveness is not source proof.
 
+The general-input node now derives 2025 age-65 status from a valid birth date
+once and sends that result to Form 8995 as well as Form 1040 and the standard
+deduction worksheet. A synthetic single-filer calculation with $26,000 of
+ordinary dividends and $15,000 of section 199A dividends passes the full
+graph: the $17,750 age-adjusted standard deduction limits Form 8995 line 15
+and Form 1040 line 13 to $1,650, and taxable income is $600 after the separate
+$6,000 senior deduction. This is a calculation regression; its dividend-only
+positive filing route remains subject to the source and export gates below.
+
 ## Implemented one-business route
 
 The Schedule C node now retains an identified business row for positive QBI, and

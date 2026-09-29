@@ -951,3 +951,31 @@ Deno.test("Scenario 16: MFJ, Schedule C + qualified dividends — income limit b
     "taxable income = $161,435.23 pre-QBI − $12,287.05",
   );
 });
+
+Deno.test("age derived from birth date limits Form 8995 deduction across the return", () => {
+  const result = runReturn({
+    general: {
+      ...singleGeneral(),
+      taxpayer_dob: "1960-06-15",
+      qbi_no_prior_loss_or_suspended_loss_confirmed: true,
+      qbi_not_patron_of_specified_cooperative_confirmed: true,
+    },
+    f1099div: [{
+      payerName: "Fund",
+      isNominee: false,
+      box11: false,
+      box1a: 26_000,
+      box5: 15_000,
+    }],
+    schedule_b_part_iii: {
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    },
+  });
+
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending["f1040"]?.["line12a_standard_deduction"], 17_750);
+  assertEquals(result.pending["form8995"]?.["qbi_deduction"], 1_650);
+  assertEquals(result.pending["f1040"]?.["line13_qbi_deduction"], 1_650);
+  assertEquals(result.pending["income_tax_calculation"]?.["taxable_income"], 600);
+});

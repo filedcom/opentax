@@ -32,16 +32,25 @@ XSD pass, or an ignored test.
 
 ### Latest validation attempt
 
-After the fixed-source full run below, the Form 1040 PDF descriptor gained the
+The 2026-09-29 fixed-source `deno task test` attempt on `a7c26864` passed
+**8,919** tests and failed one Form 8880 priority fixture in 15m56s. That
+fixture asserted a Schedule R age-65 credit without the matching Form 1040 age
+indicator now required by the return guard. Retain
+`.state/research/ty2025-full-test-a7c26864.log`. The fixture now supplies the
+age indicator. A separate DOB-derived age routing correction sends the same
+age to Form 8995 and Form 1040. The 97 focused general, Form 8880, and
+return-scenario tests pass, including a $26,000 dividend return with a $1,650
+QBI deduction and $600 taxable income. The full rerun is pending.
+
+After the earlier fixed-source full run below, the Form 1040 PDF descriptor gained the
 2025 page-2 spouse-itemization and age/blindness checkboxes, and a synthetic
 age-65 dependent Schedule R case gained a full-return XSD test. The focused
 Form 1040 PDF descriptor, PDF builder, and source-only export files pass
 **32/32**; the live Form 1040 IRS field-name check also passes. A six-page
-packet was rendered and visually inspected. A full batch on this subsequent
-source has not run yet.
+packet was rendered and visually inspected.
 Subsequent general-input and Schedule R age reconciliation changes pass
 **140/140** focused general, Form 1040, Schedule R native/PDF, and source-only
-export cases. A full batch on these changes is pending.
+export cases. Their full batch attempt is recorded above.
 
 The 2026-09-29 20:39–20:55 UTC `deno task test` run on source commit
 `56b4e37e` passed **8,916/8,916**, zero failed, in 15m54s; Deno reported no
@@ -264,6 +273,12 @@ the PDF TIN column; its full return passed XSD and its filled Form 8995 page
 was visually checked. Joint-filer farm ownership remains unresolved. The
 [Form 8995 gap](docs/mef/ty2025-form8995-positive-export-gap.md) retains the
 multi-farm, cooperative, other-adjustment, and ATS gates.
+Form 8995 now receives the DOB-derived taxpayer and spouse age flags used by
+Form 1040 and the standard-deduction worksheet. A positive full-graph
+section 199A dividend case verifies the $1,650 taxable-income limit, Form
+1040 line 13 deduction, and $600 taxable income after the separate senior
+deduction; this is a synthetic calculation case, not authenticated source or
+ATS evidence.
 Read-only text extraction across the locally retained TY2025 Form 1040 ATS
 scenario PDFs found no Form 1095-A or Marketplace Statement text. It did not
 establish source-verified policy/month evidence for the seventeen red Form 8962
@@ -444,7 +459,7 @@ including a two-gift return with two linked native forms and attachments.
 
 - [ ] Finish implementation and coverage decisions above before the agreed single full-batch gate. Existing focused cases and historical passes are not evidence for the current worktree.
 - [x] Confirm Deno, `xmllint`, `pdftoppm`, and `pdfinfo` are available. Provision and verify the TY2025 v5.4 `Return1040.xsd` / `ReturnData1040.xsd` bundle under `.state/research/docs/`; it is Git-ignored, not checked in. On 2026-09-29, Deno 2.7.7, libxml 2.9.13, and Poppler 26.03.0 were present with both schema files. A filtered MeF Schedule 2 XSD test and a filtered full-return Single W-2 XSD test each ran and passed (1 pass, 0 ignored per command), proving both test files used the local `Return1040.xsd` bundle. This checks the preflight only; the full schema matrix remains open.
-- [ ] Run `deno task test` as the final full batch after the retained routes and scope decisions are complete; record commit, command, tool versions, timestamp, pass/fail/ignored totals, failures, and ignored-test reasons. Fix failures, then rerun the same full command until the release batch passes. The latest complete regression passed 8,916/8,916 on `56b4e37e`; subsequent PDF/test edits have focused evidence only. Implementation and external gates remain open.
+- [ ] Run `deno task test` as the final full batch after the retained routes and scope decisions are complete; record commit, command, tool versions, timestamp, pass/fail/ignored totals, failures, and ignored-test reasons. Fix failures, then rerun the same full command until the release batch passes. The latest complete regression passed 8,916/8,916 on `56b4e37e`; the subsequent age-reconciliation attempt passed 8,919 and failed one now-corrected Form 8880 fixture. The current source has focused evidence only. Implementation and external gates remain open.
   - [x] Rerun the full command after correcting the three repeated-facility fixtures; `15d5430d` passed 8,855/8,855 with no ignored tests reported. Retain `.state/research/ty2025-full-test-15d5430d.log` as local regression evidence.
   - [x] Rerun the full command after adding mixed wind/geothermal copies and the no-increase source guard; `08786417` passed 8,860/8,860 with no ignored tests reported. Retain `.state/research/ty2025-full-test-08786417.log` as local regression evidence.
   - [x] Rerun the full command after adding the Form 8874 source-backed packet and fixing its CDE address layout; `5eeb5e6b` passed 8,862/8,862 with no ignored tests reported. Retain `.state/research/ty2025-full-test-5eeb5e6b.log` as local regression evidence.

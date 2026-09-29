@@ -996,6 +996,10 @@ Deno.test("date of birth derives age-65 eligibility for standard and senior dedu
     findOutput(result, "schedule1a")?.fields.taxpayer_age_65_or_older,
     true,
   );
+  assertEquals(
+    findOutput(result, "form8995")?.fields.taxpayer_age_65_or_older,
+    true,
+  );
 });
 
 Deno.test("age-65 answers must agree with taxpayer and spouse dates of birth", () => {

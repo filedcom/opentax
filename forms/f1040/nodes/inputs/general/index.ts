@@ -1028,12 +1028,12 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
             true && {
           qbi_not_patron_of_specified_cooperative_confirmed: true,
         }),
-        ...(parsed.taxpayer_age_65_or_older !== undefined &&
-          { taxpayer_age_65_or_older: parsed.taxpayer_age_65_or_older }),
+        ...(taxpayerAge65 !== undefined &&
+          { taxpayer_age_65_or_older: taxpayerAge65 }),
         ...(parsed.taxpayer_blind !== undefined &&
           { taxpayer_blind: parsed.taxpayer_blind }),
-        ...(parsed.spouse_age_65_or_older !== undefined &&
-          { spouse_age_65_or_older: parsed.spouse_age_65_or_older }),
+        ...(spouseAge65 !== undefined &&
+          { spouse_age_65_or_older: spouseAge65 }),
         ...(parsed.spouse_blind !== undefined &&
           { spouse_blind: parsed.spouse_blind }),
       } as AtLeastOne<z.infer<typeof form8995["inputSchema"]>>),
