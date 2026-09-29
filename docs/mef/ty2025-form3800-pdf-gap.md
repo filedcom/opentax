@@ -57,6 +57,15 @@ for a single nonpassive carryforward source. A 137-case focused Form 3800
 native/PDF run passed. This closes a cross-output consistency gap while the
 production carryforward route remains blocked.
 
+The Part IV join now combines passive and nonpassive carryovers that use the
+same IRS credit line. It retains the passive source vintages through preparation
+so a single-source passive row still gets its Part VI detail when combined with
+a nonpassive vintage. The synthetic mixed-line parent emits one Part IV row and
+two Part VI source rows, passes local TY2025 v5.4 `IRS3800` XSD, and the
+138-case focused Form 3800 native/PDF run passes. The production parent still
+rejects positive nonpassive carryforward intake until prior-return evidence,
+source links, and the history attachment are complete.
+
 The fixed-source `99243afd` repository-wide rerun completed at 2026-09-29
 18:13 UTC: 8,894/8,894 passed, zero failed, in 15m46s, with no ignored tests
 reported. Its log is `.state/research/ty2025-full-test-99243afd-rerun.log`.
