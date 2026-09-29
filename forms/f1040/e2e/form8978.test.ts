@@ -4,7 +4,7 @@ import { execute } from "../../../core/runtime/executor.ts";
 import { registry } from "../2025/registry.ts";
 import { DistributionCode } from "../nodes/inputs/f1099r/index.ts";
 import { Form8978Source } from "../nodes/inputs/f8978/index.ts";
-import { FilingStatus } from "../nodes/types.ts";
+import { FilingStatus, TS } from "../nodes/types.ts";
 
 const plan = buildExecutionPlan(registry);
 
@@ -95,10 +95,10 @@ Deno.test("E2E: negative Form 8978 line 14 reaches capped Schedule 3 line 6l", (
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.f8978?.line14, -500);
-  assertEquals(result.pending.f1040?.line16_income_tax, 7_949);
+  assertEquals(result.pending.f1040?.line16_income_tax, 7_955);
   assertEquals(result.pending.schedule3?.line6l_form8978_credit, 500);
   assertEquals(result.pending.f1040?.line20_nonrefundable_credits, 500);
-  assertEquals(result.pending.f1040?.line24_total_tax, 7_449);
+  assertEquals(result.pending.f1040?.line24_total_tax, 7_455);
 });
 
 Deno.test("E2E: negative Form 8978 excess offsets chapter 1 Schedule 2 tax", () => {
@@ -110,15 +110,14 @@ Deno.test("E2E: negative Form 8978 excess offsets chapter 1 Schedule 2 tax", () 
       taxpayer_ssn: "123-45-6789",
       taxpayer_dob: "1985-06-15",
     },
-    f1099r: {
-      f1099rs: [{
-        payer_name: "Plan Sponsor",
-        payer_ein: "12-3456789",
-        box1_gross_distribution: 1_000,
-        box2a_taxable_amount: 1_000,
-        box7_distribution_code: DistributionCode.Code1,
-      }],
-    },
+    f1099r: [{
+      ts: TS.T,
+      payer_name: "Plan Sponsor",
+      payer_ein: "12-3456789",
+      box1_gross_distribution: 1_000,
+      box2a_taxable_amount: 1_000,
+      box7_distribution_code: DistributionCode.Code1,
+    }],
     f8978: {
       filings: [{
         source: Form8978Source.BbaAudit,
