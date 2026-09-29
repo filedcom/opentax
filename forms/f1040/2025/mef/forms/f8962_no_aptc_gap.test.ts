@@ -1,5 +1,6 @@
 import { assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../mef/header.ts";
+import { FilingStatus as SourceFilingStatus } from "../../../nodes/types.ts";
 import { form8962 } from "./f8962.ts";
 
 const months = [
@@ -48,6 +49,7 @@ const policy = {
   issuer_name: "Marketplace",
   policy_number: "POLICY-NO-APTC",
   coverage_state: "TX",
+  covered_individual_ssns: ["123456789"],
   monthly_premiums: months.map(() => 500),
   monthly_slcsps: months.map(() => 0),
   monthly_aptcs: months.map(() => 0),
@@ -56,6 +58,11 @@ const policy = {
   annual_aptc: 0,
 };
 const pending = {
+  general: {
+    filing_status: SourceFilingStatus.Single,
+    taxpayer_ssn: "123456789",
+    taxpayer_can_be_claimed_as_dependent: false,
+  },
   f1095a: { f1095as: [policy] },
   schedule3: { line9_premium_tax_credit: 1_704 },
   f1040: { line11_agi: 75_300, line31_additional_payments: 1_704 },
@@ -65,11 +72,11 @@ Deno.test("Form 8962 positive no-APTC claim cannot rely on blank reported SLCSP"
   assertThrows(
     () => form8962.build(fields, { filer, pending }),
     Error,
-    "differs from its Form 1095-A policy or calculated PTC",
+    "one fully paid, nonshared Marketplace policy",
   );
 });
 
-Deno.test("Form 8962 positive no-APTC claim still blocks entered SLCSP corrections", () => {
+Deno.test("Form 8962 positive no-APTC claim blocks corrections without payment evidence", () => {
   const corrections = applicableSlcsps.map((corrected_slcsp, index) => ({
     month: index + 1,
     basis: "no_aptc" as const,
@@ -85,6 +92,6 @@ Deno.test("Form 8962 positive no-APTC claim still blocks entered SLCSP correctio
       },
     }),
     Error,
-    "supports identified family policies or a verified interstate move",
+    "one fully paid, nonshared Marketplace policy",
   );
 });
