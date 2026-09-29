@@ -3,6 +3,7 @@ import { form3800CarryforwardStatement } from "./f3800_carryforward_statement.ts
 
 const vintage = {
   source_key: "2022-new-markets-1",
+  source_origin: { kind: "self" },
   credit_type: "New markets credit",
   form3800_credit_line: "1i" as const,
   originating_tax_year: 2022,

@@ -1,4 +1,5 @@
 import { assertEquals, assertThrows } from "@std/assert";
+import { PassiveCreditSourceOrigin } from "../../intermediate/forms/form8582cr/source.ts";
 import {
   type Form3800CarryoverVintage,
   reconcileForm3800CarryoverLedger,
@@ -6,6 +7,7 @@ import {
 
 const vintage: Form3800CarryoverVintage = {
   source_key: "2022-qei-1",
+  source_origin: { kind: PassiveCreditSourceOrigin.Self },
   credit_type: "New markets credit",
   form3800_credit_line: "1i",
   originating_tax_year: 2022,
@@ -102,11 +104,15 @@ Deno.test("Form 3800 carryover ledger rejects missing extended carryback evidenc
 });
 
 Deno.test("Form 3800 carryover ledger rejects an invented or mismatched tax year end", () => {
-  assertThrows(() =>
-    reconcileForm3800CarryoverLedger([{
-      ...vintage,
-      originating_tax_year_end_date: "2023-12-31",
-    }]), Error, "origin year and year-end date");
+  assertThrows(
+    () =>
+      reconcileForm3800CarryoverLedger([{
+        ...vintage,
+        originating_tax_year_end_date: "2023-12-31",
+      }]),
+    Error,
+    "origin year and year-end date",
+  );
   assertThrows(() =>
     reconcileForm3800CarryoverLedger([{
       ...vintage,

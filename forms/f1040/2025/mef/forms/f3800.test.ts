@@ -18,6 +18,7 @@ Deno.test("Form 3800 rejects carryforward export until source rows and history e
         carryforward_vintages: [{
           vintage: {
             source_key: "2024-new-markets-1",
+            source_origin: { kind: PassiveCreditSourceOrigin.Self },
             credit_type: "New markets credit",
             form3800_credit_line: "1i",
             originating_tax_year: 2024,

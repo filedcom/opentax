@@ -5,6 +5,7 @@ import {
   type Form3800CarryoverVintage,
   reconcileForm3800CarryoverLedger,
 } from "../../../nodes/inputs/f3800/carryover-ledger.ts";
+import { PassiveCreditSourceOrigin } from "../../../nodes/intermediate/forms/form8582cr/source.ts";
 
 const LEFT = 36;
 const PAGE_WIDTH = 612;
@@ -19,16 +20,27 @@ function currency(value: number): string {
 function wrapExact(text: string, font: PDFFont): string[] {
   const lines: string[] = [];
   let line = "";
-  for (const character of text) {
-    const next = line + character;
-    if (font.widthOfTextAtSize(next, 9) > BODY_WIDTH) {
-      if (!line) {
-        throw new Error("Form 3800 statement character does not fit the page");
-      }
-      lines.push(line);
-      line = character;
-    } else {
+  for (const word of text.split(/\s+/)) {
+    const next = line ? `${line} ${word}` : word;
+    if (font.widthOfTextAtSize(next, 9) <= BODY_WIDTH) {
       line = next;
+      continue;
+    }
+    if (line) lines.push(line);
+    line = "";
+    for (const character of word) {
+      const fragment = line + character;
+      if (font.widthOfTextAtSize(fragment, 9) > BODY_WIDTH) {
+        if (!line) {
+          throw new Error(
+            "Form 3800 statement character does not fit the page",
+          );
+        }
+        lines.push(line);
+        line = character;
+      } else {
+        line = fragment;
+      }
     }
   }
   if (line) lines.push(line);
@@ -52,6 +64,13 @@ function statementLines(
     }; revised ${revised ? "Yes" : "No"}`,
     `Origin return: ${vintage.originating_return_reference}`,
     `Source document: ${vintage.source_document_reference}`,
+    vintage.source_origin.kind === PassiveCreditSourceOrigin.Self
+      ? "Source origin: self"
+      : `Source origin: ${
+        vintage.source_origin.kind.replaceAll("_", " ")
+      }; entity: ${vintage.source_origin.entity_reference}; EIN: ${
+        vintage.source_origin.ein ?? vintage.source_origin.missing_ein_reason
+      }`,
   ];
   for (
     const use of [...vintage.historical_uses].sort((a, b) =>

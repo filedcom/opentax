@@ -2,10 +2,12 @@ import { assertEquals, assertRejects } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { pdfReviewFixtures } from "../review-fixtures.ts";
 import type { Form3800CarryoverVintage } from "../../../nodes/inputs/f3800/carryover-ledger.ts";
+import { PassiveCreditSourceOrigin } from "../../../nodes/intermediate/forms/form8582cr/source.ts";
 import { appendForm3800CarryoverStatement } from "./f3800_carryover_statement.ts";
 
 const vintage: Form3800CarryoverVintage = {
   source_key: "2022-new-markets-1",
+  source_origin: { kind: PassiveCreditSourceOrigin.Self },
   credit_type: "New markets credit",
   form3800_credit_line: "1i",
   originating_tax_year: 2022,
@@ -39,6 +41,33 @@ Deno.test("Form 3800 carryover statement renders complete vintages over multiple
   );
   assertEquals(document.getPageCount() > 1, true);
   assertEquals((await document.save()).length > 0, true);
+});
+
+Deno.test("Form 3800 carryover history prints pass-through source identity", async () => {
+  const document = await PDFDocument.create();
+  await appendForm3800CarryoverStatement(document, [{
+    ...vintage,
+    source_origin: {
+      kind: PassiveCreditSourceOrigin.Partnership,
+      entity_reference: "2022 partnership K-1 code AD",
+      ein: "123456789",
+    },
+  }], pdfReviewFixtures[0].filer);
+  const path = await Deno.makeTempFile({ suffix: ".pdf" });
+  try {
+    await Deno.writeFile(path, await document.save());
+    const result = await new Deno.Command("pdftotext", {
+      args: [path, "-"],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
+    const printed = new TextDecoder().decode(result.stdout);
+    assertEquals(printed.includes("2022 partnership K-1 code AD"), true);
+    assertEquals(printed.includes("123456789"), true);
+  } finally {
+    await Deno.remove(path);
+  }
 });
 
 Deno.test("Form 3800 carryover statement rejects missing filer and unproved revised research details", async () => {

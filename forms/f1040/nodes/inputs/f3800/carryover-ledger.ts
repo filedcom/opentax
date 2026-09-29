@@ -3,6 +3,7 @@ import {
   form3800SpecifiedCreditLineSchema,
   form3800StandardCreditLineSchema,
 } from "../../intermediate/forms/form8582cr/credit-route.ts";
+import { passiveCreditSourceOriginSchema } from "../../intermediate/forms/form8582cr/source.ts";
 
 const dollars = z.number().finite().nonnegative().refine((amount) =>
   Number.isSafeInteger(Math.round(amount * 100)) &&
@@ -25,6 +26,7 @@ const creditLine = z.union([
 /** One origin-year credit, retained separately from every other source. */
 export const form3800CarryoverVintageSchema = z.object({
   source_key: reference,
+  source_origin: passiveCreditSourceOriginSchema,
   credit_type: reference,
   form3800_credit_line: creditLine,
   originating_tax_year: z.number().int().min(2005).max(2024),
@@ -186,6 +188,7 @@ export function reconcileForm3800CarryoverLedger(
   const vintages = form3800CarryoverLedgerSchema.parse(raw);
   return vintages.map((vintage) => ({
     sourceKey: vintage.source_key,
+    sourceOrigin: vintage.source_origin,
     creditType: vintage.credit_type,
     form3800CreditLine: vintage.form3800_credit_line,
     originatingTaxYear: vintage.originating_tax_year,

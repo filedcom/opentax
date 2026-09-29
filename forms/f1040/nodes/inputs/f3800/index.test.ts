@@ -30,6 +30,7 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 
 const carriedCredit: Form3800CarryoverVintage = {
   source_key: "2024-new-markets-1",
+  source_origin: { kind: PassiveCreditSourceOrigin.Self },
   credit_type: "New markets credit",
   form3800_credit_line: "1i",
   originating_tax_year: 2024,

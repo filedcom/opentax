@@ -66,6 +66,24 @@ two Part VI source rows, passes local TY2025 v5.4 `IRS3800` XSD, and the
 rejects positive nonpassive carryforward intake until prior-return evidence,
 source links, and the history attachment are complete.
 
+Carryforward intake now requires a typed source origin for each vintage,
+including an entity reference and EIN or `APPLD FOR` for pass-through sources.
+The standalone history renderer prints that origin. A pure assembler maps each
+reconciled ledger vintage to a namespaced FIFO tax-use source, its reserved
+`CarryforwardGeneralBusinessCr` ID, one Part IV credit-line aggregate, and
+required Part VI breakdowns. A two-year self/partnership case reconciles $700
+of credit to $500 of tax use and $200 remaining, projects the EIN and amounts
+to PDF fields, and passes the local TY2025 v5.4 `IRS3800` XSD. The 243-case
+focused Form 3800 calculation/native/PDF run passes; its log is
+`.state/research/ty2025-form3800-focused-carryforward-assembly.log`.
+Prior-return acceptance
+and actual prepared-return integration remain open, so positive production
+export is still rejected.
+The updated one-page history layout was rendered and visually checked with a
+long partnership entity reference; its EIN label and value stay together after
+word wrapping. The review PDF and PNG are retained under `.state/research/`
+as `ty2025-form3800-carryover-origin-review.*`.
+
 The fixed-source `99243afd` repository-wide rerun completed at 2026-09-29
 18:13 UTC: 8,894/8,894 passed, zero failed, in 15m46s, with no ignored tests
 reported. Its log is `.state/research/ty2025-full-test-99243afd-rerun.log`.
