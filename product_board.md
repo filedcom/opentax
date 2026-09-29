@@ -36,7 +36,11 @@ diagnostic. Neither is a release-gate pass; the full run must be repeated on a
 fixed commit after the route work is complete. All eleven
 prepared synthetic returns now generate filled PDFs through the real graph and
 builder: 57 pages total, with PDFs, source/pending JSON, page counts, and hashes
-retained under `.state/research/ty2025-filled-pdf-review/2026-09-29-v2/`.
+retained with source/pending JSON and native XML under
+`.state/research/ty2025-filled-pdf-review/2026-09-29-v3/`. All eleven native
+returns generated from those fixtures validate against TY2025 v5.4
+`Return1040.xsd`; the 57 regenerated PDF pages are pixel-identical at 65 dpi
+to the previously reviewed batch.
 Contact-sheet review found and led to fixes for Schedule 1 and Schedule 2
 identity fields; the current Schedule 1 rerender shows both fields. The rental
 case now prints its suspended loss from the same Form 8582 allocation used by

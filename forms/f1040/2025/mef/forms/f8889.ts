@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { element, elements } from "../../../mef/xml.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
+import { inputSchema as form8889SourceSchema } from "../../../nodes/intermediate/forms/form8889/index.ts";
 import {
   reconcileCode2Form8889,
   reconcilePairedForm8889,
@@ -43,7 +44,10 @@ const ownerFormSchema = z.object({
 const inputSchema = z.object({
   forms: z.array(ownerFormSchema).min(1).max(2),
 }).strict();
-type Input = z.infer<typeof inputSchema> | readonly [];
+const filingInputSchema = inputSchema.extend(
+  form8889SourceSchema.partial().shape,
+);
+type Input = z.infer<typeof filingInputSchema> | readonly [];
 
 const LINE_KEYS = new Set([
   "print_line1_coverage",
@@ -152,7 +156,7 @@ function buildIRS8889(
     throw new Error("Form 8889 MeF needs owner-labeled computed forms");
   }
   if (Object.keys(raw).length === 0) return [];
-  const fields = inputSchema.parse(raw);
+  const fields = filingInputSchema.parse(raw);
   if (
     fields.forms.length < 1 || fields.forms.length > 2 ||
     (fields.forms.length === 2 &&

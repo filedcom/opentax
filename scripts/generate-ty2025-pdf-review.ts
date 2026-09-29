@@ -4,11 +4,15 @@ import { buildExecutionPlan } from "../core/runtime/planner.ts";
 import { execute } from "../core/runtime/executor.ts";
 import { registry } from "../forms/f1040/2025/registry.ts";
 import { buildPdfBytes } from "../forms/f1040/2025/pdf/builder.ts";
+import { buildMefXml } from "../forms/f1040/2025/mef/builder.ts";
+import { buildPending } from "../forms/f1040/2025/mef/pending.ts";
 import { pdfReviewFixtures } from "../forms/f1040/2025/pdf/review-fixtures.ts";
 
 const outputDir = Deno.args[0];
 if (!outputDir || Deno.args.length !== 1) {
-  throw new Error("Usage: deno run --allow-read --allow-write --allow-net=www.irs.gov scripts/generate-ty2025-pdf-review.ts /new/output-directory");
+  throw new Error(
+    "Usage: deno run --allow-read --allow-write --allow-net=www.irs.gov scripts/generate-ty2025-pdf-review.ts /new/output-directory",
+  );
 }
 
 // Deliberately refuse an existing directory so a prior review is never replaced.
@@ -22,20 +26,30 @@ for (const fixture of pdfReviewFixtures) {
     formType: "f1040",
   });
   if (result.diagnostics.length > 0) {
-    throw new Error(`${fixture.id}: executor diagnostics: ${JSON.stringify(result.diagnostics)}`);
+    throw new Error(
+      `${fixture.id}: executor diagnostics: ${
+        JSON.stringify(result.diagnostics)
+      }`,
+    );
   }
   const pdf = await buildPdfBytes(result.pending, fixture.filer, cacheDir);
+  const xml = buildMefXml(buildPending(result.pending), fixture.filer);
   await Deno.writeFile(join(outputDir, `${fixture.id}.pdf`), pdf);
+  await Deno.writeTextFile(join(outputDir, `${fixture.id}.xml`), xml + "\n");
   await Deno.writeTextFile(
     join(outputDir, `${fixture.id}.json`),
-    JSON.stringify({
-      id: fixture.id,
-      synthetic: true,
-      inputs: fixture.inputs,
-      filer: fixture.filer,
-      expectedPdfForms: fixture.expectedPdfForms,
-      reviewFocus: fixture.reviewFocus,
-      pending: result.pending,
-    }, null, 2) + "\n",
+    JSON.stringify(
+      {
+        id: fixture.id,
+        synthetic: true,
+        inputs: fixture.inputs,
+        filer: fixture.filer,
+        expectedPdfForms: fixture.expectedPdfForms,
+        reviewFocus: fixture.reviewFocus,
+        pending: result.pending,
+      },
+      null,
+      2,
+    ) + "\n",
   );
 }
