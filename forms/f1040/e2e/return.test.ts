@@ -56,9 +56,9 @@ function runReturn(inputs: Record<string, unknown>): ExecuteResult {
 //     taxable_income                    = $59,250  (75,000 − 15,750)
 //     filing_status                     = single
 //   f1040 scalars:
-//     line24_total_tax                  = $7,949
+//     line24_total_tax                  = $7,955 (2025 Tax Table)
 //     line33_total_payments             = $11,000
-//     line35a_refund                    = $3,051
+//     line35a_refund                    = $3,045
 
 Deno.test("E2E Scenario 1: single W-2 wage earner — wages flow through AGI, standard deduction, tax calculation to final refund", () => {
   const result = runReturn({
@@ -130,8 +130,8 @@ Deno.test("E2E Scenario 1: single W-2 wage earner — wages flow through AGI, st
 
   assertEquals(
     f1040["line24_total_tax"],
-    7_949,
-    "line24_total_tax should be $7,949 (bracket tax, no AMT/other taxes)",
+    7_955,
+    "line24_total_tax should be $7,955 (2025 Tax Table, no AMT/other taxes)",
   );
 
   assertEquals(
@@ -140,11 +140,11 @@ Deno.test("E2E Scenario 1: single W-2 wage earner — wages flow through AGI, st
     "line33_total_payments should be $11,000 (W-2 withholding only)",
   );
 
-  // Refund = payments − tax = 11,000 − 7,949 = 3,051
+  // Refund = payments − tax = 11,000 − 7,955 = 3,045
   assertEquals(
     f1040["line35a_refund"],
-    3_051,
-    "line35a_refund should be $3,051",
+    3_045,
+    "line35a_refund should be $3,045",
   );
 
   assertEquals(
@@ -285,8 +285,8 @@ Deno.test("E2E Scenario 2: self-employed Schedule C — SE income and SE deducti
 // 3a — Single, foreign compensation $20,000, no W-2, no withholding:
 //   line11_agi                          = $20,000
 //   taxable_income                      = $20,000 − $15,750 = $4,250
-//   tax: 10% × $4,250                   = $425
-//   line37_amount_owed                  = $425
+//   2025 Tax Table row $4,250–$4,300  = $428
+//   line37_amount_owed                  = $428
 //
 // 3b — Single, W-2 $80,000 (withheld $10,000) + foreign compensation $20,000:
 //   line11_agi                          = $100,000
@@ -335,10 +335,10 @@ Deno.test("E2E Scenario 3a: foreign employer compensation with no W-2 — reache
   );
 
   const f1040 = result.pending["f1040"] ?? {};
-  assertEquals(f1040["line24_total_tax"], 425, "total tax = 10% × $4,250");
+  assertEquals(f1040["line24_total_tax"], 428, "2025 Tax Table on $4,250");
   assertEquals(
     f1040["line37_amount_owed"],
-    425,
+    428,
     "amount owed (no withholding)",
   );
 });
@@ -382,12 +382,12 @@ Deno.test("E2E Scenario 3b: foreign employer compensation beside a W-2 — lines
     20_000,
     "foreign wages go on line 1h",
   );
-  assertEquals(f1040["line24_total_tax"], 13_449, "total tax on $84,250");
+  assertEquals(f1040["line24_total_tax"], 13_455, "2025 Tax Table on $84,250");
   assertEquals(f1040["line33_total_payments"], 10_000, "W-2 withholding");
   assertEquals(
     f1040["line37_amount_owed"],
-    3_449,
-    "amount owed = $13,449 − $10,000",
+    3_455,
+    "amount owed = $13,455 − $10,000",
   );
 });
 
@@ -421,7 +421,7 @@ Deno.test("E2E Scenario 4a: 1099-DIV and trust K-1 dividends combine without nod
     result.pending["income_tax_calculation"]?.["taxable_income"],
     14_950,
   );
-  assertEquals(result.pending["f1040"]?.["line24_total_tax"], 1_555.5);
+  assertEquals(result.pending["f1040"]?.["line24_total_tax"], 1_559);
 });
 
 Deno.test("E2E Scenario 4b: multiple 1099-DIV and trust K-1 entries all reach AGI", () => {
