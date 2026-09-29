@@ -83,8 +83,8 @@ identified Schedule C route. The [Form 8995 gap](docs/mef/ty2025-form8995-positi
 now records the precise one-farm source and reconciliation work; the claim
 remains in scope.
 Read-only text extraction across the locally retained TY2025 Form 1040 ATS
-scenario PDFs found no Form 1095-A or Marketplace Statement. Those packet files
-cannot supply the missing policy/month evidence for the seventeen red Form 8962
+scenario PDFs found no Form 1095-A or Marketplace Statement text. It did not
+establish source-verified policy/month evidence for the seventeen red Form 8962
 full-return XSD fixtures; their source-evidence gate stays open.
 
 The 2026-09-29 moving-worktree diagnostic `deno task test` run finished with
