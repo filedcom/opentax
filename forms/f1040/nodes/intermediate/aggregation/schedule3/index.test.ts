@@ -295,16 +295,22 @@ Deno.test("routing: Part I → line20, Part II → line31, both present in same 
   assertEquals(result.outputs.length, 2);
 });
 
-Deno.test("routing: only line20 emitted when Part II is zero", () => {
+Deno.test("routing: line20 and its credit detail emitted when Part II is zero", () => {
   const result = compute({ line1_foreign_tax_credit: 100 });
   const keys = Object.keys(fieldsOf(result.outputs, f1040)!);
-  assertEquals(keys, ["line20_nonrefundable_credits"]);
+  assertEquals(keys, [
+    "line20_nonrefundable_credits",
+    "credit_limit_schedule3_lines",
+  ]);
 });
 
-Deno.test("routing: only line31 emitted when Part I is zero", () => {
+Deno.test("routing: line31 and empty credit detail emitted when Part I is zero", () => {
   const result = compute({ line10_amount_paid_extension: 100 });
   const keys = Object.keys(fieldsOf(result.outputs, f1040)!);
-  assertEquals(keys, ["line31_additional_payments"]);
+  assertEquals(keys, [
+    "line31_additional_payments",
+    "credit_limit_schedule3_lines",
+  ]);
 });
 
 Deno.test("routing: exactly one f1040 output regardless of how many fields are set", () => {

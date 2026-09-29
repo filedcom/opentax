@@ -97,7 +97,7 @@ Deno.test("form1116: Schedule K-3 line 12 cannot exceed its sourced tax", () => 
         us_tax_before_credits: 300,
       }),
     Error,
-    "exceeds its sourced foreign tax",
+    "exceeds category foreign tax",
   );
 });
 
@@ -801,7 +801,7 @@ Deno.test("form1116: rejects unmodeled older, mixed, or unreviewed carryover vin
     priorYearCarryoverSchema.safeParse({
       ...source,
       vintages: [{
-        vintage_tax_year: 2020,
+        vintage_tax_year: 2019,
         prior_year_schedule_b_line8_vintage_amount: 600,
       }],
     }).success,
@@ -907,7 +907,7 @@ Deno.test("form1116: 2024 carryover rejects mixed categories and 2025 excess", (
         prior_year_carryovers: [prior],
       }),
     Error,
-    "current-year excess tax",
+    "needs one sourced prior-year carryback and carryover review",
   );
 });
 
