@@ -313,7 +313,7 @@ Deno.test("Schedule E first-year entire sale sends current loss and gain to Form
     assertThrows(
       () => compute([{ ...activity, ...change }]),
       Error,
-      "section 469(g) review",
+      "passive",
     );
   }
 });
@@ -859,24 +859,32 @@ Deno.test("routing: section_179 with activity_type=C routes to form4562 with cor
   assertEquals(f4562Fields.section_179_deduction, 50_000);
 });
 
-Deno.test("routing: disallowed_mortgage_interest_8990 routes to form8990 with carryforward amount", () => {
-  const result = compute([
-    minimalItem({
-      rent_income: 20_000,
-      disallowed_mortgage_interest_8990: 3_000,
-    }),
-  ]);
-  assertEquals(findOutput(result, "form8990")?.nodeType, "form8990");
+Deno.test("routing: disallowed mortgage interest needs reviewed Form 8990 records", () => {
+  assertThrows(
+    () =>
+      compute([
+        minimalItem({
+          rent_income: 20_000,
+          disallowed_mortgage_interest_8990: 3_000,
+        }),
+      ]),
+    Error,
+    "reviewed Form 8990 source records",
+  );
 });
 
-Deno.test("routing: disallowed_other_interest_8990 routes to form8990", () => {
-  const result = compute([
-    minimalItem({
-      rent_income: 20_000,
-      disallowed_other_interest_8990: 2_000,
-    }),
-  ]);
-  assertEquals(findOutput(result, "form8990")?.nodeType, "form8990");
+Deno.test("routing: disallowed other interest needs reviewed Form 8990 records", () => {
+  assertThrows(
+    () =>
+      compute([
+        minimalItem({
+          rent_income: 20_000,
+          disallowed_other_interest_8990: 2_000,
+        }),
+      ]),
+    Error,
+    "reviewed Form 8990 source records",
+  );
 });
 
 Deno.test("Schedule E prior at-risk loss is not treated as a return-wide amount", () => {
@@ -1669,6 +1677,7 @@ Deno.test("smoke: comprehensive test with all major boxes populated", () => {
   const result = compute([
     {
       tsj: "T",
+      activity_id: "rental-oak-ave",
       property_description: "456 Oak Ave, Springfield, IL 62701",
       street_address: "456 Oak Ave",
       city: "Springfield",
