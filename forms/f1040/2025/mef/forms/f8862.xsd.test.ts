@@ -94,6 +94,7 @@ Deno.test({
 }, async () => {
   const xml = buildMefXml({
     f8862: {
+      credit_disallowance_ban_active: false,
       claim_eitc: true,
       claim_ctc: true,
       claim_aotc: true,
@@ -152,6 +153,7 @@ Deno.test({
   // This fixture checks XML shape and cross-document presence, not EITC math.
   const xml = buildMefXml({
     f8862: {
+      credit_disallowance_ban_active: false,
       claim_eitc: true,
       eitc_income_reporting_only: false,
       eitc_qualifying_child_of_other: false,
@@ -176,7 +178,11 @@ Deno.test({
   ignore: !xsdAvailable,
 }, async () => {
   const xml = buildMefXml({
-    f8862: { claim_eitc: true, eitc_income_reporting_only: true },
+    f8862: {
+      credit_disallowance_ban_active: false,
+      claim_eitc: true,
+      eitc_income_reporting_only: true,
+    },
     f1040: { filing_status: "single", line27_eitc: 500 },
   }, filer);
   assertEquals(xml.includes("EICEligClmQlfyChldOfOtherInd"), false);
