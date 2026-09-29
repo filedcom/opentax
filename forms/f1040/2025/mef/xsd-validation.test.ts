@@ -206,34 +206,32 @@ Deno.test("Form 8611 source reaches Schedule 2, Form 1040, and its MeF attachmen
   const general = singleGeneral();
   const result = runReturn({
     general,
-    f8611: {
-      f8611s: [{
-        source_document_reference: "2025 Building A recapture worksheet",
-        recapture_year: 2025,
-        building_bin: "TX1234567",
-        building_us_address: {
-          line1: "10 Housing Way",
-          city: "Austin",
-          state: "TX",
-          zip: "78701",
-        },
-        placed_in_service_date: "2017-08-01",
-        financed_with_tax_exempt_bonds: false,
-        calculation: {
-          source_type: "own_credit",
-          recapture_event_type: "DISPOSITION",
-          credit_period_start_year: 2017,
-          recapture_required_after_exceptions: true,
-          line1_prior_form8586_credits: 30_000,
-          line2_worksheets: [],
-          line6_qualified_basis_decrease_ratio: 1,
-          line7_prior_accelerated_recapture_amount: 0,
-          line11_interest_from_prior_years: 100,
-          prior_unused_credits: 1_000,
-          unused_additions_to_qualified_basis_credits: 0,
-        },
-      }],
-    },
+    f8611: [{
+      source_document_reference: "2025 Building A recapture worksheet",
+      recapture_year: 2025,
+      building_bin: "TX1234567",
+      building_us_address: {
+        line1: "10 Housing Way",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+      },
+      placed_in_service_date: "2017-08-01",
+      financed_with_tax_exempt_bonds: false,
+      calculation: {
+        source_type: "own_credit",
+        recapture_event_type: "DISPOSITION",
+        credit_period_start_year: 2017,
+        recapture_required_after_exceptions: true,
+        line1_prior_form8586_credits: 30_000,
+        line2_worksheets: [],
+        line6_qualified_basis_decrease_ratio: 1,
+        line7_prior_accelerated_recapture_amount: 0,
+        line11_interest_from_prior_years: 100,
+        prior_unused_credits: 1_000,
+        unused_additions_to_qualified_basis_credits: 0,
+      },
+    }],
   });
   assertEquals(result.diagnostics, []);
   assertEquals(
