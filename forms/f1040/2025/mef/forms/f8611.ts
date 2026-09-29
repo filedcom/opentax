@@ -40,7 +40,7 @@ function building(item: F8611Item): string {
       : element("CreditsSubjectToRecaptureAmt", lines.line3),
     lines.line4 === undefined
       ? ""
-      : element("CreditRecapturePercentRt", lines.line4),
+      : element("CreditRecapturePercentRt", lines.line4.toFixed(3)),
     lines.line5 === undefined
       ? ""
       : element("AcceleratedPortionOfCreditAmt", lines.line5),
