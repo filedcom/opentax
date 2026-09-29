@@ -19,8 +19,8 @@ const business = {
   line_12_depletion: 1_000,
   amt_depletion_worksheet: {
     source_reference: "2025 AMT depletion worksheet C-1",
-    all_property_income_and_basis_limits_applied_verified: true,
-    no_at_risk_or_basis_limitation_verified: true,
+    all_property_income_and_basis_limits_applied_verified: true as const,
+    no_at_risk_or_basis_limitation_verified: true as const,
     properties: [{
       property_reference: "PROPERTY-1",
       regular_allowed_depletion: 1_000,
