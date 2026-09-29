@@ -1177,7 +1177,7 @@ Deno.test("Form 8962 annual line 11 reconciles a required-filing dependent's Wor
     () =>
       form8962.build({ ...fields, dependents_modified_agi: 13_299 }, context),
     Error,
-    "dependent MAGI differs from Worksheet 1-2 source facts",
+    "household income must reconcile to taxpayer and dependent modified AGI",
   );
   assertThrows(
     () =>
@@ -1308,7 +1308,7 @@ Deno.test("Form 8962 monthly one-policy dependent MAGI reconciles source through
     () =>
       form8962.build({ ...fields, dependents_modified_agi: 13_299 }, context),
     Error,
-    "dependent MAGI differs from Worksheet 1-2 source facts",
+    "household income must reconcile to taxpayer and dependent modified AGI",
   );
   assertThrows(
     () =>
@@ -1429,54 +1429,53 @@ Deno.test("Form 8962 reconciles a same-state midyear policy switch without doubl
         },
       }),
     Error,
-    "supports one policy or two nonoverlapping same-state policies",
+    "supports identified family policies, same-state one-person policies, or a verified interstate move",
   );
-  assertThrows(
-    () =>
-      form8962.build(monthlyRepayment, {
-        ...context,
-        pending: {
-          ...context.pending,
-          f1095a: {
-            f1095as: [
-              {
-                ...policies[0],
-                monthly_premiums: policies[0].monthly_premiums.map((
-                  value,
-                  month,
-                ) => month === 11 ? 500 : value),
-                monthly_slcsps: policies[0].monthly_slcsps.map((value, month) =>
-                  month === 11 ? 600 : value
-                ),
-                monthly_aptcs: policies[0].monthly_aptcs.map((value, month) =>
-                  month === 11 ? 200 : value
-                ),
-                annual_premium: 3_500,
-                annual_slcsp: 4_200,
-                annual_aptc: 1_400,
-              },
-              {
-                ...policies[1],
-                monthly_premiums: policies[1].monthly_premiums.map((
-                  value,
-                  month,
-                ) => month === 11 ? 0 : value),
-                monthly_slcsps: policies[1].monthly_slcsps.map((value, month) =>
-                  month === 11 ? 0 : value
-                ),
-                monthly_aptcs: policies[1].monthly_aptcs.map((value, month) =>
-                  month === 11 ? 0 : value
-                ),
-                annual_premium: 2_500,
-                annual_slcsp: 3_000,
-                annual_aptc: 1_000,
-              },
-            ],
+  const returnToFirstPolicy = form8962.build(monthlyRepayment, {
+    ...context,
+    pending: {
+      ...context.pending,
+      f1095a: {
+        f1095as: [
+          {
+            ...policies[0],
+            monthly_premiums: policies[0].monthly_premiums.map((
+              value,
+              month,
+            ) => month === 11 ? 500 : value),
+            monthly_slcsps: policies[0].monthly_slcsps.map((value, month) =>
+              month === 11 ? 600 : value
+            ),
+            monthly_aptcs: policies[0].monthly_aptcs.map((value, month) =>
+              month === 11 ? 200 : value
+            ),
+            annual_premium: 3_500,
+            annual_slcsp: 4_200,
+            annual_aptc: 1_400,
           },
-        },
-      }),
-    Error,
-    "needs exactly one active Marketplace policy",
+          {
+            ...policies[1],
+            monthly_premiums: policies[1].monthly_premiums.map((
+              value,
+              month,
+            ) => month === 11 ? 0 : value),
+            monthly_slcsps: policies[1].monthly_slcsps.map((value, month) =>
+              month === 11 ? 0 : value
+            ),
+            monthly_aptcs: policies[1].monthly_aptcs.map((value, month) =>
+              month === 11 ? 0 : value
+            ),
+            annual_premium: 2_500,
+            annual_slcsp: 3_000,
+            annual_aptc: 1_000,
+          },
+        ],
+      },
+    },
+  });
+  assertStringIncludes(
+    returnToFirstPolicy,
+    "<TotalAdvancedPTCAmt>2400</TotalAdvancedPTCAmt>",
   );
 });
 
@@ -1762,7 +1761,7 @@ Deno.test("Form 8962 rejects dependent MAGI without verified dependent returns",
         household_income: 77_300,
       }, matchedContext),
     Error,
-    "supports one policy or two nonoverlapping same-state policies",
+    "dependent MAGI needs the verified general return source",
   );
 });
 
@@ -1783,7 +1782,7 @@ Deno.test("Form 8962 rejects annual and special positive routes without bounded 
     () =>
       form8962.build({ ...monthlyRepayment, qsehra_ind: true }, matchedContext),
     Error,
-    "supports one policy or two nonoverlapping same-state policies",
+    "supports identified family policies, same-state one-person policies, or a verified interstate move",
   );
   assertThrows(
     () =>
@@ -1799,7 +1798,7 @@ Deno.test("Form 8962 rejects annual and special positive routes without bounded 
         }],
       }, matchedContext),
     Error,
-    "supports one policy or two nonoverlapping same-state policies",
+    "shared filing needs one agreed Situation 4 policy",
   );
   assertThrows(
     () =>
@@ -1813,7 +1812,7 @@ Deno.test("Form 8962 rejects annual and special positive routes without bounded 
         },
       }, matchedContext),
     Error,
-    "supports one policy or two nonoverlapping same-state policies",
+    "supports identified family policies, same-state one-person policies, or a verified interstate move",
   );
   assertThrows(
     () =>

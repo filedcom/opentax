@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from "node:util";
 import { element, elements } from "../../../mef/xml.ts";
 import {
   calculateFiling,
@@ -98,8 +99,7 @@ export const form8978: MefFormDescriptor<"f8978", Input, readonly string[]> = {
     if (fields.filings) {
       const recomputed = inputSchema.parse(fields).filings.map(calculateFiling);
       if (
-        JSON.stringify(recomputed) !==
-          JSON.stringify(fields.calculated_filings) ||
+        !isDeepStrictEqual(recomputed, fields.calculated_filings) ||
         recomputed.reduce((sum, filing) => sum + filing.line14, 0) !==
           fields.line14
       ) {
