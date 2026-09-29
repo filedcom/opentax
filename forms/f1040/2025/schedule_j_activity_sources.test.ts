@@ -72,6 +72,7 @@ Deno.test("Schedule J Form 4835 source stops at passive-loss allocation", () => 
   assertThrows(() => scheduleJFarmRental4835Source({
     ...farmRental,
     livestock_crop_income: 2_000,
+    some_investment_not_at_risk: false,
   }, farmRentalEvidence), Error, "current loss needs Form 8582 allocation");
   assertThrows(() => scheduleJFarmRental4835Source({
     ...farmRental,
