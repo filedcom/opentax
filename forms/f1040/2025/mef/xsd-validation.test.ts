@@ -8498,7 +8498,7 @@ Deno.test({
   };
   const result = runReturn({
     general,
-    w2: [w2Item(50_000, 8_000)],
+    w2: [w2Item(5_000, 0)],
     schedule_c: [
       {
         ...base,
@@ -8521,6 +8521,14 @@ Deno.test({
           current_year_increases: 0,
           line9_decreases_and_exclusions: 0,
         },
+      },
+      {
+        ...base,
+        business_reference: "offsetting-service-2025",
+        line_c_business_name: "Offsetting business",
+        line_32_at_risk: "a",
+        line_1_gross_receipts: 3_000,
+        line_8_advertising: 0,
       },
     ],
   });

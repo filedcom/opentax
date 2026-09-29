@@ -32,10 +32,21 @@ uses the same simplified at-risk calculation as its separate MeF `IRS6198`
 descriptor, and rejects a line 34b loss without the required source facts.
 The Form 4835 activity description and lines 1, 5, 6–10b, 20, and 21 now have
 one source-backed PDF copy per qualifying rental farm. Focused MeF/PDF parity
-and incomplete-source cases are written but unrun.
+and incomplete-source cases pass 9/9.
 
-No filled-PDF appearance, XML/PDF joint, XSD, business-rule, or ATS gate has
-run. This covers the existing simplified Schedule C/F/Form 4835 source routes.
+The native descriptor now triggers from the Schedule C and Schedule F pending
+source slices as well as a direct Form 6198 slice. Previously the return
+builder skipped it when only the two Schedule C loss activities were present,
+even though its direct serializer could compute both copies. A source-produced
+return with two distinct at-risk-limited Schedule C businesses now emits two
+`IRS6198` documents and passes TY2025 v5.4 XSD validation. The fixture includes
+an offsetting profitable business and low wages so unrelated Form 461 and net
+QBI-loss filing boundaries do not block this Form 6198 check. Focused native
+serializer tests pass 2/2.
+
+No filled-PDF appearance, full XML/PDF joint, business-rule, or ATS gate has
+run for this two-activity return. This covers the existing simplified Schedule
+C/F/Form 4835 source routes.
 Other rental and pass-through activities, detailed Part III, prior suspended
 losses, gain/loss allocation, and source-to-return loss reconciliation remain
 open.

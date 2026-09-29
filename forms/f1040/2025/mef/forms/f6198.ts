@@ -47,6 +47,7 @@ export const form6198: MefFormDescriptor<
   readonly string[]
 > = {
   pendingKey: "form6198",
+  sourcePendingKeys: ["form6198", "schedule_c", "schedule_f"],
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f6198.pdf",
   build(fields, context) {

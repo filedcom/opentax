@@ -320,3 +320,18 @@ Schedule 3 and Form 1040. Both cases rerun the Form 1095-A allocation and Form
 8962 calculation from source. The two focused TY2025 XSD cases, including
 source-identity, allocation, and final-return tampering checks, pass 2/2.
 Other MFS shared-policy combinations remain within the open Form 8962 gate.
+
+Two executor-produced MFS shared-policy fixtures now also join Form 8962 to
+the correct finalized return page. All 15 synthetic PDF-review sources,
+including both new MFS cases, passed TY2025 v5.4 XML validation. The generated
+static PDFs under
+`.state/research/ty2025-filled-pdf-review/2026-09-29-v7/` were rendered
+and the four Form 8962 pages visually inspected. The no-exception packet shows
+only a 0.50 APTC allocation, twelve $400 APTC months, and $750 on both Form
+8962 line 29 and Schedule 2 line 1a. The exception packet shows 0.50 premium
+and APTC allocations with blank SLCSP percentage, $700 family SLCSP in each
+month, and $2,400 on Form 8962 line 26 and Schedule 3 line 9. The PDF SHA-256
+values are `52ace6d59ea348495a71c3b55134b3400382b22758481e0d836206ebf71fecd2`
+(repayment) and `bfaa9881069286e5143caedc813050dcbf441f0e8d87ecb621dfa52b72b1b845`
+(exception). These focused artifacts do not establish other MFS scenarios or
+the release PDF gate.

@@ -42,6 +42,17 @@ const jointFiler: FilerIdentity = {
   },
 };
 
+const mfsFiler: FilerIdentity = {
+  ...singleFiler,
+  filingStatus: FilingStatus.MarriedFilingSeparately,
+  spouse: {
+    ssn: "222334444",
+    firstName: "Other",
+    lastName: "Taxpayer",
+    nameControl: "TAXP",
+  },
+};
+
 const singleGeneral = {
   filing_status: SourceFilingStatus.Single,
   taxpayer_first_name: "Alex",
@@ -354,6 +365,95 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "Household income, federal-poverty percentage, applicable figure and repayment limitation agree with the source calculation",
       "Excess APTC carries once to Schedule 2 line 1a and Form 1040 line 17",
       "Both Form 8962 pages and the Schedule 2 page have legible fields and no clipped monthly amount",
+    ],
+  },
+  {
+    id: "mfs-shared-policy-repayment",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        filing_status: SourceFilingStatus.MFS,
+        spouse_first_name: "Other",
+        spouse_last_name: "Taxpayer",
+        spouse_ssn: "222-33-4444",
+        mfs_spouse_itemizing: false,
+        ptc_mfs_status: {
+          basis: "no_exception",
+          exception_reviewed: true,
+          no_one_can_claim_taxpayer: true,
+          policy_scope: "shared_with_spouse",
+          all_covered_individuals_lawfully_present: true,
+          no_self_employed_health_insurance_deduction: true,
+        },
+      },
+      w2: [wage(30_000, 0, "Example Employer", "12-3456789")],
+      f1095a: [{
+        issuer_name: "Texas Marketplace",
+        policy_number: "MFS-POLICY-1",
+        coverage_state: "TX",
+        covered_individual_ssns: ["111223333", "222334444"],
+        monthly_premiums: Array(12).fill(1_200),
+        monthly_slcsps: Array(12).fill(1_500),
+        monthly_aptcs: Array(12).fill(800),
+        shared_policy_periods: [{
+          basis: "mfs_no_exception",
+          other_taxpayer_ssn: "222-33-4444",
+          start_month: 1,
+          end_month: 12,
+        }],
+      }],
+    },
+    filer: mfsFiler,
+    expectedPdfForms: ["f1040", "form8962", "schedule2"],
+    reviewFocus: [
+      "Form 8962 Part IV allocates 50% of APTC with premium and SLCSP percentage cells blank",
+      "The $750 excess APTC appears once on Schedule 2 line 1a and Form 1040 line 17",
+      "The filer and spouse SSNs and all twelve policy months print legibly",
+    ],
+  },
+  {
+    id: "mfs-shared-policy-exception",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        filing_status: SourceFilingStatus.MFS,
+        spouse_first_name: "Other",
+        spouse_last_name: "Taxpayer",
+        spouse_ssn: "222-33-4444",
+        mfs_spouse_itemizing: false,
+        ptc_mfs_status: {
+          basis: "domestic_abuse",
+          living_apart_at_filing: true,
+          unable_to_file_joint_due_to_exception: true,
+          prior_consecutive_exception_years: 0,
+          no_one_can_claim_taxpayer: true,
+          policy_scope: "shared_with_spouse",
+        },
+      },
+      w2: [wage(30_000, 0, "Example Employer", "12-3456789")],
+      f1095a: [{
+        issuer_name: "Texas Marketplace",
+        policy_number: "MFS-POLICY-1",
+        coverage_state: "TX",
+        covered_individual_ssns: ["111223333", "222334444"],
+        monthly_premiums: Array(12).fill(1_200),
+        monthly_slcsps: Array(12).fill(1_500),
+        monthly_aptcs: Array(12).fill(800),
+        shared_policy_periods: [{
+          basis: "mfs_exception",
+          other_taxpayer_ssn: "222-33-4444",
+          start_month: 1,
+          end_month: 12,
+          monthly_family_slcsps: Array(12).fill(700),
+        }],
+      }],
+    },
+    filer: mfsFiler,
+    expectedPdfForms: ["f1040", "form8962", "schedule3"],
+    reviewFocus: [
+      "Form 8962 Part IV allocates 50% of premium and APTC with no SLCSP percentage",
+      "Each month's family SLCSP is $700 and line A shows the MFS exception",
+      "The $2,400 net PTC appears once on Schedule 3 line 9 and Form 1040 line 31",
     ],
   },
   {
