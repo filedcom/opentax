@@ -4169,10 +4169,14 @@ Deno.test({
     dependents: [{
       first_name: "Child",
       last_name: "Taxpayer",
+      name_control: "TAXP",
       ssn: "222-33-4444",
       dob: "2010-01-01",
       relationship: "daughter",
+      irs_relationship_code: "DAUGHTER",
       months_in_home: 12,
+      filed_joint_return_except_refund_only: false,
+      provided_over_half_own_support: false,
       ptc_tax_return: {
         filing: "required",
         filed_form1040: {
