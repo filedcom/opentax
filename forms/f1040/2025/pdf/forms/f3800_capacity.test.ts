@@ -39,9 +39,14 @@ function printableParts(partV: number, partVI: number): Form3800DocumentParts {
       appliedCredit: 0,
       passThroughEin: String(100_000_000 + index),
     })),
-    carryoverDetails: Array.from({ length: partVI }, () => ({
+    carryoverDetails: Array.from({ length: partVI }, (_, index) => ({
+      sourceKey: `carryover-${index}`,
       line: "1h" as const,
-      xml: "<Frm8820CYCyovCrGrp/>",
+      originatingTaxYear: 2024,
+      nonpassiveCredit: 100,
+      appliedCredit: 0,
+      recapturedOrAdjusted: 0,
+      carryforwardCredit: 100,
     })),
     passiveCurrentDetails: [],
     passiveCarryoverDetails: [],

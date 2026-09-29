@@ -38,6 +38,7 @@ export function projectForm3800HeaderFields(
     parts.lines,
     parts.carryoverRows,
     parts.carryforwardSources,
+    parts.carryoverDetails,
   );
   return {
     [form3800HeaderFields.filerName]: name,
@@ -80,6 +81,7 @@ export function projectForm3800PartIAndIIFields(
     parts.lines,
     parts.carryoverRows,
     parts.carryforwardSources,
+    parts.carryoverDetails,
   );
   if (cents(parts.lines.line38) !== cents(schedule3Line6a)) {
     throw new Error(

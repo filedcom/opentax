@@ -1,10 +1,13 @@
 import type { Form3800NonpassiveLines } from "../../../nodes/inputs/f3800/calculation.ts";
 import type { Form3800CarryoverRow } from "./f3800_passive_rows.ts";
 import type { Form3800CreditLine } from "./f3800_passive_tags.ts";
+import type { Form3800NonpassiveCarryoverDetailRow } from "./f3800_carryover_details.ts";
+import { validateForm3800NonpassiveCarryoverDetail } from "./f3800_carryover_details.ts";
 
 export type Form3800CarryforwardDocumentSource = {
   readonly sourceKey: string;
   readonly line: Form3800CreditLine;
+  readonly originatingTaxYear: number;
   readonly documentId: string;
   readonly availableCredit: number;
   readonly revisedFromOriginal: boolean;
@@ -26,6 +29,7 @@ export function reconcileForm3800CarryforwardLinks(
   lines: Form3800NonpassiveLines,
   rows: readonly Form3800CarryoverRow[],
   sources: readonly Form3800CarryforwardDocumentSource[],
+  details: readonly Form3800NonpassiveCarryoverDetailRow[],
 ) {
   const keys = new Set<string>();
   const ids = new Set<string>();
@@ -49,11 +53,16 @@ export function reconcileForm3800CarryforwardLinks(
       !source.sourceKey.trim() || !source.documentId.trim() ||
       /\s/.test(source.documentId) || keys.has(source.sourceKey) ||
       ids.has(source.documentId) ||
+      !Number.isInteger(source.originatingTaxYear) ||
+      source.originatingTaxYear < 1900 ||
+      source.originatingTaxYear >= 2025 ||
       !(source.line.startsWith("1") || source.line.startsWith("2") ||
         source.line.startsWith("4")) ||
       typeof source.revisedFromOriginal !== "boolean" ||
       cents(source.availableCredit) <= 0 ||
-      !byLine.get(source.line)?.sourceKeys.includes(source.sourceKey)
+      !byLine.get(source.line)?.sourceKeys.includes(source.sourceKey) ||
+      source.originatingTaxYear >
+        (byLine.get(source.line)?.originatingTaxYear ?? 0)
     ) {
       throw new Error(
         "Form 3800 carryforward computation source does not match Part IV",
@@ -61,6 +70,48 @@ export function reconcileForm3800CarryforwardLinks(
     }
     keys.add(source.sourceKey);
     ids.add(source.documentId);
+  }
+  const detailKeys = new Set<string>();
+  for (const detail of details) {
+    validateForm3800NonpassiveCarryoverDetail(detail);
+    const source = sources.find((source) =>
+      source.sourceKey === detail.sourceKey
+    );
+    const row = byLine.get(detail.line);
+    if (
+      detailKeys.has(detail.sourceKey) || !source || !row ||
+      row.sourceKeys.length < 2 ||
+      source.line !== detail.line ||
+      source.originatingTaxYear !== detail.originatingTaxYear ||
+      cents(source.availableCredit) !== cents(detail.nonpassiveCredit)
+    ) {
+      throw new Error(
+        "Form 3800 carryforward Part VI detail does not match its source",
+      );
+    }
+    detailKeys.add(detail.sourceKey);
+  }
+  for (const row of rows) {
+    const expected = sources.filter((source) =>
+      source.line === row.line && row.sourceKeys.includes(source.sourceKey)
+    );
+    if (
+      expected.length === row.sourceKeys.length &&
+      Math.max(...expected.map((source) => source.originatingTaxYear)) !==
+        row.originatingTaxYear
+    ) {
+      throw new Error(
+        `Form 3800 Part IV line ${row.line} latest source year does not reconcile`,
+      );
+    }
+    if (
+      row.sourceKeys.length > 1 &&
+      expected.some((source) => !detailKeys.has(source.sourceKey))
+    ) {
+      throw new Error(
+        `Form 3800 Part VI line ${row.line} lacks a nonpassive source detail`,
+      );
+    }
   }
   for (const row of rows) {
     const sourceTotal = sources.filter((source) => source.line === row.line)

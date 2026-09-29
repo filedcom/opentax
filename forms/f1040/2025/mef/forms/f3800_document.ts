@@ -7,7 +7,6 @@ import type {
 import type {
   Form3800CarryoverRow,
   Form3800PassiveDetailRow,
-  Form3800PassiveXmlRow,
 } from "./f3800_passive_rows.ts";
 import {
   form3800PassiveCarryoverDetailXml,
@@ -26,6 +25,10 @@ import {
   type Form3800CarryforwardDocumentSource,
   reconcileForm3800CarryforwardLinks,
 } from "./f3800_carryforward_link.ts";
+import {
+  type Form3800NonpassiveCarryoverDetailRow,
+  form3800NonpassiveCarryoverDetailXml,
+} from "./f3800_carryover_details.ts";
 
 export type Form3800DocumentParts = {
   readonly lines: Form3800NonpassiveLines;
@@ -35,7 +38,7 @@ export type Form3800DocumentParts = {
   readonly currentAmounts: readonly Form3800CurrentCreditAmount[];
   readonly carryoverRows: readonly Form3800CarryoverRow[];
   readonly currentDetails: readonly Form3800NonpassiveDetailRow[];
-  readonly carryoverDetails: readonly Form3800PassiveXmlRow[];
+  readonly carryoverDetails: readonly Form3800NonpassiveCarryoverDetailRow[];
   readonly passiveCurrentDetails: readonly Form3800PassiveDetailRow[];
   readonly passiveCarryoverDetails: readonly Form3800PassiveDetailRow[];
 };
@@ -83,6 +86,7 @@ export function buildIRS3800Document(parts: Form3800DocumentParts): string {
     parts.lines,
     parts.carryoverRows,
     parts.carryforwardSources,
+    parts.carryoverDetails,
   );
   if (
     !Number.isSafeInteger(appliedCents) ||
@@ -114,7 +118,10 @@ export function buildIRS3800Document(parts: Form3800DocumentParts): string {
     })),
   ];
   const carryoverDetails = [
-    ...parts.carryoverDetails,
+    ...parts.carryoverDetails.map((row) => ({
+      line: row.line,
+      xml: form3800NonpassiveCarryoverDetailXml(row),
+    })),
     ...parts.passiveCarryoverDetails.map((row) => ({
       line: row.line,
       xml: form3800PassiveCarryoverDetailXml(row),

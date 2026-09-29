@@ -8,7 +8,9 @@ import { testFiler } from "../test-filer.ts";
 import {
   form3800HeaderFields,
   form3800PartIAndIIFields,
+  form3800PartVIFields,
 } from "../../pdf/forms/f3800_fields.ts";
+import { projectForm3800PartVIFields } from "../../pdf/forms/f3800_detail_projection.ts";
 import {
   projectForm3800HeaderFields,
   projectForm3800PartIAndIIFields,
@@ -37,12 +39,14 @@ const parts: Form3800DocumentParts = {
   carryforwardSources: [{
     sourceKey: "2024-new-markets-1",
     line: "1i",
+    originatingTaxYear: 2024,
     documentId: "CarryforwardGeneralBusinessCr1",
     availableCredit: 600,
     revisedFromOriginal: true,
   }, {
     sourceKey: "2024-work-opportunity-1",
     line: "4b",
+    originatingTaxYear: 2024,
     documentId: "CarryforwardGeneralBusinessCr2",
     availableCredit: 300,
     revisedFromOriginal: false,
@@ -80,6 +84,68 @@ const parts: Form3800DocumentParts = {
   carryoverDetails: [],
   passiveCurrentDetails: [],
   passiveCarryoverDetails: [],
+};
+
+const aggregateParts: Form3800DocumentParts = {
+  ...parts,
+  lines: calculateForm3800Nonpassive({
+    filingStatus: FilingStatus.Single,
+    regularTax: 40_000,
+    alternativeMinimumTax: 0,
+    foreignTaxCredit: 0,
+    priorAllowableCredits: 0,
+    tentativeMinimumTax: 20_000,
+    standardCredit: 0,
+    specifiedCredit: 0,
+    standardCarryforward: 600,
+    specifiedCarryforward: 0,
+  }, ZERO_FORM3800_PASSIVE_ACTIVITY),
+  carryforwardSources: [{
+    sourceKey: "2022-new-markets-1",
+    line: "1i",
+    originatingTaxYear: 2022,
+    documentId: "CarryforwardGeneralBusinessCr1",
+    availableCredit: 300,
+    revisedFromOriginal: false,
+  }, {
+    sourceKey: "2024-new-markets-2",
+    line: "1i",
+    originatingTaxYear: 2024,
+    documentId: "CarryforwardGeneralBusinessCr2",
+    availableCredit: 300,
+    revisedFromOriginal: true,
+  }],
+  carryoverRows: [{
+    line: "1i",
+    sourceKeys: ["2022-new-markets-1", "2024-new-markets-2"],
+    originatingTaxYear: 2024,
+    amount: {
+      line: "1i",
+      passiveBeforeLimit: 0,
+      passiveAfterLimit: 0,
+      nonpassiveCredit: 600,
+      appliedCredit: 600,
+      recapturedOrAdjusted: 0,
+      carryforwardCredit: 0,
+    },
+  }],
+  carryoverDetails: [{
+    sourceKey: "2022-new-markets-1",
+    line: "1i",
+    originatingTaxYear: 2022,
+    nonpassiveCredit: 300,
+    appliedCredit: 300,
+    recapturedOrAdjusted: 0,
+    carryforwardCredit: 0,
+  }, {
+    sourceKey: "2024-new-markets-2",
+    line: "1i",
+    originatingTaxYear: 2024,
+    nonpassiveCredit: 300,
+    appliedCredit: 300,
+    recapturedOrAdjusted: 0,
+    carryforwardCredit: 0,
+  }],
 };
 
 const XSD_PATH = new URL(
@@ -156,28 +222,77 @@ Deno.test("Form 3800 rejects unlinked or changed carryforward source rows", () =
   );
 });
 
+Deno.test("Form 3800 Part VI prints and serializes each nonpassive carryforward vintage", () => {
+  const xml = buildIRS3800Document(aggregateParts);
+  assertEquals((xml.match(/Frm8874CYCyovCrAggrgtGrp/g) ?? []).length, 4);
+  const printed = projectForm3800PartVIFields(aggregateParts);
+  const first = form3800PartVIFields(1);
+  const second = form3800PartVIFields(2);
+  assertEquals(printed[first.a], "1i");
+  assertEquals(printed[first.b], 2022);
+  assertEquals(printed[first.f], 300);
+  assertEquals(printed[first.g], 300);
+  assertEquals(printed[second.b], 2024);
+  assertEquals(printed[second.f], 300);
+  assertThrows(
+    () =>
+      buildIRS3800Document({
+        ...aggregateParts,
+        carryoverDetails: aggregateParts.carryoverDetails.slice(0, 1),
+      }),
+    Error,
+    "lacks a nonpassive source detail",
+  );
+  assertThrows(
+    () =>
+      projectForm3800PartVIFields({
+        ...aggregateParts,
+        carryoverDetails: [{
+          ...aggregateParts.carryoverDetails[0],
+          originatingTaxYear: 2021,
+        }, aggregateParts.carryoverDetails[1]],
+      }),
+    Error,
+    "detail does not match its source",
+  );
+  assertThrows(
+    () =>
+      buildIRS3800Document({
+        ...aggregateParts,
+        carryoverRows: [{
+          ...aggregateParts.carryoverRows[0],
+          originatingTaxYear: 2023,
+        }],
+      }),
+    Error,
+    "computation source does not match Part IV",
+  );
+});
+
 Deno.test({
   name:
-    "Form 3800 linked carryforward lines and Part IV rows validate against TY2025 v5.4 XSD",
+    "Form 3800 linked carryforward lines and Part IV/VI rows validate against TY2025 v5.4 XSD",
   ignore: !xsdAvailable,
   async fn() {
-    const path = await Deno.makeTempFile({ suffix: ".xml" });
-    try {
-      await Deno.writeTextFile(
-        path,
-        buildIRS3800Document(parts).replace(
-          "<IRS3800>",
-          '<IRS3800 xmlns="http://www.irs.gov/efile" documentId="IRS3800-1">',
-        ),
-      );
-      const checked = await new Deno.Command("xmllint", {
-        args: ["--noout", "--schema", XSD_PATH, path],
-        stdout: "piped",
-        stderr: "piped",
-      }).output();
-      assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
-    } finally {
-      await Deno.remove(path);
+    for (const documentParts of [parts, aggregateParts]) {
+      const path = await Deno.makeTempFile({ suffix: ".xml" });
+      try {
+        await Deno.writeTextFile(
+          path,
+          buildIRS3800Document(documentParts).replace(
+            "<IRS3800>",
+            '<IRS3800 xmlns="http://www.irs.gov/efile" documentId="IRS3800-1">',
+          ),
+        );
+        const checked = await new Deno.Command("xmllint", {
+          args: ["--noout", "--schema", XSD_PATH, path],
+          stdout: "piped",
+          stderr: "piped",
+        }).output();
+        assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
+      } finally {
+        await Deno.remove(path);
+      }
     }
   },
 });
