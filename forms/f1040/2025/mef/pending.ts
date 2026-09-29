@@ -19,7 +19,15 @@ export function buildPending(
   // Only ALL_MEF_FORMS controls which keys are emitted as XML documents.
   for (const [nodeType, raw] of Object.entries(pending)) {
     const normalized = normalizePendingDict(raw);
-    if (normalized !== undefined) result[nodeType] = normalized;
+    if (normalized === undefined) continue;
+    // The graph can retain a source-only Form 8960 slice (for example taxable
+    // interest) even when the calculator returned no form below the MAGI
+    // threshold. Only a completed calculation may become a native document.
+    if (
+      nodeType === "form8960" &&
+      typeof normalized["line13_magi"] !== "number"
+    ) continue;
+    result[nodeType] = normalized;
   }
   // form8949 has a non-standard transaction-array structure
   result["form8949"] = extractForm8949Transactions(

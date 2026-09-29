@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertStringIncludes } from "@std/assert";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { registry } from "../registry.ts";
@@ -31,6 +31,10 @@ for (const fixture of pdfReviewFixtures) {
       });
       assertEquals(result.diagnostics, []);
       const xml = buildMefXml(buildPending(result.pending), fixture.filer);
+      if (fixture.id === "single-child-unearned-income") {
+        assertStringIncludes(xml, "<IRS8615 ");
+        assertEquals(xml.includes("<IRS8960 "), false);
+      }
       const path = await Deno.makeTempFile({ suffix: ".xml" });
       try {
         await Deno.writeTextFile(path, xml);

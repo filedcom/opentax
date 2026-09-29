@@ -83,11 +83,11 @@ scenario packet PDF as if it were a generated return.
 The workspace has blank IRS PDF templates in `.state/field-dumps/cache` and
 source ATS scenario PDFs in `.state/research/docs/ats-ty2025`. These are not
 filled-output fixtures. `forms/f1040/2025/pdf/review-fixtures.ts` now holds
-eleven synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts` can
-run them through the real return graph and PDF builder. On 2026-09-29, all eleven
-generated successfully. The 57-page PDFs, source/pending JSON, page-count and
+twelve synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts` can
+run them through the real return graph and PDF builder. On 2026-09-29, all twelve
+generated successfully. The 61-page PDFs, source/pending JSON, page-count and
 SHA-256 manifest and native XML are retained locally at
-`.state/research/ty2025-filled-pdf-review/2026-09-29-v3/`; all eleven XML
+`.state/research/ty2025-filled-pdf-review/2026-09-29-v5/`; all twelve XML
 returns validate against TY2025 v5.4 `Return1040.xsd`; see the
 [first review notes](ty2025-filled-pdf-review-2026-09-29.md). This is a starting
 review batch, not the completed PDF gate. The generator refuses to overwrite an
@@ -100,12 +100,13 @@ deno run --allow-read --allow-write --allow-net=www.irs.gov scripts/generate-ty2
 
 Each case writes a filled PDF and a JSON record of its synthetic source,
 identity, expected forms, review focus and raw computed pending data. The six
-original cases plus five source-backed filing paths are a starting matrix, not
+original cases plus six source-backed filing paths are a starting matrix, not
 coverage of all registered PDF descriptors:
 
 | Synthetic case                           | Target visual evidence                                                                                             |
 | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | `single-w2-refund`                       | Two 1040 pages, Single and digital-assets No checkboxes, wages, withholding and refund                             |
+| `single-child-unearned-income`           | 1040, Schedule B, and Form 8615; parent MFJ status and the $412 Form 8615/1040 line 16 join                         |
 | `joint-two-w2s`                          | MFJ and spouse identity, combined W-2 amounts without duplicate pages                                              |
 | `single-schedule-c`                      | Schedule C page order and business boxes, Schedule SE/1/2, Form 8995, Form 1040 amount owed                        |
 | `single-direct-pension-rollover`         | 1040 lines 5a/5b and affirmative line 5c rollover box, with no inferred QCD                                        |
@@ -117,8 +118,9 @@ coverage of all registered PDF descriptors:
 | `single-elected-lump-sum-part-ii`        | Form 4972 Part-II-only capital-gain election from a matching 1099-R; ordinary share and special tax on Form 1040   |
 | `single-foreign-interest-current-excess` | Source-joined 1099-INT, standard-deduction Form 1116 Part I/III/IV, current-year excess Schedule B, Schedule 3     |
 
-All eleven cases were rendered into page contact sheets for the first visual
-pass. Schedule 1 and Schedule 2 blank filer headers were found and fixed;
+The first eleven cases were rendered into page contact sheets for the first visual
+pass. The new Form 8615 page was rendered and checked at higher resolution.
+Schedule 1 and Schedule 2 blank filer headers were found and fixed;
 the latest Schedule 1 page was rerendered and checked at higher resolution.
 The Schedule E loss case now uses its linked Form 8582 allowed-loss allocation
 to print line 22 and line 26, with the disallowed amount absent from Schedule

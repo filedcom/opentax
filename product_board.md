@@ -40,19 +40,22 @@ IRS Tax Table ($66).
 An earlier 2026-09-29 diagnostic `deno task test` run on the moving worktree
 reported 8,535 passed and 277 failed, improved from 8,453/348 in the earlier
 diagnostic. Neither is a release-gate pass; the full run must be repeated on a
-fixed commit after the route work is complete. All eleven
-prepared synthetic returns now generate filled PDFs through the real graph and
-builder: 57 pages total, with PDFs, source/pending JSON, page counts, and hashes
-retained with source/pending JSON and native XML under
-`.state/research/ty2025-filled-pdf-review/2026-09-29-v3/`. All eleven native
+fixed commit after the route work is complete. All twelve prepared synthetic
+returns now generate filled PDFs through the real graph and builder: 61 pages
+total, with PDFs, source/pending JSON, page counts, hashes, and native XML under
+`.state/research/ty2025-filled-pdf-review/2026-09-29-v5/`. All twelve native
 returns generated from those fixtures validate against TY2025 v5.4
-`Return1040.xsd`; the 57 regenerated PDF pages are pixel-identical at 65 dpi
-to the previously reviewed batch.
+`Return1040.xsd`; the eleven prior PDFs (57 pages) are pixel-identical at 65 dpi
+to the previously reviewed batch. The new four-page child return includes
+Form 8615, whose printed $412 tax agrees with Form 1040 and native XML.
 Contact-sheet review found and led to fixes for Schedule 1 and Schedule 2
 identity fields; the current Schedule 1 rerender shows both fields. The rental
 case now prints its suspended loss from the same Form 8582 allocation used by
-native MeF. The detailed source-to-XML comparison for every page and descriptor,
-additional route fixtures, and the full release batch remain open. The
+native MeF. The child case exposed an extra native `IRS8960` document at
+$5,000 AGI; the MeF pending adapter now omits that source-only intermediate
+slice and the regenerated XML has no Form 8960. High-MAGI/no-NII inclusion
+still needs review. The detailed source-to-XML comparison for every page and
+descriptor, additional route fixtures, and the full release batch remain open. The
 profitable Schedule C case reaches Form 8995 XML and PDF with a sourced
 half-SE-tax QBI reduction, but its broader support gate remains open. The
 current full-return XSD file passes 16 of 18 cases. Its remaining ATS Scenario
@@ -123,7 +126,7 @@ now uses XSD-valid document IDs and passes all eight tests in its file.
 - [ ] Run `deno task test` once as the initial full batch; record commit, command, tool versions, timestamp, pass/fail/ignored totals, failures, and ignored-test reasons. Fix failures, then rerun the same full command until the final batch passes.
 - [x] Run the live canonical-PDF field-name checks in the normal test suite. On 2026-09-29, after correcting the Schedule 3 line 13a AcroForm path, `deno test --allow-read --allow-net=www.irs.gov --filter 'all mapped pdfField names exist in real IRS PDF' forms/f1040/2025/pdf/forms/all-descriptors.test.ts` passed all 86 checks. The full descriptor file was rerun with the repository test permissions and passed 605/605 checks, including the pinned-revision checks that had failed in the earlier diagnostic batch. This proves mapped field names exist in the referenced IRS PDFs; filled-output visual review remains a separate gate below.
 - [ ] For every retained positive filing route, generate a full return from a source-backed fixture and validate emitted XML against the checked-in TY2025 IRS schema. Check source-to-calculation-to-Form-1040 totals, required references/attachments, negative and conflicting cases, and IRS business rules separately from structural XSD success.
-- [ ] Generate the eleven prepared synthetic filled-PDF cases through the real graph and PDF builder as described in the [validation batch](docs/mef/ty2025-form1040-validation-batch.md); render and inspect every page, mark checkboxes/amounts/owner identity/page order/continuations, and add cases for each uncovered descriptor or branch.
+- [ ] Generate the twelve prepared synthetic filled-PDF cases through the real graph and PDF builder as described in the [validation batch](docs/mef/ty2025-form1040-validation-batch.md); render and inspect every page, mark checkboxes/amounts/owner identity/page order/continuations, and add cases for each uncovered descriptor or branch.
 - [ ] Compare each filled PDF to its source, calculated pending data, native XML, and Form 1040 totals. Retain review artifacts and record each discrepancy and fix; blank templates and ATS source PDFs do not count as filled-output review.
 
 ## IRS ATS and delivery

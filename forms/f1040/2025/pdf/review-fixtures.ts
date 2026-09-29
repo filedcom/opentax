@@ -64,6 +64,15 @@ const jointGeneral = {
   spouse_dob: "1987-03-10",
 };
 
+const childFiler: FilerIdentity = {
+  ...singleFiler,
+  primarySSN: "123456789",
+  lastName: "Child",
+  fullName: "Alex Child",
+  nameLine1: "ALEX CHILD",
+  nameControl: "CHIL",
+};
+
 function wage(
   wages: number,
   withholding: number,
@@ -88,6 +97,49 @@ function wage(
 }
 
 export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
+  {
+    id: "single-child-unearned-income",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        taxpayer_last_name: "Child",
+        taxpayer_ssn: "123-45-6789",
+        taxpayer_dob: "2011-06-15",
+        taxpayer_can_be_claimed_as_dependent: true,
+        dependent_earned_income: 0,
+      },
+      schedule_b_part_iii: {
+        foreign_accounts_question: false,
+        foreign_trust_question: false,
+      },
+      f1099int: [{ payer_name: "Domestic Bank", box1: 5_000 }],
+      f8615: {
+        eligibility_confirmed: true,
+        parent_name: "Jane Parent",
+        parent_name_control: "PARE",
+        parent_ssn: "987-65-4321",
+        parent_filing_status: SourceFilingStatus.MFJ,
+        parent_taxable_income: 80_000,
+        parent_income_tax: 9_126,
+        parent_tax_method: "ordinary",
+        child_unearned_income: 5_000,
+        other_children_line5: [],
+        other_children_qualified_dividends_line5: [],
+        other_children_net_capital_gain_line5: [],
+        other_children_schedule_d_tax_worksheet_used: [],
+        other_children_form2555_used: [],
+        parent_qualified_dividends: 0,
+        parent_net_capital_gain: 0,
+      },
+    },
+    filer: childFiler,
+    expectedPdfForms: ["f1040", "schedule_b", "form8615"],
+    reviewFocus: [
+      "Form 8615 identifies the child and parent, checks the parent's MFJ status, and prints its calculated lines",
+      "Schedule B interest and Form 1040 line 2b carry the same 5,000 once",
+      "Form 8615 line 18 agrees with Form 1040 line 16 and native XML",
+    ],
+  },
   {
     id: "single-w2-refund",
     inputs: {

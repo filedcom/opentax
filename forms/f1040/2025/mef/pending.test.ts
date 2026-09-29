@@ -31,3 +31,25 @@ Deno.test("MeF pending retains Form 8949 transaction provenance for Form 8854 re
   const pending = buildPending({ form8949: { transaction } });
   assertEquals(pending.form8949?.[0].source_transaction_id, "deemed-sale-1");
 });
+
+Deno.test("MeF pending excludes source-only Form 8960 but retains its completed calculation", () => {
+  const sourceOnly = buildPending({
+    form8960: {
+      filing_status: "single",
+      magi: 5_000,
+      line1_taxable_interest: 5_000,
+    },
+  });
+  assertEquals(sourceOnly.form8960, undefined);
+
+  const calculated = buildPending({
+    form8960: {
+      filing_status: "single",
+      line1_taxable_interest: 5_000,
+      line13_magi: 230_000,
+      line14_threshold: 200_000,
+      line17_niit: 190,
+    },
+  });
+  assertEquals(calculated.form8960?.line17_niit, 190);
+});
