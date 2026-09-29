@@ -45,10 +45,10 @@ parent now also accepts typed nonpassive Part VI source-vintage rows in place of
 the unused raw XML detail field. A two-year aggregate reconciles its source
 keys, originating years, amounts and tax use to Part IV and the native
 computation links; both native XML and PDF columns use those typed rows, and
-the synthetic parent passes local TY2025 v5.4 XSD. The production
-source-to-Part IV/VI assembly, authenticated prior-return evidence, filed history
-attachment, and any additional revised-credit facts remain open; native export
-still rejects carryforwards.
+the synthetic parent passes local TY2025 v5.4 XSD. Production assembly was
+subsequently connected, as recorded below. Authenticated prior-return
+evidence, the filed history attachment, and any additional revised-credit facts
+remain open; native export still rejects carryforwards.
 
 The native parent and PDF projectors now call one Part IV/VI reconciliation
 that checks aggregate source keys, latest year, passive and nonpassive amounts,
@@ -63,8 +63,8 @@ so a single-source passive row still gets its Part VI detail when combined with
 a nonpassive vintage. The synthetic mixed-line parent emits one Part IV row and
 two Part VI source rows, passes local TY2025 v5.4 `IRS3800` XSD, and the
 138-case focused Form 3800 native/PDF run passes. The production parent still
-rejects positive nonpassive carryforward intake until prior-return evidence,
-source links, and the history attachment are complete.
+rejects positive carryforward export until prior-return evidence, source links,
+and the history attachment are complete.
 
 Carryforward intake now requires a typed source origin for each vintage,
 including an entity reference and EIN or `APPLD FOR` for pass-through sources.
@@ -76,9 +76,17 @@ of credit to $500 of tax use and $200 remaining, projects the EIN and amounts
 to PDF fields, and passes the local TY2025 v5.4 `IRS3800` XSD. The 243-case
 focused Form 3800 calculation/native/PDF run passes; its log is
 `.state/research/ty2025-form3800-focused-carryforward-assembly.log`.
-Prior-return acceptance
-and actual prepared-return integration remain open, so positive production
-export is still rejected.
+Prior-return acceptance and final prepared-return export remain open, so
+positive production export is still rejected.
+
+The production preparation path now includes carryforward vintage rows in the
+shared FIFO allocation and joins their typed Part IV/VI rows with any passive
+and current-year credits. It validates the complete native Form 3800 document
+before the explicit prior-return evidence and history-attachment guard. A
+carryforward-only prepared case reaches that guard with reserved computation
+and Form 6251 IDs and reconciled Form 1040/Schedule 3 tax facts. The 243-case
+focused rerun is recorded in
+`.state/research/ty2025-form3800-focused-preparation-integration.log`.
 The updated one-page history layout was rendered and visually checked with a
 long partnership entity reference; its EIN label and value stay together after
 word wrapping. The review PDF and PNG are retained under `.state/research/`

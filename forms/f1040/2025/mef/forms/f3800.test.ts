@@ -49,9 +49,19 @@ Deno.test("Form 3800 rejects carryforward export until source rows and history e
           specifiedCarryforward: 0,
         },
         allowed_credit: 600,
-      }, { documentIdsByPendingKey: {} }),
+      }, {
+        documentIdsByPendingKey: { form6251: ["IRS6251_1"] },
+        documentIdsByTag: {
+          CarryforwardGeneralBusinessCr: ["CarryforwardGeneralBusinessCr1"],
+        },
+        pending: {
+          f1040: { line16_income_tax: 40_000 },
+          schedule3: { line6a_total: 600, line7_total: 600 },
+          form6251: { line11_amt: 0, net_tmt: 20_000 },
+        },
+      }),
     Error,
-    "needs linked prior-return evidence",
+    "needs authenticated prior-return evidence",
   );
 });
 

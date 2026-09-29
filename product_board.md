@@ -68,8 +68,8 @@ vintage to its reserved computation ID and Part IV source row. The parent
 Part I line 4 native reference, revised-carryforward indicators, and PDF
 header now derive from those linked facts. A two-vintage synthetic parent
 passes the local TY2025 v5.4 `IRS3800` XSD, and 26 neighboring native/PDF
-focused tests passed. This is a component test: the production parent still
-rejects positive carryforwards pending authenticated prior-return evidence,
+focused tests passed. At that stage, the production parent still rejected
+positive carryforwards pending authenticated prior-return evidence,
 production Part VI assembly, and the filed history attachment. The later
 8,897-test run above covers this component edit.
 
@@ -387,6 +387,7 @@ including a two-gift return with two linked native forms and attachments.
   - [x] Apply the same Part IV/VI source-key, year, amount, tax-use, adjustment, and remaining-credit reconciliation before native XML and PDF projection. Reject an aggregate detail mismatch or an impossible single-source tax-use row; 137 focused Form 3800 native/PDF tests pass. This does not enable positive carryforward filing.
   - [x] Join a passive and nonpassive carryover on the same Form 3800 credit line into one Part IV row, retain each source in Part VI, and choose the largest source-backed pass-through EIN. A synthetic mixed-line parent passes local TY2025 v5.4 `IRS3800` XSD, and 138 focused Form 3800 native/PDF tests pass. Production carryforward intake remains blocked pending prior-return evidence and filing integration.
   - [x] Require a typed self or pass-through source origin on every Form 3800 carryforward vintage; retain its entity identity in the printable history. Assemble reconciled nonpassive ledger vintages through the shared FIFO tax-use pass into computation IDs and typed Part IV/VI rows, ordered by year without changing reserved document links. A synthetic two-year self/partnership parent passes local TY2025 v5.4 `IRS3800` XSD; 243 focused Form 3800 calculation/native/PDF tests pass. The assembler is not yet connected to positive production export or authenticated prior-return records.
+  - [x] Connect the carryforward assembler to the production Form 3800 preparation path, including carryforward-only returns, reserved computation IDs, shared FIFO allocation with other credits, the passive/nonpassive Part IV join, and native document reconciliation. The 243-case focused Form 3800 run passes. Export still stops after native preparation because authenticated prior-return evidence and the filed history attachment are not linked.
   - [ ] Join those vintages to authenticated prior returns and source records, Form 8582-CR, Form 3800 Parts I/II/IV/VI, the native `CarryforwardGeneralBusinessCr` computation, the revised-carryforward history statement, native XML, and the printable packet; prove source-to-Form 1040 totals and local XSD/business-rule results.
   - [ ] Cover transfer and passive credits, carryover vintages, mixed and other source credits, row overflow, required external attachments, cross-route archive evidence, business rules, and ATS acceptance.
 - [ ] **Form 8835:** extend the bounded filer-owned wind/geothermal route to every retained credit, owner, facility, election, and source combination in the [form audit](docs/mef/ty2025-form1040-form-audit.md). Keep duplicate physical-facility records rejected and verify every native/PDF copy against its source and Form 3800 row.

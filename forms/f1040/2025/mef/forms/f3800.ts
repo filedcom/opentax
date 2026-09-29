@@ -47,6 +47,10 @@ import {
   type Form3800DocumentParts,
 } from "./f3800_document.ts";
 import { joinForm3800DocumentParts } from "./f3800_join.ts";
+import {
+  buildForm3800CarryforwardRows,
+  form3800CarryforwardCreditUseRows,
+} from "./f3800_carryforward_rows.ts";
 import { buildForm3800NonpassiveParts } from "./f3800_nonpassive.ts";
 import { sameForm3800PassiveAllocations } from "./f3800_passive_link.ts";
 import { buildForm3800PassiveRowXml } from "./f3800_passive_rows.ts";
@@ -778,11 +782,7 @@ export function prepareForm3800DocumentParts(
     throw new Error("Form 3800 preparation needs reserved document IDs");
   }
   const { tax, parsed, passiveActivity, lines, allowedCredit } = base;
-  if (parsed.carryforward_vintages?.length) {
-    throw new Error(
-      "Form 3800 carryforward needs linked prior-return evidence, Part IV and VI rows, and a filed history statement",
-    );
-  }
+  const carryforwardEntries = parsed.carryforward_vintages ?? [];
   reconcileFiledTaxContext(tax, allowedCredit, context);
   reconcilePassiveSources(parsed, context);
   if (
@@ -860,7 +860,10 @@ export function prepareForm3800DocumentParts(
       source_statement_reference: source.source_statement_reference,
       form3800_credit_line: source.form3800_credit_line,
     })),
-    nonpassiveSources,
+    [
+      ...form3800CarryforwardCreditUseRows(carryforwardEntries),
+      ...nonpassiveSources,
+    ],
     lines,
   );
   const sourceUse = new Map(
@@ -1081,7 +1084,43 @@ export function prepareForm3800DocumentParts(
       }
       : {},
   );
-  return joinForm3800DocumentParts(lines, nonpassiveParts, passiveParts);
+  const carryforward = buildForm3800CarryforwardRows(
+    carryforwardEntries,
+    context.documentIdsByTag?.CarryforwardGeneralBusinessCr ?? [],
+    taxUse.nonpassiveSources,
+  );
+  const nonpassiveWithCarryforward: Form3800DocumentParts | undefined =
+    carryforwardEntries.length > 0
+      ? {
+        ...(nonpassiveParts ?? {
+          lines,
+          transferStatementIds: [],
+          carryforwardSources: [],
+          currentRows: [],
+          currentAmounts: [],
+          carryoverRows: [],
+          currentDetails: [],
+          carryoverDetails: [],
+          passiveCurrentDetails: [],
+          passiveCarryoverDetails: [],
+        }),
+        carryforwardSources: carryforward.sources,
+        carryoverRows: carryforward.rows,
+        carryoverDetails: carryforward.details,
+      }
+      : nonpassiveParts;
+  const joined = joinForm3800DocumentParts(
+    lines,
+    nonpassiveWithCarryforward,
+    passiveParts,
+  );
+  if (carryforwardEntries.length > 0) {
+    buildIRS3800Document(joined);
+    throw new Error(
+      "Form 3800 carryforward needs authenticated prior-return evidence and an attached filed history statement",
+    );
+  }
+  return joined;
 }
 
 export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
