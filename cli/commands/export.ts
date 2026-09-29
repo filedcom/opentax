@@ -264,8 +264,10 @@ export async function exportPdfCommand(
     args,
   );
   validateBusinessRules(pending, filer, args.force);
-  const prepared = await def.prepareReturn(pending, filer);
-  const pdfBytes = await prepared.renderPdf();
+  // An unidentified draft is a PDF preview; it has no fileable MeF return.
+  const pdfBytes = args.draft && !filer
+    ? await def.buildPdfBytes(def.buildPending(pending), filer)
+    : await (await def.prepareReturn(pending, filer)).renderPdf();
   const outputBytes = args.draft ? await addDraftWatermark(pdfBytes) : pdfBytes;
   const outPath = args.outputPath ??
     join(args.baseDir, args.returnId, "export.pdf");
