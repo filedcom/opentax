@@ -59,7 +59,9 @@ Deno.test("PDF export rejects active attachments without complete PDF maps", () 
   assertAttachmentCoverage({ f8863: { f8863s: [{}] } }, "pdf");
   // Form 8862 now reaches a descriptor that validates the filing source and
   // rejects unsupported overflow statements before any PDF is emitted.
-  assertAttachmentCoverage({ f8862: { claim_eitc: true } }, "pdf");
+  assertAttachmentCoverage({
+    f8862: { claim_eitc: true, credit_disallowance_ban_active: false },
+  }, "pdf");
 });
 
 // ---------------------------------------------------------------------------
