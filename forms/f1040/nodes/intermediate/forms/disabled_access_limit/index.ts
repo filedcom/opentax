@@ -143,11 +143,12 @@ class DisabledAccessLimitNode extends TaxNode<typeof inputSchema> {
         }
         return [{ ...source, current_year_credit: credit }];
       });
+      const cappedPassive = { ...passive };
+      delete cappedPassive.required_disabled_access_k1_credits;
+      delete cappedPassive.required_orphan_drug_k1_credits;
       outputs.push(output(form8582cr, {
-        ...passive,
+        ...cappedPassive,
         credit_sources: cappedSources,
-        required_disabled_access_k1_credits: undefined,
-        required_orphan_drug_k1_credits: undefined,
       }));
     }
     if (cappedEntries.length > 0) {
