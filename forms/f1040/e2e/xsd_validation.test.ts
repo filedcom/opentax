@@ -507,6 +507,7 @@ Deno.test({
       box12_entries: [],
     })),
     schedule_c: [{
+      proprietor_recipient: "T",
       line_a_principal_business: facts.scheduleC.businessDescription,
       line_b_business_code: facts.scheduleC.businessCode,
       line_e_business_address: facts.scheduleC.businessAddress,
@@ -532,6 +533,8 @@ Deno.test({
         date_contributed: facts.form8283.donationDate,
         cost_or_adjusted_basis: facts.form8283.costBasis,
         fmv: facts.form8283.fairMarketValue,
+        charitable_limit_category: "noncash_50",
+        is_capital_gain_property: false,
       }],
     },
   });
@@ -774,7 +777,9 @@ Deno.test({
     "XSD: Single self-employed Schedule C $80K — conforms to Return1040.xsd",
   ignore: !xsdAvailable,
 }, async () => {
-  const fixture = pdfReviewFixtures.find((item) => item.id === "single-schedule-c");
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-schedule-c"
+  );
   if (!fixture) throw new Error("missing sourced Schedule C fixture");
   const result = runReturn({ ...fixture.inputs });
   assertEquals(result.diagnostics, []);
