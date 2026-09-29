@@ -26,7 +26,7 @@ structurally valid for each retained source fixture.
 | `single-direct-pension-rollover` | 2 | 1040 pension and rollover box visible. |
 | `single-schedule-c` | 11 | Schedule 1/2, two Schedule C and SE pages, and Form 8995 follow the 1040. |
 | `single-hsa-code2-excess` | 5 | All five pages inspected on the regenerated `v31` packet. Form 8889 shows the taxpayer's self-only coverage, $5,200 contributions, $4,300 limit/deduction, $1,000 line 14a distribution and $1,000 line 14b timely excess withdrawal. Schedule 1 shows $100 excess earnings on line 8z and $4,300 on line 13/26. Form 1040 shows $75,000 wages, $100 other income, $70,800 AGI, $7,031 tax, $11,000 withholding and $3,969 refund. The source JSON, pending graph and native XML agree on those joins. |
-| `joint-two-hsa-owners` | 6 | Two owner-specific Form 8889 pages print after Schedule 1. |
+| `joint-two-hsa-owners` | 6 | All six pages inspected on the regenerated `v32` packet. The primary Form 8889 shows Alex/111223333, self-only coverage, $4,000 contributions and deduction against a $4,300 limit; the spouse copy shows Sam/444556666, self-only coverage, $5,000 contributions and deduction against a $5,300 age-55 limit. Schedule 1 lines 13/26 show the combined $9,000 deduction once; Form 1040 shows $90,000 wages, $81,000 AGI, $5,466 tax, $12,000 withholding and a $6,534 refund. Source JSON, pending graph, and native XML agree. |
 | `single-marketplace-aptc-repayment` | 6 | Schedule 2 and two Form 8962 pages print; repayment is visible. |
 | `single-iso-amt` | 6 | Schedule 2 and two Form 6251 pages print; ISO spread is visible. |
 | `single-nonparticipating-rental-loss` | 6 | Schedule E shows the gross loss; Form 8582 has three pages and carries the loss. |
@@ -75,3 +75,14 @@ has SHA-256
 `4180b7b096fcd87b5011aae7c706406cdbb1984a38ac3498846e65669d141014`.
 This is a synthetic Form 1099-SA source review; payer-issued bytes, other HSA
 exception routes, and wider registered-form PDF coverage remain open.
+
+The `joint-two-hsa-owners` review used the regenerated `v32` batch at
+`.state/research/ty2025-filled-pdf-review/2026-09-29-v32/`. The synthetic
+spouse birth date was corrected from 1987 to 1970 so the age-55 catch-up
+contribution is supported by the source. Both Form 8889 copies follow the
+two Form 1040 and two Schedule 1 pages in primary-then-spouse order; all six
+rendered `v32` pages are pixel-identical to the visually inspected `v31`
+pages at 130 dpi. The `v32` PDF has SHA-256
+`2eb324aea7831acaaccf1868d28b723acfec7848420ef5a51e3e89eebbaf33c3`.
+This establishes the two-owner print and aggregation joins for this synthetic
+case; other HSA eligibility and excess-contribution routes remain open.

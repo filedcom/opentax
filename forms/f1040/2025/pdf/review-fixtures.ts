@@ -854,7 +854,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
   {
     id: "joint-two-hsa-owners",
     inputs: {
-      general: jointGeneral,
+      general: { ...jointGeneral, spouse_dob: "1970-03-10" },
       w2: [wage(90_000, 12_000, "Example Employer", "12-3456789")],
       form8889: {
         beneficiary_identity: {
