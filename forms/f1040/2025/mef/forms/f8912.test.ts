@@ -91,7 +91,7 @@ Deno.test("Form 8912 registered descriptor reconciles source, tax limit, and Sch
         unused_credit: 50,
       }, linked),
     Error,
-    "graph credit does not reconcile",
+    "bond-specific unused-credit allocation or deduction election",
   );
   assertThrows(
     () => form8912.build({ f8912s: [source] }, linked),
@@ -279,7 +279,7 @@ Deno.test("Form 8912 MeF draft validates its IRS source schema", async () => {
   }
   const xml = buildForm8912Document({ f8912s: [source] }, finalized).replace(
     "<IRS8912>",
-    '<IRS8912 xmlns="http://www.irs.gov/efile">',
+    '<IRS8912 xmlns="http://www.irs.gov/efile" documentId="Form8912">',
   );
   const path = await Deno.makeTempFile({ suffix: ".xml" });
   try {

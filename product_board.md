@@ -1,5 +1,32 @@
 # TY2025 Form 1040 product TODO
 
+## Current checkpoint (2026-09-29)
+
+This is an open release gate, not a list of completed forms. The current source
+registries contain 123 native MeF descriptors and 86 PDF descriptors; the
+[coverage decision queue](docs/mef/ty2025-form1040-coverage-decisions.md) records
+the limits of those counts. All 50 tasks below remain unchecked because a
+registered route or focused test does not establish source-to-filing coverage.
+
+The work proceeds in this order:
+
+1. Resolve the named workflow and filing-scope decisions in the
+   [coverage decision queue](docs/mef/ty2025-form1040-coverage-decisions.md),
+   including the evidence standard for uploaded records. Record each approval
+   or rejection boundary there, with the exact entered claim it covers.
+2. Complete source, calculation, native MeF, PDF, and attachment routes for
+   every retained positive claim. Keep unsupported claims fail-closed and
+   reconcile the registries with the form and root audits.
+3. Run the full batch, schema, filled-PDF, business-rule, and ATS gates below.
+   Record the result and artifacts before checking the corresponding item.
+4. Review, create the PR, merge, and release only after the preceding gates
+   pass. IRS credentials and acknowledgments must come from the authorized
+   filing environment; repository tests cannot supply them.
+
+Do not interpret an unchecked item as approval to omit its filing route. Do
+not check an item on the basis of a planned fix, a staged serializer, a local
+XSD pass, or an ignored test.
+
 ## Scope and completion rules
 
 - [ ] Keep this release limited to the TY2025 Form 1040 family: Form 1040, its applicable schedules, supporting forms, source documents, statements, PDF packet, MeF return, and A2A submission package.
@@ -56,7 +83,7 @@
 ## Automated and artifact validation
 
 - [ ] Finish implementation and coverage decisions above before the agreed single full-batch gate. Existing focused cases and historical passes are not evidence for the current worktree.
-- [ ] Confirm Deno, `xmllint`, `pdftoppm`, `pdfinfo`, and the checked-in TY2025 v5.4 `Return1040.xsd` / `ReturnData1040.xsd` are available; ensure XSD tests did not silently skip.
+- [ ] Confirm Deno, `xmllint`, `pdftoppm`, and `pdfinfo` are available. Provision and verify the TY2025 v5.4 `Return1040.xsd` / `ReturnData1040.xsd` bundle under `.state/research/docs/`; it is Git-ignored, not checked in. Confirm the XSD tests use that bundle and did not silently skip.
 - [ ] Run `deno task test` once as the initial full batch; record commit, command, tool versions, timestamp, pass/fail/ignored totals, failures, and ignored-test reasons. Fix failures, then rerun the same full command until the final batch passes.
 - [ ] Run or explicitly disposition the live canonical-PDF field checks currently ignored by the normal batch; do not count an ignored field check as PDF validation.
 - [ ] For every retained positive filing route, generate a full return from a source-backed fixture and validate emitted XML against the checked-in TY2025 IRS schema. Check source-to-calculation-to-Form-1040 totals, required references/attachments, negative and conflicting cases, and IRS business rules separately from structural XSD success.
