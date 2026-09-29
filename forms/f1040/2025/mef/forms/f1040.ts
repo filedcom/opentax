@@ -79,7 +79,12 @@ export interface Fields {
   line18_total_tax_before_credits?: number | null;
   line19_child_tax_credit?: number | null;
   line20_nonrefundable_credits?: number | null;
-  form8912_source_lines?: { line4: number } | null;
+  form8912_source_lines?: {
+    line1: number;
+    line2: number;
+    line3: number;
+    line4: number;
+  } | null;
   line21_credits_total?: number | null;
   line22_tax_after_credits?: number | null;
   line23_other_taxes?: number | null;

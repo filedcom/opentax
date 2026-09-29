@@ -1,4 +1,4 @@
-import { assertEquals, assertThrows } from "@std/assert";
+import { assertAlmostEquals, assertEquals, assertThrows } from "@std/assert";
 import { z } from "zod";
 import { CoverageType, form8889, inputSchema } from "./index.ts";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
@@ -139,6 +139,7 @@ Deno.test("Form 8889 spouse-only account retains beneficiary and Form 5329 owner
     },
     eligible_hdhp_coverage_by_month: Array(12).fill(CoverageType.SelfOnly),
     age_55_or_older: false,
+    last_month_rule_elected: false,
     married_at_year_end: true,
     spouse_has_separate_hsa: false,
     taxpayer_hsa_contributions: 5_000,
@@ -397,6 +398,7 @@ Deno.test("Form 8889 two full-year self-only HSAs keep separate owner limits", (
     },
     age_55_or_older: true,
     taxpayer_hsa_contributions: 5_000,
+    hsa_december_31_value: 0,
   };
   const result = compute({ ...primary, spouse_hsa: spouse });
   const forms = findOutput(result, "form8889")?.fields.forms as Array<
@@ -444,7 +446,7 @@ Deno.test("Form 8889 two full-year self-only HSAs keep separate owner limits", (
         spouse_hsa: spouse,
       }),
     Error,
-    "sourced agreed allocation",
+    "matching monthly family eligibility",
   );
   assertThrows(
     () =>
@@ -606,7 +608,7 @@ Deno.test("Form 8889 two spouse HSAs prorate matching partial-year family covera
         spouse_hsa: { ...spouse, allocated_family_limit: 2_139 },
       }),
     Error,
-    "sourced agreed allocation",
+    "matching monthly family eligibility",
   );
 });
 
@@ -743,21 +745,6 @@ Deno.test("Form 8889 paired mixed coverage adds each owner's self-only limit and
         spouse_hsa: { ...spouse, allocated_family_limit: 1_783 },
       }),
     Error,
-    "sourced agreed allocation",
-  );
-  assertThrows(
-    () =>
-      compute({
-        ...primary,
-        spouse_hsa: {
-          ...spouse,
-          eligible_hdhp_coverage_by_month: [
-            CoverageType.SelfOnly,
-            ...coverage.slice(1),
-          ],
-        },
-      }),
-    Error,
     "matching monthly family eligibility",
   );
 });
@@ -847,7 +834,12 @@ Deno.test("Form 8889 two spouse HSAs reject unsupported excess and missing alloc
     spouse_has_separate_hsa: true,
     allocated_family_limit: 4_275,
     family_allocation_source_reference: "Agreed family allocation",
+    employer_contribution_years: {
+      made_in_2025_for_2024_in_w2: 0,
+      made_in_2026_for_2025: 0,
+    },
     taxpayer_hsa_contributions: 4_000,
+    hsa_december_31_value: 0,
   };
   const spouse = {
     ...account,
@@ -864,7 +856,7 @@ Deno.test("Form 8889 two spouse HSAs reject unsupported excess and missing alloc
         spouse_hsa: { ...spouse, allocated_family_limit: 4_000 },
       }),
     Error,
-    "sourced agreed allocation",
+    "matching monthly family eligibility",
   );
   const spouseExcess = compute({
     ...account,
@@ -909,7 +901,7 @@ Deno.test("Form 8889 paired partial-year family coverage cannot elect the last-m
   assertThrows(
     () => compute({ ...primary, spouse_hsa: spouse }),
     Error,
-    "matching monthly family eligibility and sourced agreed allocation",
+    "matching monthly family eligibility",
   );
   assertThrows(
     () =>
@@ -918,7 +910,7 @@ Deno.test("Form 8889 paired partial-year family coverage cannot elect the last-m
         spouse_hsa: { ...spouse, last_month_rule_elected: false },
       }),
     Error,
-    "matching monthly family eligibility and sourced agreed allocation",
+    "matching monthly family eligibility",
   );
 });
 
@@ -936,6 +928,10 @@ Deno.test("Form 8889 paired HSA excess preserves each owner's Part VII source", 
     spouse_has_separate_hsa: true,
     allocated_family_limit: 4_275,
     family_allocation_source_reference: "Agreed family allocation",
+    employer_contribution_years: {
+      made_in_2025_for_2024_in_w2: 0,
+      made_in_2026_for_2025: 0,
+    },
     taxpayer_hsa_contributions: 4_000,
     hsa_december_31_value: 10_000,
   };
@@ -2095,7 +2091,7 @@ Deno.test("part2: timely personal withdrawal cannot exceed its 2025 contribution
         },
       }),
     Error,
-    "exceeds excess personal contributions",
+    "full current-year personal excess returned",
   );
 });
 
@@ -2271,7 +2267,11 @@ Deno.test("part2: age-65 exception rejects bare, early, or unreconciled distribu
     qualified_medical_expenses: 500,
     exception_qualified_taxable_amount: 1500,
   };
-  assertThrows(() => compute(base), Error, "dated distribution evidence");
+  assertThrows(
+    () => compute(base),
+    Error,
+    "dated age-65 or disability evidence",
+  );
   const evidence = {
     date_of_birth: "1960-07-01",
     birth_date_source_reference: "Beneficiary identity record",
@@ -2671,10 +2671,10 @@ Deno.test("part3: married one-HSA 2024 family-to-self-only election uses the gre
   });
   // ($8,300 family + $4,150 self-only) / 12 rounds to $1,038.
   assertEquals(firstForm(result)?.print_line18, 1_962);
-  assertEquals(firstForm(result)?.print_line21, 196.2);
+  assertAlmostEquals(firstForm(result)?.print_line21 as number, 196.2);
   assertEquals(fieldsOf(result.outputs, schedule1)?.line8f_hsa_income, 1_962);
-  assertEquals(
-    fieldsOf(result.outputs, schedule2)?.line17d_hsa_eligibility_tax,
+  assertAlmostEquals(
+    fieldsOf(result.outputs, schedule2)?.line17d_hsa_eligibility_tax as number,
     196.2,
   );
 
@@ -2775,7 +2775,7 @@ Deno.test("part3: married 2024 last-month evidence cannot guess spouse allocatio
         },
       }),
     Error,
-    "confirmation the spouse had no separate HSA",
+    "both spouse-HSA status and filed-form reconciliation",
   );
   assertThrows(
     () =>

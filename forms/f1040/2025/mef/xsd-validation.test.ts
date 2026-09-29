@@ -471,7 +471,7 @@ Deno.test({
     f1040: {
       line16_income_tax: 1_000,
       line20_nonrefundable_credits: 100,
-      form8912_source_lines: { line4: 100 },
+      form8912_source_lines: { line1: 100, line2: 0, line3: 0, line4: 100 },
     },
     schedule3: { line6k_tax_credit_bonds: 100, line8_total: 100 },
     form6251: { line11_amt: 0 },
@@ -784,6 +784,7 @@ Deno.test({
         }],
       }],
     },
+    f4136_diesel_government_sales_statement: {},
   }, extractFilerIdentity(singleGeneral()));
   assertStringIncludes(xml, "<SlsUndyedDslStLclGovtGrp>");
   assertStringIncludes(xml, "<ToWhomDieselFuelSoldStatement ");
@@ -976,6 +977,9 @@ Deno.test({
   for (const scenario of cases) {
     const xml = buildMefXml({
       f1040: { line31_additional_payments: Math.round(scenario.credit) },
+      ...(scenario.line === "7a"
+        ? { f4136_kerosene_government_sales_statement: {} }
+        : {}),
       schedule3: {
         line12_fuel_tax_credit: scenario.credit,
         line15_total: scenario.credit,
@@ -1296,6 +1300,7 @@ Deno.test({
   const xml = buildMefXml({
     f1040: { line31_additional_payments: 729 },
     schedule3: { line12_fuel_tax_credit: 729, line15_total: 729 },
+    f4136_credit_card_users_statement: {},
     f4136: {
       claimant_context: "business",
       additional_activities: [],
@@ -1377,6 +1382,7 @@ Deno.test({
   const xml = buildMefXml({
     f1040: { line31_additional_payments: 46 },
     schedule3: { line12_fuel_tax_credit: 46, line15_total: 46 },
+    f4136_emulsion_blending_statement: {},
     f4136: {
       claimant_context: "business",
       additional_activities: [],
@@ -1893,7 +1899,7 @@ Deno.test({
     {
       f1040: { line16_income_tax: 1_000 },
       schedule3: { line6a_total: 500, line7_total: 500 },
-      form6251: { line11_amt: 0, net_tmt: 0 },
+      form6251: { line11_amt: 0, net_tmt: 0, must_file_for_credit: true },
       form8582cr: {
         credit_sources: [source],
         regular_tax_all_income: 1_000,
@@ -1966,7 +1972,7 @@ Deno.test({
     {
       f1040: { line16_income_tax: 250 },
       schedule3: { line6a_total: 250, line7_total: 250 },
-      form6251: { line11_amt: 0, net_tmt: 0 },
+      form6251: { line11_amt: 0, net_tmt: 0, must_file_for_credit: true },
       form8582cr: {
         credit_sources: [source],
         regular_tax_all_income: 1_000,
@@ -2047,7 +2053,7 @@ Deno.test({
     {
       f1040: { line16_income_tax: 1_000 },
       schedule3: { line6a_total: 600, line7_total: 600 },
-      form6251: { line11_amt: 0, net_tmt: 0 },
+      form6251: { line11_amt: 0, net_tmt: 0, must_file_for_credit: true },
       form8582cr: {
         credit_sources: [source],
         regular_tax_all_income: 1_000,
@@ -2132,7 +2138,7 @@ Deno.test({
     {
       f1040: { line16_income_tax: 1_000 },
       schedule3: { line6a_total: 500, line7_total: 500 },
-      form6251: { line11_amt: 0, net_tmt: 0 },
+      form6251: { line11_amt: 0, net_tmt: 0, must_file_for_credit: true },
       form8582cr: {
         credit_sources: [source],
         regular_tax_all_income: 1_000,
@@ -2189,7 +2195,7 @@ Deno.test({
     {
       f1040: { line16_income_tax: 1_000 },
       schedule3: { line6a_total: 500, line7_total: 500 },
-      form6251: { line11_amt: 0, net_tmt: 0 },
+      form6251: { line11_amt: 0, net_tmt: 0, must_file_for_credit: true },
       k1_trust: {
         k1_trusts: [{
           estate_trust_name: "Access trust",
@@ -2242,7 +2248,7 @@ Deno.test({
     {
       f1040: { line16_income_tax: 1_000 },
       schedule3: { line6a_total: 500, line7_total: 500 },
-      form6251: { line11_amt: 0, net_tmt: 0 },
+      form6251: { line11_amt: 0, net_tmt: 0, must_file_for_credit: true },
       k1_partnership: {
         k1_partnerships: [{
           partnership_name: "Access partnership",
@@ -2335,7 +2341,7 @@ Deno.test({
     {
       f1040: { line16_income_tax: 1_000 },
       schedule3: { line6a_total: 500, line7_total: 500 },
-      form6251: { line11_amt: 0, net_tmt: 0 },
+      form6251: { line11_amt: 0, net_tmt: 0, must_file_for_credit: true },
       k1_trust: {
         k1_trusts: [{
           estate_trust_name: "Clinical estate",
@@ -2385,7 +2391,7 @@ Deno.test({
     {
       f1040: { line16_income_tax: 2_000 },
       schedule3: { line6a_total: 1_500, line7_total: 1_500 },
-      form6251: { line11_amt: 0, net_tmt: 0 },
+      form6251: { line11_amt: 0, net_tmt: 0, must_file_for_credit: true },
       k1_partnership: {
         k1_partnerships: [{
           partnership_name: "Clinical partnership",
@@ -2813,7 +2819,11 @@ Deno.test({
     {
       f1040: { line16_income_tax: 40_000 },
       schedule3: { line6a_total: 1_250, line7_total: 1_250 },
-      form6251: { line11_amt: 0, net_tmt: 20_000 },
+      form6251: {
+        line11_amt: 0,
+        net_tmt: 20_000,
+        must_file_for_credit: true,
+      },
       k1_s_corp: {
         k1_s_corps: [{
           corporation_name: "Access S corporation",
@@ -3180,7 +3190,7 @@ Deno.test({
   const xml = buildMefXml({
     f1040: { line16_income_tax: 1_000 },
     schedule3: { line6a_total: 1_000, line7_total: 1_000 },
-    form6251: { line11_amt: 0, net_tmt: 0 },
+    form6251: { line11_amt: 0, net_tmt: 0, must_file_for_credit: true },
     schedule_c: {
       schedule_cs: [{
         business_reference: "BUSINESS-1",

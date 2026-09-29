@@ -485,7 +485,12 @@ Deno.test("Form 3800 keeps the Form 8874 attachment for a passive-only QEI", () 
     unallowed_credit: 0,
     allowed_credit: 500,
   });
-  const businessTax = { ...tax, regularTax: 1_000, standardCredit: 0 };
+  const businessTax = {
+    ...tax,
+    regularTax: 1_000,
+    tentativeMinimumTax: 0,
+    standardCredit: 0,
+  };
   const input = {
     passive_source_allocations: [source],
     tax_context: businessTax,
@@ -756,7 +761,13 @@ Deno.test("Form 3800 files trust K-1 code M directly on line 1h", () => {
         f8820_k1_credit_entries: [{ ...entry, credit_amount: 1_251 }],
         tax_context: { ...businessTax, standardCredit: 1_251 },
         allowed_credit: 1_251,
-      }, context),
+      }, {
+        ...context,
+        pending: {
+          ...context.pending,
+          ...filedPending(businessTax, 1_251),
+        },
+      }),
     Error,
     "does not reconcile to estate/trust K-1",
   );
@@ -997,9 +1008,9 @@ Deno.test("Form 3800 links Form 8936 business-use credit to line 1y", () => {
   const context = {
     pending: { ...filedPending(businessTax, 1_875), f8936: source },
     documentIdsByPendingKey: {
-      f8936: ["IRS8936_1"],
       form6251: ["IRS6251_1"],
     },
+    documentIdsByTag: { IRS8936: ["IRS8936_1"] },
   };
   const xml = form3800.build(fields, context);
   assertStringIncludes(xml, "<Form8936PartIICYCreditsGrp");
@@ -1077,9 +1088,9 @@ Deno.test("Form 3800 links qualified commercial clean vehicle credit to line 1aa
   const context = {
     pending: { ...filedPending(businessTax, 7_500), f8936: source },
     documentIdsByPendingKey: {
-      f8936: ["IRS8936_1"],
       form6251: ["IRS6251_1"],
     },
+    documentIdsByTag: { IRS8936: ["IRS8936_1"] },
   };
   const xml = form3800.build(fields, context);
   assertStringIncludes(xml, "<Form8936PartVCYCreditsGrp");

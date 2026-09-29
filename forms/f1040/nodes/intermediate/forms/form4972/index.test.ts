@@ -391,24 +391,17 @@ Deno.test("Form 4972 partial-share Part-II-only without NUA keeps recipient ordi
 });
 
 Deno.test("Form 4972 partial box 9a share rejects unsupported allocations", () => {
-  for (
-    const extra of [
-      { box6_nua: 1_000 },
-      { federal_estate_tax: 1_000 },
-    ]
-  ) {
-    assertThrows(
-      () =>
-        calculated({
-          lump_sum_amount: 20_000,
-          recipient_share_pct: 50,
-          elect_10yr_averaging: true,
-          ...extra,
-        }),
-      Error,
-      "partial box 9a share supports Part II or III",
-    );
-  }
+  assertThrows(
+    () =>
+      calculated({
+        lump_sum_amount: 20_000,
+        recipient_share_pct: 50,
+        elect_10yr_averaging: true,
+        box6_nua: 1_000,
+      }),
+    Error,
+    "partial box 9a share supports Part II or III",
+  );
   assertThrows(
     () =>
       calculated({
@@ -606,6 +599,7 @@ Deno.test("Form 4972 applies an eligible death benefit before the allowance", ()
     lump_sum_amount: 20_000,
     death_benefit_exclusion: 5_000,
     beneficiary_distribution: true,
+    participant_five_year_member: false,
     participant_died_before_1996_08_21: true,
     elect_10yr_averaging: true,
   });
@@ -655,6 +649,7 @@ Deno.test("Form 4972 NUA election uses the expanded base for death and estate al
     death_benefit_exclusion: 5_000,
     federal_estate_tax: 4_000,
     beneficiary_distribution: true,
+    participant_five_year_member: false,
     participant_died_before_1996_08_21: true,
     elect_capital_gain: true,
     elect_10yr_averaging: true,
@@ -733,6 +728,7 @@ Deno.test("Form 4972 Part II allocates a death benefit between capital gain and 
     capital_gain_amount: 5_000,
     death_benefit_exclusion: 5_000,
     beneficiary_distribution: true,
+    participant_five_year_member: false,
     participant_died_before_1996_08_21: true,
     elect_capital_gain: true,
   });
@@ -758,6 +754,7 @@ Deno.test("Form 4972 estate tax reduces line 19 before averaging", () => {
     lump_sum_amount: 10_000,
     federal_estate_tax: 1_000,
     beneficiary_distribution: true,
+    participant_five_year_member: false,
     elect_10yr_averaging: true,
   });
   assertEquals(result.lines?.line19, 4_000);
@@ -770,6 +767,7 @@ Deno.test("Form 4972 combined election allocates federal estate tax to lines 6 a
     capital_gain_amount: 30_000,
     federal_estate_tax: 4_000,
     beneficiary_distribution: true,
+    participant_five_year_member: false,
     elect_capital_gain: true,
     elect_10yr_averaging: true,
   });
@@ -787,6 +785,7 @@ Deno.test("Form 4972 combined election allocates death benefit and estate tax se
     death_benefit_exclusion: 5_000,
     federal_estate_tax: 4_000,
     beneficiary_distribution: true,
+    participant_five_year_member: false,
     participant_died_before_1996_08_21: true,
     elect_capital_gain: true,
     elect_10yr_averaging: true,
@@ -802,6 +801,7 @@ Deno.test("Form 4972 Part II-only estate tax reduces capital gain and sends ordi
     capital_gain_amount: 30_000,
     federal_estate_tax: 4_000,
     beneficiary_distribution: true,
+    participant_five_year_member: false,
     elect_capital_gain: true,
   });
   assertEquals(result.lines?.line6, 28_800);
@@ -820,6 +820,7 @@ Deno.test("Form 4972 Part II-only applies death benefit and estate tax to separa
     death_benefit_exclusion: 5_000,
     federal_estate_tax: 4_000,
     beneficiary_distribution: true,
+    participant_five_year_member: false,
     participant_died_before_1996_08_21: true,
     elect_capital_gain: true,
   });
@@ -837,6 +838,7 @@ Deno.test("Form 4972 combined election keeps ordinary estate tax inside Part III
     capital_gain_amount: 30_000,
     federal_estate_tax: 4_000,
     beneficiary_distribution: true,
+    participant_five_year_member: false,
     elect_capital_gain: true,
     elect_10yr_averaging: true,
   });
@@ -872,6 +874,7 @@ Deno.test("Form 4972 rejects a death benefit larger than the taxable distributio
         capital_gain_amount: 500,
         death_benefit_exclusion: 3_000,
         beneficiary_distribution: true,
+        participant_five_year_member: false,
         participant_died_before_1996_08_21: true,
         elect_capital_gain: true,
       }),

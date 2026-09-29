@@ -953,7 +953,7 @@ export function prepareForm3800DocumentParts(
       "Form 3800 Form 5884 document count does not match self-earned source",
     );
   }
-  const form8936Ids = context.documentIdsByPendingKey.f8936 ?? [];
+  const form8936Ids = context.documentIdsByTag?.IRS8936 ?? [];
   if ((form8936 || form8936Commercial) && form8936Ids.length !== 1) {
     throw new Error(
       "Form 3800 Form 8936 document count does not match its source",

@@ -24,6 +24,9 @@ Deno.test("Form 8283 emits the sourced ATS Scenario 2 Section A donation", () =>
         date_contributed: donation.donationDate,
         cost_or_adjusted_basis: donation.costBasis,
         fmv: donation.fairMarketValue,
+        charitable_limit_category: "noncash_50",
+        is_capital_gain_property: false,
+        short_term_ordinary_income_reduction_confirmed: true,
       }],
     },
   }, testFiler());
@@ -56,11 +59,19 @@ Deno.test("Form 8283 preserves multiple Section A rows and month-only acquisitio
         donor_acquisition_description: "Purchase",
         fmv: 450,
         fmv_method: FMVMethod.ThriftShopValue,
+        charitable_limit_category: "noncash_50",
+        similar_item_group: "furniture",
+        is_capital_gain_property: false,
+        short_term_ordinary_income_reduction_confirmed: true,
       },
       {
         property_description: "Books",
         fmv: 125,
         fmv_method: FMVMethod.ComparableSales,
+        charitable_limit_category: "noncash_50",
+        similar_item_group: "books",
+        is_capital_gain_property: false,
+        short_term_ordinary_income_reduction_confirmed: true,
       },
     ],
   });
@@ -154,6 +165,7 @@ function needyTransferVehicle(
     deduction_claimed: 4_500,
     cost_or_adjusted_basis: 4_500,
     charitable_limit_category: "noncash_50" as const,
+    similar_item_group: "vehicles",
     is_capital_gain_property: false,
     short_term_ordinary_income_reduction_confirmed: true as const,
     vehicle_needy_transfer_acknowledgment: {
@@ -192,6 +204,10 @@ function sectionBMaterialImprovementVehicle() {
     fmv: 15_000,
     deduction_claimed: 15_000,
     cost_or_adjusted_basis: 18_000,
+    charitable_limit_category: "noncash_50" as const,
+    similar_item_group: "vehicles",
+    is_capital_gain_property: false,
+    short_term_ordinary_income_reduction_confirmed: true as const,
     vehicle_vin: "1HGBH41JXMN109186",
     vehicle_acknowledgment_attachment_file_name: "Form1098C-Improvement.pdf",
     vehicle_material_improvement_acknowledgment: {

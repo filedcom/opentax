@@ -41,20 +41,25 @@ Deno.test("Form 1040 MeF rejects a positive Schedule 1-A deduction without its d
   assertThrows(
     () => irs1040.build({ line13b_additional_deductions: 6_000 }),
     Error,
-    "line 13b needs an attached Schedule 1-A",
+    "line 13b needs an attached senior-only Schedule 1-A",
   );
 });
 
 Deno.test("Form 1040 MeF refuses an unresolved Form 8912 credit", () => {
   assertThrows(
-    () => irs1040.build({ form8912_source_lines: { line4: 100 } }),
+    () =>
+      irs1040.build({
+        form8912_source_lines: { line1: 100, line2: 0, line3: 0, line4: 100 },
+      }),
     Error,
     "needs finalized Form 8912 Part II",
   );
 });
 
 Deno.test("Form 1040 MeF accepts a finalized Form 8912 only with its document", () => {
-  const fields = { form8912_source_lines: { line4: 100 } };
+  const fields = {
+    form8912_source_lines: { line1: 100, line2: 0, line3: 0, line4: 100 },
+  };
   assertThrows(
     () =>
       irs1040.build(fields, {

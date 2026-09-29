@@ -125,7 +125,7 @@ Deno.test({
       line7_total: 7_500,
       line8_total: 7_500,
     },
-    form6251: { line11_amt: 0, net_tmt: 0 },
+    form6251: { line11_amt: 0, net_tmt: 0, must_file_for_credit: true },
     f3800: {
       f8936_new_vehicle_credit: {
         credit_amount: 1_875,
