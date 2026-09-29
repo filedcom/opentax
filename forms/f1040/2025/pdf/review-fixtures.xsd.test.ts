@@ -59,6 +59,15 @@ for (const fixture of pdfReviewFixtures) {
           "<PensionsAnnuitiesRolloverInd>X</PensionsAnnuitiesRolloverInd>",
         );
       }
+      if (fixture.id === "single-ira-rollover") {
+        assertEquals(result.pending.f1040.line4a_ira_gross, 5_000);
+        assertEquals(result.pending.f1040.line4b_ira_taxable, 0);
+        assertEquals(result.pending.f1040.line4c_ira_rollover, true);
+        assertStringIncludes(
+          xml,
+          "<IRADistributionRolloverInd>X</IRADistributionRolloverInd>",
+        );
+      }
       const path = await Deno.makeTempFile({ suffix: ".xml" });
       try {
         await Deno.writeTextFile(path, xml);

@@ -4,7 +4,9 @@ import { form8814ParentPrintAmounts } from "./f8814.ts";
 import { schedule1aPdf } from "./schedule1a.ts";
 import { inputSchema as w2gInputSchema } from "../../../nodes/inputs/w2g/index.ts";
 import {
+  assertIraRolloverEvidence,
   inputSchema as f1099rInputSchema,
+  isIraRollover,
   isPensionDirectRollover,
 } from "../../../nodes/inputs/f1099r/index.ts";
 
@@ -184,6 +186,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "text",
     domainKey: "line4b_ira_taxable",
     pdfField: "topmostSubform[0].Page1[0].f1_63[0]",
+  },
+  {
+    kind: "checkbox",
+    domainKey: "line4c_ira_rollover",
+    pdfField: "topmostSubform[0].Page1[0].c1_35[0]",
   },
   // f1_64 skipped (QCD sub-field)
   {
@@ -475,23 +482,36 @@ export const irs1040Pdf: PdfFormDescriptor = {
   // season; this module is the 2025 form and must always fetch the 2025 PDF.
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040--2025.pdf",
   projectFields(fields, allPending) {
+    const iraRollover = fields.line4c_ira_rollover === true;
     const rollover = fields.line5c_pension_rollover === true;
+    if (
+      fields.line4c_ira_rollover !== undefined &&
+      typeof fields.line4c_ira_rollover !== "boolean"
+    ) {
+      throw new Error("Form 1040 PDF line 4c rollover must be a boolean");
+    }
     if (
       fields.line5c_pension_rollover !== undefined &&
       typeof fields.line5c_pension_rollover !== "boolean"
     ) {
       throw new Error("Form 1040 PDF line 5c rollover must be a boolean");
     }
-    if (rollover || allPending.f1099r !== undefined) {
+    if (iraRollover || rollover || allPending.f1099r !== undefined) {
       const source = f1099rInputSchema.safeParse(allPending.f1099r);
       if (!source.success) {
         throw new Error(
           "Form 1040 PDF line 5c needs valid Form 1099-R source facts",
         );
       }
+      assertIraRolloverEvidence(source.data.f1099rs);
       if (rollover !== source.data.f1099rs.some(isPensionDirectRollover)) {
         throw new Error(
           "Form 1040 PDF line 5c rollover does not match the payer-reported Form 1099-R code G",
+        );
+      }
+      if (iraRollover !== source.data.f1099rs.some(isIraRollover)) {
+        throw new Error(
+          "Form 1040 PDF line 4c rollover does not match the reviewed IRA Form 1099-R source",
         );
       }
     }
@@ -527,6 +547,9 @@ export const irs1040Pdf: PdfFormDescriptor = {
     const child = form8814ParentPrintAmounts(allPending);
     return {
       ...fields,
+      ...(iraRollover && fields.line4b_ira_taxable === 0
+        ? { line4b_ira_taxable: "0" }
+        : {}),
       ...(rollover && fields.line5b_pension_taxable === 0
         ? { line5b_pension_taxable: "0" }
         : {}),

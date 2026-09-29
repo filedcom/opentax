@@ -92,6 +92,8 @@ const inputSchema = z.object({
   line4a_ira_gross: z.number().nonnegative().optional(),
   // Line 4b — IRA distributions, taxable amount
   line4b_ira_taxable: z.number().optional(),
+  // Line 4c(1) — source-confirmed IRA rollover
+  line4c_ira_rollover: z.boolean().optional(),
   // Line 5a — Pensions and annuities, gross
   line5a_pension_gross: z.number().nonnegative().optional(),
   // Line 5b — Pensions and annuities, taxable amount
@@ -1195,6 +1197,9 @@ class F1040Node extends TaxNode<typeof inputSchema> {
     verifyForm1116Limitation(effectiveInput, numericLines);
     const assembled = {
       ...numericLines,
+      ...(effectiveInput.line4c_ira_rollover === true
+        ? { line4c_ira_rollover: true }
+        : {}),
       ...(effectiveInput.line5c_pension_rollover === true
         ? { line5c_pension_rollover: true }
         : {}),

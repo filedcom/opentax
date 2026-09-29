@@ -1,5 +1,8 @@
 import { type FilerIdentity, FilingStatus } from "../../mef/header.ts";
-import { DistributionCode } from "../../nodes/inputs/f1099r/index.ts";
+import {
+  DistributionCode,
+  RolloverCode,
+} from "../../nodes/inputs/f1099r/index.ts";
 import { EnergyType } from "../../nodes/inputs/f8835/index.ts";
 import { CoverageType } from "../../nodes/intermediate/forms/form8889/index.ts";
 import { FilingStatus as SourceFilingStatus } from "../../nodes/types.ts";
@@ -805,6 +808,33 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "Form 1040 line 5a prints the gross pension and line 5b follows the computed taxable amount",
       "Line 5c rollover checkbox is marked only from the affirmative source fact",
       "No QCD mark is inferred from the distribution code",
+    ],
+  },
+  {
+    id: "single-ira-rollover",
+    inputs: {
+      general: singleGeneral,
+      f1099r: [{
+        payer_name: "Example IRA Custodian",
+        payer_ein: "12-3456789",
+        box1_gross_distribution: 5_000,
+        box2a_taxable_amount: 0,
+        box7_distribution_code: DistributionCode.Code7,
+        box7_ira_simple_indicator: true,
+        rollover_code: RolloverCode.S,
+        ira_rollover: {
+          destination: "ira",
+          distributed_on: "2025-06-01",
+          completed_on: "2025-06-02",
+        },
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040"],
+    reviewFocus: [
+      "Form 1040 line 4a prints the $5,000 IRA gross distribution and line 4b prints zero taxable",
+      "Line 4c(1) rollover checkbox follows the dated IRA-to-IRA source fact",
+      "The pension line 5c rollover checkbox remains blank",
     ],
   },
   {

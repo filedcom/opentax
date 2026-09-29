@@ -923,13 +923,19 @@ Deno.test("f1099r.compute: box9b_total_employee_contributions without simplified
 Deno.test("f1099r.compute: code G direct rollover reports IRA gross and zero taxable", () => {
   const result = compute([minimalIraItem({
     box1_gross_distribution: 5000,
-    box2a_taxable_amount: 5000,
+    box2a_taxable_amount: 0,
     box7_distribution_code: DistributionCode.CodeG,
     rollover_code: RolloverCode.G,
+    ira_rollover: {
+      destination: "ira",
+      distributed_on: "2025-06-01",
+      completed_on: "2025-06-02",
+    },
   })]);
   const input = f1040Input(result);
   assertEquals(input.line4a_ira_gross, 5000);
   assertEquals(input.line4b_ira_taxable, 0);
+  assertEquals(input.line4c_ira_rollover, true);
 });
 
 Deno.test("f1099r.compute: code G without box 2a stays a non-taxable direct rollover", () => {
@@ -960,6 +966,12 @@ Deno.test("f1099r.compute: IRA code G and pension code 7 do not check pension ro
   const ira = f1040Input(compute([minimalIraItem({
     box7_distribution_code: DistributionCode.CodeG,
     direct_rollover_confirmed: true,
+    rollover_code: RolloverCode.G,
+    ira_rollover: {
+      destination: "ira",
+      distributed_on: "2025-06-01",
+      completed_on: "2025-06-02",
+    },
   })]));
   const pension = f1040Input(compute([minimalPensionItem()]));
   const unconfirmed = f1040Input(compute([minimalPensionItem({
@@ -967,6 +979,7 @@ Deno.test("f1099r.compute: IRA code G and pension code 7 do not check pension ro
     box2a_taxable_amount: 10_000,
   })]));
   assertEquals(ira.line5c_pension_rollover, undefined);
+  assertEquals(ira.line4c_ira_rollover, true);
   assertEquals(pension.line5c_pension_rollover, undefined);
   assertEquals(unconfirmed.line5c_pension_rollover, undefined);
 });
@@ -975,12 +988,75 @@ Deno.test("f1099r.compute: code S rollover produces zero taxable", () => {
   const result = compute([minimalIraItem({
     box1_gross_distribution: 8000,
     box2a_taxable_amount: 8000,
-    box7_distribution_code: DistributionCode.CodeG,
+    box7_distribution_code: DistributionCode.Code7,
     rollover_code: RolloverCode.S,
+    ira_rollover: {
+      destination: "ira",
+      distributed_on: "2025-06-01",
+      completed_on: "2025-06-02",
+    },
   })]);
   const input = f1040Input(result);
   assertEquals(input.line4a_ira_gross, 8000);
   assertEquals(input.line4b_ira_taxable, 0);
+  assertEquals(input.line4c_ira_rollover, true);
+});
+
+Deno.test("f1099r.compute: IRA rollover needs dated destination evidence", () => {
+  const item = minimalIraItem({ rollover_code: RolloverCode.S });
+  assertThrows(() => compute([item]), Error, "needs destination");
+  assertThrows(
+    () =>
+      compute([minimalIraItem({
+        box7_distribution_code: DistributionCode.CodeG,
+        direct_rollover_confirmed: true,
+      })]),
+    Error,
+    "needs destination",
+  );
+  assertThrows(
+    () =>
+      compute([{
+        ...item,
+        ira_rollover: {
+          destination: "qualified_plan",
+          distributed_on: "2025-12-01",
+          completed_on: "2025-12-15",
+        },
+      }]),
+    Error,
+    "needs an explanatory statement",
+  );
+  assertThrows(
+    () =>
+      compute([{
+        ...item,
+        ira_rollover: {
+          destination: "ira",
+          distributed_on: "2025-12-01",
+          completed_on: "2026-01-15",
+        },
+      }]),
+    Error,
+    "needs an explanatory statement",
+  );
+});
+
+Deno.test("f1099r.compute: partial IRA rollover marks line 4c and taxes the remainder", () => {
+  const input = f1040Input(compute([minimalIraItem({
+    box1_gross_distribution: 10_000,
+    box2a_taxable_amount: 10_000,
+    rollover_code: RolloverCode.X,
+    partial_rollover_amount: 6_000,
+    ira_rollover: {
+      destination: "ira",
+      distributed_on: "2025-09-01",
+      completed_on: "2025-09-30",
+    },
+  })]));
+  assertEquals(input.line4a_ira_gross, 10_000);
+  assertEquals(input.line4b_ira_taxable, 4_000);
+  assertEquals(input.line4c_ira_rollover, true);
 });
 
 Deno.test("f1099r.compute: code S taxable SIMPLE IRA distribution reaches the 25% Form 5329 line", () => {

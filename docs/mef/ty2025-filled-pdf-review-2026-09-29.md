@@ -86,3 +86,18 @@ pages at 130 dpi. The `v32` PDF has SHA-256
 `2eb324aea7831acaaccf1868d28b723acfec7848420ef5a51e3e89eebbaf33c3`.
 This establishes the two-owner print and aggregation joins for this synthetic
 case; other HSA eligibility and excess-contribution routes remain open.
+
+The `single-ira-rollover` review used the regenerated `v35` batch at
+`.state/research/ty2025-filled-pdf-review/2026-09-29-v35/`. Both Form 1040
+pages were rendered at 160 dpi and are pixel-identical to the inspected `v33`
+pages. The synthetic Form 1099-R
+source records a $5,000 IRA distribution and a dated 2025 rollover to another
+IRA. The pending graph and native XML show $5,000 on line 4a, zero on line
+4b, and the IRA rollover indicator; the PDF prints those amounts, checks line
+4c(1), and leaves the separate pension line 5c rollover box blank. The PDF
+has SHA-256
+`8f2e2756881d707ab82bd5befbd8eff98c8989a3cc89460524758ce2b04e7c9c`.
+The full-return XML passed the local TY2025 v5.4 XSD. This case does not
+establish the statement-required qualified-plan or 2026 rollover paths,
+60-day waiver cases, other IRA eligibility evidence, or IRS business-rule
+acceptance.

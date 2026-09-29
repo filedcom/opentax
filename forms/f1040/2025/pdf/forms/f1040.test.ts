@@ -58,6 +58,48 @@ Deno.test("irs1040Pdf.fields: contains expected income line fields", () => {
   }
 });
 
+Deno.test("irs1040Pdf: IRA rollover checks line 4c and prints zero taxable", () => {
+  const entry = irs1040Pdf.fields.find((field) =>
+    field.domainKey === "line4c_ira_rollover"
+  );
+  assertEquals(entry?.pdfField, "topmostSubform[0].Page1[0].c1_35[0]");
+  const source = {
+    f1099r: {
+      f1099rs: [{
+        payer_name: "IRA Custodian",
+        payer_ein: "12-3456789",
+        box1_gross_distribution: 5000,
+        box2a_taxable_amount: 0,
+        box7_distribution_code: "7",
+        box7_ira_simple_indicator: true,
+        rollover_code: "S",
+        ira_rollover: {
+          destination: "ira",
+          distributed_on: "2025-06-01",
+          completed_on: "2025-06-02",
+        },
+      }],
+    },
+  };
+  const fields = {
+    line4a_ira_gross: 5000,
+    line4b_ira_taxable: 0,
+    line4c_ira_rollover: true,
+  };
+  const projected = irs1040Pdf.projectFields?.(fields, source);
+  assertEquals(projected?.line4c_ira_rollover, true);
+  assertEquals(projected?.line4b_ira_taxable, "0");
+  assertThrows(
+    () =>
+      irs1040Pdf.projectFields?.(
+        { ...fields, line4c_ira_rollover: false },
+        source,
+      ),
+    Error,
+    "does not match the reviewed IRA",
+  );
+});
+
 Deno.test("irs1040Pdf: line 5c rollover checks the 2025 pension checkbox with code-G source", () => {
   const entry = irs1040Pdf.fields.find((field) =>
     field.domainKey === "line5c_pension_rollover"

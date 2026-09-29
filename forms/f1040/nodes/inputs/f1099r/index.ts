@@ -262,6 +262,11 @@ export const itemSchema = z.object({
   // Rollover treatment dropdown
   rollover_code: z.nativeEnum(RolloverCode).optional(),
   partial_rollover_amount: z.number().nonnegative().optional(),
+  ira_rollover: z.object({
+    destination: z.enum(["ira", "qualified_plan"]),
+    distributed_on: z.string().date(),
+    completed_on: z.string().date(),
+  }).optional(),
   // Code G also covers designated Roth employer contributions. A confirmed
   // direct-rollover fact is needed before checking Form 1040 line 5c(1).
   direct_rollover_confirmed: z.boolean().optional(),
@@ -328,8 +333,81 @@ export function isPensionDirectRollover(item: R1099Item): boolean {
     !(item.disability_flag === true && item.disability_as_wages === true);
 }
 
+export function isIraRollover(item: R1099Item): boolean {
+  return item.box7_ira_simple_indicator === true &&
+    item.ira_rollover !== undefined &&
+    (item.rollover_code === RolloverCode.G ||
+      item.rollover_code === RolloverCode.S ||
+      item.rollover_code === RolloverCode.X) &&
+    item.box1_gross_distribution > 0 &&
+    item.no_distribution_received !== true &&
+    item.exclude_4972 !== true &&
+    item.exclude_8606_roth !== true;
+}
+
+export function assertIraRolloverEvidence(items: readonly R1099Item[]): void {
+  for (const item of items) validateIraRolloverEvidence(item);
+}
+
+function validateIraRolloverEvidence(item: R1099Item): void {
+  const iraRolloverCode = item.rollover_code === RolloverCode.G ||
+    item.rollover_code === RolloverCode.S ||
+    item.rollover_code === RolloverCode.X ||
+    item.box7_distribution_code === DistributionCode.CodeG;
+  if (
+    item.box7_ira_simple_indicator === true && iraRolloverCode &&
+    item.no_distribution_received !== true && item.ira_rollover === undefined
+  ) {
+    throw new Error(
+      "IRA rollover needs destination and distribution/completion dates",
+    );
+  }
+  if (item.ira_rollover !== undefined) {
+    if (!isIraRollover(item)) {
+      throw new Error(
+        "IRA rollover evidence needs an active IRA distribution and rollover code",
+      );
+    }
+    if (
+      (item.prior_ira_basis ?? 0) > 0 || item.qcd_full === true ||
+      (item.qcd_partial_amount ?? 0) > 0
+    ) {
+      throw new Error(
+        "IRA rollover cannot share Form 8606 basis or QCD treatment",
+      );
+    }
+    const { destination, distributed_on, completed_on } = item.ira_rollover;
+    const elapsedDays =
+      (Date.parse(completed_on) - Date.parse(distributed_on)) /
+      86_400_000;
+    if (
+      !distributed_on.startsWith("2025-") || elapsedDays < 0 ||
+      elapsedDays > 60
+    ) {
+      throw new Error(
+        "IRA rollover needs a 2025 distribution completed within 60 days",
+      );
+    }
+    if (destination !== "ira" || !completed_on.startsWith("2025-")) {
+      throw new Error(
+        "IRA rollover to a qualified plan or completed in 2026 needs an explanatory statement",
+      );
+    }
+    if (
+      item.rollover_code === RolloverCode.X &&
+      ((item.partial_rollover_amount ?? 0) <= 0 ||
+        (item.partial_rollover_amount ?? 0) >= item.box1_gross_distribution)
+    ) {
+      throw new Error(
+        "Partial IRA rollover needs an amount between zero and gross distribution",
+      );
+    }
+  }
+}
+
 // Cross-field validation for a single item
 function validateItem(item: R1099Item): void {
+  validateIraRolloverEvidence(item);
   if (item.exclude_4972 === true && item.no_distribution_received === true) {
     throw new Error(
       "Form 4972 election conflicts with Form 1099-R no_distribution_received",
@@ -632,6 +710,9 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
     };
     if (r1099s.some(isPensionDirectRollover)) {
       f1040Fields.line5c_pension_rollover = true;
+    }
+    if (r1099s.some(isIraRollover)) {
+      f1040Fields.line4c_ira_rollover = true;
     }
     if (Object.keys(f1040Fields).length > 0) {
       outputs.push(

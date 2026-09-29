@@ -11,7 +11,9 @@ import {
 import { FilingStatus } from "../../../nodes/types.ts";
 import { inputSchema as w2gInputSchema } from "../../../nodes/inputs/w2g/index.ts";
 import {
+  assertIraRolloverEvidence,
   inputSchema as f1099rInputSchema,
+  isIraRollover,
   isPensionDirectRollover,
 } from "../../../nodes/inputs/f1099r/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
@@ -47,6 +49,7 @@ export interface Fields {
   line3b_ordinary_dividends?: number | null;
   line4a_ira_gross?: number | null;
   line4b_ira_taxable?: number | null;
+  line4c_ira_rollover?: boolean;
   line5a_pension_gross?: number | null;
   line5b_pension_taxable?: number | null;
   line5c_pension_rollover?: boolean;
@@ -406,20 +409,35 @@ function dependentXml(fields: Input, context?: MefBuildContext): string[] {
 }
 
 function buildIRS1040(fields: Input, context?: MefBuildContext): string {
+  const iraRollover = fields.line4c_ira_rollover === true;
   const rollover = fields.line5c_pension_rollover === true;
-  if (fields.line5c_pension_rollover !== undefined &&
-      typeof fields.line5c_pension_rollover !== "boolean") {
+  if (
+    fields.line4c_ira_rollover !== undefined &&
+    typeof fields.line4c_ira_rollover !== "boolean"
+  ) {
+    throw new Error("Form 1040 line 4c rollover must be a boolean");
+  }
+  if (
+    fields.line5c_pension_rollover !== undefined &&
+    typeof fields.line5c_pension_rollover !== "boolean"
+  ) {
     throw new Error("Form 1040 line 5c rollover must be a boolean");
   }
   const f1099rSource = context?.pending?.f1099r;
-  if (rollover || f1099rSource !== undefined) {
+  if (iraRollover || rollover || f1099rSource !== undefined) {
     const parsed = f1099rInputSchema.safeParse(f1099rSource);
     if (!parsed.success) {
       throw new Error("Form 1040 line 5c needs valid Form 1099-R source facts");
     }
+    assertIraRolloverEvidence(parsed.data.f1099rs);
     if (rollover !== parsed.data.f1099rs.some(isPensionDirectRollover)) {
       throw new Error(
         "Form 1040 line 5c rollover does not match the payer-reported Form 1099-R code G",
+      );
+    }
+    if (iraRollover !== parsed.data.f1099rs.some(isIraRollover)) {
+      throw new Error(
+        "Form 1040 line 4c rollover does not match the reviewed IRA Form 1099-R source",
       );
     }
   }
@@ -591,6 +609,16 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
       pensionIndex + 1,
       0,
       element("PensionsAnnuitiesRolloverInd", "X"),
+    );
+  }
+  if (iraRollover) {
+    const iraIndex = FIELD_MAP.findIndex(([key]) =>
+      key === "line4b_ira_taxable"
+    );
+    incomeChildren.splice(
+      iraIndex + 1,
+      0,
+      element("IRADistributionRolloverInd", "X"),
     );
   }
   if (typeof fields.form8814_tax === "number" && fields.form8814_tax > 0) {
