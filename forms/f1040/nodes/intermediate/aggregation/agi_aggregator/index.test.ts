@@ -319,11 +319,11 @@ Deno.test("agi_aggregator: routes agi to schedule_a", () => {
   assertEquals((schA!.fields as Record<string, number>).agi, 75_000);
 });
 
-Deno.test("agi_aggregator: wages-only produces exactly 12 outputs (no Schedule 1 items)", () => {
+Deno.test("agi_aggregator: wages-only produces 13 context outputs without Schedule 1 items", () => {
   // With wages only, line8=0 and line10=0 so no extra f1040 fields beyond line11_agi
   // Outputs include Schedule 1-A MAGI context in addition to the existing eleven.
   const result = compute({ line1a_wages: 50_000 });
-  assertEquals(result.outputs.length, 12);
+  assertEquals(result.outputs.length, 13);
 });
 
 Deno.test("agi_aggregator: cap gain distributions included in AGI", () => {
