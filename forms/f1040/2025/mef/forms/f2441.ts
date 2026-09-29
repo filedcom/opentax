@@ -210,6 +210,7 @@ function buildIRS2441(fields: Input, context?: MefBuildContext): string {
 
 export const form2441: MefFormDescriptor<"form2441", Input> = {
   pendingKey: "form2441",
+  sourcePendingKeys: ["form2441", "f2441"],
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f2441.pdf",
   build: buildIRS2441,
