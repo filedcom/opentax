@@ -448,6 +448,40 @@ Deno.test("seven New Markets investments print an attached Form 8874 detail page
   assertEquals(packet.getPageCount(), 16);
 });
 
+Deno.test("twenty-four New Markets investments retain two statement pages and the full return credit", async () => {
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-twenty-four-new-markets-investments"
+  )!;
+  const result = f1040_2025.executeReturn({ ...fixture.inputs });
+  assertEquals(result.diagnostics, []);
+  const prepared = await f1040_2025.prepareReturn(
+    result.pending,
+    fixture.filer,
+  );
+  assertEquals(prepared.bundle.form3800Parts?.lines.line38, 12_000);
+  assertEquals(
+    [...prepared.bundle.xml.matchAll(/<CurrentYearCreditInfo>/g)].length,
+    24,
+  );
+  const allPending = normalizeAllPending(prepared.bundle.pending);
+  const printed8874 = form8874Pdf.projectFields!(allPending.f8874, allPending);
+  assertEquals(printed8874.row_6_cde, "See attached");
+  assertEquals(printed8874.row_6_credit, 9_500);
+  assertEquals(printed8874.line3, 12_000);
+  assertEquals((printed8874.print_overflow_rows as unknown[]).length, 19);
+  const printed3800 = form3800Pdf.instances?.(
+    allPending.f3800,
+    fixture.filer,
+    allPending,
+    prepared.bundle.form3800Parts,
+  )?.[0];
+  assertEquals(printed3800?.[form3800PartIIIFields("1i").g], 12_000);
+  assertEquals(
+    (await PDFDocument.load(await prepared.renderPdf())).getPageCount(),
+    21,
+  );
+});
+
 Deno.test("geothermal and New Markets credits retain separate Form 3800 lines and one return total", async () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-geothermal-and-new-markets-credits"

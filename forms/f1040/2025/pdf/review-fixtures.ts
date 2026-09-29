@@ -538,6 +538,49 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-twenty-four-new-markets-investments",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(500_000, 100_000, "Example Employer", "12-3456789")],
+      f8874: {
+        investments: Array.from({ length: 24 }, (_, index) => ({
+          cde_name: `Community Entity ${index + 1}`,
+          cde_ein: String(123456780 + index),
+          cde_address: {
+            line1: `${10 + index} Example Way`,
+            city: "Dover",
+            state: "DE",
+            zip: "19901",
+          },
+          initial_investment_date: "2025-04-15",
+          credit_allowance_date: "2025-04-15",
+          qualified_equity_investment_amount: 10_000,
+          designation_notice_reference: `Synthetic QEI notice ${index + 1}`,
+          held_on_credit_allowance_date: true,
+          qualified_on_credit_allowance_date: true,
+          recapture_notice_received: false,
+          subject_to_passive_activity_limit: false,
+        })),
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: [
+      "f1040",
+      "schedule2",
+      "schedule3",
+      "form8959",
+      "form8960",
+      "form6251",
+      "form3800",
+      "form8874",
+    ],
+    reviewFocus: [
+      "Five direct Form 8874 rows and a last-row 9,500 attachment total reconcile with nineteen further investments",
+      "The supplemental page sequence lists investments 6-23 on page one and investment 24 on page two",
+      "Twenty-four 500 credits combine to 12,000 on Form 8874, Form 3800, Schedule 3, and Form 1040 alongside high-wage Schedule 2 tax",
+    ],
+  },
+  {
     id: "single-geothermal-and-new-markets-credits",
     inputs: {
       general: singleGeneral,
