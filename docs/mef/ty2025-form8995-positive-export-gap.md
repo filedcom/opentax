@@ -1,8 +1,9 @@
 # TY2025 Form 8995 positive export boundary
 
-Status: one tightly bounded, positive Schedule C route is implemented for Form
-8995 MeF and PDF. All other positive shapes still fail explicitly. This is not
-complete Form 8995 coverage and is not an approved product exclusion.
+Status: tightly bounded, positive one-business Schedule C and one-farm Schedule
+F routes are implemented for Form 8995 MeF and PDF. Other positive shapes still
+fail explicitly. This is not complete Form 8995 coverage and is not an approved
+product exclusion.
 
 The [IRS TY2025 Form 8995 instructions](https://www.irs.gov/instructions/i8995)
 require each trade or business on line 1, the qualified business income or loss
@@ -45,6 +46,35 @@ Schedule D and retirement-plan sources, plus any Form 7206 claim beyond its
 retained Schedule C and Schedule SE source records, even if their deposits were
 omitted from Form 8995 pending data.
 
+## Implemented one-farm route
+
+The Schedule F node now retains an identified farm row with the source Schedule
+F item and its computed profit. A positive Form 8995 claim requires one farm ID,
+farm name, nine-digit EIN, material participation, and an explicit confirmation
+that there are no other attributable QBI adjustments. The return must also
+confirm no prior or suspended QBI loss and no patronage of a specified
+cooperative. The exporter recalculates the farm profit, including sourced WOTC
+wage reductions, and reconciles it to Schedule 1 line 6. It ties the half-SE-tax
+deduction to Schedule SE, Form 7206's retained Schedule SE calculation, and
+Schedule 1 line 15. It checks Form 1040 taxable income and the line 13 QBI
+deduction against every printed Form 8995 line. The route rejects other QBI
+businesses, cooperative source records, the farm optional SE method, capital
+gain, REIT/PTP amounts, and separately attributable health insurance or
+retirement deductions. Missing or conflicting facts stop MeF and PDF export.
+
+A synthetic $80,000 cash-farm return passed graph execution, native full-return
+TY2025 XSD validation, and Form 8995 MeF/PDF reconciliation. The filled
+nine-page PDF packet was generated; visual review of its Form 8995 page matched
+the farm row ($74,348 QBI), line 15 ($11,720), and Form 1040 line 13a ($11,720).
+Local review artifacts are in
+`.state/research/review/ty2025-form8995-farm/` (ignored by Git). This is
+synthetic coverage; it does not establish an ATS acceptance or the remaining
+multi-farm and cooperative routes.
+The reviewed Form 8995 PDF SHA-256 is
+`ba84326e126840c6ba96286b8e1c323c25bbec65127258890840d23621c5100d`;
+the nine-page packet SHA-256 is
+`640c25a118d1d88494c481c135a003f21f010d18499e211f69a8934f6b173ad7`.
+
 These zero-source conditions are an explicit supported boundary, not inferred
 zeros: export checks the final Schedule 1 and Form 1040 before producing a
 document. The synthetic profitable Schedule C fixture exercises the ordinary
@@ -52,24 +82,16 @@ half-SE-tax route through calculation, native XML, and PDF projection.
 
 ## Remaining gaps
 
-- A positive Schedule F return currently reaches the Form 8995 calculator but
-  cannot pass either positive exporter. The focused accrual-farm end-to-end
-  case in `forms/f1040/e2e/schedule_f_sources.test.ts` now has $12,100 of farm
-  profit, below the single filer's standard deduction; it passes because there
-  is no positive Form 8995 claim to export. It therefore does not verify a
-  positive farm QBI filing route. A farm return with taxable income and a
-  positive QBI deduction still fails at `assertOneScheduleC8995`. A read-only
-  $80,000 cash-farm reproduction had no graph diagnostics and failed at that
-  exporter guard. The calculator retains only an aggregate `qbi_from_schedule_f`
-  amount; it does not retain an identified farm row, a sourced allocation of
-  the Schedule SE deduction to that farm, or the
-  business-level no-other-adjustments and cooperative answers required by the
-  bounded exporter. Complete those source facts and the one-farm graph, MeF,
-  PDF, and Form 1040 reconciliation before marking Schedule F QBI supported.
-  The [2025 IRS Form 8995 instructions](https://www.irs.gov/instructions/i8995)
+- Multi-farm returns, farms without an EIN or separate farm name, cooperative
+  patrons, and returns with other attributable QBI deductions remain outside
+  the bounded one-farm exporter. The accrual Schedule F source case with $12,100
+  of profit still exercises a zero-claim return because its taxable income is
+  below the single standard deduction; it does not verify positive accrual-farm
+  QBI. Complete source-level allocation and multi-business Form 8995 rows before
+  treating those claims as supported. The [2025 IRS Form 8995 instructions](https://www.irs.gov/instructions/i8995)
   include trade or business QBI, the taxable-income limit, and the specified
-  cooperative routing decision. The current rejection is a live release gap,
-  not an approved exclusion or a reason to omit the farm's computed claim.
+  cooperative routing decision. These remain live release gaps, not approved
+  exclusions.
 - Broader source-backed implementations must identify and independently
   reconcile each business name/TIN and QBI, allocate Schedule SE, self-employed
   health insurance and retirement deductions to the right business, prove prior
@@ -81,8 +103,9 @@ half-SE-tax route through calculation, native XML, and PDF projection.
 The native descriptor returns no document for no-claim tracking fields or a zero
 deduction. Positive claims outside the bounded route raise a
 source-reconciliation error in both MeF and PDF. Malformed claimed amounts also
-reject. Focused and graph-to-export cases pass. A filled synthetic Schedule C
-PDF was generated; visual, local XSD, and ATS validation remain open.
+reject. Focused and graph-to-export cases pass for the two bounded sources.
+The synthetic Schedule F filled PDF was visually reviewed and its full return
+passed local XSD validation. ATS validation and the broader routes remain open.
 
 The zero-deduction route needs a separate audit: a current REIT/PTP loss may
 still need a Form 8995 carryforward line even when no line 13 deduction is

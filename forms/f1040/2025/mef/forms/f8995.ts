@@ -1,7 +1,7 @@
 import type { inputSchema } from "../../../nodes/intermediate/forms/form8995/index.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 import { element, elements } from "../../../mef/xml.ts";
-import { assertOneScheduleC8995 } from "./f8995-route.ts";
+import { assertOneBusiness8995 } from "./f8995-route.ts";
 
 type Input = Partial<ReturnType<typeof inputSchema.parse>> & {
   qbi_deduction?: number | null;
@@ -22,7 +22,7 @@ export const form8995: MefFormDescriptor<"form8995", Input> = {
     ) {
       throw new Error("Form 8995 needs a valid nonnegative QBI deduction");
     }
-    const { businessName, ein, qbi, lines } = assertOneScheduleC8995(
+    const { businessName, ein, qbi, lines } = assertOneBusiness8995(
       fields as Record<string, unknown>,
       context?.pending,
     );

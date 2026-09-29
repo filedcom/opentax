@@ -1,5 +1,5 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
-import { assertOneScheduleC8995 } from "../../mef/forms/f8995-route.ts";
+import { assertOneBusiness8995 } from "../../mef/forms/f8995-route.ts";
 
 const page1 = "topmostSubform[0].Page1[0].";
 const fields: ReadonlyArray<PdfFieldEntry> = [
@@ -54,7 +54,7 @@ export const form8995Pdf: PdfFormDescriptor = {
     ) {
       throw new Error("Form 8995 PDF needs a valid nonnegative QBI deduction");
     }
-    const { businessName, ein, qbi, lines } = assertOneScheduleC8995(
+    const { businessName, ein, qbi, lines } = assertOneBusiness8995(
       fields,
       allPending,
     );

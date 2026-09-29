@@ -5,11 +5,17 @@ import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../core/runtime/executor.ts";
 import { registry } from "../../registry.ts";
 import { pdfReviewFixtures } from "../../pdf/review-fixtures.ts";
+import { buildMefXml } from "../builder.ts";
+import { testFiler } from "../test-filer.ts";
 
 Deno.test("profitable Schedule C with half-SE deduction reaches Form 8995 MeF and PDF", () => {
-  const fixture = pdfReviewFixtures.find((item) => item.id === "single-schedule-c");
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-schedule-c"
+  );
   if (!fixture) throw new Error("missing Schedule C review fixture");
-  const result = execute(buildExecutionPlan(registry), registry, { ...fixture.inputs }, {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    ...fixture.inputs,
+  }, {
     taxYear: 2025,
     formType: "f1040",
   });
@@ -18,9 +24,12 @@ Deno.test("profitable Schedule C with half-SE deduction reaches Form 8995 MeF an
   const fields = pending.form8995;
   assertEquals(pending.schedule1?.line3_schedule_c, 80_000);
   assertEquals(typeof pending.schedule1?.line15_se_deduction, "number");
-  assertEquals(fields?.line1_qbi, Math.round(
-    80_000 - (pending.schedule1?.line15_se_deduction as number),
-  ));
+  assertEquals(
+    fields?.line1_qbi,
+    Math.round(
+      80_000 - (pending.schedule1?.line15_se_deduction as number),
+    ),
+  );
   assertEquals(fields?.line15, pending.f1040?.line13_qbi_deduction);
   const xml = form8995.build(fields, { pending });
   assertEquals(xml.includes("<EIN>123456789</EIN>"), true);
@@ -28,9 +37,129 @@ Deno.test("profitable Schedule C with half-SE deduction reaches Form 8995 MeF an
   const pdf = form8995Pdf.projectFields?.(fields, pending);
   assertEquals(pdf?.line1_qbi, fields?.line1_qbi);
   assertEquals(pdf?.line15, fields?.line15);
-  assertThrows(() => form8995.build(fields, {
-    pending: { ...pending, schedule1: { ...pending.schedule1, line15_se_deduction: 0 } },
-  }), Error, "source reconciliation");
+  assertThrows(
+    () =>
+      form8995.build(fields, {
+        pending: {
+          ...pending,
+          schedule1: { ...pending.schedule1, line15_se_deduction: 0 },
+        },
+      }),
+    Error,
+    "source reconciliation",
+  );
+});
+
+Deno.test("one sourced Schedule F farm reaches Form 8995 MeF, PDF, and full-return XSD", async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: {
+      filing_status: "single",
+      taxpayer_first_name: "Sam",
+      taxpayer_last_name: "Farmer",
+      taxpayer_ssn: "123-45-6789",
+      qbi_no_prior_loss_or_suspended_loss_confirmed: true,
+      qbi_not_patron_of_specified_cooperative_confirmed: true,
+    },
+    schedule_f: {
+      schedule_fs: [{
+        farm_id: "north",
+        line_a_principal_crop_activity: "GRAIN FARMING",
+        line_b_agricultural_activity_code: "111100",
+        line_c_farm_name: "North Farm",
+        line_d_ein: "123456789",
+        line_e_material_participation: true,
+        accounting_method: "cash",
+        line1_sales_livestock_resale: 0,
+        line2_sales_products_raised: 80_000,
+        ccc_loan_election_in_effect: false,
+        qbi_no_other_adjustments_confirmed: true,
+      }],
+    },
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const pending = result.pending;
+  const fields = pending.form8995;
+  assertEquals(pending.schedule1?.line6_schedule_f, 80_000);
+  assertEquals(
+    fields?.line1_qbi,
+    Math.round(
+      80_000 - (pending.schedule1?.line15_se_deduction as number),
+    ),
+  );
+  assertEquals(fields?.line15, pending.f1040?.line13_qbi_deduction);
+  const xml = form8995.build(fields, { pending });
+  assertEquals(
+    xml.includes("<BusinessNameLine1Txt>North Farm</BusinessNameLine1Txt>"),
+    true,
+  );
+  assertEquals(xml.includes("<EIN>123456789</EIN>"), true);
+  const pdf = form8995Pdf.projectFields?.(fields, pending);
+  assertEquals(pdf?.line1_qbi, fields?.line1_qbi);
+  assertEquals(pdf?.line15, fields?.line15);
+  const returnXml = buildMefXml(pending, testFiler());
+  assertEquals(returnXml.includes("<IRS8995 documentId="), true);
+  const schemaPath = new URL(
+    "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    import.meta.url,
+  ).pathname;
+  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(xmlPath, returnXml);
+    const validation = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", schemaPath, xmlPath],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(
+      validation.code,
+      0,
+      new TextDecoder().decode(validation.stderr),
+    );
+  } finally {
+    await Deno.remove(xmlPath);
+  }
+  assertThrows(
+    () =>
+      form8995.build(fields, {
+        pending: {
+          ...pending,
+          schedule1: { ...pending.schedule1, line6_schedule_f: 1 },
+        },
+      }),
+    Error,
+    "source reconciliation",
+  );
+  assertThrows(
+    () =>
+      form8995.build(fields, {
+        pending: {
+          ...pending,
+          schedule_se: { ...pending.schedule_se, net_profit_schedule_f: 1 },
+        },
+      }),
+    Error,
+    "source reconciliation",
+  );
+  assertThrows(
+    () =>
+      form8995Pdf.projectFields?.(fields, {
+        ...pending,
+        general: {
+          ...pending.general,
+          qbi_not_patron_of_specified_cooperative_confirmed: undefined,
+        },
+      }),
+    Error,
+    "source reconciliation",
+  );
+  assertThrows(
+    () =>
+      form8995.build(fields, {
+        pending: { ...pending, f1099patr: { f1099patrs: [] } },
+      }),
+    Error,
+    "source reconciliation",
+  );
 });
 
 Deno.test("Form 8995 omits no-claim tracking fields in both exports", () => {

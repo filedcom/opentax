@@ -103,6 +103,7 @@ export const itemSchema = z.object({
   ]),
   line_c_farm_name: z.string().optional(),
   line_d_ein: z.string().optional(),
+  qbi_no_other_adjustments_confirmed: z.boolean().optional(),
   line_e_material_participation: z.boolean(),
   line_f_made_1099_payments: z.boolean().optional(),
   line_f_filed_1099s: z.boolean().optional(),
@@ -597,7 +598,10 @@ export function computeTotalExpenses(
 }
 
 // Line 34: Net profit (or loss)
-function computeNetProfit(item: ScheduleFItem, wotcReduction = 0): number {
+export function computeNetProfit(
+  item: ScheduleFItem,
+  wotcReduction = 0,
+): number {
   const grossIncome = computeGrossIncome(item);
   const totalExpenses = computeTotalExpenses(item, grossIncome, wotcReduction);
   return grossIncome - totalExpenses;
@@ -640,7 +644,18 @@ function perItemOutputs(
 
   // Form 8995 (QBI): only when net profit > 0
   if (netProfit > 0) {
-    outputs.push(output(form8995, { qbi_from_schedule_f: netProfit }));
+    outputs.push(output(form8995, {
+      qbi_from_schedule_f: netProfit,
+      schedule_f_qbi_businesses: [{
+        business_reference: item.farm_id,
+        business_name: item.line_c_farm_name,
+        ein: item.line_d_ein?.replace(/\D/g, ""),
+        qbi: netProfit,
+        no_other_adjustments_confirmed:
+          item.qbi_no_other_adjustments_confirmed === true,
+        source_schedule_f: item,
+      }],
+    }));
   }
 
   // Form 8582 (passive): only when material participation = false

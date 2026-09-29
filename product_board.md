@@ -87,11 +87,15 @@ negative case removed an invalid Form 3800 line from the synthetic source,
 allowing the intended separate-filing-route guard to run.
 The Form 8826 cap ledger passes 4/4 after the passive pass-through fixture's
 K-1 source reference was reconciled across Form 8826 and Form 8582-CR.
-The accrual Schedule F end-to-end test remains red (5/6): positive farm QBI
-reaches Form 8995 calculation but the MeF/PDF exporter only accepts its
-identified Schedule C route. The [Form 8995 gap](docs/mef/ty2025-form8995-positive-export-gap.md)
-now records the precise one-farm source and reconciliation work; the claim
-remains in scope.
+The accrual Schedule F end-to-end test now passes 6/6 because its $12,100
+profit produces no positive QBI deduction. A new bounded one-farm Form 8995
+route carries farm identity and a reviewed no-other-adjustments answer through
+the graph, reconciles Schedule F and Schedule SE to Form 1040, and emits MeF and
+PDF. Its synthetic $80,000 cash-farm full return passed TY2025 XSD validation;
+the generated nine-page PDF packet's Form 8995 page was visually checked
+against the $74,348 QBI row and $11,720 Form 1040 deduction. The
+[Form 8995 gap](docs/mef/ty2025-form8995-positive-export-gap.md) retains the
+multi-farm, cooperative, other-adjustment, and ATS gates.
 Read-only text extraction across the locally retained TY2025 Form 1040 ATS
 scenario PDFs found no Form 1095-A or Marketplace Statement text. It did not
 establish source-verified policy/month evidence for the seventeen red Form 8962
