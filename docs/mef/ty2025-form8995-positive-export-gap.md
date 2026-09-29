@@ -58,7 +58,8 @@ wage reductions, and reconciles it to Schedule 1 line 6. It ties the half-SE-tax
 deduction to Schedule SE, Form 7206's retained Schedule SE calculation, and
 Schedule 1 line 15. It checks Form 1040 taxable income and the line 13 QBI
 deduction against every printed Form 8995 line. The route rejects other QBI
-businesses, cooperative source records, the farm optional SE method, capital
+businesses, cooperative source records and Schedule F cooperative lines, the
+farm optional SE method, capital
 gain, REIT/PTP amounts, and separately attributable health insurance or
 retirement deductions. Missing or conflicting facts stop MeF and PDF export.
 

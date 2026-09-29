@@ -260,6 +260,10 @@ export function assertOneScheduleF8995(
     source.data.farm_sources?.some((entry) =>
         entry.kind === "1099patr_cooperative"
       ) === true ||
+    !zeroOrAbsent(farm.line3a_cooperative_distributions) ||
+    !zeroOrAbsent(farm.line3b_cooperative_distributions_taxable) ||
+    !zeroOrAbsent(farm.part_iii?.line38a_cooperative_distributions) ||
+    !zeroOrAbsent(farm.part_iii?.line38b_cooperative_distributions_taxable) ||
     general?.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
     general?.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
     fields.qbi_not_patron_of_specified_cooperative_confirmed !== true ||

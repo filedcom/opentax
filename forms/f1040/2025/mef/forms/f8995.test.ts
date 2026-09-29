@@ -79,6 +79,9 @@ Deno.test("one sourced Schedule F farm reaches Form 8995 MeF, PDF, and full-retu
   assertEquals(result.diagnostics, []);
   const pending = result.pending;
   const fields = pending.form8995;
+  const farmSource = pending.schedule_f as {
+    schedule_fs: Record<string, unknown>[];
+  };
   assertEquals(pending.schedule1?.line6_schedule_f, 80_000);
   assertEquals(
     fields?.line1_qbi,
@@ -156,6 +159,23 @@ Deno.test("one sourced Schedule F farm reaches Form 8995 MeF, PDF, and full-retu
     () =>
       form8995.build(fields, {
         pending: { ...pending, f1099patr: { f1099patrs: [] } },
+      }),
+    Error,
+    "source reconciliation",
+  );
+  assertThrows(
+    () =>
+      form8995.build(fields, {
+        pending: {
+          ...pending,
+          schedule_f: {
+            ...pending.schedule_f,
+            schedule_fs: [{
+              ...farmSource.schedule_fs[0],
+              line3a_cooperative_distributions: 100,
+            }],
+          },
+        },
       }),
     Error,
     "source reconciliation",
