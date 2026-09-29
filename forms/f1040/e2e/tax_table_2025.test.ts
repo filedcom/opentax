@@ -35,6 +35,10 @@ Deno.test("E2E: qualified dividends use the Tax Table on worksheet line 22", () 
       box1a: 5_000,
       box1b: 5_000,
     }],
+    schedule_b_part_iii: {
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    },
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.f1040?.line3a_qualified_dividends, 5_000);

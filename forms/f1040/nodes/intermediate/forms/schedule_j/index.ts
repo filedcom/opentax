@@ -39,19 +39,6 @@ export const inputSchema = completeInputSchema.partial().strict();
 type ScheduleJCalculationInput = z.infer<typeof completeInputSchema>;
 
 function reconcileCurrentYear(source: ScheduleJCalculationInput): void {
-  for (const [name, amount] of Object.entries({
-    farm_net_profit: source.farm_net_profit,
-    se_tax_deduction: source.se_tax_deduction,
-    agi: source.agi,
-    taxable_income_2025: source.taxable_income_2025,
-    qbi_deduction: source.qbi_deduction,
-    additional_deductions: source.additional_deductions,
-    nol_deduction: source.nol_deduction,
-  })) {
-    if (!Number.isSafeInteger(amount)) {
-      throw new Error(`Schedule J ${name} needs a filed whole-dollar amount`);
-    }
-  }
   if (source.se_tax_deduction < 0 || source.taxable_income_2025 < 0 ||
       source.qbi_deduction < 0 || source.additional_deductions < 0 ||
       source.nol_deduction < 0) {
@@ -64,14 +51,16 @@ function reconcileCurrentYear(source: ScheduleJCalculationInput): void {
       source.additional_deductions !== 0 || source.nol_deduction !== 0) {
     throw new Error("Schedule J farm-only route needs a standard deduction and no additional or NOL deductions");
   }
-  if (source.agi !== source.farm_net_profit - source.se_tax_deduction) {
+  if (Math.abs(
+    source.agi - (source.farm_net_profit - source.se_tax_deduction)
+  ) > 0.01) {
     throw new Error("Schedule J farm profit and SE deduction do not reconcile to AGI");
   }
   const taxableFarmIncome = source.farm_net_profit -
     source.se_tax_deduction - source.qbi_deduction;
   if (taxableFarmIncome <= 0 ||
       source.elected_farm_income > taxableFarmIncome ||
-      source.elected_farm_income > source.taxable_income_2025) {
+      source.elected_farm_income > Math.round(source.taxable_income_2025)) {
     throw new Error("Schedule J election exceeds sourced taxable farm income or Form 1040 line 15");
   }
 }
@@ -92,7 +81,7 @@ class ScheduleJCalculationNode extends TaxNode<typeof inputSchema> {
     const input = completeInputSchema.parse(partial);
     reconcileCurrentYear(input);
     const lines = calculateScheduleJOrdinaryIncome({
-      taxable_income_2025: input.taxable_income_2025,
+      taxable_income_2025: Math.round(input.taxable_income_2025),
       filing_status_2025: input.filing_status_2025,
       elected_farm_income: input.elected_farm_income,
       elected_farm_income_net_capital_gain: 0,

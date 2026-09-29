@@ -94,7 +94,7 @@ Deno.test("Schedule J rejects nonfarm income rather than treating offsetting AGI
       payer_name: "Bank",
       payer_tin: "123456789",
       recipient_tin: "987654321",
-      box1_interest_income: 100,
+      box1: 100,
     }],
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(
