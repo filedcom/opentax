@@ -2,6 +2,7 @@ import { normalizeAllPending } from "../../pending.ts";
 import {
   computeNetProfit,
   inputSchema as scheduleCInputSchema,
+  itemSchema as scheduleCItemSchema,
   projectScheduleCItems,
 } from "../../../nodes/inputs/schedule_c/index.ts";
 
@@ -54,8 +55,11 @@ export function assertOneScheduleC8995(
   const row = Array.isArray(qbiRows) && qbiRows.length === 1
     ? qbiRows[0] as Record<string, unknown>
     : undefined;
+  const rowSource = scheduleCItemSchema.safeParse(row?.source_schedule_c);
   const f1040 = pending.f1040;
   const schedule1 = pending.schedule1;
+  const general = pending.general;
+  const scheduleSe = pending.schedule_se;
   const otherSourceKeys = [
     "schedule_f",
     "schedule_e",
@@ -65,10 +69,12 @@ export function assertOneScheduleC8995(
     "f1099patr",
     "schedule_d",
     "f1099b",
-    "schedule_se",
     "sep_retirement",
   ] as const;
   const form7206 = pending.form7206;
+  const seDeduction = fields.se_tax_deduction ?? 0;
+  const rawQbi = sourceBusiness ? computeNetProfit(sourceBusiness) : 0;
+  const hasSeDeduction = typeof seDeduction === "number" && seDeduction > 0;
   const ein = typeof fields.line1_ein === "string"
     ? fields.line1_ein.replace(/\D/g, "")
     : "";
@@ -77,15 +83,18 @@ export function assertOneScheduleC8995(
     !schedule1 || pending.form8995a !== undefined ||
     otherSourceKeys.some((key) => pending[key] !== undefined) ||
     (form7206 !== undefined &&
-      Object.keys(form7206).some((key) => key !== "schedule_c_source")) ||
-    sourceInput?.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
-    sourceInput?.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
+      Object.keys(form7206).some((key) =>
+        key !== "schedule_c_source" && key !== "schedule_se_source"
+      )) ||
+    general?.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
+    general?.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
     fields.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
     sourceBusiness.qbi_no_other_adjustments_confirmed !== true ||
     sourceBusiness.line_g_material_participation !== true ||
     (sourceInput?.wotc_wage_reductions?.length ?? 0) !== 0 ||
     row.no_other_adjustments_confirmed !== true ||
-    JSON.stringify(row.source_schedule_c) !== JSON.stringify(sourceBusiness) ||
+    !rowSource.success ||
+    JSON.stringify(rowSource.data) !== JSON.stringify(sourceBusiness) ||
     !sourceBusiness.business_reference ||
     fields.line1_business_reference !== sourceBusiness.business_reference ||
     !sourceBusiness.line_c_business_name ||
@@ -101,22 +110,31 @@ export function assertOneScheduleC8995(
     typeof fields.line1_qbi !== "number" ||
     !Number.isInteger(fields.line1_qbi) ||
     fields.line1_qbi <= 0 ||
-    row.qbi !== fields.line1_qbi ||
-    computeNetProfit(sourceBusiness) !== fields.line1_qbi ||
-    fields.qbi_from_schedule_c !== fields.line1_qbi ||
+    row.qbi !== rawQbi ||
+    fields.qbi_from_schedule_c !== rawQbi ||
+    typeof seDeduction !== "number" ||
+    Math.round(rawQbi - seDeduction) !== fields.line1_qbi ||
+    (hasSeDeduction
+      ? scheduleSe?.net_profit_schedule_c !== rawQbi ||
+        !zeroOrAbsent(scheduleSe?.net_profit_schedule_f) ||
+        scheduleSe?.farm_optional_method_elected === true ||
+        form7206?.schedule_se_source === undefined ||
+        (form7206.schedule_se_source as Record<string, unknown>)
+            .line13_deduction !== seDeduction ||
+        schedule1.line15_se_deduction !== seDeduction
+      : scheduleSe !== undefined ||
+        !zeroOrAbsent(schedule1.line15_se_deduction)) ||
     !zeroOrAbsent(fields.qbi_from_schedule_f) ||
     !zeroOrAbsent(fields.qbi) ||
     !zeroOrAbsent(fields.sstb_qbi) ||
     !zeroOrAbsent(fields.line6_sec199a_dividends) ||
     !zeroOrAbsent(fields.qbi_loss_carryforward) ||
     !zeroOrAbsent(fields.reit_loss_carryforward) ||
-    !zeroOrAbsent(fields.se_tax_deduction) ||
     !zeroOrAbsent(fields.se_health_insurance_deduction) ||
     !zeroOrAbsent(fields.retirement_plan_deduction) ||
-    !zeroOrAbsent(schedule1.line15_se_deduction) ||
     !zeroOrAbsent(schedule1.line16_sep_simple) ||
     !zeroOrAbsent(schedule1.line17_se_health_insurance) ||
-    schedule1.line3_schedule_c !== fields.line1_qbi ||
+    schedule1.line3_schedule_c !== rawQbi ||
     !zeroOrAbsent(f1040.line3a_qualified_dividends) ||
     !zeroOrAbsent(f1040.line7_capital_gain) ||
     !zeroOrAbsent(f1040.line7a_cap_gain_distrib) ||
@@ -124,7 +142,7 @@ export function assertOneScheduleC8995(
     !zeroOrAbsent(f1040.line13b_additional_deductions) ||
     typeof f1040.line11_agi !== "number" ||
     typeof f1040.line12c_deduction_total !== "number" ||
-    f1040.line11_agi - f1040.line12c_deduction_total !==
+    Math.round(f1040.line11_agi - f1040.line12c_deduction_total) !==
       fields.line11
   ) {
     throw new Error(

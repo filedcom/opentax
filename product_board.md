@@ -28,6 +28,20 @@ Do not interpret an unchecked item as approval to omit its filing route. Do
 not check an item on the basis of a planned fix, a staged serializer, a local
 XSD pass, or an ignored test.
 
+### Latest validation attempt
+
+The 2026-09-29 diagnostic `deno task test` run on the moving worktree reported
+8,453 passed and 348 failed. It is not a release-gate pass; the full run must
+be repeated on a fixed commit after the route work is complete. The synthetic
+filled-PDF batch currently generates eight of eleven cases. The first blocking
+case is the nonparticipating rental loss: Schedule E PDF rejects a passive loss
+despite a Form 8582 source in the finalized graph. Subsequent cases have not
+yet been generated in that batch. Visual inspection of the generated Schedule 2
+page found missing filer identity; its descriptor now maps those fields, pending
+a fresh full-batch review. The profitable Schedule C case reaches Form 8995 XML
+and PDF with a sourced half-SE-tax QBI reduction, but its broader support gate
+remains open.
+
 ## Scope and completion rules
 
 - [ ] Keep this release limited to the TY2025 Form 1040 family: Form 1040, its applicable schedules, supporting forms, source documents, statements, PDF packet, MeF return, and A2A submission package.

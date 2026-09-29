@@ -47,6 +47,7 @@ export const form2210fPdf: PdfFormDescriptor = {
     text("primarySSN", "f1_2[0]"),
   ],
   projectFields(raw, allPending) {
+    if (Object.keys(raw).length === 0) return {};
     const finalized = finalizedForm2210FSchema.parse(raw);
     // The native builder checks the source calculation and finalized Form 1040.
     form2210f.build(finalized, { pending: allPending });

@@ -33,6 +33,13 @@ function copies(
   return scheduleCPdf.instances?.(projected) ?? [];
 }
 
+Deno.test("Schedule C PDF prints EIN as nine digits in the IRS comb field", () => {
+  const [copy] = copies({
+    schedule_cs: [business({ line_d_ein: "12-3456789" })],
+  });
+  assertEquals(copy.line_d_ein, "123456789");
+});
+
 Deno.test("Form 3115 adjustments print on the same Schedule C PDF income and Part V rows", () => {
   const [copy] = copies({
     schedule_cs: [business({ line_1_gross_receipts: 20_000 })],

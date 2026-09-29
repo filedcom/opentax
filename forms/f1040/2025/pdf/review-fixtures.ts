@@ -33,7 +33,7 @@ const jointFiler: FilerIdentity = {
   ...singleFiler,
   filingStatus: FilingStatus.MarriedFilingJointly,
   nameLine1: "ALEX AND SAM EXAMPLE",
-  fullName: "Alex and Sam Example",
+  fullName: "Alex Example",
   spouse: {
     ssn: "444556666",
     firstName: "Sam",
@@ -69,8 +69,8 @@ function wage(
   return {
     box1_wages: wages,
     box2_fed_withheld: withholding,
-    box3_ss_wages: wages,
-    box4_ss_withheld: wages * 0.062,
+    box3_ss_wages: Math.min(wages, 176_100),
+    box4_ss_withheld: Math.min(wages, 176_100) * 0.062,
     box5_medicare_wages: wages,
     box6_medicare_withheld: wages * 0.0145,
     employer_ein: employerEin,
@@ -115,15 +115,23 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
   {
     id: "single-schedule-c",
     inputs: {
-      general: singleGeneral,
+      general: {
+        ...singleGeneral,
+        qbi_no_prior_loss_or_suspended_loss_confirmed: true,
+        qbi_not_patron_of_specified_cooperative_confirmed: true,
+      },
       schedule_c: [{
-        line_a_principal_business: "Consulting",
-        line_b_business_code: "541600",
-        line_c_business_name: "Example Consulting",
-        line_f_accounting_method: "cash",
-        line_g_material_participation: true,
-        line_1_gross_receipts: 80_000,
-      }],
+          business_reference: "synthetic-consulting-2025",
+          line_a_principal_business: "Consulting",
+          line_b_business_code: "541600",
+          line_c_business_name: "Example Consulting",
+          line_d_ein: "12-3456789",
+          line_f_accounting_method: "cash",
+          line_g_material_participation: true,
+          line_i_made_1099_payments: false,
+          qbi_no_other_adjustments_confirmed: true,
+          line_1_gross_receipts: 80_000,
+        }],
     },
     filer: singleFiler,
     expectedPdfForms: [

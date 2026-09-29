@@ -270,6 +270,7 @@ function projectBusiness(
   );
   return {
     ...item,
+    line_d_ein: item.line_d_ein?.replaceAll("-", ""),
     business_street: address
       ? [address.line1, address.line2].filter(Boolean).join(" ")
       : undefined,

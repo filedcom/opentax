@@ -274,10 +274,6 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
         sstb_w2_wages: sstbWages,
         unadjusted_basis: nonSstbUbia,
         sstb_unadjusted_basis: sstbUbia,
-        qbi_no_prior_loss_or_suspended_loss_confirmed:
-          input.qbi_no_prior_loss_or_suspended_loss_confirmed,
-        qbi_not_patron_of_specified_cooperative_confirmed:
-          input.qbi_not_patron_of_specified_cooperative_confirmed,
         schedule_c_qbi_businesses: items.map((item, index) => ({
           business_reference: item.business_reference,
           business_name: item.line_c_business_name,

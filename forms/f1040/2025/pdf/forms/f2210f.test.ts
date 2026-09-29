@@ -50,6 +50,10 @@ function source() {
   };
 }
 
+Deno.test("Form 2210-F PDF omits an absent form", () => {
+  assertEquals(form2210fPdf.projectFields?.({}, {}), {});
+});
+
 Deno.test("Form 2210-F PDF maps box B and printed line 14 date, leaving reserved line 5 blank", () => {
   const facts = source();
   const lines = calculateForm2210FBoxB(facts);

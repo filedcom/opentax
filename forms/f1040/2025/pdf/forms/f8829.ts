@@ -104,6 +104,7 @@ function percent(value: number): string {
 function projectFields(
   fields: Record<string, unknown>,
 ): Record<string, unknown> {
+  if (Object.keys(fields).length === 0) return fields;
   const source = rentedHomeSourceSchema.parse(fields.rented_home);
   const lines = calculateRentedHomeForm8829(source);
   for (const key of Object.keys(lines) as (keyof Form8829Lines)[]) {

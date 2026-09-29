@@ -12,6 +12,16 @@ import {
 } from "../types.ts";
 import { schedule1a } from "./schedule1a.ts";
 
+Deno.test("Schedule 1-A omits context-only input before validating fractional return AGI", () => {
+  assertEquals(
+    schedule1a.build(
+      { filing_status: FilingStatus.Single, magi: 74_348.18 },
+      { pending: { f1040: { line11_agi: 74_348.18 } } },
+    ),
+    "",
+  );
+});
+
 const review = {
   no_section933_puerto_rico_excluded_income: true as const,
   section933_review_source_reference: "2025 residency and income review",

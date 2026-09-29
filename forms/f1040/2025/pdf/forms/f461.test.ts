@@ -63,6 +63,13 @@ Deno.test("Form 461 PDF maps the canonical 2025 header and all active line widge
   assertEquals(form461Pdf.pageIndices?.(filed), [0]);
 });
 
+Deno.test("Form 461 PDF omits context-only pending fields", () => {
+  assertEquals(
+    form461Pdf.instances?.({ filing_status: "single" }, filer, pending),
+    [],
+  );
+});
+
 Deno.test("Form 461 PDF refuses a filed-return mismatch or missing identity", () => {
   assertThrows(
     () =>

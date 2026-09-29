@@ -29,15 +29,18 @@ type Input = z.infer<typeof inputSchema> | readonly [];
 function buildSeniorSchedule(raw: Input, context?: MefBuildContext): string {
   if (Array.isArray(raw) && raw.length === 0) return "";
   const input = inputSchema.parse(raw);
-  const form1040 = form1040ReconciliationSchema.parse(
-    context?.pending?.f1040,
-  );
   if (!input.senior_zero_exclusions_review) {
-    if ((form1040.line13b_additional_deductions ?? 0) === 0) return "";
+    const claim = z.object({
+      line13b_additional_deductions: z.number().optional(),
+    }).passthrough().parse(context?.pending?.f1040);
+    if ((claim.line13b_additional_deductions ?? 0) === 0) return "";
     throw new Error(
       "Schedule 1-A positive line 13b needs sourced senior-only Part I review",
     );
   }
+  const form1040 = form1040ReconciliationSchema.parse(
+    context?.pending?.f1040,
+  );
   if (
     context?.pending &&
     ("form2555" in context.pending || "form4563" in context.pending)

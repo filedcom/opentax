@@ -1,6 +1,37 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8995Pdf } from "../../pdf/forms/f8995.ts";
 import { form8995 } from "./f8995.ts";
+import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
+import { execute } from "../../../../../core/runtime/executor.ts";
+import { registry } from "../../registry.ts";
+import { pdfReviewFixtures } from "../../pdf/review-fixtures.ts";
+
+Deno.test("profitable Schedule C with half-SE deduction reaches Form 8995 MeF and PDF", () => {
+  const fixture = pdfReviewFixtures.find((item) => item.id === "single-schedule-c");
+  if (!fixture) throw new Error("missing Schedule C review fixture");
+  const result = execute(buildExecutionPlan(registry), registry, { ...fixture.inputs }, {
+    taxYear: 2025,
+    formType: "f1040",
+  });
+  assertEquals(result.diagnostics, []);
+  const pending = result.pending;
+  const fields = pending.form8995;
+  assertEquals(pending.schedule1?.line3_schedule_c, 80_000);
+  assertEquals(typeof pending.schedule1?.line15_se_deduction, "number");
+  assertEquals(fields?.line1_qbi, Math.round(
+    80_000 - (pending.schedule1?.line15_se_deduction as number),
+  ));
+  assertEquals(fields?.line15, pending.f1040?.line13_qbi_deduction);
+  const xml = form8995.build(fields, { pending });
+  assertEquals(xml.includes("<EIN>123456789</EIN>"), true);
+  assertEquals(xml.includes("<QualifiedBusinessIncomeDedAmt>"), true);
+  const pdf = form8995Pdf.projectFields?.(fields, pending);
+  assertEquals(pdf?.line1_qbi, fields?.line1_qbi);
+  assertEquals(pdf?.line15, fields?.line15);
+  assertThrows(() => form8995.build(fields, {
+    pending: { ...pending, schedule1: { ...pending.schedule1, line15_se_deduction: 0 } },
+  }), Error, "source reconciliation");
+});
 
 Deno.test("Form 8995 omits no-claim tracking fields in both exports", () => {
   assertEquals(form8995.build({}), "");
@@ -98,11 +129,11 @@ function oneBusinessClaim(qbi = 300) {
     qbi_deduction: deduction,
   };
   const pending = {
-    schedule_c: {
-      schedule_cs: [source],
+    general: {
       qbi_no_prior_loss_or_suspended_loss_confirmed: true,
       qbi_not_patron_of_specified_cooperative_confirmed: true,
     },
+    schedule_c: { schedule_cs: [source] },
     schedule1: { line3_schedule_c: qbi },
     f1040: {
       line11_agi: 50_000,
@@ -177,8 +208,8 @@ Deno.test("Form 8995 blocks a source or final-return change after calculation", 
       },
       {
         ...pending,
-        schedule_c: {
-          ...pending.schedule_c,
+        general: {
+          ...pending.general,
           qbi_not_patron_of_specified_cooperative_confirmed: undefined,
         },
       },

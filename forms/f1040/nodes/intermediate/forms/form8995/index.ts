@@ -300,9 +300,9 @@ function advancedFormOutput(
   });
 }
 
-// The simplified return currently supports one positively identified Schedule C
-// business with no other section 199A sources or adjustments. Other positive
-// deductions remain in the pending graph but cannot be exported as Form 8995.
+// The simplified return supports one positively identified Schedule C business
+// with its sourced half-SE-tax deduction and no other section 199A sources or
+// adjustments.
 function oneScheduleCLines(
   input: Form8995Input,
   cfg: F1040Config,
@@ -310,6 +310,7 @@ function oneScheduleCLines(
   const businesses = input.schedule_c_qbi_businesses;
   if (businesses?.length !== 1) return undefined;
   const business = businesses[0];
+  const seDeduction = input.se_tax_deduction ?? 0;
   if (
     !business.business_reference || !business.business_name || !business.ein ||
     business.no_other_adjustments_confirmed !== true ||
@@ -318,25 +319,32 @@ function oneScheduleCLines(
     !Number.isInteger(business.qbi) || business.qbi <= 0 ||
     sumField(input.qbi_from_schedule_c) !== business.qbi ||
     sumField(input.qbi_from_schedule_f) !== 0 || sumField(input.qbi) !== 0 ||
-    sumField(input.sstb_qbi) !== 0 || businessDeductions(input) !== 0 ||
+    sumField(input.sstb_qbi) !== 0 ||
+    typeof seDeduction !== "number" || seDeduction < 0 ||
+    sumField(input.se_health_insurance_deduction) !== 0 ||
+    sumField(input.retirement_plan_deduction) !== 0 ||
     sumField(input.line6_sec199a_dividends) !== 0 ||
     sumField(input.net_capital_gain) !== 0 ||
     (input.qbi_loss_carryforward ?? 0) !== 0 ||
     (input.reit_loss_carryforward ?? 0) !== 0 ||
-    input.agi === undefined || !Number.isInteger(input.agi) ||
+    input.agi === undefined || !Number.isFinite(input.agi) ||
     input.filing_status === undefined
   ) return undefined;
-  const line11 = Math.max(0, input.agi - standardDeductionAmount(input, cfg));
-  const line5 = Math.round(business.qbi * QBI_RATE);
+  const qbi = Math.round(business.qbi - seDeduction);
+  if (qbi <= 0) return undefined;
+  const line11 = Math.round(
+    Math.max(0, input.agi - standardDeductionAmount(input, cfg)),
+  );
+  const line5 = Math.round(qbi * QBI_RATE);
   const line14 = Math.round(line11 * QBI_RATE);
   return {
     line1_business_reference: business.business_reference,
     line1_business_name: business.business_name,
     line1_ein: business.ein,
-    line1_qbi: business.qbi,
-    line2: business.qbi,
+    line1_qbi: qbi,
+    line2: qbi,
     line3: 0,
-    line4: business.qbi,
+    line4: qbi,
     line5,
     line6: 0,
     line7: 0,

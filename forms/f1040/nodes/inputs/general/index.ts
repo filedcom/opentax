@@ -161,6 +161,9 @@ export type DependentFiling = z.infer<typeof dependentFilingSchema>;
 
 export const inputSchema = z.object({
   filing_status: z.nativeEnum(FilingStatus),
+  qbi_no_prior_loss_or_suspended_loss_confirmed: z.literal(true).optional(),
+  qbi_not_patron_of_specified_cooperative_confirmed: z.literal(true)
+    .optional(),
   form461_scope_review: form461ScopeReviewSchema.optional(),
   // Required for the Form 3800 line 13 limit when filing separately.
   spouse_has_business_credit: z.boolean().optional(),
@@ -968,6 +971,13 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
       // the same standard deduction amount as the standard_deduction worksheet.
       this.outputNodes.output(form8995, {
         filing_status: parsed.filing_status,
+        ...(parsed.qbi_no_prior_loss_or_suspended_loss_confirmed === true && {
+          qbi_no_prior_loss_or_suspended_loss_confirmed: true,
+        }),
+        ...(parsed.qbi_not_patron_of_specified_cooperative_confirmed ===
+            true && {
+          qbi_not_patron_of_specified_cooperative_confirmed: true,
+        }),
         ...(parsed.taxpayer_age_65_or_older !== undefined &&
           { taxpayer_age_65_or_older: parsed.taxpayer_age_65_or_older }),
         ...(parsed.taxpayer_blind !== undefined &&

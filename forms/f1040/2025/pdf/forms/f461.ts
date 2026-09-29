@@ -17,7 +17,7 @@ export const form461Pdf: PdfFormDescriptor = {
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f461--2025.pdf",
   pageIndices: () => [0],
   instances(raw, filer, allPending) {
-    if (Object.keys(raw).length === 0) return [];
+    if (!nativeForm461.FIELD_MAP.some(([key]) => key in raw)) return [];
     const fields = filedForm461Schema.parse(raw);
     if (
       !filer?.nameLine1 || !/^\d{9}$/.test(filer.primarySSN.replace(/\D/g, ""))

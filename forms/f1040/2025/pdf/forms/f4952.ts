@@ -43,6 +43,7 @@ export const form4952Pdf: PdfFormDescriptor = {
   ],
   fields,
   projectFields(fields, allPending) {
+    if (Object.keys(fields).length === 0) return fields;
     if (
       fields.source_1099_royalties !== undefined
     ) {

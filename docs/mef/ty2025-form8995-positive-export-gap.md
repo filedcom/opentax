@@ -23,9 +23,10 @@ record only when the business has a name, EIN, reference, positive integer net
 profit, an explicit no-other-adjustments confirmation, and an explicit no-prior-
 or-suspended-loss confirmation, plus confirmation that the filer is not a patron
 of a specified cooperative. The source Schedule C must independently recalculate
-to that QBI amount and match Schedule 1 line 3. The final Schedule 1 must show
-zero on lines 15-17, so no attributable self-employment tax, health insurance or
-retirement-plan deduction is silently allocated. No other QBI, REIT/PTP, gain or
+to the business profit and match Schedule 1 line 3. The final Schedule 1 line 15
+must match the sourced half of self-employment tax when Schedule SE applies;
+that deduction reduces line 1 QBI. Lines 16-17 remain zero, so health insurance
+or retirement-plan deductions cannot be silently allocated. No other QBI, REIT/PTP, gain or
 qualified-dividend input is allowed. The
 [corrected IRS TY2025 instructions](https://www.irs.gov/instructions/i8995)
 define Form 8995 line 11 for 1040 filers as Form 1040 line 11a minus lines 12e
@@ -40,13 +41,14 @@ to the official TY2025 AcroForm fields.
 The bounded calculation rounds each printed 20% component to whole dollars and
 routes the resulting line 15 amount exactly to Form 1040; export rejects even a
 fractional mismatch. It also rejects original Schedule F/E, K-1, Form 1099-DIV,
-Schedule D, Schedule SE and retirement-plan sources, plus any Form 7206 claim,
-even if their deposits were omitted from Form 8995 pending data.
+Schedule D and retirement-plan sources, plus any Form 7206 claim beyond its
+retained Schedule C and Schedule SE source records, even if their deposits were
+omitted from Form 8995 pending data.
 
 These zero-source conditions are an explicit supported boundary, not inferred
 zeros: export checks the final Schedule 1 and Form 1040 before producing a
-document. A typical profitable sole proprietor with positive half-SE tax is
-still outside this route and fails closed.
+document. The synthetic profitable Schedule C fixture exercises the ordinary
+half-SE-tax route through calculation, native XML, and PDF projection.
 
 ## Remaining gaps
 
@@ -61,8 +63,8 @@ still outside this route and fails closed.
 The native descriptor returns no document for no-claim tracking fields or a zero
 deduction. Positive claims outside the bounded route raise a
 source-reconciliation error in both MeF and PDF. Malformed claimed amounts also
-reject. Focused cases are written. No tests, typecheck, local XSD, filled PDF or
-ATS validation was run in this tranche.
+reject. Focused and graph-to-export cases pass. A filled synthetic Schedule C
+PDF was generated; visual, local XSD, and ATS validation remain open.
 
 The zero-deduction route needs a separate audit: a current REIT/PTP loss may
 still need a Form 8995 carryforward line even when no line 13 deduction is

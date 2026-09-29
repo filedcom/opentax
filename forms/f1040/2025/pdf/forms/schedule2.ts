@@ -195,6 +195,10 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 export const schedule2Pdf: PdfFormDescriptor = {
   pendingKey: "schedule2",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040s2--2025.pdf",
+  filerFields: [
+    { kind: "text", domainKey: "nameLine1", pdfField: "form1[0].Page1[0].f1_01[0]" },
+    { kind: "text", domainKey: "primarySSN", pdfField: "form1[0].Page1[0].f1_02[0]" },
+  ],
   fields,
   projectFields(fields, allPending) {
     const source = allPending.f4255;

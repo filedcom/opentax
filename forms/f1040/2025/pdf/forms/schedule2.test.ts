@@ -1,6 +1,13 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { schedule2Pdf } from "./schedule2.ts";
 
+Deno.test("Schedule 2 PDF includes filer identity on page 1", () => {
+  assertEquals(schedule2Pdf.filerFields?.map((entry) => entry.domainKey), [
+    "nameLine1",
+    "primarySSN",
+  ]);
+});
+
 Deno.test("Form 4255 source rows project Schedule 2 net-EPE lines and row checkboxes", () => {
   const source = {
     rows: [{
