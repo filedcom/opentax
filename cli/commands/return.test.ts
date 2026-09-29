@@ -92,13 +92,36 @@ Deno.test("CLI return reports the Form 4952 limit and carryforward", async () =>
   const tmpDir = await Deno.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
-    for (const [nodeType, data] of [
-      ["general", { filing_status: "single" }],
-      ["w2", { box1_wages: 300_000, box2_fed_withheld: 60_000 }],
-      ["f1099int", { payer_name: "Example Bank", box1: 2_000 }],
-      ["schedule_a", { line_9_investment_interest: 50_000, line_8a_mortgage_interest_1098: 20_000 }],
-    ] as const) {
-      await formAddCommand({ returnId, nodeType, dataJson: JSON.stringify(data), baseDir: tmpDir });
+    for (
+      const [nodeType, data] of [
+        ["general", { filing_status: "single" }],
+        ["w2", { box1_wages: 300_000, box2_fed_withheld: 60_000 }],
+        ["f1099int", {
+          payer_name: "Example Bank",
+          box1: 2_000,
+          investment_property_for_form4952: true,
+        }],
+        ["schedule_a", { line_8a_mortgage_interest_1098: 20_000 }],
+        ["form4952", {
+          investment_interest_expense: 50_000,
+          amt_refigure: {
+            prior_year_disallowed_interest: 0,
+            interest_on_private_activity_bonds: 0,
+            other_gross_income_adjustment: 0,
+            qualified_dividends_adjustment: 0,
+            net_disposition_gain_adjustment: 0,
+            net_capital_gain_adjustment: 0,
+            investment_expenses_adjustment: 0,
+          },
+        }],
+      ] as const
+    ) {
+      await formAddCommand({
+        returnId,
+        nodeType,
+        dataJson: JSON.stringify(data),
+        baseDir: tmpDir,
+      });
     }
     const result = await getReturnCommand({ returnId, baseDir: tmpDir });
     assertEquals(result.lines.line12c_deduction_total, 22_000);
@@ -184,7 +207,7 @@ Deno.test("getReturnCommand calculates above-threshold Schedule C QBI", async ()
     );
     assertEquals(
       Math.round(result.summary.line24_total_tax * 100) / 100,
-      44_854.25,
+      44_855.08,
     );
   } finally {
     await Deno.remove(tmpDir, { recursive: true });

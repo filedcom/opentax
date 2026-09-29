@@ -136,8 +136,8 @@ Deno.test("plain W-2 MeF validation does not report missing 1040 totals or Form 
       "<AdjustedGrossIncomeAmt>30000</AdjustedGrossIncomeAmt>",
     );
     assertStringIncludes(xml, "<TaxableIncomeAmt>14250</TaxableIncomeAmt>");
-    assertStringIncludes(xml, "<TotalTaxAmt>1472</TotalTaxAmt>");
-    assertStringIncludes(xml, "<RefundAmt>1528</RefundAmt>");
+    assertStringIncludes(xml, "<TotalTaxAmt>1475</TotalTaxAmt>");
+    assertStringIncludes(xml, "<RefundAmt>1525</RefundAmt>");
     assertStringIncludes(xml, "<IRSW2 ");
     assertEquals(xml.includes("<IRS1040ScheduleA "), false);
     assertEquals(xml.includes("<IRS6251 "), false);
@@ -153,12 +153,13 @@ Deno.test("exportMefCommand rejects an empty draft without fabricating XML", asy
   try {
     const returnId = await makeReturn(tmpDir);
     await assertRejects(
-      () => exportMefCommand({
-        returnId,
-        baseDir: tmpDir,
-        force: true,
-        draft: true,
-      }),
+      () =>
+        exportMefCommand({
+          returnId,
+          baseDir: tmpDir,
+          force: true,
+          draft: true,
+        }),
       Error,
       "requires a real filer identity",
     );

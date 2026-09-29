@@ -10,7 +10,10 @@ import {
 } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
-import { form8949 } from "../../intermediate/forms/form8949/index.ts";
+import {
+  form8949,
+  Form8949Part,
+} from "../../intermediate/forms/form8949/index.ts";
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
@@ -20,6 +23,11 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 // Part II long-term: D (1099-B basis reported), E (1099-B no basis), F (no 1099-B)
 // Part II long-term digital: J (1099-DA basis reported), K (1099-DA no basis), L (no 1099-DA)
 const SHORT_TERM_PARTS = new Set(["A", "B", "C", "G", "H", "I"]);
+const AMT_PARTS = ["A", "B", "C", "D", "E", "F"] as const;
+
+function isAmtPart(part: string): part is (typeof AMT_PARTS)[number] {
+  return AMT_PARTS.some((candidate) => candidate === part);
+}
 
 // Section 1202 QSBS exclusion codes
 // Q1: 50% exclusion (pre-2009 stock), Q2: 75% exclusion (2009-2010), Q3: 100% exclusion (post-2010)
@@ -30,7 +38,7 @@ export enum QsbsCode {
 }
 
 export const itemSchema = z.object({
-  part: z.enum(["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"]),
+  part: z.nativeEnum(Form8949Part),
   description: z.string(),
   source_transaction_id: z.string().trim().min(1).optional(),
   date_acquired: z.string(),
@@ -154,7 +162,7 @@ function processItem(item: F8949Item): NodeOutput[] {
     const regularGain = gainLoss;
     const amtGain = item.proceeds - item.amt_cost_basis;
     if (
-      !["A", "B", "C", "D", "E", "F"].includes(item.part) ||
+      !isAmtPart(item.part) ||
       !item.source_transaction_id ||
       adjustmentCodes !== undefined ||
       (adjustmentAmount ?? 0) !== 0 ||
@@ -166,8 +174,7 @@ function processItem(item: F8949Item): NodeOutput[] {
       !Number.isInteger(item.amt_cost_basis) ||
       !(
         (regularGain > 0 && amtGain > 0) ||
-        (["A", "B", "C", "D", "E", "F"].includes(item.part) &&
-          regularGain < 0 && amtGain < 0)
+        (regularGain < 0 && amtGain < 0)
       )
     ) {
       throw new Error(

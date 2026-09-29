@@ -94,7 +94,6 @@ class DisabledAccessLimitNode extends TaxNode<typeof inputSchema> {
       const matched = passive?.credit_sources.filter((source) =>
         source.source_form === "Form 8826" &&
         source.source_origin.kind === required.source_type &&
-        source.source_origin.kind !== "self" &&
         source.source_origin.ein === required.source_ein &&
         source.reporting_route === PassiveCreditReportingRoute.Form3800Line3 &&
         source.form3800_credit_line === "1e" &&

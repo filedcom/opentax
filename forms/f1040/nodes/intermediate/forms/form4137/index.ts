@@ -250,12 +250,13 @@ export function calculateForm4137(
           "Form 4137 allocated-tip W-2 needs employer name and EIN",
         );
       }
+      const sourceEin = source.employer_ein;
       const index = form.employers.findIndex((employer) =>
         employer.name === source.employer_name &&
         (employer.ein?.replaceAll("-", "") ?? "Applied For") ===
-          (source.employer_ein === "Applied For"
+          (sourceEin === "Applied For"
             ? "Applied For"
-            : source.employer_ein.replaceAll("-", ""))
+            : sourceEin.replaceAll("-", ""))
       );
       if (index < 0) {
         throw new Error(

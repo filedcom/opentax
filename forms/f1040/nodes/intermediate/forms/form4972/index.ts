@@ -175,7 +175,6 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
       input.participant_five_year_member === true) ||
     !(
       input.beneficiary_distribution === true ||
-      input.alternate_payee_distribution === true ||
       input.participant_five_year_member === true
     ) ||
     (input.beneficiary_distribution === true

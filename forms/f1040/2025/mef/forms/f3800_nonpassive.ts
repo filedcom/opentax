@@ -653,6 +653,9 @@ export function buildForm3800NonpassiveParts(
         : documentIdAt(firstFacilityIndex),
       referenceDocumentName: "IRS8835",
     };
+    if (!metadata.referenceDocumentId || !metadata.referenceDocumentName) {
+      throw new Error("Form 3800 facility credit needs a source document");
+    }
     return {
       line: row.line,
       metadata,

@@ -575,7 +575,12 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
     const losses = sum(properties, "deductibleLoss");
     const propertyNet = income - losses;
     if (royaltyKeys.length > 0 || linkedMiscRoyalty) {
-      const pendingLine5 = context?.pending?.schedule1?.line5_schedule_e;
+      const pendingSchedule1 = context?.pending?.schedule1;
+      const pendingLine5 = pendingSchedule1 &&
+          typeof pendingSchedule1 === "object" &&
+          "line5_schedule_e" in pendingSchedule1
+        ? pendingSchedule1.line5_schedule_e
+        : undefined;
       const line5 = Array.isArray(pendingLine5)
         ? pendingLine5.reduce((sum: number, amount: number) => sum + amount, 0)
         : pendingLine5;

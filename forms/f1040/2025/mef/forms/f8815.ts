@@ -32,7 +32,10 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Form8815Lines, string]> =
 
 function reconciledLines(fields: Input) {
   const source = inputSchema.parse(Object.fromEntries(
-    Object.keys(inputSchema.shape).map((key) => [key, fields[key]]),
+    Object.keys(inputSchema.shape).map((key) => [
+      key,
+      fields[key as keyof Input],
+    ]),
   ));
   const lines = calculateForm8815(source, CONFIG_BY_YEAR[2025]);
   for (const [key] of FIELD_MAP) {

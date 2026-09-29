@@ -30,6 +30,8 @@ export const inputSchema = z.object({
   // Line 8 — Additional taxes from Form 5329 (early dist, excess contributions)
   // IRC §72(t), §4973; Form 5329 all parts → Schedule 2 line 8
   line8_form5329_tax: z.number().nonnegative().optional(),
+  // Pre-2025 Form 5405 repayment posted to Schedule 2 line 10.
+  line10_homebuyer_credit_repayment: z.number().nonnegative().optional(),
   // Only Form 5329 Parts I/II are chapter 1 taxes. The later parts include
   // several different excise-tax sections, not just section 4973, and cannot
   // be included in a Form 8978 chapter 1 offset.
@@ -156,6 +158,7 @@ function part1Total(input: Schedule2Input): number {
 function part2Total(input: Schedule2Input): number {
   return (input.line4_se_tax ?? 0) +
     (input.line5_unreported_tip_tax ?? 0) +
+    (input.line10_homebuyer_credit_repayment ?? 0) +
     line8(input) +
     line13(input) +
     line17h(input) +

@@ -97,14 +97,16 @@ function medicareTax(line6: number): number {
 class ScheduleSENode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule_se";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([
-    schedule2,
-    schedule1,
-    agi_aggregator,
-    form8959,
-    form8995,
-    form7206,
-  ]);
+  get outputNodes() {
+    return new OutputNodes([
+      schedule2,
+      schedule1,
+      agi_aggregator,
+      form8959,
+      form8995,
+      form7206,
+    ]);
+  }
 
   compute(ctx: NodeContext, rawInput: ScheduleSEInput): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];

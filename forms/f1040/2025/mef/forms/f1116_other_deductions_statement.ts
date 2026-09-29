@@ -14,9 +14,12 @@ export const form1116OtherDeductionsStatement: MefFormDescriptor<
   build(_fields, context = {}) {
     const raw = context.pending?.form_1116;
     if (!raw || typeof raw !== "object") return "";
+    if (!("other_deductions" in raw)) return "";
     const amount = raw.other_deductions;
     if (typeof amount !== "number" || amount <= 0) return "";
-    const explanation = raw.other_deductions_explanation;
+    const explanation = "other_deductions_explanation" in raw
+      ? raw.other_deductions_explanation
+      : undefined;
     if (typeof explanation !== "string" || !explanation.trim()) {
       throw new Error(
         "Form 1116 other deductions need a source explanation",

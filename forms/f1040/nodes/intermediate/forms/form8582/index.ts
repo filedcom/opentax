@@ -995,7 +995,7 @@ class Form8582Node extends TaxNode<typeof inputSchema> {
             ...(line4 !== 0 ||
                 allocation.allowedOperating > 0
               ? [output(schedule1, {
-                ...(line4 !== 0 ? { line4_other_gains: line4 } : {}),
+                line4_other_gains: line4,
                 ...(allocation.allowedOperating > 0
                   ? { line5_schedule_e: -allocation.allowedOperating }
                   : {}),
@@ -1020,11 +1020,9 @@ class Form8582Node extends TaxNode<typeof inputSchema> {
         outputs: (mixedCurrentSale ? allocation.allowedOperating : line4 +
             allocation.allowedOperating) > 0
           ? [output(schedule1, {
+            line5_schedule_e: -allocation.allowedOperating,
             ...(!mixedCurrentSale && line4 > 0
               ? { line4_other_gains: -line4 }
-              : {}),
-            ...(allocation.allowedOperating > 0
-              ? { line5_schedule_e: -allocation.allowedOperating }
               : {}),
           })]
           : [],

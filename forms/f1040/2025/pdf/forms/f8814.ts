@@ -3,7 +3,10 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { rgb, StandardFonts } from "pdf-lib";
 
 const base = "topmostSubform[0].Page1[0].";
-const text = (domainKey: string, number: string): PdfFieldEntry => ({
+const text = (
+  domainKey: string,
+  number: string,
+): Extract<PdfFieldEntry, { kind: "text" }> => ({
   kind: "text",
   domainKey,
   pdfField: `${base}f1_${number}[0]`,

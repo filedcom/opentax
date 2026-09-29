@@ -93,7 +93,6 @@ export function reconciledForm8874K1Line2(
         source.form3800_credit_line === "1i" &&
         source.source_document_reference === credit.source_document_reference &&
         source.source_origin.kind === credit.source_type &&
-        source.source_origin.kind !== PassiveCreditSourceOrigin.Self &&
         source.source_origin.ein === credit.source_ein
       ).reduce((sum, source) => sum + source.current_year_credit, 0);
       if (amount !== credit.credit_amount) {

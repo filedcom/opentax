@@ -353,7 +353,10 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
       ...(other > 0 ? { line8z_other: other } : {}),
     };
     if (Object.keys(agiIncome).length > 0) {
-      outputs.push(this.outputNodes.output(agi_aggregator, agiIncome));
+      outputs.push(this.outputNodes.output(agi_aggregator, {
+        ...agiIncome,
+        line8z_other: other,
+      }));
     }
 
     // Schedule F line 6a shows received proceeds even when tax is deferred.

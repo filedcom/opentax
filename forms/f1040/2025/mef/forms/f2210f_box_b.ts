@@ -54,6 +54,7 @@ export const form2210f: MefFormDescriptor<
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f2210f.pdf",
   build(fields, context) {
+    if (Array.isArray(fields) && fields.length === 0) return "";
     const { source, filed_lines: filed } = finalizedForm2210FSchema.parse(
       fields,
     );

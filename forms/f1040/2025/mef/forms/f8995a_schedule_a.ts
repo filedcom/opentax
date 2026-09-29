@@ -14,15 +14,28 @@ function buildScheduleA(rawFields: Input, context?: MefBuildContext): string {
   if (Array.isArray(rawFields) && rawFields.length === 0) return "";
   const fields = inputSchema.strict().parse(rawFields);
   const parent = inputSchema.strict().safeParse(context?.pending?.form8995a);
-  if (!parent.success || JSON.stringify(parent.data) !== JSON.stringify(fields)) {
-    throw new Error("Form 8995-A Schedule A needs matching parent pending source");
+  if (
+    !parent.success || JSON.stringify(parent.data) !== JSON.stringify(fields)
+  ) {
+    throw new Error(
+      "Form 8995-A Schedule A needs matching parent pending source",
+    );
   }
   if (context?.pending?.form8995a_schedule_d !== undefined) {
-    throw new Error("Form 8995-A Schedule A bounded route cannot include Schedule D");
+    throw new Error(
+      "Form 8995-A Schedule A bounded route cannot include Schedule D",
+    );
   }
   const lines = calculateOneSstb8995ALines(fields);
-  if (context?.pending?.f1040?.line13_qbi_deduction !== lines.line39) {
-    throw new Error("Form 8995-A Schedule A parent line 39 differs from Form 1040 line 13");
+  const filed1040 = context?.pending?.f1040;
+  if (
+    !filed1040 || typeof filed1040 !== "object" ||
+    !("line13_qbi_deduction" in filed1040) ||
+    filed1040.line13_qbi_deduction !== lines.line39
+  ) {
+    throw new Error(
+      "Form 8995-A Schedule A parent line 39 differs from Form 1040 line 13",
+    );
   }
   return elements("IRS8995AScheduleA", [
     elements("NonPTPSSTBGrp", [

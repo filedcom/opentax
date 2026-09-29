@@ -258,7 +258,8 @@ export function qualifiedEntireDispositionGain(
   const priorOperating = item.prior_unallowed_passive_operating ?? 0;
   const firstYear = item.first_year_activity_source;
   const sourcedPriorLoss = firstYear === undefined && priorOperating > 0 &&
-    item.prior_year_8582_source?.activity_id === item.activity_id &&
+    item.prior_year_8582_source !== undefined &&
+    item.prior_year_8582_source.activity_id === item.activity_id &&
     item.prior_year_8582_source.filed_part_vii_column_c === priorOperating &&
     item.prior_year_8582_source.filed_part_ix_rows === undefined &&
     item.prior_year_8582_source.filed_part_viii_row === undefined;
@@ -910,18 +911,9 @@ function form8990Outputs(items: EItems): NodeOutput[] {
   );
   if (totalMortgage === 0 && totalOther === 0) return [];
 
-  const input: Partial<z.infer<typeof form8990["inputSchema"]>> = {};
-  if (totalMortgage > 0) {
-    input.disallowed_mortgage_interest_carryforward = totalMortgage;
-  }
-  if (totalOther > 0) input.disallowed_other_interest_carryforward = totalOther;
-
-  return [
-    output(
-      form8990,
-      input as AtLeastOne<z.infer<typeof form8990["inputSchema"]>>,
-    ),
-  ];
+  throw new Error(
+    "Schedule E business-interest carryforwards need reviewed Form 8990 source records",
+  );
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────

@@ -1158,16 +1158,18 @@ class F1040Node extends TaxNode<typeof inputSchema> {
       electric,
       businessCredit,
     );
+    const numericLines = assembleReturn(
+      effectiveInput,
+      cleanVehicles,
+      mortgage,
+      homebuyer,
+      electric,
+      businessCredit,
+      bondCredit,
+    );
+    verifyForm1116Limitation(effectiveInput, numericLines);
     const assembled = {
-      ...assembleReturn(
-        effectiveInput,
-        cleanVehicles,
-        mortgage,
-        homebuyer,
-        electric,
-        businessCredit,
-        bondCredit,
-      ),
+      ...numericLines,
       ...(effectiveInput.line5c_pension_rollover === true
         ? { line5c_pension_rollover: true }
         : {}),
@@ -1175,7 +1177,6 @@ class F1040Node extends TaxNode<typeof inputSchema> {
     const form2210f = effectiveInput.f2210f_box_b_source === undefined
       ? undefined
       : calculateForm2210FBoxB(effectiveInput.f2210f_box_b_source);
-    verifyForm1116Limitation(effectiveInput, assembled);
     const schedule3Finalization = cleanVehicles === undefined &&
         mortgage === undefined &&
         homebuyer === undefined &&

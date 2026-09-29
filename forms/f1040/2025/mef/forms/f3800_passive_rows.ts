@@ -219,7 +219,7 @@ export function form3800CarryoverRowXml(row: Form3800CarryoverRow): string {
 function sourceEntityCredits(
   sources: readonly Form3800PassiveTaxUseVintage[],
 ): Form3800CurrentEntityCredit[] {
-  return sources.flatMap((source) => {
+  return sources.flatMap<Form3800CurrentEntityCredit>((source) => {
     const origin = source.sourceOrigin;
     if (origin.kind === PassiveCreditSourceOrigin.Self) return [];
     if (origin.ein) {

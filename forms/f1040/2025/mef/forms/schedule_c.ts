@@ -20,7 +20,8 @@ import {
   rentedHomeSourceSchema,
 } from "../../../nodes/intermediate/forms/form_8829/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
-import { FilingStatus, TS } from "../../../nodes/types.ts";
+import { TS } from "../../../nodes/types.ts";
+import { FilingStatus } from "../../../mef/header.ts";
 import {
   calculateForm5884,
   inputSchema as form5884InputSchema,
@@ -144,7 +145,7 @@ function buildScheduleC(
   if (!filer) throw new Error(`Schedule C ${index + 1} needs filer identity`);
   if (
     item.proprietor_recipient === undefined &&
-    filer.filingStatus === FilingStatus.MFJ
+    filer.filingStatus === FilingStatus.MarriedFilingJointly
   ) {
     throw new Error(
       `Schedule C ${index + 1} joint return needs an explicit proprietor`,
@@ -153,7 +154,7 @@ function buildScheduleC(
   const spouse = item.proprietor_recipient === TS.S ? filer.spouse : undefined;
   if (
     item.proprietor_recipient === TS.S &&
-    (filer.filingStatus !== FilingStatus.MFJ || !spouse)
+    (filer.filingStatus !== FilingStatus.MarriedFilingJointly || !spouse)
   ) {
     throw new Error(
       `Schedule C ${

@@ -656,15 +656,17 @@ function perItemOutputs(
 class ScheduleFNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule_f";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([
-    schedule1,
-    agi_aggregator,
-    schedule_se,
-    form8995,
-    form8582,
-    form461,
-    schedule_j_calculation,
-  ]);
+  get outputNodes() {
+    return new OutputNodes([
+      schedule1,
+      agi_aggregator,
+      schedule_se,
+      form8995,
+      form8582,
+      form461,
+      schedule_j_calculation,
+    ]);
+  }
 
   compute(ctx: NodeContext, rawInput: z.infer<typeof inputSchema>): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];

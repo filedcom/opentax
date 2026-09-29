@@ -128,7 +128,9 @@ function hasUnsupportedQsbsTransaction(fields: Input): boolean {
   const rows = [
     ...(Array.isArray(fields.transaction)
       ? fields.transaction
-      : fields.transaction ? [fields.transaction] : []),
+      : fields.transaction
+      ? [fields.transaction]
+      : []),
     ...(Array.isArray(fields.transactions) ? fields.transactions : []),
   ];
   return rows.some((row) =>
@@ -156,7 +158,10 @@ export const scheduleD: MefFormDescriptor<"schedule_d", Input> = {
     }
     if (
       fields.pending_active_4797 === true &&
-      context?.pending?.agi_final?.capital_finalized !== true
+      !(context?.pending?.agi_final &&
+        typeof context.pending.agi_final === "object" &&
+        "capital_finalized" in context.pending.agi_final &&
+        context.pending.agi_final.capital_finalized === true)
     ) {
       throw new Error(
         "Schedule D active-rental Form 4797 sale needs finalized PAL allocation",

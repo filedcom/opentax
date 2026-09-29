@@ -1,5 +1,5 @@
 import { element, elements } from "../../../mef/xml.ts";
-import { FilingStatus } from "../../../mef/header.ts";
+import { FilingStatus } from "../../../nodes/types.ts";
 import { inputSchema } from "../../../nodes/inputs/schedule_r/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 

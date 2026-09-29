@@ -112,7 +112,10 @@ class F4255Node extends TaxNode<typeof inputSchema> {
       ...(lines.line19 > 0 ? { line19_form4255_net_epe: lines.line19 } : {}),
     };
     return Object.keys(fields).length === 0 ? { outputs: [] } : {
-      outputs: [this.outputNodes.output(schedule2, fields)],
+      outputs: [this.outputNodes.output(schedule2, {
+        ...fields,
+        line1d_form4255_net_epe: lines.line1d,
+      })],
     };
   }
 }

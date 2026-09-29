@@ -217,8 +217,12 @@ function assertLinkedSales(
   context: MefBuildContext | undefined,
 ): void {
   if (!context?.pending) return;
+  const form4797 = context.pending.form4797;
   const sales = z.array(passivePropertySaleSchema).parse(
-    context.pending.form4797?.passive_property_sales ?? [],
+    form4797 && typeof form4797 === "object" &&
+      "passive_property_sales" in form4797
+      ? form4797.passive_property_sales
+      : [],
   );
   const actual = input.current_4797_sale_gains ?? [];
   const key = (

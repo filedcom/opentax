@@ -133,7 +133,7 @@ function reconcileActiveBusinessIncome(
       "Form 4562 active-business limit cannot include another business-income or deduction source",
     );
   }
-  const f1040 = pending.f1040;
+  const f1040 = z.record(z.unknown()).parse(pending.f1040);
   const wageLines = [
     f1040.line1a_wages,
     f1040.line1b_household_wages,
@@ -150,7 +150,7 @@ function reconcileActiveBusinessIncome(
       "Form 4562 active-business limit needs employee compensation included; the no-wages route cannot use it",
     );
   }
-  const schedule1 = pending.schedule1;
+  const schedule1 = z.record(z.unknown()).parse(pending.schedule1);
   if (
     (schedule1.line4_other_gains ?? 0) !== 0 ||
     (schedule1.line6_schedule_f ?? 0) !== 0 ||

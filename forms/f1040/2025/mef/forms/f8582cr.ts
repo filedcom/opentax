@@ -202,7 +202,10 @@ function reconcilePassiveNewMarketsSources(
     }];
   });
   reconcileNewMarketsK1Credits(
-    combineK1ActivityCredits(credits),
+    combineK1ActivityCredits(credits.map((credit) => ({
+      ...credit,
+      entity_ein: credit.source_ein,
+    }))),
     context.pending,
   );
 }

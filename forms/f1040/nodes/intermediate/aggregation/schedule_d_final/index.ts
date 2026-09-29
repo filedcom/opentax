@@ -18,21 +18,23 @@ import { form8960 } from "../../forms/form8960/index.ts";
 import { form8995 } from "../../forms/form8995/index.ts";
 
 export const inputSchema = z.object({
-  provisional_input: scheduleDInputSchema,
+  provisional_input: z.lazy(() => scheduleDInputSchema),
   capital_reduction: z.number().int().nonnegative(),
 });
 
 class ScheduleDFinalNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule_d_final";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([
-    f1040,
-    agi_final,
-    income_tax_calculation,
-    rate_28_gain_worksheet,
-    form8960,
-    form8995,
-  ]);
+  get outputNodes() {
+    return new OutputNodes([
+      f1040,
+      agi_final,
+      income_tax_calculation,
+      rate_28_gain_worksheet,
+      form8960,
+      form8995,
+    ]);
+  }
 
   compute(ctx: NodeContext, rawInput: z.infer<typeof inputSchema>): NodeResult {
     const input = inputSchema.parse(rawInput);

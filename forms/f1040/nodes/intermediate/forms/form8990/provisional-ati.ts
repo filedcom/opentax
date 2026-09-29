@@ -74,7 +74,13 @@ export function calculateBoundedProvisionalATI(args: {
 }): BoundedProvisionalATI {
   const { provisional, returnInputs, result } = args;
   if (result.diagnostics.length > 0) {
-    throw new Error("Form 8990 provisional return has node diagnostics");
+    throw new Error(
+      `Form 8990 provisional return has node diagnostics: ${
+        result.diagnostics.map((diagnostic) =>
+          `${diagnostic.nodeType}: ${diagnostic.message}`
+        ).join("; ")
+      }`,
+    );
   }
   const inputKeys = Object.keys(returnInputs);
   if (
@@ -152,6 +158,7 @@ export function calculateBoundedProvisionalATI(args: {
     "line_g_material_participation",
     "line_1_gross_receipts",
     "line_12_depletion",
+    "amt_depletion_worksheet",
     "line_13_depreciation",
     "line_16b_interest_other",
   ]);

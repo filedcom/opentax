@@ -1,5 +1,5 @@
 import { FilingStatus } from "../../../types.ts";
-import type { Bracket } from "../../../../config/2025.ts";
+import type { Bracket } from "../../../config/2025.ts";
 import type { F8615Input } from "../../../inputs/f8615/schema.ts";
 import {
   ordinaryTax2025,

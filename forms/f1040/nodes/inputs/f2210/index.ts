@@ -1,9 +1,5 @@
 import { z } from "zod";
-import type {
-  AtLeastOne,
-  NodeOutput,
-  NodeResult,
-} from "../../../../../core/types/tax-node.ts";
+import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
@@ -98,18 +94,19 @@ class F2210Node extends TaxNode<typeof inputSchema> {
       };
     }
 
-    const fields: Record<string, number | boolean> = { f2210_active: true };
-    for (const [key, value] of Object.entries(parsed)) {
-      if (value !== undefined) fields[`f2210_${key}`] = value;
-    }
-    const outputs: NodeOutput[] = [
-      output(
-        f1040,
-        fields as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>,
-      ),
-    ];
-
-    return { outputs };
+    return {
+      outputs: [output(f1040, {
+        f2210_active: true,
+        f2210_required_annual_payment: parsed.required_annual_payment,
+        f2210_withholding: parsed.withholding,
+        f2210_q1_estimated_payment: parsed.q1_estimated_payment,
+        f2210_q2_estimated_payment: parsed.q2_estimated_payment,
+        f2210_q3_estimated_payment: parsed.q3_estimated_payment,
+        f2210_q4_estimated_payment: parsed.q4_estimated_payment,
+        f2210_prior_year_tax: parsed.prior_year_tax,
+        f2210_prior_year_agi: parsed.prior_year_agi,
+      })],
+    };
   }
 }
 

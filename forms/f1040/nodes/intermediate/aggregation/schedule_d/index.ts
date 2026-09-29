@@ -320,16 +320,18 @@ function lossLimit(filingStatus: FilingStatus | undefined): number {
 class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule_d";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([
-    f1040,
-    agi_aggregator,
-    income_tax_calculation,
-    rate_28_gain_worksheet,
-    form8960,
-    form8995,
-    form6251,
-    schedule_d_final,
-  ]);
+  get outputNodes() {
+    return new OutputNodes([
+      f1040,
+      agi_aggregator,
+      income_tax_calculation,
+      rate_28_gain_worksheet,
+      form8960,
+      form8995,
+      form6251,
+      schedule_d_final,
+    ]);
+  }
 
   compute(_ctx: NodeContext, rawInput: ScheduleDInput): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -338,10 +340,12 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
       (input.box2c_qsbs ?? 0) > 0 ||
       normalizeArray(input.transaction).some((tx) =>
         tx.qsbs_code !== undefined ||
-          tx.qsbs_amount !== undefined ||
-          tx.adjustment_codes?.includes("Q")) ||
+        tx.qsbs_amount !== undefined ||
+        tx.adjustment_codes?.includes("Q")
+      ) ||
       (input.transactions ?? []).some((tx) =>
-        tx.adjustment_codes?.includes("Q"))
+        tx.adjustment_codes?.includes("Q")
+      )
     ) {
       throw new Error(
         "Schedule D section 1202 gain needs a sourced Form 8949 exclusion, 28% Rate Gain Worksheet refigure, and Form 6251 line 2h preference before filing",

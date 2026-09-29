@@ -256,7 +256,6 @@ export const inputSchema = z.object({
       source.form3800_credit_line === "1h" &&
       source.source_document_reference === evidence.source_document_reference &&
       source.source_origin.kind === evidence.source_type &&
-      source.source_origin.kind !== PassiveCreditSourceOrigin.Self &&
       source.source_origin.ein === evidence.source_ein
     );
     if (
@@ -308,7 +307,6 @@ export const inputSchema = z.object({
         source.source_statement_reference ===
           evidence.source_statement_reference) &&
       source.source_origin.kind === evidence.source_type &&
-      source.source_origin.kind !== PassiveCreditSourceOrigin.Self &&
       source.source_origin.ein === evidence.source_ein
     );
     if (
@@ -394,7 +392,6 @@ export const inputSchema = z.object({
         source.source_statement_reference ===
           evidence.source_statement_reference) &&
       source.source_origin.kind === evidence.source_type &&
-      source.source_origin.kind !== PassiveCreditSourceOrigin.Self &&
       source.source_origin.ein === evidence.source_ein
     );
     if (

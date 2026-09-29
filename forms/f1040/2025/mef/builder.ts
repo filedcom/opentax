@@ -113,8 +113,10 @@ function buildFragments(
   context: MefBuildContext,
 ): ReadonlyArray<{ pendingKey: string; tag: string; xml: string }> {
   return ALL_MEF_FORMS.flatMap((form) => {
+    const source = pending[form.pendingKey as keyof MefFormsPending];
+    if (source === undefined) return [];
     const built = form.build(
-      (pending[form.pendingKey as keyof MefFormsPending] ?? []) as never,
+      source as never,
       context,
     );
     const fragments = typeof built === "string" ? [built] : built;
@@ -279,10 +281,15 @@ export async function buildMefBundle(
   ]);
   const attachmentSha256ByFileName = Object.fromEntries(
     await Promise.all(attachments.map(async ({ fileName, bytes }) => {
-      const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
-      return [fileName, Array.from(digest, (byte) =>
-        byte.toString(16).padStart(2, "0")
-      ).join("")] as const;
+      const digest = new Uint8Array(
+        await crypto.subtle.digest("SHA-256", Uint8Array.from(bytes)),
+      );
+      return [
+        fileName,
+        Array.from(digest, (byte) => byte.toString(16).padStart(2, "0")).join(
+          "",
+        ),
+      ] as const;
     })),
   );
   const xml = buildReturnXml(

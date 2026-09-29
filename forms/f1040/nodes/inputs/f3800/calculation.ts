@@ -396,6 +396,7 @@ export function splitForm3800PassiveCreditVintages(
   if (!source.form3800_credit_line) {
     throw new Error("Form 3800 passive source needs its exact credit line");
   }
+  const creditLine = source.form3800_credit_line;
   const vintages = [
     ...source.prior_unallowed_credits.map((credit) => ({
       originatingTaxYear: credit.originating_tax_year,
@@ -432,7 +433,7 @@ export function splitForm3800PassiveCreditVintages(
         sourceForm: source.source_form,
         sourceDocumentReference: vintage.sourceDocumentReference,
         sourceOrigin: source.source_origin,
-        form3800CreditLine: source.form3800_credit_line,
+        form3800CreditLine: creditLine,
         reportingRoute: source.reporting_route,
         originatingTaxYear: vintage.originatingTaxYear,
         beforePassiveLimit: vintage.beforePassiveLimit,

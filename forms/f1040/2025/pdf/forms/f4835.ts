@@ -1,7 +1,7 @@
 import {
   calculateForm4835Lines,
-  inputSchema,
   type F4835Item,
+  inputSchema,
 } from "../../../nodes/inputs/f4835/index.ts";
 import { farmAllowedLosses } from "../../mef/forms/f4835_passive_loss.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
@@ -13,7 +13,7 @@ const text = (
   domainKey: string,
   number: number,
   prefix = page,
-): PdfFieldEntry => ({
+): Extract<PdfFieldEntry, { kind: "text" }> => ({
   kind: "text",
   domainKey,
   pdfField: `${prefix}.f1_${String(number).padStart(2, "0")}[0]`,
@@ -126,20 +126,18 @@ function activityFields(
     ...item,
     participation: item.actively_participated === undefined
       ? undefined
-      : item.actively_participated ? "yes" : "no",
+      : item.actively_participated
+      ? "yes"
+      : "no",
     line7_gross: lines.gross,
     ...Object.assign({}, ...otherRows),
     line31_expenses: lines.expenses,
     // The printed instructions require a loss to bypass line 32 and go to 34.
-    line32_income: lines.preliminaryNet >= 0
-      ? lines.preliminaryNet
-      : undefined,
+    line32_income: lines.preliminaryNet >= 0 ? lines.preliminaryNet : undefined,
     risk_status: lines.preliminaryNet < 0
       ? item.some_investment_not_at_risk ? "some" : "all"
       : undefined,
-    line34c_allowed_loss: lines.preliminaryNet < 0
-      ? allowedLoss
-      : undefined,
+    line34c_allowed_loss: lines.preliminaryNet < 0 ? allowedLoss : undefined,
   };
 }
 

@@ -258,8 +258,14 @@ class F8621Node extends TaxNode<typeof inputSchema> {
           : []),
         ...(Object.keys(otherIncomeFields).length > 0
           ? [
-            output(schedule1, otherIncomeFields),
-            output(agi_aggregator, otherIncomeFields),
+            output(schedule1, {
+              ...otherIncomeFields,
+              line8z_form8621_mtm: otherIncomeFields.line8z_form8621_mtm ?? 0,
+            }),
+            output(agi_aggregator, {
+              ...otherIncomeFields,
+              line8z_form8621_mtm: otherIncomeFields.line8z_form8621_mtm ?? 0,
+            }),
           ]
           : []),
         ...(capitalGain > 0

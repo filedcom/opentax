@@ -482,12 +482,19 @@ function vehicleOutput(item: F8936Item, input: F8936Input): NodeOutput[] {
       );
     }
     if (credit > 0) return [];
-    return [output(
-      schedule2,
-      used
-        ? { line1c_prev_owned_clean_vehicle_repayment: item.transferred_amount }
-        : { line1b_new_clean_vehicle_repayment: item.transferred_amount },
-    )];
+    const transferredAmount = item.transferred_amount;
+    if (transferredAmount === undefined) {
+      throw new Error(
+        "f8936: dealer-transferred credit needs its transferred amount",
+      );
+    }
+    return used
+      ? [output(schedule2, {
+        line1c_prev_owned_clean_vehicle_repayment: transferredAmount,
+      })]
+      : [output(schedule2, {
+        line1b_new_clean_vehicle_repayment: transferredAmount,
+      })];
   }
   if (credit <= 0) return [];
   return [

@@ -7,7 +7,7 @@ import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
-import { schedule_a } from "../schedule_a/index.ts";
+import { scheduleA } from "../schedule_a/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 
 export enum EmployeeType {
@@ -412,7 +412,7 @@ function routedOutputs(items: F2106Input["f2106s"]): NodeOutput[] {
       ]
       : []),
     ...(scheduleATotal > 0
-      ? [output(schedule_a, { line_16_other_deductions: scheduleATotal })]
+      ? [output(scheduleA, { line_16_other_deductions: scheduleATotal })]
       : []),
   ];
 }
@@ -422,7 +422,7 @@ class F2106Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([
     schedule1,
-    schedule_a,
+    scheduleA,
     agi_aggregator,
   ]);
 

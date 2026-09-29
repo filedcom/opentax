@@ -41,8 +41,12 @@ function pendingLine(
 }
 
 function buildIRS461(rawFields: Input, context?: MefBuildContext): string {
-  // The MeF builder passes [] when this optional form has no pending slot.
+  // The executor may retain input fields even when no filed form was emitted.
   if (Array.isArray(rawFields) && rawFields.length === 0) return "";
+  if (
+    rawFields !== null && typeof rawFields === "object" &&
+    !FIELD_MAP.some(([key]) => key in rawFields)
+  ) return "";
   const fields = filedForm461Schema.parse(rawFields);
   if (
     fields.line9_total_income_loss !==
@@ -62,7 +66,7 @@ function buildIRS461(rawFields: Input, context?: MefBuildContext): string {
     );
   }
   const schedule1 = pending.schedule1;
-  const f1040 = pending.f1040;
+  const f1040 = z.record(z.unknown()).parse(pending.f1040);
   if (!f1040.filing_status) {
     throw new Error("Form 461 needs the filed Form 1040 filing status");
   }

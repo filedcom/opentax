@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { FilerIdentity } from "../mef/header.ts";
 import { TS } from "../nodes/types.ts";
 import {
+  CoverageType,
   form8889,
   inputSchema,
 } from "../nodes/intermediate/forms/form8889/index.ts";
@@ -269,7 +270,7 @@ export function reconcilePairedForm8889(
     value.every((month) => month === coverage);
   const selfOnly = [source, source.spouse_hsa].every((owner) =>
     owner.eligible_hdhp_coverage_by_month?.length === 12 &&
-    owner.eligible_hdhp_coverage_by_month.includes("self_only") &&
+    owner.eligible_hdhp_coverage_by_month.includes(CoverageType.SelfOnly) &&
     owner.eligible_hdhp_coverage_by_month.every((month) =>
       month === "self_only" || month === null
     ) &&

@@ -32,8 +32,10 @@ export function reconcileForm4972Nua(
   }
   const item = elected[0];
   const sharePct = item?.box9a_pct_total ?? 100;
-  const hasAllocation = (fields.death_benefit_exclusion ?? 0) > 0 ||
-    (fields.federal_estate_tax ?? 0) > 0;
+  const hasAllocation = (typeof fields.death_benefit_exclusion === "number" &&
+    fields.death_benefit_exclusion > 0) ||
+    (typeof fields.federal_estate_tax === "number" &&
+      fields.federal_estate_tax > 0);
   if (
     !item || item.ts !== fields.recipient ||
     sharePct <= 0 || sharePct > 100 ||

@@ -22,7 +22,7 @@ import { schedule1a } from "../../forms/schedule1a/index.ts";
 import { schedule_j_calculation } from "../../forms/schedule_j/index.ts";
 
 export const inputSchema = z.object({
-  pre_pal_input: agiInputSchema,
+  pre_pal_input: z.lazy(() => agiInputSchema),
   capital_finalized: z.literal(true),
   final_capital_gain: z.number().optional(),
   final_cap_gain_distrib: z.number().nonnegative().optional(),
@@ -35,21 +35,23 @@ export const inputSchema = z.object({
 class AgiFinalNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "agi_final";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([
-    f1040,
-    standard_deduction,
-    scheduleA,
-    eitc,
-    f8812,
-    f2441,
-    form8995,
-    form8960,
-    form8962,
-    form8880,
-    form_1116,
-    schedule1a,
-    schedule_j_calculation,
-  ]);
+  get outputNodes() {
+    return new OutputNodes([
+      f1040,
+      standard_deduction,
+      scheduleA,
+      eitc,
+      f8812,
+      f2441,
+      form8995,
+      form8960,
+      form8962,
+      form8880,
+      form_1116,
+      schedule1a,
+      schedule_j_calculation,
+    ]);
+  }
 
   compute(ctx: NodeContext, rawInput: z.infer<typeof inputSchema>): NodeResult {
     const input = inputSchema.parse(rawInput);

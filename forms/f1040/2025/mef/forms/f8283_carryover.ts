@@ -66,6 +66,8 @@ export function reconcileForm8283Carryover(
       "Form 8283 carryover needs sourced gifts, their complete Schedule A ledger, current Form 1040, and filer identity",
     );
   }
+  const filer = context.filer;
+  if (!filer) throw new Error("Form 8283 carryover needs filer identity");
   if (
     returnFields.line12a_standard_deduction !== undefined ||
     returnFields.line12e_itemized_deductions === undefined
@@ -126,7 +128,7 @@ export function reconcileForm8283Carryover(
       carryover.previously_deducted !==
         evidence.prior_deduction_workpaper
           .total_previously_deducted_through_2024 ||
-      previous.filed_taxpayer_ssn !== context.filer.primarySSN ||
+      previous.filed_taxpayer_ssn !== filer.primarySSN ||
       previous.adjusted_basis <= carryover.previously_deducted ||
       previous.adjusted_basis <= 500
     ) {

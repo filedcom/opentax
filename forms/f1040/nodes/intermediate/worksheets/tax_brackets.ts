@@ -1,5 +1,5 @@
 import { FilingStatus } from "../../types.ts";
-import type { Bracket } from "../../../config/2025.ts";
+import type { Bracket } from "../../config/2025.ts";
 
 export function bracketsForStatus(
   status: FilingStatus,

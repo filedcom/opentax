@@ -190,12 +190,14 @@ function buildOutput(deduction: number): NodeOutput[] {
 class Form7206Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form7206";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([
-    schedule1,
-    agi_aggregator,
-    form8995,
-    form8962,
-  ]);
+  get outputNodes() {
+    return new OutputNodes([
+      schedule1,
+      agi_aggregator,
+      form8995,
+      form8962,
+    ]);
+  }
 
   compute(ctx: NodeContext, rawInput: Form7206Input): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];

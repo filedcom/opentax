@@ -278,6 +278,7 @@ function sourceForm8826(
     reconcileDisabledAccessK1Credits(
       directSources.map((entry) => {
         if (
+          entry.source_type === "self" ||
           !entry.source_ein || !entry.source_document_reference ||
           ((entry.source_type === "estate" || entry.source_type === "trust") &&
             !entry.source_statement_reference)
@@ -846,7 +847,11 @@ export function prepareForm3800DocumentParts(
     facilities,
   });
   const taxUse = allocateForm3800SourceTaxUse(
-    parsed.passive_source_allocations ?? [],
+    (parsed.passive_source_allocations ?? []).map((source) => ({
+      ...source,
+      source_statement_reference: source.source_statement_reference,
+      form3800_credit_line: source.form3800_credit_line,
+    })),
     nonpassiveSources,
     lines,
   );
