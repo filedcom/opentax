@@ -32,6 +32,11 @@ AcroForm mapping repair. Retain `.state/research/ty2025-schedule-r-dependent-pos
 and `.state/research/ty2025-schedule-r-dependent-positive.pdf`. This proves
 the bounded graph and PDF path structurally, while actual support/dependency
 facts, payer-issued records, and IRS business-rule acceptance remain open.
+General input now rejects malformed or future DOBs and explicit age-65 answers
+that conflict with a supplied DOB. The bounded Schedule R path also requires
+its age-65 claim to match the finalized Form 1040 indicator; a contradictory
+synthetic return fails both graph finalization and native export. These checks
+reconcile entered facts; they do not authenticate the age or dependency source.
 
 The `start` node deposits supplied singleton inputs into executor pending slots.
 The executor does not remove the slot when an input node emits no tax outputs,

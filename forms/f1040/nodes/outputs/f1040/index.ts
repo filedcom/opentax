@@ -57,6 +57,7 @@ function sumField(value: number | number[] | undefined): number {
 
 const inputSchema = z.object({
   filing_status: z.nativeEnum(FilingStatus).optional(),
+  taxpayer_age_65_or_older: z.boolean().optional(),
   spouse_has_business_credit: z.boolean().optional(),
   // ── Part I — Income ───────────────────────────────────────────────────────
   // Line 1a — Wages (accumulable: w2, fec, f4852, f1099r and qsehra all route here)
@@ -1091,6 +1092,11 @@ class F1040Node extends TaxNode<typeof inputSchema> {
     const schedule3 = input.credit_limit_schedule3_lines;
     const elderlyCredit = schedule3?.line6dElderlyDisabled ?? 0;
     if (schedule3 && elderlyCredit > 0) {
+      if (input.taxpayer_age_65_or_older !== true) {
+        throw new Error(
+          "Schedule R age-65 credit needs a matching Form 1040 taxpayer age indicator",
+        );
+      }
       const limit = Math.max(
         0,
         totalTaxBeforeCredits(input) - schedule3.line1 - schedule3.line2 -

@@ -56,6 +56,7 @@ Deno.test("f1040: Schedule R credit cannot exceed its filed tax-limit worksheet"
   assertThrows(
     () =>
       fields({
+        taxpayer_age_65_or_older: true,
         line16_income_tax: 0,
         line20_nonrefundable_credits: 750,
         credit_limit_schedule3_lines: schedule3,
@@ -66,6 +67,7 @@ Deno.test("f1040: Schedule R credit cannot exceed its filed tax-limit worksheet"
   assertThrows(
     () =>
       fields({
+        taxpayer_age_65_or_older: true,
         line16_income_tax: 900,
         line20_nonrefundable_credits: 950,
         credit_limit_schedule3_lines: { ...schedule3, line1: 200 },
@@ -75,11 +77,23 @@ Deno.test("f1040: Schedule R credit cannot exceed its filed tax-limit worksheet"
   );
   assertEquals(
     fields({
+      taxpayer_age_65_or_older: true,
       line16_income_tax: 900,
       line20_nonrefundable_credits: 750,
       credit_limit_schedule3_lines: schedule3,
     }).line22_tax_after_credits,
     150,
+  );
+  assertThrows(
+    () =>
+      fields({
+        taxpayer_age_65_or_older: false,
+        line16_income_tax: 900,
+        line20_nonrefundable_credits: 750,
+        credit_limit_schedule3_lines: schedule3,
+      }),
+    Error,
+    "Schedule R age-65 credit needs",
   );
 });
 
@@ -212,6 +226,7 @@ Deno.test("f1040: Form 1116 limitation requires the actual Form 1040 tax source"
 
 Deno.test("f1040: Form 8396 uses its tax-liability worksheet before Schedule 3", () => {
   const result = compute({
+    taxpayer_age_65_or_older: true,
     line16_income_tax: 1_500,
     line19_child_tax_credit: 100,
     line20_nonrefundable_credits: 300,
@@ -269,6 +284,7 @@ Deno.test("f1040: Form 8396 uses its tax-liability worksheet before Schedule 3",
 
 Deno.test("f1040: Form 8859 limits carryforward after the listed prior credits", () => {
   const result = compute({
+    taxpayer_age_65_or_older: true,
     line16_income_tax: 1_000,
     line19_child_tax_credit: 100,
     line20_nonrefundable_credits: 70,

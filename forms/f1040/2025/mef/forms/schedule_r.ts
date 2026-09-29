@@ -50,6 +50,11 @@ export function calculateScheduleRAge65Single(
   ) {
     throw new Error("Schedule R AGI/status must match finalized Form 1040");
   }
+  if (f1040.taxpayer_age_65_or_older !== true) {
+    throw new Error(
+      "Schedule R age-65 source must match finalized Form 1040 age indicator",
+    );
+  }
   const base = 5_000;
   const benefits = source.nontaxable_ssa ?? 0;
   const grossSsa = number(f1040, "line6a_ss_gross");

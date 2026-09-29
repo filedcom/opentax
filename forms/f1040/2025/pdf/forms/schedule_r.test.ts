@@ -14,6 +14,7 @@ const pending = {
   schedule_r: source,
   f1040: {
     filing_status: "single",
+    taxpayer_age_65_or_older: true,
     line11_agi: 7_000,
     line18_total_tax_before_credits: 900,
     line20_nonrefundable_credits: 750,

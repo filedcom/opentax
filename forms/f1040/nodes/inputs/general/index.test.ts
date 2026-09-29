@@ -998,22 +998,60 @@ Deno.test("date of birth derives age-65 eligibility for standard and senior dedu
   );
 });
 
-Deno.test("explicit age-65 flag takes precedence over the derived date-of-birth value", () => {
-  const result = compute({
+Deno.test("age-65 answers must agree with taxpayer and spouse dates of birth", () => {
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.Single,
+        taxpayer_dob: "1955-06-01",
+        taxpayer_age_65_or_older: false,
+      }),
+    Error,
+    "taxpayer age-65 answer conflicts",
+  );
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.MFJ,
+        taxpayer_dob: "1961-01-02",
+        taxpayer_age_65_or_older: true,
+        spouse_dob: "1960-06-01",
+        spouse_age_65_or_older: true,
+      }),
+    Error,
+    "taxpayer age-65 answer conflicts",
+  );
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.MFJ,
+        taxpayer_dob: "1960-06-01",
+        spouse_dob: "1961-01-02",
+        spouse_age_65_or_older: true,
+      }),
+    Error,
+    "spouse age-65 answer conflicts",
+  );
+  const boundary = compute({
     filing_status: FilingStatus.Single,
-    taxpayer_ssn: "111-22-3333",
-    taxpayer_dob: "1955-06-01",
-    taxpayer_age_65_or_older: false,
+    taxpayer_dob: "1961-01-01",
+    taxpayer_age_65_or_older: true,
   });
+  assertEquals(
+    findOutput(boundary, "standard_deduction")?.fields
+      .taxpayer_age_65_or_older,
+    true,
+  );
+});
 
-  assertEquals(
-    findOutput(result, "standard_deduction")?.fields.taxpayer_age_65_or_older,
-    false,
-  );
-  assertEquals(
-    findOutput(result, "schedule1a")?.fields.taxpayer_age_65_or_older,
-    false,
-  );
+Deno.test("malformed or future dates of birth cannot drive Form 1040 age boxes", () => {
+  for (const dob of ["1960-02-30", "1960/02/01", "2026-01-01"]) {
+    assertThrows(
+      () => compute({ filing_status: FilingStatus.Single, taxpayer_dob: dob }),
+      Error,
+      "taxpayer date of birth",
+    );
+  }
 });
 
 Deno.test("smoke: MFJ + 2 qualifying children + 1 qualifying relative → all outputs correct", () => {

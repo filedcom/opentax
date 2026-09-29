@@ -399,15 +399,32 @@ function ageAtYearEnd(dob: string): number {
 function isAge65ByEndOfTaxYear(
   dob: string | undefined,
   taxYear: number,
+  owner: "taxpayer" | "spouse",
 ): boolean | undefined {
   if (dob === undefined) return undefined;
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dob);
-  if (match === null) return undefined;
+  if (match === null) {
+    throw new Error(`${owner} date of birth must be a valid YYYY-MM-DD date`);
+  }
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
   const birthDate = Date.UTC(
-    Number(match[1]),
-    Number(match[2]) - 1,
-    Number(match[3]),
+    year,
+    month - 1,
+    day,
   );
+  const parsed = new Date(birthDate);
+  if (
+    parsed.getUTCFullYear() !== year ||
+    parsed.getUTCMonth() !== month - 1 ||
+    parsed.getUTCDate() !== day
+  ) {
+    throw new Error(`${owner} date of birth must be a valid YYYY-MM-DD date`);
+  }
+  if (birthDate > Date.UTC(taxYear, 11, 31)) {
+    throw new Error(`${owner} date of birth is after the tax year`);
+  }
   const cutoff = Date.UTC(taxYear - 64, 0, 2);
   return birthDate < cutoff;
 }
@@ -803,10 +820,32 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
         "Dependent earned income requires the can-be-claimed-as-dependent answer",
       );
     }
-    const taxpayerAge65 = parsed.taxpayer_age_65_or_older ??
-      isAge65ByEndOfTaxYear(parsed.taxpayer_dob, ctx.taxYear);
-    const spouseAge65 = parsed.spouse_age_65_or_older ??
-      isAge65ByEndOfTaxYear(parsed.spouse_dob, ctx.taxYear);
+    const taxpayerAgeFromDob = isAge65ByEndOfTaxYear(
+      parsed.taxpayer_dob,
+      ctx.taxYear,
+      "taxpayer",
+    );
+    const spouseAgeFromDob = isAge65ByEndOfTaxYear(
+      parsed.spouse_dob,
+      ctx.taxYear,
+      "spouse",
+    );
+    if (
+      taxpayerAgeFromDob !== undefined &&
+      parsed.taxpayer_age_65_or_older !== undefined &&
+      parsed.taxpayer_age_65_or_older !== taxpayerAgeFromDob
+    ) {
+      throw new Error("taxpayer age-65 answer conflicts with date of birth");
+    }
+    if (
+      spouseAgeFromDob !== undefined &&
+      parsed.spouse_age_65_or_older !== undefined &&
+      parsed.spouse_age_65_or_older !== spouseAgeFromDob
+    ) {
+      throw new Error("spouse age-65 answer conflicts with date of birth");
+    }
+    const taxpayerAge65 = parsed.taxpayer_age_65_or_older ?? taxpayerAgeFromDob;
+    const spouseAge65 = parsed.spouse_age_65_or_older ?? spouseAgeFromDob;
     const effectiveInput: GeneralInput = {
       ...parsed,
       ...(taxpayerAge65 !== undefined &&

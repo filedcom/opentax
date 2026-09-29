@@ -271,6 +271,28 @@ Deno.test("age-65 Schedule R cannot create a credit on a zero-tax Form 1040", ()
   );
 });
 
+Deno.test("Schedule R cannot override a conflicting Form 1040 birth date", () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    ...dependentScheduleRInputs,
+    general: {
+      ...dependentScheduleRInputs.general,
+      taxpayer_dob: "1985-06-15",
+    },
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(
+    result.diagnostics.some((entry) =>
+      entry.nodeType === "f1040" &&
+      entry.message.includes("Schedule R age-65 credit needs")
+    ),
+    true,
+  );
+  assertThrows(
+    () => buildMefXml(buildPending(result.pending), filer),
+    Error,
+    "Schedule R age-65 source must match",
+  );
+});
+
 Deno.test({
   name: "XSD: dependent age-65 Schedule R credit reaches a full Form 1040",
   ignore: !returnXsdAvailable,
