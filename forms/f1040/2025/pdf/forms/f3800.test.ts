@@ -324,3 +324,91 @@ Deno.test("source-backed New Markets credit prints Form 8874 with its prepared F
     15,
   );
 });
+
+Deno.test("two New Markets investments retain separate Form 8874 rows and one parent credit", async () => {
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-two-new-markets-investments"
+  )!;
+  const result = f1040_2025.executeReturn({ ...fixture.inputs });
+  assertEquals(result.diagnostics, []);
+  const prepared = await f1040_2025.prepareReturn(
+    result.pending,
+    fixture.filer,
+  );
+  const parts = prepared.bundle.form3800Parts!;
+  assertEquals(parts.lines.line38, 1_100);
+  assertEquals(
+    parts.currentDetails.find((row) => row.line === "1i")?.credit,
+    1_100,
+  );
+  assertEquals(
+    [...prepared.bundle.xml.matchAll(/<CurrentYearCreditInfo>/g)].length,
+    2,
+  );
+  assertStringIncludes(
+    prepared.bundle.xml,
+    "<CDETotalCreditAmt>1100</CDETotalCreditAmt>",
+  );
+  assertStringIncludes(
+    prepared.bundle.xml,
+    "<TotalGeneralBusCreditsAppTxAmt>1100</TotalGeneralBusCreditsAppTxAmt>",
+  );
+  const allPending = normalizeAllPending(prepared.bundle.pending);
+  const printed8874 = form8874Pdf.projectFields!(allPending.f8874, allPending);
+  assertEquals(printed8874.row_1_rate, 5);
+  assertEquals(printed8874.row_1_credit, 500);
+  assertEquals(printed8874.row_2_rate, 6);
+  assertEquals(printed8874.row_2_credit, 600);
+  assertEquals(printed8874.line3, 1_100);
+  const printed3800 = form3800Pdf.instances?.(
+    allPending.f3800,
+    fixture.filer,
+    allPending,
+    parts,
+  )?.[0];
+  assertEquals(printed3800?.[form3800PartIIIFields("1i").g], 1_100);
+  assertEquals(
+    (await PDFDocument.load(await prepared.renderPdf())).getPageCount(),
+    15,
+  );
+});
+
+Deno.test("six New Markets investments fill the last Form 8874 row and reconcile to Form 3800", async () => {
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-six-new-markets-investments"
+  )!;
+  const result = f1040_2025.executeReturn({ ...fixture.inputs });
+  assertEquals(result.diagnostics, []);
+  const prepared = await f1040_2025.prepareReturn(
+    result.pending,
+    fixture.filer,
+  );
+  assertEquals(prepared.bundle.form3800Parts?.lines.line38, 3_000);
+  assertEquals(
+    [...prepared.bundle.xml.matchAll(/<CurrentYearCreditInfo>/g)].length,
+    6,
+  );
+  assertStringIncludes(
+    prepared.bundle.xml,
+    "<CDETotalCreditAmt>3000</CDETotalCreditAmt>",
+  );
+  const allPending = normalizeAllPending(prepared.bundle.pending);
+  const printed8874 = form8874Pdf.projectFields!(allPending.f8874, allPending);
+  assertEquals(
+    printed8874.row_6_cde,
+    "Community Entity 6\n15 Example Way, Dover, DE 19901",
+  );
+  assertEquals(printed8874.row_6_credit, 500);
+  assertEquals(printed8874.line3, 3_000);
+  const printed3800 = form3800Pdf.instances?.(
+    allPending.f3800,
+    fixture.filer,
+    allPending,
+    prepared.bundle.form3800Parts,
+  )?.[0];
+  assertEquals(printed3800?.[form3800PartIIIFields("1i").g], 3_000);
+  assertEquals(
+    (await PDFDocument.load(await prepared.renderPdf())).getPageCount(),
+    15,
+  );
+});
