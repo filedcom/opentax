@@ -41,7 +41,7 @@ Deno.test({
     }],
   }, 1_250).replace(
     "<IRS8874>",
-    '<IRS8874 xmlns="http://www.irs.gov/efile">',
+    '<IRS8874 xmlns="http://www.irs.gov/efile" documentId="IRS88740">',
   );
   const path = await Deno.makeTempFile({ suffix: ".xml" });
   try {

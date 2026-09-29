@@ -645,6 +645,7 @@ Deno.test("Form 8582 joins multiple current Form 4797 sales by exact source fact
         activity_type: "B",
         fair_rental_days: 365,
         personal_use_days: 0,
+        form_1099_payments_made: false,
         rent_income: 0,
         expense_taxes: 2_000,
         disposed_of: true,

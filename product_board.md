@@ -30,6 +30,15 @@ XSD pass, or an ignored test.
 
 ### Latest validation attempt
 
+The latest 2026-09-29 moving-worktree diagnostic `deno task test` run finished
+with 8,725 passed and 106 failed in 12m9s. It is not a fixed-commit release
+gate. Focused reruns after that snapshot passed the repaired Form 8283
+multi-attachment (5/5 route, 3/3 evidence) and vehicle-statement (15/15),
+Form 6251 native map (31/31),
+Form 4952 royalty (2/2), Form 8582 native map (30/30), Form 8863 native/XSD
+(7/7), and Form 8874 XSD (1/1) files. Form 8962 source-evidence cases,
+PDF-builder test fixtures, ATS source gaps, and other full-batch failures remain.
+
 The 2026-09-29 moving-worktree diagnostic `deno task test` run finished with
 8,609 passed and 205 failed in 11m18s. It is not the agreed fixed-commit
 release gate. A subsequent focused Form 8615 end-to-end rerun passed 4/4 after

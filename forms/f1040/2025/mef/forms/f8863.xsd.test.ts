@@ -166,7 +166,7 @@ Deno.test("Form 8863 XML rejects missing structured filing facts", () => {
         credit_limit_worksheet: worksheet,
       }),
     Error,
-    "structured student details",
+    "education expense workpaper",
   );
   assertThrows(
     () =>
@@ -314,6 +314,8 @@ Deno.test({
           llc_adjusted_expenses: 5_000,
           education_expense_workpaper: {
             ...educationWorkpaper,
+            form1098t_document_id: "1098T-2025-SCHOLAR",
+            payment_record_ids: ["TUITION-2025-SCHOLAR"],
             form1098t_box1_payments: 5_000,
             paid_tuition_required_fees: 5_000,
           },
