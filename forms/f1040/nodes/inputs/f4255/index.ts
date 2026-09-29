@@ -111,12 +111,40 @@ class F4255Node extends TaxNode<typeof inputSchema> {
         : {}),
       ...(lines.line19 > 0 ? { line19_form4255_net_epe: lines.line19 } : {}),
     };
-    return Object.keys(fields).length === 0 ? { outputs: [] } : {
-      outputs: [this.outputNodes.output(schedule2, {
-        ...fields,
-        line1d_form4255_net_epe: lines.line1d,
-      })],
-    };
+    if (lines.line1d > 0) {
+      return {
+        outputs: [this.outputNodes.output(schedule2, {
+          ...fields,
+          line1d_form4255_net_epe: lines.line1d,
+        })],
+      };
+    }
+    if (lines.line1e_1d + lines.line1e_2a > 0) {
+      return {
+        outputs: [this.outputNodes.output(schedule2, {
+          ...fields,
+          line1e_form4255_excessive_payment: lines.line1e_1d +
+            lines.line1e_2a,
+        })],
+      };
+    }
+    if (lines.line1f_1d + lines.line1f_2a > 0) {
+      return {
+        outputs: [this.outputNodes.output(schedule2, {
+          ...fields,
+          line1f_form4255_20_percent_ep: lines.line1f_1d +
+            lines.line1f_2a,
+        })],
+      };
+    }
+    if (lines.line19 > 0) {
+      return {
+        outputs: [this.outputNodes.output(schedule2, {
+          line19_form4255_net_epe: lines.line19,
+        })],
+      };
+    }
+    return { outputs: [] };
   }
 }
 
