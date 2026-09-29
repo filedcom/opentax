@@ -9,11 +9,12 @@
  * Permissions: --allow-read --allow-write --allow-run=xmllint
  */
 
-import { assertEquals, assertStringIncludes } from "@std/assert";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { execute, type ExecuteResult } from "../../../core/runtime/executor.ts";
 import { registry } from "../2025/registry.ts";
 import { f1040_2025 } from "../2025/index.ts";
+import { form8995 } from "../2025/mef/forms/f8995.ts";
 import { extractFilerIdentity } from "../mef/filer.ts";
 import { FilingStatus } from "../nodes/types.ts";
 import { SS_WAGE_BASE_2025 } from "../nodes/config/2025.ts";
@@ -485,6 +486,8 @@ Deno.test({
       address_state: facts.taxpayer.address.state,
       address_zip: facts.taxpayer.address.zip,
       filing_status: FilingStatus.MFJ,
+      qbi_no_prior_loss_or_suspended_loss_confirmed: true,
+      qbi_not_patron_of_specified_cooperative_confirmed: true,
     },
     w2: facts.w2.map((form) => ({
       employee_ssn: form.employeeSsn,
@@ -507,6 +510,10 @@ Deno.test({
       box12_entries: [],
     })),
     schedule_c: [{
+      business_reference: "ATS02-STATUTORY-C",
+      line_c_business_name:
+        `${facts.taxpayer.firstName} ${facts.taxpayer.lastName}`,
+      qbi_no_other_adjustments_confirmed: true,
       proprietor_recipient: "T",
       line_a_principal_business: facts.scheduleC.businessDescription,
       line_b_business_code: facts.scheduleC.businessCode,
@@ -558,6 +565,25 @@ Deno.test({
   assertEquals(
     xml.includes("<NetProfitOrLossAmt>26979</NetProfitOrLossAmt>"),
     true,
+  );
+  const sourcedW2 = result.pending.w2 as { w2s: Record<string, unknown>[] };
+  assertThrows(
+    () =>
+      form8995.build(result.pending.form8995, {
+        pending: {
+          ...result.pending,
+          w2: {
+            ...sourcedW2,
+            w2s: sourcedW2.w2s.map((item) =>
+              item.box13_statutory_employee === true
+                ? { ...item, box13_statutory_employee: false }
+                : item
+            ),
+          },
+        },
+      }),
+    Error,
+    "source reconciliation",
   );
   const { success, stderr } = await validateXml(xml);
   assertEquals(success, true, `xmllint errors:\n${stderr}`);

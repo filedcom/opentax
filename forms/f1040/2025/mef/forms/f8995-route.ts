@@ -133,6 +133,25 @@ export function assertOneScheduleC8995(
   const filerSsn = typeof general?.taxpayer_ssn === "string"
     ? general.taxpayer_ssn.replace(/\D/g, "")
     : "";
+  const sourceW2s = Array.isArray(pending.w2?.w2s) ? pending.w2.w2s : [];
+  const statutoryW2s = sourceW2s.filter((w2) =>
+    w2.box13_statutory_employee === true &&
+    w2.employee_ssn?.replace(/\D/g, "") === filerSsn &&
+    w2.box1_wages === sourceBusiness?.line_1_gross_receipts
+  );
+  const statutoryNoSeDeduction = sourceBusiness?.statutory_employee === true &&
+    sourceBusiness.proprietor_recipient === "T" &&
+    statutoryW2s.length === 1 &&
+    f1040?.line1a_wages === sourceW2s.reduce(
+        (sum, w2) =>
+          sum + (w2.box13_statutory_employee === true ? 0 : w2.box1_wages),
+        0,
+      ) &&
+    zeroOrAbsent(scheduleSe?.net_profit_schedule_c) &&
+    zeroOrAbsent(scheduleSe?.net_profit_schedule_f) &&
+    scheduleSe?.farm_optional_method_elected !== true &&
+    (form7206?.schedule_se_source as Record<string, unknown> | undefined)
+        ?.line13_deduction === 0;
   if (
     businesses.length !== 1 || !sourceBusiness || !row || !f1040 ||
     !schedule1 || pending.form8995a !== undefined ||
@@ -180,7 +199,9 @@ export function assertOneScheduleC8995(
         (form7206.schedule_se_source as Record<string, unknown>)
             .line13_deduction !== seDeduction ||
         schedule1.line15_se_deduction !== seDeduction
-      : scheduleSe !== undefined ||
+      : (sourceBusiness.statutory_employee === true &&
+        !statutoryNoSeDeduction) ||
+        (scheduleSe !== undefined && !statutoryNoSeDeduction) ||
         !zeroOrAbsent(schedule1.line15_se_deduction)) ||
     !zeroOrAbsent(fields.qbi_from_schedule_f) ||
     !zeroOrAbsent(fields.qbi) ||
