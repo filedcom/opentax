@@ -38,6 +38,18 @@ const second = {
 };
 const source = { account_1: first, account_2: second };
 
+const XSD_PATH = new URL(
+  "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Common/IRS8888/IRS8888.xsd",
+  import.meta.url,
+).pathname;
+let xsdAvailable = false;
+try {
+  Deno.statSync(XSD_PATH);
+  xsdAvailable = true;
+} catch {
+  // The official IRS schema bundle is local-only.
+}
+
 function build(
   input: Parameters<typeof form8888.build>[0] = source,
   context: Parameters<typeof form8888.build>[1] = {
@@ -69,6 +81,51 @@ Deno.test("Form 8888 emits two ordered direct-deposit groups and matching line 5
     "<TotalAllocationOfRefundAmt>1000</TotalAllocationOfRefundAmt>",
   );
   assertEquals(xml.includes("RefundByCheckAmt"), false);
+});
+
+Deno.test({
+  name: "XSD: Form 8888 two- and three-account refund allocations",
+  ignore: !xsdAvailable,
+  sanitizeOps: false,
+  sanitizeResources: false,
+}, async () => {
+  for (
+    const [input, refund] of [
+      [source, 1000],
+      [{
+        ...source,
+        account_3: {
+          routing_number: "021000089",
+          account_number: "777888999",
+          account_type: AccountType.Checking,
+          amount: 250,
+          owner_name: "Jane Smith",
+        },
+      }, 1250],
+    ] as const
+  ) {
+    const xml = build(input, {
+      filer,
+      pending: {
+        f1040: { line34_overpayment: refund, line35a_refund: refund },
+      },
+    }).replace(
+      "<IRS8888>",
+      '<IRS8888 xmlns="http://www.irs.gov/efile" documentId="IRS8888-1">',
+    );
+    const path = await Deno.makeTempFile({ suffix: ".xml" });
+    try {
+      await Deno.writeTextFile(path, xml);
+      const result = await new Deno.Command("xmllint", {
+        args: ["--noout", "--schema", XSD_PATH, path],
+        stdout: "piped",
+        stderr: "piped",
+      }).output();
+      assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
+    } finally {
+      await Deno.remove(path);
+    }
+  }
 });
 
 Deno.test("Form 8888 emits three accounts but no obsolete savings-bond branch", () => {
