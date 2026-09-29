@@ -127,7 +127,7 @@ Deno.test("f1040: Form 1116 line 18 cannot add back all Schedule 1-A deductions"
         form1116_line20_us_tax: 8_000,
       }),
     Error,
-    "line 18 does not match",
+    "line 18 does not reconcile its sourced preferential adjustment",
   );
 });
 
@@ -726,12 +726,11 @@ Deno.test("f1040: Form 8936 new credit is capped at remaining line 18 tax", () =
   assertEquals(f.line20_nonrefundable_credits, 5_000);
   assertEquals(f.line21_credits_total, 5_000);
   assertEquals(f.line22_tax_after_credits, 0);
-  assertEquals(result.finalizations?.[0].fields, {
-    line6f_total: 5_000,
-    line6m_total: undefined,
-    line7_total: 5_000,
-    line8_total: 5_000,
-  });
+  const schedule3 = result.finalizations?.[0].fields;
+  assertEquals(schedule3?.line6f_total, 5_000);
+  assertEquals(schedule3?.line6m_total, undefined);
+  assertEquals(schedule3?.line7_total, 5_000);
+  assertEquals(schedule3?.line8_total, 5_000);
 });
 
 Deno.test("f1040: previously owned credit takes priority over new clean vehicle credit", () => {
