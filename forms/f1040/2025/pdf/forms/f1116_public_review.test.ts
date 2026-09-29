@@ -33,6 +33,10 @@ function inputs() {
       taxpayer_dob: "1985-06-15",
       digital_assets: false,
     },
+    schedule_b_part_iii: {
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    },
     f1099int: [{
       payer_name: "Canadian Bank",
       box1: 50_000,

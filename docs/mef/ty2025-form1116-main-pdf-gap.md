@@ -1,6 +1,6 @@
 # TY2025 Form 1116 main PDF category boundary
 
-Build-first public intake and standard-deduction route (2026-09-29, unrun):
+Build-first public intake and standard-deduction route (2026-09-29):
 `form1116_review` now carries the typed affirmative single-source PDF review
 directly into the Form 1116 calculation. One documented Form 1099-INT can be the
 sole income and foreign-tax source on a single Form 1040. For a filer taking the
@@ -11,9 +11,10 @@ standard deduction, the PDF reconciles that sourced deduction to Form 1040 lines
 that sole gross interest amount, no other income, losses, adjustments,
 deductions, or special-rate items, and an identified prior-year zero-carryback
 review when current foreign tax exceeds the limit. Schedule B must reconcile its
-current-year excess to the parent category. Source/graph, PDF projection,
-excess, mixed-income, gross-income, tax mismatch, and missing review cases are
-written but unrun. The generic `agi_aggregator` gross figure is not an IRS
+current-year excess to the parent category. The focused public-review file now
+passes 3/3 cases covering source/graph, PDF projection, excess, mixed-income,
+gross-income, tax mismatch, and missing review. This is not a full category or
+filled-output pass. The generic `agi_aggregator` gross figure is not an IRS
 gross-income calculation for every return; this PDF route only uses it when it
 equals the sole identified Form 1099-INT gross interest. Mixed income, itemized
 deductions, multiple countries, and unrelated adjustment paths remain closed.
