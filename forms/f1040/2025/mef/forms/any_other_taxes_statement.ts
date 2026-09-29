@@ -7,6 +7,7 @@ export const anyOtherTaxesStatement: MefFormDescriptor<
   unknown
 > = {
   pendingKey: "any_other_taxes_statement",
+  sourcePendingKeys: ["form8978_reporting_year"],
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040s2.pdf",
   build(_fields, context) {

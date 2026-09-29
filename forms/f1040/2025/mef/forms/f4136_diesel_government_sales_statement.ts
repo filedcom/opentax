@@ -12,6 +12,7 @@ export const form4136DieselGovernmentSalesStatement: MefFormDescriptor<
   unknown
 > = {
   pendingKey: "f4136_diesel_government_sales_statement",
+  sourcePendingKeys: ["f4136"],
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f4136.pdf",
   build(_fields, context = {}) {

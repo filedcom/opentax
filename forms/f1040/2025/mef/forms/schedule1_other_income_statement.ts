@@ -8,6 +8,7 @@ export const schedule1OtherIncomeStatement: MefFormDescriptor<
   unknown
 > = {
   pendingKey: "schedule1_other_income_statement",
+  sourcePendingKeys: ["schedule1"],
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040s1--2025.pdf",
   build(_fields, context) {

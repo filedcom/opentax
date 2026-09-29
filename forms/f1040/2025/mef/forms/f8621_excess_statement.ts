@@ -39,6 +39,7 @@ export const form8621ExcessStatement: MefFormDescriptor<
   readonly string[]
 > = {
   pendingKey: "form8621_excess_statement",
+  sourcePendingKeys: ["form8621"],
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8621.pdf",
   build(_fields, context) {

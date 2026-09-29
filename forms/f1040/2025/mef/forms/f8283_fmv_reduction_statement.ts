@@ -19,6 +19,7 @@ export const form8283FmvReductionStatement: MefFormDescriptor<
   readonly string[]
 > = {
   pendingKey: "form8283_fmv_reduction_statement",
+  sourcePendingKeys: ["f8283"],
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8283--2025.pdf",
   build(_fields, context = {}) {

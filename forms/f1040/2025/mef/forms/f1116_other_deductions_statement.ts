@@ -9,6 +9,7 @@ export const form1116OtherDeductionsStatement: MefFormDescriptor<
   unknown
 > = {
   pendingKey: "form1116_other_deductions_statement",
+  sourcePendingKeys: ["form_1116"],
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1116.pdf",
   build(_fields, context = {}) {

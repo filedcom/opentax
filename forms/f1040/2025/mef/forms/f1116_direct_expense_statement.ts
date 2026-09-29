@@ -11,6 +11,7 @@ export const form1116DirectExpenseStatement: MefFormDescriptor<
   readonly string[]
 > = {
   pendingKey: "form1116_direct_expense_statement",
+  sourcePendingKeys: ["form_1116"],
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1116.pdf",
   build(_fields, context = {}) {

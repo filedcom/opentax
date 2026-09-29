@@ -7,6 +7,7 @@ export const form965aMultipleTransfereeStatement: MefFormDescriptor<
   unknown
 > = {
   pendingKey: "f965_multiple_transferee_statement",
+  sourcePendingKeys: ["f965"],
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f965a.pdf",
   build(_fields, context = {}) {

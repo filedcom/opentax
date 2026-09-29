@@ -11,6 +11,7 @@ export const cccLoanAccrualStatement: MefFormDescriptor<
   readonly string[]
 > = {
   pendingKey: "ccc_loan_accrual_statement",
+  sourcePendingKeys: ["schedule_f"],
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/instructions/i1040sf",
   build(_fields, context) {

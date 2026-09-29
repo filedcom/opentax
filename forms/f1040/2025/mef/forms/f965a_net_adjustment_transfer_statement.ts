@@ -7,6 +7,7 @@ export const form965aNetAdjustmentTransferStatement: MefFormDescriptor<
   unknown
 > = {
   pendingKey: "f965_net_adjustment_transfer_statement",
+  sourcePendingKeys: ["f965"],
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f965a.pdf",
   build(_fields, context = {}) {

@@ -13,6 +13,7 @@ export const form4136EmulsionBlendingStatement: MefFormDescriptor<
   readonly string[]
 > = {
   pendingKey: "f4136_emulsion_blending_statement",
+  sourcePendingKeys: ["f4136"],
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f4136.pdf",
   build(_fields, context = {}) {

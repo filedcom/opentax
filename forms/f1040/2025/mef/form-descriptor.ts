@@ -16,6 +16,8 @@ export interface MefFormDescriptor<
 > {
   /** Key used in the MefFormsPending dict (e.g. "form982", "schedule_d"). */
   readonly pendingKey: TKey;
+  /** Pending source keys that trigger a derived document. */
+  readonly sourcePendingKeys?: readonly string[];
   /**
    * Mapping from pending field names to XML element names.
    * Empty array for forms with non-standard builders (e.g. form8949).

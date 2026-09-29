@@ -14,6 +14,7 @@ export const form8283VehicleStatement: MefFormDescriptor<
   readonly string[]
 > = {
   pendingKey: "form8283_vehicle_statement",
+  sourcePendingKeys: ["f8283"],
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1098c--2025.pdf",
   build(_fields, context = {}) {

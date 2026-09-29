@@ -38,7 +38,10 @@ Deno.test({
     reduced_section280c_credit_election: true,
     form8932_overlapping_wage_credit: 1_250,
     subject_to_passive_activity_limit: false,
-  }).replace("<IRS8820>", '<IRS8820 xmlns="http://www.irs.gov/efile">');
+  }).replace(
+    "<IRS8820>",
+    '<IRS8820 xmlns="http://www.irs.gov/efile" documentId="IRS88201">',
+  );
   const path = await Deno.makeTempFile({ suffix: ".xml" });
   try {
     await Deno.writeTextFile(path, xml);
@@ -102,7 +105,10 @@ Deno.test({
     try {
       await Deno.writeTextFile(
         path,
-        xml.replace(`<${root}>`, `<${root} xmlns="http://www.irs.gov/efile">`),
+        xml.replace(
+          `<${root}>`,
+          `<${root} xmlns="http://www.irs.gov/efile" documentId="${root}1">`,
+        ),
       );
       const result = await new Deno.Command("xmllint", {
         args: ["--noout", "--schema", schema, path],
@@ -135,7 +141,10 @@ Deno.test({
     reduced_section280c_credit_election: true,
     form8932_overlapping_wage_credit: 0,
     subject_to_passive_activity_limit: false,
-  }).replace("<IRS8820>", '<IRS8820 xmlns="http://www.irs.gov/efile">');
+  }).replace(
+    "<IRS8820>",
+    '<IRS8820 xmlns="http://www.irs.gov/efile" documentId="IRS88201">',
+  );
   const path = await Deno.makeTempFile({ suffix: ".xml" });
   try {
     await Deno.writeTextFile(path, xml);
@@ -176,7 +185,10 @@ Deno.test({
     reduced_section280c_credit_election: true,
     form8932_overlapping_wage_credit: 0,
     subject_to_passive_activity_limit: false,
-  }).replace("<IRS8820>", '<IRS8820 xmlns="http://www.irs.gov/efile">');
+  }).replace(
+    "<IRS8820>",
+    '<IRS8820 xmlns="http://www.irs.gov/efile" documentId="IRS88201">',
+  );
   const path = await Deno.makeTempFile({ suffix: ".xml" });
   try {
     await Deno.writeTextFile(path, xml);

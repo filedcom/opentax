@@ -8,6 +8,7 @@ export const childTaxableInterestStatement: MefFormDescriptor<
   readonly string[]
 > = {
   pendingKey: "child_taxable_interest_statement",
+  sourcePendingKeys: ["form8814"],
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8814--2025.pdf",
   build(_fields, context?: MefBuildContext) {

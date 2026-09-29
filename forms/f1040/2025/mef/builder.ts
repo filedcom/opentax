@@ -114,7 +114,13 @@ function buildFragments(
 ): ReadonlyArray<{ pendingKey: string; tag: string; xml: string }> {
   return ALL_MEF_FORMS.flatMap((form) => {
     const source = pending[form.pendingKey as keyof MefFormsPending];
-    if (source === undefined && form.pendingKey !== "f1040") return [];
+    const sourceKeys = form.sourcePendingKeys ?? [form.pendingKey];
+    if (
+      form.pendingKey !== "f1040" &&
+      !sourceKeys.some((key) =>
+        pending[key as keyof MefFormsPending] !== undefined
+      )
+    ) return [];
     const built = form.build(
       (source ?? []) as never,
       context,

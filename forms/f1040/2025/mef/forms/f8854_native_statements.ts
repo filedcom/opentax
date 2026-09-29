@@ -10,6 +10,7 @@ export const form8854NativeStatements: MefFormDescriptor<
   readonly string[]
 > = {
   pendingKey: "f8854_native_statements",
+  sourcePendingKeys: ["f8854", "f8854_annual"],
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8854.pdf",
   build(_fields, context) {

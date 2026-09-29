@@ -26,7 +26,6 @@ Deno.test("Form 8283 emits the sourced ATS Scenario 2 Section A donation", () =>
         fmv: donation.fairMarketValue,
         charitable_limit_category: "noncash_50",
         is_capital_gain_property: false,
-        short_term_ordinary_income_reduction_confirmed: true,
       }],
     },
   }, testFiler());
@@ -62,7 +61,6 @@ Deno.test("Form 8283 preserves multiple Section A rows and month-only acquisitio
         charitable_limit_category: "noncash_50",
         similar_item_group: "furniture",
         is_capital_gain_property: false,
-        short_term_ordinary_income_reduction_confirmed: true,
       },
       {
         property_description: "Books",
@@ -71,7 +69,6 @@ Deno.test("Form 8283 preserves multiple Section A rows and month-only acquisitio
         charitable_limit_category: "noncash_50",
         similar_item_group: "books",
         is_capital_gain_property: false,
-        short_term_ordinary_income_reduction_confirmed: true,
       },
     ],
   });
@@ -277,6 +274,9 @@ function sectionBHighValueEquipmentGift() {
     fmv: 600_000,
     deduction_claimed: 600_000,
     cost_or_adjusted_basis: 620_000,
+    charitable_limit_category: "noncash_50" as const,
+    similar_item_group: "industrial printing presses",
+    is_capital_gain_property: false,
     qualified_appraisal: {
       ...vehicle.qualified_appraisal,
       attachment_file_name: "QualifiedAppraisal-Press.pdf",
@@ -420,6 +420,9 @@ Deno.test("Form 8283 Section A includes VIN without a donee PDF for a vehicle cl
       section_a_items: [{
         property_description: "2014 sedan, fair condition, 90,000 miles",
         fmv: 500,
+        charitable_limit_category: "noncash_50",
+        similar_item_group: "vehicles",
+        is_capital_gain_property: false,
         is_vehicle: true,
         vehicle_vin: "1HGBH41JXMN109186",
       }],
@@ -493,8 +496,16 @@ Deno.test("Form 8283 links a separate donee PDF for each Section A vehicle over 
   const xml = (await buildMefBundle({
     f8283: {
       section_a_items: [
-        needyTransferVehicle("1HGBH41JXMN109186", "Form1098C-First.pdf"),
-        needyTransferVehicle("1HGBH41JXMN109187", "Form1098C-Second.pdf"),
+        {
+          ...needyTransferVehicle("1HGBH41JXMN109186", "Form1098C-First.pdf"),
+          deduction_claimed: 2_000,
+          cost_or_adjusted_basis: 2_000,
+        },
+        {
+          ...needyTransferVehicle("1HGBH41JXMN109187", "Form1098C-Second.pdf"),
+          deduction_claimed: 2_000,
+          cost_or_adjusted_basis: 2_000,
+        },
       ],
     },
   }, {
@@ -514,7 +525,7 @@ Deno.test("Form 8283 links a separate donee PDF for each Section A vehicle over 
   })).xml;
   assertStringIncludes(
     xml,
-    'referenceDocumentId="BinaryAttachment2 BinaryAttachment3"',
+    'referenceDocumentId="BinaryAttachment6 BinaryAttachment7"',
   );
   assertStringIncludes(xml, "<Desc>Form1098C First vehicle</Desc>");
   assertStringIncludes(xml, "<Desc>Form1098C Second vehicle</Desc>");
@@ -537,9 +548,9 @@ Deno.test("Form 8283 accepts a donee-issued written acknowledgment PDF instead o
   })).xml;
   assertStringIncludes(
     xml,
-    '<BinaryAttachment documentId="BinaryAttachment2">',
+    '<BinaryAttachment documentId="BinaryAttachment4">',
   );
-  assertStringIncludes(xml, 'referenceDocumentId="BinaryAttachment2"');
+  assertStringIncludes(xml, 'referenceDocumentId="BinaryAttachment4"');
   assertStringIncludes(
     xml,
     "<Desc>DoneeOrganizationContemporaneousWrittenAcknowledgment Civic needy transfer</Desc>",
@@ -557,12 +568,16 @@ Deno.test("Form 8283 Section B emits separate signed appraisal and donee documen
     fmv: 8_000,
     deduction_claimed: 8_000,
     cost_or_adjusted_basis: 2_500,
+    charitable_limit_category: "noncash_50" as const,
+    similar_item_group: "furniture",
+    is_capital_gain_property: false,
     qualified_appraisal: {
       appraiser_first_name: "Jane",
       appraiser_last_name: "Smith",
       signed_date: "2025-08-20",
       appraiser_ein: "123456789",
       signed_by_appraiser: true as const,
+      covers_similar_item_group_confirmed: true as const,
       signature_attachment_file_name: "Form8283AppraiserSignature.pdf",
       us_address: {
         line1: "1 Art Way",
@@ -684,6 +699,9 @@ Deno.test("Form 8283 Section B return validates against TY2025 IRS XSD", async (
         fmv: 8_000,
         deduction_claimed: 8_000,
         cost_or_adjusted_basis: 2_500,
+        charitable_limit_category: "noncash_50",
+        similar_item_group: "furniture",
+        is_capital_gain_property: false,
         signed_form_attachment_file_name: "CompletedSignedForm8283.pdf",
         signed_form_source_review: await signedFormSourceReview(signedBytes),
         qualified_appraisal: {
@@ -1216,6 +1234,9 @@ Deno.test("Form 8283 Section B requires both correctly described signature PDFs"
     fmv: 8_000,
     deduction_claimed: 8_000,
     cost_or_adjusted_basis: 2_500,
+    charitable_limit_category: "noncash_50" as const,
+    similar_item_group: "furniture",
+    is_capital_gain_property: false,
     qualified_appraisal: {
       appraiser_first_name: "Jane",
       appraiser_last_name: "Smith",
@@ -1303,6 +1324,9 @@ Deno.test("Form 8283 still rejects gifts needing unlinked evidence", () => {
           property_description: "Art",
           fmv: 6_000,
           deduction_claimed: 6_000,
+          charitable_limit_category: "noncash_50",
+          similar_item_group: "art",
+          is_capital_gain_property: false,
         }],
       }),
     Error,
@@ -1314,6 +1338,9 @@ Deno.test("Form 8283 still rejects gifts needing unlinked evidence", () => {
         section_a_items: [{
           property_description: "Car",
           fmv: 1_000,
+          charitable_limit_category: "noncash_50",
+          similar_item_group: "vehicles",
+          is_capital_gain_property: false,
           is_vehicle: true,
         }],
       }),

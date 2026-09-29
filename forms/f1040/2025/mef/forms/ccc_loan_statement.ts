@@ -28,6 +28,7 @@ export const cccLoanStatement: MefFormDescriptor<
   readonly string[]
 > = {
   pendingKey: "ccc_loan_statement",
+  sourcePendingKeys: ["f4835"],
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/instructions/i1040sf",
   build(_fields, context) {

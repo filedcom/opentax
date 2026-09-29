@@ -11,6 +11,7 @@ export const form4136CreditCardUsersStatement: MefFormDescriptor<
   unknown
 > = {
   pendingKey: "f4136_credit_card_users_statement",
+  sourcePendingKeys: ["f4136"],
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f4136.pdf",
   build(_fields, context = {}) {

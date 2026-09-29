@@ -132,6 +132,10 @@ Deno.test({
   ignore: !xsdAvailable,
 }, async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
+    schedule_b_part_iii: {
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    },
     general: {
       filing_status: "single",
       taxpayer_first_name: "Test",
@@ -159,7 +163,7 @@ Deno.test({
       box12_entries: [],
     }],
     f1099div: [{
-      payerName: "U.S. Fund",
+      payerName: "US Fund",
       isNominee: false,
       box11: false,
       box1a: 20_000,
@@ -226,7 +230,7 @@ Deno.test({
 }, async () => {
   const xml = buildMefXml({
     form_1116: computedFields(),
-    schedule3: { line1_total: 1_350 },
+    schedule3: { line1_foreign_tax_credit: 1_350, line1_total: 1_350 },
   }, filer);
   assertEquals([...xml.matchAll(/<IRS1116 documentId=/g)].length, 2);
   assertStringIncludes(
@@ -493,7 +497,7 @@ Deno.test({
   };
   const xml = buildMefXml({
     form_1116: withExpense,
-    schedule3: { line1_total: 1_340 },
+    schedule3: { line1_foreign_tax_credit: 1_340, line1_total: 1_340 },
   }, filer);
   const statementId = /<ForeignIncmRelatedExpensesStmt documentId="([^"]+)"/
     .exec(xml)?.[1];
@@ -523,7 +527,7 @@ Deno.test({
       other_deductions_explanation:
         "Student loan interest adjustment $1,000; IRA deduction $1,000",
     },
-    schedule3: { line1_total: 1_350 },
+    schedule3: { line1_foreign_tax_credit: 1_350, line1_total: 1_350 },
   }, filer);
   const statementId = /<OtherDeductionsNotRelatedStmt documentId="([^"]+)"/
     .exec(xml)?.[1];

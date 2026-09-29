@@ -11,6 +11,7 @@ export const form8820ControlledGroupStatement: MefFormDescriptor<
   readonly string[]
 > = {
   pendingKey: "f8820_controlled_group_statement",
+  sourcePendingKeys: ["f8820"],
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8820.pdf",
   build(_fields, context = {}) {

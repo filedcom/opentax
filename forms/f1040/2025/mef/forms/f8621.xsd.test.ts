@@ -45,7 +45,6 @@ Deno.test({
 }, async () => {
   const event = {
     kind: ExcessEventKind.Distribution as const,
-    currency_code: "USD",
     holding_period_start: "2024-01-01",
     first_pfic_tax_year: 2024,
     shares_in_block: 100,
