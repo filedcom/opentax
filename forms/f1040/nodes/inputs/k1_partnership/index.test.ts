@@ -334,7 +334,7 @@ Deno.test("partnership K-1 box 15 code K needs source identity and passive class
     box15_code_k_disabled_access_credit: 500.25,
     disabled_access_credit_subject_to_passive_activity_limit: true,
   })]);
-  assertEquals(findOutput(result, "form8582cr")?.fields, {
+  assertEquals(findOutput(result, "disabled_access_limit")?.fields, {
     required_disabled_access_k1_credits: [{
       source_type: "partnership",
       source_ein: "123456789",
@@ -359,7 +359,7 @@ Deno.test("nonpassive partnership K-1 code K reaches source-backed Form 3800", (
     box15_code_k_disabled_access_credit: 500.25,
     disabled_access_credit_subject_to_passive_activity_limit: false,
   })]);
-  assertEquals(findOutput(result, "f3800")?.fields, {
+  assertEquals(findOutput(result, "disabled_access_limit")?.fields, {
     f8826_credit_entries: [{
       source_type: "partnership",
       source_ein: "123456789",

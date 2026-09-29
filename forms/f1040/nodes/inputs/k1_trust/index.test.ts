@@ -239,7 +239,7 @@ Deno.test("estate and trust K-1 nonpassive disabled-access credits enter Form 38
         `${entity_type} disabled-access statement`,
       disabled_access_credit_subject_to_passive_activity_limit: false,
     });
-    assertEquals(findOutput(compute([item]), "f3800")?.fields, {
+    assertEquals(findOutput(compute([item]), "disabled_access_limit")?.fields, {
       f8826_credit_entries: [{
         source_type: entity_type,
         source_ein: "123456789",
@@ -265,7 +265,7 @@ Deno.test("estate and trust K-1 nonpassive disabled-access credits enter Form 38
           ...item,
           disabled_access_credit_subject_to_passive_activity_limit: true,
         }]),
-        "form8582cr",
+        "disabled_access_limit",
       )?.fields,
       {
         required_disabled_access_k1_credits: [{

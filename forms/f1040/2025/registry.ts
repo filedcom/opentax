@@ -183,7 +183,12 @@ import { form8959 } from "../nodes/intermediate/forms/form8959/index.ts";
 import { form8960 } from "../nodes/intermediate/forms/form8960/index.ts";
 import { form8990 } from "../nodes/intermediate/forms/form8990/index.ts";
 import { form8995 } from "../nodes/intermediate/forms/form8995/index.ts";
-import { form8995a, form8995aScheduleA, form8995aScheduleC, form8995aScheduleD } from "../nodes/intermediate/forms/form8995a/index.ts";
+import {
+  form8995a,
+  form8995aScheduleA,
+  form8995aScheduleC,
+  form8995aScheduleD,
+} from "../nodes/intermediate/forms/form8995a/index.ts";
 import { form982 } from "../nodes/intermediate/forms/form982/index.ts";
 import { form_1116 } from "../nodes/intermediate/forms/form_1116/index.ts";
 import { form_8829 } from "../nodes/intermediate/forms/form_8829/index.ts";
@@ -383,7 +388,7 @@ export const registry: NodeRegistry = {
   form6781,
   form8615,
   form8582,
-  disabledAccessLimit,
+  disabled_access_limit: disabledAccessLimit,
   form8582cr,
   form8606,
   form8396,

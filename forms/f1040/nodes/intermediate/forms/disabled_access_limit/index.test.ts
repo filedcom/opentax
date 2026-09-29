@@ -93,6 +93,12 @@ Deno.test("disabled-access node retains the passive K-1 gross-source check", () 
 
 Deno.test("mixed K-1 disabled-access amounts pass through one upstream cap in the return graph", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
+    general: {
+      filing_status: "single",
+      taxpayer_first_name: "Test",
+      taxpayer_last_name: "Taxpayer",
+      taxpayer_ssn: "111223333",
+    },
     k1_partnership: [{
       partnership_name: "Access partnership",
       partnership_ein: "123456789",
@@ -113,6 +119,7 @@ Deno.test("mixed K-1 disabled-access amounts pass through one upstream cap in th
       regular_tax_without_passive: 0,
     },
   }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
   assertEquals(
     (result.pending.disabled_access_limit.f8826_credit_entries as Array<{
       credit_amount: number;
@@ -142,6 +149,12 @@ Deno.test("mixed K-1 disabled-access amounts pass through one upstream cap in th
 
 Deno.test("passive self-earned Form 8826 and nonpassive K-1 share the upstream cap", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
+    general: {
+      filing_status: "single",
+      taxpayer_first_name: "Test",
+      taxpayer_last_name: "Taxpayer",
+      taxpayer_ssn: "111223333",
+    },
     f8826: {
       eligible_expenditures: 6_250,
       prior_year_gross_receipts: 500_000,
@@ -223,6 +236,12 @@ Deno.test("passive self-earned Form 8826 needs matching Form 8582-CR activity fa
 
 Deno.test("passive Form 8826 pass-through marker shares the cap without duplicating its K-1", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
+    general: {
+      filing_status: "single",
+      taxpayer_first_name: "Test",
+      taxpayer_last_name: "Taxpayer",
+      taxpayer_ssn: "111223333",
+    },
     f8826: {
       eligible_expenditures: 0,
       subject_to_passive_activity_limit: false,

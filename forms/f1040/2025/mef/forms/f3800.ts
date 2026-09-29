@@ -995,7 +995,9 @@ export function prepareForm3800DocumentParts(
         ? {
           credit: form8826.credit,
           sources: form8826.sources,
-          documentId: form8826Ids[0],
+          documentId: form8826.sources.some((source) => !source.ein)
+            ? form8826Ids[0]
+            : undefined,
           appliedCredit: form8826Applied,
           appliedCreditsBySource: form8826SourceAllocations(
             form8826,
