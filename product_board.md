@@ -69,6 +69,9 @@ $135 allowed foreign tax credit, and $13,540 total tax in that fixture.
 The qualified-tips W-2 to Schedule 1-A return passes 6/6 after its $9,250
 single-filer taxable income was checked against the same 2025 Tax Table:
 $928 tax and a $1,572 refund in the synthetic case.
+The Form 3115-to-Schedule C end-to-end fixture now uses the public executor's
+array input shape and explicit Schedule C Form 1099 answer. Its focused case
+passes source-to-profit, native Schedule C XML, and PDF projection (1/1).
 
 The 2026-09-29 moving-worktree diagnostic `deno task test` run finished with
 8,609 passed and 205 failed in 11m18s. It is not the agreed fixed-commit

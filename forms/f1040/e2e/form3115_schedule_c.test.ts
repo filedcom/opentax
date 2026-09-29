@@ -16,18 +16,16 @@ Deno.test("Form 3115 source reaches one Schedule C profit and both projections",
       taxpayer_last_name: "Gardenia",
       taxpayer_ssn: "400001212",
     },
-    schedule_c: {
-      schedule_cs: [{
+    schedule_c: [{
         business_reference: "DESIGN",
         line_a_principal_business: "DESIGNER",
         line_b_business_code: "541310",
         line_f_accounting_method: "cash",
         line_g_material_participation: true,
+        line_i_made_1099_payments: false,
         line_1_gross_receipts: 20_000,
       }],
-    },
-    f3115: {
-      f3115s: [{
+    f3115: [{
         business_reference: "DESIGN",
         designated_change_number: "222",
         filing_type: "automatic",
@@ -35,9 +33,9 @@ Deno.test("Form 3115 source reaches one Schedule C profit and both projections",
         year_of_change: 2025,
         section_481_adjustment: 12_000,
       }],
-    },
   }, { taxYear: 2025, formType: "f1040" });
 
+  assertEquals(result.diagnostics, []);
   const source = form3115InputSchema.parse(result.pending.f3115);
   const scheduleCFields = scheduleCInputSchema.parse(result.pending.schedule_c);
   assertEquals(source.f3115s[0].section_481_adjustment, 12_000);
