@@ -52,7 +52,7 @@ function extractSpouse(
   if (!ssn || !lastName) return undefined;
 
   return {
-    ssn,
+    ssn: ssn.replace(/-/g, ""),
     firstName: firstName ?? "",
     lastName,
     middleInitial: str(f1040["spouse_middle_initial"]),

@@ -4300,7 +4300,7 @@ Deno.test({
     result.pending as MefFormsPending,
     extractFilerIdentity(general),
   );
-  assertStringIncludes(xml, "<IRS8959>");
+  assertStringIncludes(xml, "<IRS8959 ");
   assertStringIncludes(
     xml,
     "<TotalW2MedicareWagesAndTipsAmt>220000</TotalW2MedicareWagesAndTipsAmt>",
