@@ -1,4 +1,4 @@
-import { assertEquals, assertStringIncludes } from "@std/assert";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { execute } from "../../../core/runtime/executor.ts";
 import { registry } from "../2025/registry.ts";
@@ -18,6 +18,10 @@ const filer: FilerIdentity = {
 
 Deno.test("Form 8814 and a below-threshold 1099-DIV trigger Schedule B once", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
+    schedule_b_part_iii: {
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    },
     general: {
       filing_status: "single",
       taxpayer_first_name: "Test",
@@ -86,8 +90,12 @@ Deno.test("Form 8814 and a below-threshold 1099-DIV trigger Schedule B once", as
   }
 });
 
-Deno.test("Form 8814 and affirmed source income reach Form 4952 XML", async () => {
+Deno.test("Form 8814 investment income cannot enter the limited Form 4952 export route", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
+    schedule_b_part_iii: {
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    },
     general: {
       filing_status: "single",
       taxpayer_first_name: "Test",
@@ -151,31 +159,9 @@ Deno.test("Form 8814 and affirmed source income reach Form 4952 XML", async () =
   assertEquals(pending.form4952?.line4e, 25);
   assertEquals(pending.form4952?.line6, 1_450);
   assertEquals(pending.form4952?.line8, 600);
-  const xml = buildMefXml(pending, filer);
-  assertStringIncludes(xml, "<IRS4952");
-  assertStringIncludes(
-    xml,
-    "<InvestmentInterestExpDeductAmt>600</InvestmentInterestExpDeductAmt>",
+  assertThrows(
+    () => buildMefXml(pending, filer),
+    Error,
+    "Form 4952 combined path needs 1099 interest and dividend sources",
   );
-  const xsdPath = new URL(
-    "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
-    import.meta.url,
-  ).pathname;
-  try {
-    await Deno.stat(xsdPath);
-  } catch {
-    return;
-  }
-  const path = await Deno.makeTempFile({ suffix: ".xml" });
-  try {
-    await Deno.writeTextFile(path, xml);
-    const checked = await new Deno.Command("xmllint", {
-      args: ["--noout", "--schema", xsdPath, path],
-      stdout: "piped",
-      stderr: "piped",
-    }).output();
-    assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
-  } finally {
-    await Deno.remove(path);
-  }
 });

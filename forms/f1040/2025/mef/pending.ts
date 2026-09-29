@@ -27,6 +27,10 @@ export function buildPending(
       nodeType === "form8960" &&
       typeof normalized["line13_magi"] !== "number"
     ) continue;
+    if (
+      nodeType === "form4952" &&
+      typeof normalized["line3"] !== "number"
+    ) continue;
     result[nodeType] = normalized;
   }
   // form8949 has a non-standard transaction-array structure
