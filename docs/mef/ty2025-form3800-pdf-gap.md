@@ -4,7 +4,7 @@ Status: the native `IRS3800` builder is registered and source-aware, but no Form
 3800 PDF descriptor is registered. The PDF preflight now stops an active Form
 3800 source rather than producing a printable packet without its parent form.
 This is a temporary safety boundary, not a Form 3800 implementation or an
-approved exclusion. No test, XSD, filled-PDF, or ATS pass is recorded.
+approved exclusion. No complete Form 3800 PDF, filled-PDF, or ATS pass is recorded.
 
 The [official 2025 Form 3800](https://www.irs.gov/pub/irs-pdf/f3800.pdf) says to
 include all nine pages with the return. Pages 1-2 carry Parts I and II and the
@@ -46,7 +46,8 @@ Schedule 3 line 6a and source tax use against lines 17, 26, and 37 before
 filling the corresponding 39 PDF fields. A Part III projector now maps the
 currently modeled source row columns and 2/5/6 subtotals from typed amounts and
 metadata; the native path does not model elective payment columns (h) or (j).
-Those field-map and projection cases are written but not yet run.
+The field-map and projection cases passed in a focused 19-test run on
+2026-09-29; they do not validate a filled nine-page packet.
 
 Part IV top-level carryover rows now retain source keys, latest originating
 year, entity identity, and all tax-use amounts as one typed row. Native XML is
@@ -54,7 +55,7 @@ generated from that row only at document assembly; there is no cached XML copy.
 This makes its printable columns available without parsing XML. The pure Part IV
 projector now maps columns (a)-(i), including year, entity, aggregate count, tax
 use, and lines 5/6/7 subtotals, and rejects lost source identity or an
-impossible carryforward. Its cases are unrun.
+impossible carryforward. Its cases passed in that focused run.
 
 Parts V and VI now have pure source projections onto the exact page 8 and 9
 fields. Part V combines nonpassive facilities and passive current sources,
@@ -62,12 +63,13 @@ checks per-line amounts and tax use against Part III, and prints transfer sales
 without inventing purchased credits. Part VI checks each originating-year source
 against its Part IV aggregate and preserves EIN, allowed credit, tax use, and
 carryforward. Both projections use the PDF-only 15/35-row capacity check. Their
-positive, tamper, and overflow cases are written but unrun. Header projection
+positive, tamper, and overflow cases passed in that focused run. Header projection
 uses the finalized filer identity and the native transfer-statement IDs to mark
 the two yes/no questions and statement count. It rejects a transfer election
 that has no matching source-row sale or lacks reserved statement IDs. The
 revised-carryforward checkboxes are not guessed; a nonzero line 4 or 34 is a
-PDF-only rejection until a typed answer is available. Header cases are unrun.
+PDF-only rejection until a typed answer is available. Header cases passed in
+that focused run.
 
 The remaining integration is substantive. The native Form 3800 builder now calls
 the exported `prepareForm3800DocumentParts`, which obtains reserved Form 8835

@@ -394,7 +394,7 @@ Deno.test("Form 3800 passive carryover fragments follow TY2025v5.4 IRS3800 XSD",
     currentPartnership,
   ], {});
   const xml =
-    `<IRS3800 xmlns="http://www.irs.gov/efile"><CAMTAndBEATInd>false</CAMTAndBEATInd>${
+    `<IRS3800 xmlns="http://www.irs.gov/efile" documentId="IRS3800-1"><CAMTAndBEATInd>false</CAMTAndBEATInd>${
       fragments.partIII.map((row) => row.xml).join("")
     }${buildForm3800PartIVXml(fragments.partIV).join("")}${
       buildForm3800PartVXml(fragments.partV.map((row) => ({
