@@ -14,6 +14,15 @@ basis-increase election in Part VI. The current model has no Part VI election
 source, so even a future bounded PDF route must reject that election rather than
 silently leave it blank.
 
+The official two pages were rendered and visually inspected on 2026-09-29.
+Their canonical AcroForm contains 51 leaf fields: page 1 has filer name/TIN at
+`f1_1`/`f1_2`, then 24 numeric fields `f1_3`-`f1_26` for lines 1a-16; page 2
+has 21 numeric fields `f2_1`-`f2_21` for lines 17-37, then the Part VI box
+`c2_01_0_` and four text fields `f2_22`-`f2_25` for lines 39-41. The logical
+names have the `topmostSubform[0].Page1[0]` or `Page2[0]` prefix. This is a
+field-location inventory only; there is still no registered descriptor or
+filled Form 8582-CR packet.
+
 The native `IRS8582CR` builder recalculates Parts I-IV and line 37 from
 `form8582cr.credit_sources`, `regular_tax_all_income`, and
 `regular_tax_without_passive`. Its strongest current-year source is one passive,
@@ -27,6 +36,15 @@ reperformed from the same final Form 1040 income and identified passive activity
 income. Matching `regular_tax_all_income` to Form 1040 line 16 would still leave
 the other side of that subtraction unproved. Therefore no positive allowed line
 37 can yet be printed source-to-return.
+
+The [December 2025 IRS instructions](https://www.irs.gov/instructions/i8582cr)
+require line 6 to use taxable income with and without net passive income, with
+both tax amounts computed by the method used for the return. They also use
+prior-year Worksheet 9 column (b) as the source for multiple unallowed
+activities or credit types. The next implementation step must preserve that
+worksheet and its source activities, then recompute both tax sides from the
+same finalized return method before the native and printable routes can share
+line 6.
 
 The apparent zero-tax subset is not a safe shortcut. A positive source credit
 with line 37 equal to zero becomes an unallowed passive activity credit. The

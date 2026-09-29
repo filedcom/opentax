@@ -43,8 +43,8 @@ unrun and unrendered, not validated filing results.
 ## Inventory disposition, not a release decision
 
 The [registered-document audit](ty2025-form1040-form-audit.md) enumerates all
-**123/123** entries in `ALL_MEF_FORMS`: 19 main-return/schedule documents, 77
-numbered forms or distinct schedules, and 27 wage/supporting documents. Each row
+**124/124** entries in `ALL_MEF_FORMS`: 19 main-return/schedule documents, 77
+numbered forms or distinct schedules, and 28 wage/supporting documents. Each row
 names its coded source/calculation boundary, native serializer, PDF status,
 written case status, and remaining branch. This completes the _registered_
 form-by-form inventory, not the set of Form 1040 situations the product can
@@ -170,9 +170,10 @@ validation gate remains unrun. The rows below do not add product exclusions.
 | `IRS7203` plus `IRS1040ScheduleE` Part II                        | A reviewed single-corporation K-1 box-1 stock loss and material-participation workpaper drive Form 7203, one Schedule E S-corporation row, Schedule 1 line 5 and Form 1040 line 8. Native/PDF descriptors are registered; other Form 7203 shapes remain guarded.                                                                                                                                                                                                                                                                   | Bounded route written, unrun. Full test/XSD/rule batch, filled PDF and ATS acceptance remain. [Gap](ty2025-form7203-stock-loss-gap.md).                                                                                                                                                                                                                                                                                                                |
 | `IRS8880`, `IRS6198`, `IRS7217`, `IRS6252`, `IRS8862`, `IRS8863` | Each has at least one registered source-to-native slice; five construct XML despite an empty `FIELD_MAP`. The [updated six-form audit](ty2025-sparse-map-audit-20260928.md) records individual source, local XSD, native, PDF and rejection boundaries. Form 4835's at-risk loss uses a separate registered `f4835_at_risk` descriptor to emit `IRS6198`, not the Schedule C/F-only `f6198.ts` builder.                                                                                                                            | **None is whole-form complete.** Retirement-credit tax capacity; detailed at-risk basis and carryovers; partnership distribution gain; related-party installment sale; prior disallowance/ban facts; and education source/credit facts, respectively, remain open. The Form 4835 route is written but not validated by the deferred batch. No current XSD, filled-PDF or ATS acceptance is implied.                                                    |
 
-The static count is **123 entries** in `ALL_MEF_FORMS`, including the parallel
+The current static count is **124 entries** in `ALL_MEF_FORMS`, including the parallel
 Form 8995-A Schedule B registration and two Form 7203/Schedule E descriptors;
-this is a descriptor count, not 123 fully supported filing situations. The
+the added Form 3800 carryforward computation is a supporting document. This is
+a descriptor count, not 124 fully supported filing situations. The
 current census has 114 schema roots without a MeF source literal; these remain
 an applicability/implementation queue, including the staged but unregistered
 Form 1116 Schedule C. No new exclusion is inferred from absent registration, a
@@ -441,7 +442,7 @@ Form 3800 link. These cases are written but unrun.
 
 The ATS inventory in `docs/ats/ty2025.md` identifies scenario-specific facts
 that remain incomplete. This file is an earlier working inventory. The current
-`INV-01` evidence inventory is the 123-descriptor form-by-form audit in
+`INV-01` evidence inventory is the 124-descriptor form-by-form audit in
 `docs/mef/ty2025-form1040-form-audit.md`, its A/B/C/supporting ledgers, and the
 211-root schema census in `docs/mef/ty2025-xsd-document-root-census.md`. That
 inventory identifies unsupported branches but does not approve excluding them or

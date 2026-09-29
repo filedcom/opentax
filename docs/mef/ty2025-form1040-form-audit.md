@@ -12,12 +12,12 @@ which proposed workflow boundaries still need the user's approval. The
 [TY2025 schema-root census](ty2025-xsd-document-root-census.md) lists all 211
 IRS document roots permitted by the checked-in Form 1040 return schema,
 including unregistered roots awaiting applicability review. The current worktree
-has since had a fixed-source repository-wide `deno task test` pass on
-`08786417` (8,860/8,860). That pass does not prove each row's positive source
-route, filled PDF, IRS business rule, or ATS acceptance. A written case is not
-a passing case.
+has since had a fixed-source repository-wide `deno task test` pass on the
+`11d5047d` source snapshot (8,897/8,897). That pass does not prove each
+row's positive source route, filled PDF, IRS business rule, or ATS acceptance.
+A written case is not a passing case.
 
-The registered-descriptor evidence census is now **123/123 statically accounted
+The registered-descriptor evidence census is now **124/124 statically accounted
 for** in this audit and its linked [main inventory](coverage-inventory.md),
 [attachment tranche A](coverage-inventory-attachments-a.md),
 [tranche B](coverage-inventory-attachments-b.md),
@@ -29,10 +29,11 @@ rules and ATS acceptance remain open per row; no `U` or `?` is promoted to
 whole-form support by this census.
 
 On 2026-09-29, `f3800_carryforward_statement.ts` became the 124th registered
-descriptor after this static census. It emits a source-vintage computation
-whose standalone TY2025 v5.4 XSD case passes; the Form 3800 parent still
-rejects a positive carryforward. The 123-row census and its counts need a
-fresh crosswalk before they describe the current registry.
+descriptor. It is now included as a supporting row below. Its standalone
+TY2025 v5.4 XSD case passes, and a synthetic parent reference/Part IV join
+passes local XSD. The production Form 3800 parent still rejects a positive
+carryforward pending prior-return evidence, Part VI detail and the filed
+history attachment.
 
 The [unregistered-root crosswalk](ty2025-unregistered-root-applicability.md)
 groups the historical review, now 114 roots without a MeF source literal, into
@@ -222,9 +223,9 @@ qualified expenses need distinct unreimbursed receipt references matching line
 additional tax; other distribution codes, rollovers, and excess withdrawals
 remain closed for this paired subpath. See the linked gap audit above.
 
-### Registered wage and supporting descriptors (27)
+### Registered wage and supporting descriptors (28)
 
-These are included in the 123 MeF registry entries, but are not 27 additional
+These are included in the 124 MeF registry entries, but are not 28 additional
 tax forms. `R` still means registered, not validated; `P` means a bounded
 parent-source route is coded. Every row's current-run XSD, source-to-document,
 attachment/reference, business-rule, and ATS status is **open**. The file named
@@ -246,6 +247,7 @@ in each row is under `forms/f1040/2025/mef/forms/`. Binary PDFs are separate.
 | `form1116_direct_expense_statement`           | Form 1116 Part I line 2                                             | `f1116_direct_expense_statement.ts` R            | P: identified direct expenses; verify category, foreign source, and parent-document reference.                                                                                                                                                                                           |
 | `form1116_other_deductions_statement`         | Form 1116 Part I line 3b                                            | `f1116_other_deductions_statement.ts` R          | P: identified other deductions; verify apportionment, category, and parent reference.                                                                                                                                                                                                    |
 | `form1116_alternative_compensation_statement` | Form 1116 line 1b alternative foreign-service compensation sourcing | `f1116_alternative_compensation_statement.ts` R  | P: up to five identified alternative-allocation descriptions linked to line 1b; worldwide $250,000 threshold is reviewed input but not yet reconciled across wage sources. XSD/source/PDF cases are written but unrun; see [gap audit](ty2025-form1116-alternative-compensation-gap.md). |
+| `f3800_carryforward_statement`                | Form 3800 source-vintage carryforward computation                   | `f3800_carryforward_statement.ts` R             | P: one structured computation per reconciled vintage preserves origin year, origin/allowed credit and each prior use; standalone XSD and synthetic parent-link XSD pass. Positive parent filing still rejects pending authenticated prior-return facts, Part VI and history attachment; see [Form 3800 gap](ty2025-form3800-pdf-gap.md). |
 | `f4136_emulsion_blending_statement`           | Form 4136 blending claims                                           | `f4136_emulsion_blending_statement.ts` R         | P: blending source rows; reconcile rate/use/claim and parent document.                                                                                                                                                                                                                   |
 | `f4136_credit_card_users_statement`           | Form 4136 credit-card sales                                         | `f4136_credit_card_users_statement.ts` R         | P: user/sales rows; verify purchaser facts and parent claim.                                                                                                                                                                                                                             |
 | `f4136_diesel_government_sales_statement`     | Form 4136 diesel government sales                                   | `f4136_diesel_government_sales_statement.ts` R   | P: buyer/sale rows; verify qualifying use and line amount.                                                                                                                                                                                                                               |
@@ -339,7 +341,7 @@ builder rejects positive claims.
 
 | Static measure                               |                                      Count | What it means                                                                                                                                 |
 | -------------------------------------------- | -----------------------------------------: | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| MeF descriptors in `ALL_MEF_FORMS`           |                                        123 | Registration only: 96 main-return/numbered/schedule entries plus 27 wage/supporting entries.                                                  |
+| MeF descriptors in `ALL_MEF_FORMS`           |                                        124 | Registration only: 96 main-return/numbered/schedule entries plus 28 wage/supporting entries.                                                  |
 | Main-return/numbered/schedule descriptors    |                                         96 | 19 return/schedules plus 77 numbered/distinct schedules, including alternative initial/annual 8854 serializers.                               |
 | Registered PDF descriptors                   |                                         87 | Registration only, including the bounded Forms 3800/8835/8874/8911/8978 and 8911/8978 companion additions. This is not a field-map or visual pass. |
 | Forms excluded from the agreed product scope | 1040-NR, 1040-SS, 4868; dual-status e-file | Not counted as open Form 1040-family serializers.                                                                                             |

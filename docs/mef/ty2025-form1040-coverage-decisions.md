@@ -1,9 +1,10 @@
 # TY2025 Form 1040 coverage disposition queue
 
-Static build-stage checkpoint, 2026-09-28. This is the decision layer over the
-[123 registered-descriptor audit](ty2025-form1040-form-audit.md) and the
+Static build-stage checkpoint, 2026-09-28, with the 2026-09-29 Form 3800
+computation registry update. This is the decision layer over the
+[124 registered-descriptor audit](ty2025-form1040-form-audit.md) and the
 [211-root schema census](ty2025-xsd-document-root-census.md). It does not
-certify any filing route. The MeF registry contains 123 descriptors and the PDF
+certify any filing route. The MeF registry contains 124 descriptors and the PDF
 registry contains 87. The schema census has 97 roots with a source literal and
 114 without one. Those are different measures: some descriptors are statements,
 and a literal is neither registration nor valid, complete output. The ordered
@@ -22,17 +23,17 @@ schema census, intersects them with unique `IRS[A-Za-z0-9]+` matches from
 non-test MeF form source files, and subtracts the intersection from 211. It does
 not count a staged source as registered.
 
-This is a dated 123-descriptor snapshot. The Form 3800 carryforward
-computation descriptor was registered on 2026-09-29, bringing the current MeF
-registry to 124. It passes a standalone schema check but remains unlinked to
-the parent filing and does not change any disposition below.
+The Form 3800 carryforward computation descriptor was registered on
+2026-09-29. It passes a standalone schema check and a synthetic parent-link
+check, but the production parent filing remains blocked; this does not change
+any disposition below. The root census remains the dated 2026-09-28 snapshot.
 
 ## What can be decided from current evidence
 
 | Disposition                                 | Exact boundary                                                                                                                                                                                                                                                                                                                                                  | What remains                                                                                                                                                                                               |
 | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Agreed product exclusion                    | Standalone 1040-NR, 1040-SS, Form 4868, and dual-status 1040 e-file.                                                                                                                                                                                                                                                                                            | No other Form 1040-family route has been approved for exclusion.                                                                                                                                           |
-| Registered, bounded route                   | The [form-by-form audit](ty2025-form1040-form-audit.md) identifies a source/calculation slice, serializer, PDF status, and known unsupported branches for each of 123 descriptors.                                                                                                                                                                              | A bounded route is not whole-form support. The `500bd115` repository-wide run passed 8,886/8,886, but per-row positive XSD, filled-PDF, IRS-rule, and ATS evidence is still incomplete.                                                                  |
+| Registered, bounded route                   | The [form-by-form audit](ty2025-form1040-form-audit.md) identifies a source/calculation slice, serializer, PDF status, and known unsupported branches for each of 124 descriptors.                                                                                                                                                                              | A bounded route is not whole-form support. The `11d5047d` source snapshot passed 8,897/8,897, but per-row positive XSD, filled-PDF, IRS-rule, and ATS evidence is still incomplete.                                                                  |
 | Registered, active claim blocked            | Positive Form 8839 adoption credit and nonexempt Form 8990 interest do not have a complete source-to-filed-return route.                                                                                                                                                                                                                                        | Complete their sources, calculations and native/PDF output or retain explicit fail-closed behavior; registration alone cannot turn either into support.                                                    |
 | Public source, positive filing route absent | The [root crosswalk](ty2025-unregistered-root-applicability.md) lists public-input and graph paths, including Forms 9465, 8997, 8958, 5471 and 172. Schedule J has a bounded registered Schedule F-only election, while wider claims reject. Form 7203 has a bounded registered stock-only loss route, while other shareholder-basis situations remain blocked. | A guard or staged descriptor is a current safety boundary, not a permanent product exclusion. Each conditional filing trigger, source owner and required native document still needs a decision.           |
 | Conditional companion incomplete            | Form 8995-A Schedules A, B, C and D have bounded registered native routes. Schedule B's route covers only one group of two sourced Schedule C businesses. Form 1116 Schedule C retains a positive trigger without a registered filing route; it has a staged source/XML projection only.                                                                        | The [conditional-schedule audit](ty2025-conditional-schedule-applicability.md) names trigger and guard status. Complete the remaining attachments or explicitly approve fail-closed unsupported scenarios. |

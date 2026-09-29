@@ -4,9 +4,10 @@
 
 This is an open release gate, not a list of completed forms. The current source
 registries contain 124 native MeF descriptors and 87 PDF descriptors; the
-[coverage decision queue](docs/mef/ty2025-form1040-coverage-decisions.md) records
-the preceding 123-descriptor audit and its limits. The newly registered
-`CarryforwardGeneralBusinessCr` descriptor remains filing-blocked. A registered route or focused test does not
+[coverage decision queue](docs/mef/ty2025-form1040-coverage-decisions.md) and
+[form audit](docs/mef/ty2025-form1040-form-audit.md) account for all 124
+descriptors and their limits. The `CarryforwardGeneralBusinessCr` descriptor
+remains filing-blocked. A registered route or focused test does not
 establish source-to-filing coverage; check off only the specific gate proven by
 its recorded evidence.
 
@@ -57,8 +58,8 @@ header now derive from those linked facts. A two-vintage synthetic parent
 passes the local TY2025 v5.4 `IRS3800` XSD, and 26 neighboring native/PDF
 focused tests passed. This is a component test: the production parent still
 rejects positive carryforwards pending authenticated prior-return evidence,
-Part VI detail, and the filed history attachment. The 8,894-test full run
-above predates this edit.
+Part VI detail, and the filed history attachment. The later 8,897-test run
+above covers this component edit.
 
 The 2026-09-29 17:20 UTC fixed-source `deno task test` run on commit
 `453259a2` passed **8,890/8,890**, zero failed, in 16m10s; its Deno summary
@@ -328,7 +329,7 @@ including a two-gift return with two linked native forms and attachments.
 
 ## Coverage inventory and decisions
 
-- [ ] Resolve the unsupported-path disposition in **each of the 123 registered MeF descriptor rows** of the [form-by-form audit](docs/mef/ty2025-form1040-form-audit.md). For each row, record its applicable trigger, public/source facts, calculation, Form 1040 join, native document, PDF or statement, focused cases, XSD evidence, and final support or explicitly approved rejection boundary.
+- [ ] Resolve the unsupported-path disposition in **each of the 124 registered MeF descriptor rows** of the [form-by-form audit](docs/mef/ty2025-form1040-form-audit.md). For each row, record its applicable trigger, public/source facts, calculation, Form 1040 join, native document, PDF or statement, focused cases, XSD evidence, and final support or explicitly approved rejection boundary.
 - [ ] Review the **211 TY2025 IRS schema document roots** in the [root census](docs/mef/ty2025-xsd-document-root-census.md) against actual Form 1040 applicability. Resolve every still-unregistered or source-literal-only root in the [applicability crosswalk](docs/mef/ty2025-unregistered-root-applicability.md); neither a source literal nor absence from a registry is a support/exclusion decision.
 - [ ] Reconcile the registered-document audit, root crosswalk, [conditional-schedule audit](docs/mef/ty2025-conditional-schedule-applicability.md), [coverage decision queue](docs/mef/ty2025-form1040-coverage-decisions.md), and actual registries after implementation so their counts, triggers, and unsupported branches agree.
 - [ ] Decide, with the user, which current-return paths are separate workflows: amended Form 1040-X; payment/account roots (1062, 965, estimated tax, Form T, payment); recipient copies of RRB-1042-S and SSA-1042-S; and optional Forms 4547 and 9000. Preserve any income, withholding, tax, election, or amendment consequences on Form 1040.
@@ -384,7 +385,7 @@ including a two-gift return with two linked native forms and attachments.
 
 ## Native MeF and PDF parity
 
-- [ ] Resolve every native document without a corresponding required PDF or supported paper alternative in the [registry parity audit](docs/mef/ty2025-native-pdf-registry-parity.md), especially Form 965-A, Form 8582-CR, and Form 8621. Extend bounded Form 3800 and Form 8911/Schedule A descriptors to every retained filing branch.
+- [ ] Resolve every native document without a corresponding required PDF or supported paper alternative in the [registry parity audit](docs/mef/ty2025-native-pdf-registry-parity.md), especially Form 965-A, Form 8582-CR, and Form 8621. For Form 8582-CR, the official two-page, 51-field blank has been inspected, but the filed line 6 tax-without-passive-income worksheet and activity/year carryforward ledger remain open; see its [PDF gap](docs/mef/ty2025-form8582cr-pdf-gap.md). Extend bounded Form 3800 and Form 8911/Schedule A descriptors to every retained filing branch.
 - [ ] Audit every registered PDF descriptor against its canonical TY2025 IRS AcroForm fields, page count, row overflow, owner identity, checkbox semantics, descriptions, statements, document references, and current calculation. Fix stale or missing mappings rather than silently dropping fields.
 - [ ] Ensure native XML, PDF, and manifest use the same finalized return graph and prepared form instances; verify repeated owner/form copies and attachment references, including signed Form 8283 and source-issued acknowledgments.
 
@@ -392,7 +393,7 @@ including a two-gift return with two linked native forms and attachments.
 
 - [ ] Finish implementation and coverage decisions above before the agreed single full-batch gate. Existing focused cases and historical passes are not evidence for the current worktree.
 - [x] Confirm Deno, `xmllint`, `pdftoppm`, and `pdfinfo` are available. Provision and verify the TY2025 v5.4 `Return1040.xsd` / `ReturnData1040.xsd` bundle under `.state/research/docs/`; it is Git-ignored, not checked in. On 2026-09-29, Deno 2.7.7, libxml 2.9.13, and Poppler 26.03.0 were present with both schema files. A filtered MeF Schedule 2 XSD test and a filtered full-return Single W-2 XSD test each ran and passed (1 pass, 0 ignored per command), proving both test files used the local `Return1040.xsd` bundle. This checks the preflight only; the full schema matrix remains open.
-- [ ] Run `deno task test` as the final full batch after the retained routes and scope decisions are complete; record commit, command, tool versions, timestamp, pass/fail/ignored totals, failures, and ignored-test reasons. Fix failures, then rerun the same full command until the release batch passes. The latest fixed-source run passed 8,894/8,894 locally as recorded above. Implementation and external gates remain open.
+- [ ] Run `deno task test` as the final full batch after the retained routes and scope decisions are complete; record commit, command, tool versions, timestamp, pass/fail/ignored totals, failures, and ignored-test reasons. Fix failures, then rerun the same full command until the release batch passes. The latest fixed-source run passed 8,897/8,897 locally as recorded above. Implementation and external gates remain open.
   - [x] Rerun the full command after correcting the three repeated-facility fixtures; `15d5430d` passed 8,855/8,855 with no ignored tests reported. Retain `.state/research/ty2025-full-test-15d5430d.log` as local regression evidence.
   - [x] Rerun the full command after adding mixed wind/geothermal copies and the no-increase source guard; `08786417` passed 8,860/8,860 with no ignored tests reported. Retain `.state/research/ty2025-full-test-08786417.log` as local regression evidence.
   - [x] Rerun the full command after adding the Form 8874 source-backed packet and fixing its CDE address layout; `5eeb5e6b` passed 8,862/8,862 with no ignored tests reported. Retain `.state/research/ty2025-full-test-5eeb5e6b.log` as local regression evidence.
