@@ -244,6 +244,42 @@ Deno.test("Form 8889 rollover plus age-65 exception serializes distinct 14b, 16,
 });
 
 Deno.test("Form 8889 emits two owner documents and reconciles the combined deduction", () => {
+  const source = {
+    beneficiary_identity: {
+      owner: "T" as const,
+      name: "Alex Taxpayer",
+      ssn: "123456789",
+    },
+    eligible_hdhp_coverage_by_month: Array(12).fill(CoverageType.Family),
+    allocated_family_limit: 4_275,
+    family_allocation_source_reference: "2025 HSA allocation agreement",
+    age_55_or_older: false,
+    last_month_rule_elected: false,
+    married_at_year_end: true,
+    spouse_has_separate_hsa: true,
+    taxpayer_hsa_contributions: 4_000,
+    spouse_hsa: {
+      beneficiary_identity: {
+        owner: "S" as const,
+        name: "Sam Taxpayer",
+        ssn: "987654321",
+      },
+      eligible_hdhp_coverage_by_month: Array(12).fill(CoverageType.Family),
+      allocated_family_limit: 4_275,
+      family_allocation_source_reference: "2025 HSA allocation agreement",
+      age_55_or_older: false,
+      last_month_rule_elected: false,
+      married_at_year_end: true,
+      spouse_has_separate_hsa: true,
+      taxpayer_hsa_contributions: 2_000,
+    },
+  };
+  const result = form8889Node.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form8889InputSchema.parse(source),
+  );
+  const forms = result.outputs.find((row) => row.nodeType === "form8889")
+    ?.fields.forms as Form8889Owner[];
   const pairedContext: MefBuildContext = {
     filer: {
       ...context.filer!,
@@ -256,6 +292,7 @@ Deno.test("Form 8889 emits two owner documents and reconciles the combined deduc
       },
     },
     pending: {
+      form8889: { ...source, forms },
       schedule1: {
         line13_hsa_deduction: 6_000,
         line26_total_adjustments: 6_000,
@@ -264,22 +301,6 @@ Deno.test("Form 8889 emits two owner documents and reconciles the combined deduc
       f1040: { line10_adjustments: 6_000 },
     },
   };
-  const forms = [
-    {
-      owner: "primary" as const,
-      beneficiary_name: "Alex Taxpayer",
-      beneficiary_ssn: "123456789",
-      print_line6: 4_275,
-      print_line13_deduction: 4_000,
-    },
-    {
-      owner: "spouse" as const,
-      beneficiary_name: "Sam Taxpayer",
-      beneficiary_ssn: "987654321",
-      print_line6: 4_275,
-      print_line13_deduction: 2_000,
-    },
-  ];
   const xml = form8889.build({ forms }, pairedContext);
   assertEquals(xml.length, 2);
   assertStringIncludes(xml[0], "<RecipientSSN>123456789</RecipientSSN>");
@@ -297,7 +318,7 @@ Deno.test("Form 8889 emits two owner documents and reconciles the combined deduc
         },
       }),
     Error,
-    "owner totals do not reconcile",
+    "paired owner totals differ from the filed return",
   );
 });
 
@@ -309,6 +330,7 @@ function spouseOnlyCase() {
       ssn: "987654321",
     },
     eligible_hdhp_coverage_by_month: Array(12).fill(CoverageType.SelfOnly),
+    last_month_rule_elected: false,
     age_55_or_older: false,
     married_at_year_end: true,
     spouse_has_separate_hsa: false,
@@ -370,6 +392,7 @@ Deno.test("Form 8889 spouse-only excess retains a matching spouse Form 5329 sour
       ssn: "987654321",
     },
     eligible_hdhp_coverage_by_month: Array(12).fill(CoverageType.SelfOnly),
+    last_month_rule_elected: false,
     age_55_or_older: false,
     married_at_year_end: true,
     spouse_has_separate_hsa: false,
