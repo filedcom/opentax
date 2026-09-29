@@ -4,6 +4,7 @@ import {
   inputSchema,
 } from "../../../nodes/inputs/f8874/index.ts";
 import { form8874, reconciledForm8874K1Line2 } from "../../mef/forms/f8874.ts";
+import { appendForm8874InvestmentStatement } from "./f8874_overflow_statement.ts";
 
 // Form 8874 (Rev. November 2021) has six investment rows on its only form
 // page. Pages 2 and 3 in the IRS PDF are instructions, not return pages.
@@ -62,11 +63,6 @@ export const form8874Pdf: PdfFormDescriptor = {
     if (!Object.hasOwn(allPending, "f8874")) return {};
     const input = inputSchema.parse(raw);
     const lines = calculateForm8874(input);
-    if (lines.rows.length > 6) {
-      throw new Error(
-        "Form 8874 PDF has six investment rows; an overflow statement is not supported",
-      );
-    }
     for (const row of lines.rows) {
       if (
         !Number.isSafeInteger(
@@ -91,7 +87,7 @@ export const form8874Pdf: PdfFormDescriptor = {
     }
 
     const printed: Record<string, unknown> = { line2, line3 };
-    lines.rows.forEach((row, index) => {
+    lines.rows.slice(0, lines.rows.length > 6 ? 5 : 6).forEach((row, index) => {
       const prefix = `row_${index + 1}_`;
       const { investment } = row;
       printed[`${prefix}cde`] = [
@@ -107,7 +103,28 @@ export const form8874Pdf: PdfFormDescriptor = {
       printed[`${prefix}rate`] = row.rate;
       printed[`${prefix}credit`] = row.creditAmount;
     });
+    if (lines.rows.length > 6) {
+      const overflow = lines.rows.slice(5);
+      printed.row_6_cde = "See attached";
+      printed.row_6_credit = overflow.reduce(
+        (sum, row) => sum + row.creditAmount,
+        0,
+      );
+      printed.print_overflow_rows = overflow.map((
+        { investment, rate, creditAmount },
+      ) => ({
+        cdeName: investment.cde_name,
+        address:
+          `${investment.cde_address.line1}, ${investment.cde_address.city}, ${investment.cde_address.state} ${investment.cde_address.zip}`,
+        ein: printedEin(investment.cde_ein),
+        initialDate: printedDate(investment.initial_investment_date),
+        investmentAmount: investment.qualified_equity_investment_amount,
+        rate,
+        creditAmount,
+      }));
+    }
     return printed;
   },
   pageIndices: () => [0],
+  appendSupplementalPages: appendForm8874InvestmentStatement,
 };

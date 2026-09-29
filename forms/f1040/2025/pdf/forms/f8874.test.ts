@@ -1,4 +1,6 @@
-import { assertEquals, assertThrows } from "@std/assert";
+import { assertEquals, assertRejects, assertThrows } from "@std/assert";
+import { PDFDocument } from "pdf-lib";
+import { pdfReviewFixtures } from "../review-fixtures.ts";
 import { form8874Pdf } from "./f8874.ts";
 
 const source = {
@@ -163,7 +165,7 @@ Deno.test("Form 8874 PDF reconciles a passive investment to Form 8582-CR", () =>
   );
 });
 
-Deno.test("Form 8874 PDF rejects overflow, cents and a missing final credit join", () => {
+Deno.test("Form 8874 PDF prints the IRS last-row attachment total for seven investments", () => {
   const overflow = {
     investments: Array.from({ length: 7 }, (_, index) => ({
       ...source.investments[0],
@@ -171,15 +173,57 @@ Deno.test("Form 8874 PDF rejects overflow, cents and a missing final credit join
       designation_notice_reference: `QEI notice ${index}`,
     })),
   };
-  assertThrows(
-    () =>
-      form8874Pdf.projectFields!(overflow, {
-        f8874: overflow,
-        f3800: directClaim,
-      }),
+  const fields = form8874Pdf.projectFields!(overflow, {
+    f8874: overflow,
+    f3800: {
+      f8874_credit: {
+        credit_amount: 350_000,
+        subject_to_passive_activity_limit: false,
+      },
+    },
+  });
+  assertEquals(fields.row_5_credit, 50_000);
+  assertEquals(fields.row_6_cde, "See attached");
+  assertEquals(fields.row_6_credit, 100_000);
+  assertEquals(fields.row_6_investment, undefined);
+  assertEquals(fields.line3, 350_000);
+  assertEquals((fields.print_overflow_rows as unknown[]).length, 2);
+});
+
+Deno.test("Form 8874 overflow statement spans pages and rejects a changed last-row total", async () => {
+  const overflow = {
+    investments: Array.from({ length: 24 }, (_, index) => ({
+      ...source.investments[0],
+      cde_ein: String(123456780 + index),
+      designation_notice_reference: `QEI notice ${index}`,
+    })),
+  };
+  const fields = form8874Pdf.projectFields!(overflow, {
+    f8874: overflow,
+    f3800: {
+      f8874_credit: {
+        credit_amount: 1_200_000,
+        subject_to_passive_activity_limit: false,
+      },
+    },
+  });
+  const filer = pdfReviewFixtures[0].filer;
+  const document = await PDFDocument.create();
+  await form8874Pdf.appendSupplementalPages!(document, fields, filer);
+  assertEquals(document.getPageCount(), 2);
+  await assertRejects(
+    async () =>
+      await form8874Pdf.appendSupplementalPages!(
+        await PDFDocument.create(),
+        { ...fields, row_6_credit: 1 },
+        filer,
+      ),
     Error,
-    "six investment rows",
+    "does not reconcile to line 1",
   );
+});
+
+Deno.test("Form 8874 PDF rejects cents and a missing final credit join", () => {
   const cents = {
     investments: [{
       ...source.investments[0],
