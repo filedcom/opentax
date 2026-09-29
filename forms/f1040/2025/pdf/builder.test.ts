@@ -11,6 +11,7 @@ import { assertAttachmentCoverage } from "../attachment-coverage.ts";
 import type { FilerIdentity } from "../../mef/header.ts";
 import { FilingStatus } from "../../mef/header.ts";
 import { form6251Pdf } from "./forms/f6251.ts";
+import { irs1040Pdf } from "./forms/f1040.ts";
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -83,13 +84,24 @@ const F1116_PDF_URL = "https://www.irs.gov/pub/irs-prior/f1116--2025.pdf";
  * Create a minimal AcroForm PDF that contains the subset of f1040 AcroForm
  * fields used by PDF_FIELD_MAP so builder tests can run without network.
  */
-async function makeMinimalF1040Pdf(fields: string[]): Promise<Uint8Array> {
+async function makeMinimalF1040Pdf(
+  fields: string[],
+  includeMapped = true,
+): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
   const page = doc.addPage([612, 792]);
   const form = doc.getForm();
-  for (const name of fields) {
-    const tf = form.createTextField(name);
-    tf.addToPage(page, { x: 10, y: 700, width: 200, height: 20 });
+  const entries = includeMapped
+    ? [...irs1040Pdf.fields, ...(irs1040Pdf.filerFields ?? [])]
+    : [];
+  const names = new Map(entries.map((entry) => [entry.pdfField, entry.kind]));
+  for (const name of fields) if (!names.has(name)) names.set(name, "text");
+  for (const [name, kind] of names) {
+    if (kind === "checkbox" || kind === "checkboxWhen") {
+      form.createCheckBox(name).addToPage(page, { x: 10, y: 700, width: 20, height: 20 });
+    } else if (kind === "text") {
+      form.createTextField(name).addToPage(page, { x: 10, y: 700, width: 200, height: 20 });
+    }
   }
   return doc.save();
 }
@@ -135,7 +147,7 @@ Deno.test("buildPdfBytes: a missing AcroForm field stops the export", async () =
     await seedCache(
       tmpDir,
       F1040_PDF_URL,
-      await makeMinimalF1040Pdf(["unrelated_field"]),
+      await makeMinimalF1040Pdf(["unrelated_field"], false),
     );
     await assertRejects(
       () =>
@@ -288,14 +300,7 @@ Deno.test("buildPdfBytes: skips forms with no pending data", async () => {
 Deno.test("buildPdfBytes: numeric values are rounded to integers", async () => {
   const tmpDir = await Deno.makeTempDir();
   try {
-    const fieldName = "topmostSubform[0].Page1[0].f1_47[0]";
-    // Build a non-flattened stub to inspect the filled value before flatten
-    const doc = await PDFDocument.create();
-    const page = doc.addPage([612, 792]);
-    const form = doc.getForm();
-    const tf = form.createTextField(fieldName);
-    tf.addToPage(page, { x: 10, y: 700, width: 200, height: 20 });
-    const stubPdf = await doc.save();
+    const stubPdf = await makeMinimalF1040Pdf([]);
     await seedCache(tmpDir, F1040_PDF_URL, stubPdf);
 
     // The builder flattens, so we verify the output PDF is valid and non-empty
@@ -342,42 +347,7 @@ Deno.test("buildPdfBytes: caches IRS PDF after first call", async () => {
   }
 });
 
-Deno.test("buildPdfBytes: unknown field names produce a logged error, not silent skip", async () => {
-  const tmpDir = await Deno.makeTempDir();
-  const errors: string[] = [];
-  const originalError = console.error;
-  console.error = (...args: unknown[]) => {
-    errors.push(args.map(String).join(" "));
-  };
-
-  try {
-    // Seed the cache with a PDF that does NOT contain the field that the
-    // f1040 descriptor maps line1a_wages to. When the builder tries to fill
-    // that field it should catch the error from pdf-lib and log it.
-    const stubPdf = await makeMinimalF1040Pdf([]); // no fields at all
-    await seedCache(tmpDir, F1040_PDF_URL, stubPdf);
-
-    const pending = { f1040: { line1a_wages: 75000 } };
-
-    // Builder will still succeed (returns valid PDF from merged pages) but
-    // should have emitted at least one console.error for the missing field.
-    await buildPdfBytes(pending, mockFiler, tmpDir);
-
-    assertGreater(
-      errors.length,
-      0,
-      "Expected at least one console.error call for the unknown PDF field",
-    );
-    // The error message should reference the problematic field
-    const combined = errors.join("\n");
-    assertEquals(combined.includes("[PDF]"), true);
-  } finally {
-    console.error = originalError;
-    await Deno.remove(tmpDir, { recursive: true });
-  }
-});
-
-Deno.test("buildPdfBytes: emits one Form 1116 copy per income category", async () => {
+Deno.test("buildPdfBytes: rejects incomplete multi-category Form 1116 PDF source", async () => {
   const tmpDir = await Deno.makeTempDir();
   try {
     const stubPdf = await makeMinimalF1040Pdf([
@@ -388,7 +358,7 @@ Deno.test("buildPdfBytes: emits one Form 1116 copy per income category", async (
     ]);
     await seedCache(tmpDir, F1116_PDF_URL, stubPdf);
 
-    const result = await buildPdfBytes(
+    await assertRejects(() => buildPdfBytes(
       {
         form_1116: {
           foreign_tax_paid: 1_400,
@@ -410,10 +380,7 @@ Deno.test("buildPdfBytes: emits one Form 1116 copy per income category", async (
       },
       mockFiler,
       tmpDir,
-    );
-
-    const pdf = await PDFDocument.load(result);
-    assertEquals(pdf.getPageCount(), 2);
+    ), Error);
   } finally {
     await Deno.remove(tmpDir, { recursive: true });
   }

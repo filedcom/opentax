@@ -57,6 +57,7 @@ export const form6251Pdf: PdfFormDescriptor = {
     textField("primarySSN", 1, 2),
   ],
   projectFields(fields, allPending) {
+    if (Object.keys(fields).length === 0) return {};
     if (
       typeof fields.nol_adjustment === "number" &&
       fields.nol_adjustment !== 0
