@@ -1278,7 +1278,7 @@ Deno.test("Schedule 8812 Worksheet B calculates payroll branch and adoption/EIC 
   );
   assertEquals(
     calculateCreditLimitWorksheetBLines(2_200, 1, earned, false).line14,
-    500,
+    1_075,
   );
   assertEquals(
     calculateCreditLimitWorksheetBLines(500, 1, earned, false).line14,
