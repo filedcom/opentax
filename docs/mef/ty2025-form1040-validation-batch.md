@@ -25,11 +25,14 @@ test -f .state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/
 test -f .state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/ReturnData1040.xsd
 ```
 
-The TY2025 v5.4 return XSDs and all four commands were present on the 2026-09-28
-workspace inspection. The XSD tests use `ignore: !xsdAvailable`; without the
-first XSD file, they silently skip. Do not accept a batch where those tests are
-ignored. The IRS schema is structural validation, not IRS business-rule or ATS
-acceptance.
+The TY2025 v5.4 return XSDs and all four commands were present on the 2026-09-29
+workspace inspection: Deno 2.7.7, `xmllint` with libxml 2.9.13, and Poppler
+`pdftoppm`/`pdfinfo` 26.03.0. A filtered MeF Schedule 2 XSD test and a filtered
+full-return Single W-2 XSD test each ran with one pass and zero ignored, proving
+the local `Return1040.xsd` was used in both test files. The XSD tests use
+`ignore: !xsdAvailable`; without the first XSD file, they silently skip. Do not
+accept a full batch where those tests are ignored. The IRS schema is structural
+validation, not IRS business-rule or ATS acceptance.
 
 ## One full automated batch
 
