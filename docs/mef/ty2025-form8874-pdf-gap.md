@@ -102,3 +102,19 @@ The retained packet is
 The fixed-source `bc556b01` repository-wide run passed 8,873/8,873,
 zero failed, with no ignored tests reported in 16m39s. Its log is
 `.state/research/ty2025-full-test-bc556b01.log`.
+
+A 24-investment synthetic return exercises two continuation pages in the
+actual prepared packet. Its $500-per-investment credits print as five direct
+Form 8874 rows, a $9,500 last-row attachment total, and 19 six-column
+statement rows over two pages. The $12,000 source credit is fully used on
+Form 3800 line 1i/38, Schedule 3 line 6a, and Form 1040 line 20 after the
+fixture supplies sufficient taxable income; the lower-income diagnostic was
+tax-limited and remains a separate carryover case. The full native return
+passes local TY2025 v5.4 XSD. Form 8874 and both continuation pages in the
+21-page packet were rendered and inspected. The retained PDF is
+`.state/research/ty2025-filled-pdf-review/2026-09-29-v28/single-twenty-four-new-markets-investments.pdf`
+(SHA-256 `f34eb17b6b92ad02294e788c792950082f5ef3a40e633b60bf42d3a8fa5de602`).
+
+The fixed-source `9175f7c1` repository-wide run passed 8,875/8,875,
+zero failed, with no ignored tests reported in 15m57s. Its log is
+`.state/research/ty2025-full-test-9175f7c1.log`.

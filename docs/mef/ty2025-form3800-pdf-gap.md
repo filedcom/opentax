@@ -145,6 +145,27 @@ The fixed-source `bc556b01` repository-wide run passed 8,873/8,873,
 zero failed, with no ignored tests reported in 16m39s. Its log is
 `.state/research/ty2025-full-test-bc556b01.log`.
 
+A 24-investment Form 8874 return exercises two attached detail pages and a
+$9,500 last-row attachment subtotal. Its $12,000 direct source credit
+prints on Form 3800 Part III line 1i and line 38, Schedule 3 line 6a, and
+Form 1040 line 20. The full native XML passes local TY2025 v5.4 XSD, and
+the Form 8874 plus both statement pages in the 21-page packet were visually
+reviewed. The review set has 26 PDFs (255 pages) and 26 XML files under
+`.state/research/ty2025-filled-pdf-review/2026-09-29-v28/`.
+
+During fixture construction, the same $12,000 source credit with $150,000
+of wages produced $8,973 on Form 3800 line 38 and $3,027 unused. That
+diagnostic is not a carryover filing route: the
+[2025 Form 3800 instructions](https://www.irs.gov/instructions/i3800)
+require unused credit to be handled under carryback and carryforward rules.
+The accepted high-wage fixture isolates continuation-page and full-credit
+reconciliation; carryback/carryforward evidence and the durable ledger remain
+open.
+
+The fixed-source `9175f7c1` repository-wide run passed 8,875/8,875,
+zero failed, with no ignored tests reported in 15m57s. Its log is
+`.state/research/ty2025-full-test-9175f7c1.log`.
+
 The fixed-source `81a2c713` repository-wide run passed 8,869/8,869,
 zero failed, with no ignored tests reported in 20m35s. Its log is
 `.state/research/ty2025-full-test-81a2c713.log`.

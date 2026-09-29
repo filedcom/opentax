@@ -198,6 +198,22 @@ The fixed-source `deno task test` run on `bc556b01` completed at 2026-09-29
 26.03.0. Its retained log is
 `.state/research/ty2025-full-test-bc556b01.log`.
 
+The 26th synthetic return has 24 New Markets investments and a two-page
+Form 8874 continuation statement. Five $500 credits print on the form, a
+$9,500 last-row total covers the remaining nineteen, and $12,000 joins Form
+8874, Form 3800, Schedule 3, and Form 1040. Its native XML passes the local
+TY2025 v5.4 XSD; Form 8874 and both continuation pages in the 21-page
+packet were rendered and reviewed. The PDF SHA-256 is
+`f34eb17b6b92ad02294e788c792950082f5ef3a40e633b60bf42d3a8fa5de602`.
+The `2026-09-29-v28` directory holds 26 PDFs (255 pages) and 26 XML files.
+The broader filled-PDF and release gates remain open.
+
+The fixed-source `deno task test` run on `9175f7c1` completed at 2026-09-29
+14:29 UTC: 8,875/8,875 passed, zero failed, no ignored tests reported, in
+15m57s. Deno was 2.7.7, `xmllint` used libxml 2.9.13, and Poppler was
+26.03.0. Its retained log is
+`.state/research/ty2025-full-test-9175f7c1.log`.
+
 ## XML evidence
 
 For each supported positive filing route in the completed coverage inventory,
@@ -220,7 +236,7 @@ scenario packet PDF as if it were a generated return.
 The workspace has blank IRS PDF templates in `.state/field-dumps/cache` and
 source ATS scenario PDFs in `.state/research/docs/ats-ty2025`. These are not
 filled-output fixtures. `forms/f1040/2025/pdf/review-fixtures.ts` now holds
-twenty-five synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts`
+twenty-six synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts`
 can run them through the real return graph and PDF builder. Earlier on
 2026-09-29, the first sixteen
 generated 94 pages successfully under
