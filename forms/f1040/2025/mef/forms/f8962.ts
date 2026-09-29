@@ -299,6 +299,14 @@ function isBelow100AptcOnly(fields: Input, context?: MefBuildContext): boolean {
     (fields.total_advance_ptc ?? 0) > 0;
 }
 
+function isMfsNoExceptionAptcOnly(context?: MefBuildContext): boolean {
+  const general = generalSchema.safeParse(context?.pending?.general);
+  return general.success &&
+    general.data.filing_status === SourceFilingStatus.MFS &&
+    general.data.ptc_mfs_status?.basis === "no_exception" &&
+    general.data.ptc_mfs_status.policy_scope === "family_only";
+}
+
 function sourcedTaxExemptInterest(
   pending: Readonly<Record<string, unknown>> | undefined,
   reported: number,
@@ -312,7 +320,9 @@ function sourcedTaxExemptInterest(
         0,
       ) !== reported
   ) {
-    throw new Error("Form 8962 tax-exempt MAGI needs matching Form 1099-INT source");
+    throw new Error(
+      "Form 8962 tax-exempt MAGI needs matching Form 1099-INT source",
+    );
   }
   return reported;
 }
@@ -330,7 +340,9 @@ function reconcileBelow100AptcOnly(
     !context?.filer || !general.success || !source.success ||
     !form1040.success || !schedule2.success
   ) {
-    throw new Error("Form 8962 below-100% APTC-only filing needs verified return and Marketplace sources");
+    throw new Error(
+      "Form 8962 below-100% APTC-only filing needs verified return and Marketplace sources",
+    );
   }
   const policies = current1095AStatements(source.data.f1095as);
   const policy = policies[0];
@@ -376,7 +388,90 @@ function reconcileBelow100AptcOnly(
           row.allowed_credit !== undefined
         ))
   ) {
-    throw new Error("Form 8962 below-100% APTC-only filing differs from its identified policy or repayment return");
+    throw new Error(
+      "Form 8962 below-100% APTC-only filing differs from its identified policy or repayment return",
+    );
+  }
+}
+
+function reconcileMfsNoExceptionAptcOnly(
+  fields: Input,
+  context?: MefBuildContext,
+): void {
+  const pending = context?.pending;
+  const general = generalSchema.safeParse(pending?.general);
+  const source = form1095aSchema.safeParse(pending?.f1095a);
+  const form1040 = returnSchema.safeParse(pending?.f1040);
+  const schedule2 = schedule2Schema.safeParse(pending?.schedule2);
+  if (
+    !context?.filer || !general.success || !source.success ||
+    !form1040.success || !schedule2.success
+  ) {
+    throw new Error(
+      "Form 8962 MFS APTC-only filing needs verified return and Marketplace sources",
+    );
+  }
+  const policies = current1095AStatements(source.data.f1095as);
+  const policy = policies[0];
+  const ssn = context.filer.primarySSN.replaceAll("-", "");
+  const aptc = policy?.monthly_aptcs?.reduce((sum, amount) => sum + amount, 0);
+  const povertyLine = reconcilePovertyTable(fields, context);
+  const agi = form1040.data.line11_agi;
+  const povertyPct = Math.floor(agi / povertyLine * 100);
+  const cap = povertyPct < 200 ? 750 : povertyPct < 300 ? 1_950 : 3_250;
+  if (
+    context.filer.filingStatus !== FilingStatus.MarriedFilingSeparately ||
+    general.data.filing_status !== SourceFilingStatus.MFS ||
+    general.data.ptc_mfs_status?.basis !== "no_exception" ||
+    general.data.ptc_mfs_status.exception_reviewed !== true ||
+    general.data.ptc_mfs_status.no_one_can_claim_taxpayer !== true ||
+    general.data.ptc_mfs_status.policy_scope !== "family_only" ||
+    general.data.ptc_mfs_status.all_covered_individuals_lawfully_present !==
+      true ||
+    general.data.ptc_mfs_status.no_self_employed_health_insurance_deduction !==
+      true ||
+    general.data.taxpayer_ssn?.replaceAll("-", "") !== ssn ||
+    policies.length !== 1 || !policy?.policy_number ||
+    policy.coverage_state !== context.filer.address.state ||
+    policy.covered_individual_ssns?.length !== 1 ||
+    policy.covered_individual_ssns[0].replaceAll("-", "") !== ssn ||
+    policy.shared_policy_periods || policy.slcsp_corrections ||
+    policy.slcsp_review_periods || policy.alternative_marriage_owner ||
+    !policy.monthly_premiums || !policy.monthly_slcsps ||
+    !policy.monthly_aptcs || aptc === undefined || aptc <= 0 ||
+    policy.monthly_premiums.some((value) => value <= 0) ||
+    policy.monthly_aptcs.some((value) => value <= 0) ||
+    (policy.annual_aptc !== undefined && policy.annual_aptc !== aptc) ||
+    fields.monthly_ptc_rows !== undefined ||
+    fields.annual_premium !== policy.annual_premium ||
+    fields.annual_slcsp !== policy.annual_slcsp ||
+    policy.annual_premium !==
+      policy.monthly_premiums.reduce((sum, value) => sum + value, 0) ||
+    policy.annual_slcsp !==
+      policy.monthly_slcsps.reduce((sum, value) => sum + value, 0) ||
+    fields.annual_ptc_allowed !== undefined ||
+    fields.household_size !== 1 || fields.dependents_modified_agi !== 0 ||
+    fields.mfs_exception_ind === true ||
+    fields.taxpayer_modified_agi !== agi || fields.household_income !== agi ||
+    (form1040.data.line2a_tax_exempt ?? 0) !== 0 ||
+    (form1040.data.line6a_ss_gross ?? 0) !==
+      (form1040.data.line6b_ss_taxable ?? 0) ||
+    fields.federal_poverty_line !== povertyLine ||
+    fields.federal_poverty_pct !== povertyPct ||
+    povertyPct < 100 || povertyPct >= 400 ||
+    fields.total_advance_ptc !== aptc || fields.annual_aptc !== aptc ||
+    fields.total_premium_tax_credit !== 0 ||
+    (fields.net_premium_tax_credit ?? 0) !== 0 ||
+    fields.excess_advance_payment !== aptc ||
+    fields.repayment_limitation !== cap ||
+    fields.excess_advance_premium !== Math.min(aptc, cap) ||
+    schedule2.data.line1a_excess_advance_premium !== Math.min(aptc, cap) ||
+    form1040.data.line17_additional_taxes !== Math.min(aptc, cap) ||
+    pending?.schedule3 !== undefined || pending?.form2555 !== undefined
+  ) {
+    throw new Error(
+      "Form 8962 MFS APTC-only filing differs from its identified policy or repayment return",
+    );
   }
 }
 
@@ -424,7 +519,7 @@ function reconcileSimpleAnnualPolicy(
   );
   if (
     !((context.filer.filingStatus === FilingStatus.Single &&
-        fields.mfs_exception_ind !== true) || mfsException) ||
+      fields.mfs_exception_ind !== true) || mfsException) ||
     context.filer.address.foreignCountry ||
     policies.length < 1 || policies.length > 3 ||
     policies.some((policy) =>
@@ -792,9 +887,9 @@ function reconcileNoAptcPolicyMonths(
     fields.monthly_applicable_contribution !== monthlyContribution ||
     (fields.annual_slcsp !== undefined &&
       fields.annual_slcsp !== rows.reduce(
-        (sum, row) => sum + (row.slcsp ?? 0),
-        0,
-      )) ||
+          (sum, row) => sum + (row.slcsp ?? 0),
+          0,
+        )) ||
     (policy.annual_premium !== undefined &&
       policy.annual_premium !==
         policy.monthly_premiums.reduce((sum, premium) => sum + premium, 0)) ||
@@ -1772,6 +1867,8 @@ function buildIRS8962(fields: Input, context?: MefBuildContext): string {
   ) {
     if (isBelow100AptcOnly(fields, context)) {
       reconcileBelow100AptcOnly(fields, context);
+    } else if (isMfsNoExceptionAptcOnly(context)) {
+      reconcileMfsNoExceptionAptcOnly(fields, context);
     } else if (Array.isArray(monthlyRows)) {
       if (allocations.length > 0) {
         reconcileAgreedSharedPolicy(fields, context);
@@ -1794,16 +1891,29 @@ function buildIRS8962(fields: Input, context?: MefBuildContext): string {
     : fields.fpl_region === "hawaii"
     ? "B"
     : "C";
+  const mfsNoException = isMfsNoExceptionAptcOnly(context);
   const annualGroup = Array.isArray(monthlyRows) ? [] : [
     elements("AnnualPTCCalculationGrp", [
-      numberElement("AnnualPremiumAmt", fields.annual_premium),
-      numberElement("AnnualPremiumSLCSPAmt", fields.annual_slcsp),
+      numberElement(
+        "AnnualPremiumAmt",
+        mfsNoException ? undefined : fields.annual_premium,
+      ),
+      numberElement(
+        "AnnualPremiumSLCSPAmt",
+        mfsNoException ? undefined : fields.annual_slcsp,
+      ),
       numberElement(
         "AnnualContributionAmt",
-        fields.annual_applicable_contribution,
+        mfsNoException ? undefined : fields.annual_applicable_contribution,
       ),
-      numberElement("AnnualMaxPremiumAssistanceAmt", fields.annual_max_ptc),
-      numberElement("AnnualPremiumTaxCreditAllwAmt", fields.annual_ptc_allowed),
+      numberElement(
+        "AnnualMaxPremiumAssistanceAmt",
+        mfsNoException ? undefined : fields.annual_max_ptc,
+      ),
+      numberElement(
+        "AnnualPremiumTaxCreditAllwAmt",
+        mfsNoException ? undefined : fields.annual_ptc_allowed,
+      ),
       numberElement("AnnualAdvancedPTCAmt", fields.annual_aptc),
     ]),
   ];

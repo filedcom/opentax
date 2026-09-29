@@ -91,18 +91,22 @@ function noAptcSlcspDeterminations(premiums: number[], slcsps: number[]) {
 }
 
 function noAptcPaymentEvidence(premiums: number[], slcsps: number[]) {
-  return premiums.flatMap((premium, index) => premium > 0 ? [{
-    month: index + 1,
-    marketplace_slcsp: slcsps[index],
-    marketplace_method: "marketplace_tool",
-    marketplace_reference: `Marketplace determination ${index + 1}`,
-    marketplace_determined_on: "2026-02-01",
-    marketplace_record_sha256: "a".repeat(64),
-    premium_paid: premium,
-    premium_paid_in_full_on: "2026-04-01",
-    premium_payment_reference: `Premium payment ${index + 1}`,
-    premium_payment_record_sha256: "b".repeat(64),
-  }] : []);
+  return premiums.flatMap((premium, index) =>
+    premium > 0
+      ? [{
+        month: index + 1,
+        marketplace_slcsp: slcsps[index],
+        marketplace_method: "marketplace_tool",
+        marketplace_reference: `Marketplace determination ${index + 1}`,
+        marketplace_determined_on: "2026-02-01",
+        marketplace_record_sha256: "a".repeat(64),
+        premium_paid: premium,
+        premium_paid_in_full_on: "2026-04-01",
+        premium_payment_reference: `Premium payment ${index + 1}`,
+        premium_payment_record_sha256: "b".repeat(64),
+      }]
+      : []
+  );
 }
 
 Deno.test({
@@ -3505,13 +3509,14 @@ Deno.test({
   assertEquals(xml.includes("<AnnualPremiumAmt>"), false);
   assertEquals(xml.includes("<ApplicableFigureRt>"), false);
   assertThrows(
-    () => buildMefXml({
-      ...result.pending,
-      schedule2: {
-        ...result.pending.schedule2,
-        line1a_excess_advance_premium: 374,
-      },
-    } as MefFormsPending, extractFilerIdentity(general)),
+    () =>
+      buildMefXml({
+        ...result.pending,
+        schedule2: {
+          ...result.pending.schedule2,
+          line1a_excess_advance_premium: 374,
+        },
+      } as MefFormsPending, extractFilerIdentity(general)),
     Error,
     "below-100% APTC-only filing differs",
   );
@@ -3586,9 +3591,15 @@ Deno.test({
     w2: [w2Item(30_000, 0)],
     f1095a: [{
       issuer_name: "Marketplace Plan",
+      policy_number: "POLICY-MFS-REPAYMENT",
+      coverage_state: "TX",
+      covered_individual_ssns: ["111223333"],
       monthly_premiums: Array(12).fill(250),
       monthly_slcsps: Array(12).fill(350),
       monthly_aptcs: Array(12).fill(200),
+      annual_premium: 3_000,
+      annual_slcsp: 4_200,
+      annual_aptc: 2_400,
     }],
   });
   assertEquals(result.diagnostics, []);
@@ -3602,7 +3613,17 @@ Deno.test({
     xml,
     "<AnnualAdvancedPTCAmt>2400</AnnualAdvancedPTCAmt>",
   );
+  assertEquals(xml.includes("<AnnualPremiumAmt>"), false);
   assertEquals(xml.includes("<MarriedFilingSeparatelyExcInd>"), false);
+  assertThrows(
+    () =>
+      buildMefXml({
+        ...result.pending,
+        form8962: { ...result.pending.form8962, annual_aptc: 2_401 },
+      } as MefFormsPending, extractFilerIdentity(general)),
+    Error,
+    "Form 8962 MFS APTC-only filing differs",
+  );
   await validateXsd(xml, "MFS APTC-only repayment without exception");
 });
 
@@ -4153,10 +4174,13 @@ Deno.test({
   assertStringIncludes(xml, "<ModifiedAGIAmt>35120</ModifiedAGIAmt>");
   assertStringIncludes(xml, "<HouseholdIncomeAmt>35120</HouseholdIncomeAmt>");
   assertThrows(
-    () => buildMefXml({
-      ...result.pending,
-      f1099int: { f1099ints: [{ payer_name: "Municipal Bond", box8: 4_999 }] },
-    } as MefFormsPending, extractFilerIdentity(general)),
+    () =>
+      buildMefXml({
+        ...result.pending,
+        f1099int: {
+          f1099ints: [{ payer_name: "Municipal Bond", box8: 4_999 }],
+        },
+      } as MefFormsPending, extractFilerIdentity(general)),
     Error,
     "tax-exempt MAGI needs matching Form 1099-INT source",
   );
