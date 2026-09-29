@@ -32,6 +32,13 @@ XSD pass, or an ignored test.
 
 ### Latest validation attempt
 
+The 2026-09-29 22:01–22:17 UTC fixed-source `deno task test` run on
+`1307679f` passed **8,922/8,922**, zero failed, in 16m37s; Deno reported no
+ignored tests. It includes the direct-rollover gross reporting and explicit
+zero-taxable PDF regression. Retain
+`.state/research/ty2025-full-test-1307679f.log`. The local regression passed;
+the final release batch and external gates remain open.
+
 The 2026-09-29 21:31–21:47 UTC fixed-source `deno task test` run on
 `27021382` passed **8,921/8,921**, zero failed, in 16m6s; Deno reported no
 ignored tests. It includes the corrected Form 8880 priority fixture and the
@@ -467,7 +474,7 @@ including a two-gift return with two linked native forms and attachments.
 
 - [ ] Finish implementation and coverage decisions above before the agreed single full-batch gate. Existing focused cases and historical passes are not evidence for the current worktree.
 - [x] Confirm Deno, `xmllint`, `pdftoppm`, and `pdfinfo` are available. Provision and verify the TY2025 v5.4 `Return1040.xsd` / `ReturnData1040.xsd` bundle under `.state/research/docs/`; it is Git-ignored, not checked in. On 2026-09-29, Deno 2.7.7, libxml 2.9.13, and Poppler 26.03.0 were present with both schema files. A filtered MeF Schedule 2 XSD test and a filtered full-return Single W-2 XSD test each ran and passed (1 pass, 0 ignored per command), proving both test files used the local `Return1040.xsd` bundle. This checks the preflight only; the full schema matrix remains open.
-- [ ] Run `deno task test` as the final full batch after the retained routes and scope decisions are complete; record commit, command, tool versions, timestamp, pass/fail/ignored totals, failures, and ignored-test reasons. Fix failures, then rerun the same full command until the release batch passes. The latest complete regression passed 8,921/8,921 on `27021382` with no ignored tests reported. Implementation and external gates remain open.
+- [ ] Run `deno task test` as the final full batch after the retained routes and scope decisions are complete; record commit, command, tool versions, timestamp, pass/fail/ignored totals, failures, and ignored-test reasons. Fix failures, then rerun the same full command until the release batch passes. The latest complete regression passed 8,922/8,922 on `1307679f` with no ignored tests reported. Implementation and external gates remain open.
   - [x] Rerun the full command after correcting the three repeated-facility fixtures; `15d5430d` passed 8,855/8,855 with no ignored tests reported. Retain `.state/research/ty2025-full-test-15d5430d.log` as local regression evidence.
   - [x] Rerun the full command after adding mixed wind/geothermal copies and the no-increase source guard; `08786417` passed 8,860/8,860 with no ignored tests reported. Retain `.state/research/ty2025-full-test-08786417.log` as local regression evidence.
   - [x] Rerun the full command after adding the Form 8874 source-backed packet and fixing its CDE address layout; `5eeb5e6b` passed 8,862/8,862 with no ignored tests reported. Retain `.state/research/ty2025-full-test-5eeb5e6b.log` as local regression evidence.
@@ -485,6 +492,7 @@ including a two-gift return with two linked native forms and attachments.
   - [x] Rerun the full command after the Form 8888, Schedule R, Form 7203, and Form 1040 PDF changes; fixed source commit `664679b2` passed 8,914/8,914 with zero failures and no ignored tests reported. Retain `.state/research/ty2025-full-test-664679b2.log`.
   - [x] Rerun the full command after the Schedule R Form 1040 tax-limit guard; source commit `56b4e37e` passed 8,916/8,916 with zero failures and no ignored tests reported. Retain `.state/research/ty2025-full-test-56b4e37e.log`.
   - [x] Rerun the full command after Schedule R age reconciliation and the DOB-derived Form 8995 limit fix; source commit `27021382` passed 8,921/8,921 with zero failures and no ignored tests reported. Retain `.state/research/ty2025-full-test-27021382.log`. The preceding `a7c26864` attempt passed 8,919 and failed the Form 8880 fixture corrected in this source.
+  - [x] Rerun the full command after direct-rollover Form 1040 line 5a/5b and PDF corrections; source commit `1307679f` passed 8,922/8,922 with zero failures and no ignored tests reported. Retain `.state/research/ty2025-full-test-1307679f.log`.
 - [x] Run the live canonical-PDF field-name checks in the normal test suite. On 2026-09-29, after correcting the Schedule 3 line 13a AcroForm path, `deno test --allow-read --allow-net=www.irs.gov --filter 'all mapped pdfField names exist in real IRS PDF' forms/f1040/2025/pdf/forms/all-descriptors.test.ts` passed all then-86 checks. The `08786417` full run passed all 87 current descriptor field-name checks, including Form 8835's wind fields. The earlier full descriptor file passed 605/605 checks, including the pinned-revision checks that had failed in the earlier diagnostic batch. This proves mapped field names exist in the referenced IRS PDFs; filled-output visual review remains a separate gate below.
 - [ ] For every retained positive filing route, generate a full return from a source-backed fixture and validate emitted XML against the checked-in TY2025 IRS schema. Check source-to-calculation-to-Form-1040 totals, required references/attachments, negative and conflicting cases, and IRS business rules separately from structural XSD success.
 - [ ] Generate the twenty-seven prepared synthetic filled-PDF cases through the real graph and PDF builder as described in the [validation batch](docs/mef/ty2025-form1040-validation-batch.md); render and inspect every page, mark checkboxes/amounts/owner identity/page order/continuations, and add cases for each uncovered descriptor or branch.
