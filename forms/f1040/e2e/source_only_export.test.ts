@@ -2,6 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { execute } from "../../../core/runtime/executor.ts";
 import { registry } from "../2025/registry.ts";
+import { AccountType } from "../nodes/inputs/f8888/index.ts";
 import { buildMefXml } from "../2025/mef/builder.ts";
 import { buildPending } from "../2025/mef/pending.ts";
 import { type FilerIdentity, FilingStatus } from "../2025/mef/types.ts";
@@ -45,14 +46,14 @@ Deno.test("Form 8888 split refund cannot export without a matching final refund"
     account_1: {
       routing_number: "021000021",
       account_number: "111222333",
-      account_type: "checking",
+      account_type: AccountType.Checking,
       amount: 300,
       owner_name: "Test Taxpayer",
     },
     account_2: {
       routing_number: "021000021",
       account_number: "444555666",
-      account_type: "savings",
+      account_type: AccountType.Savings,
       amount: 700,
       owner_name: "Test Taxpayer",
     },
@@ -74,7 +75,10 @@ Deno.test("Form 9465 installment request cannot disappear from MeF", () => {
     f9465: attached9465,
   }, { taxYear: 2025, formType: "f1040" });
   const pending = buildPending(result.pending);
-  assertEquals(pending.f9465, attached9465);
+  assertEquals(
+    (pending as unknown as Record<string, unknown>).f9465,
+    attached9465,
+  );
   assertThrows(
     () => buildMefXml(pending, filer),
     Error,
@@ -117,7 +121,8 @@ Deno.test("Schedule R stays blocked and reviewed S-corporation stock loss emits 
               no_other_2025_stock_basis_changes: true,
               no_other_schedule_e_activity: true,
               materially_participated_in_s_corporation: true,
-              material_participation_workpaper_reference: "2025 shareholder participation log",
+              material_participation_workpaper_reference:
+                "2025 shareholder participation log",
               no_shareholder_debt_or_repayments: true,
               no_prior_year_suspended_losses: true,
               no_at_risk_or_passive_limitation: true,
@@ -148,8 +153,16 @@ Deno.test("Schedule R stays blocked and reviewed S-corporation stock loss emits 
       const xml = buildMefXml(pending, filer);
       assertEquals(xml.includes("<IRS1040ScheduleE"), true);
       assertEquals(xml.includes("<IRS7203"), true);
-      assertEquals(xml.includes("<NonpassiveLossAmt>3000</NonpassiveLossAmt>"), true);
-      assertEquals(xml.includes("<TotalSuppIncomeOrLossAmt>-3000</TotalSuppIncomeOrLossAmt>"), true);
+      assertEquals(
+        xml.includes("<NonpassiveLossAmt>3000</NonpassiveLossAmt>"),
+        true,
+      );
+      assertEquals(
+        xml.includes(
+          "<TotalSuppIncomeOrLossAmt>-3000</TotalSuppIncomeOrLossAmt>",
+        ),
+        true,
+      );
       continue;
     }
     assertThrows(
