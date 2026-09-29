@@ -1,6 +1,7 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { rgb, StandardFonts } from "pdf-lib";
 import { form8814ParentPrintAmounts } from "./f8814.ts";
+import { appendIraDistributionStatement } from "./ira_distribution_statement.ts";
 import { schedule1aPdf } from "./schedule1a.ts";
 import { inputSchema as w2gInputSchema } from "../../../nodes/inputs/w2g/index.ts";
 import {
@@ -579,6 +580,9 @@ export const irs1040Pdf: PdfFormDescriptor = {
       color: rgb(1, 1, 1),
     });
     page.drawText(note, { x: 315, y: 93, size: 7, font });
+  },
+  async appendSupplementalPages(document, _fields, filer, allPending) {
+    await appendIraDistributionStatement(document, allPending?.f1099r, filer);
   },
   filerFields: [
     // domainKey uses dot-notation to traverse FilerIdentity (resolved in builder).

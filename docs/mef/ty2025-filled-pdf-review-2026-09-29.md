@@ -97,7 +97,25 @@ IRA. The pending graph and native XML show $5,000 on line 4a, zero on line
 4c(1), and leaves the separate pension line 5c rollover box blank. The PDF
 has SHA-256
 `8f2e2756881d707ab82bd5befbd8eff98c8989a3cc89460524758ce2b04e7c9c`.
-The full-return XML passed the local TY2025 v5.4 XSD. This case does not
+The full-return XML passed the local TY2025 v5.4 XSD. This case alone did not
 establish the statement-required qualified-plan or 2026 rollover paths,
 60-day waiver cases, other IRA eligibility evidence, or IRS business-rule
 acceptance.
+
+The `single-ira-qualified-plan-rollover` and `single-ira-2026-rollover`
+packets were generated in `.state/research/ty2025-filled-pdf-review/2026-09-29-v36/`.
+All three pages of each PDF were rendered at 130 dpi and inspected. The
+qualified-plan source records $7,000 distributed on 2025-12-01 and rolled
+into Example 401(k) on 2025-12-15; the next-year source records $8,000
+distributed on 2025-12-15 and rolled into another IRA on 2026-01-15. Each
+pending graph, native Form 1040, and PDF shows the gross amount on line 4a,
+explicit zero on line 4b, and the line 4c(1) mark, with pension line 5c
+blank. Each native indicator references exactly one
+`IRADistributionStatement`; its `ExplanationTxt` matches the legible third
+PDF page, which follows both Form 1040 pages. Both full-return XML files
+passed the local TY2025 v5.4 XSD. The PDFs have SHA-256
+`ab55f290f7815cd2732763855f165a2085a6aa13f697db54add7e375168ed1f8`
+and `0a6211af6ba0449deaae984b3c671591e05e4b1d89ab314d056fa710725fd20d`,
+respectively. These synthetic packets do not establish source IRA type,
+destination eligibility, prior IRA-to-IRA rollovers, late-rollover waivers,
+or IRS business-rule acceptance.

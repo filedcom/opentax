@@ -4,6 +4,7 @@ import { cccLoanAccrualStatement } from "./ccc_loan_accrual_statement.ts";
 import { cropInsuranceDeferralStatement } from "./crop_insurance_deferral_statement.ts";
 import { jointOccupancyStatement } from "./joint_occupancy_statement.ts";
 import { irs1040 } from "./f1040.ts";
+import { iraDistributionStatement } from "./ira_distribution_statement.ts";
 import { f1099r } from "./f1099r.ts";
 import { form1116 } from "./f1116.ts";
 import { form2210f } from "./f2210f_box_b.ts";
@@ -302,6 +303,8 @@ export const ALL_MEF_FORMS = [
   // Form W-2G withholding statements follow W-2 in ReturnData1040.xsd.
   w2g,
   fecRecord,
+  // Form 1040 line 4c IRA statement precedes other income statements.
+  iraDistributionStatement,
   // Schedule 1 line 8z statement precedes the Schedule 2 line 17z statement.
   schedule1OtherIncomeStatement,
   // Schedule 2 line 17z statement precedes WagesNotShownSchedule in ReturnData.

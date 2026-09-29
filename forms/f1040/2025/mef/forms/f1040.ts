@@ -11,8 +11,8 @@ import {
 import { FilingStatus } from "../../../nodes/types.ts";
 import { inputSchema as w2gInputSchema } from "../../../nodes/inputs/w2g/index.ts";
 import {
-  assertIraRolloverEvidence,
   inputSchema as f1099rInputSchema,
+  iraDistributionExplanation,
   isIraRollover,
   isPensionDirectRollover,
 } from "../../../nodes/inputs/f1099r/index.ts";
@@ -424,12 +424,12 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
     throw new Error("Form 1040 line 5c rollover must be a boolean");
   }
   const f1099rSource = context?.pending?.f1099r;
+  let iraStatementId: string | undefined;
   if (iraRollover || rollover || f1099rSource !== undefined) {
     const parsed = f1099rInputSchema.safeParse(f1099rSource);
     if (!parsed.success) {
       throw new Error("Form 1040 line 5c needs valid Form 1099-R source facts");
     }
-    assertIraRolloverEvidence(parsed.data.f1099rs);
     if (rollover !== parsed.data.f1099rs.some(isPensionDirectRollover)) {
       throw new Error(
         "Form 1040 line 5c rollover does not match the payer-reported Form 1099-R code G",
@@ -439,6 +439,17 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
       throw new Error(
         "Form 1040 line 4c rollover does not match the reviewed IRA Form 1099-R source",
       );
+    }
+    const explanation = iraDistributionExplanation(parsed.data.f1099rs);
+    if (explanation !== undefined && context?.documentIdsByPendingKey) {
+      const ids = context.documentIdsByPendingKey.ira_distribution_statement ??
+        [];
+      if (ids.length !== 1 || !ids[0]?.trim()) {
+        throw new Error(
+          "Form 1040 line 4c needs one linked IRA distribution statement",
+        );
+      }
+      iraStatementId = ids[0];
     }
   }
   if (context?.pending?.w2g !== undefined) {
@@ -618,7 +629,16 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
     incomeChildren.splice(
       iraIndex + 1,
       0,
-      element("IRADistributionRolloverInd", "X"),
+      element(
+        "IRADistributionRolloverInd",
+        "X",
+        iraStatementId
+          ? {
+            referenceDocumentId: iraStatementId,
+            referenceDocumentName: "IRADistributionStatement",
+          }
+          : undefined,
+      ),
     );
   }
   if (typeof fields.form8814_tax === "number" && fields.form8814_tax > 0) {

@@ -838,6 +838,59 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-ira-qualified-plan-rollover",
+    inputs: {
+      general: singleGeneral,
+      f1099r: [{
+        payer_name: "Example IRA Custodian",
+        payer_ein: "12-3456789",
+        box1_gross_distribution: 7_000,
+        box2a_taxable_amount: 0,
+        box7_distribution_code: DistributionCode.Code7,
+        box7_ira_simple_indicator: true,
+        rollover_code: RolloverCode.S,
+        ira_rollover: {
+          destination: "qualified_plan",
+          destination_name: "Example 401(k)",
+          distributed_on: "2025-12-01",
+          completed_on: "2025-12-15",
+        },
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040"],
+    reviewFocus: [
+      "Form 1040 line 4c(1) links a native IRA distribution statement",
+      "The three-page PDF includes a matching named qualified-plan statement after Form 1040",
+    ],
+  },
+  {
+    id: "single-ira-2026-rollover",
+    inputs: {
+      general: singleGeneral,
+      f1099r: [{
+        payer_name: "Example IRA Custodian",
+        payer_ein: "12-3456789",
+        box1_gross_distribution: 8_000,
+        box2a_taxable_amount: 0,
+        box7_distribution_code: DistributionCode.Code7,
+        box7_ira_simple_indicator: true,
+        rollover_code: RolloverCode.S,
+        ira_rollover: {
+          destination: "ira",
+          distributed_on: "2025-12-15",
+          completed_on: "2026-01-15",
+        },
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040"],
+    reviewFocus: [
+      "Form 1040 line 4c(1) links a native IRA distribution statement",
+      "The three-page PDF explains the 2026 completion date after Form 1040",
+    ],
+  },
+  {
     id: "single-hsa-code2-excess",
     inputs: {
       general: singleGeneral,

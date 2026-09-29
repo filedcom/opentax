@@ -192,8 +192,11 @@ circumstances:
   pension rollover prints zero on line 5b and checks line 5c(1). A reviewed
   2025 IRA-to-IRA rollover prints zero on line 4b and checks line 4c(1) only
   when `ira_rollover` records the destination and distribution/completion dates.
-  A qualified-plan destination or completion in 2026 is rejected until its
-  required explanatory statement can be linked in the native return.
+  A qualified-plan destination or completion in 2026 also generates a linked
+  native `IRADistributionStatement` and a matching supplemental PDF page from
+  the reviewed destination, amount, and dates. Source IRA type, broader
+  destination eligibility, one-rollover-per-year evidence, and late-rollover
+  exceptions remain to be reconciled.
 - Code G alone does not prove the distribution is tax-free. IRS instructions
   allow a taxable rollover to a Roth account with the taxable portion in box
   2a. TY2025 ATS 1040 Scenario 8 reports code G with $10,300 in box 2a; that

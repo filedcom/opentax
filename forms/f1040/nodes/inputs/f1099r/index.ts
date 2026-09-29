@@ -264,6 +264,8 @@ export const itemSchema = z.object({
   partial_rollover_amount: z.number().nonnegative().optional(),
   ira_rollover: z.object({
     destination: z.enum(["ira", "qualified_plan"]),
+    destination_name: z.string().min(1).max(120).regex(/^[!-~]+(?: [!-~]+)*$/)
+      .optional(),
     distributed_on: z.string().date(),
     completed_on: z.string().date(),
   }).optional(),
@@ -345,6 +347,50 @@ export function isIraRollover(item: R1099Item): boolean {
     item.exclude_8606_roth !== true;
 }
 
+export function requiresIraDistributionStatement(item: R1099Item): boolean {
+  const rollover = item.ira_rollover;
+  return rollover !== undefined && isIraRollover(item) &&
+    (rollover.destination === "qualified_plan" ||
+      rollover.completed_on.startsWith("2026-"));
+}
+
+export function iraDistributionExplanation(
+  items: readonly R1099Item[],
+): string | undefined {
+  assertIraRolloverEvidence(items);
+  const rows = items.flatMap((item, index) => {
+    if (!requiresIraDistributionStatement(item)) return [];
+    const rollover = item.ira_rollover;
+    if (!rollover) {
+      throw new Error("IRA rollover statement lost source details");
+    }
+    const rolled = item.rollover_code === RolloverCode.X
+      ? item.partial_rollover_amount ?? 0
+      : item.box1_gross_distribution;
+    const destination = rollover.destination === "qualified_plan"
+      ? `${rollover.destination_name} qualified plan`
+      : rollover.destination_name
+      ? `${rollover.destination_name} IRA`
+      : "another IRA";
+    const owner = item.ts === "S" ? "Spouse" : "Taxpayer";
+    return [
+      `Distribution ${index + 1}: ${owner} received ${
+        Math.round(item.box1_gross_distribution)
+      } from an IRA on ${rollover.distributed_on}; ${
+        Math.round(rolled)
+      } was rolled into ${destination} on ${rollover.completed_on}.`,
+    ];
+  });
+  if (rows.length === 0) return undefined;
+  const explanation = rows.join(" ");
+  if (explanation.length > 9000) {
+    throw new Error(
+      "IRA distribution statement exceeds the MeF explanation limit",
+    );
+  }
+  return explanation;
+}
+
 export function assertIraRolloverEvidence(items: readonly R1099Item[]): void {
   for (const item of items) validateIraRolloverEvidence(item);
 }
@@ -388,10 +434,19 @@ function validateIraRolloverEvidence(item: R1099Item): void {
         "IRA rollover needs a 2025 distribution completed within 60 days",
       );
     }
-    if (destination !== "ira" || !completed_on.startsWith("2025-")) {
+    if (
+      destination === "qualified_plan" &&
+      !item.ira_rollover.destination_name
+    ) {
       throw new Error(
-        "IRA rollover to a qualified plan or completed in 2026 needs an explanatory statement",
+        "IRA rollover to a qualified plan needs its destination name",
       );
+    }
+    if (
+      !completed_on.startsWith("2025-") &&
+      !completed_on.startsWith("2026-")
+    ) {
+      throw new Error("IRA rollover completion must be in 2025 or 2026");
     }
     if (
       item.rollover_code === RolloverCode.X &&

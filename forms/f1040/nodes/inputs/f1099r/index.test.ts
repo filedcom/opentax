@@ -1,9 +1,10 @@
-import { assertEquals, assertThrows } from "@std/assert";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import type { z } from "zod";
 import { TS } from "../../types.ts";
 import {
   DistributionCode,
   f1099r,
+  iraDistributionExplanation,
   type itemSchema,
   RolloverCode,
 } from "./index.ts";
@@ -1025,20 +1026,38 @@ Deno.test("f1099r.compute: IRA rollover needs dated destination evidence", () =>
         },
       }]),
     Error,
-    "needs an explanatory statement",
+    "needs its destination name",
   );
-  assertThrows(
-    () =>
-      compute([{
-        ...item,
-        ira_rollover: {
-          destination: "ira",
-          distributed_on: "2025-12-01",
-          completed_on: "2026-01-15",
-        },
-      }]),
-    Error,
-    "needs an explanatory statement",
+  const nextYear = {
+    ...item,
+    ira_rollover: {
+      destination: "ira" as const,
+      distributed_on: "2025-12-01",
+      completed_on: "2026-01-15",
+    },
+  };
+  assertEquals(f1040Input(compute([nextYear])).line4c_ira_rollover, true);
+  assertEquals(
+    iraDistributionExplanation([nextYear]),
+    "Distribution 1: Taxpayer received 10000 from an IRA on 2025-12-01; 10000 was rolled into another IRA on 2026-01-15.",
+  );
+  const qualified = {
+    ...item,
+    ira_rollover: {
+      destination: "qualified_plan" as const,
+      destination_name: "Example 401(k)",
+      distributed_on: "2025-12-01",
+      completed_on: "2025-12-15",
+    },
+  };
+  assertEquals(f1040Input(compute([qualified])).line4c_ira_rollover, true);
+  assertEquals(
+    iraDistributionExplanation([qualified]),
+    "Distribution 1: Taxpayer received 10000 from an IRA on 2025-12-01; 10000 was rolled into Example 401(k) qualified plan on 2025-12-15.",
+  );
+  assertStringIncludes(
+    iraDistributionExplanation([nextYear, { ...qualified, ts: TS.S }]) ?? "",
+    "Distribution 2: Spouse received 10000 from an IRA",
   );
 });
 

@@ -68,6 +68,23 @@ for (const fixture of pdfReviewFixtures) {
           "<IRADistributionRolloverInd>X</IRADistributionRolloverInd>",
         );
       }
+      if (
+        fixture.id === "single-ira-qualified-plan-rollover" ||
+        fixture.id === "single-ira-2026-rollover"
+      ) {
+        assertEquals(result.pending.f1040.line4c_ira_rollover, true);
+        assertStringIncludes(
+          xml,
+          'referenceDocumentName="IRADistributionStatement"',
+        );
+        assertStringIncludes(xml, "<IRADistributionStatement documentId=");
+        assertStringIncludes(
+          xml,
+          fixture.id === "single-ira-qualified-plan-rollover"
+            ? "Example 401(k) qualified plan"
+            : "2026-01-15",
+        );
+      }
       const path = await Deno.makeTempFile({ suffix: ".xml" });
       try {
         await Deno.writeTextFile(path, xml);

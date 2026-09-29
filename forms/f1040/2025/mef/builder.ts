@@ -170,6 +170,12 @@ function validateDocumentReferences(
     ) {
       throw new Error("MeF joint-occupancy statement is not referenced");
     }
+    if (
+      fragment.tag === "IRADistributionStatement" &&
+      !referencedIds.includes(ids[index])
+    ) {
+      throw new Error("MeF IRA distribution statement is not referenced");
+    }
   }
 }
 

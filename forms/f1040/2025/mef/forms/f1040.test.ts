@@ -688,7 +688,36 @@ Deno.test("IRA rollover prints line 4c(1) only from reviewed source", () => {
         },
       }),
     Error,
-    "needs an explanatory statement",
+    "needs its destination name",
+  );
+  const qualifiedSource = {
+    f1099rs: [{
+      ...source.f1099rs[0],
+      ira_rollover: {
+        destination: "qualified_plan",
+        destination_name: "Example 401(k)",
+        distributed_on: "2025-06-01",
+        completed_on: "2025-06-02",
+      },
+    }],
+  };
+  assertThrows(
+    () =>
+      irs1040.build(fields, {
+        pending: { f1099r: qualifiedSource },
+        documentIdsByPendingKey: { ira_distribution_statement: [] },
+      }),
+    Error,
+    "needs one linked IRA distribution statement",
+  );
+  assertStringIncludes(
+    irs1040.build(fields, {
+      pending: { f1099r: qualifiedSource },
+      documentIdsByPendingKey: {
+        ira_distribution_statement: ["IRADistributionStatement3"],
+      },
+    }),
+    '<IRADistributionRolloverInd referenceDocumentId="IRADistributionStatement3" referenceDocumentName="IRADistributionStatement">X</IRADistributionRolloverInd>',
   );
 });
 
