@@ -136,15 +136,18 @@ Deno.test("Form 8995-A PDFs reject missing source, companion, parent, and 1040 m
   );
 });
 
-Deno.test("Form 8995-A PDF keeps unsupported business paths closed", () => {
+Deno.test("Form 8995-A PDF requires SSTB companion and patron status", () => {
   assertThrows(
     () =>
       form8995aPdf.projectFields?.({
         ...patron,
         sstb_qbi: 100,
-      }, pending),
+      }, {
+        ...pending,
+        form8995a: { ...patron, sstb_qbi: 100 },
+      }),
     Error,
-    "does not yet support",
+    "matching Schedule A companion source",
   );
   assertThrows(
     () =>
