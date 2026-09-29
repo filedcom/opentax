@@ -467,6 +467,8 @@
       font-size: 14px; color: var(--ash); line-height: 1.8; margin: 0;
     }
     .faq-a a { color: var(--espresso-light); text-decoration: underline; text-underline-offset: 3px; }
+    .note-body a { color: var(--espresso-light); text-decoration: underline; text-underline-offset: 3px; }
+    .note-body a:hover { color: var(--cream); }
     .faq-a a:hover { color: var(--cream); }
     .faq-a code {
       font-family: var(--font-mono); font-size: 12.5px;
@@ -502,6 +504,10 @@
     .footer-link:hover { color: var(--color-foreground); }
 
     @media (max-width: 600px) {
+      .nav-inner { padding: 0 16px; }
+      .nav-hide-sm { display: none !important; }
+      .hero-guide { margin-top: -12px; font-size: 13px; }
+      .guide-callout { padding: 20px; }
       .hero { padding: 60px 20px 48px; }
       .footer-inner { flex-direction: column; align-items: flex-start; }
       .install-cards { grid-template-columns: 1fr !important; }
@@ -511,6 +517,14 @@
       .fact-strip span { gap: 14px; }
       .init-card { padding: 22px; }
     }
+
+    /* tax pro guide links */
+    .hero-guide { display: inline-block; margin: -16px 0 30px; font-size: 14px; color: var(--pebble); text-decoration: none; border-bottom: 1px solid var(--timber-dark); padding-bottom: 2px; transition: color .15s, border-color .15s; }
+    .hero-guide:hover { color: var(--cream); border-color: var(--espresso-light); }
+    .guide-callout { display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; margin-top: 16px; padding: 24px 26px; border: 1px solid var(--espresso); background: rgba(112,75,48,0.16); border-radius: var(--radius-md); }
+    .guide-callout .gc-label { font-family: var(--font-mono); font-size: 10px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--espresso-light); margin-bottom: 8px; }
+    .guide-callout .gc-title { font-family: var(--font-serif); font-size: 26px; font-weight: 400; color: var(--cream); line-height: 1.2; margin-bottom: 6px; }
+    .guide-callout .gc-body { font-size: 14px; color: var(--ash); line-height: 1.7; max-width: 560px; }
   </style>
   <script type="application/ld+json">
 {
@@ -663,13 +677,13 @@
       <img src="filed-logo.png" height="28" alt="Filed" style="display:block;filter:invert(1);" />
     </a>
     <div class="nav-right">
-      <a href="#initiatives" class="nav-link">Initiatives</a>
+      <a href="#initiatives" class="nav-link nav-hide-sm">Initiatives</a>
       <a href="#install" class="nav-link">Install</a>
       <a href="build/" class="nav-link">Build</a>
       <a href="#faq" class="nav-link">FAQ</a>
-      <a href="#alliance" class="nav-link">Alliance</a>
-      <div class="nav-sep"></div>
-      <a href="https://github.com/filedcom/opentax" class="nav-link" target="_blank" rel="noopener">⭐ Star on GitHub</a>
+      <a href="#alliance" class="nav-link nav-hide-sm">Alliance</a>
+      <div class="nav-sep nav-hide-sm"></div>
+      <a href="https://github.com/filedcom/opentax" class="nav-link nav-hide-sm" target="_blank" rel="noopener">⭐ Star on GitHub</a>
     </div>
   </div>
 </nav>
@@ -687,7 +701,8 @@
       </a>
       <a href="#install" class="btn-secondary">Install the CLI</a>
     </div>
-    <p style="font-family:var(--font-mono);font-size:12px;color:var(--flint);margin-bottom:18px;letter-spacing:0.02em;">Built and maintained by <a href="https://filed.com" target="_blank" rel="noopener" style="color:var(--ash);text-decoration:none;border-bottom:1px solid var(--timber-dark);">Filed</a></p>
+    <a href="build/" class="hero-guide">Tax professional? Build on OpenTax, no code needed&nbsp;<span aria-hidden="true">&rarr;</span></a>
+    <p style="font-family:var(--font-mono);font-size:12px;color:var(--flint);margin-bottom:18px;letter-spacing:0.02em;">Built and maintained by <a href="https://filed.com" target="_blank" rel="noopener" style="color:var(--ash);text-decoration:none;border-bottom:1px solid var(--timber-dark);">Filed</a> and <a href="https://www.crimsontreesoftware.com" target="_blank" rel="noopener" style="color:var(--ash);text-decoration:none;border-bottom:1px solid var(--timber-dark);">Crimson Tree Software</a></p>
     <div class="fact-strip">
       <span><b>186</b> registered nodes</span>
       <span><b>131</b> input types</span>
@@ -809,8 +824,18 @@
     </div>
   </div>
 
+  <!-- Tax pro guide callout -->
+  <div class="guide-callout">
+    <div>
+      <p class="gc-label">For tax professionals</p>
+      <p class="gc-title">Not a developer? You can still build on OpenTax.</p>
+      <p class="gc-body">Report errors, turn tricky scenarios into test cases, or fix a rule with an AI assistant doing the coding. Our guide walks through it step by step.</p>
+    </div>
+    <a href="build/" class="btn-primary">Read the guide</a>
+  </div>
+
   <!-- Chat examples -->
-  <h2 class="sec" style="margin-bottom:32px;">Examples</h2>
+  <h2 class="sec" style="margin-bottom:32px;margin-top:72px;">Examples</h2>
 
   <p class="eyebrow">Example 1</p>
   <h3 class="sub">Let Claude do the taxes</h3>
@@ -1584,6 +1609,7 @@ Output Nodes (6):
       <a href="https://github.com/filedcom/opentax" class="btn-primary" target="_blank" rel="noopener">Contribute to the engine</a>
       <a href="build/" class="btn-secondary">Guide for tax professionals</a>
       <a href="https://github.com/opentaxdocument/otd-spec" class="btn-secondary" target="_blank" rel="noopener">Read the K-1 spec</a>
+      <a href="https://opentaxalliance.org/" class="btn-secondary" target="_blank" rel="noopener">About the Alliance</a>
     </div>
   </div>
 </div>
@@ -1607,6 +1633,7 @@ Output Nodes (6):
     <div style="min-width:160px;">
       <p style="font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:rgba(244,236,222,0.5);margin-bottom:14px;">Alliance</p>
       <div style="display:flex;flex-direction:column;gap:10px;">
+        <a href="https://opentaxalliance.org/" target="_blank" rel="noopener" class="footer-col-link">Open Tax Technology Alliance</a>
         <a href="https://github.com/filedcom/opentax" target="_blank" rel="noopener" class="footer-col-link">OpenTax Engine</a>
         <a href="build/" class="footer-col-link">Build on OpenTax</a>
         <a href="https://opentax-mcp.filed.com" target="_blank" rel="noopener" class="footer-col-link">OpenTax Connector</a>
