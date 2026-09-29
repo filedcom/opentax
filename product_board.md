@@ -47,6 +47,10 @@ half-SE-tax QBI reduction, but its broader support gate remains open. The
 current full-return XSD file passes 16 of 18 cases. Its remaining ATS Scenario
 2 and 12 cases stop on missing Form 8283 classification and Form 8995 QBI
 source facts, respectively; neither is a schema pass or an approved exclusion.
+The aggregate-only Form 2441 input now fails during MeF export instead of
+leaving a Schedule 3 credit without its required Form 2441 document; its 15
+focused MeF/XSD tests pass. A standalone Form 3800 current-year row fixture
+now uses XSD-valid document IDs and passes all eight tests in its file.
 
 ## Scope and completion rules
 
