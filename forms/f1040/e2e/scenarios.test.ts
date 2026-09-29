@@ -2,8 +2,8 @@
  * E2E scenarios — 10 common TY2025 returns.
  *
  * Each test runs a complete return through the node graph and asserts
- * specific Form 1040 line values. Math is hand-verified against the
- * bracket tables and constants in forms/f1040/nodes/config/2025.ts.
+ * specific Form 1040 line values. Income below $100,000 uses the IRS
+ * 2025 Tax Table; higher amounts use the rate schedules.
  *
  * See docs/scenarios.md for the detailed computation breakdowns.
  *
@@ -131,10 +131,10 @@ function w2Item(wages: number, withheld: number) {
 //
 // Wages: $75,000  |  Withheld: $11,000
 // AGI: $75,000  |  Std ded: $15,750  |  Taxable: $59,250
-// Tax (22% bracket): $5,578.50 + ($59,250 − $48,475) × 0.22 = $7,949
-// Refund: $11,000 − $7,949 = $3,051
+// 2025 Tax Table row $59,250–$59,300, Single: $7,955
+// Refund: $11,000 − $7,955 = $3,045
 
-Deno.test("Scenario 1: Single, W-2 $75K — refund $3,051", () => {
+Deno.test("Scenario 1: Single, W-2 $75K — refund $3,045", () => {
   const result = runReturn({
     general: singleGeneral(),
     w2: [w2Item(75_000, 11_000)],
@@ -154,9 +154,9 @@ Deno.test("Scenario 1: Single, W-2 $75K — refund $3,051", () => {
 
   // F1040 scalar summary
   const f = result.pending["f1040"] ?? {};
-  assertEquals(f["line24_total_tax"], 7_949, "total tax");
+  assertEquals(f["line24_total_tax"], 7_955, "total tax");
   assertEquals(f["line33_total_payments"], 11_000, "total payments");
-  assertEquals(f["line35a_refund"], 3_051, "refund");
+  assertEquals(f["line35a_refund"], 3_045, "refund");
   assertEquals(f["line37_amount_owed"], undefined, "no amount owed");
 });
 
@@ -164,10 +164,10 @@ Deno.test("Scenario 1: Single, W-2 $75K — refund $3,051", () => {
 //
 // Wages: $120,000  |  Withheld: $13,000
 // AGI: $120,000  |  Std ded: $31,500  |  Taxable: $88,500
-// Tax (12% bracket): $2,385 + ($88,500 − $23,850) × 0.12 = $10,143
-// Refund: $13,000 − $10,143 = $2,857
+// 2025 Tax Table row $88,500–$88,550, MFJ: $10,146
+// Refund: $13,000 − $10,146 = $2,854
 
-Deno.test("Scenario 2: MFJ, W-2 $120K — refund $2,857", () => {
+Deno.test("Scenario 2: MFJ, W-2 $120K — refund $2,854", () => {
   const result = runReturn({
     general: mfjGeneral(),
     w2: [w2Item(120_000, 13_000)],
@@ -180,9 +180,9 @@ Deno.test("Scenario 2: MFJ, W-2 $120K — refund $2,857", () => {
   );
 
   const f = result.pending["f1040"] ?? {};
-  assertEquals(f["line24_total_tax"], 10_143, "total tax");
+  assertEquals(f["line24_total_tax"], 10_146, "total tax");
   assertEquals(f["line33_total_payments"], 13_000, "total payments");
-  assertEquals(f["line35a_refund"], 2_857, "refund");
+  assertEquals(f["line35a_refund"], 2_854, "refund");
   assertEquals(f["line37_amount_owed"], undefined, "no amount owed");
 });
 
@@ -228,10 +228,10 @@ Deno.test("Scenario 3: MFJ, dual W-2s $150K — refund $2,102", () => {
 //
 // Wages: $65,000  |  Interest: $1,200  |  Withheld: $8,000
 // AGI: $66,200  |  Std ded: $15,750  |  Taxable: $50,450
-// Tax (22% bracket): $5,578.50 + ($50,450 − $48,475) × 0.22 = $6,013
-// Refund: $8,000 − $6,013 = $1,987
+// 2025 Tax Table row $50,450–$50,500, Single: $6,019
+// Refund: $8,000 − $6,019 = $1,981
 
-Deno.test("Scenario 4: Single, W-2 + interest — refund $1,987", () => {
+Deno.test("Scenario 4: Single, W-2 + interest — refund $1,981", () => {
   const result = runReturn({
     general: singleGeneral(),
     w2: [w2Item(65_000, 8_000)],
@@ -252,9 +252,9 @@ Deno.test("Scenario 4: Single, W-2 + interest — refund $1,987", () => {
   );
 
   const f = result.pending["f1040"] ?? {};
-  assertEquals(f["line24_total_tax"], 6_013, "total tax");
+  assertEquals(f["line24_total_tax"], 6_019, "total tax");
   assertEquals(f["line33_total_payments"], 8_000, "total payments");
-  assertEquals(f["line35a_refund"], 1_987, "refund");
+  assertEquals(f["line35a_refund"], 1_981, "refund");
 });
 
 // ── Scenario 5: Single, W-2 $70K + qualified dividends ──────────────────────
@@ -266,13 +266,13 @@ Deno.test("Scenario 4: Single, W-2 + interest — refund $1,987", () => {
 //   pref_income = $2,500  |  ordinary = $54,750
 //   in_zero = max(0, min($48,350, $57,250) − $54,750) = 0
 //   in_fifteen = $2,500  |  in_twenty = 0
-//   ordinary_tax = $5,578.50 + ($54,750 − $48,475) × 0.22 = $6,959
+//   ordinary_tax = $6,965 from 2025 Tax Table row $54,750–$54,800
 //   pref_tax = $2,500 × 0.15 = $375
-//   QDCGT tax = $6,959 + $375 = $7,334
+//   QDCGT tax = $6,965 + $375 = $7,340
 //
-// Refund: $9,000 − $7,334 = $1,666
+// Refund: $9,000 − $7,340 = $1,660
 
-Deno.test("Scenario 5: Single, W-2 + qualified dividends (QDCGTW) — refund $1,666", () => {
+Deno.test("Scenario 5: Single, W-2 + qualified dividends (QDCGTW) — refund $1,660", () => {
   const result = runReturn({
     general: singleGeneral(),
     w2: [w2Item(70_000, 9_000)],
@@ -285,6 +285,10 @@ Deno.test("Scenario 5: Single, W-2 + qualified dividends (QDCGTW) — refund $1,
         box1b: 2_500,
       },
     ],
+    schedule_b_part_iii: {
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    },
   });
 
   assertEquals(
@@ -299,9 +303,9 @@ Deno.test("Scenario 5: Single, W-2 + qualified dividends (QDCGTW) — refund $1,
   );
 
   const f = result.pending["f1040"] ?? {};
-  assertEquals(f["line24_total_tax"], 7_334, "total tax (QDCGTW applied)");
+  assertEquals(f["line24_total_tax"], 7_340, "total tax (QDCGTW applied)");
   assertEquals(f["line33_total_payments"], 9_000, "total payments");
-  assertEquals(f["line35a_refund"], 1_666, "refund");
+  assertEquals(f["line35a_refund"], 1_660, "refund");
 });
 
 // ── Scenario 6: HOH, W-2 $52K ──────────────────────────────────────────────
@@ -341,10 +345,9 @@ Deno.test("Scenario 6: HOH, W-2 $52K — refund $1,135", () => {
 // Std ded: $15,750  |  Pre-QBI taxable: $58,598.18
 // QBI deduction: 20% × $58,598.18 = $11,719.636 (Form 8995)
 // Taxable income: $58,598.18 − $11,719.636 = $46,878.544
-// Income tax (12% bracket, single):
-//   $1,192.50 + ($46,878.544 − $11,925) × 0.12 = $1,192.50 + $4,194.425 = $5,386.925
-// Total tax (income + SE): $5,386.925 + $11,303.64 = $16,690.565
-// Amount owed: $16,690.57
+// Income tax: $5,387 from 2025 Tax Table row $46,850–$46,900
+// Total tax (income + SE): $5,387 + $11,303.64 = $16,690.64
+// Amount owed on whole-dollar return: $16,691
 
 Deno.test("Scenario 7: Single, self-employed Schedule C $80K — owes ~$16,691", () => {
   const result = runReturn({
@@ -386,7 +389,7 @@ Deno.test("Scenario 7: Single, self-employed Schedule C $80K — owes ~$16,691",
 
   // F1040 scalar summary (total tax = income tax + SE tax via schedule 2)
   const f = result.pending["f1040"] ?? {};
-  assertEquals(r2(f["line24_total_tax"] as number), 16_690.57, "total tax");
+  assertEquals(r2(f["line24_total_tax"] as number), 16_690.64, "total tax");
   assertEquals(f["line33_total_payments"], 0, "no payments");
   // line 37 = round(line24) − round(line33): whole-dollar per filed-form arithmetic
   assertEquals(f["line37_amount_owed"], 16_691, "amount owed");
@@ -425,10 +428,10 @@ Deno.test("Scenario 8: MFJ, W-2 $200K — refund $5,102", () => {
 //
 // Wages: $80,000  |  Withheld: $10,400
 // AGI: $80,000  |  Std ded: $15,750  |  Taxable: $64,250
-// Tax (22% bracket): $5,578.50 + ($64,250 − $48,475) × 0.22 = $9,049
-// Refund: $10,400 − $9,049 = $1,351
+// 2025 Tax Table row $64,250–$64,300, MFS: $9,055
+// Refund: $10,400 − $9,055 = $1,345
 
-Deno.test("Scenario 9: MFS, W-2 $80K — refund $1,351", () => {
+Deno.test("Scenario 9: MFS, W-2 $80K — refund $1,345", () => {
   const result = runReturn({
     general: mfsGeneral(),
     w2: [w2Item(80_000, 10_400)],
@@ -441,9 +444,9 @@ Deno.test("Scenario 9: MFS, W-2 $80K — refund $1,351", () => {
   );
 
   const f = result.pending["f1040"] ?? {};
-  assertEquals(f["line24_total_tax"], 9_049, "total tax");
+  assertEquals(f["line24_total_tax"], 9_055, "total tax");
   assertEquals(f["line33_total_payments"], 10_400, "total payments");
-  assertEquals(f["line35a_refund"], 1_351, "refund");
+  assertEquals(f["line35a_refund"], 1_345, "refund");
   assertEquals(f["line37_amount_owed"], undefined, "no amount owed");
 });
 
@@ -491,7 +494,7 @@ Deno.test("Scenario 11: Single, itemized deductions Schedule A $33K — refund $
     schedule_a: {
       line_5a_state_income_tax: 10_000, // state income taxes ($10K < $40K SALT cap)
       line_8a_mortgage_interest_1098: 18_000,
-      line_11_cash_contributions: 5_000,
+      cash_contributions_to_50_percent_organizations: 5_000,
     },
   });
 
@@ -538,17 +541,18 @@ Deno.test("Scenario 11: Single, itemized deductions Schedule A $33K — refund $
 //     = $5,578.50 + $35,775 × 0.22 = $5,578.50 + $7,870.50 = $13,449
 //
 // Form 6251 — AMT:
-//   AMTI = taxable income + PAB interest = $84,250 + $100,000 = $184,250
+//   AMTI = taxable income + standard deduction addback + PAB interest
+//        = $84,250 + $15,750 + $100,000 = $200,000
 //   AMT exemption (Single) = $88,100 (phase-out starts at $626,350; no phase-out here)
-//   Taxable excess = $184,250 − $88,100 = $96,150
-//   TMT = $96,150 × 0.26 = $24,999  [≤ $239,100 threshold]
-//   AMT = max(0, $24,999 − $13,449) = $11,550
+//   Taxable excess = $200,000 − $88,100 = $111,900
+//   TMT = $111,900 × 0.26 = $29,094  [≤ $239,100 threshold]
+//   AMT = max(0, $29,094 − $13,455) = $15,639
 //
-// f1040 line16 = $13,449  |  line17 (AMT) = $11,550
-// Total tax = $13,449 + $11,550 = $24,999
-// Amount owed = $24,999 − $18,000 = $6,999
+// f1040 line16 = $13,455  |  line17 (AMT) = $15,639
+// Total tax = $29,094
+// Amount owed = $29,094 − $18,000 = $11,094
 
-Deno.test("Scenario 12: Single, AMT via PAB interest $100K — owes $6,999", () => {
+Deno.test("Scenario 12: Single, AMT via PAB interest $100K — owes $11,094", () => {
   const result = runReturn({
     general: singleGeneral(),
     w2: [w2Item(100_000, 18_000)],
@@ -573,18 +577,18 @@ Deno.test("Scenario 12: Single, AMT via PAB interest $100K — owes $6,999", () 
   // AMT fires — form6251 → schedule2 (scalar, no double-write)
   assertEquals(
     result.pending["schedule2"]?.["line2_amt"],
-    11_550,
-    "AMT computed by form6251 = $11,550",
+    15_639,
+    "AMT computed by form6251 = $15,639",
   );
 
   // Income tax from brackets (line16) and AMT (line17) combine into total
-  assertEquals(f["line24_total_tax"], 24_999, "total tax = regular + AMT");
+  assertEquals(f["line24_total_tax"], 29_094, "total tax = regular + AMT");
   assertEquals(
     f["line33_total_payments"],
     18_000,
     "total payments (W-2 withheld)",
   );
-  assertEquals(f["line37_amount_owed"], 6_999, "amount owed");
+  assertEquals(f["line37_amount_owed"], 11_094, "amount owed");
   assertEquals(f["line35a_refund"], undefined, "no refund when AMT fires");
 });
 
@@ -601,19 +605,19 @@ Deno.test("Scenario 12: Single, AMT via PAB interest $100K — owes $6,999", () 
 //   EITC = max(0, $7,152 − $1,787.58) = $5,364.42 → rounded = $5,364
 //
 // Regular tax:
-//   AGI: $32,000  |  Std ded (HOH): $22,500  |  Taxable: $9,500
-//   Tax (10% bracket, HOH): $9,500 × 0.10 = $950
+//   AGI: $32,000  |  Std ded (HOH): $23,625  |  Taxable: $8,375
+//   2025 Tax Table row $8,350–$8,400, HOH: $838
 //
 // CTC (Form 8812, OBBBA TY2025):
 //   2 qualifying children × $2,200 = $4,400 tentative CTC
 //   Phase-out threshold (HOH) = $200,000; $32,000 << threshold → no reduction
-//   Nonrefundable CTC = min($4,400, $950 income_tax) = $950 → tax reduced to $0
-//   Unused CTC for ACTC = $4,400 − $950 = $3,450
+//   Nonrefundable CTC = min($4,400, $838 income_tax) = $838 → tax reduced to $0
+//   Unused CTC for ACTC = $4,400 − $838 = $3,562
 //   ACTC cap = 2 × $1,700 = $3,400; earned income: ($32,000 − $2,500) × 15% = $4,425
-//   ACTC = min($3,450, $3,400, $4,425) = $3,400
+//   ACTC = min($3,562, $3,400, $4,425) = $3,400
 //
 // f1040 total payments = $3,500 (withheld) + $5,364 (EITC) + $3,400 (ACTC) = $12,264
-// Total tax = $0 (income tax $950 − CTC $950)
+// Total tax = $0 (income tax $838 − CTC $838)
 // Refund = $12,264 − $0 = $12,264
 
 Deno.test("Scenario 13: HOH, EITC + CTC 2 qualifying children $32K — refund $12,264", () => {
@@ -658,7 +662,7 @@ Deno.test("Scenario 13: HOH, EITC + CTC 2 qualifying children $32K — refund $1
       qualifying_children_count: 2,
       agi: 32_000,
       filing_status: FilingStatus.HOH,
-      income_tax_liability: 950,
+      income_tax_liability: 838,
       line18a_earned_income: 32_000,
       credit_limit_worksheet: zeroCreditWorksheet,
     }],
@@ -709,32 +713,31 @@ Deno.test("Schedule 8812 cannot claim a child absent from Form 1040 dependents",
 //
 // Tax:
 //   AGI: $85,000  |  Std ded (MFJ): $31,500  |  Taxable: $53,500
-//   Tax (12% bracket): $2,385 + ($53,500 − $23,850) × 0.12
-//     = $2,385 + $29,650 × 0.12 = $2,385 + $3,558 = $5,943
+//   2025 Tax Table row $53,500–$53,550, MFJ: $5,946
 //
 // CTC (Form 8812):
 //   Tentative CTC = 3 × $2,200 = $6,600  (OBBBA TY2025)
 //   Phase-out threshold (MFJ) = $400,000; $85,000 << $400,000 → no reduction
 //   creditAfterPhaseOut = $6,600
-//   Nonrefundable CTC = min($6,600, $5,943 income_tax_liability) = $5,943
+//   Nonrefundable CTC = min($6,600, $5,946 income_tax_liability) = $5,946
 //     → reduces f1040 line22 to $0
-//   CTC unused (potential ACTC) = $6,600 − $5,943 = $657
+//   CTC unused (potential ACTC) = $6,600 − $5,946 = $654
 //
 // ACTC (Form 8812 Part II-A, < 3 children in refundable path):
 //   ACTC cap = 3 × $1,700 = $5,100
 //   Earned income based = ($85,000 − $2,500) × 0.15 = $82,500 × 0.15 = $12,375
-//   tentativeACTC = min($657, $5,100) = $657
-//   ACTC = min($657, $12,375) = $657
+//   tentativeACTC = min($654, $5,100) = $654
+//   ACTC = min($654, $12,375) = $654
 //
 // f1040:
-//   line19 (nonrefundable CTC) = $5,943
-//   line22 = max(0, $5,943 − $5,943) = $0
+//   line19 (nonrefundable CTC) = $5,946
+//   line22 = max(0, $5,946 − $5,946) = $0
 //   line24 (total tax) = $0
-//   line28 (ACTC) = $657
-//   Total payments = $8,000 + $657 = $8,657
-//   Refund = $8,657 − $0 = $8,657
+//   line28 (ACTC) = $654
+//   Total payments = $8,000 + $654 = $8,654
+//   Refund = $8,654
 
-Deno.test("Scenario 14: MFJ, CTC + ACTC, 3 children, $85K — refund $8,657", () => {
+Deno.test("Scenario 14: MFJ, CTC + ACTC, 3 children, $85K — refund $8,654", () => {
   const result = runReturn({
     general: {
       ...mfjGeneral(),
@@ -803,7 +806,7 @@ Deno.test("Scenario 14: MFJ, CTC + ACTC, 3 children, $85K — refund $8,657", ()
           excluded_medicaid_waiver_payments: 0,
           schedule1_line15_se_deduction: 0,
         },
-        income_tax_liability: 5_943, // pre-computed above
+        income_tax_liability: 5_946, // 2025 Tax Table row $53,500–$53,550, MFJ
         credit_limit_worksheet: zeroCreditWorksheet,
       },
     ],
@@ -821,20 +824,20 @@ Deno.test("Scenario 14: MFJ, CTC + ACTC, 3 children, $85K — refund $8,657", ()
   // Schedule 8812 line 14 flows directly to Form 1040 line 19.
   assertEquals(
     f["line19_child_tax_credit"],
-    5_943,
-    "nonrefundable CTC = $5,943",
+    5_946,
+    "nonrefundable CTC = $5,946",
   );
 
-  // Total tax is $0 (CTC wipes out the $5,943 tax liability)
+  // Total tax is $0 (CTC wipes out the $5,946 tax liability)
   assertEquals(
     f["line24_total_tax"],
     0,
     "total tax = $0 (CTC absorbs all tax)",
   );
 
-  // Payments = $8,000 withheld + $657 ACTC refundable
-  assertEquals(f["line33_total_payments"], 8_657, "total payments = $8,657");
-  assertEquals(f["line35a_refund"], 8_657, "refund = $8,657");
+  // Payments = $8,000 withheld + $654 ACTC refundable
+  assertEquals(f["line33_total_payments"], 8_654, "total payments = $8,654");
+  assertEquals(f["line35a_refund"], 8_654, "refund = $8,654");
   assertEquals(f["line37_amount_owed"], undefined, "no amount owed");
 });
 
@@ -858,6 +861,10 @@ Deno.test("Scenario 15: MFJ, Schedule C $150K + interest — QBI reduced by the 
   const result = runReturn({
     general: mfjGeneral(),
     f1099int: [{ payer_name: "Test Bank", box1: 100_000 }],
+    schedule_b_part_iii: {
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    },
     schedule_c: [
       {
         line_a_principal_business: "Consulting",
@@ -913,6 +920,10 @@ Deno.test("Scenario 16: MFJ, Schedule C + qualified dividends — income limit b
         box1b: 100_000,
       },
     ],
+    schedule_b_part_iii: {
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    },
     schedule_c: [
       {
         line_a_principal_business: "Consulting",
