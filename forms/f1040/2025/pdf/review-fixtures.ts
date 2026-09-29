@@ -498,6 +498,53 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-geothermal-and-new-markets-credits",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(150_000, 30_000, "Example Employer", "12-3456789")],
+      f8835: [geothermalFacility(
+        "Geothermal production site",
+        "10 Plant Rd",
+        39.123456,
+        -75.123456,
+      )],
+      f8874: {
+        investments: [{
+          cde_name: "Community Development Entity",
+          cde_ein: "123456789",
+          cde_address: {
+            line1: "10 Community Way",
+            city: "Wilmington",
+            state: "DE",
+            zip: "19801",
+          },
+          initial_investment_date: "2025-04-15",
+          credit_allowance_date: "2025-04-15",
+          qualified_equity_investment_amount: 10_000,
+          designation_notice_reference: "Synthetic 2025 QEI notice",
+          held_on_credit_allowance_date: true,
+          qualified_on_credit_allowance_date: true,
+          recapture_notice_received: false,
+          subject_to_passive_activity_limit: false,
+        }],
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: [
+      "f1040",
+      "schedule3",
+      "form6251",
+      "form3800",
+      "form8835",
+      "form8874",
+    ],
+    reviewFocus: [
+      "Distinct Form 8835 and Form 8874 source documents and PDF pages each retain their source identity",
+      "Geothermal 600 enters Form 3800 Part III line 4e and New Markets 500 enters line 1i",
+      "The 1,100 Form 3800 line 38 credit reaches Schedule 3 line 6a and Form 1040 line 20 once",
+    ],
+  },
+  {
     id: "joint-two-w2s",
     inputs: {
       general: jointGeneral,

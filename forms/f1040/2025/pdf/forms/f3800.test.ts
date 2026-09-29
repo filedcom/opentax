@@ -225,6 +225,7 @@ Deno.test("two geothermal facilities print two Form 8835 copies and distinct For
     allPending.f8835,
     fixture.filer,
     allPending,
+    parts,
   ) ?? [];
   assertEquals(copies.map((copy) => copy.facility_description), [
     "Geothermal production site",
@@ -265,6 +266,7 @@ Deno.test("wind and geothermal facilities keep separate Form 8835 lines and Form
     allPending.f8835,
     fixture.filer,
     allPending,
+    parts,
   ) ?? [];
   assertEquals(copies.map((copy) => copy.facility_type), [
     "Wind",
@@ -410,5 +412,58 @@ Deno.test("six New Markets investments fill the last Form 8874 row and reconcile
   assertEquals(
     (await PDFDocument.load(await prepared.renderPdf())).getPageCount(),
     15,
+  );
+});
+
+Deno.test("geothermal and New Markets credits retain separate Form 3800 lines and one return total", async () => {
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-geothermal-and-new-markets-credits"
+  )!;
+  const result = f1040_2025.executeReturn({ ...fixture.inputs });
+  assertEquals(result.diagnostics, []);
+  const prepared = await f1040_2025.prepareReturn(
+    result.pending,
+    fixture.filer,
+  );
+  const parts = prepared.bundle.form3800Parts!;
+  assertEquals(parts.lines.line38, 1_100);
+  assertEquals(
+    Object.fromEntries(parts.currentRows.map((row) => [
+      row.line,
+      row.metadata.sourceCount,
+    ])),
+    { "1i": 1, "4e": 1 },
+  );
+  assertEquals(
+    Object.fromEntries(parts.currentDetails.map((row) => [
+      row.line,
+      row.credit,
+    ])),
+    { "1i": 500, "4e": 600 },
+  );
+  const sourceIds = parts.currentRows.map((row) =>
+    row.metadata.referenceDocumentId
+  );
+  assertEquals(sourceIds.every(Boolean), true);
+  assertEquals(new Set(sourceIds).size, 2);
+  assertEquals((prepared.bundle.xml.match(/<IRS8835\b/g) ?? []).length, 1);
+  assertEquals((prepared.bundle.xml.match(/<IRS8874\b/g) ?? []).length, 1);
+  assertStringIncludes(
+    prepared.bundle.xml,
+    "<TotalGeneralBusCreditsAppTxAmt>1100</TotalGeneralBusCreditsAppTxAmt>",
+  );
+  const allPending = normalizeAllPending(prepared.bundle.pending);
+  const printed3800 = form3800Pdf.instances?.(
+    allPending.f3800,
+    fixture.filer,
+    allPending,
+    parts,
+  )?.[0];
+  assertEquals(printed3800?.[form3800PartIIIFields("1i").g], 500);
+  assertEquals(printed3800?.[form3800PartIIIFields("4e").g], 600);
+  assertEquals(printed3800?.[form3800PartIAndIIFields.line38], 1_100);
+  assertEquals(
+    (await PDFDocument.load(await prepared.renderPdf())).getPageCount(),
+    18,
   );
 });

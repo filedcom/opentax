@@ -86,51 +86,58 @@ export const form8835Pdf: PdfFormDescriptor = {
     text("line13", `${page2}.f2_53[0]`),
     text("line15", `${page3}.f3_2[0]`),
   ],
-  instances(_fields, filer, allPending) {
+  instances(_fields, filer, allPending, preparedForm3800) {
     if (!allPending?.f8835) return [];
-    return form8835PdfSources(allPending, filer).map((source) => {
-      const { item, lines, filerName, filerTin } = source;
-      const wind = item.energy_type === EnergyType.Wind;
-      const lat = parts(item.facility_latitude!, 2);
-      const long = parts(item.facility_longitude!, 3);
-      return {
-        filer_name: filerName,
-        filer_tin: filerTin,
-        facility_type: wind ? "Wind" : "Geothermal",
-        facility_description: item.facility_description,
-        address_line1: source.addressLine1,
-        address_line2: source.addressLine2,
-        lat_sign: lat.sign,
-        lat_degrees: lat.degrees,
-        lat_fraction: lat.fraction,
-        long_sign: long.sign,
-        long_degrees: long.degrees,
-        long_fraction: long.fraction,
-        construction_date: usDate(item.facility_construction_start_date),
-        service_date: usDate(item.facility_placed_in_service_date),
-        no_increased_credit: true,
-        no_domestic_bonus: true,
-        no_energy_community_bonus: true,
-        dc_not_applicable: true,
-        ac_wind: wind,
-        ac_wind_nameplate_kw: wind ? item.ac_nameplate_kw : undefined,
-        ac_other: !wind,
-        ac_nameplate_kw: wind ? undefined : item.ac_nameplate_kw,
-        line1a_quantity: wind ? item.kwh_sold : undefined,
-        line1a_credit: wind ? lines.line1 : undefined,
-        line1c_quantity: wind ? undefined : item.kwh_sold,
-        line1c_credit: wind ? undefined : lines.line1,
-        line2: lines.line2,
-        line4: lines.line4,
-        line6: lines.line6,
-        line8: lines.line8,
-        line9: lines.line9,
-        line10: lines.line10,
-        line11: lines.line11,
-        line12: lines.line12,
-        line13: lines.line13,
-        line15: lines.line15,
-      };
-    });
+    if (!preparedForm3800) {
+      throw new Error(
+        "Form 8835 PDF needs the prepared Form 3800 source parts",
+      );
+    }
+    return form8835PdfSources(allPending, filer, preparedForm3800).map(
+      (source) => {
+        const { item, lines, filerName, filerTin } = source;
+        const wind = item.energy_type === EnergyType.Wind;
+        const lat = parts(item.facility_latitude!, 2);
+        const long = parts(item.facility_longitude!, 3);
+        return {
+          filer_name: filerName,
+          filer_tin: filerTin,
+          facility_type: wind ? "Wind" : "Geothermal",
+          facility_description: item.facility_description,
+          address_line1: source.addressLine1,
+          address_line2: source.addressLine2,
+          lat_sign: lat.sign,
+          lat_degrees: lat.degrees,
+          lat_fraction: lat.fraction,
+          long_sign: long.sign,
+          long_degrees: long.degrees,
+          long_fraction: long.fraction,
+          construction_date: usDate(item.facility_construction_start_date),
+          service_date: usDate(item.facility_placed_in_service_date),
+          no_increased_credit: true,
+          no_domestic_bonus: true,
+          no_energy_community_bonus: true,
+          dc_not_applicable: true,
+          ac_wind: wind,
+          ac_wind_nameplate_kw: wind ? item.ac_nameplate_kw : undefined,
+          ac_other: !wind,
+          ac_nameplate_kw: wind ? undefined : item.ac_nameplate_kw,
+          line1a_quantity: wind ? item.kwh_sold : undefined,
+          line1a_credit: wind ? lines.line1 : undefined,
+          line1c_quantity: wind ? undefined : item.kwh_sold,
+          line1c_credit: wind ? undefined : lines.line1,
+          line2: lines.line2,
+          line4: lines.line4,
+          line6: lines.line6,
+          line8: lines.line8,
+          line9: lines.line9,
+          line10: lines.line10,
+          line11: lines.line11,
+          line12: lines.line12,
+          line13: lines.line13,
+          line15: lines.line15,
+        };
+      },
+    );
   },
 };

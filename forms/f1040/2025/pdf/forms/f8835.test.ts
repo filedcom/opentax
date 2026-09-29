@@ -7,6 +7,7 @@ import {
 } from "../../../nodes/inputs/f8835/index.ts";
 import { form8835Pdf } from "./f8835.ts";
 import { ALL_PDF_FORMS } from "./index.ts";
+import type { Form3800DocumentParts } from "../../mef/forms/f3800_document.ts";
 
 const filer: FilerIdentity = {
   primarySSN: "123456789",
@@ -91,12 +92,63 @@ function pending(
   };
 }
 
+function preparedParts(
+  allPending: Record<string, Record<string, unknown>>,
+): Form3800DocumentParts {
+  const items = allPending.f8835?.f8835s as F8835Item[];
+  const credits = items.map((item) => calculateForm8835(item).line15);
+  const total = credits.reduce((sum, credit) => sum + credit, 0);
+  const ids = credits.map((_, index) => `F8835-${index + 1}`);
+  return {
+    lines: { line37: total, line38: total } as Form3800DocumentParts["lines"],
+    transferStatementIds: [],
+    currentRows: [{
+      line: "4e",
+      xml: "",
+      metadata: {
+        sourceCount: credits.length,
+        referenceDocumentId: ids.join(" "),
+      },
+      entityCredits: [],
+    }],
+    currentAmounts: [{
+      line: "4e",
+      nonpassiveCredit: total,
+      transferOutCredit: 0,
+      passiveBeforeLimit: 0,
+      passiveAfterLimit: 0,
+      totalCredit: total,
+      appliedCredit: total,
+    }],
+    carryoverRows: [],
+    currentDetails: credits.map((credit, index) => ({
+      line: "4e" as const,
+      credit,
+      appliedCredit: credit,
+      sourceDocumentId: ids[index],
+    })),
+    carryoverDetails: [],
+    passiveCurrentDetails: [],
+    passiveCarryoverDetails: [],
+  };
+}
+
 function projected(allPending: Record<string, Record<string, unknown>>) {
-  return form8835Pdf.instances?.({}, filer, allPending)?.[0];
+  return form8835Pdf.instances?.(
+    {},
+    filer,
+    allPending,
+    preparedParts(allPending),
+  )?.[0];
 }
 
 function projectedAll(allPending: Record<string, Record<string, unknown>>) {
-  return form8835Pdf.instances?.({}, filer, allPending) ?? [];
+  return form8835Pdf.instances?.(
+    {},
+    filer,
+    allPending,
+    preparedParts(allPending),
+  ) ?? [];
 }
 
 Deno.test("Form 8835 PDF prints one fully used geothermal facility across all three pages", () => {
@@ -134,6 +186,11 @@ Deno.test("Form 8835 PDF prints one fully used geothermal facility across all th
 });
 
 Deno.test("Form 8835 PDF rejects source-only and overstated final credit", () => {
+  assertThrows(
+    () => form8835Pdf.instances?.({}, filer, pending()),
+    Error,
+    "needs the prepared Form 3800 source parts",
+  );
   const sourceOnly = pending();
   delete sourceOnly.f3800;
   assertThrows(() => projected(sourceOnly));
@@ -141,6 +198,23 @@ Deno.test("Form 8835 PDF rejects source-only and overstated final credit", () =>
   overstated.f3800.allowed_credit = 500;
   assertThrows(
     () => projected(overstated),
+    Error,
+    "disagrees with native Form 3800",
+  );
+});
+
+Deno.test("Form 8835 PDF rejects a changed prepared line 4e tax use", () => {
+  const source = pending();
+  const prepared = preparedParts(source);
+  assertThrows(
+    () =>
+      form8835Pdf.instances?.({}, filer, source, {
+        ...prepared,
+        currentAmounts: prepared.currentAmounts.map((row) => ({
+          ...row,
+          appliedCredit: row.appliedCredit - 1,
+        })),
+      }),
     Error,
     "disagrees with native Form 3800",
   );
