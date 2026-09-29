@@ -25,7 +25,7 @@ structurally valid for each retained source fixture.
 | `joint-two-w2s` | 2 | MFJ identities and combined wages/withholding visible. |
 | `single-direct-pension-rollover` | 2 | 1040 pension and rollover box visible. |
 | `single-schedule-c` | 11 | Schedule 1/2, two Schedule C and SE pages, and Form 8995 follow the 1040. |
-| `single-hsa-code2-excess` | 5 | Schedule 1 and Form 8889 print; 8889 distribution lines are visible. |
+| `single-hsa-code2-excess` | 5 | All five pages inspected on the regenerated `v31` packet. Form 8889 shows the taxpayer's self-only coverage, $5,200 contributions, $4,300 limit/deduction, $1,000 line 14a distribution and $1,000 line 14b timely excess withdrawal. Schedule 1 shows $100 excess earnings on line 8z and $4,300 on line 13/26. Form 1040 shows $75,000 wages, $100 other income, $70,800 AGI, $7,031 tax, $11,000 withholding and $3,969 refund. The source JSON, pending graph and native XML agree on those joins. |
 | `joint-two-hsa-owners` | 6 | Two owner-specific Form 8889 pages print after Schedule 1. |
 | `single-marketplace-aptc-repayment` | 6 | Schedule 2 and two Form 8962 pages print; repayment is visible. |
 | `single-iso-amt` | 6 | Schedule 2 and two Form 6251 pages print; ISO spread is visible. |
@@ -63,8 +63,15 @@ Discrepancies found while getting the batch to render:
 
 The contact sheets establish page presence and broad placement, not detailed
 approval of every checkbox, amount, continuation, or descriptor. Apart from the
-Form 8615 and Form 8960 page cross-checks above, each case still needs line-by-line comparison
+Form 8615, Form 8960, and later Form 8889 packet cross-checks above, each case still needs line-by-line comparison
 of its PDF with the retained JSON source,
 finalized pending graph, native XML, and official form. The thirteen cases also
 cover only a subset of the 86 registered PDF descriptors. Structural XSD
 success does not establish IRS business-rule or ATS acceptance.
+
+The later `single-hsa-code2-excess` per-page review above used
+`.state/research/ty2025-filled-pdf-review/2026-09-29-v31/`. Its five-page PDF
+has SHA-256
+`4180b7b096fcd87b5011aae7c706406cdbb1984a38ac3498846e65669d141014`.
+This is a synthetic Form 1099-SA source review; payer-issued bytes, other HSA
+exception routes, and wider registered-form PDF coverage remain open.
