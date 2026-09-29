@@ -48,7 +48,12 @@ Deno.test("zero taxable income still sends Form 6251 its AMT base", () => {
   });
   assertEquals(f6251Fields(result)?.regular_tax_income, 0);
   assertEquals(f1040Fields(result)?.line16_income_tax, 0);
-  assertEquals(result.outputs.length, 4);
+  assertEquals(result.outputs.length, 5);
+  assertEquals(
+    result.outputs.find((row) => row.nodeType === "form_1116")?.fields
+      .us_tax_before_credits,
+    0,
+  );
 });
 
 Deno.test("Form 8814 tax remains on line 16 even with zero parent taxable income", () => {
@@ -80,23 +85,38 @@ Deno.test("Schedule J changes Form 1040 tax while Form 6251 receives the no-elec
 });
 
 Deno.test("Schedule J election cannot silently become ordinary tax or include line-16 add-ons", () => {
-  assertThrows(() => compute({
-    taxable_income: 50_000,
-    filing_status: FilingStatus.Single,
-    schedule_j_election_requested: true,
-  }), Error, "requires a reconciled calculated line 23");
-  assertThrows(() => compute({
-    taxable_income: 50_000,
-    filing_status: FilingStatus.Single,
-    schedule_j_calculated_tax: 5_000,
-  }), Error, "requires its source-backed election");
-  assertThrows(() => compute({
-    taxable_income: 50_000,
-    filing_status: FilingStatus.Single,
-    schedule_j_election_requested: true,
-    schedule_j_calculated_tax: 5_000,
-    form8814_tax: 135,
-  }), Error, "line 16 add-on");
+  assertThrows(
+    () =>
+      compute({
+        taxable_income: 50_000,
+        filing_status: FilingStatus.Single,
+        schedule_j_election_requested: true,
+      }),
+    Error,
+    "requires a reconciled calculated line 23",
+  );
+  assertThrows(
+    () =>
+      compute({
+        taxable_income: 50_000,
+        filing_status: FilingStatus.Single,
+        schedule_j_calculated_tax: 5_000,
+      }),
+    Error,
+    "requires its source-backed election",
+  );
+  assertThrows(
+    () =>
+      compute({
+        taxable_income: 50_000,
+        filing_status: FilingStatus.Single,
+        schedule_j_election_requested: true,
+        schedule_j_calculated_tax: 5_000,
+        form8814_tax: 135,
+      }),
+    Error,
+    "line 16 add-on",
+  );
 });
 
 // ─── 2025 Tax Table and Tax Computation Worksheet ────────────────────────────
