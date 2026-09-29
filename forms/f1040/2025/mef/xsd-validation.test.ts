@@ -4086,14 +4086,19 @@ Deno.test({
   sanitizeResources: false,
   ignore: !xsdAvailable,
 }, async () => {
-  const general = singleGeneral();
+  const general = {
+    ...singleGeneral(),
+    taxpayer_can_be_claimed_as_dependent: false,
+  };
   const result = runReturn({
     general,
     w2: [w2Item(30_120, 3_000)],
     f1095a: [
       {
         issuer_name: "First Marketplace Plan",
+        policy_number: "POLICY-TWO-MONTHLY-1",
         coverage_state: "TX",
+        covered_individual_ssns: ["111223333"],
         monthly_premiums: Array(12).fill(500),
         monthly_slcsps: Array(12).fill(600),
         monthly_aptcs: Array(12).fill(0),
@@ -4101,14 +4106,24 @@ Deno.test({
           Array(12).fill(500),
           Array(12).fill(600),
         ),
+        no_aptc_monthly_evidence: noAptcPaymentEvidence(
+          Array(12).fill(500),
+          Array(12).fill(600),
+        ),
       },
       {
         issuer_name: "Second Marketplace Plan",
+        policy_number: "POLICY-TWO-MONTHLY-2",
         coverage_state: "TX",
+        covered_individual_ssns: ["111223333"],
         monthly_premiums: [...Array(11).fill(300), 301],
         monthly_slcsps: Array(12).fill(600),
         monthly_aptcs: Array(12).fill(0),
         slcsp_corrections: noAptcSlcspDeterminations(
+          [...Array(11).fill(300), 301],
+          Array(12).fill(600),
+        ),
+        no_aptc_monthly_evidence: noAptcPaymentEvidence(
           [...Array(11).fill(300), 301],
           Array(12).fill(600),
         ),
@@ -4126,6 +4141,22 @@ Deno.test({
   assertStringIncludes(
     xml,
     "<TotalPremiumTaxCreditAmt>6600</TotalPremiumTaxCreditAmt>",
+  );
+  assertThrows(
+    () =>
+      buildMefXml({
+        ...result.pending,
+        form8962: {
+          ...result.pending.form8962,
+          monthly_ptc_rows: (
+            result.pending.form8962?.monthly_ptc_rows as Array<
+              Record<string, unknown>
+            >
+          ).map((row, index) => index === 0 ? { ...row, premium: 799 } : row),
+        },
+      } as unknown as MefFormsPending, extractFilerIdentity(general)),
+    Error,
+    "two-policy month 1 differs",
   );
   await validateXsd(xml, "two same-state policies with one SLCSP");
 });
