@@ -37,9 +37,10 @@ function facility(): F8835Item {
     facility_latitude: 39.123456,
     facility_longitude: -75.123456,
     facility_owned_by_filer: true,
-    ac_nameplate_kw: 500,
-    facility_placed_in_service_date: "2023-01-01",
-    facility_construction_start_date: "2022-12-01",
+    ac_nameplate_kw: 1_500,
+    maximum_net_output_mw: 1.5,
+    facility_placed_in_service_date: "2024-01-01",
+    facility_construction_start_date: "2023-06-01",
     production_period_start_date: "2025-01-01",
     production_period_end_date: "2025-12-31",
     increased_credit_reason: "none",
@@ -194,7 +195,7 @@ Deno.test("Form 8835 PDF prints wind on line 1a and a separate geothermal copy o
   assertEquals(copies[0].facility_type, "Wind");
   assertEquals(copies[0].ac_wind, true);
   assertEquals(copies[0].ac_other, false);
-  assertEquals(copies[0].ac_wind_nameplate_kw, 500);
+  assertEquals(copies[0].ac_wind_nameplate_kw, 1_500);
   assertEquals(copies[0].line1a_quantity, 100_000);
   assertEquals(copies[0].line1a_credit, 600);
   assertEquals(copies[0].line1c_quantity, undefined);

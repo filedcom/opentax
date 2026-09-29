@@ -9,8 +9,9 @@ function item(overrides: Record<string, unknown> = {}) {
     subject_to_passive_activity_limit: false,
     kwh_produced: 1_000_000,
     kwh_sold: 1_000_000,
-    facility_placed_in_service_date: "2023-01-01",
-    facility_construction_start_date: "2022-12-01",
+    facility_placed_in_service_date: "2024-01-01",
+    facility_construction_start_date: "2023-06-01",
+    maximum_net_output_mw: 1.5,
     production_period_start_date: "2025-01-01",
     production_period_end_date: "2025-12-31",
     increased_credit_reason: "none" as const,
@@ -31,7 +32,10 @@ Deno.test("f8835: 2025 base rate and fivefold increase are separate lines", () =
   assertEquals(lines().line1, 6_000);
   assertEquals(lines().line9, 6_000);
   assertEquals(
-    lines({ increased_credit_reason: "construction_before_2023_01_29" }).line9,
+    lines({
+      increased_credit_reason: "construction_before_2023_01_29",
+      facility_construction_start_date: "2022-12-01",
+    }).line9,
     30_000,
   );
   assertEquals(lines({ energy_type: EnergyType.BiomassOpen }).line1, 3_000);
@@ -117,6 +121,38 @@ Deno.test("f8835: validates increased-credit evidence and transferred credit", (
     })
   );
   assertThrows(() => lines({ kwh_sold: 1_000_001 }));
+});
+
+Deno.test("f8835: no-increase claim rejects facts that qualify for fivefold credit", () => {
+  assertThrows(
+    () => lines({ facility_construction_start_date: "2022-12-01" }),
+    Error,
+    "increased-credit and continuity review",
+  );
+  assertThrows(
+    () => lines({ maximum_net_output_mw: undefined }),
+    Error,
+    "reviewed maximum net output",
+  );
+  assertThrows(
+    () => lines({ maximum_net_output_mw: 0.9 }),
+    Error,
+    "reviewed maximum net output",
+  );
+  assertThrows(
+    () => lines({ ac_nameplate_kw: 900 }),
+    Error,
+    "consistent AC capacity",
+  );
+  assertThrows(
+    () =>
+      lines({
+        meets_prevailing_wage: true,
+        meets_apprenticeship: true,
+      }),
+    Error,
+    "prevailing wage and apprenticeship",
+  );
 });
 
 Deno.test("f8835: routes first four years to Form 3800 line 4e", () => {

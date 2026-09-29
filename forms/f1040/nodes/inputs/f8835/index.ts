@@ -168,7 +168,28 @@ function increaseFactor(item: F8835Item): number {
     }
     return 1;
   }
-  if (reason === "none") return 1;
+  if (reason === "none") {
+    if (item.facility_construction_start_date < "2023-01-29") {
+      throw new Error(
+        "Form 8835 construction before January 29, 2023 needs increased-credit and continuity review",
+      );
+    }
+    if (
+      item.maximum_net_output_mw === undefined ||
+      item.maximum_net_output_mw < 1 ||
+      (item.ac_nameplate_kw !== undefined && item.ac_nameplate_kw < 1_000)
+    ) {
+      throw new Error(
+        "Form 8835 no-increase claim needs reviewed maximum net output of at least 1 MW and consistent AC capacity",
+      );
+    }
+    if (item.meets_prevailing_wage && item.meets_apprenticeship) {
+      throw new Error(
+        "Form 8835 prevailing wage and apprenticeship facts qualify for the fivefold increase",
+      );
+    }
+    return 1;
+  }
   if (
     reason === "under_one_mw" &&
     (item.maximum_net_output_mw === undefined ||
