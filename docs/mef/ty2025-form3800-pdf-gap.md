@@ -18,8 +18,8 @@ The native code assembles Part I/II numbers from
 carryovers, and Part V/VI details, then checks that the source-row tax use sums
 to lines 17, 26, 37, and 38. It also checks Form 1040, Schedule 3, Form 6251,
 and required source-document IDs. The linked pass now captures those exact
-typed parts for the PDF, and the PDF builder rejects a changed pending source
-against the prepared bundle's stored source SHA-256.
+typed parts for the PDF, and the PDF builder rejects changed pending source or
+typed parts against their prepared SHA-256 values.
 
 The passive Part V and VI rows and nonpassive Part V rows now remain typed and
 source-linked through `Form3800DocumentParts`; native detail XML is serialized
@@ -79,11 +79,15 @@ source combinations still need full-return review.
 either MeF or PDF export. `buildMefBundle` validates generated attachments,
 reserves document IDs in its first pass, and captures the typed Form 3800 parts
 from the linked pass. The PDF builder accepts that bundle and checks its stored
-source SHA-256 before projection. An active Form 3800 without prepared
-parts fails rather than printing a partial parent. Existing raw builder calls
-remain during migration; this dual call shape was disclosed before introduction.
-Submission archive construction still prepares its own bundle, so shared
-archive/PDF preparation and external attachment acquisition remain open.
+source and typed-parts SHA-256 values before projection. An active Form 3800
+without prepared parts fails rather than printing a partial parent. Existing
+raw builder calls remain during migration; this dual call shape was disclosed
+before introduction.
+Submission archive construction now consumes that same bundle. It checks the
+filer/source, XML, and every attachment against hashes recorded at preparation
+before writing the ZIP. A focused geothermal case confirms that the PDF and
+submission ZIP use one prepared native return. External attachment acquisition
+and cross-route archive review remain open.
 
 The synthetic source-backed geothermal return computes a $600 Form 8835 credit,
 then prints it on Form 3800 Part III line 4e and line 38, Schedule 3 line 6a,
@@ -95,11 +99,13 @@ blank. The retained packet is
 (SHA-256 `cde93fec081ab249caec0ec8ded36dead335ab2fd26db5964864edfe05f28539`).
 The full 18-return PDF review set contains 115 pages and 18 XML files. Focused
 prepared-return, source-drift, field-map, projection, and local XSD cases pass.
-The repository-wide full test has not been rerun after this integration.
+The `b32aa0ce` repository-wide run passed 8,849/8,849 before the archive
+change; the focused PDF/archive tests now pass 13/13. A full rerun is due for the
+archive change.
 
 The remaining gate includes transfer elections with exact attachment bytes and
 statement IDs; passive and carryover vintages; multiple same-line sources and
 Parts V/VI overflow; unsourced revised-carryforward checkboxes; all applicable
-credit combinations; a shared submission-archive artifact; source-backed IRS
-business-rule checks; and ATS acceptance. A passing one-source packet does not
-establish those branches.
+credit combinations; external credit attachments and cross-route archive
+checks; source-backed IRS business-rule checks; and ATS acceptance. A passing
+one-source packet does not establish those branches.

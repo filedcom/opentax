@@ -120,6 +120,18 @@ Deno.test("Form 3800 PDF uses the exact parts captured during MeF serialization"
     assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 9, true);
     await assertRejects(
       () =>
+        buildPdfBytes(source, filer, cacheDir, {
+          ...bundle,
+          form3800Parts: {
+            ...bundle.form3800Parts!,
+            lines: { ...bundle.form3800Parts!.lines, line38: 601 },
+          },
+        }),
+      Error,
+      "Form 3800 PDF parts differ from the prepared MeF return",
+    );
+    await assertRejects(
+      () =>
         buildPdfBytes(
           {
             ...source,

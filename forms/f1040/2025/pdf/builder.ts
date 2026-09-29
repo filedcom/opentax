@@ -6,7 +6,7 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "./form-descriptor.ts";
 import type { FilerIdentity } from "../../mef/header.ts";
 import { assertAttachmentCoverage } from "../attachment-coverage.ts";
 import type { MefBundle } from "../mef/builder.ts";
-import { preparedSourceSha256 } from "../prepared-source.ts";
+import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
 
 async function fetchWithCache(
   url: string,
@@ -249,6 +249,14 @@ export async function buildPdfBytes(
       preparedBundle.sourceSha256
   ) {
     throw new Error("PDF source differs from the prepared MeF return");
+  }
+  if (
+    preparedBundle?.form3800Parts &&
+    await sha256Hex(
+        new TextEncoder().encode(JSON.stringify(preparedBundle.form3800Parts)),
+      ) !== preparedBundle.form3800PartsSha256
+  ) {
+    throw new Error("Form 3800 PDF parts differ from the prepared MeF return");
   }
   assertAttachmentCoverage(normalized, "pdf");
   const merged = await PDFDocument.create();

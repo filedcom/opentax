@@ -6,14 +6,17 @@ import type { MefBuildContext, MefPdfAttachment } from "./form-descriptor.ts";
 import type { FilerIdentity, MefFormsPending } from "./types.ts";
 import { assertAttachmentCoverage } from "../attachment-coverage.ts";
 import type { Form3800DocumentParts } from "./forms/f3800_document.ts";
-import { preparedSourceSha256 } from "../prepared-source.ts";
+import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
 
 export interface MefBundle {
   readonly xml: string;
   readonly attachments: ReadonlyArray<MefPdfAttachment>;
   readonly pending: MefFormsPending;
   readonly sourceSha256: string;
+  readonly xmlSha256: string;
+  readonly attachmentSha256ByFileName: Readonly<Record<string, string>>;
   readonly form3800Parts?: Form3800DocumentParts;
+  readonly form3800PartsSha256?: string;
 }
 
 export interface MefBundleOptions {
@@ -304,15 +307,7 @@ export async function buildMefBundle(
   ]);
   const attachmentSha256ByFileName = Object.fromEntries(
     await Promise.all(attachments.map(async ({ fileName, bytes }) => {
-      const digest = new Uint8Array(
-        await crypto.subtle.digest("SHA-256", Uint8Array.from(bytes)),
-      );
-      return [
-        fileName,
-        Array.from(digest, (byte) => byte.toString(16).padStart(2, "0")).join(
-          "",
-        ),
-      ] as const;
+      return [fileName, await sha256Hex(bytes)] as const;
     })),
   );
   const prepared = buildReturnXml(
@@ -329,5 +324,12 @@ export async function buildMefBundle(
     attachments,
     pending,
     sourceSha256: await preparedSourceSha256(pending, options.filer),
+    xmlSha256: await sha256Hex(new TextEncoder().encode(prepared.xml)),
+    attachmentSha256ByFileName,
+    form3800PartsSha256: prepared.form3800Parts
+      ? await sha256Hex(
+        new TextEncoder().encode(JSON.stringify(prepared.form3800Parts)),
+      )
+      : undefined,
   };
 }

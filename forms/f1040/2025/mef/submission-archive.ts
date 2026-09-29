@@ -1,9 +1,8 @@
 import { zipSync } from "fflate";
 import type { FilerIdentity } from "../../mef/header.ts";
 import { element, elements } from "../../mef/xml.ts";
-import { buildMefBundle, type MefBundle } from "./builder.ts";
-import type { MefFormsPending } from "./types.ts";
-import type { MefPdfAttachment } from "./form-descriptor.ts";
+import type { MefBundle } from "./builder.ts";
+import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
 
 const XML_DECLARATION = '<?xml version="1.0" encoding="UTF-8"?>\n';
 const encoder = new TextEncoder();
@@ -12,7 +11,6 @@ export interface MefSubmissionArchiveOptions {
   readonly filer: FilerIdentity;
   readonly submissionId: string;
   readonly processingDate: Date;
-  readonly attachments: ReadonlyArray<MefPdfAttachment>;
 }
 
 export interface MefSubmissionArchive {
@@ -98,19 +96,43 @@ function buildManifestXml(
 
 /** Build one compressed federal TY2025 Form 1040 submission ZIP. No network calls. */
 export async function buildMefSubmissionArchive(
-  pending: MefFormsPending,
+  bundle: MefBundle,
   options: MefSubmissionArchiveOptions,
 ): Promise<MefSubmissionArchive> {
   const { efin, tin } = validateSubmissionIdentity(options);
-  if (typeof pending.f1040?.digital_assets !== "boolean") {
+  if (typeof bundle.pending.f1040?.digital_assets !== "boolean") {
     throw new Error(
       "MeF submission needs an explicit Form 1040 digital-asset Yes or No answer",
     );
   }
-  const bundle = await buildMefBundle(pending, {
-    filer: options.filer,
-    attachments: options.attachments,
-  });
+  if (
+    await preparedSourceSha256(bundle.pending, options.filer) !==
+      bundle.sourceSha256 ||
+    await sha256Hex(encoder.encode(bundle.xml)) !== bundle.xmlSha256
+  ) {
+    throw new Error("MeF submission differs from its prepared return");
+  }
+  const attachmentNames = bundle.attachments.map(({ fileName }) => fileName);
+  const digestNames = Object.keys(bundle.attachmentSha256ByFileName);
+  if (
+    new Set(attachmentNames).size !== attachmentNames.length ||
+    attachmentNames.length !== digestNames.length ||
+    attachmentNames.some((name) =>
+      !Object.hasOwn(bundle.attachmentSha256ByFileName, name)
+    )
+  ) {
+    throw new Error("MeF submission attachment set differs from preparation");
+  }
+  for (const attachment of bundle.attachments) {
+    if (
+      await sha256Hex(attachment.bytes) !==
+        bundle.attachmentSha256ByFileName[attachment.fileName]
+    ) {
+      throw new Error(
+        `MeF submission attachment differs from preparation: ${attachment.fileName}`,
+      );
+    }
+  }
   const manifestXml = buildManifestXml(options.submissionId, efin, tin);
   const files: Record<string, Uint8Array> = {
     "manifest/manifest.xml": encoder.encode(manifestXml),

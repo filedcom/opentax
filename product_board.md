@@ -176,7 +176,11 @@ Form 8835, Form 3800 Part III line 4e and line 38, Schedule 3 line 6a, and Form
 1040 line 20. Its native XML passes local TY2025 v5.4 XSD; the 17-page packet
 includes all nine official Form 3800 pages, which were rendered and inspected.
 The corrected review set has 18 packets (115 pages). Transfer, passive,
-carryover, multiple-source, archive-sharing, and ATS gates remain open.
+carryover, multiple-source, external credit-attachment, and ATS gates remain
+open. The submission ZIP now consumes the same prepared bundle as the PDF and
+rejects source, filer, XML, or attachment drift; one geothermal ZIP/PDF case
+passes locally. Other filing routes and the full regression batch still need
+review after that archive change.
 
 The 2026-09-29 moving-worktree diagnostic `deno task test` run finished with
 8,609 passed and 205 failed in 11m18s. It is not the agreed fixed-commit
@@ -262,7 +266,7 @@ including a two-gift return with two linked native forms and attachments.
 - [ ] **Form 8582:** finish activity-ID provenance, referenced 2024 carryover imports, retained gain character, entire dispositions, active-rental/MFS boundaries, aggregate reconciliation, a durable 2025 ledger and next-year import contract. Verify worksheet Parts I-IX and overflow in filled PDF, plus Schedule E/Form 4835/4797 and Form 1040 joins. See [activity ledger](docs/mef/ty2025-form8582-activity-id-gap.md), [entire gain](docs/mef/ty2025-form8582-entire-overall-gain-gap.md), and [MFS](docs/mef/ty2025-form8582-mfs-boundary.md).
 - [ ] **Form 4952:** finish debt/expense tracing, K-1 box 20 code B's permitted deduction destination, royalty and Schedule E ownership, investment-income elections, carryover ledger, and Form 6251 interaction. Ensure calculation, native document, PDF projectors, and final filer identity use one consistent validated source path. See [main gap](docs/mef/ty2025-form4952-gap.md), [K-1 code B](docs/mef/ty2025-form4952-k1-code-b-gap.md), and [Treasury dividend](docs/mef/ty2025-form4952-treasury-dividend-slice.md).
 - [ ] **Form 4972:** complete beneficiary/partial-share, NUA, estate/death allocations and combinations, separate spouse elections, multiple 1099-R distributions, eligibility evidence, and the Form 6251/1040 tax join. Keep unsupported combinations blocked until their source records are verified. See the [Form 4972 gap](docs/mef/ty2025-form4972-gap.md).
-- [ ] **Form 3800:** extend the registered nine-page parent PDF beyond the source-backed geothermal case using the same prepared native document/instance IDs and credit attachments; reconcile every eligible business-credit source and Form 1040 tax. Complete transfer, passive, carryover, multiple-source, archive, and ATS evidence. See the [Form 3800 PDF gap](docs/mef/ty2025-form3800-pdf-gap.md).
+- [ ] **Form 3800:** extend the registered nine-page parent PDF beyond the source-backed geothermal case using the same prepared native document/instance IDs and credit attachments; reconcile every eligible business-credit source and Form 1040 tax. Complete transfer, passive, carryover, multiple-source, external-attachment, cross-route archive, and ATS evidence. See the [Form 3800 PDF gap](docs/mef/ty2025-form3800-pdf-gap.md).
 - [ ] **Forms 8995/8995-A:** finish positive QBI export and all conditional Schedule A/B/C/D paths beyond the bounded two-business Schedule B route, including election, aggregation relationship, RPE statements, owner data, and return-wide QBI totals. See [8995](docs/mef/ty2025-form8995-positive-export-gap.md) and [8995-A](docs/mef/ty2025-form8995a-gap.md).
 - [ ] **Form 8990:** obtain authenticated debt tracing and filed-year interest/ATI inputs, reconcile its return-wide ordering, and design a durable accepted-filing carryforward ledger before allowing a positive nonexcepted-interest export. See the [Form 8990 gap](docs/mef/ty2025-form8990-gap.md).
 - [ ] **Form 8839:** obtain adoption decree, expense/reimbursement, exclusion, Form 2555, and credit-ordering evidence before allowing a positive adoption-credit filing. See the [Form 8839 gap](docs/mef/ty2025-form8839-gap.md).

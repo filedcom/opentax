@@ -2,6 +2,11 @@ import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { unzipSync } from "fflate";
 import { PDFDocument } from "pdf-lib";
 import { type FilerIdentity, FilingStatus } from "./types.ts";
+import type { MefFormsPending } from "./types.ts";
+import { buildMefBundle } from "./builder.ts";
+import type { MefPdfAttachment } from "./form-descriptor.ts";
+import { f1040_2025 } from "../index.ts";
+import { pdfReviewFixtures } from "../pdf/review-fixtures.ts";
 import {
   buildMefSubmissionArchive,
   buildMefTransmissionPackage,
@@ -28,21 +33,38 @@ function filer(): FilerIdentity {
   };
 }
 
+async function makeSubmissionArchive(
+  pending: MefFormsPending,
+  options: {
+    filer: FilerIdentity;
+    submissionId: string;
+    processingDate: Date;
+    attachments: ReadonlyArray<MefPdfAttachment>;
+  },
+) {
+  const bundle = await buildMefBundle(pending, {
+    filer: options.filer,
+    attachments: options.attachments,
+  });
+  return buildMefSubmissionArchive(bundle, options);
+}
+
 Deno.test("MeF submission refuses an unanswered digital-asset question", async () => {
   await assertRejects(
-    () => buildMefSubmissionArchive({}, {
-      filer: filer(),
-      submissionId,
-      processingDate,
-      attachments: [],
-    }),
+    () =>
+      makeSubmissionArchive({}, {
+        filer: filer(),
+        submissionId,
+        processingDate,
+        attachments: [],
+      }),
     Error,
     "explicit Form 1040 digital-asset Yes or No answer",
   );
 });
 
 Deno.test("MeF submission preserves a digital-asset Yes answer", async () => {
-  const submission = await buildMefSubmissionArchive({
+  const submission = await makeSubmissionArchive({
     f1040: { digital_assets: true },
   }, {
     filer: filer(),
@@ -54,7 +76,9 @@ Deno.test("MeF submission preserves a digital-asset Yes answer", async () => {
     unzipSync(submission.bytes)["xml/submission.xml"],
   );
   assertEquals(
-    xml.includes("<VirtualCurAcquiredDurTYInd>true</VirtualCurAcquiredDurTYInd>"),
+    xml.includes(
+      "<VirtualCurAcquiredDurTYInd>true</VirtualCurAcquiredDurTYInd>",
+    ),
     true,
   );
 });
@@ -63,7 +87,7 @@ Deno.test("MeF submission ZIP contains manifest, declared return XML, and matchi
   const pdf = await PDFDocument.create();
   pdf.addPage([612, 792]);
   const pdfBytes = await pdf.save();
-  const submission = await buildMefSubmissionArchive({
+  const submission = await makeSubmissionArchive({
     f1040: { digital_assets: false },
   }, {
     filer: filer(),
@@ -146,9 +170,94 @@ Deno.test("MeF submission ZIP contains manifest, declared return XML, and matchi
   );
 });
 
+Deno.test("MeF submission rejects changes after bundle preparation", async () => {
+  const identity = filer();
+  const pdf = await PDFDocument.create();
+  pdf.addPage();
+  const bundle = await buildMefBundle({
+    f1040: { digital_assets: false },
+  }, {
+    filer: identity,
+    attachments: [{
+      fileName: "Evidence.pdf",
+      description: "Evidence copy",
+      bytes: await pdf.save(),
+    }],
+  });
+  const options = { filer: identity, submissionId, processingDate };
+  await assertRejects(
+    () =>
+      buildMefSubmissionArchive({
+        ...bundle,
+        pending: { ...bundle.pending, f1040: { digital_assets: true } },
+      }, options),
+    Error,
+    "differs from its prepared return",
+  );
+  await assertRejects(
+    () =>
+      buildMefSubmissionArchive({ ...bundle, xml: bundle.xml + " " }, options),
+    Error,
+    "differs from its prepared return",
+  );
+  await assertRejects(
+    () =>
+      buildMefSubmissionArchive(bundle, {
+        ...options,
+        filer: { ...identity, nameLine1: "DIFFERENT TAXPAYER" },
+      }),
+    Error,
+    "differs from its prepared return",
+  );
+  const changedBytes = Uint8Array.from(bundle.attachments[0].bytes);
+  changedBytes[changedBytes.length - 1] ^= 1;
+  await assertRejects(
+    () =>
+      buildMefSubmissionArchive({
+        ...bundle,
+        attachments: [{ ...bundle.attachments[0], bytes: changedBytes }],
+      }, options),
+    Error,
+    "attachment differs from preparation",
+  );
+});
+
+Deno.test("Form 3800 PDF and submission ZIP consume one prepared native return", async () => {
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-geothermal-general-business-credit"
+  )!;
+  const result = f1040_2025.executeReturn({ ...fixture.inputs });
+  assertEquals(result.diagnostics, []);
+  const identity = {
+    ...fixture.filer,
+    softwareId: "12345678",
+    originator: { efin: "123456", originatorType: "ERO" as const },
+  };
+  const prepared = await f1040_2025.prepareReturn(result.pending, identity);
+  const submission = await buildMefSubmissionArchive(prepared.bundle, {
+    filer: identity,
+    submissionId,
+    processingDate,
+  });
+  const xml = new TextDecoder().decode(
+    unzipSync(submission.bytes)["xml/submission.xml"],
+  );
+  assertEquals(
+    xml,
+    '<?xml version="1.0" encoding="UTF-8"?>\n' + prepared.bundle.xml,
+  );
+  assertEquals(submission.bundle, prepared.bundle);
+  assertEquals(prepared.bundle.form3800Parts?.lines.line38, 600);
+  assertEquals(xml.includes("<IRS3800 "), true);
+  assertEquals(
+    (await PDFDocument.load(await prepared.renderPdf())).getPageCount(),
+    17,
+  );
+});
+
 Deno.test("MeF submission ZIP includes Form 5695's generated QMID statement", async () => {
   const identity = filer();
-  const submission = await buildMefSubmissionArchive({
+  const submission = await makeSubmissionArchive({
     f1040: { digital_assets: false },
     form5695: {
       part_ii_section_a: {
@@ -185,7 +294,7 @@ Deno.test("MeF submission ZIP includes Form 5695's generated QMID statement", as
 });
 
 Deno.test("MeF submission ZIP includes Form 8824 gain statement linked from the form", async () => {
-  const submission = await buildMefSubmissionArchive({
+  const submission = await makeSubmissionArchive({
     f1040: { digital_assets: false },
     form8824: {
       relinquished_description: "Business land in Austin Texas",
@@ -221,16 +330,22 @@ Deno.test("MeF submission ZIP includes Form 8824 gain statement linked from the 
   assertEquals(files[`attachment/${pdfName}`]?.[0], 0x25);
   const xml = new TextDecoder().decode(files["xml/submission.xml"]);
   assertEquals(xml.includes('binaryAttachmentCnt="1"'), true);
-  assertEquals(xml.includes(`<AttachmentLocationTxt>${pdfName}</AttachmentLocationTxt>`), true);
+  assertEquals(
+    xml.includes(`<AttachmentLocationTxt>${pdfName}</AttachmentLocationTxt>`),
+    true,
+  );
   assertEquals(xml.includes('referenceDocumentId="BinaryAttachment'), true);
-  assertEquals(xml.includes("<GainLossForm8824Amt>50000</GainLossForm8824Amt>"), true);
+  assertEquals(
+    xml.includes("<GainLossForm8824Amt>50000</GainLossForm8824Amt>"),
+    true,
+  );
 });
 
 Deno.test("A2A request entries match both ZIP attachments in order", async () => {
   const ids = ["1234562026269abcdefg", "1234562026269abcdefh"];
   const archives = await Promise.all(
     ids.map((id) =>
-      buildMefSubmissionArchive({ f1040: { digital_assets: false } }, {
+      makeSubmissionArchive({ f1040: { digital_assets: false } }, {
         filer: filer(),
         submissionId: id,
         processingDate,
@@ -257,7 +372,7 @@ Deno.test("MeF submission ZIP rejects missing filing credentials and malformed I
   const valid = filer();
   await assertRejects(
     () =>
-      buildMefSubmissionArchive({}, {
+      makeSubmissionArchive({}, {
         filer: { ...valid, originator: undefined },
         submissionId,
         processingDate,
@@ -268,7 +383,7 @@ Deno.test("MeF submission ZIP rejects missing filing credentials and malformed I
   );
   await assertRejects(
     () =>
-      buildMefSubmissionArchive({}, {
+      makeSubmissionArchive({}, {
         filer: { ...valid, softwareId: undefined },
         submissionId,
         processingDate,
@@ -279,7 +394,7 @@ Deno.test("MeF submission ZIP rejects missing filing credentials and malformed I
   );
   await assertRejects(
     () =>
-      buildMefSubmissionArchive({}, {
+      makeSubmissionArchive({}, {
         filer: valid,
         submissionId: "1234562025269abcdefg",
         processingDate,
@@ -296,7 +411,7 @@ Deno.test("MeF A2A package rejects an empty or duplicate submission set", async 
     Error,
     "1 to 100 submissions",
   );
-  const submission = await buildMefSubmissionArchive({
+  const submission = await makeSubmissionArchive({
     f1040: { digital_assets: false },
   }, {
     filer: filer(),

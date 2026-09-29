@@ -1,5 +1,6 @@
 import { assertEquals } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "./types.ts";
+import { buildMefBundle } from "./builder.ts";
 import { buildMefSubmissionArchive } from "./submission-archive.ts";
 
 const XSD_PATH = new URL(
@@ -35,13 +36,13 @@ Deno.test({
   sanitizeResources: false,
   ignore: !xsdAvailable,
 }, async () => {
-  const submission = await buildMefSubmissionArchive({
+  const bundle = await buildMefBundle({
     f1040: { digital_assets: false },
-  }, {
+  }, { filer, attachments: [] });
+  const submission = await buildMefSubmissionArchive(bundle, {
     filer,
     submissionId: "1234562026269abcdefg",
     processingDate: new Date("2026-09-26T10:00:00Z"),
-    attachments: [],
   });
   const tmpPath = await Deno.makeTempFile({ suffix: ".xml" });
   try {
