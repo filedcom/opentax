@@ -214,8 +214,12 @@ Deno.test("Form 8283 PDF prints reconciled Section A and carries the FMV explana
 Deno.test("Form 8283 PDF prints every sourced short-term Section A reduction", () => {
   const form = {
     section_a_items: [
-      shortTermGift,
-      { ...shortTermGift, property_description: "Second purchased print" },
+      { ...shortTermGift, similar_item_group: "prints" },
+      {
+        ...shortTermGift,
+        property_description: "Second purchased print",
+        similar_item_group: "prints",
+      },
     ],
   };
   const [instance] = form8283Pdf.instances?.(form, filer, { f8283: form }) ??
@@ -376,7 +380,13 @@ Deno.test("Form 8283 PDF blocks mixed, overflow and unreconciled sources", () =>
   assertThrows(
     () =>
       form8283Pdf.instances?.(
-        { section_a_items: [gift], section_b_items: [electedLand] },
+        {
+          section_a_items: [{ ...gift, similar_item_group: "coins" }],
+          section_b_items: [{
+            ...electedLand,
+            similar_item_group: "investment_land",
+          }],
+        },
         filer,
         pending,
       ),
@@ -386,7 +396,12 @@ Deno.test("Form 8283 PDF blocks mixed, overflow and unreconciled sources", () =>
   assertThrows(
     () =>
       form8283Pdf.instances?.(
-        { section_a_items: Array(5).fill(gift) },
+        {
+          section_a_items: Array(5).fill({
+            ...gift,
+            similar_item_group: "coins",
+          }),
+        },
         filer,
         pending,
       ),
@@ -404,7 +419,10 @@ Deno.test("Form 8283 PDF blocks mixed, overflow and unreconciled sources", () =>
       form8283Pdf.instances?.(
         { section_a_items: [{ ...gift, fmv: 5_000 }] },
         filer,
-        pending,
+        {
+          ...pending,
+          f8283: { section_a_items: [{ ...gift, fmv: 5_000 }] },
+        },
       ),
     Error,
     "current gifts differ",

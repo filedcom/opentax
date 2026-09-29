@@ -31,8 +31,9 @@ XSD pass, or an ignored test.
 ### Latest validation attempt
 
 The latest 2026-09-29 moving-worktree diagnostic `deno task test` run finished
-with 8,725 passed and 106 failed in 12m9s. It is not a fixed-commit release
-gate. Focused reruns after that snapshot passed the repaired Form 8283
+with 8,752 passed and 79 failed in 12m14s. It included concurrent edits and
+is not a fixed-commit release gate. The earlier diagnostic finished with 8,725
+passed and 106 failed in 12m9s. Focused reruns after that snapshot passed the repaired Form 8283
 multi-attachment (5/5 route, 3/3 evidence) and vehicle-statement (15/15),
 Form 6251 native map (31/31),
 Form 4952 royalty (2/2), Form 8582 native map (30/30), Form 8863 native/XSD
@@ -49,6 +50,10 @@ case passes. The two aggregate builder smoke cases still fail because their
 Form 2441 AGI differs from the synthetic Form 1040 AGI, and may contain further
 source inconsistencies.
 These focused passes do not establish the full-batch or source-evidence gates.
+The linked Schedule F/Form 4835 CCC and crop-statement return also passed its
+focused TY2025 XSD validation (1/1). Form 8283 PDF's eight focused cases now
+pass with explicit similar-property groups in the synthetic multi-gift facts;
+the divergence case still reaches the Schedule A source-reconciliation guard.
 
 The 2026-09-29 moving-worktree diagnostic `deno task test` run finished with
 8,609 passed and 205 failed in 11m18s. It is not the agreed fixed-commit
