@@ -233,17 +233,26 @@ Deno.test("QPRI 1099-C does not infer discharge date from box 1", () => {
 });
 
 Deno.test("multiple excluded debts with detail cannot be silently merged", () => {
+  const qpri = minimalItem({
+    box1_date: "2025-06-15",
+    routing: "excluded",
+    exclusion_type: ExclusionType.Qpri,
+    qpri_mfs: false,
+    qpri_actual_discharge_date: "2025-06-15",
+    qpri_discharged_principal_amount: 1_000,
+    qpri_total_loan_balance_before_discharge: 1_000,
+    qpri_qualified_loan_balance_before_discharge: 1_000,
+    qpri_main_home_security_confirmed: true,
+    qpri_discharge_reason: "financial_condition",
+    qpri_discharge_reason_source: "Lender workout letter",
+    principal_residence_retained: true,
+    principal_residence_basis: 220_000,
+  });
   assertThrows(
     () =>
       compute([
-        minimalItem({
-          routing: "excluded",
-          exclusion_type: ExclusionType.Qpri,
-        }),
-        minimalItem({
-          routing: "excluded",
-          exclusion_type: ExclusionType.Qpri,
-        }),
+        qpri,
+        { ...qpri, creditor_name: "Other Creditor" },
       ]),
     Error,
     "separate Form 982 exclusion detail",
