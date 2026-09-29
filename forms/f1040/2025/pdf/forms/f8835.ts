@@ -1,8 +1,9 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
+import { EnergyType } from "../../../nodes/inputs/f8835/index.ts";
 import { form8835PdfSources } from "./f8835_source.ts";
 
-// Original TY2025 IRS Form 8835 AcroForm. Only the source-gated geothermal
-// line 1c path is populated; the printed rate cell is read-only in the PDF.
+// Original TY2025 IRS Form 8835 AcroForm. The source-gated wind and geothermal
+// paths use lines 1a and 1c; the printed rate cells are read-only in the PDF.
 const page1 = "topmostSubform[0].Page1[0]";
 const page2 = "topmostSubform[0].Page2[0]";
 const page3 = "topmostSubform[0].Page3[0]";
@@ -54,8 +55,18 @@ export const form8835Pdf: PdfFormDescriptor = {
     checked("no_domestic_bonus", `${page1}.c1_4[1]`),
     checked("no_energy_community_bonus", `${page1}.c1_5[1]`),
     checked("dc_not_applicable", `${page1}.c1_6[1]`),
+    checked("ac_wind", `${page1}.c1_8[0]`),
+    text("ac_wind_nameplate_kw", `${page1}.f1_20[0]`),
     checked("ac_other", `${page1}.c1_9[0]`),
     text("ac_nameplate_kw", `${page1}.f1_21[0]`),
+    text(
+      "line1a_quantity",
+      `${page2}.Table_PartII_Lines1a-j[0].Line1a[0].f2_1[0]`,
+    ),
+    text(
+      "line1a_credit",
+      `${page2}.Table_PartII_Lines1a-j[0].Line1a[0].f2_3[0]`,
+    ),
     text(
       "line1c_quantity",
       `${page2}.Table_PartII_Lines1a-j[0].Line1c[0].f2_7[0]`,
@@ -79,12 +90,13 @@ export const form8835Pdf: PdfFormDescriptor = {
     if (!allPending?.f8835) return [];
     return form8835PdfSources(allPending, filer).map((source) => {
       const { item, lines, filerName, filerTin } = source;
+      const wind = item.energy_type === EnergyType.Wind;
       const lat = parts(item.facility_latitude!, 2);
       const long = parts(item.facility_longitude!, 3);
       return {
         filer_name: filerName,
         filer_tin: filerTin,
-        facility_type: "Geothermal",
+        facility_type: wind ? "Wind" : "Geothermal",
         facility_description: item.facility_description,
         address_line1: source.addressLine1,
         address_line2: source.addressLine2,
@@ -100,10 +112,14 @@ export const form8835Pdf: PdfFormDescriptor = {
         no_domestic_bonus: true,
         no_energy_community_bonus: true,
         dc_not_applicable: true,
-        ac_other: true,
-        ac_nameplate_kw: item.ac_nameplate_kw,
-        line1c_quantity: item.kwh_sold,
-        line1c_credit: lines.line1,
+        ac_wind: wind,
+        ac_wind_nameplate_kw: wind ? item.ac_nameplate_kw : undefined,
+        ac_other: !wind,
+        ac_nameplate_kw: wind ? undefined : item.ac_nameplate_kw,
+        line1a_quantity: wind ? item.kwh_sold : undefined,
+        line1a_credit: wind ? lines.line1 : undefined,
+        line1c_quantity: wind ? undefined : item.kwh_sold,
+        line1c_credit: wind ? undefined : lines.line1,
         line2: lines.line2,
         line4: lines.line4,
         line6: lines.line6,

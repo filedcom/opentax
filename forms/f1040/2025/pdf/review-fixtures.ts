@@ -141,6 +141,18 @@ function geothermalFacility(
   };
 }
 
+function windFacility() {
+  return {
+    ...geothermalFacility(
+      "Wind production site",
+      "30 Wind Farm Rd",
+      39.323456,
+      -75.323456,
+    ),
+    energy_type: EnergyType.Wind,
+  };
+}
+
 export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
   {
     id: "single-child-unearned-income",
@@ -315,6 +327,36 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "Two distinct Form 8835 facilities contribute $600 each to Form 3800 line 4e and line 38",
       "Both three-page Form 8835 copies print distinct source identities and the same taxpayer identity",
       "Form 3800's Part V source rows and $1,200 Schedule 3/Form 1040 joins match the two native Form 8835 documents",
+    ],
+  },
+  {
+    id: "single-wind-and-geothermal-business-credits",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(150_000, 30_000, "Example Employer", "12-3456789")],
+      f8835: [
+        windFacility(),
+        geothermalFacility(
+          "Geothermal production site",
+          "10 Plant Rd",
+          39.123456,
+          -75.123456,
+        ),
+      ],
+    },
+    filer: singleFiler,
+    expectedPdfForms: [
+      "f1040",
+      "schedule3",
+      "form6251",
+      "form3800",
+      "form8835",
+      "form8835",
+    ],
+    reviewFocus: [
+      "Wind and geothermal Form 8835 copies print their distinct Part I identities and Part II lines 1a and 1c",
+      "Both $600 source credits reach distinct Form 3800 Part V rows and a $1,200 line 38",
+      "Schedule 3 line 6a and Form 1040 line 20 match the two native source documents and printed copies",
     ],
   },
   {

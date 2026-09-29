@@ -44,7 +44,8 @@ export function form8835PdfSources(
       );
     }
     if (
-      item.energy_type !== EnergyType.Geothermal ||
+      (item.energy_type !== EnergyType.Geothermal &&
+        item.energy_type !== EnergyType.Wind) ||
       item.facility_placed_in_service_date < "2022-01-01" ||
       item.is_fiscal_year || item.increased_credit_reason !== "none" ||
       item.domestic_content_bonus || item.energy_community_bonus ||
@@ -65,7 +66,7 @@ export function form8835PdfSources(
       lines.form3800Line !== "4e"
     ) {
       throw new Error(
-        "Form 8835 PDF currently supports filer-owned nonpassive geothermal facilities with first-four-year production and no increase, bonus, bond, transfer, or fiscal-year branch",
+        "Form 8835 PDF currently supports filer-owned nonpassive wind or geothermal facilities with first-four-year production and no increase, bonus, bond, transfer, or fiscal-year branch",
       );
     }
     if (

@@ -234,3 +234,45 @@ Deno.test("two geothermal facilities print two Form 8835 copies and distinct For
     20,
   );
 });
+
+Deno.test("wind and geothermal facilities keep separate Form 8835 lines and Form 3800 sources", async () => {
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-wind-and-geothermal-business-credits"
+  )!;
+  const result = f1040_2025.executeReturn({ ...fixture.inputs });
+  assertEquals(result.diagnostics, []);
+  const prepared = await f1040_2025.prepareReturn(
+    result.pending,
+    fixture.filer,
+  );
+  const parts = prepared.bundle.form3800Parts!;
+  assertEquals(parts.lines.line38, 1_200);
+  assertEquals(parts.currentRows[0].metadata.sourceCount, 2);
+  assertEquals(parts.currentDetails.map((row) => row.credit), [600, 600]);
+  assertEquals((prepared.bundle.xml.match(/<IRS8835\b/g) ?? []).length, 2);
+  assertStringIncludes(
+    prepared.bundle.xml,
+    "<KwHrsPrdcdAndSoldWindCrAmt>600</KwHrsPrdcdAndSoldWindCrAmt>",
+  );
+  assertStringIncludes(
+    prepared.bundle.xml,
+    "<KwHrsPrdcdAndSoldGthrmlAmt>600</KwHrsPrdcdAndSoldGthrmlAmt>",
+  );
+  const allPending = normalizeAllPending(prepared.bundle.pending);
+  const copies = form8835Pdf.instances?.(
+    allPending.f8835,
+    fixture.filer,
+    allPending,
+  ) ?? [];
+  assertEquals(copies.map((copy) => copy.facility_type), [
+    "Wind",
+    "Geothermal",
+  ]);
+  assertEquals(copies.map((copy) => copy.line15), [600, 600]);
+  assertEquals(copies[0].line1a_credit, 600);
+  assertEquals(copies[1].line1c_credit, 600);
+  assertEquals(
+    (await PDFDocument.load(await prepared.renderPdf())).getPageCount(),
+    20,
+  );
+});

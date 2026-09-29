@@ -176,11 +176,46 @@ Deno.test("Form 8835 PDF prints two distinct facility copies and rejects a misma
   );
 });
 
+Deno.test("Form 8835 PDF prints wind on line 1a and a separate geothermal copy on line 1c", () => {
+  const wind = {
+    ...facility(),
+    energy_type: EnergyType.Wind,
+    facility_description: "Wind production site",
+    facility_us_address: {
+      line1: "30 Wind Farm Rd",
+      city: "Wilmington",
+      state: "DE",
+      zip: "19801",
+    },
+    facility_latitude: 39.323456,
+  };
+  const copies = projectedAll(pending([wind, facility()]));
+  assertEquals(copies.length, 2);
+  assertEquals(copies[0].facility_type, "Wind");
+  assertEquals(copies[0].ac_wind, true);
+  assertEquals(copies[0].ac_other, false);
+  assertEquals(copies[0].ac_wind_nameplate_kw, 500);
+  assertEquals(copies[0].line1a_quantity, 100_000);
+  assertEquals(copies[0].line1a_credit, 600);
+  assertEquals(copies[0].line1c_quantity, undefined);
+  assertEquals(copies[1].facility_type, "Geothermal");
+  assertEquals(copies[1].ac_wind, false);
+  assertEquals(copies[1].ac_other, true);
+  assertEquals(copies[1].line1a_quantity, undefined);
+  assertEquals(copies[1].line1c_quantity, 100_000);
+  assertEquals(copies.map((copy) => copy.line15), [600, 600]);
+  assertEquals(
+    form8835Pdf.fields.find((field) => field.domainKey === "line1a_credit")
+      ?.pdfField,
+    "topmostSubform[0].Page2[0].Table_PartII_Lines1a-j[0].Line1a[0].f2_3[0]",
+  );
+});
+
 Deno.test("Form 8835 PDF stops for bonus, duplicate facilities, and zero credit", () => {
   assertThrows(
     () => projected(pending({ ...facility(), domestic_content_bonus: true })),
     Error,
-    "filer-owned nonpassive geothermal facilities",
+    "filer-owned nonpassive wind or geothermal facilities",
   );
   const multiple = pending();
   multiple.f8835.f8835s = [facility(), facility()];
