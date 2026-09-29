@@ -11,6 +11,10 @@ const ctx = { taxYear: 2025, formType: "f1040" };
 function run(inputs: Record<string, unknown>) {
   return execute(plan, registry, {
     general: { filing_status: "single" },
+    schedule_b_part_iii: {
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    },
     w2: [{ box1_wages: 300_000, box2_fed_withheld: 60_000 }],
     ...inputs,
   }, ctx);

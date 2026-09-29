@@ -23,6 +23,14 @@ import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { schedule3 } from "../../aggregation/schedule3/index.ts";
 import { FilingStatus } from "../../../types.ts";
 
+const noJointDistributions = {
+  filing_due_date: "2026-04-15" as const,
+  reviewed_distribution_sources_ref:
+    "Reviewed 2023 through prefiling 2026 IRA and plan distributions",
+  entries: [],
+  no_other_qualifying_distributions_in_lookback: true as const,
+};
+
 function compute(input: Record<string, unknown>) {
   // Unit-test projection of the pure calculation. The production graph obtains
   // capacity only at Form 1040 finalization, covered by form8880_finalization.test.ts.
@@ -637,6 +645,7 @@ Deno.test("form8880: MFJ AGI=$47,500 is the 50% ceiling", () => {
     ira_contributions_taxpayer: 2000,
     agi: 47500,
     filing_status: "mfj",
+    joint_distribution_review: noJointDistributions,
   });
   const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line4_retirement_savings_credit, 1000);
@@ -647,6 +656,7 @@ Deno.test("form8880: MFJ AGI=$47,501 enters the 20% bracket", () => {
     ira_contributions_taxpayer: 2000,
     agi: 47501,
     filing_status: "mfj",
+    joint_distribution_review: noJointDistributions,
   });
   const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line4_retirement_savings_credit, 400);
@@ -782,6 +792,7 @@ Deno.test("form8880: MFJ both spouses $2,000 each at 50% → $2,000 credit", () 
     ira_contributions_spouse: 2000,
     agi: 40000,
     filing_status: "mfj",
+    joint_distribution_review: noJointDistributions,
   });
   const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line4_retirement_savings_credit, 2000);
@@ -794,6 +805,7 @@ Deno.test("form8880: MFJ both spouses, contributions capped individually at $2,0
     ira_contributions_spouse: 3000,
     agi: 40000,
     filing_status: "mfj",
+    joint_distribution_review: noJointDistributions,
   });
   const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line4_retirement_savings_credit, 2000);
@@ -804,6 +816,7 @@ Deno.test("form8880: MFJ spouse only contributes, taxpayer does not", () => {
     ira_contributions_spouse: 2000,
     agi: 40000,
     filing_status: "mfj",
+    joint_distribution_review: noJointDistributions,
   });
   const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line4_retirement_savings_credit, 1000);
@@ -1179,6 +1192,7 @@ Deno.test("form8880 smoke test: MFJ both contributing, 50% rate → $2,000 credi
     ira_contributions_spouse: 1500,
     agi: 44000,
     filing_status: "mfj",
+    joint_distribution_review: noJointDistributions,
   });
 
   // schedule3 routing output + self-emitted print-line output for the PDF builder

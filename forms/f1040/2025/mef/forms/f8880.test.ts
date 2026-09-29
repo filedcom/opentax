@@ -4,6 +4,25 @@ import type { Fields } from "./f8880.ts";
 import { calculateForm8880 } from "../../../nodes/intermediate/forms/form8880/calculation.ts";
 import { FilingStatus, TS } from "../../../nodes/types.ts";
 import { buildMefXml } from "../builder.ts";
+import {
+  type FilerIdentity,
+  FilingStatus as MefFilingStatus,
+} from "../types.ts";
+
+function testFiler(
+  filingStatus = MefFilingStatus.Single,
+): FilerIdentity {
+  return {
+    primarySSN: "123456789",
+    fullName: "Alex Taxpayer",
+    nameLine1: "TAXPAYER ALEX",
+    nameControl: "TAXP",
+    address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
+    filingStatus,
+    softwareId: "12345678",
+    originator: { efin: "123456", originatorType: "ERO" },
+  };
+}
 
 const calculated: Fields & {
   ira_contributions_taxpayer: number;
@@ -149,7 +168,7 @@ Deno.test("Form 8880 source-only contribution cannot disappear in MeF assembly",
           agi: 20_000,
           filing_status: FilingStatus.Single,
         },
-      }),
+      }, testFiler()),
     Error,
     "contribution has no calculated native lines",
   );
@@ -179,7 +198,7 @@ for (
     assertEquals(result.calculatedZero, true);
     const xml = buildMefXml({
       form8880: { ...source, calculated_zero_credit: true },
-    });
+    }, testFiler());
     assertEquals(xml.includes("<IRS8880"), false);
   });
 }
@@ -254,7 +273,7 @@ Deno.test("Form 8880 calculated node output survives the full MeF assembly", () 
       line18_total_tax_before_credits: 800,
     },
     schedule3: { line4_retirement_savings_credit: 800 },
-  });
+  }, testFiler());
   assertStringIncludes(xml, "<IRS8880 ");
   assertStringIncludes(
     xml,
@@ -299,7 +318,7 @@ Deno.test("Form 8880 reviewed joint 2025 distribution prints in both columns", (
       line18_total_tax_before_credits: 1_000,
     },
     schedule3: { line4_retirement_savings_credit: 500 },
-  });
+  }, testFiler(MefFilingStatus.MarriedFilingJointly));
   assertStringIncludes(
     xml,
     "<PrimTaxableDistributionsAmt>1000</PrimTaxableDistributionsAmt>",
@@ -322,7 +341,7 @@ Deno.test("Form 8880 MeF assembly rejects an invented credit-limit line", () => 
         },
         f1040: { line18_total_tax_before_credits: 700 },
         schedule3: { line4_retirement_savings_credit: 800 },
-      }),
+      }, testFiler()),
     Error,
     "differs from the finalized credit-limit worksheet",
   );
@@ -345,7 +364,7 @@ Deno.test("Form 8880 MeF rejects an unfiled foreign AGI addback", () => {
           line18_total_tax_before_credits: 800,
         },
         schedule3: { line4_retirement_savings_credit: 800 },
-      }),
+      }, testFiler()),
     Error,
     "foreign AGI addback differs from filed Form 2555 and Schedule 1",
   );
@@ -413,7 +432,7 @@ Deno.test("Form 8880 MeF assembly rejects positive credit without contributor el
         form8880: calculated,
         f1040: { line18_total_tax_before_credits: 800 },
         schedule3: { line4_retirement_savings_credit: 800 },
-      }),
+      }, testFiler()),
     Error,
     "needs birth date, five-month student answer, and dependent-claim answer",
   );

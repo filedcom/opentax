@@ -220,7 +220,9 @@ Deno.test("Form 4952 sources plain taxable 1099-OID box 1 through MeF and PDF", 
     500,
   );
   const oidPending = {
-    ...pending,
+    ...Object.fromEntries(
+      Object.entries(pending).filter(([key]) => key !== "f1099int"),
+    ),
     f1099oid: { f1099oids: [oid] },
   };
   const xml = form4952.build(fields, { pending: oidPending });
@@ -261,7 +263,7 @@ Deno.test("Form 4952 OID route rejects adjusted and tax-exempt sources", () => {
           },
         }),
       Error,
-      "supports only unadjusted box 1 investment payers",
+      "supports only unadjusted box 1 or box 3 investment payers",
     );
   }
 });
@@ -294,7 +296,7 @@ Deno.test("Form 4952 combines plain 1099-INT and 1099-OID investment interest", 
         { pending: mixedPending },
       ),
     Error,
-    "supports only unadjusted box 1 investment payers",
+    "supports only unadjusted box 1 or box 3 investment payers",
   );
   assertThrows(
     () =>
@@ -311,7 +313,7 @@ Deno.test("Form 4952 combines plain 1099-INT and 1099-OID investment interest", 
         },
       }),
     Error,
-    "supports only unadjusted box 1 investment payers",
+    "supports only unadjusted box 1 or box 3 investment payers",
   );
   assertThrows(
     () =>
@@ -363,7 +365,7 @@ Deno.test("Form 4952 matches every plain 1099-OID payer before export", () => {
         { pending: oidPending },
       ),
     Error,
-    "supports only unadjusted box 1 investment payers",
+    "supports only unadjusted box 1 or box 3 investment payers",
   );
 });
 
@@ -401,7 +403,7 @@ Deno.test("Form 4952 interest route rejects foreign-tax and adjusted-interest br
         f1099int: { f1099ints: [{ ...interest, box5: 20 }] },
       }),
     Error,
-    "supports only unadjusted box 1 investment payers",
+    "supports only unadjusted box 1 or box 3 investment payers",
   );
 });
 
@@ -434,7 +436,7 @@ Deno.test("Form 4952 reconciles multiple ordinary investment-interest payers", (
         source_1099_interest: [600, 150],
       }, { pending: multiPending }),
     Error,
-    "supports only unadjusted box 1 investment payers",
+    "supports only unadjusted box 1 or box 3 investment payers",
   );
   assertThrows(
     () =>
@@ -445,7 +447,7 @@ Deno.test("Form 4952 reconciles multiple ordinary investment-interest payers", (
         },
       }),
     Error,
-    "supports only unadjusted box 1 investment payers",
+    "supports only unadjusted box 1 or box 3 investment payers",
   );
 });
 
@@ -453,7 +455,7 @@ Deno.test("Form 4952 interest route rejects absent, conflicting, and mixed sourc
   assertThrows(
     () => form4952.build(fields),
     Error,
-    "needs its 1099-INT, completed Form 4952",
+    "needs its 1099-INT or 1099-OID, completed Form 4952",
   );
   assertThrows(
     () =>

@@ -49,21 +49,21 @@ function computeExpectedSeTax(
 
 // ── Input validation ─────────────────────────────────────────────────────────
 
-Deno.test("input_validation_empty: all fields absent → no outputs", () => {
+Deno.test("input_validation_empty: all fields absent → only Form 7206 source", () => {
   const result = compute({});
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs.map((item) => item.nodeType), ["form7206"]);
 });
 
-Deno.test("input_validation_zero_profit: net_profit_schedule_c=0 → no outputs", () => {
+Deno.test("input_validation_zero_profit: net_profit_schedule_c=0 → only Form 7206 source", () => {
   const result = compute({ net_profit_schedule_c: 0 });
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs.map((item) => item.nodeType), ["form7206"]);
 });
 
 // ── SE threshold ─────────────────────────────────────────────────────────────
 
 Deno.test("threshold_below_400: net_profit_schedule_c=399 → no SE tax (below $400 threshold)", () => {
   const result = compute({ net_profit_schedule_c: 399 });
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs.map((item) => item.nodeType), ["form7206"]);
 });
 
 // The $400 threshold is applied to line 4a (post-92.35% multiplier), not raw net profit.
@@ -78,7 +78,7 @@ Deno.test("threshold_at_multiplied_400: raw profit 434 → line4a=400.60 ≥ $40
 Deno.test("threshold_just_below_multiplied_400: raw profit 433 → line4a=399.88 < $400 → no SE tax", () => {
   // 433 × 0.9235 = 399.88 < 400 → below threshold
   const result = compute({ net_profit_schedule_c: 433 });
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs.map((item) => item.nodeType), ["form7206"]);
 });
 
 // ── Per-field calculation — Schedule C ──────────────────────────────────────
@@ -132,7 +132,7 @@ Deno.test("calc_schedule_f_basic: net_profit_schedule_f=5000 → SE tax computed
 
 Deno.test("calc_schedule_f_below_400: net_profit_schedule_f=300 → no SE tax", () => {
   const result = compute({ net_profit_schedule_f: 300 });
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs.map((item) => item.nodeType), ["form7206"]);
 });
 
 // ── Per-field calculation — combined Schedule C + F ──────────────────────────
@@ -337,16 +337,16 @@ Deno.test("routing_form8995: deductible half of SE tax routes to form8995 as se_
   );
 });
 
-Deno.test("routing_exactly_two_outputs: exactly schedule2, schedule1, agi_aggregator, form8959, and form8995 for standard case", () => {
+Deno.test("routing_includes_form7206_source_and_five_tax_outputs", () => {
   const result = compute({ net_profit_schedule_c: 10_000 });
-  assertEquals(result.outputs.length, 5);
+  assertEquals(result.outputs.length, 6);
 });
 
 // ── Edge cases ───────────────────────────────────────────────────────────────
 
 Deno.test("edge_negative_net_profit: negative Schedule C profit → no SE tax", () => {
   const result = compute({ net_profit_schedule_c: -5_000 });
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs.map((item) => item.nodeType), ["form7206"]);
 });
 
 Deno.test("edge_combined_loss_nets_below_threshold: c=1000 + f=-800 = 200 < $400 → no SE tax", () => {
@@ -354,7 +354,7 @@ Deno.test("edge_combined_loss_nets_below_threshold: c=1000 + f=-800 = 200 < $400
     net_profit_schedule_c: 1_000,
     net_profit_schedule_f: -800,
   });
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs.map((item) => item.nodeType), ["form7206"]);
 });
 
 // Combined = 434 (= 1000 + (-566)); 434 × 0.9235 = 400.60 ≥ $400 → SE tax computed
@@ -417,7 +417,7 @@ Deno.test("smoke_all_fields: full scenario with C+F profit, tips, 8919, and w2_s
     round2(s1!.fields.line15_se_deduction as number),
     round2(expectedDeduction),
   );
-  assertEquals(result.outputs.length, 5);
+  assertEquals(result.outputs.length, 6);
 });
 
 // ── TY2025 Part II farm optional method ──────────────────────────────────────
@@ -527,7 +527,7 @@ Deno.test("farm_optional_nonfarm_loss_can_reduce_line4c_below_the_filing_thresho
     farm_optional_method_elected: true,
   });
   // Part I line4a = -$1,800 as-is; line4b = $2,000; line4c = $200.
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs.map((item) => item.nodeType), ["form7206"]);
 });
 
 Deno.test("farm_optional_line4c_below_threshold: elected method can still yield no tax", () => {
@@ -536,5 +536,5 @@ Deno.test("farm_optional_line4c_below_threshold: elected method can still yield 
     gross_farm_income: 450,
     farm_optional_method_elected: true,
   });
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs.map((item) => item.nodeType), ["form7206"]);
 });
