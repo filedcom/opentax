@@ -77,8 +77,15 @@ The Form 3800 prepared-return integration adds an eighteenth synthetic source
 return. The generator now consumes the prepared MeF bundle for its PDF, and
 the 2026-09-29-v17 review directory contains 18 PDFs (115 pages) and 18 native
 XML files. The geothermal case's native return passes local v5.4 XSD, and all
-nine filled Form 3800 pages were rendered and inspected. This code postdates
-the `21457b7e` full-test pass, so another repository-wide run is due.
+nine filled Form 3800 pages were rendered and inspected. The first full run on
+`afb11416` found one draft-PDF regression (8,848 passed, one failed); the
+unidentified preview now takes its explicit draft PDF path. The subsequent
+2026-09-29 07:30 UTC fixed-source `deno task test` run on `b32aa0ce` passed
+8,849/8,849 in 13m34s with zero failures and no ignored tests reported. Deno
+was 2.7.7, `xmllint` used libxml 2.9.13, and Poppler was 26.03.0. Logs are
+retained at `.state/research/ty2025-full-test-afb11416.log` and
+`.state/research/ty2025-full-test-b32aa0ce.log`. Source-route, IRS-rule, and
+ATS gates still need their release evidence.
 
 ## XML evidence
 
