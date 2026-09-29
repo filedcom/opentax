@@ -49,7 +49,7 @@ Deno.test({
     modified_agi: 120_000,
     form8582_line9_special_allowance_used: 5_000,
     part_ii_tax_on_income_less_line14: 9_000,
-  }).replace("<IRS8582CR>", '<IRS8582CR xmlns="http://www.irs.gov/efile">');
+  }).replace("<IRS8582CR>", '<IRS8582CR documentId="IRS8582CR0" xmlns="http://www.irs.gov/efile">');
   const path = await Deno.makeTempFile({ suffix: ".xml" });
   try {
     await Deno.writeTextFile(path, xml);
@@ -101,7 +101,7 @@ Deno.test({
     form8582_line9_special_allowance_used: 0,
     part_iii_tax_on_income_less_line26: 8_500,
     part_iv_tax_on_income_less_remaining_allowance: 7_000,
-  }).replace("<IRS8582CR>", '<IRS8582CR xmlns="http://www.irs.gov/efile">');
+  }).replace("<IRS8582CR>", '<IRS8582CR documentId="IRS8582CR0" xmlns="http://www.irs.gov/efile">');
   const path = await Deno.makeTempFile({ suffix: ".xml" });
   try {
     await Deno.writeTextFile(path, xml);

@@ -197,6 +197,7 @@ Deno.test("Form 8582-CR requires the same business sources on attached Form 3800
     () =>
       form8582cr.build(input, {
         documentIdsByPendingKey: {},
+        pending: { f3800: { passive_source_allocations: [allocation] } },
       }),
     Error,
     "needs one attached Form 3800",
@@ -720,6 +721,7 @@ Deno.test("Form 8582-CR: Form 8834 credit does not export without its filing rou
           source_form: "Form 8834",
           source_origin: { kind: PassiveCreditSourceOrigin.Self },
           reporting_route: PassiveCreditReportingRoute.Form8834,
+          form3800_credit_line: undefined,
         }],
         regular_tax_all_income: 10_000,
         regular_tax_without_passive: 8_000,
