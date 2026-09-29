@@ -842,6 +842,7 @@ Deno.test("aoc_gate_felony_does_not_block_llc_path: felony disqualifies AOC but 
       aoc_adjusted_expenses: 4000,
       felony_drug_conviction: true,
       llc_adjusted_expenses: 5000,
+      ...educationSource(5000),
       filer_magi: 0,
     }),
   ]);
@@ -1162,6 +1163,7 @@ Deno.test("edge_aoc_ineligible_student_llc_expenses_routes_llc_credit: AOC-ineli
       aoc_adjusted_expenses: 4000,
       aoc_claimed_4_prior_years: true,
       llc_adjusted_expenses: 5000,
+      ...educationSource(5000),
       filer_magi: 0,
     }),
   ]);
@@ -1236,6 +1238,7 @@ Deno.test("smoke_test_full_scenario: two students (AOC + LLC), single filer MAGI
 
   const result = compute([
     {
+      ...educationSource(4000),
       credit_type: "aoc" as const,
       student_name: "Alice AOC",
       aoc_claimed_4_prior_years: false,
@@ -1254,6 +1257,7 @@ Deno.test("smoke_test_full_scenario: two students (AOC + LLC), single filer MAGI
       taxpayer_under_24_no_refundable_aoc: false,
     },
     {
+      ...educationSource(10000),
       credit_type: "llc" as const,
       student_name: "Bob LLC",
       llc_adjusted_expenses: 10000,
