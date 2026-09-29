@@ -137,7 +137,9 @@ Deno.test("Pub 974 marriage Worksheets I-V elect beneficial pre-marriage credit"
     Error,
     "needs Form 1095-A and finalized Form 1040 facts",
   );
-  const pdf = form8962Pdf.projectFields?.(calculated!, {});
+  const pdf = form8962Pdf.projectFields?.(calculated!, {
+    general: { filing_status: FilingStatus.MFJ },
+  });
   assertEquals(pdf?.pdf_line9_yes, true);
   assertEquals(pdf?.pdf_line10_no, true);
   assertEquals(pdf?.pdf_marriage_primary_family_size, "1");
@@ -1104,7 +1106,7 @@ Deno.test("MFS without exception files APTC-only repayment subject to Table 5", 
       filing_status: FilingStatus.MFS,
       mfs_ptc_status: mfsNoException,
     }).outputs,
-    [],
+    [{ nodeType: "form8962", fields: { filing_required: false } }],
   );
   assertThrows(
     () =>
