@@ -123,6 +123,27 @@ Deno.test("Form 1040 line 35a marks an attached Form 8888", () => {
   );
 });
 
+Deno.test("Form 1040 page 2 prints spouse-itemization and age/blindness boxes", () => {
+  for (
+    const [key, field] of [
+      ["mfs_spouse_itemizing", "c2_3[0]"],
+      ["taxpayer_age_65_or_older", "c2_5[0]"],
+      ["taxpayer_blind", "c2_6[0]"],
+      ["spouse_age_65_or_older", "c2_7[0]"],
+      ["spouse_blind", "c2_8[0]"],
+    ] as const
+  ) {
+    const entry = irs1040Pdf.fields.find((item) => item.domainKey === key);
+    assertEquals(entry?.kind, "checkbox");
+    assertEquals(entry?.pdfField, `topmostSubform[0].Page2[0].${field}`);
+  }
+  assertEquals(
+    irs1040Pdf.projectFields?.({ taxpayer_age_65_or_older: true }, {})
+      ?.taxpayer_age_65_or_older,
+    true,
+  );
+});
+
 Deno.test("irs1040Pdf.fields: no empty domain keys or PDF field names", () => {
   for (const entry of irs1040Pdf.fields) {
     assertEquals(entry.domainKey.length > 0, true, "Empty domain key found");

@@ -84,6 +84,27 @@ const stockLossInputs = {
   }],
 };
 
+const dependentScheduleRInputs = {
+  general: {
+    ...stockLossInputs.general,
+    taxpayer_dob: "1960-06-15",
+    taxpayer_can_be_claimed_as_dependent: true,
+    dependent_earned_income: 0,
+  },
+  f1099int: [{ payer_name: "Test Bank", box1: 9_500 }],
+  schedule_b_part_iii: {
+    foreign_accounts_question: false,
+    foreign_trust_question: false,
+  },
+  schedule_r: {
+    filing_status: "single",
+    taxpayer_age_65_or_older: true,
+    age_65_source_reference: "1960-06-15 date of birth",
+    agi: 9_500,
+    nontaxable_ssa: 0,
+  },
+};
+
 const RETURN_XSD_PATH = new URL(
   "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
   import.meta.url,
@@ -248,6 +269,51 @@ Deno.test("age-65 Schedule R cannot create a credit on a zero-tax Form 1040", ()
     Error,
     "Schedule R credit and tax limit",
   );
+});
+
+Deno.test({
+  name: "XSD: dependent age-65 Schedule R credit reaches a full Form 1040",
+  ignore: !returnXsdAvailable,
+  sanitizeOps: false,
+  sanitizeResources: false,
+}, async () => {
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    dependentScheduleRInputs,
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(
+    result.diagnostics.filter((entry) => entry.severity === "error"),
+    [],
+  );
+  const pending = buildPending(result.pending);
+  assertEquals(pending.f1040?.line11_agi, 9_500);
+  assertEquals(pending.f1040?.line12a_standard_deduction, 3_350);
+  assertEquals(pending.f1040?.line18_total_tax_before_credits, 618);
+  assertEquals(pending.schedule3?.line6d_elderly_disabled_credit, 600);
+  assertEquals(pending.f1040?.line20_nonrefundable_credits, 600);
+  assertEquals(pending.f1040?.line22_tax_after_credits, 18);
+  const xml = buildMefXml(pending, filer);
+  assertEquals(xml.includes("<PrimaryClaimAsDependentInd>X"), true);
+  assertEquals(xml.includes("<IRS1040ScheduleB"), true);
+  assertEquals(xml.includes("<IRS1040ScheduleR"), true);
+  assertEquals(
+    xml.includes("<CreditForElderlyOrDisabledAmt>600</CreditForElderlyOrDisabledAmt>"),
+    true,
+  );
+  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(path, xml);
+    const checked = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", RETURN_XSD_PATH, path],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
+  } finally {
+    await Deno.remove(path);
+  }
 });
 
 Deno.test({

@@ -263,6 +263,31 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     domainKey: "taxpayer_can_be_claimed_as_dependent",
     pdfField: "topmostSubform[0].Page2[0].c2_1[0]",
   },
+  {
+    kind: "checkbox",
+    domainKey: "mfs_spouse_itemizing",
+    pdfField: "topmostSubform[0].Page2[0].c2_3[0]",
+  },
+  {
+    kind: "checkbox",
+    domainKey: "taxpayer_age_65_or_older",
+    pdfField: "topmostSubform[0].Page2[0].c2_5[0]",
+  },
+  {
+    kind: "checkbox",
+    domainKey: "taxpayer_blind",
+    pdfField: "topmostSubform[0].Page2[0].c2_6[0]",
+  },
+  {
+    kind: "checkbox",
+    domainKey: "spouse_age_65_or_older",
+    pdfField: "topmostSubform[0].Page2[0].c2_7[0]",
+  },
+  {
+    kind: "checkbox",
+    domainKey: "spouse_blind",
+    pdfField: "topmostSubform[0].Page2[0].c2_8[0]",
+  },
   // Line 12a: standard deduction written first; itemized overwrites if non-zero.
   {
     kind: "text",
