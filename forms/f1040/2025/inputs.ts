@@ -482,7 +482,7 @@ import {
 } from "../nodes/inputs/qsehra/index.ts";
 import {
   f965,
-  itemSchema as f965ItemSchema,
+  inputSchema as f965InputSchema,
 } from "../nodes/inputs/f965/index.ts";
 import {
   itemSchema as pppForgivenessItemSchema,
@@ -842,7 +842,7 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f8864, inputSchema: f8864InputSchema, isArray: false },
   { node: fec, itemSchema: fecItemSchema, isArray: true },
   { node: qsehra, inputSchema: qsehraInputSchema, isArray: false },
-  { node: f965, itemSchema: f965ItemSchema, isArray: true },
+  { node: f965, inputSchema: f965InputSchema, isArray: false },
   {
     node: ppp_forgiveness,
     itemSchema: pppForgivenessItemSchema,
