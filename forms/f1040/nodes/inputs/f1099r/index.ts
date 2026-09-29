@@ -263,11 +263,30 @@ export const itemSchema = z.object({
   rollover_code: z.nativeEnum(RolloverCode).optional(),
   partial_rollover_amount: z.number().nonnegative().optional(),
   ira_rollover: z.object({
+    source_ira_type: z.enum([
+      "traditional",
+      "traditional_sep",
+      "traditional_simple",
+      "roth",
+      "roth_sep",
+      "roth_simple",
+    ]),
     destination: z.enum(["ira", "qualified_plan"]),
+    destination_ira_type: z.enum([
+      "traditional",
+      "traditional_sep",
+      "traditional_simple",
+      "roth",
+      "roth_sep",
+      "roth_simple",
+    ]).optional(),
     destination_name: z.string().min(1).max(120).regex(/^[!-~]+(?: [!-~]+)*$/)
       .optional(),
     distributed_on: z.string().date(),
     completed_on: z.string().date(),
+    // Null means the owner's prior 12-month IRA-to-IRA history was reviewed
+    // and no earlier rollover was found; omission is not a reviewed answer.
+    last_ira_to_ira_rollover_on: z.string().date().nullable(),
   }).optional(),
   // Code G also covers designated Roth employer contributions. A confirmed
   // direct-rollover fact is needed before checking Form 1040 line 5c(1).
@@ -393,6 +412,25 @@ export function iraDistributionExplanation(
 
 export function assertIraRolloverEvidence(items: readonly R1099Item[]): void {
   for (const item of items) validateIraRolloverEvidence(item);
+  for (const owner of ["T", "S"] as const) {
+    const dates = items.filter((item) =>
+      (item.ts ?? "T") === owner &&
+      item.ira_rollover?.destination === "ira" && isIraRollover(item)
+    ).map((item) => item.ira_rollover!.distributed_on).sort();
+    for (let index = 1; index < dates.length; index++) {
+      if (withinOneYear(dates[index - 1], dates[index])) {
+        throw new Error(
+          "IRA-to-IRA rollover exceeds one rollover per owner in 12 months",
+        );
+      }
+    }
+  }
+}
+
+function withinOneYear(prior: string, current: string): boolean {
+  const anniversary = new Date(`${prior}T00:00:00Z`);
+  anniversary.setUTCFullYear(anniversary.getUTCFullYear() + 1);
+  return Date.parse(current) < anniversary.getTime();
 }
 
 function validateIraRolloverEvidence(item: R1099Item): void {
@@ -423,6 +461,51 @@ function validateIraRolloverEvidence(item: R1099Item): void {
       );
     }
     const { destination, distributed_on, completed_on } = item.ira_rollover;
+    const rollover = item.ira_rollover;
+    if (
+      rollover.source_ira_type !== "traditional" &&
+      rollover.source_ira_type !== "traditional_sep"
+    ) {
+      throw new Error(
+        "IRA rollover source must be a reviewed traditional or SEP IRA",
+      );
+    }
+    if (
+      item.box7_distribution_code === DistributionCode.CodeS ||
+      item.box7_distribution_code === DistributionCode.CodeJ ||
+      item.box7_distribution_code === DistributionCode.CodeQ ||
+      item.box7_distribution_code === DistributionCode.CodeT
+    ) {
+      throw new Error(
+        "IRA rollover source conflicts with the payer distribution code",
+      );
+    }
+    if (destination === "ira") {
+      if (
+        rollover.destination_ira_type !== "traditional" &&
+        rollover.destination_ira_type !== "traditional_sep"
+      ) {
+        throw new Error(
+          "IRA rollover destination must be a reviewed traditional or SEP IRA",
+        );
+      }
+      if (item.box7_distribution_code === DistributionCode.CodeG) {
+        throw new Error(
+          "IRA-to-IRA transfer cannot use payer code G rollover reporting",
+        );
+      }
+      const prior = rollover.last_ira_to_ira_rollover_on;
+      if (
+        prior &&
+        (prior >= distributed_on || withinOneYear(prior, distributed_on))
+      ) {
+        throw new Error(
+          "IRA-to-IRA rollover exceeds one rollover per owner in 12 months",
+        );
+      }
+    } else if (rollover.destination_ira_type !== undefined) {
+      throw new Error("Qualified-plan destination cannot be an IRA account");
+    }
     const elapsedDays =
       (Date.parse(completed_on) - Date.parse(distributed_on)) /
       86_400_000;
@@ -732,6 +815,7 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
     for (const item of r1099s) {
       validateItem(item);
     }
+    assertIraRolloverEvidence(r1099s);
 
     const outputs: NodeOutput[] = [];
 

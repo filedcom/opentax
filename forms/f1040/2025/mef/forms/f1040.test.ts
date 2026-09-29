@@ -648,9 +648,12 @@ Deno.test("IRA rollover prints line 4c(1) only from reviewed source", () => {
       box7_ira_simple_indicator: true,
       rollover_code: "S",
       ira_rollover: {
+        source_ira_type: "traditional",
         destination: "ira",
+        destination_ira_type: "traditional",
         distributed_on: "2025-06-01",
         completed_on: "2025-06-02",
+        last_ira_to_ira_rollover_on: null,
       },
     }],
   };
@@ -682,6 +685,7 @@ Deno.test("IRA rollover prints line 4c(1) only from reviewed source", () => {
               ira_rollover: {
                 ...source.f1099rs[0].ira_rollover,
                 destination: "qualified_plan",
+                destination_ira_type: undefined,
               },
             }],
           },
@@ -694,10 +698,12 @@ Deno.test("IRA rollover prints line 4c(1) only from reviewed source", () => {
     f1099rs: [{
       ...source.f1099rs[0],
       ira_rollover: {
+        source_ira_type: "traditional",
         destination: "qualified_plan",
         destination_name: "Example 401(k)",
         distributed_on: "2025-06-01",
         completed_on: "2025-06-02",
+        last_ira_to_ira_rollover_on: null,
       },
     }],
   };

@@ -74,9 +74,12 @@ Deno.test("irs1040Pdf: IRA rollover checks line 4c and prints zero taxable", () 
         box7_ira_simple_indicator: true,
         rollover_code: "S",
         ira_rollover: {
+          source_ira_type: "traditional",
           destination: "ira",
+          destination_ira_type: "traditional",
           distributed_on: "2025-06-01",
           completed_on: "2025-06-02",
+          last_ira_to_ira_rollover_on: null,
         },
       }],
     },
