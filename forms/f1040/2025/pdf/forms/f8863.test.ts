@@ -64,6 +64,7 @@ const worksheet = {
 const source = { f8863s: [student], credit_limit_worksheet: worksheet };
 const final = {
   f1040: {
+    filing_status: "single",
     line11_agi: 70_000,
     line18_total_tax_before_credits: 10_000,
     line29_refundable_aoc: 1_000,
@@ -108,6 +109,8 @@ Deno.test("Form 8863 PDF adds only a Part III page for a second student", () => 
     llc_adjusted_expenses: 5_000,
     education_expense_workpaper: {
       ...student.education_expense_workpaper,
+      form1098t_document_id: "1098T-2025-SCHOLAR",
+      payment_record_ids: ["TUITION-2025-SCHOLAR"],
       form1098t_box1_payments: 5_000,
       paid_tuition_required_fees: 5_000,
     },
@@ -192,6 +195,6 @@ Deno.test("Form 8863 PDF closes ambiguous institution and unreconciled return pa
         final,
       ),
     Error,
-    "two-line U.S. institution address",
+    "needs one U.S. institution, received 2025 Form 1098-T",
   );
 });
