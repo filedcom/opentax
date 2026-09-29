@@ -96,21 +96,23 @@ Deno.test("sep_retirement.compute: SEP contribution without SE compensation — 
   assertEquals(fields.line16_sep_simple, 50000);
 });
 
-Deno.test("sep_retirement.compute: SEP no contribution — no output", () => {
+Deno.test("sep_retirement.compute: SEP no contribution supplies zero Form 7206 source", () => {
   const result = compute([minimalItem({
     plan_type: PlanType.SEP,
     net_self_employment_compensation: 100000,
   })]);
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs.map((entry) => entry.nodeType), ["form7206"]);
+  assertEquals(findOutput(result, "form7206")?.fields.schedule1_line16_source, 0);
 });
 
-Deno.test("sep_retirement.compute: SEP zero contribution — no output", () => {
+Deno.test("sep_retirement.compute: SEP zero contribution supplies zero Form 7206 source", () => {
   const result = compute([minimalItem({
     plan_type: PlanType.SEP,
     sep_contribution: 0,
     net_self_employment_compensation: 100000,
   })]);
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs.map((entry) => entry.nodeType), ["form7206"]);
+  assertEquals(findOutput(result, "form7206")?.fields.schedule1_line16_source, 0);
 });
 
 // =============================================================================
@@ -190,13 +192,14 @@ Deno.test("sep_retirement.compute: SIMPLE with only employer contribution routes
   assertEquals(fields.line16_sep_simple, 5000);
 });
 
-Deno.test("sep_retirement.compute: SIMPLE zero contributions — no output", () => {
+Deno.test("sep_retirement.compute: SIMPLE zero contributions supply zero Form 7206 source", () => {
   const result = compute([minimalItem({
     plan_type: PlanType.SIMPLE,
     simple_employee_contribution: 0,
     simple_employer_contribution: 0,
   })]);
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs.map((entry) => entry.nodeType), ["form7206"]);
+  assertEquals(findOutput(result, "form7206")?.fields.schedule1_line16_source, 0);
 });
 
 // =============================================================================
@@ -264,13 +267,14 @@ Deno.test("sep_retirement.compute: Solo 401k exactly at $23,500 employee limit p
   assertEquals(fields.line16_sep_simple, 23500);
 });
 
-Deno.test("sep_retirement.compute: Solo 401k zero contributions — no output", () => {
+Deno.test("sep_retirement.compute: Solo 401k zero contributions supply zero Form 7206 source", () => {
   const result = compute([minimalItem({
     plan_type: PlanType.SOLO_401K,
     solo401k_employee_deferral: 0,
     solo401k_employer_contribution: 0,
   })]);
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs.map((entry) => entry.nodeType), ["form7206"]);
+  assertEquals(findOutput(result, "form7206")?.fields.schedule1_line16_source, 0);
 });
 
 // =============================================================================
