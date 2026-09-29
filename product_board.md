@@ -36,6 +36,11 @@ release gate. A subsequent focused Form 8615 end-to-end rerun passed 4/4 after
 the synthetic Schedule B foreign-account and trust answers were supplied and
 its $650 single taxable-income expectation was aligned with the official 2025
 IRS Tax Table ($66).
+The supporting-tax PDF mapping file now passes 20/20 focused checks: the
+Form 6251 line 2c assertion matches its verified AcroForm field, the Form 8962
+marriage test supplies the sourced marriage month, and a verified two-person
+MFJ return no longer enters the single-filer dependent-MAGI path. The related
+Form 8962 PDF dependent-MAGI and MeF tests pass 5/5 and 24/24.
 
 An earlier 2026-09-29 diagnostic `deno task test` run on the moving worktree
 reported 8,535 passed and 277 failed, improved from 8,453/348 in the earlier

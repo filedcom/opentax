@@ -25,7 +25,7 @@ export function reconcileDependentMagi(
     );
   }
   const general = generalSchema.safeParse(generalSource);
-  if (!general.success || general.data.filing_status !== FilingStatus.Single) {
+  if (!general.success) {
     throw new Error(
       "Form 8962 dependent MAGI needs the verified general return source",
     );
@@ -33,6 +33,19 @@ export function reconcileDependentMagi(
   const claimed = (general.data.dependents ?? []).filter((dependent) =>
     dependent.dependent_on_another_return !== true
   );
+  if (householdSize === 2 && general.data.filing_status === FilingStatus.MFJ) {
+    if (claimed.length !== 0 || reportedMagi !== 0) {
+      throw new Error(
+        "Form 8962 married two-person household cannot include dependent MAGI",
+      );
+    }
+    return 0;
+  }
+  if (general.data.filing_status !== FilingStatus.Single) {
+    throw new Error(
+      "Form 8962 dependent MAGI needs the verified general return source",
+    );
+  }
   if (
     claimed.length !== householdSize - 1 ||
     claimed.some((dependent) => !dependent.ptc_tax_return)
@@ -41,25 +54,33 @@ export function reconcileDependentMagi(
       "Form 8962 dependent MAGI needs every claimed dependent classified",
     );
   }
-  if (claimed.some((dependent) => dependent.ptc_tax_return?.filing === "form8814")) {
+  if (
+    claimed.some((dependent) => dependent.ptc_tax_return?.filing === "form8814")
+  ) {
     throw new Error(
       "Form 8962 bounded dependent path does not include Form 8814",
     );
   }
-  if (claimed.some((dependent) => dependent.ptc_tax_return?.filing === "not_required")) {
+  if (
+    claimed.some((dependent) =>
+      dependent.ptc_tax_return?.filing === "not_required"
+    )
+  ) {
     throw new Error(
       "Form 8962 bounded dependent path needs a source-backed not-required filing-threshold workpaper",
     );
   }
-  if (claimed.some((dependent) => {
-    const source = dependent.ptc_tax_return;
-    const ssn = dependent.ssn?.replaceAll("-", "");
-    return !ssn || source?.filing !== "required" ||
-      source.filed_form1040.taxpayer_ssn?.replaceAll("-", "") !== ssn ||
-      source.interest_forms1099.some((form) =>
-        form.recipient_ssn?.replaceAll("-", "") !== ssn
-      );
-  })) {
+  if (
+    claimed.some((dependent) => {
+      const source = dependent.ptc_tax_return;
+      const ssn = dependent.ssn?.replaceAll("-", "");
+      return !ssn || source?.filing !== "required" ||
+        source.filed_form1040.taxpayer_ssn?.replaceAll("-", "") !== ssn ||
+        source.interest_forms1099.some((form) =>
+          form.recipient_ssn?.replaceAll("-", "") !== ssn
+        );
+    })
+  ) {
     throw new Error(
       householdSize === 3
         ? "Form 8962 two dependents need filed returns and interest forms naming each covered person"

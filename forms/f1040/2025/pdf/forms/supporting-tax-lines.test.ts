@@ -171,7 +171,7 @@ Deno.test("Form 8960 PDF follows the MAGI filing threshold even with zero NIIT",
 Deno.test("Form 6251 maps the AMT investment-interest difference to line 2c", () => {
   assertEquals(
     mappedField(form6251Pdf, "line2c_investment_interest"),
-    "topmostSubform[0].Page1[0].f1_4[0]",
+    "topmostSubform[0].Page1[0].f1_7[0]",
   );
 });
 
@@ -415,6 +415,7 @@ Deno.test("Form 8962 marriage calculation reaches printed Part V line 35", () =>
     monthly_premiums: Array(12).fill(1_000),
     monthly_slcsps: Array(12).fill(1_200),
     monthly_aptcs: Array(12).fill(1_000),
+    alternative_marriage_source_month: 6,
     alternative_marriage: {
       both_unmarried_january_1: true,
       married_december_31: true,
@@ -437,7 +438,9 @@ Deno.test("Form 8962 marriage calculation reaches printed Part V line 35", () =>
   const formFields = result.outputs.find((item) => item.nodeType === "form8962")
     ?.fields;
   assert(formFields);
-  const projected = form8962Pdf.projectFields?.(formFields, {});
+  const projected = form8962Pdf.projectFields?.(formFields, {
+    general: { filing_status: FilingStatus.MFJ },
+  });
   assertEquals(projected?.pdf_line9_yes, true);
   assertEquals(projected?.pdf_line10_no, true);
   assertEquals(projected?.pdf_marriage_primary_family_size, "1");
@@ -445,9 +448,18 @@ Deno.test("Form 8962 marriage calculation reaches printed Part V line 35", () =>
   assertEquals(projected?.pdf_marriage_primary_start_month, "01");
   assertEquals(projected?.pdf_marriage_primary_end_month, "06");
   assertEquals(projected?.pdf_marriage_spouse_family_size, undefined);
+  assertThrows(
+    () =>
+      form8962Pdf.projectFields?.(
+        { ...formFields, dependents_modified_agi: 10 },
+        { general: { filing_status: FilingStatus.MFJ } },
+      ),
+    Error,
+    "married two-person household cannot include dependent MAGI",
+  );
 });
 
-Deno.test("Form 8962 PDF preserves marriage worksheet contribution in a no-premium gap", () => {
+Deno.test("Form 8962 PDF leaves an uncovered marriage month blank", () => {
   const projected = form8962Pdf.projectFields?.({
     monthly_ptc_rows: [{
       month_code: "FEBRUARY",
@@ -465,6 +477,6 @@ Deno.test("Form 8962 PDF preserves marriage worksheet contribution in a no-premi
       end_month: 3,
     },
   }, {});
-  assertEquals(projected?.pdf_month_2_contribution, "153");
-  assertEquals(projected?.pdf_month_2_premium, "0");
+  assertEquals(projected?.pdf_month_2_contribution, undefined);
+  assertEquals(projected?.pdf_month_2_premium, undefined);
 });
