@@ -141,6 +141,12 @@ visually checked with Form 3800 Part III. The corrected
 CDE text, multiple investments, other credit combinations, and the final
 release batch remain open.
 
+The fixed-source `deno task test` run on `5eeb5e6b` completed at
+2026-09-29 12:05 UTC: 8,862/8,862 passed, zero failed, no ignored tests
+reported, in 20m21s. Deno was 2.7.7, `xmllint` used libxml 2.9.13, and
+Poppler was 26.03.0. Its retained log is
+`.state/research/ty2025-full-test-5eeb5e6b.log`.
+
 ## XML evidence
 
 For each supported positive filing route in the completed coverage inventory,

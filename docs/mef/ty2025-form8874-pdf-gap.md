@@ -46,3 +46,8 @@ were visually checked. The retained PDF is
 (SHA-256 `0ad4dd7eed0449163cd5c8903f90a546b88dbc6b9de4f25ebf634e2af76faec0`).
 This is local source-to-return evidence, not external eligibility proof or IRS
 acceptance.
+
+The focused Form 8874/Form 3800/review-fixture tests passed 31/31. The
+fixed-source `deno task test` run on `5eeb5e6b` passed 8,862/8,862, zero
+failed, with no ignored tests reported in 20m21s; its log is
+`.state/research/ty2025-full-test-5eeb5e6b.log`.

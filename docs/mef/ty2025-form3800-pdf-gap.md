@@ -116,6 +116,11 @@ Form 1040. Its 15-page packet and local TY2025 v5.4 XML pass the bounded
 source-to-return check; Form 8874 and Part III were visually inspected. The
 expanded review set has 21 PDFs (170 pages) and 21 XML files under
 `.state/research/ty2025-filled-pdf-review/2026-09-29-v23/`.
+
+The fixed-source `5eeb5e6b` repository-wide run passed 8,862/8,862,
+zero failed, with no ignored tests reported in 20m21s. Its log is
+`.state/research/ty2025-full-test-5eeb5e6b.log`.
+
 The `98466597` repository-wide run passed 8,851/8,851 after the archive
 change, zero failed, in 13m37s; its summary reported no ignored tests. The
 focused PDF/archive tests passed 13/13 before that run. The log is retained at
