@@ -166,6 +166,21 @@ The fixed-source `9175f7c1` repository-wide run passed 8,875/8,875,
 zero failed, with no ignored tests reported in 15m57s. Its log is
 `.state/research/ty2025-full-test-9175f7c1.log`.
 
+One more source-backed nonpassive New Markets return has a CDE identity too
+long for the physical Form 8874 row. The last row carries the "See attached"
+$500 subtotal and a wrapped statement retains the full CDE identity. Form
+3800 Part III line 1i/38, Schedule 3 line 6a, and Form 1040 line 20 each
+reconcile to $500; native XML passes local TY2025 v5.4 XSD. The Form 8874
+and statement pages in the 16-page packet were visually reviewed. The review
+set now has 27 PDFs (271 pages) and 27 XML files under
+`.state/research/ty2025-filled-pdf-review/2026-09-29-v29/`. Carryover and
+other broader credit routes remain open.
+
+The fixed-source `7318ed47` repository-wide run completed at 2026-09-29
+15:04 UTC: 8,880/8,880 passed, zero failed, with no ignored tests reported,
+in 16m42s. Its log is
+`.state/research/ty2025-full-test-7318ed47.log`.
+
 The fixed-source `81a2c713` repository-wide run passed 8,869/8,869,
 zero failed, with no ignored tests reported in 20m35s. Its log is
 `.state/research/ty2025-full-test-81a2c713.log`.

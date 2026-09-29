@@ -52,6 +52,8 @@ reconciled pass-through line 2; one, two, six, seven, and 24 nonpassive
 investments now have reviewed filled Form 8874 and Form 3800 parent packets.
 The seven- and 24-investment packets use the IRS-required last-row attachment
 total; the latter has two continuation pages.
+One schema-valid long CDE name/address also prints in full on a wrapped
+statement page with a reconciled $500 parent credit.
 See `ty2025-form8874-pdf-gap.md`. A
 pass-through-only K-1 recipient does not create its own Form 8874, but still
 needs the Form 3800 parent in the print packet.

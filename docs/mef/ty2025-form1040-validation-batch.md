@@ -208,6 +208,22 @@ packet were rendered and reviewed. The PDF SHA-256 is
 The `2026-09-29-v28` directory holds 26 PDFs (255 pages) and 26 XML files.
 The broader filled-PDF and release gates remain open.
 
+The 27th synthetic return has one New Markets investment with a schema-valid
+long CDE name and address. Form 8874 row 6 says "See attached" with the $500
+credit, and the appended six-column statement wraps the complete CDE identity.
+Form 3800, Schedule 3, and Form 1040 each reconcile to $500. The native return
+passes the local TY2025 v5.4 XSD; the Form 8874 and statement pages in the
+16-page packet were rendered and visually reviewed. Its PDF SHA-256 is
+`6cf8c2689fb337831cb0ade1a187e37f5b1f8d4514d23a09408958ebaa4d97c6`.
+The `2026-09-29-v29` directory holds 27 PDFs (271 pages) and 27 XML files.
+The broader filled-PDF and release gates remain open.
+
+The fixed-source `deno task test` run on `7318ed47` completed at 2026-09-29
+15:04 UTC: 8,880/8,880 passed, zero failed, no ignored tests reported, in
+16m42s. Deno was 2.7.7, `xmllint` used libxml 2.9.13, and Poppler was
+26.03.0. Its retained log is
+`.state/research/ty2025-full-test-7318ed47.log`.
+
 The fixed-source `deno task test` run on `9175f7c1` completed at 2026-09-29
 14:29 UTC: 8,875/8,875 passed, zero failed, no ignored tests reported, in
 15m57s. Deno was 2.7.7, `xmllint` used libxml 2.9.13, and Poppler was
@@ -236,7 +252,7 @@ scenario packet PDF as if it were a generated return.
 The workspace has blank IRS PDF templates in `.state/field-dumps/cache` and
 source ATS scenario PDFs in `.state/research/docs/ats-ty2025`. These are not
 filled-output fixtures. `forms/f1040/2025/pdf/review-fixtures.ts` now holds
-twenty-six synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts`
+twenty-seven synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts`
 can run them through the real return graph and PDF builder. Earlier on
 2026-09-29, the first sixteen
 generated 94 pages successfully under

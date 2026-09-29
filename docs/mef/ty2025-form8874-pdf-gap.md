@@ -11,12 +11,14 @@ instructions, not filed form pages. The source PDF AcroForm has fields
 
 The bounded PDF route prints one source-backed `f8874` investment form when
 the investment/credit amounts retain whole-dollar print precision. For more
-than six investments, the first five print directly; the sixth row says
+than six investments, or when a CDE name or address cannot fit its form row,
+up to five fitting investments print directly; the sixth row says
 "See attached" in column (a) and reports the attached credit total in column
 (f), as the [IRS instructions](https://www.irs.gov/pub/irs-pdf/f8874.pdf)
-require. A supplemental PDF page lists every remaining investment with all
-six columns and carries the filer identity. The structured source supplies CDE
-identity, address, date, and investment amount; `calculateForm8874` supplies the
+require. Supplemental PDF pages list every remaining investment with all six
+columns, wrap long CDE names and addresses, and carry the filer identity. The
+structured source supplies CDE identity, address, date, and investment amount;
+`calculateForm8874` supplies the
 correct fifth/sixth-year rate and each credit. The PDF invokes the native Form
 8874 builder to check the direct Form 3800 credit and any passive Form 8582-CR
 sources, and shares its K-1 line-2 reconciliation. It then checks line 3 as the
@@ -26,8 +28,9 @@ Form 8874.
 
 Still unsupported or unverified:
 
-- More than six source investment rows use the attached detail page. Rows with
-  names, addresses, or amounts that cannot fit the statement still fail closed.
+- More than six source investment rows use attached detail pages. An
+  unbreakable name or address token that cannot fit the statement still fails
+  closed; broader text and multi-page combinations need review.
 - Fractional-dollar investment or credit values are refused, because the current
   PDF writer rounds numeric fields to whole dollars and could make printed
   column (d) times rate (e) disagree with printed credit (f).
@@ -35,8 +38,8 @@ Still unsupported or unverified:
   qualification/holding assertions, but does not contain independently verified
   Form 8874-A or Form 8874-B documents. Eligibility and recapture evidence still
   need human review before filing.
-- Longer CDE names or addresses, mixed passive/nonpassive rows, and broader
-  overflow combinations still need filled-output or attachment review.
+- Mixed passive/nonpassive rows and broader overflow combinations still need
+  filled-output or attachment review.
 
 One fully synthetic nonpassive source return now supplies a $10,000 qualified
 equity investment with a 2025 initial investment and credit allowance date.
@@ -118,3 +121,24 @@ passes local TY2025 v5.4 XSD. Form 8874 and both continuation pages in the
 The fixed-source `9175f7c1` repository-wide run passed 8,875/8,875,
 zero failed, with no ignored tests reported in 15m57s. Its log is
 `.state/research/ty2025-full-test-9175f7c1.log`.
+
+A further synthetic return uses a schema-valid 69-character CDE name and
+31-character street address that exceed the official form row's width. The
+Form 8874 last row prints "See attached" and $500, while its six-column
+supplemental page wraps the full name and address over two lines each. Form
+8874 line 3, Form 3800 Part III line 1i/38, Schedule 3 line 6a, and Form 1040
+line 20 reconcile to $500; the native return passes the local TY2025 v5.4
+XSD. The Form 8874 and statement pages in the 16-page packet were rendered
+and visually checked. The retained PDF is
+`.state/research/ty2025-filled-pdf-review/2026-09-29-v29/single-long-name-new-markets-investment.pdf`
+(SHA-256 `6cf8c2689fb337831cb0ade1a187e37f5b1f8d4514d23a09408958ebaa4d97c6`).
+The source input now enforces the native schema's 75-character CDE name line
+and 35-character street line 1 limits. The focused source, PDF, parent-return,
+and fixture-XSD suite passed 53/53. This is local layout and reconciliation
+evidence; eligibility, recapture, other source combinations, and ATS remain
+open.
+
+The fixed-source `7318ed47` repository-wide run completed at 2026-09-29
+15:04 UTC: 8,880/8,880 passed, zero failed, with no ignored tests reported,
+in 16m42s. Its log is
+`.state/research/ty2025-full-test-7318ed47.log`.
