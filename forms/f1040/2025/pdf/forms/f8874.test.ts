@@ -88,7 +88,13 @@ Deno.test("Form 8874 PDF uses the native K-1 line 2 reconciliation", () => {
     () =>
       form8874Pdf.projectFields!(source, {
         ...pending,
-        f3800: { ...pending.f3800, f8874_k1_credit_entries: [] },
+        f3800: {
+          ...pending.f3800,
+          f8874_k1_credit_entries: [{
+            ...pending.f3800.f8874_k1_credit_entries[0],
+            credit_amount: 1_251,
+          }],
+        },
       }),
     Error,
     "differs from Form 3800",

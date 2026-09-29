@@ -361,7 +361,7 @@ Deno.test("Form 8582 PDF projects Parts I–VIII from the native activity worksh
   assertEquals(fields.part4_total_loss, "20000");
   assertEquals(fields.part6_1_allowance, "7500");
   assertEquals(fields.part7_1_unallowed, "12500");
-  assertEquals(fields.part8_1_allowed, "7500");
+  assertEquals(fields.partVIII_1_allowed, "7500");
   assertEquals(fields.part9_name, undefined);
 });
 
