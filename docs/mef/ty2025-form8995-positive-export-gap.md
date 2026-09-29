@@ -52,6 +52,19 @@ half-SE-tax route through calculation, native XML, and PDF projection.
 
 ## Remaining gaps
 
+- A positive Schedule F return currently reaches the Form 8995 calculator but
+  cannot pass either positive exporter. The focused accrual-farm end-to-end
+  case in `forms/f1040/e2e/schedule_f_sources.test.ts` reproduces the MeF
+  failure at `assertOneScheduleC8995`. The calculator retains only an aggregate
+  `qbi_from_schedule_f` amount; it does not retain an identified farm row, a
+  sourced allocation of the Schedule SE deduction to that farm, or the
+  business-level no-other-adjustments and cooperative answers required by the
+  bounded exporter. Complete those source facts and the one-farm graph, MeF,
+  PDF, and Form 1040 reconciliation before marking Schedule F QBI supported.
+  The [2025 IRS Form 8995 instructions](https://www.irs.gov/instructions/i8995)
+  include trade or business QBI, the taxable-income limit, and the specified
+  cooperative routing decision. The current rejection is a live release gap,
+  not an approved exclusion or a reason to omit the farm's computed claim.
 - Broader source-backed implementations must identify and independently
   reconcile each business name/TIN and QBI, allocate Schedule SE, self-employed
   health insurance and retirement deductions to the right business, prove prior

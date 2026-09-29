@@ -77,6 +77,11 @@ negative case removed an invalid Form 3800 line from the synthetic source,
 allowing the intended separate-filing-route guard to run.
 The Form 8826 cap ledger passes 4/4 after the passive pass-through fixture's
 K-1 source reference was reconciled across Form 8826 and Form 8582-CR.
+The accrual Schedule F end-to-end test remains red (5/6): positive farm QBI
+reaches Form 8995 calculation but the MeF/PDF exporter only accepts its
+identified Schedule C route. The [Form 8995 gap](docs/mef/ty2025-form8995-positive-export-gap.md)
+now records the precise one-farm source and reconciliation work; the claim
+remains in scope.
 
 The 2026-09-29 moving-worktree diagnostic `deno task test` run finished with
 8,609 passed and 205 failed in 11m18s. It is not the agreed fixed-commit
