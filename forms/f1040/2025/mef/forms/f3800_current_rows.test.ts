@@ -322,14 +322,14 @@ Deno.test("Form 3800 mixed current-year row follows TY2025v5.4 IRS3800 XSD", asy
     sourceCount: 2,
     transferRegistrationNumber: "CAABC12ABCDE",
     entity: { ein: "123456789" },
-    referenceDocumentId: "IRS8835_1",
+    referenceDocumentId: "IRS8835-1",
     referenceDocumentName: "IRS8835",
   });
   const path = await Deno.makeTempFile({ suffix: ".xml" });
   try {
     await Deno.writeTextFile(
       path,
-      `<IRS3800 xmlns="http://www.irs.gov/efile">${body}</IRS3800>`,
+      `<IRS3800 xmlns="http://www.irs.gov/efile" documentId="IRS3800-1">${body}</IRS3800>`,
     );
     const checked = await new Deno.Command("xmllint", {
       args: ["--noout", "--schema", xsd, path],
