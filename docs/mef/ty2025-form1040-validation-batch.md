@@ -306,6 +306,18 @@ coverage of all registered PDF descriptors:
 | `single-elected-lump-sum-part-ii`        | Form 4972 Part-II-only capital-gain election from a matching 1099-R; ordinary share and special tax on Form 1040   |
 | `single-foreign-interest-current-excess` | Source-joined 1099-INT, standard-deduction Form 1116 Part I/III/IV, current-year excess Schedule B, Schedule 3     |
 
+The 2026-09-30 direct-pension-rollover review found a missing Form 1040 line
+5a amount in the earlier generated packet. The source Form 1099-R had a $20,000
+code-G distribution, while both Form 1040 PDF and native XML omitted its gross
+amount. The corrected graph reports $20,000 on line 5a and zero taxable on
+line 5b. The PDF now prints the `0` required for a full rollover, checks line
+5c(1), and leaves QCD unchecked. Both rendered Form 1040 pages were inspected
+against the source and native XML from the regenerated 27-case
+`2026-09-29-v31` batch. The PDF SHA-256 is
+`d2e69dee162e15bab26376a8b3e38ca3277494cbf25d257841777643c8d5c435`.
+The focused Form 1099-R, Form 1040 PDF and 27-case XML checks pass 115/115 and
+101/101 in separate runs. Other cases still need per-page comparison.
+
 The first eleven cases were rendered into page contact sheets for the first visual
 pass. The new Form 8615 and Form 8960 pages were rendered and checked at higher resolution.
 The three later Form 8962 and Form 6198 cases were rendered and checked on

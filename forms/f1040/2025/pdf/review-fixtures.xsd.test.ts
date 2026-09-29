@@ -43,6 +43,22 @@ for (const fixture of pdfReviewFixtures) {
           "<IndivNetInvstIncomeTaxAmt>0</IndivNetInvstIncomeTaxAmt>",
         );
       }
+      if (fixture.id === "single-direct-pension-rollover") {
+        assertEquals(result.pending.f1040.line5a_pension_gross, 20_000);
+        assertEquals(result.pending.f1040.line5b_pension_taxable, 0);
+        assertStringIncludes(
+          xml,
+          "<PensionsAnnuitiesAmt>20000</PensionsAnnuitiesAmt>",
+        );
+        assertStringIncludes(
+          xml,
+          "<TotalTaxablePensionsAmt>0</TotalTaxablePensionsAmt>",
+        );
+        assertStringIncludes(
+          xml,
+          "<PensionsAnnuitiesRolloverInd>X</PensionsAnnuitiesRolloverInd>",
+        );
+      }
       const path = await Deno.makeTempFile({ suffix: ".xml" });
       try {
         await Deno.writeTextFile(path, xml);

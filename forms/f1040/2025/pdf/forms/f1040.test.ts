@@ -92,6 +92,30 @@ Deno.test("irs1040Pdf: line 5c rollover checks the 2025 pension checkbox with co
   );
 });
 
+Deno.test("irs1040Pdf: full pension rollover prints zero taxable amount", () => {
+  const source = {
+    f1099r: {
+      f1099rs: [{
+        payer_name: "Jubilee",
+        payer_ein: "12-3456789",
+        box1_gross_distribution: 20_000,
+        box2a_taxable_amount: 0,
+        box7_distribution_code: "G",
+        direct_rollover_confirmed: true,
+      }],
+    },
+  };
+  const fields = {
+    line5a_pension_gross: 20_000,
+    line5b_pension_taxable: 0,
+    line5c_pension_rollover: true,
+  };
+  assertEquals(
+    irs1040Pdf.projectFields?.(fields, source)?.line5b_pension_taxable,
+    "0",
+  );
+});
+
 Deno.test("irs1040Pdf.fields: contains expected payment fields", () => {
   const domainKeys = new Set(irs1040Pdf.fields.map((e) => e.domainKey));
   const expected = [

@@ -188,6 +188,9 @@ circumstances:
 - A non-taxable direct rollover has $0 taxable income. The node keeps that
   treatment when code G has no box 2a amount or an explicit non-taxable
   `rollover_code` of G or S is supplied.
+- The gross distribution still prints on Form 1040 line 4a or 5a; a full
+  pension rollover prints zero on line 5b and checks line 5c(1). IRA line 4c
+  projection needs its own source-to-print review.
 - Code G alone does not prove the distribution is tax-free. IRS instructions
   allow a taxable rollover to a Roth account with the taxable portion in box
   2a. TY2025 ATS 1040 Scenario 8 reports code G with $10,300 in box 2a; that

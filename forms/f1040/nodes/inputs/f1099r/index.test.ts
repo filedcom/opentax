@@ -920,7 +920,7 @@ Deno.test("f1099r.compute: box9b_total_employee_contributions without simplified
 // 8. Edge cases
 // ---------------------------------------------------------------------------
 
-Deno.test("f1099r.compute: code G direct rollover produces zero taxable on IRA line and no gross", () => {
+Deno.test("f1099r.compute: code G direct rollover reports IRA gross and zero taxable", () => {
   const result = compute([minimalIraItem({
     box1_gross_distribution: 5000,
     box2a_taxable_amount: 5000,
@@ -928,8 +928,7 @@ Deno.test("f1099r.compute: code G direct rollover produces zero taxable on IRA l
     rollover_code: RolloverCode.G,
   })]);
   const input = f1040Input(result);
-  // Code G (direct rollover) is not reported on line 4a per IRS Form 1040 instructions
-  assertEquals(input.line4a_ira_gross, undefined);
+  assertEquals(input.line4a_ira_gross, 5000);
   assertEquals(input.line4b_ira_taxable, 0);
 });
 
@@ -940,7 +939,7 @@ Deno.test("f1099r.compute: code G without box 2a stays a non-taxable direct roll
     direct_rollover_confirmed: true,
   })]);
   const input = f1040Input(result);
-  assertEquals(input.line5a_pension_gross, undefined);
+  assertEquals(input.line5a_pension_gross, 20_300);
   assertEquals(input.line5b_pension_taxable, 0);
   assertEquals(input.line5c_pension_rollover, true);
 });
@@ -980,6 +979,7 @@ Deno.test("f1099r.compute: code S rollover produces zero taxable", () => {
     rollover_code: RolloverCode.S,
   })]);
   const input = f1040Input(result);
+  assertEquals(input.line4a_ira_gross, 8000);
   assertEquals(input.line4b_ira_taxable, 0);
 });
 

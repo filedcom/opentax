@@ -527,6 +527,9 @@ export const irs1040Pdf: PdfFormDescriptor = {
     const child = form8814ParentPrintAmounts(allPending);
     return {
       ...fields,
+      ...(rollover && fields.line5b_pension_taxable === 0
+        ? { line5b_pension_taxable: "0" }
+        : {}),
       print_form8888_attached: Object.keys(allPending.f8888 ?? {}).length > 0,
       print_form8814_line3a_included: child.dividends > 0,
       print_form8814_line3b_included: child.dividends > 0,

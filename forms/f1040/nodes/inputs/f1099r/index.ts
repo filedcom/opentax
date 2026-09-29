@@ -374,19 +374,13 @@ function disabilityWagesItems(items: R1099Items): R1099Items {
   );
 }
 
-// Whether an item should be excluded from gross distribution lines (4a/5a).
-// Per IRS Form 1040 instructions, direct rollovers and recharacterizations
-// are not reported on lines 4a/5a. A code-G item with a positive box 2a is
-// reportable because it can represent a taxable rollover to a Roth account.
+// Whether another form owns the gross distribution or the code identifies a
+// non-reportable exchange. A direct rollover still belongs on line 4a or 5a;
+// its taxable amount is separately determined for line 4b or 5b.
 function isExcludedFromGross(item: R1099Item): boolean {
   if (item.exclude_4972 === true) return true;
   if (item.exclude_8606_roth === true) return true;
   if (ZERO_TAXABLE_CODES.has(item.box7_distribution_code)) return true;
-  if (
-    item.box7_distribution_code === "G" &&
-    (item.box2a_taxable_amount ?? 0) === 0
-  ) return true;
-  if (item.rollover_code === "G" || item.rollover_code === "S") return true;
   return false;
 }
 
@@ -417,8 +411,7 @@ function iraF1040Fields(
   psoExclusionLimit: number,
 ): Record<string, number> {
   const active = iraItems(activeItems(items));
-  // Per IRS instructions, zero-taxable-code items (rollovers, recharacterizations, etc.)
-  // are not reported on line 4a (gross). Only reportable distributions contribute to gross.
+  // Direct rollovers remain in gross distributions even when line 4b is zero.
   const reportableItems = active.filter((item) => !isExcludedFromGross(item));
   const gross = reportableItems.reduce(
     (sum, item) => sum + item.box1_gross_distribution,
@@ -454,8 +447,7 @@ function pensionF1040Fields(
   const active = pensionItems(activeItems(items)).filter((item) =>
     !disWagesSet.has(item)
   );
-  // Per IRS instructions, zero-taxable-code items (rollovers, recharacterizations, etc.)
-  // are not reported on line 5a (gross). Only reportable distributions contribute to gross.
+  // Direct rollovers remain in gross distributions even when line 5b is zero.
   const reportableItems = active.filter((item) => !isExcludedFromGross(item));
   const gross = reportableItems.reduce(
     (sum, item) => sum + item.box1_gross_distribution,
