@@ -1,6 +1,9 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../mef/header.ts";
-import { buildReviewedStockLoss7203, form7203StockLoss } from "./f7203_stock_loss.ts";
+import {
+  buildReviewedStockLoss7203,
+  form7203StockLoss,
+} from "./f7203_stock_loss.ts";
 
 const filer = {
   primarySSN: "123456789",
@@ -28,7 +31,8 @@ const ledger = {
   no_other_2025_stock_basis_changes: true,
   no_other_schedule_e_activity: true,
   materially_participated_in_s_corporation: true,
-  material_participation_workpaper_reference: "2025 shareholder participation log",
+  material_participation_workpaper_reference:
+    "2025 shareholder participation log",
   no_shareholder_debt_or_repayments: true,
   no_prior_year_suspended_losses: true,
   no_at_risk_or_passive_limitation: true,
@@ -41,6 +45,18 @@ const source = {
   box1_ordinary_business: -4_000,
   form7203_stock_loss_ledger: ledger,
 };
+
+const XSD_PATH = new URL(
+  "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/Shared/IRS7203/IRS7203.xsd",
+  import.meta.url,
+).pathname;
+let xsdAvailable = false;
+try {
+  Deno.statSync(XSD_PATH);
+  xsdAvailable = true;
+} catch {
+  // The official IRS schema bundle is local-only.
+}
 
 Deno.test("Form 7203 descriptor emits nothing without its pending source", () => {
   assertEquals(form7203StockLoss.build({}, context()), "");
@@ -66,35 +82,88 @@ Deno.test("staged Form 7203 stock-only XML follows TY2025 line and group order",
     context(),
   );
   assertStringIncludes(xml, "<ShareholderSSN>123456789</ShareholderSSN>");
-  assertStringIncludes(xml, "<SCorporationName><BusinessNameLine1Txt>Test S Corp</BusinessNameLine1Txt></SCorporationName>");
+  assertStringIncludes(
+    xml,
+    "<SCorporationName><BusinessNameLine1Txt>Test S Corp</BusinessNameLine1Txt></SCorporationName>",
+  );
   assertStringIncludes(xml, "<SCorporationEIN>987654321</SCorporationEIN>");
-  assertStringIncludes(xml, "<StockBasisBeginTaxYearAmt>3000</StockBasisBeginTaxYearAmt>");
-  assertStringIncludes(xml, "<TotalDecreaseStockBasisAmt>3000</TotalDecreaseStockBasisAmt>");
-  assertStringIncludes(xml, "<StockBasisEndTaxYearAmt>0</StockBasisEndTaxYearAmt>");
-  assertStringIncludes(xml, "<ShrCarryoverAmountsGrp><OrdinaryBusinessLossAmt>1000</OrdinaryBusinessLossAmt><TotalAllowableLossAmt>1000</TotalAllowableLossAmt></ShrCarryoverAmountsGrp>");
-  assertEquals(xml.indexOf("<ShrCurrentYrLossDeductionsGrp>") <
-    xml.indexOf("<ShrAllwblLossFromStockBasisGrp>"), true);
-  assertEquals(xml.indexOf("<ShrAllwblLossFromStockBasisGrp>") <
-    xml.indexOf("<ShrCarryoverAmountsGrp>"), true);
+  assertStringIncludes(
+    xml,
+    "<StockBasisBeginTaxYearAmt>3000</StockBasisBeginTaxYearAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalDecreaseStockBasisAmt>3000</TotalDecreaseStockBasisAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<StockBasisEndTaxYearAmt>0</StockBasisEndTaxYearAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<ShrCarryoverAmountsGrp><OrdinaryBusinessLossAmt>1000</OrdinaryBusinessLossAmt><TotalAllowableLossAmt>1000</TotalAllowableLossAmt></ShrCarryoverAmountsGrp>",
+  );
+  assertEquals(
+    xml.indexOf("<ShrCurrentYrLossDeductionsGrp>") <
+      xml.indexOf("<ShrAllwblLossFromStockBasisGrp>"),
+    true,
+  );
+  assertEquals(
+    xml.indexOf("<ShrAllwblLossFromStockBasisGrp>") <
+      xml.indexOf("<ShrCarryoverAmountsGrp>"),
+    true,
+  );
+});
+
+Deno.test({
+  name: "XSD: Form 7203 stock-only loss and suspended balance",
+  ignore: !xsdAvailable,
+  sanitizeOps: false,
+  sanitizeResources: false,
+}, async () => {
+  const xml = buildReviewedStockLoss7203(
+    { stock_basis_beginning: 3_000, ordinary_loss: 4_000 },
+    context(),
+  ).replace(
+    "<IRS7203>",
+    '<IRS7203 xmlns="http://www.irs.gov/efile" documentId="IRS7203-1">',
+  );
+  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(path, xml);
+    const result = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", XSD_PATH, path],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
+  } finally {
+    await Deno.remove(path);
+  }
 });
 
 Deno.test("staged Form 7203 rejects a pending amount or shareholder mismatch", () => {
   assertThrows(
-    () => buildReviewedStockLoss7203(
-      { stock_basis_beginning: 2_000, ordinary_loss: 4_000 },
-      context(),
-    ),
+    () =>
+      buildReviewedStockLoss7203(
+        { stock_basis_beginning: 2_000, ordinary_loss: 4_000 },
+        context(),
+      ),
     Error,
     "same single-source stock-only loss",
   );
   assertThrows(
-    () => buildReviewedStockLoss7203(
-      { stock_basis_beginning: 3_000, ordinary_loss: 4_000 },
-      context({ ...source, form7203_stock_loss_ledger: {
-        ...ledger,
-        shareholder_ssn: "999999999",
-      } }),
-    ),
+    () =>
+      buildReviewedStockLoss7203(
+        { stock_basis_beginning: 3_000, ordinary_loss: 4_000 },
+        context({
+          ...source,
+          form7203_stock_loss_ledger: {
+            ...ledger,
+            shareholder_ssn: "999999999",
+          },
+        }),
+      ),
     Error,
     "same single-source stock-only loss",
   );
@@ -102,18 +171,20 @@ Deno.test("staged Form 7203 rejects a pending amount or shareholder mismatch", (
 
 Deno.test("staged Form 7203 rejects mixed K-1 basis items", () => {
   assertThrows(
-    () => buildReviewedStockLoss7203(
-      { stock_basis_beginning: 3_000, ordinary_loss: 4_000 },
-      context({ ...source, box4_interest: 200 }),
-    ),
+    () =>
+      buildReviewedStockLoss7203(
+        { stock_basis_beginning: 3_000, ordinary_loss: 4_000 },
+        context({ ...source, box4_interest: 200 }),
+      ),
     Error,
     "same single-source stock-only loss",
   );
   assertThrows(
-    () => buildReviewedStockLoss7203(
-      { stock_basis_beginning: 3_000, ordinary_loss: 4_000, new_loans: 1 },
-      context(),
-    ),
+    () =>
+      buildReviewedStockLoss7203(
+        { stock_basis_beginning: 3_000, ordinary_loss: 4_000, new_loans: 1 },
+        context(),
+      ),
     Error,
     "does not accept unreviewed basis fields",
   );
@@ -129,24 +200,35 @@ Deno.test("staged Form 7203 zero basis skips line 10 and column c", () => {
   );
   assertEquals(xml.includes("<StockBasisBeforeLossDedAmt>"), false);
   assertEquals(xml.includes("<ShrAllwblLossFromStockBasisGrp>"), false);
-  assertStringIncludes(xml, "<StockBasisEndTaxYearAmt>0</StockBasisEndTaxYearAmt>");
-  assertStringIncludes(xml, "<ShrCarryoverAmountsGrp><OrdinaryBusinessLossAmt>4000</OrdinaryBusinessLossAmt>");
+  assertStringIncludes(
+    xml,
+    "<StockBasisEndTaxYearAmt>0</StockBasisEndTaxYearAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<ShrCarryoverAmountsGrp><OrdinaryBusinessLossAmt>4000</OrdinaryBusinessLossAmt>",
+  );
 });
 
 Deno.test("staged Form 7203 rejects a filed Schedule 1/1040 loss mismatch", () => {
   const mismatched = context();
-  assertThrows(() => buildReviewedStockLoss7203(
-    { stock_basis_beginning: 3_000, ordinary_loss: 4_000 },
-    {
-      ...mismatched,
-      pending: {
-        ...mismatched.pending,
-        schedule1: {
-          line5_schedule_e: -4_000,
-          line10_total_additional_income: -4_000,
+  assertThrows(
+    () =>
+      buildReviewedStockLoss7203(
+        { stock_basis_beginning: 3_000, ordinary_loss: 4_000 },
+        {
+          ...mismatched,
+          pending: {
+            ...mismatched.pending,
+            schedule1: {
+              line5_schedule_e: -4_000,
+              line10_total_additional_income: -4_000,
+            },
+            f1040: { line8_additional_income: -4_000 },
+          },
         },
-        f1040: { line8_additional_income: -4_000 },
-      },
-    },
-  ), Error, "must match Schedule 1 line 5");
+      ),
+    Error,
+    "must match Schedule 1 line 5",
+  );
 });

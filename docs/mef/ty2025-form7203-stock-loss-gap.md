@@ -1,4 +1,4 @@
-# TY2025 Form 7203 stock-only ordinary-loss slice (written, unrun)
+# TY2025 Form 7203 stock-only ordinary-loss slice (focused check)
 
 The [IRS Form 7203 instructions](https://www.irs.gov/instructions/i7203)
 (latest published revision: December 2022) require a form for a shareholder
@@ -31,8 +31,8 @@ loss on printed Schedule 1 line 5. Other Schedule E activity is rejected in
 this narrow route rather than emitting a duplicate Schedule E document.
 The Schedule 1 node now folds Form 7203's disallowed amount into printed
 line 5 instead of an unprinted other-income subtotal; the AGI branch uses the
-same adjustment once. Focused node, native Schedule 1, and PDF field-map tests
-are written but unrun.
+same adjustment once. The focused native/PDF Form 7203 cases pass; the wider
+source-to-return and Schedule 1/1040 regression remains open.
 
 The XML order
 and element names follow the checked-in TY2025v5.4 `IRS7203.xsd`: shareholder
@@ -44,11 +44,17 @@ requires its ledger and pending loss/basis to agree, and refuses extra pending
 basis fields. The PDF map uses the official two-page Rev. December 2022
 AcroForm field tree, including Part I lines 1/5/7/10/11/14/15 and Part III
 line 35 and 47 columns (a), (c), and (e). The canonical field names were
-inspected, but filled appearance was not rendered or visually checked.
+inspected. The two-page filled stock-only case was rendered and visually checked:
+shareholder/corporation identity, original-shareholder box, Part I opening
+$3,000 basis and allowed reduction, and Part III $4,000 current loss, $3,000
+stock-allowed loss, and $1,000 carryover land in the correct columns. The
+artifact is `.state/research/ty2025-form7203-filled-review.pdf`. The native
+case passes the local TY2025 v5.4 `IRS7203` XSD; ten focused native/PDF tests
+pass.
 
 This is a registered source-backed route, but it is **not yet filing-verified**.
-Focused tests and the single full batch, XSD and IRS business-rule validation,
-filled-PDF inspection, and ATS acceptance remain unrun. The MeF/PDF preflight
+The current-source full batch, full-return and Schedule E/1/1040 checks,
+IRS business-rule validation, and ATS acceptance remain open. The MeF/PDF preflight
 still blocks other Form 7203 shapes. Actual box-16 code-D/E transactions,
 multiple corporations,
 stock blocks or shareholders, purchased/inherited/gift shares, contributions,
