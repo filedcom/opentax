@@ -180,6 +180,20 @@ Deno.test("one sourced Schedule F farm reaches Form 8995 MeF, PDF, and full-retu
     Error,
     "source reconciliation",
   );
+  assertThrows(() =>
+    form8995.build(fields, {
+      pending: {
+        ...pending,
+        schedule_f: {
+          ...pending.schedule_f,
+          farm_sources: [{
+            farm_id: "north",
+            kind: "1099nec_farm_income",
+            amount: 100,
+          }],
+        },
+      },
+    }), Error);
 });
 
 Deno.test("Form 8995 omits no-claim tracking fields in both exports", () => {

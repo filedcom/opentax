@@ -46,6 +46,11 @@ Schedule D and retirement-plan sources, plus any Form 7206 claim beyond its
 retained Schedule C and Schedule SE source records, even if their deposits were
 omitted from Form 8995 pending data.
 
+These zero-source conditions are an explicit supported boundary, not inferred
+zeros: export checks the final Schedule 1 and Form 1040 before producing a
+document. The synthetic profitable Schedule C fixture exercises the ordinary
+half-SE-tax route through calculation, native XML, and PDF projection.
+
 ## Implemented one-farm route
 
 The Schedule F node now retains an identified farm row with the source Schedule
@@ -53,14 +58,15 @@ F item and its computed profit. A positive Form 8995 claim requires one farm ID,
 farm name, nine-digit EIN, material participation, and an explicit confirmation
 that there are no other attributable QBI adjustments. The return must also
 confirm no prior or suspended QBI loss and no patronage of a specified
-cooperative. The exporter recalculates the farm profit, including sourced WOTC
-wage reductions, and reconciles it to Schedule 1 line 6. It ties the half-SE-tax
+cooperative. The exporter rechecks linked farm source amounts, recalculates the
+farm profit including sourced WOTC wage reductions, and reconciles it to
+Schedule 1 line 6. It ties the half-SE-tax
 deduction to Schedule SE, Form 7206's retained Schedule SE calculation, and
 Schedule 1 line 15. It checks Form 1040 taxable income and the line 13 QBI
 deduction against every printed Form 8995 line. The route rejects other QBI
 businesses, cooperative source records and Schedule F cooperative lines, the
-farm optional SE method, capital
-gain, REIT/PTP amounts, and separately attributable health insurance or
+farm optional SE method, capital gain, REIT/PTP amounts, and separately
+attributable health insurance or
 retirement deductions. Missing or conflicting facts stop MeF and PDF export.
 
 A synthetic $80,000 cash-farm return passed graph execution, native full-return
@@ -75,11 +81,6 @@ The reviewed Form 8995 PDF SHA-256 is
 `ba84326e126840c6ba96286b8e1c323c25bbec65127258890840d23621c5100d`;
 the nine-page packet SHA-256 is
 `640c25a118d1d88494c481c135a003f21f010d18499e211f69a8934f6b173ad7`.
-
-These zero-source conditions are an explicit supported boundary, not inferred
-zeros: export checks the final Schedule 1 and Form 1040 before producing a
-document. The synthetic profitable Schedule C fixture exercises the ordinary
-half-SE-tax route through calculation, native XML, and PDF projection.
 
 ## Remaining gaps
 

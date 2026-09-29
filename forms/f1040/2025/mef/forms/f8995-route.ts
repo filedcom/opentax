@@ -9,6 +9,7 @@ import {
   computeNetProfit as computeFarmNetProfit,
   inputSchema as scheduleFInputSchema,
   itemSchema as scheduleFItemSchema,
+  reconcileFarmSources,
   wotcReductionsByFarm,
 } from "../../../nodes/intermediate/forms/schedule_f/index.ts";
 
@@ -217,6 +218,7 @@ export function assertOneScheduleF8995(
   }
   const pending = normalizeAllPending(rawPending as Record<string, unknown>);
   const source = scheduleFInputSchema.safeParse(pending.schedule_f);
+  if (source.success) reconcileFarmSources(source.data);
   const farm = source.success && source.data.schedule_fs.length === 1
     ? source.data.schedule_fs[0]
     : undefined;
