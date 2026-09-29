@@ -13,7 +13,7 @@ import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 import {
   inputSchema as f1099patrInputSchema,
   itemSchema as f1099patrItemSchema,
-} from "../../../inputs/f1099patr/index.ts";
+} from "../../../inputs/f1099patr/schema.ts";
 import {
   computeNetProfit,
   itemSchema as scheduleCItemSchema,

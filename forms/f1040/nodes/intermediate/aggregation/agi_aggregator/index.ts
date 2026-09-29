@@ -569,23 +569,25 @@ function computeAgi(
 class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "agi_aggregator";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([
-    f1040,
-    standard_deduction,
-    scheduleA,
-    eitc,
-    f8812,
-    f2441,
-    form8995,
-    form8960,
-    form8962,
-    form8880,
-    form8582,
-    form_1116,
-    schedule1a,
-    agi_final,
-    schedule_j_calculation,
-  ]);
+  get outputNodes() {
+    return new OutputNodes([
+      f1040,
+      standard_deduction,
+      scheduleA,
+      eitc,
+      f8812,
+      f2441,
+      form8995,
+      form8960,
+      form8962,
+      form8880,
+      form8582,
+      form_1116,
+      schedule1a,
+      agi_final,
+      schedule_j_calculation,
+    ]);
+  }
 
   compute(ctx: NodeContext, rawInput: AgiInput): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
