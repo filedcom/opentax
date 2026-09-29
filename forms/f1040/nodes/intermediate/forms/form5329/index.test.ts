@@ -60,13 +60,16 @@ Deno.test("owner entries: duplicate HSA Part VII for one person fails closed", (
     december_31_value: 100,
   };
   assertThrows(
-    () => form5329.compute(
-      { taxYear: 2025, formType: "f1040" },
-      inputSchema.parse({ owner_entries: [
-        { owner: TS.T, hsa_part_vii: partVII },
-        { owner: TS.T, hsa_part_vii: partVII },
-      ] }),
-    ),
+    () =>
+      form5329.compute(
+        { taxYear: 2025, formType: "f1040" },
+        inputSchema.parse({
+          owner_entries: [
+            { owner: TS.T, hsa_part_vii: partVII },
+            { owner: TS.T, hsa_part_vii: partVII },
+          ],
+        }),
+      ),
     Error,
     "duplicate hsa_part_vii owner sources",
   );
@@ -123,13 +126,14 @@ Deno.test("schema: accepts valid full input", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("no_output: no fields provided → no outputs", () => {
-  const result = compute({ owner: TS.T,});
+  const result = compute({ owner: TS.T });
   assertEquals(result.outputs.length, 0);
 });
 
 Deno.test("no_tax: early distribution fully covered by exception retains printable form amount", () => {
   // All $10,000 covered by exception — net subject to tax = 0
-  const result = compute({ owner: TS.T,
+  const result = compute({
+    owner: TS.T,
     early_distribution: 10_000,
     early_distribution_exception: 10_000,
   });
@@ -141,7 +145,8 @@ Deno.test("no_tax: early distribution fully covered by exception retains printab
 });
 
 Deno.test("no_output: zero excess contributions → no outputs", () => {
-  const result = compute({ owner: TS.T,
+  const result = compute({
+    owner: TS.T,
     excess_traditional_ira: 0,
     traditional_ira_value: 5000,
   });
@@ -167,7 +172,8 @@ Deno.test("part1: 10% penalty on full early distribution (no exception)", () => 
 
 Deno.test("part1: 10% penalty reduced by exception", () => {
   // Line 1 = 20000, line 2 = 5000, line 3 = 15000, line 4 = 1500
-  const result = compute({ owner: TS.T,
+  const result = compute({
+    owner: TS.T,
     early_distribution: 20_000,
     early_distribution_exception: 5_000,
   });
@@ -180,7 +186,8 @@ Deno.test("part1: 10% penalty reduced by exception", () => {
 Deno.test("part1: exception cannot exceed distribution", () => {
   assertThrows(
     () =>
-      compute({ owner: TS.T,
+      compute({
+        owner: TS.T,
         early_distribution: 5_000,
         early_distribution_exception: 8_000,
       }),
@@ -206,7 +213,8 @@ Deno.test("part1_simple: SIMPLE IRA and regular early dist combine", () => {
   // Regular: 10000 × 10% = 1000
   // SIMPLE:  5000 × 25% = 1250
   // Total = 2250
-  const result = compute({ owner: TS.T,
+  const result = compute({
+    owner: TS.T,
     early_distribution: 10_000,
     simple_ira_early_distribution: 5_000,
   });
@@ -231,7 +239,8 @@ Deno.test("part2: 10% penalty on ESA/ABLE distribution (no exception)", () => {
 
 Deno.test("part2: exception reduces ESA/ABLE penalty", () => {
   // Line 5 = 5000, line 6 = 2000, line 7 = 3000, line 8 = 300
-  const result = compute({ owner: TS.T,
+  const result = compute({
+    owner: TS.T,
     esa_able_distribution: 5_000,
     esa_able_exception: 2_000,
   });
@@ -241,12 +250,13 @@ Deno.test("part2: exception reduces ESA/ABLE penalty", () => {
   assertEquals(fieldsOf(result.outputs, schedule2)!.line8_form5329_tax, 300);
 });
 
-Deno.test("part2: fully excepted ESA/ABLE → no output", () => {
-  const result = compute({ owner: TS.T,
+Deno.test("part2: fully excepted ESA/ABLE retains filing form without tax", () => {
+  const result = compute({
+    owner: TS.T,
     esa_able_distribution: 2_000,
     esa_able_exception: 2_000,
   });
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs.map((row) => row.nodeType), ["form5329"]);
 });
 
 // ---------------------------------------------------------------------------
@@ -255,7 +265,8 @@ Deno.test("part2: fully excepted ESA/ABLE → no output", () => {
 
 Deno.test("part3: 6% penalty on excess traditional IRA contributions", () => {
   // min(2000, 15000) × 6% = 120
-  const result = compute({ owner: TS.T,
+  const result = compute({
+    owner: TS.T,
     excess_traditional_ira: 2_000,
     traditional_ira_value: 15_000,
   });
@@ -267,7 +278,8 @@ Deno.test("part3: 6% penalty on excess traditional IRA contributions", () => {
 
 Deno.test("part3: 6% capped at IRA FMV when excess > FMV", () => {
   // min(5000, 500) × 6% = 30 (FMV is the lesser)
-  const result = compute({ owner: TS.T,
+  const result = compute({
+    owner: TS.T,
     excess_traditional_ira: 5_000,
     traditional_ira_value: 500,
   });
@@ -291,7 +303,8 @@ Deno.test("part3: excess traditional IRA with no FMV is rejected", () => {
 
 Deno.test("part4: 6% penalty on excess Roth IRA contributions", () => {
   // min(1500, 10000) × 6% = 90
-  const result = compute({ owner: TS.T,
+  const result = compute({
+    owner: TS.T,
     excess_roth_ira: 1_500,
     roth_ira_value: 10_000,
   });
@@ -303,7 +316,8 @@ Deno.test("part4: 6% penalty on excess Roth IRA contributions", () => {
 
 Deno.test("part4: 6% Roth capped at account FMV", () => {
   // min(8000, 300) × 6% = 18
-  const result = compute({ owner: TS.T,
+  const result = compute({
+    owner: TS.T,
     excess_roth_ira: 8_000,
     roth_ira_value: 300,
   });
@@ -319,7 +333,8 @@ Deno.test("part4: 6% Roth capped at account FMV", () => {
 
 Deno.test("part5: 6% penalty on excess Coverdell ESA contributions", () => {
   // min(500, 2000) × 6% = 30
-  const result = compute({ owner: TS.T,
+  const result = compute({
+    owner: TS.T,
     excess_coverdell_esa: 500,
     coverdell_esa_value: 2_000,
   });
@@ -335,7 +350,8 @@ Deno.test("part5: 6% penalty on excess Coverdell ESA contributions", () => {
 
 Deno.test("part6: 6% penalty on excess Archer MSA contributions", () => {
   // min(1000, 5000) × 6% = 60
-  const result = compute({ owner: TS.T,
+  const result = compute({
+    owner: TS.T,
     excess_archer_msa: 1_000,
     archer_msa_value: 5_000,
   });
@@ -351,7 +367,8 @@ Deno.test("part6: 6% penalty on excess Archer MSA contributions", () => {
 
 Deno.test("part7: 6% penalty on excess HSA contributions", () => {
   // min(2000, 8000) × 6% = 120
-  const result = compute({ owner: TS.T,
+  const result = compute({
+    owner: TS.T,
     hsa_part_vii: {
       line42_prior_excess: 0,
       line43_unused_contribution_room: 0,
@@ -368,7 +385,8 @@ Deno.test("part7: 6% penalty on excess HSA contributions", () => {
 
 Deno.test("part7: HSA excess capped at account value", () => {
   // min(10000, 200) × 6% = 12
-  const result = compute({ owner: TS.T,
+  const result = compute({
+    owner: TS.T,
     hsa_part_vii: {
       line42_prior_excess: 0,
       line43_unused_contribution_room: 0,
@@ -384,7 +402,8 @@ Deno.test("part7: HSA excess capped at account value", () => {
 });
 
 Deno.test("part7: prior-year HSA excess is reduced by unused room and taxable distributions", () => {
-  const result = compute({ owner: TS.T,
+  const result = compute({
+    owner: TS.T,
     hsa_part_vii: {
       line42_prior_excess: 2_000,
       line43_unused_contribution_room: 500,
@@ -402,7 +421,8 @@ Deno.test("part7: prior-year HSA excess is reduced by unused room and taxable di
 });
 
 Deno.test("part7: prior-year HSA excess fully absorbed has no 2025 excise", () => {
-  const result = compute({ owner: TS.T,
+  const result = compute({
+    owner: TS.T,
     hsa_part_vii: {
       line42_prior_excess: 1_000,
       line43_unused_contribution_room: 900,
@@ -422,7 +442,8 @@ Deno.test("part7: prior-year HSA excess fully absorbed has no 2025 excise", () =
 
 Deno.test("part8: 6% penalty on excess ABLE contributions", () => {
   // min(1000, 5000) × 6% = 60
-  const result = compute({ owner: TS.T,
+  const result = compute({
+    owner: TS.T,
     excess_able: 1_000,
     able_value: 5_000,
   });
@@ -441,7 +462,8 @@ Deno.test("routing: all penalties aggregate to single schedule2 output", () => {
   // Part III: min(2000, 20000) × 6% = 120
   // Part IV: min(500, 8000) × 6% = 30
   // Total = 1150
-  const result = compute({ owner: TS.T,
+  const result = compute({
+    owner: TS.T,
     early_distribution: 10_000,
     excess_traditional_ira: 2_000,
     traditional_ira_value: 20_000,
@@ -469,7 +491,8 @@ Deno.test("routing: output reaches schedule2 and prints the aggregated form amou
 });
 
 Deno.test("two independent 1099-R early distributions sum before tax and filing", () => {
-  const result = compute({ owner: TS.T,
+  const result = compute({
+    owner: TS.T,
     early_distribution: [4_000, 6_000],
     distribution_code: ["1", "1"],
   });
@@ -486,16 +509,21 @@ Deno.test("two independent 1099-R early distributions sum before tax and filing"
 Deno.test("taxpayer and spouse 1099-R amounts remain separate owner forms", () => {
   const result = form5329.compute(
     { taxYear: 2025, formType: "f1040" },
-    inputSchema.parse({ owner_entries: [
-      { owner: TS.T, early_distribution: 4_000 },
-      { owner: TS.S, early_distribution: 6_000 },
-    ] }),
+    inputSchema.parse({
+      owner_entries: [
+        { owner: TS.T, early_distribution: 4_000 },
+        { owner: TS.S, early_distribution: 6_000 },
+      ],
+    }),
   );
   const forms = findOutput(result, "form5329")?.fields.owner_forms as Array<
     Record<string, unknown>
   >;
   assertEquals(forms.map((form) => form.early_distribution), [4_000, 6_000]);
-  assertEquals(findOutput(result, "schedule2")?.fields.line8_form5329_tax, 1_000);
+  assertEquals(
+    findOutput(result, "schedule2")?.fields.line8_form5329_tax,
+    1_000,
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -510,7 +538,8 @@ Deno.test("smoke: multiple penalties across several parts", () => {
   // Part IV: min(1000, 5000) × 6% = 60
   // Part VII: min(500, 8000) × 6% = 30
   // Total = 2910
-  const result = compute({ owner: TS.T,
+  const result = compute({
+    owner: TS.T,
     early_distribution: 15_000,
     simple_ira_early_distribution: 4_000,
     esa_able_distribution: 3_000,

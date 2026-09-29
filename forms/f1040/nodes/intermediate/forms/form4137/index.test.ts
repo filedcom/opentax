@@ -412,7 +412,7 @@ Deno.test("Form 4137 lower allocated tips require reconciled daily records", () 
             daily_records: [
               {
                 ...records[0].daily_records[0],
-                cash_charge_tips_received: 900,
+                cash_charge_tips_received: 1_400,
               },
               records[0].daily_records[1],
             ],
