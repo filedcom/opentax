@@ -4108,13 +4108,19 @@ Deno.test({
   sanitizeResources: false,
   ignore: !xsdAvailable,
 }, async () => {
-  const general = singleGeneral();
+  const general = {
+    ...singleGeneral(),
+    taxpayer_can_be_claimed_as_dependent: false,
+  };
   const result = runReturn({
     general,
     w2: [w2Item(30_120, 3_000)],
     f1099int: [{ payer_name: "Municipal Bond", box8: 5_000 }],
     f1095a: [{
       issuer_name: "Marketplace Plan",
+      policy_number: "POLICY-TAX-EXEMPT",
+      coverage_state: "TX",
+      covered_individual_ssns: ["111223333"],
       annual_premium: 6_000,
       annual_slcsp: 6_000,
       annual_aptc: 0,
@@ -4122,6 +4128,10 @@ Deno.test({
       monthly_slcsps: Array(12).fill(500),
       monthly_aptcs: Array(12).fill(0),
       slcsp_corrections: noAptcSlcspDeterminations(
+        Array(12).fill(500),
+        Array(12).fill(500),
+      ),
+      no_aptc_monthly_evidence: noAptcPaymentEvidence(
         Array(12).fill(500),
         Array(12).fill(500),
       ),
@@ -4136,6 +4146,14 @@ Deno.test({
   );
   assertStringIncludes(xml, "<ModifiedAGIAmt>35120</ModifiedAGIAmt>");
   assertStringIncludes(xml, "<HouseholdIncomeAmt>35120</HouseholdIncomeAmt>");
+  assertThrows(
+    () => buildMefXml({
+      ...result.pending,
+      f1099int: { f1099ints: [{ payer_name: "Municipal Bond", box8: 4_999 }] },
+    } as MefFormsPending, extractFilerIdentity(general)),
+    Error,
+    "tax-exempt MAGI needs matching Form 1099-INT source",
+  );
   await validateXsd(xml, "1099-INT tax-exempt interest and Form 8962 MAGI");
 });
 

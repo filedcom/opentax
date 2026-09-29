@@ -12,6 +12,7 @@ import {
   inputSchema as form8962InputSchema,
 } from "../../../nodes/intermediate/forms/form8962/index.ts";
 import { inputSchema as generalSchema } from "../../../nodes/inputs/general/index.ts";
+import { inputSchema as f1099intSchema } from "../../../nodes/inputs/f1099int/index.ts";
 import { reconcileDependentMagi } from "../../form8962-dependent-magi.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
@@ -296,6 +297,24 @@ function isBelow100AptcOnly(fields: Input, context?: MefBuildContext): boolean {
     (fields.federal_poverty_pct ?? 100) < 100 &&
     fields.total_premium_tax_credit === 0 &&
     (fields.total_advance_ptc ?? 0) > 0;
+}
+
+function sourcedTaxExemptInterest(
+  pending: Readonly<Record<string, unknown>> | undefined,
+  reported: number,
+): number {
+  if (reported === 0) return 0;
+  const source = f1099intSchema.safeParse(pending?.f1099int);
+  if (
+    !source.success ||
+    source.data.f1099ints.reduce(
+        (total, item) => total + (item.box8 ?? 0) - (item.box13 ?? 0),
+        0,
+      ) !== reported
+  ) {
+    throw new Error("Form 8962 tax-exempt MAGI needs matching Form 1099-INT source");
+  }
+  return reported;
 }
 
 function reconcileBelow100AptcOnly(
@@ -734,7 +753,10 @@ function reconcileNoAptcPolicyMonths(
     );
   }
   const povertyLine = reconcilePovertyTable(fields, context);
-  const income = form1040.data.line11_agi;
+  const income = form1040.data.line11_agi + sourcedTaxExemptInterest(
+    pending,
+    form1040.data.line2a_tax_exempt ?? 0,
+  );
   const incomeAmounts = simplePolicyIncomeAmounts(
     income,
     povertyLine,
@@ -742,7 +764,6 @@ function reconcileNoAptcPolicyMonths(
     policies.length,
   );
   if (
-    (form1040.data.line2a_tax_exempt ?? 0) !== 0 ||
     (form1040.data.line6a_ss_gross ?? 0) !==
       (form1040.data.line6b_ss_taxable ?? 0) ||
     fields.taxpayer_modified_agi !== income ||
@@ -924,7 +945,10 @@ function reconcileNoAptcAnnualPolicy(
     );
   }
   const povertyLine = reconcilePovertyTable(fields, context);
-  const income = form1040.data.line11_agi;
+  const income = form1040.data.line11_agi + sourcedTaxExemptInterest(
+    pending,
+    form1040.data.line2a_tax_exempt ?? 0,
+  );
   const incomeAmounts = simplePolicyIncomeAmounts(
     income,
     povertyLine,
@@ -932,7 +956,6 @@ function reconcileNoAptcAnnualPolicy(
     policies.length,
   );
   if (
-    (form1040.data.line2a_tax_exempt ?? 0) !== 0 ||
     (form1040.data.line6a_ss_gross ?? 0) !==
       (form1040.data.line6b_ss_taxable ?? 0) ||
     fields.taxpayer_modified_agi !== income ||
