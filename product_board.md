@@ -54,6 +54,8 @@ The linked Schedule F/Form 4835 CCC and crop-statement return also passed its
 focused TY2025 XSD validation (1/1). Form 8283 PDF's eight focused cases now
 pass with explicit similar-property groups in the synthetic multi-gift facts;
 the divergence case still reaches the Schedule A source-reconciliation guard.
+The Form 8283 input/calculation file also passes 43/43 after updating its
+expected reduced-claim error text to the current guard.
 
 The 2026-09-29 moving-worktree diagnostic `deno task test` run finished with
 8,609 passed and 205 failed in 11m18s. It is not the agreed fixed-commit

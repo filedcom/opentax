@@ -294,7 +294,7 @@ Deno.test("f8283.compute: a voluntary underclaim cannot masquerade as a required
   assertThrows(
     () => compute({ section_a_items: [item] }),
     Error,
-    "needs certified sale proceeds or a sourced short-term ordinary-income reduction",
+    "needs certified sale proceeds, a sourced short-term ordinary-income reduction",
   );
   assertThrows(
     () =>
