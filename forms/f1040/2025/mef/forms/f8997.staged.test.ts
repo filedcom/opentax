@@ -1,9 +1,9 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import type { ExecuteResult } from "../../../../../core/runtime/executor.ts";
 import {
+  type Form8997Input,
   QofEventKind,
   QofInclusionType,
-  type Form8997Input,
 } from "../../../nodes/inputs/f8997/ledger.ts";
 import { stagedForm8997Pdf } from "../../pdf/forms/f8997.staged.ts";
 import { buildStagedIRS8997 } from "./f8997.staged.ts";
@@ -129,14 +129,29 @@ Deno.test("staged IRS8997 projects all four ordered parts and derived totals", (
   assertStringIncludes(xml, "<CapGainDefrdInvstQOFCurrTYGrp>");
   assertStringIncludes(xml, "<InclsnEvtOthTrnsfrDurCurrTYGrp>");
   assertStringIncludes(xml, "<TotQOFInvstHoldEOYGrp>");
-  assertStringIncludes(xml, "<TotBOYLTDefrdGainRmngQOFAmt>50000</TotBOYLTDefrdGainRmngQOFAmt>");
-  assertStringIncludes(xml, "<TotShortTermDefrdGainRmngAmt>20000</TotShortTermDefrdGainRmngAmt>");
-  assertStringIncludes(xml, "<TotPrevDefrdLongTermGainAmt>10000</TotPrevDefrdLongTermGainAmt>");
-  assertStringIncludes(xml, "<TotEOYLTDefrdGainInvstAmt>40000</TotEOYLTDefrdGainInvstAmt>");
-  assertStringIncludes(xml, "<Form1099BNotReceivedInd>X</Form1099BNotReceivedInd>");
+  assertStringIncludes(
+    xml,
+    "<TotBOYLTDefrdGainRmngQOFAmt>50000</TotBOYLTDefrdGainRmngQOFAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotShortTermDefrdGainRmngAmt>20000</TotShortTermDefrdGainRmngAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotPrevDefrdLongTermGainAmt>10000</TotPrevDefrdLongTermGainAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotEOYLTDefrdGainInvstAmt>40000</TotEOYLTDefrdGainInvstAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<Form1099BNotReceivedInd>X</Form1099BNotReceivedInd>",
+  );
   assertEquals(
     xml.indexOf("TotQOFInvstHoldBOYGrp") <
-      xml.indexOf("CapGainDefrdInvstQOFCurrTYGrp") &&
+        xml.indexOf("CapGainDefrdInvstQOFCurrTYGrp") &&
       xml.indexOf("CapGainDefrdInvstQOFCurrTYGrp") <
         xml.indexOf("InclsnEvtOthTrnsfrDurCurrTYGrp") &&
       xml.indexOf("InclsnEvtOthTrnsfrDurCurrTYGrp") <
@@ -146,7 +161,11 @@ Deno.test("staged IRS8997 projects all four ordered parts and derived totals", (
 });
 
 Deno.test("staged Form 8997 PDF uses the same Part I-IV ledger and only form pages", () => {
-  const instance = stagedForm8997Pdf.instances?.({ ...source }, undefined, pending)[0];
+  const instance = stagedForm8997Pdf.instances?.(
+    { ...source },
+    undefined,
+    pending,
+  )[0];
   assertEquals(stagedForm8997Pdf.pageIndices?.({}), [0, 1]);
   assertEquals(instance?.part1_row1_ein, "123456789");
   assertEquals(instance?.part1_row1_date, "01/15/2020");
@@ -158,7 +177,7 @@ Deno.test("staged Form 8997 PDF uses the same Part I-IV ledger and only form pag
   assertEquals(stagedForm8997Pdf.fields.length, 133);
 });
 
-Deno.test("staged Form 8997 PDF rejects an unsupported continuation page", () => {
+Deno.test("staged Form 8997 PDF rejects unsupported exception events", () => {
   const overflowing = structuredClone(source);
   for (let index = 0; index < 5; index++) {
     overflowing.investment_lots[0].events.push({
@@ -173,12 +192,13 @@ Deno.test("staged Form 8997 PDF rejects an unsupported continuation page", () =>
     });
   }
   assertThrows(
-    () => stagedForm8997Pdf.instances?.(overflowing, undefined, {
-      ...pending,
-      f8997: overflowing,
-    }),
+    () =>
+      stagedForm8997Pdf.instances?.(overflowing, undefined, {
+        ...pending,
+        f8997: overflowing,
+      }),
     Error,
-    "continuation sheet",
+    "non-sale, mixed-character and special events need a separate verified join",
   );
 });
 
@@ -190,21 +210,31 @@ Deno.test("staged Form 8997 rejects a missing executor Schedule D transaction", 
   );
 });
 
-Deno.test("staged Form 8997 rejects a code Z sign mismatch", () => {
-  const changed = structuredClone(pending) as Record<string, Record<string, unknown>>;
+Deno.test("staged Form 8997 rejects a Form 8949 arithmetic mismatch", () => {
+  const changed = structuredClone(pending) as Record<
+    string,
+    Record<string, unknown>
+  >;
   const rows = changed.form8949.transaction as Array<Record<string, unknown>>;
   rows[1].adjustment_amount = 20_000;
   assertThrows(
     () => buildStagedIRS8997(changed),
     Error,
-    "differs between Form 8949 and Schedule D",
+    "gain or loss does not reconcile to proceeds, basis, and column (g)",
   );
 });
 
 Deno.test("staged Form 8997 rejects a matching but wrong-character code Z row", () => {
-  const changed = structuredClone(pending) as Record<string, Record<string, unknown>>;
-  const formRows = changed.form8949.transaction as Array<Record<string, unknown>>;
-  const scheduleRows = changed.schedule_d.transaction as Array<Record<string, unknown>>;
+  const changed = structuredClone(pending) as Record<
+    string,
+    Record<string, unknown>
+  >;
+  const formRows = changed.form8949.transaction as Array<
+    Record<string, unknown>
+  >;
+  const scheduleRows = changed.schedule_d.transaction as Array<
+    Record<string, unknown>
+  >;
   formRows[1].part = "F";
   formRows[1].is_long_term = true;
   scheduleRows[1].part = "F";
@@ -222,11 +252,12 @@ Deno.test("staged Form 8997 rejects an unlinked executor code Y row", () => {
     source_transaction_id: "unlinked-y",
   };
   assertThrows(
-    () => buildStagedIRS8997({
-      ...pending,
-      form8949: { transaction: [...filedRows, extra] },
-      schedule_d: { transaction: [...filedRows, extra] },
-    }),
+    () =>
+      buildStagedIRS8997({
+        ...pending,
+        form8949: { transaction: [...filedRows, extra] },
+        schedule_d: { transaction: [...filedRows, extra] },
+      }),
     Error,
     "unlinked QOF code Z or Y row",
   );
