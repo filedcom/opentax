@@ -31,8 +31,11 @@ XSD pass, or an ignored test.
 ### Latest validation attempt
 
 The latest 2026-09-29 moving-worktree diagnostic `deno task test` run finished
-with 8,752 passed and 79 failed in 12m14s. It included concurrent edits and
-is not a fixed-commit release gate. The earlier diagnostic finished with 8,725
+with 8,793 passed and 37 failed in 12m12s. It included concurrent edits and
+is not a fixed-commit release gate. Several listed failures, including the
+Form 8826 cap ledger, Form 3115 end-to-end path, and Form 8582-CR guard, passed
+focused reruns after the moving snapshot began. The preceding diagnostic had
+8,752 passed and 79 failed in 12m14s; the earlier diagnostic finished with 8,725
 passed and 106 failed in 12m9s. Focused reruns after that snapshot passed the repaired Form 8283
 multi-attachment (5/5 route, 3/3 evidence) and vehicle-statement (15/15),
 Form 6251 native map (31/31),
