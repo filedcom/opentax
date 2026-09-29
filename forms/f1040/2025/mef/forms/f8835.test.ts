@@ -34,6 +34,11 @@ Deno.test("Form 8835: one MeF document per facility with 2025 Part I/II fields",
       ...facility,
       energy_type: EnergyType.BiomassOpen,
       facility_description: "Open-loop biomass plant",
+      facility_us_address: {
+        ...facility.facility_us_address,
+        line1: "200 Biomass Plant Rd",
+      },
+      facility_latitude: 30.367153,
     }],
   });
   assertEquals(documents.length, 2);

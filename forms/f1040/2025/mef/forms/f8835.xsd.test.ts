@@ -62,6 +62,11 @@ Deno.test({
         ...facility,
         energy_type: EnergyType.BiomassOpen,
         facility_description: "Biomass plant",
+        facility_us_address: {
+          ...facility.facility_us_address,
+          line1: "200 Biomass Plant Rd",
+        },
+        facility_latitude: 30.367153,
       }],
     },
   }, testFiler());

@@ -1904,7 +1904,20 @@ Deno.test("Form 3800 descriptor needs explicit Part V use for partly limited sam
   const context = {
     pending: {
       ...filedPending(fields.tax_context, 7_000),
-      f8835: { f8835s: [windFacility, windFacility] },
+      f8835: {
+        f8835s: [
+          windFacility,
+          {
+            ...windFacility,
+            facility_description: "Second onshore wind turbine",
+            facility_us_address: {
+              ...windFacility.facility_us_address,
+              line1: "200 Wind Farm Rd",
+            },
+            facility_latitude: 30.367153,
+          },
+        ],
+      },
     },
     documentIdsByPendingKey: {
       f8826: [],
