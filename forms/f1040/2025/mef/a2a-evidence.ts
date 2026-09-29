@@ -175,8 +175,12 @@ export async function recordA2aInboundPayload(
     recordId: crypto.randomUUID(),
     kind: input.kind,
     sendMessageId: input.sendMessageId,
-    responseMessageId: input.responseMessageId,
-    relatesToMessageId: input.relatesToMessageId,
+    ...(input.responseMessageId !== undefined
+      ? { responseMessageId: input.responseMessageId }
+      : {}),
+    ...(input.relatesToMessageId !== undefined
+      ? { relatesToMessageId: input.relatesToMessageId }
+      : {}),
     submissionIds: [...input.submissionIds],
     receiptOrDepositIds: [...(input.receiptOrDepositIds ?? [])],
     receivedAt: input.receivedAt.toISOString(),
