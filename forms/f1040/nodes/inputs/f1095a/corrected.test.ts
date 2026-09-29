@@ -12,6 +12,7 @@ const original = {
   issuer_name: "Marketplace",
   policy_number: "POLICY-1",
   coverage_state: "TX",
+  covered_individual_ssns: ["123456789"],
   monthly_premiums: Array<number>(12).fill(400),
   monthly_slcsps: Array<number>(12).fill(500),
   monthly_aptcs: Array<number>(12).fill(100),
