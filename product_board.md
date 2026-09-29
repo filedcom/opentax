@@ -62,6 +62,10 @@ the Form 8814, Schedule 1, and Form 8889 PDF files pass 19/19 focused checks.
 The Form 8874 PDF file passes 5/5 with a valid mismatched K-1 credit case that
 reaches its Form 3800 guard. Form 8582 PDF passes 10/10; its Part VIII row
 assertion now names the same field key as the native-to-PDF mapping.
+The Form 1116 foreign-tax-credit end-to-end file passes 5/5 after its
+$85,250 single-filer line 16 expectation was aligned with the
+[2025 IRS Tax Table](https://www.irs.gov/publications/p1040): $13,675 tax,
+$135 allowed foreign tax credit, and $13,540 total tax in that fixture.
 
 The 2026-09-29 moving-worktree diagnostic `deno task test` run finished with
 8,609 passed and 205 failed in 11m18s. It is not the agreed fixed-commit

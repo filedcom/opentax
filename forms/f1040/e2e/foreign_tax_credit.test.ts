@@ -11,7 +11,7 @@
  *
  * Without the limitation inputs the graph handed Schedule 3 the whole foreign
  * tax, so a $500 box 6 withholding on $1,000 of foreign interest produced a
- * $500 credit instead of the $135.34 the ratio allows.
+ * $500 credit instead of the $135 whole-dollar credit the ratio allows.
  */
 
 import { assertEquals } from "@std/assert";
@@ -59,9 +59,9 @@ function w2Item(wages: number, withheld: number) {
 // ── Passive category: 1099-INT box 6 above the §904(j) de minimis election ───
 //
 // Wages $100,000 + foreign interest $1,000 = gross income $101,000
-// Std ded $15,750 → taxable $85,250 → line 16 = $13,669.00
-// line 19 = 1,000 / 101,000; line 21 = 13,669 × that = $135.34
-// line 24 = min($500 paid, $135.34 limit) = $135.34
+// Std ded $15,750 → taxable $85,250 → 2025 Tax Table line 16 = $13,675
+// line 19 = 1,000 / 101,000; line 21 = 13,675 × that ≈ $135.40
+// line 24 = min($500 paid, $135 whole-dollar limit) = $135
 
 Deno.test("Form 1116: 1099-INT box 6 credit is capped by the §904 ratio, not taken whole", () => {
   const result = runReturn({
@@ -107,7 +107,7 @@ Deno.test("Form 1116: 1099-INT box 6 credit is capped by the §904 ratio, not ta
   );
   assertEquals(
     f1116["us_tax_before_credits"],
-    13_669,
+    13_675,
     "Part III line 20 — Form 1040 line 16",
   );
 
@@ -122,8 +122,8 @@ Deno.test("Form 1116: 1099-INT box 6 credit is capped by the §904 ratio, not ta
   const f = result.pending["f1040"] ?? {};
   assertEquals(
     r2(f["line24_total_tax"] as number),
-    13_534,
-    "total tax = 13,669 − 135",
+    13_540,
+    "total tax = 13,675 − 135",
   );
 });
 
