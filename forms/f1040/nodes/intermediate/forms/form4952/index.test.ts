@@ -390,34 +390,10 @@ Deno.test("Form 4952 validates qualified dividends and line 4g attribution", () 
   );
 });
 
-Deno.test("Form 4952 XML uses the 2025 schema line tags", () => {
-  const xml = mef4952.build({
-    line1: 5_000,
-    line2: 100,
-    line3: 5_100,
-    line4a: 2_000,
-    line4b: 100,
-    line4c: 1_900,
-    line4d: 0,
-    line4e: 0,
-    line4f: 0,
-    line4g: 0,
-    line4h: 1_900,
-    line5: 0,
-    line6: 1_900,
-    line7: 3_200,
-    line8: 1_900,
-  });
-  assertEquals(
-    xml.includes(
-      "<PriorYrDisallowInvsmtIntExpAmt>100</PriorYrDisallowInvsmtIntExpAmt>",
-    ),
-    true,
-  );
-  assertEquals(
-    xml.includes(
-      "<InvestmentInterestExpDeductAmt>1900</InvestmentInterestExpDeductAmt>",
-    ),
-    true,
+Deno.test("Form 4952 rejects unsourced investment income at export", () => {
+  assertThrows(
+    () => mef4952.build({ line2: 100, line8: 1_900 }),
+    Error,
+    "source-reconciled investment-income route",
   );
 });
