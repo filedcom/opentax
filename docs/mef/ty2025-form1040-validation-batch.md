@@ -87,6 +87,14 @@ retained at `.state/research/ty2025-full-test-afb11416.log` and
 `.state/research/ty2025-full-test-b32aa0ce.log`. Source-route, IRS-rule, and
 ATS gates still need their release evidence.
 
+The 2026-09-29 07:53 UTC fixed-source `deno task test` run on `98466597`
+passed 8,851/8,851 in 13m37s with zero failures and no ignored tests
+reported. Deno was 2.7.7, `xmllint` used libxml 2.9.13, and Poppler was
+26.03.0. Its log is `.state/research/ty2025-full-test-98466597.log`. This
+run includes the archive's direct use of the prepared MeF bundle and the
+source, XML, typed Form 3800 parts, and attachment drift checks. It does not
+replace the final release batch after the remaining route and scope decisions.
+
 ## XML evidence
 
 For each supported positive filing route in the completed coverage inventory,

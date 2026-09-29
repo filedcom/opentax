@@ -99,9 +99,10 @@ blank. The retained packet is
 (SHA-256 `cde93fec081ab249caec0ec8ded36dead335ab2fd26db5964864edfe05f28539`).
 The full 18-return PDF review set contains 115 pages and 18 XML files. Focused
 prepared-return, source-drift, field-map, projection, and local XSD cases pass.
-The `b32aa0ce` repository-wide run passed 8,849/8,849 before the archive
-change; the focused PDF/archive tests now pass 13/13. A full rerun is due for the
-archive change.
+The `98466597` repository-wide run passed 8,851/8,851 after the archive
+change, zero failed, in 13m37s; its summary reported no ignored tests. The
+focused PDF/archive tests passed 13/13 before that run. The log is retained at
+`.state/research/ty2025-full-test-98466597.log`.
 
 The remaining gate includes transfer elections with exact attachment bytes and
 statement IDs; passive and carryover vintages; multiple same-line sources and

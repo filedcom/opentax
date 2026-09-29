@@ -30,19 +30,20 @@ XSD pass, or an ignored test.
 
 ### Latest validation attempt
 
-The 2026-09-29 07:30 UTC fixed-source `deno task test` run on commit
-`b32aa0ce` passed **8,849/8,849**, zero failed, in 13m34s; its Deno summary
+The 2026-09-29 07:53 UTC fixed-source `deno task test` run on commit
+`98466597` passed **8,851/8,851**, zero failed, in 13m37s; its Deno summary
 reported no ignored tests. Tool versions were Deno 2.7.7, libxml 2.9.13, and
 Poppler 26.03.0. The log is retained at
-`.state/research/ty2025-full-test-b32aa0ce.log`. This includes the
-prepared Form 3800 nine-page PDF, the eighteenth synthetic source return, and
-the unidentified draft-PDF preview fix. The filled review generated 18 packets
+`.state/research/ty2025-full-test-98466597.log`. This includes the
+prepared Form 3800 nine-page PDF, a ZIP built from the same native bundle,
+post-preparation drift rejection, and the unidentified draft-PDF preview fix.
+The filled review generated 18 packets
 (115 pages) and 18 XML files under
 `.state/research/ty2025-filled-pdf-review/2026-09-29-v17/`; the geothermal
 packet's Form 3800 pages were visually checked. Broader source/ATS coverage
 and final release validation remain open. The preceding fixed-source run on
-`21457b7e` passed 8,839/8,839, zero failed; its log is retained at
-`.state/research/ty2025-full-test-21457b7e.log`.
+`b32aa0ce` passed 8,849/8,849, zero failed; its log is retained at
+`.state/research/ty2025-full-test-b32aa0ce.log`.
 
 The 2026-09-29 06:03 UTC local `deno task test` run on source commit
 `cabcfdca703c6fb581dfee8b817afdb7c8f73f4f` passed **8,835/8,835**
@@ -286,7 +287,7 @@ including a two-gift return with two linked native forms and attachments.
 
 - [ ] Finish implementation and coverage decisions above before the agreed single full-batch gate. Existing focused cases and historical passes are not evidence for the current worktree.
 - [x] Confirm Deno, `xmllint`, `pdftoppm`, and `pdfinfo` are available. Provision and verify the TY2025 v5.4 `Return1040.xsd` / `ReturnData1040.xsd` bundle under `.state/research/docs/`; it is Git-ignored, not checked in. On 2026-09-29, Deno 2.7.7, libxml 2.9.13, and Poppler 26.03.0 were present with both schema files. A filtered MeF Schedule 2 XSD test and a filtered full-return Single W-2 XSD test each ran and passed (1 pass, 0 ignored per command), proving both test files used the local `Return1040.xsd` bundle. This checks the preflight only; the full schema matrix remains open.
-- [ ] Run `deno task test` as the final full batch after the retained routes and scope decisions are complete; record commit, command, tool versions, timestamp, pass/fail/ignored totals, failures, and ignored-test reasons. Fix failures, then rerun the same full command until the release batch passes. The current source commit passed 8,849/8,849 locally as recorded above; implementation and external gates remain open.
+- [ ] Run `deno task test` as the final full batch after the retained routes and scope decisions are complete; record commit, command, tool versions, timestamp, pass/fail/ignored totals, failures, and ignored-test reasons. Fix failures, then rerun the same full command until the release batch passes. The current source commit passed 8,851/8,851 locally as recorded above; implementation and external gates remain open.
 - [x] Run the live canonical-PDF field-name checks in the normal test suite. On 2026-09-29, after correcting the Schedule 3 line 13a AcroForm path, `deno test --allow-read --allow-net=www.irs.gov --filter 'all mapped pdfField names exist in real IRS PDF' forms/f1040/2025/pdf/forms/all-descriptors.test.ts` passed all 86 checks. The full descriptor file was rerun with the repository test permissions and passed 605/605 checks, including the pinned-revision checks that had failed in the earlier diagnostic batch. This proves mapped field names exist in the referenced IRS PDFs; filled-output visual review remains a separate gate below.
 - [ ] For every retained positive filing route, generate a full return from a source-backed fixture and validate emitted XML against the checked-in TY2025 IRS schema. Check source-to-calculation-to-Form-1040 totals, required references/attachments, negative and conflicting cases, and IRS business rules separately from structural XSD success.
 - [ ] Generate the eighteen prepared synthetic filled-PDF cases through the real graph and PDF builder as described in the [validation batch](docs/mef/ty2025-form1040-validation-batch.md); render and inspect every page, mark checkboxes/amounts/owner identity/page order/continuations, and add cases for each uncovered descriptor or branch.
