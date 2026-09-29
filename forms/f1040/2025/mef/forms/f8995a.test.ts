@@ -161,7 +161,7 @@ Deno.test("Form 8995-A: SSTB, gain, REIT, and aggregation paths reject", () => {
         context,
       ),
     Error,
-    "patron",
+    "Schedule D cooperative and 1099-PATR source details",
   );
 });
 
