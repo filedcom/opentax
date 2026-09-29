@@ -37,8 +37,13 @@ year/use groups. Form 3800 Part I line 4 can reference its reserved document
 ID. A printable history page alone does not satisfy this native link; the
 structured descriptor now emits one computation per reconciled vintage using
 explicit origin and prior-use tax-year-end dates. Its standalone TY2025 v5.4
-XSD case passes. The parent reference, Part IV/VI joins, and any additional
-revised-credit facts remain open; native export still rejects carryforwards.
+XSD case passes. A typed source-to-computation link can now reconcile a
+synthetic parent Part I line 4 reference and Part IV nonpassive totals with
+the same source facts used for the PDF revised-carryforward checkboxes. That
+two-vintage parent passes local TY2025 v5.4 `IRS3800` XSD. The production
+source-to-Part IV/VI join, authenticated prior-return evidence, filed history
+attachment, and any additional revised-credit facts remain open; native export
+still rejects carryforwards.
 
 The fixed-source `99243afd` repository-wide rerun completed at 2026-09-29
 18:13 UTC: 8,894/8,894 passed, zero failed, in 15m46s, with no ignored tests
@@ -47,6 +52,12 @@ The first attempt on that unchanged commit failed one Form 2555 canonical-PDF
 check when the IRS download body closed; the exact check passed on rerun before
 the full green rerun. These runs cover the registered statement descriptor,
 but no positive Form 3800 carryforward filing path exists yet.
+
+The subsequent 2026-09-29 18:39 UTC full run on code commit `11d5047d`
+passed 8,897/8,897 with zero failures in 16m49s. It includes the synthetic
+two-vintage parent XSD check and the source-link negative tests. The log is
+`.state/research/ty2025-full-test-carryforward-link.log`. This still does
+not exercise a production positive carryforward filing path.
 
 The fixed-source `500bd115` repository-wide run completed at 2026-09-29
 16:48 UTC: 8,886/8,886 passed, zero failed, with no ignored tests reported,
@@ -114,9 +125,9 @@ positive, tamper, and overflow cases passed in that focused run. Header projecti
 uses the finalized filer identity and the native transfer-statement IDs to mark
 the two yes/no questions and statement count. It rejects a transfer election
 that has no matching source-row sale or lacks reserved statement IDs. The
-revised-carryforward checkboxes are not guessed; a nonzero line 4 or 34 is a
-PDF-only rejection until a typed answer is available. Header cases passed in
-that focused run.
+revised-carryforward checkboxes now use typed source-vintage answers that
+reconcile to Part IV and the native computation IDs. The production
+carryforward route remains blocked until those source facts are assembled.
 
 The native Form 3800 builder calls `prepareForm3800DocumentParts` during the
 linked pass. A capture callback stores that exact object in the MeF bundle;
