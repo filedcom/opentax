@@ -289,6 +289,78 @@ function simplePolicyIncomeAmounts(
   return { povertyPct, figure, repaymentCap };
 }
 
+function isBelow100AptcOnly(fields: Input, context?: MefBuildContext): boolean {
+  const general = generalSchema.safeParse(context?.pending?.general);
+  return general.success &&
+    general.data.ptc_below_100_fpl_status?.basis === "not_applicable" &&
+    (fields.federal_poverty_pct ?? 100) < 100 &&
+    fields.total_premium_tax_credit === 0 &&
+    (fields.total_advance_ptc ?? 0) > 0;
+}
+
+function reconcileBelow100AptcOnly(
+  fields: Input,
+  context?: MefBuildContext,
+): void {
+  const pending = context?.pending;
+  const general = generalSchema.safeParse(pending?.general);
+  const source = form1095aSchema.safeParse(pending?.f1095a);
+  const form1040 = returnSchema.safeParse(pending?.f1040);
+  const schedule2 = schedule2Schema.safeParse(pending?.schedule2);
+  if (
+    !context?.filer || !general.success || !source.success ||
+    !form1040.success || !schedule2.success
+  ) {
+    throw new Error("Form 8962 below-100% APTC-only filing needs verified return and Marketplace sources");
+  }
+  const policies = current1095AStatements(source.data.f1095as);
+  const policy = policies[0];
+  const ssn = context.filer.primarySSN.replaceAll("-", "");
+  const rows = fields.monthly_ptc_rows;
+  const povertyLine = reconcilePovertyTable(fields, context);
+  const agi = form1040.data.line11_agi;
+  const aptc = policy?.monthly_aptcs?.reduce((sum, amount) => sum + amount, 0);
+  if (
+    context.filer.filingStatus !== FilingStatus.Single ||
+    general.data.filing_status !== SourceFilingStatus.Single ||
+    general.data.taxpayer_ssn?.replaceAll("-", "") !== ssn ||
+    policies.length !== 1 || !policy?.policy_number ||
+    policy.coverage_state !== context.filer.address.state ||
+    policy.covered_individual_ssns?.length !== 1 ||
+    policy.covered_individual_ssns[0].replaceAll("-", "") !== ssn ||
+    policy.shared_policy_periods || policy.slcsp_corrections ||
+    policy.slcsp_review_periods || policy.alternative_marriage_owner ||
+    !policy.monthly_premiums || !policy.monthly_slcsps ||
+    !policy.monthly_aptcs || aptc === undefined || aptc <= 0 ||
+    (policy.annual_aptc !== undefined && policy.annual_aptc !== aptc) ||
+    fields.household_size !== 1 || fields.dependents_modified_agi !== 0 ||
+    fields.taxpayer_modified_agi !== agi || fields.household_income !== agi ||
+    fields.federal_poverty_line !== povertyLine ||
+    fields.federal_poverty_pct !== Math.floor(agi / povertyLine * 100) ||
+    fields.federal_poverty_pct >= 100 ||
+    fields.total_advance_ptc !== aptc ||
+    fields.total_premium_tax_credit !== 0 ||
+    (fields.net_premium_tax_credit ?? 0) !== 0 ||
+    fields.excess_advance_payment !== aptc ||
+    fields.repayment_limitation !== 375 ||
+    fields.excess_advance_premium !== Math.min(aptc, 375) ||
+    schedule2.data.line1a_excess_advance_premium !== Math.min(aptc, 375) ||
+    form1040.data.line17_additional_taxes !== Math.min(aptc, 375) ||
+    pending?.schedule3 !== undefined || pending?.form2555 !== undefined ||
+    (rows == null
+      ? fields.annual_aptc !== aptc
+      : rows.length !== 12 || fields.annual_aptc !== undefined ||
+        rows.some((row, index) =>
+          row.month_code !== MONTH_CODES[index] ||
+          row.aptc !== policy.monthly_aptcs![index] ||
+          row.premium !== undefined || row.slcsp !== undefined ||
+          row.allowed_credit !== undefined
+        ))
+  ) {
+    throw new Error("Form 8962 below-100% APTC-only filing differs from its identified policy or repayment return");
+  }
+}
+
 function reconcileSimpleAnnualPolicy(
   fields: Input,
   context?: MefBuildContext,
@@ -1666,7 +1738,9 @@ function buildIRS8962(fields: Input, context?: MefBuildContext): string {
       (row.allowed_credit ?? 0) > 0 || row.aptc > 0
     ) ?? false)
   ) {
-    if (Array.isArray(monthlyRows)) {
+    if (isBelow100AptcOnly(fields, context)) {
+      reconcileBelow100AptcOnly(fields, context);
+    } else if (Array.isArray(monthlyRows)) {
       if (allocations.length > 0) {
         reconcileAgreedSharedPolicy(fields, context);
       } else if (isNoAptcClaim(context)) {

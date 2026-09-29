@@ -3474,6 +3474,7 @@ Deno.test({
 }, async () => {
   const general = {
     ...singleGeneral(),
+    taxpayer_can_be_claimed_as_dependent: false,
     ptc_below_100_fpl_status: nonApplicableBelowFpl,
   };
   const result = runReturn({
@@ -3481,9 +3482,13 @@ Deno.test({
     w2: [w2Item(10_000, 0)],
     f1095a: [{
       issuer_name: "Marketplace Plan",
+      policy_number: "POLICY-APTC-ANNUAL",
+      coverage_state: "TX",
+      covered_individual_ssns: ["111223333"],
       monthly_premiums: Array(12).fill(250),
       monthly_slcsps: Array(12).fill(350),
       monthly_aptcs: Array(12).fill(200),
+      annual_aptc: 2_400,
     }],
   });
   assertEquals(result.diagnostics, []);
@@ -3499,6 +3504,17 @@ Deno.test({
   );
   assertEquals(xml.includes("<AnnualPremiumAmt>"), false);
   assertEquals(xml.includes("<ApplicableFigureRt>"), false);
+  assertThrows(
+    () => buildMefXml({
+      ...result.pending,
+      schedule2: {
+        ...result.pending.schedule2,
+        line1a_excess_advance_premium: 374,
+      },
+    } as MefFormsPending, extractFilerIdentity(general)),
+    Error,
+    "below-100% APTC-only filing differs",
+  );
   await validateXsd(xml, "below-100%-FPL APTC-only annual repayment");
 });
 
@@ -3511,6 +3527,7 @@ Deno.test({
 }, async () => {
   const general = {
     ...singleGeneral(),
+    taxpayer_can_be_claimed_as_dependent: false,
     ptc_below_100_fpl_status: nonApplicableBelowFpl,
   };
   const result = runReturn({
@@ -3518,6 +3535,9 @@ Deno.test({
     w2: [w2Item(10_000, 0)],
     f1095a: [{
       issuer_name: "Marketplace Plan",
+      policy_number: "POLICY-APTC-MONTHLY",
+      coverage_state: "TX",
+      covered_individual_ssns: ["111223333"],
       monthly_premiums: Array(12).fill(250),
       monthly_slcsps: [...Array(11).fill(350), 400],
       monthly_aptcs: Array(12).fill(200),
