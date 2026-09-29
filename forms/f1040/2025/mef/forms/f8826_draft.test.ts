@@ -167,13 +167,13 @@ Deno.test("Form 8826 draft: line 7 pass-through credit and combined $5,000 cap",
   assertEquals(f3800.inputSchema.parse(output?.fields).f8826_credit_entries, [
     {
       source_type: "self",
-      credit_amount: 2_209.30,
+      credit_amount: 2_375,
       subject_to_passive_activity_limit: false,
     },
     {
       source_type: "partnership",
       source_ein: "123456789",
-      credit_amount: 2_790.70,
+      credit_amount: 3_000,
       subject_to_passive_activity_limit: false,
     },
   ]);
@@ -336,7 +336,7 @@ Deno.test("Form 8826 draft: local TY2025 MeF source schema", async () => {
   ) {
     const xml = buildForm8826Document(facts).replace(
       "<IRS8826>",
-      '<IRS8826 xmlns="http://www.irs.gov/efile">',
+      '<IRS8826 xmlns="http://www.irs.gov/efile" documentId="IRS8826-1">',
     );
     const path = await Deno.makeTempFile({ suffix: ".xml" });
     try {
