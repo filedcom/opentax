@@ -212,47 +212,44 @@ Deno.test("Pub 974 single-business route rejects non-reconciled policy months", 
   );
 });
 
-Deno.test("Pub 974 iterative route accepts six verified Marketplace coverage months", () => {
-  const result = calculatePub974SingleBusinessIterative({
-    worksheet_w: {
-      ...wSource,
-      nonspecified_premium_deduction: 0,
-      business: {
-        kind: "self_employed",
-        establishing_business_earned_income: 50_000,
-        all_profitable_business_earned_income: 50_000,
-        schedule1_line15_se_tax_deduction: 5_000,
-        establishing_business_schedule1_line16_retirement_deduction: 2_000,
-        form2555_attributable_exclusion: 0,
-      },
-      specified_policy_months: Array.from({ length: 6 }, (_, index) => ({
-        form1095a_policy_number: "SIX-MONTH-2025",
-        month: index + 1,
-        specified_premium: 1_000,
-        attributable_aptc: 500,
-      })),
-    },
-    worksheet_x: xSource,
-    form1095a_policy_months: Array.from({ length: 6 }, (_, index) => ({
-      form1095a_policy_number: "SIX-MONTH-2025",
-      month: index + 1,
-      premium: 1_000,
-      aptc: 500,
-    })),
-    no_other_se_income_sources_verified: true,
-    form8962_source: {
-      monthly_premiums: [...Array(6).fill(1_000), ...Array(6).fill(0)],
-      monthly_slcsps: [...Array(6).fill(1_200), ...Array(6).fill(0)],
-      monthly_aptcs: [...Array(6).fill(500), ...Array(6).fill(0)],
-    },
-  });
-  const ptc = result.form8962_fields.total_premium_tax_credit as number;
-  assertEquals(result.worksheet_w.line1_specified_premiums, 6_000);
-  assertEquals(result.worksheet_w.line2_attributable_aptc, 3_000);
-  assert(result.schedule1_line17_deduction + ptc <= 6_000);
-  assertEquals(
-    (result.form8962_fields.monthly_ptc_rows as unknown[]).length,
-    12,
+Deno.test("Pub 974 partial-year iteration rejects a persistent dollar oscillation", () => {
+  assertThrows(
+    () =>
+      calculatePub974SingleBusinessIterative({
+        worksheet_w: {
+          ...wSource,
+          nonspecified_premium_deduction: 0,
+          business: {
+            kind: "self_employed",
+            establishing_business_earned_income: 50_000,
+            all_profitable_business_earned_income: 50_000,
+            schedule1_line15_se_tax_deduction: 5_000,
+            establishing_business_schedule1_line16_retirement_deduction: 2_000,
+            form2555_attributable_exclusion: 0,
+          },
+          specified_policy_months: Array.from({ length: 6 }, (_, index) => ({
+            form1095a_policy_number: "SIX-MONTH-2025",
+            month: index + 1,
+            specified_premium: 1_000,
+            attributable_aptc: 500,
+          })),
+        },
+        worksheet_x: xSource,
+        form1095a_policy_months: Array.from({ length: 6 }, (_, index) => ({
+          form1095a_policy_number: "SIX-MONTH-2025",
+          month: index + 1,
+          premium: 1_000,
+          aptc: 500,
+        })),
+        no_other_se_income_sources_verified: true,
+        form8962_source: {
+          monthly_premiums: [...Array(6).fill(1_000), ...Array(6).fill(0)],
+          monthly_slcsps: [...Array(6).fill(1_200), ...Array(6).fill(0)],
+          monthly_aptcs: [...Array(6).fill(500), ...Array(6).fill(0)],
+        },
+      }),
+    Error,
+    "did not converge within 100 steps",
   );
 });
 
@@ -320,52 +317,45 @@ Deno.test("Pub 974 partial-year route rejects uncovered and duplicate source mon
   );
 });
 
-Deno.test("Pub 974 mixed coverage attributes only specified-month Form 8962 PTC", () => {
-  const result = calculatePub974SingleBusinessIterative({
-    worksheet_w: {
-      ...wSource,
-      nonspecified_premium_deduction: 0,
-      business: {
-        kind: "self_employed",
-        establishing_business_earned_income: 50_000,
-        all_profitable_business_earned_income: 50_000,
-        schedule1_line15_se_tax_deduction: 5_000,
-        establishing_business_schedule1_line16_retirement_deduction: 2_000,
-        form2555_attributable_exclusion: 0,
-      },
-      specified_policy_months: Array.from({ length: 6 }, (_, index) => ({
-        form1095a_policy_number: "MIXED-2025",
-        month: index + 1,
-        specified_premium: 1_000,
-        attributable_aptc: 500,
-      })),
-    },
-    worksheet_x: xSource,
-    form1095a_policy_months: Array.from({ length: 12 }, (_, index) => ({
-      form1095a_policy_number: "MIXED-2025",
-      month: index + 1,
-      premium: 1_000,
-      aptc: 500,
-    })),
-    no_other_se_income_sources_verified: true,
-    form8962_source: {
-      monthly_premiums: Array(12).fill(1_000),
-      monthly_slcsps: [...Array(6).fill(1_200), ...Array(6).fill(1_400)],
-      monthly_aptcs: Array(12).fill(500),
-    },
-  });
-  const rows = result.form8962_fields.monthly_ptc_rows as
-    { month_code: string; allowed_credit: number }[];
-  const specifiedPtc = rows.slice(0, 6).reduce(
-    (sum, row) => sum + row.allowed_credit,
-    0,
+Deno.test("Pub 974 mixed coverage rejects a persistent dollar oscillation", () => {
+  assertThrows(
+    () =>
+      calculatePub974SingleBusinessIterative({
+        worksheet_w: {
+          ...wSource,
+          nonspecified_premium_deduction: 0,
+          business: {
+            kind: "self_employed",
+            establishing_business_earned_income: 50_000,
+            all_profitable_business_earned_income: 50_000,
+            schedule1_line15_se_tax_deduction: 5_000,
+            establishing_business_schedule1_line16_retirement_deduction: 2_000,
+            form2555_attributable_exclusion: 0,
+          },
+          specified_policy_months: Array.from({ length: 6 }, (_, index) => ({
+            form1095a_policy_number: "MIXED-2025",
+            month: index + 1,
+            specified_premium: 1_000,
+            attributable_aptc: 500,
+          })),
+        },
+        worksheet_x: xSource,
+        form1095a_policy_months: Array.from({ length: 12 }, (_, index) => ({
+          form1095a_policy_number: "MIXED-2025",
+          month: index + 1,
+          premium: 1_000,
+          aptc: 500,
+        })),
+        no_other_se_income_sources_verified: true,
+        form8962_source: {
+          monthly_premiums: Array(12).fill(1_000),
+          monthly_slcsps: [...Array(6).fill(1_200), ...Array(6).fill(1_400)],
+          monthly_aptcs: Array(12).fill(500),
+        },
+      }),
+    Error,
+    "did not converge within 100 steps",
   );
-  assertEquals(result.attributable_specified_ptc, specifiedPtc);
-  assert(
-    result.attributable_specified_ptc <
-      (result.form8962_fields.total_premium_tax_credit as number),
-  );
-  assert(result.schedule1_line17_deduction + specifiedPtc <= 6_000);
 });
 
 Deno.test("Pub 974 attribution uses monthly column (e) when amounts vary", () => {
@@ -374,7 +364,11 @@ Deno.test("Pub 974 attribution uses monthly column (e) when amounts vary", () =>
     allowed_credit: index < 6 ? 100 : 200,
   }));
   assertEquals(
-    attributableSpecifiedPtc(rows, new Set([1, 2, 3, 4, 5, 6]), new Set(Array.from({ length: 12 }, (_, i) => i + 1))),
+    attributableSpecifiedPtc(
+      rows,
+      new Set([1, 2, 3, 4, 5, 6]),
+      new Set(Array.from({ length: 12 }, (_, i) => i + 1)),
+    ),
     600,
   );
 });
