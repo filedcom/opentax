@@ -82,6 +82,10 @@ reaches Form 8995 calculation but the MeF/PDF exporter only accepts its
 identified Schedule C route. The [Form 8995 gap](docs/mef/ty2025-form8995-positive-export-gap.md)
 now records the precise one-farm source and reconciliation work; the claim
 remains in scope.
+Read-only text extraction across the locally retained TY2025 Form 1040 ATS
+scenario PDFs found no Form 1095-A or Marketplace Statement. Those packet files
+cannot supply the missing policy/month evidence for the seventeen red Form 8962
+full-return XSD fixtures; their source-evidence gate stays open.
 
 The 2026-09-29 moving-worktree diagnostic `deno task test` run finished with
 8,609 passed and 205 failed in 11m18s. It is not the agreed fixed-commit
