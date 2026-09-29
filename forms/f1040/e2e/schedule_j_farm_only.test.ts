@@ -100,7 +100,8 @@ Deno.test("Schedule J rejects nonfarm income rather than treating offsetting AGI
   assertEquals(
     result.diagnostics.some((entry) =>
       entry.nodeType === "schedule_j_calculation" &&
-      entry.message.includes("Schedule F-only")),
+      entry.message.includes("Schedule F-only")
+    ),
     true,
   );
 });

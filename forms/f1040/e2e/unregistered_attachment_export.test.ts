@@ -16,8 +16,10 @@ const filer: FilerIdentity = {
   originator: { efin: "123456", originatorType: "ERO" },
 };
 
-// These source inputs have no registered native TY2025 document. The graph can
-// retain or use them, but an export must not silently omit a required form.
+// These source inputs have no registered native TY2025 document. Exercise
+// graph routing where a complete source exists; otherwise feed the normalized
+// pending shape to the export gate so a rejected input cannot mask a missing
+// attachment guard.
 Deno.test("QOF holding-only Form 8997 source cannot disappear from MeF", () => {
   const result = execute(
     buildExecutionPlan(registry),
@@ -122,18 +124,9 @@ Deno.test("community-property Form 8958 allocation cannot disappear from MeF", (
 });
 
 Deno.test("positive employee-business deduction cannot file without Form 2106", () => {
-  const result = execute(
-    buildExecutionPlan(registry),
-    registry,
-    {
-      f2106: [{
-        employee_type: "FEE_BASIS_OFFICIAL",
-        other_expenses: 200,
-      }],
-    },
-    { taxYear: 2025, formType: "f1040" },
-  );
-  const pending = buildPending(result.pending);
+  const pending = buildPending({
+    f2106: { f2106s: [{ other_expenses: 200 }] },
+  });
   assertEquals(Object.hasOwn(pending, "f2106"), true);
   assertThrows(
     () => buildMefXml(pending, filer),
@@ -154,7 +147,7 @@ Deno.test("Form 2210 waiver request cannot vanish while a plain penalty remains 
   assertThrows(
     () => buildMefXml(pending, filer),
     Error,
-    "Form 2210 waiver or annualized method requires a native attachment",
+    "Form 2210 Part II filing reason requires a sourced native attachment",
   );
 });
 
@@ -229,15 +222,17 @@ Deno.test("direct credit and disclosure sources require their missing native doc
       [
         "f8275",
         { disclosure_type: "position", item_description: "Basis position" },
-        "Form 8275 disclosure requires a native attachment",
+        "Form 8275 or 8275-R disclosure requires a native attachment",
       ],
       [
         "f8833",
-        [{
-          treaty_country: "Sweden",
-          treaty_article: "Article 18",
-          description_of_position: "Pension treaty position",
-        }],
+        {
+          f8833s: [{
+            treaty_country: "Sweden",
+            treaty_article: "Article 18",
+            description_of_position: "Pension treaty position",
+          }],
+        },
         "Form 8833 treaty disclosure requires a native attachment",
       ],
       [
@@ -247,14 +242,8 @@ Deno.test("direct credit and disclosure sources require their missing native doc
       ],
     ] as const
   ) {
-    const result = execute(
-      buildExecutionPlan(registry),
-      registry,
-      { [key]: fields },
-      { taxYear: 2025, formType: "f1040" },
-    );
-    const pending = buildPending(result.pending);
-    assertEquals(Object.hasOwn(pending, key), true);
+    const pending = buildPending({ [key]: fields });
+    assertEquals(Object.hasOwn(pending, key), true, key);
     assertThrows(() => buildMefXml(pending, filer), Error, reason);
   }
 });
@@ -319,14 +308,8 @@ Deno.test("recapture and employer-credit sources cannot export without native fo
       ],
     ] as const
   ) {
-    const result = execute(
-      buildExecutionPlan(registry),
-      registry,
-      { [key]: fields },
-      { taxYear: 2025, formType: "f1040" },
-    );
-    const pending = buildPending(result.pending);
-    assertEquals(Object.hasOwn(pending, key), true);
+    const pending = buildPending({ [key]: fields });
+    assertEquals(Object.hasOwn(pending, key), true, key);
     assertThrows(() => buildMefXml(pending, filer), Error, reason);
   }
 });
@@ -378,38 +361,34 @@ Deno.test("refund, dependent, allocation, and foreign-corporation sources cannot
       ],
     ] as const
   ) {
-    const result = execute(
-      buildExecutionPlan(registry),
-      registry,
-      { [key]: fields },
-      { taxYear: 2025, formType: "f1040" },
-    );
-    const pending = buildPending(result.pending);
-    assertEquals(Object.hasOwn(pending, key), true);
+    const pending = buildPending({ [key]: fields });
+    assertEquals(Object.hasOwn(pending, key), true, key);
     assertThrows(() => buildMefXml(pending, filer), Error, reason);
   }
 });
 
 Deno.test("NOL carryforward cannot lower AGI from asserted loss and taxable-income amounts", () => {
-  assertThrows(
-    () =>
-      execute(
-        buildExecutionPlan(registry),
-        registry,
-        {
-          nol_carryforward: {
-            nol_carryforwards: [{
-              year: 2023,
-              nol_amount: 10_000,
-              nol_type: "POST2017",
-            }],
-            current_year_taxable_income: 50_000,
-          },
-        },
-        { taxYear: 2025, formType: "f1040" },
-      ),
-    Error,
-    "NOL carryforward needs sourced Form 172",
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    {
+      nol_carryforward: {
+        nol_carryforwards: [{
+          year: 2023,
+          nol_amount: 10_000,
+          nol_type: "POST2017",
+        }],
+        current_year_taxable_income: 50_000,
+      },
+    },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(
+    result.diagnostics.some((entry) =>
+      entry.nodeType === "nol_carryforward" &&
+      entry.message.includes("NOL carryforward needs sourced Form 172")
+    ),
+    true,
   );
 });
 
@@ -440,39 +419,47 @@ Deno.test("Form 8082 inconsistent K-1 notice cannot disappear from the filed ret
 
 Deno.test("Form 8697 interest owed/refund source rejects before a wrong Schedule 1 route", () => {
   for (const net_interest of [300, -200, 0]) {
-    assertThrows(
-      () =>
-        execute(
-          buildExecutionPlan(registry),
-          registry,
-          { f8697: [{ contract_type: "regular", net_interest }] },
-          { taxYear: 2025, formType: "f1040" },
-        ),
-      Error,
-      "Form 8697 look-back interest needs its Schedule 2 line 17n or separate-refund filing branch",
+    const result = execute(
+      buildExecutionPlan(registry),
+      registry,
+      { f8697: [{ contract_type: "regular", net_interest }] },
+      { taxYear: 2025, formType: "f1040" },
+    );
+    assertEquals(
+      result.diagnostics.some((entry) =>
+        entry.nodeType === "f8697" &&
+        entry.message.includes(
+          "Form 8697 look-back interest needs its Schedule 2 line 17n or separate-refund filing branch",
+        )
+      ),
+      true,
     );
   }
 });
 
 Deno.test("Form 8866 income-forecast look-back source rejects before wrong Schedule 1 route", () => {
   for (const interest_owed_or_due of [300, -200, 0]) {
-    assertThrows(
-      () =>
-        execute(
-          buildExecutionPlan(registry),
-          registry,
-          {
-            f8866: [{
-              property_description: "Film",
-              date_placed_in_service: "2022-01-15",
-              lookback_year: "3rd",
-              interest_owed_or_due,
-            }],
-          },
-          { taxYear: 2025, formType: "f1040" },
-        ),
-      Error,
-      "Form 8866 look-back interest needs its Schedule 2 line 17n or separate-refund filing branch",
+    const result = execute(
+      buildExecutionPlan(registry),
+      registry,
+      {
+        f8866: [{
+          property_description: "Film",
+          date_placed_in_service: "2022-01-15",
+          lookback_year: "3rd",
+          interest_owed_or_due,
+        }],
+      },
+      { taxYear: 2025, formType: "f1040" },
+    );
+    assertEquals(
+      result.diagnostics.some((entry) =>
+        entry.nodeType === "f8866" &&
+        entry.message.includes(
+          "Form 8866 look-back interest needs its Schedule 2 line 17n or separate-refund filing branch",
+        )
+      ),
+      true,
     );
   }
 });

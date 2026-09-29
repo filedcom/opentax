@@ -39,29 +39,47 @@ export const inputSchema = completeInputSchema.partial().strict();
 type ScheduleJCalculationInput = z.infer<typeof completeInputSchema>;
 
 function reconcileCurrentYear(source: ScheduleJCalculationInput): void {
-  if (source.se_tax_deduction < 0 || source.taxable_income_2025 < 0 ||
-      source.qbi_deduction < 0 || source.additional_deductions < 0 ||
-      source.nol_deduction < 0) {
-    throw new Error("Schedule J current-year deductions and taxable income cannot be negative");
+  if (
+    source.se_tax_deduction < 0 || source.taxable_income_2025 < 0 ||
+    source.qbi_deduction < 0 || source.additional_deductions < 0 ||
+    source.nol_deduction < 0
+  ) {
+    throw new Error(
+      "Schedule J current-year deductions and taxable income cannot be negative",
+    );
   }
   if (!source.farm_only_income_verified || source.farm_net_profit <= 0) {
-    throw new Error("Schedule J requires a positive, independently computed Schedule F-only income source");
+    throw new Error(
+      "Schedule J requires a positive, independently computed Schedule F-only income source",
+    );
   }
-  if (!source.taking_standard_deduction ||
-      source.additional_deductions !== 0 || source.nol_deduction !== 0) {
-    throw new Error("Schedule J farm-only route needs a standard deduction and no additional or NOL deductions");
+  if (
+    !source.taking_standard_deduction ||
+    source.additional_deductions !== 0 || source.nol_deduction !== 0
+  ) {
+    throw new Error(
+      "Schedule J farm-only route needs a standard deduction and no additional or NOL deductions",
+    );
   }
-  if (Math.abs(
-    source.agi - (source.farm_net_profit - source.se_tax_deduction)
-  ) > 0.01) {
-    throw new Error("Schedule J farm profit and SE deduction do not reconcile to AGI");
+  if (
+    Math.abs(
+      source.agi - (source.farm_net_profit - source.se_tax_deduction),
+    ) > 0.01
+  ) {
+    throw new Error(
+      "Schedule J farm profit and SE deduction do not reconcile to AGI",
+    );
   }
   const taxableFarmIncome = source.farm_net_profit -
     source.se_tax_deduction - source.qbi_deduction;
-  if (taxableFarmIncome <= 0 ||
-      source.elected_farm_income > taxableFarmIncome ||
-      source.elected_farm_income > Math.round(source.taxable_income_2025)) {
-    throw new Error("Schedule J election exceeds sourced taxable farm income or Form 1040 line 15");
+  if (
+    taxableFarmIncome <= 0 ||
+    source.elected_farm_income > taxableFarmIncome ||
+    source.elected_farm_income > Math.round(source.taxable_income_2025)
+  ) {
+    throw new Error(
+      "Schedule J election exceeds sourced taxable farm income or Form 1040 line 15",
+    );
   }
 }
 
