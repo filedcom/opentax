@@ -1,5 +1,5 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { FilingStatus } from "../../../mef/header.ts";
+import { FilingStatus } from "../../../nodes/types.ts";
 import { schedule3Pdf } from "./schedule3.ts";
 import { scheduleRPdf } from "./schedule_r.ts";
 
