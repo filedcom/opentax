@@ -86,6 +86,12 @@ Read-only text extraction across the locally retained TY2025 Form 1040 ATS
 scenario PDFs found no Form 1095-A or Marketplace Statement text. It did not
 establish source-verified policy/month evidence for the seventeen red Form 8962
 full-return XSD fixtures; their source-evidence gate stays open.
+Visual review of page 11 in the retained TY2025 ATS Scenario 2 PDF confirms
+Form 8283 Section A item A says “Clothes & toys,” donated to Goodwill, with
+$3,470 donor cost and $700 fair market value. The packet does not state the
+application's charitable-limit category or a reviewed similar-property
+classification, so the Scenario 2 Form 8283 source gate remains open rather
+than assigning those facts from an assumption.
 
 The 2026-09-29 moving-worktree diagnostic `deno task test` run finished with
 8,609 passed and 205 failed in 11m18s. It is not the agreed fixed-commit
