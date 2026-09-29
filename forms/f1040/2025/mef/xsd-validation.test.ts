@@ -3305,6 +3305,9 @@ Deno.test({
     w2: [w2Item(75_300, 10_000)],
     f1095a: [{
       issuer_name: "Marketplace Plan",
+      policy_number: "POLICY-REPAYMENT",
+      coverage_state: "TX",
+      covered_individual_ssns: ["111223333"],
       annual_premium: 7_200,
       annual_slcsp: 7_200,
       annual_aptc: 1_800,

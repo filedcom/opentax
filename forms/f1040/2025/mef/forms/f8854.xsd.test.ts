@@ -365,7 +365,7 @@ Deno.test("covered Form 8854 and deemed sale reach the return through the calcul
       address_zip: "78701",
     },
     f8854: coveredCapitalInput,
-    f8949: { f8949s: [coveredCapitalTransaction] },
+    f8949: [coveredCapitalTransaction],
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
   const xml = buildMefXml(buildPending(result.pending), filer);
@@ -403,6 +403,7 @@ Deno.test("covered Form 8854 filing keeps noncapital Section C blocked", () => {
             ...coveredCapitalInput.section_c!.mark_to_market_assets[0],
             reported_form_code: ReportedFormCode.Form4797,
             form8949_standard_holding_period_confirmed: undefined,
+            form8949_digital_asset: undefined,
           }],
         },
       }),
@@ -478,7 +479,7 @@ Deno.test("covered Form 8854 Section D reaches a PDF-backed bundle through the g
       address_zip: "78701",
     },
     f8854: coveredDeferralInput,
-    f8949: { f8949s: [coveredCapitalTransaction] },
+    f8949: [coveredCapitalTransaction],
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
   const bundle = await buildMefBundle(buildPending(result.pending), {
@@ -636,7 +637,7 @@ Deno.test("annual Form 8854 capital disposition reaches the PDF-backed return th
       address_zip: "78701",
     },
     f8854_annual: annualCapitalDispositionInput,
-    f8949: { f8949s: [annualCapitalTransaction] },
+    f8949: [annualCapitalTransaction],
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
   const bundle = await buildMefBundle(buildPending(result.pending), {

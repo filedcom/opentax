@@ -175,7 +175,7 @@ export function buildForm8854SectionC(
     if (input.section_c !== null) {
       throw new Error("Form 8854 Section C is only for covered expatriates");
     }
-    if (Object.keys(statementIds).length) {
+    if (Object.values(statementIds).some((id) => id !== undefined)) {
       throw new Error("Form 8854 Section C cannot link statements when absent");
     }
     return "";
