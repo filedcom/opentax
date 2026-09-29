@@ -3708,6 +3708,8 @@ Deno.test({
     f1095a: [{
       issuer_name: "Marketplace Plan",
       policy_number: "MFS-POLICY-1",
+      coverage_state: "TX",
+      covered_individual_ssns: ["111223333", "222334444"],
       monthly_premiums: Array(12).fill(1_200),
       monthly_slcsps: Array(12).fill(1_500),
       monthly_aptcs: Array(12).fill(800),
@@ -3736,6 +3738,32 @@ Deno.test({
   );
   assertEquals(xml.includes("<MonthlyPremiumPct>"), false);
   assertEquals(xml.includes("<MonthlyPremiumSLCSPPct>"), false);
+  assertThrows(
+    () =>
+      buildMefXml({
+        ...result.pending,
+        f1095a: {
+          f1095as: [{
+            ...(result.pending.f1095a.f1095as as Record<string, unknown>[])[0],
+            covered_individual_ssns: ["111223333", "333445555"],
+          }],
+        },
+      } as MefFormsPending, extractFilerIdentity(general)),
+    Error,
+    "identified spouse policy",
+  );
+  assertThrows(
+    () =>
+      buildMefXml({
+        ...result.pending,
+        schedule2: {
+          ...result.pending.schedule2,
+          line1a_excess_advance_premium: 749,
+        },
+      } as MefFormsPending, extractFilerIdentity(general)),
+    Error,
+    "differs from finalized return",
+  );
   await validateXsd(xml, "shared MFS APTC-only allocation");
 });
 
@@ -3768,6 +3796,8 @@ Deno.test({
     f1095a: [{
       issuer_name: "Marketplace Plan",
       policy_number: "MFS-POLICY-1",
+      coverage_state: "TX",
+      covered_individual_ssns: ["111223333", "222334444"],
       monthly_premiums: Array(12).fill(1_200),
       monthly_slcsps: Array(12).fill(1_500),
       monthly_aptcs: Array(12).fill(800),
@@ -3797,6 +3827,24 @@ Deno.test({
     "<MonthlyPremiumSLCSPAmt>700</MonthlyPremiumSLCSPAmt>",
   );
   assertEquals(xml.includes("<MonthlyPremiumSLCSPPct>"), false);
+  assertThrows(
+    () =>
+      buildMefXml({
+        ...result.pending,
+        form8962: {
+          ...result.pending.form8962,
+          shared_policy_allocations: [{
+            ...(result.pending.form8962.shared_policy_allocations as Record<
+              string,
+              unknown
+            >[])[0],
+            premium_pct: 0.4,
+          }],
+        },
+      } as unknown as MefFormsPending, extractFilerIdentity(general)),
+    Error,
+    "identified spouse policy",
+  );
   await validateXsd(xml, "shared MFS exception allocation");
 });
 

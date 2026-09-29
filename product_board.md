@@ -42,6 +42,9 @@ Form 6251 native map (31/31),
 Form 4952 royalty (2/2), Form 8582 native map (30/30), Form 8863 native/XSD
 (7/7), and Form 8874 XSD (1/1) files. Form 8962 source-evidence cases,
 PDF-builder test fixtures, ATS source gaps, and other full-batch failures remain.
+Focused Form 8962 shared-MFS no-exception and exception XSD cases now pass
+2/2 with source identity, allocation, and return-drift rejection checks; the
+remaining shared-policy combinations and full release gate stay open.
 Additional focused reruns passed Form 4972 MeF/PDF (51/51), Form 982 native/PDF
 (9/9), Schedule F (8/8), Form 4835 (7/7), and Schedule B Part III with a
 Form 8814 child election (9/9). The Schedule F fix activates its own CCC loan

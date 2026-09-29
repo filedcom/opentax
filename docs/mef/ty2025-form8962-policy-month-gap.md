@@ -301,7 +301,22 @@ tampering, and return-drift cases are written but not run.
 
 This does not yet cover shared policies where the other taxpayer is not a
 covered enrollee, multiple allocation periods or policies, a claimed dependent
-in either tax family, no-APTC Situation 3, divorce or MFS situations, corrected
-SLCSP, or inter-state shared coverage. Those routes still need tax-family
-membership and coverage-family facts, month-by-month source allocation, and
-their own final-return checks before native filing.
+in either tax family, no-APTC Situation 3, divorce, corrected SLCSP, or
+inter-state shared coverage. Those routes still need tax-family membership and
+coverage-family facts, month-by-month source allocation, and their own
+final-return checks before native filing.
+
+## One full-year MFS spouse policy
+
+The MeF descriptor now reconciles one full-year policy shared by an MFS filer
+and spouse. It requires both covered SSNs, the spouse's SSN in Part IV, the
+same policy identifier and coverage state, one source allocation period, and
+twelve monthly premium, SLCSP, and APTC amounts. For an MFS filer with no
+exception, it accepts only a 50% APTC allocation and reconciles the repayment
+to Schedule 2 and Form 1040. For a documented domestic-abuse or abandonment
+exception, it accepts 50% premium and APTC allocations, uses the filer family's
+SLCSP rather than allocating the reported SLCSP, and reconciles the credit to
+Schedule 3 and Form 1040. Both cases rerun the Form 1095-A allocation and Form
+8962 calculation from source. The two focused TY2025 XSD cases, including
+source-identity, allocation, and final-return tampering checks, pass 2/2.
+Other MFS shared-policy combinations remain within the open Form 8962 gate.

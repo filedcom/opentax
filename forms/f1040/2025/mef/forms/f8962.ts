@@ -310,11 +310,13 @@ function isMfsNoExceptionAptcOnly(context?: MefBuildContext): boolean {
     general.data.ptc_mfs_status.policy_scope === "family_only";
 }
 
-function isMfsSharedNoException(context?: MefBuildContext): boolean {
+function isMfsSharedPolicy(context?: MefBuildContext): boolean {
   const general = generalSchema.safeParse(context?.pending?.general);
   return general.success &&
     general.data.filing_status === SourceFilingStatus.MFS &&
-    general.data.ptc_mfs_status?.basis === "no_exception" &&
+    (general.data.ptc_mfs_status?.basis === "no_exception" ||
+      general.data.ptc_mfs_status?.basis === "domestic_abuse" ||
+      general.data.ptc_mfs_status?.basis === "spousal_abandonment") &&
     general.data.ptc_mfs_status.policy_scope === "shared_with_spouse";
 }
 
@@ -1785,6 +1787,147 @@ function reconcileSimplePolicyMonths(
   }
 }
 
+function reconcileMfsSharedPolicy(
+  fields: Input,
+  context?: MefBuildContext,
+): void {
+  const pending = context?.pending;
+  const source = form1095aSchema.safeParse(pending?.f1095a);
+  const general = generalSchema.safeParse(pending?.general);
+  const form1040 = returnSchema.safeParse(pending?.f1040);
+  const rows = fields.monthly_ptc_rows;
+  const allocations = fields.shared_policy_allocations ?? [];
+  if (
+    !context?.filer || !source.success || !general.success ||
+    !form1040.success || !Array.isArray(rows) || rows.length !== 12 ||
+    context.filer.filingStatus !== FilingStatus.MarriedFilingSeparately ||
+    context.filer.address.foreignCountry ||
+    general.data.filing_status !== SourceFilingStatus.MFS ||
+    general.data.ptc_mfs_status?.policy_scope !== "shared_with_spouse" ||
+    general.data.taxpayer_ssn?.replaceAll("-", "") !==
+      context.filer.primarySSN.replaceAll("-", "") ||
+    !general.data.spouse_ssn ||
+    (general.data.dependents?.length ?? 0) !== 0 ||
+    fields.household_size !== 1 ||
+    fields.dependents_modified_agi !== 0 ||
+    fields.qsehra_ind === true ||
+    fields.alternative_marriage_primary || fields.alternative_marriage_spouse ||
+    source.data.alternative_marriage_month !== undefined ||
+    pending?.form2555 !== undefined ||
+    allocations.length !== 1
+  ) {
+    throw new Error(
+      "Form 8962 shared MFS filing needs one identified spouse policy and a finalized one-person return",
+    );
+  }
+  const status = general.data.ptc_mfs_status!;
+  const exception = status.basis !== "no_exception";
+  const allocation = allocations[0];
+  const policy = current1095AStatements(source.data.f1095as)[0];
+  const period = policy?.shared_policy_periods?.[0];
+  const filerSsn = context.filer.primarySSN.replaceAll("-", "");
+  const spouseSsn = general.data.spouse_ssn.replaceAll("-", "");
+  const covered = policy?.covered_individual_ssns?.map((ssn) =>
+    ssn.replaceAll("-", "")
+  );
+  if (
+    current1095AStatements(source.data.f1095as).length !== 1 ||
+    !policy?.policy_number ||
+    policy.policy_number.slice(-15) !== allocation.policy_number ||
+    policy.coverage_state !== context.filer.address.state ||
+    policy.alternative_marriage_owner !== undefined ||
+    policy.slcsp_corrections || policy.slcsp_review_periods ||
+    !policy.monthly_premiums || !policy.monthly_slcsps ||
+    !policy.monthly_aptcs ||
+    policy.shared_policy_periods?.length !== 1 ||
+    covered?.length !== 2 || new Set(covered).size !== 2 ||
+    !covered.includes(filerSsn) || !covered.includes(spouseSsn) ||
+    (!period || !("other_taxpayer_ssn" in period) ||
+      period.other_taxpayer_ssn.replaceAll("-", "") !== spouseSsn) ||
+    period?.start_month !== 1 || period?.end_month !== 12 ||
+    allocation.other_taxpayer_ssn !== spouseSsn ||
+    allocation.start_month !== 1 || allocation.end_month !== 12 ||
+    allocation.aptc_pct !== 0.5 ||
+    allocation.slcsp_pct !== undefined ||
+    (exception
+      ? period?.basis !== "mfs_exception" ||
+        allocation.basis !== "mfs_exception" ||
+        allocation.premium_pct !== 0.5 ||
+        fields.mfs_exception_ind !== true
+      : period?.basis !== "mfs_no_exception" ||
+        allocation.basis !== "mfs_no_exception" ||
+        allocation.premium_pct !== undefined ||
+        fields.mfs_exception_ind === true ||
+        status.exception_reviewed !== true ||
+        status.no_one_can_claim_taxpayer !== true ||
+        status.all_covered_individuals_lawfully_present !== true ||
+        status.no_self_employed_health_insurance_deduction !== true)
+  ) {
+    throw new Error(
+      "Form 8962 shared MFS allocation differs from the identified spouse policy",
+    );
+  }
+  const povertyLine = reconcilePovertyTable(fields, context);
+  const derivedSource = f1095a.compute(
+    { taxYear: 2025, formType: "f1040" },
+    source.data,
+  ).outputs.find((item) => item.nodeType === "form8962")?.fields;
+  if (!derivedSource) {
+    throw new Error(
+      "Form 8962 shared MFS policy has no allocated source amounts",
+    );
+  }
+  const derivedInput = form8962InputSchema.parse({
+    ...derivedSource,
+    taxpayer_modified_agi: form1040.data.line11_agi,
+    dependents_modified_agi: 0,
+    household_size: 1,
+    fpl_region: fields.fpl_region,
+    filing_status: SourceFilingStatus.MFS,
+    mfs_ptc_status: status,
+    dependent_income_complete: true,
+  });
+  const expected = form8962Calculation.compute(
+    { taxYear: 2025, formType: "f1040" },
+    derivedInput,
+  ).outputs.find((item) => item.nodeType === "form8962")?.fields;
+  if (
+    !expected || fields.federal_poverty_line !== povertyLine ||
+    (form1040.data.line2a_tax_exempt ?? 0) !== 0 ||
+    (form1040.data.line6a_ss_gross ?? 0) !==
+      (form1040.data.line6b_ss_taxable ?? 0) ||
+    Object.entries(expected).some(([key, value]) =>
+      JSON.stringify(fields[key]) !== JSON.stringify(value)
+    )
+  ) {
+    throw new Error(
+      "Form 8962 shared MFS amounts differ from source allocation and calculated credit",
+    );
+  }
+  const net = typeof expected.net_premium_tax_credit === "number"
+    ? expected.net_premium_tax_credit
+    : 0;
+  const excess = typeof expected.excess_advance_premium === "number"
+    ? expected.excess_advance_premium
+    : 0;
+  const schedule2 = schedule2Schema.safeParse(pending?.schedule2);
+  const schedule3 = schedule3Schema.safeParse(pending?.schedule3);
+  if (
+    (net > 0 && (!schedule3.success ||
+      schedule3.data.line9_premium_tax_credit !== net ||
+      form1040.data.line31_additional_payments !== net)) ||
+    (excess > 0 && (!schedule2.success ||
+      schedule2.data.line1a_excess_advance_premium !== excess ||
+      form1040.data.line17_additional_taxes !== excess)) ||
+    (net === 0 && pending?.schedule3 !== undefined) ||
+    (excess === 0 && pending?.schedule2 !== undefined)
+  ) {
+    throw new Error(
+      "Form 8962 shared MFS credit or repayment differs from finalized return",
+    );
+  }
+}
+
 function reconcileAgreedSharedPolicy(
   fields: Input,
   context?: MefBuildContext,
@@ -2046,6 +2189,8 @@ function buildIRS8962(fields: Input, context?: MefBuildContext): string {
       reconcileBelow100AptcOnly(fields, context);
     } else if (isMfsNoExceptionAptcOnly(context)) {
       reconcileMfsNoExceptionAptcOnly(fields, context);
+    } else if (isMfsSharedPolicy(context)) {
+      reconcileMfsSharedPolicy(fields, context);
     } else if (Array.isArray(monthlyRows)) {
       if (allocations.length > 0) {
         reconcileAgreedSharedPolicy(fields, context);
