@@ -90,6 +90,21 @@ function noAptcSlcspDeterminations(premiums: number[], slcsps: number[]) {
   );
 }
 
+function noAptcPaymentEvidence(premiums: number[], slcsps: number[]) {
+  return premiums.flatMap((premium, index) => premium > 0 ? [{
+    month: index + 1,
+    marketplace_slcsp: slcsps[index],
+    marketplace_method: "marketplace_tool",
+    marketplace_reference: `Marketplace determination ${index + 1}`,
+    marketplace_determined_on: "2026-02-01",
+    marketplace_record_sha256: "a".repeat(64),
+    premium_paid: premium,
+    premium_paid_in_full_on: "2026-04-01",
+    premium_payment_reference: `Premium payment ${index + 1}`,
+    premium_payment_record_sha256: "b".repeat(64),
+  }] : []);
+}
+
 Deno.test({
   name: "XSD: TY2025 Schedule 2 tax lines retain schema order",
   sanitizeOps: false,
@@ -3357,16 +3372,26 @@ Deno.test({
   sanitizeResources: false,
   ignore: !xsdAvailable,
 }, async () => {
-  const general = singleGeneral();
+  const general = {
+    ...singleGeneral(),
+    taxpayer_can_be_claimed_as_dependent: false,
+  };
   const result = runReturn({
     general,
     w2: [w2Item(30_120, 3_000)],
     f1095a: [{
       issuer_name: "Marketplace Plan",
+      policy_number: "POLICY-NO-APTC",
+      coverage_state: "TX",
+      covered_individual_ssns: ["111223333"],
       monthly_premiums: Array(12).fill(500),
       monthly_slcsps: [...Array(11).fill(600), 601],
       monthly_aptcs: Array(12).fill(0),
       slcsp_corrections: noAptcSlcspDeterminations(
+        Array(12).fill(500),
+        [...Array(11).fill(600), 601],
+      ),
+      no_aptc_monthly_evidence: noAptcPaymentEvidence(
         Array(12).fill(500),
         [...Array(11).fill(600), 601],
       ),

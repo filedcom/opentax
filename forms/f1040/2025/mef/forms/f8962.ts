@@ -647,7 +647,6 @@ function reconcileNoAptcPolicyMonths(
     (fields.shared_policy_allocations?.length ?? 0) !== 0 ||
     fields.alternative_marriage_primary || fields.alternative_marriage_spouse ||
     fields.annual_premium !== undefined ||
-    fields.annual_slcsp !== undefined ||
     fields.annual_aptc !== undefined ||
     fields.annual_ptc_allowed !== undefined ||
     !Array.isArray(rows) || rows.length !== 12 ||
@@ -684,6 +683,11 @@ function reconcileNoAptcPolicyMonths(
   if (
     fields.annual_applicable_contribution !== annualContribution ||
     fields.monthly_applicable_contribution !== monthlyContribution ||
+    (fields.annual_slcsp !== undefined &&
+      fields.annual_slcsp !== rows.reduce(
+        (sum, row) => sum + (row.slcsp ?? 0),
+        0,
+      )) ||
     (policy.annual_premium !== undefined &&
       policy.annual_premium !==
         policy.monthly_premiums.reduce((sum, premium) => sum + premium, 0)) ||

@@ -255,7 +255,7 @@ const noAptcContext = {
 };
 
 Deno.test("Form 8962 no-APTC monthly PTC uses reviewed SLCSP and timely paid premiums", () => {
-  const xml = form8962.build(noAptcFields, noAptcContext);
+  const xml = form8962.build({ ...noAptcFields, annual_slcsp: 9_000 }, noAptcContext);
   assertStringIncludes(
     xml,
     "<TotalPremiumTaxCreditAmt>2604</TotalPremiumTaxCreditAmt>",
@@ -273,6 +273,11 @@ Deno.test("Form 8962 no-APTC monthly PTC uses reviewed SLCSP and timely paid pre
   assertEquals(
     form8962Pdf.instances?.(pdf ?? {}, filer, noAptcContext.pending)?.length,
     1,
+  );
+  assertThrows(
+    () => form8962.build({ ...noAptcFields, annual_slcsp: 9_001 }, noAptcContext),
+    Error,
+    "Form 1095-A totals or contribution do not reconcile",
   );
 });
 
