@@ -63,6 +63,16 @@ supersedes the historical 48-ignored-test note for that descriptor file.
 Mapped field existence still does not establish filled-output visual parity.
 Rerun the full task after remaining scope and route decisions are implemented.
 
+The 2026-09-29 fixed-source regression run on `21457b7e` passed
+8,839/8,839, zero failed, in 13m34s; the summary reported no ignored tests.
+Its log is `.state/research/ty2025-full-test-21457b7e.log`. Its
+separate filled-output pass generated 17 synthetic PDF packets (98 pages) and
+17 native XML files under
+`.state/research/ty2025-filled-pdf-review/2026-09-29-v15/`. The new ordinary
+Form 8283 return passes local v5.4 XSD; its Form 8283 and corrected Schedule A
+pages were visually reviewed. This packet count is coverage evidence for the
+held review matrix, not closure of the route and IRS acceptance gates.
+
 ## XML evidence
 
 For each supported positive filing route in the completed coverage inventory,
