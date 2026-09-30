@@ -369,6 +369,61 @@ Deno.test("Schedule F reconciles 1099-PATR gross and taxable cash lines without 
   assertEquals(findOutput(result, "schedule1")?.fields.line6_schedule_f, 700);
 });
 
+Deno.test("Schedule F reconciles 1099-MISC box 3 farm income to cash line 8 or accrual line 43", () => {
+  const source = {
+    farm_id: "FARM-1",
+    kind: "1099m_box3_other_income" as const,
+    amount: 900,
+    payer_name: "Farm Customer",
+    payer_tin: "123456789",
+    recipient_tin: "987654321",
+  };
+  const cash = minimalItem({
+    farm_id: "FARM-1",
+    line8_other_income: 900,
+  });
+  assertEquals(
+    findOutput(
+      compute({ schedule_fs: [cash], farm_sources: [source] }),
+      "schedule1",
+    )
+      ?.fields.line6_schedule_f,
+    900,
+  );
+  assertThrows(
+    () =>
+      compute({
+        schedule_fs: [
+          minimalItem({ farm_id: "FARM-1", line8_other_income: 899 }),
+        ],
+        farm_sources: [source],
+      }),
+    Error,
+    "line 8 is less than its routed source total",
+  );
+  const accrual = minimalItem({
+    farm_id: "FARM-1",
+    accounting_method: "accrual",
+    line1_sales_livestock_resale: undefined,
+    part_iii: {
+      line37_sales_products: 0,
+      line43_other_income: 900,
+      line45_beginning_inventory: 0,
+      line46_products_purchased: 0,
+      line48_ending_inventory: 0,
+      inventory_method: "cost",
+    },
+  });
+  assertEquals(
+    findOutput(
+      compute({ schedule_fs: [accrual], farm_sources: [source] }),
+      "schedule1",
+    )
+      ?.fields.line6_schedule_f,
+    900,
+  );
+});
+
 Deno.test("Schedule F rejects an omitted 1099-PATR gross or taxable cash line", () => {
   const source = {
     farm_id: "FARM-1",

@@ -30,6 +30,8 @@ const ROYALTIES_ROUTING = ["schedule_e", "schedule_c"] as const;
 const OTHER_INCOME_ROUTING = [
   "prizes_awards",
   "other_income",
+  "schedule_c",
+  "schedule_f",
   "form_8919",
   "excluded",
 ] as const;
@@ -130,6 +132,16 @@ export const itemSchema = z.object({
         "1099-MISC box 3 other income needs a reviewed payment description",
     });
   }
+  if (
+    (item.box3_other_income ?? 0) > 0 &&
+    item.box3_other_income_routing === "schedule_f" && !item.farm_id
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["farm_id"],
+      message: "1099-MISC box 3 farm income needs a Schedule F farm reference",
+    });
+  }
   const grossAttorneyProceeds = item.box10_attorney_proceeds ?? 0;
   if (
     (grossAttorneyProceeds > 0 ||
@@ -167,7 +179,10 @@ export const itemSchema = z.object({
     });
   }
   if (
-    ((item.box1_rents_routing === "schedule_c" && (item.box1_rents ?? 0) > 0) ||
+    ((item.box3_other_income_routing === "schedule_c" &&
+      (item.box3_other_income ?? 0) > 0) ||
+      (item.box1_rents_routing === "schedule_c" &&
+        (item.box1_rents ?? 0) > 0) ||
       (item.box2_royalties_routing === "schedule_c" &&
         (item.box2_royalties ?? 0) > 0) ||
       (item.box5_fishing_boat ?? 0) > 0 ||
@@ -231,6 +246,12 @@ function otherIncomeTotal(items: M99Item[]): number {
 function scheduleCReceiptSources(items: M99Item[]) {
   return items.flatMap((item) => {
     const amounts = [
+      [
+        "box3_other_income",
+        item.box3_other_income_routing === "schedule_c"
+          ? item.box3_other_income
+          : 0,
+      ],
       [
         "box1_rents",
         item.box1_rents_routing === "schedule_c" ? item.box1_rents : 0,
@@ -484,9 +505,24 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
           : {}),
       }];
     });
-    if (farmCropSources.length > 0) {
+    const farmBox3Sources = m99s.flatMap((item) =>
+      item.box3_other_income_routing === "schedule_f" &&
+        (item.box3_other_income ?? 0) > 0
+        ? [{
+          farm_id: item.farm_id!,
+          kind: "1099m_box3_other_income" as const,
+          amount: item.box3_other_income!,
+          payer_name: item.payer_name,
+          payer_tin: item.payer_tin,
+          recipient_tin: item.recipient_tin,
+        }]
+        : []
+    );
+    if (farmCropSources.length > 0 || farmBox3Sources.length > 0) {
       outputs.push(
-        this.outputNodes.output(schedule_f, { farm_sources: farmCropSources }),
+        this.outputNodes.output(schedule_f, {
+          farm_sources: [...farmCropSources, ...farmBox3Sources],
+        }),
       );
     }
 

@@ -208,11 +208,15 @@ export const farmSourceSchema = z.object({
     "1099g_agriculture",
     "1099g_ccc_market_gain",
     "1099m_crop_insurance",
+    "1099m_box3_other_income",
     "1099nec_farm_income",
     "1099patr_cooperative",
     "auto_expense",
   ]),
   amount: z.number().nonnegative(),
+  payer_name: z.string().trim().min(1).optional(),
+  payer_tin: z.string().regex(/^\d{9}$/).optional(),
+  recipient_tin: z.string().regex(/^\d{9}$/).optional(),
   taxable_amount: z.number().nonnegative().optional(),
   deferred: z.boolean().optional(),
 }).strict().superRefine((source, ctx) => {
@@ -231,6 +235,15 @@ export const farmSourceSchema = z.object({
     ctx.addIssue({
       code: "custom",
       message: "Taxable amount is only allowed for 1099-PATR farm sources",
+    });
+  }
+  if (
+    source.kind === "1099m_box3_other_income" &&
+    (!source.payer_name || !source.payer_tin || !source.recipient_tin)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message: "1099-MISC box 3 farm source needs payer and recipient identity",
     });
   }
 });
@@ -326,6 +339,7 @@ export function reconcileFarmSources(
       "1099g_agriculture": 0,
       "1099g_ccc_market_gain": 0,
       "1099m_crop_insurance": 0,
+      "1099m_box3_other_income": 0,
       "1099nec_farm_income": 0,
       "1099patr_cooperative": 0,
       auto_expense: 0,
@@ -365,7 +379,11 @@ export function reconcileFarmSources(
           farm.line6a_crop_insurance ?? 0,
           source["1099m_crop_insurance"],
         ],
-        ["line 8", farm.line8_other_income ?? 0, source["1099nec_farm_income"]],
+        [
+          "line 8",
+          farm.line8_other_income ?? 0,
+          source["1099nec_farm_income"] + source["1099m_box3_other_income"],
+        ],
         ["line 10", farm.line10_car_truck ?? 0, source.auto_expense],
       ] as const
       : [
@@ -392,7 +410,7 @@ export function reconcileFarmSources(
         [
           "line 43",
           accrual?.line43_other_income ?? 0,
-          source["1099nec_farm_income"],
+          source["1099nec_farm_income"] + source["1099m_box3_other_income"],
         ],
         ["line 10", farm.line10_car_truck ?? 0, source.auto_expense],
       ] as const;

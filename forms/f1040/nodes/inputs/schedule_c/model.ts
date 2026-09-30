@@ -189,6 +189,7 @@ export const inputSchema = z.object({
       box: z.enum([
         "box1_rents",
         "box2_royalties",
+        "box3_other_income",
         "box5_fishing_boat",
         "box6_medical_payments",
         "box11_fish_purchased",

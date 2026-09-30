@@ -101,6 +101,7 @@ export function assertScheduleCReceiptSourceIdentity(
         ![
           "box1_rents",
           "box2_royalties",
+          "box3_other_income",
           "box5_fishing_boat",
           "box6_medical_payments",
           "box11_fish_purchased",
@@ -168,6 +169,37 @@ export function assertSchedule1Box3SourceIdentity(
     const row = value as Record<string, unknown>;
     if (!recipients.includes(tin(row.recipient_tin, "1099-MISC recipient"))) {
       throw new Error("1099-MISC box 3 recipient differs from the filer");
+    }
+  }
+}
+
+export function assertScheduleFBox3SourceIdentity(
+  pending: Record<string, unknown>,
+  filer: FilerIdentity,
+): void {
+  const scheduleF = pending.schedule_f;
+  if (!scheduleF || typeof scheduleF !== "object") return;
+  const sources = (scheduleF as Record<string, unknown>).farm_sources;
+  if (sources === undefined) return;
+  if (!Array.isArray(sources)) {
+    throw new Error("Schedule F farm sources must be rows");
+  }
+  const recipients = [
+    tin(filer.primarySSN, "taxpayer"),
+    tin(filer.spouse?.ssn, "spouse"),
+  ];
+  for (const value of sources) {
+    if (!value || typeof value !== "object") {
+      throw new Error("Schedule F farm source is invalid");
+    }
+    const row = value as Record<string, unknown>;
+    if (row.kind !== "1099m_box3_other_income") continue;
+    if (
+      typeof row.payer_name !== "string" || !row.payer_name.trim() ||
+      !tin(row.payer_tin, "1099-MISC payer") ||
+      !recipients.includes(tin(row.recipient_tin, "1099-MISC recipient"))
+    ) {
+      throw new Error("1099-MISC box 3 farm recipient differs from the filer");
     }
   }
 }

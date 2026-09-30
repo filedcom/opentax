@@ -144,3 +144,16 @@ distinguishes self-employment income from other income, and the
 say to include applicable box 1 amounts on line 1. Payer-issued bytes,
 duplicate 1099 reports, accrual timing, visual PDF review, business rules,
 and ATS remain open.
+
+Form 1099-MISC box 3 trade or business income can now be classified to a
+named Schedule C business or Schedule F farm, as the
+[2025 recipient instructions](https://www.irs.gov/pub/irs-prior/f1099msc--2025.pdf)
+direct. Schedule C uses a payer/recipient receipt row checked against cash
+line 1 and the proprietor; Schedule F uses a payer/recipient farm source
+checked against cash line 8 or accrual line 43. A combined $3,000 business and
+$2,000 farm case reaches $5,000 of Form 1040 line 8, validates against local
+TY2025 v5.4 XSD, and builds a filled PDF. The farm recipient is checked
+against the filer/spouse pair, but Schedule F has no per-farm proprietor field
+to prove which spouse owns the farm. Payer bytes, tax-character evidence,
+duplicate source reports, visual PDF review, business rules, and ATS remain
+open.

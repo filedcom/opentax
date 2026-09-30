@@ -46,8 +46,9 @@ through Schedule 1. AGI receives their summed amount, and the MeF
 `OtherIncomeTypeStatement` receives one type-and-amount row per payment.
 Native and PDF exports reject a recipient TIN outside the filer/spouse pair.
 A two-payer $5,000 case reaches Form 1040 line 8, validates against local
-TY2025 v5.4 XSD, and builds a filled PDF packet. The box 3 business/farm,
-misclassified wage, prize, and excluded-income classifications require their
-own complete source audits; this one route does not settle them. The
+TY2025 v5.4 XSD, and builds a filled PDF packet. Separate bounded Schedule C
+and Schedule F box 3 routes now link the payment to a reviewed activity; the
+misclassified wage, prize, and excluded-income classifications still require
+their own complete source audits. The
 [2025 Form 1099-MISC recipient instructions](https://www.irs.gov/pub/irs-prior/f1099msc--2025.pdf)
 say to identify a Schedule 1 other-income payment.

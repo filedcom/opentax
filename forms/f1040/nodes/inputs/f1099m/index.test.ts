@@ -390,6 +390,37 @@ Deno.test("f1099m.compute: box 3 other income needs a payment description", () =
   );
 });
 
+Deno.test("f1099m.compute: box 3 business income links to one Schedule C", () => {
+  const result = compute([minimalItem({
+    box3_other_income: 2500,
+    box3_other_income_routing: "schedule_c",
+  })]);
+  assertEquals(fieldsOf(result.outputs, scheduleC)?.f1099m_receipt_sources, [{
+    business_reference: "business-1",
+    payer_tin: "123456789",
+    recipient_tin: "987654321",
+    box: "box3_other_income",
+    amount: 2500,
+  }]);
+  assertEquals(fieldsOf(result.outputs, schedule1)?.line8z_other, undefined);
+});
+
+Deno.test("f1099m.compute: box 3 farm income links to a Schedule F farm", () => {
+  const result = compute([minimalItem({
+    box3_other_income: 2500,
+    box3_other_income_routing: "schedule_f",
+  })]);
+  assertEquals(fieldsOf(result.outputs, schedule_f)?.farm_sources, [{
+    farm_id: "farm-1",
+    kind: "1099m_box3_other_income",
+    amount: 2500,
+    payer_name: "Test Payer",
+    payer_tin: "123456789",
+    recipient_tin: "987654321",
+  }]);
+  assertEquals(fieldsOf(result.outputs, schedule1)?.line8z_other, undefined);
+});
+
 Deno.test("f1099m.compute: misclassified box 3 wages route to Form 8919 only", () => {
   const result = compute([minimalItem({
     box3_other_income: 2_000,
