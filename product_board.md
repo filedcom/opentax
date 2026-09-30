@@ -25,7 +25,8 @@ The detailed route boundaries remain in the linked gap notes and audits.
   replace the final bulk, filled-PDF, business-rule, or ATS gates. A later
   [Form 4797 K-1 line 2 review](docs/mef/ty2025-form4797-k1-line2-filled-review.md)
   records two local-XSD-valid full returns, inspected parent and continuation
-  pages, and a separate negative-loss route check. Its broader source and
+  pages, a mixed K-1/installment return, and a separate negative-loss route
+  check. Its broader source and
   release gates remain open. The bounded [investment section 1245
   review](docs/mef/ty2025-form4797-investment-1245.md) also has one- and
   four-property XSD-valid, inspected nine-page packets; source-byte proof and

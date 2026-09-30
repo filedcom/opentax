@@ -18,6 +18,7 @@ async function verifyReturn(
   sCorps: readonly Record<string, unknown>[],
   expectedGain: number,
   expectedPages: number,
+  otherInputs: Record<string, unknown> = {},
 ): Promise<void> {
   const result = execute(
     buildExecutionPlan(registry),
@@ -26,12 +27,16 @@ async function verifyReturn(
       ...base.inputs,
       ...(partnerships.length ? { k1_partnership: partnerships } : {}),
       ...(sCorps.length ? { k1_s_corp: sCorps } : {}),
+      ...otherInputs,
     },
     { taxYear: 2025, formType: "f1040" },
   );
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.form4797.section_1231_gain, expectedGain);
   assertEquals(result.pending.schedule_d.line_11_form2439, expectedGain);
+  if (otherInputs.form6252 !== undefined) {
+    assertEquals(result.pending.form4797.gain_form6252, 10_000);
+  }
   const pending = buildPending(result.pending);
   const bundle = await buildMefBundle(pending, {
     filer: base.filer,
@@ -45,6 +50,12 @@ async function verifyReturn(
     bundle.xml,
     `<CapitalGainLossAmt>${expectedGain}</CapitalGainLossAmt>`,
   );
+  if (otherInputs.form6252 !== undefined) {
+    assertStringIncludes(
+      bundle.xml,
+      "<GainInstallmentSalesFrm6252Amt>10000</GainInstallmentSalesFrm6252Amt>",
+    );
+  }
   const xsd = new URL(
     "../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
@@ -143,4 +154,33 @@ Deno.test("a net K-1 section 1231 loss reaches the ordinary Form 1040 path", asy
   );
   const pdf = await buildPdfBytes(pending, base.filer, ".pdf-cache", bundle);
   assertEquals((await PDFDocument.load(pdf)).getPageCount(), 6);
+});
+
+Deno.test("K-1 and installment gains share Form 4797 Part I and a filled packet", async () => {
+  await verifyReturn(
+    "form4797-k1-installment-part1",
+    [{
+      partnership_name: "Partner One",
+      partnership_ein: "123456789",
+      source_document_reference: "2025 partner K-1 source",
+      recipient_tin: "111223333",
+      box10_net_1231: 7_000,
+    }],
+    [],
+    17_000,
+    7,
+    {
+      form6252: [{
+        property_description: "Business land sold on installments",
+        date_acquired: "2020-01-01",
+        date_sold: "2025-03-01",
+        sold_to_related_party: false,
+        selling_price_determinable: true,
+        selling_price: 80_000,
+        cost_basis: 40_000,
+        payments_received: 20_000,
+        is_capital_asset: false,
+      }],
+    },
+  );
 });

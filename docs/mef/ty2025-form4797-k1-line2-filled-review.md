@@ -29,6 +29,15 @@ with SHA-256
 The Form 4797 parent pages and continuation were rendered and visually
 inspected. A focused 50-source case verifies statement pagination.
 
+A third full return combines a $7,000 partnership K-1 box 10 gain with a
+$10,000 Form 6252 business installment gain. Its Form 4797 line 2 row, line 4,
+and $17,000 line 7 total print together; Schedule D and Form 1040 retain the
+same $17,000 long-term gain. Local XSD passes, and the seven-page packet's
+Form 4797 page was rendered and inspected. The PDF snapshot is
+`.state/research/ty2025-filled-pdf-review/2026-09-30-form4797-k1-installment-part1/filled-return.pdf`
+with SHA-256
+`abb7941c06b8dfe328562a837db54615c351ba5fc3994b96b2c2b3e0830209ce`.
+
 These are synthetic source facts; the issued K-1 bytes and underlying
 partnership or corporation property transactions were not authenticated.
 Section 179 property detail, passive limitations, prior section 1231 loss
