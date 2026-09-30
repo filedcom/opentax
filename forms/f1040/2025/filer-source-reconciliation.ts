@@ -410,6 +410,9 @@ export function assertScheduleCReceiptSourceIdentity(
         }
         : {}),
       amount: review?.included_in_schedule_c_gross_receipts,
+      ...(review?.customer_refunds_review
+        ? { customer_refunds_review: review.customer_refunds_review }
+        : {}),
       not_included_in_schedule_c_receipts: review
         ?.not_included_in_schedule_c_receipts,
       allocation_reference: review?.allocation_reference,
@@ -437,7 +440,43 @@ export function assertScheduleCReceiptSourceIdentity(
     };
   });
   const duplicateTotals = new Map<string, number>();
+  const refundTotals = new Map<string, number>();
+  const refundIds = new Set<string>();
   for (const row of expectedK) {
+    const refunds = row.customer_refunds_review;
+    if (refunds !== undefined) {
+      if (!Array.isArray(refunds) || refunds.length === 0) {
+        throw new Error("1099-K customer refunds need reviewed transactions");
+      }
+      let total = 0;
+      for (const value of refunds) {
+        const refund = value as Record<string, unknown>;
+        const id = `${row.pse_tin}:${refund?.refund_transaction_id}`;
+        if (
+          !refund || typeof refund !== "object" ||
+          typeof refund.original_payment_transaction_id !== "string" ||
+          !refund.original_payment_transaction_id.trim() ||
+          typeof refund.refund_transaction_id !== "string" ||
+          !refund.refund_transaction_id.trim() || refundIds.has(id) ||
+          typeof refund.amount !== "number" ||
+          !Number.isSafeInteger(refund.amount) || refund.amount <= 0 ||
+          typeof refund.refund_record_reference !== "string" ||
+          !refund.refund_record_reference.trim() ||
+          refund.issued_in_2025 !== true ||
+          refund.same_business_sale !== true ||
+          refund.not_claimed_elsewhere !== true
+        ) {
+          throw new Error("1099-K customer refund review is invalid");
+        }
+        refundIds.add(id);
+        total += refund.amount;
+      }
+      if (total > (row.amount as number)) {
+        throw new Error("1099-K customer refunds exceed business receipts");
+      }
+      const key = row.business_reference as string;
+      refundTotals.set(key, (refundTotals.get(key) ?? 0) + total);
+    }
     const omitted = row.not_included_in_schedule_c_receipts;
     const duplicate = row.duplicate_1099_review;
     if (
@@ -559,6 +598,20 @@ export function assertScheduleCReceiptSourceIdentity(
   const businesses = fields.schedule_cs;
   if (!Array.isArray(businesses)) {
     throw new Error("1099 receipts need a Schedule C business");
+  }
+  for (const [businessReference, refunds] of refundTotals) {
+    const matches = businesses.filter((business) =>
+      business && typeof business === "object" &&
+      business.business_reference === businessReference
+    );
+    if (
+      matches.length !== 1 ||
+      matches[0].line_2_returns_allowances !== refunds
+    ) {
+      throw new Error(
+        "1099-K customer refunds differ from Schedule C line 2",
+      );
+    }
   }
   const rows = [
     ...(attorneySources ?? []).map((source: unknown) => ({

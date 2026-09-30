@@ -183,6 +183,36 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
         );
       }
     }
+    const refundsByBusiness = new Map<string, number>();
+    for (const source of input.f1099k_receipt_sources ?? []) {
+      const refunds = source.customer_refunds_review ?? [];
+      if (
+        new Set(refunds.map((refund) => refund.refund_transaction_id)).size !==
+          refunds.length
+      ) {
+        throw new Error(
+          "1099-K customer refund transaction IDs must be unique",
+        );
+      }
+      const total = refunds.reduce((sum, refund) => sum + refund.amount, 0);
+      if (total > source.amount) {
+        throw new Error("1099-K customer refunds exceed business receipts");
+      }
+      if (total > 0) {
+        refundsByBusiness.set(
+          source.business_reference,
+          (refundsByBusiness.get(source.business_reference) ?? 0) + total,
+        );
+      }
+    }
+    for (const [reference, refunds] of refundsByBusiness) {
+      const business = input.schedule_cs.find((item) =>
+        item.business_reference === reference
+      );
+      if (business?.line_2_returns_allowances !== refunds) {
+        throw new Error("1099-K customer refunds must equal Schedule C line 2");
+      }
+    }
     if ((input.line_12_depletion ?? 0) > 0) {
       throw new Error(
         "Unlinked depletion worksheet amount needs a Schedule C business and property-level AMT refigure",

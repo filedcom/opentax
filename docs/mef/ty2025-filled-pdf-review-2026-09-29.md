@@ -774,3 +774,15 @@ The PDF SHA-256 is
 source/pending JSON, XML, PDF, and rendered Form 8949 pages are retained at
 `.state/research/ty2025-filled-pdf-review/2026-09-30-v95/`. Actual
 settlement bytes, refunds, IRS business rules, and ATS remain open.
+
+The `single-k-business-refund` source return has a ten-page `v96` PDF.
+Schedule C page 1 was inspected at full size; its lines 1/2/3/7/31 print
+$3,000/$400/$2,600/$2,600/$2,600, and Form 1040 line 8 carries $2,600.
+The original Form 1099-K box 1a is $3,000. Native TY2025 v5.4 XSD passes,
+and changing filed Schedule C line 2 to $300 rejects against the K refund
+records. The PDF SHA-256 is
+`db77dab9a6da54cef1a851142d84ab229c637e87c01e79da06e3c44cb43b6c2e`;
+source/pending JSON, XML, PDF, and the rendered Schedule C page are retained
+at `.state/research/ty2025-filled-pdf-review/2026-09-30-v96/`.
+Payer-issued settlement bytes, other refunds, IRS business rules, and ATS
+remain open.

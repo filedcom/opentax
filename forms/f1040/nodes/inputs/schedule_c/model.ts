@@ -216,6 +216,17 @@ export const inputSchema = z.object({
       personal_item_sales_gross: z.number().int().positive().optional(),
       reported_error_gross: z.number().int().positive().optional(),
       amount: z.number().positive(),
+      customer_refunds_review: z.array(
+        z.object({
+          original_payment_transaction_id: z.string().trim().min(1),
+          refund_transaction_id: z.string().trim().min(1),
+          amount: z.number().int().positive(),
+          refund_record_reference: z.string().trim().min(1),
+          issued_in_2025: z.literal(true),
+          same_business_sale: z.literal(true),
+          not_claimed_elsewhere: z.literal(true),
+        }).strict(),
+      ).min(1).optional(),
       not_included_in_schedule_c_receipts: z.number().nonnegative(),
       allocation_reference: z.string().trim().min(1),
       no_overlap_with_other_1099s: z.literal(true),

@@ -123,6 +123,17 @@ export const itemSchema = z.object({
   schedule_c_receipts_review: z.object({
     included_in_schedule_c_gross_receipts: z.number().int().positive(),
     not_included_in_schedule_c_receipts: z.number().int().nonnegative(),
+    customer_refunds_review: z.array(
+      z.object({
+        original_payment_transaction_id: z.string().trim().min(1),
+        refund_transaction_id: z.string().trim().min(1),
+        amount: z.number().int().positive(),
+        refund_record_reference: z.string().trim().min(1),
+        issued_in_2025: z.literal(true),
+        same_business_sale: z.literal(true),
+        not_claimed_elsewhere: z.literal(true),
+      }).strict(),
+    ).min(1).optional(),
     allocation_reference: z.string().trim().min(1),
     no_overlap_with_other_1099s: z.literal(true),
     overlap_review_reference: z.string().trim().min(1),
@@ -243,6 +254,7 @@ export const itemSchema = z.object({
   }
   if ((item.for_routing === "schedule_c" || mixed) && gross > 0) {
     const review = item.schedule_c_receipts_review;
+    const refunds = review?.customer_refunds_review ?? [];
     const personal = mixed
       ? (item.personal_item_sales_review ?? []).reduce(
         (sum, sale) => sum + sale.proceeds,
@@ -254,6 +266,10 @@ export const itemSchema = z.object({
       !/^\d{9}$/.test(item.pse_tin?.replaceAll("-", "") ?? "") ||
       !item.recipient_tin || !item.schedule_c_business_reference ||
       !review ||
+      refunds.reduce((sum, refund) => sum + refund.amount, 0) >
+        review.included_in_schedule_c_gross_receipts ||
+      new Set(refunds.map((refund) => refund.refund_transaction_id)).size !==
+        refunds.length ||
       review.included_in_schedule_c_gross_receipts +
             review.not_included_in_schedule_c_receipts + personal +
             errorAmount !== gross ||
@@ -434,6 +450,12 @@ function incomeOutputs(k99s: K99Items): NodeOutput[] {
               : {}),
             amount: item.schedule_c_receipts_review!
               .included_in_schedule_c_gross_receipts,
+            ...(item.schedule_c_receipts_review!.customer_refunds_review
+              ? {
+                customer_refunds_review:
+                  item.schedule_c_receipts_review!.customer_refunds_review,
+              }
+              : {}),
             not_included_in_schedule_c_receipts:
               item.schedule_c_receipts_review!
                 .not_included_in_schedule_c_receipts,

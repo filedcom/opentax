@@ -840,6 +840,44 @@ Deno.test("1099-K personal selling expenses reduce Form 8949 proceeds but not bo
   );
 });
 
+Deno.test("1099-K reviewed business refunds retain gross receipts for Schedule C", () => {
+  const refunds = [{
+    original_payment_transaction_id: "sale-1",
+    refund_transaction_id: "refund-1",
+    amount: 400,
+    refund_record_reference: "processor refund ledger",
+    issued_in_2025: true,
+    same_business_sale: true,
+    not_claimed_elsewhere: true,
+  }];
+  const review = {
+    included_in_schedule_c_gross_receipts: 3_000,
+    not_included_in_schedule_c_receipts: 0,
+    customer_refunds_review: refunds,
+    allocation_reference: "settlement ledger",
+    no_overlap_with_other_1099s: true,
+    overlap_review_reference: "overlap review",
+  };
+  const item = businessItem(3_000, { schedule_c_receipts_review: review });
+  const rows = findOutput(compute([item]), "schedule_c")!.fields
+    .f1099k_receipt_sources as Array<Record<string, unknown>>;
+  assertEquals(rows[0].amount, 3_000);
+  assertEquals(rows[0].customer_refunds_review, refunds);
+  assertThrows(
+    () =>
+      compute([businessItem(3_000, {
+      schedule_c_receipts_review: {
+        ...review,
+          customer_refunds_review: [
+            { ...refunds[0], amount: 3_001 },
+          ],
+        },
+      })]),
+    Error,
+    "complete box 1a allocation",
+  );
+});
+
 Deno.test("1099-K mixed business and personal payments allocate box 1a exactly", () => {
   const receiptReview = {
     included_in_schedule_c_gross_receipts: 2_000,
