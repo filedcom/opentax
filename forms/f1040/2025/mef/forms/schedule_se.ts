@@ -1,5 +1,6 @@
 import { element, elements } from "../../../mef/xml.ts";
-import { farmOptionalMethodLines } from "../../../nodes/intermediate/forms/schedule_se/calculation.ts";
+import { scheduleSELines } from "../../../nodes/intermediate/forms/schedule_se/calculation.ts";
+import { CONFIG_BY_YEAR } from "../../../nodes/config/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 export interface Fields {
@@ -39,29 +40,18 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["wages_8919", "WagesSubjectToSSTAmt"],
 ];
 
-// Schedule SE line 2 (NetNonFarmProfitLossAmt) carries Schedule C profit plus
-// ministerial SE earnings for clergy without an approved Form 4361 (Pub 517).
-function withMinisterialEarnings(fields: Input): Input {
-  const ministerial = fields["ministerial_se_earnings"];
-  if (typeof ministerial !== "number" || ministerial === 0) return fields;
-  return {
-    ...fields,
-    net_profit_schedule_c: (fields.net_profit_schedule_c ?? 0) + ministerial,
-  };
-}
-
 function buildIRS1040ScheduleSE(
-  rawFields: Input,
+  fields: Input,
   context?: MefBuildContext,
 ): string {
-  const fields = withMinisterialEarnings(rawFields);
-  const optional = farmOptionalMethodLines(fields);
+  const lines = scheduleSELines(fields, CONFIG_BY_YEAR[2025].ssWageBase);
+  const optional = fields.farm_optional_method_elected === true;
   const hasSeIncome = SE_INCOME_KEYS.some((key) =>
     typeof fields[key] === "number"
   );
   if (!hasSeIncome) return "";
   // The printed 2025 Schedule SE directs the filer to stop at line 4c.
-  if (optional && optional.line4c < 400) return "";
+  if (optional && !lines) return "";
 
   const ssn = context?.filer?.primarySSN.replaceAll("-", "");
   if (!ssn || !/^\d{9}$/.test(ssn) || ssn === "000000000") {
@@ -82,15 +72,23 @@ function buildIRS1040ScheduleSE(
   const children = [
     optional ? "" : value("net_profit_schedule_f", "NetFarmProfitLossAmt"),
     value("net_profit_schedule_c", "NetNonFarmProfitLossAmt"),
-    optional ? element("SETotalNetEarningsOrLossAmt", optional.line3) : "",
-    optional ? element("MinimumProfitForSETaxAmt", optional.line4a) : "",
-    optional ? element("OptionalMethodAmt", optional.line4b) : "",
-    optional ? element("CombinedSEAmt", optional.line4c) : "",
-    optional ? element("CombinedSEAndChurchWagesAmt", optional.line6) : "",
+    lines ? element("SETotalNetEarningsOrLossAmt", lines.line3) : "",
+    lines ? element("MinimumProfitForSETaxAmt", lines.line4a) : "",
+    optional && lines ? element("OptionalMethodAmt", lines.line4b) : "",
+    lines ? element("CombinedSEAmt", lines.line4c) : "",
+    lines ? element("CombinedSEAndChurchWagesAmt", lines.line6) : "",
     value("w2_ss_wages", "SSTWagesRRTCompAmt"),
     value("unreported_tips_4137", "UnreportedTipsAmt"),
     value("wages_8919", "WagesSubjectToSSTAmt"),
-    optional ? element("SETaxFarmOptionalMethodAmt", optional.line15) : "",
+    lines ? element("TotalWagesAndUnreportedTipsAmt", lines.line8d) : "",
+    lines ? element("AllowableSEAmt", lines.line9) : "",
+    lines ? element("TaxBaseAmt", lines.line10) : "",
+    lines ? element("SEBaseAmt", lines.line11) : "",
+    lines ? element("SelfEmploymentTaxAmt", lines.line12) : "",
+    lines ? element("DeductibleSelfEmploymentTaxAmt", lines.line13) : "",
+    optional && lines
+      ? element("SETaxFarmOptionalMethodAmt", lines.line15)
+      : "",
   ];
   return elements("IRS1040ScheduleSE", [ssnChild, ...children]);
 }

@@ -1,9 +1,9 @@
 # TY2025 Form 7206 source-to-filing gap
 
 Status: a narrow taxpayer-owned one-Schedule-C, one-non-Marketplace-plan path is
-coded, 2026-09-28, but remains unverified. No full-batch test, local XSD
-validation, filled-PDF inspection, IRS business-rule check, or ATS acceptance
-proves this path.
+coded and verified in a full TY2025 return with local v5.4 XSD validation and
+a 12-page filled-PDF inspection, 2026-09-30. Source document bytes, the full
+bulk regression, IRS business rules, and ATS acceptance remain unverified.
 
 The [2025 Form 7206](https://www.irs.gov/pub/irs-pdf/f7206.pdf) and
 [instructions](https://www.irs.gov/instructions/i7206) require a separate form
@@ -46,7 +46,11 @@ shareholder wages use line 11. The 2025 native `IRS7206` XSD requires
   includes native lines 16 and 17, which were previously omitted.
 - The PDF descriptor maps the sourced recipient and line 6 as `100%`, checks the
   core Schedule C/Schedule 1 reconciliation and overlap exclusions, then
-  projects the official fields. A filled-page visual review is still pending.
+  projects the official fields. The one-plan full-return PDF was inspected on
+  Form 1040, Schedule 1, Schedule C, Schedule SE, Form 7206, and Form 8995
+  pages. Schedule SE's previously blank computed lines 3-13 now print from the
+  same calculation as Schedule 1 line 15 and Schedule 2 line 4; native XML
+  carries the corresponding tax and deduction elements.
 - The existing Publication 974 single-business calculator remains a separate
   Marketplace-overlap route. It does not emit a Form 7206 document; its
   worksheet and return reconciliation still needs end-to-end review.

@@ -332,7 +332,6 @@ function oneScheduleCLines(
     sumField(input.qbi_from_schedule_f) !== 0 || sumField(input.qbi) !== 0 ||
     sumField(input.sstb_qbi) !== 0 ||
     typeof seDeduction !== "number" || seDeduction < 0 ||
-    sumField(input.se_health_insurance_deduction) !== 0 ||
     sumField(input.retirement_plan_deduction) !== 0 ||
     sumField(input.line6_sec199a_dividends) !== 0 ||
     sumField(input.net_capital_gain) !== 0 ||
@@ -341,7 +340,10 @@ function oneScheduleCLines(
     input.agi === undefined || !Number.isFinite(input.agi) ||
     input.filing_status === undefined
   ) return undefined;
-  const qbi = Math.round(business.qbi - seDeduction);
+  const qbi = Math.round(
+    business.qbi - seDeduction -
+      sumField(input.se_health_insurance_deduction),
+  );
   if (qbi <= 0) return undefined;
   const line11 = Math.round(
     Math.max(0, input.agi - standardDeductionAmount(input, cfg)),

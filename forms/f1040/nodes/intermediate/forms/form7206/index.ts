@@ -105,6 +105,44 @@ export const inputSchema = z.object({
 
 type Form7206Input = z.infer<typeof inputSchema>;
 
+export function reconcileSingleScheduleCGraphSource(
+  fields: {
+    schedule_c_source?: unknown;
+    schedule_se_source?: unknown;
+    schedule1_line16_source?: unknown;
+    marketplace_ptc_premium_overlap?: unknown;
+  },
+  plan: SingleScheduleCPlan,
+  computedSELine13: number,
+): void {
+  const scheduleC = inputSchema.shape.schedule_c_source.parse(
+    fields.schedule_c_source,
+  );
+  const scheduleSE = inputSchema.shape.schedule_se_source.parse(
+    fields.schedule_se_source,
+  );
+  const business = scheduleC?.businesses[0];
+  if (
+    fields.marketplace_ptc_premium_overlap !== false ||
+    scheduleC?.unadjusted_source !== true ||
+    scheduleC.businesses.length !== 1 ||
+    !business ||
+    business.business_reference !== plan.business_reference ||
+    business.proprietor_recipient !== plan.recipient ||
+    business.line31_net_profit !== plan.schedule_c_line31_net_profit ||
+    !scheduleSE ||
+    scheduleSE.net_profit_schedule_c !== plan.schedule_c_line31_net_profit ||
+    scheduleSE.net_profit_schedule_f !== 0 ||
+    scheduleSE.farm_optional_method_elected ||
+    scheduleSE.line13_deduction !== computedSELine13 ||
+    (fields.schedule1_line16_source ?? 0) !== 0
+  ) {
+    throw new Error(
+      "Form 7206 prepared source checks differ from Schedule C, Schedule SE, or the identified plan",
+    );
+  }
+}
+
 // ─── Pure Helpers ─────────────────────────────────────────────────────────────
 
 export function calculateSingleScheduleCForm7206(

@@ -2,6 +2,7 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import {
   calculateSingleScheduleCForm7206,
   form7206LinesSchema,
+  reconcileSingleScheduleCGraphSource,
   singleScheduleCPlanSchema,
 } from "../../../nodes/intermediate/forms/form7206/index.ts";
 import {
@@ -50,12 +51,18 @@ function projectFields(
     "single_schedule_c_plan",
     "recipient_name",
     "recipient_ssn",
+    "schedule_c_source",
+    "schedule_se_source",
+    "schedule1_line16_source",
+    "marketplace_ptc_premium_overlap",
     ...Object.keys(form7206LinesSchema.shape),
   ]);
   const unsupported = Object.keys(fields).filter((key) => !allowed.has(key));
   if (unsupported.length > 0) {
     throw new Error(
-      `Form 7206 PDF does not accept unreviewed fields: ${unsupported.join(", ")}`,
+      `Form 7206 PDF does not accept unreviewed fields: ${
+        unsupported.join(", ")
+      }`,
     );
   }
   const source = singleScheduleCPlanSchema.parse(fields.single_schedule_c_plan);
@@ -92,11 +99,14 @@ function projectFields(
     line8d_foreign_earned_income_exclusion: z.number().optional(),
   }).passthrough().parse(allPending.schedule1);
   const scheduleSE = scheduleSEInputSchema.parse(allPending.schedule_se);
-  const computedSELine13 = schedule_se.compute(
-    { taxYear: 2025, formType: "f1040" },
-    scheduleSE,
-  ).outputs.find((row) => row.nodeType === "schedule1")?.fields
-    .line15_se_deduction ?? 0;
+  const computedSELine13 = z.number().parse(
+    schedule_se.compute(
+      { taxYear: 2025, formType: "f1040" },
+      scheduleSE,
+    ).outputs.find((row) => row.nodeType === "schedule1")?.fields
+      .line15_se_deduction ?? 0,
+  );
+  reconcileSingleScheduleCGraphSource(fields, source, computedSELine13);
   const form1040 = z.object({
     line10_adjustments: z.number(),
   }).passthrough().parse(allPending.f1040);

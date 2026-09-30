@@ -26,18 +26,22 @@ Deno.test("2025 Schedule SE PDF uses printed AcroForm line positions", () => {
   );
   assertEquals(byKey.get("wages_8919"), "topmostSubform[0].Page1[0].f1_16[0]");
   assertEquals(byKey.get("line15"), "topmostSubform[0].Page2[0].f2_2[0]");
+  assertEquals(byKey.get("line12"), "topmostSubform[0].Page1[0].f1_21[0]");
+  assertEquals(byKey.get("line13"), "topmostSubform[0].Page1[0].f1_22[0]");
   assertEquals(scheduleSePdf.filerFields?.map((field) => field.pdfField), [
     "topmostSubform[0].Page1[0].f1_1[0]",
     "topmostSubform[0].Page1[0].f1_2[0]",
   ]);
 });
 
-Deno.test("2025 Schedule SE PDF line 2 includes a ministerial loss", () => {
+Deno.test("2025 Schedule SE PDF projects regular tax and deduction", () => {
   const projected = scheduleSePdf.projectFields?.({
-    net_profit_schedule_c: 10_000,
-    ministerial_se_earnings: -1_000,
+    net_profit_schedule_c: 50_000,
   }, {});
-  assertEquals(projected?.net_profit_schedule_c, 9_000);
+  assertEquals(projected?.line3, 50_000);
+  assertEquals(projected?.line4a, 46_175);
+  assertEquals(projected?.line12, 7_064.775);
+  assertEquals(projected?.line13, 3_532.3875);
 });
 
 Deno.test("2025 Schedule SE PDF projects elected farm method without Part I line 1a", () => {

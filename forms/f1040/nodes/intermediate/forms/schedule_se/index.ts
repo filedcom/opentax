@@ -15,30 +15,13 @@ import { eitc } from "../eitc/index.ts";
 import { schedule1a } from "../schedule1a/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
-import {
-  farmOptionalMethodLines,
-  NET_EARNINGS_MULTIPLIER,
-} from "./calculation.ts";
-
-// ─── TY2025 Constants ──────────────────────────────────────────────────────────
-// IRC §1402(b) — minimum SE earnings to owe SE tax
-const SE_EARNINGS_THRESHOLD = 400;
-// IRC §1401(a) — Social Security rate (employee + employer combined)
-const SS_RATE = 0.124;
-// IRC §1401(b) — Medicare rate (employee + employer combined)
-const MEDICARE_RATE = 0.029;
-// IRC §164(f) — deductible half of SE tax
-const SE_DEDUCTION_RATE = 0.50;
+import { scheduleSELines } from "./calculation.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 export const inputSchema = z.object({
   // Net profit from Schedule C, line 31 (Sch SE Line 2)
   net_profit_schedule_c: z.number().optional(),
-  // Net earnings from ministerial services (clergy without an approved Form 4361): wages,
-  // housing allowance, parsonage rental value, less allowable expenses. Part of Sch SE Line 2
-  // per the Schedule SE instructions and Pub 517.
-  ministerial_se_earnings: z.number().optional(),
   // Net farm profit from Schedule F, line 34 (Sch SE Line 1a)
   net_profit_schedule_f: z.number().optional(),
   // An affirmative Part II farm optional method election. The farm profit is
@@ -57,47 +40,6 @@ export const inputSchema = z.object({
 });
 
 type ScheduleSEInput = z.infer<typeof inputSchema>;
-
-// ─── Pure helpers ──────────────────────────────────────────────────────────────
-
-// Line 3 for the regular method; the farm election uses the shared Part II
-// calculation, which skips Part I line 1a.
-function combinedNetProfit(input: ScheduleSEInput): number {
-  return (input.net_profit_schedule_c ?? 0) +
-    (input.ministerial_se_earnings ?? 0) +
-    (input.net_profit_schedule_f ?? 0);
-}
-
-// Line 4a: net earnings from self-employment
-// If line 3 > 0: multiply by 92.35%; otherwise carry forward as-is (loss)
-function netEarningsFromSE(line3: number): number {
-  return line3 > 0 ? line3 * NET_EARNINGS_MULTIPLIER : line3;
-}
-
-// Line 9: remaining SS wage base after W-2/tip/form-8919 offsets (Sch SE lines 8a–8d)
-// W-2 SS wages (box 3 + box 7) reduce the SE SS wage base per Schedule SE Line 8a.
-// This prevents double-payment of SS tax on the same dollars (IRC §1402(b)).
-// Unreported tips (Form 4137 Line 10) → Line 8b; Form 8919 wages → Line 8c.
-// Line 8d = 8a + 8b + 8c; Line 9 = max(0, Line 7 − Line 8d).
-function remainingWageBase(ssWageBase: number, input: ScheduleSEInput): number {
-  return Math.max(
-    0,
-    ssWageBase -
-      (input.w2_ss_wages ?? 0) -
-      (input.unreported_tips_4137 ?? 0) -
-      (input.wages_8919 ?? 0),
-  );
-}
-
-// Line 10: Social Security portion of SE tax
-function ssTax(line6: number, line9: number): number {
-  return Math.min(line6, line9) * SS_RATE;
-}
-
-// Line 11: Medicare portion of SE tax
-function medicareTax(line6: number): number {
-  return line6 * MEDICARE_RATE;
-}
 
 // ─── Node class ───────────────────────────────────────────────────────────────
 
@@ -122,12 +64,7 @@ class ScheduleSENode extends TaxNode<typeof inputSchema> {
     if (!cfg) throw new Error(`No schedule_se config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
 
-    const optional = farmOptionalMethodLines(input);
-    // The shared Part II calculation owns the elected line 3/4a/4b/4c/6
-    // amounts. Without an election, use the regular farm-plus-nonfarm route.
-    const line3 = optional?.line3 ?? combinedNetProfit(input);
-    const line4a = optional?.line4a ?? netEarningsFromSE(line3);
-    const line4c = optional?.line4c ?? line4a;
+    const lines = scheduleSELines(input, cfg.ssWageBase);
     const source = (line13Deduction: number) =>
       this.outputNodes.output(form7206, {
         schedule_se_source: {
@@ -138,27 +75,10 @@ class ScheduleSENode extends TaxNode<typeof inputSchema> {
           line13_deduction: line13Deduction,
         },
       });
-    if (line4c < SE_EARNINGS_THRESHOLD) {
+    if (!lines) {
       return { outputs: [source(0)] };
     }
-
-    // Line 6: total SE earnings (= line 4c; church employee income not in scope)
-    const line6 = optional?.line6 ?? line4c;
-
-    // Lines 8a–8d, 9: wage base offset and remaining base
-    const line9 = remainingWageBase(cfg.ssWageBase, input);
-
-    // Line 10: SS tax on the lesser of line 6 or remaining wage base
-    const line10 = ssTax(line6, line9);
-
-    // Line 11: Medicare tax on all SE earnings
-    const line11 = medicareTax(line6);
-
-    // Line 12: total SE tax → Schedule 2 line 4
-    const line12 = line10 + line11;
-
-    // Line 13: deductible half → Schedule 1 line 15
-    const line13 = line12 * SE_DEDUCTION_RATE;
+    const { line6, line12, line13 } = lines;
 
     const outputs: NodeOutput[] = [
       source(line13),

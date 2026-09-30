@@ -1,5 +1,10 @@
 import { normalizeAllPending } from "../../pending.ts";
 import {
+  calculateSingleScheduleCForm7206,
+  reconcileSingleScheduleCGraphSource,
+  singleScheduleCPlanSchema,
+} from "../../../nodes/intermediate/forms/form7206/index.ts";
+import {
   computeNetProfit,
   inputSchema as scheduleCInputSchema,
   itemSchema as scheduleCItemSchema,
@@ -120,6 +125,22 @@ export function assertOneScheduleC8995(
   ] as const;
   const form7206 = pending.form7206;
   const seDeduction = fields.se_tax_deduction ?? 0;
+  const healthField = fields.se_health_insurance_deduction;
+  const healthDeduction = typeof healthField === "number" ? healthField : 0;
+  const hasHealthDeduction = healthDeduction > 0;
+  const healthPlan = hasHealthDeduction
+    ? singleScheduleCPlanSchema.safeParse(form7206?.single_schedule_c_plan)
+    : undefined;
+  if (hasHealthDeduction) {
+    if (!healthPlan?.success || !form7206 || typeof seDeduction !== "number") {
+      throw new Error("Form 8995 health deduction needs Form 7206 source");
+    }
+    reconcileSingleScheduleCGraphSource(
+      form7206,
+      healthPlan.data,
+      seDeduction,
+    );
+  }
   const rawQbi = sourceBusiness ? computeNetProfit(sourceBusiness) : 0;
   const hasSeDeduction = typeof seDeduction === "number" && seDeduction > 0;
   const ein = typeof fields.line1_ein === "string"
@@ -155,11 +176,23 @@ export function assertOneScheduleC8995(
   if (
     businesses.length !== 1 || !sourceBusiness || !row || !f1040 ||
     !schedule1 || pending.form8995a !== undefined ||
+    (healthField !== undefined &&
+      (typeof healthField !== "number" || !Number.isFinite(healthField) ||
+        healthField < 0)) ||
     otherSourceKeys.some((key) => pending[key] !== undefined) ||
-    (form7206 !== undefined &&
+    (!hasHealthDeduction && form7206 !== undefined &&
       Object.keys(form7206).some((key) =>
         key !== "schedule_c_source" && key !== "schedule_se_source"
       )) ||
+    (hasHealthDeduction &&
+      (!healthPlan?.success ||
+        healthPlan.data.business_reference !==
+          sourceBusiness?.business_reference ||
+        healthPlan.data.schedule_c_line31_net_profit !== rawQbi ||
+        calculateSingleScheduleCForm7206(healthPlan.data).line14 !==
+          healthDeduction ||
+        form7206?.line14 !== healthDeduction ||
+        form7206?.marketplace_ptc_premium_overlap !== false)) ||
     general?.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
     general?.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
     fields.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
@@ -190,7 +223,7 @@ export function assertOneScheduleC8995(
     row.qbi !== rawQbi ||
     fields.qbi_from_schedule_c !== rawQbi ||
     typeof seDeduction !== "number" ||
-    Math.round(rawQbi - seDeduction) !== fields.line1_qbi ||
+    Math.round(rawQbi - seDeduction - healthDeduction) !== fields.line1_qbi ||
     (hasSeDeduction
       ? scheduleSe?.net_profit_schedule_c !== rawQbi ||
         !zeroOrAbsent(scheduleSe?.net_profit_schedule_f) ||
@@ -209,10 +242,11 @@ export function assertOneScheduleC8995(
     !zeroOrAbsent(fields.line6_sec199a_dividends) ||
     !zeroOrAbsent(fields.qbi_loss_carryforward) ||
     !zeroOrAbsent(fields.reit_loss_carryforward) ||
-    !zeroOrAbsent(fields.se_health_insurance_deduction) ||
+    (hasHealthDeduction
+      ? schedule1.line17_se_health_insurance !== healthDeduction
+      : !zeroOrAbsent(schedule1.line17_se_health_insurance)) ||
     !zeroOrAbsent(fields.retirement_plan_deduction) ||
     !zeroOrAbsent(schedule1.line16_sep_simple) ||
-    !zeroOrAbsent(schedule1.line17_se_health_insurance) ||
     schedule1.line3_schedule_c !== rawQbi ||
     !zeroOrAbsent(f1040.line3a_qualified_dividends) ||
     !zeroOrAbsent(f1040.line7_capital_gain) ||

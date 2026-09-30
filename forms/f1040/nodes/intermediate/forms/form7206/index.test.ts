@@ -325,6 +325,21 @@ const filingFields = {
   single_schedule_c_plan: filingSource,
   recipient_name: "Alex Example",
   recipient_ssn: "123456789",
+  schedule_c_source: {
+    unadjusted_source: true,
+    businesses: [{
+      business_reference: "SCHEDULE-C-A",
+      proprietor_recipient: TS.T,
+      line31_net_profit: 50_000,
+    }],
+  },
+  schedule_se_source: {
+    net_profit_schedule_c: 50_000,
+    net_profit_schedule_f: 0,
+    farm_optional_method_elected: false,
+    line13_deduction: scheduleSEOutput,
+  },
+  marketplace_ptc_premium_overlap: false,
   ...filingLines,
 };
 const filingPending = {
@@ -491,7 +506,7 @@ Deno.test("2025 Form 7206 rejects mismatched owner, retirement, and PTC facts", 
         },
       }),
     Error,
-    "does not reconcile",
+    "prepared source checks differ",
   );
   assertThrows(
     () =>
