@@ -551,6 +551,19 @@ Both Form 1040 pages, both Schedule 1 pages, and both Form 4797 pages of the
 `v73` packet were rendered and visually inspected. Form 1040 line 16 tax is
 $1,595 and $3,000 withholding yields a $1,405 refund. The PDF SHA-256 is
 `fd2f380a63e2ace813711d6e3c6d2a788eee8751d5ccc438944225a7576a920a`.
-Export checks reject changed K-1/4797 rows and another recipient. A fifth
-line 10 row rejects until printable continuation exists. Mixed Form 4797
-sources, issued K-1 bytes, IRS business rules, and ATS remain open.
+Export checks reject changed K-1/4797 rows and another recipient. Mixed Form
+4797 sources, issued K-1 bytes, IRS business rules, and ATS remain open.
+
+The `single-six-partnership-code-l-r-continuation` return also passes local
+TY2025 v5.4 full-return XSD. Six distinct code L/R rows produce $1,000 on
+Form 4797 lines 17/18b, Schedule 1 line 4, and Form 1040 line 8; AGI is
+$31,000. On Form 4797 page 1 the first three rows print $100, $200, and $300;
+row 4 says `See attached` and prints $400. The seventh page of the `v74`
+PDF was rendered and visually inspected: it lists row 4's $50 loss, row 5's
+$400 gain, and row 6's $50 gain with distinct EIN, K-1 source, statement,
+character review, and recipient TIN. Form 4797 page 1 was also visually
+inspected. The PDF SHA-256 is
+`391ef0b7c24bc2ab5b0c6022b3b342e1af377e13bb9a9e0fd40e2cd8a7185657`.
+The packet is at
+`.state/research/ty2025-filled-pdf-review/2026-09-30-v74/`. Other source
+bytes, IRS business rules, and ATS remain open.

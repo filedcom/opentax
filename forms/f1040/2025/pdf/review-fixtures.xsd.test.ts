@@ -43,6 +43,16 @@ for (const fixture of pdfReviewFixtures) {
         assertStringIncludes(xml, "K-1 L 123456789");
         assertStringIncludes(xml, "K-1 R 987654321");
       }
+      if (fixture.id === "single-six-partnership-code-l-r-continuation") {
+        assertEquals(result.pending.schedule1.line4_other_gains, 1_000);
+        assertEquals(result.pending.f1040.line8_additional_income, 1_000);
+        assertEquals(result.pending.f1040.line11_agi, 31_000);
+        assertEquals((xml.match(/<OrdinaryGainLoss>/g) ?? []).length, 6);
+        assertEquals(
+          result.pending.form8582?.has_current_4797_transaction,
+          undefined,
+        );
+      }
       if (fixture.id === "single-two-partnership-code-s-capital") {
         assertEquals(result.pending.schedule_d.line_5_k1_st, 400);
         assertEquals(result.pending.schedule_d.line_12_k1_lt, 600);

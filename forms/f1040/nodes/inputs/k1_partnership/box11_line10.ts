@@ -61,11 +61,6 @@ export function box11Line10SourceRows(
       });
     });
   });
-  if (rows.length > 4) {
-    throw new Error(
-      "Form 4797 PDF line 10 needs a continuation for more than four K-1 code L/R rows",
-    );
-  }
   return rows;
 }
 

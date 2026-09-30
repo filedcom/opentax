@@ -21,6 +21,7 @@ import {
 } from "../../../nodes/intermediate/forms/form4797/investment_1245.ts";
 import { transactionSchema as form8949TransactionSchema } from "../../../nodes/intermediate/forms/form8949/index.ts";
 import { box11Line10SourceSchema } from "../../../nodes/inputs/k1_partnership/box11_line10.ts";
+import { appendForm4797Line10Statement } from "./f4797_line10_statement.ts";
 
 // IRS Form 4797 (2025) AcroForm field names.
 // Part I  — Section 1231 gains: line 9 total.
@@ -149,7 +150,7 @@ export const form4797Pdf: PdfFormDescriptor = {
   ],
   projectFields(fields, allPending) {
     if (fields.k1_box11_line10_rows !== undefined) {
-      const rows = z.array(box11Line10SourceSchema).min(1).max(4)
+      const rows = z.array(box11Line10SourceSchema).min(1)
         .parse(fields.k1_box11_line10_rows);
       if (
         Object.entries(fields).some(([key, value]) =>
@@ -169,12 +170,21 @@ export const form4797Pdf: PdfFormDescriptor = {
         pdf_line17: total,
         ordinary_gain: total,
       };
-      rows.slice(1).forEach((row, index) => {
+      rows.slice(1, rows.length > 4 ? 3 : 4).forEach((row, index) => {
         const n = index + 2;
         projected[`pdf_k1_line10_${n}_description`] =
           `K-1 ${row.code} ${row.partnership_ein}`;
         projected[`pdf_k1_line10_${n}_gain`] = row.gain_loss;
       });
+      if (rows.length > 4) {
+        const overflow = rows.slice(3);
+        projected.pdf_k1_line10_4_description = "See attached";
+        projected.pdf_k1_line10_4_gain = overflow.reduce(
+          (sum, row) => sum + row.gain_loss,
+          0,
+        );
+        projected.pdf_line10_overflow_rows = overflow;
+      }
       return projected;
     }
     if (fields.investment_1245_dispositions !== undefined) {
@@ -342,5 +352,6 @@ export const form4797Pdf: PdfFormDescriptor = {
     }
     return fields;
   },
+  appendSupplementalPages: appendForm4797Line10Statement,
   fields,
 };

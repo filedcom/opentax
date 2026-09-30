@@ -267,17 +267,17 @@ Deno.test("partnership K-1 box 11 codes L and R keep Form 4797 line 10 rows", ()
     Error,
     "Duplicate partnership K-1 box 11 code L/R source",
   );
-  assertThrows(
-    () =>
-      compute([
-        item("111111111", "L", 100),
-        item("222222222", "L", 100),
-        item("333333333", "L", 100),
-        item("444444444", "L", 100),
-        item("555555555", "L", 100),
-      ]),
-    Error,
-    "needs a continuation for more than four",
+  const many = compute([
+    item("111111111", "L", 100),
+    item("222222222", "L", 100),
+    item("333333333", "L", 100),
+    item("444444444", "L", 100),
+    item("555555555", "L", 100),
+  ]);
+  assertEquals(
+    (findOutput(many, "form4797")?.fields.k1_box11_line10_rows as unknown[])
+      .length,
+    5,
   );
   const invalid = item("123456789", "L", 400) as Record<string, unknown>;
   const review =

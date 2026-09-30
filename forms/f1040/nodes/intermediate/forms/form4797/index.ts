@@ -130,7 +130,7 @@ export const inputSchema = z.object({
   gain_form8824: z.number().nonnegative().optional(),
   // Form 4797 Part I line 2, one source row per Schedule K-1.
   k1_1231_rows: z.array(k1Section1231RowSchema).optional(),
-  k1_box11_line10_rows: z.array(box11Line10SourceSchema).max(4).optional(),
+  k1_box11_line10_rows: z.array(box11Line10SourceSchema).optional(),
   passive_property_sales: z.array(passivePropertySaleSchema).optional(),
   passive_activity_sources: form8582.inputSchema.shape.activities,
   passive_disposed_activity_ids: z.array(z.string().trim().min(1).max(64))

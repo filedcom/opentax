@@ -1070,6 +1070,41 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-six-partnership-code-l-r-continuation",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(30_000, 3_000, "Example Employer", "12-3456789")],
+      k1_partnership: [100, 200, 300, -50, 400, 50].map(
+        (gain_loss, index) => {
+          const number = index + 1;
+          const code = index % 2 === 0 ? "L" : "R";
+          return {
+            partnership_name: `Partnership ${number}`,
+            partnership_ein: `12345678${number}`,
+            source_document_reference: `Synthetic partnership ${number} K-1`,
+            box11_line10_ordinary: [{
+              code,
+              gain_loss,
+              statement_reference: `Partnership ${number} box 11 statement`,
+              recipient_tin: "111223333",
+              ordinary_character_reviewed: true,
+              character_workpaper_reference:
+                `Partnership ${number} character review`,
+            }],
+          };
+        },
+      ),
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule1", "f4797"],
+    reviewFocus: [
+      "Six K-1 code L/R rows total $1,000 on Form 4797 line 10",
+      "First three rows print on Form 4797; row four shows an attached $400 subtotal",
+      "Attached statement lists source rows four through six, including the $50 loss",
+      "Schedule 1 line 4 and Form 1040 line 8/AGI each carry $1,000 once",
+    ],
+  },
+  {
     id: "single-two-partnership-code-s-capital",
     inputs: {
       general: singleGeneral,

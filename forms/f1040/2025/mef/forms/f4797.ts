@@ -314,7 +314,7 @@ function buildIRS4797(fields: Input, context?: MefBuildContext): string {
   const k1Rows = z.array(k1Section1231RowSchema).parse(
     fields.k1_1231_rows ?? [],
   );
-  const ordinaryK1Rows = z.array(box11Line10SourceSchema).max(4).parse(
+  const ordinaryK1Rows = z.array(box11Line10SourceSchema).parse(
     fields.k1_box11_line10_rows ?? [],
   );
   const k1Gain = k1Rows.reduce(
