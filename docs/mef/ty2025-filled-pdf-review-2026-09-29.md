@@ -423,8 +423,7 @@ native bundle builder, and PDF builder. The first seven-page `v59` packet
 exposed a blank Form 1040 dependent row even though Form 8862 Part III named
 the child. Form 1040's four dependent columns now project the finalized names,
 TINs, relationships, residence marks, student/disability marks, and credit
-categories; more than four dependents reject until continuation support is
-built. The corrected `v62` packet is retained at
+categories. The corrected `v62` packet is retained at
 `.state/research/ty2025-filled-pdf-review/2026-09-30-v62/` and passes local
 TY2025 v5.4 full-return XSD. All seven pages were reviewed: Form 1040 page 1
 prints Jamie Example, SSN 222334444, daughter, home and U.S. residence, and
@@ -436,5 +435,21 @@ Part III eligibility answers. Pages 2–7 are pixel-identical to the inspected
 now joins a finalized Form 1040 dependent credit row. The seven-page `v62`
 PDF SHA-256 is
 `dca35b28abe71b627131c5350ad2eebabcad7d452fb154d05241f6a7650ee308`.
-Prior IRS-disallowance notice evidence, other reinstatement variants,
-dependent continuation, IRS business rules, and ATS acceptance remain open.
+The later `v63` packet also checks the explicitly reviewed taxpayer U.S.
+main-home answer on Form 1040 page 1 and in native XML. Prior
+IRS-disallowance notice evidence, other reinstatement variants, IRS business
+rules, and ATS acceptance remain open.
+
+The `single-five-dependent-continuation` fixture follows the
+[2025 Form 1040 instructions](https://www.irs.gov/instructions/i1040gi) to
+check the page-1 overflow box and include a statement with the same dependent
+details. The real graph and bundle yield five native `DependentDetail` rows,
+`MoreDependentsInd`, and a $2,500 Schedule 8812/Form 1040 other-dependent
+credit; the full return passes local TY2025 v5.4 XSD. The five-page `v63`
+packet prints four rows on Form 1040 page 1, checks the overflow and U.S.
+main-home boxes, and places Taylor Example's identity, TIN, relationship,
+residence, student/disability, and credit answers on the next page. Page 3 was
+rendered and visually inspected; filled text confirmed the page-1 checks and
+statement. The PDF SHA-256 is
+`8d8716e1d66fe722fa654f99d13273236e4f77e64246409e7eec4d9d85233d35`.
+Payer-issued evidence, IRS business rules, and ATS acceptance remain open.

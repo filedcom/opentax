@@ -44,15 +44,15 @@ Deno.test("Form 1040 PDF prints filed dependent identity and the correct checkbo
   assertEquals(projected?.dependent_0_full_time_student, false);
   assertEquals(projected?.dependent_0_disabled, false);
   assertEquals(projected?.dependent_0_credit_category, "ctc");
-  assertThrows(
-    () =>
-      irs1040Pdf.projectFields?.({
-        dependent_count: 5,
-        dependent_details: Array(5).fill(child),
-      }, {}),
-    Error,
-    "needs a continuation",
-  );
+  const five = irs1040Pdf.projectFields?.({
+    dependent_count: 5,
+    dependent_details: Array(5).fill(child),
+    main_home_in_us_over_half_year: true,
+  }, {});
+  assertEquals(five?.print_more_than_four_dependents, true);
+  assertEquals(five?.dependent_3_first_name, "Jamie");
+  assertEquals(five?.dependent_4_first_name, undefined);
+  assertEquals(five?.main_home_in_us_over_half_year, true);
   assertThrows(
     () =>
       irs1040Pdf.projectFields?.({

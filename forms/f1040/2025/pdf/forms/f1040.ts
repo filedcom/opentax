@@ -2,6 +2,7 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { rgb, StandardFonts } from "pdf-lib";
 import { form8814ParentPrintAmounts } from "./f8814.ts";
 import { appendIraDistributionStatement } from "./ira_distribution_statement.ts";
+import { appendDependentContinuation } from "./dependent_continuation.ts";
 import { schedule1aPdf } from "./schedule1a.ts";
 import { inputSchema as w2gInputSchema } from "../../../nodes/inputs/w2g/index.ts";
 import {
@@ -41,6 +42,11 @@ import {
 //   f2_32:        line 37 amount owed
 
 const fields: ReadonlyArray<PdfFieldEntry> = [
+  {
+    kind: "checkbox",
+    domainKey: "main_home_in_us_over_half_year",
+    pdfField: "topmostSubform[0].Page1[0].c1_5[0]",
+  },
   // ── Page 1: Filing Status checkboxes ──────────────────────────────────────
   // Verified against the 2025 f1040 AcroForm field dump (rects at y≈578–554):
   // the left column (Single/MFJ/MFS) lives under Checkbox_ReadOrder[0] with
@@ -93,6 +99,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     domainKey: "digital_assets",
     pdfField: "topmostSubform[0].Page1[0].c1_10[1]",
     whenValue: "false",
+  },
+  {
+    kind: "checkbox",
+    domainKey: "print_more_than_four_dependents",
+    pdfField: "topmostSubform[0].Page1[0].Dependents_ReadOrder[0].c1_11[0]",
   },
 
   // Four dependent columns, each with first/last name, TIN, relationship,
@@ -545,11 +556,6 @@ export const irs1040Pdf: PdfFormDescriptor = {
     ) {
       throw new Error("Form 1040 PDF dependent count differs from filed rows");
     }
-    if (dependents.length > 4) {
-      throw new Error(
-        "Form 1040 PDF needs a continuation for more than four dependents",
-      );
-    }
     const printedDependents: Record<string, unknown> = {};
     dependents.forEach((dep, i) => {
       if (dep.lived_in_us_over_half_year === undefined) {
@@ -557,6 +563,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
           "Form 1040 PDF dependent needs a reviewed U.S.-residence answer",
         );
       }
+      if (i >= 4) return;
       printedDependents[`dependent_${i}_first_name`] = dep.first_name;
       printedDependents[`dependent_${i}_last_name`] = dep.last_name;
       printedDependents[`dependent_${i}_tin`] =
@@ -639,6 +646,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
     return {
       ...fields,
       ...printedDependents,
+      print_more_than_four_dependents: dependents.length > 4,
       ...(iraRollover && fields.line4b_ira_taxable === 0
         ? { line4b_ira_taxable: "0" }
         : {}),
@@ -672,7 +680,12 @@ export const irs1040Pdf: PdfFormDescriptor = {
     });
     page.drawText(note, { x: 315, y: 93, size: 7, font });
   },
-  async appendSupplementalPages(document, _fields, filer, allPending) {
+  async appendSupplementalPages(document, fields, filer, allPending) {
+    await appendDependentContinuation(
+      document,
+      fields.dependent_details,
+      filer,
+    );
     await appendIraDistributionStatement(document, allPending?.f1099r, filer);
   },
   filerFields: [

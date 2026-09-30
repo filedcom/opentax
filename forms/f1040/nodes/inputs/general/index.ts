@@ -235,6 +235,8 @@ export const inputSchema = z.object({
   address_foreign_postal_code: z.string().optional(),
   // 1040 top-of-form fields
   digital_assets: z.boolean().optional(), // Line 1: digital assets question
+  // Form 1040 header: for a joint return, both spouses had a U.S. main home.
+  main_home_in_us_over_half_year: z.boolean().optional(),
   presidential_campaign_fund_taxpayer: z.boolean().optional(),
   presidential_campaign_fund_spouse: z.boolean().optional(),
   // Filing/return metadata
@@ -731,6 +733,11 @@ function buildF1040Input(input: GeneralInput): Record<string, unknown> {
 
   // 1040 top-of-form fields
   addIfDefined(fields, "digital_assets", input.digital_assets);
+  addIfDefined(
+    fields,
+    "main_home_in_us_over_half_year",
+    input.main_home_in_us_over_half_year,
+  );
   addIfDefined(
     fields,
     "presidential_campaign_fund_taxpayer",

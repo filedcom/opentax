@@ -290,6 +290,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     inputs: {
       general: {
         ...singleGeneral,
+        main_home_in_us_over_half_year: true,
         taxpayer_ssn_valid_for_employment: true,
         taxpayer_ssn_issued_before_due_date: true,
         taxpayer_tin_issued_by_due_date: true,
@@ -350,6 +351,60 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "Form 8862 Part III names the same child as the Form 1040 dependent and checks the CTC eligibility answers",
       "Schedule 8812 and Form 1040 carry the restored child tax credit once",
       "The native Form 8862 child joins the finalized Form 1040 dependent credit row",
+    ],
+  },
+  {
+    id: "single-five-dependent-continuation",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        main_home_in_us_over_half_year: true,
+        taxpayer_tin_issued_by_due_date: true,
+        dependents: ["Jamie", "Casey", "Riley", "Morgan", "Taylor"].map(
+          (first_name, index) => ({
+            first_name,
+            last_name: "Example",
+            name_control: "EXAM",
+            ssn: `222-33-${String(4444 + index).padStart(4, "0")}`,
+            tin_issued_by_due_date: true,
+            dob: "2007-06-15",
+            relationship: "daughter",
+            irs_relationship_code: "DAUGHTER",
+            months_in_home: 12,
+            lived_in_us_over_half_year: true,
+            us_citizen_national_or_resident: true,
+            provided_over_half_own_support: false,
+            filed_joint_return_except_refund_only: false,
+          }),
+        ),
+      },
+      w2: [wage(80_000, 12_000, "Example Employer", "12-3456789")],
+      f8812: [{
+        qualifying_children_count: 0,
+        other_dependents_count: 5,
+        filing_status: SourceFilingStatus.Single,
+        agi: 80_000,
+        income_tax_liability: 9_055,
+        credit_limit_worksheet: {
+          schedule3_line1: 0,
+          schedule3_line2: 0,
+          schedule3_line3: 0,
+          schedule3_line4: 0,
+          schedule3_line5b: 0,
+          schedule3_line6d: 0,
+          schedule3_line6f: 0,
+          schedule3_line6l: 0,
+          schedule3_line6m: 0,
+          worksheet_b_applies: false,
+        },
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule_8812"],
+    reviewFocus: [
+      "Form 1040 checks the overflow box, prints four dependent columns, and appends the fifth dependent's complete statement",
+      "The taxpayer U.S. main-home checkbox is present in both native XML and the filled Form 1040 PDF",
+      "Schedule 8812 and Form 1040 reconcile five other-dependent credit claims",
     ],
   },
   {

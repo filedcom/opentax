@@ -29,6 +29,7 @@ export interface Fields {
   spouse_ssn_issued_before_due_date?: boolean;
   spouse_tin_issued_by_due_date?: boolean;
   digital_assets?: boolean;
+  main_home_in_us_over_half_year?: boolean;
   dependent_details?: readonly DependentFiling[];
   dependent_count?: number;
   qualifying_child_tax_credit_count?: number;
@@ -548,9 +549,17 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
     throw new Error("Form 1040 digital-asset answer must be Yes or No");
   }
 
+  const mainHomeInUS = fields.main_home_in_us_over_half_year;
+  if (mainHomeInUS !== undefined && typeof mainHomeInUS !== "boolean") {
+    throw new Error("Form 1040 U.S. main-home answer must be Yes or No");
+  }
+
   // VirtualCurAcquiredDurTYInd is required by IRS1040.xsd §338 (BooleanType).
   // Preserve the answer supplied on the general input rather than overwriting Yes.
   const requiredPrefix = [
+    ...(mainHomeInUS === true
+      ? [element("MainHomeInUSOverHalfYrInd", "X")]
+      : []),
     element("IndividualReturnFilingStatusCd", statusCode),
     element(
       "VirtualCurAcquiredDurTYInd",
