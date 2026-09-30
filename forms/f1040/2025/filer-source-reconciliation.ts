@@ -12,6 +12,86 @@ function tin(value: unknown, label: string): string | undefined {
   return digits;
 }
 
+function kRecipientMatches(
+  item: Record<string, unknown>,
+  filer: FilerIdentity,
+): boolean {
+  const recipient = tin(item.recipient_tin, "1099-K recipient");
+  const recipients = [tin(filer.primarySSN, "taxpayer")];
+  if (filer.filingStatus === FilingStatus.MarriedFilingJointly) {
+    recipients.push(tin(filer.spouse?.ssn, "spouse"));
+  }
+  const tinMatches = Boolean(recipient && recipients.includes(recipient));
+  const review = item.recipient_identity_review as
+    | Record<string, unknown>
+    | undefined;
+  if (!review) return tinMatches;
+  const normalize = (value: unknown) =>
+    typeof value === "string"
+      ? value.trim().replace(/\s+/g, " ").toUpperCase()
+      : "";
+  const names = [
+    filer.fullName,
+    filer.firstName && filer.lastName
+      ? `${filer.firstName} ${filer.lastName}`
+      : undefined,
+    filer.filingStatus === FilingStatus.MarriedFilingJointly && filer.spouse
+      ? `${filer.spouse.firstName} ${filer.spouse.lastName}`
+      : undefined,
+  ].map(normalize).filter(Boolean);
+  return names.includes(normalize(review.recipient_name)) &&
+    normalize(review.address_line1) === normalize(filer.address.line1) &&
+    normalize(review.address_line2) === normalize(filer.address.line2) &&
+    normalize(review.address_city) === normalize(filer.address.city) &&
+    normalize(review.address_state) === normalize(filer.address.state) &&
+    normalize(review.address_zip) === normalize(filer.address.zip) &&
+    Boolean(normalize(review.source_reference));
+}
+
+export function assertKWithholdingSourceIdentity(
+  pending: Record<string, unknown>,
+  filer: FilerIdentity,
+): void {
+  const raw =
+    (pending.f1099k as { f1099ks?: Array<Record<string, unknown>> } | undefined)
+      ?.f1099ks ?? [];
+  const withheld = raw.filter((item) =>
+    typeof item.box4_federal_withheld === "number" &&
+    item.box4_federal_withheld > 0
+  );
+  let total = 0;
+  for (const item of withheld) {
+    if (
+      typeof item.pse_name !== "string" || !item.pse_name.trim() ||
+      !tin(item.pse_tin, "1099-K PSE") ||
+      typeof item.box1a_gross_payments !== "number" ||
+      item.box1a_gross_payments <= 0 ||
+      typeof item.box4_federal_withheld !== "number" ||
+      item.box4_federal_withheld > item.box1a_gross_payments ||
+      !["schedule_c", "schedule_1_line_8j"].includes(
+        item.for_routing as string,
+      ) ||
+      !kRecipientMatches(item, filer)
+    ) {
+      throw new Error(
+        "1099-K withholding needs identified payer, recipient, and reported income",
+      );
+    }
+    total += item.box4_federal_withheld as number;
+  }
+  const f1040 = pending.f1040 as Record<string, unknown> | undefined;
+  if (
+    (f1040?.line25b_f1099k_withheld ?? 0) !== total ||
+    (typeof f1040?.line25b_withheld_1099 === "number"
+        ? f1040.line25b_withheld_1099
+        : 0) < total
+  ) {
+    throw new Error(
+      "Form 1040 line 25b 1099-K withholding differs from payer box 4",
+    );
+  }
+}
+
 export function assertF1040SourceIdentity(
   fields: Record<string, unknown>,
   filer: FilerIdentity,
@@ -365,20 +445,15 @@ export function assertSchedule1KSourceIdentity(
     typeof item.box1a_gross_payments === "number" &&
     item.box1a_gross_payments > 0
   );
-  const recipients = [tin(filer.primarySSN, "taxpayer")];
-  if (filer.filingStatus === FilingStatus.MarriedFilingJointly) {
-    recipients.push(tin(filer.spouse?.ssn, "spouse"));
-  }
   let expected = 0;
   for (const item of hobby) {
     const review = item.nonbusiness_activity_review as
       | Record<string, unknown>
       | undefined;
-    const recipient = tin(item.recipient_tin, "1099-K recipient");
     if (
       typeof item.pse_name !== "string" || !item.pse_name.trim() ||
       !tin(item.pse_tin, "1099-K PSE") ||
-      !recipient || !recipients.includes(recipient) ||
+      !kRecipientMatches(item, filer) ||
       !review || typeof review.activity_description !== "string" ||
       !review.activity_description.trim() ||
       typeof review.included_in_line8j !== "number" ||

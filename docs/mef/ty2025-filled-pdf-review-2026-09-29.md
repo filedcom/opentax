@@ -674,3 +674,16 @@ source/pending JSON, XML, PDF, and page renders are retained at
 `.state/research/ty2025-filled-pdf-review/2026-09-30-v88/`. Payer bytes,
 activity classification records, payment-level overlap evidence, and IRS
 acceptance remain open.
+
+The `single-k-blank-tin-withholding` source return has a four-page `v89`
+PDF. The payer copy has no recipient TIN; a source-referenced name and
+address review matches the filer. The contact sheet shows $5,000 on
+Schedule 1 line 8j and Form 1040 line 8, and $480 on Form 1040 lines
+25b/25d/33/34/35a. The matching native return passes local TY2025 v5.4
+XSD. Changing box 4 or the reviewed recipient ZIP rejects at export. The
+PDF SHA-256 is
+`e9084c425fc8194d92ad7d07d4ab5db4a7209c460844b18c6ca42d7db41de8df`;
+source/pending JSON, XML, PDF, contact sheet, and page renders are retained
+at `.state/research/ty2025-filled-pdf-review/2026-09-30-v89/`. The
+payer-issued copy and recipient review are structured facts, not
+authenticated document bytes; IRS business rules and ATS remain open.

@@ -21,7 +21,17 @@ export const itemSchema = z.object({
   // Filer identification
   pse_name: z.string(),
   pse_tin: z.string().optional(),
-  recipient_tin: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
+  recipient_tin: z.string().regex(/^(\d{3}-?\d{2}-?\d{4}|\d{2}-?\d{7})$/)
+    .optional(),
+  recipient_identity_review: z.object({
+    recipient_name: z.string().trim().min(1),
+    address_line1: z.string().trim().min(1),
+    address_line2: z.string().trim().optional(),
+    address_city: z.string().trim().min(1),
+    address_state: z.string().trim().length(2),
+    address_zip: z.string().trim().min(5),
+    source_reference: z.string().trim().min(1),
+  }).strict().optional(),
 
   // Filer type checkboxes (PSE = Payment Settlement Entity; EPF = Electronic Payment Facilitator)
   filer_type_pse: z.boolean().optional(),
@@ -154,7 +164,7 @@ export const itemSchema = z.object({
     if (
       !item.pse_name.trim() ||
       !/^\d{9}$/.test(item.pse_tin?.replaceAll("-", "") ?? "") ||
-      !item.recipient_tin || !review ||
+      (!item.recipient_tin && !item.recipient_identity_review) || !review ||
       review.included_in_line8j !== gross
     ) {
       ctx.addIssue({
@@ -237,6 +247,7 @@ function federalWithholdingOutputs(k99s: K99Items): NodeOutput[] {
       item,
     ) => (output(f1040, {
       line25b_withheld_1099: item.box4_federal_withheld!,
+      line25b_f1099k_withheld: item.box4_federal_withheld!,
     })));
 }
 

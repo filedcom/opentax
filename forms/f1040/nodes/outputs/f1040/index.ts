@@ -224,6 +224,7 @@ const inputSchema = z.object({
   line25a_w2_withheld: z.number().nonnegative().optional(),
   // Line 25b — Federal tax withheld (1099 forms) (accumulable: multiple 1099s route here)
   line25b_withheld_1099: accumulable(z.number().nonnegative()).optional(),
+  line25b_f1099k_withheld: accumulable(z.number().nonnegative()).optional(),
   // Line 25c — Additional Medicare Tax withheld (Form 8959 line 24)
   line25c_additional_medicare_withheld: z.number().nonnegative().optional(),
   // Line 25c — other federal income tax withheld, including Form 8805.
@@ -997,6 +998,10 @@ function assembleReturn(
     input.line25b_withheld_1099 as number | number[] | undefined,
   );
   if (line25b > 0) result.line25b_withheld_1099 = line25b;
+  const kWithheld = sumField(
+    input.line25b_f1099k_withheld as number | number[] | undefined,
+  );
+  if (kWithheld > 0) result.line25b_f1099k_withheld = kWithheld;
 
   if (
     computed_line38 > 0 &&

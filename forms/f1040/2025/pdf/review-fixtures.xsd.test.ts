@@ -205,6 +205,85 @@ for (const fixture of pdfReviewFixtures) {
           "matching filer",
         );
       }
+      if (fixture.id === "single-k-blank-tin-withholding") {
+        assertEquals(result.pending.f1040.line8_additional_income, 5_000);
+        assertEquals(result.pending.f1040.line25b_withheld_1099, 480);
+        assertEquals(result.pending.f1040.line25b_f1099k_withheld, 480);
+        assertStringIncludes(
+          xml,
+          "<Form1099WithheldTaxAmt>480</Form1099WithheldTaxAmt>",
+        );
+        assertThrows(
+          () =>
+            buildMefXml(
+              buildPending({
+                ...result.pending,
+                f1099k: {
+                  f1099ks: (result.pending.f1099k.f1099ks as Array<
+                    Record<string, unknown>
+                  >)
+                    .map((row) => ({ ...row, box4_federal_withheld: 479 })),
+                },
+              }),
+              fixture.filer,
+            ),
+          Error,
+          "differs from payer box 4",
+        );
+        assertThrows(
+          () =>
+            buildMefXml(
+              buildPending({
+                ...result.pending,
+                f1099k: {
+                  f1099ks: (result.pending.f1099k.f1099ks as Array<
+                    Record<string, unknown>
+                  >)
+                    .map((row) => ({
+                      ...row,
+                      recipient_identity_review: {
+                        ...(row.recipient_identity_review as Record<
+                          string,
+                          unknown
+                        >),
+                        address_zip: "99999",
+                      },
+                    })),
+                },
+              }),
+              fixture.filer,
+            ),
+          Error,
+          "identified payer, recipient",
+        );
+        assertThrows(
+          () =>
+            buildMefXml(
+              buildPending({
+                ...result.pending,
+                f1099k: {
+                  f1099ks: (result.pending.f1099k.f1099ks as Array<
+                    Record<string, unknown>
+                  >)
+                    .map((row) => ({
+                      ...row,
+                      recipient_tin: "111-22-3333",
+                      recipient_identity_review: {
+                        ...(row.recipient_identity_review as Record<
+                          string,
+                          unknown
+                        >),
+                        address_zip: "99999",
+                      },
+                    })),
+                },
+              }),
+              fixture.filer,
+            ),
+          Error,
+          "identified payer, recipient",
+        );
+      }
       if (fixture.id === "single-partnership-code-l-r-ordinary") {
         assertEquals(result.pending.schedule1.line4_other_gains, 1_000);
         assertEquals(result.pending.f1040.line8_additional_income, 1_000);

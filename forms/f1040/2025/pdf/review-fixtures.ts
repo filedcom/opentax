@@ -2553,6 +2553,41 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-k-blank-tin-withholding",
+    inputs: {
+      general: singleGeneral,
+      f1099k: [{
+        pse_name: "Example Payment Processor",
+        pse_tin: "23-4567890",
+        recipient_identity_review: {
+          recipient_name: "Alex Example",
+          address_line1: "1 Example Way",
+          address_city: "Austin",
+          address_state: "TX",
+          address_zip: "78701",
+          source_reference: "Synthetic 2025 processor recipient review",
+        },
+        box1a_gross_payments: 5_000,
+        box4_federal_withheld: 480,
+        for_routing: "schedule_1_line_8j",
+        nonbusiness_activity_review: {
+          activity_description: "Occasional craft activity",
+          included_in_line8j: 5_000,
+          allocation_reference: "Synthetic 2025 craft payment review",
+          no_overlap_with_other_1099s: true,
+          overlap_review_reference: "Synthetic 2025 payer overlap review",
+        },
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule1"],
+    reviewFocus: [
+      "The payer copy has no recipient TIN; reviewed name and address match the filer",
+      "Form 1099-K box 4 contributes $480 to Form 1040 lines 25b/25d and refund",
+      "The $5,000 box 1a amount reaches Schedule 1 line 8j and Form 1040 line 8",
+    ],
+  },
+  {
     id: "single-schedule-c",
     inputs: {
       general: {
