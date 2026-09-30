@@ -32,6 +32,28 @@ for (const fixture of pdfReviewFixtures) {
       });
       assertEquals(result.diagnostics, []);
       const xml = buildMefXml(buildPending(result.pending), fixture.filer);
+      if (fixture.id === "single-section-a-capital-gain-reduction-gift") {
+        assertEquals(
+          result.pending.schedule_a.line_12_noncash_contributions,
+          3_000,
+        );
+        assertEquals(result.pending.f1040.line12e_itemized_deductions, 39_000);
+        assertStringIncludes(
+          xml,
+          "<OtherThanByCashOrCheckAmt>3000</OtherThanByCashOrCheckAmt>",
+        );
+        assertStringIncludes(
+          xml,
+          "<TotalItemizedOrStandardDedAmt>39000</TotalItemizedOrStandardDedAmt>",
+        );
+        assertStringIncludes(
+          xml,
+          '<FairMarketValueAmt referenceDocumentId="FairMarketValueStatement',
+        );
+        assertStringIncludes(xml, ">3000</FairMarketValueAmt>");
+        assertStringIncludes(xml, "unreduced FMV $4500.00 minus $1500.00");
+        assertStringIncludes(xml, "leaving adjusted basis $3000.00");
+      }
       if (fixture.id === "single-w2-custodial-eic-release") {
         const children = result.pending.eitc.qualifying_child_details as Array<
           Record<string, unknown>

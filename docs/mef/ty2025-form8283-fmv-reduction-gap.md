@@ -1,5 +1,24 @@
 # TY2025 Form 8283 FMV-reduction statement
 
+## Bounded Section A election return review (2026-09-30)
+
+The synthetic `single-section-a-capital-gain-reduction-gift` fixture now runs
+through the finalized return graph, TY2025 v5.4 MeF XML, and filled PDF. A
+purchased collectible coin with $4,500 original FMV and $3,000 adjusted basis
+produces a $3,000 Section A column (h) amount linked to a native
+`FairMarketValueStatement`. The statement computes the $1,500 reduction and
+names the 50% AGI-limit election. Schedule A line 12 is $3,000 and Form 1040
+line 12e is $39,000, including $24,000 state tax and $12,000 mortgage interest.
+The five-page filled PDF was rendered and visually checked: Form 8283 prints the
+donee, property, dates, basis, reduced claim, and a separate matching FMV
+explanation; Schedule A and Form 1040 show the same totals. The focused fixture
+passes local TY2025 v5.4 XSD validation and checks its native link, statement,
+Schedule A, and Form 1040 amounts. The focused Form 8283 source, native, and PDF
+suites passed 93 tests. The PDF reviewed here has SHA-256
+`ea7556683edb34931ef0e43a1756657868ae9724bbb565ab793276debecc3469`. This
+synthetic case does not verify a taxpayer's valuation, basis, donee, or
+election, and does not open the other reduction reasons or carryover routes.
+
 The separate
 [prior-year carryover attachment gap](ty2025-form8283-carryover-source-gap.md)
 now has one bounded, unverified native Section A and reviewed-PDF route. Other

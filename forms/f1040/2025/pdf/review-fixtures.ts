@@ -737,6 +737,50 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-section-a-capital-gain-reduction-gift",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(100_000, 16_000, "Example Employer", "12-3456789")],
+      schedule_a: {
+        line_5a_state_income_tax: 24_000,
+        line_8a_mortgage_interest_1098: 12_000,
+        capital_gain_50_percent_election_confirmed: true,
+        current_noncash_gift_inventory_complete_confirmed: true,
+        other_prior_charitable_carryovers_absent_confirmed: true,
+        capital_gain_property_carryovers: [],
+      },
+      f8283: {
+        section_a_items: [{
+          property_description: "Purchased collectible coin",
+          donee_organization_name: "Community Museum",
+          donee_organization_us_address: {
+            line1: "1 Museum Way",
+            city: "Albany",
+            state: "NY",
+            zip: "12201",
+          },
+          date_acquired: "2022-02-01",
+          date_contributed: "2025-06-01",
+          donor_acquisition_description: "Purchase",
+          fmv: 4_500,
+          deduction_claimed: 3_000,
+          cost_or_adjusted_basis: 3_000,
+          fmv_method: "comparable_sales",
+          charitable_limit_category: "noncash_50",
+          is_capital_gain_property: true,
+          capital_gain_reduction_election_confirmed: true,
+        }],
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule_a", "form8283"],
+    reviewFocus: [
+      "Section A column (h) prints the reduced $3,000 claim and column (i) prints the $3,000 basis",
+      "The linked native and printable FMV statement shows original $4,500 FMV, $1,500 appreciation removed, and the 50% limit election",
+      "Schedule A line 12 and Form 1040 itemized deductions include the reduced contribution once",
+    ],
+  },
+  {
     id: "single-geothermal-general-business-credit",
     inputs: {
       general: singleGeneral,
