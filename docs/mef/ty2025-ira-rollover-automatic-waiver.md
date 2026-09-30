@@ -25,11 +25,13 @@ statement is linked in MeF and printed in the PDF packet. A $9,000 synthetic
 late rollover completed on September 15 after June 20 institution receipt
 and instructions passed the focused node cases and the full-return TY2025 v5.4
 XSD check. Its three-page filled PDF prints $9,000/zero and the rollover mark;
-the statement page was rendered and inspected for dates and record references.
+the statement page was rendered and inspected for the waiver facts and dates.
+Internal evidence references remain in the reviewed source and are omitted
+from the transmitted statement and printable packet.
 The PDF, XML, and three page PNGs are retained under `.state/research/` as
 `ty2025-ira-late-waiver-review.*` and `ty2025-ira-late-waiver-page-*.png`.
 The PDF SHA-256 is
-`213cccbd9cca5655f764d98f6eb8f7a46e773bea64a6a916cce491fc1e08ed7b`.
+`5c1c7cdc1e6731b52256118b72a74d91c37c91fbd0760ac4a283b8316865ce49`.
 
 This uses structured reviewed references under the repository's current
 bounded-source approach; it does not authenticate the institution's issued

@@ -478,29 +478,17 @@ export function iraDistributionExplanation(
       } was rolled into ${destination} on ${rollover.completed_on}.`;
     const waiver = rollover.automatic_late_waiver;
     const waiverText = waiver
-      ? ` The automatic 60-day waiver applies: the institution received the funds on ${waiver.institution_received_on} and deposit instructions on ${waiver.deposit_instructions_on}; institution error alone delayed deposit until ${rollover.completed_on}. The source was reviewed as neither inherited nor an RMD. Reviewed records: ${waiver.rollover_eligibility_review_reference}, ${waiver.institution_receipt_reference}, ${waiver.deposit_instructions_reference}, ${waiver.institution_error_reference}, ${waiver.deposit_confirmation_reference}${
-        waiver.qualified_plan_acceptance_reference
-          ? `, ${waiver.qualified_plan_acceptance_reference}`
-          : ""
-      }.`
+      ? ` The automatic 60-day waiver applies: the institution received the funds on ${waiver.institution_received_on} and deposit instructions on ${waiver.deposit_instructions_on}; institution error alone delayed deposit until ${rollover.completed_on}. The source was reviewed as neither inherited nor an RMD.`
       : "";
     const certification = rollover.self_certified_late_waiver;
     const certificationText = certification
       ? ` Rev. Proc. 2020-46 self-certification: ${
         certification.reason.replaceAll("_", " ")
-      } prevented a timely rollover until ${certification.reason_resolved_on}; certification was signed on ${certification.certification_signed_on} and delivered to the receiving institution on ${certification.certification_delivered_on}. No prior IRS waiver denial was found. Reviewed records: ${certification.reason_evidence_reference}, ${certification.prior_denial_review_reference}, ${certification.signed_certification_reference}, ${certification.contribution_confirmation_reference}, ${certification.rollover_eligibility_review_reference}${
-        certification.qualified_plan_acceptance_reference
-          ? `, ${certification.qualified_plan_acceptance_reference}`
-          : ""
-      }.`
+      } prevented a timely rollover until ${certification.reason_resolved_on}; certification was signed on ${certification.certification_signed_on} and delivered to the receiving institution on ${certification.certification_delivered_on}. No prior IRS waiver denial was found.`
       : "";
     const ruling = rollover.irs_private_letter_waiver;
     const rulingText = ruling
-      ? ` IRS private letter ruling ${ruling.ruling_number}, issued ${ruling.issued_on}, grants a 60-day waiver for this owner and distribution with a deposit deadline of ${ruling.ruling_rollover_deadline_on}. Reviewed records: ${ruling.issued_ruling_reference}, ${ruling.owner_distribution_match_review_reference}, ${ruling.deposit_confirmation_reference}, ${ruling.rollover_eligibility_review_reference}${
-        ruling.qualified_plan_acceptance_reference
-          ? `, ${ruling.qualified_plan_acceptance_reference}`
-          : ""
-      }.`
+      ? ` IRS private letter ruling ${ruling.ruling_number}, issued ${ruling.issued_on}, grants a 60-day waiver for this owner and distribution with a deposit deadline of ${ruling.ruling_rollover_deadline_on}.`
       : "";
     return [
       `Distribution ${

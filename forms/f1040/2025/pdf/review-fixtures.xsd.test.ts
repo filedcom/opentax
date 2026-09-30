@@ -1249,6 +1249,9 @@ for (const fixture of pdfReviewFixtures) {
             : "2026-01-15",
         );
       }
+      if (fixture.id.startsWith("single-ira-late-")) {
+        assertEquals(xml.includes("synthetic-"), false);
+      }
       const path = await Deno.makeTempFile({ suffix: ".xml" });
       try {
         await Deno.writeTextFile(path, xml);

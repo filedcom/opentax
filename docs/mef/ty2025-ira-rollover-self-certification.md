@@ -24,12 +24,13 @@ after contribution, conflicting automatic-waiver facts, or missing evidence.
 A $6,000 synthetic serious-illness case passes node checks and the complete
 TY2025 v5.4 Form 1040 XML schema. Form 1040 line 4a prints $6,000, line 4b
 prints zero, and line 4c(1) is marked. The linked native explanation and the
-third page of the filled PDF both show the reason, dates, and reviewed record
-references. All three PDF pages were rendered and inspected. The retained
+third page of the filled PDF both show the reason and dates. Internal evidence
+references remain in the reviewed source and are omitted from the transmitted
+statement and printable packet. All three PDF pages were rendered and inspected. The retained
 PDF, XML, and page PNGs are under `.state/research/` as
 `ty2025-ira-self-certification-review.*` and
 `ty2025-ira-self-certification-page-*.png`; the PDF SHA-256 is
-`eab168791b8fa609f2986e3ae8cbcc36b40402c742c48bb7dbbf731fcb1b54f1`.
+`102b71402ba3bbcab37d7610dfeb1d62743581fc46ba551afcf068b1af6263aa`.
 
 The current source standard is structured reviewed references, not
 authenticated issued bytes. The IRS has not granted or accepted a waiver for

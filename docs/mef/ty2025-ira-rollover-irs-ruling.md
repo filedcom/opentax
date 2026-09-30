@@ -16,11 +16,12 @@ deadline, or simultaneous claims under another waiver method reject.
 A $7,000 synthetic late IRA-to-IRA rollover passes node checks and the full
 TY2025 v5.4 Form 1040 XML schema. The filled three-page PDF was rendered and
 inspected: Form 1040 line 4a prints $7,000, line 4b prints zero, line 4c(1)
-is marked, and the linked statement lists the ruling, dates, and source
-references. The PDF, XML, and three page PNGs are retained under
+is marked, and the linked statement lists the ruling and dates. Internal
+evidence references remain in the reviewed source and are omitted from the
+transmitted statement and printable packet. The PDF, XML, and three page PNGs are retained under
 `.state/research/` as `ty2025-ira-irs-ruling-review.*` and
 `ty2025-ira-irs-ruling-page-*.png`. The PDF SHA-256 is
-`081afd6c624255ffa67803fc73d077baa67a91ec74bb492c9c99d85a1637b991`.
+`d8075b8d5b9ee78cea6fdbf055f240d65602922bbbc8b0ce724df5ebb73f84f9`.
 
 The ruling and 1099-R in this fixture are synthetic reviewed references, not
 authenticated IRS or payer-issued bytes. Actual ruling verification, other

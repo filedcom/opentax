@@ -1157,9 +1157,9 @@ Deno.test("f1099r.compute: institution-error automatic waiver retains late IRA r
     iraDistributionExplanation([item]) ?? "",
     "automatic 60-day waiver applies",
   );
-  assertStringIncludes(
-    iraDistributionExplanation([item]) ?? "",
-    "custodian-error-1",
+  assertEquals(
+    iraDistributionExplanation([item])?.includes("custodian-error-1"),
+    false,
   );
 
   const planItem = {
@@ -1176,9 +1176,9 @@ Deno.test("f1099r.compute: institution-error automatic waiver retains late IRA r
     },
   };
   assertEquals(f1040Input(compute([planItem])).line4c_ira_rollover, true);
-  assertStringIncludes(
-    iraDistributionExplanation([planItem]) ?? "",
-    "plan-acceptance-1",
+  assertEquals(
+    iraDistributionExplanation([planItem])?.includes("plan-acceptance-1"),
+    false,
   );
   assertThrows(
     () =>
@@ -1293,9 +1293,9 @@ Deno.test("f1099r.compute: signed self-certification keeps a late rollover withi
     iraDistributionExplanation([item]) ?? "",
     "Rev. Proc. 2020-46 self-certification",
   );
-  assertStringIncludes(
-    iraDistributionExplanation([item]) ?? "",
-    "signed-letter-1",
+  assertEquals(
+    iraDistributionExplanation([item])?.includes("signed-letter-1"),
+    false,
   );
   const rollover = item.ira_rollover!;
   const certification = rollover.self_certified_late_waiver!;
