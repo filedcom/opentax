@@ -242,7 +242,7 @@ export const scheduleEPdf: PdfFormDescriptor = {
     );
     if (k1Rows.length > 0) {
       if (
-        k1Rows.length > 4 || input.schedule_es.length > 3 ||
+        k1Rows.length > 4 ||
         input.rental_income !== undefined ||
         input.royalty_income !== undefined ||
         trustRows.length > 2 ||
@@ -299,7 +299,6 @@ export const scheduleEPdf: PdfFormDescriptor = {
     }
     if (trustRows.length > 0 && k1Rows.length === 0) {
       if (
-        input.schedule_es.length > 3 ||
         input.rental_income !== undefined ||
         input.royalty_income !== undefined ||
         trustRows.length > 2 ||
@@ -347,7 +346,7 @@ export const scheduleEPdf: PdfFormDescriptor = {
     }
     const items = input.schedule_es;
     if (
-      items.length === 0 || items.length > 3 ||
+      items.length === 0 ||
       input.mortgage_interest !== undefined ||
       input.expense_auto_travel !== undefined ||
       input.expense_depletion !== undefined ||
@@ -370,7 +369,7 @@ export const scheduleEPdf: PdfFormDescriptor = {
       )
     ) {
       throw new Error(
-        "Schedule E PDF needs up to three supported Part I rental or sourced royalty properties",
+        "Schedule E PDF needs supported Part I rental or sourced royalty properties",
       );
     }
     const otherDescriptions = new Set(
@@ -482,10 +481,28 @@ export const scheduleEPdf: PdfFormDescriptor = {
       );
     }
     const payments = items.some((item) => item.form_1099_payments_made);
+    const pageFields = (start: number) =>
+      Object.fromEntries(
+        rows.slice(start, start + 3).flatMap((row, localIndex) =>
+          Object.entries(row.fields).map(([key, value]) => [
+            key.replace(/^property_\d+_/, `property_${localIndex}_`),
+            value,
+          ])
+        ),
+      );
+    const continuationPages = Array.from(
+      { length: Math.ceil(Math.max(0, rows.length - 3) / 3) },
+      (_, index) => ({
+        ...pageFields(3 + index * 3),
+        other_property_description: [...type8Descriptions][0],
+        line19_description: [...otherDescriptions][0],
+      }),
+    );
     return {
       ...partIIFields,
       ...farmFields,
-      ...Object.assign({}, ...rows.map((row) => row.fields)),
+      ...pageFields(0),
+      partIContinuationPages: continuationPages,
       payments_made: payments,
       forms_1099_filed: payments
         ? items.every((item) =>
@@ -522,6 +539,9 @@ export const scheduleEPdf: PdfFormDescriptor = {
         );
       }
     }
-    return [fields];
+    const continuations = fields.partIContinuationPages;
+    if (!Array.isArray(continuations)) return [fields];
+    const { partIContinuationPages: _continuations, ...primary } = fields;
+    return [primary, ...continuations as Record<string, unknown>[]];
   },
 };

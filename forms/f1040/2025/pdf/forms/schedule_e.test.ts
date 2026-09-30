@@ -262,6 +262,41 @@ Deno.test("Schedule E PDF maps one rental to the official 2025 Part I property A
   );
 });
 
+Deno.test("Schedule E PDF adds a Part I copy for property four and keeps totals on the first copy", () => {
+  const properties = Array.from({ length: 4 }, (_, index) => ({
+    ...rental,
+    activity_id: `rental-${index}`,
+    street_address: `${12 + index} Main Street`,
+  }));
+  const raw = { schedule_es: properties };
+  const projected = scheduleEPdf.projectFields?.(raw, {
+    schedule_e: raw,
+    schedule1: { line5_schedule_e: 33_400 },
+  }) ?? {};
+  const copies = scheduleEPdf.instances?.(projected) ?? [];
+  assertEquals(copies.length, 2);
+  assertEquals(
+    copies[0].property_0_address,
+    "12 Main Street, Austin, TX 78701",
+  );
+  assertEquals(
+    copies[0].property_2_address,
+    "14 Main Street, Austin, TX 78701",
+  );
+  assertEquals(copies[0].line23a, 48_000);
+  assertEquals(copies[0].line26, 33_400);
+  assertEquals(
+    copies[1].property_0_address,
+    "15 Main Street, Austin, TX 78701",
+  );
+  assertEquals(copies[1].property_0_line3, 12_000);
+  assertEquals(copies[1].line23a, undefined);
+  assertEquals(copies[1].line26, undefined);
+  assertEquals(copies[1].payments_made, undefined);
+  assertEquals(scheduleEPdf.pageIndices?.(copies[0]), [0]);
+  assertEquals(scheduleEPdf.pageIndices?.(copies[1]), [0]);
+});
+
 Deno.test("Schedule E PDF prints a sourced full-disposition operating loss and no Form 8582", () => {
   const sale = {
     activity_id: "rental-house",
@@ -340,14 +375,6 @@ Deno.test("Schedule E PDF fails closed on unprojected paths and Schedule 1 misma
       }),
     Error,
     "Schedule 1 line 5",
-  );
-  assertThrows(
-    () =>
-      scheduleEPdf.projectFields?.({
-        schedule_es: [rental, rental, rental, rental],
-      }, linked),
-    Error,
-    "up to three supported Part I",
   );
   assertThrows(
     () =>
