@@ -8315,6 +8315,59 @@ Deno.test({
 });
 
 Deno.test({
+  name: "XSD: Form 1098 construction-refinance points amortize on Schedule A",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const result = runReturn({
+    general,
+    f1098: [{
+      lender_name: "Construction Lender",
+      recipient_tin: general.taxpayer_ssn,
+      source_document_reference: "2025 issued construction Form 1098",
+      box1_mortgage_interest: 18_000,
+      box1_current_year_deductible_interest: 18_000,
+      box1_deduction_workpaper_reference: "2025 interest workpaper",
+      box6_points_paid: 2_000,
+      box6_deduction_workpaper_reference: "2025 construction workpaper",
+      box6_construction_refinance_review: {
+        construction_loan_record_reference: "2025 construction loan",
+        closing_disclosure_reference: "2025 refinance closing",
+        original_construction_debt: 100_000,
+        refinanced_principal: 100_000,
+        loan_term_months: 180,
+        monthly_payment_records: [7, 8, 9, 10, 11, 12].map((month) => ({
+          month,
+          document_reference: `payment-${month}`,
+        })),
+        principal_residence_when_complete_verified: true,
+        points_paid_directly_verified: true,
+        reportable_points_within_acquisition_limit_verified: true,
+      },
+      refinance: true,
+      for_routing: "A",
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(
+    result.pending.schedule_a?.line_8a_mortgage_interest_1098,
+    18_067,
+  );
+  assertEquals(result.pending.f1040?.line12e_itemized_deductions, 18_067);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(
+    xml,
+    "<RptHomeMortgIntAndPointsAmt>18067</RptHomeMortgIntAndPointsAmt>",
+  );
+  await validateXsd(xml, "Form 1098 construction-refinance points full return");
+});
+
+Deno.test({
   name:
     "XSD: 1099-NEC Form 8919 firm reaches 1040, Schedule 2, Schedule SE and Form 8959",
   sanitizeOps: false,

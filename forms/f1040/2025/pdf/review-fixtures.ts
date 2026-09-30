@@ -444,6 +444,46 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-1098-construction-refinance-points",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(80_000, 12_000, "Example Employer", "12-3456789")],
+      f1098: [{
+        lender_name: "Construction Lender",
+        recipient_tin: singleGeneral.taxpayer_ssn,
+        source_document_reference: "Synthetic 2025 construction Form 1098",
+        box1_mortgage_interest: 18_000,
+        box1_current_year_deductible_interest: 18_000,
+        box1_deduction_workpaper_reference: "2025 interest workpaper",
+        box6_points_paid: 2_000,
+        box6_deduction_workpaper_reference: "2025 construction points workpaper",
+        box6_construction_refinance_review: {
+          construction_loan_record_reference: "2025 construction loan",
+          closing_disclosure_reference: "2025 refinance closing",
+          original_construction_debt: 100_000,
+          refinanced_principal: 100_000,
+          loan_term_months: 180,
+          monthly_payment_records: [7, 8, 9, 10, 11, 12].map((month) => ({
+            month,
+            document_reference: `payment-${month}`,
+          })),
+          principal_residence_when_complete_verified: true,
+          points_paid_directly_verified: true,
+          reportable_points_within_acquisition_limit_verified: true,
+        },
+        refinance: true,
+        for_routing: "A",
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule_a"],
+    reviewFocus: [
+      "Schedule A line 8a prints 18,067 after six months of construction-refinance points amortization",
+      "The reported 2,000 points do not enter Schedule A as a full current-year deduction",
+      "Form 1040 line 12e matches the current-year itemized deduction",
+    ],
+  },
+  {
     id: "single-1098-prior-year-recovery",
     inputs: {
       general: singleGeneral,

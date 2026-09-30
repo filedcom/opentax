@@ -336,6 +336,61 @@ Deno.test("f1098.compute: box6 refinance claim is rejected pending amortization 
   );
 });
 
+Deno.test("f1098.compute: construction refinance box6 points amortize by 2025 payments", () => {
+  const source = reviewedPoints(2_000, 0, {
+    refinance: true,
+    box6_current_year_deductible_points: undefined,
+    box6_construction_refinance_review: {
+      construction_loan_record_reference: "2025 original construction loan",
+      closing_disclosure_reference: "2025 construction refinance closing",
+      original_construction_debt: 100_000,
+      refinanced_principal: 100_000,
+      loan_term_months: 180,
+      monthly_payment_records: [
+        { month: 7, document_reference: "payment-july" },
+        { month: 8, document_reference: "payment-august" },
+        { month: 9, document_reference: "payment-september" },
+        { month: 10, document_reference: "payment-october" },
+        { month: 11, document_reference: "payment-november" },
+        { month: 12, document_reference: "payment-december" },
+      ],
+      principal_residence_when_complete_verified: true,
+      points_paid_directly_verified: true,
+      reportable_points_within_acquisition_limit_verified: true,
+    },
+  });
+  const result = compute([source]);
+  assertEquals(
+    fieldsOf(result.outputs, scheduleA)?.line_8a_mortgage_interest_1098,
+    67,
+  );
+  assertThrows(
+    () =>
+      compute([{
+        ...source,
+        box6_construction_refinance_review: {
+          ...(source.box6_construction_refinance_review as Record<
+            string,
+            unknown
+          >),
+          monthly_payment_records: [{
+            month: 7,
+            document_reference: "payment-july",
+          }],
+        },
+      }]),
+    Error,
+  );
+  assertThrows(
+    () =>
+      compute([{
+        ...source,
+        box6_current_year_deductible_points: 2_000,
+      }]),
+    Error,
+  );
+});
+
 Deno.test("f1098.compute: reviewed zero current-year box6 deduction creates no Schedule A points", () => {
   const result = compute([reviewedPoints(2_000, 0)]);
   assertEquals(fieldsOf(result.outputs, scheduleA), undefined);

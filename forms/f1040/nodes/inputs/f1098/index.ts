@@ -20,6 +20,22 @@ export enum ForRouting {
   F8829 = "8829",
 }
 
+const constructionRefinanceReviewSchema = z.object({
+  construction_loan_record_reference: z.string().trim().min(1),
+  closing_disclosure_reference: z.string().trim().min(1),
+  original_construction_debt: z.number().finite().positive(),
+  refinanced_principal: z.number().finite().positive(),
+  loan_term_months: z.number().int().min(1).max(600),
+  monthly_payment_records: z.array(z.object({
+    month: z.number().int().min(1).max(12),
+    document_reference: z.string().trim().min(1),
+  }))
+    .min(1).max(12),
+  principal_residence_when_complete_verified: z.literal(true),
+  points_paid_directly_verified: z.literal(true),
+  reportable_points_within_acquisition_limit_verified: z.literal(true),
+});
+
 export const itemSchema = z.object({
   // Required per context.md
   box1_mortgage_interest: z.number().nonnegative(),
@@ -42,11 +58,16 @@ export const itemSchema = z.object({
   box4_recovery_workpaper_reference: z.string().trim().min(1).optional(),
   // box5: MIP — NOT deductible for TY2025. Collected for informational purposes only.
   box5_mip: z.number().nonnegative().optional(),
-  box6_points_paid: z.number().nonnegative().optional(),
+  box6_points_paid: z.number().finite().nonnegative().optional(),
   // Box 6 is a source amount, not necessarily the current-year deduction.
-  // The reviewed Pub. 936 workpaper determines the deductible portion.
-  box6_current_year_deductible_points: z.number().nonnegative().optional(),
+  // The reviewed Pub. 936 workpaper determines the deductible purchase portion.
+  box6_current_year_deductible_points: z.number().finite().nonnegative()
+    .optional(),
   box6_deduction_workpaper_reference: z.string().trim().min(1).optional(),
+  // The 2025 Form 1098 box 6 refinance exception covers qualifying
+  // construction-debt refinancing. Its points are amortized over this loan.
+  box6_construction_refinance_review: constructionRefinanceReviewSchema
+    .optional(),
   // box7–box11: informational only, no tax routing
   box7_property_address_same: z.boolean().optional(),
   box8_property_address: z.string().optional(),
@@ -60,7 +81,7 @@ export const itemSchema = z.object({
   dedm_override: z.boolean().optional(),
   // Binding contract exception: pre-2017 $1M limit applies even if box3 >= 12/16/2017
   binding_contract_exception: z.boolean().optional(),
-  // Refinance flag: box6 points must be amortized, not fully deducted in year paid
+  // Ordinary refinancing points do not belong in Form 1098 box 6.
   refinance: z.boolean().optional(),
 }).superRefine((item, ctx) => {
   const reportedInterest = item.box1_mortgage_interest;
@@ -168,6 +189,7 @@ export const itemSchema = z.object({
   }
   const points = item.box6_points_paid ?? 0;
   const deductible = item.box6_current_year_deductible_points;
+  const construction = item.box6_construction_refinance_review;
   if (points === 0) {
     if ((deductible ?? 0) > 0) {
       ctx.addIssue({
@@ -176,20 +198,68 @@ export const itemSchema = z.object({
         message: "Form 1098 box 6 deduction cannot exceed zero reported points",
       });
     }
+    if (construction) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["box6_construction_refinance_review"],
+        message: "Form 1098 construction-refinance review needs positive box 6 points",
+      });
+    }
     return;
   }
   if (
     (item.for_routing ?? ForRouting.A) !== ForRouting.A ||
-    item.refinance === true || item.dedm_override === true
+    (item.refinance === true && !construction) ||
+    item.dedm_override === true
   ) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["box6_points_paid"],
       message:
-        "Form 1098 box 6 points need an unambiguous Schedule A purchase route; business, rental, refinance, and DEDM allocations are unsupported",
+        "Form 1098 box 6 points need a personal purchase or reviewed construction-refinance route; ordinary refinance, business, rental, and DEDM allocations are unsupported",
     });
   }
-  if (deductible === undefined || deductible > points) {
+  if (construction && item.refinance !== true) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["box6_construction_refinance_review"],
+      message: "Form 1098 construction-refinance review requires the refinance flag",
+    });
+  }
+  if (construction) {
+    const records = construction.monthly_payment_records;
+    const months = records.length;
+    const monthNumbers = records.map((record) => record.month);
+    const references = records.map((record) => record.document_reference);
+    const expectedMonths = Array.from(
+      { length: months },
+      (_, index) => 13 - months + index,
+    );
+    if (
+      construction.refinanced_principal >
+        construction.original_construction_debt ||
+      monthNumbers.sort((a, b) => a - b).some((month, index) =>
+        month !== expectedMonths[index]
+      ) ||
+      new Set(references).size !== references.length ||
+      construction.loan_term_months < months
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["box6_construction_refinance_review"],
+        message:
+          "Form 1098 construction-refinance points need construction debt covering the new loan and one distinct payment record per 2025 amortization month",
+      });
+    }
+    if (deductible !== undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["box6_current_year_deductible_points"],
+        message:
+          "Form 1098 construction-refinance deduction is calculated from the loan term and 2025 payment records",
+      });
+    }
+  } else if (deductible === undefined || deductible > points) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["box6_current_year_deductible_points"],
@@ -239,6 +309,14 @@ export const inputSchema = z.object({
 type F1098Item = z.infer<typeof itemSchema>;
 type F1098Items = F1098Item[];
 
+function deductibleBox6Points(item: F1098Item): number {
+  const review = item.box6_construction_refinance_review;
+  if (!review) return item.box6_current_year_deductible_points ?? 0;
+  const months = review.monthly_payment_records.length;
+  return Math.round((item.box6_points_paid ?? 0) * months /
+    review.loan_term_months);
+}
+
 export function assertForm1098Box6Sources(
   source: unknown,
   recipientTins: readonly string[],
@@ -247,7 +325,7 @@ export function assertForm1098Box6Sources(
   if (source === undefined) return;
   const items = inputSchema.parse(source).f1098s;
   const claimed = items.filter((item) =>
-    (item.box6_current_year_deductible_points ?? 0) > 0
+    deductibleBox6Points(item) > 0
   );
   if (claimed.length === 0) return;
   const allowed = new Set(recipientTins.map((tin) => tin.replaceAll("-", "")));
@@ -262,7 +340,7 @@ export function assertForm1098Box6Sources(
     );
   }
   const points = claimed.reduce(
-    (sum, item) => sum + (item.box6_current_year_deductible_points ?? 0),
+    (sum, item) => sum + deductibleBox6Points(item),
     0,
   );
   if (filedLine8a < points) {
@@ -321,12 +399,12 @@ function aggregateScheduleAInterest(items: F1098Items): number {
     .reduce((sum, item) => sum + scheduleAInterestForItem(item), 0);
 }
 
-// Aggregate Schedule A purchase points across all for_routing=A items
+// Aggregate current-year Schedule A points reported in box 6.
 function aggregateScheduleAPoints(items: F1098Items): number {
   return items
     .filter((item) => (item.for_routing ?? ForRouting.A) === ForRouting.A)
     .reduce(
-      (sum, item) => sum + (item.box6_current_year_deductible_points ?? 0),
+      (sum, item) => sum + deductibleBox6Points(item),
       0,
     );
 }
