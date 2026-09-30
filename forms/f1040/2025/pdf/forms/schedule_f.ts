@@ -9,7 +9,12 @@ import {
   laborLessEmploymentCredits,
   reconcileFarmSources,
   type ScheduleFItem,
+  wotcReductionsByFarm,
 } from "../../../nodes/intermediate/forms/schedule_f/index.ts";
+import {
+  calculateForm5884,
+  inputSchema as form5884InputSchema,
+} from "../../../nodes/inputs/f5884/index.ts";
 
 // Field names verified against the 2025 IRS Schedule F AcroForm.
 const p1 = "topmostSubform[0].Page1[0].";
@@ -174,14 +179,29 @@ export const scheduleFPdf: PdfFormDescriptor = {
   pendingKey: "schedule_f",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040sf--2025.pdf",
   fields,
-  instances(raw, filer) {
+  instances(raw, filer, allPending) {
     if (Object.keys(raw).length === 0) return [];
     const input = inputSchema.parse(raw);
     reconcileFarmSources(input);
-    if ((input.wotc_wage_reductions?.length ?? 0) > 0) {
-      throw new Error(
-        "Schedule F PDF WOTC wage reduction needs its Form 5884 source",
+    const reductions = wotcReductionsByFarm(input);
+    if (reductions.size > 0) {
+      const source = form5884InputSchema.parse(allPending?.f5884);
+      const expected = new Map(
+        calculateForm5884(source).wageDeductionAllocations.flatMap(
+          (entry) =>
+            entry.location.kind === "schedule_f"
+              ? [[entry.location.farm_id, entry.credit_amount] as const]
+              : [],
+        ),
       );
+      if (
+        expected.size !== reductions.size ||
+        [...reductions].some(([key, amount]) => expected.get(key) !== amount)
+      ) {
+        throw new Error(
+          "Schedule F PDF WOTC reduction needs matching Form 5884 line 2",
+        );
+      }
     }
     return input.schedule_fs.map((item) => {
       if ((item.line32_other_expenses?.length ?? 0) > 6) {
@@ -193,7 +213,8 @@ export const scheduleFPdf: PdfFormDescriptor = {
         ? computeAccrualIncome(item)
         : undefined;
       const gross = computeGrossIncome(item);
-      const expenses = computeTotalExpenses(item, gross);
+      const wotcReduction = reductions.get(item.farm_id ?? "") ?? 0;
+      const expenses = computeTotalExpenses(item, gross, wotcReduction);
       return {
         ...item,
         ...proprietor(item, filer),
@@ -209,7 +230,7 @@ export const scheduleFPdf: PdfFormDescriptor = {
         line22_labor_after_credits: item.line22_labor_hired === undefined &&
             item.line22_other_employment_credits === undefined
           ? undefined
-          : laborLessEmploymentCredits(item),
+          : laborLessEmploymentCredits(item, wotcReduction),
         ...Object.fromEntries(
           (item.line32_other_expenses ?? []).flatMap((entry, index) => [
             [`other_description_${index}`, entry.description],

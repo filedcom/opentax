@@ -1,6 +1,7 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { CONFIG_BY_YEAR } from "../../../nodes/config/index.ts";
 import { FilingStatus, filingStatusSchema, TS } from "../../../nodes/types.ts";
+import { FilingStatus as MefFilingStatus } from "../../../mef/header.ts";
 import {
   assertScheduleCInterestExempt,
   computeCOGS,
@@ -16,6 +17,10 @@ import {
   wotcReductionsByBusiness,
 } from "../../../nodes/inputs/schedule_c/model.ts";
 import { assertCurrentYearSection481aMatches } from "../../../nodes/inputs/f3115/index.ts";
+import {
+  calculateForm5884,
+  inputSchema as form5884InputSchema,
+} from "../../../nodes/inputs/f5884/index.ts";
 
 // Field names and locations are from the two-page 2025 Schedule C AcroForm.
 const page1 = "topmostSubform[0].Page1[0].";
@@ -138,11 +143,11 @@ function requirePrintable(
     );
   }
   if (
-    item.proprietor_recipient !== undefined &&
-    item.proprietor_recipient !== TS.T
+    item.proprietor_recipient === TS.S &&
+    filingStatus !== FilingStatus.MFJ
   ) {
     throw new Error(
-      "Schedule C PDF requires an identified taxpayer-owned business",
+      "Schedule C PDF spouse proprietor needs a joint return",
     );
   }
   if (item.line_f_accounting_method === "other") {
@@ -313,18 +318,28 @@ function projectBusiness(
 
 function proprietorIdentity(
   allPending: Record<string, Record<string, unknown>>,
+  recipient: ScheduleCItem["proprietor_recipient"],
 ) {
   const general = allPending.general ?? {};
+  const spouse = recipient === TS.S;
+  const first = general[spouse ? "spouse_first_name" : "taxpayer_first_name"];
+  const last = general[spouse ? "spouse_last_name" : "taxpayer_last_name"];
   const name = [
-    general.taxpayer_first_name,
-    general.taxpayer_middle_initial,
-    general.taxpayer_last_name,
+    first,
+    general[spouse ? "spouse_middle_initial" : "taxpayer_middle_initial"],
+    last,
   ].filter((part): part is string =>
     typeof part === "string" && part.trim() !== ""
   ).join(" ");
-  const ssn = general.taxpayer_ssn;
-  if (!name || typeof ssn !== "string" || !/^\d{3}-?\d{2}-?\d{4}$/.test(ssn)) {
-    throw new Error("Schedule C PDF needs taxpayer name and SSN");
+  const ssn = general[spouse ? "spouse_ssn" : "taxpayer_ssn"];
+  if (
+    typeof first !== "string" || !first.trim() ||
+    typeof last !== "string" || !last.trim() ||
+    typeof ssn !== "string" || !/^\d{3}-?\d{2}-?\d{4}$/.test(ssn)
+  ) {
+    throw new Error(
+      `Schedule C PDF needs ${spouse ? "spouse" : "taxpayer"} name and SSN`,
+    );
   }
   return { proprietor_name: name, proprietor_ssn: ssn.replaceAll("-", "") };
 }
@@ -386,14 +401,6 @@ export const scheduleCPdf: PdfFormDescriptor = {
         "Schedule C PDF line 30 needs a linked Form 8829 calculation",
       );
     }
-    // Form 5884's node imports the live Schedule C node. Its source join is
-    // not available to this pure PDF descriptor without reopening that cycle.
-    if ((input.wotc_wage_reductions?.length ?? 0) > 0) {
-      throw new Error(
-        "Schedule C PDF WOTC wage reduction needs the matching Form 5884 source",
-      );
-    }
-    const identity = proprietorIdentity(allPending);
     const items = projectScheduleCItems(input);
     items.forEach((item) =>
       assertScheduleCInterestExempt(
@@ -402,6 +409,30 @@ export const scheduleCPdf: PdfFormDescriptor = {
       )
     );
     const wotc = wotcReductionsByBusiness(input);
+    if (wotc.size > 0) {
+      const source = form5884InputSchema.parse(allPending.f5884);
+      const expected = new Map(
+        calculateForm5884(source).wageDeductionAllocations.flatMap(
+          (entry) =>
+            entry.location.kind === "schedule_c"
+              ? [
+                [
+                  entry.location.business_reference,
+                  entry.credit_amount,
+                ] as const,
+              ]
+              : [],
+        ),
+      );
+      if (
+        expected.size !== wotc.size ||
+        [...wotc].some(([key, amount]) => expected.get(key) !== amount)
+      ) {
+        throw new Error(
+          "Schedule C PDF WOTC reduction needs matching Form 5884 line 2",
+        );
+      }
+    }
     return {
       schedule_c_instances: items.map((item) => ({
         ...projectBusiness(
@@ -409,12 +440,34 @@ export const scheduleCPdf: PdfFormDescriptor = {
           wotc.get(item.business_reference ?? "") ?? 0,
           allPending.general?.filing_status,
         ),
-        ...identity,
+        ...proprietorIdentity(allPending, item.proprietor_recipient),
       })),
     };
   },
-  instances(fields) {
-    return fields.schedule_c_instances as Record<string, unknown>[];
+  instances(fields, filer) {
+    const copies = fields.schedule_c_instances as Record<string, unknown>[];
+    if (filer) {
+      for (const copy of copies) {
+        const spouse = copy.proprietor_recipient === TS.S;
+        if (
+          spouse &&
+          (filer.filingStatus !== MefFilingStatus.MarriedFilingJointly ||
+            !filer.spouse)
+        ) {
+          throw new Error(
+            "Schedule C PDF spouse proprietor needs joint filer identity",
+          );
+        }
+        const expected = spouse ? filer.spouse!.ssn : filer.primarySSN;
+        if (
+          String(copy.proprietor_ssn).replace(/\D/g, "") !==
+            expected.replace(/\D/g, "")
+        ) {
+          throw new Error("Schedule C PDF proprietor SSN differs from filer");
+        }
+      }
+    }
+    return copies;
   },
   rows: {
     domainKey: "part_v_other_expenses",

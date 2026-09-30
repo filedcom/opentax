@@ -66,3 +66,74 @@ Deno.test("Schedule F PDF rejects an unnamed joint proprietor", () => {
     "joint return needs an explicit proprietor",
   );
 });
+
+Deno.test("Schedule F PDF prints labor reduced by its linked Form 5884 allocation", async () => {
+  const wageSource = {
+    subject_to_passive_activity_limit: false,
+    f5884s: [{
+      employee_reference: "EMP-001",
+      target_group: "1",
+      hired_on: "2025-01-15",
+      certification: {
+        path: "certified_by_start",
+        swa_certification_reference: "SWA-001",
+        certification_received_on: "2025-01-15",
+        certification_received_before_claim_confirmed: true,
+        revocation: { status: "no_notice_received" },
+      },
+      qualified_wages_confirmed: true,
+      not_prior_employee_confirmed: true,
+      not_related_or_dependent_confirmed: true,
+      more_than_half_wages_for_trade_or_business_confirmed: true,
+      excluded_wages_removed_confirmed: true,
+      wage_records: [{
+        payroll_record_reference: "PAY-001",
+        deduction_location: { kind: "schedule_f", farm_id: "farm-1" },
+        service_period_start_on: "2025-02-01",
+        service_period_end_on: "2025-02-28",
+        paid_or_incurred_on: "2025-02-28",
+        qualified_wages: 6_000,
+      }],
+      hours_worked: 400,
+    }],
+  };
+  const fields = {
+    schedule_fs: [{
+      ...farm,
+      line16_feed: undefined,
+      line6a_crop_insurance: undefined,
+      line6b_crop_insurance_taxable: undefined,
+      line8_other_income: 6_000,
+      line22_labor_hired: 6_000,
+    }],
+    wotc_wage_reductions: [{ farm_id: "farm-1", credit_amount: 2_400 }],
+  };
+  const pending = { f5884: wageSource };
+  const [projected] = scheduleFPdf.instances!(fields, jointFiler, pending);
+  assertEquals(projected.line22_labor_after_credits, 3_600);
+  assertEquals(projected.line33_total_expenses, 3_600);
+  assertEquals(projected.line34_net_profit, 2_400);
+  const bytes = await fillFormPdf(
+    scheduleFPdf,
+    projected,
+    jointFiler,
+    ".pdf-cache",
+  );
+  assertEquals((await PDFDocument.load(bytes!)).getPageCount(), 2);
+  assertThrows(
+    () => scheduleFPdf.instances!(fields, jointFiler, {}),
+  );
+  assertThrows(
+    () =>
+      scheduleFPdf.instances!(
+        {
+          ...fields,
+          wotc_wage_reductions: [{ farm_id: "farm-1", credit_amount: 2_300 }],
+        },
+        jointFiler,
+        pending,
+      ),
+    Error,
+    "needs matching Form 5884 line 2",
+  );
+});

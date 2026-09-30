@@ -172,6 +172,7 @@ source ownership, accrual timing, duplicate source reports, full packet review,
 business rules, and ATS remain open. The Schedule F PDF now expands one copy
 per farm, prints the named proprietor and verified Part I/III income fields,
 and prints Part II expenses and net profit. A spouse-owned cash farm's filled
-page was visually checked against its source. Linked Form 5884 reductions and
-more than six line 32 descriptions still stop PDF export; other Schedule F
-PDF scenarios need separate review.
+page was visually checked against its source. Linked Form 5884 line 2 wage
+reductions now reconcile to the named farm before the PDF prints labor,
+expenses, and net profit. More than six line 32 descriptions still stop PDF
+export; other Schedule F PDF scenarios need separate review.
