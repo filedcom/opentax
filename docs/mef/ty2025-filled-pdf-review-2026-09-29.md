@@ -567,3 +567,16 @@ inspected. The PDF SHA-256 is
 The packet is at
 `.state/research/ty2025-filled-pdf-review/2026-09-30-v74/`. Other source
 bytes, IRS business rules, and ATS remain open.
+
+The `single-three-car-loan-schedule1a` source passes local TY2025 v5.4
+full-return XSD with three native VIN groups and $4,000 on Form 1040 line
+13b. The five-page `v75` PDF has one VIN and $1,000 on Schedule 1-A line
+22a. Line 22b prints `SEEATTACHED` and a $3,000 subtotal; lines 23, 24,
+30, and 38 show $4,000. Its appended page lists the second and third VIN,
+their $1,500 interest each, and zero deducted on Schedules C/E/F. Schedule
+1-A page 2 and the statement page were rendered and visually inspected.
+The PDF SHA-256 is
+`6cbfe440ca23042a807783c3620fc7a5f7afd20c6844183e700ca135941dd7ed`;
+the packet is at
+`.state/research/ty2025-filled-pdf-review/2026-09-30-v75/`. Issued lender
+and purchase records, IRS business rules, and ATS remain open.

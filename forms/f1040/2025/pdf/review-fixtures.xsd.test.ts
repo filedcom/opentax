@@ -53,6 +53,20 @@ for (const fixture of pdfReviewFixtures) {
           undefined,
         );
       }
+      if (fixture.id === "single-three-car-loan-schedule1a") {
+        assertEquals(
+          (xml.match(/<QlfyPassengerVehicleLoanIntGrp>/g) ?? []).length,
+          3,
+        );
+        assertEquals(
+          result.pending.f1040.line13b_additional_deductions,
+          4_000,
+        );
+        assertStringIncludes(
+          xml,
+          "<TotQualifiedCarLoanInterestAmt>4000</TotQualifiedCarLoanInterestAmt>",
+        );
+      }
       if (fixture.id === "single-two-partnership-code-s-capital") {
         assertEquals(result.pending.schedule_d.line_5_k1_st, 400);
         assertEquals(result.pending.schedule_d.line_12_k1_lt, 600);

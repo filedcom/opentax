@@ -223,6 +223,33 @@ Deno.test("Schedule 1-A vehicle loan checks borrower, duplicate VIN, and phaseou
     2,
   );
   assertStringIncludes(twoLoanXml, "<VIN>1HGCM82633A004353</VIN>");
+  const threeLoans = {
+    ...singleVehicle,
+    vehicle_loans: [
+      { ...vehicleLoan, qualified_interest_paid: 1_000 },
+      {
+        ...vehicleLoan,
+        vin: "1HGCM82633A004353",
+        qualified_interest_paid: 1_000,
+      },
+      {
+        ...vehicleLoan,
+        vin: "1HGCM82633A004354",
+        qualified_interest_paid: 2_000,
+      },
+    ],
+  };
+  const threeLoanXml = schedule1a.build(threeLoans, {
+    pending: { f1040: singleOvertime1040 },
+  });
+  assertEquals(
+    (threeLoanXml.match(/<QlfyPassengerVehicleLoanIntGrp>/g) ?? []).length,
+    3,
+  );
+  assertStringIncludes(
+    threeLoanXml,
+    "<TotQualifiedCarLoanInterestAmt>4000</TotQualifiedCarLoanInterestAmt>",
+  );
 });
 
 Deno.test("Schedule 1-A two-employer W-2 overtime fills Part III and reconciles", () => {

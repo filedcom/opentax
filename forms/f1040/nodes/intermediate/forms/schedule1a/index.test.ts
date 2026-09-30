@@ -341,11 +341,11 @@ Deno.test("schedule1a: rejects invalid VINs and interest deducted elsewhere", ()
   );
   assertEquals(
     schedule1a.inputSchema.safeParse({
-      vehicle_loans: [
-        vehicleLoan(1_000),
-        vehicleLoan(1_000),
-        vehicleLoan(1_000),
-      ],
+      vehicle_loans: Array.from(
+        { length: 51 },
+        (_, index) =>
+          vehicleLoan(1_000, `1HGCM82633A${String(index).padStart(6, "0")}`),
+      ),
     }).success,
     false,
   );

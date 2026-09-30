@@ -1619,6 +1619,64 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-three-car-loan-schedule1a",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        taxpayer_ssn_valid_for_employment: true,
+        taxpayer_ssn_issued_before_due_date: true,
+        taxpayer_tin_issued_by_due_date: true,
+      },
+      w2: [wage(80_000, 8_000, "Example Employer", "12-3456789")],
+      schedule1a: {
+        senior_zero_exclusions_review: {
+          no_section933_puerto_rico_excluded_income: true,
+          section933_review_source_reference: "Synthetic 2025 residency review",
+          no_form2555_filed: true,
+          form2555_review_source_reference:
+            "Synthetic 2025 foreign-income review",
+          no_form4563_filed: true,
+          form4563_review_source_reference:
+            "Synthetic 2025 Samoa-source review",
+        },
+        vehicle_loans: [1_000, 1_500, 1_500].map((amount, index) => ({
+          vin: `1HGCM82633A00435${index + 2}`,
+          borrower_ssn: "111223333",
+          loan_originated_date: "2025-02-01",
+          vehicle_purchased_date: "2025-02-01",
+          lender_name: `Test Credit Union ${index + 1}`,
+          lender_interest_statement_reference:
+            `Synthetic 2025 lender statement ${index + 1}`,
+          purchase_and_lien_reference:
+            `Synthetic 2025 purchase and first-lien agreement ${index + 1}`,
+          final_assembly_reference: `Synthetic vehicle information label ${
+            index + 1
+          }`,
+          original_borrower: true,
+          purchase_proceeds_only: true,
+          first_lien_secured: true,
+          original_vehicle_use: true,
+          road_vehicle_with_two_or_more_wheels: true,
+          vehicle_type: "car",
+          gross_vehicle_weight_under_14000_pounds: true,
+          final_assembly_in_us: true,
+          expected_personal_use_over_half: true,
+          qualified_interest_paid: amount,
+          interest_deducted_elsewhere: 0,
+          no_other_interest_deduction_review_reference:
+            `Synthetic 2025 Schedule C/E/F review ${index + 1}`,
+        })),
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule1a"],
+    reviewFocus: [
+      "Three distinct VINs and interest amounts survive native Schedule 1-A line 22",
+      "The first VIN prints on line 22a, while line 22b carries the $3,000 attached subtotal",
+      "The continuation lists VINs two and three separately; lines 23/24/30/38 and Form 1040 line 13b each show $4,000",
+    ],
+  },
+  {
     id: "single-two-w2-flsa-overtime-schedule1a",
     inputs: {
       general: {

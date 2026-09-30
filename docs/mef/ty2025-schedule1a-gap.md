@@ -42,15 +42,15 @@ two-page PDF field map and inspected synthetic full-return packets.
   rejected at the public input schema. Payroll-method calculations when box 14
   lacks the premium, deferred W-2 amounts, Forms 1099-NEC/MISC, mixed
   Schedule 1-A claims, and authenticated employer evidence remain open.
-- Part IV now has a reviewed 2025 purchase-loan route for one or two new,
+- Part IV now has a reviewed 2025 purchase-loan route for up to 50 new,
   qualifying US-assembled passenger vehicles. Each record needs a borrower
   SSN, VIN, 2025 origination/purchase dates, lender and document references,
   first-lien and personal-use confirmations, eligible vehicle facts, whole-
   dollar interest, and a source-referenced review that no interest was deducted
   elsewhere. Bare VIN/interest assertions, positive Schedule C/E/F amounts,
-  mixed Schedule 1-A claims, and more than two VINs are rejected. The native
-  v5.4 schema permits up to 50 groups, but more than two needs an attached
-  statement that is not yet implemented. Refinance, inherited-obligor, mixed
+  mixed Schedule 1-A claims are rejected. The native v5.4 schema permits 50
+  vehicle groups; the PDF prints one VIN plus an attached subtotal and paginated
+  statement when there are more than two. Refinance, inherited-obligor, mixed
   business-use interest, document authentication, and cross-schedule deduction
   reconciliation remain open.
 - Part V's senior-only descriptor now computes per-person lines 36a/36b and
@@ -138,3 +138,16 @@ not authentication of the underlying lender or purchase documents. IRS
 business rules and ATS acceptance remain open.
 Source commit `44282e25` passed `deno task test` at 8,951/8,951 with zero
 failures; retain `.state/research/ty2025-full-test-schedule1a-vehicle.log`.
+
+The `single-three-car-loan-schedule1a` source has three distinct VINs and
+$1,000/$1,500/$1,500 of reviewed interest. Three native line 22 groups and
+the $4,000 deduction pass local TY2025 v5.4 full-return XSD. The 2025
+[Form 1040 instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
+require a statement when more than two VINs are reported. In the `v75`
+five-page packet, line 22a prints the first VIN and $1,000; line 22b shows
+`SEEATTACHED` and the remaining $3,000; the statement lists VINs two and
+three separately with zero deducted elsewhere. Schedule 1-A lines
+23/24/30/38 and Form 1040 line 13b each show $4,000. The Schedule 1-A page
+and statement were visually inspected; a focused 20-loan case verifies
+pagination. Lender and purchase records remain reviewed references rather
+than authenticated bytes. IRS business rules and ATS acceptance remain open.

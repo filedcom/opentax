@@ -7,6 +7,7 @@ import {
   inputSchema,
 } from "../../../nodes/intermediate/forms/schedule1a/index.ts";
 import { schedule1a } from "../../mef/forms/schedule1a.ts";
+import { appendSchedule1AVehicleStatement } from "./schedule1a_vehicle_statement.ts";
 
 // Checked against the two-page 2025 IRS AcroForm.
 const page1 = "form1[0].Page1[0]";
@@ -268,15 +269,23 @@ export const schedule1aPdf: PdfFormDescriptor = {
         input,
       );
       const [first, second] = lines.line22_vehicles;
-      return {
+      const overflow = lines.line22_vehicles.length > 2
+        ? lines.line22_vehicles.slice(1)
+        : undefined;
+      const projected: Record<string, unknown> = {
         ...lines,
         line2e_zero_exclusions: 0,
         line22a_vin: first.vin,
         line22a_elsewhere: first.deducted_elsewhere,
         line22a_interest: first.schedule1a_interest,
-        line22b_vin: second?.vin,
-        line22b_elsewhere: second?.deducted_elsewhere,
-        line22b_interest: second?.schedule1a_interest,
+        line22b_vin: overflow ? "SEEATTACHED" : second?.vin,
+        line22b_elsewhere: overflow
+          ? overflow.reduce((sum, loan) => sum + loan.deducted_elsewhere, 0)
+          : second?.deducted_elsewhere,
+        line22b_interest: overflow
+          ? overflow.reduce((sum, loan) => sum + loan.schedule1a_interest, 0)
+          : second?.schedule1a_interest,
+        ...(overflow ? { line22_overflow_vehicles: overflow } : {}),
         line25_magi: lines.line3_magi,
         ...(lines.line27_excess_magi === 0
           ? {
@@ -286,6 +295,7 @@ export const schedule1aPdf: PdfFormDescriptor = {
           }
           : {}),
       };
+      return projected;
     }
     const lines = calculateSeniorOnlySchedule1A(
       { taxYear: 2025, formType: "f1040" },
@@ -298,6 +308,7 @@ export const schedule1aPdf: PdfFormDescriptor = {
     };
   },
   fields,
+  appendSupplementalPages: appendSchedule1AVehicleStatement,
   filerFields: [
     {
       kind: "text",

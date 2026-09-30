@@ -1,4 +1,5 @@
-import { assertEquals, assertThrows } from "@std/assert";
+import { assertEquals, assertRejects, assertThrows } from "@std/assert";
+import { PDFDocument } from "pdf-lib";
 import { FilingStatus } from "../../../nodes/types.ts";
 import { irs1040Pdf } from "./f1040.ts";
 import { schedule1aPdf } from "./schedule1a.ts";
@@ -72,7 +73,7 @@ Deno.test("2025 Schedule 1-A PDF maps the senior-only worksheet to both pages", 
   );
 });
 
-Deno.test("2025 Schedule 1-A PDF maps reviewed vehicle interest to Part IV", () => {
+Deno.test("2025 Schedule 1-A PDF maps reviewed vehicle interest to Part IV", async () => {
   const loan = {
     vin: "1HGCM82633A004352",
     borrower_ssn: "111223333",
@@ -146,6 +147,73 @@ Deno.test("2025 Schedule 1-A PDF maps reviewed vehicle interest to Part IV", () 
   assertEquals(twoLoanProjected?.line22a_interest, 3_000);
   assertEquals(twoLoanProjected?.line22b_vin, secondLoan.vin);
   assertEquals(twoLoanProjected?.line22b_interest, 1_000);
+  const threeLoanSource = {
+    ...vehicleSource,
+    vehicle_loans: [
+      { ...loan, qualified_interest_paid: 1_000 },
+      secondLoan,
+      { ...loan, vin: "1HGCM82633A004354", qualified_interest_paid: 2_000 },
+    ],
+  };
+  const threeLoanProjected = schedule1aPdf.projectFields?.(threeLoanSource, {
+    schedule1a: threeLoanSource,
+    f1040: vehicleReturn,
+  }) ?? {};
+  assertEquals(threeLoanProjected.line22b_vin, "SEEATTACHED");
+  assertEquals(threeLoanProjected.line22b_interest, 3_000);
+  assertEquals(threeLoanProjected.line23_total_interest, 4_000);
+  const document = await PDFDocument.create();
+  await schedule1aPdf.appendSupplementalPages?.(
+    document,
+    threeLoanProjected,
+    { nameLine1: "Alex Example", primarySSN: "111223333" } as never,
+  );
+  assertEquals(document.getPageCount(), 1);
+  await assertRejects(async () =>
+    await schedule1aPdf.appendSupplementalPages?.(
+      await PDFDocument.create(),
+      { ...threeLoanProjected, line22b_interest: 2_999 },
+      { nameLine1: "Alex Example", primarySSN: "111223333" } as never,
+    )
+  );
+  await assertRejects(async () =>
+    await schedule1aPdf.appendSupplementalPages?.(
+      await PDFDocument.create(),
+      {
+        ...threeLoanProjected,
+        line22_overflow_vehicles: [
+          {
+            ...(threeLoanProjected.line22_overflow_vehicles as Record<
+              string,
+              unknown
+            >[])[0],
+            vin: "1HGCM82633A004355",
+          },
+          (threeLoanProjected.line22_overflow_vehicles as unknown[])[1],
+        ],
+      },
+      { nameLine1: "Alex Example", primarySSN: "111223333" } as never,
+    )
+  );
+  const twentyLoanSource = {
+    ...vehicleSource,
+    vehicle_loans: Array.from({ length: 20 }, (_, index) => ({
+      ...loan,
+      vin: `1HGCM82633A${String(index).padStart(6, "0")}`,
+      qualified_interest_paid: 200,
+    })),
+  };
+  const twentyLoanProjected = schedule1aPdf.projectFields?.(
+    twentyLoanSource,
+    { schedule1a: twentyLoanSource, f1040: vehicleReturn },
+  ) ?? {};
+  const multipage = await PDFDocument.create();
+  await schedule1aPdf.appendSupplementalPages?.(
+    multipage,
+    twentyLoanProjected,
+    { nameLine1: "Alex Example", primarySSN: "111223333" } as never,
+  );
+  assertEquals(multipage.getPageCount(), 2);
 });
 
 Deno.test("2025 Schedule 1-A PDF rejects unsupported and mismatched line 13b", () => {

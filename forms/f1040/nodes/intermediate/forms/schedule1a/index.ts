@@ -59,7 +59,7 @@ export const seniorZeroExclusionsReviewSchema = z.object({
 }).strict();
 
 export const claimInputSchema = z.object({
-  vehicle_loans: z.array(vehicleLoanSchema).min(1).max(2).optional(),
+  vehicle_loans: z.array(vehicleLoanSchema).min(1).max(50).optional(),
   senior_zero_exclusions_review: seniorZeroExclusionsReviewSchema.optional(),
 }).strict();
 
@@ -152,7 +152,7 @@ export const vehicleInterestLinesSchema = z.object({
       deducted_elsewhere: z.literal(0),
       schedule1a_interest: z.number().int().positive(),
     }).strict(),
-  ).min(1).max(2),
+  ).min(1).max(50),
   line23_total_interest: z.number().int().positive(),
   line24_capped_interest: z.number().int().positive(),
   line26_threshold: z.number().int().positive(),
