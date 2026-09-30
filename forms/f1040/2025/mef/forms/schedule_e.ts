@@ -33,6 +33,7 @@ import {
   samePassiveSale,
 } from "../../../nodes/intermediate/forms/form4797/index.ts";
 import { scheduleEK1Part2Rows } from "../../schedule-e-k1-part2.ts";
+import { buildScheduleEType8Statement } from "./schedule_e_type8_statement.ts";
 
 type Fields = Partial<z.infer<typeof inputSchema>>;
 type Property = z.infer<typeof itemSchema>;
@@ -299,7 +300,13 @@ function buildProperty(
     xml: elements("PropertyRealEstAndRoyaltyGroup", [
       propertyAddress(item),
       element("PropertyDesc", propertyTypes[item.property_type - 1]),
-      element("OtherPropertyTypeDesc", item.property_type_other_desc),
+      element(
+        "OtherPropertyTypeDesc",
+        item.property_type_other_desc &&
+          item.property_type_other_desc.length > 20
+          ? "SEE ATTACHED"
+          : item.property_type_other_desc,
+      ),
       item.property_type === 6
         ? ""
         : element("FairRentalDaysCnt", item.fair_rental_days),
@@ -467,6 +474,13 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
     ["farm_rental_gross", "FarmingAndFishingIncomeAmt"],
   ],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040se.pdf",
+  async buildBinaryAttachments(fields, context) {
+    const statement = await buildScheduleEType8Statement(
+      fields,
+      context?.filer,
+    );
+    return statement ? [statement] : [];
+  },
   build(fields, context) {
     const k1Rows = scheduleEK1Part2Rows(context?.pending);
     if ((!fields || Object.keys(fields).length === 0) && k1Rows.length === 0) {

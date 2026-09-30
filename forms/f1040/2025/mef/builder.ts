@@ -2,6 +2,7 @@ import { buildReturnHeader, FilingStatus } from "../../mef/header.ts";
 import { element, elements } from "../../mef/xml.ts";
 import { PDFDocument } from "pdf-lib";
 import { ALL_MEF_FORMS } from "./forms/index.ts";
+import { SCHEDULE_E_TYPE8_STATEMENT_FILE } from "./forms/schedule_e_type8_statement.ts";
 import type { MefBuildContext, MefPdfAttachment } from "./form-descriptor.ts";
 import type { FilerIdentity, MefFormsPending } from "./types.ts";
 import { assertAttachmentCoverage } from "../attachment-coverage.ts";
@@ -249,6 +250,19 @@ function buildReturnXml(
     throw new Error("Form 8949 needs its reconciled Schedule D");
   }
   assertAttachmentCoverage(pending, "mef");
+  if (
+    pending.schedule_e?.schedule_es?.some((item) =>
+      item.property_type === 8 &&
+      (item.property_type_other_desc?.length ?? 0) > 20
+    ) &&
+    !attachments.some((item) =>
+      item.fileName === SCHEDULE_E_TYPE8_STATEMENT_FILE
+    )
+  ) {
+    throw new Error(
+      "Schedule E long type 8 description needs its binary PDF attachment",
+    );
+  }
   const binaryAttachmentFileNames = attachments.map((item) => item.fileName);
   const attachmentDescriptionsByFileName = Object.fromEntries(
     attachments.map((item) => [item.fileName, item.description]),

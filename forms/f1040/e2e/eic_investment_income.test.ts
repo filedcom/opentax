@@ -2,7 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { execute } from "../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { registry } from "../2025/registry.ts";
-import { buildMefXml } from "../2025/mef/builder.ts";
+import { buildMefBundle, buildMefXml } from "../2025/mef/builder.ts";
 import { buildPending } from "../2025/mef/pending.ts";
 import { buildPdfBytes } from "../2025/pdf/builder.ts";
 import { form4835Pdf } from "../2025/pdf/forms/f4835.ts";
@@ -1213,6 +1213,93 @@ Deno.test("Schedule E type 8 and line 19 details follow their property sources",
   assertEquals(fields?.line26, 11_950);
   assertEquals((fields?.partIStatementRows as unknown[]).length, 6);
   const pdf = await buildPdfBytes(result.pending, filer);
+  assertEquals(new TextDecoder().decode(pdf.slice(0, 5)), "%PDF-");
+});
+
+Deno.test("Schedule E long type 8 description travels with a full return", async () => {
+  const description = "Detached mixed-use storage facility";
+  const result = execute(plan, registry, {
+    general,
+    w2: [w2],
+    schedule_e: [{
+      tsj: "T",
+      activity_id: "long-type8-rental",
+      property_description: "Reviewed storage rental",
+      street_address: "301 Rental Road",
+      city: "Austin",
+      state: "TX",
+      zip: "78701",
+      property_type: 8,
+      property_type_other_desc: description,
+      activity_type: "B",
+      fair_rental_days: 365,
+      personal_use_days: 0,
+      rent_income: 11_950,
+      form_1099_payments_made: false,
+    }],
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const filer = extractFilerIdentity(result.pending.f1040);
+  const pending = buildPending(result.pending);
+  assertThrows(
+    () => buildMefXml(pending, filer),
+    Error,
+    "needs its binary PDF attachment",
+  );
+  const bundle = await buildMefBundle(pending, { filer, attachments: [] });
+  assertEquals(bundle.attachments.length, 1);
+  const attachmentPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  try {
+    await Deno.writeFile(attachmentPath, bundle.attachments[0].bytes);
+    const extracted = await new Deno.Command("pdftotext", {
+      args: [attachmentPath, "-"],
+      stdout: "piped",
+    }).output();
+    assertEquals(extracted.code, 0);
+    const text = new TextDecoder().decode(extracted.stdout);
+    assertEquals(text.includes(description), true);
+    assertEquals(text.includes("Reviewed storage rental"), true);
+  } finally {
+    await Deno.remove(attachmentPath);
+  }
+  assertEquals(
+    bundle.xml.includes(
+      "<OtherPropertyTypeDesc>SEE ATTACHED</OtherPropertyTypeDesc>",
+    ),
+    true,
+  );
+  assertEquals(
+    bundle.xml.includes(
+      "<TotalSuppIncomeOrLossAmt>11950</TotalSuppIncomeOrLossAmt>",
+    ),
+    true,
+  );
+  const xsd = new URL(
+    "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    import.meta.url,
+  ).pathname;
+  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(xmlPath, bundle.xml);
+    const validation = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsd, xmlPath],
+      stderr: "piped",
+    }).output();
+    assertEquals(
+      validation.code,
+      0,
+      new TextDecoder().decode(validation.stderr),
+    );
+  } finally {
+    await Deno.remove(xmlPath);
+  }
+  const fields = scheduleEPdf.projectFields?.(
+    result.pending.schedule_e,
+    result.pending,
+  );
+  assertEquals(fields?.other_property_description, "See attached");
+  assertEquals((fields?.partIStatementRows as unknown[]).length, 1);
+  const pdf = await buildPdfBytes(pending, filer, ".pdf-cache", bundle);
   assertEquals(new TextDecoder().decode(pdf.slice(0, 5)), "%PDF-");
 });
 

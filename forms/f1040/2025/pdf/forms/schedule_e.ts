@@ -502,7 +502,8 @@ export const scheduleEPdf: PdfFormDescriptor = {
         ),
       );
       return {
-        other_property_description: type8.size > 1
+        other_property_description: type8.size > 1 ||
+            ([...type8][0]?.length ?? 0) > 20
           ? "See attached"
           : [...type8][0],
         line19_description: other.size > 1 ? "See attached" : [...other][0],

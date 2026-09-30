@@ -78,7 +78,7 @@ export const itemSchema = z.object({
 
   // --- Conditional fields ---
   form_1099_filed: z.boolean().optional(),
-  property_type_other_desc: z.string().max(20).optional(),
+  property_type_other_desc: z.string().optional(),
 
   // --- Address fields (informational) ---
   street_address: z.string().optional(),
