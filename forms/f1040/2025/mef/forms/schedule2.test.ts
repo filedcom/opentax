@@ -1,6 +1,37 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { calculateForm8874Recapture } from "../../../nodes/inputs/f8874/recapture_node.ts";
+import { FilingStatus } from "../../../mef/header.ts";
 import { FIELD_MAP, schedule2 } from "./schedule2.ts";
+
+function necContext(excess: number) {
+  return {
+    filer: {
+      primarySSN: "111223333",
+      nameLine1: "Test Taxpayer",
+      nameControl: "TAXP",
+      address: {
+        line1: "1 Test Way",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+      },
+      filingStatus: FilingStatus.Single,
+    },
+    pending: {
+      f1099nec: {
+        f1099necs: [{
+          payer_name: "Former Company",
+          payer_tin: "12-3456789",
+          recipient_ssn: "111223333",
+          box1_nec: excess + 1_000,
+          box3_golden_parachute: excess,
+          for_routing: "schedule_c",
+          schedule_c_business_reference: "business-1",
+        }],
+      },
+    },
+  };
+}
 
 function assertNotIncludes(actual: string, expected: string) {
   assertEquals(
@@ -520,13 +551,41 @@ Deno.test(
     const result = schedule2.build({
       golden_parachute_excise: 2000,
       line17k_golden_parachute_excise: 3000,
-    });
+    }, necContext(15_000));
     assertStringIncludes(
       result,
       "<ExcessParachutePaymentAmt>5000</ExcessParachutePaymentAmt>",
     );
   },
 );
+
+Deno.test("1099-NEC box 3 Schedule 2 tax rejects absent, changed, and wrong-recipient source", () => {
+  assertThrows(
+    () => schedule2.build({ line17k_golden_parachute_excise: 3_000 }),
+    Error,
+    "needs filer identity",
+  );
+  assertThrows(
+    () =>
+      schedule2.build(
+        { line17k_golden_parachute_excise: 2_999 },
+        necContext(15_000),
+      ),
+    Error,
+    "differs from 1099-NEC box 3 sources",
+  );
+  const wrongRecipient = necContext(15_000);
+  wrongRecipient.pending.f1099nec.f1099necs[0].recipient_ssn = "999887777";
+  assertThrows(
+    () =>
+      schedule2.build(
+        { line17k_golden_parachute_excise: 3_000 },
+        wrongRecipient,
+      ),
+    Error,
+    "recipient must match",
+  );
+});
 
 Deno.test(
   "golden_parachute_excise(2000) alone emits ExcessParachutePaymentAmt=2000",
@@ -595,13 +654,13 @@ const allFields = {
 };
 
 Deno.test("all fields present: output wrapped in IRS1040Schedule2 tag", () => {
-  const result = schedule2.build(allFields);
+  const result = schedule2.build(allFields, necContext(6_500));
   assertStringIncludes(result, "<IRS1040Schedule2>");
   assertStringIncludes(result, "</IRS1040Schedule2>");
 });
 
 Deno.test("all fields present: all direct-mapped elements emitted", () => {
-  const result = schedule2.build(allFields);
+  const result = schedule2.build(allFields, necContext(6_500));
   assertStringIncludes(
     result,
     "<AlternativeMinimumTaxAmt>100</AlternativeMinimumTaxAmt>",
@@ -640,7 +699,7 @@ Deno.test("all fields present: all direct-mapped elements emitted", () => {
 });
 
 Deno.test("all fields present: aggregated elements summed correctly", () => {
-  const result = schedule2.build(allFields);
+  const result = schedule2.build(allFields, necContext(6_500));
   // uncollected_fica(800) + uncollected_fica_gtl(900) = 1700
   assertStringIncludes(
     result,

@@ -1,4 +1,6 @@
 import { element, elements } from "../../../mef/xml.ts";
+import { FilingStatus } from "../../../mef/header.ts";
+import { necBox3ExciseFromSources } from "../../../nodes/inputs/f1099nec/index.ts";
 import { calculateForm8874Recapture } from "../../../nodes/inputs/f8874/recapture_node.ts";
 import type { F8874RecaptureInput } from "../../../nodes/inputs/f8874/recapture_node.ts";
 import {
@@ -123,6 +125,30 @@ function buildIRS1040Schedule2(
   context?: MefBuildContext,
 ): string {
   const childrenByTag = new Map<string, string>();
+
+  const necExcise = fields.line17k_golden_parachute_excise ?? 0;
+  if (necExcise > 0 || context?.pending?.f1099nec !== undefined) {
+    const filer = context?.filer;
+    if (!filer) {
+      throw new Error("Schedule 2 1099-NEC box 3 needs filer identity");
+    }
+    const recipients = [filer.primarySSN];
+    if (
+      filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+      filer.spouse?.ssn
+    ) {
+      recipients.push(filer.spouse.ssn);
+    }
+    const sourced = necBox3ExciseFromSources(
+      context?.pending?.f1099nec,
+      recipients,
+    );
+    if (Math.abs(sourced - necExcise) > 0.001) {
+      throw new Error(
+        "Schedule 2 line 17k differs from 1099-NEC box 3 sources",
+      );
+    }
+  }
 
   const form4255Amounts = [
     fields.line1d_form4255_net_epe,

@@ -327,6 +327,10 @@ Excise tax = box3_golden_parachute × 0.20
 → Schedule 2 Line 17k ("Tax on golden parachute payments") → Form 1040 Line 17
 ```
 
+Native and PDF Schedule 2 export compare line 17k's nonemployee portion to the
+underlying 1099-NEC box 3 rows and require each recipient SSN to match the
+taxpayer or joint-filing spouse. An absent or changed payer source rejects.
+
 > **Source:** [2025 Form 1099-NEC payer instructions](https://www.irs.gov/pub/irs-prior/i1099mec--2025.pdf)
 > (boxes 1 and 3) and [2025 Form 1040 instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
 > (Schedule 2 line 17k).

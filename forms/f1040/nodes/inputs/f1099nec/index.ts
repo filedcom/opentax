@@ -100,6 +100,30 @@ export const inputSchema = z.object({
 
 type NECItem = z.infer<typeof itemSchema>;
 
+export function necBox3ExciseFromSources(
+  source: unknown,
+  recipientSsns: readonly string[],
+): number {
+  if (source === undefined) {
+    throw new Error("Schedule 2 1099-NEC box 3 needs its payer source");
+  }
+  const items = inputSchema.parse(source).f1099necs;
+  const allowed = new Set(recipientSsns.map((ssn) => ssn.replaceAll("-", "")));
+  return items.reduce((tax, item) => {
+    const excess = item.box3_golden_parachute ?? 0;
+    if (excess <= 0) return tax;
+    if (
+      !item.recipient_ssn ||
+      !allowed.has(item.recipient_ssn.replaceAll("-", ""))
+    ) {
+      throw new Error(
+        "Schedule 2 1099-NEC box 3 recipient must match the taxpayer or joint-filing spouse",
+      );
+    }
+    return tax + excess * 0.20;
+  }, 0);
+}
+
 function necIncomeOutput(item: NECItem): NodeOutput[] {
   const box1 = item.box1_nec ?? 0;
   if (box1 <= 0) return [];

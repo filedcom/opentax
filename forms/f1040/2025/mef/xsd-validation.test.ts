@@ -8159,29 +8159,29 @@ Deno.test({
   const result = runReturn({
     general,
     w2g: [{
-        calendar_year: 2025,
-        source_document_reference: "2025 payer-issued W-2G copy",
-        payer_name: "Casino Inc",
-        payer_name_control: "CASI",
-        payer_us_address: {
-          line1: "500 Casino Way",
-          city: "Las Vegas",
-          state: "NV",
-          zip: "89101",
-        },
-        payer_ein: "12-3456789",
-        winner_name: "Test Taxpayer",
-        winner_us_address: {
-          line1: general.address_line1,
-          city: general.address_city,
-          state: general.address_state,
-          zip: general.address_zip,
-        },
-        box9_winner_tin: general.taxpayer_ssn,
-        box1_winnings: 10_000,
-        box4_federal_withheld: 2_400,
-        standard_or_nonstandard_code: "S",
-      }],
+      calendar_year: 2025,
+      source_document_reference: "2025 payer-issued W-2G copy",
+      payer_name: "Casino Inc",
+      payer_name_control: "CASI",
+      payer_us_address: {
+        line1: "500 Casino Way",
+        city: "Las Vegas",
+        state: "NV",
+        zip: "89101",
+      },
+      payer_ein: "12-3456789",
+      winner_name: "Test Taxpayer",
+      winner_us_address: {
+        line1: general.address_line1,
+        city: general.address_city,
+        state: general.address_state,
+        zip: general.address_zip,
+      },
+      box9_winner_tin: general.taxpayer_ssn,
+      box1_winnings: 10_000,
+      box4_federal_withheld: 2_400,
+      standard_or_nonstandard_code: "S",
+    }],
   });
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.f1040?.line25c_total, 2_400);
@@ -8191,10 +8191,56 @@ Deno.test({
     extractFilerIdentity(general),
   );
   assertStringIncludes(xml, "<IRSW2G ");
-  assertStringIncludes(xml, "<GamblingReportableWinningAmt>10000</GamblingReportableWinningAmt>");
-  assertStringIncludes(xml, "<FederalIncomeTaxWithheldAmt>2400</FederalIncomeTaxWithheldAmt>");
+  assertStringIncludes(
+    xml,
+    "<GamblingReportableWinningAmt>10000</GamblingReportableWinningAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<FederalIncomeTaxWithheldAmt>2400</FederalIncomeTaxWithheldAmt>",
+  );
   assertStringIncludes(xml, "<TaxWithheldOtherAmt>2400</TaxWithheldOtherAmt>");
   await validateXsd(xml, "withheld W-2G full return");
+});
+
+Deno.test({
+  name: "XSD: 1099-NEC box 3 adds excise without duplicating box 1 income",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const result = runReturn({
+    general,
+    f1099nec: [{
+      payer_name: "Former Company",
+      payer_tin: "12-3456789",
+      recipient_ssn: general.taxpayer_ssn,
+      box1_nec: 50_000,
+      box3_golden_parachute: 30_000,
+      for_routing: "schedule_1_line_8j",
+      nonbusiness_activity_description: "Occasional director service",
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  const necSources = result.pending.schedule1?.f1099nec_nonbusiness_sources as
+    | Array<{ amount: number }>
+    | undefined;
+  assertEquals(necSources?.[0]?.amount, 50_000);
+  assertEquals(
+    result.pending.schedule2?.line17k_golden_parachute_excise,
+    6_000,
+  );
+  assertEquals(result.pending.f1040?.line8_additional_income, 50_000);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(
+    xml,
+    "<ExcessParachutePaymentAmt>6000</ExcessParachutePaymentAmt>",
+  );
+  await validateXsd(xml, "1099-NEC golden parachute full return");
 });
 
 Deno.test({

@@ -3,6 +3,7 @@ import {
   calculateForm4255Routes,
   type F4255Input,
 } from "../../../nodes/inputs/f4255/index.ts";
+import { necBox3ExciseFromSources } from "../../../nodes/inputs/f1099nec/index.ts";
 
 // IRS Schedule 2 (2025) AcroForm field names.
 // Verified layout from https://www.irs.gov/pub/irs-prior/f1040s2--2025.pdf
@@ -196,11 +197,45 @@ export const schedule2Pdf: PdfFormDescriptor = {
   pendingKey: "schedule2",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040s2--2025.pdf",
   filerFields: [
-    { kind: "text", domainKey: "nameLine1", pdfField: "form1[0].Page1[0].f1_01[0]" },
-    { kind: "text", domainKey: "primarySSN", pdfField: "form1[0].Page1[0].f1_02[0]" },
+    {
+      kind: "text",
+      domainKey: "nameLine1",
+      pdfField: "form1[0].Page1[0].f1_01[0]",
+    },
+    {
+      kind: "text",
+      domainKey: "primarySSN",
+      pdfField: "form1[0].Page1[0].f1_02[0]",
+    },
   ],
   fields,
   projectFields(fields, allPending) {
+    const necExcise = typeof fields.line17k_golden_parachute_excise === "number"
+      ? fields.line17k_golden_parachute_excise
+      : 0;
+    if (necExcise > 0 || allPending.f1099nec !== undefined) {
+      const general = allPending.general ?? {};
+      const taxpayerSsn = general.taxpayer_ssn;
+      if (typeof taxpayerSsn !== "string") {
+        throw new Error("Schedule 2 PDF 1099-NEC box 3 needs filer identity");
+      }
+      const recipients = [taxpayerSsn];
+      if (
+        general.filing_status === "mfj" &&
+        typeof general.spouse_ssn === "string"
+      ) {
+        recipients.push(general.spouse_ssn);
+      }
+      const sourced = necBox3ExciseFromSources(
+        allPending.f1099nec,
+        recipients,
+      );
+      if (Math.abs(sourced - necExcise) > 0.001) {
+        throw new Error(
+          "Schedule 2 PDF line 17k differs from 1099-NEC box 3 sources",
+        );
+      }
+    }
     const source = allPending.f4255;
     let form4255Boxes: Record<string, boolean> = {};
     if (source && typeof source === "object" && "rows" in source) {

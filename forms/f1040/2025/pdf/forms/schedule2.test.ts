@@ -133,10 +133,57 @@ Deno.test("2025 Schedule 2 PDF sums W-2 and information-return amounts only on t
     golden_parachute_excise: 250,
     line17k_golden_parachute_excise: 150,
     line20_965_tax_installment: 2_000,
-  }, {});
+  }, {
+    general: { taxpayer_ssn: "111-22-3333", filing_status: "single" },
+    f1099nec: {
+      f1099necs: [{
+        payer_name: "Former Company",
+        payer_tin: "12-3456789",
+        recipient_ssn: "111-22-3333",
+        box1_nec: 1_000,
+        box3_golden_parachute: 750,
+        for_routing: "schedule_c",
+        schedule_c_business_reference: "business-1",
+      }],
+    },
+  });
   assertEquals(projected?.line13_uncollected_fica_total, 200);
   assertEquals(projected?.line17h_nqdc_total, 1_000);
   assertEquals(projected?.line17k_golden_parachute_total, 400);
   assertEquals(projected?.line20_965_tax_installment, 2_000);
   assertEquals(projected?.line21_total, undefined);
+});
+
+Deno.test("Schedule 2 PDF rejects unsourced or changed 1099-NEC box 3 excise", () => {
+  assertThrows(
+    () =>
+      schedule2Pdf.projectFields?.(
+        { line17k_golden_parachute_excise: 150 },
+        { general: { taxpayer_ssn: "111-22-3333" } },
+      ),
+    Error,
+    "needs its payer source",
+  );
+  assertThrows(
+    () =>
+      schedule2Pdf.projectFields?.(
+        { line17k_golden_parachute_excise: 149 },
+        {
+          general: { taxpayer_ssn: "111-22-3333" },
+          f1099nec: {
+            f1099necs: [{
+              payer_name: "Former Company",
+              payer_tin: "12-3456789",
+              recipient_ssn: "111-22-3333",
+              box1_nec: 1_000,
+              box3_golden_parachute: 750,
+              for_routing: "schedule_c",
+              schedule_c_business_reference: "business-1",
+            }],
+          },
+        },
+      ),
+    Error,
+    "differs from 1099-NEC box 3 sources",
+  );
 });
