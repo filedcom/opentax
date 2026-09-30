@@ -88,9 +88,12 @@ export const itemSchema = z.object({
   box9_crop_insurance: z.number().nonnegative().optional(),
   box9_crop_insurance_deferred: z.boolean().optional(),
   farm_id: z.string().min(1).optional(),
-  // Box 10 — Attorney proceeds → Schedule 1 Line 8z (unless physical injury IRC §104)
+  // Box 10 reports gross proceeds paid to an attorney, including client funds.
   box10_attorney_proceeds: z.number().nonnegative().optional(),
-  box10_attorney_taxable: z.boolean().optional(), // defaults true; false = excluded
+  box10_attorney_fee_receipts: z.number().nonnegative().optional(),
+  box10_attorney_client_funds: z.number().nonnegative().optional(),
+  box10_attorney_business_reference: z.string().trim().min(1).optional(),
+  box10_allocation_review_reference: z.string().trim().min(1).optional(),
   // Box 11 — Fish purchased → Schedule C
   box11_fish_purchased: z.number().nonnegative().optional(),
   // Box 12 — §409A deferrals (informational only — no current-year income if plan compliant)
@@ -111,6 +114,42 @@ export const itemSchema = z.object({
       path: ["box3_other_income_routing"],
       message:
         "Positive 1099-MISC box 3 income requires an explicit income classification",
+    });
+  }
+  const grossAttorneyProceeds = item.box10_attorney_proceeds ?? 0;
+  if (
+    (grossAttorneyProceeds > 0 ||
+      item.box10_attorney_fee_receipts !== undefined ||
+      item.box10_attorney_client_funds !== undefined) &&
+    (grossAttorneyProceeds <= 0 ||
+      item.box10_attorney_fee_receipts === undefined ||
+      item.box10_attorney_client_funds === undefined ||
+      item.box10_attorney_fee_receipts + item.box10_attorney_client_funds !==
+        grossAttorneyProceeds)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["box10_attorney_proceeds"],
+      message:
+        "1099-MISC box 10 needs reviewed fee and client-fund amounts that equal gross proceeds",
+    });
+  }
+  if (
+    (item.box10_attorney_fee_receipts ?? 0) > 0 &&
+    !item.box10_attorney_business_reference
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["box10_attorney_business_reference"],
+      message:
+        "1099-MISC box 10 retained fees need a Schedule C business reference",
+    });
+  }
+  if (grossAttorneyProceeds > 0 && !item.box10_allocation_review_reference) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["box10_allocation_review_reference"],
+      message: "1099-MISC box 10 allocation needs a reviewed source reference",
     });
   }
 });
@@ -171,12 +210,6 @@ function otherIncomeTotal(items: M99Item[]): number {
     .reduce((s, i) => s + (i.box3_other_income ?? 0), 0);
 }
 
-function taxableAttorneyTotal(items: M99Item[]): number {
-  return items
-    .filter((i) => i.box10_attorney_taxable !== false)
-    .reduce((s, i) => s + (i.box10_attorney_proceeds ?? 0), 0);
-}
-
 function scheduleCGrossReceipts(items: M99Item[]): number {
   return (
     totalOf(items, "box5_fishing_boat") +
@@ -213,14 +246,12 @@ function schedule1Output(items: M99Item[]): NodeOutput | null {
   const prizes = prizesAwardsTotal(items);
   const other = otherIncomeTotal(items);
   const substitute = totalOf(items, "box8_substitute_payments");
-  const attorney = taxableAttorneyTotal(items);
   const nqdc = totalOf(items, "box15_nqdc");
 
   const s1Input: Partial<z.infer<typeof schedule1["inputSchema"]>> = {};
   if (prizes > 0) s1Input.line8i_prizes_awards = prizes;
   if (other > 0) s1Input.line8z_other = other;
   if (substitute > 0) s1Input.line8z_substitute_payments = substitute;
-  if (attorney > 0) s1Input.line8z_attorney_proceeds = attorney;
   if (nqdc > 0) s1Input.line8z_nqdc = nqdc;
   if (Object.keys(s1Input).length === 0) return null;
   return output(
@@ -250,7 +281,7 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
   ]);
 
   compute(_ctx: NodeContext, input: M99Input): NodeResult {
-    const { f1099ms: m99s } = input;
+    const { f1099ms: m99s } = inputSchema.parse(input);
     if (m99s.length === 0) return { outputs: [] };
 
     // Direct node callers can bypass inputSchema, so do not silently turn an
@@ -328,15 +359,27 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
 
     // schedule_c — fishing boat + medical + fish purchased + rents (substantial services) + royalties (trade/business)
     const totalScheduleC = scheduleCGrossReceipts(m99s);
-    if (totalScheduleC > 0) {
-      outputs.push(
-        this.outputNodes.output(schedule_c, {
-          line1_gross_receipts: totalScheduleC,
+    const attorneyFeeSources = m99s.flatMap((item) =>
+      (item.box10_attorney_fee_receipts ?? 0) > 0
+        ? [{
+          business_reference: item.box10_attorney_business_reference!,
+          payer_tin: item.payer_tin,
+          recipient_tin: item.recipient_tin,
+          amount: item.box10_attorney_fee_receipts!,
+          allocation_review_reference: item.box10_allocation_review_reference!,
+        }]
+        : []
+    );
+    if (totalScheduleC > 0 || attorneyFeeSources.length > 0) {
+      outputs.push(this.outputNodes.output(schedule_c, {
+        ...(totalScheduleC > 0 && { line1_gross_receipts: totalScheduleC }),
+        ...(attorneyFeeSources.length > 0 && {
+          attorney_fee_sources: attorneyFeeSources,
         }),
-      );
+      } as AtLeastOne<z.infer<typeof schedule_c.inputSchema>>));
     }
 
-    // schedule1 — prizes, other income, substitute payments, attorney proceeds, NQDC ordinary income
+    // schedule1 — prizes, other income, substitute payments, NQDC ordinary income
     const sched1 = schedule1Output(m99s);
     if (sched1) outputs.push(sched1);
 
@@ -345,7 +388,7 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
     const prizes = prizesAwardsTotal(m99s);
     const substitute = totalOf(m99s, "box8_substitute_payments");
     const nqdc = totalOf(m99s, "box15_nqdc");
-    const other = otherIncomeTotal(m99s) + taxableAttorneyTotal(m99s);
+    const other = otherIncomeTotal(m99s);
     const agiIncome = {
       ...(prizes > 0 ? { line8i_prizes_awards: prizes } : {}),
       ...(substitute > 0 ? { line8z_substitute_payments: substitute } : {}),

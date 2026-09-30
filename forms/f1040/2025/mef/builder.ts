@@ -7,7 +7,10 @@ import type { FilerIdentity, MefFormsPending } from "./types.ts";
 import { assertAttachmentCoverage } from "../attachment-coverage.ts";
 import type { Form3800DocumentParts } from "./forms/f3800_document.ts";
 import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
-import { assertF1040SourceIdentity } from "../filer-source-reconciliation.ts";
+import {
+  assertAttorneyFeeSourceIdentity,
+  assertF1040SourceIdentity,
+} from "../filer-source-reconciliation.ts";
 
 export interface MefBundle {
   readonly xml: string;
@@ -203,6 +206,7 @@ function buildReturnXml(
   if (pending.f1040) {
     assertF1040SourceIdentity(pending.f1040, filer);
   }
+  assertAttorneyFeeSourceIdentity(pending, filer);
   if (
     Array.isArray(pending.form8949) && pending.form8949.length > 0 &&
     !pending.schedule_d

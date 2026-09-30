@@ -181,6 +181,15 @@ export const inputSchema = z.object({
   // Line 1 — Gross receipts or sales (from 1099-MISC, 1099-NEC, etc.)
   // Passthrough from upstream nodes routing to Schedule C
   line1_gross_receipts: z.number().nonnegative().optional(),
+  attorney_fee_sources: z.array(
+    z.object({
+      business_reference: z.string().trim().min(1),
+      payer_tin: z.string().regex(/^\d{9}$/),
+      recipient_tin: z.string().regex(/^\d{9}$/),
+      amount: z.number().positive(),
+      allocation_review_reference: z.string().trim().min(1),
+    }).strict(),
+  ).optional(),
   // Statutory employee wages (from W-2 Box 13)
   // IRC §3121(d)(3); W-2 box 13 statutory employee checkbox
   statutory_wages: z.number().nonnegative().optional(),

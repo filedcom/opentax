@@ -7,7 +7,10 @@ import type { FilerIdentity } from "../../mef/header.ts";
 import { assertAttachmentCoverage } from "../attachment-coverage.ts";
 import type { MefBundle } from "../mef/builder.ts";
 import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
-import { assertF1040FinalHeader } from "../filer-source-reconciliation.ts";
+import {
+  assertAttorneyFeeSourceIdentity,
+  assertF1040FinalHeader,
+} from "../filer-source-reconciliation.ts";
 import { assertScheduleDSalesMatchPrepared } from "../mef/forms/schedule_d.ts";
 
 async function fetchWithCache(
@@ -248,6 +251,7 @@ export async function buildPdfBytes(
   if (normalized.f1040) {
     assertF1040FinalHeader(normalized.f1040, filer);
   }
+  if (filer) assertAttorneyFeeSourceIdentity(normalized, filer);
   if (
     preparedBundle &&
     await preparedSourceSha256(pending, filer) !==

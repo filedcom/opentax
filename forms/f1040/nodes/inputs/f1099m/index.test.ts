@@ -460,12 +460,52 @@ Deno.test("f1099m.compute: box9_crop_insurance = 0 produces no schedule_f output
   assertEquals(findOutput(result, "schedule_f"), undefined);
 });
 
-// Box 10 — Attorney proceeds → Schedule 1 Line 8z (taxable, default)
-Deno.test("f1099m.compute: box10_attorney_proceeds routes to schedule1 line8z_attorney_proceeds", () => {
-  const result = compute([minimalItem({ box10_attorney_proceeds: 15000 })]);
-  assertEquals(
-    fieldsOf(result.outputs, schedule1)!.line8z_attorney_proceeds,
-    15000,
+// Box 10 gross proceeds include client funds, so only retained fees reach Schedule C.
+Deno.test("f1099m.compute: box10 retained fees route to Schedule C once", () => {
+  const result = compute([minimalItem({
+    box10_attorney_proceeds: 15000,
+    box10_attorney_fee_receipts: 5000,
+    box10_attorney_client_funds: 10000,
+    box10_attorney_business_reference: "law-office",
+    box10_allocation_review_reference: "2025 settlement ledger",
+  })]);
+  assertEquals(fieldsOf(result.outputs, scheduleC)!.attorney_fee_sources, [{
+    business_reference: "law-office",
+    payer_tin: "123456789",
+    recipient_tin: "987654321",
+    amount: 5000,
+    allocation_review_reference: "2025 settlement ledger",
+  }]);
+  assertEquals(findOutput(result, "schedule1"), undefined);
+});
+
+Deno.test("f1099m.compute: box10 rejects an unallocated or unequal gross amount", () => {
+  assertThrows(() =>
+    compute([minimalItem({ box10_attorney_proceeds: 15000 })])
+  );
+  assertThrows(() =>
+    compute([minimalItem({
+      box10_attorney_proceeds: 15000,
+      box10_attorney_fee_receipts: 5000,
+      box10_attorney_client_funds: 9000,
+      box10_attorney_business_reference: "law-office",
+      box10_allocation_review_reference: "2025 settlement ledger",
+    })])
+  );
+  assertThrows(() =>
+    compute([minimalItem({
+      box10_attorney_proceeds: 15000,
+      box10_attorney_fee_receipts: 5000,
+      box10_attorney_client_funds: 10000,
+    })])
+  );
+  assertThrows(() =>
+    compute([minimalItem({
+      box10_attorney_proceeds: 15000,
+      box10_attorney_fee_receipts: 5000,
+      box10_attorney_client_funds: 10000,
+      box10_attorney_business_reference: "law-office",
+    })])
   );
 });
 
@@ -715,12 +755,14 @@ Deno.test("f1099m.compute: box9_crop_insurance with deferral election does not t
   assertEquals(Array.isArray(result.outputs), true);
 });
 
-Deno.test("f1099m.compute: box10_attorney_proceeds with physical injury exclusion does not throw", () => {
+Deno.test("f1099m.compute: box10 client funds do not become income", () => {
   const result = f1099m.compute({ taxYear: 2025, formType: "f1040" }, {
     f1099ms: [{
       ...minimalItem(),
       box10_attorney_proceeds: 20000,
-      box10_attorney_taxable: false,
+      box10_attorney_fee_receipts: 0,
+      box10_attorney_client_funds: 20000,
+      box10_allocation_review_reference: "2025 client trust ledger",
     }],
   });
   assertEquals(Array.isArray(result.outputs), true);
@@ -796,12 +838,14 @@ Deno.test("f1099m.compute: box9_crop_insurance with deferral election retains it
   ]);
 });
 
-// Box 10 — Physical injury exclusion: does NOT route to schedule1
-Deno.test("f1099m.compute: box10_attorney_proceeds with physical injury exclusion does not route to schedule1", () => {
+// Box 10 — Client funds do not become the attorney's income.
+Deno.test("f1099m.compute: box10 client funds do not route to Schedule 1 or C", () => {
   const result = compute([
     minimalItem({
       box10_attorney_proceeds: 20000,
-      box10_attorney_taxable: false,
+      box10_attorney_fee_receipts: 0,
+      box10_attorney_client_funds: 20000,
+      box10_allocation_review_reference: "2025 client trust ledger",
     }),
   ]);
   const out = findOutput(result, "schedule1");
@@ -809,6 +853,7 @@ Deno.test("f1099m.compute: box10_attorney_proceeds with physical injury exclusio
     ? (out.fields as Record<string, unknown>).line8z_attorney_proceeds
     : undefined;
   assertEquals(!atty, true);
+  assertEquals(findOutput(result, "schedule_c"), undefined);
 });
 
 // Box 3 — Physical injury exclusion does not route
@@ -955,6 +1000,10 @@ Deno.test("f1099m.compute: smoke test — all major income boxes populate correc
       box8_substitute_payments: 250,
       box9_crop_insurance: 8000,
       box10_attorney_proceeds: 6000,
+      box10_attorney_fee_receipts: 2000,
+      box10_attorney_client_funds: 4000,
+      box10_attorney_business_reference: "law-office",
+      box10_allocation_review_reference: "2025 settlement ledger",
       box11_fish_purchased: 4500,
       box12_section_409a_deferrals: 10000, // informational only
       box13_fatca: false,
@@ -1009,11 +1058,14 @@ Deno.test("f1099m.compute: smoke test — all major income boxes populate correc
     { farm_id: "farm-1", kind: "1099m_crop_insurance", amount: 8000 },
   ]);
 
-  // box10_attorney_proceeds → schedule1 line8z_attorney_proceeds
-  assertEquals(
-    fieldsOf(result.outputs, schedule1)!.line8z_attorney_proceeds,
-    6000,
-  );
+  // Box 10's $2,000 fee is linked to a specific Schedule C business.
+  assertEquals(fieldsOf(result.outputs, scheduleC)!.attorney_fee_sources, [{
+    business_reference: "law-office",
+    payer_tin: "123456789",
+    recipient_tin: "987654321",
+    amount: 2000,
+    allocation_review_reference: "2025 settlement ledger",
+  }]);
 
   // box15_nqdc → schedule1 line8z_nqdc + schedule2 line17h_nqdc_tax
   assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_nqdc, 25000);

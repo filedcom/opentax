@@ -69,6 +69,56 @@ Deno.test("Schedule C reduces gross wages by linked Form 5884 line 2 credit", ()
   );
 });
 
+Deno.test("Schedule C reconciles 1099-MISC attorney fees to the named business", () => {
+  const source = {
+    business_reference: "LAW",
+    payer_tin: "123456789",
+    recipient_tin: "987654321",
+    amount: 5_000,
+    allocation_review_reference: "2025 settlement ledger",
+  };
+  const business = minimalItem({
+    business_reference: "LAW",
+    proprietor_recipient: TS.T,
+    line_1_gross_receipts: 5_000,
+  });
+  const run = (schedule_cs: z.infer<typeof itemSchema>[]) =>
+    scheduleC.compute({ taxYear: 2025, formType: "f1040" }, {
+      schedule_cs,
+      attorney_fee_sources: [source],
+    });
+  assertEquals(run([business]).outputs.length > 0, true);
+  assertThrows(() => run([]), Error, "matching Schedule C business");
+  assertThrows(
+    () =>
+      run([
+        minimalItem({
+          business_reference: "OTHER",
+          line_1_gross_receipts: 5_000,
+        }),
+      ]),
+    Error,
+    "matching Schedule C business",
+  );
+  assertThrows(
+    () =>
+      run([
+        minimalItem({
+          business_reference: "LAW",
+          line_1_gross_receipts: 4_999,
+        }),
+      ]),
+    Error,
+    "gross receipts include the fees",
+  );
+  assertThrows(() =>
+    scheduleC.compute({ taxYear: 2025, formType: "f1040" }, {
+      schedule_cs: [business],
+      attorney_fee_sources: [source, source],
+    })
+  );
+});
+
 Deno.test("Form 8829 line 36 reduces the same Schedule C profit used by Schedule SE and QBI", () => {
   const result = scheduleC.compute({ taxYear: 2025, formType: "f1040" }, {
     schedule_cs: [minimalItem({

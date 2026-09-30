@@ -104,3 +104,18 @@ needs source, calculation, XML, attachment, PDF, negative-case, business-rule
 and ATS dispositions. No unsupported path is excluded by this inventory. The
 separate 211-root XSD census identifies unregistered schema roots; it is not a
 support matrix.
+
+The Form 1099-MISC box 10 source route now requires a reviewed allocation of
+gross proceeds between attorney fees retained and client funds, with a source
+reference and named cash-basis Schedule C business. Only retained fees can be included in
+that business's reported gross receipts; a missing business, understated
+receipts, or wrong proprietor TIN stops calculation or export. The synthetic
+$15,000 gross/$5,000 fee case reaches $5,000 of Form 1040 additional income
+and a native Schedule C with $5,000 of gross receipts; a filled PDF packet also
+builds. This corrects the old
+automatic Schedule 1 line 8z gross-income treatment. It does not prove the
+allocation from payer-issued bytes or a trust ledger, detect duplicate fees
+reported on another information return, or validate every business-rule/PDF
+case. The [2025 information-return instructions](https://www.irs.gov/pub/irs-prior/i1099mec--2025.pdf)
+identify box 10 as gross proceeds paid to an attorney, distinct from fees for
+the attorney's services.

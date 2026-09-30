@@ -1,4 +1,4 @@
-import { z } from "zod";
+import type { z } from "zod";
 import type {
   NodeOutput,
   NodeResult,
@@ -146,6 +146,29 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     // Validate schema — throws on invalid data (negative amounts, bad enums)
     inputSchema.parse(input);
+    const attorneyFeesByBusiness = new Map<string, number>();
+    for (const source of input.attorney_fee_sources ?? []) {
+      attorneyFeesByBusiness.set(
+        source.business_reference,
+        (attorneyFeesByBusiness.get(source.business_reference) ?? 0) +
+          source.amount,
+      );
+    }
+    for (const [reference, fees] of attorneyFeesByBusiness) {
+      const matches = input.schedule_cs.filter((item) =>
+        item.business_reference === reference
+      );
+      if (
+        matches.length !== 1 ||
+        !matches[0].proprietor_recipient ||
+        matches[0].line_f_accounting_method !== "cash" ||
+        matches[0].line_1_gross_receipts < fees
+      ) {
+        throw new Error(
+          "1099-MISC box 10 retained fees need one matching Schedule C business whose gross receipts include the fees",
+        );
+      }
+    }
     if ((input.line_12_depletion ?? 0) > 0) {
       throw new Error(
         "Unlinked depletion worksheet amount needs a Schedule C business and property-level AMT refigure",
