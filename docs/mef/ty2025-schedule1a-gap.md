@@ -26,7 +26,7 @@ two-page PDF field map and inspected synthetic full-return packets.
   tipped occupation code, a valid
   timely employment SSN, and reviewed zero Part I exclusions. Each positive
   employer row retains its EIN and name and is checked against the W-2 and
-  Form 4137 facts at native/PDF export. A reviewed Form 4070 occupation and reference can supply the code when the 2025 W-2 omits it; a W-2 with a different code rejects. W-2 box 7 alone requires box 5 Medicare wages at or below $176,100; reviewed Form 4070 reports can replace box 7 for the same employer when box 5 is higher. Form 4137 line 1 column (c) is
+  Form 4137 facts at native/PDF export. A reviewed Form 4070 or Form 4137 employer occupation and reference can supply the code when the 2025 W-2 omits it; a W-2 with a different code rejects. W-2 box 7 alone requires box 5 Medicare wages at or below $176,100; reviewed Form 4070 reports can replace box 7 for the same employer when box 5 is higher. Form 4137 line 1 column (c) is
   combined with the selected W-2 or Form 4070 amount using the greater amount for each employee and
   employer, so the same tips are not deducted twice. One employer fills lines
   4a/4b/4c as applicable; multiple
@@ -208,3 +208,16 @@ rendered and are pixel-identical to the visually inspected `v80` pages (SHA-256
 Monthly report entries carry review references; actual employer-submitted
 report bytes and IRS business-rule acceptance remain open. The route follows
 the [2025 Form 1040 Schedule 1-A instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf).
+
+The `single-form4070-form4137-no-w2-code-schedule1a` fixture combines
+reviewed employer reports with a reviewed occupation on the Form 4137
+employer row. Its W-2 has no box 14b occupation code. The $5,000 Form 4070
+total and $6,500 Form 4137 line 1(c) amount fill Schedule 1-A lines 4a/4b;
+line 4c and Form 1040 line 13b take $6,500 once. Form 1040 line 1c includes
+$1,500 unreported income, and Form 4137's $115 tax reaches Schedule 2 lines
+5/7/21 and Form 1040 line 23. The full return passes local TY2025 v5.4 XSD.
+All seven `v82` PDF pages were rendered and visually inspected (SHA-256
+`790e2381262c4ee1d6b3070711b47f56c8ea83482825dc9fa8e0179a3a3beb8a`).
+The occupation review is a structured fact with a source reference; the
+underlying record is not authenticated. The 2025 W-2 transition relief is
+described in [IRS Notice 2025-69](https://www.irs.gov/irb/2025-50_IRB).

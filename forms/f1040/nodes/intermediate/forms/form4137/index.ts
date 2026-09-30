@@ -20,6 +20,8 @@ const employerSchema = z.object({
   applied_for_ein: z.literal(true).optional(),
   tips_received: z.number().nonnegative(),
   tips_reported: z.number().nonnegative(),
+  tipped_occupation_code: z.string().regex(/^\d{3}$/).optional(),
+  occupation_review_reference: z.string().trim().min(1).optional(),
 }).strict().superRefine((employer, ctx) => {
   if ((employer.ein === undefined) === (employer.applied_for_ein !== true)) {
     ctx.addIssue({
@@ -31,6 +33,16 @@ const employerSchema = z.object({
     ctx.addIssue({
       code: "custom",
       message: "Form 4137 reported tips exceed received tips",
+    });
+  }
+  if (
+    (employer.tipped_occupation_code !== undefined) !==
+      (employer.occupation_review_reference !== undefined)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message:
+        "Form 4137 reviewed occupation needs a code and source reference",
     });
   }
 });
@@ -480,9 +492,7 @@ class Form4137Node extends TaxNode<typeof inputSchema> {
           source.employer_ein?.replaceAll("-", "") ===
             employer.ein?.replaceAll("-", "") &&
           source.employer_name === employer.name &&
-          source.statutory_employee !== true &&
-          source.tipped_occupation_code !== undefined &&
-          isQualifiedTipsOccupationCode(source.tipped_occupation_code)
+          source.statutory_employee !== true
         );
         if (sources.length > 1) {
           throw new Error(
@@ -490,12 +500,27 @@ class Form4137Node extends TaxNode<typeof inputSchema> {
           );
         }
         if (sources.length === 0) return [];
+        const sourceCode = sources[0].tipped_occupation_code;
+        const reviewedCode = employer.tipped_occupation_code;
+        if (
+          sourceCode !== undefined && reviewedCode !== undefined &&
+          sourceCode !== reviewedCode
+        ) {
+          throw new Error(
+            "Schedule 1-A Form 4137 occupation disagrees with W-2 box 14b",
+          );
+        }
+        const occupationCode = reviewedCode ?? sourceCode;
+        if (
+          occupationCode === undefined ||
+          !isQualifiedTipsOccupationCode(occupationCode)
+        ) return [];
         return [{
           employee_ssn: ssn,
           employer_ein: employer.ein,
           employer_name: employer.name,
           amount: employer.tips_received,
-          occupation_code: sources[0].tipped_occupation_code!,
+          occupation_code: occupationCode,
         }];
       });
     });

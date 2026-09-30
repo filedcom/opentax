@@ -130,25 +130,28 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
               form4137.spouse_ssn?.replaceAll("-", "")
           ? "spouse"
           : undefined;
-        return recipient !== undefined &&
-          (form4137.forms ?? []).some((form) =>
-            form.recipient === recipient &&
-            form.employers.some((employer) =>
-              employer.ein?.replaceAll("-", "") ===
-                entry.employer_ein.replaceAll("-", "") &&
-              employer.name === entry.employer_name &&
-              employer.tips_received === entry.amount
-            )
-          ) &&
-          filedW2s.some((source) =>
-            source.employee_ssn?.replaceAll("-", "") ===
-              entry.employee_ssn.replaceAll("-", "") &&
-            source.employer_ein?.replaceAll("-", "") ===
-              entry.employer_ein.replaceAll("-", "") &&
-            source.employer_name === entry.employer_name &&
-            source.box13_statutory_employee !== true &&
-            source.box14b_tipped_code === entry.occupation_code
-          );
+        if (recipient === undefined) return false;
+        const employer = (form4137.forms ?? []).find((form) =>
+          form.recipient === recipient
+        )?.employers.find((candidate) =>
+          candidate.ein?.replaceAll("-", "") ===
+            entry.employer_ein.replaceAll("-", "") &&
+          candidate.name === entry.employer_name &&
+          candidate.tips_received === entry.amount
+        );
+        const source = filedW2s.find((candidate) =>
+          candidate.employee_ssn?.replaceAll("-", "") ===
+            entry.employee_ssn.replaceAll("-", "") &&
+          candidate.employer_ein?.replaceAll("-", "") ===
+            entry.employer_ein.replaceAll("-", "") &&
+          candidate.employer_name === entry.employer_name &&
+          candidate.box13_statutory_employee !== true
+        );
+        return employer !== undefined && source !== undefined &&
+          (employer.tipped_occupation_code ?? source.box14b_tipped_code) ===
+            entry.occupation_code &&
+          (source.box14b_tipped_code === undefined ||
+            source.box14b_tipped_code === entry.occupation_code);
       })
     ) {
       throw new Error(

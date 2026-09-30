@@ -1876,6 +1876,82 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-form4070-form4137-no-w2-code-schedule1a",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        taxpayer_ssn_valid_for_employment: true,
+        taxpayer_ssn_issued_before_due_date: true,
+        taxpayer_tin_issued_by_due_date: true,
+      },
+      w2: [{
+        ...wage(30_000, 2_500, "Example Restaurant", "12-3456789"),
+        employee_ssn: "111-22-3333",
+        box3_ss_wages: 25_000,
+        box4_ss_withheld: 1_550,
+        box7_ss_tips: 5_000,
+      }],
+      form4137: {
+        forms: [{
+          recipient: "taxpayer",
+          employers: [{
+            name: "Example Restaurant",
+            ein: "12-3456789",
+            tips_received: 6_500,
+            tips_reported: 5_000,
+            tipped_occupation_code: "102",
+            occupation_review_reference:
+              "Synthetic 2025 restaurant occupation review",
+          }],
+        }],
+      },
+      schedule1a: {
+        form4070_reports: [{
+          employee_ssn: "111-22-3333",
+          employer_ein: "12-3456789",
+          employer_name: "Example Restaurant",
+          occupation_code: "102",
+          occupation_review_reference:
+            "Synthetic 2025 restaurant occupation review",
+          monthly_reports: [
+            {
+              month: 1,
+              cash_tips: 2_500,
+              charged_tips: 0,
+              tips_paid_out: 0,
+              source_reference: "Synthetic January employer tip report",
+            },
+            {
+              month: 2,
+              cash_tips: 2_500,
+              charged_tips: 0,
+              tips_paid_out: 0,
+              source_reference: "Synthetic February employer tip report",
+            },
+          ],
+        }],
+        senior_zero_exclusions_review: {
+          no_section933_puerto_rico_excluded_income: true,
+          section933_review_source_reference: "Synthetic 2025 residency review",
+          no_form2555_filed: true,
+          form2555_review_source_reference:
+            "Synthetic 2025 foreign-income review",
+          no_form4563_filed: true,
+          form4563_review_source_reference:
+            "Synthetic 2025 Samoa-source review",
+        },
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule1a", "schedule2", "form4137"],
+    reviewFocus: [
+      "W-2 has no occupation code; reviewed Form 4070 and Form 4137 rows agree on code 102",
+      "Schedule 1-A lines 4a/4b/4c print $5,000/$6,500/$6,500 without double counting",
+      "Form 1040 line 1c has $1,500 unreported tips and line 13b deducts $6,500",
+      "Form 4137 tax reaches Schedule 2 and Form 1040 line 23",
+    ],
+  },
+  {
     id: "single-form4137-qualified-tips-schedule1a",
     inputs: {
       general: {

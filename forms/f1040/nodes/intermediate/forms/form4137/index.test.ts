@@ -92,6 +92,61 @@ Deno.test("Form 4137 routes a qualifying employer's line 1 tips to Schedule 1-A"
   }]);
 });
 
+Deno.test("Form 4137 accepts a reviewed occupation when the 2025 W-2 omits its code", () => {
+  const input = {
+    taxpayer_ssn: "111223333",
+    forms: [{
+      recipient: "taxpayer",
+      employers: [{
+        ...employer,
+        tipped_occupation_code: "102",
+        occupation_review_reference: "2025 employer occupation record",
+      }],
+      ss_wages_from_w2: 30_000,
+    }],
+    w2_tip_sources: [{
+      employee_ssn: "111223333",
+      employer_name: "CAFE",
+      employer_ein: "12-3456789",
+      allocated_tips: 0,
+      ss_wages_and_tips: 30_000,
+    }],
+  };
+  const result = compute(input);
+  assertEquals(fieldsOf(result.outputs, schedule1a)?.qualified_form4137_tips, [{
+    employee_ssn: "111223333",
+    employer_ein: "12-3456789",
+    employer_name: "CAFE",
+    amount: 5_000,
+    occupation_code: "102",
+  }]);
+  assertThrows(
+    () =>
+      compute({
+        ...input,
+        w2_tip_sources: [{
+          ...input.w2_tip_sources[0],
+          tipped_occupation_code: "103",
+        }],
+      }),
+    Error,
+    "occupation disagrees with W-2",
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...input,
+      forms: [{
+        ...input.forms[0],
+        employers: [{
+          ...input.forms[0].employers[0],
+          occupation_review_reference: undefined,
+        }],
+      }],
+    }).success,
+    false,
+  );
+});
+
 Deno.test("Form 4137 does not claim Schedule 1-A for an unqualified or statutory W-2", () => {
   for (
     const source of [
