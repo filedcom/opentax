@@ -1,5 +1,20 @@
 # TY2025 Form 7203 stock-only ordinary-loss slice (focused check)
 
+## Debt-supported loss boundary (staged, unrun)
+
+The 2022 [Form 7203 instructions](https://www.irs.gov/instructions/i7203)
+require each formal shareholder note to be tracked separately in Part II and
+distinguish open-account debt; a guarantee alone is not debt basis. The public
+K-1 stock-loss route and registered native/PDF projection already reject debt,
+but the direct Form 7203 calculation node previously let a positive beginning
+debt balance or new loan reduce the Schedule 1 loss add-back without an
+identified note, open-account history, or printable Part II. A current
+ordinary loss with either positive debt amount now stops at calculation before
+posting a tax amount. Source, node, native, and PDF rejection fixtures are
+authored for the deferred bulk pass. Positive debt-basis filing still requires
+the loan records, basis-restoration and repayment history, per-note Part II,
+and a complete source-to-return review.
+
 The [IRS Form 7203 instructions](https://www.irs.gov/instructions/i7203)
 (latest published revision: December 2022) require a form for a shareholder
 claiming an aggregate S-corporation loss. The [2025 shareholder K-1

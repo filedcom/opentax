@@ -5,10 +5,8 @@ import {
   calculateForm4952,
   inputSchema as form4952Schema,
 } from "../nodes/intermediate/forms/form4952/index.ts";
-import {
-  plainInvestmentInterest,
-  sourceAmountsMatch,
-} from "./form4952_combined_reconciliation.ts";
+import { sourceAmountsMatch } from "./form4952_combined_reconciliation.ts";
+import { plainInvestmentBox1Or3 } from "./form4952_interest_reconciliation.ts";
 import { reconcileForm4952Itemization } from "./form4952_itemization.ts";
 
 const scheduleASchema = z.object({
@@ -43,7 +41,7 @@ const permittedPartnershipFields = new Set([
   "box13_code_h_investment_interest",
 ]);
 
-/** K-1 code H interest expense limited by unadjusted 1099-INT box 1 income. */
+/** K-1 code H expense limited by unadjusted 1099-INT box 1/3 income. */
 export function reconcileForm4952K1InterestAgainst1099Path(
   fields: Record<string, unknown>,
   pending: Readonly<Record<string, unknown>>,
@@ -68,7 +66,7 @@ export function reconcileForm4952K1InterestAgainst1099Path(
     0,
   );
   const portfolioInterest = payers.reduce(
-    (sum, item) => sum + (item.box1 ?? 0),
+    (sum, item) => sum + (item.box1 ?? 0) + (item.box3 ?? 0),
     0,
   );
   if (
@@ -88,14 +86,14 @@ export function reconcileForm4952K1InterestAgainst1099Path(
       (item.box7?.trim().length ?? 0) > 0 ||
       item.foreign_tax_irs_country_code !== undefined
     ) ||
-    !payers.every(plainInvestmentInterest) ||
+    !payers.every(plainInvestmentBox1Or3) ||
     !sourceAmountsMatch(
       form.data.source_k1_investment_interest,
       k1s.map((item) => item.box13_code_h_investment_interest ?? 0),
     ) ||
     !sourceAmountsMatch(
       form.data.source_1099_interest,
-      payers.map((item) => item.box1 ?? 0),
+      payers.map((item) => (item.box1 ?? 0) + (item.box3 ?? 0)),
     ) ||
     k1Expense <= 0 || portfolioInterest <= 0 ||
     (form.data.investment_interest_expense ?? 0) !== 0 ||
@@ -123,7 +121,7 @@ export function reconcileForm4952K1InterestAgainst1099Path(
     Object.values(form.data.amt_refigure).some((amount) => amount !== 0)
   ) {
     throw new Error(
-      "Form 4952 mixed path supports only identified code H K-1 expenses and unadjusted domestic 1099-INT box 1 income",
+      "Form 4952 mixed path supports only identified code H K-1 expenses and unadjusted domestic 1099-INT box 1/3 income",
     );
   }
   const lines = calculateForm4952(form.data);

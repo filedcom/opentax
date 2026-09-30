@@ -74,6 +74,49 @@ Deno.test("Form 4952 limits sourced K-1 code H expense against 1099-INT income",
   assertEquals(form4952Pdf.projectFields?.(fields, pending), fields);
 });
 
+Deno.test("Form 4952 limits K-1 code H expense against plain box 3 Treasury interest", () => {
+  const treasury = {
+    ...payer,
+    box1: 0,
+    box3: 500,
+  };
+  const treasuryPending = {
+    ...pending,
+    f1099int: { f1099ints: [treasury] },
+  };
+  const source = f1099int.compute(
+    { taxYear: 2025, formType: "f1040" },
+    treasuryPending.f1099int,
+  );
+  assertEquals(
+    source.outputs.find((entry) => entry.nodeType === "form4952")
+      ?.fields.source_1099_interest,
+    500,
+  );
+  assertStringIncludes(
+    build(fields, { pending: treasuryPending }),
+    "<InvestmentPropGrossIncomeAmt>500</InvestmentPropGrossIncomeAmt>",
+  );
+  assertEquals(
+    form4952Pdf.projectFields?.(fields, treasuryPending),
+    fields,
+  );
+  const adjustedPending = {
+    ...treasuryPending,
+    f1099int: { f1099ints: [{ ...treasury, box12: 1 }] },
+  };
+  assertThrows(
+    () => build(fields, { pending: adjustedPending }),
+    Error,
+    "unadjusted domestic 1099-INT box 1/3",
+  );
+  assertThrows(
+    () => form4952Pdf.projectFields?.(fields, adjustedPending),
+    Error,
+    "unadjusted domestic 1099-INT box 1/3",
+  );
+});
+
 Deno.test("Form 4952 mixed K-1/1099-INT route rejects conflicting source facts", () => {
   assertThrows(
     () =>

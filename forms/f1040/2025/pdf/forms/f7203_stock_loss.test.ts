@@ -97,3 +97,15 @@ Deno.test("staged Form 7203 PDF rejects Schedule 1 printed-line mismatch", () =>
     pending(3_000, -4_000),
   ), Error, "must match Schedule 1 line 5");
 });
+
+Deno.test("staged Form 7203 PDF rejects an unreviewed debt-supported loss", () => {
+  assertThrows(
+    () => form7203StockLossPdf.instances?.(
+      { stock_basis_beginning: 3_000, ordinary_loss: 4_000, debt_basis_beginning: 1_000 },
+      filer,
+      pending(),
+    ),
+    Error,
+    "does not accept unreviewed basis fields",
+  );
+});

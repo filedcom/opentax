@@ -143,6 +143,15 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
       );
     }
 
+    if (
+      (input.ordinary_loss ?? 0) > 0 &&
+      ((input.debt_basis_beginning ?? 0) > 0 || (input.new_loans ?? 0) > 0)
+    ) {
+      throw new Error(
+        "Form 7203 debt-supported loss needs identified note or open-account source, debt history, and registered Part II filing review",
+      );
+    }
+
     const pool = totalLossPool(input);
     const stockAfterIncreases = stockBasisAfterIncreases(input);
     const excessGain = excessDistributionGain(stockAfterIncreases, input);

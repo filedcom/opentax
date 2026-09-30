@@ -160,6 +160,7 @@ Deno.test("f8835: routes first four years to Form 3800 line 4e", () => {
   assertEquals(
     lines({
       facility_placed_in_service_date: "2020-01-01",
+      facility_construction_start_date: "2019-06-01",
       production_period_start_date: "2025-01-01",
       production_period_end_date: "2025-12-31",
     }).form3800Line,
@@ -171,6 +172,7 @@ Deno.test("f8835: rejects periods crossing the Form 3800 four-year boundary", ()
   assertThrows(() =>
     lines({
       facility_placed_in_service_date: "2021-06-01",
+      facility_construction_start_date: "2020-06-01",
       production_period_start_date: "2025-01-01",
       production_period_end_date: "2025-12-31",
     })
@@ -180,6 +182,7 @@ Deno.test("f8835: rejects periods crossing the Form 3800 four-year boundary", ()
 Deno.test("f8835: claims only electricity sold within the facility's 10-year credit period", () => {
   const source = {
     facility_placed_in_service_date: "2015-07-01",
+    facility_construction_start_date: "2014-06-01",
     production_period_start_date: "2025-01-01",
   };
   assertEquals(
@@ -201,6 +204,18 @@ Deno.test("f8835: claims only electricity sold within the facility's 10-year cre
       }),
     Error,
     "10-year credit period",
+  );
+});
+
+Deno.test("f8835: construction start must precede placement in service", () => {
+  assertThrows(
+    () =>
+      lines({
+        facility_construction_start_date: "2024-02-01",
+        facility_placed_in_service_date: "2024-01-01",
+      }),
+    Error,
+    "construction cannot begin after",
   );
 });
 

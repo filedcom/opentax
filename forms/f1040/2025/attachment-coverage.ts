@@ -6,6 +6,10 @@ import {
   calculateForm8826,
   inputSchema as form8826InputSchema,
 } from "../nodes/inputs/f8826/index.ts";
+import {
+  casualtyLossLines,
+  inputSchema as form4684InputSchema,
+} from "../nodes/intermediate/forms/form4684/index.ts";
 
 type ExportKind = "mef" | "pdf";
 type Fields = Readonly<Record<string, unknown>>;
@@ -391,6 +395,24 @@ export function assertAttachmentCoverage(
     throw new Error(
       `[${exportKind.toUpperCase()}] Form 8886 review required for a single Form 8949/1099-B disposition with at least $2 million gross loss; no disclosure route is registered; export blocked`,
     );
+  }
+  const rawCasualty = byKey.form4684;
+  if (
+    rawCasualty !== null && typeof rawCasualty === "object" &&
+    !Array.isArray(rawCasualty)
+  ) {
+    const casualty = form4684InputSchema.parse(rawCasualty);
+    const businessLoss = casualtyLossLines(
+      casualty.business_fmv_before ?? 0,
+      casualty.business_fmv_after ?? 0,
+      casualty.business_basis ?? 0,
+      casualty.business_insurance ?? 0,
+    ).loss;
+    if (businessLoss >= 2_000_000) {
+      throw new Error(
+        `[${exportKind.toUpperCase()}] Form 8886 review required for a Form 4684 business casualty with at least $2 million loss after insurance; no disclosure route is registered; export blocked`,
+      );
+    }
   }
   if (
     qofRows.some((row) =>

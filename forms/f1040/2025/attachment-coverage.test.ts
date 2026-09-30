@@ -123,6 +123,29 @@ Deno.test("Form 8886 review blocks a single $2 million gross disposition loss in
   }
 });
 
+Deno.test("Form 8886 review blocks a $2 million Form 4684 business casualty before netting", () => {
+  const casualty = {
+    business_fmv_before: 3_000_000,
+    business_fmv_after: 500_000,
+    business_basis: 2_100_000,
+    business_insurance: 100_000,
+    business_is_section_1231: true,
+  };
+  for (const kind of ["mef", "pdf"] as const) {
+    assertThrows(
+      () => assertAttachmentCoverage({ form4684: casualty }, kind),
+      Error,
+      "Form 8886 review required for a Form 4684 business casualty",
+    );
+    assertAttachmentCoverage({
+      form4684: { ...casualty, business_insurance: 100_001 },
+    }, kind);
+    assertAttachmentCoverage({
+      form4684: { ...casualty, business_fmv_after: 1_100_000 },
+    }, kind);
+  }
+});
+
 Deno.test("PDF-only coverage gaps do not suppress a native MeF form", () => {
   const pending = { f8863: { f8863s: [{}] } };
   assertAttachmentCoverage(pending, "mef");

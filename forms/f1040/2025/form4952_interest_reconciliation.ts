@@ -38,7 +38,7 @@ type IntItem = z.infer<typeof form1099intSchema>["f1099ints"][number];
 
 // Box 1 and box 3 both contribute taxable interest from an affirmed investment
 // property. The source node posts their sum once for each 1099-INT payer.
-function plainInvestmentBox1Or3(item: IntItem): boolean {
+export function plainInvestmentBox1Or3(item: IntItem): boolean {
   return item.investment_property_for_form4952 === true &&
     (item.box1 ?? 0) + (item.box3 ?? 0) > 0 &&
     item.seller_financed !== true &&

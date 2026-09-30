@@ -223,6 +223,20 @@ income, other K-1 expenses, foreign-tax facts, manually entered loan interest,
 carryovers, and elections remain outside this route. Positive and negative cases
 are written but unrun, and source references are not authenticated.
 
+The bounded K-1 code H expense route now also accepts an affirmed, unadjusted
+1099-INT box 3 Treasury-interest payer. It uses the same box 1/3 source
+predicate as the interest-only route, matches each payer's box 1 plus box 3
+amount to the accumulated Form 4952 source, and reconciles the total to line
+4a and finalized Form 1040 line 2b. The existing K-1 recipient, line 8,
+Schedule A, and itemized-deduction joins still apply to native MeF and PDF
+projection. A box 3 positive source and bond-premium rejection cases are
+written but unrun. The [1099-INT instructions](https://www.irs.gov/instructions/i1099int)
+place taxable U.S. Savings Bond and Treasury-obligation interest in box 3;
+the [2025 Form 4952](https://www.irs.gov/pub/irs-prior/f4952--2025.pdf)
+includes investment-property interest on line 4a. Adjusted bonds, foreign
+items, OID and dividends mixed with the K-1 expense, and loan tracing remain
+outside this bounded slice.
+
 ## Partnership K-1 expense against Form 1099-DIV income
 
 A separate bounded route combines identified partnership K-1 box 13 code H

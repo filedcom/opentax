@@ -265,6 +265,14 @@ function form3800Line(item: F8835Item): "1f" | "4e" {
 }
 
 export function calculateForm8835(item: F8835Item): F8835Lines {
+  if (
+    parsedDate(item.facility_construction_start_date) >
+      parsedDate(item.facility_placed_in_service_date)
+  ) {
+    throw new Error(
+      "Form 8835 construction cannot begin after the facility was placed in service",
+    );
+  }
   if (item.kwh_sold > item.kwh_produced) {
     throw new Error("Form 8835 kWh sold cannot exceed kWh produced");
   }

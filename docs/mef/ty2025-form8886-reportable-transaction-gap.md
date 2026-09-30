@@ -44,9 +44,14 @@ threshold signal even when an adjustment reduces the filed net capital loss.
 It does not classify the row under section 165, apply a published exception,
 or infer that smaller losses are safe. Source guard cases for the exact
 threshold, both input arrays, both export paths, and a below-threshold row
-are written for the deferred batch. Casualty, K-1, section 988, multi-year,
-listed/confidential, contractual-protection, and transactions-of-interest
-screening remain open.
+are written for the deferred batch. A second bounded screen reads the Form
+4684 business property's FMV decline, adjusted basis, and insurance, then
+stops both exports when the resulting pre-netting casualty loss reaches $2
+million. Exact-threshold, insurance-reduced, and below-threshold cases are
+authored for the deferred batch. Neither screen determines whether section
+165 or a published exception applies. Multi-property casualty, K-1, section
+988, multi-year, listed/confidential, contractual-protection, and
+transactions-of-interest screening remain open.
 
 A correct public source needs a stable transaction identity and participation
 years; all applicable category flags with the governing notice/regulation for

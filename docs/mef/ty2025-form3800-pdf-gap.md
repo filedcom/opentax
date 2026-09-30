@@ -19,6 +19,9 @@ tenth anniversary of the facility's placed-in-service date, including a 2025
 period that crosses that boundary. The same calculation feeds Form 3800 and
 the native/PDF Form 8835 projectors. Boundary cases are authored but unrun for
 the deferred batch; underlying production and sale records remain unauthenticated.
+The shared calculation also rejects a construction-start date after placement
+in service; its contradiction case is authored but unrun. The construction
+record itself remains unauthenticated.
 
 A source-vintage reconciliation module now checks cent-precise origin credit,
 origin-year and subsequent allowed uses, prior adjustments, the 2025 opening
