@@ -28,6 +28,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
     payer_tin: "123456789",
     recipient_tin: "987654321",
     farm_id: "farm-1",
+    schedule_c_business_reference: "business-1",
     ...overrides,
   };
 }
@@ -40,6 +41,11 @@ function compute(items: z.infer<typeof itemSchema>[]) {
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
+}
+
+function miscReceiptTotal(result: ReturnType<typeof compute>): number {
+  return (fieldsOf(result.outputs, scheduleC)?.f1099m_receipt_sources ?? [])
+    .reduce((sum, source) => sum + source.amount, 0);
 }
 
 // ---------------------------------------------------------------------------
@@ -198,7 +204,7 @@ Deno.test("f1099m.compute: box1_rents with schedule_c routing routes to schedule
     minimalItem({ box1_rents: 30000, box1_rents_routing: "schedule_c" }),
   ]);
   assertEquals(
-    fieldsOf(result.outputs, scheduleC)!.line1_gross_receipts,
+    miscReceiptTotal(result),
     30000,
   );
 });
@@ -309,7 +315,7 @@ Deno.test("f1099m.compute: box2_royalties with schedule_c routing routes to sche
   const result = compute([
     minimalItem({ box2_royalties: 8000, box2_royalties_routing: "schedule_c" }),
   ]);
-  assertEquals(fieldsOf(result.outputs, scheduleC)!.line1_gross_receipts, 8000);
+  assertEquals(miscReceiptTotal(result), 8000);
 });
 
 // Box 2 — zero value produces no Schedule E output
@@ -403,7 +409,7 @@ Deno.test("f1099m.compute: box5_fishing_boat routes to schedule_c line1_gross_re
   const result = compute([minimalItem({ box5_fishing_boat: 8000 })]);
   const out = findOutput(result, "schedule_c");
   assertEquals(out !== undefined, true);
-  assertEquals(fieldsOf(result.outputs, scheduleC)!.line1_gross_receipts, 8000);
+  assertEquals(miscReceiptTotal(result), 8000);
 });
 
 // Box 5 — zero value produces no Schedule C output
@@ -416,7 +422,7 @@ Deno.test("f1099m.compute: box5_fishing_boat = 0 produces no schedule_c output",
 Deno.test("f1099m.compute: box6_medical_payments routes to schedule_c line1_gross_receipts", () => {
   const result = compute([minimalItem({ box6_medical_payments: 25000 })]);
   assertEquals(
-    fieldsOf(result.outputs, scheduleC)!.line1_gross_receipts,
+    miscReceiptTotal(result),
     25000,
   );
 });
@@ -518,7 +524,7 @@ Deno.test("f1099m.compute: box10_attorney_proceeds = 0 produces no schedule1 out
 // Box 11 — Fish purchased → Schedule C
 Deno.test("f1099m.compute: box11_fish_purchased routes to schedule_c line1_gross_receipts", () => {
   const result = compute([minimalItem({ box11_fish_purchased: 4000 })]);
-  assertEquals(fieldsOf(result.outputs, scheduleC)!.line1_gross_receipts, 4000);
+  assertEquals(miscReceiptTotal(result), 4000);
 });
 
 // Box 11 — zero value produces no Schedule C output
@@ -681,7 +687,7 @@ Deno.test("f1099m.compute: box8_substitute_payments at $10 threshold routes to s
 
 Deno.test("f1099m.compute: box5_fishing_boat at $600 threshold routes to schedule_c", () => {
   const result = compute([minimalItem({ box5_fishing_boat: 600 })]);
-  assertEquals(fieldsOf(result.outputs, scheduleC)!.line1_gross_receipts, 600);
+  assertEquals(miscReceiptTotal(result), 600);
 });
 
 Deno.test("f1099m.compute: box9_crop_insurance at $600 threshold routes to schedule_f", () => {
@@ -705,9 +711,18 @@ Deno.test("f1099m.compute: multiple schedule_c sources aggregate to single line1
     box11_fish_purchased: 2000,
   })]);
   assertEquals(
-    fieldsOf(result.outputs, scheduleC)!.line1_gross_receipts,
+    miscReceiptTotal(result),
     12000,
   );
+});
+
+Deno.test("f1099m: Schedule C income needs a named business", () => {
+  const item = minimalItem({
+    box6_medical_payments: 5_000,
+    schedule_c_business_reference: undefined,
+  });
+  assertEquals(itemSchema.safeParse(item).success, false);
+  assertThrows(() => compute([item]));
 });
 
 // ---------------------------------------------------------------------------
@@ -920,7 +935,7 @@ Deno.test("f1099m.compute: omitting box1_rents_routing defaults to schedule_e (t
   assertEquals(schedE !== undefined, true);
   // Should not also route to schedule_c for rents without substantial services flag
   const schedCRentalIncome = schedC
-    ? (schedC.fields as Record<string, unknown>).line1_gross_receipts
+    ? (schedC.fields as Record<string, unknown>).f1099m_receipt_sources
     : undefined;
   assertEquals((schedE!.fields as Record<string, unknown>).rental_income, 9600);
   assertEquals(!schedCRentalIncome, true);
@@ -988,6 +1003,7 @@ Deno.test("f1099m.compute: smoke test — all major income boxes populate correc
       payer_tin: "123456789",
       recipient_tin: "987654321",
       farm_id: "farm-1",
+      schedule_c_business_reference: "business-1",
       account_number: "ACC-001",
       box1_rents: 18000,
       box2_royalties: 3600,
@@ -1041,7 +1057,7 @@ Deno.test("f1099m.compute: smoke test — all major income boxes populate correc
   assertEquals(schedC !== undefined, true);
   // All three flow to schedule_c line1_gross_receipts (sum: 5000+12000+4500 = 21500)
   assertEquals(
-    fieldsOf(result.outputs, scheduleC)!.line1_gross_receipts,
+    miscReceiptTotal(result),
     21500,
   );
 

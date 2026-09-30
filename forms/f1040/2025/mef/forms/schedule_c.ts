@@ -306,6 +306,11 @@ export const scheduleC: MefFormDescriptor<
       ...fields,
       schedule_cs: fields?.schedule_cs ?? [],
     });
+    if ((input.line1_gross_receipts ?? 0) > 0) {
+      throw new Error(
+        "Schedule C top-level gross receipts need business-linked source rows",
+      );
+    }
     if (
       context.pending?.f3115 ||
       (input.section481a_adjustments?.length ?? 0) > 0

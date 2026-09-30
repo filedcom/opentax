@@ -94,6 +94,7 @@ export const itemSchema = z.object({
   box10_attorney_client_funds: z.number().nonnegative().optional(),
   box10_attorney_business_reference: z.string().trim().min(1).optional(),
   box10_allocation_review_reference: z.string().trim().min(1).optional(),
+  schedule_c_business_reference: z.string().trim().min(1).optional(),
   // Box 11 — Fish purchased → Schedule C
   box11_fish_purchased: z.number().nonnegative().optional(),
   // Box 12 — §409A deferrals (informational only — no current-year income if plan compliant)
@@ -152,6 +153,22 @@ export const itemSchema = z.object({
       message: "1099-MISC box 10 allocation needs a reviewed source reference",
     });
   }
+  if (
+    ((item.box1_rents_routing === "schedule_c" && (item.box1_rents ?? 0) > 0) ||
+      (item.box2_royalties_routing === "schedule_c" &&
+        (item.box2_royalties ?? 0) > 0) ||
+      (item.box5_fishing_boat ?? 0) > 0 ||
+      (item.box6_medical_payments ?? 0) > 0 ||
+      (item.box11_fish_purchased ?? 0) > 0) &&
+    !item.schedule_c_business_reference
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["schedule_c_business_reference"],
+      message:
+        "1099-MISC business receipts need a Schedule C business reference",
+    });
+  }
 });
 
 export const inputSchema = z.object({
@@ -180,21 +197,9 @@ function rentalIncomeForScheduleE(items: M99Item[]): number {
     .reduce((s, i) => s + (i.box1_rents ?? 0), 0);
 }
 
-function rentalIncomeForScheduleC(items: M99Item[]): number {
-  return items
-    .filter((i) => i.box1_rents_routing === "schedule_c")
-    .reduce((s, i) => s + (i.box1_rents ?? 0), 0);
-}
-
 function royaltiesForScheduleE(items: M99Item[]): number {
   return items
     .filter((i) => (i.box2_royalties_routing ?? "schedule_e") === "schedule_e")
-    .reduce((s, i) => s + (i.box2_royalties ?? 0), 0);
-}
-
-function royaltiesForScheduleC(items: M99Item[]): number {
-  return items
-    .filter((i) => i.box2_royalties_routing === "schedule_c")
     .reduce((s, i) => s + (i.box2_royalties ?? 0), 0);
 }
 
@@ -210,14 +215,33 @@ function otherIncomeTotal(items: M99Item[]): number {
     .reduce((s, i) => s + (i.box3_other_income ?? 0), 0);
 }
 
-function scheduleCGrossReceipts(items: M99Item[]): number {
-  return (
-    totalOf(items, "box5_fishing_boat") +
-    totalOf(items, "box6_medical_payments") +
-    totalOf(items, "box11_fish_purchased") +
-    rentalIncomeForScheduleC(items) +
-    royaltiesForScheduleC(items)
-  );
+function scheduleCReceiptSources(items: M99Item[]) {
+  return items.flatMap((item) => {
+    const amounts = [
+      [
+        "box1_rents",
+        item.box1_rents_routing === "schedule_c" ? item.box1_rents : 0,
+      ],
+      [
+        "box2_royalties",
+        item.box2_royalties_routing === "schedule_c" ? item.box2_royalties : 0,
+      ],
+      ["box5_fishing_boat", item.box5_fishing_boat],
+      ["box6_medical_payments", item.box6_medical_payments],
+      ["box11_fish_purchased", item.box11_fish_purchased],
+    ] as const;
+    return amounts.flatMap(([box, amount]) =>
+      (amount ?? 0) > 0
+        ? [{
+          business_reference: item.schedule_c_business_reference!,
+          payer_tin: item.payer_tin,
+          recipient_tin: item.recipient_tin,
+          box,
+          amount: amount!,
+        }]
+        : []
+    );
+  });
 }
 
 function scheduleEOutput(items: M99Item[]): NodeOutput | null {
@@ -358,7 +382,7 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
     if (schedE) outputs.push(schedE);
 
     // schedule_c — fishing boat + medical + fish purchased + rents (substantial services) + royalties (trade/business)
-    const totalScheduleC = scheduleCGrossReceipts(m99s);
+    const miscReceiptSources = scheduleCReceiptSources(m99s);
     const attorneyFeeSources = m99s.flatMap((item) =>
       (item.box10_attorney_fee_receipts ?? 0) > 0
         ? [{
@@ -370,9 +394,11 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
         }]
         : []
     );
-    if (totalScheduleC > 0 || attorneyFeeSources.length > 0) {
+    if (miscReceiptSources.length > 0 || attorneyFeeSources.length > 0) {
       outputs.push(this.outputNodes.output(schedule_c, {
-        ...(totalScheduleC > 0 && { line1_gross_receipts: totalScheduleC }),
+        ...(miscReceiptSources.length > 0 && {
+          f1099m_receipt_sources: miscReceiptSources,
+        }),
         ...(attorneyFeeSources.length > 0 && {
           attorney_fee_sources: attorneyFeeSources,
         }),

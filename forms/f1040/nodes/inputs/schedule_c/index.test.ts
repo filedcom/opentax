@@ -109,12 +109,25 @@ Deno.test("Schedule C reconciles 1099-MISC attorney fees to the named business",
         }),
       ]),
     Error,
-    "gross receipts include the fees",
+    "gross receipts include them",
   );
   assertThrows(() =>
     scheduleC.compute({ taxYear: 2025, formType: "f1040" }, {
       schedule_cs: [business],
       attorney_fee_sources: [source, source],
+    })
+  );
+  assertThrows(() =>
+    scheduleC.compute({ taxYear: 2025, formType: "f1040" }, {
+      schedule_cs: [business],
+      attorney_fee_sources: [source],
+      f1099m_receipt_sources: [{
+        business_reference: "LAW",
+        payer_tin: "223456789",
+        recipient_tin: "987654321",
+        box: "box6_medical_payments",
+        amount: 1,
+      }],
     })
   );
 });

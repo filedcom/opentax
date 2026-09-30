@@ -119,3 +119,14 @@ reported on another information return, or validate every business-rule/PDF
 case. The [2025 information-return instructions](https://www.irs.gov/pub/irs-prior/i1099mec--2025.pdf)
 identify box 10 as gross proceeds paid to an attorney, distinct from fees for
 the attorney's services.
+
+Other Schedule C-directed Form 1099-MISC receipts now carry one typed source
+row per positive box 1, 2, 5, 6, or 11 amount, linked to a named cash-basis
+business. The graph and both export paths require that business's reported
+line 1 gross receipts to include the sum of its sourced rows and match the
+recipient to its proprietor. The old top-level receipt number is rejected
+instead of being silently ignored. A two-payer $3,000/$2,000 box 6 case
+reaches one $5,000 Schedule C and Form 1040 line 8, with native XML that
+passes local TY2025 v5.4 XSD and a filled PDF packet that builds. Actual payer records, receipt timing,
+duplicate reporting across Forms 1099, visual review, business rules, and
+ATS remain open.

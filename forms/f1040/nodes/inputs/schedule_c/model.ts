@@ -181,6 +181,21 @@ export const inputSchema = z.object({
   // Line 1 — Gross receipts or sales (from 1099-MISC, 1099-NEC, etc.)
   // Passthrough from upstream nodes routing to Schedule C
   line1_gross_receipts: z.number().nonnegative().optional(),
+  f1099m_receipt_sources: z.array(
+    z.object({
+      business_reference: z.string().trim().min(1),
+      payer_tin: z.string().regex(/^\d{9}$/),
+      recipient_tin: z.string().regex(/^\d{9}$/),
+      box: z.enum([
+        "box1_rents",
+        "box2_royalties",
+        "box5_fishing_boat",
+        "box6_medical_payments",
+        "box11_fish_purchased",
+      ]),
+      amount: z.number().positive(),
+    }).strict(),
+  ).optional(),
   attorney_fee_sources: z.array(
     z.object({
       business_reference: z.string().trim().min(1),

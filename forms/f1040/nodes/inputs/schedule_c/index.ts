@@ -146,15 +146,25 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     // Validate schema — throws on invalid data (negative amounts, bad enums)
     inputSchema.parse(input);
-    const attorneyFeesByBusiness = new Map<string, number>();
-    for (const source of input.attorney_fee_sources ?? []) {
-      attorneyFeesByBusiness.set(
+    if ((input.line1_gross_receipts ?? 0) > 0) {
+      throw new Error(
+        "Schedule C top-level gross receipts need business-linked source rows",
+      );
+    }
+    const receiptsByBusiness = new Map<string, number>();
+    for (
+      const source of [
+        ...(input.attorney_fee_sources ?? []),
+        ...(input.f1099m_receipt_sources ?? []),
+      ]
+    ) {
+      receiptsByBusiness.set(
         source.business_reference,
-        (attorneyFeesByBusiness.get(source.business_reference) ?? 0) +
+        (receiptsByBusiness.get(source.business_reference) ?? 0) +
           source.amount,
       );
     }
-    for (const [reference, fees] of attorneyFeesByBusiness) {
+    for (const [reference, receipts] of receiptsByBusiness) {
       const matches = input.schedule_cs.filter((item) =>
         item.business_reference === reference
       );
@@ -162,10 +172,10 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
         matches.length !== 1 ||
         !matches[0].proprietor_recipient ||
         matches[0].line_f_accounting_method !== "cash" ||
-        matches[0].line_1_gross_receipts < fees
+        matches[0].line_1_gross_receipts < receipts
       ) {
         throw new Error(
-          "1099-MISC box 10 retained fees need one matching Schedule C business whose gross receipts include the fees",
+          "1099-MISC receipts need one matching Schedule C business with cash-basis accounting whose gross receipts include them",
         );
       }
     }
