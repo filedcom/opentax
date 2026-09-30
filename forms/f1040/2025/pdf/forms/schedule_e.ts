@@ -170,8 +170,14 @@ export const scheduleEPdf: PdfFormDescriptor = {
     if (Object.keys(raw).length === 0 && k1Rows.length === 0) return {};
     const input = inputSchema.parse(raw);
     const trustRows = input.estate_trust_rows ?? [];
-    let k1Fields: Record<string, unknown> | undefined;
+    let partIIFields: Record<string, unknown> | undefined;
     let k1Total = 0;
+    const trustTotal = trustRows.reduce(
+      (sum, row) =>
+        sum + (row.passive_income ?? 0) +
+        (row.other_income ?? 0),
+      0,
+    );
     if (k1Rows.length > 0) {
       if (
         k1Rows.length > 4 || input.schedule_es.length > 1 ||
@@ -180,7 +186,6 @@ export const scheduleEPdf: PdfFormDescriptor = {
         input.rental_income !== undefined ||
         input.royalty_income !== undefined ||
         trustRows.length > 2 ||
-        (input.schedule_es.length > 0 && trustRows.length > 0) ||
         !scheduleE.build(input, { pending: allPending })
       ) {
         throw new Error(
@@ -201,7 +206,7 @@ export const scheduleEPdf: PdfFormDescriptor = {
         (sum, row) => sum + (row.other_income ?? 0),
         0,
       );
-      k1Fields = {
+      partIIFields = {
         ...Object.fromEntries(k1Rows.flatMap((row, index) => [
           [`k1_${index}_name`, row.name],
           [`k1_${index}_code`, row.code],
@@ -229,11 +234,12 @@ export const scheduleEPdf: PdfFormDescriptor = {
           : undefined,
         trust_line41: k1Total + trustPassive + trustOther,
       };
-      if (input.schedule_es.length === 0) return k1Fields;
+      if (input.schedule_es.length === 0) return partIIFields!;
     }
-    if (trustRows.length > 0) {
+    if (trustRows.length > 0 && k1Rows.length === 0) {
       if (
-        input.schedule_es.length > 0 || input.farm_rental_net !== undefined ||
+        input.schedule_es.length > 1 ||
+        input.farm_rental_net !== undefined ||
         input.farm_rental_gross !== undefined ||
         input.rental_income !== undefined ||
         input.royalty_income !== undefined ||
@@ -241,7 +247,7 @@ export const scheduleEPdf: PdfFormDescriptor = {
         !scheduleE.build(input, { pending: allPending })
       ) {
         throw new Error(
-          "Schedule E PDF trust rows need a sourced Part III-only return",
+          "Schedule E PDF trust rows need a sourced Part III return",
         );
       }
       const passive = trustRows.reduce(
@@ -253,7 +259,7 @@ export const scheduleEPdf: PdfFormDescriptor = {
         0,
       );
       const total = passive + other;
-      return {
+      partIIFields = {
         ...Object.fromEntries(trustRows.flatMap((row, index) => [
           [`trust_${index}_name`, row.estate_trust_name],
           [`trust_${index}_ein`, row.estate_trust_ein],
@@ -266,6 +272,7 @@ export const scheduleEPdf: PdfFormDescriptor = {
         trust_line37: total,
         trust_line41: total,
       };
+      if (input.schedule_es.length === 0) return partIIFields!;
     }
     const item = input.schedule_es[0];
     if (
@@ -338,7 +345,7 @@ export const scheduleEPdf: PdfFormDescriptor = {
     const filedLine5 = Array.isArray(schedule1Line5)
       ? schedule1Line5.reduce((sum, value) => sum + value, 0)
       : schedule1Line5;
-    if (filedLine5 !== deductibleNet + k1Total) {
+    if (filedLine5 !== deductibleNet + k1Total + trustTotal) {
       throw new Error(
         "Schedule E PDF line 26 must match finalized Schedule 1 line 5",
       );
@@ -347,7 +354,7 @@ export const scheduleEPdf: PdfFormDescriptor = {
       ? undefined
       : `${item.street_address}, ${item.city}, ${item.state} ${item.zip}`;
     return {
-      ...k1Fields,
+      ...partIIFields,
       payments_made: item.form_1099_payments_made,
       forms_1099_filed: item.form_1099_payments_made
         ? item.form_1099_filed
@@ -383,9 +390,9 @@ export const scheduleEPdf: PdfFormDescriptor = {
       line24: Math.max(0, net),
       line25: allowedLoss > 0 ? allowedLoss : undefined,
       line26: deductibleNet,
-      trust_line41: k1Fields === undefined
+      trust_line41: partIIFields === undefined
         ? undefined
-        : deductibleNet + k1Total,
+        : deductibleNet + k1Total + trustTotal,
     };
   },
   instances(fields, filer, allPending) {

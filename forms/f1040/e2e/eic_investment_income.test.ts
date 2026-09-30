@@ -233,6 +233,7 @@ function runPassiveK1s(
   partnershipRent: number,
   sCorpBusiness: number,
   propertyRent = 0,
+  trustIncome = 0,
 ) {
   const reviewReference = {
     activity_statement_reference: "Synthetic 2025 K-1 activity statement",
@@ -258,6 +259,22 @@ function runPassiveK1s(
           personal_use_days: 0,
           rent_income: propertyRent,
           form_1099_payments_made: false,
+        }],
+      }
+      : {}),
+    ...(trustIncome > 0
+      ? {
+        k1_trust: [{
+          estate_trust_name: "Example Family Trust",
+          estate_trust_ein: "111222333",
+          source_document_reference: "Synthetic 2025 trust K-1",
+          box6_ordinary_business: trustIncome,
+          box6_8_activity_statement: [{
+            box: "6",
+            activity_name: "Trust business",
+            statement_reference: "Synthetic trust activity statement",
+            income: trustIncome,
+          }],
         }],
       }
       : {}),
@@ -392,6 +409,96 @@ Deno.test("EIC Worksheet 1 counts reviewed partnership and S-corporation K-1 inc
     Error,
     "recipient needs the filer or joint spouse",
   );
+});
+
+Deno.test("EIC reconciles rental, partnership, S-corporation, and trust income", async () => {
+  const atLimit = runPassiveK1s(4_000, 4_000, 1_950, 2_000);
+  assertEquals(atLimit.diagnostics, []);
+  assertEquals(atLimit.pending.eitc.investment_income_floor, 11_950);
+  assertEquals(atLimit.pending.f1040.line27_eitc !== undefined, true);
+  const overLimit = runPassiveK1s(4_000, 4_000, 1_951, 2_000);
+  assertEquals(overLimit.pending.eitc.investment_income_floor, 11_951);
+  assertEquals(overLimit.pending.f1040.line27_eitc, undefined);
+  const filer = extractFilerIdentity(atLimit.pending.f1040);
+  const xml = buildMefXml(buildPending(atLimit.pending), filer);
+  assertEquals(
+    xml.includes("<TotalSuppIncomeOrLossAmt>11950</TotalSuppIncomeOrLossAmt>"),
+    true,
+  );
+  assertEquals(
+    xml.includes(
+      "<TotalEstateOrTrustIncomeAmt>2000</TotalEstateOrTrustIncomeAmt>",
+    ),
+    true,
+  );
+  const xsd = new URL(
+    "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    import.meta.url,
+  ).pathname;
+  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(xmlPath, xml);
+    const validation = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsd, xmlPath],
+      stderr: "piped",
+    }).output();
+    assertEquals(
+      validation.code,
+      0,
+      new TextDecoder().decode(validation.stderr),
+    );
+  } finally {
+    await Deno.remove(xmlPath);
+  }
+  const fields = scheduleEPdf.projectFields?.(
+    atLimit.pending.schedule_e,
+    atLimit.pending,
+  );
+  assertEquals(fields?.line26, 1_950);
+  assertEquals(fields?.k1_line32, 8_000);
+  assertEquals(fields?.trust_line37, 2_000);
+  assertEquals(fields?.trust_line41, 11_950);
+  assertEquals(scheduleEPdf.pageIndices?.(fields ?? {}), [0, 1]);
+  const pdf = await buildPdfBytes(atLimit.pending, filer);
+  assertEquals(new TextDecoder().decode(pdf.slice(0, 5)), "%PDF-");
+  const trustAndRental = runPassiveK1s(0, 0, 9_950, 2_000);
+  assertEquals(trustAndRental.diagnostics, []);
+  assertEquals(trustAndRental.pending.eitc.investment_income_floor, 11_950);
+  const trustAndRentalFields = scheduleEPdf.projectFields?.(
+    trustAndRental.pending.schedule_e,
+    trustAndRental.pending,
+  );
+  assertEquals(trustAndRentalFields?.line26, 9_950);
+  assertEquals(trustAndRentalFields?.trust_line37, 2_000);
+  assertEquals(trustAndRentalFields?.trust_line41, 11_950);
+  assertEquals(scheduleEPdf.pageIndices?.(trustAndRentalFields ?? {}), [0, 1]);
+  const trustAndRentalPdf = await buildPdfBytes(
+    trustAndRental.pending,
+    extractFilerIdentity(trustAndRental.pending.f1040),
+  );
+  assertEquals(
+    new TextDecoder().decode(trustAndRentalPdf.slice(0, 5)),
+    "%PDF-",
+  );
+  const trustAndRentalXml = buildMefXml(
+    buildPending(trustAndRental.pending),
+    extractFilerIdentity(trustAndRental.pending.f1040),
+  );
+  const secondXmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(secondXmlPath, trustAndRentalXml);
+    const validation = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsd, secondXmlPath],
+      stderr: "piped",
+    }).output();
+    assertEquals(
+      validation.code,
+      0,
+      new TextDecoder().decode(validation.stderr),
+    );
+  } finally {
+    await Deno.remove(secondXmlPath);
+  }
 });
 
 Deno.test("EIC reconciles passive K-1s with a Schedule E property on both PDF pages", async () => {

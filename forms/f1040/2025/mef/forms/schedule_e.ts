@@ -647,8 +647,8 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
         ? pendingLine5.reduce((sum: number, amount: number) => sum + amount, 0)
         : pendingLine5;
       if (
-        itemList.length > 0 || farmNet !== undefined ||
-        line5 !== trustTotalIncome + k1TotalIncome
+        farmNet !== undefined ||
+        line5 !== propertyNet + trustTotalIncome + k1TotalIncome
       ) {
         throw new Error(
           "Schedule E trust Part III income must match finalized Schedule 1 line 5",
@@ -668,7 +668,8 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
       if (
         (royaltyKeys.length > 0 && royaltyKeys.length !== 1) ||
         itemList.length !== 1 ||
-        farmNet !== undefined || line5 !== propertyNet + k1TotalIncome
+        farmNet !== undefined ||
+        line5 !== propertyNet + trustTotalIncome + k1TotalIncome
       ) {
         throw new Error(
           "Schedule E sourced royalty net must match finalized Schedule 1 line 5",
