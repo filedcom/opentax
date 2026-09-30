@@ -493,6 +493,92 @@ for (const fixture of pdfReviewFixtures) {
           "1099-K Schedule C source differs",
         );
       }
+      if (fixture.id === "single-k-mixed-error-duplicate-personal") {
+        const kRow = (result.pending.schedule_c
+          .f1099k_receipt_sources as Array<Record<string, unknown>>)[0];
+        assertEquals(kRow.box1a_gross_payments, 4_000);
+        assertEquals(kRow.amount, 2_000);
+        assertEquals(kRow.not_included_in_schedule_c_receipts, 1_000);
+        assertEquals(kRow.personal_item_sales_gross, 800);
+        assertEquals(kRow.reported_error_gross, 200);
+        assertEquals(
+          result.pending.schedule1.form1099k_reported_error_or_loss,
+          200,
+        );
+        assertEquals(result.pending.f1040.line8_additional_income, 3_000);
+        assertEquals(result.pending.f1040.line7_capital_gain, 500);
+        assertStringIncludes(
+          xml,
+          "<Form1099KRptErrorOrLossAmt>200</Form1099KRptErrorOrLossAmt>",
+        );
+        assertThrows(
+          () =>
+            buildMefXml(
+              buildPending({
+                ...result.pending,
+                schedule1: {
+                  ...result.pending.schedule1,
+                  form1099k_reported_error_or_loss: 300,
+                },
+              }),
+              fixture.filer,
+            ),
+          Error,
+          "reported-error amount differs",
+        );
+        assertThrows(
+          () =>
+            buildMefXml(
+              buildPending({
+                ...result.pending,
+                schedule_c: {
+                  ...result.pending.schedule_c,
+                  f1099k_receipt_sources: [{
+                    ...kRow,
+                    reported_error_gross: 100,
+                  }],
+                },
+              }),
+              fixture.filer,
+            ),
+          Error,
+          "1099-K Schedule C source differs",
+        );
+        assertThrows(
+          () =>
+            buildMefXml(
+              buildPending({
+                ...result.pending,
+                f1099k: {
+                  f1099ks: (result.pending.f1099k.f1099ks as Array<
+                    Record<string, unknown>
+                  >).map((row) => {
+                    const review = row.reported_error_review as Record<
+                      string,
+                      unknown
+                    >;
+                    const payments = review.payments as Array<
+                      Record<string, unknown>
+                    >;
+                    return {
+                      ...row,
+                      reported_error_review: {
+                        ...review,
+                        payments: [{
+                          ...payments[0],
+                          transaction_id: "camera-2025",
+                        }],
+                      },
+                    };
+                  }),
+                },
+              }),
+              fixture.filer,
+            ),
+          Error,
+          "cannot share a transaction ID",
+        );
+      }
       if (fixture.id === "single-partnership-code-l-r-ordinary") {
         assertEquals(result.pending.schedule1.line4_other_gains, 1_000);
         assertEquals(result.pending.f1040.line8_additional_income, 1_000);

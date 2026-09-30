@@ -75,8 +75,8 @@ export const itemSchema = z.object({
   //     and separately identified personal-item sales on one payer report.
   //   "reported_in_error" → reviewed personal payments reported by the PSE
   //     in error, disclosed in the entry space at the top of Schedule 1.
-  // Personal-item sales require item-level basis review. Partial erroneous
-  // reports and other mixed-purpose combinations still need disposition.
+  // Personal-item sales require item-level basis review. Other mixed-purpose
+  // combinations and fee/refund adjustments still need disposition.
   for_routing: z.enum([
     "schedule_c",
     "schedule_1_line_8j",
@@ -180,7 +180,13 @@ export const itemSchema = z.object({
       !["personal_item_sales", "mixed_schedule_c_personal_item_sales"].includes(
         item.for_routing ?? "",
       )) ||
-    (item.reported_error_review && item.for_routing !== "reported_in_error")
+    (item.reported_error_review && ![
+      "schedule_c",
+      "schedule_1_line_8j",
+      "personal_item_sales",
+      "mixed_schedule_c_personal_item_sales",
+      "reported_in_error",
+    ].includes(item.for_routing ?? ""))
   ) {
     ctx.addIssue({
       code: "custom",
@@ -189,7 +195,26 @@ export const itemSchema = z.object({
     });
   }
   const mixed = item.for_routing === "mixed_schedule_c_personal_item_sales";
-  if (item.for_routing === "reported_in_error") {
+  const errorAmount = (item.reported_error_review?.payments ?? []).reduce(
+    (sum, payment) => sum + payment.amount,
+    0,
+  );
+  if (
+    item.personal_item_sales_review && item.reported_error_review &&
+    item.personal_item_sales_review.some((sale) =>
+      item.reported_error_review!.payments.some((payment) =>
+        payment.transaction_id === sale.transaction_id
+      )
+    )
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["reported_error_review"],
+      message:
+        "1099-K personal sale and reported error cannot share a transaction ID",
+    });
+  }
+  if (item.for_routing === "reported_in_error" || item.reported_error_review) {
     const review = item.reported_error_review;
     const payments = review?.payments ?? [];
     if (
@@ -199,7 +224,9 @@ export const itemSchema = z.object({
       payments.length === 0 ||
       new Set(payments.map((payment) => payment.transaction_id)).size !==
         payments.length ||
-      payments.reduce((sum, payment) => sum + payment.amount, 0) !== gross
+      (item.for_routing === "reported_in_error"
+        ? errorAmount !== gross
+        : errorAmount >= gross)
     ) {
       ctx.addIssue({
         code: "custom",
@@ -223,7 +250,8 @@ export const itemSchema = z.object({
       !item.recipient_tin || !item.schedule_c_business_reference ||
       !review ||
       review.included_in_schedule_c_gross_receipts +
-            review.not_included_in_schedule_c_receipts + personal !== gross ||
+            review.not_included_in_schedule_c_receipts + personal +
+            errorAmount !== gross ||
       (mixed && personal <= 0) ||
       (review.not_included_in_schedule_c_receipts > 0 &&
         (!review.duplicate_1099_review ||
@@ -246,7 +274,7 @@ export const itemSchema = z.object({
       !item.pse_name.trim() ||
       !/^\d{9}$/.test(item.pse_tin?.replaceAll("-", "") ?? "") ||
       (!item.recipient_tin && !item.recipient_identity_review) || !review ||
-      review.included_in_line8j !== gross
+      review.included_in_line8j + errorAmount !== gross
     ) {
       ctx.addIssue({
         code: "custom",
@@ -265,8 +293,10 @@ export const itemSchema = z.object({
       (!item.recipient_tin && !item.recipient_identity_review) ||
       sales.length === 0 || new Set(ids).size !== ids.length ||
       (mixed
-        ? sales.reduce((sum, sale) => sum + sale.proceeds, 0) >= gross
-        : sales.reduce((sum, sale) => sum + sale.proceeds, 0) !== gross) ||
+        ? sales.reduce((sum, sale) => sum + sale.proceeds, 0) + errorAmount >=
+          gross
+        : sales.reduce((sum, sale) => sum + sale.proceeds, 0) + errorAmount !==
+          gross) ||
       sales.some((sale) => {
         const acquired = new Date(`${sale.date_acquired}T00:00:00Z`);
         const sold = new Date(`${sale.date_sold}T00:00:00Z`);
@@ -381,6 +411,12 @@ function incomeOutputs(k99s: K99Items): NodeOutput[] {
             pse_tin: item.pse_tin!.replaceAll("-", ""),
             recipient_tin: item.recipient_tin!.replaceAll("-", ""),
             box1a_gross_payments: gross,
+            ...(item.reported_error_review
+              ? {
+                reported_error_gross: item.reported_error_review.payments
+                  .reduce((sum, payment) => sum + payment.amount, 0),
+              }
+              : {}),
             ...(item.for_routing === "mixed_schedule_c_personal_item_sales"
               ? {
                 personal_item_sales_gross: item.personal_item_sales_review!
@@ -426,9 +462,14 @@ function incomeOutputs(k99s: K99Items): NodeOutput[] {
     (sum, item) => sum + item.nonbusiness_activity_review!.included_in_line8j,
     0,
   );
-  const reportedError = k99s.filter((item) =>
-    item.for_routing === "reported_in_error"
-  ).reduce((sum, item) => sum + item.box1a_gross_payments!, 0);
+  const reportedError = k99s.reduce(
+    (sum, item) =>
+      sum + (item.reported_error_review?.payments ?? []).reduce(
+        (paymentSum, payment) => paymentSum + payment.amount,
+        0,
+      ),
+    0,
+  );
   return [
     ...businessOutputs,
     ...(reportedError > 0

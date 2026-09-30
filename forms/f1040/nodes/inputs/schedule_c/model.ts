@@ -214,6 +214,7 @@ export const inputSchema = z.object({
       recipient_tin: z.string().regex(/^\d{9}$/),
       box1a_gross_payments: z.number().positive(),
       personal_item_sales_gross: z.number().int().positive().optional(),
+      reported_error_gross: z.number().int().positive().optional(),
       amount: z.number().positive(),
       not_included_in_schedule_c_receipts: z.number().nonnegative(),
       allocation_reference: z.string().trim().min(1),

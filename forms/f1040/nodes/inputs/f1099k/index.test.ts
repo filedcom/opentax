@@ -919,6 +919,95 @@ Deno.test("1099-K reported-error payments aggregate on Schedule 1 without income
   );
 });
 
+Deno.test("1099-K partial reported error leaves only classified payments in income", () => {
+  const reportedError = {
+    payments: [{
+      transaction_id: "repayment-2025",
+      amount: 200,
+      kind: "expense_reimbursement",
+      sender_name: "Example Friend",
+      payment_record_reference: "2025 shared-expense record",
+      no_goods_or_services: true,
+    }],
+    correction_request_reference: "2025 payer correction request",
+  };
+  const business = businessItem(3_000, {
+    schedule_c_receipts_review: {
+      included_in_schedule_c_gross_receipts: 2_800,
+      not_included_in_schedule_c_receipts: 0,
+      allocation_reference: "2025 settlement ledger",
+      no_overlap_with_other_1099s: true,
+      overlap_review_reference: "2025 overlap review",
+    },
+    reported_error_review: reportedError,
+  });
+  const businessResult = compute([business]);
+  assertEquals(
+    (findOutput(businessResult, "schedule_c")!.fields
+      .f1099k_receipt_sources as Array<Record<string, unknown>>)[0].amount,
+    2_800,
+  );
+  assertEquals(
+    (findOutput(businessResult, "schedule1")!.fields as Record<string, unknown>)
+      .form1099k_reported_error_or_loss,
+    200,
+  );
+  const hobby = hobbyItem(3_000, {
+    nonbusiness_activity_review: {
+      activity_description: "Occasional craft sales",
+      included_in_line8j: 2_800,
+      allocation_reference: "2025 payment ledger",
+      no_overlap_with_other_1099s: true,
+      overlap_review_reference: "2025 overlap review",
+    },
+    reported_error_review: reportedError,
+  });
+  const hobbyResult = compute([hobby]);
+  assertEquals(
+    hobbyResult.outputs.find((item) =>
+      item.nodeType === "schedule1" &&
+      "line8j_f1099k_hobby_income" in item.fields
+    )?.fields.line8j_f1099k_hobby_income,
+    2_800,
+  );
+  const personal = minimalItem({
+    pse_tin: "12-3456789",
+    recipient_tin: "987-65-4321",
+    box1a_gross_payments: 1_000,
+    for_routing: "personal_item_sales",
+    personal_item_sales_review: [personalSale({ proceeds: 800 })],
+    reported_error_review: reportedError,
+  });
+  const personalResult = compute([personal]);
+  assertEquals(
+    (findOutput(personalResult, "form8949")!.fields.transaction as Record<
+      string,
+      unknown
+    >).proceeds,
+    800,
+  );
+  assertEquals(
+    (findOutput(personalResult, "schedule1")!.fields as Record<string, unknown>)
+      .form1099k_reported_error_or_loss,
+    200,
+  );
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        ...personal,
+        reported_error_review: {
+          ...reportedError,
+          payments: [{
+            ...reportedError.payments[0],
+            transaction_id: "item-1",
+          }],
+        },
+      })]),
+    Error,
+    "cannot share a transaction ID",
+  );
+});
+
 Deno.test("no for_routing: box1a above threshold still produces no income output", () => {
   const result = compute([minimalItem({ box1a_gross_payments: 50_000 })]);
   assertEquals(findOutput(result, "schedule_c"), undefined);

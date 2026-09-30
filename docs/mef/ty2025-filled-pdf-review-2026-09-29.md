@@ -744,3 +744,19 @@ amount rejects at export. The PDF SHA-256 is
 source/pending JSON, XML, PDF, and rendered pages are retained at
 `.state/research/ty2025-filled-pdf-review/2026-09-30-v93/`. Payer-issued and
 payment/correction bytes, IRS business rules, and ATS remain open.
+
+The `single-k-mixed-error-duplicate-personal` source return has a 13-page
+`v94` PDF. The contact sheet and Form 1040, Schedule 1, Schedule C, Schedule
+D, and Form 8949 pages were inspected at full size. Its $4,000 Form 1099-K
+allocates $2,000 of unique business receipts, a $1,000 payment also reported
+on Form 1099-NEC, an $800/$300 personal-camera sale, and a $200 shared-expense
+reimbursement reported in error. Schedule 1 prints $200 in the top entry and
+$3,000 on lines 3/10. Schedule C line 1/31 and Form 1040 line 8 also print
+$3,000; Form 8949 box F, Schedule D, and Form 1040 line 7a carry $500. The
+native return passes local TY2025 v5.4 XSD; changed error or business-source
+allocation rejects at export. The PDF SHA-256 is
+`6b0c0f80da3006914f52afc7fc7e1eb713b673be54f0cc3ba4260c0b2d923943`;
+source/pending JSON, XML, PDF, contact sheet, and page images are retained at
+`.state/research/ty2025-filled-pdf-review/2026-09-30-v94/`. Actual payer
+copies, payment bytes, and correction records, IRS business rules, and ATS
+remain open.

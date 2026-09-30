@@ -83,7 +83,10 @@ export function assertKReportedErrorSources(
     | undefined)?.f1099ks ?? [];
   let total = 0;
   for (const item of raw) {
-    if (item.for_routing !== "reported_in_error") continue;
+    if (
+      item.for_routing !== "reported_in_error" &&
+      item.reported_error_review === undefined
+    ) continue;
     const review = item.reported_error_review as
       | Record<string, unknown>
       | undefined;
@@ -128,7 +131,23 @@ export function assertKReportedErrorSources(
       seen.add(payment.transaction_id);
       subtotal += payment.amount;
     }
-    if (subtotal !== gross) {
+    const sales = item.personal_item_sales_review;
+    if (
+      Array.isArray(sales) &&
+      sales.some((value) =>
+        value && typeof value === "object" &&
+        seen.has((value as Record<string, unknown>).transaction_id as string)
+      )
+    ) {
+      throw new Error(
+        "1099-K personal sale and reported error cannot share a transaction ID",
+      );
+    }
+    if (
+      item.for_routing === "reported_in_error"
+        ? subtotal !== gross
+        : subtotal >= gross
+    ) {
       throw new Error("1099-K reported-error payments differ from box 1a");
     }
     total += subtotal;
@@ -278,6 +297,13 @@ export function assertKPersonalSaleSources(
       });
     }
     const mixed = item.for_routing === "mixed_schedule_c_personal_item_sales";
+    const error = (item.reported_error_review as
+      | { payments?: Array<{ amount: number }> }
+      | undefined)?.payments?.reduce(
+        (sum, payment) => sum + payment.amount,
+        0,
+      ) ??
+      0;
     const business = mixed
       ? (item.schedule_c_receipts_review as Record<string, unknown> | undefined)
       : undefined;
@@ -287,9 +313,10 @@ export function assertKPersonalSaleSources(
           business.included_in_schedule_c_gross_receipts <= 0 ||
           typeof business.not_included_in_schedule_c_receipts !== "number" ||
           business.not_included_in_schedule_c_receipts < 0 ||
-          proceedsTotal + business.included_in_schedule_c_gross_receipts +
+          proceedsTotal + error +
+                business.included_in_schedule_c_gross_receipts +
                 business.not_included_in_schedule_c_receipts !== gross
-        : proceedsTotal !== gross
+        : proceedsTotal + error !== gross
     ) {
       throw new Error("1099-K personal-item sale proceeds differ from box 1a");
     }
@@ -357,6 +384,13 @@ export function assertScheduleCReceiptSourceIdentity(
       pse_tin: tin(item.pse_tin, "1099-K PSE"),
       recipient_tin: tin(item.recipient_tin, "1099-K recipient"),
       box1a_gross_payments: item.box1a_gross_payments,
+      ...(item.reported_error_review
+        ? {
+          reported_error_gross: (item.reported_error_review as {
+            payments: Array<{ amount: number }>;
+          }).payments.reduce((sum, payment) => sum + payment.amount, 0),
+        }
+        : {}),
       ...(item.for_routing === "mixed_schedule_c_personal_item_sales"
         ? {
           personal_item_sales_gross:
@@ -575,6 +609,9 @@ export function assertScheduleCReceiptSourceIdentity(
             (row.box1a_gross_payments as number) -
               (typeof row.personal_item_sales_gross === "number"
                 ? row.personal_item_sales_gross
+                : 0) -
+              (typeof row.reported_error_gross === "number"
+                ? row.reported_error_gross
                 : 0) ||
           row.no_overlap_with_other_1099s !== true ||
           typeof row.allocation_reference !== "string" ||
@@ -698,7 +735,13 @@ export function assertSchedule1KSourceIdentity(
       typeof review.included_in_line8j !== "number" ||
       !Number.isSafeInteger(review.included_in_line8j) ||
       review.included_in_line8j <= 0 ||
-      review.included_in_line8j !== item.box1a_gross_payments ||
+      review.included_in_line8j +
+            ((item.reported_error_review as
+              | { payments?: Array<{ amount: number }> }
+              | undefined)?.payments?.reduce(
+                (sum, payment) => sum + payment.amount,
+                0,
+              ) ?? 0) !== item.box1a_gross_payments ||
       typeof review.allocation_reference !== "string" ||
       !review.allocation_reference.trim() ||
       review.no_overlap_with_other_1099s !== true ||

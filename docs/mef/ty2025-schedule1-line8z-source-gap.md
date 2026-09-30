@@ -120,7 +120,9 @@ income classification, so an unresolved source report cannot silently drop
 from a filed return. A wholly erroneous report for reviewed personal gifts
 or expense reimbursements now enters the non-income entry space at the top
 of 2025 Schedule 1, with source-to-print reconciliation. Partial erroneous
-reports and other mixed classifications remain open.
+amounts can share one K report with reviewed business, not-for-profit, or
+personal-item sales; those remaining amounts follow their ordinary routes.
+Other classifications and fee/refund adjustments remain open.
 
 The Form 1099-MISC box 3 non-prize other-income route now requires a reviewed
 payment description and carries payer, recipient, amount, and description rows
