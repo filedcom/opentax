@@ -39,6 +39,21 @@ Deno.test("normalizePendingDict: resolves all-numeric array to last element", ()
   );
 });
 
+Deno.test("normalizePendingDict: adds independent Schedule E and passive K-1 sources", () => {
+  assertEquals(
+    normalizePendingDict({
+      line5_schedule_e: [6_000, 5_950],
+      eic_passive_k1_income: [6_000, 5_950],
+      agi: [15_000, 16_950],
+    }),
+    {
+      line5_schedule_e: 11_950,
+      eic_passive_k1_income: 11_950,
+      agi: 16_950,
+    },
+  );
+});
+
 Deno.test("normalizePendingDict: single-element numeric array resolves to that element", () => {
   assertEquals(
     normalizePendingDict({ wages: [75000] }),

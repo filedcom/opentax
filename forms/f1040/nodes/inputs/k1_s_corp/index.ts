@@ -35,6 +35,10 @@ import { form8582cr } from "../../intermediate/forms/form8582cr/index.ts";
 import { disabledAccessLimit } from "../../intermediate/forms/disabled_access_limit/index.ts";
 import { scheduleA as schedule_a } from "../schedule_a/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import {
+  k1PassiveEicReviewSchema,
+  reviewedK1PassiveIncome,
+} from "../k1_passive_eic.ts";
 
 // Schedule K-1 (Form 1120-S) — Shareholder's Share of Income, Deductions, Credits
 //
@@ -75,6 +79,7 @@ export const itemSchema = z.object({
 
   // Box 3 — Other net rental income/loss → Schedule E
   box3_other_rental: z.number().optional(),
+  eic_passive_activity_review: k1PassiveEicReviewSchema.optional(),
 
   // Box 4 — Interest income → Schedule B
   box4_interest: z.number().nonnegative().optional(),
@@ -192,6 +197,37 @@ export const itemSchema = z.object({
   // At-risk suspended losses from pre-2018 years (K1S > "Pre-2018 At-Risk" tab)
   pre2018_at_risk_suspended: z.number().nonnegative().optional(),
 }).superRefine((item, ctx) => {
+  if (item.eic_passive_activity_review) {
+    for (
+      const key of ["corporation_ein", "source_document_reference"] as const
+    ) {
+      if (!item[key]) {
+        ctx.addIssue({
+          code: "custom",
+          path: [key],
+          message: `K-1 passive activity review needs ${key}`,
+        });
+      }
+    }
+    for (
+      const [reviewKey, amountKey] of [
+        ["box1", "box1_ordinary_business"],
+        ["box2", "box2_rental_re"],
+        ["box3", "box3_other_rental"],
+      ] as const
+    ) {
+      if (
+        (item[amountKey] ?? 0) > 0 &&
+        !item.eic_passive_activity_review[reviewKey]
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["eic_passive_activity_review", reviewKey],
+          message: `K-1 ${reviewKey} needs passive activity classification`,
+        });
+      }
+    }
+  }
   if (item.box10_other_income !== undefined) {
     ctx.addIssue({
       code: "custom",
@@ -330,7 +366,10 @@ function schedule1Output(items: K1SCorpItems): NodeOutput[] {
   if (total === 0) return [];
   return [
     output(schedule1, { line5_schedule_e: total }),
-    output(agi_aggregator, { line5_schedule_e: total }),
+    output(agi_aggregator, {
+      line5_schedule_e: total,
+      eic_passive_k1_income: reviewedK1PassiveIncome(items),
+    }),
   ];
 }
 

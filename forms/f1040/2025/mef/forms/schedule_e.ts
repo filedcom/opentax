@@ -31,6 +31,7 @@ import {
   passivePropertySaleSchema,
   samePassiveSale,
 } from "../../../nodes/intermediate/forms/form4797/index.ts";
+import { scheduleEK1Part2Rows } from "../../schedule-e-k1-part2.ts";
 
 type Fields = Partial<z.infer<typeof inputSchema>>;
 type Property = z.infer<typeof itemSchema>;
@@ -459,13 +460,17 @@ export function validatePassiveActivityLink(
 
 export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
   pendingKey: "schedule_e",
+  sourcePendingKeys: ["schedule_e", "k1_partnership", "k1_s_corp"],
   FIELD_MAP: [
     ["farm_rental_net", "NetFarmRentalIncomeOrLossAmt"],
     ["farm_rental_gross", "FarmingAndFishingIncomeAmt"],
   ],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040se.pdf",
   build(fields, context) {
-    if (!fields || Object.keys(fields).length === 0) return "";
+    const k1Rows = scheduleEK1Part2Rows(context?.pending);
+    if ((!fields || Object.keys(fields).length === 0) && k1Rows.length === 0) {
+      return "";
+    }
     if (
       fields.mortgage_interest !== undefined ||
       fields.expense_auto_travel !== undefined ||
@@ -602,7 +607,9 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
       ? undefined
       : farmNet + farmLosses - farmAllowed;
     if (
-      properties.length === 0 && farmNet === undefined && trustRows.length === 0
+      properties.length === 0 && farmNet === undefined &&
+      trustRows.length === 0 &&
+      k1Rows.length === 0
     ) return "";
     const payments = itemList.some((item) => item.form_1099_payments_made);
     const income = properties.filter((line) => line.net > 0).reduce(
@@ -620,6 +627,15 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
       0,
     );
     const trustTotalIncome = trustOtherIncome + trustPassiveIncome;
+    const k1PassiveIncome = k1Rows.reduce(
+      (sum, row) => sum + row.passiveIncome,
+      0,
+    );
+    const k1NonpassiveIncome = k1Rows.reduce(
+      (sum, row) => sum + row.nonpassiveIncome,
+      0,
+    );
+    const k1TotalIncome = k1PassiveIncome + k1NonpassiveIncome;
     if (trustRows.length > 0) {
       const pendingSchedule1 = context?.pending?.schedule1;
       const pendingLine5 = pendingSchedule1 &&
@@ -632,7 +648,7 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
         : pendingLine5;
       if (
         itemList.length > 0 || farmNet !== undefined ||
-        line5 !== trustTotalIncome
+        line5 !== trustTotalIncome + k1TotalIncome
       ) {
         throw new Error(
           "Schedule E trust Part III income must match finalized Schedule 1 line 5",
@@ -652,10 +668,26 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
       if (
         (royaltyKeys.length > 0 && royaltyKeys.length !== 1) ||
         itemList.length !== 1 ||
-        farmNet !== undefined || line5 !== propertyNet
+        farmNet !== undefined || line5 !== propertyNet + k1TotalIncome
       ) {
         throw new Error(
           "Schedule E sourced royalty net must match finalized Schedule 1 line 5",
+        );
+      }
+    }
+    if (k1Rows.length > 0) {
+      const pendingLine5 =
+        (context?.pending?.schedule1 as Record<string, unknown> | undefined)
+          ?.line5_schedule_e;
+      const line5 = Array.isArray(pendingLine5)
+        ? pendingLine5.reduce((sum: number, amount: number) => sum + amount, 0)
+        : pendingLine5;
+      if (
+        line5 !==
+          propertyNet + trustTotalIncome + (allowedFarmNet ?? 0) + k1TotalIncome
+      ) {
+        throw new Error(
+          "Schedule E Part II K-1 rows differ from finalized Schedule 1 line 5",
         );
       }
     }
@@ -690,6 +722,31 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
       properties.length > 0 ? element("IncomeAmt", income) : "",
       losses > 0 ? element("LossesAmt", losses) : "",
       properties.length > 0 ? element("TotalIncomeOrLossAmt", propertyNet) : "",
+      ...k1Rows.map((row) =>
+        elements("PartnershipOrSCorpGroup", [
+          element("PartnershipOrSCorporationNm", row.name),
+          element("PartnershipSCorpCd", row.code),
+          element("PartnershipOrSCorpEIN", row.ein),
+          row.passiveIncome > 0
+            ? element("BusinessPassiveIncomeAmt", row.passiveIncome)
+            : "",
+          row.nonpassiveIncome > 0
+            ? element("NonpassiveIncomeAmt", row.nonpassiveIncome)
+            : "",
+        ])
+      ),
+      k1PassiveIncome > 0
+        ? element("TotalPassiveIncomeAmt", k1PassiveIncome)
+        : "",
+      k1NonpassiveIncome > 0
+        ? element("BusTotalNonpassiveIncomeAmt", k1NonpassiveIncome)
+        : "",
+      k1Rows.length > 0
+        ? element("TotalPrtshpSCorpIncomeAmt", k1TotalIncome)
+        : "",
+      k1Rows.length > 0
+        ? element("NetPrtshpSCorpIncomeOrLossAmt", k1TotalIncome)
+        : "",
       ...trustRows.map((row) =>
         elements("EstateAndTrustGroup", [
           elements("EstateOrTrustName", [
@@ -717,7 +774,7 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
         : element("NetFarmRentalIncomeOrLossAmt", allowedFarmNet),
       element(
         "TotalSuppIncomeOrLossAmt",
-        propertyNet + trustTotalIncome + (allowedFarmNet ?? 0),
+        propertyNet + k1TotalIncome + trustTotalIncome + (allowedFarmNet ?? 0),
       ),
       farmGross === undefined
         ? ""

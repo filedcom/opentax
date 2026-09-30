@@ -117,13 +117,17 @@ export const inputSchema = z.object({
   // Line 4 — Other gains or (losses) (Form 4797)
   line4_other_gains: z.number().optional(),
   // Line 5 — Rental real estate, royalties, partnerships, etc. (Schedule E)
-  line5_schedule_e: z.number().optional(),
+  line5_schedule_e: z.union([z.number(), z.array(z.number())]).optional(),
   eic_royalty_income: z.number().nonnegative().optional(),
   eic_royalty_expenses: z.number().nonnegative().optional(),
   // Pub. 596 Worksheet 1 line 11 from passive Schedule E/Form 4835 sources.
   eic_passive_schedule_e_income: z.number().nonnegative().optional(),
   // Ordinary passive Form 4797 Part II sale gain or loss after its PAL allocation.
   eic_passive_4797_ordinary: z.number().optional(),
+  eic_passive_k1_income: z.union([
+    z.number().nonnegative(),
+    z.array(z.number().nonnegative()),
+  ]).optional(),
   // Line 17 — Rental real estate passive loss allowed (Form 8582 negative output)
   // ── IRC §469 passive activity loss limit (Schedule E) ─────────────────────
   // Schedule E holds its passive loss back and sends the figures here, because only
@@ -327,7 +331,7 @@ function nonSsaIncomeBeforePal(input: AgiInput): number {
     (input.line2a_alimony_received ?? 0) +
     (input.line3_schedule_c ?? 0) +
     (input.line4_other_gains ?? 0) +
-    (input.line5_schedule_e ?? 0) +
+    sumField(input.line5_schedule_e) +
     (input.basis_disallowed_add_back ?? 0) +
     (input.line6_schedule_f ?? 0) +
     (input.line7_unemployment ?? 0) +
@@ -562,7 +566,7 @@ function scheduleOnePartI(input: AgiInput): number {
     (input.line1_state_refund ?? 0) +
     (input.line3_schedule_c ?? 0) +
     (input.line4_other_gains ?? 0) +
-    (input.line5_schedule_e ?? 0) +
+    sumField(input.line5_schedule_e) +
     (input.basis_disallowed_add_back ?? 0) +
     (input.line6_schedule_f ?? 0) +
     (input.line7_unemployment ?? 0) +
@@ -687,7 +691,8 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
         0,
         (input.eic_passive_schedule_e_income ?? 0) -
           remainingAllowedPassiveLoss(input) +
-          (input.eic_passive_4797_ordinary ?? 0),
+          (input.eic_passive_4797_ordinary ?? 0) +
+          sumField(input.eic_passive_k1_income),
       );
 
     // Compute SSA taxable amount for f1040 line 6b pass-through
@@ -766,7 +771,7 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
             (input.line24f_501c18d ?? 0) !== 0 ||
             (input.line24b_personal_property_expenses ?? 0) !== 0 ||
             (input.line24k_section67e_excess_deduction ?? 0) !== 0 ||
-            (input.line5_schedule_e ?? 0) !== 0 ||
+            sumField(input.line5_schedule_e) !== 0 ||
             (input.line6_schedule_f ?? 0) !== 0 ||
             (input.pal_current_loss ?? 0) !== 0 ||
             (input.pal_prior_unallowed ?? 0) !== 0,

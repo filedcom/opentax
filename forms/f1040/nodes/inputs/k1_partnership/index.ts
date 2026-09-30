@@ -34,6 +34,10 @@ import { scheduleE } from "../schedule_e/index.ts";
 import { tsjSchema } from "../../types.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import {
+  k1PassiveEicReviewSchema,
+  reviewedK1PassiveIncome,
+} from "../k1_passive_eic.ts";
+import {
   box11CodeJReviewSchema,
   box11CodeJSourceRows,
 } from "./box11_code_j.ts";
@@ -94,6 +98,7 @@ export const itemSchema = z.object({
 
   // Box 3 — Other net rental income/loss → Schedule E
   box3_other_rental: z.number().optional(),
+  eic_passive_activity_review: k1PassiveEicReviewSchema.optional(),
 
   // Box 4a — Guaranteed payments for services → Schedule E + Schedule SE
   box4a_guaranteed_services: z.number().optional(),
@@ -331,6 +336,47 @@ export const itemSchema = z.object({
   // Pre-2018 other losses suspended under at-risk rules
   pre2018_atrisk_other_loss: z.number().nonnegative().optional(),
 }).superRefine((item, ctx) => {
+  if (item.eic_passive_activity_review) {
+    for (
+      const key of ["partnership_ein", "source_document_reference"] as const
+    ) {
+      if (!item[key]) {
+        ctx.addIssue({
+          code: "custom",
+          path: [key],
+          message: `K-1 passive activity review needs ${key}`,
+        });
+      }
+    }
+    for (
+      const [reviewKey, amountKey] of [
+        ["box1", "box1_ordinary_business"],
+        ["box2", "box2_rental_re"],
+        ["box3", "box3_other_rental"],
+      ] as const
+    ) {
+      if (
+        (item[amountKey] ?? 0) > 0 &&
+        !item.eic_passive_activity_review[reviewKey]
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["eic_passive_activity_review", reviewKey],
+          message: `K-1 ${reviewKey} needs passive activity classification`,
+        });
+      }
+    }
+    if (
+      item.eic_passive_activity_review.box1 === "passive" &&
+      (item.box14a_se_earnings ?? 0) > 0
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["eic_passive_activity_review", "box1"],
+        message: "K-1 passive box 1 conflicts with self-employment earnings",
+      });
+    }
+  }
   if (
     (item.box7_royalties ?? 0) > 0 || item.box7_royalty_reporting ||
     item.box13_code_i_royalty_deduction
@@ -495,7 +541,10 @@ function schedule1Output(items: K1PartnershipItems): NodeOutput[] {
   if (total === 0) return [];
   return [
     output(schedule1, { line5_schedule_e: total }),
-    output(agi_aggregator, { line5_schedule_e: total }),
+    output(agi_aggregator, {
+      line5_schedule_e: total,
+      eic_passive_k1_income: reviewedK1PassiveIncome(items),
+    }),
   ];
 }
 

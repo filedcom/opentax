@@ -11,6 +11,7 @@ import {
   validatePassiveActivityLink,
 } from "../../mef/forms/schedule_e.ts";
 import { verifyMiscRoyaltySource } from "../../mef/forms/schedule_e.ts";
+import { scheduleEK1Part2Rows } from "../../schedule-e-k1-part2.ts";
 
 // 2025 Schedule E AcroForm: one Part I property or up to two Part III trust rows.
 const page = "topmostSubform[0].Page1[0]";
@@ -97,6 +98,32 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   ].map(
     (key, index) => text(key, `${page}.f1_${77 + index}[0]`),
   ),
+  ...["A", "B", "C", "D"].flatMap((row, index) => [
+    text(
+      `k1_${index}_name`,
+      `${page2}.Table_Line28a-f[0].Row${row}[0].f2_${3 + index * 3}[0]`,
+    ),
+    text(
+      `k1_${index}_code`,
+      `${page2}.Table_Line28a-f[0].Row${row}[0].f2_${4 + index * 3}[0]`,
+    ),
+    text(
+      `k1_${index}_ein`,
+      `${page2}.Table_Line28a-f[0].Row${row}[0].f2_${5 + index * 3}[0]`,
+    ),
+    text(
+      `k1_${index}_passive_income`,
+      `${page2}.Table_Line28g-k[0].Row${row}[0].f2_${16 + index * 5}[0]`,
+    ),
+    text(
+      `k1_${index}_nonpassive_income`,
+      `${page2}.Table_Line28g-k[0].Row${row}[0].f2_${19 + index * 5}[0]`,
+    ),
+  ]),
+  text("k1_total_passive_income", `${page2}.f2_36[0]`),
+  text("k1_total_nonpassive_income", `${page2}.f2_39[0]`),
+  text("k1_line30", `${page2}.f2_45[0]`),
+  text("k1_line32", `${page2}.f2_47[0]`),
   ...["A", "B"].flatMap((row, index) => [
     text(
       `trust_${index}_name`,
@@ -125,7 +152,10 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 export const scheduleEPdf: PdfFormDescriptor = {
   pendingKey: "schedule_e",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040se--2025.pdf",
-  pageIndices: (projected) => projected.trust_line37 !== undefined ? [1] : [0],
+  pageIndices: (projected) =>
+    projected.trust_line37 !== undefined || projected.k1_line32 !== undefined
+      ? [1]
+      : [0],
   fields,
   filerFields: [
     text("fullName", `${page}.f1_1[0]`),
@@ -134,9 +164,66 @@ export const scheduleEPdf: PdfFormDescriptor = {
     text("primarySSN", `${page2}.f2_2[0]`),
   ],
   projectFields(raw, allPending) {
-    if (Object.keys(raw).length === 0) return {};
+    const k1Rows = scheduleEK1Part2Rows(allPending);
+    if (Object.keys(raw).length === 0 && k1Rows.length === 0) return {};
     const input = inputSchema.parse(raw);
     const trustRows = input.estate_trust_rows ?? [];
+    if (k1Rows.length > 0) {
+      if (
+        k1Rows.length > 4 || input.schedule_es.length > 0 ||
+        input.farm_rental_net !== undefined ||
+        input.farm_rental_gross !== undefined ||
+        input.rental_income !== undefined ||
+        input.royalty_income !== undefined ||
+        trustRows.length > 2 ||
+        !scheduleE.build(input, { pending: allPending })
+      ) {
+        throw new Error(
+          "Schedule E PDF Part II needs up to four sourced K-1 rows on a supported page 2",
+        );
+      }
+      const passive = k1Rows.reduce((sum, row) => sum + row.passiveIncome, 0);
+      const nonpassive = k1Rows.reduce(
+        (sum, row) => sum + row.nonpassiveIncome,
+        0,
+      );
+      const trustPassive = trustRows.reduce(
+        (sum, row) => sum + (row.passive_income ?? 0),
+        0,
+      );
+      const trustOther = trustRows.reduce(
+        (sum, row) => sum + (row.other_income ?? 0),
+        0,
+      );
+      return {
+        ...Object.fromEntries(k1Rows.flatMap((row, index) => [
+          [`k1_${index}_name`, row.name],
+          [`k1_${index}_code`, row.code],
+          [`k1_${index}_ein`, row.ein],
+          [`k1_${index}_passive_income`, row.passiveIncome || undefined],
+          [`k1_${index}_nonpassive_income`, row.nonpassiveIncome || undefined],
+        ])),
+        ...Object.fromEntries(trustRows.flatMap((row, index) => [
+          [`trust_${index}_name`, row.estate_trust_name],
+          [`trust_${index}_ein`, row.estate_trust_ein],
+          [`trust_${index}_passive_income`, row.passive_income],
+          [`trust_${index}_other_income`, row.other_income],
+        ])),
+        k1_total_passive_income: passive || undefined,
+        k1_total_nonpassive_income: nonpassive || undefined,
+        k1_line30: passive + nonpassive,
+        k1_line32: passive + nonpassive,
+        trust_total_passive_income: trustPassive || undefined,
+        trust_total_other_income: trustOther || undefined,
+        trust_line35: trustRows.length > 0
+          ? trustPassive + trustOther
+          : undefined,
+        trust_line37: trustRows.length > 0
+          ? trustPassive + trustOther
+          : undefined,
+        trust_line41: passive + nonpassive + trustPassive + trustOther,
+      };
+    }
     if (trustRows.length > 0) {
       if (
         input.schedule_es.length > 0 || input.farm_rental_net !== undefined ||

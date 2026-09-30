@@ -3,9 +3,14 @@
  *
  * The executor promotes a pending value to an array when multiple nodes write
  * to the same key. Both MEF and PDF builders expect scalar values, so this
- * module resolves all-numeric arrays to their last element (the most recently
- * computed value).
+ * module resolves most all-numeric arrays to their last element (the most
+ * recently computed value). Independent Schedule E sources are additive.
  */
+const additiveNumericKeys = new Set([
+  "line5_schedule_e",
+  "eic_passive_k1_income",
+]);
+
 export function normalizePendingDict(
   raw: unknown,
 ): Record<string, unknown> | undefined {
@@ -19,7 +24,9 @@ export function normalizePendingDict(
       value.length > 0 &&
       value.every((v) => typeof v === "number")
     ) {
-      result[key] = value[value.length - 1];
+      result[key] = additiveNumericKeys.has(key)
+        ? value.reduce((sum, amount) => sum + amount, 0)
+        : value[value.length - 1];
     } else {
       result[key] = value;
     }

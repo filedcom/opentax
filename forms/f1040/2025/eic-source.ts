@@ -27,6 +27,12 @@ import {
   remainingAllowedPassiveLoss,
 } from "../nodes/intermediate/aggregation/agi_aggregator/index.ts";
 import { personalPropertyRentalTotals } from "../nodes/inputs/personal_property_rental/index.ts";
+import {
+  assertK1EicReview,
+  reviewedK1PassiveIncome,
+} from "../nodes/inputs/k1_passive_eic.ts";
+import { inputSchema as partnershipK1InputSchema } from "../nodes/inputs/k1_partnership/index.ts";
+import { inputSchema as sCorpK1InputSchema } from "../nodes/inputs/k1_s_corp/index.ts";
 
 /** Check a positive Form 1040 EIC against the reviewed source before export. */
 export function assertEicSource(
@@ -98,6 +104,24 @@ export function assertEicSource(
   const royalties = scheduleERoyaltyEicAmounts(pending?.schedule_e ?? {});
   const passiveIncome = scheduleEPassiveEicIncome(pending?.schedule_e ?? {});
   const agiInput = agiInputSchema.parse(pending?.agi_aggregator ?? {});
+  const partnershipItems = pending?.k1_partnership === undefined
+    ? []
+    : partnershipK1InputSchema.parse(pending.k1_partnership).k1_partnerships;
+  const sCorpItems = pending?.k1_s_corp === undefined
+    ? []
+    : sCorpK1InputSchema.parse(pending.k1_s_corp).k1_s_corps;
+  assertK1EicReview(partnershipItems);
+  assertK1EicReview(sCorpItems);
+  const k1PassiveIncome = reviewedK1PassiveIncome(partnershipItems) +
+    reviewedK1PassiveIncome(sCorpItems);
+  const reportedK1PassiveIncome = Array.isArray(agiInput.eic_passive_k1_income)
+    ? agiInput.eic_passive_k1_income.reduce((sum, amount) => sum + amount, 0)
+    : (agiInput.eic_passive_k1_income ?? 0);
+  if (reportedK1PassiveIncome !== k1PassiveIncome) {
+    throw new Error(
+      "Form 1040 EIC passive K-1 income differs from K-1 sources",
+    );
+  }
   if ((agiInput.eic_passive_schedule_e_income ?? 0) !== passiveIncome) {
     throw new Error(
       "Form 1040 EIC passive income differs from Schedule E sources",
@@ -129,7 +153,7 @@ export function assertEicSource(
     });
   const passiveNet = Math.max(
     0,
-    passiveIncome + passiveOrdinary -
+    passiveIncome + passiveOrdinary + k1PassiveIncome -
       remainingAllowedPassiveLoss(finalizedPalInput),
   );
   const personalRental = pending?.personal_property_rental === undefined
