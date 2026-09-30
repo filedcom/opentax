@@ -786,3 +786,14 @@ source/pending JSON, XML, PDF, and the rendered Schedule C page are retained
 at `.state/research/ty2025-filled-pdf-review/2026-09-30-v96/`.
 Payer-issued settlement bytes, other refunds, IRS business rules, and ATS
 remain open.
+
+The `single-k-business-refund-and-fee` source return has a ten-page `v97`
+PDF. Schedule C page 1 was inspected at full size; lines 1/2/3/10/28/31
+print $3,000/$400/$2,600/$90/$90/$2,510. Form 1040 line 8 carries
+$2,510, while the source Form 1099-K box 1a remains $3,000. Native TY2025
+v5.4 XSD passes, and changing filed Schedule C line 10 to $80 rejects
+against the reviewed processor-fee record. The PDF SHA-256 is
+`b98bae7e40da9e1850956a4232ba41a8110c3709124d772d68ac82d8ac6b9e03`;
+source/pending JSON, XML, PDF, and the rendered Schedule C page are retained
+at `.state/research/ty2025-filled-pdf-review/2026-09-30-v97/`. Property-sale
+fees, actual settlement bytes, IRS business rules, and ATS remain open.

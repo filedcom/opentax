@@ -413,6 +413,9 @@ export function assertScheduleCReceiptSourceIdentity(
       ...(review?.customer_refunds_review
         ? { customer_refunds_review: review.customer_refunds_review }
         : {}),
+      ...(review?.processor_fees_review
+        ? { processor_fees_review: review.processor_fees_review }
+        : {}),
       not_included_in_schedule_c_receipts: review
         ?.not_included_in_schedule_c_receipts,
       allocation_reference: review?.allocation_reference,
@@ -441,8 +444,29 @@ export function assertScheduleCReceiptSourceIdentity(
   });
   const duplicateTotals = new Map<string, number>();
   const refundTotals = new Map<string, number>();
+  const processorFeeTotals = new Map<string, number>();
   const refundIds = new Set<string>();
   for (const row of expectedK) {
+    if (row.processor_fees_review !== undefined) {
+      const fees = row.processor_fees_review as Record<string, unknown>;
+      if (
+        !fees || typeof fees !== "object" ||
+        typeof fees.amount !== "number" ||
+        !Number.isSafeInteger(fees.amount) || fees.amount <= 0 ||
+        fees.amount > (row.amount as number) ||
+        typeof fees.fee_record_reference !== "string" ||
+        !fees.fee_record_reference.trim() ||
+        fees.for_service_payments_only !== true ||
+        fees.not_capitalized_or_deducted_elsewhere !== true
+      ) {
+        throw new Error("1099-K processor fee review is invalid");
+      }
+      const key = row.business_reference as string;
+      processorFeeTotals.set(
+        key,
+        (processorFeeTotals.get(key) ?? 0) + fees.amount,
+      );
+    }
     const refunds = row.customer_refunds_review;
     if (refunds !== undefined) {
       if (!Array.isArray(refunds) || refunds.length === 0) {
@@ -610,6 +634,19 @@ export function assertScheduleCReceiptSourceIdentity(
     ) {
       throw new Error(
         "1099-K customer refunds differ from Schedule C line 2",
+      );
+    }
+  }
+  for (const [businessReference, fees] of processorFeeTotals) {
+    const matches = businesses.filter((business) =>
+      business && typeof business === "object" &&
+      business.business_reference === businessReference
+    );
+    if (
+      matches.length !== 1 || matches[0].line_10_commissions_fees !== fees
+    ) {
+      throw new Error(
+        "1099-K processor fees differ from Schedule C line 10",
       );
     }
   }

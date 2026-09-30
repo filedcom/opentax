@@ -866,8 +866,8 @@ Deno.test("1099-K reviewed business refunds retain gross receipts for Schedule C
   assertThrows(
     () =>
       compute([businessItem(3_000, {
-      schedule_c_receipts_review: {
-        ...review,
+        schedule_c_receipts_review: {
+          ...review,
           customer_refunds_review: [
             { ...refunds[0], amount: 3_001 },
           ],
@@ -876,6 +876,29 @@ Deno.test("1099-K reviewed business refunds retain gross receipts for Schedule C
     Error,
     "complete box 1a allocation",
   );
+});
+
+Deno.test("1099-K reviewed service processor fees retain gross receipts for Schedule C", () => {
+  const feeReview = {
+    amount: 90,
+    fee_record_reference: "processor fee statement",
+    for_service_payments_only: true,
+    not_capitalized_or_deducted_elsewhere: true,
+  };
+  const item = businessItem(3_000, {
+    schedule_c_receipts_review: {
+      included_in_schedule_c_gross_receipts: 3_000,
+      not_included_in_schedule_c_receipts: 0,
+      processor_fees_review: feeReview,
+      allocation_reference: "settlement ledger",
+      no_overlap_with_other_1099s: true,
+      overlap_review_reference: "overlap review",
+    },
+  });
+  const rows = findOutput(compute([item]), "schedule_c")!.fields
+    .f1099k_receipt_sources as Array<Record<string, unknown>>;
+  assertEquals(rows[0].amount, 3_000);
+  assertEquals(rows[0].processor_fees_review, feeReview);
 });
 
 Deno.test("1099-K mixed business and personal payments allocate box 1a exactly", () => {

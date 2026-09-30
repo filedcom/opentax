@@ -227,6 +227,12 @@ export const inputSchema = z.object({
           not_claimed_elsewhere: z.literal(true),
         }).strict(),
       ).min(1).optional(),
+      processor_fees_review: z.object({
+        amount: z.number().int().positive(),
+        fee_record_reference: z.string().trim().min(1),
+        for_service_payments_only: z.literal(true),
+        not_capitalized_or_deducted_elsewhere: z.literal(true),
+      }).strict().optional(),
       not_included_in_schedule_c_receipts: z.number().nonnegative(),
       allocation_reference: z.string().trim().min(1),
       no_overlap_with_other_1099s: z.literal(true),

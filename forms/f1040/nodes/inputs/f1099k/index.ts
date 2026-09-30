@@ -134,6 +134,12 @@ export const itemSchema = z.object({
         not_claimed_elsewhere: z.literal(true),
       }).strict(),
     ).min(1).optional(),
+    processor_fees_review: z.object({
+      amount: z.number().int().positive(),
+      fee_record_reference: z.string().trim().min(1),
+      for_service_payments_only: z.literal(true),
+      not_capitalized_or_deducted_elsewhere: z.literal(true),
+    }).strict().optional(),
     allocation_reference: z.string().trim().min(1),
     no_overlap_with_other_1099s: z.literal(true),
     overlap_review_reference: z.string().trim().min(1),
@@ -267,6 +273,8 @@ export const itemSchema = z.object({
       !item.recipient_tin || !item.schedule_c_business_reference ||
       !review ||
       refunds.reduce((sum, refund) => sum + refund.amount, 0) >
+        review.included_in_schedule_c_gross_receipts ||
+      (review.processor_fees_review?.amount ?? 0) >
         review.included_in_schedule_c_gross_receipts ||
       new Set(refunds.map((refund) => refund.refund_transaction_id)).size !==
         refunds.length ||
@@ -454,6 +462,12 @@ function incomeOutputs(k99s: K99Items): NodeOutput[] {
               ? {
                 customer_refunds_review:
                   item.schedule_c_receipts_review!.customer_refunds_review,
+              }
+              : {}),
+            ...(item.schedule_c_receipts_review!.processor_fees_review
+              ? {
+                processor_fees_review:
+                  item.schedule_c_receipts_review!.processor_fees_review,
               }
               : {}),
             not_included_in_schedule_c_receipts:

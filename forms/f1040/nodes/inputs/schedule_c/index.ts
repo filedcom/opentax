@@ -184,6 +184,7 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
       }
     }
     const refundsByBusiness = new Map<string, number>();
+    const processorFeesByBusiness = new Map<string, number>();
     for (const source of input.f1099k_receipt_sources ?? []) {
       const refunds = source.customer_refunds_review ?? [];
       if (
@@ -204,6 +205,17 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
           (refundsByBusiness.get(source.business_reference) ?? 0) + total,
         );
       }
+      const processorFees = source.processor_fees_review?.amount ?? 0;
+      if (processorFees > source.amount) {
+        throw new Error("1099-K processor fees exceed business receipts");
+      }
+      if (processorFees > 0) {
+        processorFeesByBusiness.set(
+          source.business_reference,
+          (processorFeesByBusiness.get(source.business_reference) ?? 0) +
+            processorFees,
+        );
+      }
     }
     for (const [reference, refunds] of refundsByBusiness) {
       const business = input.schedule_cs.find((item) =>
@@ -211,6 +223,14 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
       );
       if (business?.line_2_returns_allowances !== refunds) {
         throw new Error("1099-K customer refunds must equal Schedule C line 2");
+      }
+    }
+    for (const [reference, fees] of processorFeesByBusiness) {
+      const business = input.schedule_cs.find((item) =>
+        item.business_reference === reference
+      );
+      if (business?.line_10_commissions_fees !== fees) {
+        throw new Error("1099-K processor fees must equal Schedule C line 10");
       }
     }
     if ((input.line_12_depletion ?? 0) > 0) {

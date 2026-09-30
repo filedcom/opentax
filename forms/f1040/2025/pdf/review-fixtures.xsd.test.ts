@@ -379,6 +379,37 @@ for (const fixture of pdfReviewFixtures) {
           "1099-K customer refunds differ from Schedule C line 2",
         );
       }
+      if (fixture.id === "single-k-business-refund-and-fee") {
+        const businesses = result.pending.schedule_c.schedule_cs as Array<
+          Record<string, unknown>
+        >;
+        assertEquals(businesses[0].line_1_gross_receipts, 3_000);
+        assertEquals(businesses[0].line_2_returns_allowances, 400);
+        assertEquals(businesses[0].line_10_commissions_fees, 90);
+        assertEquals(result.pending.f1040.line8_additional_income, 2_510);
+        assertStringIncludes(
+          xml,
+          "<CommissionsAndFeesAmt>90</CommissionsAndFeesAmt>",
+        );
+        assertThrows(
+          () =>
+            buildMefXml(
+              buildPending({
+                ...result.pending,
+                schedule_c: {
+                  ...result.pending.schedule_c,
+                  schedule_cs: [{
+                    ...businesses[0],
+                    line_10_commissions_fees: 80,
+                  }],
+                },
+              }),
+              fixture.filer,
+            ),
+          Error,
+          "1099-K processor fees differ from Schedule C line 10",
+        );
+      }
       if (fixture.id === "single-k-reported-error") {
         assertEquals(
           result.pending.schedule1.form1099k_reported_error_or_loss,
