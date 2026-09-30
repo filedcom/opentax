@@ -73,6 +73,17 @@ boundary while retaining fail-closed behavior for entered unsupported claims.
 
 ## Exact proposed decisions for user review, not applied
 
+For TY2025 current-return inputs, two additional named exclusions are under
+review. The [Form 8873 instructions](https://www.irs.gov/instructions/i8873)
+say its binding-contract exception was repealed for tax years beginning after
+May 17, 2006. The [latest Form 8915-D instructions](https://www.irs.gov/instructions/i8915d)
+cover 2024 repayments and amendments of affected 2021–2023 returns. The
+present `f8873` and `f8915d` nodes incorrectly deposit these asserted amounts
+into Schedule 1 line 8z for a TY2025 return. If the user approves these two
+specific exclusions, make populated TY2025 inputs reject at calculation and
+both exports, and remove their line 8z deposits. An affected-year amendment
+remains a separate workflow decision. No exclusion is applied by this note.
+
 The following are candidates to separate from the initial **current-year Form
 1040 return preparation** workflow. They are **not excluded now**. A decision to
 omit them must name the filing path, not merely the schema root, and must

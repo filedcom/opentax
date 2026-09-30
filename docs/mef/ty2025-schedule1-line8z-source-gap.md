@@ -26,14 +26,32 @@ not an approved exclusion or completion of these filing paths.
 
 | Generic deposit       | Current producer files                                                               | Missing source-to-statement decision                                                                                                                     |
 | --------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `line8z_other`        | `f8873`, `f5471` | Confirm the 2025 income line and character for each fact pattern; retain a typed source type, amount and source identity through Schedule 1 and AGI. |
-| `line8z_other_income` | `f8915d` | Resolve the 2019 disaster-distribution and repayment destination; preserve each signed source row and its filed destination. |
+| `line8z_other`        | `f8873`, `f5471` | Remove the wrong TY2025 line 8z deposits. The Form 8873 current-year exclusion appears unavailable after the 2006 repeal; its named exclusion awaits the user's decision. Form 5471 section 951(a) income belongs on line 8n, while the shareholder-level Form 8992 result belongs on line 8o. Capture their source and required information-return documents before enabling either positive route. |
+| `line8z_other_income` | `f8915d` | The latest Form 8915-D instructions cover 2024 repayments and affected prior-year amendments, not a 2025 Schedule 1 credit. Its named current-year exclusion awaits the user's decision; keep any prior-year amendment workflow separate. |
 
 This producer list was rechecked against the current node source on
 2026-09-30. Form 3115 now applies its section 481(a) adjustment through a
 named Schedule C business. The cited S-corporation K-1, trust K-1, and Form
 1099-PATR nodes no longer deposit into either generic line 8z scalar. Their
 remaining source and filing gaps still require separate audit.
+
+The [2025 Form 5471 instructions](https://www.irs.gov/instructions/i5471)
+direct a noncorporate shareholder's Schedule I section 951(a) inclusions to
+Schedule 1 line 8n. Schedule I-1 is CFC-level input for Form 8992, not an
+asserted shareholder GILTI inclusion. The [Form 8992 instructions](https://www.irs.gov/instructions/i8992)
+direct an individual shareholder's Part II line 5 result to Schedule 1 line
+8o. The checked-in TY2025 v5.4 Schedule 1 XSD has distinct
+`Section951aInclusionAmt` and `Section951AaInclusionAmt` elements. The current
+`f5471` public schema lacks the ownership, Schedule I/I-1 detail, Form 8992
+calculation, and native Form 5471/8992 documents needed to lift its existing
+export guard. A generic line 8z type statement would be the wrong fix.
+
+The [Form 8873 instructions](https://www.irs.gov/instructions/i8873) say the
+binding-contract exception was repealed for tax years beginning after May 17,
+2006. The [latest Form 8915-D instructions](https://www.irs.gov/instructions/i8915d)
+are for 2024 repayments that can require amendment of 2021–2023 returns.
+Neither source establishes a positive TY2025 Schedule 1 line 8z claim. Do not
+mark either path excluded before the named scope decision is approved.
 
 The clergy producer no longer emits a negative line 8z amount. The [2025 IRS
 Publication 517](https://www.irs.gov/publications/p517) treats qualifying
