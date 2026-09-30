@@ -689,6 +689,44 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "joint-senior-schedule1a",
+    inputs: {
+      general: {
+        ...jointGeneral,
+        taxpayer_dob: "1955-06-15",
+        spouse_dob: "1958-03-10",
+        taxpayer_ssn_valid_for_employment: true,
+        taxpayer_ssn_issued_before_due_date: true,
+        taxpayer_tin_issued_by_due_date: true,
+        spouse_ssn_valid_for_employment: true,
+        spouse_ssn_issued_before_due_date: true,
+        spouse_tin_issued_by_due_date: true,
+      },
+      w2: [wage(160_000, 20_000, "Example Employer", "12-3456789")],
+      schedule1a: {
+        senior_zero_exclusions_review: {
+          no_section933_puerto_rico_excluded_income: true,
+          section933_review_source_reference:
+            "Synthetic 2025 residency and income review",
+          no_form2555_filed: true,
+          form2555_review_source_reference:
+            "Synthetic 2025 foreign-income review",
+          no_form4563_filed: true,
+          form4563_review_source_reference:
+            "Synthetic 2025 Samoa-source income review",
+        },
+      },
+    },
+    filer: jointFiler,
+    expectedPdfForms: ["f1040", "schedule1a"],
+    reviewFocus: [
+      "Both senior ages and timely employment-valid SSNs support the joint Part V deduction",
+      "Schedule 1-A page 1 prints 160,000 on lines 1 and 3 and zero on line 2e",
+      "Schedule 1-A page 2 prints 5,400 for each spouse and 10,800 on lines 37 and 38",
+      "Form 1040 line 13b equals Schedule 1-A line 38, with the same native XML amounts",
+    ],
+  },
+  {
     id: "single-schedule-c",
     inputs: {
       general: {

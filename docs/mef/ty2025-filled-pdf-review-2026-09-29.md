@@ -119,3 +119,31 @@ and `0a6211af6ba0449deaae984b3c671591e05e4b1d89ab314d056fa710725fd20d`,
 respectively. These synthetic packets do not establish source IRA type,
 destination eligibility, prior IRA-to-IRA rollovers, late-rollover waivers,
 or IRS business-rule acceptance.
+
+The `joint-senior-schedule1a` packet was generated with the other thirty
+synthetic cases in `.state/research/ty2025-filled-pdf-review/2026-09-30-v39/`.
+Its source has an MFJ filer born in 1955, a spouse born in 1958, timely
+employment-valid SSN assertions for both, a $160,000 W-2, $20,000 withholding,
+and explicit reviewed zero exclusions for Schedule 1-A Part I. The pending
+graph reports $160,000 AGI, $10,800 senior deduction, $45,500 total
+deductions, $114,500 taxable income, $15,018 tax, and $4,982 refund. The
+Form 6251 pending line 1b is $125,300: AGI less the $34,700 standard deduction
+after adding back the $10,800 senior deduction. Native XML carries one
+`IRS1040Schedule1A` with $5,400 per spouse and $10,800 total; the full return
+passed the local TY2025 v5.4 XSD.
+
+All four PDF pages were rendered at 130 dpi and inspected. Form 1040 page 1
+has both names and SSNs, MFJ and digital-assets No checks, and $160,000 wages;
+page 2 checks both age boxes and prints $34,700 line 12e, $10,800 line 13b,
+$45,500 line 14, $114,500 line 15, $20,000 withholding, and $4,982 refund.
+Schedule 1-A page 1 now prints `ALEX AND SAM EXAMPLE`, the primary SSN,
+$160,000 on lines 1/3, and zero on line 2e; page 2 prints $150,000 threshold,
+$10,000 excess MAGI, $600 reduction, $5,400 on each of lines 36a/36b, and
+$10,800 on lines 37/38. The PDF SHA-256 is
+`f52c2fc509fbe859a26e94bfc9c020b28ff4635016e2c18a84c454ec430fb9bb`.
+The first generated batch (`v37`) stopped when Form 6251's PDF projector read
+a nonexistent calculated field from pending Schedule 1-A source facts; `v38`
+ran after the projector fix and exposed the single-name Schedule 1-A header.
+The final `v39` batch includes both fixes. This synthetic review does not
+authenticate W-2 or age/SSN evidence, cover other Schedule 1-A parts, or prove
+IRS business-rule/ATS acceptance.

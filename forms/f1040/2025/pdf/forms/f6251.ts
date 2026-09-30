@@ -1,5 +1,7 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { assertForm6251Line8 } from "../../form6251_line8.ts";
+import { inputSchema as schedule1aInputSchema } from "../../../nodes/intermediate/forms/schedule1a/index.ts";
+import { schedule1a } from "../../mef/forms/schedule1a.ts";
 
 // Verified against the cached TY2025 IRS AcroForm field tree and widget
 // positions: f1_1/f1_2 are name/SSN, f1_3..f1_33 are lines 1a..11,
@@ -78,7 +80,7 @@ export const form6251Pdf: PdfFormDescriptor = {
     const form1040 = allPending.f1040;
     const line14 = form1040?.line14_deductions_qbi_total;
     const agi = form1040?.line11_agi;
-    const senior = allPending.schedule1a?.line37_senior ?? 0;
+    const senior = form1040?.schedule1a_line37_senior_deduction ?? 0;
     if (
       typeof line14 !== "number" || typeof agi !== "number" ||
       typeof senior !== "number" ||
@@ -87,6 +89,14 @@ export const form6251Pdf: PdfFormDescriptor = {
       throw new Error(
         "Form 6251 PDF line 1a needs finalized Form 1040 lines 11b/14 and Schedule 1-A line 37",
       );
+    }
+    if (senior > 0) {
+      const source = schedule1aInputSchema.parse(allPending.schedule1a);
+      if (!schedule1a.build(source, { pending: allPending })) {
+        throw new Error(
+          "Form 6251 PDF senior deduction needs a reconciled Schedule 1-A source",
+        );
+      }
     }
     const line1a = line14 - senior;
     if (Math.round(agi - line1a) !== Math.round(fields.regular_tax_income)) {

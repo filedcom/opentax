@@ -53,14 +53,21 @@ facts, AGI, and the senior/total deduction against the pending Form 1040 lines
 exclusions remain unsupported. These references are review evidence, not
 independent authentication of the underlying taxpayer documents.
 
-The source, document, return integration, and PDF field-map cases are written
-but unrun. The official 2025 two-page AcroForm was inspected: page 1 fields
+The source, document, return integration, and PDF field-map cases are written.
+The official 2025 two-page AcroForm was inspected: page 1 fields
 `f1_03`, `f1_08`, and `f1_09` correspond to lines 1, 2e, and 3; page 2
 fields `f2_15` through `f2_23` correspond to lines 31 through 38. The
 registered PDF descriptor projects only the senior-only worksheet after the
 same MeF source/return reconciliation, and Form 1040's PDF line 13b opens only
 when that page's line 38 matches. Other Parts II-IV still cannot render.
-The route remains unverified until the full batch, local XSD, IRS business
-rules, and a filled-PDF visual/data check pass. No tests, typecheck, XSD,
-filled-PDF rendering, or ATS acceptance ran in this build-first slice. No
-compatibility layer or dual API shape was added.
+The `joint-senior-schedule1a` fixture now exercises the real source graph,
+Form 1040 join, native TY2025 v5.4 XML, and four-page filled PDF. A PDF build
+initially found that Form 6251 read a nonexistent calculated `line37_senior`
+from the Schedule 1-A source slot. Its PDF projector now reads the finalized
+Form 1040 senior amount and requires the Schedule 1-A source to reconcile
+before subtracting it from Form 6251 line 1a. The regenerated `v39` packet
+prints both spouses on Schedule 1-A page 1, $160,000 on Part I lines 1/3,
+$5,400 for each spouse in Part V, and $10,800 on line 38 and Form 1040 line
+13b. All four pages were visually inspected and the full-return XML passed the
+local XSD. The remaining positive Part I exclusions and Parts II-IV, source
+authentication, IRS business rules, and ATS acceptance remain open.

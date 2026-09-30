@@ -59,6 +59,28 @@ for (const fixture of pdfReviewFixtures) {
           "<PensionsAnnuitiesRolloverInd>X</PensionsAnnuitiesRolloverInd>",
         );
       }
+      if (fixture.id === "joint-senior-schedule1a") {
+        assertEquals(result.pending.f1040.line11_agi, 160_000);
+        assertEquals(
+          result.pending.f1040.line13b_additional_deductions,
+          10_800,
+        );
+        assertEquals(result.pending.form6251.regular_tax_income, 125_300);
+        assertStringIncludes(xml, "<IRS1040Schedule1A ");
+        assertStringIncludes(xml, "<ModifiedAGIAmt>160000</ModifiedAGIAmt>");
+        assertStringIncludes(
+          xml,
+          "<PrimaryEnhancedSeniorDedAmt>5400</PrimaryEnhancedSeniorDedAmt>",
+        );
+        assertStringIncludes(
+          xml,
+          "<SpouseEnhancedSeniorDedAmt>5400</SpouseEnhancedSeniorDedAmt>",
+        );
+        assertStringIncludes(
+          xml,
+          "<EnhancedSeniorDeductionAmt>10800</EnhancedSeniorDeductionAmt><TotalAdditionalDeductionsAmt>10800</TotalAdditionalDeductionsAmt>",
+        );
+      }
       if (fixture.id === "single-ira-rollover") {
         assertEquals(result.pending.f1040.line4a_ira_gross, 5_000);
         assertEquals(result.pending.f1040.line4b_ira_taxable, 0);
