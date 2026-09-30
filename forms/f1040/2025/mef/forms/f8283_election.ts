@@ -353,28 +353,25 @@ export function assertElectedSectionBReconciled(
   assertSectionBReconciled(context, filedScheduleA);
 }
 
-/** Reconcile one current-year Section B vehicle exception against the return. */
-export function assertSectionBVehicleReconciled(
+/** Reconcile one current-year ordinary Section B gift against the return. */
+export function assertOrdinarySectionBReconciled(
   context: MefBuildContext | undefined,
+  propertyType: SectionBPropertyType,
   filedScheduleA?: Readonly<Record<string, unknown>>,
 ): void {
-  assertSectionBReconciled(
-    context,
-    filedScheduleA,
-    SectionBPropertyType.Vehicle,
-  );
-}
-
-/** Reconcile one current-year Section B equipment gift against the return. */
-export function assertSectionBEquipmentReconciled(
-  context: MefBuildContext | undefined,
-  filedScheduleA?: Readonly<Record<string, unknown>>,
-): void {
-  assertSectionBReconciled(
-    context,
-    filedScheduleA,
-    SectionBPropertyType.Equipment,
-  );
+  if (
+    !new Set<SectionBPropertyType>([
+      SectionBPropertyType.Vehicle,
+      SectionBPropertyType.Equipment,
+      SectionBPropertyType.Collectibles,
+      SectionBPropertyType.ClothingHousehold,
+    ]).has(propertyType)
+  ) {
+    throw new Error(
+      "Form 8283 ordinary Section B property type is unsupported",
+    );
+  }
+  assertSectionBReconciled(context, filedScheduleA, propertyType);
 }
 
 function assertSectionBReconciled(
@@ -383,11 +380,7 @@ function assertSectionBReconciled(
   ordinaryPropertyType?: SectionBPropertyType,
 ): void {
   const ordinary = ordinaryPropertyType !== undefined;
-  const route = ordinaryPropertyType === SectionBPropertyType.Vehicle
-    ? "vehicle"
-    : ordinaryPropertyType === SectionBPropertyType.Equipment
-    ? "equipment"
-    : "election";
+  const route = ordinaryPropertyType?.replaceAll("_", " ") ?? "election";
   const pending = context?.pending;
   const source8283 = pending?.f8283;
   const sourceScheduleA = pending?.schedule_a;

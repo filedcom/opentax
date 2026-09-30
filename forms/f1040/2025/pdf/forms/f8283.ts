@@ -18,8 +18,7 @@ import {
   assertElectedSectionBReconciled,
   assertNeedyVehicleUnreducedSource,
   assertOrdinarySectionAReconciled,
-  assertSectionBEquipmentReconciled,
-  assertSectionBVehicleReconciled,
+  assertOrdinarySectionBReconciled,
   isSingleSectionANeedyVehicleUnreduced,
   isSingleSectionAVehicleSale,
 } from "../../mef/forms/f8283_election.ts";
@@ -50,6 +49,16 @@ const fields: PdfFieldEntry[] = [
     kind: "checkbox",
     domainKey: "section_b_equipment",
     pdfField: `${page}.Lines2d-h[0].c1_6[1]`,
+  },
+  {
+    kind: "checkbox",
+    domainKey: "section_b_collectibles",
+    pdfField: `${page}.Lines2d-h[0].c1_6[3]`,
+  },
+  {
+    kind: "checkbox",
+    domainKey: "section_b_clothing_household",
+    pdfField: `${page}.Lines2i-l[0].c1_6[1]`,
   },
   {
     kind: "checkbox",
@@ -319,14 +328,25 @@ function sectionBInstance(
   };
 }
 
-function sectionBEquipmentInstance(
+function sectionBOrdinaryTangibleInstance(
   item: SectionBItem,
   filer: FilerIdentity | undefined,
 ): Record<string, unknown> {
   const appraisal = item.qualified_appraisal;
   const donee = item.donee_acknowledgment;
+  const propertyType = item.property_type;
+  const supportedType = propertyType === SectionBPropertyType.Equipment ||
+    propertyType === SectionBPropertyType.Collectibles ||
+    propertyType === SectionBPropertyType.ClothingHousehold;
+  const label = propertyType === SectionBPropertyType.Equipment
+    ? "equipment"
+    : propertyType === SectionBPropertyType.Collectibles
+    ? "collectible"
+    : "clothing or household property";
   if (
-    item.property_type !== SectionBPropertyType.Equipment ||
+    !supportedType ||
+    (propertyType === SectionBPropertyType.ClothingHousehold &&
+      item.good_used_condition_confirmed !== true) ||
     item.capital_gain_reduction_election_confirmed === true ||
     item.is_capital_gain_property !== false ||
     item.charitable_limit_category !== "noncash_50" ||
@@ -344,14 +364,17 @@ function sectionBEquipmentInstance(
     donee.received_date !== item.date_contributed
   ) {
     throw new Error(
-      "Form 8283 Section B PDF needs one complete purchased equipment gift claimed at appraised FMV",
+      "Form 8283 Section B PDF needs one complete purchased tangible gift claimed at appraised FMV",
     );
   }
   return {
     ...sectionBPrintedFields(item, filer),
-    section_b_equipment: true,
+    section_b_equipment: propertyType === SectionBPropertyType.Equipment,
+    section_b_collectibles: propertyType === SectionBPropertyType.Collectibles,
+    section_b_clothing_household:
+      propertyType === SectionBPropertyType.ClothingHousehold,
     reduction_statements: [
-      `Section B item A: purchased equipment ${item.property_description} ` +
+      `Section B item A: purchased ${label} ${item.property_description} ` +
       `appraised and claimed at $${item.fmv.toFixed(2)}, with adjusted basis $${
         item.cost_or_adjusted_basis.toFixed(2)
       }. ` +
@@ -479,6 +502,8 @@ export const form8283Pdf: PdfFormDescriptor = {
   pageIndices: (instance) =>
     instance.section_b_other_real_estate === true ||
       instance.section_b_equipment === true ||
+      instance.section_b_collectibles === true ||
+      instance.section_b_clothing_household === true ||
       instance.section_b_vehicle === true
       ? [0, 1]
       : [0],
@@ -522,12 +547,19 @@ export const form8283Pdf: PdfFormDescriptor = {
           "Form 8283 PDF Section B supports one standalone item without Section A",
         );
       }
-      if (sectionB[0].property_type === SectionBPropertyType.Vehicle) {
-        assertSectionBVehicleReconciled({ pending: allPending });
-      } else if (
-        sectionB[0].property_type === SectionBPropertyType.Equipment
+      const ordinaryType = sectionB[0].property_type;
+      if (
+        ordinaryType && new Set<SectionBPropertyType>([
+          SectionBPropertyType.Vehicle,
+          SectionBPropertyType.Equipment,
+          SectionBPropertyType.Collectibles,
+          SectionBPropertyType.ClothingHousehold,
+        ]).has(ordinaryType)
       ) {
-        assertSectionBEquipmentReconciled({ pending: allPending });
+        assertOrdinarySectionBReconciled(
+          { pending: allPending },
+          ordinaryType,
+        );
       } else {
         assertElectedSectionBReconciled({ pending: allPending });
       }
@@ -541,8 +573,10 @@ export const form8283Pdf: PdfFormDescriptor = {
       return [
         item.property_type === SectionBPropertyType.Vehicle
           ? sectionBVehicleInstance(item, filer)
-          : item.property_type === SectionBPropertyType.Equipment
-          ? sectionBEquipmentInstance(item, filer)
+          : item.property_type === SectionBPropertyType.Equipment ||
+              item.property_type === SectionBPropertyType.Collectibles ||
+              item.property_type === SectionBPropertyType.ClothingHousehold
+          ? sectionBOrdinaryTangibleInstance(item, filer)
           : sectionBInstance(item, filer),
       ];
     }
@@ -633,6 +667,8 @@ export const form8283Pdf: PdfFormDescriptor = {
     page.drawText(
       instance.section_b_other_real_estate === true ||
         instance.section_b_equipment === true ||
+        instance.section_b_collectibles === true ||
+        instance.section_b_clothing_household === true ||
         instance.section_b_vehicle === true
         ? "Form 8283 Section B - Source and attachment record"
         : "Form 8283 Section A - Fair market value reductions",

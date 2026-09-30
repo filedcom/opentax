@@ -160,8 +160,24 @@ and inspected: Schedule A line 12 is $12,000 and Form 1040 line 12e is
 $48,000. The snapshot is retained at
 `.state/research/ty2025-filled-pdf-review/2026-09-30-section-b-equipment/filled-return.pdf`
 with SHA-256
-`b788a80bf4d6429b6c49867ce47e4bc058b4ffd07b5d6f526b7e0637cffc76dd`.
+`1469249ceb733624a737dd5e31f08c73f1de4536f130a5bf69cd2fa57222b07d`.
 The fixture does not authenticate the appraisal or signatures.
+
+The same bounded ordinary Section B route now covers a purchased collectible
+and a purchased household item in good used condition, each claimed at its
+$12,000 appraised FMV with $18,000 basis. The official property-type boxes,
+condition, appraiser/donee fields, and review supplement were checked in both
+filled packets. Their first three rendered pages are pixel-identical to the
+inspected equipment return; local TY2025 v5.4 XSD passes for each full return.
+The [2025 instructions](https://www.irs.gov/pub/irs-prior/i8283--2025.pdf)
+distinguish collectibles from art and require good used condition for the
+ordinary clothing/household deduction route. The reviewed snapshots under
+`.state/research/ty2025-filled-pdf-review/` have SHA-256
+`016e2be4ccba58097c2c1e1a6e0d5f641d8dd06f172b86c57cda0476bbf9a526`
+for `2026-09-30-section-b-collectibles/filled-return.pdf` and
+`b0897b98d23c885a255c1a8f3ccaa5f94bd8558c7f9d31f8434376e8a4cd4c38`
+for `2026-09-30-section-b-clothing_household/filled-return.pdf`. These remain
+synthetic evidence cases, not authenticated appraisal or signature reviews.
 
 This is not whole-form support. Other Section B property and multi-item routes,
 actual appraiser/donee signatures in the PDF, mixed Section A/B forms, more than

@@ -6,8 +6,7 @@ import {
   assertElectedSectionAReconciled,
   assertElectedSectionBReconciled,
   assertOrdinarySectionAReconciled,
-  assertSectionBEquipmentReconciled,
-  assertSectionBVehicleReconciled,
+  assertOrdinarySectionBReconciled,
   hasSectionAShortTermReduction,
   isSingleSectionANeedyVehicleUnreduced,
   isSingleSectionAVehicleSale,
@@ -143,14 +142,15 @@ function buildIRS1040ScheduleA(
       form.section_b_items?.[0]?.capital_gain_reduction_election_confirmed !==
         true
     ) {
+      const propertyType = form.section_b_items?.[0]?.property_type;
       if (
-        form.section_b_items?.[0]?.property_type ===
-          SectionBPropertyType.Vehicle
-      ) assertSectionBVehicleReconciled(context, fields);
-      if (
-        form.section_b_items?.[0]?.property_type ===
-          SectionBPropertyType.Equipment
-      ) assertSectionBEquipmentReconciled(context, fields);
+        propertyType && new Set<SectionBPropertyType>([
+          SectionBPropertyType.Vehicle,
+          SectionBPropertyType.Equipment,
+          SectionBPropertyType.Collectibles,
+          SectionBPropertyType.ClothingHousehold,
+        ]).has(propertyType)
+      ) assertOrdinarySectionBReconciled(context, propertyType, fields);
     }
   }
   if (
