@@ -313,3 +313,22 @@ identity, signs, amounts, and checkboxes. The PDF SHA-256 is
 Positive net-gain combinations remain blocked until code D enters the 28%
 rate and unrecaptured section 1250 worksheets. Issuer bytes, IRS business
 rules, and ATS acceptance remain open.
+
+The `single-sourced-collectibles-gain` packet was regenerated with the other
+forty-one prepared cases in
+`.state/research/ty2025-filled-pdf-review/2026-09-30-v53/`.
+The first `v51` generation exposed a prepared Form 8949 array being dropped
+before PDF projection; the first complete `v52` packet then exposed a blank
+Schedule D line 9. The corrected prepared-return hash binds the canonical
+sale row, and the PDF builder sends that row to the existing Form 8949
+projector. The final synthetic sale has $5,000 proceeds, $2,000 basis, code C,
+zero adjustment, and $3,000 long-term collectible gain. All 42 source returns
+pass local TY2025 v5.4 full-return XSD. All five pages of this packet were
+rendered and inspected: Form 8949 Part II checks only box E and prints the
+sale and totals; Schedule D line 9 prints $5,000 proceeds, $2,000 basis, and
+$3,000 gain, line 18 prints the $3,000 28% rate amount, and Form 1040 line
+7a and AGI print $3,000 and $33,000. The $17,250 taxable income, $1,835 tax,
+and $1,165 refund agree with the graph and native XML. The PDF SHA-256 is
+`1368993e8a095cdc8f9205babd887ca9d249946af0772b4f5713ab86861847a0`.
+Other collectibles and mixed-rate gains, issuer bytes, IRS business rules,
+and ATS acceptance remain open.

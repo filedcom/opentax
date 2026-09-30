@@ -274,10 +274,15 @@ export async function buildPdfBytes(
   }
   if (
     preparedBundle &&
-    await preparedSourceSha256(normalized, filer) !==
+    await preparedSourceSha256(pending, filer) !==
       preparedBundle.sourceSha256
   ) {
     throw new Error("PDF source differs from the prepared MeF return");
+  }
+  // The prepared MeF return stores canonical Form 8949 rows as an array;
+  // the existing PDF projector consumes them through its transaction field.
+  if (Array.isArray(pending.form8949)) {
+    normalized.form8949 = { transaction: pending.form8949 };
   }
   if (
     preparedBundle?.form3800Parts &&

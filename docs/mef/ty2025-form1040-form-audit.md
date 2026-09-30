@@ -353,6 +353,14 @@ tax situations, then run the agreed single full test/XSD/PDF-render batch. It
 must not promote a row solely because a file or test exists. ATS acceptance
 remains a separate final gate.
 
+Schedule D/Form 8949 addendum (2026-09-30): one sourced Part E collectible
+sale now carries its computed row through the prepared MeF return, the
+source-bound PDF builder, Schedule D line 9, and the 28% rate worksheet once.
+The 42-case local full-return XSD fixture set passes, and all five pages of
+the synthetic sale packet were visually inspected in `v53`. This covers one
+long-term code-C adjustment row; other category totals, mixed-rate cases,
+issuer bytes, IRS business rules, and ATS acceptance remain open.
+
 Form 6251 addendum (2026-09-29, unrun): the existing line-2k audited Form 8949
 route now also handles same-term short-term mixed gain/loss rows only when both
 regular and AMT nets stay positive and there is no other capital activity. The

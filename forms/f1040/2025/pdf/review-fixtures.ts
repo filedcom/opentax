@@ -751,6 +751,31 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-sourced-collectibles-gain",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(30_000, 3_000, "Example Employer", "12-3456789")],
+      f8949: [{
+        part: "E",
+        description: "Collectible artwork",
+        source_transaction_id: "synthetic-collectible-sale",
+        date_acquired: "2023-01-10",
+        date_sold: "2025-06-20",
+        proceeds: 5_000,
+        cost_basis: 2_000,
+        adjustment_codes: "C",
+        adjustment_amount: 0,
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule_d", "f8949"],
+    reviewFocus: [
+      "The sourced long-term collectible sale reports $3,000 gain on Form 8949 and Schedule D",
+      "The 28% rate amount reaches tax calculation exactly once",
+      "Form 1040 capital gain is $3,000 and AGI is $33,000",
+    ],
+  },
+  {
     id: "single-final-trust-k1-long-term-capital-loss",
     inputs: {
       general: singleGeneral,

@@ -31,6 +31,16 @@ for (const fixture of pdfReviewFixtures) {
       });
       assertEquals(result.diagnostics, []);
       const xml = buildMefXml(buildPending(result.pending), fixture.filer);
+      if (fixture.id === "single-sourced-collectibles-gain") {
+        assertEquals(
+          result.pending.rate_28_gain_worksheet.collectibles_gain_from_8949,
+          3_000,
+        );
+        assertEquals(result.pending.qdcgtw.line18_28pct_gain, 3_000);
+        assertEquals(result.pending.income_tax_calculation.rate_28_gain, 3_000);
+        assertEquals(result.pending.schedule_d.print_line18_28pct, 3_000);
+        assertEquals(result.pending.f1040.line11_agi, 33_000);
+      }
       if (fixture.id === "single-final-trust-k1-long-term-capital-loss") {
         assertEquals(result.pending.schedule_d.line_12_k1_lt, -900);
         assertEquals(result.pending.schedule_d.print_line15_lt_total, -900);

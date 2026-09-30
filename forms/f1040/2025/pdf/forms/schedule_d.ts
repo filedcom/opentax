@@ -92,6 +92,26 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "text",
+    domainKey: "print_line9_proceeds",
+    pdfField: "topmostSubform[0].Page1[0].Table_PartII[0].Row9[0].f1_31[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line9_cost",
+    pdfField: "topmostSubform[0].Page1[0].Table_PartII[0].Row9[0].f1_32[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line9_adjustment",
+    pdfField: "topmostSubform[0].Page1[0].Table_PartII[0].Row9[0].f1_33[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line9_gain",
+    pdfField: "topmostSubform[0].Page1[0].Table_PartII[0].Row9[0].f1_34[0]",
+  },
+  {
+    kind: "text",
     domainKey: "line_11_form2439",
     pdfField: "topmostSubform[0].Page1[0].f1_39[0]",
   },
@@ -170,7 +190,9 @@ export const scheduleDPdf: PdfFormDescriptor = {
     const rows = [
       ...(Array.isArray(fields.transaction)
         ? fields.transaction
-        : fields.transaction ? [fields.transaction] : []),
+        : fields.transaction
+        ? [fields.transaction]
+        : []),
       ...(Array.isArray(fields.transactions) ? fields.transactions : []),
     ];
     const hasQsbsRow = rows.some((row) =>
@@ -190,8 +212,26 @@ export const scheduleDPdf: PdfFormDescriptor = {
       );
     }
     const child = form8814ParentPrintAmounts(allPending);
+    const form8949Rows = allPending.form8949?.transaction;
+    const partERows = (Array.isArray(form8949Rows) ? form8949Rows : [])
+      .filter((row): row is Record<string, unknown> =>
+        typeof row === "object" && row !== null && row.part === "E"
+      );
+    const partETotal = (key: string): number =>
+      partERows.reduce(
+        (total, row) => total + (typeof row[key] === "number" ? row[key] : 0),
+        0,
+      );
     return {
       ...fields,
+      ...(partERows.length > 0
+        ? {
+          print_line9_proceeds: partETotal("proceeds"),
+          print_line9_cost: partETotal("cost_basis"),
+          print_line9_adjustment: partETotal("adjustment_amount"),
+          print_line9_gain: partETotal("gain_loss"),
+        }
+        : {}),
       print_form8814_line13_note: child.capitalGain > 0 &&
           typeof fields.print_line13_cap_gain_distrib === "number"
         ? `Form 8814 $${child.capitalGain}`
