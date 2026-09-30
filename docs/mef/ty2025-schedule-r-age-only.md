@@ -24,8 +24,9 @@ line 17 half-AGI amount and line 20 credit.
 
 The disability routes now select boxes 2, 4, 5, 6, and 9 in native XML and PDF.
 Each under-65 qualifying owner needs a reviewed retirement and work-capacity
-record, taxable disability income source, and current-year, prior-year, or VA
-physician statement reference. A prior-year statement additionally requires
+record, confirmation that the condition is expected to last at least one year
+or result in death, taxable disability income source, and a signed current-year,
+prior-year, or VA physician statement reference. A prior-year statement additionally requires
 review of the 1983-or-earlier or signed-line-B condition. Disability income
 cannot exceed the finalized Form 1040 wages or taxable pensions according to
 the income source classification. Box 6 line 11 adds $5,000 for the older

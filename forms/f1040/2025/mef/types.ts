@@ -25,6 +25,8 @@ import type { inputSchema as partnershipK1InputSchema } from "../../nodes/inputs
 import type { inputSchema as sCorpK1InputSchema } from "../../nodes/inputs/k1_s_corp/index.ts";
 import type { inputSchema as trustK1InputSchema } from "../../nodes/inputs/k1_trust/index.ts";
 import type { inputSchema as refinancePointsInputSchema } from "../../nodes/inputs/mortgage_refinance_points/index.ts";
+import type { inputSchema as form3921InputSchema } from "../../nodes/inputs/f3921/index.ts";
+import type { IsoAmtBasisLot } from "../../nodes/inputs/f3921/index.ts";
 
 type AnyForm = (typeof ALL_MEF_FORMS)[number];
 
@@ -50,4 +52,8 @@ export type MefFormsPending =
     k1_trust?: z.infer<typeof trustK1InputSchema>;
     // Source-only refinancing records support Schedule A line 8c.
     mortgage_refinance_points?: z.infer<typeof refinancePointsInputSchema>;
+    // Payer-issued ISO exercise copies support Form 6251 line 2i.
+    f3921?: z.infer<typeof form3921InputSchema> & {
+      iso_amt_basis_ledger?: readonly IsoAmtBasisLot[];
+    };
   };

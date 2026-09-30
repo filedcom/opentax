@@ -354,11 +354,14 @@ const disabilityEvidence = {
   retired_on_permanent_total_disability: true as const,
   below_mandatory_retirement_age_on_january_1: true as const,
   unable_to_perform_substantial_gainful_activity: true as const,
+  condition_expected_to_last_one_year_or_result_in_death_verified:
+    true as const,
   disability_income_source_reference: "Employer disability W-2",
   disability_income_reported_on: "wages" as const,
   eligibility_source_reference: "Retirement and work-capacity review",
   physician_statement: "current_year" as const,
   physician_statement_source_reference: "Signed 2025 physician statement",
+  physician_or_va_statement_signed_verified: true as const,
 };
 
 Deno.test("Schedule R disability boxes 2/4/5/6/9 use their distinct line 11 amounts", () => {

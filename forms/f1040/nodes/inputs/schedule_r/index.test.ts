@@ -317,16 +317,39 @@ Deno.test("schedule_r.compute: reviewed disability evidence reaches the Form 104
       retired_on_permanent_total_disability: true,
       below_mandatory_retirement_age_on_january_1: true,
       unable_to_perform_substantial_gainful_activity: true,
+      condition_expected_to_last_one_year_or_result_in_death_verified: true,
       disability_income_source_reference: "Employer W-2",
       disability_income_reported_on: "wages",
       eligibility_source_reference: "Retirement record",
       physician_statement: "current_year",
       physician_statement_source_reference: "Signed physician statement",
+      physician_or_va_statement_signed_verified: true,
     },
   });
   assertEquals(findOutput(reviewed, "f1040")?.fields, {
     schedule_r_disability_qualified: true,
   });
+});
+
+Deno.test("schedule_r.inputSchema: disability review needs duration and signed statement", () => {
+  const evidence = {
+    retired_on_permanent_total_disability: true,
+    below_mandatory_retirement_age_on_january_1: true,
+    unable_to_perform_substantial_gainful_activity: true,
+    disability_income_source_reference: "Employer W-2",
+    disability_income_reported_on: "wages",
+    eligibility_source_reference: "Retirement record",
+    physician_statement: "current_year",
+    physician_statement_source_reference: "Physician statement",
+  };
+  assertEquals(
+    schedule_r.inputSchema.safeParse({
+      filing_status: FilingStatus.Single,
+      taxpayer_disabled: true,
+      taxpayer_disability_evidence: evidence,
+    }).success,
+    false,
+  );
 });
 
 // =============================================================================

@@ -186,10 +186,12 @@ export function projectScheduleCPdfCandidate(
     part3_col3: ledger.filed_form1116.foreign_taxes_paid_or_accrued_usd,
     part3_col4: changed.filedCredit,
     part3_col5: changed.revisedCredit,
-    part4_col1: date(ledger.relation_back_year_end),
-    part4_col2: changed.revisedLiability,
-    part4_col3: changed.filedLiability,
-    part4_col4: changed.revisedLiability - changed.filedLiability,
+    ...(changed.revisedLiability === changed.filedLiability ? {} : {
+      part4_col1: date(ledger.relation_back_year_end),
+      part4_col2: changed.revisedLiability,
+      part4_col3: changed.filedLiability,
+      part4_col4: changed.revisedLiability - changed.filedLiability,
+    }),
   };
 }
 
@@ -209,6 +211,11 @@ export const form1116ScheduleCPdfCandidate: PdfFormDescriptor = {
     if (!name || !ssn || !/^\d{9}$/.test(ssn)) {
       throw new Error(
         "Form 1116 Schedule C PDF candidate needs filer name and SSN",
+      );
+    }
+    if (projected.reviewed_filer_ssn !== ssn) {
+      throw new Error(
+        "Form 1116 Schedule C PDF candidate owner differs from reviewed documents",
       );
     }
     return [{ ...projected, filer_name: name, filer_ssn: ssn }];

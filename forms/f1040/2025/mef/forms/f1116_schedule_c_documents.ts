@@ -23,6 +23,8 @@ export enum ScheduleCDocumentRole {
 const documentSchema = z.object({
   role: z.nativeEnum(ScheduleCDocumentRole),
   source_reference: z.string().trim().min(1),
+  reviewed_subject_ssn: z.string().regex(/^\d{9}$/).optional(),
+  foreign_tax_owner_reference: z.string().trim().min(1).optional(),
   bytes: z.instanceof(Uint8Array).refine((bytes) => bytes.length > 0),
   reviewed_sha256: z.string().regex(/^[a-f0-9]{64}$/),
   reviewed_by: z.string().trim().min(1),
@@ -53,12 +55,15 @@ export type ScheduleCDocumentIntake = z.infer<
 export interface ScheduleCDocumentManifest {
   readonly role: ScheduleCDocumentRole;
   readonly source_reference: string;
+  readonly reviewed_subject_ssn?: string;
+  readonly foreign_tax_owner_reference?: string;
   readonly sha256: string;
   readonly reviewed_by: string;
   readonly page_count: number;
 }
 
 export interface ScheduleCReviewedCandidate {
+  readonly filer_ssn: string;
   readonly documents: readonly ScheduleCDocumentManifest[];
   readonly relation_back_tax_year: number;
   readonly filed_us_tax_liability: number;
@@ -115,7 +120,10 @@ function requiredReferences(input: ScheduleCDocumentIntake) {
   return references;
 }
 
-function verifyCrossReferences(input: ScheduleCDocumentIntake): void {
+function verifyCrossReferences(
+  input: ScheduleCDocumentIntake,
+  filerSSN: string,
+): void {
   const { ledger, filed_year_evidence: evidence } = input;
   if (
     ledger.filed_form1116.source_document_reference !==
@@ -145,6 +153,24 @@ function verifyCrossReferences(input: ScheduleCDocumentIntake): void {
     if (!expectedKeys.has(`${document.role}:${document.source_reference}`)) {
       throw new Error(
         `Form 1116 Schedule C ${document.role} PDF does not match its reviewed source reference`,
+      );
+    }
+    if (document.role === ScheduleCDocumentRole.ForeignRedetermination) {
+      if (
+        !document.foreign_tax_owner_reference ||
+        (document.reviewed_subject_ssn !== undefined &&
+          document.reviewed_subject_ssn !== filerSSN)
+      ) {
+        throw new Error(
+          "Form 1116 Schedule C foreign record needs a reviewed taxpayer ownership link",
+        );
+      }
+    } else if (
+      document.reviewed_subject_ssn !== filerSSN ||
+      document.foreign_tax_owner_reference !== undefined
+    ) {
+      throw new Error(
+        "Form 1116 Schedule C filed return or workpaper owner differs from the current filer",
       );
     }
   }
@@ -184,6 +210,8 @@ async function documentManifest(
   return {
     role: document.role,
     source_reference: document.source_reference,
+    reviewed_subject_ssn: document.reviewed_subject_ssn,
+    foreign_tax_owner_reference: document.foreign_tax_owner_reference,
     sha256,
     reviewed_by: document.reviewed_by,
     page_count: pdf.getPageCount(),
@@ -196,9 +224,14 @@ async function documentManifest(
  */
 export async function reviewScheduleCDocuments(
   raw: ScheduleCDocumentIntake,
+  currentFilerSSN: string,
 ): Promise<ScheduleCReviewedCandidate> {
   const input = scheduleCDocumentIntakeSchema.parse(raw);
-  verifyCrossReferences(input);
+  const filerSSN = currentFilerSSN.replaceAll("-", "");
+  if (!/^\d{9}$/.test(filerSSN)) {
+    throw new Error("Form 1116 Schedule C review needs the current filer's SSN");
+  }
+  verifyCrossReferences(input, filerSSN);
   const nativeXmlCandidate = buildScheduleCProjection(
     input.ledger,
     input.filed_year_evidence,
@@ -212,6 +245,7 @@ export async function reviewScheduleCDocuments(
   const amendedReturnRequired = affected.redetermined_us_tax_liability_usd !==
     affected.us_tax_liability_on_filed_return_usd;
   return {
+    filer_ssn: filerSSN,
     documents,
     relation_back_tax_year: input.ledger.relation_back_tax_year,
     filed_us_tax_liability: affected.us_tax_liability_on_filed_return_usd,
@@ -225,10 +259,13 @@ export async function reviewScheduleCDocuments(
     relation_back_year_unused_foreign_tax_after:
       recomputed.revisedUnusedForeignTax,
     native_xml_candidate: nativeXmlCandidate,
-    pdf_fields_candidate: projectScheduleCPdfCandidate(
-      input.ledger,
-      input.filed_year_evidence,
-    ),
+    pdf_fields_candidate: {
+      ...projectScheduleCPdfCandidate(
+        input.ledger,
+        input.filed_year_evidence,
+      ),
+      reviewed_filer_ssn: filerSSN,
+    },
     export_ready: false,
   };
 }

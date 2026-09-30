@@ -8180,6 +8180,44 @@ function singleGeneral() {
 }
 
 Deno.test({
+  name: "XSD: identified Form 3921 ISO source reaches Form 6251 and Schedule 2",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const result = runReturn({
+    general,
+    w2: [{ box1_wages: 200_000, box2_fed_withheld: 35_000 }],
+    f3921: [{
+      source_document_reference: "2025 issued employer Form 3921 copy",
+      corporation_name: "Option Corporation",
+      corporation_ein: "12-3456789",
+      employee_tin: general.taxpayer_ssn,
+      box1_date_option_granted: "2022-06-01",
+      box2_date_option_exercised: "2025-06-02",
+      box3_exercise_price_per_share: 10,
+      box4_fmv_per_share: 250,
+      box5_shares_transferred: 1_000,
+      rights_transferable_and_not_subject_to_substantial_risk_on_exercise: true,
+      shares_disposed_during_exercise_year: 0,
+      amount_paid_for_option: 0,
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form6251?.iso_adjustment, 240_000);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(
+    xml,
+    "<IncentiveStockOptionsAmt>240000</IncentiveStockOptionsAmt>",
+  );
+  await validateXsd(xml, "identified ISO Form 3921 full return");
+});
+
+Deno.test({
   name: "XSD: withheld W-2G source reaches 1040 and native payer copy",
   sanitizeOps: false,
   sanitizeResources: false,

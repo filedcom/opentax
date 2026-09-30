@@ -376,11 +376,11 @@ export function buildScheduleCProjection(
         verified.revisedCredit,
       ),
     ]),
-    elements("ChgUSTxLiabilityGrp", [
+    ...(difference === 0 ? [] : [elements("ChgUSTxLiabilityGrp", [
       element("RlnBackYrOrAffectedTaxYrEndDt", affected.tax_year_end),
       element("TotRedetermUSTaxLiabilityAmt", verified.revisedLiability),
       element("TotUSTaxLiabilityPerReturnAmt", verified.filedLiability),
       element("DifferenceBetweenTotalsAmt", difference),
-    ]),
+    ])]),
   ]);
 }

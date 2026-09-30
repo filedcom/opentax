@@ -1,6 +1,8 @@
 import { element, elements } from "../../../mef/xml.ts";
 import { assertForm6251Line8 } from "../../form6251_line8.ts";
-import type { MefFormDescriptor } from "../form-descriptor.ts";
+import { assertForm3921IsoSource } from "../../../nodes/inputs/f3921/index.ts";
+import { FilingStatus } from "../../../mef/header.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 export interface Fields {
   regular_tax_income?: number | null;
@@ -124,7 +126,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line40", "TaxOnAlternativeMinimumGainAmt"],
 ];
 
-function buildIRS6251(fields: Input): string {
+function buildIRS6251(fields: Input, context?: MefBuildContext): string {
   if (
     typeof fields.nol_adjustment === "number" &&
     fields.nol_adjustment !== 0
@@ -142,6 +144,22 @@ function buildIRS6251(fields: Input): string {
     );
   }
   assertForm6251Line8(fields);
+  if ((fields.iso_adjustment ?? 0) > 0) {
+    const filer = context?.filer;
+    if (!filer) {
+      throw new Error("Form 6251 line 2i needs final filer identity");
+    }
+    const recipients = [filer.primarySSN];
+    if (
+      filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+      filer.spouse?.ssn
+    ) recipients.push(filer.spouse.ssn);
+    assertForm3921IsoSource(
+      context?.pending?.f3921,
+      fields.iso_adjustment!,
+      recipients,
+    );
+  }
   const line7ExceedsLine10 = typeof fields.tentative_tax === "number" &&
     typeof fields.regular_tax === "number" &&
     fields.tentative_tax > fields.regular_tax;
@@ -170,7 +188,7 @@ export const form6251: MefFormDescriptor<"form6251", Input> = {
   pendingKey: "form6251",
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f6251.pdf",
-  build(fields) {
-    return buildIRS6251(fields);
+  build(fields, context) {
+    return buildIRS6251(fields, context);
   },
 };

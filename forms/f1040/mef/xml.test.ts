@@ -86,7 +86,10 @@ Deno.test("element: plain string is wrapped in tags", () => {
 });
 
 Deno.test("element: string with special chars is escaped", () => {
-  assertEquals(element("Nm", "O'Brien & Sons"), "<Nm>O&apos;Brien &amp; Sons</Nm>");
+  assertEquals(
+    element("Nm", "O'Brien & Sons"),
+    "<Nm>O&apos;Brien &amp; Sons</Nm>",
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -94,11 +97,24 @@ Deno.test("element: string with special chars is escaped", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("element: single attr is rendered on opening tag", () => {
-  assertEquals(element("Id", "doc1", { type: "IRS1040" }), '<Id type="IRS1040">doc1</Id>');
+  assertEquals(
+    element("Id", "doc1", { type: "IRS1040" }),
+    '<Id type="IRS1040">doc1</Id>',
+  );
 });
 
 Deno.test("element: multiple attrs are all rendered", () => {
-  assertEquals(element("El", "v", { a: "1", b: "2" }), '<El a="1" b="2">v</El>');
+  assertEquals(
+    element("El", "v", { a: "1", b: "2" }),
+    '<El a="1" b="2">v</El>',
+  );
+});
+
+Deno.test("element: attribute values escape source punctuation", () => {
+  assertEquals(
+    element("El", "v", { note: 'A&B "copy" <signed>' }),
+    '<El note="A&amp;B &quot;copy&quot; &lt;signed&gt;">v</El>',
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -118,11 +134,17 @@ Deno.test("elements: array of all empty strings returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("elements: empty strings among children are filtered out", () => {
-  assertEquals(elements("Parent", ["<A>1</A>", ""]), "<Parent><A>1</A></Parent>");
+  assertEquals(
+    elements("Parent", ["<A>1</A>", ""]),
+    "<Parent><A>1</A></Parent>",
+  );
 });
 
 Deno.test("elements: leading empty strings are filtered", () => {
-  assertEquals(elements("Parent", ["", "<A>1</A>"]), "<Parent><A>1</A></Parent>");
+  assertEquals(
+    elements("Parent", ["", "<A>1</A>"]),
+    "<Parent><A>1</A></Parent>",
+  );
 });
 
 // ---------------------------------------------------------------------------

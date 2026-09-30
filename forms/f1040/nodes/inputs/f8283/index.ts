@@ -134,6 +134,22 @@ const sectionAItemSchema = z.object({
   // Narrow non-sale reduction route: purchased property held no more than one
   // year whose appreciation would be short-term gain under section 170(e)(1)(A).
   short_term_ordinary_income_reduction_confirmed: z.literal(true).optional(),
+  inventory_ordinary_income_reduction: z.object({
+    purchase_invoice_reference: z.string().trim().min(1),
+    inventory_cost_record_reference: z.string().trim().min(1),
+    property_held_for_sale_to_customers_verified: z.literal(true),
+    fmv_sale_gain_entirely_ordinary_verified: z.literal(true),
+    no_other_reduction_reason_verified: z.literal(true),
+  }).strict().optional(),
+  creator_ordinary_income_reduction: z.object({
+    creation_record_reference: z.string().trim().min(1),
+    capitalized_cost_record_reference: z.string().trim().min(1),
+    taxpayer_created_artwork_verified: z.literal(true),
+    date_acquired_is_substantial_completion_verified: z.literal(true),
+    basis_costs_not_previously_deducted_verified: z.literal(true),
+    fmv_sale_gain_entirely_ordinary_verified: z.literal(true),
+    no_other_reduction_reason_verified: z.literal(true),
+  }).strict().optional(),
   // Taxpayer-supplied general property category (for example "books"). The
   // same category must be used for similar gifts to every donee this year.
   similar_item_group: z.string().trim().min(1).optional(),
@@ -238,17 +254,26 @@ const sectionAItemSchema = z.object({
     }
     const shortTerm = item.short_term_ordinary_income_reduction_confirmed ===
       true;
+    const inventory = item.inventory_ordinary_income_reduction !== undefined;
+    const creator = item.creator_ordinary_income_reduction !== undefined;
     const capitalGainElection =
       item.capital_gain_reduction_election_confirmed === true;
+    if ((inventory || creator) && reductionCents <= 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["deduction_claimed"],
+        message: "Form 8283 ordinary-income reduction needs FMV above the basis claim",
+      });
+    }
     if (
       reductionCents > 0 && !certifiedSaleReduction && !shortTerm &&
-      !capitalGainElection
+      !inventory && !creator && !capitalGainElection
     ) {
       ctx.addIssue({
         code: "custom",
         path: ["short_term_ordinary_income_reduction_confirmed"],
         message:
-          "Form 8283 reduced Section A claim needs certified sale proceeds, a sourced short-term ordinary-income reduction, or a sourced capital-gain reduction election",
+          "Form 8283 reduced Section A claim needs certified sale proceeds, a sourced ordinary-income reduction, or a sourced capital-gain reduction election",
       });
     }
     if (capitalGainElection && reductionCents > 0) {
@@ -286,7 +311,7 @@ const sectionAItemSchema = z.object({
         Math.round(item.cost_or_adjusted_basis * 100) !==
           Math.round(item.deduction_claimed * 100) ||
         item.cost_or_adjusted_basis >= item.fmv ||
-        shortTerm || certifiedSaleReduction
+        shortTerm || inventory || creator || certifiedSaleReduction
       ) {
         ctx.addIssue({
           code: "custom",
@@ -329,7 +354,7 @@ const sectionAItemSchema = z.object({
         Math.round(item.cost_or_adjusted_basis * 100) !==
           Math.round(item.deduction_claimed * 100) ||
         item.cost_or_adjusted_basis >= item.fmv ||
-        certifiedSaleReduction
+        inventory || creator || certifiedSaleReduction
       ) {
         ctx.addIssue({
           code: "custom",
@@ -339,6 +364,77 @@ const sectionAItemSchema = z.object({
         });
       }
     }
+    if (inventory) {
+      const acquired = item.date_acquired
+        ? Date.parse(`${item.date_acquired}T00:00:00Z`)
+        : NaN;
+      const contributed = item.date_contributed
+        ? Date.parse(`${item.date_contributed}T00:00:00Z`)
+        : NaN;
+      if (
+        !Number.isFinite(acquired) || !Number.isFinite(contributed) ||
+        new Date(acquired).toISOString().slice(0, 10) !== item.date_acquired ||
+        new Date(contributed).toISOString().slice(0, 10) !==
+          item.date_contributed ||
+        !item.date_contributed?.startsWith("2025-") || acquired > contributed ||
+        item.donor_acquisition_description?.trim().toLowerCase() !==
+          "purchase" ||
+        item.is_vehicle === true || item.is_capital_gain_property !== false ||
+        item.charitable_limit_category !== "noncash_50" ||
+        item.fmv > 5_000 || item.cost_or_adjusted_basis === undefined ||
+        Math.round(item.cost_or_adjusted_basis * 100) !==
+          Math.round(item.deduction_claimed * 100) ||
+        item.cost_or_adjusted_basis >= item.fmv ||
+        shortTerm || creator || capitalGainElection || certifiedSaleReduction
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["inventory_ordinary_income_reduction"],
+          message:
+            "Form 8283 inventory reduction needs one purchased Section A inventory gift, source cost equal to claim, and ordinary appreciation below $5,000 FMV",
+        });
+      }
+    }
+    if (creator) {
+      const completed = item.date_acquired
+        ? Date.parse(`${item.date_acquired}T00:00:00Z`)
+        : NaN;
+      const contributed = item.date_contributed
+        ? Date.parse(`${item.date_contributed}T00:00:00Z`)
+        : NaN;
+      if (
+        !Number.isFinite(completed) || !Number.isFinite(contributed) ||
+        new Date(completed).toISOString().slice(0, 10) !== item.date_acquired ||
+        new Date(contributed).toISOString().slice(0, 10) !== item.date_contributed ||
+        !item.date_contributed?.startsWith("2025-") || completed > contributed ||
+        item.donor_acquisition_description?.trim().toLowerCase() !== "created" ||
+        item.is_vehicle === true || item.is_capital_gain_property !== false ||
+        item.charitable_limit_category !== "noncash_50" ||
+        item.fmv > 5_000 || item.cost_or_adjusted_basis === undefined ||
+        Math.round(item.cost_or_adjusted_basis * 100) !==
+          Math.round(item.deduction_claimed * 100) ||
+        item.cost_or_adjusted_basis >= item.fmv ||
+        shortTerm || inventory || capitalGainElection || certifiedSaleReduction
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["creator_ordinary_income_reduction"],
+          message:
+            "Form 8283 creator reduction needs donor-created Section A art, substantial-completion date, capitalized undeducted basis equal to claim, and ordinary appreciation below $5,000 FMV",
+        });
+      }
+    }
+  }
+  if (
+    (item.inventory_ordinary_income_reduction !== undefined ||
+      item.creator_ordinary_income_reduction !== undefined) &&
+    (item.fmv === undefined || item.deduction_claimed === undefined)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["deduction_claimed"],
+      message: "Form 8283 ordinary-income reduction needs original FMV and a basis claim",
+    });
   }
   if (item.vehicle_sale_acknowledgment && item.is_vehicle !== true) {
     ctx.addIssue({

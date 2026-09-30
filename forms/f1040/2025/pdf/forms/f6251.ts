@@ -1,5 +1,7 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { assertForm6251Line8 } from "../../form6251_line8.ts";
+import { assertForm3921IsoSource } from "../../../nodes/inputs/f3921/index.ts";
+import { FilingStatus } from "../../../mef/header.ts";
 import { inputSchema as schedule1aInputSchema } from "../../../nodes/intermediate/forms/schedule1a/index.ts";
 import { schedule1a } from "../../mef/forms/schedule1a.ts";
 
@@ -110,6 +112,24 @@ export const form6251Pdf: PdfFormDescriptor = {
       line1a_less_senior_deduction: line1a,
       ...(typeof nol === "number" ? { nol_adjustment: -nol } : {}),
     };
+  },
+  instances(fields, filer, allPending) {
+    if ((Number(fields.iso_adjustment ?? 0)) > 0) {
+      if (!filer) {
+        throw new Error("Form 6251 line 2i PDF needs final filer identity");
+      }
+      const recipients = [filer.primarySSN];
+      if (
+        filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+        filer.spouse?.ssn
+      ) recipients.push(filer.spouse.ssn);
+      assertForm3921IsoSource(
+        allPending?.f3921,
+        Number(fields.iso_adjustment),
+        recipients,
+      );
+    }
+    return [fields];
   },
   includeWhen: (fields) =>
     (typeof fields.tentative_tax === "number" &&

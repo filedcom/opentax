@@ -1,5 +1,41 @@
 # TY2025 Form 8283 FMV-reduction statement
 
+## Donor-created Section A artwork reduction (implementation staged 2026-10-01)
+
+The 2025 [Form 8283 instructions](https://www.irs.gov/instructions/i8283)
+identify donor-created artwork as ordinary-income property and use its
+substantial-completion date in the acquisition-date column. A separate bounded
+Section A source route now requires a creation record, a capitalized-cost
+record, confirmation that those basis costs were not previously deducted, and
+confirmation that the entire hypothetical FMV-sale gain would be ordinary.
+It requires a nonvehicle 2025 gift with original FMV no more than $5,000,
+adjusted basis equal to the claim below FMV, and a 50%-limit donee category.
+The native FMV statement names the creation and cost records, ordinary gain
+removed under section 170(e)(1)(A), and basis claim; the PDF uses the same
+explanation. Complete current-gift Schedule A and Form 1040 reconciliation is
+required. Native and PDF fixtures are authored but unrun for the bulk pass.
+The record identifiers and taxpayer confirmations do not authenticate the
+underlying creation or cost bytes. Other creator property and Section B remain
+outside this route.
+
+## Purchased Section A inventory reduction (implementation staged 2026-10-01)
+
+A distinct Section A route now identifies purchased inventory held for sale to
+customers, a purchase invoice reference, and an inventory cost-record
+reference. The source confirms that a hypothetical FMV sale would produce only
+ordinary gain and that no other reduction reason applies. The bounded route
+requires a nonvehicle gift with FMV no more than $5,000, a 50%-limit donee
+category, a 2025 contribution, and a claim equal to cost below FMV. It uses
+the complete current-gift inventory and Schedule A/Form 1040 reconciliation.
+Native Form 8283 links column (h) to a separate `FairMarketValueStatement`
+that explains the FMV, ordinary gain removed under section 170(e)(1)(A),
+invoice and cost-record references, and resulting basis claim. The PDF uses
+the same reason and prints the basis claim. Native and PDF source fixtures are
+authored for the bulk verification pass; tests, XSD, and PDF review have not
+yet run for this slice. The references and verified assertions are source
+fields, not authenticated invoice or ledger bytes. Section B inventory and
+other special reduction reasons remain outside this route.
+
 ## Bounded Section A election return review (2026-09-30)
 
 The synthetic `single-section-a-capital-gain-reduction-gift` fixture now runs
@@ -278,11 +314,11 @@ itemized total, map every required Section B field, and preserve the distinct
 signed-form/appraiser/donee attachments. No such taxpayer evidence or complete
 source contract is currently available for this case.
 
-The remaining Section A reasons need similarly specific source evidence: a
+Other Section A reasons need similarly specific source evidence: a
 donee's actual unrelated or exempt use and any disposition/certification,
 foundation status, intellectual-property basis, taxidermy costs, or a prior
 filed Form 8283 and appraisal for carryovers. The current supported Section A
-short-term, election, and certified-sale cases do not prove those facts by
+short-term, inventory, donor-created artwork, election, and certified-sale cases do not prove those facts by
 analogy. These routes remain fail-closed rather than emitting a generic FMV
 statement. This audit changed documentation only; no tests, typecheck, XSD
 validation, or filled-PDF rendering was run.

@@ -160,6 +160,15 @@ still rejects any positive Schedule C redetermination until affected-year
 amendments, later-year attributes, 2025 Form 1116/Schedule 3/Form 1040 joins,
 and the deferred test, XSD, PDF, and IRS-rule gates are resolved.
 
+The staged reviewed-document intake now requires the current filer's SSN and
+checks that every filed return or recalculation workpaper's reviewed subject
+matches it. Each foreign redetermination record needs an explicit reviewed
+taxpayer ownership link. The reviewed PDF candidate carries the same SSN and
+refuses a different filer at rendering. This binds reviewer assertions and
+hashed PDFs to one filer; it does not extract identity from those PDFs or
+authenticate that the IRS received the prior filed return or amendment. A
+wrong-owner and missing-foreign-link rejection fixture is written but unrun.
+
 ## Mixed increases and decreases, still staged and unrun
 
 The staged native and PDF projections now place a same-year accrued-tax increase
@@ -184,3 +193,17 @@ required affected-year amendment filed and its receipt verified; every
 intervening year's carryover and tax attributes checked; and the 2025 Form 1116,
 Schedule B, Schedule 3, and Form 1040 effects joined to the current return. No
 claim of those facts is inferred from this staged projection.
+
+## Balanced changes with no U.S. liability change, still staged
+
+The same single-category, single-year staged route now handles an accrued-tax
+increase and a separate refund whose dollar changes cancel. Part III still
+reports the filed and redetermined foreign tax and credit. Native and PDF
+projections leave Part IV blank when the independently recomputed U.S. tax
+liability is unchanged. A focused native/PDF candidate fixture is written but
+unrun. The [Schedule C instructions](https://www.irs.gov/instructions/i1116sc)
+require the current-year Schedule C even when there is no U.S. liability
+change; an affected-year amended return is required only when liability
+changes. This branch remains unregistered and fail-closed for filing because
+filed-year authenticity, later-year attributes, 2025 return joins, and the
+deferred validation gates are still unresolved.

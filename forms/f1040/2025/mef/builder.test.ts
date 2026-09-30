@@ -20,6 +20,7 @@ import {
   inputSchema as form4972InputSchema,
 } from "../../nodes/intermediate/forms/form4972/index.ts";
 import { DistributionCode } from "../../nodes/inputs/f1099r/index.ts";
+import { buildIsoAmtBasisLedger } from "../../nodes/inputs/f3921/index.ts";
 import {
   ForeignTaxCreditMethod,
   ForeignTaxKind,
@@ -1481,13 +1482,32 @@ Deno.test("IRS8995A absent when form8995a missing from pending", () => {
 });
 
 Deno.test("IRS6251 present when calculated AMT is positive", () => {
+  const f3921s = [{
+    source_document_reference: "Issued Form 3921 test copy",
+    corporation_name: "Option Corporation",
+    corporation_ein: "12-3456789",
+    employee_tin: "123456789",
+    box1_date_option_granted: "2022-06-01",
+    box2_date_option_exercised: "2025-06-02",
+    box3_exercise_price_per_share: 0,
+    box4_fmv_per_share: 5000,
+    box5_shares_transferred: 1,
+    rights_transferable_and_not_subject_to_substantial_risk_on_exercise:
+      true as const,
+    shares_disposed_during_exercise_year: 0 as const,
+    amount_paid_for_option: 0 as const,
+  }];
   const xml = buildMefXml({
     form6251: {
       regular_tax_income: 80000,
       iso_adjustment: 5000,
       line11_amt: 100,
     },
-  });
+    f3921: {
+      f3921s,
+      iso_amt_basis_ledger: buildIsoAmtBasisLedger({ f3921s }),
+    },
+  }, sampleFiler());
   assertStringIncludes(xml, "<IRS6251 ");
 });
 

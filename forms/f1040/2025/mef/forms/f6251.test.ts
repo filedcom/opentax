@@ -1,8 +1,50 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form6251 } from "./f6251.ts";
+import { FilingStatus } from "../../../mef/header.ts";
+import { buildIsoAmtBasisLedger } from "../../../nodes/inputs/f3921/index.ts";
+
+function isoContext(amount: number) {
+  const f3921s = [{
+    source_document_reference: "Issued Form 3921 test copy",
+    corporation_name: "Option Corporation",
+    corporation_ein: "12-3456789",
+    employee_tin: "111223333",
+    box1_date_option_granted: "2022-06-01",
+    box2_date_option_exercised: "2025-06-02",
+    box3_exercise_price_per_share: 0,
+    box4_fmv_per_share: amount,
+    box5_shares_transferred: 1,
+    rights_transferable_and_not_subject_to_substantial_risk_on_exercise: true,
+    shares_disposed_during_exercise_year: 0,
+    amount_paid_for_option: 0,
+  }];
+  return {
+    filer: {
+      primarySSN: "111223333",
+      nameLine1: "Test Taxpayer",
+      nameControl: "TAXP",
+      address: {
+        line1: "1 Main St",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+      },
+      filingStatus: FilingStatus.Single,
+    },
+    pending: {
+      f3921: {
+        f3921s,
+        iso_amt_basis_ledger: buildIsoAmtBasisLedger({ f3921s }),
+      },
+    },
+  };
+}
 
 function filed(fields: Parameters<typeof form6251.build>[0]): string {
-  return form6251.build({ line11_amt: 1, ...fields });
+  return form6251.build(
+    { line11_amt: 1, ...fields },
+    isoContext(fields.iso_adjustment ?? 0),
+  );
 }
 
 function assertNotIncludes(actual: string, expected: string) {
@@ -67,7 +109,10 @@ Deno.test("regular_tax_income at zero does not file Form 6251 by itself", () => 
 });
 
 Deno.test("an adjustment without AMT does not attach Form 6251", () => {
-  assertEquals(form6251.build({ iso_adjustment: 5_000 }), "");
+  assertEquals(
+    form6251.build({ iso_adjustment: 5_000 }, isoContext(5_000)),
+    "",
+  );
 });
 
 Deno.test("line 2d depletion serializes as a signed amount between lines 2c and 2g", () => {
@@ -346,13 +391,13 @@ const allFields = {
 };
 
 Deno.test("base fields present: output wrapped in IRS6251 tag", () => {
-  const result = form6251.build(allFields);
+  const result = form6251.build(allFields, isoContext(5_000));
   assertStringIncludes(result, "<IRS6251>");
   assertStringIncludes(result, "</IRS6251>");
 });
 
 Deno.test("base fields present: all elements emitted", () => {
-  const result = form6251.build(allFields);
+  const result = form6251.build(allFields, isoContext(5_000));
   assertStringIncludes(
     result,
     "<AGILessTotDedLessEnhncSrDedAmt>75000</AGILessTotDedLessEnhncSrDedAmt>",

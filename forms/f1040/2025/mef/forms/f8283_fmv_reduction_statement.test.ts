@@ -342,6 +342,103 @@ function nonElectionReturn(
   };
 }
 
+const inventoryGift = {
+  property_description: "Purchased retail books held for sale",
+  donee_organization_name: "Community Library",
+  donee_organization_us_address: {
+    line1: "7 Library Lane",
+    city: "Albany",
+    state: "NY",
+    zip: "12201",
+  },
+  date_acquired: "2023-03-01",
+  date_contributed: "2025-06-01",
+  donor_acquisition_description: "Purchase",
+  fmv: 1_000,
+  deduction_claimed: 600,
+  cost_or_adjusted_basis: 600,
+  is_capital_gain_property: false,
+  charitable_limit_category: "noncash_50" as const,
+  fmv_method: FMVMethod.ComparableSales,
+  inventory_ordinary_income_reduction: {
+    purchase_invoice_reference: "Invoice INV-102",
+    inventory_cost_record_reference: "Inventory ledger LOT-102",
+    property_held_for_sale_to_customers_verified: true as const,
+    fmv_sale_gain_entirely_ordinary_verified: true as const,
+    no_other_reduction_reason_verified: true as const,
+  },
+};
+
+const creatorGift = {
+  ...inventoryGift,
+  property_description: "Donor-created watercolor painting",
+  date_acquired: "2024-09-01",
+  donor_acquisition_description: "Created",
+  deduction_claimed: 250,
+  cost_or_adjusted_basis: 250,
+  inventory_ordinary_income_reduction: undefined,
+  creator_ordinary_income_reduction: {
+    creation_record_reference: "Studio log ART-17",
+    capitalized_cost_record_reference: "Undeducted materials ledger ART-17",
+    taxpayer_created_artwork_verified: true as const,
+    date_acquired_is_substantial_completion_verified: true as const,
+    basis_costs_not_previously_deducted_verified: true as const,
+    fmv_sale_gain_entirely_ordinary_verified: true as const,
+    no_other_reduction_reason_verified: true as const,
+  },
+};
+
+Deno.test("Form 8283 donor-created art links ordinary-gain statement and basis claim", () => {
+  const form = { section_a_items: [creatorGift] };
+  const pending = nonElectionReturn(form);
+  const [statement] = form8283FmvReductionStatement.build([], { pending });
+  assertStringIncludes(statement, "Donor-created artwork substantially completed");
+  assertStringIncludes(statement, "hypothetical sale gain of $750.00");
+  assertStringIncludes(statement, "Undeducted materials ledger ART-17");
+  const [xml] = form8283.build(form, {
+    pending,
+    documentIdsByPendingKey: {
+      form8283_fmv_reduction_statement: ["creator-reduction"],
+    },
+  });
+  assertStringIncludes(xml, 'referenceDocumentId="creator-reduction"');
+  assertStringIncludes(xml, ">250</FairMarketValueAmt>");
+  assertEquals(pending.schedule_a.line_12_noncash_contributions, 250);
+  assertThrows(
+    () => inputSchema.parse({ section_a_items: [{ ...creatorGift, donor_acquisition_description: "Purchase" }] }),
+    Error,
+    "donor-created Section A art",
+  );
+});
+
+Deno.test("Form 8283 purchased inventory reduction links ordinary-gain statement and reconciles claim", () => {
+  const form = { section_a_items: [inventoryGift] };
+  const pending = nonElectionReturn(form);
+  const [statement] = form8283FmvReductionStatement.build([], { pending });
+  assertStringIncludes(statement, "Purchased inventory held for sale to customers");
+  assertStringIncludes(statement, "hypothetical sale gain of $400.00");
+  assertStringIncludes(statement, "Invoice INV-102");
+  const [xml] = form8283.build(form, {
+    pending,
+    documentIdsByPendingKey: {
+      form8283_fmv_reduction_statement: ["inventory-reduction"],
+    },
+  });
+  assertStringIncludes(xml, 'referenceDocumentId="inventory-reduction"');
+  assertStringIncludes(xml, ">600</FairMarketValueAmt>");
+  assertEquals(pending.schedule_a.line_12_noncash_contributions, 600);
+  assertThrows(
+    () => inputSchema.parse({ section_a_items: [{ ...inventoryGift, cost_or_adjusted_basis: 700 }] }),
+    Error,
+    "source cost equal to claim",
+  );
+  assertThrows(
+    () => inputSchema.parse({ section_a_items: [{ ...inventoryGift, inventory_ordinary_income_reduction: { ...inventoryGift.inventory_ordinary_income_reduction, purchase_invoice_reference: "" } }] }),
+    Error,
+    "purchase_invoice_reference",
+  );
+});
+
 Deno.test("elected Section A links native statement and reconciles Schedule A line 12", () => {
   const { form, schedule, pending } = electedReturn();
   const statements = form8283FmvReductionStatement.build([], {

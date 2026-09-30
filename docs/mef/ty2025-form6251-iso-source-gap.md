@@ -4,4 +4,28 @@ The public `f3921` input now calculates a 2025 ISO exercise adjustment from Form
 
 This route requires affirmative facts that rights became transferable and were not subject to a substantial risk of forfeiture on exercise, that no acquired shares were disposed of during the exercise year, and that nothing was paid separately for the option. It rejects exercises outside 2025. Those bounds match the simple example in the [2025 Form 6251 line 2i instructions](https://www.irs.gov/instructions/i6251), which also says same-year dispositions need no line 2i adjustment and describes a separate election for restricted shares. The [Form 3921 instructions](https://www.irs.gov/instructions/i3921) identify boxes 2–5.
 
-Restricted shares, a timely inclusion election, option purchase cost, partial or full same-year disposition, prior-year ISO stock sale, and AMT basis carryforward remain outside this route. The tests were written but not run during the build-first phase.
+Restricted shares, a timely inclusion election, option purchase cost, partial or full same-year disposition, and prior-year ISO stock sales remain outside this route. The tests were written but not run during the build-first phase.
+
+The bounded retained-share path now requires each payer-issued Form 3921
+source to identify its distinct copy, corporation name/EIN, employee TIN, and
+option grant date before the 2025 exercise date. Duplicate copies reject.
+Native and PDF Form 6251 line 2i export reconcile the full claimed adjustment
+to those copies and require each employee TIN to match the taxpayer or a
+joint-filing spouse. A direct positive line 2i without matching Form 3921
+source rejects at export. A sourced $240,000 ISO adjustment full-return XSD
+fixture and negative source/recipient cases are written but unrun for the
+agreed combined test pass. Form 3921 copy bytes, truncated recipient TIN
+review and the wider ISO situations above remain open.
+
+For each retained 2025 exercise lot, the source node now prepares a
+cent-precision basis ledger keyed to its distinct Form 3921 copy. It records
+remaining shares, regular basis (exercise price times shares), the nonnegative
+exercise-date AMT adjustment, and resulting AMT basis. The node retains this
+ledger in the return's prepared source bundle, and native and PDF line 2i
+export require it to match the Form 3921 source copies exactly. This preserves
+the basis difference described in the [2025 Form 6251 instructions](https://www.irs.gov/instructions/i6251)
+for a future disposition. The ledger is prepared data, not an accepted-year
+carryforward or a 2026 return import. A later-year lot disposition, regular
+and AMT basis consumption, compensation reconciliation, and any adjustment to
+Form 8949 still need their own source-backed route. Same-year dispositions
+remain excluded by the input contract.

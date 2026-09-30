@@ -1,6 +1,8 @@
 import { inputSchema } from "../../../nodes/inputs/f8283/index.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 import {
+  assertCreatorReductionSource,
+  assertInventoryReductionSource,
   assertShortTermReductionSource,
   buildFmvReductionStatement,
   needsFmvReductionStatement,
@@ -59,7 +61,11 @@ export const form8283FmvReductionStatement: MefFormDescriptor<
     const reduced = (parsed.section_a_items ?? []).filter(
       needsFmvReductionStatement,
     );
-    for (const item of reduced) assertShortTermReductionSource(item);
+    for (const item of reduced) {
+      assertShortTermReductionSource(item);
+      assertInventoryReductionSource(item);
+      assertCreatorReductionSource(item);
+    }
     if (context.documentIdsByPendingKey) {
       const ids = context.documentIdsByPendingKey
         .form8283_fmv_reduction_statement ?? [];

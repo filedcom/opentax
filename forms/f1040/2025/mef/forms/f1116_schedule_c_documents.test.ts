@@ -2,11 +2,17 @@ import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { scheduleCLedger } from "../../../nodes/inputs/form1116_schedule_c_source/test-fixture.ts";
 import type { ScheduleCFiledYearEvidence } from "./f1116_schedule_c.ts";
+import type { FilerIdentity } from "../types.ts";
+import { form1116ScheduleCPdfCandidate } from "../../pdf/forms/f1116_schedule_c_candidate.ts";
 import {
-  reviewScheduleCDocuments,
+  reviewScheduleCDocuments as reviewWithFiler,
   type ScheduleCDocumentIntake,
   ScheduleCDocumentRole,
 } from "./f1116_schedule_c_documents.ts";
+
+const FILER_SSN = "123456789";
+const reviewScheduleCDocuments = (input: ScheduleCDocumentIntake) =>
+  reviewWithFiler(input, FILER_SSN);
 
 function reviewedCase() {
   const original = scheduleCLedger();
@@ -137,6 +143,9 @@ async function intake(): Promise<ScheduleCDocumentIntake> {
     references.map(async ([role, reference]) => ({
       role,
       source_reference: reference,
+      ...(role === ScheduleCDocumentRole.ForeignRedetermination
+        ? { foreign_tax_owner_reference: "reviewed-taxpayer-foreign-account" }
+        : { reviewed_subject_ssn: FILER_SSN }),
       ...await reviewedPdf(reference),
       reviewed_by: "Tax reviewer",
     })),
@@ -149,6 +158,7 @@ Deno.test("Schedule C intake binds seven reviewed PDF byte streams and flags ame
   const reviewed = await reviewScheduleCDocuments(input);
   assertEquals(reviewed.documents.length, 7);
   assertEquals(reviewed.documents.every((doc) => doc.page_count === 1), true);
+  assertEquals(reviewed.filer_ssn, FILER_SSN);
   assertEquals(reviewed.amended_return_required, true);
   assertEquals(reviewed.affected_year_amendment_status, "required_unverified");
   assertEquals(reviewed.filed_us_tax_liability, 4_900);
@@ -160,6 +170,40 @@ Deno.test("Schedule C intake binds seven reviewed PDF byte streams and flags ame
   assertEquals(reviewed.pdf_fields_candidate.part2_row1_col10, 20);
   assertEquals(reviewed.pdf_fields_candidate.part3_col5, 80);
   assertEquals(reviewed.pdf_fields_candidate.part4_col4, 20);
+  const pdfFiler = { primarySSN: FILER_SSN, fullName: "Taxpayer Test" } as FilerIdentity;
+  assertEquals(
+    form1116ScheduleCPdfCandidate.instances?.(reviewed.pdf_fields_candidate, pdfFiler)?.[0].filer_ssn,
+    FILER_SSN,
+  );
+  await assertRejects(
+    async () => form1116ScheduleCPdfCandidate.instances?.(
+      reviewed.pdf_fields_candidate,
+      { ...pdfFiler, primarySSN: "111223333" },
+    ),
+    Error,
+    "owner differs from reviewed documents",
+  );
+});
+
+Deno.test("Schedule C intake binds filed documents to the current filer and foreign records to that taxpayer", async () => {
+  const input = await intake();
+  await assertRejects(
+    () => reviewWithFiler(input, "111223333"),
+    Error,
+    "owner differs from the current filer",
+  );
+  await assertRejects(
+    () => reviewScheduleCDocuments({
+      ...input,
+      documents: input.documents.map((document) =>
+        document.role === ScheduleCDocumentRole.ForeignRedetermination
+          ? { ...document, foreign_tax_owner_reference: undefined }
+          : document
+      ),
+    }),
+    Error,
+    "foreign record needs a reviewed taxpayer ownership link",
+  );
 });
 
 Deno.test("Schedule C intake binds each of two payors to a distinct reviewed PDF", async () => {
@@ -237,6 +281,7 @@ Deno.test("Schedule C intake binds each of two payors to a distinct reviewed PDF
   const secondDocument = {
     role: ScheduleCDocumentRole.ForeignRedetermination,
     source_reference: "foreign-refund-notice-2",
+    foreign_tax_owner_reference: "reviewed-taxpayer-second-foreign-account",
     ...await reviewedPdf("foreign-refund-notice-2"),
     reviewed_by: "Tax reviewer",
   };

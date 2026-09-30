@@ -37,11 +37,15 @@ const disabilityEvidenceSchema = z.object({
   retired_on_permanent_total_disability: z.literal(true),
   below_mandatory_retirement_age_on_january_1: z.literal(true),
   unable_to_perform_substantial_gainful_activity: z.literal(true),
+  condition_expected_to_last_one_year_or_result_in_death_verified: z.literal(
+    true,
+  ),
   disability_income_source_reference: z.string().trim().min(1),
   disability_income_reported_on: z.enum(["wages", "pension"]),
   eligibility_source_reference: z.string().trim().min(1),
   physician_statement: z.enum(["prior_year", "current_year", "va_21_0172"]),
   physician_statement_source_reference: z.string().trim().min(1),
+  physician_or_va_statement_signed_verified: z.literal(true),
   prior_year_line_b_or_1983_verified: z.literal(true).optional(),
 });
 

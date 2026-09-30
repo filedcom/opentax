@@ -244,6 +244,55 @@ function mixedDirectionCase() {
   };
 }
 
+function balancedMixedDirectionCase() {
+  const { ledger, evidence } = mixedDirectionCase();
+  const revisedTax = 150;
+  return {
+    ledger: {
+      ...ledger,
+      payor_events: [ledger.payor_events[0], {
+        ...ledger.payor_events[1],
+        tax_change_local_currency: 200,
+        tax_change_functional_currency: 200,
+        tax_change_usd: 20,
+        payor_revised_tax_usd: 70,
+      }],
+      redetermined_form1116: {
+        ...ledger.redetermined_form1116,
+        foreign_taxes_paid_or_accrued_usd: revisedTax,
+        foreign_tax_credit_claimed_usd: revisedTax,
+      },
+      affected_years: [{
+        ...ledger.affected_years[0],
+        redetermined_us_tax_liability_usd: 4_850,
+      }],
+    },
+    evidence: {
+      ...evidence,
+      revised_form1116: {
+        ...evidence.revised_form1116,
+        line9_foreign_tax: revisedTax,
+        line14_available_tax: revisedTax,
+        line24_allowed_credit: revisedTax,
+        line33_total_credit: revisedTax,
+        line35_credit: revisedTax,
+      },
+      revised_schedule3: {
+        ...evidence.revised_schedule3,
+        line1_foreign_tax_credit: revisedTax,
+        line8_nonrefundable_credits: revisedTax,
+      },
+      revised_form1040: {
+        ...evidence.revised_form1040,
+        line20_schedule3_nonrefundable_credit: revisedTax,
+        line21_nonrefundable_credits: revisedTax,
+        line22_tax_after_credits: 4_850,
+        line24_total_tax: 4_850,
+      },
+    },
+  };
+}
+
 Deno.test("Form 1116 Schedule C stages a sourced refund in native Parts II-IV", () => {
   const { ledger, evidence } = stagedCase();
   const xml = buildScheduleCProjection(ledger, evidence);
@@ -437,6 +486,21 @@ Deno.test("Form 1116 Schedule C stages mixed Part I and II changes with net Part
     pdf.part4_col4 !== 10
   ) {
     throw new Error("Schedule C mixed PDF candidate lost a payor or net tax");
+  }
+});
+
+Deno.test("Form 1116 Schedule C keeps Part III and omits Part IV when balanced redeterminations leave U.S. tax unchanged", () => {
+  const { ledger, evidence } = balancedMixedDirectionCase();
+  const xml = buildScheduleCProjection(ledger, evidence);
+  assertStringIncludes(xml, "<IncrAmtFrgnTaxesAccruedDtl>");
+  assertStringIncludes(xml, "<DecrAmtFrgnTaxesPdAccruedDtl>");
+  assertStringIncludes(xml, "<RedetermFrgnTxsPdAccruedAmt>150</RedetermFrgnTxsPdAccruedAmt>");
+  if (xml.includes("<ChgUSTxLiabilityGrp>")) {
+    throw new Error("Schedule C Part IV cannot report an unchanged U.S. liability");
+  }
+  const pdf = projectScheduleCPdfCandidate(ledger, evidence);
+  if (pdf.part3_col2 !== 150 || pdf.part4_col1 !== undefined || pdf.part4_col4 !== undefined) {
+    throw new Error("Schedule C PDF candidate must leave unchanged-liability Part IV blank");
   }
 });
 

@@ -4131,6 +4131,11 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       general: singleGeneral,
       w2: [wage(200_000, 35_000, "Example Employer", "12-3456789")],
       f3921: [{
+        source_document_reference: "Synthetic issued Form 3921 copy",
+        corporation_name: "Example Employer",
+        corporation_ein: "12-3456789",
+        employee_tin: singleGeneral.taxpayer_ssn,
+        box1_date_option_granted: "2022-06-01",
         box2_date_option_exercised: "2025-06-02",
         box3_exercise_price_per_share: 10,
         box4_fmv_per_share: 250,

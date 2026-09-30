@@ -70,6 +70,42 @@ const shortTermGift = {
   short_term_ordinary_income_reduction_confirmed: true as const,
 };
 
+const inventoryGift = {
+  ...shortTermGift,
+  property_description: "Purchased books held for retail sale",
+  date_acquired: "2023-02-01",
+  fmv: 1_000,
+  deduction_claimed: 600,
+  cost_or_adjusted_basis: 600,
+  short_term_ordinary_income_reduction_confirmed: undefined,
+  inventory_ordinary_income_reduction: {
+    purchase_invoice_reference: "Invoice INV-102",
+    inventory_cost_record_reference: "Inventory ledger LOT-102",
+    property_held_for_sale_to_customers_verified: true as const,
+    fmv_sale_gain_entirely_ordinary_verified: true as const,
+    no_other_reduction_reason_verified: true as const,
+  },
+};
+
+const creatorGift = {
+  ...inventoryGift,
+  property_description: "Donor-created watercolor painting",
+  date_acquired: "2024-09-01",
+  donor_acquisition_description: "Created",
+  deduction_claimed: 250,
+  cost_or_adjusted_basis: 250,
+  inventory_ordinary_income_reduction: undefined,
+  creator_ordinary_income_reduction: {
+    creation_record_reference: "Studio log ART-17",
+    capitalized_cost_record_reference: "Undeducted materials ledger ART-17",
+    taxpayer_created_artwork_verified: true as const,
+    date_acquired_is_substantial_completion_verified: true as const,
+    basis_costs_not_previously_deducted_verified: true as const,
+    fmv_sale_gain_entirely_ordinary_verified: true as const,
+    no_other_reduction_reason_verified: true as const,
+  },
+};
+
 const soldVehicle = {
   property_description: "2020 Honda Civic, good condition, 60,000 miles",
   donee_organization_name: "City Charity",
@@ -763,6 +799,36 @@ Deno.test("Form 8283 PDF prints every sourced short-term Section A reduction", (
   assertStringIncludes(
     (instance?.reduction_statements as string[])[0],
     "short-term appreciation of $300.00",
+  );
+});
+
+Deno.test("Form 8283 PDF prints purchased inventory basis claim and reason", () => {
+  const form = { section_a_items: [inventoryGift] };
+  const [instance] = form8283Pdf.instances?.(
+    form,
+    filer,
+    currentSectionAPending(form),
+  ) ?? [];
+  assertEquals(instance?.row1_claim, 600);
+  assertEquals(instance?.row1_basis, 600);
+  assertStringIncludes(
+    (instance?.reduction_statements as string[])[0],
+    "hypothetical sale gain of $400.00",
+  );
+});
+
+Deno.test("Form 8283 PDF prints donor-created art basis claim and reason", () => {
+  const form = { section_a_items: [creatorGift] };
+  const [instance] = form8283Pdf.instances?.(
+    form,
+    filer,
+    currentSectionAPending(form),
+  ) ?? [];
+  assertEquals(instance?.row1_basis, 250);
+  assertEquals(instance?.row1_claim, 250);
+  assertStringIncludes(
+    (instance?.reduction_statements as string[])[0],
+    "hypothetical sale gain of $750.00",
   );
 });
 

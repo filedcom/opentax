@@ -7,6 +7,8 @@ import {
   SectionBPropertyType,
 } from "../../../nodes/inputs/f8283/index.ts";
 import {
+  assertCreatorReductionSource,
+  assertInventoryReductionSource,
   assertShortTermReductionSource,
   assertVehicleSaleReductionSource,
   fmvReductionExplanation,
@@ -636,17 +638,25 @@ export const form8283Pdf: PdfFormDescriptor = {
       item.short_term_ordinary_income_reduction_confirmed === true &&
       needsFmvReductionStatement(item)
     );
+    const inventoryReduction = sectionA.some((item) =>
+      item.inventory_ordinary_income_reduction !== undefined &&
+      needsFmvReductionStatement(item)
+    );
+    const creatorReduction = sectionA.some((item) =>
+      item.creator_ordinary_income_reduction !== undefined &&
+      needsFmvReductionStatement(item)
+    );
     if (
       !elected &&
-      !shortTermReduction && !soldVehicle && !needyVehicle &&
+      !shortTermReduction && !inventoryReduction && !creatorReduction && !soldVehicle && !needyVehicle &&
       sectionA.length !== 1
     ) {
       throw new Error(
-        "Form 8283 PDF needs a reconciled Section A election, sourced short-term reduction, or one ordinary gift",
+        "Form 8283 PDF needs a reconciled Section A election, sourced ordinary-income reduction, or one ordinary gift",
       );
     }
     if (elected) assertElectedSectionAReconciled({ pending: allPending });
-    if (!elected && !shortTermReduction && !soldVehicle && !needyVehicle) {
+    if (!elected && !shortTermReduction && !inventoryReduction && !creatorReduction && !soldVehicle && !needyVehicle) {
       assertUnreducedSectionACompanion(sectionA[0]);
     }
     if (soldVehicle) {
@@ -659,6 +669,8 @@ export const form8283Pdf: PdfFormDescriptor = {
         assertUnreducedSectionACompanion(item);
       } else {
         assertShortTermReductionSource(item);
+        assertInventoryReductionSource(item);
+        assertCreatorReductionSource(item);
       }
     }
     if (
