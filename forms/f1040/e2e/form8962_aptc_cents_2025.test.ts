@@ -60,11 +60,11 @@ async function validateXml(xml: string) {
   }
 }
 
-function file(policy: Record<string, unknown>) {
+function file(policies: Record<string, unknown> | Record<string, unknown>[]) {
   return execute(buildExecutionPlan(registry), registry, {
     general,
     w2: [w2],
-    f1095a: [policy],
+    f1095a: Array.isArray(policies) ? policies : [policies],
   }, { taxYear: 2025, formType: "f1040" });
 }
 
@@ -160,6 +160,96 @@ Deno.test("one-policy APTC cents round line 33 totals once for annual line 11", 
   const filer = extractFilerIdentity(result.pending.f1040);
   const xml = buildMefXml(result.pending, filer);
   assertStringIncludes(xml, "<AnnualPremiumAmt>9606</AnnualPremiumAmt>");
+  assertStringIncludes(
+    xml,
+    "<AnnualAdvancedPTCAmt>3606</AnnualAdvancedPTCAmt>",
+  );
+  await validateXml(xml);
+  const pdf = await buildPdfBytes(result.pending, filer);
+  assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 3, true);
+});
+
+Deno.test("corrected 1095-A cents supersede original monthly policy amounts", async () => {
+  const original = {
+    issuer_name: "Texas Marketplace",
+    policy_number: "POLICY-CORRECTED-CENTS",
+    coverage_state: "TX",
+    covered_individual_ssns: ["111223333"],
+    monthly_premiums: Array(12).fill(600),
+    monthly_slcsps: Array(12).fill(650),
+    monthly_aptcs: Array(12).fill(500),
+    annual_premium: 7_200,
+    annual_slcsp: 7_800,
+    annual_aptc: 6_000,
+  };
+  const corrected = {
+    ...original,
+    corrected_box_checked: true,
+    monthly_premiums: Array(12).fill(800.51),
+    monthly_slcsps: [...Array(6).fill(700.49), ...Array(6).fill(800.49)],
+    monthly_aptcs: Array(12).fill(300.51),
+    annual_premium: 9_606.12,
+    annual_slcsp: 9_005.88,
+    annual_aptc: 3_606.12,
+  };
+  const result = file([original, corrected]);
+  assertEquals(result.diagnostics, []);
+  const source = result.pending.f1095a?.f1095as as Array<{
+    monthly_premiums: number[];
+  }>;
+  assertEquals(source.length, 2);
+  assertEquals(source[0].monthly_premiums[0], 600);
+  assertEquals(source[1].monthly_premiums[0], 800.51);
+  const rows = result.pending.form8962?.monthly_ptc_rows as Array<{
+    premium: number;
+    slcsp: number;
+    aptc: number;
+  }>;
+  assertEquals(rows[0].premium, 801);
+  assertEquals(rows[0].slcsp, 700);
+  assertEquals(rows[0].aptc, 301);
+  assertEquals(result.pending.form8962?.total_premium_tax_credit, 8_400);
+  assertEquals(result.pending.form8962?.total_advance_ptc, 3_612);
+  assertEquals(result.pending.f1040?.line31_additional_payments, 4_788);
+  const filer = extractFilerIdentity(result.pending.f1040);
+  const xml = buildMefXml(result.pending, filer);
+  await validateXml(xml);
+  const pdf = await buildPdfBytes(result.pending, filer);
+  assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 3, true);
+});
+
+Deno.test("corrected 1095-A annual cents use corrected line 33 totals", async () => {
+  const original = {
+    issuer_name: "Texas Marketplace",
+    policy_number: "POLICY-CORRECTED-ANNUAL-CENTS",
+    coverage_state: "TX",
+    covered_individual_ssns: ["111223333"],
+    monthly_premiums: Array(12).fill(600),
+    monthly_slcsps: Array(12).fill(650),
+    monthly_aptcs: Array(12).fill(500),
+    annual_premium: 7_200,
+    annual_slcsp: 7_800,
+    annual_aptc: 6_000,
+  };
+  const corrected = {
+    ...original,
+    corrected_box_checked: true,
+    monthly_premiums: Array(12).fill(800.49),
+    monthly_slcsps: Array(12).fill(700.49),
+    monthly_aptcs: Array(12).fill(300.49),
+    annual_premium: 9_605.88,
+    annual_slcsp: 8_405.88,
+    annual_aptc: 3_605.88,
+  };
+  const result = file([original, corrected]);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form8962?.monthly_ptc_rows, undefined);
+  assertEquals(result.pending.form8962?.annual_premium, 9_606);
+  assertEquals(result.pending.form8962?.annual_slcsp, 8_406);
+  assertEquals(result.pending.form8962?.annual_aptc, 3_606);
+  assertEquals(result.pending.f1040?.line31_additional_payments, 4_198);
+  const filer = extractFilerIdentity(result.pending.f1040);
+  const xml = buildMefXml(result.pending, filer);
   assertStringIncludes(
     xml,
     "<AnnualAdvancedPTCAmt>3606</AnnualAdvancedPTCAmt>",

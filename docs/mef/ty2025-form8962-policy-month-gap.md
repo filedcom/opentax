@@ -55,16 +55,18 @@ Marketplace values remain in the pending source record. Native MeF independently
 reconciles the raw annual/monthly totals, then checks the filed whole-dollar
 rows or line 11, total PTC and APTC, Schedule 2 or 3, and Form 1040.
 
-Five full-return cents cases pass local TY2025 v5.4 XSD: monthly net PTC,
+Seven full-return cents cases pass local TY2025 v5.4 XSD: monthly net PTC,
 annual line 11 net PTC, monthly excess-APTC repayment, below-100% APTC-only
-repayment, and MFS APTC-only annual repayment. The first three build PDF
-packets; a raw premium changed across a rounding boundary is rejected at
-native export. The monthly $800.51/$700.49/$300.51 source yields $8,400 PTC,
-$3,612 APTC, and $4,788 net PTC. Replacing monthly APTC with $750.51 yields
-$612 excess repayment. Cents handling for multiple policies, corrected-copy
-source pairs, shared allocations, marriage, QSEHRA, and Pub. 974 remains open,
-as do source authenticity, PDF visual review, the final bulk test, IRS
-business-rule results, and ATS acceptance.
+repayment, MFS APTC-only annual repayment, and corrected-copy versions of the
+ordinary monthly and annual paths. Five build PDF packets; a raw premium
+changed across a rounding boundary is rejected at native export. The
+corrected-copy cases keep both Marketplace statements in the source record and
+use only the identified corrected version for calculation, MeF, and PDF. The
+monthly $800.51/$700.49/$300.51 source yields $8,400 PTC, $3,612 APTC, and
+$4,788 net PTC. Replacing monthly APTC with $750.51 yields $612 excess
+repayment. Cents handling for multiple policies, shared allocations, marriage,
+QSEHRA, and Pub. 974 remains open, as do source authenticity, PDF visual
+review, the final bulk test, IRS business-rule results, and ATS acceptance.
 
 ## No-APTC positive PTC: bounded monthly route
 

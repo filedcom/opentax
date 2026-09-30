@@ -1000,7 +1000,6 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
       allocatedItems[0].slcsp_corrections === undefined &&
       allocatedItems[0].slcsp_review_periods === undefined &&
       allocatedItems[0].alternative_marriage_owner === undefined &&
-      sourceStatements.length === 1 &&
       ([
         ...allocatedItems[0].monthly_premiums,
         ...allocatedItems[0].monthly_slcsps,
