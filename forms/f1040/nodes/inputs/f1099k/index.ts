@@ -73,14 +73,30 @@ export const itemSchema = z.object({
   //   "schedule_1_line_8j" → confirmed activity-not-for-profit income.
   //   "mixed_schedule_c_personal_item_sales" → reviewed business receipts
   //     and separately identified personal-item sales on one payer report.
-  // Personal-item sales require item-level basis review. Erroneous Forms
-  // 1099-K and other mixed-purpose combinations still need disposition.
+  //   "reported_in_error" → reviewed personal payments reported by the PSE
+  //     in error, disclosed in the entry space at the top of Schedule 1.
+  // Personal-item sales require item-level basis review. Partial erroneous
+  // reports and other mixed-purpose combinations still need disposition.
   for_routing: z.enum([
     "schedule_c",
     "schedule_1_line_8j",
     "personal_item_sales",
     "mixed_schedule_c_personal_item_sales",
+    "reported_in_error",
   ]).optional(),
+  reported_error_review: z.object({
+    payments: z.array(
+      z.object({
+        transaction_id: z.string().trim().min(1),
+        amount: z.number().int().positive(),
+        kind: z.enum(["personal_gift", "expense_reimbursement"]),
+        sender_name: z.string().trim().min(1),
+        payment_record_reference: z.string().trim().min(1),
+        no_goods_or_services: z.literal(true),
+      }).strict(),
+    ).min(1),
+    correction_request_reference: z.string().trim().min(1),
+  }).strict().optional(),
   personal_item_sales_review: z.array(
     z.object({
       transaction_id: z.string().trim().min(1),
@@ -163,7 +179,8 @@ export const itemSchema = z.object({
     (item.personal_item_sales_review &&
       !["personal_item_sales", "mixed_schedule_c_personal_item_sales"].includes(
         item.for_routing ?? "",
-      ))
+      )) ||
+    (item.reported_error_review && item.for_routing !== "reported_in_error")
   ) {
     ctx.addIssue({
       code: "custom",
@@ -172,6 +189,26 @@ export const itemSchema = z.object({
     });
   }
   const mixed = item.for_routing === "mixed_schedule_c_personal_item_sales";
+  if (item.for_routing === "reported_in_error") {
+    const review = item.reported_error_review;
+    const payments = review?.payments ?? [];
+    if (
+      gross <= 0 || !item.pse_name.trim() ||
+      !/^\d{9}$/.test(item.pse_tin?.replaceAll("-", "") ?? "") ||
+      (!item.recipient_tin && !item.recipient_identity_review) ||
+      payments.length === 0 ||
+      new Set(payments.map((payment) => payment.transaction_id)).size !==
+        payments.length ||
+      payments.reduce((sum, payment) => sum + payment.amount, 0) !== gross
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["reported_error_review"],
+        message:
+          "1099-K reported error needs identified payer, recipient, correction request, and payments equal to box 1a",
+      });
+    }
+  }
   if ((item.for_routing === "schedule_c" || mixed) && gross > 0) {
     const review = item.schedule_c_receipts_review;
     const personal = mixed
@@ -378,6 +415,8 @@ function incomeOutputs(k99s: K99Items): NodeOutput[] {
         return [];
       case "personal_item_sales":
         return [];
+      case "reported_in_error":
+        return [];
     }
   });
   const hobbyIncome = k99s.filter((item) =>
@@ -387,8 +426,14 @@ function incomeOutputs(k99s: K99Items): NodeOutput[] {
     (sum, item) => sum + item.nonbusiness_activity_review!.included_in_line8j,
     0,
   );
+  const reportedError = k99s.filter((item) =>
+    item.for_routing === "reported_in_error"
+  ).reduce((sum, item) => sum + item.box1a_gross_payments!, 0);
   return [
     ...businessOutputs,
+    ...(reportedError > 0
+      ? [output(schedule1, { form1099k_reported_error_or_loss: reportedError })]
+      : []),
     ...(hobbyIncome > 0
       ? [
         output(schedule1, { line8j_f1099k_hobby_income: hobbyIncome }),

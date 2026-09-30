@@ -117,8 +117,10 @@ business/personal mixed route now allocates one K report between Schedule C
 and Form 8949, including an identified NEC/MISC duplicate when present.
 Native MeF and PDF export reject any positive K box 1a with no supported
 income classification, so an unresolved source report cannot silently drop
-from a filed return. Erroneous reports, reimbursements, and other mixed
-classifications remain open.
+from a filed return. A wholly erroneous report for reviewed personal gifts
+or expense reimbursements now enters the non-income entry space at the top
+of 2025 Schedule 1, with source-to-print reconciliation. Partial erroneous
+reports and other mixed classifications remain open.
 
 The Form 1099-MISC box 3 non-prize other-income route now requires a reviewed
 payment description and carries payer, recipient, amount, and description rows

@@ -732,3 +732,15 @@ source/pending JSON, XML, PDF, contact sheet, and page images are retained at
 `.state/research/ty2025-filled-pdf-review/2026-09-30-v92/`. Actual payer
 copies and payment transaction bytes are not authenticated; IRS business
 rules and ATS remain open.
+
+The `single-k-reported-error` source return has a four-page `v93` PDF, all
+pages inspected at full size. A synthetic Form 1099-K reports $1,000 made up
+of an $800 personal gift and a $200 shared-expense reimbursement. Schedule 1
+prints $1,000 in its 2025 top entry, leaves line 10 blank, and Form 1040 line
+8 remains blank. The native XML contains `Form1099KRptErrorOrLossAmt` and
+passes local TY2025 v5.4 XSD. Changed source recipient or Schedule 1 top
+amount rejects at export. The PDF SHA-256 is
+`7570cd9593965b536163a6ea8341d58254a99be2dc2c870ece44e193731b84d0`;
+source/pending JSON, XML, PDF, and rendered pages are retained at
+`.state/research/ty2025-filled-pdf-review/2026-09-30-v93/`. Payer-issued and
+payment/correction bytes, IRS business rules, and ATS remain open.

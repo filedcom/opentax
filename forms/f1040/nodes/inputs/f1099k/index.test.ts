@@ -870,6 +870,55 @@ Deno.test("1099-K mixed business and personal payments allocate box 1a exactly",
   );
 });
 
+Deno.test("1099-K reported-error payments aggregate on Schedule 1 without income", () => {
+  const erroneous = (amount: number, pseTin: string) =>
+    minimalItem({
+      pse_tin: pseTin,
+      recipient_tin: "987-65-4321",
+      box1a_gross_payments: amount,
+      for_routing: "reported_in_error",
+      reported_error_review: {
+        payments: [{
+          transaction_id: `gift-${pseTin}`,
+          amount,
+          kind: "personal_gift",
+          sender_name: "Example Friend",
+          payment_record_reference: "2025 payment record",
+          no_goods_or_services: true,
+        }],
+        correction_request_reference: "2025 payer correction request",
+      },
+    });
+  const first = erroneous(800, "12-3456789");
+  const second = erroneous(200, "23-4567890");
+  const result = compute([first, second]);
+  assertEquals(
+    (findOutput(result, "schedule1")!.fields as Record<string, unknown>)
+      .form1099k_reported_error_or_loss,
+    1_000,
+  );
+  assertEquals(findOutput(result, "agi_aggregator"), undefined);
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        ...first,
+        reported_error_review: {
+          payments: [{
+            transaction_id: "gift-1",
+            amount: 700,
+            kind: "personal_gift",
+            sender_name: "Example Friend",
+            payment_record_reference: "2025 payment record",
+            no_goods_or_services: true,
+          }],
+          correction_request_reference: "2025 payer correction request",
+        },
+      })]),
+    Error,
+    "payments equal to box 1a",
+  );
+});
+
 Deno.test("no for_routing: box1a above threshold still produces no income output", () => {
   const result = compute([minimalItem({ box1a_gross_payments: 50_000 })]);
   assertEquals(findOutput(result, "schedule_c"), undefined);

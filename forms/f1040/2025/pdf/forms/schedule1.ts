@@ -34,6 +34,11 @@ import { schedule1ActivityNotForProfitTotal } from "../../mef/forms/schedule1_no
 //     f2_30 = Line 26
 
 const fields: ReadonlyArray<PdfFieldEntry> = [
+  {
+    kind: "text",
+    domainKey: "form1099k_reported_error_or_loss",
+    pdfField: "topmostSubform[0].Page1[0].f1_03[0]",
+  },
   // ── Page 1: Part I Additional Income ────────────────────────────────────────
   {
     kind: "text",

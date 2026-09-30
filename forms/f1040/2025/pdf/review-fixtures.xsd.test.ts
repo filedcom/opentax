@@ -319,6 +319,52 @@ for (const fixture of pdfReviewFixtures) {
           "1099-K personal-item sales differ",
         );
       }
+      if (fixture.id === "single-k-reported-error") {
+        assertEquals(
+          result.pending.schedule1.form1099k_reported_error_or_loss,
+          1_000,
+        );
+        assertEquals(
+          result.pending.schedule1.line10_total_additional_income ?? 0,
+          0,
+        );
+        assertEquals(result.pending.f1040.line8_additional_income ?? 0, 0);
+        assertStringIncludes(
+          xml,
+          "<Form1099KRptErrorOrLossAmt>1000</Form1099KRptErrorOrLossAmt>",
+        );
+        assertThrows(
+          () =>
+            buildMefXml(
+              buildPending({
+                ...result.pending,
+                schedule1: {
+                  ...result.pending.schedule1,
+                  form1099k_reported_error_or_loss: 900,
+                },
+              }),
+              fixture.filer,
+            ),
+          Error,
+          "reported-error amount differs",
+        );
+        assertThrows(
+          () =>
+            buildMefXml(
+              buildPending({
+                ...result.pending,
+                f1099k: {
+                  f1099ks: (result.pending.f1099k.f1099ks as Array<
+                    Record<string, unknown>
+                  >).map((row) => ({ ...row, recipient_tin: "999-99-9999" })),
+                },
+              }),
+              fixture.filer,
+            ),
+          Error,
+          "identified payer, recipient",
+        );
+      }
       if (fixture.id === "single-k-mixed-business-personal") {
         assertThrows(
           () =>

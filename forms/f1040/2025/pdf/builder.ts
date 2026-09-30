@@ -11,6 +11,7 @@ import {
   assertF1040FinalHeader,
   assertKIncomeClassification,
   assertKPersonalSaleSources,
+  assertKReportedErrorSources,
   assertKWithholdingSourceIdentity,
   assertSchedule1Box3SourceIdentity,
   assertSchedule1KSourceIdentity,
@@ -265,6 +266,7 @@ export async function buildPdfBytes(
   }
   assertKIncomeClassification(normalized);
   if (filer) {
+    assertKReportedErrorSources(normalized, filer);
     assertScheduleCReceiptSourceIdentity(normalized, filer);
     assertKWithholdingSourceIdentity(normalized, filer);
     assertKPersonalSaleSources(pending, filer);

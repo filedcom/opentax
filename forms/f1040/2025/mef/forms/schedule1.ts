@@ -7,6 +7,7 @@ import { schedule1ActivityNotForProfitTotal } from "./schedule1_nonbusiness_sour
 import { inputSchema as trustK1InputSchema } from "../../../nodes/inputs/k1_trust/index.ts";
 
 export interface Fields {
+  form1099k_reported_error_or_loss?: number | null;
   line1_state_refund?: number | null;
   line3_schedule_c?: number | null;
   line4_other_gains?: number | null;
@@ -63,6 +64,7 @@ export interface Fields {
 type Input = Partial<Fields> & Record<string, unknown>;
 
 export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
+  ["form1099k_reported_error_or_loss", "Form1099KRptErrorOrLossAmt"],
   ["line1_state_refund", "StateLocalIncomeTaxRefundAmt"],
   ["line3_schedule_c", "BusinessIncomeLossAmt"],
   ["line4_other_gains", "OtherGainLossAmt"],

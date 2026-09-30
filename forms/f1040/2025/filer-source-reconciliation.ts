@@ -16,6 +16,7 @@ export function assertKIncomeClassification(
         "schedule_1_line_8j",
         "personal_item_sales",
         "mixed_schedule_c_personal_item_sales",
+        "reported_in_error",
       ].includes(item.for_routing as string)
     ) {
       throw new Error(
@@ -73,6 +74,73 @@ function kRecipientMatches(
     Boolean(normalize(review.source_reference));
 }
 
+export function assertKReportedErrorSources(
+  pending: Record<string, unknown>,
+  filer: FilerIdentity,
+): void {
+  const raw = (pending.f1099k as
+    | { f1099ks?: Array<Record<string, unknown>> }
+    | undefined)?.f1099ks ?? [];
+  let total = 0;
+  for (const item of raw) {
+    if (item.for_routing !== "reported_in_error") continue;
+    const review = item.reported_error_review as
+      | Record<string, unknown>
+      | undefined;
+    const payments = review?.payments;
+    const gross = item.box1a_gross_payments;
+    if (
+      typeof item.pse_name !== "string" || !item.pse_name.trim() ||
+      !tin(item.pse_tin, "1099-K PSE") || !kRecipientMatches(item, filer) ||
+      typeof gross !== "number" || !Number.isSafeInteger(gross) ||
+      gross <= 0 || !Array.isArray(payments) || payments.length === 0 ||
+      typeof review?.correction_request_reference !== "string" ||
+      !review.correction_request_reference.trim()
+    ) {
+      throw new Error(
+        "1099-K reported error needs identified payer, recipient, and correction request",
+      );
+    }
+    const seen = new Set<string>();
+    let subtotal = 0;
+    for (const value of payments) {
+      if (!value || typeof value !== "object") {
+        throw new Error("1099-K reported-error payment is invalid");
+      }
+      const payment = value as Record<string, unknown>;
+      if (
+        typeof payment.transaction_id !== "string" ||
+        !payment.transaction_id.trim() ||
+        seen.has(payment.transaction_id) ||
+        typeof payment.amount !== "number" ||
+        !Number.isSafeInteger(payment.amount) || payment.amount <= 0 ||
+        !["personal_gift", "expense_reimbursement"].includes(
+          payment.kind as string,
+        ) ||
+        typeof payment.sender_name !== "string" ||
+        !payment.sender_name.trim() ||
+        typeof payment.payment_record_reference !== "string" ||
+        !payment.payment_record_reference.trim() ||
+        payment.no_goods_or_services !== true
+      ) {
+        throw new Error("1099-K reported-error payment is invalid");
+      }
+      seen.add(payment.transaction_id);
+      subtotal += payment.amount;
+    }
+    if (subtotal !== gross) {
+      throw new Error("1099-K reported-error payments differ from box 1a");
+    }
+    total += subtotal;
+  }
+  const schedule1 = pending.schedule1 as Record<string, unknown> | undefined;
+  if ((schedule1?.form1099k_reported_error_or_loss ?? 0) !== total) {
+    throw new Error(
+      "Schedule 1 1099-K reported-error amount differs from payer sources",
+    );
+  }
+}
+
 export function assertKWithholdingSourceIdentity(
   pending: Record<string, unknown>,
   filer: FilerIdentity,
@@ -98,6 +166,7 @@ export function assertKWithholdingSourceIdentity(
         "schedule_1_line_8j",
         "personal_item_sales",
         "mixed_schedule_c_personal_item_sales",
+        "reported_in_error",
       ].includes(
         item.for_routing as string,
       ) ||

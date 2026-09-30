@@ -11,6 +11,7 @@ import {
   assertF1040SourceIdentity,
   assertKIncomeClassification,
   assertKPersonalSaleSources,
+  assertKReportedErrorSources,
   assertKWithholdingSourceIdentity,
   assertSchedule1Box3SourceIdentity,
   assertSchedule1KSourceIdentity,
@@ -219,6 +220,7 @@ function buildReturnXml(
     assertF1040SourceIdentity(pending.f1040, filer);
   }
   assertKIncomeClassification(pending);
+  assertKReportedErrorSources(pending, filer);
   assertScheduleCReceiptSourceIdentity(pending, filer);
   assertKWithholdingSourceIdentity(pending, filer);
   assertKPersonalSaleSources(pending, filer);

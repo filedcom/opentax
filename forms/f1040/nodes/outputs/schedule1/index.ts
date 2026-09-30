@@ -20,6 +20,9 @@ import { box11CodeKSourceSchema } from "../../inputs/k1_partnership/box11_code_k
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 const inputSchema = z.object({
+  // Entry space above Part I: Form 1099-K amounts reported in error or
+  // personal items sold at a loss. It does not enter income or AGI totals.
+  form1099k_reported_error_or_loss: z.number().int().nonnegative().optional(),
   // ── Part I — Additional Income ────────────────────────────────────────────
   // Line 1 — Taxable refunds, credits, or offsets of state/local income taxes
   line1_state_refund: z.number().optional(),

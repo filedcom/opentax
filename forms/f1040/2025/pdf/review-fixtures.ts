@@ -2637,6 +2637,46 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-k-reported-error",
+    inputs: {
+      general: singleGeneral,
+      f1099k: [{
+        pse_name: "Example Payment App",
+        pse_tin: "34-5678901",
+        recipient_tin: "111-22-3333",
+        box1a_gross_payments: 1_000,
+        for_routing: "reported_in_error",
+        reported_error_review: {
+          payments: [{
+            transaction_id: "birthday-gift-2025",
+            amount: 800,
+            kind: "personal_gift",
+            sender_name: "Example Friend",
+            payment_record_reference: "Synthetic 2025 gift payment record",
+            no_goods_or_services: true,
+          }, {
+            transaction_id: "shared-meal-2025",
+            amount: 200,
+            kind: "expense_reimbursement",
+            sender_name: "Example Neighbor",
+            payment_record_reference:
+              "Synthetic 2025 shared-meal expense and repayment record",
+            no_goods_or_services: true,
+          }],
+          correction_request_reference:
+            "Synthetic 2025 payer correction request record",
+        },
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule1"],
+    reviewFocus: [
+      "K box 1a $1,000 splits into a $800 personal gift and $200 expense reimbursement",
+      "Schedule 1 top entry shows $1,000 reported in error without line 8 income",
+      "Form 1040 total income and AGI remain zero",
+    ],
+  },
+  {
     id: "single-k-mixed-business-personal",
     inputs: {
       general: {
