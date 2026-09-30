@@ -31,6 +31,15 @@ for (const fixture of pdfReviewFixtures) {
       });
       assertEquals(result.diagnostics, []);
       const xml = buildMefXml(buildPending(result.pending), fixture.filer);
+      if (fixture.id === "single-final-trust-k1-long-term-capital-loss") {
+        assertEquals(result.pending.schedule_d.line_12_k1_lt, -900);
+        assertEquals(result.pending.schedule_d.print_line15_lt_total, -900);
+        assertEquals(result.pending.f1040.line11_agi, 29_100);
+        assertStringIncludes(
+          xml,
+          "<NetLTGainOrLossFromSchK1Amt>-900</NetLTGainOrLossFromSchK1Amt>",
+        );
+      }
       if (fixture.id === "single-mixed-final-trust-and-partnership-capital") {
         assertEquals(result.pending.schedule_d.line_5_k1_st, 200);
         assertEquals(result.pending.schedule_d.line_12_k1_lt, 100);

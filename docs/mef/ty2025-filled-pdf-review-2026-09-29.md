@@ -301,3 +301,15 @@ line 7a; AGI is $30,300. Its four-page PDF SHA-256 is
 All eight pages were rendered and inspected for identity, amounts, signs, and
 checkboxes. Trust issuer bytes, code D's rate-character branches, IRS business
 rules, and ATS acceptance remain open.
+
+The `single-final-trust-k1-long-term-capital-loss` packet was generated with
+the other forty prepared cases in
+`.state/research/ty2025-filled-pdf-review/2026-09-30-v50/`. Its synthetic
+final trust K-1 code D $900 long-term loss passes local TY2025 v5.4 XSD and
+prints as `-900` on Schedule D lines 12, 15, 16, and 21 and Form 1040 line
+7a; AGI is $29,100. All four pages were rendered and inspected for owner
+identity, signs, amounts, and checkboxes. The PDF SHA-256 is
+`768f2e0595f7365ce94cc60c666980d3021066e9f4885a1c52b33da7ebc650c8`.
+Positive net-gain combinations remain blocked until code D enters the 28%
+rate and unrecaptured section 1250 worksheets. Issuer bytes, IRS business
+rules, and ATS acceptance remain open.

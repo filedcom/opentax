@@ -751,6 +751,31 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-final-trust-k1-long-term-capital-loss",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(30_000, 3_000, "Example Employer", "12-3456789")],
+      k1_trust: [{
+        estate_trust_name: "Family Trust",
+        estate_trust_ein: "123456789",
+        source_document_reference: "Synthetic final 2025 trust K-1",
+        box11_code_d_long_term_capital_loss_carryover: 900,
+        box11_code_d_statement_reference:
+          "Synthetic final capital loss statement",
+        box11_final_k1: true,
+        box11_beneficiary_succeeds_to_property: true,
+        beneficiary_ssn: "111223333",
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule_d"],
+    reviewFocus: [
+      "The final trust K-1 code D $900 loss prints as negative $900 on Schedule D line 12",
+      "Schedule D lines 15 and 16 and Form 1040 line 7a carry the $900 loss once",
+      "Form 1040 AGI is $29,100 after the loss",
+    ],
+  },
+  {
     id: "single-final-trust-k1-short-term-capital-loss",
     inputs: {
       general: singleGeneral,

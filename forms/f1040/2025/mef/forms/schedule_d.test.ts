@@ -53,6 +53,49 @@ Deno.test("Schedule D code C final trust loss reconciles source and owner", () =
   assertThrows(() => scheduleD.build({ line_5_k1_st: 900 }, mixedContext));
 });
 
+Deno.test("Schedule D code D final trust loss reconciles line 12 and owner", () => {
+  const item = {
+    estate_trust_name: "Family Trust",
+    estate_trust_ein: "123456789",
+    source_document_reference: "Final K-1",
+    box11_code_d_long_term_capital_loss_carryover: 900,
+    box11_code_d_statement_reference: "Final capital loss statement",
+    box11_final_k1: true,
+    box11_beneficiary_succeeds_to_property: true,
+    beneficiary_ssn: "111223333",
+  };
+  const context = {
+    filer: { primarySSN: "111223333" } as never,
+    pending: { k1_trust: { k1_trusts: [item] } },
+  };
+  const fields = {
+    line_12_k1_lt: -900,
+    trust_k1_code_d_loss: 900,
+    print_line16_combined: -900,
+  };
+  assertStringIncludes(
+    scheduleD.build(fields, context),
+    "<NetLTGainOrLossFromSchK1Amt>-900</NetLTGainOrLossFromSchK1Amt>",
+  );
+  assertThrows(() =>
+    scheduleD.build({ ...fields, line_12_k1_lt: -899 }, context)
+  );
+  assertThrows(() =>
+    scheduleD.build({ ...fields, print_line16_combined: 100 }, context)
+  );
+  assertThrows(
+    () => scheduleD.build(fields),
+    Error,
+    "needs its final trust K-1 source",
+  );
+  assertThrows(() =>
+    scheduleD.build(fields, {
+      ...context,
+      filer: { primarySSN: "987654321" } as never,
+    })
+  );
+});
+
 function assertNotIncludes(actual: string, expected: string) {
   assertEquals(
     actual.includes(expected),

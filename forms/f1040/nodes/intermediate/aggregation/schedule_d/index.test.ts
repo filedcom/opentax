@@ -696,6 +696,11 @@ Deno.test("compute: offsetting trust K-1 short-term items still file Schedule D"
   assertEquals(findOutput(result, "schedule_d")?.fields.print_line7_st_total, 0);
 });
 
+Deno.test("compute: final trust K-1 code D allows a loss and rejects positive special-rate worksheet exposure", () => {
+  assertEquals(findOutput(computeD2({ line_12_k1_lt: -900, trust_k1_code_d_loss: 900 }), "f1040")?.fields.line7_capital_gain, -900);
+  assertThrows(() => computeD2({ line_12_k1_lt: [-900, 1000], trust_k1_code_d_loss: 900 }), Error, "needs 28% and unrecaptured");
+});
+
 Deno.test("compute: line_12_k1_lt (LT K-1) included in LT net", () => {
   const result = computeD2({ line_12_k1_lt: 3_500 });
   const f1040 = findOutput(result, "f1040");

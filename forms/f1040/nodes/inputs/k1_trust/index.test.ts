@@ -128,6 +128,35 @@ Deno.test("trust K-1 box 11 code C requires final-year beneficiary evidence", ()
   );
 });
 
+Deno.test("trust K-1 box 11 code D reaches Schedule D line 12 as a loss", () => {
+  const item = minimalItem({
+    estate_trust_ein: "123456789",
+    source_document_reference: "Final K-1",
+    box11_code_d_long_term_capital_loss_carryover: 900,
+    box11_code_d_statement_reference: "Final capital loss statement",
+    box11_final_k1: true,
+    box11_beneficiary_succeeds_to_property: true,
+    beneficiary_ssn: "111223333",
+  });
+  assertEquals(findOutput(compute([item]), "schedule_d")?.fields, {
+    line_12_k1_lt: -900,
+    trust_k1_code_d_loss: 900,
+  });
+  assertEquals(
+    findOutput(compute([{ ...item, box4a_net_lt_cap_gain: 900 }]), "schedule_d")
+      ?.fields.line_12_k1_lt,
+    0,
+  );
+});
+
+Deno.test("trust K-1 box 11 code D requires final-year beneficiary evidence", () => {
+  assertThrows(() =>
+    compute([
+      minimalItem({ box11_code_d_long_term_capital_loss_carryover: 900 }),
+    ])
+  );
+});
+
 Deno.test("trust K-1 box 12 code A routes signed line 2j amounts per source", () => {
   const source = {
     estate_trust_ein: "123456789",

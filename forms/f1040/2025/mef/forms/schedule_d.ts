@@ -152,10 +152,19 @@ export const scheduleD: MefFormDescriptor<"schedule_d", Input> = {
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040sd.pdf",
   build(fields, context) {
     const trustSource = context?.pending?.k1_trust;
+    if (
+      trustSource === undefined &&
+      typeof fields.trust_k1_code_d_loss === "number"
+    ) {
+      throw new Error(
+        "Schedule D code D loss needs its final trust K-1 source",
+      );
+    }
     if (trustSource !== undefined) {
       const trusts = trustK1InputSchema.parse(trustSource).k1_trusts;
       const finalLossItems = trusts.filter((item) =>
-        item.box11_code_c_short_term_capital_loss_carryover !== undefined
+        item.box11_code_c_short_term_capital_loss_carryover !== undefined ||
+        item.box11_code_d_long_term_capital_loss_carryover !== undefined
       );
       if (finalLossItems.length > 0) {
         const ownerSsns = [
@@ -173,7 +182,7 @@ export const scheduleD: MefFormDescriptor<"schedule_d", Input> = {
           )
         ) {
           throw new Error(
-            "Schedule D line 5 needs distinct final trust K-1 code C sources owned by this return",
+            "Schedule D needs distinct final trust K-1 capital loss sources owned by this return",
           );
         }
         const partnerships = context?.pending?.k1_partnership === undefined
@@ -183,7 +192,7 @@ export const scheduleD: MefFormDescriptor<"schedule_d", Input> = {
         const sCorps = context?.pending?.k1_s_corp === undefined
           ? []
           : sCorpK1InputSchema.parse(context.pending.k1_s_corp).k1_s_corps;
-        const expected = trusts.reduce(
+        const expectedSt = trusts.reduce(
           (sum, item) =>
             sum + (item.box3_net_st_cap_gain ?? 0) -
             (item.box11_code_c_short_term_capital_loss_carryover ?? 0),
@@ -195,9 +204,41 @@ export const scheduleD: MefFormDescriptor<"schedule_d", Input> = {
           (sum, item) => sum + (item.box7_net_st_cap_gain ?? 0),
           0,
         );
-        if (fields.line_5_k1_st !== expected) {
+        if (
+          finalLossItems.some((item) =>
+            item.box11_code_c_short_term_capital_loss_carryover !== undefined
+          ) && fields.line_5_k1_st !== expectedSt
+        ) {
           throw new Error(
             "Schedule D line 5 must reconcile to issued K-1 capital amounts",
+          );
+        }
+        const expectedLt = trusts.reduce(
+          (sum, item) =>
+            sum + (item.box4a_net_lt_cap_gain ?? 0) -
+            (item.box11_code_d_long_term_capital_loss_carryover ?? 0),
+          0,
+        ) + partnerships.reduce(
+          (sum, item) => sum + (item.box9a_net_lt_cap_gain ?? 0),
+          0,
+        ) + sCorps.reduce(
+          (sum, item) => sum + (item.box8a_net_lt_cap_gain ?? 0),
+          0,
+        );
+        const codeDLoss = trusts.reduce(
+          (sum, item) =>
+            sum + (item.box11_code_d_long_term_capital_loss_carryover ?? 0),
+          0,
+        );
+        if (
+          codeDLoss > 0 &&
+          (fields.line_12_k1_lt !== expectedLt ||
+            fields.trust_k1_code_d_loss !== codeDLoss ||
+            (typeof fields.print_line16_combined === "number" &&
+              fields.print_line16_combined > 0))
+        ) {
+          throw new Error(
+            "Schedule D line 12 needs reconciled final trust K-1 code D loss without unhandled special-rate gain",
           );
         }
       }

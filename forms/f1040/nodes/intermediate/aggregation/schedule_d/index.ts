@@ -113,6 +113,7 @@ export const inputSchema = z.object({
   line_5_k1_st: accumulable(z.number()).optional(),
   // K-1 long-term capital gains/losses — Line 12
   line_12_k1_lt: accumulable(z.number()).optional(),
+  trust_k1_code_d_loss: z.number().int().positive().optional(),
   // Form 8621 QEF net capital gain is long-term gain, not Schedule 1 income.
   line_11_qef_lt: z.number().nonnegative().optional(),
   // d_screen-style individual transactions (proceeds/cost/adjustment; gain_loss computed here)
@@ -430,6 +431,11 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
 
     // Line 16: combined net capital gain or loss
     const line16 = line7 + line15;
+    if (input.trust_k1_code_d_loss !== undefined && line16 > 0) {
+      throw new Error(
+        "Final trust K-1 code D with net capital gain needs 28% and unrecaptured section 1250 worksheet reconciliation",
+      );
+    }
 
     // Line 17: are lines 15 and 16 both gains?
     const line17Yes = line15 > 0 && line16 > 0;
