@@ -550,6 +550,18 @@ Deno.test("TY2025 Form 1040 builder rejects other return types and years", () =>
   );
 });
 
+Deno.test("TY2025 MeF rejects an explicitly dual-status Form 1040", () => {
+  assertThrows(
+    () =>
+      rawBuildMefXml(
+        { f1040: { dual_status_return_2025: true } },
+        sampleFiler(),
+      ),
+    Error,
+    "dual-status return cannot use Form 1040 e-file",
+  );
+});
+
 Deno.test("TY2025 MeF bundle rejects a non-1040 export", async () => {
   await assertRejects(
     () =>

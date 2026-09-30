@@ -33,6 +33,9 @@ export function assertF1040FinalHeader(
   fields: Record<string, unknown>,
   filer: FilerIdentity | undefined,
 ): void {
+  if (fields.dual_status_return_2025 === true) {
+    throw new Error("TY2025 dual-status return cannot use Form 1040 e-file");
+  }
   if (
     !filer || !/^\d{9}$/.test(filer.primarySSN) ||
     !filer.firstNameWithInitial?.trim() || !filer.lastName?.trim()

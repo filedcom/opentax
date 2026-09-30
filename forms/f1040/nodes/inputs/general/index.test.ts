@@ -42,6 +42,18 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
+Deno.test("general rejects an explicitly dual-status 2025 e-file", () => {
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.Single,
+        dual_status_return_2025: true,
+      }),
+    Error,
+    "dual-status return cannot use Form 1040 e-file",
+  );
+});
+
 Deno.test("general gives Form 8880 filing status and both return SSNs", () => {
   const result = compute({ filing_status: FilingStatus.MFJ });
   assertEquals(findOutput(result, "form8880")?.fields, {

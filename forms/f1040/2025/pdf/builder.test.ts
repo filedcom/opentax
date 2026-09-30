@@ -94,6 +94,21 @@ Deno.test("Form 1040 PDF rejects source TINs that differ from the filer", async 
   );
 });
 
+Deno.test("Form 1040 PDF rejects an explicitly dual-status return", async () => {
+  await assertRejects(
+    () =>
+      buildPdfBytes({
+        f1040: {
+          filing_status: "single",
+          digital_assets: false,
+          dual_status_return_2025: true,
+        },
+      }, mockFiler),
+    Error,
+    "dual-status return cannot use Form 1040 e-file",
+  );
+});
+
 Deno.test("Form 8949 PDF cannot export without Schedule D", async () => {
   await assertRejects(
     () => buildPdfBytes({ form8949: [{ part: "B" }] }, undefined),

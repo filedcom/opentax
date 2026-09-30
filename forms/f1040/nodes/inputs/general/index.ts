@@ -161,6 +161,8 @@ export type DependentFiling = z.infer<typeof dependentFilingSchema>;
 
 export const inputSchema = z.object({
   filing_status: z.nativeEnum(FilingStatus),
+  // A 2025 dual-status return cannot use the Form 1040 MeF filing path.
+  dual_status_return_2025: z.boolean().optional(),
   qbi_no_prior_loss_or_suspended_loss_confirmed: z.literal(true).optional(),
   qbi_not_patron_of_specified_cooperative_confirmed: z.literal(true)
     .optional(),
@@ -804,6 +806,9 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
 
   compute(ctx: NodeContext, input: GeneralInput): NodeResult {
     const parsed = inputSchema.parse(input);
+    if (parsed.dual_status_return_2025 === true) {
+      throw new Error("TY2025 dual-status return cannot use Form 1040 e-file");
+    }
     if (
       parsed.taxpayer_can_be_claimed_as_dependent === true &&
       parsed.dependent_earned_income === undefined

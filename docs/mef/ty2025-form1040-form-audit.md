@@ -355,11 +355,13 @@ remains a separate final gate.
 
 The TY2025 Form 1040 MeF builder now rejects caller-supplied return types
 other than 1040 and years other than 2025 before it emits any documents.
-Focused export tests cover 1040-NR, 1040-SS, 4868, and 2024. The source intake
-still lacks a reviewed taxpayer residency/dual-status classification, so this
-does not yet prove that a dual-status filing claim will be detected. The
-[2025 Publication 519](https://www.irs.gov/publications/p519) e-file boundary
-remains an open source-to-export requirement.
+Focused export tests cover 1040-NR, 1040-SS, 4868, and 2024. An explicitly
+marked TY2025 dual-status return is also rejected at general intake, raw MeF
+export, prepared-return validation, and PDF export. Source intake still lacks
+a required, reviewed taxpayer residency/dual-status classification. An omitted
+flag therefore does not prove that a dual-status filing claim will be detected.
+The [2025 Publication 519](https://www.irs.gov/publications/p519) e-file
+boundary remains an open source-to-export requirement.
 
 When the calculated Form 1040 contains taxpayer or spouse TINs, both native
 and PDF exports now compare them to the filer identity used to label the
