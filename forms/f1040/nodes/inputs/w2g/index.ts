@@ -53,6 +53,20 @@ export const itemSchema = z.object({
 
 export const inputSchema = z.object({
   w2gs: z.array(itemSchema).min(1),
+}).superRefine(({ w2gs }, ctx) => {
+  const references = new Set<string>();
+  w2gs.forEach((item, index) => {
+    const reference = item.source_document_reference?.trim();
+    if (!reference) return;
+    if (references.has(reference)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["w2gs", index, "source_document_reference"],
+        message: "The same payer-issued W-2G source cannot be entered twice",
+      });
+    }
+    references.add(reference);
+  });
 });
 
 export type W2GItem = z.infer<typeof itemSchema>;

@@ -84,6 +84,14 @@ Deno.test("withheld W-2G emits one native document in TY2025 order", () => {
   );
 });
 
+Deno.test("withheld W-2G cannot emit the same payer-issued copy twice", () => {
+  assertThrows(
+    () => w2g.build({ w2gs: [issued, { ...issued }] }, { filer }),
+    Error,
+    "same payer-issued W-2G source",
+  );
+});
+
 Deno.test("withheld W-2G rejects incomplete issued form and winner mismatch", () => {
   assertThrows(
     () =>

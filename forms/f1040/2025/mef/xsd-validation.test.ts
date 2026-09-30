@@ -8150,6 +8150,54 @@ function singleGeneral() {
 }
 
 Deno.test({
+  name: "XSD: withheld W-2G source reaches 1040 and native payer copy",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const result = runReturn({
+    general,
+    w2g: [{
+        calendar_year: 2025,
+        source_document_reference: "2025 payer-issued W-2G copy",
+        payer_name: "Casino Inc",
+        payer_name_control: "CASI",
+        payer_us_address: {
+          line1: "500 Casino Way",
+          city: "Las Vegas",
+          state: "NV",
+          zip: "89101",
+        },
+        payer_ein: "12-3456789",
+        winner_name: "Test Taxpayer",
+        winner_us_address: {
+          line1: general.address_line1,
+          city: general.address_city,
+          state: general.address_state,
+          zip: general.address_zip,
+        },
+        box9_winner_tin: general.taxpayer_ssn,
+        box1_winnings: 10_000,
+        box4_federal_withheld: 2_400,
+        standard_or_nonstandard_code: "S",
+      }],
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040?.line25c_total, 2_400);
+  assertEquals(result.pending.schedule1?.line8b_gambling_winnings, 10_000);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(xml, "<IRSW2G ");
+  assertStringIncludes(xml, "<GamblingReportableWinningAmt>10000</GamblingReportableWinningAmt>");
+  assertStringIncludes(xml, "<FederalIncomeTaxWithheldAmt>2400</FederalIncomeTaxWithheldAmt>");
+  assertStringIncludes(xml, "<TaxWithheldOtherAmt>2400</TaxWithheldOtherAmt>");
+  await validateXsd(xml, "withheld W-2G full return");
+});
+
+Deno.test({
   name:
     "XSD: 1099-NEC Form 8919 firm reaches 1040, Schedule 2, Schedule SE and Form 8959",
   sanitizeOps: false,

@@ -23,5 +23,10 @@ direct structured source input, not an alias for the old free-text payer
 address. Missing or contradictory facts reject export. A no-withholding W-2G can
 still report box 1 income without the attachment. The Form 1040 PDF path remains
 fail-closed for positive W-2G withholding because the payer-issued W-2G PDF is
-not mapped or bundled. Native XSD, business rules, full source-to-return tests,
-and filled PDF review are still unrun, so this is not a filing-readiness claim.
+not mapped or bundled. A source-to-return case now checks $10,000 of winnings
+and $2,400 of withholding through Schedule 1, Form 1040 line 25c, and the
+native `IRSW2G`; the full return passes the local TY2025 v5.4 XSD.
+The shared source schema rejects duplicate payer-copy references before graph
+calculation or native export. Authentication of the issued copy, IRS business
+rules, the PDF attachment, filled-page review, and ATS acceptance remain open,
+so this is not a filing-readiness claim.

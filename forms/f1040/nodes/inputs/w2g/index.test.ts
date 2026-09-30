@@ -51,6 +51,16 @@ Deno.test("w2g.inputSchema: empty array fails (min 1)", () => {
   assertEquals(parsed.success, false);
 });
 
+Deno.test("w2g.inputSchema: duplicate payer-issued copy reference fails", () => {
+  const parsed = w2g.inputSchema.safeParse({
+    w2gs: [
+      { source_document_reference: "Casino copy 1", box1_winnings: 1000 },
+      { source_document_reference: " Casino copy 1 ", box1_winnings: 1000 },
+    ],
+  });
+  assertEquals(parsed.success, false);
+});
+
 Deno.test("w2g.inputSchema: valid full item passes", () => {
   const parsed = w2g.inputSchema.safeParse({
     w2gs: [{
