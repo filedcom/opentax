@@ -196,6 +196,15 @@ export const inputSchema = z.object({
       amount: z.number().positive(),
     }).strict(),
   ).optional(),
+  f1099nec_receipt_sources: z.array(
+    z.object({
+      business_reference: z.string().trim().min(1),
+      payer_name: z.string().trim().min(1),
+      payer_tin: z.string().regex(/^\d{9}$/),
+      recipient_tin: z.string().regex(/^\d{9}$/),
+      amount: z.number().positive(),
+    }).strict(),
+  ).optional(),
   attorney_fee_sources: z.array(
     z.object({
       business_reference: z.string().trim().min(1),

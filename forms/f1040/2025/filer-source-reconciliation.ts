@@ -29,7 +29,7 @@ export function assertF1040SourceIdentity(
   }
 }
 
-export function assertF1099MiscScheduleCSourceIdentity(
+export function assertScheduleCReceiptSourceIdentity(
   pending: Record<string, unknown>,
   filer: FilerIdentity,
 ): void {
@@ -46,31 +46,40 @@ export function assertF1099MiscScheduleCSourceIdentity(
   }
   const attorneySources = fields.attorney_fee_sources;
   const receiptSources = fields.f1099m_receipt_sources;
-  if (attorneySources === undefined && receiptSources === undefined) return;
+  const necSources = fields.f1099nec_receipt_sources;
+  if (
+    attorneySources === undefined && receiptSources === undefined &&
+    necSources === undefined
+  ) return;
   if (
     (attorneySources !== undefined && !Array.isArray(attorneySources)) ||
-    (receiptSources !== undefined && !Array.isArray(receiptSources))
+    (receiptSources !== undefined && !Array.isArray(receiptSources)) ||
+    (necSources !== undefined && !Array.isArray(necSources))
   ) {
-    throw new Error("1099-MISC Schedule C sources must be arrays");
+    throw new Error("1099 Schedule C sources must be arrays");
   }
   const businesses = fields.schedule_cs;
   if (!Array.isArray(businesses)) {
-    throw new Error("1099-MISC receipts need a Schedule C business");
+    throw new Error("1099 receipts need a Schedule C business");
   }
   const rows = [
     ...(attorneySources ?? []).map((source: unknown) => ({
       source,
-      attorney: true,
+      kind: "attorney" as const,
     })),
     ...(receiptSources ?? []).map((source: unknown) => ({
       source,
-      attorney: false,
+      kind: "misc" as const,
+    })),
+    ...(necSources ?? []).map((source: unknown) => ({
+      source,
+      kind: "nec" as const,
     })),
   ];
   const totals = new Map<string, number>();
-  for (const { source, attorney } of rows) {
+  for (const { source, kind } of rows) {
     if (!source || typeof source !== "object") {
-      throw new Error("1099-MISC Schedule C source is invalid");
+      throw new Error("1099 Schedule C source is invalid");
     }
     const row = source as Record<string, unknown>;
     const matches = businesses.filter((business) =>
@@ -79,16 +88,16 @@ export function assertF1099MiscScheduleCSourceIdentity(
     );
     if (matches.length !== 1) {
       throw new Error(
-        "1099-MISC receipts need one matching Schedule C business",
+        "1099 receipts need one matching Schedule C business",
       );
     }
     if (
       typeof row.amount !== "number" || !Number.isFinite(row.amount) ||
       row.amount <= 0 ||
-      (attorney &&
+      (kind === "attorney" &&
         (typeof row.allocation_review_reference !== "string" ||
           !row.allocation_review_reference.trim())) ||
-      (!attorney &&
+      (kind === "misc" &&
         ![
           "box1_rents",
           "box2_royalties",
@@ -96,25 +105,28 @@ export function assertF1099MiscScheduleCSourceIdentity(
           "box6_medical_payments",
           "box11_fish_purchased",
         ].includes(row.box as string)) ||
+      (kind === "nec" &&
+        (typeof row.payer_name !== "string" || !row.payer_name.trim() ||
+          !tin(row.payer_tin, "1099-NEC payer"))) ||
       typeof matches[0].line_1_gross_receipts !== "number" ||
       matches[0].line_1_gross_receipts < row.amount
     ) {
       throw new Error(
-        "1099-MISC source amount must be included in Schedule C gross receipts",
+        "1099 source amount must be included in Schedule C gross receipts",
       );
     }
     const businessReference = row.business_reference as string;
     const total = (totals.get(businessReference) ?? 0) + row.amount;
     if (total > matches[0].line_1_gross_receipts) {
       throw new Error(
-        "1099-MISC sources exceed Schedule C gross receipts",
+        "1099 sources exceed Schedule C gross receipts",
       );
     }
     totals.set(businessReference, total);
     const proprietor = matches[0].proprietor_recipient;
     if (matches[0].line_f_accounting_method !== "cash") {
       throw new Error(
-        "1099-MISC receipts need a cash-basis Schedule C business",
+        "1099 receipts need a cash-basis Schedule C business",
       );
     }
     const expected = proprietor === "T"
@@ -124,10 +136,10 @@ export function assertF1099MiscScheduleCSourceIdentity(
       : undefined;
     if (
       !expected ||
-      tin(row.recipient_tin, "1099-MISC recipient") !== expected
+      tin(row.recipient_tin, "1099 recipient") !== expected
     ) {
       throw new Error(
-        "1099-MISC recipient differs from the Schedule C proprietor",
+        "1099 recipient differs from the Schedule C proprietor",
       );
     }
   }

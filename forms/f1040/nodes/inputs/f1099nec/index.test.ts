@@ -6,7 +6,6 @@ import { form8919 } from "../../intermediate/forms/form8919/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
-import { scheduleC } from "../schedule_c/index.ts";
 import { schedule_f } from "../../intermediate/forms/schedule_f/index.ts";
 
 // ---------------------------------------------------------------------------
@@ -17,6 +16,9 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
   return {
     payer_name: "Test Payer",
     payer_tin: "12-3456789",
+    recipient_ssn: "987654321",
+    schedule_c_business_reference: "business-1",
+    for_routing: "schedule_c" as const,
     farm_id: "farm-1",
     ...overrides,
   };
@@ -32,16 +34,19 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
-// Extract gross receipts from a schedule_c output (which uses schedule_cs array)
+// Extract the total linked NEC receipts emitted for Schedule C.
 function schedCGrossReceipts(
   result: ReturnType<typeof compute>,
 ): number | undefined {
   const out = findOutput(result, "schedule_c");
   if (!out) return undefined;
   const fields = out.fields as {
-    schedule_cs?: Array<{ line_1_gross_receipts: number }>;
+    f1099nec_receipt_sources?: Array<{ amount: number }>;
   };
-  return fields.schedule_cs?.[0]?.line_1_gross_receipts;
+  return fields.f1099nec_receipt_sources?.reduce(
+    (sum, row) => sum + row.amount,
+    0,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -232,11 +237,12 @@ Deno.test("routing: multiple nonbusiness 1099-NEC payers combine once without lo
   );
 });
 
-Deno.test("routing: omitting for_routing defaults to schedule_c", () => {
-  const result = compute([minimalItem({ box1_nec: 3000 })]);
-  const out = findOutput(result, "schedule_c");
-  assertEquals(out !== undefined, true);
-  assertEquals(schedCGrossReceipts(result), 3000);
+Deno.test("routing: positive box 1 needs an explicit route", () => {
+  assertThrows(
+    () => compute([minimalItem({ box1_nec: 3000, for_routing: undefined })]),
+    Error,
+    "explicit income route",
+  );
 });
 
 Deno.test("routing: box1_nec = 0 with schedule_c produces no schedule_c output", () => {
@@ -314,7 +320,7 @@ Deno.test("routing: state boxes (5,6,7) produce no federal outputs", () => {
 // 3. Aggregation — multiple items in one compute() call
 // ---------------------------------------------------------------------------
 
-Deno.test("aggregation: multiple schedule_c items sum box1_nec per item as separate outputs", () => {
+Deno.test("aggregation: multiple schedule_c items retain payer source rows", () => {
   const result = compute([
     minimalItem({ box1_nec: 5000, for_routing: "schedule_c" }),
     minimalItem({
@@ -326,15 +332,13 @@ Deno.test("aggregation: multiple schedule_c items sum box1_nec per item as separ
   const schedCOutputs = result.outputs.filter((o) =>
     o.nodeType === "schedule_c"
   );
-  // Expect two separate schedule_c outputs (one per item)
-  assertEquals(schedCOutputs.length, 2);
-  const amounts = schedCOutputs.map(
-    (o) =>
-      ((o.fields as { schedule_cs?: Array<{ line_1_gross_receipts: number }> })
-        .schedule_cs?.[0]?.line_1_gross_receipts) as number,
+  assertEquals(schedCOutputs.length, 1);
+  assertEquals(schedCGrossReceipts(result), 8000);
+  assertEquals(
+    (schedCOutputs[0].fields as { f1099nec_receipt_sources: unknown[] })
+      .f1099nec_receipt_sources.length,
+    2,
   );
-  assertEquals(amounts.includes(5000), true);
-  assertEquals(amounts.includes(3000), true);
 });
 
 Deno.test("aggregation: multiple schedule_f items produce separate outputs", () => {
@@ -565,6 +569,9 @@ Deno.test("warning: box4 > 24% of box1 — plausibility warning, does not throw"
       payer_name: "Acme",
       payer_tin: "12-3456789",
       box1_nec: 1000,
+      for_routing: "schedule_c",
+      recipient_ssn: "987654321",
+      schedule_c_business_reference: "business-1",
       box4_federal_withheld: 400, // > 24% (240)
     }],
   });
@@ -578,7 +585,7 @@ Deno.test("warning: second_tin_notice = true — informational, does not throw",
       payer_tin: "12-3456789",
       second_tin_notice: true,
       farm_id: "farm-1",
-    } as ReturnType<typeof minimalItem>],
+    } as unknown as ReturnType<typeof minimalItem>],
   });
   assertEquals(Array.isArray(result.outputs), true);
 });
@@ -635,10 +642,7 @@ Deno.test("informational: payer_tin change does not affect output count", () => 
 
 Deno.test("informational: account_number present does not change output count", () => {
   const withAcct = compute([{
-    payer_name: "Acme",
-    payer_tin: "12-3456789",
-    box1_nec: 2000,
-    for_routing: "schedule_c" as const,
+    ...minimalItem({ box1_nec: 2000 }),
     account_number: "ACC-001",
   } as unknown as ReturnType<typeof minimalItem>]);
   const withoutAcct = compute([
@@ -661,8 +665,7 @@ Deno.test("informational: state boxes (5,6,7) produce zero federal outputs", () 
 // 8. Edge Cases
 // ---------------------------------------------------------------------------
 
-Deno.test("edge: multiple 1099-NECs for same schedule_c produce separate schedule_c outputs", () => {
-  // Per context.md: each NEC item produces its own output; Schedule C aggregates them
+Deno.test("edge: multiple 1099-NECs for same schedule_c produce linked source rows", () => {
   const result = compute([
     minimalItem({ box1_nec: 10000, for_routing: "schedule_c" }),
     minimalItem({
@@ -679,7 +682,8 @@ Deno.test("edge: multiple 1099-NECs for same schedule_c produce separate schedul
   const schedCOutputs = result.outputs.filter((o) =>
     o.nodeType === "schedule_c"
   );
-  assertEquals(schedCOutputs.length, 3);
+  assertEquals(schedCOutputs.length, 1);
+  assertEquals(schedCGrossReceipts(result), 18000);
 });
 
 Deno.test("edge: form_8919 routing excludes schedule_c output", () => {
@@ -826,11 +830,12 @@ Deno.test("smoke: freelancer with two clients, backup withholding, and golden pa
     }),
   ]);
 
-  // Three schedule_c outputs (clients 1, 2, OldCo)
+  // Three payer receipts flow to one reviewed Schedule C business.
   const schedCOutputs = result.outputs.filter((o) =>
     o.nodeType === "schedule_c"
   );
-  assertEquals(schedCOutputs.length, 3);
+  assertEquals(schedCOutputs.length, 1);
+  assertEquals(schedCGrossReceipts(result), 597000);
 
   // One schedule1 output for line 8z (director fee) + one for golden parachute income
   const schedule1Outputs = result.outputs.filter((o) =>

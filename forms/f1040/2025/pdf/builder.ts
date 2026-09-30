@@ -9,7 +9,7 @@ import type { MefBundle } from "../mef/builder.ts";
 import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
 import {
   assertF1040FinalHeader,
-  assertF1099MiscScheduleCSourceIdentity,
+  assertScheduleCReceiptSourceIdentity,
 } from "../filer-source-reconciliation.ts";
 import { assertScheduleDSalesMatchPrepared } from "../mef/forms/schedule_d.ts";
 
@@ -251,7 +251,7 @@ export async function buildPdfBytes(
   if (normalized.f1040) {
     assertF1040FinalHeader(normalized.f1040, filer);
   }
-  if (filer) assertF1099MiscScheduleCSourceIdentity(normalized, filer);
+  if (filer) assertScheduleCReceiptSourceIdentity(normalized, filer);
   if (
     preparedBundle &&
     await preparedSourceSha256(pending, filer) !==

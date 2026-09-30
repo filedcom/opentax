@@ -156,6 +156,7 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
       const source of [
         ...(input.attorney_fee_sources ?? []),
         ...(input.f1099m_receipt_sources ?? []),
+        ...(input.f1099nec_receipt_sources ?? []),
       ]
     ) {
       receiptsByBusiness.set(
@@ -175,7 +176,7 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
         matches[0].line_1_gross_receipts < receipts
       ) {
         throw new Error(
-          "1099-MISC receipts need one matching Schedule C business with cash-basis accounting whose gross receipts include them",
+          "1099 receipts need one matching Schedule C business with cash-basis accounting whose gross receipts include them",
         );
       }
     }

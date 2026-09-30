@@ -25,7 +25,39 @@ export const itemSchema = z.object({
   for_routing: z
     .enum(["schedule_c", "schedule_f", "form_8919", "schedule_1_line_8z"])
     .optional(),
+  schedule_c_business_reference: z.string().trim().min(1).optional(),
   farm_id: z.string().min(1).optional(),
+}).superRefine((item, ctx) => {
+  if ((item.box1_nec ?? 0) <= 0) return;
+  if (!item.for_routing) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["for_routing"],
+      message: "Positive 1099-NEC box 1 needs an explicit income route",
+    });
+  }
+  if (
+    item.for_routing === "schedule_c" &&
+    (!item.schedule_c_business_reference || !item.recipient_ssn)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["schedule_c_business_reference"],
+      message: "1099-NEC Schedule C income needs a business and recipient TIN",
+    });
+  }
+  if (
+    item.for_routing === "schedule_c" &&
+    (!item.payer_name.trim() ||
+      !/^\d{9}$/.test(item.payer_tin.replaceAll("-", "")))
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["payer_tin"],
+      message:
+        "1099-NEC Schedule C income needs a payer name and nine-digit TIN",
+    });
+  }
 });
 
 export const inputSchema = z.object({
@@ -37,20 +69,9 @@ type NECItem = z.infer<typeof itemSchema>;
 function necIncomeOutput(item: NECItem): NodeOutput[] {
   const box1 = item.box1_nec ?? 0;
   if (box1 <= 0) return [];
-  switch (item.for_routing ?? "schedule_c") {
+  switch (item.for_routing) {
     case "schedule_c":
-      // Synthesize a minimal schedule_c item so the schedule_c node can compute SE tax
-      // and QBI. Required header fields are defaulted for NEC-sourced entries.
-      return [output(schedule_c, {
-        schedule_cs: [{
-          line_a_principal_business: item.payer_name ??
-            "Self-employment income",
-          line_b_business_code: "999999",
-          line_f_accounting_method: "cash",
-          line_g_material_participation: true,
-          line_1_gross_receipts: box1,
-        }],
-      })];
+      return [];
     case "schedule_f": {
       if (!item.farm_id) {
         throw new Error("1099-NEC farm income requires farm_id");
@@ -119,9 +140,23 @@ class F1099necNode extends TaxNode<typeof inputSchema> {
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
     const nonbusinessIncome = nonbusinessOtherIncome(parsed.f1099necs);
+    const scheduleCSources = parsed.f1099necs.flatMap((item) =>
+      item.for_routing === "schedule_c" && (item.box1_nec ?? 0) > 0
+        ? [{
+          business_reference: item.schedule_c_business_reference!,
+          payer_name: item.payer_name,
+          payer_tin: item.payer_tin.replaceAll("-", ""),
+          recipient_tin: item.recipient_ssn!.replaceAll("-", ""),
+          amount: item.box1_nec!,
+        }]
+        : []
+    );
     return {
       outputs: [
         ...parsed.f1099necs.flatMap((item) => this.processItem(item)),
+        ...(scheduleCSources.length > 0
+          ? [output(schedule_c, { f1099nec_receipt_sources: scheduleCSources })]
+          : []),
         ...(nonbusinessIncome > 0
           ? [
             output(schedule1, {

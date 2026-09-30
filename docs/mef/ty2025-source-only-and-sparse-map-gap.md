@@ -130,3 +130,17 @@ reaches one $5,000 Schedule C and Form 1040 line 8, with native XML that
 passes local TY2025 v5.4 XSD and a filled PDF packet that builds. Actual payer records, receipt timing,
 duplicate reporting across Forms 1099, visual review, business rules, and
 ATS remain open.
+
+Form 1099-NEC box 1 now requires an explicit income route. A Schedule C route
+also requires the payer identity, recipient TIN, and a reference to one
+reviewed cash-basis business. Payer rows are included in the same line 1 and
+proprietor checks as Form 1099-MISC receipts; no business is generated from
+the payer name or a placeholder business code. Two $3,000/$2,000 payer rows
+reach one $5,000 Schedule C and Form 1040 line 8, and the native return passes
+local TY2025 v5.4 XSD while the filled PDF packet builds. The
+[2025 recipient form](https://www.irs.gov/pub/irs-prior/f1099nec--2025.pdf)
+distinguishes self-employment income from other income, and the
+[2025 Schedule C instructions](https://www.irs.gov/pub/irs-prior/i1040sc--2025.pdf)
+say to include applicable box 1 amounts on line 1. Payer-issued bytes,
+duplicate 1099 reports, accrual timing, visual PDF review, business rules,
+and ATS remain open.
