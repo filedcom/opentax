@@ -234,7 +234,7 @@ export const scheduleDPdf: PdfFormDescriptor = {
         group.parts.some((part) => part === row.part) &&
         // Unadjusted broker-basis rows already print on lines 1a/8a.
         !((row.part === "A" || row.part === "D") &&
-          !row.adjustment_codes)
+          !row.adjustment_codes && row.adjustment_amount === undefined)
       );
       if (selected.length === 0) continue;
       for (

@@ -202,7 +202,8 @@ export const form8949Pdf: PdfFormDescriptor = {
       rows.length === 0 && source.some((row) =>
         typeof row !== "object" || row === null ||
         !("part" in row) || (row.part !== "A" && row.part !== "D") ||
-        ("adjustment_codes" in row && !!row.adjustment_codes)
+        ("adjustment_codes" in row && !!row.adjustment_codes) ||
+        ("adjustment_amount" in row && row.adjustment_amount !== undefined)
       )
     ) {
       throw new Error("Form 8949 PDF needs computed canonical transaction rows");

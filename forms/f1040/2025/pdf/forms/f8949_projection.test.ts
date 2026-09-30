@@ -76,6 +76,13 @@ Deno.test("Form 8949 PDF accepts direct broker rows only when no separate sale p
     Error,
     "needs computed canonical transaction rows",
   );
+  assertThrows(
+    () => form8949Pdf.projectFields?.({}, {
+      f8949: { f8949s: [{ part: "A", adjustment_amount: 0 }] },
+    }),
+    Error,
+    "needs computed canonical transaction rows",
+  );
 });
 
 Deno.test("Form 8949 PDF splits a reporting category after eleven rows", () => {

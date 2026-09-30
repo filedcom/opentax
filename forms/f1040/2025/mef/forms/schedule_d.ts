@@ -87,6 +87,48 @@ const TRANSACTION_GROUPS = [
 
 type PreparedSale = ReturnType<typeof transactionSchema.parse>;
 
+function isDirectSale(sale: PreparedSale): boolean {
+  return (sale.part === "A" || sale.part === "D") &&
+    !sale.adjustment_codes && sale.adjustment_amount === undefined;
+}
+
+function saleKey(sale: PreparedSale): string {
+  return JSON.stringify([
+    sale.part,
+    sale.description,
+    sale.source_transaction_id ?? null,
+    sale.date_acquired,
+    sale.date_sold,
+    sale.proceeds,
+    sale.cost_basis,
+    sale.adjustment_codes ?? null,
+    sale.adjustment_amount ?? null,
+    sale.gain_loss,
+    sale.is_long_term,
+    sale.from_form4797_investment_1245 ?? false,
+    sale.form4797_property_id ?? null,
+  ]);
+}
+
+function assertPreparedSalesMatchCalculation(
+  fields: Input,
+  preparedSales: readonly PreparedSale[],
+): void {
+  const raw = fields.transaction;
+  const calculatedSales =
+    (raw === undefined ? [] : Array.isArray(raw) ? raw : [raw])
+      .map((row) => transactionSchema.parse(row));
+  for (const sale of calculatedSales) assertForm8949TransactionMath(sale);
+  const expected = calculatedSales.filter((sale) => !isDirectSale(sale))
+    .map(saleKey).sort();
+  const actual = preparedSales.map(saleKey).sort();
+  if (JSON.stringify(expected) !== JSON.stringify(actual)) {
+    throw new Error(
+      "Schedule D prepared Form 8949 rows differ from calculated sales",
+    );
+  }
+}
+
 function buildTransactionGroup(
   group: (typeof TRANSACTION_GROUPS)[number],
   rows: readonly PreparedSale[],
@@ -329,12 +371,13 @@ export const scheduleD: MefFormDescriptor<"schedule_d", Input> = {
     );
     for (const sale of preparedSales) {
       assertForm8949TransactionMath(sale);
-      if ((sale.part === "A" || sale.part === "D") && !sale.adjustment_codes) {
+      if (isDirectSale(sale)) {
         throw new Error(
           "Schedule D direct sale must not also file on Form 8949",
         );
       }
     }
+    assertPreparedSalesMatchCalculation(fields, preparedSales);
     return buildIRS1040ScheduleD(fields, preparedSales);
   },
 };

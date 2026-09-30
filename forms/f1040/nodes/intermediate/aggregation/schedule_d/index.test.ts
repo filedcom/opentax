@@ -48,6 +48,16 @@ Deno.test("Schedule D files direct transaction and entered aggregate once on lin
   assertEquals(findOutput(result, "f1040")?.fields.line7_capital_gain, 700);
 });
 
+Deno.test("Schedule D keeps amount-only adjusted sale off direct line 1a", () => {
+  const result = compute({
+    transaction: mkTx({ adjustment_amount: 300, gain_loss: 500 }),
+  });
+  const filed = findOutput(result, "schedule_d")?.fields;
+  assertEquals(filed?.print_line1a_proceeds, undefined);
+  assertEquals(filed?.print_line7_st_total, 500);
+  assertEquals(findOutput(result, "f1040")?.fields.line7_capital_gain, 500);
+});
+
 Deno.test("multiple Form 6252 and 4797 line 11 sources sum before filing", () => {
   const result = compute({ line_11_form2439: [11_000, 10_000] });
   assertEquals(findOutput(result, "f1040")?.fields.line7_capital_gain, 21_000);

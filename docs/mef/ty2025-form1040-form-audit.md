@@ -383,6 +383,15 @@ full-return XSD, and all five `v56` pages were inspected: the direct gain
 appears only on line 1a, while the adjusted loss appears on Form 8949 and
 line 1b. Other sale categories and IRS business-rule acceptance remain open.
 
+The prepared Form 8949 rows are now compared as a multiset with Schedule D's
+calculated non-direct transactions before native XML is built. A missing,
+changed, or duplicated row fails export. Direct-reporting checks in the
+calculation, prepared return, and both filing projections also require the
+adjustment amount to be absent; an amount without a code stays on the Form
+8949 path. The focused tests and four affected full-return local XSD fixtures
+pass. This guard does not establish broader sale-route coverage or IRS
+business-rule and ATS acceptance.
+
 Form 6251 addendum (2026-09-29, unrun): the existing line-2k audited Form 8949
 route now also handles same-term short-term mixed gain/loss rows only when both
 regular and AMT nets stay positive and there is no other capital activity. The

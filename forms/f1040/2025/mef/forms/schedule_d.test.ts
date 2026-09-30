@@ -16,22 +16,50 @@ Deno.test("Schedule D native groups match prepared Form 8949 category totals", (
     gain_loss: proceeds - cost_basis + (adjustment_amount ?? 0),
     is_long_term: !(part === "A" || part === "B" || part === "H"),
   });
-  const xml = scheduleD.build({}, { pending: { form8949: [
+  const sales = [
     sale("A", 2_000, 1_000, 100),
     sale("B", 3_000, 2_000),
     sale("H", 4_000, 3_000),
     sale("E", 5_000, 2_000),
     sale("K", 6_000, 4_000),
-  ] } });
+  ];
+  const xml = scheduleD.build({ transaction: sales }, {
+    pending: { form8949: sales },
+  });
   assertStringIncludes(xml,
     "<TotalSTCGL1099ShowsBasisGrp><TotalProceedsSalesPriceAmt>2000</TotalProceedsSalesPriceAmt><TotalCostOrOtherBasisAmt>1000</TotalCostOrOtherBasisAmt><TotAdjustmentsToGainOrLossAmt>100</TotAdjustmentsToGainOrLossAmt><TotalGainOrLossAmt>1100</TotalGainOrLossAmt></TotalSTCGL1099ShowsBasisGrp>");
   assertStringIncludes(xml,
     "<TotalSTCGL1099NotShowBasisGrp><TotalProceedsSalesPriceAmt>7000</TotalProceedsSalesPriceAmt><TotalCostOrOtherBasisAmt>5000</TotalCostOrOtherBasisAmt><TotalGainOrLossAmt>2000</TotalGainOrLossAmt></TotalSTCGL1099NotShowBasisGrp>");
   assertStringIncludes(xml,
     "<TotalLTCGL1099NotShowBasisGrp><TotalProceedsSalesPriceAmt>11000</TotalProceedsSalesPriceAmt><TotalCostOrOtherBasisAmt>6000</TotalCostOrOtherBasisAmt><TotalGainOrLossAmt>5000</TotalGainOrLossAmt></TotalLTCGL1099NotShowBasisGrp>");
-  assertThrows(() => scheduleD.build({}, { pending: { form8949: [
-    sale("A", 2_000, 1_000),
-  ] } }), Error, "direct sale must not also file");
+  const direct = sale("A", 2_000, 1_000);
+  assertThrows(() => scheduleD.build({ transaction: direct }, {
+    pending: { form8949: [direct] },
+  }), Error, "direct sale must not also file");
+});
+
+Deno.test("Schedule D rejects prepared Form 8949 rows changed from calculated sales", () => {
+  const calculated = {
+    part: "B",
+    description: "Broker shares",
+    source_transaction_id: "broker-sale-1",
+    date_acquired: "2025-01-10",
+    date_sold: "2025-06-20",
+    proceeds: 2_000,
+    cost_basis: 1_000,
+    gain_loss: 1_000,
+    is_long_term: false,
+  };
+  const fields = { transaction: calculated };
+  assertThrows(() => scheduleD.build(fields, {
+    pending: { form8949: [] },
+  }), Error, "differ from calculated sales");
+  assertThrows(() => scheduleD.build(fields, {
+    pending: { form8949: [{ ...calculated, description: "Changed sale" }] },
+  }), Error, "differ from calculated sales");
+  assertThrows(() => scheduleD.build(fields, {
+    pending: { form8949: [calculated, calculated] },
+  }), Error, "differ from calculated sales");
 });
 
 Deno.test("Schedule D code C final trust loss reconciles source and owner", () => {

@@ -9,7 +9,8 @@ function extractForm8949Transactions(
   if (tx === undefined) return undefined;
   const filedRows = (Array.isArray(tx) ? tx : [tx])
     .filter((row) =>
-      !((row.part === "A" || row.part === "D") && !row.adjustment_codes)
+      !((row.part === "A" || row.part === "D") && !row.adjustment_codes &&
+        row.adjustment_amount === undefined)
     ) as F8949Transaction[];
   return filedRows.length > 0 ? filedRows : undefined;
 }

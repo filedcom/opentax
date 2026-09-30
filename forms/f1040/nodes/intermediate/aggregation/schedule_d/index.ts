@@ -524,12 +524,19 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
     // qualify for direct reporting on lines 1a/8a without Form 8949
     // (Schedule D instructions, "Exception 1"). All other transactions remain
     // on the Form 8949 path and aggregate into lines 1b/2/3 and 8b/9/10.
-    const isDirect = (part: string, codes: string | undefined): boolean =>
-      (part === "A" || part === "D") && !(codes ?? "").length;
+    const isDirect = (
+      part: string,
+      codes: string | undefined,
+      adjustment: number | undefined,
+    ): boolean =>
+      (part === "A" || part === "D") && !(codes ?? "").length &&
+      adjustment === undefined;
 
     const direct = { stP: 0, stC: 0, ltP: 0, ltC: 0 };
     for (const tx of dScreenTxs) {
-      if (!isDirect(tx.part, tx.adjustment_codes)) continue;
+      if (!isDirect(tx.part, tx.adjustment_codes, tx.adjustment_amount)) {
+        continue;
+      }
       if (LONG_TERM_PARTS.has(tx.part)) {
         direct.ltP += tx.proceeds;
         direct.ltC += tx.cost_basis;
@@ -539,7 +546,9 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
       }
     }
     for (const tx of f8949Txs) {
-      if (!isDirect(tx.part, tx.adjustment_codes)) continue;
+      if (!isDirect(tx.part, tx.adjustment_codes, tx.adjustment_amount)) {
+        continue;
+      }
       if (tx.is_long_term) {
         direct.ltP += tx.proceeds;
         direct.ltC += tx.cost_basis;
