@@ -408,6 +408,43 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-withheld-w2g",
+    inputs: {
+      general: singleGeneral,
+      w2g: [{
+        calendar_year: 2025,
+        source_document_reference: "2025 Casino W-2G recipient copy",
+        payer_name: "Casino Inc",
+        payer_name_control: "CASI",
+        payer_us_address: {
+          line1: "500 Casino Way",
+          city: "Las Vegas",
+          state: "NV",
+          zip: "89101",
+        },
+        payer_ein: "12-3456789",
+        winner_name: "Alex Example",
+        winner_us_address: {
+          line1: "1 Example Way",
+          city: "Austin",
+          state: "TX",
+          zip: "78701",
+        },
+        box9_winner_tin: "111-22-3333",
+        box1_winnings: 10_000,
+        box4_federal_withheld: 2_400,
+        standard_or_nonstandard_code: "S",
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule1", "w2g"],
+    reviewFocus: [
+      "Schedule 1 line 8b and Form 1040 income include the $10,000 box 1 winnings once",
+      "Form 1040 line 25c and the W-2G copy each show $2,400 withheld",
+      "The recipient Copy B display names the same payer, winner, TIN, and address as the native W-2G",
+    ],
+  },
+  {
     id: "single-ordinary-noncash-gift",
     inputs: {
       general: singleGeneral,

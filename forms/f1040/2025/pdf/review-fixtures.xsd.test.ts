@@ -43,6 +43,15 @@ for (const fixture of pdfReviewFixtures) {
         assertStringIncludes(xml, "<MoreDependentsInd>X</MoreDependentsInd>");
         assertEquals(result.pending.f1040.line19_child_tax_credit, 2_500);
       }
+      if (fixture.id === "single-withheld-w2g") {
+        assertEquals(result.pending.schedule1.line8b_gambling_winnings, 10_000);
+        assertEquals(result.pending.f1040.line25c_total, 2_400);
+        assertStringIncludes(xml, "<IRSW2G ");
+        assertStringIncludes(
+          xml,
+          "<FederalIncomeTaxWithheldAmt>2400</FederalIncomeTaxWithheldAmt>",
+        );
+      }
       if (fixture.id === "single-8862-ctc-reinstatement") {
         const dependent = (result.pending.f1040.dependent_details as Array<
           { first_name: string; credit_category: string }

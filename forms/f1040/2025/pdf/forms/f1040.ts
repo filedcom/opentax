@@ -4,7 +4,6 @@ import { form8814ParentPrintAmounts } from "./f8814.ts";
 import { appendIraDistributionStatement } from "./ira_distribution_statement.ts";
 import { appendDependentContinuation } from "./dependent_continuation.ts";
 import { schedule1aPdf } from "./schedule1a.ts";
-import { inputSchema as w2gInputSchema } from "../../../nodes/inputs/w2g/index.ts";
 import {
   DependentCreditCategory,
   dependentFilingSchema,
@@ -610,21 +609,6 @@ export const irs1040Pdf: PdfFormDescriptor = {
       if (iraRollover !== source.data.f1099rs.some(isIraRollover)) {
         throw new Error(
           "Form 1040 PDF line 4c rollover does not match the reviewed IRA Form 1099-R source",
-        );
-      }
-    }
-    if (allPending.w2g !== undefined) {
-      const source = w2gInputSchema.safeParse(allPending.w2g);
-      if (!source.success) {
-        throw new Error(
-          "Form 1040 W-2G withholding needs valid payer-issued source facts",
-        );
-      }
-      if (
-        source.data.w2gs.some((item) => (item.box4_federal_withheld ?? 0) > 0)
-      ) {
-        throw new Error(
-          "Form 1040 W-2G withholding cannot render until its payer-issued W-2G attachment is supported",
         );
       }
     }

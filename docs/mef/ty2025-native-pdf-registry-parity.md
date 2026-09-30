@@ -33,6 +33,11 @@ priority-1 count. The table is an exact list of the _parent taxpayer-form_
 parity gaps found in this comparison, not every difference between pending-key
 lists.
 
+The later W-2G route now has a registered recipient Copy B PDF descriptor and
+an inspected five-page synthetic packet. It reproduces reviewed source facts;
+the issued-copy bytes and any required signature remain separate evidence
+gates. This does not change the parent taxpayer-form priority-1 list.
+
 Form 3800 was on the initial parity list. Its nine-page parent descriptor now
 uses the native prepared parts; one- and two-facility geothermal returns and a
 mixed wind/geothermal return have local XSD and filled-PDF evidence. Transfer,

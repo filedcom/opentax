@@ -86,9 +86,11 @@ import { form8995aScheduleAPdf } from "./f8995a_schedule_a.ts";
 import { form8995aScheduleBPdf } from "./f8995a_schedule_b.ts";
 import { form8995aScheduleCPdf } from "./f8995a_schedule_c.ts";
 import { form8995aScheduleDPdf } from "./f8995a_schedule_d.ts";
+import { w2gPdf } from "./w2g.ts";
 
 export const ALL_PDF_FORMS: readonly PdfFormDescriptor[] = [
   irs1040Pdf,
+  w2gPdf,
   schedule1Pdf,
   schedule1aPdf,
   schedule2Pdf,

@@ -453,3 +453,15 @@ rendered and visually inspected; filled text confirmed the page-1 checks and
 statement. The PDF SHA-256 is
 `8d8716e1d66fe722fa654f99d13273236e4f77e64246409e7eec4d9d85233d35`.
 Payer-issued evidence, IRS business rules, and ATS acceptance remain open.
+
+The `single-withheld-w2g` source now produces one recipient Copy B page in a
+five-page `v65` packet from the same reviewed payer and winner facts used by
+the native `IRSW2G`. Form 1040 line 8 and AGI print $10,000; line 25c and the
+W-2G box 4 print $2,400; Schedule 1 line 8b prints $10,000. The W-2G page was
+rendered and visually inspected, and filled text from the other four pages
+confirmed those amounts. The full return passes local TY2025 v5.4 XSD. The
+PDF SHA-256 is
+`b0225617164e409273a4ed9d70610890dff74695e69bf3051d54b507adc3d42b`.
+The printed page is generated from structured facts; authenticated payer-issued
+bytes, any required winner signature, IRS business rules, and ATS acceptance
+remain open.
