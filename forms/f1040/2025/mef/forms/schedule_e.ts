@@ -26,10 +26,7 @@ import type { z } from "zod";
 import type { FilerIdentity } from "../../../mef/header.ts";
 import { inputSchema as partnershipK1InputSchema } from "../../../nodes/inputs/k1_partnership/index.ts";
 import { inputSchema as miscInputSchema } from "../../../nodes/inputs/f1099m/index.ts";
-import {
-  applyDniLimit,
-  inputSchema as trustK1InputSchema,
-} from "../../../nodes/inputs/k1_trust/index.ts";
+import { inputSchema as trustK1InputSchema } from "../../../nodes/inputs/k1_trust/index.ts";
 import {
   passivePropertySaleSchema,
   samePassiveSale,
@@ -554,12 +551,17 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
           source.estate_trust_name === row.estate_trust_name &&
           source.estate_trust_ein === row.estate_trust_ein &&
           source.source_document_reference === row.source_document_reference &&
-          applyDniLimit(source).box5_other_portfolio === row.other_income
+          (source.box5_other_portfolio ?? 0) ===
+            (row.other_income ?? 0) &&
+          (source.box6_ordinary_business ?? 0) +
+                (source.box7_rental_real_estate ?? 0) +
+                (source.box8_other_rental ?? 0) ===
+            (row.passive_income ?? 0)
         )
         : [];
       if (matches.length !== 1) {
         throw new Error(
-          "Schedule E estate/trust row must match one unadjusted K-1 box 5 source",
+          "Schedule E estate/trust row must match one K-1 and its box 5–8 activity statement",
         );
       }
     }
@@ -610,9 +612,33 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
     const losses = sum(properties, "deductibleLoss");
     const propertyNet = income - losses;
     const trustOtherIncome = trustRows.reduce(
-      (sum, row) => sum + row.other_income,
+      (sum, row) => sum + (row.other_income ?? 0),
       0,
     );
+    const trustPassiveIncome = trustRows.reduce(
+      (sum, row) => sum + (row.passive_income ?? 0),
+      0,
+    );
+    const trustTotalIncome = trustOtherIncome + trustPassiveIncome;
+    if (trustRows.length > 0) {
+      const pendingSchedule1 = context?.pending?.schedule1;
+      const pendingLine5 = pendingSchedule1 &&
+          typeof pendingSchedule1 === "object" &&
+          "line5_schedule_e" in pendingSchedule1
+        ? pendingSchedule1.line5_schedule_e
+        : undefined;
+      const line5 = Array.isArray(pendingLine5)
+        ? pendingLine5.reduce((sum: number, amount: number) => sum + amount, 0)
+        : pendingLine5;
+      if (
+        itemList.length > 0 || farmNet !== undefined ||
+        line5 !== trustTotalIncome
+      ) {
+        throw new Error(
+          "Schedule E trust Part III income must match finalized Schedule 1 line 5",
+        );
+      }
+    }
     if (royaltyKeys.length > 0 || linkedMiscRoyalty) {
       const pendingSchedule1 = context?.pending?.schedule1;
       const pendingLine5 = pendingSchedule1 &&
@@ -670,24 +696,28 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
             element("BusinessNameLine1Txt", row.estate_trust_name),
           ]),
           element("EstateOrTrustEIN", row.estate_trust_ein),
+          element("EstateAndTrustPassiveIncomeAmt", row.passive_income),
           element("OtherIncomeAmt", row.other_income),
         ])
       ),
-      trustRows.length > 0
+      trustPassiveIncome > 0
+        ? element("EstateAndTrustTotPssvIncmAmt", trustPassiveIncome)
+        : "",
+      trustOtherIncome > 0
         ? element("TotalOtherIncomeAmt", trustOtherIncome)
         : "",
       trustRows.length > 0
-        ? element("TotalEstateOrTrustIncomeAmt", trustOtherIncome)
+        ? element("TotalEstateOrTrustIncomeAmt", trustTotalIncome)
         : "",
       trustRows.length > 0
-        ? element("TotEstateAndTrustIncOrLossAmt", trustOtherIncome)
+        ? element("TotEstateAndTrustIncOrLossAmt", trustTotalIncome)
         : "",
       allowedFarmNet === undefined
         ? ""
         : element("NetFarmRentalIncomeOrLossAmt", allowedFarmNet),
       element(
         "TotalSuppIncomeOrLossAmt",
-        propertyNet + trustOtherIncome + (allowedFarmNet ?? 0),
+        propertyNet + trustTotalIncome + (allowedFarmNet ?? 0),
       ),
       farmGross === undefined
         ? ""

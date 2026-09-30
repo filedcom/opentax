@@ -6284,6 +6284,60 @@ Deno.test({
 });
 
 Deno.test({
+  name: "XSD: trust K-1 boxes 6 through 8 reach Schedule E passive income",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const result = runReturn({
+    general,
+    k1_trust: [{
+      estate_trust_name: "Family Trust",
+      estate_trust_ein: "123456789",
+      source_document_reference: "K1-2025-A",
+      box6_ordinary_business: 300,
+      box7_rental_real_estate: 200,
+      box8_other_rental: 100,
+      box6_8_activity_statement: [
+        {
+          box: "6",
+          activity_name: "Shop",
+          statement_reference: "A-6",
+          income: 300,
+        },
+        {
+          box: "7",
+          activity_name: "House",
+          statement_reference: "A-7",
+          income: 200,
+        },
+        {
+          box: "8",
+          activity_name: "Equipment",
+          statement_reference: "A-8",
+          income: 100,
+        },
+      ],
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(
+    xml,
+    "<EstateAndTrustPassiveIncomeAmt>600</EstateAndTrustPassiveIncomeAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalSuppIncomeOrLossAmt>600</TotalSuppIncomeOrLossAmt>",
+  );
+  await validateXsd(xml, "trust K-1 boxes 6-8 Schedule E passive income");
+});
+
+Deno.test({
   name: "XSD: Schedule E nonpassive rental loss validates",
   sanitizeOps: false,
   sanitizeResources: false,

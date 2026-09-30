@@ -18,13 +18,49 @@ Deno.test("trust K-1 box 5 prints Schedule E Part III and line 41", () => {
       other_income: 750,
     }],
   });
-  const pending = { k1_trust: { k1_trusts: [source] }, schedule_e: raw };
+  const pending = {
+    k1_trust: { k1_trusts: [source] },
+    schedule_e: raw,
+    schedule1: { line5_schedule_e: 750 },
+  };
   const projected = scheduleEPdf.projectFields?.(raw, pending);
   assertEquals(projected?.trust_0_name, "Family Trust");
   assertEquals(projected?.trust_0_ein, "123456789");
   assertEquals(projected?.trust_0_other_income, 750);
   assertEquals(projected?.trust_line37, 750);
   assertEquals(projected?.trust_line41, 750);
+  assertEquals(scheduleEPdf.pageIndices?.(projected ?? {}), [1]);
+});
+
+Deno.test("trust K-1 activity income prints Part III passive column", () => {
+  const source = {
+    estate_trust_name: "Family Trust",
+    estate_trust_ein: "123456789",
+    source_document_reference: "K1-2025-A",
+    box6_ordinary_business: 600,
+    box6_8_activity_statement: [{
+      box: "6",
+      activity_name: "Shop",
+      statement_reference: "A-6",
+      income: 600,
+    }],
+  };
+  const raw = scheduleEInputSchema.parse({
+    estate_trust_rows: [{
+      estate_trust_name: source.estate_trust_name,
+      estate_trust_ein: source.estate_trust_ein,
+      source_document_reference: source.source_document_reference,
+      passive_income: 600,
+    }],
+  });
+  const projected = scheduleEPdf.projectFields?.(raw, {
+    k1_trust: { k1_trusts: [source] },
+    schedule_e: raw,
+    schedule1: { line5_schedule_e: 600 },
+  });
+  assertEquals(projected?.trust_0_passive_income, 600);
+  assertEquals(projected?.trust_total_passive_income, 600);
+  assertEquals(projected?.trust_line37, 600);
   assertEquals(scheduleEPdf.pageIndices?.(projected ?? {}), [1]);
 });
 

@@ -739,6 +739,33 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-trust-k1-passive-schedule-e",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(30_000, 3_000, "Example Employer", "12-3456789")],
+      k1_trust: [{
+        estate_trust_name: "Family Trust",
+        estate_trust_ein: "123456789",
+        source_document_reference: "Synthetic 2025 trust K-1",
+        box6_ordinary_business: 300,
+        box7_rental_real_estate: 200,
+        box8_other_rental: 100,
+        box6_8_activity_statement: [
+          { box: "6", activity_name: "Shop", statement_reference: "Synthetic shop statement", income: 300 },
+          { box: "7", activity_name: "House", statement_reference: "Synthetic house statement", income: 200 },
+          { box: "8", activity_name: "Equipment", statement_reference: "Synthetic equipment statement", income: 100 },
+        ],
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule1", "schedule_e"],
+    reviewFocus: [
+      "Three positive activity rows reconcile to K-1 boxes 6, 7, and 8",
+      "The $600 total prints only in Schedule E Part III passive column (d), line 37, and line 41",
+      "Schedule 1 line 5 and Form 1040 line 8 include the $600 once",
+    ],
+  },
+  {
     id: "single-reviewed-car-loan-schedule1a",
     inputs: {
       general: {

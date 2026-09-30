@@ -191,8 +191,13 @@ export const inputSchema = z.object({
       estate_trust_name: z.string().trim().min(1),
       estate_trust_ein: z.string().regex(/^\d{9}$/),
       source_document_reference: z.string().trim().min(1),
-      other_income: z.number().int().positive(),
-    }).strict(),
+      other_income: z.number().int().positive().optional(),
+      passive_income: z.number().int().positive().optional(),
+    }).strict().refine(
+      (row) =>
+        row.other_income !== undefined || row.passive_income !== undefined,
+      { message: "Schedule E estate/trust row needs income" },
+    ),
   ).optional(),
   // Passthrough mortgage interest from 1098 Box 1 routed to Schedule E
   mortgage_interest: z.number().nonnegative().optional(),
@@ -1018,7 +1023,10 @@ class ScheduleENode extends TaxNode<typeof inputSchema> {
     );
     const totalNet = propertyNet + passthroughRental + passthroughRoyalty +
       (farm_rental_net ?? 0) +
-      (estate_trust_rows ?? []).reduce((sum, row) => sum + row.other_income, 0);
+      (estate_trust_rows ?? []).reduce(
+        (sum, row) => sum + (row.other_income ?? 0) + (row.passive_income ?? 0),
+        0,
+      );
     // Schedule E line 26 carries income plus DEDUCTIBLE losses: a passive loss is held
     // back here and the part Form 8582 allows comes back on Schedule 1 (IRC §469(a)).
     const entireLoss = schedule_es.length === 1 && farms.length === 0

@@ -107,10 +107,15 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
       `${page2}.Table_Line33a-b[0].Row${row}[0].f2_${49 + index * 2}[0]`,
     ),
     text(
+      `trust_${index}_passive_income`,
+      `${page2}.Table_Line33c-f[0].Row${row}[0].f2_${53 + index * 4}[0]`,
+    ),
+    text(
       `trust_${index}_other_income`,
       `${page2}.Table_Line33c-f[0].Row${row}[0].f2_${55 + index * 4}[0]`,
     ),
   ]),
+  text("trust_total_passive_income", `${page2}.f2_61[0]`),
   text("trust_total_other_income", `${page2}.f2_63[0]`),
   text("trust_line35", `${page2}.f2_68[0]`),
   text("trust_line37", `${page2}.f2_70[0]`),
@@ -145,14 +150,24 @@ export const scheduleEPdf: PdfFormDescriptor = {
           "Schedule E PDF trust rows need a sourced Part III-only return",
         );
       }
-      const total = trustRows.reduce((sum, row) => sum + row.other_income, 0);
+      const passive = trustRows.reduce(
+        (sum, row) => sum + (row.passive_income ?? 0),
+        0,
+      );
+      const other = trustRows.reduce(
+        (sum, row) => sum + (row.other_income ?? 0),
+        0,
+      );
+      const total = passive + other;
       return {
         ...Object.fromEntries(trustRows.flatMap((row, index) => [
           [`trust_${index}_name`, row.estate_trust_name],
           [`trust_${index}_ein`, row.estate_trust_ein],
+          [`trust_${index}_passive_income`, row.passive_income],
           [`trust_${index}_other_income`, row.other_income],
         ])),
-        trust_total_other_income: total,
+        trust_total_passive_income: passive > 0 ? passive : undefined,
+        trust_total_other_income: other > 0 ? other : undefined,
         trust_line35: total,
         trust_line37: total,
         trust_line41: total,

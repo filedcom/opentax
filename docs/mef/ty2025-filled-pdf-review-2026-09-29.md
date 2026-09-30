@@ -251,5 +251,20 @@ and 10 with no line 8z amount. Schedule E page 2 prints the trust name and
 EIN, $750 in Part III column (f), $750 on lines 34a, 35, 37, and 41, and
 the taxpayer name and SSN. Its PDF SHA-256 is
 `11dfaaa12df6cd0570672170d09d2d5499a70ca42896bae1ecd6e0588e42fbe4`.
-The K-1 is synthetic; issuer bytes, boxes 6–9 activity statements and
-limitations, IRS business rules, and ATS acceptance remain open.
+The K-1 is synthetic; issuer bytes, trust activity losses, box 9 deductions,
+IRS business rules, and ATS acceptance remain open.
+
+The `single-trust-k1-passive-schedule-e` packet was generated with the other
+thirty-six prepared cases in
+`.state/research/ty2025-filled-pdf-review/2026-09-30-v46/`. Its synthetic
+trust K-1 box 6/7/8 totals of $300/$200/$100 match three named activity
+statement rows and carry $600 of passive income to Schedule E Part III. The
+full return passes local TY2025 v5.4 XSD. All five PDF pages were rendered
+and inspected: Form 1040 has $30,000 wages, $600 additional income, $30,600
+AGI, $14,850 taxable income, $1,547 tax, and $1,453 refund; Schedule 1
+prints $600 on lines 5 and 10; Schedule E page 2 prints the trust identity,
+$600 only in passive column (d), and $600 on lines 34a, 35, 37, and 41.
+The PDF SHA-256 is
+`5862f159b811adc8ba7130b69531fdeef33ef16527c05f9a8c8aa08be87bdcb4`.
+Activity losses, box 9 deductions, issuer bytes, IRS business rules, and ATS
+acceptance remain open.
