@@ -17,6 +17,11 @@ const general = {
     not_qualifying_child_of_another_taxpayer_verified: true,
     qualifying_child_status_record_reference: "Synthetic 2025 family review",
   },
+  prior_eic_disallowance_review: {
+    status: "none",
+    irs_account_record_reference: "Synthetic IRS account transcript review",
+    no_nonclerical_disallowance_since_1996_verified: true,
+  },
 };
 const w2 = {
   employee_ssn: "111-22-3333",

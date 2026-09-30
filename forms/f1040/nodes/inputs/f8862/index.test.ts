@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { f8862 } from "./index.ts";
 
 function compute(input: Parameters<typeof f8862.compute>[1]) {
@@ -15,12 +15,16 @@ Deno.test("f8862: empty object is valid — all fields optional", () => {
 });
 
 Deno.test("f8862: eitc_qualifying_children_count > 3 rejected", () => {
-  const parsed = f8862.inputSchema.safeParse({ eitc_qualifying_children_count: 4 });
+  const parsed = f8862.inputSchema.safeParse({
+    eitc_qualifying_children_count: 4,
+  });
   assertEquals(parsed.success, false);
 });
 
 Deno.test("f8862: negative eitc_qualifying_children_count rejected", () => {
-  const parsed = f8862.inputSchema.safeParse({ eitc_qualifying_children_count: -1 });
+  const parsed = f8862.inputSchema.safeParse({
+    eitc_qualifying_children_count: -1,
+  });
   assertEquals(parsed.success, false);
 });
 
@@ -43,10 +47,32 @@ Deno.test("f8862: claim_eitc=false produces no eitc output", () => {
 // =============================================================================
 
 Deno.test("f8862: claim_eitc=true routes to eitc node", () => {
-  const result = compute({ claim_eitc: true });
+  const result = compute({
+    claim_eitc: true,
+    eitc_disallowed_year: 2023,
+    eitc_disallowance_notice_reference: "Synthetic 2023 IRS notice",
+  });
   const out = result.outputs.find((o) => o.nodeType === "eitc");
   assertEquals(out !== undefined, true);
   assertEquals((out!.fields as Record<string, boolean>).form8862_filed, true);
+  assertEquals(out!.fields.form8862_disallowed_year, 2023);
+});
+
+Deno.test("f8862: an EIC claim needs the prior IRS notice and year", () => {
+  assertThrows(
+    () => compute({ claim_eitc: true }),
+    Error,
+    "prior disallowance year and IRS notice reference",
+  );
+  assertThrows(
+    () =>
+      compute({
+        claim_eitc: true,
+        eitc_disallowed_year: 2023,
+      }),
+    Error,
+    "prior disallowance year and IRS notice reference",
+  );
 });
 
 // =============================================================================
@@ -76,7 +102,13 @@ Deno.test("f8862: claim_aotc=true routes to f8863 node", () => {
 // =============================================================================
 
 Deno.test("f8862: all three claims produce three outputs", () => {
-  const result = compute({ claim_eitc: true, claim_ctc: true, claim_aotc: true });
+  const result = compute({
+    claim_eitc: true,
+    claim_ctc: true,
+    claim_aotc: true,
+    eitc_disallowed_year: 2023,
+    eitc_disallowance_notice_reference: "Synthetic 2023 IRS notice",
+  });
   assertEquals(result.outputs.length, 3);
   const nodeTypes = result.outputs.map((o) => o.nodeType);
   assertEquals(nodeTypes.includes("eitc"), true);
@@ -85,6 +117,11 @@ Deno.test("f8862: all three claims produce three outputs", () => {
 });
 
 Deno.test("f8862: claim_eitc + claim_ctc only produces two outputs", () => {
-  const result = compute({ claim_eitc: true, claim_ctc: true });
+  const result = compute({
+    claim_eitc: true,
+    claim_ctc: true,
+    eitc_disallowed_year: 2023,
+    eitc_disallowance_notice_reference: "Synthetic 2023 IRS notice",
+  });
   assertEquals(result.outputs.length, 2);
 });

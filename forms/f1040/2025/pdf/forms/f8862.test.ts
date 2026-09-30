@@ -12,6 +12,11 @@ const filer = {
   filingStatus: FilingStatus.Single,
 };
 
+const priorEicEvidence = {
+  eitc_disallowed_year: 2023,
+  eitc_disallowance_notice_reference: "Synthetic 2023 IRS notice",
+};
+
 Deno.test("Form 8862 PDF maps exact Dec 2025 widget names on all three pages", () => {
   const map = new Map(
     form8862Pdf.fields.map((entry) => [entry.domainKey, entry.pdfField]),
@@ -43,6 +48,7 @@ Deno.test("Form 8862 PDF maps exact Dec 2025 widget names on all three pages", (
 Deno.test("Form 8862 PDF projects bounded EITC and CTC claims", () => {
   const source = {
     claim_eitc: true,
+    ...priorEicEvidence,
     eitc_income_reporting_only: false,
     eitc_qualifying_child_of_other: false,
     eitc_children: [{ first_name: "Alice", last_name: "Doe", days_in_us: 300 }],
@@ -108,6 +114,7 @@ Deno.test("Form 8862 PDF rejects unclaimed credits and overflow rows", () => {
       form8862Pdf.instances?.(
         {
           claim_eitc: true,
+          ...priorEicEvidence,
           eitc_income_reporting_only: true,
         },
         filer,

@@ -13,6 +13,7 @@ import { standard_deduction } from "../../intermediate/worksheets/standard_deduc
 import {
   childlessEicReviewSchema,
   eitc,
+  priorEicDisallowanceReviewSchema,
 } from "../../intermediate/forms/eitc/index.ts";
 import { f8812 } from "../f8812/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
@@ -172,6 +173,7 @@ export type DependentFiling = z.infer<typeof dependentFilingSchema>;
 export const inputSchema = z.object({
   filing_status: z.nativeEnum(FilingStatus),
   childless_eic_review: childlessEicReviewSchema.optional(),
+  prior_eic_disallowance_review: priorEicDisallowanceReviewSchema.optional(),
   // 2025 EIC special rule for a married taxpayer filing separately.
   mfs_eitc_separation_review: z.discriminatedUnion("basis", [
     z.object({
@@ -982,11 +984,11 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
         spouse_dob: parsed.spouse_dob,
         taxpayer_death_date: parsed.taxpayer_death_date,
         spouse_death_date: parsed.spouse_death_date,
-        main_home_in_us_over_half_year:
-          parsed.main_home_in_us_over_half_year,
+        main_home_in_us_over_half_year: parsed.main_home_in_us_over_half_year,
         taxpayer_can_be_claimed_as_dependent:
           parsed.taxpayer_can_be_claimed_as_dependent,
         childless_eic_review: parsed.childless_eic_review,
+        prior_eic_disallowance_review: parsed.prior_eic_disallowance_review,
         mfs_separation_reviewed:
           parsed.mfs_eitc_separation_review !== undefined,
         filer_has_valid_ssns: filer.eitc,

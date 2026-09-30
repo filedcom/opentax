@@ -121,6 +121,11 @@ const BASE_IDENTITY = {
   taxpayer_ssn_issued_before_due_date: true,
   taxpayer_tin_issued_by_due_date: true,
   taxpayer_dob: "1985-06-15",
+  prior_eic_disallowance_review: {
+    status: "none",
+    irs_account_record_reference: "Synthetic IRS account transcript review",
+    no_nonclerical_disallowance_since_1996_verified: true,
+  },
   address_line1: "123 Main St",
   address_city: "Springfield",
   address_state: "IL",
@@ -928,7 +933,8 @@ Deno.test({
       taxpayer_can_be_claimed_as_dependent: false,
       childless_eic_review: {
         not_qualifying_child_of_another_taxpayer_verified: true,
-        qualifying_child_status_record_reference: "Synthetic 2025 family review",
+        qualifying_child_status_record_reference:
+          "Synthetic 2025 family review",
       },
     },
     w2: [w2Item(12_000, 500)],

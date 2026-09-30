@@ -1,5 +1,6 @@
 import { assertEquals } from "@std/assert";
 import { buildMefXml } from "../builder.ts";
+import { buildPending } from "../pending.ts";
 import { type FilerIdentity, FilingStatus } from "../types.ts";
 import { FilingStatus as NodeFilingStatus } from "../../../nodes/types.ts";
 
@@ -24,6 +25,50 @@ const filer: FilerIdentity = {
   filingStatus: FilingStatus.Single,
   softwareId: "12345678",
   originator: { efin: "123456", originatorType: "ERO" },
+};
+
+const priorEicEvidence = {
+  eitc_disallowed_year: 2023,
+  eitc_disallowance_notice_reference: "Synthetic 2023 IRS notice",
+};
+const generalEicSource = {
+  filing_status: "single",
+  taxpayer_ssn: "123456789",
+  taxpayer_ssn_valid_for_employment: true,
+  taxpayer_ssn_issued_before_due_date: true,
+  taxpayer_tin_issued_by_due_date: true,
+  taxpayer_dob: "1985-06-15",
+  prior_eic_disallowance_review: {
+    status: "requires_8862",
+    disallowed_year: 2023,
+    disallowance_notice_reference: "Synthetic 2023 IRS notice",
+  },
+};
+const childlessEicSource = {
+  ...generalEicSource,
+  main_home_in_us_over_half_year: true,
+  taxpayer_can_be_claimed_as_dependent: false,
+  childless_eic_review: {
+    not_qualifying_child_of_another_taxpayer_verified: true,
+    qualifying_child_status_record_reference: "Synthetic 2025 family review",
+  },
+};
+const claimedChild = {
+  first_name: "Child",
+  last_name: "Test",
+  name_control: "TEST",
+  ssn: "111223334",
+  ssn_valid_for_employment: true,
+  ssn_issued_before_due_date: true,
+  tin_issued_by_due_date: true,
+  dob: "2017-07-04",
+  relationship: "daughter",
+  irs_relationship_code: "DAUGHTER",
+  months_in_home: 12,
+  lived_in_us_over_half_year: true,
+  us_citizen_national_or_resident: true,
+  provided_over_half_own_support: false,
+  filed_joint_return_except_refund_only: false,
 };
 
 const aocStudent = {
@@ -92,55 +137,82 @@ Deno.test({
   sanitizeResources: false,
   ignore: !xsdAvailable,
 }, async () => {
-  const xml = buildMefXml({
-    f8862: {
-      credit_disallowance_ban_active: false,
-      claim_eitc: true,
-      claim_ctc: true,
-      claim_aotc: true,
-      eitc_income_reporting_only: false,
-      eitc_qualifying_child_of_other: false,
-      eitc_children: [{
-        first_name: "Child",
-        last_name: "Test",
-        days_in_us: 365,
-        birth_month_day: "--07-04",
-      }],
-      ctc_children: [{
-        first_name: "Child",
-        last_name: "Test",
-        lived_with_over_half_year: true,
-        qualifying_child: true,
-        dependent: true,
-        us_citizen_national_or_resident: true,
-      }],
-      aotc_students: [{
-        first_name: "Student",
-        last_name: "Test",
-        eligible: true,
-        credit_claimed_four_prior_years: false,
-      }],
-    },
-    f8863: {
-      f8863s: [aocStudent],
-      credit_limit_worksheet: {
-        form1040_line18_tax: 10_000,
-        schedule3_line1_foreign_tax_credit: 0,
-        schedule3_line2_dependent_care_credit: 0,
-        schedule3_line6d: 0,
-        schedule3_line6l: 0,
+  const xml = buildMefXml(
+    buildPending({
+      f8862: {
+        credit_disallowance_ban_active: false,
+        claim_eitc: true,
+        ...priorEicEvidence,
+        claim_ctc: true,
+        claim_aotc: true,
+        eitc_income_reporting_only: false,
+        eitc_qualifying_child_of_other: false,
+        eitc_children: [{
+          first_name: "Child",
+          last_name: "Test",
+          days_in_us: 365,
+          birth_month_day: "--07-04",
+        }],
+        ctc_children: [{
+          first_name: "Child",
+          last_name: "Test",
+          lived_with_over_half_year: true,
+          qualifying_child: true,
+          dependent: true,
+          us_citizen_national_or_resident: true,
+        }],
+        aotc_students: [{
+          first_name: "Student",
+          last_name: "Test",
+          eligible: true,
+          credit_claimed_four_prior_years: false,
+        }],
       },
-    },
-    f1040: {
-      filing_status: "single",
-      line11_agi: 70_000,
-      line18_total_tax_before_credits: 10_000,
-      line19_child_tax_credit: 2_200,
-      line27_eitc: 500,
-      line29_refundable_aoc: 1_000,
-    },
-    schedule3: { line3_education_credit: 1_500 },
-  }, filer);
+      f8863: {
+        f8863s: [aocStudent],
+        credit_limit_worksheet: {
+          form1040_line18_tax: 10_000,
+          schedule3_line1_foreign_tax_credit: 0,
+          schedule3_line2_dependent_care_credit: 0,
+          schedule3_line6d: 0,
+          schedule3_line6l: 0,
+        },
+      },
+      f1040: {
+        filing_status: "single",
+        taxpayer_ssn: "123456789",
+        taxpayer_ssn_valid_for_employment: true,
+        taxpayer_ssn_issued_before_due_date: true,
+        taxpayer_tin_issued_by_due_date: true,
+        dependent_count: 1,
+        qualifying_child_tax_credit_count: 1,
+        dependent_details: [{ ...claimedChild, credit_category: "ctc" }],
+        line11_agi: 70_000,
+        line18_total_tax_before_credits: 10_000,
+        line19_child_tax_credit: 2_200,
+        line27_eitc: 500,
+        line29_refundable_aoc: 1_000,
+      },
+      general: { ...generalEicSource, dependents: [claimedChild] },
+      eitc: {
+        credit_amount: 500,
+        qualifying_children: 1,
+        qualifying_child_details: [{
+          first_name: "Child",
+          last_name: "Test",
+          name_control: "TEST",
+          ssn: "111223334",
+          ssn_valid_for_employment: true,
+          tin_issued_by_due_date: true,
+          dob: "2017-07-04",
+          irs_relationship_code: "DAUGHTER",
+          months_in_home: 12,
+        }],
+      },
+      schedule3: { line3_education_credit: 1_500 },
+    }),
+    filer,
+  );
   await validateXsd(xml);
 });
 
@@ -151,22 +223,32 @@ Deno.test({
   ignore: !xsdAvailable,
 }, async () => {
   // This fixture checks XML shape and cross-document presence, not EITC math.
-  const xml = buildMefXml({
-    f8862: {
-      credit_disallowance_ban_active: false,
-      claim_eitc: true,
-      eitc_income_reporting_only: false,
-      eitc_qualifying_child_of_other: false,
-      eitc_without_child: {
-        primary: {
-          main_home_us_days: 365,
-          age: 35,
-          claimed_as_dependent: false,
+  const xml = buildMefXml(
+    buildPending({
+      f8862: {
+        credit_disallowance_ban_active: false,
+        claim_eitc: true,
+        ...priorEicEvidence,
+        eitc_income_reporting_only: false,
+        eitc_qualifying_child_of_other: false,
+        eitc_without_child: {
+          primary: {
+            main_home_us_days: 365,
+            age: 35,
+            claimed_as_dependent: false,
+          },
         },
       },
-    },
-    f1040: { filing_status: "single", line27_eitc: 500 },
-  }, filer);
+      f1040: {
+        filing_status: "single",
+        main_home_in_us_over_half_year: true,
+        line27_eitc: 500,
+      },
+      general: childlessEicSource,
+      eitc: { credit_amount: 500, qualifying_children: 0 },
+    }),
+    filer,
+  );
   assertEquals(xml.includes("<PrimaryNoQualifyingChildGrp>"), true);
   await validateXsd(xml);
 });
@@ -177,14 +259,24 @@ Deno.test({
   sanitizeResources: false,
   ignore: !xsdAvailable,
 }, async () => {
-  const xml = buildMefXml({
-    f8862: {
-      credit_disallowance_ban_active: false,
-      claim_eitc: true,
-      eitc_income_reporting_only: true,
-    },
-    f1040: { filing_status: "single", line27_eitc: 500 },
-  }, filer);
+  const xml = buildMefXml(
+    buildPending({
+      f8862: {
+        credit_disallowance_ban_active: false,
+        claim_eitc: true,
+        ...priorEicEvidence,
+        eitc_income_reporting_only: true,
+      },
+      f1040: {
+        filing_status: "single",
+        main_home_in_us_over_half_year: true,
+        line27_eitc: 500,
+      },
+      general: childlessEicSource,
+      eitc: { credit_amount: 500, qualifying_children: 0 },
+    }),
+    filer,
+  );
   assertEquals(xml.includes("EICEligClmQlfyChldOfOtherInd"), false);
   await validateXsd(xml);
 });

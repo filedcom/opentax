@@ -19,3 +19,14 @@ Deno.test("export rejects a positive EIC without its matching calculation", () =
     "needs its matching calculation source",
   );
 });
+
+Deno.test("export rejects a positive EIC without reviewed prior history", () => {
+  assertThrows(
+    () => assertEicSource("single", 500, true, {
+      general: { filing_status: "single" },
+      eitc: { credit_amount: 500, qualifying_children: 0 },
+    }),
+    Error,
+    "reviewed prior-disallowance history",
+  );
+});

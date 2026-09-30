@@ -15,6 +15,11 @@ function compute(input: Record<string, unknown>) {
       not_qualifying_child_of_another_taxpayer_verified: true,
       qualifying_child_status_record_reference: "Synthetic 2025 family review",
     },
+    prior_eic_disallowance_review: {
+      status: "none",
+      irs_account_record_reference: "Synthetic IRS account transcript review",
+      no_nonclerical_disallowance_since_1996_verified: true,
+    },
     ...input,
   });
 }
@@ -65,32 +70,41 @@ Deno.test("childless EIC honors the IRS birthday boundaries", () => {
     taxpayer_dob: "2000-02-14",
     taxpayer_death_date: "2025-02-12",
   });
-  assertEquals(getCredit({
-    ...base,
-    taxpayer_dob: "2000-02-14",
-    taxpayer_death_date: "2025-02-13",
-  }), 542);
+  assertEquals(
+    getCredit({
+      ...base,
+      taxpayer_dob: "2000-02-14",
+      taxpayer_death_date: "2025-02-13",
+    }),
+    542,
+  );
   noCredit({
     ...base,
     taxpayer_dob: "1960-02-14",
     taxpayer_death_date: "2025-02-14",
   });
-  assertEquals(getCredit({
-    ...base,
-    taxpayer_dob: "1960-02-14",
-    taxpayer_death_date: "2025-02-13",
-  }), 542);
+  assertEquals(
+    getCredit({
+      ...base,
+      taxpayer_dob: "1960-02-14",
+      taxpayer_death_date: "2025-02-13",
+    }),
+    542,
+  );
 });
 
 Deno.test("MFJ childless EIC accepts one age-eligible spouse; HOH requires unmarried review", () => {
   const base = { earned_income: 12_000 };
-  assertEquals(getCredit({
-    ...base,
-    filing_status: FilingStatus.MFJ,
-    taxpayer_dob: "2003-06-15",
-    spouse_dob: "1985-06-15",
-    childless_eic_review: undefined,
-  }), 649);
+  assertEquals(
+    getCredit({
+      ...base,
+      filing_status: FilingStatus.MFJ,
+      taxpayer_dob: "2003-06-15",
+      spouse_dob: "1985-06-15",
+      childless_eic_review: undefined,
+    }),
+    649,
+  );
   noCredit({
     ...base,
     filing_status: FilingStatus.MFJ,
@@ -98,15 +112,94 @@ Deno.test("MFJ childless EIC accepts one age-eligible spouse; HOH requires unmar
     spouse_dob: "2004-06-15",
   });
   noCredit({ ...base, filing_status: FilingStatus.HOH });
-  assertEquals(getCredit({
+  assertEquals(
+    getCredit({
+      ...base,
+      filing_status: FilingStatus.HOH,
+      childless_eic_review: {
+        not_qualifying_child_of_another_taxpayer_verified: true,
+        qualifying_child_status_record_reference:
+          "Synthetic 2025 family review",
+        hoh_unmarried_at_year_end_verified: true,
+      },
+    }),
+    542,
+  );
+});
+
+Deno.test("EIC requires reviewed prior-disallowance history and the matching Form 8862 when needed", () => {
+  const base = { earned_income: 12_000, filing_status: FilingStatus.Single };
+  noCredit({ ...base, prior_eic_disallowance_review: undefined });
+  const required = {
+    status: "requires_8862",
+    disallowed_year: 2023,
+    disallowance_notice_reference: "Synthetic 2023 IRS notice",
+  };
+  noCredit({ ...base, prior_eic_disallowance_review: required });
+  noCredit({
     ...base,
-    filing_status: FilingStatus.HOH,
-    childless_eic_review: {
-      not_qualifying_child_of_another_taxpayer_verified: true,
-      qualifying_child_status_record_reference: "Synthetic 2025 family review",
-      hoh_unmarried_at_year_end_verified: true,
+    prior_eic_disallowance_review: required,
+    form8862_filed: true,
+    form8862_disallowed_year: 2022,
+    form8862_notice_reference: "Synthetic 2023 IRS notice",
+  });
+  assertEquals(
+    getCredit({
+      ...base,
+      prior_eic_disallowance_review: required,
+      form8862_filed: true,
+      form8862_disallowed_year: 2023,
+      form8862_notice_reference: "Synthetic 2023 IRS notice",
+    }),
+    542,
+  );
+  assertEquals(
+    getCredit({
+      ...base,
+      prior_eic_disallowance_review: {
+        status: "math_or_clerical_only",
+        irs_notice_reference: "Synthetic 2023 math-error notice",
+        no_other_disallowance_verified: true,
+      },
+    }),
+    542,
+  );
+  assertEquals(
+    getCredit({
+      ...base,
+      prior_eic_disallowance_review: {
+        status: "reinstated",
+        disallowance_notice_reference: "Synthetic 2022 IRS notice",
+        later_allowance_notice_reference: "Synthetic 2023 allowance notice",
+        no_new_disallowance_verified: true,
+      },
+    }),
+    542,
+  );
+  assertEquals(
+    getCredit({
+      ...base,
+      prior_eic_disallowance_review: {
+        status: "childless_exception",
+        disallowance_notice_reference: "Synthetic 2023 child-only notice",
+        disallowed_only_for_child_qualification_verified: true,
+        no_other_disallowance_verified: true,
+        no_active_ban_verified: true,
+      },
+    }),
+    542,
+  );
+  noCredit({
+    ...base,
+    qualifying_children: 1,
+    prior_eic_disallowance_review: {
+      status: "childless_exception",
+      disallowance_notice_reference: "Synthetic 2023 child-only notice",
+      disallowed_only_for_child_qualification_verified: true,
+      no_other_disallowance_verified: true,
+      no_active_ban_verified: true,
     },
-  }), 542);
+  });
 });
 
 function getCredit(input: Record<string, unknown>): number {

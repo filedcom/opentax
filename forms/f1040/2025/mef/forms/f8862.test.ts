@@ -3,10 +3,16 @@ import { SCENARIO_1040_05_FACTS } from "../../../e2e/ats/ty2025_cases.ts";
 import type { F8862Input } from "../../../nodes/inputs/f8862/index.ts";
 import { form8862 as nativeForm8862 } from "./f8862.ts";
 
+const priorEicEvidence = {
+  eitc_disallowed_year: 2023,
+  eitc_disallowance_notice_reference: "Synthetic 2023 IRS notice",
+};
+
 const source = SCENARIO_1040_05_FACTS;
 
 const scenarioInput = {
   claim_eitc: true,
+  ...priorEicEvidence,
   claim_ctc: true,
   claim_aotc: true,
   eitc_income_reporting_only:
@@ -89,6 +95,7 @@ Deno.test("Form 8862 native filing rejects claims absent from the finalized retu
     () =>
       nativeForm8862.build({
         claim_eitc: true,
+        ...priorEicEvidence,
         eitc_income_reporting_only: true,
       }),
     Error,
@@ -98,6 +105,7 @@ Deno.test("Form 8862 native filing rejects claims absent from the finalized retu
     () =>
       nativeForm8862.build({
         claim_eitc: true,
+        ...priorEicEvidence,
         eitc_income_reporting_only: true,
       }, { pending: { f1040: { line27_eitc: 0 } } }),
     Error,
@@ -107,6 +115,7 @@ Deno.test("Form 8862 native filing rejects claims absent from the finalized retu
     () =>
       nativeForm8862.build({
         claim_eitc: true,
+        ...priorEicEvidence,
         eitc_income_reporting_only: true,
       }, { pending: { f1040: { line27_eitc: "500" } } }),
     Error,
@@ -187,6 +196,7 @@ Deno.test("Form 8862 CTC names must match filed dependent credit rows", () => {
 Deno.test("Form 8862 supports EITC without qualifying children", () => {
   const xml = form8862.build({
     claim_eitc: true,
+    ...priorEicEvidence,
     eitc_income_reporting_only: false,
     eitc_qualifying_child_of_other: false,
     eitc_without_child: {
@@ -205,6 +215,7 @@ Deno.test("Form 8862 supports EITC without qualifying children", () => {
 Deno.test("Form 8862 rejects childless EITC with fewer than 183 US-home days", () => {
   const childless = {
     claim_eitc: true,
+    ...priorEicEvidence,
     eitc_income_reporting_only: false,
     eitc_qualifying_child_of_other: false,
     eitc_without_child: {
@@ -259,6 +270,7 @@ Deno.test("Form 8862 rejects childless EITC with fewer than 183 US-home days", (
 Deno.test("Form 8862 stops Part II after an income-reporting-only EITC disallowance", () => {
   const xml = form8862.build({
     claim_eitc: true,
+    ...priorEicEvidence,
     eitc_income_reporting_only: true,
   });
   assertStringIncludes(
@@ -271,6 +283,7 @@ Deno.test("Form 8862 stops Part II after an income-reporting-only EITC disallowa
     () =>
       form8862.build({
         claim_eitc: true,
+        ...priorEicEvidence,
         eitc_income_reporting_only: true,
         eitc_qualifying_child_of_other: false,
       }),
@@ -283,7 +296,7 @@ Deno.test("Form 8862 rejects missing detail rather than filing an incomplete for
   assertEquals(form8862.build({}), "");
   assertEquals(form8862.build({ claim_eitc: false }), "");
   assertThrows(
-    () => form8862.build({ claim_eitc: true }),
+    () => form8862.build({ claim_eitc: true, ...priorEicEvidence }),
     Error,
     "income-reporting answer",
   );
@@ -291,6 +304,7 @@ Deno.test("Form 8862 rejects missing detail rather than filing an incomplete for
     () =>
       form8862.build({
         claim_eitc: true,
+        ...priorEicEvidence,
         eitc_income_reporting_only: false,
         eitc_qualifying_child_of_other: false,
       }),
@@ -326,6 +340,7 @@ Deno.test("Form 8862 rejects missing detail rather than filing an incomplete for
     () =>
       form8862.build({
         claim_eitc: true,
+        ...priorEicEvidence,
         eitc_income_reporting_only: false,
         eitc_qualifying_child_of_other: false,
         eitc_children: [{
@@ -341,6 +356,7 @@ Deno.test("Form 8862 rejects missing detail rather than filing an incomplete for
     () =>
       form8862.build({
         claim_eitc: true,
+        ...priorEicEvidence,
         eitc_income_reporting_only: false,
         eitc_qualifying_child_of_other: false,
         eitc_children: [{
@@ -357,6 +373,7 @@ Deno.test("Form 8862 rejects missing detail rather than filing an incomplete for
     () =>
       form8862.build({
         claim_eitc: true,
+        ...priorEicEvidence,
         eitc_income_reporting_only: false,
         eitc_qualifying_child_of_other: false,
         eitc_without_child: {
@@ -383,6 +400,7 @@ Deno.test("Form 8862 rejects missing detail rather than filing an incomplete for
     () =>
       form8862.build({
         claim_eitc: true,
+        ...priorEicEvidence,
         eitc_income_reporting_only: false,
         eitc_qualifying_child_of_other: false,
         eitc_children: [{

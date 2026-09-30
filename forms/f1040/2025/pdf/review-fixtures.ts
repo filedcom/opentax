@@ -64,6 +64,11 @@ const singleGeneral = {
   taxpayer_last_name: "Example",
   taxpayer_ssn: "111-22-3333",
   taxpayer_dob: "1985-06-15",
+  prior_eic_disallowance_review: {
+    status: "none",
+    irs_account_record_reference: "Synthetic IRS account transcript review",
+    no_nonclerical_disallowance_since_1996_verified: true,
+  },
   address_line1: "1 Example Way",
   address_city: "Austin",
   address_state: "TX",

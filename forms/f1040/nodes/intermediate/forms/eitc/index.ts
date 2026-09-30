@@ -35,6 +35,37 @@ export const childlessEicReviewSchema = z.object({
   hoh_unmarried_at_year_end_verified: z.literal(true).optional(),
 }).strict();
 
+export const priorEicDisallowanceReviewSchema = z.discriminatedUnion("status", [
+  z.object({
+    status: z.literal("none"),
+    irs_account_record_reference: z.string().trim().min(1),
+    no_nonclerical_disallowance_since_1996_verified: z.literal(true),
+  }).strict(),
+  z.object({
+    status: z.literal("math_or_clerical_only"),
+    irs_notice_reference: z.string().trim().min(1),
+    no_other_disallowance_verified: z.literal(true),
+  }).strict(),
+  z.object({
+    status: z.literal("reinstated"),
+    disallowance_notice_reference: z.string().trim().min(1),
+    later_allowance_notice_reference: z.string().trim().min(1),
+    no_new_disallowance_verified: z.literal(true),
+  }).strict(),
+  z.object({
+    status: z.literal("childless_exception"),
+    disallowance_notice_reference: z.string().trim().min(1),
+    disallowed_only_for_child_qualification_verified: z.literal(true),
+    no_other_disallowance_verified: z.literal(true),
+    no_active_ban_verified: z.literal(true),
+  }).strict(),
+  z.object({
+    status: z.literal("requires_8862"),
+    disallowed_year: z.number().int().min(1997).max(2024),
+    disallowance_notice_reference: z.string().trim().min(1),
+  }).strict(),
+]);
+
 export const inputSchema = z.object({
   // Earned income from wages (W-2 Box 1), fed by w2 node
   earned_income: z.number().nonnegative().optional(),
@@ -64,13 +95,16 @@ export const inputSchema = z.object({
   main_home_in_us_over_half_year: z.boolean().optional(),
   taxpayer_can_be_claimed_as_dependent: z.boolean().optional(),
   childless_eic_review: childlessEicReviewSchema.optional(),
+  prior_eic_disallowance_review: priorEicDisallowanceReviewSchema.optional(),
 
   // Investment income (interest, dividends, capital gains, rents)
   // If investment_income > eitcInvestmentIncomeLimit, no EITC allowed
   investment_income: z.number().nonnegative().optional(),
 
-  // Set by Form 8862 when prior-year EITC disallowance has been cleared
+  // A filed Form 8862 can satisfy the reviewed prior-disallowance route.
   form8862_filed: z.boolean().optional(),
+  form8862_disallowed_year: z.number().int().min(1997).max(2024).optional(),
+  form8862_notice_reference: z.string().trim().min(1).optional(),
   form2555_filed: z.boolean().optional(),
 });
 
@@ -107,8 +141,10 @@ function meetsChildlessAgeTest(
 }
 
 export function childlessEicEligible(input: EitcInput): boolean {
-  if (input.filing_status === undefined ||
-    input.filing_status === FilingStatus.MFS) return false;
+  if (
+    input.filing_status === undefined ||
+    input.filing_status === FilingStatus.MFS
+  ) return false;
   const isJoint = isJointFiler(input.filing_status);
   const ageEligible = meetsChildlessAgeTest(
     input.taxpayer_dob,
@@ -120,10 +156,28 @@ export function childlessEicEligible(input: EitcInput): boolean {
   }
   if (isJoint) return true;
   return input.taxpayer_can_be_claimed_as_dependent === false &&
-    input.childless_eic_review?.
-        not_qualifying_child_of_another_taxpayer_verified === true &&
+    input.childless_eic_review
+        ?.not_qualifying_child_of_another_taxpayer_verified === true &&
     (input.filing_status !== FilingStatus.HOH ||
       input.childless_eic_review.hoh_unmarried_at_year_end_verified === true);
+}
+
+export function priorEicDisallowanceEligible(
+  input: EitcInput,
+  children: number,
+): boolean {
+  const review = input.prior_eic_disallowance_review;
+  if (review === undefined) return false;
+  if (review.status === "childless_exception") {
+    return children === 0 && input.form8862_filed !== true;
+  }
+  if (review.status !== "requires_8862") {
+    return input.form8862_filed !== true;
+  }
+  return input.form8862_filed === true &&
+    input.form8862_disallowed_year === review.disallowed_year &&
+    input.form8862_notice_reference ===
+      review.disallowance_notice_reference;
 }
 
 function computeEitc(
@@ -138,6 +192,7 @@ function computeEitc(
 
   if (input.filer_has_valid_ssns !== true) return 0;
   if (input.form2555_filed === true) return 0;
+  if (!priorEicDisallowanceEligible(input, children)) return 0;
 
   // A separate return can use the 2025 separated-spouse rule only with a
   // qualifying child and reviewed residence/separation facts.

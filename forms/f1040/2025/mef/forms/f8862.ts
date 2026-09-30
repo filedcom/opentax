@@ -1,5 +1,6 @@
 import { element, elements } from "../../../mef/xml.ts";
 import {
+  assertEitcDisallowanceEvidence,
   type F8862Input,
   inputSchema,
 } from "../../../nodes/inputs/f8862/index.ts";
@@ -252,6 +253,7 @@ export const form8862: MefFormDescriptor<"f8862", F8862Input> = {
   build(rawFields, context) {
     if (Object.keys(rawFields).length === 0) return "";
     const fields = inputSchema.parse(rawFields);
+    assertEitcDisallowanceEvidence(fields);
     validateDetail(fields);
     if (!fields.claim_eitc && !fields.claim_ctc && !fields.claim_aotc) {
       return "";
