@@ -78,11 +78,13 @@ review. The [Form 8873 instructions](https://www.irs.gov/instructions/i8873)
 say its binding-contract exception was repealed for tax years beginning after
 May 17, 2006. The [latest Form 8915-D instructions](https://www.irs.gov/instructions/i8915d)
 cover 2024 repayments and amendments of affected 2021–2023 returns. The
-present `f8873` and `f8915d` nodes incorrectly deposit these asserted amounts
-into Schedule 1 line 8z for a TY2025 return. If the user approves these two
-specific exclusions, make populated TY2025 inputs reject at calculation and
-both exports, and remove their line 8z deposits. An affected-year amendment
-remains a separate workflow decision. No exclusion is applied by this note.
+previous `f8873` and `f8915d` nodes incorrectly deposited these asserted
+amounts into Schedule 1 line 8z for a TY2025 return. Populated input now
+rejects at calculation, and both exports already reject; this is a safety
+boundary while the named product decisions remain open. If the user approves
+these two specific exclusions, record that disposition and retain the
+rejection. An affected-year amendment remains a separate workflow decision.
+No exclusion is applied by this note.
 
 The following are candidates to separate from the initial **current-year Form
 1040 return preparation** workflow. They are **not excluded now**. A decision to

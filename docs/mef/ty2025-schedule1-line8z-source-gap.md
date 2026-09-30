@@ -18,16 +18,17 @@ $1,200 recovery in a full return passes local TY2025 v5.4 XSD and its
 five-page filled PDF was inspected; see the
 [Form 1098 review](ty2025-filled-pdf-review-2026-09-29.md).
 
-Two generic scalar keys, `line8z_other` and `line8z_other_income`, remain a real
-source-provenance gap. The sink cannot infer the IRS statement's required type
-from a merged number. The MeF and PDF projections now reject a nonzero generic
-amount instead of inventing a label. That is a temporary fail-closed boundary,
-not an approved exclusion or completion of these filing paths.
+Two generic scalar keys, `line8z_other` and `line8z_other_income`, remain in
+the sink schemas, but the known producer nodes no longer emit them. The sink
+cannot infer the IRS statement's required type from a merged number. MeF and
+PDF projections reject a nonzero generic amount instead of inventing a label.
+That is a fail-closed boundary, not an approved exclusion or completion of
+these filing paths.
 
 | Generic deposit       | Current producer files                                                               | Missing source-to-statement decision                                                                                                                     |
 | --------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `line8z_other`        | `f8873` | The Form 8873 current-year exclusion appears unavailable after the 2006 repeal; its named exclusion awaits the user's decision. Form 5471's wrong line 8z deposit was removed; all populated Form 5471 input now rejects at calculation until section 951(a) line 8n, Form 8992 line 8o, and required documents are supported. |
-| `line8z_other_income` | `f8915d` | The latest Form 8915-D instructions cover 2024 repayments and affected prior-year amendments, not a 2025 Schedule 1 credit. Its named current-year exclusion awaits the user's decision; keep any prior-year amendment workflow separate. |
+| `line8z_other`        | None now | Form 5471's wrong line 8z deposit was removed; all populated Form 5471 input rejects at calculation until section 951(a) line 8n, Form 8992 line 8o, and required documents are supported. Form 8873's asserted exclusion now also rejects at calculation; its named TY2025 scope decision remains open. |
+| `line8z_other_income` | None now | Form 8915-D's asserted income or repayment now rejects at calculation instead of producing a TY2025 line 8z amount. Its named current-year scope decision and any affected-year amendment workflow remain open. |
 
 This producer list was rechecked against the current node source on
 2026-09-30. Form 3115 now applies its section 481(a) adjustment through a

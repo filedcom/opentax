@@ -1,15 +1,15 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import type { NodeResult } from "../../../../../core/types/tax-node.ts";
+import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { schedule1 } from "../../outputs/schedule1/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // TY2025 — Form 8873: Extraterritorial Income Exclusion
 // IRC §114 was repealed by the American Jobs Creation Act of 2004 (AJCA 2004, P.L. 108-357)
 // effective for transactions after 2006. For TY2025, extremely limited applicability remains
 // under transition relief for binding contracts entered before September 17, 2003.
-// The exclusion reduces taxable income — flows to Schedule 1 Line 8 as negative income.
+// Populated TY2025 input remains an unresolved scope decision. Do not invent
+// a Schedule 1 line 8z reduction from this sparse historical form input.
 
 // Per-item schema — each Form 8873 covers one transaction/exclusion
 export const itemSchema = z.object({
@@ -23,30 +23,16 @@ export const inputSchema = z.object({
   f8873s: z.array(itemSchema).min(1),
 });
 
-type F8873Item = z.infer<typeof itemSchema>;
-type F8873Items = F8873Item[];
-
-function totalExclusion(items: F8873Items): number {
-  return items.reduce((sum, item) => sum + item.extraterritorial_income_excluded, 0);
-}
-
-function schedule1Output(items: F8873Items): NodeOutput[] {
-  const exclusion = totalExclusion(items);
-  if (exclusion === 0) return [];
-  // Exclusion reduces income — flows as a negative amount to Schedule 1 Line 8 (other income)
-  return [output(schedule1, { line8z_other: -exclusion })];
-}
-
 class F8873Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8873";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1]);
+  readonly outputNodes = new OutputNodes([]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
-    const parsed = inputSchema.parse(input);
-    const { f8873s } = parsed;
-
-    return { outputs: schedule1Output(f8873s) };
+    inputSchema.parse(input);
+    throw new Error(
+      "TY2025 Form 8873 has no reviewed current-year filing route; its Schedule 1 line 8z exclusion is unsupported",
+    );
   }
 }
 
