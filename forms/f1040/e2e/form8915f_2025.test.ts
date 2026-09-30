@@ -251,3 +251,142 @@ for (
     }
   });
 }
+
+Deno.test("spouse-owned 2025 Form 8915-F IRA spread keeps spouse identity", async () => {
+  const spouseInputs = {
+    ...inputs,
+    general: {
+      ...inputs.general,
+      filing_status: "mfj",
+      spouse_first_name: "Sam",
+      spouse_last_name: "Example",
+      spouse_ssn: "444-55-6666",
+      spouse_dob: "1986-05-10",
+    },
+    f1099r: [{
+      ...inputs.f1099r[0],
+      ts: "S",
+      box7_ira_simple_indicator: true,
+      form8915f_treatment: "three_years",
+    }],
+    f8915f: [{
+      ...disaster,
+      retirement_source_kind: "traditional_ira",
+      owner: "S",
+      recipient_ssn: "444556666",
+      eligible_retirement_source_review_reference:
+        "reviewed spouse traditional IRA account",
+      no_ira_basis_review_reference: "reviewed spouse IRA basis history",
+      full_inclusion_elected: false,
+    }],
+  };
+  const result = execute(plan, registry, spouseInputs, {
+    taxYear: 2025,
+    formType: "f1040",
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040?.line4b_ira_taxable, 6_667);
+  const filer = extractFilerIdentity(result.pending.f1040);
+  assertEquals(filer?.spouse?.ssn, "444556666");
+  const xml = buildMefXml(buildPending(result.pending), filer);
+  assertStringIncludes(
+    xml,
+    "<PersonNm>Sam Example</PersonNm><SSN>444556666</SSN>",
+  );
+  const xsd = new URL(
+    "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    import.meta.url,
+  ).pathname;
+  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(xmlPath, xml);
+    const validation = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsd, xmlPath],
+      stderr: "piped",
+    }).output();
+    assertEquals(
+      validation.code,
+      0,
+      new TextDecoder().decode(validation.stderr),
+    );
+  } finally {
+    await Deno.remove(xmlPath);
+  }
+  const pdf = await buildPdfBytes(result.pending, filer);
+  assertEquals((await PDFDocument.load(pdf)).getPageCount(), 6);
+});
+
+for (const sourceKind of ["plan", "traditional_ira"] as const) {
+  Deno.test(`code 1 ${sourceKind} qualified disaster distribution avoids Form 5329`, async () => {
+    const earlyInputs = {
+      ...inputs,
+      f1099r: [{
+        ...inputs.f1099r[0],
+        box7_distribution_code: "1",
+        box7_ira_simple_indicator: sourceKind === "traditional_ira",
+        form8915f_treatment: "three_years",
+      }],
+      f8915f: [{
+        ...disaster,
+        retirement_source_kind: sourceKind,
+        ...(sourceKind === "traditional_ira"
+          ? {
+            no_ira_basis_review_reference:
+              "reviewed traditional IRA nondeductible-basis history",
+          }
+          : {}),
+        full_inclusion_elected: false,
+      }],
+    };
+    const result = execute(plan, registry, earlyInputs, {
+      taxYear: 2025,
+      formType: "f1040",
+    });
+    assertEquals(result.diagnostics, []);
+    assertEquals(result.pending.form5329, undefined);
+    assertEquals(
+      sourceKind === "plan"
+        ? result.pending.f1040?.line5b_pension_taxable
+        : result.pending.f1040?.line4b_ira_taxable,
+      6_667,
+    );
+    const filer = extractFilerIdentity(result.pending.f1040);
+    const xml = buildMefXml(buildPending(result.pending), filer);
+    assertStringIncludes(xml, "<IRS8915F documentId=");
+    assertEquals(xml.includes("<IRS5329"), false);
+    const xsd = new URL(
+      "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+      import.meta.url,
+    ).pathname;
+    const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+    try {
+      await Deno.writeTextFile(xmlPath, xml);
+      const validation = await new Deno.Command("xmllint", {
+        args: ["--noout", "--schema", xsd, xmlPath],
+        stderr: "piped",
+      }).output();
+      assertEquals(
+        validation.code,
+        0,
+        new TextDecoder().decode(validation.stderr),
+      );
+    } finally {
+      await Deno.remove(xmlPath);
+    }
+    const pdf = await buildPdfBytes(result.pending, filer);
+    assertEquals((await PDFDocument.load(pdf)).getPageCount(), 6);
+    if (sourceKind === "plan") {
+      const { f8915f: _missingForm, ...orphan } = result.pending;
+      assertThrows(
+        () => buildMefXml(buildPending(orphan), filer),
+        Error,
+        "needs one matching Form 8915-F",
+      );
+      await assertRejects(
+        () => buildPdfBytes(orphan, filer),
+        Error,
+        "needs one matching Form 8915-F",
+      );
+    }
+  });
+}

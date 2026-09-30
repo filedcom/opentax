@@ -12,7 +12,9 @@ more than $22,000. A pure calculation records Form 8915-F lines 1e, 2 or 3,
 5b, 6, Part II or III, and its Form 1040 amount. The source matcher requires
 exactly one 1099-R with the same
 recipient, payer, account, issue reference, date, gross, and taxable amount and
-a straightforward taxable code 2 or 7 route. The bounded Part I source
+a straightforward taxable code 1, 2, or 7 route. A linked code 1 qualified
+disaster distribution is exempt from Form 5329; an ordinary code 1 distribution
+still reaches that form. The bounded Part I source
 currently requires that this be the return's only 1099-R, so line 2(a)
 represents all plan distributions. The old amount-only source is rejected. The
 Form 1099-R calculation supplies Form 1040 lines 5a/5b for a plan or 4a/4b
@@ -25,8 +27,12 @@ Form 8915-F exports verify that result against the source again. Native
 packet includes all four Form 8915-F pages; the full-inclusion and first-year
 spread pages were inspected for the plan and traditional IRA routes. A changed 1099-R taxable amount rejects at full
 native export, and either export rejects a linked 1099-R without Form 8915-F.
-IRS business-rule
-and ATS acceptance is unverified.
+The spouse-owned traditional IRA spread also passes local full-return XSD; its
+Form 1040 and Form 8915-F first pages were inspected for the spouse name and
+SSN, while $6,667 flows to line 4b.
+Local full-return XSD and PDF packet cases pass for code 1 plan and traditional
+IRA distributions, including rejection of an orphaned linked source. IRS
+business-rule and ATS acceptance is unverified.
 
 The [2025 IRS Form 8915-F instructions](https://www.irs.gov/instructions/i8915f)
 distinguish 2020 disasters from qualified 2021-and-later disasters. The latter
@@ -50,6 +56,6 @@ IRA account cases; the 2026–27 annual
 inclusions and accepted-filing carryforward for a 2025 three-year election,
 prior filed Form 8915-F elections, repayments and
 attached worksheets, additional disasters, cost basis, early-distribution
-exception handling, and amended-year effects. Review references are structured
+exception handling for partially qualified or excess distributions, and amended-year effects. Review references are structured
 facts; they do not authenticate the underlying documents. No unsupported
 prior-year or current-year claim is accepted.

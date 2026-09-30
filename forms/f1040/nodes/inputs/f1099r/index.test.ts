@@ -227,6 +227,24 @@ Deno.test("f1099r.compute: distribution code 2 does not route to form5329 automa
   assertEquals(form5329, undefined);
 });
 
+Deno.test("f1099r.compute: linked code 1 disaster distribution bypasses Form 5329", () => {
+  const result = compute([minimalIraItem({
+    account_number: "123",
+    source_document_reference: "issued 2025 1099-R account 123",
+    box13_date_of_payment: "2025-06-01",
+    box1_gross_distribution: 20_000,
+    box2a_taxable_amount: 20_000,
+    box7_distribution_code: DistributionCode.Code1,
+    form8915f_treatment: "three_years",
+  })]);
+  assertEquals(f1040Input(result).line4a_ira_gross, 20_000);
+  assertEquals(f1040Input(result).line4b_ira_taxable, 6_667);
+  assertEquals(
+    result.outputs.some((item) => item.nodeType === "form5329"),
+    false,
+  );
+});
+
 Deno.test("f1099r.compute: distribution code 7 does not route to form5329", () => {
   const result = compute([
     minimalPensionItem({ box7_distribution_code: DistributionCode.Code7 }),

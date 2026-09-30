@@ -568,7 +568,7 @@ function validateItem(item: R1099Item): void {
       !item.source_document_reference || !item.account_number ||
       !item.box13_date_of_payment ||
       item.box2a_taxable_amount !== item.box1_gross_distribution ||
-      !["2", "7"].includes(item.box7_distribution_code) ||
+      !["1", "2", "7"].includes(item.box7_distribution_code) ||
       item.exclude_4972 === true || item.exclude_8606_roth === true ||
       item.rollover_code !== undefined || (item.pso_premium ?? 0) > 0 ||
       item.simplified_method_flag === true ||
@@ -744,12 +744,14 @@ function withholdingF1040Fields(items: R1099Items): Record<string, number> {
   return { line25b_withheld_1099: total };
 }
 
-// Form 5329 outputs: code 1 (early, no exception) routes automatically for all distributions
-// (both IRA and pension) with code 1. The penalty applies to both account types unless an
-// exception applies, which is determined on Form 5329 itself.
+// Form 5329 outputs: code 1 ordinarily routes early distributions here.
+// A reviewed, source-matched Form 8915-F qualified disaster distribution is
+// exempt and the exporter requires its actual Form 8915-F document.
 function form5329Outputs(items: R1099Items): NodeOutput[] {
   const earlyItems = activeItems(items).filter(
-    (item) => EARLY_DIST_CODES.has(item.box7_distribution_code),
+    (item) =>
+      EARLY_DIST_CODES.has(item.box7_distribution_code) &&
+      item.form8915f_treatment === undefined,
   );
   return earlyItems.map((item) => {
     // Form 5329 line 1 takes the early distribution "includible in income". With

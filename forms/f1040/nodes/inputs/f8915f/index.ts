@@ -151,7 +151,7 @@ export function verifyCurrentYearDistributionSource(
         (item.full_inclusion_elected ? "full" : "three_years") &&
       (source.box7_ira_simple_indicator === true) ===
         (item.retirement_source_kind === "traditional_ira") &&
-      ["2", "7"].includes(source.box7_distribution_code) &&
+      ["1", "2", "7"].includes(source.box7_distribution_code) &&
       source.exclude_4972 !== true &&
       source.exclude_8606_roth !== true &&
       source.rollover_code === undefined &&
