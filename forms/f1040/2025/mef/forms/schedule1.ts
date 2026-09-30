@@ -5,6 +5,7 @@ import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import { schedule1OtherIncomeRows } from "./schedule1_other_income_rows.ts";
 import { schedule1ActivityNotForProfitTotal } from "./schedule1_nonbusiness_sources.ts";
 import { inputSchema as trustK1InputSchema } from "../../../nodes/inputs/k1_trust/index.ts";
+import { assertPersonalPropertyRentalSource } from "../../personal-property-rental-source.ts";
 
 export interface Fields {
   form1099k_reported_error_or_loss?: number | null;
@@ -21,6 +22,7 @@ export interface Fields {
   line8f_hsa_income?: number | null;
   line8i_prizes_awards?: number | null;
   line8j_f1099k_hobby_income?: number | null;
+  line8l_personal_property_rent?: number | null;
   line8p_excess_business_loss?: number | null;
   line8z_rtaa?: number | null;
   line8z_taxable_grants?: number | null;
@@ -56,6 +58,7 @@ export interface Fields {
   line20_ira_deduction?: number | null;
   line23_archer_msa_deduction?: number | null;
   line24f_501c18d?: number | null;
+  line24b_personal_property_expenses?: number | null;
   line24k_section67e_excess_deduction?: number | null;
   line25_total_other_adjustments?: number | null;
   line26_total_adjustments?: number | null;
@@ -79,6 +82,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line8f_hsa_income", "TotHSADistriHDHPAmt"],
   ["line8i_prizes_awards", "PrizesAwardsAmt"],
   ["line8j_f1099k_hobby_income", "ActivityNotForProfitIncmAmt"],
+  ["line8l_personal_property_rent", "RentalIncomePersonalPropAmt"],
   ["line8p_excess_business_loss", "ExcessBusinessLossAmt"],
   ["line8z_nqdc", "NonqlfyDeferredCompensationAmt"],
   ["line8z_other", "OtherIncomeTotalAmt"],
@@ -95,6 +99,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line20_ira_deduction", "IRADeductionAmt"],
   ["line21_student_loan_interest", "StudentLoanInterestDedAmt"],
   ["line23_archer_msa_deduction", "ArcherMSADeductionAmt"],
+  ["line24b_personal_property_expenses", "RntlIncmPrsnlPropExpnssDedAmt"],
   ["line24f_501c18d", "Sect501c18DContriDedAmt"],
   ["line24k_section67e_excess_deduction", "Section67eExcessDeductionAmt"],
   ["line25_total_other_adjustments", "TotalOtherAdjustmentsAmt"],
@@ -192,6 +197,11 @@ export const schedule1: MefFormDescriptor<"schedule1", Input> = {
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040s1.pdf",
   build(fields, context) {
+    assertPersonalPropertyRentalSource(
+      fields,
+      context?.pending,
+      context?.filer,
+    );
     if (
       context?.pending?.f1098 !== undefined ||
       (fields.line8z_f1098_interest_recovery ?? 0) > 0
@@ -218,6 +228,7 @@ export const schedule1: MefFormDescriptor<"schedule1", Input> = {
       fields.line25_total_other_adjustments !== null &&
       fields.line25_total_other_adjustments !==
         (fields.line24f_501c18d ?? 0) +
+          (fields.line24b_personal_property_expenses ?? 0) +
           (fields.line24k_section67e_excess_deduction ?? 0)
     ) {
       throw new Error(

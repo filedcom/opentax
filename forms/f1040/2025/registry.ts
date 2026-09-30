@@ -30,6 +30,7 @@ import { k1Partnership } from "../nodes/inputs/k1_partnership/index.ts";
 import { scheduleA } from "../nodes/inputs/schedule_a/index.ts";
 import { scheduleC } from "../nodes/inputs/schedule_c/index.ts";
 import { scheduleE } from "../nodes/inputs/schedule_e/index.ts";
+import { personal_property_rental } from "../nodes/inputs/personal_property_rental/index.ts";
 import { rrb1099r } from "../nodes/inputs/rrb1099r/index.ts";
 import { ssa1099 } from "../nodes/inputs/ssa1099/index.ts";
 import { w2 } from "../nodes/inputs/w2/index.ts";
@@ -252,6 +253,7 @@ export const registry: NodeRegistry = {
   schedule_a: scheduleA,
   schedule_c: scheduleC,
   schedule_e: scheduleE,
+  personal_property_rental,
   rrb1099r,
   ssa1099,
   w2,

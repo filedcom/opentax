@@ -5,7 +5,7 @@
 //     enforcing this; the field is optional and accepted even when tax_court_method=true
 
 import { assertEquals, assertThrows } from "@std/assert";
-import { inputSchema, scheduleE } from "./index.ts";
+import { inputSchema, scheduleE, scheduleERoyaltyEicAmounts } from "./index.ts";
 import { form8582 } from "../../intermediate/forms/form8582/index.ts";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
@@ -532,6 +532,54 @@ Deno.test("routing: royalties_income routes net to schedule1 line5", () => {
     number
   >;
   assertEquals(input.line5_schedule_e, 5_000);
+});
+
+Deno.test("EIC royalty worksheet requires a reviewed split of mixed-property expenses", () => {
+  const mixed = minimalItem({
+    property_type: 6,
+    activity_type: "D",
+    rent_income: 5_000,
+    royalties_income: 6_000,
+    expense_other_lines: [{ description: "Property costs", amount: 5_000 }],
+  });
+  assertThrows(
+    () => compute([mixed]),
+    Error,
+    "reviewed allocation",
+  );
+  const allocated = {
+    ...mixed,
+    eic_royalty_expense_allocation: {
+      amount: 2_000,
+      workpaper_reference: "Synthetic 2025 allocation ledger",
+      all_property_expenses_allocated_once: true,
+    },
+  };
+  assertEquals(
+    scheduleERoyaltyEicAmounts({ schedule_es: [allocated] }),
+    { income: 6_000, expenses: 2_000 },
+  );
+  const result = compute([allocated]);
+  assertEquals(
+    findOutput(result, "agi_aggregator")?.fields.eic_royalty_income,
+    6_000,
+  );
+  assertEquals(
+    findOutput(result, "agi_aggregator")?.fields.eic_royalty_expenses,
+    2_000,
+  );
+  assertThrows(
+    () =>
+      compute([{
+        ...allocated,
+        eic_royalty_expense_allocation: {
+          ...allocated.eic_royalty_expense_allocation,
+          amount: 5_001,
+        },
+      }]),
+    Error,
+    "reviewed allocation",
+  );
 });
 
 Deno.test("routing: royalties_income=0 produces no extra output beyond schedule1", () => {

@@ -131,6 +131,10 @@ import {
   scheduleE,
 } from "../nodes/inputs/schedule_e/index.ts";
 import {
+  itemSchema as personalPropertyRentalItemSchema,
+  personal_property_rental,
+} from "../nodes/inputs/personal_property_rental/index.ts";
+import {
   itemSchema as ssaItemSchema,
   ssa1099,
 } from "../nodes/inputs/ssa1099/index.ts";
@@ -670,6 +674,11 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f8949, itemSchema: f8949ItemSchema, isArray: true },
   { node: scheduleC, itemSchema: scheduleCItemSchema, isArray: true },
   { node: scheduleE, itemSchema: scheduleEItemSchema, isArray: true },
+  {
+    node: personal_property_rental,
+    itemSchema: personalPropertyRentalItemSchema,
+    isArray: true,
+  },
   { node: rrb1099r, itemSchema: rrb1099rItemSchema, isArray: true },
   { node: ssa1099, itemSchema: ssaItemSchema, isArray: true },
   { node: f1095a, itemSchema: f1095aItemSchema, isArray: true },

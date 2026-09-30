@@ -118,6 +118,8 @@ export const inputSchema = z.object({
   line4_other_gains: z.number().optional(),
   // Line 5 — Rental real estate, royalties, partnerships, etc. (Schedule E)
   line5_schedule_e: z.number().optional(),
+  eic_royalty_income: z.number().nonnegative().optional(),
+  eic_royalty_expenses: z.number().nonnegative().optional(),
   // Line 17 — Rental real estate passive loss allowed (Form 8582 negative output)
   // ── IRC §469 passive activity loss limit (Schedule E) ─────────────────────
   // Schedule E holds its passive loss back and sends the figures here, because only
@@ -165,6 +167,7 @@ export const inputSchema = z.object({
   line8j_f1099nec_nonbusiness: z.number().nonnegative().optional(),
   line8z_f1099m_box3_other: z.number().nonnegative().optional(),
   line8j_f1099k_hobby_income: z.number().nonnegative().optional(),
+  line8l_personal_property_rent: z.number().int().nonnegative().optional(),
   line8i_prizes_awards: z.number().nonnegative().optional(),
   line8z_substitute_payments: z.number().nonnegative().optional(),
   line8z_nqdc: z.number().nonnegative().optional(),
@@ -218,6 +221,7 @@ export const inputSchema = z.object({
   line23_archer_msa_deduction: z.number().nonnegative().optional(),
   // Line 24f — §501(c)(18)(D) pension plan deduction (W-2 Box 12 Code H)
   line24f_501c18d: z.number().nonnegative().optional(),
+  line24b_personal_property_expenses: z.number().int().nonnegative().optional(),
   line24k_section67e_excess_deduction: z.number().int().nonnegative()
     .optional(),
   // Line 11 — Educator expenses (Schedule 1 Part II line 11)
@@ -342,6 +346,7 @@ function nonSsaIncomeBeforePal(input: AgiInput): number {
     (input.line8j_f1099nec_nonbusiness ?? 0) +
     (input.line8z_f1099m_box3_other ?? 0) +
     (input.line8j_f1099k_hobby_income ?? 0) +
+    (input.line8l_personal_property_rent ?? 0) +
     (input.line8i_prizes_awards ?? 0) +
     (input.line8z_substitute_payments ?? 0) +
     (input.line8z_nqdc ?? 0) +
@@ -437,6 +442,7 @@ function aboveLineDeductionsExceptSli(input: AgiInput): number {
     (input.line20_ira_deduction ?? 0) +
     (input.line23_archer_msa_deduction ?? 0) +
     (input.line24f_501c18d ?? 0) +
+    (input.line24b_personal_property_expenses ?? 0) +
     (input.line24k_section67e_excess_deduction ?? 0)
   );
 }
@@ -575,6 +581,7 @@ function scheduleOnePartI(input: AgiInput): number {
     (input.line8j_f1099nec_nonbusiness ?? 0) +
     (input.line8z_f1099m_box3_other ?? 0) +
     (input.line8j_f1099k_hobby_income ?? 0) +
+    (input.line8l_personal_property_rent ?? 0) +
     (input.line8i_prizes_awards ?? 0) +
     (input.line8z_substitute_payments ?? 0) +
     (input.line8z_nqdc ?? 0) +
@@ -648,7 +655,7 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
     }
     const agi = computeAgi(input, cfg);
     const totalIncome = grossIncome(input, cfg) - exclusions(input);
-    // Pub. 596 Worksheet 1 lines 1–4 and 7. Business §1231 gain on line 7a
+    // Pub. 596 Worksheet 1 lines 1–10. Business §1231 gain on line 7a
     // is removed using Form 4797 line 7 or 9, as the worksheet directs.
     const eicInvestmentIncomeFloor =
       Math.max(0, input.line2b_taxable_interest ?? 0) +
@@ -656,6 +663,13 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
       (input.form8814_eic_tax_exempt_interest ?? 0) +
       Math.max(0, sumField(input.line3b_ordinary_dividends)) +
       (input.form8814_eic_line4 ?? 0) +
+      Math.max(
+        0,
+        (input.eic_royalty_income ?? 0) +
+          (input.line8l_personal_property_rent ?? 0) -
+          (input.eic_royalty_expenses ?? 0) -
+          (input.line24b_personal_property_expenses ?? 0),
+      ) +
       Math.max(
         0,
         Math.max(
@@ -739,6 +753,7 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
             (input.line21_student_loan_interest ?? 0) !== 0 ||
             (input.line23_archer_msa_deduction ?? 0) !== 0 ||
             (input.line24f_501c18d ?? 0) !== 0 ||
+            (input.line24b_personal_property_expenses ?? 0) !== 0 ||
             (input.line24k_section67e_excess_deduction ?? 0) !== 0 ||
             (input.line5_schedule_e ?? 0) !== 0 ||
             (input.line6_schedule_f ?? 0) !== 0 ||

@@ -139,6 +139,13 @@ export const itemSchema = z.object({
 
   // --- Income fields ---
   royalties_income: z.number().nonnegative().optional(),
+  // Required to identify the filed, ownership-adjusted share of line 20
+  // expenses related to royalties when rent and royalties share one property.
+  eic_royalty_expense_allocation: z.object({
+    amount: z.number().int().nonnegative(),
+    workpaper_reference: z.string().trim().min(1),
+    all_property_expenses_allocated_once: z.literal(true),
+  }).strict().optional(),
   k1_royalty_source: z.object({
     partnership_ein: z.string().regex(/^\d{9}$/),
     source_document_reference: z.string().trim().min(1),
@@ -466,6 +473,64 @@ export function computeExpenses(item: EItem): number {
     (item.expense_depletion ?? 0) +
     otherLinesTotal +
     (item.operating_expenses_carryover ?? 0);
+}
+
+const eicFiledExpenseKeys = [
+  "expense_advertising",
+  "expense_auto_travel",
+  "expense_cleaning",
+  "expense_commissions",
+  "expense_insurance",
+  "expense_legal_professional",
+  "expense_management",
+  "expense_mortgage_interest",
+  "expense_other_interest",
+  "expense_repairs",
+  "expense_supplies",
+  "expense_taxes",
+  "expense_utilities",
+] as const satisfies ReadonlyArray<keyof EItem>;
+
+/** Pub. 596 Worksheet 1 lines 8–9 from filed Schedule E property rows. */
+export function scheduleERoyaltyEicAmounts(rawInput: unknown): {
+  income: number;
+  expenses: number;
+} {
+  const input = inputSchema.parse(rawInput);
+  let income = 0;
+  let expenses = 0;
+  for (const item of input.schedule_es) {
+    if ((item.royalties_income ?? 0) === 0 || isVacationHomeExcluded(item)) {
+      continue;
+    }
+    const fraction = (item.ownership_percent ?? 100) / 100;
+    const allocated = (amount: number) => Math.round(amount * fraction);
+    const filedExpenses = eicFiledExpenseKeys.reduce(
+      (sum, key) => sum + allocated(item[key] ?? 0),
+      0,
+    ) + allocated(
+      (item.expense_depreciation ?? 0) + (item.expense_depletion ?? 0),
+    ) + (item.expense_other_lines ?? []).reduce(
+      (sum, line) => sum + allocated(line.amount),
+      0,
+    );
+    const allocation = item.eic_royalty_expense_allocation;
+    const mixed = item.rent_income > 0 && filedExpenses > 0;
+    if (
+      (mixed && allocation === undefined) ||
+      (allocation !== undefined &&
+        (allocation.amount > filedExpenses ||
+          (!mixed && allocation.amount !== filedExpenses)))
+    ) {
+      throw new Error(
+        "Schedule E EIC royalty expenses need a reviewed allocation of filed property expenses",
+      );
+    }
+    income += allocated(item.royalties_income ?? 0);
+    expenses += allocation?.amount ?? filedExpenses;
+  }
+  if (input.schedule_es.length === 0) income += input.royalty_income ?? 0;
+  return { income, expenses };
 }
 
 export function isVacationHomeExcluded(item: EItem): boolean {
@@ -1021,6 +1086,7 @@ class ScheduleENode extends TaxNode<typeof inputSchema> {
       (sum, item) => sum + computePropertyNet(item),
       0,
     );
+    const eicRoyalty = scheduleERoyaltyEicAmounts(parsed);
     const totalNet = propertyNet + passthroughRental + passthroughRoyalty +
       (farm_rental_net ?? 0) +
       (estate_trust_rows ?? []).reduce(
@@ -1039,6 +1105,8 @@ class ScheduleENode extends TaxNode<typeof inputSchema> {
       output(schedule1, { line5_schedule_e: deductibleNet }),
       this.outputNodes.output(agi_aggregator, {
         line5_schedule_e: deductibleNet,
+        eic_royalty_income: eicRoyalty.income,
+        eic_royalty_expenses: eicRoyalty.expenses,
         ...(entireLoss === undefined ? palFields(schedule_es, farms) : {}),
       }),
       ...(entireLoss === undefined ? form8582Outputs(schedule_es, farms) : []),

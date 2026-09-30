@@ -52,6 +52,7 @@ const inputSchema = z.object({
   line8g_child_interest_dividends: z.number().nonnegative().optional(),
   line8i_prizes_awards: z.number().optional(),
   line8j_f1099k_hobby_income: z.number().nonnegative().optional(),
+  line8l_personal_property_rent: z.number().int().nonnegative().optional(),
   line8p_excess_business_loss: z.number().nonnegative().optional(),
   line8z_rtaa: z.number().optional(),
   line8z_taxable_grants: z.number().optional(),
@@ -121,6 +122,7 @@ const inputSchema = z.object({
   line23_archer_msa_deduction: z.number().nonnegative().optional(),
   // Line 24f — §501(c)(18)(D) pension plan deduction
   line24f_501c18d: z.number().nonnegative().optional(),
+  line24b_personal_property_expenses: z.number().int().nonnegative().optional(),
   // Line 24k — estate/trust K-1 box 11 code A section 67(e) expense.
   line24k_section67e_excess_deduction: z.number().int().nonnegative()
     .optional(),
@@ -174,6 +176,7 @@ function otherIncome(input: Schedule1Input): number {
     (input.line8g_child_interest_dividends ?? 0) +
     (input.line8i_prizes_awards ?? 0) +
     (input.line8j_f1099k_hobby_income ?? 0) +
+    (input.line8l_personal_property_rent ?? 0) +
     (input.line8p_excess_business_loss ?? 0) +
     (input.line8z_rtaa ?? 0) +
     (input.line8z_taxable_grants ?? 0) +
@@ -238,6 +241,7 @@ function totalAdjustments(input: Schedule1Input): number {
     (input.line20_ira_deduction ?? 0) +
     (input.line23_archer_msa_deduction ?? 0) +
     (input.line24f_501c18d ?? 0) +
+    (input.line24b_personal_property_expenses ?? 0) +
     (input.line24k_section67e_excess_deduction ?? 0) +
     (input.line24h_dpad ?? 0)
   );
@@ -253,9 +257,12 @@ function assembleSchedule1(input: Schedule1Input): Record<string, unknown> {
   };
   if (
     input.line24f_501c18d !== undefined ||
+    input.line24b_personal_property_expenses !== undefined ||
     input.line24k_section67e_excess_deduction !== undefined
   ) {
-    result.line25_total_other_adjustments = (input.line24f_501c18d ?? 0) +
+    result.line25_total_other_adjustments =
+      (input.line24b_personal_property_expenses ?? 0) +
+      (input.line24f_501c18d ?? 0) +
       (input.line24k_section67e_excess_deduction ?? 0);
   }
 
@@ -327,6 +334,7 @@ function assembleSchedule1(input: Schedule1Input): Record<string, unknown> {
     "line8f_hsa_income",
     "line8i_prizes_awards",
     "line8j_f1099k_hobby_income",
+    "line8l_personal_property_rent",
     "line8p_excess_business_loss",
     "line8z_rtaa",
     "line8z_taxable_grants",
@@ -353,6 +361,7 @@ function assembleSchedule1(input: Schedule1Input): Record<string, unknown> {
     "line21_student_loan_interest",
     "line23_archer_msa_deduction",
     "line24f_501c18d",
+    "line24b_personal_property_expenses",
     "line24k_section67e_excess_deduction",
   ] as const satisfies readonly (keyof Schedule1Input)[];
   for (const key of directLines) {

@@ -3,6 +3,7 @@ import { FilingStatus } from "../../../mef/header.ts";
 import { assertForm1098Box4Sources } from "../../../nodes/inputs/f1098/index.ts";
 import { schedule1OtherIncomeRows } from "../../mef/forms/schedule1_other_income_rows.ts";
 import { schedule1ActivityNotForProfitTotal } from "../../mef/forms/schedule1_nonbusiness_sources.ts";
+import { assertPersonalPropertyRentalSource } from "../../personal-property-rental-source.ts";
 
 // IRS Schedule 1 (2025) AcroForm field names.
 // Verified layout from https://www.irs.gov/pub/irs-prior/f1040s1--2025.pdf
@@ -112,6 +113,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "text",
+    domainKey: "line8l_personal_property_rent",
+    pdfField: "topmostSubform[0].Page1[0].f1_24[0]",
+  },
+  {
+    kind: "text",
     domainKey: "line8p_excess_business_loss",
     pdfField: "topmostSubform[0].Page1[0].f1_28[0]",
   },
@@ -204,6 +210,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "text",
+    domainKey: "line24b_personal_property_expenses",
+    pdfField: "topmostSubform[0].Page2[0].f2_17[0]",
+  },
+  {
+    kind: "text",
     domainKey: "line24k_section67e_excess_deduction",
     pdfField: "topmostSubform[0].Page2[0].f2_26[0]",
   },
@@ -235,6 +246,7 @@ export const schedule1Pdf: PdfFormDescriptor = {
     },
   ],
   instances(fields, filer, all) {
+    assertPersonalPropertyRentalSource(fields, all, filer);
     if (
       all?.f1098 !== undefined ||
       Number(fields.line8z_f1098_interest_recovery ?? 0) > 0

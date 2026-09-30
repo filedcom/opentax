@@ -15,6 +15,8 @@ import {
   form8814EicLine4,
   itemSchema as f8814ItemSchema,
 } from "../nodes/inputs/f8814/index.ts";
+import { scheduleERoyaltyEicAmounts } from "../nodes/inputs/schedule_e/index.ts";
+import { personalPropertyRentalTotals } from "../nodes/inputs/personal_property_rental/index.ts";
 
 /** Check a positive Form 1040 EIC against the reviewed source before export. */
 export function assertEicSource(
@@ -83,18 +85,37 @@ export function assertEicSource(
   if ((schedule1?.line8z_form8814 ?? 0) !== childSchedule1Income) {
     throw new Error("Form 1040 EIC Form 8814 income differs from Schedule 1");
   }
+  const royalties = scheduleERoyaltyEicAmounts(pending?.schedule_e ?? {});
+  const personalRental = pending?.personal_property_rental === undefined
+    ? { income: 0, expenses: 0 }
+    : personalPropertyRentalTotals(pending.personal_property_rental);
+  if (
+    (schedule1?.line8l_personal_property_rent ?? 0) !==
+      personalRental.income ||
+    (schedule1?.line24b_personal_property_expenses ?? 0) !==
+      personalRental.expenses
+  ) {
+    throw new Error(
+      "Form 1040 EIC personal-property rental differs from Schedule 1",
+    );
+  }
   const investmentIncomeFloor = Math.max(0, filedAmount("line2a_tax_exempt")) +
     childTaxExemptInterest +
     Math.max(0, filedAmount("line2b_taxable_interest")) +
     Math.max(0, filedAmount("line3b_ordinary_dividends")) +
     childLine4 +
+    Math.max(
+      0,
+      royalties.income + personalRental.income - royalties.expenses -
+        personalRental.expenses,
+    ) +
     Math.max(0, capitalGain - form4797Exclusion);
   if (
     !("investment_income_floor" in result) ||
     result.investment_income_floor !== investmentIncomeFloor
   ) {
     throw new Error(
-      "Form 1040 EIC investment income differs from filed interest, dividends, and gains",
+      "Form 1040 EIC investment income differs from filed interest, dividends, gains, royalties, and rent",
     );
   }
   const source = generalInputSchema.safeParse(pending?.general);
