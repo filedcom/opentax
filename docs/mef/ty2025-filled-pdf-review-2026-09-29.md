@@ -284,3 +284,20 @@ PDF SHA-256 is
 `a4029986322d355e8d619ebe7a1e986dd3ba1b82fbe77d38b5c9c08384ad5bac`.
 Issuer bytes, other box 11 codes, IRS business rules, and ATS acceptance
 remain open.
+
+Two final trust K-1 code C cases were generated with the other thirty-eight
+prepared returns in
+`.state/research/ty2025-filled-pdf-review/2026-09-30-v49/` and both pass local
+TY2025 v5.4 full-return XSD. In
+`single-final-trust-k1-short-term-capital-loss`, a $700 final-year short-term
+capital loss prints as `-700` on Schedule D lines 5, 7, and 16 and Form 1040
+line 7a; AGI is $29,300. Its four-page PDF SHA-256 is
+`30abed7eea4d6ddc7104f712fb20b719aeabe69e0a28717e4f5d5adc1f7daa6c`.
+In `single-mixed-final-trust-and-partnership-capital`, the same trust loss
+and partnership $900 short-term/$100 long-term gains print as $200 on Schedule
+D lines 5 and 7, $100 on lines 12 and 15, and $300 on line 16 and Form 1040
+line 7a; AGI is $30,300. Its four-page PDF SHA-256 is
+`08509be1330c170a1ae5cf956fccecc591b5cfa20ba9a1b511d91be9558ff35e`.
+All eight pages were rendered and inspected for identity, amounts, signs, and
+checkboxes. Trust issuer bytes, code D's rate-character branches, IRS business
+rules, and ATS acceptance remain open.

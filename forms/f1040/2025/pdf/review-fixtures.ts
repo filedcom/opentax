@@ -719,6 +719,63 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-mixed-final-trust-and-partnership-capital",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(30_000, 3_000, "Example Employer", "12-3456789")],
+      k1_trust: [{
+        estate_trust_name: "Family Trust",
+        estate_trust_ein: "123456789",
+        source_document_reference: "Synthetic final trust K-1",
+        box11_code_c_short_term_capital_loss_carryover: 700,
+        box11_code_c_statement_reference:
+          "Synthetic final capital loss statement",
+        box11_final_k1: true,
+        box11_beneficiary_succeeds_to_property: true,
+        beneficiary_ssn: "111223333",
+      }],
+      k1_partnership: [{
+        partnership_name: "Example Partnership",
+        partnership_ein: "987654321",
+        source_document_reference: "Synthetic partnership K-1",
+        box8_net_st_cap_gain: 900,
+        box9a_net_lt_cap_gain: 100,
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule_d"],
+    reviewFocus: [
+      "Trust code C negative $700 and partnership box 8 positive $900 sum to Schedule D line 5 of $200",
+      "Partnership box 9a adds $100 on Schedule D line 12, making Form 1040 capital gain $300",
+      "Form 1040 AGI is $30,300; no K-1 amount is counted twice",
+    ],
+  },
+  {
+    id: "single-final-trust-k1-short-term-capital-loss",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(30_000, 3_000, "Example Employer", "12-3456789")],
+      k1_trust: [{
+        estate_trust_name: "Family Trust",
+        estate_trust_ein: "123456789",
+        source_document_reference: "Synthetic final 2025 trust K-1",
+        box11_code_c_short_term_capital_loss_carryover: 700,
+        box11_code_c_statement_reference:
+          "Synthetic final capital loss statement",
+        box11_final_k1: true,
+        box11_beneficiary_succeeds_to_property: true,
+        beneficiary_ssn: "111223333",
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule_d"],
+    reviewFocus: [
+      "The final trust K-1 code C $700 loss prints as negative $700 on Schedule D line 5",
+      "Schedule D line 7 and Form 1040 line 7a carry the $700 capital loss once",
+      "Form 1040 AGI is $29,300 after the loss",
+    ],
+  },
+  {
     id: "single-final-trust-k1-section67e-deduction",
     inputs: {
       general: singleGeneral,

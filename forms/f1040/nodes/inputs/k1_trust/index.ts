@@ -118,6 +118,9 @@ export const itemSchema = z.object({
   box11_code_a_section67e_excess_deduction: z.number().int().positive()
     .optional(),
   box11_code_a_statement_reference: z.string().trim().min(1).optional(),
+  box11_code_c_short_term_capital_loss_carryover: z.number().int().positive()
+    .optional(),
+  box11_code_c_statement_reference: z.string().trim().min(1).optional(),
   box11_final_k1: z.literal(true).optional(),
   box11_beneficiary_succeeds_to_property: z.literal(true).optional(),
   beneficiary_ssn: z.string().regex(/^\d{9}$/).optional(),
@@ -185,6 +188,26 @@ export const itemSchema = z.object({
           code: "custom",
           path: [key],
           message: `K-1 box 11 code A needs ${key}`,
+        });
+      }
+    }
+  }
+  if (item.box11_code_c_short_term_capital_loss_carryover !== undefined) {
+    for (
+      const key of [
+        "estate_trust_ein",
+        "source_document_reference",
+        "box11_code_c_statement_reference",
+        "box11_final_k1",
+        "box11_beneficiary_succeeds_to_property",
+        "beneficiary_ssn",
+      ] as const
+    ) {
+      if (item[key] === undefined) {
+        ctx.addIssue({
+          code: "custom",
+          path: [key],
+          message: `K-1 box 11 code C needs ${key}`,
         });
       }
     }
@@ -413,14 +436,19 @@ function f1040QualDivOutput(items: K1TrustItems): NodeOutput[] {
 // Aggregate capital gains/losses → schedule_d (one merged output)
 function scheduleDOutput(items: K1TrustItems): NodeOutput[] {
   const totalSt = items.reduce(
-    (sum, item) => sum + (item.box3_net_st_cap_gain ?? 0),
+    (sum, item) =>
+      sum + (item.box3_net_st_cap_gain ?? 0) -
+      (item.box11_code_c_short_term_capital_loss_carryover ?? 0),
     0,
   );
   const totalLt = items.reduce(
     (sum, item) => sum + (item.box4a_net_lt_cap_gain ?? 0),
     0,
   );
-  const hasSt = totalSt !== 0;
+  const hasSt = items.some((item) =>
+    (item.box3_net_st_cap_gain ?? 0) !== 0 ||
+    item.box11_code_c_short_term_capital_loss_carryover !== undefined
+  );
   const hasLt = totalLt !== 0;
   if (!hasSt && !hasLt) return [];
 

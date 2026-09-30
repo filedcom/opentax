@@ -31,6 +31,28 @@ for (const fixture of pdfReviewFixtures) {
       });
       assertEquals(result.diagnostics, []);
       const xml = buildMefXml(buildPending(result.pending), fixture.filer);
+      if (fixture.id === "single-mixed-final-trust-and-partnership-capital") {
+        assertEquals(result.pending.schedule_d.line_5_k1_st, 200);
+        assertEquals(result.pending.schedule_d.line_12_k1_lt, 100);
+        assertEquals(result.pending.f1040.line11_agi, 30_300);
+        assertStringIncludes(
+          xml,
+          "<NetSTGainOrLossFromSchK1Amt>200</NetSTGainOrLossFromSchK1Amt>",
+        );
+        assertStringIncludes(
+          xml,
+          "<NetLTGainOrLossFromSchK1Amt>100</NetLTGainOrLossFromSchK1Amt>",
+        );
+      }
+      if (fixture.id === "single-final-trust-k1-short-term-capital-loss") {
+        assertEquals(result.pending.schedule_d.line_5_k1_st, -700);
+        assertEquals(result.pending.schedule_d.print_line7_st_total, -700);
+        assertEquals(result.pending.f1040.line11_agi, 29_300);
+        assertStringIncludes(
+          xml,
+          "<NetSTGainOrLossFromSchK1Amt>-700</NetSTGainOrLossFromSchK1Amt>",
+        );
+      }
       if (fixture.id === "single-final-trust-k1-section67e-deduction") {
         assertEquals(
           result.pending.schedule1.line24k_section67e_excess_deduction,

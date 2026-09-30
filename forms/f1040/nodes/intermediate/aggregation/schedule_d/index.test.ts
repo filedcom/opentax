@@ -681,6 +681,21 @@ Deno.test("compute: line_5_k1_st (ST K-1) included in ST net", () => {
   assertEquals(input.line7_capital_gain, 2_500);
 });
 
+Deno.test("compute: mixed K-1 deposits sum signed Schedule D lines 5 and 12", () => {
+  const result = computeD2({
+    line_5_k1_st: [900, -700],
+    line_12_k1_lt: [400, 100],
+  });
+  assertEquals(findOutput(result, "f1040")?.fields.line7_capital_gain, 700);
+  assertEquals(findOutput(result, "schedule_d")?.fields.line_5_k1_st, 200);
+  assertEquals(findOutput(result, "schedule_d")?.fields.line_12_k1_lt, 500);
+});
+
+Deno.test("compute: offsetting trust K-1 short-term items still file Schedule D", () => {
+  const result = computeD2({ line_5_k1_st: 0 });
+  assertEquals(findOutput(result, "schedule_d")?.fields.print_line7_st_total, 0);
+});
+
 Deno.test("compute: line_12_k1_lt (LT K-1) included in LT net", () => {
   const result = computeD2({ line_12_k1_lt: 3_500 });
   const f1040 = findOutput(result, "f1040");

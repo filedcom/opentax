@@ -110,9 +110,9 @@ export const inputSchema = z.object({
   line_4_other_st: accumulable(z.number()).optional(),
   gain_form6252_st: z.number().nonnegative().optional(),
   // K-1 short-term capital gains/losses — Line 5
-  line_5_k1_st: z.number().optional(),
+  line_5_k1_st: accumulable(z.number()).optional(),
   // K-1 long-term capital gains/losses — Line 12
-  line_12_k1_lt: z.number().optional(),
+  line_12_k1_lt: accumulable(z.number()).optional(),
   // Form 8621 QEF net capital gain is long-term gain, not Schedule 1 income.
   line_11_qef_lt: z.number().nonnegative().optional(),
   // d_screen-style individual transactions (proceeds/cost/adjustment; gain_loss computed here)
@@ -150,8 +150,8 @@ function hasCapitalActivity(input: ScheduleDInput): boolean {
     (input.line_12_cap_gain_dist ?? 0) !== 0 ||
     sumAmounts(input.line_11_form2439) !== 0 ||
     sumAmounts(input.line_4_other_st) !== 0 ||
-    (input.line_5_k1_st ?? 0) !== 0 ||
-    (input.line_12_k1_lt ?? 0) !== 0 ||
+    input.line_5_k1_st !== undefined ||
+    input.line_12_k1_lt !== undefined ||
     (input.line_11_qef_lt ?? 0) !== 0;
 
   return (
@@ -197,6 +197,10 @@ function hasOtherAmtBasisCapitalActivity(input: ScheduleDInput): boolean {
 // Form 1040 line 7a may report capital gain distributions directly when they
 // are the only capital activity. In that case Schedule D is not filed.
 function hasOnlyCapitalGainDistributions(input: ScheduleDInput): boolean {
+  if (
+    input.line_5_k1_st !== undefined ||
+    input.line_12_k1_lt !== undefined
+  ) return false;
   const distributions = (input.line13_cap_gain_distrib ?? 0) +
     (input.line13_form8814 ?? 0) +
     (input.line_12_cap_gain_dist ?? 0);
@@ -214,8 +218,6 @@ function hasOnlyCapitalGainDistributions(input: ScheduleDInput): boolean {
     input.line_14_carryover,
     sumAmounts(input.line_11_form2439),
     sumAmounts(input.line_4_other_st),
-    input.line_5_k1_st,
-    input.line_12_k1_lt,
     input.line_11_qef_lt,
     input.line19_unrecaptured_1250,
     input.collectibles_gain_form2439,
@@ -266,7 +268,7 @@ function computeDScreenStNet(input: ScheduleDInput): number {
     (input.line_1a_proceeds ?? 0) -
     (input.line_1a_cost ?? 0) +
     sumAmounts(input.line_4_other_st) +
-    (input.line_5_k1_st ?? 0) -
+    sumAmounts(input.line_5_k1_st) -
     (input.line_6_carryover ?? 0)
   );
 }
@@ -279,7 +281,7 @@ function computeDScreenLtNet(input: ScheduleDInput): number {
     sumAmounts(input.line_11_form2439) +
     (input.line_11_qef_lt ?? 0) +
     (input.line_12_cap_gain_dist ?? 0) +
-    (input.line_12_k1_lt ?? 0) -
+    sumAmounts(input.line_12_k1_lt) -
     (input.line_14_carryover ?? 0)
   );
 }
@@ -554,6 +556,12 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
       // engine, so it is always answered "No".
       print_qof_disposition: false,
     };
+    if (Array.isArray(input.line_5_k1_st)) {
+      printFields.line_5_k1_st = sumAmounts(input.line_5_k1_st);
+    }
+    if (Array.isArray(input.line_12_k1_lt)) {
+      printFields.line_12_k1_lt = sumAmounts(input.line_12_k1_lt);
+    }
     // Multiple source nodes can contribute to these Form 6252/4797 lines.
     // Replace the executor's accumulated array with the exact line total for
     // both the pending MeF document and the calculation above.

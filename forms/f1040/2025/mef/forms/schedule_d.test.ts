@@ -1,6 +1,58 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { scheduleD } from "./schedule_d.ts";
 
+Deno.test("Schedule D code C final trust loss reconciles source and owner", () => {
+  const item = {
+    estate_trust_name: "Family Trust",
+    estate_trust_ein: "123456789",
+    source_document_reference: "Final K-1",
+    box11_code_c_short_term_capital_loss_carryover: 700,
+    box11_code_c_statement_reference: "Final capital loss statement",
+    box11_final_k1: true,
+    box11_beneficiary_succeeds_to_property: true,
+    beneficiary_ssn: "111223333",
+  };
+  const context = {
+    filer: { primarySSN: "111223333" } as never,
+    pending: { k1_trust: { k1_trusts: [item] } },
+  };
+  const xml = scheduleD.build({ line_5_k1_st: -700 }, context);
+  assertStringIncludes(
+    xml,
+    "<NetSTGainOrLossFromSchK1Amt>-700</NetSTGainOrLossFromSchK1Amt>",
+  );
+  assertThrows(() => scheduleD.build({ line_5_k1_st: -699 }, context));
+  assertThrows(() =>
+    scheduleD.build({ line_5_k1_st: -700 }, {
+      ...context,
+      filer: { primarySSN: "987654321" } as never,
+    })
+  );
+  assertThrows(() =>
+    scheduleD.build({ line_5_k1_st: -700 }, {
+      ...context,
+      pending: { k1_trust: { k1_trusts: [item, item] } },
+    })
+  );
+  const mixedContext = {
+    ...context,
+    pending: {
+      ...context.pending,
+      k1_partnership: {
+        k1_partnerships: [{
+          partnership_name: "Example Partnership",
+          box8_net_st_cap_gain: 900,
+        }],
+      },
+    },
+  };
+  assertStringIncludes(
+    scheduleD.build({ line_5_k1_st: 200 }, mixedContext),
+    "<NetSTGainOrLossFromSchK1Amt>200</NetSTGainOrLossFromSchK1Amt>",
+  );
+  assertThrows(() => scheduleD.build({ line_5_k1_st: 900 }, mixedContext));
+});
+
 function assertNotIncludes(actual: string, expected: string) {
   assertEquals(
     actual.includes(expected),

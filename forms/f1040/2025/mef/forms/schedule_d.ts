@@ -1,5 +1,8 @@
 import { element, elements } from "../../../mef/xml.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
+import { inputSchema as trustK1InputSchema } from "../../../nodes/inputs/k1_trust/index.ts";
+import { inputSchema as partnershipK1InputSchema } from "../../../nodes/inputs/k1_partnership/index.ts";
+import { inputSchema as sCorpK1InputSchema } from "../../../nodes/inputs/k1_s_corp/index.ts";
 
 export interface Fields {
   line_1a_proceeds?: number | null;
@@ -148,6 +151,57 @@ export const scheduleD: MefFormDescriptor<"schedule_d", Input> = {
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040sd.pdf",
   build(fields, context) {
+    const trustSource = context?.pending?.k1_trust;
+    if (trustSource !== undefined) {
+      const trusts = trustK1InputSchema.parse(trustSource).k1_trusts;
+      const finalLossItems = trusts.filter((item) =>
+        item.box11_code_c_short_term_capital_loss_carryover !== undefined
+      );
+      if (finalLossItems.length > 0) {
+        const ownerSsns = [
+          context?.filer?.primarySSN,
+          context?.filer?.spouse?.ssn,
+        ].filter((ssn): ssn is string => ssn !== undefined)
+          .map((ssn) => ssn.replaceAll("-", ""));
+        const keys = finalLossItems.map((item) =>
+          `${item.estate_trust_ein}:${item.source_document_reference}`
+        );
+        if (
+          new Set(keys).size !== keys.length ||
+          finalLossItems.some((item) =>
+            !ownerSsns.includes(item.beneficiary_ssn!)
+          )
+        ) {
+          throw new Error(
+            "Schedule D line 5 needs distinct final trust K-1 code C sources owned by this return",
+          );
+        }
+        const partnerships = context?.pending?.k1_partnership === undefined
+          ? []
+          : partnershipK1InputSchema.parse(context.pending.k1_partnership)
+            .k1_partnerships;
+        const sCorps = context?.pending?.k1_s_corp === undefined
+          ? []
+          : sCorpK1InputSchema.parse(context.pending.k1_s_corp).k1_s_corps;
+        const expected = trusts.reduce(
+          (sum, item) =>
+            sum + (item.box3_net_st_cap_gain ?? 0) -
+            (item.box11_code_c_short_term_capital_loss_carryover ?? 0),
+          0,
+        ) + partnerships.reduce(
+          (sum, item) => sum + (item.box8_net_st_cap_gain ?? 0),
+          0,
+        ) + sCorps.reduce(
+          (sum, item) => sum + (item.box7_net_st_cap_gain ?? 0),
+          0,
+        );
+        if (fields.line_5_k1_st !== expected) {
+          throw new Error(
+            "Schedule D line 5 must reconcile to issued K-1 capital amounts",
+          );
+        }
+      }
+    }
     if (
       (typeof fields.box2c_qsbs === "number" && fields.box2c_qsbs > 0) ||
       hasUnsupportedQsbsTransaction(fields)
