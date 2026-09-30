@@ -75,9 +75,10 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
     const filedW2s = w2InputSchema.parse(context?.pending?.w2).w2s;
     const sourceW2s = filedW2s.filter((item) =>
       item.box13_statutory_employee !== true &&
-      item.box14b_tipped_code !== undefined &&
-      isQualifiedTipsOccupationCode(item.box14b_tipped_code) &&
-      (item.box7_ss_tips ?? 0) > 0
+      (item.qualified_tips_box14_review !== undefined ||
+        (item.box14b_tipped_code !== undefined &&
+          isQualifiedTipsOccupationCode(item.box14b_tipped_code) &&
+          (item.box7_ss_tips ?? 0) > 0))
     );
     const normalize = (value: string) => value.replaceAll("-", "");
     if (
@@ -89,9 +90,21 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
           normalize(source.employer_ein ?? "") ===
             normalize(entry.employer_ein) &&
           source.employer_name === entry.employer_name &&
-          source.box7_ss_tips === entry.amount &&
+          (source.qualified_tips_box14_review === undefined
+            ? entry.source_type === "w2_box7" &&
+              source.box7_ss_tips === entry.amount
+            : entry.source_type === "w2_box14" &&
+              (source.box14_entries ?? []).filter((box14) =>
+                  box14.description ===
+                    source.qualified_tips_box14_review!.box14_description &&
+                  !box14.is_state_sdi_pfml &&
+                  box14.amount === entry.amount
+                ).length === 1) &&
           source.box5_medicare_wages === entry.box5_medicare_wages &&
-          source.box14b_tipped_code === entry.occupation_code
+          (source.qualified_tips_box14_review?.occupation_code ??
+              source.box14b_tipped_code) === entry.occupation_code &&
+          (source.box14b_tipped_code === undefined ||
+            source.box14b_tipped_code === entry.occupation_code)
         )
       )
     ) {

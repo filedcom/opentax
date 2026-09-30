@@ -290,6 +290,7 @@ Deno.test("2025 Schedule 1-A PDF maps single-employer W-2 tips to Part II", () =
       amount: 5_000,
       box5_medicare_wages: 30_000,
       occupation_code: "102",
+      source_type: "w2_box7" as const,
     }],
   };
   const tipReturn = {

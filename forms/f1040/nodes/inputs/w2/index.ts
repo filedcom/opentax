@@ -156,6 +156,13 @@ export const w2ItemSchema = z.object({
   box14_entries: z.array(box14EntrySchema).optional().describe(
     "Other — employer-labeled items; SDI/PFML deductible on Sch A",
   ),
+  qualified_tips_box14_review: z.object({
+    box14_description: z.string().trim().min(1),
+    occupation_code: z.string().regex(/^\d{3}$/),
+    occupation_review_reference: z.string().trim().min(1),
+    tips_included_in_box1: z.literal(true),
+    source_reference: z.string().trim().min(1),
+  }).strict().optional(),
   flsa_overtime_review: z.object({
     covered_nonexempt_employee: z.literal(true),
     premium_included_in_box1: z.literal(true),
@@ -237,6 +244,30 @@ function validateItem(
     ) {
       throw new Error(
         "W-2 FLSA overtime review needs one positive box 14 premium included in box 1 and source employer/employee identities",
+      );
+    }
+  }
+  if (item.qualified_tips_box14_review !== undefined) {
+    const review = item.qualified_tips_box14_review;
+    const matches = (item.box14_entries ?? []).filter((entry) =>
+      entry.description === review.box14_description
+    );
+    if (
+      matches.length !== 1 || matches[0].amount <= 0 ||
+      !Number.isSafeInteger(matches[0].amount) ||
+      matches[0].amount > item.box1_wages ||
+      matches[0].is_state_sdi_pfml ||
+      !isQualifiedTipsOccupationCode(review.occupation_code) ||
+      (item.box14b_tipped_code !== undefined &&
+        item.box14b_tipped_code !== review.occupation_code) ||
+      item.box13_statutory_employee === true ||
+      !/^\d{9}$/.test(item.employee_ssn?.replaceAll("-", "") ?? "") ||
+      !/^\d{2}-?\d{7}$/.test(item.employer_ein ?? "") ||
+      !item.employer_name?.trim() ||
+      (box14Amount(item, "RRTA compensation") ?? 0) > 0
+    ) {
+      throw new Error(
+        "W-2 qualified tips box 14 review needs one positive included tip entry, matching occupation, and employer/employee identities",
       );
     }
   }
@@ -612,18 +643,27 @@ function scheduleSEOutput(w2s: W2Items): NodeOutput[] {
 function qualifiedTipsOutput(w2s: W2Items): NodeOutput[] {
   const tips = regularItems(w2s)
     .filter((item) =>
-      item.box14b_tipped_code !== undefined &&
-      isQualifiedTipsOccupationCode(item.box14b_tipped_code) &&
-      (item.box7_ss_tips ?? 0) > 0
+      item.qualified_tips_box14_review !== undefined ||
+      (item.box14b_tipped_code !== undefined &&
+        isQualifiedTipsOccupationCode(item.box14b_tipped_code) &&
+        (item.box7_ss_tips ?? 0) > 0)
     )
-    .map((item) => ({
-      employee_ssn: item.employee_ssn!,
-      employer_ein: item.employer_ein!,
-      employer_name: item.employer_name!,
-      amount: item.box7_ss_tips!,
-      box5_medicare_wages: item.box5_medicare_wages,
-      occupation_code: item.box14b_tipped_code!,
-    }));
+    .map((item) => {
+      const review = item.qualified_tips_box14_review;
+      return {
+        employee_ssn: item.employee_ssn!,
+        employer_ein: item.employer_ein!,
+        employer_name: item.employer_name!,
+        amount: review === undefined
+          ? item.box7_ss_tips!
+          : box14Amount(item, review.box14_description)!,
+        box5_medicare_wages: item.box5_medicare_wages,
+        occupation_code: review?.occupation_code ?? item.box14b_tipped_code!,
+        source_type: review === undefined
+          ? "w2_box7" as const
+          : "w2_box14" as const,
+      };
+    });
   return tips.length > 0
     ? [output(schedule1a, { qualified_employee_tips: tips })]
     : [];

@@ -100,6 +100,7 @@ export const inputSchema = claimInputSchema.extend({
     amount: z.number().nonnegative(),
     box5_medicare_wages: z.number().nonnegative().optional(),
     occupation_code: z.string().regex(/^\d{3}$/).optional(),
+    source_type: z.enum(["w2_box7", "w2_box14"]),
   })).optional(),
   qualified_form4137_tips: z.array(
     z.object({
@@ -576,7 +577,7 @@ export function calculateEmployeeTipsSchedule1A(
         entry.employer_ein.replaceAll("-", "")
     );
     if (
-      w2 && !hasForm4070 &&
+      w2 && w2.source_type === "w2_box7" && !hasForm4070 &&
       (w2.box5_medicare_wages === undefined ||
         w2.box5_medicare_wages > 176_100)
     ) {

@@ -1823,6 +1823,56 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-w2-box14-qualified-tips-schedule1a",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        taxpayer_ssn_valid_for_employment: true,
+        taxpayer_ssn_issued_before_due_date: true,
+        taxpayer_tin_issued_by_due_date: true,
+      },
+      w2: [{
+        ...wage(200_000, 35_000, "Example Restaurant", "12-3456789"),
+        employee_ssn: "111-22-3333",
+        box3_ss_wages: 161_100,
+        box7_ss_tips: 15_000,
+        box14_entries: [{
+          description: "Employer reported tips",
+          amount: 20_000,
+          is_state_sdi_pfml: false,
+        }],
+        qualified_tips_box14_review: {
+          box14_description: "Employer reported tips",
+          occupation_code: "102",
+          occupation_review_reference:
+            "Synthetic 2025 restaurant occupation review",
+          tips_included_in_box1: true,
+          source_reference: "Synthetic 2025 employer W-2 box 14 tip accounting",
+        },
+      }],
+      schedule1a: {
+        senior_zero_exclusions_review: {
+          no_section933_puerto_rico_excluded_income: true,
+          section933_review_source_reference: "Synthetic 2025 residency review",
+          no_form2555_filed: true,
+          form2555_review_source_reference:
+            "Synthetic 2025 foreign-income review",
+          no_form4563_filed: true,
+          form4563_review_source_reference:
+            "Synthetic 2025 Samoa-source review",
+        },
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule1a"],
+    reviewFocus: [
+      "Reviewed W-2 box 14 reports $20,000 of tips and replaces the same employer's $15,000 box 7 amount",
+      "The 2025 W-2 omits box 14b, with occupation code 102 supplied by review",
+      "Schedule 1-A lines 4a/4c show $20,000 and line 13/38 shows $15,000 after MAGI phaseout",
+      "Form 1040 line 13b agrees with Schedule 1-A line 38",
+    ],
+  },
+  {
     id: "single-form4070-high-wage-qualified-tips-schedule1a",
     inputs: {
       general: {

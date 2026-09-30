@@ -76,6 +76,7 @@ const singleTips = {
     amount: 5_000,
     box5_medicare_wages: 30_000,
     occupation_code: "102",
+    source_type: "w2_box7" as const,
   }],
 };
 
@@ -521,6 +522,72 @@ Deno.test("Schedule 1-A Form 4070 replaces capped W-2 box 7 for the same employe
   );
 });
 
+Deno.test("Schedule 1-A W-2 box 14 tips reconcile to the reviewed employer entry", () => {
+  const review = {
+    box14_description: "Employer reported tips",
+    occupation_code: "102",
+    occupation_review_reference: "2025 employer occupation record",
+    tips_included_in_box1: true as const,
+    source_reference: "2025 W-2 box 14 tip accounting",
+  };
+  const source = {
+    ...singleTips,
+    magi: 200_000,
+    qualified_employee_tips: [{
+      ...singleTips.qualified_employee_tips[0],
+      amount: 20_000,
+      box5_medicare_wages: 200_000,
+      source_type: "w2_box14" as const,
+    }],
+  };
+  const pending = {
+    f1040: {
+      ...singleTips1040,
+      line11_agi: 200_000,
+      line13b_additional_deductions: 15_000,
+    },
+    w2: {
+      w2s: [{
+        ...singleTipsW2.w2s[0],
+        box1_wages: 200_000,
+        box5_medicare_wages: 200_000,
+        box7_ss_tips: 15_000,
+        box14b_tipped_code: undefined,
+        box14_entries: [{
+          description: "Employer reported tips",
+          amount: 20_000,
+          is_state_sdi_pfml: false,
+        }],
+        qualified_tips_box14_review: review,
+      }],
+    },
+  };
+  const xml = schedule1a.build(source, { pending });
+  assertStringIncludes(
+    xml,
+    "<QualifiedTipsWagesAmt>20000</QualifiedTipsWagesAmt>",
+  );
+  assertThrows(
+    () =>
+      schedule1a.build(source, {
+        pending: {
+          ...pending,
+          w2: {
+            w2s: [{
+              ...pending.w2.w2s[0],
+              box14_entries: [{
+                ...pending.w2.w2s[0].box14_entries[0],
+                amount: 19_999,
+              }],
+            }],
+          },
+        },
+      }),
+    Error,
+    "W-2 tips do not match",
+  );
+});
+
 Deno.test("Schedule 1-A W-2 tips applies the $25,000 cap and whole-thousand phaseout", () => {
   const lines = calculateEmployeeTipsSchedule1A(
     { taxYear: 2025, formType: "f1040" },
@@ -736,6 +803,7 @@ Deno.test("Schedule 1-A combines Form 4137 and W-2 employers without double coun
         amount: 2_000,
         box5_medicare_wages: 20_000,
         occupation_code: "103",
+        source_type: "w2_box7" as const,
       },
     ],
     qualified_form4137_tips: [{

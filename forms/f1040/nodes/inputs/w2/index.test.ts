@@ -225,6 +225,7 @@ Deno.test("box7 tips with a tipped occupation code route to Schedule 1-A", () =>
     amount: 5_000,
     box5_medicare_wages: undefined,
     occupation_code: "102",
+    source_type: "w2_box7",
   }]);
 });
 
@@ -233,6 +234,55 @@ Deno.test("box7 tips without a tipped occupation code do not route to Schedule 1
     minimalItem({ box1_wages: 30_000, box7_ss_tips: 5_000 }),
   ]);
   assertEquals(fieldsOf(result.outputs, schedule1a), undefined);
+});
+
+Deno.test("reviewed W-2 box 14 tips replace box 7 for one employer", () => {
+  const item = {
+    ...minimalItem(),
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    employer_name: "First Restaurant",
+    box1_wages: 200_000,
+    box5_medicare_wages: 200_000,
+    box7_ss_tips: 15_000,
+    box14_entries: [{
+      description: "Employer reported tips",
+      amount: 20_000,
+      is_state_sdi_pfml: false,
+    }],
+    qualified_tips_box14_review: {
+      box14_description: "Employer reported tips",
+      occupation_code: "102",
+      occupation_review_reference: "2025 employer occupation record",
+      tips_included_in_box1: true,
+      source_reference: "2025 W-2 box 14 employer tip accounting",
+    },
+  };
+  const result = compute([item]);
+  assertEquals(fieldsOf(result.outputs, schedule1a)?.qualified_employee_tips, [{
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    employer_name: "First Restaurant",
+    amount: 20_000,
+    box5_medicare_wages: 200_000,
+    occupation_code: "102",
+    source_type: "w2_box14",
+  }]);
+  const excessive = {
+    ...item,
+    box14_entries: [{ ...item.box14_entries[0], amount: 200_001 }],
+  };
+  assertThrows(
+    () => compute([excessive]),
+    Error,
+    "one positive included tip entry",
+  );
+  const conflicting = { ...item, box14b_tipped_code: "103" };
+  assertThrows(
+    () => compute([conflicting]),
+    Error,
+    "matching occupation",
+  );
 });
 
 Deno.test("box7 tips with a three-digit code outside the IRS occupation list do not route", () => {
@@ -275,6 +325,7 @@ Deno.test("qualified tips are summed across eligible W-2s only", () => {
       amount: 2_000,
       box5_medicare_wages: undefined,
       occupation_code: "102",
+      source_type: "w2_box7",
     },
     {
       employee_ssn: "444556666",
@@ -283,6 +334,7 @@ Deno.test("qualified tips are summed across eligible W-2s only", () => {
       amount: 3_000,
       box5_medicare_wages: undefined,
       occupation_code: "203",
+      source_type: "w2_box7",
     },
   ]);
 });

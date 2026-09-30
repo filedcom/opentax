@@ -14,6 +14,7 @@ function tips(amount: number, employee_ssn = TAXPAYER_SSN) {
     employer_ein: "123456789",
     employer_name: "Test Restaurant",
     amount,
+    source_type: "w2_box7" as const,
   }];
 }
 
