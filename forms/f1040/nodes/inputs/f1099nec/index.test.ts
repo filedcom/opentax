@@ -67,12 +67,20 @@ Deno.test("reviewed NEC tips retain the payer source and reject an amount outsid
   assertEquals(
     findOutput(result, "schedule1a")?.fields.qualified_trade_business_tips,
     [{
+      source_form: "1099nec",
       business_reference: "business-1",
       recipient_ssn: "987654321",
       payer_name: "Test Payer",
       payer_tin: "123456789",
-      box1_nec: 5_000,
-      ...review,
+      source_amount: 5_000,
+      amount: review.amount,
+      occupation_code: review.occupation_code,
+      occupation_review_reference: review.occupation_review_reference,
+      tip_records_reference: review.tip_records_reference,
+      included_in_source_amount: true,
+      no_other_allocable_deductions: true,
+      no_other_allocable_deductions_review_reference:
+        review.no_other_allocable_deductions_review_reference,
     }],
   );
   assertThrows(

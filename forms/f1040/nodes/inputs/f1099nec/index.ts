@@ -249,12 +249,25 @@ class F1099necNode extends TaxNode<typeof inputSchema> {
     const qualifiedTips = parsed.f1099necs.flatMap((item) =>
       item.qualified_tips_review
         ? [{
+          source_form: "1099nec" as const,
           business_reference: item.schedule_c_business_reference!,
           recipient_ssn: item.recipient_ssn!,
           payer_name: item.payer_name,
           payer_tin: item.payer_tin.replaceAll("-", ""),
-          box1_nec: item.box1_nec!,
-          ...item.qualified_tips_review,
+          source_amount: item.box1_nec!,
+          amount: item.qualified_tips_review.amount,
+          occupation_code: item.qualified_tips_review.occupation_code,
+          occupation_review_reference:
+            item.qualified_tips_review.occupation_review_reference,
+          tip_records_reference:
+            item.qualified_tips_review.tip_records_reference,
+          included_in_source_amount:
+            item.qualified_tips_review.included_in_box1,
+          no_other_allocable_deductions:
+            item.qualified_tips_review.no_other_allocable_deductions,
+          no_other_allocable_deductions_review_reference:
+            item.qualified_tips_review
+              .no_other_allocable_deductions_review_reference,
         }]
         : []
     );

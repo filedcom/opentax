@@ -14,6 +14,7 @@ import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { scheduleC as schedule_c } from "../schedule_c/index.ts";
+import { schedule1a } from "../../intermediate/forms/schedule1a/index.ts";
 import { scheduleE as schedule_e } from "../schedule_e/index.ts";
 import { schedule_f } from "../../intermediate/forms/schedule_f/index.ts";
 import { form8960 } from "../../intermediate/forms/form8960/index.ts";
@@ -73,6 +74,15 @@ export const itemSchema = z.object({
   box3_other_income: z.number().nonnegative().optional(),
   box3_other_income_routing: z.enum(OTHER_INCOME_ROUTING).optional(),
   box3_other_income_description: z.string().trim().min(1).max(100).optional(),
+  qualified_tips_box3_review: z.object({
+    amount: z.number().int().positive(),
+    occupation_code: z.string().regex(/^\d{3}$/),
+    occupation_review_reference: z.string().trim().min(1),
+    tip_records_reference: z.string().trim().min(1),
+    included_in_box3: z.literal(true),
+    no_other_allocable_deductions: z.literal(true),
+    no_other_allocable_deductions_review_reference: z.string().trim().min(1),
+  }).strict().optional(),
   // When true, box3_other_income is also investment income subject to NIIT (IRC §1411).
   // Use for brokerage-sourced income (e.g., income from terminated investment accounts).
   // Defaults false — prizes, settlements, and other non-investment income are not NII.
@@ -112,6 +122,20 @@ export const itemSchema = z.object({
   box17_state_payer_id: z.string().optional(),
   box18_state_income: z.number().nonnegative().optional(),
 }).superRefine((item, ctx) => {
+  if (
+    item.qualified_tips_box3_review &&
+    (item.box3_other_income_routing !== "schedule_c" ||
+      !item.schedule_c_business_reference ||
+      item.box3_niit_applicable === true ||
+      item.qualified_tips_box3_review.amount > (item.box3_other_income ?? 0))
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["qualified_tips_box3_review"],
+      message:
+        "1099-MISC qualified tips need non-NIIT Schedule C income included in box 3",
+    });
+  }
   if ((item.box3_other_income ?? 0) > 0 && !item.box3_other_income_routing) {
     ctx.addIssue({
       code: "custom",
@@ -340,6 +364,7 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([
     schedule_c,
+    schedule1a,
     schedule_e,
     schedule_f,
     schedule1,
@@ -450,6 +475,36 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
           attorney_fee_sources: attorneyFeeSources,
         }),
       } as AtLeastOne<z.infer<typeof schedule_c.inputSchema>>));
+    }
+    const qualifiedTips = m99s.flatMap((item) =>
+      item.qualified_tips_box3_review
+        ? [{
+          source_form: "1099misc" as const,
+          business_reference: item.schedule_c_business_reference!,
+          recipient_ssn: item.recipient_tin,
+          payer_name: item.payer_name,
+          payer_tin: item.payer_tin,
+          source_amount: item.box3_other_income!,
+          amount: item.qualified_tips_box3_review.amount,
+          occupation_code: item.qualified_tips_box3_review.occupation_code,
+          occupation_review_reference:
+            item.qualified_tips_box3_review.occupation_review_reference,
+          tip_records_reference:
+            item.qualified_tips_box3_review.tip_records_reference,
+          included_in_source_amount:
+            item.qualified_tips_box3_review.included_in_box3,
+          no_other_allocable_deductions:
+            item.qualified_tips_box3_review.no_other_allocable_deductions,
+          no_other_allocable_deductions_review_reference:
+            item.qualified_tips_box3_review
+              .no_other_allocable_deductions_review_reference,
+        }]
+        : []
+    );
+    if (qualifiedTips.length > 0) {
+      outputs.push(this.outputNodes.output(schedule1a, {
+        qualified_trade_business_tips: qualifiedTips,
+      }));
     }
 
     // schedule1 — prizes, other income, substitute payments, NQDC ordinary income

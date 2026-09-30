@@ -48,6 +48,52 @@ function miscReceiptTotal(result: ReturnType<typeof compute>): number {
     .reduce((sum, source) => sum + source.amount, 0);
 }
 
+Deno.test("reviewed MISC box 3 tips remain tied to the payer and Schedule C", () => {
+  const review = {
+    amount: 4_000,
+    occupation_code: "102",
+    occupation_review_reference: "occupation record",
+    tip_records_reference: "2025 POS ledger",
+    included_in_box3: true,
+    no_other_allocable_deductions: true,
+    no_other_allocable_deductions_review_reference: "Schedule 1 review",
+  };
+  const source = minimalItem({
+    box3_other_income: 5_000,
+    box3_other_income_routing: "schedule_c",
+    qualified_tips_box3_review: review,
+  });
+  const result = compute([source]);
+  assertEquals(
+    findOutput(result, "schedule1a")?.fields.qualified_trade_business_tips,
+    [{
+      source_form: "1099misc",
+      business_reference: "business-1",
+      recipient_ssn: "987654321",
+      payer_name: "Test Payer",
+      payer_tin: "123456789",
+      source_amount: 5_000,
+      amount: 4_000,
+      occupation_code: "102",
+      occupation_review_reference: "occupation record",
+      tip_records_reference: "2025 POS ledger",
+      included_in_source_amount: true,
+      no_other_allocable_deductions: true,
+      no_other_allocable_deductions_review_reference: "Schedule 1 review",
+    }],
+  );
+  assertThrows(
+    () => compute([{ ...source, box3_other_income: 3_999 }]),
+    Error,
+    "qualified tips need non-NIIT Schedule C income included in box 3",
+  );
+  assertThrows(
+    () => compute([{ ...source, box3_other_income_routing: "other_income" }]),
+    Error,
+    "qualified tips need non-NIIT Schedule C income included in box 3",
+  );
+});
+
 // ---------------------------------------------------------------------------
 // 1. Input schema validation
 // ---------------------------------------------------------------------------

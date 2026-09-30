@@ -37,7 +37,7 @@ two-page PDF field map and inspected synthetic full-return packets.
   for the W-2 box 7-only route, and an
   occupation code outside the IRS list reject. Other employer statement variants,
   multiple occupations at one employer, other special wage-base handling,
-  Form 1099-MISC/K business tips, multiple Schedule C businesses, multiple Form 4137 employers in a
+  Form 1099-K business tips, multiple Schedule C businesses, multiple Form 4137 employers in a
   full packet, and underlying record authentication remain open.
 - Part III now supports employer-identified `FLSA Overtime Premium` in W-2
   box 14 when a source-referenced review confirms the employee is covered and
@@ -272,6 +272,21 @@ affirms there are no other deductions allocable to this business. The
 Schedule 1-A page 1 at full resolution (SHA-256
 `7ed925ddc0c9aacac604166dcf21683eeab3714fffd3b0d637a5266862be2000`).
 Payer-issued 1099 and tip-record bytes are not authenticated. Multiple
-businesses and the 1099-MISC/1099-K line 5 sources still need their own
+businesses and the 1099-K line 5 source still need their own
 owner-specific net-profit and deduction allocation. IRS business rules and
 ATS acceptance remain open.
+
+The `single-nec-misc-business-tips-schedule1a` fixture adds a reviewed
+1099-MISC box 3 tip component to the same Schedule C business as a reviewed
+1099-NEC box 1 component. The two payer reports contribute $5,000 and
+$8,000 of qualified tips, respectively, while Schedule C line 31 is
+$10,000. The line 5 worksheet applies the $706 rounded SE deduction once,
+so line 5, line 13, line 38, and Form 1040 line 13b show $9,294. MISC box 3
+must be routed to Schedule C; a tip amount larger than the box, NIIT
+classification, or a changed internal row rejects. The full return passes
+local TY2025 v5.4 XSD. All 12 `v86` PDF pages were viewed as a contact sheet
+and the Schedule 1-A line 5 page was checked at full resolution (SHA-256
+`b3479712e700700c9ea14235ad144f187b3e03489b10cd8a6f30b7b5d49ea8b4`).
+Source references and review facts are not authenticated payer/tip bytes.
+1099-K, multiple-business deduction allocation, IRS rules, and ATS remain
+open.

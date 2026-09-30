@@ -68,7 +68,40 @@ for (const fixture of pdfReviewFixtures) {
               fixture.filer,
             ),
           Error,
-          "do not match filed 1099-NEC",
+          "do not match filed payer sources",
+        );
+      }
+      if (fixture.id === "single-nec-misc-business-tips-schedule1a") {
+        const reports = result.pending.schedule1a
+          .qualified_trade_business_tips as Array<Record<string, unknown>>;
+        assertEquals(reports.length, 2);
+        assertEquals(
+          reports.reduce((sum, row) => sum + Number(row.amount), 0),
+          13_000,
+        );
+        assertEquals(result.pending.f1040.line13b_additional_deductions, 9_294);
+        assertStringIncludes(
+          xml,
+          "<QualifiedTipsTradeOrBusAmt>9294</QualifiedTipsTradeOrBusAmt>",
+        );
+        assertThrows(
+          () =>
+            buildMefXml(
+              buildPending({
+                ...result.pending,
+                schedule1a: {
+                  ...result.pending.schedule1a,
+                  qualified_trade_business_tips: reports.map((row) =>
+                    row.source_form === "1099misc"
+                      ? { ...row, amount: 4_999 }
+                      : row
+                  ),
+                },
+              }),
+              fixture.filer,
+            ),
+          Error,
+          "do not match filed payer sources",
         );
       }
       if (fixture.id === "single-partnership-code-l-r-ordinary") {

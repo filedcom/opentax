@@ -126,16 +126,17 @@ export const inputSchema = claimInputSchema.extend({
   ).optional(),
   qualified_trade_business_tips: z.array(
     z.object({
+      source_form: z.enum(["1099nec", "1099misc"]),
       business_reference: z.string().trim().min(1),
       recipient_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
       payer_name: z.string().trim().min(1),
       payer_tin: z.string().regex(/^\d{9}$/),
-      box1_nec: z.number().int().positive(),
+      source_amount: z.number().positive(),
       amount: z.number().int().positive(),
       occupation_code: z.string().regex(/^\d{3}$/),
       occupation_review_reference: z.string().trim().min(1),
       tip_records_reference: z.string().trim().min(1),
-      included_in_box1: z.literal(true),
+      included_in_source_amount: z.literal(true),
       no_other_allocable_deductions: z.literal(true),
       no_other_allocable_deductions_review_reference: z.string().trim().min(1),
     }).strict(),
@@ -434,7 +435,7 @@ function tipsOvertimePhaseout(input: Schedule1AInput): number | undefined {
   return Math.floor(Math.max(0, input.magi - threshold) / 1_000) * 100;
 }
 
-/** TY2025 line 5, limited to one cash-basis Schedule C business with NEC tips. */
+/** TY2025 line 5, limited to one cash-basis Schedule C business. */
 export function qualifiedTradeBusinessTips(input: Schedule1AInput): number {
   const reports = input.qualified_trade_business_tips ?? [];
   if (reports.length === 0) return 0;
@@ -466,23 +467,23 @@ export function qualifiedTradeBusinessTips(input: Schedule1AInput): number {
   const seen = new Set<string>();
   let reported = 0;
   for (const report of reports) {
-    const key = `${report.business_reference}:${
+    const key = `${report.source_form}:${report.business_reference}:${
       report.recipient_ssn.replaceAll("-", "")
     }:${report.payer_tin}`;
     if (seen.has(key)) {
       throw new Error(
-        "Schedule 1-A trade or business tips repeat a 1099-NEC payer",
+        "Schedule 1-A trade or business tips repeat a payer form",
       );
     }
     seen.add(key);
     if (
       report.business_reference !== business.business_reference ||
       report.recipient_ssn.replaceAll("-", "") !== owner.replaceAll("-", "") ||
-      report.amount > report.box1_nec ||
+      report.amount > report.source_amount ||
       !isQualifiedTipsOccupationCode(report.occupation_code)
     ) {
       throw new Error(
-        "Schedule 1-A trade or business tips do not match the owner, business, 1099-NEC, or qualified occupation",
+        "Schedule 1-A trade or business tips do not match the owner, business, payer form, or qualified occupation",
       );
     }
     reported += report.amount;

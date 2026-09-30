@@ -24,21 +24,37 @@ Deno.test("schedule1a: NEC trade tips stop at one business profit after SE deduc
     }],
     qualified_tips_se_deduction: 706.4775,
     qualified_trade_business_tips: [{
+      source_form: "1099nec" as const,
       business_reference: "events",
       recipient_ssn: TAXPAYER_SSN,
       payer_name: "Events Payer",
       payer_tin: "123456789",
-      box1_nec: 18_000,
+      source_amount: 18_000,
       amount: 12_000,
       occupation_code: "102",
       occupation_review_reference: "occupation record",
       tip_records_reference: "POS ledger",
-      included_in_box1: true as const,
+      included_in_source_amount: true as const,
       no_other_allocable_deductions: true as const,
       no_other_allocable_deductions_review_reference: "Schedule 1 review",
     }],
   };
   assertEquals(qualifiedTradeBusinessTips(source), 9_294);
+  assertEquals(
+    qualifiedTradeBusinessTips({
+      ...source,
+      qualified_trade_business_tips: [
+        { ...source.qualified_trade_business_tips[0], amount: 8_000 },
+        {
+          ...source.qualified_trade_business_tips[0],
+          source_form: "1099misc",
+          source_amount: 8_000,
+          amount: 5_000,
+        },
+      ],
+    }),
+    9_294,
+  );
   assertEquals(
     qualifiedTradeBusinessTips({
       ...source,

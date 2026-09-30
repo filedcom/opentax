@@ -636,3 +636,15 @@ the source/pending JSON, XML, PDF, contact sheet, and detailed page render
 are retained at `.state/research/ty2025-filled-pdf-review/2026-09-30-v85/`.
 This synthetic review does not authenticate the payer or tip-record bytes or
 establish IRS acceptance.
+
+The `single-nec-misc-business-tips-schedule1a` source return has a
+12-page `v86` PDF. Its page contact sheet was inspected, and Schedule 1-A
+page 1 was checked at full resolution: employee lines 4a–4c are zero;
+business line 5 and lines 6/7/13 print $9,294. The matching native return
+passes local TY2025 v5.4 XSD, and Form 1040 line 13b, Schedule C line 31,
+and Schedule 1 line 15 reconcile to the $10,000 profit and $706 rounded SE
+deduction. The PDF SHA-256 is
+`b3479712e700700c9ea14235ad144f187b3e03489b10cd8a6f30b7b5d49ea8b4`;
+the source/pending JSON, XML, PDF, contact sheet, and detailed page render
+are retained at `.state/research/ty2025-filled-pdf-review/2026-09-30-v86/`.
+Payer and tip-record bytes and IRS acceptance remain open.

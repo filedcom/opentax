@@ -13,6 +13,7 @@ import {
 import { inputSchema as w2InputSchema } from "../../../nodes/inputs/w2/index.ts";
 import { inputSchema as form4137InputSchema } from "../../../nodes/intermediate/forms/form4137/index.ts";
 import { inputSchema as necInputSchema } from "../../../nodes/inputs/f1099nec/index.ts";
+import { inputSchema as miscInputSchema } from "../../../nodes/inputs/f1099m/index.ts";
 import { scheduleC } from "../../../nodes/inputs/schedule_c/index.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
@@ -243,37 +244,79 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
       );
     }
     if ((input.qualified_trade_business_tips?.length ?? 0) > 0) {
-      const filed = necInputSchema.parse(context?.pending?.f1099nec).f1099necs;
-      const sources = filed.filter((item) => item.qualified_tips_review);
+      const nec = context?.pending?.f1099nec
+        ? necInputSchema.parse(context.pending.f1099nec).f1099necs
+        : [];
+      const misc = context?.pending?.f1099m
+        ? miscInputSchema.parse(context.pending.f1099m).f1099ms
+        : [];
+      const sources = [
+        ...nec.flatMap((item) =>
+          item.qualified_tips_review
+            ? [{
+              source_form: "1099nec" as const,
+              business_reference: item.schedule_c_business_reference,
+              recipient_ssn: item.recipient_ssn,
+              payer_name: item.payer_name,
+              payer_tin: item.payer_tin.replaceAll("-", ""),
+              source_amount: item.box1_nec,
+              amount: item.qualified_tips_review.amount,
+              occupation_code: item.qualified_tips_review.occupation_code,
+              occupation_review_reference:
+                item.qualified_tips_review.occupation_review_reference,
+              tip_records_reference:
+                item.qualified_tips_review.tip_records_reference,
+              included_in_source_amount:
+                item.qualified_tips_review.included_in_box1,
+              no_other_allocable_deductions:
+                item.qualified_tips_review.no_other_allocable_deductions,
+              no_other_allocable_deductions_review_reference:
+                item.qualified_tips_review
+                  .no_other_allocable_deductions_review_reference,
+            }]
+            : []
+        ),
+        ...misc.flatMap((item) =>
+          item.qualified_tips_box3_review
+            ? [{
+              source_form: "1099misc" as const,
+              business_reference: item.schedule_c_business_reference,
+              recipient_ssn: item.recipient_tin,
+              payer_name: item.payer_name,
+              payer_tin: item.payer_tin,
+              source_amount: item.box3_other_income,
+              amount: item.qualified_tips_box3_review.amount,
+              occupation_code: item.qualified_tips_box3_review.occupation_code,
+              occupation_review_reference:
+                item.qualified_tips_box3_review.occupation_review_reference,
+              tip_records_reference:
+                item.qualified_tips_box3_review.tip_records_reference,
+              included_in_source_amount:
+                item.qualified_tips_box3_review.included_in_box3,
+              no_other_allocable_deductions:
+                item.qualified_tips_box3_review.no_other_allocable_deductions,
+              no_other_allocable_deductions_review_reference:
+                item.qualified_tips_box3_review
+                  .no_other_allocable_deductions_review_reference,
+            }]
+            : []
+        ),
+      ];
       const reports = input.qualified_trade_business_tips!;
-      if (
-        sources.length !== reports.length ||
-        !reports.every((report) =>
-          sources.some((source) =>
-            source.for_routing === "schedule_c" &&
-            source.schedule_c_business_reference ===
-              report.business_reference &&
-            source.recipient_ssn?.replaceAll("-", "") ===
-              report.recipient_ssn.replaceAll("-", "") &&
-            source.payer_name === report.payer_name &&
-            source.payer_tin.replaceAll("-", "") === report.payer_tin &&
-            source.box1_nec === report.box1_nec &&
-            JSON.stringify(source.qualified_tips_review) === JSON.stringify({
-                amount: report.amount,
-                occupation_code: report.occupation_code,
-                occupation_review_reference: report.occupation_review_reference,
-                tip_records_reference: report.tip_records_reference,
-                included_in_box1: report.included_in_box1,
-                no_other_allocable_deductions:
-                  report.no_other_allocable_deductions,
-                no_other_allocable_deductions_review_reference:
-                  report.no_other_allocable_deductions_review_reference,
-              })
+      const canonical = (rows: readonly Record<string, unknown>[]) =>
+        rows.map((row) =>
+          JSON.stringify(
+            Object.fromEntries(
+              Object.entries(row).sort(([a], [b]) => a.localeCompare(b)),
+            ),
           )
-        )
+        ).sort();
+      if (
+        JSON.stringify(canonical(sources)) !==
+          JSON.stringify(canonical(reports))
       ) {
         throw new Error(
-          "Schedule 1-A business tips do not match filed 1099-NEC sources",
+          "Schedule 1-A business tips do not match filed payer sources",
         );
       }
       const businessOutput = scheduleC.compute(
