@@ -284,6 +284,41 @@ for (const fixture of pdfReviewFixtures) {
           "identified payer, recipient",
         );
       }
+      if (fixture.id === "single-k-personal-gain-loss") {
+        const rows = result.pending.form8949.transaction as Array<
+          Record<string, unknown>
+        >;
+        assertEquals(rows.length, 2);
+        assertEquals(rows.find((row) => row.part === "C")?.gain_loss, 550);
+        assertEquals(
+          rows.find((row) => row.part === "F")?.adjustment_codes,
+          "L",
+        );
+        assertEquals(rows.find((row) => row.part === "F")?.gain_loss, 0);
+        assertEquals(result.pending.f1040.line7_capital_gain, 550);
+        assertStringIncludes(
+          xml,
+          "<CapitalGainLossAmt>550</CapitalGainLossAmt>",
+        );
+        assertThrows(
+          () =>
+            buildMefXml(
+              buildPending({
+                ...result.pending,
+                form8949: {
+                  transaction: rows.map((row) =>
+                    row.part === "F"
+                      ? { ...row, adjustment_amount: 0, gain_loss: -300 }
+                      : row
+                  ),
+                },
+              }),
+              fixture.filer,
+            ),
+          Error,
+          "1099-K personal-item sales differ",
+        );
+      }
       if (fixture.id === "single-partnership-code-l-r-ordinary") {
         assertEquals(result.pending.schedule1.line4_other_gains, 1_000);
         assertEquals(result.pending.f1040.line8_additional_income, 1_000);

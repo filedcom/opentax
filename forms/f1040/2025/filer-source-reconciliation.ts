@@ -68,7 +68,7 @@ export function assertKWithholdingSourceIdentity(
       item.box1a_gross_payments <= 0 ||
       typeof item.box4_federal_withheld !== "number" ||
       item.box4_federal_withheld > item.box1a_gross_payments ||
-      !["schedule_c", "schedule_1_line_8j"].includes(
+      !["schedule_c", "schedule_1_line_8j", "personal_item_sales"].includes(
         item.for_routing as string,
       ) ||
       !kRecipientMatches(item, filer)
@@ -88,6 +88,120 @@ export function assertKWithholdingSourceIdentity(
   ) {
     throw new Error(
       "Form 1040 line 25b 1099-K withholding differs from payer box 4",
+    );
+  }
+}
+
+export function assertKPersonalSaleSources(
+  pending: Record<string, unknown>,
+  filer: FilerIdentity,
+): void {
+  const k =
+    (pending.f1099k as { f1099ks?: Array<Record<string, unknown>> } | undefined)
+      ?.f1099ks ?? [];
+  const personal = k.filter((item) =>
+    item.for_routing === "personal_item_sales"
+  );
+  const expected: Array<Record<string, unknown>> = [];
+  const seen = new Set<string>();
+  for (const item of personal) {
+    const sales = item.personal_item_sales_review;
+    const gross = item.box1a_gross_payments;
+    const pseTin = tin(item.pse_tin, "1099-K PSE");
+    if (
+      typeof item.pse_name !== "string" || !item.pse_name.trim() ||
+      !pseTin || !kRecipientMatches(item, filer) ||
+      typeof gross !== "number" || gross <= 0 ||
+      !Array.isArray(sales) || sales.length === 0
+    ) {
+      throw new Error(
+        "1099-K personal-item sales need identified payer, recipient, and reviewed items",
+      );
+    }
+    let proceedsTotal = 0;
+    for (const value of sales) {
+      if (!value || typeof value !== "object") {
+        throw new Error("1099-K personal-item sale review is invalid");
+      }
+      const sale = value as Record<string, unknown>;
+      const id = `1099k:${pseTin}:${sale.transaction_id}`;
+      const acquired = new Date(`${sale.date_acquired}T00:00:00Z`);
+      const sold = new Date(`${sale.date_sold}T00:00:00Z`);
+      if (
+        typeof sale.transaction_id !== "string" ||
+        !sale.transaction_id.trim() ||
+        seen.has(id) ||
+        typeof sale.description !== "string" || !sale.description.trim() ||
+        typeof sale.date_acquired !== "string" ||
+        Number.isNaN(acquired.getTime()) ||
+        acquired.toISOString().slice(0, 10) !== sale.date_acquired ||
+        typeof sale.date_sold !== "string" ||
+        Number.isNaN(sold.getTime()) ||
+        sold.toISOString().slice(0, 10) !== sale.date_sold ||
+        !sale.date_sold.startsWith("2025-") || acquired >= sold ||
+        typeof sale.proceeds !== "number" ||
+        !Number.isSafeInteger(sale.proceeds) ||
+        sale.proceeds <= 0 || typeof sale.cost_basis !== "number" ||
+        !Number.isSafeInteger(sale.cost_basis) || sale.cost_basis < 0 ||
+        sale.acquired_by_purchase !== true ||
+        sale.personal_use_only !== true || sale.not_main_home !== true ||
+        sale.not_collectible !== true ||
+        sale.no_other_information_return_for_sale !== true ||
+        typeof sale.acquisition_record_reference !== "string" ||
+        !sale.acquisition_record_reference.trim() ||
+        typeof sale.sale_record_reference !== "string" ||
+        !sale.sale_record_reference.trim()
+      ) {
+        throw new Error("1099-K personal-item sale review is invalid");
+      }
+      seen.add(id);
+      proceedsTotal += sale.proceeds;
+      const anniversary = new Date(acquired);
+      anniversary.setUTCFullYear(anniversary.getUTCFullYear() + 1);
+      if (
+        acquired.getUTCMonth() === 1 && acquired.getUTCDate() === 29 &&
+        anniversary.getUTCMonth() === 2
+      ) anniversary.setUTCDate(0);
+      const longTerm = sold > anniversary;
+      const loss = Math.max(0, sale.cost_basis - sale.proceeds);
+      expected.push({
+        part: longTerm ? "F" : "C",
+        description: sale.description,
+        source_transaction_id: id,
+        date_acquired: sale.date_acquired,
+        date_sold: sale.date_sold,
+        proceeds: sale.proceeds,
+        cost_basis: sale.cost_basis,
+        ...(loss > 0 ? { adjustment_codes: "L", adjustment_amount: loss } : {}),
+        gain_loss: Math.max(0, sale.proceeds - sale.cost_basis),
+        is_long_term: longTerm,
+      });
+    }
+    if (proceedsTotal !== gross) {
+      throw new Error("1099-K personal-item sale proceeds differ from box 1a");
+    }
+  }
+  const rawRows = Array.isArray(pending.form8949)
+    ? pending.form8949
+    : (pending.form8949 as Record<string, unknown> | undefined)?.transaction;
+  const actual = (Array.isArray(rawRows) ? rawRows : rawRows ? [rawRows] : [])
+    .filter((row) =>
+      row && typeof row === "object" &&
+      typeof row.source_transaction_id === "string" &&
+      row.source_transaction_id.startsWith("1099k:")
+    );
+  const canonical = (rows: Array<Record<string, unknown>>) =>
+    rows.map((row) =>
+      JSON.stringify(
+        Object.entries(row).filter(([, value]) => value !== undefined)
+          .sort(([a], [b]) => a.localeCompare(b)),
+      )
+    ).sort();
+  if (
+    JSON.stringify(canonical(actual)) !== JSON.stringify(canonical(expected))
+  ) {
+    throw new Error(
+      "1099-K personal-item sales differ from filed Form 8949 rows",
     );
   }
 }

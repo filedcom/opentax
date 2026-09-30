@@ -9,6 +9,7 @@ import type { Form3800DocumentParts } from "./forms/f3800_document.ts";
 import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
 import {
   assertF1040SourceIdentity,
+  assertKPersonalSaleSources,
   assertKWithholdingSourceIdentity,
   assertSchedule1Box3SourceIdentity,
   assertSchedule1KSourceIdentity,
@@ -218,6 +219,7 @@ function buildReturnXml(
   }
   assertScheduleCReceiptSourceIdentity(pending, filer);
   assertKWithholdingSourceIdentity(pending, filer);
+  assertKPersonalSaleSources(pending, filer);
   assertSchedule1Box3SourceIdentity(pending, filer);
   assertSchedule1NecSourceIdentity(pending, filer);
   assertSchedule1KSourceIdentity(pending, filer);

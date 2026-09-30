@@ -10,6 +10,10 @@ import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { scheduleC as schedule_c } from "../schedule_c/index.ts";
 import { schedule1a } from "../../intermediate/forms/schedule1a/index.ts";
+import {
+  form8949,
+  Form8949Part,
+} from "../../intermediate/forms/form8949/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // TY2025 issuer reporting threshold. This does not limit the recipient's
@@ -67,8 +71,30 @@ export const itemSchema = z.object({
   // When omitted, the gross information-return amount is not presumed taxable.
   //   "schedule_c"       → business income (Schedule C line 1)
   //   "schedule_1_line_8j" → confirmed activity-not-for-profit income.
-  // Personal-item sales and erroneous Forms 1099-K need their own sources.
-  for_routing: z.enum(["schedule_c", "schedule_1_line_8j"]).optional(),
+  // Personal-item sales require item-level basis review. Erroneous Forms
+  // 1099-K and mixed-purpose payer reports still need separate disposition.
+  for_routing: z.enum([
+    "schedule_c",
+    "schedule_1_line_8j",
+    "personal_item_sales",
+  ]).optional(),
+  personal_item_sales_review: z.array(
+    z.object({
+      transaction_id: z.string().trim().min(1),
+      description: z.string().trim().min(1).max(100),
+      date_acquired: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      date_sold: z.string().regex(/^2025-\d{2}-\d{2}$/),
+      proceeds: z.number().int().positive(),
+      cost_basis: z.number().int().nonnegative(),
+      acquired_by_purchase: z.literal(true),
+      acquisition_record_reference: z.string().trim().min(1),
+      sale_record_reference: z.string().trim().min(1),
+      personal_use_only: z.literal(true),
+      not_main_home: z.literal(true),
+      not_collectible: z.literal(true),
+      no_other_information_return_for_sale: z.literal(true),
+    }).strict(),
+  ).min(1).optional(),
   schedule_c_business_reference: z.string().trim().min(1).optional(),
   schedule_c_receipts_review: z.object({
     included_in_schedule_c_gross_receipts: z.number().int().positive(),
@@ -127,7 +153,9 @@ export const itemSchema = z.object({
   if (
     (item.schedule_c_receipts_review && item.for_routing !== "schedule_c") ||
     (item.nonbusiness_activity_review &&
-      (item.for_routing !== "schedule_1_line_8j" || gross <= 0))
+      (item.for_routing !== "schedule_1_line_8j" || gross <= 0)) ||
+    (item.personal_item_sales_review &&
+      item.for_routing !== "personal_item_sales")
   ) {
     ctx.addIssue({
       code: "custom",
@@ -172,6 +200,33 @@ export const itemSchema = z.object({
         path: ["nonbusiness_activity_review"],
         message:
           "1099-K nonbusiness income needs identified payer, recipient, activity, and a complete box 1a allocation",
+      });
+    }
+  }
+  if (item.for_routing === "personal_item_sales") {
+    const sales = item.personal_item_sales_review ?? [];
+    const ids = sales.map((sale) => sale.transaction_id);
+    if (
+      gross <= 0 || !item.pse_name.trim() ||
+      !/^\d{9}$/.test(item.pse_tin?.replaceAll("-", "") ?? "") ||
+      (!item.recipient_tin && !item.recipient_identity_review) ||
+      sales.length === 0 || new Set(ids).size !== ids.length ||
+      sales.reduce((sum, sale) => sum + sale.proceeds, 0) !== gross ||
+      sales.some((sale) => {
+        const acquired = new Date(`${sale.date_acquired}T00:00:00Z`);
+        const sold = new Date(`${sale.date_sold}T00:00:00Z`);
+        return Number.isNaN(acquired.getTime()) ||
+          acquired.toISOString().slice(0, 10) !== sale.date_acquired ||
+          Number.isNaN(sold.getTime()) ||
+          sold.toISOString().slice(0, 10) !== sale.date_sold ||
+          acquired >= sold;
+      })
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["personal_item_sales_review"],
+        message:
+          "1099-K personal-item sales need identified recipient, valid dated items, and proceeds equal to box 1a",
       });
     }
   }
@@ -290,6 +345,8 @@ function incomeOutputs(k99s: K99Items): NodeOutput[] {
         })];
       case "schedule_1_line_8j":
         return [];
+      case "personal_item_sales":
+        return [];
     }
   });
   const hobbyIncome = k99s.filter((item) =>
@@ -322,6 +379,7 @@ class F1099kNode extends TaxNode<typeof inputSchema> {
     f1040,
     schedule_c,
     schedule1a,
+    form8949,
     schedule1,
     agi_aggregator,
   ]);
@@ -337,6 +395,39 @@ class F1099kNode extends TaxNode<typeof inputSchema> {
       ...federalWithholdingOutputs(parsed.f1099ks),
       ...incomeOutputs(parsed.f1099ks),
     ];
+    for (const item of parsed.f1099ks) {
+      if (item.for_routing !== "personal_item_sales") continue;
+      for (const sale of item.personal_item_sales_review!) {
+        const acquired = new Date(`${sale.date_acquired}T00:00:00Z`);
+        const sold = new Date(`${sale.date_sold}T00:00:00Z`);
+        const anniversary = new Date(acquired);
+        anniversary.setUTCFullYear(anniversary.getUTCFullYear() + 1);
+        if (
+          acquired.getUTCMonth() === 1 && acquired.getUTCDate() === 29 &&
+          anniversary.getUTCMonth() === 2
+        ) anniversary.setUTCDate(0);
+        const longTerm = sold > anniversary;
+        const loss = Math.max(0, sale.cost_basis - sale.proceeds);
+        outputs.push(output(form8949, {
+          transaction: {
+            part: longTerm ? Form8949Part.F : Form8949Part.C,
+            description: sale.description,
+            source_transaction_id: `1099k:${
+              item.pse_tin!.replaceAll("-", "")
+            }:${sale.transaction_id}`,
+            date_acquired: sale.date_acquired,
+            date_sold: sale.date_sold,
+            proceeds: sale.proceeds,
+            cost_basis: sale.cost_basis,
+            ...(loss > 0
+              ? { adjustment_codes: "L", adjustment_amount: loss }
+              : {}),
+            gain_loss: Math.max(0, sale.proceeds - sale.cost_basis),
+            is_long_term: longTerm,
+          },
+        }));
+      }
+    }
     const qualifiedTips = parsed.f1099ks.flatMap((item) =>
       item.qualified_tips_box1a_review
         ? [{

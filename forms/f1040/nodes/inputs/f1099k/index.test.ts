@@ -45,6 +45,25 @@ function hobbyItem(gross: number, overrides: Record<string, unknown> = {}) {
   });
 }
 
+function personalSale(overrides: Record<string, unknown> = {}) {
+  return {
+    transaction_id: "item-1",
+    description: "Personal chair",
+    date_acquired: "2024-06-15",
+    date_sold: "2025-06-15",
+    proceeds: 700,
+    cost_basis: 1_000,
+    acquired_by_purchase: true,
+    acquisition_record_reference: "purchase receipt",
+    sale_record_reference: "processor settlement",
+    personal_use_only: true,
+    not_main_home: true,
+    not_collectible: true,
+    no_other_information_return_for_sale: true,
+    ...overrides,
+  };
+}
+
 function compute(items: ReturnType<typeof minimalItem>[]) {
   return f1099k.compute({ taxYear: 2025, formType: "f1040" }, {
     f1099ks: items,
@@ -735,6 +754,51 @@ Deno.test("1099-K nonbusiness route requires all box 1a receipts on line 8j", ()
       compute([hobbyItem(8_000, { nonbusiness_activity_review: undefined })]),
     Error,
     "complete box 1a allocation",
+  );
+});
+
+Deno.test("1099-K personal loss uses Form 8949 code L and anniversary is short term", () => {
+  const item = minimalItem({
+    pse_tin: "12-3456789",
+    recipient_tin: "987-65-4321",
+    box1a_gross_payments: 700,
+    for_routing: "personal_item_sales",
+    personal_item_sales_review: [personalSale()],
+  });
+  const row = findOutput(compute([item]), "form8949")!.fields
+    .transaction as Record<string, unknown>;
+  assertEquals(row.part, "C");
+  assertEquals(row.adjustment_codes, "L");
+  assertEquals(row.adjustment_amount, 300);
+  assertEquals(row.gain_loss, 0);
+  const leapRow = findOutput(
+    compute([minimalItem({
+      ...item,
+      personal_item_sales_review: [personalSale({
+        date_acquired: "2024-02-29",
+        date_sold: "2025-03-01",
+      })],
+    })]),
+    "form8949",
+  )!.fields.transaction as Record<string, unknown>;
+  assertEquals(leapRow.part, "F");
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        ...item,
+        personal_item_sales_review: [personalSale({ proceeds: 699 })],
+      })]),
+    Error,
+    "proceeds equal to box 1a",
+  );
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        ...item,
+        personal_item_sales_review: [personalSale({ date_sold: "2025-02-30" })],
+      })]),
+    Error,
+    "valid dated items",
   );
 });
 

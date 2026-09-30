@@ -108,9 +108,11 @@ business rules and ATS acceptance all remain open.
 
 The former Form 1099-K gross-payment line-8z route is removed for TY2025.
 An explicitly classified hobby payment now enters line 8j with the same
-amount in AGI, including multi-payer aggregation. This does not classify
-personal-item sales, erroneous reports, reimbursements, or business receipts
-as hobby income. Those need their own transaction facts and destinations.
+amount in AGI, including multi-payer aggregation. Personal-item sales now use item-level acquisition and sale facts on Form
+8949 and Schedule D: positive gains are taxable and code L cancels a
+nondeductible personal loss. This does not classify erroneous reports,
+reimbursements, mixed-purpose K reports, or business receipts as hobby
+income; those need their own transaction facts and destinations.
 
 The Form 1099-MISC box 3 non-prize other-income route now requires a reviewed
 payment description and carries payer, recipient, amount, and description rows

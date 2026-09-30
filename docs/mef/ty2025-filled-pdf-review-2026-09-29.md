@@ -687,3 +687,17 @@ source/pending JSON, XML, PDF, contact sheet, and page renders are retained
 at `.state/research/ty2025-filled-pdf-review/2026-09-30-v89/`. The
 payer-issued copy and recipient review are structured facts, not
 authenticated document bytes; IRS business rules and ATS remain open.
+
+The `single-k-personal-gain-loss` source return has a six-page `v90` PDF.
+The contact sheet and both Form 8949 pages were inspected at full size.
+Form 8949 box C prints an $800 sale with $250 basis and $550 short-term gain;
+box F prints a $700 sale with $1,000 basis, code L, a $300 adjustment, and
+zero long-term loss. Schedule D lines 3/10/16 and Form 1040 line 7a carry
+$550. The two item proceeds sum to Form 1099-K box 1a's $1,500, and the
+native full return passes local TY2025 v5.4 XSD. Altered Form 8949 source
+rows reject at export. The PDF SHA-256 is
+`e90d839ae7167b5a474f8c71d45f65d5b6e45bf447e50896e45b484fe17a374d`;
+source/pending JSON, XML, PDF, contact sheet, and detailed pages are retained
+at `.state/research/ty2025-filled-pdf-review/2026-09-30-v90/`. Purchase
+and settlement bytes, mixed K payments, other basis adjustments, IRS rules,
+and ATS remain open.
