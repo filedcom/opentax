@@ -811,6 +811,89 @@ Deno.test("prior Form 4835 passive loss prints PAL and reconciles EIC", async ()
   assertEquals(new TextDecoder().decode(pdf.slice(0, 5)), "%PDF-");
 });
 
+Deno.test("active rental special allowance nets passive farm income", async () => {
+  const runMixed = (wages: number) =>
+    execute(plan, registry, {
+      general,
+      w2: [{
+        ...w2,
+        box1_wages: wages,
+        box3_ss_wages: wages,
+        box4_ss_withheld: Math.round(wages * 0.062),
+        box5_medicare_wages: wages,
+        box6_medicare_withheld: Math.round(wages * 0.0145),
+      }],
+      schedule_e: [{
+        tsj: "T",
+        activity_id: "active-rental",
+        property_description: "Reviewed active rental",
+        street_address: "123 Rental Road",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+        property_type: 1,
+        activity_type: "A",
+        fair_rental_days: 365,
+        personal_use_days: 0,
+        rent_income: 10_000,
+        expense_repairs: 40_000,
+        form_1099_payments_made: false,
+      }],
+      f4835: [{
+        activity_id: "passive-farm-profit",
+        activity_name: "Reviewed passive farm profit",
+        livestock_crop_income: 5_000,
+        actively_participated: false,
+      }],
+    }, { taxYear: 2025, formType: "f1040" });
+  const phased = runMixed(120_000);
+  assertEquals(phased.diagnostics, []);
+  assertEquals(phased.pending.form8582.modified_agi, 125_000);
+  assertEquals(phased.carryforwards.suspended_pal_8582, 12_500);
+  assertEquals(phased.pending.schedule1.line5_schedule_e, -12_500);
+  assertEquals(phased.pending.f1040.line11_agi, 107_500);
+  const cutoff = runMixed(150_000);
+  assertEquals(cutoff.diagnostics, []);
+  assertEquals(cutoff.carryforwards.suspended_pal_8582, 25_000);
+  assertEquals(cutoff.pending.schedule1.line5_schedule_e, 0);
+  const filer = extractFilerIdentity(phased.pending.f1040);
+  const xml = buildMefXml(buildPending(phased.pending), filer);
+  assertEquals(
+    xml.includes("<TotalSuppIncomeOrLossAmt>-12500</TotalSuppIncomeOrLossAmt>"),
+    true,
+  );
+  const xsd = new URL(
+    "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    import.meta.url,
+  ).pathname;
+  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(xmlPath, xml);
+    const validation = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsd, xmlPath],
+      stderr: "piped",
+    }).output();
+    assertEquals(
+      validation.code,
+      0,
+      new TextDecoder().decode(validation.stderr),
+    );
+  } finally {
+    await Deno.remove(xmlPath);
+  }
+  const fields = scheduleEPdf.projectFields?.(
+    phased.pending.schedule_e,
+    phased.pending,
+  );
+  assertEquals(fields?.property_0_line21, -30_000);
+  assertEquals(fields?.property_0_line22, 17_500);
+  assertEquals(fields?.line26, -17_500);
+  assertEquals(fields?.farm_line40, 5_000);
+  assertEquals(fields?.trust_line41, -12_500);
+  const pdf = await buildPdfBytes(phased.pending, filer);
+  assertEquals(new TextDecoder().decode(pdf.slice(0, 5)), "%PDF-");
+});
+
 Deno.test("EIC reconciles rental, partnership, S-corporation, and trust income", async () => {
   const atLimit = runPassiveK1s(4_000, 4_000, 1_950, 2_000);
   assertEquals(atLimit.diagnostics, []);
