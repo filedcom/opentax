@@ -1,4 +1,6 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
+import { FilingStatus } from "../../../mef/header.ts";
+import { assertForm1098Box4Sources } from "../../../nodes/inputs/f1098/index.ts";
 import { schedule1OtherIncomeRows } from "../../mef/forms/schedule1_other_income_rows.ts";
 import { schedule1ActivityNotForProfitTotal } from "../../mef/forms/schedule1_nonbusiness_sources.ts";
 
@@ -227,7 +229,27 @@ export const schedule1Pdf: PdfFormDescriptor = {
       pdfField: "topmostSubform[0].Page1[0].f1_02[0]",
     },
   ],
-  instances(fields) {
+  instances(fields, filer, all) {
+    if (
+      all?.f1098 !== undefined ||
+      Number(fields.line8z_f1098_interest_recovery ?? 0) > 0
+    ) {
+      if (!filer) {
+        throw new Error("Schedule 1 PDF Form 1098 box 4 needs filer identity");
+      }
+      const recipients = [filer.primarySSN];
+      if (
+        filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+        filer.spouse?.ssn
+      ) {
+        recipients.push(filer.spouse.ssn);
+      }
+      assertForm1098Box4Sources(
+        all?.f1098,
+        recipients,
+        Number(fields.line8z_f1098_interest_recovery ?? 0),
+      );
+    }
     const rows = schedule1OtherIncomeRows(fields);
     const activityNotForProfit = schedule1ActivityNotForProfitTotal(fields);
     if (rows.length === 0 && activityNotForProfit === 0) return [fields];

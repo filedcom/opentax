@@ -1,11 +1,68 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { schedule1Pdf } from "./schedule1.ts";
+import { FilingStatus } from "../../../mef/header.ts";
 
 Deno.test("Schedule 1 PDF includes filer identity on page 1", () => {
   assertEquals(schedule1Pdf.filerFields?.map((entry) => entry.domainKey), [
     "nameLine1",
     "primarySSN",
   ]);
+});
+
+Deno.test("Schedule 1 PDF rejects Form 1098 box 4 recovery without its payer source", () => {
+  const filer = {
+    primarySSN: "111223333",
+    nameLine1: "TEST TAXPAYER",
+    nameControl: "TAXP",
+    address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
+    filingStatus: FilingStatus.Single,
+  };
+  assertThrows(
+    () =>
+      schedule1Pdf.instances?.(
+        { line8z_f1098_interest_recovery: 1_200 },
+        filer,
+        {},
+      ),
+    Error,
+    "needs payer source rows",
+  );
+  const source = {
+    f1098s: [{
+      box1_mortgage_interest: 0,
+      box4_refund_overpaid: 2_000,
+      box4_prior_year_refund: true,
+      box4_taxable_recovery_verified_amount: 1_200,
+      box4_recovery_workpaper_reference: "Pub. 525 review",
+      lender_name: "Home Lender",
+      recipient_tin: "999887777",
+      source_document_reference: "issued 1098",
+    }],
+  };
+  assertThrows(
+    () =>
+      schedule1Pdf.instances?.(
+        { line8z_f1098_interest_recovery: 1_200 },
+        filer,
+        { f1098: source },
+      ),
+    Error,
+    "recipient must match",
+  );
+  assertThrows(
+    () =>
+      schedule1Pdf.instances?.(
+        { line8z_f1098_interest_recovery: 1_199 },
+        filer,
+        {
+          f1098: {
+            f1098s: [{ ...source.f1098s[0], recipient_tin: filer.primarySSN }],
+          },
+        },
+      ),
+    Error,
+    "must match sourced taxable recovery",
+  );
 });
 
 Deno.test("Schedule 1 PDF puts Form 2106 deductions on line 12", () => {

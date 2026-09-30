@@ -11,7 +11,12 @@ their parent link are written but unrun. Nonbusiness Form 1099-NEC payments
 now use Schedule 1 line 8j with payer, recipient, and activity-description
 rows; their total reaches AGI without an 8z statement. A reviewed Form 1098 box 4 prior-year
 mortgage-interest recovery likewise has one sourced Schedule 1/AGI amount and
-a distinct type row.
+a distinct type row. The positive recovery now needs payer-copy identity and a
+recipient matching the filer or joint-filing spouse, and both native and PDF
+Schedule 1 exports reconcile the sourced taxable amount. A synthetic
+$1,200 recovery in a full return passes local TY2025 v5.4 XSD and its
+five-page filled PDF was inspected; see the
+[Form 1098 review](ty2025-filled-pdf-review-2026-09-29.md).
 
 Two generic scalar keys, `line8z_other` and `line8z_other_income`, remain a real
 source-provenance gap. The sink cannot infer the IRS statement's required type

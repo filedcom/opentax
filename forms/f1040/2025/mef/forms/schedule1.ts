@@ -1,4 +1,6 @@
 import { element, elements } from "../../../mef/xml.ts";
+import { FilingStatus } from "../../../mef/header.ts";
+import { assertForm1098Box4Sources } from "../../../nodes/inputs/f1098/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import { schedule1OtherIncomeRows } from "./schedule1_other_income_rows.ts";
 import { schedule1ActivityNotForProfitTotal } from "./schedule1_nonbusiness_sources.ts";
@@ -188,6 +190,27 @@ export const schedule1: MefFormDescriptor<"schedule1", Input> = {
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040s1.pdf",
   build(fields, context) {
+    if (
+      context?.pending?.f1098 !== undefined ||
+      (fields.line8z_f1098_interest_recovery ?? 0) > 0
+    ) {
+      const filer = context?.filer;
+      if (!filer) {
+        throw new Error("Schedule 1 Form 1098 box 4 needs filer identity");
+      }
+      const recipients = [filer.primarySSN];
+      if (
+        filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+        filer.spouse?.ssn
+      ) {
+        recipients.push(filer.spouse.ssn);
+      }
+      assertForm1098Box4Sources(
+        context?.pending?.f1098,
+        recipients,
+        fields.line8z_f1098_interest_recovery ?? 0,
+      );
+    }
     if (
       fields.line25_total_other_adjustments !== undefined &&
       fields.line25_total_other_adjustments !== null &&

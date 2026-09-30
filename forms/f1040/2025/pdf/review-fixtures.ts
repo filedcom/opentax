@@ -258,6 +258,34 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-1098-prior-year-recovery",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(80_000, 12_000, "Example Employer", "12-3456789")],
+      f1098: [{
+        lender_name: "Home Lender",
+        recipient_tin: singleGeneral.taxpayer_ssn,
+        source_document_reference: "Synthetic 2025 Form 1098 recovery copy",
+        box1_mortgage_interest: 18_000,
+        box1_current_year_deductible_interest: 18_000,
+        box1_deduction_workpaper_reference: "2025 Pub. 936 interest workpaper",
+        box4_refund_overpaid: 2_000,
+        box4_prior_year_refund: true,
+        box4_taxable_recovery_verified_amount: 1_200,
+        box4_recovery_workpaper_reference:
+          "2025 Pub. 525 tax-benefit workpaper",
+        for_routing: "A",
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule1", "schedule_a"],
+    reviewFocus: [
+      "Schedule A line 8a prints current-year interest of 18,000 without netting the prior-year refund",
+      "Schedule 1 line 8z describes and reports only the reviewed 1,200 taxable recovery",
+      "Form 1040 line 8 and AGI include the 1,200 recovery once",
+    ],
+  },
+  {
     id: "single-ordinary-noncash-gift",
     inputs: {
       general: singleGeneral,

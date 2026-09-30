@@ -115,6 +115,17 @@ export const itemSchema = z.object({
   const refund = item.box4_refund_overpaid ?? 0;
   const taxableRecovery = item.box4_taxable_recovery_verified_amount;
   if (refund > 0) {
+    if (
+      !item.lender_name?.trim() || !item.recipient_tin ||
+      !item.source_document_reference
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["source_document_reference"],
+        message:
+          "Form 1098 box 4 needs lender, recipient TIN, and distinct payer-copy reference",
+      });
+    }
     if ((item.for_routing ?? ForRouting.A) !== ForRouting.A) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -257,6 +268,43 @@ export function assertForm1098Box6Sources(
   if (filedLine8a < points) {
     throw new Error(
       "Schedule A line 8a is less than sourced Form 1098 box 6 deductible points",
+    );
+  }
+}
+
+export function assertForm1098Box4Sources(
+  source: unknown,
+  recipientTins: readonly string[],
+  filedRecovery: number,
+): void {
+  if (source === undefined) {
+    if (filedRecovery > 0) {
+      throw new Error("Schedule 1 Form 1098 box 4 needs payer source rows");
+    }
+    return;
+  }
+  const items = inputSchema.parse(source).f1098s;
+  const claimed = items.filter((item) =>
+    (item.box4_taxable_recovery_verified_amount ?? 0) > 0
+  );
+  const allowed = new Set(recipientTins.map((tin) => tin.replaceAll("-", "")));
+  if (
+    claimed.some((item) =>
+      !item.recipient_tin ||
+      !allowed.has(item.recipient_tin.replaceAll("-", ""))
+    )
+  ) {
+    throw new Error(
+      "Schedule 1 Form 1098 box 4 recipient must match the taxpayer or joint-filing spouse",
+    );
+  }
+  const recovery = claimed.reduce(
+    (sum, item) => sum + (item.box4_taxable_recovery_verified_amount ?? 0),
+    0,
+  );
+  if (filedRecovery !== recovery) {
+    throw new Error(
+      "Schedule 1 Form 1098 box 4 recovery must match sourced taxable recovery",
     );
   }
 }

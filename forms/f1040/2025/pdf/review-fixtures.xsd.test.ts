@@ -31,6 +31,23 @@ for (const fixture of pdfReviewFixtures) {
       });
       assertEquals(result.diagnostics, []);
       const xml = buildMefXml(buildPending(result.pending), fixture.filer);
+      if (fixture.id === "single-1098-prior-year-recovery") {
+        assertEquals(
+          result.pending.schedule_a.line_8a_mortgage_interest_1098,
+          18_000,
+        );
+        assertEquals(
+          result.pending.schedule1.line8z_f1098_interest_recovery,
+          1_200,
+        );
+        assertEquals(result.pending.f1040.line8_additional_income, 1_200);
+        assertEquals(result.pending.f1040.line11_agi, 81_200);
+        assertStringIncludes(
+          xml,
+          "<RptHomeMortgIntAndPointsAmt>18000</RptHomeMortgIntAndPointsAmt>",
+        );
+        assertStringIncludes(xml, "<OtherIncomeTotalAmt");
+      }
       if (fixture.id === "single-sourced-collectibles-gain") {
         assertEquals(
           result.pending.rate_28_gain_worksheet.collectibles_gain_from_8949,

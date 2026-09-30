@@ -1,5 +1,10 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { f1098, ForRouting, inputSchema } from "./index.ts";
+import {
+  assertForm1098Box4Sources,
+  f1098,
+  ForRouting,
+  inputSchema,
+} from "./index.ts";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { scheduleA } from "../schedule_a/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
@@ -73,6 +78,9 @@ function reviewedRecovery(
     box4_prior_year_refund: true,
     box4_taxable_recovery_verified_amount: taxable,
     box4_recovery_workpaper_reference: "reviewed-pub525-recovery-2025",
+    lender_name: "Reviewed Lender",
+    recipient_tin: "111-22-3333",
+    source_document_reference: `issued-1098-recovery-${refund}-${taxable}`,
     ...overrides,
   });
 }
@@ -225,6 +233,41 @@ Deno.test("f1098.compute: box4 same-year designation is rejected", () => {
     () =>
       compute([reviewedRecovery(200, 200, { box4_prior_year_refund: false })]),
     Error,
+  );
+});
+
+Deno.test("f1098.compute: positive box4 needs identified lender, recipient, and payer copy", () => {
+  for (
+    const missing of [
+      "lender_name",
+      "recipient_tin",
+      "source_document_reference",
+    ]
+  ) {
+    assertThrows(
+      () => compute([reviewedRecovery(200, 100, { [missing]: undefined })]),
+      Error,
+    );
+  }
+});
+
+Deno.test("f1098 box4 filing reconciles payer recipient and taxable recovery", () => {
+  const source = { f1098s: [reviewedRecovery(2_000, 1_200)] };
+  assertForm1098Box4Sources(source, ["111223333"], 1_200);
+  assertThrows(
+    () => assertForm1098Box4Sources(source, ["999887777"], 1_200),
+    Error,
+    "recipient must match",
+  );
+  assertThrows(
+    () => assertForm1098Box4Sources(source, ["111223333"], 1_199),
+    Error,
+    "must match sourced taxable recovery",
+  );
+  assertThrows(
+    () => assertForm1098Box4Sources(undefined, ["111223333"], 1_200),
+    Error,
+    "needs payer source rows",
   );
 });
 
