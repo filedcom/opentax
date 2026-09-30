@@ -1836,7 +1836,6 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         employee_ssn: "111-22-3333",
         box3_ss_wages: 161_100,
         box7_ss_tips: 15_000,
-        box14b_tipped_code: "102",
       }],
       schedule1a: {
         form4070_reports: [{
@@ -1844,6 +1843,8 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
           employer_ein: "12-3456789",
           employer_name: "Example Restaurant",
           occupation_code: "102",
+          occupation_review_reference:
+            "Synthetic 2025 restaurant occupation review",
           monthly_reports: Array.from({ length: 12 }, (_, index) => ({
             month: index + 1,
             cash_tips: index === 11 ? 2_400 : 1_600,

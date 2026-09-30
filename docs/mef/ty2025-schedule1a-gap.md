@@ -7,7 +7,7 @@ Sources:
 and checked-in v5.4 `Common/IRS1040Schedule1A/IRS1040Schedule1A.xsd`.
 
 The `schedule1a` node computes a combined deduction and sends it to Form 1040
-line 13b. MeF includes identified W-2-box-7 and Form 4137 tips, reviewed W-2-box-14 FLSA
+line 13b. MeF includes identified W-2-box-7 and Form 4137 tips, reviewed Form 4070 employer reports, and reviewed W-2-box-14 FLSA
 overtime, vehicle-interest, and senior routes in the Schedule 1-A
 descriptor after Schedule 1 and before Schedule 2. Form 1040's positive-line-13b guard opens
 only when that source review is present and the second pass has exactly one
@@ -26,7 +26,7 @@ two-page PDF field map and inspected synthetic full-return packets.
   tipped occupation code, a valid
   timely employment SSN, and reviewed zero Part I exclusions. Each positive
   employer row retains its EIN and name and is checked against the W-2 and
-  Form 4137 facts at native/PDF export. W-2 box 7 alone requires box 5 Medicare wages at or below $176,100; reviewed Form 4070 reports can replace box 7 for the same employer when box 5 is higher. Form 4137 line 1 column (c) is
+  Form 4137 facts at native/PDF export. A reviewed Form 4070 occupation and reference can supply the code when the 2025 W-2 omits it; a W-2 with a different code rejects. W-2 box 7 alone requires box 5 Medicare wages at or below $176,100; reviewed Form 4070 reports can replace box 7 for the same employer when box 5 is higher. Form 4137 line 1 column (c) is
   combined with the selected W-2 or Form 4070 amount using the greater amount for each employee and
   employer, so the same tips are not deducted twice. One employer fills lines
   4a/4b/4c as applicable; multiple
@@ -197,14 +197,14 @@ IRS rules, and ATS remain open.
 
 The `single-form4070-high-wage-qualified-tips-schedule1a` fixture has twelve
 monthly employer reports totaling $20,000, matched by recipient, employer,
-and occupation to a W-2 with $15,000 in box 7 and $200,000 in box 5. The
+and occupation to a W-2 with $15,000 in box 7, $200,000 in box 5, and no tipped occupation code. The
 reviewed monthly net is cash plus charged tips less tips paid out. It
 replaces the W-2 box 7 amount for this employer rather than adding to it.
 Schedule 1-A lines 4a/4c show $20,000, lines 10/12 show the $5,000 MAGI
 phaseout, and line 13/38 and Form 1040 line 13b show $15,000. The full
-return passes local TY2025 v5.4 XSD. All four pages of the `v80` PDF were
-rendered and visually inspected (SHA-256
-`8479bab71654276ba39f91124412ccf2d38a3816d4355a417cd8112540c8098a`).
+return passes local TY2025 v5.4 XSD. All four pages of the `v81` PDF were
+rendered and are pixel-identical to the visually inspected `v80` pages (SHA-256
+`c13a8bcad9afdd1f66343d64047dbef23fa69e8c916626d803c213b5316cb132`).
 Monthly report entries carry review references; actual employer-submitted
 report bytes and IRS business-rule acceptance remain open. The route follows
 the [2025 Form 1040 Schedule 1-A instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf).

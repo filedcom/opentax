@@ -67,6 +67,7 @@ export const claimInputSchema = z.object({
       employer_ein: z.string().regex(/^\d{2}-?\d{7}$/),
       employer_name: z.string().trim().min(1),
       occupation_code: z.string().regex(/^\d{3}$/),
+      occupation_review_reference: z.string().trim().min(1),
       monthly_reports: z.array(
         z.object({
           month: z.number().int().min(1).max(12),

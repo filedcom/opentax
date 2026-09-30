@@ -402,6 +402,7 @@ Deno.test("Schedule 1-A Form 4070 replaces capped W-2 box 7 for the same employe
     employer_ein: "123456789",
     employer_name: "Test Restaurant",
     occupation_code: "102",
+    occupation_review_reference: "2025 employer occupation record",
     monthly_reports: [
       {
         month: 1,
@@ -454,6 +455,36 @@ Deno.test("Schedule 1-A Form 4070 replaces capped W-2 box 7 for the same employe
   assertStringIncludes(
     xml,
     "<QualifiedTipsWagesAmt>20000</QualifiedTipsWagesAmt>",
+  );
+  const noW2Code = {
+    ...source,
+    qualified_employee_tips: [],
+  };
+  const noW2CodePending = {
+    ...pending,
+    w2: {
+      w2s: [{
+        ...pending.w2.w2s[0],
+        box14b_tipped_code: undefined,
+      }],
+    },
+  };
+  assertStringIncludes(
+    schedule1a.build(noW2Code, { pending: noW2CodePending }),
+    "<QualifiedTipsWagesAmt>20000</QualifiedTipsWagesAmt>",
+  );
+  assertThrows(
+    () =>
+      schedule1a.build(noW2Code, {
+        pending: {
+          ...noW2CodePending,
+          w2: {
+            w2s: [{ ...noW2CodePending.w2.w2s[0], box14b_tipped_code: "103" }],
+          },
+        },
+      }),
+    Error,
+    "W-2 tips do not match the employer sources",
   );
   assertThrows(
     () =>

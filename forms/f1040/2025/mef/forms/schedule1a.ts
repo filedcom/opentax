@@ -108,7 +108,8 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
             normalize(report.employer_ein) &&
           source.employer_name === report.employer_name &&
           source.box13_statutory_employee !== true &&
-          source.box14b_tipped_code === report.occupation_code &&
+          (source.box14b_tipped_code === undefined ||
+            source.box14b_tipped_code === report.occupation_code) &&
           isQualifiedTipsOccupationCode(report.occupation_code)
         )
       )
