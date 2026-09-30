@@ -75,12 +75,14 @@ exclusions remain unsupported. These references are review evidence, not
 independent authentication of the underlying taxpayer documents.
 
 The source, document, return integration, and PDF field-map cases are written.
-Positive Parts II–V can now coexist in native XML and PDF projection. A focused
-$5,000 tips, $4,000 overtime, $4,000 vehicle-interest, and $10,800 senior
-case emits all four parts in order and validates against the local v5.4
-Schedule 1-A XSD; a mismatched Form 1040 total rejects. A senior-plus-overtime
-PDF projection fills both parts and $14,800 on line 38. Full mixed-return
-graph/XSD and filled-packet review remain open.
+Positive Parts II–V can now coexist in native XML and PDF projection. A joint
+source graph with two identified W-2 tip employers ($3,000/$2,000), reviewed
+$4,000 overtime, $4,000 vehicle interest, and $10,800 of senior deduction
+passes local v5.4 full-return XSD. All five pages of its `v77` packet were
+rendered and visually inspected: each part prints its own amount, the
+employer worksheet reconciles to line 4c, and line 38 equals Form 1040 line
+13b at $23,800. A mismatched Form 1040 total rejects. Other mixed source
+combinations, underlying record authentication, IRS rules, and ATS remain open.
 The official 2025 two-page AcroForm was inspected: page 1 fields
 `f1_03`, `f1_08`, and `f1_09` correspond to lines 1, 2e, and 3; page 2
 fields `f2_15` through `f2_23` correspond to lines 31 through 38. The

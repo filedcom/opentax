@@ -325,6 +325,26 @@ for (const fixture of pdfReviewFixtures) {
           "<EnhancedSeniorDeductionAmt>10800</EnhancedSeniorDeductionAmt><TotalAdditionalDeductionsAmt>10800</TotalAdditionalDeductionsAmt>",
         );
       }
+      if (fixture.id === "joint-mixed-schedule1a") {
+        assertEquals(result.pending.f1040.line11_agi, 160_000);
+        assertEquals(
+          result.pending.f1040.line13b_additional_deductions,
+          23_800,
+        );
+        const tags = [
+          "<QualifiedTipsEmployeeAmt>5000</QualifiedTipsEmployeeAmt>",
+          "<QualifiedOvertimeCompDedAmt>4000</QualifiedOvertimeCompDedAmt>",
+          "<QualifiedCarLoanInterestDedAmt>4000</QualifiedCarLoanInterestDedAmt>",
+          "<EnhancedSeniorDeductionAmt>10800</EnhancedSeniorDeductionAmt>",
+          "<TotalAdditionalDeductionsAmt>23800</TotalAdditionalDeductionsAmt>",
+        ];
+        let previous = xml.indexOf("<IRS1040Schedule1A ");
+        for (const tag of tags) {
+          const position = xml.indexOf(tag, previous + 1);
+          assertEquals(position > previous, true, tag);
+          previous = position;
+        }
+      }
       if (fixture.id === "single-w2-qualified-tips-schedule1a") {
         assertEquals(result.pending.f1040.line13b_additional_deductions, 5_000);
         assertStringIncludes(xml, "<IRS1040Schedule1A ");

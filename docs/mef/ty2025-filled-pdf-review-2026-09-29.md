@@ -593,3 +593,18 @@ inspected. The PDF SHA-256 is
 the packet is at
 `.state/research/ty2025-filled-pdf-review/2026-09-30-v76/`. Issued
 W-2 bytes, IRS business rules, and ATS remain open.
+
+The `joint-mixed-schedule1a` source combines two identified W-2 tip employers
+($3,000 and $2,000), one reviewed $4,000 overtime premium, one reviewed
+$4,000 vehicle loan, and two senior deductions totaling $10,800. The source
+graph puts $23,800 on Form 1040 line 13b, and the full return passes local
+TY2025 v5.4 XSD. In the five-page `v77` PDF, Schedule 1-A page 1 prints
+zero on lines 4a/4b, $5,000 on line 4c, $4,000 on line 21, and the page 2
+vehicle and senior amounts add to $23,800 on line 38. The employer worksheet
+lists both identified sources and sums to line 4c. Form 1040 page 2 prints
+$23,800 on line 13b, $101,500 taxable income, $12,158 tax, and a $7,842
+refund. All five pages were rendered and visually inspected. The PDF SHA-256
+is `a14c3299a8eca6bc4270bccabbabf945fd15435d64fb7272297270a8a602f05d`;
+the packet is at
+`.state/research/ty2025-filled-pdf-review/2026-09-30-v77/`. Other mixed
+source combinations, issued records, IRS business rules, and ATS remain open.
