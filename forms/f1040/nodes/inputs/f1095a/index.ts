@@ -617,13 +617,26 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
         adjustedPremiums[proof.month - 1] = payment.amount;
         hasProtectedPartial = true;
       }
+      const noAptcMonthlyClaim = f1095as.length === 1 &&
+        item.no_aptc_monthly_evidence !== undefined &&
+        item.monthly_aptcs.every((amount) => amount === 0) &&
+        item.shared_policy_periods === undefined &&
+        (hasProtectedPartial ||
+          adjustedPremiums.some((amount) => amount !== adjustedPremiums[0]) ||
+          slcsps.some((amount) => amount !== slcsps[0]));
       return {
         ...item,
-        monthly_premiums: hasProtectedPartial
+        // Form 8962 electronic entries are whole dollars. Keep the original
+        // 1095-A and payment amounts in the source record for filing checks.
+        monthly_premiums: noAptcMonthlyClaim
+          ? adjustedPremiums.map(Math.round)
+          : hasProtectedPartial
           ? adjustedPremiums
           : item.monthly_premiums,
-        annual_premium: hasProtectedPartial ? undefined : item.annual_premium,
-        monthly_slcsps: slcsps,
+        annual_premium: noAptcMonthlyClaim || hasProtectedPartial
+          ? undefined
+          : item.annual_premium,
+        monthly_slcsps: noAptcMonthlyClaim ? slcsps.map(Math.round) : slcsps,
         // The reported annual column B was checked against the reported
         // monthly column above; it does not total the corrected SLCSP series.
         annual_slcsp: undefined,
@@ -921,7 +934,23 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
       activePremiums[0] > 0 && activeSlcsps[0] > 0 &&
       activePremiums.every((amount) => amount === activePremiums[0]) &&
       activeSlcsps.every((amount) => amount === activeSlcsps[0]) &&
+      f1095as.every((item) =>
+        !item.no_aptc_monthly_evidence ||
+        (item.monthly_premiums?.every((amount) =>
+          amount === item.monthly_premiums![0]
+        ) &&
+          item.slcsp_corrections?.every((correction) =>
+            correction.corrected_slcsp ===
+              item.slcsp_corrections![0].corrected_slcsp
+          ) &&
+          item.no_aptc_monthly_evidence.every((proof) =>
+            proof.premium_payment.status === "paid_in_full"
+          ))
+      ) &&
       allocatedItems.every((item) =>
+        !item.no_aptc_monthly_evidence?.some((proof) =>
+          proof.premium_payment.status !== "paid_in_full"
+        ) &&
         !item.shared_policy_periods &&
         item.monthly_premiums && item.monthly_slcsps && item.monthly_aptcs &&
         item.monthly_premiums[0] > 0 && item.monthly_slcsps[0] > 0 &&
@@ -934,6 +963,33 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
       )
     ) {
       form8962Fields.annual_line11_eligible = true;
+    }
+    const annualCentsPolicy = allocatedItems.length === 1 &&
+      form8962Fields.annual_line11_eligible === true &&
+      allocatedItems[0].no_aptc_monthly_evidence !== undefined &&
+      allocatedItems[0].monthly_aptcs?.every((amount) => amount === 0) &&
+      allocatedItems[0].annual_premium !== undefined &&
+      (allocatedItems[0].monthly_premiums!.some((amount) =>
+        !Number.isInteger(amount)
+      ) || allocatedItems[0].monthly_slcsps!.some((amount) =>
+        !Number.isInteger(amount)
+      ));
+    if (annualCentsPolicy) {
+      // Line 11 uses the annual 1095-A totals, rounded once. The source
+      // monthly rows remain available for independent filing reconciliation.
+      form8962Fields.annual_premium = Math.round(
+        allocatedItems[0].annual_premium!,
+      );
+      form8962Fields.annual_slcsp = Math.round(
+        allocatedItems[0].monthly_slcsps!.reduce(
+          (sum, amount) => sum + amount,
+          0,
+        ),
+      );
+      form8962Fields.annual_aptc = 0;
+      delete form8962Fields.monthly_premiums;
+      delete form8962Fields.monthly_slcsps;
+      delete form8962Fields.monthly_aptcs;
     }
     if (sharedAllocations.length > 0) {
       form8962Fields.shared_policy_allocations = sharedAllocations;

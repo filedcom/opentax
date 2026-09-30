@@ -135,15 +135,117 @@ Deno.test("200% FPL no-APTC 1095-A reaches full return, MeF, and PDF", async () 
   await validateXml(xml);
 });
 
+Deno.test("no-APTC 1095-A cents are rounded before Form 8962 credit and e-file", async () => {
+  const centsPolicy = {
+    ...policy,
+    monthly_premiums: Array(12).fill(800.51),
+    annual_premium: 9_606.12,
+    annual_slcsp: 0,
+    annual_aptc: 0,
+    slcsp_corrections: policy.slcsp_corrections.map((item, index) => ({
+      ...item,
+      corrected_slcsp: index < 6 ? 700.49 : 800.49,
+    })),
+    no_aptc_monthly_evidence: policy.no_aptc_monthly_evidence.map((
+      item,
+      index,
+    ) => ({
+      ...item,
+      marketplace_slcsp: index < 6 ? 700.49 : 800.49,
+      premium_payment: { ...item.premium_payment, amount: 800.51 },
+    })),
+  };
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general,
+    w2: [w2(30_120, 3_000)],
+    f1095a: [centsPolicy],
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const source = result.pending.f1095a?.f1095as as Array<{
+    monthly_premiums: number[];
+  }>;
+  const rows = result.pending.form8962?.monthly_ptc_rows as Array<{
+    premium: number;
+    slcsp: number;
+    allowed_credit: number;
+  }>;
+  assertEquals(source[0].monthly_premiums[0], 800.51);
+  assertEquals(rows[0].premium, 801);
+  assertEquals(rows[0].slcsp, 700);
+  assertEquals(rows[0].allowed_credit, 650);
+  assertEquals(result.pending.form8962?.total_premium_tax_credit, 8_400);
+  assertEquals(result.pending.schedule3?.line9_premium_tax_credit, 8_400);
+  assertEquals(result.pending.f1040?.line31_additional_payments, 8_400);
+  const filer = extractFilerIdentity(result.pending.f1040);
+  const xml = buildMefXml(result.pending, filer);
+  assertStringIncludes(xml, "<MonthlyPremiumAmt>801</MonthlyPremiumAmt>");
+  assertStringIncludes(
+    xml,
+    "<MonthlyPremiumSLCSPAmt>700</MonthlyPremiumSLCSPAmt>",
+  );
+  const pdfFields =
+    form8962Pdf.projectFields?.(result.pending.form8962!, result.pending) ?? {};
+  assertEquals(pdfFields.pdf_month_1_premium, "801");
+  assertEquals(pdfFields.pdf_month_1_slcsp, "700");
+  await validateXml(xml);
+  const pdf = await buildPdfBytes(result.pending, filer);
+  assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 3, true);
+});
+
+Deno.test("unchanged no-APTC policy rounds annual 1095-A totals for line 11", async () => {
+  const annualCentsPolicy = {
+    ...policy,
+    monthly_premiums: Array(12).fill(800.49),
+    annual_premium: 9_605.88,
+    annual_slcsp: 0,
+    annual_aptc: 0,
+    slcsp_corrections: policy.slcsp_corrections.map((item) => ({
+      ...item,
+      corrected_slcsp: 700.49,
+    })),
+    no_aptc_monthly_evidence: policy.no_aptc_monthly_evidence.map((item) => ({
+      ...item,
+      marketplace_slcsp: 700.49,
+      premium_payment: { ...item.premium_payment, amount: 800.49 },
+    })),
+  };
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: lawfulGeneral,
+    w2: [w2(10_000, 0)],
+    f1095a: [annualCentsPolicy],
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form8962?.monthly_ptc_rows, undefined);
+  assertEquals(result.pending.form8962?.annual_premium, 9_606);
+  assertEquals(result.pending.form8962?.annual_slcsp, 8_406);
+  assertEquals(result.pending.form8962?.annual_ptc_allowed, 8_406);
+  assertEquals(result.pending.schedule3?.line9_premium_tax_credit, 8_406);
+  assertEquals(result.pending.f1040?.line31_additional_payments, 8_406);
+  const filer = extractFilerIdentity(result.pending.f1040);
+  const xml = buildMefXml(result.pending, filer);
+  assertStringIncludes(xml, "<AnnualPremiumAmt>9606</AnnualPremiumAmt>");
+  assertStringIncludes(
+    xml,
+    "<AnnualPremiumSLCSPAmt>8406</AnnualPremiumSLCSPAmt>",
+  );
+  await validateXml(xml);
+  const pdfFields =
+    form8962Pdf.projectFields?.(result.pending.form8962!, result.pending) ?? {};
+  assertEquals(pdfFields.pdf_annual_premium, "9606");
+  assertEquals(pdfFields.pdf_annual_slcsp, "8406");
+  const pdf = await buildPdfBytes(result.pending, filer);
+  assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 3, true);
+});
+
 Deno.test("protected partial premium reduces one no-APTC month and full-return credit", async () => {
   const protectedPayment = {
     status: "protected_partial" as const,
-    amount: 500,
+    amount: 500.51,
     paid_on: "2026-04-01",
     reference: "January premium payment ledger",
     record_sha256: "c".repeat(64),
     protection_basis: "premium_payment_threshold" as const,
-    minimum_payment_to_avoid_termination: 450,
+    minimum_payment_to_avoid_termination: 450.25,
     issuer_coverage_provided: true as const,
     issuer_confirmation_reference:
       "Issuer January threshold and coverage confirmation",
@@ -170,23 +272,23 @@ Deno.test("protected partial premium reduces one no-APTC month and full-return c
     allowed_credit: number;
   }>;
   assertEquals(sourcePolicies[0].monthly_premiums[0], 800);
-  assertEquals(creditRows[0].premium, 500);
-  assertEquals(creditRows[0].allowed_credit, 500);
-  assertEquals(result.pending.form8962?.total_premium_tax_credit, 8_250);
-  assertEquals(result.pending.schedule3?.line9_premium_tax_credit, 8_250);
-  assertEquals(result.pending.f1040?.line31_additional_payments, 8_250);
+  assertEquals(creditRows[0].premium, 501);
+  assertEquals(creditRows[0].allowed_credit, 501);
+  assertEquals(result.pending.form8962?.total_premium_tax_credit, 8_251);
+  assertEquals(result.pending.schedule3?.line9_premium_tax_credit, 8_251);
+  assertEquals(result.pending.f1040?.line31_additional_payments, 8_251);
   const filer = extractFilerIdentity(result.pending.f1040);
   const xml = buildMefXml(result.pending, filer);
-  assertStringIncludes(xml, "<MonthlyPremiumAmt>500</MonthlyPremiumAmt>");
+  assertStringIncludes(xml, "<MonthlyPremiumAmt>501</MonthlyPremiumAmt>");
   assertStringIncludes(
     xml,
-    "<TotalPremiumTaxCreditAmt>8250</TotalPremiumTaxCreditAmt>",
+    "<TotalPremiumTaxCreditAmt>8251</TotalPremiumTaxCreditAmt>",
   );
   await validateXml(xml);
   const fields =
     form8962Pdf.projectFields?.(result.pending.form8962!, result.pending) ?? {};
-  assertEquals(fields.pdf_month_1_premium, "500");
-  assertEquals(fields.pdf_month_1_allowed_credit, "500");
+  assertEquals(fields.pdf_month_1_premium, "501");
+  assertEquals(fields.pdf_month_1_allowed_credit, "501");
   const pdf = await buildPdfBytes(result.pending, filer);
   assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 3, true);
   assertThrows(

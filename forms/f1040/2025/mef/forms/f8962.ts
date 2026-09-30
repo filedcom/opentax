@@ -951,14 +951,18 @@ function reconcileNoAptcPolicyMonths(
           0,
         )) ||
     (policy.annual_premium !== undefined &&
-      policy.annual_premium !==
-        policy.monthly_premiums.reduce((sum, premium) => sum + premium, 0)) ||
+      Math.abs(
+          policy.annual_premium -
+            policy.monthly_premiums.reduce((sum, premium) => sum + premium, 0),
+        ) >
+        0.01) ||
     (policy.annual_aptc ?? 0) !== 0 ||
     (policy.monthly_slcsps && policy.annual_slcsp !== undefined &&
-      policy.annual_slcsp !== policy.monthly_slcsps.reduce(
-          (sum, slcsp) => sum + slcsp,
-          0,
-        )) ||
+      Math.abs(
+          policy.annual_slcsp -
+            policy.monthly_slcsps.reduce((sum, slcsp) => sum + slcsp, 0),
+        ) >
+        0.01) ||
     (!policy.monthly_slcsps && (policy.annual_slcsp ?? 0) !== 0)
   ) {
     throw new Error(
@@ -1025,8 +1029,8 @@ function reconcileNoAptcPolicyMonths(
         `Form 8962 no-APTC month ${month} lacks matching Marketplace SLCSP and timely premium-payment evidence`,
       );
     }
-    const premium = paidPremium;
-    const slcsp = correction.corrected_slcsp;
+    const premium = Math.round(paidPremium);
+    const slcsp = Math.round(correction.corrected_slcsp);
     const maxAssistance = Math.max(0, slcsp - monthlyContribution);
     const allowed = Math.min(premium, maxAssistance);
     if (
@@ -1347,9 +1351,10 @@ function reconcileNoAptcAnnualPolicy(
   if (
     fields.annual_applicable_contribution !== annualContribution ||
     fields.monthly_applicable_contribution !== monthlyContribution ||
-    policy.annual_premium !== reportedPremium ||
+    (policy.annual_premium === undefined ||
+      Math.abs(policy.annual_premium - reportedPremium) > 0.01) ||
     (policy.annual_slcsp !== undefined &&
-      policy.annual_slcsp !== (reportedSlcsp ?? 0)) ||
+      Math.abs(policy.annual_slcsp - (reportedSlcsp ?? 0)) > 0.01) ||
     (policy.annual_aptc ?? 0) !== 0
   ) {
     throw new Error(
@@ -1398,8 +1403,8 @@ function reconcileNoAptcAnnualPolicy(
       );
     }
   }
-  const annualPremium = reportedPremium;
-  const annualSlcsp = monthlySlcsp * 12;
+  const annualPremium = Math.round(reportedPremium);
+  const annualSlcsp = Math.round(monthlySlcsp * 12);
   const annualMaxAssistance = Math.max(0, annualSlcsp - annualContribution);
   const credit = Math.round(Math.min(annualPremium, annualMaxAssistance));
   const schedule3 = schedule3Schema.safeParse(pending?.schedule3);

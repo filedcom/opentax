@@ -85,13 +85,35 @@ SHA-256 identifiers for the payment and issuer confirmation. The source graph
 retains the original Form 1095-A premium while sending only the amount paid to
 Form 8962; MeF and PDF recompute that reduction from the raw source.
 
-In the full-return case, January's Form 1095-A premium is $800 and $500 was
-paid by April 15 against a $450 issuer-confirmed minimum. January's Form 8962
-premium and credit are $500. The annual credit falls from $8,400 to $8,250,
+In the full-return case, January's Form 1095-A premium is $800 and $500.51 was
+paid by April 15 against a $450.25 issuer-confirmed minimum. January's Form 8962
+premium and credit round to $501. The annual credit falls from $8,400 to $8,251,
 and reconciles through Schedule 3 and Form 1040. The full return passes local
-TY2025 v5.4 XSD and generates a PDF packet. A $600 threshold with only $500
+TY2025 v5.4 XSD and generates a PDF packet. A $600 threshold with only $500.51
 paid rejects. External issuer/payment-record authentication, PDF visual review,
 full bulk regression, IRS business rules, and ATS remain open.
+
+## Whole-dollar Form 8962 entries
+
+The [2025 Form 8962 instructions](https://www.irs.gov/instructions/i8962)
+require whole-dollar entries for electronic filing and direct filers to round
+Form 1095-A amounts to the nearest dollar. For the bounded one-policy no-APTC
+monthly path, the source graph now rounds each determined monthly SLCSP and
+paid premium before calculating credit. The raw Form 1095-A, Marketplace, and
+payment amounts stay in the source record; native MeF independently rounds
+them and checks every filed row. A $800.51 premium with $700.49 SLCSP in six
+months and $800.49 SLCSP in six months yields $801 premium, $700/$800 SLCSP,
+and $8,400 total PTC. A $500.51 protected partial payment rounds to a $501
+filed premium.
+
+For an unchanged full-year policy using line 11, the annual Form 1095-A totals
+are rounded once. Twelve $800.49 premiums and $700.49 corrected SLCSPs yield
+$9,606 premium, $8,406 SLCSP, and $8,406 PTC for a lawfully present filer
+below 100% FPL. Both cents fixtures reconcile to Schedule 3 and Form 1040,
+pass local TY2025 v5.4 XSD, and build PDF packets. The focused source, MeF,
+and full-return run passes 91 cases. Cents handling for multiple policies,
+APTC, shared allocations, marriage, and Pub. 974 remains open; so do visual
+PDF review, the final bulk regression, IRS business rules, and ATS.
 
 ## State emergency-order protection
 
