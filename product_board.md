@@ -32,6 +32,13 @@ XSD pass, or an ignored test.
 
 ### Latest validation attempt
 
+The 2026-09-30 fixed-source `deno task test` run on `44282e25` passed
+**8,951/8,951**, zero failed, in 16m34s. It includes the reviewed Schedule
+1-A vehicle-interest route, the 34th prepared full-return XSD fixture, and
+the canonical PDF field-name checks. Retain
+`.state/research/ty2025-full-test-schedule1a-vehicle.log`. The local
+regression passed; the final release batch and external gates remain open.
+
 The 2026-09-29 22:01–22:17 UTC fixed-source `deno task test` run on
 `1307679f` passed **8,922/8,922**, zero failed, in 16m37s; Deno reported no
 ignored tests. It includes the direct-rollover gross reporting and explicit
@@ -514,6 +521,7 @@ including a two-gift return with two linked native forms and attachments.
   - [x] Rerun `deno task test` after the joint senior Schedule 1-A packet and Form 6251 PDF reconciliation fix; source commit `89b972c6` passed 8,932/8,932 with zero failures in 17m57s on 2026-09-30 00:24 UTC with Deno 2.7.7. Retain `.state/research/ty2025-full-test-schedule1a-pdf.log`.
   - [x] Rerun `deno task test` after the source-backed single W-2 tips Schedule 1-A native/PDF route; source commit `46d7d080` passed 8,938/8,938 with zero failures in 16m29s on 2026-09-30 00:54 UTC with Deno 2.7.7. Retain `.state/research/ty2025-full-test-schedule1a-tips.log`.
   - [x] Rerun `deno task test` after replacing unsourced overtime totals with reviewed W-2 box 14 premiums and adding the Schedule 1-A Part III native/PDF route; source commit `b2182cc1` passed 8,947/8,947 with zero failures in 16m21s on 2026-09-30 01:23 UTC with Deno 2.7.7. Retain `.state/research/ty2025-full-test-schedule1a-overtime.log`.
+  - [x] Rerun `deno task test` after replacing bare car-loan interest with reviewed vehicle and lender facts and adding the Schedule 1-A Part IV native/PDF route; source commit `44282e25` passed 8,951/8,951 with zero failures in 16m34s on 2026-09-30 01:49 UTC with Deno 2.7.7. Retain `.state/research/ty2025-full-test-schedule1a-vehicle.log`.
 - [x] Run the live canonical-PDF field-name checks in the normal test suite. On 2026-09-29, after correcting the Schedule 3 line 13a AcroForm path, `deno test --allow-read --allow-net=www.irs.gov --filter 'all mapped pdfField names exist in real IRS PDF' forms/f1040/2025/pdf/forms/all-descriptors.test.ts` passed all then-86 checks. The `08786417` full run passed all 87 current descriptor field-name checks, including Form 8835's wind fields. The earlier full descriptor file passed 605/605 checks, including the pinned-revision checks that had failed in the earlier diagnostic batch. This proves mapped field names exist in the referenced IRS PDFs; filled-output visual review remains a separate gate below.
 - [ ] For every retained positive filing route, generate a full return from a source-backed fixture and validate emitted XML against the checked-in TY2025 IRS schema. Check source-to-calculation-to-Form-1040 totals, required references/attachments, negative and conflicting cases, and IRS business rules separately from structural XSD success.
 - [ ] Generate the thirty-four prepared synthetic filled-PDF cases through the real graph and PDF builder as described in the [validation batch](docs/mef/ty2025-form1040-validation-batch.md); render and inspect every page, mark checkboxes/amounts/owner identity/page order/continuations, and add cases for each uncovered descriptor or branch.

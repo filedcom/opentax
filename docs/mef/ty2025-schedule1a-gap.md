@@ -136,3 +136,5 @@ PDF were rendered and inspected; the Part IV rows, filer identity, and Form
 retain the page review and SHA-256. The references are review assertions,
 not authentication of the underlying lender or purchase documents. IRS
 business rules and ATS acceptance remain open.
+Source commit `44282e25` passed `deno task test` at 8,951/8,951 with zero
+failures; retain `.state/research/ty2025-full-test-schedule1a-vehicle.log`.
