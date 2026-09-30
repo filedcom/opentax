@@ -67,6 +67,48 @@ Deno.test("Schedule F PDF rejects an unnamed joint proprietor", () => {
   );
 });
 
+Deno.test("Schedule F accrual PDF prints Part III income and inventory on page 2", async () => {
+  const accrualFarm = {
+    ...farm,
+    accounting_method: "accrual" as const,
+    line1_sales_livestock_resale: undefined,
+    line6a_crop_insurance: undefined,
+    line6b_crop_insurance_taxable: undefined,
+    line8_other_income: undefined,
+    part_iii: {
+      line37_sales_products: 10_000,
+      line43_other_income: 2_000,
+      line45_beginning_inventory: 1_000,
+      line46_products_purchased: 500,
+      line48_ending_inventory: 200,
+      inventory_method: "cost" as const,
+    },
+  };
+  const [projected] = scheduleFPdf.instances!(
+    { schedule_fs: [accrualFarm] },
+    jointFiler,
+  );
+  assertEquals(projected.line44_total_income, 12_000);
+  assertEquals(projected.line47_inventory_plus_purchases, 1_500);
+  assertEquals(projected.line49_cost_of_products_sold, 1_300);
+  assertEquals(projected.line50_gross_income, 10_700);
+  assertEquals(projected.line9_gross_income, 10_700);
+  const bytes = await fillFormPdf(
+    scheduleFPdf,
+    projected,
+    jointFiler,
+    ".pdf-cache",
+  );
+  assertEquals((await PDFDocument.load(bytes!)).getPageCount(), 2);
+  const page2 = "topmostSubform[0].Page2[0].";
+  assertEquals(
+    scheduleFPdf.fields.find((entry) =>
+      entry.domainKey === "line50_gross_income"
+    )?.pdfField,
+    `${page2}f2_18[0]`,
+  );
+});
+
 Deno.test("Schedule F PDF prints labor reduced by its linked Form 5884 allocation", async () => {
   const wageSource = {
     subject_to_passive_activity_limit: false,
