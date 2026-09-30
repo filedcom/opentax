@@ -1,4 +1,4 @@
-import type { FilerIdentity } from "../mef/header.ts";
+import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
 
 function tin(value: unknown, label: string): string | undefined {
   if (value === undefined) return undefined;
@@ -26,5 +26,39 @@ export function assertF1040SourceIdentity(
     spouse !== tin(filer.spouse?.ssn, "filer spouse")
   ) {
     throw new Error("Form 1040 spouse source TIN differs from the filer");
+  }
+}
+
+export function assertF1040FinalHeader(
+  fields: Record<string, unknown>,
+  filer: FilerIdentity | undefined,
+): void {
+  if (
+    !filer || !/^\d{9}$/.test(filer.primarySSN) ||
+    !filer.firstNameWithInitial?.trim() || !filer.lastName?.trim()
+  ) {
+    throw new Error(
+      "Form 1040 export needs the identified taxpayer's SSN, first-name field, and last name",
+    );
+  }
+  assertF1040SourceIdentity(fields, filer);
+  const statusCodes: Readonly<Record<string, FilingStatus>> = {
+    single: FilingStatus.Single,
+    mfj: FilingStatus.MarriedFilingJointly,
+    mfs: FilingStatus.MarriedFilingSeparately,
+    hoh: FilingStatus.HeadOfHousehold,
+    qss: FilingStatus.QualifyingSurvivingSpouse,
+  };
+  const status = fields.filing_status;
+  if (
+    typeof status !== "string" || statusCodes[status] === undefined ||
+    statusCodes[status] !== filer.filingStatus
+  ) {
+    throw new Error(
+      "Form 1040 export filing status must match the identified filer",
+    );
+  }
+  if (typeof fields.digital_assets !== "boolean") {
+    throw new Error("Form 1040 export needs the digital-assets answer");
   }
 }

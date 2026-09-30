@@ -11,6 +11,8 @@ const filer: FilerIdentity = {
   primarySSN: "123456789",
   nameLine1: "TAXPAYER TEST",
   nameControl: "TAXP",
+  firstNameWithInitial: "Test",
+  lastName: "Taxpayer",
   address: {
     line1: "1 Test Way",
     city: "Austin",
@@ -37,7 +39,7 @@ Deno.test({
   ignore: !xsdAvailable,
 }, async () => {
   const bundle = await buildMefBundle({
-    f1040: { digital_assets: false },
+    f1040: { filing_status: "single", digital_assets: false },
   }, { filer, attachments: [] });
   const submission = await buildMefSubmissionArchive(bundle, {
     filer,

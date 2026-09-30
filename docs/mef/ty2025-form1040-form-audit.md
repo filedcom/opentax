@@ -367,6 +367,18 @@ return. Focused cases reject changed taxpayer TINs and spouse TINs without a
 matching spouse in the header, while accepting matching dashed/plain SSNs.
 This check does not authenticate missing source identity or issuer bytes.
 
+The final `prepareReturn` path now applies the same Form 1040 header preflight
+as filled-PDF export before returning its native bundle: printable taxpayer
+name/SSN, filing status matching the filer, and an explicit digital-assets
+answer. Focused missing/conflicting cases fail before XML; an existing
+source-backed Form 3800 prepared bundle, PDF, and submission ZIP still pass.
+The submission archive applies the same check after verifying prepared source
+and XML hashes, so callers cannot bypass it by assembling a lower-level
+bundle directly; its manifest XSD and focused archive cases pass.
+The direct low-level XML builder intentionally remains usable for isolated
+partial-document tests and is not evidence of a complete filing. The
+return-wide graph, manifest, and external acceptance gates remain open.
+
 Schedule D/Form 8949 addendum (2026-09-30): one sourced Part E collectible
 sale now carries its computed row through the prepared MeF return, the
 source-bound PDF builder, Schedule D line 9, and the 28% rate worksheet once.

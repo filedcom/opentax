@@ -3,6 +3,7 @@ import type { FilerIdentity } from "../../mef/header.ts";
 import { element, elements } from "../../mef/xml.ts";
 import type { MefBundle } from "./builder.ts";
 import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
+import { assertF1040FinalHeader } from "../filer-source-reconciliation.ts";
 
 const XML_DECLARATION = '<?xml version="1.0" encoding="UTF-8"?>\n';
 const encoder = new TextEncoder();
@@ -112,6 +113,7 @@ export async function buildMefSubmissionArchive(
   ) {
     throw new Error("MeF submission differs from its prepared return");
   }
+  assertF1040FinalHeader(bundle.pending.f1040 ?? {}, options.filer);
   const attachmentNames = bundle.attachments.map(({ fileName }) => fileName);
   const digestNames = Object.keys(bundle.attachmentSha256ByFileName);
   if (

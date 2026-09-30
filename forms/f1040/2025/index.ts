@@ -12,6 +12,7 @@ import { registry } from "./registry.ts";
 import { buildMefBundle, buildMefXml } from "./mef/builder.ts";
 import { buildPending } from "./mef/pending.ts";
 import { buildPdfBytes } from "./pdf/builder.ts";
+import { assertF1040FinalHeader } from "./filer-source-reconciliation.ts";
 
 function executeReturn(inputs: Record<string, unknown>): ExecuteResult {
   if (inputs.form8990 === undefined) {
@@ -65,6 +66,7 @@ export const f1040_2025: FormDefinition = {
   executeReturn,
   prepareReturn: async (pending, filer) => {
     const normalized = buildPending(pending) as MefFormsPending;
+    assertF1040FinalHeader(normalized.f1040 ?? {}, filer);
     const bundle = await buildMefBundle(normalized, {
       filer,
       attachments: [],

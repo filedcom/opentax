@@ -20,6 +20,8 @@ function filer(): FilerIdentity {
     primarySSN: "123456789",
     nameLine1: "TAXPAYER TEST",
     nameControl: "TAXP",
+    firstNameWithInitial: "Test",
+    lastName: "Taxpayer",
     fullName: "Test Taxpayer",
     address: {
       line1: "1 Test Way",
@@ -63,9 +65,23 @@ Deno.test("MeF submission refuses an unanswered digital-asset question", async (
   );
 });
 
+Deno.test("MeF submission refuses a missing Form 1040 filing status", async () => {
+  await assertRejects(
+    () =>
+      makeSubmissionArchive({ f1040: { digital_assets: false } }, {
+        filer: filer(),
+        submissionId,
+        processingDate,
+        attachments: [],
+      }),
+    Error,
+    "filing status must match the identified filer",
+  );
+});
+
 Deno.test("MeF submission preserves a digital-asset Yes answer", async () => {
   const submission = await makeSubmissionArchive({
-    f1040: { digital_assets: true },
+    f1040: { filing_status: "single", digital_assets: true },
   }, {
     filer: filer(),
     submissionId,
@@ -88,7 +104,7 @@ Deno.test("MeF submission ZIP contains manifest, declared return XML, and matchi
   pdf.addPage([612, 792]);
   const pdfBytes = await pdf.save();
   const submission = await makeSubmissionArchive({
-    f1040: { digital_assets: false },
+    f1040: { filing_status: "single", digital_assets: false },
   }, {
     filer: filer(),
     submissionId,
@@ -175,7 +191,7 @@ Deno.test("MeF submission rejects changes after bundle preparation", async () =>
   const pdf = await PDFDocument.create();
   pdf.addPage();
   const bundle = await buildMefBundle({
-    f1040: { digital_assets: false },
+    f1040: { filing_status: "single", digital_assets: false },
   }, {
     filer: identity,
     attachments: [{
@@ -189,7 +205,10 @@ Deno.test("MeF submission rejects changes after bundle preparation", async () =>
     () =>
       buildMefSubmissionArchive({
         ...bundle,
-        pending: { ...bundle.pending, f1040: { digital_assets: true } },
+        pending: {
+          ...bundle.pending,
+          f1040: { filing_status: "single", digital_assets: true },
+        },
       }, options),
     Error,
     "differs from its prepared return",
@@ -258,7 +277,7 @@ Deno.test("Form 3800 PDF and submission ZIP consume one prepared native return",
 Deno.test("MeF submission ZIP includes Form 5695's generated QMID statement", async () => {
   const identity = filer();
   const submission = await makeSubmissionArchive({
-    f1040: { digital_assets: false },
+    f1040: { filing_status: "single", digital_assets: false },
     form5695: {
       part_ii_section_a: {
         main_home_in_us: true,
@@ -295,7 +314,7 @@ Deno.test("MeF submission ZIP includes Form 5695's generated QMID statement", as
 
 Deno.test("MeF submission ZIP includes Form 8824 gain statement linked from the form", async () => {
   const submission = await makeSubmissionArchive({
-    f1040: { digital_assets: false },
+    f1040: { filing_status: "single", digital_assets: false },
     form8824: {
       relinquished_description: "Business land in Austin Texas",
       received_description: "Business land in Dallas Texas",
@@ -345,7 +364,9 @@ Deno.test("A2A request entries match both ZIP attachments in order", async () =>
   const ids = ["1234562026269abcdefg", "1234562026269abcdefh"];
   const archives = await Promise.all(
     ids.map((id) =>
-      makeSubmissionArchive({ f1040: { digital_assets: false } }, {
+      makeSubmissionArchive({
+        f1040: { filing_status: "single", digital_assets: false },
+      }, {
         filer: filer(),
         submissionId: id,
         processingDate,
@@ -412,7 +433,7 @@ Deno.test("MeF A2A package rejects an empty or duplicate submission set", async 
     "1 to 100 submissions",
   );
   const submission = await makeSubmissionArchive({
-    f1040: { digital_assets: false },
+    f1040: { filing_status: "single", digital_assets: false },
   }, {
     filer: filer(),
     submissionId,

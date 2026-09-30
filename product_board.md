@@ -506,6 +506,7 @@ including a two-gift return with two linked native forms and attachments.
 - [ ] Audit every registered PDF descriptor against its canonical TY2025 IRS AcroForm fields, page count, row overflow, owner identity, checkbox semantics, descriptions, statements, document references, and current calculation. Fix stale or missing mappings rather than silently dropping fields.
   - [x] Form 1040 PDF packet preflight now rejects missing printable taxpayer name/SSN, a filing status absent from or inconsistent with the identified filer, and a missing digital-assets answer. The synthetic Form 7203 packet caught the previously blank name and status boxes; its corrected source prints all three on Form 1040 page 1. The wider descriptor audit remains open.
 - [ ] Ensure native XML, PDF, and manifest use the same finalized return graph and prepared form instances; verify repeated owner/form copies and attachment references, including signed Form 8283 and source-issued acknowledgments.
+  - [x] Require the final prepared Form 1040 export and submission archive to have a printable taxpayer identity, a filing status matching the filer, and an explicit digital-assets answer. The filled-PDF builder uses the same preflight. Missing and conflicting inputs fail focused tests; a positive Form 3800 prepared return, PDF, and submission ZIP plus the manifest XSD still pass. The lower-level XML serializer remains available for isolated partial-document tests, so direct-call completeness and the wider graph/manifest audit remain open.
 
 ## Automated and artifact validation
 
