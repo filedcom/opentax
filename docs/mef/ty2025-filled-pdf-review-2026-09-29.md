@@ -479,3 +479,18 @@ packet totals. The corrected PDF SHA-256 is
 `e29f8d64aec9bfe0d3762e69d8cf390b6dc9f89b09e02a3975f32143ed6caea7`.
 Per-employee payroll proof, W-2/W-3 duties, other rate periods, IRS business
 rules, and ATS acceptance remain open.
+
+The `single-form8814-child-dividends-adjustments` source passes local TY2025
+v5.4 full-return XSD with a linked `IRS8814` and
+`ChildTaxableInterestStmt`. The six-page `v68` packet prints Jamie Example's
+$1,850 interest and $1,850 qualified dividends on Form 8814, with the four
+excluded interest adjustments on a child-identified continuation. Form 1040
+page 1 checks both child-dividend boxes on line 3c and prints $500 on lines
+3a/3b; Schedule 1 line 8z prints $500; Form 1040 line 16 checks Form 8814
+and includes its $135 tax in $9,375 total income tax. The $2,625 refund
+reconciles to the $12,000 W-2 withholding. Form 1040 page 1, Form 8814, and
+its continuation were rendered and visually inspected; filled text confirmed
+the other three pages. The PDF SHA-256 is
+`ae32b41fb25e2258de57fc3b099e95ed6e4fe3b9d8fea0cfd3699b4bfad0642e`.
+Child issuer documents, parent-election eligibility evidence, other income
+combinations, IRS business rules, and ATS acceptance remain open.

@@ -474,6 +474,41 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-form8814-child-dividends-adjustments",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(80_000, 12_000, "Example Employer", "12-3456789")],
+      f8814: [{
+        child_name: "Jamie Example",
+        child_name_control: "EXAM",
+        child_ssn: "222-33-4444",
+        child_age_eligible: true,
+        child_required_to_file: true,
+        child_income_only_permitted_types: true,
+        child_no_joint_return: true,
+        child_no_estimated_payments: true,
+        child_no_withholding: true,
+        parent_eligible_to_elect: true,
+        interest_income: 1_850,
+        interest_adjustments: {
+          nominee_distribution: 120,
+          accrued_interest: 30,
+          abp_adjustment: 15,
+          oid_adjustment: 5,
+        },
+        dividend_income: 1_850,
+        qualified_dividends: 1_850,
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule1", "form8814"],
+    reviewFocus: [
+      "Form 8814 child identity, adjusted line 1a interest, qualified dividend allocation, and linked interest statement print together",
+      "Form 1040 line 3a/3b child-dividend marks, Schedule 1 line 8z, and line 16 election tax reconcile once",
+      "Native Form 8814 and child-interest statement references pass local TY2025 v5.4 XSD",
+    ],
+  },
+  {
     id: "single-ordinary-noncash-gift",
     inputs: {
       general: singleGeneral,

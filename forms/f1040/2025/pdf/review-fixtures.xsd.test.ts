@@ -60,6 +60,14 @@ for (const fixture of pdfReviewFixtures) {
         );
         assertStringIncludes(xml, "<FUTATaxAmt>90</FUTATaxAmt>");
       }
+      if (fixture.id === "single-form8814-child-dividends-adjustments") {
+        assertEquals(result.pending.f1040.line3a_qualified_dividends, 500);
+        assertEquals(result.pending.f1040.line3b_ordinary_dividends, 500);
+        assertEquals(result.pending.f1040.form8814_tax, 135);
+        assertEquals(result.pending.schedule1.line8z_form8814, 500);
+        assertStringIncludes(xml, "<ChildTaxableInterestStmt ");
+        assertStringIncludes(xml, 'childInterestAndDividendTaxAmt="135"');
+      }
       if (fixture.id === "single-8862-ctc-reinstatement") {
         const dependent = (result.pending.f1040.dependent_details as Array<
           { first_name: string; credit_category: string }
