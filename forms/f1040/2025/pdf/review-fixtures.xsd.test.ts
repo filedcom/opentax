@@ -41,6 +41,12 @@ for (const fixture of pdfReviewFixtures) {
         assertEquals(result.pending.schedule_d.print_line18_28pct, 3_000);
         assertEquals(result.pending.f1040.line11_agi, 33_000);
       }
+      if (fixture.id === "single-short-and-long-form8949-sales") {
+        assertEquals(result.pending.schedule_d.print_line7_st_total, 1_000);
+        assertEquals(result.pending.schedule_d.print_line15_lt_total, 2_000);
+        assertEquals(result.pending.schedule_d.print_line16_combined, 3_000);
+        assertEquals(result.pending.f1040.line11_agi, 33_000);
+      }
       if (fixture.id === "single-final-trust-k1-long-term-capital-loss") {
         assertEquals(result.pending.schedule_d.line_12_k1_lt, -900);
         assertEquals(result.pending.schedule_d.print_line15_lt_total, -900);

@@ -332,3 +332,19 @@ and $1,165 refund agree with the graph and native XML. The PDF SHA-256 is
 `1368993e8a095cdc8f9205babd887ca9d249946af0772b4f5713ab86861847a0`.
 Other collectibles and mixed-rate gains, issuer bytes, IRS business rules,
 and ATS acceptance remain open.
+
+The `single-short-and-long-form8949-sales` packet was generated with the
+other forty-two prepared cases in
+`.state/research/ty2025-filled-pdf-review/2026-09-30-v54/`.
+Its two synthetic sale rows pass local TY2025 v5.4 full-return XSD. All six
+pages were rendered and inspected. Form 8949 Part I checks only box B and
+prints $2,000 proceeds, $1,000 basis, and $1,000 gain; Part II checks only
+box F and prints $4,000 proceeds, $2,000 basis, and $2,000 gain. Schedule D
+lines 2 and 10 carry those same totals, lines 7/15/16 print
+$1,000/$2,000/$3,000, and Form 1040 line 7a and AGI print $3,000 and
+$33,000. The $17,250 taxable income, $1,595 tax, and $1,405 refund agree
+with the computed graph and native XML. The PDF SHA-256 is
+`ae99a0fb139a86ad5e378ebbbe2277040a590a38b8f7a0bb86c028b8e1a79e79`.
+The live IRS field-name check confirms the expanded Schedule D row maps.
+Other sale categories, direct-reporting consistency, IRS business rules,
+and ATS acceptance remain open.

@@ -776,6 +776,37 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-short-and-long-form8949-sales",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(30_000, 3_000, "Example Employer", "12-3456789")],
+      f8949: [{
+        part: "B",
+        description: "Short-term shares",
+        source_transaction_id: "synthetic-short-sale",
+        date_acquired: "2025-01-10",
+        date_sold: "2025-06-20",
+        proceeds: 2_000,
+        cost_basis: 1_000,
+      }, {
+        part: "F",
+        description: "Long-term shares",
+        source_transaction_id: "synthetic-long-sale",
+        date_acquired: "2022-01-10",
+        date_sold: "2025-06-20",
+        proceeds: 4_000,
+        cost_basis: 2_000,
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule_d", "f8949"],
+    reviewFocus: [
+      "The short-term sale prints on Form 8949 box B and Schedule D line 2",
+      "The long-term sale prints on Form 8949 box F and Schedule D line 10",
+      "The $3,000 combined gain reaches Form 1040 line 7a and $33,000 AGI",
+    ],
+  },
+  {
     id: "single-final-trust-k1-long-term-capital-loss",
     inputs: {
       general: singleGeneral,

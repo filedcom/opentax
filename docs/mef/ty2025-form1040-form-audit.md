@@ -361,6 +361,13 @@ the synthetic sale packet were visually inspected in `v53`. This covers one
 long-term code-C adjustment row; other category totals, mixed-rate cases,
 issuer bytes, IRS business rules, and ATS acceptance remain open.
 
+The next bounded Schedule D PDF pass uses canonical prepared Form 8949 rows
+for paper lines 1b/2/3/8b/9/10. A short-term box B and long-term box F
+return passes local full-return XSD, and all six pages were inspected in
+`v54`; the printed row totals and Form 1040 gain reconcile. The live IRS
+AcroForm field-name check passes for the expanded map. Direct-reported
+broker rows and the other box categories still need source-to-paper review.
+
 Form 6251 addendum (2026-09-29, unrun): the existing line-2k audited Form 8949
 route now also handles same-term short-term mixed gain/loss rows only when both
 regular and AMT nets stay positive and there is no other capital activity. The
