@@ -26,7 +26,7 @@ not an approved exclusion or completion of these filing paths.
 
 | Generic deposit       | Current producer files                                                               | Missing source-to-statement decision                                                                                                                     |
 | --------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `line8z_other`        | `f8873`, `f5471` | Remove the wrong TY2025 line 8z deposits. The Form 8873 current-year exclusion appears unavailable after the 2006 repeal; its named exclusion awaits the user's decision. Form 5471 section 951(a) income belongs on line 8n, while the shareholder-level Form 8992 result belongs on line 8o. Capture their source and required information-return documents before enabling either positive route. |
+| `line8z_other`        | `f8873` | The Form 8873 current-year exclusion appears unavailable after the 2006 repeal; its named exclusion awaits the user's decision. Form 5471's wrong line 8z deposit was removed; all populated Form 5471 input now rejects at calculation until section 951(a) line 8n, Form 8992 line 8o, and required documents are supported. |
 | `line8z_other_income` | `f8915d` | The latest Form 8915-D instructions cover 2024 repayments and affected prior-year amendments, not a 2025 Schedule 1 credit. Its named current-year exclusion awaits the user's decision; keep any prior-year amendment workflow separate. |
 
 This producer list was rechecked against the current node source on

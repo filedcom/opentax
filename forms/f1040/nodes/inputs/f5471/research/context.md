@@ -1,5 +1,11 @@
 # f5471 — Form 5471: Information Return of U.S. Persons With Respect To Certain Foreign Corporations
 
+> Historical design notes below describe an obsolete line 8z calculation. The
+> TY2025 node now rejects every populated Form 5471 at calculation. Section
+> 951(a) belongs on Schedule 1 line 8n; an individual's section 951A inclusion
+> requires Form 8992 and belongs on line 8o. Source ownership, complete Form
+> 5471/8992 data, native documents, and PDF output remain open.
+
 ## Overview
 
 Form 5471 is an informational return filed by U.S. persons who are officers, directors,

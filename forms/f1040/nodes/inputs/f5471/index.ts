@@ -1,8 +1,7 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import type { NodeResult } from "../../../../../core/types/tax-node.ts";
+import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { schedule1 } from "../../outputs/schedule1/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // TY2025 — Form 5471: Information Return of U.S. Persons With Respect To
@@ -12,14 +11,12 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 // certain foreign corporations (IRC §6038). Five filing categories (1–5)
 // determine which schedules must be attached.
 //
-// Key 1040 flows:
-//   - Subpart F income (Schedule I)  → Schedule 1 line 8z  (IRC §951(a))
-//   - GILTI inclusion (Schedule I-1) → Schedule 1 line 8z  (IRC §951A)
-//   - E&P fields (Schedules H, J)    → informational only
-//   - Foreign taxes (Schedule E)     → informational (practitioner routes via FEC/1116)
+// This input is retained for intake, but filing remains unsupported. Section
+// 951(a) belongs on Schedule 1 line 8n; an individual's section 951A amount
+// requires Form 8992 and belongs on line 8o. Neither can be inferred from the
+// sparse fields below, and the required Form 5471 schedules are not emitted.
 //
-// Covers all 17 Drake screens: 5471, SCHA, SCHB, Sch C tab, Sch F tab,
-// SCHF, Sch G tab, SCHI, O1, SCHE, SCHH, I1, SCHJ, Sch M tab, SCHP, SCHQ, SCHR.
+// The historical intake contains only a subset of the required schedules.
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
@@ -67,7 +64,8 @@ export const itemSchema = z.object({
   factoring_income: z.number().nonnegative().optional(),
 
   // ── Schedule I-1 — GILTI (I1 screen) ─────────────────────────────────────
-  // Shareholder's pro-rata share of GILTI inclusion under IRC §951A — Schedule I-1
+  // Historical asserted amount; Schedule I-1 reports CFC-level inputs, while
+  // the individual's inclusion requires Form 8992.
   gilti_inclusion: z.number().nonnegative().optional(),
 
   // ── Schedule E — Foreign Taxes Paid (SCHE screen) ────────────────────────
@@ -91,57 +89,18 @@ export const inputSchema = z.object({
   f5471s: z.array(itemSchema).min(1),
 });
 
-type F5471Item = z.infer<typeof itemSchema>;
-type F5471Items = F5471Item[];
-
-// ─── Pure helper functions ────────────────────────────────────────────────────
-
-// Total Subpart F income from one item (Schedule I lines 1 + 5 + 6)
-// IRC §951(a); Form 5471 Sch I instructions
-function itemSubpartFTotal(item: F5471Item): number {
-  return (
-    (item.subpart_f_income ?? 0) +
-    (item.previously_excluded_subpart_f_income ?? 0) +
-    (item.factoring_income ?? 0)
-  );
-}
-
-// Total income includible under Subpart F across all items
-function totalSubpartFIncome(items: F5471Items): number {
-  return items.reduce((sum, item) => sum + itemSubpartFTotal(item), 0);
-}
-
-// Total GILTI inclusion across all items (IRC §951A)
-function totalGiltiInclusion(items: F5471Items): number {
-  return items.reduce((sum, item) => sum + (item.gilti_inclusion ?? 0), 0);
-}
-
-// Total 5471 income = Subpart F + GILTI — routed to Schedule 1 line 8z_other
-function totalIncomeInclusion(items: F5471Items): number {
-  return totalSubpartFIncome(items) + totalGiltiInclusion(items);
-}
-
-// Emit one schedule1 output only when total income > 0
-function schedule1Output(items: F5471Items): NodeOutput[] {
-  const total = totalIncomeInclusion(items);
-  if (total === 0) return [];
-  return [output(schedule1, { line8z_other: total })];
-}
-
 // ─── Node class ───────────────────────────────────────────────────────────────
 
 class F5471Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f5471";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1]);
+  readonly outputNodes = new OutputNodes([]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
-    const parsed = inputSchema.parse(input);
-    const { f5471s } = parsed;
-
-    return {
-      outputs: schedule1Output(f5471s),
-    };
+    inputSchema.parse(input);
+    throw new Error(
+      "TY2025 Form 5471 requires reviewed shareholder inclusions, Form 8992 when applicable, and native Form 5471 schedules before calculation",
+    );
   }
 }
 
