@@ -247,7 +247,7 @@ Deno.test("Schedule R stays blocked and reviewed S-corporation stock loss emits 
       () => buildMefXml(pending, filer),
       Error,
       key === "schedule_r"
-        ? "Schedule R native filing needs sourced single-taxpayer age-65 facts"
+        ? "Schedule R age-only filing needs sourced taxpayer/spouse age and benefit facts"
         : `${formName} requires a native filing document`,
     );
   }

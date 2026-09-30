@@ -100,6 +100,18 @@ Deno.test("schedule_r.compute: MFJ one spouse 65+ — credit = 5000 * 15% = 750"
   assertEquals(fields.line6d_elderly_disabled_credit, 750);
 });
 
+Deno.test("schedule_r.compute: qualifying surviving spouse uses box 1 base and AGI threshold", () => {
+  const result = compute({
+    filing_status: FilingStatus.QSS,
+    taxpayer_age_65_or_older: true,
+    agi: 7_500,
+  });
+  assertEquals(
+    fieldsOf(result.outputs, schedule3)?.line6d_elderly_disabled_credit,
+    750,
+  );
+});
+
 Deno.test("schedule_r.compute: MFJ both spouses 65+ — produces output with $7500 base", () => {
   const result = compute({
     filing_status: FilingStatus.MFJ,
@@ -126,7 +138,7 @@ Deno.test("schedule_r.compute: single 65+ zero AGI — credit = 5000 * 15% = 750
   assertEquals(fields.line6d_elderly_disabled_credit, 750);
 });
 
-Deno.test("schedule_r.compute: MFS disabled zero AGI — credit = 3750 * 15% = 562.5", () => {
+Deno.test("schedule_r.compute: MFS disabled zero AGI — whole-dollar credit = 563", () => {
   const result = compute({
     filing_status: FilingStatus.MFS,
     taxpayer_disabled: true,
@@ -134,7 +146,7 @@ Deno.test("schedule_r.compute: MFS disabled zero AGI — credit = 3750 * 15% = 5
     agi: 0,
   });
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6d_elderly_disabled_credit, 562.5);
+  assertEquals(fields.line6d_elderly_disabled_credit, 563);
 });
 
 // =============================================================================

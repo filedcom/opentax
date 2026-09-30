@@ -97,6 +97,37 @@ Deno.test("f1040: Schedule R credit cannot exceed its filed tax-limit worksheet"
   );
 });
 
+Deno.test("f1040: Schedule R age credit accepts an older joint spouse and rejects MFS cohabitation", () => {
+  const schedule3 = {
+    ...emptySchedule3ForBusinessCredit,
+    line6dElderlyDisabled: 750,
+    line7: 750,
+  };
+  assertEquals(
+    fields({
+      filing_status: FilingStatus.MFJ,
+      taxpayer_age_65_or_older: false,
+      spouse_age_65_or_older: true,
+      line16_income_tax: 900,
+      line20_nonrefundable_credits: 750,
+      credit_limit_schedule3_lines: schedule3,
+    }).line22_tax_after_credits,
+    150,
+  );
+  assertThrows(
+    () => fields({
+      filing_status: FilingStatus.MFS,
+      taxpayer_age_65_or_older: true,
+      mfs_spouse_lived_with_taxpayer: true,
+      line16_income_tax: 900,
+      line20_nonrefundable_credits: 750,
+      credit_limit_schedule3_lines: schedule3,
+    }),
+    Error,
+    "lived apart all year",
+  );
+});
+
 Deno.test("f1040: verifies Form 1116 lines 18 and 20 against filed return sources", () => {
   const f = fields({
     line11_agi: 80_000,

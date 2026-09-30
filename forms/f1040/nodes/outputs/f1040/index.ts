@@ -58,6 +58,7 @@ function sumField(value: number | number[] | undefined): number {
 const inputSchema = z.object({
   filing_status: z.nativeEnum(FilingStatus).optional(),
   taxpayer_age_65_or_older: z.boolean().optional(),
+  spouse_age_65_or_older: z.boolean().optional(),
   spouse_has_business_credit: z.boolean().optional(),
   // ── Part I — Income ───────────────────────────────────────────────────────
   // Line 1a — Wages (accumulable: w2, fec, f4852, f1099r and qsehra all route here)
@@ -1100,9 +1101,21 @@ class F1040Node extends TaxNode<typeof inputSchema> {
     const schedule3 = input.credit_limit_schedule3_lines;
     const elderlyCredit = schedule3?.line6dElderlyDisabled ?? 0;
     if (schedule3 && elderlyCredit > 0) {
-      if (input.taxpayer_age_65_or_older !== true) {
+      if (
+        input.taxpayer_age_65_or_older !== true &&
+        !(input.filing_status === FilingStatus.MFJ &&
+          input.spouse_age_65_or_older === true)
+      ) {
         throw new Error(
-          "Schedule R age-65 credit needs a matching Form 1040 taxpayer age indicator",
+          "Schedule R age-65 credit needs a matching Form 1040 taxpayer or joint-spouse age indicator",
+        );
+      }
+      if (
+        input.filing_status === FilingStatus.MFS &&
+        input.mfs_spouse_lived_with_taxpayer !== false
+      ) {
+        throw new Error(
+          "Schedule R MFS credit needs spouses who lived apart all year",
         );
       }
       const limit = Math.max(

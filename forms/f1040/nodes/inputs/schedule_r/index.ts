@@ -16,7 +16,7 @@ const BASE_AMOUNT: Record<FilingStatus, number> = {
   [FilingStatus.MFJ]: 7500,   // both 65+ or both disabled
   [FilingStatus.MFS]: 3750,
   [FilingStatus.HOH]: 5000,
-  [FilingStatus.QSS]: 7500,
+  [FilingStatus.QSS]: 5000,
 };
 
 // MFJ — one spouse qualifies: base $5,000; both qualify: $7,500
@@ -29,7 +29,7 @@ const AGI_PHASEOUT: Record<FilingStatus, number> = {
   [FilingStatus.MFJ]: 10000,
   [FilingStatus.MFS]: 5000,
   [FilingStatus.HOH]: 7500,
-  [FilingStatus.QSS]: 10000,
+  [FilingStatus.QSS]: 7500,
 };
 
 export const inputSchema = z.object({
@@ -57,7 +57,13 @@ export const inputSchema = z.object({
   // Provenance for the bounded age-65 taxpayer filing path. The source facts
   // must be checked against the final Form 1040 before a native form is built.
   age_65_source_reference: z.string().trim().min(1).optional(),
+  spouse_age_65_source_reference: z.string().trim().min(1).optional(),
+  mfs_lived_apart_all_year_source_reference: z.string().trim().min(1).optional(),
   nontaxable_ssa_source_reference: z.string().trim().min(1).optional(),
+  nontaxable_pension_source_reference: z.string().trim().min(1).optional(),
+  nontaxable_va_source_reference: z.string().trim().min(1).optional(),
+  nontaxable_pension_line13b_eligible_verified: z.literal(true).optional(),
+  nontaxable_va_veterans_pension_verified: z.literal(true).optional(),
 });
 
 type ScheduleRInput = z.infer<typeof inputSchema>;
@@ -114,7 +120,7 @@ function agiPhaseout(input: ScheduleRInput, amount: number): number {
   const agi = input.agi ?? 0;
   const threshold = AGI_PHASEOUT[input.filing_status];
   const excess = Math.max(0, agi - threshold);
-  const reduction = excess * 0.5;
+  const reduction = Math.round(excess * 0.5);
   return Math.max(0, amount - reduction);
 }
 
@@ -127,7 +133,7 @@ function computeCredit(input: ScheduleRInput): number {
   amount = reduceByNontaxableBenefits(input, amount);
   amount = agiPhaseout(input, amount);
 
-  return Math.round(amount * 0.15 * 100) / 100;
+  return Math.round(amount * 0.15);
 }
 
 class ScheduleRNode extends TaxNode<typeof inputSchema> {

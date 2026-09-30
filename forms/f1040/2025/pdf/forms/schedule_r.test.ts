@@ -57,3 +57,53 @@ Deno.test("Schedule R PDF rejects a credit that differs from the finalized retur
   );
   assertEquals(scheduleRPdf.projectFields?.({}, pending), {});
 });
+
+Deno.test("Schedule R PDF prints the joint-spouse and MFS age-only boxes", () => {
+  const joint = {
+    schedule_r: {
+      ...source,
+      filing_status: FilingStatus.MFJ,
+      taxpayer_age_65_or_older: false,
+      spouse_age_65_or_older: true,
+      age_65_source_reference: undefined,
+      spouse_age_65_source_reference: "Spouse DOB record",
+      agi: 10_000,
+    },
+    f1040: {
+      ...pending.f1040,
+      filing_status: "mfj",
+      taxpayer_age_65_or_older: false,
+      spouse_age_65_or_older: true,
+      line11_agi: 10_000,
+    },
+    schedule3: pending.schedule3,
+  };
+  const projected = scheduleRPdf.projectFields?.(joint.schedule_r, joint);
+  assertEquals(projected?.box7, "yes");
+  assertEquals(projected?.line10, 5_000);
+  assertEquals(projected?.line15, 10_000);
+  assertEquals(
+    scheduleRPdf.fields.find((field) => field.domainKey === "box7")?.pdfField,
+    "topmostSubform[0].Page1[0].Married[0].c1_1[4]",
+  );
+  const separate = {
+    schedule_r: {
+      ...source,
+      filing_status: FilingStatus.MFS,
+      agi: 5_000,
+      mfs_lived_apart_all_year_source_reference: "Separate residence record",
+    },
+    f1040: {
+      ...pending.f1040,
+      filing_status: "mfs",
+      mfs_spouse_lived_with_taxpayer: false,
+      line11_agi: 5_000,
+      line20_nonrefundable_credits: 563,
+    },
+    schedule3: { line6d_elderly_disabled_credit: 563 },
+  };
+  const mfs = scheduleRPdf.projectFields?.(separate.schedule_r, separate);
+  assertEquals(mfs?.box8, "yes");
+  assertEquals(mfs?.line10, 3_750);
+  assertEquals(mfs?.line15, 5_000);
+});

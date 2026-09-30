@@ -1,6 +1,6 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import {
-  calculateScheduleRAge65Single,
+  calculateScheduleRAgeOnly,
   scheduleR,
 } from "../../mef/forms/schedule_r.ts";
 
@@ -23,9 +23,28 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     pdfField: `${page1}.c1_1[0]`,
     whenValue: "yes",
   },
+  {
+    kind: "checkboxWhen",
+    domainKey: "box3",
+    pdfField: `${page1}.Married[0].c1_1[0]`,
+    whenValue: "yes",
+  },
+  {
+    kind: "checkboxWhen",
+    domainKey: "box7",
+    pdfField: `${page1}.Married[0].c1_1[4]`,
+    whenValue: "yes",
+  },
+  {
+    kind: "checkboxWhen",
+    domainKey: "box8",
+    pdfField: `${page1}.MarriedSeparate[0].c1_1[0]`,
+    whenValue: "yes",
+  },
   text("line10", `${page2}.f2_1[0]`),
   text("line12", `${page2}.f2_3[0]`),
   text("line13a", `${page2}.f2_4[0]`),
+  text("line13b", `${page2}.f2_5[0]`),
   { ...text("line13c", `${page2}.f2_6[0]`), printZero: true },
   text("line14", `${page2}.f2_7[0]`),
   text("line15", `${page2}.f2_8[0]`),
@@ -45,10 +64,8 @@ export const scheduleRPdf: PdfFormDescriptor = {
   projectFields(raw, allPending) {
     if (Object.keys(raw).length === 0) return {};
     if (!scheduleR.build(raw, { pending: allPending })) return {};
-    return {
-      box1: "yes",
-      ...calculateScheduleRAge65Single({ pending: allPending }),
-    };
+    const { box, lines } = calculateScheduleRAgeOnly({ pending: allPending });
+    return { [`box${box}`]: "yes", ...lines };
   },
   filerFields: [
     text("fullName", `${page1}.f1_1[0]`),
