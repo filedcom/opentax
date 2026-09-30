@@ -12,6 +12,7 @@ import {
 } from "../../../nodes/inputs/schedule_a/index.ts";
 import { form8283Pdf } from "./f8283.ts";
 import { form8283 } from "../../mef/forms/f8283.ts";
+import { scheduleA as scheduleAMef } from "../../mef/forms/schedule_a.ts";
 import { form8283FmvReductionStatement } from "../../mef/forms/f8283_fmv_reduction_statement.ts";
 
 const filer = {
@@ -479,6 +480,16 @@ Deno.test("Form 8283 PDF rejects incomplete or divergent short-term reductions",
 
 Deno.test("Form 8283 PDF prints one reconciled vehicle capped at certified sale proceeds", () => {
   const pending = soldVehiclePending();
+  const native = form8283.build(pending.f8283, {
+    pending,
+    attachmentDescriptionsByFileName: {
+      "Form1098C-Civic.pdf": "Form1098C Civic acknowledgment",
+    },
+  })[0];
+  assertStringIncludes(
+    native,
+    "<FairMarketValueAmt>15000</FairMarketValueAmt>",
+  );
   const [instance] = form8283Pdf.instances?.(pending.f8283, filer, pending) ??
     [];
   assertEquals(instance?.row1_vehicle, true);
@@ -495,6 +506,26 @@ Deno.test("Form 8283 PDF prints one reconciled vehicle capped at certified sale 
         ...pending,
         f1040: { ...pending.f1040, line12e_itemized_deductions: 14_000 },
       }),
+    Error,
+    "recomputed Schedule A or Form 1040",
+  );
+  assertThrows(
+    () =>
+      form8283.build(pending.f8283, {
+        pending: {
+          ...pending,
+          f1040: { ...pending.f1040, line12e_itemized_deductions: 14_000 },
+        },
+      }),
+    Error,
+    "recomputed Schedule A or Form 1040",
+  );
+  assertThrows(
+    () =>
+      scheduleAMef.build({
+        ...pending.schedule_a,
+        line_12_noncash_contributions: 14_000,
+      }, { pending }),
     Error,
     "recomputed Schedule A or Form 1040",
   );

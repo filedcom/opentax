@@ -5,6 +5,8 @@ import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import {
   assertElectedSectionAReconciled,
   assertElectedSectionBReconciled,
+  assertOrdinarySectionAReconciled,
+  isSingleSectionAVehicleSale,
 } from "./f8283_election.ts";
 import { inputSchema as form8283InputSchema } from "../../../nodes/inputs/f8283/index.ts";
 import { reconcileForm8283Carryover } from "./f8283_carryover.ts";
@@ -118,6 +120,14 @@ function buildIRS1040ScheduleA(
       context ?? {},
       fields,
     );
+  }
+  if (
+    context?.pending?.f8283 !== undefined &&
+    isSingleSectionAVehicleSale(
+      form8283InputSchema.parse(context.pending.f8283),
+    )
+  ) {
+    assertOrdinarySectionAReconciled(context, fields);
   }
   if (
     fields.capital_gain_election_finalized === true &&

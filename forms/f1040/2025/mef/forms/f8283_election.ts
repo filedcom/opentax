@@ -1,5 +1,6 @@
 import {
   f8283,
+  type F8283Input,
   inputSchema as form8283InputSchema,
   type SectionAItem,
 } from "../../../nodes/inputs/f8283/index.ts";
@@ -23,9 +24,23 @@ function hasCompleteSectionAColumns(item: SectionAItem): boolean {
     item.cost_or_adjusted_basis !== undefined;
 }
 
+export function isSingleSectionAVehicleSale(form: F8283Input): boolean {
+  const sectionA = form.section_a_items ?? [];
+  const item = sectionA[0];
+  return sectionA.length === 1 && (form.section_b_items ?? []).length === 0 &&
+    item.is_vehicle === true &&
+    item.vehicle_sale_acknowledgment !== undefined &&
+    !!item.vehicle_acknowledgment_attachment_file_name?.trim() &&
+    item.capital_gain_reduction_election_confirmed !== true &&
+    item.short_term_ordinary_income_reduction_confirmed !== true &&
+    item.fmv !== undefined && item.deduction_claimed !== undefined &&
+    Math.round((item.fmv - item.deduction_claimed) * 100) > 0;
+}
+
 /** Reconcile one ordinary, unreduced Section A gift before printing its PDF. */
 export function assertOrdinarySectionAReconciled(
   context: MefBuildContext | undefined,
+  filedScheduleA?: Readonly<Record<string, unknown>>,
 ): void {
   const pending = context?.pending;
   const returnFields = pending?.f1040 as Record<string, unknown> | undefined;
@@ -109,7 +124,15 @@ export function assertOrdinarySectionAReconciled(
     computed.line_12_noncash_contributions !==
       scheduleFields.line_12_noncash_contributions ||
     computed.line_13_contribution_carryover !==
-      scheduleFields.line_13_contribution_carryover
+      scheduleFields.line_13_contribution_carryover ||
+    (filedScheduleA && (
+      filedScheduleA.line_11_cash_contributions !==
+        computed.line_11_cash_contributions ||
+      filedScheduleA.line_12_noncash_contributions !==
+        computed.line_12_noncash_contributions ||
+      filedScheduleA.line_13_contribution_carryover !==
+        computed.line_13_contribution_carryover
+    ))
   ) {
     throw new Error(
       "Form 8283 ordinary Section A differs from recomputed Schedule A or Form 1040 itemized deductions",

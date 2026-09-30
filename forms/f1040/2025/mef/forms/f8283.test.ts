@@ -7,9 +7,15 @@ import {
 import { PDFDocument } from "pdf-lib";
 import { SCENARIO_1040_02_FACTS } from "../../../e2e/ats/ty2025_cases.ts";
 import {
+  f8283,
   FMVMethod,
+  inputSchema as form8283InputSchema,
   SectionBPropertyType,
 } from "../../../nodes/inputs/f8283/index.ts";
+import {
+  inputSchema as scheduleAInputSchema,
+  scheduleA as scheduleANode,
+} from "../../../nodes/inputs/schedule_a/index.ts";
 import { buildMefBundle, buildMefXml } from "../builder.ts";
 import { testFiler } from "../test-filer.ts";
 import { form8283 } from "./f8283.ts";
@@ -1501,53 +1507,71 @@ Deno.test("Form 8283 material-improvement vehicle emits donee's box 5c detail", 
 });
 
 Deno.test("Form 8283 links both native vehicle statement and donee-issued PDF", async () => {
-  const bundle = await buildMefBundle({
-    f8283: {
-      section_a_items: [{
-        property_description: "2020 Honda Civic, good condition, 60,000 miles",
-        donee_organization_name: "City Charity",
-        donee_organization_us_address: {
+  const form = form8283InputSchema.parse({
+    section_a_items: [{
+      property_description: "2020 Honda Civic, good condition, 60,000 miles",
+      donee_organization_name: "City Charity",
+      donee_organization_us_address: {
+        line1: "1 Main St",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+      },
+      is_vehicle: true,
+      vehicle_vin: "1HGBH41JXMN109186",
+      vehicle_acknowledgment_attachment_file_name: "Form1098C-Civic.pdf",
+      date_contributed: "2025-06-01",
+      date_acquired: "2020-01-01",
+      donor_acquisition_description: "Purchase",
+      fmv: 20_000,
+      deduction_claimed: 15_000,
+      cost_or_adjusted_basis: 25_000,
+      charitable_limit_category: "noncash_50",
+      is_capital_gain_property: false,
+      fmv_method: FMVMethod.ComparableSales,
+      vehicle_sale_acknowledgment: {
+        copy_received_from_donee: true,
+        donee_certified: true,
+        donee_name: "City Charity",
+        donee_ein: "987654321",
+        donee_us_address: {
           line1: "1 Main St",
           city: "Austin",
           state: "TX",
           zip: "78701",
         },
-        is_vehicle: true,
-        vehicle_vin: "1HGBH41JXMN109186",
-        vehicle_acknowledgment_attachment_file_name: "Form1098C-Civic.pdf",
-        date_contributed: "2025-06-01",
-        date_acquired: "2020-01-01",
-        donor_acquisition_description: "Purchase",
-        fmv: 20_000,
-        deduction_claimed: 15_000,
-        cost_or_adjusted_basis: 25_000,
-        charitable_limit_category: "noncash_50",
-        is_capital_gain_property: false,
-        fmv_method: FMVMethod.ComparableSales,
-        vehicle_sale_acknowledgment: {
-          copy_received_from_donee: true,
-          donee_certified: true,
-          donee_name: "City Charity",
-          donee_ein: "987654321",
-          donee_us_address: {
-            line1: "1 Main St",
-            city: "Austin",
-            state: "TX",
-            zip: "78701",
-          },
-          acknowledgment_received_date: "2025-07-15",
-          sale_to_unrelated_party: true,
-          sale_date: "2025-07-01",
-          gross_proceeds: 15_000,
-          vehicle_year: 2020,
-          vehicle_make: "Honda",
-          vehicle_model: "Civic",
-          vehicle_condition: "Good condition",
-          odometer_miles: 60_000,
-          goods_or_services_received: false,
-        },
-      }],
-    },
+        acknowledgment_received_date: "2025-07-15",
+        sale_to_unrelated_party: true,
+        sale_date: "2025-07-01",
+        gross_proceeds: 15_000,
+        vehicle_year: 2020,
+        vehicle_make: "Honda",
+        vehicle_model: "Civic",
+        vehicle_condition: "Good condition",
+        odometer_miles: 60_000,
+        goods_or_services_received: false,
+      },
+    }],
+  });
+  const giftItems = f8283.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form,
+  ).outputs[0].fields.noncash_contribution_items;
+  const scheduleSource = {
+    agi: 100_000,
+    current_noncash_gift_inventory_complete_confirmed: true as const,
+    other_prior_charitable_carryovers_absent_confirmed: true as const,
+    capital_gain_property_carryovers: [],
+    noncash_contribution_items: giftItems,
+  };
+  const scheduleFinal = scheduleANode.compute(
+    { taxYear: 2025, formType: "f1040" },
+    scheduleAInputSchema.parse(scheduleSource),
+  ).finalizations![0].fields;
+  const bundle = await buildMefBundle({
+    f8283: form,
+    schedule_a: { ...scheduleSource, ...scheduleFinal },
+    f1040: { line11_agi: 100_000, line12e_itemized_deductions: 15_000 },
   }, {
     filer: testFiler(),
     attachments: [{

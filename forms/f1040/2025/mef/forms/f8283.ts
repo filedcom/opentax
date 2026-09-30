@@ -13,6 +13,8 @@ import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import {
   assertElectedSectionAReconciled,
   assertElectedSectionBReconciled,
+  assertOrdinarySectionAReconciled,
+  isSingleSectionAVehicleSale,
 } from "./f8283_election.ts";
 import {
   carriedSectionAItem,
@@ -784,6 +786,9 @@ export const form8283: MefFormDescriptor<
     }
     const sectionA = parsed.section_a_items ?? [];
     const sectionB = parsed.section_b_items ?? [];
+    if (isSingleSectionAVehicleSale(parsed)) {
+      assertOrdinarySectionAReconciled(context);
+    }
     const signedFormFiles = sectionB.map((item) =>
       item.signed_form_attachment_file_name
     ).filter((fileName): fileName is string => fileName !== undefined);

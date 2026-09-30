@@ -72,7 +72,10 @@ is limited to donee-certified unrelated-party sale proceeds. It requires one
 complete purchased vehicle source, a named donee-issued acknowledgment PDF,
 matching printed donee and acknowledgment facts, a sourced FMV reduction, a
 complete Schedule A inventory, and an itemized Form 1040 reconciled to that
-inventory. The synthetic full return has $20,000 FMV, $25,000 basis, $15,000
+inventory. Native Form 8283 and Schedule A now enforce that same reconciliation
+for the single certified-sale route, including a direct Schedule A build whose
+filed amount differs from the pending return. The synthetic full return has
+$20,000 FMV, $25,000 basis, $15,000
 certified proceeds and claimed deduction; local TY2025 v5.4 XSD passes with
 the acknowledgment reference and native FMV statement. The five-page filled
 packet was rendered and visually checked: the vehicle checkbox, VIN, basis,

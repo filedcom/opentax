@@ -17,6 +17,7 @@ import {
   assertElectedSectionAReconciled,
   assertElectedSectionBReconciled,
   assertOrdinarySectionAReconciled,
+  isSingleSectionAVehicleSale,
 } from "../../mef/forms/f8283_election.ts";
 import {
   carriedSectionAItem,
@@ -395,13 +396,7 @@ export const form8283Pdf: PdfFormDescriptor = {
       return [sectionBInstance(sectionB[0], filer)];
     }
     if (sectionA.length === 0) return [];
-    const soldVehicle = sectionA.length === 1 &&
-      sectionA[0].is_vehicle === true &&
-      sectionA[0].vehicle_sale_acknowledgment !== undefined &&
-      !!sectionA[0].vehicle_acknowledgment_attachment_file_name?.trim() &&
-      sectionA[0].capital_gain_reduction_election_confirmed !== true &&
-      sectionA[0].short_term_ordinary_income_reduction_confirmed !== true &&
-      needsFmvReductionStatement(sectionA[0]);
+    const soldVehicle = isSingleSectionAVehicleSale(source);
     if (sectionA.some((item) => item.is_vehicle === true) && !soldVehicle) {
       throw new Error(
         "Form 8283 PDF supports only one reconciled Section A vehicle limited to certified sale proceeds",
