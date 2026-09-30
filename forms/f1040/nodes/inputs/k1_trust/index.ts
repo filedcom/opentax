@@ -4,13 +4,13 @@ import type {
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
 import {
-  type AtLeastOne,
   output,
   TaxNode,
 } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { scheduleE } from "../schedule_e/index.ts";
 import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
 import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
 import { form4952 } from "../../intermediate/forms/form4952/index.ts";
@@ -88,7 +88,7 @@ export const itemSchema = z.object({
   // Box 4c — Unrecaptured §1250 gain (informational; Schedule D Worksheet line 11)
   box4c_unrecaptured_1250: z.number().nonnegative().optional(),
 
-  // Box 5 — Other portfolio income/loss → Schedule 1 line 8z
+  // Box 5 — Other portfolio income → Schedule E Part III, column (f)
   box5_other_portfolio: z.number().optional(),
 
   // Box 6 — Ordinary business income/loss → Schedule E page 2 → Schedule 1 line 5
@@ -142,20 +142,60 @@ export const itemSchema = z.object({
   box14_foreign_tax_credit_method: z.nativeEnum(ForeignTaxCreditMethod)
     .optional(),
 }).superRefine((item, ctx) => {
+  if ((item.box5_other_portfolio ?? 0) !== 0) {
+    for (
+      const key of ["estate_trust_ein", "source_document_reference"] as const
+    ) {
+      if (!item[key]) {
+        ctx.addIssue({
+          code: "custom",
+          path: [key],
+          message: `K-1 box 5 Schedule E income needs ${key}`,
+        });
+      }
+    }
+    if (item.box5_other_portfolio! < 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["box5_other_portfolio"],
+        message: "K-1 box 5 loss needs its separate deduction character",
+      });
+    }
+  }
+  for (
+    const key of [
+      "box6_ordinary_business",
+      "box7_rental_real_estate",
+      "box8_other_rental",
+      "box9_directly_apportioned_deductions",
+    ] as const
+  ) {
+    if ((item[key] ?? 0) !== 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: [key],
+        message:
+          `K-1 ${key} needs its activity statement and Schedule E limitation route`,
+      });
+    }
+  }
   if ((item.box12_amt ?? 0) !== 0) {
     ctx.addIssue({
       code: "custom",
       path: ["box12_amt"],
-      message: "Uncoded K-1 box 12 AMT amount needs its source code before filing",
+      message:
+        "Uncoded K-1 box 12 AMT amount needs its source code before filing",
     });
   }
   if (item.box12_code_a_amt_adjustment !== undefined) {
-    for (const key of [
-      "estate_trust_ein",
-      "source_document_reference",
-      "box12_codes_b_through_f_absent",
-      "box12_codes_g_through_i_absent",
-    ] as const) {
+    for (
+      const key of [
+        "estate_trust_ein",
+        "source_document_reference",
+        "box12_codes_b_through_f_absent",
+        "box12_codes_g_through_i_absent",
+      ] as const
+    ) {
       if (item[key] === undefined) {
         ctx.addIssue({
           code: "custom",
@@ -274,7 +314,7 @@ function totalPositiveIncome(item: K1TrustItem): number {
 // If total distributions exceed DNI, scale every income character proportionally
 // so that the beneficiary's total inclusion equals DNI.
 // Losses pass through unchanged (they are not "distributed income").
-function applyDniLimit(item: K1TrustItem): K1TrustItem {
+export function applyDniLimit(item: K1TrustItem): K1TrustItem {
   const dni = item.distributable_net_income;
   if (dni === undefined) return item;
 
@@ -385,36 +425,19 @@ function scheduleDOutput(items: K1TrustItems): NodeOutput[] {
   return [output(schedule_d, { line_12_k1_lt: totalLt })];
 }
 
-// Aggregate pass-through income/loss → schedule1
-// Box 6 (business) + Box 7 (rental RE) + Box 8 (other rental) → line5_schedule_e
-// Box 5 (other portfolio) → line8z_other_income
-function schedule1Output(items: K1TrustItems): NodeOutput[] {
-  const scheduleETotal = items.reduce(
-    (sum, item) =>
-      sum +
-      (item.box6_ordinary_business ?? 0) +
-      (item.box7_rental_real_estate ?? 0) +
-      (item.box8_other_rental ?? 0),
-    0,
+function scheduleEOutputs(items: K1TrustItems): NodeOutput[] {
+  return items.flatMap((item) =>
+    (item.box5_other_portfolio ?? 0) > 0
+      ? [output(scheduleE, {
+        estate_trust_rows: [{
+          estate_trust_name: item.estate_trust_name,
+          estate_trust_ein: item.estate_trust_ein!,
+          source_document_reference: item.source_document_reference!,
+          other_income: item.box5_other_portfolio!,
+        }],
+      })]
+      : []
   );
-  const otherPortfolioTotal = items.reduce(
-    (sum, item) => sum + (item.box5_other_portfolio ?? 0),
-    0,
-  );
-
-  if (scheduleETotal === 0 && otherPortfolioTotal === 0) return [];
-  if (scheduleETotal !== 0 && otherPortfolioTotal !== 0) {
-    return [
-      output(schedule1, {
-        line5_schedule_e: scheduleETotal,
-        line8z_other_income: otherPortfolioTotal,
-      }),
-    ];
-  }
-  if (scheduleETotal !== 0) {
-    return [output(schedule1, { line5_schedule_e: scheduleETotal })];
-  }
-  return [output(schedule1, { line8z_other_income: otherPortfolioTotal })];
 }
 
 // Route foreign taxes → form_1116 (one output per K-1 with foreign taxes)
@@ -440,19 +463,6 @@ function form1116Outputs(items: K1TrustItems): NodeOutput[] {
         }],
       })
     );
-}
-
-// box9_directly_apportioned_deductions: deductions allocated directly to the beneficiary
-// (depreciation, depletion, etc.) that reduce income of the same character per IRC §1041.
-// Routed to schedule1 line8z_other_income as a negative adjustment to offset passthrough
-// income, which is the closest available sink until a dedicated schedule_e sink is wired.
-function apportionedDeductionOutputs(items: K1TrustItems): NodeOutput[] {
-  const total = items.reduce(
-    (sum, item) => sum + (item.box9_directly_apportioned_deductions ?? 0),
-    0,
-  );
-  if (total <= 0) return [];
-  return [output(schedule1, { line8z_other_income: -total })];
 }
 
 function disabledAccessCreditOutputs(items: K1TrustItems): NodeOutput[] {
@@ -571,6 +581,7 @@ class K1TrustNode extends TaxNode<typeof inputSchema> {
     f1040,
     schedule_d,
     schedule1,
+    scheduleE,
     form_1116,
     form4952,
     form6251,
@@ -590,18 +601,15 @@ class K1TrustNode extends TaxNode<typeof inputSchema> {
       ...scheduleBDividendOutputs(limitedItems),
       ...f1040QualDivOutput(limitedItems),
       ...scheduleDOutput(limitedItems),
-      ...schedule1Output(limitedItems),
+      ...scheduleEOutputs(limitedItems),
       ...form1116Outputs(limitedItems),
-      ...apportionedDeductionOutputs(limitedItems),
       ...disabledAccessCreditOutputs(limitedItems),
       ...orphanDrugCreditOutputs(limitedItems),
       ...newMarketsCreditOutputs(limitedItems),
       ...limitedItems.flatMap((item) =>
-        (item.box12_code_a_amt_adjustment ?? 0) === 0
-          ? []
-          : [output(form6251, {
-            line2j_estates_and_trusts: item.box12_code_a_amt_adjustment!,
-          })]
+        (item.box12_code_a_amt_adjustment ?? 0) === 0 ? [] : [output(form6251, {
+          line2j_estates_and_trusts: item.box12_code_a_amt_adjustment!,
+        })]
       ),
     ];
 

@@ -6,12 +6,15 @@ import {
   qualifiedEntireDispositionGain,
   qualifiedEntireDispositionLoss,
 } from "../../../nodes/inputs/schedule_e/index.ts";
-import { scheduleE, validatePassiveActivityLink } from "../../mef/forms/schedule_e.ts";
+import {
+  scheduleE,
+  validatePassiveActivityLink,
+} from "../../mef/forms/schedule_e.ts";
 import { verifyMiscRoyaltySource } from "../../mef/forms/schedule_e.ts";
 
-// 2025 Schedule E AcroForm, Part I property A. This descriptor deliberately
-// retains only page 1: Parts II-IV and farm rental income are not projected.
+// 2025 Schedule E AcroForm: one Part I property or up to two Part III trust rows.
 const page = "topmostSubform[0].Page1[0]";
+const page2 = "topmostSubform[0].Page2[0]";
 const text = (
   domainKey: string,
   pdfField: string,
@@ -94,20 +97,67 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   ].map(
     (key, index) => text(key, `${page}.f1_${77 + index}[0]`),
   ),
+  ...["A", "B"].flatMap((row, index) => [
+    text(
+      `trust_${index}_name`,
+      `${page2}.Table_Line33a-b[0].Row${row}[0].f2_${48 + index * 2}[0]`,
+    ),
+    text(
+      `trust_${index}_ein`,
+      `${page2}.Table_Line33a-b[0].Row${row}[0].f2_${49 + index * 2}[0]`,
+    ),
+    text(
+      `trust_${index}_other_income`,
+      `${page2}.Table_Line33c-f[0].Row${row}[0].f2_${55 + index * 4}[0]`,
+    ),
+  ]),
+  text("trust_total_other_income", `${page2}.f2_63[0]`),
+  text("trust_line35", `${page2}.f2_68[0]`),
+  text("trust_line37", `${page2}.f2_70[0]`),
+  text("trust_line41", `${page2}.f2_78[0]`),
 ];
 
 export const scheduleEPdf: PdfFormDescriptor = {
   pendingKey: "schedule_e",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040se--2025.pdf",
-  pageIndices: () => [0],
+  pageIndices: (projected) => projected.trust_line37 !== undefined ? [1] : [0],
   fields,
   filerFields: [
     text("fullName", `${page}.f1_1[0]`),
     text("primarySSN", `${page}.f1_2[0]`),
+    text("fullName", `${page2}.f2_1[0]`),
+    text("primarySSN", `${page2}.f2_2[0]`),
   ],
   projectFields(raw, allPending) {
     if (Object.keys(raw).length === 0) return {};
     const input = inputSchema.parse(raw);
+    const trustRows = input.estate_trust_rows ?? [];
+    if (trustRows.length > 0) {
+      if (
+        input.schedule_es.length > 0 || input.farm_rental_net !== undefined ||
+        input.farm_rental_gross !== undefined ||
+        input.rental_income !== undefined ||
+        input.royalty_income !== undefined ||
+        trustRows.length > 2 ||
+        !scheduleE.build(input, { pending: allPending })
+      ) {
+        throw new Error(
+          "Schedule E PDF trust rows need a sourced Part III-only return",
+        );
+      }
+      const total = trustRows.reduce((sum, row) => sum + row.other_income, 0);
+      return {
+        ...Object.fromEntries(trustRows.flatMap((row, index) => [
+          [`trust_${index}_name`, row.estate_trust_name],
+          [`trust_${index}_ein`, row.estate_trust_ein],
+          [`trust_${index}_other_income`, row.other_income],
+        ])),
+        trust_total_other_income: total,
+        trust_line35: total,
+        trust_line37: total,
+        trust_line41: total,
+      };
+    }
     const item = input.schedule_es[0];
     if (
       input.schedule_es.length !== 1 || !item ||

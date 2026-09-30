@@ -383,34 +383,37 @@ Deno.test("negative box4a (long-term loss) routes to schedule_d", () => {
   assertEquals(out?.fields.line_12_k1_lt, -600);
 });
 
-Deno.test("box5_other_portfolio routes to schedule1 line8z_other_income", () => {
-  const result = compute([minimalItem({ box5_other_portfolio: 750 })]);
-  const out = findOutput(result, "schedule1");
-  assertEquals(out?.fields.line8z_other_income, 750);
+Deno.test("box 5 creates a sourced Schedule E Part III row", () => {
+  const result = compute([minimalItem({
+    estate_trust_ein: "123456789",
+    source_document_reference: "K1-2025-A",
+    box5_other_portfolio: 750,
+  })]);
+  const out = findOutput(result, "schedule_e");
+  assertEquals(out?.fields.estate_trust_rows, [{
+    estate_trust_name: "Test Trust",
+    estate_trust_ein: "123456789",
+    source_document_reference: "K1-2025-A",
+    other_income: 750,
+  }]);
+  assertEquals(findOutput(result, "schedule1"), undefined);
 });
 
-Deno.test("box6_ordinary_business routes to schedule1 line5_schedule_e", () => {
-  const result = compute([minimalItem({ box6_ordinary_business: 4000 })]);
-  const out = findOutput(result, "schedule1");
-  assertEquals(out?.fields.line5_schedule_e, 4000);
-});
-
-Deno.test("negative box6 (business loss) routes to schedule1", () => {
-  const result = compute([minimalItem({ box6_ordinary_business: -1500 })]);
-  const out = findOutput(result, "schedule1");
-  assertEquals(out?.fields.line5_schedule_e, -1500);
-});
-
-Deno.test("box7_rental_real_estate routes to schedule1 line5_schedule_e", () => {
-  const result = compute([minimalItem({ box7_rental_real_estate: 2500 })]);
-  const out = findOutput(result, "schedule1");
-  assertEquals(out?.fields.line5_schedule_e, 2500);
-});
-
-Deno.test("box8_other_rental routes to schedule1 line5_schedule_e", () => {
-  const result = compute([minimalItem({ box8_other_rental: 1200 })]);
-  const out = findOutput(result, "schedule1");
-  assertEquals(out?.fields.line5_schedule_e, 1200);
+Deno.test("boxes 6 through 9 require activity and deduction character", () => {
+  for (
+    const field of [
+      "box6_ordinary_business",
+      "box7_rental_real_estate",
+      "box8_other_rental",
+      "box9_directly_apportioned_deductions",
+    ]
+  ) {
+    assertThrows(
+      () => compute([minimalItem({ [field]: 100 })]),
+      Error,
+      "activity statement",
+    );
+  }
 });
 
 Deno.test("box14_foreign_tax routes to form_1116", () => {
@@ -475,44 +478,44 @@ Deno.test("box3 STCG sums across K-1s to schedule_d", () => {
   assertEquals(out?.fields.line_5_k1_st, 1500);
 });
 
-Deno.test("box6 business income sums across K-1s to schedule1", () => {
-  const result = compute([
-    minimalItem({ box6_ordinary_business: 2000 }),
-    minimalItem({ estate_trust_name: "Trust B", box6_ordinary_business: 1000 }),
-  ]);
-  const out = findOutput(result, "schedule1");
-  assertEquals(out?.fields.line5_schedule_e, 3000);
-});
-
-Deno.test("box6+box7+box8 combined routes to schedule1 line5_schedule_e", () => {
+Deno.test("box 5 retains distinct Schedule E rows across K-1s", () => {
   const result = compute([
     minimalItem({
-      box6_ordinary_business: 1000,
-      box7_rental_real_estate: 500,
-      box8_other_rental: 300,
+      estate_trust_ein: "123456789",
+      source_document_reference: "A",
+      box5_other_portfolio: 2000,
+    }),
+    minimalItem({
+      estate_trust_name: "Trust B",
+      estate_trust_ein: "987654321",
+      source_document_reference: "B",
+      box5_other_portfolio: 1000,
     }),
   ]);
-  const out = findOutput(result, "schedule1");
-  // 1000 + 500 + 300 = 1800
-  assertEquals(out?.fields.line5_schedule_e, 1800);
-});
-
-Deno.test("box5_other_portfolio and box6_ordinary_business together produce single schedule1 with both fields", () => {
-  // When both schedule_e income and other-portfolio income are nonzero, a single
-  // schedule1 output is emitted with both line5_schedule_e and line8z_other_income set
-  const result = compute([
-    minimalItem({ box5_other_portfolio: 400, box6_ordinary_business: 3000 }),
+  const rows = result.outputs.filter((o) => o.nodeType === "schedule_e");
+  assertEquals(rows.length, 2);
+  assertEquals(rows.map((row) => row.fields.estate_trust_rows), [
+    [{
+      estate_trust_name: "Test Trust",
+      estate_trust_ein: "123456789",
+      source_document_reference: "A",
+      other_income: 2000,
+    }],
+    [{
+      estate_trust_name: "Trust B",
+      estate_trust_ein: "987654321",
+      source_document_reference: "B",
+      other_income: 1000,
+    }],
   ]);
-  const sch1Outputs = result.outputs.filter((o) => o.nodeType === "schedule1");
-  assertEquals(sch1Outputs.length, 1);
-  assertEquals(sch1Outputs[0].fields.line5_schedule_e, 3000);
-  assertEquals(sch1Outputs[0].fields.line8z_other_income, 400);
 });
 
-Deno.test("negative box5_other_portfolio (portfolio loss) routes to schedule1 line8z_other_income", () => {
-  const result = compute([minimalItem({ box5_other_portfolio: -500 })]);
-  const out = findOutput(result, "schedule1");
-  assertEquals(out?.fields.line8z_other_income, -500);
+Deno.test("negative box 5 needs its deduction character", () => {
+  assertThrows(
+    () => compute([minimalItem({ box5_other_portfolio: -500 })]),
+    Error,
+    "separate deduction character",
+  );
 });
 
 Deno.test("box4a LTCG sums across K-1s to schedule_d", () => {
@@ -564,9 +567,9 @@ Deno.test("smoke test — K-1 with all major boxes", () => {
       box2b_qualified_dividends: 600,
       box3_net_st_cap_gain: 1000,
       box4a_net_lt_cap_gain: 2000,
+      estate_trust_ein: "123456789",
+      source_document_reference: "K1-2025-A",
       box5_other_portfolio: 300,
-      box6_ordinary_business: 5000,
-      box7_rental_real_estate: 1500,
       box14_foreign_tax: 100,
       box14_foreign_income: 500,
       box14_foreign_income_category: "passive",
@@ -579,10 +582,12 @@ Deno.test("smoke test — K-1 with all major boxes", () => {
   const sd = findOutput(result, "schedule_d");
   assertEquals(sd?.fields.line_5_k1_st, 1000);
   assertEquals(sd?.fields.line_12_k1_lt, 2000);
-  const sch1 = findOutput(result, "schedule1");
-  // box6=5000 + box7=1500 → line5_schedule_e=6500; box5=300 → line8z_other_income=300
-  assertEquals(sch1?.fields.line5_schedule_e, 6500);
-  assertEquals(sch1?.fields.line8z_other_income, 300);
+  const scheduleE = findOutput(result, "schedule_e");
+  assertEquals(
+    (scheduleE?.fields.estate_trust_rows as Array<{ other_income: number }>)[0]
+      .other_income,
+    300,
+  );
   const f1116 = findOutput(result, "form_1116");
   assertEquals(
     (f1116?.fields.foreign_tax_items as Array<Record<string, unknown>>)[0]
@@ -632,17 +637,19 @@ Deno.test("DNI: prorates all characters proportionally", () => {
   assertEquals(sbInterest?.fields.taxable_interest_net, 2_000);
 });
 
-Deno.test("DNI: losses pass through unchanged regardless of DNI cap", () => {
-  // Loss in box6 should not be scaled
-  const result = compute([
-    minimalItem({
-      box6_ordinary_business: -3_000,
-      box1_interest: 5_000,
-      distributable_net_income: 2_000,
-    }),
-  ]);
-  const sch1 = findOutput(result, "schedule1");
-  assertEquals(sch1?.fields.line5_schedule_e, -3_000); // loss unchanged
+Deno.test("DNI: unsupported box 6 loss remains filing-blocked", () => {
+  assertThrows(
+    () =>
+      compute([
+        minimalItem({
+          box6_ordinary_business: -3_000,
+          box1_interest: 5_000,
+          distributable_net_income: 2_000,
+        }),
+      ]),
+    Error,
+    "activity statement",
+  );
 });
 
 Deno.test("DNI: per-trust — DNI cap applied independently to each K-1", () => {

@@ -27,6 +27,10 @@ import type { FilerIdentity } from "../../../mef/header.ts";
 import { inputSchema as partnershipK1InputSchema } from "../../../nodes/inputs/k1_partnership/index.ts";
 import { inputSchema as miscInputSchema } from "../../../nodes/inputs/f1099m/index.ts";
 import {
+  applyDniLimit,
+  inputSchema as trustK1InputSchema,
+} from "../../../nodes/inputs/k1_trust/index.ts";
+import {
   passivePropertySaleSchema,
   samePassiveSale,
 } from "../../../nodes/intermediate/forms/form4797/index.ts";
@@ -530,6 +534,35 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
     }
     const farmNet = fields.farm_rental_net;
     const farmGross = fields.farm_rental_gross;
+    const trustRows = fields.estate_trust_rows ?? [];
+    const trustSource = context?.pending?.k1_trust;
+    const trustParsed = trustK1InputSchema.safeParse(trustSource);
+    if (trustRows.length > 0 && !trustParsed.success) {
+      throw new Error("Schedule E estate/trust rows need their source K-1s");
+    }
+    const trustKeys = trustRows.map((row) =>
+      `${row.estate_trust_ein}:${row.source_document_reference}`
+    );
+    if (new Set(trustKeys).size !== trustKeys.length || trustRows.length > 2) {
+      throw new Error(
+        "Schedule E estate/trust rows need unique sources and fit the two printed rows",
+      );
+    }
+    for (const row of trustRows) {
+      const matches = trustParsed.success
+        ? trustParsed.data.k1_trusts.filter((source) =>
+          source.estate_trust_name === row.estate_trust_name &&
+          source.estate_trust_ein === row.estate_trust_ein &&
+          source.source_document_reference === row.source_document_reference &&
+          applyDniLimit(source).box5_other_portfolio === row.other_income
+        )
+        : [];
+      if (matches.length !== 1) {
+        throw new Error(
+          "Schedule E estate/trust row must match one unadjusted K-1 box 5 source",
+        );
+      }
+    }
     if ((farmNet === undefined) !== (farmGross === undefined)) {
       throw new Error(
         "Schedule E farm rental line 40 and line 42 must both be supplied",
@@ -566,7 +599,9 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
     const allowedFarmNet = farmNet === undefined
       ? undefined
       : farmNet + farmLosses - farmAllowed;
-    if (properties.length === 0 && farmNet === undefined) return "";
+    if (
+      properties.length === 0 && farmNet === undefined && trustRows.length === 0
+    ) return "";
     const payments = itemList.some((item) => item.form_1099_payments_made);
     const income = properties.filter((line) => line.net > 0).reduce(
       (total, line) => total + line.net,
@@ -574,6 +609,10 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
     );
     const losses = sum(properties, "deductibleLoss");
     const propertyNet = income - losses;
+    const trustOtherIncome = trustRows.reduce(
+      (sum, row) => sum + row.other_income,
+      0,
+    );
     if (royaltyKeys.length > 0 || linkedMiscRoyalty) {
       const pendingSchedule1 = context?.pending?.schedule1;
       const pendingLine5 = pendingSchedule1 &&
@@ -625,10 +664,31 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
       properties.length > 0 ? element("IncomeAmt", income) : "",
       losses > 0 ? element("LossesAmt", losses) : "",
       properties.length > 0 ? element("TotalIncomeOrLossAmt", propertyNet) : "",
+      ...trustRows.map((row) =>
+        elements("EstateAndTrustGroup", [
+          elements("EstateOrTrustName", [
+            element("BusinessNameLine1Txt", row.estate_trust_name),
+          ]),
+          element("EstateOrTrustEIN", row.estate_trust_ein),
+          element("OtherIncomeAmt", row.other_income),
+        ])
+      ),
+      trustRows.length > 0
+        ? element("TotalOtherIncomeAmt", trustOtherIncome)
+        : "",
+      trustRows.length > 0
+        ? element("TotalEstateOrTrustIncomeAmt", trustOtherIncome)
+        : "",
+      trustRows.length > 0
+        ? element("TotEstateAndTrustIncOrLossAmt", trustOtherIncome)
+        : "",
       allowedFarmNet === undefined
         ? ""
         : element("NetFarmRentalIncomeOrLossAmt", allowedFarmNet),
-      element("TotalSuppIncomeOrLossAmt", propertyNet + (allowedFarmNet ?? 0)),
+      element(
+        "TotalSuppIncomeOrLossAmt",
+        propertyNet + trustOtherIncome + (allowedFarmNet ?? 0),
+      ),
       farmGross === undefined
         ? ""
         : element("FarmingAndFishingIncomeAmt", farmGross),

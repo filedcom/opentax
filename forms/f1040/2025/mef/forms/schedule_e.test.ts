@@ -63,6 +63,45 @@ Deno.test("Schedule E serializes property lines and totals in XSD order", () => 
   );
 });
 
+Deno.test("Schedule E Part III matches a trust K-1 box 5 source", () => {
+  const source = {
+    estate_trust_name: "Family Trust",
+    estate_trust_ein: "123456789",
+    source_document_reference: "K1-2025-A",
+    box5_other_portfolio: 750,
+  };
+  const row = {
+    estate_trust_name: source.estate_trust_name,
+    estate_trust_ein: source.estate_trust_ein,
+    source_document_reference: source.source_document_reference,
+    other_income: 750,
+  };
+  const xml = scheduleE.build({ estate_trust_rows: [row] }, {
+    pending: { k1_trust: { k1_trusts: [source] } },
+  });
+  assertStringIncludes(xml, "<EstateOrTrustEIN>123456789</EstateOrTrustEIN>");
+  assertStringIncludes(xml, "<OtherIncomeAmt>750</OtherIncomeAmt>");
+  assertStringIncludes(xml, "<TotalOtherIncomeAmt>750</TotalOtherIncomeAmt>");
+  assertStringIncludes(
+    xml,
+    "<TotEstateAndTrustIncOrLossAmt>750</TotEstateAndTrustIncOrLossAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalSuppIncomeOrLossAmt>750</TotalSuppIncomeOrLossAmt>",
+  );
+  assertThrows(
+    () =>
+      scheduleE.build({ estate_trust_rows: [row] }, {
+        pending: {
+          k1_trust: { k1_trusts: [{ ...source, box5_other_portfolio: 751 }] },
+        },
+      }),
+    Error,
+    "must match one",
+  );
+});
+
 Deno.test("Schedule E combines two properties and Form 4835 farm income", () => {
   const xml = scheduleE.build({
     schedule_es: [

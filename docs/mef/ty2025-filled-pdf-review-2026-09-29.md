@@ -235,3 +235,21 @@ includes its instructions page. The PDF SHA-256 is
 `7454b9ae9db6c606d136e60bc7595ae23c2e1e9c883caefa3862dd8ddf34b836`.
 This is a synthetic source and local structural/visual check; IRS business
 rules and ATS acceptance remain open.
+
+The `single-trust-k1-box5-schedule-e` return was regenerated with the other
+thirty-five prepared cases in
+`.state/research/ty2025-filled-pdf-review/2026-09-30-v45/`. A reviewed
+synthetic trust K-1 names Family Trust, EIN `123456789`, and $750 of box 5
+portfolio income. The graph carries $30,000 W-2 wages and the $750 through
+Schedule E Part III to Schedule 1 line 5 and Form 1040 line 8; the full return
+passes local TY2025 v5.4 XSD.
+
+All five pages were rendered and inspected. Form 1040 pages 1–2 print
+$30,000 wages, $750 additional income, $30,750 AGI, $15,000 taxable income,
+$1,565 tax, and $1,435 refund. Schedule 1 pages 1–2 print $750 on lines 5
+and 10 with no line 8z amount. Schedule E page 2 prints the trust name and
+EIN, $750 in Part III column (f), $750 on lines 34a, 35, 37, and 41, and
+the taxpayer name and SSN. Its PDF SHA-256 is
+`11dfaaa12df6cd0570672170d09d2d5499a70ca42896bae1ecd6e0588e42fbe4`.
+The K-1 is synthetic; issuer bytes, boxes 6–9 activity statements and
+limitations, IRS business rules, and ATS acceptance remain open.

@@ -186,6 +186,14 @@ export const itemSchema = z.object({
 
 export const inputSchema = z.object({
   schedule_es: z.array(itemSchema).optional().default([]),
+  estate_trust_rows: z.array(
+    z.object({
+      estate_trust_name: z.string().trim().min(1),
+      estate_trust_ein: z.string().regex(/^\d{9}$/),
+      source_document_reference: z.string().trim().min(1),
+      other_income: z.number().int().positive(),
+    }).strict(),
+  ).optional(),
   // Passthrough mortgage interest from 1098 Box 1 routed to Schedule E
   mortgage_interest: z.number().nonnegative().optional(),
   // Auto/travel expense from auto_expense worksheet (AUTO screen)
@@ -940,8 +948,13 @@ class ScheduleENode extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
-    const { schedule_es, rental_income, royalty_income, farm_rental_net } =
-      parsed;
+    const {
+      schedule_es,
+      rental_income,
+      royalty_income,
+      farm_rental_net,
+      estate_trust_rows,
+    } = parsed;
     const linkedMiscRoyalty = schedule_es.length === 1 &&
       schedule_es[0].f1099m_royalty_source !== undefined &&
       royalty_income ===
@@ -982,7 +995,7 @@ class ScheduleENode extends TaxNode<typeof inputSchema> {
     if (
       schedule_es.length === 0 && passthroughRental === 0 &&
       passthroughRoyalty === 0 &&
-      farm_rental_net === undefined
+      farm_rental_net === undefined && (estate_trust_rows?.length ?? 0) === 0
     ) {
       return { outputs: [] };
     }
@@ -1004,7 +1017,8 @@ class ScheduleENode extends TaxNode<typeof inputSchema> {
       0,
     );
     const totalNet = propertyNet + passthroughRental + passthroughRoyalty +
-      (farm_rental_net ?? 0);
+      (farm_rental_net ?? 0) +
+      (estate_trust_rows ?? []).reduce((sum, row) => sum + row.other_income, 0);
     // Schedule E line 26 carries income plus DEDUCTIBLE losses: a passive loss is held
     // back here and the part Form 8582 allows comes back on Schedule 1 (IRC §469(a)).
     const entireLoss = schedule_es.length === 1 && farms.length === 0

@@ -6251,6 +6251,39 @@ Deno.test({
 });
 
 Deno.test({
+  name: "XSD: trust K-1 box 5 reaches Schedule E Part III and Form 1040",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const result = runReturn({
+    general,
+    k1_trust: [{
+      estate_trust_name: "Family Trust",
+      estate_trust_ein: "123456789",
+      source_document_reference: "K1-2025-A",
+      box5_other_portfolio: 750,
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(xml, "<EstateOrTrustEIN>123456789</EstateOrTrustEIN>");
+  assertStringIncludes(
+    xml,
+    "<TotEstateAndTrustIncOrLossAmt>750</TotEstateAndTrustIncOrLossAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalSuppIncomeOrLossAmt>750</TotalSuppIncomeOrLossAmt>",
+  );
+  await validateXsd(xml, "trust K-1 box 5 Schedule E Part III");
+});
+
+Deno.test({
   name: "XSD: Schedule E nonpassive rental loss validates",
   sanitizeOps: false,
   sanitizeResources: false,

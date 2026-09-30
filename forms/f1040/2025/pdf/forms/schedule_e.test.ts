@@ -3,6 +3,31 @@ import { scheduleEPdf } from "./schedule_e.ts";
 import { scheduleE } from "../../mef/forms/schedule_e.ts";
 import { inputSchema as scheduleEInputSchema } from "../../../nodes/inputs/schedule_e/index.ts";
 
+Deno.test("trust K-1 box 5 prints Schedule E Part III and line 41", () => {
+  const source = {
+    estate_trust_name: "Family Trust",
+    estate_trust_ein: "123456789",
+    source_document_reference: "K1-2025-A",
+    box5_other_portfolio: 750,
+  };
+  const raw = scheduleEInputSchema.parse({
+    estate_trust_rows: [{
+      estate_trust_name: source.estate_trust_name,
+      estate_trust_ein: source.estate_trust_ein,
+      source_document_reference: source.source_document_reference,
+      other_income: 750,
+    }],
+  });
+  const pending = { k1_trust: { k1_trusts: [source] }, schedule_e: raw };
+  const projected = scheduleEPdf.projectFields?.(raw, pending);
+  assertEquals(projected?.trust_0_name, "Family Trust");
+  assertEquals(projected?.trust_0_ein, "123456789");
+  assertEquals(projected?.trust_0_other_income, 750);
+  assertEquals(projected?.trust_line37, 750);
+  assertEquals(projected?.trust_line41, 750);
+  assertEquals(scheduleEPdf.pageIndices?.(projected ?? {}), [1]);
+});
+
 Deno.test("partnership K-1 royalty and code I reconcile Schedule E MeF and PDF", () => {
   const k1 = {
     partnership_name: "Mineral Partnership",
@@ -148,12 +173,21 @@ Deno.test("Schedule E PDF prints a Form 8582 suspended rental loss without a cur
   assertEquals(projected?.line22, undefined);
   assertEquals(projected?.line25, undefined);
   assertEquals(projected?.line26, 0);
-  assertThrows(() => scheduleEPdf.projectFields?.(raw, {
-    ...linked,
-    form8582: { ...linked.form8582, activities: [{
-      ...linked.form8582.activities[0], current_net: -4_999,
-    }] },
-  }), Error, "does not match Form 8582 activity");
+  assertThrows(
+    () =>
+      scheduleEPdf.projectFields?.(raw, {
+        ...linked,
+        form8582: {
+          ...linked.form8582,
+          activities: [{
+            ...linked.form8582.activities[0],
+            current_net: -4_999,
+          }],
+        },
+      }),
+    Error,
+    "does not match Form 8582 activity",
+  );
 });
 
 Deno.test("Schedule E PDF maps one rental to the official 2025 Part I property A widgets", () => {

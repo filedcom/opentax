@@ -719,6 +719,26 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-trust-k1-box5-schedule-e",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(30_000, 3_000, "Example Employer", "12-3456789")],
+      k1_trust: [{
+        estate_trust_name: "Family Trust",
+        estate_trust_ein: "123456789",
+        source_document_reference: "Synthetic 2025 trust K-1",
+        box5_other_portfolio: 750,
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule1", "schedule_e"],
+    reviewFocus: [
+      "The trust name, EIN, and $750 box 5 income print on Schedule E Part III, page 2",
+      "Schedule E lines 34a, 35, 37, and 41 reconcile to $750 and Schedule 1 line 5",
+      "Form 1040 wages $30,000 and Schedule 1 income $750 enter AGI once",
+    ],
+  },
+  {
     id: "single-reviewed-car-loan-schedule1a",
     inputs: {
       general: {
