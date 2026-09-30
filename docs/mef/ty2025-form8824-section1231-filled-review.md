@@ -20,10 +20,20 @@ pages inspected. The retained snapshot is
 `.state/research/ty2025-filled-pdf-review/2026-09-30-form8824-section1231/filled-return.pdf`
 with SHA-256 `a75bb6d2e6fe9ad20f7c6e0cf4e2fed4ea5088fd728db4d88c563894265e8891`.
 
+A second synthetic return combines this exchange with a business-land
+installment sale. Form 6252 line 26 contributes $10,000 to Form 4797 line 4;
+Form 8824 line 22 contributes $20,000 to line 5; Form 4797 line 7 and Schedule D
+line 11 total $30,000, matching Form 1040 line 7a. One generated gain statement
+remains linked in the MeF bundle. Local full-return XSD passes, and the Form
+4797 page of the nine-page packet was rendered and inspected. The retained
+snapshot is
+`.state/research/ty2025-filled-pdf-review/2026-09-30-form4797-mixed-part1/filled-return.pdf`
+with SHA-256 `c1cb97029aacc5814c45fad8bf43a5da5991b14199562e66e8e79e099a51b701`.
+
 The Form 4797 PDF projector checks line 5 against the linked Form 8824 line 22
 even when called directly. The dates and amounts above are synthetic and do not
 authenticate ownership, property valuation, identification, exchange
 intermediary records, or the filer’s prior-year section 1231 history. This case
 leaves multi-asset exchanges, recapture, related parties, other exchange
-classes, mixed Form 4797 sources, IRS business rules, the agreed final bulk
-batch, and ATS acceptance open.
+classes, other mixed Form 4797 sources, IRS business rules, the agreed final
+bulk batch, and ATS acceptance open.
