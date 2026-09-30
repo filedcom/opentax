@@ -641,8 +641,10 @@ function categoryTotals(
       ? matching.reduce(
         (sum, item) =>
           sum +
-          generalDeductions *
-            fraction(item.foreign_gross_income, worldwideGrossIncome),
+          Math.round(
+            generalDeductions *
+              fraction(item.foreign_gross_income, worldwideGrossIncome),
+          ),
         0,
       )
       : 0;

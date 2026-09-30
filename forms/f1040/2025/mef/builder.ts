@@ -270,6 +270,7 @@ function buildReturnXml(
     attachments.map((item) => [item.fileName, item.description]),
   );
   const initial = buildFragments(pending, {
+    phase: "discovery",
     filer,
     binaryAttachmentFileNames,
     attachmentDescriptionsByFileName,
@@ -302,6 +303,7 @@ function buildReturnXml(
   );
   let form3800Parts: Form3800DocumentParts | undefined;
   const linked = buildFragments(pending, {
+    phase: "final",
     filer,
     binaryAttachmentFileNames,
     attachmentDescriptionsByFileName,

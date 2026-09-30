@@ -1,6 +1,6 @@
 # TY2025 Form 1116 line 1b alternative compensation source
 
-Build-pass checkpoint (2026-09-28; cases written, unrun). The
+Original build-pass checkpoint (2026-09-28; test status superseded below). The
 [2025 Form 1116 instructions](https://www.irs.gov/instructions/i1116) require
 line 1b when an employee has at least $250,000 of worldwide compensation and
 uses an alternative basis to source foreign-service pay. The attachment must
@@ -22,7 +22,7 @@ item retains those facts in the general category. The native line 1b indicator,
 are now built and linked as described below, pending the full batch. The PDF
 maps the line 1b checkbox. A separate bounded one-employer general-category
 projection is now built, with source and return reconciliation described below.
-Source/XML/PDF cases are written; none has run.
+The original source/XML/PDF cases have now run with the affected focused suite below.
 
 The MeF descriptor checks the Form 1116 item against its identified foreign-
 employer source and rejects a missing or conflicting source. This path does not
@@ -38,12 +38,12 @@ excluded-income and eligible-tax reconciliation before attempting an attachment.
 The main native Form 1116 now also requires exactly one nonblank document ID for
 that statement whenever line 1b is active. Previously, a direct build without
 the document map could still emit a line 1b indicator with no linked statement.
-Missing, blank, duplicate and valid-ID cases are written but unrun. Previously,
+Missing, blank, duplicate and valid-ID cases now pass focused checks. Previously,
 a direct statement build could serialize an otherwise valid-looking line 1b
 statement from `form_1116` fields and filer identity alone, even when the
 foreign-employer source was missing or its amounts disagreed. A missing FEC,
 tampered FEC allocation, and tampered Form 1116 line 1a item now have focused
-fail-closed cases written but unrun. The main `IRS1116` descriptor retains its
+fail-closed cases now pass focused checks. The main `IRS1116` descriptor retains its
 existing check through the shared function. This closes a native attachment
 escape; the separate narrow PDF route does not prove full return acceptance.
 
@@ -55,7 +55,7 @@ The native statement's geographical-comparison element now prints those four
 amounts rather than relying on free text. The retained `geographical_comparison`
 and source document reference describe why the alternative basis is more
 accurate. The PDF line 1b projection now also requires the same identified
-foreign-employer source item before checking the box; its cases are unrun.
+foreign-employer source item before checking the box; its focused cases now pass.
 Worldwide employee compensation still needs an owner-attributed W-2 and
 foreign-employer model for the remaining mixed source cases, including non-box-1
 compensation. Direct XML still rejects a missing conversion attachment; a
@@ -91,8 +91,7 @@ foreign-currency tax, Form 1040 lines 1h/1z/9/11/14-16, regular-tax facts, and
 Schedule 3 line 1. It fills box d, line 1b, Part I lines 1a-7, Part II row A's
 other-tax columns (p)/(t), Part III lines 9-24, and Part IV line 28 and totals.
 It rejects other income, deductions, exclusions, carryovers, mixed employers or
-categories, and missing conversion facts. Cases are written but unrun; no
-completed PDF, field appearance, or IRS acceptance is claimed. The broader
+categories, and missing conversion facts. Focused cases now pass; the completed graph PDF and local XSD result are recorded below, while IRS acceptance remains open. The broader
 general-category PDF path remains fail-closed.
 
 ## Paid-tax currency source contract
@@ -108,8 +107,7 @@ tax-record reference. The source node checks the cent-rounded conversion against
 its U.S.-dollar tax, requires no Form 2555 exclusion in this slice, and carries
 the currency facts and wage-record reference to the general Form 1116 item. The
 native Form 1116 and alternative-basis statement share a check of those same
-numeric, date, tax-kind and source facts. Focused source and mismatch cases are
-written but unrun.
+numeric, date, tax-kind and source facts. Focused source and mismatch cases now pass.
 
 The TY2025 v5.4 `IRS1116.xsd` explicitly permits a `BinaryAttachment` reference
 at the Form 1116 document root. The bounded source path now builds a readable
@@ -120,6 +118,29 @@ binary document is linked to the general-category native `IRS1116` root. Neither
 the alternative-basis statement's allocation-computation field nor its
 100-character geographical comparison is repurposed for the rate explanation.
 Direct XML export without the attachment and mismatched source/attachment links
-remain closed. The PDF generator and positive/negative link cases are written
-but unrun; full-batch XSD, rendered appearance and ATS acceptance are still
-required before claiming a filed path.
+remain closed. The PDF generator and positive/negative link cases now pass. The local full-return XSD and rendered positive packet are recorded below; full-batch, business-rule, and ATS acceptance remain open.
+
+## Positive graph checkpoint (2026-09-30)
+
+A real graph fixture now reaches a positive Form 1116 from one identified
+foreign employer: $300,000 total compensation, $140,000 alternatively sourced
+to Germany, and $2,000 paid tax converted from EUR 1,600. The filed $15,750
+standard deduction is entered on Part I line 3a and apportioned at the
+140,000/300,000 five-decimal ratio; line 3g is $7,350 and line 7 is $132,650.
+The calculator now rounds that allocated deduction to whole dollars before
+producing the native document and PDF. Form 1040 lines 1h/1z, 12a, 15 and 16,
+Form 1116 Parts I-IV, and Schedule 3 line 1 reconcile to a $2,000 credit.
+The bundle links the alternative-basis native statement and a PDF explaining
+the paid-tax currency conversion. A document-discovery phase validates the
+attachment file and description before final IDs exist; the final phase
+requires and links the actual IDs. Direct export without the attachment still
+rejects.
+
+The complete MeF return passes local TY2025 v5.4 `Return1040.xsd`. The six-page
+return packet builds; Form 1040 page 2, Schedule 3, both Form 1116 pages, and
+the last Form 8960 page were visually inspected. The retained local review PDF
+is `.state/research/ty2025-form1116-alternative-compensation-full.pdf`
+(SHA-256 `9b8faca15ba536db7a72331dface39015334548fa187c4be2d5f4c9c95612fa7`).
+The affected focused run passed 110/110 tests. Uploaded wage and tax-record
+bytes, mixed employers and deductions, other categories, wider carryovers,
+IRS business rules, ATS acceptance, and the final bulk regression remain open.

@@ -115,6 +115,7 @@ export function alternativeCompensationStatementId(
     }
     return undefined;
   }
+  if (context?.phase === "discovery") return undefined;
   if (ids.length !== 1 || !ids[0]?.trim()) {
     throw new Error(
       "Form 1116 line 1b needs one linked alternative compensation statement",

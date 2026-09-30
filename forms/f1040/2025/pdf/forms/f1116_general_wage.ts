@@ -25,7 +25,7 @@ function ratio(numerator: number, denominator: number): number {
     100_000;
 }
 
-/** The one-employer, zero-deduction case with a sourced line 1b election. */
+/** One employer, a sourced line 1b election, and the filed standard deduction. */
 export function projectGeneralWageForm1116Pdf(
   fields: Record<string, unknown>,
   pending: Pending,
@@ -88,11 +88,18 @@ export function projectGeneralWageForm1116Pdf(
   const line18 = fields.total_income;
   const line20 = fields.us_tax_before_credits;
   const worldwideGross = fields.worldwide_gross_income;
+  const standardDeduction = fields.standard_or_itemized_deduction;
+  const foreignDeduction = safePositiveInteger(standardDeduction)
+    ? Math.round(standardDeduction * ratio(foreign, gross))
+    : 0;
+  const foreignTaxableIncome = foreign - foreignDeduction;
   if (
     !safePositiveInteger(gross) || !safePositiveInteger(foreign) ||
     !safePositiveInteger(tax) || !safePositiveInteger(line18) ||
     !safePositiveInteger(line20) || !safePositiveInteger(worldwideGross) ||
-    foreign > gross || gross !== line18 || gross !== worldwideGross ||
+    !safePositiveInteger(standardDeduction) ||
+    foreign > gross || gross - standardDeduction !== line18 ||
+    gross !== worldwideGross || foreignTaxableIncome <= 0 ||
     alternative.compensation_item_total_usd !== gross ||
     alternative.alternative_foreign_source_usd !== foreign ||
     summary.foreignGrossIncome !== foreign ||
@@ -100,16 +107,15 @@ export function projectGeneralWageForm1116Pdf(
     summary.foreignTaxPaid !== tax ||
     (summary.foreignTaxReduction ?? 0) !== 0 ||
     item.schedule_k3_line12_reduction !== undefined ||
-    summary.foreignTaxableIncome !== foreign ||
+    summary.foreignTaxableIncome !== foreignTaxableIncome ||
     summary.directlyAllocableDeductions !== 0 ||
     summary.explicitlyApportionedDeductions !== 0 ||
-    summary.automaticallyApportionedDeductions !== 0 ||
+    summary.automaticallyApportionedDeductions !== foreignDeduction ||
     (summary.vehicleInterestByCountry ?? []).some((row) => row.amount !== 0) ||
     (item.directly_allocable_deductions ?? 0) !== 0 ||
     (item.apportioned_deductions ?? 0) !== 0 ||
     (item.excluded_income ?? 0) !== 0 ||
-    !zero(fields.general_deductions) ||
-    !zero(fields.standard_or_itemized_deduction) ||
+    fields.general_deductions !== standardDeduction ||
     !zero(fields.other_deductions) ||
     !zero(summary.priorYearCarryover) ||
     !zero(summary.usedPriorYearCarryover) ||
@@ -119,7 +125,7 @@ export function projectGeneralWageForm1116Pdf(
     !zero(wage.foreign_earned_income_exclusion_usd)
   ) {
     throw new Error(
-      "Form 1116 general wage PDF differs from the reviewed one-employer, zero-deduction, zero-carryover calculation",
+      "Form 1116 general wage PDF differs from the reviewed one-employer, standard-deduction, zero-carryover calculation",
     );
   }
   const preferences = fields.regular_tax_preference_facts;
@@ -187,18 +193,19 @@ export function projectGeneralWageForm1116Pdf(
     f1040.line9_total_income !== gross ||
     !zero(f1040.line10_adjustments) ||
     f1040.line11_agi !== gross ||
-    f1040.line14_deductions_qbi_total !== 0 ||
+    f1040.line12a_standard_deduction !== standardDeduction ||
+    !zero(f1040.line12e_itemized_deductions) ||
+    f1040.line14_deductions_qbi_total !== standardDeduction ||
     f1040.line15_taxable_income !== line18 ||
     f1040.line16_income_tax !== line20 ||
-    pending.schedule1a !== undefined ||
     otherIncomeLines.some((key) => !zero(f1040[key])) ||
     schedule2TaxKeys.some((key) => !zero(schedule2[key]))
   ) {
     throw new Error(
-      "Form 1116 general wage PDF needs only the identified employer on Form 1040 lines 1h and 1z, with reconciled tax and no other income or deductions",
+      "Form 1116 general wage PDF needs only the identified employer on Form 1040 lines 1h and 1z, with the filed standard deduction and reconciled tax",
     );
   }
-  const line19 = ratio(foreign, line18);
+  const line19 = ratio(foreignTaxableIncome, line18);
   const line21 = Math.round(line20 * line19);
   const line24 = Math.min(tax, line21);
   const line33 = Math.min(line20, line24);
@@ -220,19 +227,19 @@ export function projectGeneralWageForm1116Pdf(
     pdf_line1a_a: foreign,
     pdf_line1a_total: foreign,
     pdf_line2_a: 0,
-    pdf_line3a_a: 0,
+    pdf_line3a_a: standardDeduction,
     pdf_line3b_a: 0,
-    pdf_line3c_a: 0,
+    pdf_line3c_a: standardDeduction,
     pdf_line3d_a: foreign,
     pdf_line3e_a: gross,
     pdf_line3f_a: ratio(foreign, gross).toFixed(5),
-    pdf_line3g_a: 0,
+    pdf_line3g_a: foreignDeduction,
     pdf_line4a_a: 0,
     pdf_line4b_a: 0,
     pdf_line5_a: 0,
-    pdf_line6_a: 0,
-    pdf_line6_total: 0,
-    pdf_line7: foreign,
+    pdf_line6_a: foreignDeduction,
+    pdf_line6_total: foreignDeduction,
+    pdf_line7: foreignTaxableIncome,
     pdf_tax_credit_method: ForeignTaxCreditMethod.Paid,
     pdf_part2_date_a: `${date.slice(5, 7)}/${date.slice(8, 10)}/${
       date.slice(0, 4)
@@ -247,9 +254,9 @@ export function projectGeneralWageForm1116Pdf(
     pdf_line12: 0,
     pdf_line13: 0,
     pdf_line14: tax,
-    pdf_line15: foreign,
+    pdf_line15: foreignTaxableIncome,
     pdf_line16: 0,
-    pdf_line17: foreign,
+    pdf_line17: foreignTaxableIncome,
     pdf_line19: line19.toFixed(5),
     pdf_line21: line21,
     pdf_line22: 0,

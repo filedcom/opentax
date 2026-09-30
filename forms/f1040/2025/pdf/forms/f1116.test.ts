@@ -29,19 +29,27 @@ Deno.test("Form 1116 PDF accepts context-only Schedule 1-A on the sourced intere
     ...fixture.inputs,
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
-  assertEquals(result.pending.schedule1a?.senior_zero_exclusions_review, undefined);
+  assertEquals(
+    result.pending.schedule1a?.senior_zero_exclusions_review,
+    undefined,
+  );
   const projected = form1116Pdf.projectFields?.(
     result.pending.form_1116,
     result.pending,
   );
   assertEquals(projected?.pdf_line24, 3_875);
-  assertThrows(() => form1116Pdf.projectFields?.(
-    result.pending.form_1116,
-    {
-      ...result.pending,
-      f1040: { ...result.pending.f1040, line13b_additional_deductions: 1 },
-    },
-  ), Error, "only identified foreign interest");
+  assertThrows(
+    () =>
+      form1116Pdf.projectFields?.(
+        result.pending.form_1116,
+        {
+          ...result.pending,
+          f1040: { ...result.pending.f1040, line13b_additional_deductions: 1 },
+        },
+      ),
+    Error,
+    "only identified foreign interest",
+  );
 });
 
 Deno.test("Form 1116 PDF rejects disclosed redetermination without Schedule C", () => {
@@ -177,7 +185,7 @@ Deno.test("Form 1116 PDF line 1b requires the same identified compensation sourc
 });
 
 Deno.test("Form 1116 PDF projects reviewed one-employer general wages", () => {
-  const usTax = ordinaryTax2025(300_000, FilingStatus.Single);
+  const usTax = ordinaryTax2025(284_250, FilingStatus.Single);
   const alternative = {
     specific_compensation_description: "Salary",
     alternative_allocation_basis: "Client locations",
@@ -212,10 +220,12 @@ Deno.test("Form 1116 PDF projects reviewed one-employer general wages", () => {
       alternative_compensation_sourcing: alternative,
     }],
     worldwide_gross_income: 300_000,
-    worldwide_taxable_income: 300_000,
+    worldwide_taxable_income: 284_250,
+    general_deductions: 15_750,
+    standard_or_itemized_deduction: 15_750,
     us_tax_before_credits: usTax,
     regular_tax_preference_facts: {
-      taxable_income: 300_000,
+      taxable_income: 284_250,
       qualified_dividends: 0,
       net_capital_gain: 0,
       filing_status: FilingStatus.Single,
@@ -255,8 +265,9 @@ Deno.test("Form 1116 PDF projects reviewed one-employer general wages", () => {
       line9_total_income: 300_000,
       line10_adjustments: 0,
       line11_agi: 300_000,
-      line14_deductions_qbi_total: 0,
-      line15_taxable_income: 300_000,
+      line12a_standard_deduction: 15_750,
+      line14_deductions_qbi_total: 15_750,
+      line15_taxable_income: 284_250,
       line16_income_tax: usTax,
     },
     schedule3: { line1_foreign_tax_credit: 2_000 },
@@ -266,6 +277,9 @@ Deno.test("Form 1116 PDF projects reviewed one-employer general wages", () => {
   assertEquals(projected.alternative_compensation_source, true);
   assertEquals(projected.pdf_line1a_a, 140_000);
   assertEquals(projected.pdf_line3e_a, 300_000);
+  assertEquals(projected.pdf_line3a_a, 15_750);
+  assertEquals(projected.pdf_line3g_a, 7_350);
+  assertEquals(projected.pdf_line7, 132_650);
   assertEquals(projected.pdf_part2_foreign_other_a, 1_600);
   assertEquals(projected.pdf_part2_us_other_a, 2_000);
   assertEquals(projected.pdf_line19, "0.46667");
@@ -293,10 +307,10 @@ Deno.test("Form 1116 PDF projects reviewed one-employer general wages", () => {
     () =>
       form1116Pdf.projectFields?.(fields, {
         ...pending,
-        f1040: { ...pending.f1040, line14_deductions_qbi_total: 15_750 },
+        f1040: { ...pending.f1040, line14_deductions_qbi_total: 15_749 },
       }),
     Error,
-    "no other income or deductions",
+    "filed standard deduction",
   );
   assertThrows(
     () =>
