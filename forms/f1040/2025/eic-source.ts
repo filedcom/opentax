@@ -10,6 +10,11 @@ import {
 } from "../nodes/intermediate/forms/eitc/index.ts";
 import { inputSchema as f8862InputSchema } from "../nodes/inputs/f8862/index.ts";
 import { form4797EicCapitalExclusion } from "../nodes/intermediate/forms/form4797/index.ts";
+import {
+  calculateForm8814,
+  form8814EicLine4,
+  itemSchema as f8814ItemSchema,
+} from "../nodes/inputs/f8814/index.ts";
 
 /** Check a positive Form 1040 EIC against the reviewed source before export. */
 export function assertEicSource(
@@ -52,9 +57,37 @@ export function assertEicSource(
     0,
     filedAmount("line7_capital_gain") + filedAmount("line7a_cap_gain_distrib"),
   );
+  const form8814 = pending?.form8814 as Record<string, unknown> | undefined;
+  const childLines = form8814?.items as unknown[] | undefined;
+  if (form8814 !== undefined && !Array.isArray(childLines)) {
+    throw new Error("Form 1040 EIC needs calculated Form 8814 child sources");
+  }
+  let childTaxExemptInterest = 0;
+  let childLine4 = 0;
+  let childSchedule1Income = 0;
+  for (const rawLine of childLines ?? []) {
+    const item = f8814ItemSchema.parse(
+      (rawLine as Record<string, unknown>).item,
+    );
+    const line = calculateForm8814(item);
+    if ((rawLine as Record<string, unknown>).line12 !== line.line12) {
+      throw new Error(
+        "Form 1040 EIC Form 8814 line 12 differs from its child source",
+      );
+    }
+    childTaxExemptInterest += item.tax_exempt_interest ?? 0;
+    childLine4 += form8814EicLine4(line);
+    childSchedule1Income += line.line12;
+  }
+  const schedule1 = pending?.schedule1 as Record<string, unknown> | undefined;
+  if ((schedule1?.line8z_form8814 ?? 0) !== childSchedule1Income) {
+    throw new Error("Form 1040 EIC Form 8814 income differs from Schedule 1");
+  }
   const investmentIncomeFloor = Math.max(0, filedAmount("line2a_tax_exempt")) +
+    childTaxExemptInterest +
     Math.max(0, filedAmount("line2b_taxable_interest")) +
     Math.max(0, filedAmount("line3b_ordinary_dividends")) +
+    childLine4 +
     Math.max(0, capitalGain - form4797Exclusion);
   if (
     !("investment_income_floor" in result) ||

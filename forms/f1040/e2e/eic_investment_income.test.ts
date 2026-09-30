@@ -112,6 +112,32 @@ function runCapital(
   }, { taxYear: 2025, formType: "f1040" });
 }
 
+function runForm8814(
+  childTaxExemptInterest: number,
+  childInterest: number,
+  alaskaPfd = 0,
+) {
+  return execute(plan, registry, {
+    general,
+    w2: [w2],
+    f8814: [{
+      child_name: "Jamie Example",
+      child_name_control: "EXAM",
+      child_ssn: "987654321",
+      child_age_eligible: true,
+      child_required_to_file: true,
+      child_income_only_permitted_types: true,
+      child_no_joint_return: true,
+      child_no_estimated_payments: true,
+      child_no_withholding: true,
+      parent_eligible_to_elect: true,
+      interest_income: childInterest,
+      tax_exempt_interest: childTaxExemptInterest,
+      alaska_pfd: alaskaPfd,
+    }],
+  }, { taxYear: 2025, formType: "f1040" });
+}
+
 Deno.test("EIC investment limit follows filed interest and dividends through the full graph", async () => {
   const atLimit = run(11_950);
   assertEquals(atLimit.diagnostics, []);
@@ -241,6 +267,82 @@ Deno.test("EIC investment limit includes capital distributions but subtracts For
   );
   assertThrows(
     () => irs1040Pdf.projectFields?.(businessGain.pending.f1040, changedSource),
+    Error,
+    "investment income differs",
+  );
+});
+
+Deno.test("EIC investment limit includes Form 8814 tax-exempt interest and line 12 after Alaska adjustment", async () => {
+  const atLimit = runForm8814(3_000, 11_650);
+  assertEquals(atLimit.diagnostics, []);
+  const atLimitChild = (atLimit.pending.form8814.items as Array<{
+    line12: number;
+    item: Record<string, unknown>;
+  }>)[0];
+  assertEquals(atLimitChild.line12, 8_950);
+  assertEquals(atLimit.pending.eitc.investment_income_floor, 11_950);
+  const credit = atLimit.pending.f1040.line27_eitc;
+  if (typeof credit !== "number" || credit <= 0) {
+    throw new Error("Expected positive EIC at the Form 8814 investment limit");
+  }
+  const filer = extractFilerIdentity(atLimit.pending.f1040);
+  const xml = buildMefXml(buildPending(atLimit.pending), filer);
+  const xsd = new URL(
+    "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    import.meta.url,
+  ).pathname;
+  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(xmlPath, xml);
+    const validation = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsd, xmlPath],
+      stderr: "piped",
+    }).output();
+    assertEquals(
+      validation.code,
+      0,
+      new TextDecoder().decode(validation.stderr),
+    );
+  } finally {
+    await Deno.remove(xmlPath);
+  }
+
+  const overLimit = runForm8814(3_001, 11_650);
+  assertEquals(overLimit.diagnostics, []);
+  assertEquals(overLimit.pending.eitc.investment_income_floor, 11_951);
+  assertEquals(overLimit.pending.f1040.line27_eitc, undefined);
+
+  const alaska = runForm8814(5_159, 9_000, 2_000);
+  assertEquals(alaska.diagnostics, []);
+  assertEquals(
+    (alaska.pending.form8814.items as Array<{ line12: number }>)[0].line12,
+    8_300,
+  );
+  assertEquals(alaska.pending.eitc.investment_income_floor, 11_950);
+  const alaskaCredit = alaska.pending.f1040.line27_eitc;
+  if (typeof alaskaCredit !== "number" || alaskaCredit <= 0) {
+    throw new Error("Expected EIC after excluding the Alaska PFD share");
+  }
+  const tampered = {
+    ...atLimit.pending,
+    form8814: {
+      ...atLimit.pending.form8814,
+      items: [{
+        ...atLimitChild,
+        item: {
+          ...atLimitChild.item,
+          tax_exempt_interest: 3_001,
+        },
+      }],
+    },
+  };
+  assertThrows(
+    () => buildMefXml(buildPending(tampered), filer),
+    Error,
+    "investment income differs",
+  );
+  assertThrows(
+    () => irs1040Pdf.projectFields?.(atLimit.pending.f1040, tampered),
     Error,
     "investment income differs",
   );

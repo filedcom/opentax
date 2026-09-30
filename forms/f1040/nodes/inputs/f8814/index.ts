@@ -145,6 +145,24 @@ export function calculateForm8814(item: F8814Item): Form8814Lines {
   };
 }
 
+/** Pub. 596 Worksheet 1 line 4, using Worksheet 2 for an Alaska PFD. */
+export function form8814EicLine4(line: Form8814Lines): number {
+  const alaskaPfd = line.item.alaska_pfd ?? 0;
+  if (alaskaPfd === 0) return line.line12;
+  const nonqualifiedInterestAndDividends = (line.item.interest_income ?? 0) +
+    line.line2a -
+    (line.item.qualified_dividends ?? 0);
+  if (nonqualifiedInterestAndDividends <= 0) {
+    throw new Error("Form 8814 Alaska PFD worksheet needs positive income");
+  }
+  return Math.max(
+    0,
+    line.line12 - Math.round(
+      line.line12 * alaskaPfd / nonqualifiedInterestAndDividends,
+    ),
+  );
+}
+
 class F8814Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8814";
   readonly inputSchema = inputSchema;
@@ -181,6 +199,10 @@ class F8814Node extends TaxNode<typeof inputSchema> {
     const line12 = sum((line) => line.line12);
     const line15 = sum((line) => line.line15);
     const line12InvestmentIncome = sum((line) => line.line12InvestmentIncome);
+    const eicTaxExemptInterest = sum((line) =>
+      line.item.tax_exempt_interest ?? 0
+    );
+    const eicLine4 = sum(form8814EicLine4);
     const childHadForeignAccount = lines.some((line) =>
       line.item.child_had_foreign_account === true
     );
@@ -189,6 +211,13 @@ class F8814Node extends TaxNode<typeof inputSchema> {
     );
     const outputs: NodeOutput[] = [
       { nodeType: "form8814", fields: { items: lines } },
+      {
+        nodeType: agi_aggregator.nodeType,
+        fields: {
+          form8814_eic_tax_exempt_interest: eicTaxExemptInterest,
+          form8814_eic_line4: eicLine4,
+        },
+      },
       {
         nodeType: form8962.nodeType,
         fields: {

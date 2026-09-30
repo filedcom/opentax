@@ -106,6 +106,8 @@ export const inputSchema = z.object({
   line7a_cap_gain_distrib: z.number().nonnegative().optional(),
   // Form 4797 §1231 gain embedded in Form 1040 line 7a; Worksheet 1 removes it.
   form4797_1231_capital_gain: z.number().nonnegative().optional(),
+  form8814_eic_tax_exempt_interest: z.number().nonnegative().optional(),
+  form8814_eic_line4: z.number().nonnegative().optional(),
 
   // ── Schedule 1 Part I — Additional income ─────────────────────────────────
   // Line 1 — State and local income tax refunds (Form 1099-G)
@@ -646,12 +648,14 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
     }
     const agi = computeAgi(input, cfg);
     const totalIncome = grossIncome(input, cfg) - exclusions(input);
-    // Pub. 596 Worksheet 1 lines 1–3 and 7. Business §1231 gain on line 7a
+    // Pub. 596 Worksheet 1 lines 1–4 and 7. Business §1231 gain on line 7a
     // is removed using Form 4797 line 7 or 9, as the worksheet directs.
     const eicInvestmentIncomeFloor =
       Math.max(0, input.line2b_taxable_interest ?? 0) +
       (input.tax_exempt_interest ?? 0) +
+      (input.form8814_eic_tax_exempt_interest ?? 0) +
       Math.max(0, sumField(input.line3b_ordinary_dividends)) +
+      (input.form8814_eic_line4 ?? 0) +
       Math.max(
         0,
         Math.max(
