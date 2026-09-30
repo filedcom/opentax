@@ -7,6 +7,7 @@ import {
   assertElectedSectionBReconciled,
   assertOrdinarySectionAReconciled,
   hasSectionAShortTermReduction,
+  isSingleSectionANeedyVehicleUnreduced,
   isSingleSectionAVehicleSale,
 } from "./f8283_election.ts";
 import { inputSchema as form8283InputSchema } from "../../../nodes/inputs/f8283/index.ts";
@@ -126,7 +127,8 @@ function buildIRS1040ScheduleA(
     const form = form8283InputSchema.parse(context.pending.f8283);
     if (
       isSingleSectionAVehicleSale(form) ||
-      hasSectionAShortTermReduction(form)
+      hasSectionAShortTermReduction(form) ||
+      isSingleSectionANeedyVehicleUnreduced(form)
     ) {
       assertOrdinarySectionAReconciled(context, fields);
     }

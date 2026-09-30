@@ -37,6 +37,63 @@ export function isSingleSectionAVehicleSale(form: F8283Input): boolean {
     Math.round((item.fmv - item.deduction_claimed) * 100) > 0;
 }
 
+export function isSingleSectionANeedyVehicleUnreduced(
+  form: F8283Input,
+): boolean {
+  const sectionA = form.section_a_items ?? [];
+  const item = sectionA[0];
+  return sectionA.length === 1 && (form.section_b_items ?? []).length === 0 &&
+    item.is_vehicle === true &&
+    item.vehicle_needy_transfer_acknowledgment !== undefined &&
+    item.fmv !== undefined && item.deduction_claimed === item.fmv;
+}
+
+export function assertNeedyVehicleUnreducedSource(form: F8283Input): void {
+  if (!isSingleSectionANeedyVehicleUnreduced(form)) {
+    throw new Error(
+      "Form 8283 needy-transfer Section A route needs one vehicle claimed at original FMV",
+    );
+  }
+  const item = form.section_a_items![0];
+  const acknowledgment = item.vehicle_needy_transfer_acknowledgment!;
+  const address = item.donee_organization_us_address;
+  const certifiedAddress = acknowledgment.donee_us_address;
+  const description = item.property_description?.toLowerCase() ?? "";
+  const compactDescription = description.replace(/[,\s]/g, "");
+  if (
+    !hasCompleteSectionAColumns(item) ||
+    !item.vehicle_vin?.trim() ||
+    !item.vehicle_acknowledgment_attachment_file_name?.trim() ||
+    !item.date_acquired || !item.date_contributed?.startsWith("2025-") ||
+    item.date_acquired > item.date_contributed ||
+    item.donor_acquisition_description?.trim().toLowerCase() !== "purchase" ||
+    item.fmv === undefined || item.fmv <= 500 || item.fmv > 5_000 ||
+    item.cost_or_adjusted_basis === undefined ||
+    item.cost_or_adjusted_basis < item.fmv ||
+    item.is_capital_gain_property !== false ||
+    item.charitable_limit_category !== "noncash_50" ||
+    item.short_term_ordinary_income_reduction_confirmed === true ||
+    item.capital_gain_reduction_election_confirmed === true ||
+    !description.includes(String(acknowledgment.vehicle_year)) ||
+    !description.includes(acknowledgment.vehicle_make.toLowerCase()) ||
+    !description.includes(acknowledgment.vehicle_model.toLowerCase()) ||
+    !description.includes(acknowledgment.vehicle_condition.toLowerCase()) ||
+    !compactDescription.includes(String(acknowledgment.odometer_miles)) ||
+    !item.donee_organization_name?.trim() || !address ||
+    item.donee_organization_name.trim() !== acknowledgment.donee_name.trim() ||
+    address.line1.trim() !== certifiedAddress.line1.trim() ||
+    (address.line2?.trim() ?? "") !==
+      (certifiedAddress.line2?.trim() ?? "") ||
+    address.city.trim() !== certifiedAddress.city.trim() ||
+    address.state.trim() !== certifiedAddress.state.trim() ||
+    address.zip.trim() !== certifiedAddress.zip.trim()
+  ) {
+    throw new Error(
+      "Form 8283 needy-transfer Section A route needs complete purchased vehicle and matching donee facts",
+    );
+  }
+}
+
 export function hasSectionAShortTermReduction(form: F8283Input): boolean {
   const sectionA = form.section_a_items ?? [];
   return sectionA.length > 0 && (form.section_b_items ?? []).length === 0 &&

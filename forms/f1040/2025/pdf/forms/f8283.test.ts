@@ -116,6 +116,36 @@ const soldVehicle = {
   },
 };
 
+const needyVehicle = {
+  ...soldVehicle,
+  fmv: 4_000,
+  deduction_claimed: 4_000,
+  cost_or_adjusted_basis: 5_000,
+  vehicle_sale_acknowledgment: undefined,
+  vehicle_needy_transfer_acknowledgment: {
+    copy_received_from_donee: true as const,
+    donee_certified: true as const,
+    donee_name: "City Charity",
+    donee_ein: "987654321",
+    donee_us_address: {
+      line1: "1 Main St",
+      city: "Austin",
+      state: "TX",
+      zip: "78701",
+    },
+    acknowledgment_furnished_date: "2025-06-20",
+    vehicle_to_be_transferred_to_needy_confirmed: true as const,
+    transfer_for_significantly_below_fmv_confirmed: true as const,
+    direct_charitable_transportation_purpose_confirmed: true as const,
+    vehicle_year: 2020,
+    vehicle_make: "Honda",
+    vehicle_model: "Civic",
+    vehicle_condition: "Good condition",
+    odometer_miles: 60_000,
+    goods_or_services_received: false as const,
+  },
+};
+
 function soldVehiclePending() {
   const form = { section_a_items: [soldVehicle] };
   const items = f8283.compute(
@@ -578,7 +608,93 @@ Deno.test("Form 8283 PDF prints one reconciled vehicle capped at certified sale 
         pending,
       ),
     Error,
-    "only one reconciled Section A vehicle",
+    "only one reconciled certified-sale or unreduced needy-transfer",
+  );
+});
+
+Deno.test("Form 8283 PDF prints one unreduced needy-transfer vehicle with matched certification", () => {
+  const form = { section_a_items: [needyVehicle] };
+  const pending = currentSectionAPending(form);
+  const [instance] = form8283Pdf.instances?.(form, filer, pending) ?? [];
+  assertEquals(instance?.row1_vehicle, true);
+  assertEquals(instance?.row1_vin, needyVehicle.vehicle_vin);
+  assertEquals(instance?.row1_claim, 4_000);
+  assertEquals(instance?.row1_basis, 5_000);
+  assertEquals(instance?.reduction_statements, []);
+  const native = form8283.build(pending.f8283, {
+    pending,
+    attachmentDescriptionsByFileName: {
+      "Form1098C-Civic.pdf": "Form1098C needy transfer certification",
+    },
+  })[0];
+  assertStringIncludes(native, "<FairMarketValueAmt>4000</FairMarketValueAmt>");
+  assertThrows(
+    () =>
+      form8283Pdf.instances?.(
+        {
+          section_a_items: [{
+            ...needyVehicle,
+            donee_organization_name: "Different Charity",
+          }],
+        },
+        filer,
+        pending,
+      ),
+    Error,
+    "matching donee facts",
+  );
+  const mismatchedDonee = {
+    section_a_items: [{
+      ...needyVehicle,
+      donee_organization_name: "Different Charity",
+    }],
+  };
+  assertThrows(
+    () =>
+      form8283.build(mismatchedDonee, {
+        pending: { ...pending, f8283: mismatchedDonee },
+      }),
+    Error,
+    "matching donee facts",
+  );
+  const mismatchedVehicle = {
+    section_a_items: [{
+      ...needyVehicle,
+      property_description: "2019 Honda Civic, good condition, 60,000 miles",
+    }],
+  };
+  assertThrows(
+    () =>
+      form8283.build(mismatchedVehicle, {
+        pending: { ...pending, f8283: mismatchedVehicle },
+      }),
+    Error,
+    "matching donee facts",
+  );
+  const higherFmv = {
+    section_a_items: [{
+      ...needyVehicle,
+      fmv: 5_100,
+      deduction_claimed: 5_100,
+      cost_or_adjusted_basis: 6_000,
+    }],
+  };
+  assertThrows(
+    () =>
+      form8283.build(higherFmv, {
+        pending: { ...pending, f8283: higherFmv },
+      }),
+    Error,
+    "needs Section B",
+  );
+  assertThrows(
+    () =>
+      scheduleAMef.build({
+        ...pending.schedule_a,
+        line_12_noncash_contributions: 3_999,
+      }, { pending }),
+    Error,
+    "recomputed Schedule A or Form 1040",
   );
 });
 

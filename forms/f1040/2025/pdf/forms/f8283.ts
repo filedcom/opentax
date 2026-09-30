@@ -16,7 +16,9 @@ import {
 import {
   assertElectedSectionAReconciled,
   assertElectedSectionBReconciled,
+  assertNeedyVehicleUnreducedSource,
   assertOrdinarySectionAReconciled,
+  isSingleSectionANeedyVehicleUnreduced,
   isSingleSectionAVehicleSale,
 } from "../../mef/forms/f8283_election.ts";
 import {
@@ -397,9 +399,13 @@ export const form8283Pdf: PdfFormDescriptor = {
     }
     if (sectionA.length === 0) return [];
     const soldVehicle = isSingleSectionAVehicleSale(source);
-    if (sectionA.some((item) => item.is_vehicle === true) && !soldVehicle) {
+    const needyVehicle = isSingleSectionANeedyVehicleUnreduced(source);
+    if (
+      sectionA.some((item) => item.is_vehicle === true) &&
+      !soldVehicle && !needyVehicle
+    ) {
       throw new Error(
-        "Form 8283 PDF supports only one reconciled Section A vehicle limited to certified sale proceeds",
+        "Form 8283 PDF supports only one reconciled certified-sale or unreduced needy-transfer Section A vehicle",
       );
     }
     const elected = sectionA.some((item) =>
@@ -411,21 +417,23 @@ export const form8283Pdf: PdfFormDescriptor = {
     );
     if (
       !elected &&
-      !shortTermReduction && !soldVehicle && sectionA.length !== 1
+      !shortTermReduction && !soldVehicle && !needyVehicle &&
+      sectionA.length !== 1
     ) {
       throw new Error(
         "Form 8283 PDF needs a reconciled Section A election, sourced short-term reduction, or one ordinary gift",
       );
     }
     if (elected) assertElectedSectionAReconciled({ pending: allPending });
-    if (!elected && !shortTermReduction && !soldVehicle) {
+    if (!elected && !shortTermReduction && !soldVehicle && !needyVehicle) {
       assertUnreducedSectionACompanion(sectionA[0]);
     }
     if (soldVehicle) {
       assertVehicleSaleReductionSource(sectionA[0]);
     }
+    if (needyVehicle) assertNeedyVehicleUnreducedSource(source);
     for (const item of sectionA) {
-      if (soldVehicle) continue;
+      if (soldVehicle || needyVehicle) continue;
       if (!elected && !needsFmvReductionStatement(item)) {
         assertUnreducedSectionACompanion(item);
       } else {

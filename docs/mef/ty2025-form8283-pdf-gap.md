@@ -98,6 +98,24 @@ now require the same finalized current-gift inventory and itemized amount.
 See the [reduction review](ty2025-form8283-fmv-reduction-gap.md) for its PDF
 digest and remaining source limits.
 
+The 2026-09-30 needy-transfer review adds one purchased, nonappreciated vehicle
+claimed at its $4,000 FMV with a $5,000 basis. The source must contain a
+donee-certified plan to transfer the vehicle to a needy recipient for
+significantly below FMV, a named acknowledgment PDF, matching donee and
+printed vehicle facts, a complete Schedule A inventory, and an itemized Form
+1040. Native Form 8283 and Schedule A enforce that same reconciliation. The
+synthetic full return passes local TY2025 v5.4 XSD and carries the certified
+vehicle statement and acknowledgment reference; it needs no FMV-reduction
+statement. All four filled pages were rendered and visually checked, including
+the vehicle checkbox and VIN, $4,000 Form 8283 claim and Schedule A line 12,
+and $40,000 Form 1040 line 12e. The PDF SHA-256 is
+`4845e349ebb5b8fdf757e87ee9eed4c227773651a94d94731f04ddb6864146c8`.
+The acknowledgment in this fixture is synthetic text, not an authenticated
+donee-issued record. The
+[2025 instructions](https://www.irs.gov/pub/irs-prior/i8283--2025.pdf)
+describe the needy-transfer exception and the contemporaneous acknowledgment
+requirement. Other vehicle exceptions and combinations remain open.
+
 This is not whole-form support. Other Section B property and multi-item routes,
 actual appraiser/donee signatures in the PDF, mixed Section A/B forms, more than
 four Section A rows, other vehicle routes, carryover-year Form 8283 filings, and

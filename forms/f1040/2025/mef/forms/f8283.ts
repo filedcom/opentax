@@ -13,8 +13,10 @@ import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import {
   assertElectedSectionAReconciled,
   assertElectedSectionBReconciled,
+  assertNeedyVehicleUnreducedSource,
   assertOrdinarySectionAReconciled,
   hasSectionAShortTermReduction,
+  isSingleSectionANeedyVehicleUnreduced,
   isSingleSectionAVehicleSale,
 } from "./f8283_election.ts";
 import {
@@ -787,9 +789,13 @@ export const form8283: MefFormDescriptor<
     }
     const sectionA = parsed.section_a_items ?? [];
     const sectionB = parsed.section_b_items ?? [];
+    if (isSingleSectionANeedyVehicleUnreduced(parsed)) {
+      assertNeedyVehicleUnreducedSource(parsed);
+    }
     if (
       isSingleSectionAVehicleSale(parsed) ||
-      hasSectionAShortTermReduction(parsed)
+      hasSectionAShortTermReduction(parsed) ||
+      isSingleSectionANeedyVehicleUnreduced(parsed)
     ) {
       assertOrdinarySectionAReconciled(context);
     }
