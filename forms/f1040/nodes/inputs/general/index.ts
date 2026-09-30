@@ -148,7 +148,14 @@ export const dependentSchema = z.object({
     }).strict(),
   ]).optional(),
   taxpayer_provided_over_half_support: z.boolean().optional(),
-  dependent_on_another_return: z.boolean().optional(), // Disqualifies dependent entirely
+  dependent_on_another_return: z.boolean().optional(), // Excludes the Form 1040 dependent row and CTC/ODC
+  custodial_eitc_release_review: z.object({
+    form8332_source_reference: z.string().trim().min(1),
+    custody_record_reference: z.string().trim().min(1),
+    custodial_parent_for_2025: z.literal(true),
+    valid_2025_release_to_noncustodial_parent: z.literal(true),
+    no_competing_eitc_claim_verified: z.literal(true),
+  }).strict().optional(),
   child_care_months: z.number().int().min(0).max(12).optional(), // For Form 2441
   education_credit_eligible: z.boolean().optional(), // For Form 8863
   ip_pin: z.string().length(6).optional(), // Dependent's IP PIN
@@ -604,7 +611,10 @@ function isEitcQualifyingChild(
 function eitcQualifyingChildren(
   deps: DependentItem[],
 ): Array<DependentItem & { ssn: string }> {
-  return deps.filter((dep) => dep.dependent_on_another_return !== true)
+  return deps.filter((dep) =>
+    dep.dependent_on_another_return !== true ||
+    dep.custodial_eitc_release_review !== undefined
+  )
     .filter(isEitcQualifyingChild);
 }
 
@@ -890,6 +900,16 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
     }
 
     const deps = parsed.dependents ?? [];
+    for (const dep of deps) {
+      if (
+        dep.custodial_eitc_release_review &&
+        dep.dependent_on_another_return !== true
+      ) {
+        throw new Error(
+          "Custodial EIC release review requires a child claimed on the other parent's return",
+        );
+      }
+    }
     const claimedDeps = deps.filter((dep) =>
       dep.dependent_on_another_return !== true
     );

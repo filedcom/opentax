@@ -1213,6 +1213,50 @@ Deno.test("dependent_on_another_return: true → excluded from dependent_count",
   assertEquals(input?.qualifying_child_tax_credit_count, 1);
 });
 
+Deno.test("custodial Form 8332 release keeps child in EIC but off Form 1040 dependent rows", () => {
+  const release = {
+    form8332_source_reference: "signed 2025 Form 8332",
+    custody_record_reference: "2025 nights ledger",
+    custodial_parent_for_2025: true,
+    valid_2025_release_to_noncustodial_parent: true,
+    no_competing_eitc_claim_verified: true,
+  };
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    dependents: [qualifyingChildDep({
+      dependent_on_another_return: true,
+      custodial_eitc_release_review: release,
+    })],
+  });
+  const f1040Input = findOutput(result, "f1040")?.fields as Record<
+    string,
+    unknown
+  >;
+  const eitcInput = findOutput(result, "eitc")?.fields as Record<
+    string,
+    unknown
+  >;
+  assertEquals(f1040Input.dependent_count, 0);
+  assertEquals(f1040Input.qualifying_child_tax_credit_count, 0);
+  assertEquals(eitcInput.qualifying_children, 1);
+  assertEquals(
+    (eitcInput.qualifying_child_details as Array<Record<string, unknown>>)[0]
+      .ssn,
+    "123-45-6789",
+  );
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.Single,
+        dependents: [qualifyingChildDep({
+          custodial_eitc_release_review: release,
+        })],
+      }),
+    Error,
+    "requires a child claimed on the other parent's return",
+  );
+});
+
 // ============================================================
 // 14. ATIN disqualifies CTC
 // ============================================================

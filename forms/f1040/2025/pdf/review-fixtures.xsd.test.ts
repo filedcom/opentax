@@ -31,6 +31,46 @@ for (const fixture of pdfReviewFixtures) {
       });
       assertEquals(result.diagnostics, []);
       const xml = buildMefXml(buildPending(result.pending), fixture.filer);
+      if (fixture.id === "single-w2-custodial-eic-release") {
+        const children = result.pending.eitc.qualifying_child_details as Array<
+          Record<string, unknown>
+        >;
+        assertEquals(result.pending.f1040.dependent_count, 0);
+        assertEquals(result.pending.eitc.qualifying_children, 1);
+        assertEquals(children[0].ssn, "111-22-3334");
+        assertEquals(
+          typeof result.pending.f1040.line27_eitc === "number" &&
+            result.pending.f1040.line27_eitc > 0,
+          true,
+        );
+        assertStringIncludes(xml, "<IRS1040ScheduleEIC documentId=");
+        assertStringIncludes(
+          xml,
+          "<QualifyingChildSSN>111223334</QualifyingChildSSN>",
+        );
+        assertThrows(
+          () =>
+            buildMefXml(
+              buildPending({
+                ...result.pending,
+                general: {
+                  ...result.pending.general,
+                  dependents: [{
+                    ...(
+                      result.pending.general.dependents as Array<
+                        Record<string, unknown>
+                      >
+                    )[0],
+                    custodial_eitc_release_review: undefined,
+                  }],
+                },
+              }),
+              fixture.filer,
+            ),
+          Error,
+          "Schedule EIC child differs from reviewed general source",
+        );
+      }
       if (fixture.id === "single-1099nec-trade-business-tips-schedule1a") {
         const line15 = result.pending.schedule1.line15_se_deduction as number;
         const expected = Math.min(12_000, 10_000 - Math.round(line15));

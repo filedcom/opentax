@@ -8,6 +8,7 @@ import { assertAttachmentCoverage } from "../attachment-coverage.ts";
 import type { MefBundle } from "../mef/builder.ts";
 import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
 import {
+  assertEitcChildSources,
   assertF1040FinalHeader,
   assertKIncomeClassification,
   assertKPersonalSaleSources,
@@ -266,6 +267,7 @@ export async function buildPdfBytes(
   }
   assertKIncomeClassification(normalized);
   if (filer) {
+    assertEitcChildSources(pending, filer);
     assertKReportedErrorSources(normalized, filer);
     assertScheduleCReceiptSourceIdentity(normalized, filer);
     assertKWithholdingSourceIdentity(normalized, filer);

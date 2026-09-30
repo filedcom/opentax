@@ -374,6 +374,72 @@ export function assertF1040SourceIdentity(
   }
 }
 
+export function assertEitcChildSources(
+  pending: Record<string, unknown>,
+  filer: FilerIdentity,
+): void {
+  const eitc = pending.eitc as Record<string, unknown> | undefined;
+  const credit = eitc?.credit_amount;
+  const count = eitc?.qualifying_children;
+  if (typeof credit !== "number" || credit <= 0 || count === 0) return;
+  const general = pending.general as Record<string, unknown> | undefined;
+  const source = general?.dependents;
+  const rows = eitc?.qualifying_child_details;
+  if (
+    !Array.isArray(source) || !Array.isArray(rows) ||
+    typeof count !== "number" || rows.length !== count ||
+    (pending.f1040 as Record<string, unknown> | undefined)?.line27_eitc !==
+      credit ||
+    tin(general?.taxpayer_ssn, "EIC filer") !==
+      tin(filer.primarySSN, "filer")
+  ) {
+    throw new Error("Schedule EIC child source differs from the filed credit");
+  }
+  const seen = new Set<string>();
+  for (const value of rows) {
+    const row = value as Record<string, unknown>;
+    const ssn = tin(row?.ssn, "Schedule EIC child");
+    const matches = source.filter((value) =>
+      value && typeof value === "object" &&
+      tin((value as Record<string, unknown>).ssn, "dependent") === ssn
+    );
+    if (!ssn || seen.has(ssn) || matches.length !== 1) {
+      throw new Error("Schedule EIC child needs one matching general source");
+    }
+    seen.add(ssn);
+    const dep = matches[0] as Record<string, unknown>;
+    const release = dep.custodial_eitc_release_review as
+      | Record<string, unknown>
+      | undefined;
+    if (
+      dep.first_name !== row.first_name ||
+      dep.last_name !== row.last_name ||
+      dep.name_control !== row.name_control ||
+      dep.dob !== row.dob ||
+      dep.irs_relationship_code !== row.irs_relationship_code ||
+      dep.months_in_home !== row.months_in_home ||
+      dep.full_time_student !== row.full_time_student ||
+      dep.disabled !== row.disabled || dep.ip_pin !== row.ip_pin ||
+      dep.ssn_valid_for_employment !== true ||
+      dep.tin_issued_by_due_date !== true ||
+      (dep.dependent_on_another_return === true &&
+        (!release ||
+          typeof release.form8332_source_reference !== "string" ||
+          !release.form8332_source_reference.trim() ||
+          typeof release.custody_record_reference !== "string" ||
+          !release.custody_record_reference.trim() ||
+          release.custodial_parent_for_2025 !== true ||
+          release.valid_2025_release_to_noncustodial_parent !== true ||
+          release.no_competing_eitc_claim_verified !== true)) ||
+      (dep.dependent_on_another_return !== true && release !== undefined)
+    ) {
+      throw new Error(
+        "Schedule EIC child differs from reviewed general source",
+      );
+    }
+  }
+}
+
 export function assertScheduleCReceiptSourceIdentity(
   pending: Record<string, unknown>,
   filer: FilerIdentity,

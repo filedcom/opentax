@@ -232,6 +232,48 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-w2-custodial-eic-release",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        taxpayer_ssn_valid_for_employment: true,
+        taxpayer_tin_issued_by_due_date: true,
+        dependents: [{
+          first_name: "Ada",
+          last_name: "Example",
+          name_control: "EXAM",
+          ssn: "111-22-3334",
+          ssn_valid_for_employment: true,
+          tin_issued_by_due_date: true,
+          dob: "2017-06-15",
+          relationship: "daughter",
+          irs_relationship_code: "DAUGHTER",
+          months_in_home: 12,
+          lived_in_us_over_half_year: true,
+          us_citizen_national_or_resident: true,
+          provided_over_half_own_support: false,
+          filed_joint_return_except_refund_only: false,
+          dependent_on_another_return: true,
+          custodial_eitc_release_review: {
+            form8332_source_reference: "Synthetic signed 2025 Form 8332",
+            custody_record_reference: "Synthetic 2025 custody nights ledger",
+            custodial_parent_for_2025: true,
+            valid_2025_release_to_noncustodial_parent: true,
+            no_competing_eitc_claim_verified: true,
+          },
+        }],
+      },
+      w2: [wage(15_000, 1_500, "Example Employer", "12-3456789")],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "eitc"],
+    reviewFocus: [
+      "Custodial parent has an EIC qualifying child despite releasing the dependency and CTC claim",
+      "Form 1040 lists no dependent or child tax credit while line 27 reports EIC",
+      "Schedule EIC names Ada Example with SSN, birth year, relationship, and 12 months in the home",
+    ],
+  },
+  {
     id: "single-1098-purchase-points",
     inputs: {
       general: singleGeneral,

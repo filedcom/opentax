@@ -797,3 +797,15 @@ against the reviewed processor-fee record. The PDF SHA-256 is
 source/pending JSON, XML, PDF, and the rendered Schedule C page are retained
 at `.state/research/ty2025-filled-pdf-review/2026-09-30-v97/`. Property-sale
 fees, actual settlement bytes, IRS business rules, and ATS remain open.
+
+The `single-w2-custodial-eic-release` source return has a three-page `v98`
+PDF. Form 1040 page 1 has no dependent or child-credit row; page 2 line 27a
+has $4,328 EIC and line 35a has a $5,828 refund including $1,500 W-2
+withholding. The full-size Schedule EIC page identifies Ada Example, SSN
+111223334, birth year 2017, daughter relationship, and 12 months in the U.S.
+home. Native TY2025 v5.4 XSD passes, and removing the Form 8332 release
+review from the source rejects at export. The PDF SHA-256 is
+`a00ee0c6c221cd903213a0835cce8d092ff7bd643a78f2e786dc7b3987fa8d51`;
+source/pending JSON, XML, PDF, and all three rendered pages are retained at
+`.state/research/ty2025-filled-pdf-review/2026-09-30-v98/`. A signed release,
+custody proof, IRS business rules, and ATS remain open.

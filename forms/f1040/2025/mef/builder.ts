@@ -8,6 +8,7 @@ import { assertAttachmentCoverage } from "../attachment-coverage.ts";
 import type { Form3800DocumentParts } from "./forms/f3800_document.ts";
 import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
 import {
+  assertEitcChildSources,
   assertF1040SourceIdentity,
   assertKIncomeClassification,
   assertKPersonalSaleSources,
@@ -220,6 +221,7 @@ function buildReturnXml(
     assertF1040SourceIdentity(pending.f1040, filer);
   }
   assertKIncomeClassification(pending);
+  assertEitcChildSources(pending, filer);
   assertKReportedErrorSources(pending, filer);
   assertScheduleCReceiptSourceIdentity(pending, filer);
   assertKWithholdingSourceIdentity(pending, filer);

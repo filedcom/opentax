@@ -26,8 +26,14 @@ not an approved exclusion or completion of these filing paths.
 
 | Generic deposit       | Current producer files                                                               | Missing source-to-statement decision                                                                                                                     |
 | --------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `line8z_other`        | `f3115`, `f8873`, `f5471` | Confirm the 2025 income line and character for each fact pattern; retain a typed source type, amount and source identity through Schedule 1 and AGI.     |
-| `line8z_other_income` | `k1_s_corp`, `f3115`, `f8915d`, `k1_trust`, `f1099patr`           | Resolve pass-through, disaster and cooperative classifications separately; preserve each signed source row and its filed destination. |
+| `line8z_other`        | `f8873`, `f5471` | Confirm the 2025 income line and character for each fact pattern; retain a typed source type, amount and source identity through Schedule 1 and AGI. |
+| `line8z_other_income` | `f8915d` | Resolve the 2019 disaster-distribution and repayment destination; preserve each signed source row and its filed destination. |
+
+This producer list was rechecked against the current node source on
+2026-09-30. Form 3115 now applies its section 481(a) adjustment through a
+named Schedule C business. The cited S-corporation K-1, trust K-1, and Form
+1099-PATR nodes no longer deposit into either generic line 8z scalar. Their
+remaining source and filing gaps still require separate audit.
 
 The clergy producer no longer emits a negative line 8z amount. The [2025 IRS
 Publication 517](https://www.irs.gov/publications/p517) treats qualifying
