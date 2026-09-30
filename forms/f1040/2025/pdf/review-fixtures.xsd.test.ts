@@ -1226,7 +1226,9 @@ for (const fixture of pdfReviewFixtures) {
       if (
         fixture.id === "single-ira-qualified-plan-rollover" ||
         fixture.id === "single-ira-2026-rollover" ||
-        fixture.id === "single-ira-late-automatic-waiver"
+        fixture.id === "single-ira-late-automatic-waiver" ||
+        fixture.id === "single-ira-late-self-certification" ||
+        fixture.id === "single-ira-late-irs-ruling"
       ) {
         assertEquals(result.pending.f1040.line4c_ira_rollover, true);
         assertStringIncludes(
@@ -1240,6 +1242,10 @@ for (const fixture of pdfReviewFixtures) {
             ? "Example 401(k) qualified plan"
             : fixture.id === "single-ira-late-automatic-waiver"
             ? "automatic 60-day waiver applies"
+            : fixture.id === "single-ira-late-self-certification"
+            ? "Rev. Proc. 2020-46 self-certification"
+            : fixture.id === "single-ira-late-irs-ruling"
+            ? "private letter ruling PLR-2025-SYNTHETIC"
             : "2026-01-15",
         );
       }

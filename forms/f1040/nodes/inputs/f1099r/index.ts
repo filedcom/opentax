@@ -187,6 +187,21 @@ export enum RolloverCode {
   X = "X",
 }
 
+export enum SelfCertificationReason {
+  FinancialInstitutionError = "financial_institution_error",
+  UncashedMisplacedCheck = "uncashed_misplaced_check",
+  MistakenAccount = "mistaken_account",
+  SeverelyDamagedResidence = "severely_damaged_residence",
+  FamilyDeath = "family_death",
+  SeriousIllness = "serious_illness",
+  Incarceration = "incarceration",
+  ForeignCountryRestriction = "foreign_country_restriction",
+  PostalError = "postal_error",
+  ReturnedLevy = "returned_levy",
+  DelayedPlanInformation = "delayed_plan_information",
+  StateUnclaimedProperty = "state_unclaimed_property",
+}
+
 // Per-item schema — one 1099-R from one payer
 export const itemSchema = z.object({
   // Required identifiers
@@ -306,6 +321,39 @@ export const itemSchema = z.object({
       deposit_confirmation_reference: z.string().trim().min(1),
       qualified_plan_acceptance_reference: z.string().trim().min(1).optional(),
     }).strict().optional(),
+    // Revenue Procedure 2020-46 written certification to the receiving IRA
+    // trustee or plan administrator. The 30-day safe harbor is checked below.
+    self_certified_late_waiver: z.object({
+      reason: z.nativeEnum(SelfCertificationReason),
+      reason_prevented_timely_rollover: z.literal(true),
+      reason_resolved_on: z.string().date(),
+      reason_evidence_reference: z.string().trim().min(1),
+      no_prior_irs_waiver_denial_confirmed: z.literal(true),
+      prior_denial_review_reference: z.string().trim().min(1),
+      certification_signed_on: z.string().date(),
+      certification_delivered_on: z.string().date(),
+      signed_certification_reference: z.string().trim().min(1),
+      contribution_confirmation_reference: z.string().trim().min(1),
+      not_inherited_ira_confirmed: z.literal(true),
+      not_required_minimum_distribution_confirmed: z.literal(true),
+      rollover_eligibility_review_reference: z.string().trim().min(1),
+      qualified_plan_acceptance_reference: z.string().trim().min(1).optional(),
+    }).strict().optional(),
+    // A favorable IRS private letter ruling grants only the 60-day waiver;
+    // the distribution still has to qualify for rollover on other grounds.
+    irs_private_letter_waiver: z.object({
+      ruling_number: z.string().trim().min(1),
+      issued_on: z.string().date(),
+      ruling_rollover_deadline_on: z.string().date(),
+      favorable_60_day_waiver_confirmed: z.literal(true),
+      issued_ruling_reference: z.string().trim().min(1),
+      owner_distribution_match_review_reference: z.string().trim().min(1),
+      deposit_confirmation_reference: z.string().trim().min(1),
+      not_inherited_ira_confirmed: z.literal(true),
+      not_required_minimum_distribution_confirmed: z.literal(true),
+      rollover_eligibility_review_reference: z.string().trim().min(1),
+      qualified_plan_acceptance_reference: z.string().trim().min(1).optional(),
+    }).strict().optional(),
   }).optional(),
   // Code G also covers designated Roth employer contributions. A confirmed
   // direct-rollover fact is needed before checking Form 1040 line 5c(1).
@@ -393,7 +441,9 @@ export function requiresIraDistributionStatement(item: R1099Item): boolean {
   return rollover !== undefined && isIraRollover(item) &&
     (rollover.destination === "qualified_plan" ||
       rollover.completed_on.startsWith("2026-") ||
-      rollover.automatic_late_waiver !== undefined);
+      rollover.automatic_late_waiver !== undefined ||
+      rollover.self_certified_late_waiver !== undefined ||
+      rollover.irs_private_letter_waiver !== undefined);
 }
 
 export function iraDistributionExplanation(
@@ -434,7 +484,29 @@ export function iraDistributionExplanation(
           : ""
       }.`
       : "";
-    return [`Distribution ${index + 1}: ${opening}${waiverText}`];
+    const certification = rollover.self_certified_late_waiver;
+    const certificationText = certification
+      ? ` Rev. Proc. 2020-46 self-certification: ${
+        certification.reason.replaceAll("_", " ")
+      } prevented a timely rollover until ${certification.reason_resolved_on}; certification was signed on ${certification.certification_signed_on} and delivered to the receiving institution on ${certification.certification_delivered_on}. No prior IRS waiver denial was found. Reviewed records: ${certification.reason_evidence_reference}, ${certification.prior_denial_review_reference}, ${certification.signed_certification_reference}, ${certification.contribution_confirmation_reference}, ${certification.rollover_eligibility_review_reference}${
+        certification.qualified_plan_acceptance_reference
+          ? `, ${certification.qualified_plan_acceptance_reference}`
+          : ""
+      }.`
+      : "";
+    const ruling = rollover.irs_private_letter_waiver;
+    const rulingText = ruling
+      ? ` IRS private letter ruling ${ruling.ruling_number}, issued ${ruling.issued_on}, grants a 60-day waiver for this owner and distribution with a deposit deadline of ${ruling.ruling_rollover_deadline_on}. Reviewed records: ${ruling.issued_ruling_reference}, ${ruling.owner_distribution_match_review_reference}, ${ruling.deposit_confirmation_reference}, ${ruling.rollover_eligibility_review_reference}${
+        ruling.qualified_plan_acceptance_reference
+          ? `, ${ruling.qualified_plan_acceptance_reference}`
+          : ""
+      }.`
+      : "";
+    return [
+      `Distribution ${
+        index + 1
+      }: ${opening}${waiverText}${certificationText}${rulingText}`,
+    ];
   });
   if (rows.length === 0) return undefined;
   const explanation = rows.join(" ");
@@ -475,14 +547,27 @@ function automaticWaiverDeadline(distributedOn: string): number {
   return deadline.getTime();
 }
 
-function validateAutomaticLateWaiver(item: R1099Item): void {
+function validateLateWaiver(item: R1099Item): void {
   const rollover = item.ira_rollover!;
   const waiver = rollover.automatic_late_waiver;
+  const certification = rollover.self_certified_late_waiver;
+  const ruling = rollover.irs_private_letter_waiver;
   const distributed = Date.parse(rollover.distributed_on);
   const completed = Date.parse(rollover.completed_on);
   const elapsedDays = (completed - distributed) / 86_400_000;
   const directPlanRollover = rollover.destination === "qualified_plan" &&
     item.box7_distribution_code === DistributionCode.CodeG;
+  if ([waiver, certification, ruling].filter(Boolean).length > 1) {
+    throw new Error("IRA late rollover cannot claim two waiver methods");
+  }
+  if (ruling) {
+    validatePrivateLetterWaiver(item);
+    return;
+  }
+  if (certification) {
+    validateSelfCertifiedLateWaiver(item);
+    return;
+  }
   if (!waiver) {
     if (elapsedDays > 60 && !directPlanRollover) {
       throw new Error("IRA rollover needs completion within 60 days");
@@ -530,6 +615,110 @@ function validateAutomaticLateWaiver(item: R1099Item): void {
   }
   if (completed > automaticWaiverDeadline(rollover.distributed_on)) {
     throw new Error("IRA automatic late waiver needs deposit within one year");
+  }
+}
+
+function validateSelfCertifiedLateWaiver(item: R1099Item): void {
+  const rollover = item.ira_rollover!;
+  const certification = rollover.self_certified_late_waiver!;
+  const distributed = Date.parse(rollover.distributed_on);
+  const completed = Date.parse(rollover.completed_on);
+  const resolved = Date.parse(certification.reason_resolved_on);
+  const deadline = distributed + 60 * 86_400_000;
+  if (
+    completed <= deadline ||
+    (rollover.destination === "qualified_plan" &&
+      item.box7_distribution_code === DistributionCode.CodeG)
+  ) {
+    throw new Error(
+      "IRA self-certification needs an actual late 60-day rollover",
+    );
+  }
+  if (!item.source_document_reference || !item.account_number) {
+    throw new Error(
+      "IRA self-certification needs its issued Form 1099-R reference and account",
+    );
+  }
+  if (
+    rollover.destination === "qualified_plan" &&
+    !certification.qualified_plan_acceptance_reference
+  ) {
+    throw new Error(
+      "IRA self-certification to a qualified plan needs plan acceptance evidence",
+    );
+  }
+  if (
+    rollover.destination === "ira" &&
+    certification.qualified_plan_acceptance_reference
+  ) {
+    throw new Error(
+      "IRA self-certification cannot claim plan acceptance for an IRA destination",
+    );
+  }
+  if (
+    resolved <= deadline || resolved > completed ||
+    completed - resolved > 30 * 86_400_000
+  ) {
+    throw new Error(
+      "IRA self-certification needs contribution within 30 days after the reason ended",
+    );
+  }
+  const signed = Date.parse(certification.certification_signed_on);
+  const delivered = Date.parse(certification.certification_delivered_on);
+  if (
+    signed < distributed || signed > delivered ||
+    delivered < resolved || delivered > completed
+  ) {
+    throw new Error(
+      "IRA self-certification must be signed and delivered before the late contribution",
+    );
+  }
+}
+
+function validatePrivateLetterWaiver(item: R1099Item): void {
+  const rollover = item.ira_rollover!;
+  const ruling = rollover.irs_private_letter_waiver!;
+  const distributed = Date.parse(rollover.distributed_on);
+  const completed = Date.parse(rollover.completed_on);
+  if (
+    completed <= distributed + 60 * 86_400_000 ||
+    (rollover.destination === "qualified_plan" &&
+      item.box7_distribution_code === DistributionCode.CodeG)
+  ) {
+    throw new Error(
+      "IRA private letter waiver needs an actual late 60-day rollover",
+    );
+  }
+  if (!item.source_document_reference || !item.account_number) {
+    throw new Error(
+      "IRA private letter waiver needs its issued Form 1099-R reference and account",
+    );
+  }
+  if (
+    Date.parse(ruling.issued_on) < distributed ||
+    Date.parse(ruling.ruling_rollover_deadline_on) <
+      Date.parse(ruling.issued_on) ||
+    completed > Date.parse(ruling.ruling_rollover_deadline_on)
+  ) {
+    throw new Error(
+      "IRA private letter waiver needs deposit within the ruling deadline",
+    );
+  }
+  if (
+    rollover.destination === "qualified_plan" &&
+    !ruling.qualified_plan_acceptance_reference
+  ) {
+    throw new Error(
+      "IRA private letter waiver to a qualified plan needs plan acceptance evidence",
+    );
+  }
+  if (
+    rollover.destination === "ira" &&
+    ruling.qualified_plan_acceptance_reference
+  ) {
+    throw new Error(
+      "IRA private letter waiver cannot claim plan acceptance for an IRA destination",
+    );
   }
 }
 
@@ -614,7 +803,7 @@ function validateIraRolloverEvidence(item: R1099Item): void {
         "IRA rollover needs a 2025 distribution completed after payment",
       );
     }
-    validateAutomaticLateWaiver(item);
+    validateLateWaiver(item);
     if (
       destination === "qualified_plan" &&
       !item.ira_rollover.destination_name

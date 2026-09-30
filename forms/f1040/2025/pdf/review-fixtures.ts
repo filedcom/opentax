@@ -2,6 +2,7 @@ import { type FilerIdentity, FilingStatus } from "../../mef/header.ts";
 import {
   DistributionCode,
   RolloverCode,
+  SelfCertificationReason,
 } from "../../nodes/inputs/f1099r/index.ts";
 import { EnergyType } from "../../nodes/inputs/f8835/index.ts";
 import { CoverageType } from "../../nodes/intermediate/forms/form8889/index.ts";
@@ -3556,6 +3557,99 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     reviewFocus: [
       "Form 1040 line 4a prints $9,000 and line 4b prints zero with the IRA rollover mark",
       "The attached explanation lists timely institution receipt and instructions, its error, and the September deposit",
+    ],
+  },
+  {
+    id: "single-ira-late-self-certification",
+    inputs: {
+      general: singleGeneral,
+      f1099r: [{
+        payer_name: "Example IRA Custodian",
+        payer_ein: "12-3456789",
+        account_number: "IRA-2025-CERT",
+        source_document_reference: "issued-1099r-cert-2025",
+        box1_gross_distribution: 6_000,
+        box2a_taxable_amount: 0,
+        box7_distribution_code: DistributionCode.Code7,
+        box7_ira_simple_indicator: true,
+        rollover_code: RolloverCode.S,
+        ira_rollover: {
+          source_ira_type: "traditional",
+          destination: "ira",
+          destination_ira_type: "traditional",
+          distributed_on: "2025-05-01",
+          completed_on: "2025-09-10",
+          last_ira_to_ira_rollover_on: null,
+          self_certified_late_waiver: {
+            reason: SelfCertificationReason.SeriousIllness,
+            reason_prevented_timely_rollover: true,
+            reason_resolved_on: "2025-08-20",
+            reason_evidence_reference: "synthetic-medical-review",
+            no_prior_irs_waiver_denial_confirmed: true,
+            prior_denial_review_reference: "synthetic-irs-history-review",
+            certification_signed_on: "2025-09-01",
+            certification_delivered_on: "2025-09-02",
+            signed_certification_reference: "synthetic-signed-certification",
+            contribution_confirmation_reference:
+              "synthetic-deposit-confirmation",
+            not_inherited_ira_confirmed: true,
+            not_required_minimum_distribution_confirmed: true,
+            rollover_eligibility_review_reference:
+              "synthetic-rollover-eligibility",
+          },
+        },
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040"],
+    reviewFocus: [
+      "Form 1040 line 4a prints $6,000 and line 4b prints zero with the IRA rollover mark",
+      "The attached explanation names the permitted serious-illness reason, signed certification, 30-day contribution, and source records",
+    ],
+  },
+  {
+    id: "single-ira-late-irs-ruling",
+    inputs: {
+      general: singleGeneral,
+      f1099r: [{
+        payer_name: "Example IRA Custodian",
+        payer_ein: "12-3456789",
+        account_number: "IRA-2025-PLR",
+        source_document_reference: "issued-1099r-plr-2025",
+        box1_gross_distribution: 7_000,
+        box2a_taxable_amount: 0,
+        box7_distribution_code: DistributionCode.Code7,
+        box7_ira_simple_indicator: true,
+        rollover_code: RolloverCode.S,
+        ira_rollover: {
+          source_ira_type: "traditional",
+          destination: "ira",
+          destination_ira_type: "traditional",
+          distributed_on: "2025-05-01",
+          completed_on: "2025-09-10",
+          last_ira_to_ira_rollover_on: null,
+          irs_private_letter_waiver: {
+            ruling_number: "PLR-2025-SYNTHETIC",
+            issued_on: "2025-08-01",
+            ruling_rollover_deadline_on: "2025-10-01",
+            favorable_60_day_waiver_confirmed: true,
+            issued_ruling_reference: "synthetic-issued-ruling",
+            owner_distribution_match_review_reference:
+              "synthetic-ruling-owner-source-match",
+            deposit_confirmation_reference: "synthetic-ruling-deposit",
+            not_inherited_ira_confirmed: true,
+            not_required_minimum_distribution_confirmed: true,
+            rollover_eligibility_review_reference:
+              "synthetic-ruling-eligibility",
+          },
+        },
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040"],
+    reviewFocus: [
+      "Form 1040 line 4a prints $7,000 and line 4b prints zero with the IRA rollover mark",
+      "The attached explanation identifies the favorable ruling, owner and distribution match, deposit deadline, and source records",
     ],
   },
   {

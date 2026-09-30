@@ -7,6 +7,7 @@ import {
   iraDistributionExplanation,
   type itemSchema,
   RolloverCode,
+  SelfCertificationReason,
 } from "./index.ts";
 
 // ---------------------------------------------------------------------------
@@ -1253,6 +1254,178 @@ Deno.test("f1099r.compute: institution-error automatic waiver retains late IRA r
       false,
     );
   }
+});
+
+Deno.test("f1099r.compute: signed self-certification keeps a late rollover within the 30-day safe harbor", () => {
+  const item = minimalIraItem({
+    account_number: "IRA-2025-2",
+    source_document_reference: "issued-1099r-2025-2",
+    rollover_code: RolloverCode.S,
+    ira_rollover: {
+      source_ira_type: "traditional",
+      destination: "ira",
+      destination_ira_type: "traditional",
+      distributed_on: "2025-05-01",
+      completed_on: "2025-09-10",
+      last_ira_to_ira_rollover_on: null,
+      self_certified_late_waiver: {
+        reason: SelfCertificationReason.SeriousIllness,
+        reason_prevented_timely_rollover: true,
+        reason_resolved_on: "2025-08-20",
+        reason_evidence_reference: "medical-review-1",
+        no_prior_irs_waiver_denial_confirmed: true,
+        prior_denial_review_reference: "irs-history-review-1",
+        certification_signed_on: "2025-09-01",
+        certification_delivered_on: "2025-09-02",
+        signed_certification_reference: "signed-letter-1",
+        contribution_confirmation_reference: "deposit-2",
+        not_inherited_ira_confirmed: true,
+        not_required_minimum_distribution_confirmed: true,
+        rollover_eligibility_review_reference: "eligibility-review-2",
+      },
+    },
+  });
+  const input = f1040Input(compute([item]));
+  assertEquals(input.line4a_ira_gross, 10_000);
+  assertEquals(input.line4b_ira_taxable, 0);
+  assertEquals(input.line4c_ira_rollover, true);
+  assertStringIncludes(
+    iraDistributionExplanation([item]) ?? "",
+    "Rev. Proc. 2020-46 self-certification",
+  );
+  assertStringIncludes(
+    iraDistributionExplanation([item]) ?? "",
+    "signed-letter-1",
+  );
+  const rollover = item.ira_rollover!;
+  const certification = rollover.self_certified_late_waiver!;
+  for (
+    const bad of [
+      { ...item, source_document_reference: undefined },
+      { ...item, ira_rollover: { ...rollover, completed_on: "2025-09-20" } },
+      { ...item, ira_rollover: { ...rollover, completed_on: "2025-05-20" } },
+      {
+        ...item,
+        ira_rollover: {
+          ...rollover,
+          self_certified_late_waiver: {
+            ...certification,
+            certification_delivered_on: "2025-09-11",
+          },
+        },
+      },
+      {
+        ...item,
+        ira_rollover: {
+          ...rollover,
+          self_certified_late_waiver: {
+            ...certification,
+            reason_resolved_on: "2025-06-01",
+          },
+        },
+      },
+      {
+        ...item,
+        ira_rollover: { ...rollover, self_certified_late_waiver: undefined },
+      },
+    ]
+  ) {
+    assertThrows(() => compute([bad]), Error);
+  }
+  const automatic = minimalIraItem({
+    account_number: "IRA-AUTO",
+    source_document_reference: "issued-1099r-auto",
+    rollover_code: RolloverCode.S,
+    ira_rollover: {
+      ...rollover,
+      automatic_late_waiver: {
+        institution_received_on: "2025-05-20",
+        deposit_instructions_on: "2025-05-20",
+        institution_error_only: true,
+        not_inherited_ira_confirmed: true,
+        not_required_minimum_distribution_confirmed: true,
+        rollover_eligibility_review_reference: "eligibility-review-3",
+        institution_receipt_reference: "receipt-3",
+        deposit_instructions_reference: "instructions-3",
+        institution_error_reference: "error-3",
+        deposit_confirmation_reference: "deposit-3",
+      },
+    },
+  });
+  assertThrows(
+    () => compute([automatic]),
+    Error,
+    "cannot claim two waiver methods",
+  );
+});
+
+Deno.test("f1099r.compute: favorable IRS ruling links a late distribution and deposit", () => {
+  const item = minimalIraItem({
+    account_number: "IRA-2025-PLR",
+    source_document_reference: "issued-1099r-2025-plr",
+    rollover_code: RolloverCode.S,
+    ira_rollover: {
+      source_ira_type: "traditional",
+      destination: "ira",
+      destination_ira_type: "traditional",
+      distributed_on: "2025-05-01",
+      completed_on: "2025-09-10",
+      last_ira_to_ira_rollover_on: null,
+      irs_private_letter_waiver: {
+        ruling_number: "PLR-2025-EXAMPLE",
+        issued_on: "2025-08-01",
+        ruling_rollover_deadline_on: "2025-10-01",
+        favorable_60_day_waiver_confirmed: true,
+        issued_ruling_reference: "issued-ruling-1",
+        owner_distribution_match_review_reference: "ruling-source-match-1",
+        deposit_confirmation_reference: "deposit-confirmation-1",
+        not_inherited_ira_confirmed: true,
+        not_required_minimum_distribution_confirmed: true,
+        rollover_eligibility_review_reference: "rollover-eligibility-1",
+      },
+    },
+  });
+  const input = f1040Input(compute([item]));
+  assertEquals(input.line4a_ira_gross, 10_000);
+  assertEquals(input.line4b_ira_taxable, 0);
+  assertEquals(input.line4c_ira_rollover, true);
+  assertStringIncludes(
+    iraDistributionExplanation([item]) ?? "",
+    "private letter ruling PLR-2025-EXAMPLE",
+  );
+  const rollover = item.ira_rollover!;
+  const ruling = rollover.irs_private_letter_waiver!;
+  for (
+    const bad of [
+      { ...item, source_document_reference: undefined },
+      { ...item, ira_rollover: { ...rollover, completed_on: "2025-05-15" } },
+      { ...item, ira_rollover: { ...rollover, completed_on: "2025-10-02" } },
+      {
+        ...item,
+        ira_rollover: {
+          ...rollover,
+          irs_private_letter_waiver: { ...ruling, issued_on: "2025-04-01" },
+        },
+      },
+    ]
+  ) {
+    assertThrows(() => compute([bad]), Error);
+  }
+  assertEquals(
+    f1099r.inputSchema.safeParse({
+      f1099rs: [{
+        ...item,
+        ira_rollover: {
+          ...rollover,
+          irs_private_letter_waiver: {
+            ...ruling,
+            favorable_60_day_waiver_confirmed: undefined,
+          },
+        },
+      }],
+    }).success,
+    false,
+  );
 });
 
 Deno.test("f1099r.compute: IRA rollover requires account type and prior-history review", () => {
