@@ -1,8 +1,21 @@
 # TY2025 Form 8915-F source and filing boundary
 
-Status: any populated `f8915f` item now rejects before it can produce Schedule 1
-income. Absent and empty lists make no claim. Focused negative cases are written
-but unrun. No MeF, PDF, XSD, IRS business-rule or ATS acceptance is claimed.
+Status: any populated `f8915f` item still rejects before filing. Absent and
+empty lists make no claim. A bounded source contract now covers one 2025
+disaster and one fully taxable, non-IRA 2025 distribution elected into income
+in full. It requires FEMA identity and dates, principal-home and economic-loss
+review references, eligible-plan review, no-prior-distribution and no-repayment reviews, the owner
+SSN, an issued Form 1099-R reference and account identity, and a whole-dollar
+distribution of no more than $22,000. A pure calculation records Form 8915-F
+lines 1e, 2, 5b, 6, 8–11, 13 and 15. The source matcher requires exactly one
+1099-R with the same recipient, payer, account, issue reference, date, gross,
+and taxable amount and a straightforward taxable non-IRA code 2 or 7 route.
+The bounded Part I source currently requires that this be the return's only
+1099-R, so line 2(a) represents all plan distributions rather than silently
+omitting another source.
+The old amount-only source is rejected, not accepted as a second API shape.
+Six focused Form 8915-F cases and the 92 Form 1099-R cases pass. No native,
+PDF, full-return XSD, IRS business-rule or ATS acceptance is claimed.
 
 The [2025 IRS Form 8915-F instructions](https://www.irs.gov/instructions/i8915f)
 distinguish 2020 disasters from qualified 2021-and-later disasters. The latter
@@ -21,10 +34,11 @@ rather than an arbitrary current-year income credit. The native `IRS8915F`
 document is not registered. These are active correctness gaps, not approved
 exclusions.
 
-Reopen with a disaster-specific source contract (FEMA declaration/incident dates
-and qualified-area/person facts), distribution type and year, 1099-R
-gross/taxable/withholding data, prior filed Form 8915-F elections and annual
-inclusions, repayments by date, and the correct $100,000-versus-$22,000 limit.
-Then join to Form 1040's proper retirement lines and any amended-year handling,
-and add native Form 8915-F, PDF, XSD and ATS validation. No unsupported
-prior-year or current-year claim is silently accepted.
+Next, connect the bounded 2025 source to Form 1040 line 5b, its native
+`IRS8915F` document, and all four printable pages; cross-check the pending
+1099-R and filer again at export, then validate a full return and inspect the
+filled packet. Wider sources still need IRA and Form 8606 cases, income spread
+over three years, prior filed Form 8915-F elections and annual inclusions,
+repayments and attached worksheets, additional disasters, cost basis,
+early-distribution exception handling, and amended-year effects. No
+unsupported prior-year or current-year claim is silently accepted.

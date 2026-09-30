@@ -198,6 +198,7 @@ export const itemSchema = z.object({
   recipient_address_state: z.string().optional(),
   recipient_address_zip: z.string().optional(),
   account_number: z.string().optional(),
+  source_document_reference: z.string().trim().min(1).optional(),
   ts: tsSchema.optional(),
 
   // Box 1: Gross distribution (required)
