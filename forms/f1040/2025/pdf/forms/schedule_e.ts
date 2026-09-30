@@ -12,8 +12,14 @@ import {
 } from "../../mef/forms/schedule_e.ts";
 import { verifyMiscRoyaltySource } from "../../mef/forms/schedule_e.ts";
 import { scheduleEK1Part2Rows } from "../../schedule-e-k1-part2.ts";
+import {
+  calculateForm4835AtRiskNet,
+  inputSchema as form4835InputSchema,
+} from "../../../nodes/inputs/f4835/index.ts";
+import { farmAllowedLosses } from "../../mef/forms/f4835_passive_loss.ts";
 
-// 2025 Schedule E AcroForm: one Part I property or up to two Part III trust rows.
+// 2025 Schedule E AcroForm: one Part I property, four Part II K-1 rows,
+// two Part III trust rows, and Part V farm totals on the same two pages.
 const page = "topmostSubform[0].Page1[0]";
 const page2 = "topmostSubform[0].Page2[0]";
 const text = (
@@ -147,6 +153,8 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   text("trust_line35", `${page2}.f2_68[0]`),
   text("trust_line37", `${page2}.f2_70[0]`),
   text("trust_line41", `${page2}.f2_78[0]`),
+  text("farm_line40", `${page2}.f2_77[0]`),
+  text("farm_line42", `${page2}.Line42_ReadOrder[0].f2_79[0]`),
 ];
 
 export const scheduleEPdf: PdfFormDescriptor = {
@@ -155,7 +163,8 @@ export const scheduleEPdf: PdfFormDescriptor = {
   pageIndices: (projected) => {
     const partI = projected.line26 !== undefined;
     const partII = projected.trust_line37 !== undefined ||
-      projected.k1_line32 !== undefined;
+      projected.k1_line32 !== undefined ||
+      projected.farm_line40 !== undefined;
     return partI && partII ? [0, 1] : partII ? [1] : [0];
   },
   fields,
@@ -172,6 +181,22 @@ export const scheduleEPdf: PdfFormDescriptor = {
     const trustRows = input.estate_trust_rows ?? [];
     let partIIFields: Record<string, unknown> | undefined;
     let k1Total = 0;
+    const farmItems = allPending.f4835 === undefined
+      ? []
+      : form4835InputSchema.parse(allPending.f4835).f4835s;
+    const farmPreliminaries = farmItems.map((item) =>
+      calculateForm4835AtRiskNet(item).atRiskNet
+    );
+    const farmAllowed = farmAllowedLosses({ pending: allPending });
+    const farmNet = input.farm_rental_net === undefined
+      ? 0
+      : input.farm_rental_net +
+        farmPreliminaries.reduce((sum, net) => sum + Math.max(0, -net), 0) -
+        farmAllowed.reduce((sum, amount) => sum + amount, 0);
+    const farmFields = input.farm_rental_net === undefined ? {} : {
+      farm_line40: farmNet,
+      farm_line42: input.farm_rental_gross,
+    };
     const trustTotal = trustRows.reduce(
       (sum, row) =>
         sum + (row.passive_income ?? 0) +
@@ -181,8 +206,6 @@ export const scheduleEPdf: PdfFormDescriptor = {
     if (k1Rows.length > 0) {
       if (
         k1Rows.length > 4 || input.schedule_es.length > 1 ||
-        input.farm_rental_net !== undefined ||
-        input.farm_rental_gross !== undefined ||
         input.rental_income !== undefined ||
         input.royalty_income !== undefined ||
         trustRows.length > 2 ||
@@ -232,15 +255,14 @@ export const scheduleEPdf: PdfFormDescriptor = {
         trust_line37: trustRows.length > 0
           ? trustPassive + trustOther
           : undefined,
-        trust_line41: k1Total + trustPassive + trustOther,
+        ...farmFields,
+        trust_line41: k1Total + trustPassive + trustOther + farmNet,
       };
       if (input.schedule_es.length === 0) return partIIFields!;
     }
     if (trustRows.length > 0 && k1Rows.length === 0) {
       if (
         input.schedule_es.length > 1 ||
-        input.farm_rental_net !== undefined ||
-        input.farm_rental_gross !== undefined ||
         input.rental_income !== undefined ||
         input.royalty_income !== undefined ||
         trustRows.length > 2 ||
@@ -270,16 +292,25 @@ export const scheduleEPdf: PdfFormDescriptor = {
         trust_total_other_income: other > 0 ? other : undefined,
         trust_line35: total,
         trust_line37: total,
-        trust_line41: total,
+        ...farmFields,
+        trust_line41: total + farmNet,
       };
       if (input.schedule_es.length === 0) return partIIFields!;
+    }
+    if (input.schedule_es.length === 0 && input.farm_rental_net !== undefined) {
+      if (!scheduleE.build(input, { pending: allPending })) {
+        throw new Error(
+          "Schedule E PDF farm rental needs a native Form 4835 join",
+        );
+      }
+      return {
+        ...farmFields,
+        trust_line41: farmNet,
+      };
     }
     const item = input.schedule_es[0];
     if (
       input.schedule_es.length !== 1 || !item ||
-      input.farm_rental_net !== undefined ||
-      input.farm_rental_gross !== undefined ||
-      (input.farm_rental_activities?.length ?? 0) > 0 ||
       input.mortgage_interest !== undefined ||
       input.expense_auto_travel !== undefined ||
       input.expense_depletion !== undefined ||
@@ -345,7 +376,7 @@ export const scheduleEPdf: PdfFormDescriptor = {
     const filedLine5 = Array.isArray(schedule1Line5)
       ? schedule1Line5.reduce((sum, value) => sum + value, 0)
       : schedule1Line5;
-    if (filedLine5 !== deductibleNet + k1Total + trustTotal) {
+    if (filedLine5 !== deductibleNet + k1Total + trustTotal + farmNet) {
       throw new Error(
         "Schedule E PDF line 26 must match finalized Schedule 1 line 5",
       );
@@ -355,6 +386,7 @@ export const scheduleEPdf: PdfFormDescriptor = {
       : `${item.street_address}, ${item.city}, ${item.state} ${item.zip}`;
     return {
       ...partIIFields,
+      ...farmFields,
       payments_made: item.form_1099_payments_made,
       forms_1099_filed: item.form_1099_payments_made
         ? item.form_1099_filed
@@ -391,8 +423,10 @@ export const scheduleEPdf: PdfFormDescriptor = {
       line25: allowedLoss > 0 ? allowedLoss : undefined,
       line26: deductibleNet,
       trust_line41: partIIFields === undefined
-        ? undefined
-        : deductibleNet + k1Total + trustTotal,
+        ? input.farm_rental_net === undefined
+          ? undefined
+          : deductibleNet + farmNet
+        : deductibleNet + k1Total + trustTotal + farmNet,
     };
   },
   instances(fields, filer, allPending) {

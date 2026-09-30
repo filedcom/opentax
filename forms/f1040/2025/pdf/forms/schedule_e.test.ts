@@ -351,7 +351,7 @@ Deno.test("Schedule E PDF fails closed on unprojected paths and Schedule 1 misma
         farm_rental_gross: 100,
       }, linked),
     Error,
-    "one supported Part I rental",
+    "needs its Form 4835 source",
   );
   assertThrows(
     () =>

@@ -20,6 +20,7 @@ import { form8582 } from "./f8582.ts";
 import { farmAllowedLosses } from "./f4835_passive_loss.ts";
 import {
   calculateForm4835AtRiskNet,
+  calculateForm4835Lines,
   inputSchema as form4835InputSchema,
 } from "../../../nodes/inputs/f4835/index.ts";
 import type { z } from "zod";
@@ -582,17 +583,19 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
     const farmPreliminaries = farmItems.map((item) =>
       calculateForm4835AtRiskNet(item).atRiskNet
     );
+    if ((farmItems.length > 0) !== (farmNet !== undefined)) {
+      throw new Error("Schedule E farm rental needs its Form 4835 source");
+    }
     if (
       farmItems.length > 0 &&
-      farmPreliminaries.reduce((sum, net) => sum + net, 0) !== farmNet
+      (farmPreliminaries.reduce((sum, net) => sum + net, 0) !== farmNet ||
+        farmItems.reduce(
+            (sum, item) => sum + calculateForm4835Lines(item).gross,
+            0,
+          ) !== farmGross)
     ) {
       throw new Error(
-        "Schedule E farm rental amount does not match Form 4835 activities",
-      );
-    }
-    if (farmNet !== undefined && farmNet < 0 && farmItems.length === 0) {
-      throw new Error(
-        "Schedule E farm rental loss needs linked Form 4835 limitation forms",
+        "Schedule E farm rental net and gross do not match Form 4835 activities",
       );
     }
     const farmLosses = farmPreliminaries.reduce(
@@ -647,8 +650,9 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
         ? pendingLine5.reduce((sum: number, amount: number) => sum + amount, 0)
         : pendingLine5;
       if (
-        farmNet !== undefined ||
-        line5 !== propertyNet + trustTotalIncome + k1TotalIncome
+        line5 !==
+          propertyNet + trustTotalIncome + k1TotalIncome +
+            (allowedFarmNet ?? 0)
       ) {
         throw new Error(
           "Schedule E trust Part III income must match finalized Schedule 1 line 5",

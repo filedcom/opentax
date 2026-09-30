@@ -164,7 +164,7 @@ export const form4835Pdf: PdfFormDescriptor = {
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f4835--2025.pdf",
   pageIndices: () => [0],
   filerFields: [
-    text("nameLine1", 1),
+    text("fullName", 1),
     text("primarySSN", 2),
   ],
   projectFields(raw, allPending) {

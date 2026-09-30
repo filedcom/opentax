@@ -234,6 +234,7 @@ function runPassiveK1s(
   sCorpBusiness: number,
   propertyRent = 0,
   trustIncome = 0,
+  farmIncome = 0,
 ) {
   const reviewReference = {
     activity_statement_reference: "Synthetic 2025 K-1 activity statement",
@@ -275,6 +276,15 @@ function runPassiveK1s(
             statement_reference: "Synthetic trust activity statement",
             income: trustIncome,
           }],
+        }],
+      }
+      : {}),
+    ...(farmIncome > 0
+      ? {
+        f4835: [{
+          activity_id: "combined-farm-rental",
+          activity_name: "Reviewed farm rental",
+          livestock_crop_income: farmIncome,
         }],
       }
       : {}),
@@ -409,6 +419,103 @@ Deno.test("EIC Worksheet 1 counts reviewed partnership and S-corporation K-1 inc
     Error,
     "recipient needs the filer or joint spouse",
   );
+});
+
+Deno.test("EIC reconciles Form 4835 with rental and three K-1 sources", async () => {
+  const atLimit = runPassiveK1s(3_000, 3_000, 1_950, 2_000, 2_000);
+  assertEquals(atLimit.diagnostics, []);
+  assertEquals(atLimit.pending.eitc.investment_income_floor, 11_950);
+  assertEquals(atLimit.pending.f1040.line27_eitc !== undefined, true);
+  const overLimit = runPassiveK1s(3_000, 3_000, 1_950, 2_000, 2_001);
+  assertEquals(overLimit.pending.eitc.investment_income_floor, 11_951);
+  assertEquals(overLimit.pending.f1040.line27_eitc, undefined);
+  const filer = extractFilerIdentity(atLimit.pending.f1040);
+  const xml = buildMefXml(buildPending(atLimit.pending), filer);
+  assertEquals(
+    xml.includes(
+      "<NetFarmRentalIncomeOrLossAmt>2000</NetFarmRentalIncomeOrLossAmt>",
+    ),
+    true,
+  );
+  assertEquals(
+    xml.includes("<TotalSuppIncomeOrLossAmt>11950</TotalSuppIncomeOrLossAmt>"),
+    true,
+  );
+  const xsd = new URL(
+    "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    import.meta.url,
+  ).pathname;
+  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(xmlPath, xml);
+    const validation = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsd, xmlPath],
+      stderr: "piped",
+    }).output();
+    assertEquals(
+      validation.code,
+      0,
+      new TextDecoder().decode(validation.stderr),
+    );
+  } finally {
+    await Deno.remove(xmlPath);
+  }
+  const fields = scheduleEPdf.projectFields?.(
+    atLimit.pending.schedule_e,
+    atLimit.pending,
+  );
+  assertEquals(fields?.line26, 1_950);
+  assertEquals(fields?.k1_line32, 6_000);
+  assertEquals(fields?.trust_line37, 2_000);
+  assertEquals(fields?.farm_line40, 2_000);
+  assertEquals(fields?.farm_line42, 2_000);
+  assertEquals(fields?.trust_line41, 11_950);
+  assertEquals(scheduleEPdf.pageIndices?.(fields ?? {}), [0, 1]);
+  const pdf = await buildPdfBytes(atLimit.pending, filer);
+  assertEquals(new TextDecoder().decode(pdf.slice(0, 5)), "%PDF-");
+  const { f4835: _farm, ...noFarmSource } = atLimit.pending;
+  assertThrows(
+    () => buildMefXml(buildPending(noFarmSource), filer),
+    Error,
+    "needs its Form 4835 source",
+  );
+  assertThrows(
+    () =>
+      scheduleEPdf.projectFields?.(
+        atLimit.pending.schedule_e,
+        noFarmSource,
+      ),
+    Error,
+    "needs its Form 4835 source",
+  );
+  const changedFarmGross = {
+    ...atLimit.pending,
+    schedule_e: {
+      ...atLimit.pending.schedule_e,
+      farm_rental_gross: 2_001,
+    },
+  };
+  assertThrows(
+    () => buildMefXml(buildPending(changedFarmGross), filer),
+    Error,
+    "farm rental net and gross do not match",
+  );
+  const farmOnly = runPassiveK1s(0, 0, 0, 0, 11_950);
+  assertEquals(farmOnly.diagnostics, []);
+  assertEquals(farmOnly.pending.eitc.investment_income_floor, 11_950);
+  const farmOnlyFields = scheduleEPdf.projectFields?.(
+    farmOnly.pending.schedule_e,
+    farmOnly.pending,
+  );
+  assertEquals(farmOnlyFields?.farm_line40, 11_950);
+  assertEquals(farmOnlyFields?.farm_line42, 11_950);
+  assertEquals(farmOnlyFields?.trust_line41, 11_950);
+  assertEquals(scheduleEPdf.pageIndices?.(farmOnlyFields ?? {}), [1]);
+  const farmOnlyPdf = await buildPdfBytes(
+    farmOnly.pending,
+    extractFilerIdentity(farmOnly.pending.f1040),
+  );
+  assertEquals(new TextDecoder().decode(farmOnlyPdf.slice(0, 5)), "%PDF-");
 });
 
 Deno.test("EIC reconciles rental, partnership, S-corporation, and trust income", async () => {

@@ -227,6 +227,16 @@ Deno.test("Schedule E combines two properties and Form 4835 farm income", () => 
     ],
     farm_rental_net: 3000,
     farm_rental_gross: 5000,
+  }, {
+    pending: {
+      f4835: {
+        f4835s: [{
+          activity_name: "Farm",
+          livestock_crop_income: 5000,
+          expense_feed: 2000,
+        }],
+      },
+    },
   });
   assertStringIncludes(
     xml,

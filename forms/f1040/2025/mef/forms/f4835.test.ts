@@ -204,7 +204,17 @@ Deno.test("Form 4835 rejects unsupported elections and unchecked losses", () => 
 
 Deno.test("Schedule E includes farm rental lines 40, 41, and 42", () => {
   assertEquals(
-    scheduleE.build({ farm_rental_net: 600, farm_rental_gross: 1000 }),
+    scheduleE.build({ farm_rental_net: 600, farm_rental_gross: 1000 }, {
+      pending: {
+        f4835: {
+          f4835s: [{
+            activity_name: "Farm",
+            livestock_crop_income: 1000,
+            expense_feed: 400,
+          }],
+        },
+      },
+    }),
     "<IRS1040ScheduleE><NetFarmRentalIncomeOrLossAmt>600</NetFarmRentalIncomeOrLossAmt><TotalSuppIncomeOrLossAmt>600</TotalSuppIncomeOrLossAmt><FarmingAndFishingIncomeAmt>1000</FarmingAndFishingIncomeAmt></IRS1040ScheduleE>",
   );
   assertThrows(() => scheduleE.build({ farm_rental_net: 1 }));
