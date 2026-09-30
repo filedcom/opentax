@@ -337,6 +337,7 @@ Deno.test("covered Form 8854 with reconciled Form 8949 property reaches full ret
     f1040: { filing_status: "single" },
     f8854: coveredCapitalInput,
     form8949: [coveredCapitalTransaction],
+    schedule_d: { transaction: coveredCapitalTransaction },
   }, filer);
   assertStringIncludes(xml, "<IRS8854 documentId=");
   assertStringIncludes(xml, "<IRS8949 documentId=");
@@ -435,6 +436,7 @@ Deno.test("covered Form 8854 Section D links only its actual PDF bundle attachme
     f1040: { filing_status: "single" },
     f8854: coveredDeferralInput,
     form8949: [coveredCapitalTransaction],
+    schedule_d: { transaction: coveredCapitalTransaction },
   };
   assertThrows(
     () => buildMefXml(pending, filer),
@@ -602,6 +604,7 @@ Deno.test("annual Form 8854 capital disposition requires its payment PDF and fil
     f1040: { filing_status: "single" },
     f8854_annual: annualCapitalDispositionInput,
     form8949: [annualCapitalTransaction],
+    schedule_d: { transaction: annualCapitalTransaction },
   };
   assertThrows(
     () => buildMefXml(pending, filer),
@@ -820,6 +823,7 @@ Deno.test({
     f1040: { filing_status: "single" },
     f8854: coveredCapitalInput,
     form8949: [coveredCapitalTransaction],
+    schedule_d: { transaction: coveredCapitalTransaction },
   }, filer);
   const xsd = new URL(
     "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
@@ -849,6 +853,7 @@ Deno.test({
     f1040: { filing_status: "single" },
     f8854: coveredDeferralInput,
     form8949: [coveredCapitalTransaction],
+    schedule_d: { transaction: coveredCapitalTransaction },
   }, { filer, attachments: await deferralAttachments() });
   const xsd = new URL(
     "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
@@ -906,6 +911,7 @@ Deno.test({
     f1040: { filing_status: "single" },
     f8854_annual: annualCapitalDispositionInput,
     form8949: [annualCapitalTransaction],
+    schedule_d: { transaction: annualCapitalTransaction },
   }, { filer, attachments: [await annualPaymentAttachment()] });
   const xsd = new URL(
     "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",

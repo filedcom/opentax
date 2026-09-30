@@ -535,6 +535,64 @@ Deno.test("ReturnType is 1040", () => {
   assertStringIncludes(xml, "<ReturnTypeCd>1040</ReturnTypeCd>");
 });
 
+Deno.test("TY2025 Form 1040 builder rejects other return types and years", () => {
+  for (const returnType of ["1040NR", "1040SS", "4868"]) {
+    assertThrows(
+      () => rawBuildMefXml({}, sampleFiler(), "2025v5.4", 2025, returnType),
+      Error,
+      "requires year 2025 and return type 1040",
+    );
+  }
+  assertThrows(
+    () => rawBuildMefXml({}, sampleFiler(), "2025v5.4", 2024, "1040"),
+    Error,
+    "requires year 2025 and return type 1040",
+  );
+});
+
+Deno.test("TY2025 MeF bundle rejects a non-1040 export", async () => {
+  await assertRejects(
+    () =>
+      buildMefBundle({}, {
+        filer: sampleFiler(),
+        attachments: [],
+        returnType: "1040NR",
+      }),
+    Error,
+    "requires year 2025 and return type 1040",
+  );
+});
+
+Deno.test("Form 1040 MeF rejects source TINs that differ from the filer", () => {
+  assertThrows(
+    () =>
+      rawBuildMefXml({ f1040: { taxpayer_ssn: "987-65-4321" } }, sampleFiler()),
+    Error,
+    "taxpayer source TIN differs from the filer",
+  );
+  assertThrows(
+    () =>
+      rawBuildMefXml({ f1040: { spouse_ssn: "987-65-4321" } }, sampleFiler()),
+    Error,
+    "spouse source TIN differs from the filer",
+  );
+  const filer = {
+    ...sampleFiler(),
+    spouse: {
+      ssn: "987654321",
+      firstName: "Jane",
+      lastName: "Smith",
+      nameControl: "SMIT",
+    },
+  };
+  assertStringIncludes(
+    rawBuildMefXml({
+      f1040: { taxpayer_ssn: "123-45-6789", spouse_ssn: "987-65-4321" },
+    }, filer),
+    "<IRS1040 ",
+  );
+});
+
 Deno.test("TaxPeriodBeginDate is 2025-01-01", () => {
   const xml = buildMefXml({});
   assertStringIncludes(
@@ -967,18 +1025,21 @@ Deno.test("IRS2441 absent when form2441 missing from pending", () => {
   assertNotIncludes(xml, "<IRS2441>");
 });
 
+const bundledSale = {
+  part: "B",
+  description: "AAPL",
+  date_acquired: "2025-01-15",
+  date_sold: "2025-06-01",
+  proceeds: 5000,
+  cost_basis: 3000,
+  gain_loss: 2000,
+  is_long_term: false,
+};
+
 Deno.test("IRS8949 present when form8949 has transactions", () => {
   const xml = buildMefXml({
-    form8949: [{
-      part: "A",
-      description: "AAPL",
-      date_acquired: "2024-01-15",
-      date_sold: "2025-06-01",
-      proceeds: 5000,
-      cost_basis: 3000,
-      gain_loss: 2000,
-      is_long_term: false,
-    }],
+    schedule_d: { transaction: bundledSale },
+    form8949: [bundledSale],
   });
   assertStringIncludes(xml, "<IRS8949 ");
 });
@@ -986,6 +1047,14 @@ Deno.test("IRS8949 present when form8949 has transactions", () => {
 Deno.test("IRS8949 absent when form8949 is empty array", () => {
   const xml = buildMefXml({ form8949: [] });
   assertNotIncludes(xml, "<IRS8949>");
+});
+
+Deno.test("Form 8949 cannot export without a reconciled Schedule D", () => {
+  assertThrows(
+    () => buildMefXml({ form8949: [bundledSale] }),
+    Error,
+    "needs its reconciled Schedule D",
+  );
 });
 
 Deno.test("IRS8949 absent when form8949 missing from pending", () => {
@@ -1025,19 +1094,10 @@ Deno.test("documentCnt=10 when all 10 forms have data", () => {
     schedule1: { line7_unemployment: 4800 },
     schedule2: { line2_amt: 5000, line11_additional_medicare: 450 },
     schedule3: { line2_childcare_credit: 0 },
-    schedule_d: { line_4_other_st: 1000 },
+    schedule_d: { line_4_other_st: 1000, transaction: bundledSale },
     form8889: sampleForm8889,
     form2441: sampleForm2441,
-    form8949: [{
-      part: "A",
-      description: "AAPL",
-      date_acquired: "2024-01-15",
-      date_sold: "2025-06-01",
-      proceeds: 5000,
-      cost_basis: 3000,
-      gain_loss: 2000,
-      is_long_term: false,
-    }],
+    form8949: [bundledSale],
     form8959: sampleForm8959,
     form8960: { line1_taxable_interest: 1200 },
   });
@@ -1050,19 +1110,10 @@ Deno.test("all 10 forms populated: XML contains all 10 document tags", () => {
     schedule1: { line7_unemployment: 4800 },
     schedule2: { line2_amt: 5000, line11_additional_medicare: 450 },
     schedule3: { line2_childcare_credit: 0 },
-    schedule_d: { line_4_other_st: 1000 },
+    schedule_d: { line_4_other_st: 1000, transaction: bundledSale },
     form8889: sampleForm8889,
     form2441: sampleForm2441,
-    form8949: [{
-      part: "A",
-      description: "AAPL",
-      date_acquired: "2024-01-15",
-      date_sold: "2025-06-01",
-      proceeds: 5000,
-      cost_basis: 3000,
-      gain_loss: 2000,
-      is_long_term: false,
-    }],
+    form8949: [bundledSale],
     form8959: sampleForm8959,
     form8960: { line1_taxable_interest: 1200 },
   });

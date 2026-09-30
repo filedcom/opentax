@@ -7,6 +7,8 @@ import { type FilerIdentity, FilingStatus } from "../../mef/header.ts";
 import { assertAttachmentCoverage } from "../attachment-coverage.ts";
 import type { MefBundle } from "../mef/builder.ts";
 import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
+import { assertF1040SourceIdentity } from "../filer-source-reconciliation.ts";
+import { assertScheduleDSalesMatchPrepared } from "../mef/forms/schedule_d.ts";
 
 async function fetchWithCache(
   url: string,
@@ -252,6 +254,7 @@ export async function buildPdfBytes(
         "Form 1040 PDF needs the identified taxpayer's SSN, first-name field, and last name",
       );
     }
+    assertF1040SourceIdentity(normalized.f1040, filer);
     const statusCodes: Readonly<Record<string, FilingStatus>> = {
       single: FilingStatus.Single,
       mfj: FilingStatus.MarriedFilingJointly,
@@ -283,6 +286,23 @@ export async function buildPdfBytes(
   // the existing PDF projector consumes them through its transaction field.
   if (Array.isArray(pending.form8949)) {
     normalized.form8949 = { transaction: pending.form8949 };
+  }
+  const form8949Rows = normalized.form8949?.transaction;
+  if (
+    form8949Rows !== undefined &&
+    (!Array.isArray(form8949Rows) || form8949Rows.length > 0) &&
+    !normalized.schedule_d
+  ) {
+    throw new Error("Form 8949 PDF needs its Schedule D");
+  }
+  if (normalized.schedule_d) {
+    if (form8949Rows !== undefined && !Array.isArray(form8949Rows)) {
+      throw new Error("Form 8949 PDF needs prepared transaction rows");
+    }
+    assertScheduleDSalesMatchPrepared(
+      normalized.schedule_d.transaction,
+      form8949Rows ?? [],
+    );
   }
   if (
     preparedBundle?.form3800Parts &&

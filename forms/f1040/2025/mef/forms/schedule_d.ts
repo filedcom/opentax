@@ -110,11 +110,17 @@ function saleKey(sale: PreparedSale): string {
   ]);
 }
 
-function assertPreparedSalesMatchCalculation(
-  fields: Input,
-  preparedSales: readonly PreparedSale[],
-): void {
-  const raw = fields.transaction;
+export function assertScheduleDSalesMatchPrepared(
+  raw: unknown,
+  rawPrepared: readonly unknown[],
+): PreparedSale[] {
+  const preparedSales = rawPrepared.map((row) => transactionSchema.parse(row));
+  for (const sale of preparedSales) {
+    assertForm8949TransactionMath(sale);
+    if (isDirectSale(sale)) {
+      throw new Error("Schedule D direct sale must not also file on Form 8949");
+    }
+  }
   const calculatedSales =
     (raw === undefined ? [] : Array.isArray(raw) ? raw : [raw])
       .map((row) => transactionSchema.parse(row));
@@ -127,6 +133,7 @@ function assertPreparedSalesMatchCalculation(
       "Schedule D prepared Form 8949 rows differ from calculated sales",
     );
   }
+  return preparedSales;
 }
 
 function buildTransactionGroup(
@@ -366,18 +373,10 @@ export const scheduleD: MefFormDescriptor<"schedule_d", Input> = {
     if (rawSales !== undefined && !Array.isArray(rawSales)) {
       throw new Error("Schedule D needs prepared Form 8949 transaction rows");
     }
-    const preparedSales = (rawSales ?? []).map((row) =>
-      transactionSchema.parse(row)
+    const preparedSales = assertScheduleDSalesMatchPrepared(
+      fields.transaction,
+      rawSales ?? [],
     );
-    for (const sale of preparedSales) {
-      assertForm8949TransactionMath(sale);
-      if (isDirectSale(sale)) {
-        throw new Error(
-          "Schedule D direct sale must not also file on Form 8949",
-        );
-      }
-    }
-    assertPreparedSalesMatchCalculation(fields, preparedSales);
     return buildIRS1040ScheduleD(fields, preparedSales);
   },
 };

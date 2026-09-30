@@ -353,6 +353,20 @@ tax situations, then run the agreed single full test/XSD/PDF-render batch. It
 must not promote a row solely because a file or test exists. ATS acceptance
 remains a separate final gate.
 
+The TY2025 Form 1040 MeF builder now rejects caller-supplied return types
+other than 1040 and years other than 2025 before it emits any documents.
+Focused export tests cover 1040-NR, 1040-SS, 4868, and 2024. The source intake
+still lacks a reviewed taxpayer residency/dual-status classification, so this
+does not yet prove that a dual-status filing claim will be detected. The
+[2025 Publication 519](https://www.irs.gov/publications/p519) e-file boundary
+remains an open source-to-export requirement.
+
+When the calculated Form 1040 contains taxpayer or spouse TINs, both native
+and PDF exports now compare them to the filer identity used to label the
+return. Focused cases reject changed taxpayer TINs and spouse TINs without a
+matching spouse in the header, while accepting matching dashed/plain SSNs.
+This check does not authenticate missing source identity or issuer bytes.
+
 Schedule D/Form 8949 addendum (2026-09-30): one sourced Part E collectible
 sale now carries its computed row through the prepared MeF return, the
 source-bound PDF builder, Schedule D line 9, and the 28% rate worksheet once.
@@ -384,13 +398,17 @@ appears only on line 1a, while the adjusted loss appears on Form 8949 and
 line 1b. Other sale categories and IRS business-rule acceptance remain open.
 
 The prepared Form 8949 rows are now compared as a multiset with Schedule D's
-calculated non-direct transactions before native XML is built. A missing,
-changed, or duplicated row fails export. Direct-reporting checks in the
-calculation, prepared return, and both filing projections also require the
+calculated non-direct transactions before native XML and filled-PDF export. A
+missing, changed, or duplicated row fails either export; Form 8949 also cannot
+export without Schedule D. The direct Form 8854 bundle and XSD fixtures now
+include their filed Schedule D transaction. Direct-reporting checks in the
+calculation, prepared return, and both filing projections require the
 adjustment amount to be absent; an amount without a code stays on the Form
-8949 path. The focused tests and four affected full-return local XSD fixtures
-pass. This guard does not establish broader sale-route coverage or IRS
-business-rule and ATS acceptance.
+8949 path. The affected focused tests, four capital-sale full-return XSD
+fixtures, and one regenerated source-to-MeF-to-PDF packet pass. This guard does
+not establish broader sale-route coverage or IRS business-rule and ATS
+acceptance. The [2025 Form 8949 instructions](https://www.irs.gov/instructions/i8949)
+require Form 8949 to be filed with Schedule D.
 
 Form 6251 addendum (2026-09-29, unrun): the existing line-2k audited Form 8949
 route now also handles same-term short-term mixed gain/loss rows only when both

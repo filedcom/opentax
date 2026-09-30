@@ -69,6 +69,69 @@ Deno.test("Form 1040 PDF rejects missing printed identity, status, or digital-as
   );
 });
 
+Deno.test("Form 1040 PDF rejects source TINs that differ from the filer", async () => {
+  const fields = {
+    filing_status: "single",
+    digital_assets: false,
+  };
+  await assertRejects(
+    () =>
+      buildPdfBytes(
+        { f1040: { ...fields, taxpayer_ssn: "987-65-4321" } },
+        mockFiler,
+      ),
+    Error,
+    "taxpayer source TIN differs from the filer",
+  );
+  await assertRejects(
+    () =>
+      buildPdfBytes(
+        { f1040: { ...fields, spouse_ssn: "987-65-4321" } },
+        mockFiler,
+      ),
+    Error,
+    "spouse source TIN differs from the filer",
+  );
+});
+
+Deno.test("Form 8949 PDF cannot export without Schedule D", async () => {
+  await assertRejects(
+    () => buildPdfBytes({ form8949: [{ part: "B" }] }, undefined),
+    Error,
+    "needs its Schedule D",
+  );
+});
+
+Deno.test("Form 8949 PDF rows must match calculated Schedule D sales", async () => {
+  const sale = {
+    part: "B",
+    description: "Broker shares",
+    date_acquired: "2025-01-15",
+    date_sold: "2025-06-01",
+    proceeds: 2_000,
+    cost_basis: 1_000,
+    gain_loss: 1_000,
+    is_long_term: false,
+  };
+  for (
+    const prepared of [
+      [],
+      [{ ...sale, description: "Different shares" }],
+      [sale, sale],
+    ]
+  ) {
+    await assertRejects(
+      () =>
+        buildPdfBytes({
+          schedule_d: { transaction: sale },
+          form8949: prepared,
+        }, undefined),
+      Error,
+      "prepared Form 8949 rows differ from calculated sales",
+    );
+  }
+});
+
 Deno.test("PDF export rejects active attachments without complete PDF maps", () => {
   const active: Array<[Record<string, Record<string, unknown>>, string]> = [
     [{ f8997: { investment_lots: [{}] } }, "Form 8997"],

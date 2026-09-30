@@ -7,6 +7,7 @@ import type { FilerIdentity, MefFormsPending } from "./types.ts";
 import { assertAttachmentCoverage } from "../attachment-coverage.ts";
 import type { Form3800DocumentParts } from "./forms/f3800_document.ts";
 import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
+import { assertF1040SourceIdentity } from "../filer-source-reconciliation.ts";
 
 export interface MefBundle {
   readonly xml: string;
@@ -188,8 +189,22 @@ function buildReturnXml(
   attachments: ReadonlyArray<MefPdfAttachment>,
   attachmentSha256ByFileName?: Readonly<Record<string, string>>,
 ): { readonly xml: string; readonly form3800Parts?: Form3800DocumentParts } {
+  if (year !== 2025 || returnType !== "1040") {
+    throw new Error(
+      "TY2025 Form 1040 export requires year 2025 and return type 1040",
+    );
+  }
   if (!filer) {
     throw new Error("MeF export requires a real filer identity");
+  }
+  if (pending.f1040) {
+    assertF1040SourceIdentity(pending.f1040, filer);
+  }
+  if (
+    Array.isArray(pending.form8949) && pending.form8949.length > 0 &&
+    !pending.schedule_d
+  ) {
+    throw new Error("Form 8949 needs its reconciled Schedule D");
   }
   assertAttachmentCoverage(pending, "mef");
   const binaryAttachmentFileNames = attachments.map((item) => item.fileName);
