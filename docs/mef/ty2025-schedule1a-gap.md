@@ -94,3 +94,5 @@ Form 1040 line 13b prints $5,000. The page review and SHA-256 are in the
 [filled-PDF notes](ty2025-filled-pdf-review-2026-09-29.md). This is a
 synthetic source check; payer-issued bytes and IRS business-rule acceptance
 remain open.
+Source commit `46d7d080` passed `deno task test` at 8,938/8,938 with zero
+failures; retain `.state/research/ty2025-full-test-schedule1a-tips.log`.
