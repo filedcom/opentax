@@ -7,6 +7,7 @@ import { form1116_review } from "../nodes/inputs/form1116_review/index.ts";
 import { form1116_carryover_review } from "../nodes/inputs/form1116_carryover_review/index.ts";
 import { form1116_prior_carryover } from "../nodes/inputs/form1116_prior_carryover/index.ts";
 import { f1098 } from "../nodes/inputs/f1098/index.ts";
+import { mortgage_refinance_points } from "../nodes/inputs/mortgage_refinance_points/index.ts";
 import { f1099b } from "../nodes/inputs/f1099b/index.ts";
 import { f1099c } from "../nodes/inputs/f1099c/index.ts";
 import { f1099div } from "../nodes/inputs/f1099div/index.ts";
@@ -227,6 +228,7 @@ export const registry: NodeRegistry = {
   // ── Inputs ─────────────────────────────────────────────────────────────────
   ext,
   f1098,
+  mortgage_refinance_points,
   f1099b,
   f1099c,
   f1099div,

@@ -30,6 +30,28 @@ under the agreed implementation-first workflow. The lender-issued copy, payment
 and debt records, full Pub. 936 mortgage-limit review, PDF packet, business
 rules, and ATS remain open.
 
+## Ordinary refinance points outside box 6 (implementation written; untested)
+
+The separate public `mortgage_refinance_points` source records the linked
+payer-issued Form 1098, closing disclosure, Pub. 936 workpaper, borrower,
+qualified-home debt, loan term, service-fee exclusion, and consecutive 2025
+payment records. It accepts only points that the payer did not report in box 6,
+with no cash-out beyond qualified prior home debt. It spreads interest-like
+points over the loan term and deposits the rounded 2025 portion on Schedule A
+line 8c. Native and PDF Schedule A export require the borrower to match the
+taxpayer or joint-filing spouse, the linked Form 1098 to have no box 6 points,
+and the filed line 8c amount to equal the source calculation. The associated
+Form 1098 box 1 interest continues separately to line 8a.
+
+A synthetic $3,000 charge with $1,000 of service fees and six payments on a
+180-month loan is written to expect $67 on line 8c, $18,000 on line 8a, and
+$18,067 on Form 1040 line 12e. The focused cases, full-return XSD fixture,
+and filled-PDF fixture have not run under the agreed implementation-first
+workflow. This bounded route does not resolve mixed acquisition/cash-out
+allocation, improvement-point exceptions, early payoff, later-year amortization,
+multiple-source mortgage-limit allocation, payer-issued bytes, business rules,
+or ATS acceptance.
+
 ## Box 4 recovery audited with the points route
 
 [2025 Publication 525](https://www.irs.gov/publications/p525) says Form 1098 box 4 is a 2025 refund of mortgage interest paid in an earlier year. It does not reduce current-year box 1 interest. Taxable recovery depends on the earlier deduction and tax benefit. A positive box 4 now requires personal Schedule A routing, an identified lender, recipient TIN, distinct payer-copy reference, `box4_prior_year_refund: true`, a reviewed Pub. 525 recovery workpaper reference, and `box4_taxable_recovery_verified_amount` from zero through box 4. Duplicate copies reject. Current box 1 interest stays on Schedule A line 8a; only the reviewed taxable recovery routes to Schedule 1 line 8z and AGI. Native and PDF Schedule 1 exports require the taxpayer or joint-filing spouse as recipient and an exact match to the sourced recovery. Same-year netting, business/rental recovery without its own route, and unsourced full-refund taxation reject. A synthetic $2,000 prior-year refund with $1,200 reviewed taxable recovery and $18,000 current interest passes local TY2025 v5.4 full-return XSD; all five filled PDF pages were inspected in the [v58 review](ty2025-filled-pdf-review-2026-09-29.md). Payer-issued bytes, the actual Pub. 525 calculation, IRS business rules, ATS, and the final bulk regression remain open.

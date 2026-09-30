@@ -484,6 +484,53 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-unreported-refinance-points",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(80_000, 12_000, "Example Employer", "12-3456789")],
+      f1098: [{
+        lender_name: "Refinance Lender",
+        recipient_tin: singleGeneral.taxpayer_ssn,
+        source_document_reference: "Synthetic 2025 refinance Form 1098",
+        box1_mortgage_interest: 18_000,
+        box1_current_year_deductible_interest: 18_000,
+        box1_deduction_workpaper_reference: "2025 interest workpaper",
+        for_routing: "A",
+      }],
+      mortgage_refinance_points: {
+        refinances: [{
+          mortgage_id: "refinance-2025-1",
+          recipient_tin: singleGeneral.taxpayer_ssn,
+          lender_name: "Refinance Lender",
+          form1098_source_document_reference: "Synthetic 2025 refinance Form 1098",
+          closing_disclosure_reference: "2025 refinance closing disclosure",
+          pub936_workpaper_reference: "2025 refinance points workpaper",
+          refinance_close_month_2025: 6,
+          prior_qualified_home_debt: 100_000,
+          refinanced_principal: 100_000,
+          loan_term_months: 180,
+          total_points_charged: 3_000,
+          points_for_nondeductible_services: 1_000,
+          monthly_payment_records: [7, 8, 9, 10, 11, 12].map((month) => ({
+            month,
+            document_reference: `refinance-payment-${month}`,
+          })),
+          qualified_home_secured_verified: true,
+          points_not_reported_in_box6_verified: true,
+          points_paid_directly_verified: true,
+          acquisition_debt_limit_verified: true,
+        }],
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule_a"],
+    reviewFocus: [
+      "Schedule A line 8a prints 18,000 of reported interest and line 8c prints 67 of unreported refinance points",
+      "Form 1040 line 12e matches the 18,067 itemized deduction",
+      "The linked payer Form 1098 has no box 6 points",
+    ],
+  },
+  {
     id: "single-1098-prior-year-recovery",
     inputs: {
       general: singleGeneral,

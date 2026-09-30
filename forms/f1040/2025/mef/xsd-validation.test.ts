@@ -8368,6 +8368,58 @@ Deno.test({
 });
 
 Deno.test({
+  name: "XSD: ordinary refinance points not reported in box 6 reach Schedule A line 8c",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const result = runReturn({
+    general,
+    f1098: [{
+      lender_name: "Refinance Lender",
+      recipient_tin: general.taxpayer_ssn,
+      source_document_reference: "2025 issued refinance Form 1098",
+      box1_mortgage_interest: 18_000,
+      box1_current_year_deductible_interest: 18_000,
+      box1_deduction_workpaper_reference: "2025 interest workpaper",
+      for_routing: "A",
+    }],
+    mortgage_refinance_points: {
+      refinances: [{
+        mortgage_id: "refinance-2025-1",
+        recipient_tin: general.taxpayer_ssn,
+        lender_name: "Refinance Lender",
+        form1098_source_document_reference: "2025 issued refinance Form 1098",
+        closing_disclosure_reference: "2025 refinance closing disclosure",
+        pub936_workpaper_reference: "2025 refinance points workpaper",
+        refinance_close_month_2025: 6,
+        prior_qualified_home_debt: 100_000,
+        refinanced_principal: 100_000,
+        loan_term_months: 180,
+        total_points_charged: 3_000,
+        points_for_nondeductible_services: 1_000,
+        monthly_payment_records: [7, 8, 9, 10, 11, 12].map((month) => ({
+          month,
+          document_reference: `refinance-payment-${month}`,
+        })),
+        qualified_home_secured_verified: true,
+        points_not_reported_in_box6_verified: true,
+        points_paid_directly_verified: true,
+        acquisition_debt_limit_verified: true,
+      }],
+    },
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule_a?.line_8a_mortgage_interest_1098, 18_000);
+  assertEquals(result.pending.schedule_a?.line_8c_points_no_1098, 67);
+  assertEquals(result.pending.f1040?.line12e_itemized_deductions, 18_067);
+  const xml = buildMefXml(result.pending as MefFormsPending, extractFilerIdentity(general));
+  assertStringIncludes(xml, "<Form1098PointsNotReportedAmt>67</Form1098PointsNotReportedAmt>");
+  await validateXsd(xml, "ordinary refinance points full return");
+});
+
+Deno.test({
   name:
     "XSD: 1099-NEC Form 8919 firm reaches 1040, Schedule 2, Schedule SE and Form 8959",
   sanitizeOps: false,

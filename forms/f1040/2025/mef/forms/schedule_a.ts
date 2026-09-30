@@ -1,6 +1,7 @@
 import { element, elements } from "../../../mef/xml.ts";
 import { FilingStatus } from "../../../mef/header.ts";
 import { assertForm1098Box6Sources } from "../../../nodes/inputs/f1098/index.ts";
+import { assertRefinancePointsSource } from "../../../nodes/inputs/mortgage_refinance_points/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import {
   assertElectedSectionAReconciled,
@@ -101,6 +102,23 @@ function buildIRS1040ScheduleA(
       context.pending.f1098,
       recipients,
       fields.line_8a_mortgage_interest_1098 ?? 0,
+    );
+  }
+  if (context?.pending?.mortgage_refinance_points !== undefined) {
+    const filer = context.filer;
+    if (!filer) {
+      throw new Error("Schedule A refinance points need filer identity");
+    }
+    const recipients = [filer.primarySSN];
+    if (
+      filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+      filer.spouse?.ssn
+    ) recipients.push(filer.spouse.ssn);
+    assertRefinancePointsSource(
+      context.pending.mortgage_refinance_points,
+      context.pending.f1098,
+      recipients,
+      fields.line_8c_points_no_1098 ?? 0,
     );
   }
   // A section 170(d) noncash carryover needs Form 8283 in the carryover year.

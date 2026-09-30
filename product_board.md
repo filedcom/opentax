@@ -40,12 +40,14 @@ The detailed route boundaries remain in the linked gap notes and audits.
   finalized Schedule EIC and its Form 1040 credit. Parts III/IV require every
   filed CTC/ODC dependent and AOTC student once; these changes have not entered
   the final test batch.
-- **Form 1098 box 6 checkpoint:** ordinary refinancing points are not reported
-  in box 6 under the 2025 payer instructions. A direct construction-debt
-  refinance exception now calculates current-year amortization from payment
-  records and loan term into Schedule A line 8a. Its full-return and PDF review
-  fixtures are written but unrun; separate unreported refinance points and a
-  later-year ledger remain open. See the [points route](docs/mef/ty2025-form1098-box6-points.md).
+- **Form 1098 points checkpoint:** ordinary refinancing points are not reported
+  in box 6 under the 2025 payer instructions. The construction-debt exception
+  calculates current-year amortization into Schedule A line 8a. A separate
+  linked Form 1098 and closing-disclosure route now calculates ordinary
+  unreported refinance points into line 8c. Both routes have focused cases and
+  full-return XSD/PDF fixtures written but unrun. Payer-byte proof, mixed-debt
+  allocation, and a later-year ledger remain open. See the
+  [points route](docs/mef/ty2025-form1098-box6-points.md).
   The preexisting focused
   XSD/PDF evidence for these slices is recorded in their gap notes. All wider
   form variants, source proof, the final bulk run, business rules, and ATS
@@ -126,7 +128,7 @@ establish full filing support.
 - [ ] **Forms 2210/2210-F, 8801, 172, 461, 4562, 4797, 6252, 7206, 7217, 8829, 8606, 8815, 8915-F:** review their applicable public inputs, computations, source proof, Form 1040 joins, native/PDF documents, and conditional attachments; finish all positive routes or obtain a named fail-closed decision. Use the matching form gap notes under [docs/mef](docs/mef/) and the [form audit](docs/mef/ty2025-form1040-form-audit.md).
 - [ ] **Forms 2106, 8853, 8863, 8880, 8886, 8941, 8958, 8959, 8978, 8997, 982, 3115, 4255, 6478, 8621, 8864, 8874, 8911, 965-A, 8582-CR, 8611, 8826:** resolve the per-form unsupported branches, source/owner evidence, PDF parity, and required schedules or statements listed in the [form audit](docs/mef/ty2025-form1040-form-audit.md) and corresponding [gap notes](docs/mef/). Form 8863 now accepts the required public credit-limit worksheet and one sourced AOC case passed local XSD and filled-PDF review; other education-credit paths remain open. Form 8886 needs a per-transaction current-return attachment and a separate initial-year OTSA copy with identical disclosure content under the [IRS instructions](https://www.irs.gov/instructions/i8886); resolve that delivery workflow with its source and native/PDF route. Do not infer whole-form support from a bounded slice.
 - [ ] **Foreign/entity and special attachments:** resolve applicable Forms 5471, 8858/Schedule M, 1118, trust K-1 backup withholding, section 965, and every other individual-filer root flagged in the [unregistered-root crosswalk](docs/mef/ty2025-unregistered-root-applicability.md), including source copy versus transmitted attachment ownership.
-- [ ] **Source/statement exceptions:** finish W-2G withholding attachments; Form 1098 box 6 construction-refinance source proof, mortgage-limit allocation, and later-year amortization beyond the bounded [purchase-points and construction-refinance routes](docs/mef/ty2025-form1098-box6-points.md), plus ordinary refinance points outside box 6 on Schedule A line 8c; Schedule LEP/R; Form 8814 child-income notation; Form 8862 credit-reinstatement links beyond the bounded CTC case with current full-return XSD and filled-PDF review, including authentication of the now-required prior IRS notices for CTC/ODC and AOTC and review of the new multi-person PDF continuation; Schedule H FUTA continuation; and required signed/byte-bound statements and source copies identified by the [form audit](docs/mef/ty2025-form1040-form-audit.md).
+- [ ] **Source/statement exceptions:** finish W-2G withholding attachments; Form 1098 box 6 construction-refinance source proof, mortgage-limit allocation, and later-year amortization beyond the bounded [purchase-points, construction-refinance, and ordinary unreported refinance-points routes](docs/mef/ty2025-form1098-box6-points.md); extend ordinary line 8c points to mixed-debt, improvement, early-payoff, and later-year cases; Schedule LEP/R; Form 8814 child-income notation; Form 8862 credit-reinstatement links beyond the bounded CTC case with current full-return XSD and filled-PDF review, including authentication of the now-required prior IRS notices for CTC/ODC and AOTC and review of the new multi-person PDF continuation; Schedule H FUTA continuation; and required signed/byte-bound statements and source copies identified by the [form audit](docs/mef/ty2025-form1040-form-audit.md).
 
 ## Native MeF and PDF parity
 

@@ -31,6 +31,10 @@ import {
   itemSchema as f1098ItemSchema,
 } from "../nodes/inputs/f1098/index.ts";
 import {
+  mortgage_refinance_points,
+  inputSchema as mortgageRefinancePointsInputSchema,
+} from "../nodes/inputs/mortgage_refinance_points/index.ts";
+import {
   f1098e,
   itemSchema as f1098eItemSchema,
 } from "../nodes/inputs/f1098e/index.ts";
@@ -712,6 +716,11 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: form2441, inputSchema: form2441InputSchema, isArray: false },
   { node: form2555, inputSchema: form2555InputSchema, isArray: false },
   { node: scheduleA, inputSchema: scheduleAInputSchema, isArray: false },
+  {
+    node: mortgage_refinance_points,
+    inputSchema: mortgageRefinancePointsInputSchema,
+    isArray: false,
+  },
   { node: schedule_d, inputSchema: scheduleDInputSchema, isArray: false },
   { node: ext, inputSchema: extInputSchema, isArray: false },
   { node: general, inputSchema: generalInputSchema, isArray: false },

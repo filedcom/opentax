@@ -1,6 +1,7 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { FilingStatus } from "../../../mef/header.ts";
 import { assertForm1098Box6Sources } from "../../../nodes/inputs/f1098/index.ts";
+import { assertRefinancePointsSource } from "../../../nodes/inputs/mortgage_refinance_points/index.ts";
 import { assertElectedSectionAReconciled } from "../../mef/forms/f8283_election.ts";
 import { inputSchema as form8283InputSchema } from "../../../nodes/inputs/f8283/index.ts";
 import { reconcileForm8283Carryover } from "../../mef/forms/f8283_carryover.ts";
@@ -184,6 +185,22 @@ export const scheduleAPdf: PdfFormDescriptor = {
         all.f1098,
         recipients,
         Number(input.line_8a_mortgage_interest_1098 ?? 0),
+      );
+    }
+    if (all?.mortgage_refinance_points !== undefined) {
+      if (!filer) {
+        throw new Error("Schedule A refinance points PDF needs filer identity");
+      }
+      const recipients = [filer.primarySSN];
+      if (
+        filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+        filer.spouse?.ssn
+      ) recipients.push(filer.spouse.ssn);
+      assertRefinancePointsSource(
+        all.mortgage_refinance_points,
+        all.f1098,
+        recipients,
+        Number(input.line_8c_points_no_1098 ?? 0),
       );
     }
     const hasPriorCarryover = [

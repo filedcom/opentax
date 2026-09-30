@@ -24,6 +24,7 @@ import type { inputSchema as patrInputSchema } from "../../nodes/inputs/f1099pat
 import type { inputSchema as partnershipK1InputSchema } from "../../nodes/inputs/k1_partnership/index.ts";
 import type { inputSchema as sCorpK1InputSchema } from "../../nodes/inputs/k1_s_corp/index.ts";
 import type { inputSchema as trustK1InputSchema } from "../../nodes/inputs/k1_trust/index.ts";
+import type { inputSchema as refinancePointsInputSchema } from "../../nodes/inputs/mortgage_refinance_points/index.ts";
 
 type AnyForm = (typeof ALL_MEF_FORMS)[number];
 
@@ -47,4 +48,6 @@ export type MefFormsPending =
     k1_partnership?: z.infer<typeof partnershipK1InputSchema>;
     k1_s_corp?: z.infer<typeof sCorpK1InputSchema>;
     k1_trust?: z.infer<typeof trustK1InputSchema>;
+    // Source-only refinancing records support Schedule A line 8c.
+    mortgage_refinance_points?: z.infer<typeof refinancePointsInputSchema>;
   };
