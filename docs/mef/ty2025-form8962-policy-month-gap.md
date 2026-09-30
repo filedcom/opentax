@@ -53,6 +53,14 @@ return passes local TY2025 v5.4 XSD, the PDF packet builds, and 149 focused
 cases across this route pass. PDF visual review and the final bulk regression
 remain open. The broader boundaries below still apply.
 
+The same no-APTC source path now files for one lawfully present enrollee below
+100% FPL when the existing reviewed source status establishes lawful presence,
+Medicaid ineligibility due to immigration status, Marketplace coverage, and
+otherwise applicable-taxpayer facts. A $10,000 W-2 gives 66% FPL and $9,000
+monthly or $8,400 annual PTC in separate full-return cases. Both local TY2025
+v5.4 XSD checks and PDF builds pass; deleting the status stops native export.
+The external eligibility records and filled PDF pages remain unreviewed.
+
 The [2025 Form 8962 instructions](https://www.irs.gov/instructions/i8962)
 require Form 8962 when the taxpayer claims a PTC even if no APTC was paid. They
 also warn that Form 1095-A column B can be blank, zero, or wrong in that case,

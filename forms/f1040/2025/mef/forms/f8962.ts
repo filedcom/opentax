@@ -261,12 +261,12 @@ function simplePolicyIncomeAmounts(
   povertyLine: number,
   householdSize: number | null | undefined,
   policyCount: number,
-  below100MarketplaceException = false,
+  below100VerifiedException = false,
   verifiedDependent = false,
 ): { povertyPct: number; figure: number; repaymentCap: number | undefined } {
   const actualPct = Math.floor(householdIncome / povertyLine * 100);
   if (
-    (actualPct < 100 && !below100MarketplaceException) ||
+    (actualPct < 100 && !below100VerifiedException) ||
     (actualPct < 400 &&
       (policyCount !== 1 ||
         (householdSize !== 1 && !(verifiedDependent && householdSize === 2))))
@@ -879,6 +879,7 @@ function reconcileNoAptcPolicyMonths(
     povertyLine,
     fields.household_size,
     policies.length,
+    general.data.ptc_below_100_fpl_status?.basis === "lawfully_present",
   );
   if (
     (form1040.data.line6a_ss_gross ?? 0) !==
@@ -1262,7 +1263,7 @@ function reconcileNoAptcAnnualPolicy(
     povertyLine,
     fields.household_size,
     policies.length,
-    false,
+    general.data.ptc_below_100_fpl_status?.basis === "lawfully_present",
     hasVerifiedDependent,
   );
   if (

@@ -29,8 +29,8 @@ line choice, and the premium-payment timing rule.
 
 ## Still unsupported by this route
 
-- A zero-APTC household below 100% FPL, including the lawfully present exception
-  that needs additional eligibility facts.
+- A zero-APTC household below 100% FPL without the reviewed lawfully present
+  exception, or with more than one covered person or policy.
 - More than one covered person or policy, shared policy allocations, married
   filing separately, or a year-of-marriage alternative calculation.
 - Changes in coverage family, interstate moves, QSEHRA, self-employed
@@ -47,3 +47,25 @@ credit, Schedule 3 line 9, Form 1040 line 31, twelve native monthly groups,
 local TY2025 v5.4 XSD validation, and PDF packet generation. The PDF projector
 shows $650 credit in January and $750 in July. The completed packet has not
 yet had a visual review, and the final full regression remains open.
+
+## Lawfully present exception below 100% FPL
+
+The [2025 Form 8962 instructions](https://www.irs.gov/instructions/i8962)
+allow a taxpayer below 100% FPL to claim the PTC without APTC when the covered
+individual is lawfully present and Medicaid-ineligible because of immigration
+status, and the remaining applicable-taxpayer requirements hold. The existing
+reviewed `lawfully_present` source status captures those facts. Native MeF now
+accepts that status for the bounded single-enrollee, single-policy no-APTC
+monthly and full-year annual paths; the Marketplace-estimate exception still
+requires APTC.
+
+A $10,000 W-2 gives 66% FPL and a zero applicable figure. Twelve covered
+months at $800 premium with corrected SLCSP of $700 for six months and $800
+for six months yield $9,000 on the monthly path. A constant $700 corrected
+SLCSP yields $8,400 on annual line 11. Both full returns reconcile Form 8962,
+Schedule 3 line 9, and Form 1040 line 31, pass local TY2025 v5.4 XSD, and
+generate PDF packets. Removing the exception status rejects during native
+projection. The underlying immigration, Medicaid, Marketplace, and payment
+records are identified by entered review facts; their bytes have not been
+authenticated. Filled-PDF visual review and the final bulk regression remain
+open.
