@@ -18,6 +18,7 @@ import {
 } from "../../../nodes/inputs/f1099r/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import { assertMfsEitcSource } from "../../mfs-eitc-source.ts";
+import { assertEicSource } from "../../eic-source.ts";
 
 export interface Fields {
   filing_status?: string;
@@ -580,6 +581,12 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
     fields.filing_status,
     fields.mfs_eitc_separation_rule,
     resolveNumber(fields.line27_eitc),
+    context?.pending,
+  );
+  assertEicSource(
+    fields.filing_status,
+    resolveNumber(fields.line27_eitc),
+    mainHomeInUS,
     context?.pending,
   );
 

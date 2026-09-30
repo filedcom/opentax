@@ -904,7 +904,7 @@ Deno.test({
     },
     w2: [w2Item(32_000, 3_500)],
   });
-  const xml = buildXmlSlice(result, ["f1040", "eitc", "w2"]);
+  const xml = buildXmlSlice(result, ["f1040", "eitc", "w2", "general"]);
   assertEquals((xml.match(/<DependentDetail>/g) ?? []).length, 2);
   assertEquals((xml.match(/<IRS1040ScheduleEIC documentId=/g) ?? []).length, 1);
   assertEquals((xml.match(/<QualifyingChildInformation>/g) ?? []).length, 2);
@@ -922,10 +922,18 @@ Deno.test({
   ignore: !xsdAvailable,
 }, async () => {
   const result = runReturn({
-    general: singleGeneral(),
+    general: {
+      ...singleGeneral(),
+      main_home_in_us_over_half_year: true,
+      taxpayer_can_be_claimed_as_dependent: false,
+      childless_eic_review: {
+        not_qualifying_child_of_another_taxpayer_verified: true,
+        qualifying_child_status_record_reference: "Synthetic 2025 family review",
+      },
+    },
     w2: [w2Item(12_000, 500)],
   });
-  const xml = buildXmlSlice(result, ["f1040", "eitc", "w2"]);
+  const xml = buildXmlSlice(result, ["f1040", "eitc", "w2", "general"]);
   assertStringIncludes(xml, "<EarnedIncomeCreditAmt>");
   assertEquals(xml.includes("<IRS1040ScheduleEIC"), false);
   assertEquals(

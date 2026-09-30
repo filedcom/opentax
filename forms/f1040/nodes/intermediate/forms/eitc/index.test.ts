@@ -8,6 +8,13 @@ import { FilingStatus } from "../../../types.ts";
 function compute(input: Record<string, unknown>) {
   return eitc.compute({ taxYear: 2025, formType: "f1040" }, {
     filer_has_valid_ssns: true,
+    taxpayer_dob: "1985-06-15",
+    main_home_in_us_over_half_year: true,
+    taxpayer_can_be_claimed_as_dependent: false,
+    childless_eic_review: {
+      not_qualifying_child_of_another_taxpayer_verified: true,
+      qualifying_child_status_record_reference: "Synthetic 2025 family review",
+    },
     ...input,
   });
 }
@@ -34,6 +41,72 @@ Deno.test("filing Form 2555 disqualifies EIC even with earned income and a child
     filing_status: FilingStatus.Single,
     form2555_filed: true,
   });
+});
+
+Deno.test("childless EIC requires DOB, U.S. main home, and reviewed dependent status", () => {
+  const base = { earned_income: 12_000, filing_status: FilingStatus.Single };
+  assertEquals(getCredit(base), 542);
+  noCredit({ ...base, taxpayer_dob: undefined });
+  noCredit({ ...base, taxpayer_dob: "2001-01-02" });
+  noCredit({ ...base, taxpayer_dob: "1960-12-31" });
+  noCredit({ ...base, main_home_in_us_over_half_year: false });
+  noCredit({ ...base, main_home_in_us_over_half_year: undefined });
+  noCredit({ ...base, taxpayer_can_be_claimed_as_dependent: true });
+  noCredit({ ...base, taxpayer_can_be_claimed_as_dependent: undefined });
+  noCredit({ ...base, childless_eic_review: undefined });
+});
+
+Deno.test("childless EIC honors the IRS birthday boundaries", () => {
+  const base = { earned_income: 12_000, filing_status: FilingStatus.Single };
+  assertEquals(getCredit({ ...base, taxpayer_dob: "2001-01-01" }), 542);
+  assertEquals(getCredit({ ...base, taxpayer_dob: "1961-01-01" }), 542);
+  noCredit({
+    ...base,
+    taxpayer_dob: "2000-02-14",
+    taxpayer_death_date: "2025-02-12",
+  });
+  assertEquals(getCredit({
+    ...base,
+    taxpayer_dob: "2000-02-14",
+    taxpayer_death_date: "2025-02-13",
+  }), 542);
+  noCredit({
+    ...base,
+    taxpayer_dob: "1960-02-14",
+    taxpayer_death_date: "2025-02-14",
+  });
+  assertEquals(getCredit({
+    ...base,
+    taxpayer_dob: "1960-02-14",
+    taxpayer_death_date: "2025-02-13",
+  }), 542);
+});
+
+Deno.test("MFJ childless EIC accepts one age-eligible spouse; HOH requires unmarried review", () => {
+  const base = { earned_income: 12_000 };
+  assertEquals(getCredit({
+    ...base,
+    filing_status: FilingStatus.MFJ,
+    taxpayer_dob: "2003-06-15",
+    spouse_dob: "1985-06-15",
+    childless_eic_review: undefined,
+  }), 649);
+  noCredit({
+    ...base,
+    filing_status: FilingStatus.MFJ,
+    taxpayer_dob: "2003-06-15",
+    spouse_dob: "2004-06-15",
+  });
+  noCredit({ ...base, filing_status: FilingStatus.HOH });
+  assertEquals(getCredit({
+    ...base,
+    filing_status: FilingStatus.HOH,
+    childless_eic_review: {
+      not_qualifying_child_of_another_taxpayer_verified: true,
+      qualifying_child_status_record_reference: "Synthetic 2025 family review",
+      hoh_unmarried_at_year_end_verified: true,
+    },
+  }), 542);
 });
 
 function getCredit(input: Record<string, unknown>): number {

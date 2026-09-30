@@ -10,6 +10,13 @@ const general = {
   taxpayer_ssn_valid_for_employment: true,
   taxpayer_ssn_issued_before_due_date: true,
   taxpayer_tin_issued_by_due_date: true,
+  taxpayer_dob: "1985-06-15",
+  main_home_in_us_over_half_year: true,
+  taxpayer_can_be_claimed_as_dependent: false,
+  childless_eic_review: {
+    not_qualifying_child_of_another_taxpayer_verified: true,
+    qualifying_child_status_record_reference: "Synthetic 2025 family review",
+  },
 };
 const w2 = {
   employee_ssn: "111-22-3333",

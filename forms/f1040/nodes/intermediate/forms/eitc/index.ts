@@ -29,6 +29,12 @@ export const qualifyingChildDetailSchema = z.object({
 });
 export type QualifyingChildDetail = z.infer<typeof qualifyingChildDetailSchema>;
 
+export const childlessEicReviewSchema = z.object({
+  not_qualifying_child_of_another_taxpayer_verified: z.literal(true),
+  qualifying_child_status_record_reference: z.string().trim().min(1),
+  hoh_unmarried_at_year_end_verified: z.literal(true).optional(),
+}).strict();
+
 export const inputSchema = z.object({
   // Earned income from wages (W-2 Box 1), fed by w2 node
   earned_income: z.number().nonnegative().optional(),
@@ -51,6 +57,13 @@ export const inputSchema = z.object({
   filing_status: filingStatusSchema.optional(),
   mfs_separation_reviewed: z.boolean().optional(),
   filer_has_valid_ssns: z.boolean().optional(),
+  taxpayer_dob: z.string().date().optional(),
+  spouse_dob: z.string().date().optional(),
+  taxpayer_death_date: z.string().date().optional(),
+  spouse_death_date: z.string().date().optional(),
+  main_home_in_us_over_half_year: z.boolean().optional(),
+  taxpayer_can_be_claimed_as_dependent: z.boolean().optional(),
+  childless_eic_review: childlessEicReviewSchema.optional(),
 
   // Investment income (interest, dividends, capital gains, rents)
   // If investment_income > eitcInvestmentIncomeLimit, no EITC allowed
@@ -61,7 +74,7 @@ export const inputSchema = z.object({
   form2555_filed: z.boolean().optional(),
 });
 
-type EitcInput = z.infer<typeof inputSchema>;
+export type EitcInput = z.infer<typeof inputSchema>;
 
 // ─── Pure Helpers ─────────────────────────────────────────────────────────────
 
@@ -72,6 +85,45 @@ function isJointFiler(status: FilingStatus | undefined): boolean {
 function clampChildren(children: number): number {
   // IRS treats 3+ the same
   return Math.min(children, 3);
+}
+
+function meetsChildlessAgeTest(
+  dob: string | undefined,
+  deathDate: string | undefined,
+): boolean {
+  if (dob === undefined) return false;
+  if (deathDate === undefined) {
+    return dob > "1960-12-31" && dob < "2001-01-02";
+  }
+  if (!deathDate.startsWith("2025-")) return false;
+  const year = Number(dob.slice(0, 4));
+  const month = Number(dob.slice(5, 7));
+  const day = Number(dob.slice(8, 10));
+  const age25 = new Date(Date.UTC(year + 25, month - 1, day));
+  age25.setUTCDate(age25.getUTCDate() - 1);
+  const age65 = new Date(Date.UTC(year + 65, month - 1, day));
+  return deathDate >= age25.toISOString().slice(0, 10) &&
+    deathDate < age65.toISOString().slice(0, 10);
+}
+
+export function childlessEicEligible(input: EitcInput): boolean {
+  if (input.filing_status === undefined ||
+    input.filing_status === FilingStatus.MFS) return false;
+  const isJoint = isJointFiler(input.filing_status);
+  const ageEligible = meetsChildlessAgeTest(
+    input.taxpayer_dob,
+    input.taxpayer_death_date,
+  ) || (isJoint &&
+    meetsChildlessAgeTest(input.spouse_dob, input.spouse_death_date));
+  if (!ageEligible || input.main_home_in_us_over_half_year !== true) {
+    return false;
+  }
+  if (isJoint) return true;
+  return input.taxpayer_can_be_claimed_as_dependent === false &&
+    input.childless_eic_review?.
+        not_qualifying_child_of_another_taxpayer_verified === true &&
+    (input.filing_status !== FilingStatus.HOH ||
+      input.childless_eic_review.hoh_unmarried_at_year_end_verified === true);
 }
 
 function computeEitc(
@@ -93,6 +145,8 @@ function computeEitc(
     input.filing_status === FilingStatus.MFS &&
     (children === 0 || input.mfs_separation_reviewed !== true)
   ) return 0;
+
+  if (children === 0 && !childlessEicEligible(input)) return 0;
 
   // Investment income disqualifier (IRC §32(i))
   if ((input.investment_income ?? 0) > investmentIncomeLimit) return 0;

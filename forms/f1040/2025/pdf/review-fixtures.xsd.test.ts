@@ -5,6 +5,7 @@ import { registry } from "../registry.ts";
 import { buildMefXml } from "../mef/builder.ts";
 import { buildPending } from "../mef/pending.ts";
 import { pdfReviewFixtures } from "./review-fixtures.ts";
+import { irs1040Pdf } from "./forms/f1040.ts";
 
 const xsd = new URL(
   "../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
@@ -119,6 +120,23 @@ for (const fixture of pdfReviewFixtures) {
         assertStringIncludes(
           xml,
           "<EarnedIncomeCreditAmt>649</EarnedIncomeCreditAmt>",
+        );
+        const noReview = {
+          ...result.pending,
+          general: {
+            ...result.pending.general,
+            childless_eic_review: undefined,
+          },
+        };
+        assertThrows(
+          () => buildMefXml(buildPending(noReview), fixture.filer),
+          Error,
+          "childless EIC needs reviewed general source facts",
+        );
+        assertThrows(
+          () => irs1040Pdf.projectFields?.(result.pending.f1040, noReview),
+          Error,
+          "childless EIC needs reviewed general source facts",
         );
         const expected = Math.min(12_000, 10_000 - Math.round(line15));
         assertEquals(expected, 9_294);

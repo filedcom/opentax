@@ -10,7 +10,10 @@ import {
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { standard_deduction } from "../../intermediate/worksheets/standard_deduction/index.ts";
-import { eitc } from "../../intermediate/forms/eitc/index.ts";
+import {
+  childlessEicReviewSchema,
+  eitc,
+} from "../../intermediate/forms/eitc/index.ts";
 import { f8812 } from "../f8812/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { form8959 } from "../../intermediate/forms/form8959/index.ts";
@@ -168,6 +171,7 @@ export type DependentFiling = z.infer<typeof dependentFilingSchema>;
 
 export const inputSchema = z.object({
   filing_status: z.nativeEnum(FilingStatus),
+  childless_eic_review: childlessEicReviewSchema.optional(),
   // 2025 EIC special rule for a married taxpayer filing separately.
   mfs_eitc_separation_review: z.discriminatedUnion("basis", [
     z.object({
@@ -974,6 +978,15 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
       ),
       this.outputNodes.output(eitc, {
         filing_status: parsed.filing_status,
+        taxpayer_dob: parsed.taxpayer_dob,
+        spouse_dob: parsed.spouse_dob,
+        taxpayer_death_date: parsed.taxpayer_death_date,
+        spouse_death_date: parsed.spouse_death_date,
+        main_home_in_us_over_half_year:
+          parsed.main_home_in_us_over_half_year,
+        taxpayer_can_be_claimed_as_dependent:
+          parsed.taxpayer_can_be_claimed_as_dependent,
+        childless_eic_review: parsed.childless_eic_review,
         mfs_separation_reviewed:
           parsed.mfs_eitc_separation_review !== undefined,
         filer_has_valid_ssns: filer.eitc,

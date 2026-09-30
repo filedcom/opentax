@@ -5,6 +5,7 @@ import { appendIraDistributionStatement } from "./ira_distribution_statement.ts"
 import { appendDependentContinuation } from "./dependent_continuation.ts";
 import { schedule1aPdf } from "./schedule1a.ts";
 import { assertMfsEitcSource } from "../../mfs-eitc-source.ts";
+import { assertEicSource } from "../../eic-source.ts";
 import {
   DependentCreditCategory,
   dependentFilingSchema,
@@ -561,6 +562,12 @@ export const irs1040Pdf: PdfFormDescriptor = {
       fields.filing_status,
       fields.mfs_eitc_separation_rule,
       typeof fields.line27_eitc === "number" ? fields.line27_eitc : undefined,
+      allPending,
+    );
+    assertEicSource(
+      fields.filing_status,
+      typeof fields.line27_eitc === "number" ? fields.line27_eitc : undefined,
+      fields.main_home_in_us_over_half_year,
       allPending,
     );
     const dependents = dependentFilingSchema.array().parse(
