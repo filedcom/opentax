@@ -81,6 +81,26 @@ for (const fixture of pdfReviewFixtures) {
           "<EnhancedSeniorDeductionAmt>10800</EnhancedSeniorDeductionAmt><TotalAdditionalDeductionsAmt>10800</TotalAdditionalDeductionsAmt>",
         );
       }
+      if (fixture.id === "single-w2-qualified-tips-schedule1a") {
+        assertEquals(result.pending.f1040.line13b_additional_deductions, 5_000);
+        assertStringIncludes(xml, "<IRS1040Schedule1A ");
+        assertStringIncludes(
+          xml,
+          "<QualifiedTipsWagesAmt>5000</QualifiedTipsWagesAmt>",
+        );
+        assertStringIncludes(
+          xml,
+          "<QualifiedTipsEmployeeAmt>5000</QualifiedTipsEmployeeAmt>",
+        );
+        assertStringIncludes(
+          xml,
+          "<QualifiedTipsDeductionAmt>5000</QualifiedTipsDeductionAmt>",
+        );
+        assertStringIncludes(
+          xml,
+          "<TotalAdditionalDeductionsAmt>5000</TotalAdditionalDeductionsAmt>",
+        );
+      }
       if (fixture.id === "single-ira-rollover") {
         assertEquals(result.pending.f1040.line4a_ira_gross, 5_000);
         assertEquals(result.pending.f1040.line4b_ira_taxable, 0);

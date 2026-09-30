@@ -497,7 +497,7 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
         context.documentIdsByPendingKey.schedule1a?.length !== 1)
     ) {
       throw new Error(
-        "Form 1040 line 13b needs an attached senior-only Schedule 1-A",
+        "Form 1040 line 13b needs an attached reviewed Schedule 1-A",
       );
     }
   }

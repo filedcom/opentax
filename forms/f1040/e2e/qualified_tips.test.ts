@@ -48,7 +48,12 @@ Deno.test("qualified tips: flows from W-2 through Schedule 1-A to tax and refund
     [],
   );
   assertEquals(result.pending.schedule1a?.qualified_employee_tips, [
-    { employee_ssn: "111-22-3333", amount: 5_000 },
+    {
+      employee_ssn: "111-22-3333",
+      amount: 5_000,
+      box5_medicare_wages: 30_000,
+      occupation_code: "102",
+    },
   ]);
   assertEquals(f1040.line13b_additional_deductions, 5_000);
   assertEquals(f1040.line14_deductions_qbi_total, 20_750);

@@ -46,6 +46,8 @@ export const inputSchema = claimInputSchema.extend({
   qualified_employee_tips: z.array(z.object({
     employee_ssn: z.string(),
     amount: z.number().nonnegative(),
+    box5_medicare_wages: z.number().nonnegative().optional(),
+    occupation_code: z.string().regex(/^\d{3}$/).optional(),
   })).optional(),
   magi: z.number().optional(),
   filing_status: z.nativeEnum(FilingStatus).optional(),
@@ -74,6 +76,25 @@ export const seniorOnlyLinesSchema = z.object({
 
 export type SeniorOnlyLines = z.infer<typeof seniorOnlyLinesSchema>;
 
+export const singleEmployerTipsLinesSchema = z.object({
+  line1_agi: z.number().int(),
+  line3_magi: z.number().int(),
+  line4a_w2_tips: z.number().int().positive(),
+  line4c_employee_tips: z.number().int().positive(),
+  line6_total_tips: z.number().int().positive(),
+  line7_capped_tips: z.number().int().positive(),
+  line9_threshold: z.number().int().positive(),
+  line10_excess_magi: z.number().int().nonnegative(),
+  line11_thousands: z.number().int().nonnegative(),
+  line12_reduction: z.number().int().nonnegative(),
+  line13_tips: z.number().int().positive(),
+  line38_total: z.number().int().positive(),
+}).strict();
+
+export type SingleEmployerTipsLines = z.infer<
+  typeof singleEmployerTipsLinesSchema
+>;
+
 const QUALIFIED_TIPS_CAP = 25_000;
 const OVERTIME_CAP = 12_500;
 const OVERTIME_CAP_MFJ = 25_000;
@@ -82,6 +103,27 @@ const TIPS_OVERTIME_PHASEOUT_THRESHOLD_MFJ = 300_000;
 const VEHICLE_INTEREST_CAP = 10_000;
 const VEHICLE_PHASEOUT_THRESHOLD = 100_000;
 const VEHICLE_PHASEOUT_THRESHOLD_MFJ = 200_000;
+
+// IRS.gov/TippedOccupations, TY2025 list (the published codes are contiguous
+// within each of these occupation groups).
+const QUALIFIED_TIP_OCCUPATION_RANGES: readonly [number, number][] = [
+  [101, 110],
+  [201, 211],
+  [301, 304],
+  [401, 409],
+  [501, 510],
+  [601, 611],
+  [701, 706],
+  [801, 810],
+];
+
+export function isQualifiedTipsOccupationCode(code: string): boolean {
+  if (!/^\d{3}$/.test(code)) return false;
+  const number = Number(code);
+  return QUALIFIED_TIP_OCCUPATION_RANGES.some(([first, last]) =>
+    number >= first && number <= last
+  );
+}
 
 function tipsOvertimePhaseout(input: Schedule1AInput): number | undefined {
   if (input.filing_status === undefined || input.magi === undefined) {
@@ -270,6 +312,95 @@ export function calculateSeniorOnlySchedule1A(
     line36b_spouse: spouse,
     line37_senior: taxpayer + spouse,
     line38_total: taxpayer + spouse,
+  });
+}
+
+/** W-2 box 7 tips from exactly one qualifying employer, with no other Part II source. */
+export function calculateSingleEmployerTipsSchedule1A(
+  ctx: NodeContext,
+  rawInput: Schedule1AInput,
+): SingleEmployerTipsLines {
+  if (ctx.taxYear !== 2025) {
+    throw new Error("Schedule 1-A tips filing needs tax year 2025");
+  }
+  const input = inputSchema.parse(rawInput);
+  if (!input.senior_zero_exclusions_review) {
+    throw new Error(
+      "Schedule 1-A tips filing needs sourced zero-exclusion review for Part I",
+    );
+  }
+  if (
+    input.qualified_employee_tips?.length !== 1 ||
+    (input.taxpayer_qualified_overtime_compensation ?? 0) > 0 ||
+    (input.spouse_qualified_overtime_compensation ?? 0) > 0 ||
+    (input.vehicle_loans?.length ?? 0) > 0 ||
+    seniorDeduction(ctx, input) > 0
+  ) {
+    throw new Error(
+      "Schedule 1-A single-employer tips filing cannot include multiple tip employers, senior, overtime, or vehicle claims",
+    );
+  }
+  if (
+    input.magi === undefined || !Number.isSafeInteger(input.magi) ||
+    input.filing_status === undefined ||
+    input.filing_status === FilingStatus.MFS
+  ) {
+    throw new Error(
+      "Schedule 1-A tips filing needs whole-dollar AGI and eligible filing status",
+    );
+  }
+  const entry = input.qualified_employee_tips[0];
+  if (!Number.isSafeInteger(entry.amount) || entry.amount <= 0) {
+    throw new Error(
+      "Schedule 1-A W-2 box 7 tips must be positive whole dollars",
+    );
+  }
+  if (
+    entry.occupation_code === undefined ||
+    !isQualifiedTipsOccupationCode(entry.occupation_code) ||
+    entry.box5_medicare_wages === undefined ||
+    entry.box5_medicare_wages > 176_100
+  ) {
+    throw new Error(
+      "Schedule 1-A W-2 box 7 filing needs a qualifying occupation code and Medicare wages at or below the 2025 social security wage base",
+    );
+  }
+  const employeeSsn = entry.employee_ssn.replaceAll("-", "");
+  const taxpayerEligible = employeeSsn ===
+      input.taxpayer_ssn?.replaceAll("-", "") &&
+    input.taxpayer_has_valid_ssn === true;
+  const spouseEligible = input.filing_status === FilingStatus.MFJ &&
+    employeeSsn === input.spouse_ssn?.replaceAll("-", "") &&
+    input.spouse_has_valid_ssn === true;
+  if (!taxpayerEligible && !spouseEligible) {
+    throw new Error("Schedule 1-A tips need the recipient's valid SSN");
+  }
+  const threshold = input.filing_status === FilingStatus.MFJ
+    ? TIPS_OVERTIME_PHASEOUT_THRESHOLD_MFJ
+    : TIPS_OVERTIME_PHASEOUT_THRESHOLD;
+  const excess = Math.max(0, input.magi - threshold);
+  const thousands = Math.floor(excess / 1_000);
+  const reduction = thousands * 100;
+  const capped = Math.min(entry.amount, QUALIFIED_TIPS_CAP);
+  const deduction = Math.max(0, capped - reduction);
+  if (deduction <= 0 || deduction !== qualifiedTipsDeduction(input)) {
+    throw new Error(
+      "Schedule 1-A tips deduction does not reconcile to the source graph",
+    );
+  }
+  return singleEmployerTipsLinesSchema.parse({
+    line1_agi: input.magi,
+    line3_magi: input.magi,
+    line4a_w2_tips: entry.amount,
+    line4c_employee_tips: entry.amount,
+    line6_total_tips: entry.amount,
+    line7_capped_tips: capped,
+    line9_threshold: threshold,
+    line10_excess_magi: excess,
+    line11_thousands: thousands,
+    line12_reduction: reduction,
+    line13_tips: deduction,
+    line38_total: deduction,
   });
 }
 

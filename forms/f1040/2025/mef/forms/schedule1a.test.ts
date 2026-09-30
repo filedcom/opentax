@@ -1,6 +1,7 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   calculateSeniorOnlySchedule1A,
+  calculateSingleEmployerTipsSchedule1A,
   type SeniorOnlyLines,
   seniorZeroExclusionsReviewSchema,
 } from "../../../nodes/intermediate/forms/schedule1a/index.ts";
@@ -59,6 +60,134 @@ const joint1040 = {
   spouse_ssn_issued_before_due_date: true,
   spouse_tin_issued_by_due_date: true,
 };
+
+const singleTips = {
+  filing_status: FilingStatus.Single,
+  magi: 30_000,
+  taxpayer_ssn: "111223333",
+  taxpayer_has_valid_ssn: true,
+  senior_zero_exclusions_review: review,
+  qualified_employee_tips: [{
+    employee_ssn: "111223333",
+    amount: 5_000,
+    box5_medicare_wages: 30_000,
+    occupation_code: "102",
+  }],
+};
+
+const singleTips1040 = {
+  filing_status: FilingStatus.Single,
+  line11_agi: 30_000,
+  line13b_additional_deductions: 5_000,
+  schedule1a_line37_senior_deduction: 0,
+  taxpayer_ssn: "111223333",
+  taxpayer_ssn_valid_for_employment: true,
+  taxpayer_ssn_issued_before_due_date: true,
+  taxpayer_tin_issued_by_due_date: true,
+};
+
+Deno.test("Schedule 1-A single-employer W-2 tips source fills Part II and reconciles", () => {
+  const lines = calculateSingleEmployerTipsSchedule1A(
+    { taxYear: 2025, formType: "f1040" },
+    singleTips,
+  );
+  assertEquals(lines.line4a_w2_tips, 5_000);
+  assertEquals(lines.line4c_employee_tips, 5_000);
+  assertEquals(lines.line13_tips, 5_000);
+  const xml = schedule1a.build(singleTips, {
+    pending: { f1040: singleTips1040 },
+  });
+  assertStringIncludes(
+    xml,
+    "<QualifiedTipsWagesAmt>5000</QualifiedTipsWagesAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<QualifiedTipsForm4137Amt>0</QualifiedTipsForm4137Amt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<QualifiedTipsDeductionAmt>5000</QualifiedTipsDeductionAmt>",
+  );
+  assertEquals(xml.includes("EnhancedSeniorDeductionAmt"), false);
+});
+
+Deno.test("Schedule 1-A W-2 tips applies the $25,000 cap and whole-thousand phaseout", () => {
+  const lines = calculateSingleEmployerTipsSchedule1A(
+    { taxYear: 2025, formType: "f1040" },
+    {
+      ...singleTips,
+      magi: 151_999,
+      qualified_employee_tips: [{
+        ...singleTips.qualified_employee_tips[0],
+        amount: 30_000,
+      }],
+    },
+  );
+  assertEquals(lines.line7_capped_tips, 25_000);
+  assertEquals(lines.line10_excess_magi, 1_999);
+  assertEquals(lines.line11_thousands, 1);
+  assertEquals(lines.line12_reduction, 100);
+  assertEquals(lines.line13_tips, 24_900);
+});
+
+Deno.test("Schedule 1-A tips filing rejects unsupported or unsourced Part II evidence", () => {
+  const pending = { f1040: singleTips1040 };
+  assertThrows(
+    () =>
+      schedule1a.build({
+        ...singleTips,
+        qualified_employee_tips: [
+          ...singleTips.qualified_employee_tips,
+          { ...singleTips.qualified_employee_tips[0], amount: 1_000 },
+        ],
+      }, { pending }),
+    Error,
+    "multiple tip employers",
+  );
+  assertThrows(
+    () =>
+      schedule1a.build({
+        ...singleTips,
+        qualified_employee_tips: [{
+          ...singleTips.qualified_employee_tips[0],
+          occupation_code: "999",
+        }],
+      }, { pending }),
+    Error,
+    "qualifying occupation code",
+  );
+  assertThrows(
+    () =>
+      schedule1a.build({
+        ...singleTips,
+        qualified_employee_tips: [{
+          ...singleTips.qualified_employee_tips[0],
+          box5_medicare_wages: 176_101,
+        }],
+      }, { pending }),
+    Error,
+    "Medicare wages at or below",
+  );
+  assertThrows(
+    () =>
+      schedule1a.build(singleTips, {
+        pending: { ...pending, form4137: { forms: [{}] } },
+      }),
+    Error,
+    "cannot include Form 4137 tips",
+  );
+  assertThrows(
+    () =>
+      schedule1a.build(singleTips, {
+        pending: {
+          f1040: { ...singleTips1040, line13b_additional_deductions: 4_999 },
+        },
+      }),
+    Error,
+    "do not reconcile",
+  );
+});
 
 const filer: FilerIdentity = {
   primarySSN: "111223333",
@@ -145,7 +274,7 @@ Deno.test("Schedule 1-A integration rejects incomplete and unsupported line 13b"
   assertThrows(
     () => buildMefXml({ f1040: joint1040 }, filer),
     Error,
-    "attached senior-only Schedule 1-A",
+    "attached reviewed Schedule 1-A",
   );
   assertThrows(
     () =>
@@ -188,7 +317,7 @@ Deno.test("Schedule 1-A senior-only MeF rejects missing review, other claims, an
         pending: { f1040: joint1040 },
       }),
     Error,
-    "sourced senior-only Part I review",
+    "sourced Part I zero-exclusion review",
   );
   assertThrows(
     () =>

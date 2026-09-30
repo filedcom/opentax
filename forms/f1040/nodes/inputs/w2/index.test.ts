@@ -219,12 +219,26 @@ Deno.test("box7 tips with a tipped occupation code route to Schedule 1-A", () =>
   assertEquals(fieldsOf(result.outputs, schedule1a)?.qualified_employee_tips, [{
     employee_ssn: "111223333",
     amount: 5_000,
+    box5_medicare_wages: undefined,
+    occupation_code: "102",
   }]);
 });
 
 Deno.test("box7 tips without a tipped occupation code do not route to Schedule 1-A", () => {
   const result = compute([
     minimalItem({ box1_wages: 30_000, box7_ss_tips: 5_000 }),
+  ]);
+  assertEquals(fieldsOf(result.outputs, schedule1a), undefined);
+});
+
+Deno.test("box7 tips with a three-digit code outside the IRS occupation list do not route", () => {
+  const result = compute([
+    minimalItem({
+      employee_ssn: "111223333",
+      box1_wages: 30_000,
+      box7_ss_tips: 5_000,
+      box14b_tipped_code: "999",
+    }),
   ]);
   assertEquals(fieldsOf(result.outputs, schedule1a), undefined);
 });
@@ -246,8 +260,18 @@ Deno.test("qualified tips are summed across eligible W-2s only", () => {
     minimalItem({ box1_wages: 20_000, box7_ss_tips: 4_000 }),
   ]);
   assertEquals(fieldsOf(result.outputs, schedule1a)?.qualified_employee_tips, [
-    { employee_ssn: "111223333", amount: 2_000 },
-    { employee_ssn: "444556666", amount: 3_000 },
+    {
+      employee_ssn: "111223333",
+      amount: 2_000,
+      box5_medicare_wages: undefined,
+      occupation_code: "102",
+    },
+    {
+      employee_ssn: "444556666",
+      amount: 3_000,
+      box5_medicare_wages: undefined,
+      occupation_code: "203",
+    },
   ]);
 });
 

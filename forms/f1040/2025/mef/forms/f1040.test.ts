@@ -41,7 +41,7 @@ Deno.test("Form 1040 MeF rejects a positive Schedule 1-A deduction without its d
   assertThrows(
     () => irs1040.build({ line13b_additional_deductions: 6_000 }),
     Error,
-    "line 13b needs an attached senior-only Schedule 1-A",
+    "line 13b needs an attached reviewed Schedule 1-A",
   );
 });
 

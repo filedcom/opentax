@@ -689,6 +689,45 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-w2-qualified-tips-schedule1a",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        taxpayer_ssn_valid_for_employment: true,
+        taxpayer_ssn_issued_before_due_date: true,
+        taxpayer_tin_issued_by_due_date: true,
+      },
+      w2: [{
+        ...wage(30_000, 2_500, "Example Restaurant", "12-3456789"),
+        employee_ssn: "111-22-3333",
+        box3_ss_wages: 25_000,
+        box4_ss_withheld: 1_860,
+        box7_ss_tips: 5_000,
+        box14b_tipped_code: "102",
+      }],
+      schedule1a: {
+        senior_zero_exclusions_review: {
+          no_section933_puerto_rico_excluded_income: true,
+          section933_review_source_reference:
+            "Synthetic 2025 residency and income review",
+          no_form2555_filed: true,
+          form2555_review_source_reference:
+            "Synthetic 2025 foreign-income review",
+          no_form4563_filed: true,
+          form4563_review_source_reference:
+            "Synthetic 2025 Samoa-source income review",
+        },
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule1a"],
+    reviewFocus: [
+      "W-2 box 7 tips and occupation code 102 support the single-employer Part II path",
+      "Schedule 1-A page 1 prints 5,000 on lines 4a, 4c, 6, 7, and 13",
+      "Schedule 1-A line 38 and Form 1040 line 13b both print 5,000",
+    ],
+  },
+  {
     id: "joint-senior-schedule1a",
     inputs: {
       general: {

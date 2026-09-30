@@ -2,6 +2,7 @@ import { z } from "zod";
 import { element, elements } from "../../../mef/xml.ts";
 import {
   calculateSeniorOnlySchedule1A,
+  calculateSingleEmployerTipsSchedule1A,
   inputSchema,
 } from "../../../nodes/intermediate/forms/schedule1a/index.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
@@ -26,7 +27,7 @@ const form1040ReconciliationSchema = z.object({
 
 type Input = z.infer<typeof inputSchema> | readonly [];
 
-function buildSeniorSchedule(raw: Input, context?: MefBuildContext): string {
+function buildSchedule(raw: Input, context?: MefBuildContext): string {
   if (Array.isArray(raw) && raw.length === 0) return "";
   const input = inputSchema.parse(raw);
   if (!input.senior_zero_exclusions_review) {
@@ -35,7 +36,7 @@ function buildSeniorSchedule(raw: Input, context?: MefBuildContext): string {
     }).passthrough().parse(context?.pending?.f1040);
     if ((claim.line13b_additional_deductions ?? 0) === 0) return "";
     throw new Error(
-      "Schedule 1-A positive line 13b needs sourced senior-only Part I review",
+      "Schedule 1-A positive line 13b needs sourced Part I zero-exclusion review",
     );
   }
   const form1040 = form1040ReconciliationSchema.parse(
@@ -48,6 +49,80 @@ function buildSeniorSchedule(raw: Input, context?: MefBuildContext): string {
     throw new Error(
       "Schedule 1-A zero-exclusion review conflicts with a Form 2555 or Form 4563 source",
     );
+  }
+  if ((input.qualified_employee_tips?.length ?? 0) > 0) {
+    const form4137 = context?.pending?.form4137 === undefined
+      ? undefined
+      : z.object({ forms: z.array(z.unknown()).optional() }).passthrough()
+        .parse(context.pending.form4137);
+    if ((form4137?.forms?.length ?? 0) > 0) {
+      throw new Error(
+        "Schedule 1-A W-2-only tips filing cannot include Form 4137 tips",
+      );
+    }
+    const lines = calculateSingleEmployerTipsSchedule1A(
+      { taxYear: 2025, formType: "f1040" },
+      input,
+    );
+    const entry = input.qualified_employee_tips![0];
+    const ssn = entry.employee_ssn.replaceAll("-", "");
+    const matchesRecipient = (
+      sourceSsn: string | undefined,
+      returnSsn: string | undefined,
+      employmentValid: boolean | undefined,
+      issuedBeforeDueDate: boolean | undefined,
+      tinIssuedByDueDate: boolean | undefined,
+    ) =>
+      sourceSsn?.replaceAll("-", "") === ssn &&
+      returnSsn?.replaceAll("-", "") === ssn &&
+      employmentValid === true && issuedBeforeDueDate === true &&
+      tinIssuedByDueDate === true;
+    const taxpayer = matchesRecipient(
+      input.taxpayer_ssn,
+      form1040.taxpayer_ssn,
+      form1040.taxpayer_ssn_valid_for_employment,
+      form1040.taxpayer_ssn_issued_before_due_date,
+      form1040.taxpayer_tin_issued_by_due_date,
+    );
+    const spouse = input.filing_status === FilingStatus.MFJ && matchesRecipient(
+      input.spouse_ssn,
+      form1040.spouse_ssn,
+      form1040.spouse_ssn_valid_for_employment,
+      form1040.spouse_ssn_issued_before_due_date,
+      form1040.spouse_tin_issued_by_due_date,
+    );
+    if (
+      form1040.filing_status !== input.filing_status ||
+      (!taxpayer && !spouse) ||
+      form1040.line11_agi !== lines.line1_agi ||
+      form1040.line13b_additional_deductions !== lines.line38_total ||
+      (form1040.schedule1a_line37_senior_deduction ?? 0) !== 0
+    ) {
+      throw new Error(
+        "Schedule 1-A tips identity and Part I/VI do not reconcile to Form 1040",
+      );
+    }
+    return elements("IRS1040Schedule1A", [
+      element("AdjustedGrossIncomeAmt", lines.line1_agi),
+      element("ModifiedAGIAmt", lines.line3_magi),
+      element("QualifiedTipsWagesAmt", lines.line4a_w2_tips),
+      element("QualifiedTipsForm4137Amt", 0),
+      element("QualifiedTipsEmployeeAmt", lines.line4c_employee_tips),
+      element("TotalQualifiedTipsAmt", lines.line6_total_tips),
+      element("SmallerTipsOrMaxDedAmt", lines.line7_capped_tips),
+      element("TipsFilingStatusThrshldAmt", lines.line9_threshold),
+      lines.line10_excess_magi > 0
+        ? element("TipsMAGILessThrshldAmt", lines.line10_excess_magi)
+        : "",
+      lines.line10_excess_magi > 0
+        ? element("TipsMAGILessThrshldDivideNum", lines.line11_thousands)
+        : "",
+      lines.line10_excess_magi > 0
+        ? element("TipsMAGILessThrshldRedAmt", lines.line12_reduction)
+        : "",
+      element("QualifiedTipsDeductionAmt", lines.line13_tips),
+      element("TotalAdditionalDeductionsAmt", lines.line38_total),
+    ]);
   }
   const lines = calculateSeniorOnlySchedule1A(
     { taxYear: 2025, formType: "f1040" },
@@ -121,5 +196,5 @@ export const schedule1a: MefFormDescriptor<"schedule1a", Input> = {
   pendingKey: "schedule1a",
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040s1a--2025.pdf",
-  build: buildSeniorSchedule,
+  build: buildSchedule,
 };

@@ -31,7 +31,10 @@ import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { f8812 } from "../f8812/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../config/index.ts";
-import { schedule1a } from "../../intermediate/forms/schedule1a/index.ts";
+import {
+  isQualifiedTipsOccupationCode,
+  schedule1a,
+} from "../../intermediate/forms/schedule1a/index.ts";
 import {
   AllocationBasis,
   Form8958Line,
@@ -570,11 +573,14 @@ function qualifiedTipsOutput(w2s: W2Items): NodeOutput[] {
   const tips = regularItems(w2s)
     .filter((item) =>
       item.box14b_tipped_code !== undefined &&
+      isQualifiedTipsOccupationCode(item.box14b_tipped_code) &&
       (item.box7_ss_tips ?? 0) > 0
     )
     .map((item) => ({
       employee_ssn: item.employee_ssn!,
       amount: item.box7_ss_tips!,
+      box5_medicare_wages: item.box5_medicare_wages,
+      occupation_code: item.box14b_tipped_code!,
     }));
   return tips.length > 0
     ? [output(schedule1a, { qualified_employee_tips: tips })]

@@ -1,12 +1,12 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import {
   calculateSeniorOnlySchedule1A,
+  calculateSingleEmployerTipsSchedule1A,
   inputSchema,
 } from "../../../nodes/intermediate/forms/schedule1a/index.ts";
 import { schedule1a } from "../../mef/forms/schedule1a.ts";
 
-// Checked against the two-page 2025 IRS AcroForm. This descriptor deliberately
-// fills only the sourced senior-only route; Parts II-IV remain unsupported.
+// Checked against the two-page 2025 IRS AcroForm. Parts III-IV remain unsupported.
 const page1 = "form1[0].Page1[0]";
 const page2 = "form1[0].Page2[0]";
 const fields: ReadonlyArray<PdfFieldEntry> = [
@@ -18,6 +18,46 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     printZero: true,
   },
   { kind: "text", domainKey: "line3_magi", pdfField: `${page1}.f1_09[0]` },
+  { kind: "text", domainKey: "line4a_w2_tips", pdfField: `${page1}.f1_10[0]` },
+  {
+    kind: "text",
+    domainKey: "line4b_zero_form4137",
+    pdfField: `${page1}.f1_11[0]`,
+    printZero: true,
+  },
+  {
+    kind: "text",
+    domainKey: "line4c_employee_tips",
+    pdfField: `${page1}.f1_12[0]`,
+  },
+  {
+    kind: "text",
+    domainKey: "line6_total_tips",
+    pdfField: `${page1}.f1_14[0]`,
+  },
+  {
+    kind: "text",
+    domainKey: "line7_capped_tips",
+    pdfField: `${page1}.f1_15[0]`,
+  },
+  { kind: "text", domainKey: "line8_magi", pdfField: `${page1}.f1_16[0]` },
+  { kind: "text", domainKey: "line9_threshold", pdfField: `${page1}.f1_17[0]` },
+  {
+    kind: "text",
+    domainKey: "line10_excess_magi",
+    pdfField: `${page1}.f1_18[0]`,
+  },
+  {
+    kind: "text",
+    domainKey: "line11_thousands",
+    pdfField: `${page1}.f1_19[0]`,
+  },
+  {
+    kind: "text",
+    domainKey: "line12_reduction",
+    pdfField: `${page1}.f1_20[0]`,
+  },
+  { kind: "text", domainKey: "line13_tips", pdfField: `${page1}.f1_21[0]` },
   { kind: "text", domainKey: "line31_magi", pdfField: `${page2}.f2_15[0]` },
   {
     kind: "text",
@@ -71,6 +111,25 @@ export const schedule1aPdf: PdfFormDescriptor = {
     const input = inputSchema.parse(raw);
     // Keep the PDF authorization identical to native XML authorization.
     if (!schedule1a.build(input, { pending: allPending })) return {};
+    if ((input.qualified_employee_tips?.length ?? 0) > 0) {
+      const lines = calculateSingleEmployerTipsSchedule1A(
+        { taxYear: 2025, formType: "f1040" },
+        input,
+      );
+      return {
+        ...lines,
+        line2e_zero_exclusions: 0,
+        line4b_zero_form4137: 0,
+        line8_magi: lines.line3_magi,
+        ...(lines.line10_excess_magi === 0
+          ? {
+            line10_excess_magi: undefined,
+            line11_thousands: undefined,
+            line12_reduction: undefined,
+          }
+          : {}),
+      };
+    }
     const lines = calculateSeniorOnlySchedule1A(
       { taxYear: 2025, formType: "f1040" },
       input,

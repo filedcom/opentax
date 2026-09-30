@@ -100,3 +100,47 @@ Deno.test("2025 Schedule 1-A PDF rejects unsupported and mismatched line 13b", (
     "needs a reconciled Schedule 1-A page",
   );
 });
+
+Deno.test("2025 Schedule 1-A PDF maps single-employer W-2 tips to Part II", () => {
+  const tipSource = {
+    filing_status: FilingStatus.Single,
+    magi: 30_000,
+    taxpayer_ssn: "111223333",
+    taxpayer_has_valid_ssn: true,
+    senior_zero_exclusions_review: source.senior_zero_exclusions_review,
+    qualified_employee_tips: [{
+      employee_ssn: "111223333",
+      amount: 5_000,
+      box5_medicare_wages: 30_000,
+      occupation_code: "102",
+    }],
+  };
+  const tipReturn = {
+    filing_status: FilingStatus.Single,
+    line11_agi: 30_000,
+    line13b_additional_deductions: 5_000,
+    schedule1a_line37_senior_deduction: 0,
+    taxpayer_ssn: "111223333",
+    taxpayer_ssn_valid_for_employment: true,
+    taxpayer_ssn_issued_before_due_date: true,
+    taxpayer_tin_issued_by_due_date: true,
+  };
+  const mapped = new Map(
+    schedule1aPdf.fields.map((entry) => [entry.domainKey, entry.pdfField]),
+  );
+  assertEquals(mapped.get("line4a_w2_tips"), "form1[0].Page1[0].f1_10[0]");
+  assertEquals(
+    mapped.get("line4b_zero_form4137"),
+    "form1[0].Page1[0].f1_11[0]",
+  );
+  assertEquals(mapped.get("line13_tips"), "form1[0].Page1[0].f1_21[0]");
+  const projected = schedule1aPdf.projectFields?.(tipSource, {
+    schedule1a: tipSource,
+    f1040: tipReturn,
+  });
+  assertEquals(projected?.line4a_w2_tips, 5_000);
+  assertEquals(projected?.line4b_zero_form4137, 0);
+  assertEquals(projected?.line4c_employee_tips, 5_000);
+  assertEquals(projected?.line13_tips, 5_000);
+  assertEquals(projected?.line38_total, 5_000);
+});

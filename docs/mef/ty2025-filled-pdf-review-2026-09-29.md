@@ -147,3 +147,26 @@ ran after the projector fix and exposed the single-name Schedule 1-A header.
 The final `v39` batch includes both fixes. This synthetic review does not
 authenticate W-2 or age/SSN evidence, cover other Schedule 1-A parts, or prove
 IRS business-rule/ATS acceptance.
+
+The `single-w2-qualified-tips-schedule1a` packet was generated with the other
+thirty-one synthetic cases in
+`.state/research/ty2025-filled-pdf-review/2026-09-30-v41/`. Its W-2 reports
+$30,000 box 1 wages, $5,000 box 7 tips, $30,000 box 5 Medicare wages, and
+TTOC 102; the reviewed Schedule 1-A source asserts zero Part I exclusions.
+The graph reports $30,000 AGI, $5,000 additional deduction, $9,250 taxable
+income, $928 tax, and a $1,572 refund. Native XML contains one Schedule 1-A
+with $5,000 on lines 4a/4c/6/7/13/38 and passed the local TY2025 v5.4
+full-return XSD.
+
+All four pages were rendered at 120 dpi and inspected. Form 1040 page 1 shows
+the single owner, SSN, $30,000 wages, and No digital-assets check; page 2
+prints $5,000 on line 13b, $9,250 on line 15, $928 tax, $2,500 withholding,
+and $1,572 refund. Schedule 1-A page 1 prints the owner's name/SSN,
+$30,000 on lines 1/3/8, zero on lines 2e/4b, $5,000 on lines 4a/4c/6/7/13,
+and $150,000 on line 9. Lines 10–12 are blank below the phaseout threshold;
+Part III is blank. Page 2 leaves vehicle/senior parts blank and prints
+$5,000 on line 38. The PDF SHA-256 is
+`c4c8128e977d82ce6142c86b1703f256afec8cf95912d6b368c2784ef66a8973`.
+This synthetic review does not authenticate the payer W-2 or residency/SSN
+assertions, exercise other Part II sources, or prove IRS business-rule or ATS
+acceptance.

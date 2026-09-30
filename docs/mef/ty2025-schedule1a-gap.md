@@ -1,17 +1,19 @@
-# TY2025 Schedule 1-A bounded senior-only filing path
+# TY2025 Schedule 1-A bounded filing paths
 
 Sources:
 [2025 Schedule 1-A](https://www.irs.gov/pub/irs-prior/f1040s1a--2025.pdf),
 [2025 Form 1040 instructions, including Schedule 1-A](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf),
+[IRS list of qualifying tipped occupations](https://www.irs.gov/forms-pubs/occupations-that-customarily-and-regularly-received-tips-on-or-before-dec-31-2024),
 and checked-in v5.4 `Common/IRS1040Schedule1A/IRS1040Schedule1A.xsd`.
 
 The `schedule1a` node computes a combined deduction and sends it to Form 1040
-line 13b. MeF now includes a strict senior-only Schedule 1-A descriptor after
+line 13b. MeF includes bounded senior-only and single-employer W-2-box-7 tips
+routes in the Schedule 1-A descriptor after
 Schedule 1 and before Schedule 2. Form 1040's positive-line-13b guard opens
 only when that source review is present and the second pass has exactly one
 attached Schedule 1-A. The descriptor independently rejects unsupported
-components and reconciles line 38 to line 13b. The same senior-only boundary
-now has a two-page PDF field map, but its filled appearance is unverified.
+components and reconciles line 38 to line 13b. Both routes have a two-page PDF
+field map and inspected synthetic full-return packets.
 
 ## Source and line blockers
 
@@ -20,12 +22,15 @@ now has a two-page PDF field map, but its filled appearance is unverified.
   aggregator, and the senior-only route requires a source-referenced review that
   all those adjustments are zero. Positive exclusions still need their own
   source routes; `magi` cannot be assumed to be line 3 without this review.
-- Part II lines 4a–4c distinguish W-2 box 7, Form 4137 tips, multiple employers,
-  and the Social Security wage-base/special occupation cases. The node receives
-  only employee-SSN/amount pairs from qualifying W-2 box 7 records, then
-  computes the final tips deduction. It cannot fill or reconcile every
-  applicable source line, and the IRS instructions' multi-employer and wage-base
-  worksheets are not represented.
+- Part II now has one source-backed route: one W-2 box 7 tips record with a
+  published three-digit tipped occupation code, box 5 Medicare wages at or
+  below $176,100, a valid timely employment SSN, and reviewed zero Part I
+  exclusions. It fills lines 4a/4c, 6/7, 9–13 as applicable, and line 38,
+  with source-graph and Form 1040 reconciliation. It rejects a second qualified
+  tips record, Form 4137, mixed senior/overtime/vehicle claims, high box 5
+  wages, and an occupation code outside the IRS list. Form 4070 or employer
+  statement alternatives, multiple employers or occupations, special wage-base
+  handling, self-employment tips, and combined Schedule 1-A branches remain open.
 - Part III lines 14a–14c distinguish qualified overtime included in W-2 box 1
   from qualified overtime on Forms 1099-NEC/MISC. The node currently accepts
   taxpayer/spouse compensation totals as direct claims without those document
@@ -57,9 +62,9 @@ The source, document, return integration, and PDF field-map cases are written.
 The official 2025 two-page AcroForm was inspected: page 1 fields
 `f1_03`, `f1_08`, and `f1_09` correspond to lines 1, 2e, and 3; page 2
 fields `f2_15` through `f2_23` correspond to lines 31 through 38. The
-registered PDF descriptor projects only the senior-only worksheet after the
+registered PDF descriptor projects either supported worksheet after the
 same MeF source/return reconciliation, and Form 1040's PDF line 13b opens only
-when that page's line 38 matches. Other Parts II-IV still cannot render.
+when that page's line 38 matches. Other Part II sources and Parts III-IV remain open.
 The `joint-senior-schedule1a` fixture now exercises the real source graph,
 Form 1040 join, native TY2025 v5.4 XML, and four-page filled PDF. A PDF build
 initially found that Form 6251 read a nonexistent calculated `line37_senior`
@@ -69,8 +74,23 @@ before subtracting it from Form 6251 line 1a. The regenerated `v39` packet
 prints both spouses on Schedule 1-A page 1, $160,000 on Part I lines 1/3,
 $5,400 for each spouse in Part V, and $10,800 on line 38 and Form 1040 line
 13b. All four pages were visually inspected and the full-return XML passed the
-local XSD. The remaining positive Part I exclusions and Parts II-IV, source
+local XSD. The remaining positive Part I exclusions, other Part II sources,
+Parts III-IV, source
 authentication, IRS business rules, and ATS acceptance remain open.
 The source commit `89b972c6` passed the complete `deno task test` run at
 8,932/8,932 with zero failures; the log is retained at
 `.state/research/ty2025-full-test-schedule1a-pdf.log`.
+
+The `single-w2-qualified-tips-schedule1a` fixture uses one $30,000 W-2 with
+$5,000 box 7 tips, TTOC 102, box 5 Medicare wages below the wage base,
+timely employment-valid taxpayer SSN facts, and reviewed zero Part I
+exclusions. Its source graph reports $5,000 on Form 1040 line 13b, $9,250
+taxable income, $928 tax, and a $1,572 refund. The native Schedule 1-A
+emits $5,000 on lines 4a, 4c, 6, 7, 13, and 38 and passes local TY2025 v5.4
+full-return XSD. All four pages of the `v41` PDF were rendered and inspected:
+Part II prints those amounts, zero on line 4b, line 8 prints $30,000 MAGI, line 9 prints the
+$150,000 threshold, lines 10–12 are blank because MAGI is below it, and
+Form 1040 line 13b prints $5,000. The page review and SHA-256 are in the
+[filled-PDF notes](ty2025-filled-pdf-review-2026-09-29.md). This is a
+synthetic source check; payer-issued bytes and IRS business-rule acceptance
+remain open.
