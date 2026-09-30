@@ -645,15 +645,46 @@ Deno.test("nonpassive partnership K-1 code K reaches source-backed Form 3800", (
 
 Deno.test("box 10 retains each partnership's Form 4797 line 2 amount", () => {
   const result = compute([
-    minimalItem({ partnership_name: "Partner One", box10_net_1231: 10_000 }),
-    minimalItem({ partnership_name: "Partner Two", box10_net_1231: -2_000 }),
+    minimalItem({
+      partnership_name: "Partner One",
+      partnership_ein: "123456789",
+      source_document_reference: "K-1 P1",
+      recipient_tin: "111223333",
+      box10_net_1231: 10_000,
+    }),
+    minimalItem({
+      partnership_name: "Partner Two",
+      partnership_ein: "987654321",
+      source_document_reference: "K-1 P2",
+      recipient_tin: "111223333",
+      box10_net_1231: -2_000,
+    }),
   ]);
   const fields = findOutput(result, "form4797")?.fields;
   assertEquals(fields?.section_1231_gain, 8_000);
   assertEquals(fields?.k1_1231_rows, [
-    { source: "partnership", entity_name: "Partner One", gain_loss: 10_000 },
-    { source: "partnership", entity_name: "Partner Two", gain_loss: -2_000 },
+    {
+      source: "partnership",
+      entity_name: "Partner One",
+      source_ein: "123456789",
+      source_document_reference: "K-1 P1",
+      recipient_tin: "111223333",
+      gain_loss: 10_000,
+    },
+    {
+      source: "partnership",
+      entity_name: "Partner Two",
+      source_ein: "987654321",
+      source_document_reference: "K-1 P2",
+      recipient_tin: "111223333",
+      gain_loss: -2_000,
+    },
   ]);
+  assertThrows(
+    () => compute([minimalItem({ box10_net_1231: 1_000 })]),
+    Error,
+    "box 10 needs EIN",
+  );
 });
 
 // ── 1. Input schema validation ────────────────────────────────────────────────

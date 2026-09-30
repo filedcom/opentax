@@ -5288,6 +5288,9 @@ Deno.test({
     w2: [w2Item(50_000, 8_000)],
     k1_partnership: [{
       partnership_name: "Example Partnership",
+      partnership_ein: "123456789",
+      source_document_reference: "2025 K-1 example section 1231",
+      recipient_tin: "111223333",
       box10_net_1231: 20_000,
     }],
     form6252: [{
@@ -5335,9 +5338,18 @@ Deno.test({
     w2: [w2Item(50_000, 8_000)],
     k1_partnership: [{
       partnership_name: "Partner One",
+      partnership_ein: "123456789",
+      source_document_reference: "2025 K-1 partner one section 1231",
+      recipient_tin: "111223333",
       box10_net_1231: 10_000,
     }],
-    k1_s_corp: [{ corporation_name: "Corp Two", box9_net_1231: 3_000 }],
+    k1_s_corp: [{
+      corporation_name: "Corp Two",
+      corporation_ein: "987654321",
+      source_document_reference: "2025 K-1 corp two section 1231",
+      recipient_tin: "111223333",
+      box9_net_1231: 3_000,
+    }],
   });
   assertEquals(result.diagnostics, []);
   const xml = buildMefXml(
@@ -5476,6 +5488,9 @@ Deno.test({
     w2: [w2Item(50_000, 8_000)],
     k1_partnership: [{
       partnership_name: "Example Partnership",
+      partnership_ein: "123456789",
+      source_document_reference: "2025 K-1 example section 1231",
+      recipient_tin: "111223333",
       box10_net_1231: 20_000,
     }],
   });
@@ -5507,6 +5522,9 @@ Deno.test({
     w2: [w2Item(50_000, 8_000)],
     k1_partnership: [{
       partnership_name: "Example Partnership",
+      partnership_ein: "123456789",
+      source_document_reference: "2025 K-1 example section 1231 loss",
+      recipient_tin: "111223333",
       box10_net_1231: -4_000,
     }],
   });

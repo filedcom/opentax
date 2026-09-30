@@ -109,6 +109,7 @@ function runCapital(
           corporation_name: "Example S Corp",
           corporation_ein: "123456789",
           source_document_reference: "Synthetic 2025 K-1",
+          recipient_tin: "111223333",
           box9_net_1231: section1231Gain,
         }],
       }

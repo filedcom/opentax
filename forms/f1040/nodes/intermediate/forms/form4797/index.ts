@@ -28,6 +28,9 @@ import { box11Line10SourceSchema } from "../../../inputs/k1_partnership/box11_li
 export const k1Section1231RowSchema = z.object({
   source: z.enum(["partnership", "s_corp"]),
   entity_name: z.string().min(1),
+  source_ein: z.string().regex(/^\d{9}$/),
+  source_document_reference: z.string().trim().min(1),
+  recipient_tin: z.string().regex(/^\d{9}$/),
   gain_loss: z.number(),
 }).strict();
 export type K1Section1231Row = z.infer<typeof k1Section1231RowSchema>;

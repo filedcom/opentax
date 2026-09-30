@@ -4,6 +4,7 @@ import {
   inputSchema as form8582InputSchema,
 } from "../../../nodes/intermediate/forms/form8582/index.ts";
 import {
+  k1Section1231RowSchema,
   passivePropertySaleSchema,
   passiveSaleGain,
   samePassiveSale,
@@ -20,12 +21,14 @@ import {
   investment1245DispositionSchema,
 } from "../../../nodes/intermediate/forms/form4797/investment_1245.ts";
 import { transactionSchema as form8949TransactionSchema } from "../../../nodes/intermediate/forms/form8949/index.ts";
+import { assertK1Section1231FilingLinks } from "../../../nodes/intermediate/forms/form4797/k1_1231_source.ts";
 import { calculateInstallmentSale } from "../../../nodes/intermediate/forms/form6252/calculation.ts";
 import { inputSchema as form6252InputSchema } from "../../../nodes/intermediate/forms/form6252/index.ts";
 import { calculateLikeKindExchange } from "../../../nodes/intermediate/forms/form8824/calculation.ts";
 import { inputSchema as form8824InputSchema } from "../../../nodes/intermediate/forms/form8824/index.ts";
 import { box11Line10SourceSchema } from "../../../nodes/inputs/k1_partnership/box11_line10.ts";
 import { appendForm4797Line10Statement } from "./f4797_line10_statement.ts";
+import { appendForm4797Line2Statement } from "./f4797_line2_statement.ts";
 
 // IRS Form 4797 (2025) AcroForm field names.
 // Part I  — installment/exchange gain and section 1231 lines 4–9.
@@ -33,6 +36,23 @@ import { appendForm4797Line10Statement } from "./f4797_line10_statement.ts";
 // Part III — recapture: 1245 (line 22) and 1250 (line 26c).
 // Nonrecaptured 1231 loss from prior years: line 8.
 const fields: ReadonlyArray<PdfFieldEntry> = [
+  ...Array.from({ length: 4 }, (_, index): PdfFieldEntry[] => {
+    const row = index + 1;
+    const first = 6 + index * 7;
+    const base = `topmostSubform[0].Page1[0].TableLine2[0].Row${row}[0]`;
+    return [
+      {
+        kind: "text",
+        domainKey: `pdf_k1_line2_${row}_description`,
+        pdfField: `${base}.f1_${first}[0]`,
+      },
+      {
+        kind: "text",
+        domainKey: `pdf_k1_line2_${row}_gain`,
+        pdfField: `${base}.f1_${first + 6}[0]`,
+      },
+    ];
+  }).flat(),
   {
     kind: "text",
     domainKey: "gain_form6252",
@@ -97,6 +117,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
       },
     ];
   }).flat(),
+  {
+    kind: "text",
+    domainKey: "pdf_line11_loss",
+    pdfField: "topmostSubform[0].Page1[0].f1_69[0]",
+  },
   {
     kind: "text",
     domainKey: "pdf_line12",
@@ -375,6 +400,42 @@ export const form4797Pdf: PdfFormDescriptor = {
         "Form 4797 PDF needs property-level line 2/10 row mapping for passive sales",
       );
     }
+    const k1Rows = z.array(k1Section1231RowSchema).parse(
+      fields.k1_1231_rows ?? [],
+    );
+    const projected: Record<string, unknown> = { ...fields };
+    if (k1Rows.length > 0) {
+      assertK1Section1231FilingLinks(k1Rows, allPending);
+      const sourceTotal = k1Rows.reduce((sum, row) => sum + row.gain_loss, 0) +
+        Number(fields.gain_form6252 ?? 0) + Number(fields.gain_form8824 ?? 0);
+      if (sourceTotal !== fields.section_1231_gain) {
+        throw new Error(
+          "Form 4797 PDF line 2 K-1 sources must reconcile to line 7",
+        );
+      }
+      k1Rows.slice(0, k1Rows.length > 4 ? 3 : 4).forEach((row, index) => {
+        const rowNumber = index + 1;
+        projected[`pdf_k1_line2_${rowNumber}_description`] = row.source ===
+            "partnership"
+          ? `K-1 1065 ${row.source_ein}`
+          : `K-1 1120-S ${row.source_ein}`;
+        projected[`pdf_k1_line2_${rowNumber}_gain`] = row.gain_loss;
+      });
+      if (k1Rows.length > 4) {
+        const overflow = k1Rows.slice(3);
+        projected.pdf_k1_line2_4_description = "See attached";
+        projected.pdf_k1_line2_4_gain = overflow.reduce(
+          (sum, row) => sum + row.gain_loss,
+          0,
+        );
+        projected.pdf_line2_overflow_rows = overflow;
+      }
+      if (sourceTotal < 0) {
+        projected.pdf_line11_loss = -sourceTotal;
+        projected.pdf_line17 = sourceTotal;
+        projected.ordinary_gain = sourceTotal;
+      }
+    }
     if (typeof fields.gain_form6252 === "number" && fields.gain_form6252 > 0) {
       if (!allPending.form6252) {
         throw new Error("Form 4797 PDF line 4 needs its Form 6252 source");
@@ -421,15 +482,23 @@ export const form4797Pdf: PdfFormDescriptor = {
       }
       const recaptured = Math.min(gain, priorLoss);
       return {
-        ...fields,
+        ...projected,
         pdf_section_1231_line9: Math.max(0, gain - priorLoss),
         pdf_line12: recaptured,
         pdf_line17: recaptured,
         ordinary_gain: recaptured,
       };
     }
-    return fields;
+    return projected;
   },
-  appendSupplementalPages: appendForm4797Line10Statement,
+  async appendSupplementalPages(document, projected, filer, allPending) {
+    await appendForm4797Line2Statement(
+      document,
+      projected,
+      filer,
+      allPending,
+    );
+    await appendForm4797Line10Statement(document, projected, filer);
+  },
   fields,
 };

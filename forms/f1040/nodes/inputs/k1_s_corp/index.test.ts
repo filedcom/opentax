@@ -237,15 +237,46 @@ Deno.test("nonpassive S corporation K-1 code K reaches source-backed Form 3800",
 
 Deno.test("box 9 retains each S-corp's Form 4797 line 2 amount", () => {
   const result = compute([
-    minimalItem({ corporation_name: "Corp One", box9_net_1231: 3_000 }),
-    minimalItem({ corporation_name: "Corp Two", box9_net_1231: 4_000 }),
+    minimalItem({
+      corporation_name: "Corp One",
+      corporation_ein: "123456789",
+      source_document_reference: "K-1 C1",
+      recipient_tin: "111223333",
+      box9_net_1231: 3_000,
+    }),
+    minimalItem({
+      corporation_name: "Corp Two",
+      corporation_ein: "987654321",
+      source_document_reference: "K-1 C2",
+      recipient_tin: "111223333",
+      box9_net_1231: 4_000,
+    }),
   ]);
   const fields = findOutput(result, "form4797")?.fields;
   assertEquals(fields?.section_1231_gain, 7_000);
   assertEquals(fields?.k1_1231_rows, [
-    { source: "s_corp", entity_name: "Corp One", gain_loss: 3_000 },
-    { source: "s_corp", entity_name: "Corp Two", gain_loss: 4_000 },
+    {
+      source: "s_corp",
+      entity_name: "Corp One",
+      source_ein: "123456789",
+      source_document_reference: "K-1 C1",
+      recipient_tin: "111223333",
+      gain_loss: 3_000,
+    },
+    {
+      source: "s_corp",
+      entity_name: "Corp Two",
+      source_ein: "987654321",
+      source_document_reference: "K-1 C2",
+      recipient_tin: "111223333",
+      gain_loss: 4_000,
+    },
   ]);
+  assertThrows(
+    () => compute([minimalItem({ box9_net_1231: 1_000 })]),
+    Error,
+    "box 9 needs EIN",
+  );
 });
 
 // ── 1. Input schema validation ────────────────────────────────────────────────

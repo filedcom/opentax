@@ -22,7 +22,11 @@ The detailed route boundaries remain in the linked gap notes and audits.
   passed local TY2025 v5.4 XSD (`deno test --allow-read --allow-write
   --allow-run=xmllint,deno,pdftotext --allow-net=www.irs.gov
   forms/f1040/2025/pdf/review-fixtures.xsd.test.ts`, 88/88). This does not
-  replace the final bulk, filled-PDF, business-rule, or ATS gates.
+  replace the final bulk, filled-PDF, business-rule, or ATS gates. A later
+  [Form 4797 K-1 line 2 review](docs/mef/ty2025-form4797-k1-line2-filled-review.md)
+  records two local-XSD-valid full returns, inspected parent and continuation
+  pages, and a separate negative-loss route check. Its broader source and
+  release gates remain open.
 - **Open release gates:** settle the named coverage and evidence decisions;
   complete or explicitly reject each retained positive filing route; reconcile
   the 126 MeF descriptors, 89 PDF descriptors, and 211 IRS schema roots; then

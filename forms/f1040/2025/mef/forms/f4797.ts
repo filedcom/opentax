@@ -38,6 +38,7 @@ import {
   type Box11Line10Source,
   box11Line10SourceSchema,
 } from "../../../nodes/inputs/k1_partnership/box11_line10.ts";
+import { assertK1Section1231FilingLinks } from "../../../nodes/intermediate/forms/form4797/k1_1231_source.ts";
 
 export interface Fields {
   section_1231_gain?: number | null;
@@ -314,6 +315,9 @@ function buildIRS4797(fields: Input, context?: MefBuildContext): string {
   const k1Rows = z.array(k1Section1231RowSchema).parse(
     fields.k1_1231_rows ?? [],
   );
+  if (k1Rows.length > 0 && context?.pending) {
+    assertK1Section1231FilingLinks(k1Rows, context.pending, context.filer);
+  }
   const ordinaryK1Rows = z.array(box11Line10SourceSchema).parse(
     fields.k1_box11_line10_rows ?? [],
   );
@@ -480,7 +484,9 @@ function buildIRS4797(fields: Input, context?: MefBuildContext): string {
       elements("PropertySaleOrExchange", [
         element(
           "PropertyDesc",
-          row.source === "partnership" ? "K-1 Form 1065" : "K-1 Form 1120-S",
+          row.source === "partnership"
+            ? `K-1 1065 ${row.source_ein}`
+            : `K-1 1120-S ${row.source_ein}`,
         ),
         row.source === "s_corp"
           ? element("DateAcquiredInheritedCd", "FROM SCHEDULE K-1 F1120S")

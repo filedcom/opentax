@@ -73,6 +73,7 @@ export const itemSchema = z.object({
   partnership_name: z.string().min(1),
   partnership_ein: z.string().regex(/^\d{9}$/).optional(),
   source_document_reference: z.string().trim().min(1).optional(),
+  recipient_tin: z.string().regex(/^\d{9}$/).optional(),
   // Box 15 code Z is the partner's orphan-drug credit, not a generic credit.
   box15_code_z_orphan_drug_credit: z.number().int().positive().optional(),
   orphan_drug_credit_subject_to_passive_activity_limit: z.boolean().optional(),
@@ -789,11 +790,24 @@ function box9bCollectiblesOutputs(items: K1PartnershipItems): NodeOutput[] {
 function box10Net1231Outputs(items: K1PartnershipItems): NodeOutput[] {
   const rows = items
     .filter((item) => (item.box10_net_1231 ?? 0) !== 0)
-    .map((item) => ({
-      source: "partnership" as const,
-      entity_name: item.partnership_name,
-      gain_loss: item.box10_net_1231 ?? 0,
-    }));
+    .map((item) => {
+      if (
+        !item.partnership_ein || !item.source_document_reference ||
+        !item.recipient_tin
+      ) {
+        throw new Error(
+          "Partnership K-1 box 10 needs EIN, issued K-1 reference, and recipient TIN",
+        );
+      }
+      return {
+        source: "partnership" as const,
+        entity_name: item.partnership_name,
+        source_ein: item.partnership_ein,
+        source_document_reference: item.source_document_reference,
+        recipient_tin: item.recipient_tin,
+        gain_loss: item.box10_net_1231 ?? 0,
+      };
+    });
   if (rows.length === 0) return [];
   const total = rows.reduce((sum, row) => sum + row.gain_loss, 0);
   return [output(form4797, { section_1231_gain: total, k1_1231_rows: rows })];
