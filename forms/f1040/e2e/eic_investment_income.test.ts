@@ -714,6 +714,79 @@ Deno.test("EIC reconciles rental, partnership, S-corporation, and trust income",
   }
 });
 
+Deno.test("three passive rentals print Schedule E property columns A through C", async () => {
+  const runRentals = (lastRent: number) =>
+    execute(plan, registry, {
+      general,
+      w2: [w2],
+      schedule_e: [4_000, 3_950, lastRent].map((rent, index) => ({
+        tsj: "T",
+        activity_id: `rental-${index}`,
+        property_description: `Reviewed rental ${index + 1}`,
+        street_address: `${100 + index} Rental Road`,
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+        property_type: 1,
+        activity_type: "B",
+        fair_rental_days: 365,
+        personal_use_days: 0,
+        rent_income: rent,
+        form_1099_payments_made: false,
+      })),
+    }, { taxYear: 2025, formType: "f1040" });
+  const atLimit = runRentals(4_000);
+  assertEquals(atLimit.diagnostics, []);
+  assertEquals(atLimit.pending.eitc.investment_income_floor, 11_950);
+  assertEquals(atLimit.pending.f1040.line27_eitc !== undefined, true);
+  const overLimit = runRentals(4_001);
+  assertEquals(overLimit.pending.eitc.investment_income_floor, 11_951);
+  assertEquals(overLimit.pending.f1040.line27_eitc, undefined);
+  const filer = extractFilerIdentity(atLimit.pending.f1040);
+  const xml = buildMefXml(buildPending(atLimit.pending), filer);
+  assertEquals(
+    xml.includes("<TotalSuppIncomeOrLossAmt>11950</TotalSuppIncomeOrLossAmt>"),
+    true,
+  );
+  const xsd = new URL(
+    "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    import.meta.url,
+  ).pathname;
+  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(xmlPath, xml);
+    const validation = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsd, xmlPath],
+      stderr: "piped",
+    }).output();
+    assertEquals(
+      validation.code,
+      0,
+      new TextDecoder().decode(validation.stderr),
+    );
+  } finally {
+    await Deno.remove(xmlPath);
+  }
+  const fields = scheduleEPdf.projectFields?.(
+    atLimit.pending.schedule_e,
+    atLimit.pending,
+  );
+  for (const [index, rent] of [4_000, 3_950, 4_000].entries()) {
+    assertEquals(
+      fields?.[`property_${index}_address`],
+      `${100 + index} Rental Road, Austin, TX 78701`,
+    );
+    assertEquals(fields?.[`property_${index}_line3`], rent);
+    assertEquals(fields?.[`property_${index}_line21`], rent);
+  }
+  assertEquals(fields?.line23a, 11_950);
+  assertEquals(fields?.line24, 11_950);
+  assertEquals(fields?.line26, 11_950);
+  assertEquals(scheduleEPdf.pageIndices?.(fields ?? {}), [0]);
+  const pdf = await buildPdfBytes(atLimit.pending, filer);
+  assertEquals(new TextDecoder().decode(pdf.slice(0, 5)), "%PDF-");
+});
+
 Deno.test("EIC reconciles passive K-1s with a Schedule E property on both PDF pages", async () => {
   const atLimit = runPassiveK1s(4_000, 4_000, 3_950);
   assertEquals(atLimit.diagnostics, []);

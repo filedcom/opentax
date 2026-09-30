@@ -18,7 +18,7 @@ import {
 } from "../../../nodes/inputs/f4835/index.ts";
 import { farmAllowedLosses } from "../../mef/forms/f4835_passive_loss.ts";
 
-// 2025 Schedule E AcroForm: one Part I property, four Part II K-1 rows,
+// 2025 Schedule E AcroForm: three Part I properties, four Part II K-1 rows,
 // two Part III trust rows, and Part V farm totals on the same two pages.
 const page = "topmostSubform[0].Page1[0]";
 const page2 = "topmostSubform[0].Page2[0]";
@@ -64,34 +64,71 @@ const expenseLines = [
 const fields: ReadonlyArray<PdfFieldEntry> = [
   ...answer("payments_made", 1),
   ...answer("forms_1099_filed", 2),
-  text("property_address", `${page}.Table_Line1a[0].RowA[0].f1_3[0]`),
-  text("property_type", `${page}.Table_Line1b[0].RowA[0].f1_6[0]`),
-  text("fair_rental_days", `${page}.Table_Line2[0].RowA[0].f1_9[0]`),
-  {
-    ...text("personal_use_days", `${page}.Table_Line2[0].RowA[0].f1_10[0]`),
-    printZero: true,
-  },
-  {
-    kind: "checkboxWhen",
-    domainKey: "qualified_joint_venture",
-    pdfField: `${page}.Table_Line2[0].RowA[0].c1_3[0]`,
-    whenValue: "true",
-  },
-  text("other_property_description", `${page}.f1_15[0]`),
-  text("line3", `${page}.Table_Income[0].Line3[0].f1_16[0]`),
-  text("line4", `${page}.Table_Income[0].Line4[0].f1_19[0]`),
-  ...expenseLines.map(([key, line]) =>
+  ...["A", "B", "C"].flatMap((row, index) => [
     text(
-      key,
-      `${page}.Table_Expenses[0].Line${line}[0].f1_${22 + (line - 5) * 3}[0]`,
-    )
-  ),
-  text("line18", `${page}.Table_Expenses[0].Line18[0].f1_61[0]`),
+      `property_${index}_address`,
+      `${page}.Table_Line1a[0].Row${row}[0].f1_${3 + index}[0]`,
+    ),
+    text(
+      `property_${index}_type`,
+      `${page}.Table_Line1b[0].Row${row}[0].f1_${6 + index}[0]`,
+    ),
+    text(
+      `property_${index}_fair_rental_days`,
+      `${page}.Table_Line2[0].Row${row}[0].f1_${9 + index * 2}[0]`,
+    ),
+    {
+      ...text(
+        `property_${index}_personal_use_days`,
+        `${page}.Table_Line2[0].Row${row}[0].f1_${10 + index * 2}[0]`,
+      ),
+      printZero: true,
+    },
+    {
+      kind: "checkboxWhen" as const,
+      domainKey: `property_${index}_qualified_joint_venture`,
+      pdfField: `${page}.Table_Line2[0].Row${row}[0].c1_${3 + index}[0]`,
+      whenValue: "true",
+    },
+    text(
+      `property_${index}_line3`,
+      `${page}.Table_Income[0].Line3[0].f1_${16 + index}[0]`,
+    ),
+    text(
+      `property_${index}_line4`,
+      `${page}.Table_Income[0].Line4[0].f1_${19 + index}[0]`,
+    ),
+    ...expenseLines.map(([key, line]) =>
+      text(
+        `property_${index}_${key}`,
+        `${page}.Table_Expenses[0].Line${line}[0].f1_${
+          22 + (line - 5) * 3 + index
+        }[0]`,
+      )
+    ),
+    text(
+      `property_${index}_line18`,
+      `${page}.Table_Expenses[0].Line18[0].f1_${61 + index}[0]`,
+    ),
+    text(
+      `property_${index}_line19`,
+      `${page}.Table_Expenses[0].Line19[0].f1_${65 + index}[0]`,
+    ),
+    text(
+      `property_${index}_line20`,
+      `${page}.Table_Expenses[0].Line20[0].f1_${68 + index}[0]`,
+    ),
+    text(
+      `property_${index}_line21`,
+      `${page}.Table_Expenses[0].Line21[0].f1_${71 + index}[0]`,
+    ),
+    text(
+      `property_${index}_line22`,
+      `${page}.Table_Expenses[0].Line22[0].f1_${74 + index}[0]`,
+    ),
+  ]),
+  text("other_property_description", `${page}.f1_15[0]`),
   text("line19_description", `${page}.Table_Expenses[0].Line19[0].f1_64[0]`),
-  text("line19", `${page}.Table_Expenses[0].Line19[0].f1_65[0]`),
-  text("line20", `${page}.Table_Expenses[0].Line20[0].f1_68[0]`),
-  text("line21", `${page}.Table_Expenses[0].Line21[0].f1_71[0]`),
-  text("line22", `${page}.Table_Expenses[0].Line22[0].f1_74[0]`),
   ...[
     "line23a",
     "line23b",
@@ -205,7 +242,7 @@ export const scheduleEPdf: PdfFormDescriptor = {
     );
     if (k1Rows.length > 0) {
       if (
-        k1Rows.length > 4 || input.schedule_es.length > 1 ||
+        k1Rows.length > 4 || input.schedule_es.length > 3 ||
         input.rental_income !== undefined ||
         input.royalty_income !== undefined ||
         trustRows.length > 2 ||
@@ -262,7 +299,7 @@ export const scheduleEPdf: PdfFormDescriptor = {
     }
     if (trustRows.length > 0 && k1Rows.length === 0) {
       if (
-        input.schedule_es.length > 1 ||
+        input.schedule_es.length > 3 ||
         input.rental_income !== undefined ||
         input.royalty_income !== undefined ||
         trustRows.length > 2 ||
@@ -308,125 +345,168 @@ export const scheduleEPdf: PdfFormDescriptor = {
         trust_line41: farmNet,
       };
     }
-    const item = input.schedule_es[0];
+    const items = input.schedule_es;
     if (
-      input.schedule_es.length !== 1 || !item ||
+      items.length === 0 || items.length > 3 ||
       input.mortgage_interest !== undefined ||
       input.expense_auto_travel !== undefined ||
       input.expense_depletion !== undefined ||
+      (items.length > 1 && items.some((item) => item.f1099m_royalty_source)) ||
       (input.royalty_income !== undefined &&
-        (!item.f1099m_royalty_source ||
+        (items.length !== 1 || !items[0].f1099m_royalty_source ||
           input.royalty_income !==
-            item.f1099m_royalty_source.box2_gross_royalties)) ||
-      (item.property_type === 6 && !item.k1_royalty_source &&
-        !item.f1099m_royalty_source) ||
-      item.personal_use_days !== 0 ||
-      item.main_home_or_second_home === true ||
-      ((item.royalties_income ?? 0) > 0 && !item.k1_royalty_source &&
-        !item.f1099m_royalty_source) ||
-      (item.ownership_percent ?? 100) <= 0 ||
-      (item.expense_other_lines?.length ?? 0) > 1 ||
-      (item.expense_depreciation_amt ?? 0) > 0 ||
-      (item.section_1231_gain_loss ?? 0) !== 0
+            items[0].f1099m_royalty_source.box2_gross_royalties)) ||
+      items.some((item) =>
+        (item.property_type === 6 && !item.k1_royalty_source &&
+          !item.f1099m_royalty_source) ||
+        item.personal_use_days !== 0 ||
+        item.main_home_or_second_home === true ||
+        ((item.royalties_income ?? 0) > 0 && !item.k1_royalty_source &&
+          !item.f1099m_royalty_source) ||
+        (item.ownership_percent ?? 100) <= 0 ||
+        (item.expense_other_lines?.length ?? 0) > 1 ||
+        (item.expense_depreciation_amt ?? 0) > 0 ||
+        (item.section_1231_gain_loss ?? 0) !== 0
+      )
     ) {
       throw new Error(
-        "Schedule E PDF needs one supported Part I rental or sourced royalty property",
+        "Schedule E PDF needs up to three supported Part I rental or sourced royalty properties",
       );
     }
-    const entireLoss = qualifiedEntireDispositionLoss(item);
-    const entireGain = qualifiedEntireDispositionGain(item);
-    if (
-      (item.disposed_of === true ||
-        (item.passive_property_sales?.length ?? 0) > 0) &&
-      entireLoss === undefined && entireGain === undefined
-    ) {
+    const otherDescriptions = new Set(
+      items.flatMap((item) =>
+        (item.expense_other_lines ?? []).map((line) => line.description)
+      ),
+    );
+    const type8Descriptions = new Set(
+      items.filter((item) => item.property_type === 8).map((item) =>
+        item.property_type_other_desc
+      ),
+    );
+    if (otherDescriptions.size > 1 || type8Descriptions.size > 1) {
       throw new Error(
-        "Schedule E PDF disposition needs the sourced entire-interest overall-loss route",
+        "Schedule E PDF multiple property descriptions need an attached statement",
       );
     }
-    const allowedByActivity = validatePassiveActivityLink(input.schedule_es, {
+    const allowedByActivity = validatePassiveActivityLink(items, {
       pending: allPending,
     });
-    // The native descriptor checks address, allocation, whole-dollar lines,
-    // and the matching Form 4797 sale before the PDF projects the same source.
-    if (item.f1099m_royalty_source) {
-      verifyMiscRoyaltySource(item, allPending.f1099m);
+    // Native Schedule E checks every source row, limitation, and finalized total.
+    if (items[0].f1099m_royalty_source) {
+      verifyMiscRoyaltySource(items[0], allPending.f1099m);
     } else if (!scheduleE.build(input, { pending: allPending })) {
-      throw new Error("Schedule E PDF needs a native Part I property");
+      throw new Error("Schedule E PDF needs native Part I properties");
     }
-    const fraction = (item.ownership_percent ?? 100) / 100;
-    const amount = (value: number | undefined) =>
-      Math.round((value ?? 0) * fraction);
-    const rent = amount(item.rent_income);
-    const royalty = amount(item.royalties_income);
-    const depreciation = amount(
-      (item.expense_depreciation ?? 0) + (item.expense_depletion ?? 0),
-    );
-    const other = item.expense_other_lines?.[0];
-    const expenseTotal = Math.round(computeExpenses(item) * fraction);
-    const net = Math.round(computePropertyNet(item));
-    const allowedLoss = entireLoss ?? entireGain ??
-      (item.activity_type === "A" || item.activity_type === "B"
-        ? allowedByActivity.get(0) ?? 0
-        : Math.max(0, -net));
-    const deductibleNet = entireLoss === undefined && entireGain === undefined
-      ? Math.max(0, net) - allowedLoss
-      : net - (item.prior_unallowed_passive_operating ?? 0);
+    const rows = items.map((item, index) => {
+      const entireLoss = qualifiedEntireDispositionLoss(item);
+      const entireGain = qualifiedEntireDispositionGain(item);
+      if (
+        (item.disposed_of === true ||
+          (item.passive_property_sales?.length ?? 0) > 0) &&
+        entireLoss === undefined && entireGain === undefined
+      ) {
+        throw new Error(
+          "Schedule E PDF disposition needs the sourced entire-interest overall-loss route",
+        );
+      }
+      const fraction = (item.ownership_percent ?? 100) / 100;
+      const amount = (value: number | undefined) =>
+        Math.round((value ?? 0) * fraction);
+      const rent = amount(item.rent_income);
+      const royalty = amount(item.royalties_income);
+      const mortgage = amount(item.expense_mortgage_interest);
+      const depreciation = amount(
+        (item.expense_depreciation ?? 0) + (item.expense_depletion ?? 0),
+      );
+      const other = item.expense_other_lines?.[0];
+      const expenseTotal = Math.round(computeExpenses(item) * fraction);
+      const net = Math.round(computePropertyNet(item));
+      const allowedLoss = entireLoss ?? entireGain ??
+        (item.activity_type === "A" || item.activity_type === "B"
+          ? allowedByActivity.get(index) ?? 0
+          : Math.max(0, -net));
+      const deductibleNet = entireLoss === undefined &&
+          entireGain === undefined
+        ? Math.max(0, net) - allowedLoss
+        : net - (item.prior_unallowed_passive_operating ?? 0);
+      return {
+        rent,
+        royalty,
+        mortgage,
+        depreciation,
+        expenseTotal,
+        net,
+        allowedLoss,
+        deductibleNet,
+        fields: {
+          [`property_${index}_address`]: item.property_type === 6
+            ? undefined
+            : `${item.street_address}, ${item.city}, ${item.state} ${item.zip}`,
+          [`property_${index}_type`]: item.property_type,
+          [`property_${index}_fair_rental_days`]: item.property_type === 6
+            ? undefined
+            : item.fair_rental_days,
+          [`property_${index}_personal_use_days`]: item.property_type === 6
+            ? undefined
+            : item.personal_use_days,
+          [`property_${index}_qualified_joint_venture`]:
+            item.qualified_joint_venture,
+          [`property_${index}_line3`]: rent,
+          [`property_${index}_line4`]: royalty,
+          ...Object.fromEntries(
+            expenseLines.map(([key]) => [
+              `property_${index}_${key}`,
+              amount(item[key]),
+            ]),
+          ),
+          [`property_${index}_line18`]: depreciation,
+          [`property_${index}_line19`]: amount(other?.amount),
+          [`property_${index}_line20`]: expenseTotal,
+          [`property_${index}_line21`]: net,
+          [`property_${index}_line22`]: allowedLoss > 0
+            ? allowedLoss
+            : undefined,
+        },
+      };
+    });
+    const sumRows = (key: keyof typeof rows[number]) =>
+      rows.reduce((sum, row) => sum + Number(row[key] ?? 0), 0);
+    const propertyTotal = sumRows("deductibleNet");
     const schedule1Line5 = allPending.schedule1?.line5_schedule_e;
     const filedLine5 = Array.isArray(schedule1Line5)
       ? schedule1Line5.reduce((sum, value) => sum + value, 0)
       : schedule1Line5;
-    if (filedLine5 !== deductibleNet + k1Total + trustTotal + farmNet) {
+    if (filedLine5 !== propertyTotal + k1Total + trustTotal + farmNet) {
       throw new Error(
         "Schedule E PDF line 26 must match finalized Schedule 1 line 5",
       );
     }
-    const address = item.property_type === 6
-      ? undefined
-      : `${item.street_address}, ${item.city}, ${item.state} ${item.zip}`;
+    const payments = items.some((item) => item.form_1099_payments_made);
     return {
       ...partIIFields,
       ...farmFields,
-      payments_made: item.form_1099_payments_made,
-      forms_1099_filed: item.form_1099_payments_made
-        ? item.form_1099_filed
+      ...Object.assign({}, ...rows.map((row) => row.fields)),
+      payments_made: payments,
+      forms_1099_filed: payments
+        ? items.every((item) =>
+          !item.form_1099_payments_made || item.form_1099_filed
+        )
         : undefined,
-      property_address: address,
-      property_type: item.property_type,
-      fair_rental_days: item.property_type === 6
-        ? undefined
-        : item.fair_rental_days,
-      personal_use_days: item.property_type === 6
-        ? undefined
-        : item.personal_use_days,
-      qualified_joint_venture: item.qualified_joint_venture,
-      other_property_description: item.property_type === 8
-        ? item.property_type_other_desc
-        : undefined,
-      line3: rent,
-      line4: royalty,
-      ...Object.fromEntries(
-        expenseLines.map(([key]) => [key, amount(item[key])]),
-      ),
-      line18: depreciation,
-      line19_description: other?.description,
-      line19: amount(other?.amount),
-      line20: expenseTotal,
-      line21: net,
-      line22: allowedLoss > 0 ? allowedLoss : undefined,
-      line23a: rent,
-      line23b: royalty,
-      line23c: amount(item.expense_mortgage_interest),
-      line23d: depreciation,
-      line23e: expenseTotal,
-      line24: Math.max(0, net),
-      line25: allowedLoss > 0 ? allowedLoss : undefined,
-      line26: deductibleNet,
+      other_property_description: [...type8Descriptions][0],
+      line19_description: [...otherDescriptions][0],
+      line23a: sumRows("rent"),
+      line23b: sumRows("royalty"),
+      line23c: sumRows("mortgage"),
+      line23d: sumRows("depreciation"),
+      line23e: sumRows("expenseTotal"),
+      line24: rows.reduce((sum, row) => sum + Math.max(0, row.net), 0),
+      line25: sumRows("allowedLoss") || undefined,
+      line26: propertyTotal,
       trust_line41: partIIFields === undefined
         ? input.farm_rental_net === undefined
           ? undefined
-          : deductibleNet + farmNet
-        : deductibleNet + k1Total + trustTotal + farmNet,
+          : propertyTotal + farmNet
+        : propertyTotal + k1Total + trustTotal + farmNet,
     };
   },
   instances(fields, filer, allPending) {

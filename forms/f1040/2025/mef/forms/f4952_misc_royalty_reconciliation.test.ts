@@ -104,10 +104,10 @@ Deno.test("one 1099-MISC portfolio royalty posts once to Schedule E and Form 495
   );
   assertEquals(form4952Pdf.projectFields?.(fields, pending), fields);
   const pdf = scheduleEPdf.projectFields?.(pending.schedule_e, pending);
-  assertEquals(pdf?.line4, 800);
-  assertEquals(pdf?.property_address, undefined);
-  assertEquals(pdf?.fair_rental_days, undefined);
-  assertEquals(pdf?.personal_use_days, undefined);
+  assertEquals(pdf?.property_0_line4, 800);
+  assertEquals(pdf?.property_0_address, undefined);
+  assertEquals(pdf?.property_0_fair_rental_days, undefined);
+  assertEquals(pdf?.property_0_personal_use_days, undefined);
   assertEquals(
     form4952Pdf.instances?.(fields, filer, pending),
     [fields],

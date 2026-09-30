@@ -84,7 +84,7 @@ Deno.test("first-year entire-sale gain prints Part V from the same Schedule E an
   assertEquals(form.part5_1_gain, "8000");
   assertEquals(form.part5_1_prior, undefined);
   const scheduleE = scheduleEPdf.projectFields!(pending.schedule_e, pending);
-  assertEquals(scheduleE.line22, 2_000);
+  assertEquals(scheduleE.property_0_line22, 2_000);
   assertEquals(scheduleE.line26, -2_000);
   assertThrows(
     () =>
@@ -201,7 +201,7 @@ Deno.test("active rental entire-sale gain reconciles Form 8582 Part IV, Schedule
   assertEquals(form.part4_1_prior, "8000");
   assertEquals(form.part4_1_gain, "5000");
   const scheduleE = scheduleEPdf.projectFields!(pending.schedule_e, pending);
-  assertEquals(scheduleE.line22, 10_000);
+  assertEquals(scheduleE.property_0_line22, 10_000);
   assertEquals(scheduleE.line26, -10_000);
   assertThrows(
     () =>

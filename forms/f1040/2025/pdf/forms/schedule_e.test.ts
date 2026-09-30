@@ -123,11 +123,11 @@ Deno.test("partnership K-1 royalty and code I reconcile Schedule E MeF and PDF",
     true,
   );
   const projected = scheduleEPdf.projectFields?.(raw, pending);
-  assertEquals(projected?.property_address, undefined);
-  assertEquals(projected?.fair_rental_days, undefined);
-  assertEquals(projected?.personal_use_days, undefined);
-  assertEquals(projected?.line4, 700);
-  assertEquals(projected?.line19, 100);
+  assertEquals(projected?.property_0_address, undefined);
+  assertEquals(projected?.property_0_fair_rental_days, undefined);
+  assertEquals(projected?.property_0_personal_use_days, undefined);
+  assertEquals(projected?.property_0_line4, 700);
+  assertEquals(projected?.property_0_line19, 100);
   assertEquals(projected?.line26, 600);
   assertThrows(
     () =>
@@ -205,8 +205,8 @@ Deno.test("Schedule E PDF prints a Form 8582 suspended rental loss without a cur
     },
   };
   const projected = scheduleEPdf.projectFields?.(raw, linked);
-  assertEquals(projected?.line21, -5_000);
-  assertEquals(projected?.line22, undefined);
+  assertEquals(projected?.property_0_line21, -5_000);
+  assertEquals(projected?.property_0_line22, undefined);
   assertEquals(projected?.line25, undefined);
   assertEquals(projected?.line26, 0);
   assertThrows(
@@ -232,24 +232,28 @@ Deno.test("Schedule E PDF maps one rental to the official 2025 Part I property A
     schedule_e: raw,
     schedule1: { line5_schedule_e: 8_350 },
   });
-  assertEquals(projected?.property_address, "12 Main Street, Austin, TX 78701");
-  assertEquals(projected?.property_type, 1);
+  assertEquals(
+    projected?.property_0_address,
+    "12 Main Street, Austin, TX 78701",
+  );
+  assertEquals(projected?.property_0_type, 1);
   assertEquals(projected?.payments_made, false);
-  assertEquals(projected?.personal_use_days, 0);
-  assertEquals(projected?.line3, 12_000);
-  assertEquals(projected?.line18, 1_500);
+  assertEquals(projected?.property_0_personal_use_days, 0);
+  assertEquals(projected?.property_0_line3, 12_000);
+  assertEquals(projected?.property_0_line18, 1_500);
   assertEquals(projected?.line19_description, "Bank fees");
-  assertEquals(projected?.line19, 50);
-  assertEquals(projected?.line20, 3_650);
-  assertEquals(projected?.line21, 8_350);
-  assertEquals(projected?.line22, undefined);
+  assertEquals(projected?.property_0_line19, 50);
+  assertEquals(projected?.property_0_line20, 3_650);
+  assertEquals(projected?.property_0_line21, 8_350);
+  assertEquals(projected?.property_0_line22, undefined);
   assertEquals(projected?.line23c, 2_000);
   assertEquals(projected?.line23e, 3_650);
   assertEquals(projected?.line24, 8_350);
   assertEquals(projected?.line26, 8_350);
   assertEquals(scheduleEPdf.pageIndices?.(projected ?? {}), [0]);
   assertEquals(
-    scheduleEPdf.fields.find((field) => field.domainKey === "line22")?.pdfField,
+    scheduleEPdf.fields.find((field) => field.domainKey === "property_0_line22")
+      ?.pdfField,
     "topmostSubform[0].Page1[0].Table_Expenses[0].Line22[0].f1_74[0]",
   );
   assertEquals(
@@ -301,11 +305,11 @@ Deno.test("Schedule E PDF prints a sourced full-disposition operating loss and n
     schedule1: { line5_schedule_e: -9_000 },
   };
   const projected = scheduleEPdf.projectFields?.(raw, allPending);
-  assertEquals(projected?.line3, 1_000);
-  assertEquals(projected?.expense_taxes, 7_000);
-  assertEquals(projected?.line20, 7_000);
-  assertEquals(projected?.line21, -6_000);
-  assertEquals(projected?.line22, 9_000);
+  assertEquals(projected?.property_0_line3, 1_000);
+  assertEquals(projected?.property_0_expense_taxes, 7_000);
+  assertEquals(projected?.property_0_line20, 7_000);
+  assertEquals(projected?.property_0_line21, -6_000);
+  assertEquals(projected?.property_0_line22, 9_000);
   assertEquals(projected?.line24, 0);
   assertEquals(projected?.line25, 9_000);
   assertEquals(projected?.line26, -9_000);
@@ -339,9 +343,11 @@ Deno.test("Schedule E PDF fails closed on unprojected paths and Schedule 1 misma
   );
   assertThrows(
     () =>
-      scheduleEPdf.projectFields?.({ schedule_es: [rental, rental] }, linked),
+      scheduleEPdf.projectFields?.({
+        schedule_es: [rental, rental, rental, rental],
+      }, linked),
     Error,
-    "one supported Part I rental",
+    "up to three supported Part I",
   );
   assertThrows(
     () =>
