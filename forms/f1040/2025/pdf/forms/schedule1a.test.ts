@@ -73,6 +73,29 @@ Deno.test("2025 Schedule 1-A PDF maps the senior-only worksheet to both pages", 
   );
 });
 
+Deno.test("2025 Schedule 1-A PDF fills senior and overtime parts together", () => {
+  const mixed = {
+    ...source,
+    qualified_w2_overtime: [{
+      employee_ssn: "111223333",
+      employer_ein: "123456789",
+      amount: 4_000,
+      box1_wages: 160_000,
+      covered_nonexempt_employee: true as const,
+      premium_included_in_box1: true as const,
+      source_reference: "Employer box 14 FLSA premium review",
+    }],
+  };
+  const mixedReturn = { ...return1040, line13b_additional_deductions: 14_800 };
+  const projected = schedule1aPdf.projectFields?.(mixed, {
+    schedule1a: mixed,
+    f1040: mixedReturn,
+  });
+  assertEquals(projected?.line21_overtime, 4_000);
+  assertEquals(projected?.line37_senior, 10_800);
+  assertEquals(projected?.line38_total, 14_800);
+});
+
 Deno.test("2025 Schedule 1-A PDF maps reviewed vehicle interest to Part IV", async () => {
   const loan = {
     vin: "1HGCM82633A004352",
@@ -216,7 +239,7 @@ Deno.test("2025 Schedule 1-A PDF maps reviewed vehicle interest to Part IV", asy
   assertEquals(multipage.getPageCount(), 2);
 });
 
-Deno.test("2025 Schedule 1-A PDF rejects unsupported and mismatched line 13b", () => {
+Deno.test("2025 Schedule 1-A PDF rejects mismatched line 13b", () => {
   assertThrows(
     () =>
       schedule1aPdf.projectFields?.({
@@ -232,7 +255,7 @@ Deno.test("2025 Schedule 1-A PDF rejects unsupported and mismatched line 13b", (
         }],
       }, { schedule1a: source, f1040: return1040 }),
     Error,
-    "cannot include tips, senior, or vehicle claims",
+    "do not reconcile",
   );
   assertThrows(
     () =>

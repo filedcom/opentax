@@ -619,7 +619,74 @@ Deno.test("Schedule 1-A senior-only document accompanies reconciled Form 1040 li
   );
 });
 
-Deno.test("Schedule 1-A integration rejects incomplete and unsupported line 13b", () => {
+Deno.test("Schedule 1-A emits all four deductions in schema order with one total", async () => {
+  const mixed = {
+    ...joint,
+    qualified_employee_tips: singleTips.qualified_employee_tips,
+    qualified_w2_overtime: [overtimeEntry],
+    vehicle_loans: [vehicleLoan],
+  };
+  const xml = schedule1a.build(mixed, {
+    pending: {
+      f1040: { ...joint1040, line13b_additional_deductions: 23_800 },
+      w2: singleTipsW2,
+    },
+  });
+  const tags = [
+    "QualifiedTipsDeductionAmt>5000",
+    "QualifiedOvertimeCompDedAmt>4000",
+    "QualifiedCarLoanInterestDedAmt>4000",
+    "EnhancedSeniorDeductionAmt>10800",
+    "TotalAdditionalDeductionsAmt>23800",
+  ];
+  let previous = -1;
+  for (const tag of tags) {
+    const position = xml.indexOf(tag);
+    assertEquals(position > previous, true, tag);
+    previous = position;
+  }
+  const xsd = new URL(
+    "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Common/IRS1040Schedule1A/IRS1040Schedule1A.xsd",
+    import.meta.url,
+  );
+  try {
+    await Deno.stat(xsd);
+    const xmlFile = await Deno.makeTempFile({ suffix: ".xml" });
+    try {
+      await Deno.writeTextFile(
+        xmlFile,
+        xml.replace(
+          "<IRS1040Schedule1A>",
+          '<IRS1040Schedule1A xmlns="http://www.irs.gov/efile" documentId="SCHEDULE1A1">',
+        ),
+      );
+      const checked = await new Deno.Command("xmllint", {
+        args: ["--noout", "--schema", xsd.pathname, xmlFile],
+        stdout: "piped",
+        stderr: "piped",
+      }).output();
+      assertEquals(
+        checked.code,
+        0,
+        new TextDecoder().decode(checked.stderr),
+      );
+    } finally {
+      await Deno.remove(xmlFile);
+    }
+  } catch (error) {
+    if (!(error instanceof Deno.errors.NotFound)) throw error;
+  }
+  assertThrows(
+    () =>
+      schedule1a.build(mixed, {
+        pending: { f1040: joint1040, w2: singleTipsW2 },
+      }),
+    Error,
+    "do not reconcile",
+  );
+});
+
+Deno.test("Schedule 1-A integration rejects incomplete and mismatched line 13b", () => {
   assertThrows(
     () => buildMefXml({ f1040: joint1040 }, filer),
     Error,
@@ -632,7 +699,7 @@ Deno.test("Schedule 1-A integration rejects incomplete and unsupported line 13b"
         schedule1a: { ...joint, qualified_w2_overtime: [overtimeEntry] },
       }, filer),
     Error,
-    "cannot include tips, senior, or vehicle claims",
+    "do not reconcile",
   );
   assertThrows(
     () =>
@@ -645,7 +712,7 @@ Deno.test("Schedule 1-A integration rejects incomplete and unsupported line 13b"
   );
 });
 
-Deno.test("Schedule 1-A senior-only MeF rejects missing review, other claims, and mismatched return", () => {
+Deno.test("Schedule 1-A senior MeF rejects missing review and mismatched return", () => {
   assertEquals(
     seniorZeroExclusionsReviewSchema.safeParse({
       ...review,
@@ -677,7 +744,7 @@ Deno.test("Schedule 1-A senior-only MeF rejects missing review, other claims, an
         pending: { f1040: joint1040 },
       }),
     Error,
-    "cannot include tips, senior, or vehicle claims",
+    "do not reconcile",
   );
   assertThrows(
     () =>

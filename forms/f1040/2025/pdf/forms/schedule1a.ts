@@ -5,6 +5,7 @@ import {
   calculateW2OvertimeSchedule1A,
   calculateW2TipsSchedule1A,
   inputSchema,
+  seniorDeduction,
 } from "../../../nodes/intermediate/forms/schedule1a/index.ts";
 import { schedule1a } from "../../mef/forms/schedule1a.ts";
 import { appendSchedule1AVehicleStatement } from "./schedule1a_vehicle_statement.ts";
@@ -231,17 +232,22 @@ export const schedule1aPdf: PdfFormDescriptor = {
     const input = inputSchema.parse(raw);
     // Keep the PDF authorization identical to native XML authorization.
     if (!schedule1a.build(input, { pending: allPending })) return {};
+    const projected: Record<string, unknown> = {
+      line1_agi: input.magi,
+      line2e_zero_exclusions: 0,
+      line3_magi: input.magi,
+    };
+    let total = 0;
     if ((input.qualified_employee_tips?.length ?? 0) > 0) {
       const lines = calculateW2TipsSchedule1A(
         { taxYear: 2025, formType: "f1040" },
         input,
       );
-      return {
+      Object.assign(projected, {
         ...lines,
         ...(input.qualified_employee_tips!.length > 1
           ? { pdf_tip_sources: input.qualified_employee_tips }
           : {}),
-        line2e_zero_exclusions: 0,
         line4b_zero_form4137: 0,
         line8_magi: lines.line3_magi,
         ...(lines.line10_excess_magi === 0
@@ -251,16 +257,16 @@ export const schedule1aPdf: PdfFormDescriptor = {
             line12_reduction: undefined,
           }
           : {}),
-      };
+      });
+      total += lines.line13_tips;
     }
     if ((input.qualified_w2_overtime?.length ?? 0) > 0) {
       const lines = calculateW2OvertimeSchedule1A(
         { taxYear: 2025, formType: "f1040" },
         input,
       );
-      return {
+      Object.assign(projected, {
         ...lines,
-        line2e_zero_exclusions: 0,
         line14b_zero_1099: 0,
         line16_magi: lines.line3_magi,
         ...(lines.line18_excess_magi === 0
@@ -270,7 +276,8 @@ export const schedule1aPdf: PdfFormDescriptor = {
             line20_reduction: undefined,
           }
           : {}),
-      };
+      });
+      total += lines.line21_overtime;
     }
     if ((input.vehicle_loans?.length ?? 0) > 0) {
       const lines = calculateVehicleInterestSchedule1A(
@@ -281,9 +288,8 @@ export const schedule1aPdf: PdfFormDescriptor = {
       const overflow = lines.line22_vehicles.length > 2
         ? lines.line22_vehicles.slice(1)
         : undefined;
-      const projected: Record<string, unknown> = {
+      Object.assign(projected, {
         ...lines,
-        line2e_zero_exclusions: 0,
         line22a_vin: first.vin,
         line22a_elsewhere: first.deducted_elsewhere,
         line22a_interest: first.schedule1a_interest,
@@ -303,18 +309,22 @@ export const schedule1aPdf: PdfFormDescriptor = {
             line29_reduction: undefined,
           }
           : {}),
-      };
-      return projected;
+      });
+      total += lines.line30_vehicle_interest;
     }
-    const lines = calculateSeniorOnlySchedule1A(
-      { taxYear: 2025, formType: "f1040" },
-      input,
-    );
-    return {
-      ...lines,
-      line2e_zero_exclusions: 0,
-      line31_magi: lines.line3_magi,
-    };
+    if (seniorDeduction({ taxYear: 2025, formType: "f1040" }, input) > 0) {
+      const lines = calculateSeniorOnlySchedule1A(
+        { taxYear: 2025, formType: "f1040" },
+        input,
+      );
+      Object.assign(projected, {
+        ...lines,
+        line31_magi: lines.line3_magi,
+      });
+      total += lines.line37_senior;
+    }
+    projected.line38_total = total;
+    return projected;
   },
   fields,
   async appendSupplementalPages(document, projected, filer) {

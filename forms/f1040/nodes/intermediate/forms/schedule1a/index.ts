@@ -335,7 +335,7 @@ export function seniorDeduction(
   return eligiblePeople * perPerson;
 }
 
-/** The strictly zero-exclusion, senior-only TY2025 filing subset. */
+/** The strictly zero-exclusion TY2025 senior deduction lines. */
 export function calculateSeniorOnlySchedule1A(
   ctx: NodeContext,
   rawInput: Schedule1AInput,
@@ -347,15 +347,6 @@ export function calculateSeniorOnlySchedule1A(
   if (!input.senior_zero_exclusions_review) {
     throw new Error(
       "Schedule 1-A senior filing needs sourced zero-exclusion review for Part I",
-    );
-  }
-  if (
-    (input.qualified_employee_tips?.length ?? 0) > 0 ||
-    (input.qualified_w2_overtime?.length ?? 0) > 0 ||
-    (input.vehicle_loans?.length ?? 0) > 0
-  ) {
-    throw new Error(
-      "Schedule 1-A senior-only filing cannot include tips, overtime, or vehicle interest",
     );
   }
   if (
@@ -415,15 +406,8 @@ export function calculateW2TipsSchedule1A(
       "Schedule 1-A tips filing needs sourced zero-exclusion review for Part I",
     );
   }
-  if (
-    !input.qualified_employee_tips?.length ||
-    (input.qualified_w2_overtime?.length ?? 0) > 0 ||
-    (input.vehicle_loans?.length ?? 0) > 0 ||
-    seniorDeduction(ctx, input) > 0
-  ) {
-    throw new Error(
-      "Schedule 1-A W-2 tips filing cannot include senior, overtime, or vehicle claims",
-    );
+  if (!input.qualified_employee_tips?.length) {
+    throw new Error("Schedule 1-A W-2 tips filing needs qualified tips");
   }
   if (
     input.magi === undefined || !Number.isSafeInteger(input.magi) ||
@@ -516,14 +500,9 @@ export function calculateW2OvertimeSchedule1A(
       "Schedule 1-A overtime filing needs sourced zero-exclusion review for Part I",
     );
   }
-  if (
-    !input.qualified_w2_overtime?.length ||
-    (input.qualified_employee_tips?.length ?? 0) > 0 ||
-    (input.vehicle_loans?.length ?? 0) > 0 ||
-    seniorDeduction(ctx, input) > 0
-  ) {
+  if (!input.qualified_w2_overtime?.length) {
     throw new Error(
-      "Schedule 1-A W-2 overtime filing cannot include tips, senior, or vehicle claims",
+      "Schedule 1-A W-2 overtime filing needs qualified overtime",
     );
   }
   if (
@@ -611,14 +590,9 @@ export function calculateVehicleInterestSchedule1A(
       "Schedule 1-A vehicle interest needs sourced zero-exclusion review for Part I",
     );
   }
-  if (
-    !input.vehicle_loans?.length ||
-    (input.qualified_employee_tips?.length ?? 0) > 0 ||
-    (input.qualified_w2_overtime?.length ?? 0) > 0 ||
-    seniorDeduction(ctx, input) > 0
-  ) {
+  if (!input.vehicle_loans?.length) {
     throw new Error(
-      "Schedule 1-A vehicle interest filing cannot include tips, overtime, or senior claims",
+      "Schedule 1-A vehicle interest filing needs a qualified loan",
     );
   }
   if (

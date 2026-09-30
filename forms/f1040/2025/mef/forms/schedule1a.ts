@@ -7,6 +7,7 @@ import {
   calculateW2TipsSchedule1A,
   inputSchema,
   isQualifiedTipsOccupationCode,
+  seniorDeduction,
 } from "../../../nodes/intermediate/forms/schedule1a/index.ts";
 import { inputSchema as w2InputSchema } from "../../../nodes/inputs/w2/index.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
@@ -54,6 +55,10 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
       "Schedule 1-A zero-exclusion review conflicts with a Form 2555 or Form 4563 source",
     );
   }
+  const parts: string[] = [];
+  let total = 0;
+  let senior = 0;
+  let part1: { line1_agi: number; line3_magi: number } | undefined;
   if ((input.qualified_employee_tips?.length ?? 0) > 0) {
     const form4137 = context?.pending?.form4137 === undefined
       ? undefined
@@ -132,17 +137,15 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
     if (
       form1040.filing_status !== input.filing_status ||
       !allRecipientsMatch ||
-      form1040.line11_agi !== lines.line1_agi ||
-      form1040.line13b_additional_deductions !== lines.line38_total ||
-      (form1040.schedule1a_line37_senior_deduction ?? 0) !== 0
+      form1040.line11_agi !== lines.line1_agi
     ) {
       throw new Error(
         "Schedule 1-A tips identity and Part I/VI do not reconcile to Form 1040",
       );
     }
-    return elements("IRS1040Schedule1A", [
-      element("AdjustedGrossIncomeAmt", lines.line1_agi),
-      element("ModifiedAGIAmt", lines.line3_magi),
+    part1 = lines;
+    total += lines.line13_tips;
+    parts.push(
       element("QualifiedTipsWagesAmt", lines.line4a_w2_tips),
       element("QualifiedTipsForm4137Amt", 0),
       element("QualifiedTipsEmployeeAmt", lines.line4c_employee_tips),
@@ -159,8 +162,7 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
         ? element("TipsMAGILessThrshldRedAmt", lines.line12_reduction)
         : "",
       element("QualifiedTipsDeductionAmt", lines.line13_tips),
-      element("TotalAdditionalDeductionsAmt", lines.line38_total),
-    ]);
+    );
   }
   if ((input.qualified_w2_overtime?.length ?? 0) > 0) {
     const lines = calculateW2OvertimeSchedule1A(
@@ -200,17 +202,15 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
     if (
       form1040.filing_status !== input.filing_status ||
       !ownersMatch ||
-      form1040.line11_agi !== lines.line1_agi ||
-      form1040.line13b_additional_deductions !== lines.line38_total ||
-      (form1040.schedule1a_line37_senior_deduction ?? 0) !== 0
+      form1040.line11_agi !== lines.line1_agi
     ) {
       throw new Error(
         "Schedule 1-A overtime identity and Part I/VI do not reconcile to Form 1040",
       );
     }
-    return elements("IRS1040Schedule1A", [
-      element("AdjustedGrossIncomeAmt", lines.line1_agi),
-      element("ModifiedAGIAmt", lines.line3_magi),
+    part1 = lines;
+    total += lines.line21_overtime;
+    parts.push(
       element("QualifiedOvertimeWagesAmt", lines.line14a_w2_overtime),
       element("QualifiedOvertimeForm1099Amt", 0),
       element("TotalQualifiedOvertimeAmt", lines.line14c_total_overtime),
@@ -226,8 +226,7 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
         ? element("OtMAGILessThrshldRedAmt", lines.line20_reduction)
         : "",
       element("QualifiedOvertimeCompDedAmt", lines.line21_overtime),
-      element("TotalAdditionalDeductionsAmt", lines.line38_total),
-    ]);
+    );
   }
   if ((input.vehicle_loans?.length ?? 0) > 0) {
     const lines = calculateVehicleInterestSchedule1A(
@@ -250,17 +249,15 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
           ssn?.replaceAll("-", "") === loan.borrower_ssn.replaceAll("-", "")
         )
       ) ||
-      form1040.line11_agi !== lines.line1_agi ||
-      form1040.line13b_additional_deductions !== lines.line38_total ||
-      (form1040.schedule1a_line37_senior_deduction ?? 0) !== 0
+      form1040.line11_agi !== lines.line1_agi
     ) {
       throw new Error(
         "Schedule 1-A vehicle interest identity and Part I/VI do not reconcile to Form 1040",
       );
     }
-    return elements("IRS1040Schedule1A", [
-      element("AdjustedGrossIncomeAmt", lines.line1_agi),
-      element("ModifiedAGIAmt", lines.line3_magi),
+    part1 = lines;
+    total += lines.line30_vehicle_interest;
+    parts.push(
       ...lines.line22_vehicles.map((loan) =>
         elements("QlfyPassengerVehicleLoanIntGrp", [
           element("VIN", loan.vin),
@@ -281,74 +278,86 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
         ? element("CarLnIntMAGILessThrshldRedAmt", lines.line29_reduction)
         : "",
       element("QualifiedCarLoanInterestDedAmt", lines.line30_vehicle_interest),
-      element("TotalAdditionalDeductionsAmt", lines.line38_total),
-    ]);
-  }
-  const lines = calculateSeniorOnlySchedule1A(
-    { taxYear: 2025, formType: "f1040" },
-    input,
-  );
-  const matchesPerson = (
-    claimed: number,
-    sourceSsn: string | undefined,
-    returnSsn: string | undefined,
-    returnAge: boolean | undefined,
-    employmentValid: boolean | undefined,
-    issuedBeforeDueDate: boolean | undefined,
-    tinIssuedByDueDate: boolean | undefined,
-  ) =>
-    claimed === 0 || (
-      sourceSsn !== undefined && returnSsn !== undefined &&
-      sourceSsn.replaceAll("-", "") === returnSsn.replaceAll("-", "") &&
-      returnAge === true && employmentValid === true &&
-      issuedBeforeDueDate === true && tinIssuedByDueDate === true
     );
+  }
+  if (seniorDeduction({ taxYear: 2025, formType: "f1040" }, input) > 0) {
+    const lines = calculateSeniorOnlySchedule1A(
+      { taxYear: 2025, formType: "f1040" },
+      input,
+    );
+    const matchesPerson = (
+      claimed: number,
+      sourceSsn: string | undefined,
+      returnSsn: string | undefined,
+      returnAge: boolean | undefined,
+      employmentValid: boolean | undefined,
+      issuedBeforeDueDate: boolean | undefined,
+      tinIssuedByDueDate: boolean | undefined,
+    ) =>
+      claimed === 0 || (
+        sourceSsn !== undefined && returnSsn !== undefined &&
+        sourceSsn.replaceAll("-", "") === returnSsn.replaceAll("-", "") &&
+        returnAge === true && employmentValid === true &&
+        issuedBeforeDueDate === true && tinIssuedByDueDate === true
+      );
+    if (
+      form1040.filing_status !== input.filing_status ||
+      !matchesPerson(
+        lines.line36a_taxpayer,
+        input.taxpayer_ssn,
+        form1040.taxpayer_ssn,
+        form1040.taxpayer_age_65_or_older,
+        form1040.taxpayer_ssn_valid_for_employment,
+        form1040.taxpayer_ssn_issued_before_due_date,
+        form1040.taxpayer_tin_issued_by_due_date,
+      ) ||
+      !matchesPerson(
+        lines.line36b_spouse,
+        input.spouse_ssn,
+        form1040.spouse_ssn,
+        form1040.spouse_age_65_or_older,
+        form1040.spouse_ssn_valid_for_employment,
+        form1040.spouse_ssn_issued_before_due_date,
+        form1040.spouse_tin_issued_by_due_date,
+      ) ||
+      form1040.line11_agi !== lines.line1_agi
+    ) {
+      throw new Error(
+        "Schedule 1-A senior identity and Part I/VI do not reconcile to Form 1040",
+      );
+    }
+    part1 = lines;
+    senior = lines.line37_senior;
+    total += senior;
+    parts.push(
+      element("EnhncSrDedFSThrshldAmt", lines.line32_threshold),
+      element("EnhncSrDedMAGILessThrshldAmt", lines.line33_excess_magi),
+      element("EnhnSrDedMAGILessThrshldRedAmt", lines.line34_reduction),
+      element("SpecfiedDolLessThrshldRedAmt", lines.line35_per_person),
+      lines.line36a_taxpayer > 0
+        ? element("PrimaryEnhancedSeniorDedAmt", lines.line36a_taxpayer)
+        : "",
+      lines.line36b_spouse > 0
+        ? element("SpouseEnhancedSeniorDedAmt", lines.line36b_spouse)
+        : "",
+      element("EnhancedSeniorDeductionAmt", lines.line37_senior),
+    );
+  }
   if (
-    form1040.filing_status !== input.filing_status ||
-    !matchesPerson(
-      lines.line36a_taxpayer,
-      input.taxpayer_ssn,
-      form1040.taxpayer_ssn,
-      form1040.taxpayer_age_65_or_older,
-      form1040.taxpayer_ssn_valid_for_employment,
-      form1040.taxpayer_ssn_issued_before_due_date,
-      form1040.taxpayer_tin_issued_by_due_date,
-    ) ||
-    !matchesPerson(
-      lines.line36b_spouse,
-      input.spouse_ssn,
-      form1040.spouse_ssn,
-      form1040.spouse_age_65_or_older,
-      form1040.spouse_ssn_valid_for_employment,
-      form1040.spouse_ssn_issued_before_due_date,
-      form1040.spouse_tin_issued_by_due_date,
-    ) ||
-    form1040.line11_agi === undefined ||
-    form1040.line13b_additional_deductions === undefined ||
-    form1040.schedule1a_line37_senior_deduction === undefined ||
-    form1040.line11_agi !== lines.line1_agi ||
-    form1040.line13b_additional_deductions !== lines.line38_total ||
-    form1040.schedule1a_line37_senior_deduction !== lines.line37_senior
+    !part1 || form1040.filing_status !== input.filing_status ||
+    form1040.line11_agi !== part1.line1_agi ||
+    form1040.line13b_additional_deductions !== total ||
+    (form1040.schedule1a_line37_senior_deduction ?? 0) !== senior
   ) {
     throw new Error(
-      "Schedule 1-A senior identity and Part I/VI do not reconcile to Form 1040",
+      "Schedule 1-A total and senior deduction do not reconcile to Form 1040",
     );
   }
   return elements("IRS1040Schedule1A", [
-    element("AdjustedGrossIncomeAmt", lines.line1_agi),
-    element("ModifiedAGIAmt", lines.line3_magi),
-    element("EnhncSrDedFSThrshldAmt", lines.line32_threshold),
-    element("EnhncSrDedMAGILessThrshldAmt", lines.line33_excess_magi),
-    element("EnhnSrDedMAGILessThrshldRedAmt", lines.line34_reduction),
-    element("SpecfiedDolLessThrshldRedAmt", lines.line35_per_person),
-    lines.line36a_taxpayer > 0
-      ? element("PrimaryEnhancedSeniorDedAmt", lines.line36a_taxpayer)
-      : "",
-    lines.line36b_spouse > 0
-      ? element("SpouseEnhancedSeniorDedAmt", lines.line36b_spouse)
-      : "",
-    element("EnhancedSeniorDeductionAmt", lines.line37_senior),
-    element("TotalAdditionalDeductionsAmt", lines.line38_total),
+    element("AdjustedGrossIncomeAmt", part1.line1_agi),
+    element("ModifiedAGIAmt", part1.line3_magi),
+    ...parts,
+    element("TotalAdditionalDeductionsAmt", total),
   ]);
 }
 

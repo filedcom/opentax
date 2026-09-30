@@ -7,19 +7,19 @@ Sources:
 and checked-in v5.4 `Common/IRS1040Schedule1A/IRS1040Schedule1A.xsd`.
 
 The `schedule1a` node computes a combined deduction and sends it to Form 1040
-line 13b. MeF includes bounded senior-only and identified W-2-box-7 tips
-routes plus reviewed W-2-box-14 FLSA overtime and vehicle-interest routes in the Schedule 1-A
+line 13b. MeF includes identified W-2-box-7 tips, reviewed W-2-box-14 FLSA
+overtime, vehicle-interest, and senior routes in the Schedule 1-A
 descriptor after Schedule 1 and before Schedule 2. Form 1040's positive-line-13b guard opens
 only when that source review is present and the second pass has exactly one
 attached Schedule 1-A. The descriptor independently rejects unsupported
-components and reconciles line 38 to line 13b. All four routes have a
+components and reconciles their combined line 38 to line 13b. All four routes have a
 two-page PDF field map and inspected synthetic full-return packets.
 
 ## Source and line blockers
 
 - Part I lines 1–3 use Form 1040 line 11b plus Puerto Rico excluded income, Form
   2555 lines 45/50, and Form 4563 line 15. The node receives `magi` from the AGI
-  aggregator, and the senior-only route requires a source-referenced review that
+  aggregator, and each positive route requires a source-referenced review that
   all those adjustments are zero. Positive exclusions still need their own
   source routes; `magi` cannot be assumed to be line 3 without this review.
 - Part II has a source-backed W-2 box 7 route with a published three-digit
@@ -31,11 +31,10 @@ two-page PDF field map and inspected synthetic full-return packets.
   4c through the IRS worksheet, kept in the PDF packet. The worksheet
   paginates after five employer rows. It also fills lines 6/7, 9–13, and
   38 and reconciles to Form 1040. Duplicate employee/employer rows, Form
-  4137, mixed senior/overtime/vehicle claims, high box 5 wages, and an
+  4137, high box 5 wages, and an
   occupation code outside the IRS list reject. Form 4070 or employer
   statement alternatives, multiple occupations at one employer, special
-  wage-base handling, self-employment tips, and combined Schedule 1-A
-  branches remain open.
+  wage-base handling, self-employment tips, and full combined packets remain open.
 - Part III now supports employer-identified `FLSA Overtime Premium` in W-2
   box 14 when a source-referenced review confirms the employee is covered and
   nonexempt under the FLSA and that the premium is included in box 1. The W-2
@@ -45,28 +44,28 @@ two-page PDF field map and inspected synthetic full-return packets.
   outputs fill lines 14a–21 as applicable and line 38; the filer, AGI, and
   deduction reconcile to Form 1040. Raw taxpayer-entered overtime totals are
   rejected at the public input schema. Payroll-method calculations when box 14
-  lacks the premium, deferred W-2 amounts, Forms 1099-NEC/MISC, mixed
-  Schedule 1-A claims, and authenticated employer evidence remain open.
+  lacks the premium, deferred W-2 amounts, Forms 1099-NEC/MISC, full combined
+  packets, and authenticated employer evidence remain open.
 - Part IV now has a reviewed 2025 purchase-loan route for up to 50 new,
   qualifying US-assembled passenger vehicles. Each record needs a borrower
   SSN, VIN, 2025 origination/purchase dates, lender and document references,
   first-lien and personal-use confirmations, eligible vehicle facts, whole-
   dollar interest, and a source-referenced review that no interest was deducted
-  elsewhere. Bare VIN/interest assertions, positive Schedule C/E/F amounts,
-  mixed Schedule 1-A claims are rejected. The native v5.4 schema permits 50
+  elsewhere. Bare VIN/interest assertions and positive Schedule C/E/F amounts
+  are rejected. The native v5.4 schema permits 50
   vehicle groups; the PDF prints one VIN plus an attached subtotal and paginated
   statement when there are more than two. Refinance, inherited-obligor, mixed
   business-use interest, document authentication, and cross-schedule deduction
   reconciliation remain open.
-- Part V's senior-only descriptor now computes per-person lines 36a/36b and
+- Part V's senior calculation computes per-person lines 36a/36b and
   intermediate lines 32–35. Its zero-exclusion review does not establish the
   positive Part I exclusion paths or authenticate the underlying documents.
 
 The v5.4 XSD has distinct elements for these source lines and Part VI line 38.
-The registered senior-only MeF descriptor
+The registered Schedule 1-A MeF descriptor
 requires an explicit source-referenced review that there was no section 933
 Puerto Rico exclusion and no Form 2555 or Form 4563 filing. It uses the AGI
-calculated upstream, rejects any tips, overtime, or vehicle claim, computes
+calculated upstream, computes
 the Part V phaseout and each spouse's line 36 amount, and emits Part I lines
 1/3 plus Part V lines 32-37 and Part VI line 38 in native XSD order. It checks
 the filing status, each claimed senior's SSN/age/timely employment-valid SSN
@@ -76,6 +75,12 @@ exclusions remain unsupported. These references are review evidence, not
 independent authentication of the underlying taxpayer documents.
 
 The source, document, return integration, and PDF field-map cases are written.
+Positive Parts II–V can now coexist in native XML and PDF projection. A focused
+$5,000 tips, $4,000 overtime, $4,000 vehicle-interest, and $10,800 senior
+case emits all four parts in order and validates against the local v5.4
+Schedule 1-A XSD; a mismatched Form 1040 total rejects. A senior-plus-overtime
+PDF projection fills both parts and $14,800 on line 38. Full mixed-return
+graph/XSD and filled-packet review remain open.
 The official 2025 two-page AcroForm was inspected: page 1 fields
 `f1_03`, `f1_08`, and `f1_09` correspond to lines 1, 2e, and 3; page 2
 fields `f2_15` through `f2_23` correspond to lines 31 through 38. The
