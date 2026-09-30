@@ -1,5 +1,30 @@
 import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
 
+export function assertKIncomeClassification(
+  pending: Record<string, unknown>,
+): void {
+  const raw = (pending.f1099k as
+    | { f1099ks?: Array<Record<string, unknown>> }
+    | undefined)?.f1099ks ?? [];
+  for (const item of raw) {
+    const gross = item.box1a_gross_payments;
+    if (gross === undefined || gross === 0) continue;
+    if (
+      typeof gross !== "number" || !Number.isFinite(gross) || gross < 0 ||
+      ![
+        "schedule_c",
+        "schedule_1_line_8j",
+        "personal_item_sales",
+        "mixed_schedule_c_personal_item_sales",
+      ].includes(item.for_routing as string)
+    ) {
+      throw new Error(
+        "Form 1099-K box 1a needs a reviewed income classification before filing",
+      );
+    }
+  }
+}
+
 function tin(value: unknown, label: string): string | undefined {
   if (value === undefined) return undefined;
   if (typeof value !== "string") {

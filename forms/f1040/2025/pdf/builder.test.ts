@@ -109,6 +109,24 @@ Deno.test("Form 1040 PDF rejects an explicitly dual-status return", async () => 
   );
 });
 
+Deno.test("Form 1040 PDF rejects positive 1099-K with no income classification", async () => {
+  await assertRejects(
+    () =>
+      buildPdfBytes({
+        f1099k: {
+          f1099ks: [{
+            pse_name: "Example Processor",
+            pse_tin: "123456789",
+            recipient_tin: "123456789",
+            box1a_gross_payments: 5_000,
+          }],
+        },
+      }, mockFiler),
+    Error,
+    "needs a reviewed income classification",
+  );
+});
+
 Deno.test("Form 8949 PDF cannot export without Schedule D", async () => {
   await assertRejects(
     () => buildPdfBytes({ form8949: [{ part: "B" }] }, undefined),

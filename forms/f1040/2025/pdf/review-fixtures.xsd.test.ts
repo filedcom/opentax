@@ -320,6 +320,22 @@ for (const fixture of pdfReviewFixtures) {
         );
       }
       if (fixture.id === "single-k-mixed-business-personal") {
+        assertThrows(
+          () =>
+            buildMefXml(
+              buildPending({
+                ...result.pending,
+                f1099k: {
+                  f1099ks: (result.pending.f1099k.f1099ks as Array<
+                    Record<string, unknown>
+                  >).map((row) => ({ ...row, for_routing: undefined })),
+                },
+              }),
+              fixture.filer,
+            ),
+          Error,
+          "needs a reviewed income classification",
+        );
         const kRows = result.pending.schedule_c
           .f1099k_receipt_sources as Array<Record<string, unknown>>;
         const rawSale = result.pending.form8949.transaction as

@@ -9,6 +9,7 @@ import type { MefBundle } from "../mef/builder.ts";
 import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
 import {
   assertF1040FinalHeader,
+  assertKIncomeClassification,
   assertKPersonalSaleSources,
   assertKWithholdingSourceIdentity,
   assertSchedule1Box3SourceIdentity,
@@ -262,6 +263,7 @@ export async function buildPdfBytes(
   if (normalized.f1040) {
     assertF1040FinalHeader(normalized.f1040, filer);
   }
+  assertKIncomeClassification(normalized);
   if (filer) {
     assertScheduleCReceiptSourceIdentity(normalized, filer);
     assertKWithholdingSourceIdentity(normalized, filer);
