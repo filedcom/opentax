@@ -527,18 +527,15 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
     const isDirect = (part: string, codes: string | undefined): boolean =>
       (part === "A" || part === "D") && !(codes ?? "").length;
 
-    const direct = { stP: 0, stC: 0, stG: 0, ltP: 0, ltC: 0, ltG: 0 };
+    const direct = { stP: 0, stC: 0, ltP: 0, ltC: 0 };
     for (const tx of dScreenTxs) {
       if (!isDirect(tx.part, tx.adjustment_codes)) continue;
-      const gl = dScreenGainLoss(tx);
       if (LONG_TERM_PARTS.has(tx.part)) {
         direct.ltP += tx.proceeds;
         direct.ltC += tx.cost_basis;
-        direct.ltG += gl;
       } else {
         direct.stP += tx.proceeds;
         direct.stC += tx.cost_basis;
-        direct.stG += gl;
       }
     }
     for (const tx of f8949Txs) {
@@ -546,11 +543,9 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
       if (tx.is_long_term) {
         direct.ltP += tx.proceeds;
         direct.ltC += tx.cost_basis;
-        direct.ltG += tx.gain_loss;
       } else {
         direct.stP += tx.proceeds;
         direct.stC += tx.cost_basis;
-        direct.stG += tx.gain_loss;
       }
     }
 
@@ -582,15 +577,23 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
     if (line16 > 0) {
       printFields.print_line17_both_gains = line17Yes;
     }
-    if (direct.stP > 0 || direct.stC > 0) {
-      printFields.print_line1a_proceeds = direct.stP;
-      printFields.print_line1a_cost = direct.stC;
-      printFields.print_line1a_gain = direct.stG;
+    const directStProceeds = (input.line_1a_proceeds ?? 0) + direct.stP;
+    const directStCost = (input.line_1a_cost ?? 0) + direct.stC;
+    if (directStProceeds > 0 || directStCost > 0) {
+      printFields.line_1a_proceeds = directStProceeds;
+      printFields.line_1a_cost = directStCost;
+      printFields.print_line1a_proceeds = directStProceeds;
+      printFields.print_line1a_cost = directStCost;
+      printFields.print_line1a_gain = directStProceeds - directStCost;
     }
-    if (direct.ltP > 0 || direct.ltC > 0) {
-      printFields.print_line8a_proceeds = direct.ltP;
-      printFields.print_line8a_cost = direct.ltC;
-      printFields.print_line8a_gain = direct.ltG;
+    const directLtProceeds = (input.line_8a_proceeds ?? 0) + direct.ltP;
+    const directLtCost = (input.line_8a_cost ?? 0) + direct.ltC;
+    if (directLtProceeds > 0 || directLtCost > 0) {
+      printFields.line_8a_proceeds = directLtProceeds;
+      printFields.line_8a_cost = directLtCost;
+      printFields.print_line8a_proceeds = directLtProceeds;
+      printFields.print_line8a_cost = directLtCost;
+      printFields.print_line8a_gain = directLtProceeds - directLtCost;
     }
     if (
       line13F1099div > 0 || line13Form8814 > 0 ||

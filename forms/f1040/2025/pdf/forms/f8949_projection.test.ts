@@ -62,6 +62,22 @@ Deno.test("Form 8949 PDF projects canonical Part I and Part II into separate che
   );
 });
 
+Deno.test("Form 8949 PDF accepts direct broker rows only when no separate sale page is due", () => {
+  assertEquals(
+    form8949Pdf.projectFields?.({}, {
+      f8949: { f8949s: [{ part: "A" }, { part: "D" }] },
+    }),
+    {},
+  );
+  assertThrows(
+    () => form8949Pdf.projectFields?.({}, {
+      f8949: { f8949s: [{ part: "B" }] },
+    }),
+    Error,
+    "needs computed canonical transaction rows",
+  );
+});
+
 Deno.test("Form 8949 PDF splits a reporting category after eleven rows", () => {
   const rows = Array.from({ length: 12 }, (_, index) => ({
     ...shortTerm,

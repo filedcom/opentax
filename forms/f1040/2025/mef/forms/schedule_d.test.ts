@@ -219,13 +219,13 @@ Deno.test("line_12_cap_gain_dist maps to CapitalGainDistributionsAmt", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test(
-  "line_1a_proceeds + line_1a_cost emit TotalSTCGL1099BBssRptNoAdjGrp with child elements",
+  "line_1a_proceeds + line_1a_cost emit TotalSTCGL1099BssRptNoAdjGrp with child elements",
   () => {
     const result = scheduleD.build({
       line_1a_proceeds: 10000,
       line_1a_cost: 8000,
     });
-    assertStringIncludes(result, "<TotalSTCGL1099BBssRptNoAdjGrp>");
+    assertStringIncludes(result, "<TotalSTCGL1099BssRptNoAdjGrp>");
     assertStringIncludes(
       result,
       "<TotalProceedsSalesPriceAmt>10000</TotalProceedsSalesPriceAmt>",
@@ -238,7 +238,7 @@ Deno.test(
       result,
       "<TotalGainOrLossAmt>2000</TotalGainOrLossAmt>",
     );
-    assertStringIncludes(result, "</TotalSTCGL1099BBssRptNoAdjGrp>");
+    assertStringIncludes(result, "</TotalSTCGL1099BssRptNoAdjGrp>");
   },
 );
 
@@ -258,13 +258,13 @@ Deno.test("line_1a group emits loss when cost > proceeds", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test(
-  "line_8a_proceeds + line_8a_cost emit TotalLTCGL1099BBssRptNoAdjGrp with child elements",
+  "line_8a_proceeds + line_8a_cost emit TotalLTCGL1099BssRptNoAdjGrp with child elements",
   () => {
     const result = scheduleD.build({
       line_8a_proceeds: 20000,
       line_8a_cost: 15000,
     });
-    assertStringIncludes(result, "<TotalLTCGL1099BBssRptNoAdjGrp>");
+    assertStringIncludes(result, "<TotalLTCGL1099BssRptNoAdjGrp>");
     assertStringIncludes(
       result,
       "<TotalProceedsSalesPriceAmt>20000</TotalProceedsSalesPriceAmt>",
@@ -277,7 +277,7 @@ Deno.test(
       result,
       "<TotalGainOrLossAmt>5000</TotalGainOrLossAmt>",
     );
-    assertStringIncludes(result, "</TotalLTCGL1099BBssRptNoAdjGrp>");
+    assertStringIncludes(result, "</TotalLTCGL1099BssRptNoAdjGrp>");
   },
 );
 
@@ -287,24 +287,24 @@ Deno.test(
 
 Deno.test("line_1a with only proceeds emits group with just TotalProceedsSalesPriceAmt", () => {
   const result = scheduleD.build({ line_1a_proceeds: 5000 });
-  assertStringIncludes(result, "<TotalSTCGL1099BBssRptNoAdjGrp>");
+  assertStringIncludes(result, "<TotalSTCGL1099BssRptNoAdjGrp>");
   assertStringIncludes(
     result,
     "<TotalProceedsSalesPriceAmt>5000</TotalProceedsSalesPriceAmt>",
   );
   assertNotIncludes(result, "<TotalCostOrOtherBasisAmt>");
-  assertStringIncludes(result, "</TotalSTCGL1099BBssRptNoAdjGrp>");
+  assertStringIncludes(result, "</TotalSTCGL1099BssRptNoAdjGrp>");
 });
 
 Deno.test("line_1a with only cost emits group with just TotalCostOrOtherBasisAmt", () => {
   const result = scheduleD.build({ line_1a_cost: 3000 });
-  assertStringIncludes(result, "<TotalSTCGL1099BBssRptNoAdjGrp>");
+  assertStringIncludes(result, "<TotalSTCGL1099BssRptNoAdjGrp>");
   assertStringIncludes(
     result,
     "<TotalCostOrOtherBasisAmt>3000</TotalCostOrOtherBasisAmt>",
   );
   assertNotIncludes(result, "<TotalProceedsSalesPriceAmt>");
-  assertStringIncludes(result, "</TotalSTCGL1099BBssRptNoAdjGrp>");
+  assertStringIncludes(result, "</TotalSTCGL1099BssRptNoAdjGrp>");
 });
 
 // ---------------------------------------------------------------------------
@@ -319,8 +319,8 @@ Deno.test("single known scalar field: only that element emitted, absent fields o
   );
   assertNotIncludes(result, "<NetSTGainOrLossFromSchK1Amt>");
   assertNotIncludes(result, "<STCapitalLossCarryoverAmt>");
-  assertNotIncludes(result, "<TotalSTCGL1099BBssRptNoAdjGrp>");
-  assertNotIncludes(result, "<TotalLTCGL1099BBssRptNoAdjGrp>");
+  assertNotIncludes(result, "<TotalSTCGL1099BssRptNoAdjGrp>");
+  assertNotIncludes(result, "<TotalLTCGL1099BssRptNoAdjGrp>");
 });
 
 // ---------------------------------------------------------------------------
@@ -351,7 +351,7 @@ Deno.test("all fields present: output wrapped in IRS1040ScheduleD tag", () => {
 
 Deno.test("all fields present: line 1a nested group emitted", () => {
   const result = scheduleD.build(allFields);
-  assertStringIncludes(result, "<TotalSTCGL1099BBssRptNoAdjGrp>");
+  assertStringIncludes(result, "<TotalSTCGL1099BssRptNoAdjGrp>");
   assertStringIncludes(
     result,
     "<TotalProceedsSalesPriceAmt>100</TotalProceedsSalesPriceAmt>",
@@ -368,8 +368,8 @@ Deno.test("all fields present: line 1a nested group emitted", () => {
 
 Deno.test("all fields present: line 8a nested group emitted", () => {
   const result = scheduleD.build(allFields);
-  assertStringIncludes(result, "<TotalLTCGL1099BBssRptNoAdjGrp>");
-  assertStringIncludes(result, "</TotalLTCGL1099BBssRptNoAdjGrp>");
+  assertStringIncludes(result, "<TotalLTCGL1099BssRptNoAdjGrp>");
+  assertStringIncludes(result, "</TotalLTCGL1099BssRptNoAdjGrp>");
 });
 
 Deno.test("all fields present: scalar fields emitted correctly", () => {

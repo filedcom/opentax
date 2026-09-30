@@ -368,6 +368,14 @@ return passes local full-return XSD, and all six pages were inspected in
 AcroForm field-name check passes for the expanded map. Direct-reported
 broker rows and the other box categories still need source-to-paper review.
 
+The direct-reporting follow-up removes unadjusted 1099-B basis-reported
+Part A/D rows from the prepared Form 8949 document while retaining their
+computed source on Schedule D. The native direct-group element names were
+corrected against TY2025 v5.4 XSD. One two-sale return passes local schema
+validation, and all four `v55` pages show lines 1a/8a with no Form 8949
+page. Adjusted and digital-asset categories, issuer bytes, IRS business
+rules, and ATS acceptance remain open.
+
 Form 6251 addendum (2026-09-29, unrun): the existing line-2k audited Form 8949
 route now also handles same-term short-term mixed gain/loss rows only when both
 regular and AMT nets stay positive and there is no other capital activity. The

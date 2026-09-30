@@ -348,3 +348,19 @@ with the computed graph and native XML. The PDF SHA-256 is
 The live IRS field-name check confirms the expanded Schedule D row maps.
 Other sale categories, direct-reporting consistency, IRS business rules,
 and ATS acceptance remain open.
+
+The `single-direct-broker-basis-sales` packet was regenerated with the other
+forty-three prepared cases in
+`.state/research/ty2025-filled-pdf-review/2026-09-30-v55/`.
+The first local XSD check exposed incorrect Schedule D direct-group element
+names, now corrected to the TY2025 v5.4 schema. All four pages were rendered
+and inspected. Form 1040 pages 1–2 show the single owner, $30,000 wages,
+$3,000 capital gain, $33,000 AGI, $1,595 tax, and $1,405 refund. Schedule D
+page 1 prints the short sale's $2,000 proceeds/$1,000 basis/$1,000 gain on
+line 1a and the long sale's $4,000/$2,000/$2,000 on line 8a, with blank
+Form 8949 rows; page 2 prints $3,000 on line 16 and the qualified-dividend
+tax-worksheet mark. The native XML contains both direct-reporting groups
+and no Form 8949 document, matching the four-page PDF. The PDF SHA-256 is
+`266bf11c643decece733b9a9a2048211638b94589bd6bee260518ccedac006ad`.
+Issuer bytes, adjusted and digital-asset direct categories, IRS business
+rules, and ATS acceptance remain open.

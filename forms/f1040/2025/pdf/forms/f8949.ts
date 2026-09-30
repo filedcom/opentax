@@ -11,8 +11,18 @@ import { isQofCodeZRow } from "../../mef/forms/f8949.ts";
 // The canonical Form 8949 node emits one transaction or an accumulated array.
 // Each official 2025 page holds 11 rows for exactly one reporting box.
 const PARTS = [
-  "A", "B", "C", "G", "H", "I",
-  "D", "E", "F", "J", "K", "L",
+  "A",
+  "B",
+  "C",
+  "G",
+  "H",
+  "I",
+  "D",
+  "E",
+  "F",
+  "J",
+  "K",
+  "L",
 ] as const;
 const SHORT_TERM_PARTS = new Set(["A", "B", "C", "G", "H", "I"]);
 const ROW_COLUMNS = [
@@ -60,7 +70,9 @@ function checkedDate(value: string): string {
     ? [value.slice(6, 10), value.slice(0, 2), value.slice(3, 5)]
     : undefined;
   if (!match) {
-    throw new Error("Form 8949 PDF transaction dates need a supported calendar date");
+    throw new Error(
+      "Form 8949 PDF transaction dates need a supported calendar date",
+    );
   }
   const [year, month, day] = match;
   const iso = `${year}-${month}-${day}`;
@@ -69,7 +81,9 @@ function checkedDate(value: string): string {
     !Number.isFinite(timestamp) ||
     new Date(timestamp).toISOString().slice(0, 10) !== iso
   ) {
-    throw new Error("Form 8949 PDF transaction dates need a valid calendar date");
+    throw new Error(
+      "Form 8949 PDF transaction dates need a valid calendar date",
+    );
   }
   return `${month}/${day}/${year}`;
 }
@@ -93,15 +107,19 @@ function checkboxFields(page: 1 | 2): PdfFieldEntry[] {
 }
 
 function transactionFields(page: 1 | 2): PdfFieldEntry[] {
-  return Array.from({ length: ROWS_PER_PAGE }, (_, row) =>
-    ROW_COLUMNS.map((column, offset) => ({
-      kind: "text" as const,
-      domainKey: `pdf_page${page}_row${row + 1}_${column}`,
-      pdfField:
-        `topmostSubform[0].Page${page}[0].Table_Line1_Part${page}[0].Row${row + 1}[0].f${page}_${
-          String(3 + row * ROW_COLUMNS.length + offset).padStart(2, "0")
-        }[0]`,
-    }))
+  return Array.from(
+    { length: ROWS_PER_PAGE },
+    (_, row) =>
+      ROW_COLUMNS.map((column, offset) => ({
+        kind: "text" as const,
+        domainKey: `pdf_page${page}_row${row + 1}_${column}`,
+        pdfField:
+          `topmostSubform[0].Page${page}[0].Table_Line1_Part${page}[0].Row${
+            row + 1
+          }[0].f${page}_${
+            String(3 + row * ROW_COLUMNS.length + offset).padStart(2, "0")
+          }[0]`,
+      })),
   ).flat();
 }
 
@@ -137,16 +155,25 @@ function validateTransactions(rows: readonly unknown[]): Transaction[] {
   });
 }
 
-function pageInstance(part: string, transactions: Transaction[]): Record<string, unknown> {
+function pageInstance(
+  part: string,
+  transactions: Transaction[],
+): Record<string, unknown> {
   const page = pageForPart(part);
   const rows = Object.fromEntries(transactions.flatMap((tx, index) => {
     const qofZ = isQofCodeZRow(tx);
     const values = [
       tx.description,
-      tx.from_form4797_investment_1245 ? undefined : checkedDate(tx.date_acquired),
-      tx.from_form4797_investment_1245 || qofZ ? undefined : checkedDate(tx.date_sold),
+      tx.from_form4797_investment_1245
+        ? undefined
+        : checkedDate(tx.date_acquired),
+      tx.from_form4797_investment_1245 || qofZ
+        ? undefined
+        : checkedDate(tx.date_sold),
       qofZ ? undefined : printedAmount(tx.proceeds),
-      tx.from_form4797_investment_1245 || qofZ ? undefined : printedAmount(tx.cost_basis),
+      tx.from_form4797_investment_1245 || qofZ
+        ? undefined
+        : printedAmount(tx.cost_basis),
       tx.adjustment_codes,
       tx.adjustment_amount === undefined
         ? undefined
@@ -167,14 +194,20 @@ function pageInstance(part: string, transactions: Transaction[]): Record<string,
     pdf_page_index: page - 1,
     pdf_part: part,
     ...rows,
-    ...(transactions.every(isQofCodeZRow)
-      ? {}
-      : { [`pdf_page${page}_total_proceeds`]: printedAmount(sum((tx) => tx.proceeds)) }),
+    ...(transactions.every(isQofCodeZRow) ? {} : {
+      [`pdf_page${page}_total_proceeds`]: printedAmount(
+        sum((tx) => tx.proceeds),
+      ),
+    }),
     ...(transactions.every((tx) =>
         tx.from_form4797_investment_1245 || isQofCodeZRow(tx)
       )
       ? {}
-      : { [`pdf_page${page}_total_cost_basis`]: printedAmount(sum((tx) => tx.cost_basis)) }),
+      : {
+        [`pdf_page${page}_total_cost_basis`]: printedAmount(
+          sum((tx) => tx.cost_basis),
+        ),
+      }),
     ...(hasAdjustment
       ? {
         [`pdf_page${page}_total_adjustment_amount`]: printedAmount(
@@ -193,13 +226,24 @@ export const form8949Pdf: PdfFormDescriptor = {
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8949--2025.pdf",
   projectFields(fields, allPending) {
     if (fields.transactions !== undefined || fields.f8949s !== undefined) {
-      throw new Error("Form 8949 PDF needs computed canonical transaction rows");
+      throw new Error(
+        "Form 8949 PDF needs computed canonical transaction rows",
+      );
     }
     const rows = sourceRows(fields.transaction);
     const source = sourceRows(allPending.f8949?.f8949s);
     assertNoSection1202Rows([...rows, ...source]);
-    if (rows.length === 0 && source.length > 0) {
-      throw new Error("Form 8949 PDF needs computed canonical transaction rows");
+    if (
+      rows.length === 0 &&
+      source.some((row) =>
+        typeof row !== "object" || row === null ||
+        !("part" in row) || (row.part !== "A" && row.part !== "D") ||
+        ("adjustment_codes" in row && !!row.adjustment_codes)
+      )
+    ) {
+      throw new Error(
+        "Form 8949 PDF needs computed canonical transaction rows",
+      );
     }
     if (rows.length > 0) {
       nativeForm8949.build(rows.map((row) => transactionSchema.parse(row)), {
@@ -210,7 +254,9 @@ export const form8949Pdf: PdfFormDescriptor = {
   },
   instances(fields) {
     if (fields.transactions !== undefined || fields.f8949s !== undefined) {
-      throw new Error("Form 8949 PDF needs computed canonical transaction rows");
+      throw new Error(
+        "Form 8949 PDF needs computed canonical transaction rows",
+      );
     }
     const rows = sourceRows(fields.transaction);
     assertNoSection1202Rows(rows);
@@ -219,20 +265,23 @@ export const form8949Pdf: PdfFormDescriptor = {
       const forPart = transactions.filter((tx) => tx.part === part);
       return Array.from(
         { length: Math.ceil(forPart.length / ROWS_PER_PAGE) },
-        (_, chunk) => pageInstance(
-          part,
-          forPart.slice(
-            chunk * ROWS_PER_PAGE,
-            (chunk + 1) * ROWS_PER_PAGE,
+        (_, chunk) =>
+          pageInstance(
+            part,
+            forPart.slice(
+              chunk * ROWS_PER_PAGE,
+              (chunk + 1) * ROWS_PER_PAGE,
+            ),
           ),
-        ),
       );
     });
   },
   pageIndices(fields) {
     const page = fields.pdf_page_index;
     if (page !== 0 && page !== 1) {
-      throw new Error("Form 8949 PDF instance needs a selected Part I or II page");
+      throw new Error(
+        "Form 8949 PDF instance needs a selected Part I or II page",
+      );
     }
     return [page];
   },
@@ -245,9 +294,25 @@ export const form8949Pdf: PdfFormDescriptor = {
     ...totalFields(2),
   ],
   filerFields: [
-    { kind: "text", domainKey: "fullName", pdfField: "topmostSubform[0].Page1[0].f1_01[0]" },
-    { kind: "text", domainKey: "primarySSN", pdfField: "topmostSubform[0].Page1[0].f1_02[0]" },
-    { kind: "text", domainKey: "fullName", pdfField: "topmostSubform[0].Page2[0].f2_01[0]" },
-    { kind: "text", domainKey: "primarySSN", pdfField: "topmostSubform[0].Page2[0].f2_02[0]" },
+    {
+      kind: "text",
+      domainKey: "fullName",
+      pdfField: "topmostSubform[0].Page1[0].f1_01[0]",
+    },
+    {
+      kind: "text",
+      domainKey: "primarySSN",
+      pdfField: "topmostSubform[0].Page1[0].f1_02[0]",
+    },
+    {
+      kind: "text",
+      domainKey: "fullName",
+      pdfField: "topmostSubform[0].Page2[0].f2_01[0]",
+    },
+    {
+      kind: "text",
+      domainKey: "primarySSN",
+      pdfField: "topmostSubform[0].Page2[0].f2_02[0]",
+    },
   ],
 };

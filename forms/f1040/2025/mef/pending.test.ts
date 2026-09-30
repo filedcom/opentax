@@ -32,6 +32,31 @@ Deno.test("MeF pending retains Form 8949 transaction provenance for Form 8854 re
   assertEquals(pending.form8949?.[0].source_transaction_id, "deemed-sale-1");
 });
 
+Deno.test("MeF pending files unadjusted broker-basis sales on Schedule D only", () => {
+  const direct = {
+    part: "A",
+    description: "Broker shares",
+    date_acquired: "2025-01-10",
+    date_sold: "2025-06-20",
+    proceeds: 2_000,
+    cost_basis: 1_000,
+    gain_loss: 1_000,
+    is_long_term: false,
+  };
+  const adjusted = {
+    ...direct,
+    adjustment_codes: "W",
+    adjustment_amount: 100,
+    gain_loss: 1_100,
+  };
+  const pending = buildPending({
+    form8949: { transaction: [direct, adjusted] },
+    schedule_d: { transaction: [direct, adjusted] },
+  });
+  assertEquals(pending.form8949, [adjusted]);
+  assertEquals(pending.schedule_d?.transaction, [direct, adjusted]);
+});
+
 Deno.test("MeF pending excludes source-only Form 8960 but retains its completed calculation", () => {
   const sourceOnly = buildPending({
     form8960: {

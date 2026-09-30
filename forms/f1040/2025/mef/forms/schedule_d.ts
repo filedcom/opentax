@@ -87,14 +87,14 @@ function buildIRS1040ScheduleD(fields: Input): string {
   // Nested groups first (XSD order: line 1a before line 8a)
   children.push(
     buildBasisRptNoAdjGroup(
-      "TotalSTCGL1099BBssRptNoAdjGrp",
+      "TotalSTCGL1099BssRptNoAdjGrp",
       f.line_1a_proceeds,
       f.line_1a_cost,
     ),
   );
   children.push(
     buildBasisRptNoAdjGroup(
-      "TotalLTCGL1099BBssRptNoAdjGrp",
+      "TotalLTCGL1099BssRptNoAdjGrp",
       f.line_8a_proceeds,
       f.line_8a_cost,
     ),

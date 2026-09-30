@@ -807,6 +807,37 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-direct-broker-basis-sales",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(30_000, 3_000, "Example Employer", "12-3456789")],
+      f8949: [{
+        part: "A",
+        description: "Short-term broker shares",
+        source_transaction_id: "synthetic-direct-short",
+        date_acquired: "2025-01-10",
+        date_sold: "2025-06-20",
+        proceeds: 2_000,
+        cost_basis: 1_000,
+      }, {
+        part: "D",
+        description: "Long-term broker shares",
+        source_transaction_id: "synthetic-direct-long",
+        date_acquired: "2022-01-10",
+        date_sold: "2025-06-20",
+        proceeds: 4_000,
+        cost_basis: 2_000,
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule_d"],
+    reviewFocus: [
+      "Unadjusted basis-reported sales print on Schedule D lines 1a and 8a",
+      "The native return carries both direct-reporting groups without a Form 8949 document",
+      "The $3,000 capital gain reaches Form 1040 line 7a and $33,000 AGI",
+    ],
+  },
+  {
     id: "single-final-trust-k1-long-term-capital-loss",
     inputs: {
       general: singleGeneral,

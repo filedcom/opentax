@@ -47,6 +47,17 @@ for (const fixture of pdfReviewFixtures) {
         assertEquals(result.pending.schedule_d.print_line16_combined, 3_000);
         assertEquals(result.pending.f1040.line11_agi, 33_000);
       }
+      if (fixture.id === "single-direct-broker-basis-sales") {
+        assertEquals(result.pending.schedule_d.line_1a_proceeds, 2_000);
+        assertEquals(result.pending.schedule_d.line_1a_cost, 1_000);
+        assertEquals(result.pending.schedule_d.line_8a_proceeds, 4_000);
+        assertEquals(result.pending.schedule_d.line_8a_cost, 2_000);
+        assertEquals(result.pending.schedule_d.print_line16_combined, 3_000);
+        assertEquals(result.pending.f1040.line11_agi, 33_000);
+        assertStringIncludes(xml, "<TotalSTCGL1099BssRptNoAdjGrp>");
+        assertStringIncludes(xml, "<TotalLTCGL1099BssRptNoAdjGrp>");
+        assertEquals(xml.includes("<IRS8949>"), false);
+      }
       if (fixture.id === "single-final-trust-k1-long-term-capital-loss") {
         assertEquals(result.pending.schedule_d.line_12_k1_lt, -900);
         assertEquals(result.pending.schedule_d.print_line15_lt_total, -900);
