@@ -21,6 +21,35 @@ const filer: FilerIdentity = {
   originator: { efin: "123456", originatorType: "ERO" },
 };
 
+Deno.test("clergy housing cannot reach a prepared return without matched source facts", () => {
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    {
+      clergy: [{
+        ministerial_wages: 50_000,
+        housing_allowance_designated: 12_000,
+        actual_housing_expenses: 10_000,
+        fair_market_rental_value: 15_000,
+        is_ordained_minister: true,
+      }],
+    },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(
+    result.diagnostics.some((entry) =>
+      entry.nodeType === "clergy" &&
+      entry.message.includes("needs a matched W-2")
+    ),
+    true,
+  );
+  assertThrows(
+    () => buildMefXml(buildPending(result.pending), filer),
+    Error,
+    "Clergy income needs matched W-2",
+  );
+});
+
 const attached9465 = {
   filing_mode: "attached_2025_1040",
   tax_year: 2025,
@@ -261,7 +290,10 @@ Deno.test("age-65 Schedule R cannot create a credit on a zero-tax Form 1040", ()
     true,
   );
   assertEquals(
-    Object.hasOwn(buildPending(result.pending).f1040 ?? {}, "line21_credits_total"),
+    Object.hasOwn(
+      buildPending(result.pending).f1040 ?? {},
+      "line21_credits_total",
+    ),
     false,
   );
   assertThrows(
@@ -321,7 +353,9 @@ Deno.test({
   assertEquals(xml.includes("<IRS1040ScheduleB"), true);
   assertEquals(xml.includes("<IRS1040ScheduleR"), true);
   assertEquals(
-    xml.includes("<CreditForElderlyOrDisabledAmt>600</CreditForElderlyOrDisabledAmt>"),
+    xml.includes(
+      "<CreditForElderlyOrDisabledAmt>600</CreditForElderlyOrDisabledAmt>",
+    ),
     true,
   );
   const path = await Deno.makeTempFile({ suffix: ".xml" });

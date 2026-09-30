@@ -4,6 +4,7 @@ import { assertAttachmentCoverage } from "./attachment-coverage.ts";
 Deno.test("native attachment preflight blocks unfiled public inputs", () => {
   for (
     const pending of [
+      { clergy: { clergys: [{ ministerial_wages: 50_000 }] } },
       { f8997: { investment_lots: [{ lot_id: "QOF" }] } },
       { f8997: { investment_lots: [{ events: [{}] }] } },
       { f8958: { state: "CA" } },

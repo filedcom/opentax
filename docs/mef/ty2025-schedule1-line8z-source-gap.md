@@ -27,7 +27,21 @@ not an approved exclusion or completion of these filing paths.
 | Generic deposit       | Current producer files                                                               | Missing source-to-statement decision                                                                                                                     |
 | --------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `line8z_other`        | `f3115`, `f8873`, `f5471`, `k1_partnership` | Confirm the 2025 income line and character for each fact pattern; retain a typed source type, amount and source identity through Schedule 1 and AGI.     |
-| `line8z_other_income` | `k1_s_corp`, `f3115`, `clergy`, `f8915d`, `k1_trust`, `f1099patr`           | Resolve pass-through, disaster, housing and cooperative classifications separately; preserve each signed source row and its filed destination. |
+| `line8z_other_income` | `k1_s_corp`, `f3115`, `f8915d`, `k1_trust`, `f1099patr`           | Resolve pass-through, disaster and cooperative classifications separately; preserve each signed source row and its filed destination. |
+
+The clergy producer no longer emits a negative line 8z amount. The [2025 IRS
+Publication 517](https://www.irs.gov/publications/p517) treats qualifying
+housing as an exclusion from gross income, while including parsonage value and
+housing allowance in ministerial self-employment earnings when applicable.
+Subtracting those amounts again on Schedule 1 could understate AGI; omitting
+parsonage from Schedule SE could understate SE tax. The old public input lacks
+the matched W-2, minister/recipient, employer, advance designation, excess
+allowance review, and Form 4361 approval needed for a complete return. Every
+populated clergy input now fails explicitly at calculation and MeF/PDF export. A source-backed
+clergy route must reconcile the W-2 box 1 amount, report any taxable excess on
+Form 1040 line 1h, include the proper housing amounts on Schedule SE, preserve
+owner and payer identity, and handle the Form 4361 exemption. This is an open
+filing path, not an approved exclusion.
 
 The executor accumulates colliding scalar output keys as an array. These two
 sink schemas currently expect numbers, so a return with multiple generic

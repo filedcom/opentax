@@ -24,6 +24,13 @@ const positive = (value: unknown): boolean =>
 
 const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
   {
+    pendingKey: "clergy",
+    exportKinds: ["mef", "pdf"],
+    reason:
+      "Clergy income needs matched W-2, housing designation, taxable excess, parsonage/SE, and Form 4361 evidence",
+    isActive: (fields) => nonempty(fields.clergys),
+  },
+  {
     pendingKey: "f8862",
     exportKinds: ["mef", "pdf"],
     reason: "Form 8862 credit claim needs an explicit active-ban status",
