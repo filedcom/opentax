@@ -388,11 +388,85 @@ const creatorGift = {
   },
 };
 
+const unrelatedUseGift = {
+  ...electedCapitalGift,
+  capital_gain_reduction_election_confirmed: undefined,
+  unrelated_use_capital_gain_reduction: {
+    purchase_record_reference: "Coin purchase receipt COIN-17",
+    donee_unrelated_use_statement_reference: "Museum sale-plan letter USE-17",
+    tangible_personal_property_verified: true as const,
+    donee_use_unrelated_to_exempt_purpose_verified: true as const,
+    hypothetical_fmv_sale_gain_entirely_long_term_verified: true as const,
+    no_other_reduction_reason_verified: true as const,
+  },
+};
+
+Deno.test("Form 8283 unrelated-use tangible property links reduced FMV to Schedule A", () => {
+  const form = { section_a_items: [unrelatedUseGift] };
+  const pending = nonElectionReturn(form);
+  const [statement] = form8283FmvReductionStatement.build([], { pending });
+  assertStringIncludes(statement, "unrelated to the donee's exempt purpose");
+  assertStringIncludes(statement, "Museum sale-plan letter USE-17");
+  const [xml] = form8283.build(form, {
+    pending,
+    documentIdsByPendingKey: {
+      form8283_fmv_reduction_statement: ["unrelated-use-reduction"],
+    },
+  });
+  assertStringIncludes(xml, 'referenceDocumentId="unrelated-use-reduction"');
+  assertStringIncludes(xml, ">3000</FairMarketValueAmt>");
+  assertEquals(pending.schedule_a.line_12_noncash_contributions, 3_000);
+  const [scheduleXml] = scheduleAMef.build(pending.schedule_a, { pending });
+  assertStringIncludes(scheduleXml, ">3000</OtherThanByCashOrCheckAmt>");
+  const mismatchedPending = {
+    ...pending,
+    schedule_a: {
+      ...pending.schedule_a,
+      line_12_noncash_contributions: 2_999,
+    },
+  };
+  assertThrows(
+    () => form8283.build(form, { pending: mismatchedPending }),
+    Error,
+    "differs from recomputed Schedule A",
+  );
+  assertThrows(
+    () =>
+      form8283FmvReductionStatement.build([], {
+        pending: mismatchedPending,
+      }),
+    Error,
+    "differs from recomputed Schedule A",
+  );
+  assertThrows(
+    () =>
+      scheduleAMef.build(pending.schedule_a, {
+        pending: { ...pending, f8283: undefined },
+      }),
+    Error,
+    "needs its linked Form 8283 source",
+  );
+  assertThrows(
+    () =>
+      inputSchema.parse({
+        section_a_items: [{
+          ...unrelatedUseGift,
+          donor_acquisition_description: "Gift",
+        }],
+      }),
+    Error,
+    "purchased long-term tangible property",
+  );
+});
+
 Deno.test("Form 8283 donor-created art links ordinary-gain statement and basis claim", () => {
   const form = { section_a_items: [creatorGift] };
   const pending = nonElectionReturn(form);
   const [statement] = form8283FmvReductionStatement.build([], { pending });
-  assertStringIncludes(statement, "Donor-created artwork substantially completed");
+  assertStringIncludes(
+    statement,
+    "Donor-created artwork substantially completed",
+  );
   assertStringIncludes(statement, "hypothetical sale gain of $750.00");
   assertStringIncludes(statement, "Undeducted materials ledger ART-17");
   const [xml] = form8283.build(form, {
@@ -405,7 +479,13 @@ Deno.test("Form 8283 donor-created art links ordinary-gain statement and basis c
   assertStringIncludes(xml, ">250</FairMarketValueAmt>");
   assertEquals(pending.schedule_a.line_12_noncash_contributions, 250);
   assertThrows(
-    () => inputSchema.parse({ section_a_items: [{ ...creatorGift, donor_acquisition_description: "Purchase" }] }),
+    () =>
+      inputSchema.parse({
+        section_a_items: [{
+          ...creatorGift,
+          donor_acquisition_description: "Purchase",
+        }],
+      }),
     Error,
     "donor-created Section A art",
   );
@@ -415,7 +495,10 @@ Deno.test("Form 8283 purchased inventory reduction links ordinary-gain statement
   const form = { section_a_items: [inventoryGift] };
   const pending = nonElectionReturn(form);
   const [statement] = form8283FmvReductionStatement.build([], { pending });
-  assertStringIncludes(statement, "Purchased inventory held for sale to customers");
+  assertStringIncludes(
+    statement,
+    "Purchased inventory held for sale to customers",
+  );
   assertStringIncludes(statement, "hypothetical sale gain of $400.00");
   assertStringIncludes(statement, "Invoice INV-102");
   const [xml] = form8283.build(form, {
@@ -428,12 +511,24 @@ Deno.test("Form 8283 purchased inventory reduction links ordinary-gain statement
   assertStringIncludes(xml, ">600</FairMarketValueAmt>");
   assertEquals(pending.schedule_a.line_12_noncash_contributions, 600);
   assertThrows(
-    () => inputSchema.parse({ section_a_items: [{ ...inventoryGift, cost_or_adjusted_basis: 700 }] }),
+    () =>
+      inputSchema.parse({
+        section_a_items: [{ ...inventoryGift, cost_or_adjusted_basis: 700 }],
+      }),
     Error,
     "source cost equal to claim",
   );
   assertThrows(
-    () => inputSchema.parse({ section_a_items: [{ ...inventoryGift, inventory_ordinary_income_reduction: { ...inventoryGift.inventory_ordinary_income_reduction, purchase_invoice_reference: "" } }] }),
+    () =>
+      inputSchema.parse({
+        section_a_items: [{
+          ...inventoryGift,
+          inventory_ordinary_income_reduction: {
+            ...inventoryGift.inventory_ordinary_income_reduction,
+            purchase_invoice_reference: "",
+          },
+        }],
+      }),
     Error,
     "purchase_invoice_reference",
   );

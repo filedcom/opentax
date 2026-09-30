@@ -112,8 +112,10 @@ export function assertInventoryReductionSource(item: SectionAItem): void {
     !item.date_contributed || !item.donor_acquisition_description?.trim() ||
     item.cost_or_adjusted_basis === undefined ||
     (!item.fmv_method && !item.fmv_method_description?.trim()) ||
-    !item.inventory_ordinary_income_reduction.purchase_invoice_reference.trim() ||
-    !item.inventory_ordinary_income_reduction.inventory_cost_record_reference.trim()
+    !item.inventory_ordinary_income_reduction.purchase_invoice_reference
+      .trim() ||
+    !item.inventory_ordinary_income_reduction.inventory_cost_record_reference
+      .trim()
   ) {
     throw new Error(
       "Form 8283 inventory reduction needs complete donee, property, dates, basis, valuation method, invoice, and cost-ledger source",
@@ -132,10 +134,32 @@ export function assertCreatorReductionSource(item: SectionAItem): void {
     item.cost_or_adjusted_basis === undefined ||
     (!item.fmv_method && !item.fmv_method_description?.trim()) ||
     !item.creator_ordinary_income_reduction.creation_record_reference.trim() ||
-    !item.creator_ordinary_income_reduction.capitalized_cost_record_reference.trim()
+    !item.creator_ordinary_income_reduction.capitalized_cost_record_reference
+      .trim()
   ) {
     throw new Error(
       "Form 8283 creator reduction needs complete donee, property, completion date, basis, valuation method, and capitalized-cost records",
+    );
+  }
+}
+
+export function assertUnrelatedUseReductionSource(item: SectionAItem): void {
+  const review = item.unrelated_use_capital_gain_reduction;
+  if (!review) return;
+  const address = item.donee_organization_us_address;
+  if (
+    !item.donee_organization_name?.trim() || !address?.line1.trim() ||
+    !address.city.trim() || !address.state.trim() || !address.zip.trim() ||
+    !item.property_description?.trim() || !item.date_acquired ||
+    !item.date_contributed ||
+    item.donor_acquisition_description?.trim().toLowerCase() !== "purchase" ||
+    item.cost_or_adjusted_basis === undefined ||
+    (!item.fmv_method && !item.fmv_method_description?.trim()) ||
+    !review.purchase_record_reference.trim() ||
+    !review.donee_unrelated_use_statement_reference.trim()
+  ) {
+    throw new Error(
+      "Form 8283 unrelated-use reduction needs complete donee, tangible property, dates, basis, valuation, purchase, and donee-use records",
     );
   }
 }
@@ -206,20 +230,21 @@ export function fmvReductionExplanation(
         item.cost_or_adjusted_basis !== undefined
     ? `Purchased inventory held for sale to customers: hypothetical sale gain of ${
       usd(fmv - item.cost_or_adjusted_basis)
-    } would be ordinary income under section 170(e)(1)(A). Invoice ${
-      item.inventory_ordinary_income_reduction.purchase_invoice_reference
-    } and cost record ${
-      item.inventory_ordinary_income_reduction.inventory_cost_record_reference
-    } support adjusted basis ${usd(item.cost_or_adjusted_basis)}.`
+    } would be ordinary income under section 170(e)(1)(A). Invoice ${item.inventory_ordinary_income_reduction.purchase_invoice_reference} and cost record ${item.inventory_ordinary_income_reduction.inventory_cost_record_reference} support adjusted basis ${
+      usd(item.cost_or_adjusted_basis)
+    }.`
     : item.creator_ordinary_income_reduction !== undefined &&
         item.cost_or_adjusted_basis !== undefined
     ? `Donor-created artwork substantially completed on ${item.date_acquired}: hypothetical sale gain of ${
       usd(fmv - item.cost_or_adjusted_basis)
-    } would be ordinary income under section 170(e)(1)(A). Creation record ${
-      item.creator_ordinary_income_reduction.creation_record_reference
-    } and capitalized undeducted cost record ${
-      item.creator_ordinary_income_reduction.capitalized_cost_record_reference
-    } support adjusted basis ${usd(item.cost_or_adjusted_basis)}.`
+    } would be ordinary income under section 170(e)(1)(A). Creation record ${item.creator_ordinary_income_reduction.creation_record_reference} and capitalized undeducted cost record ${item.creator_ordinary_income_reduction.capitalized_cost_record_reference} support adjusted basis ${
+      usd(item.cost_or_adjusted_basis)
+    }.`
+    : item.unrelated_use_capital_gain_reduction !== undefined &&
+        item.cost_or_adjusted_basis !== undefined
+    ? `Purchased long-term tangible personal property is put to a use unrelated to the donee's exempt purpose. Purchase record ${item.unrelated_use_capital_gain_reduction.purchase_record_reference} and donee-use statement ${item.unrelated_use_capital_gain_reduction.donee_unrelated_use_statement_reference} support the section 170(e)(1)(B)(i) reduction of long-term appreciation ${
+      usd(fmv - item.cost_or_adjusted_basis)
+    }, leaving adjusted basis ${usd(item.cost_or_adjusted_basis)}.`
     : item.capital_gain_reduction_election_confirmed === true &&
         item.date_acquired && item.date_contributed &&
         item.cost_or_adjusted_basis !== undefined
@@ -229,7 +254,7 @@ export function fmvReductionExplanation(
     : "";
   if (!reason) {
     throw new Error(
-      "Form 8283 reduced claim needs certified sale proceeds, a sourced ordinary-income reduction, or a sourced capital-gain reduction election",
+      "Form 8283 reduced claim needs certified sale proceeds or a sourced ordinary-income or capital-gain reduction",
     );
   }
   const explanation = `Section A item ${propertyId(index)}: unreduced FMV ${
@@ -250,6 +275,7 @@ export function buildFmvReductionStatement(
   assertShortTermReductionSource(item);
   assertInventoryReductionSource(item);
   assertCreatorReductionSource(item);
+  assertUnrelatedUseReductionSource(item);
   assertVehicleSaleReductionSource(item);
   return elements("FairMarketValueStatement", [
     element("ShortExplanationTxt", fmvReductionExplanation(item, index)),
@@ -844,6 +870,7 @@ export const form8283: MefFormDescriptor<
       assertShortTermReductionSource(item);
       assertInventoryReductionSource(item);
       assertCreatorReductionSource(item);
+      assertUnrelatedUseReductionSource(item);
       assertVehicleSaleReductionSource(item);
     }
     const elected = (parsed.section_a_items ?? []).some((item) =>
@@ -873,7 +900,10 @@ export const form8283: MefFormDescriptor<
     if (
       isSingleSectionAVehicleSale(parsed) ||
       hasSectionAShortTermReduction(parsed) ||
-      isSingleSectionANeedyVehicleUnreduced(parsed)
+      isSingleSectionANeedyVehicleUnreduced(parsed) ||
+      sectionA.some((item) =>
+        item.unrelated_use_capital_gain_reduction !== undefined
+      )
     ) {
       assertOrdinarySectionAReconciled(context);
     }

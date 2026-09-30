@@ -10,6 +10,7 @@ import {
   assertCreatorReductionSource,
   assertInventoryReductionSource,
   assertShortTermReductionSource,
+  assertUnrelatedUseReductionSource,
   assertVehicleSaleReductionSource,
   fmvReductionExplanation,
   needsFmvReductionStatement,
@@ -646,9 +647,14 @@ export const form8283Pdf: PdfFormDescriptor = {
       item.creator_ordinary_income_reduction !== undefined &&
       needsFmvReductionStatement(item)
     );
+    const unrelatedUseReduction = sectionA.some((item) =>
+      item.unrelated_use_capital_gain_reduction !== undefined &&
+      needsFmvReductionStatement(item)
+    );
     if (
       !elected &&
-      !shortTermReduction && !inventoryReduction && !creatorReduction && !soldVehicle && !needyVehicle &&
+      !shortTermReduction && !inventoryReduction && !creatorReduction &&
+      !unrelatedUseReduction && !soldVehicle && !needyVehicle &&
       sectionA.length !== 1
     ) {
       throw new Error(
@@ -656,7 +662,11 @@ export const form8283Pdf: PdfFormDescriptor = {
       );
     }
     if (elected) assertElectedSectionAReconciled({ pending: allPending });
-    if (!elected && !shortTermReduction && !inventoryReduction && !creatorReduction && !soldVehicle && !needyVehicle) {
+    if (
+      !elected && !shortTermReduction && !inventoryReduction &&
+      !creatorReduction && !unrelatedUseReduction && !soldVehicle &&
+      !needyVehicle
+    ) {
       assertUnreducedSectionACompanion(sectionA[0]);
     }
     if (soldVehicle) {
@@ -671,6 +681,7 @@ export const form8283Pdf: PdfFormDescriptor = {
         assertShortTermReductionSource(item);
         assertInventoryReductionSource(item);
         assertCreatorReductionSource(item);
+        assertUnrelatedUseReductionSource(item);
       }
     }
     if (

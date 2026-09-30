@@ -4,9 +4,11 @@ import {
   assertCreatorReductionSource,
   assertInventoryReductionSource,
   assertShortTermReductionSource,
+  assertUnrelatedUseReductionSource,
   buildFmvReductionStatement,
   needsFmvReductionStatement,
 } from "./f8283.ts";
+import { assertOrdinarySectionAReconciled } from "./f8283_election.ts";
 import { assertElectedSectionAReconciled } from "./f8283_election.ts";
 import {
   carriedSectionAItem,
@@ -57,6 +59,12 @@ export const form8283FmvReductionStatement: MefFormDescriptor<
       )
     ) {
       assertElectedSectionAReconciled(context);
+    } else if (
+      (parsed.section_a_items ?? []).some((item) =>
+        item.unrelated_use_capital_gain_reduction !== undefined
+      )
+    ) {
+      assertOrdinarySectionAReconciled(context);
     }
     const reduced = (parsed.section_a_items ?? []).filter(
       needsFmvReductionStatement,
@@ -65,6 +73,7 @@ export const form8283FmvReductionStatement: MefFormDescriptor<
       assertShortTermReductionSource(item);
       assertInventoryReductionSource(item);
       assertCreatorReductionSource(item);
+      assertUnrelatedUseReductionSource(item);
     }
     if (context.documentIdsByPendingKey) {
       const ids = context.documentIdsByPendingKey

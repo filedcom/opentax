@@ -5,7 +5,10 @@ import {
   assertForm1098MortgageLimitSources,
 } from "../../../nodes/inputs/f1098/index.ts";
 import { assertRefinancePointsSource } from "../../../nodes/inputs/mortgage_refinance_points/index.ts";
-import { assertElectedSectionAReconciled } from "../../mef/forms/f8283_election.ts";
+import {
+  assertElectedSectionAReconciled,
+  assertOrdinarySectionAReconciled,
+} from "../../mef/forms/f8283_election.ts";
 import { inputSchema as form8283InputSchema } from "../../../nodes/inputs/f8283/index.ts";
 import { reconcileForm8283Carryover } from "../../mef/forms/f8283_carryover.ts";
 import {
@@ -302,6 +305,28 @@ export const scheduleAPdf: PdfFormDescriptor = {
       !hasPriorCarryover
     ) {
       assertElectedSectionAReconciled({ pending: all }, input);
+    }
+    const noncashItems = all?.schedule_a?.noncash_contribution_items;
+    const hasUnrelatedUseGift = Array.isArray(noncashItems) &&
+      noncashItems.some((item) =>
+        item !== null && typeof item === "object" &&
+        (item as Record<string, unknown>)
+            .unrelated_use_capital_gain_reduction_confirmed === true
+      );
+    if (hasUnrelatedUseGift && !all?.f8283) {
+      throw new Error(
+        "Schedule A unrelated-use capital-gain reduction PDF needs its linked Form 8283 source",
+      );
+    }
+    const form8283Source = all?.f8283
+      ? form8283InputSchema.parse(all.f8283)
+      : undefined;
+    if (
+      (form8283Source?.section_a_items ?? []).some((item) =>
+        item.unrelated_use_capital_gain_reduction !== undefined
+      )
+    ) {
+      assertOrdinarySectionAReconciled({ pending: all }, input);
     }
     const amount = (key: string) => Number(input[key] ?? 0);
     if (

@@ -1,5 +1,21 @@
 # TY2025 Form 8283 FMV-reduction statement
 
+## Section A unrelated-use tangible property (implementation staged 2026-10-01)
+
+The [2025 Form 8283 instructions](https://www.irs.gov/instructions/i8283)
+and [Publication 526](https://www.irs.gov/publications/p526) reduce an
+appreciated long-term tangible-personal-property gift to basis when the donee
+puts it to an unrelated use. A separate bounded Section A route now requires a
+purchased nonvehicle gift with original FMV no more than $5,000, a 50%-limit
+donee, purchase and donee-use record references, an explicit unrelated-use
+review, and a claim equal to adjusted basis below FMV. It does not use the
+return-wide 50%-limit capital-gain election. The source produces a distinct
+native FMV-reduction statement, PDF explanation, and current-gift Schedule A
+and Form 1040 reconciliation. Positive and mismatched-source fixtures are
+authored but unrun. The underlying purchase and donee records are not byte
+authenticated; Section B, later donee disposition, and other reduction reasons
+remain open.
+
 ## Donor-created Section A artwork reduction (implementation staged 2026-10-01)
 
 The 2025 [Form 8283 instructions](https://www.irs.gov/instructions/i8283)
@@ -122,7 +138,7 @@ with a $24,000 current reduced gift and $60,000 AGI, the focused unrun case
 expects $24,000 on Schedule A line 12 and $5,000 on line 13. Mixed 20%/30%
 categories with such a carryover remain fail-closed, as do special carryover
 histories. The input's basis, holding period, donee category, and election need
-external verification. Unrelated-use tangible property, foundation gifts,
+external verification. Other unrelated-use tangible-property variants, foundation gifts,
 intellectual property, taxidermy, recapture, combined vehicle sale/appreciation
 reductions, and Section B reduction statements remain separate unsupported
 paths. Full MeF XSD, business-rule, PDF, and return-batch validation remain

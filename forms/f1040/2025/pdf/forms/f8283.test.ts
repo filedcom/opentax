@@ -11,6 +11,7 @@ import {
   scheduleA,
 } from "../../../nodes/inputs/schedule_a/index.ts";
 import { form8283Pdf } from "./f8283.ts";
+import { scheduleAPdf } from "./schedule_a.ts";
 import { form8283 } from "../../mef/forms/f8283.ts";
 import { scheduleA as scheduleAMef } from "../../mef/forms/schedule_a.ts";
 import { form8283FmvReductionStatement } from "../../mef/forms/f8283_fmv_reduction_statement.ts";
@@ -102,6 +103,25 @@ const creatorGift = {
     date_acquired_is_substantial_completion_verified: true as const,
     basis_costs_not_previously_deducted_verified: true as const,
     fmv_sale_gain_entirely_ordinary_verified: true as const,
+    no_other_reduction_reason_verified: true as const,
+  },
+};
+
+const unrelatedUseGift = {
+  ...shortTermGift,
+  property_description: "Purchased collectible coin sold by museum",
+  date_acquired: "2022-02-01",
+  fmv: 4_500,
+  deduction_claimed: 3_000,
+  cost_or_adjusted_basis: 3_000,
+  is_capital_gain_property: true,
+  short_term_ordinary_income_reduction_confirmed: undefined,
+  unrelated_use_capital_gain_reduction: {
+    purchase_record_reference: "Coin purchase receipt COIN-17",
+    donee_unrelated_use_statement_reference: "Museum sale-plan letter USE-17",
+    tangible_personal_property_verified: true as const,
+    donee_use_unrelated_to_exempt_purpose_verified: true as const,
+    hypothetical_fmv_sale_gain_entirely_long_term_verified: true as const,
     no_other_reduction_reason_verified: true as const,
   },
 };
@@ -829,6 +849,49 @@ Deno.test("Form 8283 PDF prints donor-created art basis claim and reason", () =>
   assertStringIncludes(
     (instance?.reduction_statements as string[])[0],
     "hypothetical sale gain of $750.00",
+  );
+});
+
+Deno.test("Form 8283 PDF prints unrelated-use tangible property basis and statement", () => {
+  const form = { section_a_items: [unrelatedUseGift] };
+  const pending = currentSectionAPending(form);
+  const [instance] = form8283Pdf.instances?.(
+    form,
+    filer,
+    pending,
+  ) ?? [];
+  assertEquals(instance?.row1_basis, 3_000);
+  assertEquals(instance?.row1_claim, 3_000);
+  assertStringIncludes(
+    (instance?.reduction_statements as string[])[0],
+    "section 170(e)(1)(B)(i) reduction",
+  );
+  assertEquals(scheduleAPdf.includeWhen?.(pending.schedule_a, pending), true);
+  assertThrows(
+    () =>
+      scheduleAPdf.includeWhen?.(pending.schedule_a, {
+        ...pending,
+        f8283: undefined,
+      }),
+    Error,
+    "needs its linked Form 8283 source",
+  );
+  const changedSchedule = {
+    ...pending.schedule_a,
+    noncash_contribution_items: pending.schedule_a.noncash_contribution_items
+      .map((item) => ({
+        ...item,
+        unrelated_use_capital_gain_reduction_confirmed: undefined,
+      })),
+  };
+  assertThrows(
+    () =>
+      scheduleAPdf.includeWhen?.(changedSchedule, {
+        ...pending,
+        schedule_a: changedSchedule,
+      }),
+    Error,
+    "differs from Schedule A's gift inventory",
   );
 });
 

@@ -33,6 +33,7 @@ const noncashContributionItemSchema = z.object({
   original_fmv: z.number().nonnegative().optional(),
   adjusted_basis: z.number().nonnegative().optional(),
   capital_gain_reduction_election_confirmed: z.literal(true).optional(),
+  unrelated_use_capital_gain_reduction_confirmed: z.literal(true).optional(),
 });
 const capitalGainCarryoverSchema = z.object({
   contribution_id: z.string().trim().min(1),
@@ -100,10 +101,26 @@ export const inputSchema = z.object({
   const gifts = data.noncash_contribution_items ?? [];
   const election = data.capital_gain_50_percent_election_confirmed === true ||
     gifts.some((item) =>
-      item.capital_gain_reduction_election_confirmed === true ||
-      (item.is_capital_gain_property === true &&
-        item.category === "noncash_50")
+      item.capital_gain_reduction_election_confirmed === true
     );
+  for (const [index, item] of gifts.entries()) {
+    const noAppreciation = item.original_fmv !== undefined &&
+      item.original_fmv === item.adjusted_basis &&
+      item.amount === item.adjusted_basis;
+    if (
+      item.is_capital_gain_property === true &&
+      item.category === "noncash_50" && !noAppreciation &&
+      item.capital_gain_reduction_election_confirmed !== true &&
+      item.unrelated_use_capital_gain_reduction_confirmed !== true
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["noncash_contribution_items", index],
+        message:
+          "Appreciated capital-gain property in the 50% category needs an elected or unrelated-use basis reduction",
+      });
+    }
+  }
   if (!election && (data.capital_gain_property_carryovers?.length ?? 0) > 0) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -170,6 +187,7 @@ export const inputSchema = z.object({
           item.amount === item.adjusted_basis;
         if (
           (item.capital_gain_reduction_election_confirmed !== true &&
+            item.unrelated_use_capital_gain_reduction_confirmed !== true &&
             !noAppreciation) ||
           item.category !== "noncash_50" ||
           item.original_fmv === undefined ||
@@ -181,7 +199,7 @@ export const inputSchema = z.object({
             code: z.ZodIssueCode.custom,
             path: ["noncash_contribution_items", index],
             message:
-              "Every current capital-gain gift to a 50%-limit organization must use reduced basis under the return-wide election",
+              "Every current capital-gain gift to a 50%-limit organization must use its reduced basis",
           });
         }
       }
@@ -451,9 +469,7 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
     const election =
       input.capital_gain_50_percent_election_confirmed === true ||
       (input.noncash_contribution_items ?? []).some((item) =>
-        item.capital_gain_reduction_election_confirmed === true ||
-        (item.is_capital_gain_property === true &&
-          item.category === "noncash_50")
+        item.capital_gain_reduction_election_confirmed === true
       );
     const electedCarryovers = election
       ? computeElectedCapitalGainCarryovers(

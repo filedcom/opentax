@@ -141,6 +141,18 @@ function buildIRS1040ScheduleA(
   const sourceScheduleA = context?.pending?.schedule_a as
     | Record<string, unknown>
     | undefined;
+  const noncashItems = sourceScheduleA?.noncash_contribution_items;
+  const unrelatedUseGift = Array.isArray(noncashItems) &&
+    noncashItems.some((item) =>
+      item !== null && typeof item === "object" &&
+      (item as Record<string, unknown>)
+          .unrelated_use_capital_gain_reduction_confirmed === true
+    );
+  if (unrelatedUseGift && context?.pending?.f8283 === undefined) {
+    throw new Error(
+      "Schedule A unrelated-use capital-gain reduction needs its linked Form 8283 source",
+    );
+  }
   const hasPriorCapitalGainProperty = [
     fields.capital_gain_property_carryovers,
     sourceScheduleA?.capital_gain_property_carryovers,
@@ -163,7 +175,10 @@ function buildIRS1040ScheduleA(
     if (
       isSingleSectionAVehicleSale(form) ||
       hasSectionAShortTermReduction(form) ||
-      isSingleSectionANeedyVehicleUnreduced(form)
+      isSingleSectionANeedyVehicleUnreduced(form) ||
+      (form.section_a_items ?? []).some((item) =>
+        item.unrelated_use_capital_gain_reduction !== undefined
+      )
     ) {
       assertOrdinarySectionAReconciled(context, fields);
     }
