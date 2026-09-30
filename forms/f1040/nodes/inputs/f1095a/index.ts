@@ -167,6 +167,31 @@ export const itemSchema = z.object({
           issuer_confirmation_reference: z.string().trim().min(1),
           issuer_confirmation_sha256: z.string().regex(/^[a-f0-9]{64}$/),
         }).strict(),
+        z.object({
+          status: z.literal("emergency_order_partial"),
+          amount: z.number().positive(),
+          paid_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+          reference: z.string().trim().min(1),
+          record_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+          order_state: z.string().regex(/^[A-Z]{2}$/),
+          emergency_state: z.string().regex(/^[A-Z]{2}$/),
+          emergency_declaration_reference: z.string().trim().min(1),
+          emergency_declaration_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+          emergency_declared_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+          emergency_expires_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+          order_identifier: z.string().trim().min(1),
+          order_issuing_authority: z.literal("state_insurance_department"),
+          order_issued_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+          order_effective_start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+          order_effective_end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+          order_prohibits_termination: z.literal(true),
+          order_protected_month: z.number().int().min(1).max(12),
+          order_reference: z.string().trim().min(1),
+          order_record_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+          issuer_coverage_provided: z.literal(true),
+          issuer_confirmation_reference: z.string().trim().min(1),
+          issuer_confirmation_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+        }).strict(),
       ]),
     }).strict(),
   ).min(1).max(12).optional(),
@@ -339,6 +364,12 @@ function hasNonZero(arr: number[]): boolean {
   return arr.some((v) => v > 0);
 }
 
+function validIsoDate(value: string): boolean {
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(date.getTime()) &&
+    date.toISOString().slice(0, 10) === value;
+}
+
 class F1095ANode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f1095a";
   readonly inputSchema = inputSchema;
@@ -355,7 +386,7 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
     if (
       f1095as.some((item) =>
         item.no_aptc_monthly_evidence?.some((evidence) =>
-          evidence.premium_payment.status === "protected_partial"
+          evidence.premium_payment.status !== "paid_in_full"
         )
       ) &&
       (f1095as.length !== 1 ||
@@ -553,12 +584,31 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
       let hasProtectedPartial = false;
       for (const proof of item.no_aptc_monthly_evidence ?? []) {
         const payment = proof.premium_payment;
-        if (payment.status !== "protected_partial") continue;
+        if (payment.status === "paid_in_full") continue;
         const reportedPremium = item.monthly_premiums[proof.month - 1];
+        const monthStart = `2025-${String(proof.month).padStart(2, "0")}-01`;
+        const monthEnd = new Date(Date.UTC(2025, proof.month, 0))
+          .toISOString().slice(0, 10);
         if (
           reportedPremium <= 0 || payment.amount >= reportedPremium ||
-          payment.amount < payment.minimum_payment_to_avoid_termination ||
-          payment.paid_on > "2026-04-15"
+          !validIsoDate(payment.paid_on) ||
+          payment.paid_on > "2026-04-15" ||
+          (payment.status === "protected_partial" &&
+            payment.amount < payment.minimum_payment_to_avoid_termination) ||
+          (payment.status === "emergency_order_partial" &&
+            (payment.order_state !== item.coverage_state ||
+              payment.emergency_state !== item.coverage_state ||
+              payment.order_protected_month !== proof.month ||
+              !validIsoDate(payment.order_effective_start) ||
+              !validIsoDate(payment.order_effective_end) ||
+              !validIsoDate(payment.emergency_declared_on) ||
+              !validIsoDate(payment.emergency_expires_on) ||
+              !validIsoDate(payment.order_issued_on) ||
+              payment.emergency_declared_on > payment.order_issued_on ||
+              payment.emergency_expires_on < payment.order_issued_on ||
+              payment.order_effective_start > payment.order_effective_end ||
+              payment.order_effective_start > monthEnd ||
+              payment.order_effective_end < monthStart))
         ) {
           throw new Error(
             `Form 1095-A protected partial payment for month ${proof.month} does not establish a covered paid premium`,

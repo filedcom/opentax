@@ -65,10 +65,11 @@ The one-policy monthly path also reduces a month with an issuer-confirmed
 protected partial payment by the unpaid premium at the unextended filing due
 date. In a full return, an $800 reported January premium with $500 paid above a
 $450 documented issuer threshold produces $500 on Form 8962 column (a) and
-$8,250 total credit. The original $800 remains in the Form 1095-A source; MeF
-recomputes the claimed premium and the full return passes local TY2025 v5.4
-XSD. Other 2025 protection scenarios and source-record authentication remain
-open. See the [no-APTC gap](ty2025-form8962-no-aptc-below400.md).
+$8,250 total credit. A separate Texas January emergency-order case with $400
+paid yields $8,150 annually. The original $800 remains in the Form 1095-A
+source; MeF recomputes each claimed premium, and both full returns pass local
+TY2025 v5.4 XSD. Source-record authentication remains open. See the
+[no-APTC gap](ty2025-form8962-no-aptc-below400.md).
 
 The [2025 Form 8962 instructions](https://www.irs.gov/instructions/i8962)
 require Form 8962 when the taxpayer claims a PTC even if no APTC was paid. They
@@ -83,8 +84,9 @@ one-policy monthly filing route now also requires one `no_aptc_monthly_evidence`
 record per covered month: the Marketplace determination amount, method, date,
 reference, and source-record SHA-256, plus a dated payment record with amount,
 reference, and source-record SHA-256 for each covered month. The payment is
-explicitly `paid_in_full` or `protected_partial`; the latter also needs issuer
-threshold and continued-coverage confirmation. The
+explicitly `paid_in_full`, `protected_partial` under an issuer threshold, or
+`emergency_order_partial` under a state order. The protected records also need
+issuer coverage confirmation and the applicable threshold or order facts. The
 policy must cover only the identified single filer in one state, have positive
 reported column A in each covered month, zero APTC, no shared allocation or
 unreported coverage change, and an applicable SLCSP correction for every covered
@@ -104,8 +106,8 @@ References and hashes identify the separate source records for preparer review.
 The application has not authenticated the Marketplace or payment documents or
 compared hashes to their actual bytes; that external source review remains
 required. No-APTC multiple policies, shared policies, changes in coverage family
-or state, protected partial payments outside the documented issuer threshold,
-nonstandard due dates,
+or state, protected partial payments outside the documented issuer-threshold
+and state emergency-order routes, nonstandard due dates,
 below-400%-FPL returns, and MEC/coverage eligibility proof remain outside this
 bounded route. The entered evidence is not submitted as an invented IRS
 attachment.

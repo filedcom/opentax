@@ -38,7 +38,8 @@ line choice, and the premium-payment timing rule.
   APTC was paid.
 - Missing or inconsistent Marketplace SLCSP determinations, missing monthly
   payment evidence, protected partial payments outside the documented issuer
-  threshold route, and payments made after the unextended due date.
+  threshold or state emergency-order routes, and payments made after the
+  unextended due date.
 
 The focused Form 8962 source, calculation, MeF, and PDF cases pass: 148/148
 across the relevant files. A separate full-return case passes from a $30,120
@@ -77,8 +78,8 @@ allow a credit for a month with an unpaid premium portion when a qualifying
 payment threshold is met, the issuer provides coverage, and the amount paid is
 enough to prevent termination. They require the premium used for the credit to
 exclude the amount unpaid at the unextended filing due date. The single-policy,
-zero-APTC monthly source now records each payment as either `paid_in_full` or
-`protected_partial`. A protected record needs the issuer-confirmed threshold,
+zero-APTC monthly source records full payment, an issuer-confirmed threshold,
+or a state emergency order. A threshold record needs the issuer-confirmed minimum,
 continued coverage, payment date and amount, and separate references and
 SHA-256 identifiers for the payment and issuer confirmation. The source graph
 retains the original Form 1095-A premium while sending only the amount paid to
@@ -89,6 +90,32 @@ paid by April 15 against a $450 issuer-confirmed minimum. January's Form 8962
 premium and credit are $500. The annual credit falls from $8,400 to $8,250,
 and reconciles through Schedule 3 and Form 1040. The full return passes local
 TY2025 v5.4 XSD and generates a PDF packet. A $600 threshold with only $500
-paid rejects. The first grace month and emergency-order protection scenarios,
-external issuer/payment-record authentication, PDF visual review, full bulk
-regression, IRS business rules, and ATS remain open.
+paid rejects. External issuer/payment-record authentication, PDF visual review,
+full bulk regression, IRS business rules, and ATS remain open.
+
+## State emergency-order protection
+
+The same [2025 instructions](https://www.irs.gov/instructions/i8962) allow a
+partly paid month when a state insurance department's order during a declared
+emergency prohibits termination for that month. The new
+`emergency_order_partial` payment record identifies the order's state,
+protected month, declaration and order dates, order number, coverage
+confirmation, and source references and SHA-256 identifiers. Source and native
+filing checks require the order state to match the policy state, issuance during
+the declared emergency, an effective period overlapping the protected month,
+and payment by the unextended return due date. The claim premium is the amount
+paid, leaving the reported Form 1095-A premium intact.
+
+In the full-return case, a Texas January order and issuer confirmation protect
+$400 paid against an $800 reported premium. January's Form 8962 premium and
+credit are $400, and the annual credit is $8,150 on Schedule 3 and Form 1040.
+The full return passes local TY2025 v5.4 XSD and generates a PDF packet.
+Wrong state, month, order timing, or emergency-declaration timing rejects at
+native filing. The order, declaration, issuer, and payment bytes remain
+unauthenticated; PDF visual review, the full regression, IRS business rules,
+and ATS remain open.
+
+The first-month grace period in
+[45 CFR 156.270(d)](https://www.govinfo.gov/content/pkg/CFR-2025-title45-vol2/pdf/CFR-2025-title45-vol2-part156.pdf)
+applies to enrollees receiving APTC, so it belongs to the separate
+advance-payment Form 8962 route.

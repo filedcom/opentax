@@ -214,6 +214,108 @@ Deno.test("protected partial premium reduces one no-APTC month and full-return c
   );
 });
 
+Deno.test("state emergency order protects a partially paid no-APTC month", async () => {
+  const emergencyPayment = {
+    status: "emergency_order_partial" as const,
+    amount: 400,
+    paid_on: "2026-04-01",
+    reference: "January premium payment ledger",
+    record_sha256: "e".repeat(64),
+    order_state: "TX",
+    emergency_state: "TX",
+    emergency_declaration_reference: "Texas emergency declaration",
+    emergency_declaration_sha256: "b".repeat(64),
+    emergency_declared_on: "2024-12-20",
+    emergency_expires_on: "2025-02-01",
+    order_identifier: "TX-2025-01",
+    order_issuing_authority: "state_insurance_department" as const,
+    order_issued_on: "2025-01-10",
+    order_effective_start: "2025-01-10",
+    order_effective_end: "2025-01-31",
+    order_prohibits_termination: true as const,
+    order_protected_month: 1,
+    order_reference: "Texas insurance order",
+    order_record_sha256: "f".repeat(64),
+    issuer_coverage_provided: true as const,
+    issuer_confirmation_reference: "Issuer January coverage record",
+    issuer_confirmation_sha256: "a".repeat(64),
+  };
+  const emergencyPolicy = {
+    ...policy,
+    no_aptc_monthly_evidence: policy.no_aptc_monthly_evidence.map((
+      item,
+      index,
+    ) => index === 0 ? { ...item, premium_payment: emergencyPayment } : item),
+  };
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general,
+    w2: [w2(30_120, 3_000)],
+    f1095a: [emergencyPolicy],
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const creditRows = result.pending.form8962?.monthly_ptc_rows as Array<{
+    premium: number;
+    allowed_credit: number;
+  }>;
+  assertEquals(creditRows[0].premium, 400);
+  assertEquals(creditRows[0].allowed_credit, 400);
+  assertEquals(result.pending.form8962?.total_premium_tax_credit, 8_150);
+  assertEquals(result.pending.schedule3?.line9_premium_tax_credit, 8_150);
+  assertEquals(result.pending.f1040?.line31_additional_payments, 8_150);
+  const filer = extractFilerIdentity(result.pending.f1040);
+  const xml = buildMefXml(result.pending, filer);
+  assertStringIncludes(xml, "<MonthlyPremiumAmt>400</MonthlyPremiumAmt>");
+  assertStringIncludes(
+    xml,
+    "<TotalPremiumTaxCreditAmt>8150</TotalPremiumTaxCreditAmt>",
+  );
+  await validateXml(xml);
+  const fields =
+    form8962Pdf.projectFields?.(result.pending.form8962!, result.pending) ?? {};
+  assertEquals(fields.pdf_month_1_premium, "400");
+  const pdf = await buildPdfBytes(result.pending, filer);
+  assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 3, true);
+  for (
+    const changedPayment of [
+      { ...emergencyPayment, order_state: "CA" },
+      { ...emergencyPayment, emergency_state: "CA" },
+      { ...emergencyPayment, order_protected_month: 2 },
+      { ...emergencyPayment, order_issued_on: "2025-02-02" },
+      {
+        ...emergencyPayment,
+        order_effective_start: "2025-01-30",
+        order_effective_end: "2025-01-20",
+      },
+      {
+        ...emergencyPayment,
+        order_effective_start: "2025-02-01",
+        order_effective_end: "2025-02-28",
+      },
+    ]
+  ) {
+    assertThrows(
+      () =>
+        form8962Mef.build(result.pending.form8962!, {
+          filer,
+          pending: {
+            ...result.pending,
+            f1095a: {
+              f1095as: [{
+                ...emergencyPolicy,
+                no_aptc_monthly_evidence: [{
+                  ...emergencyPolicy.no_aptc_monthly_evidence[0],
+                  premium_payment: changedPayment,
+                }, ...emergencyPolicy.no_aptc_monthly_evidence.slice(1)],
+              }],
+            },
+          },
+        }),
+      Error,
+      "month 1 lacks matching Marketplace SLCSP",
+    );
+  }
+});
+
 Deno.test("lawfully present filer below 100% FPL claims no-APTC monthly credit", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: lawfulGeneral,

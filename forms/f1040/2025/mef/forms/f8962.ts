@@ -808,6 +808,8 @@ function paidNoAptcPremium(
   payment: NoAptcPayment,
   reportedPremium: number,
   allowProtectedPartial = false,
+  month?: number,
+  coverageState?: string,
 ): number | null {
   if (
     !validIsoDate(payment.paid_on) ||
@@ -816,9 +818,30 @@ function paidNoAptcPremium(
   if (payment.status === "paid_in_full") {
     return payment.amount >= reportedPremium ? reportedPremium : null;
   }
+  if (!allowProtectedPartial || payment.amount >= reportedPremium) return null;
+  if (payment.status === "protected_partial") {
+    return payment.amount >= payment.minimum_payment_to_avoid_termination
+      ? payment.amount
+      : null;
+  }
+  if (month === undefined || coverageState === undefined) return null;
+  const monthStart = `2025-${String(month).padStart(2, "0")}-01`;
+  const monthEnd = new Date(Date.UTC(2025, month, 0))
+    .toISOString().slice(0, 10);
   if (
-    !allowProtectedPartial || payment.amount >= reportedPremium ||
-    payment.amount < payment.minimum_payment_to_avoid_termination
+    payment.order_state !== coverageState ||
+    payment.emergency_state !== coverageState ||
+    payment.order_protected_month !== month ||
+    !validIsoDate(payment.emergency_declared_on) ||
+    !validIsoDate(payment.emergency_expires_on) ||
+    !validIsoDate(payment.order_issued_on) ||
+    !validIsoDate(payment.order_effective_start) ||
+    !validIsoDate(payment.order_effective_end) ||
+    payment.emergency_declared_on > payment.order_issued_on ||
+    payment.emergency_expires_on < payment.order_issued_on ||
+    payment.order_effective_start > payment.order_effective_end ||
+    payment.order_effective_start > monthEnd ||
+    payment.order_effective_end < monthStart
   ) return null;
   return payment.amount;
 }
@@ -982,7 +1005,13 @@ function reconcileNoAptcPolicyMonths(
       return total;
     }
     const paidPremium = proof
-      ? paidNoAptcPremium(proof.premium_payment, reportedPremium, true)
+      ? paidNoAptcPremium(
+        proof.premium_payment,
+        reportedPremium,
+        true,
+        month,
+        policy.coverage_state,
+      )
       : null;
     if (
       !correction || !proof || correction.basis !== "no_aptc" ||
