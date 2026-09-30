@@ -31,6 +31,15 @@ for (const fixture of pdfReviewFixtures) {
       });
       assertEquals(result.diagnostics, []);
       const xml = buildMefXml(buildPending(result.pending), fixture.filer);
+      if (fixture.id === "single-8862-ctc-reinstatement") {
+        const dependent = (result.pending.f1040.dependent_details as
+          Array<{ first_name: string; credit_category: string }>)[0];
+        assertEquals(dependent.first_name, "Jamie");
+        assertEquals(dependent.credit_category, "ctc");
+        assertEquals(result.pending.f1040.line19_child_tax_credit, 2_200);
+        assertStringIncludes(xml, "<IRS8862 ");
+        assertStringIncludes(xml, "<IRS1040Schedule8812 ");
+      }
       if (fixture.id === "single-1098-prior-year-recovery") {
         assertEquals(
           result.pending.schedule_a.line_8a_mortgage_interest_1098,

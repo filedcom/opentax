@@ -417,3 +417,24 @@ SHA-256 is
 `a28c5e014ec15ca9b8f2c4d56e22abfe108baccf195de293e8fbd3b4224b6174`.
 Payer-issued bytes, the underlying Pub. 525 tax-benefit calculation, IRS
 business rules, and ATS acceptance remain open.
+
+The `single-8862-ctc-reinstatement` source was run through the real graph,
+native bundle builder, and PDF builder. The first seven-page `v59` packet
+exposed a blank Form 1040 dependent row even though Form 8862 Part III named
+the child. Form 1040's four dependent columns now project the finalized names,
+TINs, relationships, residence marks, student/disability marks, and credit
+categories; more than four dependents reject until continuation support is
+built. The corrected `v62` packet is retained at
+`.state/research/ty2025-filled-pdf-review/2026-09-30-v62/` and passes local
+TY2025 v5.4 full-return XSD. All seven pages were reviewed: Form 1040 page 1
+prints Jamie Example, SSN 222334444, daughter, home and U.S. residence, and
+only the CTC box. Page 2 prints $2,200 on line 19 and a $5,145 refund.
+Schedule 8812 pages 1–2 print one qualifying child and $2,200 on line 14;
+Form 8862 pages 1–3 check the CTC/ODC claim and name Jamie with positive
+Part III eligibility answers. Pages 2–7 are pixel-identical to the inspected
+`v59` pages after the dependent-row correction. The native Form 8862 CTC name
+now joins a finalized Form 1040 dependent credit row. The seven-page `v62`
+PDF SHA-256 is
+`dca35b28abe71b627131c5350ad2eebabcad7d452fb154d05241f6a7650ee308`.
+Prior IRS-disallowance notice evidence, other reinstatement variants,
+dependent continuation, IRS business rules, and ATS acceptance remain open.

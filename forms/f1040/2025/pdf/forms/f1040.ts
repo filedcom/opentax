@@ -5,6 +5,10 @@ import { appendIraDistributionStatement } from "./ira_distribution_statement.ts"
 import { schedule1aPdf } from "./schedule1a.ts";
 import { inputSchema as w2gInputSchema } from "../../../nodes/inputs/w2g/index.ts";
 import {
+  DependentCreditCategory,
+  dependentFilingSchema,
+} from "../../../nodes/inputs/general/index.ts";
+import {
   assertIraRolloverEvidence,
   inputSchema as f1099rInputSchema,
   isIraRollover,
@@ -90,6 +94,55 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     pdfField: "topmostSubform[0].Page1[0].c1_10[1]",
     whenValue: "false",
   },
+
+  // Four dependent columns, each with first/last name, TIN, relationship,
+  // residence answers, and one credit-category mark.
+  ...Array.from({ length: 4 }, (_, i): PdfFieldEntry[] => {
+    const column = i + 1;
+    const table = "topmostSubform[0].Page1[0].Table_Dependents[0]";
+    return [
+      {
+        kind: "text",
+        domainKey: `dependent_${i}_first_name`,
+        pdfField: `${table}.Row1[0].f1_${31 + i}[0]`,
+      },
+      {
+        kind: "text",
+        domainKey: `dependent_${i}_last_name`,
+        pdfField: `${table}.Row2[0].f1_${35 + i}[0]`,
+      },
+      {
+        kind: "text",
+        domainKey: `dependent_${i}_tin`,
+        pdfField: `${table}.Row3[0].f1_${39 + i}[0]`,
+      },
+      {
+        kind: "text",
+        domainKey: `dependent_${i}_relationship`,
+        pdfField: `${table}.Row4[0].f1_${43 + i}[0]`,
+      },
+      ...["home", "home_us"].map((fact, j): PdfFieldEntry => ({
+        kind: "checkbox",
+        domainKey: `dependent_${i}_${fact}`,
+        pdfField: `${table}.Row5[0].Dependent${column}[0].c1_${
+          12 + 2 * i + j
+        }[0]`,
+      })),
+      ...["full_time_student", "disabled"].map((fact, j): PdfFieldEntry => ({
+        kind: "checkbox",
+        domainKey: `dependent_${i}_${fact}`,
+        pdfField: `${table}.Row6[0].Dependent${column}[0].c1_${
+          20 + 2 * i + j
+        }[0]`,
+      })),
+      ...["ctc", "odc"].map((category, j): PdfFieldEntry => ({
+        kind: "checkboxWhen",
+        domainKey: `dependent_${i}_credit_category`,
+        pdfField: `${table}.Row7[0].Dependent${column}[0].c1_${28 + i}[${j}]`,
+        whenValue: category,
+      })),
+    ];
+  }).flat(),
 
   // ── Page 1: Wages (Lines 1a–1z) ───────────────────────────────────────────
   {
@@ -483,6 +536,43 @@ export const irs1040Pdf: PdfFormDescriptor = {
   // season; this module is the 2025 form and must always fetch the 2025 PDF.
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040--2025.pdf",
   projectFields(fields, allPending) {
+    const dependents = dependentFilingSchema.array().parse(
+      fields.dependent_details ?? [],
+    );
+    if (
+      fields.dependent_count !== undefined &&
+      fields.dependent_count !== dependents.length
+    ) {
+      throw new Error("Form 1040 PDF dependent count differs from filed rows");
+    }
+    if (dependents.length > 4) {
+      throw new Error(
+        "Form 1040 PDF needs a continuation for more than four dependents",
+      );
+    }
+    const printedDependents: Record<string, unknown> = {};
+    dependents.forEach((dep, i) => {
+      if (dep.lived_in_us_over_half_year === undefined) {
+        throw new Error(
+          "Form 1040 PDF dependent needs a reviewed U.S.-residence answer",
+        );
+      }
+      printedDependents[`dependent_${i}_first_name`] = dep.first_name;
+      printedDependents[`dependent_${i}_last_name`] = dep.last_name;
+      printedDependents[`dependent_${i}_tin`] =
+        (dep.ssn ?? dep.itin ?? dep.atin)?.replaceAll("-", "");
+      printedDependents[`dependent_${i}_relationship`] = dep.relationship;
+      printedDependents[`dependent_${i}_home`] = dep.months_in_home > 6;
+      printedDependents[`dependent_${i}_home_us`] =
+        dep.lived_in_us_over_half_year;
+      printedDependents[`dependent_${i}_full_time_student`] =
+        dep.full_time_student === true;
+      printedDependents[`dependent_${i}_disabled`] = dep.disabled === true;
+      printedDependents[`dependent_${i}_credit_category`] =
+        dep.credit_category === DependentCreditCategory.None
+          ? undefined
+          : dep.credit_category;
+    });
     const iraRollover = fields.line4c_ira_rollover === true;
     const rollover = fields.line5c_pension_rollover === true;
     if (
@@ -548,6 +638,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
     const child = form8814ParentPrintAmounts(allPending);
     return {
       ...fields,
+      ...printedDependents,
       ...(iraRollover && fields.line4b_ira_taxable === 0
         ? { line4b_ira_taxable: "0" }
         : {}),

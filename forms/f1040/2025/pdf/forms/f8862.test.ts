@@ -57,7 +57,15 @@ Deno.test("Form 8862 PDF projects bounded EITC and CTC claims", () => {
     }],
   };
   const instances = form8862Pdf.instances?.(source, filer, {
-    f1040: { line27_eitc: 500, line19_child_tax_credit: 2200 },
+    f1040: {
+      line27_eitc: 500,
+      line19_child_tax_credit: 2200,
+      dependent_details: [{
+        first_name: "Alice",
+        last_name: "Doe",
+        credit_category: "ctc",
+      }],
+    },
   }) ?? [];
   assertEquals(instances.length, 1);
   assertEquals(instances[0].tax_year, 2025);
@@ -83,7 +91,14 @@ Deno.test("Form 8862 PDF rejects unclaimed credits and overflow rows", () => {
   assertThrows(
     () =>
       form8862Pdf.instances?.(ctc, filer, {
-        f1040: { line19_child_tax_credit: 500 },
+        f1040: {
+          line19_child_tax_credit: 500,
+          dependent_details: ctc.ctc_children.map((child) => ({
+            first_name: child.first_name,
+            last_name: child.last_name,
+            credit_category: "ctc",
+          })),
+        },
       }),
     Error,
     "additional statement",

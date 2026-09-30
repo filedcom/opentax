@@ -20,6 +20,53 @@ Deno.test("irs1040Pdf: Form 1040 projects source-reconciled fields", () => {
   assertEquals(typeof irs1040Pdf.projectFields, "function");
 });
 
+Deno.test("Form 1040 PDF prints filed dependent identity and the correct checkboxes", () => {
+  const child = {
+    first_name: "Jamie",
+    last_name: "Example",
+    ssn: "222-33-4444",
+    dob: "2015-06-15",
+    relationship: "daughter",
+    months_in_home: 12,
+    lived_in_us_over_half_year: true,
+    credit_category: "ctc",
+  };
+  const projected = irs1040Pdf.projectFields?.({
+    dependent_count: 1,
+    dependent_details: [child],
+  }, {});
+  assertEquals(projected?.dependent_0_first_name, "Jamie");
+  assertEquals(projected?.dependent_0_last_name, "Example");
+  assertEquals(projected?.dependent_0_tin, "222334444");
+  assertEquals(projected?.dependent_0_relationship, "daughter");
+  assertEquals(projected?.dependent_0_home, true);
+  assertEquals(projected?.dependent_0_home_us, true);
+  assertEquals(projected?.dependent_0_full_time_student, false);
+  assertEquals(projected?.dependent_0_disabled, false);
+  assertEquals(projected?.dependent_0_credit_category, "ctc");
+  assertThrows(
+    () =>
+      irs1040Pdf.projectFields?.({
+        dependent_count: 5,
+        dependent_details: Array(5).fill(child),
+      }, {}),
+    Error,
+    "needs a continuation",
+  );
+  assertThrows(
+    () =>
+      irs1040Pdf.projectFields?.({
+        dependent_count: 1,
+        dependent_details: [{
+          ...child,
+          lived_in_us_over_half_year: undefined,
+        }],
+      }, {}),
+    Error,
+    "U.S.-residence answer",
+  );
+});
+
 // ---------------------------------------------------------------------------
 // fields array structure
 // ---------------------------------------------------------------------------

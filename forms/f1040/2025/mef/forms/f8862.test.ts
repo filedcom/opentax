@@ -63,6 +63,11 @@ const finalizedContext = {
       line27_eitc: 500,
       line19_child_tax_credit: 2_200,
       line29_refundable_aoc: 1_000,
+      dependent_details: source.dependents.slice(0, 2).map((child) => ({
+        first_name: child.firstName,
+        last_name: child.lastName,
+        credit_category: "ctc",
+      })),
     },
     f8863: {
       f8863s: [{
@@ -156,6 +161,27 @@ Deno.test("Form 8862 serializes three credit sections with sourced names and ans
   assertEquals((xml.match(/<AOTCStudentInformationGrp>/g) ?? []).length, 1);
   assertStringIncludes(xml, "<LiveInUSDayCnt>365</LiveInUSDayCnt>");
   assertStringIncludes(xml, "<EligibleStudentInd>true</EligibleStudentInd>");
+});
+
+Deno.test("Form 8862 CTC names must match filed dependent credit rows", () => {
+  assertThrows(
+    () =>
+      nativeForm8862.build(scenarioInput, {
+        pending: {
+          ...finalizedContext.pending,
+          f1040: {
+            ...finalizedContext.pending.f1040,
+            dependent_details: [{
+              first_name: "Wrong",
+              last_name: "Child",
+              credit_category: "ctc",
+            }],
+          },
+        },
+      }),
+    Error,
+    "must match filed Form 1040 dependent credit rows",
+  );
 });
 
 Deno.test("Form 8862 supports EITC without qualifying children", () => {

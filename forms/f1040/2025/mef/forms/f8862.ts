@@ -176,6 +176,47 @@ function validateFinalizedCreditClaims(
       "Form 8862 CTC/ODC claim needs a finalized Form 1040 line 19 or 28 credit",
     );
   }
+  if (fields.claim_ctc) {
+    const dependentRows = form1040.dependent_details;
+    if (!Array.isArray(dependentRows)) {
+      throw new Error(
+        "Form 8862 CTC and ODC names need finalized Form 1040 dependent rows",
+      );
+    }
+    const filed = new Map<string, string>();
+    for (const row of dependentRows) {
+      if (row === null || typeof row !== "object") continue;
+      const dep = row as Record<string, unknown>;
+      if (
+        typeof dep.first_name !== "string" ||
+        typeof dep.last_name !== "string" ||
+        typeof dep.credit_category !== "string"
+      ) continue;
+      const name = `${dep.first_name} ${dep.last_name}`.trim().toUpperCase();
+      if (filed.has(name)) {
+        throw new Error("Form 8862 dependent names are ambiguous on Form 1040");
+      }
+      filed.set(name, dep.credit_category);
+    }
+    const claimed = new Set<string>();
+    for (
+      const [people, category] of [
+        [fields.ctc_children ?? [], "ctc"],
+        [fields.other_dependents ?? [], "odc"],
+      ] as const
+    ) {
+      for (const person of people) {
+        const name = `${person.first_name} ${person.last_name}`.trim()
+          .toUpperCase();
+        if (claimed.has(name) || filed.get(name) !== category) {
+          throw new Error(
+            "Form 8862 CTC and ODC names must match filed Form 1040 dependent credit rows",
+          );
+        }
+        claimed.add(name);
+      }
+    }
+  }
   if (fields.claim_aotc) {
     const form8863 = form8863InputSchema.safeParse(pending?.f8863);
     if (!form8863.success) {
