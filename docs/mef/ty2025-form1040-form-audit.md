@@ -115,8 +115,11 @@ the native linked line 8z statement, and four visually inspected PDF pages in
 `v69`; local TY2025 v5.4 full-return XSD passes. Untyped box 11 rejects, and
 code E fully taxable cancellation of debt now has a separate reviewed source
 route. Two debts reconcile to Schedule 1 line 8c, AGI, native full-return XSD,
-and four visually inspected `v70` PDF pages. Section 108 exclusions, Form 982,
-and Form 1099-C debt matching remain unresolved. See the [line 8z source
+and four visually inspected `v70` PDF pages. Code K nonbusiness winnings with
+zero partnership losses now combine with distinct W-2G winnings on Schedule 1
+line 8b; the five-page `v71` packet and local full-return XSD pass. Section 108
+exclusions, Form 982, Form 1099-C debt matching, partnership gambling losses,
+and gambling businesses remain unresolved. See the [line 8z source
 audit](ty2025-schedule1-line8z-source-gap.md).
 
 #### Sparse main-return and schedule rows: static source boundary

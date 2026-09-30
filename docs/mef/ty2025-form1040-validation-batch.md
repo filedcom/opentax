@@ -263,7 +263,7 @@ scenario packet PDF as if it were a generated return.
 The workspace has blank IRS PDF templates in `.state/field-dumps/cache` and
 source ATS scenario PDFs in `.state/research/docs/ats-ty2025`. These are not
 filled-output fixtures. `forms/f1040/2025/pdf/review-fixtures.ts` now holds
-fifty-four synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts`
+fifty-five synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts`
 can run them through the real return graph and PDF builder. Earlier on
 2026-09-29, the first sixteen
 generated 94 pages successfully under
@@ -294,6 +294,7 @@ coverage of all registered PDF descriptors:
 | `single-high-wage-no-niit`               | Form 8960 filed above the MAGI threshold with zero NIIT; Form 8959 and Schedule 2 carry $180 Additional Medicare Tax |
 | `single-two-partnership-code-j-recoveries` | Two K-1 code J recoveries, separate native type rows, Schedule 1 line 8z and Form 1040 line 8/AGI                  |
 | `single-two-partnership-code-e-cod` | Two fully taxable K-1 code E debts, Schedule 1 line 8c and Form 1040 line 8/AGI; no Form 982 or Form 1099-C |
+| `single-partnership-code-k-and-w2g` | Two nonbusiness K-1 code K winnings and a distinct W-2G combine on Schedule 1 line 8b; W-2G withholding reaches Form 1040 |
 | `single-sourced-collectibles-gain`        | Form 8949 Part II box E and Schedule D lines 9/18 carry a sourced $3,000 collectible gain to Form 1040              |
 | `single-short-and-long-form8949-sales`   | Form 8949 boxes B/F, Schedule D lines 2/10 and short/long totals, and Form 1040 capital gain                        |
 | `single-direct-broker-basis-sales`        | Unadjusted basis-reported sales on Schedule D lines 1a/8a with no Form 8949 document or PDF page                    |

@@ -116,6 +116,53 @@ Deno.test("partnership K-1 box 11 code E keeps fully taxable COD sources", () =>
   );
 });
 
+Deno.test("partnership K-1 box 11 code K keeps reviewed gambling winnings sources", () => {
+  const item = (ein: string, winnings: number) =>
+    minimalItem({
+      partnership_ein: ein,
+      source_document_reference: `2025 K-1 ${ein}`,
+      box11_code_k_gambling: {
+        reported_winnings: winnings,
+        reported_losses: 0,
+        nonbusiness_gambling_confirmed: true,
+        no_overlap_with_w2g_confirmed: true,
+        statement_reference: `box 11 K statement ${ein}`,
+        recipient_tin: "111223333",
+        gambling_review_reference: `Gambling review ${ein}`,
+      },
+    });
+  const result = compute([item("123456789", 400), item("987654321", 600)]);
+  for (const node of ["schedule1", "agi_aggregator"]) {
+    const rows = findOutput(result, node)?.fields
+      .k1_partnership_box11_code_k_sources as Array<{ winnings: number }>;
+    assertEquals(rows.map((row) => row.winnings), [400, 600]);
+  }
+  assertThrows(
+    () => compute([item("123456789", 400), item("123456789", 400)]),
+    Error,
+    "Duplicate partnership K-1 box 11 code K source",
+  );
+  const invalid = item("123456789", 400) as Record<string, unknown>;
+  const review = invalid.box11_code_k_gambling as Record<string, unknown>;
+  for (
+    const change of [
+      { reported_losses: 100 },
+      { nonbusiness_gambling_confirmed: false },
+      { no_overlap_with_w2g_confirmed: false },
+    ]
+  ) {
+    assertEquals(
+      k1Partnership.inputSchema.safeParse({
+        k1_partnerships: [{
+          ...invalid,
+          box11_code_k_gambling: { ...review, ...change },
+        }],
+      }).success,
+      false,
+    );
+  }
+});
+
 Deno.test("partnership K-3 passive interest and line 12 reduction reconcile to K-1", () => {
   const k3 = {
     partnership_ein: "123456789",

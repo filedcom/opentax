@@ -32,6 +32,7 @@ import { agi_final } from "../agi_final/index.ts";
 import { schedule_j_calculation } from "../../forms/schedule_j/index.ts";
 import { box11CodeJSourceSchema } from "../../../inputs/k1_partnership/box11_code_j.ts";
 import { box11CodeESourceSchema } from "../../../inputs/k1_partnership/box11_code_e.ts";
+import { box11CodeKSourceSchema } from "../../../inputs/k1_partnership/box11_code_k.ts";
 
 // Fields that may arrive from multiple upstream nodes accumulate as arrays in the
 // executor pending dict. Declaring them accumulable prevents Zod parse failure.
@@ -168,6 +169,8 @@ export const inputSchema = z.object({
   k1_partnership_box11_code_j_sources: z.array(box11CodeJSourceSchema)
     .optional(),
   k1_partnership_box11_code_e_sources: z.array(box11CodeESourceSchema)
+    .optional(),
+  k1_partnership_box11_code_k_sources: z.array(box11CodeKSourceSchema)
     .optional(),
   line8z_form8814: z.number().nonnegative().optional(),
   line8z_hsa_excess_earnings: z.number().nonnegative().optional(),
@@ -317,6 +320,10 @@ function nonSsaIncomeBeforePal(input: AgiInput): number {
     (input.line6_schedule_f ?? 0) +
     (input.line7_unemployment ?? 0) +
     (input.line8b_gambling_winnings ?? 0) +
+    (input.k1_partnership_box11_code_k_sources ?? []).reduce(
+      (sum, row) => sum + row.winnings,
+      0,
+    ) +
     (input.line8c_cod_income ?? 0) +
     (input.k1_partnership_box11_code_e_sources ?? []).reduce(
       (sum, row) => sum + row.amount,
@@ -546,6 +553,10 @@ function scheduleOnePartI(input: AgiInput): number {
     (input.line6_schedule_f ?? 0) +
     (input.line7_unemployment ?? 0) +
     (input.line8b_gambling_winnings ?? 0) +
+    (input.k1_partnership_box11_code_k_sources ?? []).reduce(
+      (sum, row) => sum + row.winnings,
+      0,
+    ) +
     (input.line8c_cod_income ?? 0) +
     (input.k1_partnership_box11_code_e_sources ?? []).reduce(
       (sum, row) => sum + row.amount,

@@ -68,6 +68,19 @@ direct generally taxable code E debt cancellation to line 8c and describe
 possible exclusions. Excluded or partly taxable debt, Form 982, 1099-C matching,
 and authentic source/workpaper evidence remain open.
 
+Box 11 code K now has a bounded nonbusiness gambling-winnings route to
+Schedule 1 line 8b. Each partnership statement must identify a positive
+winnings amount, zero losses, the recipient, source K-1, and a gambling review;
+the review must confirm the partnership was not in the gambling business and
+the winnings do not overlap a W-2G. The K-1 rows sum with a separate W-2G
+amount in Schedule 1 and AGI. Native/PDF export rechecks the issued K-1 facts,
+recipient, W-2G amount, and filed line 8b. A synthetic $400/$600 K-1 plus
+$200 W-2G case passes local TY2025 v5.4 XSD, and all five `v71` PDF pages
+were inspected. The [2025 partner instructions](https://www.irs.gov/instructions/i1065sk1)
+direct nonbusiness winnings to line 8b and potentially deductible losses to
+Schedule A line 16. Partnership losses, gambling businesses, authenticated
+no-overlap evidence, and issued source bytes remain open.
+
 Other box 11 codes have distinct destinations and remain open, as do issued
 source bytes, prior-return authentication, IRS business rules, and ATS.
 

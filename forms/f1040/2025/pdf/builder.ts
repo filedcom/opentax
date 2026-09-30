@@ -17,6 +17,7 @@ import {
 import { assertScheduleDSalesMatchPrepared } from "../mef/forms/schedule_d.ts";
 import { assertBox11CodeJSources } from "../../nodes/inputs/k1_partnership/box11_code_j.ts";
 import { assertBox11CodeESources } from "../../nodes/inputs/k1_partnership/box11_code_e.ts";
+import { assertBox11CodeKSources } from "../../nodes/inputs/k1_partnership/box11_code_k.ts";
 
 async function fetchWithCache(
   url: string,
@@ -273,6 +274,7 @@ export async function buildPdfBytes(
     : [];
   assertBox11CodeJSources(normalized, k1Recipients);
   assertBox11CodeESources(normalized, k1Recipients);
+  assertBox11CodeKSources(normalized, k1Recipients);
   if (
     preparedBundle &&
     await preparedSourceSha256(pending, filer) !==

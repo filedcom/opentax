@@ -31,6 +31,17 @@ for (const fixture of pdfReviewFixtures) {
       });
       assertEquals(result.diagnostics, []);
       const xml = buildMefXml(buildPending(result.pending), fixture.filer);
+      if (fixture.id === "single-partnership-code-k-and-w2g") {
+        assertEquals(result.pending.schedule1.line8b_gambling_winnings, 1_200);
+        assertEquals(result.pending.f1040.line8_additional_income, 1_200);
+        assertEquals(result.pending.f1040.line11_agi, 31_200);
+        assertEquals(result.pending.f1040.line25c_total, 50);
+        assertStringIncludes(
+          xml,
+          "<GamblingReportableWinningAmt>1200</GamblingReportableWinningAmt>",
+        );
+        assertStringIncludes(xml, "<IRSW2G ");
+      }
       if (fixture.id === "single-two-partnership-code-e-cod") {
         assertEquals(result.pending.schedule1.line8c_cod_income, 1_000);
         assertEquals(result.pending.f1040.line8_additional_income, 1_000);

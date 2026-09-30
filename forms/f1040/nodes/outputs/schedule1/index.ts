@@ -7,6 +7,7 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { box11CodeJSourceSchema } from "../../inputs/k1_partnership/box11_code_j.ts";
 import { box11CodeESourceSchema } from "../../inputs/k1_partnership/box11_code_e.ts";
+import { box11CodeKSourceSchema } from "../../inputs/k1_partnership/box11_code_k.ts";
 
 // Schedule 1 Output Node — Additional Income and Adjustments Assembly
 //
@@ -88,6 +89,8 @@ const inputSchema = z.object({
     .optional(),
   k1_partnership_box11_code_e_sources: z.array(box11CodeESourceSchema)
     .optional(),
+  k1_partnership_box11_code_k_sources: z.array(box11CodeKSourceSchema)
+    .optional(),
   // ── Part II — Adjustments to Income ──────────────────────────────────────
   // Line 11 — Educator expenses (up to $300 / $600 MFJ)
   line11_educator_expenses: z.number().nonnegative().optional(),
@@ -148,6 +151,10 @@ function otherIncome(input: Schedule1Input): number {
       ? -(input.line8a_nol_deduction)
       : 0) +
     (input.line8b_gambling_winnings ?? 0) +
+    (input.k1_partnership_box11_code_k_sources ?? []).reduce(
+      (sum, row) => sum + row.winnings,
+      0,
+    ) +
     (input.line8c_cod_income ?? 0) +
     (input.k1_partnership_box11_code_e_sources ?? []).reduce(
       (sum, row) => sum + row.amount,
@@ -275,6 +282,13 @@ function assembleSchedule1(input: Schedule1Input): Record<string, unknown> {
   if (input.line8b_gambling_winnings !== undefined) {
     result.line8b_gambling_winnings = input.line8b_gambling_winnings;
   }
+  if (input.k1_partnership_box11_code_k_sources?.length) {
+    result.line8b_gambling_winnings = (input.line8b_gambling_winnings ?? 0) +
+      input.k1_partnership_box11_code_k_sources.reduce(
+        (sum, row) => sum + row.winnings,
+        0,
+      );
+  }
   if (input.line8d_foreign_earned_income_exclusion !== undefined) {
     result.line8d_foreign_earned_income_exclusion =
       input.line8d_foreign_earned_income_exclusion;
@@ -376,6 +390,12 @@ function assembleSchedule1(input: Schedule1Input): Record<string, unknown> {
       ? {
         k1_partnership_box11_code_e_sources:
           input.k1_partnership_box11_code_e_sources,
+      }
+      : {}),
+    ...(input.k1_partnership_box11_code_k_sources !== undefined
+      ? {
+        k1_partnership_box11_code_k_sources:
+          input.k1_partnership_box11_code_k_sources,
       }
       : {}),
   };

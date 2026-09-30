@@ -518,3 +518,15 @@ refund. No Form 982 or Form 1099-C appears. The PDF SHA-256 is
 Export checks reject changed K-1 facts, another recipient, a Form 1099-C mix,
 and an altered line 8c. Exclusion/partly taxable cases, source bytes,
 taxability workpaper authentication, IRS business rules, and ATS remain open.
+
+The `single-partnership-code-k-and-w2g` source passes local TY2025 v5.4
+full-return XSD. Its two nonbusiness partnership code K winnings of $400/$600
+and separate $200 W-2G sum to $1,200 on Schedule 1 line 8b, Form 1040 line 8,
+and $31,200 AGI. All five pages of the `v71` PDF packet were rendered and
+visually inspected: both Form 1040 pages, the W-2G recipient copy, and both
+Schedule 1 pages. Form 1040 line 16 tax is $1,619; $3,050 total withholding
+yields a $1,431 refund. The PDF SHA-256 is
+`99e37a64522069d8d95be24a84e7bfddc421a91e47ddd2b73ca3acf6f18b4471`.
+Export checks reject changed K-1 or W-2G winnings, another recipient, and
+changed line 8b. Partnership gambling losses, gambling businesses, issued
+source bytes, IRS business rules, and ATS remain open.
