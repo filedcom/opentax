@@ -79,6 +79,14 @@ const finalizedContext = {
         credit_category: "ctc",
       })),
     },
+    eitc: {
+      credit_amount: 500,
+      qualifying_children: 2,
+      qualifying_child_details: source.dependents.slice(0, 2).map((child) => ({
+        first_name: child.firstName,
+        last_name: child.lastName,
+      })),
+    },
     f8863: {
       f8863s: [{
         credit_type: "aoc",
@@ -194,6 +202,26 @@ Deno.test("Form 8862 CTC names must match filed dependent credit rows", () => {
       }),
     Error,
     "must match filed Form 1040 dependent credit rows",
+  );
+});
+
+Deno.test("Form 8862 EITC child names must match finalized Schedule EIC", () => {
+  assertThrows(
+    () =>
+      nativeForm8862.build(scenarioInput, {
+        pending: {
+          ...finalizedContext.pending,
+          eitc: {
+            ...finalizedContext.pending.eitc,
+            qualifying_child_details: [{
+              first_name: "Other",
+              last_name: "Child",
+            }, finalizedContext.pending.eitc.qualifying_child_details[1]],
+          },
+        },
+      }),
+    Error,
+    "must match finalized Schedule EIC",
   );
 });
 

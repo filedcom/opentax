@@ -168,6 +168,43 @@ function validateFinalizedCreditClaims(
       "Form 8862 EITC claim needs positive finalized Form 1040 line 27",
     );
   }
+  if (fields.claim_eitc && (fields.eitc_children?.length ?? 0) > 0) {
+    const eitc = pending?.eitc as Record<string, unknown> | undefined;
+    const filedChildren = eitc?.qualifying_child_details;
+    if (
+      !Array.isArray(filedChildren) ||
+      eitc?.qualifying_children !== fields.eitc_children?.length ||
+      eitc?.credit_amount !== form1040.line27_eitc ||
+      (context?.documentIdsByPendingKey &&
+        (context.documentIdsByPendingKey.eitc?.length ?? 0) === 0)
+    ) {
+      throw new Error(
+        "Form 8862 EITC children must match finalized Schedule EIC and Form 1040 line 27",
+      );
+    }
+    const names = filedChildren.map((child) => {
+      if (child === null || typeof child !== "object") return "";
+      const person = child as Record<string, unknown>;
+      if (
+        typeof person.first_name !== "string" ||
+        typeof person.last_name !== "string"
+      ) return "";
+      return `${person.first_name} ${person.last_name}`.trim().toUpperCase();
+    });
+    const claimed = fields.eitc_children!.map((child) =>
+      `${child.first_name} ${child.last_name}`.trim().toUpperCase()
+    );
+    if (
+      names.length !== claimed.length ||
+      new Set(names).size !== names.length ||
+      new Set(claimed).size !== claimed.length ||
+      names.some((name) => !name || !claimed.includes(name))
+    ) {
+      throw new Error(
+        "Form 8862 EITC children must match finalized Schedule EIC and Form 1040 line 27",
+      );
+    }
+  }
   if (
     fields.claim_ctc &&
     !(positive(form1040.line19_child_tax_credit) ||

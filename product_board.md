@@ -36,7 +36,9 @@ The detailed route boundaries remain in the linked gap notes and audits.
   worksheet route, and the reviewed Form 8862 CTC case. Form 8862 CTC/ODC and
   AOTC claims now require a prior-disallowance year and IRS notice reference,
   like the EITC route. Extra CTC/ODC people and AOTC students now get a numbered
-  PDF continuation; these changes have not entered the final test batch.
+  PDF continuation. Form 8862 Part II child names and count now reconcile to
+  finalized Schedule EIC and its Form 1040 credit; these changes have not entered
+  the final test batch.
   The preexisting focused
   XSD/PDF evidence for these slices is recorded in their gap notes. All wider
   form variants, source proof, the final bulk run, business rules, and ATS

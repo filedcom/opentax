@@ -75,6 +75,11 @@ Deno.test("Form 8862 PDF projects bounded EITC and CTC claims", () => {
         credit_category: "ctc",
       }],
     },
+    eitc: {
+      credit_amount: 500,
+      qualifying_children: 1,
+      qualifying_child_details: [{ first_name: "Alice", last_name: "Doe" }],
+    },
   }) ?? [];
   assertEquals(instances.length, 1);
   assertEquals(instances[0].tax_year, 2025);

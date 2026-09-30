@@ -54,6 +54,12 @@ their line 12/14–17, 13/16–17, or 18/19a–b answers and filer identity, as 
 2025 form directs. The native document continues to carry every person. This
 continuation is written but has not yet entered the agreed final PDF batch.
 
+When Part II names qualifying children, both export paths now require the same
+distinct names and count on finalized Schedule EIC, plus the Schedule EIC credit
+equal to Form 1040 line 27. A document-ID-aware native build also requires the
+Schedule EIC attachment. Residence days and prior-notice document bytes still
+need source review; the current structured facts alone do not prove them.
+
 ---
 
 ## Calculation Logic
