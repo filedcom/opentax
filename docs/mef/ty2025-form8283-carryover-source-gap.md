@@ -54,5 +54,9 @@ complete. The filed 2024 return and prior deduction workpaper are referenced
 assertions. Source values and the PDF must be independently inspected before
 use. Section B, required appraisals, pass-through gifts, special carryover
 histories, mixed current-year gifts, additional e-file business
-rules, and ATS acceptance remain open. The single full test batch, generated
-XML XSD validation, and filled-PDF visual check have not run.
+rules, and ATS acceptance remain open. The one-gift and two-gift synthetic
+bundles passed the local TY2025 v5.4 Return1040 XSD on 2026-09-30, including
+their distinct native Form 8283, statement, and prior-PDF references. The
+single full test batch and filled-PDF visual check have not run. XSD success
+does not establish that the synthetic blank prior PDFs represent actually
+filed 2024 forms.

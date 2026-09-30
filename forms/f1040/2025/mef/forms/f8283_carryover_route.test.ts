@@ -23,6 +23,30 @@ const attachmentDescription = form8283CarryoverAttachmentDescription(
   attachmentFile,
 );
 
+async function assertCarryoverBundleXsd(xml: string): Promise<void> {
+  const xsdPath = new URL(
+    "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    import.meta.url,
+  ).pathname;
+  try {
+    await Deno.stat(xsdPath);
+  } catch {
+    return;
+  }
+  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(path, xml);
+    const checked = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsdPath, path],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
+  } finally {
+    await Deno.remove(path);
+  }
+}
+
 async function reviewedSource() {
   const pdf = await PDFDocument.create();
   pdf.addPage([612, 792]);
@@ -143,6 +167,7 @@ Deno.test("Form 8283 carryover binds native Section A, FMV statement, prior PDF 
     true,
   );
   assertEquals(bundle.attachments.length, 1);
+  await assertCarryoverBundleXsd(bundle.xml);
 });
 
 Deno.test("Form 8283 multiple carried gifts each have a native form, statement, prior PDF, and preview", async () => {
@@ -228,6 +253,7 @@ Deno.test("Form 8283 multiple carried gifts each have a native form, statement, 
     2,
   );
   assertEquals(bundle.attachments.length, 2);
+  await assertCarryoverBundleXsd(bundle.xml);
   assertEquals(
     form8283Pdf.instances!(multiple.f8283, testFiler(), multiple).length,
     2,
