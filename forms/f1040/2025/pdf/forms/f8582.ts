@@ -387,7 +387,7 @@ export const form8582Pdf: PdfFormDescriptor = {
   },
   fields,
   filerFields: [
-    pdfText("nameLine1", `${p1}.f1_01[0]`),
+    pdfText("fullName", `${p1}.f1_01[0]`),
     pdfText("primarySSN", `${p1}.f1_02[0]`),
   ],
 };

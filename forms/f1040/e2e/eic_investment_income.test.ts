@@ -518,6 +518,112 @@ Deno.test("EIC reconciles Form 4835 with rental and three K-1 sources", async ()
   assertEquals(new TextDecoder().decode(farmOnlyPdf.slice(0, 5)), "%PDF-");
 });
 
+function runFarmLossOffset(rentIncome: number, farmLoss: number) {
+  return execute(plan, registry, {
+    general,
+    w2: [w2],
+    schedule_e: [{
+      tsj: "T",
+      activity_id: "income-rental",
+      property_description: "Reviewed passive rental",
+      street_address: "123 Rental Road",
+      city: "Austin",
+      state: "TX",
+      zip: "78701",
+      property_type: 1,
+      activity_type: "B",
+      fair_rental_days: 365,
+      personal_use_days: 0,
+      rent_income: rentIncome,
+      form_1099_payments_made: false,
+    }],
+    f4835: [{
+      activity_id: "loss-farm",
+      activity_name: "Reviewed passive farm rental",
+      livestock_crop_income: 0,
+      expense_feed: farmLoss,
+      actively_participated: false,
+      some_investment_not_at_risk: false,
+    }],
+  }, { taxYear: 2025, formType: "f1040" });
+}
+
+Deno.test("EIC nets an allowed Form 4835 farm loss against passive rental income", async () => {
+  const atLimit = runFarmLossOffset(12_000, 50);
+  assertEquals(atLimit.diagnostics, []);
+  assertEquals(atLimit.pending.eitc.investment_income_floor, 11_950);
+  assertEquals(atLimit.pending.f1040.line27_eitc !== undefined, true);
+  assertEquals(atLimit.carryforwards.suspended_pal_8582 ?? 0, 0);
+  const overLimit = runFarmLossOffset(12_001, 50);
+  assertEquals(overLimit.pending.eitc.investment_income_floor, 11_951);
+  assertEquals(overLimit.pending.f1040.line27_eitc, undefined);
+  const filer = extractFilerIdentity(atLimit.pending.f1040);
+  const xml = buildMefXml(buildPending(atLimit.pending), filer);
+  assertEquals(
+    xml.includes(
+      "<NetFarmRentalIncomeOrLossAmt>-50</NetFarmRentalIncomeOrLossAmt>",
+    ),
+    true,
+  );
+  assertEquals(
+    xml.includes("<TotalSuppIncomeOrLossAmt>11950</TotalSuppIncomeOrLossAmt>"),
+    true,
+  );
+  const xsd = new URL(
+    "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    import.meta.url,
+  ).pathname;
+  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(xmlPath, xml);
+    const validation = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsd, xmlPath],
+      stderr: "piped",
+    }).output();
+    assertEquals(
+      validation.code,
+      0,
+      new TextDecoder().decode(validation.stderr),
+    );
+  } finally {
+    await Deno.remove(xmlPath);
+  }
+  const fields = scheduleEPdf.projectFields?.(
+    atLimit.pending.schedule_e,
+    atLimit.pending,
+  );
+  assertEquals(fields?.line26, 12_000);
+  assertEquals(fields?.farm_line40, -50);
+  assertEquals(fields?.trust_line41, 11_950);
+  assertEquals(scheduleEPdf.pageIndices?.(fields ?? {}), [0, 1]);
+  const pdf = await buildPdfBytes(atLimit.pending, filer);
+  assertEquals(new TextDecoder().decode(pdf.slice(0, 5)), "%PDF-");
+  const forgedFarm = {
+    ...atLimit.pending,
+    f4835: {
+      ...atLimit.pending.f4835,
+      f4835s: [{
+        ...((atLimit.pending.f4835.f4835s as Record<string, unknown>[])[0]),
+        expense_feed: 51,
+      }],
+    },
+  };
+  assertThrows(
+    () => buildMefXml(buildPending(forgedFarm), filer),
+    Error,
+    "Form 4835",
+  );
+  assertThrows(
+    () =>
+      scheduleEPdf.projectFields?.(
+        atLimit.pending.schedule_e,
+        forgedFarm,
+      ),
+    Error,
+    "Form 4835",
+  );
+});
+
 Deno.test("EIC reconciles rental, partnership, S-corporation, and trust income", async () => {
   const atLimit = runPassiveK1s(4_000, 4_000, 1_950, 2_000);
   assertEquals(atLimit.diagnostics, []);
