@@ -76,3 +76,30 @@ Deno.test("Form 4797 prints line 9 only when prior section 1231 losses apply", (
     "line 4 must match Form 6252 line 26",
   );
 });
+
+Deno.test("Form 4797 line 5 reconciles its section 1231 exchange source", () => {
+  const fields = { section_1231_gain: 20_000, gain_form8824: 20_000 };
+  const exchange = {
+    relinquished_basis: 40_000,
+    received_fmv: 100_000,
+    cash_received: 20_000,
+    gain_type: "section_1231",
+  };
+  assertEquals(
+    form4797Pdf.projectFields?.(fields, { form8824: exchange }).gain_form8824,
+    20_000,
+  );
+  assertThrows(
+    () => form4797Pdf.projectFields?.(fields, {}),
+    Error,
+    "line 5 needs its Form 8824 source",
+  );
+  assertThrows(
+    () =>
+      form4797Pdf.projectFields?.(fields, {
+        form8824: { ...exchange, cash_received: 10_000 },
+      }),
+    Error,
+    "line 5 must match Form 8824 line 22",
+  );
+});

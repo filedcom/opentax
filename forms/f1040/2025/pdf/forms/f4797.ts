@@ -22,6 +22,8 @@ import {
 import { transactionSchema as form8949TransactionSchema } from "../../../nodes/intermediate/forms/form8949/index.ts";
 import { calculateInstallmentSale } from "../../../nodes/intermediate/forms/form6252/calculation.ts";
 import { inputSchema as form6252InputSchema } from "../../../nodes/intermediate/forms/form6252/index.ts";
+import { calculateLikeKindExchange } from "../../../nodes/intermediate/forms/form8824/calculation.ts";
+import { inputSchema as form8824InputSchema } from "../../../nodes/intermediate/forms/form8824/index.ts";
 import { box11Line10SourceSchema } from "../../../nodes/inputs/k1_partnership/box11_line10.ts";
 import { appendForm4797Line10Statement } from "./f4797_line10_statement.ts";
 
@@ -377,6 +379,18 @@ export const form4797Pdf: PdfFormDescriptor = {
         .reduce((sum, sale) => sum + calculateInstallmentSale(sale).line26, 0);
       if (gain !== fields.gain_form6252) {
         throw new Error("Form 4797 PDF line 4 must match Form 6252 line 26");
+      }
+    }
+    if (typeof fields.gain_form8824 === "number" && fields.gain_form8824 > 0) {
+      if (!allPending.form8824) {
+        throw new Error("Form 4797 PDF line 5 needs its Form 8824 source");
+      }
+      const exchange = form8824InputSchema.parse(allPending.form8824);
+      if (
+        exchange.gain_type !== "section_1231" ||
+        calculateLikeKindExchange(exchange).line22 !== fields.gain_form8824
+      ) {
+        throw new Error("Form 4797 PDF line 5 must match Form 8824 line 22");
       }
     }
     const priorLoss = fields.nonrecaptured_1231_loss;
