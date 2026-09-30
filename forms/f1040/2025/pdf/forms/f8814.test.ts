@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { calculateForm8814 } from "../../../nodes/inputs/f8814/index.ts";
 import {
@@ -172,10 +172,23 @@ Deno.test("2025 parent PDF marks Form 8814 dividends and direct child gain", () 
 
   const withScheduleD = irs1040Pdf.projectFields?.(
     { line7_capital_gain: 200 },
-    pending,
+    { ...pending, schedule_d: { print_line13_cap_gain_distrib: 200 } },
   ) ?? {};
   assertEquals(withScheduleD.print_form8814_line7a_note, undefined);
-  assertEquals(withScheduleD.print_form8814_line7a_included, true);
+  assertEquals(withScheduleD.print_form8814_line7a_included, false);
+  assertThrows(
+    () => irs1040Pdf.projectFields?.({ line7_capital_gain: 200 }, pending),
+    Error,
+    "needs the Form 8814 amount",
+  );
+  assertThrows(
+    () => irs1040Pdf.projectFields?.(
+      { line7a_cap_gain_distrib: 200, line7_capital_gain: 200 },
+      { ...pending, schedule_d: { print_line13_cap_gain_distrib: 200 } },
+    ),
+    Error,
+    "cannot use direct line 7a and Schedule D together",
+  );
   const scheduleD = scheduleDPdf.projectFields?.(
     { print_line13_cap_gain_distrib: 200 },
     pending,

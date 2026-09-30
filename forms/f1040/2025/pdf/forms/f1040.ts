@@ -663,6 +663,23 @@ export const irs1040Pdf: PdfFormDescriptor = {
       }
     }
     const child = form8814ParentPrintAmounts(allPending);
+    const childGainDirect = child.capitalGain > 0 &&
+      typeof fields.line7a_cap_gain_distrib === "number" &&
+      fields.line7a_cap_gain_distrib >= child.capitalGain;
+    const childGainOnScheduleD = child.capitalGain > 0 &&
+      typeof fields.line7_capital_gain === "number" &&
+      typeof allPending.schedule_d?.print_line13_cap_gain_distrib === "number" &&
+      allPending.schedule_d.print_line13_cap_gain_distrib >= child.capitalGain;
+    if (childGainDirect && childGainOnScheduleD) {
+      throw new Error(
+        "Form 1040 PDF child capital gain cannot use direct line 7a and Schedule D together",
+      );
+    }
+    if (child.capitalGain > 0 && !childGainDirect && !childGainOnScheduleD) {
+      throw new Error(
+        "Form 1040 PDF child capital gain needs the Form 8814 amount on line 7a or Schedule D line 13",
+      );
+    }
     const printMfsSpouseName = fields.filing_status === "mfs" &&
         typeof fields.spouse_first_name === "string" &&
         typeof fields.spouse_last_name === "string"
@@ -684,9 +701,8 @@ export const irs1040Pdf: PdfFormDescriptor = {
       print_form8888_attached: Object.keys(allPending.f8888 ?? {}).length > 0,
       print_form8814_line3a_included: child.dividends > 0,
       print_form8814_line3b_included: child.dividends > 0,
-      print_form8814_line7a_included: child.capitalGain > 0,
-      print_form8814_line7a_note: child.capitalGain > 0 &&
-          typeof fields.line7a_cap_gain_distrib === "number"
+      print_form8814_line7a_included: childGainDirect,
+      print_form8814_line7a_note: childGainDirect
         ? `Form 8814 $${child.capitalGain}`
         : undefined,
     };

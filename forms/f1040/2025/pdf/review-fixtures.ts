@@ -784,6 +784,43 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-form8814-child-gain-with-schedule-d",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(80_000, 12_000, "Example Employer", "12-3456789")],
+      f8814: [{
+        child_name: "Jamie Example",
+        child_name_control: "EXAM",
+        child_ssn: "222-33-4444",
+        child_age_eligible: true,
+        child_required_to_file: true,
+        child_income_only_permitted_types: true,
+        child_no_joint_return: true,
+        child_no_estimated_payments: true,
+        child_no_withholding: true,
+        parent_eligible_to_elect: true,
+        interest_income: 3_700,
+        capital_gain_distributions: 500,
+      }],
+      f8949: [{
+        part: "E",
+        description: "Long-term shares",
+        source_transaction_id: "synthetic-parent-share-sale",
+        date_acquired: "2023-01-10",
+        date_sold: "2025-06-20",
+        proceeds: 2_000,
+        cost_basis: 1_000,
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule1", "schedule_d", "f8949", "form8814"],
+    reviewFocus: [
+      "The child capital-gain portion prints as Form 8814 on Schedule D line 13",
+      "Form 1040 line 7a includes the finalized Schedule D result without a direct-child-gain line 7b mark",
+      "The parent sale and child capital-gain distribution each enter taxable income once",
+    ],
+  },
+  {
     id: "single-ordinary-noncash-gift",
     inputs: {
       general: singleGeneral,

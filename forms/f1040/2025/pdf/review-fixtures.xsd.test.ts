@@ -995,6 +995,19 @@ for (const fixture of pdfReviewFixtures) {
         assertStringIncludes(xml, "<ChildTaxableInterestStmt ");
         assertStringIncludes(xml, 'childInterestAndDividendTaxAmt="135"');
       }
+      if (fixture.id === "single-form8814-child-gain-with-schedule-d") {
+        assertEquals(result.pending.schedule_d.print_line13_cap_gain_distrib, 179);
+        assertEquals(result.pending.f1040.line7_capital_gain, 1_179);
+        assertEquals(result.pending.f1040.line7a_cap_gain_distrib, undefined);
+        assertEquals(result.pending.f1040.form8814_tax, 135);
+        const projected = irs1040Pdf.projectFields?.(
+          result.pending.f1040,
+          result.pending,
+        );
+        assertEquals(projected?.print_form8814_line7a_included, false);
+        assertStringIncludes(xml, "<IRS8814 ");
+        assertStringIncludes(xml, "<IRS1040ScheduleD ");
+      }
       if (fixture.id === "single-8862-ctc-reinstatement") {
         const dependent = (result.pending.f1040.dependent_details as Array<
           { first_name: string; credit_category: string }
