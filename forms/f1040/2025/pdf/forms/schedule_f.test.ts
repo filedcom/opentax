@@ -179,3 +179,49 @@ Deno.test("Schedule F PDF prints labor reduced by its linked Form 5884 allocatio
     "needs matching Form 5884 line 2",
   );
 });
+
+Deno.test("Schedule F PDF carries excess line 32 expenses on a described continuation", async () => {
+  const other = Array.from({ length: 8 }, (_, index) => ({
+    description: `FARM EXPENSE ${index + 1}`,
+    amount: (index + 1) * 10,
+  }));
+  const [projected] = scheduleFPdf.instances!({
+    schedule_fs: [{ ...farm, line32_other_expenses: other }],
+  }, jointFiler);
+  assertEquals(projected.other_description_0, "FARM EXPENSE 1");
+  assertEquals(projected.other_amount_4, 50);
+  assertEquals(projected.other_description_5, "SEE ATTACHED");
+  assertEquals(projected.other_amount_5, 210);
+  assertEquals(projected.line32_statement_rows, other.slice(5));
+  assertEquals(projected.line33_total_expenses, 860);
+  assertEquals(projected.line34_net_profit, 4_140);
+  const bytes = await fillFormPdf(
+    scheduleFPdf,
+    projected,
+    jointFiler,
+    ".pdf-cache",
+  );
+  assertEquals((await PDFDocument.load(bytes!)).getPageCount(), 2);
+  const continuation = await PDFDocument.create();
+  await scheduleFPdf.appendSupplementalPages!(
+    continuation,
+    projected,
+    jointFiler,
+  );
+  assertEquals(continuation.getPageCount(), 1);
+
+  const many = Array.from({ length: 85 }, (_, index) => ({
+    description: `ADDITIONAL FARM EXPENSE ${index + 1}`,
+    amount: 1,
+  }));
+  const [manyFields] = scheduleFPdf.instances!({
+    schedule_fs: [{ ...farm, line32_other_expenses: many }],
+  }, jointFiler);
+  const morePages = await PDFDocument.create();
+  await scheduleFPdf.appendSupplementalPages!(
+    morePages,
+    manyFields,
+    jointFiler,
+  );
+  assertEquals(morePages.getPageCount() > 1, true);
+});

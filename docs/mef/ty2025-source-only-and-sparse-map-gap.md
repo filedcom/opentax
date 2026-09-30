@@ -176,5 +176,9 @@ page and an accrual farm's Part III page were visually checked against their
 sources. The accrual page prints lines 37, 43–50 and reconciles its $10,700
 gross income to Part I line 9. Linked Form 5884 line 2 wage
 reductions now reconcile to the named farm before the PDF prints labor,
-expenses, and net profit. More than six line 32 descriptions still stop PDF
-export; other Schedule F PDF scenarios need separate review.
+expenses, and net profit. When more than six line 32 expenses are present,
+the PDF prints five directly, carries the remaining total on line 32f as
+"SEE ATTACHED," and appends a proprietor-identified statement of each amount.
+An eight-expense filled packet was inspected against line 33 and line 34;
+the 85-expense pagination case passes. Other Schedule F PDF scenarios need
+separate review.

@@ -1,3 +1,4 @@
+import { StandardFonts } from "pdf-lib";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { type FilerIdentity, FilingStatus } from "../../../mef/header.ts";
 import {
@@ -38,6 +39,35 @@ const answer = (key: string, prefix: string): PdfFieldEntry[] => [
   box(key, `${prefix}[0]`, "true"),
   box(key, `${prefix}[1]`, "false"),
 ];
+
+type OtherExpense = NonNullable<ScheduleFItem["line32_other_expenses"]>[number];
+
+function wrapStatementText(
+  value: string,
+  maxWidth: number,
+  widthOf: (text: string) => number,
+): string[] {
+  const lines: string[] = [];
+  let line = "";
+  for (const word of value.split(/\s+/).filter(Boolean)) {
+    const candidate = line ? `${line} ${word}` : word;
+    if (widthOf(candidate) <= maxWidth) {
+      line = candidate;
+      continue;
+    }
+    if (line) lines.push(line);
+    line = "";
+    for (const character of word) {
+      if (line && widthOf(line + character) > maxWidth) {
+        lines.push(line);
+        line = "";
+      }
+      line += character;
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
+}
 
 const fields: ReadonlyArray<PdfFieldEntry> = [
   txt("proprietor_name", `${p1}f1_1[0]`),
@@ -203,12 +233,19 @@ export const scheduleFPdf: PdfFormDescriptor = {
         );
       }
     }
-    return input.schedule_fs.map((item) => {
-      if ((item.line32_other_expenses?.length ?? 0) > 6) {
-        throw new Error(
-          "Schedule F PDF supports at most six described line 32 expenses",
-        );
-      }
+    return input.schedule_fs.map((item, index) => {
+      const other = item.line32_other_expenses ?? [];
+      const continuation = other.length > 6 ? other.slice(5) : [];
+      const continuationTotal = continuation.reduce(
+        (sum, expense) => sum + expense.amount,
+        0,
+      );
+      const printedOther: OtherExpense[] = continuation.length
+        ? [...other.slice(0, 5), {
+          description: "SEE ATTACHED",
+          amount: continuationTotal,
+        }]
+        : other;
       const accrual = item.accounting_method === "accrual"
         ? computeAccrualIncome(item)
         : undefined;
@@ -217,6 +254,7 @@ export const scheduleFPdf: PdfFormDescriptor = {
       const expenses = computeTotalExpenses(item, gross, wotcReduction);
       return {
         ...item,
+        farm_copy_number: index + 1,
         ...proprietor(item, filer),
         line_d_ein: item.line_d_ein?.replace(/\D/g, ""),
         line1c_profit: item.accounting_method === "cash"
@@ -232,11 +270,13 @@ export const scheduleFPdf: PdfFormDescriptor = {
           ? undefined
           : laborLessEmploymentCredits(item, wotcReduction),
         ...Object.fromEntries(
-          (item.line32_other_expenses ?? []).flatMap((entry, index) => [
+          printedOther.flatMap((entry, index) => [
             [`other_description_${index}`, entry.description],
             [`other_amount_${index}`, entry.amount],
           ]),
         ),
+        line32_statement_rows: continuation,
+        line32_statement_total: continuationTotal,
         line33_total_expenses: expenses,
         line34_net_profit: gross - expenses,
         line44_total_income: accrual?.totalIncome,
@@ -250,6 +290,95 @@ export const scheduleFPdf: PdfFormDescriptor = {
           ) => [`part_iii.${key}`, value]),
         ),
       };
+    });
+  },
+  async appendSupplementalPages(document, fields) {
+    const rows = fields.line32_statement_rows as OtherExpense[] | undefined;
+    if (!rows?.length) return;
+    const proprietor = String(fields.proprietor_name ?? "").trim();
+    const ssn = String(fields.proprietor_ssn ?? "").replace(/\D/g, "");
+    if (!proprietor || !/^\d{9}$/.test(ssn)) {
+      throw new Error("Schedule F line 32 statement needs proprietor identity");
+    }
+    const font = await document.embedFont(StandardFonts.Helvetica);
+    const bold = await document.embedFont(StandardFonts.HelveticaBold);
+    const amount = (value: number) => Math.round(value).toString();
+    const total = rows.reduce((sum, row) => sum + row.amount, 0);
+    if (total !== fields.line32_statement_total) {
+      throw new Error(
+        "Schedule F line 32 statement total differs from line 32f",
+      );
+    }
+    let page = document.addPage([612, 792]);
+    let y = 694;
+    let pageNumber = 0;
+    const newPage = () => {
+      if (pageNumber > 0) page = document.addPage([612, 792]);
+      pageNumber++;
+      page.drawText("Schedule F (2025) - Line 32f other expenses", {
+        x: 40,
+        y: 750,
+        size: 12,
+        font: bold,
+      });
+      page.drawText(`${proprietor}  SSN ${ssn}`, {
+        x: 40,
+        y: 732,
+        size: 9,
+        font,
+      });
+      const farmLabel = `Farm copy ${String(fields.farm_copy_number)}` +
+        (fields.farm_id ? `  ID: ${String(fields.farm_id)}` : "");
+      page.drawText(farmLabel, {
+        x: 40,
+        y: 718,
+        size: 9,
+        font,
+      });
+      page.drawText("Expense description", {
+        x: 40,
+        y: 694,
+        size: 9,
+        font: bold,
+      });
+      page.drawText("Amount", { x: 510, y: 694, size: 9, font: bold });
+      y = 677;
+    };
+    newPage();
+    for (const [index, row] of rows.entries()) {
+      const lines = wrapStatementText(
+        row.description,
+        445,
+        (value) => font.widthOfTextAtSize(value, 9),
+      );
+      if (!lines.length) {
+        throw new Error("Schedule F line 32 statement needs a description");
+      }
+      for (const line of lines) {
+        if (y < 65) newPage();
+        page.drawText(line, { x: 40, y, size: 9, font });
+        y -= 13;
+      }
+      page.drawText(amount(row.amount), {
+        x: 560 - font.widthOfTextAtSize(amount(row.amount), 9),
+        y: y + 13,
+        size: 9,
+        font,
+      });
+      y -= index === rows.length - 1 ? 12 : 6;
+    }
+    if (y < 65) newPage();
+    page.drawText("Total carried to Schedule F line 32f", {
+      x: 40,
+      y,
+      size: 9,
+      font: bold,
+    });
+    page.drawText(amount(total), {
+      x: 560 - bold.widthOfTextAtSize(amount(total), 9),
+      y,
+      size: 9,
+      font: bold,
     });
   },
 };
