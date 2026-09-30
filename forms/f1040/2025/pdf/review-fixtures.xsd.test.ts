@@ -73,6 +73,10 @@ for (const fixture of pdfReviewFixtures) {
       }
       if (fixture.id === "single-1099nec-trade-business-tips-schedule1a") {
         const line15 = result.pending.schedule1.line15_se_deduction as number;
+        assertEquals(result.pending.eitc.se_tax_deduction, line15);
+        assertEquals(result.pending.eitc.credit_amount, 649);
+        assertEquals(result.pending.f1040.line27_eitc, 649);
+        assertStringIncludes(xml, "<EarnedIncomeCreditAmt>649</EarnedIncomeCreditAmt>");
         const expected = Math.min(12_000, 10_000 - Math.round(line15));
         assertEquals(expected, 9_294);
         assertEquals(

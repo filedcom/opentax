@@ -11,6 +11,7 @@ import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import { form8959 } from "../form8959/index.ts";
 import { form8995 } from "../form8995/index.ts";
 import { form7206 } from "../form7206/index.ts";
+import { eitc } from "../eitc/index.ts";
 import { schedule1a } from "../schedule1a/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
@@ -111,6 +112,7 @@ class ScheduleSENode extends TaxNode<typeof inputSchema> {
       form8959,
       form8995,
       form7206,
+      eitc,
       schedule1a,
     ]);
   }
@@ -169,6 +171,7 @@ class ScheduleSENode extends TaxNode<typeof inputSchema> {
       this.outputNodes.output(schedule2, { line4_se_tax: line12 }),
       this.outputNodes.output(schedule1, { line15_se_deduction: line13 }),
       this.outputNodes.output(agi_aggregator, { line15_se_deduction: line13 }),
+      this.outputNodes.output(eitc, { se_tax_deduction: line13 }),
       // Route net earnings (line 6) to Form 8959 Part II for Additional Medicare Tax.
       // i8959 line 8: "Enter your self-employment income from Schedule SE (Form 1040),
       // Part I, line 6." That is after the 92.35% multiplier. IRC §3101(b)(2).

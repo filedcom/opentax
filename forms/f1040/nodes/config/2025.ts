@@ -270,45 +270,7 @@ export const QBI_THRESHOLD_MFJ_2025 = 394_600;
 export const QBI_PHASE_IN_RANGE_2025 = 100_000;
 
 // ─── EITC (Earned Income Tax Credit) ─────────────────────────────────────────
-// Rev. Proc. 2024-40, §3.11; IRC §32
-
-/** EITC maximum credit amounts by number of qualifying children (0–3). */
-export const EITC_MAX_CREDIT_2025: Record<number, number> = {
-  0: 649,
-  1: 4_328,
-  2: 7_152,
-  3: 8_046,
-} as const;
-
-/** EITC earned income at which phase-in ends (credit reaches maximum). */
-export const EITC_PHASE_IN_END_2025: Record<number, number> = {
-  0: 8_490,
-  1: 12_730,
-  2: 17_880,
-  3: 17_880,
-} as const;
-
-/**
- * EITC phase-out start by children count: [single/hoh/mfs threshold, mfj/qss threshold].
- * TY2025 values (Rev. Proc. 2024-40, §3.11; IRC §32(b)(2)).
- */
-export const EITC_PHASEOUT_START_2025: Record<number, [number, number]> = {
-  0: [10_620, 17_850],
-  1: [23_511, 30_470],
-  2: [23_511, 30_470],
-  3: [23_511, 30_470],
-} as const;
-
-/**
- * EITC income limit (disqualifying income) by children count:
- * [single/hoh/mfs limit, mfj/qss limit].
- */
-export const EITC_INCOME_LIMIT_2025: Record<number, [number, number]> = {
-  0: [18_591, 25_511],
-  1: [49_084, 56_004],
-  2: [55_768, 62_688],
-  3: [59_899, 66_819],
-} as const;
+// The earned-income amount is selected from the TY2025 IRS EIC table.
 
 /** EITC investment income limit — disqualifies any EITC when exceeded. */
 export const EITC_INVESTMENT_INCOME_LIMIT_2025 = 11_950;
@@ -684,10 +646,6 @@ export const config2025: F1040Config = {
   qbiThresholdSingle: QBI_THRESHOLD_SINGLE_2025,
   qbiThresholdMfj: QBI_THRESHOLD_MFJ_2025,
   qbiPhaseInRange: QBI_PHASE_IN_RANGE_2025,
-  eitcMaxCredit: EITC_MAX_CREDIT_2025,
-  eitcPhaseInEnd: EITC_PHASE_IN_END_2025,
-  eitcPhaseoutStart: EITC_PHASEOUT_START_2025,
-  eitcIncomeLimit: EITC_INCOME_LIMIT_2025,
   eitcInvestmentIncomeLimit: EITC_INVESTMENT_INCOME_LIMIT_2025,
   ctcPerChild: CTC_PER_CHILD_2025,
   odcPerDependent: ODC_PER_DEPENDENT_2025,

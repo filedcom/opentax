@@ -348,7 +348,12 @@ Deno.test("routing_form8995: deductible half of SE tax routes to form8995 as se_
 
 Deno.test("routing_includes_form7206_source_and_six_tax_outputs", () => {
   const result = compute({ net_profit_schedule_c: 10_000 });
-  assertEquals(result.outputs.length, 7);
+  assertEquals(result.outputs.length, 8);
+  const { seDeduction } = computeExpectedSeTax(10_000);
+  assertEquals(
+    round2(findOutput(result, "eitc")!.fields.se_tax_deduction as number),
+    round2(seDeduction),
+  );
 });
 
 // ── Edge cases ───────────────────────────────────────────────────────────────
@@ -426,7 +431,7 @@ Deno.test("smoke_all_fields: full scenario with C+F profit, tips, 8919, and w2_s
     round2(s1!.fields.line15_se_deduction as number),
     round2(expectedDeduction),
   );
-  assertEquals(result.outputs.length, 7);
+  assertEquals(result.outputs.length, 8);
 });
 
 // ── TY2025 Part II farm optional method ──────────────────────────────────────
