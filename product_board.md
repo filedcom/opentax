@@ -1,6 +1,9 @@
 # TY2025 Form 1040 product board
 
-## Current state (2026-09-30)
+The [product plan](product_plan.md) records the execution sequence and current
+implementation checkpoint. This board remains the detailed open-work list.
+
+## Current state (2026-10-01)
 
 This board lists **open work only**. The completed checkpoints and their test logs,
 source references, PDF reviews, and earlier decisions are preserved in the
@@ -36,6 +39,10 @@ The detailed route boundaries remain in the linked gap notes and audits.
   the 126 MeF descriptors, 89 PDF descriptors, and 211 IRS schema roots; then
   run full source, XSD, PDF, business-rule, and ATS validation. Keep this draft
   [PR #56](https://github.com/filedcom/opentax/pull/56) updated as work lands.
+- **Implementation-first checkpoint:** the user reaffirmed that the remaining
+  routes should be implemented before testing resumes. Earlier focused checks
+  are recorded in their gap notes; no new per-form checks or bulk run should
+  be treated as the current acceptance gate.
 
 A checked historical item records its bounded evidence only. An unchecked item
 below remains open even when one of its examples already passes. A source
