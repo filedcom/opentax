@@ -657,8 +657,9 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
     }
     const agi = computeAgi(input, cfg);
     const totalIncome = grossIncome(input, cfg) - exclusions(input);
-    // Pub. 596 Worksheet 1 lines 1–10. Business §1231 gain on line 7a
-    // is removed using Form 4797 line 7 or 9, as the worksheet directs.
+    // Pub. 596 Worksheet 1 lines 1–13. Business §1231 gain on line 7a
+    // is removed using Form 4797 line 7 or 9; allowed passive Schedule E
+    // losses reduce line 13.
     const eicInvestmentIncomeFloor =
       Math.max(0, input.line2b_taxable_interest ?? 0) +
       (input.tax_exempt_interest ?? 0) +
