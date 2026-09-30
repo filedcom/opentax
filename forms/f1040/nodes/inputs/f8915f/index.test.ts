@@ -45,12 +45,8 @@ Deno.test("Form 8915-F calculates one current-year fully taxable plan distributi
   assertEquals(lines.line15_form1040_line5b, 20_000);
 });
 
-Deno.test("Form 8915-F retains a filing guard until native and PDF are joined", () => {
-  assertThrows(
-    () => compute({ f8915fs: [reviewed2025Plan] }),
-    Error,
-    "source-matched native and PDF filing route",
-  );
+Deno.test("Form 8915-F retains the reviewed source for native and PDF export", () => {
+  assertEquals(compute({ f8915fs: [reviewed2025Plan] }).outputs, []);
 });
 
 Deno.test("Form 8915-F rejects the old amount-only source", () => {

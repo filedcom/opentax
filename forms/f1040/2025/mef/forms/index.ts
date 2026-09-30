@@ -83,6 +83,7 @@ import { form8888 } from "./f8888.ts";
 import { form8889 } from "./f8889.ts";
 import { form8911 } from "./f8911.ts";
 import { form8912 } from "./f8912.ts";
+import { form8915F } from "./f8915f.ts";
 import { form8911ScheduleA } from "./f8911_schedule_a.ts";
 import { form8936 } from "./f8936.ts";
 import { form8936ScheduleA } from "./f8936_schedule_a.ts";
@@ -270,6 +271,7 @@ export const ALL_MEF_FORMS = [
   // Form 8911
   form8911,
   form8912,
+  form8915F,
   // Form 8919
   form8919,
   // Form 8911 Schedule A follows Form 8919 in ReturnData1040.xsd.

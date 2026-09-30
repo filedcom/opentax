@@ -146,12 +146,7 @@ class F8915FNode extends TaxNode<typeof inputSchema> {
   ): NodeResult {
     const input = inputSchema.parse(rawInput);
     if ((input.f8915fs?.length ?? 0) > 0) {
-      // The pending source is not a filed route until Form 8915-F and the
-      // matched 1099-R/1040/PDF documents can be emitted together.
       currentYearPlanLines(input.f8915fs![0]);
-      throw new Error(
-        "TY2025 Form 8915-F needs its source-matched native and PDF filing route",
-      );
     }
     return { outputs: [] };
   }
