@@ -687,7 +687,7 @@ Deno.test("Form 8283 Section B emits separate signed appraisal and donee documen
         }],
       }),
     Error,
-    "linked appraisal or vehicle acknowledgment attachment",
+    "reviewed complete signed appraisal PDF",
   );
 });
 

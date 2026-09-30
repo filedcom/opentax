@@ -42,6 +42,11 @@ const fields: PdfFieldEntry[] = [
   text("filer_ssn", "f1_2[0]"),
   {
     kind: "checkbox",
+    domainKey: "section_b_art_at_least_20000",
+    pdfField: `${page}.Lines2a-c[0].c1_6[0]`,
+  },
+  {
+    kind: "checkbox",
     domainKey: "section_b_art_under_20000",
     pdfField: `${page}.Lines2a-c[0].c1_6[2]`,
   },
@@ -341,10 +346,12 @@ function sectionBOrdinaryTangibleInstance(
   const donee = item.donee_acknowledgment;
   const propertyType = item.property_type;
   const supportedType = propertyType === SectionBPropertyType.ArtUnder20000 ||
+    propertyType === SectionBPropertyType.ArtAtLeast20000 ||
     propertyType === SectionBPropertyType.Equipment ||
     propertyType === SectionBPropertyType.Collectibles ||
     propertyType === SectionBPropertyType.ClothingHousehold;
-  const label = propertyType === SectionBPropertyType.ArtUnder20000
+  const label = propertyType === SectionBPropertyType.ArtUnder20000 ||
+      propertyType === SectionBPropertyType.ArtAtLeast20000
     ? "art"
     : propertyType === SectionBPropertyType.Equipment
     ? "equipment"
@@ -361,6 +368,12 @@ function sectionBOrdinaryTangibleInstance(
     item.fmv <= 5_000 || item.fmv > 500_000 ||
     (propertyType === SectionBPropertyType.ArtUnder20000 &&
       item.fmv >= 20_000) ||
+    (propertyType === SectionBPropertyType.ArtAtLeast20000 &&
+      (item.deduction_claimed < 20_000 ||
+        !appraisal?.attachment_file_name ||
+        !appraisal.full_appraisal_source_review ||
+        appraisal.attachment_file_name ===
+          item.signed_form_attachment_file_name)) ||
     item.deduction_claimed !== item.fmv ||
     item.cost_or_adjusted_basis === undefined ||
     item.cost_or_adjusted_basis < item.fmv ||
@@ -379,6 +392,8 @@ function sectionBOrdinaryTangibleInstance(
   }
   return {
     ...sectionBPrintedFields(item, filer),
+    section_b_art_at_least_20000:
+      propertyType === SectionBPropertyType.ArtAtLeast20000,
     section_b_art_under_20000:
       propertyType === SectionBPropertyType.ArtUnder20000,
     section_b_equipment: propertyType === SectionBPropertyType.Equipment,
@@ -393,6 +408,11 @@ function sectionBOrdinaryTangibleInstance(
       `Appraiser signed ${printedDate(appraisal.signed_date)}. ` +
       `The completed signed Form 8283 ${item.signed_form_attachment_file_name} ` +
       `was reviewed ${item.signed_form_source_review.reviewed_on} by ${item.signed_form_source_review.reviewed_by}. ` +
+      (propertyType === SectionBPropertyType.ArtAtLeast20000
+        ? `The complete signed appraisal ${appraisal.attachment_file_name} was reviewed ${
+          appraisal.full_appraisal_source_review!.reviewed_on
+        } by ${appraisal.full_appraisal_source_review!.reviewed_by}. `
+        : "") +
       `This generated PDF does not reproduce signatures and is not the signed filing attachment.`,
     ],
   };
@@ -513,6 +533,7 @@ export const form8283Pdf: PdfFormDescriptor = {
   fields,
   pageIndices: (instance) =>
     instance.section_b_other_real_estate === true ||
+      instance.section_b_art_at_least_20000 === true ||
       instance.section_b_art_under_20000 === true ||
       instance.section_b_equipment === true ||
       instance.section_b_collectibles === true ||
@@ -564,6 +585,7 @@ export const form8283Pdf: PdfFormDescriptor = {
       if (
         ordinaryType && new Set<SectionBPropertyType>([
           SectionBPropertyType.ArtUnder20000,
+          SectionBPropertyType.ArtAtLeast20000,
           SectionBPropertyType.Vehicle,
           SectionBPropertyType.Equipment,
           SectionBPropertyType.Collectibles,
@@ -588,6 +610,7 @@ export const form8283Pdf: PdfFormDescriptor = {
         item.property_type === SectionBPropertyType.Vehicle
           ? sectionBVehicleInstance(item, filer)
           : item.property_type === SectionBPropertyType.ArtUnder20000 ||
+              item.property_type === SectionBPropertyType.ArtAtLeast20000 ||
               item.property_type === SectionBPropertyType.Equipment ||
               item.property_type === SectionBPropertyType.Collectibles ||
               item.property_type === SectionBPropertyType.ClothingHousehold
@@ -681,6 +704,7 @@ export const form8283Pdf: PdfFormDescriptor = {
     const page = document.addPage([612, 792]);
     page.drawText(
       instance.section_b_other_real_estate === true ||
+        instance.section_b_art_at_least_20000 === true ||
         instance.section_b_art_under_20000 === true ||
         instance.section_b_equipment === true ||
         instance.section_b_collectibles === true ||

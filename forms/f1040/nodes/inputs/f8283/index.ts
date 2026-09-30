@@ -14,7 +14,6 @@ import { form8283CarryoverEvidenceSchema } from "./carryover-source.ts";
 import { FMVMethod } from "./fmv-method.ts";
 export { FMVMethod } from "./fmv-method.ts";
 
-
 export enum SectionBPropertyType {
   ArtUnder20000 = "art_under_20000",
   ArtAtLeast20000 = "art_at_least_20000",
@@ -498,8 +497,17 @@ const sectionBItemSchema = z.object({
     signed_by_appraiser: z.literal(true),
     signature_attachment_file_name: z.string().min(1).optional(),
     // Full appraisal PDF, distinct from the Form 8283 signature PDF, is
-    // required when the claimed deduction for this item exceeds $500,000.
+    // required for art deductions of at least $20,000 and when the claimed
+    // deduction for this item exceeds $500,000.
     attachment_file_name: z.string().min(1).optional(),
+    full_appraisal_source_review: z.object({
+      reviewed_by: z.string().trim().min(1),
+      reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+      signed_appraisal_confirmed: z.literal(true),
+      donated_property_matches_confirmed: z.literal(true),
+      appraised_fmv_matches_confirmed: z.literal(true),
+    }).optional(),
     covers_similar_item_group_confirmed: z.literal(true).optional(),
   }).superRefine((appraisal, ctx) => {
     if (Boolean(appraisal.appraiser_ein) === Boolean(appraisal.appraiser_ssn)) {
@@ -583,6 +591,29 @@ const sectionBItemSchema = z.object({
       code: "custom",
       message: "Form 8283 Section B deduction claimed exceeds appraised FMV",
     });
+  }
+  if (
+    item.qualified_appraisal?.full_appraisal_source_review &&
+    !item.qualified_appraisal.attachment_file_name
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message:
+        "Form 8283 reviewed full appraisal needs its named PDF attachment",
+    });
+  }
+  if (item.property_type === SectionBPropertyType.ArtAtLeast20000) {
+    if (
+      item.deduction_claimed < 20_000 || item.deduction_claimed > 500_000 ||
+      !item.qualified_appraisal?.attachment_file_name ||
+      !item.qualified_appraisal.full_appraisal_source_review
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "Form 8283 art deduction of at least $20,000 needs a reviewed complete signed appraisal PDF",
+      });
+    }
   }
   if (item.deduction_claimed > 500_000) {
     if (

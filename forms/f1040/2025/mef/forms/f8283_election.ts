@@ -362,6 +362,7 @@ export function assertOrdinarySectionBReconciled(
   if (
     !new Set<SectionBPropertyType>([
       SectionBPropertyType.ArtUnder20000,
+      SectionBPropertyType.ArtAtLeast20000,
       SectionBPropertyType.Vehicle,
       SectionBPropertyType.Equipment,
       SectionBPropertyType.Collectibles,

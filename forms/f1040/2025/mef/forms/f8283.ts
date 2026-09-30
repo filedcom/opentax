@@ -472,6 +472,9 @@ function requiredSignatureAttachment(
 function requiredQualifiedAppraisalAttachment(
   fileName: string | undefined,
   context: MefBuildContext,
+  review?: NonNullable<
+    SectionBItem["qualified_appraisal"]
+  >["full_appraisal_source_review"],
 ): string | undefined {
   if (!fileName) {
     throw new Error(
@@ -482,6 +485,14 @@ function requiredQualifiedAppraisalAttachment(
   if (!description?.startsWith("Qualified Appraisal")) {
     throw new Error(
       "Form 8283 high-value appraisal PDF needs a description beginning Qualified Appraisal",
+    );
+  }
+  if (
+    review && context.documentIdsByPendingKey &&
+    context.attachmentSha256ByFileName?.[fileName] !== review.pdf_sha256
+  ) {
+    throw new Error(
+      "Form 8283 full qualified-appraisal PDF bytes do not match the reviewed source SHA-256",
     );
   }
   const id = context.documentIdsByAttachmentFileName?.[fileName];
@@ -628,6 +639,7 @@ function buildSectionBItem(
   }
   const tangible = new Set<SectionBPropertyType>([
     SectionBPropertyType.ArtUnder20000,
+    SectionBPropertyType.ArtAtLeast20000,
     SectionBPropertyType.OtherRealEstate,
     SectionBPropertyType.Equipment,
     SectionBPropertyType.Collectibles,
@@ -636,11 +648,6 @@ function buildSectionBItem(
   ]);
   if (tangible.has(item.property_type) && !item.physical_condition?.trim()) {
     throw new Error("Form 8283 tangible property needs its physical condition");
-  }
-  if (item.property_type === SectionBPropertyType.ArtAtLeast20000) {
-    throw new Error(
-      "Form 8283 Section B gift needs a linked appraisal or vehicle acknowledgment attachment",
-    );
   }
   if (item.donee_acknowledgment.received_date !== item.date_contributed) {
     throw new Error(
@@ -671,10 +678,21 @@ function buildSectionBItem(
     (id): id is string => id !== undefined,
   );
   const signedFormId = requiredSignedFormAttachment(item, context);
-  const qualifiedAppraisalId = similarGroupTotal > 500_000
+  const artAtLeast20000 =
+    item.property_type === SectionBPropertyType.ArtAtLeast20000;
+  if (
+    artAtLeast20000 &&
+    appraisal.attachment_file_name === item.signed_form_attachment_file_name
+  ) {
+    throw new Error(
+      "Form 8283 art needs its complete signed appraisal PDF separate from the completed signed Form 8283",
+    );
+  }
+  const qualifiedAppraisalId = similarGroupTotal > 500_000 || artAtLeast20000
     ? requiredQualifiedAppraisalAttachment(
       appraisal.attachment_file_name,
       context,
+      artAtLeast20000 ? appraisal.full_appraisal_source_review : undefined,
     )
     : undefined;
   const binaryIds = [

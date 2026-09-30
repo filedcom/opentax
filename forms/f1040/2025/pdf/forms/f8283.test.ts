@@ -504,6 +504,8 @@ function purchasedOrdinaryTangiblePending(
   physicalCondition: string,
 ) {
   const vehicle = materialImprovementVehiclePending().f8283.section_b_items[0];
+  const artHigh = propertyType === SectionBPropertyType.ArtAtLeast20000;
+  const claim = artHigh ? 25_000 : 12_000;
   const item = {
     ...vehicle,
     property_description: description,
@@ -513,9 +515,23 @@ function purchasedOrdinaryTangiblePending(
       propertyType === SectionBPropertyType.ClothingHousehold
         ? true as const
         : undefined,
-    fmv: 12_000,
-    deduction_claimed: 12_000,
-    cost_or_adjusted_basis: 18_000,
+    fmv: claim,
+    deduction_claimed: claim,
+    cost_or_adjusted_basis: artHigh ? 35_000 : 18_000,
+    qualified_appraisal: {
+      ...vehicle.qualified_appraisal,
+      attachment_file_name: artHigh ? "FullArtAppraisal.pdf" : undefined,
+      full_appraisal_source_review: artHigh
+        ? {
+          reviewed_by: "Synthetic test reviewer",
+          reviewed_on: "2025-09-01",
+          pdf_sha256: "a".repeat(64),
+          signed_appraisal_confirmed: true as const,
+          donated_property_matches_confirmed: true as const,
+          appraised_fmv_matches_confirmed: true as const,
+        }
+        : undefined,
+    },
     similar_item_group: propertyType,
     vehicle_vin: undefined,
     vehicle_acknowledgment_attachment_file_name: undefined,
@@ -540,12 +556,19 @@ function purchasedOrdinaryTangiblePending(
   return {
     f8283: form,
     schedule_a: { ...source, ...finalized },
-    f1040: { line11_agi: 100_000, line12e_itemized_deductions: 12_000 },
+    f1040: { line11_agi: 100_000, line12e_itemized_deductions: claim },
   };
 }
 
 Deno.test("Form 8283 PDF prints purchased Section B art, equipment, collectible and household gifts", () => {
   const routes = [
+    [
+      SectionBPropertyType.ArtAtLeast20000,
+      "Oil painting, early twentieth century",
+      "Good condition; minor frame wear",
+      "section_b_art_at_least_20000",
+      "Form8283[0].Page1[0].Lines2a-c[0].c1_6[0]",
+    ],
     [
       SectionBPropertyType.ArtUnder20000,
       "Oil painting, early twentieth century",
@@ -585,8 +608,11 @@ Deno.test("Form 8283 PDF prints purchased Section B art, equipment, collectible 
       [];
     assertEquals(form8283Pdf.pageIndices?.(instance), [0, 1]);
     assertEquals(instance?.[key], true);
-    assertEquals(instance?.section_b_appraised_fmv, 12_000);
-    assertEquals(instance?.section_b_claim, 12_000);
+    const amount = propertyType === SectionBPropertyType.ArtAtLeast20000
+      ? 25_000
+      : 12_000;
+    assertEquals(instance?.section_b_appraised_fmv, amount);
+    assertEquals(instance?.section_b_claim, amount);
     assertEquals(instance?.section_b_appraiser_name, "Jane Smith");
     assertStringIncludes(
       (instance?.reduction_statements as string[])[0],
@@ -604,7 +630,7 @@ Deno.test("Form 8283 PDF prints purchased Section B art, equipment, collectible 
       () =>
         scheduleAMef.build({
           ...pending.schedule_a,
-          line_12_noncash_contributions: 11_999,
+          line_12_noncash_contributions: amount - 1,
         }, { pending }),
       Error,
       "recomputed Schedule A lines 11",
@@ -659,7 +685,7 @@ Deno.test("Form 8283 PDF maps December 2025 Section A identity and four rows", (
     byKey.get("row4_claim"),
     "Form8283[0].Page1[0].Table_Line1_ColsD-I[0].Row1D[0].f1_39[0]",
   );
-  assertEquals(form8283Pdf.fields.length, 70);
+  assertEquals(form8283Pdf.fields.length, 71);
 });
 
 Deno.test("Form 8283 PDF prints reconciled Section A and carries the FMV explanation", () => {

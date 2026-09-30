@@ -146,6 +146,7 @@ function buildIRS1040ScheduleA(
       if (
         propertyType && new Set<SectionBPropertyType>([
           SectionBPropertyType.ArtUnder20000,
+          SectionBPropertyType.ArtAtLeast20000,
           SectionBPropertyType.Vehicle,
           SectionBPropertyType.Equipment,
           SectionBPropertyType.Collectibles,

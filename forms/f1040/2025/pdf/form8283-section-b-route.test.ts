@@ -1,4 +1,4 @@
-import { assertEquals, assertStringIncludes } from "@std/assert";
+import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
@@ -271,6 +271,12 @@ for (
 for (
   const route of [
     {
+      type: "art_at_least_20000",
+      description: "Oil painting, early twentieth century",
+      condition: "Good condition; minor frame wear",
+      xmlTag: "ArtWorthAtLeast20000DollarsInd",
+    },
+    {
       type: "art_under_20000",
       description: "Oil painting, early twentieth century",
       condition: "Good condition; minor frame wear",
@@ -297,12 +303,17 @@ for (
   ] as const
 ) {
   Deno.test(`Section B purchased ${route.type} joins full return, signed form, XSD and PDF`, async () => {
+    const artHigh = route.type === "art_at_least_20000";
+    const claim = artHigh ? 25_000 : 12_000;
     const signature = await syntheticEvidence(
       "mock appraiser Jane Smith and City Charity signatures",
     );
     const completedForm = await syntheticEvidence(
       `test-only ${route.type} Form 8283 with mock appraiser and donee signatures`,
     );
+    const fullAppraisal = artHigh
+      ? await syntheticEvidence("test-only complete signed art appraisal")
+      : undefined;
     const equipment = {
       property_description: route.description,
       property_type: route.type,
@@ -313,9 +324,9 @@ for (
       date_acquired: "2018-05-15",
       donor_acquisition_description: "Purchase",
       date_contributed: "2025-06-01",
-      fmv: 12_000,
-      deduction_claimed: 12_000,
-      cost_or_adjusted_basis: 18_000,
+      fmv: claim,
+      deduction_claimed: claim,
+      cost_or_adjusted_basis: artHigh ? 35_000 : 18_000,
       charitable_limit_category: "noncash_50",
       similar_item_group: route.type,
       is_capital_gain_property: false,
@@ -336,6 +347,17 @@ for (
         appraiser_ein: "123456789",
         signed_by_appraiser: true,
         signature_attachment_file_name: "EquipmentAppraiserSignature.pdf",
+        attachment_file_name: artHigh ? "FullArtAppraisal.pdf" : undefined,
+        full_appraisal_source_review: fullAppraisal
+          ? {
+            reviewed_by: "Synthetic test reviewer",
+            reviewed_on: "2025-09-01",
+            pdf_sha256: await sha256(fullAppraisal),
+            signed_appraisal_confirmed: true,
+            donated_property_matches_confirmed: true,
+            appraised_fmv_matches_confirmed: true,
+          }
+          : undefined,
         us_address: {
           line1: "1 Art Way",
           city: "Austin",
@@ -376,49 +398,75 @@ for (
     assertEquals(result.diagnostics, []);
     assertEquals(
       result.pending.schedule_a.line_12_noncash_contributions,
-      12_000,
+      claim,
     );
-    assertEquals(result.pending.f1040.line12e_itemized_deductions, 48_000);
+    assertEquals(
+      result.pending.f1040.line12e_itemized_deductions,
+      36_000 + claim,
+    );
     const pending = buildPending(result.pending);
+    const attachments = [
+      {
+        fileName: equipment.qualified_appraisal.signature_attachment_file_name,
+        description: "Form 8283 appraiser signature document",
+        bytes: signature,
+      },
+      {
+        fileName: equipment.donee_acknowledgment.signature_attachment_file_name,
+        description: "Form 8283 Donee signature document",
+        bytes: signature,
+      },
+      {
+        fileName: equipment.signed_form_attachment_file_name,
+        description: "Form 8283 completed signed Section B",
+        bytes: completedForm,
+      },
+      ...(fullAppraisal
+        ? [{
+          fileName: "FullArtAppraisal.pdf",
+          description: "Qualified Appraisal for art valued at $20,000 or more",
+          bytes: fullAppraisal,
+        }]
+        : []),
+    ];
     const bundle = await buildMefBundle(pending, {
       filer: base.filer,
-      attachments: [
-        {
-          fileName:
-            equipment.qualified_appraisal.signature_attachment_file_name,
-          description: "Form 8283 appraiser signature document",
-          bytes: signature,
-        },
-        {
-          fileName:
-            equipment.donee_acknowledgment.signature_attachment_file_name,
-          description: "Form 8283 Donee signature document",
-          bytes: signature,
-        },
-        {
-          fileName: equipment.signed_form_attachment_file_name,
-          description: "Form 8283 completed signed Section B",
-          bytes: completedForm,
-        },
-      ],
+      attachments,
     });
-    assertEquals(bundle.attachments.length, 3);
+    if (fullAppraisal) {
+      await assertRejects(
+        () =>
+          buildMefBundle(pending, {
+            filer: base.filer,
+            attachments: attachments.map((attachment) =>
+              attachment.fileName === "FullArtAppraisal.pdf"
+                ? { ...attachment, bytes: signature }
+                : attachment
+            ),
+          }),
+        Error,
+        "full qualified-appraisal PDF bytes do not match",
+      );
+    }
+    assertEquals(bundle.attachments.length, artHigh ? 4 : 3);
     assertStringIncludes(bundle.xml, `<${route.xmlTag}>X</${route.xmlTag}>`);
     assertStringIncludes(
       bundle.xml,
-      "<AppraisedFairMarketValueAmt>12000</AppraisedFairMarketValueAmt>",
+      `<AppraisedFairMarketValueAmt>${claim}</AppraisedFairMarketValueAmt>`,
     );
     assertStringIncludes(
       bundle.xml,
-      "<DeductionClaimedAmt>12000</DeductionClaimedAmt>",
+      `<DeductionClaimedAmt>${claim}</DeductionClaimedAmt>`,
     );
     assertStringIncludes(
       bundle.xml,
-      "<OtherThanByCashOrCheckAmt>12000</OtherThanByCashOrCheckAmt>",
+      `<OtherThanByCashOrCheckAmt>${claim}</OtherThanByCashOrCheckAmt>`,
     );
     assertStringIncludes(
       bundle.xml,
-      "<TotalItemizedOrStandardDedAmt>48000</TotalItemizedOrStandardDedAmt>",
+      `<TotalItemizedOrStandardDedAmt>${
+        36_000 + claim
+      }</TotalItemizedOrStandardDedAmt>`,
     );
     const xsd = new URL(
       "../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",

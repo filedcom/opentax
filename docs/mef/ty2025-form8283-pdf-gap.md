@@ -191,8 +191,25 @@ with SHA-256
 `0b485419f23e1aff557aac7747a61402092213dbdaf3931b9dc5086e4e82c428`.
 The [2025 instructions](https://www.irs.gov/pub/irs-prior/i8283--2025.pdf)
 require the complete signed appraisal as a return attachment when the art
-deduction reaches $20,000; that route remains closed. The art case uses mock
-source PDFs and does not authenticate the appraisal or signatures.
+deduction reaches $20,000. The under-$20,000 art case uses mock source PDFs and
+does not authenticate the appraisal or signatures.
+
+The purchased, nonappreciated art route for a claim from $20,000 through
+$500,000 requires a separate complete signed appraisal PDF. The submitted
+bytes must match the named review's SHA-256, and the electronic item,
+appraiser/donee signatures, completed signed Form 8283, and finalized Schedule
+A inventory remain required. One $25,000 synthetic painting passes local
+TY2025 v5.4 full-return XSD with four linked PDFs; altered appraisal bytes
+reject. All six filled pages were rendered and inspected. Section B line 2a is
+checked, the property and appraiser/donee facts print on the intended pages,
+Schedule A line 12 is $25,000, and Form 1040 line 12e is $61,000. The review
+snapshot is
+`.state/research/ty2025-filled-pdf-review/2026-09-30-section-b-art_at_least_20000/filled-return.pdf`
+with SHA-256
+`0c640887de585db56ef65df89e200222b914e95c620bf8cc473a1920fef96d5d`.
+The PDFs are synthetic evidence and the review assertions are not independent
+authentication of an actual signed appraisal. Art above $500,000, multiple
+items, reductions and carryovers remain closed.
 
 This is not whole-form support. Other Section B property and multi-item routes,
 actual appraiser/donee signatures in the PDF, mixed Section A/B forms, more than
