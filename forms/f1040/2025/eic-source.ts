@@ -34,6 +34,23 @@ export function assertEicSource(
   ) {
     throw new Error("Form 1040 EIC needs its matching calculation source");
   }
+  const filed = pending?.f1040 as Record<string, unknown> | undefined;
+  const filedAmount = (key: string): number => {
+    const value = filed?.[key];
+    const current = Array.isArray(value) ? value[value.length - 1] : value;
+    return typeof current === "number" ? current : 0;
+  };
+  const investmentIncomeFloor = Math.max(0, filedAmount("line2a_tax_exempt")) +
+    Math.max(0, filedAmount("line2b_taxable_interest")) +
+    Math.max(0, filedAmount("line3b_ordinary_dividends"));
+  if (
+    !("investment_income_floor" in result) ||
+    result.investment_income_floor !== investmentIncomeFloor
+  ) {
+    throw new Error(
+      "Form 1040 EIC investment income differs from filed interest and dividends",
+    );
+  }
   const source = generalInputSchema.safeParse(pending?.general);
   const form8862 = f8862InputSchema.safeParse(pending?.f8862);
   const priorReviewEligible = source.success &&

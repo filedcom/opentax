@@ -206,6 +206,7 @@ Deno.test({
       general: { ...generalEicSource, dependents: [claimedChild] },
       eitc: {
         credit_amount: 500,
+        investment_income_floor: 0,
         qualifying_children: 1,
         qualifying_child_details: [{
           first_name: "Child",
@@ -256,7 +257,11 @@ Deno.test({
         line27_eitc: 500,
       },
       general: childlessEicSource,
-      eitc: { credit_amount: 500, qualifying_children: 0 },
+      eitc: {
+        credit_amount: 500,
+        qualifying_children: 0,
+        investment_income_floor: 0,
+      },
     }),
     filer,
   );
@@ -285,7 +290,11 @@ Deno.test({
         line27_eitc: 500,
       },
       general: childlessEicSource,
-      eitc: { credit_amount: 500, qualifying_children: 0 },
+      eitc: {
+        credit_amount: 500,
+        qualifying_children: 0,
+        investment_income_floor: 0,
+      },
     }),
     filer,
   );

@@ -644,6 +644,12 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
     }
     const agi = computeAgi(input, cfg);
     const totalIncome = grossIncome(input, cfg) - exclusions(input);
+    // Pub. 596 Worksheet 1 lines 1–3 are always investment income. Other
+    // worksheet lines need their own source classification before inclusion.
+    const eicInvestmentIncomeFloor =
+      Math.max(0, input.line2b_taxable_interest ?? 0) +
+      (input.tax_exempt_interest ?? 0) +
+      Math.max(0, sumField(input.line3b_ordinary_dividends));
 
     // Compute SSA taxable amount for f1040 line 6b pass-through
     const ssaGross = input.line6a_ss_gross ?? 0;
@@ -677,7 +683,10 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
         agi,
       }),
       this.outputNodes.output(scheduleA, { agi }),
-      this.outputNodes.output(eitc, { agi }),
+      this.outputNodes.output(eitc, {
+        agi,
+        investment_income_floor: eicInvestmentIncomeFloor,
+      }),
       // Pass AGI to f8812 for CTC/ACTC phase-out computation
       this.outputNodes.output(f8812, { auto_agi: agi }),
       // Pass AGI to f2441 for dependent care credit rate calculation

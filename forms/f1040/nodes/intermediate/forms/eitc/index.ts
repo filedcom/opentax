@@ -141,6 +141,8 @@ export const inputSchema = z.object({
   // Investment income (interest, dividends, capital gains, rents)
   // If investment_income > eitcInvestmentIncomeLimit, no EITC allowed
   investment_income: z.number().nonnegative().optional(),
+  // Pub. 596 Worksheet 1 lines 1–3, routed from the filed income sources.
+  investment_income_floor: z.number().nonnegative().optional(),
 
   // A filed Form 8862 can satisfy the reviewed prior-disallowance route.
   form8862_filed: z.boolean().optional(),
@@ -267,7 +269,10 @@ function computeEitc(
   if (children > 0 && !childEicFilerEligible(input)) return 0;
 
   // Investment income disqualifier (IRC §32(i))
-  if ((input.investment_income ?? 0) > investmentIncomeLimit) return 0;
+  if (
+    Math.max(input.investment_income ?? 0, input.investment_income_floor ?? 0) >
+      investmentIncomeLimit
+  ) return 0;
 
   // Must have earned income
   if (earnedIncome <= 0) return 0;
@@ -307,6 +312,7 @@ class EitcNode extends TaxNode<typeof inputSchema> {
           nodeType: this.nodeType,
           fields: {
             credit_amount: credit,
+            investment_income_floor: input.investment_income_floor ?? 0,
             qualifying_children: input.qualifying_children ?? 0,
             qualifying_child_details: input.qualifying_child_details ?? [],
           },
