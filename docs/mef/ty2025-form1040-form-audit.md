@@ -375,6 +375,12 @@ source-backed Form 3800 prepared bundle, PDF, and submission ZIP still pass.
 The submission archive applies the same check after verifying prepared source
 and XML hashes, so callers cannot bypass it by assembling a lower-level
 bundle directly; its manifest XSD and focused archive cases pass.
+The A2A container builder also reopens every submission ZIP and compares its
+manifest, return XML, and attachment bytes with the prepared archive before
+adding it to the request. It validates the manifest's Submission ID, EFIN,
+taxpayer TIN, and fixed 2025 Form 1040 values against the native return.
+Focused cases reject post-preparation XML, PDF, manifest/TIN, and ID changes;
+the ordered two-submission container still passes.
 The direct low-level XML builder intentionally remains usable for isolated
 partial-document tests and is not evidence of a complete filing. The
 return-wide graph, manifest, and external acceptance gates remain open.

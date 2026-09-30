@@ -1,5 +1,5 @@
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
-import { unzipSync } from "fflate";
+import { unzipSync, zipSync } from "fflate";
 import { PDFDocument } from "pdf-lib";
 import { type FilerIdentity, FilingStatus } from "./types.ts";
 import type { MefFormsPending } from "./types.ts";
@@ -387,6 +387,76 @@ Deno.test("A2A request entries match both ZIP attachments in order", async () =>
   for (const archive of archives) {
     assertEquals(container[archive.fileName], archive.bytes);
   }
+});
+
+Deno.test("A2A transmission rejects a submission ZIP changed after preparation", async () => {
+  const pdf = await PDFDocument.create();
+  pdf.addPage();
+  const submission = await makeSubmissionArchive({
+    f1040: { filing_status: "single", digital_assets: false },
+  }, {
+    filer: filer(),
+    submissionId,
+    processingDate,
+    attachments: [{
+      fileName: "Evidence.pdf",
+      description: "Evidence copy",
+      bytes: await pdf.save(),
+    }],
+  });
+  const packaged = (archive: typeof submission) =>
+    buildMefTransmissionPackage([{
+      archive,
+      electronicPostmark: processingDate,
+    }]);
+  const xmlChanged = unzipSync(submission.bytes);
+  xmlChanged["xml/submission.xml"] = new TextEncoder().encode("<Return/>");
+  assertThrows(
+    () => packaged({ ...submission, bytes: zipSync(xmlChanged) }),
+    Error,
+    "differs from its prepared return",
+  );
+  const attachmentMissing = unzipSync(submission.bytes);
+  delete attachmentMissing["attachment/Evidence.pdf"];
+  assertThrows(
+    () => packaged({ ...submission, bytes: zipSync(attachmentMissing) }),
+    Error,
+    "differs from its prepared return",
+  );
+  assertThrows(
+    () =>
+      packaged({ ...submission, manifestXml: submission.manifestXml + " " }),
+    Error,
+    "differs from its prepared return",
+  );
+  const manifestChanged = submission.manifestXml.replace(
+    "<TIN>123456789</TIN>",
+    "<TIN>987654321</TIN>",
+  );
+  const changedManifestZip = unzipSync(submission.bytes);
+  changedManifestZip["manifest/manifest.xml"] = new TextEncoder().encode(
+    manifestChanged,
+  );
+  assertThrows(
+    () =>
+      packaged({
+        ...submission,
+        manifestXml: manifestChanged,
+        bytes: zipSync(changedManifestZip),
+      }),
+    Error,
+    "manifest differs from its ID or prepared return",
+  );
+  assertThrows(
+    () =>
+      packaged({
+        ...submission,
+        submissionId: "1234562026269abcdefh",
+        fileName: "1234562026269abcdefh.zip",
+      }),
+    Error,
+    "manifest differs from its ID",
+  );
 });
 
 Deno.test("MeF submission ZIP rejects missing filing credentials and malformed IDs", async () => {

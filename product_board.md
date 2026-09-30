@@ -448,6 +448,7 @@ including a two-gift return with two linked native forms and attachments.
 - [ ] Complete Schedule 1 line 8z source/description handling, Schedule 1-A deduction variants and filled PDF, Schedule 2's 2025 line structure, Schedule 3 joins, and Schedule EIC child identity/residency projection. See the [Schedule 1-A gap](docs/mef/ty2025-schedule1a-gap.md) and [line 8z source gap](docs/mef/ty2025-schedule1-line8z-source-gap.md).
 - [ ] Finish Schedule C and Schedule F/Form 4835 source, at-risk, passive, self-employment, QBI, and PDF cross-checks, including Schedule C [PDF mapping](docs/mef/ty2025-schedule-c-pdf-gap.md), Schedule J's [source](docs/mef/ty2025-schedule-j-source-gap.md) and [integration](docs/mef/ty2025-schedule-j-integration-gap.md), and the applicable Schedule E rental/royalty joins.
 - [ ] Verify Form 1040 assembly order, document references, multiple-instance IDs, required PDF descriptions, manifest/return archives, A2A request package, and explicit failures for missing or invalid AcroForm fields.
+  - [x] Check each prepared submission ZIP again when building the A2A transmission container. The manifest, XML, and attachment entries must exactly match the prepared archive; its Submission ID, EFIN, and taxpayer TIN must match the native return. Changed XML, missing PDF, altered manifest/TIN, and changed ID all reject in focused tests. The existing two-submission order case still passes. This does not establish IRS endpoint, credential, business-rule, or ATS acceptance.
 
 ## Named tax-form gaps
 
