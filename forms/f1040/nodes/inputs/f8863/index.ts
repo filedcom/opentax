@@ -101,19 +101,21 @@ export const itemSchema = z.object({
   education_expense_workpaper: educationExpenseWorkpaperSchema.optional(),
 });
 
+// 2025 Form 8863 Credit Limit Worksheet, lines 4 and 5. These amounts must
+// come from the completed return; missing amounts are not treated as zero.
+export const creditLimitWorksheetSchema = z.object({
+  form1040_line18_tax: z.number().nonnegative(),
+  schedule3_line1_foreign_tax_credit: z.number().nonnegative(),
+  schedule3_line2_dependent_care_credit: z.number().nonnegative(),
+  schedule3_line6d: z.number().nonnegative(),
+  schedule3_line6l: z.number().nonnegative(),
+});
+
 export const inputSchema = z.object({
   f8863s: z.array(itemSchema).min(1),
   // Set by Form 8862 when prior-year AOTC disallowance has been cleared
   form8862_filed: z.boolean().optional(),
-  // 2025 Form 8863 Credit Limit Worksheet, lines 4 and 5. These amounts must
-  // come from the completed return; missing amounts are not treated as zero.
-  credit_limit_worksheet: z.object({
-    form1040_line18_tax: z.number().nonnegative(),
-    schedule3_line1_foreign_tax_credit: z.number().nonnegative(),
-    schedule3_line2_dependent_care_credit: z.number().nonnegative(),
-    schedule3_line6d: z.number().nonnegative(),
-    schedule3_line6l: z.number().nonnegative(),
-  }).optional(),
+  credit_limit_worksheet: creditLimitWorksheetSchema.optional(),
 });
 
 export type F8863Item = z.infer<typeof itemSchema>;
@@ -167,7 +169,9 @@ export function validateForm8863FilingSource(
     workpaper.qualified_expense_refunds +
     workpaper.expenses_used_for_other_tax_benefits;
   if (reductions > paid) {
-    throw new Error("Form 8863 education expense reductions exceed paid expenses");
+    throw new Error(
+      "Form 8863 education expense reductions exceed paid expenses",
+    );
   }
   const claimed = credit === "aoc"
     ? item.aoc_adjusted_expenses
@@ -187,13 +191,17 @@ function assertDistinctEducationSourceReferences(items: F8863Items): void {
     if (!workpaper) continue;
     const documentId = workpaper.form1098t_document_id.trim();
     if (documentIds.has(documentId)) {
-      throw new Error("Form 8863 students cannot reuse a Form 1098-T document reference");
+      throw new Error(
+        "Form 8863 students cannot reuse a Form 1098-T document reference",
+      );
     }
     documentIds.add(documentId);
     for (const rawPaymentId of workpaper.payment_record_ids) {
       const paymentId = rawPaymentId.trim();
       if (paymentIds.has(paymentId)) {
-        throw new Error("Form 8863 students cannot reuse an education payment reference");
+        throw new Error(
+          "Form 8863 students cannot reuse an education payment reference",
+        );
       }
       paymentIds.add(paymentId);
     }

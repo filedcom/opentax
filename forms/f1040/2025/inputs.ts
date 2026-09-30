@@ -95,6 +95,7 @@ import {
   itemSchema as f8812ItemSchema,
 } from "../nodes/inputs/f8812/index.ts";
 import {
+  creditLimitWorksheetSchema as f8863CreditLimitWorksheetSchema,
   f8863,
   itemSchema as f8863ItemSchema,
 } from "../nodes/inputs/f8863/index.ts";
@@ -671,6 +672,14 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f2441, itemSchema: f2441ItemSchema, isArray: true },
   { node: f8812, itemSchema: f8812ItemSchema, isArray: true },
   { node: f8863, itemSchema: f8863ItemSchema, isArray: true },
+  {
+    node: f8863,
+    inputKey: "f8863_credit_limit_worksheet",
+    inputSchema: z.object({
+      credit_limit_worksheet: f8863CreditLimitWorksheetSchema,
+    }),
+    isArray: false,
+  },
   { node: f8949, itemSchema: f8949ItemSchema, isArray: true },
   { node: scheduleC, itemSchema: scheduleCItemSchema, isArray: true },
   { node: scheduleE, itemSchema: scheduleEItemSchema, isArray: true },
