@@ -8,6 +8,10 @@ import {
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import type { FilerIdentity } from "../../../mef/header.ts";
 import type { z } from "zod";
+import {
+  buildForm8915FRepaymentWorksheet,
+  repaymentWorksheetFileName,
+} from "./f8915f_repayment_worksheet.ts";
 
 export function form8915FOwnerName(
   item: Form8915FItem,
@@ -40,6 +44,20 @@ export function buildCurrentYearDistributionForm8915F(
     }
     | undefined;
   const lines = currentYearDistributionLines(item);
+  const worksheetId = context?.documentIdsByAttachmentFileName
+    ?.[repaymentWorksheetFileName(item)];
+  if (
+    item.repayment.kind === "same_year" &&
+    context?.documentIdsByAttachmentFileName && !worksheetId
+  ) {
+    throw new Error("Form 8915-F repayment needs its attached worksheet");
+  }
+  const repaymentAttrs = worksheetId
+    ? {
+      referenceDocumentId: worksheetId,
+      referenceDocumentName: "BinaryAttachment",
+    }
+    : undefined;
   const matches1040 = item.retirement_source_kind === "plan"
     ? filed1040?.line5a_pension_gross === item.gross_distribution &&
       filed1040?.line5b_pension_taxable === lines.line15_form1040_line5b
@@ -105,6 +123,13 @@ export function buildCurrentYearDistributionForm8915F(
           : "",
         element("CYQlfySelectedDistriAmt", lines.line11_current_income),
         element("SumPriorYrAndCYSelDistriAmt", lines.line13_total_income),
+        lines.line14_plan_repayment > 0
+          ? element(
+            "TotalRepymtOtherThanIRAAmt",
+            lines.line14_plan_repayment,
+            repaymentAttrs,
+          )
+          : "",
         element("CYTaxableDistributionsAmt", lines.line15_form1040_line5b),
       ])
       : elements("QlfyDistriTrdnSEPSIMPLERothGrp", [
@@ -117,6 +142,13 @@ export function buildCurrentYearDistributionForm8915F(
           : "",
         element("CYQlfySelectedDistriAmt", lines.line22_current_ira_income),
         element("SumPriorYrAndCYSelDistriAmt", lines.line24_total_ira_income),
+        lines.line25_ira_repayment > 0
+          ? element(
+            "TotalRepymtIRARetirePlanAmt",
+            lines.line25_ira_repayment,
+            repaymentAttrs,
+          )
+          : "",
         element("CYTaxableDistributionsAmt", lines.line26_form1040_line4b),
       ]),
   ]);
@@ -134,5 +166,11 @@ export const form8915F: MefFormDescriptor<
     return items.length === 0
       ? ""
       : buildCurrentYearDistributionForm8915F(items[0], context);
+  },
+  async buildBinaryAttachments(fields, context) {
+    const items = inputSchema.parse(fields).f8915fs ?? [];
+    return items.length === 0 || items[0].repayment.kind === "none"
+      ? []
+      : [await buildForm8915FRepaymentWorksheet(items[0], context?.filer)];
   },
 };

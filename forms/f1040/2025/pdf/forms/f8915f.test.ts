@@ -17,7 +17,10 @@ const item = itemSchema.parse({
   eligible_retirement_source_review_reference:
     "reviewed eligible employer plan",
   no_prior_distributions_review_reference: "reviewed 2025 disaster ledger",
-  no_repayments_review_reference: "reviewed retirement repayment ledger",
+  repayment: {
+    kind: "none",
+    review_reference: "reviewed retirement repayment ledger",
+  },
   source_1099r_document_reference: "issued 2025 1099-R account 123",
   source_1099r_payer_ein: "123456789",
   source_1099r_account_number: "123",
@@ -125,6 +128,39 @@ Deno.test("bounded Form 8915-F PDF rejects a changed Form 1040 amount", () => {
       }),
     Error,
     "must match Form 1040",
+  );
+});
+
+Deno.test("Form 8915-F PDF maps plan repayment to line 14", () => {
+  const repaid = itemSchema.parse({
+    ...item,
+    full_inclusion_elected: false,
+    repayment: {
+      kind: "same_year",
+      amount: 1_000,
+      date: "2025-08-01",
+      receiving_plan_review_reference: "reviewed receiving plan",
+      repayment_record_reference: "repayment confirmation",
+    },
+  });
+  const fields = form8915FPdf.instances!({ f8915fs: [repaid] }, filer, {
+    ...pending,
+    f1099r: {
+      f1099rs: [{
+        ...pending.f1099r.f1099rs[0],
+        form8915f_treatment: "three_years",
+        form8915f_repayment_amount: 1_000,
+      }],
+    },
+    f1040: { line5a_pension_gross: 20_000, line5b_pension_taxable: 5_667 },
+  })[0];
+  assertEquals(fields.line14, 1_000);
+  assertEquals(fields.line15, 5_667);
+  assertEquals(
+    form8915FPdf.fields.some((entry) =>
+      entry.domainKey === "line14" && entry.pdfField.endsWith("f3_07[0]")
+    ),
+    true,
   );
 });
 

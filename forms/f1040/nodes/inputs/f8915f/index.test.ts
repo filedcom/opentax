@@ -20,7 +20,10 @@ const reviewed2025Plan = {
   eligible_retirement_source_review_reference:
     "reviewed eligible employer plan",
   no_prior_distributions_review_reference: "reviewed 2025 disaster ledger",
-  no_repayments_review_reference: "reviewed retirement repayment ledger",
+  repayment: {
+    kind: "none",
+    review_reference: "reviewed retirement repayment ledger",
+  },
   source_1099r_document_reference: "issued 2025 1099-R account 123",
   source_1099r_payer_ein: "123456789",
   source_1099r_account_number: "123",
@@ -57,6 +60,52 @@ Deno.test("Form 8915-F spreads a new 2025 plan distribution over three years", (
   assertEquals(lines.line10_taxable, 20_000);
   assertEquals(lines.line11_current_income, 6_667);
   assertEquals(lines.line15_form1040_line5b, 6_667);
+});
+
+Deno.test("Form 8915-F bounds a same-year repayment to current income", () => {
+  const repayment = {
+    kind: "same_year",
+    amount: 1_000,
+    date: "2025-08-01",
+    receiving_plan_review_reference: "reviewed receiving plan",
+    repayment_record_reference: "repayment confirmation",
+  } as const;
+  const source = {
+    ...reviewed2025Plan,
+    full_inclusion_elected: false,
+    repayment,
+  };
+  const lines = currentYearDistributionLines(itemSchema.parse(source));
+  assertEquals(lines.line14_plan_repayment, 1_000);
+  assertEquals(lines.line15_form1040_line5b, 5_667);
+  assertEquals(
+    itemSchema.safeParse({
+      ...source,
+      repayment: { ...repayment, date: "2025-05-31" },
+    }).success,
+    false,
+  );
+  assertEquals(
+    itemSchema.safeParse({
+      ...source,
+      repayment: { ...repayment, date: "2026-01-01" },
+    }).success,
+    false,
+  );
+  assertEquals(
+    itemSchema.safeParse({
+      ...source,
+      repayment: { ...repayment, amount: 6_668 },
+    }).success,
+    false,
+  );
+  assertEquals(
+    itemSchema.safeParse({
+      ...source,
+      repayment: { ...repayment, receiving_plan_review_reference: "" },
+    }).success,
+    false,
+  );
 });
 
 Deno.test("Form 8915-F traditional IRA path needs reviewed no-basis history", () => {

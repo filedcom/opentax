@@ -140,9 +140,10 @@ function effectiveTaxableAmount(
     taxable = Math.max(0, taxable - exclusion);
   }
 
-  return item.form8915f_treatment === "three_years"
+  const currentYear = item.form8915f_treatment === "three_years"
     ? Math.round(taxable / 3)
     : taxable;
+  return currentYear - (item.form8915f_repayment_amount ?? 0);
 }
 
 // Distribution code enum covering all valid 1099-R Box 7 codes for TY2025
@@ -305,6 +306,7 @@ export const itemSchema = z.object({
   exclude_8606_roth: z.boolean().optional(),
   // The reviewed Form 8915-F source must own this tax-year treatment.
   form8915f_treatment: z.enum(["full", "three_years"]).optional(),
+  form8915f_repayment_amount: z.number().int().positive().optional(),
 
   // QCD fields
   qcd_full: z.boolean().optional(),
@@ -562,6 +564,18 @@ function validateIraRolloverEvidence(item: R1099Item): void {
 // Cross-field validation for a single item
 function validateItem(item: R1099Item): void {
   validateIraRolloverEvidence(item);
+  if (
+    item.form8915f_repayment_amount !== undefined &&
+    (item.form8915f_treatment === undefined ||
+      item.form8915f_repayment_amount >
+        (item.form8915f_treatment === "three_years"
+          ? Math.round(item.box1_gross_distribution / 3)
+          : item.box1_gross_distribution))
+  ) {
+    throw new Error(
+      "Form 1099-R Form 8915-F repayment needs a linked current-year amount",
+    );
+  }
   if (
     item.form8915f_treatment !== undefined &&
     (

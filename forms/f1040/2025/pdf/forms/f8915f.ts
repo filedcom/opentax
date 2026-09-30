@@ -59,6 +59,7 @@ export const form8915FPdf: PdfFormDescriptor = {
       line11_election: item.full_inclusion_elected,
       line11: lines.line11_current_income,
       line13: lines.line13_total_income,
+      line14: lines.line14_plan_repayment,
       line15: lines.line15_form1040_line5b,
       line16_yes: item.retirement_source_kind === "traditional_ira",
       line16_no: item.retirement_source_kind === "plan",
@@ -69,6 +70,7 @@ export const form8915FPdf: PdfFormDescriptor = {
         item.full_inclusion_elected,
       line22: lines.line22_current_ira_income,
       line24: lines.line24_total_ira_income,
+      line25: lines.line25_ira_repayment,
       line26: lines.line26_form1040_line4b,
     }];
   },
@@ -110,6 +112,7 @@ export const form8915FPdf: PdfFormDescriptor = {
     checkbox("line11_election", `${page3}.Line11_ReadOrder[0].c3_2[0]`),
     field("line11", `${page3}.f3_04[0]`),
     field("line13", `${page3}.f3_06[0]`),
+    field("line14", `${page3}.f3_07[0]`),
     field("line15", `${page3}.f3_08[0]`),
     checkbox("line16_no", `${page3}.c3_3[1]`),
     checkbox("line16_yes", `${page3}.c3_3[0]`),
@@ -119,6 +122,7 @@ export const form8915FPdf: PdfFormDescriptor = {
     checkbox("line22_election", `${page3}.Line22_ReadOrder[0].c3_5[0]`),
     field("line22", `${page3}.f3_13[0]`),
     field("line24", `${page3}.f3_15[0]`),
+    field("line25", `${page3}.f3_16[0]`),
     field("line26", `${page3}.f3_17[0]`),
   ],
 };

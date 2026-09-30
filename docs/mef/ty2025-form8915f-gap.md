@@ -6,10 +6,10 @@ income in full or spread over three years. The source kind is explicit; the
 traditional IRA route requires reviewed nondeductible-basis history showing
 that Form 8606 is not needed. It requires FEMA identity and
 dates, principal-home and economic-loss review references, eligible-plan review,
-no-prior-distribution and no-repayment reviews, the owner SSN, an issued Form
+no-prior-distribution review and an explicit reviewed no-repayment or dated 2025 repayment state, the owner SSN, an issued Form
 1099-R reference and account identity, and a whole-dollar distribution of no
 more than $22,000. A pure calculation records Form 8915-F lines 1e, 2 or 3,
-5b, 6, Part II or III, and its Form 1040 amount. The source matcher requires
+5b, 6, Part II or III including line 14 or 25 repayments, and its Form 1040 amount. The source matcher requires
 exactly one 1099-R with the same
 recipient, payer, account, issue reference, date, gross, and taxable amount and
 a straightforward taxable code 1, 2, or 7 route. A linked code 1 qualified
@@ -31,8 +31,19 @@ The spouse-owned traditional IRA spread also passes local full-return XSD; its
 Form 1040 and Form 8915-F first pages were inspected for the spouse name and
 SSN, while $6,667 flows to line 4b.
 Local full-return XSD and PDF packet cases pass for code 1 plan and traditional
-IRA distributions, including rejection of an orphaned linked source. IRS
-business-rule and ATS acceptance is unverified.
+IRA distributions, including rejection of an orphaned linked source. A 2025
+repayment to a reviewed eligible receiving plan can reduce first-year income
+when it is no more than that income. The linked Form 1099-R records the same
+amount; Form 8915-F line 14 or 25 and the corresponding Form 1040 taxable line
+reconcile. The filing bundle includes completed Worksheet 3 or 5 as a linked
+PDF attachment. $20,000 plan and IRA distributions spread over three years
+with $1,000 repaid each report $5,667 taxable and pass local full-return XSD.
+The six-page return PDFs and one-page worksheet PDFs build; a missing worksheet
+or a mismatched 1099-R repayment rejects export. The 2025-only repayment state
+requires a repayment date after the distribution, reviewed receiving-plan
+eligibility and a transaction reference; it excludes excess repayment needing
+carryback or later-year allocation. IRS business-rule and ATS acceptance is
+unverified.
 
 The [2025 IRS Form 8915-F instructions](https://www.irs.gov/instructions/i8915f)
 distinguish 2020 disasters from qualified 2021-and-later disasters. The latter
@@ -54,8 +65,8 @@ remain active correctness gaps, not approved exclusions.
 Next, wider sources still need Roth IRA, nonzero basis/Form 8606, and other
 IRA account cases; the 2026–27 annual
 inclusions and accepted-filing carryforward for a 2025 three-year election,
-prior filed Form 8915-F elections, repayments and
-attached worksheets, additional disasters, cost basis, early-distribution
+prior filed Form 8915-F elections, repayments after 2025, excess repayment
+carryback and later-year allocation, additional disasters, cost basis, early-distribution
 exception handling for partially qualified or excess distributions, and amended-year effects. Review references are structured
 facts; they do not authenticate the underlying documents. No unsupported
 prior-year or current-year claim is accepted.

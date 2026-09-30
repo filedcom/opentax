@@ -16,7 +16,10 @@ const item = itemSchema.parse({
   eligible_retirement_source_review_reference:
     "reviewed eligible employer plan",
   no_prior_distributions_review_reference: "reviewed 2025 disaster ledger",
-  no_repayments_review_reference: "reviewed retirement repayment ledger",
+  repayment: {
+    kind: "none",
+    review_reference: "reviewed retirement repayment ledger",
+  },
   source_1099r_document_reference: "issued 2025 1099-R account 123",
   source_1099r_payer_ein: "123456789",
   source_1099r_account_number: "123",

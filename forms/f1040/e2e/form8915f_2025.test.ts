@@ -8,7 +8,7 @@ import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { registry } from "../2025/registry.ts";
-import { buildMefXml } from "../2025/mef/builder.ts";
+import { buildMefBundle, buildMefXml } from "../2025/mef/builder.ts";
 import { buildPending } from "../2025/mef/pending.ts";
 import { buildPdfBytes } from "../2025/pdf/builder.ts";
 import { extractFilerIdentity } from "../mef/filer.ts";
@@ -27,7 +27,10 @@ const disaster = {
   eligible_retirement_source_review_reference:
     "reviewed eligible employer plan",
   no_prior_distributions_review_reference: "reviewed 2025 disaster ledger",
-  no_repayments_review_reference: "reviewed retirement repayment ledger",
+  repayment: {
+    kind: "none",
+    review_reference: "reviewed retirement repayment ledger",
+  },
   source_1099r_document_reference: "issued 2025 1099-R account 123",
   source_1099r_payer_ein: "123456789",
   source_1099r_account_number: "123",
@@ -62,6 +65,105 @@ const inputs = {
   }],
   f8915f: [disaster],
 };
+
+for (const sourceKind of ["plan", "traditional_ira"] as const) {
+  Deno.test(`2025 Form 8915-F ${sourceKind} same-year repayment reaches Form 1040 and attached worksheet`, async () => {
+    const repaymentInputs = {
+      ...inputs,
+      f1099r: [{
+        ...inputs.f1099r[0],
+        box7_ira_simple_indicator: sourceKind === "traditional_ira",
+        form8915f_treatment: "three_years",
+        form8915f_repayment_amount: 1_000,
+      }],
+      f8915f: [{
+        ...disaster,
+        retirement_source_kind: sourceKind,
+        ...(sourceKind === "traditional_ira"
+          ? { no_ira_basis_review_reference: "reviewed IRA basis history" }
+          : {}),
+        full_inclusion_elected: false,
+        repayment: {
+          kind: "same_year",
+          amount: 1_000,
+          date: "2025-08-01",
+          receiving_plan_review_reference: "reviewed eligible receiving plan",
+          repayment_record_reference: "2025 repayment confirmation",
+        },
+      }],
+    };
+    const result = execute(plan, registry, repaymentInputs, {
+      taxYear: 2025,
+      formType: "f1040",
+    });
+    assertEquals(result.diagnostics, []);
+    const line = sourceKind === "plan"
+      ? "line5b_pension_taxable"
+      : "line4b_ira_taxable";
+    assertEquals(result.pending.f1040?.[line], 5_667);
+    const filer = extractFilerIdentity(result.pending.f1040);
+    const pending = buildPending(result.pending);
+    assertThrows(
+      () => buildMefXml(pending, filer),
+      Error,
+      "attached worksheet",
+    );
+    const bundle = await buildMefBundle(pending, { filer, attachments: [] });
+    assertEquals(bundle.attachments.length, 1);
+    assertEquals(
+      bundle.attachments[0].fileName,
+      sourceKind === "plan"
+        ? "Form8915FWorksheet3.pdf"
+        : "Form8915FWorksheet5.pdf",
+    );
+    assertEquals(
+      (await PDFDocument.load(bundle.attachments[0].bytes)).getPageCount(),
+      1,
+    );
+    assertStringIncludes(bundle.xml, "<BinaryAttachment documentId=");
+    assertStringIncludes(
+      bundle.xml,
+      sourceKind === "plan"
+        ? "<TotalRepymtOtherThanIRAAmt referenceDocumentId="
+        : "<TotalRepymtIRARetirePlanAmt referenceDocumentId=",
+    );
+    assertStringIncludes(
+      bundle.xml,
+      "<CYTaxableDistributionsAmt>5667</CYTaxableDistributionsAmt>",
+    );
+    const xsd = new URL(
+      "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+      import.meta.url,
+    ).pathname;
+    const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+    try {
+      await Deno.writeTextFile(xmlPath, bundle.xml);
+      const validation = await new Deno.Command("xmllint", {
+        args: ["--noout", "--schema", xsd, xmlPath],
+        stderr: "piped",
+      }).output();
+      assertEquals(
+        validation.code,
+        0,
+        new TextDecoder().decode(validation.stderr),
+      );
+    } finally {
+      await Deno.remove(xmlPath);
+    }
+    const pdf = await buildPdfBytes(result.pending, filer);
+    assertEquals((await PDFDocument.load(pdf)).getPageCount(), 6);
+    const changed = structuredClone(result.pending);
+    (changed.f1099r as {
+      f1099rs: Array<{ form8915f_repayment_amount: number }>;
+    }).f1099rs[0]
+      .form8915f_repayment_amount = 999;
+    await assertRejects(
+      () => buildMefBundle(buildPending(changed), { filer, attachments: [] }),
+      Error,
+      "matching fully taxable Form 1099-R",
+    );
+  });
+}
 
 Deno.test("reviewed 2025 Form 8915-F plan distribution reaches full native and PDF return", async () => {
   const result = execute(plan, registry, inputs, {

@@ -30,7 +30,17 @@ export const itemSchema = z.object({
   eligible_retirement_source_review_reference: referenceSchema,
   no_ira_basis_review_reference: referenceSchema.optional(),
   no_prior_distributions_review_reference: referenceSchema,
-  no_repayments_review_reference: referenceSchema,
+  repayment: z.discriminatedUnion("kind", [
+    z.object({ kind: z.literal("none"), review_reference: referenceSchema })
+      .strict(),
+    z.object({
+      kind: z.literal("same_year"),
+      amount: z.number().int().positive(),
+      date: dateSchema,
+      receiving_plan_review_reference: referenceSchema,
+      repayment_record_reference: referenceSchema,
+    }).strict(),
+  ]),
   source_1099r_document_reference: referenceSchema,
   source_1099r_payer_ein: z.string().regex(/^\d{9}$/),
   source_1099r_account_number: referenceSchema,
@@ -61,6 +71,23 @@ export const itemSchema = z.object({
       message:
         "Form 8915-F current-year path needs a fully taxable distribution",
     });
+  }
+  if (item.repayment.kind === "same_year") {
+    const currentIncome = item.full_inclusion_elected
+      ? item.gross_distribution
+      : Math.round(item.gross_distribution / 3);
+    if (
+      item.repayment.date.slice(0, 4) !== "2025" ||
+      item.repayment.date < item.distribution_date ||
+      item.repayment.amount > currentIncome
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["repayment"],
+        message:
+          "Form 8915-F same-year repayment must follow the distribution and fit current-year income",
+      });
+    }
   }
   if (
     item.retirement_source_kind === "traditional_ira" &&
@@ -99,6 +126,9 @@ export function currentYearDistributionLines(raw: Form8915FItem) {
   const thisYear = item.full_inclusion_elected
     ? amount
     : Math.round(amount / 3);
+  const repayment = item.repayment.kind === "same_year"
+    ? item.repayment.amount
+    : 0;
   return {
     line1e_available: 22_000,
     line2a_plan_distributions: plan ? amount : 0,
@@ -112,12 +142,14 @@ export function currentYearDistributionLines(raw: Form8915FItem) {
     line10_taxable: plan ? amount : 0,
     line11_current_income: plan ? thisYear : 0,
     line13_total_income: plan ? thisYear : 0,
-    line15_form1040_line5b: plan ? thisYear : 0,
+    line14_plan_repayment: plan ? repayment : 0,
+    line15_form1040_line5b: plan ? thisYear - repayment : 0,
     line20_ira_qualified: plan ? 0 : amount,
     line21_ira_taxable: plan ? 0 : amount,
     line22_current_ira_income: plan ? 0 : thisYear,
     line24_total_ira_income: plan ? 0 : thisYear,
-    line26_form1040_line4b: plan ? 0 : thisYear,
+    line25_ira_repayment: plan ? 0 : repayment,
+    line26_form1040_line4b: plan ? 0 : thisYear - repayment,
   } as const;
 }
 
@@ -149,6 +181,8 @@ export function verifyCurrentYearDistributionSource(
       source.box2a_taxable_amount === item.taxable_distribution &&
       source.form8915f_treatment ===
         (item.full_inclusion_elected ? "full" : "three_years") &&
+      (source.form8915f_repayment_amount ?? 0) ===
+        (item.repayment.kind === "same_year" ? item.repayment.amount : 0) &&
       (source.box7_ira_simple_indicator === true) ===
         (item.retirement_source_kind === "traditional_ira") &&
       ["1", "2", "7"].includes(source.box7_distribution_code) &&
