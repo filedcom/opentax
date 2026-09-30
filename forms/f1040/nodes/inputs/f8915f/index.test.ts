@@ -45,6 +45,16 @@ Deno.test("Form 8915-F calculates one current-year fully taxable plan distributi
   assertEquals(lines.line15_form1040_line5b, 20_000);
 });
 
+Deno.test("Form 8915-F spreads a new 2025 plan distribution over three years", () => {
+  const lines = currentYearPlanLines(itemSchema.parse({
+    ...reviewed2025Plan,
+    full_inclusion_elected: false,
+  }));
+  assertEquals(lines.line10_taxable, 20_000);
+  assertEquals(lines.line11_current_income, 6_667);
+  assertEquals(lines.line15_form1040_line5b, 6_667);
+});
+
 Deno.test("Form 8915-F retains the reviewed source for native and PDF export", () => {
   assertEquals(compute({ f8915fs: [reviewed2025Plan] }).outputs, []);
 });
@@ -125,6 +135,7 @@ Deno.test("Form 8915-F matches one issued 1099-R and recipient", () => {
       box1_gross_distribution: 20_000,
       box2a_taxable_amount: 20_000,
       box7_distribution_code: "7",
+      form8915f_treatment: "full",
       box13_date_of_payment: "2025-06-01",
     }],
   };
@@ -132,6 +143,19 @@ Deno.test("Form 8915-F matches one issued 1099-R and recipient", () => {
     itemSchema.parse(reviewed2025Plan),
     source,
     filer,
+  );
+  assertThrows(
+    () =>
+      verifyCurrentYearPlanSource(
+        itemSchema.parse({
+          ...reviewed2025Plan,
+          full_inclusion_elected: false,
+        }),
+        source,
+        filer,
+      ),
+    Error,
+    "matching fully taxable non-IRA Form 1099-R",
   );
   assertThrows(
     () =>

@@ -82,7 +82,9 @@ export function buildCurrentYearPlanForm8915F(
       element("QlfyDistriOrAllocationAmt", lines.line8_plan_qualified),
       element("DistributionsCostAmt", lines.line9_cost),
       element("QlfyDistriMinusDistriCostAmt", lines.line10_taxable),
-      element("OptOutSpreadThreeYrsInd", "X"),
+      item.full_inclusion_elected
+        ? element("OptOutSpreadThreeYrsInd", "X")
+        : "",
       element("CYQlfySelectedDistriAmt", lines.line11_current_income),
       element("SumPriorYrAndCYSelDistriAmt", lines.line13_total_income),
       element("CYTaxableDistributionsAmt", lines.line15_form1040_line5b),

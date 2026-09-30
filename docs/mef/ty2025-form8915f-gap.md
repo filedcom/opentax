@@ -1,7 +1,8 @@
 # TY2025 Form 8915-F source and filing boundary
 
 Status: a bounded route files one 2025 disaster and one fully taxable, non-IRA
-2025 distribution elected into income in full. It requires FEMA identity and
+2025 distribution, either included in income in full or spread over three
+years. It requires FEMA identity and
 dates, principal-home and economic-loss review references, eligible-plan review,
 no-prior-distribution and no-repayment reviews, the owner SSN, an issued Form
 1099-R reference and account identity, and a whole-dollar distribution of no
@@ -11,11 +12,16 @@ recipient, payer, account, issue reference, date, gross, and taxable amount and
 a straightforward taxable non-IRA code 2 or 7 route. The bounded Part I source
 currently requires that this be the return's only 1099-R, so line 2(a)
 represents all plan distributions. The old amount-only source is rejected. The
-Form 1099-R calculation supplies Form 1040 lines 5a and 5b; both native and PDF
+Form 1099-R calculation supplies Form 1040 lines 5a and 5b. An explicit
+Form 8915-F treatment link makes the three-year election report one third of
+the 2025 taxable amount, rounded to a whole dollar; a $20,000 distribution
+prints $20,000 on line 5a and $6,667 on line 5b. Both native and PDF
 Form 8915-F exports verify that result against the source again. Native
 `IRS8915F` validates against the local TY2025 v5.4 full-return XSD. The six-page
-packet includes all four Form 8915-F pages; its populated pages were inspected.
-A changed 1099-R taxable amount rejects at full native export. IRS business-rule
+packet includes all four Form 8915-F pages; the full-inclusion and first-year
+spread pages were inspected. A changed 1099-R taxable amount rejects at full
+native export, and either export rejects a linked 1099-R without Form 8915-F.
+IRS business-rule
 and ATS acceptance is unverified.
 
 The [2025 IRS Form 8915-F instructions](https://www.irs.gov/instructions/i8915f)
@@ -35,8 +41,9 @@ rather than an arbitrary current-year income credit. The bounded route removes
 those errors for its one supported current-year plan distribution. Wider routes
 remain active correctness gaps, not approved exclusions.
 
-Next, wider sources still need IRA and Form 8606 cases, income spread over three
-years, prior filed Form 8915-F elections and annual inclusions, repayments and
+Next, wider sources still need IRA and Form 8606 cases, the 2026–27 annual
+inclusions and accepted-filing carryforward for a 2025 three-year election,
+prior filed Form 8915-F elections, repayments and
 attached worksheets, additional disasters, cost basis, early-distribution
 exception handling, and amended-year effects. Review references are structured
 facts; they do not authenticate the underlying documents. No unsupported

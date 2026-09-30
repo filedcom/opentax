@@ -140,7 +140,9 @@ function effectiveTaxableAmount(
     taxable = Math.max(0, taxable - exclusion);
   }
 
-  return taxable;
+  return item.form8915f_treatment === "three_years"
+    ? Math.round(taxable / 3)
+    : taxable;
 }
 
 // Distribution code enum covering all valid 1099-R Box 7 codes for TY2025
@@ -301,6 +303,8 @@ export const itemSchema = z.object({
   carry_to_5329: z.boolean().optional(),
   exclude_4972: z.boolean().optional(),
   exclude_8606_roth: z.boolean().optional(),
+  // The reviewed Form 8915-F source must own this tax-year treatment.
+  form8915f_treatment: z.enum(["full", "three_years"]).optional(),
 
   // QCD fields
   qcd_full: z.boolean().optional(),
@@ -558,6 +562,25 @@ function validateIraRolloverEvidence(item: R1099Item): void {
 // Cross-field validation for a single item
 function validateItem(item: R1099Item): void {
   validateIraRolloverEvidence(item);
+  if (
+    item.form8915f_treatment !== undefined &&
+    (
+      !item.source_document_reference || !item.account_number ||
+      !item.box13_date_of_payment ||
+      item.box2a_taxable_amount !== item.box1_gross_distribution ||
+      item.box7_ira_simple_indicator === true ||
+      !["2", "7"].includes(item.box7_distribution_code) ||
+      item.exclude_4972 === true || item.exclude_8606_roth === true ||
+      item.rollover_code !== undefined || (item.pso_premium ?? 0) > 0 ||
+      item.simplified_method_flag === true ||
+      item.disability_as_wages === true ||
+      item.no_distribution_received === true
+    )
+  ) {
+    throw new Error(
+      "Form 1099-R Form 8915-F treatment needs a fully taxable non-IRA plan distribution",
+    );
+  }
   if (item.exclude_4972 === true && item.no_distribution_received === true) {
     throw new Error(
       "Form 4972 election conflicts with Form 1099-R no_distribution_received",
@@ -822,6 +845,12 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const parsed = inputSchema.parse(input);
     const { f1099rs: r1099s } = parsed;
+    if (
+      ctx.taxYear !== 2025 &&
+      r1099s.some((item) => item.form8915f_treatment !== undefined)
+    ) {
+      throw new Error("Form 8915-F source treatment is limited to TY2025");
+    }
 
     // Cross-field validation
     for (const item of r1099s) {

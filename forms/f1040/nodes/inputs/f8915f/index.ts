@@ -34,7 +34,7 @@ export const itemSchema = z.object({
   source_1099r_account_number: referenceSchema,
   gross_distribution: z.number().int().positive().max(22_000),
   taxable_distribution: z.number().int().positive().max(22_000),
-  full_inclusion_elected: z.literal(true),
+  full_inclusion_elected: z.boolean(),
 }).strict().superRefine((item, context) => {
   const begin = Date.parse(`${item.disaster_begin_date}T00:00:00Z`);
   const declaration = Date.parse(`${item.disaster_declaration_date}T00:00:00Z`);
@@ -72,6 +72,9 @@ export type Form8915FItem = z.infer<typeof itemSchema>;
 export function currentYearPlanLines(raw: Form8915FItem) {
   const item = itemSchema.parse(raw);
   const amount = item.gross_distribution;
+  const thisYear = item.full_inclusion_elected
+    ? amount
+    : Math.round(amount / 3);
   return {
     line1e_available: 22_000,
     line2a_plan_distributions: amount,
@@ -81,9 +84,9 @@ export function currentYearPlanLines(raw: Form8915FItem) {
     line8_plan_qualified: amount,
     line9_cost: 0,
     line10_taxable: amount,
-    line11_current_income: amount,
-    line13_total_income: amount,
-    line15_form1040_line5b: amount,
+    line11_current_income: thisYear,
+    line13_total_income: thisYear,
+    line15_form1040_line5b: thisYear,
   } as const;
 }
 
@@ -113,6 +116,8 @@ export function verifyCurrentYearPlanSource(
       source.box13_date_of_payment === item.distribution_date &&
       source.box1_gross_distribution === item.gross_distribution &&
       source.box2a_taxable_amount === item.taxable_distribution &&
+      source.form8915f_treatment ===
+        (item.full_inclusion_elected ? "full" : "three_years") &&
       source.box7_ira_simple_indicator !== true &&
       ["2", "7"].includes(source.box7_distribution_code) &&
       source.exclude_4972 !== true &&
@@ -131,6 +136,39 @@ export function verifyCurrentYearPlanSource(
   ) {
     throw new Error(
       "Form 8915-F needs one matching fully taxable non-IRA Form 1099-R source",
+    );
+  }
+}
+
+/** Prevent a linked 1099-R from reducing taxable income without its form. */
+export function assertForm8915FSourceLinks(
+  pending: Readonly<Record<string, unknown>>,
+): void {
+  const source = f1099rInputSchema.safeParse(pending.f1099r);
+  if (!source.success) {
+    const raw = pending.f1099r as { f1099rs?: unknown } | undefined;
+    if (
+      Array.isArray(raw?.f1099rs) &&
+      raw.f1099rs.some((item) =>
+        item !== null && typeof item === "object" &&
+        "form8915f_treatment" in item
+      )
+    ) {
+      throw new Error("Form 1099-R Form 8915-F treatment has invalid source");
+    }
+    return;
+  }
+  const linked = source.data.f1099rs.filter((item) =>
+    item.form8915f_treatment !== undefined
+  );
+  if (linked.length === 0) return;
+  const form = inputSchema.safeParse(pending.f8915f);
+  if (
+    linked.length !== 1 || !form.success ||
+    form.data.f8915fs?.length !== 1
+  ) {
+    throw new Error(
+      "Form 1099-R Form 8915-F treatment needs one matching Form 8915-F",
     );
   }
 }

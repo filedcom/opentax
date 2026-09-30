@@ -26,6 +26,7 @@ import { assertBox11CodeESources } from "../../nodes/inputs/k1_partnership/box11
 import { assertBox11CodeKSources } from "../../nodes/inputs/k1_partnership/box11_code_k.ts";
 import { assertBox11CodeSSources } from "../../nodes/inputs/k1_partnership/box11_code_s.ts";
 import { assertBox11Line10Sources } from "../../nodes/inputs/k1_partnership/box11_line10.ts";
+import { assertForm8915FSourceLinks } from "../../nodes/inputs/f8915f/index.ts";
 
 async function fetchWithCache(
   url: string,
@@ -265,6 +266,7 @@ export async function buildPdfBytes(
   if (normalized.f1040) {
     assertF1040FinalHeader(normalized.f1040, filer);
   }
+  assertForm8915FSourceLinks(normalized);
   assertKIncomeClassification(normalized);
   if (filer) {
     assertEitcChildSources(pending, filer);

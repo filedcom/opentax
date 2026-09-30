@@ -47,6 +47,7 @@ const pending = {
       box1_gross_distribution: 20_000,
       box2a_taxable_amount: 20_000,
       box7_distribution_code: "7",
+      form8915f_treatment: "full",
       box13_date_of_payment: "2025-06-01",
     }],
   },
@@ -123,4 +124,21 @@ Deno.test("bounded Form 8915-F PDF rejects a changed Form 1040 amount", () => {
     Error,
     "must match Form 1040",
   );
+});
+
+Deno.test("Form 8915-F PDF leaves the full-inclusion election clear for a three-year spread", () => {
+  const spread = { ...item, full_inclusion_elected: false };
+  const fields = form8915FPdf.instances!({ f8915fs: [spread] }, filer, {
+    ...pending,
+    f1099r: {
+      f1099rs: [{
+        ...pending.f1099r.f1099rs[0],
+        form8915f_treatment: "three_years",
+      }],
+    },
+    f1040: { ...pending.f1040, line5b_pension_taxable: 6_667 },
+  })[0];
+  assertEquals(fields.line11_election, false);
+  assertEquals(fields.line11, 6_667);
+  assertEquals(fields.line15, 6_667);
 });

@@ -1,4 +1,9 @@
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import {
+  assertEquals,
+  assertRejects,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
@@ -50,6 +55,7 @@ const inputs = {
     box1_gross_distribution: 20_000,
     box2a_taxable_amount: 20_000,
     box7_distribution_code: "7",
+    form8915f_treatment: "full",
     box13_date_of_payment: "2025-06-01",
   }],
   f8915f: [disaster],
@@ -101,5 +107,63 @@ Deno.test("reviewed 2025 Form 8915-F plan distribution reaches full native and P
     () => buildMefXml(buildPending(changedSource), filer),
     Error,
     "Form 8915-F",
+  );
+});
+
+Deno.test("2025 Form 8915-F three-year election reports only the first-year pension share", async () => {
+  const spreadInputs = {
+    ...inputs,
+    f1099r: [{ ...inputs.f1099r[0], form8915f_treatment: "three_years" }],
+    f8915f: [{ ...disaster, full_inclusion_elected: false }],
+  };
+  const result = execute(plan, registry, spreadInputs, {
+    taxYear: 2025,
+    formType: "f1040",
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040?.line5a_pension_gross, 20_000);
+  assertEquals(result.pending.f1040?.line5b_pension_taxable, 6_667);
+  const filer = extractFilerIdentity(result.pending.f1040);
+  const xml = buildMefXml(buildPending(result.pending), filer);
+  assertStringIncludes(
+    xml,
+    "<CYQlfySelectedDistriAmt>6667</CYQlfySelectedDistriAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<CYTaxableDistributionsAmt>6667</CYTaxableDistributionsAmt>",
+  );
+  assertEquals(xml.includes("<OptOutSpreadThreeYrsInd>"), false);
+  const xsd = new URL(
+    "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    import.meta.url,
+  ).pathname;
+  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(xmlPath, xml);
+    const validation = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsd, xmlPath],
+      stderr: "piped",
+    }).output();
+    assertEquals(
+      validation.code,
+      0,
+      new TextDecoder().decode(validation.stderr),
+    );
+  } finally {
+    await Deno.remove(xmlPath);
+  }
+  const pdf = await buildPdfBytes(result.pending, filer);
+  assertEquals((await PDFDocument.load(pdf)).getPageCount(), 6);
+  const { f8915f: _missingForm, ...orphan } = result.pending;
+  assertThrows(
+    () => buildMefXml(buildPending(orphan), filer),
+    Error,
+    "needs one matching Form 8915-F",
+  );
+  await assertRejects(
+    () => buildPdfBytes(orphan, filer),
+    Error,
+    "needs one matching Form 8915-F",
   );
 });

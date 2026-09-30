@@ -53,7 +53,7 @@ export const form8915FPdf: PdfFormDescriptor = {
       line8: lines.line8_plan_qualified,
       line9: lines.line9_cost,
       line10: lines.line10_taxable,
-      line11_election: true,
+      line11_election: item.full_inclusion_elected,
       line11: lines.line11_current_income,
       line13: lines.line13_total_income,
       line15: lines.line15_form1040_line5b,

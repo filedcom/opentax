@@ -46,6 +46,7 @@ const pending = {
       box1_gross_distribution: 20_000,
       box2a_taxable_amount: 20_000,
       box7_distribution_code: "7",
+      form8915f_treatment: "full",
       box13_date_of_payment: "2025-06-01",
     }],
   },
