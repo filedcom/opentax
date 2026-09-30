@@ -3515,6 +3515,50 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-ira-late-automatic-waiver",
+    inputs: {
+      general: singleGeneral,
+      f1099r: [{
+        payer_name: "Example IRA Custodian",
+        payer_ein: "12-3456789",
+        account_number: "IRA-2025-LATE",
+        source_document_reference: "issued-1099r-late-2025",
+        box1_gross_distribution: 9_000,
+        box2a_taxable_amount: 0,
+        box7_distribution_code: DistributionCode.Code7,
+        box7_ira_simple_indicator: true,
+        rollover_code: RolloverCode.S,
+        ira_rollover: {
+          source_ira_type: "traditional",
+          destination: "ira",
+          destination_ira_type: "traditional",
+          distributed_on: "2025-06-01",
+          completed_on: "2025-09-15",
+          last_ira_to_ira_rollover_on: null,
+          automatic_late_waiver: {
+            institution_received_on: "2025-06-20",
+            deposit_instructions_on: "2025-06-20",
+            institution_error_only: true,
+            not_inherited_ira_confirmed: true,
+            not_required_minimum_distribution_confirmed: true,
+            rollover_eligibility_review_reference:
+              "synthetic-eligibility-review",
+            institution_receipt_reference: "synthetic-custodian-receipt",
+            deposit_instructions_reference: "synthetic-deposit-instructions",
+            institution_error_reference: "synthetic-custodian-error",
+            deposit_confirmation_reference: "synthetic-deposit-confirmation",
+          },
+        },
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040"],
+    reviewFocus: [
+      "Form 1040 line 4a prints $9,000 and line 4b prints zero with the IRA rollover mark",
+      "The attached explanation lists timely institution receipt and instructions, its error, and the September deposit",
+    ],
+  },
+  {
     id: "single-hsa-code2-excess",
     inputs: {
       general: singleGeneral,
@@ -3887,7 +3931,8 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         taxpayer_can_be_claimed_as_dependent: false,
         childless_eic_review: {
           not_qualifying_child_of_another_taxpayer_verified: true,
-          qualifying_child_status_record_reference: "Synthetic 2025 family review",
+          qualifying_child_status_record_reference:
+            "Synthetic 2025 family review",
         },
       },
       w2: [{

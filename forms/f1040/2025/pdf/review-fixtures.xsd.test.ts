@@ -1225,7 +1225,8 @@ for (const fixture of pdfReviewFixtures) {
       }
       if (
         fixture.id === "single-ira-qualified-plan-rollover" ||
-        fixture.id === "single-ira-2026-rollover"
+        fixture.id === "single-ira-2026-rollover" ||
+        fixture.id === "single-ira-late-automatic-waiver"
       ) {
         assertEquals(result.pending.f1040.line4c_ira_rollover, true);
         assertStringIncludes(
@@ -1237,6 +1238,8 @@ for (const fixture of pdfReviewFixtures) {
           xml,
           fixture.id === "single-ira-qualified-plan-rollover"
             ? "Example 401(k) qualified plan"
+            : fixture.id === "single-ira-late-automatic-waiver"
+            ? "automatic 60-day waiver applies"
             : "2026-01-15",
         );
       }

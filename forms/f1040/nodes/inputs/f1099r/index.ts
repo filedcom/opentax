@@ -291,6 +291,21 @@ export const itemSchema = z.object({
     // Null means the owner's prior 12-month IRA-to-IRA history was reviewed
     // and no earlier rollover was found; omission is not a reviewed answer.
     last_ira_to_ira_rollover_on: z.string().date().nullable(),
+    // Publication 590-A automatic waiver: the institution timely received
+    // funds and instructions, but its error alone delayed the deposit.
+    automatic_late_waiver: z.object({
+      institution_received_on: z.string().date(),
+      deposit_instructions_on: z.string().date(),
+      institution_error_only: z.literal(true),
+      not_inherited_ira_confirmed: z.literal(true),
+      not_required_minimum_distribution_confirmed: z.literal(true),
+      rollover_eligibility_review_reference: z.string().trim().min(1),
+      institution_receipt_reference: z.string().trim().min(1),
+      deposit_instructions_reference: z.string().trim().min(1),
+      institution_error_reference: z.string().trim().min(1),
+      deposit_confirmation_reference: z.string().trim().min(1),
+      qualified_plan_acceptance_reference: z.string().trim().min(1).optional(),
+    }).strict().optional(),
   }).optional(),
   // Code G also covers designated Roth employer contributions. A confirmed
   // direct-rollover fact is needed before checking Form 1040 line 5c(1).
@@ -377,7 +392,8 @@ export function requiresIraDistributionStatement(item: R1099Item): boolean {
   const rollover = item.ira_rollover;
   return rollover !== undefined && isIraRollover(item) &&
     (rollover.destination === "qualified_plan" ||
-      rollover.completed_on.startsWith("2026-"));
+      rollover.completed_on.startsWith("2026-") ||
+      rollover.automatic_late_waiver !== undefined);
 }
 
 export function iraDistributionExplanation(
@@ -410,9 +426,15 @@ export function iraDistributionExplanation(
       } from an IRA on ${rollover.distributed_on}; ${
         Math.round(rolled)
       } was rolled into ${destination} on ${rollover.completed_on}.`;
-    return [
-      `Distribution ${index + 1}: ${opening}`,
-    ];
+    const waiver = rollover.automatic_late_waiver;
+    const waiverText = waiver
+      ? ` The automatic 60-day waiver applies: the institution received the funds on ${waiver.institution_received_on} and deposit instructions on ${waiver.deposit_instructions_on}; institution error alone delayed deposit until ${rollover.completed_on}. The source was reviewed as neither inherited nor an RMD. Reviewed records: ${waiver.rollover_eligibility_review_reference}, ${waiver.institution_receipt_reference}, ${waiver.deposit_instructions_reference}, ${waiver.institution_error_reference}, ${waiver.deposit_confirmation_reference}${
+        waiver.qualified_plan_acceptance_reference
+          ? `, ${waiver.qualified_plan_acceptance_reference}`
+          : ""
+      }.`
+      : "";
+    return [`Distribution ${index + 1}: ${opening}${waiverText}`];
   });
   if (rows.length === 0) return undefined;
   const explanation = rows.join(" ");
@@ -445,6 +467,70 @@ function withinOneYear(prior: string, current: string): boolean {
   const anniversary = new Date(`${prior}T00:00:00Z`);
   anniversary.setUTCFullYear(anniversary.getUTCFullYear() + 1);
   return Date.parse(current) < anniversary.getTime();
+}
+
+function automaticWaiverDeadline(distributedOn: string): number {
+  const deadline = new Date(`${distributedOn}T00:00:00Z`);
+  deadline.setUTCFullYear(deadline.getUTCFullYear() + 1);
+  return deadline.getTime();
+}
+
+function validateAutomaticLateWaiver(item: R1099Item): void {
+  const rollover = item.ira_rollover!;
+  const waiver = rollover.automatic_late_waiver;
+  const distributed = Date.parse(rollover.distributed_on);
+  const completed = Date.parse(rollover.completed_on);
+  const elapsedDays = (completed - distributed) / 86_400_000;
+  const directPlanRollover = rollover.destination === "qualified_plan" &&
+    item.box7_distribution_code === DistributionCode.CodeG;
+  if (!waiver) {
+    if (elapsedDays > 60 && !directPlanRollover) {
+      throw new Error("IRA rollover needs completion within 60 days");
+    }
+    return;
+  }
+  if (elapsedDays <= 60 || directPlanRollover) {
+    throw new Error(
+      "IRA automatic late waiver needs an actual late 60-day rollover",
+    );
+  }
+  if (!item.source_document_reference || !item.account_number) {
+    throw new Error(
+      "IRA automatic late waiver needs its issued Form 1099-R reference and account",
+    );
+  }
+  if (
+    rollover.destination === "qualified_plan" &&
+    !waiver.qualified_plan_acceptance_reference
+  ) {
+    throw new Error(
+      "IRA automatic late waiver to a qualified plan needs plan acceptance evidence",
+    );
+  }
+  if (
+    rollover.destination === "ira" &&
+    waiver.qualified_plan_acceptance_reference
+  ) {
+    throw new Error(
+      "IRA automatic late waiver cannot claim plan acceptance for an IRA destination",
+    );
+  }
+  for (
+    const date of [
+      waiver.institution_received_on,
+      waiver.deposit_instructions_on,
+    ]
+  ) {
+    const elapsed = (Date.parse(date) - distributed) / 86_400_000;
+    if (elapsed < 0 || elapsed > 60 || Date.parse(date) > completed) {
+      throw new Error(
+        "IRA automatic late waiver needs institution receipt and instructions within 60 days",
+      );
+    }
+  }
+  if (completed > automaticWaiverDeadline(rollover.distributed_on)) {
+    throw new Error("IRA automatic late waiver needs deposit within one year");
+  }
 }
 
 function validateIraRolloverEvidence(item: R1099Item): void {
@@ -528,13 +614,7 @@ function validateIraRolloverEvidence(item: R1099Item): void {
         "IRA rollover needs a 2025 distribution completed after payment",
       );
     }
-    if (
-      elapsedDays > 60 &&
-      !(destination === "qualified_plan" &&
-        item.box7_distribution_code === DistributionCode.CodeG)
-    ) {
-      throw new Error("IRA rollover needs completion within 60 days");
-    }
+    validateAutomaticLateWaiver(item);
     if (
       destination === "qualified_plan" &&
       !item.ira_rollover.destination_name

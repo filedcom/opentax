@@ -1122,6 +1122,139 @@ Deno.test("f1099r.compute: IRA rollover needs dated destination evidence", () =>
   );
 });
 
+Deno.test("f1099r.compute: institution-error automatic waiver retains late IRA rollover", () => {
+  const item = minimalIraItem({
+    account_number: "IRA-2025-1",
+    source_document_reference: "issued-1099r-2025-1",
+    rollover_code: RolloverCode.S,
+    ira_rollover: {
+      source_ira_type: "traditional",
+      destination: "ira",
+      destination_ira_type: "traditional",
+      distributed_on: "2025-06-01",
+      completed_on: "2025-09-15",
+      last_ira_to_ira_rollover_on: null,
+      automatic_late_waiver: {
+        institution_received_on: "2025-06-20",
+        deposit_instructions_on: "2025-06-20",
+        institution_error_only: true,
+        not_inherited_ira_confirmed: true,
+        not_required_minimum_distribution_confirmed: true,
+        rollover_eligibility_review_reference: "eligibility-review-1",
+        institution_receipt_reference: "custodian-receipt-1",
+        deposit_instructions_reference: "instructions-1",
+        institution_error_reference: "custodian-error-1",
+        deposit_confirmation_reference: "deposit-1",
+      },
+    },
+  });
+  const input = f1040Input(compute([item]));
+  assertEquals(input.line4a_ira_gross, 10_000);
+  assertEquals(input.line4b_ira_taxable, 0);
+  assertEquals(input.line4c_ira_rollover, true);
+  assertStringIncludes(
+    iraDistributionExplanation([item]) ?? "",
+    "automatic 60-day waiver applies",
+  );
+  assertStringIncludes(
+    iraDistributionExplanation([item]) ?? "",
+    "custodian-error-1",
+  );
+
+  const planItem = {
+    ...item,
+    ira_rollover: {
+      ...item.ira_rollover!,
+      destination: "qualified_plan" as const,
+      destination_ira_type: undefined,
+      destination_name: "Example 401(k)",
+      automatic_late_waiver: {
+        ...item.ira_rollover!.automatic_late_waiver!,
+        qualified_plan_acceptance_reference: "plan-acceptance-1",
+      },
+    },
+  };
+  assertEquals(f1040Input(compute([planItem])).line4c_ira_rollover, true);
+  assertStringIncludes(
+    iraDistributionExplanation([planItem]) ?? "",
+    "plan-acceptance-1",
+  );
+  assertThrows(
+    () =>
+      compute([{
+        ...planItem,
+        ira_rollover: {
+          ...planItem.ira_rollover,
+          automatic_late_waiver: {
+            ...planItem.ira_rollover.automatic_late_waiver,
+            qualified_plan_acceptance_reference: undefined,
+          },
+        },
+      }]),
+    Error,
+    "needs plan acceptance evidence",
+  );
+
+  const waiver = item.ira_rollover!.automatic_late_waiver!;
+  const invalid = [
+    { ...item, source_document_reference: undefined },
+    {
+      ...item,
+      ira_rollover: {
+        ...item.ira_rollover!,
+        automatic_late_waiver: {
+          ...waiver,
+          institution_received_on: "2025-08-01",
+        },
+      },
+    },
+    {
+      ...item,
+      ira_rollover: {
+        ...item.ira_rollover!,
+        automatic_late_waiver: {
+          ...waiver,
+          deposit_instructions_on: "2025-08-01",
+        },
+      },
+    },
+    {
+      ...item,
+      ira_rollover: { ...item.ira_rollover!, completed_on: "2026-07-01" },
+    },
+    {
+      ...item,
+      ira_rollover: { ...item.ira_rollover!, completed_on: "2025-06-25" },
+    },
+    {
+      ...item,
+      ira_rollover: { ...item.ira_rollover!, automatic_late_waiver: undefined },
+    },
+  ];
+  for (const bad of invalid) {
+    assertThrows(() => compute([bad]), Error);
+  }
+  for (
+    const key of [
+      "not_inherited_ira_confirmed",
+      "not_required_minimum_distribution_confirmed",
+    ] as const
+  ) {
+    assertEquals(
+      f1099r.inputSchema.safeParse({
+        f1099rs: [{
+          ...item,
+          ira_rollover: {
+            ...item.ira_rollover!,
+            automatic_late_waiver: { ...waiver, [key]: undefined },
+          },
+        }],
+      }).success,
+      false,
+    );
+  }
+});
+
 Deno.test("f1099r.compute: IRA rollover requires account type and prior-history review", () => {
   const item = minimalIraItem({
     rollover_code: RolloverCode.S,
