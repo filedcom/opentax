@@ -308,7 +308,9 @@ function sectionBVehicleInstance(
 ): Record<string, unknown> {
   const appraisal = item.qualified_appraisal;
   const donee = item.donee_acknowledgment;
-  const acknowledgment = item.vehicle_material_improvement_acknowledgment;
+  const acknowledgment = item.vehicle_material_improvement_acknowledgment ??
+    item.vehicle_significant_use_acknowledgment ??
+    item.vehicle_needy_transfer_acknowledgment;
   const description = item.property_description?.toLowerCase() ?? "";
   const compactDescription = description.replace(/[,\s]/g, "");
   if (
@@ -340,9 +342,14 @@ function sectionBVehicleInstance(
       JSON.stringify(acknowledgment.donee_us_address)
   ) {
     throw new Error(
-      "Form 8283 Section B PDF needs one fully sourced material-improvement vehicle and signed-form review",
+      "Form 8283 Section B PDF needs one fully sourced exception vehicle and signed-form review",
     );
   }
+  const certification = item.vehicle_material_improvement_acknowledgment
+    ? `The donee certified a material improvement: ${item.vehicle_material_improvement_acknowledgment.intended_improvement_description}.`
+    : item.vehicle_significant_use_acknowledgment
+    ? `The donee certified significant charitable use: ${item.vehicle_significant_use_acknowledgment.intended_use_description} for ${item.vehicle_significant_use_acknowledgment.intended_use_duration}.`
+    : "The donee certified a transfer to a needy recipient for significantly below FMV in direct furtherance of its charitable transportation purpose.";
   const person = identity(filer);
   return {
     ...person,
@@ -370,7 +377,7 @@ function sectionBVehicleInstance(
     section_b_donee_city_state_zip: cityStateZip(donee.us_address),
     reduction_statements: [
       `Section B item A: ${item.property_description}; VIN ${item.vehicle_vin}. ` +
-      `The donee certified a material improvement: ${acknowledgment.intended_improvement_description}. ` +
+      `${certification} ` +
       `Appraised FMV and claimed deduction are both $${item.fmv.toFixed(2)}. ` +
       `Appraiser signed ${printedDate(appraisal.signed_date)}. ` +
       `Review the donee-issued acknowledgment ${item.vehicle_acknowledgment_attachment_file_name} ` +
