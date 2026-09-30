@@ -3,10 +3,10 @@
 ## Current checkpoint (2026-09-30)
 
 This is an open release gate, not a list of completed forms. The current source
-registries contain 124 native MeF descriptors and 88 PDF descriptors; the
+registries contain 126 native MeF descriptors and 89 PDF descriptors; the
 [coverage decision queue](docs/mef/ty2025-form1040-coverage-decisions.md) and
-[form audit](docs/mef/ty2025-form1040-form-audit.md) account for all 124
-descriptors and their limits. The `CarryforwardGeneralBusinessCr` descriptor
+[form audit](docs/mef/ty2025-form1040-form-audit.md) retain an earlier
+124-descriptor snapshot and need a refreshed census. The `CarryforwardGeneralBusinessCr` descriptor
 remains filing-blocked. A registered route or focused test does not
 establish source-to-filing coverage; check off only the specific gate proven by
 its recorded evidence.
