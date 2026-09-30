@@ -116,3 +116,5 @@ graph, and XML. The [filled-PDF notes](ty2025-filled-pdf-review-2026-09-29.md)
 retain the page review and SHA-256. Source references are review assertions;
 payer-issued W-2 and payroll bytes, IRS business rules, and ATS acceptance
 remain open.
+Source commit `b2182cc1` passed `deno task test` at 8,947/8,947 with zero
+failures; retain `.state/research/ty2025-full-test-schedule1a-overtime.log`.
