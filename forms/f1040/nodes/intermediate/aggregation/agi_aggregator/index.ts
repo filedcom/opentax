@@ -204,6 +204,8 @@ export const inputSchema = z.object({
   line23_archer_msa_deduction: z.number().nonnegative().optional(),
   // Line 24f — §501(c)(18)(D) pension plan deduction (W-2 Box 12 Code H)
   line24f_501c18d: z.number().nonnegative().optional(),
+  line24k_section67e_excess_deduction: z.number().int().nonnegative()
+    .optional(),
   // Line 11 — Educator expenses (Schedule 1 Part II line 11)
   line11_educator_expenses: z.number().nonnegative().optional(),
   // Line 12 — Employee business expenses (Form 2106)
@@ -407,7 +409,8 @@ function aboveLineDeductionsExceptSli(input: AgiInput): number {
     (input.line18_early_withdrawal ?? 0) +
     (input.line20_ira_deduction ?? 0) +
     (input.line23_archer_msa_deduction ?? 0) +
-    (input.line24f_501c18d ?? 0)
+    (input.line24f_501c18d ?? 0) +
+    (input.line24k_section67e_excess_deduction ?? 0)
   );
 }
 
@@ -677,6 +680,7 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
             (input.line21_student_loan_interest ?? 0) !== 0 ||
             (input.line23_archer_msa_deduction ?? 0) !== 0 ||
             (input.line24f_501c18d ?? 0) !== 0 ||
+            (input.line24k_section67e_excess_deduction ?? 0) !== 0 ||
             (input.line5_schedule_e ?? 0) !== 0 ||
             (input.line6_schedule_f ?? 0) !== 0 ||
             (input.pal_current_loss ?? 0) !== 0 ||

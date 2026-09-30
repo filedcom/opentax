@@ -27,7 +27,8 @@ import { schedule1OtherIncomeRows } from "../../mef/forms/schedule1_other_income
 //   Part II Adjustments:
 //     f2_01–f2_08 = Lines 11–18, respectively
 //     f2_12 = Line 20 IRA deduction; f2_13 = Line 21 student loan interest
-//     f2_15 = Line 23 Archer MSA; f2_25 = Line 24f; f2_30 = Line 26
+//     f2_15 = Line 23 Archer MSA; f2_21 = Line 24f; f2_26 = Line 24k;
+//     f2_30 = Line 26
 
 const fields: ReadonlyArray<PdfFieldEntry> = [
   // ── Page 1: Part I Additional Income ────────────────────────────────────────
@@ -195,6 +196,16 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "text",
+    domainKey: "line24k_section67e_excess_deduction",
+    pdfField: "topmostSubform[0].Page2[0].f2_26[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line25_total_other_adjustments",
+    pdfField: "topmostSubform[0].Page2[0].f2_29[0]",
+  },
+  {
+    kind: "text",
     domainKey: "line26_total_adjustments",
     pdfField: "topmostSubform[0].Page2[0].f2_30[0]",
   },
@@ -204,8 +215,16 @@ export const schedule1Pdf: PdfFormDescriptor = {
   pendingKey: "schedule1",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040s1--2025.pdf",
   filerFields: [
-    { kind: "text", domainKey: "nameLine1", pdfField: "topmostSubform[0].Page1[0].f1_01[0]" },
-    { kind: "text", domainKey: "primarySSN", pdfField: "topmostSubform[0].Page1[0].f1_02[0]" },
+    {
+      kind: "text",
+      domainKey: "nameLine1",
+      pdfField: "topmostSubform[0].Page1[0].f1_01[0]",
+    },
+    {
+      kind: "text",
+      domainKey: "primarySSN",
+      pdfField: "topmostSubform[0].Page1[0].f1_02[0]",
+    },
   ],
   instances(fields) {
     const rows = schedule1OtherIncomeRows(fields);

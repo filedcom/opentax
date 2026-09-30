@@ -7,6 +7,7 @@ import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { scheduleE } from "../schedule_e/index.ts";
 import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
 import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
@@ -114,6 +115,12 @@ export const itemSchema = z.object({
 
   // Box 11 — Final year deductions (excess deductions on termination)
   box11_final_year_deductions: z.number().nonnegative().optional(),
+  box11_code_a_section67e_excess_deduction: z.number().int().positive()
+    .optional(),
+  box11_code_a_statement_reference: z.string().trim().min(1).optional(),
+  box11_final_k1: z.literal(true).optional(),
+  box11_beneficiary_succeeds_to_property: z.literal(true).optional(),
+  beneficiary_ssn: z.string().regex(/^\d{9}$/).optional(),
 
   // Uncoded box 12 cannot identify a Form 6251 line.
   box12_amt: z.number().optional(),
@@ -160,6 +167,26 @@ export const itemSchema = z.object({
         message:
           `K-1 ${key} needs its coded tax-rate or deduction filing route`,
       });
+    }
+  }
+  if (item.box11_code_a_section67e_excess_deduction !== undefined) {
+    for (
+      const key of [
+        "estate_trust_ein",
+        "source_document_reference",
+        "box11_code_a_statement_reference",
+        "box11_final_k1",
+        "box11_beneficiary_succeeds_to_property",
+        "beneficiary_ssn",
+      ] as const
+    ) {
+      if (item[key] === undefined) {
+        ctx.addIssue({
+          code: "custom",
+          path: [key],
+          message: `K-1 box 11 code A needs ${key}`,
+        });
+      }
     }
   }
   if (
@@ -570,6 +597,7 @@ class K1TrustNode extends TaxNode<typeof inputSchema> {
     f1040,
     schedule_d,
     schedule1,
+    agi_aggregator,
     scheduleE,
     form_1116,
     form4952,
@@ -588,6 +616,24 @@ class K1TrustNode extends TaxNode<typeof inputSchema> {
       ...f1040QualDivOutput(k1_trusts),
       ...scheduleDOutput(k1_trusts),
       ...scheduleEOutputs(k1_trusts),
+      ...(() => {
+        const codeAItems = k1_trusts.filter((item) =>
+          item.box11_code_a_section67e_excess_deduction !== undefined
+        );
+        if (codeAItems.length === 0) return [];
+        const amount = codeAItems.reduce(
+          (sum, item) => sum + item.box11_code_a_section67e_excess_deduction!,
+          0,
+        );
+        return [
+          output(schedule1, {
+            line24k_section67e_excess_deduction: amount,
+          }),
+          output(agi_aggregator, {
+            line24k_section67e_excess_deduction: amount,
+          }),
+        ];
+      })(),
       ...form1116Outputs(k1_trusts),
       ...disabledAccessCreditOutputs(k1_trusts),
       ...orphanDrugCreditOutputs(k1_trusts),

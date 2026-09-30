@@ -1,6 +1,7 @@
 import { element, elements } from "../../../mef/xml.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import { schedule1OtherIncomeRows } from "./schedule1_other_income_rows.ts";
+import { inputSchema as trustK1InputSchema } from "../../../nodes/inputs/k1_trust/index.ts";
 
 export interface Fields {
   line1_state_refund?: number | null;
@@ -52,6 +53,8 @@ export interface Fields {
   line20_ira_deduction?: number | null;
   line23_archer_msa_deduction?: number | null;
   line24f_501c18d?: number | null;
+  line24k_section67e_excess_deduction?: number | null;
+  line25_total_other_adjustments?: number | null;
   line26_total_adjustments?: number | null;
 }
 
@@ -89,6 +92,8 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line21_student_loan_interest", "StudentLoanInterestDedAmt"],
   ["line23_archer_msa_deduction", "ArcherMSADeductionAmt"],
   ["line24f_501c18d", "Sect501c18DContriDedAmt"],
+  ["line24k_section67e_excess_deduction", "Section67eExcessDeductionAmt"],
+  ["line25_total_other_adjustments", "TotalOtherAdjustmentsAmt"],
   ["line26_total_adjustments", "TotalAdjustmentsAmt"],
 ];
 
@@ -179,6 +184,53 @@ export const schedule1: MefFormDescriptor<"schedule1", Input> = {
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040s1.pdf",
   build(fields, context) {
+    if (
+      fields.line25_total_other_adjustments !== undefined &&
+      fields.line25_total_other_adjustments !== null &&
+      fields.line25_total_other_adjustments !==
+        (fields.line24f_501c18d ?? 0) +
+          (fields.line24k_section67e_excess_deduction ?? 0)
+    ) {
+      throw new Error(
+        "Schedule 1 line 25 must equal supported line 24 adjustments",
+      );
+    }
+    const k1Source = context?.pending?.k1_trust;
+    const parsedK1 = k1Source === undefined
+      ? undefined
+      : trustK1InputSchema.parse(k1Source);
+    const codeAItems =
+      parsedK1?.k1_trusts.filter((item) =>
+        item.box11_code_a_section67e_excess_deduction !== undefined
+      ) ?? [];
+    if (
+      codeAItems.length > 0 ||
+      (fields.line24k_section67e_excess_deduction ?? 0) > 0
+    ) {
+      const amount = codeAItems.reduce(
+        (sum, item) =>
+          sum + (item.box11_code_a_section67e_excess_deduction ?? 0),
+        0,
+      );
+      const filerSsns = [
+        context?.filer?.primarySSN,
+        context?.filer?.spouse?.ssn,
+      ]
+        .filter((ssn): ssn is string => ssn !== undefined)
+        .map((ssn) => ssn.replaceAll("-", ""));
+      const keys = codeAItems.map((item) =>
+        `${item.estate_trust_ein}:${item.source_document_reference}`
+      );
+      if (
+        amount === 0 || amount !== fields.line24k_section67e_excess_deduction ||
+        new Set(keys).size !== keys.length ||
+        codeAItems.some((item) => !filerSsns.includes(item.beneficiary_ssn!))
+      ) {
+        throw new Error(
+          "Schedule 1 line 24k needs distinct final trust K-1 code A sources owned by this return",
+        );
+      }
+    }
     const unsupported = [
       "line2a_alimony_received",
       "line8g_child_interest_dividends",

@@ -257,3 +257,49 @@ Deno.test("Schedule 1 native elements follow TY2025 schema order", () => {
     );
   }
 });
+
+Deno.test("Schedule 1 line 24k reconciles distinct final trust K-1 sources and beneficiary", () => {
+  const source = {
+    estate_trust_name: "Family Trust",
+    estate_trust_ein: "123456789",
+    source_document_reference: "K-1 A",
+    box11_code_a_section67e_excess_deduction: 500,
+    box11_code_a_statement_reference: "Final deduction statement",
+    box11_final_k1: true,
+    box11_beneficiary_succeeds_to_property: true,
+    beneficiary_ssn: "111223333",
+  };
+  const context = {
+    filer: { primarySSN: "111223333" } as never,
+    pending: { k1_trust: { k1_trusts: [source] } },
+  };
+  const xml = schedule1.build({
+    line24k_section67e_excess_deduction: 500,
+    line26_total_adjustments: 500,
+  }, context);
+  assertStringIncludes(
+    xml,
+    "<Section67eExcessDeductionAmt>500</Section67eExcessDeductionAmt>",
+  );
+  assertThrows(() =>
+    schedule1.build({ line24k_section67e_excess_deduction: 499 }, context)
+  );
+  assertThrows(() =>
+    schedule1.build({
+      line24k_section67e_excess_deduction: 500,
+      line25_total_other_adjustments: 499,
+    }, context)
+  );
+  assertThrows(() =>
+    schedule1.build({ line24k_section67e_excess_deduction: 500 }, {
+      ...context,
+      filer: { primarySSN: "987654321" } as never,
+    })
+  );
+  assertThrows(() =>
+    schedule1.build({ line24k_section67e_excess_deduction: 500 }, {
+      ...context,
+      pending: { k1_trust: { k1_trusts: [source, source] } },
+    })
+  );
+});

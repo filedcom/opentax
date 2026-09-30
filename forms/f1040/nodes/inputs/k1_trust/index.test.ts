@@ -19,6 +19,66 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
+Deno.test("trust K-1 box 11 code A sums distinct final K-1 deductions for Schedule 1 and AGI", () => {
+  const source = {
+    box11_code_a_statement_reference: "Final-year deduction statement",
+    box11_final_k1: true,
+    box11_beneficiary_succeeds_to_property: true,
+    beneficiary_ssn: "111223333",
+  };
+  const result = compute([
+    minimalItem({
+      ...source,
+      estate_trust_ein: "123456789",
+      source_document_reference: "K-1 A",
+      box11_code_a_section67e_excess_deduction: 300,
+    }),
+    minimalItem({
+      ...source,
+      estate_trust_ein: "987654321",
+      source_document_reference: "K-1 B",
+      box11_code_a_section67e_excess_deduction: 200,
+    }),
+  ]);
+  for (const nodeType of ["schedule1", "agi_aggregator"]) {
+    assertEquals(
+      result.outputs.filter((row) => row.nodeType === nodeType).map((row) =>
+        row.fields.line24k_section67e_excess_deduction
+      ),
+      [500],
+    );
+  }
+});
+
+Deno.test("trust K-1 box 11 code A requires final-year beneficiary evidence", () => {
+  const source = {
+    estate_trust_ein: "123456789",
+    source_document_reference: "K-1 A",
+    box11_code_a_section67e_excess_deduction: 500,
+  };
+  assertThrows(() => compute([minimalItem(source)]));
+  assertThrows(() =>
+    compute([
+      minimalItem({
+        ...source,
+        box11_code_a_statement_reference: "Statement",
+        box11_final_k1: true,
+        beneficiary_ssn: "111223333",
+      }),
+    ])
+  );
+  assertThrows(() =>
+    compute([minimalItem({
+      ...source,
+      box11_code_a_statement_reference: "Statement",
+      box11_final_k1: true,
+      box11_beneficiary_succeeds_to_property: true,
+      beneficiary_ssn: "111223333",
+      box11_final_year_deductions: 500,
+    })])
+  );
+});
+
 Deno.test("trust K-1 box 12 code A routes signed line 2j amounts per source", () => {
   const source = {
     estate_trust_ein: "123456789",

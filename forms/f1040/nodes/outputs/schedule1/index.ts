@@ -91,6 +91,9 @@ const inputSchema = z.object({
   line23_archer_msa_deduction: z.number().nonnegative().optional(),
   // Line 24f — §501(c)(18)(D) pension plan deduction
   line24f_501c18d: z.number().nonnegative().optional(),
+  // Line 24k — estate/trust K-1 box 11 code A section 67(e) expense.
+  line24k_section67e_excess_deduction: z.number().int().nonnegative()
+    .optional(),
   // Line 24h — Domestic Production Activities Deduction (DPAD) — LEGACY TY2017 and prior only
   // Repealed by TCJA §13305 effective TY2018+; retained for amended pre-2018 returns
   line24h_dpad: z.number().nonnegative().optional(),
@@ -186,6 +189,7 @@ function totalAdjustments(input: Schedule1Input): number {
     (input.line20_ira_deduction ?? 0) +
     (input.line23_archer_msa_deduction ?? 0) +
     (input.line24f_501c18d ?? 0) +
+    (input.line24k_section67e_excess_deduction ?? 0) +
     (input.line24h_dpad ?? 0)
   );
 }
@@ -198,6 +202,13 @@ function assembleSchedule1(input: Schedule1Input): Record<string, number> {
     line10_total_additional_income,
     line26_total_adjustments,
   };
+  if (
+    input.line24f_501c18d !== undefined ||
+    input.line24k_section67e_excess_deduction !== undefined
+  ) {
+    result.line25_total_other_adjustments = (input.line24f_501c18d ?? 0) +
+      (input.line24k_section67e_excess_deduction ?? 0);
+  }
 
   // Pass-through fields when present
   if (input.line1_state_refund !== undefined) {
@@ -287,6 +298,7 @@ function assembleSchedule1(input: Schedule1Input): Record<string, number> {
     "line21_student_loan_interest",
     "line23_archer_msa_deduction",
     "line24f_501c18d",
+    "line24k_section67e_excess_deduction",
   ] as const satisfies readonly (keyof Schedule1Input)[];
   for (const key of directLines) {
     const value = input[key];

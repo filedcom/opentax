@@ -42,6 +42,14 @@ Deno.test("Schedule 1 PDF uses 2025 fields after the Form 1099-K entry", () => {
   );
   assertEquals(at("line24f_501c18d"), "topmostSubform[0].Page2[0].f2_21[0]");
   assertEquals(
+    at("line24k_section67e_excess_deduction"),
+    "topmostSubform[0].Page2[0].f2_26[0]",
+  );
+  assertEquals(
+    at("line25_total_other_adjustments"),
+    "topmostSubform[0].Page2[0].f2_29[0]",
+  );
+  assertEquals(
     at("line26_total_adjustments"),
     "topmostSubform[0].Page2[0].f2_30[0]",
   );

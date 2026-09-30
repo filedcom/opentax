@@ -268,3 +268,19 @@ The PDF SHA-256 is
 `5862f159b811adc8ba7130b69531fdeef33ef16527c05f9a8c8aa08be87bdcb4`.
 Activity losses, box 9 deductions, issuer bytes, IRS business rules, and ATS
 acceptance remain open.
+
+The `single-final-trust-k1-section67e-deduction` packet was generated with
+the other thirty-seven prepared cases in
+`.state/research/ty2025-filled-pdf-review/2026-09-30-v48/`. A synthetic final
+K-1 with trust EIN `123456789`, code A statement, and succeeding beneficiary
+SSN `111223333` supplies a $500 section 67(e) excess deduction. The graph
+and native XML reconcile Schedule 1 lines 24k, 25, and 26 to $500 and Form
+1040 line 10 to $500; AGI is $29,500. The 38 prepared returns pass local
+TY2025 v5.4 XSD, and the focused node, native, PDF-field, and fixture suite
+passes 164/164. All four pages of the corrected packet were rendered and
+inspected. The first `v47` render exposed a blank Schedule 1 line 25;
+`v48` prints $500 on lines 24k, 25, and 26 and on Form 1040 line 10. The
+PDF SHA-256 is
+`a4029986322d355e8d619ebe7a1e986dd3ba1b82fbe77d38b5c9c08384ad5bac`.
+Issuer bytes, other box 11 codes, IRS business rules, and ATS acceptance
+remain open.

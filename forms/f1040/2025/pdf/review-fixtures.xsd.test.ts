@@ -31,6 +31,30 @@ for (const fixture of pdfReviewFixtures) {
       });
       assertEquals(result.diagnostics, []);
       const xml = buildMefXml(buildPending(result.pending), fixture.filer);
+      if (fixture.id === "single-final-trust-k1-section67e-deduction") {
+        assertEquals(
+          result.pending.schedule1.line24k_section67e_excess_deduction,
+          500,
+        );
+        assertEquals(result.pending.schedule1.line26_total_adjustments, 500);
+        assertEquals(
+          result.pending.schedule1.line25_total_other_adjustments,
+          500,
+        );
+        assertEquals(result.pending.f1040.line11_agi, 29_500);
+        assertStringIncludes(
+          xml,
+          "<Section67eExcessDeductionAmt>500</Section67eExcessDeductionAmt>",
+        );
+        assertStringIncludes(
+          xml,
+          "<TotalAdjustmentsAmt>500</TotalAdjustmentsAmt>",
+        );
+        assertStringIncludes(
+          xml,
+          "<TotalOtherAdjustmentsAmt>500</TotalOtherAdjustmentsAmt>",
+        );
+      }
       if (fixture.id === "single-child-unearned-income") {
         assertStringIncludes(xml, "<IRS8615 ");
         assertEquals(xml.includes("<IRS8960 "), false);

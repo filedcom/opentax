@@ -40,6 +40,13 @@ Deno.test("schedule1: empty input emits zero totals", () => {
   assertEquals(f.line26_total_adjustments, 0);
 });
 
+Deno.test("schedule1: section 67(e) excess deduction prints on line 24k and line 26", () => {
+  const f = fields({ line24k_section67e_excess_deduction: 500 });
+  assertEquals(f.line24k_section67e_excess_deduction, 500);
+  assertEquals(f.line25_total_other_adjustments, 500);
+  assertEquals(f.line26_total_adjustments, 500);
+});
+
 // ─── Part I — Additional Income ───────────────────────────────────────────────
 
 Deno.test("schedule1: state tax refund included in additional income", () => {

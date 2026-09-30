@@ -719,6 +719,31 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-final-trust-k1-section67e-deduction",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(30_000, 3_000, "Example Employer", "12-3456789")],
+      k1_trust: [{
+        estate_trust_name: "Family Trust",
+        estate_trust_ein: "123456789",
+        source_document_reference: "Synthetic final 2025 trust K-1",
+        box11_code_a_section67e_excess_deduction: 500,
+        box11_code_a_statement_reference:
+          "Synthetic final-year deduction statement",
+        box11_final_k1: true,
+        box11_beneficiary_succeeds_to_property: true,
+        beneficiary_ssn: "111223333",
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule1"],
+    reviewFocus: [
+      "The final trust K-1 code A $500 deduction prints on Schedule 1 line 24k and line 26",
+      "Form 1040 line 10 deducts $500 and line 11 AGI is $29,500",
+      "The XML and PDF each include this beneficiary deduction once",
+    ],
+  },
+  {
     id: "single-trust-k1-box5-schedule-e",
     inputs: {
       general: singleGeneral,
@@ -751,9 +776,24 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         box7_rental_real_estate: 200,
         box8_other_rental: 100,
         box6_8_activity_statement: [
-          { box: "6", activity_name: "Shop", statement_reference: "Synthetic shop statement", income: 300 },
-          { box: "7", activity_name: "House", statement_reference: "Synthetic house statement", income: 200 },
-          { box: "8", activity_name: "Equipment", statement_reference: "Synthetic equipment statement", income: 100 },
+          {
+            box: "6",
+            activity_name: "Shop",
+            statement_reference: "Synthetic shop statement",
+            income: 300,
+          },
+          {
+            box: "7",
+            activity_name: "House",
+            statement_reference: "Synthetic house statement",
+            income: 200,
+          },
+          {
+            box: "8",
+            activity_name: "Equipment",
+            statement_reference: "Synthetic equipment statement",
+            income: 100,
+          },
         ],
       }],
     },
