@@ -723,7 +723,7 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
             (input.pal_prior_unallowed ?? 0) !== 0,
         },
       }),
-      this.outputNodes.output(schedule1a, { magi: agi }),
+      this.outputNodes.output(schedule1a, { magi: Math.round(agi) }),
       // General supplies filing status. Form 8880 line 8 adds Form 2555
       // exclusions back to final AGI before applying its credit-rate table.
       this.outputNodes.output(form8880, {

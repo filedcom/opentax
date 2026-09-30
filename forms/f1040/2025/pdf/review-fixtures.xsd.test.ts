@@ -1,4 +1,4 @@
-import { assertEquals, assertStringIncludes } from "@std/assert";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { registry } from "../registry.ts";
@@ -31,6 +31,46 @@ for (const fixture of pdfReviewFixtures) {
       });
       assertEquals(result.diagnostics, []);
       const xml = buildMefXml(buildPending(result.pending), fixture.filer);
+      if (fixture.id === "single-1099nec-trade-business-tips-schedule1a") {
+        const line15 = result.pending.schedule1.line15_se_deduction as number;
+        const expected = Math.min(12_000, 10_000 - Math.round(line15));
+        assertEquals(expected, 9_294);
+        assertEquals(
+          result.pending.f1040.line13b_additional_deductions,
+          expected,
+        );
+        assertStringIncludes(
+          xml,
+          `<QualifiedTipsTradeOrBusAmt>${expected}</QualifiedTipsTradeOrBusAmt>`,
+        );
+        assertStringIncludes(
+          xml,
+          `<TotalQualifiedTipsAmt>${expected}</TotalQualifiedTipsAmt>`,
+        );
+        assertThrows(
+          () =>
+            buildMefXml(
+              buildPending({
+                ...result.pending,
+                schedule1a: {
+                  ...result.pending.schedule1a,
+                  qualified_trade_business_tips: [{
+                    ...(
+                      result.pending.schedule1a
+                        .qualified_trade_business_tips as Array<
+                          Record<string, unknown>
+                        >
+                    )[0],
+                    amount: 11_999,
+                  }],
+                },
+              }),
+              fixture.filer,
+            ),
+          Error,
+          "do not match filed 1099-NEC",
+        );
+      }
       if (fixture.id === "single-partnership-code-l-r-ordinary") {
         assertEquals(result.pending.schedule1.line4_other_gains, 1_000);
         assertEquals(result.pending.f1040.line8_additional_income, 1_000);

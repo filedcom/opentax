@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { element, elements } from "../../../mef/xml.ts";
 import {
-  calculateEmployeeTipsSchedule1A,
+  calculateQualifiedTipsSchedule1A,
   calculateSeniorOnlySchedule1A,
   calculateVehicleInterestSchedule1A,
   calculateW2OvertimeSchedule1A,
@@ -12,12 +12,14 @@ import {
 } from "../../../nodes/intermediate/forms/schedule1a/index.ts";
 import { inputSchema as w2InputSchema } from "../../../nodes/inputs/w2/index.ts";
 import { inputSchema as form4137InputSchema } from "../../../nodes/intermediate/forms/form4137/index.ts";
+import { inputSchema as necInputSchema } from "../../../nodes/inputs/f1099nec/index.ts";
+import { scheduleC } from "../../../nodes/inputs/schedule_c/index.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 const form1040ReconciliationSchema = z.object({
   filing_status: z.nativeEnum(FilingStatus).optional(),
-  line11_agi: z.number().int().optional(),
+  line11_agi: z.number().finite().optional(),
   line13b_additional_deductions: z.number().int().nonnegative().optional(),
   schedule1a_line37_senior_deduction: z.number().int().nonnegative().optional(),
   taxpayer_ssn: z.string().optional(),
@@ -65,15 +67,18 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
     (input.qualified_employee_tips?.length ?? 0) > 0 ||
     (input.qualified_form4137_tips?.length ?? 0) > 0 ||
     (input.form4070_reports?.length ?? 0) > 0 ||
-    (input.employer_tip_statements?.length ?? 0) > 0
+    (input.employer_tip_statements?.length ?? 0) > 0 ||
+    (input.qualified_trade_business_tips?.length ?? 0) > 0
   ) {
-    const lines = calculateEmployeeTipsSchedule1A(
+    const lines = calculateQualifiedTipsSchedule1A(
       { taxYear: 2025, formType: "f1040" },
       input,
     );
     const entries = input.qualified_employee_tips ?? [];
     const form4137Entries = input.qualified_form4137_tips ?? [];
-    const filedW2s = w2InputSchema.parse(context?.pending?.w2).w2s;
+    const filedW2s = context?.pending?.w2
+      ? w2InputSchema.parse(context.pending.w2).w2s
+      : [];
     const sourceW2s = filedW2s.filter((item) =>
       item.box13_statutory_employee !== true &&
       (item.qualified_tips_box14_review !== undefined ||
@@ -231,11 +236,90 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
     if (
       form1040.filing_status !== input.filing_status ||
       !allRecipientsMatch ||
-      form1040.line11_agi !== lines.line1_agi
+      Math.round(form1040.line11_agi ?? NaN) !== lines.line1_agi
     ) {
       throw new Error(
         "Schedule 1-A tips identity and Part I/VI do not reconcile to Form 1040",
       );
+    }
+    if ((input.qualified_trade_business_tips?.length ?? 0) > 0) {
+      const filed = necInputSchema.parse(context?.pending?.f1099nec).f1099necs;
+      const sources = filed.filter((item) => item.qualified_tips_review);
+      const reports = input.qualified_trade_business_tips!;
+      if (
+        sources.length !== reports.length ||
+        !reports.every((report) =>
+          sources.some((source) =>
+            source.for_routing === "schedule_c" &&
+            source.schedule_c_business_reference ===
+              report.business_reference &&
+            source.recipient_ssn?.replaceAll("-", "") ===
+              report.recipient_ssn.replaceAll("-", "") &&
+            source.payer_name === report.payer_name &&
+            source.payer_tin.replaceAll("-", "") === report.payer_tin &&
+            source.box1_nec === report.box1_nec &&
+            JSON.stringify(source.qualified_tips_review) === JSON.stringify({
+                amount: report.amount,
+                occupation_code: report.occupation_code,
+                occupation_review_reference: report.occupation_review_reference,
+                tip_records_reference: report.tip_records_reference,
+                included_in_box1: report.included_in_box1,
+                no_other_allocable_deductions:
+                  report.no_other_allocable_deductions,
+                no_other_allocable_deductions_review_reference:
+                  report.no_other_allocable_deductions_review_reference,
+              })
+          )
+        )
+      ) {
+        throw new Error(
+          "Schedule 1-A business tips do not match filed 1099-NEC sources",
+        );
+      }
+      const businessOutput = scheduleC.compute(
+        { taxYear: 2025, formType: "f1040" },
+        context?.pending?.schedule_c as Parameters<typeof scheduleC.compute>[1],
+      ).outputs.find((item) => item.nodeType === "schedule1a");
+      const businessRows = businessOutput?.fields
+        .qualified_tips_schedule_c_businesses;
+      const scheduleOne = z.object({
+        line15_se_deduction: z.number().optional(),
+        line6_schedule_f: z.number().optional(),
+        line16_sep_simple: z.number().optional(),
+        line17_se_health_insurance: z.number().optional(),
+      })
+        .passthrough().parse(context?.pending?.schedule1);
+      const line15 = scheduleOne.line15_se_deduction ?? 0;
+      if (
+        JSON.stringify(businessRows) !==
+          JSON.stringify(input.qualified_tips_schedule_c_businesses) ||
+        line15 !== (input.qualified_tips_se_deduction ?? 0) ||
+        (scheduleOne.line6_schedule_f ?? 0) !== 0 ||
+        (scheduleOne.line16_sep_simple ?? 0) !== 0 ||
+        (scheduleOne.line17_se_health_insurance ?? 0) !== 0 ||
+        !reports.every((report) => {
+          const ssn = report.recipient_ssn.replaceAll("-", "");
+          return matchesRecipient(
+            ssn,
+            input.taxpayer_ssn,
+            form1040.taxpayer_ssn,
+            form1040.taxpayer_ssn_valid_for_employment,
+            form1040.taxpayer_ssn_issued_before_due_date,
+            form1040.taxpayer_tin_issued_by_due_date,
+          ) || (input.filing_status === FilingStatus.MFJ && matchesRecipient(
+            ssn,
+            input.spouse_ssn,
+            form1040.spouse_ssn,
+            form1040.spouse_ssn_valid_for_employment,
+            form1040.spouse_ssn_issued_before_due_date,
+            form1040.spouse_tin_issued_by_due_date,
+          ));
+        })
+      ) {
+        throw new Error(
+          "Schedule 1-A business tips do not match Schedule C or SE",
+        );
+      }
     }
     part1 = lines;
     total += lines.line13_tips;
@@ -243,6 +327,9 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
       element("QualifiedTipsWagesAmt", lines.line4a_w2_tips),
       element("QualifiedTipsForm4137Amt", lines.line4b_form4137_tips),
       element("QualifiedTipsEmployeeAmt", lines.line4c_employee_tips),
+      lines.line5_trade_business_tips > 0
+        ? element("QualifiedTipsTradeOrBusAmt", lines.line5_trade_business_tips)
+        : "",
       element("TotalQualifiedTipsAmt", lines.line6_total_tips),
       element("SmallerTipsOrMaxDedAmt", lines.line7_capped_tips),
       element("TipsFilingStatusThrshldAmt", lines.line9_threshold),
@@ -296,7 +383,7 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
     if (
       form1040.filing_status !== input.filing_status ||
       !ownersMatch ||
-      form1040.line11_agi !== lines.line1_agi
+      Math.round(form1040.line11_agi ?? NaN) !== lines.line1_agi
     ) {
       throw new Error(
         "Schedule 1-A overtime identity and Part I/VI do not reconcile to Form 1040",
@@ -343,7 +430,7 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
           ssn?.replaceAll("-", "") === loan.borrower_ssn.replaceAll("-", "")
         )
       ) ||
-      form1040.line11_agi !== lines.line1_agi
+      Math.round(form1040.line11_agi ?? NaN) !== lines.line1_agi
     ) {
       throw new Error(
         "Schedule 1-A vehicle interest identity and Part I/VI do not reconcile to Form 1040",
@@ -414,7 +501,7 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
         form1040.spouse_ssn_issued_before_due_date,
         form1040.spouse_tin_issued_by_due_date,
       ) ||
-      form1040.line11_agi !== lines.line1_agi
+      Math.round(form1040.line11_agi ?? NaN) !== lines.line1_agi
     ) {
       throw new Error(
         "Schedule 1-A senior identity and Part I/VI do not reconcile to Form 1040",
@@ -439,7 +526,7 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
   }
   if (
     !part1 || form1040.filing_status !== input.filing_status ||
-    form1040.line11_agi !== part1.line1_agi ||
+    Math.round(form1040.line11_agi ?? NaN) !== part1.line1_agi ||
     form1040.line13b_additional_deductions !== total ||
     (form1040.schedule1a_line37_senior_deduction ?? 0) !== senior
   ) {

@@ -50,6 +50,42 @@ function schedCGrossReceipts(
   );
 }
 
+Deno.test("reviewed NEC tips retain the payer source and reject an amount outside box 1", () => {
+  const review = {
+    amount: 4_000,
+    occupation_code: "102",
+    occupation_review_reference: "occupation record",
+    tip_records_reference: "2025 POS ledger",
+    included_in_box1: true,
+    no_other_allocable_deductions: true,
+    no_other_allocable_deductions_review_reference: "Schedule 1 review",
+  };
+  const result = compute([minimalItem({
+    box1_nec: 5_000,
+    qualified_tips_review: review,
+  })]);
+  assertEquals(
+    findOutput(result, "schedule1a")?.fields.qualified_trade_business_tips,
+    [{
+      business_reference: "business-1",
+      recipient_ssn: "987654321",
+      payer_name: "Test Payer",
+      payer_tin: "123456789",
+      box1_nec: 5_000,
+      ...review,
+    }],
+  );
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box1_nec: 3_999,
+        qualified_tips_review: review,
+      })]),
+    Error,
+    "qualified tips need Schedule C income included in box 1",
+  );
+});
+
 // ---------------------------------------------------------------------------
 // 1. Input Schema Validation
 // ---------------------------------------------------------------------------

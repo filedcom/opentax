@@ -124,6 +124,32 @@ export const inputSchema = claimInputSchema.extend({
       occupation_code: z.string().regex(/^\d{3}$/),
     }).strict(),
   ).optional(),
+  qualified_trade_business_tips: z.array(
+    z.object({
+      business_reference: z.string().trim().min(1),
+      recipient_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+      payer_name: z.string().trim().min(1),
+      payer_tin: z.string().regex(/^\d{9}$/),
+      box1_nec: z.number().int().positive(),
+      amount: z.number().int().positive(),
+      occupation_code: z.string().regex(/^\d{3}$/),
+      occupation_review_reference: z.string().trim().min(1),
+      tip_records_reference: z.string().trim().min(1),
+      included_in_box1: z.literal(true),
+      no_other_allocable_deductions: z.literal(true),
+      no_other_allocable_deductions_review_reference: z.string().trim().min(1),
+    }).strict(),
+  ).optional(),
+  qualified_tips_schedule_c_businesses: z.array(
+    z.object({
+      business_reference: z.string().trim().min(1).optional(),
+      proprietor_recipient: z.enum(["T", "S"]).optional(),
+      line31_net_profit: z.number(),
+    }).strict(),
+  ).optional(),
+  qualified_tips_se_deduction: z.number().nonnegative().optional(),
+  qualified_tips_schedule_f_profit: z.number().optional(),
+  qualified_tips_farm_optional_method: z.boolean().optional(),
   magi: z.number().optional(),
   filing_status: z.nativeEnum(FilingStatus).optional(),
   taxpayer_ssn: z.string().optional(),
@@ -151,12 +177,13 @@ export const seniorOnlyLinesSchema = z.object({
 
 export type SeniorOnlyLines = z.infer<typeof seniorOnlyLinesSchema>;
 
-export const employeeTipsLinesSchema = z.object({
+export const qualifiedTipsLinesSchema = z.object({
   line1_agi: z.number().int(),
   line3_magi: z.number().int(),
   line4a_w2_tips: z.number().int().nonnegative(),
   line4b_form4137_tips: z.number().int().nonnegative(),
-  line4c_employee_tips: z.number().int().positive(),
+  line4c_employee_tips: z.number().int().nonnegative(),
+  line5_trade_business_tips: z.number().int().nonnegative(),
   line6_total_tips: z.number().int().positive(),
   line7_capped_tips: z.number().int().positive(),
   line9_threshold: z.number().int().positive(),
@@ -167,8 +194,8 @@ export const employeeTipsLinesSchema = z.object({
   line38_total: z.number().int().positive(),
 }).strict();
 
-export type EmployeeTipsLines = z.infer<
-  typeof employeeTipsLinesSchema
+export type QualifiedTipsLines = z.infer<
+  typeof qualifiedTipsLinesSchema
 >;
 
 export const w2OvertimeLinesSchema = z.object({
@@ -407,6 +434,69 @@ function tipsOvertimePhaseout(input: Schedule1AInput): number | undefined {
   return Math.floor(Math.max(0, input.magi - threshold) / 1_000) * 100;
 }
 
+/** TY2025 line 5, limited to one cash-basis Schedule C business with NEC tips. */
+export function qualifiedTradeBusinessTips(input: Schedule1AInput): number {
+  const reports = input.qualified_trade_business_tips ?? [];
+  if (reports.length === 0) return 0;
+  const businesses = input.qualified_tips_schedule_c_businesses ?? [];
+  if (
+    businesses.length !== 1 ||
+    (input.qualified_tips_schedule_f_profit ?? 0) !== 0 ||
+    input.qualified_tips_farm_optional_method === true
+  ) {
+    throw new Error(
+      "Schedule 1-A trade or business tips need one Schedule C business and no farm income",
+    );
+  }
+  const business = businesses[0];
+  const owner = business.proprietor_recipient === "T"
+    ? input.taxpayer_ssn
+    : business.proprietor_recipient === "S" &&
+        input.filing_status === FilingStatus.MFJ
+    ? input.spouse_ssn
+    : undefined;
+  const validSsn = business.proprietor_recipient === "T"
+    ? input.taxpayer_has_valid_ssn
+    : input.spouse_has_valid_ssn;
+  if (!owner || validSsn !== true || !business.business_reference) {
+    throw new Error(
+      "Schedule 1-A trade or business tips need a named Schedule C owner with a valid SSN",
+    );
+  }
+  const seen = new Set<string>();
+  let reported = 0;
+  for (const report of reports) {
+    const key = `${report.business_reference}:${
+      report.recipient_ssn.replaceAll("-", "")
+    }:${report.payer_tin}`;
+    if (seen.has(key)) {
+      throw new Error(
+        "Schedule 1-A trade or business tips repeat a 1099-NEC payer",
+      );
+    }
+    seen.add(key);
+    if (
+      report.business_reference !== business.business_reference ||
+      report.recipient_ssn.replaceAll("-", "") !== owner.replaceAll("-", "") ||
+      report.amount > report.box1_nec ||
+      !isQualifiedTipsOccupationCode(report.occupation_code)
+    ) {
+      throw new Error(
+        "Schedule 1-A trade or business tips do not match the owner, business, 1099-NEC, or qualified occupation",
+      );
+    }
+    reported += report.amount;
+  }
+  const profit = Math.round(business.line31_net_profit);
+  const seDeduction = Math.round(input.qualified_tips_se_deduction ?? 0);
+  if (seDeduction > Math.max(0, profit)) {
+    throw new Error(
+      "Schedule 1-A Schedule SE deduction exceeds business profit",
+    );
+  }
+  return Math.min(reported, Math.max(0, profit - seDeduction));
+}
+
 export function qualifiedTipsDeduction(input: Schedule1AInput): number {
   const taxpayerSsn = input.taxpayer_ssn?.replaceAll("-", "");
   const spouseSsn = input.spouse_ssn?.replaceAll("-", "");
@@ -426,7 +516,10 @@ export function qualifiedTipsDeduction(input: Schedule1AInput): number {
     },
     0,
   );
-  const tips = Math.min(eligibleTips, QUALIFIED_TIPS_CAP);
+  const tips = Math.min(
+    eligibleTips + qualifiedTradeBusinessTips(input),
+    QUALIFIED_TIPS_CAP,
+  );
   const phaseout = tipsOvertimePhaseout(input);
   if (
     tips === 0 ||
@@ -592,11 +685,11 @@ export function calculateSeniorOnlySchedule1A(
   });
 }
 
-/** Qualified W-2 and Form 4137 tips, reconciled per employer. */
-export function calculateEmployeeTipsSchedule1A(
+/** Qualified employee and Schedule C tips, reconciled to their source rows. */
+export function calculateQualifiedTipsSchedule1A(
   ctx: NodeContext,
   rawInput: Schedule1AInput,
-): EmployeeTipsLines {
+): QualifiedTipsLines {
   if (ctx.taxYear !== 2025) {
     throw new Error("Schedule 1-A tips filing needs tax year 2025");
   }
@@ -607,8 +700,9 @@ export function calculateEmployeeTipsSchedule1A(
     );
   }
   const rows = qualifiedEmployeeTipRows(input);
-  if (rows.length === 0) {
-    throw new Error("Schedule 1-A employee tips filing needs qualified tips");
+  const businessTips = qualifiedTradeBusinessTips(input);
+  if (rows.length === 0 && businessTips === 0) {
+    throw new Error("Schedule 1-A tips filing needs qualified tips");
   }
   if (
     input.magi === undefined || !Number.isSafeInteger(input.magi) ||
@@ -667,10 +761,11 @@ export function calculateEmployeeTipsSchedule1A(
       throw new Error("Schedule 1-A tips need the recipient's valid SSN");
     }
   }
-  const tips = rows.reduce(
+  const employeeTips = rows.reduce(
     (sum, entry) => sum + entry.amount,
     0,
   );
+  const tips = employeeTips + businessTips;
   const threshold = input.filing_status === FilingStatus.MFJ
     ? TIPS_OVERTIME_PHASEOUT_THRESHOLD_MFJ
     : TIPS_OVERTIME_PHASEOUT_THRESHOLD;
@@ -684,12 +779,13 @@ export function calculateEmployeeTipsSchedule1A(
       "Schedule 1-A tips deduction does not reconcile to the source graph",
     );
   }
-  return employeeTipsLinesSchema.parse({
+  return qualifiedTipsLinesSchema.parse({
     line1_agi: input.magi,
     line3_magi: input.magi,
     line4a_w2_tips: rows.length === 1 ? rows[0].reported_amount : 0,
     line4b_form4137_tips: rows.length === 1 ? rows[0].form4137_amount : 0,
-    line4c_employee_tips: tips,
+    line4c_employee_tips: employeeTips,
+    line5_trade_business_tips: businessTips,
     line6_total_tips: tips,
     line7_capped_tips: capped,
     line9_threshold: threshold,

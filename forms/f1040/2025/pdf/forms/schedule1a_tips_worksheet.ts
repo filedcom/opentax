@@ -32,8 +32,12 @@ export async function appendSchedule1ATipsWorksheet(
     fields.line4a_w2_tips !== 0 ||
     fields.line4b_form4137_tips !== 0 ||
     fields.line4c_employee_tips !== total ||
-    fields.line6_total_tips !== total ||
-    fields.line7_capped_tips !== Math.min(total, 25_000)
+    fields.line6_total_tips !== total +
+        (fields.line5_trade_business_tips as number | undefined ?? 0) ||
+    fields.line7_capped_tips !== Math.min(
+        total + (fields.line5_trade_business_tips as number | undefined ?? 0),
+        25_000,
+      )
   ) {
     throw new Error(
       "Schedule 1-A tips worksheet does not reconcile to Part II",

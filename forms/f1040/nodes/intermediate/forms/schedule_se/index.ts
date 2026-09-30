@@ -11,6 +11,7 @@ import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import { form8959 } from "../form8959/index.ts";
 import { form8995 } from "../form8995/index.ts";
 import { form7206 } from "../form7206/index.ts";
+import { schedule1a } from "../schedule1a/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 import {
@@ -110,6 +111,7 @@ class ScheduleSENode extends TaxNode<typeof inputSchema> {
       form8959,
       form8995,
       form7206,
+      schedule1a,
     ]);
   }
 
@@ -158,6 +160,12 @@ class ScheduleSENode extends TaxNode<typeof inputSchema> {
 
     const outputs: NodeOutput[] = [
       source(line13),
+      this.outputNodes.output(schedule1a, {
+        qualified_tips_se_deduction: line13,
+        qualified_tips_schedule_f_profit: input.net_profit_schedule_f ?? 0,
+        qualified_tips_farm_optional_method:
+          input.farm_optional_method_elected === true,
+      }),
       this.outputNodes.output(schedule2, { line4_se_tax: line12 }),
       this.outputNodes.output(schedule1, { line15_se_deduction: line13 }),
       this.outputNodes.output(agi_aggregator, { line15_se_deduction: line13 }),

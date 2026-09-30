@@ -623,3 +623,16 @@ and pages 5–6 inspected after correction. The `v79` PDF SHA-256 is
 the packet is at
 `.state/research/ty2025-filled-pdf-review/2026-09-30-v79/`. Issued W-2
 and tip records, IRS business rules, and ATS remain open.
+
+The `single-1099nec-trade-business-tips-schedule1a` source return has a
+12-page `v85` PDF. Its page contact sheet was inspected; Schedule 1-A page 1
+was rendered at full resolution and shows zero on employee lines 4a–4c,
+$9,294 on line 5 and lines 6/7/13, and $9,294 AGI on Part I. Form 1040 line
+13b prints $9,294; Schedule C line 31 prints $10,000, and Schedule 1 line
+15 prints the $706 rounded SE deduction. The matching native full return
+passes local TY2025 v5.4 XSD. The PDF SHA-256 is
+`7ed925ddc0c9aacac604166dcf21683eeab3714fffd3b0d637a5266862be2000`;
+the source/pending JSON, XML, PDF, contact sheet, and detailed page render
+are retained at `.state/research/ty2025-filled-pdf-review/2026-09-30-v85/`.
+This synthetic review does not authenticate the payer or tip-record bytes or
+establish IRS acceptance.

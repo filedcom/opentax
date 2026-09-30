@@ -1,12 +1,94 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
-import { claimInputSchema, schedule1a } from "./index.ts";
+import {
+  claimInputSchema,
+  qualifiedTradeBusinessTips,
+  schedule1a,
+} from "./index.ts";
 import { standard_deduction } from "../../worksheets/standard_deduction/index.ts";
 import { FilingStatus } from "../../../types.ts";
 
 const ctx = { taxYear: 2025, formType: "f1040" } as const;
 const TAXPAYER_SSN = "111223333";
+
+Deno.test("schedule1a: NEC trade tips stop at one business profit after SE deduction", () => {
+  const source = {
+    filing_status: FilingStatus.Single,
+    taxpayer_ssn: TAXPAYER_SSN,
+    taxpayer_has_valid_ssn: true,
+    qualified_tips_schedule_c_businesses: [{
+      business_reference: "events",
+      proprietor_recipient: "T" as const,
+      line31_net_profit: 10_000,
+    }],
+    qualified_tips_se_deduction: 706.4775,
+    qualified_trade_business_tips: [{
+      business_reference: "events",
+      recipient_ssn: TAXPAYER_SSN,
+      payer_name: "Events Payer",
+      payer_tin: "123456789",
+      box1_nec: 18_000,
+      amount: 12_000,
+      occupation_code: "102",
+      occupation_review_reference: "occupation record",
+      tip_records_reference: "POS ledger",
+      included_in_box1: true as const,
+      no_other_allocable_deductions: true as const,
+      no_other_allocable_deductions_review_reference: "Schedule 1 review",
+    }],
+  };
+  assertEquals(qualifiedTradeBusinessTips(source), 9_294);
+  assertEquals(
+    qualifiedTradeBusinessTips({
+      ...source,
+      qualified_trade_business_tips: [{
+        ...source.qualified_trade_business_tips[0],
+        amount: 5_000,
+      }],
+    }),
+    5_000,
+  );
+  assertEquals(
+    qualifiedTradeBusinessTips({
+      ...source,
+      qualified_tips_schedule_c_businesses: [{
+        ...source.qualified_tips_schedule_c_businesses[0],
+        line31_net_profit: -1_000,
+      }],
+      qualified_tips_se_deduction: 0,
+    }),
+    0,
+  );
+  assertThrows(
+    () =>
+      qualifiedTradeBusinessTips({
+        ...source,
+        qualified_tips_schedule_c_businesses: [
+          ...source.qualified_tips_schedule_c_businesses,
+          {
+            business_reference: "other",
+            proprietor_recipient: "T",
+            line31_net_profit: 1_000,
+          },
+        ],
+      }),
+    Error,
+    "one Schedule C business",
+  );
+  assertThrows(
+    () =>
+      qualifiedTradeBusinessTips({
+        ...source,
+        qualified_trade_business_tips: [{
+          ...source.qualified_trade_business_tips[0],
+          recipient_ssn: "999887777",
+        }],
+      }),
+    Error,
+    "do not match the owner",
+  );
+});
 
 function tips(amount: number, employee_ssn = TAXPAYER_SSN) {
   return [{

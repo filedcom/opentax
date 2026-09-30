@@ -1,6 +1,6 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
-  calculateEmployeeTipsSchedule1A,
+  calculateQualifiedTipsSchedule1A,
   calculateSeniorOnlySchedule1A,
   calculateVehicleInterestSchedule1A,
   calculateW2OvertimeSchedule1A,
@@ -372,7 +372,7 @@ Deno.test("Schedule 1-A W-2 overtime enforces source ownership and duplicate emp
 });
 
 Deno.test("Schedule 1-A single-employer W-2 tips source fills Part II and reconciles", () => {
-  const lines = calculateEmployeeTipsSchedule1A(
+  const lines = calculateQualifiedTipsSchedule1A(
     { taxYear: 2025, formType: "f1040" },
     singleTips,
   );
@@ -445,7 +445,7 @@ Deno.test("Schedule 1-A Form 4070 replaces capped W-2 box 7 for the same employe
       }],
     },
   };
-  const lines = calculateEmployeeTipsSchedule1A(
+  const lines = calculateQualifiedTipsSchedule1A(
     { taxYear: 2025, formType: "f1040" },
     source,
   );
@@ -504,7 +504,7 @@ Deno.test("Schedule 1-A Form 4070 replaces capped W-2 box 7 for the same employe
   );
   assertThrows(
     () =>
-      calculateEmployeeTipsSchedule1A(
+      calculateQualifiedTipsSchedule1A(
         { taxYear: 2025, formType: "f1040" },
         {
           ...source,
@@ -622,7 +622,7 @@ Deno.test("Schedule 1-A employer statement replaces W-2 box 7 and rejects compet
       }],
     },
   };
-  const lines = calculateEmployeeTipsSchedule1A(
+  const lines = calculateQualifiedTipsSchedule1A(
     { taxYear: 2025, formType: "f1040" },
     source,
   );
@@ -645,7 +645,7 @@ Deno.test("Schedule 1-A employer statement replaces W-2 box 7 and rejects compet
   );
   assertThrows(
     () =>
-      calculateEmployeeTipsSchedule1A(
+      calculateQualifiedTipsSchedule1A(
         { taxYear: 2025, formType: "f1040" },
         { ...source, employer_tip_statements: [statement, statement] },
       ),
@@ -654,7 +654,7 @@ Deno.test("Schedule 1-A employer statement replaces W-2 box 7 and rejects compet
   );
   assertThrows(
     () =>
-      calculateEmployeeTipsSchedule1A(
+      calculateQualifiedTipsSchedule1A(
         { taxYear: 2025, formType: "f1040" },
         {
           ...source,
@@ -680,7 +680,7 @@ Deno.test("Schedule 1-A employer statement replaces W-2 box 7 and rejects compet
 });
 
 Deno.test("Schedule 1-A W-2 tips applies the $25,000 cap and whole-thousand phaseout", () => {
-  const lines = calculateEmployeeTipsSchedule1A(
+  const lines = calculateQualifiedTipsSchedule1A(
     { taxYear: 2025, formType: "f1040" },
     {
       ...singleTips,
@@ -732,7 +732,7 @@ Deno.test("Schedule 1-A combines two identified W-2 tip employers on line 4c", (
       ],
     },
   };
-  const lines = calculateEmployeeTipsSchedule1A(
+  const lines = calculateQualifiedTipsSchedule1A(
     { taxYear: 2025, formType: "f1040" },
     source,
   );
@@ -840,7 +840,7 @@ Deno.test("Schedule 1-A uses the greater of W-2 and Form 4137 tips for one emplo
       }],
     },
   };
-  const lines = calculateEmployeeTipsSchedule1A(
+  const lines = calculateQualifiedTipsSchedule1A(
     { taxYear: 2025, formType: "f1040" },
     input,
   );
@@ -905,7 +905,7 @@ Deno.test("Schedule 1-A combines Form 4137 and W-2 employers without double coun
       occupation_code: "102",
     }],
   };
-  const lines = calculateEmployeeTipsSchedule1A(
+  const lines = calculateQualifiedTipsSchedule1A(
     { taxYear: 2025, formType: "f1040" },
     input,
   );

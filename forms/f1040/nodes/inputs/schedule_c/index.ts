@@ -8,6 +8,7 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule_se } from "../../intermediate/forms/schedule_se/index.ts";
+import { schedule1a } from "../../intermediate/forms/schedule1a/index.ts";
 import { form8995 } from "../../intermediate/forms/form8995/index.ts";
 import { internalForm8990ScheduleCPass } from "../../intermediate/forms/form8990/schedule-c-pass.ts";
 import { sameStagedScheduleCSource } from "../../intermediate/forms/form8990/two-stage.ts";
@@ -132,6 +133,7 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
     schedule1,
     agi_aggregator,
     schedule_se,
+    schedule1a,
     form8995,
     form8582,
     form6251,
@@ -225,6 +227,13 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
       )
     );
     const netProfits = atRisk.map((result) => result.atRiskNet);
+    outputs.push(this.outputNodes.output(schedule1a, {
+      qualified_tips_schedule_c_businesses: items.map((item, index) => ({
+        business_reference: item.business_reference,
+        proprietor_recipient: item.proprietor_recipient,
+        line31_net_profit: netProfits[index],
+      })),
+    }));
     outputs.push(this.outputNodes.output(form7206, {
       schedule_c_source: {
         unadjusted_source: Object.keys(input).every((key) =>

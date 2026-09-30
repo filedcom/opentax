@@ -3,6 +3,36 @@ import { PDFDocument } from "pdf-lib";
 import { FilingStatus } from "../../../nodes/types.ts";
 import { irs1040Pdf } from "./f1040.ts";
 import { schedule1aPdf } from "./schedule1a.ts";
+import { pdfReviewFixtures } from "../review-fixtures.ts";
+import { execute } from "../../../../../core/runtime/executor.ts";
+import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
+import { registry } from "../../registry.ts";
+
+Deno.test("2025 Schedule 1-A PDF maps the source-backed NEC line 5 and zero employee line", () => {
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-1099nec-trade-business-tips-schedule1a"
+  )!;
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    { ...fixture.inputs },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  const projected = schedule1aPdf.projectFields?.(
+    result.pending.schedule1a,
+    result.pending,
+  );
+  assertEquals(projected?.line4c_employee_tips, 0);
+  assertEquals(projected?.line5_trade_business_tips, 9_294);
+  assertEquals(projected?.line6_total_tips, 9_294);
+  assertEquals(
+    schedule1aPdf.fields.find((field) =>
+      field.domainKey === "line5_trade_business_tips"
+    )?.pdfField,
+    "form1[0].Page1[0].f1_13[0]",
+  );
+});
 
 const source = {
   filing_status: FilingStatus.MFJ,

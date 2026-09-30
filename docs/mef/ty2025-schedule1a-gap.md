@@ -37,7 +37,7 @@ two-page PDF field map and inspected synthetic full-return packets.
   for the W-2 box 7-only route, and an
   occupation code outside the IRS list reject. Other employer statement variants,
   multiple occupations at one employer, other special wage-base handling,
-  self-employment tips, multiple Form 4137 employers in a
+  Form 1099-MISC/K business tips, multiple Schedule C businesses, multiple Form 4137 employers in a
   full packet, and underlying record authentication remain open.
 - Part III now supports employer-identified `FLSA Overtime Premium` in W-2
   box 14 when a source-referenced review confirms the employee is covered and
@@ -254,3 +254,24 @@ The source reference and review facts do not authenticate the employer's
 actual statement bytes. More than one statement for an employer is not yet
 resolved. The [2025 Form 1040 instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
 permit this employer statement method.
+
+The `single-1099nec-trade-business-tips-schedule1a` fixture exercises a
+bounded line 5 route under the [2025 Schedule 1-A instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
+and [Notice 2025-69](https://www.irs.gov/irb/2025-50_IRB). One 1099-NEC
+box 1 contains $18,000 of compensation; a reviewed point-of-sale record
+identifies $12,000 as qualified tips in occupation 102, linked to the
+taxpayer and one cash-basis Schedule C business. Schedule C line 31 is
+$10,000. The filed half-SE-tax deduction rounds to $706, so line 5 is
+limited to $9,294. Employee line 4c prints zero; lines 5/6/7/13/38 and
+Form 1040 line 13b print $9,294. The source graph and full native return
+pass local TY2025 v5.4 XSD. Native and PDF preflight reject a changed NEC
+tip amount, wrong owner, duplicate payer, multiple Schedule C businesses,
+farm income, or additional allocable Schedule 1 lines 16/17. The review
+affirms there are no other deductions allocable to this business. The
+12-page `v85` filled PDF was viewed as a page contact sheet and its
+Schedule 1-A page 1 at full resolution (SHA-256
+`7ed925ddc0c9aacac604166dcf21683eeab3714fffd3b0d637a5266862be2000`).
+Payer-issued 1099 and tip-record bytes are not authenticated. Multiple
+businesses and the 1099-MISC/1099-K line 5 sources still need their own
+owner-specific net-profit and deduction allocation. IRS business rules and
+ATS acceptance remain open.

@@ -1,6 +1,6 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import {
-  calculateEmployeeTipsSchedule1A,
+  calculateQualifiedTipsSchedule1A,
   calculateSeniorOnlySchedule1A,
   calculateVehicleInterestSchedule1A,
   calculateW2OvertimeSchedule1A,
@@ -40,6 +40,12 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "text",
     domainKey: "line4c_employee_tips",
     pdfField: `${page1}.f1_12[0]`,
+    printZero: true,
+  },
+  {
+    kind: "text",
+    domainKey: "line5_trade_business_tips",
+    pdfField: `${page1}.f1_13[0]`,
   },
   {
     kind: "text",
@@ -243,9 +249,10 @@ export const schedule1aPdf: PdfFormDescriptor = {
       (input.qualified_employee_tips?.length ?? 0) > 0 ||
       (input.qualified_form4137_tips?.length ?? 0) > 0 ||
       (input.form4070_reports?.length ?? 0) > 0 ||
-      (input.employer_tip_statements?.length ?? 0) > 0
+      (input.employer_tip_statements?.length ?? 0) > 0 ||
+      (input.qualified_trade_business_tips?.length ?? 0) > 0
     ) {
-      const lines = calculateEmployeeTipsSchedule1A(
+      const lines = calculateQualifiedTipsSchedule1A(
         { taxYear: 2025, formType: "f1040" },
         input,
       );

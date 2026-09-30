@@ -10,6 +10,7 @@ import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
 import { scheduleC as schedule_c } from "../schedule_c/index.ts";
+import { schedule1a } from "../../intermediate/forms/schedule1a/index.ts";
 import { schedule_f } from "../../intermediate/forms/schedule_f/index.ts";
 import { form8919 } from "../../intermediate/forms/form8919/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
@@ -26,10 +27,31 @@ export const itemSchema = z.object({
     .enum(["schedule_c", "schedule_f", "form_8919", "schedule_1_line_8j"])
     .optional(),
   schedule_c_business_reference: z.string().trim().min(1).optional(),
+  qualified_tips_review: z.object({
+    amount: z.number().int().positive(),
+    occupation_code: z.string().regex(/^\d{3}$/),
+    occupation_review_reference: z.string().trim().min(1),
+    tip_records_reference: z.string().trim().min(1),
+    included_in_box1: z.literal(true),
+    no_other_allocable_deductions: z.literal(true),
+    no_other_allocable_deductions_review_reference: z.string().trim().min(1),
+  }).strict().optional(),
   nonbusiness_activity_description: z.string().trim().min(1).max(100)
     .optional(),
   farm_id: z.string().min(1).optional(),
 }).superRefine((item, ctx) => {
+  if (
+    item.qualified_tips_review &&
+    (item.for_routing !== "schedule_c" ||
+      item.qualified_tips_review.amount > (item.box1_nec ?? 0))
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["qualified_tips_review"],
+      message:
+        "1099-NEC qualified tips need Schedule C income included in box 1",
+    });
+  }
   if ((item.box3_golden_parachute ?? 0) > (item.box1_nec ?? 0)) {
     ctx.addIssue({
       code: "custom",
@@ -175,6 +197,7 @@ class F1099necNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([
     schedule_c,
+    schedule1a,
     schedule_f,
     form8919,
     schedule1,
@@ -223,11 +246,30 @@ class F1099necNode extends TaxNode<typeof inputSchema> {
         }]
         : []
     );
+    const qualifiedTips = parsed.f1099necs.flatMap((item) =>
+      item.qualified_tips_review
+        ? [{
+          business_reference: item.schedule_c_business_reference!,
+          recipient_ssn: item.recipient_ssn!,
+          payer_name: item.payer_name,
+          payer_tin: item.payer_tin.replaceAll("-", ""),
+          box1_nec: item.box1_nec!,
+          ...item.qualified_tips_review,
+        }]
+        : []
+    );
     return {
       outputs: [
         ...parsed.f1099necs.flatMap((item) => this.processItem(item)),
         ...(scheduleCSources.length > 0
           ? [output(schedule_c, { f1099nec_receipt_sources: scheduleCSources })]
+          : []),
+        ...(qualifiedTips.length > 0
+          ? [
+            output(schedule1a, {
+              qualified_trade_business_tips: qualifiedTips,
+            }),
+          ]
           : []),
         ...(nonbusinessIncome > 0
           ? [
