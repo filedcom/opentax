@@ -4,6 +4,7 @@ import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { registry } from "../2025/registry.ts";
 import { buildMefXml } from "../2025/mef/builder.ts";
 import { buildPending } from "../2025/mef/pending.ts";
+import { buildPdfBytes } from "../2025/pdf/builder.ts";
 import { irs1040Pdf } from "../2025/pdf/forms/f1040.ts";
 import { schedule1Pdf } from "../2025/pdf/forms/schedule1.ts";
 import { scheduleEPdf } from "../2025/pdf/forms/schedule_e.ts";
@@ -228,7 +229,11 @@ function runPassiveTrust(income: number) {
   }, { taxYear: 2025, formType: "f1040" });
 }
 
-function runPassiveK1s(partnershipRent: number, sCorpBusiness: number) {
+function runPassiveK1s(
+  partnershipRent: number,
+  sCorpBusiness: number,
+  propertyRent = 0,
+) {
   const reviewReference = {
     activity_statement_reference: "Synthetic 2025 K-1 activity statement",
     participation_workpaper_reference: "Synthetic 2025 participation review",
@@ -237,6 +242,25 @@ function runPassiveK1s(partnershipRent: number, sCorpBusiness: number) {
   return execute(plan, registry, {
     general,
     w2: [w2],
+    ...(propertyRent > 0
+      ? {
+        schedule_e: [{
+          tsj: "T",
+          activity_id: "combined-rental",
+          property_description: "Reviewed combined rental",
+          street_address: "123 Rental Road",
+          city: "Austin",
+          state: "TX",
+          zip: "78701",
+          property_type: 1,
+          activity_type: "B",
+          fair_rental_days: 365,
+          personal_use_days: 0,
+          rent_income: propertyRent,
+          form_1099_payments_made: false,
+        }],
+      }
+      : {}),
     k1_partnership: [{
       partnership_name: "Example Rental Partnership",
       partnership_ein: "123456789",
@@ -368,6 +392,55 @@ Deno.test("EIC Worksheet 1 counts reviewed partnership and S-corporation K-1 inc
     Error,
     "recipient needs the filer or joint spouse",
   );
+});
+
+Deno.test("EIC reconciles passive K-1s with a Schedule E property on both PDF pages", async () => {
+  const atLimit = runPassiveK1s(4_000, 4_000, 3_950);
+  assertEquals(atLimit.diagnostics, []);
+  assertEquals(atLimit.pending.eitc.investment_income_floor, 11_950);
+  assertEquals(atLimit.pending.f1040.line27_eitc !== undefined, true);
+  const overLimit = runPassiveK1s(4_000, 4_000, 3_951);
+  assertEquals(overLimit.pending.eitc.investment_income_floor, 11_951);
+  assertEquals(overLimit.pending.f1040.line27_eitc, undefined);
+  const filer = extractFilerIdentity(atLimit.pending.f1040);
+  const xml = buildMefXml(buildPending(atLimit.pending), filer);
+  assertEquals(
+    xml.includes("<TotalPassiveIncomeAmt>8000</TotalPassiveIncomeAmt>"),
+    true,
+  );
+  assertEquals(
+    xml.includes("<TotalSuppIncomeOrLossAmt>11950</TotalSuppIncomeOrLossAmt>"),
+    true,
+  );
+  const xsd = new URL(
+    "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    import.meta.url,
+  ).pathname;
+  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(xmlPath, xml);
+    const validation = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsd, xmlPath],
+      stderr: "piped",
+    }).output();
+    assertEquals(
+      validation.code,
+      0,
+      new TextDecoder().decode(validation.stderr),
+    );
+  } finally {
+    await Deno.remove(xmlPath);
+  }
+  const fields = scheduleEPdf.projectFields?.(
+    atLimit.pending.schedule_e,
+    atLimit.pending,
+  );
+  assertEquals(fields?.line26, 3_950);
+  assertEquals(fields?.k1_line32, 8_000);
+  assertEquals(fields?.trust_line41, 11_950);
+  assertEquals(scheduleEPdf.pageIndices?.(fields ?? {}), [0, 1]);
+  const pdf = await buildPdfBytes(atLimit.pending, filer);
+  assertEquals(new TextDecoder().decode(pdf.slice(0, 5)), "%PDF-");
 });
 
 Deno.test("EIC Worksheet 1 counts trust K-1 passive Schedule E income", async () => {

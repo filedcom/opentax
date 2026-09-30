@@ -152,10 +152,12 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 export const scheduleEPdf: PdfFormDescriptor = {
   pendingKey: "schedule_e",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040se--2025.pdf",
-  pageIndices: (projected) =>
-    projected.trust_line37 !== undefined || projected.k1_line32 !== undefined
-      ? [1]
-      : [0],
+  pageIndices: (projected) => {
+    const partI = projected.line26 !== undefined;
+    const partII = projected.trust_line37 !== undefined ||
+      projected.k1_line32 !== undefined;
+    return partI && partII ? [0, 1] : partII ? [1] : [0];
+  },
   fields,
   filerFields: [
     text("fullName", `${page}.f1_1[0]`),
@@ -168,14 +170,17 @@ export const scheduleEPdf: PdfFormDescriptor = {
     if (Object.keys(raw).length === 0 && k1Rows.length === 0) return {};
     const input = inputSchema.parse(raw);
     const trustRows = input.estate_trust_rows ?? [];
+    let k1Fields: Record<string, unknown> | undefined;
+    let k1Total = 0;
     if (k1Rows.length > 0) {
       if (
-        k1Rows.length > 4 || input.schedule_es.length > 0 ||
+        k1Rows.length > 4 || input.schedule_es.length > 1 ||
         input.farm_rental_net !== undefined ||
         input.farm_rental_gross !== undefined ||
         input.rental_income !== undefined ||
         input.royalty_income !== undefined ||
         trustRows.length > 2 ||
+        (input.schedule_es.length > 0 && trustRows.length > 0) ||
         !scheduleE.build(input, { pending: allPending })
       ) {
         throw new Error(
@@ -187,6 +192,7 @@ export const scheduleEPdf: PdfFormDescriptor = {
         (sum, row) => sum + row.nonpassiveIncome,
         0,
       );
+      k1Total = passive + nonpassive;
       const trustPassive = trustRows.reduce(
         (sum, row) => sum + (row.passive_income ?? 0),
         0,
@@ -195,7 +201,7 @@ export const scheduleEPdf: PdfFormDescriptor = {
         (sum, row) => sum + (row.other_income ?? 0),
         0,
       );
-      return {
+      k1Fields = {
         ...Object.fromEntries(k1Rows.flatMap((row, index) => [
           [`k1_${index}_name`, row.name],
           [`k1_${index}_code`, row.code],
@@ -211,8 +217,8 @@ export const scheduleEPdf: PdfFormDescriptor = {
         ])),
         k1_total_passive_income: passive || undefined,
         k1_total_nonpassive_income: nonpassive || undefined,
-        k1_line30: passive + nonpassive,
-        k1_line32: passive + nonpassive,
+        k1_line30: k1Total,
+        k1_line32: k1Total,
         trust_total_passive_income: trustPassive || undefined,
         trust_total_other_income: trustOther || undefined,
         trust_line35: trustRows.length > 0
@@ -221,8 +227,9 @@ export const scheduleEPdf: PdfFormDescriptor = {
         trust_line37: trustRows.length > 0
           ? trustPassive + trustOther
           : undefined,
-        trust_line41: passive + nonpassive + trustPassive + trustOther,
+        trust_line41: k1Total + trustPassive + trustOther,
       };
+      if (input.schedule_es.length === 0) return k1Fields;
     }
     if (trustRows.length > 0) {
       if (
@@ -328,7 +335,10 @@ export const scheduleEPdf: PdfFormDescriptor = {
       ? Math.max(0, net) - allowedLoss
       : net - (item.prior_unallowed_passive_operating ?? 0);
     const schedule1Line5 = allPending.schedule1?.line5_schedule_e;
-    if (schedule1Line5 !== deductibleNet) {
+    const filedLine5 = Array.isArray(schedule1Line5)
+      ? schedule1Line5.reduce((sum, value) => sum + value, 0)
+      : schedule1Line5;
+    if (filedLine5 !== deductibleNet + k1Total) {
       throw new Error(
         "Schedule E PDF line 26 must match finalized Schedule 1 line 5",
       );
@@ -337,6 +347,7 @@ export const scheduleEPdf: PdfFormDescriptor = {
       ? undefined
       : `${item.street_address}, ${item.city}, ${item.state} ${item.zip}`;
     return {
+      ...k1Fields,
       payments_made: item.form_1099_payments_made,
       forms_1099_filed: item.form_1099_payments_made
         ? item.form_1099_filed
@@ -372,6 +383,9 @@ export const scheduleEPdf: PdfFormDescriptor = {
       line24: Math.max(0, net),
       line25: allowedLoss > 0 ? allowedLoss : undefined,
       line26: deductibleNet,
+      trust_line41: k1Fields === undefined
+        ? undefined
+        : deductibleNet + k1Total,
     };
   },
   instances(fields, filer, allPending) {
