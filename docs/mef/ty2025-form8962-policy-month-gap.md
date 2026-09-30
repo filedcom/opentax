@@ -43,6 +43,29 @@ send net PTC on line 26 to Schedule 3 line 9 and excess APTC repayment on line
 29 to Schedule 2 line 1a. The checked-in TY2025 v5.4 schema has the native
 `MonthlyPTCCalculationGrp` and those total fields.
 
+## One-policy APTC cents
+
+The [2025 Form 8962 instructions](https://www.irs.gov/instructions/i8962)
+require whole-dollar electronic entries. For a single ordinary APTC policy
+without shared allocation, SLCSP correction, move review, or marriage
+worksheet, the source graph now rounds the monthly Form 1095-A columns A/B/C
+before calculating lines 12–23. A full-year policy with unchanged premium and
+SLCSP instead uses and rounds each annual line 33 total once for line 11. Raw
+Marketplace values remain in the pending source record. Native MeF independently
+reconciles the raw annual/monthly totals, then checks the filed whole-dollar
+rows or line 11, total PTC and APTC, Schedule 2 or 3, and Form 1040.
+
+Five full-return cents cases pass local TY2025 v5.4 XSD: monthly net PTC,
+annual line 11 net PTC, monthly excess-APTC repayment, below-100% APTC-only
+repayment, and MFS APTC-only annual repayment. The first three build PDF
+packets; a raw premium changed across a rounding boundary is rejected at
+native export. The monthly $800.51/$700.49/$300.51 source yields $8,400 PTC,
+$3,612 APTC, and $4,788 net PTC. Replacing monthly APTC with $750.51 yields
+$612 excess repayment. Cents handling for multiple policies, corrected-copy
+source pairs, shared allocations, marriage, QSEHRA, and Pub. 974 remains open,
+as do source authenticity, PDF visual review, the final bulk test, IRS
+business-rule results, and ATS acceptance.
+
 ## No-APTC positive PTC: bounded monthly route
 
 The one-filer, one-policy 200%-FPL monthly path now has a full-return source

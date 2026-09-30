@@ -991,6 +991,55 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
       delete form8962Fields.monthly_slcsps;
       delete form8962Fields.monthly_aptcs;
     }
+    const aptcCentsPolicy = allocatedItems.length === 1 &&
+      allocatedItems[0].monthly_premiums !== undefined &&
+      allocatedItems[0].monthly_slcsps !== undefined &&
+      allocatedItems[0].monthly_aptcs !== undefined &&
+      allocatedItems[0].monthly_aptcs.some((amount) => amount > 0) &&
+      allocatedItems[0].shared_policy_periods === undefined &&
+      allocatedItems[0].slcsp_corrections === undefined &&
+      allocatedItems[0].slcsp_review_periods === undefined &&
+      allocatedItems[0].alternative_marriage_owner === undefined &&
+      sourceStatements.length === 1 &&
+      ([
+        ...allocatedItems[0].monthly_premiums,
+        ...allocatedItems[0].monthly_slcsps,
+        ...allocatedItems[0].monthly_aptcs,
+      ].some((amount) => !Number.isInteger(amount)) ||
+        [
+          allocatedItems[0].annual_premium,
+          allocatedItems[0].annual_slcsp,
+          allocatedItems[0].annual_aptc,
+        ].some((amount) => amount !== undefined && !Number.isInteger(amount)));
+    if (aptcCentsPolicy) {
+      const policy = allocatedItems[0];
+      if (form8962Fields.annual_line11_eligible === true) {
+        if (
+          policy.annual_premium === undefined ||
+          policy.annual_slcsp === undefined ||
+          policy.annual_aptc === undefined
+        ) {
+          throw new Error(
+            "Form 8962 annual APTC cents need all three Form 1095-A line 33 totals",
+          );
+        }
+        form8962Fields.annual_premium = Math.round(policy.annual_premium);
+        form8962Fields.annual_slcsp = Math.round(policy.annual_slcsp);
+        form8962Fields.annual_aptc = Math.round(policy.annual_aptc);
+        delete form8962Fields.monthly_premiums;
+        delete form8962Fields.monthly_slcsps;
+        delete form8962Fields.monthly_aptcs;
+      } else {
+        form8962Fields.monthly_premiums = policy.monthly_premiums!.map(
+          Math.round,
+        );
+        form8962Fields.monthly_slcsps = policy.monthly_slcsps!.map(Math.round);
+        form8962Fields.monthly_aptcs = policy.monthly_aptcs!.map(Math.round);
+        delete form8962Fields.annual_premium;
+        delete form8962Fields.annual_slcsp;
+        delete form8962Fields.annual_aptc;
+      }
+    }
     if (sharedAllocations.length > 0) {
       form8962Fields.shared_policy_allocations = sharedAllocations;
     }

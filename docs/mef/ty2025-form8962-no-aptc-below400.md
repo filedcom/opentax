@@ -112,8 +112,10 @@ $9,606 premium, $8,406 SLCSP, and $8,406 PTC for a lawfully present filer
 below 100% FPL. Both cents fixtures reconcile to Schedule 3 and Form 1040,
 pass local TY2025 v5.4 XSD, and build PDF packets. The focused source, MeF,
 and full-return run passes 91 cases. Cents handling for multiple policies,
-APTC, shared allocations, marriage, and Pub. 974 remains open; so do visual
-PDF review, the final bulk regression, IRS business rules, and ATS.
+corrected-copy pairs, shared allocations, marriage, QSEHRA, and Pub. 974
+remains open; the bounded one-policy APTC route is documented in the
+[policy-month gap](ty2025-form8962-policy-month-gap.md). Visual PDF review,
+the final bulk regression, IRS business rules, and ATS also remain open.
 
 ## State emergency-order protection
 

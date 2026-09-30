@@ -363,7 +363,16 @@ function reconcileBelow100AptcOnly(
   const rows = fields.monthly_ptc_rows;
   const povertyLine = reconcilePovertyTable(fields, context);
   const agi = form1040.data.line11_agi;
-  const aptc = policy?.monthly_aptcs?.reduce((sum, amount) => sum + amount, 0);
+  const sourceAptc = policy?.monthly_aptcs?.reduce(
+    (sum, amount) => sum + amount,
+    0,
+  );
+  const aptc = rows == null
+    ? Math.round(policy?.annual_aptc ?? sourceAptc ?? 0)
+    : policy?.monthly_aptcs?.reduce(
+      (sum, amount) => sum + Math.round(amount),
+      0,
+    );
   if (
     context.filer.filingStatus !== FilingStatus.Single ||
     general.data.filing_status !== SourceFilingStatus.Single ||
@@ -376,7 +385,8 @@ function reconcileBelow100AptcOnly(
     policy.slcsp_review_periods || policy.alternative_marriage_owner ||
     !policy.monthly_premiums || !policy.monthly_slcsps ||
     !policy.monthly_aptcs || aptc === undefined || aptc <= 0 ||
-    (policy.annual_aptc !== undefined && policy.annual_aptc !== aptc) ||
+    (policy.annual_aptc !== undefined &&
+      Math.abs(policy.annual_aptc - (sourceAptc ?? 0)) > 0.01) ||
     fields.household_size !== 1 || fields.dependents_modified_agi !== 0 ||
     fields.taxpayer_modified_agi !== agi || fields.household_income !== agi ||
     fields.federal_poverty_line !== povertyLine ||
@@ -396,7 +406,7 @@ function reconcileBelow100AptcOnly(
       : rows.length !== 12 || fields.annual_aptc !== undefined ||
         rows.some((row, index) =>
           row.month_code !== MONTH_CODES[index] ||
-          row.aptc !== policy.monthly_aptcs![index] ||
+          row.aptc !== Math.round(policy.monthly_aptcs![index]) ||
           row.premium !== undefined || row.slcsp !== undefined ||
           row.allowed_credit !== undefined
         ))
@@ -427,7 +437,11 @@ function reconcileMfsNoExceptionAptcOnly(
   const policies = current1095AStatements(source.data.f1095as);
   const policy = policies[0];
   const ssn = context.filer.primarySSN.replaceAll("-", "");
-  const aptc = policy?.monthly_aptcs?.reduce((sum, amount) => sum + amount, 0);
+  const sourceAptc = policy?.monthly_aptcs?.reduce(
+    (sum, amount) => sum + amount,
+    0,
+  );
+  const aptc = Math.round(policy?.annual_aptc ?? sourceAptc ?? 0);
   const povertyLine = reconcilePovertyTable(fields, context);
   const agi = form1040.data.line11_agi;
   const povertyPct = Math.floor(agi / povertyLine * 100);
@@ -454,14 +468,23 @@ function reconcileMfsNoExceptionAptcOnly(
     !policy.monthly_aptcs || aptc === undefined || aptc <= 0 ||
     policy.monthly_premiums.some((value) => value <= 0) ||
     policy.monthly_aptcs.some((value) => value <= 0) ||
-    (policy.annual_aptc !== undefined && policy.annual_aptc !== aptc) ||
+    (policy.annual_aptc !== undefined &&
+      Math.abs(policy.annual_aptc - (sourceAptc ?? 0)) > 0.01) ||
     fields.monthly_ptc_rows !== undefined ||
-    fields.annual_premium !== policy.annual_premium ||
-    fields.annual_slcsp !== policy.annual_slcsp ||
-    policy.annual_premium !==
-      policy.monthly_premiums.reduce((sum, value) => sum + value, 0) ||
-    policy.annual_slcsp !==
-      policy.monthly_slcsps.reduce((sum, value) => sum + value, 0) ||
+    fields.annual_premium !== Math.round(policy.annual_premium ?? 0) ||
+    fields.annual_slcsp !== Math.round(policy.annual_slcsp ?? 0) ||
+    policy.annual_premium === undefined ||
+    Math.abs(
+        policy.annual_premium -
+          policy.monthly_premiums.reduce((sum, value) => sum + value, 0),
+      ) >
+      0.01 ||
+    policy.annual_slcsp === undefined ||
+    Math.abs(
+        policy.annual_slcsp -
+          policy.monthly_slcsps.reduce((sum, value) => sum + value, 0),
+      ) >
+      0.01 ||
     fields.annual_ptc_allowed !== undefined ||
     fields.household_size !== 1 || fields.dependents_modified_agi !== 0 ||
     fields.mfs_exception_ind === true ||
@@ -658,17 +681,26 @@ function reconcileSimpleAnnualPolicy(
       "Form 8962 annual line 11 needs unchanged monthly premiums and SLCSP with reconciled Form 1095-A line 33 totals",
     );
   }
-  const annualPremium = policies.reduce(
+  const sourceAnnualPremium = policies.reduce(
     (sum, policy) => sum + policy.annual_premium!,
     0,
   );
-  const annualSlcsp = twoStateFamilyPolicies
+  const sourceAnnualSlcsp = twoStateFamilyPolicies
     ? policies.reduce((sum, policy) => sum + policy.annual_slcsp!, 0)
     : policies[0].annual_slcsp!;
-  const annualAptc = policies.reduce(
+  const sourceAnnualAptc = policies.reduce(
     (sum, policy) => sum + policy.annual_aptc!,
     0,
   );
+  const annualPremium = multiplePolicies
+    ? sourceAnnualPremium
+    : Math.round(sourceAnnualPremium);
+  const annualSlcsp = multiplePolicies
+    ? sourceAnnualSlcsp
+    : Math.round(sourceAnnualSlcsp);
+  const annualAptc = multiplePolicies
+    ? sourceAnnualAptc
+    : Math.round(sourceAnnualAptc);
   if (
     (form1040.data.line2a_tax_exempt ?? 0) !== 0 ||
     (form1040.data.line6a_ss_gross ?? 0) !==
@@ -1918,6 +1950,9 @@ function reconcileSimplePolicyMonths(
     if (premium === undefined || slcsp === undefined || aptc === undefined) {
       throw new Error("Form 8962 needs all three Form 1095-A monthly columns");
     }
+    const filedPremium = policies.length === 1 ? Math.round(premium) : premium;
+    const filedSlcsp = policies.length === 1 ? Math.round(slcsp) : slcsp;
+    const filedAptc = policies.length === 1 ? Math.round(aptc) : aptc;
     if (
       active.length > 1 &&
       active.some((activePolicy) =>
@@ -1934,13 +1969,13 @@ function reconcileSimplePolicyMonths(
         } overlapping family policies need positive premiums and APTC, and the same positive SLCSP within a state`,
       );
     }
-    const maxAssistance = Math.max(0, slcsp - monthlyContribution);
+    const maxAssistance = Math.max(0, filedSlcsp - monthlyContribution);
     if (
-      row.month_code !== MONTH_CODES[index] || row.premium !== premium ||
-      row.slcsp !== slcsp || row.aptc !== aptc ||
+      row.month_code !== MONTH_CODES[index] || row.premium !== filedPremium ||
+      row.slcsp !== filedSlcsp || row.aptc !== filedAptc ||
       row.contribution !== monthlyContribution ||
       row.max_assistance !== maxAssistance ||
-      row.allowed_credit !== Math.min(premium, maxAssistance) ||
+      row.allowed_credit !== Math.min(filedPremium, maxAssistance) ||
       premium <= 0 || slcsp <= 0 || aptc <= 0
     ) {
       throw new Error(
@@ -1972,8 +2007,9 @@ function reconcileSimplePolicyMonths(
     (sum, row) => sum + (row.allowed_credit ?? 0),
     0,
   ));
-  const advance = Math.round(
-    policies.reduce(
+  const advance = policies.length === 1
+    ? rows.reduce((sum, row) => sum + (row.aptc ?? 0), 0)
+    : Math.round(policies.reduce(
       (sum, policy) =>
         sum +
         (policy.monthly_aptcs?.reduce(
@@ -1981,8 +2017,7 @@ function reconcileSimplePolicyMonths(
           0,
         ) ?? 0),
       0,
-    ),
-  );
+    ));
   const net = Math.max(0, credit - advance);
   const excess = Math.max(0, advance - credit);
   const repayment = Math.min(excess, incomeAmounts.repaymentCap ?? excess);
