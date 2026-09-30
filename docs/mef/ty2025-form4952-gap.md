@@ -350,6 +350,22 @@ election remain blocked.
 
 ## Remaining in-scope Form 1040 boundaries
 
+The two mixed partnership code H cases now also pass a full-return local
+TY2025 v5.4 XSD check and produce four-page filled packets. In each case,
+the reviewed K-1 belongs to the final filer and contributes $300 of investment
+interest expense. A $500 Form 1099-INT investment payer produces Form 4952
+line 4a/4h of $500, while a $500 Form 1099-DIV payer with $100 qualified
+dividends produces line 4b of $100 and line 4h of $400. Both deduct $300 on
+Form 4952 line 8 and Schedule A line 9, with $18,300 of itemized deductions
+on Form 1040. Schedule A and Form 4952 pages 3–4 were rendered and inspected
+for both cases. The retained PDFs are
+`2026-10-01-form4952-k1-1099-int/filled-return.pdf` (SHA-256
+`4a445c7fd26d05a79a1508aea0227fed361a7575a73d445dfdf4441e34b79302`)
+and `2026-10-01-form4952-k1-1099-div/filled-return.pdf` (SHA-256
+`000232b0504377677aea579fa6a70734f8c9b9fb954e17c03eb254ad2914785e`)
+under `.state/research/ty2025-filled-pdf-review/`. The issued K-1 and 1099
+bytes, business rules, and ATS have not been authenticated or run.
+
 The positive MeF/PDF slices still do not cover a Form 1099-DIV box 2a
 capital-gain distribution or other disposition gain: line 4d must net all
 investment-property gains, losses, and capital-loss carryovers. A line 4g
