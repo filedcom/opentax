@@ -18,6 +18,7 @@ import { assertBox11CodeJSources } from "../../nodes/inputs/k1_partnership/box11
 import { assertBox11CodeESources } from "../../nodes/inputs/k1_partnership/box11_code_e.ts";
 import { assertBox11CodeKSources } from "../../nodes/inputs/k1_partnership/box11_code_k.ts";
 import { assertBox11CodeSSources } from "../../nodes/inputs/k1_partnership/box11_code_s.ts";
+import { assertBox11Line10Sources } from "../../nodes/inputs/k1_partnership/box11_line10.ts";
 
 export interface MefBundle {
   readonly xml: string;
@@ -228,6 +229,7 @@ function buildReturnXml(
   assertBox11CodeESources(pending, k1Recipients);
   assertBox11CodeKSources(pending, k1Recipients);
   assertBox11CodeSSources(pending, k1Recipients);
+  assertBox11Line10Sources(pending, k1Recipients);
   if (
     Array.isArray(pending.form8949) && pending.form8949.length > 0 &&
     !pending.schedule_d

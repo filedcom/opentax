@@ -238,6 +238,65 @@ Deno.test("partnership K-1 box 11 code S keeps short and long source rows", () =
   }
 });
 
+Deno.test("partnership K-1 box 11 codes L and R keep Form 4797 line 10 rows", () => {
+  const item = (ein: string, code: "L" | "R", amount: number) =>
+    minimalItem({
+      partnership_ein: ein,
+      source_document_reference: `2025 K-1 ${ein}`,
+      box11_line10_ordinary: [{
+        code,
+        gain_loss: amount,
+        statement_reference: `box 11 ${code} statement ${ein}`,
+        recipient_tin: "111223333",
+        ordinary_character_reviewed: true,
+        character_workpaper_reference: `Ordinary review ${ein}`,
+      }],
+    });
+  const result = compute([
+    item("123456789", "L", 400),
+    item("987654321", "R", -200),
+  ]);
+  const rows = findOutput(result, "form4797")?.fields
+    .k1_box11_line10_rows as Array<{ code: string; gain_loss: number }>;
+  assertEquals(rows.map((row) => [row.code, row.gain_loss]), [["L", 400], [
+    "R",
+    -200,
+  ]]);
+  assertThrows(
+    () => compute([item("123456789", "L", 400), item("123456789", "L", 400)]),
+    Error,
+    "Duplicate partnership K-1 box 11 code L/R source",
+  );
+  assertThrows(
+    () =>
+      compute([
+        item("111111111", "L", 100),
+        item("222222222", "L", 100),
+        item("333333333", "L", 100),
+        item("444444444", "L", 100),
+        item("555555555", "L", 100),
+      ]),
+    Error,
+    "needs a continuation for more than four",
+  );
+  const invalid = item("123456789", "L", 400) as Record<string, unknown>;
+  const review =
+    (invalid.box11_line10_ordinary as Array<Record<string, unknown>>)[0];
+  for (
+    const change of [{ gain_loss: 0 }, { ordinary_character_reviewed: false }]
+  ) {
+    assertEquals(
+      k1Partnership.inputSchema.safeParse({
+        k1_partnerships: [{
+          ...invalid,
+          box11_line10_ordinary: [{ ...review, ...change }],
+        }],
+      }).success,
+      false,
+    );
+  }
+});
+
 Deno.test("partnership K-3 passive interest and line 12 reduction reconcile to K-1", () => {
   const k3 = {
     partnership_ein: "123456789",

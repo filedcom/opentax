@@ -1028,6 +1028,48 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-partnership-code-l-r-ordinary",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(30_000, 3_000, "Example Employer", "12-3456789")],
+      k1_partnership: [
+        {
+          partnership_name: "Alpha Partnership",
+          partnership_ein: "123456789",
+          source_document_reference: "Synthetic Alpha 2025 K-1",
+          box11_line10_ordinary: [{
+            code: "L",
+            gain_loss: 400,
+            statement_reference: "Alpha box 11 code L statement",
+            recipient_tin: "111223333",
+            ordinary_character_reviewed: true,
+            character_workpaper_reference: "Alpha section 751b review",
+          }],
+        },
+        {
+          partnership_name: "Beta Partnership",
+          partnership_ein: "987654321",
+          source_document_reference: "Synthetic Beta 2025 K-1",
+          box11_line10_ordinary: [{
+            code: "R",
+            gain_loss: 600,
+            statement_reference: "Beta box 11 code R statement",
+            recipient_tin: "111223333",
+            ordinary_character_reviewed: true,
+            character_workpaper_reference: "Beta ordinary character review",
+          }],
+        },
+      ],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule1", "f4797"],
+    reviewFocus: [
+      "Partnership box 11 code L and R retain separate $400/$600 Form 4797 line 10 rows",
+      "Form 4797 line 17/18b and Schedule 1 line 4 carry $1,000 once",
+      "Form 1040 line 8 and AGI include the $1,000 once",
+    ],
+  },
+  {
     id: "single-two-partnership-code-s-capital",
     inputs: {
       general: singleGeneral,

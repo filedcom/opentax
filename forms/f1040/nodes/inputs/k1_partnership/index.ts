@@ -49,6 +49,10 @@ import {
   box11CodeSReviewSchema,
   box11CodeSSourceRows,
 } from "./box11_code_s.ts";
+import {
+  box11Line10ReviewSchema,
+  box11Line10SourceRows,
+} from "./box11_line10.ts";
 
 // Schedule K-1 (Form 1065) — Partner's Share of Income, Deductions, Credits
 //
@@ -174,6 +178,7 @@ export const itemSchema = z.object({
   box11_code_e_cod: box11CodeEReviewSchema.optional(),
   box11_code_k_gambling: box11CodeKReviewSchema.optional(),
   box11_code_s_nonportfolio_capital: box11CodeSReviewSchema.optional(),
+  box11_line10_ordinary: z.array(box11Line10ReviewSchema).min(1).optional(),
 
   // Box 12 — Section 179 deduction → Form 4562
   box12_section_179: z.number().nonnegative().optional().describe(
@@ -773,6 +778,12 @@ function box11CodeKGamblingOutputs(items: K1PartnershipItems): NodeOutput[] {
   ];
 }
 
+function box11Line10OrdinaryOutputs(items: K1PartnershipItems): NodeOutput[] {
+  const rows = box11Line10SourceRows(items);
+  if (rows.length === 0) return [];
+  return [output(form4797, { k1_box11_line10_rows: rows })];
+}
+
 // Box 12 — Section 179 deduction → Form 4562
 // §179 deductions pass through to the partner and are subject to the partner's own §179
 // limitation on Form 4562. Aggregate across all K-1s and emit as a single input.
@@ -928,6 +939,7 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
       ...box11OtherIncomeOutputs(k1_partnerships),
       ...box11CodeECodOutputs(k1_partnerships),
       ...box11CodeKGamblingOutputs(k1_partnerships),
+      ...box11Line10OrdinaryOutputs(k1_partnerships),
       // box12_section_179 → form4562 (partner-level §179 limitation applies)
       ...box12Section179Outputs(k1_partnerships),
       ...box13DeductionOutputs(k1_partnerships),

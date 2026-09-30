@@ -19,6 +19,7 @@ import { assertBox11CodeJSources } from "../../nodes/inputs/k1_partnership/box11
 import { assertBox11CodeESources } from "../../nodes/inputs/k1_partnership/box11_code_e.ts";
 import { assertBox11CodeKSources } from "../../nodes/inputs/k1_partnership/box11_code_k.ts";
 import { assertBox11CodeSSources } from "../../nodes/inputs/k1_partnership/box11_code_s.ts";
+import { assertBox11Line10Sources } from "../../nodes/inputs/k1_partnership/box11_line10.ts";
 
 async function fetchWithCache(
   url: string,
@@ -277,6 +278,7 @@ export async function buildPdfBytes(
   assertBox11CodeESources(normalized, k1Recipients);
   assertBox11CodeKSources(normalized, k1Recipients);
   assertBox11CodeSSources(normalized, k1Recipients);
+  assertBox11Line10Sources(normalized, k1Recipients);
   if (
     preparedBundle &&
     await preparedSourceSha256(pending, filer) !==

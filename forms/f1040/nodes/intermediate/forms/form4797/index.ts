@@ -16,6 +16,7 @@ import {
   calculateInvestment1245Disposition,
   investment1245DispositionSchema,
 } from "./investment_1245.ts";
+import { box11Line10SourceSchema } from "../../../inputs/k1_partnership/box11_line10.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -129,6 +130,7 @@ export const inputSchema = z.object({
   gain_form8824: z.number().nonnegative().optional(),
   // Form 4797 Part I line 2, one source row per Schedule K-1.
   k1_1231_rows: z.array(k1Section1231RowSchema).optional(),
+  k1_box11_line10_rows: z.array(box11Line10SourceSchema).max(4).optional(),
   passive_property_sales: z.array(passivePropertySaleSchema).optional(),
   passive_activity_sources: form8582.inputSchema.shape.activities,
   passive_disposed_activity_ids: z.array(z.string().trim().min(1).max(64))
@@ -279,6 +281,7 @@ function hasSaleData(input: Form4797Input): boolean {
     totalSection1231(input) !== 0 ||
     (input.passive_property_sales?.length ?? 0) > 0 ||
     (input.k1_1231_rows?.length ?? 0) > 0 ||
+    (input.k1_box11_line10_rows?.length ?? 0) > 0 ||
     (input.ordinary_gain !== undefined && input.ordinary_gain !== 0) ||
     (input.ordinary_gain_form4684 !== undefined &&
       input.ordinary_gain_form4684 !== 0) ||
@@ -460,6 +463,7 @@ class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
     if (
       (input.passive_property_sales ?? []).some((sale) => sale.part === "II") &&
       (input.ordinary_gain !== undefined ||
+        (input.k1_box11_line10_rows?.length ?? 0) > 0 ||
         input.ordinary_gain_form4684 !== undefined ||
         input.recapture_form6252 !== undefined)
     ) {
@@ -493,6 +497,10 @@ class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
       (allocation?.allowedPartI ?? 0);
     const priorLoss = input.nonrecaptured_1231_loss ?? 0;
     const partIIOrdinaryGain = (input.ordinary_gain ?? 0) +
+      (input.k1_box11_line10_rows ?? []).reduce(
+        (sum, row) => sum + row.gain_loss,
+        0,
+      ) +
       (input.ordinary_gain_form4684 ?? 0) +
       (input.recapture_form6252 ?? 0) +
       (input.passive_property_sales ?? []).filter((sale) => sale.part === "II")
@@ -520,7 +528,10 @@ class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
       }));
       return { outputs };
     }
-    if (!entireSale || (input.passive_activity_sources?.length ?? 0) === 1) {
+    if (
+      saleGains.length > 0 &&
+      (!entireSale || (input.passive_activity_sources?.length ?? 0) === 1)
+    ) {
       outputs.push(output(form8582, {
         has_current_4797_transaction: true,
         ...(saleGains.length > 0 ? { current_4797_sale_gains: saleGains } : {}),

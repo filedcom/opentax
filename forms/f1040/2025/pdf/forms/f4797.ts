@@ -20,6 +20,7 @@ import {
   investment1245DispositionSchema,
 } from "../../../nodes/intermediate/forms/form4797/investment_1245.ts";
 import { transactionSchema as form8949TransactionSchema } from "../../../nodes/intermediate/forms/form8949/index.ts";
+import { box11Line10SourceSchema } from "../../../nodes/inputs/k1_partnership/box11_line10.ts";
 
 // IRS Form 4797 (2025) AcroForm field names.
 // Part I  — Section 1231 gains: line 9 total.
@@ -43,9 +44,12 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     pdfField: "topmostSubform[0].Page1[0].f1_77[0]",
   },
   ...([
-    ["pdf_sale_description", 41], ["pdf_sale_acquired", 42],
-    ["pdf_sale_sold", 43], ["pdf_sale_price", 44],
-    ["pdf_sale_depreciation", 45], ["pdf_sale_basis", 46],
+    ["pdf_sale_description", 41],
+    ["pdf_sale_acquired", 42],
+    ["pdf_sale_sold", 43],
+    ["pdf_sale_price", 44],
+    ["pdf_sale_depreciation", 45],
+    ["pdf_sale_basis", 46],
     ["pdf_sale_gain", 47],
   ] as const).map(([domainKey, n]): PdfFieldEntry => ({
     kind: "text",
@@ -53,6 +57,25 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     pdfField: `topmostSubform[0].Page1[0].TableLine10[0].Row1[0].f1_${n}[0]`,
     ...(n === 45 ? { printZero: true } : {}),
   })),
+  ...Array.from({ length: 3 }, (_, index): PdfFieldEntry[] => {
+    const row = index + 2;
+    const first = 48 + index * 7;
+    return [
+      {
+        kind: "text",
+        domainKey: `pdf_k1_line10_${row}_description`,
+        pdfField:
+          `topmostSubform[0].Page1[0].TableLine10[0].Row${row}[0].f1_${first}[0]`,
+      },
+      {
+        kind: "text",
+        domainKey: `pdf_k1_line10_${row}_gain`,
+        pdfField: `topmostSubform[0].Page1[0].TableLine10[0].Row${row}[0].f1_${
+          first + 6
+        }[0]`,
+      },
+    ];
+  }).flat(),
   {
     kind: "text",
     domainKey: "pdf_line13",
@@ -74,9 +97,21 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
       pdfField: `${table2}.Row${row}[0].f2_${field}[0]`,
     });
     return [
-      { kind: "text", domainKey: `pdf_investment_${column}_description`, pdfField: `${table1}.f2_${index * 3 + 1}[0]` },
-      { kind: "text", domainKey: `pdf_investment_${column}_acquired`, pdfField: `${table1}.f2_${index * 3 + 2}[0]` },
-      { kind: "text", domainKey: `pdf_investment_${column}_sold`, pdfField: `${table1}.f2_${index * 3 + 3}[0]` },
+      {
+        kind: "text",
+        domainKey: `pdf_investment_${column}_description`,
+        pdfField: `${table1}.f2_${index * 3 + 1}[0]`,
+      },
+      {
+        kind: "text",
+        domainKey: `pdf_investment_${column}_acquired`,
+        pdfField: `${table1}.f2_${index * 3 + 2}[0]`,
+      },
+      {
+        kind: "text",
+        domainKey: `pdf_investment_${column}_sold`,
+        pdfField: `${table1}.f2_${index * 3 + 3}[0]`,
+      },
       cell("line20", "20", 13 + index),
       cell("line21", "21", 17 + index),
       cell("line22", "22", 21 + index),
@@ -86,7 +121,10 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
       cell("line25b", "25b", 37 + index),
     ];
   }).flat(),
-  ...(["line30", "line31", "line32"] as const).map((key, index): PdfFieldEntry => ({
+  ...(["line30", "line31", "line32"] as const).map((
+    key,
+    index,
+  ): PdfFieldEntry => ({
     kind: "text",
     domainKey: `pdf_investment_${key}`,
     pdfField: `topmostSubform[0].Page2[0].f2_${97 + index}[0]`,
@@ -98,18 +136,57 @@ export const form4797Pdf: PdfFormDescriptor = {
   pendingKey: "form4797",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f4797--2025.pdf",
   filerFields: [
-    { kind: "text", domainKey: "nameLine1", pdfField: "topmostSubform[0].Page1[0].f1_1[0]" },
-    { kind: "text", domainKey: "primarySSN", pdfField: "topmostSubform[0].Page1[0].f1_2[0]" },
+    {
+      kind: "text",
+      domainKey: "nameLine1",
+      pdfField: "topmostSubform[0].Page1[0].f1_1[0]",
+    },
+    {
+      kind: "text",
+      domainKey: "primarySSN",
+      pdfField: "topmostSubform[0].Page1[0].f1_2[0]",
+    },
   ],
   projectFields(fields, allPending) {
+    if (fields.k1_box11_line10_rows !== undefined) {
+      const rows = z.array(box11Line10SourceSchema).min(1).max(4)
+        .parse(fields.k1_box11_line10_rows);
+      if (
+        Object.entries(fields).some(([key, value]) =>
+          key !== "k1_box11_line10_rows" && value !== undefined &&
+          value !== null &&
+          (Array.isArray(value) ? value.length > 0 : value !== 0)
+        )
+      ) {
+        throw new Error(
+          "Form 4797 PDF code L/R line 10 rows cannot overlap another Part I/II/III source",
+        );
+      }
+      const total = rows.reduce((sum, row) => sum + row.gain_loss, 0);
+      const projected: Record<string, unknown> = {
+        pdf_sale_description: `K-1 ${rows[0].code} ${rows[0].partnership_ein}`,
+        pdf_sale_gain: rows[0].gain_loss,
+        pdf_line17: total,
+        ordinary_gain: total,
+      };
+      rows.slice(1).forEach((row, index) => {
+        const n = index + 2;
+        projected[`pdf_k1_line10_${n}_description`] =
+          `K-1 ${row.code} ${row.partnership_ein}`;
+        projected[`pdf_k1_line10_${n}_gain`] = row.gain_loss;
+      });
+      return projected;
+    }
     if (fields.investment_1245_dispositions !== undefined) {
       const source = z.array(investment1245DispositionSchema).min(1).max(4)
         .parse(fields.investment_1245_dispositions);
       if (
-        new Set(source.map((sale) => sale.property_id)).size !== source.length ||
+        new Set(source.map((sale) => sale.property_id)).size !==
+          source.length ||
         Object.entries(fields).some(([key, value]) =>
           key !== "investment_1245_dispositions" && value !== undefined &&
-          value !== null && (Array.isArray(value) ? value.length > 0 : value !== 0)
+          value !== null &&
+          (Array.isArray(value) ? value.length > 0 : value !== 0)
         )
       ) {
         throw new Error(
@@ -154,17 +231,21 @@ export const form4797Pdf: PdfFormDescriptor = {
         pdfFields[`${prefix}_acquired`] = date(item.sale.acquired_on);
         pdfFields[`${prefix}_sold`] = date(item.sale.sold_on);
         pdfFields[`${prefix}_line20`] = item.sale.gross_sales_price;
-        pdfFields[`${prefix}_line21`] = item.sale.cost_or_other_basis_plus_sale_expense;
-        pdfFields[`${prefix}_line22`] = item.sale.depreciation_allowed_or_allowable;
+        pdfFields[`${prefix}_line21`] =
+          item.sale.cost_or_other_basis_plus_sale_expense;
+        pdfFields[`${prefix}_line22`] =
+          item.sale.depreciation_allowed_or_allowable;
         pdfFields[`${prefix}_line23`] = item.adjustedBasis;
         pdfFields[`${prefix}_line24`] = item.totalGain;
-        pdfFields[`${prefix}_line25a`] = item.sale.depreciation_allowed_or_allowable;
+        pdfFields[`${prefix}_line25a`] =
+          item.sale.depreciation_allowed_or_allowable;
         pdfFields[`${prefix}_line25b`] = item.ordinaryRecapture;
       });
       return pdfFields;
     }
     if (
-      (typeof fields.recapture_1245 === "number" && fields.recapture_1245 > 0) ||
+      (typeof fields.recapture_1245 === "number" &&
+        fields.recapture_1245 > 0) ||
       (typeof fields.recapture_1250 === "number" && fields.recapture_1250 > 0)
     ) {
       throw new Error(
@@ -174,8 +255,10 @@ export const form4797Pdf: PdfFormDescriptor = {
     const passiveSales = z.array(passivePropertySaleSchema).parse(
       fields.passive_property_sales ?? [],
     );
-    if (passiveSales.length === 1 &&
-      passiveSales[0].entire_activity_interest_disposed === true) {
+    if (
+      passiveSales.length === 1 &&
+      passiveSales[0].entire_activity_interest_disposed === true
+    ) {
       const scheduleE = scheduleEInputSchema.parse(allPending.schedule_e ?? {});
       const activity = scheduleE.schedule_es[0];
       const entireLoss = activity
@@ -194,7 +277,8 @@ export const form4797Pdf: PdfFormDescriptor = {
         (entireGain !== undefined &&
           (!gainLedger?.success ||
             gainLedger.data.activities?.length !== 1 ||
-            gainLedger.data.activities?.[0]?.activity_id !== activity.activity_id ||
+            gainLedger.data.activities?.[0]?.activity_id !==
+              activity.activity_id ||
             gainLedger.data.current_4797_sale_gains?.length !== 1 ||
             gainLedger.data.current_4797_sale_gains?.[0]?.gain !==
               passiveSaleGain(passiveSales[0]) ||

@@ -542,3 +542,15 @@ $1,477 refund. The PDF SHA-256 is
 Export checks reject changed K-1 identity or capital character, another
 recipient, and altered partnership subtotals. Passive losses, special-rate
 components, issued source bytes, IRS business rules, and ATS remain open.
+
+The `single-partnership-code-l-r-ordinary` source passes local TY2025 v5.4
+full-return XSD. Two reviewed K-1 box 11 entries appear as separate Form 4797
+Part II line 10 rows: code L $400 and code R $600. Lines 17/18b, Schedule 1
+line 4/10, and Form 1040 line 8 each carry $1,000 once; AGI is $31,000.
+Both Form 1040 pages, both Schedule 1 pages, and both Form 4797 pages of the
+`v73` packet were rendered and visually inspected. Form 1040 line 16 tax is
+$1,595 and $3,000 withholding yields a $1,405 refund. The PDF SHA-256 is
+`fd2f380a63e2ace813711d6e3c6d2a788eee8751d5ccc438944225a7576a920a`.
+Export checks reject changed K-1/4797 rows and another recipient. A fifth
+line 10 row rejects until printable continuation exists. Mixed Form 4797
+sources, issued K-1 bytes, IRS business rules, and ATS remain open.
