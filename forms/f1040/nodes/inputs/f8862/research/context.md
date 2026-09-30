@@ -59,6 +59,9 @@ distinct names and count on finalized Schedule EIC, plus the Schedule EIC credit
 equal to Form 1040 line 27. A document-ID-aware native build also requires the
 Schedule EIC attachment. Residence days and prior-notice document bytes still
 need source review; the current structured facts alone do not prove them.
+Parts III and IV now require complete person sets: every finalized Form 1040
+CTC/ODC dependent must appear in Form 8862, and every Form 8863 AOC student must
+appear once. A matching subset is no longer enough to file those parts.
 
 ---
 

@@ -37,7 +37,8 @@ The detailed route boundaries remain in the linked gap notes and audits.
   AOTC claims now require a prior-disallowance year and IRS notice reference,
   like the EITC route. Extra CTC/ODC people and AOTC students now get a numbered
   PDF continuation. Form 8862 Part II child names and count now reconcile to
-  finalized Schedule EIC and its Form 1040 credit; these changes have not entered
+  finalized Schedule EIC and its Form 1040 credit. Parts III/IV require every
+  filed CTC/ODC dependent and AOTC student once; these changes have not entered
   the final test batch.
   The preexisting focused
   XSD/PDF evidence for these slices is recorded in their gap notes. All wider

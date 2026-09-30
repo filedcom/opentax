@@ -205,6 +205,38 @@ Deno.test("Form 8862 CTC names must match filed dependent credit rows", () => {
   );
 });
 
+Deno.test("Form 8862 Part III must list every filed CTC and ODC dependent", () => {
+  assertThrows(
+    () =>
+      nativeForm8862.build({
+        ...scenarioInput,
+        ctc_qualifying_children_count: 1,
+        ctc_children: scenarioInput.ctc_children.slice(0, 1),
+      }, finalizedContext),
+    Error,
+    "must include every filed CTC and ODC dependent",
+  );
+});
+
+Deno.test("Form 8862 Part IV must list every filed AOTC student", () => {
+  assertThrows(
+    () =>
+      nativeForm8862.build(scenarioInput, {
+        pending: {
+          ...finalizedContext.pending,
+          f8863: {
+            f8863s: [
+              ...finalizedContext.pending.f8863.f8863s,
+              { credit_type: "aoc", student_name: "Another Student" },
+            ],
+          },
+        },
+      }),
+    Error,
+    "reconcile to Form 8863",
+  );
+});
+
 Deno.test("Form 8862 EITC child names must match finalized Schedule EIC", () => {
   assertThrows(
     () =>

@@ -254,6 +254,17 @@ function validateFinalizedCreditClaims(
         claimed.add(name);
       }
     }
+    const filedCreditNames = [...filed.entries()].filter(([, category]) =>
+      category === "ctc" || category === "odc"
+    ).map(([name]) => name);
+    if (
+      claimed.size !== filedCreditNames.length ||
+      filedCreditNames.some((name) => !claimed.has(name))
+    ) {
+      throw new Error(
+        "Form 8862 Part III must include every filed CTC and ODC dependent",
+      );
+    }
   }
   if (fields.claim_aotc) {
     const form8863 = form8863InputSchema.safeParse(pending?.f8863);
@@ -262,15 +273,21 @@ function validateFinalizedCreditClaims(
         "Form 8862 AOTC students and credit must reconcile to Form 8863 and the finalized return",
       );
     }
-    const names = new Set(
-      form8863.data.f8863s.filter((student) => student.credit_type === "aoc")
-        .map((student) => student.student_name.trim().toUpperCase()),
+    const filedStudents = form8863.data.f8863s.filter((student) =>
+      student.credit_type === "aoc"
+    ).map((student) => student.student_name.trim().toUpperCase());
+    const claimedStudents = (fields.aotc_students ?? []).map((student) =>
+      `${student.first_name} ${student.last_name}`.trim().toUpperCase()
     );
+    const filedNames = new Set(filedStudents);
+    const claimedNames = new Set(claimedStudents);
     const schedule3 = pending?.schedule3 as Record<string, unknown> | undefined;
     if (
-      fields.aotc_students?.some((student) =>
-        !names.has(`${student.first_name} ${student.last_name}`.toUpperCase())
-      ) || !names.size ||
+      !filedNames.size ||
+      filedNames.size !== filedStudents.length ||
+      claimedNames.size !== claimedStudents.length ||
+      filedNames.size !== claimedNames.size ||
+      filedStudents.some((name) => !claimedNames.has(name)) ||
       !(positive(form1040.line29_refundable_aoc) ||
         positive(schedule3?.line3_education_credit)) ||
       (context?.documentIdsByPendingKey &&
