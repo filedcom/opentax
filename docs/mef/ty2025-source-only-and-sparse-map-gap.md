@@ -145,6 +145,18 @@ say to include applicable box 1 amounts on line 1. Payer-issued bytes,
 duplicate 1099 reports, accrual timing, visual PDF review, business rules,
 and ATS remain open.
 
+For a classified nonbusiness activity, Form 1099-NEC box 1 now supplies
+payer, recipient, amount, and reviewed activity-description rows to Schedule 1
+line 8j rather than a generic line 8z scalar. Its amount combines once with
+Form 1099-K hobby income when present and reaches AGI and Form 1040 line 8.
+The two-payer $5,000 case validates against local TY2025 v5.4 XSD and builds
+a filled PDF. The 2025 [Schedule C instructions](https://www.irs.gov/pub/irs-prior/i1040sc--2025.pdf)
+put not-for-profit activity on line 8j, while the
+[2025 Form 1040 instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
+require type-and-amount detail for line 8z. Actual profit motive, payer
+bytes, duplicate reporting, filled-page review, business rules, and ATS
+remain open.
+
 Form 1099-MISC box 3 trade or business income can now be classified to a
 named Schedule C business or Schedule F farm, as the
 [2025 recipient instructions](https://www.irs.gov/pub/irs-prior/f1099msc--2025.pdf)

@@ -23,9 +23,11 @@ export const itemSchema = z.object({
   box3_golden_parachute: z.number().nonnegative().optional(),
   box4_federal_withheld: z.number().nonnegative().optional(),
   for_routing: z
-    .enum(["schedule_c", "schedule_f", "form_8919", "schedule_1_line_8z"])
+    .enum(["schedule_c", "schedule_f", "form_8919", "schedule_1_line_8j"])
     .optional(),
   schedule_c_business_reference: z.string().trim().min(1).optional(),
+  nonbusiness_activity_description: z.string().trim().min(1).max(100)
+    .optional(),
   farm_id: z.string().min(1).optional(),
 }).superRefine((item, ctx) => {
   if ((item.box1_nec ?? 0) <= 0) return;
@@ -44,6 +46,19 @@ export const itemSchema = z.object({
       code: "custom",
       path: ["schedule_c_business_reference"],
       message: "1099-NEC Schedule C income needs a business and recipient TIN",
+    });
+  }
+  if (
+    item.for_routing === "schedule_1_line_8j" &&
+    (!item.recipient_ssn || !item.nonbusiness_activity_description ||
+      !item.payer_name.trim() ||
+      !/^\d{9}$/.test(item.payer_tin.replaceAll("-", "")))
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["nonbusiness_activity_description"],
+      message:
+        "1099-NEC nonbusiness activity needs a description, recipient, and payer identity",
     });
   }
   if (
@@ -97,7 +112,7 @@ function necIncomeOutput(item: NECItem): NodeOutput[] {
           amount: box1,
         }],
       })];
-    case "schedule_1_line_8z":
+    case "schedule_1_line_8j":
       return [];
     default:
       return [];
@@ -105,7 +120,7 @@ function necIncomeOutput(item: NECItem): NodeOutput[] {
 }
 
 function nonbusinessOtherIncome(items: readonly NECItem[]): number {
-  return items.filter((item) => item.for_routing === "schedule_1_line_8z")
+  return items.filter((item) => item.for_routing === "schedule_1_line_8j")
     .reduce((sum, item) => sum + (item.box1_nec ?? 0), 0);
 }
 
@@ -140,6 +155,18 @@ class F1099necNode extends TaxNode<typeof inputSchema> {
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
     const nonbusinessIncome = nonbusinessOtherIncome(parsed.f1099necs);
+    const nonbusinessSources = parsed.f1099necs.flatMap((item) =>
+      item.for_routing === "schedule_1_line_8j" &&
+        (item.box1_nec ?? 0) > 0
+        ? [{
+          payer_name: item.payer_name,
+          payer_tin: item.payer_tin.replaceAll("-", ""),
+          recipient_tin: item.recipient_ssn!.replaceAll("-", ""),
+          description: item.nonbusiness_activity_description!,
+          amount: item.box1_nec!,
+        }]
+        : []
+    );
     const scheduleCSources = parsed.f1099necs.flatMap((item) =>
       item.for_routing === "schedule_c" && (item.box1_nec ?? 0) > 0
         ? [{
@@ -160,10 +187,10 @@ class F1099necNode extends TaxNode<typeof inputSchema> {
         ...(nonbusinessIncome > 0
           ? [
             output(schedule1, {
-              line8z_f1099nec_nonbusiness: nonbusinessIncome,
+              f1099nec_nonbusiness_sources: nonbusinessSources,
             }),
             output(agi_aggregator, {
-              line8z_f1099nec_nonbusiness: nonbusinessIncome,
+              line8j_f1099nec_nonbusiness: nonbusinessIncome,
             }),
           ]
           : []),

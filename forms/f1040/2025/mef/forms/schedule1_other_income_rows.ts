@@ -9,7 +9,6 @@ const SOURCED_COMPONENTS = [
   ["line8z_form8621_qef", "Form 8621 QEF ordinary income"],
   ["line8z_form8621_mtm", "Form 8621 mark-to-market gain or loss"],
   ["line8z_form8621_section1291", "Form 8621 section 1291 current-year income"],
-  ["line8z_f1099nec_nonbusiness", "Form 1099-NEC nonbusiness services"],
   ["line8z_f1098_interest_recovery", "Form 1098 mortgage interest refund"],
   [
     "line8z_k1_s_corp_tax_benefit_recovery",
@@ -34,6 +33,15 @@ export function schedule1OtherIncomeRows(
   fields: object,
 ): readonly Schedule1OtherIncomeRow[] {
   const source = fields as Readonly<Record<string, unknown>>;
+  if (
+    source.line8z_f1099nec_nonbusiness !== undefined &&
+    source.line8z_f1099nec_nonbusiness !== null &&
+    source.line8z_f1099nec_nonbusiness !== 0
+  ) {
+    throw new Error(
+      "Form 1099-NEC nonbusiness income needs Schedule 1 line 8j source rows",
+    );
+  }
   if (
     ["line8z_other", "line8z_other_income"].some((key) => {
       const value = source[key];

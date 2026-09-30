@@ -7,9 +7,9 @@ registers that statement for named components such as Form 8814, HSA excess
 earnings, Form 1099-G trade adjustment assistance, and Form 6198 at-risk
 adjustments. Form 8621 now carries its QEF, mark-to-market, and section 1291
 amounts separately into Schedule 1, AGI, and this statement. Those rows and
-their parent link are written but unrun. Nonbusiness Form 1099-NEC payments now
-aggregate once from the reviewed payer items, preserving their Schedule 1/AGI
-total and a typed statement row. A reviewed Form 1098 box 4 prior-year
+their parent link are written but unrun. Nonbusiness Form 1099-NEC payments
+now use Schedule 1 line 8j with payer, recipient, and activity-description
+rows; their total reaches AGI without an 8z statement. A reviewed Form 1098 box 4 prior-year
 mortgage-interest recovery likewise has one sourced Schedule 1/AGI amount and
 a distinct type row.
 
@@ -52,3 +52,18 @@ misclassified wage, prize, and excluded-income classifications still require
 their own complete source audits. The
 [2025 Form 1099-MISC recipient instructions](https://www.irs.gov/pub/irs-prior/f1099msc--2025.pdf)
 say to identify a Schedule 1 other-income payment.
+
+The old Form 1099-NEC nonbusiness line 8z scalar is rejected. Positive
+not-for-profit or sporadic-activity box 1 payments now require the recipient,
+payer, and a reviewed activity description and add their source rows to
+Schedule 1 line 8j and AGI. Native and PDF line 8j combine them with any
+Form 1099-K hobby amount once, and final exports reject a recipient outside
+the filer/spouse pair. Two $3,000/$2,000 payments reach $5,000 on Form 1040
+line 8, pass local TY2025 v5.4 XSD, and build a filled PDF. The
+[2025 Schedule C instructions](https://www.irs.gov/pub/irs-prior/i1040sc--2025.pdf)
+direct not-for-profit activity to line 8j; the
+[2025 Form 1040 instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
+reserve line 8z for other taxable income with listed type and amount. This
+does not authenticate the payer form or prove that the activity lacks a profit
+motive, detect duplicate reports, visually review the PDF, or establish IRS
+acceptance.

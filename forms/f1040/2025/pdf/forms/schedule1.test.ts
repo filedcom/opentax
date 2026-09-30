@@ -86,3 +86,18 @@ Deno.test("Schedule 1 PDF rejects an untyped generic line 8z amount", () => {
     "line 8z generic income needs identified source types",
   );
 });
+
+Deno.test("Schedule 1 PDF combines 1099-K and 1099-NEC activity income on line 8j", () => {
+  const projected = schedule1Pdf.instances?.({
+    line8j_f1099k_hobby_income: 100,
+    f1099nec_nonbusiness_sources: [{
+      payer_name: "Event Payer",
+      payer_tin: "123456789",
+      recipient_tin: "987654321",
+      description: "One-time event",
+      amount: 2_000,
+    }],
+  })?.[0];
+  assertEquals(projected?.line8j_f1099k_hobby_income, 2_100);
+  assertEquals(projected?.line8z_other, undefined);
+});

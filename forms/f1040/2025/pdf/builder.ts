@@ -10,6 +10,7 @@ import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
 import {
   assertF1040FinalHeader,
   assertSchedule1Box3SourceIdentity,
+  assertSchedule1NecSourceIdentity,
   assertScheduleCReceiptSourceIdentity,
   assertScheduleFBox3SourceIdentity,
 } from "../filer-source-reconciliation.ts";
@@ -256,6 +257,7 @@ export async function buildPdfBytes(
   if (filer) {
     assertScheduleCReceiptSourceIdentity(normalized, filer);
     assertSchedule1Box3SourceIdentity(normalized, filer);
+    assertSchedule1NecSourceIdentity(normalized, filer);
     assertScheduleFBox3SourceIdentity(normalized, filer);
   }
   if (

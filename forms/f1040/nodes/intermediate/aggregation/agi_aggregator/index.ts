@@ -155,7 +155,7 @@ export const inputSchema = z.object({
   line8z_form8621_qef: z.number().optional(),
   line8z_form8621_mtm: z.number().optional(),
   line8z_form8621_section1291: z.number().optional(),
-  line8z_f1099nec_nonbusiness: z.number().nonnegative().optional(),
+  line8j_f1099nec_nonbusiness: z.number().nonnegative().optional(),
   line8z_f1099m_box3_other: z.number().nonnegative().optional(),
   line8j_f1099k_hobby_income: z.number().nonnegative().optional(),
   line8i_prizes_awards: z.number().nonnegative().optional(),
@@ -318,7 +318,7 @@ function nonSsaIncomeBeforePal(input: AgiInput): number {
     (input.line8z_form8621_qef ?? 0) +
     (input.line8z_form8621_mtm ?? 0) +
     (input.line8z_form8621_section1291 ?? 0) +
-    (input.line8z_f1099nec_nonbusiness ?? 0) +
+    (input.line8j_f1099nec_nonbusiness ?? 0) +
     (input.line8z_f1099m_box3_other ?? 0) +
     (input.line8j_f1099k_hobby_income ?? 0) +
     (input.line8i_prizes_awards ?? 0) +
@@ -539,7 +539,7 @@ function scheduleOnePartI(input: AgiInput): number {
     (input.line8z_form8621_qef ?? 0) +
     (input.line8z_form8621_mtm ?? 0) +
     (input.line8z_form8621_section1291 ?? 0) +
-    (input.line8z_f1099nec_nonbusiness ?? 0) +
+    (input.line8j_f1099nec_nonbusiness ?? 0) +
     (input.line8z_f1099m_box3_other ?? 0) +
     (input.line8j_f1099k_hobby_income ?? 0) +
     (input.line8i_prizes_awards ?? 0) +

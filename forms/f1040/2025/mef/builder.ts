@@ -10,6 +10,7 @@ import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
 import {
   assertF1040SourceIdentity,
   assertSchedule1Box3SourceIdentity,
+  assertSchedule1NecSourceIdentity,
   assertScheduleCReceiptSourceIdentity,
   assertScheduleFBox3SourceIdentity,
 } from "../filer-source-reconciliation.ts";
@@ -210,6 +211,7 @@ function buildReturnXml(
   }
   assertScheduleCReceiptSourceIdentity(pending, filer);
   assertSchedule1Box3SourceIdentity(pending, filer);
+  assertSchedule1NecSourceIdentity(pending, filer);
   assertScheduleFBox3SourceIdentity(pending, filer);
   if (
     Array.isArray(pending.form8949) && pending.form8949.length > 0 &&

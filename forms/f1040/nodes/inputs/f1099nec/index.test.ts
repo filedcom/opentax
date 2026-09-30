@@ -17,6 +17,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
     payer_name: "Test Payer",
     payer_tin: "12-3456789",
     recipient_ssn: "987654321",
+    nonbusiness_activity_description: "Occasional activity",
     schedule_c_business_reference: "business-1",
     for_routing: "schedule_c" as const,
     farm_id: "farm-1",
@@ -136,7 +137,7 @@ Deno.test("schema: all valid routing enum values pass", () => {
       "schedule_c",
       "schedule_f",
       "form_8919",
-      "schedule_1_line_8z",
+      "schedule_1_line_8j",
     ]
   ) {
     const parsed = f1099nec.inputSchema.safeParse({
@@ -193,30 +194,36 @@ Deno.test("routing: box1_nec with form_8919 → form8919 node", () => {
   }]);
 });
 
-Deno.test("routing: nonbusiness 1099-NEC income reaches typed Schedule 1 line 8z and AGI", () => {
+Deno.test("routing: nonbusiness 1099-NEC activity reaches Schedule 1 line 8j and AGI", () => {
   const result = compute([
-    minimalItem({ box1_nec: 1200, for_routing: "schedule_1_line_8z" }),
+    minimalItem({ box1_nec: 1200, for_routing: "schedule_1_line_8j" }),
   ]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
   assertEquals(
-    fieldsOf(result.outputs, schedule1)!.line8z_f1099nec_nonbusiness,
-    1200,
+    fieldsOf(result.outputs, schedule1)!.f1099nec_nonbusiness_sources,
+    [{
+      payer_name: "Test Payer",
+      payer_tin: "123456789",
+      recipient_tin: "987654321",
+      description: "Occasional activity",
+      amount: 1200,
+    }],
   );
   assertEquals(
-    fieldsOf(result.outputs, agi_aggregator)!.line8z_f1099nec_nonbusiness,
+    fieldsOf(result.outputs, agi_aggregator)!.line8j_f1099nec_nonbusiness,
     1200,
   );
 });
 
 Deno.test("routing: multiple nonbusiness 1099-NEC payers combine once without losing AGI", () => {
   const result = compute([
-    minimalItem({ box1_nec: 1_200, for_routing: "schedule_1_line_8z" }),
+    minimalItem({ box1_nec: 1_200, for_routing: "schedule_1_line_8j" }),
     minimalItem({
       payer_name: "Second Payer",
       payer_tin: "98-7654321",
       box1_nec: 800,
-      for_routing: "schedule_1_line_8z",
+      for_routing: "schedule_1_line_8j",
     }),
   ]);
   assertEquals(
@@ -228,12 +235,37 @@ Deno.test("routing: multiple nonbusiness 1099-NEC payers combine once without lo
     1,
   );
   assertEquals(
-    fieldsOf(result.outputs, schedule1)?.line8z_f1099nec_nonbusiness,
-    2_000,
+    fieldsOf(result.outputs, schedule1)?.f1099nec_nonbusiness_sources?.map(
+      (row) => row.amount,
+    ),
+    [1_200, 800],
   );
   assertEquals(
-    fieldsOf(result.outputs, agi_aggregator)?.line8z_f1099nec_nonbusiness,
+    fieldsOf(result.outputs, agi_aggregator)?.line8j_f1099nec_nonbusiness,
     2_000,
+  );
+});
+
+Deno.test("routing: nonbusiness 1099-NEC needs a reviewed activity and recipient", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box1_nec: 500,
+        for_routing: "schedule_1_line_8j",
+        nonbusiness_activity_description: undefined,
+      })]),
+    Error,
+    "needs a description",
+  );
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box1_nec: 500,
+        for_routing: "schedule_1_line_8j",
+        recipient_ssn: undefined,
+      })]),
+    Error,
+    "needs a description",
   );
 });
 
@@ -405,7 +437,7 @@ Deno.test("aggregation: mixed routing routes each item independently", () => {
     }),
     minimalItem({
       box1_nec: 4000,
-      for_routing: "schedule_1_line_8z",
+      for_routing: "schedule_1_line_8j",
       payer_name: "Other",
     }),
   ]);
@@ -698,19 +730,19 @@ Deno.test("edge: form_8919 routing excludes schedule_c output", () => {
   assertEquals(findOutput(result, "form8919") !== undefined, true);
 });
 
-Deno.test("edge: schedule_1_line_8z routing excludes schedule_c and form8919 outputs", () => {
+Deno.test("edge: schedule_1_line_8j routing excludes schedule_c and form8919 outputs", () => {
   const result = compute([
-    minimalItem({ box1_nec: 5000, for_routing: "schedule_1_line_8z" }),
+    minimalItem({ box1_nec: 5000, for_routing: "schedule_1_line_8j" }),
   ]);
   assertEquals(findOutput(result, "schedule_c"), undefined);
   assertEquals(findOutput(result, "form8919"), undefined);
   assertEquals(findOutput(result, "schedule1") !== undefined, true);
 });
 
-Deno.test("edge: box1_nec with schedule_1_line_8z produces no schedule2 output (no SE tax)", () => {
+Deno.test("edge: box1_nec with schedule_1_line_8j produces no schedule2 output (no SE tax)", () => {
   // Non-business income on Sch1 Line 8z is NOT subject to SE tax
   const result = compute([
-    minimalItem({ box1_nec: 10000, for_routing: "schedule_1_line_8z" }),
+    minimalItem({ box1_nec: 10000, for_routing: "schedule_1_line_8j" }),
   ]);
   assertEquals(findOutput(result, "schedule2"), undefined);
 });
@@ -821,12 +853,12 @@ Deno.test("smoke: freelancer with two clients, backup withholding, and golden pa
       box3_golden_parachute: 300000,
       for_routing: "schedule_c",
     }),
-    // Isolated one-time director fee → schedule_1_line_8z
+    // Isolated one-time director fee → schedule_1_line_8j
     minimalItem({
       payer_name: "Board LLC",
       payer_tin: "44-4444444",
       box1_nec: 5000,
-      for_routing: "schedule_1_line_8z",
+      for_routing: "schedule_1_line_8j",
     }),
   ]);
 

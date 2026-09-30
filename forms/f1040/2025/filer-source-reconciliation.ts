@@ -173,6 +173,33 @@ export function assertSchedule1Box3SourceIdentity(
   }
 }
 
+export function assertSchedule1NecSourceIdentity(
+  pending: Record<string, unknown>,
+  filer: FilerIdentity,
+): void {
+  const schedule1 = pending.schedule1;
+  if (!schedule1 || typeof schedule1 !== "object") return;
+  const rows = (schedule1 as Record<string, unknown>)
+    .f1099nec_nonbusiness_sources;
+  if (rows === undefined) return;
+  if (!Array.isArray(rows)) {
+    throw new Error("Schedule 1 1099-NEC nonbusiness sources must be rows");
+  }
+  const recipients = [
+    tin(filer.primarySSN, "taxpayer"),
+    tin(filer.spouse?.ssn, "spouse"),
+  ];
+  for (const value of rows) {
+    if (!value || typeof value !== "object") {
+      throw new Error("Schedule 1 1099-NEC nonbusiness source is invalid");
+    }
+    const row = value as Record<string, unknown>;
+    if (!recipients.includes(tin(row.recipient_tin, "1099-NEC recipient"))) {
+      throw new Error("1099-NEC nonbusiness recipient differs from the filer");
+    }
+  }
+}
+
 export function assertScheduleFBox3SourceIdentity(
   pending: Record<string, unknown>,
   filer: FilerIdentity,

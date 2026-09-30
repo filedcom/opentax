@@ -162,7 +162,13 @@ Deno.test("Schedule 1 line 8z sums typed sources once and links the statement", 
     line8z_form8621_qef: 200,
     line8z_form8621_mtm: -100,
     line8z_form8621_section1291: 25,
-    line8z_f1099nec_nonbusiness: 300,
+    f1099nec_nonbusiness_sources: [{
+      payer_name: "Occasional Payer",
+      payer_tin: "123456789",
+      recipient_tin: "987654321",
+      description: "Occasional service",
+      amount: 300,
+    }],
   };
   const xml = schedule1.build(fields, {
     documentIdsByPendingKey: {
@@ -171,7 +177,11 @@ Deno.test("Schedule 1 line 8z sums typed sources once and links the statement", 
   });
   assertStringIncludes(
     xml,
-    '<OtherIncomeTotalAmt referenceDocumentId="OtherIncomeTypeStatement-1" referenceDocumentName="OtherIncomeTypeStatement">4025</OtherIncomeTotalAmt>',
+    '<OtherIncomeTotalAmt referenceDocumentId="OtherIncomeTypeStatement-1" referenceDocumentName="OtherIncomeTypeStatement">3725</OtherIncomeTotalAmt>',
+  );
+  assertStringIncludes(
+    xml,
+    "<ActivityNotForProfitIncmAmt>300</ActivityNotForProfitIncmAmt>",
   );
   assertEquals(xml.match(/<OtherIncomeTotalAmt /g)?.length, 1);
   for (

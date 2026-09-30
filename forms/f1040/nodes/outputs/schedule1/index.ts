@@ -61,7 +61,16 @@ const inputSchema = z.object({
   line8z_form8621_qef: z.number().optional(),
   line8z_form8621_mtm: z.number().optional(),
   line8z_form8621_section1291: z.number().optional(),
-  line8z_f1099nec_nonbusiness: z.number().nonnegative().optional(),
+  f1099nec_nonbusiness_sources: z.array(
+    z.object({
+      payer_name: z.string().trim().min(1),
+      payer_tin: z.string().regex(/^\d{9}$/),
+      recipient_tin: z.string().regex(/^\d{9}$/),
+      description: z.string().trim().min(1).max(100),
+      amount: z.number().positive(),
+    }).strict(),
+  ).optional(),
+  line8z_f1099nec_nonbusiness: z.never().optional(),
   f1099m_box3_other_income_sources: z.array(
     z.object({
       payer_name: z.string().trim().min(1),
@@ -160,7 +169,10 @@ function otherIncome(input: Schedule1Input): number {
     (input.line8z_form8621_qef ?? 0) +
     (input.line8z_form8621_mtm ?? 0) +
     (input.line8z_form8621_section1291 ?? 0) +
-    (input.line8z_f1099nec_nonbusiness ?? 0) +
+    (input.f1099nec_nonbusiness_sources ?? []).reduce(
+      (sum, row) => sum + row.amount,
+      0,
+    ) +
     (input.f1099m_box3_other_income_sources ?? []).reduce(
       (sum, row) => sum + row.amount,
       0,
@@ -299,7 +311,6 @@ function assembleSchedule1(input: Schedule1Input): Record<string, unknown> {
     "line8z_form8621_qef",
     "line8z_form8621_mtm",
     "line8z_form8621_section1291",
-    "line8z_f1099nec_nonbusiness",
     "line8z_f1098_interest_recovery",
     "line8z_k1_s_corp_tax_benefit_recovery",
     "at_risk_disallowed_add_back",
@@ -325,6 +336,9 @@ function assembleSchedule1(input: Schedule1Input): Record<string, unknown> {
 
   return {
     ...result,
+    ...(input.f1099nec_nonbusiness_sources !== undefined
+      ? { f1099nec_nonbusiness_sources: input.f1099nec_nonbusiness_sources }
+      : {}),
     ...(input.f1099m_box3_other_income_sources !== undefined
       ? {
         f1099m_box3_other_income_sources:

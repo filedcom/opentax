@@ -34,6 +34,16 @@ Deno.test("schedule1: compute returns one self-referencing output", () => {
   assertEquals(result.outputs[0].nodeType, "schedule1");
 });
 
+Deno.test("schedule1: rejects the old unlinked 1099-NEC line 8z amount", () => {
+  assertThrows(() =>
+    compute(
+      {
+        line8z_f1099nec_nonbusiness: 500,
+      } as unknown as Parameters<typeof schedule1.compute>[1],
+    )
+  );
+});
+
 Deno.test("schedule1: empty input emits zero totals", () => {
   const f = fields({});
   assertEquals(f.line10_total_additional_income, 0);

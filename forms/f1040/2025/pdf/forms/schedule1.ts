@@ -1,5 +1,6 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { schedule1OtherIncomeRows } from "../../mef/forms/schedule1_other_income_rows.ts";
+import { schedule1ActivityNotForProfitTotal } from "../../mef/forms/schedule1_nonbusiness_sources.ts";
 
 // IRS Schedule 1 (2025) AcroForm field names.
 // Verified layout from https://www.irs.gov/pub/irs-prior/f1040s1--2025.pdf
@@ -228,13 +229,21 @@ export const schedule1Pdf: PdfFormDescriptor = {
   ],
   instances(fields) {
     const rows = schedule1OtherIncomeRows(fields);
-    if (rows.length === 0) return [fields];
+    const activityNotForProfit = schedule1ActivityNotForProfitTotal(fields);
+    if (rows.length === 0 && activityNotForProfit === 0) return [fields];
     return [{
       ...fields,
-      line8z_other: rows.reduce((sum, row) => sum + row.amount, 0),
-      line8z_description: rows.map((row) =>
-        row.label === "FORM 8814" ? "Form 8814" : row.label
-      ).join(", "),
+      ...(activityNotForProfit > 0
+        ? { line8j_f1099k_hobby_income: activityNotForProfit }
+        : {}),
+      ...(rows.length > 0
+        ? {
+          line8z_other: rows.reduce((sum, row) => sum + row.amount, 0),
+          line8z_description: rows.map((row) =>
+            row.label === "FORM 8814" ? "Form 8814" : row.label
+          ).join(", "),
+        }
+        : {}),
     }];
   },
   fields,

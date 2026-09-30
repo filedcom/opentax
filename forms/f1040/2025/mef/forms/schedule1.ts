@@ -1,6 +1,7 @@
 import { element, elements } from "../../../mef/xml.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import { schedule1OtherIncomeRows } from "./schedule1_other_income_rows.ts";
+import { schedule1ActivityNotForProfitTotal } from "./schedule1_nonbusiness_sources.ts";
 import { inputSchema as trustK1InputSchema } from "../../../nodes/inputs/k1_trust/index.ts";
 
 export interface Fields {
@@ -28,7 +29,6 @@ export interface Fields {
   line8z_form8621_qef?: number | null;
   line8z_form8621_mtm?: number | null;
   line8z_form8621_section1291?: number | null;
-  line8z_f1099nec_nonbusiness?: number | null;
   line8z_f1098_interest_recovery?: number | null;
   line8z_k1_s_corp_tax_benefit_recovery?: number | null;
   line8z_form8814?: number | null;
@@ -129,6 +129,10 @@ function buildIRS1040Schedule1(
           }
           : undefined,
       );
+    }
+    if (key === "line8j_f1099k_hobby_income") {
+      const amount = schedule1ActivityNotForProfitTotal(fields);
+      return amount > 0 ? element(tag, amount) : "";
     }
     if (typeof value !== "number") return "";
     if (key === "line8a_nol_deduction") return element(tag, -value);
