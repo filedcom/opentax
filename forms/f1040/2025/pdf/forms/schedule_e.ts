@@ -17,6 +17,7 @@ import {
   inputSchema as form4835InputSchema,
 } from "../../../nodes/inputs/f4835/index.ts";
 import { farmAllowedLosses } from "../../mef/forms/f4835_passive_loss.ts";
+import { appendScheduleEPartIStatement } from "./schedule_e_part_i_statement.ts";
 
 // 2025 Schedule E AcroForm: three Part I properties, four Part II K-1 rows,
 // two Part III trust rows, and Part V farm totals on the same two pages.
@@ -363,7 +364,6 @@ export const scheduleEPdf: PdfFormDescriptor = {
         ((item.royalties_income ?? 0) > 0 && !item.k1_royalty_source &&
           !item.f1099m_royalty_source) ||
         (item.ownership_percent ?? 100) <= 0 ||
-        (item.expense_other_lines?.length ?? 0) > 1 ||
         (item.expense_depreciation_amt ?? 0) > 0 ||
         (item.section_1231_gain_loss ?? 0) !== 0
       )
@@ -372,21 +372,17 @@ export const scheduleEPdf: PdfFormDescriptor = {
         "Schedule E PDF needs supported Part I rental or sourced royalty properties",
       );
     }
-    const otherDescriptions = new Set(
-      items.flatMap((item) =>
-        (item.expense_other_lines ?? []).map((line) => line.description)
-      ),
-    );
-    const type8Descriptions = new Set(
-      items.filter((item) => item.property_type === 8).map((item) =>
-        item.property_type_other_desc
-      ),
-    );
-    if (otherDescriptions.size > 1 || type8Descriptions.size > 1) {
-      throw new Error(
-        "Schedule E PDF multiple property descriptions need an attached statement",
-      );
-    }
+    const needsLine19Statement =
+      items.some((item) => (item.expense_other_lines?.length ?? 0) > 1) ||
+      Array.from(
+        { length: Math.ceil(items.length / 3) },
+        (_, pageIndex) =>
+          new Set(
+            items.slice(pageIndex * 3, pageIndex * 3 + 3).flatMap((item) =>
+              (item.expense_other_lines ?? []).map((line) => line.description)
+            ),
+          ).size > 1,
+      ).some(Boolean);
     const allowedByActivity = validatePassiveActivityLink(items, {
       pending: allPending,
     });
@@ -417,7 +413,10 @@ export const scheduleEPdf: PdfFormDescriptor = {
       const depreciation = amount(
         (item.expense_depreciation ?? 0) + (item.expense_depletion ?? 0),
       );
-      const other = item.expense_other_lines?.[0];
+      const otherAmount = (item.expense_other_lines ?? []).reduce(
+        (sum, line) => sum + amount(line.amount),
+        0,
+      );
       const expenseTotal = Math.round(computeExpenses(item) * fraction);
       const net = Math.round(computePropertyNet(item));
       const allowedLoss = entireLoss ?? entireGain ??
@@ -459,7 +458,7 @@ export const scheduleEPdf: PdfFormDescriptor = {
             ]),
           ),
           [`property_${index}_line18`]: depreciation,
-          [`property_${index}_line19`]: amount(other?.amount),
+          [`property_${index}_line19`]: otherAmount,
           [`property_${index}_line20`]: expenseTotal,
           [`property_${index}_line21`]: net,
           [`property_${index}_line22`]: allowedLoss > 0
@@ -490,12 +489,59 @@ export const scheduleEPdf: PdfFormDescriptor = {
           ])
         ),
       );
+    const pageDescriptions = (start: number) => {
+      const pageItems = items.slice(start, start + 3);
+      const other = new Set(
+        pageItems.flatMap((item) =>
+          (item.expense_other_lines ?? []).map((line) => line.description)
+        ),
+      );
+      const type8 = new Set(
+        pageItems.filter((item) => item.property_type === 8).map((item) =>
+          item.property_type_other_desc
+        ),
+      );
+      return {
+        other_property_description: type8.size > 1
+          ? "See attached"
+          : [...type8][0],
+        line19_description: other.size > 1 ? "See attached" : [...other][0],
+      };
+    };
+    const statementRows = items.flatMap((item, index) => {
+      const identity = {
+        copy: Math.floor(index / 3) + 1,
+        column: ["A", "B", "C"][index % 3],
+        property: item.property_description,
+        address: item.property_type === 6
+          ? undefined
+          : `${item.street_address}, ${item.city}, ${item.state} ${item.zip}`,
+      };
+      return [
+        ...(item.property_type === 8
+          ? [{
+            ...identity,
+            line: "Type 8",
+            description: item.property_type_other_desc!,
+          }]
+          : []),
+        ...(needsLine19Statement
+          ? (item.expense_other_lines ?? []).map((line) => ({
+            ...identity,
+            line: "19",
+            description: line.description,
+            amount: Math.round(
+              line.amount * (item.ownership_percent ?? 100) / 100,
+            ),
+          }))
+          : []),
+      ];
+    });
     const continuationPages = Array.from(
       { length: Math.ceil(Math.max(0, rows.length - 3) / 3) },
       (_, index) => ({
         ...pageFields(3 + index * 3),
-        other_property_description: [...type8Descriptions][0],
-        line19_description: [...otherDescriptions][0],
+        ...pageDescriptions(3 + index * 3),
       }),
     );
     return {
@@ -503,14 +549,14 @@ export const scheduleEPdf: PdfFormDescriptor = {
       ...farmFields,
       ...pageFields(0),
       partIContinuationPages: continuationPages,
+      partIStatementRows: statementRows,
       payments_made: payments,
       forms_1099_filed: payments
         ? items.every((item) =>
           !item.form_1099_payments_made || item.form_1099_filed
         )
         : undefined,
-      other_property_description: [...type8Descriptions][0],
-      line19_description: [...otherDescriptions][0],
+      ...pageDescriptions(0),
       line23a: sumRows("rent"),
       line23b: sumRows("royalty"),
       line23c: sumRows("mortgage"),
@@ -543,5 +589,12 @@ export const scheduleEPdf: PdfFormDescriptor = {
     if (!Array.isArray(continuations)) return [fields];
     const { partIContinuationPages: _continuations, ...primary } = fields;
     return [primary, ...continuations as Record<string, unknown>[]];
+  },
+  async appendSupplementalPages(document, fields, filer) {
+    await appendScheduleEPartIStatement(
+      document,
+      fields.partIStatementRows,
+      filer,
+    );
   },
 };

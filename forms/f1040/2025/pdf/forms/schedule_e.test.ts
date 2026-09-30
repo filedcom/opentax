@@ -297,6 +297,41 @@ Deno.test("Schedule E PDF adds a Part I copy for property four and keeps totals 
   assertEquals(scheduleEPdf.pageIndices?.(copies[1]), [0]);
 });
 
+Deno.test("Schedule E PDF retains distinct line 19 and type 8 descriptions for an attachment", () => {
+  const properties = [{
+    ...rental,
+    activity_id: "first",
+    expense_other_lines: [{ description: "Tolls", amount: 20 }, {
+      description: "Bank fees",
+      amount: 30,
+    }],
+  }, {
+    ...rental,
+    activity_id: "second",
+    property_type: 8,
+    property_type_other_desc: "Mixed-use warehouse",
+    street_address: "13 Main Street",
+  }, {
+    ...rental,
+    activity_id: "third",
+    property_type: 8,
+    property_type_other_desc: "Detached storage",
+    street_address: "14 Main Street",
+  }];
+  const raw = { schedule_es: properties };
+  const projected = scheduleEPdf.projectFields?.(raw, {
+    schedule_e: raw,
+    schedule1: { line5_schedule_e: 25_050 },
+  }) ?? {};
+  assertEquals(projected.property_0_line19, 50);
+  assertEquals(projected.property_1_line19, 50);
+  assertEquals(projected.line19_description, "See attached");
+  assertEquals(projected.other_property_description, "See attached");
+  assertEquals((projected.partIStatementRows as unknown[]).length, 6);
+  assertEquals(projected.line23e, 10_950);
+  assertEquals(projected.line26, 25_050);
+});
+
 Deno.test("Schedule E PDF prints a sourced full-disposition operating loss and no Form 8582", () => {
   const sale = {
     activity_id: "rental-house",

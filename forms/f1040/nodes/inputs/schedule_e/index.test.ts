@@ -1378,6 +1378,15 @@ Deno.test("hard validation: property_type=8 with property_type_other_desc does n
   assertEquals(Array.isArray(result.outputs), true);
 });
 
+Deno.test("property type 8 description respects the MeF 20-character field", () => {
+  assertThrows(() =>
+    compute([minimalItem({
+      property_type: 8,
+      property_type_other_desc: "Detached storage unit",
+    })])
+  );
+});
+
 Deno.test("hard validation: form_1099_payments_made=true without form_1099_filed throws", () => {
   assertThrows(() =>
     compute([
