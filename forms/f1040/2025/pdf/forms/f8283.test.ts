@@ -339,6 +339,165 @@ function electedLandPending() {
   };
 }
 
+function materialImprovementVehiclePending() {
+  const vehicle = {
+    property_description: "2018 Honda Civic, fair condition, 90,000 miles",
+    property_type: SectionBPropertyType.Vehicle,
+    physical_condition: "Fair condition; engine needs replacement",
+    date_acquired: "2018-05-15",
+    donor_acquisition_description: "Purchase",
+    date_contributed: "2025-06-01",
+    fmv: 15_000,
+    deduction_claimed: 15_000,
+    cost_or_adjusted_basis: 18_000,
+    charitable_limit_category: "noncash_50" as const,
+    is_capital_gain_property: false,
+    vehicle_vin: "1HGBH41JXMN109186",
+    vehicle_acknowledgment_attachment_file_name: "Form1098C-Improvement.pdf",
+    vehicle_material_improvement_acknowledgment: {
+      copy_received_from_donee: true as const,
+      donee_certified: true as const,
+      donee_name: "City Charity",
+      donee_ein: "987654321",
+      donee_us_address: {
+        line1: "1 Main St",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+      },
+      acknowledgment_furnished_date: "2025-06-20",
+      no_transfer_before_completion_confirmed: true as const,
+      intended_improvement_description: "Replace failed engine",
+      major_repair_or_addition_confirmed: true as const,
+      significant_value_increase_confirmed: true as const,
+      no_additional_donor_payment_confirmed: true as const,
+      vehicle_year: 2018,
+      vehicle_make: "Honda",
+      vehicle_model: "Civic",
+      vehicle_condition: "Fair condition",
+      odometer_miles: 90_000,
+      goods_or_services_received: false as const,
+    },
+    signed_form_attachment_file_name: "SignedForm8283.pdf",
+    signed_form_source_review: {
+      reviewed_by: "Review Clerk",
+      reviewed_on: "2025-09-01",
+      pdf_sha256: "a".repeat(64),
+      appraiser_signature_present: true as const,
+      donee_signature_present: true as const,
+      matches_electronic_form_confirmed: true as const,
+    },
+    qualified_appraisal: {
+      appraiser_first_name: "Jane",
+      appraiser_last_name: "Smith",
+      signed_date: "2025-05-28",
+      appraiser_ein: "123456789",
+      signed_by_appraiser: true as const,
+      signature_attachment_file_name: "AppraiserSignature.pdf",
+      us_address: {
+        line1: "1 Art Way",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+      },
+    },
+    donee_acknowledgment: {
+      organization_name: "City Charity",
+      ein: "987654321",
+      received_date: "2025-06-01",
+      signed_by_donee: true as const,
+      unrelated_use: false,
+      signature_attachment_file_name: "DoneeSignature.pdf",
+      us_address: {
+        line1: "1 Main St",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+      },
+    },
+  };
+  const form = { section_b_items: [vehicle] };
+  const items = f8283.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form8283InputSchema.parse(form),
+  ).outputs[0].fields.noncash_contribution_items;
+  const source = {
+    agi: 100_000,
+    current_noncash_gift_inventory_complete_confirmed: true as const,
+    other_prior_charitable_carryovers_absent_confirmed: true as const,
+    capital_gain_property_carryovers: [],
+    noncash_contribution_items: items,
+  };
+  const finalized = scheduleA.compute(
+    { taxYear: 2025, formType: "f1040" },
+    scheduleAInputSchema.parse(source),
+  ).finalizations![0].fields;
+  return {
+    f8283: form,
+    schedule_a: { ...source, ...finalized },
+    f1040: { line11_agi: 100_000, line12e_itemized_deductions: 15_000 },
+  };
+}
+
+Deno.test("Form 8283 PDF prints reconciled Section B material-improvement vehicle", () => {
+  const pending = materialImprovementVehiclePending();
+  const [instance] = form8283Pdf.instances?.(pending.f8283, filer, pending) ??
+    [];
+  assertEquals(form8283Pdf.pageIndices?.(instance), [0, 1]);
+  assertEquals(instance?.section_b_vehicle, true);
+  assertEquals(instance?.section_b_other_real_estate, undefined);
+  assertEquals(instance?.section_b_appraised_fmv, 15_000);
+  assertEquals(instance?.section_b_claim, 15_000);
+  assertStringIncludes(
+    (instance?.reduction_statements as string[])[0],
+    "VIN 1HGBH41JXMN109186",
+  );
+  const byKey = new Map(
+    form8283Pdf.fields.map((field) => [field.domainKey, field.pdfField]),
+  );
+  assertEquals(
+    byKey.get("section_b_vehicle"),
+    "Form8283[0].Page1[0].Lines2i-l[0].c1_6[0]",
+  );
+  scheduleAMef.build(pending.schedule_a, { pending });
+  assertThrows(
+    () =>
+      scheduleAMef.build({
+        ...pending.schedule_a,
+        line_12_noncash_contributions: 14_999,
+      }, { pending }),
+    Error,
+    "recomputed Schedule A lines 11",
+  );
+  assertThrows(
+    () =>
+      form8283Pdf.instances?.(pending.f8283, filer, {
+        ...pending,
+        f1040: { ...pending.f1040, line12e_itemized_deductions: 14_999 },
+      }),
+    Error,
+    "recomputed Schedule A lines 11",
+  );
+  const wrongDonee = {
+    section_b_items: [{
+      ...pending.f8283.section_b_items[0],
+      donee_acknowledgment: {
+        ...pending.f8283.section_b_items[0].donee_acknowledgment,
+        organization_name: "Different Charity",
+      },
+    }],
+  };
+  assertThrows(
+    () =>
+      form8283Pdf.instances?.(wrongDonee, filer, {
+        ...pending,
+        f8283: wrongDonee,
+      }),
+    Error,
+    "signed donee and vehicle acknowledgment must identify the same organization",
+  );
+});
+
 Deno.test("Form 8283 PDF maps December 2025 Section A identity and four rows", () => {
   assertEquals(form8283Pdf.pageIndices?.({}), [0]);
   const byKey = new Map(
@@ -354,7 +513,7 @@ Deno.test("Form 8283 PDF maps December 2025 Section A identity and four rows", (
     byKey.get("row4_claim"),
     "Form8283[0].Page1[0].Table_Line1_ColsD-I[0].Row1D[0].f1_39[0]",
   );
-  assertEquals(form8283Pdf.fields.length, 65);
+  assertEquals(form8283Pdf.fields.length, 66);
 });
 
 Deno.test("Form 8283 PDF prints reconciled Section A and carries the FMV explanation", () => {

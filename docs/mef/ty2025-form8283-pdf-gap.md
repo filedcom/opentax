@@ -116,9 +116,21 @@ donee-issued record. The
 describe the needy-transfer exception and the contemporaneous acknowledgment
 requirement. Other vehicle exceptions and combinations remain open.
 
+The 2026-09-30 Section B vehicle pass maps the official page 1 vehicle-type
+checkbox and both Section B pages for one purchased, nonappreciated vehicle
+above $5,000 with a donee-certified material-improvement exception. The
+preview prints appraised FMV and claimed deduction separately, plus appraisal
+and donee identities. Its supplemental page identifies the VIN, certified
+improvement, donee acknowledgment, and separately reviewed completed signed
+Form 8283. The source must match a complete current-gift Schedule A inventory
+and itemized Form 1040; direct Schedule A builds reject a changed filed
+amount. Focused PDF descriptor and native Section B tests pass. This is a
+projection and source-reconciliation check, not a visual review of a filled
+packet or verification of actual signatures and donee-issued PDF bytes.
+
 This is not whole-form support. Other Section B property and multi-item routes,
 actual appraiser/donee signatures in the PDF, mixed Section A/B forms, more than
-four Section A rows, other vehicle routes, carryover-year Form 8283 filings, and
+four Section A rows, other Section B vehicle exceptions, carryover-year Form 8283 filings, and
 other non-election routes still stop rather than producing an incomplete PDF. The
 verified field map does not prove that every filled text variant fits or that
 every supplemental page is visually correct. Other AcroForm data, page

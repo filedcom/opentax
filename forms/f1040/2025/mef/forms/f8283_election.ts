@@ -3,6 +3,7 @@ import {
   type F8283Input,
   inputSchema as form8283InputSchema,
   type SectionAItem,
+  SectionBPropertyType,
 } from "../../../nodes/inputs/f8283/index.ts";
 import {
   inputSchema as scheduleAInputSchema,
@@ -349,6 +350,22 @@ export function assertElectedSectionBReconciled(
   context: MefBuildContext | undefined,
   filedScheduleA?: Readonly<Record<string, unknown>>,
 ): void {
+  assertSectionBReconciled(context, filedScheduleA, false);
+}
+
+/** Reconcile one current-year Section B vehicle exception against the return. */
+export function assertSectionBVehicleReconciled(
+  context: MefBuildContext | undefined,
+  filedScheduleA?: Readonly<Record<string, unknown>>,
+): void {
+  assertSectionBReconciled(context, filedScheduleA, true);
+}
+
+function assertSectionBReconciled(
+  context: MefBuildContext | undefined,
+  filedScheduleA: Readonly<Record<string, unknown>> | undefined,
+  vehicle: boolean,
+): void {
   const pending = context?.pending;
   const source8283 = pending?.f8283;
   const sourceScheduleA = pending?.schedule_a;
@@ -358,29 +375,43 @@ export function assertElectedSectionBReconciled(
     typeof sourceScheduleA !== "object"
   ) {
     throw new Error(
-      "Form 8283 Section B election needs filed Form 8283, complete Schedule A source, and itemized Form 1040",
+      `Form 8283 Section B ${
+        vehicle ? "vehicle" : "election"
+      } needs filed Form 8283, complete Schedule A source, and itemized Form 1040`,
     );
   }
   if (
     returnFields.line12e_itemized_deductions === undefined ||
     returnFields.line12a_standard_deduction !== undefined
   ) {
-    throw new Error("Form 8283 Section B election needs an itemized Form 1040");
+    throw new Error(
+      `Form 8283 Section B ${
+        vehicle ? "vehicle" : "election"
+      } needs an itemized Form 1040`,
+    );
   }
   const form = form8283InputSchema.parse(source8283);
   if (
     (form.section_a_items ?? []).length !== 0 ||
     (form.section_b_items ?? []).length !== 1 ||
-    form.section_b_items?.[0]?.capital_gain_reduction_election_confirmed !==
-      true
+    (vehicle
+      ? form.section_b_items?.[0]?.property_type !==
+          SectionBPropertyType.Vehicle ||
+        form.section_b_items?.[0]?.capital_gain_reduction_election_confirmed ===
+          true
+      : form.section_b_items?.[0]?.capital_gain_reduction_election_confirmed !==
+        true)
   ) {
     throw new Error(
-      "Form 8283 Section B election is bounded to one current-year investment-land gift",
+      vehicle
+        ? "Form 8283 Section B vehicle is bounded to one current-year vehicle gift"
+        : "Form 8283 Section B election is bounded to one current-year investment-land gift",
     );
   }
   const scheduleFields = sourceScheduleA as Record<string, unknown>;
   if (
-    scheduleFields.capital_gain_election_finalized !== true ||
+    (vehicle && scheduleFields.capital_gain_election_finalized === true) ||
+    (!vehicle && scheduleFields.capital_gain_election_finalized !== true) ||
     scheduleFields.charitable_limits_finalized !== true ||
     scheduleFields.current_noncash_gift_inventory_complete_confirmed !== true ||
     scheduleFields.other_prior_charitable_carryovers_absent_confirmed !==
@@ -390,7 +421,9 @@ export function assertElectedSectionBReconciled(
     scheduleFields.line_13_contribution_carryover !== 0
   ) {
     throw new Error(
-      "Form 8283 Section B election needs a finalized complete current-gift inventory and an empty prior-carryover ledger",
+      `Form 8283 Section B ${
+        vehicle ? "vehicle" : "election"
+      } needs a finalized complete current-gift inventory and an empty prior-carryover ledger`,
     );
   }
   const {
@@ -418,7 +451,7 @@ export function assertElectedSectionBReconciled(
     );
   }
   if (parsedScheduleA.agi !== returnFields.line11_agi) {
-    throw new Error("Schedule A election AGI differs from Form 1040 line 11");
+    throw new Error("Schedule A AGI differs from Form 1040 line 11");
   }
   const recomputed = scheduleA.compute(
     { taxYear: 2025, formType: "f1040" },
@@ -431,7 +464,9 @@ export function assertElectedSectionBReconciled(
     output.nodeType === "standard_deduction"
   )?.fields.itemized_deductions;
   if (
-    !computed || computed.capital_gain_election_finalized !== true ||
+    !computed ||
+    (vehicle && computed.capital_gain_election_finalized === true) ||
+    (!vehicle && computed.capital_gain_election_finalized !== true) ||
     itemizedTotal !== returnFields.line12e_itemized_deductions ||
     computed.line_11_cash_contributions !==
       scheduleFields.line_11_cash_contributions ||
@@ -449,7 +484,9 @@ export function assertElectedSectionBReconciled(
     ))
   ) {
     throw new Error(
-      "Form 8283 Section B election differs from recomputed Schedule A lines 11–13 or Form 1040 itemized total",
+      `Form 8283 Section B ${
+        vehicle ? "vehicle" : "election"
+      } differs from recomputed Schedule A lines 11–13 or Form 1040 itemized total`,
     );
   }
 }

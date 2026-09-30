@@ -18,6 +18,7 @@ import {
   assertElectedSectionBReconciled,
   assertNeedyVehicleUnreducedSource,
   assertOrdinarySectionAReconciled,
+  assertSectionBVehicleReconciled,
   isSingleSectionANeedyVehicleUnreduced,
   isSingleSectionAVehicleSale,
 } from "../../mef/forms/f8283_election.ts";
@@ -43,6 +44,11 @@ const fields: PdfFieldEntry[] = [
     kind: "checkbox",
     domainKey: "section_b_other_real_estate",
     pdfField: `${page}.Lines2d-h[0].c1_6[0]`,
+  },
+  {
+    kind: "checkbox",
+    domainKey: "section_b_vehicle",
+    pdfField: `${page}.Lines2i-l[0].c1_6[0]`,
   },
   text("section_b_description", "Table_Line3_ColsA-C[0].Row3A[0].f1_42[0]"),
   text("section_b_condition", "Table_Line3_ColsA-C[0].Row3A[0].f1_43[0]"),
@@ -297,6 +303,87 @@ function sectionBInstance(
   };
 }
 
+function sectionBVehicleInstance(
+  item: SectionBItem,
+  filer: FilerIdentity | undefined,
+): Record<string, unknown> {
+  const appraisal = item.qualified_appraisal;
+  const donee = item.donee_acknowledgment;
+  const acknowledgment = item.vehicle_material_improvement_acknowledgment;
+  const description = item.property_description?.toLowerCase() ?? "";
+  const compactDescription = description.replace(/[,\s]/g, "");
+  if (
+    item.property_type !== SectionBPropertyType.Vehicle ||
+    item.capital_gain_reduction_election_confirmed === true ||
+    item.is_capital_gain_property !== false ||
+    item.charitable_limit_category !== "noncash_50" ||
+    item.fmv <= 5_000 || item.deduction_claimed !== item.fmv ||
+    item.cost_or_adjusted_basis === undefined ||
+    item.cost_or_adjusted_basis < item.fmv ||
+    !item.property_description?.trim() || !item.physical_condition?.trim() ||
+    !item.vehicle_vin?.trim() || !item.date_acquired ||
+    !item.date_contributed?.startsWith("2025-") ||
+    item.date_acquired > item.date_contributed ||
+    item.donor_acquisition_description?.trim().toLowerCase() !== "purchase" ||
+    !appraisal?.signature_attachment_file_name ||
+    !donee?.signature_attachment_file_name ||
+    !item.signed_form_attachment_file_name || !item.signed_form_source_review ||
+    !item.vehicle_acknowledgment_attachment_file_name || !acknowledgment ||
+    !description.includes(String(acknowledgment.vehicle_year)) ||
+    !description.includes(acknowledgment.vehicle_make.toLowerCase()) ||
+    !description.includes(acknowledgment.vehicle_model.toLowerCase()) ||
+    !description.includes(acknowledgment.vehicle_condition.toLowerCase()) ||
+    !compactDescription.includes(String(acknowledgment.odometer_miles)) ||
+    donee.received_date !== item.date_contributed ||
+    donee.organization_name !== acknowledgment.donee_name ||
+    donee.ein !== acknowledgment.donee_ein ||
+    JSON.stringify(donee.us_address) !==
+      JSON.stringify(acknowledgment.donee_us_address)
+  ) {
+    throw new Error(
+      "Form 8283 Section B PDF needs one fully sourced material-improvement vehicle and signed-form review",
+    );
+  }
+  const person = identity(filer);
+  return {
+    ...person,
+    page2_filer_name: person.filer_name,
+    page2_filer_ssn: person.filer_ssn,
+    section_b_vehicle: true,
+    section_b_description: item.property_description,
+    section_b_condition: item.physical_condition,
+    section_b_appraised_fmv: item.fmv,
+    section_b_acquired_date: printedDate(item.date_acquired, true),
+    section_b_how_acquired: item.donor_acquisition_description,
+    section_b_basis: item.cost_or_adjusted_basis,
+    section_b_claim: item.deduction_claimed,
+    section_b_appraiser_signed_date: printedDate(appraisal.signed_date),
+    section_b_appraiser_name:
+      `${appraisal.appraiser_first_name} ${appraisal.appraiser_last_name}`,
+    section_b_appraiser_id: appraisal.appraiser_ein ?? appraisal.appraiser_ssn,
+    section_b_appraiser_address: [
+      street(appraisal.us_address),
+      cityStateZip(appraisal.us_address),
+    ].join("; "),
+    section_b_donee_received_date: printedDate(donee.received_date),
+    section_b_unrelated_use_yes: donee.unrelated_use,
+    section_b_unrelated_use_no: !donee.unrelated_use,
+    section_b_donee_name: donee.organization_name,
+    section_b_donee_ein: donee.ein,
+    section_b_donee_street: street(donee.us_address),
+    section_b_donee_city_state_zip: cityStateZip(donee.us_address),
+    reduction_statements: [
+      `Section B item A: ${item.property_description}; VIN ${item.vehicle_vin}. ` +
+      `The donee certified a material improvement: ${acknowledgment.intended_improvement_description}. ` +
+      `Appraised FMV and claimed deduction are both $${item.fmv.toFixed(2)}. ` +
+      `Review the donee-issued acknowledgment ${item.vehicle_acknowledgment_attachment_file_name} ` +
+      `and completed signed Form 8283 ${item.signed_form_attachment_file_name} ` +
+      `(reviewed ${item.signed_form_source_review.reviewed_on} by ${item.signed_form_source_review.reviewed_by}). ` +
+      `This generated PDF does not reproduce signatures and is not the signed filing attachment.`,
+    ],
+  };
+}
+
 function drawWrappedText(
   page: PDFPage,
   font: PDFFont,
@@ -347,7 +434,10 @@ export const form8283Pdf: PdfFormDescriptor = {
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8283--2025.pdf",
   fields,
   pageIndices: (instance) =>
-    instance.section_b_other_real_estate === true ? [0, 1] : [0],
+    instance.section_b_other_real_estate === true ||
+      instance.section_b_vehicle === true
+      ? [0, 1]
+      : [0],
   instances(raw, filer, allPending) {
     if (Object.keys(raw).length === 0) return [];
     if (Array.isArray(raw.section_a_items) && raw.section_a_items.length > 4) {
@@ -388,14 +478,22 @@ export const form8283Pdf: PdfFormDescriptor = {
           "Form 8283 PDF Section B supports one standalone item without Section A",
         );
       }
-      assertElectedSectionBReconciled({ pending: allPending });
+      if (sectionB[0].property_type === SectionBPropertyType.Vehicle) {
+        assertSectionBVehicleReconciled({ pending: allPending });
+      } else {
+        assertElectedSectionBReconciled({ pending: allPending });
+      }
       if (
         JSON.stringify(source) !==
           JSON.stringify(inputSchema.parse(allPending?.f8283))
       ) {
         throw new Error("Form 8283 PDF source differs from the pending return");
       }
-      return [sectionBInstance(sectionB[0], filer)];
+      return [
+        sectionB[0].property_type === SectionBPropertyType.Vehicle
+          ? sectionBVehicleInstance(sectionB[0], filer)
+          : sectionBInstance(sectionB[0], filer),
+      ];
     }
     if (sectionA.length === 0) return [];
     const soldVehicle = isSingleSectionAVehicleSale(source);
@@ -482,8 +580,9 @@ export const form8283Pdf: PdfFormDescriptor = {
     const bold = await document.embedFont(StandardFonts.HelveticaBold);
     const page = document.addPage([612, 792]);
     page.drawText(
-      instance.section_b_other_real_estate === true
-        ? "Form 8283 Section B - Election and attachment record"
+      instance.section_b_other_real_estate === true ||
+        instance.section_b_vehicle === true
+        ? "Form 8283 Section B - Source and attachment record"
         : "Form 8283 Section A - Fair market value reductions",
       {
         x: 48,

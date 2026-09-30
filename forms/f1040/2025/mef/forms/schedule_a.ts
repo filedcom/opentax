@@ -6,11 +6,15 @@ import {
   assertElectedSectionAReconciled,
   assertElectedSectionBReconciled,
   assertOrdinarySectionAReconciled,
+  assertSectionBVehicleReconciled,
   hasSectionAShortTermReduction,
   isSingleSectionANeedyVehicleUnreduced,
   isSingleSectionAVehicleSale,
 } from "./f8283_election.ts";
-import { inputSchema as form8283InputSchema } from "../../../nodes/inputs/f8283/index.ts";
+import {
+  inputSchema as form8283InputSchema,
+  SectionBPropertyType,
+} from "../../../nodes/inputs/f8283/index.ts";
 import { reconcileForm8283Carryover } from "./f8283_carryover.ts";
 
 export interface Fields {
@@ -132,6 +136,14 @@ function buildIRS1040ScheduleA(
     ) {
       assertOrdinarySectionAReconciled(context, fields);
     }
+    if (
+      (form.section_a_items ?? []).length === 0 &&
+      (form.section_b_items ?? []).length === 1 &&
+      form.section_b_items?.[0]?.property_type ===
+        SectionBPropertyType.Vehicle &&
+      form.section_b_items?.[0]?.capital_gain_reduction_election_confirmed !==
+        true
+    ) assertSectionBVehicleReconciled(context, fields);
   }
   if (
     fields.capital_gain_election_finalized === true &&
