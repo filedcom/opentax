@@ -2,9 +2,10 @@
 
 ## Current state (2026-10-01)
 
-This board lists **open work only**. The completed checkpoints and their test logs,
-source references, PDF reviews, and earlier decisions are preserved in the
-[2026-09-30 checkpoint archive](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md).
+This board shows **completed checkpoints and open work**. A checked checkpoint
+records only the work named in that row; it does not close a broader form or
+release gate. Older test logs, source references, PDF reviews, and decisions
+remain in the [2026-09-30 checkpoint archive](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md).
 The detailed route boundaries remain in the linked gap notes and audits.
 
 - **Implemented slices:** reviewed source routes now cover selected W-2, 1099,
@@ -69,10 +70,48 @@ The detailed route boundaries remain in the linked gap notes and audits.
   are recorded in their gap notes; no new per-form checks or bulk run should
   be treated as the current acceptance gate.
 
-A checked historical item records its bounded evidence only. An unchecked item
+A checked item records its bounded evidence only. An unchecked item
 below remains open even when one of its examples already passes. A source
 literal, registered descriptor, local XSD pass, or focused test alone does not
 establish full filing support.
+
+## Completed checkpoints
+
+### Verified on earlier commits
+
+- [x] The fixed-source `deno task test` baseline passed 8,951/8,951 with zero
+  failures on `44282e25`; [log](.state/research/ty2025-full-test-schedule1a-vehicle.log).
+  This predates the current implementation and is not the final bulk gate.
+- [x] The prepared source-to-native-MeF review fixture set passed 88/88 local
+  TY2025 v5.4 XSD checks on `9effd20b`. The current fixture set has grown and
+  awaits the final batch.
+- [x] The earlier PDF descriptor check found all mapped field names in the
+  referenced IRS PDFs (then 87 descriptors); see the
+  [checkpoint archive](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md).
+  This was a field-name check, not filled-output review.
+
+### Implemented in draft PR #56; current batch pending
+
+- [x] Form 4952's bounded partnership K-1 paths check final-filer ownership
+  and reconcile their mixed K-1/1099 Form 1040 joins (`59bc67de`, `0ed3df33`).
+- [x] Form 8863 accepts a public credit-limit worksheet input for the
+  reviewed AOC route (`ad1def92`).
+- [x] Form 8862 CTC/ODC and AOTC paths require prior-disallowance year and
+  IRS-notice references; multi-person PDF continuations and finalized
+  EITC/CTC/ODC/AOTC claimant joins are written (`6704de8f` through
+  `906b7d01`).
+- [x] Form 1098 construction-debt refinance points calculate a TY2025
+  Schedule A line 8a amount from the loan term and payment records
+  (`796df406`).
+- [x] Ordinary unreported refinance points have a linked Form 1098,
+  closing-disclosure, payment-record, and Schedule A line 8c source route
+  (`6b86815f`).
+- [x] Form 8814 child-gain PDF notation follows direct Form 1040 line 7a or
+  Schedule D line 13, with a mixed-return fixture written (`7f8dd8b6`).
+
+The items in this second group have authored cases but have **not** entered
+the requested final bulk test. Their source authentication, broader variants,
+filled-PDF review, IRS business rules, and ATS gates remain open below.
 
 ## Work order
 
