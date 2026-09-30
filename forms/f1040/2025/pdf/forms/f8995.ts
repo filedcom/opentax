@@ -1,5 +1,8 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
-import { assertOneBusiness8995 } from "../../mef/forms/f8995-route.ts";
+import {
+  assertNoUnfiled8995Loss,
+  assertOneBusiness8995,
+} from "../../mef/forms/f8995-route.ts";
 
 const page1 = "topmostSubform[0].Page1[0].";
 const fields: ReadonlyArray<PdfFieldEntry> = [
@@ -46,6 +49,7 @@ export const form8995Pdf: PdfFormDescriptor = {
   projectFields(fields, allPending) {
     const deduction = fields.qbi_deduction;
     if (deduction === undefined || deduction === null || deduction === 0) {
+      assertNoUnfiled8995Loss(fields);
       return {};
     }
     if (

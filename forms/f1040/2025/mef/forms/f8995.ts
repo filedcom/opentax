@@ -1,7 +1,10 @@
 import type { inputSchema } from "../../../nodes/intermediate/forms/form8995/index.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 import { element, elements } from "../../../mef/xml.ts";
-import { assertOneBusiness8995 } from "./f8995-route.ts";
+import {
+  assertNoUnfiled8995Loss,
+  assertOneBusiness8995,
+} from "./f8995-route.ts";
 
 type Input = Partial<ReturnType<typeof inputSchema.parse>> & {
   qbi_deduction?: number | null;
@@ -14,6 +17,7 @@ export const form8995: MefFormDescriptor<"form8995", Input> = {
   build(fields, context) {
     const deduction = fields.qbi_deduction;
     if (deduction === undefined || deduction === null || deduction === 0) {
+      assertNoUnfiled8995Loss(fields as Record<string, unknown>);
       return "";
     }
     if (

@@ -127,7 +127,8 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
   }
   if (
     partialDeathBenefit &&
-    (input.elect_10yr_averaging !== true ||
+    ((input.elect_10yr_averaging !== true &&
+      input.elect_capital_gain !== true) ||
       (input.box6_nua ?? 0) > 0 || input.elect_include_nua === true ||
       (input.annuity_actuarial_value ?? 0) > 0 ||
       (input.federal_estate_tax ?? 0) > 0 ||
@@ -137,7 +138,7 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
         deathBenefit * recipientShare)
   ) {
     throw new Error(
-      "form4972: partial-share death benefit needs Part III and an administrator source matching the full exclusion and recipient allocation, without NUA, annuity, or estate tax",
+      "form4972: partial-share death benefit needs Part II or III and an administrator source matching the full exclusion and recipient allocation, without NUA, annuity, or estate tax",
     );
   }
   if (
@@ -395,9 +396,12 @@ class Form4972Node extends TaxNode<typeof inputSchema> {
       ? box2aTaxable - (electCapGain ? box3CapitalGain : 0) +
         includedNua - (electCapGain ? nuaCapitalGain : 0)
       : taxableAmount - (electCapGain ? capitalGain : 0);
+    const recipientOrdinaryDeathBenefit = partialShare && !elect10yr
+      ? deathBenefit * recipientShare - deathBenefitCapitalShare
+      : ordinaryDeathBenefit;
     const ordinaryIncomeOn1040 = Math.max(
       0,
-      ordinaryIncome - ordinaryDeathBenefit,
+      ordinaryIncome - recipientOrdinaryDeathBenefit,
     );
     const partIII = elect10yr
       ? partIIILines(

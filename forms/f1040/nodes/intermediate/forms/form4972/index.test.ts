@@ -150,9 +150,49 @@ Deno.test("Form 4972 partial beneficiary Part II and III allocate the death bene
     assertThrows(
       () => calculated({ ...source, ...unsupported }),
       Error,
-      "partial-share death benefit needs Part III",
+      "partial-share death benefit needs Part II or III",
     );
   }
+});
+
+Deno.test("Form 4972 partial beneficiary Part-II-only uses recipient death-benefit share on Form 1040", () => {
+  const result = calculated({
+    lump_sum_amount: 20_000,
+    capital_gain_amount: 4_000,
+    recipient_share_pct: 50,
+    beneficiary_distribution: true,
+    participant_five_year_member: false,
+    participant_died_before_1996_08_21: true,
+    prior_beneficiary_election_after_1986: false,
+    death_benefit_exclusion: 5_000,
+    death_benefit_recipient_allocated_amount: 2_500,
+    death_benefit_exclusion_source_reference:
+      "Plan administrator beneficiary exclusion allocation",
+    elect_capital_gain: true,
+  });
+  assertEquals(result.lines?.line6, 3_500);
+  assertEquals(result.lines?.line7, 700);
+  assertEquals(result.lines?.line8, undefined);
+  assertEquals(result.tax, 700);
+  assertEquals(result.f1040?.line5b_form4972_ordinary, 14_000);
+  assertThrows(
+    () => calculated({
+      lump_sum_amount: 20_000,
+      capital_gain_amount: 4_000,
+      recipient_share_pct: 50,
+      beneficiary_distribution: true,
+      participant_five_year_member: false,
+      participant_died_before_1996_08_21: true,
+      prior_beneficiary_election_after_1986: false,
+      death_benefit_exclusion: 5_000,
+      death_benefit_recipient_allocated_amount: 2_000,
+      death_benefit_exclusion_source_reference:
+        "Plan administrator beneficiary exclusion allocation",
+      elect_capital_gain: true,
+    }),
+    Error,
+    "recipient allocation",
+  );
 });
 
 Deno.test("Form 4972 partial death benefit can exceed this recipient's box 2a but not the grossed-up distribution", () => {
@@ -206,7 +246,7 @@ Deno.test("Form 4972 partial death benefit rejects unsourced allocation and othe
     assertThrows(
       () => calculated({ ...base, ...changed }),
       Error,
-      "partial-share death benefit needs Part III",
+      "partial-share death benefit needs Part II or III",
     );
   }
 });
@@ -411,7 +451,7 @@ Deno.test("Form 4972 partial box 9a share rejects unsupported allocations", () =
         death_benefit_exclusion: 1_000,
       }),
     Error,
-    "partial-share death benefit needs Part III",
+    "partial-share death benefit needs Part II or III",
   );
   assertThrows(
     () =>

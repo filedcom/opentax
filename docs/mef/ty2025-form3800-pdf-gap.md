@@ -7,6 +7,13 @@ geothermal and mixed wind/geothermal credit returns have local XSD and
 filled-PDF evidence. Other credit sources, transfers, carryovers, row
 combinations, and ATS acceptance remain open.
 
+The direct PDF descriptor now requires the pending Form 3800 allowed-credit
+amount to match both its return-wide pending source and the prepared native
+line 38 at cent precision. A changed raw descriptor argument or changed pending
+credit fails before any page fields are projected. Positive and tamper fixtures
+are authored for the deferred bulk run; this closes the direct-projection
+amount drift, while individual credit-source authenticity remains open.
+
 The Form 8835 source calculation now rejects electricity sold on or after the
 tenth anniversary of the facility's placed-in-service date, including a 2025
 period that crosses that boundary. The same calculation feeds Form 3800 and

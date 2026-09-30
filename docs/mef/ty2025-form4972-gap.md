@@ -1,5 +1,23 @@
 # TY2025 Form 4972 remaining coverage
 
+## Partial-share Part-II-only death benefit (staged, unrun)
+
+The [2025 Death Benefit Worksheet](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf)
+allocates the full allowable exclusion to each recipient in proportion to the
+box 9a distribution share, then allocates that recipient amount between capital
+gain and ordinary income. A bounded beneficiary now may elect Part II alone for
+one 1099-R with a partial box 9a share, positive box 3 capital gain, and a
+pre-August-21-1996 death. The administrator allocation reference, full
+allowable exclusion, and exact recipient allocation remain required. NUA,
+annuity, federal estate tax, and other elected distributions remain excluded.
+For a 50% beneficiary with box 2a $20,000, box 3 $4,000, and a $5,000 full
+exclusion, the recipient exclusion is $2,500: $500 reduces line 6 to $3,500,
+line 7 is $700, and the remaining $2,000 reduces the $16,000 ordinary share to
+$14,000 on Form 1040 line 5b. Native and PDF reconcile those amounts to the
+one elected 1099-R and finalized Form 1040. Source, calculation, native, PDF,
+and tampering fixtures are authored but unrun; the administrator statement
+bytes, filled PDF, XSD, business rules, and ATS remain unverified.
+
 Source: [IRS 2025 Form 4972](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf),
 including the form's multiple-recipient instructions and worksheets on pages
 3–4. The checked-in TY2025 v5.4 schema is
@@ -125,7 +143,7 @@ including the form's multiple-recipient instructions and worksheets on pages
   Form 1040. Focused positive, allocation/source-mismatch, unsupported
   combination, and printed-line cases are written but unrun. The entered
   administrator reference does not independently authenticate the statement.
-  Part-II-only death-benefit allocation, combined NUA/annuity/estate
+  Other Part-II-only death-benefit combinations, combined NUA/annuity/estate
   adjustments, shares requiring non-whole-dollar allocation, filled-PDF
   appearance, XSD, business-rule, and ATS checks remain open.
 - A joint return with qualified distributions for both spouses requires a

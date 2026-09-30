@@ -37,6 +37,40 @@ const lineNumbers = [
   17,
 ] as const;
 
+/** A zero deduction cannot discard a required loss carryforward workpaper. */
+export function assertNoUnfiled8995Loss(
+  fields: Readonly<Record<string, unknown>>,
+): void {
+  const currentReit = fields.line6_sec199a_dividends;
+  const prior = fields.reit_loss_carryforward;
+  if (
+    currentReit !== undefined &&
+      !(typeof currentReit === "number" && Number.isFinite(currentReit)) &&
+      !(Array.isArray(currentReit) &&
+        currentReit.every((value) =>
+          typeof value === "number" && Number.isFinite(value)
+        )) ||
+    prior !== undefined &&
+      (typeof prior !== "number" || !Number.isFinite(prior))
+  ) {
+    throw new Error("Form 8995 loss carryforward source must be numeric");
+  }
+  const current = currentReit === undefined
+    ? 0
+    : Array.isArray(currentReit)
+    ? currentReit.reduce((sum: number, value: number) => sum + value, 0)
+    : currentReit as number;
+  if (
+    (typeof prior === "number" && current + prior < 0) ||
+    (typeof fields.line17 === "number" && fields.line17 > 0) ||
+    (typeof fields.line16 === "number" && fields.line16 > 0)
+  ) {
+    throw new Error(
+      "Form 8995 zero deduction cannot omit an unfiled QBI or REIT/PTP loss carryforward",
+    );
+  }
+}
+
 export type OneBusiness8995 = {
   readonly businessName: string;
   readonly tin: { readonly kind: "ein" | "ssn"; readonly value: string };

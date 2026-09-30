@@ -460,6 +460,12 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
       return { outputs: [] };
     }
 
+    if (netReit(input) < 0) {
+      throw new Error(
+        "Form 8995 negative REIT/PTP line 8 needs a sourced line 17 carryforward filing route",
+      );
+    }
+
     const taxableIncome = taxableIncomeBeforeQbi(input, cfg);
     if (
       taxableIncome !== undefined && input.filing_status !== undefined &&

@@ -125,6 +125,29 @@ Deno.test("Form 3800 PDF uses the exact parts captured during MeF serialization"
   assertEquals(instance?.[form3800PartIIIFields("4e").g], 600);
   assertEquals(instance?.[form3800PartIIIFields("4e").i], 600);
   assertThrows(
+    () => form3800Pdf.instances?.(
+      { ...source.f3800, allowed_credit: 601 },
+      filer,
+      source,
+      bundle.form3800Parts,
+    ),
+    Error,
+    "pending allowed credit differs from prepared MeF line 38",
+  );
+  assertThrows(
+    () => form3800Pdf.instances?.(
+      source.f3800,
+      filer,
+      {
+        ...source,
+        f3800: { ...source.f3800, allowed_credit: 601 },
+      },
+      bundle.form3800Parts,
+    ),
+    Error,
+    "pending allowed credit differs from prepared MeF line 38",
+  );
+  assertThrows(
     () => form3800Pdf.instances?.(source.f3800, filer, source),
     Error,
     "same prepared MeF return",

@@ -101,6 +101,44 @@ Deno.test("2025 Form 4972 PDF keeps a partial beneficiary's full death benefit o
   );
 });
 
+Deno.test("2025 Form 4972 PDF prints partial beneficiary Part-II-only death-benefit adjustment", () => {
+  const source = {
+    ...eligibility,
+    recipient: "T",
+    beneficiary_distribution: true,
+    participant_five_year_member: false,
+    prior_beneficiary_election_after_1986: false,
+    participant_died_before_1996_08_21: true,
+    lump_sum_amount: 20_000,
+    capital_gain_amount: 4_000,
+    recipient_share_pct: 50,
+    death_benefit_exclusion: 5_000,
+    death_benefit_recipient_allocated_amount: 2_500,
+    death_benefit_exclusion_source_reference:
+      "Plan administrator beneficiary exclusion allocation",
+    elect_capital_gain: true,
+  };
+  const calculated = form4972Node.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form4972InputSchema.parse(source),
+  ).outputs[0].fields;
+  const original = pending("T", 20_000, 4_000);
+  const allPending = {
+    ...original,
+    f1099r: { f1099rs: [{ ...original.f1099r.f1099rs[0], box9a_pct_total: 50 }] },
+    f1040: { form4972_tax: 700, line5b_pension_taxable: 14_000 },
+  };
+  const projected = form4972Pdf.projectFields?.(calculated, allPending);
+  assertEquals(projected?.line6, 3_500);
+  assertEquals(projected?.line7, 700);
+  assertEquals(projected?.line8, undefined);
+  assertThrows(
+    () => form4972Pdf.projectFields?.({ ...calculated, line6: 4_000 }, allPending),
+    Error,
+    "partial-share lines differ",
+  );
+});
+
 Deno.test("2025 Form 4972 PDF separates partial beneficiary capital and ordinary death-benefit lines", () => {
   const source = {
     ...eligibility,

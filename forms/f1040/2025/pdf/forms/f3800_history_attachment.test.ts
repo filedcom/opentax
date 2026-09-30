@@ -81,7 +81,7 @@ const parts: Form3800DocumentParts = {
   passiveCarryoverDetails: [],
 };
 const all = {
-  f3800: { carryforward_vintages: entries },
+  f3800: { carryforward_vintages: entries, allowed_credit: 1_000 },
   schedule3: { line6a_total: 1_000 },
 };
 

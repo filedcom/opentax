@@ -68,6 +68,22 @@ export const form3800Pdf: PdfFormDescriptor = {
         "Form 3800 PDF needs the same prepared MeF return, filer, and Schedule 3",
       );
     }
+    const allowed = raw.allowed_credit;
+    const pending3800 = all.f3800;
+    if (
+      !pending3800 || typeof pending3800 !== "object" ||
+      Array.isArray(pending3800) ||
+      (pending3800 as Record<string, unknown>).allowed_credit !== allowed ||
+      typeof allowed !== "number" || !Number.isFinite(allowed) ||
+      !Number.isSafeInteger(Math.round(allowed * 100)) ||
+      Math.abs(allowed * 100 - Math.round(allowed * 100)) > 0.000001 ||
+      Math.round(allowed * 100) !==
+        Math.round(prepared.lines.line38 * 100)
+    ) {
+      throw new Error(
+        "Form 3800 PDF pending allowed credit differs from prepared MeF line 38",
+      );
+    }
     const line6a = all.schedule3.line6a_total;
     if (typeof line6a !== "number") {
       throw new Error("Form 3800 PDF needs finalized Schedule 3 line 6a");

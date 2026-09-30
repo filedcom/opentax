@@ -224,6 +224,52 @@ Deno.test("Form 4972 MeF reconciles a partial beneficiary's Part II and III deat
   );
 });
 
+Deno.test("Form 4972 MeF reconciles partial beneficiary Part-II-only death benefit and ordinary pension", () => {
+  const source = {
+    ...qualified,
+    recipient: TS.T,
+    beneficiary_distribution: true,
+    participant_five_year_member: false,
+    prior_beneficiary_election_after_1986: false,
+    participant_died_before_1996_08_21: true,
+    lump_sum_amount: 20_000,
+    capital_gain_amount: 4_000,
+    recipient_share_pct: 50,
+    death_benefit_exclusion: 5_000,
+    death_benefit_recipient_allocated_amount: 2_500,
+    death_benefit_exclusion_source_reference:
+      "Plan administrator beneficiary exclusion allocation",
+    elect_capital_gain: true,
+  };
+  const fields = form4972Node.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form4972InputSchema.parse(source),
+  ).outputs[0].fields;
+  const pending = {
+    f1099r: { f1099rs: [{
+      payer_name: "Qualified Plan",
+      payer_ein: "123456789",
+      box1_gross_distribution: 20_000,
+      box2a_taxable_amount: 20_000,
+      box3_capital_gain: 4_000,
+      box7_distribution_code: DistributionCode.CodeA,
+      box9a_pct_total: 50,
+      ts: TS.T,
+      exclude_4972: true,
+    }] },
+    f1040: { form4972_tax: 700, line5b_pension_taxable: 14_000 },
+  };
+  const xml = form4972.build(fields, { filer, pending });
+  assertStringIncludes(xml, "<CapitalGainElectionAmt>3500</CapitalGainElectionAmt>");
+  assertStringIncludes(xml, "<CapitalGainTimesElectionPctAmt>700</CapitalGainTimesElectionPctAmt>");
+  assertEquals(xml.includes("<LumpSumDistriOrdinaryIncmAmt>"), false);
+  assertThrows(
+    () => form4972.build(fields, { filer, pending: { ...pending, f1040: { ...pending.f1040, line5b_pension_taxable: 13_999 } } }),
+    Error,
+    "ordinary income is missing",
+  );
+});
+
 Deno.test("Form 4972 MeF reconciles partial-share Part II plus Part III", () => {
   const { fields, pending } = partialRecipientCase(4_000);
   const xml = form4972.build(fields, { filer, pending });

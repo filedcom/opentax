@@ -134,8 +134,14 @@ reject. Focused and graph-to-export cases pass for the two bounded sources.
 The synthetic Schedule F filled PDF was visually reviewed and its full return
 passed local XSD validation. ATS validation and the broader routes remain open.
 
-The zero-deduction route needs a separate audit: a current REIT/PTP loss may
-still need a Form 8995 carryforward line even when no line 13 deduction is
-allowed. The existing calculation node can return no pending form in that case.
-Do not interpret the no-claim omission here as approval to drop a reportable
-carryforward.
+The zero-deduction route now rejects a negative net REIT/PTP line 8 at the
+calculation node instead of silently returning no pending form. Direct MeF and
+PDF zero-deduction calls also reject an indicated unfiled line 16 or 17 loss,
+or a negative net of current section 199A dividends and a prior REIT/PTP loss.
+The [2025 IRS instructions](https://www.irs.gov/instructions/i8995) require a
+negative line 8 amount to carry forward and line 17 to be carried to the next
+year. A $3,000 current section 199A dividend less a $5,000 prior loss therefore
+needs a $2,000 ending loss record; the current source and export contract does
+not support that filing route. Focused node and direct native/PDF rejection
+cases are written but unrun. Source-backed line 17 filing, prior-loss
+provenance, and the wider zero-deduction audit remain open.
