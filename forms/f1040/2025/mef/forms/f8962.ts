@@ -14,6 +14,7 @@ import {
 import { inputSchema as generalSchema } from "../../../nodes/inputs/general/index.ts";
 import { inputSchema as f1099intSchema } from "../../../nodes/inputs/f1099int/index.ts";
 import { reconcileDependentMagi } from "../../form8962-dependent-magi.ts";
+import { roundForm8962Amounts } from "../../form8962-money.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 interface MonthlyRow {
@@ -681,26 +682,17 @@ function reconcileSimpleAnnualPolicy(
       "Form 8962 annual line 11 needs unchanged monthly premiums and SLCSP with reconciled Form 1095-A line 33 totals",
     );
   }
-  const sourceAnnualPremium = policies.reduce(
-    (sum, policy) => sum + policy.annual_premium!,
-    0,
+  const annualPremium = roundForm8962Amounts(
+    policies.map((policy) => policy.annual_premium!),
   );
-  const sourceAnnualSlcsp = twoStateFamilyPolicies
-    ? policies.reduce((sum, policy) => sum + policy.annual_slcsp!, 0)
-    : policies[0].annual_slcsp!;
-  const sourceAnnualAptc = policies.reduce(
-    (sum, policy) => sum + policy.annual_aptc!,
-    0,
+  const annualSlcsp = roundForm8962Amounts(
+    twoStateFamilyPolicies
+      ? policies.map((policy) => policy.annual_slcsp!)
+      : [policies[0].annual_slcsp!],
   );
-  const annualPremium = multiplePolicies
-    ? sourceAnnualPremium
-    : Math.round(sourceAnnualPremium);
-  const annualSlcsp = multiplePolicies
-    ? sourceAnnualSlcsp
-    : Math.round(sourceAnnualSlcsp);
-  const annualAptc = multiplePolicies
-    ? sourceAnnualAptc
-    : Math.round(sourceAnnualAptc);
+  const annualAptc = roundForm8962Amounts(
+    policies.map((policy) => policy.annual_aptc!),
+  );
   if (
     (form1040.data.line2a_tax_exempt ?? 0) !== 0 ||
     (form1040.data.line6a_ss_gross ?? 0) !==
@@ -1950,9 +1942,17 @@ function reconcileSimplePolicyMonths(
     if (premium === undefined || slcsp === undefined || aptc === undefined) {
       throw new Error("Form 8962 needs all three Form 1095-A monthly columns");
     }
-    const filedPremium = policies.length === 1 ? Math.round(premium) : premium;
-    const filedSlcsp = policies.length === 1 ? Math.round(slcsp) : slcsp;
-    const filedAptc = policies.length === 1 ? Math.round(aptc) : aptc;
+    const filedPremium = roundForm8962Amounts(
+      active.map((activePolicy) => activePolicy.monthly_premiums![index]),
+    );
+    const filedSlcsp = roundForm8962Amounts(
+      twoStateFamilyPolicies && active.length === 2
+        ? active.map((activePolicy) => activePolicy.monthly_slcsps![index])
+        : [policy.monthly_slcsps![index]],
+    );
+    const filedAptc = roundForm8962Amounts(
+      active.map((activePolicy) => activePolicy.monthly_aptcs![index]),
+    );
     if (
       active.length > 1 &&
       active.some((activePolicy) =>
@@ -2007,17 +2007,7 @@ function reconcileSimplePolicyMonths(
     (sum, row) => sum + (row.allowed_credit ?? 0),
     0,
   ));
-  const advance = policies.length === 1
-    ? rows.reduce((sum, row) => sum + (row.aptc ?? 0), 0)
-    : Math.round(policies.reduce(
-      (sum, policy) =>
-        sum +
-        (policy.monthly_aptcs?.reduce(
-          (subtotal, amount) => subtotal + amount,
-          0,
-        ) ?? 0),
-      0,
-    ));
+  const advance = rows.reduce((sum, row) => sum + (row.aptc ?? 0), 0);
   const net = Math.max(0, credit - advance);
   const excess = Math.max(0, advance - credit);
   const repayment = Math.min(excess, incomeAmounts.repaymentCap ?? excess);

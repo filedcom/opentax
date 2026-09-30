@@ -43,7 +43,7 @@ send net PTC on line 26 to Schedule 3 line 9 and excess APTC repayment on line
 29 to Schedule 2 line 1a. The checked-in TY2025 v5.4 schema has the native
 `MonthlyPTCCalculationGrp` and those total fields.
 
-## One-policy APTC cents
+## Ordinary APTC cents
 
 The [2025 Form 8962 instructions](https://www.irs.gov/instructions/i8962)
 require whole-dollar electronic entries. For a single ordinary APTC policy
@@ -64,9 +64,37 @@ corrected-copy cases keep both Marketplace statements in the source record and
 use only the identified corrected version for calculation, MeF, and PDF. The
 monthly $800.51/$700.49/$300.51 source yields $8,400 PTC, $3,612 APTC, and
 $4,788 net PTC. Replacing monthly APTC with $750.51 yields $612 excess
-repayment. Cents handling for multiple policies, shared allocations, marriage,
-QSEHRA, and Pub. 974 remains open, as do source authenticity, PDF visual
+repayment. Cents handling for other multi-policy combinations, shared
+allocations, marriage, QSEHRA, and Pub. 974 remains open, as do source
+authenticity, PDF visual
 review, the final bulk test, IRS business-rule results, and ATS acceptance.
+
+For multiple ordinary APTC policies, the [Form 8962
+instructions](https://www.irs.gov/instructions/i8962) combine source amounts
+that belong on the same monthly or annual line. The [2025 Form 1040 rounding
+rule](https://www.irs.gov/instructions/i1040gi) says to retain cents while
+adding amounts for one line and round the total. Applying that general rule
+to the Form 8962 combination instructions, the graph now merges raw
+monthly premiums and APTC, selects one same-state SLCSP or adds distinct-state
+SLCSPs, and rounds each resulting Form 8962 line using integer cents. For annual
+line 11, it adds
+the raw policy line 33 A and C totals, selects one same-state line 33 B (or
+adds different-state B amounts), then rounds those line totals. Native MeF
+recomputes the same amounts from each original policy and checks Schedule 2/3
+and Form 1040.
+
+Full-return cents cases cover a chronological two-policy single-filer switch,
+two simultaneous same-state taxpayer/dependent policies on monthly and annual
+lines, and simultaneous policies in Texas and Oklahoma on monthly lines.
+$500.26 plus $300.26 premiums file as $801 for the month. The different-state
+$600.26 plus $400.26 SLCSPs file as $1,001; rounding the source forms
+separately would give a different value. All four variations pass local
+TY2025 v5.4 XSD and build PDF packets. A three-amount half-dollar case guards
+against binary floating-point addition losing the rounding threshold; source
+amounts beyond cent precision reject. The affected source, calculation, MeF,
+corrected-copy, and full-return suite passes 162 cases. No-APTC multiple
+policies, special allocations, marriage, QSEHRA, Pub. 974, and other policy
+combinations still need source-to-filed cents reconciliation.
 
 ## No-APTC positive PTC: bounded monthly route
 
