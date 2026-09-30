@@ -73,6 +73,49 @@ Deno.test("partnership K-1 box 11 code J keeps each reviewed recovery source", (
   );
 });
 
+Deno.test("partnership K-1 box 11 code E keeps fully taxable COD sources", () => {
+  const item = (ein: string, amount: number) =>
+    minimalItem({
+      partnership_ein: ein,
+      source_document_reference: `2025 K-1 ${ein}`,
+      box11_code_e_cod: {
+        reported_amount: amount,
+        debt_reference: `debt-${ein}`,
+        statement_reference: `box 11 E statement ${ein}`,
+        recipient_tin: "111223333",
+        fully_taxable_reviewed: true,
+        no_section108_exclusion_confirmed: true,
+        not_reported_on_form1099c_confirmed: true,
+        taxability_workpaper_reference: `COD review ${ein}`,
+      },
+    });
+  const result = compute([item("123456789", 400), item("987654321", 600)]);
+  for (const node of ["schedule1", "agi_aggregator"]) {
+    const rows = findOutput(result, node)?.fields
+      .k1_partnership_box11_code_e_sources as Array<{ amount: number }>;
+    assertEquals(rows.map((row) => row.amount), [400, 600]);
+  }
+  assertThrows(
+    () => compute([item("123456789", 400), item("123456789", 400)]),
+    Error,
+    "Duplicate partnership K-1 box 11 code E debt source",
+  );
+  const invalid = item("123456789", 400) as Record<string, unknown>;
+  const review = invalid.box11_code_e_cod as Record<string, unknown>;
+  assertEquals(
+    k1Partnership.inputSchema.safeParse({
+      k1_partnerships: [{
+        ...invalid,
+        box11_code_e_cod: {
+          ...review,
+          no_section108_exclusion_confirmed: false,
+        },
+      }],
+    }).success,
+    false,
+  );
+});
+
 Deno.test("partnership K-3 passive interest and line 12 reduction reconcile to K-1", () => {
   const k3 = {
     partnership_ein: "123456789",

@@ -1028,6 +1028,52 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-two-partnership-code-e-cod",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(30_000, 3_000, "Example Employer", "12-3456789")],
+      k1_partnership: [
+        {
+          partnership_name: "Alpha Partnership",
+          partnership_ein: "123456789",
+          source_document_reference: "Synthetic Alpha 2025 K-1",
+          box11_code_e_cod: {
+            reported_amount: 400,
+            debt_reference: "Alpha debt A",
+            statement_reference: "Alpha box 11 code E statement",
+            recipient_tin: "111223333",
+            fully_taxable_reviewed: true,
+            no_section108_exclusion_confirmed: true,
+            not_reported_on_form1099c_confirmed: true,
+            taxability_workpaper_reference: "Alpha debt taxability review",
+          },
+        },
+        {
+          partnership_name: "Beta Partnership",
+          partnership_ein: "987654321",
+          source_document_reference: "Synthetic Beta 2025 K-1",
+          box11_code_e_cod: {
+            reported_amount: 600,
+            debt_reference: "Beta debt B",
+            statement_reference: "Beta box 11 code E statement",
+            recipient_tin: "111223333",
+            fully_taxable_reviewed: true,
+            no_section108_exclusion_confirmed: true,
+            not_reported_on_form1099c_confirmed: true,
+            taxability_workpaper_reference: "Beta debt taxability review",
+          },
+        },
+      ],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule1"],
+    reviewFocus: [
+      "Separate fully taxable K-1 code E debts of $400 and $600 make $1,000 on Schedule 1 line 8c",
+      "Form 1040 line 8 and AGI include the $1,000 once",
+      "No Form 982 or Form 1099-C source is present",
+    ],
+  },
+  {
     id: "single-two-partnership-code-j-recoveries",
     inputs: {
       general: singleGeneral,

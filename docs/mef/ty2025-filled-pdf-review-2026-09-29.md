@@ -507,3 +507,14 @@ a $1,405 refund. The PDF SHA-256 is
 Focused native and PDF checks reject source-row tampering and a recipient
 outside the return. Issued K-1 bytes, prior-year tax-benefit workpapers,
 other box 11 codes, IRS business rules, and ATS acceptance remain open.
+
+The `single-two-partnership-code-e-cod` source passes local TY2025 v5.4
+full-return XSD. Two reviewed, fully taxable code E debts of $400 and $600
+produce $1,000 on Schedule 1 line 8c and line 10, Form 1040 line 8, and
+$31,000 AGI. All four pages of the `v70` PDF packet were rendered and visually
+inspected. Form 1040 line 16 tax is $1,595; $3,000 withholding yields a $1,405
+refund. No Form 982 or Form 1099-C appears. The PDF SHA-256 is
+`c5536f42c868461274b4dc21de3e66cac0407651f8a77174c22ab802b761db1d`.
+Export checks reject changed K-1 facts, another recipient, a Form 1099-C mix,
+and an altered line 8c. Exclusion/partly taxable cases, source bytes,
+taxability workpaper authentication, IRS business rules, and ATS remain open.

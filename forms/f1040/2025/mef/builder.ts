@@ -15,6 +15,7 @@ import {
   assertScheduleFFarmSourceIdentity,
 } from "../filer-source-reconciliation.ts";
 import { assertBox11CodeJSources } from "../../nodes/inputs/k1_partnership/box11_code_j.ts";
+import { assertBox11CodeESources } from "../../nodes/inputs/k1_partnership/box11_code_e.ts";
 
 export interface MefBundle {
   readonly xml: string;
@@ -214,13 +215,15 @@ function buildReturnXml(
   assertSchedule1Box3SourceIdentity(pending, filer);
   assertSchedule1NecSourceIdentity(pending, filer);
   assertScheduleFFarmSourceIdentity(pending, filer);
-  assertBox11CodeJSources(pending, [
+  const k1Recipients = [
     filer.primarySSN,
     ...(filer.filingStatus === FilingStatus.MarriedFilingJointly &&
         filer.spouse?.ssn
       ? [filer.spouse.ssn]
       : []),
-  ]);
+  ];
+  assertBox11CodeJSources(pending, k1Recipients);
+  assertBox11CodeESources(pending, k1Recipients);
   if (
     Array.isArray(pending.form8949) && pending.form8949.length > 0 &&
     !pending.schedule_d

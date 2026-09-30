@@ -113,7 +113,10 @@ The Schedule 1 row now has one more bounded source: partnership K-1 box 11 code
 J reviewed taxable recovery. Two partnership source rows reconcile through AGI,
 the native linked line 8z statement, and four visually inspected PDF pages in
 `v69`; local TY2025 v5.4 full-return XSD passes. Untyped box 11 rejects, and
-other codes remain unresolved. See the [line 8z source
+code E fully taxable cancellation of debt now has a separate reviewed source
+route. Two debts reconcile to Schedule 1 line 8c, AGI, native full-return XSD,
+and four visually inspected `v70` PDF pages. Section 108 exclusions, Form 982,
+and Form 1099-C debt matching remain unresolved. See the [line 8z source
 audit](ty2025-schedule1-line8z-source-gap.md).
 
 #### Sparse main-return and schedule rows: static source boundary

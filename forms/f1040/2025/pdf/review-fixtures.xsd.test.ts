@@ -31,6 +31,16 @@ for (const fixture of pdfReviewFixtures) {
       });
       assertEquals(result.diagnostics, []);
       const xml = buildMefXml(buildPending(result.pending), fixture.filer);
+      if (fixture.id === "single-two-partnership-code-e-cod") {
+        assertEquals(result.pending.schedule1.line8c_cod_income, 1_000);
+        assertEquals(result.pending.f1040.line8_additional_income, 1_000);
+        assertEquals(result.pending.f1040.line11_agi, 31_000);
+        assertStringIncludes(
+          xml,
+          "<DebtCancellationAmt>1000</DebtCancellationAmt>",
+        );
+        assertEquals(xml.includes("<IRS982 "), false);
+      }
       if (fixture.id === "single-two-partnership-code-j-recoveries") {
         assertEquals(result.pending.schedule1.line9_total_other_income, 1_000);
         assertEquals(result.pending.f1040.line8_additional_income, 1_000);

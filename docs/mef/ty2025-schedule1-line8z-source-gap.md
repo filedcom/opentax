@@ -54,6 +54,20 @@ K-1 facts and filer or joint spouse. A two-K-1 $400/$600 case produces $1,000
 on Schedule 1 line 8z and Form 1040 line 8, passes local TY2025 v5.4 XSD,
 and prints in four inspected `v69` PDF pages. This follows the [2025 partner
 instructions](https://www.irs.gov/instructions/i1065sk1) for box 11 code J.
+Box 11 code E has a separate bounded fully taxable cancellation-of-debt route
+to Schedule 1 line 8c. It requires the partnership EIN and K-1 reference,
+statement and debt references, recipient TIN, amount, affirmative taxability and
+no-section-108-exclusion review, confirmation that the debt was not reported
+on Form 1099-C, and a taxability workpaper reference. The source rows survive
+through Schedule 1 and AGI. MeF/PDF export checks them against the K-1 facts,
+filed line 8c and filer or joint spouse; a return with any Form 1099-C source
+rejects until debt-level duplicate reconciliation exists. The synthetic
+$400/$600 case passes full-return TY2025 v5.4 XSD and all four `v70` PDF pages
+were inspected. The [2025 partner instructions](https://www.irs.gov/instructions/i1065sk1)
+direct generally taxable code E debt cancellation to line 8c and describe
+possible exclusions. Excluded or partly taxable debt, Form 982, 1099-C matching,
+and authentic source/workpaper evidence remain open.
+
 Other box 11 codes have distinct destinations and remain open, as do issued
 source bytes, prior-return authentication, IRS business rules, and ATS.
 

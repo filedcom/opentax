@@ -16,6 +16,7 @@ import {
 } from "../filer-source-reconciliation.ts";
 import { assertScheduleDSalesMatchPrepared } from "../mef/forms/schedule_d.ts";
 import { assertBox11CodeJSources } from "../../nodes/inputs/k1_partnership/box11_code_j.ts";
+import { assertBox11CodeESources } from "../../nodes/inputs/k1_partnership/box11_code_e.ts";
 
 async function fetchWithCache(
   url: string,
@@ -261,18 +262,17 @@ export async function buildPdfBytes(
     assertSchedule1NecSourceIdentity(normalized, filer);
     assertScheduleFFarmSourceIdentity(normalized, filer);
   }
-  assertBox11CodeJSources(
-    normalized,
-    filer
-      ? [
-        filer.primarySSN,
-        ...(filer.filingStatus === FilingStatus.MarriedFilingJointly &&
-            filer.spouse?.ssn
-          ? [filer.spouse.ssn]
-          : []),
-      ]
-      : [],
-  );
+  const k1Recipients = filer
+    ? [
+      filer.primarySSN,
+      ...(filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+          filer.spouse?.ssn
+        ? [filer.spouse.ssn]
+        : []),
+    ]
+    : [];
+  assertBox11CodeJSources(normalized, k1Recipients);
+  assertBox11CodeESources(normalized, k1Recipients);
   if (
     preparedBundle &&
     await preparedSourceSha256(pending, filer) !==
