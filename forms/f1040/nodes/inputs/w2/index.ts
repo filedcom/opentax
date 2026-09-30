@@ -242,10 +242,20 @@ function validateItem(
   }
   if (
     item.box14b_tipped_code !== undefined &&
+    isQualifiedTipsOccupationCode(item.box14b_tipped_code) &&
     (item.box7_ss_tips ?? 0) > 0 &&
     !/^\d{9}$/.test(item.employee_ssn?.replaceAll("-", "") ?? "")
   ) {
     throw new Error("W-2 qualified tips need a nine-digit employee SSN");
+  }
+  if (
+    item.box14b_tipped_code !== undefined &&
+    isQualifiedTipsOccupationCode(item.box14b_tipped_code) &&
+    (item.box7_ss_tips ?? 0) > 0 &&
+    (!/^\d{2}-?\d{7}$/.test(item.employer_ein ?? "") ||
+      !item.employer_name?.trim())
+  ) {
+    throw new Error("W-2 qualified tips need employer EIN and name");
   }
   const ssWages = (item.box3_ss_wages ?? 0) + (item.box7_ss_tips ?? 0);
   const rrtaCompensation = box14Amount(item, "RRTA compensation") ?? 0;
@@ -602,6 +612,8 @@ function qualifiedTipsOutput(w2s: W2Items): NodeOutput[] {
     )
     .map((item) => ({
       employee_ssn: item.employee_ssn!,
+      employer_ein: item.employer_ein!,
+      employer_name: item.employer_name!,
       amount: item.box7_ss_tips!,
       box5_medicare_wages: item.box5_medicare_wages,
       occupation_code: item.box14b_tipped_code!,

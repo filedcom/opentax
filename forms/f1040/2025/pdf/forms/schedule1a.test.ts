@@ -262,6 +262,8 @@ Deno.test("2025 Schedule 1-A PDF maps single-employer W-2 tips to Part II", () =
     senior_zero_exclusions_review: source.senior_zero_exclusions_review,
     qualified_employee_tips: [{
       employee_ssn: "111223333",
+      employer_ein: "123456789",
+      employer_name: "Test Restaurant",
       amount: 5_000,
       box5_medicare_wages: 30_000,
       occupation_code: "102",
@@ -289,6 +291,18 @@ Deno.test("2025 Schedule 1-A PDF maps single-employer W-2 tips to Part II", () =
   const projected = schedule1aPdf.projectFields?.(tipSource, {
     schedule1a: tipSource,
     f1040: tipReturn,
+    w2: {
+      w2s: [{
+        employee_ssn: "111223333",
+        employer_ein: "123456789",
+        employer_name: "Test Restaurant",
+        box1_wages: 30_000,
+        box2_fed_withheld: 2_500,
+        box5_medicare_wages: 30_000,
+        box7_ss_tips: 5_000,
+        box14b_tipped_code: "102",
+      }],
+    },
   });
   assertEquals(projected?.line4a_w2_tips, 5_000);
   assertEquals(projected?.line4b_zero_form4137, 0);

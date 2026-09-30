@@ -67,6 +67,20 @@ for (const fixture of pdfReviewFixtures) {
           "<TotQualifiedCarLoanInterestAmt>4000</TotQualifiedCarLoanInterestAmt>",
         );
       }
+      if (fixture.id === "single-two-w2-qualified-tips-schedule1a") {
+        assertEquals(
+          result.pending.f1040.line13b_additional_deductions,
+          5_000,
+        );
+        assertStringIncludes(
+          xml,
+          "<QualifiedTipsWagesAmt>0</QualifiedTipsWagesAmt>",
+        );
+        assertStringIncludes(
+          xml,
+          "<QualifiedTipsEmployeeAmt>5000</QualifiedTipsEmployeeAmt>",
+        );
+      }
       if (fixture.id === "single-two-partnership-code-s-capital") {
         assertEquals(result.pending.schedule_d.line_5_k1_st, 400);
         assertEquals(result.pending.schedule_d.line_12_k1_lt, 600);

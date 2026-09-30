@@ -211,6 +211,8 @@ Deno.test("box7 tips with a tipped occupation code route to Schedule 1-A", () =>
   const result = compute([
     minimalItem({
       employee_ssn: "111223333",
+      employer_ein: "123456789",
+      employer_name: "First Restaurant",
       box1_wages: 30_000,
       box7_ss_tips: 5_000,
       box14b_tipped_code: "102",
@@ -218,6 +220,8 @@ Deno.test("box7 tips with a tipped occupation code route to Schedule 1-A", () =>
   ]);
   assertEquals(fieldsOf(result.outputs, schedule1a)?.qualified_employee_tips, [{
     employee_ssn: "111223333",
+    employer_ein: "123456789",
+    employer_name: "First Restaurant",
     amount: 5_000,
     box5_medicare_wages: undefined,
     occupation_code: "102",
@@ -247,12 +251,16 @@ Deno.test("qualified tips are summed across eligible W-2s only", () => {
   const result = compute([
     minimalItem({
       employee_ssn: "111223333",
+      employer_ein: "123456789",
+      employer_name: "First Restaurant",
       box1_wages: 20_000,
       box7_ss_tips: 2_000,
       box14b_tipped_code: "102",
     }),
     minimalItem({
       employee_ssn: "444556666",
+      employer_ein: "987654321",
+      employer_name: "Second Restaurant",
       box1_wages: 20_000,
       box7_ss_tips: 3_000,
       box14b_tipped_code: "203",
@@ -262,12 +270,16 @@ Deno.test("qualified tips are summed across eligible W-2s only", () => {
   assertEquals(fieldsOf(result.outputs, schedule1a)?.qualified_employee_tips, [
     {
       employee_ssn: "111223333",
+      employer_ein: "123456789",
+      employer_name: "First Restaurant",
       amount: 2_000,
       box5_medicare_wages: undefined,
       occupation_code: "102",
     },
     {
       employee_ssn: "444556666",
+      employer_ein: "987654321",
+      employer_name: "Second Restaurant",
       amount: 3_000,
       box5_medicare_wages: undefined,
       occupation_code: "203",

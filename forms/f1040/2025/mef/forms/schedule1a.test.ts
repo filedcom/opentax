@@ -1,9 +1,9 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   calculateSeniorOnlySchedule1A,
-  calculateSingleEmployerTipsSchedule1A,
   calculateVehicleInterestSchedule1A,
   calculateW2OvertimeSchedule1A,
+  calculateW2TipsSchedule1A,
   type SeniorOnlyLines,
   seniorZeroExclusionsReviewSchema,
 } from "../../../nodes/intermediate/forms/schedule1a/index.ts";
@@ -71,6 +71,8 @@ const singleTips = {
   senior_zero_exclusions_review: review,
   qualified_employee_tips: [{
     employee_ssn: "111223333",
+    employer_ein: "123456789",
+    employer_name: "Test Restaurant",
     amount: 5_000,
     box5_medicare_wages: 30_000,
     occupation_code: "102",
@@ -86,6 +88,19 @@ const singleTips1040 = {
   taxpayer_ssn_valid_for_employment: true,
   taxpayer_ssn_issued_before_due_date: true,
   taxpayer_tin_issued_by_due_date: true,
+};
+
+const singleTipsW2 = {
+  w2s: [{
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    employer_name: "Test Restaurant",
+    box1_wages: 30_000,
+    box2_fed_withheld: 2_500,
+    box5_medicare_wages: 30_000,
+    box7_ss_tips: 5_000,
+    box14b_tipped_code: "102",
+  }],
 };
 
 const overtimeEntry = {
@@ -356,7 +371,7 @@ Deno.test("Schedule 1-A W-2 overtime enforces source ownership and duplicate emp
 });
 
 Deno.test("Schedule 1-A single-employer W-2 tips source fills Part II and reconciles", () => {
-  const lines = calculateSingleEmployerTipsSchedule1A(
+  const lines = calculateW2TipsSchedule1A(
     { taxYear: 2025, formType: "f1040" },
     singleTips,
   );
@@ -364,7 +379,7 @@ Deno.test("Schedule 1-A single-employer W-2 tips source fills Part II and reconc
   assertEquals(lines.line4c_employee_tips, 5_000);
   assertEquals(lines.line13_tips, 5_000);
   const xml = schedule1a.build(singleTips, {
-    pending: { f1040: singleTips1040 },
+    pending: { f1040: singleTips1040, w2: singleTipsW2 },
   });
   assertStringIncludes(
     xml,
@@ -382,7 +397,7 @@ Deno.test("Schedule 1-A single-employer W-2 tips source fills Part II and reconc
 });
 
 Deno.test("Schedule 1-A W-2 tips applies the $25,000 cap and whole-thousand phaseout", () => {
-  const lines = calculateSingleEmployerTipsSchedule1A(
+  const lines = calculateW2TipsSchedule1A(
     { taxYear: 2025, formType: "f1040" },
     {
       ...singleTips,
@@ -400,8 +415,72 @@ Deno.test("Schedule 1-A W-2 tips applies the $25,000 cap and whole-thousand phas
   assertEquals(lines.line13_tips, 24_900);
 });
 
+Deno.test("Schedule 1-A combines two identified W-2 tip employers on line 4c", () => {
+  const second = {
+    ...singleTips.qualified_employee_tips[0],
+    employer_ein: "987654321",
+    employer_name: "Second Restaurant",
+    amount: 2_000,
+    box5_medicare_wages: 20_000,
+    occupation_code: "103",
+  };
+  const source = {
+    ...singleTips,
+    magi: 50_000,
+    qualified_employee_tips: [
+      { ...singleTips.qualified_employee_tips[0], amount: 3_000 },
+      second,
+    ],
+  };
+  const pending = {
+    f1040: { ...singleTips1040, line11_agi: 50_000 },
+    w2: {
+      w2s: [
+        { ...singleTipsW2.w2s[0], box7_ss_tips: 3_000 },
+        {
+          ...singleTipsW2.w2s[0],
+          employer_ein: "987654321",
+          employer_name: "Second Restaurant",
+          box1_wages: 20_000,
+          box5_medicare_wages: 20_000,
+          box7_ss_tips: 2_000,
+          box14b_tipped_code: "103",
+        },
+      ],
+    },
+  };
+  const lines = calculateW2TipsSchedule1A(
+    { taxYear: 2025, formType: "f1040" },
+    source,
+  );
+  assertEquals(lines.line4a_w2_tips, 0);
+  assertEquals(lines.line4c_employee_tips, 5_000);
+  const xml = schedule1a.build(source, { pending });
+  assertStringIncludes(xml, "<QualifiedTipsWagesAmt>0</QualifiedTipsWagesAmt>");
+  assertStringIncludes(
+    xml,
+    "<QualifiedTipsEmployeeAmt>5000</QualifiedTipsEmployeeAmt>",
+  );
+  assertThrows(
+    () =>
+      schedule1a.build(source, {
+        pending: {
+          ...pending,
+          w2: {
+            w2s: [
+              pending.w2.w2s[0],
+              { ...pending.w2.w2s[1], box7_ss_tips: 2_001 },
+            ],
+          },
+        },
+      }),
+    Error,
+    "do not match the employer sources",
+  );
+});
+
 Deno.test("Schedule 1-A tips filing rejects unsupported or unsourced Part II evidence", () => {
-  const pending = { f1040: singleTips1040 };
+  const pending = { f1040: singleTips1040, w2: singleTipsW2 };
   assertThrows(
     () =>
       schedule1a.build({
@@ -412,7 +491,7 @@ Deno.test("Schedule 1-A tips filing rejects unsupported or unsourced Part II evi
         ],
       }, { pending }),
     Error,
-    "multiple tip employers",
+    "one row per employee and employer",
   );
   assertThrows(
     () =>
@@ -451,6 +530,7 @@ Deno.test("Schedule 1-A tips filing rejects unsupported or unsourced Part II evi
       schedule1a.build(singleTips, {
         pending: {
           f1040: { ...singleTips1040, line13b_additional_deductions: 4_999 },
+          w2: singleTipsW2,
         },
       }),
     Error,

@@ -7,7 +7,7 @@ Sources:
 and checked-in v5.4 `Common/IRS1040Schedule1A/IRS1040Schedule1A.xsd`.
 
 The `schedule1a` node computes a combined deduction and sends it to Form 1040
-line 13b. MeF includes bounded senior-only and single-employer W-2-box-7 tips
+line 13b. MeF includes bounded senior-only and identified W-2-box-7 tips
 routes plus reviewed W-2-box-14 FLSA overtime and vehicle-interest routes in the Schedule 1-A
 descriptor after Schedule 1 and before Schedule 2. Form 1040's positive-line-13b guard opens
 only when that source review is present and the second pass has exactly one
@@ -22,15 +22,20 @@ two-page PDF field map and inspected synthetic full-return packets.
   aggregator, and the senior-only route requires a source-referenced review that
   all those adjustments are zero. Positive exclusions still need their own
   source routes; `magi` cannot be assumed to be line 3 without this review.
-- Part II now has one source-backed route: one W-2 box 7 tips record with a
-  published three-digit tipped occupation code, box 5 Medicare wages at or
-  below $176,100, a valid timely employment SSN, and reviewed zero Part I
-  exclusions. It fills lines 4a/4c, 6/7, 9–13 as applicable, and line 38,
-  with source-graph and Form 1040 reconciliation. It rejects a second qualified
-  tips record, Form 4137, mixed senior/overtime/vehicle claims, high box 5
-  wages, and an occupation code outside the IRS list. Form 4070 or employer
-  statement alternatives, multiple employers or occupations, special wage-base
-  handling, self-employment tips, and combined Schedule 1-A branches remain open.
+- Part II has a source-backed W-2 box 7 route with a published three-digit
+  tipped occupation code, box 5 Medicare wages at or below $176,100, a valid
+  timely employment SSN, and reviewed zero Part I exclusions. Each positive
+  employer row retains its EIN and name and is checked against the issued W-2
+  facts at native/PDF export. One employer fills lines 4a/4c; multiple
+  employers print zero on 4a/4b and put the sum of the greater-of amounts on
+  4c through the IRS worksheet, kept in the PDF packet. The worksheet
+  paginates after five employer rows. It also fills lines 6/7, 9–13, and
+  38 and reconciles to Form 1040. Duplicate employee/employer rows, Form
+  4137, mixed senior/overtime/vehicle claims, high box 5 wages, and an
+  occupation code outside the IRS list reject. Form 4070 or employer
+  statement alternatives, multiple occupations at one employer, special
+  wage-base handling, self-employment tips, and combined Schedule 1-A
+  branches remain open.
 - Part III now supports employer-identified `FLSA Overtime Premium` in W-2
   box 14 when a source-referenced review confirms the employee is covered and
   nonexempt under the FLSA and that the premium is included in box 1. The W-2
@@ -108,6 +113,18 @@ synthetic source check; payer-issued bytes and IRS business-rule acceptance
 remain open.
 Source commit `46d7d080` passed `deno task test` at 8,938/8,938 with zero
 failures; retain `.state/research/ty2025-full-test-schedule1a-tips.log`.
+
+The `single-two-w2-qualified-tips-schedule1a` source has $3,000 and $2,000
+box 7 tips from different employers. Their EIN, name, employee SSN, box 5
+wages and occupation codes must match the W-2 records. The graph and native
+Schedule 1-A put zero on 4a/4b and $5,000 on 4c, 6, 7, 13, and 38; Form 1040
+line 13b agrees. The full return passes local TY2025 v5.4 XSD. In the
+five-page `v76` packet, Schedule 1-A page 1 and the employer worksheet were
+rendered and visually inspected. The worksheet shows both employer rows and
+reconciles to line 4c; a six-employer component case verifies pagination.
+This follows the [2025 Form 1040 instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
+for lines 4a–4c. Form 4070, Form 4137, actual W-2 bytes, IRS business
+rules, and ATS remain open.
 
 The `single-two-w2-flsa-overtime-schedule1a` fixture uses two $50,000/$30,000
 W-2s with separately identified $3,000/$1,000 FLSA overtime premiums and

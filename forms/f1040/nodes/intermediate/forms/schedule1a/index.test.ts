@@ -9,7 +9,12 @@ const ctx = { taxYear: 2025, formType: "f1040" } as const;
 const TAXPAYER_SSN = "111223333";
 
 function tips(amount: number, employee_ssn = TAXPAYER_SSN) {
-  return [{ employee_ssn, amount }];
+  return [{
+    employee_ssn,
+    employer_ein: "123456789",
+    employer_name: "Test Restaurant",
+    amount,
+  }];
 }
 
 function overtime(

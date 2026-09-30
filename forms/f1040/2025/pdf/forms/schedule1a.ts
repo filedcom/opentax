@@ -1,13 +1,14 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import {
   calculateSeniorOnlySchedule1A,
-  calculateSingleEmployerTipsSchedule1A,
   calculateVehicleInterestSchedule1A,
   calculateW2OvertimeSchedule1A,
+  calculateW2TipsSchedule1A,
   inputSchema,
 } from "../../../nodes/intermediate/forms/schedule1a/index.ts";
 import { schedule1a } from "../../mef/forms/schedule1a.ts";
 import { appendSchedule1AVehicleStatement } from "./schedule1a_vehicle_statement.ts";
+import { appendSchedule1ATipsWorksheet } from "./schedule1a_tips_worksheet.ts";
 
 // Checked against the two-page 2025 IRS AcroForm.
 const page1 = "form1[0].Page1[0]";
@@ -21,7 +22,12 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     printZero: true,
   },
   { kind: "text", domainKey: "line3_magi", pdfField: `${page1}.f1_09[0]` },
-  { kind: "text", domainKey: "line4a_w2_tips", pdfField: `${page1}.f1_10[0]` },
+  {
+    kind: "text",
+    domainKey: "line4a_w2_tips",
+    pdfField: `${page1}.f1_10[0]`,
+    printZero: true,
+  },
   {
     kind: "text",
     domainKey: "line4b_zero_form4137",
@@ -226,12 +232,15 @@ export const schedule1aPdf: PdfFormDescriptor = {
     // Keep the PDF authorization identical to native XML authorization.
     if (!schedule1a.build(input, { pending: allPending })) return {};
     if ((input.qualified_employee_tips?.length ?? 0) > 0) {
-      const lines = calculateSingleEmployerTipsSchedule1A(
+      const lines = calculateW2TipsSchedule1A(
         { taxYear: 2025, formType: "f1040" },
         input,
       );
       return {
         ...lines,
+        ...(input.qualified_employee_tips!.length > 1
+          ? { pdf_tip_sources: input.qualified_employee_tips }
+          : {}),
         line2e_zero_exclusions: 0,
         line4b_zero_form4137: 0,
         line8_magi: lines.line3_magi,
@@ -308,7 +317,10 @@ export const schedule1aPdf: PdfFormDescriptor = {
     };
   },
   fields,
-  appendSupplementalPages: appendSchedule1AVehicleStatement,
+  async appendSupplementalPages(document, projected, filer) {
+    await appendSchedule1ATipsWorksheet(document, projected, filer);
+    await appendSchedule1AVehicleStatement(document, projected, filer);
+  },
   filerFields: [
     {
       kind: "text",

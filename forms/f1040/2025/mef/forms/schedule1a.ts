@@ -2,11 +2,13 @@ import { z } from "zod";
 import { element, elements } from "../../../mef/xml.ts";
 import {
   calculateSeniorOnlySchedule1A,
-  calculateSingleEmployerTipsSchedule1A,
   calculateVehicleInterestSchedule1A,
   calculateW2OvertimeSchedule1A,
+  calculateW2TipsSchedule1A,
   inputSchema,
+  isQualifiedTipsOccupationCode,
 } from "../../../nodes/intermediate/forms/schedule1a/index.ts";
+import { inputSchema as w2InputSchema } from "../../../nodes/inputs/w2/index.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
@@ -62,13 +64,40 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
         "Schedule 1-A W-2-only tips filing cannot include Form 4137 tips",
       );
     }
-    const lines = calculateSingleEmployerTipsSchedule1A(
+    const lines = calculateW2TipsSchedule1A(
       { taxYear: 2025, formType: "f1040" },
       input,
     );
-    const entry = input.qualified_employee_tips![0];
-    const ssn = entry.employee_ssn.replaceAll("-", "");
+    const entries = input.qualified_employee_tips!;
+    const sourceW2s = w2InputSchema.parse(context?.pending?.w2).w2s
+      .filter((item) =>
+        item.box13_statutory_employee !== true &&
+        item.box14b_tipped_code !== undefined &&
+        isQualifiedTipsOccupationCode(item.box14b_tipped_code) &&
+        (item.box7_ss_tips ?? 0) > 0
+      );
+    const normalize = (value: string) => value.replaceAll("-", "");
+    if (
+      sourceW2s.length !== entries.length ||
+      !entries.every((entry) =>
+        sourceW2s.some((source) =>
+          normalize(source.employee_ssn ?? "") ===
+            normalize(entry.employee_ssn) &&
+          normalize(source.employer_ein ?? "") ===
+            normalize(entry.employer_ein) &&
+          source.employer_name === entry.employer_name &&
+          source.box7_ss_tips === entry.amount &&
+          source.box5_medicare_wages === entry.box5_medicare_wages &&
+          source.box14b_tipped_code === entry.occupation_code
+        )
+      )
+    ) {
+      throw new Error(
+        "Schedule 1-A W-2 tips do not match the employer sources",
+      );
+    }
     const matchesRecipient = (
+      ssn: string,
       sourceSsn: string | undefined,
       returnSsn: string | undefined,
       employmentValid: boolean | undefined,
@@ -79,23 +108,30 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
       returnSsn?.replaceAll("-", "") === ssn &&
       employmentValid === true && issuedBeforeDueDate === true &&
       tinIssuedByDueDate === true;
-    const taxpayer = matchesRecipient(
-      input.taxpayer_ssn,
-      form1040.taxpayer_ssn,
-      form1040.taxpayer_ssn_valid_for_employment,
-      form1040.taxpayer_ssn_issued_before_due_date,
-      form1040.taxpayer_tin_issued_by_due_date,
-    );
-    const spouse = input.filing_status === FilingStatus.MFJ && matchesRecipient(
-      input.spouse_ssn,
-      form1040.spouse_ssn,
-      form1040.spouse_ssn_valid_for_employment,
-      form1040.spouse_ssn_issued_before_due_date,
-      form1040.spouse_tin_issued_by_due_date,
-    );
+    const allRecipientsMatch = entries.every((entry) => {
+      const ssn = normalize(entry.employee_ssn);
+      const taxpayer = matchesRecipient(
+        ssn,
+        input.taxpayer_ssn,
+        form1040.taxpayer_ssn,
+        form1040.taxpayer_ssn_valid_for_employment,
+        form1040.taxpayer_ssn_issued_before_due_date,
+        form1040.taxpayer_tin_issued_by_due_date,
+      );
+      const spouse = input.filing_status === FilingStatus.MFJ &&
+        matchesRecipient(
+          ssn,
+          input.spouse_ssn,
+          form1040.spouse_ssn,
+          form1040.spouse_ssn_valid_for_employment,
+          form1040.spouse_ssn_issued_before_due_date,
+          form1040.spouse_tin_issued_by_due_date,
+        );
+      return taxpayer || spouse;
+    });
     if (
       form1040.filing_status !== input.filing_status ||
-      (!taxpayer && !spouse) ||
+      !allRecipientsMatch ||
       form1040.line11_agi !== lines.line1_agi ||
       form1040.line13b_additional_deductions !== lines.line38_total ||
       (form1040.schedule1a_line37_senior_deduction ?? 0) !== 0

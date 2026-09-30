@@ -580,3 +580,16 @@ The PDF SHA-256 is
 the packet is at
 `.state/research/ty2025-filled-pdf-review/2026-09-30-v75/`. Issued lender
 and purchase records, IRS business rules, and ATS remain open.
+
+The `single-two-w2-qualified-tips-schedule1a` source passes local TY2025
+v5.4 full-return XSD with two distinct employer tip sources. In the
+five-page `v76` PDF, Schedule 1-A page 1 prints zero on 4a/4b and $5,000
+on 4c, 6, 7, and 13; line 38 and Form 1040 line 13b agree. The appended
+worksheet shows the first employer's $3,000 and the second employer's
+$2,000 with their EINs, tipped codes, recipient SSN, and zero Form 4137
+amounts. Schedule 1-A page 1 and the worksheet were rendered and visually
+inspected. The PDF SHA-256 is
+`96b96636a8ae9719f7e5fef57ed73324ea1f438f1fd5cb8dfc9437f279f93140`;
+the packet is at
+`.state/research/ty2025-filled-pdf-review/2026-09-30-v76/`. Issued
+W-2 bytes, IRS business rules, and ATS remain open.
