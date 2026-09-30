@@ -86,10 +86,10 @@ const fields: PdfFieldEntry[] = [
     pdfField: `${page2}.c2_4[1]`,
   },
   ...([
-    ["appraiser_signed_date", "f2_14[0]"],
-    ["appraiser_name", "f2_15[0]"],
+    ["appraiser_name", "f2_13[0]"],
+    ["appraiser_street", "f2_15[0]"],
     ["appraiser_id", "f2_16[0]"],
-    ["appraiser_address", "f2_17[0]"],
+    ["appraiser_city_state_zip", "f2_17[0]"],
     ["donee_received_date", "f2_18[0]"],
     ["donee_name", "f2_19[0]"],
     ["donee_ein", "f2_20[0]"],
@@ -276,14 +276,11 @@ function sectionBInstance(
     section_b_how_acquired: item.donor_acquisition_description,
     section_b_basis: item.cost_or_adjusted_basis,
     section_b_claim: item.deduction_claimed,
-    section_b_appraiser_signed_date: printedDate(appraisal.signed_date),
     section_b_appraiser_name:
       `${appraisal.appraiser_first_name} ${appraisal.appraiser_last_name}`,
     section_b_appraiser_id: appraisal.appraiser_ein ?? appraisal.appraiser_ssn,
-    section_b_appraiser_address: [
-      street(appraisal.us_address),
-      cityStateZip(appraisal.us_address),
-    ].join("; "),
+    section_b_appraiser_street: street(appraisal.us_address),
+    section_b_appraiser_city_state_zip: cityStateZip(appraisal.us_address),
     section_b_donee_received_date: printedDate(donee.received_date),
     section_b_unrelated_use_yes: donee.unrelated_use,
     section_b_unrelated_use_no: !donee.unrelated_use,
@@ -298,6 +295,8 @@ function sectionBInstance(
         reduction.toFixed(2)
       }, leaving adjusted basis and claimed contribution $${
         item.deduction_claimed.toFixed(2)
+      }. Appraiser signed ${
+        printedDate(appraisal.signed_date)
       }. Source names the separate reduction statement ${item.reduction_statement_attachment_file_name} and signature PDFs ${appraisal.signature_attachment_file_name} and ${donee.signature_attachment_file_name}. A separately reviewed completed signed Form 8283 PDF is still required for MeF filing. This generated PDF does not reproduce signatures and is not a signed paper Form 8283.`,
     ],
   };
@@ -357,14 +356,11 @@ function sectionBVehicleInstance(
     section_b_how_acquired: item.donor_acquisition_description,
     section_b_basis: item.cost_or_adjusted_basis,
     section_b_claim: item.deduction_claimed,
-    section_b_appraiser_signed_date: printedDate(appraisal.signed_date),
     section_b_appraiser_name:
       `${appraisal.appraiser_first_name} ${appraisal.appraiser_last_name}`,
     section_b_appraiser_id: appraisal.appraiser_ein ?? appraisal.appraiser_ssn,
-    section_b_appraiser_address: [
-      street(appraisal.us_address),
-      cityStateZip(appraisal.us_address),
-    ].join("; "),
+    section_b_appraiser_street: street(appraisal.us_address),
+    section_b_appraiser_city_state_zip: cityStateZip(appraisal.us_address),
     section_b_donee_received_date: printedDate(donee.received_date),
     section_b_unrelated_use_yes: donee.unrelated_use,
     section_b_unrelated_use_no: !donee.unrelated_use,
@@ -376,6 +372,7 @@ function sectionBVehicleInstance(
       `Section B item A: ${item.property_description}; VIN ${item.vehicle_vin}. ` +
       `The donee certified a material improvement: ${acknowledgment.intended_improvement_description}. ` +
       `Appraised FMV and claimed deduction are both $${item.fmv.toFixed(2)}. ` +
+      `Appraiser signed ${printedDate(appraisal.signed_date)}. ` +
       `Review the donee-issued acknowledgment ${item.vehicle_acknowledgment_attachment_file_name} ` +
       `and completed signed Form 8283 ${item.signed_form_attachment_file_name} ` +
       `(reviewed ${item.signed_form_source_review.reviewed_on} by ${item.signed_form_source_review.reviewed_by}). ` +

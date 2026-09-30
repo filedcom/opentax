@@ -124,9 +124,23 @@ and donee identities. Its supplemental page identifies the VIN, certified
 improvement, donee acknowledgment, and separately reviewed completed signed
 Form 8283. The source must match a complete current-gift Schedule A inventory
 and itemized Form 1040; direct Schedule A builds reject a changed filed
-amount. Focused PDF descriptor and native Section B tests pass. This is a
-projection and source-reconciliation check, not a visual review of a filled
-packet or verification of actual signatures and donee-issued PDF bytes.
+amount. The full synthetic route now passes the local TY2025 v5.4 XSD and
+renders six pages. All six pages were inspected: Form 1040 line 12e and
+Schedule A lines 12/17 agree with the $15,000 Section B claim and $51,000
+itemized total; the vehicle box, appraisal value, acquisition, basis, donee,
+and supplemental VIN/improvement record print in their intended locations.
+This review caught an existing Section B page 2 field error: the appraiser's
+date had printed in the title box, name in the business-address box, and full
+address in the city line. The corrected map prints name, street, and
+city/state/ZIP in their own fields for both land and vehicle routes. The
+official PDF has no AcroForm field for the appraiser signature date, so the
+generated supplement records it without filling the signature line. The
+reviewed packet is retained under
+`.state/research/ty2025-filled-pdf-review/2026-09-30-section-b-vehicle/`;
+its SHA-256 is
+`36fd572b9ab4d7b25d8313b03f9928433165ec3ebb45f4d5c2437bdf5db18254`.
+The fixture uses mock signatures and acknowledgment text; it does not verify
+actual signed or donee-issued taxpayer records.
 
 This is not whole-form support. Other Section B property and multi-item routes,
 actual appraiser/donee signatures in the PDF, mixed Section A/B forms, more than

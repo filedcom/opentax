@@ -868,9 +868,10 @@ Deno.test("Form 8283 PDF prints reconciled Section B land without inventing sign
   assertEquals(instance?.section_b_acquired_date, "02/2022");
   assertEquals(instance?.section_b_appraiser_name, "Sam Expert");
   assertEquals(instance?.section_b_appraiser_id, "123456789");
+  assertEquals(instance?.section_b_appraiser_street, "1 Appraisal Ave");
   assertEquals(
-    instance?.section_b_appraiser_address,
-    "1 Appraisal Ave; Albany, NY 12201",
+    instance?.section_b_appraiser_city_state_zip,
+    "Albany, NY 12201",
   );
   assertEquals(instance?.section_b_unrelated_use_no, true);
   assertEquals(instance?.section_b_donee_name, "Community Land Trust");
@@ -894,10 +895,19 @@ Deno.test("Form 8283 PDF prints reconciled Section B land without inventing sign
     "Form8283[0].Page2[0].f2_16[0]",
   );
   assertEquals(
-    byKey.get("section_b_appraiser_address"),
+    byKey.get("section_b_appraiser_name"),
+    "Form8283[0].Page2[0].f2_13[0]",
+  );
+  assertEquals(
+    byKey.get("section_b_appraiser_street"),
+    "Form8283[0].Page2[0].f2_15[0]",
+  );
+  assertEquals(
+    byKey.get("section_b_appraiser_city_state_zip"),
     "Form8283[0].Page2[0].f2_17[0]",
   );
   assertEquals(byKey.has("section_b_appraiser_signature"), false);
+  assertEquals(byKey.has("section_b_appraiser_signed_date"), false);
 });
 
 Deno.test("Form 8283 PDF blocks mixed, overflow and unreconciled sources", () => {
