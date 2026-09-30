@@ -147,6 +147,23 @@ for (const fixture of pdfReviewFixtures) {
           Error,
           "1099-K Schedule C source differs",
         );
+        assertThrows(
+          () =>
+            buildMefXml(
+              buildPending({
+                ...result.pending,
+                f1099m: {
+                  f1099ms: (result.pending.f1099m.f1099ms as Array<
+                    Record<string, unknown>
+                  >)
+                    .map((row) => ({ ...row, payer_tin: "99-9999999" })),
+                },
+              }),
+              fixture.filer,
+            ),
+          Error,
+          "1099-K omitted receipts do not match",
+        );
       }
       if (fixture.id === "single-nec-k-nonbusiness-line8j") {
         assertEquals(result.pending.schedule1.line9_total_other_income, 8_000);

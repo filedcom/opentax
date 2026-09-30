@@ -218,6 +218,12 @@ export const inputSchema = z.object({
       allocation_reference: z.string().trim().min(1),
       no_overlap_with_other_1099s: z.literal(true),
       overlap_review_reference: z.string().trim().min(1),
+      duplicate_1099_review: z.object({
+        source_form: z.enum(["1099nec", "1099misc"]),
+        payer_tin: z.string().regex(/^\d{9}$/),
+        amount: z.number().int().positive(),
+        transaction_review_reference: z.string().trim().min(1),
+      }).strict().optional(),
     }).strict(),
   ).optional(),
   attorney_fee_sources: z.array(

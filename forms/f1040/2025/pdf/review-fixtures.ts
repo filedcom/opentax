@@ -2455,6 +2455,13 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
           allocation_reference: "Synthetic 2025 processor settlement review",
           no_overlap_with_other_1099s: true,
           overlap_review_reference: "Synthetic 2025 NEC/MISC overlap review",
+          duplicate_1099_review: {
+            source_form: "1099misc",
+            payer_tin: "23-4567890",
+            amount: 2_000,
+            transaction_review_reference:
+              "Synthetic 2025 MISC/K duplicate transaction review",
+          },
         },
         qualified_tips_box1a_review: {
           amount: 6_000,

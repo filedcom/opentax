@@ -66,6 +66,12 @@ export const itemSchema = z.object({
     allocation_reference: z.string().trim().min(1),
     no_overlap_with_other_1099s: z.literal(true),
     overlap_review_reference: z.string().trim().min(1),
+    duplicate_1099_review: z.object({
+      source_form: z.enum(["1099nec", "1099misc"]),
+      payer_tin: z.string().regex(/^\d{2}-?\d{7}$/),
+      amount: z.number().int().positive(),
+      transaction_review_reference: z.string().trim().min(1),
+    }).strict().optional(),
   }).strict().optional(),
   nonbusiness_activity_review: z.object({
     activity_description: z.string().trim().min(1).max(100),
@@ -127,7 +133,13 @@ export const itemSchema = z.object({
       !item.recipient_tin || !item.schedule_c_business_reference ||
       !review ||
       review.included_in_schedule_c_gross_receipts +
-            review.not_included_in_schedule_c_receipts !== gross
+            review.not_included_in_schedule_c_receipts !== gross ||
+      (review.not_included_in_schedule_c_receipts > 0 &&
+        (!review.duplicate_1099_review ||
+          review.duplicate_1099_review.amount !==
+            review.not_included_in_schedule_c_receipts)) ||
+      (review.not_included_in_schedule_c_receipts === 0 &&
+        review.duplicate_1099_review !== undefined)
     ) {
       ctx.addIssue({
         code: "custom",
@@ -254,6 +266,15 @@ function incomeOutputs(k99s: K99Items): NodeOutput[] {
             no_overlap_with_other_1099s: true,
             overlap_review_reference: item.schedule_c_receipts_review!
               .overlap_review_reference,
+            ...(item.schedule_c_receipts_review!.duplicate_1099_review
+              ? {
+                duplicate_1099_review: {
+                  ...item.schedule_c_receipts_review!.duplicate_1099_review,
+                  payer_tin: item.schedule_c_receipts_review!
+                    .duplicate_1099_review!.payer_tin.replaceAll("-", ""),
+                },
+              }
+              : {}),
           }],
         })];
       case "schedule_1_line_8j":

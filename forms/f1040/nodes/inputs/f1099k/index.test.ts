@@ -641,6 +641,13 @@ Deno.test("1099-K business route allocates box 1a and retains reviewed tip evide
       allocation_reference: "2025 processor settlement ledger",
       no_overlap_with_other_1099s: true,
       overlap_review_reference: "2025 NEC and MISC overlap review",
+      duplicate_1099_review: {
+        source_form: "1099misc",
+        payer_tin: "23-4567890",
+        amount: 2_000,
+        transaction_review_reference:
+          "2025 MISC/K duplicate transaction review",
+      },
     },
     qualified_tips_box1a_review: {
       amount: 5_000,

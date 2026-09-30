@@ -294,15 +294,16 @@ open.
 The `single-nec-misc-k-business-tips-schedule1a` fixture adds $6,000 of
 reviewed Form 1099-K box 1a tips to $4,000 NEC and $4,000 MISC tips. The
 processor's $10,000 box 1a is allocated to $8,000 included in the named
-Schedule C business and $2,000 not included, with an explicit review that
-the included receipts do not duplicate another payer report. The three
+Schedule C business and $2,000 identified as payments already counted on the MISC report, with a
+transaction-review reference and a check that the included K receipts do not
+duplicate another payer report. The three
 sources produce $18,000 gross receipts, $10,000 profit, and $9,294 on
 Schedule 1-A line 5 after the rounded $706 Schedule 1 line 15 deduction.
 Native and PDF export match the K source row to the original payer report
 and the proprietor. The full return passes local TY2025 v5.4 XSD, and a
-changed K receipt row rejects. All 12 `v87` PDF pages were inspected as a
+changed K receipt row or referenced MISC payer rejects. All 12 `v87` PDF pages were inspected as a
 contact sheet, with Schedule 1-A page 1 checked at full resolution (SHA-256
-`2cfcd2ab37ad9ebc69665824dfe3fde2842763145a2888e7493a382d5a8a85cb`).
+`541ad5cff5a492002aa5eda8d3f990f4acfa87ef4667cd7ae8935c279747194b`).
 Processor and tip-record bytes, transaction-level duplicate evidence,
 personal-payment classification, EIN recipients, multiple-business
 deduction allocation, IRS business rules, and ATS acceptance remain open.

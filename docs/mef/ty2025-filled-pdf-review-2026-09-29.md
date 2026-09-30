@@ -656,11 +656,11 @@ reviewed tips, and the $10,000 Schedule C profit less $706 rounded SE
 deduction caps lines 5/13/38 and Form 1040 line 13b at $9,294. Schedule C
 line 1 prints $18,000 of gross receipts, including $8,000 allocated from
 the K box 1a. The matching native return passes local TY2025 v5.4 XSD;
-changed K receipt rows reject at export. The PDF SHA-256 is
-`2cfcd2ab37ad9ebc69665824dfe3fde2842763145a2888e7493a382d5a8a85cb`;
+changed K receipt rows or the referenced MISC payer reject at export. The PDF SHA-256 is
+`541ad5cff5a492002aa5eda8d3f990f4acfa87ef4667cd7ae8935c279747194b`;
 the source/pending JSON, XML, PDF, contact sheet, and detailed page render
 are retained at `.state/research/ty2025-filled-pdf-review/2026-09-30-v87/`.
-Processor records, tip ledgers, duplicate-transaction proof, and IRS
+Processor records, tip ledgers, transaction-level duplicate proof, and IRS
 acceptance remain open.
 
 The `single-nec-k-nonbusiness-line8j` return has a four-page `v88` PDF.

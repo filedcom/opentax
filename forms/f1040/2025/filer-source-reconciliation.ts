@@ -54,8 +54,95 @@ export function assertScheduleCReceiptSourceIdentity(
       allocation_reference: review?.allocation_reference,
       no_overlap_with_other_1099s: review?.no_overlap_with_other_1099s,
       overlap_review_reference: review?.overlap_review_reference,
+      ...(review?.duplicate_1099_review
+        ? {
+          duplicate_1099_review: {
+            source_form:
+              (review.duplicate_1099_review as Record<string, unknown>)
+                .source_form as string,
+            payer_tin: tin(
+              (review.duplicate_1099_review as Record<string, unknown>)
+                .payer_tin,
+              "duplicate 1099 payer",
+            ),
+            amount: (review.duplicate_1099_review as Record<string, unknown>)
+              .amount as number,
+            transaction_review_reference:
+              (review.duplicate_1099_review as Record<string, unknown>)
+                .transaction_review_reference as string,
+          },
+        }
+        : {}),
     };
   });
+  const duplicateTotals = new Map<string, number>();
+  for (const row of expectedK) {
+    const omitted = row.not_included_in_schedule_c_receipts;
+    const duplicate = row.duplicate_1099_review;
+    if (
+      typeof omitted !== "number" ||
+      (omitted > 0 && (!duplicate || duplicate.amount !== omitted)) ||
+      (omitted === 0 && duplicate)
+    ) {
+      throw new Error(
+        "1099-K omitted receipts need one identified duplicate 1099 source",
+      );
+    }
+    if (!duplicate) continue;
+    if (
+      !["1099nec", "1099misc"].includes(duplicate.source_form) ||
+      !duplicate.payer_tin ||
+      typeof duplicate.amount !== "number" ||
+      !Number.isSafeInteger(duplicate.amount) || duplicate.amount <= 0
+    ) {
+      throw new Error("1099-K duplicate review has an invalid 1099 source");
+    }
+    const source = duplicate.source_form === "1099nec"
+      ? (pending.f1099nec as
+        | { f1099necs?: Array<Record<string, unknown>> }
+        | undefined)
+        ?.f1099necs ?? []
+      : duplicate.source_form === "1099misc"
+      ? (pending.f1099m as
+        | { f1099ms?: Array<Record<string, unknown>> }
+        | undefined)
+        ?.f1099ms ?? []
+      : [];
+    const matches = source.filter((item) =>
+      tin(item.payer_tin, "duplicate 1099 payer") === duplicate.payer_tin &&
+      tin(
+          item.recipient_ssn ?? item.recipient_tin,
+          "duplicate 1099 recipient",
+        ) ===
+        row.recipient_tin &&
+      item.schedule_c_business_reference === row.business_reference &&
+      (duplicate.source_form === "1099nec"
+        ? item.for_routing === "schedule_c"
+        : item.box3_other_income_routing === "schedule_c")
+    );
+    const amount = duplicate.source_form === "1099nec"
+      ? matches[0]?.box1_nec
+      : matches[0]?.box3_other_income;
+    if (
+      matches.length !== 1 || typeof amount !== "number" ||
+      !Number.isFinite(amount) || amount < duplicate.amount ||
+      typeof duplicate.transaction_review_reference !== "string" ||
+      !duplicate.transaction_review_reference.trim()
+    ) {
+      throw new Error(
+        "1099-K omitted receipts do not match a filed NEC/MISC source",
+      );
+    }
+    const key =
+      `${duplicate.source_form}:${duplicate.payer_tin}:${row.recipient_tin}:${row.business_reference}`;
+    const total = (duplicateTotals.get(key) ?? 0) + duplicate.amount;
+    if (total > amount) {
+      throw new Error(
+        "1099-K duplicate allocations exceed the filed NEC/MISC source",
+      );
+    }
+    duplicateTotals.set(key, total);
+  }
   const scheduleC = pending.schedule_c;
   if (!scheduleC || typeof scheduleC !== "object") {
     if (expectedK.length) {
