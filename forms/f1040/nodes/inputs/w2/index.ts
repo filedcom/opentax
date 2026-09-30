@@ -515,6 +515,12 @@ export function form4137Sources(w2s: W2Items) {
         employer_ein: item.employer_ein,
       }),
       allocated_tips: item.box8_allocated_tips ?? 0,
+      ...(item.box14b_tipped_code !== undefined && {
+        tipped_occupation_code: item.box14b_tipped_code,
+      }),
+      ...(item.box13_statutory_employee === true && {
+        statutory_employee: true as const,
+      }),
       ...(rrtaCompensation !== undefined && {
         rrta_compensation: rrtaCompensation,
       }),

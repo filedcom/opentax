@@ -93,6 +93,10 @@ Deno.test("2025 Schedule 2 PDF maps sourced Part II taxes to printed lines", () 
     "form1[0].Page1[0].f1_24[0]",
   );
   assertEquals(
+    byKey.get("line7_unreported_ss_medicare_total"),
+    "form1[0].Page1[0].f1_18[0]",
+  );
+  assertEquals(
     byKey.get("line16_lihtc_recapture"),
     "form1[0].Page1[0].f1_27[0]",
   );
@@ -151,7 +155,17 @@ Deno.test("2025 Schedule 2 PDF sums W-2 and information-return amounts only on t
   assertEquals(projected?.line17h_nqdc_total, 1_000);
   assertEquals(projected?.line17k_golden_parachute_total, 400);
   assertEquals(projected?.line20_965_tax_installment, 2_000);
-  assertEquals(projected?.line21_total, undefined);
+  assertEquals(projected?.line18_other_additional_taxes, 1_400);
+  assertEquals(projected?.line21_total, 1_600);
+});
+
+Deno.test("Schedule 2 PDF prints Form 4137 tax through lines 7 and 21", () => {
+  const projected = schedule2Pdf.projectFields?.({
+    line5_unreported_tip_tax: 115,
+  }, {});
+  assertEquals(projected?.line5_unreported_tip_tax, 115);
+  assertEquals(projected?.line7_unreported_ss_medicare_total, 115);
+  assertEquals(projected?.line21_total, 115);
 });
 
 Deno.test("Schedule 2 PDF rejects unsourced or changed 1099-NEC box 3 excise", () => {

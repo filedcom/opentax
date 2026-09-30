@@ -5,6 +5,7 @@ import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import { form8959 } from "../form8959/index.ts";
 import { form8919 } from "../form8919/index.ts";
+import { schedule1a } from "../schedule1a/index.ts";
 import { calculateForm4137, form4137, inputSchema } from "./index.ts";
 
 const employer = {
@@ -63,6 +64,59 @@ Deno.test("Form 4137 calculates unreported income, SS tax and Medicare tax from 
     recipient: "taxpayer",
     line10_ss_tips: 3_000,
   }]);
+});
+
+Deno.test("Form 4137 routes a qualifying employer's line 1 tips to Schedule 1-A", () => {
+  const result = compute({
+    taxpayer_ssn: "111223333",
+    forms: [{
+      recipient: "taxpayer",
+      employers: [employer],
+      ss_wages_from_w2: 30_000,
+    }],
+    w2_tip_sources: [{
+      employee_ssn: "111223333",
+      employer_name: "CAFE",
+      employer_ein: "12-3456789",
+      allocated_tips: 0,
+      tipped_occupation_code: "102",
+      ss_wages_and_tips: 30_000,
+    }],
+  });
+  assertEquals(fieldsOf(result.outputs, schedule1a)?.qualified_form4137_tips, [{
+    employee_ssn: "111223333",
+    employer_ein: "12-3456789",
+    employer_name: "CAFE",
+    amount: 5_000,
+    occupation_code: "102",
+  }]);
+});
+
+Deno.test("Form 4137 does not claim Schedule 1-A for an unqualified or statutory W-2", () => {
+  for (
+    const source of [
+      { tipped_occupation_code: "999" },
+      { tipped_occupation_code: "102", statutory_employee: true },
+    ]
+  ) {
+    const result = compute({
+      taxpayer_ssn: "111223333",
+      forms: [{
+        recipient: "taxpayer",
+        employers: [employer],
+        ss_wages_from_w2: 30_000,
+      }],
+      w2_tip_sources: [{
+        employee_ssn: "111223333",
+        employer_name: "CAFE",
+        employer_ein: "12-3456789",
+        allocated_tips: 0,
+        ss_wages_and_tips: 30_000,
+        ...source,
+      }],
+    });
+    assertEquals(fieldsOf(result.outputs, schedule1a), undefined);
+  }
 });
 
 Deno.test("Form 4137 line 5 tips remain income but are excluded from FICA", () => {

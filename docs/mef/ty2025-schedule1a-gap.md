@@ -7,7 +7,7 @@ Sources:
 and checked-in v5.4 `Common/IRS1040Schedule1A/IRS1040Schedule1A.xsd`.
 
 The `schedule1a` node computes a combined deduction and sends it to Form 1040
-line 13b. MeF includes identified W-2-box-7 tips, reviewed W-2-box-14 FLSA
+line 13b. MeF includes identified W-2-box-7 and Form 4137 tips, reviewed W-2-box-14 FLSA
 overtime, vehicle-interest, and senior routes in the Schedule 1-A
 descriptor after Schedule 1 and before Schedule 2. Form 1040's positive-line-13b guard opens
 only when that source review is present and the second pass has exactly one
@@ -22,19 +22,23 @@ two-page PDF field map and inspected synthetic full-return packets.
   aggregator, and each positive route requires a source-referenced review that
   all those adjustments are zero. Positive exclusions still need their own
   source routes; `magi` cannot be assumed to be line 3 without this review.
-- Part II has a source-backed W-2 box 7 route with a published three-digit
+- Part II has source-backed W-2 box 7 and Form 4137 routes with a published three-digit
   tipped occupation code, box 5 Medicare wages at or below $176,100, a valid
   timely employment SSN, and reviewed zero Part I exclusions. Each positive
-  employer row retains its EIN and name and is checked against the issued W-2
-  facts at native/PDF export. One employer fills lines 4a/4c; multiple
+  employer row retains its EIN and name and is checked against the W-2 and
+  Form 4137 facts at native/PDF export. Form 4137 line 1 column (c) is
+  combined with W-2 box 7 using the greater amount for each employee and
+  employer, so the same tips are not deducted twice. One employer fills lines
+  4a/4b/4c as applicable; multiple
   employers print zero on 4a/4b and put the sum of the greater-of amounts on
   4c through the IRS worksheet, kept in the PDF packet. The worksheet
   paginates after five employer rows. It also fills lines 6/7, 9–13, and
-  38 and reconciles to Form 1040. Duplicate employee/employer rows, Form
-  4137, high box 5 wages, and an
+  38 and reconciles to Form 1040. Duplicate source rows, high box 5 wages
+  for the W-2 box 7 route, and an
   occupation code outside the IRS list reject. Form 4070 or employer
   statement alternatives, multiple occupations at one employer, special
-  wage-base handling, self-employment tips, and full combined packets remain open.
+  wage-base handling, self-employment tips, multiple Form 4137 employers in a
+  full packet, and underlying record authentication remain open.
 - Part III now supports employer-identified `FLSA Overtime Premium` in W-2
   box 14 when a source-referenced review confirms the employee is covered and
   nonexempt under the FLSA and that the premium is included in box 1. The W-2
@@ -65,9 +69,9 @@ The v5.4 XSD has distinct elements for these source lines and Part VI line 38.
 The registered Schedule 1-A MeF descriptor
 requires an explicit source-referenced review that there was no section 933
 Puerto Rico exclusion and no Form 2555 or Form 4563 filing. It uses the AGI
-calculated upstream, computes
-the Part V phaseout and each spouse's line 36 amount, and emits Part I lines
-1/3 plus Part V lines 32-37 and Part VI line 38 in native XSD order. It checks
+calculated upstream, computes each positive deduction and emits Parts I–VI
+in native XSD order, including the Part V phaseout and each spouse's line 36
+amount. It checks
 the filing status, each claimed senior's SSN/age/timely employment-valid SSN
 facts, AGI, and the senior/total deduction against the pending Form 1040 lines
 11b and 13b, and rejects a conflicting Form 2555/4563 pending source. Positive Part I
@@ -175,3 +179,18 @@ three separately with zero deducted elsewhere. Schedule 1-A lines
 and statement were visually inspected; a focused 20-loan case verifies
 pagination. Lender and purchase records remain reviewed references rather
 than authenticated bytes. IRS business rules and ATS acceptance remain open.
+
+The `single-form4137-qualified-tips-schedule1a` fixture uses one qualifying
+W-2 employer with $5,000 box 7 tips and Form 4137 line 1 column (c) with
+$6,500 tips received and $5,000 reported. Schedule 1-A lines 4a/4b/4c
+print $5,000/$6,500/$6,500; line 38 and Form 1040 line 13b deduct $6,500
+once. The $1,500 unreported portion reaches Form 1040 line 1c, and Form
+4137's $115 tax reaches Schedule 2 lines 5/7/21 and Form 1040 line 23.
+The source graph and native XML pass local TY2025 v5.4 full-return XSD.
+The corrected seven-page `v79` packet was visually inspected; its hash is
+in the [filled-PDF notes](ty2025-filled-pdf-review-2026-09-29.md).
+This route requires a matching employer, W-2 occupation code, recipient
+SSN, and Form 4137 amount at export. Multiple-employer greater-of
+arithmetic and the worksheet pass focused tests. Form 4070 alternatives,
+multiple Form 4137 employers in a full packet, source-byte authentication,
+IRS rules, and ATS remain open.

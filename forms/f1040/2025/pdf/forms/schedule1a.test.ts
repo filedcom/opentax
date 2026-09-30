@@ -307,7 +307,7 @@ Deno.test("2025 Schedule 1-A PDF maps single-employer W-2 tips to Part II", () =
   );
   assertEquals(mapped.get("line4a_w2_tips"), "form1[0].Page1[0].f1_10[0]");
   assertEquals(
-    mapped.get("line4b_zero_form4137"),
+    mapped.get("line4b_form4137_tips"),
     "form1[0].Page1[0].f1_11[0]",
   );
   assertEquals(mapped.get("line13_tips"), "form1[0].Page1[0].f1_21[0]");
@@ -328,7 +328,7 @@ Deno.test("2025 Schedule 1-A PDF maps single-employer W-2 tips to Part II", () =
     },
   });
   assertEquals(projected?.line4a_w2_tips, 5_000);
-  assertEquals(projected?.line4b_zero_form4137, 0);
+  assertEquals(projected?.line4b_form4137_tips, 0);
   assertEquals(projected?.line4c_employee_tips, 5_000);
   assertEquals(projected?.line13_tips, 5_000);
   assertEquals(projected?.line38_total, 5_000);

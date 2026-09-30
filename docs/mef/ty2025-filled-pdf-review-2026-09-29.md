@@ -608,3 +608,18 @@ is `a14c3299a8eca6bc4270bccabbabf945fd15435d64fb7272297270a8a602f05d`;
 the packet is at
 `.state/research/ty2025-filled-pdf-review/2026-09-30-v77/`. Other mixed
 source combinations, issued records, IRS business rules, and ATS remain open.
+
+The `single-form4137-qualified-tips-schedule1a` return passes local
+TY2025 v5.4 full-return XSD. Its W-2 has $5,000 box 7 tips and Form 4137
+line 1 column (c) has $6,500 received, so Schedule 1-A lines 4a/4b/4c
+print $5,000/$6,500/$6,500. Form 1040 line 1c includes the $1,500
+unreported amount; line 13b deducts $6,500 once. Form 4137 line 13
+prints $115 tax. The initial `v78` render exposed blank Schedule 2
+calculated lines 7/21 despite native XML and Form 1040 carrying $115;
+the corrected `v79` PDF prints $115 on lines 5/7/21. All seven pages
+were inspected, with pages 1–4 and 7 pixel-identical to the first render
+and pages 5–6 inspected after correction. The `v79` PDF SHA-256 is
+`f1850cb6d0c9bd5248aa0e9149d2fb639d572382fd8ed2c2fe390ab41ba64e2d`;
+the packet is at
+`.state/research/ty2025-filled-pdf-review/2026-09-30-v79/`. Issued W-2
+and tip records, IRS business rules, and ATS remain open.

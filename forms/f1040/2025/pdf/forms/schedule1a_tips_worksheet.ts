@@ -7,9 +7,13 @@ const rowSchema = z.object({
   employer_ein: z.string().regex(/^\d{2}-?\d{7}$/),
   employer_name: z.string().trim().min(1),
   amount: z.number().int().positive(),
-  box5_medicare_wages: z.number().nonnegative(),
+  w2_amount: z.number().int().nonnegative(),
+  form4137_amount: z.number().int().nonnegative(),
   occupation_code: z.string().regex(/^\d{3}$/),
-}).strict();
+}).strict().refine(
+  (row) => row.amount === Math.max(row.w2_amount, row.form4137_amount),
+  "Schedule 1-A tips worksheet row needs the greater source amount",
+);
 
 export async function appendSchedule1ATipsWorksheet(
   document: PDFDocument,
@@ -26,7 +30,7 @@ export async function appendSchedule1ATipsWorksheet(
   const total = rows.reduce((sum, row) => sum + row.amount, 0);
   if (
     fields.line4a_w2_tips !== 0 ||
-    fields.line4b_zero_form4137 !== 0 ||
+    fields.line4b_form4137_tips !== 0 ||
     fields.line4c_employee_tips !== total ||
     fields.line6_total_tips !== total ||
     fields.line7_capped_tips !== Math.min(total, 25_000)
@@ -116,13 +120,18 @@ export async function appendSchedule1ATipsWorksheet(
         size: 8,
         font,
       });
-      page.drawText(row.amount.toLocaleString("en-US"), {
+      page.drawText(row.w2_amount.toLocaleString("en-US"), {
         x: 252,
         y: y + 32,
         size: 8,
         font,
       });
-      page.drawText("0", { x: 343, y: y + 32, size: 8, font });
+      page.drawText(row.form4137_amount.toLocaleString("en-US"), {
+        x: 343,
+        y: y + 32,
+        size: 8,
+        font,
+      });
       page.drawText(row.amount.toLocaleString("en-US"), {
         x: 430,
         y: y + 32,

@@ -83,6 +83,15 @@ export const inputSchema = claimInputSchema.extend({
     box5_medicare_wages: z.number().nonnegative().optional(),
     occupation_code: z.string().regex(/^\d{3}$/).optional(),
   })).optional(),
+  qualified_form4137_tips: z.array(
+    z.object({
+      employee_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+      employer_ein: z.string().regex(/^\d{2}-?\d{7}$/),
+      employer_name: z.string().trim().min(1),
+      amount: z.number().int().positive(),
+      occupation_code: z.string().regex(/^\d{3}$/),
+    }).strict(),
+  ).optional(),
   magi: z.number().optional(),
   filing_status: z.nativeEnum(FilingStatus).optional(),
   taxpayer_ssn: z.string().optional(),
@@ -110,10 +119,11 @@ export const seniorOnlyLinesSchema = z.object({
 
 export type SeniorOnlyLines = z.infer<typeof seniorOnlyLinesSchema>;
 
-export const w2TipsLinesSchema = z.object({
+export const employeeTipsLinesSchema = z.object({
   line1_agi: z.number().int(),
   line3_magi: z.number().int(),
   line4a_w2_tips: z.number().int().nonnegative(),
+  line4b_form4137_tips: z.number().int().nonnegative(),
   line4c_employee_tips: z.number().int().positive(),
   line6_total_tips: z.number().int().positive(),
   line7_capped_tips: z.number().int().positive(),
@@ -125,8 +135,8 @@ export const w2TipsLinesSchema = z.object({
   line38_total: z.number().int().positive(),
 }).strict();
 
-export type W2TipsLines = z.infer<
-  typeof w2TipsLinesSchema
+export type EmployeeTipsLines = z.infer<
+  typeof employeeTipsLinesSchema
 >;
 
 export const w2OvertimeLinesSchema = z.object({
@@ -197,6 +207,61 @@ export function isQualifiedTipsOccupationCode(code: string): boolean {
   );
 }
 
+export function qualifiedEmployeeTipRows(input: Schedule1AInput) {
+  const rows = new Map<string, {
+    employee_ssn: string;
+    employer_ein: string;
+    employer_name: string;
+    occupation_code: string;
+    w2_amount: number;
+    form4137_amount: number;
+  }>();
+  for (
+    const [kind, sources] of [
+      ["w2", input.qualified_employee_tips ?? []],
+      ["form4137", input.qualified_form4137_tips ?? []],
+    ] as const
+  ) {
+    for (const source of sources) {
+      const key = [
+        source.employee_ssn.replaceAll("-", ""),
+        source.employer_ein.replaceAll("-", ""),
+      ].join(":");
+      const prior = rows.get(key);
+      if (
+        prior && (prior.employer_name !== source.employer_name ||
+          prior.occupation_code !== source.occupation_code)
+      ) {
+        throw new Error(
+          "Schedule 1-A tip sources disagree on employer or occupation",
+        );
+      }
+      if (
+        prior &&
+        (kind === "w2" ? prior.w2_amount : prior.form4137_amount) > 0
+      ) {
+        throw new Error(
+          "Schedule 1-A tips need one row per employee, employer, and source",
+        );
+      }
+      rows.set(key, {
+        employee_ssn: source.employee_ssn,
+        employer_ein: source.employer_ein,
+        employer_name: source.employer_name,
+        occupation_code: source.occupation_code ?? "",
+        w2_amount: kind === "w2" ? source.amount : prior?.w2_amount ?? 0,
+        form4137_amount: kind === "form4137"
+          ? source.amount
+          : prior?.form4137_amount ?? 0,
+      });
+    }
+  }
+  return [...rows.values()].map((row) => ({
+    ...row,
+    amount: Math.max(row.w2_amount, row.form4137_amount),
+  }));
+}
+
 function tipsOvertimePhaseout(input: Schedule1AInput): number | undefined {
   if (input.filing_status === undefined || input.magi === undefined) {
     return undefined;
@@ -210,7 +275,7 @@ function tipsOvertimePhaseout(input: Schedule1AInput): number | undefined {
 export function qualifiedTipsDeduction(input: Schedule1AInput): number {
   const taxpayerSsn = input.taxpayer_ssn?.replaceAll("-", "");
   const spouseSsn = input.spouse_ssn?.replaceAll("-", "");
-  const eligibleTips = (input.qualified_employee_tips ?? []).reduce(
+  const eligibleTips = qualifiedEmployeeTipRows(input).reduce(
     (sum, entry) => {
       const employeeSsn = entry.employee_ssn.replaceAll("-", "");
       if (
@@ -392,11 +457,11 @@ export function calculateSeniorOnlySchedule1A(
   });
 }
 
-/** W-2 box 7 tips from distinct qualifying employers. */
-export function calculateW2TipsSchedule1A(
+/** Qualified W-2 and Form 4137 tips, reconciled per employer. */
+export function calculateEmployeeTipsSchedule1A(
   ctx: NodeContext,
   rawInput: Schedule1AInput,
-): W2TipsLines {
+): EmployeeTipsLines {
   if (ctx.taxYear !== 2025) {
     throw new Error("Schedule 1-A tips filing needs tax year 2025");
   }
@@ -406,8 +471,9 @@ export function calculateW2TipsSchedule1A(
       "Schedule 1-A tips filing needs sourced zero-exclusion review for Part I",
     );
   }
-  if (!input.qualified_employee_tips?.length) {
-    throw new Error("Schedule 1-A W-2 tips filing needs qualified tips");
+  const rows = qualifiedEmployeeTipRows(input);
+  if (rows.length === 0) {
+    throw new Error("Schedule 1-A employee tips filing needs qualified tips");
   }
   if (
     input.magi === undefined || !Number.isSafeInteger(input.magi) ||
@@ -418,18 +484,29 @@ export function calculateW2TipsSchedule1A(
       "Schedule 1-A tips filing needs whole-dollar AGI and eligible filing status",
     );
   }
-  const seen = new Set<string>();
-  for (const entry of input.qualified_employee_tips) {
+  for (const entry of rows) {
     if (!Number.isSafeInteger(entry.amount) || entry.amount <= 0) {
       throw new Error(
-        "Schedule 1-A W-2 box 7 tips must be positive whole dollars",
+        "Schedule 1-A employee tips must be positive whole dollars",
       );
     }
     if (
       entry.occupation_code === undefined ||
-      !isQualifiedTipsOccupationCode(entry.occupation_code) ||
-      entry.box5_medicare_wages === undefined ||
-      entry.box5_medicare_wages > 176_100
+      !isQualifiedTipsOccupationCode(entry.occupation_code)
+    ) {
+      throw new Error(
+        "Schedule 1-A employee tips need a qualifying occupation code",
+      );
+    }
+    const w2 = input.qualified_employee_tips?.find((source) =>
+      source.employee_ssn.replaceAll("-", "") ===
+        entry.employee_ssn.replaceAll("-", "") &&
+      source.employer_ein.replaceAll("-", "") ===
+        entry.employer_ein.replaceAll("-", "")
+    );
+    if (
+      w2 && (w2.box5_medicare_wages === undefined ||
+        w2.box5_medicare_wages > 176_100)
     ) {
       throw new Error(
         "Schedule 1-A W-2 box 7 filing needs a qualifying occupation code and Medicare wages at or below the 2025 social security wage base",
@@ -445,15 +522,8 @@ export function calculateW2TipsSchedule1A(
     if (!taxpayerEligible && !spouseEligible) {
       throw new Error("Schedule 1-A tips need the recipient's valid SSN");
     }
-    const key = `${employeeSsn}:${entry.employer_ein.replaceAll("-", "")}`;
-    if (seen.has(key)) {
-      throw new Error(
-        "Schedule 1-A tips need one row per employee and employer",
-      );
-    }
-    seen.add(key);
   }
-  const tips = input.qualified_employee_tips.reduce(
+  const tips = rows.reduce(
     (sum, entry) => sum + entry.amount,
     0,
   );
@@ -470,10 +540,11 @@ export function calculateW2TipsSchedule1A(
       "Schedule 1-A tips deduction does not reconcile to the source graph",
     );
   }
-  return w2TipsLinesSchema.parse({
+  return employeeTipsLinesSchema.parse({
     line1_agi: input.magi,
     line3_magi: input.magi,
-    line4a_w2_tips: input.qualified_employee_tips.length === 1 ? tips : 0,
+    line4a_w2_tips: rows.length === 1 ? rows[0].w2_amount : 0,
+    line4b_form4137_tips: rows.length === 1 ? rows[0].form4137_amount : 0,
     line4c_employee_tips: tips,
     line6_total_tips: tips,
     line7_capped_tips: capped,

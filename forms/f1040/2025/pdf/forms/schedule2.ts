@@ -65,8 +65,18 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "text",
+    domainKey: "line1z_total_additions",
+    pdfField: "form1[0].Page1[0].f1_11[0]",
+  },
+  {
+    kind: "text",
     domainKey: "line2_amt",
     pdfField: "form1[0].Page1[0].f1_12[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line3_additional_tax",
+    pdfField: "form1[0].Page1[0].f1_13[0]",
   },
 
   // ── Part II: Other Taxes ─────────────────────────────────────────────────────
@@ -84,6 +94,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "text",
     domainKey: "line6_uncollected_8919",
     pdfField: "form1[0].Page1[0].f1_17[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line7_unreported_ss_medicare_total",
+    pdfField: "form1[0].Page1[0].f1_18[0]",
   },
   {
     kind: "text",
@@ -175,6 +190,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "text",
     domainKey: "line17z_amount",
     pdfField: "form1[0].Page2[0].f2_20[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line18_other_additional_taxes",
+    pdfField: "form1[0].Page2[0].f2_21[0]",
   },
   {
     kind: "text",
@@ -312,18 +332,74 @@ export const schedule2Pdf: PdfFormDescriptor = {
       }
       : { ...fields, ...form4255Boxes, ...sourceTotals };
     const worksheet = allPending.form8978_reporting_year;
-    const reduction = worksheet?.schedule2_line17z_reduction;
-    const line21 = worksheet?.schedule2_line21;
-    if (typeof reduction !== "number" || reduction <= 0) {
-      return typeof line21 === "number" && line21 > 0
-        ? { ...projected, line21_total: line21 }
-        : projected;
+    const reduction = typeof worksheet?.schedule2_line17z_reduction === "number"
+      ? worksheet.schedule2_line17z_reduction
+      : 0;
+    const sumAmount = (key: string): number => {
+      const value = fields[key];
+      return Array.isArray(value)
+        ? value.reduce(
+          (sum, item) => sum + (typeof item === "number" ? item : 0),
+          0,
+        )
+        : typeof value === "number"
+        ? value
+        : 0;
+    };
+    const line1z = [
+      "line1a_excess_advance_premium",
+      "line1b_new_clean_vehicle_repayment",
+      "line1c_prev_owned_clean_vehicle_repayment",
+      "line1d_form4255_net_epe",
+      "line1e_form4255_excessive_payment",
+      "line1f_form4255_20_percent_ep",
+    ].reduce((sum, key) => sum + sumAmount(key), 0);
+    const line3 = line1z + amount("line2_amt");
+    const line7 = amount("line5_unreported_tip_tax") +
+      amount("line6_uncollected_8919");
+    const line17z = amount("line17z_other_additional_taxes") - reduction;
+    const line18 = [
+      "line17a_investment_credit_recapture",
+      "line17a_new_markets_credit_recapture",
+      "line17b_mortgage_subsidy_recapture",
+      "line17c_hsa_penalty",
+      "line17d_hsa_eligibility_tax",
+      "line17e_archer_msa_tax",
+      "line17f_medicare_advantage_msa_tax",
+      "section409a_excise",
+      "line17h_nqdc_tax",
+      "golden_parachute_excise",
+      "line17k_golden_parachute_excise",
+      "line17p_form8621_interest",
+    ].reduce((sum, key) => sum + amount(key), line17z);
+    if (line18 < 0) {
+      throw new Error(
+        "Schedule 2 PDF line 18 cannot print a negative Form 8978 adjustment",
+      );
     }
+    const calculatedPart2 = amount("line4_se_tax") + line7 +
+      amount("line8_form5329_tax") +
+      amount("line9_household_employment") +
+      amount("line11_additional_medicare") +
+      amount("line12_niit") + line13 +
+      amount("line16_lihtc_recapture") + line18 +
+      amount("line19_form4255_net_epe");
+    const line21 = typeof worksheet?.schedule2_line21 === "number"
+      ? worksheet.schedule2_line21
+      : calculatedPart2;
     return {
       ...projected,
-      line17z_description: "Form 8978 ADJ",
-      line17z_amount: `(${Math.round(reduction)})`,
-      line21_total: line21,
+      ...(line1z > 0 ? { line1z_total_additions: line1z } : {}),
+      ...(line3 > 0 ? { line3_additional_tax: line3 } : {}),
+      ...(line7 > 0 ? { line7_unreported_ss_medicare_total: line7 } : {}),
+      ...(line18 > 0 ? { line18_other_additional_taxes: line18 } : {}),
+      ...(line21 > 0 || reduction > 0 ? { line21_total: line21 } : {}),
+      ...(reduction > 0
+        ? {
+          line17z_description: "Form 8978 ADJ",
+          line17z_amount: `(${Math.round(reduction)})`,
+        }
+        : {}),
     };
   },
 };

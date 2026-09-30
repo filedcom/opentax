@@ -1,9 +1,9 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
+  calculateEmployeeTipsSchedule1A,
   calculateSeniorOnlySchedule1A,
   calculateVehicleInterestSchedule1A,
   calculateW2OvertimeSchedule1A,
-  calculateW2TipsSchedule1A,
   type SeniorOnlyLines,
   seniorZeroExclusionsReviewSchema,
 } from "../../../nodes/intermediate/forms/schedule1a/index.ts";
@@ -371,7 +371,7 @@ Deno.test("Schedule 1-A W-2 overtime enforces source ownership and duplicate emp
 });
 
 Deno.test("Schedule 1-A single-employer W-2 tips source fills Part II and reconciles", () => {
-  const lines = calculateW2TipsSchedule1A(
+  const lines = calculateEmployeeTipsSchedule1A(
     { taxYear: 2025, formType: "f1040" },
     singleTips,
   );
@@ -397,7 +397,7 @@ Deno.test("Schedule 1-A single-employer W-2 tips source fills Part II and reconc
 });
 
 Deno.test("Schedule 1-A W-2 tips applies the $25,000 cap and whole-thousand phaseout", () => {
-  const lines = calculateW2TipsSchedule1A(
+  const lines = calculateEmployeeTipsSchedule1A(
     { taxYear: 2025, formType: "f1040" },
     {
       ...singleTips,
@@ -449,7 +449,7 @@ Deno.test("Schedule 1-A combines two identified W-2 tip employers on line 4c", (
       ],
     },
   };
-  const lines = calculateW2TipsSchedule1A(
+  const lines = calculateEmployeeTipsSchedule1A(
     { taxYear: 2025, formType: "f1040" },
     source,
   );
@@ -491,7 +491,7 @@ Deno.test("Schedule 1-A tips filing rejects unsupported or unsourced Part II evi
         ],
       }, { pending }),
     Error,
-    "one row per employee and employer",
+    "one row per employee, employer, and source",
   );
   assertThrows(
     () =>
@@ -520,14 +520,6 @@ Deno.test("Schedule 1-A tips filing rejects unsupported or unsourced Part II evi
   assertThrows(
     () =>
       schedule1a.build(singleTips, {
-        pending: { ...pending, form4137: { forms: [{}] } },
-      }),
-    Error,
-    "cannot include Form 4137 tips",
-  );
-  assertThrows(
-    () =>
-      schedule1a.build(singleTips, {
         pending: {
           f1040: { ...singleTips1040, line13b_additional_deductions: 4_999 },
           w2: singleTipsW2,
@@ -535,6 +527,149 @@ Deno.test("Schedule 1-A tips filing rejects unsupported or unsourced Part II evi
       }),
     Error,
     "do not reconcile",
+  );
+});
+
+Deno.test("Schedule 1-A uses the greater of W-2 and Form 4137 tips for one employer", () => {
+  const input = {
+    ...singleTips,
+    qualified_form4137_tips: [{
+      employee_ssn: "111223333",
+      employer_ein: "123456789",
+      employer_name: "Test Restaurant",
+      amount: 6_500,
+      occupation_code: "102",
+    }],
+  };
+  const pending = {
+    f1040: { ...singleTips1040, line13b_additional_deductions: 6_500 },
+    w2: singleTipsW2,
+    form4137: {
+      taxpayer_ssn: "111223333",
+      forms: [{
+        recipient: "taxpayer",
+        employers: [{
+          name: "Test Restaurant",
+          ein: "123456789",
+          tips_received: 6_500,
+          tips_reported: 5_000,
+        }],
+      }],
+    },
+  };
+  const lines = calculateEmployeeTipsSchedule1A(
+    { taxYear: 2025, formType: "f1040" },
+    input,
+  );
+  assertEquals(lines.line4a_w2_tips, 5_000);
+  assertEquals(lines.line4b_form4137_tips, 6_500);
+  assertEquals(lines.line4c_employee_tips, 6_500);
+  const xml = schedule1a.build(input, { pending });
+  assertStringIncludes(
+    xml,
+    "<QualifiedTipsWagesAmt>5000</QualifiedTipsWagesAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<QualifiedTipsForm4137Amt>6500</QualifiedTipsForm4137Amt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalAdditionalDeductionsAmt>6500</TotalAdditionalDeductionsAmt>",
+  );
+  assertThrows(
+    () =>
+      schedule1a.build(input, {
+        pending: {
+          ...pending,
+          form4137: {
+            ...pending.form4137,
+            forms: [{
+              ...pending.form4137.forms[0],
+              employers: [{
+                ...pending.form4137.forms[0].employers[0],
+                tips_received: 6_499,
+              }],
+            }],
+          },
+        },
+      }),
+    Error,
+    "do not match the filed employer",
+  );
+});
+
+Deno.test("Schedule 1-A combines Form 4137 and W-2 employers without double counting", () => {
+  const input = {
+    ...singleTips,
+    qualified_employee_tips: [
+      ...singleTips.qualified_employee_tips,
+      {
+        employee_ssn: "111223333",
+        employer_ein: "987654321",
+        employer_name: "Second Restaurant",
+        amount: 2_000,
+        box5_medicare_wages: 20_000,
+        occupation_code: "103",
+      },
+    ],
+    qualified_form4137_tips: [{
+      employee_ssn: "111223333",
+      employer_ein: "123456789",
+      employer_name: "Test Restaurant",
+      amount: 6_500,
+      occupation_code: "102",
+    }],
+  };
+  const lines = calculateEmployeeTipsSchedule1A(
+    { taxYear: 2025, formType: "f1040" },
+    input,
+  );
+  assertEquals(lines.line4a_w2_tips, 0);
+  assertEquals(lines.line4b_form4137_tips, 0);
+  assertEquals(lines.line4c_employee_tips, 8_500);
+  const xml = schedule1a.build(input, {
+    pending: {
+      f1040: {
+        ...singleTips1040,
+        line13b_additional_deductions: 8_500,
+      },
+      w2: {
+        w2s: [
+          singleTipsW2.w2s[0],
+          {
+            ...singleTipsW2.w2s[0],
+            employer_ein: "987654321",
+            employer_name: "Second Restaurant",
+            box1_wages: 20_000,
+            box5_medicare_wages: 20_000,
+            box7_ss_tips: 2_000,
+            box14b_tipped_code: "103",
+          },
+        ],
+      },
+      form4137: {
+        taxpayer_ssn: "111223333",
+        forms: [{
+          recipient: "taxpayer",
+          employers: [{
+            name: "Test Restaurant",
+            ein: "123456789",
+            tips_received: 6_500,
+            tips_reported: 5_000,
+          }],
+        }],
+      },
+    },
+  });
+  assertStringIncludes(xml, "<QualifiedTipsWagesAmt>0</QualifiedTipsWagesAmt>");
+  assertStringIncludes(
+    xml,
+    "<QualifiedTipsForm4137Amt>0</QualifiedTipsForm4137Amt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<QualifiedTipsEmployeeAmt>8500</QualifiedTipsEmployeeAmt>",
   );
 });
 

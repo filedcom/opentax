@@ -1,15 +1,17 @@
 import { z } from "zod";
 import { element, elements } from "../../../mef/xml.ts";
 import {
+  calculateEmployeeTipsSchedule1A,
   calculateSeniorOnlySchedule1A,
   calculateVehicleInterestSchedule1A,
   calculateW2OvertimeSchedule1A,
-  calculateW2TipsSchedule1A,
   inputSchema,
   isQualifiedTipsOccupationCode,
+  qualifiedEmployeeTipRows,
   seniorDeduction,
 } from "../../../nodes/intermediate/forms/schedule1a/index.ts";
 import { inputSchema as w2InputSchema } from "../../../nodes/inputs/w2/index.ts";
+import { inputSchema as form4137InputSchema } from "../../../nodes/intermediate/forms/form4137/index.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
@@ -59,28 +61,23 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
   let total = 0;
   let senior = 0;
   let part1: { line1_agi: number; line3_magi: number } | undefined;
-  if ((input.qualified_employee_tips?.length ?? 0) > 0) {
-    const form4137 = context?.pending?.form4137 === undefined
-      ? undefined
-      : z.object({ forms: z.array(z.unknown()).optional() }).passthrough()
-        .parse(context.pending.form4137);
-    if ((form4137?.forms?.length ?? 0) > 0) {
-      throw new Error(
-        "Schedule 1-A W-2-only tips filing cannot include Form 4137 tips",
-      );
-    }
-    const lines = calculateW2TipsSchedule1A(
+  if (
+    (input.qualified_employee_tips?.length ?? 0) > 0 ||
+    (input.qualified_form4137_tips?.length ?? 0) > 0
+  ) {
+    const lines = calculateEmployeeTipsSchedule1A(
       { taxYear: 2025, formType: "f1040" },
       input,
     );
-    const entries = input.qualified_employee_tips!;
-    const sourceW2s = w2InputSchema.parse(context?.pending?.w2).w2s
-      .filter((item) =>
-        item.box13_statutory_employee !== true &&
-        item.box14b_tipped_code !== undefined &&
-        isQualifiedTipsOccupationCode(item.box14b_tipped_code) &&
-        (item.box7_ss_tips ?? 0) > 0
-      );
+    const entries = input.qualified_employee_tips ?? [];
+    const form4137Entries = input.qualified_form4137_tips ?? [];
+    const filedW2s = w2InputSchema.parse(context?.pending?.w2).w2s;
+    const sourceW2s = filedW2s.filter((item) =>
+      item.box13_statutory_employee !== true &&
+      item.box14b_tipped_code !== undefined &&
+      isQualifiedTipsOccupationCode(item.box14b_tipped_code) &&
+      (item.box7_ss_tips ?? 0) > 0
+    );
     const normalize = (value: string) => value.replaceAll("-", "");
     if (
       sourceW2s.length !== entries.length ||
@@ -101,6 +98,43 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
         "Schedule 1-A W-2 tips do not match the employer sources",
       );
     }
+    const form4137 = form4137InputSchema.parse(
+      context?.pending?.form4137 ?? {},
+    );
+    if (
+      !form4137Entries.every((entry) => {
+        const recipient = entry.employee_ssn.replaceAll("-", "") ===
+            form4137.taxpayer_ssn?.replaceAll("-", "")
+          ? "taxpayer"
+          : entry.employee_ssn.replaceAll("-", "") ===
+              form4137.spouse_ssn?.replaceAll("-", "")
+          ? "spouse"
+          : undefined;
+        return recipient !== undefined &&
+          (form4137.forms ?? []).some((form) =>
+            form.recipient === recipient &&
+            form.employers.some((employer) =>
+              employer.ein?.replaceAll("-", "") ===
+                entry.employer_ein.replaceAll("-", "") &&
+              employer.name === entry.employer_name &&
+              employer.tips_received === entry.amount
+            )
+          ) &&
+          filedW2s.some((source) =>
+            source.employee_ssn?.replaceAll("-", "") ===
+              entry.employee_ssn.replaceAll("-", "") &&
+            source.employer_ein?.replaceAll("-", "") ===
+              entry.employer_ein.replaceAll("-", "") &&
+            source.employer_name === entry.employer_name &&
+            source.box13_statutory_employee !== true &&
+            source.box14b_tipped_code === entry.occupation_code
+          );
+      })
+    ) {
+      throw new Error(
+        "Schedule 1-A Form 4137 tips do not match the filed employer and W-2 sources",
+      );
+    }
     const matchesRecipient = (
       ssn: string,
       sourceSsn: string | undefined,
@@ -113,27 +147,29 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
       returnSsn?.replaceAll("-", "") === ssn &&
       employmentValid === true && issuedBeforeDueDate === true &&
       tinIssuedByDueDate === true;
-    const allRecipientsMatch = entries.every((entry) => {
-      const ssn = normalize(entry.employee_ssn);
-      const taxpayer = matchesRecipient(
-        ssn,
-        input.taxpayer_ssn,
-        form1040.taxpayer_ssn,
-        form1040.taxpayer_ssn_valid_for_employment,
-        form1040.taxpayer_ssn_issued_before_due_date,
-        form1040.taxpayer_tin_issued_by_due_date,
-      );
-      const spouse = input.filing_status === FilingStatus.MFJ &&
-        matchesRecipient(
+    const allRecipientsMatch = qualifiedEmployeeTipRows(input).every(
+      (entry) => {
+        const ssn = normalize(entry.employee_ssn);
+        const taxpayer = matchesRecipient(
           ssn,
-          input.spouse_ssn,
-          form1040.spouse_ssn,
-          form1040.spouse_ssn_valid_for_employment,
-          form1040.spouse_ssn_issued_before_due_date,
-          form1040.spouse_tin_issued_by_due_date,
+          input.taxpayer_ssn,
+          form1040.taxpayer_ssn,
+          form1040.taxpayer_ssn_valid_for_employment,
+          form1040.taxpayer_ssn_issued_before_due_date,
+          form1040.taxpayer_tin_issued_by_due_date,
         );
-      return taxpayer || spouse;
-    });
+        const spouse = input.filing_status === FilingStatus.MFJ &&
+          matchesRecipient(
+            ssn,
+            input.spouse_ssn,
+            form1040.spouse_ssn,
+            form1040.spouse_ssn_valid_for_employment,
+            form1040.spouse_ssn_issued_before_due_date,
+            form1040.spouse_tin_issued_by_due_date,
+          );
+        return taxpayer || spouse;
+      },
+    );
     if (
       form1040.filing_status !== input.filing_status ||
       !allRecipientsMatch ||
@@ -147,7 +183,7 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
     total += lines.line13_tips;
     parts.push(
       element("QualifiedTipsWagesAmt", lines.line4a_w2_tips),
-      element("QualifiedTipsForm4137Amt", 0),
+      element("QualifiedTipsForm4137Amt", lines.line4b_form4137_tips),
       element("QualifiedTipsEmployeeAmt", lines.line4c_employee_tips),
       element("TotalQualifiedTipsAmt", lines.line6_total_tips),
       element("SmallerTipsOrMaxDedAmt", lines.line7_capped_tips),

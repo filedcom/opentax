@@ -1,10 +1,11 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import {
+  calculateEmployeeTipsSchedule1A,
   calculateSeniorOnlySchedule1A,
   calculateVehicleInterestSchedule1A,
   calculateW2OvertimeSchedule1A,
-  calculateW2TipsSchedule1A,
   inputSchema,
+  qualifiedEmployeeTipRows,
   seniorDeduction,
 } from "../../../nodes/intermediate/forms/schedule1a/index.ts";
 import { schedule1a } from "../../mef/forms/schedule1a.ts";
@@ -31,7 +32,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "text",
-    domainKey: "line4b_zero_form4137",
+    domainKey: "line4b_form4137_tips",
     pdfField: `${page1}.f1_11[0]`,
     printZero: true,
   },
@@ -238,17 +239,19 @@ export const schedule1aPdf: PdfFormDescriptor = {
       line3_magi: input.magi,
     };
     let total = 0;
-    if ((input.qualified_employee_tips?.length ?? 0) > 0) {
-      const lines = calculateW2TipsSchedule1A(
+    if (
+      (input.qualified_employee_tips?.length ?? 0) > 0 ||
+      (input.qualified_form4137_tips?.length ?? 0) > 0
+    ) {
+      const lines = calculateEmployeeTipsSchedule1A(
         { taxYear: 2025, formType: "f1040" },
         input,
       );
       Object.assign(projected, {
         ...lines,
-        ...(input.qualified_employee_tips!.length > 1
-          ? { pdf_tip_sources: input.qualified_employee_tips }
+        ...(qualifiedEmployeeTipRows(input).length > 1
+          ? { pdf_tip_sources: qualifiedEmployeeTipRows(input) }
           : {}),
-        line4b_zero_form4137: 0,
         line8_magi: lines.line3_magi,
         ...(lines.line10_excess_magi === 0
           ? {
