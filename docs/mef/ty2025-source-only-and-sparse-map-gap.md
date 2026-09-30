@@ -88,8 +88,16 @@ only until the deferred full batch runs.
 Form 8862 now reaches a bounded PDF descriptor. Active claims without the
 required source, finalized credit, or on-form row capacity stop there rather
 than silently omitting a filing. Form 8863 also has a bounded descriptor.
-Focused cases are written but unrun; no filled-PDF or business-rule result is
-claimed.
+The one-child CTC reinstatement fixture passed a current full-return local
+TY2025 v5.4 XSD check on 2026-10-01. Its seven-page packet was rendered and
+inspected: Form 1040 identifies the same child and reports $2,200 on line 19;
+Schedule 8812 line 14 reports $2,200; Form 8862 names the child, checks CTC,
+and answers its four Part III eligibility questions yes. The retained PDF is
+`.state/research/ty2025-filled-pdf-review/2026-10-01-form8862-ctc-reinstatement/filled-return.pdf`
+(SHA-256 `6d0a15c1249ae2ea5095d129eb2185e951cb55742b4cf9036bfde48ced4c321c`).
+This does not authenticate the prior IRS disallowance notice or establish the
+other EITC/AOTC/ODC variants, overflow statements, business rules, or ATS.
+Form 8863 still needs filled-PDF review.
 
 The [IRS Form 8862 instructions](https://www.irs.gov/instructions/i8862) also
 say a return claiming a credit during a 2- or 10-year disallowance ban to appeal
