@@ -105,6 +105,11 @@ export const itemSchema = z.object({
       date_sold: z.string().regex(/^2025-\d{2}-\d{2}$/),
       proceeds: z.number().int().positive(),
       cost_basis: z.number().int().nonnegative(),
+      selling_expenses_review: z.object({
+        amount: z.number().int().positive(),
+        expense_record_reference: z.string().trim().min(1),
+        not_in_cost_basis_or_other_deduction: z.literal(true),
+      }).strict().optional(),
       acquired_by_purchase: z.literal(true),
       acquisition_record_reference: z.string().trim().min(1),
       sale_record_reference: z.string().trim().min(1),
@@ -304,7 +309,8 @@ export const itemSchema = z.object({
           acquired.toISOString().slice(0, 10) !== sale.date_acquired ||
           Number.isNaN(sold.getTime()) ||
           sold.toISOString().slice(0, 10) !== sale.date_sold ||
-          acquired >= sold;
+          acquired >= sold ||
+          (sale.selling_expenses_review?.amount ?? 0) > sale.proceeds;
       })
     ) {
       ctx.addIssue({
@@ -527,7 +533,9 @@ class F1099kNode extends TaxNode<typeof inputSchema> {
           anniversary.getUTCMonth() === 2
         ) anniversary.setUTCDate(0);
         const longTerm = sold > anniversary;
-        const loss = Math.max(0, sale.cost_basis - sale.proceeds);
+        const netProceeds = sale.proceeds -
+          (sale.selling_expenses_review?.amount ?? 0);
+        const loss = Math.max(0, sale.cost_basis - netProceeds);
         outputs.push(output(form8949, {
           transaction: {
             part: longTerm ? Form8949Part.F : Form8949Part.C,
@@ -537,12 +545,12 @@ class F1099kNode extends TaxNode<typeof inputSchema> {
             }:${sale.transaction_id}`,
             date_acquired: sale.date_acquired,
             date_sold: sale.date_sold,
-            proceeds: sale.proceeds,
+            proceeds: netProceeds,
             cost_basis: sale.cost_basis,
             ...(loss > 0
               ? { adjustment_codes: "L", adjustment_amount: loss }
               : {}),
-            gain_loss: Math.max(0, sale.proceeds - sale.cost_basis),
+            gain_loss: Math.max(0, netProceeds - sale.cost_basis),
             is_long_term: longTerm,
           },
         }));

@@ -319,6 +319,37 @@ for (const fixture of pdfReviewFixtures) {
           "1099-K personal-item sales differ",
         );
       }
+      if (fixture.id === "single-k-personal-selling-fees") {
+        const rows = result.pending.form8949.transaction as Array<
+          Record<string, unknown>
+        >;
+        assertEquals(rows.find((row) => row.part === "C")?.proceeds, 750);
+        assertEquals(rows.find((row) => row.part === "C")?.gain_loss, 500);
+        assertEquals(rows.find((row) => row.part === "F")?.proceeds, 650);
+        assertEquals(
+          rows.find((row) => row.part === "F")?.adjustment_amount,
+          350,
+        );
+        assertEquals(result.pending.f1040.line7_capital_gain, 500);
+        assertThrows(
+          () =>
+            buildMefXml(
+              buildPending({
+                ...result.pending,
+                form8949: {
+                  transaction: rows.map((row) =>
+                    row.part === "C"
+                      ? { ...row, proceeds: 800, gain_loss: 550 }
+                      : row
+                  ),
+                },
+              }),
+              fixture.filer,
+            ),
+          Error,
+          "1099-K personal-item sales differ",
+        );
+      }
       if (fixture.id === "single-k-reported-error") {
         assertEquals(
           result.pending.schedule1.form1099k_reported_error_or_loss,

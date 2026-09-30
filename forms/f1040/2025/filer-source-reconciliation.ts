@@ -243,6 +243,9 @@ export function assertKPersonalSaleSources(
         throw new Error("1099-K personal-item sale review is invalid");
       }
       const sale = value as Record<string, unknown>;
+      const expenses = sale.selling_expenses_review as
+        | Record<string, unknown>
+        | undefined;
       const id = `1099k:${pseTin}:${sale.transaction_id}`;
       const acquired = new Date(`${sale.date_acquired}T00:00:00Z`);
       const sold = new Date(`${sale.date_sold}T00:00:00Z`);
@@ -269,7 +272,14 @@ export function assertKPersonalSaleSources(
         typeof sale.acquisition_record_reference !== "string" ||
         !sale.acquisition_record_reference.trim() ||
         typeof sale.sale_record_reference !== "string" ||
-        !sale.sale_record_reference.trim()
+        !sale.sale_record_reference.trim() ||
+        (expenses !== undefined &&
+          (typeof expenses.amount !== "number" ||
+            !Number.isSafeInteger(expenses.amount) ||
+            expenses.amount <= 0 || expenses.amount > sale.proceeds ||
+            typeof expenses.expense_record_reference !== "string" ||
+            !expenses.expense_record_reference.trim() ||
+            expenses.not_in_cost_basis_or_other_deduction !== true))
       ) {
         throw new Error("1099-K personal-item sale review is invalid");
       }
@@ -282,17 +292,18 @@ export function assertKPersonalSaleSources(
         anniversary.getUTCMonth() === 2
       ) anniversary.setUTCDate(0);
       const longTerm = sold > anniversary;
-      const loss = Math.max(0, sale.cost_basis - sale.proceeds);
+      const netProceeds = sale.proceeds - (expenses?.amount as number ?? 0);
+      const loss = Math.max(0, sale.cost_basis - netProceeds);
       expected.push({
         part: longTerm ? "F" : "C",
         description: sale.description,
         source_transaction_id: id,
         date_acquired: sale.date_acquired,
         date_sold: sale.date_sold,
-        proceeds: sale.proceeds,
+        proceeds: netProceeds,
         cost_basis: sale.cost_basis,
         ...(loss > 0 ? { adjustment_codes: "L", adjustment_amount: loss } : {}),
-        gain_loss: Math.max(0, sale.proceeds - sale.cost_basis),
+        gain_loss: Math.max(0, netProceeds - sale.cost_basis),
         is_long_term: longTerm,
       });
     }

@@ -802,6 +802,44 @@ Deno.test("1099-K personal loss uses Form 8949 code L and anniversary is short t
   );
 });
 
+Deno.test("1099-K personal selling expenses reduce Form 8949 proceeds but not box 1a", () => {
+  const item = minimalItem({
+    pse_tin: "12-3456789",
+    recipient_tin: "987-65-4321",
+    box1a_gross_payments: 700,
+    for_routing: "personal_item_sales",
+    personal_item_sales_review: [personalSale({
+      cost_basis: 500,
+      selling_expenses_review: {
+        amount: 50,
+        expense_record_reference: "marketplace fee statement",
+        not_in_cost_basis_or_other_deduction: true,
+      },
+    })],
+  });
+  const row = findOutput(compute([item]), "form8949")!.fields
+    .transaction as Record<string, unknown>;
+  assertEquals(row.proceeds, 650);
+  assertEquals(row.cost_basis, 500);
+  assertEquals(row.gain_loss, 150);
+  assertEquals(row.adjustment_codes, undefined);
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        ...item,
+        personal_item_sales_review: [personalSale({
+          selling_expenses_review: {
+            amount: 701,
+            expense_record_reference: "marketplace fee statement",
+            not_in_cost_basis_or_other_deduction: true,
+          },
+        })],
+      })]),
+    Error,
+    "personal-item sales",
+  );
+});
+
 Deno.test("1099-K mixed business and personal payments allocate box 1a exactly", () => {
   const receiptReview = {
     included_in_schedule_c_gross_receipts: 2_000,

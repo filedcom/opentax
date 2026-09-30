@@ -760,3 +760,17 @@ source/pending JSON, XML, PDF, contact sheet, and page images are retained at
 `.state/research/ty2025-filled-pdf-review/2026-09-30-v94/`. Actual payer
 copies, payment bytes, and correction records, IRS business rules, and ATS
 remain open.
+
+The `single-k-personal-selling-fees` source return has a six-page `v95` PDF.
+Both Form 8949 pages were inspected at full size, and extracted text confirms
+Form 1040 line 7a and Schedule D lines 3/7/16 at $500. Form 8949 box C has
+$750 net proceeds, $250 basis, and $500 gain from an $800 gross sale and $50
+selling fee. Box F has $650 net proceeds, $1,000 basis, code L, a $350
+adjustment, and zero deductible loss from a $700 gross sale and $50 selling
+fee. The original Form 1099-K box 1a remains $1,500. Native TY2025 v5.4 XSD
+passes, and substituting gross proceeds in the filed Form 8949 row rejects.
+The PDF SHA-256 is
+`f26d21db9ce4ea35558f88969b62b6d2adb3541769ebed6cf09ea10fbec32593`;
+source/pending JSON, XML, PDF, and rendered Form 8949 pages are retained at
+`.state/research/ty2025-filled-pdf-review/2026-09-30-v95/`. Actual
+settlement bytes, refunds, IRS business rules, and ATS remain open.
