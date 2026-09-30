@@ -71,12 +71,55 @@ for (const fixture of pdfReviewFixtures) {
           "Schedule EIC child differs from reviewed general source",
         );
       }
+      if (fixture.id === "mfs-w2-separated-spouse-eic") {
+        assertEquals(result.pending.f1040.mfs_eitc_separation_rule, true);
+        assertEquals(result.pending.f1040.dependent_count, 0);
+        assertEquals(result.pending.f1040.line27_eitc, 4_328);
+        assertStringIncludes(
+          xml,
+          "<SepdSpsFilingSepRetMeetsRqrInd>X</SepdSpsFilingSepRetMeetsRqrInd>",
+        );
+        assertStringIncludes(xml, "<EarnedIncomeCreditAmt");
+        assertStringIncludes(xml, "<IRS1040ScheduleEIC documentId=");
+        assertThrows(
+          () =>
+            buildMefXml(
+              buildPending({
+                ...result.pending,
+                general: {
+                  ...result.pending.general,
+                  mfs_eitc_separation_review: undefined,
+                },
+              }),
+              fixture.filer,
+            ),
+          Error,
+          "needs reviewed general source facts",
+        );
+      }
+      if (fixture.id === "mfs-w2-legal-separation-eic-child") {
+        assertEquals(result.pending.f1040.mfs_eitc_separation_rule, true);
+        assertEquals(result.pending.f1040.dependent_count, 1);
+        assertEquals(result.pending.f1040.line27_eitc, 4_328);
+        assertEquals(result.pending.f1040.line28_actc, 1_700);
+        assertEquals(result.pending.f1040.line35a_refund, 7_528);
+        const dependentAt = xml.indexOf("<DependentDetail>");
+        const separatedAt = xml.indexOf(
+          "<SepdSpsFilingSepRetMeetsRqrInd>X</SepdSpsFilingSepRetMeetsRqrInd>",
+        );
+        assertEquals(dependentAt >= 0 && separatedAt > dependentAt, true);
+        assertStringIncludes(xml, "<IRS1040ScheduleEIC documentId=");
+        assertStringIncludes(xml, "<IRS1040Schedule8812 documentId=");
+      }
       if (fixture.id === "single-1099nec-trade-business-tips-schedule1a") {
         const line15 = result.pending.schedule1.line15_se_deduction as number;
         assertEquals(result.pending.eitc.se_tax_deduction, line15);
         assertEquals(result.pending.eitc.credit_amount, 649);
         assertEquals(result.pending.f1040.line27_eitc, 649);
-        assertStringIncludes(xml, "<EarnedIncomeCreditAmt>649</EarnedIncomeCreditAmt>");
+        assertStringIncludes(
+          xml,
+          "<EarnedIncomeCreditAmt>649</EarnedIncomeCreditAmt>",
+        );
         const expected = Math.min(12_000, 10_000 - Math.round(line15));
         assertEquals(expected, 9_294);
         assertEquals(

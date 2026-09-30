@@ -106,6 +106,7 @@ const inputSchema = z.object({
   // Line 6b — Social security benefits, taxable amount
   line6b_ss_taxable: z.number().nonnegative().optional(),
   mfs_spouse_lived_with_taxpayer: z.boolean().optional(),
+  mfs_eitc_separation_rule: z.boolean().optional(),
   // Line 7 — Capital gain or (loss) (Schedule D)
   line7_capital_gain: z.number().optional(),
   // Line 7a — Capital gain distributions (no Schedule D required)

@@ -168,6 +168,24 @@ export type DependentFiling = z.infer<typeof dependentFilingSchema>;
 
 export const inputSchema = z.object({
   filing_status: z.nativeEnum(FilingStatus),
+  // 2025 EIC special rule for a married taxpayer filing separately.
+  mfs_eitc_separation_review: z.discriminatedUnion("basis", [
+    z.object({
+      basis: z.literal("last_six_months_apart"),
+      separate_residence_record_reference: z.string().trim().min(1),
+      child_residence_record_reference: z.string().trim().min(1),
+      no_competing_eitc_claim_verified: z.literal(true),
+      not_qualifying_child_of_another_taxpayer_verified: z.literal(true),
+    }).strict(),
+    z.object({
+      basis: z.literal("legal_separation"),
+      written_agreement_or_decree_reference: z.string().trim().min(1),
+      year_end_separate_residence_record_reference: z.string().trim().min(1),
+      child_residence_record_reference: z.string().trim().min(1),
+      no_competing_eitc_claim_verified: z.literal(true),
+      not_qualifying_child_of_another_taxpayer_verified: z.literal(true),
+    }).strict(),
+  ]).optional(),
   // A 2025 dual-status return cannot use the Form 1040 MeF filing path.
   dual_status_return_2025: z.boolean().optional(),
   qbi_no_prior_loss_or_suspended_loss_confirmed: z.literal(true).optional(),
@@ -764,6 +782,11 @@ function buildF1040Input(input: GeneralInput): Record<string, unknown> {
   addIfDefined(fields, "mfs_spouse_itemizing", input.mfs_spouse_itemizing);
   addIfDefined(
     fields,
+    "mfs_eitc_separation_rule",
+    input.mfs_eitc_separation_review === undefined ? undefined : true,
+  );
+  addIfDefined(
+    fields,
     "mfs_spouse_lived_with_taxpayer",
     input.mfs_spouse_lived_with_taxpayer,
   );
@@ -918,6 +941,23 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
     );
     const dependentsModifiedAgi = ptcDependentsModifiedAgi(claimedDeps);
     const eitcChildren = eitcQualifyingChildren(deps);
+    if (parsed.mfs_eitc_separation_review) {
+      if (parsed.filing_status !== FilingStatus.MFS) {
+        throw new Error(
+          "Separated-spouse EIC review requires MFS filing status",
+        );
+      }
+      if (eitcChildren.length === 0) {
+        throw new Error(
+          "Separated-spouse EIC review needs a qualifying child who lived with the filer",
+        );
+      }
+      if (parsed.taxpayer_can_be_claimed_as_dependent === true) {
+        throw new Error(
+          "Separated-spouse EIC filer cannot be another taxpayer's dependent",
+        );
+      }
+    }
     const filer = filerCreditEligibility(parsed);
     const counts = dependentCounts(deps, filer);
 
@@ -934,6 +974,8 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
       ),
       this.outputNodes.output(eitc, {
         filing_status: parsed.filing_status,
+        mfs_separation_reviewed:
+          parsed.mfs_eitc_separation_review !== undefined,
         filer_has_valid_ssns: filer.eitc,
         qualifying_children: Math.min(eitcChildren.length, 3),
         qualifying_child_details: eitcChildren.slice(0, 3).map((dep) => ({

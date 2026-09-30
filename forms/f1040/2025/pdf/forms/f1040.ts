@@ -4,6 +4,7 @@ import { form8814ParentPrintAmounts } from "./f8814.ts";
 import { appendIraDistributionStatement } from "./ira_distribution_statement.ts";
 import { appendDependentContinuation } from "./dependent_continuation.ts";
 import { schedule1aPdf } from "./schedule1a.ts";
+import { assertMfsEitcSource } from "../../mfs-eitc-source.ts";
 import {
   DependentCreditCategory,
   dependentFilingSchema,
@@ -103,6 +104,16 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "checkbox",
     domainKey: "print_more_than_four_dependents",
     pdfField: "topmostSubform[0].Page1[0].Dependents_ReadOrder[0].c1_11[0]",
+  },
+  {
+    kind: "checkbox",
+    domainKey: "mfs_eitc_separation_rule",
+    pdfField: "topmostSubform[0].Page1[0].c1_32[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_mfs_spouse_full_name",
+    pdfField: "topmostSubform[0].Page1[0].Checkbox_ReadOrder[0].f1_28[0]",
   },
 
   // Four dependent columns, each with first/last name, TIN, relationship,
@@ -546,6 +557,12 @@ export const irs1040Pdf: PdfFormDescriptor = {
   // season; this module is the 2025 form and must always fetch the 2025 PDF.
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040--2025.pdf",
   projectFields(fields, allPending) {
+    assertMfsEitcSource(
+      fields.filing_status,
+      fields.mfs_eitc_separation_rule,
+      typeof fields.line27_eitc === "number" ? fields.line27_eitc : undefined,
+      allPending,
+    );
     const dependents = dependentFilingSchema.array().parse(
       fields.dependent_details ?? [],
     );
@@ -627,9 +644,15 @@ export const irs1040Pdf: PdfFormDescriptor = {
       }
     }
     const child = form8814ParentPrintAmounts(allPending);
+    const printMfsSpouseName = fields.filing_status === "mfs" &&
+        typeof fields.spouse_first_name === "string" &&
+        typeof fields.spouse_last_name === "string"
+      ? `${fields.spouse_first_name} ${fields.spouse_last_name}`
+      : undefined;
     return {
       ...fields,
       ...printedDependents,
+      print_mfs_spouse_full_name: printMfsSpouseName,
       print_more_than_four_dependents: dependents.length > 4,
       ...(iraRollover && fields.line4b_ira_taxable === 0
         ? { line4b_ira_taxable: "0" }

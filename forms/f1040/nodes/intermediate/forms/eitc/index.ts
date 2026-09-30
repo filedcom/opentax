@@ -49,6 +49,7 @@ export const inputSchema = z.object({
 
   // Filing status — determines phaseout thresholds
   filing_status: filingStatusSchema.optional(),
+  mfs_separation_reviewed: z.boolean().optional(),
   filer_has_valid_ssns: z.boolean().optional(),
 
   // Investment income (interest, dividends, capital gains, rents)
@@ -84,8 +85,12 @@ function computeEitc(
 
   if (input.filer_has_valid_ssns !== true) return 0;
 
-  // MFS filers are disqualified (IRC §32(d))
-  if (input.filing_status === FilingStatus.MFS) return 0;
+  // A separate return can use the 2025 separated-spouse rule only with a
+  // qualifying child and reviewed residence/separation facts.
+  if (
+    input.filing_status === FilingStatus.MFS &&
+    (children === 0 || input.mfs_separation_reviewed !== true)
+  ) return 0;
 
   // Investment income disqualifier (IRC §32(i))
   if ((input.investment_income ?? 0) > investmentIncomeLimit) return 0;

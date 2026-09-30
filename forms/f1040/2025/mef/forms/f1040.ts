@@ -17,6 +17,7 @@ import {
   isPensionDirectRollover,
 } from "../../../nodes/inputs/f1099r/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
+import { assertMfsEitcSource } from "../../mfs-eitc-source.ts";
 
 export interface Fields {
   filing_status?: string;
@@ -57,6 +58,7 @@ export interface Fields {
   line6a_ss_gross?: number | null;
   line6b_ss_taxable?: number | null;
   mfs_spouse_lived_with_taxpayer?: boolean;
+  mfs_eitc_separation_rule?: boolean;
   line7_capital_gain?: number | null;
   line7a_cap_gain_distrib?: number | null;
   line8_additional_income?: number | null;
@@ -290,7 +292,12 @@ function dependentXml(fields: Input, context?: MefBuildContext): string[] {
       "Form 1040 dependent credits do not match the dependent rows",
     );
   }
-  if (details.length === 0) return [];
+  const separatedSpouseMark = fields.mfs_eitc_separation_rule === true
+    ? element("SepdSpsFilingSepRetMeetsRqrInd", "X")
+    : "";
+  if (details.length === 0) {
+    return separatedSpouseMark ? [separatedSpouseMark] : [];
+  }
 
   if (
     !Object.values(FilingStatus).includes(fields.filing_status as FilingStatus)
@@ -403,6 +410,7 @@ function dependentXml(fields: Input, context?: MefBuildContext): string[] {
   const livedWithYou = details.filter((dep) => dep.months_in_home > 6).length;
   return [
     ...rows,
+    separatedSpouseMark,
     details.length > 4 ? element("MoreDependentsInd", "X") : "",
     element("ChldWhoLivedWithYouCnt", livedWithYou),
     element("OtherDependentsListedCnt", details.length - livedWithYou),
@@ -567,6 +575,13 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
     ),
     ...dependentXml(fields, context),
   ];
+
+  assertMfsEitcSource(
+    fields.filing_status,
+    fields.mfs_eitc_separation_rule,
+    resolveNumber(fields.line27_eitc),
+    context?.pending,
+  );
 
   const capitalGain = resolveNumber(fields.line7_capital_gain);
   const directDistribution = resolveNumber(fields.line7a_cap_gain_distrib);

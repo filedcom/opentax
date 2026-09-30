@@ -809,3 +809,29 @@ review from the source rejects at export. The PDF SHA-256 is
 source/pending JSON, XML, PDF, and all three rendered pages are retained at
 `.state/research/ty2025-filled-pdf-review/2026-09-30-v98/`. A signed release,
 custody proof, IRS business rules, and ATS remain open.
+
+The mfs-w2-separated-spouse-eic source return has a three-page v99 PDF.
+Form 1040 page 1 shows the MFS status, Other Taxpayer in the MFS spouse
+name line, no claimed dependent, and the separated-spouse EIC checkbox.
+Page 2 shows $4,328 EIC and a $5,828 refund. Schedule EIC prints Ada and
+Example in the separate first- and last-name areas with SSN, birth year,
+daughter relationship, and 12 U.S. residence months. Native TY2025 v5.4
+XSD passes; removing the separation review from the source rejects at
+export. The PDF SHA-256 is
+7783d61f3b5acf1de54f41885aef394ea236438b491d20763774945c25cab512;
+source/pending JSON, XML, PDF, and all three rendered pages are retained at
+.state/research/ty2025-filled-pdf-review/2026-09-30-v99/.
+
+The mfs-w2-legal-separation-eic-child source return has a five-page v100
+PDF. Form 1040 page 1 shows the MFS spouse, one claimed child with the CTC
+box, and the separated-spouse mark; page 2 prints $4,328 EIC, $1,700 ACTC,
+and a $7,528 refund. Schedule 8812 pages 1-2 reconcile the $2,200
+potential CTC, zero nonrefundable credit, $15,000 earned income, and $1,700
+ACTC. Schedule EIC prints the child's first and last names separately. The
+native child row precedes the separated-spouse indicator and the full
+return passes local TY2025 v5.4 XSD. The PDF SHA-256 is
+6210f221971f9d27c06afcde24538d9bc3d63cc4a4172b751e0dc6bdd068da23;
+source/pending JSON, XML, PDF, and all five rendered pages are retained at
+.state/research/ty2025-filled-pdf-review/2026-09-30-v100/.
+These synthetic reviews do not authenticate the signed separation and
+residence records or establish IRS business-rule or ATS acceptance.

@@ -20,6 +20,28 @@ Deno.test("irs1040Pdf: Form 1040 projects source-reconciled fields", () => {
   assertEquals(typeof irs1040Pdf.projectFields, "function");
 });
 
+Deno.test("Form 1040 PDF maps the separated-spouse mark and MFS spouse name", () => {
+  const mapped = new Map(
+    irs1040Pdf.fields.map((entry) => [entry.domainKey, entry.pdfField]),
+  );
+  assertEquals(
+    mapped.get("mfs_eitc_separation_rule"),
+    "topmostSubform[0].Page1[0].c1_32[0]",
+  );
+  assertEquals(
+    mapped.get("print_mfs_spouse_full_name"),
+    "topmostSubform[0].Page1[0].Checkbox_ReadOrder[0].f1_28[0]",
+  );
+  assertEquals(
+    irs1040Pdf.projectFields?.({
+      filing_status: "mfs",
+      spouse_first_name: "Other",
+      spouse_last_name: "Taxpayer",
+    }, {})?.print_mfs_spouse_full_name,
+    "Other Taxpayer",
+  );
+});
+
 Deno.test("Form 1040 PDF prints filed dependent identity and the correct checkboxes", () => {
   const child = {
     first_name: "Jamie",

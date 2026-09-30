@@ -27,6 +27,10 @@ Deno.test("Schedule EIC PDF maps child rows, not income into line 6 months", () 
     mapped.get("child3_months_in_home"),
     "topmostSubform[0].Page1[0].f1_26[0]",
   );
+  assertEquals(
+    mapped.get("child1_name"),
+    "topmostSubform[0].Page1[0].f1_03[0]",
+  );
   assertEquals(mapped.has("earned_income"), false);
   assertEquals(mapped.has("investment_income"), false);
   assertEquals(mapped.has("qualifying_children"), false);
@@ -46,6 +50,8 @@ Deno.test("Schedule EIC PDF projects qualifying-child identity and residency", (
     qualifying_children: 1,
     qualifying_child_details: [child],
   }, {}) ?? {};
+  assertEquals(projected.child1_first_name, "Ada");
+  assertEquals(projected.child1_last_name, "Taxpayer");
   assertEquals(projected.child1_name, "Ada Taxpayer");
   assertEquals(projected.child1_ssn, "111223334");
   assertEquals(projected.child1_birth_year_digit1, "2");

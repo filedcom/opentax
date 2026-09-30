@@ -279,6 +279,23 @@ Deno.test("MFS without the separate-spouse eligibility route has no EIC", () => 
   });
 });
 
+Deno.test("reviewed MFS separation with one child uses the single EIC column", () => {
+  assertEquals(
+    getCredit({
+      earned_income: 15_000,
+      qualifying_children: 1,
+      filing_status: FilingStatus.MFS,
+      mfs_separation_reviewed: true,
+    }),
+    4_328,
+  );
+  noCredit({
+    earned_income: 15_000,
+    filing_status: FilingStatus.MFS,
+    mfs_separation_reviewed: true,
+  });
+});
+
 Deno.test("computed EIC routes to Form 1040 line 27a", () => {
   const result = compute({
     earned_income: 12_730,

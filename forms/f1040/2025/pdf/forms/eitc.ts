@@ -1,4 +1,5 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
+import { rgb, StandardFonts } from "pdf-lib";
 import { qualifyingChildDetailSchema } from "../../../nodes/intermediate/forms/eitc/index.ts";
 
 // The 2025 Schedule EIC filing page has child columns, not income summaries.
@@ -143,6 +144,8 @@ export const eitcPdf: PdfFormDescriptor = {
         }
       }
       projected[`child${n}_name`] = `${child.first_name} ${child.last_name}`;
+      projected[`child${n}_first_name`] = child.first_name;
+      projected[`child${n}_last_name`] = child.last_name;
       projected[`child${n}_ssn`] = child.ssn.replaceAll("-", "");
       projected[`child${n}_relationship`] = child.irs_relationship_code;
       projected[`child${n}_months_in_home`] = child.months_in_home;
@@ -151,6 +154,50 @@ export const eitcPdf: PdfFormDescriptor = {
       }
     });
     return projected;
+  },
+  async decoratePages(document, pages, fields) {
+    const page = pages[0];
+    if (!page) return;
+    const font = await document.embedFont(StandardFonts.Helvetica);
+    for (let index = 0; index < 3; index++) {
+      const first = fields[`child${index + 1}_first_name`];
+      const last = fields[`child${index + 1}_last_name`];
+      if (typeof first !== "string" || typeof last !== "string") continue;
+      const left = 209.8 + index * 122.4;
+      const textSize = (value: string) => {
+        const width = font.widthOfTextAtSize(value, 9);
+        const size = Math.min(9, 54 * 9 / Math.max(width, 1));
+        if (size < 6) {
+          throw new Error(
+            "Schedule EIC PDF child name exceeds its printed box",
+          );
+        }
+        return size;
+      };
+      // The IRS AcroForm has one full-name field per child column. Print
+      // separate names in the two halves shown on the paper form.
+      page.drawRectangle({
+        x: left + 0.3,
+        y: 468.2,
+        width: 119.9,
+        height: 11.4,
+        color: rgb(1, 1, 1),
+      });
+      page.drawText(first, {
+        x: left + 2,
+        y: 470,
+        size: textSize(first),
+        font,
+        color: rgb(0, 0, 0.55),
+      });
+      page.drawText(last, {
+        x: left + 62,
+        y: 470,
+        size: textSize(last),
+        font,
+        color: rgb(0, 0, 0.55),
+      });
+    }
   },
   fields,
   includeWhen: (source, all) =>

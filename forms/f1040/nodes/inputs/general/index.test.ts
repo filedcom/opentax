@@ -1258,6 +1258,52 @@ Deno.test("custodial Form 8332 release keeps child in EIC but off Form 1040 depe
 });
 
 // ============================================================
+// Separated-spouse EIC special rule
+// ============================================================
+
+Deno.test("reviewed MFS separation reaches EIC and Form 1040 special-rule mark", () => {
+  const review = {
+    basis: "last_six_months_apart",
+    separate_residence_record_reference: "2025 residence ledger",
+    child_residence_record_reference: "2025 school address record",
+    no_competing_eitc_claim_verified: true,
+    not_qualifying_child_of_another_taxpayer_verified: true,
+  };
+  const result = compute({
+    filing_status: FilingStatus.MFS,
+    mfs_eitc_separation_review: review,
+    dependents: [qualifyingChildDep()],
+  });
+  assertEquals(
+    findOutput(result, "eitc")?.fields.mfs_separation_reviewed,
+    true,
+  );
+  assertEquals(
+    findOutput(result, "f1040")?.fields.mfs_eitc_separation_rule,
+    true,
+  );
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.MFS,
+        mfs_eitc_separation_review: review,
+      }),
+    Error,
+    "needs a qualifying child",
+  );
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.Single,
+        mfs_eitc_separation_review: review,
+        dependents: [qualifyingChildDep()],
+      }),
+    Error,
+    "requires MFS filing status",
+  );
+});
+
+// ============================================================
 // 14. ATIN disqualifies CTC
 // ============================================================
 
