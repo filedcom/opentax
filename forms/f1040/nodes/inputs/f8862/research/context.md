@@ -48,6 +48,12 @@ test, the instructions require entering 365 on line 7 and completing line 8.
 Sources: [December 2025 Form 8862](https://www.irs.gov/pub/irs-pdf/f8862.pdf)
 and [its instructions](https://www.irs.gov/pub/irs-pdf/i8862.pdf).
 
+The three-page PDF holds four CTC children, four other dependents, and three
+AOTC students. Additional people now print on a numbered continuation with
+their line 12/14–17, 13/16–17, or 18/19a–b answers and filer identity, as the
+2025 form directs. The native document continues to carry every person. This
+continuation is written but has not yet entered the agreed final PDF batch.
+
 ---
 
 ## Calculation Logic

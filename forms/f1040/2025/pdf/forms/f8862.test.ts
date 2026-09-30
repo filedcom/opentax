@@ -1,6 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
+import { PDFDocument } from "pdf-lib";
 import { FilingStatus } from "../../../mef/header.ts";
-import { form8862Pdf } from "./f8862.ts";
+import { form8862OverflowRows, form8862Pdf } from "./f8862.ts";
 
 const filer = {
   primarySSN: "123456789",
@@ -84,7 +85,7 @@ Deno.test("Form 8862 PDF projects bounded EITC and CTC claims", () => {
   assertEquals(instances[0].ctc_child_0_citizen, "yes");
 });
 
-Deno.test("Form 8862 PDF rejects unclaimed credits and overflow rows", () => {
+Deno.test("Form 8862 PDF attaches numbered continuation for extra children", async () => {
   const ctc = {
     claim_ctc: true,
     ctc_disallowed_year: 2023,
@@ -98,21 +99,53 @@ Deno.test("Form 8862 PDF rejects unclaimed credits and overflow rows", () => {
       us_citizen_national_or_resident: true,
     })),
   };
-  assertThrows(
-    () =>
-      form8862Pdf.instances?.(ctc, filer, {
-        f1040: {
-          line19_child_tax_credit: 500,
-          dependent_details: ctc.ctc_children.map((child) => ({
-            first_name: child.first_name,
-            last_name: child.last_name,
-            credit_category: "ctc",
-          })),
-        },
-      }),
-    Error,
-    "additional statement",
-  );
+  const instance = form8862Pdf.instances?.(ctc, filer, {
+    f1040: {
+      line19_child_tax_credit: 500,
+      dependent_details: ctc.ctc_children.map((child) => ({
+        first_name: child.first_name,
+        last_name: child.last_name,
+        credit_category: "ctc",
+      })),
+    },
+  })[0];
+  assertEquals(instance?.ctc_child_3_name, "David Doe");
+  assertEquals(instance?.print_overflow_rows, [{
+    heading: "12. Child 5: Ellen Doe",
+    answers:
+      "14 lived with filer: yes; 15 qualifying child: yes; " +
+      "16 dependent: yes; 17 US citizen/national/resident: yes",
+  }]);
+  const document = await PDFDocument.create();
+  await form8862Pdf.appendSupplementalPages?.(document, instance!, filer);
+  assertEquals(document.getPageCount(), 1);
+});
+
+Deno.test("Form 8862 continuation includes extra ODC and AOTC answers", () => {
+  const rows = form8862OverflowRows({
+    other_dependents: Array.from({ length: 5 }, (_, i) => ({
+      first_name: `Other${i}`,
+      last_name: "Doe",
+      dependent: true,
+      us_citizen_national_or_resident: true,
+    })),
+    aotc_students: Array.from({ length: 4 }, (_, i) => ({
+      first_name: `Student${i}`,
+      last_name: "Doe",
+      eligible: true,
+      credit_claimed_four_prior_years: false,
+    })),
+  });
+  assertEquals(rows, [{
+    heading: "13. Other dependent 5: Other4 Doe",
+    answers: "16 dependent: yes; 17 US citizen/national/resident: yes",
+  }, {
+    heading: "18. Student 4: Student3 Doe",
+    answers: "19a eligible student: yes; 19b credit claimed four prior years: no",
+  }]);
+});
+
+Deno.test("Form 8862 PDF rejects a claim missing from the finalized return", () => {
   assertThrows(
     () =>
       form8862Pdf.instances?.(
