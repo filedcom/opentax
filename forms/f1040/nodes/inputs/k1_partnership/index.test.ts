@@ -25,6 +25,54 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
+Deno.test("partnership K-1 box 11 code J keeps each reviewed recovery source", () => {
+  const item = (ein: string, amount: number) =>
+    minimalItem({
+      partnership_ein: ein,
+      source_document_reference: `2025 K-1 ${ein}`,
+      box11_code_j_recovery: {
+        reported_amount: amount + 100,
+        taxable_amount: amount,
+        prior_year_tax_benefit_reviewed: true,
+        prior_year_tax_benefit_workpaper_reference: `2024 return ${ein}`,
+        statement_reference: `2025 box 11 J statement ${ein}`,
+        recipient_tin: "111223333",
+      },
+    });
+  const result = compute([item("123456789", 400), item("987654321", 600)]);
+  for (const node of ["schedule1", "agi_aggregator"]) {
+    const rows = findOutput(result, node)?.fields
+      .k1_partnership_box11_code_j_sources as Array<{ taxable_amount: number }>;
+    assertEquals(rows.map((row) => row.taxable_amount), [400, 600]);
+  }
+  assertThrows(
+    () => compute([minimalItem({ box11_other_income: 100 })]),
+    Error,
+    "Untyped partnership K-1 box 11",
+  );
+  assertThrows(
+    () => compute([item("123456789", 400), item("123456789", 400)]),
+    Error,
+    "Duplicate partnership K-1 box 11 code J source",
+  );
+  assertEquals(
+    k1Partnership.inputSchema.safeParse({
+      k1_partnerships: [item("123456789", 400), {
+        ...item("987654321", 600),
+        box11_code_j_recovery: {
+          reported_amount: 700,
+          taxable_amount: 800,
+          prior_year_tax_benefit_reviewed: true,
+          prior_year_tax_benefit_workpaper_reference: "2024 return",
+          statement_reference: "2025 box 11 J statement",
+          recipient_tin: "111223333",
+        },
+      }],
+    }).success,
+    false,
+  );
+});
+
 Deno.test("partnership K-3 passive interest and line 12 reduction reconcile to K-1", () => {
   const k3 = {
     partnership_ein: "123456789",

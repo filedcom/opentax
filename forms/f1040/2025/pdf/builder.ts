@@ -3,7 +3,7 @@ import { join } from "@std/path";
 import { normalizeAllPending } from "../pending.ts";
 import { ALL_PDF_FORMS } from "./forms/index.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "./form-descriptor.ts";
-import type { FilerIdentity } from "../../mef/header.ts";
+import { type FilerIdentity, FilingStatus } from "../../mef/header.ts";
 import { assertAttachmentCoverage } from "../attachment-coverage.ts";
 import type { MefBundle } from "../mef/builder.ts";
 import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
@@ -15,6 +15,7 @@ import {
   assertScheduleFFarmSourceIdentity,
 } from "../filer-source-reconciliation.ts";
 import { assertScheduleDSalesMatchPrepared } from "../mef/forms/schedule_d.ts";
+import { assertBox11CodeJSources } from "../../nodes/inputs/k1_partnership/box11_code_j.ts";
 
 async function fetchWithCache(
   url: string,
@@ -260,6 +261,18 @@ export async function buildPdfBytes(
     assertSchedule1NecSourceIdentity(normalized, filer);
     assertScheduleFFarmSourceIdentity(normalized, filer);
   }
+  assertBox11CodeJSources(
+    normalized,
+    filer
+      ? [
+        filer.primarySSN,
+        ...(filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+            filer.spouse?.ssn
+          ? [filer.spouse.ssn]
+          : []),
+      ]
+      : [],
+  );
   if (
     preparedBundle &&
     await preparedSourceSha256(pending, filer) !==

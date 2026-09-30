@@ -1,4 +1,4 @@
-import { buildReturnHeader } from "../../mef/header.ts";
+import { buildReturnHeader, FilingStatus } from "../../mef/header.ts";
 import { element, elements } from "../../mef/xml.ts";
 import { PDFDocument } from "pdf-lib";
 import { ALL_MEF_FORMS } from "./forms/index.ts";
@@ -14,6 +14,7 @@ import {
   assertScheduleCReceiptSourceIdentity,
   assertScheduleFFarmSourceIdentity,
 } from "../filer-source-reconciliation.ts";
+import { assertBox11CodeJSources } from "../../nodes/inputs/k1_partnership/box11_code_j.ts";
 
 export interface MefBundle {
   readonly xml: string;
@@ -213,6 +214,13 @@ function buildReturnXml(
   assertSchedule1Box3SourceIdentity(pending, filer);
   assertSchedule1NecSourceIdentity(pending, filer);
   assertScheduleFFarmSourceIdentity(pending, filer);
+  assertBox11CodeJSources(pending, [
+    filer.primarySSN,
+    ...(filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+        filer.spouse?.ssn
+      ? [filer.spouse.ssn]
+      : []),
+  ]);
   if (
     Array.isArray(pending.form8949) && pending.form8949.length > 0 &&
     !pending.schedule_d

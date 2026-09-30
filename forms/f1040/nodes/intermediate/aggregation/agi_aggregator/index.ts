@@ -30,6 +30,7 @@ import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 import { schedule1a } from "../../forms/schedule1a/index.ts";
 import { agi_final } from "../agi_final/index.ts";
 import { schedule_j_calculation } from "../../forms/schedule_j/index.ts";
+import { box11CodeJSourceSchema } from "../../../inputs/k1_partnership/box11_code_j.ts";
 
 // Fields that may arrive from multiple upstream nodes accumulate as arrays in the
 // executor pending dict. Declaring them accumulable prevents Zod parse failure.
@@ -163,6 +164,8 @@ export const inputSchema = z.object({
   line8z_nqdc: z.number().nonnegative().optional(),
   line8z_f1098_interest_recovery: z.number().nonnegative().optional(),
   line8z_k1_s_corp_tax_benefit_recovery: z.number().nonnegative().optional(),
+  k1_partnership_box11_code_j_sources: z.array(box11CodeJSourceSchema)
+    .optional(),
   line8z_form8814: z.number().nonnegative().optional(),
   line8z_hsa_excess_earnings: z.number().nonnegative().optional(),
   line8z_hsa_excess_employer: z.number().nonnegative().optional(),
@@ -326,6 +329,10 @@ function nonSsaIncomeBeforePal(input: AgiInput): number {
     (input.line8z_nqdc ?? 0) +
     (input.line8z_f1098_interest_recovery ?? 0) +
     (input.line8z_k1_s_corp_tax_benefit_recovery ?? 0) +
+    (input.k1_partnership_box11_code_j_sources ?? []).reduce(
+      (sum, row) => sum + row.taxable_amount,
+      0,
+    ) +
     (input.line8z_form8814 ?? 0) +
     (input.line8z_hsa_excess_earnings ?? 0) +
     (input.line8z_hsa_excess_employer ?? 0) +
@@ -547,6 +554,10 @@ function scheduleOnePartI(input: AgiInput): number {
     (input.line8z_nqdc ?? 0) +
     (input.line8z_f1098_interest_recovery ?? 0) +
     (input.line8z_k1_s_corp_tax_benefit_recovery ?? 0) +
+    (input.k1_partnership_box11_code_j_sources ?? []).reduce(
+      (sum, row) => sum + row.taxable_amount,
+      0,
+    ) +
     (input.line8z_form8814 ?? 0) +
     (input.line8z_hsa_excess_earnings ?? 0) +
     (input.line8z_hsa_excess_employer ?? 0) +

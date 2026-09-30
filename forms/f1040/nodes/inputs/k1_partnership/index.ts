@@ -33,6 +33,10 @@ import { disabledAccessLimit } from "../../intermediate/forms/disabled_access_li
 import { scheduleE } from "../schedule_e/index.ts";
 import { tsjSchema } from "../../types.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import {
+  box11CodeJReviewSchema,
+  box11CodeJSourceRows,
+} from "./box11_code_j.ts";
 
 // Schedule K-1 (Form 1065) — Partner's Share of Income, Deductions, Credits
 //
@@ -150,10 +154,11 @@ export const itemSchema = z.object({
     "Box 10 — Net section 1231 gain (loss)",
   ),
 
-  // Box 11 — Other income (loss) → Schedule 1 line 8z (various codes A–J)
+  // Uncoded box 11 cannot establish a Form 1040 destination.
   box11_other_income: z.number().optional().describe(
     "Box 11 — Other income (loss)",
   ),
+  box11_code_j_recovery: box11CodeJReviewSchema.optional(),
 
   // Box 12 — Section 179 deduction → Form 4562
   box12_section_179: z.number().nonnegative().optional().describe(
@@ -714,18 +719,13 @@ function box10Net1231Outputs(items: K1PartnershipItems): NodeOutput[] {
   return [output(form4797, { section_1231_gain: total, k1_1231_rows: rows })];
 }
 
-// Box 11 — Other income (loss) → Schedule 1 line 8z + agi_aggregator
-// Various codes A–J (e.g., code A: other portfolio income, code C: §1256 contracts).
-// Routed to the generic line8z_other bucket on Schedule 1 and the AGI aggregator.
+// Box 11 code J: reviewed tax-benefit recovery → Schedule 1 line 8z.
 function box11OtherIncomeOutputs(items: K1PartnershipItems): NodeOutput[] {
-  const total = items.reduce(
-    (sum, item) => sum + (item.box11_other_income ?? 0),
-    0,
-  );
-  if (total === 0) return [];
+  const rows = box11CodeJSourceRows(items);
+  if (rows.length === 0) return [];
   return [
-    output(schedule1, { line8z_other: total }),
-    output(agi_aggregator, { line8z_other: total }),
+    output(schedule1, { k1_partnership_box11_code_j_sources: rows }),
+    output(agi_aggregator, { k1_partnership_box11_code_j_sources: rows }),
   ];
 }
 
@@ -880,7 +880,7 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
       ...unrecaptured1250Outputs(k1_partnerships),
       // box10_net_1231 → form4797 Part I (§1231 gain/loss)
       ...box10Net1231Outputs(k1_partnerships),
-      // box11_other_income → Schedule 1 line 8z + agi_aggregator
+      // Reviewed box 11 code J sources → Schedule 1 line 8z + AGI.
       ...box11OtherIncomeOutputs(k1_partnerships),
       // box12_section_179 → form4562 (partner-level §179 limitation applies)
       ...box12Section179Outputs(k1_partnerships),

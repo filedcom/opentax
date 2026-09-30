@@ -26,7 +26,7 @@ not an approved exclusion or completion of these filing paths.
 
 | Generic deposit       | Current producer files                                                               | Missing source-to-statement decision                                                                                                                     |
 | --------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `line8z_other`        | `f3115`, `f8873`, `f5471`, `k1_partnership` | Confirm the 2025 income line and character for each fact pattern; retain a typed source type, amount and source identity through Schedule 1 and AGI.     |
+| `line8z_other`        | `f3115`, `f8873`, `f5471` | Confirm the 2025 income line and character for each fact pattern; retain a typed source type, amount and source identity through Schedule 1 and AGI.     |
 | `line8z_other_income` | `k1_s_corp`, `f3115`, `f8915d`, `k1_trust`, `f1099patr`           | Resolve pass-through, disaster and cooperative classifications separately; preserve each signed source row and its filed destination. |
 
 The clergy producer no longer emits a negative line 8z amount. The [2025 IRS
@@ -42,6 +42,20 @@ clergy route must reconcile the W-2 box 1 amount, report any taxable excess on
 Form 1040 line 1h, include the proper housing amounts on Schedule SE, preserve
 owner and payer identity, and handle the Form 4361 exemption. This is an open
 filing path, not an approved exclusion.
+
+Partnership K-1 box 11 is now code-specific. An uncoded amount rejects at the
+producer and MeF/PDF export. The supported code J tax-benefit recovery requires
+the partnership EIN and issued K-1 reference, statement reference, owner TIN,
+reported amount, reviewed taxable amount no greater than the reported amount,
+and a prior-year tax-benefit workpaper. Each positive source survives into
+Schedule 1 and AGI; the native line 8z type statement carries one row per
+partnership. MeF and PDF export reconcile the finalized rows to the entered
+K-1 facts and filer or joint spouse. A two-K-1 $400/$600 case produces $1,000
+on Schedule 1 line 8z and Form 1040 line 8, passes local TY2025 v5.4 XSD,
+and prints in four inspected `v69` PDF pages. This follows the [2025 partner
+instructions](https://www.irs.gov/instructions/i1065sk1) for box 11 code J.
+Other box 11 codes have distinct destinations and remain open, as do issued
+source bytes, prior-return authentication, IRS business rules, and ATS.
 
 The executor accumulates colliding scalar output keys as an array. These two
 sink schemas currently expect numbers, so a return with multiple generic

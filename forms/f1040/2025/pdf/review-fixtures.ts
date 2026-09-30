@@ -1028,6 +1028,48 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-two-partnership-code-j-recoveries",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(30_000, 3_000, "Example Employer", "12-3456789")],
+      k1_partnership: [
+        {
+          partnership_name: "Alpha Partnership",
+          partnership_ein: "123456789",
+          source_document_reference: "Synthetic Alpha 2025 K-1",
+          box11_code_j_recovery: {
+            reported_amount: 500,
+            taxable_amount: 400,
+            prior_year_tax_benefit_reviewed: true,
+            prior_year_tax_benefit_workpaper_reference: "Alpha 2024 tax review",
+            statement_reference: "Alpha box 11 code J statement",
+            recipient_tin: "111223333",
+          },
+        },
+        {
+          partnership_name: "Beta Partnership",
+          partnership_ein: "987654321",
+          source_document_reference: "Synthetic Beta 2025 K-1",
+          box11_code_j_recovery: {
+            reported_amount: 700,
+            taxable_amount: 600,
+            prior_year_tax_benefit_reviewed: true,
+            prior_year_tax_benefit_workpaper_reference: "Beta 2024 tax review",
+            statement_reference: "Beta box 11 code J statement",
+            recipient_tin: "111223333",
+          },
+        },
+      ],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule1"],
+    reviewFocus: [
+      "Separate K-1 code J recoveries of $400 and $600 make $1,000 on Schedule 1 line 8z",
+      "Form 1040 line 8 and AGI include the $1,000 recovery once",
+      "The linked native statement identifies each partnership source",
+    ],
+  },
+  {
     id: "single-sourced-collectibles-gain",
     inputs: {
       general: singleGeneral,

@@ -109,6 +109,13 @@ bounded route and its remaining evidence.
 | Schedule R    | Sourced age-65 single-filer credit; P                                                   | `schedule_r.ts` R    | Y   | W     | Bounded native and two-page PDF map reconcile benefits, AGI, tax limit, Schedule 3 and final Form 1040. The bounded XSD and filled two-page PDF review pass; disability, spouse, other-benefit, full-return, and ATS paths remain open. See [source-only audit](ty2025-source-only-and-sparse-map-gap.md).                                                                                                                                                   |
 | Schedule SE   | Self-employment profit/tax facts; P                                                     | `schedule_se.ts` R   | Y   | W     | Open: multiple businesses, clergy and cross-form wage-base audit. The legacy clergy input now fails closed because it subtracted housing again on Schedule 1 line 8z and omitted parsonage from the SE base; a matched W-2/housing/owner source route remains required.                                                                                                                                                                                                                                                                                                                                                  |
 
+The Schedule 1 row now has one more bounded source: partnership K-1 box 11 code
+J reviewed taxable recovery. Two partnership source rows reconcile through AGI,
+the native linked line 8z statement, and four visually inspected PDF pages in
+`v69`; local TY2025 v5.4 full-return XSD passes. Untyped box 11 rejects, and
+other codes remain unresolved. See the [line 8z source
+audit](ty2025-schedule1-line8z-source-gap.md).
+
 #### Sparse main-return and schedule rows: static source boundary
 
 The table above names the registered documents; the following narrows its

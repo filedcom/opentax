@@ -1,3 +1,5 @@
+import { box11CodeJSourceSchema } from "../../../nodes/inputs/k1_partnership/box11_code_j.ts";
+
 export interface Schedule1OtherIncomeRow {
   readonly label: string;
   readonly amount: number;
@@ -68,8 +70,21 @@ export function schedule1OtherIncomeRows(
       }];
     },
   );
+  const partnershipSources = source.k1_partnership_box11_code_j_sources;
+  if (partnershipSources !== undefined && !Array.isArray(partnershipSources)) {
+    throw new Error("Schedule 1 partnership K-1 code J sources must be rows");
+  }
+  const partnershipRows: Schedule1OtherIncomeRow[] = (
+    (partnershipSources ?? []) as unknown[]
+  ).map((value) => {
+    const row = box11CodeJSourceSchema.parse(value);
+    return {
+      label: `Partnership K-1 code J recovery ${row.partnership_ein}`,
+      amount: row.taxable_amount,
+    };
+  });
   const rows = source.f1099m_box3_other_income_sources;
-  if (rows === undefined) return componentRows;
+  if (rows === undefined) return [...componentRows, ...partnershipRows];
   if (!Array.isArray(rows)) {
     throw new Error("Schedule 1 1099-MISC box 3 sources must be rows");
   }
@@ -92,7 +107,7 @@ export function schedule1OtherIncomeRows(
     }
     return { label: row.description, amount: row.amount };
   });
-  return [...componentRows, ...box3Rows];
+  return [...componentRows, ...partnershipRows, ...box3Rows];
 }
 
 export function schedule1OtherIncomeTotal(

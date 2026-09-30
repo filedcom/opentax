@@ -494,3 +494,16 @@ the other three pages. The PDF SHA-256 is
 `ae32b41fb25e2258de57fc3b099e95ed6e4fe3b9d8fea0cfd3699b4bfad0642e`.
 Child issuer documents, parent-election eligibility evidence, other income
 combinations, IRS business rules, and ATS acceptance remain open.
+
+The `single-two-partnership-code-j-recoveries` source passes local TY2025 v5.4
+full-return XSD. Its native `OtherIncomeTypeStatement` has one type-and-amount
+row for each issued partnership EIN: $400 and $600. In the four-page `v69`
+packet, both Form 1040 pages and both Schedule 1 pages were rendered and
+visually inspected. Schedule 1 line 8z prints $1,000 and wraps the two source
+descriptions legibly; line 10 and Form 1040 line 8 carry $1,000 once, and AGI
+is $31,000. Form 1040 line 16 tax is $1,595 and the $3,000 withholding yields
+a $1,405 refund. The PDF SHA-256 is
+`647baa43233b7758f45168c5bd4c25d441ace71e127dce2976f27c844bd9a3b6`.
+Focused native and PDF checks reject source-row tampering and a recipient
+outside the return. Issued K-1 bytes, prior-year tax-benefit workpapers,
+other box 11 codes, IRS business rules, and ATS acceptance remain open.
