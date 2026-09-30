@@ -160,7 +160,7 @@ and inspected: Schedule A line 12 is $12,000 and Form 1040 line 12e is
 $48,000. The snapshot is retained at
 `.state/research/ty2025-filled-pdf-review/2026-09-30-section-b-equipment/filled-return.pdf`
 with SHA-256
-`1469249ceb733624a737dd5e31f08c73f1de4536f130a5bf69cd2fa57222b07d`.
+`425042bd78b4386797ae0325390fd874e9fe5d916227c1201bf57e072904fbbc`.
 The fixture does not authenticate the appraisal or signatures.
 
 The same bounded ordinary Section B route now covers a purchased collectible
@@ -173,11 +173,26 @@ The [2025 instructions](https://www.irs.gov/pub/irs-prior/i8283--2025.pdf)
 distinguish collectibles from art and require good used condition for the
 ordinary clothing/household deduction route. The reviewed snapshots under
 `.state/research/ty2025-filled-pdf-review/` have SHA-256
-`016e2be4ccba58097c2c1e1a6e0d5f641d8dd06f172b86c57cda0476bbf9a526`
+`b07d70ecd556c3221b7cdff7ba8b6abb350667bec2c61c1525863d9b005a5f56`
 for `2026-09-30-section-b-collectibles/filled-return.pdf` and
-`b0897b98d23c885a255c1a8f3ccaa5f94bd8558c7f9d31f8434376e8a4cd4c38`
+`546bef585099c24f9bb4e5b62de788b9f29ea0b225e9461cce702e3dd24b1cd7`
 for `2026-09-30-section-b-clothing_household/filled-return.pdf`. These remain
 synthetic evidence cases, not authenticated appraisal or signature reviews.
+
+The purchased, nonappreciated art route is limited to one item with appraised
+FMV and claim above $5,000 and below $20,000. It uses the official Section B
+line 2c checkbox, the same complete Schedule A inventory and signed-form
+attachment review, and the same six-page packet. The rendered art packet was
+inspected after correcting an initial line 2a/2c checkbox mistake. Its local
+TY2025 v5.4 full-return XSD passes, with $12,000 on Schedule A line 12 and
+$48,000 on Form 1040 line 12e. The reviewed snapshot is
+`.state/research/ty2025-filled-pdf-review/2026-09-30-section-b-art_under_20000/filled-return.pdf`
+with SHA-256
+`0b485419f23e1aff557aac7747a61402092213dbdaf3931b9dc5086e4e82c428`.
+The [2025 instructions](https://www.irs.gov/pub/irs-prior/i8283--2025.pdf)
+require the complete signed appraisal as a return attachment when the art
+deduction reaches $20,000; that route remains closed. The art case uses mock
+source PDFs and does not authenticate the appraisal or signatures.
 
 This is not whole-form support. Other Section B property and multi-item routes,
 actual appraiser/donee signatures in the PDF, mixed Section A/B forms, more than

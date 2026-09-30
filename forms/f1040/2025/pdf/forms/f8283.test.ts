@@ -544,8 +544,15 @@ function purchasedOrdinaryTangiblePending(
   };
 }
 
-Deno.test("Form 8283 PDF prints purchased Section B equipment, collectible and household gifts", () => {
+Deno.test("Form 8283 PDF prints purchased Section B art, equipment, collectible and household gifts", () => {
   const routes = [
+    [
+      SectionBPropertyType.ArtUnder20000,
+      "Oil painting, early twentieth century",
+      "Good condition; minor frame wear",
+      "section_b_art_under_20000",
+      "Form8283[0].Page1[0].Lines2a-c[0].c1_6[2]",
+    ],
     [
       SectionBPropertyType.Equipment,
       "Used industrial printing press",
@@ -652,7 +659,7 @@ Deno.test("Form 8283 PDF maps December 2025 Section A identity and four rows", (
     byKey.get("row4_claim"),
     "Form8283[0].Page1[0].Table_Line1_ColsD-I[0].Row1D[0].f1_39[0]",
   );
-  assertEquals(form8283Pdf.fields.length, 69);
+  assertEquals(form8283Pdf.fields.length, 70);
 });
 
 Deno.test("Form 8283 PDF prints reconciled Section A and carries the FMV explanation", () => {

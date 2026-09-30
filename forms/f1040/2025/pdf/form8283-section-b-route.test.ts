@@ -271,6 +271,12 @@ for (
 for (
   const route of [
     {
+      type: "art_under_20000",
+      description: "Oil painting, early twentieth century",
+      condition: "Good condition; minor frame wear",
+      xmlTag: "ArtWorthLssThan20000DollarsInd",
+    },
+    {
       type: "equipment",
       description: "Used industrial printing press",
       condition: "Operational, professionally maintained",
@@ -313,7 +319,8 @@ for (
       charitable_limit_category: "noncash_50",
       similar_item_group: route.type,
       is_capital_gain_property: false,
-      signed_form_attachment_file_name: "CompletedEquipmentForm8283.pdf",
+      signed_form_attachment_file_name:
+        `${route.type}-CompletedSignedForm8283.pdf`,
       signed_form_source_review: {
         reviewed_by: "Synthetic test reviewer",
         reviewed_on: "2025-09-01",

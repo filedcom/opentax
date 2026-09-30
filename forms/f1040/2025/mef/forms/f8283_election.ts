@@ -361,6 +361,7 @@ export function assertOrdinarySectionBReconciled(
 ): void {
   if (
     !new Set<SectionBPropertyType>([
+      SectionBPropertyType.ArtUnder20000,
       SectionBPropertyType.Vehicle,
       SectionBPropertyType.Equipment,
       SectionBPropertyType.Collectibles,

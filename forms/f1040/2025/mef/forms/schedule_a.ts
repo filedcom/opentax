@@ -145,6 +145,7 @@ function buildIRS1040ScheduleA(
       const propertyType = form.section_b_items?.[0]?.property_type;
       if (
         propertyType && new Set<SectionBPropertyType>([
+          SectionBPropertyType.ArtUnder20000,
           SectionBPropertyType.Vehicle,
           SectionBPropertyType.Equipment,
           SectionBPropertyType.Collectibles,

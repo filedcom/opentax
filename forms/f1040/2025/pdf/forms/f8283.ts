@@ -42,6 +42,11 @@ const fields: PdfFieldEntry[] = [
   text("filer_ssn", "f1_2[0]"),
   {
     kind: "checkbox",
+    domainKey: "section_b_art_under_20000",
+    pdfField: `${page}.Lines2a-c[0].c1_6[2]`,
+  },
+  {
+    kind: "checkbox",
     domainKey: "section_b_other_real_estate",
     pdfField: `${page}.Lines2d-h[0].c1_6[0]`,
   },
@@ -335,10 +340,13 @@ function sectionBOrdinaryTangibleInstance(
   const appraisal = item.qualified_appraisal;
   const donee = item.donee_acknowledgment;
   const propertyType = item.property_type;
-  const supportedType = propertyType === SectionBPropertyType.Equipment ||
+  const supportedType = propertyType === SectionBPropertyType.ArtUnder20000 ||
+    propertyType === SectionBPropertyType.Equipment ||
     propertyType === SectionBPropertyType.Collectibles ||
     propertyType === SectionBPropertyType.ClothingHousehold;
-  const label = propertyType === SectionBPropertyType.Equipment
+  const label = propertyType === SectionBPropertyType.ArtUnder20000
+    ? "art"
+    : propertyType === SectionBPropertyType.Equipment
     ? "equipment"
     : propertyType === SectionBPropertyType.Collectibles
     ? "collectible"
@@ -351,6 +359,8 @@ function sectionBOrdinaryTangibleInstance(
     item.is_capital_gain_property !== false ||
     item.charitable_limit_category !== "noncash_50" ||
     item.fmv <= 5_000 || item.fmv > 500_000 ||
+    (propertyType === SectionBPropertyType.ArtUnder20000 &&
+      item.fmv >= 20_000) ||
     item.deduction_claimed !== item.fmv ||
     item.cost_or_adjusted_basis === undefined ||
     item.cost_or_adjusted_basis < item.fmv ||
@@ -369,6 +379,8 @@ function sectionBOrdinaryTangibleInstance(
   }
   return {
     ...sectionBPrintedFields(item, filer),
+    section_b_art_under_20000:
+      propertyType === SectionBPropertyType.ArtUnder20000,
     section_b_equipment: propertyType === SectionBPropertyType.Equipment,
     section_b_collectibles: propertyType === SectionBPropertyType.Collectibles,
     section_b_clothing_household:
@@ -501,6 +513,7 @@ export const form8283Pdf: PdfFormDescriptor = {
   fields,
   pageIndices: (instance) =>
     instance.section_b_other_real_estate === true ||
+      instance.section_b_art_under_20000 === true ||
       instance.section_b_equipment === true ||
       instance.section_b_collectibles === true ||
       instance.section_b_clothing_household === true ||
@@ -550,6 +563,7 @@ export const form8283Pdf: PdfFormDescriptor = {
       const ordinaryType = sectionB[0].property_type;
       if (
         ordinaryType && new Set<SectionBPropertyType>([
+          SectionBPropertyType.ArtUnder20000,
           SectionBPropertyType.Vehicle,
           SectionBPropertyType.Equipment,
           SectionBPropertyType.Collectibles,
@@ -573,7 +587,8 @@ export const form8283Pdf: PdfFormDescriptor = {
       return [
         item.property_type === SectionBPropertyType.Vehicle
           ? sectionBVehicleInstance(item, filer)
-          : item.property_type === SectionBPropertyType.Equipment ||
+          : item.property_type === SectionBPropertyType.ArtUnder20000 ||
+              item.property_type === SectionBPropertyType.Equipment ||
               item.property_type === SectionBPropertyType.Collectibles ||
               item.property_type === SectionBPropertyType.ClothingHousehold
           ? sectionBOrdinaryTangibleInstance(item, filer)
@@ -666,6 +681,7 @@ export const form8283Pdf: PdfFormDescriptor = {
     const page = document.addPage([612, 792]);
     page.drawText(
       instance.section_b_other_real_estate === true ||
+        instance.section_b_art_under_20000 === true ||
         instance.section_b_equipment === true ||
         instance.section_b_collectibles === true ||
         instance.section_b_clothing_household === true ||
