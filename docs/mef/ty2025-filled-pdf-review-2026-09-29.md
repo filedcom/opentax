@@ -381,3 +381,20 @@ SHA-256 is
 `e75ff981be0f9f3fbece3cf66c2283065aa18e56ddd1bc8772081c94c5abf784`.
 Other sale categories, issuer bytes, IRS business rules, and ATS acceptance
 remain open.
+
+The `single-1098-purchase-points` source was run through the real return graph,
+native bundle builder, and PDF builder as a focused `v57` packet at
+`.state/research/ty2025-filled-pdf-review/2026-09-30-v57/`. The synthetic
+Form 1098 reports $18,000 of currently deductible box 1 interest and $2,400
+of currently deductible box 6 purchase points for the taxpayer, with a named
+lender and reviewed workpaper references. The full native return passes local
+TY2025 v5.4 XSD. All three PDF pages were rendered and inspected: Form 1040
+pages 1–2 print the single filer's identity, $80,000 wages and AGI, $20,400
+itemized deduction on line 12e, $59,600 taxable income, $8,032 tax, $12,000
+withholding, and $3,968 refund. Schedule A prints the same name and SSN,
+$20,400 on line 8a, a blank line 8c, and $20,400 on lines 10 and 17. No
+clipping was observed. Source, native XML, and printed amounts reconcile.
+The three-page PDF SHA-256 is
+`31b1d5c096f1af5e7ed41bdd21eb750ac6ccf28c14ada6ab13368aadf25101bf`.
+Payer-issued bytes, the underlying Pub. 936 calculation, other mortgage
+allocations, IRS business rules, and ATS acceptance remain open.

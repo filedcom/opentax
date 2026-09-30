@@ -232,6 +232,32 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-1098-purchase-points",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(80_000, 12_000, "Example Employer", "12-3456789")],
+      f1098: [{
+        lender_name: "Home Lender",
+        recipient_tin: singleGeneral.taxpayer_ssn,
+        source_document_reference: "Synthetic 2025 Form 1098 copy 1",
+        box1_mortgage_interest: 18_000,
+        box1_current_year_deductible_interest: 18_000,
+        box1_deduction_workpaper_reference: "2025 interest workpaper",
+        box6_points_paid: 2_400,
+        box6_current_year_deductible_points: 2_400,
+        box6_deduction_workpaper_reference: "2025 purchase-points workpaper",
+        for_routing: "A",
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule_a"],
+    reviewFocus: [
+      "Schedule A line 8a prints 20,400 of reported mortgage interest and purchase points; line 8c remains blank",
+      "Form 1040 line 12e matches the 20,400 itemized deduction",
+      "The taxpayer name and SSN print on Schedule A and both Form 1040 pages",
+    ],
+  },
+  {
     id: "single-ordinary-noncash-gift",
     inputs: {
       general: singleGeneral,
