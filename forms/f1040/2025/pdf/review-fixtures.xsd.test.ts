@@ -52,6 +52,14 @@ for (const fixture of pdfReviewFixtures) {
           "<FederalIncomeTaxWithheldAmt>2400</FederalIncomeTaxWithheldAmt>",
         );
       }
+      if (fixture.id === "single-schedule-h-three-state-futa") {
+        assertEquals(result.pending.schedule2.line9_household_employment, 90);
+        assertEquals(
+          (xml.match(/<UnemploymentStateTaxGroup>/g) ?? []).length,
+          3,
+        );
+        assertStringIncludes(xml, "<FUTATaxAmt>90</FUTATaxAmt>");
+      }
       if (fixture.id === "single-8862-ctc-reinstatement") {
         const dependent = (result.pending.f1040.dependent_details as Array<
           { first_name: string; credit_category: string }

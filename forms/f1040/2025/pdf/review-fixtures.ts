@@ -445,6 +445,35 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-schedule-h-three-state-futa",
+    inputs: {
+      general: singleGeneral,
+      schedule_h: {
+        employer_ein: "123456789",
+        cash_wages_over_2025_limit: false,
+        cash_wages_over_quarter_limit: true,
+        federal_unemployment: {
+          paid_only_one_state: false,
+          all_contributions_paid_on_time: true,
+          all_futa_wages_state_taxable: true,
+          taxable_futa_wages: 3_000,
+          state_rows: ["OH", "NY", "PA"].map((state) => ({
+            state,
+            taxable_state_wages: 1_000,
+            contributions_paid_by_due_date: 30,
+          })),
+        },
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule2", "schedule_h"],
+    reviewFocus: [
+      "Schedule H line 17 prints OH and NY with PA on the attached continuation",
+      "The three state contribution rows sum to line 18 and the $90 FUTA tax reaches Schedule 2 line 9 once",
+      "Native Schedule H contains all three state rows and the Form 1040 tax and amount owed match",
+    ],
+  },
+  {
     id: "single-ordinary-noncash-gift",
     inputs: {
       general: singleGeneral,

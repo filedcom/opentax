@@ -131,9 +131,10 @@ validated in the deferred batch.
 The Schedule H PDF source map now covers Part I, Part II Section A, Section B
 with extra state/rate rows on a line-17 continuation page, and Part III. It
 recomputes the amounts from the same input as native MeF and checks Schedule 2
-line 9. These cases are written but unrun; per-employee payroll sourcing,
-filled-PDF appearance of the official form and continuation, and IRS acceptance
-remain open.
+line 9. A three-state synthetic full return passes local TY2025 v5.4 XSD and
+its seven-page packet shows two states on line 17 plus a legible continuation
+for the third. Per-employee payroll sourcing, W-2/W-3 duties, wider state/rate
+combinations, and IRS acceptance remain open.
 
 ### Numbered forms and distinct registered schedules (77 descriptors)
 

@@ -465,3 +465,17 @@ PDF SHA-256 is
 The printed page is generated from structured facts; authenticated payer-issued
 bytes, any required winner signature, IRS business rules, and ATS acceptance
 remain open.
+
+The `single-schedule-h-three-state-futa` synthetic aggregate source exercises
+[Schedule H's 2025 line 17 continuation rule](https://www.irs.gov/instructions/i1040sh).
+Its full return passes local TY2025 v5.4 XSD with three native state rows. The
+seven-page `v66` packet exposed a black-filled continuation table even though
+the PA third row was extractable as text. The corrected `v67` packet prints OH
+and NY on Schedule H page 2 and PA in a legible line 17 statement on page 7;
+both pages were rendered and visually inspected. Schedule H line 18 totals
+$90 of state contributions, line 24 is $90 FUTA, Schedule 2 line 9 is $90,
+and Form 1040 tax and amount owed are $90. Filled text confirmed the other
+packet totals. The corrected PDF SHA-256 is
+`e29f8d64aec9bfe0d3762e69d8cf390b6dc9f89b09e02a3975f32143ed6caea7`.
+Per-employee payroll proof, W-2/W-3 duties, other rate periods, IRS business
+rules, and ATS acceptance remain open.
