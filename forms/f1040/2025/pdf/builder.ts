@@ -12,7 +12,7 @@ import {
   assertSchedule1Box3SourceIdentity,
   assertSchedule1NecSourceIdentity,
   assertScheduleCReceiptSourceIdentity,
-  assertScheduleFBox3SourceIdentity,
+  assertScheduleFFarmSourceIdentity,
 } from "../filer-source-reconciliation.ts";
 import { assertScheduleDSalesMatchPrepared } from "../mef/forms/schedule_d.ts";
 
@@ -258,7 +258,7 @@ export async function buildPdfBytes(
     assertScheduleCReceiptSourceIdentity(normalized, filer);
     assertSchedule1Box3SourceIdentity(normalized, filer);
     assertSchedule1NecSourceIdentity(normalized, filer);
-    assertScheduleFBox3SourceIdentity(normalized, filer);
+    assertScheduleFFarmSourceIdentity(normalized, filer);
   }
   if (
     preparedBundle &&

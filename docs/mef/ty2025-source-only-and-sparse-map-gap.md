@@ -164,8 +164,14 @@ direct. Schedule C uses a payer/recipient receipt row checked against cash
 line 1 and the proprietor; Schedule F uses a payer/recipient farm source
 checked against cash line 8 or accrual line 43. A combined $3,000 business and
 $2,000 farm case reaches $5,000 of Form 1040 line 8, validates against local
-TY2025 v5.4 XSD, and builds a filled PDF. The farm recipient is checked
-against the filer/spouse pair, but Schedule F has no per-farm proprietor field
-to prove which spouse owns the farm. Payer bytes, tax-character evidence,
-duplicate source reports, visual PDF review, business rules, and ATS remain
-open.
+TY2025 v5.4 XSD, and builds a filled PDF. For this box 3 route and the
+Form 1099-NEC farm route, Schedule F now records a taxpayer/spouse proprietor;
+the graph requires that owner and final native/PDF export matches the source
+recipient TIN to that owner. Payer bytes, tax-character evidence, other farm
+source ownership, accrual timing, duplicate source reports, full packet review,
+business rules, and ATS remain open. The Schedule F PDF now expands one copy
+per farm, prints the named proprietor and verified Part I/III income fields,
+and prints Part II expenses and net profit. A spouse-owned cash farm's filled
+page was visually checked against its source. Linked Form 5884 reductions and
+more than six line 32 descriptions still stop PDF export; other Schedule F
+PDF scenarios need separate review.

@@ -81,6 +81,7 @@ const cashIncomeKeys = [
 export const itemSchema = z.object({
   // Header / identification
   farm_id: z.string().min(1).optional(),
+  proprietor_recipient: z.enum(["T", "S"]).optional(),
   line_a_principal_crop_activity: z.string().min(1),
   line_b_agricultural_activity_code: z.enum([
     "111100",
@@ -238,12 +239,13 @@ export const farmSourceSchema = z.object({
     });
   }
   if (
-    source.kind === "1099m_box3_other_income" &&
+    (source.kind === "1099m_box3_other_income" ||
+      source.kind === "1099nec_farm_income") &&
     (!source.payer_name || !source.payer_tin || !source.recipient_tin)
   ) {
     ctx.addIssue({
       code: "custom",
-      message: "1099-MISC box 3 farm source needs payer and recipient identity",
+      message: "1099 farm source needs payer and recipient identity",
     });
   }
 });
@@ -330,9 +332,19 @@ export function reconcileFarmSources(
     }
   >();
   for (const source of sources) {
-    if (!farms.has(source.farm_id)) {
+    const farm = farms.get(source.farm_id);
+    if (!farm) {
       throw new Error(
         `Schedule F source references unknown farm_id ${source.farm_id}`,
+      );
+    }
+    if (
+      (source.kind === "1099m_box3_other_income" ||
+        source.kind === "1099nec_farm_income") &&
+      !farm.proprietor_recipient
+    ) {
+      throw new Error(
+        "1099 farm source needs a named Schedule F proprietor",
       );
     }
     const current = totals.get(source.farm_id) ?? {

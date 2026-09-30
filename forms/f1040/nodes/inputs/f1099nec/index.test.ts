@@ -171,8 +171,28 @@ Deno.test("routing: box1_nec with schedule_f → schedule_f node", () => {
   const out = findOutput(result, "schedule_f");
   assertEquals(out !== undefined, true);
   assertEquals(fieldsOf(result.outputs, schedule_f)!.farm_sources, [
-    { farm_id: "farm-1", kind: "1099nec_farm_income", amount: 8000 },
+    {
+      farm_id: "farm-1",
+      kind: "1099nec_farm_income",
+      amount: 8000,
+      payer_name: "Test Payer",
+      payer_tin: "123456789",
+      recipient_tin: "987654321",
+    },
   ]);
+});
+
+Deno.test("routing: Schedule F 1099-NEC needs recipient and payer identity", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box1_nec: 8000,
+        for_routing: "schedule_f",
+        recipient_ssn: undefined,
+      })]),
+    Error,
+    "needs a farm, payer, and recipient identity",
+  );
 });
 
 Deno.test("routing: box1_nec with form_8919 → form8919 node", () => {

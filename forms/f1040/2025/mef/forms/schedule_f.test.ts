@@ -3,6 +3,7 @@ import type { ScheduleFItem } from "../../../nodes/intermediate/forms/schedule_f
 import { testFiler } from "../test-filer.ts";
 import { buildMefXml } from "../builder.ts";
 import { scheduleF } from "./schedule_f.ts";
+import { FilingStatus } from "../../../mef/header.ts";
 
 function farm(overrides: Partial<ScheduleFItem> = {}): ScheduleFItem {
   return {
@@ -14,6 +15,35 @@ function farm(overrides: Partial<ScheduleFItem> = {}): ScheduleFItem {
     ...overrides,
   };
 }
+
+Deno.test("Schedule F native header uses the named spouse proprietor", () => {
+  const jointFiler = {
+    ...testFiler(),
+    filingStatus: FilingStatus.MarriedFilingJointly,
+    spouse: {
+      ssn: "111223333",
+      firstName: "Jane",
+      lastName: "Farmer",
+      nameControl: "FARM",
+    },
+  };
+  const [xml] = scheduleF.build({
+    schedule_fs: [farm({ proprietor_recipient: "S" })],
+  }, { filer: jointFiler });
+  assertStringIncludes(
+    xml,
+    "<BusinessNameLine1Txt>Jane Farmer</BusinessNameLine1Txt>",
+  );
+  assertStringIncludes(xml, "<SSN>111223333</SSN>");
+  assertThrows(
+    () =>
+      scheduleF.build({
+        schedule_fs: [farm()],
+      }, { filer: jointFiler }),
+    Error,
+    "joint return needs an explicit proprietor",
+  );
+});
 
 Deno.test("Schedule F emits one cash-method document per sourced farm", () => {
   const xml = buildMefXml({

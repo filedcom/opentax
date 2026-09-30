@@ -380,6 +380,7 @@ Deno.test("Schedule F reconciles 1099-MISC box 3 farm income to cash line 8 or a
   };
   const cash = minimalItem({
     farm_id: "FARM-1",
+    proprietor_recipient: "T",
     line8_other_income: 900,
   });
   assertEquals(
@@ -394,7 +395,11 @@ Deno.test("Schedule F reconciles 1099-MISC box 3 farm income to cash line 8 or a
     () =>
       compute({
         schedule_fs: [
-          minimalItem({ farm_id: "FARM-1", line8_other_income: 899 }),
+          minimalItem({
+            farm_id: "FARM-1",
+            proprietor_recipient: "T",
+            line8_other_income: 899,
+          }),
         ],
         farm_sources: [source],
       }),
@@ -403,6 +408,7 @@ Deno.test("Schedule F reconciles 1099-MISC box 3 farm income to cash line 8 or a
   );
   const accrual = minimalItem({
     farm_id: "FARM-1",
+    proprietor_recipient: "T",
     accounting_method: "accrual",
     line1_sales_livestock_resale: undefined,
     part_iii: {

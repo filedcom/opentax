@@ -49,6 +49,18 @@ export const itemSchema = z.object({
     });
   }
   if (
+    item.for_routing === "schedule_f" &&
+    (!item.farm_id || !item.recipient_ssn || !item.payer_name.trim() ||
+      !/^\d{9}$/.test(item.payer_tin.replaceAll("-", "")))
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["farm_id"],
+      message:
+        "1099-NEC farm income needs a farm, payer, and recipient identity",
+    });
+  }
+  if (
     item.for_routing === "schedule_1_line_8j" &&
     (!item.recipient_ssn || !item.nonbusiness_activity_description ||
       !item.payer_name.trim() ||
@@ -96,6 +108,9 @@ function necIncomeOutput(item: NECItem): NodeOutput[] {
           farm_id: item.farm_id,
           kind: "1099nec_farm_income",
           amount: box1,
+          payer_name: item.payer_name,
+          payer_tin: item.payer_tin.replaceAll("-", ""),
+          recipient_tin: item.recipient_ssn!.replaceAll("-", ""),
         }],
       })];
     }

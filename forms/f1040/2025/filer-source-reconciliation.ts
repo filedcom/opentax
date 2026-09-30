@@ -200,7 +200,7 @@ export function assertSchedule1NecSourceIdentity(
   }
 }
 
-export function assertScheduleFBox3SourceIdentity(
+export function assertScheduleFFarmSourceIdentity(
   pending: Record<string, unknown>,
   filer: FilerIdentity,
 ): void {
@@ -211,22 +211,41 @@ export function assertScheduleFBox3SourceIdentity(
   if (!Array.isArray(sources)) {
     throw new Error("Schedule F farm sources must be rows");
   }
-  const recipients = [
-    tin(filer.primarySSN, "taxpayer"),
-    tin(filer.spouse?.ssn, "spouse"),
-  ];
+  const farms = (scheduleF as Record<string, unknown>).schedule_fs;
+  if (!Array.isArray(farms)) {
+    throw new Error("Schedule F sources need named farms");
+  }
   for (const value of sources) {
     if (!value || typeof value !== "object") {
       throw new Error("Schedule F farm source is invalid");
     }
     const row = value as Record<string, unknown>;
-    if (row.kind !== "1099m_box3_other_income") continue;
+    if (
+      row.kind !== "1099m_box3_other_income" &&
+      row.kind !== "1099nec_farm_income"
+    ) continue;
+    const matches = farms.filter((farm) =>
+      farm && typeof farm === "object" &&
+      farm.farm_id === row.farm_id
+    );
+    if (matches.length !== 1) {
+      throw new Error("1099 farm source needs one matching Schedule F farm");
+    }
+    const proprietor = matches[0].proprietor_recipient;
+    const expected = proprietor === "T"
+      ? tin(filer.primarySSN, "taxpayer")
+      : proprietor === "S"
+      ? tin(filer.spouse?.ssn, "spouse")
+      : undefined;
     if (
       typeof row.payer_name !== "string" || !row.payer_name.trim() ||
-      !tin(row.payer_tin, "1099-MISC payer") ||
-      !recipients.includes(tin(row.recipient_tin, "1099-MISC recipient"))
+      !tin(row.payer_tin, "1099 payer") ||
+      !expected ||
+      tin(row.recipient_tin, "1099 recipient") !== expected
     ) {
-      throw new Error("1099-MISC box 3 farm recipient differs from the filer");
+      throw new Error(
+        "1099 farm recipient differs from the Schedule F proprietor",
+      );
     }
   }
 }

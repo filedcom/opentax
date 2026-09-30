@@ -93,6 +93,7 @@ Deno.test("1099-MISC box 3 business and farm payments reach their own reviewed a
     schedule_f: {
       schedule_fs: [{
         farm_id: "north",
+        proprietor_recipient: "T",
         line_a_principal_crop_activity: "GRAIN FARMING",
         line_b_agricultural_activity_code: "111100",
         line_e_material_participation: true,
@@ -131,6 +132,7 @@ Deno.test("1099-MISC box 3 farm recipient must belong to the filer", async () =>
     schedule_f: {
       schedule_fs: [{
         farm_id: "north",
+        proprietor_recipient: "T",
         line_a_principal_crop_activity: "GRAIN FARMING",
         line_b_agricultural_activity_code: "111100",
         line_e_material_participation: true,
@@ -151,11 +153,46 @@ Deno.test("1099-MISC box 3 farm recipient must belong to the filer", async () =>
   assertThrows(
     () => buildMefXml(pending, filer),
     Error,
-    "farm recipient differs from the filer",
+    "farm recipient differs from the Schedule F proprietor",
   );
   await assertRejects(
     () => buildPdfBytes(pending, filer),
     Error,
-    "farm recipient differs from the filer",
+    "farm recipient differs from the Schedule F proprietor",
+  );
+});
+
+Deno.test("1099-NEC farm recipient must match its named proprietor", async () => {
+  const pending = buildPending({
+    schedule_f: {
+      schedule_fs: [{
+        farm_id: "north",
+        proprietor_recipient: "T",
+        line_a_principal_crop_activity: "GRAIN FARMING",
+        line_b_agricultural_activity_code: "111100",
+        line_e_material_participation: true,
+        accounting_method: "cash",
+        line1_sales_livestock_resale: 0,
+        line8_other_income: 500,
+      }],
+      farm_sources: [{
+        farm_id: "north",
+        kind: "1099nec_farm_income",
+        amount: 500,
+        payer_name: "Farm Customer",
+        payer_tin: "123456789",
+        recipient_tin: "111223333",
+      }],
+    },
+  });
+  assertThrows(
+    () => buildMefXml(pending, filer),
+    Error,
+    "farm recipient differs from the Schedule F proprietor",
+  );
+  await assertRejects(
+    () => buildPdfBytes(pending, filer),
+    Error,
+    "farm recipient differs from the Schedule F proprietor",
   );
 });

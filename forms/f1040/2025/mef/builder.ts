@@ -12,7 +12,7 @@ import {
   assertSchedule1Box3SourceIdentity,
   assertSchedule1NecSourceIdentity,
   assertScheduleCReceiptSourceIdentity,
-  assertScheduleFBox3SourceIdentity,
+  assertScheduleFFarmSourceIdentity,
 } from "../filer-source-reconciliation.ts";
 
 export interface MefBundle {
@@ -212,7 +212,7 @@ function buildReturnXml(
   assertScheduleCReceiptSourceIdentity(pending, filer);
   assertSchedule1Box3SourceIdentity(pending, filer);
   assertSchedule1NecSourceIdentity(pending, filer);
-  assertScheduleFBox3SourceIdentity(pending, filer);
+  assertScheduleFFarmSourceIdentity(pending, filer);
   if (
     Array.isArray(pending.form8949) && pending.form8949.length > 0 &&
     !pending.schedule_d
