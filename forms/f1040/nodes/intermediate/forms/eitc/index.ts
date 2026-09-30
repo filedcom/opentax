@@ -35,6 +35,11 @@ export const childlessEicReviewSchema = z.object({
   hoh_unmarried_at_year_end_verified: z.literal(true).optional(),
 }).strict();
 
+export const childEicFilerReviewSchema = z.object({
+  not_qualifying_child_of_another_taxpayer_verified: z.literal(true),
+  relationship_age_residence_record_reference: z.string().trim().min(1),
+}).strict();
+
 export const priorEicDisallowanceReviewSchema = z.discriminatedUnion("status", [
   z.object({
     status: z.literal("none"),
@@ -95,6 +100,7 @@ export const inputSchema = z.object({
   main_home_in_us_over_half_year: z.boolean().optional(),
   taxpayer_can_be_claimed_as_dependent: z.boolean().optional(),
   childless_eic_review: childlessEicReviewSchema.optional(),
+  child_eic_filer_review: childEicFilerReviewSchema.optional(),
   prior_eic_disallowance_review: priorEicDisallowanceReviewSchema.optional(),
 
   // Investment income (interest, dividends, capital gains, rents)
@@ -162,6 +168,16 @@ export function childlessEicEligible(input: EitcInput): boolean {
       input.childless_eic_review.hoh_unmarried_at_year_end_verified === true);
 }
 
+export function childEicFilerEligible(input: EitcInput): boolean {
+  if (input.filing_status === FilingStatus.MFJ) return true;
+  if (input.filing_status === FilingStatus.MFS) {
+    return input.mfs_separation_reviewed === true;
+  }
+  return input.filing_status !== undefined &&
+    input.child_eic_filer_review
+        ?.not_qualifying_child_of_another_taxpayer_verified === true;
+}
+
 export function priorEicDisallowanceEligible(
   input: EitcInput,
   children: number,
@@ -202,6 +218,7 @@ function computeEitc(
   ) return 0;
 
   if (children === 0 && !childlessEicEligible(input)) return 0;
+  if (children > 0 && !childEicFilerEligible(input)) return 0;
 
   // Investment income disqualifier (IRC §32(i))
   if ((input.investment_income ?? 0) > investmentIncomeLimit) return 0;

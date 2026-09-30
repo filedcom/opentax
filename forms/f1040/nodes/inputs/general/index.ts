@@ -11,6 +11,7 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { standard_deduction } from "../../intermediate/worksheets/standard_deduction/index.ts";
 import {
+  childEicFilerReviewSchema,
   childlessEicReviewSchema,
   eitc,
   priorEicDisallowanceReviewSchema,
@@ -173,6 +174,7 @@ export type DependentFiling = z.infer<typeof dependentFilingSchema>;
 export const inputSchema = z.object({
   filing_status: z.nativeEnum(FilingStatus),
   childless_eic_review: childlessEicReviewSchema.optional(),
+  child_eic_filer_review: childEicFilerReviewSchema.optional(),
   prior_eic_disallowance_review: priorEicDisallowanceReviewSchema.optional(),
   // 2025 EIC special rule for a married taxpayer filing separately.
   mfs_eitc_separation_review: z.discriminatedUnion("basis", [
@@ -988,6 +990,7 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
         taxpayer_can_be_claimed_as_dependent:
           parsed.taxpayer_can_be_claimed_as_dependent,
         childless_eic_review: parsed.childless_eic_review,
+        child_eic_filer_review: parsed.child_eic_filer_review,
         prior_eic_disallowance_review: parsed.prior_eic_disallowance_review,
         mfs_separation_reviewed:
           parsed.mfs_eitc_separation_review !== undefined,

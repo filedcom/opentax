@@ -15,6 +15,11 @@ function compute(input: Record<string, unknown>) {
       not_qualifying_child_of_another_taxpayer_verified: true,
       qualifying_child_status_record_reference: "Synthetic 2025 family review",
     },
+    child_eic_filer_review: {
+      not_qualifying_child_of_another_taxpayer_verified: true,
+      relationship_age_residence_record_reference:
+        "Synthetic 2025 filer family and residence review",
+    },
     prior_eic_disallowance_review: {
       status: "none",
       irs_account_record_reference: "Synthetic IRS account transcript review",
@@ -200,6 +205,39 @@ Deno.test("EIC requires reviewed prior-disallowance history and the matching For
       no_active_ban_verified: true,
     },
   });
+});
+
+Deno.test("a nonjoint child EIC requires the filer's qualifying-child status review", () => {
+  const base = {
+    earned_income: 15_000,
+    qualifying_children: 1,
+    filing_status: FilingStatus.Single,
+  };
+  assertEquals(getCredit(base), 4_328);
+  noCredit({ ...base, child_eic_filer_review: undefined });
+  assertEquals(
+    getCredit({
+      ...base,
+      filing_status: FilingStatus.MFJ,
+      child_eic_filer_review: undefined,
+    }),
+    4_328,
+  );
+  noCredit({
+    ...base,
+    filing_status: FilingStatus.MFS,
+    child_eic_filer_review: undefined,
+    mfs_separation_reviewed: false,
+  });
+  assertEquals(
+    getCredit({
+      ...base,
+      filing_status: FilingStatus.MFS,
+      child_eic_filer_review: undefined,
+      mfs_separation_reviewed: true,
+    }),
+    4_328,
+  );
 });
 
 function getCredit(input: Record<string, unknown>): number {

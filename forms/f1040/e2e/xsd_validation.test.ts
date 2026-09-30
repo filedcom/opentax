@@ -121,6 +121,11 @@ const BASE_IDENTITY = {
   taxpayer_ssn_issued_before_due_date: true,
   taxpayer_tin_issued_by_due_date: true,
   taxpayer_dob: "1985-06-15",
+  child_eic_filer_review: {
+    not_qualifying_child_of_another_taxpayer_verified: true,
+    relationship_age_residence_record_reference:
+      "Synthetic 2025 filer family and residence review",
+  },
   prior_eic_disallowance_review: {
     status: "none",
     irs_account_record_reference: "Synthetic IRS account transcript review",

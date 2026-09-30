@@ -3,6 +3,7 @@ import {
   inputSchema as generalInputSchema,
 } from "../nodes/inputs/general/index.ts";
 import {
+  childEicFilerEligible,
   childlessEicEligible,
   priorEicDisallowanceEligible,
 } from "../nodes/intermediate/forms/eitc/index.ts";
@@ -54,7 +55,20 @@ export function assertEicSource(
   ) {
     throw new Error("Form 1040 EIC needs matching general filer facts");
   }
-  if (result.qualifying_children !== 0) return;
+  if (result.qualifying_children !== 0) {
+    if (
+      !childEicFilerEligible({
+        ...source.data,
+        mfs_separation_reviewed:
+          source.data.mfs_eitc_separation_review !== undefined,
+      })
+    ) {
+      throw new Error(
+        "Form 1040 child EIC needs reviewed filer qualifying-child status",
+      );
+    }
+    return;
+  }
   if (
     !childlessEicEligible(source.data) || mainHomeInUS !== true
   ) {

@@ -49,6 +49,33 @@ for (const fixture of pdfReviewFixtures) {
           xml,
           "<QualifyingChildSSN>111223334</QualifyingChildSSN>",
         );
+        const noFilerReview = {
+          ...result.pending,
+          general: {
+            ...result.pending.general,
+            child_eic_filer_review: undefined,
+          },
+        };
+        const withoutReview = execute(plan, registry, {
+          ...fixture.inputs,
+          general: noFilerReview.general,
+        }, { taxYear: 2025, formType: "f1040" });
+        assertEquals(withoutReview.diagnostics, []);
+        assertEquals(withoutReview.pending.f1040.line27_eitc, undefined);
+        assertThrows(
+          () => buildMefXml(buildPending(noFilerReview), fixture.filer),
+          Error,
+          "child EIC needs reviewed filer qualifying-child status",
+        );
+        assertThrows(
+          () =>
+            irs1040Pdf.projectFields?.(
+              result.pending.f1040,
+              noFilerReview,
+            ),
+          Error,
+          "child EIC needs reviewed filer qualifying-child status",
+        );
         assertThrows(
           () =>
             buildMefXml(

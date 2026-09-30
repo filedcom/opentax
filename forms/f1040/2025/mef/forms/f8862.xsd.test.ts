@@ -33,6 +33,11 @@ const priorEicEvidence = {
 };
 const generalEicSource = {
   filing_status: "single",
+  child_eic_filer_review: {
+    not_qualifying_child_of_another_taxpayer_verified: true,
+    relationship_age_residence_record_reference:
+      "Synthetic 2025 filer family and residence review",
+  },
   taxpayer_ssn: "123456789",
   taxpayer_ssn_valid_for_employment: true,
   taxpayer_ssn_issued_before_due_date: true,
