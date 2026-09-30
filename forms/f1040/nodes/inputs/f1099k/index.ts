@@ -71,12 +71,15 @@ export const itemSchema = z.object({
   // When omitted, the gross information-return amount is not presumed taxable.
   //   "schedule_c"       → business income (Schedule C line 1)
   //   "schedule_1_line_8j" → confirmed activity-not-for-profit income.
+  //   "mixed_schedule_c_personal_item_sales" → reviewed business receipts
+  //     and separately identified personal-item sales on one payer report.
   // Personal-item sales require item-level basis review. Erroneous Forms
-  // 1099-K and mixed-purpose payer reports still need separate disposition.
+  // 1099-K and other mixed-purpose combinations still need disposition.
   for_routing: z.enum([
     "schedule_c",
     "schedule_1_line_8j",
     "personal_item_sales",
+    "mixed_schedule_c_personal_item_sales",
   ]).optional(),
   personal_item_sales_review: z.array(
     z.object({
@@ -151,11 +154,16 @@ export const itemSchema = z.object({
 }).superRefine((item, ctx) => {
   const gross = item.box1a_gross_payments ?? 0;
   if (
-    (item.schedule_c_receipts_review && item.for_routing !== "schedule_c") ||
+    (item.schedule_c_receipts_review &&
+      !["schedule_c", "mixed_schedule_c_personal_item_sales"].includes(
+        item.for_routing ?? "",
+      )) ||
     (item.nonbusiness_activity_review &&
       (item.for_routing !== "schedule_1_line_8j" || gross <= 0)) ||
     (item.personal_item_sales_review &&
-      item.for_routing !== "personal_item_sales")
+      !["personal_item_sales", "mixed_schedule_c_personal_item_sales"].includes(
+        item.for_routing ?? "",
+      ))
   ) {
     ctx.addIssue({
       code: "custom",
@@ -163,15 +171,24 @@ export const itemSchema = z.object({
       message: "1099-K receipt review must match its income route",
     });
   }
-  if (item.for_routing === "schedule_c" && gross > 0) {
+  const mixed = item.for_routing === "mixed_schedule_c_personal_item_sales";
+  if ((item.for_routing === "schedule_c" || mixed) && gross > 0) {
     const review = item.schedule_c_receipts_review;
+    const personal = mixed
+      ? (item.personal_item_sales_review ?? []).reduce(
+        (sum, sale) => sum + sale.proceeds,
+        0,
+      )
+      : 0;
     if (
       !item.pse_name.trim() ||
       !/^\d{9}$/.test(item.pse_tin?.replaceAll("-", "") ?? "") ||
       !item.recipient_tin || !item.schedule_c_business_reference ||
       !review ||
       review.included_in_schedule_c_gross_receipts +
-            review.not_included_in_schedule_c_receipts !== gross ||
+            review.not_included_in_schedule_c_receipts + personal !== gross ||
+      (mixed && (personal <= 0 ||
+        review.not_included_in_schedule_c_receipts !== 0)) ||
       (review.not_included_in_schedule_c_receipts > 0 &&
         (!review.duplicate_1099_review ||
           review.duplicate_1099_review.amount !==
@@ -203,7 +220,7 @@ export const itemSchema = z.object({
       });
     }
   }
-  if (item.for_routing === "personal_item_sales") {
+  if (item.for_routing === "personal_item_sales" || mixed) {
     const sales = item.personal_item_sales_review ?? [];
     const ids = sales.map((sale) => sale.transaction_id);
     if (
@@ -211,7 +228,9 @@ export const itemSchema = z.object({
       !/^\d{9}$/.test(item.pse_tin?.replaceAll("-", "") ?? "") ||
       (!item.recipient_tin && !item.recipient_identity_review) ||
       sales.length === 0 || new Set(ids).size !== ids.length ||
-      sales.reduce((sum, sale) => sum + sale.proceeds, 0) !== gross ||
+      (mixed
+        ? sales.reduce((sum, sale) => sum + sale.proceeds, 0) >= gross
+        : sales.reduce((sum, sale) => sum + sale.proceeds, 0) !== gross) ||
       sales.some((sale) => {
         const acquired = new Date(`${sale.date_acquired}T00:00:00Z`);
         const sold = new Date(`${sale.date_sold}T00:00:00Z`);
@@ -232,7 +251,10 @@ export const itemSchema = z.object({
   }
   if (
     item.qualified_tips_box1a_review &&
-    (item.for_routing !== "schedule_c" ||
+    (![
+      "schedule_c",
+      "mixed_schedule_c_personal_item_sales",
+    ].includes(item.for_routing ?? "") ||
       !item.schedule_c_receipts_review ||
       item.qualified_tips_box1a_review.amount >
         item.schedule_c_receipts_review.included_in_schedule_c_gross_receipts)
@@ -315,6 +337,7 @@ function incomeOutputs(k99s: K99Items): NodeOutput[] {
     if (gross <= 0) return [];
     switch (item.for_routing) {
       case "schedule_c":
+      case "mixed_schedule_c_personal_item_sales":
         return [output(schedule_c, {
           f1099k_receipt_sources: [{
             business_reference: item.schedule_c_business_reference!,
@@ -322,6 +345,15 @@ function incomeOutputs(k99s: K99Items): NodeOutput[] {
             pse_tin: item.pse_tin!.replaceAll("-", ""),
             recipient_tin: item.recipient_tin!.replaceAll("-", ""),
             box1a_gross_payments: gross,
+            ...(item.for_routing === "mixed_schedule_c_personal_item_sales"
+              ? {
+                personal_item_sales_gross: item.personal_item_sales_review!
+                  .reduce(
+                    (sum, sale) => sum + sale.proceeds,
+                    0,
+                  ),
+              }
+              : {}),
             amount: item.schedule_c_receipts_review!
               .included_in_schedule_c_gross_receipts,
             not_included_in_schedule_c_receipts:
@@ -396,7 +428,10 @@ class F1099kNode extends TaxNode<typeof inputSchema> {
       ...incomeOutputs(parsed.f1099ks),
     ];
     for (const item of parsed.f1099ks) {
-      if (item.for_routing !== "personal_item_sales") continue;
+      if (
+        item.for_routing !== "personal_item_sales" &&
+        item.for_routing !== "mixed_schedule_c_personal_item_sales"
+      ) continue;
       for (const sale of item.personal_item_sales_review!) {
         const acquired = new Date(`${sale.date_acquired}T00:00:00Z`);
         const sold = new Date(`${sale.date_sold}T00:00:00Z`);

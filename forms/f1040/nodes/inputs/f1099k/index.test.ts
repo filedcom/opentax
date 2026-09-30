@@ -802,6 +802,55 @@ Deno.test("1099-K personal loss uses Form 8949 code L and anniversary is short t
   );
 });
 
+Deno.test("1099-K mixed business and personal payments allocate box 1a exactly", () => {
+  const receiptReview = {
+    included_in_schedule_c_gross_receipts: 2_000,
+    not_included_in_schedule_c_receipts: 0,
+    allocation_reference: "settlement ledger",
+    no_overlap_with_other_1099s: true,
+    overlap_review_reference: "overlap review",
+  };
+  const item = businessItem(2_800, {
+    for_routing: "mixed_schedule_c_personal_item_sales",
+    schedule_c_receipts_review: receiptReview,
+    personal_item_sales_review: [personalSale({ proceeds: 800 })],
+  });
+  const result = compute([item]);
+  const receipt = (findOutput(result, "schedule_c")!.fields
+    .f1099k_receipt_sources as Array<Record<string, unknown>>)[0];
+  assertEquals(receipt.box1a_gross_payments, 2_800);
+  assertEquals(receipt.amount, 2_000);
+  assertEquals(receipt.personal_item_sales_gross, 800);
+  assertEquals(
+    (findOutput(result, "form8949")!.fields.transaction as Record<
+      string,
+      unknown
+    >).gain_loss,
+    0,
+  );
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        ...item,
+        personal_item_sales_review: [personalSale({ proceeds: 700 })],
+      })]),
+    Error,
+    "complete box 1a allocation",
+  );
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        ...item,
+        schedule_c_receipts_review: {
+          ...receiptReview,
+          not_included_in_schedule_c_receipts: 100,
+        },
+      })]),
+    Error,
+    "complete box 1a allocation",
+  );
+});
+
 Deno.test("no for_routing: box1a above threshold still produces no income output", () => {
   const result = compute([minimalItem({ box1a_gross_payments: 50_000 })]);
   assertEquals(findOutput(result, "schedule_c"), undefined);

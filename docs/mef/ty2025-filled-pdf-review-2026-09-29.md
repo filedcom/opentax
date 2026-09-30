@@ -699,5 +699,21 @@ rows reject at export. The PDF SHA-256 is
 `e90d839ae7167b5a474f8c71d45f65d5b6e45bf447e50896e45b484fe17a374d`;
 source/pending JSON, XML, PDF, contact sheet, and detailed pages are retained
 at `.state/research/ty2025-filled-pdf-review/2026-09-30-v90/`. Purchase
-and settlement bytes, mixed K payments, other basis adjustments, IRS rules,
+and settlement bytes, other mixed K combinations, other basis adjustments, IRS rules,
 and ATS remain open.
+
+The `single-k-mixed-business-personal` source return has a 13-page `v91`
+PDF. The contact sheet, Form 1040 line 7a/8, Schedule C line 1/31, Schedule D
+line 10/16, and Form 8949 box F sale were visually inspected. One $2,800
+Form 1099-K allocates $2,000 to cash-basis Schedule C and $800 to a purchased
+personal camera with $300 basis. The resulting $500 long-term gain appears on
+Form 1040 line 7a, and the $2,000 business profit appears on line 8; neither
+amount includes the other route. The source-backed native return passes local
+TY2025 v5.4 XSD, and altered Schedule C personal allocation or Form 8949
+proceeds reject at export. The PDF SHA-256 is
+`1d6ac0dd361fc7686f5a7e1f1c24b01ad2e4ba1225f288bed66d1a561cccb608`;
+source/pending JSON, XML, PDF, contact sheet, and individual page images are
+retained at `.state/research/ty2025-filled-pdf-review/2026-09-30-v91/`.
+The transaction records and payer copy remain structured assertions rather
+than authenticated bytes. Other mixed combinations, fee/refund treatment,
+IRS business rules, and ATS remain open.

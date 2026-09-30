@@ -319,6 +319,62 @@ for (const fixture of pdfReviewFixtures) {
           "1099-K personal-item sales differ",
         );
       }
+      if (fixture.id === "single-k-mixed-business-personal") {
+        const kRows = result.pending.schedule_c
+          .f1099k_receipt_sources as Array<Record<string, unknown>>;
+        const rawSale = result.pending.form8949.transaction as
+          | Record<string, unknown>
+          | Array<Record<string, unknown>>;
+        const sales = Array.isArray(rawSale) ? rawSale : [rawSale];
+        assertEquals(kRows.length, 1);
+        assertEquals(kRows[0].box1a_gross_payments, 2_800);
+        assertEquals(kRows[0].amount, 2_000);
+        assertEquals(kRows[0].personal_item_sales_gross, 800);
+        assertEquals(sales.length, 1);
+        assertEquals(sales[0].part, "F");
+        assertEquals(sales[0].gain_loss, 500);
+        assertEquals(result.pending.f1040.line7_capital_gain, 500);
+        assertEquals(
+          (result.pending.schedule_c.schedule_cs as Array<
+            Record<string, unknown>
+          >)[0].line_1_gross_receipts,
+          2_000,
+        );
+        assertStringIncludes(
+          xml,
+          "<CapitalGainLossAmt>500</CapitalGainLossAmt>",
+        );
+        assertThrows(
+          () =>
+            buildMefXml(
+              buildPending({
+                ...result.pending,
+                schedule_c: {
+                  ...result.pending.schedule_c,
+                  f1099k_receipt_sources: [{
+                    ...kRows[0],
+                    personal_item_sales_gross: 700,
+                  }],
+                },
+              }),
+              fixture.filer,
+            ),
+          Error,
+          "1099-K Schedule C source differs",
+        );
+        assertThrows(
+          () =>
+            buildMefXml(
+              buildPending({
+                ...result.pending,
+                form8949: { transaction: [{ ...sales[0], proceeds: 700 }] },
+              }),
+              fixture.filer,
+            ),
+          Error,
+          "1099-K personal-item sales differ",
+        );
+      }
       if (fixture.id === "single-partnership-code-l-r-ordinary") {
         assertEquals(result.pending.schedule1.line4_other_gains, 1_000);
         assertEquals(result.pending.f1040.line8_additional_income, 1_000);

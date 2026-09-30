@@ -68,7 +68,12 @@ export function assertKWithholdingSourceIdentity(
       item.box1a_gross_payments <= 0 ||
       typeof item.box4_federal_withheld !== "number" ||
       item.box4_federal_withheld > item.box1a_gross_payments ||
-      !["schedule_c", "schedule_1_line_8j", "personal_item_sales"].includes(
+      ![
+        "schedule_c",
+        "schedule_1_line_8j",
+        "personal_item_sales",
+        "mixed_schedule_c_personal_item_sales",
+      ].includes(
         item.for_routing as string,
       ) ||
       !kRecipientMatches(item, filer)
@@ -100,7 +105,8 @@ export function assertKPersonalSaleSources(
     (pending.f1099k as { f1099ks?: Array<Record<string, unknown>> } | undefined)
       ?.f1099ks ?? [];
   const personal = k.filter((item) =>
-    item.for_routing === "personal_item_sales"
+    item.for_routing === "personal_item_sales" ||
+    item.for_routing === "mixed_schedule_c_personal_item_sales"
   );
   const expected: Array<Record<string, unknown>> = [];
   const seen = new Set<string>();
@@ -177,7 +183,19 @@ export function assertKPersonalSaleSources(
         is_long_term: longTerm,
       });
     }
-    if (proceedsTotal !== gross) {
+    const mixed = item.for_routing === "mixed_schedule_c_personal_item_sales";
+    const business = mixed
+      ? (item.schedule_c_receipts_review as Record<string, unknown> | undefined)
+      : undefined;
+    if (
+      mixed
+        ? typeof business?.included_in_schedule_c_gross_receipts !== "number" ||
+          business.included_in_schedule_c_gross_receipts <= 0 ||
+          business.not_included_in_schedule_c_receipts !== 0 ||
+          proceedsTotal + business.included_in_schedule_c_gross_receipts !==
+            gross
+        : proceedsTotal !== gross
+    ) {
       throw new Error("1099-K personal-item sale proceeds differ from box 1a");
     }
   }
@@ -231,7 +249,9 @@ export function assertScheduleCReceiptSourceIdentity(
     (pending.f1099k as { f1099ks?: Array<Record<string, unknown>> } | undefined)
       ?.f1099ks ?? [];
   const expectedK = rawK.filter((item) =>
-    item.for_routing === "schedule_c" &&
+    ["schedule_c", "mixed_schedule_c_personal_item_sales"].includes(
+      item.for_routing as string,
+    ) &&
     typeof item.box1a_gross_payments === "number" &&
     item.box1a_gross_payments > 0
   ).map((item) => {
@@ -242,6 +262,13 @@ export function assertScheduleCReceiptSourceIdentity(
       pse_tin: tin(item.pse_tin, "1099-K PSE"),
       recipient_tin: tin(item.recipient_tin, "1099-K recipient"),
       box1a_gross_payments: item.box1a_gross_payments,
+      ...(item.for_routing === "mixed_schedule_c_personal_item_sales"
+        ? {
+          personal_item_sales_gross:
+            (item.personal_item_sales_review as Array<Record<string, unknown>>)
+              ?.reduce((sum: number, sale) => sum + Number(sale.proceeds), 0),
+        }
+        : {}),
       amount: review?.included_in_schedule_c_gross_receipts,
       not_included_in_schedule_c_receipts: review
         ?.not_included_in_schedule_c_receipts,
@@ -450,7 +477,10 @@ export function assertScheduleCReceiptSourceIdentity(
           typeof row.box1a_gross_payments !== "number" ||
           typeof row.not_included_in_schedule_c_receipts !== "number" ||
           row.amount + row.not_included_in_schedule_c_receipts !==
-            row.box1a_gross_payments ||
+            (row.box1a_gross_payments as number) -
+              (typeof row.personal_item_sales_gross === "number"
+                ? row.personal_item_sales_gross
+                : 0) ||
           row.no_overlap_with_other_1099s !== true ||
           typeof row.allocation_reference !== "string" ||
           !row.allocation_reference.trim() ||
