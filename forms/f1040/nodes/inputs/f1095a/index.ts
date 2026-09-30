@@ -147,10 +147,27 @@ export const itemSchema = z.object({
       marketplace_reference: z.string().trim().min(1),
       marketplace_determined_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
       marketplace_record_sha256: z.string().regex(/^[a-f0-9]{64}$/),
-      premium_paid: z.number().nonnegative(),
-      premium_paid_in_full_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-      premium_payment_reference: z.string().trim().min(1),
-      premium_payment_record_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+      premium_payment: z.discriminatedUnion("status", [
+        z.object({
+          status: z.literal("paid_in_full"),
+          amount: z.number().nonnegative(),
+          paid_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+          reference: z.string().trim().min(1),
+          record_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+        }).strict(),
+        z.object({
+          status: z.literal("protected_partial"),
+          amount: z.number().positive(),
+          paid_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+          reference: z.string().trim().min(1),
+          record_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+          protection_basis: z.literal("premium_payment_threshold"),
+          minimum_payment_to_avoid_termination: z.number().positive(),
+          issuer_coverage_provided: z.literal(true),
+          issuer_confirmation_reference: z.string().trim().min(1),
+          issuer_confirmation_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+        }).strict(),
+      ]),
     }).strict(),
   ).min(1).max(12).optional(),
   // Known changes that can make reported column B inaccurate. A change not
@@ -335,6 +352,21 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
       .parse(input);
     const f1095as = current1095AStatements(sourceStatements);
     verifyPolicyCoverageIdentities(f1095as);
+    if (
+      f1095as.some((item) =>
+        item.no_aptc_monthly_evidence?.some((evidence) =>
+          evidence.premium_payment.status === "protected_partial"
+        )
+      ) &&
+      (f1095as.length !== 1 ||
+        f1095as[0].shared_policy_periods !== undefined ||
+        !f1095as[0].monthly_premiums || !f1095as[0].monthly_aptcs ||
+        f1095as[0].monthly_aptcs.some((amount) => amount !== 0))
+    ) {
+      throw new Error(
+        "Form 1095-A protected partial payment needs one nonshared zero-APTC monthly policy",
+      );
+    }
     const hasMarriageOwner = f1095as.some((item) =>
       item.alternative_marriage_owner !== undefined
     );
@@ -517,8 +549,30 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
           "Form 1095-A missing column B needs corrected SLCSP for every covered month",
         );
       }
+      const adjustedPremiums = [...item.monthly_premiums];
+      let hasProtectedPartial = false;
+      for (const proof of item.no_aptc_monthly_evidence ?? []) {
+        const payment = proof.premium_payment;
+        if (payment.status !== "protected_partial") continue;
+        const reportedPremium = item.monthly_premiums[proof.month - 1];
+        if (
+          reportedPremium <= 0 || payment.amount >= reportedPremium ||
+          payment.amount < payment.minimum_payment_to_avoid_termination ||
+          payment.paid_on > "2026-04-15"
+        ) {
+          throw new Error(
+            `Form 1095-A protected partial payment for month ${proof.month} does not establish a covered paid premium`,
+          );
+        }
+        adjustedPremiums[proof.month - 1] = payment.amount;
+        hasProtectedPartial = true;
+      }
       return {
         ...item,
+        monthly_premiums: hasProtectedPartial
+          ? adjustedPremiums
+          : item.monthly_premiums,
+        annual_premium: hasProtectedPartial ? undefined : item.annual_premium,
         monthly_slcsps: slcsps,
         // The reported annual column B was checked against the reported
         // monthly column above; it does not total the corrected SLCSP series.

@@ -30,15 +30,15 @@ line choice, and the premium-payment timing rule.
 ## Still unsupported by this route
 
 - A zero-APTC household below 100% FPL without the reviewed lawfully present
-  exception, or with more than one covered person or policy.
+  exception.
 - More than one covered person or policy, shared policy allocations, married
   filing separately, or a year-of-marriage alternative calculation.
 - Changes in coverage family, interstate moves, QSEHRA, self-employed
   health-insurance deduction circularity, and other MEC interactions when zero
   APTC was paid.
 - Missing or inconsistent Marketplace SLCSP determinations, missing monthly
-  payment evidence, partial payments requiring the special 2025 no-termination
-  test, and premiums paid after the unextended due date.
+  payment evidence, protected partial payments outside the documented issuer
+  threshold route, and payments made after the unextended due date.
 
 The focused Form 8962 source, calculation, MeF, and PDF cases pass: 148/148
 across the relevant files. A separate full-return case passes from a $30,120
@@ -69,3 +69,26 @@ projection. The underlying immigration, Medicaid, Marketplace, and payment
 records are identified by entered review facts; their bytes have not been
 authenticated. Filled-PDF visual review and the final bulk regression remain
 open.
+
+## Protected partial premium payment
+
+The [2025 Form 8962 instructions](https://www.irs.gov/instructions/i8962)
+allow a credit for a month with an unpaid premium portion when a qualifying
+payment threshold is met, the issuer provides coverage, and the amount paid is
+enough to prevent termination. They require the premium used for the credit to
+exclude the amount unpaid at the unextended filing due date. The single-policy,
+zero-APTC monthly source now records each payment as either `paid_in_full` or
+`protected_partial`. A protected record needs the issuer-confirmed threshold,
+continued coverage, payment date and amount, and separate references and
+SHA-256 identifiers for the payment and issuer confirmation. The source graph
+retains the original Form 1095-A premium while sending only the amount paid to
+Form 8962; MeF and PDF recompute that reduction from the raw source.
+
+In the full-return case, January's Form 1095-A premium is $800 and $500 was
+paid by April 15 against a $450 issuer-confirmed minimum. January's Form 8962
+premium and credit are $500. The annual credit falls from $8,400 to $8,250,
+and reconciles through Schedule 3 and Form 1040. The full return passes local
+TY2025 v5.4 XSD and generates a PDF packet. A $600 threshold with only $500
+paid rejects. The first grace month and emergency-order protection scenarios,
+external issuer/payment-record authentication, PDF visual review, full bulk
+regression, IRS business rules, and ATS remain open.

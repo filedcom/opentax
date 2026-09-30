@@ -1472,3 +1472,68 @@ Deno.test("SLCSP corrections reject duplicate months and no-APTC contradictions"
     "conflicts with paid APTC",
   );
 });
+
+Deno.test("protected partial no-APTC premium adjusts only its covered month", () => {
+  const premiums = Array(12).fill(800);
+  const payment = {
+    status: "protected_partial",
+    amount: 500,
+    paid_on: "2026-04-01",
+    reference: "January payment ledger",
+    record_sha256: "a".repeat(64),
+    protection_basis: "premium_payment_threshold",
+    minimum_payment_to_avoid_termination: 450,
+    issuer_coverage_provided: true,
+    issuer_confirmation_reference: "Issuer threshold and coverage record",
+    issuer_confirmation_sha256: "b".repeat(64),
+  };
+  const proof = {
+    month: 1,
+    marketplace_slcsp: 700,
+    marketplace_method: "marketplace_tool",
+    marketplace_reference: "Marketplace January SLCSP",
+    marketplace_determined_on: "2026-02-01",
+    marketplace_record_sha256: "c".repeat(64),
+    premium_payment: payment,
+  };
+  const sourceFields = {
+    policy_number: "POLICY-1",
+    coverage_state: "TX",
+    covered_individual_ssns: ["123456789"],
+    monthly_premiums: premiums,
+    monthly_slcsps: Array(12).fill(0),
+    monthly_aptcs: Array(12).fill(0),
+    annual_premium: 9_600,
+    slcsp_corrections: noAptcDeterminations(premiums, Array(12).fill(700)),
+    no_aptc_monthly_evidence: [proof],
+  };
+  const output = findOutput(compute([minimalItem(sourceFields)]), "form8962")
+    ?.fields;
+  assertEquals((output?.monthly_premiums as number[])[0], 500);
+  assertEquals((output?.monthly_premiums as number[])[1], 800);
+  assertEquals(output?.annual_line11_eligible, undefined);
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        ...sourceFields,
+        no_aptc_monthly_evidence: [{
+          ...proof,
+          premium_payment: {
+            ...payment,
+            minimum_payment_to_avoid_termination: 600,
+          },
+        }],
+      })]),
+    Error,
+    "does not establish a covered paid premium",
+  );
+  assertThrows(
+    () =>
+      compute([
+        minimalItem(sourceFields),
+        minimalItem({ ...sourceFields, policy_number: "POLICY-2" }),
+      ]),
+    Error,
+    "one nonshared zero-APTC monthly policy",
+  );
+});

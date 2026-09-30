@@ -800,6 +800,29 @@ function validIsoDate(value: string): boolean {
     date.toISOString().slice(0, 10) === value;
 }
 
+type NoAptcPayment = NonNullable<
+  z.infer<typeof form1095aSchema>["f1095as"][number]["no_aptc_monthly_evidence"]
+>[number]["premium_payment"];
+
+function paidNoAptcPremium(
+  payment: NoAptcPayment,
+  reportedPremium: number,
+  allowProtectedPartial = false,
+): number | null {
+  if (
+    !validIsoDate(payment.paid_on) ||
+    payment.paid_on > TY2025_UNEXTENDED_DUE_DATE
+  ) return null;
+  if (payment.status === "paid_in_full") {
+    return payment.amount >= reportedPremium ? reportedPremium : null;
+  }
+  if (
+    !allowProtectedPartial || payment.amount >= reportedPremium ||
+    payment.amount < payment.minimum_payment_to_avoid_termination
+  ) return null;
+  return payment.amount;
+}
+
 function isNoAptcClaim(context?: MefBuildContext): boolean {
   const source = form1095aSchema.safeParse(context?.pending?.f1095a);
   if (!source.success) return false;
@@ -944,8 +967,8 @@ function reconcileNoAptcPolicyMonths(
     const month = index + 1;
     const correction = corrections.get(month);
     const proof = evidence.get(month);
-    const premium = policy.monthly_premiums![index];
-    if (premium === 0) {
+    const reportedPremium = policy.monthly_premiums![index];
+    if (reportedPremium === 0) {
       if (
         row.month_code !== MONTH_CODES[index] || row.premium !== 0 ||
         row.slcsp !== 0 || row.aptc !== 0 ||
@@ -958,20 +981,22 @@ function reconcileNoAptcPolicyMonths(
       }
       return total;
     }
+    const paidPremium = proof
+      ? paidNoAptcPremium(proof.premium_payment, reportedPremium, true)
+      : null;
     if (
       !correction || !proof || correction.basis !== "no_aptc" ||
       correction.corrected_slcsp <= 0 ||
       proof.marketplace_slcsp !== correction.corrected_slcsp ||
       proof.marketplace_method !== correction.determination_source ||
       !validIsoDate(proof.marketplace_determined_on) ||
-      !validIsoDate(proof.premium_paid_in_full_on) ||
-      proof.premium_paid_in_full_on > TY2025_UNEXTENDED_DUE_DATE ||
-      proof.premium_paid < premium
+      paidPremium === null
     ) {
       throw new Error(
-        `Form 8962 no-APTC month ${month} lacks matching Marketplace SLCSP and timely full premium-payment evidence`,
+        `Form 8962 no-APTC month ${month} lacks matching Marketplace SLCSP and timely premium-payment evidence`,
       );
     }
+    const premium = paidPremium;
     const slcsp = correction.corrected_slcsp;
     const maxAssistance = Math.max(0, slcsp - monthlyContribution);
     const allowed = Math.min(premium, maxAssistance);
@@ -1138,9 +1163,10 @@ function reconcileTwoNoAptcPolicyMonths(
         proof.marketplace_slcsp !== slcsp ||
         proof.marketplace_method !== correction.determination_source ||
         !validIsoDate(proof.marketplace_determined_on) ||
-        !validIsoDate(proof.premium_paid_in_full_on) ||
-        proof.premium_paid_in_full_on > TY2025_UNEXTENDED_DUE_DATE ||
-        proof.premium_paid < policies[policyIndex].monthly_premiums![index]
+        paidNoAptcPremium(
+            proof.premium_payment,
+            policies[policyIndex].monthly_premiums![index],
+          ) === null
       ) {
         throw new Error(
           `Form 8962 two-policy month ${month} lacks matching SLCSP or full payment evidence`,
@@ -1333,9 +1359,10 @@ function reconcileNoAptcAnnualPolicy(
       proof.marketplace_slcsp !== monthlySlcsp ||
       proof.marketplace_method !== correction.determination_source ||
       !validIsoDate(proof.marketplace_determined_on) ||
-      !validIsoDate(proof.premium_paid_in_full_on) ||
-      proof.premium_paid_in_full_on > TY2025_UNEXTENDED_DUE_DATE ||
-      proof.premium_paid < policy.monthly_premiums[month - 1]
+      paidNoAptcPremium(
+          proof.premium_payment,
+          policy.monthly_premiums[month - 1],
+        ) === null
     ) {
       throw new Error(
         `Form 8962 no-APTC annual month ${month} lacks matching SLCSP and timely full premium-payment evidence`,
@@ -1467,9 +1494,10 @@ function reconcileTwoNoAptcAnnualPolicies(
         proof.marketplace_slcsp !== slcsp ||
         proof.marketplace_method !== correction.determination_source ||
         !validIsoDate(proof.marketplace_determined_on) ||
-        !validIsoDate(proof.premium_paid_in_full_on) ||
-        proof.premium_paid_in_full_on > TY2025_UNEXTENDED_DUE_DATE ||
-        proof.premium_paid < policy.monthly_premiums![month - 1]
+        paidNoAptcPremium(
+            proof.premium_payment,
+            policy.monthly_premiums![month - 1],
+          ) === null
       ) {
         throw new Error(
           `Form 8962 two-policy annual month ${month} lacks matching SLCSP or full payment evidence`,
@@ -2332,9 +2360,10 @@ function reconcileNoAptcSharedPolicy(
       proof.marketplace_slcsp !== correction.corrected_slcsp ||
       proof.marketplace_method !== correction.determination_source ||
       !validIsoDate(proof.marketplace_determined_on) ||
-      !validIsoDate(proof.premium_paid_in_full_on) ||
-      proof.premium_paid_in_full_on > TY2025_UNEXTENDED_DUE_DATE ||
-      proof.premium_paid < policy.monthly_premiums[month - 1]
+      paidNoAptcPremium(
+          proof.premium_payment,
+          policy.monthly_premiums[month - 1],
+        ) === null
     ) {
       throw new Error(
         `Form 8962 no-APTC shared month ${month} lacks matching SLCSP or timely full payment`,

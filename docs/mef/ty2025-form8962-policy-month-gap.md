@@ -43,7 +43,7 @@ send net PTC on line 26 to Schedule 3 line 9 and excess APTC repayment on line
 29 to Schedule 2 line 1a. The checked-in TY2025 v5.4 schema has the native
 `MonthlyPTCCalculationGrp` and those total fields.
 
-## No-APTC positive PTC: bounded monthly route written, unrun
+## No-APTC positive PTC: bounded monthly route
 
 The one-filer, one-policy 200%-FPL monthly path now has a full-return source
 case. A $30,120 W-2 and twelve covered zero-APTC months with separately
@@ -61,6 +61,15 @@ monthly or $8,400 annual PTC in separate full-return cases. Both local TY2025
 v5.4 XSD checks and PDF builds pass; deleting the status stops native export.
 The external eligibility records and filled PDF pages remain unreviewed.
 
+The one-policy monthly path also reduces a month with an issuer-confirmed
+protected partial payment by the unpaid premium at the unextended filing due
+date. In a full return, an $800 reported January premium with $500 paid above a
+$450 documented issuer threshold produces $500 on Form 8962 column (a) and
+$8,250 total credit. The original $800 remains in the Form 1095-A source; MeF
+recomputes the claimed premium and the full return passes local TY2025 v5.4
+XSD. Other 2025 protection scenarios and source-record authentication remain
+open. See the [no-APTC gap](ty2025-form8962-no-aptc-below400.md).
+
 The [2025 Form 8962 instructions](https://www.irs.gov/instructions/i8962)
 require Form 8962 when the taxpayer claims a PTC even if no APTC was paid. They
 also warn that Form 1095-A column B can be blank, zero, or wrong in that case,
@@ -72,14 +81,16 @@ exceptions). Zero APTC is therefore not evidence of zero PTC.
 The `f1095a.slcsp_corrections` amounts alone remain insufficient. A bounded
 one-policy monthly filing route now also requires one `no_aptc_monthly_evidence`
 record per covered month: the Marketplace determination amount, method, date,
-reference, and source-record SHA-256, plus the premium amount paid in full,
-payment date, reference, and source-record SHA-256 for each covered month. The
+reference, and source-record SHA-256, plus a dated payment record with amount,
+reference, and source-record SHA-256 for each covered month. The payment is
+explicitly `paid_in_full` or `protected_partial`; the latter also needs issuer
+threshold and continued-coverage confirmation. The
 policy must cover only the identified single filer in one state, have positive
 reported column A in each covered month, zero APTC, no shared allocation or
 unreported coverage change, and an applicable SLCSP correction for every covered
 month. Uncovered months require zero reported columns A/B/C and zero Form 8962
 monthly policy and credit amounts. The recorded determination must equal the
-corrected SLCSP; full premium payment must be dated no later than April 15,
+corrected SLCSP; the qualifying payment must be dated no later than April 15,
 2026, the ordinary
 [TY2025 Form 1040 due date](https://www.irs.gov/instructions/i1040gi). The route
 reconciles the raw 1095-A A/C columns and line 33 totals, each monthly Form 8962
@@ -93,7 +104,8 @@ References and hashes identify the separate source records for preparer review.
 The application has not authenticated the Marketplace or payment documents or
 compared hashes to their actual bytes; that external source review remains
 required. No-APTC multiple policies, shared policies, changes in coverage family
-or state, less-than-full-payment exceptions, nonstandard due dates,
+or state, protected partial payments outside the documented issuer threshold,
+nonstandard due dates,
 below-400%-FPL returns, and MEC/coverage eligibility proof remain outside this
 bounded route. The entered evidence is not submitted as an invented IRS
 attachment.

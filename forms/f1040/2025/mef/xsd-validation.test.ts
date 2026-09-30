@@ -100,10 +100,13 @@ function noAptcPaymentEvidence(premiums: number[], slcsps: number[]) {
         marketplace_reference: `Marketplace determination ${index + 1}`,
         marketplace_determined_on: "2026-02-01",
         marketplace_record_sha256: "a".repeat(64),
-        premium_paid: premium,
-        premium_paid_in_full_on: "2026-04-01",
-        premium_payment_reference: `Premium payment ${index + 1}`,
-        premium_payment_record_sha256: "b".repeat(64),
+        premium_payment: {
+          status: "paid_in_full",
+          amount: premium,
+          paid_on: "2026-04-01",
+          reference: `Premium payment ${index + 1}`,
+          record_sha256: "b".repeat(64),
+        },
       }]
       : []
   );
@@ -4009,7 +4012,16 @@ Deno.test({
               ...((result.pending.f1095a?.f1095as as Record<string, unknown>[])[
                 0
               ].no_aptc_monthly_evidence as Record<string, unknown>[])[0],
-              premium_paid: 14_999,
+              premium_payment: {
+                ...((result.pending.f1095a?.f1095as as Record<
+                  string,
+                  unknown
+                >[])[
+                  0
+                ].no_aptc_monthly_evidence as Record<string, unknown>[])[0]
+                  .premium_payment as Record<string, unknown>,
+                amount: 14_999,
+              },
             }],
           }],
         },

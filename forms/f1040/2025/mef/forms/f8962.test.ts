@@ -218,10 +218,13 @@ const noAptcEvidence = noAptcSlcsps.map((marketplace_slcsp, index) => ({
   marketplace_reference: `MARKETPLACE-${index + 1}`,
   marketplace_determined_on: "2026-02-01",
   marketplace_record_sha256: "a".repeat(64),
-  premium_paid: 800,
-  premium_paid_in_full_on: "2026-04-01",
-  premium_payment_reference: `PAYMENT-${index + 1}`,
-  premium_payment_record_sha256: "b".repeat(64),
+  premium_payment: {
+    status: "paid_in_full" as const,
+    amount: 800,
+    paid_on: "2026-04-01",
+    reference: `PAYMENT-${index + 1}`,
+    record_sha256: "b".repeat(64),
+  },
 }));
 const noAptcContext = {
   ...matchedContext,
@@ -255,7 +258,10 @@ const noAptcContext = {
 };
 
 Deno.test("Form 8962 no-APTC monthly PTC uses reviewed SLCSP and timely paid premiums", () => {
-  const xml = form8962.build({ ...noAptcFields, annual_slcsp: 9_000 }, noAptcContext);
+  const xml = form8962.build(
+    { ...noAptcFields, annual_slcsp: 9_000 },
+    noAptcContext,
+  );
   assertStringIncludes(
     xml,
     "<TotalPremiumTaxCreditAmt>2604</TotalPremiumTaxCreditAmt>",
@@ -275,7 +281,8 @@ Deno.test("Form 8962 no-APTC monthly PTC uses reviewed SLCSP and timely paid pre
     1,
   );
   assertThrows(
-    () => form8962.build({ ...noAptcFields, annual_slcsp: 9_001 }, noAptcContext),
+    () =>
+      form8962.build({ ...noAptcFields, annual_slcsp: 9_001 }, noAptcContext),
     Error,
     "Form 1095-A totals or contribution do not reconcile",
   );
@@ -508,7 +515,13 @@ Deno.test("Form 8962 no-APTC full-year unchanged policy uses sourced annual line
             index,
           ) =>
             index === 0
-              ? { ...item, premium_paid_in_full_on: "2026-04-16" }
+              ? {
+                ...item,
+                premium_payment: {
+                  ...item.premium_payment,
+                  paid_on: "2026-04-16",
+                },
+              }
               : item
           ),
         }),
@@ -526,7 +539,13 @@ Deno.test("Form 8962 no-APTC full-year unchanged policy uses sourced annual line
           no_aptc_monthly_evidence: policy.no_aptc_monthly_evidence.map(
             (item, index) =>
               index === 0
-                ? { ...item, premium_paid_in_full_on: "2026-04-16" }
+                ? {
+                  ...item,
+                  premium_payment: {
+                    ...item.premium_payment,
+                    paid_on: "2026-04-16",
+                  },
+                }
                 : item,
           ),
         }).pending,
@@ -704,7 +723,13 @@ Deno.test("Form 8962 no-APTC PTC rejects absent, mismatched, or late source evid
         withPolicy({
           ...policy,
           no_aptc_monthly_evidence: [
-            { ...noAptcEvidence[0], premium_paid_in_full_on: "2026-04-16" },
+            {
+              ...noAptcEvidence[0],
+              premium_payment: {
+                ...noAptcEvidence[0].premium_payment,
+                paid_on: "2026-04-16",
+              },
+            },
             ...noAptcEvidence.slice(1),
           ],
         }),
@@ -719,7 +744,13 @@ Deno.test("Form 8962 no-APTC PTC rejects absent, mismatched, or late source evid
         withPolicy({
           ...policy,
           no_aptc_monthly_evidence: [
-            { ...noAptcEvidence[0], premium_paid: 799 },
+            {
+              ...noAptcEvidence[0],
+              premium_payment: {
+                ...noAptcEvidence[0].premium_payment,
+                amount: 799,
+              },
+            },
             ...noAptcEvidence.slice(1),
           ],
         }),
