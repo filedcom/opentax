@@ -6,6 +6,7 @@ import {
   assertElectedSectionAReconciled,
   assertElectedSectionBReconciled,
   assertOrdinarySectionAReconciled,
+  assertSectionBEquipmentReconciled,
   assertSectionBVehicleReconciled,
   hasSectionAShortTermReduction,
   isSingleSectionANeedyVehicleUnreduced,
@@ -139,11 +140,18 @@ function buildIRS1040ScheduleA(
     if (
       (form.section_a_items ?? []).length === 0 &&
       (form.section_b_items ?? []).length === 1 &&
-      form.section_b_items?.[0]?.property_type ===
-        SectionBPropertyType.Vehicle &&
       form.section_b_items?.[0]?.capital_gain_reduction_election_confirmed !==
         true
-    ) assertSectionBVehicleReconciled(context, fields);
+    ) {
+      if (
+        form.section_b_items?.[0]?.property_type ===
+          SectionBPropertyType.Vehicle
+      ) assertSectionBVehicleReconciled(context, fields);
+      if (
+        form.section_b_items?.[0]?.property_type ===
+          SectionBPropertyType.Equipment
+      ) assertSectionBEquipmentReconciled(context, fields);
+    }
   }
   if (
     fields.capital_gain_election_finalized === true &&

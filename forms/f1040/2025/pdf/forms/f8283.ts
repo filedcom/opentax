@@ -18,6 +18,7 @@ import {
   assertElectedSectionBReconciled,
   assertNeedyVehicleUnreducedSource,
   assertOrdinarySectionAReconciled,
+  assertSectionBEquipmentReconciled,
   assertSectionBVehicleReconciled,
   isSingleSectionANeedyVehicleUnreduced,
   isSingleSectionAVehicleSale,
@@ -44,6 +45,11 @@ const fields: PdfFieldEntry[] = [
     kind: "checkbox",
     domainKey: "section_b_other_real_estate",
     pdfField: `${page}.Lines2d-h[0].c1_6[0]`,
+  },
+  {
+    kind: "checkbox",
+    domainKey: "section_b_equipment",
+    pdfField: `${page}.Lines2d-h[0].c1_6[1]`,
   },
   {
     kind: "checkbox",
@@ -240,6 +246,39 @@ function cityStateZip(address: {
   return `${address.city}, ${address.state} ${address.zip}`;
 }
 
+function sectionBPrintedFields(
+  item: SectionBItem,
+  filer: FilerIdentity | undefined,
+): Record<string, unknown> {
+  const appraisal = item.qualified_appraisal!;
+  const donee = item.donee_acknowledgment!;
+  const person = identity(filer);
+  return {
+    ...person,
+    page2_filer_name: person.filer_name,
+    page2_filer_ssn: person.filer_ssn,
+    section_b_description: item.property_description,
+    section_b_condition: item.physical_condition,
+    section_b_appraised_fmv: item.fmv,
+    section_b_acquired_date: printedDate(item.date_acquired, true),
+    section_b_how_acquired: item.donor_acquisition_description,
+    section_b_basis: item.cost_or_adjusted_basis,
+    section_b_claim: item.deduction_claimed,
+    section_b_appraiser_name:
+      `${appraisal.appraiser_first_name} ${appraisal.appraiser_last_name}`,
+    section_b_appraiser_id: appraisal.appraiser_ein ?? appraisal.appraiser_ssn,
+    section_b_appraiser_street: street(appraisal.us_address),
+    section_b_appraiser_city_state_zip: cityStateZip(appraisal.us_address),
+    section_b_donee_received_date: printedDate(donee.received_date),
+    section_b_unrelated_use_yes: donee.unrelated_use,
+    section_b_unrelated_use_no: !donee.unrelated_use,
+    section_b_donee_name: donee.organization_name,
+    section_b_donee_ein: donee.ein,
+    section_b_donee_street: street(donee.us_address),
+    section_b_donee_city_state_zip: cityStateZip(donee.us_address),
+  };
+}
+
 function sectionBInstance(
   item: SectionBItem,
   filer: FilerIdentity | undefined,
@@ -262,32 +301,10 @@ function sectionBInstance(
       "Form 8283 Section B PDF needs one complete investment-land election source with named signature PDFs",
     );
   }
-  const person = identity(filer);
   const reduction = item.fmv - item.deduction_claimed;
   return {
-    ...person,
-    page2_filer_name: person.filer_name,
-    page2_filer_ssn: person.filer_ssn,
+    ...sectionBPrintedFields(item, filer),
     section_b_other_real_estate: true,
-    section_b_description: item.property_description,
-    section_b_condition: item.physical_condition,
-    section_b_appraised_fmv: item.fmv,
-    section_b_acquired_date: printedDate(item.date_acquired, true),
-    section_b_how_acquired: item.donor_acquisition_description,
-    section_b_basis: item.cost_or_adjusted_basis,
-    section_b_claim: item.deduction_claimed,
-    section_b_appraiser_name:
-      `${appraisal.appraiser_first_name} ${appraisal.appraiser_last_name}`,
-    section_b_appraiser_id: appraisal.appraiser_ein ?? appraisal.appraiser_ssn,
-    section_b_appraiser_street: street(appraisal.us_address),
-    section_b_appraiser_city_state_zip: cityStateZip(appraisal.us_address),
-    section_b_donee_received_date: printedDate(donee.received_date),
-    section_b_unrelated_use_yes: donee.unrelated_use,
-    section_b_unrelated_use_no: !donee.unrelated_use,
-    section_b_donee_name: donee.organization_name,
-    section_b_donee_ein: donee.ein,
-    section_b_donee_street: street(donee.us_address),
-    section_b_donee_city_state_zip: cityStateZip(donee.us_address),
     reduction_statements: [
       `Section B item A: unimproved investment land appraised at FMV $${
         item.fmv.toFixed(2)
@@ -298,6 +315,50 @@ function sectionBInstance(
       }. Appraiser signed ${
         printedDate(appraisal.signed_date)
       }. Source names the separate reduction statement ${item.reduction_statement_attachment_file_name} and signature PDFs ${appraisal.signature_attachment_file_name} and ${donee.signature_attachment_file_name}. A separately reviewed completed signed Form 8283 PDF is still required for MeF filing. This generated PDF does not reproduce signatures and is not a signed paper Form 8283.`,
+    ],
+  };
+}
+
+function sectionBEquipmentInstance(
+  item: SectionBItem,
+  filer: FilerIdentity | undefined,
+): Record<string, unknown> {
+  const appraisal = item.qualified_appraisal;
+  const donee = item.donee_acknowledgment;
+  if (
+    item.property_type !== SectionBPropertyType.Equipment ||
+    item.capital_gain_reduction_election_confirmed === true ||
+    item.is_capital_gain_property !== false ||
+    item.charitable_limit_category !== "noncash_50" ||
+    item.fmv <= 5_000 || item.fmv > 500_000 ||
+    item.deduction_claimed !== item.fmv ||
+    item.cost_or_adjusted_basis === undefined ||
+    item.cost_or_adjusted_basis < item.fmv ||
+    !item.property_description?.trim() || !item.physical_condition?.trim() ||
+    !item.date_acquired || !item.date_contributed?.startsWith("2025-") ||
+    item.date_acquired > item.date_contributed ||
+    item.donor_acquisition_description?.trim().toLowerCase() !== "purchase" ||
+    !appraisal?.signature_attachment_file_name ||
+    !donee?.signature_attachment_file_name ||
+    !item.signed_form_attachment_file_name || !item.signed_form_source_review ||
+    donee.received_date !== item.date_contributed
+  ) {
+    throw new Error(
+      "Form 8283 Section B PDF needs one complete purchased equipment gift claimed at appraised FMV",
+    );
+  }
+  return {
+    ...sectionBPrintedFields(item, filer),
+    section_b_equipment: true,
+    reduction_statements: [
+      `Section B item A: purchased equipment ${item.property_description} ` +
+      `appraised and claimed at $${item.fmv.toFixed(2)}, with adjusted basis $${
+        item.cost_or_adjusted_basis.toFixed(2)
+      }. ` +
+      `Appraiser signed ${printedDate(appraisal.signed_date)}. ` +
+      `The completed signed Form 8283 ${item.signed_form_attachment_file_name} ` +
+      `was reviewed ${item.signed_form_source_review.reviewed_on} by ${item.signed_form_source_review.reviewed_by}. ` +
+      `This generated PDF does not reproduce signatures and is not the signed filing attachment.`,
     ],
   };
 }
@@ -350,31 +411,9 @@ function sectionBVehicleInstance(
     : item.vehicle_significant_use_acknowledgment
     ? `The donee certified significant charitable use: ${item.vehicle_significant_use_acknowledgment.intended_use_description} for ${item.vehicle_significant_use_acknowledgment.intended_use_duration}.`
     : "The donee certified a transfer to a needy recipient for significantly below FMV in direct furtherance of its charitable transportation purpose.";
-  const person = identity(filer);
   return {
-    ...person,
-    page2_filer_name: person.filer_name,
-    page2_filer_ssn: person.filer_ssn,
+    ...sectionBPrintedFields(item, filer),
     section_b_vehicle: true,
-    section_b_description: item.property_description,
-    section_b_condition: item.physical_condition,
-    section_b_appraised_fmv: item.fmv,
-    section_b_acquired_date: printedDate(item.date_acquired, true),
-    section_b_how_acquired: item.donor_acquisition_description,
-    section_b_basis: item.cost_or_adjusted_basis,
-    section_b_claim: item.deduction_claimed,
-    section_b_appraiser_name:
-      `${appraisal.appraiser_first_name} ${appraisal.appraiser_last_name}`,
-    section_b_appraiser_id: appraisal.appraiser_ein ?? appraisal.appraiser_ssn,
-    section_b_appraiser_street: street(appraisal.us_address),
-    section_b_appraiser_city_state_zip: cityStateZip(appraisal.us_address),
-    section_b_donee_received_date: printedDate(donee.received_date),
-    section_b_unrelated_use_yes: donee.unrelated_use,
-    section_b_unrelated_use_no: !donee.unrelated_use,
-    section_b_donee_name: donee.organization_name,
-    section_b_donee_ein: donee.ein,
-    section_b_donee_street: street(donee.us_address),
-    section_b_donee_city_state_zip: cityStateZip(donee.us_address),
     reduction_statements: [
       `Section B item A: ${item.property_description}; VIN ${item.vehicle_vin}. ` +
       `${certification} ` +
@@ -439,6 +478,7 @@ export const form8283Pdf: PdfFormDescriptor = {
   fields,
   pageIndices: (instance) =>
     instance.section_b_other_real_estate === true ||
+      instance.section_b_equipment === true ||
       instance.section_b_vehicle === true
       ? [0, 1]
       : [0],
@@ -484,6 +524,10 @@ export const form8283Pdf: PdfFormDescriptor = {
       }
       if (sectionB[0].property_type === SectionBPropertyType.Vehicle) {
         assertSectionBVehicleReconciled({ pending: allPending });
+      } else if (
+        sectionB[0].property_type === SectionBPropertyType.Equipment
+      ) {
+        assertSectionBEquipmentReconciled({ pending: allPending });
       } else {
         assertElectedSectionBReconciled({ pending: allPending });
       }
@@ -493,10 +537,13 @@ export const form8283Pdf: PdfFormDescriptor = {
       ) {
         throw new Error("Form 8283 PDF source differs from the pending return");
       }
+      const item = sectionB[0];
       return [
-        sectionB[0].property_type === SectionBPropertyType.Vehicle
-          ? sectionBVehicleInstance(sectionB[0], filer)
-          : sectionBInstance(sectionB[0], filer),
+        item.property_type === SectionBPropertyType.Vehicle
+          ? sectionBVehicleInstance(item, filer)
+          : item.property_type === SectionBPropertyType.Equipment
+          ? sectionBEquipmentInstance(item, filer)
+          : sectionBInstance(item, filer),
       ];
     }
     if (sectionA.length === 0) return [];
@@ -585,6 +632,7 @@ export const form8283Pdf: PdfFormDescriptor = {
     const page = document.addPage([612, 792]);
     page.drawText(
       instance.section_b_other_real_estate === true ||
+        instance.section_b_equipment === true ||
         instance.section_b_vehicle === true
         ? "Form 8283 Section B - Source and attachment record"
         : "Form 8283 Section A - Fair market value reductions",

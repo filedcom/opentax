@@ -498,6 +498,91 @@ Deno.test("Form 8283 PDF prints reconciled Section B material-improvement vehicl
   );
 });
 
+function purchasedEquipmentPending() {
+  const vehicle = materialImprovementVehiclePending().f8283.section_b_items[0];
+  const equipment = {
+    ...vehicle,
+    property_description: "Used industrial printing press",
+    property_type: SectionBPropertyType.Equipment,
+    physical_condition: "Operational, professionally maintained",
+    fmv: 12_000,
+    deduction_claimed: 12_000,
+    cost_or_adjusted_basis: 18_000,
+    similar_item_group: "industrial printing presses",
+    vehicle_vin: undefined,
+    vehicle_acknowledgment_attachment_file_name: undefined,
+    vehicle_material_improvement_acknowledgment: undefined,
+  };
+  const form = { section_b_items: [equipment] };
+  const items = f8283.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form8283InputSchema.parse(form),
+  ).outputs[0].fields.noncash_contribution_items;
+  const source = {
+    agi: 100_000,
+    current_noncash_gift_inventory_complete_confirmed: true as const,
+    other_prior_charitable_carryovers_absent_confirmed: true as const,
+    capital_gain_property_carryovers: [],
+    noncash_contribution_items: items,
+  };
+  const finalized = scheduleA.compute(
+    { taxYear: 2025, formType: "f1040" },
+    scheduleAInputSchema.parse(source),
+  ).finalizations![0].fields;
+  return {
+    f8283: form,
+    schedule_a: { ...source, ...finalized },
+    f1040: { line11_agi: 100_000, line12e_itemized_deductions: 12_000 },
+  };
+}
+
+Deno.test("Form 8283 PDF prints one reconciled Section B equipment gift", () => {
+  const pending = purchasedEquipmentPending();
+  const [instance] = form8283Pdf.instances?.(pending.f8283, filer, pending) ??
+    [];
+  assertEquals(form8283Pdf.pageIndices?.(instance), [0, 1]);
+  assertEquals(instance?.section_b_equipment, true);
+  assertEquals(instance?.section_b_appraised_fmv, 12_000);
+  assertEquals(instance?.section_b_claim, 12_000);
+  assertEquals(instance?.section_b_appraiser_name, "Jane Smith");
+  assertStringIncludes(
+    (instance?.reduction_statements as string[])[0],
+    "Used industrial printing press",
+  );
+  const byKey = new Map(
+    form8283Pdf.fields.map((field) => [field.domainKey, field.pdfField]),
+  );
+  assertEquals(
+    byKey.get("section_b_equipment"),
+    "Form8283[0].Page1[0].Lines2d-h[0].c1_6[1]",
+  );
+  scheduleAMef.build(pending.schedule_a, { pending });
+  assertThrows(
+    () =>
+      scheduleAMef.build({
+        ...pending.schedule_a,
+        line_12_noncash_contributions: 11_999,
+      }, { pending }),
+    Error,
+    "recomputed Schedule A lines 11",
+  );
+  const missingReview = {
+    section_b_items: [{
+      ...pending.f8283.section_b_items[0],
+      signed_form_source_review: undefined,
+    }],
+  };
+  assertThrows(
+    () =>
+      form8283Pdf.instances?.(missingReview, filer, {
+        ...pending,
+        f8283: missingReview,
+      }),
+    Error,
+    "complete purchased equipment gift",
+  );
+});
+
 Deno.test("Form 8283 PDF maps December 2025 Section A identity and four rows", () => {
   assertEquals(form8283Pdf.pageIndices?.({}), [0]);
   const byKey = new Map(
@@ -513,7 +598,7 @@ Deno.test("Form 8283 PDF maps December 2025 Section A identity and four rows", (
     byKey.get("row4_claim"),
     "Form8283[0].Page1[0].Table_Line1_ColsD-I[0].Row1D[0].f1_39[0]",
   );
-  assertEquals(form8283Pdf.fields.length, 66);
+  assertEquals(form8283Pdf.fields.length, 67);
 });
 
 Deno.test("Form 8283 PDF prints reconciled Section A and carries the FMV explanation", () => {

@@ -350,7 +350,7 @@ export function assertElectedSectionBReconciled(
   context: MefBuildContext | undefined,
   filedScheduleA?: Readonly<Record<string, unknown>>,
 ): void {
-  assertSectionBReconciled(context, filedScheduleA, false);
+  assertSectionBReconciled(context, filedScheduleA);
 }
 
 /** Reconcile one current-year Section B vehicle exception against the return. */
@@ -358,14 +358,36 @@ export function assertSectionBVehicleReconciled(
   context: MefBuildContext | undefined,
   filedScheduleA?: Readonly<Record<string, unknown>>,
 ): void {
-  assertSectionBReconciled(context, filedScheduleA, true);
+  assertSectionBReconciled(
+    context,
+    filedScheduleA,
+    SectionBPropertyType.Vehicle,
+  );
+}
+
+/** Reconcile one current-year Section B equipment gift against the return. */
+export function assertSectionBEquipmentReconciled(
+  context: MefBuildContext | undefined,
+  filedScheduleA?: Readonly<Record<string, unknown>>,
+): void {
+  assertSectionBReconciled(
+    context,
+    filedScheduleA,
+    SectionBPropertyType.Equipment,
+  );
 }
 
 function assertSectionBReconciled(
   context: MefBuildContext | undefined,
   filedScheduleA: Readonly<Record<string, unknown>> | undefined,
-  vehicle: boolean,
+  ordinaryPropertyType?: SectionBPropertyType,
 ): void {
+  const ordinary = ordinaryPropertyType !== undefined;
+  const route = ordinaryPropertyType === SectionBPropertyType.Vehicle
+    ? "vehicle"
+    : ordinaryPropertyType === SectionBPropertyType.Equipment
+    ? "equipment"
+    : "election";
   const pending = context?.pending;
   const source8283 = pending?.f8283;
   const sourceScheduleA = pending?.schedule_a;
@@ -375,9 +397,7 @@ function assertSectionBReconciled(
     typeof sourceScheduleA !== "object"
   ) {
     throw new Error(
-      `Form 8283 Section B ${
-        vehicle ? "vehicle" : "election"
-      } needs filed Form 8283, complete Schedule A source, and itemized Form 1040`,
+      `Form 8283 Section B ${route} needs filed Form 8283, complete Schedule A source, and itemized Form 1040`,
     );
   }
   if (
@@ -385,33 +405,30 @@ function assertSectionBReconciled(
     returnFields.line12a_standard_deduction !== undefined
   ) {
     throw new Error(
-      `Form 8283 Section B ${
-        vehicle ? "vehicle" : "election"
-      } needs an itemized Form 1040`,
+      `Form 8283 Section B ${route} needs an itemized Form 1040`,
     );
   }
   const form = form8283InputSchema.parse(source8283);
   if (
     (form.section_a_items ?? []).length !== 0 ||
     (form.section_b_items ?? []).length !== 1 ||
-    (vehicle
-      ? form.section_b_items?.[0]?.property_type !==
-          SectionBPropertyType.Vehicle ||
+    (ordinary
+      ? form.section_b_items?.[0]?.property_type !== ordinaryPropertyType ||
         form.section_b_items?.[0]?.capital_gain_reduction_election_confirmed ===
           true
       : form.section_b_items?.[0]?.capital_gain_reduction_election_confirmed !==
         true)
   ) {
     throw new Error(
-      vehicle
-        ? "Form 8283 Section B vehicle is bounded to one current-year vehicle gift"
+      ordinary
+        ? `Form 8283 Section B ${route} is bounded to one current-year ${route} gift`
         : "Form 8283 Section B election is bounded to one current-year investment-land gift",
     );
   }
   const scheduleFields = sourceScheduleA as Record<string, unknown>;
   if (
-    (vehicle && scheduleFields.capital_gain_election_finalized === true) ||
-    (!vehicle && scheduleFields.capital_gain_election_finalized !== true) ||
+    (ordinary && scheduleFields.capital_gain_election_finalized === true) ||
+    (!ordinary && scheduleFields.capital_gain_election_finalized !== true) ||
     scheduleFields.charitable_limits_finalized !== true ||
     scheduleFields.current_noncash_gift_inventory_complete_confirmed !== true ||
     scheduleFields.other_prior_charitable_carryovers_absent_confirmed !==
@@ -421,9 +438,7 @@ function assertSectionBReconciled(
     scheduleFields.line_13_contribution_carryover !== 0
   ) {
     throw new Error(
-      `Form 8283 Section B ${
-        vehicle ? "vehicle" : "election"
-      } needs a finalized complete current-gift inventory and an empty prior-carryover ledger`,
+      `Form 8283 Section B ${route} needs a finalized complete current-gift inventory and an empty prior-carryover ledger`,
     );
   }
   const {
@@ -465,8 +480,8 @@ function assertSectionBReconciled(
   )?.fields.itemized_deductions;
   if (
     !computed ||
-    (vehicle && computed.capital_gain_election_finalized === true) ||
-    (!vehicle && computed.capital_gain_election_finalized !== true) ||
+    (ordinary && computed.capital_gain_election_finalized === true) ||
+    (!ordinary && computed.capital_gain_election_finalized !== true) ||
     itemizedTotal !== returnFields.line12e_itemized_deductions ||
     computed.line_11_cash_contributions !==
       scheduleFields.line_11_cash_contributions ||
@@ -484,9 +499,7 @@ function assertSectionBReconciled(
     ))
   ) {
     throw new Error(
-      `Form 8283 Section B ${
-        vehicle ? "vehicle" : "election"
-      } differs from recomputed Schedule A lines 11–13 or Form 1040 itemized total`,
+      `Form 8283 Section B ${route} differs from recomputed Schedule A lines 11–13 or Form 1040 itemized total`,
     );
   }
 }

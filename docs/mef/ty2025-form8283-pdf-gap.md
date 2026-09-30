@@ -149,6 +149,20 @@ respectively.
 The fixture uses mock signatures and acknowledgment text; it does not verify
 actual signed or donee-issued taxpayer records.
 
+The 2026-09-30 equipment pass adds one purchased, nonappreciated Section B
+equipment item claimed at its $12,000 appraised FMV, below the $500,000
+full-appraisal attachment threshold. The PDF checks the complete current-gift
+Schedule A inventory and itemized Form 1040, prints the official equipment
+checkbox, both Section B pages, appraiser/donee identity, basis and claim, and
+a source-review supplement. The full synthetic return passes local TY2025
+v5.4 XSD with three linked mock PDF attachments. All six pages were rendered
+and inspected: Schedule A line 12 is $12,000 and Form 1040 line 12e is
+$48,000. The snapshot is retained at
+`.state/research/ty2025-filled-pdf-review/2026-09-30-section-b-equipment/filled-return.pdf`
+with SHA-256
+`b788a80bf4d6429b6c49867ce47e4bc058b4ffd07b5d6f526b7e0637cffc76dd`.
+The fixture does not authenticate the appraisal or signatures.
+
 This is not whole-form support. Other Section B property and multi-item routes,
 actual appraiser/donee signatures in the PDF, mixed Section A/B forms, more than
 four Section A rows, carryover-year Form 8283 filings, and
