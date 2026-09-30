@@ -13,6 +13,7 @@ import { standard_deduction } from "../../intermediate/worksheets/standard_deduc
 import {
   childEicFilerReviewSchema,
   childlessEicReviewSchema,
+  eicTaxResidencyReviewSchema,
   eitc,
   priorEicDisallowanceReviewSchema,
 } from "../../intermediate/forms/eitc/index.ts";
@@ -176,6 +177,7 @@ export const inputSchema = z.object({
   childless_eic_review: childlessEicReviewSchema.optional(),
   child_eic_filer_review: childEicFilerReviewSchema.optional(),
   prior_eic_disallowance_review: priorEicDisallowanceReviewSchema.optional(),
+  eic_tax_residency_review: eicTaxResidencyReviewSchema.optional(),
   // 2025 EIC special rule for a married taxpayer filing separately.
   mfs_eitc_separation_review: z.discriminatedUnion("basis", [
     z.object({
@@ -776,6 +778,11 @@ function buildF1040Input(input: GeneralInput): Record<string, unknown> {
   );
   addIfDefined(
     fields,
+    "eic_tax_residency_review",
+    input.eic_tax_residency_review,
+  );
+  addIfDefined(
+    fields,
     "presidential_campaign_fund_taxpayer",
     input.presidential_campaign_fund_taxpayer,
   );
@@ -992,6 +999,7 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
         childless_eic_review: parsed.childless_eic_review,
         child_eic_filer_review: parsed.child_eic_filer_review,
         prior_eic_disallowance_review: parsed.prior_eic_disallowance_review,
+        eic_tax_residency_review: parsed.eic_tax_residency_review,
         mfs_separation_reviewed:
           parsed.mfs_eitc_separation_review !== undefined,
         filer_has_valid_ssns: filer.eitc,

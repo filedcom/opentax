@@ -40,6 +40,40 @@ export const childEicFilerReviewSchema = z.object({
   relationship_age_residence_record_reference: z.string().trim().min(1),
 }).strict();
 
+/** Pub. 596 rule 4: any nonresident period needs a joint full-year election. */
+export const eicTaxResidencyReviewSchema = z.discriminatedUnion("status", [
+  z.object({
+    status: z.literal("all_year_resident"),
+    taxpayer_status_record_reference: z.string().trim().min(1),
+    spouse_status_record_reference: z.string().trim().min(1).optional(),
+  }).strict(),
+  z.object({
+    status: z.literal("joint_new_election"),
+    elected_person: z.enum(["taxpayer", "spouse"]),
+    elected_spouse_nonresident_at_year_end_verified: z.literal(true),
+    other_spouse_citizen_or_resident_at_year_end_verified: z.literal(true),
+    worldwide_income_included_verified: z.literal(true),
+    status_record_reference: z.string().trim().min(1),
+    signed_statement_file_name: z.string().trim().min(1),
+    signed_statement_pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+    statement_signed_by_both_verified: z.literal(true),
+  }).strict(),
+  z.object({
+    status: z.literal("joint_prior_election"),
+    elected_person: z.enum(["taxpayer", "spouse"]),
+    election_still_in_effect_verified: z.literal(true),
+    at_least_one_spouse_citizen_or_resident_during_2025_verified: z.literal(
+      true,
+    ),
+    worldwide_income_included_verified: z.literal(true),
+    prior_joint_return_reference: z.string().trim().min(1),
+    prior_signed_statement_reference: z.string().trim().min(1),
+  }).strict(),
+]);
+export type EicTaxResidencyReview = z.infer<
+  typeof eicTaxResidencyReviewSchema
+>;
+
 export const priorEicDisallowanceReviewSchema = z.discriminatedUnion("status", [
   z.object({
     status: z.literal("none"),
@@ -102,6 +136,7 @@ export const inputSchema = z.object({
   childless_eic_review: childlessEicReviewSchema.optional(),
   child_eic_filer_review: childEicFilerReviewSchema.optional(),
   prior_eic_disallowance_review: priorEicDisallowanceReviewSchema.optional(),
+  eic_tax_residency_review: eicTaxResidencyReviewSchema.optional(),
 
   // Investment income (interest, dividends, capital gains, rents)
   // If investment_income > eitcInvestmentIncomeLimit, no EITC allowed
@@ -196,6 +231,16 @@ export function priorEicDisallowanceEligible(
       review.disallowance_notice_reference;
 }
 
+export function eicTaxResidencyEligible(input: EitcInput): boolean {
+  const review = input.eic_tax_residency_review;
+  if (!review) return false;
+  if (review.status === "all_year_resident") {
+    return input.filing_status !== FilingStatus.MFJ ||
+      review.spouse_status_record_reference !== undefined;
+  }
+  return input.filing_status === FilingStatus.MFJ;
+}
+
 function computeEitc(
   input: EitcInput,
   investmentIncomeLimit: number,
@@ -207,6 +252,7 @@ function computeEitc(
   const isJoint = isJointFiler(input.filing_status);
 
   if (input.filer_has_valid_ssns !== true) return 0;
+  if (!eicTaxResidencyEligible(input)) return 0;
   if (input.form2555_filed === true) return 0;
   if (!priorEicDisallowanceEligible(input, children)) return 0;
 

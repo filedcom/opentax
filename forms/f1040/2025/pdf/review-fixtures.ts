@@ -74,6 +74,11 @@ const singleGeneral = {
     irs_account_record_reference: "Synthetic IRS account transcript review",
     no_nonclerical_disallowance_since_1996_verified: true,
   },
+  eic_tax_residency_review: {
+    status: "all_year_resident",
+    taxpayer_status_record_reference: "Synthetic 2025 resident status review",
+    spouse_status_record_reference: "Synthetic 2025 spouse status review",
+  },
   address_line1: "1 Example Way",
   address_city: "Austin",
   address_state: "TX",

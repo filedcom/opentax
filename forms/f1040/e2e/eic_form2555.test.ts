@@ -22,6 +22,10 @@ const general = {
     irs_account_record_reference: "Synthetic IRS account transcript review",
     no_nonclerical_disallowance_since_1996_verified: true,
   },
+  eic_tax_residency_review: {
+    status: "all_year_resident",
+    taxpayer_status_record_reference: "Synthetic 2025 resident status review",
+  },
 };
 const w2 = {
   employee_ssn: "111-22-3333",

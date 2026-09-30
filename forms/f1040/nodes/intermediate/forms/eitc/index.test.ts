@@ -25,6 +25,11 @@ function compute(input: Record<string, unknown>) {
       irs_account_record_reference: "Synthetic IRS account transcript review",
       no_nonclerical_disallowance_since_1996_verified: true,
     },
+    eic_tax_residency_review: {
+      status: "all_year_resident",
+      taxpayer_status_record_reference: "Synthetic 2025 resident status review",
+      spouse_status_record_reference: "Synthetic 2025 spouse status review",
+    },
     ...input,
   });
 }
@@ -51,6 +56,54 @@ Deno.test("filing Form 2555 disqualifies EIC even with earned income and a child
     filing_status: FilingStatus.Single,
     form2555_filed: true,
   });
+});
+
+Deno.test("EIC requires reviewed all-year resident status or a valid joint election", () => {
+  const base = {
+    earned_income: 15_000,
+    qualifying_children: 1,
+    filing_status: FilingStatus.Single,
+  };
+  assertEquals(getCredit(base) > 0, true);
+  noCredit({ ...base, eic_tax_residency_review: undefined });
+  noCredit({
+    ...base,
+    eic_tax_residency_review: {
+      status: "joint_new_election",
+      elected_person: "taxpayer",
+      elected_spouse_nonresident_at_year_end_verified: true,
+      other_spouse_citizen_or_resident_at_year_end_verified: true,
+      worldwide_income_included_verified: true,
+      status_record_reference: "2025 status record",
+      signed_statement_file_name: "ResidentElection.pdf",
+      signed_statement_pdf_sha256: "a".repeat(64),
+      statement_signed_by_both_verified: true,
+    },
+  });
+  noCredit({
+    ...base,
+    filing_status: FilingStatus.MFJ,
+    eic_tax_residency_review: {
+      status: "all_year_resident",
+      taxpayer_status_record_reference: "2025 taxpayer status record",
+    },
+  });
+  assertEquals(
+    getCredit({
+      ...base,
+      filing_status: FilingStatus.MFJ,
+      eic_tax_residency_review: {
+        status: "joint_prior_election",
+        elected_person: "spouse",
+        election_still_in_effect_verified: true,
+        at_least_one_spouse_citizen_or_resident_during_2025_verified: true,
+        worldwide_income_included_verified: true,
+        prior_joint_return_reference: "2024 joint Form 1040",
+        prior_signed_statement_reference: "2024 signed election statement",
+      },
+    }) > 0,
+    true,
+  );
 });
 
 Deno.test("childless EIC requires DOB, U.S. main home, and reviewed dependent status", () => {

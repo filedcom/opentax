@@ -5,6 +5,7 @@ import {
 import {
   childEicFilerEligible,
   childlessEicEligible,
+  eicTaxResidencyEligible,
   priorEicDisallowanceEligible,
 } from "../nodes/intermediate/forms/eitc/index.ts";
 import { inputSchema as f8862InputSchema } from "../nodes/inputs/f8862/index.ts";
@@ -48,6 +49,9 @@ export function assertEicSource(
     }, result.qualifying_children as number);
   if (!source.success || !priorReviewEligible) {
     throw new Error("Form 1040 EIC needs reviewed prior-disallowance history");
+  }
+  if (!eicTaxResidencyEligible(source.data)) {
+    throw new Error("Form 1040 EIC needs reviewed full-year resident status");
   }
   if (
     source.data.filing_status !== filingStatus ||

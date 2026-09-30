@@ -6,6 +6,7 @@ import { appendDependentContinuation } from "./dependent_continuation.ts";
 import { schedule1aPdf } from "./schedule1a.ts";
 import { assertMfsEitcSource } from "../../mfs-eitc-source.ts";
 import { assertEicSource } from "../../eic-source.ts";
+import { residentElectionName } from "../../resident-election-source.ts";
 import {
   DependentCreditCategory,
   dependentFilingSchema,
@@ -85,6 +86,16 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     domainKey: "filing_status",
     pdfField: "topmostSubform[0].Page1[0].c1_8[1]",
     whenValue: "qss",
+  },
+  {
+    kind: "checkbox",
+    domainKey: "print_resident_election",
+    pdfField: "topmostSubform[0].Page1[0].c1_9[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_resident_election_name",
+    pdfField: "topmostSubform[0].Page1[0].f1_30[0]",
   },
 
   // ── Page 1: Digital assets question (Yes = c1_10[0], No = c1_10[1]) ───────
@@ -558,6 +569,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
   // season; this module is the 2025 form and must always fetch the 2025 PDF.
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040--2025.pdf",
   projectFields(fields, allPending) {
+    const residentElection = residentElectionName(fields, allPending);
     assertMfsEitcSource(
       fields.filing_status,
       fields.mfs_eitc_separation_rule,
@@ -659,6 +671,8 @@ export const irs1040Pdf: PdfFormDescriptor = {
     return {
       ...fields,
       ...printedDependents,
+      print_resident_election: residentElection !== undefined,
+      print_resident_election_name: residentElection,
       print_mfs_spouse_full_name: printMfsSpouseName,
       print_more_than_four_dependents: dependents.length > 4,
       ...(iraRollover && fields.line4b_ira_taxable === 0

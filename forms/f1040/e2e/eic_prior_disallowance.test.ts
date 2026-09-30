@@ -32,6 +32,10 @@ const general = {
     disallowed_year: 2023,
     disallowance_notice_reference: "Synthetic 2023 IRS notice",
   },
+  eic_tax_residency_review: {
+    status: "all_year_resident",
+    taxpayer_status_record_reference: "Synthetic 2025 resident status review",
+  },
 };
 const w2 = {
   employee_ssn: "111-22-3333",

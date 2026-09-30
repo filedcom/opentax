@@ -19,6 +19,7 @@ import {
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import { assertMfsEitcSource } from "../../mfs-eitc-source.ts";
 import { assertEicSource } from "../../eic-source.ts";
+import { residentElectionName } from "../../resident-election-source.ts";
 
 export interface Fields {
   filing_status?: string;
@@ -32,6 +33,11 @@ export interface Fields {
   spouse_tin_issued_by_due_date?: boolean;
   digital_assets?: boolean;
   main_home_in_us_over_half_year?: boolean;
+  eic_tax_residency_review?: unknown;
+  taxpayer_first_name?: string;
+  taxpayer_last_name?: string;
+  spouse_first_name?: string;
+  spouse_last_name?: string;
   dependent_details?: readonly DependentFiling[];
   dependent_count?: number;
   qualifying_child_tax_credit_count?: number;
@@ -562,6 +568,12 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
   if (mainHomeInUS !== undefined && typeof mainHomeInUS !== "boolean") {
     throw new Error("Form 1040 U.S. main-home answer must be Yes or No");
   }
+  const residentElection = residentElectionName(
+    fields,
+    context?.pending,
+    context?.attachmentSha256ByFileName,
+    true,
+  );
 
   // VirtualCurAcquiredDurTYInd is required by IRS1040.xsd §338 (BooleanType).
   // Preserve the answer supplied on the general input rather than overwriting Yes.
@@ -570,6 +582,12 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
       ? [element("MainHomeInUSOverHalfYrInd", "X")]
       : []),
     element("IndividualReturnFilingStatusCd", statusCode),
+    ...(residentElection
+      ? [elements("NRASpouseTreatedAsResidentGrp", [
+        element("NRASpouseTreatedAsResidentInd", "X"),
+        element("SpouseNm", residentElection),
+      ])]
+      : []),
     element(
       "VirtualCurAcquiredDurTYInd",
       digitalAssets === true ? "true" : "false",

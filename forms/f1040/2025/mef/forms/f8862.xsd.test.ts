@@ -48,6 +48,10 @@ const generalEicSource = {
     disallowed_year: 2023,
     disallowance_notice_reference: "Synthetic 2023 IRS notice",
   },
+  eic_tax_residency_review: {
+    status: "all_year_resident",
+    taxpayer_status_record_reference: "Synthetic 2025 resident status review",
+  },
 };
 const childlessEicSource = {
   ...generalEicSource,
@@ -185,6 +189,7 @@ Deno.test({
       },
       f1040: {
         filing_status: "single",
+        eic_tax_residency_review: generalEicSource.eic_tax_residency_review,
         taxpayer_ssn: "123456789",
         taxpayer_ssn_valid_for_employment: true,
         taxpayer_ssn_issued_before_due_date: true,
@@ -246,6 +251,7 @@ Deno.test({
       },
       f1040: {
         filing_status: "single",
+        eic_tax_residency_review: childlessEicSource.eic_tax_residency_review,
         main_home_in_us_over_half_year: true,
         line27_eitc: 500,
       },
@@ -274,6 +280,7 @@ Deno.test({
       },
       f1040: {
         filing_status: "single",
+        eic_tax_residency_review: childlessEicSource.eic_tax_residency_review,
         main_home_in_us_over_half_year: true,
         line27_eitc: 500,
       },
