@@ -13,7 +13,8 @@ import { reconcileForm4952Itemization } from "./form4952_itemization.ts";
 
 const schedule1Schema = z.object({
   line5_schedule_e: z.number(),
-  line9_total_other_income: z.number(),
+  line9_total_other_income: z.number().optional(),
+  line10_total_additional_income: z.number(),
 });
 const scheduleASchema = z.object({
   line_9_investment_interest: z.number().nonnegative(),
@@ -189,7 +190,8 @@ export function reconcileForm4952K1CodeBRoyaltyPath(
   }
   if (
     schedule1.data.line5_schedule_e !== netRoyalty ||
-    schedule1.data.line9_total_other_income !== netRoyalty ||
+    (schedule1.data.line9_total_other_income ?? 0) !== 0 ||
+    schedule1.data.line10_total_additional_income !== netRoyalty ||
     form1040.data.line8_additional_income !== netRoyalty ||
     (form1040.data.line2b_taxable_interest ?? 0) !== box5 ||
     scheduleA.data.line_9_investment_interest !== lines.line8 ||

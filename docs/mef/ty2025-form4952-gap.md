@@ -21,7 +21,16 @@ require. The 1099 may not carry other income or withholding boxes; additional
 royalties, expenses, foreign-tax interaction, elections, AMT adjustments, or K-1
 code B remain outside this slice. Separately entered investment interest must
 explicitly exclude royalty-attributable interest, which belongs on Schedule E.
-Source, XML, and PDF cases are written but unrun.
+The direct source and serializer cases are written. A full-return portfolio
+royalty case passed local TY2025 v5.4 XSD and filled-PDF review on 2026-09-30
+after correcting its final Schedule 1 reconciliation: the $800 royalty belongs
+on line 5 and contributes to line 10, while line 9 remains empty. The
+seven-page packet prints $800 once on Schedule E and Schedule 1, $300 on Form
+4952 line 8 and Schedule A line 9, and $18,300 in selected itemized deductions.
+The inspected snapshot is
+`.state/research/ty2025-filled-pdf-review/2026-09-30-form4952-misc-royalty/filled-return.pdf`
+with SHA-256
+`c6ccaa7e940a27d5717cdbc091c5bb534e57f3f44850d4b028bd2eb200cdb98c`.
 
 The royalty cannot be classified to Schedule C or have an empty box 2. Omitting
 box 2 routing defaults to Schedule E; zero or unspecified box 2 income produces
@@ -48,7 +57,9 @@ netting all investment-property gains, losses, and capital-loss carryovers
 before lines 4d/4e; a positive per-broker-transaction shortcut would overstate
 the deduction. The AMT refigure also still relies on asserted source adjustments
 rather than a full AMT-basis reconstruction. No local tests, typecheck, XSD,
-PDF, or IRS ATS validation has run in the build-first pass.
+PDF, or IRS ATS validation had run in the earlier build-first pass. The bounded
+royalty case above supplies local XSD and filled-PDF evidence only; IRS rules,
+ATS, and authenticated loan/source evidence remain open.
 
 No compatibility layer, fallback, or dual API was added.
 

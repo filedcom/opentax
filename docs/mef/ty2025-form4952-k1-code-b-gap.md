@@ -21,6 +21,9 @@ now checks the one K-1 and Schedule E royalty row, the Form 4952 numbered
 lines, and the finalized Schedule 1, Schedule A, and Form 1040 amounts.
 The export guard remains closed pending the product's source-document
 verification standard and verification of that reconciliation in the full batch.
+The standalone reconciliation now checks the royalty on Schedule 1 line 5 and
+the resulting total on line 10, rather than incorrectly expecting it on line 9;
+its four focused cases pass. This does not open code B export.
 
 Box 20 code B remains **blocked for export**. The typed issuer crosswalk now
 names the same box 13 code I expense, character and royalty property and checks

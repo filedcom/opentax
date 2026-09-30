@@ -65,7 +65,7 @@ const filer = {
 const pending = {
   f1099m: { f1099ms: [misc] },
   schedule_e: { schedule_es: [property], royalty_income: 800 },
-  schedule1: { line5_schedule_e: 800, line9_total_other_income: 800 },
+  schedule1: { line5_schedule_e: 800, line10_total_additional_income: 800 },
   schedule_a: { line_9_investment_interest: 300 },
   standard_deduction: { itemized_deductions: 20_000 },
   income_tax_calculation: { taking_standard_deduction: false },
@@ -113,8 +113,9 @@ Deno.test("one 1099-MISC portfolio royalty posts once to Schedule E and Form 495
     [fields],
   );
   assertEquals(
-    scheduleEPdf.instances?.(pdf ?? {}, filer, pending),
-    [pdf!],
+    scheduleEPdf.instances?.(pdf ?? {}, filer, pending)?.[0]
+      .property_0_line4,
+    800,
   );
 });
 
@@ -145,6 +146,14 @@ Deno.test("1099-MISC portfolio royalty rejects source, property, deduction, and 
     {
       ...pending,
       schedule1: { ...pending.schedule1, line5_schedule_e: 700 },
+    },
+    {
+      ...pending,
+      schedule1: { ...pending.schedule1, line9_total_other_income: 800 },
+    },
+    {
+      ...pending,
+      schedule1: { ...pending.schedule1, line10_total_additional_income: 801 },
     },
     {
       ...pending,

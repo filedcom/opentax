@@ -78,7 +78,7 @@ const fields = { ...input, ...calculateForm4952(input) };
 const pending = {
   k1_partnership: { k1_partnerships: [k1] },
   schedule_e: { schedule_es: [property] },
-  schedule1: { line5_schedule_e: 250, line9_total_other_income: 250 },
+  schedule1: { line5_schedule_e: 250, line10_total_additional_income: 250 },
   schedule_a: { line_9_investment_interest: 250 },
   standard_deduction: { itemized_deductions: 20_000 },
   income_tax_calculation: { taking_standard_deduction: false },
