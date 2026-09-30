@@ -5,6 +5,7 @@ import { itemSchema } from "../../../nodes/inputs/f8915f/index.ts";
 import { form8915FPdf } from "./f8915f.ts";
 
 const item = itemSchema.parse({
+  retirement_source_kind: "plan",
   owner: "T",
   recipient_ssn: "111223333",
   fema_number: "DR-4871-TX",
@@ -13,7 +14,8 @@ const item = itemSchema.parse({
   distribution_date: "2025-06-01",
   qualified_area_home_review_reference: "reviewed principal home in Texas",
   economic_loss_review_reference: "reviewed 2025 flood loss",
-  eligible_plan_review_reference: "reviewed eligible employer plan",
+  eligible_retirement_source_review_reference:
+    "reviewed eligible employer plan",
   no_prior_distributions_review_reference: "reviewed 2025 disaster ledger",
   no_repayments_review_reference: "reviewed retirement repayment ledger",
   source_1099r_document_reference: "issued 2025 1099-R account 123",
@@ -141,4 +143,32 @@ Deno.test("Form 8915-F PDF leaves the full-inclusion election clear for a three-
   assertEquals(fields.line11_election, false);
   assertEquals(fields.line11, 6_667);
   assertEquals(fields.line15, 6_667);
+});
+
+Deno.test("Form 8915-F PDF maps a traditional IRA to Part I and Part III", () => {
+  const ira = {
+    ...item,
+    retirement_source_kind: "traditional_ira" as const,
+    no_ira_basis_review_reference: "reviewed nondeductible basis history",
+    full_inclusion_elected: false,
+  };
+  const fields = form8915FPdf.instances!({ f8915fs: [ira] }, filer, {
+    ...pending,
+    f1099r: {
+      f1099rs: [{
+        ...pending.f1099r.f1099rs[0],
+        box7_ira_simple_indicator: true,
+        form8915f_treatment: "three_years",
+      }],
+    },
+    f1040: { line4a_ira_gross: 20_000, line4b_ira_taxable: 6_667 },
+  })[0];
+  assertEquals(fields.line3a, 20_000);
+  assertEquals(fields.line3b, 20_000);
+  assertEquals(fields.line16_yes, true);
+  assertEquals(fields.line17_no, true);
+  assertEquals(fields.line20, 20_000);
+  assertEquals(fields.line22, 6_667);
+  assertEquals(fields.line26, 6_667);
+  assertEquals(fields.line8_no, true);
 });

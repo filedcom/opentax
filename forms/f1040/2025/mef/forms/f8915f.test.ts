@@ -1,9 +1,10 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../mef/header.ts";
 import { itemSchema } from "../../../nodes/inputs/f8915f/index.ts";
-import { buildCurrentYearPlanForm8915F } from "./f8915f.ts";
+import { buildCurrentYearDistributionForm8915F } from "./f8915f.ts";
 
 const item = itemSchema.parse({
+  retirement_source_kind: "plan",
   owner: "T",
   recipient_ssn: "111223333",
   fema_number: "DR-4871-TX",
@@ -12,7 +13,8 @@ const item = itemSchema.parse({
   distribution_date: "2025-06-01",
   qualified_area_home_review_reference: "reviewed principal home in Texas",
   economic_loss_review_reference: "reviewed 2025 flood loss",
-  eligible_plan_review_reference: "reviewed eligible employer plan",
+  eligible_retirement_source_review_reference:
+    "reviewed eligible employer plan",
   no_prior_distributions_review_reference: "reviewed 2025 disaster ledger",
   no_repayments_review_reference: "reviewed retirement repayment ledger",
   source_1099r_document_reference: "issued 2025 1099-R account 123",
@@ -57,7 +59,7 @@ const pending = {
 };
 
 Deno.test("bounded Form 8915-F native document matches source and TY2025 XSD", async () => {
-  const xml = buildCurrentYearPlanForm8915F(item, { filer, pending });
+  const xml = buildCurrentYearDistributionForm8915F(item, { filer, pending });
   assertStringIncludes(
     xml,
     "<CalendarYrDisasterCd>2025</CalendarYrDisasterCd>",
@@ -107,7 +109,7 @@ Deno.test("bounded Form 8915-F native document matches source and TY2025 XSD", a
 Deno.test("bounded Form 8915-F native document rejects changed retirement income", () => {
   assertThrows(
     () =>
-      buildCurrentYearPlanForm8915F(item, {
+      buildCurrentYearDistributionForm8915F(item, {
         filer,
         pending: {
           ...pending,

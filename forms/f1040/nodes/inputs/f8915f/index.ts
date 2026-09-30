@@ -16,8 +16,9 @@ const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(
 );
 const referenceSchema = z.string().trim().min(1);
 
-/** One 2025 disaster, one fully taxable non-IRA distribution, one 1099-R. */
+/** One 2025 disaster, one fully taxable distribution, one 1099-R. */
 export const itemSchema = z.object({
+  retirement_source_kind: z.enum(["plan", "traditional_ira"]),
   owner: z.enum(["T", "S"]),
   recipient_ssn: z.string().regex(/^\d{9}$/),
   fema_number: z.string().regex(/^DR-\d{4}-[A-Z]{2}$/),
@@ -26,7 +27,8 @@ export const itemSchema = z.object({
   distribution_date: dateSchema,
   qualified_area_home_review_reference: referenceSchema,
   economic_loss_review_reference: referenceSchema,
-  eligible_plan_review_reference: referenceSchema,
+  eligible_retirement_source_review_reference: referenceSchema,
+  no_ira_basis_review_reference: referenceSchema.optional(),
   no_prior_distributions_review_reference: referenceSchema,
   no_repayments_review_reference: referenceSchema,
   source_1099r_document_reference: referenceSchema,
@@ -57,7 +59,28 @@ export const itemSchema = z.object({
       code: z.ZodIssueCode.custom,
       path: ["taxable_distribution"],
       message:
-        "Form 8915-F full-inclusion path needs a fully taxable distribution",
+        "Form 8915-F current-year path needs a fully taxable distribution",
+    });
+  }
+  if (
+    item.retirement_source_kind === "traditional_ira" &&
+    item.no_ira_basis_review_reference === undefined
+  ) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["no_ira_basis_review_reference"],
+      message:
+        "Form 8915-F traditional IRA needs reviewed Form 8606 basis history",
+    });
+  }
+  if (
+    item.retirement_source_kind === "plan" &&
+    item.no_ira_basis_review_reference !== undefined
+  ) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["no_ira_basis_review_reference"],
+      message: "Form 8915-F plan distribution cannot claim IRA basis review",
     });
   }
 });
@@ -68,29 +91,37 @@ export const inputSchema = z.object({
 
 export type Form8915FItem = z.infer<typeof itemSchema>;
 
-/** Values shared by the future MeF, PDF and Form 1040 reconciliation. */
-export function currentYearPlanLines(raw: Form8915FItem) {
+/** First-year values shared by MeF, PDF and Form 1040 reconciliation. */
+export function currentYearDistributionLines(raw: Form8915FItem) {
   const item = itemSchema.parse(raw);
   const amount = item.gross_distribution;
+  const plan = item.retirement_source_kind === "plan";
   const thisYear = item.full_inclusion_elected
     ? amount
     : Math.round(amount / 3);
   return {
     line1e_available: 22_000,
-    line2a_plan_distributions: amount,
-    line2b_qualified_plan_distributions: amount,
+    line2a_plan_distributions: plan ? amount : 0,
+    line2b_qualified_plan_distributions: plan ? amount : 0,
+    line3a_ira_distributions: plan ? 0 : amount,
+    line3b_qualified_ira_distributions: plan ? 0 : amount,
     line5b_qualified_distributions: amount,
     line6_total_qualified: amount,
-    line8_plan_qualified: amount,
+    line8_plan_qualified: plan ? amount : 0,
     line9_cost: 0,
-    line10_taxable: amount,
-    line11_current_income: thisYear,
-    line13_total_income: thisYear,
-    line15_form1040_line5b: thisYear,
+    line10_taxable: plan ? amount : 0,
+    line11_current_income: plan ? thisYear : 0,
+    line13_total_income: plan ? thisYear : 0,
+    line15_form1040_line5b: plan ? thisYear : 0,
+    line20_ira_qualified: plan ? 0 : amount,
+    line21_ira_taxable: plan ? 0 : amount,
+    line22_current_ira_income: plan ? 0 : thisYear,
+    line24_total_ira_income: plan ? 0 : thisYear,
+    line26_form1040_line4b: plan ? 0 : thisYear,
   } as const;
 }
 
-export function verifyCurrentYearPlanSource(
+export function verifyCurrentYearDistributionSource(
   raw: Form8915FItem,
   pending1099R: unknown,
   filer: FilerIdentity | undefined,
@@ -118,11 +149,17 @@ export function verifyCurrentYearPlanSource(
       source.box2a_taxable_amount === item.taxable_distribution &&
       source.form8915f_treatment ===
         (item.full_inclusion_elected ? "full" : "three_years") &&
-      source.box7_ira_simple_indicator !== true &&
+      (source.box7_ira_simple_indicator === true) ===
+        (item.retirement_source_kind === "traditional_ira") &&
       ["2", "7"].includes(source.box7_distribution_code) &&
       source.exclude_4972 !== true &&
       source.exclude_8606_roth !== true &&
       source.rollover_code === undefined &&
+      source.ira_rollover === undefined &&
+      (source.prior_ira_basis ?? 0) === 0 &&
+      source.box11_first_year_roth === undefined &&
+      source.qcd_full !== true &&
+      (source.qcd_partial_amount ?? 0) === 0 &&
       (source.pso_premium ?? 0) === 0 &&
       source.simplified_method_flag !== true &&
       source.disability_as_wages !== true &&
@@ -135,7 +172,7 @@ export function verifyCurrentYearPlanSource(
     (parsed.success && parsed.data.f1099rs.length !== 1)
   ) {
     throw new Error(
-      "Form 8915-F needs one matching fully taxable non-IRA Form 1099-R source",
+      "Form 8915-F needs one matching fully taxable Form 1099-R source",
     );
   }
 }
@@ -184,7 +221,7 @@ class F8915FNode extends TaxNode<typeof inputSchema> {
   ): NodeResult {
     const input = inputSchema.parse(rawInput);
     if ((input.f8915fs?.length ?? 0) > 0) {
-      currentYearPlanLines(input.f8915fs![0]);
+      currentYearDistributionLines(input.f8915fs![0]);
     }
     return { outputs: [] };
   }

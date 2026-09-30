@@ -568,17 +568,19 @@ function validateItem(item: R1099Item): void {
       !item.source_document_reference || !item.account_number ||
       !item.box13_date_of_payment ||
       item.box2a_taxable_amount !== item.box1_gross_distribution ||
-      item.box7_ira_simple_indicator === true ||
       !["2", "7"].includes(item.box7_distribution_code) ||
       item.exclude_4972 === true || item.exclude_8606_roth === true ||
       item.rollover_code !== undefined || (item.pso_premium ?? 0) > 0 ||
       item.simplified_method_flag === true ||
+      (item.prior_ira_basis ?? 0) > 0 ||
+      item.box11_first_year_roth !== undefined ||
+      item.qcd_full === true || (item.qcd_partial_amount ?? 0) > 0 ||
       item.disability_as_wages === true ||
       item.no_distribution_received === true
     )
   ) {
     throw new Error(
-      "Form 1099-R Form 8915-F treatment needs a fully taxable non-IRA plan distribution",
+      "Form 1099-R Form 8915-F treatment needs a fully taxable retirement distribution",
     );
   }
   if (item.exclude_4972 === true && item.no_distribution_received === true) {
