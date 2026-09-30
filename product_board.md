@@ -5,8 +5,8 @@
 This is an open release gate, not a list of completed forms. The current source
 registries contain 126 native MeF descriptors and 89 PDF descriptors; the
 [coverage decision queue](docs/mef/ty2025-form1040-coverage-decisions.md) and
-[form audit](docs/mef/ty2025-form1040-form-audit.md) retain an earlier
-124-descriptor snapshot and need a refreshed census. The `CarryforwardGeneralBusinessCr` descriptor
+[form audit](docs/mef/ty2025-form1040-form-audit.md) now account for the
+126-descriptor registry and its limits. The `CarryforwardGeneralBusinessCr` descriptor
 remains filing-blocked. A registered route or focused test does not
 establish source-to-filing coverage; check off only the specific gate proven by
 its recorded evidence.
@@ -423,9 +423,10 @@ including a two-gift return with two linked native forms and attachments.
 
 ## Coverage inventory and decisions
 
-- [ ] Resolve the unsupported-path disposition in **each of the 124 registered MeF descriptor rows** of the [form-by-form audit](docs/mef/ty2025-form1040-form-audit.md). For each row, record its applicable trigger, public/source facts, calculation, Form 1040 join, native document, PDF or statement, focused cases, XSD evidence, and final support or explicitly approved rejection boundary.
+- [ ] Resolve the unsupported-path disposition in **each of the 126 registered MeF descriptor rows** of the [form-by-form audit](docs/mef/ty2025-form1040-form-audit.md). For each row, record its applicable trigger, public/source facts, calculation, Form 1040 join, native document, PDF or statement, focused cases, XSD evidence, and final support or explicitly approved rejection boundary.
 - [ ] Review the **211 TY2025 IRS schema document roots** in the [root census](docs/mef/ty2025-xsd-document-root-census.md) against actual Form 1040 applicability. Resolve every still-unregistered or source-literal-only root in the [applicability crosswalk](docs/mef/ty2025-unregistered-root-applicability.md); neither a source literal nor absence from a registry is a support/exclusion decision.
 - [ ] Reconcile the registered-document audit, root crosswalk, [conditional-schedule audit](docs/mef/ty2025-conditional-schedule-applicability.md), [coverage decision queue](docs/mef/ty2025-form1040-coverage-decisions.md), and actual registries after implementation so their counts, triggers, and unsupported branches agree.
+  - [x] Refresh the 2026-09-30 registry census after the IRA rollover statement and bounded Form 8915-F registration: 126 MeF and 89 PDF descriptors, with 19 main/schedule, 78 numbered, and 29 supporting MeF audit rows. Recheck all 211 schema roots against source literals: 100 present and 111 absent; a literal for Forms 2106 or 8997 remains staging rather than registration. Per-route dispositions and later registrations still require reconciliation.
 - [ ] Decide, with the user, which current-return paths are separate workflows: amended Form 1040-X; payment/account roots (1062, 965, estimated tax, Form T, payment); recipient copies of RRB-1042-S and SSA-1042-S; and optional Forms 4547 and 9000. Preserve any income, withholding, tax, election, or amendment consequences on Form 1040.
 - [ ] Decide conditional filer ownership individually for entity-associated roots, including Forms 8858/Schedule M and 1118, entity-issued 1065 Schedule D and 8825, and trust K-1 box 13 code B backup withholding. Build any individual Form 1040 attachment that remains required; do not blanket-exclude an entity-root family.
 - [ ] Audit [source-only and sparsely mapped forms](docs/mef/ty2025-source-only-and-sparse-map-gap.md): identify every positive filing trigger, confirm each emitted field and required statement/attachment, and replace any optimistic mapping with a verified route or explicit rejection.
