@@ -20,24 +20,42 @@ import {
   investment1245DispositionSchema,
 } from "../../../nodes/intermediate/forms/form4797/investment_1245.ts";
 import { transactionSchema as form8949TransactionSchema } from "../../../nodes/intermediate/forms/form8949/index.ts";
+import { calculateInstallmentSale } from "../../../nodes/intermediate/forms/form6252/calculation.ts";
+import { inputSchema as form6252InputSchema } from "../../../nodes/intermediate/forms/form6252/index.ts";
 import { box11Line10SourceSchema } from "../../../nodes/inputs/k1_partnership/box11_line10.ts";
 import { appendForm4797Line10Statement } from "./f4797_line10_statement.ts";
 
 // IRS Form 4797 (2025) AcroForm field names.
-// Part I  — Section 1231 gains: line 9 total.
+// Part I  — installment/exchange gain and section 1231 lines 4–9.
 // Part II — ordinary gains: line 18b total.
 // Part III — recapture: 1245 (line 22) and 1250 (line 26c).
 // Nonrecaptured 1231 loss from prior years: line 8.
 const fields: ReadonlyArray<PdfFieldEntry> = [
   {
     kind: "text",
-    domainKey: "nonrecaptured_1231_loss",
-    pdfField: "topmostSubform[0].Page1[0].TableLine2[0].Row1[0].f1_7[0]",
+    domainKey: "gain_form6252",
+    pdfField: "topmostSubform[0].Page1[0].f1_35[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "gain_form8824",
+    pdfField: "topmostSubform[0].Page1[0].f1_36[0]",
   },
   {
     kind: "text",
     domainKey: "section_1231_gain",
-    pdfField: "topmostSubform[0].Page1[0].TableLine2[0].Row1[0].f1_10[0]",
+    pdfField: "topmostSubform[0].Page1[0].f1_38[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "nonrecaptured_1231_loss",
+    pdfField: "topmostSubform[0].Page1[0].f1_39[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "pdf_section_1231_line9",
+    pdfField: "topmostSubform[0].Page1[0].f1_40[0]",
+    printZero: true,
   },
   {
     kind: "text",
@@ -349,6 +367,30 @@ export const form4797Pdf: PdfFormDescriptor = {
       throw new Error(
         "Form 4797 PDF needs property-level line 2/10 row mapping for passive sales",
       );
+    }
+    if (typeof fields.gain_form6252 === "number" && fields.gain_form6252 > 0) {
+      if (!allPending.form6252) {
+        throw new Error("Form 4797 PDF line 4 needs its Form 6252 source");
+      }
+      const sales = form6252InputSchema.parse(allPending.form6252).f6252s;
+      const gain = sales.filter((sale) => sale.is_capital_asset === false)
+        .reduce((sum, sale) => sum + calculateInstallmentSale(sale).line26, 0);
+      if (gain !== fields.gain_form6252) {
+        throw new Error("Form 4797 PDF line 4 must match Form 6252 line 26");
+      }
+    }
+    const priorLoss = fields.nonrecaptured_1231_loss;
+    if (typeof priorLoss === "number" && priorLoss > 0) {
+      const gain = fields.section_1231_gain;
+      if (typeof gain !== "number" || gain <= 0) {
+        throw new Error(
+          "Form 4797 PDF line 8 needs a positive section 1231 line 7 gain",
+        );
+      }
+      return {
+        ...fields,
+        pdf_section_1231_line9: Math.max(0, gain - priorLoss),
+      };
     }
     return fields;
   },
