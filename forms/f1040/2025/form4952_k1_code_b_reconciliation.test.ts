@@ -6,6 +6,7 @@ const k1 = {
   partnership_name: "Mineral Partnership",
   partnership_ein: "123456789",
   source_document_reference: "2025-issued-k1",
+  recipient_tin: "123456789",
   investment_property_for_form4952: true,
   box7_royalties: 600,
   box7_royalty_reporting: {

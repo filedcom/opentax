@@ -4,6 +4,11 @@ import { k1Partnership } from "../../../nodes/inputs/k1_partnership/index.ts";
 import { calculateForm4952 } from "../../../nodes/intermediate/forms/form4952/index.ts";
 import { form4952Pdf } from "../../pdf/forms/f4952.ts";
 import { form4952 } from "./f4952.ts";
+import { testFiler } from "../test-filer.ts";
+
+const filer = testFiler();
+const build: typeof form4952.build = (fields, context) =>
+  form4952.build(fields, { ...context, filer });
 
 const payer = {
   payer_name: "Investment Bank",
@@ -14,6 +19,7 @@ const partnership = {
   partnership_name: "Portfolio Partnership",
   partnership_ein: "123456789",
   source_document_reference: "filed-2025-k1-portfolio",
+  recipient_tin: "123456789",
   box13_code_h_investment_interest: 300,
 };
 const inputs = {
@@ -62,7 +68,7 @@ Deno.test("Form 4952 limits sourced K-1 code H expense against 1099-INT income",
     300,
   );
   assertStringIncludes(
-    form4952.build(fields, { pending }),
+    build(fields, { pending }),
     "<InvestmentInterestExpDeductAmt>300</InvestmentInterestExpDeductAmt>",
   );
   assertEquals(form4952Pdf.projectFields?.(fields, pending), fields);
@@ -71,7 +77,7 @@ Deno.test("Form 4952 limits sourced K-1 code H expense against 1099-INT income",
 Deno.test("Form 4952 mixed K-1/1099-INT route rejects conflicting source facts", () => {
   assertThrows(
     () =>
-      form4952.build(fields, {
+      build(fields, {
         pending: { ...pending, form_1116: { foreign_tax_paid: 50 } },
       }),
     Error,
@@ -87,13 +93,13 @@ Deno.test("Form 4952 mixed K-1/1099-INT route rejects conflicting source facts",
     "needs source-backed investment-interest allocation",
   );
   assertThrows(
-    () => form4952.build(fields),
+    () => build(fields),
     Error,
-    "needs both sources",
+    "needs its issued partnership K-1 recipients",
   );
   assertThrows(
     () =>
-      form4952.build(fields, {
+      build(fields, {
         pending: {
           ...pending,
           f1099int: { f1099ints: [{ ...payer, box6: 10 }] },
@@ -115,7 +121,7 @@ Deno.test("Form 4952 mixed K-1/1099-INT route rejects conflicting source facts",
   );
   assertThrows(
     () =>
-      form4952.build({ ...fields, source_k1_investment_interest: 250 }, {
+      build({ ...fields, source_k1_investment_interest: 250 }, {
         pending,
       }),
     Error,
@@ -150,7 +156,7 @@ Deno.test("Form 4952 mixed route matches several K-1 and 1099-INT amounts withou
     f1040: { ...pending.f1040, line2b_taxable_interest: 750 },
   };
   assertStringIncludes(
-    form4952.build(multiFields, { pending: multiPending }),
+    build(multiFields, { pending: multiPending }),
     "<InvestmentInterestExpDeductAmt>450</InvestmentInterestExpDeductAmt>",
   );
   assertEquals(
@@ -159,7 +165,7 @@ Deno.test("Form 4952 mixed route matches several K-1 and 1099-INT amounts withou
   );
   assertThrows(
     () =>
-      form4952.build({
+      build({
         ...multiFields,
         source_k1_investment_interest: [200, 250],
       }, { pending: multiPending }),

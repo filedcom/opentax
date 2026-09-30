@@ -35,6 +35,7 @@ const permittedPartnershipFields = new Set([
   "partnership_name",
   "partnership_ein",
   "source_document_reference",
+  "recipient_tin",
   "investment_property_for_form4952",
   "box5_interest",
   "box13_code_h_investment_interest",
@@ -82,6 +83,7 @@ export function reconcileForm4952PartnershipPath(
     items.some((item) =>
       item.investment_property_for_form4952 !== true ||
       !item.partnership_ein || !item.source_document_reference ||
+      !item.recipient_tin ||
       (item.box5_interest ?? 0) <= 0 ||
       (item.box13_code_h_investment_interest ?? 0) <= 0 ||
       Object.keys(item).some((key) => !permittedPartnershipFields.has(key))

@@ -39,6 +39,7 @@ const permittedPartnershipFields = new Set([
   "partnership_name",
   "partnership_ein",
   "source_document_reference",
+  "recipient_tin",
   "box13_code_h_investment_interest",
 ]);
 
@@ -77,6 +78,7 @@ export function reconcileForm4952K1InterestAgainst1099Path(
       k1s.length ||
     k1s.some((item) =>
       !item.partnership_ein || !item.source_document_reference ||
+      !item.recipient_tin ||
       (item.box13_code_h_investment_interest ?? 0) <= 0 ||
       Object.keys(item).some((key) => !permittedPartnershipFields.has(key))
     ) ||

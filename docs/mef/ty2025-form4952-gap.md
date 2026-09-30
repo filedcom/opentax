@@ -147,13 +147,22 @@ finalized Schedule A line 9, and matches the income amounts to finalized Form
 1040 lines 2b, 3a, and 3b. Form 1040 line 12e must contain at least the line 8
 deduction. The route requires a positive separately entered investment-interest
 expense and an explicit zero-adjustment AMT refigure. Focused source, MeF, PDF,
-and rejection cases are written but unrun.
+and rejection cases were written earlier. A full-return case now passes local
+TY2025 v5.4 XSD and an inspected four-page PDF: $500 of 1099-INT interest and
+$400 of 1099-DIV ordinary dividends put $900 on Form 4952 line 4a, while its
+$100 qualified dividend is removed on line 4b. The $800 line 8 deduction
+matches Schedule A line 9 and the selected $18,800 itemized total; Form 4952
+line 7 shows the remaining $100 carryforward. The local snapshot is
+`.state/research/ty2025-filled-pdf-review/2026-09-30-form4952-combined-payers/filled-return.pdf`
+with SHA-256
+`eeb97cab2e70af950b204fde4a1b3ef4b1e237847173f154db32fea67067d92f`.
 
 The combined slice is not capital-gain distribution, foreign-source/foreign-tax,
 interest-adjustment, or election coverage. It does not independently establish
 loan tracing or payment. Non-1099 income paths other than the bounded
 partnership-K-1 route remain blocked at export. The full test, typecheck, XSD,
-and filled-PDF batch remains pending.
+and final full batch remain pending. The calculated $100 line 7 is not yet a
+durable accepted-filing carryforward or a verified 2026 import.
 
 ## Several ordinary interest and dividend payers
 
@@ -176,7 +185,9 @@ not prove debt tracing or the AMT refigure.
 One or more distinct 2025 partnership K-1s can each supply both box 5 portfolio
 interest and box 13 code H investment interest for Form 4952. The bounded
 MeF/PDF route requires each partnership EIN, unique source-document reference,
-investment-property affirmation, and no other modeled K-1 amounts. Each
+recipient TIN, investment-property affirmation, and no other modeled K-1
+amounts. Final native and PDF filing checks require each recipient to be the
+taxpayer or joint-filing spouse. Each
 accumulated Form 4952 source amount must match one K-1 box amount, independent
 of payer order. It recalculates every numbered line, checks line 8 against
 Schedule A line 9, and matches the box 5 sum to finalized Form 1040 line 2b and
@@ -186,10 +197,18 @@ be absent, and Form 1040 line 12e to equal the calculated Schedule A total, not
 merely exceed Form 4952 line 8. Foreign items, AMT adjustments, carryovers,
 elections, manually entered investment interest, and mixed sources beyond the
 separately bounded K-1/1099-INT and K-1/1099-DIV routes remain blocked at
-export. Focused positive and negative cases are written but unrun. The
+export. Focused positive, negative, and owner-mismatch cases pass. A full
+return with one recipient-owned K-1 box 5 amount of $500 and code H expense of
+$300 passes local TY2025 v5.4 XSD and an inspected four-page PDF; Form 4952
+line 8 and Schedule A line 9 both print $300, and Form 1040 selects $18,300
+of itemized deductions. The local snapshot is
+`.state/research/ty2025-filled-pdf-review/2026-10-01-form4952-k1-interest/filled-return.pdf`
+with SHA-256
+`e23d67da6fa16f46688ffa3e87260408a948b05f7aa8acbd0a212360676b61a8`.
+The
 source-document references identify the K-1s; they are not independent
 authentication of the issued form. The full validation batch and filled-PDF
-review are still pending.
+review for other K-1 combinations is still pending.
 
 ## Partnership K-1 expense against Form 1099-INT income
 

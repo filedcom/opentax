@@ -45,6 +45,7 @@ const permittedPartnershipFields = new Set([
   "partnership_name",
   "partnership_ein",
   "source_document_reference",
+  "recipient_tin",
   "investment_property_for_form4952",
   "box5_interest",
   "box7_royalties",
@@ -101,7 +102,7 @@ export function reconcileForm4952K1CodeBRoyaltyPath(
   if (
     k1s.length !== 1 || rows.length !== 1 || !k1 || !row || !codeB ||
     !codeI || !royalty || !source || !k1.partnership_ein ||
-    !k1.source_document_reference ||
+    !k1.source_document_reference || !k1.recipient_tin ||
     k1.investment_property_for_form4952 !== true ||
     gross <= 0 || interest <= 0 || expense <= 0 ||
     codeI.reported_amount !== codeB.reported_amount ||

@@ -6,6 +6,7 @@ import { reconcileForm4952PartnershipPath } from "../../form4952_partnership_rec
 import { reconcileForm4952K1InterestAgainst1099Path } from "../../form4952_k1_1099int_reconciliation.ts";
 import { reconcileForm4952K1InterestAgainst1099DivPath } from "../../form4952_k1_1099div_reconciliation.ts";
 import { reconcileForm4952MiscRoyaltyPath } from "../../form4952_misc_royalty_reconciliation.ts";
+import { assertForm4952K1Recipients } from "../../form4952_k1_recipient.ts";
 
 // TY2025 AcroForm order: f1_01/f1_02 are taxpayer name and identifying
 // number; the numbered form lines start at f1_03.
@@ -80,6 +81,12 @@ export const form4952Pdf: PdfFormDescriptor = {
     return fields;
   },
   instances(fields, filer, allPending) {
+    if (fields.source_k1_investment_interest !== undefined) {
+      if (!filer || !allPending) {
+        throw new Error("Form 4952 PDF K-1 source needs final filer identity");
+      }
+      assertForm4952K1Recipients(allPending, filer);
+    }
     if (fields.source_1099_royalties !== undefined) {
       if (!filer || !allPending) {
         throw new Error("Form 4952 PDF linked royalty needs filer identity");

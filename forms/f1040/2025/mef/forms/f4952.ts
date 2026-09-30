@@ -6,6 +6,7 @@ import { reconcileForm4952PartnershipPath } from "../../form4952_partnership_rec
 import { reconcileForm4952K1InterestAgainst1099Path } from "../../form4952_k1_1099int_reconciliation.ts";
 import { reconcileForm4952K1InterestAgainst1099DivPath } from "../../form4952_k1_1099div_reconciliation.ts";
 import { reconcileForm4952MiscRoyaltyPath } from "../../form4952_misc_royalty_reconciliation.ts";
+import { assertForm4952K1Recipients } from "../../form4952_k1_recipient.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 
 export interface Fields {
@@ -52,6 +53,12 @@ export const form4952: MefFormDescriptor<"form4952", Input> = {
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f4952--2025.pdf",
   build(fields, context) {
+    if (fields.source_k1_investment_interest !== undefined) {
+      if (!context?.filer) {
+        throw new Error("Form 4952 K-1 source needs final filer identity");
+      }
+      assertForm4952K1Recipients(context.pending ?? {}, context.filer);
+    }
     if (
       fields.source_1099_royalties !== undefined
     ) {

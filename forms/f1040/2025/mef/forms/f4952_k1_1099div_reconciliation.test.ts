@@ -4,6 +4,11 @@ import { k1Partnership } from "../../../nodes/inputs/k1_partnership/index.ts";
 import { calculateForm4952 } from "../../../nodes/intermediate/forms/form4952/index.ts";
 import { form4952Pdf } from "../../pdf/forms/f4952.ts";
 import { form4952 } from "./f4952.ts";
+import { testFiler } from "../test-filer.ts";
+
+const filer = testFiler();
+const build: typeof form4952.build = (fields, context) =>
+  form4952.build(fields, { ...context, filer });
 
 const payer = {
   payerName: "Investment Fund",
@@ -17,6 +22,7 @@ const partnership = {
   partnership_name: "Portfolio Partnership",
   partnership_ein: "123456789",
   source_document_reference: "filed-2025-k1-code-h",
+  recipient_tin: "123456789",
   box13_code_h_investment_interest: 300,
 };
 const inputs = {
@@ -71,7 +77,7 @@ Deno.test("Form 4952 limits K-1 code H expense using 1099-DIV ordinary less qual
   assertEquals(fields.line4b, 100);
   assertEquals(fields.line8, 300);
   assertStringIncludes(
-    form4952.build(fields, { pending }),
+    build(fields, { pending }),
     "<InvestmentInterestExpDeductAmt>300</InvestmentInterestExpDeductAmt>",
   );
   assertEquals(form4952Pdf.projectFields?.(fields, pending), fields);
@@ -79,13 +85,13 @@ Deno.test("Form 4952 limits K-1 code H expense using 1099-DIV ordinary less qual
 
 Deno.test("Form 4952 mixed K-1/1099-DIV route rejects unsupported and conflicting facts", () => {
   assertThrows(
-    () => form4952.build(fields),
+    () => build(fields),
     Error,
-    "needs both sources",
+    "needs its issued partnership K-1 recipients",
   );
   assertThrows(
     () =>
-      form4952.build(fields, {
+      build(fields, {
         pending: { ...pending, form_1116: { foreign_tax_paid: 50 } },
       }),
     Error,
@@ -102,7 +108,7 @@ Deno.test("Form 4952 mixed K-1/1099-DIV route rejects unsupported and conflictin
   );
   assertThrows(
     () =>
-      form4952.build(fields, {
+      build(fields, {
         pending: {
           ...pending,
           k1_partnership: {
@@ -115,7 +121,7 @@ Deno.test("Form 4952 mixed K-1/1099-DIV route rejects unsupported and conflictin
   );
   assertThrows(
     () =>
-      form4952.build({ ...fields, source_1099_qualified_dividends: 90 }, {
+      build({ ...fields, source_1099_qualified_dividends: 90 }, {
         pending,
       }),
     Error,
@@ -165,7 +171,7 @@ Deno.test("Form 4952 mixed K-1/1099-DIV route matches multiple sources without p
     },
   };
   assertStringIncludes(
-    form4952.build(multiFields, { pending: multiPending }),
+    build(multiFields, { pending: multiPending }),
     "<InvestmentInterestExpDeductAmt>450</InvestmentInterestExpDeductAmt>",
   );
   assertEquals(
@@ -174,7 +180,7 @@ Deno.test("Form 4952 mixed K-1/1099-DIV route matches multiple sources without p
   );
   assertThrows(
     () =>
-      form4952.build({
+      build({
         ...multiFields,
         source_k1_investment_interest: [200, 250],
       }, { pending: multiPending }),
