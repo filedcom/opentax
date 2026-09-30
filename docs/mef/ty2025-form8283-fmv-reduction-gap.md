@@ -172,7 +172,8 @@ bytes; the bundle verifies that digest and links the PDF to the IRS8283
 document. Form 8453 mailing is not an implemented alternative in this export.
 Schedule A PDF calls the return-wide election reconciliation before printing the
 deduction. The descriptor rejects other Section B routes, mixed Section A/B,
-more than four Section A items, vehicles, missing return-wide source, and
+more than four Section A items, vehicle routes other than one certified-sale
+Section A item, missing return-wide source, and
 non-election routes rather than printing a partial form. Mapping and negative
 cases are written but unrun; the filled PDF has not been rendered or visually
 checked. The
@@ -180,7 +181,7 @@ checked. The
 require filing the form in a section 170(d) carryover year, so each deducted
 older property needs a carryover-year Form 8283 document, not only a Schedule A
 line 13 amount. The next build must cover other Section B paths, signed PDF
-composition, carryover-year Form 8283 documents, vehicle and other Section A PDF
+composition, carryover-year Form 8283 documents, other vehicle and Section A PDF
 routes, and continuation pages. No tests, typecheck, XSD validation, or
 filled-PDF rendering ran in this pass.
 

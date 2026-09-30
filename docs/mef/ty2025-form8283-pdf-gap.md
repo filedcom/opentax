@@ -67,9 +67,27 @@ rerendered page now prints $1,200 on line 12 and $37,200 on line 17, with
 matching name and SSN. The synthetic source and corrected packet are retained
 under `.state/research/ty2025-filled-pdf-review/2026-09-29-v15/`.
 
+The 2026-09-30 vehicle pass adds one current-year Section A vehicle whose claim
+is limited to donee-certified unrelated-party sale proceeds. It requires one
+complete purchased vehicle source, a named donee-issued acknowledgment PDF,
+matching printed donee and acknowledgment facts, a sourced FMV reduction, a
+complete Schedule A inventory, and an itemized Form 1040 reconciled to that
+inventory. The synthetic full return has $20,000 FMV, $25,000 basis, $15,000
+certified proceeds and claimed deduction; local TY2025 v5.4 XSD passes with
+the acknowledgment reference and native FMV statement. The five-page filled
+packet was rendered and visually checked: the vehicle checkbox, VIN, basis,
+claim, explanation, Schedule A line 12, and Form 1040 line 12e agree. Its PDF
+SHA-256 is
+`2cb812caecf1ef1565dd1b5c6302e8d988f75949e84e482069b1ebbaf2a08e3a`.
+The synthetic acknowledgment contains matching text but is not an actual
+donee-issued taxpayer record. The
+[2025 instructions](https://www.irs.gov/pub/irs-prior/i8283--2025.pdf)
+describe the Section A sale-proceeds example and require the donee
+acknowledgment with an e-filed return.
+
 This is not whole-form support. Other Section B property and multi-item routes,
 actual appraiser/donee signatures in the PDF, mixed Section A/B forms, more than
-four Section A rows, vehicles, carryover-year Form 8283 filings, and other
+four Section A rows, other vehicle routes, carryover-year Form 8283 filings, and other
 non-election routes still stop rather than producing an incomplete PDF. The
 verified field map does not prove that every filled text variant fits or that
 every supplemental page is visually correct. Other AcroForm data, page

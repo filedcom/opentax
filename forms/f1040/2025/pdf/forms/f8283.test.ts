@@ -69,6 +69,76 @@ const shortTermGift = {
   short_term_ordinary_income_reduction_confirmed: true as const,
 };
 
+const soldVehicle = {
+  property_description: "2020 Honda Civic, good condition, 60,000 miles",
+  donee_organization_name: "City Charity",
+  donee_organization_us_address: {
+    line1: "1 Main St",
+    city: "Austin",
+    state: "TX",
+    zip: "78701",
+  },
+  is_vehicle: true,
+  vehicle_vin: "1HGBH41JXMN109186",
+  vehicle_acknowledgment_attachment_file_name: "Form1098C-Civic.pdf",
+  date_acquired: "2020-01-01",
+  date_contributed: "2025-06-01",
+  donor_acquisition_description: "Purchase",
+  fmv: 20_000,
+  deduction_claimed: 15_000,
+  cost_or_adjusted_basis: 25_000,
+  charitable_limit_category: "noncash_50" as const,
+  similar_item_group: "vehicles",
+  is_capital_gain_property: false,
+  fmv_method: FMVMethod.ComparableSales,
+  vehicle_sale_acknowledgment: {
+    copy_received_from_donee: true as const,
+    donee_certified: true as const,
+    donee_name: "City Charity",
+    donee_ein: "987654321",
+    donee_us_address: {
+      line1: "1 Main St",
+      city: "Austin",
+      state: "TX",
+      zip: "78701",
+    },
+    acknowledgment_received_date: "2025-07-15",
+    sale_to_unrelated_party: true as const,
+    sale_date: "2025-07-01",
+    gross_proceeds: 15_000,
+    vehicle_year: 2020,
+    vehicle_make: "Honda",
+    vehicle_model: "Civic",
+    vehicle_condition: "Good condition",
+    odometer_miles: 60_000,
+    goods_or_services_received: false as const,
+  },
+};
+
+function soldVehiclePending() {
+  const form = { section_a_items: [soldVehicle] };
+  const items = f8283.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form8283InputSchema.parse(form),
+  ).outputs[0].fields.noncash_contribution_items;
+  const source = {
+    agi: 100_000,
+    current_noncash_gift_inventory_complete_confirmed: true as const,
+    other_prior_charitable_carryovers_absent_confirmed: true as const,
+    capital_gain_property_carryovers: [],
+    noncash_contribution_items: items,
+  };
+  const finalized = scheduleA.compute(
+    { taxYear: 2025, formType: "f1040" },
+    scheduleAInputSchema.parse(source),
+  ).finalizations![0].fields;
+  return {
+    f8283: form,
+    schedule_a: { ...source, ...finalized },
+    f1040: { line11_agi: 100_000, line12e_itemized_deductions: 15_000 },
+  };
+}
+
 function electedPending() {
   const form = { section_a_items: [gift] };
   const items = f8283.compute(
@@ -404,6 +474,44 @@ Deno.test("Form 8283 PDF rejects incomplete or divergent short-term reductions",
   assertThrows(
     () => form8283Pdf.instances?.(mixed, filer, { f8283: mixed }),
     Error,
+  );
+});
+
+Deno.test("Form 8283 PDF prints one reconciled vehicle capped at certified sale proceeds", () => {
+  const pending = soldVehiclePending();
+  const [instance] = form8283Pdf.instances?.(pending.f8283, filer, pending) ??
+    [];
+  assertEquals(instance?.row1_vehicle, true);
+  assertEquals(instance?.row1_vin, soldVehicle.vehicle_vin);
+  assertEquals(instance?.row1_claim, 15_000);
+  assertEquals(instance?.row1_basis, 25_000);
+  assertStringIncludes(
+    (instance?.reduction_statements as string[])[0],
+    "gross proceeds $15000.00",
+  );
+  assertThrows(
+    () =>
+      form8283Pdf.instances?.(pending.f8283, filer, {
+        ...pending,
+        f1040: { ...pending.f1040, line12e_itemized_deductions: 14_000 },
+      }),
+    Error,
+    "recomputed Schedule A or Form 1040",
+  );
+  assertThrows(
+    () =>
+      form8283Pdf.instances?.(
+        {
+          section_a_items: [{
+            ...soldVehicle,
+            vehicle_acknowledgment_attachment_file_name: undefined,
+          }],
+        },
+        filer,
+        pending,
+      ),
+    Error,
+    "only one reconciled Section A vehicle",
   );
 });
 

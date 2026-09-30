@@ -8,6 +8,7 @@ import {
 } from "../../../nodes/inputs/f8283/index.ts";
 import {
   assertShortTermReductionSource,
+  assertVehicleSaleReductionSource,
   fmvReductionExplanation,
   needsFmvReductionStatement,
   sectionAFmvMethodDescription,
@@ -394,9 +395,16 @@ export const form8283Pdf: PdfFormDescriptor = {
       return [sectionBInstance(sectionB[0], filer)];
     }
     if (sectionA.length === 0) return [];
-    if (sectionA.some((item) => item.is_vehicle === true)) {
+    const soldVehicle = sectionA.length === 1 &&
+      sectionA[0].is_vehicle === true &&
+      sectionA[0].vehicle_sale_acknowledgment !== undefined &&
+      !!sectionA[0].vehicle_acknowledgment_attachment_file_name?.trim() &&
+      sectionA[0].capital_gain_reduction_election_confirmed !== true &&
+      sectionA[0].short_term_ordinary_income_reduction_confirmed !== true &&
+      needsFmvReductionStatement(sectionA[0]);
+    if (sectionA.some((item) => item.is_vehicle === true) && !soldVehicle) {
       throw new Error(
-        "Form 8283 PDF vehicle acknowledgment route is not yet mapped",
+        "Form 8283 PDF supports only one reconciled Section A vehicle limited to certified sale proceeds",
       );
     }
     const elected = sectionA.some((item) =>
@@ -408,18 +416,23 @@ export const form8283Pdf: PdfFormDescriptor = {
     );
     if (
       !elected &&
-      !shortTermReduction && sectionA.length !== 1
+      !shortTermReduction && !soldVehicle && sectionA.length !== 1
     ) {
       throw new Error(
         "Form 8283 PDF needs a reconciled Section A election, sourced short-term reduction, or one ordinary gift",
       );
     }
     if (elected) assertElectedSectionAReconciled({ pending: allPending });
-    if (!elected && !shortTermReduction) {
+    if (!elected && !shortTermReduction && !soldVehicle) {
       assertUnreducedSectionACompanion(sectionA[0]);
       assertOrdinarySectionAReconciled({ pending: allPending });
     }
+    if (soldVehicle) {
+      assertVehicleSaleReductionSource(sectionA[0]);
+      assertOrdinarySectionAReconciled({ pending: allPending });
+    }
     for (const item of sectionA) {
+      if (soldVehicle) continue;
       if (!elected && !needsFmvReductionStatement(item)) {
         assertUnreducedSectionACompanion(item);
       } else {
@@ -443,7 +456,8 @@ export const form8283Pdf: PdfFormDescriptor = {
     sectionA.forEach((item, index) => {
       const prefix = `row${index + 1}_`;
       instance[`${prefix}donee`] = doneeLine(item);
-      instance[`${prefix}vehicle`] = false;
+      instance[`${prefix}vehicle`] = item.is_vehicle === true;
+      instance[`${prefix}vin`] = item.is_vehicle ? item.vehicle_vin : undefined;
       instance[`${prefix}description`] = item.property_description;
       instance[`${prefix}contribution_date`] = printedDate(
         item.date_contributed,
