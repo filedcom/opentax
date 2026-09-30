@@ -88,10 +88,20 @@ donee-issued taxpayer record. The
 describe the Section A sale-proceeds example and require the donee
 acknowledgment with an e-filed return.
 
+The 2026-09-30 two-print review adds a complete-return check for purchased
+short-term Section A property. Both $1,000 FMV prints are reduced to $700
+adjusted basis and print on rows A and B. Two native FMV statements retain
+their separate row letters. Schedule A line 12 and Form 1040 line 12e show
+$1,400 and $37,400; the five-page PDF was rendered and inspected. Local
+TY2025 v5.4 XSD passed, and native Form 8283, Schedule A, and PDF projection
+now require the same finalized current-gift inventory and itemized amount.
+See the [reduction review](ty2025-form8283-fmv-reduction-gap.md) for its PDF
+digest and remaining source limits.
+
 This is not whole-form support. Other Section B property and multi-item routes,
 actual appraiser/donee signatures in the PDF, mixed Section A/B forms, more than
-four Section A rows, other vehicle routes, carryover-year Form 8283 filings, and other
-non-election routes still stop rather than producing an incomplete PDF. The
+four Section A rows, other vehicle routes, carryover-year Form 8283 filings, and
+other non-election routes still stop rather than producing an incomplete PDF. The
 verified field map does not prove that every filled text variant fits or that
 every supplemental page is visually correct. Other AcroForm data, page
 appearance, and complete returns must be checked in the agreed PDF/full-test

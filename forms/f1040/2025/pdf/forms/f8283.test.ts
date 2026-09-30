@@ -197,6 +197,39 @@ function ordinaryPending() {
   };
 }
 
+function currentSectionAPending(form: {
+  section_a_items: readonly Record<string, unknown>[];
+}) {
+  const parsedForm = form8283InputSchema.parse(form);
+  const items = f8283.compute(
+    { taxYear: 2025, formType: "f1040" },
+    parsedForm,
+  ).outputs[0].fields.noncash_contribution_items;
+  const source = {
+    agi: 100_000,
+    current_noncash_gift_inventory_complete_confirmed: true as const,
+    other_prior_charitable_carryovers_absent_confirmed: true as const,
+    capital_gain_property_carryovers: [],
+    noncash_contribution_items: items,
+  };
+  const calculated = scheduleA.compute(
+    { taxYear: 2025, formType: "f1040" },
+    scheduleAInputSchema.parse(source),
+  );
+  const finalized = calculated.finalizations![0].fields;
+  const itemized = calculated.outputs.find((output) =>
+    output.nodeType === "standard_deduction"
+  )?.fields.itemized_deductions;
+  return {
+    f8283: parsedForm,
+    schedule_a: { ...source, ...finalized },
+    f1040: {
+      line11_agi: 100_000,
+      line12e_itemized_deductions: itemized,
+    },
+  };
+}
+
 const electedLand = {
   property_description: "Unimproved investment land",
   property_type: SectionBPropertyType.OtherRealEstate,
@@ -357,8 +390,11 @@ Deno.test("Form 8283 PDF prints every sourced short-term Section A reduction", (
       },
     ],
   };
-  const [instance] = form8283Pdf.instances?.(form, filer, { f8283: form }) ??
-    [];
+  const [instance] = form8283Pdf.instances?.(
+    form,
+    filer,
+    currentSectionAPending(form),
+  ) ?? [];
   assertEquals(instance?.row1_claim, 700);
   assertEquals(instance?.row2_claim, 700);
   assertEquals(instance?.row2_description, "Second purchased print");
@@ -386,7 +422,7 @@ Deno.test("Form 8283 mixed Section A preview keeps its sole reduction on item B"
       similar_item_group: "prints",
     }],
   };
-  const pending = { f8283: form };
+  const pending = currentSectionAPending(form);
   const [instance] = form8283Pdf.instances?.(form, filer, pending) ?? [];
   assertEquals(instance?.row1_claim, 600);
   assertEquals(instance?.row2_claim, 700);

@@ -54,6 +54,33 @@ for (const fixture of pdfReviewFixtures) {
         assertStringIncludes(xml, "unreduced FMV $4500.00 minus $1500.00");
         assertStringIncludes(xml, "leaving adjusted basis $3000.00");
       }
+      if (fixture.id === "single-two-short-term-reduced-gifts") {
+        assertEquals(
+          result.pending.schedule_a.line_12_noncash_contributions,
+          1_400,
+        );
+        assertEquals(result.pending.f1040.line12e_itemized_deductions, 37_400);
+        assertEquals(
+          (xml.match(/<FairMarketValueStatement documentId=/g) ?? []).length,
+          2,
+        );
+        assertEquals(
+          (xml.match(/<FairMarketValueAmt referenceDocumentId=/g) ?? []).length,
+          2,
+        );
+        assertStringIncludes(
+          xml,
+          "<OtherThanByCashOrCheckAmt>1400</OtherThanByCashOrCheckAmt>",
+        );
+        assertStringIncludes(
+          xml,
+          "<TotalItemizedOrStandardDedAmt>37400</TotalItemizedOrStandardDedAmt>",
+        );
+        assertStringIncludes(
+          xml,
+          "Section A item B: unreduced FMV $1000.00 minus $300.00",
+        );
+      }
       if (fixture.id === "single-w2-custodial-eic-release") {
         const children = result.pending.eitc.qualifying_child_details as Array<
           Record<string, unknown>

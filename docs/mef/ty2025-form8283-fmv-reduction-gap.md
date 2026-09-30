@@ -19,6 +19,23 @@ suites passed 93 tests. The PDF reviewed here has SHA-256
 synthetic case does not verify a taxpayer's valuation, basis, donee, or
 election, and does not open the other reduction reasons or carryover routes.
 
+## Two purchased short-term Section A gifts (2026-09-30)
+
+The non-election purchased short-term reduction now uses the same complete
+current-gift inventory, finalized Schedule A, and itemized Form 1040
+reconciliation in native Form 8283, Schedule A MeF, and the PDF. A synthetic
+two-print return claims $700 for each $1,000 original FMV gift, links each
+reduced column (h) amount to a distinct native FMV statement, and retains the
+second gift's item B label in both statements. Local TY2025 v5.4 full-return
+XSD passed. The five-page filled packet was visually checked: both rows show
+$700, the supplemental page explains both $300 reductions, Schedule A line 12
+shows $1,400, and Form 1040 line 12e shows $37,400. The reviewed PDF has
+SHA-256
+`b81969831c5c5629da73fc85d748a3f7355cbad591416bac890f751fe1a83537`.
+Native Form 8283 and Schedule A reject a mismatched filed amount in focused
+checks. This synthetic source does not verify the taxpayer's purchase, holding
+period, valuation, or donee record, and does not cover other reduction reasons.
+
 The separate
 [prior-year carryover attachment gap](ty2025-form8283-carryover-source-gap.md)
 now has one bounded, unverified native Section A and reviewed-PDF route. Other
@@ -171,10 +188,9 @@ reviewer, review date, signature/data checks, and SHA-256 of the submitted
 bytes; the bundle verifies that digest and links the PDF to the IRS8283
 document. Form 8453 mailing is not an implemented alternative in this export.
 Schedule A PDF calls the return-wide election reconciliation before printing the
-deduction. The descriptor rejects other Section B routes, mixed Section A/B,
-more than four Section A items, vehicle routes other than one certified-sale
-Section A item, missing return-wide source, and
-non-election routes rather than printing a partial form. Mapping and negative
+deduction. At that checkpoint, the descriptor rejected other Section B routes,
+mixed Section A/B, more than four Section A items, vehicles, missing return-wide
+source, and non-election routes rather than printing a partial form. Mapping and negative
 cases are written but unrun; the filled PDF has not been rendered or visually
 checked. The
 [Form 8283 instructions](https://www.irs.gov/pub/irs-prior/i8283--2025.pdf) also

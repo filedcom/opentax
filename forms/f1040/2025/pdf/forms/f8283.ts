@@ -420,11 +420,9 @@ export const form8283Pdf: PdfFormDescriptor = {
     if (elected) assertElectedSectionAReconciled({ pending: allPending });
     if (!elected && !shortTermReduction && !soldVehicle) {
       assertUnreducedSectionACompanion(sectionA[0]);
-      assertOrdinarySectionAReconciled({ pending: allPending });
     }
     if (soldVehicle) {
       assertVehicleSaleReductionSource(sectionA[0]);
-      assertOrdinarySectionAReconciled({ pending: allPending });
     }
     for (const item of sectionA) {
       if (soldVehicle) continue;
@@ -440,6 +438,7 @@ export const form8283Pdf: PdfFormDescriptor = {
     ) {
       throw new Error("Form 8283 PDF source differs from the pending return");
     }
+    if (!elected) assertOrdinarySectionAReconciled({ pending: allPending });
     const instance: Record<string, unknown> = {
       ...identity(filer),
       reduction_statements: sectionA.flatMap((item, index) =>

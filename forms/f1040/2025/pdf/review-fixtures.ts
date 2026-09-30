@@ -781,6 +781,50 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-two-short-term-reduced-gifts",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(100_000, 16_000, "Example Employer", "12-3456789")],
+      schedule_a: {
+        line_5a_state_income_tax: 24_000,
+        line_8a_mortgage_interest_1098: 12_000,
+        current_noncash_gift_inventory_complete_confirmed: true,
+        other_prior_charitable_carryovers_absent_confirmed: true,
+        capital_gain_property_carryovers: [],
+      },
+      f8283: {
+        section_a_items: ["First", "Second"].map((label) => ({
+          property_description: `${label} purchased art print`,
+          donee_organization_name: "Community Arts Center",
+          donee_organization_us_address: {
+            line1: "12 Arts Road",
+            city: "Albany",
+            state: "NY",
+            zip: "12201",
+          },
+          date_acquired: "2025-01-01",
+          date_contributed: "2025-06-01",
+          donor_acquisition_description: "Purchase",
+          fmv: 1_000,
+          deduction_claimed: 700,
+          cost_or_adjusted_basis: 700,
+          fmv_method: "comparable_sales",
+          charitable_limit_category: "noncash_50",
+          similar_item_group: "art prints",
+          is_capital_gain_property: false,
+          short_term_ordinary_income_reduction_confirmed: true,
+        })),
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule_a", "form8283"],
+    reviewFocus: [
+      "Form 8283 prints both $700 Section A claims and two separate reduction explanations",
+      "Each native reduced amount links to its own FMV statement; item B remains item B",
+      "Schedule A line 12 is $1,400 and Form 1040 itemized deductions are $37,400",
+    ],
+  },
+  {
     id: "single-geothermal-general-business-credit",
     inputs: {
       general: singleGeneral,

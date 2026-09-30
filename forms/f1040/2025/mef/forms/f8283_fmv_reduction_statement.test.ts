@@ -313,6 +313,35 @@ function electedReturn() {
   return { form, schedule, pending };
 }
 
+function nonElectionReturn(
+  form: { section_a_items: readonly Record<string, unknown>[] },
+) {
+  const parsed = inputSchema.parse(form);
+  const items = f8283.compute(
+    { taxYear: 2025, formType: "f1040" },
+    parsed,
+  ).outputs[0].fields.noncash_contribution_items;
+  const source = {
+    agi: 100_000,
+    current_noncash_gift_inventory_complete_confirmed: true as const,
+    other_prior_charitable_carryovers_absent_confirmed: true as const,
+    capital_gain_property_carryovers: [],
+    noncash_contribution_items: items,
+  };
+  const finalized = scheduleANode.compute(
+    { taxYear: 2025, formType: "f1040" },
+    scheduleAInputSchema.parse(source),
+  ).finalizations![0].fields;
+  return {
+    f8283: parsed,
+    schedule_a: { ...source, ...finalized },
+    f1040: {
+      line11_agi: 100_000,
+      line12e_itemized_deductions: finalized.line_12_noncash_contributions,
+    },
+  };
+}
+
 Deno.test("elected Section A links native statement and reconciles Schedule A line 12", () => {
   const { form, schedule, pending } = electedReturn();
   const statements = form8283FmvReductionStatement.build([], {
@@ -411,7 +440,7 @@ Deno.test("Form 8283 non-election reductions require distinct statement IDs", ()
       { ...shortTerm, property_description: "Second purchased art print" },
     ],
   };
-  const pending = { f8283: form };
+  const pending = nonElectionReturn(form);
   assertEquals(
     form8283FmvReductionStatement.build([], { pending }).length,
     2,
@@ -425,6 +454,26 @@ Deno.test("Form 8283 non-election reductions require distinct statement IDs", ()
   assertStringIncludes(linked[0], 'referenceDocumentId="reduction1"');
   assertStringIncludes(linked[0], 'referenceDocumentId="reduction2"');
   assertStringIncludes(linked[0], ">700</FairMarketValueAmt>");
+  assertThrows(
+    () =>
+      form8283.build(form, {
+        pending: {
+          ...pending,
+          f1040: { ...pending.f1040, line12e_itemized_deductions: 1_399 },
+        },
+      }),
+    Error,
+    "recomputed Schedule A or Form 1040",
+  );
+  assertThrows(
+    () =>
+      scheduleAMef.build({
+        ...pending.schedule_a,
+        line_12_noncash_contributions: 1_399,
+      }, { pending }),
+    Error,
+    "recomputed Schedule A or Form 1040",
+  );
   assertThrows(
     () =>
       form8283FmvReductionStatement.build([], {

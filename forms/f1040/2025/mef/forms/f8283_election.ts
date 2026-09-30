@@ -37,7 +37,18 @@ export function isSingleSectionAVehicleSale(form: F8283Input): boolean {
     Math.round((item.fmv - item.deduction_claimed) * 100) > 0;
 }
 
-/** Reconcile one ordinary, unreduced Section A gift before printing its PDF. */
+export function hasSectionAShortTermReduction(form: F8283Input): boolean {
+  const sectionA = form.section_a_items ?? [];
+  return sectionA.length > 0 && (form.section_b_items ?? []).length === 0 &&
+    sectionA.every((item) => item.is_vehicle !== true) &&
+    sectionA.some((item) =>
+      item.short_term_ordinary_income_reduction_confirmed === true &&
+      item.fmv !== undefined && item.deduction_claimed !== undefined &&
+      Math.round((item.fmv - item.deduction_claimed) * 100) > 0
+    );
+}
+
+/** Reconcile up to four current Section A gifts without a capital-gain election. */
 export function assertOrdinarySectionAReconciled(
   context: MefBuildContext | undefined,
   filedScheduleA?: Readonly<Record<string, unknown>>,
@@ -57,13 +68,14 @@ export function assertOrdinarySectionAReconciled(
     );
   }
   const form = form8283InputSchema.parse(pending.f8283);
+  const sectionA = form.section_a_items ?? [];
   if (
-    (form.section_a_items ?? []).length !== 1 ||
+    sectionA.length < 1 || sectionA.length > 4 ||
     (form.section_b_items ?? []).length !== 0 ||
-    !hasCompleteSectionAColumns(form.section_a_items![0])
+    sectionA.some((item) => !hasCompleteSectionAColumns(item))
   ) {
     throw new Error(
-      "Form 8283 ordinary Section A needs one fully sourced current-year gift",
+      "Form 8283 ordinary Section A needs one to four fully sourced current-year gifts",
     );
   }
   if (

@@ -14,6 +14,7 @@ import {
   assertElectedSectionAReconciled,
   assertElectedSectionBReconciled,
   assertOrdinarySectionAReconciled,
+  hasSectionAShortTermReduction,
   isSingleSectionAVehicleSale,
 } from "./f8283_election.ts";
 import {
@@ -786,7 +787,10 @@ export const form8283: MefFormDescriptor<
     }
     const sectionA = parsed.section_a_items ?? [];
     const sectionB = parsed.section_b_items ?? [];
-    if (isSingleSectionAVehicleSale(parsed)) {
+    if (
+      isSingleSectionAVehicleSale(parsed) ||
+      hasSectionAShortTermReduction(parsed)
+    ) {
       assertOrdinarySectionAReconciled(context);
     }
     const signedFormFiles = sectionB.map((item) =>
