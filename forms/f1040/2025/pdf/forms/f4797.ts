@@ -99,6 +99,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   }).flat(),
   {
     kind: "text",
+    domainKey: "pdf_line12",
+    pdfField: "topmostSubform[0].Page1[0].f1_70[0]",
+  },
+  {
+    kind: "text",
     domainKey: "pdf_line13",
     pdfField: "topmostSubform[0].Page1[0].f1_71[0]",
   },
@@ -401,9 +406,26 @@ export const form4797Pdf: PdfFormDescriptor = {
           "Form 4797 PDF line 8 needs a positive section 1231 line 7 gain",
         );
       }
+      if (
+        gain !== Number(fields.gain_form6252 ?? 0) +
+            Number(fields.gain_form8824 ?? 0) ||
+        Number(fields.ordinary_gain ?? 0) !== 0 ||
+        Number(fields.ordinary_gain_form4684 ?? 0) !== 0 ||
+        Number(fields.recapture_form6252 ?? 0) !== 0 ||
+        (Array.isArray(fields.k1_1231_rows) &&
+          fields.k1_1231_rows.length > 0)
+      ) {
+        throw new Error(
+          "Form 4797 PDF prior-loss recapture needs only linked line 4/5 section 1231 gains",
+        );
+      }
+      const recaptured = Math.min(gain, priorLoss);
       return {
         ...fields,
         pdf_section_1231_line9: Math.max(0, gain - priorLoss),
+        pdf_line12: recaptured,
+        pdf_line17: recaptured,
+        ordinary_gain: recaptured,
       };
     }
     return fields;

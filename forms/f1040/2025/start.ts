@@ -28,7 +28,7 @@ function buildInputSchema(
       shape[key] = entry.inputSchema.optional();
     }
   }
-  return z.object(shape);
+  return z.object(shape).strict();
 }
 
 /**

@@ -66,6 +66,24 @@ Deno.test("empty input produces no outputs", () => {
   assertEquals(result.outputs.length, 0);
 });
 
+Deno.test("unknown top-level filing claims fail instead of disappearing", () => {
+  const startNode = buildStartNode(inputNodes);
+  assertEquals(
+    startNode.inputSchema.safeParse({
+      form4797: { nonrecaptured_1231_loss: 4_000 },
+    }).success,
+    false,
+  );
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    { form4797: { nonrecaptured_1231_loss: 4_000 } },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics[0]?.nodeType, "start");
+  assertEquals(result.diagnostics[0]?.message.includes("form4797"), true);
+});
+
 Deno.test("single w2 item routes to w2 node", () => {
   const startNode = buildStartNode(inputNodes);
   const w2Item = {

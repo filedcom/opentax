@@ -20,6 +20,9 @@ Deno.test("Form 4797 Part I uses the official 2025 line 4–9 fields", () => {
     field("pdf_section_1231_line9"),
     "topmostSubform[0].Page1[0].f1_40[0]",
   );
+  assertEquals(field("pdf_line12"), "topmostSubform[0].Page1[0].f1_70[0]");
+  assertEquals(field("pdf_line17"), "topmostSubform[0].Page1[0].f1_75[0]");
+  assertEquals(field("ordinary_gain"), "topmostSubform[0].Page1[0].f1_77[0]");
 });
 
 Deno.test("Form 4797 prints line 9 only when prior section 1231 losses apply", () => {
@@ -43,22 +46,22 @@ Deno.test("Form 4797 prints line 9 only when prior section 1231 losses apply", (
     form4797Pdf.projectFields?.(source, pending).pdf_section_1231_line9,
     undefined,
   );
-  assertEquals(
-    form4797Pdf.projectFields?.(
-      { ...source, nonrecaptured_1231_loss: 4_000 },
-      pending,
-    )
-      .pdf_section_1231_line9,
-    6_000,
+  const partial = form4797Pdf.projectFields?.(
+    { ...source, nonrecaptured_1231_loss: 4_000 },
+    pending,
   );
-  assertEquals(
-    form4797Pdf.projectFields?.(
-      { ...source, nonrecaptured_1231_loss: 12_000 },
-      pending,
-    )
-      .pdf_section_1231_line9,
-    0,
+  assertEquals(partial?.pdf_section_1231_line9, 6_000);
+  assertEquals(partial?.pdf_line12, 4_000);
+  assertEquals(partial?.pdf_line17, 4_000);
+  assertEquals(partial?.ordinary_gain, 4_000);
+  const full = form4797Pdf.projectFields?.(
+    { ...source, nonrecaptured_1231_loss: 12_000 },
+    pending,
   );
+  assertEquals(full?.pdf_section_1231_line9, 0);
+  assertEquals(full?.pdf_line12, 10_000);
+  assertEquals(full?.pdf_line17, 10_000);
+  assertEquals(full?.ordinary_gain, 10_000);
   assertThrows(
     () => form4797Pdf.projectFields?.({ nonrecaptured_1231_loss: 4_000 }, {}),
     Error,
@@ -74,6 +77,24 @@ Deno.test("Form 4797 prints line 9 only when prior section 1231 losses apply", (
       form4797Pdf.projectFields?.({ ...source, gain_form6252: 9_999 }, pending),
     Error,
     "line 4 must match Form 6252 line 26",
+  );
+  assertThrows(
+    () =>
+      form4797Pdf.projectFields?.(
+        { section_1231_gain: 10_000, nonrecaptured_1231_loss: 4_000 },
+        {},
+      ),
+    Error,
+    "prior-loss recapture needs only linked line 4/5",
+  );
+  assertThrows(
+    () =>
+      form4797Pdf.projectFields?.(
+        { ...source, nonrecaptured_1231_loss: 4_000, ordinary_gain: 1_000 },
+        pending,
+      ),
+    Error,
+    "prior-loss recapture needs only linked line 4/5",
   );
 });
 
