@@ -242,7 +242,8 @@ export const schedule1aPdf: PdfFormDescriptor = {
     if (
       (input.qualified_employee_tips?.length ?? 0) > 0 ||
       (input.qualified_form4137_tips?.length ?? 0) > 0 ||
-      (input.form4070_reports?.length ?? 0) > 0
+      (input.form4070_reports?.length ?? 0) > 0 ||
+      (input.employer_tip_statements?.length ?? 0) > 0
     ) {
       const lines = calculateEmployeeTipsSchedule1A(
         { taxYear: 2025, formType: "f1040" },

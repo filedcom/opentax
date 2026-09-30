@@ -1823,6 +1823,55 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-employer-statement-qualified-tips-schedule1a",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        taxpayer_ssn_valid_for_employment: true,
+        taxpayer_ssn_issued_before_due_date: true,
+        taxpayer_tin_issued_by_due_date: true,
+      },
+      w2: [{
+        ...wage(200_000, 35_000, "Example Restaurant", "12-3456789"),
+        employee_ssn: "111-22-3333",
+        box3_ss_wages: 161_100,
+        box7_ss_tips: 15_000,
+      }],
+      schedule1a: {
+        employer_tip_statements: [{
+          employee_ssn: "111-22-3333",
+          employer_ein: "12-3456789",
+          employer_name: "Example Restaurant",
+          amount: 20_000,
+          occupation_code: "102",
+          occupation_review_reference:
+            "Synthetic 2025 restaurant occupation review",
+          statement_reference: "Synthetic 2025 employer tip statement",
+          furnished_to_employee: true,
+          included_in_w2_box1: true,
+        }],
+        senior_zero_exclusions_review: {
+          no_section933_puerto_rico_excluded_income: true,
+          section933_review_source_reference: "Synthetic 2025 residency review",
+          no_form2555_filed: true,
+          form2555_review_source_reference:
+            "Synthetic 2025 foreign-income review",
+          no_form4563_filed: true,
+          form4563_review_source_reference:
+            "Synthetic 2025 Samoa-source review",
+        },
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule1a"],
+    reviewFocus: [
+      "Reviewed employer statement reports $20,000 of tips for the identified W-2 employee and employer",
+      "The statement replaces the same employer's $15,000 W-2 box 7 amount",
+      "Schedule 1-A lines 4a/4c show $20,000 and line 13/38 shows $15,000 after MAGI phaseout",
+      "Form 1040 line 13b agrees with Schedule 1-A line 38",
+    ],
+  },
+  {
     id: "single-w2-box14-qualified-tips-schedule1a",
     inputs: {
       general: {

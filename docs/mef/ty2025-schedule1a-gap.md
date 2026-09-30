@@ -22,11 +22,11 @@ two-page PDF field map and inspected synthetic full-return packets.
   aggregator, and each positive route requires a source-referenced review that
   all those adjustments are zero. Positive exclusions still need their own
   source routes; `magi` cannot be assumed to be line 3 without this review.
-- Part II has source-backed W-2 box 7, reviewed W-2 box 14 employer tips, reviewed Form 4070 monthly report, and Form 4137 routes with a published three-digit
+- Part II has source-backed W-2 box 7, reviewed W-2 box 14 or separate employer tip statements, reviewed Form 4070 monthly report, and Form 4137 routes with a published three-digit
   tipped occupation code, a valid
   timely employment SSN, and reviewed zero Part I exclusions. Each positive
   employer row retains its EIN and name and is checked against the W-2 and
-  Form 4137 facts at native/PDF export. A reviewed W-2 box 14, Form 4070, or Form 4137 employer occupation and reference can supply the code when the 2025 W-2 omits it; a W-2 with a different code rejects. W-2 box 7 alone requires box 5 Medicare wages at or below $176,100; reviewed box 14 or Form 4070 amounts can replace box 7 for the same employer when box 5 is higher. Form 4137 line 1 column (c) is
+  Form 4137 facts at native/PDF export. A reviewed W-2 box 14, separate employer statement, Form 4070, or Form 4137 employer occupation and reference can supply the code when the 2025 W-2 omits it; a W-2 with a different code rejects. W-2 box 7 alone requires box 5 Medicare wages at or below $176,100; reviewed box 14, separate statement, or Form 4070 amounts can replace box 7 for the same employer when box 5 is higher. Form 4137 line 1 column (c) is
   combined with the selected W-2 or Form 4070 amount using the greater amount for each employee and
   employer, so the same tips are not deducted twice. One employer fills lines
   4a/4b/4c as applicable; multiple
@@ -35,7 +35,7 @@ two-page PDF field map and inspected synthetic full-return packets.
   paginates after five employer rows. It also fills lines 6/7, 9–13, and
   38 and reconciles to Form 1040. Duplicate source rows or Form 4070 months, high box 5 wages
   for the W-2 box 7-only route, and an
-  occupation code outside the IRS list reject. Separate employer statement alternatives,
+  occupation code outside the IRS list reject. Other employer statement variants,
   multiple occupations at one employer, other special wage-base handling,
   self-employment tips, multiple Form 4137 employers in a
   full packet, and underlying record authentication remain open.
@@ -234,6 +234,23 @@ v5.4 XSD. All four `v83` PDF pages were rendered and are pixel-identical to
 the visually inspected `v81` pages (SHA-256
 `4e6b69f1c79ed6ca5ad53aa2c83d9cf98c5e8a640e2ee18f87e7e2766ef91cb3`).
 The [2025 Form 1040 instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
-allow an employer's voluntary W-2 box 14 tip amount. Separate employer
-statements, issuer-form authentication, and IRS business-rule acceptance
+allow an employer's voluntary W-2 box 14 tip amount. Issuer-form
+authentication and IRS business-rule acceptance
 remain open.
+
+The `single-employer-statement-qualified-tips-schedule1a` fixture uses a
+separately furnished employer statement reporting $20,000 of 2025 tips for
+the identified employee and employer. Its reviewed occupation and source
+references, affirmative box 1 inclusion, W-2 employee SSN/EIN/name, and
+$200,000 W-2 wages are checked at filing export. This statement replaces
+the same employer's $15,000 W-2 box 7 amount; it cannot be combined with a
+selected W-2 box 14 tip amount or Form 4070 report for the same employee and
+employer. Schedule 1-A lines 4a/4c show $20,000 and lines 13/38 and Form
+1040 line 13b show $15,000 after the $5,000 MAGI phaseout. The full return
+passes local TY2025 v5.4 XSD. All four `v84` PDF pages were rendered and
+are pixel-identical to the visually inspected `v81` pages (SHA-256
+`356436712b7c01930371fff607f6b3049e6f56938338529e70c7f43d26215842`).
+The source reference and review facts do not authenticate the employer's
+actual statement bytes. More than one statement for an employer is not yet
+resolved. The [2025 Form 1040 instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
+permit this employer statement method.

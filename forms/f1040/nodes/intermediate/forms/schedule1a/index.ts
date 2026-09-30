@@ -79,6 +79,19 @@ export const claimInputSchema = z.object({
       ).min(1).max(12),
     }).strict(),
   ).min(1).max(100).optional(),
+  employer_tip_statements: z.array(
+    z.object({
+      employee_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+      employer_ein: z.string().regex(/^\d{2}-?\d{7}$/),
+      employer_name: z.string().trim().min(1),
+      amount: z.number().int().positive(),
+      occupation_code: z.string().regex(/^\d{3}$/),
+      occupation_review_reference: z.string().trim().min(1),
+      statement_reference: z.string().trim().min(1),
+      furnished_to_employee: z.literal(true),
+      included_in_w2_box1: z.literal(true),
+    }).strict(),
+  ).min(1).max(100).optional(),
 }).strict();
 
 export const inputSchema = claimInputSchema.extend({
@@ -285,6 +298,19 @@ export function qualifiedEmployeeTipRows(input: Schedule1AInput) {
     ].join(":");
     const prior = rows.get(key);
     if (
+      (input.qualified_employee_tips ?? []).some((source) =>
+        source.source_type === "w2_box14" &&
+        source.employee_ssn.replaceAll("-", "") ===
+          report.employee_ssn.replaceAll("-", "") &&
+        source.employer_ein.replaceAll("-", "") ===
+          report.employer_ein.replaceAll("-", "")
+      )
+    ) {
+      throw new Error(
+        "Schedule 1-A tips need one selected alternative employer report",
+      );
+    }
+    if (
       prior && (prior.employer_name !== report.employer_name ||
         prior.occupation_code !== report.occupation_code)
     ) {
@@ -319,6 +345,49 @@ export function qualifiedEmployeeTipRows(input: Schedule1AInput) {
       employer_name: report.employer_name,
       occupation_code: report.occupation_code,
       reported_amount: amount,
+      form4137_amount: prior?.form4137_amount ?? 0,
+    });
+  }
+  const seenStatements = new Set<string>();
+  for (const statement of input.employer_tip_statements ?? []) {
+    const key = [
+      statement.employee_ssn.replaceAll("-", ""),
+      statement.employer_ein.replaceAll("-", ""),
+    ].join(":");
+    const prior = rows.get(key);
+    if (
+      (input.qualified_employee_tips ?? []).some((source) =>
+        source.source_type === "w2_box14" &&
+        source.employee_ssn.replaceAll("-", "") ===
+          statement.employee_ssn.replaceAll("-", "") &&
+        source.employer_ein.replaceAll("-", "") ===
+          statement.employer_ein.replaceAll("-", "")
+      )
+    ) {
+      throw new Error(
+        "Schedule 1-A tips need one selected alternative employer report",
+      );
+    }
+    if (seen4070.has(key) || seenStatements.has(key)) {
+      throw new Error(
+        "Schedule 1-A tips need one selected alternative employer report",
+      );
+    }
+    if (
+      prior && (prior.employer_name !== statement.employer_name ||
+        prior.occupation_code !== statement.occupation_code)
+    ) {
+      throw new Error(
+        "Schedule 1-A employer statement disagrees on employer or occupation",
+      );
+    }
+    seenStatements.add(key);
+    rows.set(key, {
+      employee_ssn: statement.employee_ssn,
+      employer_ein: statement.employer_ein,
+      employer_name: statement.employer_name,
+      occupation_code: statement.occupation_code,
+      reported_amount: statement.amount,
       form4137_amount: prior?.form4137_amount ?? 0,
     });
   }
@@ -571,13 +640,16 @@ export function calculateEmployeeTipsSchedule1A(
         entry.employer_ein.replaceAll("-", "")
     );
     const employeeSsn = entry.employee_ssn.replaceAll("-", "");
-    const hasForm4070 = input.form4070_reports?.some((report) =>
+    const hasAlternativeReport = [
+      ...(input.form4070_reports ?? []),
+      ...(input.employer_tip_statements ?? []),
+    ].some((report) =>
       report.employee_ssn.replaceAll("-", "") === employeeSsn &&
       report.employer_ein.replaceAll("-", "") ===
         entry.employer_ein.replaceAll("-", "")
     );
     if (
-      w2 && w2.source_type === "w2_box7" && !hasForm4070 &&
+      w2 && w2.source_type === "w2_box7" && !hasAlternativeReport &&
       (w2.box5_medicare_wages === undefined ||
         w2.box5_medicare_wages > 176_100)
     ) {

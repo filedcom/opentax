@@ -64,7 +64,8 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
   if (
     (input.qualified_employee_tips?.length ?? 0) > 0 ||
     (input.qualified_form4137_tips?.length ?? 0) > 0 ||
-    (input.form4070_reports?.length ?? 0) > 0
+    (input.form4070_reports?.length ?? 0) > 0 ||
+    (input.employer_tip_statements?.length ?? 0) > 0
   ) {
     const lines = calculateEmployeeTipsSchedule1A(
       { taxYear: 2025, formType: "f1040" },
@@ -129,6 +130,27 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
     ) {
       throw new Error(
         "Schedule 1-A Form 4070 tips need a matching filed W-2 employer and occupation",
+      );
+    }
+    if (
+      !(input.employer_tip_statements ?? []).every((statement) =>
+        filedW2s.some((source) =>
+          normalize(source.employee_ssn ?? "") ===
+            normalize(statement.employee_ssn) &&
+          normalize(source.employer_ein ?? "") ===
+            normalize(statement.employer_ein) &&
+          source.employer_name === statement.employer_name &&
+          source.box13_statutory_employee !== true &&
+          source.box1_wages >= statement.amount &&
+          source.qualified_tips_box14_review === undefined &&
+          (source.box14b_tipped_code === undefined ||
+            source.box14b_tipped_code === statement.occupation_code) &&
+          isQualifiedTipsOccupationCode(statement.occupation_code)
+        )
+      )
+    ) {
+      throw new Error(
+        "Schedule 1-A employer tip statement needs a matching filed W-2 employer, wages, and occupation",
       );
     }
     const form4137 = form4137InputSchema.parse(

@@ -588,6 +588,97 @@ Deno.test("Schedule 1-A W-2 box 14 tips reconcile to the reviewed employer entry
   );
 });
 
+Deno.test("Schedule 1-A employer statement replaces W-2 box 7 and rejects competing reports", () => {
+  const statement = {
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    employer_name: "Test Restaurant",
+    amount: 20_000,
+    occupation_code: "102",
+    occupation_review_reference: "2025 employer occupation record",
+    statement_reference: "2025 employer tip statement",
+    furnished_to_employee: true as const,
+    included_in_w2_box1: true as const,
+  };
+  const source = {
+    ...singleTips,
+    magi: 200_000,
+    qualified_employee_tips: [],
+    employer_tip_statements: [statement],
+  };
+  const pending = {
+    f1040: {
+      ...singleTips1040,
+      line11_agi: 200_000,
+      line13b_additional_deductions: 15_000,
+    },
+    w2: {
+      w2s: [{
+        ...singleTipsW2.w2s[0],
+        box1_wages: 200_000,
+        box5_medicare_wages: 200_000,
+        box7_ss_tips: 15_000,
+        box14b_tipped_code: undefined,
+      }],
+    },
+  };
+  const lines = calculateEmployeeTipsSchedule1A(
+    { taxYear: 2025, formType: "f1040" },
+    source,
+  );
+  assertEquals(lines.line4a_w2_tips, 20_000);
+  assertEquals(lines.line13_tips, 15_000);
+  assertStringIncludes(
+    schedule1a.build(source, { pending }),
+    "<QualifiedTipsWagesAmt>20000</QualifiedTipsWagesAmt>",
+  );
+  assertThrows(
+    () =>
+      schedule1a.build(source, {
+        pending: {
+          ...pending,
+          w2: { w2s: [{ ...pending.w2.w2s[0], employer_ein: "987654321" }] },
+        },
+      }),
+    Error,
+    "matching filed W-2",
+  );
+  assertThrows(
+    () =>
+      calculateEmployeeTipsSchedule1A(
+        { taxYear: 2025, formType: "f1040" },
+        { ...source, employer_tip_statements: [statement, statement] },
+      ),
+    Error,
+    "one selected alternative employer report",
+  );
+  assertThrows(
+    () =>
+      calculateEmployeeTipsSchedule1A(
+        { taxYear: 2025, formType: "f1040" },
+        {
+          ...source,
+          form4070_reports: [{
+            employee_ssn: statement.employee_ssn,
+            employer_ein: statement.employer_ein,
+            employer_name: statement.employer_name,
+            occupation_code: statement.occupation_code,
+            occupation_review_reference: statement.occupation_review_reference,
+            monthly_reports: [{
+              month: 1,
+              cash_tips: 20_000,
+              charged_tips: 0,
+              tips_paid_out: 0,
+              source_reference: "January employer report",
+            }],
+          }],
+        },
+      ),
+    Error,
+    "one selected alternative employer report",
+  );
+});
+
 Deno.test("Schedule 1-A W-2 tips applies the $25,000 cap and whole-thousand phaseout", () => {
   const lines = calculateEmployeeTipsSchedule1A(
     { taxYear: 2025, formType: "f1040" },
