@@ -71,3 +71,6 @@ $5,400 for each spouse in Part V, and $10,800 on line 38 and Form 1040 line
 13b. All four pages were visually inspected and the full-return XML passed the
 local XSD. The remaining positive Part I exclusions and Parts II-IV, source
 authentication, IRS business rules, and ATS acceptance remain open.
+The source commit `89b972c6` passed the complete `deno task test` run at
+8,932/8,932 with zero failures; the log is retained at
+`.state/research/ty2025-full-test-schedule1a-pdf.log`.
