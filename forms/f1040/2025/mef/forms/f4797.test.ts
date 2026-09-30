@@ -84,7 +84,7 @@ Deno.test("Form 4797 investment recapture links Part III to the excess-gain Form
         }],
       }, context),
     Error,
-    "20-character MeF limit",
+    "20",
   );
 });
 

@@ -36,27 +36,37 @@ Deno.test("investment section 1245 property separates ordinary recapture and exc
 });
 
 Deno.test("investment section 1245 source rejects short holding and impossible depreciation", () => {
-  assertThrows(
-    () => investment1245DispositionSchema.parse({
+  assertEquals(
+    investment1245DispositionSchema.safeParse({
       ...sale,
-      acquired_on: "2025-01-01",
-    }),
+      property_description: "Rental property longer",
+    }).success,
+    false,
+  );
+  assertThrows(
+    () =>
+      investment1245DispositionSchema.parse({
+        ...sale,
+        acquired_on: "2025-01-01",
+      }),
     Error,
     "over-one-year",
   );
   assertThrows(
-    () => investment1245DispositionSchema.parse({
-      ...sale,
-      depreciation_allowed_or_allowable: 13_000,
-    }),
+    () =>
+      investment1245DispositionSchema.parse({
+        ...sale,
+        depreciation_allowed_or_allowable: 13_000,
+      }),
     Error,
     "supported basis and depreciation",
   );
   assertThrows(
-    () => investment1245DispositionSchema.parse({
-      ...sale,
-      depreciation_schedule_reference: "",
-    }),
+    () =>
+      investment1245DispositionSchema.parse({
+        ...sale,
+        depreciation_schedule_reference: "",
+      }),
     Error,
   );
 });

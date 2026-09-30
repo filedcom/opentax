@@ -5,7 +5,7 @@ import { z } from "zod";
 // need separate property-level source and are not inferred from this row.
 export const investment1245DispositionSchema = z.object({
   property_id: z.string().trim().min(1),
-  property_description: z.string().trim().min(1).max(40),
+  property_description: z.string().trim().min(1).max(20),
   acquired_on: z.string().date(),
   sold_on: z.string().date(),
   gross_sales_price: z.number().int().nonnegative(),
@@ -74,7 +74,9 @@ export function calculateInvestment1245Disposition(
 }
 
 export function assertInvestment1245FilingLinks(
-  calculated: ReadonlyArray<ReturnType<typeof calculateInvestment1245Disposition>>,
+  calculated: ReadonlyArray<
+    ReturnType<typeof calculateInvestment1245Disposition>
+  >,
   rows: readonly {
     from_form4797_investment_1245?: true;
     form4797_property_id?: string;

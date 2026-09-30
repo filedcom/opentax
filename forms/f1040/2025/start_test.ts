@@ -249,6 +249,17 @@ Deno.test("Form 4797 investment property source enters the return plan without a
   );
   assertEquals(
     startNode.inputSchema.safeParse({
+      form4797_investment_1245: {
+        investment_1245_dispositions: [{
+          ...sale,
+          property_description: "Rental property longer",
+        }],
+      },
+    }).success,
+    false,
+  );
+  assertEquals(
+    startNode.inputSchema.safeParse({
       form4797_investment_1245: { ...input, ordinary_gain: 1 },
     }).success,
     false,
