@@ -1,6 +1,39 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { scheduleD } from "./schedule_d.ts";
 
+Deno.test("Schedule D native groups match prepared Form 8949 category totals", () => {
+  const sale = (part: string, proceeds: number, cost_basis: number, adjustment_amount?: number) => ({
+    part,
+    description: `${part} shares`,
+    date_acquired: part === "A" || part === "B" || part === "H"
+      ? "2025-01-10"
+      : "2022-01-10",
+    date_sold: "2025-06-20",
+    proceeds,
+    cost_basis,
+    adjustment_codes: adjustment_amount === undefined ? undefined : "W",
+    adjustment_amount,
+    gain_loss: proceeds - cost_basis + (adjustment_amount ?? 0),
+    is_long_term: !(part === "A" || part === "B" || part === "H"),
+  });
+  const xml = scheduleD.build({}, { pending: { form8949: [
+    sale("A", 2_000, 1_000, 100),
+    sale("B", 3_000, 2_000),
+    sale("H", 4_000, 3_000),
+    sale("E", 5_000, 2_000),
+    sale("K", 6_000, 4_000),
+  ] } });
+  assertStringIncludes(xml,
+    "<TotalSTCGL1099ShowsBasisGrp><TotalProceedsSalesPriceAmt>2000</TotalProceedsSalesPriceAmt><TotalCostOrOtherBasisAmt>1000</TotalCostOrOtherBasisAmt><TotAdjustmentsToGainOrLossAmt>100</TotAdjustmentsToGainOrLossAmt><TotalGainOrLossAmt>1100</TotalGainOrLossAmt></TotalSTCGL1099ShowsBasisGrp>");
+  assertStringIncludes(xml,
+    "<TotalSTCGL1099NotShowBasisGrp><TotalProceedsSalesPriceAmt>7000</TotalProceedsSalesPriceAmt><TotalCostOrOtherBasisAmt>5000</TotalCostOrOtherBasisAmt><TotalGainOrLossAmt>2000</TotalGainOrLossAmt></TotalSTCGL1099NotShowBasisGrp>");
+  assertStringIncludes(xml,
+    "<TotalLTCGL1099NotShowBasisGrp><TotalProceedsSalesPriceAmt>11000</TotalProceedsSalesPriceAmt><TotalCostOrOtherBasisAmt>6000</TotalCostOrOtherBasisAmt><TotalGainOrLossAmt>5000</TotalGainOrLossAmt></TotalLTCGL1099NotShowBasisGrp>");
+  assertThrows(() => scheduleD.build({}, { pending: { form8949: [
+    sale("A", 2_000, 1_000),
+  ] } }), Error, "direct sale must not also file");
+});
+
 Deno.test("Schedule D code C final trust loss reconciles source and owner", () => {
   const item = {
     estate_trust_name: "Family Trust",

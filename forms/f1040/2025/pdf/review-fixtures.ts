@@ -838,6 +838,39 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-direct-and-adjusted-broker-sales",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(30_000, 3_000, "Example Employer", "12-3456789")],
+      f8949: [{
+        part: "A",
+        description: "Direct broker shares",
+        source_transaction_id: "synthetic-direct-short-mixed",
+        date_acquired: "2025-01-10",
+        date_sold: "2025-06-20",
+        proceeds: 2_000,
+        cost_basis: 1_000,
+      }, {
+        part: "A",
+        description: "Adjusted broker shares",
+        source_transaction_id: "synthetic-adjusted-short-mixed",
+        date_acquired: "2025-01-10",
+        date_sold: "2025-06-20",
+        proceeds: 500,
+        cost_basis: 1_000,
+        adjustment_codes: "W",
+        adjustment_amount: 300,
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule_d", "f8949"],
+    reviewFocus: [
+      "The direct $1,000 gain prints only on Schedule D line 1a",
+      "The adjusted $200 loss prints on Form 8949 box A and Schedule D line 1b",
+      "The $800 net capital gain reaches Form 1040 line 7a and $30,800 AGI",
+    ],
+  },
+  {
     id: "single-final-trust-k1-long-term-capital-loss",
     inputs: {
       general: singleGeneral,

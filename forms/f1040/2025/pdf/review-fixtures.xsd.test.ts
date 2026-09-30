@@ -40,12 +40,15 @@ for (const fixture of pdfReviewFixtures) {
         assertEquals(result.pending.income_tax_calculation.rate_28_gain, 3_000);
         assertEquals(result.pending.schedule_d.print_line18_28pct, 3_000);
         assertEquals(result.pending.f1040.line11_agi, 33_000);
+        assertStringIncludes(xml, "<TotalLTCGL1099NotShowBasisGrp>");
       }
       if (fixture.id === "single-short-and-long-form8949-sales") {
         assertEquals(result.pending.schedule_d.print_line7_st_total, 1_000);
         assertEquals(result.pending.schedule_d.print_line15_lt_total, 2_000);
         assertEquals(result.pending.schedule_d.print_line16_combined, 3_000);
         assertEquals(result.pending.f1040.line11_agi, 33_000);
+        assertStringIncludes(xml, "<TotalSTCGL1099NotShowBasisGrp>");
+        assertStringIncludes(xml, "<TotalLTCGL1099NotReceivedGrp>");
       }
       if (fixture.id === "single-direct-broker-basis-sales") {
         assertEquals(result.pending.schedule_d.line_1a_proceeds, 2_000);
@@ -56,7 +59,15 @@ for (const fixture of pdfReviewFixtures) {
         assertEquals(result.pending.f1040.line11_agi, 33_000);
         assertStringIncludes(xml, "<TotalSTCGL1099BssRptNoAdjGrp>");
         assertStringIncludes(xml, "<TotalLTCGL1099BssRptNoAdjGrp>");
-        assertEquals(xml.includes("<IRS8949>"), false);
+        assertEquals(xml.includes("<IRS8949 "), false);
+      }
+      if (fixture.id === "single-direct-and-adjusted-broker-sales") {
+        assertEquals(result.pending.schedule_d.line_1a_proceeds, 2_000);
+        assertEquals(result.pending.schedule_d.print_line7_st_total, 800);
+        assertEquals(result.pending.f1040.line11_agi, 30_800);
+        assertStringIncludes(xml, "<TotalSTCGL1099BssRptNoAdjGrp>");
+        assertStringIncludes(xml, "<TotalSTCGL1099ShowsBasisGrp>");
+        assertStringIncludes(xml, "<IRS8949 ");
       }
       if (fixture.id === "single-final-trust-k1-long-term-capital-loss") {
         assertEquals(result.pending.schedule_d.line_12_k1_lt, -900);

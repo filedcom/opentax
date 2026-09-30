@@ -364,3 +364,20 @@ and no Form 8949 document, matching the four-page PDF. The PDF SHA-256 is
 `266bf11c643decece733b9a9a2048211638b94589bd6bee260518ccedac006ad`.
 Issuer bytes, adjusted and digital-asset direct categories, IRS business
 rules, and ATS acceptance remain open.
+
+The `single-direct-and-adjusted-broker-sales` packet was generated with the
+other forty-four prepared cases in
+`.state/research/ty2025-filled-pdf-review/2026-09-30-v56/`.
+The source has one unadjusted box-A sale with $2,000 proceeds and $1,000 basis,
+and one adjusted box-A sale with $500 proceeds, $1,000 basis, and a $300
+code-W adjustment. The five pages were rendered and inspected. Schedule D
+page 1 prints the $1,000 direct gain on line 1a, the $200 adjusted loss on
+line 1b, and $800 on line 7; Form 8949 page 1 checks only box A and includes
+only the adjusted row. Schedule D page 2 and Form 1040 line 7a print $800.
+Form 1040 shows $30,800 AGI, $15,050 taxable income, $1,571 tax, and a
+$1,429 refund. Native XML contains the direct group, the Form 8949 box-A
+group and document, and passes local TY2025 v5.4 full-return XSD. The PDF
+SHA-256 is
+`e75ff981be0f9f3fbece3cf66c2283065aa18e56ddd1bc8772081c94c5abf784`.
+Other sale categories, issuer bytes, IRS business rules, and ATS acceptance
+remain open.

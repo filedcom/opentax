@@ -376,6 +376,13 @@ validation, and all four `v55` pages show lines 1a/8a with no Form 8949
 page. Adjusted and digital-asset categories, issuer bytes, IRS business
 rules, and ATS acceptance remain open.
 
+The native Schedule D serializer now projects the prepared Form 8949 rows
+into all six TY2025 category-total groups in XSD order, matching the printed
+Schedule D line groups. A direct-and-adjusted box-A return passes local
+full-return XSD, and all five `v56` pages were inspected: the direct gain
+appears only on line 1a, while the adjusted loss appears on Form 8949 and
+line 1b. Other sale categories and IRS business-rule acceptance remain open.
+
 Form 6251 addendum (2026-09-29, unrun): the existing line-2k audited Form 8949
 route now also handles same-term short-term mixed gain/loss rows only when both
 regular and AMT nets stay positive and there is no other capital activity. The

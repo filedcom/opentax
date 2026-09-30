@@ -3,6 +3,10 @@ import type { MefFormDescriptor } from "../form-descriptor.ts";
 import { inputSchema as trustK1InputSchema } from "../../../nodes/inputs/k1_trust/index.ts";
 import { inputSchema as partnershipK1InputSchema } from "../../../nodes/inputs/k1_partnership/index.ts";
 import { inputSchema as sCorpK1InputSchema } from "../../../nodes/inputs/k1_s_corp/index.ts";
+import {
+  assertForm8949TransactionMath,
+  transactionSchema,
+} from "../../../nodes/intermediate/forms/form8949/index.ts";
 
 export interface Fields {
   line_1a_proceeds?: number | null;
@@ -72,7 +76,42 @@ function buildBasisRptNoAdjGroup(
   return elements(groupTag, children);
 }
 
-function buildIRS1040ScheduleD(fields: Input): string {
+const TRANSACTION_GROUPS = [
+  { parts: ["A", "G"], tag: "TotalSTCGL1099ShowsBasisGrp" },
+  { parts: ["B", "H"], tag: "TotalSTCGL1099NotShowBasisGrp" },
+  { parts: ["C", "I"], tag: "TotalSTCGL1099NotReceivedGrp" },
+  { parts: ["D", "J"], tag: "TotalLTCGL1099ShowsBasisGrp" },
+  { parts: ["E", "K"], tag: "TotalLTCGL1099NotShowBasisGrp" },
+  { parts: ["F", "L"], tag: "TotalLTCGL1099NotReceivedGrp" },
+] as const;
+
+type PreparedSale = ReturnType<typeof transactionSchema.parse>;
+
+function buildTransactionGroup(
+  group: (typeof TRANSACTION_GROUPS)[number],
+  rows: readonly PreparedSale[],
+): string {
+  const selected = rows.filter((row) =>
+    group.parts.some((part) => part === row.part)
+  );
+  if (selected.length === 0) return "";
+  const sum = (
+    key: "proceeds" | "cost_basis" | "adjustment_amount" | "gain_loss",
+  ) => selected.reduce((total, row) => total + (row[key] ?? 0), 0);
+  return elements(group.tag, [
+    element("TotalProceedsSalesPriceAmt", sum("proceeds")),
+    element("TotalCostOrOtherBasisAmt", sum("cost_basis")),
+    selected.some((row) => row.adjustment_amount !== undefined)
+      ? element("TotAdjustmentsToGainOrLossAmt", sum("adjustment_amount"))
+      : "",
+    element("TotalGainOrLossAmt", sum("gain_loss")),
+  ]);
+}
+
+function buildIRS1040ScheduleD(
+  fields: Input,
+  preparedSales: readonly PreparedSale[],
+): string {
   const f = fields as Fields;
   // The intermediate node reports a distribution-only return directly on
   // Form 1040 line 7a. It emits print_line16_combined only when Schedule D is
@@ -84,7 +123,7 @@ function buildIRS1040ScheduleD(fields: Input): string {
   ) return "";
   const children: string[] = [];
 
-  // Nested groups first (XSD order: line 1a before line 8a)
+  // Part I: direct line 1a, Form 8949 lines 1b/2/3, then scalar lines 4–6.
   children.push(
     buildBasisRptNoAdjGroup(
       "TotalSTCGL1099BssRptNoAdjGrp",
@@ -93,10 +132,8 @@ function buildIRS1040ScheduleD(fields: Input): string {
     ),
   );
   children.push(
-    buildBasisRptNoAdjGroup(
-      "TotalLTCGL1099BssRptNoAdjGrp",
-      f.line_8a_proceeds,
-      f.line_8a_cost,
+    ...TRANSACTION_GROUPS.slice(0, 3).map((group) =>
+      buildTransactionGroup(group, preparedSales)
     ),
   );
 
@@ -111,9 +148,27 @@ function buildIRS1040ScheduleD(fields: Input): string {
       mappedAmounts.set(tag, (mappedAmounts.get(tag) ?? 0) + amount);
     }
   }
-  for (const [tag, value] of mappedAmounts) {
-    children.push(element(tag, value));
-  }
+  const mapped = (tag: string) =>
+    mappedAmounts.has(tag) ? element(tag, mappedAmounts.get(tag)!) : "";
+  children.push(mapped("STGainOrLossFromFormsAmt"));
+  children.push(mapped("NetSTGainOrLossFromSchK1Amt"));
+  children.push(mapped("STCapitalLossCarryoverAmt"));
+
+  // Part II: direct line 8a, Form 8949 lines 8b/9/10, then scalar lines.
+  children.push(
+    buildBasisRptNoAdjGroup(
+      "TotalLTCGL1099BssRptNoAdjGrp",
+      f.line_8a_proceeds,
+      f.line_8a_cost,
+    ),
+  );
+  children.push(
+    ...TRANSACTION_GROUPS.slice(3).map((group) =>
+      buildTransactionGroup(group, preparedSales)
+    ),
+  );
+  children.push(mapped("LTGainOrLossFromFormsAmt"));
+  children.push(mapped("NetLTGainOrLossFromSchK1Amt"));
 
   // Aggregated capital gain distributions (line 13 from two possible sources)
   const capGainValues = AGGREGATED_CAP_GAIN_DIST
@@ -123,6 +178,8 @@ function buildIRS1040ScheduleD(fields: Input): string {
     const sum = capGainValues.reduce((a, b) => a + b, 0);
     children.push(element("CapitalGainDistributionsAmt", sum));
   }
+  children.push(mapped("LTCapitalLossCarryoverAmt"));
+  children.push(mapped("UnrcptrSect1250GainWrkshtAmt"));
 
   return elements("IRS1040ScheduleD", children);
 }
@@ -263,6 +320,21 @@ export const scheduleD: MefFormDescriptor<"schedule_d", Input> = {
       );
     }
     if (fields.active_4797_final_no_schedule_d === true) return "";
-    return buildIRS1040ScheduleD(fields);
+    const rawSales = context?.pending?.form8949;
+    if (rawSales !== undefined && !Array.isArray(rawSales)) {
+      throw new Error("Schedule D needs prepared Form 8949 transaction rows");
+    }
+    const preparedSales = (rawSales ?? []).map((row) =>
+      transactionSchema.parse(row)
+    );
+    for (const sale of preparedSales) {
+      assertForm8949TransactionMath(sale);
+      if ((sale.part === "A" || sale.part === "D") && !sale.adjustment_codes) {
+        throw new Error(
+          "Schedule D direct sale must not also file on Form 8949",
+        );
+      }
+    }
+    return buildIRS1040ScheduleD(fields, preparedSales);
   },
 };
