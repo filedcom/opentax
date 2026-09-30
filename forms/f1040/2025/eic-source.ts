@@ -15,7 +15,14 @@ import {
   form8814EicLine4,
   itemSchema as f8814ItemSchema,
 } from "../nodes/inputs/f8814/index.ts";
-import { scheduleERoyaltyEicAmounts } from "../nodes/inputs/schedule_e/index.ts";
+import {
+  scheduleEPassiveEicIncome,
+  scheduleERoyaltyEicAmounts,
+} from "../nodes/inputs/schedule_e/index.ts";
+import {
+  inputSchema as agiInputSchema,
+  remainingAllowedPassiveLoss,
+} from "../nodes/intermediate/aggregation/agi_aggregator/index.ts";
 import { personalPropertyRentalTotals } from "../nodes/inputs/personal_property_rental/index.ts";
 
 /** Check a positive Form 1040 EIC against the reviewed source before export. */
@@ -86,6 +93,17 @@ export function assertEicSource(
     throw new Error("Form 1040 EIC Form 8814 income differs from Schedule 1");
   }
   const royalties = scheduleERoyaltyEicAmounts(pending?.schedule_e ?? {});
+  const passiveIncome = scheduleEPassiveEicIncome(pending?.schedule_e ?? {});
+  const agiInput = agiInputSchema.parse(pending?.agi_aggregator ?? {});
+  if ((agiInput.eic_passive_schedule_e_income ?? 0) !== passiveIncome) {
+    throw new Error(
+      "Form 1040 EIC passive income differs from Schedule E sources",
+    );
+  }
+  const passiveNet = Math.max(
+    0,
+    passiveIncome - remainingAllowedPassiveLoss(agiInput),
+  );
   const personalRental = pending?.personal_property_rental === undefined
     ? { income: 0, expenses: 0 }
     : personalPropertyRentalTotals(pending.personal_property_rental);
@@ -109,7 +127,7 @@ export function assertEicSource(
       royalties.income + personalRental.income - royalties.expenses -
         personalRental.expenses,
     ) +
-    Math.max(0, capitalGain - form4797Exclusion);
+    Math.max(0, capitalGain - form4797Exclusion) + passiveNet;
   if (
     !("investment_income_floor" in result) ||
     result.investment_income_floor !== investmentIncomeFloor

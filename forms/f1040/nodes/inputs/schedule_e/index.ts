@@ -647,6 +647,29 @@ function farmCurrentIncome(farms: readonly FarmActivity[]): number {
   return farms.reduce((sum, farm) => sum + Math.max(0, farm.current_net), 0);
 }
 
+/** Positive passive rental/farm income on Pub. 596 Worksheet 1 line 11.
+ * Royalty rows are handled on lines 8–10, so their net is excluded here. */
+export function scheduleEPassiveEicIncome(rawInput: unknown): number {
+  const input = inputSchema.parse(rawInput);
+  const rentalIncome = input.schedule_es.filter(isPassive).reduce(
+    (sum, item) => {
+      const net = computePropertyNet(item);
+      if ((item.royalties_income ?? 0) === 0) return sum + Math.max(0, net);
+      const fraction = (item.ownership_percent ?? 100) / 100;
+      const royaltyGross = Math.round(item.royalties_income! * fraction);
+      const royaltyExpense = item.eic_royalty_expense_allocation?.amount ??
+        Math.round(computeExpenses(item) * fraction);
+      return sum + Math.max(0, net - (royaltyGross - royaltyExpense));
+    },
+    0,
+  );
+  return rentalIncome + farmCurrentIncome(input.farm_rental_activities ?? []) +
+    (input.estate_trust_rows ?? []).reduce(
+      (sum, row) => sum + (row.passive_income ?? 0),
+      0,
+    );
+}
+
 function hasPassiveLoss(
   items: EItems,
   farms: readonly FarmActivity[],
@@ -1087,6 +1110,7 @@ class ScheduleENode extends TaxNode<typeof inputSchema> {
       0,
     );
     const eicRoyalty = scheduleERoyaltyEicAmounts(parsed);
+    const eicPassiveIncome = scheduleEPassiveEicIncome(parsed);
     const totalNet = propertyNet + passthroughRental + passthroughRoyalty +
       (farm_rental_net ?? 0) +
       (estate_trust_rows ?? []).reduce(
@@ -1107,6 +1131,7 @@ class ScheduleENode extends TaxNode<typeof inputSchema> {
         line5_schedule_e: deductibleNet,
         eic_royalty_income: eicRoyalty.income,
         eic_royalty_expenses: eicRoyalty.expenses,
+        eic_passive_schedule_e_income: eicPassiveIncome,
         ...(entireLoss === undefined ? palFields(schedule_es, farms) : {}),
       }),
       ...(entireLoss === undefined ? form8582Outputs(schedule_es, farms) : []),

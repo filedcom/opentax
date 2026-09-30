@@ -113,6 +113,112 @@ function runCapital(
   }, { taxYear: 2025, formType: "f1040" });
 }
 
+function runPassiveRental(rent: number, interest = 0, passiveLoss = 0) {
+  return execute(plan, registry, {
+    general,
+    w2: [w2],
+    schedule_e: [
+      {
+        tsj: "T",
+        activity_id: "passive-rental",
+        property_description: "Reviewed 2025 rental",
+        street_address: "123 Rental Road",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+        property_type: 1,
+        activity_type: "B",
+        fair_rental_days: 365,
+        personal_use_days: 0,
+        rent_income: rent,
+        form_1099_payments_made: false,
+      },
+      ...(passiveLoss > 0
+        ? [{
+          tsj: "T",
+          activity_id: "passive-loss",
+          property_description: "Reviewed 2025 second rental",
+          property_type: 1,
+          activity_type: "B",
+          fair_rental_days: 365,
+          personal_use_days: 0,
+          rent_income: 0,
+          expense_repairs: passiveLoss,
+          form_1099_payments_made: false,
+        }]
+        : []),
+    ],
+    ...(interest > 0
+      ? {
+        f1099int: [{
+          payer_name: "Example Bank",
+          recipient_ssn: "111-22-3333",
+          box8: interest,
+        }],
+      }
+      : {}),
+  }, { taxYear: 2025, formType: "f1040" });
+}
+
+Deno.test("EIC Worksheet 1 counts passive Schedule E rental profit at the investment limit", async () => {
+  const atLimit = runPassiveRental(11_950);
+  assertEquals(atLimit.diagnostics, []);
+  assertEquals(atLimit.pending.eitc.investment_income_floor, 11_950);
+  assertEquals(
+    typeof atLimit.pending.eitc.credit_amount === "number" &&
+      atLimit.pending.eitc.credit_amount > 0,
+    true,
+  );
+  const overLimit = runPassiveRental(11_951);
+  assertEquals(overLimit.pending.eitc.investment_income_floor, 11_951);
+  assertEquals(overLimit.pending.eitc.credit_amount, 0);
+  const combined = runPassiveRental(9_000, 2_951);
+  assertEquals(combined.pending.eitc.investment_income_floor, 11_951);
+  assertEquals(combined.pending.eitc.credit_amount, 0);
+  const netted = runPassiveRental(12_000, 0, 50);
+  assertEquals(netted.diagnostics, []);
+  assertEquals(netted.pending.eitc.investment_income_floor, 11_950);
+  assertEquals(netted.pending.f1040.line27_eitc !== undefined, true);
+  const filer = extractFilerIdentity(atLimit.pending.f1040);
+  const xml = buildMefXml(buildPending(atLimit.pending), filer);
+  const xsd = new URL(
+    "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    import.meta.url,
+  ).pathname;
+  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(xmlPath, xml);
+    const validation = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsd, xmlPath],
+      stderr: "piped",
+    }).output();
+    assertEquals(
+      validation.code,
+      0,
+      new TextDecoder().decode(validation.stderr),
+    );
+  } finally {
+    await Deno.remove(xmlPath);
+  }
+  const forged = {
+    ...atLimit.pending,
+    agi_aggregator: {
+      ...atLimit.pending.agi_aggregator,
+      eic_passive_schedule_e_income: 0,
+    },
+  };
+  assertThrows(
+    () => buildMefXml(buildPending(forged), filer),
+    Error,
+    "passive income differs",
+  );
+  assertThrows(
+    () => irs1040Pdf.projectFields?.(atLimit.pending.f1040, forged),
+    Error,
+    "passive income differs",
+  );
+});
+
 function runForm8814(
   childTaxExemptInterest: number,
   childInterest: number,
