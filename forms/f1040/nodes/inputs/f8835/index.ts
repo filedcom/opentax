@@ -247,6 +247,13 @@ function form3800Line(item: F8835Item): "1f" | "4e" {
       "Form 8835 production period must be a valid 2025 period after service",
     );
   }
+  const creditEnd = new Date(service);
+  creditEnd.setUTCFullYear(creditEnd.getUTCFullYear() + 10);
+  if (end >= creditEnd) {
+    throw new Error(
+      "Form 8835 electricity sold after the 10-year credit period cannot be claimed",
+    );
+  }
   const fourthAnniversary = new Date(service);
   fourthAnniversary.setUTCFullYear(fourthAnniversary.getUTCFullYear() + 4);
   if (start < fourthAnniversary && end >= fourthAnniversary) {

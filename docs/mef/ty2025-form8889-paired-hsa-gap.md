@@ -133,7 +133,10 @@ calculator checks valid dates, a nonnegative interval of at most 60 days, and
 that the line-14b amount does not exceed line 14a. A direct trustee transfer is
 not reported on line 14a or 14b. This is a direct input cutover, not a legacy
 branch. The references and affirmations are entered evidence, not verified
-documents; rollover-specific 1099-SA source reconciliation remains open.
+documents. The rollover source now names an owner-matched code-1 Form 1099-SA
+whose box 1 covers the excluded amount and participates in exact line-14a
+reconciliation. Native and PDF projections recompute line 14b from that same
+source; focused source-link and wrong-code cases are authored but unrun.
 Positive and negative focused cases are written but have not been run. The
 [2025 Form 8889 instructions](https://www.irs.gov/instructions/i8889) supply the
 rollover, direct-transfer, and line-14b rules.

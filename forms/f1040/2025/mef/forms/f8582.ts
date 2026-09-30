@@ -804,7 +804,7 @@ export const form8582: MefFormDescriptor<"form8582", Input> = {
     const upper = mfsApart ? 75_000 : 150_000;
     const maximum = mfsApart ? 12_500 : 25_000;
     const difference = Math.max(0, upper - magi);
-    const phasedMaximum = Math.min(maximum, difference * 0.5);
+    const phasedMaximum = Math.round(Math.min(maximum, difference * 0.5));
     const specialAllowance = overallNet < 0
       ? Math.max(0, limit.allowed - currentIncome)
       : 0;

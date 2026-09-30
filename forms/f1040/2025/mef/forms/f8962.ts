@@ -1867,7 +1867,6 @@ function reconcileSimplePolicyMonths(
   const activePolicyNumbers = new Set<string>();
   let previousPolicyNumber: string | undefined;
   let switches = 0;
-  let hasUncoveredMonth = false;
   for (const [index, row] of rows.entries()) {
     const active = policies.filter((policy) =>
       (policy.monthly_premiums?.[index] ?? 0) > 0 ||
@@ -1878,7 +1877,6 @@ function reconcileSimplePolicyMonths(
     // cover different portions of the year. The chronological switch and
     // policy-identity checks below still apply to every covered month.
     if (active.length === 0) {
-      hasUncoveredMonth = true;
       if (
         row.month_code !== MONTH_CODES[index] || row.premium !== 0 ||
         row.slcsp !== 0 || row.aptc !== 0 ||
@@ -2012,14 +2010,6 @@ function reconcileSimplePolicyMonths(
   if (interstateMove && switches !== 1) {
     throw new Error(
       "Form 8962 interstate move needs one chronological policy switch",
-    );
-  }
-  if (
-    !interstateMove && fields.household_size === 1 && switches > 1 &&
-    hasUncoveredMonth
-  ) {
-    throw new Error(
-      "Form 8962 alternating same-state policies need twelve covered months",
     );
   }
   const credit = Math.round(rows.reduce(

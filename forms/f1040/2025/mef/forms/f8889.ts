@@ -5,6 +5,7 @@ import { inputSchema as form8889SourceSchema } from "../../../nodes/intermediate
 import {
   reconcileCode2Form8889,
   reconcilePairedForm8889,
+  reconcileRolloverForm8889,
   reconcileSpouseOnlyForm8889,
 } from "../../form8889_spouse_reconciliation.ts";
 
@@ -173,6 +174,7 @@ function buildIRS8889(
     context?.filer,
   );
   reconcileCode2Form8889(fields.forms, context?.pending, context?.filer);
+  reconcileRolloverForm8889(fields.forms, context?.pending, context?.filer);
   reconcilePairedForm8889(
     fields.forms,
     context?.pending,

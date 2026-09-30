@@ -354,6 +354,8 @@ Deno.test("Form 8582 PDF projects Parts I–VIII from the native activity worksh
   assertEquals(fields.line3, "-20000");
   assertEquals(fields.line5, "75000");
   assertEquals(fields.line6, "60000");
+  assertEquals(fields.line7, "15000");
+  assertEquals(fields.line8, "7500");
   assertEquals(fields.line9, "7500");
   assertEquals(fields.line11, "7500");
   assertEquals(fields.part4_1_name, "Rental home");
@@ -363,6 +365,22 @@ Deno.test("Form 8582 PDF projects Parts I–VIII from the native activity worksh
   assertEquals(fields.part7_1_unallowed, "12500");
   assertEquals(fields.partVIII_1_allowed, "7500");
   assertEquals(fields.part9_name, undefined);
+});
+
+Deno.test("Form 8582 PDF projects rounded odd-dollar MFS Part II allowance", () => {
+  const fields = form8582Pdf.projectFields!(
+    { ...rentalFields, modified_agi: 60_003 },
+    rentalPending,
+  );
+  assertEquals(fields.line5, "75000");
+  assertEquals(fields.line6, "60003");
+  assertEquals(fields.line7, "14997");
+  assertEquals(fields.line8, "7499");
+  assertEquals(fields.line9, "7499");
+  assertEquals(fields.line11, "7499");
+  assertEquals(fields.part6_1_allowance, "7499");
+  assertEquals(fields.part7_1_unallowed, "12501");
+  assertEquals(fields.partVIII_1_allowed, "7499");
 });
 
 Deno.test("Form 8582 PDF keeps other-passive Part V separate from rental Part IV", () => {

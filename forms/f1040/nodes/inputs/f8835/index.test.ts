@@ -177,6 +177,33 @@ Deno.test("f8835: rejects periods crossing the Form 3800 four-year boundary", ()
   );
 });
 
+Deno.test("f8835: claims only electricity sold within the facility's 10-year credit period", () => {
+  const source = {
+    facility_placed_in_service_date: "2015-07-01",
+    production_period_start_date: "2025-01-01",
+  };
+  assertEquals(
+    lines({ ...source, production_period_end_date: "2025-06-30" })
+      .form3800Line,
+    "1f",
+  );
+  assertThrows(
+    () => lines({ ...source, production_period_end_date: "2025-07-01" }),
+    Error,
+    "10-year credit period",
+  );
+  assertThrows(
+    () =>
+      lines({
+        ...source,
+        facility_placed_in_service_date: "2015-01-01",
+        production_period_end_date: "2025-01-31",
+      }),
+    Error,
+    "10-year credit period",
+  );
+});
+
 Deno.test("f8835: forwards each facility and transfer election to Form 3800", () => {
   const result = f8835.compute({ taxYear: 2025, formType: "f1040" }, {
     f8835s: [

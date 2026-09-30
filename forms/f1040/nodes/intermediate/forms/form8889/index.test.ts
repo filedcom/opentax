@@ -117,12 +117,14 @@ function employerCode2Sa(principal: number, earnings: number) {
   };
 }
 
-function rolloverEvidence(amount: number) {
+function rolloverEvidence(amount: number, reportedGross = amount) {
   return {
     amount,
     distribution_date: "2025-05-01",
     contribution_date: "2025-05-30",
     distribution_source_reference: "2025 HSA 1099-SA distribution A",
+    form1099_sa_source_reference:
+      `2025 ordinary HSA distribution ${reportedGross}`,
     contribution_source_reference: "2025 destination HSA receipt B",
     same_beneficiary: true as const,
     receiving_hsa_no_other_rollover_in_preceding_12_months: true as const,
@@ -1857,7 +1859,7 @@ Deno.test("part2: fully non-qualified distribution → income + 20% penalty", ()
 Deno.test("part2: line 14b rollover reduces taxable net distributions", () => {
   const result = compute({
     ...ordinary1099Sa(5000),
-    hsa_excluded_distributions: { rollover: rolloverEvidence(3000) },
+    hsa_excluded_distributions: { rollover: rolloverEvidence(3000, 5000) },
     qualified_medical_expenses: 1500,
     exception_qualified_taxable_amount: 0,
   });
@@ -1923,6 +1925,37 @@ Deno.test("part2: HSA rollover line 14b needs supported redeposit evidence", () 
     Error,
     "distinct distribution and redeposit sources",
   );
+  assertEquals(
+    firstForm(compute(source(base)))?.print_line14b_excluded_distributions,
+    500,
+  );
+  assertThrows(
+    () => compute(source({
+      ...base,
+      form1099_sa_source_reference: "unmatched 1099-SA",
+    })),
+    Error,
+    "linked code-1 Form 1099-SA",
+  );
+  assertThrows(
+    () => compute(source({
+      ...base,
+      form1099_sa_source_reference: base.contribution_source_reference,
+    })),
+    Error,
+    "linked code-1 Form 1099-SA",
+  );
+  assertThrows(
+    () => compute({
+      ...source(base),
+      form1099_sa_distributions: [{
+        ...ordinary1099Sa(500).form1099_sa_distributions[0],
+        box3_distribution_code: "3",
+      }],
+    }),
+    Error,
+    "linked code-1 Form 1099-SA",
+  );
   for (
     const field of [
       "same_beneficiary",
@@ -1950,16 +1983,16 @@ Deno.test("part2: line 14b and line 15 cannot exceed their source distribution",
     () =>
       compute({
         ...ordinary1099Sa(1000),
-        hsa_excluded_distributions: { rollover: rolloverEvidence(1001) },
+        hsa_excluded_distributions: { rollover: rolloverEvidence(1001, 1000) },
       }),
     Error,
-    "line 14b cannot exceed",
+    "linked code-1 Form 1099-SA",
   );
   assertThrows(
     () =>
       compute({
         ...ordinary1099Sa(1000),
-        hsa_excluded_distributions: { rollover: rolloverEvidence(600) },
+        hsa_excluded_distributions: { rollover: rolloverEvidence(600, 1000) },
         qualified_medical_expenses: 500,
       }),
     Error,
@@ -2400,6 +2433,7 @@ Deno.test("part2: sourced rollover and age-65 exception allocate separate dollar
   const rollover = {
     ...rolloverEvidence(1000),
     distribution_source_reference: "May trustee transaction",
+    form1099_sa_source_reference: "2025 Form 1099-SA",
   };
   const source = {
     hsa_distributions: 2000,

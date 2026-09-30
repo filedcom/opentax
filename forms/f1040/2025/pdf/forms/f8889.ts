@@ -3,6 +3,7 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import {
   reconcileCode2Form8889,
   reconcilePairedForm8889,
+  reconcileRolloverForm8889,
   reconcileSpouseOnlyForm8889,
 } from "../../form8889_spouse_reconciliation.ts";
 
@@ -210,6 +211,7 @@ export const form8889Pdf: PdfFormDescriptor = {
     }
     reconcileSpouseOnlyForm8889(forms, allPending, filer);
     reconcileCode2Form8889(forms, allPending, filer);
+    reconcileRolloverForm8889(forms, allPending, filer);
     reconcilePairedForm8889(forms, allPending, filer);
     return forms;
   },

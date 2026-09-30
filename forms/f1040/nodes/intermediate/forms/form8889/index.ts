@@ -156,6 +156,7 @@ const beneficiaryInputSchema = z.object({
       distribution_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
       contribution_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
       distribution_source_reference: z.string().trim().min(1),
+      form1099_sa_source_reference: z.string().trim().min(1),
       contribution_source_reference: z.string().trim().min(1),
       same_beneficiary: z.literal(true),
       receiving_hsa_no_other_rollover_in_preceding_12_months: z.literal(true),
@@ -844,6 +845,22 @@ function verifyDistributionSources(
     ) {
       throw new Error(
         "Form 8889 line 14a must reconcile to distinct Form 1099-SA box 1 sources",
+      );
+    }
+  }
+  const rollover = input.hsa_excluded_distributions?.rollover;
+  if (rollover) {
+    const form = records?.find((record) =>
+      record.source_reference === rollover.form1099_sa_source_reference
+    );
+    if (
+      !form || form.box3_distribution_code !== "1" ||
+      form.box1_gross_distribution < rollover.amount ||
+      rollover.form1099_sa_source_reference ===
+        rollover.contribution_source_reference
+    ) {
+      throw new Error(
+        "Form 8889 rollover needs a linked code-1 Form 1099-SA with box 1 covering the excluded amount",
       );
     }
   }

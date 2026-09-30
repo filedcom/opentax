@@ -7,6 +7,108 @@ import {
   inputSchema,
 } from "../nodes/intermediate/forms/form8889/index.ts";
 
+/** Bind a single-owner rollover to its owner source and return totals. */
+export function reconcileRolloverForm8889(
+  forms: readonly Readonly<Record<string, unknown>>[],
+  allPending: Readonly<Record<string, unknown>> | undefined,
+  filer: FilerIdentity | undefined,
+): void {
+  const pending8889 = allPending?.form8889;
+  if (
+    !pending8889 || typeof pending8889 !== "object" ||
+    Array.isArray(pending8889)
+  ) {
+    if (
+      forms.length === 1 &&
+      typeof forms[0]?.print_line14b_excluded_distributions === "number" &&
+      forms[0].print_line14b_excluded_distributions > 0
+    ) {
+      throw new Error("Form 8889 positive line 14b needs owner source");
+    }
+    return;
+  }
+  const { forms: _printed, ...sourceFields } = pending8889 as Record<
+    string,
+    unknown
+  >;
+  const rawExcluded = sourceFields.hsa_excluded_distributions;
+  if (
+    !rawExcluded || typeof rawExcluded !== "object" ||
+    !("rollover" in rawExcluded)
+  ) {
+    if (
+      forms.length === 1 &&
+      typeof forms[0]?.print_line14b_excluded_distributions === "number" &&
+      forms[0].print_line14b_excluded_distributions > 0 &&
+      !(rawExcluded && typeof rawExcluded === "object" &&
+        "timely_excess_withdrawal" in rawExcluded) &&
+      !(sourceFields.employer_excess_treatment &&
+        typeof sourceFields.employer_excess_treatment === "object" &&
+        "timely_withdrawal" in sourceFields.employer_excess_treatment)
+    ) {
+      throw new Error("Form 8889 positive rollover needs owner source");
+    }
+    return;
+  }
+  const source = inputSchema.parse(sourceFields);
+  if (
+    forms.length !== 1 || !forms[0] ||
+    source.spouse_hsa !== undefined ||
+    forms[0].owner !==
+      (source.beneficiary_identity.owner === TS.T ? "primary" : "spouse") ||
+    source.beneficiary_identity.ssn.replaceAll("-", "") !==
+      forms[0].beneficiary_ssn ||
+    source.beneficiary_identity.name !== forms[0].beneficiary_name ||
+    source.beneficiary_identity.ssn.replaceAll("-", "") !==
+      (source.beneficiary_identity.owner === TS.T
+        ? filer?.primarySSN.replaceAll("-", "")
+        : filer?.spouse?.ssn.replaceAll("-", ""))
+  ) {
+    throw new Error("Form 8889 rollover source differs from filer owner");
+  }
+  const outputs = form8889.compute(
+    { taxYear: 2025, formType: "f1040" },
+    source,
+  ).outputs;
+  const expected = (outputs.find((row) => row.nodeType === "form8889")
+    ?.fields.forms as readonly Record<string, unknown>[] | undefined)?.[0];
+  const filed = forms[0];
+  if (
+    !expected ||
+    Object.keys(expected).sort().join("|") !==
+      Object.keys(filed).sort().join("|") ||
+    Object.keys(expected).some((key) => expected[key] !== filed[key])
+  ) {
+    throw new Error("Form 8889 rollover print differs from source calculation");
+  }
+  const schedule1 = z.object({
+    line13_hsa_deduction: z.number().optional(),
+    line8f_hsa_income: z.number().optional(),
+    line10_total_additional_income: z.number(),
+    line26_total_adjustments: z.number(),
+  }).passthrough().parse(allPending?.schedule1);
+  const schedule2 = z.object({
+    line17c_hsa_penalty: z.number().optional(),
+  }).passthrough().parse(allPending?.schedule2 ?? {});
+  const return1040 = z.object({
+    line8_additional_income: z.number(),
+    line10_adjustments: z.number(),
+  }).passthrough().parse(allPending?.f1040);
+  if (
+    (schedule1.line13_hsa_deduction ?? 0) !==
+      (filed.print_line13_deduction ?? 0) ||
+    (schedule1.line8f_hsa_income ?? 0) !==
+      (filed.print_line16_taxable ?? 0) ||
+    (schedule2.line17c_hsa_penalty ?? 0) !==
+      (filed.print_line17b_penalty ?? 0) ||
+    schedule1.line10_total_additional_income !==
+      return1040.line8_additional_income ||
+    schedule1.line26_total_adjustments !== return1040.line10_adjustments
+  ) {
+    throw new Error("Form 8889 rollover amounts differ from filed return");
+  }
+}
+
 /** Recompute the one-owner code-2 excess return before native or PDF export. */
 export function reconcileCode2Form8889(
   forms: readonly Readonly<Record<string, unknown>>[],

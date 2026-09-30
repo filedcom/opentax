@@ -1,6 +1,11 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../mef/header.ts";
 import { f1095a } from "../../../nodes/inputs/f1095a/index.ts";
+import {
+  form8962 as form8962Calculation,
+  inputSchema as form8962InputSchema,
+} from "../../../nodes/intermediate/forms/form8962/index.ts";
+import { FilingStatus as SourceFilingStatus } from "../../../nodes/types.ts";
 import { form8962Pdf } from "../../pdf/forms/f8962.ts";
 import { form8962 } from "./f8962.ts";
 
@@ -192,26 +197,26 @@ Deno.test("Form 8962 alternating policies reject month, identity, state, and fin
   );
 });
 
-Deno.test("Form 8962 alternating policies do not infer an unsourced gap month", () => {
-  const first = {
-    ...policies[0],
-    monthly_premiums: policies[0].monthly_premiums.map((value, index) =>
-      index === 0 ? 0 : value
+Deno.test("Form 8962 partial-year A-B-A policies leave a sourced gap month blank", () => {
+  const second = {
+    ...policies[1],
+    monthly_premiums: policies[1].monthly_premiums.map((value, index) =>
+      index === 5 ? 0 : value
     ),
-    monthly_slcsps: policies[0].monthly_slcsps.map((value, index) =>
-      index === 0 ? 0 : value
+    monthly_slcsps: policies[1].monthly_slcsps.map((value, index) =>
+      index === 5 ? 0 : value
     ),
-    monthly_aptcs: policies[0].monthly_aptcs.map((value, index) =>
-      index === 0 ? 0 : value
+    monthly_aptcs: policies[1].monthly_aptcs.map((value, index) =>
+      index === 5 ? 0 : value
     ),
-    annual_premium: policies[0].annual_premium - 500,
-    annual_slcsp: policies[0].annual_slcsp - 600,
-    annual_aptc: policies[0].annual_aptc - 200,
+    annual_premium: policies[1].annual_premium - 500,
+    annual_slcsp: policies[1].annual_slcsp - 600,
+    annual_aptc: policies[1].annual_aptc - 200,
   };
   const gapFields = {
     ...fields,
     monthly_ptc_rows: fields.monthly_ptc_rows.map((row, index) =>
-      index === 0
+      index === 5
         ? {
           ...row,
           premium: 0,
@@ -227,18 +232,54 @@ Deno.test("Form 8962 alternating policies do not infer an unsourced gap month", 
     excess_advance_payment: 1_463,
     excess_advance_premium: 1_463,
   };
+  const gapPending = {
+    ...pending,
+    f1095a: { f1095as: [policies[0], second] },
+    schedule2: { line1a_excess_advance_premium: 1_463 },
+    f1040: { line11_agi: 75_300, line17_additional_taxes: 1_463 },
+  };
+  const output = f1095a.compute(
+    { taxYear: 2025, formType: "f1040" },
+    gapPending.f1095a,
+  )
+    .outputs.find((item) => item.nodeType === "form8962");
+  assertEquals(output?.fields.monthly_premiums?.[5], 0);
+  assertEquals(output?.fields.monthly_slcsps?.[5], 0);
+  assertEquals(output?.fields.monthly_aptcs?.[5], 0);
+  const calculated = form8962Calculation.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form8962InputSchema.parse({
+      ...output?.fields,
+      taxpayer_modified_agi: 75_300,
+      dependents_modified_agi: 0,
+      household_size: 1,
+      fpl_region: "contiguous",
+      filing_status: SourceFilingStatus.Single,
+      dependent_income_complete: true,
+    }),
+  ).outputs.find((item) => item.nodeType === "form8962")?.fields;
+  assertEquals(calculated?.monthly_ptc_rows?.[5].allowed_credit, 0);
+  assertEquals(calculated?.total_premium_tax_credit, 737);
+  assertEquals(calculated?.excess_advance_premium, 1_463);
+  const xml = form8962.build(gapFields, { filer, pending: gapPending });
+  assertEquals((xml.match(/<MonthlyPTCCalculationGrp>/g) ?? []).length, 11);
+  assertEquals(xml.includes("<MonthCd>JUNE</MonthCd>"), false);
+  const projected = form8962Pdf.projectFields?.(gapFields, gapPending) ?? {};
+  assertEquals(projected.pdf_month_6_premium, undefined);
+  assertEquals(projected.pdf_month_6_slcsp, undefined);
+  assertEquals(
+    form8962Pdf.instances?.(projected, filer, gapPending)?.length,
+    1,
+  );
   assertThrows(
     () =>
-      form8962.build(gapFields, {
-        filer,
-        pending: {
-          ...pending,
-          f1095a: { f1095as: [first, policies[1]] },
-          schedule2: { line1a_excess_advance_premium: 1_463 },
-          f1040: { line11_agi: 75_300, line17_additional_taxes: 1_463 },
-        },
-      }),
+      form8962.build({
+        ...gapFields,
+        monthly_ptc_rows: gapFields.monthly_ptc_rows.map((row, index) =>
+          index === 5 ? { ...row, allowed_credit: 1 } : row
+        ),
+      }, { filer, pending: gapPending }),
     Error,
-    "need twelve covered months",
+    "must have zero policy and credit amounts",
   );
 });

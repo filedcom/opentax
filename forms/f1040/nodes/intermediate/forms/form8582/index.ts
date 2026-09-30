@@ -784,7 +784,9 @@ function specialAllowance(
   const phaseOutReduction = PHASE_OUT_RATE * (magi - lower);
   const phasedAllowance = Math.max(0, max - phaseOutReduction);
 
-  return Math.min(rentalNetLoss, phasedAllowance);
+  // Form 8582 line 8 is entered in whole dollars; round the half-dollar
+  // result only after applying the 50% phaseout to the source MAGI.
+  return Math.min(rentalNetLoss, Math.round(phasedAllowance));
 }
 
 // IRC §469(a): a passive loss is deductible only against passive income, plus the

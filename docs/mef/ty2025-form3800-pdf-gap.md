@@ -7,6 +7,12 @@ geothermal and mixed wind/geothermal credit returns have local XSD and
 filled-PDF evidence. Other credit sources, transfers, carryovers, row
 combinations, and ATS acceptance remain open.
 
+The Form 8835 source calculation now rejects electricity sold on or after the
+tenth anniversary of the facility's placed-in-service date, including a 2025
+period that crosses that boundary. The same calculation feeds Form 3800 and
+the native/PDF Form 8835 projectors. Boundary cases are authored but unrun for
+the deferred batch; underlying production and sale records remain unauthenticated.
+
 A source-vintage reconciliation module now checks cent-precise origin credit,
 origin-year and subsequent allowed uses, prior adjustments, the 2025 opening
 balance, and any 2025 recapture reduction. It retains the year-by-year facts

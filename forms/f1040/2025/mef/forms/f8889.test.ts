@@ -169,9 +169,7 @@ function buildInvalid(raw: unknown, buildContext: MefBuildContext = context) {
 }
 
 Deno.test("Form 8889 rollover plus age-65 exception serializes distinct 14b, 16, and 17b amounts", () => {
-  const result = form8889Node.compute(
-    { taxYear: 2025, formType: "f1040" },
-    form8889InputSchema.parse({
+  const source = form8889InputSchema.parse({
       beneficiary_identity: {
         owner: "T",
         name: "Alex Taxpayer",
@@ -191,6 +189,7 @@ Deno.test("Form 8889 rollover plus age-65 exception serializes distinct 14b, 16,
           distribution_date: "2025-05-01",
           contribution_date: "2025-05-30",
           distribution_source_reference: "May trustee transaction",
+          form1099_sa_source_reference: "2025 Form 1099-SA",
           contribution_source_reference: "Receiving HSA deposit",
           same_beneficiary: true,
           receiving_hsa_no_other_rollover_in_preceding_12_months: true,
@@ -218,12 +217,28 @@ Deno.test("Form 8889 rollover plus age-65 exception serializes distinct 14b, 16,
           form1099_sa_source_reference: "2025 Form 1099-SA",
         }],
       },
-    }),
+    });
+  const result = form8889Node.compute(
+    { taxYear: 2025, formType: "f1040" },
+    source,
   );
   const printed = result.outputs.find((entry) => entry.nodeType === "form8889");
+  const forms = printed?.fields.forms as Form8889Owner[];
   const xml = form8889.build(
     (printed?.fields ?? {}) as Parameters<typeof form8889.build>[0],
-    context,
+    {
+      ...context,
+      pending: {
+        form8889: { ...source, forms },
+        schedule1: {
+          line8f_hsa_income: 900,
+          line10_total_additional_income: 900,
+          line26_total_adjustments: 0,
+        },
+        schedule2: { line17c_hsa_penalty: 80 },
+        f1040: { line8_additional_income: 900, line10_adjustments: 0 },
+      },
+    },
   ).join("");
   assertStringIncludes(
     xml,
@@ -240,6 +255,100 @@ Deno.test("Form 8889 rollover plus age-65 exception serializes distinct 14b, 16,
   assertStringIncludes(
     xml,
     "<HSADistriAddnlPercentTaxAmt>80</HSADistriAddnlPercentTaxAmt>",
+  );
+});
+
+Deno.test("Form 8889 rollover source reconciles to MeF, PDF, and the return", () => {
+  const source = form8889InputSchema.parse({
+    beneficiary_identity: {
+      owner: "T",
+      name: "Alex Taxpayer",
+      ssn: "123456789",
+    },
+    hsa_distributions: 1_000,
+    form1099_sa_distributions: [{
+      tax_year: 2025,
+      recipient_ssn: "123456789",
+      box1_gross_distribution: 1_000,
+      box3_distribution_code: "1",
+      source_reference: "owner 1099-SA",
+    }],
+    hsa_excluded_distributions: {
+      rollover: {
+        amount: 600,
+        distribution_date: "2025-05-01",
+        contribution_date: "2025-05-30",
+        distribution_source_reference: "owner trustee withdrawal",
+        form1099_sa_source_reference: "owner 1099-SA",
+        contribution_source_reference: "receiving HSA deposit",
+        same_beneficiary: true,
+        receiving_hsa_no_other_rollover_in_preceding_12_months: true,
+        not_direct_trustee_transfer: true,
+      },
+    },
+    exception_qualified_taxable_amount: 0,
+  });
+  const result = form8889Node.compute(
+    { taxYear: 2025, formType: "f1040" },
+    source,
+  );
+  const forms = result.outputs.find((row) => row.nodeType === "form8889")
+    ?.fields.forms as Form8889Owner[];
+  const pending = {
+    form8889: { ...source, forms },
+    schedule1: {
+      line8f_hsa_income: 400,
+      line10_total_additional_income: 400,
+      line26_total_adjustments: 0,
+    },
+    schedule2: { line17c_hsa_penalty: 80 },
+    f1040: { line8_additional_income: 400, line10_adjustments: 0 },
+  };
+  const buildContext = { ...context, pending };
+  assertThrows(
+    () => form8889.build({ forms }, context),
+    Error,
+    "positive line 14b needs owner source",
+  );
+  assertThrows(
+    () => form8889Pdf.instances?.({ forms }, context.filer!),
+    Error,
+    "positive line 14b needs owner source",
+  );
+  const xml = form8889.build({ forms }, buildContext).join("");
+  assertStringIncludes(xml, "<HSADistributionRolloverAmt>600</HSADistributionRolloverAmt>");
+  assertEquals(
+    form8889Pdf.instances?.({ forms }, context.filer!, pending)?.[0]
+      ?.print_line14b_excluded_distributions,
+    600,
+  );
+  assertThrows(
+    () => form8889.build({ forms }, {
+      ...buildContext,
+      pending: {
+        ...pending,
+        form8889: {
+          ...source,
+          hsa_excluded_distributions: {
+            rollover: {
+              ...source.hsa_excluded_distributions!.rollover!,
+              form1099_sa_source_reference: "wrong 1099-SA",
+            },
+          },
+          forms,
+        },
+      },
+    }),
+    Error,
+    "linked code-1 Form 1099-SA",
+  );
+  assertThrows(
+    () => form8889Pdf.instances?.({ forms }, context.filer!, {
+      ...pending,
+      f1040: { ...pending.f1040, line8_additional_income: 399 },
+    }),
+    Error,
+    "amounts differ from filed return",
   );
 });
 
@@ -629,7 +738,7 @@ Deno.test("Form 8889 serializes all calculated 2025 lines in XSD order", () => {
     print_line12: 5_800,
     print_line13_deduction: 2_000,
     print_line14a_distributions: 4_000,
-    print_line14b_excluded_distributions: 500,
+    print_line14b_excluded_distributions: 0,
     print_line14c: 3_500,
     print_line15_qualified: 2_500,
     print_line16_taxable: 1_000,

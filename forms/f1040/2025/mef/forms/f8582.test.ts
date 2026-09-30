@@ -766,6 +766,22 @@ Deno.test("Form 8582: MFS lived apart prints the $75,000 phaseout and $7,500 all
     xml,
     "<AllowedRentalRealtyLossAmt>7500</AllowedRentalRealtyLossAmt>",
   );
+  const oddDollarPhaseout = form8582.build({
+    ...input,
+    modified_agi: 60_003,
+  }, context);
+  assertStringIncludes(
+    oddDollarPhaseout,
+    "<ModifiedAGIDifferenceAmt>14997</ModifiedAGIDifferenceAmt>",
+  );
+  assertStringIncludes(
+    oddDollarPhaseout,
+    "<PercentNetSpecialAllowanceAmt>7499</PercentNetSpecialAllowanceAmt>",
+  );
+  assertStringIncludes(
+    oddDollarPhaseout,
+    "<AllowedRentalRealtyLossAmt>7499</AllowedRentalRealtyLossAmt>",
+  );
   const belowPhaseout = form8582.build({
     ...input,
     modified_agi: 50_000,
