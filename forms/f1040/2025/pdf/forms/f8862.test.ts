@@ -53,6 +53,8 @@ Deno.test("Form 8862 PDF projects bounded EITC and CTC claims", () => {
     eitc_qualifying_child_of_other: false,
     eitc_children: [{ first_name: "Alice", last_name: "Doe", days_in_us: 300 }],
     claim_ctc: true,
+    ctc_disallowed_year: 2023,
+    ctc_disallowance_notice_reference: "Synthetic 2023 IRS CTC notice",
     ctc_children: [{
       first_name: "Alice",
       last_name: "Doe",
@@ -85,6 +87,8 @@ Deno.test("Form 8862 PDF projects bounded EITC and CTC claims", () => {
 Deno.test("Form 8862 PDF rejects unclaimed credits and overflow rows", () => {
   const ctc = {
     claim_ctc: true,
+    ctc_disallowed_year: 2023,
+    ctc_disallowance_notice_reference: "Synthetic 2023 IRS CTC notice",
     ctc_children: ["Alice", "Betty", "Carol", "David", "Ellen"].map((name) => ({
       first_name: name,
       last_name: "Doe",
@@ -128,6 +132,8 @@ Deno.test("Form 8862 PDF rejects unclaimed credits and overflow rows", () => {
 Deno.test("Form 8862 PDF requires AOTC students to match Form 8863", () => {
   const aotc = {
     claim_aotc: true,
+    aotc_disallowed_year: 2023,
+    aotc_disallowance_notice_reference: "Synthetic 2023 IRS AOTC notice",
     aotc_students: [{
       first_name: "Alice",
       last_name: "Doe",

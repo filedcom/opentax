@@ -14,7 +14,11 @@ const scenarioInput = {
   claim_eitc: true,
   ...priorEicEvidence,
   claim_ctc: true,
+  ctc_disallowed_year: 2023,
+  ctc_disallowance_notice_reference: "Synthetic 2023 IRS CTC notice",
   claim_aotc: true,
+  aotc_disallowed_year: 2023,
+  aotc_disallowance_notice_reference: "Synthetic 2023 IRS AOTC notice",
   eitc_income_reporting_only:
     source.form8862.eicDisallowedForIncomeReportingOnly,
   eitc_qualifying_child_of_other:
@@ -318,7 +322,12 @@ Deno.test("Form 8862 rejects missing detail rather than filing an incomplete for
     "CTC child count does not match",
   );
   assertThrows(
-    () => form8862.build({ claim_aotc: true }),
+    () =>
+      form8862.build({
+        claim_aotc: true,
+        aotc_disallowed_year: 2023,
+        aotc_disallowance_notice_reference: "Synthetic 2023 IRS AOTC notice",
+      }),
     Error,
     "AOTC needs student detail",
   );
@@ -326,6 +335,8 @@ Deno.test("Form 8862 rejects missing detail rather than filing an incomplete for
     () =>
       form8862.build({
         claim_aotc: true,
+        aotc_disallowed_year: 2023,
+        aotc_disallowance_notice_reference: "Synthetic 2023 IRS AOTC notice",
         aotc_students: [{
           first_name: "Student",
           last_name: "Test",

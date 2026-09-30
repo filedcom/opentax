@@ -520,6 +520,8 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       }],
       f8862: {
         claim_ctc: true,
+        ctc_disallowed_year: 2023,
+        ctc_disallowance_notice_reference: "Synthetic 2023 IRS CTC notice",
         credit_disallowance_ban_active: false,
         ctc_children: [{
           first_name: "Jamie",

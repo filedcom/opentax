@@ -33,7 +33,10 @@ The detailed route boundaries remain in the linked gap notes and audits.
   other property classes remain open.
 - **Latest implementation checkpoint:** PR #56 now includes final-filer K-1
   ownership checks for bounded Form 4952 paths, a public Form 8863 credit-limit
-  worksheet route, and the reviewed Form 8862 CTC case. The preexisting focused
+  worksheet route, and the reviewed Form 8862 CTC case. Form 8862 CTC/ODC and
+  AOTC claims now require a prior-disallowance year and IRS notice reference,
+  like the EITC route; this tightening has not entered the final test batch.
+  The preexisting focused
   XSD/PDF evidence for these slices is recorded in their gap notes. All wider
   form variants, source proof, the final bulk run, business rules, and ATS
   remain open.
@@ -113,7 +116,7 @@ establish full filing support.
 - [ ] **Forms 2210/2210-F, 8801, 172, 461, 4562, 4797, 6252, 7206, 7217, 8829, 8606, 8815, 8915-F:** review their applicable public inputs, computations, source proof, Form 1040 joins, native/PDF documents, and conditional attachments; finish all positive routes or obtain a named fail-closed decision. Use the matching form gap notes under [docs/mef](docs/mef/) and the [form audit](docs/mef/ty2025-form1040-form-audit.md).
 - [ ] **Forms 2106, 8853, 8863, 8880, 8886, 8941, 8958, 8959, 8978, 8997, 982, 3115, 4255, 6478, 8621, 8864, 8874, 8911, 965-A, 8582-CR, 8611, 8826:** resolve the per-form unsupported branches, source/owner evidence, PDF parity, and required schedules or statements listed in the [form audit](docs/mef/ty2025-form1040-form-audit.md) and corresponding [gap notes](docs/mef/). Form 8863 now accepts the required public credit-limit worksheet and one sourced AOC case passed local XSD and filled-PDF review; other education-credit paths remain open. Form 8886 needs a per-transaction current-return attachment and a separate initial-year OTSA copy with identical disclosure content under the [IRS instructions](https://www.irs.gov/instructions/i8886); resolve that delivery workflow with its source and native/PDF route. Do not infer whole-form support from a bounded slice.
 - [ ] **Foreign/entity and special attachments:** resolve applicable Forms 5471, 8858/Schedule M, 1118, trust K-1 backup withholding, section 965, and every other individual-filer root flagged in the [unregistered-root crosswalk](docs/mef/ty2025-unregistered-root-applicability.md), including source copy versus transmitted attachment ownership.
-- [ ] **Source/statement exceptions:** finish W-2G withholding attachments; Form 1098 box 6 refinancing, amortization, other allocations, and authenticated source proof beyond the bounded [purchase-points route](docs/mef/ty2025-form1098-box6-points.md); Schedule LEP/R; Form 8814 child-income notation; Form 8862 credit-reinstatement links beyond the bounded CTC case with current full-return XSD and filled-PDF review; Schedule H FUTA continuation; and required signed/byte-bound statements and source copies identified by the [form audit](docs/mef/ty2025-form1040-form-audit.md).
+- [ ] **Source/statement exceptions:** finish W-2G withholding attachments; Form 1098 box 6 refinancing, amortization, other allocations, and authenticated source proof beyond the bounded [purchase-points route](docs/mef/ty2025-form1098-box6-points.md); Schedule LEP/R; Form 8814 child-income notation; Form 8862 credit-reinstatement links beyond the bounded CTC case with current full-return XSD and filled-PDF review, including authentication of the now-required prior IRS notices for CTC/ODC and AOTC; Schedule H FUTA continuation; and required signed/byte-bound statements and source copies identified by the [form audit](docs/mef/ty2025-form1040-form-audit.md).
 
 ## Native MeF and PDF parity
 

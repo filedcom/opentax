@@ -153,7 +153,11 @@ Deno.test({
         claim_eitc: true,
         ...priorEicEvidence,
         claim_ctc: true,
+        ctc_disallowed_year: 2023,
+        ctc_disallowance_notice_reference: "Synthetic 2023 IRS CTC notice",
         claim_aotc: true,
+        aotc_disallowed_year: 2023,
+        aotc_disallowance_notice_reference: "Synthetic 2023 IRS AOTC notice",
         eitc_income_reporting_only: false,
         eitc_qualifying_child_of_other: false,
         eitc_children: [{

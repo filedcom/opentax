@@ -67,8 +67,10 @@ export const inputSchema = z.object({
   // not any of these years; the TY2025 MeF document does not serialize them.
   eitc_disallowed_year: z.number().int().min(1997).max(2024).optional(),
   eitc_disallowance_notice_reference: z.string().trim().min(1).optional(),
-  ctc_disallowed_year: z.number().int().nonnegative().optional(),
-  aotc_disallowed_year: z.number().int().nonnegative().optional(),
+  ctc_disallowed_year: z.number().int().min(2016).max(2024).optional(),
+  ctc_disallowance_notice_reference: z.string().trim().min(1).optional(),
+  aotc_disallowed_year: z.number().int().min(2016).max(2024).optional(),
+  aotc_disallowance_notice_reference: z.string().trim().min(1).optional(),
 
   // Part II: EITC — qualifying children eligibility re-certification
   eitc_qualifying_children_count: z.number().int().min(0).max(3).optional(),
@@ -94,14 +96,32 @@ export const inputSchema = z.object({
 
 export type F8862Input = z.infer<typeof inputSchema>;
 
-export function assertEitcDisallowanceEvidence(input: F8862Input): void {
-  if (!input.claim_eitc) return;
+export function assertCreditDisallowanceEvidence(input: F8862Input): void {
   if (
-    input.eitc_disallowed_year === undefined ||
-    !input.eitc_disallowance_notice_reference
+    input.claim_eitc &&
+    (input.eitc_disallowed_year === undefined ||
+      !input.eitc_disallowance_notice_reference)
   ) {
     throw new Error(
       "Form 8862 EIC claim needs the prior disallowance year and IRS notice reference",
+    );
+  }
+  if (
+    input.claim_ctc &&
+    (input.ctc_disallowed_year === undefined ||
+      !input.ctc_disallowance_notice_reference)
+  ) {
+    throw new Error(
+      "Form 8862 CTC/ACTC/ODC claim needs the prior disallowance year and IRS notice reference",
+    );
+  }
+  if (
+    input.claim_aotc &&
+    (input.aotc_disallowed_year === undefined ||
+      !input.aotc_disallowance_notice_reference)
+  ) {
+    throw new Error(
+      "Form 8862 AOTC claim needs the prior disallowance year and IRS notice reference",
     );
   }
 }
@@ -136,7 +156,7 @@ class F8862Node extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, rawInput: F8862Input): NodeResult {
     const input = inputSchema.parse(rawInput);
-    assertEitcDisallowanceEvidence(input);
+    assertCreditDisallowanceEvidence(input);
     const outputs: NodeOutput[] = [
       ...eitcOutput(input),
       ...ctcOutput(input),
