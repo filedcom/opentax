@@ -1,4 +1,6 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
+import { FilingStatus } from "../../../mef/header.ts";
+import { assertForm1098Box6Sources } from "../../../nodes/inputs/f1098/index.ts";
 import { assertElectedSectionAReconciled } from "../../mef/forms/f8283_election.ts";
 import { inputSchema as form8283InputSchema } from "../../../nodes/inputs/f8283/index.ts";
 import { reconcileForm8283Carryover } from "../../mef/forms/f8283_carryover.ts";
@@ -166,6 +168,23 @@ export const scheduleAPdf: PdfFormDescriptor = {
   instances(input, filer, all) {
     if (!(Number(all?.f1040?.line12e_itemized_deductions ?? 0) > 0)) {
       return [];
+    }
+    if (all?.f1098 !== undefined) {
+      if (!filer) {
+        throw new Error("Schedule A PDF Form 1098 box 6 needs filer identity");
+      }
+      const recipients = [filer.primarySSN];
+      if (
+        filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+        filer.spouse?.ssn
+      ) {
+        recipients.push(filer.spouse.ssn);
+      }
+      assertForm1098Box6Sources(
+        all.f1098,
+        recipients,
+        Number(input.line_8a_mortgage_interest_1098 ?? 0),
+      );
     }
     const hasPriorCarryover = [
       input.capital_gain_property_carryovers,

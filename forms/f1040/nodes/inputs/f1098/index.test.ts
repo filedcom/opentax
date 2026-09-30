@@ -48,6 +48,9 @@ function reviewedPoints(
     box6_points_paid: points,
     box6_current_year_deductible_points: deductible,
     box6_deduction_workpaper_reference: "reviewed-pub936-workpaper-2025",
+    lender_name: "Reviewed Lender",
+    recipient_tin: "111-22-3333",
+    source_document_reference: `issued-1098-${points}-${deductible}`,
     ...overrides,
   });
 }
@@ -437,6 +440,27 @@ Deno.test("f1098.compute: two reviewed box6 sources aggregate on Schedule A line
   assertEquals(fields.line_8c_points_no_1098, undefined);
 });
 
+Deno.test("f1098.compute: positive box6 needs identified lender and recipient", () => {
+  assertThrows(
+    () => compute([reviewedPoints(1_000, 1_000, { lender_name: undefined })]),
+    Error,
+    "needs lender, recipient TIN",
+  );
+  assertThrows(
+    () => compute([reviewedPoints(1_000, 1_000, { recipient_tin: undefined })]),
+    Error,
+    "needs lender, recipient TIN",
+  );
+});
+
+Deno.test("f1098.compute: duplicate payer-issued Form 1098 rejects", () => {
+  assertThrows(
+    () => compute([reviewedPoints(1_000), reviewedPoints(1_000)]),
+    Error,
+    "same payer-issued Form 1098",
+  );
+});
+
 Deno.test("f1098.compute: multiple unreviewed rental box1 sources fail closed", () => {
   assertThrows(() =>
     compute([
@@ -551,6 +575,9 @@ Deno.test("f1098.compute: smoke — comprehensive item routes correctly", () => 
     box6_points_paid: 2_400,
     box6_current_year_deductible_points: 2_400,
     box6_deduction_workpaper_reference: "reviewed-pub936-workpaper-2025",
+    lender_name: "Reviewed Lender",
+    recipient_tin: "111-22-3333",
+    source_document_reference: "issued-1098-complete-case",
     box7_property_address_same: true,
     box9_number_of_properties: 1,
     box10_other: "Homeowner insurance: $1,200",

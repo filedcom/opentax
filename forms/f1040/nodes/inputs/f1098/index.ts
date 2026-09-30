@@ -26,6 +26,7 @@ export const itemSchema = z.object({
   for_routing: z.nativeEnum(ForRouting).optional(),
   // Informational / routing helpers
   lender_name: z.string().optional(),
+  recipient_tin: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
   source_document_reference: z.string().trim().min(1).optional(),
   box2_outstanding_principal: z.number().nonnegative().optional(),
   box3_origination_date: z.string().optional(),
@@ -193,14 +194,72 @@ export const itemSchema = z.object({
         "Form 1098 box 6 needs a reviewed Pub. 936 deduction workpaper reference",
     });
   }
+  if (
+    !item.lender_name?.trim() || !item.recipient_tin ||
+    !item.source_document_reference
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["source_document_reference"],
+      message:
+        "Form 1098 box 6 needs lender, recipient TIN, and distinct payer-copy reference",
+    });
+  }
 });
 
 export const inputSchema = z.object({
   f1098s: z.array(itemSchema),
+}).superRefine(({ f1098s }, ctx) => {
+  const sources = new Set<string>();
+  f1098s.forEach((item, index) => {
+    const reference = item.source_document_reference?.trim();
+    if (!reference) return;
+    if (sources.has(reference)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["f1098s", index, "source_document_reference"],
+        message: "The same payer-issued Form 1098 cannot be entered twice",
+      });
+    }
+    sources.add(reference);
+  });
 });
 
 type F1098Item = z.infer<typeof itemSchema>;
 type F1098Items = F1098Item[];
+
+export function assertForm1098Box6Sources(
+  source: unknown,
+  recipientTins: readonly string[],
+  filedLine8a: number,
+): void {
+  if (source === undefined) return;
+  const items = inputSchema.parse(source).f1098s;
+  const claimed = items.filter((item) =>
+    (item.box6_current_year_deductible_points ?? 0) > 0
+  );
+  if (claimed.length === 0) return;
+  const allowed = new Set(recipientTins.map((tin) => tin.replaceAll("-", "")));
+  if (
+    claimed.some((item) =>
+      !item.recipient_tin ||
+      !allowed.has(item.recipient_tin.replaceAll("-", ""))
+    )
+  ) {
+    throw new Error(
+      "Schedule A Form 1098 box 6 recipient must match the taxpayer or joint-filing spouse",
+    );
+  }
+  const points = claimed.reduce(
+    (sum, item) => sum + (item.box6_current_year_deductible_points ?? 0),
+    0,
+  );
+  if (filedLine8a < points) {
+    throw new Error(
+      "Schedule A line 8a is less than sourced Form 1098 box 6 deductible points",
+    );
+  }
+}
 
 // Interest routed to Schedule A from a single item
 function scheduleAInterestForItem(item: F1098Item): number {

@@ -1,4 +1,6 @@
 import { element, elements } from "../../../mef/xml.ts";
+import { FilingStatus } from "../../../mef/header.ts";
+import { assertForm1098Box6Sources } from "../../../nodes/inputs/f1098/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import {
   assertElectedSectionAReconciled,
@@ -75,6 +77,24 @@ function buildIRS1040ScheduleA(
   ) {
     return "";
   }
+  if (context?.pending?.f1098 !== undefined) {
+    const filer = context.filer;
+    if (!filer) {
+      throw new Error("Schedule A Form 1098 box 6 needs filer identity");
+    }
+    const recipients = [filer.primarySSN];
+    if (
+      filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+      filer.spouse?.ssn
+    ) {
+      recipients.push(filer.spouse.ssn);
+    }
+    assertForm1098Box6Sources(
+      context.pending.f1098,
+      recipients,
+      fields.line_8a_mortgage_interest_1098 ?? 0,
+    );
+  }
   // A section 170(d) noncash carryover needs Form 8283 in the carryover year.
   // The 2025 instructions also require a completed copy from the previous
   // year, plus any appraisal that had to accompany that earlier return. The
@@ -99,8 +119,10 @@ function buildIRS1040ScheduleA(
       fields,
     );
   }
-  if (fields.capital_gain_election_finalized === true &&
-    !hasPriorCapitalGainProperty) {
+  if (
+    fields.capital_gain_election_finalized === true &&
+    !hasPriorCapitalGainProperty
+  ) {
     const form8283 = context?.pending?.f8283 as
       | {
         section_b_items?: readonly {

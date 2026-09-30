@@ -8244,6 +8244,47 @@ Deno.test({
 });
 
 Deno.test({
+  name: "XSD: identified Form 1098 box 6 points reach Schedule A line 8a",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const result = runReturn({
+    general,
+    f1098: [{
+      lender_name: "Home Lender",
+      recipient_tin: general.taxpayer_ssn,
+      source_document_reference: "2025 issued Form 1098 copy 1",
+      box1_mortgage_interest: 18_000,
+      box1_current_year_deductible_interest: 18_000,
+      box1_deduction_workpaper_reference: "2025 Pub. 936 interest workpaper",
+      box6_points_paid: 2_400,
+      box6_current_year_deductible_points: 2_400,
+      box6_deduction_workpaper_reference:
+        "2025 Pub. 936 purchase-points workpaper",
+      for_routing: "A",
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(
+    result.pending.schedule_a?.line_8a_mortgage_interest_1098,
+    20_400,
+  );
+  assertEquals(result.pending.schedule_a?.line_8c_points_no_1098, undefined);
+  assertEquals(result.pending.f1040?.line12e_itemized_deductions, 20_400);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(
+    xml,
+    "<RptHomeMortgIntAndPointsAmt>20400</RptHomeMortgIntAndPointsAmt>",
+  );
+  await validateXsd(xml, "Form 1098 box 6 purchase points full return");
+});
+
+Deno.test({
   name:
     "XSD: 1099-NEC Form 8919 firm reaches 1040, Schedule 2, Schedule SE and Form 8959",
   sanitizeOps: false,
