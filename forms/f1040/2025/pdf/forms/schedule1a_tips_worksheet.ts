@@ -7,11 +7,11 @@ const rowSchema = z.object({
   employer_ein: z.string().regex(/^\d{2}-?\d{7}$/),
   employer_name: z.string().trim().min(1),
   amount: z.number().int().positive(),
-  w2_amount: z.number().int().nonnegative(),
+  reported_amount: z.number().int().nonnegative(),
   form4137_amount: z.number().int().nonnegative(),
   occupation_code: z.string().regex(/^\d{3}$/),
 }).strict().refine(
-  (row) => row.amount === Math.max(row.w2_amount, row.form4137_amount),
+  (row) => row.amount === Math.max(row.reported_amount, row.form4137_amount),
   "Schedule 1-A tips worksheet row needs the greater source amount",
 );
 
@@ -70,7 +70,7 @@ export async function appendSchedule1ATipsWorksheet(
     const columns = [36, 248, 339, 426, 493, 576];
     const labels = [
       "Employer / EIN / occupation",
-      "(b) W-2",
+      "(b) W-2/4070",
       "(c) 4137",
       "(d) Greater",
       "Employee",
@@ -120,7 +120,7 @@ export async function appendSchedule1ATipsWorksheet(
         size: 8,
         font,
       });
-      page.drawText(row.w2_amount.toLocaleString("en-US"), {
+      page.drawText(row.reported_amount.toLocaleString("en-US"), {
         x: 252,
         y: y + 32,
         size: 8,

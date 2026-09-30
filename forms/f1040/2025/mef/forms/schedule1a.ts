@@ -63,7 +63,8 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
   let part1: { line1_agi: number; line3_magi: number } | undefined;
   if (
     (input.qualified_employee_tips?.length ?? 0) > 0 ||
-    (input.qualified_form4137_tips?.length ?? 0) > 0
+    (input.qualified_form4137_tips?.length ?? 0) > 0 ||
+    (input.form4070_reports?.length ?? 0) > 0
   ) {
     const lines = calculateEmployeeTipsSchedule1A(
       { taxYear: 2025, formType: "f1040" },
@@ -96,6 +97,24 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
     ) {
       throw new Error(
         "Schedule 1-A W-2 tips do not match the employer sources",
+      );
+    }
+    if (
+      !(input.form4070_reports ?? []).every((report) =>
+        filedW2s.some((source) =>
+          normalize(source.employee_ssn ?? "") ===
+            normalize(report.employee_ssn) &&
+          normalize(source.employer_ein ?? "") ===
+            normalize(report.employer_ein) &&
+          source.employer_name === report.employer_name &&
+          source.box13_statutory_employee !== true &&
+          source.box14b_tipped_code === report.occupation_code &&
+          isQualifiedTipsOccupationCode(report.occupation_code)
+        )
+      )
+    ) {
+      throw new Error(
+        "Schedule 1-A Form 4070 tips need a matching filed W-2 employer and occupation",
       );
     }
     const form4137 = form4137InputSchema.parse(

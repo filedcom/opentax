@@ -396,6 +396,100 @@ Deno.test("Schedule 1-A single-employer W-2 tips source fills Part II and reconc
   assertEquals(xml.includes("EnhancedSeniorDeductionAmt"), false);
 });
 
+Deno.test("Schedule 1-A Form 4070 replaces capped W-2 box 7 for the same employer", () => {
+  const report = {
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    employer_name: "Test Restaurant",
+    occupation_code: "102",
+    monthly_reports: [
+      {
+        month: 1,
+        cash_tips: 12_000,
+        charged_tips: 0,
+        tips_paid_out: 0,
+        source_reference: "January employer report",
+      },
+      {
+        month: 2,
+        cash_tips: 8_000,
+        charged_tips: 0,
+        tips_paid_out: 0,
+        source_reference: "February employer report",
+      },
+    ],
+  };
+  const source = {
+    ...singleTips,
+    magi: 200_000,
+    qualified_employee_tips: [{
+      ...singleTips.qualified_employee_tips[0],
+      amount: 15_000,
+      box5_medicare_wages: 200_000,
+    }],
+    form4070_reports: [report],
+  };
+  const pending = {
+    f1040: {
+      ...singleTips1040,
+      line11_agi: 200_000,
+      line13b_additional_deductions: 15_000,
+    },
+    w2: {
+      w2s: [{
+        ...singleTipsW2.w2s[0],
+        box5_medicare_wages: 200_000,
+        box7_ss_tips: 15_000,
+      }],
+    },
+  };
+  const lines = calculateEmployeeTipsSchedule1A(
+    { taxYear: 2025, formType: "f1040" },
+    source,
+  );
+  assertEquals(lines.line4a_w2_tips, 20_000);
+  assertEquals(lines.line4c_employee_tips, 20_000);
+  assertEquals(lines.line13_tips, 15_000);
+  const xml = schedule1a.build(source, { pending });
+  assertStringIncludes(
+    xml,
+    "<QualifiedTipsWagesAmt>20000</QualifiedTipsWagesAmt>",
+  );
+  assertThrows(
+    () =>
+      schedule1a.build({
+        ...source,
+        qualified_employee_tips: [],
+        form4070_reports: [{ ...report, employer_ein: "987654321" }],
+      }, {
+        pending: {
+          ...pending,
+          w2: { w2s: [{ ...pending.w2.w2s[0], box7_ss_tips: 0 }] },
+        },
+      }),
+    Error,
+    "matching filed W-2",
+  );
+  assertThrows(
+    () =>
+      calculateEmployeeTipsSchedule1A(
+        { taxYear: 2025, formType: "f1040" },
+        {
+          ...source,
+          form4070_reports: [{
+            ...report,
+            monthly_reports: [
+              report.monthly_reports[0],
+              report.monthly_reports[0],
+            ],
+          }],
+        },
+      ),
+    Error,
+    "repeated report month",
+  );
+});
+
 Deno.test("Schedule 1-A W-2 tips applies the $25,000 cap and whole-thousand phaseout", () => {
   const lines = calculateEmployeeTipsSchedule1A(
     { taxYear: 2025, formType: "f1040" },

@@ -22,22 +22,22 @@ two-page PDF field map and inspected synthetic full-return packets.
   aggregator, and each positive route requires a source-referenced review that
   all those adjustments are zero. Positive exclusions still need their own
   source routes; `magi` cannot be assumed to be line 3 without this review.
-- Part II has source-backed W-2 box 7 and Form 4137 routes with a published three-digit
-  tipped occupation code, box 5 Medicare wages at or below $176,100, a valid
+- Part II has source-backed W-2 box 7, reviewed Form 4070 monthly report, and Form 4137 routes with a published three-digit
+  tipped occupation code, a valid
   timely employment SSN, and reviewed zero Part I exclusions. Each positive
   employer row retains its EIN and name and is checked against the W-2 and
-  Form 4137 facts at native/PDF export. Form 4137 line 1 column (c) is
-  combined with W-2 box 7 using the greater amount for each employee and
+  Form 4137 facts at native/PDF export. W-2 box 7 alone requires box 5 Medicare wages at or below $176,100; reviewed Form 4070 reports can replace box 7 for the same employer when box 5 is higher. Form 4137 line 1 column (c) is
+  combined with the selected W-2 or Form 4070 amount using the greater amount for each employee and
   employer, so the same tips are not deducted twice. One employer fills lines
   4a/4b/4c as applicable; multiple
   employers print zero on 4a/4b and put the sum of the greater-of amounts on
   4c through the IRS worksheet, kept in the PDF packet. The worksheet
   paginates after five employer rows. It also fills lines 6/7, 9–13, and
-  38 and reconciles to Form 1040. Duplicate source rows, high box 5 wages
-  for the W-2 box 7 route, and an
-  occupation code outside the IRS list reject. Form 4070 or employer
-  statement alternatives, multiple occupations at one employer, special
-  wage-base handling, self-employment tips, multiple Form 4137 employers in a
+  38 and reconciles to Form 1040. Duplicate source rows or Form 4070 months, high box 5 wages
+  for the W-2 box 7-only route, and an
+  occupation code outside the IRS list reject. Employer statement alternatives,
+  multiple occupations at one employer, other special wage-base handling,
+  self-employment tips, multiple Form 4137 employers in a
   full packet, and underlying record authentication remain open.
 - Part III now supports employer-identified `FLSA Overtime Premium` in W-2
   box 14 when a source-referenced review confirms the employee is covered and
@@ -191,6 +191,20 @@ The corrected seven-page `v79` packet was visually inspected; its hash is
 in the [filled-PDF notes](ty2025-filled-pdf-review-2026-09-29.md).
 This route requires a matching employer, W-2 occupation code, recipient
 SSN, and Form 4137 amount at export. Multiple-employer greater-of
-arithmetic and the worksheet pass focused tests. Form 4070 alternatives,
+arithmetic and the worksheet pass focused tests. Form 4070 employer-report bytes,
 multiple Form 4137 employers in a full packet, source-byte authentication,
 IRS rules, and ATS remain open.
+
+The `single-form4070-high-wage-qualified-tips-schedule1a` fixture has twelve
+monthly employer reports totaling $20,000, matched by recipient, employer,
+and occupation to a W-2 with $15,000 in box 7 and $200,000 in box 5. The
+reviewed monthly net is cash plus charged tips less tips paid out. It
+replaces the W-2 box 7 amount for this employer rather than adding to it.
+Schedule 1-A lines 4a/4c show $20,000, lines 10/12 show the $5,000 MAGI
+phaseout, and line 13/38 and Form 1040 line 13b show $15,000. The full
+return passes local TY2025 v5.4 XSD. All four pages of the `v80` PDF were
+rendered and visually inspected (SHA-256
+`8479bab71654276ba39f91124412ccf2d38a3816d4355a417cd8112540c8098a`).
+Monthly report entries carry review references; actual employer-submitted
+report bytes and IRS business-rule acceptance remain open. The route follows
+the [2025 Form 1040 Schedule 1-A instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf).

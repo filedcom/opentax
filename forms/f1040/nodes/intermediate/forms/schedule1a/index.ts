@@ -61,6 +61,23 @@ export const seniorZeroExclusionsReviewSchema = z.object({
 export const claimInputSchema = z.object({
   vehicle_loans: z.array(vehicleLoanSchema).min(1).max(50).optional(),
   senior_zero_exclusions_review: seniorZeroExclusionsReviewSchema.optional(),
+  form4070_reports: z.array(
+    z.object({
+      employee_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+      employer_ein: z.string().regex(/^\d{2}-?\d{7}$/),
+      employer_name: z.string().trim().min(1),
+      occupation_code: z.string().regex(/^\d{3}$/),
+      monthly_reports: z.array(
+        z.object({
+          month: z.number().int().min(1).max(12),
+          cash_tips: z.number().int().nonnegative(),
+          charged_tips: z.number().int().nonnegative(),
+          tips_paid_out: z.number().int().nonnegative(),
+          source_reference: z.string().trim().min(1),
+        }).strict(),
+      ).min(1).max(12),
+    }).strict(),
+  ).min(1).max(100).optional(),
 }).strict();
 
 export const inputSchema = claimInputSchema.extend({
@@ -213,7 +230,7 @@ export function qualifiedEmployeeTipRows(input: Schedule1AInput) {
     employer_ein: string;
     employer_name: string;
     occupation_code: string;
-    w2_amount: number;
+    reported_amount: number;
     form4137_amount: number;
   }>();
   for (
@@ -238,7 +255,7 @@ export function qualifiedEmployeeTipRows(input: Schedule1AInput) {
       }
       if (
         prior &&
-        (kind === "w2" ? prior.w2_amount : prior.form4137_amount) > 0
+        (kind === "w2" ? prior.reported_amount : prior.form4137_amount) > 0
       ) {
         throw new Error(
           "Schedule 1-A tips need one row per employee, employer, and source",
@@ -249,16 +266,63 @@ export function qualifiedEmployeeTipRows(input: Schedule1AInput) {
         employer_ein: source.employer_ein,
         employer_name: source.employer_name,
         occupation_code: source.occupation_code ?? "",
-        w2_amount: kind === "w2" ? source.amount : prior?.w2_amount ?? 0,
+        reported_amount: kind === "w2"
+          ? source.amount
+          : prior?.reported_amount ?? 0,
         form4137_amount: kind === "form4137"
           ? source.amount
           : prior?.form4137_amount ?? 0,
       });
     }
   }
+  const seen4070 = new Set<string>();
+  for (const report of input.form4070_reports ?? []) {
+    const key = [
+      report.employee_ssn.replaceAll("-", ""),
+      report.employer_ein.replaceAll("-", ""),
+    ].join(":");
+    const prior = rows.get(key);
+    if (
+      prior && (prior.employer_name !== report.employer_name ||
+        prior.occupation_code !== report.occupation_code)
+    ) {
+      throw new Error(
+        "Schedule 1-A Form 4070 employer or occupation disagrees",
+      );
+    }
+    const seenMonths = new Set<number>();
+    const amount = report.monthly_reports.reduce((sum, monthly) => {
+      if (seenMonths.has(monthly.month)) {
+        throw new Error("Schedule 1-A Form 4070 has a repeated report month");
+      }
+      seenMonths.add(monthly.month);
+      const net = monthly.cash_tips + monthly.charged_tips -
+        monthly.tips_paid_out;
+      if (net < 0) {
+        throw new Error(
+          "Schedule 1-A Form 4070 tips paid out exceed tips received",
+        );
+      }
+      return sum + net;
+    }, 0);
+    if (amount <= 0 || seen4070.has(key)) {
+      throw new Error(
+        "Schedule 1-A Form 4070 needs one positive employer report set",
+      );
+    }
+    seen4070.add(key);
+    rows.set(key, {
+      employee_ssn: report.employee_ssn,
+      employer_ein: report.employer_ein,
+      employer_name: report.employer_name,
+      occupation_code: report.occupation_code,
+      reported_amount: amount,
+      form4137_amount: prior?.form4137_amount ?? 0,
+    });
+  }
   return [...rows.values()].map((row) => ({
     ...row,
-    amount: Math.max(row.w2_amount, row.form4137_amount),
+    amount: Math.max(row.reported_amount, row.form4137_amount),
   }));
 }
 
@@ -504,15 +568,21 @@ export function calculateEmployeeTipsSchedule1A(
       source.employer_ein.replaceAll("-", "") ===
         entry.employer_ein.replaceAll("-", "")
     );
+    const employeeSsn = entry.employee_ssn.replaceAll("-", "");
+    const hasForm4070 = input.form4070_reports?.some((report) =>
+      report.employee_ssn.replaceAll("-", "") === employeeSsn &&
+      report.employer_ein.replaceAll("-", "") ===
+        entry.employer_ein.replaceAll("-", "")
+    );
     if (
-      w2 && (w2.box5_medicare_wages === undefined ||
+      w2 && !hasForm4070 &&
+      (w2.box5_medicare_wages === undefined ||
         w2.box5_medicare_wages > 176_100)
     ) {
       throw new Error(
         "Schedule 1-A W-2 box 7 filing needs a qualifying occupation code and Medicare wages at or below the 2025 social security wage base",
       );
     }
-    const employeeSsn = entry.employee_ssn.replaceAll("-", "");
     const taxpayerEligible = employeeSsn ===
         input.taxpayer_ssn?.replaceAll("-", "") &&
       input.taxpayer_has_valid_ssn === true;
@@ -543,7 +613,7 @@ export function calculateEmployeeTipsSchedule1A(
   return employeeTipsLinesSchema.parse({
     line1_agi: input.magi,
     line3_magi: input.magi,
-    line4a_w2_tips: rows.length === 1 ? rows[0].w2_amount : 0,
+    line4a_w2_tips: rows.length === 1 ? rows[0].reported_amount : 0,
     line4b_form4137_tips: rows.length === 1 ? rows[0].form4137_amount : 0,
     line4c_employee_tips: tips,
     line6_total_tips: tips,

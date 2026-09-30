@@ -1823,6 +1823,58 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-form4070-high-wage-qualified-tips-schedule1a",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        taxpayer_ssn_valid_for_employment: true,
+        taxpayer_ssn_issued_before_due_date: true,
+        taxpayer_tin_issued_by_due_date: true,
+      },
+      w2: [{
+        ...wage(200_000, 35_000, "Example Restaurant", "12-3456789"),
+        employee_ssn: "111-22-3333",
+        box3_ss_wages: 161_100,
+        box7_ss_tips: 15_000,
+        box14b_tipped_code: "102",
+      }],
+      schedule1a: {
+        form4070_reports: [{
+          employee_ssn: "111-22-3333",
+          employer_ein: "12-3456789",
+          employer_name: "Example Restaurant",
+          occupation_code: "102",
+          monthly_reports: Array.from({ length: 12 }, (_, index) => ({
+            month: index + 1,
+            cash_tips: index === 11 ? 2_400 : 1_600,
+            charged_tips: 0,
+            tips_paid_out: 0,
+            source_reference: `Synthetic 2025 month ${
+              index + 1
+            } employer tip report`,
+          })),
+        }],
+        senior_zero_exclusions_review: {
+          no_section933_puerto_rico_excluded_income: true,
+          section933_review_source_reference: "Synthetic 2025 residency review",
+          no_form2555_filed: true,
+          form2555_review_source_reference:
+            "Synthetic 2025 foreign-income review",
+          no_form4563_filed: true,
+          form4563_review_source_reference:
+            "Synthetic 2025 Samoa-source review",
+        },
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule1a"],
+    reviewFocus: [
+      "Twelve reviewed Form 4070 reports total $20,000 and replace the same employer's $15,000 W-2 box 7 value",
+      "Schedule 1-A lines 4a/4c print $20,000 and line 13 prints $15,000 after the $5,000 MAGI phaseout",
+      "Form 1040 line 13b agrees with Schedule 1-A line 38",
+    ],
+  },
+  {
     id: "single-form4137-qualified-tips-schedule1a",
     inputs: {
       general: {
