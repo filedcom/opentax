@@ -160,6 +160,106 @@ function runPassiveRental(rent: number, interest = 0, passiveLoss = 0) {
   }, { taxYear: 2025, formType: "f1040" });
 }
 
+function runPassiveOrdinarySale(gain: number, taxExemptInterest = 0) {
+  return execute(plan, registry, {
+    general,
+    w2: [w2],
+    ...(taxExemptInterest > 0
+      ? {
+        f1099int: [{
+          payer_name: "Example Bank",
+          recipient_ssn: "111-22-3333",
+          box8: taxExemptInterest,
+        }],
+      }
+      : {}),
+    schedule_e: [{
+      tsj: "T",
+      activity_id: "passive-sale",
+      property_description: "Reviewed rental property sale",
+      street_address: "500 Sale Road",
+      city: "Austin",
+      state: "TX",
+      zip: "78701",
+      property_type: 1,
+      activity_type: "B",
+      fair_rental_days: 365,
+      personal_use_days: 0,
+      rent_income: 0,
+      form_1099_payments_made: false,
+      disposed_of: true,
+      passive_property_sales: [{
+        activity_id: "passive-sale",
+        activity_name: "Reviewed rental property sale",
+        part: "II",
+        property_description: "Rental equipment",
+        acquired_on: "2025-01-01",
+        sold_on: "2025-06-01",
+        gross_sales_price: 5_000 + gain,
+        cost_or_other_basis: 5_000,
+        depreciation_allowed: 0,
+        entire_activity_interest_disposed: false,
+        buyer_unrelated: true,
+        fully_taxable: true,
+        installment_method: false,
+        disposition_document_reference: "Synthetic 2025 sale statement",
+      }],
+    }],
+  }, { taxYear: 2025, formType: "f1040" });
+}
+
+Deno.test("EIC Worksheet 1 counts passive Form 4797 Part II ordinary gains", async () => {
+  const atLimit = runPassiveOrdinarySale(11_950);
+  assertEquals(atLimit.diagnostics, []);
+  assertEquals(atLimit.pending.eitc.investment_income_floor, 11_950);
+  assertEquals(atLimit.pending.f1040.line27_eitc !== undefined, true);
+  const overLimit = runPassiveOrdinarySale(11_951);
+  assertEquals(overLimit.diagnostics, []);
+  assertEquals(overLimit.pending.eitc.investment_income_floor, 11_951);
+  assertEquals(overLimit.pending.f1040.line27_eitc, undefined);
+  const combined = runPassiveOrdinarySale(9_000, 2_951);
+  assertEquals(combined.pending.eitc.investment_income_floor, 11_951);
+  assertEquals(combined.pending.f1040.line27_eitc, undefined);
+  const filer = extractFilerIdentity(atLimit.pending.f1040);
+  const xml = buildMefXml(buildPending(atLimit.pending), filer);
+  const xsd = new URL(
+    "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    import.meta.url,
+  ).pathname;
+  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(xmlPath, xml);
+    const validation = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsd, xmlPath],
+      stderr: "piped",
+    }).output();
+    assertEquals(
+      validation.code,
+      0,
+      new TextDecoder().decode(validation.stderr),
+    );
+  } finally {
+    await Deno.remove(xmlPath);
+  }
+  const forged = {
+    ...atLimit.pending,
+    agi_aggregator: {
+      ...atLimit.pending.agi_aggregator,
+      eic_passive_4797_ordinary: 0,
+    },
+  };
+  assertThrows(
+    () => buildMefXml(buildPending(forged), filer),
+    Error,
+    "passive ordinary gain differs",
+  );
+  assertThrows(
+    () => irs1040Pdf.projectFields?.(atLimit.pending.f1040, forged),
+    Error,
+    "passive ordinary gain differs",
+  );
+});
+
 Deno.test("EIC Worksheet 1 counts passive Schedule E rental profit at the investment limit", async () => {
   const atLimit = runPassiveRental(11_950);
   assertEquals(atLimit.diagnostics, []);

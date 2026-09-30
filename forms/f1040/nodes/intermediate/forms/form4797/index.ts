@@ -293,6 +293,23 @@ export function form4797EicCapitalExclusion(
   );
 }
 
+/** Pub. 596 Worksheet 1 line 11/12: ordinary passive Part II sale gain,
+ * net of the prior PAL applied to that Form 4797 line. */
+export function form4797EicPassiveOrdinary(
+  rawInput: unknown,
+  activeRentalAllowedPartII?: number,
+): number {
+  const input = inputSchema.parse(rawInput);
+  const gross = (input.passive_property_sales ?? [])
+    .filter((sale) => sale.part === "II")
+    .reduce((sum, sale) => sum + passiveSaleGain(sale), 0);
+  const allocation = activeRentalMixedSale(input)
+    ? undefined
+    : mixedPassiveAllocation(input);
+  return gross - (allocation?.allowedPartII ?? 0) -
+    (activeRentalAllowedPartII ?? 0);
+}
+
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
 // Returns true if the input contains any computable sale data.
@@ -526,6 +543,7 @@ class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
       (input.passive_property_sales ?? []).filter((sale) => sale.part === "II")
         .reduce((sum, sale) => sum + passiveSaleGain(sale), 0) -
       (allocation?.allowedPartII ?? 0);
+    const eicPassiveOrdinary = form4797EicPassiveOrdinary(input);
     const unrecaptured1250 = input.unrecaptured_section_1250_gain ?? 0;
 
     const outputs: NodeOutput[] = [];
@@ -549,6 +567,7 @@ class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
           0,
         ),
         line4_other_gains: partIIOrdinaryGain,
+        eic_passive_4797_ordinary: eicPassiveOrdinary,
       }));
       return { outputs };
     }
@@ -576,6 +595,11 @@ class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
               allocation.allowedPartII,
           }
           : {}),
+      }));
+    }
+    if (eicPassiveOrdinary !== 0) {
+      outputs.push(output(agi_aggregator, {
+        eic_passive_4797_ordinary: eicPassiveOrdinary,
       }));
     }
 

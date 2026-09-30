@@ -1,5 +1,10 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { form4797, form4797EicCapitalExclusion, inputSchema } from "./index.ts";
+import {
+  form4797,
+  form4797EicCapitalExclusion,
+  form4797EicPassiveOrdinary,
+  inputSchema,
+} from "./index.ts";
 
 function compute(input: Record<string, unknown>) {
   return form4797.compute(
@@ -254,6 +259,7 @@ Deno.test("mixed retained passive sale nets prior Part I and II PAL once", () =>
     5_000,
   );
   assertEquals(form4797EicCapitalExclusion(input), 5_000);
+  assertEquals(form4797EicPassiveOrdinary(input), 1_000);
   assertEquals(
     findOutput(result, "schedule1")?.fields.line4_other_gains,
     1_000,
@@ -338,6 +344,8 @@ Deno.test("active rental sale defers Part I and II PAL until modified AGI is kno
     "needs finalized rental PAL",
   );
   assertEquals(form4797EicCapitalExclusion(input, 1_500), 500);
+  assertEquals(form4797EicPassiveOrdinary(input), 500);
+  assertEquals(form4797EicPassiveOrdinary(input, 400), 100);
   assertEquals(
     findOutput(result, "agi_aggregator")?.fields.pal_pending_active_4797,
     true,

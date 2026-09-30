@@ -122,6 +122,8 @@ export const inputSchema = z.object({
   eic_royalty_expenses: z.number().nonnegative().optional(),
   // Pub. 596 Worksheet 1 line 11 from passive Schedule E/Form 4835 sources.
   eic_passive_schedule_e_income: z.number().nonnegative().optional(),
+  // Ordinary passive Form 4797 Part II sale gain or loss after its PAL allocation.
+  eic_passive_4797_ordinary: z.number().optional(),
   // Line 17 — Rental real estate passive loss allowed (Form 8582 negative output)
   // ── IRC §469 passive activity loss limit (Schedule E) ─────────────────────
   // Schedule E holds its passive loss back and sends the figures here, because only
@@ -684,7 +686,8 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
       Math.max(
         0,
         (input.eic_passive_schedule_e_income ?? 0) -
-          remainingAllowedPassiveLoss(input),
+          remainingAllowedPassiveLoss(input) +
+          (input.eic_passive_4797_ordinary ?? 0),
       );
 
     // Compute SSA taxable amount for f1040 line 6b pass-through

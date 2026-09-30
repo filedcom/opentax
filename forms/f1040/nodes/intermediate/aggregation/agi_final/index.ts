@@ -77,6 +77,8 @@ class AgiFinalNode extends TaxNode<typeof inputSchema> {
         input.allowed_part_ii + input.part_i_ordinary_loss,
       pal_4797_preapplied_loss: input.allowed_part_i + input.allowed_part_ii,
       pal_final_allowed_loss: input.allowed_total,
+      eic_passive_4797_ordinary: (pre.eic_passive_4797_ordinary ?? 0) -
+        input.allowed_part_ii,
     });
     const result = agi_aggregator.compute(ctx, finalInput);
     return {

@@ -9,7 +9,10 @@ import {
   priorEicDisallowanceEligible,
 } from "../nodes/intermediate/forms/eitc/index.ts";
 import { inputSchema as f8862InputSchema } from "../nodes/inputs/f8862/index.ts";
-import { form4797EicCapitalExclusion } from "../nodes/intermediate/forms/form4797/index.ts";
+import {
+  form4797EicCapitalExclusion,
+  form4797EicPassiveOrdinary,
+} from "../nodes/intermediate/forms/form4797/index.ts";
 import {
   calculateForm8814,
   form8814EicLine4,
@@ -100,9 +103,34 @@ export function assertEicSource(
       "Form 1040 EIC passive income differs from Schedule E sources",
     );
   }
+  const passiveOrdinaryBeforeFinal = pending?.form4797 === undefined
+    ? 0
+    : form4797EicPassiveOrdinary(pending.form4797);
+  if (
+    (agiInput.eic_passive_4797_ordinary ?? 0) !==
+      passiveOrdinaryBeforeFinal
+  ) {
+    throw new Error(
+      "Form 1040 EIC passive ordinary gain differs from Form 4797 sources",
+    );
+  }
+  const allowedPartII = typeof agiFinal?.allowed_part_ii === "number"
+    ? agiFinal.allowed_part_ii
+    : 0;
+  const passiveOrdinary = passiveOrdinaryBeforeFinal - allowedPartII;
+  const finalizedPalInput = agiFinal === undefined
+    ? agiInput
+    : agiInputSchema.parse({
+      ...agiInput,
+      pal_pending_active_4797: false,
+      pal_4797_preapplied_loss: (agiFinal.allowed_part_i as number) +
+        allowedPartII,
+      pal_final_allowed_loss: agiFinal.allowed_total,
+    });
   const passiveNet = Math.max(
     0,
-    passiveIncome - remainingAllowedPassiveLoss(agiInput),
+    passiveIncome + passiveOrdinary -
+      remainingAllowedPassiveLoss(finalizedPalInput),
   );
   const personalRental = pending?.personal_property_rental === undefined
     ? { income: 0, expenses: 0 }
