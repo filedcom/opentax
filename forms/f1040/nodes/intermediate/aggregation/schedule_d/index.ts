@@ -16,6 +16,7 @@ import { form8960 } from "../../forms/form8960/index.ts";
 import { form8995 } from "../../forms/form8995/index.ts";
 import { form6251 } from "../../forms/form6251/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import { box11CodeSSourceSchema } from "../../../inputs/k1_partnership/box11_code_s.ts";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -113,6 +114,10 @@ export const inputSchema = z.object({
   line_5_k1_st: accumulable(z.number()).optional(),
   // K-1 long-term capital gains/losses — Line 12
   line_12_k1_lt: accumulable(z.number()).optional(),
+  k1_partnership_box11_code_s_sources: z.array(box11CodeSSourceSchema)
+    .optional(),
+  k1_partnership_line5_source_total: z.number().int().optional(),
+  k1_partnership_line12_source_total: z.number().int().optional(),
   trust_k1_code_d_loss: z.number().int().positive().optional(),
   // Form 8621 QEF net capital gain is long-term gain, not Schedule 1 income.
   line_11_qef_lt: z.number().nonnegative().optional(),
@@ -338,6 +343,28 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, rawInput: ScheduleDInput): NodeResult {
     const input = inputSchema.parse(rawInput);
+    if (input.k1_partnership_box11_code_s_sources?.length) {
+      const hasContribution = (
+        line: number | number[] | undefined,
+        total: number | undefined,
+      ) =>
+        total === 0 && line === undefined ||
+        total !== undefined && normalizeArray(line).includes(total);
+      if (
+        !hasContribution(
+          input.line_5_k1_st,
+          input.k1_partnership_line5_source_total,
+        ) ||
+        !hasContribution(
+          input.line_12_k1_lt,
+          input.k1_partnership_line12_source_total,
+        )
+      ) {
+        throw new Error(
+          "Schedule D code S source totals must contribute to lines 5 and 12",
+        );
+      }
+    }
 
     if (
       (input.box2c_qsbs ?? 0) > 0 ||

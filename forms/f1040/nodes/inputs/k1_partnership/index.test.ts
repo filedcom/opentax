@@ -163,6 +163,81 @@ Deno.test("partnership K-1 box 11 code K keeps reviewed gambling winnings source
   }
 });
 
+Deno.test("partnership K-1 box 11 code S keeps short and long source rows", () => {
+  const item = (ein: string, shortTerm: number, longTerm: number) =>
+    minimalItem({
+      partnership_ein: ein,
+      source_document_reference: `2025 K-1 ${ein}`,
+      box11_code_s_nonportfolio_capital: {
+        short_term_gain_loss: shortTerm,
+        long_term_gain_loss: longTerm,
+        nonpassive_reviewed: true,
+        no_special_rate_components_confirmed: true,
+        statement_reference: `box 11 S statement ${ein}`,
+        recipient_tin: "111223333",
+        character_workpaper_reference: `Capital review ${ein}`,
+      },
+    });
+  const result = compute([
+    item("123456789", 400, 0),
+    item("987654321", 0, 600),
+  ]);
+  const fields = findOutput(result, "schedule_d")?.fields;
+  assertEquals(fields?.line_5_k1_st, 400);
+  assertEquals(fields?.line_12_k1_lt, 600);
+  assertEquals(fields?.k1_partnership_line5_source_total, 400);
+  assertEquals(fields?.k1_partnership_line12_source_total, 600);
+  assertEquals(
+    (fields?.k1_partnership_box11_code_s_sources as Array<
+      { short_term_gain_loss: number; long_term_gain_loss: number }
+    >).map((row) => [row.short_term_gain_loss, row.long_term_gain_loss]),
+    [[400, 0], [0, 600]],
+  );
+  const signed = findOutput(
+    compute([item("123456789", -400, 600)]),
+    "schedule_d",
+  )?.fields;
+  assertEquals(signed?.line_5_k1_st, -400);
+  assertEquals(signed?.line_12_k1_lt, 600);
+  const combined = findOutput(
+    compute([{
+      ...item("123456789", 400, 600),
+      box8_net_st_cap_gain: -100,
+      box9a_net_lt_cap_gain: 50,
+    }]),
+    "schedule_d",
+  )?.fields;
+  assertEquals(combined?.line_5_k1_st, 300);
+  assertEquals(combined?.line_12_k1_lt, 650);
+  assertThrows(
+    () => compute([item("123456789", 400, 0), item("123456789", 400, 0)]),
+    Error,
+    "Duplicate partnership K-1 box 11 code S source",
+  );
+  const invalid = item("123456789", 400, 0) as Record<string, unknown>;
+  const review = invalid.box11_code_s_nonportfolio_capital as Record<
+    string,
+    unknown
+  >;
+  for (
+    const change of [
+      { short_term_gain_loss: 0 },
+      { nonpassive_reviewed: false },
+      { no_special_rate_components_confirmed: false },
+    ]
+  ) {
+    assertEquals(
+      k1Partnership.inputSchema.safeParse({
+        k1_partnerships: [{
+          ...invalid,
+          box11_code_s_nonportfolio_capital: { ...review, ...change },
+        }],
+      }).success,
+      false,
+    );
+  }
+});
+
 Deno.test("partnership K-3 passive interest and line 12 reduction reconcile to K-1", () => {
   const k3 = {
     partnership_ein: "123456789",

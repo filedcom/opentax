@@ -122,6 +122,12 @@ exclusions, Form 982, Form 1099-C debt matching, partnership gambling losses,
 and gambling businesses remain unresolved. See the [line 8z source
 audit](ty2025-schedule1-line8z-source-gap.md).
 
+Schedule D now has a bounded partnership K-1 box 11 code S route. Reviewed
+nonpassive short- and long-term source rows reach lines 5 and 12; a $400/$600
+synthetic return passes local full-return XSD and four visually inspected
+`v72` PDF pages. Passive losses, special-rate components, and issued source
+authentication remain open.
+
 #### Sparse main-return and schedule rows: static source boundary
 
 The table above names the registered documents; the following narrows its

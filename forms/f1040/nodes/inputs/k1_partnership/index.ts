@@ -45,6 +45,10 @@ import {
   box11CodeKReviewSchema,
   box11CodeKSourceRows,
 } from "./box11_code_k.ts";
+import {
+  box11CodeSReviewSchema,
+  box11CodeSSourceRows,
+} from "./box11_code_s.ts";
 
 // Schedule K-1 (Form 1065) — Partner's Share of Income, Deductions, Credits
 //
@@ -169,6 +173,7 @@ export const itemSchema = z.object({
   box11_code_j_recovery: box11CodeJReviewSchema.optional(),
   box11_code_e_cod: box11CodeEReviewSchema.optional(),
   box11_code_k_gambling: box11CodeKReviewSchema.optional(),
+  box11_code_s_nonportfolio_capital: box11CodeSReviewSchema.optional(),
 
   // Box 12 — Section 179 deduction → Form 4562
   box12_section_179: z.number().nonnegative().optional().describe(
@@ -584,27 +589,38 @@ function f1040QualDivOutput(items: K1PartnershipItems): NodeOutput[] {
 
 // Aggregate capital gains/losses → schedule_d (one merged output)
 function scheduleDOutput(items: K1PartnershipItems): NodeOutput[] {
+  const codeS = box11CodeSSourceRows(items);
   const totalSt = items.reduce(
     (sum, item) => sum + (item.box8_net_st_cap_gain ?? 0),
     0,
-  );
+  ) + codeS.reduce((sum, row) => sum + row.short_term_gain_loss, 0);
   const totalLt = items.reduce(
     (sum, item) => sum + (item.box9a_net_lt_cap_gain ?? 0),
     0,
-  );
-  const hasSt = totalSt !== 0;
-  const hasLt = totalLt !== 0;
+  ) + codeS.reduce((sum, row) => sum + row.long_term_gain_loss, 0);
+  const hasSt = totalSt !== 0 ||
+    codeS.some((row) => row.short_term_gain_loss !== 0);
+  const hasLt = totalLt !== 0 ||
+    codeS.some((row) => row.long_term_gain_loss !== 0);
   if (!hasSt && !hasLt) return [];
-
+  const sourceFields = codeS.length > 0
+    ? {
+      k1_partnership_box11_code_s_sources: codeS,
+      k1_partnership_line5_source_total: totalSt,
+      k1_partnership_line12_source_total: totalLt,
+    }
+    : {};
   if (hasSt && hasLt) {
-    return [
-      output(schedule_d, { line_5_k1_st: totalSt, line_12_k1_lt: totalLt }),
-    ];
+    return [output(schedule_d, {
+      line_5_k1_st: totalSt,
+      line_12_k1_lt: totalLt,
+      ...sourceFields,
+    })];
   }
   if (hasSt) {
-    return [output(schedule_d, { line_5_k1_st: totalSt })];
+    return [output(schedule_d, { line_5_k1_st: totalSt, ...sourceFields })];
   }
-  return [output(schedule_d, { line_12_k1_lt: totalLt })];
+  return [output(schedule_d, { line_12_k1_lt: totalLt, ...sourceFields })];
 }
 
 // NIIT routing: K-1 partnership income → Form 8960 lines 2 and 4a.

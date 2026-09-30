@@ -530,3 +530,15 @@ yields a $1,431 refund. The PDF SHA-256 is
 Export checks reject changed K-1 or W-2G winnings, another recipient, and
 changed line 8b. Partnership gambling losses, gambling businesses, issued
 source bytes, IRS business rules, and ATS remain open.
+
+The `single-two-partnership-code-s-capital` source passes local TY2025 v5.4
+full-return XSD. Two reviewed, nonpassive K-1 code S statements supply $400
+short-term gain on Schedule D line 5 and $600 long-term gain on line 12; line
+16 and Form 1040 line 7a show $1,000, with $31,000 AGI. Both Form 1040 pages
+and both Schedule D pages of the `v72` packet were rendered and visually
+inspected. Form 1040 line 16 tax is $1,523 and $3,000 withholding yields a
+$1,477 refund. The PDF SHA-256 is
+`cd28899489a0757b76fc7b2d48e55ba1581bd973f689480318f1689891079bd1`.
+Export checks reject changed K-1 identity or capital character, another
+recipient, and altered partnership subtotals. Passive losses, special-rate
+components, issued source bytes, IRS business rules, and ATS remain open.

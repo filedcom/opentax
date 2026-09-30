@@ -81,6 +81,18 @@ direct nonbusiness winnings to line 8b and potentially deductible losses to
 Schedule A line 16. Partnership losses, gambling businesses, authenticated
 no-overlap evidence, and issued source bytes remain open.
 
+Box 11 code S now has a bounded nonpassive Schedule D route, separate from
+Schedule 1 line 8z. Each K-1 statement identifies signed short- and long-term
+capital amounts, the recipient, and a character workpaper; review must confirm
+that no passive limitation or special-rate component applies. The source rows
+and partnership subtotals survive into Schedule D. Native/PDF export checks
+them against the K-1 statements and filer or joint spouse. A $400 short-term
+and $600 long-term two-K-1 case passes local TY2025 v5.4 XSD and all four
+`v72` PDF pages were inspected. The [2025 partner instructions](https://www.irs.gov/instructions/i1065sk1)
+direct code S short- and long-term amounts to Schedule D lines 5 and 12.
+Passive losses, special-rate amounts, issued source bytes, IRS business rules,
+and ATS remain open.
+
 Other box 11 codes have distinct destinations and remain open, as do issued
 source bytes, prior-return authentication, IRS business rules, and ATS.
 

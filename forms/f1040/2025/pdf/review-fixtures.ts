@@ -1028,6 +1028,50 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-two-partnership-code-s-capital",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(30_000, 3_000, "Example Employer", "12-3456789")],
+      k1_partnership: [
+        {
+          partnership_name: "Alpha Partnership",
+          partnership_ein: "123456789",
+          source_document_reference: "Synthetic Alpha 2025 K-1",
+          box11_code_s_nonportfolio_capital: {
+            short_term_gain_loss: 400,
+            long_term_gain_loss: 0,
+            nonpassive_reviewed: true,
+            no_special_rate_components_confirmed: true,
+            statement_reference: "Alpha box 11 code S statement",
+            recipient_tin: "111223333",
+            character_workpaper_reference: "Alpha capital character review",
+          },
+        },
+        {
+          partnership_name: "Beta Partnership",
+          partnership_ein: "987654321",
+          source_document_reference: "Synthetic Beta 2025 K-1",
+          box11_code_s_nonportfolio_capital: {
+            short_term_gain_loss: 0,
+            long_term_gain_loss: 600,
+            nonpassive_reviewed: true,
+            no_special_rate_components_confirmed: true,
+            statement_reference: "Beta box 11 code S statement",
+            recipient_tin: "111223333",
+            character_workpaper_reference: "Beta capital character review",
+          },
+        },
+      ],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule_d"],
+    reviewFocus: [
+      "Two code S partnership statements retain $400 short-term and $600 long-term gain separately",
+      "Schedule D lines 5 and 12 carry the respective amounts and line 16 totals $1,000",
+      "Form 1040 line 7a and AGI include the gain once",
+    ],
+  },
+  {
     id: "single-partnership-code-k-and-w2g",
     inputs: {
       general: singleGeneral,
