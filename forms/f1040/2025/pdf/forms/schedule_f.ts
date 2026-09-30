@@ -1,5 +1,5 @@
-import { StandardFonts } from "pdf-lib";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
+import { appendExpenseStatement } from "./expense-statement.ts";
 import { type FilerIdentity, FilingStatus } from "../../../mef/header.ts";
 import {
   computeAccrualIncome,
@@ -41,33 +41,6 @@ const answer = (key: string, prefix: string): PdfFieldEntry[] => [
 ];
 
 type OtherExpense = NonNullable<ScheduleFItem["line32_other_expenses"]>[number];
-
-function wrapStatementText(
-  value: string,
-  maxWidth: number,
-  widthOf: (text: string) => number,
-): string[] {
-  const lines: string[] = [];
-  let line = "";
-  for (const word of value.split(/\s+/).filter(Boolean)) {
-    const candidate = line ? `${line} ${word}` : word;
-    if (widthOf(candidate) <= maxWidth) {
-      line = candidate;
-      continue;
-    }
-    if (line) lines.push(line);
-    line = "";
-    for (const character of word) {
-      if (line && widthOf(line + character) > maxWidth) {
-        lines.push(line);
-        line = "";
-      }
-      line += character;
-    }
-  }
-  if (line) lines.push(line);
-  return lines;
-}
 
 const fields: ReadonlyArray<PdfFieldEntry> = [
   txt("proprietor_name", `${p1}f1_1[0]`),
@@ -295,90 +268,16 @@ export const scheduleFPdf: PdfFormDescriptor = {
   async appendSupplementalPages(document, fields) {
     const rows = fields.line32_statement_rows as OtherExpense[] | undefined;
     if (!rows?.length) return;
-    const proprietor = String(fields.proprietor_name ?? "").trim();
-    const ssn = String(fields.proprietor_ssn ?? "").replace(/\D/g, "");
-    if (!proprietor || !/^\d{9}$/.test(ssn)) {
-      throw new Error("Schedule F line 32 statement needs proprietor identity");
-    }
-    const font = await document.embedFont(StandardFonts.Helvetica);
-    const bold = await document.embedFont(StandardFonts.HelveticaBold);
-    const amount = (value: number) => Math.round(value).toString();
-    const total = rows.reduce((sum, row) => sum + row.amount, 0);
-    if (total !== fields.line32_statement_total) {
-      throw new Error(
-        "Schedule F line 32 statement total differs from line 32f",
-      );
-    }
-    let page = document.addPage([612, 792]);
-    let y = 694;
-    let pageNumber = 0;
-    const newPage = () => {
-      if (pageNumber > 0) page = document.addPage([612, 792]);
-      pageNumber++;
-      page.drawText("Schedule F (2025) - Line 32f other expenses", {
-        x: 40,
-        y: 750,
-        size: 12,
-        font: bold,
-      });
-      page.drawText(`${proprietor}  SSN ${ssn}`, {
-        x: 40,
-        y: 732,
-        size: 9,
-        font,
-      });
-      const farmLabel = `Farm copy ${String(fields.farm_copy_number)}` +
-        (fields.farm_id ? `  ID: ${String(fields.farm_id)}` : "");
-      page.drawText(farmLabel, {
-        x: 40,
-        y: 718,
-        size: 9,
-        font,
-      });
-      page.drawText("Expense description", {
-        x: 40,
-        y: 694,
-        size: 9,
-        font: bold,
-      });
-      page.drawText("Amount", { x: 510, y: 694, size: 9, font: bold });
-      y = 677;
-    };
-    newPage();
-    for (const [index, row] of rows.entries()) {
-      const lines = wrapStatementText(
-        row.description,
-        445,
-        (value) => font.widthOfTextAtSize(value, 9),
-      );
-      if (!lines.length) {
-        throw new Error("Schedule F line 32 statement needs a description");
-      }
-      for (const line of lines) {
-        if (y < 65) newPage();
-        page.drawText(line, { x: 40, y, size: 9, font });
-        y -= 13;
-      }
-      page.drawText(amount(row.amount), {
-        x: 560 - font.widthOfTextAtSize(amount(row.amount), 9),
-        y: y + 13,
-        size: 9,
-        font,
-      });
-      y -= index === rows.length - 1 ? 12 : 6;
-    }
-    if (y < 65) newPage();
-    page.drawText("Total carried to Schedule F line 32f", {
-      x: 40,
-      y,
-      size: 9,
-      font: bold,
-    });
-    page.drawText(amount(total), {
-      x: 560 - bold.widthOfTextAtSize(amount(total), 9),
-      y,
-      size: 9,
-      font: bold,
+    const farmLabel = `Farm copy ${String(fields.farm_copy_number)}` +
+      (fields.farm_id ? `  ID: ${String(fields.farm_id)}` : "");
+    await appendExpenseStatement(document, {
+      title: "Schedule F (2025) - Line 32f other expenses",
+      proprietorName: String(fields.proprietor_name ?? ""),
+      proprietorSsn: String(fields.proprietor_ssn ?? ""),
+      activityLabel: farmLabel,
+      destinationLabel: "Schedule F line 32f",
+      rows,
+      expectedTotal: Number(fields.line32_statement_total),
     });
   },
 };

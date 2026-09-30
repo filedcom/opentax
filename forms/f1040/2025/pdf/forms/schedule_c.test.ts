@@ -1,8 +1,10 @@
 import { assertEquals, assertThrows } from "@std/assert";
+import { PDFDocument } from "pdf-lib";
 import { FilingStatus } from "../../../nodes/types.ts";
 import { FilingStatus as MefFilingStatus } from "../../../mef/header.ts";
 import { testFiler } from "../../mef/test-filer.ts";
 import { scheduleCPdf } from "./schedule_c.ts";
+import { fillFormPdf } from "../builder.ts";
 
 const pending = {
   general: {
@@ -103,6 +105,43 @@ Deno.test("Schedule C PDF reconciles Form 5884 labor and prints the reduced prof
     Error,
     "needs matching Form 5884 line 2",
   );
+});
+
+Deno.test("Schedule C PDF carries excess Part V descriptions on a statement", async () => {
+  const other = Array.from({ length: 11 }, (_, index) => ({
+    description: `BUSINESS EXPENSE ${index + 1}`,
+    amount: (index + 1) * 10,
+  }));
+  const [copy] = copies({
+    schedule_cs: [business({ part_v_other_expenses: other })],
+  });
+  const printed = copy.part_v_other_expenses as Array<{
+    description: string;
+    amount: number;
+  }>;
+  assertEquals(printed.length, 9);
+  assertEquals(printed[7], other[7]);
+  assertEquals(printed[8], { description: "SEE ATTACHED", amount: 300 });
+  assertEquals(copy.part_v_statement_rows, other.slice(8));
+  assertEquals(copy.line48, 660);
+  assertEquals(copy.line27b, 660);
+  assertEquals(copy.line31, 99_340);
+  const bytes = await fillFormPdf(scheduleCPdf, copy, undefined, ".pdf-cache");
+  assertEquals((await PDFDocument.load(bytes!)).getPageCount(), 2);
+  const continuation = await PDFDocument.create();
+  await scheduleCPdf.appendSupplementalPages!(continuation, copy, undefined);
+  assertEquals(continuation.getPageCount(), 1);
+
+  const many = Array.from({ length: 90 }, (_, index) => ({
+    description: `LONG BUSINESS EXPENSE ${index + 1}`,
+    amount: 1,
+  }));
+  const [manyCopy] = copies({
+    schedule_cs: [business({ part_v_other_expenses: many })],
+  });
+  const morePages = await PDFDocument.create();
+  await scheduleCPdf.appendSupplementalPages!(morePages, manyCopy, undefined);
+  assertEquals(morePages.getPageCount() > 1, true);
 });
 
 Deno.test("Form 3115 adjustments print on the same Schedule C PDF income and Part V rows", () => {

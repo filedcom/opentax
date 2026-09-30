@@ -17,6 +17,7 @@ import {
   wotcReductionsByBusiness,
 } from "../../../nodes/inputs/schedule_c/model.ts";
 import { assertCurrentYearSection481aMatches } from "../../../nodes/inputs/f3115/index.ts";
+import { appendExpenseStatement } from "./expense-statement.ts";
 import {
   calculateForm5884,
   inputSchema as form5884InputSchema,
@@ -169,9 +170,9 @@ function requirePrintable(
     );
   }
   const other = item.part_v_other_expenses ?? [];
-  if (other.length > 9 || other.some((entry) => !entry.description.trim())) {
+  if (other.some((entry) => !entry.description.trim())) {
     throw new Error(
-      "Schedule C PDF Part V requires at most nine described expenses",
+      "Schedule C PDF Part V requires described expenses",
     );
   }
   if (
@@ -273,8 +274,22 @@ function projectBusiness(
     (sum, entry) => sum + entry.amount,
     0,
   );
+  const other = item.part_v_other_expenses ?? [];
+  const continuation = other.length > 9 ? other.slice(8) : [];
+  const continuationTotal = continuation.reduce(
+    (sum, entry) => sum + entry.amount,
+    0,
+  );
   return {
     ...item,
+    part_v_other_expenses: continuation.length
+      ? [
+        ...other.slice(0, 8),
+        { description: "SEE ATTACHED", amount: continuationTotal },
+      ]
+      : other,
+    part_v_statement_rows: continuation,
+    part_v_statement_total: continuationTotal,
     line_d_ein: item.line_d_ein?.replaceAll("-", ""),
     business_street: address
       ? [address.line1, address.line2].filter(Boolean).join(" ")
@@ -434,12 +449,13 @@ export const scheduleCPdf: PdfFormDescriptor = {
       }
     }
     return {
-      schedule_c_instances: items.map((item) => ({
+      schedule_c_instances: items.map((item, index) => ({
         ...projectBusiness(
           item,
           wotc.get(item.business_reference ?? "") ?? 0,
           allPending.general?.filing_status,
         ),
+        business_copy_number: index + 1,
         ...proprietorIdentity(allPending, item.proprietor_recipient),
       })),
     };
@@ -487,5 +503,28 @@ export const scheduleCPdf: PdfFormDescriptor = {
         fieldNumBase: 16,
       },
     ],
+  },
+  async appendSupplementalPages(document, fields) {
+    const rows = fields.part_v_statement_rows as
+      | Array<{
+        description: string;
+        amount: number;
+      }>
+      | undefined;
+    if (!rows?.length) return;
+    const businessLabel =
+      `Business copy ${String(fields.business_copy_number)}` +
+      (fields.business_reference
+        ? `  Reference: ${String(fields.business_reference)}`
+        : "");
+    await appendExpenseStatement(document, {
+      title: "Schedule C (2025) - Part V other expenses",
+      proprietorName: String(fields.proprietor_name ?? ""),
+      proprietorSsn: String(fields.proprietor_ssn ?? ""),
+      activityLabel: businessLabel,
+      destinationLabel: "Schedule C Part V row 9",
+      rows,
+      expectedTotal: Number(fields.part_v_statement_total),
+    });
   },
 };
