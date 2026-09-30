@@ -10,6 +10,24 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function businessItem(gross: number, overrides: Record<string, unknown> = {}) {
+  return minimalItem({
+    pse_tin: "123456789",
+    recipient_tin: "987654321",
+    box1a_gross_payments: gross,
+    for_routing: "schedule_c",
+    schedule_c_business_reference: "business-1",
+    schedule_c_receipts_review: {
+      included_in_schedule_c_gross_receipts: gross,
+      not_included_in_schedule_c_receipts: 0,
+      allocation_reference: "2025 payment settlement ledger",
+      no_overlap_with_other_1099s: true,
+      overlap_review_reference: "2025 information-return overlap review",
+    },
+    ...overrides,
+  });
+}
+
 function compute(items: ReturnType<typeof minimalItem>[]) {
   return f1099k.compute({ taxYear: 2025, formType: "f1040" }, {
     f1099ks: items,
@@ -593,22 +611,65 @@ Deno.test("PSE item with all optional boxes present — only box4 produces feder
 // ============================================================
 
 Deno.test("for_routing=schedule_c: box1a above $5,000 routes to schedule_c", () => {
-  const result = compute([
-    minimalItem({ box1a_gross_payments: 10_000, for_routing: "schedule_c" }),
-  ]);
+  const result = compute([businessItem(10_000)]);
   const schedCOut = findOutput(result, "schedule_c");
   assertEquals(schedCOut !== undefined, true);
 });
 
+Deno.test("1099-K business route allocates box 1a and retains reviewed tip evidence", () => {
+  const result = compute([businessItem(10_000, {
+    schedule_c_receipts_review: {
+      included_in_schedule_c_gross_receipts: 8_000,
+      not_included_in_schedule_c_receipts: 2_000,
+      allocation_reference: "2025 processor settlement ledger",
+      no_overlap_with_other_1099s: true,
+      overlap_review_reference: "2025 NEC and MISC overlap review",
+    },
+    qualified_tips_box1a_review: {
+      amount: 5_000,
+      occupation_code: "102",
+      occupation_review_reference: "occupation record",
+      tip_records_reference: "2025 POS tip ledger",
+      included_in_box1a: true,
+      no_other_allocable_deductions: true,
+      no_other_allocable_deductions_review_reference: "Schedule 1 review",
+    },
+  })]);
+  const business = findOutput(result, "schedule_c")!.fields
+    .f1099k_receipt_sources as Array<
+      { amount: number; box1a_gross_payments: number }
+    >;
+  assertEquals(business[0].amount, 8_000);
+  assertEquals(business[0].box1a_gross_payments, 10_000);
+  const tips = findOutput(result, "schedule1a")!.fields
+    .qualified_trade_business_tips as Array<
+      { source_form: string; amount: number }
+    >;
+  assertEquals(tips[0].source_form, "1099k");
+  assertEquals(tips[0].amount, 5_000);
+  assertThrows(
+    () =>
+      compute([businessItem(10_000, {
+        schedule_c_receipts_review: {
+          included_in_schedule_c_gross_receipts: 7_999,
+          not_included_in_schedule_c_receipts: 2_000,
+          allocation_reference: "2025 processor settlement ledger",
+          no_overlap_with_other_1099s: true,
+          overlap_review_reference: "2025 overlap review",
+        },
+      })]),
+    Error,
+    "complete box 1a allocation",
+  );
+});
+
 Deno.test("for_routing=schedule_c: $5,000 gross routes despite issuer threshold", () => {
-  const result = compute([
-    minimalItem({ box1a_gross_payments: 5_000, for_routing: "schedule_c" }),
-  ]);
+  const result = compute([businessItem(5_000)]);
   const schedCOut = findOutput(result, "schedule_c");
   assertEquals(schedCOut !== undefined, true);
   assertEquals(
-    (schedCOut!.fields as { schedule_cs: { line_1_gross_receipts: number }[] })
-      .schedule_cs[0].line_1_gross_receipts,
+    (schedCOut!.fields as { f1099k_receipt_sources: { amount: number }[] })
+      .f1099k_receipt_sources[0].amount,
     5_000,
   );
 });
@@ -640,14 +701,12 @@ Deno.test("no for_routing: box1a above threshold still produces no income output
 });
 
 Deno.test("for_routing=schedule_c: $4,999 gross routes despite issuer threshold", () => {
-  const result = compute([
-    minimalItem({ box1a_gross_payments: 4_999, for_routing: "schedule_c" }),
-  ]);
+  const result = compute([businessItem(4_999)]);
   const schedCOut = findOutput(result, "schedule_c");
   assertEquals(schedCOut !== undefined, true);
   assertEquals(
-    (schedCOut!.fields as { schedule_cs: { line_1_gross_receipts: number }[] })
-      .schedule_cs[0].line_1_gross_receipts,
+    (schedCOut!.fields as { f1099k_receipt_sources: { amount: number }[] })
+      .f1099k_receipt_sources[0].amount,
     4_999,
   );
 });

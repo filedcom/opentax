@@ -104,6 +104,50 @@ for (const fixture of pdfReviewFixtures) {
           "do not match filed payer sources",
         );
       }
+      if (fixture.id === "single-nec-misc-k-business-tips-schedule1a") {
+        const tips = result.pending.schedule1a
+          .qualified_trade_business_tips as Array<Record<string, unknown>>;
+        assertEquals(tips.length, 3);
+        assertEquals(
+          tips.reduce((sum, row) => sum + Number(row.amount), 0),
+          14_000,
+        );
+        assertEquals(
+          (result.pending.schedule_c.schedule_cs as Array<
+            Record<string, unknown>
+          >)[0].line_1_gross_receipts,
+          18_000,
+        );
+        assertEquals(result.pending.f1040.line13b_additional_deductions, 9_294);
+        assertStringIncludes(
+          xml,
+          "<QualifiedTipsTradeOrBusAmt>9294</QualifiedTipsTradeOrBusAmt>",
+        );
+        assertThrows(
+          () =>
+            buildMefXml(
+              buildPending({
+                ...result.pending,
+                schedule_c: {
+                  ...result.pending.schedule_c,
+                  f1099k_receipt_sources: [
+                    ...(result.pending.schedule_c
+                      .f1099k_receipt_sources as Array<Record<string, unknown>>)
+                      .map((
+                        row: Record<string, unknown>,
+                      ) => ({
+                        ...row,
+                        amount: 7_999,
+                      })),
+                  ],
+                },
+              }),
+              fixture.filer,
+            ),
+          Error,
+          "1099-K Schedule C source differs",
+        );
+      }
       if (fixture.id === "single-partnership-code-l-r-ordinary") {
         assertEquals(result.pending.schedule1.line4_other_gains, 1_000);
         assertEquals(result.pending.f1040.line8_additional_income, 1_000);

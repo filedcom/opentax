@@ -159,6 +159,7 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
         ...(input.attorney_fee_sources ?? []),
         ...(input.f1099m_receipt_sources ?? []),
         ...(input.f1099nec_receipt_sources ?? []),
+        ...(input.f1099k_receipt_sources ?? []),
       ]
     ) {
       receiptsByBusiness.set(

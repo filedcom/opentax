@@ -9,6 +9,7 @@ import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { scheduleC as schedule_c } from "../schedule_c/index.ts";
+import { schedule1a } from "../../intermediate/forms/schedule1a/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // TY2025 issuer reporting threshold. This does not limit the recipient's
@@ -20,6 +21,7 @@ export const itemSchema = z.object({
   // Filer identification
   pse_name: z.string(),
   pse_tin: z.string().optional(),
+  recipient_tin: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
 
   // Filer type checkboxes (PSE = Payment Settlement Entity; EPF = Electronic Payment Facilitator)
   filer_type_pse: z.boolean().optional(),
@@ -57,6 +59,23 @@ export const itemSchema = z.object({
   //   "schedule_1_line_8j" → confirmed activity-not-for-profit income.
   // Personal-item sales and erroneous Forms 1099-K need their own sources.
   for_routing: z.enum(["schedule_c", "schedule_1_line_8j"]).optional(),
+  schedule_c_business_reference: z.string().trim().min(1).optional(),
+  schedule_c_receipts_review: z.object({
+    included_in_schedule_c_gross_receipts: z.number().int().positive(),
+    not_included_in_schedule_c_receipts: z.number().int().nonnegative(),
+    allocation_reference: z.string().trim().min(1),
+    no_overlap_with_other_1099s: z.literal(true),
+    overlap_review_reference: z.string().trim().min(1),
+  }).strict().optional(),
+  qualified_tips_box1a_review: z.object({
+    amount: z.number().int().positive(),
+    occupation_code: z.string().regex(/^\d{3}$/),
+    occupation_review_reference: z.string().trim().min(1),
+    tip_records_reference: z.string().trim().min(1),
+    included_in_box1a: z.literal(true),
+    no_other_allocable_deductions: z.literal(true),
+    no_other_allocable_deductions_review_reference: z.string().trim().min(1),
+  }).strict().optional(),
 
   // Boxes 5a–5l — Monthly gross payment amounts
   box5a_january: z.number().nonnegative().optional(),
@@ -80,6 +99,40 @@ export const itemSchema = z.object({
 
   // Box 8 — State Income Tax Withheld (flows to state return only)
   box8_state_withheld: z.number().nonnegative().optional(),
+}).superRefine((item, ctx) => {
+  const gross = item.box1a_gross_payments ?? 0;
+  if (item.for_routing === "schedule_c" && gross > 0) {
+    const review = item.schedule_c_receipts_review;
+    if (
+      !item.pse_name.trim() ||
+      !/^\d{9}$/.test(item.pse_tin?.replaceAll("-", "") ?? "") ||
+      !item.recipient_tin || !item.schedule_c_business_reference ||
+      !review ||
+      review.included_in_schedule_c_gross_receipts +
+            review.not_included_in_schedule_c_receipts !== gross
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["schedule_c_receipts_review"],
+        message:
+          "1099-K Schedule C income needs identified payer, recipient, business, and a complete box 1a allocation",
+      });
+    }
+  }
+  if (
+    item.qualified_tips_box1a_review &&
+    (item.for_routing !== "schedule_c" ||
+      !item.schedule_c_receipts_review ||
+      item.qualified_tips_box1a_review.amount >
+        item.schedule_c_receipts_review.included_in_schedule_c_gross_receipts)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["qualified_tips_box1a_review"],
+      message:
+        "1099-K qualified tips need reviewed box 1a payments included in Schedule C receipts",
+    });
+  }
 });
 
 export const inputSchema = z.object({
@@ -151,13 +204,22 @@ function incomeOutputs(k99s: K99Items): NodeOutput[] {
     switch (item.for_routing) {
       case "schedule_c":
         return [output(schedule_c, {
-          schedule_cs: [{
-            line_a_principal_business: item.pse_name ??
-              "Payment network income",
-            line_b_business_code: "999999",
-            line_f_accounting_method: "cash",
-            line_g_material_participation: true,
-            line_1_gross_receipts: gross,
+          f1099k_receipt_sources: [{
+            business_reference: item.schedule_c_business_reference!,
+            pse_name: item.pse_name,
+            pse_tin: item.pse_tin!.replaceAll("-", ""),
+            recipient_tin: item.recipient_tin!.replaceAll("-", ""),
+            box1a_gross_payments: gross,
+            amount: item.schedule_c_receipts_review!
+              .included_in_schedule_c_gross_receipts,
+            not_included_in_schedule_c_receipts:
+              item.schedule_c_receipts_review!
+                .not_included_in_schedule_c_receipts,
+            allocation_reference: item.schedule_c_receipts_review!
+              .allocation_reference,
+            no_overlap_with_other_1099s: true,
+            overlap_review_reference: item.schedule_c_receipts_review!
+              .overlap_review_reference,
           }],
         })];
       case "schedule_1_line_8j":
@@ -189,6 +251,7 @@ class F1099kNode extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([
     f1040,
     schedule_c,
+    schedule1a,
     schedule1,
     agi_aggregator,
   ]);
@@ -204,6 +267,36 @@ class F1099kNode extends TaxNode<typeof inputSchema> {
       ...federalWithholdingOutputs(parsed.f1099ks),
       ...incomeOutputs(parsed.f1099ks),
     ];
+    const qualifiedTips = parsed.f1099ks.flatMap((item) =>
+      item.qualified_tips_box1a_review
+        ? [{
+          source_form: "1099k" as const,
+          business_reference: item.schedule_c_business_reference!,
+          recipient_ssn: item.recipient_tin!,
+          payer_name: item.pse_name,
+          payer_tin: item.pse_tin!.replaceAll("-", ""),
+          source_amount: item.box1a_gross_payments!,
+          amount: item.qualified_tips_box1a_review.amount,
+          occupation_code: item.qualified_tips_box1a_review.occupation_code,
+          occupation_review_reference:
+            item.qualified_tips_box1a_review.occupation_review_reference,
+          tip_records_reference:
+            item.qualified_tips_box1a_review.tip_records_reference,
+          included_in_source_amount:
+            item.qualified_tips_box1a_review.included_in_box1a,
+          no_other_allocable_deductions:
+            item.qualified_tips_box1a_review.no_other_allocable_deductions,
+          no_other_allocable_deductions_review_reference:
+            item.qualified_tips_box1a_review
+              .no_other_allocable_deductions_review_reference,
+        }]
+        : []
+    );
+    if (qualifiedTips.length > 0) {
+      outputs.push(
+        output(schedule1a, { qualified_trade_business_tips: qualifiedTips }),
+      );
+    }
 
     return { outputs };
   }

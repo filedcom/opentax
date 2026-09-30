@@ -126,7 +126,7 @@ export const inputSchema = claimInputSchema.extend({
   ).optional(),
   qualified_trade_business_tips: z.array(
     z.object({
-      source_form: z.enum(["1099nec", "1099misc"]),
+      source_form: z.enum(["1099nec", "1099misc", "1099k"]),
       business_reference: z.string().trim().min(1),
       recipient_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
       payer_name: z.string().trim().min(1),

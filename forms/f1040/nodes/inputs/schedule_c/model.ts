@@ -206,6 +206,20 @@ export const inputSchema = z.object({
       amount: z.number().positive(),
     }).strict(),
   ).optional(),
+  f1099k_receipt_sources: z.array(
+    z.object({
+      business_reference: z.string().trim().min(1),
+      pse_name: z.string().trim().min(1),
+      pse_tin: z.string().regex(/^\d{9}$/),
+      recipient_tin: z.string().regex(/^\d{9}$/),
+      box1a_gross_payments: z.number().positive(),
+      amount: z.number().positive(),
+      not_included_in_schedule_c_receipts: z.number().nonnegative(),
+      allocation_reference: z.string().trim().min(1),
+      no_overlap_with_other_1099s: z.literal(true),
+      overlap_review_reference: z.string().trim().min(1),
+    }).strict(),
+  ).optional(),
   attorney_fee_sources: z.array(
     z.object({
       business_reference: z.string().trim().min(1),

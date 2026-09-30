@@ -14,6 +14,7 @@ import { inputSchema as w2InputSchema } from "../../../nodes/inputs/w2/index.ts"
 import { inputSchema as form4137InputSchema } from "../../../nodes/intermediate/forms/form4137/index.ts";
 import { inputSchema as necInputSchema } from "../../../nodes/inputs/f1099nec/index.ts";
 import { inputSchema as miscInputSchema } from "../../../nodes/inputs/f1099m/index.ts";
+import { inputSchema as kInputSchema } from "../../../nodes/inputs/f1099k/index.ts";
 import { scheduleC } from "../../../nodes/inputs/schedule_c/index.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
@@ -250,6 +251,9 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
       const misc = context?.pending?.f1099m
         ? miscInputSchema.parse(context.pending.f1099m).f1099ms
         : [];
+      const k = context?.pending?.f1099k
+        ? kInputSchema.parse(context.pending.f1099k).f1099ks
+        : [];
       const sources = [
         ...nec.flatMap((item) =>
           item.qualified_tips_review
@@ -297,6 +301,31 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
                 item.qualified_tips_box3_review.no_other_allocable_deductions,
               no_other_allocable_deductions_review_reference:
                 item.qualified_tips_box3_review
+                  .no_other_allocable_deductions_review_reference,
+            }]
+            : []
+        ),
+        ...k.flatMap((item) =>
+          item.qualified_tips_box1a_review
+            ? [{
+              source_form: "1099k" as const,
+              business_reference: item.schedule_c_business_reference,
+              recipient_ssn: item.recipient_tin,
+              payer_name: item.pse_name,
+              payer_tin: item.pse_tin?.replaceAll("-", ""),
+              source_amount: item.box1a_gross_payments,
+              amount: item.qualified_tips_box1a_review.amount,
+              occupation_code: item.qualified_tips_box1a_review.occupation_code,
+              occupation_review_reference:
+                item.qualified_tips_box1a_review.occupation_review_reference,
+              tip_records_reference:
+                item.qualified_tips_box1a_review.tip_records_reference,
+              included_in_source_amount:
+                item.qualified_tips_box1a_review.included_in_box1a,
+              no_other_allocable_deductions:
+                item.qualified_tips_box1a_review.no_other_allocable_deductions,
+              no_other_allocable_deductions_review_reference:
+                item.qualified_tips_box1a_review
                   .no_other_allocable_deductions_review_reference,
             }]
             : []

@@ -33,8 +33,38 @@ export function assertScheduleCReceiptSourceIdentity(
   pending: Record<string, unknown>,
   filer: FilerIdentity,
 ): void {
+  const rawK =
+    (pending.f1099k as { f1099ks?: Array<Record<string, unknown>> } | undefined)
+      ?.f1099ks ?? [];
+  const expectedK = rawK.filter((item) =>
+    item.for_routing === "schedule_c" &&
+    typeof item.box1a_gross_payments === "number" &&
+    item.box1a_gross_payments > 0
+  ).map((item) => {
+    const review = item.schedule_c_receipts_review as Record<string, unknown>;
+    return {
+      business_reference: item.schedule_c_business_reference,
+      pse_name: item.pse_name,
+      pse_tin: tin(item.pse_tin, "1099-K PSE"),
+      recipient_tin: tin(item.recipient_tin, "1099-K recipient"),
+      box1a_gross_payments: item.box1a_gross_payments,
+      amount: review?.included_in_schedule_c_gross_receipts,
+      not_included_in_schedule_c_receipts: review
+        ?.not_included_in_schedule_c_receipts,
+      allocation_reference: review?.allocation_reference,
+      no_overlap_with_other_1099s: review?.no_overlap_with_other_1099s,
+      overlap_review_reference: review?.overlap_review_reference,
+    };
+  });
   const scheduleC = pending.schedule_c;
-  if (!scheduleC || typeof scheduleC !== "object") return;
+  if (!scheduleC || typeof scheduleC !== "object") {
+    if (expectedK.length) {
+      throw new Error(
+        "1099-K Schedule C source differs from the filed business",
+      );
+    }
+    return;
+  }
   const fields = scheduleC as Record<string, unknown>;
   if (
     typeof fields.line1_gross_receipts === "number" &&
@@ -47,14 +77,34 @@ export function assertScheduleCReceiptSourceIdentity(
   const attorneySources = fields.attorney_fee_sources;
   const receiptSources = fields.f1099m_receipt_sources;
   const necSources = fields.f1099nec_receipt_sources;
+  const kSources = fields.f1099k_receipt_sources;
+  const sortRows = (rows: unknown[]) =>
+    rows.map((row) =>
+      JSON.stringify(
+        Object.entries(row as Record<string, unknown>).sort(([a], [b]) =>
+          a.localeCompare(b)
+        ),
+      )
+    ).sort();
+  if (
+    !Array.isArray(kSources) ||
+    JSON.stringify(sortRows(kSources)) !== JSON.stringify(sortRows(expectedK))
+  ) {
+    if (kSources !== undefined || expectedK.length) {
+      throw new Error(
+        "1099-K Schedule C source differs from the filed payer report",
+      );
+    }
+  }
   if (
     attorneySources === undefined && receiptSources === undefined &&
-    necSources === undefined
+    necSources === undefined && kSources === undefined
   ) return;
   if (
     (attorneySources !== undefined && !Array.isArray(attorneySources)) ||
     (receiptSources !== undefined && !Array.isArray(receiptSources)) ||
-    (necSources !== undefined && !Array.isArray(necSources))
+    (necSources !== undefined && !Array.isArray(necSources)) ||
+    (kSources !== undefined && !Array.isArray(kSources))
   ) {
     throw new Error("1099 Schedule C sources must be arrays");
   }
@@ -74,6 +124,10 @@ export function assertScheduleCReceiptSourceIdentity(
     ...(necSources ?? []).map((source: unknown) => ({
       source,
       kind: "nec" as const,
+    })),
+    ...(kSources ?? []).map((source: unknown) => ({
+      source,
+      kind: "k" as const,
     })),
   ];
   const totals = new Map<string, number>();
@@ -109,6 +163,18 @@ export function assertScheduleCReceiptSourceIdentity(
       (kind === "nec" &&
         (typeof row.payer_name !== "string" || !row.payer_name.trim() ||
           !tin(row.payer_tin, "1099-NEC payer"))) ||
+      (kind === "k" &&
+        (typeof row.pse_name !== "string" || !row.pse_name.trim() ||
+          !tin(row.pse_tin, "1099-K PSE") ||
+          typeof row.box1a_gross_payments !== "number" ||
+          typeof row.not_included_in_schedule_c_receipts !== "number" ||
+          row.amount + row.not_included_in_schedule_c_receipts !==
+            row.box1a_gross_payments ||
+          row.no_overlap_with_other_1099s !== true ||
+          typeof row.allocation_reference !== "string" ||
+          !row.allocation_reference.trim() ||
+          typeof row.overlap_review_reference !== "string" ||
+          !row.overlap_review_reference.trim())) ||
       typeof matches[0].line_1_gross_receipts !== "number" ||
       matches[0].line_1_gross_receipts < row.amount
     ) {

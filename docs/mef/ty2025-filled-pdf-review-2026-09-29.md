@@ -648,3 +648,17 @@ deduction. The PDF SHA-256 is
 the source/pending JSON, XML, PDF, contact sheet, and detailed page render
 are retained at `.state/research/ty2025-filled-pdf-review/2026-09-30-v86/`.
 Payer and tip-record bytes and IRS acceptance remain open.
+
+The `single-nec-misc-k-business-tips-schedule1a` source return has a
+12-page `v87` PDF. The page contact sheet and full-size Schedule 1-A page 1
+were inspected: NEC, MISC, and K contribute $4,000, $4,000, and $6,000
+reviewed tips, and the $10,000 Schedule C profit less $706 rounded SE
+deduction caps lines 5/13/38 and Form 1040 line 13b at $9,294. Schedule C
+line 1 prints $18,000 of gross receipts, including $8,000 allocated from
+the K box 1a. The matching native return passes local TY2025 v5.4 XSD;
+changed K receipt rows reject at export. The PDF SHA-256 is
+`2cfcd2ab37ad9ebc69665824dfe3fde2842763145a2888e7493a382d5a8a85cb`;
+the source/pending JSON, XML, PDF, contact sheet, and detailed page render
+are retained at `.state/research/ty2025-filled-pdf-review/2026-09-30-v87/`.
+Processor records, tip ledgers, duplicate-transaction proof, and IRS
+acceptance remain open.

@@ -37,7 +37,7 @@ two-page PDF field map and inspected synthetic full-return packets.
   for the W-2 box 7-only route, and an
   occupation code outside the IRS list reject. Other employer statement variants,
   multiple occupations at one employer, other special wage-base handling,
-  Form 1099-K business tips, multiple Schedule C businesses, multiple Form 4137 employers in a
+  multiple Schedule C businesses, multiple Form 4137 employers in a
   full packet, and underlying record authentication remain open.
 - Part III now supports employer-identified `FLSA Overtime Premium` in W-2
   box 14 when a source-referenced review confirms the employee is covered and
@@ -288,5 +288,21 @@ local TY2025 v5.4 XSD. All 12 `v86` PDF pages were viewed as a contact sheet
 and the Schedule 1-A line 5 page was checked at full resolution (SHA-256
 `b3479712e700700c9ea14235ad144f187b3e03489b10cd8a6f30b7b5d49ea8b4`).
 Source references and review facts are not authenticated payer/tip bytes.
-1099-K, multiple-business deduction allocation, IRS rules, and ATS remain
+multiple-business deduction allocation, IRS rules, and ATS remain
 open.
+
+The `single-nec-misc-k-business-tips-schedule1a` fixture adds $6,000 of
+reviewed Form 1099-K box 1a tips to $4,000 NEC and $4,000 MISC tips. The
+processor's $10,000 box 1a is allocated to $8,000 included in the named
+Schedule C business and $2,000 not included, with an explicit review that
+the included receipts do not duplicate another payer report. The three
+sources produce $18,000 gross receipts, $10,000 profit, and $9,294 on
+Schedule 1-A line 5 after the rounded $706 Schedule 1 line 15 deduction.
+Native and PDF export match the K source row to the original payer report
+and the proprietor. The full return passes local TY2025 v5.4 XSD, and a
+changed K receipt row rejects. All 12 `v87` PDF pages were inspected as a
+contact sheet, with Schedule 1-A page 1 checked at full resolution (SHA-256
+`2cfcd2ab37ad9ebc69665824dfe3fde2842763145a2888e7493a382d5a8a85cb`).
+Processor and tip-record bytes, transaction-level duplicate evidence,
+personal-payment classification, EIN recipients, multiple-business
+deduction allocation, IRS business rules, and ATS acceptance remain open.

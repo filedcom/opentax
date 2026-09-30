@@ -2394,6 +2394,124 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-nec-misc-k-business-tips-schedule1a",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        taxpayer_ssn_valid_for_employment: true,
+        taxpayer_ssn_issued_before_due_date: true,
+        taxpayer_tin_issued_by_due_date: true,
+        qbi_no_prior_loss_or_suspended_loss_confirmed: true,
+        qbi_not_patron_of_specified_cooperative_confirmed: true,
+      },
+      f1099nec: [{
+        payer_name: "Example Events NEC",
+        payer_tin: "98-7654321",
+        recipient_ssn: "111-22-3333",
+        box1_nec: 5_000,
+        for_routing: "schedule_c",
+        schedule_c_business_reference: "synthetic-triple-tip-service-2025",
+        qualified_tips_review: {
+          amount: 4_000,
+          occupation_code: "102",
+          occupation_review_reference:
+            "Synthetic 2025 service occupation record",
+          tip_records_reference: "Synthetic 2025 NEC POS tip ledger",
+          included_in_box1: true,
+          no_other_allocable_deductions: true,
+          no_other_allocable_deductions_review_reference:
+            "Synthetic 2025 Schedule 1 allocation review",
+        },
+      }],
+      f1099m: [{
+        payer_name: "Example Events MISC",
+        payer_tin: "23-4567890",
+        recipient_tin: "111-22-3333",
+        box3_other_income: 5_000,
+        box3_other_income_routing: "schedule_c",
+        schedule_c_business_reference: "synthetic-triple-tip-service-2025",
+        qualified_tips_box3_review: {
+          amount: 4_000,
+          occupation_code: "102",
+          occupation_review_reference:
+            "Synthetic 2025 service occupation record",
+          tip_records_reference: "Synthetic 2025 MISC POS tip ledger",
+          included_in_box3: true,
+          no_other_allocable_deductions: true,
+          no_other_allocable_deductions_review_reference:
+            "Synthetic 2025 Schedule 1 allocation review",
+        },
+      }],
+      f1099k: [{
+        pse_name: "Example Card Processor",
+        pse_tin: "34-5678901",
+        recipient_tin: "111-22-3333",
+        box1a_gross_payments: 10_000,
+        for_routing: "schedule_c",
+        schedule_c_business_reference: "synthetic-triple-tip-service-2025",
+        schedule_c_receipts_review: {
+          included_in_schedule_c_gross_receipts: 8_000,
+          not_included_in_schedule_c_receipts: 2_000,
+          allocation_reference: "Synthetic 2025 processor settlement review",
+          no_overlap_with_other_1099s: true,
+          overlap_review_reference: "Synthetic 2025 NEC/MISC overlap review",
+        },
+        qualified_tips_box1a_review: {
+          amount: 6_000,
+          occupation_code: "102",
+          occupation_review_reference:
+            "Synthetic 2025 service occupation record",
+          tip_records_reference: "Synthetic 2025 card POS tip ledger",
+          included_in_box1a: true,
+          no_other_allocable_deductions: true,
+          no_other_allocable_deductions_review_reference:
+            "Synthetic 2025 Schedule 1 allocation review",
+        },
+      }],
+      schedule_c: [{
+        business_reference: "synthetic-triple-tip-service-2025",
+        proprietor_recipient: "T",
+        line_a_principal_business: "Event food service",
+        line_b_business_code: "722320",
+        line_c_business_name: "Example Triple Service",
+        line_f_accounting_method: "cash",
+        line_g_material_participation: true,
+        line_i_made_1099_payments: false,
+        line_j_filed_1099s: false,
+        qbi_no_other_adjustments_confirmed: true,
+        line_1_gross_receipts: 18_000,
+        line_8_advertising: 8_000,
+      }],
+      schedule1a: {
+        senior_zero_exclusions_review: {
+          no_section933_puerto_rico_excluded_income: true,
+          section933_review_source_reference: "Synthetic 2025 residency review",
+          no_form2555_filed: true,
+          form2555_review_source_reference:
+            "Synthetic 2025 foreign-income review",
+          no_form4563_filed: true,
+          form4563_review_source_reference:
+            "Synthetic 2025 Samoa-source review",
+        },
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: [
+      "f1040",
+      "schedule_c",
+      "schedule_se",
+      "schedule1",
+      "schedule2",
+      "form8995",
+      "schedule1a",
+    ],
+    reviewFocus: [
+      "NEC, MISC, and K reports contribute $4,000, $4,000, and $6,000 of nonoverlapping tips",
+      "K box 1a allocates $8,000 of $10,000 to the named Schedule C business",
+      "One $10,000 business profit less the $706 rounded SE deduction limits line 5 to $9,294",
+    ],
+  },
+  {
     id: "single-schedule-c",
     inputs: {
       general: {
