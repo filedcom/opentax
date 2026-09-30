@@ -311,18 +311,20 @@ Deno.test("routing: box1_nec absent produces no routing output", () => {
   assertEquals(findOutput(result, "form8919"), undefined);
 });
 
-Deno.test("routing: box3_golden_parachute > 0 → schedule1 line8z_golden_parachute", () => {
-  const result = compute([minimalItem({ box3_golden_parachute: 100000 })]);
-  const out = findOutput(result, "schedule1");
-  assertEquals(out !== undefined, true);
-  assertEquals(
-    fieldsOf(result.outputs, schedule1)!.line8z_golden_parachute,
-    100000,
-  );
+Deno.test("routing: box3 is already in box1 and does not add Schedule 1 income", () => {
+  const result = compute([minimalItem({
+    box1_nec: 150000,
+    box3_golden_parachute: 100000,
+  })]);
+  assertEquals(schedCGrossReceipts(result), 150000);
+  assertEquals(findOutput(result, "schedule1"), undefined);
 });
 
 Deno.test("routing: box3_golden_parachute > 0 → schedule2 line17k_golden_parachute_excise", () => {
-  const result = compute([minimalItem({ box3_golden_parachute: 100000 })]);
+  const result = compute([minimalItem({
+    box1_nec: 150000,
+    box3_golden_parachute: 100000,
+  })]);
   const out = findOutput(result, "schedule2");
   assertEquals(out !== undefined, true);
   assertEquals(
@@ -426,8 +428,12 @@ Deno.test("aggregation: multiple box4_federal_withheld items produce separate f1
 
 Deno.test("aggregation: multiple box3_golden_parachute items produce separate outputs", () => {
   const result = compute([
-    minimalItem({ box3_golden_parachute: 50000 }),
-    minimalItem({ box3_golden_parachute: 30000, payer_name: "Payer Two" }),
+    minimalItem({ box1_nec: 60000, box3_golden_parachute: 50000 }),
+    minimalItem({
+      box1_nec: 40000,
+      box3_golden_parachute: 30000,
+      payer_name: "Payer Two",
+    }),
   ]);
   const sch2Outputs = result.outputs.filter((o) => o.nodeType === "schedule2");
   assertEquals(sch2Outputs.length, 2);
@@ -529,7 +535,10 @@ Deno.test("threshold: box4_federal_withheld at 24% of box1_nec — engine accept
 
 // Box 3 excise: 20% of golden parachute amount
 Deno.test("threshold: box3 excise = box3 × 0.20 — exact calculation", () => {
-  const result = compute([minimalItem({ box3_golden_parachute: 50000 })]);
+  const result = compute([minimalItem({
+    box1_nec: 60000,
+    box3_golden_parachute: 50000,
+  })]);
   const out = findOutput(result, "schedule2");
   assertEquals(out !== undefined, true);
   assertEquals(
@@ -539,7 +548,10 @@ Deno.test("threshold: box3 excise = box3 × 0.20 — exact calculation", () => {
 });
 
 Deno.test("threshold: box3 = 1 (minimum non-zero) — excise = 0.20", () => {
-  const result = compute([minimalItem({ box3_golden_parachute: 1 })]);
+  const result = compute([minimalItem({
+    box1_nec: 1,
+    box3_golden_parachute: 1,
+  })]);
   const out = findOutput(result, "schedule2");
   assertEquals(out !== undefined, true);
   assertEquals(
@@ -642,16 +654,25 @@ Deno.test("warning: second_tin_notice = true — informational, does not throw",
   assertEquals(Array.isArray(result.outputs), true);
 });
 
-Deno.test("warning: box3_golden_parachute with no box1_nec — does not throw", () => {
-  // Box 3 can exist without box1 in edge scenarios (unusual but not invalid)
-  const result = f1099nec.compute({ taxYear: 2025, formType: "f1040" }, {
+Deno.test("validation: box3 without box1 is rejected", () => {
+  const parsed = f1099nec.inputSchema.safeParse({
     f1099necs: [{
       payer_name: "BigCo",
       payer_tin: "11-2233445",
       box3_golden_parachute: 50000,
     }],
   });
-  assertEquals(Array.isArray(result.outputs), true);
+  assertEquals(parsed.success, false);
+});
+
+Deno.test("validation: box3 greater than box1 is rejected", () => {
+  const parsed = f1099nec.inputSchema.safeParse({
+    f1099necs: [minimalItem({
+      box1_nec: 40000,
+      box3_golden_parachute: 50000,
+    })],
+  });
+  assertEquals(parsed.success, false);
 });
 
 // ---------------------------------------------------------------------------
@@ -779,15 +800,16 @@ Deno.test("edge: box1_nec with form_8919 routing produces no schedule_c output",
   assertEquals(findOutput(result, "schedule_c"), undefined);
 });
 
-Deno.test("edge: box3_golden_parachute with box1_nec schedule_c produces both outputs", () => {
-  // Total in box1 (→ schedule_c), excess in box3 (→ schedule1 + schedule2 excise)
+Deno.test("edge: box3 with Schedule C box1 produces income once and excise", () => {
+  // Total in box1 reaches Schedule C; excess in box3 reaches Schedule 2.
   const result = compute([minimalItem({
     box1_nec: 200000,
     for_routing: "schedule_c",
     box3_golden_parachute: 150000,
   })]);
   assertEquals(findOutput(result, "schedule_c") !== undefined, true);
-  assertEquals(findOutput(result, "schedule1") !== undefined, true);
+  assertEquals(schedCGrossReceipts(result), 200000);
+  assertEquals(findOutput(result, "schedule1"), undefined);
   assertEquals(findOutput(result, "schedule2") !== undefined, true);
 });
 
@@ -889,7 +911,7 @@ Deno.test("smoke: freelancer with two clients, backup withholding, and golden pa
   assertEquals(schedCOutputs.length, 1);
   assertEquals(schedCGrossReceipts(result), 597000);
 
-  // One schedule1 output for line 8z (director fee) + one for golden parachute income
+  // One Schedule 1 output for the director fee; box 3 adds no income.
   const schedule1Outputs = result.outputs.filter((o) =>
     o.nodeType === "schedule1"
   );

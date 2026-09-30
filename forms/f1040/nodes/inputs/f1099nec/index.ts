@@ -30,6 +30,13 @@ export const itemSchema = z.object({
     .optional(),
   farm_id: z.string().min(1).optional(),
 }).superRefine((item, ctx) => {
+  if ((item.box3_golden_parachute ?? 0) > (item.box1_nec ?? 0)) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["box3_golden_parachute"],
+      message: "1099-NEC box 3 excess must be included in box 1 compensation",
+    });
+  }
   if ((item.box1_nec ?? 0) <= 0) return;
   if (!item.for_routing) {
     ctx.addIssue({
@@ -159,7 +166,6 @@ class F1099necNode extends TaxNode<typeof inputSchema> {
       ...necIncomeOutput(item),
       ...(box3 > 0
         ? [
-          output(schedule1, { line8z_golden_parachute: box3 }),
           output(schedule2, { line17k_golden_parachute_excise: box3 * 0.20 }),
         ]
         : []),
