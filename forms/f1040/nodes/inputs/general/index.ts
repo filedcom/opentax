@@ -18,6 +18,7 @@ import {
   priorEicDisallowanceReviewSchema,
 } from "../../intermediate/forms/eitc/index.ts";
 import { f8812 } from "../f8812/index.ts";
+import { priorCreditDisallowanceReviewSchema } from "../f8862/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { form8959 } from "../../intermediate/forms/form8959/index.ts";
 import {
@@ -177,6 +178,8 @@ export const inputSchema = z.object({
   childless_eic_review: childlessEicReviewSchema.optional(),
   child_eic_filer_review: childEicFilerReviewSchema.optional(),
   prior_eic_disallowance_review: priorEicDisallowanceReviewSchema.optional(),
+  prior_ctc_disallowance_review: priorCreditDisallowanceReviewSchema.optional(),
+  prior_aotc_disallowance_review: priorCreditDisallowanceReviewSchema.optional(),
   eic_tax_residency_review: eicTaxResidencyReviewSchema.optional(),
   // 2025 EIC special rule for a married taxpayer filing separately.
   mfs_eitc_separation_review: z.discriminatedUnion("basis", [

@@ -2,9 +2,11 @@ import { element, elements } from "../../../mef/xml.ts";
 import {
   assertCreditDisallowanceEvidence,
   type F8862Input,
+  type PriorCreditDisallowanceReview,
   inputSchema,
 } from "../../../nodes/inputs/f8862/index.ts";
 import { inputSchema as form8863InputSchema } from "../../../nodes/inputs/f8863/index.ts";
+import { inputSchema as generalInputSchema } from "../../../nodes/inputs/general/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 function boolElement(tag: string, value: boolean | undefined): string {
@@ -160,6 +162,41 @@ function validateFinalizedCreditClaims(
   const form1040 = pending?.f1040 as Record<string, unknown> | undefined;
   if (!form1040) {
     throw new Error("Form 8862 needs finalized Form 1040 credit lines");
+  }
+  const general = generalInputSchema.safeParse(pending?.general);
+  const filerSsn = context?.filer?.primarySSN ??
+    (general.success ? general.data.taxpayer_ssn?.replace(/\D/g, "") : undefined);
+  const assertPriorNotice = (
+    credit: "CTC/ODC" | "AOTC",
+    review: PriorCreditDisallowanceReview | undefined,
+    year: number | undefined,
+    reference: string | undefined,
+  ) => {
+    if (
+      !review || review.disallowed_year !== year ||
+      review.notice_reference !== reference ||
+      !filerSsn || review.taxpayer_ssn.replace(/\D/g, "") !== filerSsn
+    ) {
+      throw new Error(
+        `Form 8862 ${credit} claim needs a matching reviewed prior IRS notice and taxpayer`,
+      );
+    }
+  };
+  if (fields.claim_ctc) {
+    assertPriorNotice(
+      "CTC/ODC",
+      general.success ? general.data.prior_ctc_disallowance_review : undefined,
+      fields.ctc_disallowed_year,
+      fields.ctc_disallowance_notice_reference,
+    );
+  }
+  if (fields.claim_aotc) {
+    assertPriorNotice(
+      "AOTC",
+      general.success ? general.data.prior_aotc_disallowance_review : undefined,
+      fields.aotc_disallowed_year,
+      fields.aotc_disallowance_notice_reference,
+    );
   }
   const positive = (value: unknown) =>
     typeof value === "number" && Number.isFinite(value) && value > 0;

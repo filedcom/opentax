@@ -1,8 +1,5 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
-import {
-  calculateScheduleRAgeOnly,
-  scheduleR,
-} from "../../mef/forms/schedule_r.ts";
+import { calculateScheduleR, scheduleR } from "../../mef/forms/schedule_r.ts";
 
 // Canonical fields inspected on the two-page 2025 IRS Schedule R AcroForm.
 const page1 = "topmostSubform[0].Page1[0]";
@@ -25,8 +22,32 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "checkboxWhen",
+    domainKey: "box2",
+    pdfField: `${page1}.c1_1[1]`,
+    whenValue: "yes",
+  },
+  {
+    kind: "checkboxWhen",
     domainKey: "box3",
     pdfField: `${page1}.Married[0].c1_1[0]`,
+    whenValue: "yes",
+  },
+  {
+    kind: "checkboxWhen",
+    domainKey: "box4",
+    pdfField: `${page1}.Married[0].c1_1[1]`,
+    whenValue: "yes",
+  },
+  {
+    kind: "checkboxWhen",
+    domainKey: "box5",
+    pdfField: `${page1}.Married[0].c1_1[2]`,
+    whenValue: "yes",
+  },
+  {
+    kind: "checkboxWhen",
+    domainKey: "box6",
+    pdfField: `${page1}.Married[0].c1_1[3]`,
     whenValue: "yes",
   },
   {
@@ -41,7 +62,20 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     pdfField: `${page1}.MarriedSeparate[0].c1_1[0]`,
     whenValue: "yes",
   },
+  {
+    kind: "checkboxWhen",
+    domainKey: "box9",
+    pdfField: `${page1}.MarriedSeparate[0].c1_1[1]`,
+    whenValue: "yes",
+  },
+  {
+    kind: "checkboxWhen",
+    domainKey: "priorYearStatement",
+    pdfField: `${page1}.c1_2[0]`,
+    whenValue: "yes",
+  },
   text("line10", `${page2}.f2_1[0]`),
+  text("line11", `${page2}.f2_2[0]`),
   text("line12", `${page2}.f2_3[0]`),
   text("line13a", `${page2}.f2_4[0]`),
   text("line13b", `${page2}.f2_5[0]`),
@@ -64,8 +98,14 @@ export const scheduleRPdf: PdfFormDescriptor = {
   projectFields(raw, allPending) {
     if (Object.keys(raw).length === 0) return {};
     if (!scheduleR.build(raw, { pending: allPending })) return {};
-    const { box, lines } = calculateScheduleRAgeOnly({ pending: allPending });
-    return { [`box${box}`]: "yes", ...lines };
+    const { box, priorYearStatement, lines } = calculateScheduleR({
+      pending: allPending,
+    });
+    return {
+      [`box${box}`]: "yes",
+      ...(priorYearStatement ? { priorYearStatement: "yes" } : {}),
+      ...lines,
+    };
   },
   filerFields: [
     text("fullName", `${page1}.f1_1[0]`),

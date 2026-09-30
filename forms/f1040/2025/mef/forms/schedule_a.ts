@@ -1,6 +1,9 @@
 import { element, elements } from "../../../mef/xml.ts";
 import { FilingStatus } from "../../../mef/header.ts";
-import { assertForm1098Box6Sources } from "../../../nodes/inputs/f1098/index.ts";
+import {
+  assertForm1098Box6Sources,
+  assertForm1098MortgageLimitSources,
+} from "../../../nodes/inputs/f1098/index.ts";
 import { assertRefinancePointsSource } from "../../../nodes/inputs/mortgage_refinance_points/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import {
@@ -102,6 +105,16 @@ function buildIRS1040ScheduleA(
       context.pending.f1098,
       recipients,
       fields.line_8a_mortgage_interest_1098 ?? 0,
+    );
+    assertForm1098MortgageLimitSources(
+      context.pending.f1098,
+      recipients,
+      filer.filingStatus === FilingStatus.Single,
+      fields.line_8a_mortgage_interest_1098 ?? 0,
+      fields.line_8b_mortgage_interest_no_1098 ?? 0,
+      fields.line_8c_points_no_1098 ?? 0,
+      context.pending.mortgage_refinance_points !== undefined,
+      context.pending.form8396 !== undefined,
     );
   }
   if (context?.pending?.mortgage_refinance_points !== undefined) {

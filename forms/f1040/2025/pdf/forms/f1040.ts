@@ -663,6 +663,17 @@ export const irs1040Pdf: PdfFormDescriptor = {
       }
     }
     const child = form8814ParentPrintAmounts(allPending);
+    if (
+      child.dividends > 0 &&
+      ((typeof fields.line3a_qualified_dividends !== "number" ||
+        fields.line3a_qualified_dividends < child.dividends) ||
+        (typeof fields.line3b_ordinary_dividends !== "number" ||
+          fields.line3b_ordinary_dividends < child.dividends))
+    ) {
+      throw new Error(
+        "Form 1040 PDF child-dividend marks need the Form 8814 amount on lines 3a and 3b",
+      );
+    }
     const childGainDirect = child.capitalGain > 0 &&
       typeof fields.line7a_cap_gain_distrib === "number" &&
       fields.line7a_cap_gain_distrib >= child.capitalGain;

@@ -105,3 +105,29 @@ Deno.test("Schedule J rejects nonfarm income rather than treating offsetting AGI
     true,
   );
 });
+
+Deno.test("Schedule J names fishing Schedule C as a blocked attribution source", () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    ...inputs(),
+    schedule_c: {
+      schedule_cs: [{
+        business_reference: "fishing-a",
+        line_a_principal_business: "Commercial fishing",
+        line_b_business_code: "114110",
+        line_f_accounting_method: "cash",
+        line_g_material_participation: true,
+        line_1_gross_receipts: 80_000,
+        line_22_supplies: 20_000,
+      }],
+    },
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(
+    result.diagnostics.some((entry) =>
+      entry.nodeType === "schedule_j_calculation" &&
+      entry.message.includes(
+        "Schedule F-only election cannot include line3_schedule_c",
+      )
+    ),
+    true,
+  );
+});

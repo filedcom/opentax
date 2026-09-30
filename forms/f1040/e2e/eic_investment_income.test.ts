@@ -1532,6 +1532,18 @@ function runForm8814(
       child_no_withholding: true,
       parent_eligible_to_elect: true,
       interest_income: childInterest,
+      source_review: {
+        source_document_reference: "reviewed-jamie-eic-child-income",
+        tax_year: 2025,
+        child_ssn: "987654321",
+        electing_parent_ssn: "111223333",
+        eligibility_reviewed: true,
+        income: {
+          interest_income: childInterest,
+          tax_exempt_interest: childTaxExemptInterest,
+          alaska_pfd: alaskaPfd,
+        },
+      },
       tax_exempt_interest: childTaxExemptInterest,
       alaska_pfd: alaskaPfd,
     }],

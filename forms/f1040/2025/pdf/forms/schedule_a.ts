@@ -1,6 +1,9 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { FilingStatus } from "../../../mef/header.ts";
-import { assertForm1098Box6Sources } from "../../../nodes/inputs/f1098/index.ts";
+import {
+  assertForm1098Box6Sources,
+  assertForm1098MortgageLimitSources,
+} from "../../../nodes/inputs/f1098/index.ts";
 import { assertRefinancePointsSource } from "../../../nodes/inputs/mortgage_refinance_points/index.ts";
 import { assertElectedSectionAReconciled } from "../../mef/forms/f8283_election.ts";
 import { inputSchema as form8283InputSchema } from "../../../nodes/inputs/f8283/index.ts";
@@ -185,6 +188,16 @@ export const scheduleAPdf: PdfFormDescriptor = {
         all.f1098,
         recipients,
         Number(input.line_8a_mortgage_interest_1098 ?? 0),
+      );
+      assertForm1098MortgageLimitSources(
+        all.f1098,
+        recipients,
+        filer.filingStatus === FilingStatus.Single,
+        Number(input.line_8a_mortgage_interest_1098 ?? 0),
+        Number(input.line_8b_mortgage_interest_no_1098 ?? 0),
+        Number(input.line_8c_points_no_1098 ?? 0),
+        all.mortgage_refinance_points !== undefined,
+        all.form8396 !== undefined,
       );
     }
     if (all?.mortgage_refinance_points !== undefined) {

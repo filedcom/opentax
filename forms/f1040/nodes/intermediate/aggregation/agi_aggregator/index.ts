@@ -244,19 +244,19 @@ export const inputSchema = z.object({
 
 type AgiInput = z.infer<typeof inputSchema>;
 
-function farmOnlyIncomeVerified(input: AgiInput): boolean {
+function firstNonScheduleFIncomeSource(input: AgiInput): string | undefined {
   const allowed = new Set([
     "filing_status",
     "line6_schedule_f",
     "line15_se_deduction",
   ]);
-  return Object.entries(input).every(([key, value]) => {
-    if (allowed.has(key) || value === undefined) return true;
-    if (typeof value === "number") return value === 0;
-    if (typeof value === "boolean") return value === false;
-    if (Array.isArray(value)) return value.every((item) => item === 0);
-    return false;
-  });
+  return Object.entries(input).find(([key, value]) => {
+    if (allowed.has(key) || value === undefined) return false;
+    if (typeof value === "number") return value !== 0;
+    if (typeof value === "boolean") return value !== false;
+    if (Array.isArray(value)) return value.some((item) => item !== 0);
+    return true;
+  })?.[0];
 }
 
 // ─── SSA Taxability Worksheet (IRC §86) ───────────────────────────────────────
@@ -702,6 +702,7 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
     const line8 = scheduleOnePartI(input);
     const line10 = aboveLineDeductions(input, cfg);
 
+    const unsupportedFarmIncome = firstNonScheduleFIncomeSource(input);
     const f1040Fields: Partial<z.infer<typeof f1040["inputSchema"]>> = {
       line11_agi: agi,
     };
@@ -722,7 +723,8 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
         ),
       }),
       this.outputNodes.output(schedule_j_calculation, {
-        farm_only_income_verified: farmOnlyIncomeVerified(input),
+        farm_only_income_verified: unsupportedFarmIncome === undefined,
+        farm_only_unsupported_source_key: unsupportedFarmIncome,
         se_tax_deduction: input.line15_se_deduction ?? 0,
         agi,
       }),

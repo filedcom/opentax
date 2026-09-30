@@ -21,11 +21,47 @@ export interface Fields {
     contributions_paid?: number;
     zero_experience_rate?: true;
     taxable_wages: number;
+    all_household_employees_included: true;
+    prior_year_quarter_threshold_met: boolean;
+    prior_year_quarter_source_reference?: string;
+    employee_wages: Array<{
+      employee_id: string;
+      payroll_source_reference: string;
+      relationship: "unrelated";
+      age_18_or_older_for_fica: true;
+      ordinary_cash_only: true;
+      annual_cash_wages: number;
+      quarterly_cash_wages: [number, number, number, number];
+      w2?: {
+        source_reference: string;
+        box2_federal_income_tax_withheld: number;
+        box3_social_security_wages: number;
+        box5_medicare_wages: number;
+      };
+    }>;
   } | {
     paid_only_one_state: boolean;
     all_contributions_paid_on_time: boolean;
     all_futa_wages_state_taxable: boolean;
     taxable_futa_wages: number;
+    all_household_employees_included: true;
+    prior_year_quarter_threshold_met: boolean;
+    prior_year_quarter_source_reference?: string;
+    employee_wages: Array<{
+      employee_id: string;
+      payroll_source_reference: string;
+      relationship: "unrelated";
+      age_18_or_older_for_fica: true;
+      ordinary_cash_only: true;
+      annual_cash_wages: number;
+      quarterly_cash_wages: [number, number, number, number];
+      w2?: {
+        source_reference: string;
+        box2_federal_income_tax_withheld: number;
+        box3_social_security_wages: number;
+        box5_medicare_wages: number;
+      };
+    }>;
     state_rows: Array<{
       state: string;
       taxable_state_wages: number;

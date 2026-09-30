@@ -107,3 +107,53 @@ Deno.test("Schedule R PDF prints the joint-spouse and MFS age-only boxes", () =>
   assertEquals(mfs?.line10, 3_750);
   assertEquals(mfs?.line15, 5_000);
 });
+
+Deno.test("Schedule R PDF prints box 6, line 11, and prior-year disability statement", () => {
+  const joint = {
+    schedule_r: {
+      filing_status: FilingStatus.MFJ,
+      taxpayer_age_65_or_older: true,
+      spouse_age_65_or_older: false,
+      age_65_source_reference: "Taxpayer DOB",
+      spouse_disabled: true,
+      spouse_disability_income: 1_000,
+      spouse_disability_evidence: {
+        retired_on_permanent_total_disability: true,
+        below_mandatory_retirement_age_on_january_1: true,
+        unable_to_perform_substantial_gainful_activity: true,
+        disability_income_source_reference: "Spouse W-2",
+        disability_income_reported_on: "wages",
+        eligibility_source_reference: "Retirement record",
+        physician_statement: "prior_year",
+        physician_statement_source_reference:
+          "Prior signed physician statement",
+        prior_year_line_b_or_1983_verified: true,
+      },
+      agi: 10_000,
+    },
+    f1040: {
+      filing_status: FilingStatus.MFJ,
+      taxpayer_age_65_or_older: true,
+      spouse_age_65_or_older: false,
+      line1z_total_wages: 1_000,
+      line11_agi: 10_000,
+      line18_total_tax_before_credits: 1_500,
+      line20_nonrefundable_credits: 900,
+    },
+    schedule3: { line6d_elderly_disabled_credit: 900 },
+  };
+  const projected = scheduleRPdf.projectFields?.(joint.schedule_r, joint);
+  assertEquals(projected?.box6, "yes");
+  assertEquals(projected?.priorYearStatement, "yes");
+  assertEquals(projected?.line11, 6_000);
+  assertEquals(projected?.line12, 6_000);
+  assertEquals(projected?.line22, 900);
+  assertEquals(
+    scheduleRPdf.fields.find((field) => field.domainKey === "box6")?.pdfField,
+    "topmostSubform[0].Page1[0].Married[0].c1_1[3]",
+  );
+  assertEquals(
+    scheduleRPdf.fields.find((field) => field.domainKey === "line11")?.pdfField,
+    "topmostSubform[0].Page2[0].f2_2[0]",
+  );
+});

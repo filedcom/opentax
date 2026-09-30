@@ -2,8 +2,9 @@
 
 Status: `IRS8886` exists in the checked-in TY2025 MeF schema, but the Form 1040
 graph has no public `f8886` source, native descriptor, PDF descriptor, or
-return-level reportable-transaction decision. This is an open filing-safety
-gap, not an approved exclusion. The `IRS8886` text in the Form 8621 descriptor
+complete return-level reportable-transaction decision. A bounded high-loss
+disposition preflight now blocks both exports pending review. The wider filing
+gap remains open. The `IRS8886` text in the Form 8621 descriptor
 is an allowed reference-document name, not a Form 8886 builder or a finding
 that any PFIC item is reportable.
 
@@ -34,6 +35,19 @@ identify the whole transaction, prior/subsequent-year losses, section 165 or
 Conversely, a smaller tax item could still be listed or otherwise reportable.
 Do not silently conclude that the absence of `f8886` means no disclosure.
 
+The first implemented screen reads each `f8949.f8949s` and
+`f1099b.f1099bs` source row, as well as finalized Form 8949 rows, before
+offsetting other sales or applying row adjustments. When `cost_basis -
+proceeds` is at least $2 million on one row, both MeF and PDF export stop
+with a named Form 8886 review error. This catches an individual-year
+threshold signal even when an adjustment reduces the filed net capital loss.
+It does not classify the row under section 165, apply a published exception,
+or infer that smaller losses are safe. Source guard cases for the exact
+threshold, both input arrays, both export paths, and a below-threshold row
+are written for the deferred batch. Casualty, K-1, section 988, multi-year,
+listed/confidential, contractual-protection, and transactions-of-interest
+screening remain open.
+
 A correct public source needs a stable transaction identity and participation
 years; all applicable category flags with the governing notice/regulation for
 listed or interest transactions; source-linked tax consequences and anticipated
@@ -58,5 +72,6 @@ have distinct timing rules. The current app has no such workflow. It should
 not claim the disclosure is complete until both the return attachment and any
 required OTSA delivery are accounted for.
 
-This pass is an audit only. No guard, source, serializer, PDF, or tests were
-added, and no tests, typecheck, XSD validation, or filled-PDF rendering ran.
+The disclosure serializer, PDF, OTSA workflow, and full review source are not
+implemented. No tests, typecheck, XSD validation, or filled-PDF rendering ran
+after this screen was written.

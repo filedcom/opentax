@@ -54,6 +54,21 @@ const aotcStudentSchema = personNameSchema.extend({
   credit_claimed_four_prior_years: z.boolean(),
 });
 
+// A reviewed prior IRS notice is separate from the current-year Form 8862
+// answers. Its copy reference identifies the retained source, while the
+// matching year, notice, and taxpayer are checked again at export.
+export const priorCreditDisallowanceReviewSchema = z.object({
+  disallowed_year: z.number().int().min(2016).max(2024),
+  notice_reference: z.string().trim().min(1),
+  notice_copy_reference: z.string().trim().min(1),
+  taxpayer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+  nonclerical_disallowance_verified: z.literal(true),
+  no_active_ban_verified: z.literal(true),
+}).strict();
+export type PriorCreditDisallowanceReview = z.infer<
+  typeof priorCreditDisallowanceReviewSchema
+>;
+
 export const inputSchema = z.object({
   // Which credits were previously disallowed and are being reclaimed
   claim_eitc: z.boolean().optional(),

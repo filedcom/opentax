@@ -22,9 +22,20 @@ guard now permits an older joint-filing spouse and rejects a separate-filer
 credit without all-year separation. Whole-dollar rounding is applied to the
 line 17 half-AGI amount and line 20 credit.
 
-Focused calculation, native, and PDF cases for these age-only statuses are
-written but unrun under the implementation-first workflow. A complete
+The disability routes now select boxes 2, 4, 5, 6, and 9 in native XML and PDF.
+Each under-65 qualifying owner needs a reviewed retirement and work-capacity
+record, taxable disability income source, and current-year, prior-year, or VA
+physician statement reference. A prior-year statement additionally requires
+review of the 1983-or-earlier or signed-line-B condition. Disability income
+cannot exceed the finalized Form 1040 wages or taxable pensions according to
+the income source classification. Box 6 line 11 adds $5,000 for the older
+spouse before capping by the $7,500 line 10 base. The PDF projects the Part II
+prior-year checkbox when applicable. These source references record reviewed
+facts; they do not authenticate document bytes.
+
+Focused calculation, native, and PDF cases for the age and disability statuses
+are written but unrun under the implementation-first workflow. A complete
 source-backed full-return XSD/filled-PDF case for each new status, verified
-underlying document bytes, disability boxes 2/4/5/6/9 and physician evidence,
-all combinations of Schedule 3 priorities, business rules, and ATS remain
-open. This route does not establish whole-form Schedule R support.
+underlying document bytes, all combinations of Schedule 3 priorities, business
+rules, and ATS remain open. This route does not establish whole-form Schedule R
+support.

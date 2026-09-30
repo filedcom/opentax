@@ -236,7 +236,7 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
     pendingKey: "f9465",
     exportKinds: ["mef", "pdf"],
     reason:
-      "Form 9465 requires a native filing document for the installment request",
+      "Form 9465 attached installment request remains blocked pending accepted electronic authorization and linked native/PDF filing review",
     isActive: (fields) => Object.keys(fields).length > 0,
   },
   {
@@ -370,6 +370,28 @@ export function assertAttachmentCoverage(
       ? form8949.transaction
       : [form8949.transaction]
     : [];
+  // A single large disposition is a Form 8886 loss-transaction review signal.
+  // Screen source basis and proceeds before netting with other sales or Form
+  // 8949 adjustments. This does not determine section 165 character or a
+  // published exception; Form 8886 has no supported filing route yet.
+  const dispositionRows = [
+    ...((byKey.f8949 as { f8949s?: unknown[] } | undefined)?.f8949s ?? []),
+    ...((byKey.f1099b as { f1099bs?: unknown[] } | undefined)?.f1099bs ?? []),
+    ...qofRows,
+  ];
+  if (dispositionRows.some((raw) => {
+    if (raw === null || typeof raw !== "object") return false;
+    const row = raw as Record<string, unknown>;
+    return typeof row.cost_basis === "number" &&
+      Number.isFinite(row.cost_basis) &&
+      typeof row.proceeds === "number" &&
+      Number.isFinite(row.proceeds) &&
+      row.cost_basis - row.proceeds >= 2_000_000;
+  })) {
+    throw new Error(
+      `[${exportKind.toUpperCase()}] Form 8886 review required for a single Form 8949/1099-B disposition with at least $2 million gross loss; no disclosure route is registered; export blocked`,
+    );
+  }
   if (
     qofRows.some((row) =>
       row !== null && typeof row === "object" &&

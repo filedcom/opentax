@@ -82,9 +82,16 @@ the attached XML type do not answer that by themselves. Keep both export
 guards until an authoritative answer and an accepted ATS case establish the
 representation; do not fabricate a PDF signature field.
 
-## Decision owed before changing export
+## TY2025 filing decision: fail closed
 
-The current implementation direction is a bounded return-attached request;
+The current TY2025 Form 1040 product keeps Form 9465 requests **fail closed at
+both MeF and PDF export**. The native constructor and PDF projection are staged
+implementation, not filing support. The export guard now names the unresolved
+electronic authorization and linked native/PDF review directly. This decision
+does not classify a proposed installment payment as a tax payment or an IRS
+approved agreement.
+
+The implementation direction remains a bounded return-attached request;
 the separate IRS online/later workflows are **not** silently emitted or
 excluded. Before enabling attached export, resolve the attached-return
 signature/authorization treatment, visually verify a filled canonical PDF,
@@ -95,3 +102,12 @@ payroll deduction, spouse/joint requests, balances over $25,000, Form 2159,
 Form 433-F and Part II remain unsupported and must continue to reject. The
 source-review assertions and current XML projection do not authenticate an
 IRS account transcript or establish that the IRS will grant an agreement.
+
+This is an explicit release boundary rather than an indefinitely ambiguous
+request state: any populated `f9465` input stops both exports with the same
+Form 9465 authorization/review error. A taxpayer who seeks an online or later
+standalone agreement must use that separate IRS workflow; this Form 1040
+export does not submit it. The [IRS Form 9465 instructions](https://www.irs.gov/instructions/i9465)
+describe the attached and standalone routes, while [Publication 4164 §8.14.3](https://www.irs.gov/pub/irs-pdf/p4164.pdf)
+specifies the standalone electronic jurat. Neither resolves the attached
+non-direct-debit authorization question identified above.

@@ -40,8 +40,20 @@ Deno.test({
   ignore: !xsdAvailable,
 }, async () => {
   const xml = buildMefXml({ schedule_lep: { requests: [
-    { person: "taxpayer", language_preference_code: LanguagePreferenceCode.Spanish },
-    { person: "spouse", language_preference_code: LanguagePreferenceCode.Cancel },
+    {
+      person: "taxpayer",
+      language_preference_code: LanguagePreferenceCode.Spanish,
+      request_confirmed_by_person: true,
+      request_record_reference: "Ada 2025 language request",
+    },
+    {
+      person: "spouse",
+      language_preference_code: LanguagePreferenceCode.Cancel,
+      request_confirmed_by_person: true,
+      request_record_reference: "Grace 2025 cancellation request",
+      prior_language_preference_code: LanguagePreferenceCode.French,
+      prior_election_record_reference: "Grace filed 2024 Schedule LEP",
+    },
   ] } }, filer);
   const tmpPath = await Deno.makeTempFile({ suffix: ".xml" });
   try {

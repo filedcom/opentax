@@ -142,6 +142,23 @@ Deno.test("single-state Section A FUTA is 0.6% of taxable wages", () => {
       state: "OH",
       contributions_paid: 100,
       taxable_wages: 7_000,
+      all_household_employees_included: true,
+      prior_year_quarter_threshold_met: false,
+      employee_wages: [{
+        employee_id: "worker-1",
+        payroll_source_reference: "2025-household-payroll-1",
+        relationship: "unrelated",
+        annual_cash_wages: 10_000,
+        age_18_or_older_for_fica: true,
+        ordinary_cash_only: true,
+        quarterly_cash_wages: [10_000, 0, 0, 0],
+        w2: {
+          source_reference: "2025-w2-worker",
+          box2_federal_income_tax_withheld: 0,
+          box3_social_security_wages: 10_000,
+          box5_medicare_wages: 10_000,
+        },
+      }],
     },
   });
   const s2 = findOutput(result, "schedule2");
@@ -156,6 +173,22 @@ Deno.test("Section B FUTA routes the credit-reduced tax to Schedule 2", () => {
       all_contributions_paid_on_time: true,
       all_futa_wages_state_taxable: true,
       taxable_futa_wages: 7_000,
+      all_household_employees_included: true,
+      prior_year_quarter_threshold_met: false,
+      employee_wages: [2_500, 2_500, 2_000].map((annual_cash_wages, index) => ({
+        employee_id: `worker-${index + 1}`,
+        payroll_source_reference: `2025-household-payroll-${index + 1}`,
+        relationship: "unrelated" as const,
+        annual_cash_wages,
+        age_18_or_older_for_fica: true as const,
+        ordinary_cash_only: true as const,
+        quarterly_cash_wages: [annual_cash_wages, 0, 0, 0] as [
+          number,
+          number,
+          number,
+          number,
+        ],
+      })),
       state_rows: [{
         state: "CA",
         taxable_state_wages: 7_000,
@@ -210,6 +243,23 @@ Deno.test("combined: FICA + federal withholding + Section A FUTA", () => {
       state: "OH",
       contributions_paid: 100,
       taxable_wages: 7_000,
+      all_household_employees_included: true,
+      prior_year_quarter_threshold_met: false,
+      employee_wages: [{
+        employee_id: "worker-1",
+        payroll_source_reference: "2025-household-payroll-1",
+        relationship: "unrelated",
+        annual_cash_wages: 20_000,
+        age_18_or_older_for_fica: true,
+        ordinary_cash_only: true,
+        quarterly_cash_wages: [20_000, 0, 0, 0],
+        w2: {
+          source_reference: "2025-w2-worker",
+          box2_federal_income_tax_withheld: 2_000,
+          box3_social_security_wages: 20_000,
+          box5_medicare_wages: 20_000,
+        },
+      }],
     },
   });
   const s2 = findOutput(result, "schedule2");
@@ -223,4 +273,168 @@ Deno.test("output routes to schedule2 line9_household_employment", () => {
   const result = compute({ ss_wages: 5_000, medicare_wages: 5_000 });
   const s2 = findOutput(result, "schedule2");
   assertEquals(s2?.fields.line9_household_employment, 765);
+});
+
+Deno.test("FUTA payroll applies the $7,000 cap separately to each sourced employee", () => {
+  const unemployment = {
+    paid_only_one_state: true,
+    all_contributions_paid_on_time: true,
+    all_futa_wages_state_taxable: true,
+    state: "OH",
+    contributions_paid: 100,
+    taxable_wages: 10_000,
+    all_household_employees_included: true,
+    prior_year_quarter_threshold_met: false,
+    employee_wages: [
+      {
+        employee_id: "worker-1",
+        payroll_source_reference: "payroll-1",
+        relationship: "unrelated",
+        annual_cash_wages: 9_000,
+        age_18_or_older_for_fica: true,
+        ordinary_cash_only: true,
+        quarterly_cash_wages: [9_000, 0, 0, 0],
+        w2: {
+          source_reference: "2025-w2-worker",
+          box2_federal_income_tax_withheld: 0,
+          box3_social_security_wages: 9_000,
+          box5_medicare_wages: 9_000,
+        },
+      },
+      {
+        employee_id: "worker-2",
+        payroll_source_reference: "payroll-2",
+        relationship: "unrelated",
+        annual_cash_wages: 3_000,
+        age_18_or_older_for_fica: true,
+        ordinary_cash_only: true,
+        quarterly_cash_wages: [3_000, 0, 0, 0],
+        w2: {
+          source_reference: "2025-w2-worker-2",
+          box2_federal_income_tax_withheld: 0,
+          box3_social_security_wages: 3_000,
+          box5_medicare_wages: 3_000,
+        },
+      },
+    ],
+  };
+  assertEquals(
+    findOutput(
+      compute({
+        ss_wages: 12_000,
+        medicare_wages: 12_000,
+        cash_wages_over_quarter_limit: true,
+        federal_unemployment: unemployment,
+      }),
+      "schedule2",
+    )?.fields.line9_household_employment,
+    1_896,
+  );
+  assertThrows(
+    () =>
+      compute({
+        ss_wages: 12_000,
+        medicare_wages: 12_000,
+        cash_wages_over_quarter_limit: true,
+        federal_unemployment: { ...unemployment, taxable_wages: 12_000 },
+      }),
+    Error,
+    "differ from per-employee payroll",
+  );
+  assertThrows(
+    () =>
+      compute({
+        ss_wages: 12_000,
+        medicare_wages: 12_000,
+        cash_wages_over_quarter_limit: true,
+        federal_unemployment: {
+          ...unemployment,
+          employee_wages: [
+            unemployment.employee_wages[0],
+            unemployment.employee_wages[0],
+          ],
+        },
+      }),
+    Error,
+    "payroll IDs must be unique",
+  );
+  assertThrows(
+    () =>
+      compute({
+        ss_wages: 12_000,
+        medicare_wages: 12_000,
+        cash_wages_over_quarter_limit: true,
+        federal_unemployment: {
+          ...unemployment,
+          employee_wages: [{
+            ...unemployment.employee_wages[0],
+            quarterly_cash_wages: [8_000, 0, 0, 0],
+          }, unemployment.employee_wages[1]],
+        },
+      }),
+    Error,
+    "quarterly cash wages differ",
+  );
+  assertThrows(
+    () =>
+      compute({
+        ss_wages: 12_000,
+        medicare_wages: 12_000,
+        cash_wages_over_quarter_limit: true,
+        federal_unemployment: {
+          ...unemployment,
+          employee_wages: [{
+            ...unemployment.employee_wages[0],
+            w2: {
+              ...unemployment.employee_wages[0].w2,
+              box3_social_security_wages: 8_000,
+            },
+          }, unemployment.employee_wages[1]],
+        },
+      }),
+    Error,
+    "Form W-2 FICA wages differ",
+  );
+});
+
+Deno.test("FUTA quarter test accepts a documented prior-year threshold only when current quarters are below $1,000", () => {
+  const federal_unemployment = {
+    paid_only_one_state: true,
+    all_contributions_paid_on_time: true,
+    all_futa_wages_state_taxable: true,
+    state: "OH",
+    zero_experience_rate: true,
+    taxable_wages: 900,
+    all_household_employees_included: true,
+    prior_year_quarter_threshold_met: false,
+    employee_wages: [{
+      employee_id: "worker-1",
+      payroll_source_reference: "payroll-2025-1",
+      relationship: "unrelated",
+      age_18_or_older_for_fica: true,
+      ordinary_cash_only: true,
+      annual_cash_wages: 900,
+      quarterly_cash_wages: [225, 225, 225, 225],
+    }],
+  };
+  assertThrows(
+    () =>
+      compute({ cash_wages_over_quarter_limit: true, federal_unemployment }),
+    Error,
+    "$1,000 current- or prior-year quarter",
+  );
+  assertEquals(
+    findOutput(
+      compute({
+        cash_wages_over_quarter_limit: true,
+        federal_unemployment: {
+          ...federal_unemployment,
+          prior_year_quarter_threshold_met: true,
+          prior_year_quarter_source_reference: "payroll-2024-q4",
+        },
+      }),
+      "schedule2",
+    )?.fields.line9_household_employment,
+    5,
+  );
 });

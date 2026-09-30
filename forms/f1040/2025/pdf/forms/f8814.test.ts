@@ -1,6 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
-import { calculateForm8814 } from "../../../nodes/inputs/f8814/index.ts";
+import { calculateForm8814, type F8814Item } from "../../../nodes/inputs/f8814/index.ts";
+import type { FilerIdentity } from "../../mef/types.ts";
 import {
   form8814DottedNotes,
   form8814ParentPrintAmounts,
@@ -24,15 +25,54 @@ const election = {
   parent_eligible_to_elect: true as const,
   interest_income: 3700,
 };
+const filer = { primarySSN: "123456789" } as FilerIdentity;
+const reviewed = (item: F8814Item): F8814Item => ({
+  ...item,
+  source_review: {
+    source_document_reference: "reviewed-child-income-packet",
+    tax_year: 2025,
+    child_ssn: item.child_ssn,
+    electing_parent_ssn: filer.primarySSN,
+    eligibility_reviewed: true,
+    income: {
+      interest_income: item.interest_income,
+      tax_exempt_interest: item.tax_exempt_interest,
+      private_activity_bond_interest: item.private_activity_bond_interest,
+      dividend_income: item.dividend_income,
+      dividend_nominee_distribution: item.dividend_nominee_distribution,
+      qualified_dividends: item.qualified_dividends,
+      capital_gain_distributions: item.capital_gain_distributions,
+      capital_gain_nominee_distribution: item.capital_gain_nominee_distribution,
+      alaska_pfd: item.alaska_pfd,
+      nontaxable_social_security: item.nontaxable_social_security,
+    },
+    interest_adjustments: item.interest_adjustments,
+  },
+});
 
 Deno.test("Form 8814 PDF expands one copy for each elected child", () => {
-  const first = calculateForm8814(election);
-  const second = calculateForm8814({ ...election, child_ssn: "111223333" });
-  const instances = form8814Pdf.instances?.({ items: [first, second] }) ?? [];
+  const first = calculateForm8814(reviewed(election));
+  const second = calculateForm8814(reviewed({ ...election, child_ssn: "111223333" }));
+  const instances = form8814Pdf.instances?.({ items: [first, second] }, filer) ?? [];
   assertEquals(instances.length, 2);
   assertEquals(instances[0].line12, 1000);
   assertEquals(instances[0].line15, 135);
   assertEquals(instances[0].multiple_forms, true);
+});
+
+Deno.test("Form 8814 PDF rejects an unreviewed or wrong-owner child source", () => {
+  assertThrows(
+    () => form8814Pdf.instances?.({ items: [calculateForm8814(election)] }, filer),
+    Error,
+    "reviewed child-income source",
+  );
+  assertThrows(
+    () => form8814Pdf.instances?.({
+      items: [calculateForm8814(reviewed(election))],
+    }, { ...filer, primarySSN: "111223333" }),
+    Error,
+    "child/parent owner differs",
+  );
 });
 
 Deno.test("Schedule 1 PDF prints Form 8814 on line 8z amount field", () => {
@@ -46,13 +86,13 @@ Deno.test("Schedule 1 PDF prints Form 8814 on line 8z amount field", () => {
 });
 
 Deno.test("Form 8814 PDF prints child nominee amounts beside lines 1a, 2a, and 3", () => {
-  const line = calculateForm8814({
+  const line = calculateForm8814(reviewed({
     ...election,
     interest_adjustments: { nominee_distribution: 120 },
     dividend_nominee_distribution: 90,
     capital_gain_nominee_distribution: 75,
-  });
-  const instance = form8814Pdf.instances?.({ items: [line] })[0] ?? {};
+  }));
+  const instance = form8814Pdf.instances?.({ items: [line] }, filer)[0] ?? {};
   assertEquals(form8814DottedNotes(instance), {
     interest: "ND $120",
     interestAttachment: [],
@@ -62,7 +102,7 @@ Deno.test("Form 8814 PDF prints child nominee amounts beside lines 1a, 2a, and 3
 });
 
 Deno.test("Form 8814 PDF adds a child-specific line 1a continuation when adjustments do not fit", async () => {
-  const line = calculateForm8814({
+  const line = calculateForm8814(reviewed({
     ...election,
     interest_adjustments: {
       nominee_distribution: 120,
@@ -70,8 +110,8 @@ Deno.test("Form 8814 PDF adds a child-specific line 1a continuation when adjustm
       abp_adjustment: 15,
       oid_adjustment: 5,
     },
-  });
-  const instance = form8814Pdf.instances?.({ items: [line] })[0] ?? {};
+  }));
+  const instance = form8814Pdf.instances?.({ items: [line] }, filer)[0] ?? {};
   assertEquals(form8814DottedNotes(instance), {
     interest: "See attached interest adjustments",
     interestAttachment: [
@@ -91,8 +131,8 @@ Deno.test("Form 8814 PDF adds a child-specific line 1a continuation when adjustm
 
 Deno.test("Form 8814 PDF follows the 2025 skip rule for lines 7 through 10", () => {
   const noPreferred = form8814Pdf.instances?.({
-    items: [calculateForm8814(election)],
-  })[0] ?? {};
+    items: [calculateForm8814(reviewed(election))],
+  }, filer)[0] ?? {};
   assertEquals(noPreferred.line7_fraction, undefined);
   assertEquals(noPreferred.line8_fraction, undefined);
   assertEquals(noPreferred.line9, undefined);
@@ -100,12 +140,12 @@ Deno.test("Form 8814 PDF follows the 2025 skip rule for lines 7 through 10", () 
   assertEquals(noPreferred.line11, "-0-");
 
   const onePreferred = form8814Pdf.instances?.({
-    items: [calculateForm8814({
+    items: [calculateForm8814(reviewed({
       ...election,
       dividend_income: 300,
       qualified_dividends: 300,
-    })],
-  })[0] ?? {};
+    }))],
+  }, filer)[0] ?? {};
   assertEquals(onePreferred.line8_fraction, "00000");
   assertEquals(onePreferred.line10, 0);
   assertEquals(
@@ -132,7 +172,11 @@ Deno.test("2025 parent PDF marks Form 8814 dividends and direct child gain", () 
     capitalGain: 200,
   });
   const direct = irs1040Pdf.projectFields?.(
-    { line7a_cap_gain_distrib: 200 },
+    {
+      line3a_qualified_dividends: 120,
+      line3b_ordinary_dividends: 120,
+      line7a_cap_gain_distrib: 200,
+    },
     pending,
   ) ?? {};
   assertEquals(direct.print_form8814_line3a_included, true);
@@ -171,19 +215,32 @@ Deno.test("2025 parent PDF marks Form 8814 dividends and direct child gain", () 
   );
 
   const withScheduleD = irs1040Pdf.projectFields?.(
-    { line7_capital_gain: 200 },
+    {
+      line3a_qualified_dividends: 120,
+      line3b_ordinary_dividends: 120,
+      line7_capital_gain: 200,
+    },
     { ...pending, schedule_d: { print_line13_cap_gain_distrib: 200 } },
   ) ?? {};
   assertEquals(withScheduleD.print_form8814_line7a_note, undefined);
   assertEquals(withScheduleD.print_form8814_line7a_included, false);
   assertThrows(
-    () => irs1040Pdf.projectFields?.({ line7_capital_gain: 200 }, pending),
+    () => irs1040Pdf.projectFields?.({
+      line3a_qualified_dividends: 120,
+      line3b_ordinary_dividends: 120,
+      line7_capital_gain: 200,
+    }, pending),
     Error,
     "needs the Form 8814 amount",
   );
   assertThrows(
     () => irs1040Pdf.projectFields?.(
-      { line7a_cap_gain_distrib: 200, line7_capital_gain: 200 },
+      {
+        line3a_qualified_dividends: 120,
+        line3b_ordinary_dividends: 120,
+        line7a_cap_gain_distrib: 200,
+        line7_capital_gain: 200,
+      },
       { ...pending, schedule_d: { print_line13_cap_gain_distrib: 200 } },
     ),
     Error,
@@ -194,6 +251,15 @@ Deno.test("2025 parent PDF marks Form 8814 dividends and direct child gain", () 
     pending,
   ) ?? {};
   assertEquals(scheduleD.print_form8814_line13_note, "Form 8814 $200");
+  assertThrows(
+    () => irs1040Pdf.projectFields?.({
+      line3a_qualified_dividends: 119,
+      line3b_ordinary_dividends: 120,
+      line7a_cap_gain_distrib: 200,
+    }, pending),
+    Error,
+    "child-dividend marks need the Form 8814 amount",
+  );
 });
 
 Deno.test("Schedule B marks only the child foreign-account and trust lines", () => {

@@ -36,6 +36,25 @@ const constructionRefinanceReviewSchema = z.object({
   reportable_points_within_acquisition_limit_verified: z.literal(true),
 });
 
+export const mortgageLimitReviewSchema = z.object({
+  table1_workpaper_reference: z.string().trim().min(1),
+  all_qualified_home_mortgages_included_verified: z.literal(true),
+  all_post_2017_acquisition_debt_verified: z.literal(true),
+  single_filing_status_verified: z.literal(true),
+  loans: z.array(
+    z.object({
+      source_document_reference: z.string().trim().min(1),
+      monthly_balance_records: z.array(
+        z.object({
+          month: z.number().int().min(1).max(12),
+          closing_balance: z.number().finite().positive(),
+          lender_statement_reference: z.string().trim().min(1),
+        }).strict(),
+      ).length(12),
+    }).strict(),
+  ).length(2),
+}).strict();
+
 export const itemSchema = z.object({
   // Required per context.md
   box1_mortgage_interest: z.number().nonnegative(),
@@ -202,7 +221,8 @@ export const itemSchema = z.object({
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["box6_construction_refinance_review"],
-        message: "Form 1098 construction-refinance review needs positive box 6 points",
+        message:
+          "Form 1098 construction-refinance review needs positive box 6 points",
       });
     }
     return;
@@ -223,7 +243,8 @@ export const itemSchema = z.object({
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["box6_construction_refinance_review"],
-      message: "Form 1098 construction-refinance review requires the refinance flag",
+      message:
+        "Form 1098 construction-refinance review requires the refinance flag",
     });
   }
   if (construction) {
@@ -290,7 +311,8 @@ export const itemSchema = z.object({
 
 export const inputSchema = z.object({
   f1098s: z.array(itemSchema),
-}).superRefine(({ f1098s }, ctx) => {
+  mortgage_limit_review: mortgageLimitReviewSchema.optional(),
+}).superRefine(({ f1098s, mortgage_limit_review }, ctx) => {
   const sources = new Set<string>();
   f1098s.forEach((item, index) => {
     const reference = item.source_document_reference?.trim();
@@ -304,6 +326,72 @@ export const inputSchema = z.object({
     }
     sources.add(reference);
   });
+  if (!mortgage_limit_review) return;
+  const loans = mortgage_limit_review.loans;
+  const sameSources = f1098s.length === 2 && loans.every((loan) =>
+    f1098s.some((item) =>
+      item.source_document_reference === loan.source_document_reference
+    )
+  ) && new Set(loans.map((loan) =>
+        loan.source_document_reference
+      )).size === 2;
+  const sourceEligible = f1098s.every((item) => {
+    const date = /^([0-9]{2})\/([0-9]{2})\/([0-9]{4})$/.exec(
+      item.box3_origination_date ?? "",
+    );
+    if (!date) return false;
+    const month = Number(date[1]);
+    const day = Number(date[2]);
+    const year = Number(date[3]);
+    const parsed = new Date(Date.UTC(year, month - 1, day));
+    const validDate = parsed.getUTCFullYear() === year &&
+      parsed.getUTCMonth() === month - 1 && parsed.getUTCDate() === day;
+    return validDate && parsed >= new Date("2017-12-16T00:00:00Z") &&
+      parsed < new Date("2025-01-01T00:00:00Z") &&
+      (item.for_routing ?? ForRouting.A) === ForRouting.A &&
+      (item.box1_mortgage_interest ?? 0) > 0 &&
+      (item.box6_points_paid ?? 0) === 0 &&
+      item.refinance !== true && item.binding_contract_exception !== true &&
+      item.dedm_override !== true && !!item.lender_name?.trim() &&
+      !!item.recipient_tin && !!item.source_document_reference;
+  });
+  const recordsValid = loans.every((loan) => {
+    const months = loan.monthly_balance_records.map((row) => row.month)
+      .sort((a, b) => a - b);
+    return months.every((month, index) => month === index + 1) &&
+      new Set(
+          loan.monthly_balance_records.map((row) =>
+            row.lender_statement_reference
+          ),
+        ).size === 12;
+  });
+  const averageTotal = loans.reduce(
+    (sum, loan) =>
+      sum + loan.monthly_balance_records.reduce(
+          (loanSum, row) => loanSum + row.closing_balance,
+          0,
+        ) / 12,
+    0,
+  );
+  const ratio = Math.round(750_000 / averageTotal * 1_000) / 1_000;
+  const expectedInterest = Math.round(
+    f1098s.reduce((sum, item) => sum + item.box1_mortgage_interest, 0) * ratio,
+  );
+  const claimedInterest = f1098s.reduce(
+    (sum, item) => sum + (item.box1_current_year_deductible_interest ?? 0),
+    0,
+  );
+  if (
+    !sameSources || !sourceEligible || !recordsValid ||
+    averageTotal <= 750_000 || claimedInterest !== expectedInterest
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["mortgage_limit_review"],
+      message:
+        "Two full-year post-2017 acquisition loans need 12 distinct monthly lender balances each and one Pub. 936 Table 1 allocation matching the sourced Schedule A interest",
+    });
+  }
 });
 
 type F1098Item = z.infer<typeof itemSchema>;
@@ -313,8 +401,44 @@ function deductibleBox6Points(item: F1098Item): number {
   const review = item.box6_construction_refinance_review;
   if (!review) return item.box6_current_year_deductible_points ?? 0;
   const months = review.monthly_payment_records.length;
-  return Math.round((item.box6_points_paid ?? 0) * months /
-    review.loan_term_months);
+  return Math.round(
+    (item.box6_points_paid ?? 0) * months /
+      review.loan_term_months,
+  );
+}
+
+export function assertForm1098MortgageLimitSources(
+  source: unknown,
+  recipientTins: readonly string[],
+  singleFiler: boolean,
+  filedLine8a: number,
+  filedLine8b: number,
+  filedLine8c: number,
+  hasUnreportedRefinancePoints: boolean,
+  hasMortgageInterestCredit: boolean,
+): void {
+  if (source === undefined) return;
+  const parsed = inputSchema.parse(source);
+  if (!parsed.mortgage_limit_review) return;
+  const allowed = new Set(recipientTins.map((tin) => tin.replaceAll("-", "")));
+  const expectedLine8a = parsed.f1098s.reduce(
+    (sum, item) => sum + (item.box1_current_year_deductible_interest ?? 0),
+    0,
+  );
+  if (
+    !singleFiler ||
+    parsed.f1098s.some((item) =>
+      !item.recipient_tin ||
+      !allowed.has(item.recipient_tin.replaceAll("-", ""))
+    ) ||
+    filedLine8a !== expectedLine8a || filedLine8b !== 0 ||
+    filedLine8c !== 0 || hasUnreportedRefinancePoints ||
+    hasMortgageInterestCredit
+  ) {
+    throw new Error(
+      "Schedule A two-loan mortgage-limit allocation needs the same single filer, sourced line 8a interest, and no other mortgage-interest or points routes",
+    );
+  }
 }
 
 export function assertForm1098Box6Sources(
@@ -324,9 +448,7 @@ export function assertForm1098Box6Sources(
 ): void {
   if (source === undefined) return;
   const items = inputSchema.parse(source).f1098s;
-  const claimed = items.filter((item) =>
-    deductibleBox6Points(item) > 0
-  );
+  const claimed = items.filter((item) => deductibleBox6Points(item) > 0);
   if (claimed.length === 0) return;
   const allowed = new Set(recipientTins.map((tin) => tin.replaceAll("-", "")));
   if (

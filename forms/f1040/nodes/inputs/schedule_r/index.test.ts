@@ -5,7 +5,10 @@ import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 import { FilingStatus } from "../../types.ts";
 
 function compute(input: Record<string, unknown>) {
-  return schedule_r.compute({ taxYear: 2025, formType: "f1040" }, input as Parameters<typeof schedule_r.compute>[1]);
+  return schedule_r.compute(
+    { taxYear: 2025, formType: "f1040" },
+    input as Parameters<typeof schedule_r.compute>[1],
+  );
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -284,6 +287,46 @@ Deno.test("schedule_r.compute: age 65+ with disability income — no cap applied
   });
   const fields = fieldsOf(result.outputs, schedule3)!;
   assertEquals(fields.line6d_elderly_disabled_credit, 750); // 5000 * 15%
+});
+
+Deno.test("schedule_r.compute: box 6 keeps the older spouse's $5,000 before disability cap", () => {
+  const result = compute({
+    filing_status: FilingStatus.MFJ,
+    taxpayer_age_65_or_older: true,
+    spouse_disabled: true,
+    spouse_disability_income: 1_000,
+    agi: 0,
+  });
+  assertEquals(
+    fieldsOf(result.outputs, schedule3)?.line6d_elderly_disabled_credit,
+    900,
+  );
+});
+
+Deno.test("schedule_r.compute: reviewed disability evidence reaches the Form 1040 credit guard", () => {
+  const source = {
+    filing_status: FilingStatus.Single,
+    taxpayer_disabled: true,
+    taxpayer_disability_income: 5_000,
+    agi: 7_500,
+  };
+  assertEquals(findOutput(compute(source), "f1040"), undefined);
+  const reviewed = compute({
+    ...source,
+    taxpayer_disability_evidence: {
+      retired_on_permanent_total_disability: true,
+      below_mandatory_retirement_age_on_january_1: true,
+      unable_to_perform_substantial_gainful_activity: true,
+      disability_income_source_reference: "Employer W-2",
+      disability_income_reported_on: "wages",
+      eligibility_source_reference: "Retirement record",
+      physician_statement: "current_year",
+      physician_statement_source_reference: "Signed physician statement",
+    },
+  });
+  assertEquals(findOutput(reviewed, "f1040")?.fields, {
+    schedule_r_disability_qualified: true,
+  });
 });
 
 // =============================================================================

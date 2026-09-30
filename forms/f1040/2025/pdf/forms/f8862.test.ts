@@ -17,6 +17,26 @@ const priorEicEvidence = {
   eitc_disallowed_year: 2023,
   eitc_disallowance_notice_reference: "Synthetic 2023 IRS notice",
 };
+const noticeReviews = {
+  filing_status: "single",
+  taxpayer_ssn: "123456789",
+  prior_ctc_disallowance_review: {
+    disallowed_year: 2023,
+    notice_reference: "Synthetic 2023 IRS CTC notice",
+    notice_copy_reference: "Retained synthetic CTC notice copy",
+    taxpayer_ssn: "123456789",
+    nonclerical_disallowance_verified: true,
+    no_active_ban_verified: true,
+  },
+  prior_aotc_disallowance_review: {
+    disallowed_year: 2023,
+    notice_reference: "Synthetic 2023 IRS AOTC notice",
+    notice_copy_reference: "Retained synthetic AOTC notice copy",
+    taxpayer_ssn: "123456789",
+    nonclerical_disallowance_verified: true,
+    no_active_ban_verified: true,
+  },
+};
 
 Deno.test("Form 8862 PDF maps exact Dec 2025 widget names on all three pages", () => {
   const map = new Map(
@@ -66,6 +86,7 @@ Deno.test("Form 8862 PDF projects bounded EITC and CTC claims", () => {
     }],
   };
   const instances = form8862Pdf.instances?.(source, filer, {
+    general: noticeReviews,
     f1040: {
       line27_eitc: 500,
       line19_child_tax_credit: 2200,
@@ -105,6 +126,7 @@ Deno.test("Form 8862 PDF attaches numbered continuation for extra children", asy
     })),
   };
   const instance = form8862Pdf.instances?.(ctc, filer, {
+    general: noticeReviews,
     f1040: {
       line19_child_tax_credit: 500,
       dependent_details: ctc.ctc_children.map((child) => ({
@@ -180,6 +202,7 @@ Deno.test("Form 8862 PDF requires AOTC students to match Form 8863", () => {
     }],
   };
   const pending = {
+    general: noticeReviews,
     f1040: { line29_refundable_aoc: 1000 },
     f8863: { f8863s: [{ credit_type: "aoc", student_name: "Alice Doe" }] },
   };

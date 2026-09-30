@@ -49,23 +49,35 @@ export const itemSchema = z.object({
   }).optional(),
   standard_or_nonstandard_code: z.enum(["S", "N"]).optional(),
   source_document_reference: z.string().trim().min(1).optional(),
+  issued_copy_attachment_file_name: z.string().trim().min(1).optional(),
+  issued_copy_pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/).optional(),
 }).strict();
 
 export const inputSchema = z.object({
   w2gs: z.array(itemSchema).min(1),
 }).superRefine(({ w2gs }, ctx) => {
   const references = new Set<string>();
+  const copyFiles = new Set<string>();
   w2gs.forEach((item, index) => {
     const reference = item.source_document_reference?.trim();
-    if (!reference) return;
-    if (references.has(reference)) {
+    if (reference && references.has(reference)) {
       ctx.addIssue({
         code: "custom",
         path: ["w2gs", index, "source_document_reference"],
         message: "The same payer-issued W-2G source cannot be entered twice",
       });
     }
-    references.add(reference);
+    if (reference) references.add(reference);
+    const file = item.issued_copy_attachment_file_name;
+    if (file && copyFiles.has(file)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["w2gs", index, "issued_copy_attachment_file_name"],
+        message:
+          "Each payer-issued W-2G copy must have its own attachment file",
+      });
+    }
+    if (file) copyFiles.add(file);
   });
 });
 

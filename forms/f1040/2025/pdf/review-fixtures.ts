@@ -456,7 +456,8 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         box1_current_year_deductible_interest: 18_000,
         box1_deduction_workpaper_reference: "2025 interest workpaper",
         box6_points_paid: 2_000,
-        box6_deduction_workpaper_reference: "2025 construction points workpaper",
+        box6_deduction_workpaper_reference:
+          "2025 construction points workpaper",
         box6_construction_refinance_review: {
           construction_loan_record_reference: "2025 construction loan",
           closing_disclosure_reference: "2025 refinance closing",
@@ -502,10 +503,12 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
           mortgage_id: "refinance-2025-1",
           recipient_tin: singleGeneral.taxpayer_ssn,
           lender_name: "Refinance Lender",
-          form1098_source_document_reference: "Synthetic 2025 refinance Form 1098",
+          form1098_source_document_reference:
+            "Synthetic 2025 refinance Form 1098",
           closing_disclosure_reference: "2025 refinance closing disclosure",
           pub936_workpaper_reference: "2025 refinance points workpaper",
-          refinance_close_month_2025: 6,
+          refinance_close_year: 2025,
+          refinance_close_month: 6,
           prior_qualified_home_debt: 100_000,
           refinanced_principal: 100_000,
           loan_term_months: 180,
@@ -563,6 +566,14 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     inputs: {
       general: {
         ...singleGeneral,
+        prior_ctc_disallowance_review: {
+          disallowed_year: 2023,
+          notice_reference: "Synthetic 2023 IRS CTC notice",
+          notice_copy_reference: "Retained synthetic CTC notice copy",
+          taxpayer_ssn: "111223333",
+          nonclerical_disallowance_verified: true,
+          no_active_ban_verified: true,
+        },
         main_home_in_us_over_half_year: true,
         taxpayer_ssn_valid_for_employment: true,
         taxpayer_ssn_issued_before_due_date: true,
@@ -732,6 +743,22 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
           all_contributions_paid_on_time: true,
           all_futa_wages_state_taxable: true,
           taxable_futa_wages: 3_000,
+          all_household_employees_included: true,
+          prior_year_quarter_threshold_met: false,
+          employee_wages: [1_500, 1_500].map((annual_cash_wages, index) => ({
+            employee_id: `worker-${index + 1}`,
+            payroll_source_reference: `2025-household-payroll-${index + 1}`,
+            relationship: "unrelated" as const,
+            annual_cash_wages,
+            age_18_or_older_for_fica: true as const,
+            ordinary_cash_only: true as const,
+            quarterly_cash_wages: [annual_cash_wages, 0, 0, 0] as [
+              number,
+              number,
+              number,
+              number,
+            ],
+          })),
           state_rows: ["OH", "NY", "PA"].map((state) => ({
             state,
             taxable_state_wages: 1_000,
@@ -765,6 +792,24 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         child_no_withholding: true,
         parent_eligible_to_elect: true,
         interest_income: 1_850,
+        source_review: {
+          source_document_reference: "reviewed-jamie-interest-dividend-packet",
+          tax_year: 2025,
+          child_ssn: "222-33-4444",
+          electing_parent_ssn: singleFiler.primarySSN,
+          eligibility_reviewed: true,
+          income: {
+            interest_income: 1_850,
+            dividend_income: 1_850,
+            qualified_dividends: 1_850,
+          },
+          interest_adjustments: {
+            nominee_distribution: 120,
+            accrued_interest: 30,
+            abp_adjustment: 15,
+            oid_adjustment: 5,
+          },
+        },
         interest_adjustments: {
           nominee_distribution: 120,
           accrued_interest: 30,
@@ -800,6 +845,14 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         child_no_withholding: true,
         parent_eligible_to_elect: true,
         interest_income: 3_700,
+        source_review: {
+          source_document_reference: "reviewed-jamie-interest-gain-packet",
+          tax_year: 2025,
+          child_ssn: "222-33-4444",
+          electing_parent_ssn: singleFiler.primarySSN,
+          eligibility_reviewed: true,
+          income: { interest_income: 3_700, capital_gain_distributions: 500 },
+        },
         capital_gain_distributions: 500,
       }],
       f8949: [{
@@ -1379,10 +1432,14 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
           {
             person: "taxpayer",
             language_preference_code: LanguagePreferenceCode.Spanish,
+            request_confirmed_by_person: true,
+            request_record_reference: "Alex 2025 language request",
           },
           {
             person: "spouse",
             language_preference_code: LanguagePreferenceCode.French,
+            request_confirmed_by_person: true,
+            request_record_reference: "Sam 2025 language request",
           },
         ],
       },

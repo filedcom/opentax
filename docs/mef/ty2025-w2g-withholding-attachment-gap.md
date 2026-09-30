@@ -35,3 +35,14 @@ inspected W-2G Copy B page and checked Form 1040/Schedule 1 amounts; its
 full return passes local TY2025 v5.4 XSD. Authentication of the issued copy,
 required signature when applicable, IRS business rules, and ATS acceptance
 remain open, so this is not a filing-readiness claim.
+
+The withheld route now also requires `issued_copy_attachment_file_name` and
+`issued_copy_pdf_sha256` for every payer-issued W-2G source. The prepared MeF
+bundle must contain a readable PDF with that exact filename and SHA-256; each
+withheld source must use a distinct attachment file. The bytes are included in
+the return archive alongside the native `IRSW2G`, so a changed, missing, or
+swapped PDF blocks export. The generated Copy B remains a printable display
+and does not substitute for the attached payer-issued PDF. The current source
+fields do not prove that a PDF was actually issued by the payer or that its
+visible values match the reviewed entries. Those checks, IRS business rules,
+and a current full-batch XSD/PDF pass remain open.

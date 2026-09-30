@@ -93,7 +93,7 @@ Deno.test("f1040: Schedule R credit cannot exceed its filed tax-limit worksheet"
         credit_limit_schedule3_lines: schedule3,
       }),
     Error,
-    "Schedule R age-65 credit needs",
+    "Schedule R credit needs",
   );
 });
 
@@ -115,16 +115,46 @@ Deno.test("f1040: Schedule R age credit accepts an older joint spouse and reject
     150,
   );
   assertThrows(
-    () => fields({
-      filing_status: FilingStatus.MFS,
-      taxpayer_age_65_or_older: true,
-      mfs_spouse_lived_with_taxpayer: true,
-      line16_income_tax: 900,
-      line20_nonrefundable_credits: 750,
-      credit_limit_schedule3_lines: schedule3,
-    }),
+    () =>
+      fields({
+        filing_status: FilingStatus.MFS,
+        taxpayer_age_65_or_older: true,
+        mfs_spouse_lived_with_taxpayer: true,
+        line16_income_tax: 900,
+        line20_nonrefundable_credits: 750,
+        credit_limit_schedule3_lines: schedule3,
+      }),
     Error,
     "lived apart all year",
+  );
+});
+
+Deno.test("f1040: Schedule R disability credit requires the reviewed source marker", () => {
+  const schedule3 = {
+    ...emptySchedule3ForBusinessCredit,
+    line6dElderlyDisabled: 225,
+    line7: 225,
+  };
+  assertThrows(
+    () =>
+      fields({
+        taxpayer_age_65_or_older: false,
+        line16_income_tax: 900,
+        line20_nonrefundable_credits: 225,
+        credit_limit_schedule3_lines: schedule3,
+      }),
+    Error,
+    "reviewed disability evidence",
+  );
+  assertEquals(
+    fields({
+      taxpayer_age_65_or_older: false,
+      schedule_r_disability_qualified: true,
+      line16_income_tax: 900,
+      line20_nonrefundable_credits: 225,
+      credit_limit_schedule3_lines: schedule3,
+    }).line22_tax_after_credits,
+    675,
   );
 });
 

@@ -21,6 +21,8 @@ const filer: FilerIdentity = {
 const issued = {
   calendar_year: 2025 as const,
   source_document_reference: "Payer-issued W-2G 2025-0001",
+  issued_copy_attachment_file_name: "PayerIssuedW2G.pdf",
+  issued_copy_pdf_sha256: "a".repeat(64),
   payer_name: "Casino Inc",
   payer_name_control: "CASI",
   payer_us_address: {
@@ -44,9 +46,15 @@ const issued = {
   box15_state_withheld: 100,
   standard_or_nonstandard_code: "S" as const,
 };
+const context = {
+  filer,
+  attachmentSha256ByFileName: {
+    "PayerIssuedW2G.pdf": issued.issued_copy_pdf_sha256,
+  },
+};
 
 Deno.test("withheld W-2G emits one native document in TY2025 order", () => {
-  const xml = w2g.build({ w2gs: [issued, { box1_winnings: 500 }] }, { filer });
+  const xml = w2g.build({ w2gs: [issued, { box1_winnings: 500 }] }, context);
   assertEquals(xml.length, 1);
   const tags = [
     "<CalendarYr>",
@@ -86,40 +94,68 @@ Deno.test("withheld W-2G emits one native document in TY2025 order", () => {
 
 Deno.test("withheld W-2G cannot emit the same payer-issued copy twice", () => {
   assertThrows(
-    () => w2g.build({ w2gs: [issued, { ...issued }] }, { filer }),
+    () => w2g.build({ w2gs: [issued, { ...issued }] }, context),
     Error,
     "same payer-issued W-2G source",
+  );
+});
+
+Deno.test("withheld W-2G requires its exact submitted payer-issued PDF", () => {
+  assertThrows(
+    () => w2g.build({ w2gs: [issued] }, { filer }),
+    Error,
+    "matching SHA-256",
+  );
+  assertThrows(
+    () =>
+      w2g.build({ w2gs: [issued] }, {
+        ...context,
+        attachmentSha256ByFileName: { "PayerIssuedW2G.pdf": "b".repeat(64) },
+      }),
+    Error,
+    "matching SHA-256",
+  );
+  assertThrows(
+    () =>
+      w2g.build({
+        w2gs: [{ ...issued, issued_copy_attachment_file_name: undefined }],
+      }, context),
+    Error,
+    "payer-issued PDF copy",
   );
 });
 
 Deno.test("withheld W-2G rejects incomplete issued form and winner mismatch", () => {
   assertThrows(
     () =>
-      w2g.build({ w2gs: [{ ...issued, payer_us_address: undefined }] }, {
-        filer,
-      }),
+      w2g.build(
+        { w2gs: [{ ...issued, payer_us_address: undefined }] },
+        context,
+      ),
     Error,
     "structured payer identity",
   );
   assertThrows(
     () =>
-      w2g.build({ w2gs: [{ ...issued, box9_winner_tin: "999-88-7777" }] }, {
-        filer,
-      }),
+      w2g.build(
+        { w2gs: [{ ...issued, box9_winner_tin: "999-88-7777" }] },
+        context,
+      ),
     Error,
     "matching the taxpayer",
   );
   assertThrows(
     () =>
-      w2g.build({ w2gs: [{ ...issued, calendar_year: undefined }] }, { filer }),
+      w2g.build({ w2gs: [{ ...issued, calendar_year: undefined }] }, context),
     Error,
     "issued 2025 form",
   );
   assertThrows(
     () =>
-      w2g.build({ w2gs: [{ ...issued, payer_address: "500 Casino Way" }] }, {
-        filer,
-      }),
+      w2g.build(
+        { w2gs: [{ ...issued, payer_address: "500 Casino Way" }] },
+        context,
+      ),
   );
 });
 
@@ -139,12 +175,16 @@ Deno.test("withheld W-2G accepts a matching joint-filing spouse but not a separa
     winner_name: "Joint Spouse",
     box9_winner_tin: "222-33-4444",
   };
-  const xml = w2g.build({ w2gs: [spouseIssued] }, { filer: jointFiler });
+  const xml = w2g.build({ w2gs: [spouseIssued] }, {
+    ...context,
+    filer: jointFiler,
+  });
   assertEquals(xml.length, 1);
   assertStringIncludes(xml[0], "<RecipientSSN>222334444</RecipientSSN>");
   assertThrows(
     () =>
       w2g.build({ w2gs: [spouseIssued] }, {
+        ...context,
         filer: {
           ...jointFiler,
           filingStatus: FilingStatus.MarriedFilingSeparately,

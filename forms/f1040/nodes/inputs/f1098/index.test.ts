@@ -1,6 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   assertForm1098Box4Sources,
+  assertForm1098MortgageLimitSources,
   f1098,
   ForRouting,
   inputSchema,
@@ -103,6 +104,118 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 Deno.test("f1098.schema: empty array accepted — zero items produces empty outputs", () => {
   const result = compute([]);
   assertEquals(result.outputs.length, 0);
+});
+
+Deno.test("two full-year post-2017 loans share one Pub. 936 mortgage limit", () => {
+  const source = {
+    f1098s: [
+      reviewedInterest(20_000, 16_660, {
+        lender_name: "First Lender",
+        recipient_tin: "111-22-3333",
+        source_document_reference: "2025 first Form 1098",
+        box3_origination_date: "01/15/2020",
+      }),
+      reviewedInterest(16_000, 13_328, {
+        lender_name: "Second Lender",
+        recipient_tin: "111-22-3333",
+        source_document_reference: "2025 second Form 1098",
+        box3_origination_date: "02/15/2021",
+      }),
+    ],
+    mortgage_limit_review: {
+      table1_workpaper_reference: "2025 Pub. 936 Table 1 both loans",
+      all_qualified_home_mortgages_included_verified: true,
+      all_post_2017_acquisition_debt_verified: true,
+      single_filing_status_verified: true,
+      loans: ([
+        ["2025 first Form 1098", 500_000],
+        ["2025 second Form 1098", 400_000],
+      ] as const).map(([source_document_reference, balance]) => ({
+        source_document_reference,
+        monthly_balance_records: Array.from({ length: 12 }, (_, index) => ({
+          month: index + 1,
+          closing_balance: balance,
+          lender_statement_reference: `${source_document_reference}-month-${
+            index + 1
+          }`,
+        })),
+      })),
+    },
+  };
+  const parsed = inputSchema.parse(source);
+  const result = f1098.compute(
+    { taxYear: 2025, formType: "f1040" },
+    parsed,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, scheduleA)?.line_8a_mortgage_interest_1098,
+    29_988,
+  );
+  assertForm1098MortgageLimitSources(
+    source,
+    ["111223333"],
+    true,
+    29_988,
+    0,
+    0,
+    false,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...source,
+      f1098s: [
+        source.f1098s[0],
+        { ...source.f1098s[1], box1_current_year_deductible_interest: 16_000 },
+      ],
+    }).success,
+    false,
+  );
+  assertThrows(
+    () =>
+      assertForm1098MortgageLimitSources(
+        source,
+        ["111223333"],
+        false,
+        29_988,
+        0,
+        0,
+        false,
+        false,
+      ),
+    Error,
+    "same single filer",
+  );
+  assertThrows(
+    () =>
+      assertForm1098MortgageLimitSources(
+        source,
+        ["111223333"],
+        true,
+        29_988,
+        0,
+        1,
+        true,
+        false,
+      ),
+    Error,
+    "no other mortgage-interest",
+  );
+  assertThrows(
+    () =>
+      assertForm1098MortgageLimitSources(
+        source,
+        ["111223333"],
+        true,
+        29_988,
+        0,
+        0,
+        false,
+        true,
+      ),
+    Error,
+    "no other mortgage-interest",
+  );
 });
 
 Deno.test("f1098.schema: missing box1_mortgage_interest throws", () => {

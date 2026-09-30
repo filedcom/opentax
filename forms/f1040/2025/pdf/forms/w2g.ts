@@ -1,7 +1,7 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { StandardFonts } from "pdf-lib";
 import { inputSchema, type W2GItem } from "../../../nodes/inputs/w2g/index.ts";
-import { w2g as nativeW2G } from "../../mef/forms/w2g.ts";
+import { assertWithheldW2GSource } from "../../mef/forms/w2g.ts";
 
 // Copy B is the recipient copy identified on the continuous-use Dec. 2023
 // Form W-2G. It occupies PDF page 3 (zero-based index 2).
@@ -104,7 +104,7 @@ export const w2gPdf: PdfFormDescriptor = {
       (item.box4_federal_withheld ?? 0) > 0
     );
     if (active.length === 0) return [];
-    nativeW2G.build(source, { filer });
+    active.forEach((item) => assertWithheldW2GSource(item, filer));
     const withheld = active.reduce(
       (sum, item) => sum + item.box4_federal_withheld!,
       0,

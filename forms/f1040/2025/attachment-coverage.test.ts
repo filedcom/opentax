@@ -97,6 +97,32 @@ Deno.test("QOF code Z/Y rows cannot export without the annual Form 8997", () => 
   }
 });
 
+Deno.test("Form 8886 review blocks a single $2 million gross disposition loss in both exports", () => {
+  const row = {
+    source_transaction_id: "sale-2025-large-loss",
+    proceeds: 100_000,
+    cost_basis: 2_100_000,
+    adjustment_amount: 1_500_000,
+  };
+  for (const kind of ["mef", "pdf"] as const) {
+    for (const pending of [
+      { f8949: { f8949s: [row] } },
+      { f1099b: { f1099bs: [row] } },
+      { form8949: [row] },
+      { form8949: { transaction: row } },
+    ]) {
+      assertThrows(
+        () => assertAttachmentCoverage(pending, kind),
+        Error,
+        "Form 8886 review required for a single Form 8949/1099-B disposition",
+      );
+    }
+    assertAttachmentCoverage({
+      f8949: { f8949s: [{ ...row, cost_basis: 2_099_999 }] },
+    }, kind);
+  }
+});
+
 Deno.test("PDF-only coverage gaps do not suppress a native MeF form", () => {
   const pending = { f8863: { f8863s: [{}] } };
   assertAttachmentCoverage(pending, "mef");

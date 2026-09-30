@@ -37,6 +37,16 @@ Remaining work before broader Schedule J support:
    Form 8615 combinations must not be opened until their worksheets and
    provenance are complete.
 
+The current graph now identifies the first non-Schedule-F AGI source when a
+Schedule J election would otherwise fail the farm-only attribution guard.
+For example, a fishing Schedule C activity reaches `line3_schedule_c` and is
+rejected with that source key; its separately computed activity net is not
+silently treated as elected income. A focused source-to-graph rejection case
+is authored for the deferred batch. [2025 Schedule J instructions](https://www.irs.gov/instructions/i1040sj)
+expressly allow fishing Schedule C income, but its attributable SE deduction,
+QBI, losses, and combination with Schedule F still need a full ledger before
+that route can be filed.
+
 The graph uses direct declared edges from Schedule F, the AGI aggregator,
 standard deduction, and the public election to the calculated node. There is
 no executor override, asserted-tax fallback, second public tax shape, or

@@ -59,6 +59,7 @@ const inputSchema = z.object({
   filing_status: z.nativeEnum(FilingStatus).optional(),
   taxpayer_age_65_or_older: z.boolean().optional(),
   spouse_age_65_or_older: z.boolean().optional(),
+  schedule_r_disability_qualified: z.literal(true).optional(),
   spouse_has_business_credit: z.boolean().optional(),
   // ── Part I — Income ───────────────────────────────────────────────────────
   // Line 1a — Wages (accumulable: w2, fec, f4852, f1099r and qsehra all route here)
@@ -1104,10 +1105,11 @@ class F1040Node extends TaxNode<typeof inputSchema> {
       if (
         input.taxpayer_age_65_or_older !== true &&
         !(input.filing_status === FilingStatus.MFJ &&
-          input.spouse_age_65_or_older === true)
+          input.spouse_age_65_or_older === true) &&
+        input.schedule_r_disability_qualified !== true
       ) {
         throw new Error(
-          "Schedule R age-65 credit needs a matching Form 1040 taxpayer or joint-spouse age indicator",
+          "Schedule R credit needs matching Form 1040 age indicators or reviewed disability evidence",
         );
       }
       if (

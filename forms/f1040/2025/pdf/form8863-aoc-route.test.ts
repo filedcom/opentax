@@ -13,12 +13,35 @@ const base = pdfReviewFixtures.find((fixture) =>
   fixture.id === "single-w2-refund"
 )!;
 
-Deno.test("sourced American Opportunity Credit reaches Form 8863 and Form 1040", async () => {
+Deno.test("reviewed Form 8862 AOTC reinstatement reaches Form 8863 and Form 1040", async () => {
   const result = execute(
     buildExecutionPlan(registry),
     registry,
     {
       ...base.inputs,
+      general: {
+        ...(base.inputs.general as Record<string, unknown>),
+        prior_aotc_disallowance_review: {
+          disallowed_year: 2023,
+          notice_reference: "Synthetic 2023 IRS AOTC notice",
+          notice_copy_reference: "Retained synthetic AOTC notice copy",
+          taxpayer_ssn: "111223333",
+          nonclerical_disallowance_verified: true,
+          no_active_ban_verified: true,
+        },
+      },
+      f8862: {
+        claim_aotc: true,
+        aotc_disallowed_year: 2023,
+        aotc_disallowance_notice_reference: "Synthetic 2023 IRS AOTC notice",
+        credit_disallowance_ban_active: false,
+        aotc_students: [{
+          first_name: "Student",
+          last_name: "Test",
+          eligible: true,
+          credit_claimed_four_prior_years: false,
+        }],
+      },
       f8863: [{
         credit_type: "aoc",
         student_name: "Student Test",
@@ -85,6 +108,7 @@ Deno.test("sourced American Opportunity Credit reaches Form 8863 and Form 1040",
     attachments: [],
   });
   assertStringIncludes(bundle.xml, "<IRS8863 ");
+  assertStringIncludes(bundle.xml, "<IRS8862 ");
   assertStringIncludes(bundle.xml, "<IRS1040Schedule3 ");
   const xsd = new URL(
     "../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
@@ -103,7 +127,7 @@ Deno.test("sourced American Opportunity Credit reaches Form 8863 and Form 1040",
     await Deno.remove(xmlPath);
   }
   const pdf = await buildPdfBytes(pending, base.filer, ".pdf-cache", bundle);
-  assertEquals((await PDFDocument.load(pdf)).getPageCount(), 5);
+  assertEquals((await PDFDocument.load(pdf)).getPageCount(), 8);
   if (Deno.args.includes("--write-review-artifacts")) {
     const directory = new URL(
       "../../../../.state/research/ty2025-filled-pdf-review/2026-10-01-form8863-aoc/",

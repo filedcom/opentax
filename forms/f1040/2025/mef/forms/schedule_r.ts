@@ -1,6 +1,10 @@
 import { element, elements } from "../../../mef/xml.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
-import { inputSchema, schedule_r } from "../../../nodes/inputs/schedule_r/index.ts";
+import {
+  inputSchema,
+  schedule_r,
+  validDisabilityEvidence,
+} from "../../../nodes/inputs/schedule_r/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 function number(fields: Record<string, unknown>, key: string): number {
@@ -12,26 +16,29 @@ function number(fields: Record<string, unknown>, key: string): number {
   return value;
 }
 
-type AgeBox = 1 | 3 | 7 | 8;
+type ScheduleRBox = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 
-const AGE_BOX_TAG: Record<AgeBox, string> = {
+const BOX_TAG: Record<ScheduleRBox, string> = {
   1: "Primary65OrOlderInd",
+  2: "Und65RtdPermnntTotDsbltyInd",
   3: "BothSpouses65OrOlderInd",
+  4: "BothUnder65OneRtdDsbltyInd",
+  5: "BothUnder65BothRtdDsbltyInd",
+  6: "One65OrOlderOtherRtdDsbltyInd",
   7: "One65OrOlderOtherNotRtdInd",
   8: "Age65OrOldrNotLvngTogetherInd",
+  9: "Under65DidNotLiveTogetherInd",
 };
 
-export function calculateScheduleRAgeOnly(
+export function calculateScheduleR(
   context: MefBuildContext,
-): { box: AgeBox; lines: Record<string, number> } {
+): {
+  box: ScheduleRBox;
+  priorYearStatement: boolean;
+  lines: Record<string, number>;
+} {
   const source = inputSchema.parse(context.pending?.schedule_r);
   if (
-    source.taxpayer_disabled === true ||
-    source.spouse_disabled === true ||
-    (source.taxpayer_disability_income ?? 0) !== 0 ||
-    (source.spouse_disability_income ?? 0) !== 0 ||
-    (source.taxpayer_age_65_or_older !== true &&
-      source.spouse_age_65_or_older !== true) ||
     (source.taxpayer_age_65_or_older === true &&
       !source.age_65_source_reference) ||
     (source.spouse_age_65_or_older === true &&
@@ -46,7 +53,7 @@ export function calculateScheduleRAgeOnly(
         source.nontaxable_va_veterans_pension_verified !== true))
   ) {
     throw new Error(
-      "Schedule R age-only filing needs sourced taxpayer/spouse age and benefit facts; disability paths remain unsupported",
+      "Schedule R filing needs sourced taxpayer/spouse age and benefit facts",
     );
   }
   const returnFields = context.pending?.f1040;
@@ -76,7 +83,57 @@ export function calculateScheduleRAgeOnly(
       "Schedule R age-65 source must match finalized Form 1040 age indicator(s)",
     );
   }
-  let box: AgeBox;
+  const taxpayerDisabled = source.taxpayer_disabled === true &&
+    source.taxpayer_age_65_or_older !== true;
+  const spouseDisabled = source.spouse_disabled === true &&
+    source.spouse_age_65_or_older !== true;
+  if (
+    (source.filing_status !== FilingStatus.MFJ &&
+      (source.spouse_disabled === true ||
+        source.spouse_disability_income !== undefined ||
+        source.spouse_disability_evidence !== undefined)) ||
+    (source.taxpayer_disabled === true && !taxpayerDisabled) ||
+    (source.spouse_disabled === true && !spouseDisabled) ||
+    (taxpayerDisabled !== (source.taxpayer_disability_income !== undefined)) ||
+    (spouseDisabled !== (source.spouse_disability_income !== undefined)) ||
+    (taxpayerDisabled &&
+      !validDisabilityEvidence(source.taxpayer_disability_evidence)) ||
+    (spouseDisabled &&
+      !validDisabilityEvidence(source.spouse_disability_evidence)) ||
+    (!taxpayerDisabled && source.taxpayer_disability_evidence !== undefined) ||
+    (!spouseDisabled && source.spouse_disability_evidence !== undefined)
+  ) {
+    throw new Error(
+      "Schedule R disability needs each qualifying person's reviewed income, retirement, and physician evidence",
+    );
+  }
+  const disabilityWages =
+    (source.taxpayer_disability_evidence?.disability_income_reported_on ===
+        "wages"
+      ? source.taxpayer_disability_income ?? 0
+      : 0) +
+    (source.spouse_disability_evidence?.disability_income_reported_on ===
+        "wages"
+      ? source.spouse_disability_income ?? 0
+      : 0);
+  const disabilityPension =
+    (source.taxpayer_disability_evidence?.disability_income_reported_on ===
+        "pension"
+      ? source.taxpayer_disability_income ?? 0
+      : 0) +
+    (source.spouse_disability_evidence?.disability_income_reported_on ===
+        "pension"
+      ? source.spouse_disability_income ?? 0
+      : 0);
+  if (
+    disabilityWages > number(f1040, "line1z_total_wages") ||
+    disabilityPension > number(f1040, "line5b_pension_taxable")
+  ) {
+    throw new Error(
+      "Schedule R taxable disability income exceeds finalized Form 1040 wages or taxable pensions",
+    );
+  }
+  let box: ScheduleRBox | 0;
   let base: number;
   let threshold: number;
   if (
@@ -85,24 +142,30 @@ export function calculateScheduleRAgeOnly(
     source.filing_status === FilingStatus.QSS
   ) {
     if (
-      source.taxpayer_age_65_or_older !== true ||
       source.spouse_age_65_or_older === true
-    ) throw new Error("Schedule R age-only status and owner disagree");
-    box = 1;
+    ) throw new Error("Schedule R status and owner disagree");
+    box = source.taxpayer_age_65_or_older === true
+      ? 1
+      : taxpayerDisabled
+      ? 2
+      : 0;
     base = 5_000;
     threshold = 7_500;
   } else if (source.filing_status === FilingStatus.MFS) {
     if (
-      source.taxpayer_age_65_or_older !== true ||
       source.spouse_age_65_or_older === true ||
       f1040.mfs_spouse_lived_with_taxpayer !== false ||
       !source.mfs_lived_apart_all_year_source_reference
     ) {
       throw new Error(
-        "Schedule R MFS age-65 credit needs proof that spouses lived apart all year",
+        "Schedule R MFS credit needs proof that spouses lived apart all year",
       );
     }
-    box = 8;
+    box = source.taxpayer_age_65_or_older === true
+      ? 8
+      : taxpayerDisabled
+      ? 9
+      : 0;
     base = 3_750;
     threshold = 5_000;
   } else {
@@ -111,13 +174,29 @@ export function calculateScheduleRAgeOnly(
       source.spouse_age_65_or_older === undefined ||
       source.taxpayer_age_65_or_older === undefined
     ) throw new Error("Schedule R joint age facts must identify both spouses");
-    box = source.taxpayer_age_65_or_older &&
-        source.spouse_age_65_or_older
-      ? 3
-      : 7;
-    base = box === 3 ? 7_500 : 5_000;
+    const taxpayerOlder = source.taxpayer_age_65_or_older;
+    const spouseOlder = source.spouse_age_65_or_older;
+    if (taxpayerOlder && spouseOlder) box = 3;
+    else if (
+      (taxpayerOlder && spouseDisabled) || (spouseOlder && taxpayerDisabled)
+    ) box = 6;
+    else if (taxpayerOlder || spouseOlder) box = 7;
+    else if (taxpayerDisabled && spouseDisabled) box = 5;
+    else if (taxpayerDisabled || spouseDisabled) box = 4;
+    else box = 0;
+    base = [3, 5, 6].includes(box) ? 7_500 : 5_000;
     threshold = 10_000;
   }
+  if (box === 0) {
+    throw new Error("Schedule R needs a qualifying age or disability route");
+  }
+  const disabilityIncome =
+    (taxpayerDisabled ? source.taxpayer_disability_income ?? 0 : 0) +
+    (spouseDisabled ? source.spouse_disability_income ?? 0 : 0);
+  const line11 = [2, 4, 5, 6, 9].includes(box)
+    ? disabilityIncome + (box === 6 ? 5_000 : 0)
+    : 0;
+  const line12 = [2, 4, 5, 6, 9].includes(box) ? Math.min(base, line11) : base;
   const benefits = source.nontaxable_ssa ?? 0;
   const otherBenefits = (source.nontaxable_pension ?? 0) +
     (source.nontaxable_va ?? 0);
@@ -131,7 +210,7 @@ export function calculateScheduleRAgeOnly(
   const excessAgi = Math.max(0, source.agi - threshold);
   const halfExcessAgi = Math.round(excessAgi / 2);
   const totalReduction = benefits + otherBenefits + halfExcessAgi;
-  const net = Math.max(0, base - totalReduction);
+  const net = Math.max(0, line12 - totalReduction);
   const tentative = Math.round(net * 0.15);
   const taxBeforeCredits = number(f1040, "line18_total_tax_before_credits");
   const priorCredits = number(schedule3, "line1_total") +
@@ -141,6 +220,7 @@ export function calculateScheduleRAgeOnly(
   const credit = Math.min(tentative, limit);
   if (
     !Number.isSafeInteger(base) || !Number.isSafeInteger(benefits) ||
+    !Number.isSafeInteger(line11) || !Number.isSafeInteger(line12) ||
     !Number.isSafeInteger(otherBenefits) ||
     !Number.isSafeInteger(source.agi) ||
     !Number.isSafeInteger(halfExcessAgi) ||
@@ -155,32 +235,48 @@ export function calculateScheduleRAgeOnly(
       "Schedule R credit and tax limit must reconcile to finalized Schedule 3 and Form 1040",
     );
   }
-  return { box, lines: {
-    line10: base,
-    line12: base,
-    line13a: benefits,
-    line13b: otherBenefits,
-    line13c: benefits + otherBenefits,
-    line14: source.agi,
-    line15: threshold,
-    line16: excessAgi,
-    line17: halfExcessAgi,
-    line18: totalReduction,
-    line19: net,
-    line20: tentative,
-    line21: limit,
-    line22: credit,
-  } };
+  const priorYearStatement = (taxpayerDisabled &&
+    source.taxpayer_disability_evidence?.physician_statement ===
+      "prior_year") ||
+    (spouseDisabled &&
+      source.spouse_disability_evidence?.physician_statement === "prior_year");
+  return {
+    box,
+    priorYearStatement,
+    lines: {
+      line10: base,
+      line11,
+      line12,
+      line13a: benefits,
+      line13b: otherBenefits,
+      line13c: benefits + otherBenefits,
+      line14: source.agi,
+      line15: threshold,
+      line16: excessAgi,
+      line17: halfExcessAgi,
+      line18: totalReduction,
+      line19: net,
+      line20: tentative,
+      line21: limit,
+      line22: credit,
+    },
+  };
 }
 
-function buildAgeOnly(context: MefBuildContext): string {
-  const { box, lines } = calculateScheduleRAgeOnly(context);
+function buildScheduleR(context: MefBuildContext): string {
+  const { box, priorYearStatement, lines } = calculateScheduleR(context);
   return elements("IRS1040ScheduleR", [
-    element(AGE_BOX_TAG[box], "X"),
+    element(BOX_TAG[box], "X"),
+    ...(priorYearStatement ? [element("PriorYearStatementInd", "X")] : []),
     element("FilingStatusAmt", lines.line10),
+    ...(lines.line11 > 0
+      ? [element("TaxableDisabilityAmt", lines.line11)]
+      : []),
     element("SmallerOfFSOrTaxableAmt", lines.line12),
     element("NontxSocSecAndRlrdBenefitsAmt", lines.line13a),
-    ...(lines.line13b > 0 ? [element("NontaxableOtherAmt", lines.line13b)] : []),
+    ...(lines.line13b > 0
+      ? [element("NontaxableOtherAmt", lines.line13b)]
+      : []),
     element("TotalNontaxableAmt", lines.line13c),
     element("TaxReturnAGIAmt", lines.line14),
     element("ExemptionAmt", lines.line15),
@@ -228,8 +324,10 @@ export const scheduleR: MefFormDescriptor<"schedule_r", unknown> = {
         number(s3, "line2_childcare_credit") -
         number(s3, "line6l_form8978_credit");
       if (taxLimit <= 0) return "";
-      throw new Error("Schedule R positive source credit is missing from Schedule 3 line 6d");
+      throw new Error(
+        "Schedule R positive source credit is missing from Schedule 3 line 6d",
+      );
     }
-    return buildAgeOnly(context);
+    return buildScheduleR(context);
   },
 };

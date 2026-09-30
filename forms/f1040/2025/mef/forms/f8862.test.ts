@@ -7,6 +7,26 @@ const priorEicEvidence = {
   eitc_disallowed_year: 2023,
   eitc_disallowance_notice_reference: "Synthetic 2023 IRS notice",
 };
+const noticeReviews = {
+  filing_status: "single",
+  taxpayer_ssn: "123456789",
+  prior_ctc_disallowance_review: {
+    disallowed_year: 2023,
+    notice_reference: "Synthetic 2023 IRS CTC notice",
+    notice_copy_reference: "Retained synthetic CTC notice copy",
+    taxpayer_ssn: "123456789",
+    nonclerical_disallowance_verified: true,
+    no_active_ban_verified: true,
+  },
+  prior_aotc_disallowance_review: {
+    disallowed_year: 2023,
+    notice_reference: "Synthetic 2023 IRS AOTC notice",
+    notice_copy_reference: "Retained synthetic AOTC notice copy",
+    taxpayer_ssn: "123456789",
+    nonclerical_disallowance_verified: true,
+    no_active_ban_verified: true,
+  },
+};
 
 const source = SCENARIO_1040_05_FACTS;
 
@@ -69,6 +89,7 @@ const scenarioInput = {
 
 const finalizedContext = {
   pending: {
+    general: noticeReviews,
     f1040: {
       line27_eitc: 500,
       line19_child_tax_credit: 2_200,
@@ -168,6 +189,48 @@ Deno.test("Form 8862 native filing rejects claims absent from the finalized retu
       }),
     Error,
     "reconcile to Form 8863",
+  );
+});
+
+Deno.test("Form 8862 CTC/ODC and AOTC claims require matching reviewed notice facts", () => {
+  assertThrows(
+    () => nativeForm8862.build(scenarioInput, {
+      pending: { ...finalizedContext.pending, general: { filing_status: "single" } },
+    }),
+    Error,
+    "matching reviewed prior IRS notice",
+  );
+  assertThrows(
+    () => nativeForm8862.build(scenarioInput, {
+      pending: {
+        ...finalizedContext.pending,
+        general: {
+          ...noticeReviews,
+          prior_ctc_disallowance_review: {
+            ...noticeReviews.prior_ctc_disallowance_review,
+            disallowed_year: 2022,
+          },
+        },
+      },
+    }),
+    Error,
+    "CTC/ODC claim needs a matching reviewed prior IRS notice",
+  );
+  assertThrows(
+    () => nativeForm8862.build(scenarioInput, {
+      pending: {
+        ...finalizedContext.pending,
+        general: {
+          ...noticeReviews,
+          prior_aotc_disallowance_review: {
+            ...noticeReviews.prior_aotc_disallowance_review,
+            taxpayer_ssn: "987654321",
+          },
+        },
+      },
+    }),
+    Error,
+    "AOTC claim needs a matching reviewed prior IRS notice",
   );
 });
 

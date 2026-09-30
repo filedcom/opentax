@@ -62,6 +62,14 @@ need source review; the current structured facts alone do not prove them.
 Parts III and IV now require complete person sets: every finalized Form 1040
 CTC/ODC dependent must appear in Form 8862, and every Form 8863 AOC student must
 appear once. A matching subset is no longer enough to file those parts.
+For CTC/ODC and AOTC, the general source now carries separate reviewed prior
+IRS notice records. Each records the earlier disallowance year, notice
+reference, retained-copy reference, taxpayer SSN, a nonclerical-disallowance
+review, and a no-active-ban review. Native and PDF export compare the year,
+notice reference, and taxpayer to the Form 8862 claim and filer. These
+structured records do not authenticate the underlying IRS notice bytes; that
+source-copy proof remains open. Full-return ODC and AOTC XSD/PDF cases are
+authored for the agreed final batch and have not yet run.
 
 ---
 

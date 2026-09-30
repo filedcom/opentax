@@ -51,6 +51,14 @@ Deno.test({
         child_no_withholding: true,
         parent_eligible_to_elect: true,
         interest_income: 3700,
+        source_review: {
+          source_document_reference: "reviewed-alex-interest",
+          tax_year: 2025,
+          child_ssn: "987654321",
+          electing_parent_ssn: filer.primarySSN,
+          eligibility_reviewed: true,
+          income: { interest_income: 3700 },
+        },
       })],
     },
   }, filer);
@@ -88,6 +96,14 @@ Deno.test({
     child_no_withholding: true,
     parent_eligible_to_elect: true,
     interest_income: 3000,
+    source_review: {
+      source_document_reference: "reviewed-alex-interest",
+      tax_year: 2025,
+      child_ssn: "987654321",
+      electing_parent_ssn: filer.primarySSN,
+      eligibility_reviewed: true,
+      income: { interest_income: 3000 },
+    },
   } as const;
   const xml = buildMefXml({
     f1040: {
@@ -102,6 +118,26 @@ Deno.test({
           ...child,
           child_name: "Jamie Rivera",
           child_ssn: "987654322",
+          source_review: {
+            source_document_reference: "reviewed-jamie-interest-dividend-gain",
+            tax_year: 2025,
+            child_ssn: "987654322",
+            electing_parent_ssn: filer.primarySSN,
+            eligibility_reviewed: true,
+            income: {
+              interest_income: 3000,
+              dividend_income: 300,
+              dividend_nominee_distribution: 200,
+              capital_gain_distributions: 100,
+              capital_gain_nominee_distribution: 50,
+            },
+            interest_adjustments: {
+              nominee_distribution: 500,
+              accrued_interest: 100,
+              abp_adjustment: 50,
+              oid_adjustment: 25,
+            },
+          },
           interest_adjustments: {
             nominee_distribution: 500,
             accrued_interest: 100,

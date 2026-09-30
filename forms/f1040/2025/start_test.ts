@@ -209,7 +209,12 @@ Deno.test("singleton Form 8824 exchange routes to its calculation node", () => {
 Deno.test("Schedule LEP language request reaches its metadata node", () => {
   const startNode = buildStartNode(inputNodes);
   const source = {
-    requests: [{ person: "taxpayer", language_preference_code: "001" }],
+    requests: [{
+      person: "taxpayer",
+      language_preference_code: "001",
+      request_confirmed_by_person: true,
+      request_record_reference: "Taxpayer 2025 language request",
+    }],
   };
   assertEquals(
     startNode.inputSchema.safeParse({ schedule_lep: source }).success,

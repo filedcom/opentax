@@ -92,12 +92,12 @@ Deno.test("Form 9465 staged native route rejects changed return, identity, and p
   );
 });
 
-Deno.test("Form 9465 remains blocked from export until native and PDF routes are registered", () => {
+Deno.test("Form 9465 attached request remains blocked pending authorization and linked review", () => {
   for (const kind of ["mef", "pdf"] as const) {
     assertThrows(
       () => assertAttachmentCoverage(pending, kind),
       Error,
-      "Form 9465 requires a native filing document",
+      "Form 9465 attached installment request remains blocked pending accepted electronic authorization",
     );
   }
 });

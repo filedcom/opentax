@@ -187,7 +187,7 @@ Deno.test("Form 9465 installment request cannot disappear from MeF", () => {
   assertThrows(
     () => buildMefXml(pending, filer),
     Error,
-    "Form 9465 requires a native filing document",
+    "Form 9465 attached installment request remains blocked pending accepted electronic authorization",
   );
 });
 
@@ -247,7 +247,7 @@ Deno.test("Schedule R stays blocked and reviewed S-corporation stock loss emits 
       () => buildMefXml(pending, filer),
       Error,
       key === "schedule_r"
-        ? "Schedule R age-only filing needs sourced taxpayer/spouse age and benefit facts"
+        ? "Schedule R filing needs sourced taxpayer/spouse age and benefit facts"
         : `${formName} requires a native filing document`,
     );
   }
@@ -314,7 +314,7 @@ Deno.test("Schedule R cannot override a conflicting Form 1040 birth date", () =>
   assertEquals(
     result.diagnostics.some((entry) =>
       entry.nodeType === "f1040" &&
-      entry.message.includes("Schedule R age-65 credit needs")
+      entry.message.includes("Schedule R credit needs")
     ),
     true,
   );
@@ -356,6 +356,91 @@ Deno.test({
     xml.includes(
       "<CreditForElderlyOrDisabledAmt>600</CreditForElderlyOrDisabledAmt>",
     ),
+    true,
+  );
+  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(path, xml);
+    const checked = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", RETURN_XSD_PATH, path],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
+  } finally {
+    await Deno.remove(path);
+  }
+});
+
+Deno.test({
+  name:
+    "XSD: sourced under-65 disability Schedule R credit reaches a full Form 1040",
+  ignore: !returnXsdAvailable,
+  sanitizeOps: false,
+  sanitizeResources: false,
+}, async () => {
+  const disabilityInputs = {
+    ...dependentScheduleRInputs,
+    general: {
+      ...dependentScheduleRInputs.general,
+      taxpayer_dob: "1985-06-15",
+      taxpayer_age_65_or_older: false,
+      dependent_earned_income: 5_000,
+    },
+    w2: [{
+      employer_ein: "12-3456789",
+      employer_name: "ACME CORP",
+      employer_address_line1: "500 Market St",
+      employer_address_city: "Austin",
+      employer_address_state: "TX",
+      employer_address_zip: "78701",
+      box1_wages: 5_000,
+      box2_fed_withheld: 0,
+      box3_ss_wages: 5_000,
+      box4_ss_withheld: 310,
+      box5_medicare_wages: 5_000,
+      box6_medicare_withheld: 72.5,
+    }],
+    schedule_r: {
+      filing_status: "single",
+      taxpayer_age_65_or_older: false,
+      taxpayer_disabled: true,
+      taxpayer_disability_income: 5_000,
+      taxpayer_disability_evidence: {
+        retired_on_permanent_total_disability: true,
+        below_mandatory_retirement_age_on_january_1: true,
+        unable_to_perform_substantial_gainful_activity: true,
+        disability_income_source_reference: "ACME disability W-2",
+        disability_income_reported_on: "wages",
+        eligibility_source_reference: "Retirement and work-capacity review",
+        physician_statement: "current_year",
+        physician_statement_source_reference: "Signed 2025 physician statement",
+      },
+      agi: 14_500,
+      nontaxable_ssa: 0,
+    },
+  };
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    disabilityInputs,
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(
+    result.diagnostics.filter((entry) => entry.severity === "error"),
+    [],
+  );
+  const pending = buildPending(result.pending);
+  assertEquals(pending.schedule3?.line6d_elderly_disabled_credit, 225);
+  const xml = buildMefXml(pending, filer);
+  assertEquals(
+    xml.includes(
+      "<Und65RtdPermnntTotDsbltyInd>X</Und65RtdPermnntTotDsbltyInd>",
+    ),
+    true,
+  );
+  assertEquals(
+    xml.includes("<TaxableDisabilityAmt>5000</TaxableDisabilityAmt>"),
     true,
   );
   const path = await Deno.makeTempFile({ suffix: ".xml" });

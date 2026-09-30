@@ -8186,11 +8186,20 @@ Deno.test({
   ignore: !xsdAvailable,
 }, async () => {
   const general = singleGeneral();
+  const issuedCopy = await PDFDocument.create();
+  issuedCopy.addPage([300, 400]);
+  const issuedCopyBytes = await issuedCopy.save();
+  const issuedCopyHash = Array.from(
+    new Uint8Array(await crypto.subtle.digest("SHA-256", issuedCopyBytes)),
+    (byte) => byte.toString(16).padStart(2, "0"),
+  ).join("");
   const result = runReturn({
     general,
     w2g: [{
       calendar_year: 2025,
       source_document_reference: "2025 payer-issued W-2G copy",
+      issued_copy_attachment_file_name: "IssuedW2G.pdf",
+      issued_copy_pdf_sha256: issuedCopyHash,
       payer_name: "Casino Inc",
       payer_name_control: "CASI",
       payer_us_address: {
@@ -8216,10 +8225,15 @@ Deno.test({
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.f1040?.line25c_total, 2_400);
   assertEquals(result.pending.schedule1?.line8b_gambling_winnings, 10_000);
-  const xml = buildMefXml(
-    result.pending as MefFormsPending,
-    extractFilerIdentity(general),
-  );
+  const bundle = await buildMefBundle(result.pending as MefFormsPending, {
+    filer: extractFilerIdentity(general),
+    attachments: [{
+      fileName: "IssuedW2G.pdf",
+      description: "Payer-issued Form W-2G recipient copy",
+      bytes: issuedCopyBytes,
+    }],
+  });
+  const xml = bundle.xml;
   assertStringIncludes(xml, "<IRSW2G ");
   assertStringIncludes(
     xml,
@@ -8368,7 +8382,8 @@ Deno.test({
 });
 
 Deno.test({
-  name: "XSD: ordinary refinance points not reported in box 6 reach Schedule A line 8c",
+  name:
+    "XSD: ordinary refinance points not reported in box 6 reach Schedule A line 8c",
   sanitizeOps: false,
   sanitizeResources: false,
   ignore: !xsdAvailable,
@@ -8393,7 +8408,8 @@ Deno.test({
         form1098_source_document_reference: "2025 issued refinance Form 1098",
         closing_disclosure_reference: "2025 refinance closing disclosure",
         pub936_workpaper_reference: "2025 refinance points workpaper",
-        refinance_close_month_2025: 6,
+        refinance_close_year: 2025,
+        refinance_close_month: 6,
         prior_qualified_home_debt: 100_000,
         refinanced_principal: 100_000,
         loan_term_months: 180,
@@ -8411,12 +8427,294 @@ Deno.test({
     },
   });
   assertEquals(result.diagnostics, []);
-  assertEquals(result.pending.schedule_a?.line_8a_mortgage_interest_1098, 18_000);
+  assertEquals(
+    result.pending.schedule_a?.line_8a_mortgage_interest_1098,
+    18_000,
+  );
   assertEquals(result.pending.schedule_a?.line_8c_points_no_1098, 67);
   assertEquals(result.pending.f1040?.line12e_itemized_deductions, 18_067);
-  const xml = buildMefXml(result.pending as MefFormsPending, extractFilerIdentity(general));
-  assertStringIncludes(xml, "<Form1098PointsNotReportedAmt>67</Form1098PointsNotReportedAmt>");
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(
+    xml,
+    "<Form1098PointsNotReportedAmt>67</Form1098PointsNotReportedAmt>",
+  );
   await validateXsd(xml, "ordinary refinance points full return");
+});
+
+Deno.test({
+  name:
+    "XSD: early full payoff deducts remaining ordinary refinance points on Schedule A line 8c",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const result = runReturn({
+    general,
+    f1098: [{
+      lender_name: "Refinance Lender",
+      recipient_tin: general.taxpayer_ssn,
+      source_document_reference: "2025 paid-off refinance Form 1098",
+      box1_mortgage_interest: 18_000,
+      box1_current_year_deductible_interest: 18_000,
+      box1_deduction_workpaper_reference: "2025 interest workpaper",
+      for_routing: "A",
+    }],
+    mortgage_refinance_points: {
+      refinances: [{
+        mortgage_id: "paid-off-refinance-2025",
+        recipient_tin: general.taxpayer_ssn,
+        lender_name: "Refinance Lender",
+        form1098_source_document_reference: "2025 paid-off refinance Form 1098",
+        closing_disclosure_reference: "2025 refinance closing disclosure",
+        pub936_workpaper_reference: "2025 payoff points workpaper",
+        refinance_close_year: 2025,
+        refinance_close_month: 6,
+        prior_qualified_home_debt: 100_000,
+        refinanced_principal: 100_000,
+        loan_term_months: 180,
+        total_points_charged: 3_000,
+        points_for_nondeductible_services: 1_000,
+        monthly_payment_records: [7, 8, 9].map((month) => ({
+          month,
+          document_reference: `payoff-payment-${month}`,
+        })),
+        early_payoff_2025: {
+          payoff_month_2025: 9,
+          payoff_statement_reference: "2025 full-payoff statement",
+          full_payoff_verified: true,
+          refinanced_with_same_lender: false,
+        },
+        qualified_home_secured_verified: true,
+        points_not_reported_in_box6_verified: true,
+        points_paid_directly_verified: true,
+        acquisition_debt_limit_verified: true,
+      }],
+    },
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule_a?.line_8c_points_no_1098, 2_000);
+  assertEquals(result.pending.f1040?.line12e_itemized_deductions, 20_000);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(
+    xml,
+    "<Form1098PointsNotReportedAmt>2000</Form1098PointsNotReportedAmt>",
+  );
+  await validateXsd(xml, "early payoff refinance points full return");
+});
+
+Deno.test({
+  name:
+    "XSD: mixed qualified-debt and home-improvement refinance points reach Schedule A line 8c",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const result = runReturn({
+    general,
+    f1098: [{
+      lender_name: "Refinance Lender",
+      recipient_tin: general.taxpayer_ssn,
+      source_document_reference: "2025 improved-home refinance Form 1098",
+      box1_mortgage_interest: 18_000,
+      box1_current_year_deductible_interest: 18_000,
+      box1_deduction_workpaper_reference: "2025 interest workpaper",
+      for_routing: "A",
+    }],
+    mortgage_refinance_points: {
+      refinances: [{
+        mortgage_id: "improved-home-refinance-2025",
+        recipient_tin: general.taxpayer_ssn,
+        lender_name: "Refinance Lender",
+        form1098_source_document_reference:
+          "2025 improved-home refinance Form 1098",
+        closing_disclosure_reference: "2025 refinance closing disclosure",
+        pub936_workpaper_reference: "2025 improvement points workpaper",
+        refinance_close_year: 2025,
+        refinance_close_month: 6,
+        prior_qualified_home_debt: 75_000,
+        refinanced_principal: 100_000,
+        loan_term_months: 180,
+        total_points_charged: 3_000,
+        points_for_nondeductible_services: 1_000,
+        improvement: {
+          amount_used_to_substantially_improve_main_home: 25_000,
+          improvement_expense_records_reference: "2025 improvement invoices",
+          main_home_and_substantial_improvement_verified: true,
+          pub936_immediate_points_tests_1_through_6_verified: true,
+          points_paid_with_own_funds_verified: true,
+        },
+        monthly_payment_records: [7, 8, 9, 10, 11, 12].map((month) => ({
+          month,
+          document_reference: `improvement-payment-${month}`,
+        })),
+        qualified_home_secured_verified: true,
+        points_not_reported_in_box6_verified: true,
+        points_paid_directly_verified: true,
+        acquisition_debt_limit_verified: true,
+      }],
+    },
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule_a?.line_8c_points_no_1098, 550);
+  assertEquals(result.pending.f1040?.line12e_itemized_deductions, 18_550);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(
+    xml,
+    "<Form1098PointsNotReportedAmt>550</Form1098PointsNotReportedAmt>",
+  );
+  await validateXsd(xml, "improved-home refinance points full return");
+});
+
+Deno.test({
+  name:
+    "XSD: 2024 refinance ledger amortizes unreported points on 2025 Schedule A line 8c",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const result = runReturn({
+    general,
+    f1098: [{
+      lender_name: "Refinance Lender",
+      recipient_tin: general.taxpayer_ssn,
+      source_document_reference: "2025 continuing-loan Form 1098",
+      box1_mortgage_interest: 18_000,
+      box1_current_year_deductible_interest: 18_000,
+      box1_deduction_workpaper_reference: "2025 interest workpaper",
+      for_routing: "A",
+    }],
+    mortgage_refinance_points: {
+      refinances: [{
+        mortgage_id: "refinance-2024-ledger",
+        recipient_tin: general.taxpayer_ssn,
+        lender_name: "Refinance Lender",
+        form1098_source_document_reference: "2025 continuing-loan Form 1098",
+        closing_disclosure_reference: "2024 refinance closing disclosure",
+        pub936_workpaper_reference: "2025 refinance points workpaper",
+        refinance_close_year: 2024,
+        refinance_close_month: 6,
+        prior_year_2024: {
+          filed_2024_return_reference: "Filed 2024 Form 1040/Schedule A",
+          filed_2024_points_workpaper_reference: "2024 loan points ledger",
+          filed_2024_loan_points_deduction: 67,
+          payment_records_2024: [7, 8, 9, 10, 11, 12].map((month) => ({
+            month,
+            document_reference: `2024-payment-${month}`,
+          })),
+        },
+        prior_qualified_home_debt: 100_000,
+        refinanced_principal: 100_000,
+        loan_term_months: 180,
+        total_points_charged: 3_000,
+        points_for_nondeductible_services: 1_000,
+        monthly_payment_records: Array.from({ length: 12 }, (_, index) => ({
+          month: index + 1,
+          document_reference: `2025-payment-${index + 1}`,
+        })),
+        qualified_home_secured_verified: true,
+        points_not_reported_in_box6_verified: true,
+        points_paid_directly_verified: true,
+        acquisition_debt_limit_verified: true,
+      }],
+    },
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule_a?.line_8c_points_no_1098, 133);
+  assertEquals(result.pending.f1040?.line12e_itemized_deductions, 18_133);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(
+    xml,
+    "<Form1098PointsNotReportedAmt>133</Form1098PointsNotReportedAmt>",
+  );
+  await validateXsd(xml, "2024 refinance points on 2025 full return");
+});
+
+Deno.test({
+  name: "XSD: two post-2017 Form 1098 loans share one mortgage interest limit",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const result = runReturn({
+    general,
+    f1098: [
+      {
+        lender_name: "First Lender",
+        recipient_tin: general.taxpayer_ssn,
+        source_document_reference: "2025 first Form 1098",
+        box3_origination_date: "01/15/2020",
+        box1_mortgage_interest: 20_000,
+        box1_current_year_deductible_interest: 16_660,
+        box1_deduction_workpaper_reference: "2025 two-loan Pub. 936 Table 1",
+        for_routing: "A",
+      },
+      {
+        lender_name: "Second Lender",
+        recipient_tin: general.taxpayer_ssn,
+        source_document_reference: "2025 second Form 1098",
+        box3_origination_date: "02/15/2021",
+        box1_mortgage_interest: 16_000,
+        box1_current_year_deductible_interest: 13_328,
+        box1_deduction_workpaper_reference: "2025 two-loan Pub. 936 Table 1",
+        for_routing: "A",
+      },
+    ],
+    f1098_mortgage_limit_review: {
+      mortgage_limit_review: {
+        table1_workpaper_reference: "2025 two-loan Pub. 936 Table 1",
+        all_qualified_home_mortgages_included_verified: true,
+        all_post_2017_acquisition_debt_verified: true,
+        single_filing_status_verified: true,
+        loans: ([
+          ["2025 first Form 1098", 500_000],
+          ["2025 second Form 1098", 400_000],
+        ] as const).map(([source_document_reference, balance]) => ({
+          source_document_reference,
+          monthly_balance_records: Array.from(
+            { length: 12 },
+            (_, index) => ({
+              month: index + 1,
+              closing_balance: balance,
+              lender_statement_reference: `${source_document_reference}-month-${
+                index + 1
+              }`,
+            }),
+          ),
+        })),
+      },
+    },
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(
+    result.pending.schedule_a?.line_8a_mortgage_interest_1098,
+    29_988,
+  );
+  assertEquals(result.pending.f1040?.line12e_itemized_deductions, 29_988);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(
+    xml,
+    "<RptHomeMortgIntAndPointsAmt>29988</RptHomeMortgIntAndPointsAmt>",
+  );
+  await validateXsd(xml, "two-loan mortgage-limit full return");
 });
 
 Deno.test({
@@ -8612,6 +8910,23 @@ Deno.test({
         state: "TX",
         contributions_paid: 100,
         taxable_wages: 7_000,
+        all_household_employees_included: true,
+        prior_year_quarter_threshold_met: false,
+        employee_wages: [{
+          employee_id: "worker-1",
+          payroll_source_reference: "2025-household-payroll-1",
+          relationship: "unrelated",
+          annual_cash_wages: 10_000,
+          age_18_or_older_for_fica: true,
+          ordinary_cash_only: true,
+          quarterly_cash_wages: [10_000, 0, 0, 0],
+          w2: {
+            source_reference: "2025-w2-worker",
+            box2_federal_income_tax_withheld: 0,
+            box3_social_security_wages: 10_000,
+            box5_medicare_wages: 10_000,
+          },
+        }],
       },
     },
   }, extractFilerIdentity(singleGeneral()));
@@ -8664,6 +8979,25 @@ Deno.test({
         all_contributions_paid_on_time: true,
         all_futa_wages_state_taxable: true,
         taxable_futa_wages: 7_000,
+        all_household_employees_included: true,
+        prior_year_quarter_threshold_met: false,
+        employee_wages: [2_500, 2_500, 2_000].map((
+          annual_cash_wages,
+          index,
+        ) => ({
+          employee_id: `worker-${index + 1}`,
+          payroll_source_reference: `2025-household-payroll-${index + 1}`,
+          relationship: "unrelated" as const,
+          annual_cash_wages,
+          age_18_or_older_for_fica: true as const,
+          ordinary_cash_only: true as const,
+          quarterly_cash_wages: [annual_cash_wages, 0, 0, 0] as [
+            number,
+            number,
+            number,
+            number,
+          ],
+        })),
         state_rows: [{
           state: "CA",
           taxable_state_wages: 7_000,
@@ -8698,6 +9032,25 @@ Deno.test({
         state: "OH",
         zero_experience_rate: true,
         taxable_wages: 7_000,
+        all_household_employees_included: true,
+        prior_year_quarter_threshold_met: false,
+        employee_wages: [2_500, 2_500, 2_000].map((
+          annual_cash_wages,
+          index,
+        ) => ({
+          employee_id: `worker-${index + 1}`,
+          payroll_source_reference: `2025-household-payroll-${index + 1}`,
+          relationship: "unrelated" as const,
+          annual_cash_wages,
+          age_18_or_older_for_fica: true as const,
+          ordinary_cash_only: true as const,
+          quarterly_cash_wages: [annual_cash_wages, 0, 0, 0] as [
+            number,
+            number,
+            number,
+            number,
+          ],
+        })),
       },
     },
   }, extractFilerIdentity(singleGeneral()));

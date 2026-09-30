@@ -21,6 +21,7 @@ const completeInputSchema = z.object({
   tax_treatment: scheduleJOrdinaryIncomeInputSchema.shape.tax_treatment,
   farm_net_profit: finiteAmount,
   farm_only_income_verified: z.boolean(),
+  farm_only_unsupported_source_key: z.string().optional(),
   se_tax_deduction: finiteAmount,
   agi: finiteAmount,
   taxable_income_2025: finiteAmount,
@@ -48,7 +49,14 @@ function reconcileCurrentYear(source: ScheduleJCalculationInput): void {
       "Schedule J current-year deductions and taxable income cannot be negative",
     );
   }
-  if (!source.farm_only_income_verified || source.farm_net_profit <= 0) {
+  if (!source.farm_only_income_verified) {
+    throw new Error(
+      source.farm_only_unsupported_source_key
+        ? `Schedule J Schedule F-only election cannot include ${source.farm_only_unsupported_source_key} until attributable farming or fishing income is reconciled`
+        : "Schedule J requires a positive, independently computed Schedule F-only income source",
+    );
+  }
+  if (source.farm_net_profit <= 0) {
     throw new Error(
       "Schedule J requires a positive, independently computed Schedule F-only income source",
     );

@@ -29,10 +29,11 @@ import {
 import {
   f1098,
   itemSchema as f1098ItemSchema,
+  mortgageLimitReviewSchema,
 } from "../nodes/inputs/f1098/index.ts";
 import {
-  mortgage_refinance_points,
   inputSchema as mortgageRefinancePointsInputSchema,
+  mortgage_refinance_points,
 } from "../nodes/inputs/mortgage_refinance_points/index.ts";
 import {
   f1098e,
@@ -670,6 +671,12 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f1099b, itemSchema: f1099bItemSchema, isArray: true },
   { node: f1099r, itemSchema: f1099rItemSchema, isArray: true },
   { node: f1098, itemSchema: f1098ItemSchema, isArray: true },
+  {
+    node: f1098,
+    inputKey: "f1098_mortgage_limit_review",
+    inputSchema: z.object({ mortgage_limit_review: mortgageLimitReviewSchema }),
+    isArray: false,
+  },
   { node: f1098e, itemSchema: f1098eItemSchema, isArray: true },
   { node: f4835, itemSchema: f4835ItemSchema, isArray: true },
   { node: form6252, itemSchema: form6252ItemSchema, isArray: true },

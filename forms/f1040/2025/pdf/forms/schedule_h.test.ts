@@ -89,6 +89,23 @@ Deno.test("Schedule H PDF maps Section A FUTA and Part III to the 2025 widgets",
       state: "OH",
       contributions_paid: 100,
       taxable_wages: 3_100,
+      all_household_employees_included: true,
+      prior_year_quarter_threshold_met: false,
+      employee_wages: [{
+        employee_id: "worker-1",
+        payroll_source_reference: "2025-household-payroll-1",
+        relationship: "unrelated",
+        annual_cash_wages: 3_100,
+        age_18_or_older_for_fica: true,
+        ordinary_cash_only: true,
+        quarterly_cash_wages: [3_100, 0, 0, 0],
+        w2: {
+          source_reference: "2025-w2-worker",
+          box2_federal_income_tax_withheld: 0,
+          box3_social_security_wages: 3_100,
+          box5_medicare_wages: 3_100,
+        },
+      }],
     },
   };
   const projected = scheduleHPdf.projectFields?.(sectionA, {}) ?? {};
@@ -125,12 +142,31 @@ Deno.test("Schedule H PDF maps Section A FUTA and Part III to the 2025 widgets",
 Deno.test("Schedule H PDF maps two Section B rows, totals, and worksheet indicator", () => {
   const sectionB = {
     ...source,
+    ss_wages: 3_000,
+    medicare_wages: 3_000,
     cash_wages_over_quarter_limit: true,
     federal_unemployment: {
       paid_only_one_state: false,
       all_contributions_paid_on_time: true,
       all_futa_wages_state_taxable: true,
       taxable_futa_wages: 3_000,
+      all_household_employees_included: true,
+      prior_year_quarter_threshold_met: false,
+      employee_wages: [{
+        employee_id: "worker-1",
+        payroll_source_reference: "2025-household-payroll-1",
+        relationship: "unrelated",
+        annual_cash_wages: 3_000,
+        age_18_or_older_for_fica: true,
+        ordinary_cash_only: true,
+        quarterly_cash_wages: [3_000, 0, 0, 0],
+        w2: {
+          source_reference: "2025-w2-worker",
+          box2_federal_income_tax_withheld: 0,
+          box3_social_security_wages: 3_000,
+          box5_medicare_wages: 3_000,
+        },
+      }],
       state_rows: [
         {
           state: "OH",
@@ -161,11 +197,11 @@ Deno.test("Schedule H PDF maps two Section B rows, totals, and worksheet indicat
   assertEquals(projected.line19_tentative_credit, 162);
   assertEquals(projected.line23_allowed_credit, 162);
   assertEquals(projected.line24_futa_tax, 18);
-  assertEquals(projected.line26_total_tax, 492);
+  assertEquals(projected.line26_total_tax, 477);
   assertEquals(
     scheduleHPdf.instances?.(projected, filer, {
       schedule_h: sectionB,
-      schedule2: { line9_household_employment: 492 },
+      schedule2: { line9_household_employment: 477 },
     })?.length,
     1,
   );
@@ -200,6 +236,23 @@ Deno.test("Schedule H PDF retains additional Section B rows for line 17 continua
       all_contributions_paid_on_time: true,
       all_futa_wages_state_taxable: true,
       taxable_futa_wages: 3_100,
+      all_household_employees_included: true,
+      prior_year_quarter_threshold_met: false,
+      employee_wages: [{
+        employee_id: "worker-1",
+        payroll_source_reference: "2025-household-payroll-1",
+        relationship: "unrelated",
+        annual_cash_wages: 3_100,
+        age_18_or_older_for_fica: true,
+        ordinary_cash_only: true,
+        quarterly_cash_wages: [3_100, 0, 0, 0],
+        w2: {
+          source_reference: "2025-w2-worker",
+          box2_federal_income_tax_withheld: 0,
+          box3_social_security_wages: 3_100,
+          box5_medicare_wages: 3_100,
+        },
+      }],
       state_rows: ["OH", "NY", "PA"].map((state) => ({
         state,
         taxable_state_wages: 1_000,

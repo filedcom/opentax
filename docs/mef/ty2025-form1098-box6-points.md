@@ -48,9 +48,80 @@ A synthetic $3,000 charge with $1,000 of service fees and six payments on a
 $18,067 on Form 1040 line 12e. The focused cases, full-return XSD fixture,
 and filled-PDF fixture have not run under the agreed implementation-first
 workflow. This bounded route does not resolve mixed acquisition/cash-out
-allocation, improvement-point exceptions, early payoff, later-year amortization,
-multiple-source mortgage-limit allocation, payer-issued bytes, business rules,
+allocation beyond the qualified improvement case below, later-year amortization
+beyond the 2024-origin slice below,
+multiple-source mortgage-limit allocation beyond the bounded two-loan route,
+payer-issued bytes, business rules,
 or ATS acceptance.
+
+The ordinary line 8c source now uses one `refinance_close_year` and
+`refinance_close_month` pair. For a 2024 closing, it requires a referenced
+filed 2024 return, its loan-specific points workpaper, distinct consecutive
+2024 payment records through December, and the precise 2024 deduction
+recomputed from the loan's interest-like points and term. The 2025 side must
+have twelve consecutive payment records, a matching 2025 payer Form 1098,
+and enough term and remaining unamortized points for the claimed amount.
+The bounded $2,000 interest-like-points / 180-month / six prior-payments and
+twelve current-payments fixture expects $67 on the 2024 ledger and $133 on
+2025 Schedule A line 8c. Prior-year improvement and early-payoff combinations
+remain excluded until their opening balance can be reconciled. The filed
+return/workpaper bytes and mortgage-limit allocation across loans beyond the
+bounded two-loan route remain open;
+the fixture is unrun pending the combined batch.
+
+A bounded mixed-use improvement route now records the portion of new loan
+principal used to repay qualified old home debt and the portion used to
+substantially improve the main home. The two amounts must exactly cover the
+new principal, so personal cash-out remains excluded. The improvement portion
+requires a cited expense record and affirmative review of the main-home,
+substantial-improvement, Pub. 936 first-six tests, and own-funds conditions.
+It deducts that portion of interest-like points immediately, then spreads
+the remaining interest-like points over the payment months and loan term.
+The Pub. 936 example of a $100,000 refinance with $75,000 to repay old debt,
+$25,000 for improvement, $2,000 of interest-like points, and six 2025 payments
+on a 180-month loan yields $500 immediately plus $50 ratably, or $550 on
+Schedule A line 8c. A focused fixture is written but unrun. The source still
+requires the reviewed acquisition-debt-limit condition; whole-return
+mortgage-limit allocation beyond the bounded two-loan route and underlying
+expense bytes remain open.
+
+For a 2025 ordinary refinance that is fully paid off in 2025, the source may
+now include `early_payoff_2025` with a full-payoff statement reference, the
+payoff month, explicit full-payoff verification, and confirmation that the
+borrower did not refinance with the same lender. Distinct monthly payment
+records must run consecutively from the first claimed payment through the
+payoff month, with no later record. The remaining interest-like points are
+deducted in the payoff year on line 8c, while service-fee points stay excluded.
+The same-lender refinance exception is rejected by the strict source schema;
+it needs a separate new-loan amortization record. A synthetic three-payment
+July–September payoff case is written to expect $2,000 of line 8c points from
+$3,000 charged less $1,000 of service fees. The fixture remains unrun until
+the combined batch. This route does not prove the payoff statement's bytes,
+historical amortization, or multiple-debt limit allocation.
+
+## Bounded two-loan mortgage limit (implementation written; untested)
+
+For a single filer with exactly two full-year Form 1098 acquisition loans
+originated after December 15, 2017, the public
+`f1098_mortgage_limit_review` workpaper joins both payer copies. It requires
+twelve distinct monthly lender balance references per loan, matching source
+references, a complete-mortgage review, and confirmation that both debts are
+post-2017 home acquisition debt. The source computes the average of each
+loan's twelve closing balances, adds them for Publication 936 Table 1 line 12,
+then rounds the $750,000/line 12 ratio to three decimal places for line 14.
+The two reviewed Form 1098 box 1 deductible amounts must sum to the Table 1
+line 15 result. Native and PDF Schedule A require the final filer to be single,
+both payer recipients to match, and line 8a to equal that result. Other
+mortgage interest and unreported points routes reject in this bounded case.
+An active Form 8396 mortgage-interest credit also rejects in both exporters.
+
+A synthetic pair of $500,000 and $400,000 monthly balances with $20,000 and
+$16,000 of reported interest yields a .833 ratio and $29,988 on Schedule A
+line 8a. Source and full-return XSD fixtures are written but unrun under the
+implementation-first workflow. These structured records do not authenticate
+the lender statements, and this slice does not cover grandfathered debt,
+mixed-use debt, second homes, part-year loans, joint/MFS limits, points,
+Form 8396 interaction, or other mortgage sources.
 
 ## Box 4 recovery audited with the points route
 

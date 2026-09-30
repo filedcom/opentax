@@ -65,10 +65,10 @@ function assertRecipient(
   }
 }
 
-function buildWithheldW2G(
+export function assertWithheldW2GSource(
   item: W2GItem,
   filer: FilerIdentity | undefined,
-): string {
+): void {
   if (
     item.calendar_year !== 2025 || !item.source_document_reference ||
     !item.payer_name?.trim() || !item.payer_name_control ||
@@ -85,6 +85,23 @@ function buildWithheldW2G(
     );
   }
   assertRecipient(item, filer);
+}
+
+function buildWithheldW2G(
+  item: W2GItem,
+  context: MefBuildContext | undefined,
+): string {
+  assertWithheldW2GSource(item, context?.filer);
+  const file = item.issued_copy_attachment_file_name;
+  if (
+    !file || !item.issued_copy_pdf_sha256 ||
+    context?.attachmentSha256ByFileName?.[file] !==
+      item.issued_copy_pdf_sha256
+  ) {
+    throw new Error(
+      "Withheld W-2G needs its payer-issued PDF copy in the prepared MeF bundle with matching SHA-256",
+    );
+  }
   return elements("IRSW2G", [
     element("CalendarYr", 2025),
     element("PayerNameControlTxt", item.payer_name_control),
@@ -128,6 +145,6 @@ export const w2g: MefFormDescriptor<"w2g", unknown, readonly string[]> = {
     const active = source.w2gs.filter((item) =>
       (item.box4_federal_withheld ?? 0) > 0
     );
-    return active.map((item) => buildWithheldW2G(item, context?.filer));
+    return active.map((item) => buildWithheldW2G(item, context));
   },
 };
