@@ -77,10 +77,18 @@ Deno.test("2025 Schedule 1-A PDF rejects unsupported and mismatched line 13b", (
     () =>
       schedule1aPdf.projectFields?.({
         ...source,
-        taxpayer_qualified_overtime_compensation: 100,
+        qualified_w2_overtime: [{
+          employee_ssn: "111223333",
+          employer_ein: "123456789",
+          amount: 100,
+          box1_wages: 100_000,
+          covered_nonexempt_employee: true,
+          premium_included_in_box1: true,
+          source_reference: "Employer box 14 FLSA premium review",
+        }],
       }, { schedule1a: source, f1040: return1040 }),
     Error,
-    "cannot include tips, overtime, or vehicle interest",
+    "cannot include tips, senior, or vehicle claims",
   );
   assertThrows(
     () =>
@@ -143,4 +151,48 @@ Deno.test("2025 Schedule 1-A PDF maps single-employer W-2 tips to Part II", () =
   assertEquals(projected?.line4c_employee_tips, 5_000);
   assertEquals(projected?.line13_tips, 5_000);
   assertEquals(projected?.line38_total, 5_000);
+});
+
+Deno.test("2025 Schedule 1-A PDF maps reviewed W-2 overtime to Part III", () => {
+  const overtimeSource = {
+    filing_status: FilingStatus.Single,
+    magi: 80_000,
+    taxpayer_ssn: "111223333",
+    taxpayer_has_valid_ssn: true,
+    senior_zero_exclusions_review: source.senior_zero_exclusions_review,
+    qualified_w2_overtime: [{
+      employee_ssn: "111223333",
+      employer_ein: "123456789",
+      amount: 4_000,
+      box1_wages: 80_000,
+      covered_nonexempt_employee: true,
+      premium_included_in_box1: true,
+      source_reference: "Employer box 14 FLSA premium review",
+    }],
+  };
+  const overtimeReturn = {
+    filing_status: FilingStatus.Single,
+    line11_agi: 80_000,
+    line13b_additional_deductions: 4_000,
+    schedule1a_line37_senior_deduction: 0,
+    taxpayer_ssn: "111223333",
+    taxpayer_ssn_valid_for_employment: true,
+    taxpayer_ssn_issued_before_due_date: true,
+    taxpayer_tin_issued_by_due_date: true,
+  };
+  const mapped = new Map(schedule1aPdf.fields.map((entry) => [
+    entry.domainKey,
+    entry.pdfField,
+  ]));
+  assertEquals(mapped.get("line14a_w2_overtime"), "form1[0].Page1[0].f1_22[0]");
+  assertEquals(mapped.get("line21_overtime"), "form1[0].Page1[0].f1_31[0]");
+  const projected = schedule1aPdf.projectFields?.(overtimeSource, {
+    schedule1a: overtimeSource,
+    f1040: overtimeReturn,
+  });
+  assertEquals(projected?.line14a_w2_overtime, 4_000);
+  assertEquals(projected?.line14b_zero_1099, 0);
+  assertEquals(projected?.line14c_total_overtime, 4_000);
+  assertEquals(projected?.line21_overtime, 4_000);
+  assertEquals(projected?.line38_total, 4_000);
 });

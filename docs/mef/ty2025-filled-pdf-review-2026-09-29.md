@@ -170,3 +170,26 @@ $5,000 on line 38. The PDF SHA-256 is
 This synthetic review does not authenticate the payer W-2 or residency/SSN
 assertions, exercise other Part II sources, or prove IRS business-rule or ATS
 acceptance.
+
+The `single-two-w2-flsa-overtime-schedule1a` packet was generated with the
+other thirty-two synthetic cases in
+`.state/research/ty2025-filled-pdf-review/2026-09-30-v42/`. Two W-2s report
+$50,000 and $30,000 box 1 wages, $3,000 and $1,000 in separately identified
+box 14 FLSA overtime premiums, and reviewed covered/nonexempt status and
+box-1 inclusion. The graph reports $80,000 AGI, $4,000 additional deduction,
+$60,250 taxable income, $8,175 tax, $8,000 withholding, and $175 owed. Native
+XML contains one Schedule 1-A with $4,000 on lines 14a/14c/15/21/38 and
+zero on line 14b; the full return passed local TY2025 v5.4 XSD.
+
+All four pages were rendered at 120 dpi and inspected. Form 1040 page 1 shows
+the single owner, SSN, $80,000 wages, and No digital-assets check; page 2
+prints $4,000 on line 13b, $60,250 on line 15, $8,175 tax, $8,000
+withholding, and $175 owed. Schedule 1-A page 1 prints the owner name/SSN,
+$80,000 on lines 1/3/16, zero on lines 2e/14b, $4,000 on lines
+14a/14c/15/21, and $150,000 on line 17. Lines 18–20 are blank below the
+phaseout threshold; the unrelated tips part is blank. Page 2 leaves
+vehicle/senior parts blank and prints $4,000 on line 38. The PDF SHA-256 is
+`71f247fc47ad84e02ec87783f9d16dc74d74067fee2499d146b3740e999acfad`.
+This synthetic review does not authenticate payer-issued W-2 or payroll
+bytes, exercise other overtime sources, or prove IRS business-rule or ATS
+acceptance.

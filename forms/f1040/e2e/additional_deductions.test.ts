@@ -50,11 +50,22 @@ Deno.test("Schedule 1-A: overtime and vehicle interest flow from public input to
       taxpayer_tin_issued_by_due_date: true,
     },
     w2: [{
+      employer_ein: "12-3456789",
+      employee_ssn: "111-22-3333",
       box1_wages: 80_000,
       box2_fed_withheld: 8_000,
+      box14_entries: [{
+        description: "FLSA Overtime Premium",
+        amount: 5_000,
+        is_state_sdi_pfml: false,
+      }],
+      flsa_overtime_review: {
+        covered_nonexempt_employee: true,
+        premium_included_in_box1: true,
+        source_reference: "Employer 2025 payroll statement",
+      },
     }],
     schedule1a: {
-      taxpayer_qualified_overtime_compensation: 5_000,
       vehicle_loans: [{
         vin: "1HGCM82633A004352",
         qualified_interest_paid: 2_000,

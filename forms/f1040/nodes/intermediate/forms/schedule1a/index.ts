@@ -36,13 +36,22 @@ export const seniorZeroExclusionsReviewSchema = z.object({
 }).strict();
 
 export const claimInputSchema = z.object({
-  taxpayer_qualified_overtime_compensation: z.number().nonnegative().optional(),
-  spouse_qualified_overtime_compensation: z.number().nonnegative().optional(),
   vehicle_loans: z.array(vehicleLoanSchema).min(1).optional(),
   senior_zero_exclusions_review: seniorZeroExclusionsReviewSchema.optional(),
-});
+}).strict();
 
 export const inputSchema = claimInputSchema.extend({
+  qualified_w2_overtime: z.array(
+    z.object({
+      employee_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+      employer_ein: z.string().regex(/^\d{2}-?\d{7}$/),
+      amount: z.number().nonnegative(),
+      box1_wages: z.number().nonnegative(),
+      covered_nonexempt_employee: z.literal(true),
+      premium_included_in_box1: z.literal(true),
+      source_reference: z.string().trim().min(1),
+    }).strict(),
+  ).optional(),
   qualified_employee_tips: z.array(z.object({
     employee_ssn: z.string(),
     amount: z.number().nonnegative(),
@@ -94,6 +103,22 @@ export const singleEmployerTipsLinesSchema = z.object({
 export type SingleEmployerTipsLines = z.infer<
   typeof singleEmployerTipsLinesSchema
 >;
+
+export const w2OvertimeLinesSchema = z.object({
+  line1_agi: z.number().int(),
+  line3_magi: z.number().int(),
+  line14a_w2_overtime: z.number().int().positive(),
+  line14c_total_overtime: z.number().int().positive(),
+  line15_capped_overtime: z.number().int().positive(),
+  line17_threshold: z.number().int().positive(),
+  line18_excess_magi: z.number().int().nonnegative(),
+  line19_thousands: z.number().int().nonnegative(),
+  line20_reduction: z.number().int().nonnegative(),
+  line21_overtime: z.number().int().positive(),
+  line38_total: z.number().int().positive(),
+}).strict();
+
+export type W2OvertimeLines = z.infer<typeof w2OvertimeLinesSchema>;
 
 const QUALIFIED_TIPS_CAP = 25_000;
 const OVERTIME_CAP = 12_500;
@@ -174,13 +199,24 @@ export function qualifiedOvertimeDeduction(input: Schedule1AInput): number {
     return 0;
   }
 
-  const taxpayerOvertime = input.taxpayer_has_valid_ssn === true
-    ? input.taxpayer_qualified_overtime_compensation ?? 0
-    : 0;
-  const spouseOvertime = input.filing_status === FilingStatus.MFJ &&
-      input.spouse_has_valid_ssn === true
-    ? input.spouse_qualified_overtime_compensation ?? 0
-    : 0;
+  const taxpayerSsn = input.taxpayer_ssn?.replaceAll("-", "");
+  const spouseSsn = input.spouse_ssn?.replaceAll("-", "");
+  const eligibleOvertime = (input.qualified_w2_overtime ?? []).reduce(
+    (sum, entry) => {
+      const employeeSsn = entry.employee_ssn.replaceAll("-", "");
+      if (
+        employeeSsn === taxpayerSsn &&
+        input.taxpayer_has_valid_ssn === true
+      ) return sum + entry.amount;
+      if (
+        input.filing_status === FilingStatus.MFJ &&
+        employeeSsn === spouseSsn &&
+        input.spouse_has_valid_ssn === true
+      ) return sum + entry.amount;
+      return sum;
+    },
+    0,
+  );
   const cap = input.filing_status === FilingStatus.MFJ
     ? OVERTIME_CAP_MFJ
     : OVERTIME_CAP;
@@ -188,7 +224,7 @@ export function qualifiedOvertimeDeduction(input: Schedule1AInput): number {
   if (phaseout === undefined) return 0;
   return Math.max(
     0,
-    Math.min(taxpayerOvertime + spouseOvertime, cap) - phaseout,
+    Math.min(eligibleOvertime, cap) - phaseout,
   );
 }
 
@@ -264,8 +300,7 @@ export function calculateSeniorOnlySchedule1A(
   }
   if (
     (input.qualified_employee_tips?.length ?? 0) > 0 ||
-    (input.taxpayer_qualified_overtime_compensation ?? 0) > 0 ||
-    (input.spouse_qualified_overtime_compensation ?? 0) > 0 ||
+    (input.qualified_w2_overtime?.length ?? 0) > 0 ||
     (input.vehicle_loans?.length ?? 0) > 0
   ) {
     throw new Error(
@@ -331,8 +366,7 @@ export function calculateSingleEmployerTipsSchedule1A(
   }
   if (
     input.qualified_employee_tips?.length !== 1 ||
-    (input.taxpayer_qualified_overtime_compensation ?? 0) > 0 ||
-    (input.spouse_qualified_overtime_compensation ?? 0) > 0 ||
+    (input.qualified_w2_overtime?.length ?? 0) > 0 ||
     (input.vehicle_loans?.length ?? 0) > 0 ||
     seniorDeduction(ctx, input) > 0
   ) {
@@ -400,6 +434,101 @@ export function calculateSingleEmployerTipsSchedule1A(
     line11_thousands: thousands,
     line12_reduction: reduction,
     line13_tips: deduction,
+    line38_total: deduction,
+  });
+}
+
+/** Reviewed FLSA premiums in W-2 box 14 that are included in box 1 wages. */
+export function calculateW2OvertimeSchedule1A(
+  ctx: NodeContext,
+  rawInput: Schedule1AInput,
+): W2OvertimeLines {
+  if (ctx.taxYear !== 2025) {
+    throw new Error("Schedule 1-A overtime filing needs tax year 2025");
+  }
+  const input = inputSchema.parse(rawInput);
+  if (!input.senior_zero_exclusions_review) {
+    throw new Error(
+      "Schedule 1-A overtime filing needs sourced zero-exclusion review for Part I",
+    );
+  }
+  if (
+    !input.qualified_w2_overtime?.length ||
+    (input.qualified_employee_tips?.length ?? 0) > 0 ||
+    (input.vehicle_loans?.length ?? 0) > 0 ||
+    seniorDeduction(ctx, input) > 0
+  ) {
+    throw new Error(
+      "Schedule 1-A W-2 overtime filing cannot include tips, senior, or vehicle claims",
+    );
+  }
+  if (
+    input.magi === undefined || !Number.isSafeInteger(input.magi) ||
+    input.filing_status === undefined ||
+    input.filing_status === FilingStatus.MFS
+  ) {
+    throw new Error(
+      "Schedule 1-A overtime filing needs whole-dollar AGI and eligible filing status",
+    );
+  }
+  const seen = new Set<string>();
+  let total = 0;
+  for (const entry of input.qualified_w2_overtime) {
+    const ssn = entry.employee_ssn.replaceAll("-", "");
+    const employer = entry.employer_ein.replaceAll("-", "");
+    const key = `${ssn}:${employer}`;
+    if (seen.has(key)) {
+      throw new Error(
+        "Schedule 1-A overtime needs one W-2 premium per employee and employer",
+      );
+    }
+    seen.add(key);
+    const taxpayer = ssn === input.taxpayer_ssn?.replaceAll("-", "") &&
+      input.taxpayer_has_valid_ssn === true;
+    const spouse = input.filing_status === FilingStatus.MFJ &&
+      ssn === input.spouse_ssn?.replaceAll("-", "") &&
+      input.spouse_has_valid_ssn === true;
+    if (!taxpayer && !spouse) {
+      throw new Error("Schedule 1-A overtime needs the recipient's valid SSN");
+    }
+    if (
+      !Number.isSafeInteger(entry.amount) || entry.amount <= 0 ||
+      !Number.isSafeInteger(entry.box1_wages) ||
+      entry.amount > entry.box1_wages
+    ) {
+      throw new Error(
+        "Schedule 1-A W-2 overtime premium must be whole dollars included in box 1",
+      );
+    }
+    total += entry.amount;
+  }
+  const threshold = input.filing_status === FilingStatus.MFJ
+    ? TIPS_OVERTIME_PHASEOUT_THRESHOLD_MFJ
+    : TIPS_OVERTIME_PHASEOUT_THRESHOLD;
+  const excess = Math.max(0, input.magi - threshold);
+  const thousands = Math.floor(excess / 1_000);
+  const reduction = thousands * 100;
+  const cap = input.filing_status === FilingStatus.MFJ
+    ? OVERTIME_CAP_MFJ
+    : OVERTIME_CAP;
+  const capped = Math.min(total, cap);
+  const deduction = Math.max(0, capped - reduction);
+  if (deduction <= 0 || deduction !== qualifiedOvertimeDeduction(input)) {
+    throw new Error(
+      "Schedule 1-A overtime deduction does not reconcile to the source graph",
+    );
+  }
+  return w2OvertimeLinesSchema.parse({
+    line1_agi: input.magi,
+    line3_magi: input.magi,
+    line14a_w2_overtime: total,
+    line14c_total_overtime: total,
+    line15_capped_overtime: capped,
+    line17_threshold: threshold,
+    line18_excess_magi: excess,
+    line19_thousands: thousands,
+    line20_reduction: reduction,
+    line21_overtime: deduction,
     line38_total: deduction,
   });
 }

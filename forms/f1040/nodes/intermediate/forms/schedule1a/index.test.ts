@@ -1,7 +1,7 @@
 import { assertEquals } from "@std/assert";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
-import { schedule1a } from "./index.ts";
+import { claimInputSchema, schedule1a } from "./index.ts";
 import { standard_deduction } from "../../worksheets/standard_deduction/index.ts";
 import { FilingStatus } from "../../../types.ts";
 
@@ -12,12 +12,37 @@ function tips(amount: number, employee_ssn = TAXPAYER_SSN) {
   return [{ employee_ssn, amount }];
 }
 
+function overtime(
+  amount: number,
+  employee_ssn = TAXPAYER_SSN,
+  employer_ein = "123456789",
+) {
+  return [{
+    employee_ssn,
+    employer_ein,
+    amount,
+    box1_wages: 50_000,
+    covered_nonexempt_employee: true as const,
+    premium_included_in_box1: true as const,
+    source_reference: "Employer 2025 box 14 FLSA premium and coverage review",
+  }];
+}
+
 function deduction(
   input: Parameters<typeof schedule1a.compute>[1],
 ): number | undefined {
   return fieldsOf(schedule1a.compute(ctx, input).outputs, f1040)
     ?.line13b_additional_deductions;
 }
+
+Deno.test("schedule1a: unsupported direct overtime totals are rejected at public input", () => {
+  assertEquals(
+    claimInputSchema.safeParse({
+      taxpayer_qualified_overtime_compensation: 5_000,
+    }).success,
+    false,
+  );
+});
 
 Deno.test("schedule1a: deducts qualified employee tips", () => {
   assertEquals(
@@ -167,8 +192,9 @@ Deno.test("schedule1a: phaseout never produces a negative deduction", () => {
 Deno.test("schedule1a: caps qualified overtime and applies the whole-$1,000 phaseout", () => {
   assertEquals(
     deduction({
-      taxpayer_qualified_overtime_compensation: 20_000,
+      qualified_w2_overtime: overtime(20_000),
       taxpayer_has_valid_ssn: true,
+      taxpayer_ssn: TAXPAYER_SSN,
       magi: 152_999,
       filing_status: FilingStatus.Single,
     }),
@@ -179,10 +205,14 @@ Deno.test("schedule1a: caps qualified overtime and applies the whole-$1,000 phas
 Deno.test("schedule1a: joint overtime includes only spouses with valid SSNs", () => {
   assertEquals(
     deduction({
-      taxpayer_qualified_overtime_compensation: 10_000,
-      spouse_qualified_overtime_compensation: 8_000,
+      qualified_w2_overtime: [
+        ...overtime(10_000),
+        ...overtime(8_000, "444556666", "987654321"),
+      ],
       taxpayer_has_valid_ssn: true,
       spouse_has_valid_ssn: false,
+      taxpayer_ssn: TAXPAYER_SSN,
+      spouse_ssn: "444556666",
       magi: 200_000,
       filing_status: FilingStatus.MFJ,
     }),
@@ -193,8 +223,9 @@ Deno.test("schedule1a: joint overtime includes only spouses with valid SSNs", ()
 Deno.test("schedule1a: married filing separately cannot deduct overtime", () => {
   assertEquals(
     deduction({
-      taxpayer_qualified_overtime_compensation: 5_000,
+      qualified_w2_overtime: overtime(5_000),
       taxpayer_has_valid_ssn: true,
+      taxpayer_ssn: TAXPAYER_SSN,
       magi: 50_000,
       filing_status: FilingStatus.MFS,
     }),
@@ -285,7 +316,8 @@ Deno.test("schedule1a: routes the enhanced senior amount separately for AMT", ()
   const result = schedule1a.compute(ctx, {
     taxpayer_age_65_or_older: true,
     taxpayer_has_valid_ssn: true,
-    taxpayer_qualified_overtime_compensation: 2_000,
+    qualified_w2_overtime: overtime(2_000),
+    taxpayer_ssn: TAXPAYER_SSN,
     magi: 50_000,
     filing_status: FilingStatus.Single,
   });
@@ -349,7 +381,7 @@ Deno.test("schedule1a: total combines tips, overtime, vehicle interest, and seni
   assertEquals(
     deduction({
       qualified_employee_tips: tips(2_000),
-      taxpayer_qualified_overtime_compensation: 3_000,
+      qualified_w2_overtime: overtime(3_000),
       vehicle_loans: [{
         vin: "1HGCM82633A004352",
         qualified_interest_paid: 1_000,

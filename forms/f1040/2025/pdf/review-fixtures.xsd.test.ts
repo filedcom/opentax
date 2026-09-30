@@ -101,6 +101,27 @@ for (const fixture of pdfReviewFixtures) {
           "<TotalAdditionalDeductionsAmt>5000</TotalAdditionalDeductionsAmt>",
         );
       }
+      if (fixture.id === "single-two-w2-flsa-overtime-schedule1a") {
+        assertEquals(result.pending.f1040.line11_agi, 80_000);
+        assertEquals(result.pending.f1040.line13b_additional_deductions, 4_000);
+        assertStringIncludes(xml, "<IRS1040Schedule1A ");
+        assertStringIncludes(
+          xml,
+          "<QualifiedOvertimeWagesAmt>4000</QualifiedOvertimeWagesAmt>",
+        );
+        assertStringIncludes(
+          xml,
+          "<QualifiedOvertimeForm1099Amt>0</QualifiedOvertimeForm1099Amt>",
+        );
+        assertStringIncludes(
+          xml,
+          "<QualifiedOvertimeCompDedAmt>4000</QualifiedOvertimeCompDedAmt>",
+        );
+        assertStringIncludes(
+          xml,
+          "<TotalAdditionalDeductionsAmt>4000</TotalAdditionalDeductionsAmt>",
+        );
+      }
       if (fixture.id === "single-ira-rollover") {
         assertEquals(result.pending.f1040.line4a_ira_gross, 5_000);
         assertEquals(result.pending.f1040.line4b_ira_taxable, 0);

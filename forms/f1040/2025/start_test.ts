@@ -280,13 +280,12 @@ Deno.test("singleton Form 8936 keeps one MAGI record with its vehicle array", ()
   assertEquals(result.outputs, [{ nodeType: "f8936", fields: form }]);
 });
 
-Deno.test("singleton Schedule 1-A claim routes taxpayer-entered deductions", () => {
+Deno.test("singleton Schedule 1-A claim routes taxpayer-entered vehicle evidence", () => {
   const startNode = buildStartNode(inputNodes);
   const result = startNode.compute(
     { taxYear: 2025, formType: "f1040" },
     {
       schedule1a: {
-        taxpayer_qualified_overtime_compensation: 3_000,
         vehicle_loans: [{
           vin: "1HGCM82633A004352",
           qualified_interest_paid: 1_200,
@@ -297,7 +296,6 @@ Deno.test("singleton Schedule 1-A claim routes taxpayer-entered deductions", () 
   assertEquals(result.outputs, [{
     nodeType: "schedule1a",
     fields: {
-      taxpayer_qualified_overtime_compensation: 3_000,
       vehicle_loans: [{
         vin: "1HGCM82633A004352",
         qualified_interest_paid: 1_200,

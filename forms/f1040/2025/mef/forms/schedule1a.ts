@@ -3,6 +3,7 @@ import { element, elements } from "../../../mef/xml.ts";
 import {
   calculateSeniorOnlySchedule1A,
   calculateSingleEmployerTipsSchedule1A,
+  calculateW2OvertimeSchedule1A,
   inputSchema,
 } from "../../../nodes/intermediate/forms/schedule1a/index.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
@@ -121,6 +122,73 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
         ? element("TipsMAGILessThrshldRedAmt", lines.line12_reduction)
         : "",
       element("QualifiedTipsDeductionAmt", lines.line13_tips),
+      element("TotalAdditionalDeductionsAmt", lines.line38_total),
+    ]);
+  }
+  if ((input.qualified_w2_overtime?.length ?? 0) > 0) {
+    const lines = calculateW2OvertimeSchedule1A(
+      { taxYear: 2025, formType: "f1040" },
+      input,
+    );
+    const matchesRecipient = (
+      sourceSsn: string,
+      inputSsn: string | undefined,
+      returnSsn: string | undefined,
+      employmentValid: boolean | undefined,
+      issuedBeforeDueDate: boolean | undefined,
+      tinIssuedByDueDate: boolean | undefined,
+    ) =>
+      sourceSsn.replaceAll("-", "") === inputSsn?.replaceAll("-", "") &&
+      sourceSsn.replaceAll("-", "") === returnSsn?.replaceAll("-", "") &&
+      employmentValid === true && issuedBeforeDueDate === true &&
+      tinIssuedByDueDate === true;
+    const ownersMatch = input.qualified_w2_overtime!.every((entry) =>
+      matchesRecipient(
+        entry.employee_ssn,
+        input.taxpayer_ssn,
+        form1040.taxpayer_ssn,
+        form1040.taxpayer_ssn_valid_for_employment,
+        form1040.taxpayer_ssn_issued_before_due_date,
+        form1040.taxpayer_tin_issued_by_due_date,
+      ) ||
+      (input.filing_status === FilingStatus.MFJ && matchesRecipient(
+        entry.employee_ssn,
+        input.spouse_ssn,
+        form1040.spouse_ssn,
+        form1040.spouse_ssn_valid_for_employment,
+        form1040.spouse_ssn_issued_before_due_date,
+        form1040.spouse_tin_issued_by_due_date,
+      ))
+    );
+    if (
+      form1040.filing_status !== input.filing_status ||
+      !ownersMatch ||
+      form1040.line11_agi !== lines.line1_agi ||
+      form1040.line13b_additional_deductions !== lines.line38_total ||
+      (form1040.schedule1a_line37_senior_deduction ?? 0) !== 0
+    ) {
+      throw new Error(
+        "Schedule 1-A overtime identity and Part I/VI do not reconcile to Form 1040",
+      );
+    }
+    return elements("IRS1040Schedule1A", [
+      element("AdjustedGrossIncomeAmt", lines.line1_agi),
+      element("ModifiedAGIAmt", lines.line3_magi),
+      element("QualifiedOvertimeWagesAmt", lines.line14a_w2_overtime),
+      element("QualifiedOvertimeForm1099Amt", 0),
+      element("TotalQualifiedOvertimeAmt", lines.line14c_total_overtime),
+      element("SmallerOvertimeOrMaxDedAmt", lines.line15_capped_overtime),
+      element("OvertimeFilingStatusThrshldAmt", lines.line17_threshold),
+      lines.line18_excess_magi > 0
+        ? element("OtMAGILessThrshldAmt", lines.line18_excess_magi)
+        : "",
+      lines.line18_excess_magi > 0
+        ? element("OtMAGILessThrshldDivideNum", lines.line19_thousands)
+        : "",
+      lines.line18_excess_magi > 0
+        ? element("OtMAGILessThrshldRedAmt", lines.line20_reduction)
+        : "",
+      element("QualifiedOvertimeCompDedAmt", lines.line21_overtime),
       element("TotalAdditionalDeductionsAmt", lines.line38_total),
     ]);
   }

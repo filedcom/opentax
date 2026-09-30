@@ -689,6 +689,67 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-two-w2-flsa-overtime-schedule1a",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        taxpayer_ssn_valid_for_employment: true,
+        taxpayer_ssn_issued_before_due_date: true,
+        taxpayer_tin_issued_by_due_date: true,
+      },
+      w2: [
+        {
+          ...wage(50_000, 5_000, "First Employer", "12-3456789"),
+          employee_ssn: "111-22-3333",
+          box14_entries: [{
+            description: "FLSA Overtime Premium",
+            amount: 3_000,
+            is_state_sdi_pfml: false,
+          }],
+          flsa_overtime_review: {
+            covered_nonexempt_employee: true,
+            premium_included_in_box1: true,
+            source_reference: "First Employer 2025 payroll statement",
+          },
+        },
+        {
+          ...wage(30_000, 3_000, "Second Employer", "98-7654321"),
+          employee_ssn: "111-22-3333",
+          box14_entries: [{
+            description: "FLSA Overtime Premium",
+            amount: 1_000,
+            is_state_sdi_pfml: false,
+          }],
+          flsa_overtime_review: {
+            covered_nonexempt_employee: true,
+            premium_included_in_box1: true,
+            source_reference: "Second Employer 2025 payroll statement",
+          },
+        },
+      ],
+      schedule1a: {
+        senior_zero_exclusions_review: {
+          no_section933_puerto_rico_excluded_income: true,
+          section933_review_source_reference:
+            "Synthetic 2025 residency and income review",
+          no_form2555_filed: true,
+          form2555_review_source_reference:
+            "Synthetic 2025 foreign-income review",
+          no_form4563_filed: true,
+          form4563_review_source_reference:
+            "Synthetic 2025 Samoa-source income review",
+        },
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule1a"],
+    reviewFocus: [
+      "Two reviewed FLSA premiums in W-2 box 14 add to Schedule 1-A Part III line 14a",
+      "Schedule 1-A Part III lines 14a/14c/15/21 and line 38 print 4,000",
+      "Form 1040 line 13b prints the same 4,000 with correct tax and refund",
+    ],
+  },
+  {
     id: "single-w2-qualified-tips-schedule1a",
     inputs: {
       general: {

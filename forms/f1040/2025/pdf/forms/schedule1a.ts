@@ -2,11 +2,12 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import {
   calculateSeniorOnlySchedule1A,
   calculateSingleEmployerTipsSchedule1A,
+  calculateW2OvertimeSchedule1A,
   inputSchema,
 } from "../../../nodes/intermediate/forms/schedule1a/index.ts";
 import { schedule1a } from "../../mef/forms/schedule1a.ts";
 
-// Checked against the two-page 2025 IRS AcroForm. Parts III-IV remain unsupported.
+// Checked against the two-page 2025 IRS AcroForm. Part IV remains unsupported.
 const page1 = "form1[0].Page1[0]";
 const page2 = "form1[0].Page2[0]";
 const fields: ReadonlyArray<PdfFieldEntry> = [
@@ -58,6 +59,49 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     pdfField: `${page1}.f1_20[0]`,
   },
   { kind: "text", domainKey: "line13_tips", pdfField: `${page1}.f1_21[0]` },
+  {
+    kind: "text",
+    domainKey: "line14a_w2_overtime",
+    pdfField: `${page1}.f1_22[0]`,
+  },
+  {
+    kind: "text",
+    domainKey: "line14b_zero_1099",
+    pdfField: `${page1}.f1_23[0]`,
+    printZero: true,
+  },
+  {
+    kind: "text",
+    domainKey: "line14c_total_overtime",
+    pdfField: `${page1}.f1_24[0]`,
+  },
+  {
+    kind: "text",
+    domainKey: "line15_capped_overtime",
+    pdfField: `${page1}.f1_25[0]`,
+  },
+  { kind: "text", domainKey: "line16_magi", pdfField: `${page1}.f1_26[0]` },
+  {
+    kind: "text",
+    domainKey: "line17_threshold",
+    pdfField: `${page1}.f1_27[0]`,
+  },
+  {
+    kind: "text",
+    domainKey: "line18_excess_magi",
+    pdfField: `${page1}.f1_28[0]`,
+  },
+  {
+    kind: "text",
+    domainKey: "line19_thousands",
+    pdfField: `${page1}.f1_29[0]`,
+  },
+  {
+    kind: "text",
+    domainKey: "line20_reduction",
+    pdfField: `${page1}.f1_30[0]`,
+  },
+  { kind: "text", domainKey: "line21_overtime", pdfField: `${page1}.f1_31[0]` },
   { kind: "text", domainKey: "line31_magi", pdfField: `${page2}.f2_15[0]` },
   {
     kind: "text",
@@ -126,6 +170,25 @@ export const schedule1aPdf: PdfFormDescriptor = {
             line10_excess_magi: undefined,
             line11_thousands: undefined,
             line12_reduction: undefined,
+          }
+          : {}),
+      };
+    }
+    if ((input.qualified_w2_overtime?.length ?? 0) > 0) {
+      const lines = calculateW2OvertimeSchedule1A(
+        { taxYear: 2025, formType: "f1040" },
+        input,
+      );
+      return {
+        ...lines,
+        line2e_zero_exclusions: 0,
+        line14b_zero_1099: 0,
+        line16_magi: lines.line3_magi,
+        ...(lines.line18_excess_magi === 0
+          ? {
+            line18_excess_magi: undefined,
+            line19_thousands: undefined,
+            line20_reduction: undefined,
           }
           : {}),
       };

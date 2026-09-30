@@ -303,6 +303,70 @@ Deno.test("qualified tips need the W-2 employee SSN for filer attribution", () =
   );
 });
 
+Deno.test("reviewed W-2 box 14 FLSA overtime premium routes to Schedule 1-A", () => {
+  const result = compute([minimalItem({
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    box1_wages: 80_000,
+    box14_entries: [{
+      description: "FLSA Overtime Premium",
+      amount: 4_000,
+      is_state_sdi_pfml: false,
+    }],
+    flsa_overtime_review: {
+      covered_nonexempt_employee: true,
+      premium_included_in_box1: true,
+      source_reference: "2025 employer payroll statement",
+    },
+  })]);
+  assertEquals(fieldsOf(result.outputs, schedule1a)?.qualified_w2_overtime, [{
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    amount: 4_000,
+    box1_wages: 80_000,
+    covered_nonexempt_employee: true,
+    premium_included_in_box1: true,
+    source_reference: "2025 employer payroll statement",
+  }]);
+});
+
+Deno.test("unreviewed W-2 box 14 overtime premium does not claim Schedule 1-A", () => {
+  const result = compute([minimalItem({
+    employee_ssn: "111223333",
+    employer_ein: "123456789",
+    box1_wages: 80_000,
+    box14_entries: [{
+      description: "FLSA Overtime Premium",
+      amount: 4_000,
+      is_state_sdi_pfml: false,
+    }],
+  })]);
+  assertEquals(fieldsOf(result.outputs, schedule1a), undefined);
+});
+
+Deno.test("W-2 FLSA overtime review rejects premium above box 1 wages", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        employee_ssn: "111223333",
+        employer_ein: "123456789",
+        box1_wages: 3_000,
+        box14_entries: [{
+          description: "FLSA Overtime Premium",
+          amount: 4_000,
+          is_state_sdi_pfml: false,
+        }],
+        flsa_overtime_review: {
+          covered_nonexempt_employee: true,
+          premium_included_in_box1: true,
+          source_reference: "2025 employer payroll statement",
+        },
+      })]),
+    Error,
+    "premium included in box 1",
+  );
+});
+
 Deno.test("invalid tipped occupation code is rejected", () => {
   const parsed = w2.inputSchema.safeParse({
     w2s: [

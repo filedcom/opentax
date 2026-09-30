@@ -156,6 +156,13 @@ export const w2ItemSchema = z.object({
   box14_entries: z.array(box14EntrySchema).optional().describe(
     "Other — employer-labeled items; SDI/PFML deductible on Sch A",
   ),
+  flsa_overtime_review: z.object({
+    covered_nonexempt_employee: z.literal(true),
+    premium_included_in_box1: z.literal(true),
+    source_reference: z.string().trim().min(1),
+  }).strict().optional().describe(
+    "Source review for an employer-identified FLSA overtime premium in box 14",
+  ),
   box14b_tipped_code: z.string().regex(/^\d{3}$/).optional().describe(
     "Treasury Tipped Occupation Code",
   ),
@@ -216,6 +223,23 @@ function validateItem(
   ssTaxPerEmployer: number,
   retirementLimits: Record<string, Record<number, number>>,
 ): void {
+  if (item.flsa_overtime_review !== undefined) {
+    const premiums = (item.box14_entries ?? []).filter((entry) =>
+      entry.description.trim().toLowerCase() === "flsa overtime premium"
+    );
+    if (
+      premiums.length !== 1 || premiums[0].amount <= 0 ||
+      premiums[0].amount > item.box1_wages ||
+      premiums[0].is_state_sdi_pfml ||
+      item.box13_statutory_employee === true ||
+      !/^\d{3}-?\d{2}-?\d{4}$/.test(item.employee_ssn ?? "") ||
+      !/^\d{2}-?\d{7}$/.test(item.employer_ein ?? "")
+    ) {
+      throw new Error(
+        "W-2 FLSA overtime review needs one positive box 14 premium included in box 1 and source employer/employee identities",
+      );
+    }
+  }
   if (
     item.box14b_tipped_code !== undefined &&
     (item.box7_ss_tips ?? 0) > 0 &&
@@ -587,6 +611,26 @@ function qualifiedTipsOutput(w2s: W2Items): NodeOutput[] {
     : [];
 }
 
+function qualifiedOvertimeOutput(w2s: W2Items): NodeOutput[] {
+  const premiums = regularItems(w2s)
+    .filter((item) => item.flsa_overtime_review !== undefined)
+    .map((item) => ({
+      employee_ssn: item.employee_ssn!,
+      employer_ein: item.employer_ein!,
+      amount:
+        item.box14_entries!.find((entry) =>
+          entry.description.trim().toLowerCase() === "flsa overtime premium"
+        )!.amount,
+      box1_wages: item.box1_wages,
+      covered_nonexempt_employee: true as const,
+      premium_included_in_box1: true as const,
+      source_reference: item.flsa_overtime_review!.source_reference,
+    }));
+  return premiums.length > 0
+    ? [output(schedule1a, { qualified_w2_overtime: premiums })]
+    : [];
+}
+
 function box12NodeOutputs(w2s: W2Items): NodeOutput[] {
   const entries = regularItems(w2s).flatMap((item) => item.box12_entries ?? []);
   const allEntries = w2s.flatMap((item) => item.box12_entries ?? []);
@@ -783,6 +827,7 @@ class W2Node extends TaxNode<typeof inputSchema> {
       ...scheduleSEOutput(input.w2s),
       output(form8919, { w2_sources: form8919W2Sources(input.w2s) }),
       ...qualifiedTipsOutput(input.w2s),
+      ...qualifiedOvertimeOutput(input.w2s),
       ...box12NodeOutputs(input.w2s),
       this.outputNodes.output(f1040, f1040Fields as AtLeastOne<F1040Input>),
     ];

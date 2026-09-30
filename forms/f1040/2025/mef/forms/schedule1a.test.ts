@@ -2,6 +2,7 @@ import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   calculateSeniorOnlySchedule1A,
   calculateSingleEmployerTipsSchedule1A,
+  calculateW2OvertimeSchedule1A,
   type SeniorOnlyLines,
   seniorZeroExclusionsReviewSchema,
 } from "../../../nodes/intermediate/forms/schedule1a/index.ts";
@@ -85,6 +86,142 @@ const singleTips1040 = {
   taxpayer_ssn_issued_before_due_date: true,
   taxpayer_tin_issued_by_due_date: true,
 };
+
+const overtimeEntry = {
+  employee_ssn: "111223333",
+  employer_ein: "123456789",
+  amount: 4_000,
+  box1_wages: 80_000,
+  covered_nonexempt_employee: true as const,
+  premium_included_in_box1: true as const,
+  source_reference: "Employer box 14 FLSA premium and coverage review",
+};
+
+const singleOvertime = {
+  filing_status: FilingStatus.Single,
+  magi: 80_000,
+  taxpayer_ssn: "111223333",
+  taxpayer_has_valid_ssn: true,
+  senior_zero_exclusions_review: review,
+  qualified_w2_overtime: [
+    { ...overtimeEntry, amount: 3_000 },
+    { ...overtimeEntry, employer_ein: "987654321", amount: 1_000 },
+  ],
+};
+
+const singleOvertime1040 = {
+  filing_status: FilingStatus.Single,
+  line11_agi: 80_000,
+  line13b_additional_deductions: 4_000,
+  schedule1a_line37_senior_deduction: 0,
+  taxpayer_ssn: "111223333",
+  taxpayer_ssn_valid_for_employment: true,
+  taxpayer_ssn_issued_before_due_date: true,
+  taxpayer_tin_issued_by_due_date: true,
+};
+
+Deno.test("Schedule 1-A two-employer W-2 overtime fills Part III and reconciles", () => {
+  const lines = calculateW2OvertimeSchedule1A(
+    { taxYear: 2025, formType: "f1040" },
+    singleOvertime,
+  );
+  assertEquals(lines.line14a_w2_overtime, 4_000);
+  assertEquals(lines.line21_overtime, 4_000);
+  const xml = schedule1a.build(singleOvertime, {
+    pending: { f1040: singleOvertime1040 },
+  });
+  assertStringIncludes(
+    xml,
+    "<QualifiedOvertimeWagesAmt>4000</QualifiedOvertimeWagesAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<QualifiedOvertimeForm1099Amt>0</QualifiedOvertimeForm1099Amt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<QualifiedOvertimeCompDedAmt>4000</QualifiedOvertimeCompDedAmt>",
+  );
+});
+
+Deno.test("Schedule 1-A joint W-2 overtime caps both owners and applies whole-thousand phaseout", () => {
+  const jointOvertime = {
+    ...singleOvertime,
+    filing_status: FilingStatus.MFJ,
+    magi: 301_999,
+    spouse_ssn: "444556666",
+    spouse_has_valid_ssn: true,
+    qualified_w2_overtime: [
+      { ...overtimeEntry, amount: 15_000 },
+      {
+        ...overtimeEntry,
+        employee_ssn: "444556666",
+        employer_ein: "987654321",
+        amount: 12_000,
+      },
+    ],
+  };
+  const lines = calculateW2OvertimeSchedule1A(
+    { taxYear: 2025, formType: "f1040" },
+    jointOvertime,
+  );
+  assertEquals(lines.line14a_w2_overtime, 27_000);
+  assertEquals(lines.line15_capped_overtime, 25_000);
+  assertEquals(lines.line18_excess_magi, 1_999);
+  assertEquals(lines.line19_thousands, 1);
+  assertEquals(lines.line20_reduction, 100);
+  assertEquals(lines.line21_overtime, 24_900);
+  const xml = schedule1a.build(jointOvertime, {
+    pending: {
+      f1040: {
+        ...singleOvertime1040,
+        filing_status: FilingStatus.MFJ,
+        line11_agi: 301_999,
+        line13b_additional_deductions: 24_900,
+        spouse_ssn: "444556666",
+        spouse_ssn_valid_for_employment: true,
+        spouse_ssn_issued_before_due_date: true,
+        spouse_tin_issued_by_due_date: true,
+      },
+    },
+  });
+  assertStringIncludes(
+    xml,
+    "<OtMAGILessThrshldDivideNum>1</OtMAGILessThrshldDivideNum>",
+  );
+  assertStringIncludes(
+    xml,
+    "<QualifiedOvertimeCompDedAmt>24900</QualifiedOvertimeCompDedAmt>",
+  );
+});
+
+Deno.test("Schedule 1-A W-2 overtime enforces source ownership and duplicate employer", () => {
+  assertThrows(
+    () =>
+      schedule1a.build({
+        ...singleOvertime,
+        qualified_w2_overtime: [
+          overtimeEntry,
+          { ...overtimeEntry, amount: 500 },
+        ],
+      }, { pending: { f1040: singleOvertime1040 } }),
+    Error,
+    "one W-2 premium per employee and employer",
+  );
+  assertThrows(
+    () =>
+      schedule1a.build(singleOvertime, {
+        pending: {
+          f1040: {
+            ...singleOvertime1040,
+            taxpayer_ssn_issued_before_due_date: false,
+          },
+        },
+      }),
+    Error,
+    "do not reconcile",
+  );
+});
 
 Deno.test("Schedule 1-A single-employer W-2 tips source fills Part II and reconciles", () => {
   const lines = calculateSingleEmployerTipsSchedule1A(
@@ -280,10 +417,10 @@ Deno.test("Schedule 1-A integration rejects incomplete and unsupported line 13b"
     () =>
       buildMefXml({
         f1040: joint1040,
-        schedule1a: { ...joint, taxpayer_qualified_overtime_compensation: 100 },
+        schedule1a: { ...joint, qualified_w2_overtime: [overtimeEntry] },
       }, filer),
     Error,
-    "cannot include tips, overtime, or vehicle interest",
+    "cannot include tips, senior, or vehicle claims",
   );
   assertThrows(
     () =>
@@ -323,12 +460,12 @@ Deno.test("Schedule 1-A senior-only MeF rejects missing review, other claims, an
     () =>
       schedule1a.build({
         ...joint,
-        taxpayer_qualified_overtime_compensation: 100,
+        qualified_w2_overtime: [overtimeEntry],
       }, {
         pending: { f1040: joint1040 },
       }),
     Error,
-    "cannot include tips, overtime, or vehicle interest",
+    "cannot include tips, senior, or vehicle claims",
   );
   assertThrows(
     () =>
