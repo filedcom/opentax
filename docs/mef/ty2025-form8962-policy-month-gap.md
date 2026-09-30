@@ -45,6 +45,14 @@ send net PTC on line 26 to Schedule 3 line 9 and excess APTC repayment on line
 
 ## No-APTC positive PTC: bounded monthly route written, unrun
 
+The one-filer, one-policy 200%-FPL monthly path now has a full-return source
+case. A $30,120 W-2 and twelve covered zero-APTC months with separately
+determined SLCSP and timely full-payment records produce $8,400 of credit on
+Form 8962, Schedule 3 line 9, and Form 1040 line 31. The complete native
+return passes local TY2025 v5.4 XSD, the PDF packet builds, and 149 focused
+cases across this route pass. PDF visual review and the final bulk regression
+remain open. The broader boundaries below still apply.
+
 The [2025 Form 8962 instructions](https://www.irs.gov/instructions/i8962)
 require Form 8962 when the taxpayer claims a PTC even if no APTC was paid. They
 also warn that Form 1095-A column B can be blank, zero, or wrong in that case,

@@ -40,7 +40,10 @@ line choice, and the premium-payment timing rule.
   payment evidence, partial payments requiring the special 2025 no-termination
   test, and premiums paid after the unextended due date.
 
-The added focused cases cover positive monthly and annual 200%-FPL MeF/PDF
-projection paths, income-figure tampering, absent monthly evidence, and the
-below-100%-FPL stop. These cases have not been run as part of this isolated
-implementation tranche; they belong to the coordinated full validation batch.
+The focused Form 8962 source, calculation, MeF, and PDF cases pass: 148/148
+across the relevant files. A separate full-return case passes from a $30,120
+W-2 and twelve no-APTC Form 1095-A policy months through Form 8962's $8,400
+credit, Schedule 3 line 9, Form 1040 line 31, twelve native monthly groups,
+local TY2025 v5.4 XSD validation, and PDF packet generation. The PDF projector
+shows $650 credit in January and $750 in July. The completed packet has not
+yet had a visual review, and the final full regression remains open.
