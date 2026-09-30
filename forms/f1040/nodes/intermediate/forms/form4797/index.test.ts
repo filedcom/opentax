@@ -1,5 +1,5 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { form4797, inputSchema } from "./index.ts";
+import { form4797, form4797EicCapitalExclusion, inputSchema } from "./index.ts";
 
 function compute(input: Record<string, unknown>) {
   return form4797.compute(
@@ -63,6 +63,19 @@ Deno.test("Part I: pure §1231 gain routes to schedule_d line_11_form2439", () =
   const result = compute({ section_1231_gain: 10_000 });
   const sd = findOutput(result, "schedule_d");
   assertEquals(sd?.fields.line_11_form2439, 10_000);
+  assertEquals(
+    form4797EicCapitalExclusion({ section_1231_gain: 10_000 }),
+    10_000,
+  );
+});
+
+Deno.test("EIC Form 4797 exclusion uses line 9 after prior section 1231 loss recapture", () => {
+  const input = { section_1231_gain: 10_000, nonrecaptured_1231_loss: 4_000 };
+  assertEquals(
+    findOutput(compute(input), "schedule_d")?.fields.line_11_form2439,
+    6_000,
+  );
+  assertEquals(form4797EicCapitalExclusion(input), 6_000);
 });
 
 Deno.test("passive property sale source routes dated Part I and Part II gains", () => {
@@ -205,7 +218,7 @@ Deno.test("mixed retained passive sale nets prior Part I and II PAL once", () =>
     prior_unallowed_4797_part1: 3_000,
     prior_unallowed_4797_part2: 1_000,
   };
-  const result = compute({
+  const input = {
     passive_activity_sources: [activity],
     passive_disposed_activity_ids: [activity.activity_id],
     passive_property_sales: [
@@ -234,11 +247,13 @@ Deno.test("mixed retained passive sale nets prior Part I and II PAL once", () =>
         entire_activity_interest_disposed: false,
       },
     ],
-  });
+  };
+  const result = compute(input);
   assertEquals(
     findOutput(result, "schedule_d")?.fields.line_11_form2439,
     5_000,
   );
+  assertEquals(form4797EicCapitalExclusion(input), 5_000);
   assertEquals(
     findOutput(result, "schedule1")?.fields.line4_other_gains,
     1_000,
@@ -317,6 +332,12 @@ Deno.test("active rental sale defers Part I and II PAL until modified AGI is kno
     findOutput(result, "schedule_d")?.fields.line_11_form2439,
     2_000,
   );
+  assertThrows(
+    () => form4797EicCapitalExclusion(input),
+    Error,
+    "needs finalized rental PAL",
+  );
+  assertEquals(form4797EicCapitalExclusion(input, 1_500), 500);
   assertEquals(
     findOutput(result, "agi_aggregator")?.fields.pal_pending_active_4797,
     true,
