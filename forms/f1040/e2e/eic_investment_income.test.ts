@@ -81,6 +81,37 @@ function run(
   }, { taxYear: 2025, formType: "f1040" });
 }
 
+function runCapital(
+  capitalGainDistribution: number,
+  section1231Gain?: number,
+) {
+  return execute(plan, registry, {
+    general,
+    w2: [w2],
+    ...(capitalGainDistribution > 0
+      ? {
+        f1099div: [{
+          payerName: "Example Broker",
+          isNominee: false,
+          box11: false,
+          box1a: 0,
+          box2a: capitalGainDistribution,
+        }],
+      }
+      : {}),
+    ...(section1231Gain !== undefined
+      ? {
+        k1_s_corp: [{
+          corporation_name: "Example S Corp",
+          corporation_ein: "123456789",
+          source_document_reference: "Synthetic 2025 K-1",
+          box9_net_1231: section1231Gain,
+        }],
+      }
+      : {}),
+  }, { taxYear: 2025, formType: "f1040" });
+}
+
 Deno.test("EIC investment limit follows filed interest and dividends through the full graph", async () => {
   const atLimit = run(11_950);
   assertEquals(atLimit.diagnostics, []);
@@ -142,6 +173,74 @@ Deno.test("EIC investment limit follows filed interest and dividends through the
   };
   assertThrows(
     () => buildMefXml(buildPending(changedReturn), filer),
+    Error,
+    "investment income differs",
+  );
+});
+
+Deno.test("EIC investment limit includes capital distributions but subtracts Form 4797 section 1231 gain", async () => {
+  const atLimit = runCapital(11_950);
+  assertEquals(atLimit.diagnostics, []);
+  assertEquals(atLimit.pending.eitc.investment_income_floor, 11_950);
+  assertEquals(atLimit.pending.f1040.line7a_cap_gain_distrib, 11_950);
+  const credit = atLimit.pending.f1040.line27_eitc;
+  if (typeof credit !== "number" || credit <= 0) {
+    throw new Error("Expected a positive EIC at the capital-gain limit");
+  }
+  const filer = extractFilerIdentity(atLimit.pending.f1040);
+  const xml = buildMefXml(buildPending(atLimit.pending), filer);
+  const xsd = new URL(
+    "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    import.meta.url,
+  ).pathname;
+  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(xmlPath, xml);
+    const validation = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsd, xmlPath],
+      stderr: "piped",
+    }).output();
+    assertEquals(
+      validation.code,
+      0,
+      new TextDecoder().decode(validation.stderr),
+    );
+  } finally {
+    await Deno.remove(xmlPath);
+  }
+
+  const overLimit = runCapital(11_951);
+  assertEquals(overLimit.diagnostics, []);
+  assertEquals(overLimit.pending.eitc.investment_income_floor, 11_951);
+  assertEquals(overLimit.pending.f1040.line27_eitc, undefined);
+
+  const businessGain = runCapital(0, 11_951);
+  assertEquals(businessGain.diagnostics, []);
+  assertEquals(businessGain.pending.eitc.investment_income_floor, 0);
+  assertEquals(businessGain.pending.f1040.line7_capital_gain, 11_951);
+  const businessCredit = businessGain.pending.f1040.line27_eitc;
+  if (typeof businessCredit !== "number" || businessCredit <= 0) {
+    throw new Error("Expected positive EIC after the Form 4797 adjustment");
+  }
+  buildMefXml(
+    buildPending(businessGain.pending),
+    extractFilerIdentity(businessGain.pending.f1040),
+  );
+  const changedSource = {
+    ...businessGain.pending,
+    form4797: { section_1231_gain: 0 },
+  };
+  assertThrows(
+    () =>
+      buildMefXml(
+        buildPending(changedSource),
+        extractFilerIdentity(businessGain.pending.f1040),
+      ),
+    Error,
+    "investment income differs",
+  );
+  assertThrows(
+    () => irs1040Pdf.projectFields?.(businessGain.pending.f1040, changedSource),
     Error,
     "investment income differs",
   );

@@ -69,6 +69,10 @@ class AgiFinalNode extends TaxNode<typeof inputSchema> {
       pal_pending_active_4797: false,
       line7_capital_gain: input.final_capital_gain,
       line7a_cap_gain_distrib: input.final_cap_gain_distrib,
+      form4797_1231_capital_gain: Math.max(
+        0,
+        (pre.form4797_1231_capital_gain ?? 0) - input.allowed_part_i,
+      ),
       line4_other_gains: (pre.line4_other_gains ?? 0) -
         input.allowed_part_ii + input.part_i_ordinary_loss,
       pal_4797_preapplied_loss: input.allowed_part_i + input.allowed_part_ii,

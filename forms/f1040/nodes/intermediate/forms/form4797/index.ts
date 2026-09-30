@@ -273,6 +273,26 @@ function totalSection1231(input: Form4797Input): number {
   ).reduce((sum, sale) => sum + passiveSaleGain(sale), 0);
 }
 
+/** Pub. 596 Worksheet 1 line 6: Form 4797 line 9 when §1231 recapture applies. */
+export function form4797EicCapitalExclusion(
+  rawInput: unknown,
+  activeRentalAllowedPartI?: number,
+): number {
+  const input = inputSchema.parse(rawInput);
+  if (input.investment_1245_dispositions !== undefined) return 0;
+  const activeRental = activeRentalMixedSale(input);
+  if (activeRental && activeRentalAllowedPartI === undefined) {
+    throw new Error("EIC Form 4797 exclusion needs finalized rental PAL");
+  }
+  const allocation = activeRental ? undefined : mixedPassiveAllocation(input);
+  const gross = totalSection1231(input) -
+    (allocation?.allowedPartI ?? 0) - (activeRentalAllowedPartI ?? 0);
+  return netSection1231GainForScheduleD(
+    gross,
+    input.nonrecaptured_1231_loss ?? 0,
+  );
+}
+
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
 // Returns true if the input contains any computable sale data.
@@ -520,6 +540,10 @@ class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
       }));
       outputs.push(output(agi_aggregator, {
         pal_pending_active_4797: true,
+        form4797_1231_capital_gain: netSection1231GainForScheduleD(
+          grossGain,
+          priorLoss,
+        ),
         pal_current_4797_gain: saleGains.reduce(
           (sum, sale) => sum + sale.gain,
           0,
@@ -557,7 +581,15 @@ class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
 
     // Schedule D: §1231 net gain → LT capital gain (line 11)
     const sdOut = scheduleDOutput(grossGain, priorLoss);
-    if (sdOut !== null) outputs.push(sdOut);
+    if (sdOut !== null) {
+      outputs.push(sdOut);
+      outputs.push(output(agi_aggregator, {
+        form4797_1231_capital_gain: netSection1231GainForScheduleD(
+          grossGain,
+          priorLoss,
+        ),
+      }));
+    }
 
     // Schedule 1 / AGI: §1231 net loss (ordinary) + recaptured gain + Part II
     const ordinary = ordinaryAmount(grossGain, priorLoss, partIIOrdinaryGain);

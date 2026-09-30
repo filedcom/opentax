@@ -9,6 +9,7 @@ import {
   priorEicDisallowanceEligible,
 } from "../nodes/intermediate/forms/eitc/index.ts";
 import { inputSchema as f8862InputSchema } from "../nodes/inputs/f8862/index.ts";
+import { form4797EicCapitalExclusion } from "../nodes/intermediate/forms/form4797/index.ts";
 
 /** Check a positive Form 1040 EIC against the reviewed source before export. */
 export function assertEicSource(
@@ -40,15 +41,27 @@ export function assertEicSource(
     const current = Array.isArray(value) ? value[value.length - 1] : value;
     return typeof current === "number" ? current : 0;
   };
+  const agiFinal = pending?.agi_final as Record<string, unknown> | undefined;
+  const allowedPartI = typeof agiFinal?.allowed_part_i === "number"
+    ? agiFinal.allowed_part_i
+    : undefined;
+  const form4797Exclusion = pending?.form4797 === undefined
+    ? 0
+    : form4797EicCapitalExclusion(pending.form4797, allowedPartI);
+  const capitalGain = Math.max(
+    0,
+    filedAmount("line7_capital_gain") + filedAmount("line7a_cap_gain_distrib"),
+  );
   const investmentIncomeFloor = Math.max(0, filedAmount("line2a_tax_exempt")) +
     Math.max(0, filedAmount("line2b_taxable_interest")) +
-    Math.max(0, filedAmount("line3b_ordinary_dividends"));
+    Math.max(0, filedAmount("line3b_ordinary_dividends")) +
+    Math.max(0, capitalGain - form4797Exclusion);
   if (
     !("investment_income_floor" in result) ||
     result.investment_income_floor !== investmentIncomeFloor
   ) {
     throw new Error(
-      "Form 1040 EIC investment income differs from filed interest and dividends",
+      "Form 1040 EIC investment income differs from filed interest, dividends, and gains",
     );
   }
   const source = generalInputSchema.safeParse(pending?.general);
