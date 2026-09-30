@@ -1,8 +1,5 @@
 # TY2025 Form 1040 product board
 
-The [product plan](product_plan.md) records the execution sequence and current
-implementation checkpoint. This board remains the detailed open-work list.
-
 ## Current state (2026-10-01)
 
 This board lists **open work only**. The completed checkpoints and their test logs,
@@ -20,7 +17,7 @@ The detailed route boundaries remain in the linked gap notes and audits.
   commit `44282e25`; see the [retained log](.state/research/ty2025-full-test-schedule1a-vehicle.log).
   Later implementation has focused checks, but the final fixed-source bulk run
   has not happened. Run it after implementation is finished, as requested.
-- **Current focused checkpoint:** after the top-level input guard and Form 4797
+- **Prior focused checkpoint:** after the top-level input guard and Form 4797
   PDF changes on `9effd20b`, the 88 prepared source-to-native-MeF fixtures
   passed local TY2025 v5.4 XSD (`deno test --allow-read --allow-write
   --allow-run=xmllint,deno,pdftotext --allow-net=www.irs.gov
@@ -34,6 +31,12 @@ The detailed route boundaries remain in the linked gap notes and audits.
   review](docs/mef/ty2025-form4797-investment-1245.md) also has one- and
   four-property XSD-valid, inspected nine-page packets; source-byte proof and
   other property classes remain open.
+- **Latest implementation checkpoint:** PR #56 now includes final-filer K-1
+  ownership checks for bounded Form 4952 paths, a public Form 8863 credit-limit
+  worksheet route, and the reviewed Form 8862 CTC case. The preexisting focused
+  XSD/PDF evidence for these slices is recorded in their gap notes. All wider
+  form variants, source proof, the final bulk run, business rules, and ATS
+  remain open.
 - **Open release gates:** settle the named coverage and evidence decisions;
   complete or explicitly reject each retained positive filing route; reconcile
   the 126 MeF descriptors, 89 PDF descriptors, and 211 IRS schema roots; then
