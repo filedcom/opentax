@@ -25,7 +25,7 @@ import {
 import { form8962 } from "../../forms/form8962/index.ts";
 import { form8880 } from "../../forms/form8880/index.ts";
 import { form_1116 } from "../../forms/form_1116/index.ts";
-import { FilingStatus } from "../../../types.ts";
+import type { FilingStatus } from "../../../types.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 import { schedule1a } from "../../forms/schedule1a/index.ts";
 import { agi_final } from "../agi_final/index.ts";
@@ -156,6 +156,7 @@ export const inputSchema = z.object({
   line8z_form8621_mtm: z.number().optional(),
   line8z_form8621_section1291: z.number().optional(),
   line8z_f1099nec_nonbusiness: z.number().nonnegative().optional(),
+  line8z_f1099m_box3_other: z.number().nonnegative().optional(),
   line8j_f1099k_hobby_income: z.number().nonnegative().optional(),
   line8i_prizes_awards: z.number().nonnegative().optional(),
   line8z_substitute_payments: z.number().nonnegative().optional(),
@@ -318,6 +319,7 @@ function nonSsaIncomeBeforePal(input: AgiInput): number {
     (input.line8z_form8621_mtm ?? 0) +
     (input.line8z_form8621_section1291 ?? 0) +
     (input.line8z_f1099nec_nonbusiness ?? 0) +
+    (input.line8z_f1099m_box3_other ?? 0) +
     (input.line8j_f1099k_hobby_income ?? 0) +
     (input.line8i_prizes_awards ?? 0) +
     (input.line8z_substitute_payments ?? 0) +
@@ -538,6 +540,7 @@ function scheduleOnePartI(input: AgiInput): number {
     (input.line8z_form8621_mtm ?? 0) +
     (input.line8z_form8621_section1291 ?? 0) +
     (input.line8z_f1099nec_nonbusiness ?? 0) +
+    (input.line8z_f1099m_box3_other ?? 0) +
     (input.line8j_f1099k_hobby_income ?? 0) +
     (input.line8i_prizes_awards ?? 0) +
     (input.line8z_substitute_payments ?? 0) +

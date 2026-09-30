@@ -11,7 +11,10 @@ const SOURCED_COMPONENTS = [
   ["line8z_form8621_section1291", "Form 8621 section 1291 current-year income"],
   ["line8z_f1099nec_nonbusiness", "Form 1099-NEC nonbusiness services"],
   ["line8z_f1098_interest_recovery", "Form 1098 mortgage interest refund"],
-  ["line8z_k1_s_corp_tax_benefit_recovery", "S corporation tax-benefit recovery"],
+  [
+    "line8z_k1_s_corp_tax_benefit_recovery",
+    "S corporation tax-benefit recovery",
+  ],
   ["line8z_hsa_excess_earnings", "HSA excess earnings"],
   ["line8z_hsa_excess_employer", "HSA excess employer contributions"],
   ["line8z_rtaa", "Trade adjustment assistance"],
@@ -41,18 +44,47 @@ export function schedule1OtherIncomeRows(
       "Schedule 1 line 8z generic income needs identified source types before filing",
     );
   }
-  return SOURCED_COMPONENTS.flatMap(([key, label]) => {
-    const amount = source[key];
-    if (amount === undefined || amount === null || amount === 0) return [];
-    if (typeof amount !== "number" || !Number.isSafeInteger(amount)) {
-      throw new Error(`Schedule 1 line 8z ${key} needs a whole-dollar amount`);
+  const componentRows: Schedule1OtherIncomeRow[] = SOURCED_COMPONENTS.flatMap(
+    ([key, label]) => {
+      const amount = source[key];
+      if (amount === undefined || amount === null || amount === 0) return [];
+      if (typeof amount !== "number" || !Number.isSafeInteger(amount)) {
+        throw new Error(
+          `Schedule 1 line 8z ${key} needs a whole-dollar amount`,
+        );
+      }
+      return [{
+        label,
+        amount,
+        ...(label === "FORM 8814" ? { literalCode: "FORM 8814" as const } : {}),
+      }];
+    },
+  );
+  const rows = source.f1099m_box3_other_income_sources;
+  if (rows === undefined) return componentRows;
+  if (!Array.isArray(rows)) {
+    throw new Error("Schedule 1 1099-MISC box 3 sources must be rows");
+  }
+  const box3Rows: Schedule1OtherIncomeRow[] = rows.map((value: unknown) => {
+    if (!value || typeof value !== "object") {
+      throw new Error("Schedule 1 1099-MISC box 3 source is invalid");
     }
-    return [{
-      label,
-      amount,
-      ...(label === "FORM 8814" ? { literalCode: "FORM 8814" as const } : {}),
-    }];
+    const row = value as Record<string, unknown>;
+    if (
+      typeof row.description !== "string" || !row.description.trim() ||
+      typeof row.amount !== "number" || !Number.isSafeInteger(row.amount) ||
+      row.amount <= 0 || typeof row.payer_name !== "string" ||
+      !row.payer_name.trim() ||
+      typeof row.payer_tin !== "string" ||
+      !/^\d{9}$/.test(row.payer_tin) ||
+      typeof row.recipient_tin !== "string" ||
+      !/^\d{9}$/.test(row.recipient_tin)
+    ) {
+      throw new Error("Schedule 1 1099-MISC box 3 source is invalid");
+    }
+    return { label: row.description, amount: row.amount };
   });
+  return [...componentRows, ...box3Rows];
 }
 
 export function schedule1OtherIncomeTotal(

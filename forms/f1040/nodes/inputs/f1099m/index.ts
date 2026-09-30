@@ -70,6 +70,7 @@ export const itemSchema = z.object({
   // Box 3 — Other income
   box3_other_income: z.number().nonnegative().optional(),
   box3_other_income_routing: z.enum(OTHER_INCOME_ROUTING).optional(),
+  box3_other_income_description: z.string().trim().min(1).max(100).optional(),
   // When true, box3_other_income is also investment income subject to NIIT (IRC §1411).
   // Use for brokerage-sourced income (e.g., income from terminated investment accounts).
   // Defaults false — prizes, settlements, and other non-investment income are not NII.
@@ -115,6 +116,18 @@ export const itemSchema = z.object({
       path: ["box3_other_income_routing"],
       message:
         "Positive 1099-MISC box 3 income requires an explicit income classification",
+    });
+  }
+  if (
+    (item.box3_other_income ?? 0) > 0 &&
+    item.box3_other_income_routing === "other_income" &&
+    !item.box3_other_income_description
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["box3_other_income_description"],
+      message:
+        "1099-MISC box 3 other income needs a reviewed payment description",
     });
   }
   const grossAttorneyProceeds = item.box10_attorney_proceeds ?? 0;
@@ -274,7 +287,20 @@ function schedule1Output(items: M99Item[]): NodeOutput | null {
 
   const s1Input: Partial<z.infer<typeof schedule1["inputSchema"]>> = {};
   if (prizes > 0) s1Input.line8i_prizes_awards = prizes;
-  if (other > 0) s1Input.line8z_other = other;
+  if (other > 0) {
+    s1Input.f1099m_box3_other_income_sources = items.flatMap((item) =>
+      item.box3_other_income_routing === "other_income" &&
+        (item.box3_other_income ?? 0) > 0
+        ? [{
+          payer_name: item.payer_name,
+          payer_tin: item.payer_tin,
+          recipient_tin: item.recipient_tin,
+          description: item.box3_other_income_description!,
+          amount: item.box3_other_income!,
+        }]
+        : []
+    );
+  }
   if (substitute > 0) s1Input.line8z_substitute_payments = substitute;
   if (nqdc > 0) s1Input.line8z_nqdc = nqdc;
   if (Object.keys(s1Input).length === 0) return null;
@@ -419,7 +445,7 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
       ...(prizes > 0 ? { line8i_prizes_awards: prizes } : {}),
       ...(substitute > 0 ? { line8z_substitute_payments: substitute } : {}),
       ...(nqdc > 0 ? { line8z_nqdc: nqdc } : {}),
-      ...(other > 0 ? { line8z_other: other } : {}),
+      ...(other > 0 ? { line8z_f1099m_box3_other: other } : {}),
     };
     if (prizes > 0) {
       outputs.push(this.outputNodes.output(agi_aggregator, {
@@ -438,7 +464,7 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
       }));
     } else if (other > 0) {
       outputs.push(this.outputNodes.output(agi_aggregator, {
-        line8z_other: other,
+        line8z_f1099m_box3_other: other,
       }));
     }
 

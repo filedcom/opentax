@@ -359,9 +359,35 @@ Deno.test("f1099m.compute: box3_other_income with other_income routing routes to
     minimalItem({
       box3_other_income: 2000,
       box3_other_income_routing: "other_income",
+      box3_other_income_description: "Taxable settlement",
     }),
   ]);
-  assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_other, 2000);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)!.f1099m_box3_other_income_sources,
+    [{
+      payer_name: "Test Payer",
+      payer_tin: "123456789",
+      recipient_tin: "987654321",
+      description: "Taxable settlement",
+      amount: 2000,
+    }],
+  );
+  assertEquals(
+    fieldsOf(result.outputs, agi_aggregator)!.line8z_f1099m_box3_other,
+    2000,
+  );
+});
+
+Deno.test("f1099m.compute: box 3 other income needs a payment description", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box3_other_income: 2000,
+        box3_other_income_routing: "other_income",
+      })]),
+    Error,
+    "reviewed payment description",
+  );
 });
 
 Deno.test("f1099m.compute: misclassified box 3 wages route to Form 8919 only", () => {

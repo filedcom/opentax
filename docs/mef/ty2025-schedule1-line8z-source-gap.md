@@ -21,7 +21,7 @@ not an approved exclusion or completion of these filing paths.
 
 | Generic deposit       | Current producer files                                                               | Missing source-to-statement decision                                                                                                                     |
 | --------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `line8z_other`        | `f3115`, `f8873`, `f5471`, `f1099m`, `k1_partnership` | Confirm the 2025 income line and character for each fact pattern; retain a typed source type, amount and source identity through Schedule 1 and AGI.     |
+| `line8z_other`        | `f3115`, `f8873`, `f5471`, `k1_partnership` | Confirm the 2025 income line and character for each fact pattern; retain a typed source type, amount and source identity through Schedule 1 and AGI.     |
 | `line8z_other_income` | `k1_s_corp`, `f3115`, `clergy`, `f8915d`, `k1_trust`, `f1099patr`           | Resolve pass-through, disaster, housing and cooperative classifications separately; preserve each signed source row and its filed destination. |
 
 The executor accumulates colliding scalar output keys as an array. These two
@@ -39,3 +39,15 @@ An explicitly classified hobby payment now enters line 8j with the same
 amount in AGI, including multi-payer aggregation. This does not classify
 personal-item sales, erroneous reports, reimbursements, or business receipts
 as hobby income. Those need their own transaction facts and destinations.
+
+The Form 1099-MISC box 3 non-prize other-income route now requires a reviewed
+payment description and carries payer, recipient, amount, and description rows
+through Schedule 1. AGI receives their summed amount, and the MeF
+`OtherIncomeTypeStatement` receives one type-and-amount row per payment.
+Native and PDF exports reject a recipient TIN outside the filer/spouse pair.
+A two-payer $5,000 case reaches Form 1040 line 8, validates against local
+TY2025 v5.4 XSD, and builds a filled PDF packet. The box 3 business/farm,
+misclassified wage, prize, and excluded-income classifications require their
+own complete source audits; this one route does not settle them. The
+[2025 Form 1099-MISC recipient instructions](https://www.irs.gov/pub/irs-prior/f1099msc--2025.pdf)
+say to identify a Schedule 1 other-income payment.

@@ -109,6 +109,7 @@ Deno.test("Form 8960 receives allowed interest and taxpayer-allocated state tax"
       recipient_tin: "987654321",
       box3_other_income: 1_000,
       box3_other_income_routing: "other_income",
+      box3_other_income_description: "Brokerage termination payment",
       box3_niit_applicable: true,
     }],
     form4952: {

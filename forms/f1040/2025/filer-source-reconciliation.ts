@@ -145,6 +145,33 @@ export function assertScheduleCReceiptSourceIdentity(
   }
 }
 
+export function assertSchedule1Box3SourceIdentity(
+  pending: Record<string, unknown>,
+  filer: FilerIdentity,
+): void {
+  const schedule1 = pending.schedule1;
+  if (!schedule1 || typeof schedule1 !== "object") return;
+  const rows = (schedule1 as Record<string, unknown>)
+    .f1099m_box3_other_income_sources;
+  if (rows === undefined) return;
+  if (!Array.isArray(rows)) {
+    throw new Error("Schedule 1 1099-MISC box 3 sources must be rows");
+  }
+  const recipients = [
+    tin(filer.primarySSN, "taxpayer"),
+    tin(filer.spouse?.ssn, "spouse"),
+  ];
+  for (const value of rows) {
+    if (!value || typeof value !== "object") {
+      throw new Error("Schedule 1 1099-MISC box 3 source is invalid");
+    }
+    const row = value as Record<string, unknown>;
+    if (!recipients.includes(tin(row.recipient_tin, "1099-MISC recipient"))) {
+      throw new Error("1099-MISC box 3 recipient differs from the filer");
+    }
+  }
+}
+
 export function assertF1040FinalHeader(
   fields: Record<string, unknown>,
   filer: FilerIdentity | undefined,

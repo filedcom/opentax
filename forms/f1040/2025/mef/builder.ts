@@ -9,6 +9,7 @@ import type { Form3800DocumentParts } from "./forms/f3800_document.ts";
 import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
 import {
   assertF1040SourceIdentity,
+  assertSchedule1Box3SourceIdentity,
   assertScheduleCReceiptSourceIdentity,
 } from "../filer-source-reconciliation.ts";
 
@@ -207,6 +208,7 @@ function buildReturnXml(
     assertF1040SourceIdentity(pending.f1040, filer);
   }
   assertScheduleCReceiptSourceIdentity(pending, filer);
+  assertSchedule1Box3SourceIdentity(pending, filer);
   if (
     Array.isArray(pending.form8949) && pending.form8949.length > 0 &&
     !pending.schedule_d
