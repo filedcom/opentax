@@ -216,6 +216,15 @@ function projectFields(
     const policies = current1095AStatements(
       form1095aSchema.parse(allPending.f1095a).f1095as,
     );
+    const twoNoAptcPoliciesWithEvidence = fields.household_size === 1 &&
+      policies.length === 2 &&
+      policies.every((policy) =>
+        policy.policy_number &&
+        policy.covered_individual_ssns?.length === 1 &&
+        policy.monthly_aptcs?.every((amount) => amount === 0) &&
+        policy.slcsp_corrections?.length === 12 &&
+        policy.no_aptc_monthly_evidence?.length === 12
+      );
     if (
       Array.isArray(fields.monthly_ptc_rows) &&
       Array.from(
@@ -227,7 +236,7 @@ function projectFields(
             (policy.monthly_aptcs?.[month] ?? 0) > 0
           ).length > 1,
       ).some(Boolean) && fields.household_size !== 2 &&
-      fields.household_size !== 3
+      fields.household_size !== 3 && !twoNoAptcPoliciesWithEvidence
     ) {
       throw new Error(
         "Form 8962 PDF overlapping policies need enrollee and coverage-family source reconciliation",

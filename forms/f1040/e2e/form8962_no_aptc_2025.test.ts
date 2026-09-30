@@ -237,6 +237,119 @@ Deno.test("unchanged no-APTC policy rounds annual 1095-A totals for line 11", as
   assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 3, true);
 });
 
+function twoNoAptcPolicies(benchmarks: number[]) {
+  return [500.26, 300.26].map((premium, policyIndex) => ({
+    issuer_name: "Texas Marketplace",
+    policy_number: `NO-APTC-CENTS-${policyIndex + 1}`,
+    coverage_state: "TX",
+    covered_individual_ssns: ["111223333"],
+    monthly_premiums: Array(12).fill(premium),
+    monthly_slcsps: Array(12).fill(0),
+    monthly_aptcs: Array(12).fill(0),
+    annual_premium: Math.round(premium * 1_200) / 100,
+    annual_slcsp: 0,
+    annual_aptc: 0,
+    slcsp_corrections: benchmarks.map((slcsp, index) => ({
+      month: index + 1,
+      basis: "no_aptc",
+      corrected_slcsp: slcsp,
+      determination_source: "marketplace_tool",
+    })),
+    no_aptc_monthly_evidence: benchmarks.map((slcsp, index) => ({
+      month: index + 1,
+      marketplace_slcsp: slcsp,
+      marketplace_method: "marketplace_tool",
+      marketplace_reference: `Policy ${policyIndex + 1} determination ${
+        index + 1
+      }`,
+      marketplace_determined_on: "2026-02-01",
+      marketplace_record_sha256: "a".repeat(64),
+      premium_payment: {
+        status: "paid_in_full",
+        amount: premium,
+        paid_on: "2026-04-01",
+        reference: `Policy ${policyIndex + 1} payment ${index + 1}`,
+        record_sha256: "b".repeat(64),
+      },
+    })),
+  }));
+}
+
+Deno.test("two no-APTC policy premiums combine cents before monthly filing", async () => {
+  const policies = twoNoAptcPolicies([
+    ...Array(6).fill(700.49),
+    ...Array(6).fill(800.49),
+  ]);
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general,
+    w2: [w2(30_120, 3_000)],
+    f1095a: policies,
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const sourcePolicies = result.pending.f1095a?.f1095as as Array<{
+    monthly_premiums: number[];
+  }>;
+  assertEquals(sourcePolicies[0].monthly_premiums[0], 500.26);
+  assertEquals(sourcePolicies[1].monthly_premiums[0], 300.26);
+  const rows = result.pending.form8962?.monthly_ptc_rows as Array<{
+    premium: number;
+    slcsp: number;
+  }>;
+  assertEquals(rows?.[0].premium, 801);
+  assertEquals(rows?.[0].slcsp, 700);
+  assertEquals(rows?.[6].slcsp, 800);
+  assertEquals(result.pending.form8962?.total_premium_tax_credit, 8_400);
+  assertEquals(result.pending.schedule3?.line9_premium_tax_credit, 8_400);
+  assertEquals(result.pending.f1040?.line31_additional_payments, 8_400);
+  const filer = extractFilerIdentity(result.pending.f1040);
+  const xml = buildMefXml(result.pending, filer);
+  assertStringIncludes(xml, "<MonthlyPremiumAmt>801</MonthlyPremiumAmt>");
+  await validateXml(xml);
+  const pdf = await buildPdfBytes(result.pending, filer);
+  assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 3, true);
+  const changedSLCSP = structuredClone(result.pending);
+  const changedPolicies = changedSLCSP.f1095a?.f1095as as Array<{
+    slcsp_corrections: Array<{ corrected_slcsp: number }>;
+  }>;
+  changedPolicies[1].slcsp_corrections[0].corrected_slcsp = 701.49;
+  assertThrows(
+    () => buildMefXml(changedSLCSP, filer),
+    Error,
+    "one same-state SLCSP",
+  );
+});
+
+Deno.test("two no-APTC policies round combined annual premiums once", async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general,
+    w2: [w2(30_120, 3_000)],
+    f1095a: twoNoAptcPolicies(Array(12).fill(700.49)),
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form8962?.monthly_ptc_rows, undefined);
+  assertEquals(result.pending.form8962?.annual_premium, 9_606);
+  assertEquals(result.pending.form8962?.annual_slcsp, 8_406);
+  assertEquals(result.pending.form8962?.annual_ptc_allowed, 7_804);
+  assertEquals(result.pending.schedule3?.line9_premium_tax_credit, 7_804);
+  assertEquals(result.pending.f1040?.line31_additional_payments, 7_804);
+  const filer = extractFilerIdentity(result.pending.f1040);
+  const xml = buildMefXml(result.pending, filer);
+  assertStringIncludes(xml, "<AnnualPremiumAmt>9606</AnnualPremiumAmt>");
+  assertStringIncludes(
+    xml,
+    "<AnnualPremiumSLCSPAmt>8406</AnnualPremiumSLCSPAmt>",
+  );
+  await validateXml(xml);
+  const pdf = await buildPdfBytes(result.pending, filer);
+  assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 3, true);
+  const changedPremium = structuredClone(result.pending);
+  const changedPolicies = changedPremium.f1095a?.f1095as as Array<{
+    annual_premium: number;
+  }>;
+  changedPolicies[1].annual_premium += 0.01;
+  assertThrows(() => buildMefXml(changedPremium, filer));
+});
+
 Deno.test("protected partial premium reduces one no-APTC month and full-return credit", async () => {
   const protectedPayment = {
     status: "protected_partial" as const,

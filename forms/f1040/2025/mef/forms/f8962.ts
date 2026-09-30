@@ -1131,14 +1131,19 @@ function reconcileTwoNoAptcPolicyMonths(
       !policy.monthly_aptcs || !policy.slcsp_corrections ||
       !policy.no_aptc_monthly_evidence ||
       policy.monthly_premiums.some((amount) => amount <= 0) ||
-      policy.monthly_slcsps.some((amount) => amount <= 0) ||
       policy.monthly_aptcs.some((amount) => amount !== 0) ||
       (policy.annual_premium !== undefined &&
-        policy.annual_premium !==
-          policy.monthly_premiums.reduce((sum, amount) => sum + amount, 0)) ||
+        Math.abs(
+            policy.annual_premium -
+              policy.monthly_premiums.reduce((sum, amount) => sum + amount, 0),
+          ) >
+          0.005) ||
       (policy.annual_slcsp !== undefined &&
-        policy.annual_slcsp !==
-          policy.monthly_slcsps.reduce((sum, amount) => sum + amount, 0)) ||
+        Math.abs(
+            policy.annual_slcsp -
+              policy.monthly_slcsps.reduce((sum, amount) => sum + amount, 0),
+          ) >
+          0.005) ||
       (policy.annual_aptc ?? 0) !== 0
     ) ||
     fields.household_size !== 1 || fields.dependents_modified_agi !== 0 ||
@@ -1201,12 +1206,17 @@ function reconcileTwoNoAptcPolicyMonths(
   let credit = 0;
   for (let index = 0; index < 12; index++) {
     const month = index + 1;
-    const premium = policies.reduce(
-      (sum, policy) => sum + policy.monthly_premiums![index],
-      0,
+    const premium = roundForm8962Amounts(
+      policies.map((policy) => policy.monthly_premiums![index]),
     );
-    const slcsp = policies[0].monthly_slcsps![index];
-    if (policies[1].monthly_slcsps![index] !== slcsp) {
+    const sourceSlcsp = evidence[0].corrections.get(month)?.corrected_slcsp;
+    if (sourceSlcsp === undefined || sourceSlcsp <= 0) {
+      throw new Error(
+        `Form 8962 two-policy month ${month} needs a determined SLCSP`,
+      );
+    }
+    const slcsp = roundForm8962Amounts([sourceSlcsp]);
+    if (evidence[1].corrections.get(month)?.corrected_slcsp !== sourceSlcsp) {
       throw new Error(
         `Form 8962 two-policy month ${month} needs one same-state SLCSP`,
       );
@@ -1216,8 +1226,8 @@ function reconcileTwoNoAptcPolicyMonths(
       const proof = evidence[policyIndex].payments.get(month);
       if (
         !correction || !proof || correction.basis !== "no_aptc" ||
-        correction.corrected_slcsp !== slcsp ||
-        proof.marketplace_slcsp !== slcsp ||
+        correction.corrected_slcsp !== sourceSlcsp ||
+        proof.marketplace_slcsp !== sourceSlcsp ||
         proof.marketplace_method !== correction.determination_source ||
         !validIsoDate(proof.marketplace_determined_on) ||
         paidNoAptcPremium(
@@ -1492,20 +1502,27 @@ function reconcileTwoNoAptcAnnualPolicies(
       !policy.monthly_premiums || !policy.monthly_slcsps ||
       !policy.monthly_aptcs || !policy.slcsp_corrections ||
       !policy.no_aptc_monthly_evidence ||
+      policy.annual_premium === undefined ||
+      policy.annual_slcsp === undefined ||
       policy.monthly_premiums.some((amount) =>
         amount <= 0 || amount !== policy.monthly_premiums![0]
       ) ||
       policy.monthly_slcsps.some((amount) =>
-        amount <= 0 || amount !== policy.monthly_slcsps![0]
+        amount !== policy.monthly_slcsps![0]
       ) ||
       policy.monthly_aptcs.some((amount) => amount !== 0) ||
-      policy.annual_premium !==
-        policy.monthly_premiums.reduce((sum, amount) => sum + amount, 0) ||
-      policy.annual_slcsp !==
-        policy.monthly_slcsps.reduce((sum, amount) => sum + amount, 0) ||
+      Math.abs(
+          policy.annual_premium! -
+            policy.monthly_premiums.reduce((sum, amount) => sum + amount, 0),
+        ) >
+        0.005 ||
+      Math.abs(
+          policy.annual_slcsp! -
+            policy.monthly_slcsps.reduce((sum, amount) => sum + amount, 0),
+        ) >
+        0.005 ||
       (policy.annual_aptc ?? 0) !== 0
     ) ||
-    policies[0].monthly_slcsps?.[0] !== policies[1].monthly_slcsps?.[0] ||
     fields.monthly_ptc_rows != null || fields.household_size !== 1 ||
     fields.dependents_modified_agi !== 0 ||
     fields.qsehra_ind === true || fields.mfs_exception_ind === true ||
@@ -1526,7 +1543,10 @@ function reconcileTwoNoAptcAnnualPolicies(
   const incomeAmounts = simplePolicyIncomeAmounts(income, povertyLine, 1, 1);
   const contribution = Math.round(income * incomeAmounts.figure);
   const monthlyContribution = Math.round(contribution / 12);
-  const slcsp = policies[0].monthly_slcsps![0];
+  const slcsp = policies[0].slcsp_corrections![0]?.corrected_slcsp;
+  if (slcsp === undefined || slcsp <= 0) {
+    throw new Error("Form 8962 two-policy annual PTC needs determined SLCSP");
+  }
   for (const policy of policies) {
     const corrections = new Map(
       policy.slcsp_corrections!.map((item) => [item.month, item]),
@@ -1563,11 +1583,10 @@ function reconcileTwoNoAptcAnnualPolicies(
       }
     }
   }
-  const premium = policies.reduce(
-    (sum, policy) => sum + policy.annual_premium!,
-    0,
+  const premium = roundForm8962Amounts(
+    policies.map((policy) => policy.annual_premium!),
   );
-  const annualSlcsp = slcsp * 12;
+  const annualSlcsp = roundForm8962Amounts(Array(12).fill(slcsp));
   const assistance = Math.max(0, annualSlcsp - contribution);
   const credit = Math.round(Math.min(premium, assistance));
   const schedule3 = schedule3Schema.safeParse(pending?.schedule3);

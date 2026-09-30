@@ -31,8 +31,9 @@ line choice, and the premium-payment timing rule.
 
 - A zero-APTC household below 100% FPL without the reviewed lawfully present
   exception.
-- More than one covered person or policy, shared policy allocations, married
-  filing separately, or a year-of-marriage alternative calculation.
+- More than one covered person, more than the separately bounded two-policy
+  single-enrollee route, shared policy allocations, married filing separately,
+  or a year-of-marriage alternative calculation.
 - Changes in coverage family, interstate moves, QSEHRA, self-employed
   health-insurance deduction circularity, and other MEC interactions when zero
   APTC was paid.
@@ -111,11 +112,36 @@ are rounded once. Twelve $800.49 premiums and $700.49 corrected SLCSPs yield
 $9,606 premium, $8,406 SLCSP, and $8,406 PTC for a lawfully present filer
 below 100% FPL. Both cents fixtures reconcile to Schedule 3 and Form 1040,
 pass local TY2025 v5.4 XSD, and build PDF packets. The focused source, MeF,
-and full-return run passes 91 cases. Cents handling for multiple policies,
-corrected-copy pairs, shared allocations, marriage, QSEHRA, and Pub. 974
+and full-return run passes 91 cases. Cents handling for other multiple-policy
+combinations, corrected-copy pairs, shared allocations, marriage, QSEHRA, and Pub. 974
 remains open; the bounded one-policy APTC route is documented in the
 [policy-month gap](ty2025-form8962-policy-month-gap.md). Visual PDF review,
 the final bulk regression, IRS business rules, and ATS also remain open.
+
+## Two fully paid policies with cents
+
+The existing two-policy single-enrollee route now combines source premiums in
+integer cents before rounding one monthly Form 8962 line. It uses the one
+Marketplace-determined SLCSP for both same-state policies and rounds that line
+once. When both policies qualify for unchanged annual line 11, it combines their
+Form 1095-A line 33 premium totals before rounding, and rounds the corrected
+annual SLCSP once. This follows the [2025 Form 8962 multiple-policy
+instructions](https://www.irs.gov/instructions/i8962); applying the [Form 1040
+whole-dollar addition rule](https://www.irs.gov/instructions/i1040gi) to these
+Form 8962 lines is an inference.
+
+Two $500.26/$300.26 full-year premiums become $801 on each monthly line, while
+the original statements and payment evidence keep their cents. A changing
+$700.49/$800.49 determined SLCSP produces $8,400 credit for a 200%-FPL filer.
+The unchanged $700.49 SLCSP uses annual line 11: the combined premiums round to
+$9,606, the corrected SLCSP to $8,406, and the credit is $7,804 after the $602
+contribution. Both full returns pass local TY2025 v5.4 XSD and build PDF
+packets. Mutating a source SLCSP or annual premium after calculation rejects.
+This route still requires two distinct identified policies for the sole covered
+filer, twelve same-state Marketplace determinations, timely full payment of
+every premium, and no allocation or marriage calculation. Other coverage-family
+and payment combinations, external record authentication, filled-PDF review,
+IRS business rules, ATS, and the final bulk regression remain open.
 
 ## State emergency-order protection
 

@@ -992,6 +992,53 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
       delete form8962Fields.monthly_slcsps;
       delete form8962Fields.monthly_aptcs;
     }
+    const twoNoAptcCentsPolicies = allocatedItems.length === 2 &&
+      allocatedItems.every((item) =>
+        item.no_aptc_monthly_evidence !== undefined &&
+        item.monthly_premiums !== undefined &&
+        item.monthly_slcsps !== undefined &&
+        item.monthly_aptcs?.every((amount) => amount === 0) &&
+        item.shared_policy_periods === undefined &&
+        item.slcsp_review_periods === undefined &&
+        item.alternative_marriage_owner === undefined
+      ) &&
+      allocatedItems.some((item) =>
+        [
+          ...item.monthly_premiums!,
+          ...item.monthly_slcsps!,
+          item.annual_premium,
+        ].some((amount) => amount !== undefined && !Number.isInteger(amount))
+      );
+    if (twoNoAptcCentsPolicies) {
+      if (form8962Fields.annual_line11_eligible === true) {
+        if (allocatedItems.some((item) => item.annual_premium === undefined)) {
+          throw new Error(
+            "Form 8962 two-policy annual no-APTC cents need both Form 1095-A line 33 premiums",
+          );
+        }
+        form8962Fields.annual_premium = roundForm8962Amounts(
+          allocatedItems.map((item) => item.annual_premium!),
+        );
+        form8962Fields.annual_slcsp = roundForm8962Amounts(activeSlcsps!);
+        form8962Fields.annual_aptc = 0;
+        delete form8962Fields.monthly_premiums;
+        delete form8962Fields.monthly_slcsps;
+        delete form8962Fields.monthly_aptcs;
+      } else {
+        form8962Fields.monthly_premiums = activePremiums!.map((_, month) =>
+          roundForm8962Amounts(
+            allocatedItems.map((item) => item.monthly_premiums![month]),
+          )
+        );
+        form8962Fields.monthly_slcsps = activeSlcsps!.map((slcsp) =>
+          roundForm8962Amounts([slcsp])
+        );
+        form8962Fields.monthly_aptcs = Array(12).fill(0);
+        delete form8962Fields.annual_premium;
+        delete form8962Fields.annual_slcsp;
+        delete form8962Fields.annual_aptc;
+      }
+    }
     const aptcCentsPolicies = allocatedItems.length > 0 &&
       allocatedItems.every((policy) =>
         policy.monthly_premiums !== undefined &&

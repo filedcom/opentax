@@ -92,8 +92,8 @@ separately would give a different value. All four variations pass local
 TY2025 v5.4 XSD and build PDF packets. A three-amount half-dollar case guards
 against binary floating-point addition losing the rounding threshold; source
 amounts beyond cent precision reject. The affected source, calculation, MeF,
-corrected-copy, and full-return suite passes 162 cases. No-APTC multiple
-policies, special allocations, marriage, QSEHRA, Pub. 974, and other policy
+corrected-copy, and full-return suite passes 162 cases. Other no-APTC
+multi-policy routes, special allocations, marriage, QSEHRA, Pub. 974, and other policy
 combinations still need source-to-filed cents reconciliation.
 
 ## No-APTC positive PTC: bounded monthly route
@@ -158,7 +158,7 @@ blank. Focused positive and tamper cases are written but unrun.
 References and hashes identify the separate source records for preparer review.
 The application has not authenticated the Marketplace or payment documents or
 compared hashes to their actual bytes; that external source review remains
-required. No-APTC multiple policies, shared policies, changes in coverage family
+required. No-APTC policies outside the separate two-policy route, shared policies, changes in coverage family
 or state, protected partial payments outside the documented issuer-threshold
 and state emergency-order routes, nonstandard due dates,
 below-400%-FPL returns, and MEC/coverage eligibility proof remain outside this
