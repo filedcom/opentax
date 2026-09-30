@@ -24,6 +24,7 @@ It still rejects a net total outside either limit, mixed short/long-term rows,
 additional Schedule D activity, qualified dividends, Form 4952 election, Form
 2555, and special-rate gains. This does not determine regular or AMT
 capital-loss carryovers, transactions whose gain/loss sign changes between
-bases, or a net gain under one tax and net loss under the other. Focused source,
-calculation, MeF, PDF, and rejection cases are written but unrun; the
-coordinated test, XSD, filled-PDF, IRS-rule, and ATS gates remain open.
+bases, or a net gain under one tax and net loss under the other. The focused
+source, calculation, MeF, PDF, and rejection run on 2026-09-30 passed 156/156
+cases across the Form 6251, Form 59E, native, and PDF suites. Full-return XSD,
+filled-PDF, IRS-rule, and ATS gates remain open.

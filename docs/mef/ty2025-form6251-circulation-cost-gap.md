@@ -13,9 +13,10 @@ their signed difference to Form 6251 line 2o. The Form 6251 node includes that
 amount in AMTI and in the negative-lines-2c-through-3 filing test. The TY2025
 MeF descriptor uses `CirculationCostAmt` in the `IRS6251` sequence, and the PDF
 descriptor uses page-1 AcroForm field `f1_19[0]`. The cached TY2025 XSD and
-field dump supplied the element and field mapping. Focused positive, negative,
-missing-source, election, calculation, XML-order, and PDF-mapping cases are
-written but unrun.
+field dump supplied the element and field mapping. The focused Form 6251/Form
+59E source, calculation, native, and PDF run on 2026-09-30 passed 156/156 cases,
+including positive, negative, missing-source, election, XML-order, and
+PDF-mapping checks.
 
 This route relies on reviewed deduction figures; it does not calculate the
 three-year amortization schedule, a property-loss limitation, or establish that
