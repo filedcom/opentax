@@ -67,7 +67,7 @@ const inputs = {
 };
 
 for (const sourceKind of ["plan", "traditional_ira"] as const) {
-  Deno.test(`2025 Form 8915-F ${sourceKind} same-year repayment reaches Form 1040 and attached worksheet`, async () => {
+  Deno.test(`2025 Form 8915-F ${sourceKind} repayment reaches Form 1040 and attached worksheet`, async () => {
     const repaymentInputs = {
       ...inputs,
       f1099r: [{
@@ -84,11 +84,14 @@ for (const sourceKind of ["plan", "traditional_ira"] as const) {
           : {}),
         full_inclusion_elected: false,
         repayment: {
-          kind: "same_year",
+          kind: "timely",
           amount: 1_000,
           date: "2025-08-01",
           receiving_plan_review_reference: "reviewed eligible receiving plan",
           repayment_record_reference: "2025 repayment confirmation",
+          return_filing_date: "2026-04-10",
+          filing_date_review_reference: "reviewed 2025 return filing date",
+          filing_deadline: { kind: "ordinary" },
         },
       }],
     };
@@ -162,6 +165,91 @@ for (const sourceKind of ["plan", "traditional_ira"] as const) {
       Error,
       "matching fully taxable Form 1099-R",
     );
+  });
+}
+
+for (
+  const [sourceKind, repaymentDate, filingDate, deadline] of [
+    ["plan", "2026-04-01", "2026-04-10", { kind: "ordinary" }],
+    ["traditional_ira", "2026-09-01", "2026-10-01", {
+      kind: "automatic_extension",
+      accepted_on: "2026-04-15",
+      acceptance_reference: "accepted 2025 Form 4868",
+    }],
+  ] as const
+) {
+  Deno.test(`2026 timely ${sourceKind} repayment reduces the 2025 return with a worksheet`, async () => {
+    const result = execute(plan, registry, {
+      ...inputs,
+      f1099r: [{
+        ...inputs.f1099r[0],
+        box7_ira_simple_indicator: sourceKind === "traditional_ira",
+        form8915f_treatment: "three_years",
+        form8915f_repayment_amount: 1_000,
+      }],
+      f8915f: [{
+        ...disaster,
+        retirement_source_kind: sourceKind,
+        ...(sourceKind === "traditional_ira"
+          ? { no_ira_basis_review_reference: "reviewed IRA basis history" }
+          : {}),
+        full_inclusion_elected: false,
+        repayment: {
+          kind: "timely",
+          amount: 1_000,
+          date: repaymentDate,
+          receiving_plan_review_reference: "reviewed eligible receiving plan",
+          repayment_record_reference: "2026 repayment confirmation",
+          return_filing_date: filingDate,
+          filing_date_review_reference: "reviewed 2025 return filing date",
+          filing_deadline: deadline,
+        },
+      }],
+    }, { taxYear: 2025, formType: "f1040" });
+    assertEquals(result.diagnostics, []);
+    assertEquals(
+      sourceKind === "plan"
+        ? result.pending.f1040?.line5b_pension_taxable
+        : result.pending.f1040?.line4b_ira_taxable,
+      5_667,
+    );
+    const filer = extractFilerIdentity(result.pending.f1040);
+    const bundle = await buildMefBundle(buildPending(result.pending), {
+      filer,
+      attachments: [],
+    });
+    assertEquals(bundle.attachments.length, 1);
+    assertStringIncludes(
+      bundle.xml,
+      sourceKind === "plan"
+        ? "<TotalRepymtOtherThanIRAAmt referenceDocumentId="
+        : "<TotalRepymtIRARetirePlanAmt referenceDocumentId=",
+    );
+    assertStringIncludes(
+      bundle.xml,
+      "<CYTaxableDistributionsAmt>5667</CYTaxableDistributionsAmt>",
+    );
+    const xsd = new URL(
+      "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+      import.meta.url,
+    ).pathname;
+    const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+    try {
+      await Deno.writeTextFile(xmlPath, bundle.xml);
+      const validation = await new Deno.Command("xmllint", {
+        args: ["--noout", "--schema", xsd, xmlPath],
+        stderr: "piped",
+      }).output();
+      assertEquals(
+        validation.code,
+        0,
+        new TextDecoder().decode(validation.stderr),
+      );
+    } finally {
+      await Deno.remove(xmlPath);
+    }
+    const pdf = await buildPdfBytes(result.pending, filer);
+    assertEquals((await PDFDocument.load(pdf)).getPageCount(), 6);
   });
 }
 

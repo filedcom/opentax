@@ -136,11 +136,14 @@ Deno.test("Form 8915-F PDF maps plan repayment to line 14", () => {
     ...item,
     full_inclusion_elected: false,
     repayment: {
-      kind: "same_year",
+      kind: "timely",
       amount: 1_000,
       date: "2025-08-01",
       receiving_plan_review_reference: "reviewed receiving plan",
       repayment_record_reference: "repayment confirmation",
+      return_filing_date: "2026-04-10",
+      filing_date_review_reference: "reviewed 2025 return filing date",
+      filing_deadline: { kind: "ordinary" },
     },
   });
   const fields = form8915FPdf.instances!({ f8915fs: [repaid] }, filer, {

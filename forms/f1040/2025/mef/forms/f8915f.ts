@@ -47,7 +47,7 @@ export function buildCurrentYearDistributionForm8915F(
   const worksheetId = context?.documentIdsByAttachmentFileName
     ?.[repaymentWorksheetFileName(item)];
   if (
-    item.repayment.kind === "same_year" &&
+    item.repayment.kind === "timely" &&
     context?.documentIdsByAttachmentFileName && !worksheetId
   ) {
     throw new Error("Form 8915-F repayment needs its attached worksheet");

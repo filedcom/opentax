@@ -62,13 +62,16 @@ Deno.test("Form 8915-F spreads a new 2025 plan distribution over three years", (
   assertEquals(lines.line15_form1040_line5b, 6_667);
 });
 
-Deno.test("Form 8915-F bounds a same-year repayment to current income", () => {
+Deno.test("Form 8915-F bounds repayment to income and the reviewed filing deadline", () => {
   const repayment = {
-    kind: "same_year",
+    kind: "timely",
     amount: 1_000,
     date: "2025-08-01",
     receiving_plan_review_reference: "reviewed receiving plan",
     repayment_record_reference: "repayment confirmation",
+    return_filing_date: "2026-04-10",
+    filing_date_review_reference: "reviewed 2025 return filing date",
+    filing_deadline: { kind: "ordinary" },
   } as const;
   const source = {
     ...reviewed2025Plan,
@@ -88,7 +91,77 @@ Deno.test("Form 8915-F bounds a same-year repayment to current income", () => {
   assertEquals(
     itemSchema.safeParse({
       ...source,
-      repayment: { ...repayment, date: "2026-01-01" },
+      repayment: { ...repayment, date: "2026-04-01" },
+    }).success,
+    true,
+  );
+  assertEquals(
+    itemSchema.safeParse({
+      ...source,
+      repayment: { ...repayment, date: "2026-04-10" },
+    }).success,
+    false,
+  );
+  assertEquals(
+    itemSchema.safeParse({
+      ...source,
+      repayment: {
+        ...repayment,
+        date: "2026-04-16",
+        return_filing_date: "2026-04-17",
+      },
+    }).success,
+    false,
+  );
+  const extended = {
+    ...repayment,
+    date: "2026-09-01",
+    return_filing_date: "2026-10-01",
+    filing_deadline: {
+      kind: "automatic_extension",
+      accepted_on: "2026-04-15",
+      acceptance_reference: "accepted Form 4868",
+    },
+  } as const;
+  assertEquals(
+    itemSchema.safeParse({ ...source, repayment: extended }).success,
+    true,
+  );
+  assertEquals(
+    itemSchema.safeParse({
+      ...source,
+      repayment: {
+        ...extended,
+        filing_deadline: {
+          ...extended.filing_deadline,
+          accepted_on: "2026-04-16",
+        },
+      },
+    }).success,
+    false,
+  );
+  assertEquals(
+    itemSchema.safeParse({
+      ...source,
+      repayment: { ...extended, return_filing_date: "2026-10-16" },
+    }).success,
+    false,
+  );
+  assertEquals(
+    itemSchema.safeParse({
+      ...source,
+      repayment: {
+        ...extended,
+        date: "2026-02-01",
+        return_filing_date: "2026-03-01",
+      },
+    }).success,
+    false,
+  );
+  assertEquals(
+    itemSchema.safeParse({
+      ...source,
+      repayment: { ...repayment, kind: "same_year" },
     }).success,
     false,
   );

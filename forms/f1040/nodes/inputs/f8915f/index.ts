@@ -34,11 +34,21 @@ export const itemSchema = z.object({
     z.object({ kind: z.literal("none"), review_reference: referenceSchema })
       .strict(),
     z.object({
-      kind: z.literal("same_year"),
+      kind: z.literal("timely"),
       amount: z.number().int().positive(),
       date: dateSchema,
       receiving_plan_review_reference: referenceSchema,
       repayment_record_reference: referenceSchema,
+      return_filing_date: dateSchema,
+      filing_date_review_reference: referenceSchema,
+      filing_deadline: z.discriminatedUnion("kind", [
+        z.object({ kind: z.literal("ordinary") }).strict(),
+        z.object({
+          kind: z.literal("automatic_extension"),
+          accepted_on: dateSchema,
+          acceptance_reference: referenceSchema,
+        }).strict(),
+      ]),
     }).strict(),
   ]),
   source_1099r_document_reference: referenceSchema,
@@ -72,20 +82,32 @@ export const itemSchema = z.object({
         "Form 8915-F current-year path needs a fully taxable distribution",
     });
   }
-  if (item.repayment.kind === "same_year") {
+  if (item.repayment.kind === "timely") {
     const currentIncome = item.full_inclusion_elected
       ? item.gross_distribution
       : Math.round(item.gross_distribution / 3);
+    const ordinaryDeadline = "2026-04-15";
+    const deadline = item.repayment.filing_deadline.kind === "ordinary"
+      ? ordinaryDeadline
+      : "2026-10-15";
+    const extension = item.repayment.filing_deadline;
     if (
-      item.repayment.date.slice(0, 4) !== "2025" ||
       item.repayment.date < item.distribution_date ||
+      item.repayment.return_filing_date.slice(0, 4) !== "2026" ||
+      item.repayment.date >= item.repayment.return_filing_date ||
+      item.repayment.date > deadline ||
+      item.repayment.return_filing_date > deadline ||
+      (extension.kind === "automatic_extension" &&
+        (extension.accepted_on < "2026-01-01" ||
+          extension.accepted_on > ordinaryDeadline ||
+          extension.accepted_on > item.repayment.return_filing_date)) ||
       item.repayment.amount > currentIncome
     ) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["repayment"],
         message:
-          "Form 8915-F same-year repayment must follow the distribution and fit current-year income",
+          "Form 8915-F repayment must precede filing and the reviewed 2025 return deadline, follow the distribution, and fit current-year income",
       });
     }
   }
@@ -126,7 +148,7 @@ export function currentYearDistributionLines(raw: Form8915FItem) {
   const thisYear = item.full_inclusion_elected
     ? amount
     : Math.round(amount / 3);
-  const repayment = item.repayment.kind === "same_year"
+  const repayment = item.repayment.kind === "timely"
     ? item.repayment.amount
     : 0;
   return {
@@ -182,7 +204,7 @@ export function verifyCurrentYearDistributionSource(
       source.form8915f_treatment ===
         (item.full_inclusion_elected ? "full" : "three_years") &&
       (source.form8915f_repayment_amount ?? 0) ===
-        (item.repayment.kind === "same_year" ? item.repayment.amount : 0) &&
+        (item.repayment.kind === "timely" ? item.repayment.amount : 0) &&
       (source.box7_ira_simple_indicator === true) ===
         (item.retirement_source_kind === "traditional_ira") &&
       ["1", "2", "7"].includes(source.box7_distribution_code) &&

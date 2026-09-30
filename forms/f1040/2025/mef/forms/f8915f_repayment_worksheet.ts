@@ -18,7 +18,7 @@ export async function buildForm8915FRepaymentWorksheet(
   filer?: FilerIdentity,
 ): Promise<MefPdfAttachment> {
   const item = itemSchema.parse(raw);
-  if (item.repayment.kind !== "same_year") {
+  if (item.repayment.kind !== "timely") {
     throw new Error("Form 8915-F repayment worksheet needs a repayment");
   }
   if (!filer?.primarySSN) {
@@ -66,6 +66,14 @@ export async function buildForm8915FRepaymentWorksheet(
   write(`FEMA disaster: ${item.fema_number}`);
   write(`Distribution date: ${item.distribution_date}`);
   write(`Repayment date: ${item.repayment.date}`);
+  write(`2025 return filing date: ${item.repayment.return_filing_date}`);
+  write(
+    `Filing deadline: ${
+      item.repayment.filing_deadline.kind === "ordinary"
+        ? "2026-04-15 (ordinary)"
+        : "2026-10-15 (automatic extension)"
+    }`,
+  );
   y -= 16;
   write(`Line 1. Last year's Form 8915-F line ${priorRepaymentLine}: $0`);
   write(`Line 2. Last year's Form 8915-F line ${priorIncomeLine}: $0`);
