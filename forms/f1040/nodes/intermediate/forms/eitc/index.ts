@@ -58,6 +58,7 @@ export const inputSchema = z.object({
 
   // Set by Form 8862 when prior-year EITC disallowance has been cleared
   form8862_filed: z.boolean().optional(),
+  form2555_filed: z.boolean().optional(),
 });
 
 type EitcInput = z.infer<typeof inputSchema>;
@@ -84,6 +85,7 @@ function computeEitc(
   const isJoint = isJointFiler(input.filing_status);
 
   if (input.filer_has_valid_ssns !== true) return 0;
+  if (input.form2555_filed === true) return 0;
 
   // A separate return can use the 2025 separated-spouse rule only with a
   // qualifying child and reviewed residence/separation facts.

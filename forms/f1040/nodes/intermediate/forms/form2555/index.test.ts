@@ -37,6 +37,7 @@ Deno.test("physical presence — exactly 330 days qualifies", () => {
     findOutput(result, "f1040")?.fields.form8839_form2555_line45,
     50_000,
   );
+  assertEquals(findOutput(result, "eitc")?.fields.form2555_filed, true);
 });
 
 Deno.test("physical presence — 329 days does not qualify", () => {

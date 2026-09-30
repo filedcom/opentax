@@ -27,6 +27,15 @@ Deno.test("EITC needs verified filer SSNs", () => {
   });
 });
 
+Deno.test("filing Form 2555 disqualifies EIC even with earned income and a child", () => {
+  noCredit({
+    earned_income: 15_000,
+    qualifying_children: 1,
+    filing_status: FilingStatus.Single,
+    form2555_filed: true,
+  });
+});
+
 function getCredit(input: Record<string, unknown>): number {
   const result = compute(input);
   const out = result.outputs.find((o) => o.nodeType === "f1040");
