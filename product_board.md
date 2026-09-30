@@ -17,6 +17,12 @@ The detailed route boundaries remain in the linked gap notes and audits.
   commit `44282e25`; see the [retained log](.state/research/ty2025-full-test-schedule1a-vehicle.log).
   Later implementation has focused checks, but the final fixed-source bulk run
   has not happened. Run it after implementation is finished, as requested.
+- **Current focused checkpoint:** after the top-level input guard and Form 4797
+  PDF changes on `9effd20b`, the 88 prepared source-to-native-MeF fixtures
+  passed local TY2025 v5.4 XSD (`deno test --allow-read --allow-write
+  --allow-run=xmllint,deno,pdftotext --allow-net=www.irs.gov
+  forms/f1040/2025/pdf/review-fixtures.xsd.test.ts`, 88/88). This does not
+  replace the final bulk, filled-PDF, business-rule, or ATS gates.
 - **Open release gates:** settle the named coverage and evidence decisions;
   complete or explicitly reject each retained positive filing route; reconcile
   the 126 MeF descriptors, 89 PDF descriptors, and 211 IRS schema roots; then
