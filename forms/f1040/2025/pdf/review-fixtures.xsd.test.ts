@@ -148,6 +148,46 @@ for (const fixture of pdfReviewFixtures) {
           "1099-K Schedule C source differs",
         );
       }
+      if (fixture.id === "single-nec-k-nonbusiness-line8j") {
+        assertEquals(result.pending.schedule1.line9_total_other_income, 8_000);
+        assertEquals(result.pending.f1040.line8_additional_income, 8_000);
+        assertStringIncludes(
+          xml,
+          "<ActivityNotForProfitIncmAmt>8000</ActivityNotForProfitIncmAmt>",
+        );
+        assertThrows(
+          () =>
+            buildMefXml(
+              buildPending({
+                ...result.pending,
+                schedule1: {
+                  ...result.pending.schedule1,
+                  line8j_f1099k_hobby_income: 4_999,
+                },
+              }),
+              fixture.filer,
+            ),
+          Error,
+          "1099-K nonbusiness income differs",
+        );
+        assertThrows(
+          () =>
+            buildMefXml(
+              buildPending({
+                ...result.pending,
+                f1099k: {
+                  f1099ks: (result.pending.f1099k.f1099ks as Array<
+                    Record<string, unknown>
+                  >)
+                    .map((row) => ({ ...row, recipient_tin: "999-88-7777" })),
+                },
+              }),
+              fixture.filer,
+            ),
+          Error,
+          "matching filer",
+        );
+      }
       if (fixture.id === "single-partnership-code-l-r-ordinary") {
         assertEquals(result.pending.schedule1.line4_other_gains, 1_000);
         assertEquals(result.pending.f1040.line8_additional_income, 1_000);

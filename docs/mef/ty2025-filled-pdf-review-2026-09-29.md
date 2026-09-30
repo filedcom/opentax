@@ -662,3 +662,15 @@ the source/pending JSON, XML, PDF, contact sheet, and detailed page render
 are retained at `.state/research/ty2025-filled-pdf-review/2026-09-30-v87/`.
 Processor records, tip ledgers, duplicate-transaction proof, and IRS
 acceptance remain open.
+
+The `single-nec-k-nonbusiness-line8j` return has a four-page `v88` PDF.
+The contact sheet was inspected: Schedule 1 line 8j and Form 1040 line 8
+both print $8,000 from separate $3,000 NEC and $5,000 K activity receipts.
+The matching native return passes local TY2025 v5.4 XSD. A changed K
+line 8j amount or a K recipient outside the filer rejects at export. The
+PDF SHA-256 is
+`43e3ce4265f8e059e32507252af077c185337f9a4cc939b0b1d0d25991f06cac`;
+source/pending JSON, XML, PDF, and page renders are retained at
+`.state/research/ty2025-filled-pdf-review/2026-09-30-v88/`. Payer bytes,
+activity classification records, payment-level overlap evidence, and IRS
+acceptance remain open.

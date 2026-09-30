@@ -10,6 +10,7 @@ import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
 import {
   assertF1040FinalHeader,
   assertSchedule1Box3SourceIdentity,
+  assertSchedule1KSourceIdentity,
   assertSchedule1NecSourceIdentity,
   assertScheduleCReceiptSourceIdentity,
   assertScheduleFFarmSourceIdentity,
@@ -263,6 +264,7 @@ export async function buildPdfBytes(
     assertScheduleCReceiptSourceIdentity(normalized, filer);
     assertSchedule1Box3SourceIdentity(normalized, filer);
     assertSchedule1NecSourceIdentity(normalized, filer);
+    assertSchedule1KSourceIdentity(normalized, filer);
     assertScheduleFFarmSourceIdentity(normalized, filer);
   }
   const k1Recipients = filer

@@ -67,6 +67,13 @@ export const itemSchema = z.object({
     no_overlap_with_other_1099s: z.literal(true),
     overlap_review_reference: z.string().trim().min(1),
   }).strict().optional(),
+  nonbusiness_activity_review: z.object({
+    activity_description: z.string().trim().min(1).max(100),
+    included_in_line8j: z.number().int().positive(),
+    allocation_reference: z.string().trim().min(1),
+    no_overlap_with_other_1099s: z.literal(true),
+    overlap_review_reference: z.string().trim().min(1),
+  }).strict().optional(),
   qualified_tips_box1a_review: z.object({
     amount: z.number().int().positive(),
     occupation_code: z.string().regex(/^\d{3}$/),
@@ -101,6 +108,17 @@ export const itemSchema = z.object({
   box8_state_withheld: z.number().nonnegative().optional(),
 }).superRefine((item, ctx) => {
   const gross = item.box1a_gross_payments ?? 0;
+  if (
+    (item.schedule_c_receipts_review && item.for_routing !== "schedule_c") ||
+    (item.nonbusiness_activity_review &&
+      (item.for_routing !== "schedule_1_line_8j" || gross <= 0))
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["for_routing"],
+      message: "1099-K receipt review must match its income route",
+    });
+  }
   if (item.for_routing === "schedule_c" && gross > 0) {
     const review = item.schedule_c_receipts_review;
     if (
@@ -116,6 +134,22 @@ export const itemSchema = z.object({
         path: ["schedule_c_receipts_review"],
         message:
           "1099-K Schedule C income needs identified payer, recipient, business, and a complete box 1a allocation",
+      });
+    }
+  }
+  if (item.for_routing === "schedule_1_line_8j" && gross > 0) {
+    const review = item.nonbusiness_activity_review;
+    if (
+      !item.pse_name.trim() ||
+      !/^\d{9}$/.test(item.pse_tin?.replaceAll("-", "") ?? "") ||
+      !item.recipient_tin || !review ||
+      review.included_in_line8j !== gross
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["nonbusiness_activity_review"],
+        message:
+          "1099-K nonbusiness income needs identified payer, recipient, activity, and a complete box 1a allocation",
       });
     }
   }
@@ -227,8 +261,12 @@ function incomeOutputs(k99s: K99Items): NodeOutput[] {
     }
   });
   const hobbyIncome = k99s.filter((item) =>
-    item.for_routing === "schedule_1_line_8j"
-  ).reduce((sum, item) => sum + (item.box1a_gross_payments ?? 0), 0);
+    item.for_routing === "schedule_1_line_8j" &&
+    (item.box1a_gross_payments ?? 0) > 0
+  ).reduce(
+    (sum, item) => sum + item.nonbusiness_activity_review!.included_in_line8j,
+    0,
+  );
   return [
     ...businessOutputs,
     ...(hobbyIncome > 0

@@ -10,6 +10,7 @@ import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
 import {
   assertF1040SourceIdentity,
   assertSchedule1Box3SourceIdentity,
+  assertSchedule1KSourceIdentity,
   assertSchedule1NecSourceIdentity,
   assertScheduleCReceiptSourceIdentity,
   assertScheduleFFarmSourceIdentity,
@@ -217,6 +218,7 @@ function buildReturnXml(
   assertScheduleCReceiptSourceIdentity(pending, filer);
   assertSchedule1Box3SourceIdentity(pending, filer);
   assertSchedule1NecSourceIdentity(pending, filer);
+  assertSchedule1KSourceIdentity(pending, filer);
   assertScheduleFFarmSourceIdentity(pending, filer);
   const k1Recipients = [
     filer.primarySSN,

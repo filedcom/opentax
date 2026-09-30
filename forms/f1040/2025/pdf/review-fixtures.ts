@@ -2512,6 +2512,40 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-nec-k-nonbusiness-line8j",
+    inputs: {
+      general: singleGeneral,
+      f1099nec: [{
+        payer_name: "Example Workshop",
+        payer_tin: "12-3456789",
+        recipient_ssn: "111-22-3333",
+        box1_nec: 3_000,
+        for_routing: "schedule_1_line_8j",
+        nonbusiness_activity_description: "Occasional workshop",
+      }],
+      f1099k: [{
+        pse_name: "Example Payment Processor",
+        pse_tin: "23-4567890",
+        recipient_tin: "111-22-3333",
+        box1a_gross_payments: 5_000,
+        for_routing: "schedule_1_line_8j",
+        nonbusiness_activity_review: {
+          activity_description: "Occasional craft activity",
+          included_in_line8j: 5_000,
+          allocation_reference: "Synthetic 2025 craft payment review",
+          no_overlap_with_other_1099s: true,
+          overlap_review_reference: "Synthetic 2025 NEC/K overlap review",
+        },
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule1"],
+    reviewFocus: [
+      "NEC $3,000 and K $5,000 nonbusiness activities sum once to Schedule 1 line 8j",
+      "Form 1040 line 8 and AGI include the $8,000 combined amount",
+    ],
+  },
+  {
     id: "single-schedule-c",
     inputs: {
       general: {

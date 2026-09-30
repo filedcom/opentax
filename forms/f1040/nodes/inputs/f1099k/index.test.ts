@@ -28,6 +28,23 @@ function businessItem(gross: number, overrides: Record<string, unknown> = {}) {
   });
 }
 
+function hobbyItem(gross: number, overrides: Record<string, unknown> = {}) {
+  return minimalItem({
+    pse_tin: "123456789",
+    recipient_tin: "987654321",
+    box1a_gross_payments: gross,
+    for_routing: "schedule_1_line_8j",
+    nonbusiness_activity_review: {
+      activity_description: "Occasional craft sales",
+      included_in_line8j: gross,
+      allocation_reference: "2025 activity payment ledger",
+      no_overlap_with_other_1099s: true,
+      overlap_review_reference: "2025 information-return overlap review",
+    },
+    ...overrides,
+  });
+}
+
 function compute(items: ReturnType<typeof minimalItem>[]) {
   return f1099k.compute({ taxYear: 2025, formType: "f1040" }, {
     f1099ks: items,
@@ -676,10 +693,7 @@ Deno.test("for_routing=schedule_c: $5,000 gross routes despite issuer threshold"
 
 Deno.test("for_routing=schedule_1_line_8j: hobby gross routes to Schedule 1 and AGI", () => {
   const result = compute([
-    minimalItem({
-      box1a_gross_payments: 8_000,
-      for_routing: "schedule_1_line_8j",
-    }),
+    hobbyItem(8_000),
   ]);
   const sched1Out = findOutput(result, "schedule1");
   assertEquals(sched1Out !== undefined, true);
@@ -691,6 +705,29 @@ Deno.test("for_routing=schedule_1_line_8j: hobby gross routes to Schedule 1 and 
     (findOutput(result, "agi_aggregator")!.fields as Record<string, unknown>)
       .line8j_f1099k_hobby_income,
     8_000,
+  );
+});
+
+Deno.test("1099-K nonbusiness route requires all box 1a receipts on line 8j", () => {
+  assertThrows(
+    () =>
+      compute([hobbyItem(8_000, {
+        nonbusiness_activity_review: {
+          activity_description: "Occasional craft sales",
+          included_in_line8j: 5_000,
+          allocation_reference: "2025 activity payment ledger",
+          no_overlap_with_other_1099s: true,
+          overlap_review_reference: "2025 information-return overlap review",
+        },
+      })]),
+    Error,
+    "complete box 1a allocation",
+  );
+  assertThrows(
+    () =>
+      compute([hobbyItem(8_000, { nonbusiness_activity_review: undefined })]),
+    Error,
+    "complete box 1a allocation",
   );
 });
 
@@ -713,7 +750,7 @@ Deno.test("for_routing=schedule_c: $4,999 gross routes despite issuer threshold"
 
 Deno.test("for_routing=schedule_1_line_8j: $1 gross routes despite issuer threshold", () => {
   const result = compute([
-    minimalItem({ box1a_gross_payments: 1, for_routing: "schedule_1_line_8j" }),
+    hobbyItem(1),
   ]);
   const sched1Out = findOutput(result, "schedule1");
   assertEquals(
@@ -729,7 +766,7 @@ Deno.test("for_routing=schedule_1_line_8j: $1 gross routes despite issuer thresh
 
 Deno.test("for_routing=schedule_1_line_8j: zero gross creates neither Schedule 1 nor AGI income", () => {
   const result = compute([
-    minimalItem({ box1a_gross_payments: 0, for_routing: "schedule_1_line_8j" }),
+    hobbyItem(0, { nonbusiness_activity_review: undefined }),
   ]);
   assertEquals(findOutput(result, "schedule1"), undefined);
   assertEquals(findOutput(result, "agi_aggregator"), undefined);
@@ -737,11 +774,8 @@ Deno.test("for_routing=schedule_1_line_8j: zero gross creates neither Schedule 1
 
 Deno.test("for_routing=schedule_1_line_8j: sourced items aggregate once for Schedule 1 and AGI", () => {
   const result = compute([
-    minimalItem({ box1a_gross_payments: 1, for_routing: "schedule_1_line_8j" }),
-    minimalItem({
-      box1a_gross_payments: 4_999,
-      for_routing: "schedule_1_line_8j",
-    }),
+    hobbyItem(1),
+    hobbyItem(4_999),
   ]);
   const schedule1Amounts = result.outputs.filter((o) =>
     o.nodeType === "schedule1"

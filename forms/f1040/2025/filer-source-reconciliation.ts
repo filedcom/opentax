@@ -266,6 +266,59 @@ export function assertSchedule1NecSourceIdentity(
   }
 }
 
+export function assertSchedule1KSourceIdentity(
+  pending: Record<string, unknown>,
+  filer: FilerIdentity,
+): void {
+  const raw =
+    (pending.f1099k as { f1099ks?: Array<Record<string, unknown>> } | undefined)
+      ?.f1099ks ?? [];
+  const hobby = raw.filter((item) =>
+    item.for_routing === "schedule_1_line_8j" &&
+    typeof item.box1a_gross_payments === "number" &&
+    item.box1a_gross_payments > 0
+  );
+  const recipients = [tin(filer.primarySSN, "taxpayer")];
+  if (filer.filingStatus === FilingStatus.MarriedFilingJointly) {
+    recipients.push(tin(filer.spouse?.ssn, "spouse"));
+  }
+  let expected = 0;
+  for (const item of hobby) {
+    const review = item.nonbusiness_activity_review as
+      | Record<string, unknown>
+      | undefined;
+    const recipient = tin(item.recipient_tin, "1099-K recipient");
+    if (
+      typeof item.pse_name !== "string" || !item.pse_name.trim() ||
+      !tin(item.pse_tin, "1099-K PSE") ||
+      !recipient || !recipients.includes(recipient) ||
+      !review || typeof review.activity_description !== "string" ||
+      !review.activity_description.trim() ||
+      typeof review.included_in_line8j !== "number" ||
+      !Number.isSafeInteger(review.included_in_line8j) ||
+      review.included_in_line8j <= 0 ||
+      review.included_in_line8j !== item.box1a_gross_payments ||
+      typeof review.allocation_reference !== "string" ||
+      !review.allocation_reference.trim() ||
+      review.no_overlap_with_other_1099s !== true ||
+      typeof review.overlap_review_reference !== "string" ||
+      !review.overlap_review_reference.trim()
+    ) {
+      throw new Error(
+        "1099-K nonbusiness source needs a matching filer and reviewed box 1a allocation",
+      );
+    }
+    expected += review.included_in_line8j;
+  }
+  const schedule1 = pending.schedule1 as Record<string, unknown> | undefined;
+  const actual = schedule1?.line8j_f1099k_hobby_income;
+  if (expected !== (actual ?? 0)) {
+    throw new Error(
+      "1099-K nonbusiness income differs from Schedule 1 line 8j source",
+    );
+  }
+}
+
 export function assertScheduleFFarmSourceIdentity(
   pending: Record<string, unknown>,
   filer: FilerIdentity,
