@@ -5,6 +5,7 @@ import {
 } from "../../nodes/inputs/f1099r/index.ts";
 import { EnergyType } from "../../nodes/inputs/f8835/index.ts";
 import { CoverageType } from "../../nodes/intermediate/forms/form8889/index.ts";
+import { LanguagePreferenceCode } from "../../nodes/inputs/schedule_lep/index.ts";
 import { FilingStatus as SourceFilingStatus } from "../../nodes/types.ts";
 
 /** Synthetic source returns for the held TY2025 filled-PDF review. */
@@ -686,6 +687,35 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "MFJ box and both names/SSNs are placed without clipping",
       "Two source W-2 amounts combine once on lines 1a and 25a",
       "No duplicate Form 1040 pages or missing page 2",
+    ],
+  },
+  {
+    id: "joint-two-w2s-schedule-lep",
+    inputs: {
+      general: jointGeneral,
+      w2: [
+        wage(42_000, 4_000, "First Example Employer", "12-3456789"),
+        wage(28_000, 2_500, "Second Example Employer", "98-7654321"),
+      ],
+      schedule_lep: {
+        requests: [
+          {
+            person: "taxpayer",
+            language_preference_code: LanguagePreferenceCode.Spanish,
+          },
+          {
+            person: "spouse",
+            language_preference_code: LanguagePreferenceCode.French,
+          },
+        ],
+      },
+    },
+    filer: jointFiler,
+    expectedPdfForms: ["f1040", "schedule_lep", "schedule_lep"],
+    reviewFocus: [
+      "Two W-2s give $70,000 wages and $6,500 withholding on the joint return",
+      "The taxpayer's separate Schedule LEP page checks Spanish and prints Alex Example/111223333",
+      "The spouse's separate Schedule LEP page checks French and prints Sam Example/444556666",
     ],
   },
   {

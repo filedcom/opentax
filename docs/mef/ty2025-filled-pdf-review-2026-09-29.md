@@ -216,3 +216,22 @@ Lines 27–29 and the unrelated senior part are blank. The PDF SHA-256 is
 `15e4ae3af4e64903cacce45f6d49fdec377bd22a5452538f5fc87bc47297fea0`.
 The synthetic review does not authenticate lender, purchase, final-assembly,
 or no-other-deduction records, or prove IRS business-rule or ATS acceptance.
+
+The `joint-two-w2s-schedule-lep` packet was generated with the other
+thirty-four synthetic cases in
+`.state/research/ty2025-filled-pdf-review/2026-09-30-v44/`. Two W-2s report
+$42,000/$28,000 wages and $4,000/$2,500 withholding. The joint return's
+taxpayer requests Spanish (001), and the spouse requests French (011). The
+graph records $70,000 wages, $31,500 standard deduction, $38,500 taxable
+income, $4,146 tax, and $2,354 refund. Native XML contains separate
+`IRS1040ScheduleLEP` documents with the correct owner SSNs and codes; the
+full return passed local TY2025 v5.4 XSD.
+
+All four pages were rendered and inspected. Form 1040 pages 1–2 show both
+owners, joint status, $70,000 wages, $6,500 withholding, $4,146 tax, and
+$2,354 refund. Page 3 prints Alex Example/111223333 and checks only Spanish.
+Page 4 prints Sam Example/444556666 and checks only French. Neither LEP page
+includes its instructions page. The PDF SHA-256 is
+`7454b9ae9db6c606d136e60bc7595ae23c2e1e9c883caefa3862dd8ddf34b836`.
+This is a synthetic source and local structural/visual check; IRS business
+rules and ATS acceptance remain open.

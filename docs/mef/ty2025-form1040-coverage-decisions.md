@@ -50,8 +50,10 @@ signed attachment evidence.
 
 Schedule LEP is no longer an absent optional attachment: a taxpayer or joint
 spouse language request has a typed public input, native serializer, and
-one-page-per-person PDF projection. It remains build-only until the full XSD,
-filled-PDF, IRS-rule, and ATS gates run. This is not an exclusion decision.
+one-page-per-person PDF projection. A joint source return now passes local
+TY2025 v5.4 full-return XSD with two distinct LEP documents, and all four
+PDF pages were inspected for owner identity and separate language selections.
+IRS business-rule and ATS gates remain open. This is not an exclusion decision.
 
 ### Evidence that code cannot infer
 

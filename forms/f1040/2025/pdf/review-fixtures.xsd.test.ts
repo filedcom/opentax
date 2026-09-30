@@ -144,6 +144,21 @@ for (const fixture of pdfReviewFixtures) {
           "<TotalAdditionalDeductionsAmt>4000</TotalAdditionalDeductionsAmt>",
         );
       }
+      if (fixture.id === "joint-two-w2s-schedule-lep") {
+        assertStringIncludes(
+          xml,
+          "<WagesSalariesAndTipsAmt>70000</WagesSalariesAndTipsAmt>",
+        );
+        assertEquals((xml.match(/<IRS1040ScheduleLEP /g) ?? []).length, 2);
+        assertStringIncludes(
+          xml,
+          "<PersonNm>Alex Example</PersonNm><SSN>111223333</SSN><LanguagePreferenceCd>001</LanguagePreferenceCd>",
+        );
+        assertStringIncludes(
+          xml,
+          "<PersonNm>Sam Example</PersonNm><SSN>444556666</SSN><LanguagePreferenceCd>011</LanguagePreferenceCd>",
+        );
+      }
       if (fixture.id === "single-ira-rollover") {
         assertEquals(result.pending.f1040.line4a_ira_gross, 5_000);
         assertEquals(result.pending.f1040.line4b_ira_taxable, 0);
