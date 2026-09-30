@@ -28,6 +28,34 @@ function overtime(
   }];
 }
 
+function vehicleLoan(
+  qualified_interest_paid: number,
+  vin = "1HGCM82633A004352",
+) {
+  return {
+    vin,
+    borrower_ssn: TAXPAYER_SSN,
+    loan_originated_date: "2025-02-01",
+    vehicle_purchased_date: "2025-02-01",
+    lender_name: "Test Credit Union",
+    lender_interest_statement_reference: "2025 lender interest statement",
+    purchase_and_lien_reference: "2025 purchase and first-lien agreement",
+    final_assembly_reference: "vehicle information label",
+    original_borrower: true as const,
+    purchase_proceeds_only: true as const,
+    first_lien_secured: true as const,
+    original_vehicle_use: true as const,
+    road_vehicle_with_two_or_more_wheels: true as const,
+    vehicle_type: "car" as const,
+    gross_vehicle_weight_under_14000_pounds: true as const,
+    final_assembly_in_us: true as const,
+    expected_personal_use_over_half: true as const,
+    qualified_interest_paid,
+    interest_deducted_elsewhere: 0 as const,
+    no_other_interest_deduction_review_reference: "2025 Schedule C/E/F review",
+  };
+}
+
 function deduction(
   input: Parameters<typeof schedule1a.compute>[1],
 ): number | undefined {
@@ -233,45 +261,37 @@ Deno.test("schedule1a: married filing separately cannot deduct overtime", () => 
   );
 });
 
-Deno.test("schedule1a: vehicle interest subtracts business use and allows MFS", () => {
+Deno.test("schedule1a: reviewed vehicle interest allows MFS", () => {
   assertEquals(
     deduction({
-      vehicle_loans: [{
-        vin: "1HGCM82633A004352",
-        qualified_interest_paid: 4_000,
-        interest_deducted_on_business_schedules: 750,
-      }],
+      vehicle_loans: [vehicleLoan(4_000)],
+      taxpayer_ssn: TAXPAYER_SSN,
       magi: 80_000,
       filing_status: FilingStatus.MFS,
     }),
-    3_250,
+    4_000,
   );
 });
 
 Deno.test("schedule1a: passes computed line 30 vehicle interest separately", () => {
   const result = schedule1a.compute(ctx, {
-    vehicle_loans: [{
-      vin: "1HGCM82633A004352",
-      qualified_interest_paid: 4_000,
-      interest_deducted_on_business_schedules: 750,
-    }],
+    vehicle_loans: [vehicleLoan(4_000)],
+    taxpayer_ssn: TAXPAYER_SSN,
     magi: 80_000,
     filing_status: FilingStatus.MFS,
   });
   assertEquals(
     fieldsOf(result.outputs, standard_deduction)
       ?.qualified_vehicle_loan_interest_deduction,
-    3_250,
+    4_000,
   );
 });
 
 Deno.test("schedule1a: vehicle phaseout rounds excess MAGI up to $1,000", () => {
   assertEquals(
     deduction({
-      vehicle_loans: [{
-        vin: "1HGCM82633A004352",
-        qualified_interest_paid: 10_000,
-      }],
+      vehicle_loans: [vehicleLoan(10_000)],
+      taxpayer_ssn: TAXPAYER_SSN,
       magi: 100_001,
       filing_status: FilingStatus.Single,
     }),
@@ -279,10 +299,19 @@ Deno.test("schedule1a: vehicle phaseout rounds excess MAGI up to $1,000", () => 
   );
 });
 
-Deno.test("schedule1a: rejects invalid VINs and excess business-use interest", () => {
+Deno.test("schedule1a: rejects invalid VINs and interest deducted elsewhere", () => {
   assertEquals(
     schedule1a.inputSchema.safeParse({
-      vehicle_loans: [{ vin: "not-a-vin", qualified_interest_paid: 1_000 }],
+      vehicle_loans: [vehicleLoan(1_000, "not-a-vin")],
+    }).success,
+    false,
+  );
+  assertEquals(
+    schedule1a.inputSchema.safeParse({
+      vehicle_loans: [{
+        ...vehicleLoan(1_000),
+        interest_deducted_elsewhere: 1,
+      }],
     }).success,
     false,
   );
@@ -291,8 +320,32 @@ Deno.test("schedule1a: rejects invalid VINs and excess business-use interest", (
       vehicle_loans: [{
         vin: "1HGCM82633A004352",
         qualified_interest_paid: 1_000,
-        interest_deducted_on_business_schedules: 1_001,
       }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    schedule1a.inputSchema.safeParse({
+      vehicle_loans: [{
+        ...vehicleLoan(1_000),
+        loan_originated_date: "2025-02-30",
+      }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    schedule1a.inputSchema.safeParse({
+      vehicle_loans: [{ ...vehicleLoan(1_000), final_assembly_in_us: false }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    schedule1a.inputSchema.safeParse({
+      vehicle_loans: [
+        vehicleLoan(1_000),
+        vehicleLoan(1_000),
+        vehicleLoan(1_000),
+      ],
     }).success,
     false,
   );
@@ -382,10 +435,7 @@ Deno.test("schedule1a: total combines tips, overtime, vehicle interest, and seni
     deduction({
       qualified_employee_tips: tips(2_000),
       qualified_w2_overtime: overtime(3_000),
-      vehicle_loans: [{
-        vin: "1HGCM82633A004352",
-        qualified_interest_paid: 1_000,
-      }],
+      vehicle_loans: [vehicleLoan(1_000)],
       taxpayer_age_65_or_older: true,
       taxpayer_ssn: TAXPAYER_SSN,
       taxpayer_has_valid_ssn: true,

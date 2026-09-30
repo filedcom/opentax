@@ -8,11 +8,11 @@ and checked-in v5.4 `Common/IRS1040Schedule1A/IRS1040Schedule1A.xsd`.
 
 The `schedule1a` node computes a combined deduction and sends it to Form 1040
 line 13b. MeF includes bounded senior-only and single-employer W-2-box-7 tips
-routes plus a reviewed W-2-box-14 FLSA overtime route in the Schedule 1-A
+routes plus reviewed W-2-box-14 FLSA overtime and vehicle-interest routes in the Schedule 1-A
 descriptor after Schedule 1 and before Schedule 2. Form 1040's positive-line-13b guard opens
 only when that source review is present and the second pass has exactly one
 attached Schedule 1-A. The descriptor independently rejects unsupported
-components and reconciles line 38 to line 13b. All three routes have a
+components and reconciles line 38 to line 13b. All four routes have a
 two-page PDF field map and inspected synthetic full-return packets.
 
 ## Source and line blockers
@@ -42,12 +42,17 @@ two-page PDF field map and inspected synthetic full-return packets.
   rejected at the public input schema. Payroll-method calculations when box 14
   lacks the premium, deferred W-2 amounts, Forms 1099-NEC/MISC, mixed
   Schedule 1-A claims, and authenticated employer evidence remain open.
-- Part IV line 22 requires a VIN and per-loan interest deducted on Schedule C,
-  E, or F versus interest claimed on Schedule 1-A. The node has a VIN, paid
-  interest, and an asserted business-schedule amount, but no loan/purchase-date,
-  new-vehicle, final-assembly, lender, or business-deduction reconciliation.
-  Native v5.4 permits at most 50 vehicle groups; the node has no corresponding
-  limit. Emitting line 30 from these assertions could overstate the deduction.
+- Part IV now has a reviewed 2025 purchase-loan route for one or two new,
+  qualifying US-assembled passenger vehicles. Each record needs a borrower
+  SSN, VIN, 2025 origination/purchase dates, lender and document references,
+  first-lien and personal-use confirmations, eligible vehicle facts, whole-
+  dollar interest, and a source-referenced review that no interest was deducted
+  elsewhere. Bare VIN/interest assertions, positive Schedule C/E/F amounts,
+  mixed Schedule 1-A claims, and more than two VINs are rejected. The native
+  v5.4 schema permits up to 50 groups, but more than two needs an attached
+  statement that is not yet implemented. Refinance, inherited-obligor, mixed
+  business-use interest, document authentication, and cross-schedule deduction
+  reconciliation remain open.
 - Part V's senior-only descriptor now computes per-person lines 36a/36b and
   intermediate lines 32–35. Its zero-exclusion review does not establish the
   positive Part I exclusion paths or authenticate the underlying documents.
@@ -69,9 +74,9 @@ The source, document, return integration, and PDF field-map cases are written.
 The official 2025 two-page AcroForm was inspected: page 1 fields
 `f1_03`, `f1_08`, and `f1_09` correspond to lines 1, 2e, and 3; page 2
 fields `f2_15` through `f2_23` correspond to lines 31 through 38. The
-registered PDF descriptor projects either supported worksheet after the
+registered PDF descriptor projects a supported worksheet after the
 same MeF source/return reconciliation, and Form 1040's PDF line 13b opens only
-when that page's line 38 matches. Other Part II/III sources and Part IV remain open.
+when that page's line 38 matches. Other Part II/III/IV sources remain open.
 The `joint-senior-schedule1a` fixture now exercises the real source graph,
 Form 1040 join, native TY2025 v5.4 XML, and four-page filled PDF. A PDF build
 initially found that Form 6251 read a nonexistent calculated `line37_senior`
@@ -82,7 +87,7 @@ prints both spouses on Schedule 1-A page 1, $160,000 on Part I lines 1/3,
 $5,400 for each spouse in Part V, and $10,800 on line 38 and Form 1040 line
 13b. All four pages were visually inspected and the full-return XML passed the
 local XSD. The remaining positive Part I exclusions, other Part II sources,
-other Part III sources, Part IV, source authentication, IRS business rules,
+other Part III/IV sources, source authentication, IRS business rules,
 and ATS acceptance remain open.
 The source commit `89b972c6` passed the complete `deno task test` run at
 8,932/8,932 with zero failures; the log is retained at
@@ -118,3 +123,16 @@ payer-issued W-2 and payroll bytes, IRS business rules, and ATS acceptance
 remain open.
 Source commit `b2182cc1` passed `deno task test` at 8,947/8,947 with zero
 failures; retain `.state/research/ty2025-full-test-schedule1a-overtime.log`.
+
+The `single-reviewed-car-loan-schedule1a` fixture has a synthetic $80,000 W-2
+and one reviewed 2025 purchase loan with $4,000 interest, a VIN, lender and
+purchase references, vehicle eligibility facts, and a zero-interest-deducted-
+elsewhere review. The graph reports $80,000 AGI, $4,000 on Form 1040 line
+13b, $60,250 taxable income, $8,175 tax, and $175 owed. Native Schedule 1-A
+prints the VIN, zero on line 22(ii), $4,000 on lines 22(iii)/23/24/30/38,
+and passes local TY2025 v5.4 full-return XSD. All four pages of the `v43`
+PDF were rendered and inspected; the Part IV rows, filer identity, and Form
+1040 totals agree with the source, graph, and XML. The [filled-PDF notes](ty2025-filled-pdf-review-2026-09-29.md)
+retain the page review and SHA-256. The references are review assertions,
+not authentication of the underlying lender or purchase documents. IRS
+business rules and ATS acceptance remain open.

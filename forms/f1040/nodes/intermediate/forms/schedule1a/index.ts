@@ -8,22 +8,45 @@ import { standard_deduction } from "../../worksheets/standard_deduction/index.ts
 import { FilingStatus } from "../../../types.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
+const vehiclePurchaseDateSchema = z.string().regex(/^2025-\d{2}-\d{2}$/)
+  .refine((value) => {
+    const date = new Date(`${value}T00:00:00Z`);
+    return !Number.isNaN(date.valueOf()) &&
+      date.toISOString().slice(0, 10) === value;
+  }, "Must be a valid 2025 calendar date");
+
 const vehicleLoanSchema = z.object({
   vin: z.string().trim().regex(
     /^[A-HJ-NPR-Z0-9]{17}$/i,
     "VIN must contain 17 characters and cannot contain I, O, or Q",
   ),
-  qualified_interest_paid: z.number().nonnegative(),
-  interest_deducted_on_business_schedules: z.number().nonnegative().optional(),
-}).refine(
-  (loan) =>
-    (loan.interest_deducted_on_business_schedules ?? 0) <=
-      loan.qualified_interest_paid,
-  {
-    message: "Business-use interest cannot exceed qualified interest paid",
-    path: ["interest_deducted_on_business_schedules"],
-  },
-);
+  borrower_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+  loan_originated_date: vehiclePurchaseDateSchema,
+  vehicle_purchased_date: vehiclePurchaseDateSchema,
+  lender_name: z.string().trim().min(1),
+  lender_interest_statement_reference: z.string().trim().min(1),
+  purchase_and_lien_reference: z.string().trim().min(1),
+  final_assembly_reference: z.string().trim().min(1),
+  original_borrower: z.literal(true),
+  purchase_proceeds_only: z.literal(true),
+  first_lien_secured: z.literal(true),
+  original_vehicle_use: z.literal(true),
+  road_vehicle_with_two_or_more_wheels: z.literal(true),
+  vehicle_type: z.enum([
+    "car",
+    "minivan",
+    "van",
+    "suv",
+    "pickup",
+    "motorcycle",
+  ]),
+  gross_vehicle_weight_under_14000_pounds: z.literal(true),
+  final_assembly_in_us: z.literal(true),
+  expected_personal_use_over_half: z.literal(true),
+  qualified_interest_paid: z.number().int().positive(),
+  interest_deducted_elsewhere: z.literal(0),
+  no_other_interest_deduction_review_reference: z.string().trim().min(1),
+}).strict();
 
 /** Fields a taxpayer supplies directly for Schedule 1-A. */
 export const seniorZeroExclusionsReviewSchema = z.object({
@@ -36,7 +59,7 @@ export const seniorZeroExclusionsReviewSchema = z.object({
 }).strict();
 
 export const claimInputSchema = z.object({
-  vehicle_loans: z.array(vehicleLoanSchema).min(1).optional(),
+  vehicle_loans: z.array(vehicleLoanSchema).min(1).max(2).optional(),
   senior_zero_exclusions_review: seniorZeroExclusionsReviewSchema.optional(),
 }).strict();
 
@@ -119,6 +142,28 @@ export const w2OvertimeLinesSchema = z.object({
 }).strict();
 
 export type W2OvertimeLines = z.infer<typeof w2OvertimeLinesSchema>;
+
+export const vehicleInterestLinesSchema = z.object({
+  line1_agi: z.number().int(),
+  line3_magi: z.number().int(),
+  line22_vehicles: z.array(
+    z.object({
+      vin: z.string(),
+      deducted_elsewhere: z.literal(0),
+      schedule1a_interest: z.number().int().positive(),
+    }).strict(),
+  ).min(1).max(2),
+  line23_total_interest: z.number().int().positive(),
+  line24_capped_interest: z.number().int().positive(),
+  line26_threshold: z.number().int().positive(),
+  line27_excess_magi: z.number().int().nonnegative(),
+  line28_thousands: z.number().int().nonnegative(),
+  line29_reduction: z.number().int().nonnegative(),
+  line30_vehicle_interest: z.number().int().positive(),
+  line38_total: z.number().int().positive(),
+}).strict();
+
+export type VehicleInterestLines = z.infer<typeof vehicleInterestLinesSchema>;
 
 const QUALIFIED_TIPS_CAP = 25_000;
 const OVERTIME_CAP = 12_500;
@@ -231,9 +276,13 @@ export function qualifiedOvertimeDeduction(input: Schedule1AInput): number {
 export function vehicleLoanInterestDeduction(input: Schedule1AInput): number {
   if (input.filing_status === undefined || input.magi === undefined) return 0;
   const qualifiedInterest = (input.vehicle_loans ?? []).reduce(
-    (sum, loan) =>
-      sum + loan.qualified_interest_paid -
-      (loan.interest_deducted_on_business_schedules ?? 0),
+    (sum, loan) => {
+      const borrower = loan.borrower_ssn.replaceAll("-", "");
+      const taxpayer = borrower === input.taxpayer_ssn?.replaceAll("-", "");
+      const spouse = input.filing_status === FilingStatus.MFJ &&
+        borrower === input.spouse_ssn?.replaceAll("-", "");
+      return sum + (taxpayer || spouse ? loan.qualified_interest_paid : 0);
+    },
     0,
   );
   if (qualifiedInterest <= 0) return 0;
@@ -529,6 +578,88 @@ export function calculateW2OvertimeSchedule1A(
     line19_thousands: thousands,
     line20_reduction: reduction,
     line21_overtime: deduction,
+    line38_total: deduction,
+  });
+}
+
+/** Reviewed 2025 purchase loans with no interest deducted elsewhere. */
+export function calculateVehicleInterestSchedule1A(
+  ctx: NodeContext,
+  rawInput: Schedule1AInput,
+): VehicleInterestLines {
+  if (ctx.taxYear !== 2025) {
+    throw new Error("Schedule 1-A vehicle interest filing needs tax year 2025");
+  }
+  const input = inputSchema.parse(rawInput);
+  if (!input.senior_zero_exclusions_review) {
+    throw new Error(
+      "Schedule 1-A vehicle interest needs sourced zero-exclusion review for Part I",
+    );
+  }
+  if (
+    !input.vehicle_loans?.length ||
+    (input.qualified_employee_tips?.length ?? 0) > 0 ||
+    (input.qualified_w2_overtime?.length ?? 0) > 0 ||
+    seniorDeduction(ctx, input) > 0
+  ) {
+    throw new Error(
+      "Schedule 1-A vehicle interest filing cannot include tips, overtime, or senior claims",
+    );
+  }
+  if (
+    input.magi === undefined || !Number.isSafeInteger(input.magi) ||
+    input.filing_status === undefined
+  ) {
+    throw new Error(
+      "Schedule 1-A vehicle interest needs whole-dollar AGI and filing status",
+    );
+  }
+  const seen = new Set<string>();
+  let total = 0;
+  for (const loan of input.vehicle_loans) {
+    const vin = loan.vin.toUpperCase();
+    if (seen.has(vin)) {
+      throw new Error("Schedule 1-A vehicle interest needs one entry per VIN");
+    }
+    seen.add(vin);
+    const borrower = loan.borrower_ssn.replaceAll("-", "");
+    if (
+      borrower !== input.taxpayer_ssn?.replaceAll("-", "") &&
+      !(input.filing_status === FilingStatus.MFJ &&
+        borrower === input.spouse_ssn?.replaceAll("-", ""))
+    ) {
+      throw new Error("Schedule 1-A vehicle borrower must be a return filer");
+    }
+    total += loan.qualified_interest_paid;
+  }
+  const threshold = input.filing_status === FilingStatus.MFJ
+    ? VEHICLE_PHASEOUT_THRESHOLD_MFJ
+    : VEHICLE_PHASEOUT_THRESHOLD;
+  const excess = Math.max(0, input.magi - threshold);
+  const thousands = Math.ceil(excess / 1_000);
+  const reduction = thousands * 200;
+  const capped = Math.min(total, VEHICLE_INTEREST_CAP);
+  const deduction = Math.max(0, capped - reduction);
+  if (deduction <= 0 || deduction !== vehicleLoanInterestDeduction(input)) {
+    throw new Error(
+      "Schedule 1-A vehicle interest deduction does not reconcile to the source graph",
+    );
+  }
+  return vehicleInterestLinesSchema.parse({
+    line1_agi: input.magi,
+    line3_magi: input.magi,
+    line22_vehicles: input.vehicle_loans.map((loan) => ({
+      vin: loan.vin.toUpperCase(),
+      deducted_elsewhere: 0,
+      schedule1a_interest: loan.qualified_interest_paid,
+    })),
+    line23_total_interest: total,
+    line24_capped_interest: capped,
+    line26_threshold: threshold,
+    line27_excess_magi: excess,
+    line28_thousands: thousands,
+    line29_reduction: reduction,
+    line30_vehicle_interest: deduction,
     line38_total: deduction,
   });
 }

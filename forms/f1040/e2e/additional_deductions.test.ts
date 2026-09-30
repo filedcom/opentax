@@ -68,7 +68,26 @@ Deno.test("Schedule 1-A: overtime and vehicle interest flow from public input to
     schedule1a: {
       vehicle_loans: [{
         vin: "1HGCM82633A004352",
+        borrower_ssn: "111223333",
+        loan_originated_date: "2025-02-01",
+        vehicle_purchased_date: "2025-02-01",
+        lender_name: "Test Credit Union",
+        lender_interest_statement_reference: "2025 lender interest statement",
+        purchase_and_lien_reference: "2025 purchase and first-lien agreement",
+        final_assembly_reference: "vehicle information label",
+        original_borrower: true,
+        purchase_proceeds_only: true,
+        first_lien_secured: true,
+        original_vehicle_use: true,
+        road_vehicle_with_two_or_more_wheels: true,
+        vehicle_type: "car",
+        gross_vehicle_weight_under_14000_pounds: true,
+        final_assembly_in_us: true,
+        expected_personal_use_over_half: true,
         qualified_interest_paid: 2_000,
+        interest_deducted_elsewhere: 0,
+        no_other_interest_deduction_review_reference:
+          "2025 Schedule C/E/F review",
       }],
     },
   }, { taxYear: 2025, formType: "f1040" });

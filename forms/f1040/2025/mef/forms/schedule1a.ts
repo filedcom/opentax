@@ -3,6 +3,7 @@ import { element, elements } from "../../../mef/xml.ts";
 import {
   calculateSeniorOnlySchedule1A,
   calculateSingleEmployerTipsSchedule1A,
+  calculateVehicleInterestSchedule1A,
   calculateW2OvertimeSchedule1A,
   inputSchema,
 } from "../../../nodes/intermediate/forms/schedule1a/index.ts";
@@ -189,6 +190,61 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
         ? element("OtMAGILessThrshldRedAmt", lines.line20_reduction)
         : "",
       element("QualifiedOvertimeCompDedAmt", lines.line21_overtime),
+      element("TotalAdditionalDeductionsAmt", lines.line38_total),
+    ]);
+  }
+  if ((input.vehicle_loans?.length ?? 0) > 0) {
+    const lines = calculateVehicleInterestSchedule1A(
+      { taxYear: 2025, formType: "f1040" },
+      input,
+    );
+    const returnSsns = [form1040.taxpayer_ssn];
+    if (input.filing_status === FilingStatus.MFJ) {
+      returnSsns.push(form1040.spouse_ssn);
+    }
+    if (
+      form1040.filing_status !== input.filing_status ||
+      input.taxpayer_ssn?.replaceAll("-", "") !==
+        form1040.taxpayer_ssn?.replaceAll("-", "") ||
+      (input.filing_status === FilingStatus.MFJ &&
+        input.spouse_ssn?.replaceAll("-", "") !==
+          form1040.spouse_ssn?.replaceAll("-", "")) ||
+      !input.vehicle_loans!.every((loan) =>
+        returnSsns.some((ssn) =>
+          ssn?.replaceAll("-", "") === loan.borrower_ssn.replaceAll("-", "")
+        )
+      ) ||
+      form1040.line11_agi !== lines.line1_agi ||
+      form1040.line13b_additional_deductions !== lines.line38_total ||
+      (form1040.schedule1a_line37_senior_deduction ?? 0) !== 0
+    ) {
+      throw new Error(
+        "Schedule 1-A vehicle interest identity and Part I/VI do not reconcile to Form 1040",
+      );
+    }
+    return elements("IRS1040Schedule1A", [
+      element("AdjustedGrossIncomeAmt", lines.line1_agi),
+      element("ModifiedAGIAmt", lines.line3_magi),
+      ...lines.line22_vehicles.map((loan) =>
+        elements("QlfyPassengerVehicleLoanIntGrp", [
+          element("VIN", loan.vin),
+          element("QualifiedCarLoanIntDedSchAmt", loan.deducted_elsewhere),
+          element("QualifiedCarLoanInterestAmt", loan.schedule1a_interest),
+        ])
+      ),
+      element("TotQualifiedCarLoanInterestAmt", lines.line23_total_interest),
+      element("SmallerCarLoanIntOrMaxDedAmt", lines.line24_capped_interest),
+      element("CarLnIntFilingStatusThrshldAmt", lines.line26_threshold),
+      lines.line27_excess_magi > 0
+        ? element("CarLnIntMAGILessThrshldAmt", lines.line27_excess_magi)
+        : "",
+      lines.line27_excess_magi > 0
+        ? element("CarLnIntMAGILessThrshldDivNum", lines.line28_thousands)
+        : "",
+      lines.line27_excess_magi > 0
+        ? element("CarLnIntMAGILessThrshldRedAmt", lines.line29_reduction)
+        : "",
+      element("QualifiedCarLoanInterestDedAmt", lines.line30_vehicle_interest),
       element("TotalAdditionalDeductionsAmt", lines.line38_total),
     ]);
   }

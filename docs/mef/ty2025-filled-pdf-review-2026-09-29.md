@@ -193,3 +193,26 @@ vehicle/senior parts blank and prints $4,000 on line 38. The PDF SHA-256 is
 This synthetic review does not authenticate payer-issued W-2 or payroll
 bytes, exercise other overtime sources, or prove IRS business-rule or ATS
 acceptance.
+
+The `single-reviewed-car-loan-schedule1a` packet was generated with the
+other thirty-three synthetic cases in
+`.state/research/ty2025-filled-pdf-review/2026-09-30-v43/`. Its W-2 reports
+$80,000 box 1 wages and $8,000 withholding. The reviewed vehicle source
+records a 2025 purchase and first-lien loan, a qualifying new US-assembled
+passenger vehicle, VIN `1HGCM82633A004352`, $4,000 lender interest, and no
+interest deducted elsewhere. The graph reports $80,000 AGI, $4,000
+additional deduction, $60,250 taxable income, $8,175 tax, and $175 owed.
+Native Schedule 1-A includes the VIN, zero on line 22(ii), $4,000 on line
+22(iii) and line 30; the full return passed local TY2025 v5.4 XSD.
+
+All four pages were rendered and inspected. Form 1040 page 1 shows the
+single filer, SSN, $80,000 wages, and No digital-assets check; page 2
+prints $4,000 on line 13b, $60,250 on line 15, $8,175 tax, $8,000
+withholding, and $175 owed. Schedule 1-A page 1 prints the filer and
+$80,000 on lines 1/3, zero on line 2e, with tips and overtime blank. Page 2
+prints the VIN in line 22a, `0` in column (ii), $4,000 in column (iii),
+$4,000 on lines 23/24/30/38, $80,000 on line 25, and $100,000 on line 26.
+Lines 27–29 and the unrelated senior part are blank. The PDF SHA-256 is
+`15e4ae3af4e64903cacce45f6d49fdec377bd22a5452538f5fc87bc47297fea0`.
+The synthetic review does not authenticate lender, purchase, final-assembly,
+or no-other-deduction records, or prove IRS business-rule or ATS acceptance.

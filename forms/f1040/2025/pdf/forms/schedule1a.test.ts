@@ -72,6 +72,82 @@ Deno.test("2025 Schedule 1-A PDF maps the senior-only worksheet to both pages", 
   );
 });
 
+Deno.test("2025 Schedule 1-A PDF maps reviewed vehicle interest to Part IV", () => {
+  const loan = {
+    vin: "1HGCM82633A004352",
+    borrower_ssn: "111223333",
+    loan_originated_date: "2025-02-01",
+    vehicle_purchased_date: "2025-02-01",
+    lender_name: "Test Credit Union",
+    lender_interest_statement_reference: "2025 lender interest statement",
+    purchase_and_lien_reference: "2025 purchase and first-lien agreement",
+    final_assembly_reference: "vehicle information label",
+    original_borrower: true,
+    purchase_proceeds_only: true,
+    first_lien_secured: true,
+    original_vehicle_use: true,
+    road_vehicle_with_two_or_more_wheels: true,
+    vehicle_type: "car",
+    gross_vehicle_weight_under_14000_pounds: true,
+    final_assembly_in_us: true,
+    expected_personal_use_over_half: true,
+    qualified_interest_paid: 4_000,
+    interest_deducted_elsewhere: 0,
+    no_other_interest_deduction_review_reference: "2025 Schedule C/E/F review",
+  };
+  const vehicleSource = {
+    filing_status: FilingStatus.Single,
+    magi: 80_000,
+    taxpayer_ssn: "111223333",
+    senior_zero_exclusions_review: source.senior_zero_exclusions_review,
+    vehicle_loans: [loan],
+  };
+  const vehicleReturn = {
+    filing_status: FilingStatus.Single,
+    line11_agi: 80_000,
+    line13b_additional_deductions: 4_000,
+    schedule1a_line37_senior_deduction: 0,
+    taxpayer_ssn: "111223333",
+  };
+  const map = new Map(
+    schedule1aPdf.fields.map((entry) => [entry.domainKey, entry.pdfField]),
+  );
+  assertEquals(
+    map.get("line22a_vin"),
+    "form1[0].Page2[0].Table_Line22[0].Line22a[0].VIN-1_Comb[0].f2_01[0]",
+  );
+  assertEquals(
+    map.get("line30_vehicle_interest"),
+    "form1[0].Page2[0].f2_14[0]",
+  );
+  const projected = schedule1aPdf.projectFields?.(vehicleSource, {
+    schedule1a: vehicleSource,
+    f1040: vehicleReturn,
+  });
+  assertEquals(projected?.line22a_vin, loan.vin);
+  assertEquals(projected?.line22a_elsewhere, 0);
+  assertEquals(projected?.line22a_interest, 4_000);
+  assertEquals(projected?.line23_total_interest, 4_000);
+  assertEquals(projected?.line30_vehicle_interest, 4_000);
+  assertEquals(projected?.line38_total, 4_000);
+  const secondLoan = {
+    ...loan,
+    vin: "1HGCM82633A004353",
+    qualified_interest_paid: 1_000,
+  };
+  const twoLoanSource = {
+    ...vehicleSource,
+    vehicle_loans: [{ ...loan, qualified_interest_paid: 3_000 }, secondLoan],
+  };
+  const twoLoanProjected = schedule1aPdf.projectFields?.(twoLoanSource, {
+    schedule1a: twoLoanSource,
+    f1040: vehicleReturn,
+  });
+  assertEquals(twoLoanProjected?.line22a_interest, 3_000);
+  assertEquals(twoLoanProjected?.line22b_vin, secondLoan.vin);
+  assertEquals(twoLoanProjected?.line22b_interest, 1_000);
+});
+
 Deno.test("2025 Schedule 1-A PDF rejects unsupported and mismatched line 13b", () => {
   assertThrows(
     () =>

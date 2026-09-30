@@ -689,6 +689,63 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-reviewed-car-loan-schedule1a",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        taxpayer_ssn_valid_for_employment: true,
+        taxpayer_ssn_issued_before_due_date: true,
+        taxpayer_tin_issued_by_due_date: true,
+      },
+      w2: [wage(80_000, 8_000, "Example Employer", "12-3456789")],
+      schedule1a: {
+        senior_zero_exclusions_review: {
+          no_section933_puerto_rico_excluded_income: true,
+          section933_review_source_reference:
+            "Synthetic 2025 residency and income review",
+          no_form2555_filed: true,
+          form2555_review_source_reference:
+            "Synthetic 2025 foreign-income review",
+          no_form4563_filed: true,
+          form4563_review_source_reference:
+            "Synthetic 2025 Samoa-source income review",
+        },
+        vehicle_loans: [{
+          vin: "1HGCM82633A004352",
+          borrower_ssn: "111223333",
+          loan_originated_date: "2025-02-01",
+          vehicle_purchased_date: "2025-02-01",
+          lender_name: "Test Credit Union",
+          lender_interest_statement_reference:
+            "Synthetic 2025 lender interest statement",
+          purchase_and_lien_reference:
+            "Synthetic 2025 purchase and first-lien agreement",
+          final_assembly_reference: "Synthetic vehicle information label",
+          original_borrower: true,
+          purchase_proceeds_only: true,
+          first_lien_secured: true,
+          original_vehicle_use: true,
+          road_vehicle_with_two_or_more_wheels: true,
+          vehicle_type: "car",
+          gross_vehicle_weight_under_14000_pounds: true,
+          final_assembly_in_us: true,
+          expected_personal_use_over_half: true,
+          qualified_interest_paid: 4_000,
+          interest_deducted_elsewhere: 0,
+          no_other_interest_deduction_review_reference:
+            "Synthetic 2025 Schedule C/E/F review",
+        }],
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule1a"],
+    reviewFocus: [
+      "Part IV line 22a prints the reviewed VIN, zero deducted elsewhere, and $4,000 interest",
+      "Part IV lines 23, 24, 30, and 38 print $4,000 with line 25 at $80,000",
+      "Form 1040 line 13b prints $4,000 and agrees with native XML",
+    ],
+  },
+  {
     id: "single-two-w2-flsa-overtime-schedule1a",
     inputs: {
       general: {

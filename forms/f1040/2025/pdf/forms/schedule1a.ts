@@ -2,12 +2,13 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import {
   calculateSeniorOnlySchedule1A,
   calculateSingleEmployerTipsSchedule1A,
+  calculateVehicleInterestSchedule1A,
   calculateW2OvertimeSchedule1A,
   inputSchema,
 } from "../../../nodes/intermediate/forms/schedule1a/index.ts";
 import { schedule1a } from "../../mef/forms/schedule1a.ts";
 
-// Checked against the two-page 2025 IRS AcroForm. Part IV remains unsupported.
+// Checked against the two-page 2025 IRS AcroForm.
 const page1 = "form1[0].Page1[0]";
 const page2 = "form1[0].Page2[0]";
 const fields: ReadonlyArray<PdfFieldEntry> = [
@@ -102,6 +103,74 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     pdfField: `${page1}.f1_30[0]`,
   },
   { kind: "text", domainKey: "line21_overtime", pdfField: `${page1}.f1_31[0]` },
+  {
+    kind: "text",
+    domainKey: "line22a_vin",
+    pdfField: `${page2}.Table_Line22[0].Line22a[0].VIN-1_Comb[0].f2_01[0]`,
+  },
+  {
+    kind: "text",
+    domainKey: "line22a_elsewhere",
+    pdfField: `${page2}.Table_Line22[0].Line22a[0].f2_02[0]`,
+    printZero: true,
+  },
+  {
+    kind: "text",
+    domainKey: "line22a_interest",
+    pdfField: `${page2}.Table_Line22[0].Line22a[0].f2_03[0]`,
+  },
+  {
+    kind: "text",
+    domainKey: "line22b_vin",
+    pdfField: `${page2}.Table_Line22[0].Line22b[0].VIN-2_Comb[0].f2_04[0]`,
+  },
+  {
+    kind: "text",
+    domainKey: "line22b_elsewhere",
+    pdfField: `${page2}.Table_Line22[0].Line22b[0].f2_05[0]`,
+    printZero: true,
+  },
+  {
+    kind: "text",
+    domainKey: "line22b_interest",
+    pdfField: `${page2}.Table_Line22[0].Line22b[0].f2_06[0]`,
+  },
+  {
+    kind: "text",
+    domainKey: "line23_total_interest",
+    pdfField: `${page2}.f2_07[0]`,
+  },
+  {
+    kind: "text",
+    domainKey: "line24_capped_interest",
+    pdfField: `${page2}.f2_08[0]`,
+  },
+  { kind: "text", domainKey: "line25_magi", pdfField: `${page2}.f2_09[0]` },
+  {
+    kind: "text",
+    domainKey: "line26_threshold",
+    pdfField: `${page2}.f2_10[0]`,
+  },
+  {
+    kind: "text",
+    domainKey: "line27_excess_magi",
+    pdfField: `${page2}.f2_11[0]`,
+  },
+  {
+    kind: "text",
+    domainKey: "line28_thousands",
+    pdfField: `${page2}.f2_12[0]`,
+  },
+  {
+    kind: "text",
+    domainKey: "line29_reduction",
+    pdfField: `${page2}.f2_13[0]`,
+  },
+  {
+    kind: "text",
+    domainKey: "line30_vehicle_interest",
+    pdfField: `${page2}.f2_14[0]`,
+  },
   { kind: "text", domainKey: "line31_magi", pdfField: `${page2}.f2_15[0]` },
   {
     kind: "text",
@@ -189,6 +258,31 @@ export const schedule1aPdf: PdfFormDescriptor = {
             line18_excess_magi: undefined,
             line19_thousands: undefined,
             line20_reduction: undefined,
+          }
+          : {}),
+      };
+    }
+    if ((input.vehicle_loans?.length ?? 0) > 0) {
+      const lines = calculateVehicleInterestSchedule1A(
+        { taxYear: 2025, formType: "f1040" },
+        input,
+      );
+      const [first, second] = lines.line22_vehicles;
+      return {
+        ...lines,
+        line2e_zero_exclusions: 0,
+        line22a_vin: first.vin,
+        line22a_elsewhere: first.deducted_elsewhere,
+        line22a_interest: first.schedule1a_interest,
+        line22b_vin: second?.vin,
+        line22b_elsewhere: second?.deducted_elsewhere,
+        line22b_interest: second?.schedule1a_interest,
+        line25_magi: lines.line3_magi,
+        ...(lines.line27_excess_magi === 0
+          ? {
+            line27_excess_magi: undefined,
+            line28_thousands: undefined,
+            line29_reduction: undefined,
           }
           : {}),
       };

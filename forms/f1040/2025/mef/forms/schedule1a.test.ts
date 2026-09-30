@@ -2,6 +2,7 @@ import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   calculateSeniorOnlySchedule1A,
   calculateSingleEmployerTipsSchedule1A,
+  calculateVehicleInterestSchedule1A,
   calculateW2OvertimeSchedule1A,
   type SeniorOnlyLines,
   seniorZeroExclusionsReviewSchema,
@@ -119,6 +120,110 @@ const singleOvertime1040 = {
   taxpayer_ssn_issued_before_due_date: true,
   taxpayer_tin_issued_by_due_date: true,
 };
+
+const vehicleLoan = {
+  vin: "1HGCM82633A004352",
+  borrower_ssn: "111223333",
+  loan_originated_date: "2025-02-01",
+  vehicle_purchased_date: "2025-02-01",
+  lender_name: "Test Credit Union",
+  lender_interest_statement_reference: "2025 lender interest statement",
+  purchase_and_lien_reference: "2025 purchase and first-lien agreement",
+  final_assembly_reference: "vehicle information label",
+  original_borrower: true as const,
+  purchase_proceeds_only: true as const,
+  first_lien_secured: true as const,
+  original_vehicle_use: true as const,
+  road_vehicle_with_two_or_more_wheels: true as const,
+  vehicle_type: "car" as const,
+  gross_vehicle_weight_under_14000_pounds: true as const,
+  final_assembly_in_us: true as const,
+  expected_personal_use_over_half: true as const,
+  qualified_interest_paid: 4_000,
+  interest_deducted_elsewhere: 0 as const,
+  no_other_interest_deduction_review_reference: "2025 Schedule C/E/F review",
+};
+
+const singleVehicle = {
+  filing_status: FilingStatus.Single,
+  magi: 80_000,
+  taxpayer_ssn: "111223333",
+  senior_zero_exclusions_review: review,
+  vehicle_loans: [vehicleLoan],
+};
+
+Deno.test("Schedule 1-A reviewed vehicle loan fills Part IV and reconciles", () => {
+  const lines = calculateVehicleInterestSchedule1A(
+    { taxYear: 2025, formType: "f1040" },
+    singleVehicle,
+  );
+  assertEquals(lines.line22_vehicles[0].vin, vehicleLoan.vin);
+  assertEquals(lines.line23_total_interest, 4_000);
+  assertEquals(lines.line30_vehicle_interest, 4_000);
+  const xml = schedule1a.build(singleVehicle, {
+    pending: { f1040: singleOvertime1040 },
+  });
+  assertStringIncludes(xml, `<VIN>${vehicleLoan.vin}</VIN>`);
+  assertStringIncludes(
+    xml,
+    "<QualifiedCarLoanIntDedSchAmt>0</QualifiedCarLoanIntDedSchAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<QualifiedCarLoanInterestAmt>4000</QualifiedCarLoanInterestAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<QualifiedCarLoanInterestDedAmt>4000</QualifiedCarLoanInterestDedAmt>",
+  );
+});
+
+Deno.test("Schedule 1-A vehicle loan checks borrower, duplicate VIN, and phaseout", () => {
+  assertThrows(
+    () =>
+      schedule1a.build({
+        ...singleVehicle,
+        vehicle_loans: [{ ...vehicleLoan, borrower_ssn: "999887777" }],
+      }, { pending: { f1040: singleOvertime1040 } }),
+    Error,
+    "borrower must be a return filer",
+  );
+  assertThrows(
+    () =>
+      schedule1a.build({
+        ...singleVehicle,
+        vehicle_loans: [vehicleLoan, vehicleLoan],
+      }, { pending: { f1040: singleOvertime1040 } }),
+    Error,
+    "one entry per VIN",
+  );
+  const lines = calculateVehicleInterestSchedule1A(
+    { taxYear: 2025, formType: "f1040" },
+    { ...singleVehicle, magi: 101_001 },
+  );
+  assertEquals(lines.line28_thousands, 2);
+  assertEquals(lines.line29_reduction, 400);
+  assertEquals(lines.line30_vehicle_interest, 3_600);
+  const twoLoans = {
+    ...singleVehicle,
+    vehicle_loans: [
+      { ...vehicleLoan, qualified_interest_paid: 3_000 },
+      {
+        ...vehicleLoan,
+        vin: "1HGCM82633A004353",
+        qualified_interest_paid: 1_000,
+      },
+    ],
+  };
+  const twoLoanXml = schedule1a.build(twoLoans, {
+    pending: { f1040: singleOvertime1040 },
+  });
+  assertEquals(
+    (twoLoanXml.match(/<QlfyPassengerVehicleLoanIntGrp>/g) ?? []).length,
+    2,
+  );
+  assertStringIncludes(twoLoanXml, "<VIN>1HGCM82633A004353</VIN>");
+});
 
 Deno.test("Schedule 1-A two-employer W-2 overtime fills Part III and reconciles", () => {
   const lines = calculateW2OvertimeSchedule1A(

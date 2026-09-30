@@ -122,6 +122,28 @@ for (const fixture of pdfReviewFixtures) {
           "<TotalAdditionalDeductionsAmt>4000</TotalAdditionalDeductionsAmt>",
         );
       }
+      if (fixture.id === "single-reviewed-car-loan-schedule1a") {
+        assertEquals(result.pending.f1040.line11_agi, 80_000);
+        assertEquals(result.pending.f1040.line13b_additional_deductions, 4_000);
+        assertStringIncludes(xml, "<IRS1040Schedule1A ");
+        assertStringIncludes(xml, "<VIN>1HGCM82633A004352</VIN>");
+        assertStringIncludes(
+          xml,
+          "<QualifiedCarLoanIntDedSchAmt>0</QualifiedCarLoanIntDedSchAmt>",
+        );
+        assertStringIncludes(
+          xml,
+          "<QualifiedCarLoanInterestAmt>4000</QualifiedCarLoanInterestAmt>",
+        );
+        assertStringIncludes(
+          xml,
+          "<QualifiedCarLoanInterestDedAmt>4000</QualifiedCarLoanInterestDedAmt>",
+        );
+        assertStringIncludes(
+          xml,
+          "<TotalAdditionalDeductionsAmt>4000</TotalAdditionalDeductionsAmt>",
+        );
+      }
       if (fixture.id === "single-ira-rollover") {
         assertEquals(result.pending.f1040.line4a_ira_gross, 5_000);
         assertEquals(result.pending.f1040.line4b_ira_taxable, 0);
