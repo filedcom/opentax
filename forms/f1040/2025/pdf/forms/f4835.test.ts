@@ -87,16 +87,7 @@ Deno.test("Form 4835 PDF blocks losses without linked Form 8582 allocation", () 
   }), Error, "computed Form 8582 activity allocation");
 });
 
-Deno.test("Form 4835 PDF blocks source paths requiring unrepresented annotations", () => {
-  assertThrows(() => copies({
-    f4835: {
-      f4835s: [{
-        activity_name: "Carryover farm",
-        livestock_crop_income: 5_000,
-        prior_unallowed_passive_operating: 400,
-      }],
-    },
-  }), Error, "PAL annotation");
+Deno.test("Form 4835 PDF blocks source paths requiring unrepresented statements", () => {
   assertThrows(() => copies({
     f4835: {
       f4835s: [{
