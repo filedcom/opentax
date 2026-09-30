@@ -717,3 +717,18 @@ retained at `.state/research/ty2025-filled-pdf-review/2026-09-30-v91/`.
 The transaction records and payer copy remain structured assertions rather
 than authenticated bytes. Other mixed combinations, fee/refund treatment,
 IRS business rules, and ATS remain open.
+
+The `single-k-mixed-duplicate-personal` source return has a 13-page `v92`
+PDF. Its contact sheet and Form 1040, Schedule C, Schedule D, and Form 8949
+pages were visually inspected at full size. Form 1099-K box 1a reports
+$3,800: $2,000 of unique cash business receipts, $1,000 also reported on a
+matching Form 1099-NEC, and an $800 personal-camera sale with $300 basis.
+Schedule C line 1/31 and Form 1040 line 8 print $3,000 once; Form 8949 box F,
+Schedule D line 10/16, and Form 1040 line 7a print the separate $500 gain.
+The full return passes local TY2025 v5.4 XSD. Changed NEC payer or omitted
+K duplicate allocation rejects at export. The PDF SHA-256 is
+`12ef6b3c78ab1d5413544f2141504876d0bd8e1b42a2ae18a0863f69ec13b003`;
+source/pending JSON, XML, PDF, contact sheet, and page images are retained at
+`.state/research/ty2025-filled-pdf-review/2026-09-30-v92/`. Actual payer
+copies and payment transaction bytes are not authenticated; IRS business
+rules and ATS remain open.

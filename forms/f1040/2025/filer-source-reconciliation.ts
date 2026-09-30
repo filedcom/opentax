@@ -191,9 +191,10 @@ export function assertKPersonalSaleSources(
       mixed
         ? typeof business?.included_in_schedule_c_gross_receipts !== "number" ||
           business.included_in_schedule_c_gross_receipts <= 0 ||
-          business.not_included_in_schedule_c_receipts !== 0 ||
-          proceedsTotal + business.included_in_schedule_c_gross_receipts !==
-            gross
+          typeof business.not_included_in_schedule_c_receipts !== "number" ||
+          business.not_included_in_schedule_c_receipts < 0 ||
+          proceedsTotal + business.included_in_schedule_c_gross_receipts +
+                business.not_included_in_schedule_c_receipts !== gross
         : proceedsTotal !== gross
     ) {
       throw new Error("1099-K personal-item sale proceeds differ from box 1a");

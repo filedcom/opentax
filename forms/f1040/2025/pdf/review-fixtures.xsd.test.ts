@@ -375,6 +375,62 @@ for (const fixture of pdfReviewFixtures) {
           "1099-K personal-item sales differ",
         );
       }
+      if (fixture.id === "single-k-mixed-duplicate-personal") {
+        const kRow = (result.pending.schedule_c
+          .f1099k_receipt_sources as Array<Record<string, unknown>>)[0];
+        const necRow = (result.pending.schedule_c
+          .f1099nec_receipt_sources as Array<Record<string, unknown>>)[0];
+        assertEquals(kRow.box1a_gross_payments, 3_800);
+        assertEquals(kRow.amount, 2_000);
+        assertEquals(kRow.not_included_in_schedule_c_receipts, 1_000);
+        assertEquals(kRow.personal_item_sales_gross, 800);
+        assertEquals(necRow.amount, 1_000);
+        assertEquals(
+          (result.pending.schedule_c.schedule_cs as Array<
+            Record<string, unknown>
+          >)[0].line_1_gross_receipts,
+          3_000,
+        );
+        assertEquals(result.pending.f1040.line7_capital_gain, 500);
+        assertStringIncludes(
+          xml,
+          "<CapitalGainLossAmt>500</CapitalGainLossAmt>",
+        );
+        assertThrows(
+          () =>
+            buildMefXml(
+              buildPending({
+                ...result.pending,
+                f1099nec: {
+                  f1099necs: (result.pending.f1099nec.f1099necs as Array<
+                    Record<string, unknown>
+                  >).map((row) => ({ ...row, payer_tin: "99-9999999" })),
+                },
+              }),
+              fixture.filer,
+            ),
+          Error,
+          "1099-K omitted receipts do not match",
+        );
+        assertThrows(
+          () =>
+            buildMefXml(
+              buildPending({
+                ...result.pending,
+                schedule_c: {
+                  ...result.pending.schedule_c,
+                  f1099k_receipt_sources: [{
+                    ...kRow,
+                    not_included_in_schedule_c_receipts: 0,
+                  }],
+                },
+              }),
+              fixture.filer,
+            ),
+          Error,
+          "1099-K Schedule C source differs",
+        );
+      }
       if (fixture.id === "single-partnership-code-l-r-ordinary") {
         assertEquals(result.pending.schedule1.line4_other_gains, 1_000);
         assertEquals(result.pending.f1040.line8_additional_income, 1_000);

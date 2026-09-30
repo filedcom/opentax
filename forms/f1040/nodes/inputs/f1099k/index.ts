@@ -187,8 +187,7 @@ export const itemSchema = z.object({
       !review ||
       review.included_in_schedule_c_gross_receipts +
             review.not_included_in_schedule_c_receipts + personal !== gross ||
-      (mixed && (personal <= 0 ||
-        review.not_included_in_schedule_c_receipts !== 0)) ||
+      (mixed && personal <= 0) ||
       (review.not_included_in_schedule_c_receipts > 0 &&
         (!review.duplicate_1099_review ||
           review.duplicate_1099_review.amount !==

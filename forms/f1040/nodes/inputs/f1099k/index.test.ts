@@ -828,6 +828,25 @@ Deno.test("1099-K mixed business and personal payments allocate box 1a exactly",
     >).gain_loss,
     0,
   );
+  const duplicated = compute([businessItem(2_900, {
+    for_routing: "mixed_schedule_c_personal_item_sales",
+    schedule_c_receipts_review: {
+      ...receiptReview,
+      not_included_in_schedule_c_receipts: 100,
+      duplicate_1099_review: {
+        source_form: "1099nec",
+        payer_tin: "23-4567890",
+        amount: 100,
+        transaction_review_reference: "duplicate payment record",
+      },
+    },
+    personal_item_sales_review: [personalSale({ proceeds: 800 })],
+  })]);
+  const duplicateRow = (findOutput(duplicated, "schedule_c")!.fields
+    .f1099k_receipt_sources as Array<Record<string, unknown>>)[0];
+  assertEquals(duplicateRow.amount, 2_000);
+  assertEquals(duplicateRow.not_included_in_schedule_c_receipts, 100);
+  assertEquals(duplicateRow.personal_item_sales_gross, 800);
   assertThrows(
     () =>
       compute([minimalItem({
