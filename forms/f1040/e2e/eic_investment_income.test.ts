@@ -208,6 +208,73 @@ function runPassiveOrdinarySale(gain: number, taxExemptInterest = 0) {
   }, { taxYear: 2025, formType: "f1040" });
 }
 
+function runPassiveTrust(income: number) {
+  return execute(plan, registry, {
+    general,
+    w2: [w2],
+    k1_trust: [{
+      estate_trust_name: "Family Trust",
+      estate_trust_ein: "123456789",
+      source_document_reference: "Synthetic 2025 trust K-1",
+      box6_ordinary_business: income,
+      box6_8_activity_statement: [{
+        box: "6",
+        activity_name: "Trust business",
+        statement_reference: "Synthetic K-1 activity statement",
+        income,
+      }],
+    }],
+  }, { taxYear: 2025, formType: "f1040" });
+}
+
+Deno.test("EIC Worksheet 1 counts trust K-1 passive Schedule E income", async () => {
+  const atLimit = runPassiveTrust(11_950);
+  assertEquals(atLimit.diagnostics, []);
+  assertEquals(atLimit.pending.eitc.investment_income_floor, 11_950);
+  assertEquals(atLimit.pending.f1040.line27_eitc !== undefined, true);
+  const overLimit = runPassiveTrust(11_951);
+  assertEquals(overLimit.pending.eitc.investment_income_floor, 11_951);
+  assertEquals(overLimit.pending.f1040.line27_eitc, undefined);
+  const filer = extractFilerIdentity(atLimit.pending.f1040);
+  const xml = buildMefXml(buildPending(atLimit.pending), filer);
+  const xsd = new URL(
+    "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    import.meta.url,
+  ).pathname;
+  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(xmlPath, xml);
+    const validation = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsd, xmlPath],
+      stderr: "piped",
+    }).output();
+    assertEquals(
+      validation.code,
+      0,
+      new TextDecoder().decode(validation.stderr),
+    );
+  } finally {
+    await Deno.remove(xmlPath);
+  }
+  const forged = {
+    ...atLimit.pending,
+    k1_trust: {
+      ...atLimit.pending.k1_trust,
+      k1_trusts: [{
+        ...((atLimit.pending.k1_trust.k1_trusts as Record<string, unknown>[])[
+          0
+        ]),
+        box6_ordinary_business: 11_951,
+      }],
+    },
+  };
+  assertThrows(
+    () => buildMefXml(buildPending(forged), filer),
+    Error,
+    "per-activity statement",
+  );
+});
+
 Deno.test("EIC Worksheet 1 counts passive Form 4797 Part II ordinary gains", async () => {
   const atLimit = runPassiveOrdinarySale(11_950);
   assertEquals(atLimit.diagnostics, []);
