@@ -108,7 +108,7 @@ Deno.test("first-year active rental entire loss stays on Schedule E and Form 479
 
 Deno.test("active entire-loss export rejects MFS, changed acquisition, closing and final amount", () => {
   const pending = filedReturn();
-  const altered = [
+  const altered: Array<typeof pending> = [
     {
       ...pending,
       f1040: { ...pending.f1040, filing_status: FilingStatus.MFS },

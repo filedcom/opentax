@@ -114,7 +114,7 @@ Deno.test("active first-year retained sale above the allowance phaseout preserve
 
 Deno.test("active first-year retained sale rejects changed acquisition, phaseout and return", () => {
   const pending = normalizeAllPending(filedReturn().pending);
-  const altered = [
+  const altered: Array<typeof pending> = [
     {
       ...pending,
       schedule_e: {

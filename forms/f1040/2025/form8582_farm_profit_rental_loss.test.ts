@@ -100,7 +100,7 @@ Deno.test("Form 4835 profit allows one passive rental loss with a retained activ
 
 Deno.test("Form 8582 farm-profit/rental-loss native and PDF reject changed sources and return", () => {
   const pending = normalizeAllPending(filedReturn().pending);
-  const altered = [
+  const altered: Array<typeof pending> = [
     {
       ...pending,
       f4835: {

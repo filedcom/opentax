@@ -113,7 +113,7 @@ Deno.test("first-year retained Part II sale uses ordinary gain and preserves the
 
 Deno.test("first-year retained Part II sale rejects changed acquisition, closing, gain and return", () => {
   const pending = normalizeAllPending(filedReturn().pending);
-  const altered = [
+  const altered: Array<typeof pending> = [
     {
       ...pending,
       schedule_e: {

@@ -45,19 +45,19 @@ function filedReturn() {
 
 Deno.test("mixed full and partial investment recapture reaches Schedule 1, D, Form 1040 and Form 4797 outputs", () => {
   const pending = filedReturn();
-  assertEquals(pending.schedule1.line4_other_gains, 8_000);
-  assertEquals(pending.schedule_d.print_line16_combined, 3_000);
-  assertEquals(pending.f1040.line7_capital_gain, 3_000);
-  assertEquals(pending.f1040.line8_additional_income, 8_000);
-  assertEquals(pending.f1040.line11_agi, 86_000);
-  const xml = form4797.build(pending.form4797, { pending });
+  assertEquals(pending.schedule1!.line4_other_gains, 8_000);
+  assertEquals(pending.schedule_d!.print_line16_combined, 3_000);
+  assertEquals(pending.f1040!.line7_capital_gain, 3_000);
+  assertEquals(pending.f1040!.line8_additional_income, 8_000);
+  assertEquals(pending.f1040!.line11_agi, 86_000);
+  const xml = form4797.build(pending.form4797!, { pending });
   assertStringIncludes(
     xml,
     "<TotalSectionPropertyAmt>8000</TotalSectionPropertyAmt>",
   );
   assertStringIncludes(xml, "<NetGainAmt>3000</NetGainAmt>");
   const pdf = form4797Pdf.projectFields!(
-    pending.form4797,
+    pending.form4797!,
     normalizeAllPending(pending),
   );
   assertEquals(pdf.pdf_investment_line31, 8_000);
@@ -90,13 +90,17 @@ Deno.test("mixed investment recapture rejects property and final-return tamperin
   }];
   for (const altered of changed) {
     assertThrows(
-      () => form4797.build(altered.form4797, { pending: altered }),
+      () =>
+        form4797.build(
+          altered.form4797! as Parameters<typeof form4797.build>[0],
+          { pending: altered },
+        ),
       Error,
     );
     assertThrows(
       () =>
         form4797Pdf.projectFields!(
-          altered.form4797,
+          altered.form4797!,
           normalizeAllPending(altered),
         ),
       Error,

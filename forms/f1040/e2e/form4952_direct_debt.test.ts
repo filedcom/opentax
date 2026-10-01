@@ -1,4 +1,9 @@
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import {
+  assert,
+  assertEquals,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { execute } from "../../../core/runtime/executor.ts";
@@ -488,6 +493,7 @@ Deno.test("Form 4952 traced loan joins two distinct taxable OID payers through t
   assertEquals((await PDFDocument.load(pdf)).getPageCount() > 0, true);
 
   const oidItems = result.pending.f1099oid!.f1099oids;
+  assert(Array.isArray(oidItems));
   const duplicate = {
     ...result.pending,
     f1099oid: {
@@ -558,9 +564,15 @@ Deno.test("Form 4952 traced loan joins distinct Treasury, OID, and ordinary divi
   const pdf = await buildPdfBytes(pending, finalFiler, ".pdf-cache", bundle);
   assertEquals((await PDFDocument.load(pdf)).getPageCount() > 0, true);
 
-  const treasury = result.pending.f1099int!.f1099ints[0];
-  const oid = result.pending.f1099oid!.f1099oids[0];
-  const dividend = result.pending.f1099div!.f1099divs[0];
+  const intItems = result.pending.f1099int!.f1099ints;
+  assert(Array.isArray(intItems));
+  const treasury = intItems[0];
+  const oidItems = result.pending.f1099oid!.f1099oids;
+  assert(Array.isArray(oidItems));
+  const oid = oidItems[0];
+  const dividendItems = result.pending.f1099div!.f1099divs;
+  assert(Array.isArray(dividendItems));
+  const dividend = dividendItems[0];
   const changed = {
     ...result.pending,
     f1099div: {

@@ -124,7 +124,7 @@ Deno.test("two Form 4835 losses share one rental profit and retain distinct Form
 
 Deno.test("two-farm Form 8582 route rejects changed activity and return totals", () => {
   const pending = normalizeAllPending(filedReturn().pending);
-  const changed = [{
+  const changed: Array<typeof pending> = [{
     ...pending,
     f4835: {
       ...pending.f4835,

@@ -109,7 +109,7 @@ Deno.test("farm profit releases two passive rental losses with separate Part VII
 
 Deno.test("farm-profit/two-rental Form 8582 native and PDF reject changed source or return", () => {
   const pending = normalizeAllPending(filedReturn().pending);
-  const altered = [
+  const altered: Array<typeof pending> = [
     {
       ...pending,
       f4835: {

@@ -1,3 +1,4 @@
+import { normalizeAllPending } from "../pending.ts";
 import {
   assert,
   assertEquals,
@@ -76,7 +77,10 @@ Deno.test("one direct bond and one PAB fund reach Form 6251, Schedule 2, Form 10
   assertEquals(schedule2.line2_amt, form.line11_amt);
   assertEquals(f1040.line17_additional_taxes, form.line11_amt);
   assertEquals(
-    form6251Pdf.projectFields?.(form, pending)?.private_activity_bond_interest,
+    form6251Pdf.projectFields?.(
+      form as Record<string, unknown>,
+      normalizeAllPending(pending),
+    )?.private_activity_bond_interest,
     300_000,
   );
   const bundle = await buildMefBundle(pending, {
@@ -139,13 +143,18 @@ Deno.test("mixed PAB sources reject changed payer, review, amount, return and ta
     assertThrows(() =>
       form6251.build(form, { filer: base.filer, pending: changed })
     );
-    assertThrows(() => form6251Pdf.projectFields?.(form, changed));
+    assertThrows(() =>
+      form6251Pdf.projectFields?.(
+        form as Record<string, unknown>,
+        normalizeAllPending(changed),
+      )
+    );
   }
   assertThrows(() =>
     form6251Pdf.projectFields?.({
       ...form,
       private_activity_bond_interest: 299_999,
-    }, pending)
+    } as Record<string, unknown>, normalizeAllPending(pending))
   );
 });
 
@@ -181,7 +190,10 @@ Deno.test("direct-bond expense reduces mixed PAB AMT preference but not Form 104
   assertEquals(schedule2.line2_amt, form.line11_amt);
   assertEquals(f1040.line17_additional_taxes, form.line11_amt);
   assertEquals(
-    form6251Pdf.projectFields?.(form, pending)?.private_activity_bond_interest,
+    form6251Pdf.projectFields?.(
+      form as Record<string, unknown>,
+      normalizeAllPending(pending),
+    )?.private_activity_bond_interest,
     290_000,
   );
   const bundle = await buildMefBundle(pending, {
@@ -241,12 +253,17 @@ Deno.test("mixed PAB direct expense rejects altered workpaper and final return",
     assertThrows(() =>
       form6251.build(form, { filer: base.filer, pending: changed })
     );
-    assertThrows(() => form6251Pdf.projectFields?.(form, changed));
+    assertThrows(() =>
+      form6251Pdf.projectFields?.(
+        form as Record<string, unknown>,
+        normalizeAllPending(changed),
+      )
+    );
   }
   assertThrows(() =>
     form6251Pdf.projectFields?.({
       ...form,
       private_activity_bond_interest: 300_000,
-    }, pending)
+    } as Record<string, unknown>, normalizeAllPending(pending))
   );
 });

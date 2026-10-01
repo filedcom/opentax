@@ -1,3 +1,4 @@
+import { normalizeAllPending } from "../pending.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
@@ -81,7 +82,9 @@ Deno.test("K-1 code B royalty expense joins one Schedule E debit and Form 4952 l
   });
   assertEquals(result.diagnostics, []);
   assertEquals(
-    result.pending.schedule_e?.schedule_es?.[0].royalties_income,
+    (result.pending.schedule_e?.schedule_es as
+      | Array<{ royalties_income: number }>
+      | undefined)?.[0].royalties_income,
     600,
   );
   assertEquals(result.pending.schedule1?.line5_schedule_e, 250);
@@ -110,12 +113,21 @@ Deno.test("K-1 code B royalty expense joins one Schedule E debit and Form 4952 l
     Error,
   );
   assertThrows(
-    () => form4952Pdf.projectFields?.(pending.form4952!, pending),
+    () =>
+      form4952Pdf.projectFields?.(
+        pending.form4952! as Record<string, unknown>,
+        normalizeAllPending(pending),
+      ),
     Error,
     "needs verified issued supplement",
   );
   assertThrows(
-    () => form4952Pdf.instances?.(pending.form4952!, base.filer, pending),
+    () =>
+      form4952Pdf.instances?.(
+        pending.form4952! as Record<string, unknown>,
+        base.filer,
+        normalizeAllPending(pending),
+      ),
     Error,
     "needs verified issued supplement",
   );
@@ -127,7 +139,11 @@ Deno.test("K-1 code B royalty expense joins one Schedule E debit and Form 4952 l
     }>;
   }).schedule_es[0].k1_royalty_source.issuer_expense_item_id = "other-item";
   assertThrows(
-    () => form4952Pdf.projectFields?.(pending.form4952!, changedRow),
+    () =>
+      form4952Pdf.projectFields?.(
+        pending.form4952! as Record<string, unknown>,
+        normalizeAllPending(changedRow),
+      ),
     Error,
     "same allowed code I expense",
   );
@@ -141,7 +157,11 @@ Deno.test("K-1 code B royalty expense joins one Schedule E debit and Form 4952 l
   }).k1_partnerships[0].box20_code_b_investment_expenses.issuer_crosswalk
     .issuer_expense_item_id = "other-item";
   assertThrows(
-    () => form4952Pdf.projectFields?.(pending.form4952!, changedSource),
+    () =>
+      form4952Pdf.projectFields?.(
+        pending.form4952! as Record<string, unknown>,
+        normalizeAllPending(changedSource),
+      ),
     Error,
   );
 });
@@ -182,12 +202,21 @@ Deno.test("code B royalty K-1 and separate box 5/code H K-1 reconcile their reta
     "needs verified issued supplement",
   );
   assertThrows(
-    () => form4952Pdf.projectFields?.(pending.form4952!, pending),
+    () =>
+      form4952Pdf.projectFields?.(
+        pending.form4952! as Record<string, unknown>,
+        normalizeAllPending(pending),
+      ),
     Error,
     "needs verified issued supplement",
   );
   assertThrows(
-    () => form4952Pdf.instances?.(pending.form4952!, base.filer, pending),
+    () =>
+      form4952Pdf.instances?.(
+        pending.form4952! as Record<string, unknown>,
+        base.filer,
+        normalizeAllPending(pending),
+      ),
     Error,
     "needs verified issued supplement",
   );
@@ -209,7 +238,11 @@ Deno.test("code B royalty K-1 and separate box 5/code H K-1 reconcile their reta
     k1_partnerships: Array<{ recipient_tin?: string }>;
   }).k1_partnerships[1].recipient_tin = "999887777";
   assertThrows(
-    () => form4952Pdf.projectFields?.(pending.form4952!, changedRecipient),
+    () =>
+      form4952Pdf.projectFields?.(
+        pending.form4952! as Record<string, unknown>,
+        normalizeAllPending(changedRecipient),
+      ),
     Error,
   );
   const reusedIssuer = structuredClone(pending);

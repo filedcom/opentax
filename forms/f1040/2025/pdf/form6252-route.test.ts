@@ -1,3 +1,4 @@
+import { normalizeAllPending } from "../pending.ts";
 import {
   assertEquals,
   assertRejects,
@@ -59,9 +60,9 @@ Deno.test("short-term capital installment sale joins Schedule D, Form 1040, nati
     "<CapitalGainLossAmt>12000</CapitalGainLossAmt>",
   );
   const [projected] = form6252Pdf.instances!(
-    pending.form6252!,
+    pending.form6252! as Record<string, unknown>,
     base.filer,
-    pending,
+    normalizeAllPending(pending),
   );
   assertEquals(projected.line26, 12_000);
   const pdf = await buildPdfBytes(pending, base.filer, ".pdf-cache", bundle);
@@ -83,9 +84,9 @@ Deno.test("short-term capital installment sale joins Schedule D, Form 1040, nati
   assertThrows(
     () =>
       form6252Pdf.instances!(
-        changedSource.form6252!,
+        changedSource.form6252! as Record<string, unknown>,
         base.filer,
-        changedSource,
+        normalizeAllPending(changedSource),
       ),
     Error,
     "Schedule D gain source",
@@ -100,9 +101,9 @@ Deno.test("short-term capital installment sale joins Schedule D, Form 1040, nati
   assertThrows(
     () =>
       form6252Pdf.instances!(
-        changedDestination.form6252!,
+        changedDestination.form6252! as Record<string, unknown>,
         base.filer,
-        changedDestination,
+        normalizeAllPending(changedDestination),
       ),
     Error,
     "Schedule D gain source",

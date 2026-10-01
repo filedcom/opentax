@@ -1,3 +1,4 @@
+import { normalizeAllPending } from "../pending.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
@@ -103,7 +104,8 @@ Deno.test("traced taxable-securities loan and separate royalty reach Form 4952, 
   assertEquals(result.pending.f1040.line12e_itemized_deductions, 18_300);
   const pending = buildPending(result.pending);
   assertEquals(
-    form4952Pdf.projectFields?.(pending.form4952, pending)?.line8,
+    form4952Pdf.projectFields?.(pending.form4952!, normalizeAllPending(pending))
+      ?.line8,
     300,
   );
   const bundle = await buildMefBundle(pending, {

@@ -174,7 +174,7 @@ export function reconcileForm4952DividendPath(
       tax.data.form4952_amt_elected_capital_gain !== 0 ||
       qualified !== qualifiedTotal ||
       (tax.data.net_capital_gain ?? 0) !== 0 ||
-      (tax.data.unrecaptured1250_gain ?? 0) !== 0 ||
+      (tax.data.unrecaptured_1250_gain ?? 0) !== 0 ||
       (tax.data.rate_28_gain ?? 0) !== 0 ||
       (tax.data.foreign_earned_income_exclusion ?? 0) !== 0 ||
       tax.data.schedule_j_calculated_tax !== undefined ||

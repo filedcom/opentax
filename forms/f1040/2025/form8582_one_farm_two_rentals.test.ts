@@ -107,7 +107,7 @@ Deno.test("one farm loss offsets two rental profits and retains one activity PAL
 
 Deno.test("one-farm/two-rental Form 8582 route rejects source and return tampering", () => {
   const pending = normalizeAllPending(filedReturn().pending);
-  const changed = [{
+  const changed: Array<typeof pending> = [{
     ...pending,
     f4835: {
       ...pending.f4835,
