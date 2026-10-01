@@ -1,5 +1,6 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { SCENARIO_1040_12_FACTS } from "../../../e2e/ats/ty2025_cases.ts";
+import { form7217NonliquidatingDecrease } from "../../../2025/form7217_732c_decrease.fixture.ts";
 import {
   computeForm7217Amounts,
   f7217,
@@ -300,6 +301,100 @@ Deno.test("Form 7217 section 732(c) liquidating basis increase follows class, ap
       }),
     Error,
     "basis-increase workpaper",
+  );
+});
+
+Deno.test("Form 7217 section 732(c) nonliquidating decrease preserves inventory, then uses depreciation and remaining basis", () => {
+  const source = form7217NonliquidatingDecrease;
+  assertEquals(computeForm7217Amounts(source).basisAllocatedToProperty, 400);
+  assertEquals(
+    f7217.compute({ taxYear: 2025, formType: "f1040" }, {
+      form7217s: [source],
+    }).outputs,
+    [],
+  );
+  for (
+    const altered of [
+      { ...source, section_732c_allocation_workpaper_reference: undefined },
+      {
+        ...source,
+        distributed_properties: source.distributed_properties.map((
+          property,
+          index,
+        ) =>
+          index === 1
+            ? { ...property, partner_basis_after_section_732: 149 }
+            : index === 2
+            ? { ...property, partner_basis_after_section_732: 151 }
+            : property
+        ),
+      },
+      {
+        ...source,
+        distributed_properties: source.distributed_properties.map((
+          property,
+          index,
+        ) =>
+          index === 0
+            ? { ...property, partner_basis_after_section_732: 99 }
+            : index === 1
+            ? { ...property, partner_basis_after_section_732: 151 }
+            : property
+        ),
+      },
+    ]
+  ) {
+    assertThrows(() =>
+      f7217.compute({ taxYear: 2025, formType: "f1040" }, {
+        form7217s: [altered],
+      })
+    );
+  }
+});
+
+Deno.test("Form 7217 section 732(c) liquidation protects inventory before other property", () => {
+  const source = {
+    ...form7217NonliquidatingDecrease,
+    complete_liquidation: true,
+    partner_adjusted_basis_before_distribution: 250,
+    distributed_properties: [
+      {
+        ...form7217NonliquidatingDecrease.distributed_properties[0],
+        partnership_basis_before_distribution: 300,
+        fair_market_value: 250,
+        partner_basis_after_section_732: 200,
+      },
+      {
+        ...form7217NonliquidatingDecrease.distributed_properties[1],
+        partnership_basis_before_distribution: 200,
+        fair_market_value: 100,
+        partner_basis_after_section_732: 0,
+      },
+    ],
+  };
+  assertEquals(computeForm7217Amounts(source).basisAllocatedToProperty, 200);
+  assertEquals(
+    f7217.compute({ taxYear: 2025, formType: "f1040" }, {
+      form7217s: [source],
+    }).outputs,
+    [],
+  );
+  assertThrows(() =>
+    f7217.compute({ taxYear: 2025, formType: "f1040" }, {
+      form7217s: [{
+        ...source,
+        distributed_properties: [
+          {
+            ...source.distributed_properties[0],
+            partner_basis_after_section_732: 199,
+          },
+          {
+            ...source.distributed_properties[1],
+            partner_basis_after_section_732: 1,
+          },
+        ],
+      }],
+    })
   );
 });
 

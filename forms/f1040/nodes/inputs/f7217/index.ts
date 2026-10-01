@@ -165,29 +165,81 @@ function allocateWholeDollars(
   return allocated;
 }
 
-/** Bounded section 732(c) increase: class basis, appreciation, then FMV. */
-function assertLiquidatingBasisIncreaseAllocation(
+function reduceSection732cClass(
+  expected: number[],
+  properties: Form7217Item["distributed_properties"],
+  indices: readonly number[],
+  reduction: number,
+): void {
+  if (reduction === 0) return;
+  const depreciation = indices.map((index) =>
+    Math.max(
+      0,
+      expected[index] - properties[index].fair_market_value!,
+    )
+  );
+  const first = Math.min(
+    reduction,
+    depreciation.reduce((sum, amount) => sum + amount, 0),
+  );
+  if (first > 0) {
+    allocateWholeDollars(first, depreciation).forEach((cut, position) => {
+      expected[indices[position]] -= cut;
+    });
+  }
+  const remaining = reduction - first;
+  if (remaining > 0) {
+    allocateWholeDollars(
+      remaining,
+      indices.map((index) => expected[index]),
+    ).forEach((cut, position) => {
+      expected[indices[position]] -= cut;
+    });
+  }
+}
+
+/** Bounded section 732(c) allocation: class basis, depreciation/basis for
+ * decreases, and appreciation/FMV for liquidating increases. */
+function assertSection732cAllocation(
   item: Form7217Item,
   amounts: Form7217Amounts,
 ): void {
-  if (!item.complete_liquidation || item.distributed_properties.length < 2) {
+  if (item.distributed_properties.length < 2) {
+    return;
+  }
+  // Section 731(c) securities need their separate deemed-money basis rules.
+  // The existing zero-reduction security route is outside this class allocator.
+  if (
+    item.distributed_properties.some((property) =>
+      property.property_treatment !==
+        Form7217PropertyTreatment.Section732Property
+    )
+  ) return;
+  if (amounts.basisAllocatedToProperty === amounts.totalPartnershipBasis) {
+    if (
+      item.distributed_properties.some((property) =>
+        property.partner_basis_after_section_732 !==
+          property.partnership_basis_before_distribution
+      )
+    ) {
+      throw new Error(
+        "Form 7217 Part II property basis differs without a section 732(c) aggregate adjustment",
+      );
+    }
     return;
   }
   if (
     !item.section_732c_allocation_workpaper_reference ||
     item.distributed_properties.some((property) =>
       property.section_732c_class === undefined ||
-      property.property_treatment !==
-        Form7217PropertyTreatment.Section732Property ||
       !Number.isSafeInteger(property.partnership_basis_before_distribution) ||
       !Number.isSafeInteger(property.fair_market_value) ||
       !Number.isSafeInteger(property.partner_basis_after_section_732)
     ) ||
-    !Number.isSafeInteger(amounts.basisAllocatedToProperty) ||
-    amounts.basisAllocatedToProperty < amounts.totalPartnershipBasis
+    !Number.isSafeInteger(amounts.basisAllocatedToProperty)
   ) {
     throw new Error(
-      "Form 7217 multi-property liquidation needs a classified section 732(c) basis-increase workpaper",
+      "Form 7217 multi-property distribution needs a classified section 732(c) basis-allocation workpaper",
     );
   }
   const properties = item.distributed_properties;
@@ -195,36 +247,73 @@ function assertLiquidatingBasisIncreaseAllocation(
     .filter(({ property }) => property.section_732c_class === "other_property");
   const extra = amounts.basisAllocatedToProperty -
     amounts.totalPartnershipBasis;
-  if (extra > 0 && other.length === 0) {
-    throw new Error(
-      "Form 7217 section 732(c) basis increase needs other property",
-    );
-  }
-  const appreciation = other.map(({ property }) =>
-    Math.max(
-      0,
-      property.fair_market_value! -
-        property.partnership_basis_before_distribution!,
-    )
-  );
-  const totalAppreciation = appreciation.reduce((sum, value) => sum + value, 0);
-  const appreciationExtra = Math.min(extra, totalAppreciation);
-  const appreciatedShares = appreciationExtra > 0
-    ? allocateWholeDollars(appreciationExtra, appreciation)
-    : other.map(() => 0);
-  const remaining = extra - appreciationExtra;
-  const fmvShares = remaining > 0
-    ? allocateWholeDollars(
-      remaining,
-      other.map(({ property }) => property.fair_market_value!),
-    )
-    : other.map(() => 0);
   const expected = properties.map((property) =>
     property.partnership_basis_before_distribution!
   );
-  other.forEach(({ index }, position) => {
-    expected[index] += appreciatedShares[position] + fmvShares[position];
-  });
+  if (extra < 0) {
+    const inventory = properties.flatMap((property, index) =>
+      property.section_732c_class === "inventory_or_receivable" ? [index] : []
+    );
+    const otherIndices = other.map(({ index }) => index);
+    const inventoryBasis = inventory.reduce(
+      (sum, index) => sum + expected[index],
+      0,
+    );
+    const inventoryReduction = Math.max(
+      0,
+      inventoryBasis - amounts.basisAllocatedToProperty,
+    );
+    if (inventoryReduction > 0) {
+      reduceSection732cClass(
+        expected,
+        properties,
+        inventory,
+        inventoryReduction,
+      );
+    }
+    reduceSection732cClass(
+      expected,
+      properties,
+      otherIndices,
+      -extra - inventoryReduction,
+    );
+  } else {
+    if (!item.complete_liquidation) {
+      throw new Error(
+        "Form 7217 nonliquidating distribution cannot increase section 732 property basis",
+      );
+    }
+    if (extra > 0 && other.length === 0) {
+      throw new Error(
+        "Form 7217 section 732(c) basis increase needs other property",
+      );
+    }
+    const appreciation = other.map(({ property }) =>
+      Math.max(
+        0,
+        property.fair_market_value! -
+          property.partnership_basis_before_distribution!,
+      )
+    );
+    const totalAppreciation = appreciation.reduce(
+      (sum, value) => sum + value,
+      0,
+    );
+    const appreciationExtra = Math.min(extra, totalAppreciation);
+    const appreciatedShares = appreciationExtra > 0
+      ? allocateWholeDollars(appreciationExtra, appreciation)
+      : other.map(() => 0);
+    const remaining = extra - appreciationExtra;
+    const fmvShares = remaining > 0
+      ? allocateWholeDollars(
+        remaining,
+        other.map(({ property }) => property.fair_market_value!),
+      )
+      : other.map(() => 0);
+    other.forEach(({ index }, position) => {
+      expected[index] += appreciatedShares[position] + fmvShares[position];
+    });
+  }
   if (
     properties.some((property, index) =>
       property.partner_basis_after_section_732 !== expected[index]
@@ -409,7 +498,7 @@ export function assertForm7217FilingSource(input: Form7217Input): void {
     }
     section731Form8949Transaction(item);
     const amounts = computeForm7217Amounts(item);
-    assertLiquidatingBasisIncreaseAllocation(item, amounts);
+    assertSection732cAllocation(item, amounts);
     if (
       Math.round(amounts.totalPartnerBasisAfterSection732 ?? -1) !==
         Math.round(amounts.basisAllocatedToProperty)
