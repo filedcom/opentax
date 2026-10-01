@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **54 open TODOs and no
-completed checkboxes**. The **433 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **434 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -13,14 +13,14 @@ coverage decision, or release gate.
 | Workstream | Open TODOs | Completed bounded items | Current state |
 | --- | ---: | ---: | --- |
 | Scope and completion rules | 5 | 1 | Filing boundaries and end-to-end acceptance rule need final review. |
-| Coverage inventory and decisions | 8 | 2 | Form applicability, ownership, evidence standards, and unsupported-path decisions remain open. |
+| Coverage inventory and decisions | 8 | 3 | Form applicability, ownership, evidence standards, and unsupported-path decisions remain open. |
 | Core return and source paths | 8 | 37 | Return-wide joins and source classification remain incomplete. |
 | Named tax-form gaps | 20 | 370 | Many sourced form slices exist; the listed parent form paths remain open. |
 | Native MeF and PDF parity | 3 | 22 | Registry, attachment, and printable-output parity remain open. |
 | Automated and artifact validation | 5 | 0 | The merged code checkpoint passed 10,006/10,006 local tests; the new implementation batch is unrun. |
 | IRS ATS and delivery | 5 | 1 | CLI v2.0.5 is published; IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 433 bounded routes and
+**Implemented coverage.** The completed ledger records 434 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -43,8 +43,8 @@ extends sourced routes and reconciliation, including the recent Forms 4562, 4797
 Reviewed-source prerequisites cover Forms 172, 8801, and 2210 box E. Draft return
 PDFs now use a faint centered gray watermark. Positive extension payments now
 require reviewed source evidence and final-return reconciliation. The
-unregistered-root review has source calculations for Forms 8828 and 8908;
-their positive filing routes remain closed.
+unregistered-root review has source calculations for Forms 8828, 8908, and
+8844; their positive filing routes remain closed.
 The new positive and tamper fixtures are authored but the agreed full-batch test,
 XSD checks, and filled-PDF visual review have not run on this branch.
 
