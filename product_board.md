@@ -2,7 +2,7 @@
 
 ## Full status summary (2026-10-01)
 
-Draft [PR #56](https://github.com/filedcom/opentax/pull/56) covers the
+Open [PR #56](https://github.com/filedcom/opentax/pull/56) covers the
 TY2025 Form 1040 filing family. This board contains **54 open TODOs and no
 completed checkboxes**. The **383 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
@@ -17,7 +17,7 @@ coverage decision, or release gate.
 | Core return and source paths | 8 | 35 | Return-wide joins and source classification remain incomplete. |
 | Named tax-form gaps | 20 | 326 | Many sourced form slices exist; the listed parent form paths remain open. |
 | Native MeF and PDF parity | 3 | 21 | Registry, attachment, and printable-output parity remain open. |
-| Automated and artifact validation | 5 | 0 | The latest full run passed 10,002 cases and found four fixture failures; all four have focused fixes, and the full rerun is pending. |
+| Automated and artifact validation | 5 | 0 | The rebased code checkpoint passes 10,006/10,006 local tests; the manual artifact and IRS gates remain open. |
 | IRS ATS and delivery | 5 | 0 | Issued credentials, accepted ATS scenarios, review, merge, and release remain open. |
 
 **Implemented coverage.** Bounded routes now connect selected wage, information
@@ -62,8 +62,9 @@ names the exact supported inputs and remaining gates for every slice.
 Merge-readiness validation is under way. The branch was rebased onto
 `origin/main` at `80647e73` on 2026-10-01; clergy source-evidence rejection and
 the PR's shared Schedule SE calculation were retained at the two conflict
-sites. The latest full suite passed 10,002 cases and found four fixture
-failures. All four have focused fixes; a full rerun is required.
+sites. The repaired branch passes the complete local test suite. This is a
+code checkpoint; coverage decisions, manual packet inspection, and IRS ATS
+acceptance remain open below.
 
 **Coverage still to decide.** Reconcile the 138 registered native MeF
 descriptors, 108 PDF descriptors, and 211 TY2025 IRS schema roots (112 source
@@ -75,43 +76,21 @@ source records. Every retained positive route still needs an unbroken
 source-to-calculation-to-Form-1040-to-native-MeF-to-PDF-to-attachment chain;
 otherwise its named fail-closed boundary needs user approval.
 
-**Validation and delivery.** The last complete `deno task test` baseline
-passed 8,951/8,951 at `44282e25`; its
-[log](.state/research/ty2025-full-test-schedule1a-vehicle.log) predates this
-work. The merge-check `deno task test` attempt on 2026-10-01 stopped at
-TypeScript checking with 484 errors before executing tests; the
-[local log](.state/research/ty2025-pr56-merge-check-2026-10-01.log) records
-the initial failure. A second full attempt after repairs stopped at 108
-TypeScript errors before executing tests; its
-[local log](.state/research/ty2025-pr56-merge-check-rerun-2026-10-01.log)
-records the remaining clusters. The branch is being repaired and must rerun
-the same full command. A post-rebase full attempt reached two missing
-test-import TypeScript errors before execution; both imports were corrected. Its
-[local log](.state/research/ty2025-pr56-post-rebase-2026-10-01.log)
-records that gate. The next complete command passed TypeScript checking and
-executed the suite: **9,736 passed, 266 failed**. Its
-[local log](.state/research/ty2025-pr56-post-rebase-full-rerun-2026-10-01.log)
-was the earlier failing baseline. A subsequent complete run at `1a4a793b`
-passed **10,002** and failed **4** in 28m57s. Its
-[local log](.state/research/ty2025-pr56-final-full-rerun-2026-10-01.log)
-shows stale Form 8949 direct-sale and Form 8826 pass-through fixtures, plus a
-prior Form 4835 export assertion that lacked authenticated 2024 filing evidence.
-Those fixtures now test canonical sale rows, matched K-1 sources, and the
-prior-year export stop. The affected files pass **47/47** focused tests after
-repair; the same complete command must run again. The corrected TY2025 v5.4
-[XSD validation file](.state/research/pr56-xsd-focused.log) now passes
-**181/181**, with source-backed positive cases and explicit stops where
-authenticated prior filing bytes are missing. Focused Form 7203/8582/8606,
-Form 8962, Form 6251, and core return suites have also passed after repairs.
-The Form 8978 negative Schedule 2 line 18 PDF route remains closed pending a
-supported signed-offset projection. An earlier prepared set passed 88/88 local TY2025 v5.4 XSD
-checks at `9effd20b`. No current passing complete test, filled-PDF,
-business-rule, or IRS ATS acceptance is claimed. After implementation and
-scope decisions, run one full test batch, source-backed XSD/business-rule
-validation, and the [sixty prepared filled-PDF
-cases](docs/mef/ty2025-form1040-validation-batch.md); then complete IRS ATS
-with issued credentials and acknowledgments before PR review, merge, and
-release.
+**Validation and delivery.** `deno task test` at `c0d45cb0` completed on
+2026-10-01: **10,006 passed, 0 failed, 0 ignored** in 27m13s. The
+[local log](.state/research/ty2025-pr56-final-green-check-2026-10-01.log)
+records the complete command. It used Deno 2.7.7, TypeScript 5.9.2, and
+libxml 2.9.13. The corrected TY2025 v5.4
+[XSD validation file](.state/research/pr56-xsd-focused.log) separately passed
+**181/181**, including source-backed positive cases and explicit stops where
+authenticated prior filing bytes are missing. The full suite includes
+source-to-XML and filled-PDF integration fixtures; the separate
+[sixty-case manual render and inspection batch](docs/mef/ty2025-form1040-validation-batch.md)
+remains open. The Form 8978 negative Schedule 2 line 18 PDF route remains
+closed pending a supported signed-offset projection. IRS ATS transmission and
+acceptance with issued credentials are not yet evidenced. Resolve the open
+scope and form paths, inspect the prepared PDFs, then complete ATS and review
+before merge and release.
 
 ## Scope and completion rules
 
