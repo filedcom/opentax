@@ -147,36 +147,58 @@ export function assertReturnWideArithmetic(
     throw new Error("Form 1040 line 24 differs from lines 22 and 23");
   }
 
+  const withholdingKeys = [
+    "line25a_w2_withheld",
+    "line25b_withheld_1099",
+    "line25c_total",
+  ] as const;
+  const withholdingComponents = withholdingKeys.reduce(
+    (sum, key) => sum + (amount(key) ?? 0),
+    0,
+  );
   const line25d = amount("line25d_total_withholding");
   if (
     line25d !== undefined &&
-    !matches(
-      line25d,
-      (amount("line25a_w2_withheld") ?? 0) +
-        (amount("line25b_withheld_1099") ?? 0) +
-        (amount("line25c_total") ?? 0),
-    )
+    !matches(line25d, withholdingComponents)
   ) {
     throw new Error("Form 1040 line 25d differs from lines 25a through 25c");
   }
 
+  const refundableKeys = [
+    "line27_eitc",
+    "line28_actc",
+    "line29_refundable_aoc",
+    "line30_refundable_adoption",
+    "line31_additional_payments",
+  ] as const;
+  const refundableComponents = refundableKeys.reduce(
+    (sum, key) => sum + (amount(key) ?? 0),
+    0,
+  );
   const line32 = amount("line32_refundable_credits_total");
   if (
     line32 !== undefined &&
-    !matches(
-      line32,
-      (amount("line27_eitc") ?? 0) + (amount("line28_actc") ?? 0) +
-        (amount("line29_refundable_aoc") ?? 0) +
-        (amount("line30_refundable_adoption") ?? 0) +
-        (amount("line31_additional_payments") ?? 0),
-    )
+    !matches(line32, refundableComponents)
   ) {
     throw new Error("Form 1040 line 32 differs from lines 27 through 31");
   }
   const line33 = amount("line33_total_payments");
+  const paymentKeys = [
+    ...withholdingKeys,
+    "line25d_total_withholding",
+    "line26_estimated_tax",
+    ...refundableKeys,
+    "line32_refundable_credits_total",
+  ];
   if (
-    line33 !== undefined && line25d !== undefined && line32 !== undefined &&
-    !matches(line33, line25d + (amount("line26_estimated_tax") ?? 0) + line32)
+    line33 !== undefined &&
+    paymentKeys.some((key) => amount(key) !== undefined) &&
+    !matches(
+      line33,
+      (line25d ?? withholdingComponents) +
+        (amount("line26_estimated_tax") ?? 0) +
+        (line32 ?? refundableComponents),
+    )
   ) {
     throw new Error("Form 1040 line 33 differs from withholding and payments");
   }

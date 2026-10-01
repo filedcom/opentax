@@ -174,6 +174,31 @@ Deno.test("Form 1040 export replays overpayment and amount owed", () => {
   });
 });
 
+Deno.test("Form 1040 line 33 replays a payment component when zero subtotals are omitted", () => {
+  const fields = {
+    line25a_w2_withheld: 125,
+    line33_total_payments: 125,
+  };
+  assertReturnWideArithmetic(fields);
+  assertStringIncludes(
+    irs1040.build(fields, { pending: {} }),
+    "<TotalPaymentsAmt>125</TotalPaymentsAmt>",
+  );
+  irs1040Pdf.projectFields?.(fields, {});
+  const changed = { ...fields, line33_total_payments: 126 };
+  assertThrows(() => assertReturnWideArithmetic(changed), Error, "line 33");
+  assertThrows(
+    () => irs1040.build(changed, { pending: {} }),
+    Error,
+    "line 33",
+  );
+  assertThrows(
+    () => irs1040Pdf.projectFields?.(changed, {}),
+    Error,
+    "line 33",
+  );
+});
+
 const filed = {
   filing_status: "single",
   line16_income_tax: 1_000,
