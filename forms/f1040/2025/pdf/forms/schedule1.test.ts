@@ -1,6 +1,10 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { schedule1Pdf } from "./schedule1.ts";
 import { FilingStatus } from "../../../mef/header.ts";
+import { execute } from "../../../../../core/runtime/executor.ts";
+import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
+import { registry } from "../../registry.ts";
+import { pdfReviewFixtures } from "../review-fixtures.ts";
 
 Deno.test("Schedule 1 PDF includes filer identity on page 1", () => {
   assertEquals(schedule1Pdf.filerFields?.map((entry) => entry.domainKey), [
@@ -55,6 +59,26 @@ Deno.test("Schedule 1 PDF line 7 shows the retained same-year unemployment repay
     Error,
     "line 7 differs from retained unemployment sources",
   );
+});
+
+Deno.test("fully repaid unemployment alone still creates Schedule 1 and its PDF repayment annotation", () => {
+  const base = pdfReviewFixtures.find((fixture) =>
+    fixture.id === "single-w2-refund"
+  )!;
+  const result = execute(buildExecutionPlan(registry), registry, {
+    ...base.inputs,
+    f1099g: [{ box_1_unemployment: 5_000, box_1_repaid: 5_000 }],
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule1?.line7_unemployment, 0);
+  assertEquals(result.pending.schedule1?.line10_total_additional_income, 0);
+  const projected = schedule1Pdf.instances?.(
+    result.pending.schedule1,
+    base.filer,
+    result.pending,
+  )?.[0];
+  assertEquals(projected?.print_line7_unemployment_repayment, true);
+  assertEquals(projected?.line7_unemployment_repayment, 5_000);
 });
 
 Deno.test("Schedule 1 PDF maps 8n/8o and refuses incomplete foreign-corporation attachments", () => {

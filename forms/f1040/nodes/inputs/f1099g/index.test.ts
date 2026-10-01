@@ -481,16 +481,11 @@ Deno.test("f1099g.compute: box_8_trade_or_business and administrative fields pro
 // 8. Edge Cases
 // =============================================================================
 
-Deno.test("f1099g.compute: repaid equals unemployment — net floors at $0, no line7 output", () => {
+Deno.test("f1099g.compute: fully repaid current-year unemployment emits zero line 7 for the repayment annotation", () => {
   const result = compute([
     minimalItem({ box_1_unemployment: 5000, box_1_repaid: 5000 }),
   ]);
-  const out = result.outputs.find(
-    (o) =>
-      o.nodeType === "schedule1" &&
-      (o.fields as Record<string, unknown>).line7_unemployment !== undefined,
-  );
-  assertEquals(out, undefined);
+  assertEquals(fieldsOf(result.outputs, schedule1)?.line7_unemployment, 0);
 });
 
 Deno.test("f1099g.compute: repaid exceeds unemployment — net floors at $0, no line7 output", () => {

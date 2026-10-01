@@ -325,6 +325,21 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-fully-repaid-unemployment",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(75_000, 11_000, "Example Employer", "12-3456789")],
+      f1099g: [{ box_1_unemployment: 5_000, box_1_repaid: 5_000 }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule1"],
+    reviewFocus: [
+      "Schedule 1 remains attached when current-year unemployment is fully repaid",
+      "Schedule 1 line 7 nets to zero and prints its Repaid annotation with $5,000",
+      "Form 1040 line 8 does not include the repaid unemployment",
+    ],
+  },
+  {
     id: "single-w2-custodial-eic-release",
     inputs: {
       general: {

@@ -233,9 +233,23 @@ function schedule1Output(g99s: G99Items): NodeOutput[] {
   const stateRefund = totalStateRefundTaxable(g99s);
   const rtaa = totalRtaa(g99s);
   const grants = totalTaxableGrants(g99s);
+  const unemploymentReceived = g99s.reduce(
+    (sum, item) => sum + (item.box_1_unemployment ?? 0),
+    0,
+  );
+  const unemploymentRepaid = g99s.reduce(
+    (sum, item) => sum + (item.box_1_repaid ?? 0),
+    0,
+  );
 
   const fields: Partial<z.infer<typeof schedule1["inputSchema"]>> = {};
-  if (unemploymentNet > 0) {
+  // A fully repaid current-year benefit still belongs on Schedule 1 line 7:
+  // the printed form needs its "Repaid" annotation beside the zero net amount.
+  if (
+    unemploymentNet > 0 ||
+    (unemploymentReceived > 0 &&
+      unemploymentReceived === unemploymentRepaid)
+  ) {
     fields.line7_unemployment = unemploymentNet;
   }
   if (stateRefund > 0) {
