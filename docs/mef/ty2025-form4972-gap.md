@@ -684,3 +684,26 @@ joint-filing spouses to attach separate forms and add their tax to Form 1040.
 Part II, annuities, beneficiaries, partial shares, multiple copies per plan,
 administrator source bytes, filled PDF, XSD, business rules, and ATS acceptance
 remain open for this pair.
+
+## One spouse's NUA capital election with separate ten-year forms (2026-10-01, unrun)
+
+The [2025 Form 4972 instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf)
+allow the 20% capital-gain election and ten-year option together. Their NUA
+Worksheet divides box 6 employer-security appreciation between capital and
+ordinary portions, and spouses filing jointly calculate separate Forms 4972
+before adding the special taxes on Form 1040 line 16. The bounded two-spouse
+source route now permits one spouse's full-share, single-copy NUA election to
+include Part II when that owner's box 3 is positive and the NUA allocation is
+an exact whole-dollar product of boxes 3, 2a, and 6. Both spouses retain Part
+III; the other's separate full-share plan has an ordinary Part-III-only election.
+
+In the authored case, taxpayer boxes 2a/3/6 of $30,000/$6,000/$5,000 put
+$1,000 NUA on Form 4972 line 6, giving line 6 of $7,000 and line 8 of $28,000.
+The spouse's separate $40,000 box 2a source yields line 8 of $40,000. Neither
+Part III distribution enters Form 1040 line 5b. Native and PDF projections
+replay each source plan, source box, computed line, owner identity, and combined
+final tax; changed gain, plan, capital line, and final tax have authored rejection
+fixtures. These cases remain unrun pending bulk validation. Beneficiary shares,
+annuities, estate/death allocation, multi-copy NUA, source document
+authentication, filled PDF review, XSD/business-rule validation, and ATS
+acceptance remain open.

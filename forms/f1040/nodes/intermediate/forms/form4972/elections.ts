@@ -150,7 +150,18 @@ class Form4972ElectionsNode extends TaxNode<typeof inputSchema> {
             elections[index].source_document_references.length !== 1 ||
             form.elect_include_nua !== true ||
             form.elect_10yr_averaging !== true ||
-            form.elect_capital_gain === true)
+            (form.elect_capital_gain === true &&
+              (typeof form.capital_gain_amount !== "number" ||
+                form.capital_gain_amount <= 0 ||
+                typeof form.lump_sum_amount !== "number" ||
+                typeof form.box6_nua !== "number" ||
+                !Number.isSafeInteger(form.lump_sum_amount) ||
+                !Number.isSafeInteger(form.capital_gain_amount) ||
+                !Number.isSafeInteger(form.box6_nua) ||
+                !Number.isSafeInteger(
+                  form.box6_nua * form.capital_gain_amount /
+                    form.lump_sum_amount,
+                ))))
         ) ||
         plans.some((plan) => !plan || typeof plan !== "object") ||
         elections.some((election, index) => {
