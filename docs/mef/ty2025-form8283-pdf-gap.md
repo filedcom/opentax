@@ -1,5 +1,14 @@
 # TY2025 Form 8283 PDF boundary
 
+The purchased Section B ordinary-income reduction now distinguishes short-term
+capital assets from purchased inventory in a single source reason record. The
+inventory route prints the same official Section B FMV and basis-claim fields,
+with a supplement identifying the held-for-sale property and reviewed cost
+ledger. Its native filing still requires the distinct complete signed form,
+full appraisal, reduction statement, purchase/cost record, and appraiser/donee
+signature PDFs. A full-return equipment inventory example is authored but not
+run; the preview and source-review claims do not authenticate those documents.
+
 The
 [official December 2025 Form 8283](https://www.irs.gov/pub/irs-prior/f8283--2025.pdf)
 is a two-page filing form. Its AcroForm field names and page widgets were

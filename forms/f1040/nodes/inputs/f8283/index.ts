@@ -647,6 +647,49 @@ const sectionAItemSchema = z.object({
   }
 });
 
+const ordinaryIncomeReductionBase = z.object({
+  gain_removed: z.number().positive(),
+  purchase_record_attachment_file_name: z.string().trim().min(1),
+  reduction_statement_attachment_file_name: z.string().trim().min(1),
+  reduction_statement_review: z.object({
+    reviewed_by: z.string().trim().min(1),
+    reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+    property_and_fmv_match_confirmed: z.literal(true),
+    basis_and_gain_match_confirmed: z.literal(true),
+    reduced_claim_matches_confirmed: z.literal(true),
+  }).strict(),
+});
+
+const ordinaryIncomeReductionSchema = z.discriminatedUnion("reason", [
+  ordinaryIncomeReductionBase.extend({
+    reason: z.literal("purchased_short_term_capital_asset"),
+    purchase_record_review: z.object({
+      reviewed_by: z.string().trim().min(1),
+      reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+      property_dates_basis_match_confirmed: z.literal(true),
+      capital_asset_not_inventory_confirmed: z.literal(true),
+      no_depreciation_or_recapture_confirmed: z.literal(true),
+      donor_did_not_create_property_confirmed: z.literal(true),
+    }).strict(),
+  }).strict(),
+  ordinaryIncomeReductionBase.extend({
+    reason: z.literal("purchased_inventory"),
+    inventory_cost_record_reference: z.string().trim().min(1),
+    purchase_record_review: z.object({
+      reviewed_by: z.string().trim().min(1),
+      reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+      property_dates_basis_match_confirmed: z.literal(true),
+      inventory_cost_record_matches_pdf_confirmed: z.literal(true),
+      held_for_sale_to_customers_confirmed: z.literal(true),
+      cost_basis_not_previously_deducted_confirmed: z.literal(true),
+      no_enhanced_corporate_deduction_confirmed: z.literal(true),
+    }).strict(),
+  }).strict(),
+]);
+
 // Section B — items >$5,000 each (requires qualified appraisal)
 const sectionBItemSchema = z.object({
   property_description: z.string().optional(),
@@ -666,28 +709,7 @@ const sectionBItemSchema = z.object({
   // The supported Section B election is limited to purchased, unimproved
   // investment land. Developed real estate can involve recapture.
   investment_land_unimproved_confirmed: z.literal(true).optional(),
-  short_term_tangible_reduction: z.object({
-    short_term_gain_removed: z.number().positive(),
-    purchase_record_attachment_file_name: z.string().trim().min(1),
-    purchase_record_review: z.object({
-      reviewed_by: z.string().trim().min(1),
-      reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-      pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/),
-      property_dates_basis_match_confirmed: z.literal(true),
-      capital_asset_not_inventory_confirmed: z.literal(true),
-      no_depreciation_or_recapture_confirmed: z.literal(true),
-      donor_did_not_create_property_confirmed: z.literal(true),
-    }),
-    reduction_statement_attachment_file_name: z.string().trim().min(1),
-    reduction_statement_review: z.object({
-      reviewed_by: z.string().trim().min(1),
-      reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-      pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/),
-      property_and_fmv_match_confirmed: z.literal(true),
-      basis_and_short_term_gain_match_confirmed: z.literal(true),
-      reduced_claim_matches_confirmed: z.literal(true),
-    }),
-  }).strict().optional(),
+  ordinary_income_reduction: ordinaryIncomeReductionSchema.optional(),
   reduction_statement_attachment_file_name: z.string().min(1).optional(),
   // A reviewer must verify the actual reduction computation in the PDF whose
   // bytes are submitted. Merely naming an attachment does not substantiate it.
@@ -766,7 +788,8 @@ const sectionBItemSchema = z.object({
   is_capital_gain_property: z.boolean().optional(),
 }).superRefine((item, ctx) => {
   validateCharitableLimitCategory(item, ctx);
-  if (item.short_term_tangible_reduction) {
+  const ordinaryReduction = item.ordinary_income_reduction;
+  if (ordinaryReduction) {
     const acquired =
       item.date_acquired && /^\d{4}-\d{2}-\d{2}$/.test(item.date_acquired)
         ? Date.parse(`${item.date_acquired}T00:00:00Z`)
@@ -797,7 +820,8 @@ const sectionBItemSchema = z.object({
       item.donor_acquisition_description?.trim().toLowerCase() !== "purchase" ||
       !Number.isFinite(acquired) || !Number.isFinite(contributed) ||
       !Number.isFinite(anniversary) || contributed <= acquired ||
-      contributed > anniversary ||
+      (ordinaryReduction.reason === "purchased_short_term_capital_asset" &&
+        contributed > anniversary) ||
       !item.date_contributed?.startsWith("2025-") ||
       new Date(acquired).toISOString().slice(0, 10) !== item.date_acquired ||
       new Date(contributed).toISOString().slice(0, 10) !==
@@ -808,7 +832,7 @@ const sectionBItemSchema = z.object({
       item.cost_or_adjusted_basis <= 5_000 ||
       item.cost_or_adjusted_basis >= item.fmv ||
       Math.round(
-          item.short_term_tangible_reduction.short_term_gain_removed * 100,
+          ordinaryReduction.gain_removed * 100,
         ) !==
         Math.round((item.fmv - item.cost_or_adjusted_basis) * 100) ||
       Math.round(item.deduction_claimed * 100) !==
@@ -819,9 +843,9 @@ const sectionBItemSchema = z.object({
     ) {
       ctx.addIssue({
         code: "custom",
-        path: ["short_term_tangible_reduction"],
+        path: ["ordinary_income_reduction"],
         message:
-          "Form 8283 purchased short-term equipment, art, or collectible needs a basis-limited claim, reviewed full appraisal, signed Form 8283, purchase record, and reduction statement",
+          "Form 8283 ordinary-income equipment, art, or collectible needs a basis-limited claim, reviewed full appraisal, signed Form 8283, purchase/cost record, and reduction statement",
       });
     }
   }

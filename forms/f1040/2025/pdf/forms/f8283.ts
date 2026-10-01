@@ -378,7 +378,7 @@ function sectionBOrdinaryTangibleInstance(
         !appraisal.full_appraisal_source_review ||
         appraisal.attachment_file_name ===
           item.signed_form_attachment_file_name)) ||
-    (item.short_term_tangible_reduction === undefined
+    (item.ordinary_income_reduction === undefined
       ? item.deduction_claimed !== item.fmv
       : (propertyType !== SectionBPropertyType.Equipment &&
         propertyType !== SectionBPropertyType.ArtUnder20000 &&
@@ -389,7 +389,7 @@ function sectionBOrdinaryTangibleInstance(
         item.deduction_claimed !== item.cost_or_adjusted_basis ||
         item.fmv <= item.deduction_claimed) ||
     item.cost_or_adjusted_basis === undefined ||
-    (item.short_term_tangible_reduction === undefined &&
+    (item.ordinary_income_reduction === undefined &&
       item.cost_or_adjusted_basis < item.fmv) ||
     !item.property_description?.trim() || !item.physical_condition?.trim() ||
     !item.date_acquired || !item.date_contributed?.startsWith("2025-") ||
@@ -404,6 +404,16 @@ function sectionBOrdinaryTangibleInstance(
       "Form 8283 Section B PDF needs one complete purchased tangible gift and its supported claim",
     );
   }
+  const ordinary = item.ordinary_income_reduction;
+  const ordinaryExplanation = ordinary?.reason === "purchased_inventory"
+    ? `Purchased inventory held for sale to customers has $${
+      ordinary.gain_removed.toFixed(2)
+    } hypothetical ordinary sale gain removed under section 170(e)(1)(A). Cost record ${ordinary.inventory_cost_record_reference}, purchase/basis PDF ${ordinary.purchase_record_attachment_file_name}, full appraisal ${appraisal.attachment_file_name}, and reduction statement ${ordinary.reduction_statement_attachment_file_name} have separate source reviews. `
+    : ordinary
+    ? `The purchased short-term capital asset's FMV sale gain $${
+      ordinary.gain_removed.toFixed(2)
+    } is removed under section 170(e)(1)(A); purchase record ${ordinary.purchase_record_attachment_file_name}, full appraisal ${appraisal.attachment_file_name}, and reduction statement ${ordinary.reduction_statement_attachment_file_name} have separate source reviews. `
+    : "";
   return {
     ...sectionBPrintedFields(item, filer),
     section_b_art_at_least_20000:
@@ -420,11 +430,7 @@ function sectionBOrdinaryTangibleInstance(
         item.deduction_claimed.toFixed(2)
       }, with adjusted basis $${item.cost_or_adjusted_basis.toFixed(2)}. ` +
       `Appraiser signed ${printedDate(appraisal.signed_date)}. ` +
-      (item.short_term_tangible_reduction
-        ? `The purchased short-term capital asset's FMV sale gain $${
-          item.short_term_tangible_reduction.short_term_gain_removed.toFixed(2)
-        } is removed under section 170(e)(1)(A); purchase record $${item.short_term_tangible_reduction.purchase_record_attachment_file_name}, full appraisal ${appraisal.attachment_file_name}, and reduction statement $${item.short_term_tangible_reduction.reduction_statement_attachment_file_name} have separate source reviews. `
-        : "") +
+      ordinaryExplanation +
       `The completed signed Form 8283 ${item.signed_form_attachment_file_name} ` +
       `was reviewed ${item.signed_form_source_review.reviewed_on} by ${item.signed_form_source_review.reviewed_by}. ` +
       (propertyType === SectionBPropertyType.ArtAtLeast20000

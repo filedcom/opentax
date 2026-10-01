@@ -1,5 +1,31 @@
 # TY2025 Form 8283 FMV-reduction statement
 
+## Purchased Section B inventory and shared ordinary-income evidence (2026-10-01, unrun)
+
+The Section B source now uses one required-reason `ordinary_income_reduction`
+record for a purchased short-term capital asset or purchased inventory. This is
+a direct replacement of the former short-term-only source field; there is no
+alias. Both routes require appraised FMV above an undeducted cost basis, a claim
+equal to basis, and a reviewed statement computing the gain removed under
+section 170(e)(1)(A), as described in the
+[2025 Form 8283 instructions](https://www.irs.gov/instructions/i8283). The
+inventory reason additionally requires a named cost
+ledger, a reviewed purchase/basis PDF confirming inventory held for sale to
+customers, that the cost was not previously deducted, and that the individual
+does not claim a corporate enhanced deduction. Its purchase date need not be
+within a year of contribution; the short-term capital-asset reason still does.
+The one-item Schedule A and itemized Form 1040 amounts must match the source.
+Native Form 8283 retains original appraised FMV and the lower basis claim, and
+links the reviewed purchase/cost record, full appraisal, reduction statement,
+completed signed Form 8283, and two signature PDFs as six distinct documents.
+The official PDF preview selects the property box, prints both amounts, and
+names the inventory cost record and reduction reason in its supplement. An
+$18,000 equipment inventory FMV/$12,000 basis case and altered-byte assertions
+are authored but unrun. The PDF evidence and reviewer assertions still require
+human verification of actual signatures, inventory classification, cost, and
+appraiser qualification. Prior-year Section B carryovers stay closed without
+authenticated accepted 2024 filing evidence.
+
 ## Purchased short-term Section B art at $20,000 or more (2026-10-01, unrun)
 
 The bounded purchased short-term tangible-property route now includes one

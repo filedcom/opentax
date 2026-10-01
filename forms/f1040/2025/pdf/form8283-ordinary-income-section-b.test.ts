@@ -35,16 +35,25 @@ async function sha256(bytes: Uint8Array): Promise<string> {
 }
 
 for (
-  const [propertyType, appraisedFmv, basis] of [
-    ["equipment", 18_000, 12_000],
-    ["art_under_20000", 18_000, 12_000],
-    ["art_at_least_20000", 25_000, 22_000],
-    ["collectibles", 18_000, 12_000],
+  const [propertyType, appraisedFmv, basis, reason] of [
+    ["equipment", 18_000, 12_000, "purchased_short_term_capital_asset"],
+    ["art_under_20000", 18_000, 12_000, "purchased_short_term_capital_asset"],
+    [
+      "art_at_least_20000",
+      25_000,
+      22_000,
+      "purchased_short_term_capital_asset",
+    ],
+    ["collectibles", 18_000, 12_000, "purchased_short_term_capital_asset"],
+    ["equipment", 18_000, 12_000, "purchased_inventory"],
   ] as const
 ) {
-  Deno.test(`Section B purchased short-term ${propertyType} joins reviewed bytes, Schedule A, native MeF, and PDF`, async () => {
+  Deno.test(`Section B ${reason} ${propertyType} joins reviewed bytes, Schedule A, native MeF, and PDF`, async () => {
+    const acquiredDate = reason === "purchased_inventory"
+      ? "2023-01-15"
+      : "2025-01-15";
     const purchase = await evidence(
-      `invoice and basis $${basis}, 2025-01-15`,
+      `invoice and basis $${basis}, ${acquiredDate}; inventory cost ledger INV-15`,
     );
     const appraisal = await evidence(
       `signed appraisal: ${propertyType} FMV $${appraisedFmv}`,
@@ -53,7 +62,7 @@ for (
       `completed signed Form 8283 for ${propertyType}`,
     );
     const reduction = await evidence(
-      `FMV $${appraisedFmv} less short-term gain $${
+      `FMV $${appraisedFmv} less ordinary-income gain $${
         appraisedFmv - basis
       } equals claim $${basis}`,
     );
@@ -67,14 +76,16 @@ for (
     };
     const item = {
       property_description: propertyType === "equipment"
-        ? "Unused personal audio equipment, serial ST-8283"
+        ? reason === "purchased_inventory"
+          ? "Retail audio equipment stock, serial INV-15"
+          : "Unused personal audio equipment, serial ST-8283"
         : propertyType === "art_under_20000" ||
             propertyType === "art_at_least_20000"
         ? "Purchased framed painting, catalog ST-8283"
         : "Purchased rare coin, catalog ST-8283",
       property_type: propertyType,
       physical_condition: "Good used condition",
-      date_acquired: "2025-01-15",
+      date_acquired: acquiredDate,
       donor_acquisition_description: "Purchase",
       date_contributed: "2025-06-01",
       fmv: appraisedFmv,
@@ -118,25 +129,40 @@ for (
         us_address: address,
         signature_attachment_file_name: "DoneeSignature.pdf",
       },
-      short_term_tangible_reduction: {
-        short_term_gain_removed: appraisedFmv - basis,
+      ordinary_income_reduction: {
+        reason,
+        gain_removed: appraisedFmv - basis,
         purchase_record_attachment_file_name: "PurchaseRecord.pdf",
-        purchase_record_review: {
-          reviewed_by: "Synthetic reviewer",
-          reviewed_on: "2025-09-01",
-          pdf_sha256: await sha256(purchase),
-          property_dates_basis_match_confirmed: true,
-          capital_asset_not_inventory_confirmed: true,
-          no_depreciation_or_recapture_confirmed: true,
-          donor_did_not_create_property_confirmed: true,
-        },
+        ...(reason === "purchased_inventory"
+          ? { inventory_cost_record_reference: "INV-15" }
+          : {}),
+        purchase_record_review: reason === "purchased_inventory"
+          ? {
+            reviewed_by: "Synthetic reviewer",
+            reviewed_on: "2025-09-01",
+            pdf_sha256: await sha256(purchase),
+            property_dates_basis_match_confirmed: true,
+            inventory_cost_record_matches_pdf_confirmed: true,
+            held_for_sale_to_customers_confirmed: true,
+            cost_basis_not_previously_deducted_confirmed: true,
+            no_enhanced_corporate_deduction_confirmed: true,
+          }
+          : {
+            reviewed_by: "Synthetic reviewer",
+            reviewed_on: "2025-09-01",
+            pdf_sha256: await sha256(purchase),
+            property_dates_basis_match_confirmed: true,
+            capital_asset_not_inventory_confirmed: true,
+            no_depreciation_or_recapture_confirmed: true,
+            donor_did_not_create_property_confirmed: true,
+          },
         reduction_statement_attachment_file_name: "ReductionStatement.pdf",
         reduction_statement_review: {
           reviewed_by: "Synthetic reviewer",
           reviewed_on: "2025-09-01",
           pdf_sha256: await sha256(reduction),
           property_and_fmv_match_confirmed: true,
-          basis_and_short_term_gain_match_confirmed: true,
+          basis_and_gain_match_confirmed: true,
           reduced_claim_matches_confirmed: true,
         },
       },

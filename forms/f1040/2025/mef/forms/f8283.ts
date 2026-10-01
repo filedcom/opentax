@@ -667,11 +667,11 @@ function requiredReductionAttachment(
   return id;
 }
 
-function requiredShortTermAttachments(
+function requiredOrdinaryIncomeAttachments(
   item: SectionBItem,
   context: MefBuildContext,
 ): string[] {
-  const evidence = item.short_term_tangible_reduction;
+  const evidence = item.ordinary_income_reduction;
   const appraisal = item.qualified_appraisal;
   if (
     !evidence || !appraisal?.attachment_file_name ||
@@ -679,7 +679,7 @@ function requiredShortTermAttachments(
     !item.signed_form_attachment_file_name || !item.signed_form_source_review
   ) {
     throw new Error(
-      "Form 8283 short-term Section B gift needs reviewed purchase, appraisal, signed form, and reduction PDFs",
+      "Form 8283 ordinary-income Section B gift needs reviewed purchase, appraisal, signed form, and reduction PDFs",
     );
   }
   const names = [
@@ -692,7 +692,7 @@ function requiredShortTermAttachments(
   ];
   if (names.some((name) => !name) || new Set(names).size !== names.length) {
     throw new Error(
-      "Form 8283 short-term Section B gift evidence must use six distinct PDFs",
+      "Form 8283 ordinary-income Section B gift evidence must use six distinct PDFs",
     );
   }
   const reviewed = [
@@ -711,19 +711,19 @@ function requiredShortTermAttachments(
   for (const [name, description, digest] of reviewed) {
     if (context.attachmentDescriptionsByFileName?.[name] !== description) {
       throw new Error(
-        `Form 8283 short-term Section B gift needs ${description}`,
+        `Form 8283 ordinary-income Section B gift needs ${description}`,
       );
     }
     if (context.documentIdsByPendingKey) {
       if (context.attachmentSha256ByFileName?.[name] !== digest) {
         throw new Error(
-          `Form 8283 short-term Section B gift ${description} bytes differ from reviewed SHA-256`,
+          `Form 8283 ordinary-income Section B gift ${description} bytes differ from reviewed SHA-256`,
         );
       }
       const id = context.documentIdsByAttachmentFileName?.[name];
       if (!id) {
         throw new Error(
-          `Form 8283 short-term Section B gift ${description} has no linked MeF document`,
+          `Form 8283 ordinary-income Section B gift ${description} has no linked MeF document`,
         );
       }
       ids.push(id);
@@ -737,7 +737,7 @@ function requiredShortTermAttachments(
   if (appraisalId) ids.push(appraisalId);
   if (new Set(ids).size !== ids.length) {
     throw new Error(
-      "Form 8283 short-term Section B gift PDFs need distinct MeF document IDs",
+      "Form 8283 ordinary-income Section B gift PDFs need distinct MeF document IDs",
     );
   }
   return ids;
@@ -847,7 +847,7 @@ function buildSectionBItem(
   if (
     Math.round((item.fmv - item.deduction_claimed) * 100) > 0 &&
     item.capital_gain_reduction_election_confirmed !== true &&
-    item.short_term_tangible_reduction === undefined
+    item.ordinary_income_reduction === undefined
   ) {
     throw new Error(
       "Form 8283 Section B reduced claim needs a supported reviewed FMV-reduction computation and statement",
@@ -869,8 +869,8 @@ function buildSectionBItem(
     (id): id is string => id !== undefined,
   );
   const signedFormId = requiredSignedFormAttachment(item, context);
-  const shortTermIds = item.short_term_tangible_reduction
-    ? requiredShortTermAttachments(item, context)
+  const ordinaryReductionIds = item.ordinary_income_reduction
+    ? requiredOrdinaryIncomeAttachments(item, context)
     : [];
   const artAtLeast20000 =
     item.property_type === SectionBPropertyType.ArtAtLeast20000;
@@ -884,7 +884,7 @@ function buildSectionBItem(
   }
   const qualifiedAppraisalId =
     (similarGroupTotal > 500_000 || artAtLeast20000) &&
-      item.short_term_tangible_reduction === undefined
+      item.ordinary_income_reduction === undefined
       ? requiredQualifiedAppraisalAttachment(
         appraisal.attachment_file_name,
         context,
@@ -896,18 +896,18 @@ function buildSectionBItem(
     qualifiedAppraisalId,
     reductionAttachmentId,
     signedFormId,
-    ...shortTermIds,
+    ...ordinaryReductionIds,
     ...signatureIds,
   ]
     .filter(
       (id): id is string => id !== undefined,
     );
   if (
-    item.short_term_tangible_reduction && context.documentIdsByPendingKey &&
+    item.ordinary_income_reduction && context.documentIdsByPendingKey &&
     (binaryIds.length !== 6 || new Set(binaryIds).size !== 6)
   ) {
     throw new Error(
-      "Form 8283 short-term Section B gift needs six distinct linked MeF document IDs",
+      "Form 8283 ordinary-income Section B gift needs six distinct linked MeF document IDs",
     );
   }
   return elements(
@@ -989,7 +989,7 @@ export const form8283: MefFormDescriptor<
     if (
       ((parsed.section_a_items ?? []).some(needsFmvReductionStatement) ||
         (parsed.section_b_items ?? []).some((item) =>
-          item.short_term_tangible_reduction !== undefined
+          item.ordinary_income_reduction !== undefined
         )) &&
       context.pending?.f8283 !== undefined &&
       JSON.stringify(parsed) !==
@@ -1013,8 +1013,8 @@ export const form8283: MefFormDescriptor<
     const electedB = (parsed.section_b_items ?? []).some((item) =>
       item.capital_gain_reduction_election_confirmed === true
     );
-    const shortTermB = (parsed.section_b_items ?? []).some((item) =>
-      item.short_term_tangible_reduction !== undefined
+    const ordinaryReductionB = (parsed.section_b_items ?? []).some((item) =>
+      item.ordinary_income_reduction !== undefined
     );
     if (elected || electedB) {
       if (electedB) {
@@ -1029,7 +1029,7 @@ export const form8283: MefFormDescriptor<
         throw new Error("Form 8283 election differs from the pending source");
       }
     }
-    if (shortTermB) {
+    if (ordinaryReductionB) {
       const propertyType = parsed.section_b_items?.[0]?.property_type;
       if (
         propertyType !== SectionBPropertyType.Equipment &&
@@ -1038,7 +1038,7 @@ export const form8283: MefFormDescriptor<
         propertyType !== SectionBPropertyType.Collectibles
       ) {
         throw new Error(
-          "Form 8283 short-term Section B property type is unsupported",
+          "Form 8283 ordinary-income Section B property type is unsupported",
         );
       }
       assertOrdinarySectionBReconciled(context, propertyType);
