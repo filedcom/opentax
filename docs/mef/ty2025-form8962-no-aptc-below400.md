@@ -1,5 +1,26 @@
 # TY2025 Form 8962: no-APTC claim at 100%-399% FPL
 
+## One three-person monthly family policy (staged, unrun)
+
+One fully paid, nonshared Marketplace policy may now cover a single filer and
+two claimed dependents at 100%-399% FPL with no APTC. The bounded route
+requires filed 2025 returns and distinct issued income documents for both
+dependents, exact covered SSNs, a Marketplace SLCSP determination and timely
+full-premium payment for every covered month, and a final Schedule 3 line 9 and
+Form 1040 line 31 credit match. It uses the existing monthly Form 8962 rows,
+native document, and PDF projection. The [2025 Form 8962
+instructions](https://www.irs.gov/instructions/i8962) direct a corrected
+applicable SLCSP determination when no APTC was paid and add a dependent's
+modified AGI to household income when a return is required.
+
+The authored family has $51,640 household income, exactly 200% of the $25,820
+contiguous-state family-of-three poverty line. Its monthly $900 paid premiums
+and determined $700/$800 SLCSP amounts produce $7,968 PTC. Positive and
+changed dependent income, covered SSN, SLCSP evidence, and final credit
+fixtures are written but unrun. Other-family enrollees, shared policies,
+multiple policies, unreviewed dependent income, and external source-byte
+authentication remain outside this route.
+
 ## Sequential two-policy no-APTC switch (staged, unrun)
 
 A single filer at 200% FPL may now reconcile two distinct same-state policies

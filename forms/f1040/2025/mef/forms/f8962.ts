@@ -1004,15 +1004,16 @@ function reconcileNoAptcPolicyMonths(
     fields.dependents_modified_agi,
     pending?.general,
   );
-  const hasVerifiedDependent = fields.household_size === 2 &&
-    (general.data.dependents?.length ?? 0) === 1;
+  const hasVerifiedDependents =
+    (fields.household_size === 2 || fields.household_size === 3) &&
+    (general.data.dependents?.length ?? 0) === fields.household_size - 1;
   if (
     context.filer.filingStatus !== FilingStatus.Single ||
     context.filer.address.foreignCountry ||
     policies.length !== 1 || !policy?.policy_number ||
     policy.coverage_state !== context.filer.address.state ||
-    (hasVerifiedDependent
-      ? policy.covered_individual_ssns?.length !== 2
+    (hasVerifiedDependents
+      ? policy.covered_individual_ssns?.length !== fields.household_size
       : policy.covered_individual_ssns?.length !== 1 ||
         (policy.covered_individual_ssns?.[0] ?? "").replaceAll("-", "") !==
           context.filer.primarySSN.replaceAll("-", "")) ||
@@ -1020,7 +1021,7 @@ function reconcileNoAptcPolicyMonths(
       context.filer.primarySSN.replaceAll("-", "") ||
     general.data.filing_status !== SourceFilingStatus.Single ||
     general.data.taxpayer_can_be_claimed_as_dependent !== false ||
-    (!hasVerifiedDependent && (general.data.dependents?.length ?? 0) !== 0) ||
+    (!hasVerifiedDependents && (general.data.dependents?.length ?? 0) !== 0) ||
     policy.shared_policy_periods || policy.slcsp_review_periods ||
     policy.alternative_marriage_owner ||
     source.data.alternative_marriage_month !== undefined ||
@@ -1031,7 +1032,7 @@ function reconcileNoAptcPolicyMonths(
       policy.monthly_premiums?.[index] === 0 && slcsp !== 0
     ) ||
     policy.monthly_aptcs.some((aptc) => aptc !== 0) ||
-    (fields.household_size !== 1 && !hasVerifiedDependent) ||
+    (fields.household_size !== 1 && !hasVerifiedDependents) ||
     fields.dependents_modified_agi !== dependentMagi ||
     fields.qsehra_ind === true || fields.mfs_exception_ind === true ||
     (fields.shared_policy_allocations?.length ?? 0) !== 0 ||
@@ -1043,10 +1044,10 @@ function reconcileNoAptcPolicyMonths(
     pending?.form2555 !== undefined
   ) {
     throw new Error(
-      "Form 8962 no-APTC PTC supports one fully paid, nonshared Marketplace policy and a verified one- or two-person single return",
+      "Form 8962 no-APTC PTC supports one fully paid, nonshared Marketplace policy and a verified one- to three-person single return",
     );
   }
-  if (hasVerifiedDependent) {
+  if (hasVerifiedDependents) {
     reconcileOnePolicyDependentIdentity(
       policies,
       fields.household_size,
@@ -1061,7 +1062,7 @@ function reconcileNoAptcPolicyMonths(
   );
   const income = taxpayerIncome + dependentMagi;
   if (
-    hasVerifiedDependent &&
+    hasVerifiedDependents &&
     (income < povertyLine || income >= 4 * povertyLine)
   ) {
     throw new Error(
@@ -1074,7 +1075,7 @@ function reconcileNoAptcPolicyMonths(
     fields.household_size,
     policies.length,
     general.data.ptc_below_100_fpl_status?.basis === "lawfully_present",
-    hasVerifiedDependent,
+    hasVerifiedDependents,
   );
   if (
     (form1040.data.line6a_ss_gross ?? 0) !==
