@@ -52,8 +52,17 @@ alongside one ordinary box 1a Form 1099-DIV payer. The combined source guard
 replays both payers and the final Form 1040 interest/dividend amounts; the loan
 guard replays the same retained debt and payments. Form 4952 line 4a, Schedule
 A line 9, native MeF, and PDF must agree. A full-return positive and changed
-dividend-source fixture are authored for the deferred batch. Other mixed payer
+dividend-source fixture are authored for the deferred batch. Wider mixed payer
 combinations and authenticated issuer or lender bytes remain open.
+
+The same direct loan also accepts two unadjusted 1099-INT box 1 payers plus
+one ordinary 1099-DIV box 1a payer. Both interest payers need distinct source
+references and payer names, and the dividend payer needs its own source
+reference. Native and PDF export compare the retained two-interest amount
+inventory and one dividend amount with the printed Form 4952, then the existing
+combined-income guard replays each payer against Form 1040 and Schedule A.
+A full-return positive and duplicate-reference tamper fixture are authored
+for the deferred batch. Source bytes and larger payer inventories remain open.
 
 The same single loan can pair one unadjusted taxable Form 1099-OID box 1 payer
 with the ordinary Form 1099-DIV payer. The combined source guard verifies the
@@ -67,7 +76,7 @@ investment payer in place of the interest or dividend payer. The same retained
 loan and payment records, OID source, Form 4952, Schedule A, Form 1040 interest,
 native document, and PDF must reconcile. An executor positive and changed-OID
 fixture is authored for the deferred batch. Other OID boxes, tax-exempt
-instruments, mixed payers, and lender/broker byte proof remain open.
+instruments, other mixed payers, and lender/broker byte proof remain open.
 
 An affirmatively classified Form 1099-MISC box 2 portfolio royalty sends the
 same amount to Schedule E income and Form 4952 line 4a. A bounded filing route

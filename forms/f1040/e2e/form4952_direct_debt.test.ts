@@ -42,7 +42,8 @@ function filing(
     | "dividend"
     | "oid"
     | "interest_dividend"
-    | "oid_dividend" = "interest",
+    | "oid_dividend"
+    | "two_interest_dividend" = "interest",
 ) {
   return execute(buildExecutionPlan(registry), registry, {
     general: {
@@ -52,7 +53,21 @@ function filing(
       taxpayer_ssn: "123-45-6789",
       taxpayer_dob: "1980-06-15",
     },
-    ...(source === "interest" || source === "interest_dividend"
+    ...(source === "two_interest_dividend"
+      ? {
+        f1099int: [{
+          payer_name: "First taxable bond payer",
+          source_document_reference: "issued-2025-first-bond-interest",
+          box1: 30_000,
+          investment_property_for_form4952: true,
+        }, {
+          payer_name: "Second taxable bond payer",
+          source_document_reference: "issued-2025-second-bond-interest",
+          box1: 30_000,
+          investment_property_for_form4952: true,
+        }],
+      }
+      : source === "interest" || source === "interest_dividend"
       ? {
         f1099int: [{
           payer_name: "Taxable bond payer",
@@ -81,7 +96,8 @@ function filing(
           investment_property_for_form4952: true,
         }],
       }),
-    ...(source === "interest_dividend" || source === "oid_dividend"
+    ...(source === "interest_dividend" || source === "oid_dividend" ||
+        source === "two_interest_dividend"
       ? {
         f1099div: [{
           payerName: "Taxable stock payer",
@@ -267,6 +283,50 @@ Deno.test("Form 4952 traced loan with OID and ordinary dividend payers reaches f
       pending: { ...result.pending, f1099oid: { f1099oids: [] } },
       filer: testFiler(),
     }), Error);
+});
+
+Deno.test("Form 4952 traced loan with two interest payers and one dividend payer reaches filing outputs", () => {
+  const result = filing("two_interest_dividend");
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form4952?.line4a, 100_000);
+  assertEquals(result.pending.form4952?.line8, 20_000);
+  assertEquals(result.pending.f1040?.line2b_taxable_interest, 60_000);
+  assertEquals(result.pending.f1040?.line3b_ordinary_dividends, 40_000);
+  assertEquals(result.pending.schedule_a?.line_9_investment_interest, 20_000);
+  const fields = result.pending.form4952!;
+  assertStringIncludes(
+    nativeForm4952.build(fields, {
+      pending: result.pending,
+      filer: testFiler(),
+    }),
+    "<InvestmentInterestExpDeductAmt>20000</InvestmentInterestExpDeductAmt>",
+  );
+  assertEquals(
+    form4952Pdf.projectFields!(fields, result.pending).line8,
+    20_000,
+  );
+  const changed = {
+    ...result.pending,
+    f1099int: {
+      f1099ints: [
+        ...(result.pending.f1099int as {
+          f1099ints: Record<string, unknown>[];
+        }).f1099ints.slice(0, 1),
+        {
+          ...(result.pending.f1099int as {
+            f1099ints: Record<string, unknown>[];
+          }).f1099ints[1],
+          source_document_reference: "issued-2025-first-bond-interest",
+        },
+      ],
+    },
+  };
+  assertThrows(() =>
+    nativeForm4952.build(fields, {
+      pending: changed,
+      filer: testFiler(),
+    }), Error);
+  assertThrows(() => form4952Pdf.projectFields!(fields, changed), Error);
 });
 
 Deno.test("Form 4952 direct loan rejects payment, loan, and owner tampering at export", () => {

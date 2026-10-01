@@ -103,15 +103,30 @@ export function reconcileForm4952DirectDebtExport(
     dividend.data.f1099divs.length === 1 &&
     pending.f1099int === undefined &&
     (dividend.data.f1099divs[0].box1b ?? 0) === 0;
+  const twoInterestAndDividend = interest.success && dividend.success &&
+    interest.data.f1099ints.length === 2 &&
+    dividend.data.f1099divs.length === 1 &&
+    pending.f1099oid === undefined &&
+    (dividend.data.f1099divs[0].box1b ?? 0) === 0 &&
+    interest.data.f1099ints.every((item) =>
+      item.source_document_reference?.trim() && item.payer_name?.trim()
+    ) &&
+    new Set(
+        interest.data.f1099ints.map((item) => item.source_document_reference),
+      ).size === 2 &&
+    new Set(interest.data.f1099ints.map((item) => item.payer_name)).size ===
+      2 &&
+    !!dividend.data.f1099divs[0].source_document_reference;
   if (
     !printed.success || !retained.success ||
     !printed.data.direct_debt_trace || !retained.data.direct_debt_trace ||
     (!oneInterest && !oneDividend && !oneOid &&
-      !oneInterestAndDividend && !oneOidAndDividend) ||
+      !oneInterestAndDividend && !oneOidAndDividend &&
+      !twoInterestAndDividend) ||
     !sameTrace(printed.data.direct_debt_trace, retained.data.direct_debt_trace)
   ) {
     throw new Error(
-      "Form 4952 direct debt export needs one retained loan, matching payments, and one or two supported 1099-INT, ordinary 1099-DIV, or taxable 1099-OID investment payers",
+      "Form 4952 direct debt export needs one retained loan, matching payments, and a supported 1099-INT, ordinary 1099-DIV, or taxable 1099-OID investment payer inventory",
     );
   }
   const owner = finalFilerTin?.replaceAll("-", "");
@@ -129,7 +144,22 @@ export function reconcileForm4952DirectDebtExport(
     lineKeys.some((key) => fields[key] !== lines[key]) ||
     printed.data.investment_interest_expense !==
       retained.data.investment_interest_expense ||
-    (oneInterestAndDividend || oneOidAndDividend
+    (twoInterestAndDividend
+      ? !Array.isArray(printed.data.source_1099_interest) ||
+        !Array.isArray(retained.data.source_1099_interest) ||
+        printed.data.source_1099_interest.length !== 2 ||
+        retained.data.source_1099_interest.length !== 2 ||
+        JSON.stringify(
+            [...printed.data.source_1099_interest].sort((a, b) => a - b),
+          ) !==
+          JSON.stringify(
+            [...retained.data.source_1099_interest].sort((a, b) => a - b),
+          ) ||
+        typeof printed.data.source_1099_dividends !== "number" ||
+        typeof retained.data.source_1099_dividends !== "number" ||
+        printed.data.source_1099_dividends !==
+          retained.data.source_1099_dividends
+      : oneInterestAndDividend || oneOidAndDividend
       ? typeof printed.data.source_1099_interest !== "number" ||
         typeof retained.data.source_1099_interest !== "number" ||
         printed.data.source_1099_interest !==
