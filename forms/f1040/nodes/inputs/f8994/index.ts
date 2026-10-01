@@ -1,8 +1,9 @@
 import { z } from "zod";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import type { NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import { f3800 } from "../f3800/index.ts";
 
 // January 2021 Form 8994 and December 2024 instructions apply to TY2025.
 // This source covers one direct Schedule C employer, not a K-1 credit.
@@ -81,6 +82,7 @@ export const inputSchema = z.object({
   no_pass_through_credit_confirmed: z.literal(true),
   no_controlled_group_or_common_control_confirmed: z.literal(true),
   schedule_c_wage_ledger_reference: reference,
+  other_schedule_c_wages: dollars,
   employees: z.array(employeeSchema).min(1),
 }).strict().superRefine((source, ctx) => {
   const policyStart = source.policy_adopted_date > source.policy_effective_date
@@ -147,11 +149,22 @@ export function calculateForm8994(raw: F8994Input) {
 class F8994Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8994";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([]);
+  readonly outputNodes = new OutputNodes([f3800]);
 
   compute(_ctx: NodeContext, rawInput: F8994Input): NodeResult {
-    inputSchema.parse(rawInput);
-    return { outputs: [] }; // Form 3800 integration is needed before tax output.
+    const source = inputSchema.parse(rawInput);
+    const lines = calculateForm8994(source);
+    return {
+      outputs: [output(f3800, {
+        f8994_direct_employer_credit: {
+          credit_amount: lines.line3,
+          schedule_c_business_reference: source.schedule_c_business_reference,
+          schedule_c_wage_ledger_reference:
+            source.schedule_c_wage_ledger_reference,
+          subject_to_passive_activity_limit: false,
+        },
+      })],
+    };
   }
 }
 

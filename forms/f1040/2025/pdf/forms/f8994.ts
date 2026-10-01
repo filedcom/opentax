@@ -1,5 +1,5 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
-import { reconcileForm8994DirectEmployer } from "../../form8994_source.ts";
+import { reconcileForm8994DocumentSource } from "../../form8994_source.ts";
 
 // The January 2021 one-page IRS AcroForm is the filing revision for TY2025.
 const page = "topmostSubform[0].Page1[0].";
@@ -15,7 +15,7 @@ const yes = (domainKey: string, number: number): PdfFieldEntry => ({
   whenValue: "true",
 });
 
-/** Staged direct-employer PDF projection; absent from the public registry. */
+/** Official direct-employer PDF projection for the bounded source. */
 export const form8994Pdf: PdfFormDescriptor = {
   pendingKey: "f8994",
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8994.pdf",
@@ -34,7 +34,7 @@ export const form8994Pdf: PdfFormDescriptor = {
     text("primarySSN", "f1_02[0]"),
   ],
   projectFields(raw, allPending) {
-    const { lines } = reconcileForm8994DirectEmployer(raw, allPending);
+    const { lines } = reconcileForm8994DocumentSource(raw, allPending);
     return {
       line_a_yes: true,
       line_b_yes: true,

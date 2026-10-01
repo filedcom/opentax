@@ -16,6 +16,7 @@ export const form8994DirectEmployer = inputSchema.parse({
   no_pass_through_credit_confirmed: true,
   no_controlled_group_or_common_control_confirmed: true,
   schedule_c_wage_ledger_reference: "2025-boise-design-payroll",
+  other_schedule_c_wages: 44_400,
   employees: [{
     employee_name: "A Example",
     employee_ssn: "123450001",
@@ -61,6 +62,15 @@ export const form8994DirectEmployer = inputSchema.parse({
 
 export const form8994MatchedPending = {
   f8994: form8994DirectEmployer,
+  f3800: {
+    f8994_direct_employer_credit: {
+      credit_amount: 1_250,
+      schedule_c_business_reference: "boise-design-2025",
+      schedule_c_wage_ledger_reference: "2025-boise-design-payroll",
+      subject_to_passive_activity_limit: false,
+    },
+    form8994_applied_credit: 1_250,
+  },
   f1040: { taxpayer_ssn: "123-45-6789" },
   schedule_c: {
     schedule_cs: [{

@@ -12,8 +12,13 @@ Deno.test("Form 8994 direct employer computes reviewed 75% and 100% leave rates"
   assertEquals([lines.line1, lines.line2, lines.line3], [1_250, 0, 1_250]);
   assertEquals(
     f8994.compute({ taxYear: 2025, formType: "f1040" }, form8994DirectEmployer)
-      .outputs,
-    [],
+      .outputs[0].fields.f8994_direct_employer_credit,
+    {
+      credit_amount: 1_250,
+      schedule_c_business_reference: "boise-design-2025",
+      schedule_c_wage_ledger_reference: "2025-boise-design-payroll",
+      subject_to_passive_activity_limit: false,
+    },
   );
 });
 

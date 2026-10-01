@@ -8,6 +8,7 @@ import { inputSchema as scheduleCInputSchema } from "../nodes/inputs/schedule_c/
 export function reconcileForm8994DirectEmployer(
   raw: unknown,
   pending: Readonly<Record<string, unknown>>,
+  appliedCredit?: number,
 ) {
   const source = form8994InputSchema.parse(raw);
   if (
@@ -46,12 +47,62 @@ export function reconcileForm8994DirectEmployer(
     0,
   );
   if (
-    (business.line_26_wages ?? 0) < paidWages ||
-    business.line_26_other_employment_credits !== lines.line1
+    business.line_26_wages !== source.other_schedule_c_wages + paidWages
   ) {
     throw new Error(
-      "Form 8994 credit and qualifying wages must reconcile to Schedule C line 26 deduction reduction",
+      "Form 8994 qualifying wages differ from Schedule C gross wage ledger",
+    );
+  }
+  if (
+    appliedCredit !== undefined && (
+      !Number.isInteger(appliedCredit) || appliedCredit < 0 ||
+      appliedCredit > lines.line3 ||
+      business.line_26_other_employment_credits !== appliedCredit
+    )
+  ) {
+    throw new Error(
+      "Form 8994 Schedule C wage deduction reduction differs from Form 3800 allowed credit",
     );
   }
   return { source, lines };
+}
+
+/** Document and print projection require the same current-credit claim. */
+export function reconcileForm8994DocumentSource(
+  raw: unknown,
+  pending: Readonly<Record<string, unknown>>,
+) {
+  const form3800 = pending.f3800;
+  if (
+    !form3800 || typeof form3800 !== "object" ||
+    !("f8994_direct_employer_credit" in form3800) ||
+    !("form8994_applied_credit" in form3800) ||
+    typeof form3800.form8994_applied_credit !== "number"
+  ) {
+    throw new Error("Form 8994 needs Form 3800 allowed-credit allocation");
+  }
+  const reconciled = reconcileForm8994DirectEmployer(
+    raw,
+    pending,
+    form3800.form8994_applied_credit,
+  );
+  const credit = form3800.f8994_direct_employer_credit;
+  if (
+    !credit || typeof credit !== "object" ||
+    !("credit_amount" in credit) ||
+    !("schedule_c_business_reference" in credit) ||
+    !("schedule_c_wage_ledger_reference" in credit) ||
+    !("subject_to_passive_activity_limit" in credit) ||
+    credit.credit_amount !== reconciled.lines.line3 ||
+    credit.schedule_c_business_reference !==
+      reconciled.source.schedule_c_business_reference ||
+    credit.schedule_c_wage_ledger_reference !==
+      reconciled.source.schedule_c_wage_ledger_reference ||
+    credit.subject_to_passive_activity_limit !== false
+  ) {
+    throw new Error(
+      "Form 8994 Form 3800 source credit differs from filed form",
+    );
+  }
+  return reconciled;
 }

@@ -102,6 +102,7 @@ import { form8962Pdf } from "./f8962.ts";
 import { form8978Pdf } from "./f8978.ts";
 import { form8978ScheduleAPdf } from "./f8978_schedule_a.ts";
 import { form8990Pdf } from "./f8990.ts";
+import { form8994Pdf } from "./f8994.ts";
 import { form8992Pdf } from "./f8992.ts";
 import { form8992ScheduleAPdf } from "./f8992_schedule_a.ts";
 import { form8995Pdf } from "./f8995.ts";
@@ -220,6 +221,7 @@ export const ALL_PDF_FORMS: readonly PdfFormDescriptor[] = [
   form8990Pdf,
   form8992Pdf,
   form8992ScheduleAPdf,
+  form8994Pdf,
   form8995Pdf,
   form965aPdf,
   form8995aPdf,
