@@ -4,7 +4,7 @@
 
 Draft [PR #56](https://github.com/filedcom/opentax/pull/56) covers the
 TY2025 Form 1040 filing family. This board lists **54 open TODOs only**.
-The **333 completed bounded items** and their exact limits live in the
+The **334 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -15,7 +15,7 @@ coverage decision, or release gate.
 | Scope and completion rules | 5 | 1 | Filing boundaries and end-to-end acceptance rule need final review. |
 | Coverage inventory and decisions | 8 | 0 | Form applicability, ownership, evidence standards, and unsupported-path decisions remain open. |
 | Core return and source paths | 8 | 4 | Return-wide joins and source classification remain incomplete. |
-| Named tax-form gaps | 20 | 317 | Many sourced form slices exist; the listed parent form paths remain open. |
+| Named tax-form gaps | 20 | 318 | Many sourced form slices exist; the listed parent form paths remain open. |
 | Native MeF and PDF parity | 3 | 11 | Registry, attachment, and printable-output parity remain open. |
 | Automated and artifact validation | 5 | 0 | The agreed final bulk gate has not run on this work. |
 | IRS ATS and delivery | 5 | 0 | Issued credentials, accepted ATS scenarios, review, merge, and release remain open. |
@@ -27,11 +27,11 @@ credit sources to Form 1040. The ledger details source checks, owner identity,
 calculations, native MeF, PDF projection, and authored positive or tamper cases
 for each completed slice. Recent work includes three-country Form 1116 income,
 two-owner Form 8889 distributions and rollovers, Form 6251 capital-basis and
-AMT adjustments, Form 3800 mixed and Form 8826 sourced credits, and a Form 8962
-shared policy with a claimed dependent and another tax family. Several
-candidates intentionally stop at source review because prior accepted returns,
-IRS notices, signatures, or other authoritative bytes cannot yet be
-authenticated.
+AMT adjustments, Form 3800 mixed and Form 8826 sourced credits, Form 5471
+Schedule G answers, and a Form 8962 shared policy with a claimed dependent and
+another tax family. Several candidates intentionally stop at source review
+because prior accepted returns, IRS notices, signatures, or other authoritative
+bytes cannot yet be authenticated.
 
 **Coverage still to decide.** Reconcile the 138 registered native MeF
 descriptors, 102 PDF descriptors, and 211 TY2025 IRS schema roots (112 source

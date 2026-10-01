@@ -5,7 +5,7 @@ Build-stage triage updated 2026-10-01. The source is the checked-in
 [`ty2025-xsd-document-root-census.md`](ty2025-xsd-document-root-census.md),
 compared with public inputs in `forms/f1040/2025/inputs.ts`, the node registry,
 and `ALL_MEF_FORMS`. The historical unregistered-root review is grouped below;
-the current census has 102 `No` rows. Schedules 1-A, J, LEP and R, Forms 2210-F, 8915-F,
+the current census has 99 `No` rows. Schedules 1-A, J, LEP and R, Forms 2210-F, 8915-F,
 2439/8888, W-2G, and Form 8995-A Schedules C/D are now-registered status notes,
 not missing native roots. This is a **disposition queue**, not a completed
 form-by-form coverage inventory. Neither a root's presence in the schema nor a
