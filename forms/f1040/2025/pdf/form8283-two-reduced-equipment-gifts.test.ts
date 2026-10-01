@@ -80,32 +80,32 @@ Deno.test("two separately signed reduced Section B equipment gifts reach Schedul
     attachments.push(
       {
         fileName: names.purchase,
-        description: "Form 8283 Section B purchase and basis record",
+        description: `Form 8283 Section B purchase and basis record: lot ${index}`,
         bytes: purchase,
       },
       {
         fileName: names.appraisal,
-        description: "Qualified Appraisal for Section B equipment",
+        description: `Qualified Appraisal for Section B equipment lot ${index}`,
         bytes: appraisal,
       },
       {
         fileName: names.signed,
-        description: "Form 8283 completed signed Section B",
+        description: `Form 8283 completed signed Section B: lot ${index}`,
         bytes: signed,
       },
       {
         fileName: names.reduction,
-        description: "Form 8283 Section B FMV reduction statement",
+        description: `Form 8283 Section B FMV reduction statement: lot ${index}`,
         bytes: reduction,
       },
       {
         fileName: names.appraiser,
-        description: "Form 8283 appraiser signature document",
+        description: `Form 8283 appraiser signature document: lot ${index}`,
         bytes: appraiser,
       },
       {
         fileName: names.donee,
-        description: "Form 8283 Donee signature document",
+        description: `Form 8283 Donee signature document: lot ${index}`,
         bytes: donee,
       },
     );
@@ -255,7 +255,7 @@ Deno.test("two separately signed reduced Section B equipment gifts reach Schedul
         },
       }, { filer: base.filer, attachments }),
     Error,
-    "reduced equipment sources",
+    "two separately sourced similar gifts",
   );
   await assertRejects(
     () =>

@@ -75,22 +75,22 @@ for (const reduced of [false, true]) {
       attachments.push(
         {
           fileName: `Signed8283-${index}.pdf`,
-          description: "Form 8283 completed signed Section B",
+          description: `Form 8283 completed signed Section B: art ${index}`,
           bytes: signedForm,
         },
         {
           fileName: `Appraisal-${index}.pdf`,
-          description: "Qualified Appraisal for Section B art_at_least_20000",
+          description: `Qualified Appraisal for Section B art_at_least_20000 item ${index}`,
           bytes: appraisal,
         },
         {
           fileName: `AppraiserSignature-${index}.pdf`,
-          description: "Form 8283 appraiser signature document",
+          description: `Form 8283 appraiser signature document: art ${index}`,
           bytes: appraiserSignature,
         },
         {
           fileName: `DoneeSignature-${index}.pdf`,
-          description: "Form 8283 Donee signature document",
+          description: `Form 8283 Donee signature document: art ${index}`,
           bytes: doneeSignature,
         },
       );
@@ -302,7 +302,9 @@ for (const reduced of [false, true]) {
           },
         }, { filer: base.filer, attachments }),
       Error,
-      "similar-art sources and donees",
+      reduced
+        ? "two separately sourced similar gifts"
+        : "distinct signed/appraised similar-art sources and donees",
     );
     if (reduced) {
       await assertRejects(

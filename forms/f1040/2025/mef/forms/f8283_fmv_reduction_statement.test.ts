@@ -429,7 +429,7 @@ Deno.test("Form 8283 unrelated-use tangible property links reduced FMV to Schedu
   const form = { section_a_items: [unrelatedUseGift] };
   const pending = nonElectionReturn(form);
   const [statement] = form8283FmvReductionStatement.build([], { pending });
-  assertStringIncludes(statement, "unrelated to the donee's exempt purpose");
+  assertStringIncludes(statement, "unrelated to the donee&apos;s exempt purpose");
   assertStringIncludes(statement, "Museum sale-plan letter USE-17");
   const [xml] = form8283.build(form, {
     pending,
@@ -440,7 +440,7 @@ Deno.test("Form 8283 unrelated-use tangible property links reduced FMV to Schedu
   assertStringIncludes(xml, 'referenceDocumentId="unrelated-use-reduction"');
   assertStringIncludes(xml, ">3000</FairMarketValueAmt>");
   assertEquals(pending.schedule_a.line_12_noncash_contributions, 3_000);
-  const [scheduleXml] = scheduleAMef.build(pending.schedule_a, { pending });
+  const scheduleXml = scheduleAMef.build(pending.schedule_a, { pending });
   assertStringIncludes(scheduleXml, ">3000</OtherThanByCashOrCheckAmt>");
   const mismatchedPending = {
     ...pending,

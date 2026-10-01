@@ -573,7 +573,10 @@ function requiredSignatureAttachment(
   if (!fileName) {
     throw new Error(`Form 8283 needs ${description} PDF`);
   }
-  if (context.attachmentDescriptionsByFileName?.[fileName] !== description) {
+  if (!matchesAttachmentDescription(
+    context.attachmentDescriptionsByFileName?.[fileName],
+    description,
+  )) {
     throw new Error(
       `Form 8283 needs a matching PDF described exactly as ${description}`,
     );
@@ -583,6 +586,15 @@ function requiredSignatureAttachment(
     throw new Error(`Form 8283 ${description} PDF has no linked MeF document`);
   }
   return id;
+}
+
+function matchesAttachmentDescription(
+  actual: string | undefined,
+  required: string,
+): boolean {
+  return actual === required ||
+    (actual?.startsWith(`${required}: `) === true &&
+      actual.length > required.length + 2);
 }
 
 function requiredQualifiedAppraisalAttachment(
@@ -631,8 +643,10 @@ function requiredReductionAttachment(
     );
   }
   if (
-    context.attachmentDescriptionsByFileName?.[fileName] !==
-      "Form 8283 Section B FMV reduction statement"
+    !matchesAttachmentDescription(
+      context.attachmentDescriptionsByFileName?.[fileName],
+      "Form 8283 Section B FMV reduction statement",
+    )
   ) {
     throw new Error(
       "Form 8283 Section B election needs its matching FMV-reduction statement PDF",
@@ -711,7 +725,10 @@ function requiredOrdinaryIncomeAttachments(
   ] as const;
   const ids: string[] = [];
   for (const [name, description, digest] of reviewed) {
-    if (context.attachmentDescriptionsByFileName?.[name] !== description) {
+    if (!matchesAttachmentDescription(
+      context.attachmentDescriptionsByFileName?.[name],
+      description,
+    )) {
       throw new Error(
         `Form 8283 ordinary-income Section B gift needs ${description}`,
       );
@@ -795,7 +812,10 @@ function requiredUnrelatedUseAttachments(
   ] as const;
   const ids: string[] = [];
   for (const [name, description, digest] of reviewed) {
-    if (context.attachmentDescriptionsByFileName?.[name] !== description) {
+    if (!matchesAttachmentDescription(
+      context.attachmentDescriptionsByFileName?.[name],
+      description,
+    )) {
       throw new Error(
         `Form 8283 unrelated-use Section B art needs ${description}`,
       );

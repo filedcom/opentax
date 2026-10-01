@@ -302,7 +302,7 @@ Deno.test("Form 8283 Section B does not file an unexplained reduction below appr
         }],
       }),
     Error,
-    "needs a sourced FMV-reduction computation and statement",
+    "needs a supported reviewed FMV-reduction computation and statement",
   );
 });
 
@@ -355,7 +355,7 @@ Deno.test("Form 8283 similar books across three donees need three Section B docu
   }
 });
 
-Deno.test("Form 8283 similar equipment above $500,000 shares a full group appraisal attachment", () => {
+Deno.test("Form 8283 unreduced equipment group needs separately supported Section B sources", () => {
   const base = sectionBHighValueEquipmentGift();
   const sectionB = [1, 2].map((index) => ({
     ...base,
@@ -376,7 +376,7 @@ Deno.test("Form 8283 similar equipment above $500,000 shares a full group apprai
       signature_attachment_file_name: `Donee-${index}.pdf`,
     },
   }));
-  const documents = form8283.build({ section_b_items: sectionB }, {
+  assertThrows(() => form8283.build({ section_b_items: sectionB }, {
     attachmentDescriptionsByFileName: {
       "Form8283AppraiserSignature.pdf":
         "Form 8283 appraiser signature document",
@@ -391,11 +391,7 @@ Deno.test("Form 8283 similar equipment above $500,000 shares a full group apprai
       "Donee-2.pdf": "PDF-DONEE2",
       "QualifiedAppraisal-EquipmentGroup.pdf": "PDF-GROUP",
     },
-  });
-  assertEquals(documents.length, 2);
-  for (const document of documents) {
-    assertStringIncludes(document, "PDF-GROUP");
-  }
+  }), Error, "distinct signed/appraised similar-art sources and donees or reduced equipment sources");
 });
 
 Deno.test("Form 8283 combined $500,000 group threshold rejects missing full appraisal even when each item is below it", () => {
@@ -608,54 +604,36 @@ Deno.test("Form 8283 Section B emits separate signed appraisal and donee documen
     },
   };
   const docs = form8283.build({
-    section_b_items: [
-      {
-        ...gift,
-        signed_form_attachment_file_name: "SignedDesk8283.pdf",
-        signed_form_source_review: {
-          reviewed_by: "Test reviewer",
-          reviewed_on: "2025-09-01",
-          pdf_sha256: "a".repeat(64),
-          appraiser_signature_present: true,
-          donee_signature_present: true,
-          matches_electronic_form_confirmed: true,
-        },
+    section_b_items: [{
+      ...gift,
+      signed_form_attachment_file_name: "SignedDesk8283.pdf",
+      signed_form_source_review: {
+        reviewed_by: "Test reviewer",
+        reviewed_on: "2025-09-01",
+        pdf_sha256: "a".repeat(64),
+        appraiser_signature_present: true,
+        donee_signature_present: true,
+        matches_electronic_form_confirmed: true,
       },
-      {
-        ...gift,
-        property_description: "Antique chair",
-        signed_form_attachment_file_name: "SignedChair8283.pdf",
-        signed_form_source_review: {
-          reviewed_by: "Test reviewer",
-          reviewed_on: "2025-09-01",
-          pdf_sha256: "b".repeat(64),
-          appraiser_signature_present: true,
-          donee_signature_present: true,
-          matches_electronic_form_confirmed: true,
-        },
-      },
-    ],
+    }],
   }, {
     attachmentDescriptionsByFileName: {
       "Form8283AppraiserSignature.pdf":
         "Form 8283 appraiser signature document",
       "Form8283DoneeSignature.pdf": "Form 8283 Donee signature document",
       "SignedDesk8283.pdf": "Form 8283 completed signed Section B",
-      "SignedChair8283.pdf": "Form 8283 completed signed Section B",
     },
     documentIdsByAttachmentFileName: {
       "Form8283AppraiserSignature.pdf": "BinaryAttachmentAppraiser",
       "Form8283DoneeSignature.pdf": "BinaryAttachmentDonee",
       "SignedDesk8283.pdf": "SignedDesk",
-      "SignedChair8283.pdf": "SignedChair",
     },
     attachmentSha256ByFileName: {
       "SignedDesk8283.pdf": "a".repeat(64),
-      "SignedChair8283.pdf": "b".repeat(64),
     },
     documentIdsByPendingKey: {},
   });
-  assertEquals(docs.length, 2);
+  assertEquals(docs.length, 1);
   assertStringIncludes(docs[0], "<CollectiblesInd>X</CollectiblesInd>");
   assertStringIncludes(docs[0], "<DonorAcquiredDt>2018-05</DonorAcquiredDt>");
   assertStringIncludes(
@@ -670,11 +648,6 @@ Deno.test("Form 8283 Section B emits separate signed appraisal and donee documen
   assertStringIncludes(
     docs[0],
     'referenceDocumentId="SignedDesk BinaryAttachmentAppraiser BinaryAttachmentDonee"',
-  );
-  assertStringIncludes(docs[1], "Antique chair");
-  assertStringIncludes(
-    docs[1],
-    'referenceDocumentId="SignedChair BinaryAttachmentAppraiser BinaryAttachmentDonee"',
   );
   assertThrows(
     () =>
