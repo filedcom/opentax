@@ -335,10 +335,13 @@ filing rules, not blanket exclusions or a completed source-to-return audit.
 
 ## Special census caveat
 
-`IRS8839` was `No` in the static source-literal census because the registered
-`form8839` descriptor currently fails closed before constructing native XML. It
-is not an unregistered descriptor and not a supported adoption-credit path. The
-active credit still needs source, calculation, MeF, PDF and validation work.
+`IRS8839` was `No` in the earlier static source-literal census because its
+registered descriptor previously failed closed. A bounded one-child reviewed
+claim now has a programmatic two-pass calculation and prepared MeF/PDF bundle
+route with byte-bound attachments. CLI stored-input and convenience
+`prepareReturn` claims remain closed; unused-credit carryforward, exclusion,
+wider credit ordering, issuer authenticity, and artifact validation remain open.
+It is not an unregistered descriptor or a generally available CLI route.
 Similarly, a literal mention of `IRS8886` in a different descriptor does not
 create a registered Form 8886 document. Registration must be checked against
 `ALL_MEF_FORMS`, and all applicability classifications above remain subject to
