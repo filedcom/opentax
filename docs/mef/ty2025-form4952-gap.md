@@ -47,6 +47,13 @@ deferred batch. Mixed interest/dividend payers, qualified dividends, foreign
 tax, capital-gain distributions, and unauthenticated lender or broker bytes
 remain outside this direct-loan route.
 
+It also accepts exactly one affirmed, unadjusted taxable Form 1099-OID box 1
+investment payer in place of the interest or dividend payer. The same retained
+loan and payment records, OID source, Form 4952, Schedule A, Form 1040 interest,
+native document, and PDF must reconcile. An executor positive and changed-OID
+fixture is authored for the deferred batch. Other OID boxes, tax-exempt
+instruments, mixed payers, and lender/broker byte proof remain open.
+
 An affirmatively classified Form 1099-MISC box 2 portfolio royalty sends the
 same amount to Schedule E income and Form 4952 line 4a. A bounded filing route
 now requires one 1099-MISC and one separately identified, nonbusiness,

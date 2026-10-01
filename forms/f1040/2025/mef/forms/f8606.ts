@@ -6,6 +6,8 @@ import {
 } from "../../../nodes/intermediate/forms/form8606/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import type { z } from "zod";
+import { inputSchema as iraWorksheetSchema } from "../../../nodes/intermediate/worksheets/ira_deduction_worksheet/index.ts";
+import { inputSchema as w2Schema } from "../../../nodes/inputs/w2/index.ts";
 
 type Input = z.infer<typeof printSchema> | readonly [];
 
@@ -52,11 +54,11 @@ function buildIRS8606(rawFields: Input, context?: MefBuildContext): string {
   const line14 = fields.print_line14_remaining_basis;
   if (
     ![line1, line2, line3, line14].every(Number.isInteger) ||
-    line1 <= 0 || line2 <= 0 || line3 !== line1 + line2 ||
+    line1 <= 0 || line3 !== line1 + line2 ||
     line14 !== line3
   ) {
     throw new Error(
-      "Form 8606 MeF needs whole-dollar line 1, documented prior basis, and line 3 = line 14 = lines 1 + 2",
+      "Form 8606 MeF needs whole-dollar line 1, nonnegative documented prior basis, and line 3 = line 14 = lines 1 + 2",
     );
   }
   const filer = context?.filer;
@@ -71,6 +73,44 @@ function buildIRS8606(rawFields: Input, context?: MefBuildContext): string {
     throw new Error(
       "Form 8606 MeF does not yet support joint returns with spouse IRA filing ambiguity",
     );
+  }
+  if (line2 === 0) {
+    const evidence = fields.zero_basis_source;
+    const worksheet = iraWorksheetSchema.safeParse(
+      context?.pending?.ira_deduction_worksheet,
+    );
+    const w2s = w2Schema.safeParse(context?.pending?.w2);
+    const f1040 = context?.pending?.f1040 as
+      | Record<string, unknown>
+      | undefined;
+    const schedule1 = context?.pending?.schedule1 as
+      | Record<string, unknown>
+      | undefined;
+    if (
+      !evidence || !worksheet.success || !w2s.success ||
+      w2s.data.w2s.length !== 1 || !f1040 ||
+      evidence.form5498.owner_ssn !== filer.primarySSN ||
+      evidence.prior_form8606.owner_ssn !== filer.primarySSN ||
+      evidence.form5498.source_document_reference ===
+        evidence.prior_form8606.source_document_reference ||
+      evidence.form5498.box1_ira_contributions !== line1 ||
+      worksheet.data.ira_contribution !== line1 ||
+      worksheet.data.active_participant !== true ||
+      worksheet.data.magi !== f1040.line11_agi ||
+      f1040.line11_agi !== w2s.data.w2s[0].box1_wages ||
+      w2s.data.w2s[0].box13_retirement_plan !== true ||
+      w2s.data.w2s[0].employee_ssn?.replace(/\D/g, "") !== filer.primarySSN ||
+      worksheet.data.form8606_filing_details?.owner !== IraOwner.Taxpayer ||
+      JSON.stringify(worksheet.data.form8606_zero_basis_source) !==
+        JSON.stringify(evidence) ||
+      (schedule1?.line20_ira_deduction ?? 0) !== 0 ||
+      (f1040.line4a_ira_gross ?? 0) !== 0 ||
+      (f1040.line4b_ira_taxable ?? 0) !== 0
+    ) {
+      throw new Error(
+        "Form 8606 zero-opening-basis claim needs matching 2024 Form 8606, 2025 Form 5498, IRA worksheet, and finalized Form 1040 sources",
+      );
+    }
   }
   return elements("IRS8606", [
     element("Form8606IRANamelineTxt", filer.fullName),

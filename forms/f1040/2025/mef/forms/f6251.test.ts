@@ -655,11 +655,11 @@ Deno.test("line2a_taxes_paid maps to ScheduleATaxesAmt", () => {
   assertStringIncludes(result, "<ScheduleATaxesAmt>15000</ScheduleATaxesAmt>");
 });
 
-Deno.test("line2b_tax_refund maps to positive TotalRefundReceivedAmt", () => {
-  const result = filed({ line2b_tax_refund: 1_000 });
-  assertStringIncludes(
-    result,
-    "<TotalRefundReceivedAmt>1000</TotalRefundReceivedAmt>",
+Deno.test("line2b_tax_refund rejects an unsourced direct export", () => {
+  assertThrows(
+    () => filed({ line2b_tax_refund: 1_000 }),
+    Error,
+    "reviewed 1099-G state-income-tax refund",
   );
 });
 

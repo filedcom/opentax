@@ -8,6 +8,7 @@ import { assertForm6251DepletionSource } from "../../form6251_depletion_source.t
 import { assertForm6251DepreciationSource } from "../../form6251_depreciation_source.ts";
 import { assertForm6251TrustSource } from "../../form6251_trust_source.ts";
 import { assertForm6251PrivateActivityBondSource } from "../../form6251_pab_source.ts";
+import { assertForm6251RefundSource } from "../../form6251_refund_source.ts";
 import { FilingStatus } from "../../../mef/header.ts";
 import { inputSchema as schedule1aInputSchema } from "../../../nodes/intermediate/forms/schedule1a/index.ts";
 import { schedule1a } from "../../mef/forms/schedule1a.ts";
@@ -92,6 +93,7 @@ export const form6251Pdf: PdfFormDescriptor = {
     assertForm6251DepreciationSource(fields);
     assertForm6251TrustSource(fields, allPending);
     assertForm6251PrivateActivityBondSource(fields, allPending);
+    assertForm6251RefundSource(fields, allPending);
     assertForm6251QualifiedDividendSource(fields, allPending);
     const form1040 = allPending.f1040;
     const line14 = form1040?.line14_deductions_qbi_total;

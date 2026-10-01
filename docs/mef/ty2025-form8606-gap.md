@@ -1,8 +1,8 @@
 # TY2025 Form 8606 coverage gap
 
-Status: bounded taxpayer-owned, no-activity Part I native MeF route written
-but unrun. Tests, local XSD validation, filled PDF rendering, and IRS ATS
-remain outstanding.
+Status: bounded taxpayer-owned, no-activity Part I native MeF/PDF routes
+written but unrun. Tests, local XSD validation, filled PDF rendering, and IRS
+ATS remain outstanding.
 
 ## Structural mismatch
 
@@ -30,8 +30,18 @@ unsupported assumption.
    calculated Part I print lines. The MeF descriptor rejects missing owner,
    joint/spouse ambiguity, any IRA distribution or conversion, absent 2024
    line-14 basis documentation, and inconsistent line arithmetic. The source
-   and XML path is intentionally only a positive 2025 nondeductible taxpayer
-   contribution with positive prior basis and no IRA activity.
+   and XML path permits positive 2025 nondeductible taxpayer contributions
+   with positive prior basis and no IRA activity. A second bounded path permits
+   a filed 2024 Form 8606 line 14 of zero, with a 2025 traditional-IRA Form
+   5498 box 1 matching the current contribution. The zero-basis path requires
+   the same owner SSN on both source records and the final filer, distinct
+   document references, no returned/SEP/SIMPLE employer contributions, no
+   rollover, one W-2 with plan coverage, worksheet MAGI equal to the final
+   Form 1040 AGI and W-2 wages, no IRA distribution or conversion, and no
+   Schedule 1 IRA deduction. Its line 1, line 2, line 3, and line 14 pass
+   through the calculation, native XML, and PDF projection. The PDF replays
+   the same final-source gate. A full-return positive fixture and source/return
+   tamper cases are authored but unrun.
 2. The [2025 instructions](https://www.irs.gov/pub/irs-pdf/i8606.pdf) and
    form require line 4 for 2025 contributions made during January 1 through
    April 15, 2026. The current calculation does not collect that portion,
@@ -52,10 +62,12 @@ unsupported assumption.
 
 ## Smallest safe rebuild boundary
 
-The bounded route above is written, not yet verified. The IRS form explicitly
+The bounded routes above are written, not yet verified. The IRS form explicitly
 says that with no traditional IRA distribution or Roth conversion, line 3
 carries to line 14 and the intervening Part I lines are skipped. Broader
-distribution, conversion, Roth, zero-prior-basis, and married/spouse paths
+distribution, conversion, Roth, other zero-prior-basis fact patterns, and married/spouse paths
 must wait for source-specific rules and owner-separated documents. Reconcile
 the shared builder fixtures, then run the agreed full batch, TY2025 XSD check,
-PDF inspection, and IRS business-rule/ATS gates.
+PDF inspection, and IRS business-rule/ATS gates. The current Form 5498 and
+prior-return facts are reviewed fields, not authenticated source bytes; copy
+authentication and additional custodians/contributions remain open.

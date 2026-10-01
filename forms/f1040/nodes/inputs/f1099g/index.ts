@@ -41,6 +41,7 @@ export const itemSchema = z.object({
   box_11_state_withheld: z.number().nonnegative().optional(),
   payer_name: z.string().optional(),
   payer_tin: z.string().optional(),
+  recipient_tin: z.string().regex(/^\d{9}$/).optional(),
   account_number: z.string().optional(),
 }).superRefine((item, ctx) => {
   const refund = item.box_2_state_refund ?? 0;

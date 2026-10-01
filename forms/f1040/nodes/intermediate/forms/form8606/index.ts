@@ -22,6 +22,26 @@ export const filingDetailsSchema = z.object({
   no_ira_distributions_or_conversions_confirmed: z.literal(true),
 });
 
+export const zeroBasisSourceSchema = z.object({
+  form5498: z.object({
+    tax_year: z.literal(2025),
+    source_document_reference: z.string().trim().min(1),
+    custodian_ein: z.string().regex(/^\d{9}$/),
+    owner_ssn: z.string().regex(/^\d{9}$/),
+    traditional_ira_confirmed: z.literal(true),
+    no_returned_contributions_confirmed: z.literal(true),
+    no_sep_or_simple_employer_contributions_confirmed: z.literal(true),
+    box1_ira_contributions: z.number().int().positive(),
+    box2_rollover_contributions: z.literal(0),
+  }).strict(),
+  prior_form8606: z.object({
+    tax_year: z.literal(2024),
+    source_document_reference: z.string().trim().min(1),
+    owner_ssn: z.string().regex(/^\d{9}$/),
+    filed_line14_basis: z.literal(0),
+  }).strict(),
+}).strict();
+
 export const inputSchema = z.object({
   // Part I — Nondeductible Traditional IRA Contributions
   // Line 1: nondeductible contributions made this year
@@ -55,6 +75,7 @@ export const inputSchema = z.object({
 
   // Required source attestations and owner for the bounded no-activity MeF path.
   filing_details: filingDetailsSchema.optional(),
+  zero_basis_source: zeroBasisSourceSchema.optional(),
 });
 
 export type Form8606Input = z.infer<typeof inputSchema>;
@@ -77,6 +98,7 @@ export const printSchema = z.object({
   source_roth_basis_contributions: z.number().nonnegative(),
   source_roth_basis_conversions: z.number().nonnegative(),
   filing_details: filingDetailsSchema.optional(),
+  zero_basis_source: zeroBasisSourceSchema.optional(),
 });
 
 // ─── Part I Helpers ───────────────────────────────────────────────────────────
@@ -287,6 +309,7 @@ class Form8606Node extends TaxNode<typeof inputSchema> {
       source_roth_basis_contributions: input.roth_basis_contributions ?? 0,
       source_roth_basis_conversions: input.roth_basis_conversions ?? 0,
       filing_details: input.filing_details,
+      zero_basis_source: input.zero_basis_source,
       ...(distributions + conversions > 0
         ? {
           print_line6_year_end_value: input.year_end_ira_value ?? 0,

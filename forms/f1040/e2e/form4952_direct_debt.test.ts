@@ -36,7 +36,7 @@ const trace = {
   }],
 } as const;
 
-function filing(source: "interest" | "dividend" = "interest") {
+function filing(source: "interest" | "dividend" | "oid" = "interest") {
   return execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: "single",
@@ -53,13 +53,21 @@ function filing(source: "interest" | "dividend" = "interest") {
           investment_property_for_form4952: true,
         }],
       }
-      : {
+      : source === "dividend"
+      ? {
         f1099div: [{
           payerName: "Taxable stock payer",
           source_document_reference: "issued-2025-stock-dividend",
           isNominee: false,
           box11: false,
           box1a: 100_000,
+          investment_property_for_form4952: true,
+        }],
+      }
+      : {
+        f1099oid: [{
+          payer_name: "Taxable OID bond payer",
+          box1_oid: 100_000,
           investment_property_for_form4952: true,
         }],
       }),
@@ -134,6 +142,36 @@ Deno.test("Form 4952 traced loan with one ordinary dividend payer reaches native
     () =>
       nativeForm4952.build(fields, {
         pending: { ...result.pending, f1099div: { f1099divs: [] } },
+        filer: testFiler(),
+      }),
+    Error,
+    "one retained loan",
+  );
+});
+
+Deno.test("Form 4952 traced loan with one taxable OID payer reaches native and PDF", () => {
+  const result = filing("oid");
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form4952?.line4a, 100_000);
+  assertEquals(result.pending.form4952?.line8, 20_000);
+  assertEquals(result.pending.f1040?.line2b_taxable_interest, 100_000);
+  assertEquals(result.pending.schedule_a?.line_9_investment_interest, 20_000);
+  const fields = result.pending.form4952!;
+  assertStringIncludes(
+    nativeForm4952.build(fields, {
+      pending: result.pending,
+      filer: testFiler(),
+    }),
+    "<InvestmentInterestExpDeductAmt>20000</InvestmentInterestExpDeductAmt>",
+  );
+  assertEquals(
+    form4952Pdf.projectFields!(fields, result.pending).line8,
+    20_000,
+  );
+  assertThrows(
+    () =>
+      nativeForm4952.build(fields, {
+        pending: { ...result.pending, f1099oid: { f1099oids: [] } },
         filer: testFiler(),
       }),
     Error,

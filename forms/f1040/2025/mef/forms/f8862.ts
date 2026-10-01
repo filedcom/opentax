@@ -2,8 +2,8 @@ import { element, elements } from "../../../mef/xml.ts";
 import {
   assertCreditDisallowanceEvidence,
   type F8862Input,
-  type PriorCreditDisallowanceReview,
   inputSchema,
+  type PriorCreditDisallowanceReview,
 } from "../../../nodes/inputs/f8862/index.ts";
 import { inputSchema as form8863InputSchema } from "../../../nodes/inputs/f8863/index.ts";
 import { inputSchema as generalInputSchema } from "../../../nodes/inputs/general/index.ts";
@@ -165,7 +165,9 @@ function validateFinalizedCreditClaims(
   }
   const general = generalInputSchema.safeParse(pending?.general);
   const filerSsn = context?.filer?.primarySSN ??
-    (general.success ? general.data.taxpayer_ssn?.replace(/\D/g, "") : undefined);
+    (general.success
+      ? general.data.taxpayer_ssn?.replace(/\D/g, "")
+      : undefined);
   const assertPriorNotice = (
     credit: "CTC/ODC" | "AOTC",
     review: PriorCreditDisallowanceReview | undefined,
@@ -310,9 +312,12 @@ function validateFinalizedCreditClaims(
         "Form 8862 AOTC students and credit must reconcile to Form 8863 and the finalized return",
       );
     }
-    const filedStudents = form8863.data.f8863s.filter((student) =>
+    const aocStudents = form8863.data.f8863s.filter((student) =>
       student.credit_type === "aoc"
-    ).map((student) => student.student_name.trim().toUpperCase());
+    );
+    const filedStudents = aocStudents.map((student) =>
+      student.student_name.trim().toUpperCase()
+    );
     const claimedStudents = (fields.aotc_students ?? []).map((student) =>
       `${student.first_name} ${student.last_name}`.trim().toUpperCase()
     );
@@ -333,6 +338,28 @@ function validateFinalizedCreditClaims(
       throw new Error(
         "Form 8862 AOTC students and credit must reconcile to Form 8863 and the finalized return",
       );
+    }
+    if (fields.claim_ctc && Array.isArray(form1040.dependent_details)) {
+      const odcDependents = form1040.dependent_details.filter((row) =>
+        row !== null && typeof row === "object" &&
+        (row as Record<string, unknown>).credit_category === "odc"
+      ) as Record<string, unknown>[];
+      for (const student of aocStudents) {
+        const name = student.student_name.trim().toUpperCase();
+        const samePerson = odcDependents.find((row) =>
+          `${row.first_name} ${row.last_name}`.trim().toUpperCase() === name
+        );
+        if (
+          samePerson &&
+          (typeof samePerson.ssn !== "string" ||
+            samePerson.ssn.replace(/\D/g, "") !==
+              student.student_ssn.replace(/\D/g, ""))
+        ) {
+          throw new Error(
+            "Form 8862 shared ODC and AOTC student needs one matching dependent SSN",
+          );
+        }
+      }
     }
   }
 }

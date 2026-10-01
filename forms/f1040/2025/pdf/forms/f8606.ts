@@ -1,4 +1,5 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
+import { form8606 } from "../../mef/forms/f8606.ts";
 
 // IRS Form 8606 (2025) AcroForm field names.
 // Verified against the f8606--2025.pdf AcroForm field dump.
@@ -22,27 +23,91 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 
 const fields: ReadonlyArray<PdfFieldEntry> = [
   // ── Part I: Nondeductible contributions and basis ───────────────────────────
-  { kind: "text", domainKey: "print_line1_nondeductible", pdfField: "topmostSubform[0].Page1[0].f1_09[0]" },
-  { kind: "text", domainKey: "print_line2_prior_basis", pdfField: "topmostSubform[0].Page1[0].f1_10[0]", printZero: true },
-  { kind: "text", domainKey: "print_line3_total_basis", pdfField: "topmostSubform[0].Page1[0].f1_11[0]" },
-  { kind: "text", domainKey: "print_line6_year_end_value", pdfField: "topmostSubform[0].Page1[0].f1_14[0]" },
-  { kind: "text", domainKey: "print_line7_distributions", pdfField: "topmostSubform[0].Page1[0].f1_15[0]" },
-  { kind: "text", domainKey: "print_line8_conversions", pdfField: "topmostSubform[0].Page1[0].f1_16[0]" },
-  { kind: "text", domainKey: "print_line13_nontaxable", pdfField: "topmostSubform[0].Page1[0].f1_22[0]" },
-  { kind: "text", domainKey: "print_line14_remaining_basis", pdfField: "topmostSubform[0].Page1[0].f1_23[0]" },
-  { kind: "text", domainKey: "print_line15c_taxable", pdfField: "topmostSubform[0].Page2[0].f2_03[0]" },
+  {
+    kind: "text",
+    domainKey: "print_line1_nondeductible",
+    pdfField: "topmostSubform[0].Page1[0].f1_09[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line2_prior_basis",
+    pdfField: "topmostSubform[0].Page1[0].f1_10[0]",
+    printZero: true,
+  },
+  {
+    kind: "text",
+    domainKey: "print_line3_total_basis",
+    pdfField: "topmostSubform[0].Page1[0].f1_11[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line6_year_end_value",
+    pdfField: "topmostSubform[0].Page1[0].f1_14[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line7_distributions",
+    pdfField: "topmostSubform[0].Page1[0].f1_15[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line8_conversions",
+    pdfField: "topmostSubform[0].Page1[0].f1_16[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line13_nontaxable",
+    pdfField: "topmostSubform[0].Page1[0].f1_22[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line14_remaining_basis",
+    pdfField: "topmostSubform[0].Page1[0].f1_23[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line15c_taxable",
+    pdfField: "topmostSubform[0].Page2[0].f2_03[0]",
+  },
 
   // ── Part II: Roth conversions ───────────────────────────────────────────────
-  { kind: "text", domainKey: "print_line16_converted", pdfField: "topmostSubform[0].Page2[0].f2_04[0]" },
-  { kind: "text", domainKey: "print_line18_taxable_conversion", pdfField: "topmostSubform[0].Page2[0].f2_06[0]" },
+  {
+    kind: "text",
+    domainKey: "print_line16_converted",
+    pdfField: "topmostSubform[0].Page2[0].f2_04[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line18_taxable_conversion",
+    pdfField: "topmostSubform[0].Page2[0].f2_06[0]",
+  },
 ];
 
 export const form8606Pdf: PdfFormDescriptor = {
   pendingKey: "form8606",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8606--2025.pdf",
+  instances(raw, filer, allPending) {
+    if (Object.keys(raw).length === 0) return [];
+    if (!filer || !allPending) {
+      throw new Error("Form 8606 PDF needs final filer and source graph");
+    }
+    form8606.build(raw as Parameters<typeof form8606.build>[0], {
+      filer,
+      pending: allPending,
+    });
+    return [raw];
+  },
   fields,
   filerFields: [
-    { kind: "text", domainKey: "fullName", pdfField: "topmostSubform[0].Page1[0].f1_01[0]" },
-    { kind: "text", domainKey: "primarySSN", pdfField: "topmostSubform[0].Page1[0].f1_02[0]" },
+    {
+      kind: "text",
+      domainKey: "fullName",
+      pdfField: "topmostSubform[0].Page1[0].f1_01[0]",
+    },
+    {
+      kind: "text",
+      domainKey: "primarySSN",
+      pdfField: "topmostSubform[0].Page1[0].f1_02[0]",
+    },
   ],
 };
