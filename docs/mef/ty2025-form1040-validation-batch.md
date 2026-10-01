@@ -260,6 +260,12 @@ scenario packet PDF as if it were a generated return.
 
 ## Filled-PDF visual review
 
+The first post-implementation `deno task test` at `b168d9bb` on 2026-10-02
+stopped before test execution with 32 TypeScript errors. It used Deno 2.7.7,
+V8 14.6.202.9-rusty, and TypeScript 5.9.2; the log is retained locally at
+`.state/research/ty2025-pr59-bulk-test-2026-10-02.log`. The same full command
+must be rerun after type repairs. This is not a test pass.
+
 The workspace has blank IRS PDF templates in `.state/field-dumps/cache` and
 source ATS scenario PDFs in `.state/research/docs/ats-ty2025`. These are not
 filled-output fixtures. `forms/f1040/2025/pdf/review-fixtures.ts` now holds

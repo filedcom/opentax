@@ -74,6 +74,9 @@ The saved failure log was re-triaged without rerunning it: identifiable
 non-named PDF builder, CLI 1099-MISC fixture, and extension fixture failures
 have later fixes; most other recorded failures concern the deferred named
 forms. That historical classification does not establish a current pass.
+The post-implementation full `deno task test` at `b168d9bb` on 2026-10-02
+stopped in TypeScript checking with 32 errors, before any test executed.
+Type repairs are in progress; the same full command remains the gate.
 The four reported paths in [issue #60](https://github.com/filedcom/opentax/issues/60)
 are implemented with focused fixtures; they await the same bulk test gate.
 CLI `return get` and `return validate` now read the same finalized pending graph
