@@ -636,11 +636,11 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
       const mixedFullyDeductibleLoss = !oneTermOnly &&
         fullyDeductibleNetLoss &&
         basisRows.every((row) => row.regular_gain < 0 && row.amt_gain < 0);
-      // One long-term lot can change from regular gain to AMT loss. Up to two
-      // other audited lots may be losses under both bases if the regular net
-      // stays positive and the separate AMT net loss is fully deductible.
-      const longTermGainToAmtLoss = basisRows.length >= 1 &&
-        longTermBasisRows.length === basisRows.length &&
+      // One same-term lot can change from regular gain to AMT loss while
+      // other audited lots remain losses under both bases, provided the
+      // separate AMT net loss is fully deductible.
+      const sameTermGainToAmtLoss = basisRows.length >= 1 &&
+        oneTermOnly &&
         basisRows.filter((row) => row.regular_gain > 0 && row.amt_gain < 0)
             .length === 1 &&
         basisRows.filter((row) => row.regular_gain < 0 && row.amt_gain < 0)
@@ -662,10 +662,10 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
           !longLossOffsetShortGain && !shortLossLongGainToAmtLoss) ||
         (lossBasisRows.some((row) =>
           row.regular_gain >= 0 || row.amt_gain >= 0
-        ) && !longTermGainToAmtLoss && !shortLossLongGainToAmtLoss) ||
+        ) && !sameTermGainToAmtLoss && !shortLossLongGainToAmtLoss) ||
         !(fullyDeductibleNetLoss || positiveShortTermNet ||
           positiveLongTermNet || shortLossOffsetLongGain ||
-          longLossOffsetShortGain || longTermGainToAmtLoss ||
+          longLossOffsetShortGain || sameTermGainToAmtLoss ||
           shortLossLongGainToAmtLoss) ||
         ((input.qualified_dividends ?? 0) > 0 &&
           !shortLossOffsetLongGain) ||

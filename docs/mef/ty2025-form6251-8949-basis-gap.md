@@ -209,3 +209,15 @@ replay all dated rows and final tax/capital-gain totals; changing one source AMT
 basis or Form 1040 gain rejects. The four-lot fixtures are authored but unrun.
 Other gain/loss sign patterns, carryovers, source-byte authentication, IRS
 business rules, and ATS remain open.
+
+The same complete-audit rule now accepts one short-term regular gain that
+becomes an AMT loss with any number of other short-term losses under both
+bases. The regular net must stay positive, while the separate AMT loss remains
+within its filing-status deduction limit. The authored three-lot case yields
+$1,500 regular Schedule D gain, $1,100 deductible AMT loss, and negative
+$2,600 on Form 6251 line 2k. Short-term gain is not preferential income, so
+Part III stays empty. Native and PDF export replay every dated lot, Schedule 2,
+and Form 1040 line 7/15/17; changing one AMT basis, omitting a lot, or changing
+the return gain rejects. The fixtures are unrun. Other term mixes and
+sign-changing patterns, carryovers, broker-copy authentication, IRS business
+rules, and ATS remain open.

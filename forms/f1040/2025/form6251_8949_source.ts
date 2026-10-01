@@ -96,8 +96,9 @@ export function assertForm6251Form8949Source(
   }
   const regularNet = rows.reduce((sum, row) => sum + row.regular_gain, 0);
   const amtNet = rows.reduce((sum, row) => sum + row.amt_gain, 0);
-  const gainToAmtLoss = rows.length >= 1 &&
-    rows.every((row) => ["D", "E", "F"].includes(row.part)) &&
+  const oneTermOnly = rows.every((row) => ["A", "B", "C"].includes(row.part)) ||
+    rows.every((row) => ["D", "E", "F"].includes(row.part));
+  const gainToAmtLoss = rows.length >= 1 && oneTermOnly &&
     rows.filter((row) => row.regular_gain > 0 && row.amt_gain < 0)
         .length === 1 &&
     rows.filter((row) => row.regular_gain < 0 && row.amt_gain < 0)
@@ -115,7 +116,7 @@ export function assertForm6251Form8949Source(
     !gainToAmtLoss && !mixedTermGainToAmtLoss
   ) {
     throw new Error(
-      "Form 6251 gain-to-AMT-loss basis sale needs audited long-term lots or identified short-term losses offsetting one long-term regular gain with a fully deductible AMT net loss",
+      "Form 6251 gain-to-AMT-loss basis sale needs audited same-term lots or identified short-term losses offsetting one long-term regular gain with a fully deductible AMT net loss",
     );
   }
   if (gainToAmtLoss || mixedTermGainToAmtLoss) {
@@ -125,7 +126,11 @@ export function assertForm6251Form8949Source(
     const amt = fields.line11_amt;
     if (
       amtNet < lossLimit ||
-      fields.net_capital_gain !== regularNet ||
+      fields.net_capital_gain !==
+        (rows.every((row) => ["D", "E", "F"].includes(row.part)) ||
+            mixedTermGainToAmtLoss
+          ? regularNet
+          : 0) ||
       (fields.qualified_dividends ?? 0) !== 0 ||
       fields.prior_iso_sale_review !== undefined ||
       (fields.form4952_regular_election ?? 0) !== 0 ||
