@@ -38,7 +38,7 @@ Deno.test("Form 8820 input rejects estate and trust K-1 orphan-drug claims", () 
           }],
         }),
       Error,
-      "clean electricity investment credit",
+      "Estate/trust K-1 box 13 code M orphan-drug credit needs a reviewed source route",
     );
   }
 });

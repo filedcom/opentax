@@ -101,7 +101,10 @@ Deno.test({
     },
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
-  const xml = buildMefXml(result.pending, filer);
+  const xml = buildMefXml(result.pending, {
+    ...filer,
+    primarySSN: "111223333",
+  });
   assertStringIncludes(
     xml,
     "<STGainOrLossFromFormsAmt>4000</STGainOrLossFromFormsAmt>",
