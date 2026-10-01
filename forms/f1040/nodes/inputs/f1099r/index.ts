@@ -1477,6 +1477,20 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
     const parsed = inputSchema.parse(input);
     const { f1099rs: r1099s } = parsed;
     if (
+      ctx.taxYear === 2025 &&
+      r1099s.some((item) =>
+        (item.box7_distribution_code === DistributionCode.CodeP ||
+          item.box7_code2 === DistributionCode.CodeP) &&
+        (item.box1_gross_distribution > 0 ||
+          (item.box2a_taxable_amount ?? 0) > 0 ||
+          (item.box4_federal_withheld ?? 0) > 0)
+      )
+    ) {
+      throw new Error(
+        "TY2025 code P Form 1099-R needs prior-year correction and receipt-date review before current-year filing",
+      );
+    }
+    if (
       ctx.taxYear !== 2025 &&
       r1099s.some((item) => item.form8915f_treatment !== undefined)
     ) {

@@ -142,6 +142,32 @@ Deno.test("f1099r.compute: pension distribution routes to f1040 lines 5a/5b", ()
   assertEquals(input.line5b_pension_taxable, 20000);
 });
 
+Deno.test("f1099r.compute: positive TY2025 code P cannot enter ordinary retirement lines", () => {
+  for (
+    const item of [
+      minimalPensionItem({
+        box7_distribution_code: DistributionCode.CodeP,
+        box2a_taxable_amount: 1_000,
+      }),
+      minimalIraItem({
+        box7_distribution_code: DistributionCode.CodeP,
+        box2a_taxable_amount: 1_000,
+      }),
+      minimalPensionItem({
+        box7_distribution_code: DistributionCode.Code1,
+        box7_code2: DistributionCode.CodeP,
+        box2a_taxable_amount: 1_000,
+      }),
+    ]
+  ) {
+    assertThrows(
+      () => compute([item]),
+      Error,
+      "code P Form 1099-R needs prior-year correction and receipt-date review",
+    );
+  }
+});
+
 Deno.test("f1099r.compute: IRA routing uses gross as taxable when box2a absent", () => {
   const result = compute([minimalIraItem({
     box1_gross_distribution: 5000,

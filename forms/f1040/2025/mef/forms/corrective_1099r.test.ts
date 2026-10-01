@@ -61,7 +61,7 @@ Deno.test("code-8 correction rejects a wrong 1099-R recipient at native export",
   );
 });
 
-Deno.test("IRA code 8 and noncurrent code P do not become corrective line 1h", () => {
+Deno.test("IRA code 8 and ordinary pension code 7 do not become corrective line 1h", () => {
   const ira = filing([{
     ...corrective,
     box7_ira_simple_indicator: true,
@@ -69,16 +69,6 @@ Deno.test("IRA code 8 and noncurrent code P do not become corrective line 1h", (
   assertEquals(ira.diagnostics, []);
   assertEquals(buildPending(ira.pending).f1040?.line1h_other_earned, undefined);
   assertEquals(buildPending(ira.pending).f1040?.line4b_ira_taxable, 1_000);
-
-  const codeP = filing([{
-    ...corrective,
-    box7_distribution_code: "P",
-  }]);
-  assertEquals(codeP.diagnostics, []);
-  assertEquals(
-    buildPending(codeP.pending).f1040?.line1h_other_earned,
-    undefined,
-  );
 
   const ordinary = filing([{
     ...corrective,
