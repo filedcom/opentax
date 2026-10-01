@@ -15,8 +15,8 @@ import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 type Input = Partial<Form8829Lines & { rented_home: RentedHomeSource }>;
 
-// TY2025 v5.4 IRS8829.xsd order. Inapplicable owner-home, direct-expense,
-// casualty, interest, tax, and depreciation elements are omitted.
+// TY2025 v5.4 IRS8829.xsd order. Inapplicable owner-home, casualty,
+// interest, tax, and depreciation elements are omitted.
 export const FIELD_MAP: ReadonlyArray<readonly [keyof Form8829Lines, string]> =
   [
     ["line1", "BusinessUseSquareFeetCnt"],
@@ -26,9 +26,11 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Form8829Lines, string]> =
     ["line8", "HomeBusinessGainOrLossAmt"],
     ["line18b", "InsuranceIndirectAmt"],
     ["line19b", "RentIndirectAmt"],
+    ["line20a", "RepairsAndMaintDirectAmt"],
     ["line20b", "RepairsAndMaintIndirectAmt"],
     ["line21b", "UtilitiesIndirectAmt"],
     ["line22b", "OtherExpensesIndirectAmt"],
+    ["line23a", "DirectNondeductedSubtotalAmt"],
     ["line23b", "IndirectNondeductedSubtotalAmt"],
     ["line24", "AllwblIndrNondeductedExpnssAmt"],
     ["line25", "OperatingExpensesCarryoverAmt"],

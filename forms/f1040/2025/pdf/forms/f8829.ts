@@ -12,7 +12,8 @@ import {
 // Part II - Figure your allowable deduction.
 // Part III - Depreciation of your home.
 // Part IV - Carryover of unallowed expenses.
-// Bounded rented-home route: line 1-3, 7-8, 15, 18b-28, 32-36, and 43-44.
+// Bounded rented-home route: line 1-3, 7-8, 15, 18b-28, 20a, 23a,
+// 32-36, and 43-44.
 const page = "topmostSubform[0].Page1[0]";
 const fields: ReadonlyArray<PdfFieldEntry> = [
   {
@@ -51,6 +52,12 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "text",
+    domainKey: "line20a",
+    pdfField:
+      "topmostSubform[0].Page1[0].Table_Lines16-23[0].Line20[0].f1_30[0]",
+  },
+  {
+    kind: "text",
     domainKey: "line20b",
     pdfField:
       "topmostSubform[0].Page1[0].Table_Lines16-23[0].Line20[0].f1_31[0]",
@@ -71,6 +78,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "text",
     domainKey: "line25",
     pdfField: "topmostSubform[0].Page1[0].f1_39[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line23a",
+    pdfField: `${page}.Table_Lines16-23[0].Line23[0].f1_36[0]`,
   },
   {
     kind: "text",

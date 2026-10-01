@@ -17,6 +17,7 @@ export const rentedHome: RentedHomeSource = {
   schedule_c_line29_tentative_profit: 5_000,
   insurance_indirect: 1_000,
   rent_indirect: 10_000,
+  repairs_direct: 0,
   repairs_indirect: 500,
   utilities_indirect: 2_000,
   other_indirect: 500,
@@ -30,6 +31,7 @@ export const rentedHome: RentedHomeSource = {
   no_home_business_gain_or_other_trade_loss: true,
   no_casualty_mortgage_tax_or_depreciation: true,
   home_expenses_excluded_from_schedule_c_verified: true,
+  direct_repairs_business_area_only_verified: true,
 };
 
 Deno.test("2025 Form 8829 rented-home input is registered", () => {
@@ -80,6 +82,27 @@ Deno.test("2025 Form 8829 retains operating carryover when current deduction is 
   assertEquals(
     result.outputs.find((item) => item.nodeType === "form_8829")?.fields.line43,
     2_900,
+  );
+});
+
+Deno.test("2025 Form 8829 applies direct business-area repairs without area proration", () => {
+  const lines = calculateRentedHomeForm8829({
+    ...rentedHome,
+    repairs_direct: 700,
+  });
+  assertEquals(lines.line20a, 700);
+  assertEquals(lines.line23a, 700);
+  assertEquals(lines.line24, 2_800);
+  assertEquals(lines.line26, 3_600);
+  assertEquals(lines.line36, 3_600);
+  assertThrows(
+    () =>
+      calculateRentedHomeForm8829({
+        ...rentedHome,
+        repairs_direct: 700,
+        direct_repairs_business_area_only_verified: false,
+      } as unknown as RentedHomeSource),
+    Error,
   );
 });
 

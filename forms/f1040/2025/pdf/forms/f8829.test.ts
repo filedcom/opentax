@@ -30,6 +30,20 @@ Deno.test("2025 Form 8829 indirect expenses use printed lines 18 through 22", ()
   );
 });
 
+Deno.test("2025 Form 8829 direct repairs and subtotal use column a", () => {
+  const byKey = new Map(
+    form8829Pdf.fields.map((entry) => [entry.domainKey, entry.pdfField]),
+  );
+  assertEquals(
+    byKey.get("line20a"),
+    `${page}.Table_Lines16-23[0].Line20[0].f1_30[0]`,
+  );
+  assertEquals(
+    byKey.get("line23a"),
+    `${page}.Table_Lines16-23[0].Line23[0].f1_36[0]`,
+  );
+});
+
 Deno.test("2025 Form 8829 rented-home PDF omits unsupported owner-home fields", () => {
   const byKey = new Map(
     form8829Pdf.fields.map((entry) => [entry.domainKey, entry.pdfField]),
@@ -91,6 +105,7 @@ Deno.test("2025 Form 8829 PDF projection checks source and formats percentages",
     schedule_c_line29_tentative_profit: 5_000,
     insurance_indirect: 1_000,
     rent_indirect: 10_000,
+    repairs_direct: 0,
     repairs_indirect: 500,
     utilities_indirect: 2_000,
     other_indirect: 500,
@@ -104,6 +119,7 @@ Deno.test("2025 Form 8829 PDF projection checks source and formats percentages",
     no_home_business_gain_or_other_trade_loss: true,
     no_casualty_mortgage_tax_or_depreciation: true,
     home_expenses_excluded_from_schedule_c_verified: true,
+    direct_repairs_business_area_only_verified: true,
   } as const;
   const lines = calculateRentedHomeForm8829(source);
   const fields = { rented_home: source, ...lines };
@@ -126,4 +142,23 @@ Deno.test("2025 Form 8829 PDF projection checks source and formats percentages",
   assertEquals(carryoverProjected?.pdf_line15, "-0-");
   assertEquals(carryoverProjected?.line36, 0);
   assertEquals(carryoverProjected?.line43, 2_900);
+
+  const directRepairs = { ...source, repairs_direct: 700 };
+  const directLines = calculateRentedHomeForm8829(directRepairs);
+  const directProjected = form8829Pdf.projectFields?.(
+    { rented_home: directRepairs, ...directLines },
+    {},
+  );
+  assertEquals(directProjected?.line20a, 700);
+  assertEquals(directProjected?.line23a, 700);
+  assertEquals(directProjected?.line36, 3_600);
+  assertThrows(
+    () =>
+      form8829Pdf.projectFields?.(
+        { rented_home: directRepairs, ...directLines, line23a: 140 },
+        {},
+      ),
+    Error,
+    "line23a differs",
+  );
 });

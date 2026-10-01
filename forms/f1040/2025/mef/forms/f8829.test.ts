@@ -17,6 +17,7 @@ const source: RentedHomeSource = {
   schedule_c_line29_tentative_profit: 5_000,
   insurance_indirect: 1_000,
   rent_indirect: 10_000,
+  repairs_direct: 0,
   repairs_indirect: 500,
   utilities_indirect: 2_000,
   other_indirect: 500,
@@ -30,6 +31,7 @@ const source: RentedHomeSource = {
   no_home_business_gain_or_other_trade_loss: true,
   no_casualty_mortgage_tax_or_depreciation: true,
   home_expenses_excluded_from_schedule_c_verified: true,
+  direct_repairs_business_area_only_verified: true,
 };
 
 const filer: FilerIdentity = {
@@ -189,5 +191,40 @@ Deno.test("2025 Form 8829 rejects stale line 36 before filing", () => {
       ),
     Error,
     "differs from source calculation",
+  );
+});
+
+Deno.test("2025 Form 8829 MeF emits direct repair and subtotal before indirect amounts", () => {
+  const withDirectRepairs = { ...source, repairs_direct: 700 };
+  const lines = calculateRentedHomeForm8829(withDirectRepairs);
+  const xml = form8829.build(
+    { rented_home: withDirectRepairs, ...lines },
+    context(withDirectRepairs),
+  );
+  assertStringIncludes(
+    xml,
+    "<RepairsAndMaintDirectAmt>700</RepairsAndMaintDirectAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<DirectNondeductedSubtotalAmt>700</DirectNondeductedSubtotalAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<AllowableHomeBusExpnssSchCAmt>3600</AllowableHomeBusExpnssSchCAmt>",
+  );
+  assertEquals(
+    xml.indexOf("RepairsAndMaintDirectAmt") <
+      xml.indexOf("RepairsAndMaintIndirectAmt"),
+    true,
+  );
+  assertThrows(
+    () =>
+      form8829.build(
+        { rented_home: withDirectRepairs, ...lines, line20a: 140 },
+        context(withDirectRepairs),
+      ),
+    Error,
+    "line20a differs",
   );
 });
