@@ -29,3 +29,23 @@ Focused positive owner-payment, missing/mismatched code-2, source-free ordinary
 distribution, wrong-recipient, wrong-box-1, and multiple ordinary Forms 1099-SA
 cases are written but unrun. The full test, XSD, filled-PDF, IRS-rule, and ATS
 gates remain pending.
+
+## Personal contribution with a partly medical distribution (written, unrun)
+
+One single primary HSA owner can now carry a personal contribution alongside
+one code-1 Form 1099-SA distribution that was partly spent on one reviewed,
+unreimbursed medical expense. This route requires twelve self-only eligible
+months, an owner-matched 1099-SA box 1 and one medical receipt reference, a
+positive deduction, and a positive taxable remainder with an explicit zero
+exception. The Form 8889 calculator determines lines 13, 15, 16, and 17b;
+native and PDF export recompute the owner form and match Schedule 1 deduction
+and income, Schedule 2's 20% tax, and Form 1040 lines 8, 10, and 23. A bare
+matching printed form or an altered source/return cannot use this route.
+The [2025 Form 8889 instructions](https://www.irs.gov/instructions/i8889)
+direct those line destinations and the additional-tax rule.
+
+Employer funding, multiple 1099-SA forms or medical receipts, age-65 or
+disability exceptions, prior excess, and testing-period events are outside
+this narrow mixed path. The entered trustee and receipt references are not
+authenticated document bytes. Positive and tamper fixtures are authored for
+the deferred combined validation pass.

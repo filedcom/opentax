@@ -3,12 +3,13 @@ import { element, elements } from "../../../mef/xml.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import { inputSchema as form8889SourceSchema } from "../../../nodes/intermediate/forms/form8889/index.ts";
 import {
-  reconcileDatedExceptionForm8889,
   reconcileCode2Form8889,
+  reconcileDatedExceptionForm8889,
   reconcilePairedForm8889,
   reconcileRolloverForm8889,
   reconcileSpouseOnlyForm8889,
 } from "../../form8889_spouse_reconciliation.ts";
+import { reconcilePrimaryMixedMedicalForm8889 } from "../../form8889_mixed_medical_reconciliation.ts";
 
 // The Form 8889 node emits the completed 2025 form lines. Serialize those
 // lines rather than reinterpreting raw HSA contributions in the MeF layer.
@@ -174,10 +175,19 @@ function buildIRS8889(
     context?.pending,
     context?.filer,
   );
-  reconcileDatedExceptionForm8889(fields.forms, context?.pending, context?.filer);
+  reconcileDatedExceptionForm8889(
+    fields.forms,
+    context?.pending,
+    context?.filer,
+  );
   reconcileCode2Form8889(fields.forms, context?.pending, context?.filer);
   reconcileRolloverForm8889(fields.forms, context?.pending, context?.filer);
   reconcilePairedForm8889(
+    fields.forms,
+    context?.pending,
+    context?.filer,
+  );
+  reconcilePrimaryMixedMedicalForm8889(
     fields.forms,
     context?.pending,
     context?.filer,
