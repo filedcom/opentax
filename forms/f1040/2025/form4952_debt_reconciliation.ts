@@ -103,6 +103,18 @@ export function reconcileForm4952DirectDebtExport(
   const oneDividend = dividend.success &&
     dividend.data.f1099divs.length === 1 &&
     pending.f1099int === undefined && pending.f1099oid === undefined;
+  const twoDividends = dividend.success &&
+    dividend.data.f1099divs.length === 2 &&
+    pending.f1099int === undefined && pending.f1099oid === undefined &&
+    dividend.data.f1099divs.filter((item) => (item.box1b ?? 0) > 0).length ===
+      1 &&
+    dividend.data.f1099divs.every((item) =>
+      !!item.source_document_reference?.trim() && !!item.payerName?.trim()
+    ) &&
+    new Set(
+        dividend.data.f1099divs.map((item) => item.source_document_reference),
+      ).size === 2 &&
+    new Set(dividend.data.f1099divs.map((item) => item.payerName)).size === 2;
   const oneOid = oid.success && oid.data.f1099oids.length === 1 &&
     pending.f1099int === undefined && pending.f1099div === undefined;
   const oneTreasuryInterestAndOid = interest.success && oid.success &&
@@ -184,7 +196,7 @@ export function reconcileForm4952DirectDebtExport(
   if (
     !printed.success || !retained.success ||
     !printed.data.direct_debt_trace || !retained.data.direct_debt_trace ||
-    (!oneInterest && !twoInterest && !oneDividend && !oneOid &&
+    (!oneInterest && !twoInterest && !oneDividend && !twoDividends && !oneOid &&
       !oneTreasuryInterestAndOid &&
       !oneInterestAndDividend && !oneOidAndDividend &&
       !twoInterestAndDividend && !interestAndTwoDividends &&
@@ -268,6 +280,23 @@ export function reconcileForm4952DirectDebtExport(
           JSON.stringify(
             [...retained.data.source_1099_interest].sort((a, b) => a - b),
           ) ||
+        JSON.stringify(
+            [...printed.data.source_1099_dividends].sort((a, b) => a - b),
+          ) !==
+          JSON.stringify(
+            [...retained.data.source_1099_dividends].sort((a, b) => a - b),
+          ) ||
+        typeof printed.data.source_1099_qualified_dividends !== "number" ||
+        typeof retained.data.source_1099_qualified_dividends !== "number" ||
+        printed.data.source_1099_qualified_dividends !==
+          retained.data.source_1099_qualified_dividends
+      : twoDividends
+      ? printed.data.source_1099_interest !== undefined ||
+        retained.data.source_1099_interest !== undefined ||
+        !Array.isArray(printed.data.source_1099_dividends) ||
+        !Array.isArray(retained.data.source_1099_dividends) ||
+        printed.data.source_1099_dividends.length !== 2 ||
+        retained.data.source_1099_dividends.length !== 2 ||
         JSON.stringify(
             [...printed.data.source_1099_dividends].sort((a, b) => a - b),
           ) !==

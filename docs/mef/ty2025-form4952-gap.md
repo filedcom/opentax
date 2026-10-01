@@ -654,5 +654,25 @@ and say the election can be revoked only with IRS consent. This bounded route
 requires one traced loan, one qualified-dividend payer, no capital gain or
 foreign-income/tax source, and no other line-16 add-on or special worksheet.
 The source and loan references are reviewer-supplied, not authenticated issued
-bytes. Elections with capital gains, multiple dividend payers, carryovers, AMT
-differences, or other tax worksheets remain closed.
+bytes. Elections with capital gains, carryovers, AMT differences, or other tax
+worksheets remain closed. The two-payer route below is separately bounded.
+
+## Traced election with two dividend payers (written, unrun)
+
+The [2025 Form 4952](https://www.irs.gov/pub/irs-prior/f4952--2025.pdf)
+uses the total qualified dividends included on line 4a for line 4b, and permits
+an elected portion on line 4g. One direct-use, owner-identified loan now joins
+two distinct domestic Form 1099-DIV payers, exactly one reporting box 1b
+qualified dividends. Each payer needs a different name and issued-copy
+reference. The bounded $17,000 qualified first copy plus $18,000 ordinary
+second copy yields $35,000 on line 4a, $17,000 on line 4b, and a $2,000
+election on line 4g. Form 4952 line 8 and Schedule A line 9 are $20,000.
+Native and PDF export replay the two payer amounts and loan payments, compare
+the numbered Form 4952 lines and Form 1040 lines 3a/3b, then refigure line 16
+with the Schedule D Tax Worksheet using the election. Positive and duplicate
+copy, box 1b, and tax-tamper fixtures are authored but unrun.
+
+The issued dividend copies and lender records remain entered references, not
+authenticated bytes. Multiple qualified payers, interest/OID combinations,
+capital gains, foreign income/tax, carryovers, AMT differences, and other tax
+worksheets remain outside this bounded election route.

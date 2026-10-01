@@ -46,6 +46,7 @@ function filing(
     | "interest"
     | "dividend"
     | "qualified_dividend"
+    | "two_qualified_dividends"
     | "oid"
     | "interest_dividend"
     | "oid_dividend"
@@ -133,17 +134,35 @@ function filing(
           investment_property_for_form4952: true,
         }],
       }
-      : source === "dividend" || source === "qualified_dividend"
+      : source === "dividend" || source === "qualified_dividend" ||
+          source === "two_qualified_dividends"
       ? {
-        f1099div: [{
-          payerName: "Taxable stock payer",
-          source_document_reference: "issued-2025-stock-dividend",
-          isNominee: false,
-          box11: false,
-          box1a: source === "qualified_dividend" ? 34_000 : 100_000,
-          ...(source === "qualified_dividend" ? { box1b: 15_000 } : {}),
-          investment_property_for_form4952: true,
-        }],
+        f1099div: source === "two_qualified_dividends"
+          ? [{
+            payerName: "First taxable stock payer",
+            source_document_reference: "issued-2025-first-stock-dividend",
+            isNominee: false,
+            box11: false,
+            box1a: 17_000,
+            box1b: 17_000,
+            investment_property_for_form4952: true,
+          }, {
+            payerName: "Second taxable stock payer",
+            source_document_reference: "issued-2025-second-stock-dividend",
+            isNominee: false,
+            box11: false,
+            box1a: 18_000,
+            investment_property_for_form4952: true,
+          }]
+          : [{
+            payerName: "Taxable stock payer",
+            source_document_reference: "issued-2025-stock-dividend",
+            isNominee: false,
+            box11: false,
+            box1a: source === "qualified_dividend" ? 34_000 : 100_000,
+            ...(source === "qualified_dividend" ? { box1b: 15_000 } : {}),
+            investment_property_for_form4952: true,
+          }],
       }
       : {
         f1099oid: [{
@@ -1022,4 +1041,73 @@ Deno.test("Form 4952 direct loan rejects payment, loan, and owner tampering at e
     Error,
     "owner",
   );
+});
+
+Deno.test("Form 4952 elects qualified dividends from one of two distinct payers", () => {
+  const result = filing("two_qualified_dividends", false, 2_000);
+  assertEquals(result.diagnostics, []);
+  const fields = result.pending.form4952!;
+  assertEquals(fields.line4a, 35_000);
+  assertEquals(fields.line4b, 17_000);
+  assertEquals(fields.line4g, 2_000);
+  assertEquals(fields.line8, 20_000);
+  assertEquals(result.pending.schedule_a?.line_9_investment_interest, 20_000);
+  assertEquals(result.pending.f1040?.line3a_qualified_dividends, 17_000);
+  assertEquals(result.pending.f1040?.line3b_ordinary_dividends, 35_000);
+  assertEquals(result.pending.income_tax_calculation?.form4952_election, 2_000);
+  const xml = nativeForm4952.build(fields, {
+    pending: result.pending,
+    filer: testFiler(),
+  });
+  assertStringIncludes(
+    xml,
+    "<InvestmentIncomeElectionAmt>2000</InvestmentIncomeElectionAmt>",
+  );
+  assertEquals(
+    form4952Pdf.projectFields!(fields, result.pending).line4g,
+    2_000,
+  );
+});
+
+Deno.test("two-payer Form 4952 election rejects duplicate copy, altered qualified amount, and tax", () => {
+  const result = filing("two_qualified_dividends", false, 2_000);
+  assertEquals(result.diagnostics, []);
+  const fields = result.pending.form4952!;
+  const sources = (result.pending.f1099div as {
+    f1099divs: Record<string, unknown>[];
+  }).f1099divs;
+  const altered = [{
+    ...result.pending,
+    f1099div: {
+      f1099divs: [sources[0], {
+        ...sources[1],
+        source_document_reference: sources[0].source_document_reference,
+      }],
+    },
+  }, {
+    ...result.pending,
+    f1099div: {
+      f1099divs: [{ ...sources[0], box1b: 16_999 }, sources[1]],
+    },
+  }, {
+    ...result.pending,
+    f1040: {
+      ...result.pending.f1040,
+      line16_income_tax: Number(result.pending.f1040?.line16_income_tax) + 1,
+    },
+  }];
+  for (const changed of altered) {
+    assertThrows(
+      () =>
+        nativeForm4952.build(fields, {
+          pending: changed,
+          filer: testFiler(),
+        }),
+      Error,
+    );
+    assertThrows(
+      () => form4952Pdf.projectFields!(fields, changed),
+      Error,
+    );
+  }
 });

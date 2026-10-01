@@ -65,6 +65,14 @@ export function reconcileForm4952DividendPath(
     0,
   );
   const election = form.data.investment_income_election ?? 0;
+  const twoPayerElection = sourceItems.length === 2 &&
+    sourceItems.filter((item) => (item.box1b ?? 0) > 0).length === 1 &&
+    sourceItems.every((item) =>
+      !!item.source_document_reference?.trim() && !!item.payerName?.trim()
+    ) &&
+    new Set(sourceItems.map((item) => item.source_document_reference)).size ===
+      2 &&
+    new Set(sourceItems.map((item) => item.payerName)).size === 2;
   if (
     sourceItems.some((item) =>
       (item.box7 ?? 0) > 0 ||
@@ -109,9 +117,10 @@ export function reconcileForm4952DividendPath(
     (form.data.other_investment_property_net_disposition_gain ?? 0) !== 0 ||
     (form.data.other_investment_property_net_capital_gain ?? 0) !== 0 ||
     (election > 0 &&
-      (sourceItems.length !== 1 || !form.data.direct_debt_trace ||
-        !sourceItems[0].source_document_reference?.trim() ||
-        !sourceItems[0].payerName?.trim() ||
+      (!form.data.direct_debt_trace ||
+        !(sourceItems.length === 1 &&
+            !!sourceItems[0].source_document_reference?.trim() &&
+            !!sourceItems[0].payerName?.trim() || twoPayerElection) ||
         election > qualifiedTotal)) ||
     (form.data.elected_capital_gain_portion ?? 0) !== 0 ||
     (form.data.investment_expenses ?? 0) !== 0 ||
@@ -125,7 +134,7 @@ export function reconcileForm4952DividendPath(
     Object.values(form.data.amt_refigure).some((amount) => amount !== 0)
   ) {
     throw new Error(
-      "Form 4952 dividend path supports only 1099-DIV box 1a/1b investment payers, with a qualified-dividend election only for one traced-loan payer",
+      "Form 4952 dividend path supports only sourced 1099-DIV box 1a/1b investment payers and a traced-loan qualified-dividend election",
     );
   }
   const lines = calculateForm4952(form.data);
