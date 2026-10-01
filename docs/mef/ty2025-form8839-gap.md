@@ -459,30 +459,34 @@ registered MeF/PDF Form 8839 guards remain closed. The fixture demonstrates
 internal consistency of synthetic evidence; it does not authenticate a real
 adoption decree, receipt, birth record, reimbursement, or MAGI findings.
 
-## Bounded public one-child route (written, bulk validation pending)
+## Bounded programmatic one-child route (written, bulk validation pending)
 
-The public `form8839` input now has one direct shape: adoption ledger, reviewed
-decree/birth/expense facts, MAGI nonapplicability review, and a distinct PDF
-manifest for each source document. It contains document identifiers, file names,
-descriptions, and SHA-256 digests, never raw bytes. The base Form 8839 node
-remains closed; the public return executor computes a zero-credit Schedule 3
-marker internally when no other Schedule 3 source is active. It then uses its
-own pre-adoption Form 1040 sink to settle the credit once and records the final
-Schedule 3 and Form 1040 values. Native and PDF projection replay that same
-source and pre-credit sink. An unused nonrefundable line 14 balance is rejected
-because the active return does not carry a filed adoption-credit carryforward
-ledger.
+The programmatic `executeReturn({ form8839: ... })` input has one direct shape:
+adoption ledger, reviewed decree/birth/expense facts, MAGI nonapplicability
+review, and a distinct PDF manifest for each source document. It contains
+document identifiers, file names, descriptions, and SHA-256 digests, never raw
+bytes. The base Form 8839 node remains closed; the public return executor
+computes a zero-credit Schedule 3 marker internally when no other Schedule 3
+source is active. It then uses its own pre-adoption Form 1040 sink to settle the
+credit once and records the final Schedule 3 and Form 1040 values. Native and
+PDF projection replay that same source and pre-credit sink. An unused
+nonrefundable line 14 balance is rejected because the active return does not
+carry a filed adoption-credit carryforward ledger.
 
 `buildMefBundle` requires the exact reviewed PDF bytes through its existing
 `attachments` option. It validates every PDF, matches its unique file name and
 description to the manifest, and recomputes every reviewed SHA-256 digest.
+
+Form 8839 is deliberately absent from `inputNodes`, so the CLI stored-input path
+cannot currently accept this claim. The convenience `f1040_2025.prepareReturn`
+also passes no external attachments and fails closed for a positive claim. This
+is a programmatic prepared-bundle route, not general CLI filing support.
+
 Prepared PDF rendering requires that bundle, its source digest, its native
 IRS8839 document, and the same attached bytes. Synchronous XML and standalone
 PDF reject positive claims because they cannot receive those bytes. The
-convenience `f1040_2025.prepareReturn` currently passes an empty attachment
-list, so it also fails closed for a positive Form 8839 claim. The supported
-prepared path is the existing `buildMefBundle` API with attachments followed by
-`buildPdfBytes` with that exact bundle.
+supported prepared path is the existing `buildMefBundle` API with attachments
+followed by `buildPdfBytes` with that exact bundle.
 
 The route remains limited to a reviewed, single-filer, one-child domestic 2025
 final decree, no employer exclusion or prior adoption claim, no Form 2555 or
