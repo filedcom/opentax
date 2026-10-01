@@ -226,8 +226,12 @@ function line2kBasisDispositionAdjustment(input: Form6251Input): number {
   const lossLimit = input.filing_status === FilingStatus.MFS ? -1_500 : -3_000;
   const oneTermOnly = rows.every((row) => ["A", "B", "C"].includes(row.part)) ||
     rows.every((row) => ["D", "E", "F"].includes(row.part));
+  const allLosses = rows.every((row) =>
+    row.regular_gain < 0 && row.amt_gain < 0
+  );
   if (
-    rows.length > 0 && oneTermOnly && regularNet < 0 && amtNet < 0 &&
+    rows.length > 0 && (oneTermOnly || allLosses) &&
+    regularNet < 0 && amtNet < 0 &&
     (regularNet < lossLimit || amtNet < lossLimit)
   ) {
     return Math.max(amtNet, lossLimit) - Math.max(regularNet, lossLimit);
@@ -652,7 +656,8 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
         longTermBasisRows.length === basisRows.length;
       const fullyDeductibleNetLoss = regularBasisNet < 0 && amtBasisNet < 0 &&
         regularBasisNet >= lossLimit && amtBasisNet >= lossLimit;
-      const cappedSameTermNetLoss = oneTermOnly &&
+      const cappedAuditedNetLoss = (oneTermOnly ||
+        basisRows.every((row) => row.regular_gain < 0 && row.amt_gain < 0)) &&
         regularBasisNet < 0 && amtBasisNet < 0 &&
         (regularBasisNet < lossLimit || amtBasisNet < lossLimit);
       const mixedFullyDeductibleLoss = !oneTermOnly &&
@@ -687,14 +692,15 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
         longTermBasisRows.length === basisRows.length &&
         regularBasisNet > 0 && amtBasisNet > 0;
       if (
-        (!oneTermOnly && !mixedFullyDeductibleLoss &&
+        (!oneTermOnly && !cappedAuditedNetLoss &&
+          !mixedFullyDeductibleLoss &&
           !mixedFullyDeductibleOffsetLoss &&
           !shortLossOffsetLongGain &&
           !longLossOffsetShortGain && !shortLossLongGainToAmtLoss) ||
         (lossBasisRows.some((row) =>
           row.regular_gain >= 0 || row.amt_gain >= 0
         ) && !sameTermGainToAmtLoss && !shortLossLongGainToAmtLoss) ||
-        !(fullyDeductibleNetLoss || cappedSameTermNetLoss ||
+        !(fullyDeductibleNetLoss || cappedAuditedNetLoss ||
           positiveShortTermNet ||
           positiveLongTermNet || shortLossOffsetLongGain ||
           longLossOffsetShortGain || sameTermGainToAmtLoss ||
@@ -711,7 +717,7 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
         (input.foreign_earned_income_exclusion ?? 0) !== 0
       ) {
         throw new Error(
-          "Form 6251 line 2k AMT basis losses need one term of identified losses and gains with net losses within both regular and AMT Schedule D deduction limits or a separately capped same-term loss, net positive same-term gains, or audited mixed-term gains remaining positive under both bases, with no preferential-rate extras or other capital activity",
+          "Form 6251 line 2k AMT basis losses need audited same-term or mixed-term deductible losses, all-loss lots with a separately capped loss, net positive same-term gains, or audited mixed-term gains remaining positive under both bases, with no preferential-rate extras or other capital activity",
         );
       }
     }

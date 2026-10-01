@@ -61,11 +61,15 @@ export function assertForm6251Form8949Source(
   const amtNet = rows.reduce((sum, row) => sum + row.amt_gain, 0);
   const oneTermOnly = rows.every((row) => ["A", "B", "C"].includes(row.part)) ||
     rows.every((row) => ["D", "E", "F"].includes(row.part));
+  const allLosses = rows.every((row) =>
+    row.regular_gain < 0 && row.amt_gain < 0
+  );
   const lossLimit = fields.filing_status === "mfs" ? -1_500 : -3_000;
-  const cappedSameTermNetLoss = rows.length > 0 && oneTermOnly &&
+  const cappedAuditedNetLoss = rows.length > 0 &&
+    (oneTermOnly || allLosses) &&
     regularNet < 0 && amtNet < 0 &&
     (regularNet < lossLimit || amtNet < lossLimit);
-  const calculatedDifference = cappedSameTermNetLoss
+  const calculatedDifference = cappedAuditedNetLoss
     ? Math.max(amtNet, lossLimit) - Math.max(regularNet, lossLimit)
     : amtNet - regularNet;
   if (
@@ -180,7 +184,7 @@ export function assertForm6251Form8949Source(
       );
     }
   }
-  if (cappedSameTermNetLoss) {
+  if (cappedAuditedNetLoss) {
     const schedule2 = pending?.schedule2 as Record<string, unknown> | undefined;
     const form1040 = pending?.f1040 as Record<string, unknown> | undefined;
     const amt = fields.line11_amt;
@@ -195,7 +199,7 @@ export function assertForm6251Form8949Source(
       form1040.line17_additional_taxes < amt
     ) {
       throw new Error(
-        "Form 6251 capped same-term basis loss needs separate AMT and regular Schedule D deductions, Schedule 2, and Form 1040 capital loss and tax",
+        "Form 6251 capped audited basis loss needs separate AMT and regular Schedule D deductions, Schedule 2, and Form 1040 capital loss and tax",
       );
     }
   }
