@@ -136,6 +136,8 @@ Deno.test("general passes Form 461 filing status and documented C/F scope review
     other_part_i_lines_zero: true,
     part_ii_adjustments_zero: true,
     post_at_risk_and_passive_limits_confirmed: true,
+    line2_schedule_c_amount: -200_000,
+    line6_schedule_f_amount: 0,
     source_document_refs: ["return-wide business income workpaper"],
   };
   const result = compute({

@@ -65,6 +65,8 @@ function preparedReturn() {
         other_part_i_lines_zero: true,
         part_ii_adjustments_zero: true,
         post_at_risk_and_passive_limits_confirmed: true,
+        line2_schedule_c_amount: -200,
+        line6_schedule_f_amount: 0,
         source_document_refs: ["synthetic 2025 Schedule C source pair"],
       },
     },

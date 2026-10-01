@@ -36,6 +36,15 @@ an unresolved passive loss reported by either source, produces an explicit node
 error. This is an intentionally bounded path, not a general Form 461
 implementation for capital gains, Schedule E, or other business items.
 
+The signed review now also states `line2_schedule_c_amount` and
+`line6_schedule_f_amount`, including zero for an absent source. The Form 461 node
+checks those amounts against its aggregated C/F inputs. Native MeF and PDF
+export require the same review in the pending general return and compare it to
+the printed lines and filed Schedule 1. Duplicate workpaper references reject.
+Positive C/F and missing/changed review fixtures are authored for the deferred
+bulk batch. References identify the preparer's source workpapers; no underlying
+statement bytes are authenticated.
+
 ## Filing rule to implement
 
 The [2025 Form 461](https://www.irs.gov/pub/irs-pdf/f461.pdf) has one

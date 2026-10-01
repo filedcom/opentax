@@ -28,6 +28,17 @@ const filed = {
 };
 const pending = {
   form461: filed,
+  general: {
+    form461_scope_review: {
+      only_schedule_c_and_f_business_items: true,
+      other_part_i_lines_zero: true,
+      part_ii_adjustments_zero: true,
+      post_at_risk_and_passive_limits_confirmed: true,
+      line2_schedule_c_amount: -200_000,
+      line6_schedule_f_amount: -200_000,
+      source_document_refs: ["signed Schedule C and F workpaper"],
+    },
+  },
   f1040: { filing_status: "single" },
   schedule1: {
     line3_schedule_c: -200_000,
@@ -84,5 +95,22 @@ Deno.test("Form 461 PDF refuses a filed-return mismatch or missing identity", ()
     () => form461Pdf.instances?.(filed, undefined, pending),
     Error,
     "needs filer name",
+  );
+});
+
+Deno.test("Form 461 PDF refuses a missing or altered signed C/F source review", () => {
+  assertThrows(() =>
+    form461Pdf.instances?.(filed, filer, { ...pending, general: {} })
+  );
+  assertThrows(() =>
+    form461Pdf.instances?.(filed, filer, {
+      ...pending,
+      general: {
+        form461_scope_review: {
+          ...pending.general.form461_scope_review,
+          line2_schedule_c_amount: -199_999,
+        },
+      },
+    })
   );
 });
