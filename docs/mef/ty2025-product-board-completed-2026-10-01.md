@@ -258,6 +258,8 @@ Moved from [product_board.md](../../product_board.md) on 2026-10-01 so the board
 
 - [x] Reconcile Form 1116 general-category line 1b from three same-employee foreign-employer wage records: one alternatively sourced foreign-service item and two distinct U.S.-service-only items prove worldwide employee compensation, Form 1040 wages, Schedule 3 credit, the native statement, and parent PDF. Positive and owner/document/amount tamper fixtures are authored for deferred validation; additional employers, mixed W-2/spouse compensation, source bytes, and wider baskets remain open.
 
+- [x] Reconcile both MFJ spouses' separate self-only HSA timely personal-excess returns: owner-specific code-2 Form 1099-SA recipient, box 1/2, and document references feed both Forms 8889 lines 14a/14b and 13, zero current Form 5329 excess, combined Schedule 1 and Form 1040 income/deductions, native MeF, and PDF. Full-return and box/owner/reference/return tamper fixtures are authored for deferred validation; employer returns, other distribution mixes, prior-year accepted evidence, and source-byte authentication remain open.
+
 ## Native MeF and PDF parity
 
 - [x] Register a bounded Form 8582-CR PDF and native line-6 source join for one current-year self-earned passive Form 8874 credit plus one separately sourced Schedule E rental-income activity: recompute both ordinary-tax sides from finalized Form 1040, retain current-year Worksheet 9 activity/source/allowed/unallowed amounts, reconcile Form 3800, Schedule 3 and Form 1040, and print Part I/line 37. Full-return and source/tax/credit/return tamper fixtures are authored for deferred validation; prior-year credits, wider passive sources, special allowances, Part VI, accepted-year import and filled-output/XSD review remain open.
