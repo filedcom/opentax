@@ -718,6 +718,21 @@ export function reconcilePairedForm8889(
           (source.spouse_hsa.allocated_family_limit ?? 0) ===
       Math.round(8_550 * deemedFamilyMonths / 12);
   const owners = [source, source.spouse_hsa];
+  for (const [index, owner] of owners.entries()) {
+    const otherOwner = owners[1 - index]!;
+    if (
+      owner.qualified_medical_expense_evidence?.some((receipt) =>
+        receipt.eligible_person === "spouse" &&
+        (filer.filingStatus !== FilingStatus.MarriedFilingJointly ||
+          receipt.patient_ssn?.replaceAll("-", "") !==
+            otherOwner.beneficiary_identity.ssn.replaceAll("-", ""))
+      )
+    ) {
+      throw new Error(
+        "Form 8889 spouse medical receipt patient must match the other joint-return HSA owner",
+      );
+    }
+  }
   const medicareOwner = owners.find((owner) => owner.medicare_enrollment);
   const continuingOwner = owners.find((owner) => owner !== medicareOwner);
   const firstIneligible = medicareOwner?.medicare_enrollment

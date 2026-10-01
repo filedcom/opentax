@@ -550,3 +550,20 @@ The onset notice, contribution record, and HSA year-end balance are entered
 source facts rather than authenticated document bytes. January family coverage
 allocation, employer funding, timely withdrawals, age-65 distributions, and
 simultaneous prior excess remain outside this bounded route.
+
+## One HSA owner's medical receipt for the other spouse (2026-10-01, unrun)
+
+The paired full-year self-only personal-contribution route now accepts one
+primary-owner HSA medical receipt for the spouse on the same joint return.
+A receipt labeled `spouse` must name the patient's SSN, and native MeF and PDF
+projection require it to equal the other HSA owner's SSN. The two Form 1099-SA
+recipients remain tied to their own HSA owners; the primary owner's $300 spouse
+expense reaches only that owner's Form 8889 line 15, while the spouse owner's
+separate $500 expense reaches the second Form 8889. The authored full return
+reconciles $700 taxable distributions and $140 additional tax to Schedule 1,
+Schedule 2, and Form 1040, with separate Form 8889 native/PDF pages. Wrong,
+missing, and owner-self patient SSNs, plus final tax drift, reject. The
+[2025 Form 8889 line-15 instructions](https://www.irs.gov/instructions/i8889)
+permit an HSA beneficiary's spouse's unreimbursed qualified medical expenses.
+These fixtures are authored but unrun; receipt and trustee bytes remain
+unauthenticated, and nonjoint or more complex coverage paths remain open.

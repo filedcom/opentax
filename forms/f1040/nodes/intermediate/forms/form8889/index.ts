@@ -189,11 +189,15 @@ const beneficiaryInputSchema = z.object({
       eligible_person: z.enum(["owner", "spouse", "dependent"]),
       patient_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
     }).strict().superRefine((receipt, ctx) => {
-      if (receipt.eligible_person === "dependent" && !receipt.patient_ssn) {
+      if (
+        (receipt.eligible_person === "dependent" ||
+          receipt.eligible_person === "spouse") && !receipt.patient_ssn
+      ) {
         ctx.addIssue({
           code: "custom",
           path: ["patient_ssn"],
-          message: "Form 8889 dependent medical receipt needs patient SSN",
+          message:
+            "Form 8889 spouse or dependent medical receipt needs patient SSN",
         });
       }
     }),

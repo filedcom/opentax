@@ -897,6 +897,7 @@ function pairedDistributions() {
         incurred_after_hsa_established: true,
         not_reimbursed_by_other_coverage: true,
         eligible_person: "spouse",
+        patient_ssn: "123456789",
       }],
       exception_qualified_taxable_amount: 0,
     },
