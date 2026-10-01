@@ -1,5 +1,5 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
-import { type FilerIdentity, FilingStatus } from "./mef/header.ts";
+import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
 import {
   DependentRelationship,
   general,
@@ -100,7 +100,7 @@ const interest = {
 
 function household(annualAptc: 600 | 4_800) {
   const generalSource = {
-    filing_status: FilingStatus.Single,
+    filing_status: "single" as const,
     taxpayer_ssn: "123456789",
     dependents: [mixed, interest],
   };
@@ -114,7 +114,7 @@ function household(annualAptc: 600 | 4_800) {
     form8962Node.inputSchema.parse({
       household_size: 3,
       fpl_region: "contiguous",
-      filing_status: FilingStatus.Single,
+      filing_status: "single" as const,
       taxpayer_modified_agi: 100_000,
       dependents_modified_agi: generalOutput?.dependents_modified_agi,
       dependent_income_complete: generalOutput?.dependent_income_complete,
@@ -269,11 +269,13 @@ Deno.test("Form 8962 two-dependent family rejects changed source, identity, poli
     Error,
     "distinct covered people",
   );
-  const projected = form8962Pdf.projectFields?.(fields, pending) ?? {};
   assertThrows(() =>
-    form8962Pdf.instances?.(projected, filer, {
-      ...pending,
-      schedule3: { line9_premium_tax_credit: 0 },
+    form8962.build(fields, {
+      filer,
+      pending: {
+        ...pending,
+        schedule3: { line9_premium_tax_credit: 0 },
+      },
     }), Error);
   assertThrows(
     () =>

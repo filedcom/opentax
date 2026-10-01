@@ -102,12 +102,12 @@ function filing(monthlySlcsp = 1_200) {
     schedule1_line16_source: 2_000,
     pub974_single_business: source,
   });
-  const deduction = insurance.outputs.find((row) =>
-    row.nodeType === "schedule1"
-  )?.fields.line17_se_health_insurance as number;
   const reconciliation = insurance.outputs.find((row) =>
     row.nodeType === "form8962"
   )?.fields.pub974_reconciliation;
+  const deduction =
+    (reconciliation as { schedule1_line17_final_deduction: number })
+      .schedule1_line17_final_deduction;
   const calculated = form8962.compute(
     context,
     form8962InputSchema.parse({
@@ -136,7 +136,7 @@ function filing(monthlySlcsp = 1_200) {
   );
   const fields = calculated.outputs.find((row) => row.nodeType === "form8962")!
     .fields;
-  const credit = fields.net_premium_tax_credit as number;
+  const credit = (fields.net_premium_tax_credit ?? 0) as number;
   const repayment = (fields.excess_advance_premium ?? 0) as number;
   const schedule1Fields = schedule1.compute(context, {
     line3_schedule_c: 50_000,

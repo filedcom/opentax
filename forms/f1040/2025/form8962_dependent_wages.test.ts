@@ -56,9 +56,9 @@ const dependent = {
   },
 };
 
-function wageDependentPolicy(annualAptc: 600 | 2_400) {
+function wageDependentPolicy(annualAptc: 600 | 4_800) {
   const generalSource = {
-    filing_status: FilingStatus.Single,
+    filing_status: "single" as const,
     taxpayer_ssn: "123456789",
     dependents: [dependent],
   };
@@ -72,12 +72,12 @@ function wageDependentPolicy(annualAptc: 600 | 2_400) {
     form8962Node.inputSchema.parse({
       household_size: 2,
       fpl_region: "contiguous",
-      filing_status: FilingStatus.Single,
-      taxpayer_modified_agi: 50_000,
+      filing_status: "single" as const,
+      taxpayer_modified_agi: 70_000,
       dependents_modified_agi: generalOutput?.dependents_modified_agi,
       dependent_income_complete: generalOutput?.dependent_income_complete,
-      annual_premium: 6_000,
-      annual_slcsp: 7_200,
+      annual_premium: 12_000,
+      annual_slcsp: 10_800,
       annual_aptc: annualAptc,
       annual_line11_eligible: true,
     }),
@@ -93,18 +93,18 @@ function wageDependentPolicy(annualAptc: 600 | 2_400) {
         policy_number: "CASEY-FAMILY-2025",
         coverage_state: "TX",
         covered_individual_ssns: ["123456789", "987654321"],
-        monthly_premiums: Array(12).fill(500),
-        monthly_slcsps: Array(12).fill(600),
+        monthly_premiums: Array(12).fill(1_000),
+        monthly_slcsps: Array(12).fill(900),
         monthly_aptcs: Array(12).fill(annualAptc / 12),
-        annual_premium: 6_000,
-        annual_slcsp: 7_200,
+        annual_premium: 12_000,
+        annual_slcsp: 10_800,
         annual_aptc: annualAptc,
       }],
     },
     schedule2: { line1a_excess_advance_premium: repayment ?? 0 },
     schedule3: { line9_premium_tax_credit: net ?? 0 },
     f1040: {
-      line11_agi: 50_000,
+      line11_agi: 70_000,
       line17_additional_taxes: repayment ?? 0,
       line31_additional_payments: net ?? 0,
     },
@@ -112,13 +112,13 @@ function wageDependentPolicy(annualAptc: 600 | 2_400) {
   return { fields, pending, net, repayment };
 }
 
-for (const aptc of [600, 2_400] as const) {
+for (const aptc of [600, 4_800] as const) {
   Deno.test(`Form 8962 wage-only dependent reaches annual native/PDF and return at APTC ${aptc}`, () => {
     const { fields, pending, net, repayment } = wageDependentPolicy(aptc);
     assertEquals(fields.dependents_modified_agi, 16_000);
-    assertEquals(fields.household_income, 66_000);
+    assertEquals(fields.household_income, 86_000);
     assertEquals((net ?? 0) > 0, aptc === 600);
-    assertEquals((repayment ?? 0) > 0, aptc === 2_400);
+    assertEquals((repayment ?? 0) > 0, aptc === 4_800);
     const xml = form8962.build(fields, { filer, pending });
     assertStringIncludes(
       xml,
@@ -176,11 +176,13 @@ Deno.test("Form 8962 wage-only dependent rejects changed W-2, refund-only wages,
       },
     })
   );
-  const projected = form8962Pdf.projectFields?.(fields, pending) ?? {};
   assertThrows(() =>
-    form8962Pdf.instances?.(projected, filer, {
-      ...pending,
-      schedule3: { line9_premium_tax_credit: 0 },
+    form8962.build(fields, {
+      filer,
+      pending: {
+        ...pending,
+        schedule3: { line9_premium_tax_credit: 0 },
+      },
     })
   );
 });

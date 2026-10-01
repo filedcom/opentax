@@ -10,10 +10,15 @@ import { inputSchema as f1095aInputSchema } from "../nodes/inputs/f1095a/index.t
 const dependent = {
   first_name: "Casey",
   last_name: "Taxpayer",
+  name_control: "TAXP",
   ssn: "987654321",
   dob: "2007-06-15",
   relationship: DependentRelationship.Daughter,
+  irs_relationship_code: "DAUGHTER",
   months_in_home: 12,
+  lived_in_us_over_half_year: true,
+  us_citizen_national_or_resident: true,
+  filed_joint_return_except_refund_only: false,
   provided_over_half_own_support: false,
   ptc_tax_return: {
     filing: "required" as const,
@@ -84,6 +89,8 @@ const policy = {
 const filer = {
   primarySSN: "123456789",
   fullName: "Alex Taxpayer",
+  firstNameWithInitial: "Alex",
+  lastName: "Taxpayer",
   nameLine1: "Alex Taxpayer",
   nameControl: "TAXP",
   filingStatus: MefFilingStatus.Single,
@@ -99,6 +106,7 @@ function filedReturn() {
       taxpayer_ssn: "123-45-6789",
       taxpayer_dob: "1985-06-15",
       taxpayer_can_be_claimed_as_dependent: false,
+      digital_assets: false,
       address_line1: "1 Main St",
       address_city: "Austin",
       address_state: "TX",

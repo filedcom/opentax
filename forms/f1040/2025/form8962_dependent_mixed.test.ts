@@ -63,7 +63,7 @@ const dependent = {
 
 function mixedDependentPolicy(annualAptc: 600 | 4_800) {
   const generalSource = {
-    filing_status: FilingStatus.Single,
+    filing_status: "single" as const,
     taxpayer_ssn: "123456789",
     dependents: [dependent],
   };
@@ -77,12 +77,12 @@ function mixedDependentPolicy(annualAptc: 600 | 4_800) {
     form8962Node.inputSchema.parse({
       household_size: 2,
       fpl_region: "contiguous",
-      filing_status: FilingStatus.Single,
-      taxpayer_modified_agi: 50_000,
+      filing_status: "single" as const,
+      taxpayer_modified_agi: 70_000,
       dependents_modified_agi: generalOutput?.dependents_modified_agi,
       dependent_income_complete: generalOutput?.dependent_income_complete,
-      annual_premium: 6_000,
-      annual_slcsp: 7_200,
+      annual_premium: 12_000,
+      annual_slcsp: 10_800,
       annual_aptc: annualAptc,
       annual_line11_eligible: true,
     }),
@@ -108,18 +108,18 @@ function mixedDependentPolicy(annualAptc: 600 | 4_800) {
         policy_number: "CASEY-FAMILY-2025",
         coverage_state: "TX",
         covered_individual_ssns: ["123456789", "987654321"],
-        monthly_premiums: Array(12).fill(500),
-        monthly_slcsps: Array(12).fill(600),
+        monthly_premiums: Array(12).fill(1_000),
+        monthly_slcsps: Array(12).fill(900),
         monthly_aptcs: Array(12).fill(annualAptc / 12),
-        annual_premium: 6_000,
-        annual_slcsp: 7_200,
+        annual_premium: 12_000,
+        annual_slcsp: 10_800,
         annual_aptc: annualAptc,
       }],
     },
     schedule2: { line1a_excess_advance_premium: repayment ?? 0 },
     schedule3: { line9_premium_tax_credit: net ?? 0 },
     f1040: {
-      line11_agi: 50_000,
+      line11_agi: 70_000,
       line17_additional_taxes: repayment ?? 0,
       line31_additional_payments: net ?? 0,
     },
@@ -131,7 +131,7 @@ for (const aptc of [600, 4_800] as const) {
   Deno.test(`Form 8962 mixed W-2 and 1099-INT dependent reaches annual native/PDF and return at APTC ${aptc}`, () => {
     const { fields, pending, net, repayment } = mixedDependentPolicy(aptc);
     assertEquals(fields.dependents_modified_agi, 15_100);
-    assertEquals(fields.household_income, 65_100);
+    assertEquals(fields.household_income, 85_100);
     assertEquals((net ?? 0) > 0, aptc === 600);
     assertEquals((repayment ?? 0) > 0, aptc === 4_800);
     const xml = form8962.build(fields, { filer, pending });
@@ -223,22 +223,24 @@ Deno.test("Form 8962 mixed dependent rejects source, threshold, MAGI, and return
     Error,
     "does not establish the 2025 filing requirement",
   );
-  const projected = form8962Pdf.projectFields?.(fields, pending) ?? {};
   assertThrows(
     () =>
       form8962.build(fields, {
         filer,
         pending: {
           ...pending,
-          f1040: { ...pending.f1040, line11_agi: 51_000 },
+          f1040: { ...pending.f1040, line11_agi: 71_000 },
         },
       }),
     Error,
     "finalized Form 1040",
   );
   assertThrows(() =>
-    form8962Pdf.instances?.(projected, filer, {
-      ...pending,
-      schedule3: { line9_premium_tax_credit: 0 },
+    form8962.build(fields, {
+      filer,
+      pending: {
+        ...pending,
+        schedule3: { line9_premium_tax_credit: 0 },
+      },
     }), Error);
 });
