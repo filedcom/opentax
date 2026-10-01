@@ -197,6 +197,7 @@ function qualifyingChildDep(overrides: Record<string, unknown> = {}) {
     dob: "2010-06-15", // age 15 at Dec 31 2025 → under 17
     relationship: DependentRelationship.Daughter,
     months_in_home: 12,
+    months_lived_with_you_in_us: 12,
     lived_in_us_over_half_year: true,
     us_citizen_national_or_resident: true,
     provided_over_half_own_support: false,
@@ -300,6 +301,7 @@ function nonCtcDep(overrides: Record<string, unknown> = {}) {
     dob: "2010-01-01",
     relationship: DependentRelationship.Son,
     months_in_home: 12,
+    months_lived_with_you_in_us: 12,
     lived_in_us_over_half_year: true,
     us_citizen_national_or_resident: true,
     provided_over_half_own_support: false,
@@ -961,10 +963,25 @@ Deno.test("qualifying EITC child identity reaches the Schedule EIC input", () =>
     dob: "2010-06-15",
     irs_relationship_code: "DAUGHTER",
     months_in_home: 12,
+    months_lived_with_you_in_us: 12,
     full_time_student: undefined,
     disabled: undefined,
     ip_pin: "123456",
   }]);
+});
+
+Deno.test("EITC child needs exact U.S. months; a U.S. residency Boolean alone is insufficient", () => {
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.Single,
+        dependents: [qualifyingChildDep({
+          months_lived_with_you_in_us: undefined,
+        })],
+      }),
+    Error,
+    "needs exact U.S. months",
+  );
 });
 
 // ============================================================
@@ -1116,6 +1133,7 @@ Deno.test("smoke: MFJ + 2 qualifying children + 1 qualifying relative → all ou
         dob: "2015-04-01",
         relationship: DependentRelationship.Daughter,
         months_in_home: 12,
+        months_lived_with_you_in_us: 12,
         lived_in_us_over_half_year: true,
         us_citizen_national_or_resident: true,
         provided_over_half_own_support: false,
@@ -1132,6 +1150,7 @@ Deno.test("smoke: MFJ + 2 qualifying children + 1 qualifying relative → all ou
         dob: "2017-08-20",
         relationship: DependentRelationship.Son,
         months_in_home: 12,
+        months_lived_with_you_in_us: 12,
         lived_in_us_over_half_year: true,
         us_citizen_national_or_resident: true,
         provided_over_half_own_support: false,

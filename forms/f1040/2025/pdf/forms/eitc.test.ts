@@ -9,6 +9,7 @@ const child = {
   dob: "2017-06-15",
   irs_relationship_code: "DAUGHTER",
   months_in_home: 12,
+  months_lived_with_you_in_us: 12,
 };
 
 Deno.test("Schedule EIC PDF maps child rows, not income into line 6 months", () => {
@@ -16,15 +17,15 @@ Deno.test("Schedule EIC PDF maps child rows, not income into line 6 months", () 
     eitcPdf.fields.map((entry) => [entry.domainKey, entry.pdfField]),
   );
   assertEquals(
-    mapped.get("child1_months_in_home"),
+    mapped.get("child1_us_months"),
     "topmostSubform[0].Page1[0].Line6_Child1_ReadOrder[0].f1_24[0]",
   );
   assertEquals(
-    mapped.get("child2_months_in_home"),
+    mapped.get("child2_us_months"),
     "topmostSubform[0].Page1[0].Line6_Child2_ReadOrder[0].f1_25[0]",
   );
   assertEquals(
-    mapped.get("child3_months_in_home"),
+    mapped.get("child3_us_months"),
     "topmostSubform[0].Page1[0].f1_26[0]",
   );
   assertEquals(
@@ -57,7 +58,7 @@ Deno.test("Schedule EIC PDF projects qualifying-child identity and residency", (
   assertEquals(projected.child1_birth_year_digit1, "2");
   assertEquals(projected.child1_birth_year_digit4, "7");
   assertEquals(projected.child1_relationship, "DAUGHTER");
-  assertEquals(projected.child1_months_in_home, 12);
+  assertEquals(projected.child1_us_months, 12);
   assertEquals(projected.child1_student, undefined);
 });
 

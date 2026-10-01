@@ -23,6 +23,7 @@ export const qualifyingChildDetailSchema = z.object({
   dob: z.string(),
   irs_relationship_code: z.string().optional(),
   months_in_home: z.number().int().min(0).max(12),
+  months_lived_with_you_in_us: z.number().int().min(7).max(12),
   full_time_student: z.boolean().optional(),
   disabled: z.boolean().optional(),
   ip_pin: z.string().optional(),

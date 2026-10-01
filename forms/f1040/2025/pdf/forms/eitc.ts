@@ -3,7 +3,7 @@ import { rgb, StandardFonts } from "pdf-lib";
 import { qualifyingChildDetailSchema } from "../../../nodes/intermediate/forms/eitc/index.ts";
 
 // The 2025 Schedule EIC filing page has child columns, not income summaries.
-// AcroForm fields 24-26 are each child's line 6 months lived at home.
+// AcroForm fields 24-26 are each child's line 6 months lived in the U.S.
 const PAGE = "topmostSubform[0].Page1[0]";
 
 function text(domainKey: string, path: string): PdfFieldEntry {
@@ -68,7 +68,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
       ),
       text(`child${child}_relationship`, `f1_${relationship}[0]`),
       text(
-        `child${child}_months_in_home`,
+        `child${child}_us_months`,
         child < 3
           ? `Line6_Child${child}_ReadOrder[0].f1_${months}[0]`
           : `f1_${months}[0]`,
@@ -120,7 +120,8 @@ export const eitcPdf: PdfFormDescriptor = {
         !child.first_name.trim() || !child.last_name.trim() ||
         !child.irs_relationship_code ||
         !/^\d{3}-?\d{2}-?\d{4}$/.test(child.ssn) ||
-        child.months_in_home < 7
+        child.months_lived_with_you_in_us < 7 ||
+        child.months_lived_with_you_in_us > child.months_in_home
       ) {
         throw new Error(
           `Schedule EIC child ${n} needs name, SSN, relationship, and qualifying residency`,
@@ -148,7 +149,7 @@ export const eitcPdf: PdfFormDescriptor = {
       projected[`child${n}_last_name`] = child.last_name;
       projected[`child${n}_ssn`] = child.ssn.replaceAll("-", "");
       projected[`child${n}_relationship`] = child.irs_relationship_code;
-      projected[`child${n}_months_in_home`] = child.months_in_home;
+      projected[`child${n}_us_months`] = child.months_lived_with_you_in_us;
       for (let digit = 0; digit < 4; digit++) {
         projected[`child${n}_birth_year_digit${digit + 1}`] = year[digit];
       }

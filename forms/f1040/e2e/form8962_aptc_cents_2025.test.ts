@@ -334,6 +334,7 @@ Deno.test("overlapping family policies combine cents across monthly, annual, and
         relationship: "daughter",
         irs_relationship_code: "DAUGHTER",
         months_in_home: 12,
+        months_lived_with_you_in_us: 12,
         lived_in_us_over_half_year: true,
         us_citizen_national_or_resident: true,
         provided_over_half_own_support: false,

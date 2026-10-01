@@ -116,6 +116,8 @@ export const dependentSchema = z.object({
   irs_relationship_code: z.nativeEnum(IRSDependentRelationshipCode).optional(),
   months_in_home: z.number().int().min(0).max(12),
   lived_in_us_over_half_year: z.boolean().optional(),
+  // Exact 2025 Schedule EIC line 6 months, distinct from total home months.
+  months_lived_with_you_in_us: z.number().int().min(7).max(12).optional(),
   us_citizen_national_or_resident: z.boolean().optional(),
   provided_over_half_own_support: z.boolean().optional(),
   filed_joint_return_except_refund_only: z.boolean().optional(),
@@ -869,22 +871,38 @@ function passesEitcAgeTest(dep: DependentItem): boolean {
 // test, and a noncustodial parent's CTC release does not confer EITC eligibility.
 function isEitcQualifyingChild(
   dep: DependentItem,
-): dep is DependentItem & { ssn: string } {
-  return (
-    passesResidencyTest(dep) &&
+): dep is DependentItem & {
+  ssn: string;
+  months_lived_with_you_in_us: number;
+} {
+  const otherwiseQualified = passesResidencyTest(dep) &&
     dep.lived_in_us_over_half_year === true &&
     dep.ssn !== undefined && dep.ssn.length > 0 &&
     dep.ssn_valid_for_employment === true &&
     dep.tin_issued_by_due_date === true &&
     passesJointReturnTest(dep) &&
     passesRelationshipTest(dep) &&
-    passesEitcAgeTest(dep)
-  );
+    passesEitcAgeTest(dep);
+  if (
+    otherwiseQualified &&
+    (dep.months_lived_with_you_in_us === undefined ||
+      dep.months_lived_with_you_in_us > dep.months_in_home)
+  ) {
+    throw new Error(
+      "EIC qualifying child needs exact U.S. months no greater than home months",
+    );
+  }
+  return otherwiseQualified;
 }
 
 function eitcQualifyingChildren(
   deps: DependentItem[],
-): Array<DependentItem & { ssn: string }> {
+): Array<
+  DependentItem & {
+    ssn: string;
+    months_lived_with_you_in_us: number;
+  }
+> {
   return deps.filter((dep) =>
     dep.dependent_on_another_return !== true ||
     dep.custodial_eitc_release_review !== undefined
@@ -1266,6 +1284,7 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
           dob: dep.dob,
           irs_relationship_code: dep.irs_relationship_code,
           months_in_home: dep.months_in_home,
+          months_lived_with_you_in_us: dep.months_lived_with_you_in_us,
           full_time_student: dep.full_time_student,
           disabled: dep.disabled,
           ip_pin: dep.ip_pin,

@@ -418,6 +418,7 @@ export function assertEitcChildSources(
       dep.dob !== row.dob ||
       dep.irs_relationship_code !== row.irs_relationship_code ||
       dep.months_in_home !== row.months_in_home ||
+      dep.months_lived_with_you_in_us !== row.months_lived_with_you_in_us ||
       dep.lived_in_us_over_half_year !== true ||
       dep.full_time_student !== row.full_time_student ||
       dep.disabled !== row.disabled || dep.ip_pin !== row.ip_pin ||

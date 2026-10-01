@@ -340,6 +340,7 @@ Deno.test("qualifying-child facts survive EIC finalization and reach Schedule EI
     dob: "2017-06-15",
     irs_relationship_code: "DAUGHTER",
     months_in_home: 12,
+    months_lived_with_you_in_us: 12,
   };
   const result = compute({
     earned_income: 12_730,

@@ -50,6 +50,7 @@ Deno.test("Form 1040 PDF prints filed dependent identity and the correct checkbo
     dob: "2015-06-15",
     relationship: "daughter",
     months_in_home: 12,
+    months_lived_with_you_in_us: 12,
     lived_in_us_over_half_year: true,
     credit_category: "ctc",
   };

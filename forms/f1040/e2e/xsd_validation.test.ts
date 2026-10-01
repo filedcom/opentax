@@ -265,8 +265,7 @@ Deno.test({
 });
 
 Deno.test({
-  name:
-    "ATS 1040 Scenario 1 Schedule H stays blocked without employee payroll",
+  name: "ATS 1040 Scenario 1 Schedule H stays blocked without employee payroll",
 }, () => {
   const facts = SCENARIO_1040_01_FACTS;
   const result = runReturn({
@@ -380,6 +379,7 @@ Deno.test({
           ? IRSDependentRelationshipCode.Son
           : IRSDependentRelationshipCode.Daughter,
         months_in_home: dependent.monthsInHome,
+        months_lived_with_you_in_us: 12,
         lived_in_us_over_half_year: true,
         us_citizen_national_or_resident: true,
         provided_over_half_own_support: false,
@@ -884,6 +884,7 @@ Deno.test({
           relationship: DependentRelationship.Son,
           irs_relationship_code: IRSDependentRelationshipCode.Son,
           months_in_home: 12,
+          months_lived_with_you_in_us: 12,
           lived_in_us_over_half_year: true,
           us_citizen_national_or_resident: true,
           provided_over_half_own_support: false,
@@ -901,6 +902,7 @@ Deno.test({
           relationship: DependentRelationship.Daughter,
           irs_relationship_code: IRSDependentRelationshipCode.Daughter,
           months_in_home: 12,
+          months_lived_with_you_in_us: 12,
           lived_in_us_over_half_year: true,
           us_citizen_national_or_resident: true,
           provided_over_half_own_support: false,
