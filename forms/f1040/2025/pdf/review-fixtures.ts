@@ -8,8 +8,9 @@ import {
 import { EnergyType } from "../../nodes/inputs/f8835/index.ts";
 import { trustPartVStatementFixture } from "../../nodes/inputs/f3468/trust-part-v.fixture.ts";
 import { CoverageType } from "../../nodes/intermediate/forms/form8889/index.ts";
+import { IraOwner } from "../../nodes/intermediate/forms/form8606/index.ts";
 import { LanguagePreferenceCode } from "../../nodes/inputs/schedule_lep/index.ts";
-import { FilingStatus as SourceFilingStatus } from "../../nodes/types.ts";
+import { FilingStatus as SourceFilingStatus, TS } from "../../nodes/types.ts";
 import { form7217NonliquidatingDecrease } from "../form7217_732c_decrease.fixture.ts";
 
 /** Synthetic source returns for the held TY2025 filled-PDF review. */
@@ -5789,6 +5790,303 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "Form 4952 shows 900 investment income, 100 qualified dividends, and 800 deductible interest",
       "Schedule A adds the 800 investment-interest deduction to 18,000 sourced mortgage interest",
       "Forms 1099-INT and 1099-DIV reconcile with Form 1040 interest and dividend lines",
+    ],
+  },
+  {
+    id: "single-form4562-section179-w2-income-limit",
+    inputs: {
+      general: singleGeneral,
+      w2: [{
+        ...wage(30_000, 3_000, "Acme Software", "12-3456789"),
+        employee_ssn: "111-22-3333",
+      }],
+      schedule_c: [{
+        business_reference: "CONSULTING-2025",
+        line_a_principal_business: "Software consulting",
+        line_b_business_code: "541511",
+        line_f_accounting_method: "cash",
+        line_g_material_participation: true,
+        line_i_made_1099_payments: false,
+        line_32_at_risk: "a",
+        line_1_gross_receipts: 30_000,
+        line_13_depreciation: 30_000,
+      }],
+      form4562: {
+        asset: {
+          business_reference: "CONSULTING-2025",
+          activity_description: "Software consulting",
+          asset_description: "Computer server",
+          source_document_ref: "Synthetic 2025 server invoice 17",
+          placed_in_service_date: "2025-03-01",
+          cost: 30_000,
+          elected_cost: 30_000,
+          taxpayer_active_business_income: 60_000,
+          taxpayer_active_business_income_source_ref:
+            "Synthetic 2025 Schedule C and employee W-2 income workpaper",
+          prior_year_carryover: 0,
+          prior_year_carryover_source_ref:
+            "Synthetic 2024 Form 4562 line 13 review",
+          business_use_pct: 100,
+          is_listed_property: false,
+          bonus_elected_out: true,
+          no_other_depreciation_for_activity: true,
+          no_other_depreciation_assets_on_return: true,
+          return_asset_inventory_source_ref:
+            "Synthetic 2025 fixed asset register",
+          filing_status: SourceFilingStatus.Single,
+        },
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule_c", "schedule1", "form4562"],
+    reviewFocus: [
+      "Form 4562 prints the 30,000 section 179 deduction and its W-2-supported income limit",
+      "Schedule C has 30,000 receipts and 30,000 depreciation, leaving no business profit on Schedule 1",
+      "The computer-server description, service date, and filer identity match the native return",
+    ],
+  },
+  {
+    id: "single-form6781-two-section1256-accounts",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(75_000, 11_000, "Example Employer", "12-3456789")],
+      form6781: {
+        accounts: [
+          {
+            account_identification: "Broker A Form 1099-B",
+            gain_loss: 12_000,
+          },
+          {
+            account_identification: "Broker B Form 1099-B",
+            gain_loss: -2_000,
+          },
+        ],
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "form6781", "schedule_d"],
+    reviewFocus: [
+      "Form 6781 prints both account identities and their 12,000 gain and 2,000 loss",
+      "The 40/60 split reaches Schedule D as 4,000 short-term and 6,000 long-term gain",
+      "Schedule D and Form 1040 capital gain agree with the native documents",
+    ],
+  },
+  {
+    id: "single-form8863-lifetime-learning-scholarship",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(75_000, 11_000, "Example Employer", "12-3456789")],
+      f8863: [{
+        credit_type: "llc",
+        student_name: "Student Test",
+        student_ssn: "222-33-4444",
+        filer_magi: 75_000,
+        filing_status: SourceFilingStatus.Single,
+        llc_adjusted_expenses: 7_500,
+        aoc_claimed_4_prior_years: false,
+        education_expense_workpaper: {
+          form1098t_box1_payments: 8_000,
+          form1098t_box5_scholarships: 1_000,
+          form1098t_document_id: "1098T-2025-LLC-STUDENT",
+          payment_record_ids: ["TUITION-2025-LLC", "BOOKS-2025-LLC"],
+          paid_tuition_required_fees: 8_000,
+          paid_course_materials_to_institution: 500,
+          institution_materials_requirement_record_id:
+            "COURSE-2025-LLC-REQUIRED-BOOKS",
+          institution_materials_payment_record_id: "BOOKS-2025-LLC",
+          paid_course_materials_elsewhere: 0,
+          outside_materials_needed_for_course: false,
+          institution_materials_required_for_enrollment: true,
+          tax_free_assistance_applied_to_expenses: 1_000,
+          qualified_expense_refunds: 0,
+          expenses_used_for_other_tax_benefits: 0,
+        },
+        filing_details: {
+          first_name: "Student",
+          last_name: "Test",
+          name_control: "TEST",
+          institutions: [{
+            name: "Test University",
+            us_address: {
+              line1: "1 College Way",
+              city: "Austin",
+              state: "TX",
+              zip: "78701",
+            },
+            current_year_1098t_received: true,
+            prior_year_1098t_received: false,
+            ein: "12-3456789",
+          }],
+        },
+      }],
+      f8863_credit_limit_worksheet: {
+        credit_limit_worksheet: {
+          form1040_line18_tax: 7_955,
+          schedule3_line1_foreign_tax_credit: 0,
+          schedule3_line2_dependent_care_credit: 0,
+          schedule3_line6d: 0,
+          schedule3_line6l: 0,
+        },
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "f8863", "schedule3"],
+    reviewFocus: [
+      "Form 8863 shows 7,500 adjusted expenses after the 1,000 scholarship and a 1,500 LLC credit",
+      "Student and institution identities agree with the 1098-T and payment workpaper",
+      "Schedule 3 and Form 1040 carry the same nonrefundable education credit",
+    ],
+  },
+  {
+    id: "single-form8606-post-year-contribution-and-distribution",
+    inputs: {
+      general: { ...singleGeneral, taxpayer_dob: "1960-06-15" },
+      w2: [{
+        ...wage(100_000, 15_000, "Austin Employer", "987654321"),
+        employee_ssn: "111-22-3333",
+        box13_retirement_plan: true,
+      }],
+      f1099r: [{
+        payer_name: "IRA Custodian",
+        payer_ein: "123456789",
+        source_document_reference: "2025 issued Form 1099-R",
+        box1_gross_distribution: 20_000,
+        box2a_taxable_amount: 20_000,
+        box7_distribution_code: "7",
+        box7_ira_simple_indicator: true,
+        ts: "T",
+        prior_ira_basis: 6_000,
+        year_end_ira_value: 10_000,
+        form8606_distribution_evidence: {
+          prior_form8606: {
+            tax_year: 2024,
+            source_document_reference: "2024 filed Form 8606",
+            owner_ssn: "111223333",
+            filed_line14_basis: 6_000,
+          },
+          year_end_statement: {
+            as_of: "2025-12-31",
+            source_document_reference: "2025 all-IRA custodian statement",
+            owner_ssn: "111223333",
+            all_traditional_ira_balances_included_confirmed: true,
+            total_fair_market_value: 10_000,
+          },
+          form1099r_source_document_reference: "2025 issued Form 1099-R",
+          no_current_nondeductible_contribution_confirmed: false,
+          no_other_traditional_ira_distribution_or_conversion_confirmed: true,
+          no_rollover_repayment_qcd_hsa_or_disaster_amount_confirmed: true,
+        },
+      }],
+      ira_deduction_worksheet: {
+        filing_status: SourceFilingStatus.Single,
+        magi: 116_000,
+        ira_contribution: 1_000,
+        active_participant: true,
+        form8606_filing_details: {
+          owner: IraOwner.Taxpayer,
+          prior_basis_documented_from_2024_form8606: true,
+          no_ira_distributions_or_conversions_confirmed: false,
+        },
+        form8606_current_contribution_source: {
+          form5498: {
+            tax_year: 2025,
+            source_document_reference: "2025 issued traditional IRA Form 5498",
+            custodian_ein: "123456789",
+            owner_ssn: "111223333",
+            traditional_ira_confirmed: true,
+            no_returned_contributions_confirmed: true,
+            no_sep_or_simple_employer_contributions_confirmed: true,
+            box1_ira_contributions: 1_000,
+            box2_rollover_contributions: 0,
+          },
+          contribution_receipt: {
+            source_document_reference: "2026 IRA receipt designated for 2025",
+            custodian_ein: "123456789",
+            owner_ssn: "111223333",
+            designated_tax_year: 2025,
+            received_on: "2026-02-15",
+            contribution_amount: 1_000,
+          },
+        },
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "form8606"],
+    reviewFocus: [
+      "Form 8606 line 4 defers the 1,000 designated 2025 contribution received in February 2026",
+      "Prior 6,000 basis and year-end 10,000 IRA value leave 4,000 nontaxable and 16,000 taxable distribution",
+      "Form 1040 IRA distribution lines, native Form 8606, and PDF owner agree",
+    ],
+  },
+  {
+    id: "single-form7206-schedule-c-health-plan",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        taxpayer_can_be_claimed_as_dependent: false,
+        qbi_no_prior_loss_or_suspended_loss_confirmed: true,
+        qbi_not_patron_of_specified_cooperative_confirmed: true,
+      },
+      schedule_c: [{
+        business_reference: "HEALTH-CONSULTING",
+        proprietor_recipient: TS.T,
+        line_a_principal_business: "Consulting",
+        line_b_business_code: "541600",
+        line_c_business_name: "Alex Consulting",
+        line_f_accounting_method: "cash",
+        line_g_material_participation: true,
+        line_i_made_1099_payments: false,
+        qbi_no_other_adjustments_confirmed: true,
+        line_1_gross_receipts: 50_000,
+      }],
+      form7206: {
+        single_schedule_c_plan: {
+          business_reference: "HEALTH-CONSULTING",
+          plan_identifier: "ALEX-HEALTH-2025",
+          recipient: TS.T,
+          taxpayer_identity: { name: "Alex Example", ssn: "111223333" },
+          premium_months: Array.from({ length: 12 }, (_, index) => ({
+            month: index + 1,
+            paid_premium: 1_000,
+            policy_source_reference:
+              "Synthetic 2025 taxpayer-only policy statement",
+            payment_source_reference: `Synthetic 2025 premium receipt ${
+              index + 1
+            }`,
+            covered_person: "taxpayer",
+            eligible_for_subsidized_employer_plan: false,
+            employer_plan_review_reference:
+              "Synthetic 2025 employer eligibility review",
+            marketplace_policy: false,
+            long_term_care_policy: false,
+            public_safety_officer_excluded_amount: 0,
+          })),
+          schedule_c_line31_net_profit: 50_000,
+          schedule1_line15_se_tax_deduction: 3_532,
+          schedule1_line16_retirement_deduction: 0,
+          plan_established_under_business: true,
+          sole_positive_business_verified: true,
+          no_form2555: true,
+          no_schedule_se_optional_method: true,
+          no_other_earned_income: true,
+        },
+        marketplace_ptc_premium_overlap: false,
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: [
+      "f1040",
+      "schedule_c",
+      "schedule1",
+      "schedule_se",
+      "schedule2",
+      "form7206",
+      "form8995",
+    ],
+    reviewFocus: [
+      "Form 7206 prints twelve 1,000 premium months and the 12,000 business-plan deduction",
+      "Schedule C profit, Schedule SE deduction, Schedule 1 line 17, and Form 1040 AGI reconcile",
+      "Form 8995 QBI excludes the linked health-insurance and half-SE-tax deductions",
     ],
   },
 ];

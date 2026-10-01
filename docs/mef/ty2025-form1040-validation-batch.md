@@ -263,7 +263,7 @@ scenario packet PDF as if it were a generated return.
 The workspace has blank IRS PDF templates in `.state/field-dumps/cache` and
 source ATS scenario PDFs in `.state/research/docs/ats-ty2025`. These are not
 filled-output fixtures. `forms/f1040/2025/pdf/review-fixtures.ts` now holds
-123 synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts`
+128 synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts`
 can run them through the real return graph and PDF builder. Earlier on
 2026-09-29, the first sixteen
 generated 94 pages successfully under
@@ -284,8 +284,8 @@ deno run --allow-read scripts/plan-ty2025-pdf-review.ts > /absolute/new/review-p
 
 The read-only plan enumerates all fixture IDs, expected PDF descriptor keys,
 synthetic owner SSNs, and review focus, then lists registered PDF keys not
-represented by any fixture. The current fixture metadata names **47 distinct
-registered PDF keys out of 112**; **65 keys remain without a fixture**, across
+represented by any fixture. The current fixture metadata names **52 distinct
+registered PDF keys out of 112**; **60 keys remain without a fixture**, across
 115 registered descriptors. The eight older human-readable expected-form aliases
 have been replaced with their exact descriptor keys, while repeated keys still
 indicate multiple expected copies. The plan does not prove that any PDF renders.
@@ -319,18 +319,26 @@ interest and dividends through Form 4952 and Schedule A. Each uses the same
 synthetic W-2 filer identity as the basic return case. These fixture definitions
 still await the bulk run and visual review.
 
-Uncovered registered PDF keys at this checkpoint (65):
+Five more fixtures reproduce supported full-return routes: a W-2 income-limited
+section 179 asset on Form 4562, two Section 1256 broker accounts on Form 6781,
+a scholarship-adjusted lifetime learning credit on Form 8863, a sourced
+post-year IRA contribution and distribution on Form 8606, and a twelve-month
+Schedule C health plan on Form 7206. The source, owner, and final-return joins
+come from existing route tests; these fixture definitions have not yet been
+rendered or validated in the held batch.
+
+Uncovered registered PDF keys at this checkpoint (60):
 
 ```text
 f2106 f2210f f2439 f4136 f4255 f4835
 f5471_parent f5471_schedule_e f5471_schedule_h f5471_schedule_i1
 f5471_schedule_j f5471_schedule_m f5471_schedule_p f5471_schedule_q
 f5471_schedule_r f5884 f8611 f8820 f8834 f8844 f8854 f8854_annual
-f8859 f8863 f8864 f8881 f8882 f8888 f8911 f8911_schedule_a f8912
+f8859 f8864 f8881 f8882 f8888 f8911 f8911_schedule_a f8912
 f8915f f8936 f8941 f8978 f8994 f965
-form4562 form461 form4684 form5329
-form5695 form6781 form7203 form7206 form8396 form8582cr
-form8606 form8815 form8839 form8853 form8919
+form461 form4684 form5329
+form5695 form7203 form8396 form8582cr
+form8815 form8839 form8853 form8919
 form8978_schedule_a form8990 form8992 form8992_schedule_a form8995a
 form8995a_schedule_a form8995a_schedule_b form8995a_schedule_c
 form8995a_schedule_d form982 form_8829 schedule_j schedule_r
