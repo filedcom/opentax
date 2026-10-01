@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **52 open TODOs and no
-completed checkboxes**. The **640 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **641 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -28,7 +28,7 @@ diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 141-case filled-PDF plan with an XSD gate is prepared; the prior full command reached 10,168 passes and 174 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 640 bounded routes and
+**Implemented coverage.** The completed ledger records 641 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -117,6 +117,8 @@ external receipt and owner proof remain open. Final Form 1040 export also checks
 printed AGI, deductions, and taxable income against their component lines.
 Filed overpayment and amount owed now replay whole-dollar tax/payment balance
 and any reported estimated-tax penalty before native/PDF projection.
+Final native/PDF export now matches filing status and an explicitly supplied
+digital-assets answer to the retained general source record.
 Schedule 1-A now rejects omitted qualifying tip employers; Schedule EIC export
 replays the claimed child's exact U.S. residence months into native and PDF
 line 6, requiring that fact for an otherwise qualifying child. The 2025 Schedule 2 graph and
@@ -209,10 +211,10 @@ These gates and a filing-ready release remain open.
 
 ## Automated and artifact validation
 
-- [ ] Finish implementation and coverage decisions above before the agreed single full-batch gate. Existing focused cases and historical passes are not evidence for the current worktree.
-- [ ] Run `deno task test` as the final full batch after the retained routes and scope decisions are complete; record commit, command, tool versions, timestamp, pass/fail/ignored totals, failures, and ignored-test reasons. Fix failures, then rerun the same full command until the release batch passes.
+- [ ] Finish the non-named implementation and coverage decisions for this phase before the agreed single full-batch gate. The 20 named-form parent gaps are deferred to the following phase; existing focused cases and historical passes are not evidence for the current worktree.
+- [ ] Run `deno task test` as the full batch for this phase after its retained routes and scope decisions are complete; record commit, command, tool versions, timestamp, pass/fail/ignored totals, failures, and ignored-test reasons. Fix failures, then rerun the same full command until this phase passes.
 - [ ] For every retained positive filing route, generate a full return from a source-backed fixture and validate emitted XML against the locally cached TY2025 IRS schema, recording its provenance and digest. Check source-to-calculation-to-Form-1040 totals, required references/attachments, negative and conflicting cases, and IRS business rules separately from structural XSD success.
-- [ ] Generate the sixty prepared synthetic filled-PDF cases through the real graph and PDF builder as described in the [validation batch](docs/mef/ty2025-form1040-validation-batch.md); render and inspect every page, mark checkboxes/amounts/owner identity/page order/continuations, and add cases for each uncovered descriptor or branch.
+- [ ] Generate the 141 prepared synthetic filled-PDF cases through the real graph and PDF builder as described in the [validation batch](docs/mef/ty2025-form1040-validation-batch.md); render and inspect every page, mark checkboxes/amounts/owner identity/page order/continuations, and add cases for each uncovered descriptor or branch.
 - [ ] Compare each filled PDF to its source, calculated pending data, native XML, and Form 1040 totals. Retain review artifacts and record each discrepancy and fix; blank templates and ATS source PDFs do not count as filled-output review.
 
 ## IRS ATS and delivery
