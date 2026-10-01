@@ -104,6 +104,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "text",
+    domainKey: "line6j_alt_fuel_vehicle_refueling",
+    pdfField: "topmostSubform[0].Page1[0].f1_18[0]",
+  },
+  {
+    kind: "text",
     domainKey: "line6k_tax_credit_bonds",
     pdfField: "topmostSubform[0].Page1[0].f1_19[0]",
   },
