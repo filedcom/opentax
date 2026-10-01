@@ -56,11 +56,14 @@ const dependent = {
   },
 };
 
-function wageDependentPolicy(annualAptc: 600 | 4_800) {
+function wageDependentPolicy(
+  annualAptc: 600 | 4_800,
+  wageDependent = dependent,
+) {
   const generalSource = {
     filing_status: "single" as const,
     taxpayer_ssn: "123456789",
-    dependents: [dependent],
+    dependents: [wageDependent],
   };
   const generalOutput = general.compute(
     { taxYear: 2025, formType: "f1040" },
@@ -129,6 +132,117 @@ for (const aptc of [600, 4_800] as const) {
     assertEquals(form8962Pdf.instances?.(projected, filer, pending)?.length, 1);
   });
 }
+
+const twoEmployerDependent = {
+  ...dependent,
+  ptc_tax_return: {
+    ...dependent.ptc_tax_return,
+    wage_forms_w2: [
+      {
+        ...dependent.ptc_tax_return.wage_forms_w2[0],
+        source_document_id: "casey-issued-2025-w2-summer",
+        box1_wages: 9_000,
+      },
+      {
+        ...dependent.ptc_tax_return.wage_forms_w2[0],
+        source_document_id: "casey-issued-2025-w2-autumn",
+        employer_name: "Autumn Employer",
+        employer_ein: "556677889",
+        box1_wages: 7_000,
+      },
+    ],
+  },
+};
+
+Deno.test("Form 8962 sums two dependent W-2 employers into sourced household MAGI and annual MeF/PDF", () => {
+  const { fields, pending } = wageDependentPolicy(600, twoEmployerDependent);
+  assertEquals(fields.dependents_modified_agi, 16_000);
+  assertEquals(fields.household_income, 86_000);
+  const xml = form8962.build(fields, { filer, pending });
+  assertStringIncludes(
+    xml,
+    "<TotalDependentsModifiedAGIAmt>16000</TotalDependentsModifiedAGIAmt>",
+  );
+  const projected = form8962Pdf.projectFields?.(fields, pending) ?? {};
+  assertEquals(projected.dependents_modified_agi, 16_000);
+  assertEquals(form8962Pdf.instances?.(projected, filer, pending)?.length, 1);
+});
+
+Deno.test("Form 8962 two-W-2 dependent rejects amount, identity, duplicate source, and threshold tampering", () => {
+  const { fields, pending } = wageDependentPolicy(600, twoEmployerDependent);
+  const wages = twoEmployerDependent.ptc_tax_return.wage_forms_w2;
+  const changed = (replacement: typeof wages) => ({
+    ...pending,
+    general: {
+      ...pending.general,
+      dependents: [{
+        ...twoEmployerDependent,
+        ptc_tax_return: {
+          ...twoEmployerDependent.ptc_tax_return,
+          wage_forms_w2: replacement,
+        },
+      }],
+    },
+  });
+  assertThrows(() =>
+    form8962.build(fields, {
+      filer,
+      pending: changed([{ ...wages[0], box1_wages: 8_999 }, wages[1]]),
+    })
+  );
+  assertThrows(() =>
+    form8962Pdf.projectFields?.(
+      fields,
+      changed([wages[0], { ...wages[1], employee_ssn: "111223333" }]),
+    )
+  );
+  assertThrows(() =>
+    general.compute(
+      { taxYear: 2025, formType: "f1040" },
+      general.inputSchema.parse(
+        changed([
+          wages[0],
+          { ...wages[1], employer_ein: wages[0].employer_ein },
+        ]).general,
+      ),
+    )
+  );
+  assertThrows(() =>
+    general.compute(
+      { taxYear: 2025, formType: "f1040" },
+      general.inputSchema.parse(
+        changed([
+          wages[0],
+          { ...wages[1], source_document_id: wages[0].source_document_id },
+        ]).general,
+      ),
+    )
+  );
+  const thresholdDependent = {
+    ...twoEmployerDependent,
+    ptc_tax_return: {
+      ...twoEmployerDependent.ptc_tax_return,
+      filed_form1040: {
+        ...twoEmployerDependent.ptc_tax_return.filed_form1040,
+        line1z_wages: 15_750,
+        line11b_agi: 15_750,
+      },
+      wage_forms_w2: [
+        { ...wages[0], box1_wages: 8_000 },
+        { ...wages[1], box1_wages: 7_750 },
+      ],
+    },
+  };
+  assertThrows(() =>
+    general.compute(
+      { taxYear: 2025, formType: "f1040" },
+      general.inputSchema.parse({
+        ...pending.general,
+        dependents: [thresholdDependent],
+      }),
+    )
+  );
+});
 
 Deno.test("Form 8962 wage-only dependent rejects changed W-2, refund-only wages, and return credit", () => {
   const { fields, pending } = wageDependentPolicy(600);

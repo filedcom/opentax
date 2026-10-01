@@ -185,3 +185,18 @@ only the filer, and an annual case also covers only the dependent. Focused
 missing, duplicate, and other-family SSN rejection cases were added but are
 unrun. This check establishes only consistency with captured Part II facts, not
 Marketplace authenticity, monthly MEC eligibility, or IRS acceptance.
+
+## Two distinct dependent W-2 employers (2026-10-01, unrun)
+
+The required-filing wage-only source now accepts two 2025 Forms W-2 for one
+claimed dependent when their document IDs and employer EINs are distinct. The
+combined box 1 wages must equal that dependent's referenced filed single Form
+1040 lines 1z and 11b; the dependent must be under 65, not blind, and have
+more than $15,750 of wages to establish a required 2025 filing. The existing
+one-policy annual and bounded monthly Form 8962 routes use the summed dependent
+MAGI and recheck each W-2 recipient SSN before native MeF or PDF projection.
+An authored $9,000 plus $7,000 annual-policy fixture reaches household income
+and both filing outputs, with changed wage amount, recipient, repeated employer
+or document, and exact-threshold rejection fixtures. All remain unrun pending
+the bulk validation pass. Two W-2s mixed with interest, more employers, other
+filing triggers, and source-byte authentication remain outside this slice.

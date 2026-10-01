@@ -164,7 +164,7 @@ export const dependentSchema = z.object({
           employee_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
           box1_wages: z.number().positive(),
         }).strict(),
-      ).length(1).optional(),
+      ).min(1).max(2).optional(),
     }).strict(),
   ]).optional(),
   taxpayer_provided_over_half_support: z.boolean().optional(),
@@ -340,6 +340,17 @@ export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
       (sum, source) => sum + source.box1_wages,
       0,
     ) ?? 0;
+    if (
+      taxReturn.wage_forms_w2 &&
+      (new Set(taxReturn.wage_forms_w2.map((form) => form.source_document_id))
+            .size !== taxReturn.wage_forms_w2.length ||
+        new Set(taxReturn.wage_forms_w2.map((form) => form.employer_ein))
+            .size !== taxReturn.wage_forms_w2.length)
+    ) {
+      throw new Error(
+        "Form 8962 dependent W-2 wage sources need distinct documents and employers",
+      );
+    }
     const wageOnly = wages > 0 && taxableInterest === 0 &&
       exemptInterest === 0 && taxReturn.interest_forms1099.length === 0;
     const interestOnly = wages === 0 && taxableInterest > 0 &&
@@ -349,7 +360,7 @@ export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
       taxReturn.interest_forms1099.length === 1;
     if (!wageOnly && !interestOnly && !mixedWagesAndInterest) {
       throw new Error(
-        "Form 8962 dependent required-filing source supports one W-2 wage-only, Form 1099-INT interest-only, or one W-2 plus one Form 1099-INT return",
+        "Form 8962 dependent required-filing source supports one or two W-2s wage-only, Form 1099-INT interest-only, or one W-2 plus one Form 1099-INT return",
       );
     }
     if (

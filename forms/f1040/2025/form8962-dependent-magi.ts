@@ -116,8 +116,8 @@ export function reconcileDependentMagi(
         : "Form 8962 two dependents need distinct filed-return and interest source documents",
     );
   }
-  // The required-filing source is limited to interest-only, one W-2 wage-only,
-  // or one W-2 plus one 1099-INT on a single return. Other income/adjustments,
+  // The required-filing source is limited to interest-only, one or two W-2s
+  // wage-only, or one W-2 plus one 1099-INT on a single return. Other income/adjustments,
   // Form 2555, and Social Security
   // cannot enter this bounded Worksheet 1-2 route by assertion.
   const magi = ptcDependentsModifiedAgi(claimed);
