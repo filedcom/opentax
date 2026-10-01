@@ -8,6 +8,7 @@ import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import {
   reconcileCashCapitalAndNewNote,
   reviewedForm7203DebtEvidenceSchema,
+  sumPrincipalRepayments,
 } from "./debt-note.ts";
 import { reviewedStockLossLedgerSchema } from "./stock-ledger.ts";
 
@@ -129,7 +130,7 @@ function tentativeDebtBasis(input: Form7203Input): number {
     ? input.reviewed_debt_evidence
     : undefined;
   return (input.debt_basis_beginning ?? 0) + (input.new_loans ?? 0) -
-    (note?.principal_repayment?.amount ?? 0) -
+    sumPrincipalRepayments(note?.principal_repayments) -
     (note?.second_formal_note?.principal_repayment?.amount ?? 0);
 }
 
@@ -226,7 +227,7 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
     if (note?.second_formal_note) {
       const stock = input.stock_basis_beginning ?? 0;
       const firstDebtBasis = note.cash_advance_amount -
-        (note.principal_repayment?.amount ?? 0);
+        sumPrincipalRepayments(note.principal_repayments);
       const totalDebtBasis = firstDebtBasis +
         note.second_formal_note.cash_advance_amount -
         (note.second_formal_note.principal_repayment?.amount ?? 0);

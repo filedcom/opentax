@@ -234,11 +234,35 @@ debt basis on line 30. Line 34 reportable repayment gain is zero in this bounded
 case. Part III and Schedule E allocate current ordinary loss to stock, then the
 repaid note's remaining basis; Schedule 1 and Form 1040 carry the resulting
 allowed loss. Positive and altered date/source/return fixtures are authored for
-the deferred batch. This does not cover a prior reduced-basis note, multiple
-notes, interest in the payment, more than one repayment, or authenticated bank
-and corporate-record bytes. See the
+the deferred batch. This example does not cover a prior reduced-basis note,
+interest in the payment, or authenticated bank and corporate-record bytes. See the
 [Form 7203](https://www.irs.gov/pub/irs-pdf/f7203.pdf) and
 [instructions](https://www.irs.gov/instructions/i7203).
+
+## One new formal note with two principal repayments (2026-10-01, unrun)
+
+The direct first-note source now uses one `principal_repayments` list containing
+one or two strictly dated 2025 principal-only payments. For two payments on a
+single new note, each names that note and has a distinct corporate loan ledger
+and shareholder deposit reference. Dates must advance after the signed note;
+their total must remain below the full-basis advance and equal K-1 box 16 code
+E. The source confirms zero opening debt basis, no earlier debt-basis reduction,
+and no other basis changes. The one-payment and no-payment first-note routes use
+the same direct list shape; the old singular first-note field is removed.
+
+Both payments precede year-end loss allocation. Form 7203 Part II lines 19,
+26, 32, and 33 report their aggregate, lines 20/27/29 use the remaining note
+balance, and line 30 applies the debt-supported ordinary loss. The bounded
+example advances $2,000, repays $200 and $350 on separate dates, and leaves
+$1,450 of debt basis to support loss after $1,500 of stock basis. Its $2,950
+allowed Schedule E loss joins Schedule 1 line 5 and Form 1040 line 8; native
+and PDF projections replay the same totals. Positive, duplicate-date/record,
+K-1 total, overpayment, nonprincipal, and return-tamper fixtures are authored
+for the deferred batch. Two payments on the first note together with a second
+formal note, reduced prior basis, repayment gain, interest allocation, and
+authenticated bank or corporate records remain outside this route. The
+[Form 7203 instructions](https://www.irs.gov/instructions/i7203) require a
+separate formal-note column and the loan-specific principal total on line 19.
 
 ## One new formal-note debt loss route (2026-10-01, unrun)
 

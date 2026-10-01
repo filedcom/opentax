@@ -213,12 +213,12 @@ Deno.test("Form 7203 two-note second principal repayment replays into return, na
     reconcileNewFormalNotes({
       ...notes,
       no_2025_repayments_confirmed: false,
-      principal_repayment: {
+      principal_repayments: [{
         ...secondNote.principal_repayment,
         formal_note_id: oneNote.formal_note_id,
         corporate_loan_ledger_reference: "first note loan ledger",
         shareholder_bank_deposit_reference: "first note bank deposit",
-      },
+      }],
     }, source)
   );
   assertThrows(() =>
@@ -342,7 +342,7 @@ Deno.test("Form 7203 sourced principal repayment reduces debt basis before the c
   const repaidNote = {
     ...oneNote,
     no_2025_repayments_confirmed: false,
-    principal_repayment: {
+    principal_repayments: [{
       formal_note_id: oneNote.formal_note_id,
       date: "2025-08-15",
       amount: 500,
@@ -351,7 +351,7 @@ Deno.test("Form 7203 sourced principal repayment reduces debt basis before the c
       shareholder_bank_deposit_reference:
         "shareholder bank principal deposit 2025-08",
       principal_only_confirmed: true,
-    },
+    }],
   };
   const source = {
     ...oneNoteK1,
@@ -421,10 +421,10 @@ Deno.test("Form 7203 sourced principal repayment reduces debt basis before the c
   assertThrows(() =>
     reconcileNewFormalNotes({
       ...repaidNote,
-      principal_repayment: {
-        ...repaidNote.principal_repayment,
+      principal_repayments: [{
+        ...repaidNote.principal_repayments[0],
         date: "2025-03-01",
-      },
+      }],
     }, source)
   );
   assertThrows(() =>
@@ -437,10 +437,10 @@ Deno.test("Form 7203 sourced principal repayment reduces debt basis before the c
             ...source,
             form7203_debt_evidence: {
               ...repaidNote,
-              principal_repayment: {
-                ...repaidNote.principal_repayment,
+              principal_repayments: [{
+                ...repaidNote.principal_repayments[0],
                 amount: 600,
-              },
+              }],
             },
           }],
         },
@@ -636,7 +636,7 @@ Deno.test("Form 7203 two formal notes reconcile one identified principal repayme
     ...oneNote,
     current_box1_ordinary_loss: 2_500,
     no_2025_repayments_confirmed: false,
-    principal_repayment: {
+    principal_repayments: [{
       formal_note_id: oneNote.formal_note_id,
       date: "2025-08-15",
       amount: 500,
@@ -645,7 +645,7 @@ Deno.test("Form 7203 two formal notes reconcile one identified principal repayme
       shareholder_bank_deposit_reference:
         "2025 shareholder note-01 bank deposit",
       principal_only_confirmed: true,
-    },
+    }],
     second_formal_note: {
       formal_note_id: "note-2025-02",
       signed_note_document_reference: "signed note PDF 2025-02",
@@ -743,10 +743,10 @@ Deno.test("Form 7203 two formal notes reconcile one identified principal repayme
   assertThrows(() =>
     reconcileNewFormalNotes({
       ...repaidTwoNotes,
-      principal_repayment: {
-        ...repaidTwoNotes.principal_repayment,
+      principal_repayments: [{
+        ...repaidTwoNotes.principal_repayments[0],
         formal_note_id: repaidTwoNotes.second_formal_note.formal_note_id,
-      },
+      }],
     }, source)
   );
   assertThrows(() =>
@@ -782,7 +782,7 @@ Deno.test("Form 7203 two formal notes replay each identified repayment through t
     ...oneNote,
     current_box1_ordinary_loss: 2_000,
     no_2025_repayments_confirmed: false,
-    principal_repayment: {
+    principal_repayments: [{
       formal_note_id: oneNote.formal_note_id,
       date: "2025-08-15",
       amount: 500,
@@ -790,7 +790,7 @@ Deno.test("Form 7203 two formal notes replay each identified repayment through t
         "2025 note-01 corporate principal ledger",
       shareholder_bank_deposit_reference: "2025 note-01 shareholder deposit",
       principal_only_confirmed: true,
-    },
+    }],
     second_formal_note: {
       formal_note_id: "note-2025-02",
       signed_note_document_reference: "signed note PDF 2025-02",
@@ -927,7 +927,7 @@ Deno.test("Form 7203 two formal notes replay each identified repayment through t
         principal_repayment: {
           ...notes.second_formal_note.principal_repayment,
           shareholder_bank_deposit_reference:
-            notes.principal_repayment.shareholder_bank_deposit_reference,
+            notes.principal_repayments[0].shareholder_bank_deposit_reference,
         },
       },
     }, source)

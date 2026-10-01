@@ -1,5 +1,6 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { projectReviewedStockLoss7203 } from "../../form7203_stock_loss_projection.ts";
+import { sumPrincipalRepayments } from "../../../nodes/intermediate/forms/form7203/debt-note.ts";
 
 // The official Form 7203 is Rev. December 2022 and remains the current IRS
 // form. Widget names were inspected from its two-page AcroForm field tree.
@@ -142,7 +143,7 @@ export const form7203StockLossPdf: PdfFormDescriptor = {
       allowedDebt2,
       carryover,
     } = projectReviewedStockLoss7203(raw, allPending ?? {}, filer);
-    const repayment = note?.principal_repayment?.amount ?? 0;
+    const repayment = sumPrincipalRepayments(note?.principal_repayments);
     const debtAfterRepayment = (note?.cash_advance_amount ?? 0) - repayment;
     const secondAdvance = note?.second_formal_note?.cash_advance_amount ?? 0;
     const secondRepayment =

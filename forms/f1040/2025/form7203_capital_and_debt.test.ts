@@ -188,7 +188,7 @@ Deno.test("Form 7203 capital-and-debt route rejects overlapping source and alter
 const repaidNote = {
   ...note,
   no_2025_repayments_confirmed: false,
-  principal_repayment: {
+  principal_repayments: [{
     formal_note_id: note.formal_note_id,
     date: "2025-09-15",
     amount: 400,
@@ -197,7 +197,7 @@ const repaidNote = {
     shareholder_bank_deposit_reference:
       "shareholder loan repayment deposit 2025-09-15",
     principal_only_confirmed: true,
-  },
+  }],
 };
 const repaidSource = {
   ...source,
@@ -239,16 +239,145 @@ Deno.test("Form 7203 cash capital plus a partially repaid new note support one K
   await prepared.renderPdf();
 });
 
+Deno.test("Form 7203 sums two dated principal repayments on one fully based note before loss allocation", async () => {
+  const twoRepayments = {
+    ...repaidNote,
+    principal_repayments: [{
+      ...repaidNote.principal_repayments[0],
+      date: "2025-08-15",
+      amount: 200,
+      corporate_loan_ledger_reference:
+        "corporate loan principal ledger 2025-08-15",
+      shareholder_bank_deposit_reference: "shareholder loan deposit 2025-08-15",
+    }, {
+      ...repaidNote.principal_repayments[0],
+      date: "2025-11-15",
+      amount: 350,
+      corporate_loan_ledger_reference:
+        "corporate loan principal ledger 2025-11-15",
+      shareholder_bank_deposit_reference: "shareholder loan deposit 2025-11-15",
+    }],
+  };
+  const twoPaymentSource = {
+    ...repaidSource,
+    box16_code_e_loan_repayment: 550,
+    form7203_debt_evidence: twoRepayments,
+  };
+  const result = filedReturn(twoPaymentSource);
+  assertEquals(result.diagnostics, []);
+  const pending = normalizeAllPending(result.pending);
+  assertEquals(pending.schedule1.line5_schedule_e, -2_950);
+  assertEquals(pending.f1040.line8_additional_income, -2_950);
+  assertEquals(pending.f1040.line11_agi, 47_050);
+  assertEquals(result.carryforwards.suspended_scorp_loss_7203, 1_050);
+  const xml = buildReviewedStockLoss7203(pending.form7203, { filer, pending });
+  assertStringIncludes(
+    xml,
+    "<PrincipalDebtRepaymentAmt>550</PrincipalDebtRepaymentAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<NontaxableDebtRepaymentAmt>550</NontaxableDebtRepaymentAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<LoanBalanceEndTaxYrAmt>1450</LoanBalanceEndTaxYrAmt>",
+  );
+  const printed = form7203StockLossPdf.instances?.(
+    pending.form7203,
+    filer,
+    pending,
+  )?.[0];
+  assertEquals(printed?.line19_debt1, 550);
+  assertEquals(printed?.line26_debt1, 550);
+  assertEquals(printed?.line29_debt1, 1_450);
+  assertEquals(printed?.line30_debt1, 1_450);
+  assertEquals(printed?.line34_debt1, undefined);
+  assertEquals(printed?.line47_carryover, 1_050);
+  const prepared = await f1040_2025.prepareReturn(result.pending, filer);
+  assertStringIncludes(prepared.bundle.xml, "<IRS7203 ");
+  assertStringIncludes(prepared.bundle.xml, "<IRS1040ScheduleE ");
+  assertStringIncludes(
+    prepared.bundle.xml,
+    "<NetPrtshpSCorpIncomeOrLossAmt>-2950</NetPrtshpSCorpIncomeOrLossAmt>",
+  );
+  await prepared.renderPdf();
+
+  const invalid = (
+    payments: typeof twoRepayments.principal_repayments,
+    codeE = 550,
+  ) =>
+    filedReturn({
+      ...twoPaymentSource,
+      box16_code_e_loan_repayment: codeE,
+      form7203_debt_evidence: {
+        ...twoRepayments,
+        principal_repayments: payments,
+      },
+    });
+  const rejected = (result: ReturnType<typeof filedReturn>) =>
+    assertEquals(
+      result.diagnostics.some((item) => item.severity === "error"),
+      true,
+    );
+  rejected(invalid(twoRepayments.principal_repayments, 549));
+  rejected(invalid([
+    twoRepayments.principal_repayments[0],
+    { ...twoRepayments.principal_repayments[1], date: "2025-08-15" },
+  ]));
+  rejected(invalid([
+    twoRepayments.principal_repayments[0],
+    {
+      ...twoRepayments.principal_repayments[1],
+      corporate_loan_ledger_reference:
+        twoRepayments.principal_repayments[0].corporate_loan_ledger_reference,
+    },
+  ]));
+  rejected(invalid([
+    twoRepayments.principal_repayments[0],
+    { ...twoRepayments.principal_repayments[1], amount: 1_800 },
+  ], 2_000));
+  rejected(invalid([
+    twoRepayments.principal_repayments[0],
+    {
+      ...twoRepayments.principal_repayments[1],
+      principal_only_confirmed: false,
+    },
+  ]));
+  assertThrows(() =>
+    buildReviewedStockLoss7203(pending.form7203, {
+      filer,
+      pending: {
+        ...pending,
+        schedule1: { ...pending.schedule1, line5_schedule_e: -2_949 },
+      },
+    })
+  );
+  assertThrows(() =>
+    form7203StockLossPdf.instances?.(
+      {
+        ...pending.form7203,
+        reviewed_debt_evidence: {
+          ...twoRepayments,
+          principal_repayments: [twoRepayments.principal_repayments[0]],
+        },
+      },
+      filer,
+      pending,
+    )
+  );
+});
+
 Deno.test("Form 7203 combined capital, note and repayment reject cross-source or return tampering", () => {
   const overlap = filedReturn({
     ...repaidSource,
     form7203_debt_evidence: {
       ...repaidNote,
-      principal_repayment: {
-        ...repaidNote.principal_repayment,
+      principal_repayments: [{
+        ...repaidNote.principal_repayments[0],
         shareholder_bank_deposit_reference:
           contribution.bank_transfer_reference,
-      },
+      }],
     },
   });
   assertEquals(

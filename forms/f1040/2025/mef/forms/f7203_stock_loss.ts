@@ -1,6 +1,7 @@
 import { element, elements } from "../../../mef/xml.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import { projectReviewedStockLoss7203 } from "../../form7203_stock_loss_projection.ts";
+import { sumPrincipalRepayments } from "../../../nodes/intermediate/forms/form7203/debt-note.ts";
 
 export function buildReviewedStockLoss7203(
   rawFields: Record<string, unknown>,
@@ -24,7 +25,7 @@ export function buildReviewedStockLoss7203(
     context?.pending ?? {},
     context?.filer,
   );
-  const repayment = note?.principal_repayment?.amount ?? 0;
+  const repayment = sumPrincipalRepayments(note?.principal_repayments);
   const debtAfterRepayment = (note?.cash_advance_amount ?? 0) - repayment;
   const secondAdvance = note?.second_formal_note?.cash_advance_amount ?? 0;
   const secondRepayment =

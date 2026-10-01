@@ -11,14 +11,21 @@ const ty2025Date = z.string().regex(/^2025-\d{2}-\d{2}$/).refine((value) =>
 const principalRepaymentSchema = z.object({
   formal_note_id: sourceReference,
   date: ty2025Date,
-  amount: z.number().int().positive(),
+  amount: z.number().int().positive().refine(Number.isSafeInteger),
   corporate_loan_ledger_reference: sourceReference,
   shareholder_bank_deposit_reference: sourceReference,
   principal_only_confirmed: z.literal(true),
 }).strict();
 
+export function sumPrincipalRepayments(
+  payments: readonly { amount: number }[] | undefined,
+): number {
+  return (payments ?? []).reduce((total, payment) => total + payment.amount, 0);
+}
+
 // Source contract for one or two new formal shareholder notes. Each listed
-// note may have one sourced principal repayment assigned to its own note ID.
+// The first note may have two dated principal repayments; a second note retains
+// one repayment in its separately bounded source route.
 export const reviewedNewFormalNotesSchema = z.object({
   kind: z.literal("new_2025_formal_notes"),
   shareholder_ssn: z.string().regex(/^\d{9}$/),
@@ -33,7 +40,7 @@ export const reviewedNewFormalNotesSchema = z.object({
   shareholder_lender_ssn: z.string().regex(/^\d{9}$/),
   corporate_borrower_ein: z.string().regex(/^\d{9}$/),
   bank_transfer_reference: sourceReference,
-  cash_advance_amount: z.number().int().positive(),
+  cash_advance_amount: z.number().int().positive().refine(Number.isSafeInteger),
   second_formal_note: z.object({
     formal_note_id: sourceReference,
     signed_note_document_reference: sourceReference,
@@ -41,7 +48,9 @@ export const reviewedNewFormalNotesSchema = z.object({
     shareholder_lender_ssn: z.string().regex(/^\d{9}$/),
     corporate_borrower_ein: z.string().regex(/^\d{9}$/),
     bank_transfer_reference: sourceReference,
-    cash_advance_amount: z.number().int().positive(),
+    cash_advance_amount: z.number().int().positive().refine(
+      Number.isSafeInteger,
+    ),
     corporation_received_funds_confirmed: z.literal(true),
     shareholder_funded_directly_confirmed: z.literal(true),
     not_a_guarantee_or_cosign_confirmed: z.literal(true),
@@ -58,7 +67,8 @@ export const reviewedNewFormalNotesSchema = z.object({
   beginning_note_debt_basis: z.literal(0),
   no_other_shareholder_debt_confirmed: z.literal(true),
   no_2025_repayments_confirmed: z.boolean(),
-  principal_repayment: principalRepaymentSchema.optional(),
+  principal_repayments: z.array(principalRepaymentSchema).min(1).max(2)
+    .optional(),
   no_prior_reduced_debt_basis_confirmed: z.literal(true),
   no_other_2025_basis_changes_confirmed: z.literal(true),
   no_prior_suspended_losses_confirmed: z.literal(true),
@@ -76,12 +86,10 @@ export const reviewedNewFormalNotesSchema = z.object({
         note.second_formal_note.bank_transfer_reference,
       ]
       : []),
-    ...(note.principal_repayment
-      ? [
-        note.principal_repayment.corporate_loan_ledger_reference,
-        note.principal_repayment.shareholder_bank_deposit_reference,
-      ]
-      : []),
+    ...(note.principal_repayments ?? []).flatMap((payment) => [
+      payment.corporate_loan_ledger_reference,
+      payment.shareholder_bank_deposit_reference,
+    ]),
     ...(note.second_formal_note?.principal_repayment
       ? [
         note.second_formal_note.principal_repayment
@@ -95,6 +103,8 @@ export const reviewedNewFormalNotesSchema = z.object({
     note.shareholder_ssn !== note.shareholder_lender_ssn ||
     note.corporation_ein !== note.corporate_borrower_ein ||
     (note.second_formal_note !== undefined &&
+      (note.principal_repayments?.length ?? 0) > 1) ||
+    (note.second_formal_note !== undefined &&
       (note.second_formal_note.shareholder_lender_ssn !==
           note.shareholder_ssn ||
         note.second_formal_note.corporate_borrower_ein !==
@@ -103,11 +113,15 @@ export const reviewedNewFormalNotesSchema = z.object({
           (note.second_formal_note.principal_repayment !== undefined))) ||
     new Set(references).size !== references.length ||
     note.no_2025_repayments_confirmed ===
-      (note.principal_repayment !== undefined) ||
-    (note.principal_repayment !== undefined &&
-      (note.principal_repayment.formal_note_id !== note.formal_note_id ||
-        note.principal_repayment.date <= note.note_execution_date ||
-        note.principal_repayment.amount >= note.cash_advance_amount)) ||
+      ((note.principal_repayments?.length ?? 0) > 0) ||
+    (note.principal_repayments ?? []).some((payment, index) =>
+      payment.formal_note_id !== note.formal_note_id ||
+      payment.date <= note.note_execution_date ||
+      (index > 0 &&
+        payment.date <= note.principal_repayments![index - 1].date)
+    ) ||
+    sumPrincipalRepayments(note.principal_repayments) >=
+      note.cash_advance_amount ||
     (note.second_formal_note?.principal_repayment !== undefined &&
       (note.second_formal_note.principal_repayment.formal_note_id !==
           note.second_formal_note.formal_note_id ||
@@ -151,12 +165,10 @@ export function reconcileCashCapitalAndNewNote(
     note.formal_note_id,
     note.signed_note_document_reference,
     note.bank_transfer_reference,
-    ...(note.principal_repayment
-      ? [
-        note.principal_repayment.corporate_loan_ledger_reference,
-        note.principal_repayment.shareholder_bank_deposit_reference,
-      ]
-      : []),
+    ...(note.principal_repayments ?? []).flatMap((payment) => [
+      payment.corporate_loan_ledger_reference,
+      payment.shareholder_bank_deposit_reference,
+    ]),
   ];
   if (
     ledger.shareholder_ssn !== note.shareholder_ssn ||
@@ -193,7 +205,7 @@ export function reconcileNewFormalNotes(
     note.shareholder_ssn !== k1.recipient_tin ||
     note.current_box1_ordinary_loss !== loss ||
     (k1.box16_code_e_loan_repayment ?? 0) !==
-      ((note.principal_repayment?.amount ?? 0) +
+      (sumPrincipalRepayments(note.principal_repayments) +
         (note.second_formal_note?.principal_repayment?.amount ?? 0))
   ) {
     throw new Error(
@@ -203,7 +215,8 @@ export function reconcileNewFormalNotes(
   const stockSupportedLoss = Math.min(loss, note.beginning_stock_basis);
   const debtSupportedLossCandidate = Math.min(
     loss - stockSupportedLoss,
-    note.cash_advance_amount - (note.principal_repayment?.amount ?? 0) +
+    note.cash_advance_amount -
+      sumPrincipalRepayments(note.principal_repayments) +
       (note.second_formal_note?.cash_advance_amount ?? 0) -
       (note.second_formal_note?.principal_repayment?.amount ?? 0),
   );
@@ -211,8 +224,10 @@ export function reconcileNewFormalNotes(
     note.second_formal_note &&
     !Number.isSafeInteger(
       debtSupportedLossCandidate *
-        (note.cash_advance_amount - (note.principal_repayment?.amount ?? 0)) /
-        (note.cash_advance_amount - (note.principal_repayment?.amount ?? 0) +
+        (note.cash_advance_amount -
+          sumPrincipalRepayments(note.principal_repayments)) /
+        (note.cash_advance_amount -
+          sumPrincipalRepayments(note.principal_repayments) +
           note.second_formal_note.cash_advance_amount -
           (note.second_formal_note.principal_repayment?.amount ?? 0)),
     )

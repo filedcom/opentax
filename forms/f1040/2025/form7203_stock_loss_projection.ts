@@ -6,6 +6,7 @@ import { reviewedStockLossLedgerSchema } from "../nodes/intermediate/forms/form7
 import {
   reconcileCashCapitalAndNewNote,
   reconcileNewFormalNotes,
+  sumPrincipalRepayments,
 } from "../nodes/intermediate/forms/form7203/debt-note.ts";
 
 const pendingRecordSchema = z.record(z.string(), z.unknown());
@@ -146,7 +147,8 @@ export function projectReviewedStockLoss7203(
 
   const allowedStock = Math.min(currentLoss, availableBasis);
   const firstDebtBasis = note
-    ? note.cash_advance_amount - (note.principal_repayment?.amount ?? 0)
+    ? note.cash_advance_amount -
+      sumPrincipalRepayments(note.principal_repayments)
     : 0;
   const secondDebtBasis = (note?.second_formal_note?.cash_advance_amount ?? 0) -
     (note?.second_formal_note?.principal_repayment?.amount ?? 0);
