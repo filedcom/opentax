@@ -40,29 +40,36 @@ const creditOnlySCorpFields = new Set([
   "new_markets_credit_subject_to_passive_activity_limit",
 ]);
 
-/** Replays the one-activity, current-year-only line 6 and credit source against the filed return. */
+/** Replays one rental activity and its current-year credits against the filed return. */
 export function reconcileFiledForm8582CROrdinary(
   raw: unknown,
   pending: Pending,
 ) {
   const input = form8582crInputSchema.parse(raw);
   const source = input.credit_sources[0];
-  const selfCredit =
-    source?.source_origin.kind === PassiveCreditSourceOrigin.Self;
+  const selfCredit = input.credit_sources.length > 0 &&
+    input.credit_sources.length <= 2 &&
+    input.credit_sources.every((entry) =>
+      entry.source_origin.kind === PassiveCreditSourceOrigin.Self
+    );
   const partnershipCredit = source?.source_origin.kind ===
     PassiveCreditSourceOrigin.Partnership;
   const sCorpCredit = source?.source_origin.kind ===
     PassiveCreditSourceOrigin.SCorporation;
   if (
-    !input.line6_ordinary_worksheet || input.credit_sources.length !== 1 ||
-    !source || source.source_form !== "Form 8874" ||
+    !input.line6_ordinary_worksheet || input.credit_sources.length === 0 ||
+    input.credit_sources.length > 2 || !source ||
+    (!selfCredit && input.credit_sources.length !== 1) ||
     (!selfCredit && !partnershipCredit && !sCorpCredit) ||
-    source.category !== PassiveCreditCategory.Other ||
-    source.reporting_route !== PassiveCreditReportingRoute.Form3800Line3 ||
-    source.form3800_credit_line !== "1i" ||
-    source.current_year_credit <= 0 ||
-    source.prior_unallowed_credits.length !== 0 ||
-    source.publicly_traded_partnership ||
+    input.credit_sources.some((entry) =>
+      entry.source_form !== "Form 8874" ||
+      entry.category !== PassiveCreditCategory.Other ||
+      entry.reporting_route !== PassiveCreditReportingRoute.Form3800Line3 ||
+      entry.form3800_credit_line !== "1i" ||
+      entry.current_year_credit <= 0 ||
+      entry.prior_unallowed_credits.length !== 0 ||
+      entry.publicly_traded_partnership
+    ) ||
     input.modified_agi !== undefined ||
     input.is_real_estate_professional !== undefined ||
     input.form8582_line9_special_allowance_used !== undefined ||
@@ -77,7 +84,7 @@ export function reconcileFiledForm8582CROrdinary(
     ].some((key) => nonemptySource(pending[key]))
   ) {
     throw new Error(
-      "Form 8582-CR printable ordinary route needs one current-year Form 8874 or credit-only K-1 code AD credit and one sourced passive rental income activity",
+      "Form 8582-CR printable ordinary route needs one or two self-earned current-year Form 8874 credits, or one credit-only K-1 code AD credit, and one sourced passive rental income activity",
     );
   }
   const tax = calculateForm8582CRLine6OrdinaryWorksheet(
@@ -105,13 +112,34 @@ export function reconcileFiledForm8582CROrdinary(
     const ordinaryCredits = rows.filter((row) =>
       !row.investment.subject_to_passive_activity_limit
     );
+    const sourceKeys = input.credit_sources.map((entry) =>
+      JSON.stringify([
+        entry.activity_reference,
+        entry.source_document_reference,
+      ])
+    );
     if (
-      credits.length !== 1 || ordinaryCredits.length > 1 ||
-      credits[0].investment.passive_activity_reference !==
-        source.activity_reference ||
-      credits[0].investment.passive_source_document_reference !==
-        source.source_document_reference ||
-      credits[0].creditAmount !== source.current_year_credit
+      credits.length !== input.credit_sources.length ||
+      ordinaryCredits.length > 1 ||
+      new Set(sourceKeys).size !== sourceKeys.length ||
+      credits.some((row) =>
+        input.credit_sources.filter((entry) =>
+          row.investment.passive_activity_reference ===
+            entry.activity_reference &&
+          row.investment.passive_source_document_reference ===
+            entry.source_document_reference &&
+          row.creditAmount === entry.current_year_credit
+        ).length !== 1
+      ) ||
+      input.credit_sources.some((entry) =>
+        credits.filter((row) =>
+          row.investment.passive_activity_reference ===
+            entry.activity_reference &&
+          row.investment.passive_source_document_reference ===
+            entry.source_document_reference &&
+          row.creditAmount === entry.current_year_credit
+        ).length !== 1
+      )
     ) {
       throw new Error(
         "Form 8582-CR credit differs from the filed passive Form 8874 investment",
@@ -186,7 +214,10 @@ export function reconcileFiledForm8582CROrdinary(
   const ledger = buildCurrentYearCarryforwardLedger(input);
   if (
     lines.partI.line6 !== tax.line6 ||
-    lines.partI.line5 !== source.current_year_credit ||
+    lines.partI.line5 !== input.credit_sources.reduce(
+        (sum, entry) => sum + entry.current_year_credit,
+        0,
+      ) ||
     lines.partI.rental.total !== 0 || lines.partI.rehabilitation.total !== 0 ||
     lines.partI.housing.total !== 0 || lines.partII || lines.partIII ||
     lines.partIV ||

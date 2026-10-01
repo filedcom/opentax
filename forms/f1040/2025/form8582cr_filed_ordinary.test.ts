@@ -92,6 +92,7 @@ function filedReturn(
   investmentAmount = 10_000,
   interestBoxes: number[] = [],
   nonpassiveInvestmentAmount = 0,
+  secondPassiveInvestmentAmount = 0,
 ) {
   const interestAmount = interestBoxes.reduce((sum, amount) => sum + amount, 0);
   const taxableWithInterest = taxable + interestAmount;
@@ -147,13 +148,37 @@ function filedReturn(
             passive_source_document_reference: undefined,
           }]
           : []),
+        ...(secondPassiveInvestmentAmount > 0
+          ? [{
+            ...investment,
+            cde_name: "Second Community Development Entity",
+            cde_ein: "987654321",
+            initial_investment_date: "2025-06-15",
+            credit_allowance_date: "2025-06-15",
+            designation_notice_reference: "2025 second community QEI notice",
+            qualified_equity_investment_amount: secondPassiveInvestmentAmount,
+            passive_activity_reference: "community-investment-2",
+            passive_source_document_reference:
+              "2025 second community QEI notice",
+          }]
+          : []),
       ],
     },
     form8582cr: {
-      credit_sources: [{
-        ...source,
-        current_year_credit: investmentAmount * 0.05,
-      }],
+      credit_sources: [
+        {
+          ...source,
+          current_year_credit: investmentAmount * 0.05,
+        },
+        ...(secondPassiveInvestmentAmount > 0
+          ? [{
+            ...source,
+            activity_reference: "community-investment-2",
+            source_document_reference: "2025 second community QEI notice",
+            current_year_credit: secondPassiveInvestmentAmount * 0.05,
+          }]
+          : []),
+      ],
       regular_tax_all_income: taxAllWithInterest,
       regular_tax_without_passive: taxWithoutWithInterest,
       line6_ordinary_worksheet: {
@@ -577,6 +602,20 @@ Deno.test("partial passive Form 8874 allowance joins one fully used nonpassive i
   );
   assertThrows(
     () =>
+      form8582crPdf.projectFields!(pending.form8582cr, {
+        ...pending,
+        f8874: {
+          investments: [investments[0], {
+            ...investments[1],
+            passive_activity_reference: "wrong-activity",
+          }],
+        },
+      }),
+    Error,
+    "credit differs from the filed passive Form 8874 investment",
+  );
+  assertThrows(
+    () =>
       form3800Pdf.instances?.(
         filed.f3800,
         extractFilerIdentity(general),
@@ -591,6 +630,127 @@ Deno.test("partial passive Form 8874 allowance joins one fully used nonpassive i
       ),
     Error,
     "mixed passive/nonpassive Form 8874 row",
+  );
+});
+
+Deno.test("two passive Form 8874 activities share line 6 and keep separate 2025 Worksheet 9 balances", async () => {
+  const result = filedReturn(100_000, [], 0, 100_000);
+  const pending = normalizeAllPending(result.pending);
+  const lines = calculateForm8582CR(pending.form8582cr);
+  const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
+  assertEquals(lines.partI.line5, 10_000);
+  assertEquals(lines.partI.line6, 4_412);
+  assertEquals(lines.line37, 4_412);
+  assertEquals(ledger.rows.length, 2);
+  assertEquals(
+    ledger.rows.map((row) => [
+      row.source.activity_reference,
+      row.allowed_credit,
+      row.unallowed_credit,
+      row.originating_tax_year,
+    ]),
+    [
+      ["community-investment-1", 2_206, 2_794, 2025],
+      ["community-investment-2", 2_206, 2_794, 2025],
+    ],
+  );
+  assertEquals(pending.schedule3.line6a_total, 4_412);
+  assertEquals(pending.f1040.line20_nonrefundable_credits, 4_412);
+  const passivePdf = form8582crPdf.projectFields!(pending.form8582cr, pending);
+  assertEquals(passivePdf.line4a, 10_000);
+  assertEquals(passivePdf.line7, 5_588);
+  assertEquals(passivePdf.line37, 4_412);
+  const prepared = await f1040_2025.prepareReturn(
+    result.pending,
+    extractFilerIdentity(general),
+  );
+  const parts = prepared.bundle.form3800Parts!;
+  assertEquals(parts.lines.line1, 0);
+  assertEquals(parts.lines.line2, 10_000);
+  assertEquals(parts.lines.line3, 4_412);
+  assertEquals(parts.lines.line6, 4_412);
+  assertEquals(parts.lines.line17, 4_412);
+  assertEquals(parts.lines.line38, 4_412);
+  assertEquals(parts.currentRows.length, 1);
+  assertEquals(parts.currentRows[0].metadata.sourceCount, 2);
+  assertEquals(parts.currentRows[0].metadata.referenceDocumentName, "IRS8874");
+  assertEquals(parts.currentDetails.length, 0);
+  assertEquals(parts.passiveCurrentDetails.length, 2);
+  assertEquals(
+    parts.passiveCurrentDetails.map((detail) => [
+      detail.source.activityReference,
+      detail.source.beforePassiveLimit,
+      detail.source.afterPassiveLimit,
+      detail.sourceDocument?.documentId,
+    ]),
+    [
+      [
+        "community-investment-1",
+        5_000,
+        2_206,
+        parts.currentRows[0].metadata.referenceDocumentId,
+      ],
+      [
+        "community-investment-2",
+        5_000,
+        2_206,
+        parts.currentRows[0].metadata.referenceDocumentId,
+      ],
+    ],
+  );
+  assertEquals(
+    [...prepared.bundle.xml.matchAll(/<Frm8874CYAggrgtAmtGrp/g)].length,
+    2,
+  );
+  const filed = normalizeAllPending(prepared.bundle.pending);
+  const printed = form3800Pdf.instances?.(
+    filed.f3800,
+    extractFilerIdentity(general),
+    filed,
+    parts,
+  )?.[0];
+  assertEquals(printed?.[form3800PartIIIFields("1i").g], 4_412);
+  assertEquals(printed?.[form3800PartIAndIIFields.line38], 4_412);
+  assert(
+    (await PDFDocument.load(await prepared.renderPdf())).getPageCount() > 0,
+  );
+  const investments = pending.f8874.investments as Record<string, unknown>[];
+  assertThrows(
+    () =>
+      form8582crPdf.projectFields!(pending.form8582cr, {
+        ...pending,
+        f8874: {
+          investments: [investments[0], {
+            ...investments[1],
+            qualified_equity_investment_amount: 99_000,
+          }],
+        },
+      }),
+    Error,
+    "credit differs from the filed passive Form 8874 investment",
+  );
+  assertThrows(
+    () =>
+      form3800Pdf.instances?.(
+        filed.f3800,
+        extractFilerIdentity(general),
+        filed,
+        {
+          ...parts,
+          passiveCurrentDetails: [
+            parts.passiveCurrentDetails[0],
+            {
+              ...parts.passiveCurrentDetails[1],
+              source: {
+                ...parts.passiveCurrentDetails[1].source,
+                activityReference: "wrong-activity",
+              },
+            },
+          ],
+        },
+      ),
+    Error,
+    "two passive Form 8874 activities",
   );
 });
 

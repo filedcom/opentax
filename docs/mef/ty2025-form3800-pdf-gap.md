@@ -359,6 +359,17 @@ changed passive QEI amount, and prepared-row tamper fixtures are authored
 for the deferred bulk run. Accepted prior-year import and future use of this
 unallowed balance remain closed.
 
+Two separately identified self-earned passive Form 8874 investments can now
+share the one sourced Schedule E rental ordinary line-6 tax worksheet. In the
+bounded full return, each investment generates $5,000 of current-year credit;
+Form 8582-CR line 6 permits $4,412 in total and its 2025 Worksheet 9 retains
+$2,206 allowed and $2,794 unallowed for each activity. Form 3800 Part III
+line 1i reports $10,000 before and $4,412 after the passive limit, with two
+Part V details tied to one filed IRS8874 document ID. Parts I/II, Schedule 3,
+Form 1040, native XML, and PDF use $4,412. Source amount and prepared activity
+tamper fixtures are authored for the deferred bulk run. Prior-year credit
+import remains closed without authenticated accepted-year evidence.
+
 The seven-investment New Markets return prints $3,500 on Form 3800 Part III
 line 1i and line 38, Schedule 3 line 6a, and Form 1040 line 20. Form 8874
 uses the required last-row "See attached" convention and an additional

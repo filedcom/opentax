@@ -322,6 +322,90 @@ export const form3800Pdf: PdfFormDescriptor = {
         );
       }
     }
+    if (
+      !source.f8874_credit &&
+      source.passive_source_allocations?.length === 2 &&
+      source.passive_source_allocations.every((entry) =>
+        entry.source_origin.kind === "self" &&
+        entry.source_form === "Form 8874" &&
+        entry.form3800_credit_line === "1i"
+      ) &&
+      !source.f8820_credit && !source.f5884_credit &&
+      !source.f8835_credit_entries?.length &&
+      !source.f8826_credit_entries?.length &&
+      !source.f8874_k1_credit_entries?.length &&
+      !source.f8820_k1_credit_entries?.length &&
+      !source.f3468_trust_part_v_credit_entries?.length &&
+      !source.carryforward_vintages?.length
+    ) {
+      const filed = f8874InputSchema.parse(all.f8874);
+      const credits = calculateForm8874(filed);
+      const { lines: passive, ledger } = reconcileFiledForm8582CROrdinary(
+        all.form8582cr,
+        all,
+      );
+      const rawSource = f3800InputSchema.parse(raw);
+      const rows = prepared.currentRows.filter((row) => row.line === "1i");
+      const amounts = prepared.currentAmounts.filter((row) =>
+        row.line === "1i"
+      );
+      const details = prepared.passiveCurrentDetails.filter((row) =>
+        row.line === "1i"
+      );
+      if (
+        credits.rows.length !== 2 || credits.nonpassiveCredit !== 0 ||
+        credits.passiveCredit !== passive.partI.line5 ||
+        ledger.rows.length !== 2 ||
+        new Set(ledger.rows.map((row) =>
+            JSON.stringify([
+              row.source.activity_reference,
+              row.source.source_document_reference,
+            ])
+          )).size !== 2 ||
+        JSON.stringify(rawSource.passive_source_allocations) !==
+          JSON.stringify(source.passive_source_allocations) ||
+        rows.length !== 1 || amounts.length !== 1 || details.length !== 2 ||
+        prepared.currentDetails.some((row) => row.line === "1i") ||
+        rows[0].metadata.sourceCount !== 2 ||
+        rows[0].metadata.referenceDocumentName !== "IRS8874" ||
+        !rows[0].metadata.referenceDocumentId ||
+        details.some((detail) => {
+          const matches = ledger.rows.filter((row) =>
+            row.source.activity_reference ===
+              detail.source.activityReference &&
+            row.source.source_document_reference ===
+              detail.source.sourceDocumentReference
+          );
+          return matches.length !== 1 ||
+            detail.sourceDocument?.documentId !==
+              rows[0].metadata.referenceDocumentId ||
+            detail.source.beforePassiveLimit !== matches[0].total_credit ||
+            detail.source.afterPassiveLimit !== matches[0].allowed_credit ||
+            detail.source.unusedAfterTaxLimit !== 0;
+        }) ||
+        ledger.rows.some((row) =>
+          details.filter((detail) =>
+            detail.source.activityReference === row.source.activity_reference &&
+            detail.source.sourceDocumentReference ===
+              row.source.source_document_reference
+          ).length !== 1
+        ) ||
+        amounts[0].nonpassiveCredit !== 0 ||
+        amounts[0].passiveBeforeLimit !== credits.passiveCredit ||
+        amounts[0].passiveAfterLimit !== passive.line37 ||
+        amounts[0].appliedCredit !== passive.line37 ||
+        prepared.lines.line1 !== 0 ||
+        prepared.lines.line2 !== credits.passiveCredit ||
+        prepared.lines.line3 !== passive.line37 ||
+        prepared.lines.line6 !== passive.line37 ||
+        prepared.lines.line17 !== passive.line37 ||
+        prepared.lines.line38 !== passive.line37
+      ) {
+        throw new Error(
+          "Form 3800 PDF two passive Form 8874 activities differ from filed Worksheet 9",
+        );
+      }
+    }
     const directOrphanK1 = source.f8820_k1_credit_entries;
     const rawOrphanK1 = raw.f8820_k1_credit_entries === undefined
       ? undefined

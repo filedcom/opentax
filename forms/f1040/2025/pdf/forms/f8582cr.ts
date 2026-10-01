@@ -66,8 +66,9 @@ export const form8582crPdf: PdfFormDescriptor = {
       throw new Error("Form 8582-CR PDF line 37 differs from native MeF");
     }
     if (
-      ledger.rows.length !== 1 || tax.line6 !== lines.partI.line6 ||
-      ledger.rows[0].source.source_form !== "Form 8874"
+      ledger.rows.length < 1 || ledger.rows.length > 2 ||
+      tax.line6 !== lines.partI.line6 ||
+      ledger.rows.some((row) => row.source.source_form !== "Form 8874")
     ) {
       throw new Error(
         "Form 8582-CR PDF Worksheet 9 credit and line 6 source do not reconcile",
