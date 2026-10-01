@@ -52,6 +52,7 @@ function filedReturn() {
   const result = f1040_2025.executeReturn({
     general: {
       filing_status: FilingStatus.Single,
+      digital_assets: false,
       taxpayer_first_name: "Alex",
       taxpayer_last_name: "Example",
       taxpayer_ssn: "111-22-3333",
@@ -230,6 +231,7 @@ Deno.test("two-country passive interest uses a filed 2024 vintage through both F
   const result = f1040_2025.executeReturn({
     general: {
       filing_status: FilingStatus.Single,
+      digital_assets: false,
       taxpayer_first_name: "Alex",
       taxpayer_last_name: "Example",
       taxpayer_ssn: "111-22-3333",
@@ -307,7 +309,7 @@ Deno.test("two-country passive interest uses a filed 2024 vintage through both F
       .filer;
   const fullPending = buildPending(result.pending);
   const bundle = await buildMefBundle(fullPending, { filer, attachments: [] });
-  assert(bundle.xml.includes("<IRS1116ScheduleB>"));
+  assert(bundle.xml.includes("<IRS1116ScheduleB "));
   assert(bundle.xml.includes("<ForeignCountryCd>FR</ForeignCountryCd>"));
   assert(
     (await buildPdfBytes(fullPending, filer, ".pdf-cache", bundle)).length > 0,

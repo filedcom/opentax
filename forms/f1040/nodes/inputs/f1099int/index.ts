@@ -166,7 +166,7 @@ function scheduleBOutput(item: INTItem): NodeOutput {
         ? { seller_financed_buyer: item.seller_financed_buyer }
         : {}),
     },
-    box3_us_obligations: item.box3,
+    ...(item.box3 !== undefined ? { box3_us_obligations: item.box3 } : {}),
   });
 }
 

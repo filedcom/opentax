@@ -485,7 +485,11 @@ export function projectSingleSourceForm1116Pdf(
   ];
   if (
     !f1040 || !schedule3 ||
-    (twoCountry
+    (threeCountryMixed
+      ? f1040.line2b_taxable_interest !==
+          threeCountryMixed.a.gross + threeCountryMixed.c.gross ||
+        f1040.line3b_ordinary_dividends !== threeCountryMixed.b.gross
+      : twoCountry
       ? f1040.line2b_taxable_interest !==
           (twoCountryMixed?.a.gross ??
             twoCountryTreasury?.worldwideGross ?? twoCountry.foreignGross) ||
@@ -515,7 +519,7 @@ export function projectSingleSourceForm1116Pdf(
     pending.schedule1a?.senior_zero_exclusions_review === true ||
     otherIncomeLines.some((key) =>
       (key !== "line3b_ordinary_dividends" ||
-        !(dividend || mixed || twoCountryMixed)) &&
+        !(dividend || mixed || twoCountryMixed || threeCountryMixed)) &&
       !zero(f1040[key])
     ) ||
     (!reportedOn1099 && pending.f1099int !== undefined) ||
