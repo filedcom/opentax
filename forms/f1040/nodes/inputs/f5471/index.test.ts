@@ -180,6 +180,10 @@ const item: F5471Item = {
     prior_year_schedule_p_reference: "2024 Schedule P",
     source_workpaper_reference: "2025 Schedule P workpaper",
   },
+  schedule_r: {
+    distributions: [],
+    source_workpaper_reference: "2025 CFC distribution ledger",
+  },
   form5471_identity: {
     cfc_tax_year_begin: "2025-01-01",
     cfc_tax_year_end: "2025-12-31",
@@ -313,6 +317,17 @@ Deno.test("Category 5a rejects missing worksheets, wrong pro rata income, and as
     {
       ...item,
       schedule_p: { ...item.schedule_p, opening_ptep_usd_basis: 1 },
+    },
+    {
+      ...item,
+      schedule_r: {
+        ...item.schedule_r,
+        distributions: [{ date: "2025-06-30", amount: 100 }],
+      },
+    },
+    {
+      ...item,
+      schedule_r: { ...item.schedule_r, source_workpaper_reference: "" },
     },
     {
       ...item,

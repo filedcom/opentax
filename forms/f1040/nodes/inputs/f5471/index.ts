@@ -309,6 +309,13 @@ export const schedulePSchema = z.object({
   source_workpaper_reference: sourceReference,
 }).strict();
 
+// The reviewed CFC made no actual distribution during its accounting year.
+// A Schedule R row needs dated recipient and E&P characterization facts.
+export const scheduleRSchema = z.object({
+  distributions: z.tuple([]),
+  source_workpaper_reference: sourceReference,
+}).strict();
+
 const foreignAddressSchema = z.object({
   line1: z.string().trim().min(1).max(35)
     .regex(/^[A-Za-z0-9]( ?[A-Za-z0-9\-/])*$/),
@@ -372,6 +379,7 @@ export const itemSchema = z.object({
   schedule_g: scheduleGSchema,
   schedule_j: scheduleJSchema,
   schedule_p: schedulePSchema,
+  schedule_r: scheduleRSchema,
   form5471_identity: form5471IdentitySchema,
 }).strict().superRefine((value, ctx) => {
   const e = value.schedule_e;

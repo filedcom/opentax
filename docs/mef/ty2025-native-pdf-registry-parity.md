@@ -4,7 +4,7 @@ Static comparison updated 2026-10-01 of the descriptors actually registered in
 `forms/f1040/2025/mef/forms/index.ts` and `forms/f1040/2025/pdf/forms/index.ts`,
 checked against `forms/f1040/2025/attachment-coverage.ts`. This is a
 printable-return coverage audit, not an IRS rule, passed test, or new product
-exclusion. The indexes currently hold **135 native descriptors and 99 PDF
+exclusion. The indexes currently hold **136 native descriptors and 100 PDF
 descriptors**. No test, XSD, filled PDF, or ATS run was performed for this
 inventory update.
 
@@ -41,13 +41,15 @@ gates. This does not change the parent taxpayer-form priority-1 list.
 
 Form 3468's bounded trust-owned Part V route now has both registered
 descriptors. Form 8992, its Schedule A, and Form 5471 page 1/B Part II/G/I plus
-separate Schedules E/E-1, H, I-1, J and P also have native and PDF descriptors for
+separate Schedules E/E-1, H, I-1, J, P and R also have native and PDF descriptors for
 one wholly owned Category 5a CFC. Their source/return checks and fixtures are
 written but unrun. The Schedule H route requires explicit zero book-to-tax
 adjustments and general-category E&P only; Schedule J has a bounded reviewed
 opening E&P/PTEP history; Schedule P has the sole shareholder's functional
-PTEP and U.S.-dollar basis. Schedules Q, R and applicable conditional
-Category 5a attachments are still missing, so the
+PTEP and U.S.-dollar basis. Schedule R has a reviewed empty distribution
+ledger and a header-only projection; its all-zero instruction/business-rule
+status remains unverified. Schedule Q, the overlapping Category 4 packet, and
+applicable conditional attachments remain, so the
 attachment-coverage and Schedule 1 export guards continue to reject positive
 filing. Registry parity for these documents does not imply a complete
 foreign corporation filing packet.

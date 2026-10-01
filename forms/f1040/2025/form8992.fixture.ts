@@ -175,6 +175,10 @@ export const form8992Cfc: F5471Item = {
     prior_year_schedule_p_reference: "Reviewed 2024 Schedule P",
     source_workpaper_reference: "Reviewed 2025 Schedule P PTEP basis",
   },
+  schedule_r: {
+    distributions: [],
+    source_workpaper_reference: "Reviewed CFC distribution ledger",
+  },
   form5471_identity: {
     cfc_tax_year_begin: "2025-01-01",
     cfc_tax_year_end: "2025-12-31",
