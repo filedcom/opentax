@@ -8,6 +8,7 @@ import {
 } from "../../../nodes/inputs/f8283/index.ts";
 import {
   assertCreatorReductionSource,
+  assertIntellectualPropertyReductionSource,
   assertInventoryReductionSource,
   assertManuscriptReductionSource,
   assertPrivateFoundationReductionSource,
@@ -773,11 +774,16 @@ export const form8283Pdf: PdfFormDescriptor = {
       item.taxidermy_capital_gain_reduction !== undefined &&
       needsFmvReductionStatement(item)
     );
+    const intellectualPropertyReduction = sectionA.some((item) =>
+      item.intellectual_property_capital_gain_reduction !== undefined &&
+      needsFmvReductionStatement(item)
+    );
     if (
       !elected && !shortTermReduction && !inventoryReduction &&
       !creatorReduction && !manuscriptReduction &&
       !unrelatedUseReduction && !soldVehicle && !needyVehicle &&
       !privateFoundationReduction && !taxidermyReduction &&
+      !intellectualPropertyReduction &&
       sectionA.some((item) => needsFmvReductionStatement(item))
     ) {
       throw new Error(
@@ -789,6 +795,7 @@ export const form8283Pdf: PdfFormDescriptor = {
       !elected && !shortTermReduction && !inventoryReduction &&
       !creatorReduction && !manuscriptReduction && !unrelatedUseReduction &&
       !privateFoundationReduction && !taxidermyReduction &&
+      !intellectualPropertyReduction &&
       !soldVehicle &&
       !needyVehicle
     ) {
@@ -810,6 +817,7 @@ export const form8283Pdf: PdfFormDescriptor = {
         assertUnrelatedUseReductionSource(item);
         assertPrivateFoundationReductionSource(item);
         assertTaxidermyReductionSource(item);
+        assertIntellectualPropertyReductionSource(item);
       }
     }
     if (

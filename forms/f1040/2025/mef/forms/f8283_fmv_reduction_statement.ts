@@ -2,6 +2,7 @@ import { inputSchema } from "../../../nodes/inputs/f8283/index.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 import {
   assertCreatorReductionSource,
+  assertIntellectualPropertyReductionSource,
   assertInventoryReductionSource,
   assertPrivateFoundationReductionSource,
   assertShortTermReductionSource,
@@ -65,7 +66,8 @@ export const form8283FmvReductionStatement: MefFormDescriptor<
       (parsed.section_a_items ?? []).some((item) =>
         item.unrelated_use_capital_gain_reduction !== undefined ||
         item.private_foundation_capital_gain_reduction !== undefined ||
-        item.taxidermy_capital_gain_reduction !== undefined
+        item.taxidermy_capital_gain_reduction !== undefined ||
+        item.intellectual_property_capital_gain_reduction !== undefined
       )
     ) {
       assertOrdinarySectionAReconciled(context);
@@ -80,6 +82,7 @@ export const form8283FmvReductionStatement: MefFormDescriptor<
       assertUnrelatedUseReductionSource(item);
       assertPrivateFoundationReductionSource(item);
       assertTaxidermyReductionSource(item);
+      assertIntellectualPropertyReductionSource(item);
     }
     if (context.documentIdsByPendingKey) {
       const ids = context.documentIdsByPendingKey

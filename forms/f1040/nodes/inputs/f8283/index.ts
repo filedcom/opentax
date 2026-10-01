@@ -196,6 +196,21 @@ const sectionAItemSchema = z.object({
     hypothetical_fmv_sale_gain_entirely_long_term_verified: z.literal(true),
     no_other_reduction_reason_verified: z.literal(true),
   }).strict().optional(),
+  intellectual_property_capital_gain_reduction: z.object({
+    property_kind: z.literal("purchased_patent"),
+    patent_number: z.string().trim().min(1),
+    patent_registration_record_reference: z.string().trim().min(1),
+    purchase_record_reference: z.string().trim().min(1),
+    unamortized_basis_schedule_reference: z.string().trim().min(1),
+    unamortized_adjusted_basis: z.number().positive(),
+    donee_2025_net_income_statement_reference: z.string().trim().min(1),
+    donor_owned_full_patent_rights_verified: z.literal(true),
+    all_patent_rights_transferred_to_donee_verified: z.literal(true),
+    adjusted_basis_excludes_prior_amortization_verified: z.literal(true),
+    donee_2025_net_income_zero_verified: z.literal(true),
+    hypothetical_fmv_sale_gain_entirely_long_term_verified: z.literal(true),
+    no_other_reduction_reason_verified: z.literal(true),
+  }).strict().optional(),
   // Taxpayer-supplied general property category (for example "books"). The
   // same category must be used for similar gifts to every donee this year.
   similar_item_group: z.string().trim().min(1).optional(),
@@ -308,12 +323,14 @@ const sectionAItemSchema = z.object({
     const privateFoundation =
       item.private_foundation_capital_gain_reduction !== undefined;
     const taxidermy = item.taxidermy_capital_gain_reduction !== undefined;
+    const intellectualProperty =
+      item.intellectual_property_capital_gain_reduction !== undefined;
     const capitalGainElection =
       item.capital_gain_reduction_election_confirmed === true;
     if (
       privateFoundation &&
       (shortTerm || inventory || creator || manuscript || unrelatedUse ||
-        taxidermy ||
+        taxidermy || intellectualProperty ||
         capitalGainElection || certifiedSaleReduction)
     ) {
       ctx.addIssue({
@@ -325,7 +342,7 @@ const sectionAItemSchema = z.object({
     }
     if (
       (inventory || creator || manuscript || unrelatedUse ||
-        privateFoundation || taxidermy) &&
+        privateFoundation || taxidermy || intellectualProperty) &&
       reductionCents <= 0
     ) {
       ctx.addIssue({
@@ -337,7 +354,7 @@ const sectionAItemSchema = z.object({
     if (
       reductionCents > 0 && !certifiedSaleReduction && !shortTerm &&
       !inventory && !creator && !manuscript && !unrelatedUse &&
-      !privateFoundation && !taxidermy &&
+      !privateFoundation && !taxidermy && !intellectualProperty &&
       !capitalGainElection
     ) {
       ctx.addIssue({
@@ -383,7 +400,7 @@ const sectionAItemSchema = z.object({
           Math.round(item.deduction_claimed * 100) ||
         item.cost_or_adjusted_basis >= item.fmv ||
         shortTerm || inventory || creator || manuscript || unrelatedUse ||
-        privateFoundation || taxidermy ||
+        privateFoundation || taxidermy || intellectualProperty ||
         certifiedSaleReduction
       ) {
         ctx.addIssue({
@@ -428,7 +445,7 @@ const sectionAItemSchema = z.object({
           Math.round(item.deduction_claimed * 100) ||
         item.cost_or_adjusted_basis >= item.fmv ||
         inventory || creator || manuscript || unrelatedUse ||
-        privateFoundation || taxidermy ||
+        privateFoundation || taxidermy || intellectualProperty ||
         certifiedSaleReduction
       ) {
         ctx.addIssue({
@@ -461,7 +478,7 @@ const sectionAItemSchema = z.object({
           Math.round(item.deduction_claimed * 100) ||
         item.cost_or_adjusted_basis >= item.fmv ||
         shortTerm || creator || manuscript || unrelatedUse ||
-        privateFoundation || taxidermy ||
+        privateFoundation || taxidermy || intellectualProperty ||
         capitalGainElection ||
         certifiedSaleReduction
       ) {
@@ -496,7 +513,7 @@ const sectionAItemSchema = z.object({
           Math.round(item.deduction_claimed * 100) ||
         item.cost_or_adjusted_basis >= item.fmv ||
         shortTerm || inventory || manuscript || unrelatedUse ||
-        privateFoundation || taxidermy ||
+        privateFoundation || taxidermy || intellectualProperty ||
         capitalGainElection ||
         certifiedSaleReduction
       ) {
@@ -531,7 +548,7 @@ const sectionAItemSchema = z.object({
           Math.round(item.deduction_claimed * 100) ||
         item.cost_or_adjusted_basis >= item.fmv ||
         shortTerm || inventory || creator || unrelatedUse ||
-        privateFoundation || taxidermy ||
+        privateFoundation || taxidermy || intellectualProperty ||
         capitalGainElection || certifiedSaleReduction
       ) {
         ctx.addIssue({
@@ -575,7 +592,7 @@ const sectionAItemSchema = z.object({
           Math.round(item.deduction_claimed * 100) ||
         item.cost_or_adjusted_basis >= item.fmv ||
         shortTerm || inventory || creator || manuscript ||
-        privateFoundation || taxidermy ||
+        privateFoundation || taxidermy || intellectualProperty ||
         capitalGainElection ||
         certifiedSaleReduction
       ) {
@@ -637,7 +654,7 @@ const sectionAItemSchema = z.object({
           Math.round(item.deduction_claimed * 100) ||
         item.cost_or_adjusted_basis >= item.fmv ||
         shortTerm || inventory || creator || manuscript || unrelatedUse ||
-        taxidermy ||
+        taxidermy || intellectualProperty ||
         capitalGainElection || certifiedSaleReduction
       ) {
         ctx.addIssue({
@@ -685,13 +702,62 @@ const sectionAItemSchema = z.object({
           Math.round(item.deduction_claimed * 100) ||
         costs >= item.fmv ||
         shortTerm || inventory || creator || manuscript || unrelatedUse ||
-        privateFoundation || capitalGainElection || certifiedSaleReduction
+        privateFoundation || intellectualProperty || capitalGainElection ||
+        certifiedSaleReduction
       ) {
         ctx.addIssue({
           code: "custom",
           path: ["taxidermy_capital_gain_reduction"],
           message:
             "Form 8283 taxidermy reduction needs one long-term donor-prepared Section A mount, eligible preparation-only basis below FMV, and a 50% limit donee",
+        });
+      }
+    }
+    if (intellectualProperty) {
+      const acquired = item.date_acquired
+        ? Date.parse(`${item.date_acquired}T00:00:00Z`)
+        : NaN;
+      const contributed = item.date_contributed
+        ? Date.parse(`${item.date_contributed}T00:00:00Z`)
+        : NaN;
+      const acquiredDate = Number.isFinite(acquired)
+        ? new Date(acquired)
+        : undefined;
+      const anniversary = acquiredDate
+        ? Date.UTC(
+          acquiredDate.getUTCFullYear() + 1,
+          acquiredDate.getUTCMonth(),
+          acquiredDate.getUTCDate(),
+        )
+        : NaN;
+      const basis = item.intellectual_property_capital_gain_reduction!
+        .unamortized_adjusted_basis;
+      if (
+        !item.date_contributed?.startsWith("2025-") ||
+        acquiredDate?.toISOString().slice(0, 10) !== item.date_acquired ||
+        !Number.isFinite(contributed) ||
+        new Date(contributed).toISOString().slice(0, 10) !==
+          item.date_contributed ||
+        contributed <= anniversary ||
+        item.donor_acquisition_description?.trim().toLowerCase() !==
+          "purchase" ||
+        item.is_vehicle === true || item.is_capital_gain_property !== true ||
+        item.charitable_limit_category !== "noncash_50" ||
+        item.fmv > 5_000 || item.cost_or_adjusted_basis === undefined ||
+        Math.round(basis * 100) !==
+          Math.round(item.cost_or_adjusted_basis * 100) ||
+        Math.round(basis * 100) !==
+          Math.round(item.deduction_claimed * 100) ||
+        basis >= item.fmv ||
+        shortTerm || inventory || creator || manuscript || unrelatedUse ||
+        privateFoundation || taxidermy || capitalGainElection ||
+        certifiedSaleReduction
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["intellectual_property_capital_gain_reduction"],
+          message:
+            "Form 8283 patent reduction needs one purchased long-term Section A patent, unamortized basis below FMV, zero donee-year income, and a 50% limit donee",
         });
       }
     }
@@ -702,7 +768,8 @@ const sectionAItemSchema = z.object({
       item.manuscript_ordinary_income_reduction !== undefined ||
       item.unrelated_use_capital_gain_reduction !== undefined ||
       item.private_foundation_capital_gain_reduction !== undefined ||
-      item.taxidermy_capital_gain_reduction !== undefined) &&
+      item.taxidermy_capital_gain_reduction !== undefined ||
+      item.intellectual_property_capital_gain_reduction !== undefined) &&
     (item.fmv === undefined || item.deduction_claimed === undefined)
   ) {
     ctx.addIssue({
@@ -1395,7 +1462,8 @@ export const inputSchema = z.object({
   if (
     sectionA.some((item) =>
       item.private_foundation_capital_gain_reduction !== undefined ||
-      item.taxidermy_capital_gain_reduction !== undefined
+      item.taxidermy_capital_gain_reduction !== undefined ||
+      item.intellectual_property_capital_gain_reduction !== undefined
     ) &&
     (positive.length !== 1 || sectionB.length > 0 ||
       input.carryover_evidence !== undefined)
@@ -1623,7 +1691,9 @@ function validateCharitableLimitCategory(
     if (
       (!item.capital_gain_reduction_election_confirmed &&
         !item.unrelated_use_capital_gain_reduction &&
-        !item.taxidermy_capital_gain_reduction && !noAppreciation) ||
+        !item.taxidermy_capital_gain_reduction &&
+        !item.intellectual_property_capital_gain_reduction &&
+        !noAppreciation) ||
       item.cost_or_adjusted_basis === undefined ||
       claimed > item.cost_or_adjusted_basis
     ) {
@@ -1669,6 +1739,10 @@ function scheduleAOutput(input: F8283Input): NodeOutput[] {
           : true as const,
       taxidermy_capital_gain_reduction_confirmed:
         item.taxidermy_capital_gain_reduction === undefined
+          ? undefined
+          : true as const,
+      intellectual_property_capital_gain_reduction_confirmed:
+        item.intellectual_property_capital_gain_reduction === undefined
           ? undefined
           : true as const,
     }];

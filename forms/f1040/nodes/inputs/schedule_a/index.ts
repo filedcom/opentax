@@ -37,6 +37,8 @@ const noncashContributionItemSchema = z.object({
   private_foundation_capital_gain_reduction_confirmed: z.literal(true)
     .optional(),
   taxidermy_capital_gain_reduction_confirmed: z.literal(true).optional(),
+  intellectual_property_capital_gain_reduction_confirmed: z.literal(true)
+    .optional(),
 });
 const capitalGainCarryoverSchema = z.object({
   contribution_id: z.string().trim().min(1),
@@ -115,7 +117,8 @@ export const inputSchema = z.object({
       item.category === "noncash_50" && !noAppreciation &&
       item.capital_gain_reduction_election_confirmed !== true &&
       item.unrelated_use_capital_gain_reduction_confirmed !== true &&
-      item.taxidermy_capital_gain_reduction_confirmed !== true
+      item.taxidermy_capital_gain_reduction_confirmed !== true &&
+      item.intellectual_property_capital_gain_reduction_confirmed !== true
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -193,6 +196,8 @@ export const inputSchema = z.object({
           (item.capital_gain_reduction_election_confirmed !== true &&
             item.unrelated_use_capital_gain_reduction_confirmed !== true &&
             item.taxidermy_capital_gain_reduction_confirmed !== true &&
+            item.intellectual_property_capital_gain_reduction_confirmed !==
+              true &&
             !noAppreciation) ||
           item.category !== "noncash_50" ||
           item.original_fmv === undefined ||

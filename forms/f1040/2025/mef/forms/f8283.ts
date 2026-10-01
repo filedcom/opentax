@@ -240,6 +240,34 @@ export function assertTaxidermyReductionSource(item: SectionAItem): void {
   }
 }
 
+export function assertIntellectualPropertyReductionSource(
+  item: SectionAItem,
+): void {
+  const review = item.intellectual_property_capital_gain_reduction;
+  if (!review) return;
+  const address = item.donee_organization_us_address;
+  if (
+    !item.donee_organization_name?.trim() || !address?.line1.trim() ||
+    !address.city.trim() || !address.state.trim() || !address.zip.trim() ||
+    !item.property_description?.trim() || !item.date_acquired ||
+    !item.date_contributed ||
+    item.donor_acquisition_description?.trim().toLowerCase() !== "purchase" ||
+    item.cost_or_adjusted_basis === undefined ||
+    (!item.fmv_method && !item.fmv_method_description?.trim()) ||
+    !review.patent_number.trim() ||
+    !review.patent_registration_record_reference.trim() ||
+    !review.purchase_record_reference.trim() ||
+    !review.unamortized_basis_schedule_reference.trim() ||
+    !review.donee_2025_net_income_statement_reference.trim() ||
+    Math.round(review.unamortized_adjusted_basis * 100) !==
+      Math.round(item.cost_or_adjusted_basis * 100)
+  ) {
+    throw new Error(
+      "Form 8283 patent reduction needs matching patent ownership, purchase, unamortized basis, donee-income, and valuation records",
+    );
+  }
+}
+
 export function assertVehicleSaleReductionSource(item: SectionAItem): void {
   if (!item.vehicle_sale_acknowledgment || !needsFmvReductionStatement(item)) {
     return;
@@ -340,6 +368,13 @@ export function fmvReductionExplanation(
     }; hunting, travel, equipment, and labor value are excluded. FMV appreciation ${
       usd(fmv - item.cost_or_adjusted_basis)
     } is removed.`
+    : item.intellectual_property_capital_gain_reduction !== undefined &&
+        item.cost_or_adjusted_basis !== undefined
+    ? `Purchased patent ${item.intellectual_property_capital_gain_reduction.patent_number} is limited under section 170(e)(1)(B)(iii) to unamortized adjusted basis. Registration ${item.intellectual_property_capital_gain_reduction.patent_registration_record_reference}, purchase ${item.intellectual_property_capital_gain_reduction.purchase_record_reference}, and basis schedule ${item.intellectual_property_capital_gain_reduction.unamortized_basis_schedule_reference} support basis ${
+      usd(item.cost_or_adjusted_basis)
+    }. Donee statement ${item.intellectual_property_capital_gain_reduction.donee_2025_net_income_statement_reference} reports zero 2025 net income, so no income-based additional deduction is included. FMV appreciation ${
+      usd(fmv - item.cost_or_adjusted_basis)
+    } is removed.`
     : item.capital_gain_reduction_election_confirmed === true &&
         item.date_acquired && item.date_contributed &&
         item.cost_or_adjusted_basis !== undefined
@@ -374,6 +409,7 @@ export function buildFmvReductionStatement(
   assertUnrelatedUseReductionSource(item);
   assertPrivateFoundationReductionSource(item);
   assertTaxidermyReductionSource(item);
+  assertIntellectualPropertyReductionSource(item);
   assertVehicleSaleReductionSource(item);
   return elements("FairMarketValueStatement", [
     element("ShortExplanationTxt", fmvReductionExplanation(item, index)),
@@ -1196,6 +1232,7 @@ export const form8283: MefFormDescriptor<
       assertUnrelatedUseReductionSource(item);
       assertPrivateFoundationReductionSource(item);
       assertTaxidermyReductionSource(item);
+      assertIntellectualPropertyReductionSource(item);
       assertVehicleSaleReductionSource(item);
     }
     const elected = (parsed.section_a_items ?? []).some((item) =>
@@ -1279,7 +1316,8 @@ export const form8283: MefFormDescriptor<
       sectionA.some((item) =>
         item.unrelated_use_capital_gain_reduction !== undefined ||
         item.private_foundation_capital_gain_reduction !== undefined ||
-        item.taxidermy_capital_gain_reduction !== undefined
+        item.taxidermy_capital_gain_reduction !== undefined ||
+        item.intellectual_property_capital_gain_reduction !== undefined
       )
     ) {
       assertOrdinarySectionAReconciled(context);
