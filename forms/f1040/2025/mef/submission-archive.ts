@@ -1,8 +1,13 @@
 import { unzipSync, zipSync } from "fflate";
+import { createHash } from "node:crypto";
 import type { FilerIdentity } from "../../mef/header.ts";
 import { element, elements } from "../../mef/xml.ts";
 import type { MefBundle } from "./builder.ts";
-import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
+import {
+  preparedSourceBytes,
+  preparedSourceSha256,
+  sha256Hex,
+} from "../prepared-source.ts";
 import {
   assertPreparedAttachmentManifest,
   assertPreparedDocumentInventory,
@@ -30,6 +35,7 @@ export interface MefSubmissionArchive {
   readonly bytes: Uint8Array;
   readonly manifestXml: string;
   readonly bundle: MefBundle;
+  readonly filer: FilerIdentity;
   readonly residencyReview: FilingResidencyReview;
 }
 
@@ -51,7 +57,36 @@ function sameBytes(
     actual.every((byte, index) => byte === expected[index]);
 }
 
+function sha256HexSync(bytes: Uint8Array): string {
+  return createHash("sha256").update(bytes).digest("hex");
+}
+
+function assertPreparedBundleDigests(archive: MefSubmissionArchive): void {
+  const { bundle } = archive;
+  const attachmentNames = bundle.attachments.map((item) => item.fileName);
+  const digestNames = Object.keys(bundle.attachmentSha256ByFileName);
+  if (
+    sha256HexSync(encoder.encode(bundle.xml)) !== bundle.xmlSha256 ||
+    sha256HexSync(preparedSourceBytes(bundle.pending, archive.filer)) !==
+      bundle.sourceSha256 ||
+    attachmentNames.length !== digestNames.length ||
+    new Set(attachmentNames).size !== attachmentNames.length ||
+    attachmentNames.some((name) =>
+      !Object.hasOwn(bundle.attachmentSha256ByFileName, name)
+    ) ||
+    bundle.attachments.some((attachment) =>
+      sha256HexSync(attachment.bytes) !==
+        bundle.attachmentSha256ByFileName[attachment.fileName]
+    )
+  ) {
+    throw new Error(
+      "MeF transmission bundle differs from its prepared source, XML, or PDF digests",
+    );
+  }
+}
+
 function assertPreparedArchiveContents(archive: MefSubmissionArchive): void {
+  assertPreparedBundleDigests(archive);
   assertPreparedDocumentInventory(archive.bundle);
   let entries: Record<string, Uint8Array>;
   try {
@@ -220,6 +255,7 @@ export async function buildMefSubmissionArchive(
     bytes: zipSync(files, { level: 6 }),
     manifestXml,
     bundle,
+    filer: options.filer,
     residencyReview,
   };
 }

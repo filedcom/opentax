@@ -352,7 +352,89 @@ Deno.test("A2A package rechecks the archived Form 1040 document inventory", asyn
         electronicPostmark: processingDate,
       }]),
     Error,
-    "document count",
+    "prepared source, XML, or PDF digests",
+  );
+});
+
+Deno.test("A2A package replays source, XML, and PDF digests after joint archive changes", async () => {
+  const pdf = await PDFDocument.create();
+  pdf.addPage();
+  const submission = await makeSubmissionArchive({
+    f1040: { filing_status: "single", digital_assets: false },
+  }, {
+    filer: filer(),
+    submissionId,
+    processingDate,
+    attachments: [{
+      fileName: "Evidence.pdf",
+      description: "Evidence copy",
+      bytes: await pdf.save(),
+    }],
+  });
+  const packaged = (archive: typeof submission) =>
+    buildMefTransmissionPackage([{
+      archive,
+      electronicPostmark: processingDate,
+    }]);
+  packaged(submission);
+
+  const changedXml = submission.bundle.xml.replace(
+    "<PrimarySSN>123456789</PrimarySSN>",
+    "<PrimarySSN>123456780</PrimarySSN>",
+  );
+  const xmlEntries = unzipSync(submission.bytes);
+  xmlEntries["xml/submission.xml"] = new TextEncoder().encode(
+    '<?xml version="1.0" encoding="UTF-8"?>\n' + changedXml,
+  );
+  assertThrows(
+    () =>
+      packaged({
+        ...submission,
+        bytes: zipSync(xmlEntries),
+        bundle: { ...submission.bundle, xml: changedXml },
+      }),
+    Error,
+    "prepared source, XML, or PDF digests",
+  );
+
+  assertThrows(
+    () =>
+      packaged({
+        ...submission,
+        bundle: {
+          ...submission.bundle,
+          pending: {
+            ...submission.bundle.pending,
+            f1040: {
+              ...submission.bundle.pending.f1040,
+              digital_assets: true,
+            },
+          },
+        },
+      }),
+    Error,
+    "prepared source, XML, or PDF digests",
+  );
+
+  const changedPdf = Uint8Array.from(submission.bundle.attachments[0].bytes);
+  changedPdf[changedPdf.length - 1] ^= 1;
+  const pdfEntries = unzipSync(submission.bytes);
+  pdfEntries["attachment/Evidence.pdf"] = changedPdf;
+  assertThrows(
+    () =>
+      packaged({
+        ...submission,
+        bytes: zipSync(pdfEntries),
+        bundle: {
+          ...submission.bundle,
+          attachments: [{
+            ...submission.bundle.attachments[0],
+            bytes: changedPdf,
+          }],
+        },
+      }),
+    Error,
+    "prepared source, XML, or PDF digests",
   );
 });
 
