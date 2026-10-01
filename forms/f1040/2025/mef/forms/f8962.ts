@@ -264,7 +264,7 @@ function reconcilePovertyTable(
       month > 0 && monthState !== months[month - 1]
     ).length;
     if (
-      (residenceStates.length < 2 || residenceStates.length > 4) ||
+      (residenceStates.length < 2 || residenceStates.length > 12) ||
       residenceMonths === undefined ||
       residenceMonths[11] !== state ||
       new Set(residenceMonths).size !== residenceStates.length ||
@@ -1824,8 +1824,8 @@ function reconcileSimplePolicyMonths(
   const residenceStates = general.success
     ? general.data.ptc_residence_states_2025
     : undefined;
-  const residenceMonths = (residenceStates?.length === 2 ||
-      residenceStates?.length === 3 || residenceStates?.length === 4) &&
+  const residenceMonths = (residenceStates?.length ?? 0) >= 2 &&
+      (residenceStates?.length ?? 0) <= 12 &&
       general.success
     ? general.data.ptc_residence_months_2025
     : undefined;
@@ -2056,7 +2056,7 @@ function reconcileSimplePolicyMonths(
         })
       ) {
         throw new Error(
-          "Form 8962 three-or-four-state move needs one reported Marketplace review on each distinct arrival policy and no corrected SLCSP",
+          "Form 8962 multi-state move needs one reported Marketplace review on each distinct arrival policy and no corrected SLCSP",
         );
       }
     } else {
