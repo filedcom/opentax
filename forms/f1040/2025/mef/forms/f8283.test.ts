@@ -208,7 +208,9 @@ async function reviewedNeedyVehicle(
   bytes: Uint8Array,
 ) {
   const pdfSha256 = Array.from(
-    new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)),
+    new Uint8Array(
+      await crypto.subtle.digest("SHA-256", Uint8Array.from(bytes)),
+    ),
     (byte) => byte.toString(16).padStart(2, "0"),
   ).join("");
   return {
@@ -1433,7 +1435,9 @@ Deno.test("Form 8283 needy-transfer vehicle links Form 1098-C and emits native b
 Deno.test("Form 8283 significant-use vehicle links donee PDF and emits boxes 5a and 5c", async () => {
   const bytes = await acknowledgmentPdf();
   const pdfSha256 = Array.from(
-    new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)),
+    new Uint8Array(
+      await crypto.subtle.digest("SHA-256", Uint8Array.from(bytes)),
+    ),
     (byte) => byte.toString(16).padStart(2, "0"),
   ).join("");
   const item = {
@@ -1515,7 +1519,9 @@ Deno.test("Form 8283 significant-use vehicle links donee PDF and emits boxes 5a 
 Deno.test("Form 8283 material-improvement vehicle emits donee's box 5c detail", async () => {
   const bytes = await acknowledgmentPdf();
   const pdfSha256 = Array.from(
-    new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)),
+    new Uint8Array(
+      await crypto.subtle.digest("SHA-256", Uint8Array.from(bytes)),
+    ),
     (byte) => byte.toString(16).padStart(2, "0"),
   ).join("");
   const item = {
@@ -1590,7 +1596,9 @@ Deno.test("Form 8283 material-improvement vehicle emits donee's box 5c detail", 
 Deno.test("Form 8283 links both native vehicle statement and donee-issued PDF", async () => {
   const vehiclePdfBytes = await acknowledgmentPdf();
   const vehiclePdfSha256 = Array.from(
-    new Uint8Array(await crypto.subtle.digest("SHA-256", vehiclePdfBytes)),
+    new Uint8Array(
+      await crypto.subtle.digest("SHA-256", Uint8Array.from(vehiclePdfBytes)),
+    ),
     (byte) => byte.toString(16).padStart(2, "0"),
   ).join("");
   const form = form8283InputSchema.parse({

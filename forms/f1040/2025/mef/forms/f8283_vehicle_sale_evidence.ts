@@ -76,7 +76,7 @@ export async function verifyVehicleNeedyAcknowledgmentEvidence(
     throw new Error("Form 8283 needy-transfer acknowledgment needs a PDF page");
   }
   const digest = new Uint8Array(
-    await crypto.subtle.digest("SHA-256", attachment.bytes),
+    await crypto.subtle.digest("SHA-256", Uint8Array.from(attachment.bytes)),
   );
   const actualSha256 = Array.from(
     digest,
@@ -154,7 +154,7 @@ export async function verifyVehicleSignificantUseAcknowledgmentEvidence(
     );
   }
   const digest = new Uint8Array(
-    await crypto.subtle.digest("SHA-256", attachment.bytes),
+    await crypto.subtle.digest("SHA-256", Uint8Array.from(attachment.bytes)),
   );
   const actualSha256 = Array.from(
     digest,
@@ -233,7 +233,7 @@ export async function verifyVehicleMaterialImprovementAcknowledgmentEvidence(
     );
   }
   const digest = new Uint8Array(
-    await crypto.subtle.digest("SHA-256", attachment.bytes),
+    await crypto.subtle.digest("SHA-256", Uint8Array.from(attachment.bytes)),
   );
   const actualSha256 = Array.from(
     digest,
@@ -328,7 +328,7 @@ export async function verifyVehicleSaleAcknowledgmentEvidence(
     throw new Error("Form 8283 vehicle acknowledgment needs a PDF page");
   }
   const digest = new Uint8Array(
-    await crypto.subtle.digest("SHA-256", attachment.bytes),
+    await crypto.subtle.digest("SHA-256", Uint8Array.from(attachment.bytes)),
   );
   const actualSha256 = Array.from(
     digest,

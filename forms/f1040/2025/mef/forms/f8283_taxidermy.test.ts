@@ -85,7 +85,11 @@ const filer = {
 
 Deno.test("Form 8283 taxidermy basis limit reaches Schedule A, Form 1040, native statement and PDF", () => {
   const pending = pendingReturn();
-  assertEquals(pending.schedule_a.line_12_noncash_contributions, 3_000);
+  assertEquals(
+    (pending.schedule_a as Record<string, unknown>)
+      .line_12_noncash_contributions,
+    3_000,
+  );
   assertEquals(pending.f1040.line12e_itemized_deductions, 3_000);
   const [statement] = form8283FmvReductionStatement.build([], { pending });
   assertStringIncludes(statement, "section 170(e)(1)(B)(iv)");

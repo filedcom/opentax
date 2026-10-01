@@ -48,7 +48,9 @@ async function caseForReview() {
   const document = await PDFDocument.create();
   document.addPage([612, 792]);
   const bytes = await document.save();
-  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+  const digest = new Uint8Array(
+    await crypto.subtle.digest("SHA-256", Uint8Array.from(bytes)),
+  );
   const pdfSha256 = Array.from(
     digest,
     (byte) => byte.toString(16).padStart(2, "0"),
@@ -113,7 +115,7 @@ Deno.test("vehicle sale acknowledgment review rejects a zero-page PDF", async ()
   const { review, attachment } = await caseForReview();
   const emptyBytes = await (await PDFDocument.create()).save();
   const digest = new Uint8Array(
-    await crypto.subtle.digest("SHA-256", emptyBytes),
+    await crypto.subtle.digest("SHA-256", Uint8Array.from(emptyBytes)),
   );
   const pdfSha256 = Array.from(
     digest,

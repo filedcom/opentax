@@ -1725,6 +1725,8 @@ type ClassifiedItem = {
   is_capital_gain_property?: boolean;
   capital_gain_reduction_election_confirmed?: true;
   unrelated_use_capital_gain_reduction?: unknown;
+  taxidermy_capital_gain_reduction?: unknown;
+  intellectual_property_capital_gain_reduction?: unknown;
   cost_or_adjusted_basis?: number;
 };
 
@@ -1818,15 +1820,18 @@ function scheduleAOutput(input: F8283Input): NodeOutput[] {
           ? undefined
           : true as const,
       private_foundation_capital_gain_reduction_confirmed:
-        item.private_foundation_capital_gain_reduction === undefined
+        !("private_foundation_capital_gain_reduction" in item) ||
+          item.private_foundation_capital_gain_reduction === undefined
           ? undefined
           : true as const,
       taxidermy_capital_gain_reduction_confirmed:
-        item.taxidermy_capital_gain_reduction === undefined
+        !("taxidermy_capital_gain_reduction" in item) ||
+          item.taxidermy_capital_gain_reduction === undefined
           ? undefined
           : true as const,
       intellectual_property_capital_gain_reduction_confirmed:
-        item.intellectual_property_capital_gain_reduction === undefined
+        !("intellectual_property_capital_gain_reduction" in item) ||
+          item.intellectual_property_capital_gain_reduction === undefined
           ? undefined
           : true as const,
     }];

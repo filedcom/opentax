@@ -906,7 +906,7 @@ Deno.test("Form 8283 carries four distinct unreduced Section A gifts through Sch
         f1040: {
           ...pending.f1040,
           line12e_itemized_deductions:
-            pending.f1040.line12e_itemized_deductions + 1,
+            (pending.f1040.line12e_itemized_deductions as number) + 1,
         },
       }),
     Error,

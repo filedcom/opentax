@@ -99,7 +99,12 @@ async function assertLocalXsd(xml: string): Promise<void> {
 Deno.test("sold Section A vehicle joins graph, acknowledgment, native XML and filled PDF", async () => {
   const acknowledgmentBytes = await syntheticDoneeAcknowledgment();
   const pdfSha256 = Array.from(
-    new Uint8Array(await crypto.subtle.digest("SHA-256", acknowledgmentBytes)),
+    new Uint8Array(
+      await crypto.subtle.digest(
+        "SHA-256",
+        Uint8Array.from(acknowledgmentBytes),
+      ),
+    ),
     (byte) => byte.toString(16).padStart(2, "0"),
   ).join("");
   const reviewedVehicle = {
@@ -208,7 +213,12 @@ Deno.test("unreduced needy-transfer vehicle joins certification, native XML and 
     "Acknowledgment furnished 2025-06-20; no goods or services received",
   ]);
   const pdfSha256 = Array.from(
-    new Uint8Array(await crypto.subtle.digest("SHA-256", acknowledgmentBytes)),
+    new Uint8Array(
+      await crypto.subtle.digest(
+        "SHA-256",
+        Uint8Array.from(acknowledgmentBytes),
+      ),
+    ),
     (byte) => byte.toString(16).padStart(2, "0"),
   ).join("");
   const needyVehicle = {
@@ -364,7 +374,12 @@ Deno.test("Section A significant-use vehicle joins reviewed box 5a/5c PDF throug
     "Acknowledgment furnished 2025-06-20; no goods or services received",
   ]);
   const pdfSha256 = Array.from(
-    new Uint8Array(await crypto.subtle.digest("SHA-256", acknowledgmentBytes)),
+    new Uint8Array(
+      await crypto.subtle.digest(
+        "SHA-256",
+        Uint8Array.from(acknowledgmentBytes),
+      ),
+    ),
     (byte) => byte.toString(16).padStart(2, "0"),
   ).join("");
   const significantUse = {
@@ -502,7 +517,12 @@ Deno.test("Section A material-improvement vehicle joins reviewed box 5a/5c PDF t
     "No additional donor payment; furnished 2025-06-20; no goods or services",
   ]);
   const pdfSha256 = Array.from(
-    new Uint8Array(await crypto.subtle.digest("SHA-256", acknowledgmentBytes)),
+    new Uint8Array(
+      await crypto.subtle.digest(
+        "SHA-256",
+        Uint8Array.from(acknowledgmentBytes),
+      ),
+    ),
     (byte) => byte.toString(16).padStart(2, "0"),
   ).join("");
   const improvement = {

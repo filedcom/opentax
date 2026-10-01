@@ -167,7 +167,7 @@ function reissuedMccSale(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function compute(...items: ReturnType<typeof transaction>[]) {
+function compute(...items: unknown[]) {
   const input = f8828.inputSchema.parse({ f8828s: items });
   return f8828.compute({ taxYear: 2025, formType: "f1040" }, input);
 }

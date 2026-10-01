@@ -276,7 +276,7 @@ Deno.test("Section B unrelated-use camera equipment joins source, Schedule A, na
             purchase_record_review: {
               ...typedItem.unrelated_use_capital_gain_reduction!
                 .purchase_record_review,
-              personal_use_non_depreciable_equipment_confirmed: false,
+              personal_use_non_depreciable_equipment_confirmed: false as never,
             },
           },
         }],
