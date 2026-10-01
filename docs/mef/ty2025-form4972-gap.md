@@ -567,6 +567,22 @@ claimed.
 
 ## Remaining multiple-recipient implementation
 
+A bounded extension combines elected positive box 6 NUA, a separately
+percentaged box 8 annuity, and administrator-sourced estate tax for one
+partial-share beneficiary's Part-III-only election. The [2025 Form 4972
+multiple-recipient instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf)
+direct the line 8 NUA amount to be divided by box 9a, line 11 annuity value
+by the box 8 percentage, line 18 to use estate tax attributable to the
+distribution, and line 29 tax to be prorated by box 9a. The route requires
+one issued 1099-R, box 1 equal to boxes 2a plus elected box 6, distinct
+reviewed estate-administrator and estate-return references, and an exact
+recipient estate-tax allocation. Native and PDF independently replay the
+source boxes, calculated lines, and Form 1040 special tax. Positive and
+NUA/annuity/estate/printed-line/return-tax tamper fixtures are authored but
+unrun. Part II, death benefits, multiple copies, and broader allocations
+stay closed. Source bytes, filled PDF, XSD, business rules, and ATS acceptance
+remain to be verified.
+
 A further bounded Part-III-only partial-share beneficiary case now combines a
 box 8 annuity and estate tax without capital gain, NUA, or a death-benefit
 exclusion. The recipient's box 2a and box 9a yield the full line 8 amount;

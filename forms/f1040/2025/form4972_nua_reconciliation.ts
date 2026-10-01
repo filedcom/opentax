@@ -48,6 +48,12 @@ export function reconcileForm4972Nua(
   const partialEstate = sharePct < 100 &&
     typeof fields.federal_estate_tax === "number" &&
     fields.federal_estate_tax > 0;
+  const partialNuaAnnuityEstatePartIII = partialEstate && !partialDeath &&
+    (item?.box8_other ?? 0) > 0 &&
+    fields.elect_10yr_averaging === true &&
+    fields.elect_capital_gain !== true &&
+    (fields.capital_gain_amount ?? 0) === 0 &&
+    fields.death_benefit_exclusion === undefined;
   if (
     !item || item.ts !== fields.recipient ||
     sharePct <= 0 || sharePct > 100 ||
@@ -66,7 +72,8 @@ export function reconcileForm4972Nua(
         (sharePct !== 100 &&
           ((partialDeath && partialEstate) ||
             (!partialDeath && !partialEstate) ||
-            (item.box8_other ?? 0) > 0 ||
+            ((item.box8_other ?? 0) > 0 &&
+              !partialNuaAnnuityEstatePartIII) ||
             (partialEstate && fields.elect_capital_gain === true &&
               fields.elect_10yr_averaging === true &&
               (typeof fields.capital_gain_amount !== "number" ||
