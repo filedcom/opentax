@@ -120,6 +120,12 @@ export const twoCountryMixedPdfReviewSchema = twoCountryInterestPdfReviewSchema
     column_b_dividend_irs_country_code: z.string().length(2),
   }).strict();
 
+export const threeCountryMixedPdfReviewSchema = twoCountryMixedPdfReviewSchema
+  .extend({
+    column_c_interest_source_document_reference: z.string().trim().min(1),
+    column_c_interest_irs_country_code: z.string().length(2),
+  }).strict();
+
 export const partnershipK3PassiveInterestSchema = z.object({
   partnership_ein: z.string().regex(/^\d{9}$/),
   k1_source_document_reference: z.string().trim().min(1),
@@ -603,6 +609,7 @@ export const inputSchema = z.object({
   three_country_interest_pdf_review: threeCountryInterestPdfReviewSchema
     .optional(),
   two_country_mixed_pdf_review: twoCountryMixedPdfReviewSchema.optional(),
+  three_country_mixed_pdf_review: threeCountryMixedPdfReviewSchema.optional(),
   two_country_treasury_pdf_review: twoCountryTreasuryPdfReviewSchema.optional(),
 });
 
@@ -1175,6 +1182,7 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
         three_country_interest_pdf_review:
           input.three_country_interest_pdf_review,
         two_country_mixed_pdf_review: input.two_country_mixed_pdf_review,
+        three_country_mixed_pdf_review: input.three_country_mixed_pdf_review,
         two_country_treasury_pdf_review: input.two_country_treasury_pdf_review,
         regular_tax_preference_facts: input.regular_tax_preference_facts,
       },

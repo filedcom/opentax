@@ -92,6 +92,7 @@ export function reconcileForm1116TwoCountryMixed(
   foreignTax: number;
   allocatedDeduction: number;
 } | undefined {
+  if (fields.three_country_mixed_pdf_review !== undefined) return undefined;
   const parsed = Array.isArray(fields.category_summaries) &&
       fields.category_summaries.length === 1
     ? categorySummarySchema.safeParse(fields.category_summaries[0])

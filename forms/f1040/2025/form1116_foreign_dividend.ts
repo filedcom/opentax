@@ -35,7 +35,8 @@ export function reconcileForm1116ForeignDividend(
 ): boolean {
   if (
     fields.mixed_interest_dividend_pdf_review !== undefined ||
-    fields.two_country_mixed_pdf_review !== undefined
+    fields.two_country_mixed_pdf_review !== undefined ||
+    fields.three_country_mixed_pdf_review !== undefined
   ) return false;
   const summaries = fields.category_summaries;
   const parsed = Array.isArray(summaries) && summaries.length === 1

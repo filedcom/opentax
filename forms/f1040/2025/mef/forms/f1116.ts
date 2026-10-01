@@ -29,6 +29,7 @@ import { reconcileForm1116ForeignDividend } from "../../form1116_foreign_dividen
 import { reconcileForm1116MixedInterestDividend } from "../../form1116_mixed_interest_dividend.ts";
 import { reconcileForm1116TwoCountryInterest } from "../../form1116_two_country_interest.ts";
 import { reconcileForm1116ThreeCountryInterest } from "../../form1116_three_country_interest.ts";
+import { reconcileForm1116ThreeCountryMixed } from "../../form1116_three_country_mixed.ts";
 import { reconcileForm1116TwoCountryTreasury } from "../../form1116_two_country_treasury.ts";
 import { reconcileForm1116TwoCountryMixed } from "../../form1116_two_country_mixed.ts";
 
@@ -420,6 +421,10 @@ function buildIRS1116(
     (context?.pending ?? {}) as Record<string, Record<string, unknown>>,
   );
   reconcileForm1116ThreeCountryInterest(
+    fields as unknown as Readonly<Record<string, unknown>>,
+    (context?.pending ?? {}) as Record<string, Record<string, unknown>>,
+  );
+  reconcileForm1116ThreeCountryMixed(
     fields as unknown as Readonly<Record<string, unknown>>,
     (context?.pending ?? {}) as Record<string, Record<string, unknown>>,
   );

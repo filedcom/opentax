@@ -8,6 +8,7 @@ import {
   singleSourceK3PdfReviewSchema,
   singleSourcePdfReviewSchema,
   threeCountryInterestPdfReviewSchema,
+  threeCountryMixedPdfReviewSchema,
   twoCountryInterestPdfReviewSchema,
   twoCountryMixedPdfReviewSchema,
   twoCountryTreasuryPdfReviewSchema,
@@ -23,6 +24,7 @@ import { reconcileForm1116ForeignDividend } from "../../form1116_foreign_dividen
 import { reconcileForm1116MixedInterestDividend } from "../../form1116_mixed_interest_dividend.ts";
 import { reconcileForm1116TwoCountryInterest } from "../../form1116_two_country_interest.ts";
 import { reconcileForm1116ThreeCountryInterest } from "../../form1116_three_country_interest.ts";
+import { reconcileForm1116ThreeCountryMixed } from "../../form1116_three_country_mixed.ts";
 import { reconcileForm1116TwoCountryTreasury } from "../../form1116_two_country_treasury.ts";
 import { reconcileForm1116TwoCountryMixed } from "../../form1116_two_country_mixed.ts";
 
@@ -59,7 +61,9 @@ export function projectSingleSourceForm1116Pdf(
     pending,
   );
   const twoCountryMixed = reconcileForm1116TwoCountryMixed(fields, pending);
-  const threeCountry = reconcileForm1116ThreeCountryInterest(fields, pending);
+  const threeCountryMixed = reconcileForm1116ThreeCountryMixed(fields, pending);
+  const threeCountry = reconcileForm1116ThreeCountryInterest(fields, pending) ??
+    threeCountryMixed;
   const twoCountry = threeCountry ??
     reconcileForm1116TwoCountryInterest(fields, pending) ??
     twoCountryTreasury ?? twoCountryMixed;
@@ -74,7 +78,7 @@ export function projectSingleSourceForm1116Pdf(
   }
   const item = twoCountry
     ? {
-      ...(twoCountryMixed
+      ...(twoCountryMixed || threeCountryMixed
         ? summary.items.find((row) =>
           row.tax_kind === ForeignTaxKind.Interest
         ) ??
@@ -103,7 +107,9 @@ export function projectSingleSourceForm1116Pdf(
   const review =
     (twoCountry
       ? threeCountry
-        ? threeCountryInterestPdfReviewSchema
+        ? threeCountryMixed
+          ? threeCountryMixedPdfReviewSchema
+          : threeCountryInterestPdfReviewSchema
         : twoCountryTreasury
         ? twoCountryTreasuryPdfReviewSchema
         : twoCountryMixed
@@ -119,7 +125,9 @@ export function projectSingleSourceForm1116Pdf(
       .safeParse(
         twoCountry
           ? threeCountry
-            ? fields.three_country_interest_pdf_review
+            ? threeCountryMixed
+              ? fields.three_country_mixed_pdf_review
+              : fields.three_country_interest_pdf_review
             : twoCountryTreasury
             ? fields.two_country_treasury_pdf_review
             : twoCountryMixed
@@ -609,7 +617,7 @@ export function projectSingleSourceForm1116Pdf(
     pdf_country_a: twoCountry?.a.country ?? item.irs_country_code,
     pdf_country_b: twoCountry?.b.country,
     pdf_country_c: threeCountry?.c.country,
-    pdf_income_description: mixed || twoCountryMixed
+    pdf_income_description: mixed || twoCountryMixed || threeCountryMixed
       ? "Interest and dividend income"
       : dividend
       ? "Dividend income"
@@ -682,8 +690,11 @@ export function projectSingleSourceForm1116Pdf(
       ? undefined
       : item.foreign_tax_paid,
     pdf_part2_total_a: twoCountry?.a.tax ?? item.foreign_tax_paid,
-    pdf_part2_us_interest_b: twoCountryMixed ? undefined : twoCountry?.b.tax,
-    pdf_part2_us_dividend_b: twoCountryMixed?.b.tax,
+    pdf_part2_us_interest_b: twoCountryMixed || threeCountryMixed
+      ? undefined
+      : twoCountry?.b.tax,
+    pdf_part2_us_dividend_b: twoCountryMixed?.b.tax ??
+      threeCountryMixed?.b.tax,
     pdf_part2_total_b: twoCountry?.b.tax,
     pdf_part2_us_interest_c: threeCountry?.c.tax,
     pdf_part2_total_c: threeCountry?.c.tax,

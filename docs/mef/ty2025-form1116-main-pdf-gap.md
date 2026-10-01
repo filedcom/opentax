@@ -1,5 +1,22 @@
 # TY2025 Form 1116 main PDF category boundary
 
+**Three-country interest and ordinary dividends (written, unrun):** Two
+separately issued Forms 1099-INT with foreign box 1/box 6 interest in Canada
+and Germany and one French corporation Form 1099-DIV with nonqualified foreign
+box 1a/box 7 dividends now occupy passive Form 1116 country columns A/C and
+B, respectively. A distinct three-column review binds each issued copy and
+country; the dividend retains its 31-day holding and no-related-payment
+review. The source guard checks the three tax kinds and Part II rows, no other
+statement income, five-decimal standard-deduction allocation, Schedule 3,
+Form 1040 interest/dividend/taxable-income/tax totals, native MeF, and the
+parent PDF. Full-return positive and interest, dividend, review, and return
+tamper fixtures are authored for the deferred batch. The
+[2025 Form 1116 instructions](https://www.irs.gov/instructions/i1116)
+direct country-by-country Parts I and II and an additional attachment only
+after three countries. This bounded case excludes qualified dividends,
+domestic income, same-country multiple payers, source-byte authentication,
+and filled-output/XSD verification.
+
 **Three-country 1099-INT passive interest (written, unrun):** Three separately
 issued 2025 Forms 1099-INT, one each from Canada, France, and Germany, now
 carry positive foreign box 1 interest and box 6 U.S.-dollar tax through one

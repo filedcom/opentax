@@ -9,6 +9,7 @@ import {
   multiSourcePdfReviewSchema,
   singleSourcePdfReviewSchema,
   threeCountryInterestPdfReviewSchema,
+  threeCountryMixedPdfReviewSchema,
   twoCountryInterestPdfReviewSchema,
   twoCountryMixedPdfReviewSchema,
   twoCountryTreasuryPdfReviewSchema,
@@ -30,6 +31,7 @@ export const inputSchema = z.object({
   three_country_interest_pdf_review: threeCountryInterestPdfReviewSchema
     .optional(),
   two_country_mixed_pdf_review: twoCountryMixedPdfReviewSchema.optional(),
+  three_country_mixed_pdf_review: threeCountryMixedPdfReviewSchema.optional(),
   two_country_treasury_pdf_review: twoCountryTreasuryPdfReviewSchema.optional(),
 }).strict();
 
@@ -47,6 +49,7 @@ class Form1116ReviewNode extends TaxNode<typeof inputSchema> {
       two_country_interest_pdf_review,
       three_country_interest_pdf_review,
       two_country_mixed_pdf_review,
+      three_country_mixed_pdf_review,
       two_country_treasury_pdf_review,
       ...preferential
     } = review;
@@ -58,6 +61,7 @@ class Form1116ReviewNode extends TaxNode<typeof inputSchema> {
         two_country_interest_pdf_review,
         three_country_interest_pdf_review,
         two_country_mixed_pdf_review,
+        three_country_mixed_pdf_review,
         two_country_treasury_pdf_review,
       ].filter(Boolean).length > 1
     ) {
@@ -74,6 +78,7 @@ class Form1116ReviewNode extends TaxNode<typeof inputSchema> {
         two_country_interest_pdf_review,
         three_country_interest_pdf_review,
         two_country_mixed_pdf_review,
+        three_country_mixed_pdf_review,
         two_country_treasury_pdf_review,
       })],
     };
