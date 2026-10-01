@@ -57,10 +57,17 @@ export function assertForm6251Form8949Source(
   }
   const rows = (Array.isArray(raw) ? raw : [raw]) as BasisRow[];
   const source = form8949SourceSchema.safeParse(pending?.f8949);
-  const calculatedDifference = rows.reduce(
-    (sum, row) => sum + row.amt_gain - row.regular_gain,
-    0,
-  );
+  const regularNet = rows.reduce((sum, row) => sum + row.regular_gain, 0);
+  const amtNet = rows.reduce((sum, row) => sum + row.amt_gain, 0);
+  const oneTermOnly = rows.every((row) => ["A", "B", "C"].includes(row.part)) ||
+    rows.every((row) => ["D", "E", "F"].includes(row.part));
+  const lossLimit = fields.filing_status === "mfs" ? -1_500 : -3_000;
+  const cappedSameTermNetLoss = rows.length > 0 && oneTermOnly &&
+    regularNet < 0 && amtNet < 0 &&
+    (regularNet < lossLimit || amtNet < lossLimit);
+  const calculatedDifference = cappedSameTermNetLoss
+    ? Math.max(amtNet, lossLimit) - Math.max(regularNet, lossLimit)
+    : amtNet - regularNet;
   if (
     !source.success || rows.length === 0 ||
     fields.line2k_disposition !== calculatedDifference ||
@@ -94,10 +101,6 @@ export function assertForm6251Form8949Source(
       "Form 6251 line 2k needs every AMT basis row to match the retained, unadjusted Form 8949 source and its 2025 holding period",
     );
   }
-  const regularNet = rows.reduce((sum, row) => sum + row.regular_gain, 0);
-  const amtNet = rows.reduce((sum, row) => sum + row.amt_gain, 0);
-  const oneTermOnly = rows.every((row) => ["A", "B", "C"].includes(row.part)) ||
-    rows.every((row) => ["D", "E", "F"].includes(row.part));
   const gainToAmtLoss = rows.length >= 1 && oneTermOnly &&
     rows.filter((row) => row.regular_gain > 0 && row.amt_gain < 0)
         .length === 1 &&
@@ -106,7 +109,6 @@ export function assertForm6251Form8949Source(
     regularNet > 0 && amtNet < 0;
   const shortLosses = rows.filter((row) => ["A", "B", "C"].includes(row.part));
   const longRows = rows.filter((row) => ["D", "E", "F"].includes(row.part));
-  const lossLimit = fields.filing_status === "mfs" ? -1_500 : -3_000;
   const crossTermDeductibleLoss = rows.length === 2 &&
     shortLosses.length === 1 && longRows.length === 1 &&
     regularNet < 0 && regularNet >= lossLimit &&
@@ -163,7 +165,7 @@ export function assertForm6251Form8949Source(
     const form1040 = pending?.f1040 as Record<string, unknown> | undefined;
     const amt = fields.line11_amt;
     if (
-      fields.net_capital_gain !== 0 ||
+      (fields.net_capital_gain ?? 0) !== 0 ||
       (fields.qualified_dividends ?? 0) !== 0 ||
       form1040?.line7_capital_gain !== regularNet ||
       typeof amt !== "number" || amt <= 0 ||
@@ -173,6 +175,25 @@ export function assertForm6251Form8949Source(
     ) {
       throw new Error(
         "Form 6251 cross-term basis loss needs its fully deductible Schedule D loss and matching Form 1040 and Schedule 2 tax",
+      );
+    }
+  }
+  if (cappedSameTermNetLoss) {
+    const schedule2 = pending?.schedule2 as Record<string, unknown> | undefined;
+    const form1040 = pending?.f1040 as Record<string, unknown> | undefined;
+    const amt = fields.line11_amt;
+    if (
+      (fields.net_capital_gain ?? 0) !== 0 ||
+      (fields.qualified_dividends ?? 0) !== 0 ||
+      form1040?.line7_capital_gain !== Math.max(regularNet, lossLimit) ||
+      form1040?.line15_taxable_income !== fields.regular_taxable_income ||
+      typeof amt !== "number" || amt <= 0 ||
+      schedule2?.line2_amt !== amt ||
+      typeof form1040?.line17_additional_taxes !== "number" ||
+      form1040.line17_additional_taxes < amt
+    ) {
+      throw new Error(
+        "Form 6251 capped same-term basis loss needs separate AMT and regular Schedule D deductions, Schedule 2, and Form 1040 capital loss and tax",
       );
     }
   }

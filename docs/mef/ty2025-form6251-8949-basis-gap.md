@@ -221,3 +221,23 @@ and Form 1040 line 7/15/17; changing one AMT basis, omitting a lot, or changing
 the return gain rejects. The fixtures are unrun. Other term mixes and
 sign-changing patterns, carryovers, broker-copy authentication, IRS business
 rules, and ATS remain open.
+
+## Same-term loss crossing the separate Schedule D limit (staged, unrun)
+
+The complete-audit Form 8949 route now computes the regular and AMT current-year
+capital-loss deductions separately for identified, unadjusted short-term-only
+or long-term-only rows when both net totals are losses and at least one crosses
+the filing-status $3,000/$1,500 deduction limit. Form 6251 line 2k receives
+the difference between deductible amounts, not the raw difference between
+the two basis totals. For one reviewed 2025 broker row with a $2,000 regular
+loss and a $5,000 AMT loss, Form 1040 line 7 remains -$2,000 while the AMT
+Schedule D deduction is capped at -$3,000, making line 2k -$1,000. The
+remaining $2,000 is an AMT capital-loss carryover for 2026; this route does
+not yet file or import that later-year carryover. Native and PDF export replay
+the exact dated broker row and reconcile line 2k, Schedule 2 line 2, Form 1040
+capital loss, taxable income, and additional tax. Changed basis, printed line,
+or return totals reject. The positive and tamper fixtures are authored for the
+requested final batch. Prior-year capital-loss carryovers, mixed short/long
+terms, adjusted broker rows, and unauthenticated issued-copy bytes remain
+outside this route. The [2025 Form 6251 line 2k instructions](https://www.irs.gov/instructions/i6251)
+require the regular and AMT capital-loss limits to be applied separately.
