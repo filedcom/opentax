@@ -89,6 +89,40 @@ export const inputSchema = z.object({
 type OIDItem = z.infer<typeof itemSchema>;
 type OIDItems = OIDItem[];
 
+const issuedCopyFields = [
+  "box1_oid",
+  "box2_other_interest",
+  "box3_early_withdrawal_penalty",
+  "box4_federal_withheld",
+  "box5_market_discount",
+  "box6_acquisition_premium",
+  "box7_description",
+  "box8_oid_treasury",
+  "box9_investment_expenses",
+  "box10_bond_premium",
+  "box11_tax_exempt_oid",
+  "box12_state_tax",
+  "box13_fatca",
+] as const satisfies readonly (keyof OIDItem)[];
+
+function assertDistinctIssuedCopies(items: OIDItems): void {
+  const seen = new Set<string>();
+  for (const item of items) {
+    if (!item.source_document_reference || !item.payer_tin) continue;
+    const key = JSON.stringify([
+      item.source_document_reference,
+      item.payer_tin.replace(/\D/g, ""),
+      ...issuedCopyFields.map((field) => item[field] ?? null),
+    ]);
+    if (seen.has(key)) {
+      throw new Error(
+        "1099-OID repeats the same identified payer-issued copy and box amounts",
+      );
+    }
+    seen.add(key);
+  }
+}
+
 function taxableInterest(item: OIDItem): number {
   const gross = (item.box1_oid ?? 0) + (item.box8_oid_treasury ?? 0) +
     (item.box2_other_interest ?? 0) +
@@ -269,6 +303,7 @@ class F1099oidNode extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { f1099oids } = inputSchema.parse(input);
+    assertDistinctIssuedCopies(f1099oids);
     f1099oids.forEach(validateItem);
 
     const outputs: NodeOutput[] = [

@@ -23,6 +23,34 @@ function interestDetail(result: ReturnType<typeof compute>) {
   } | undefined;
 }
 
+Deno.test("1099-OID exact issued-copy repetition cannot double interest or withholding", () => {
+  const issued = {
+    payer_name: "Bond Fund",
+    payer_tin: "12-3456789",
+    source_document_reference: "issued-oid-copy-1",
+    box1_oid: 200,
+    box4_federal_withheld: 15,
+    box7_description: "Bond A",
+  };
+  assertThrows(
+    () => compute([issued, { ...issued, nominee_oid: 50 }]),
+    Error,
+    "repeats the same identified payer-issued copy",
+  );
+  const separate = compute([
+    issued,
+    { ...issued, source_document_reference: "issued-oid-copy-2" },
+  ]);
+  assertEquals(
+    separate.outputs.filter((row) => row.nodeType === "schedule_b").length,
+    2,
+  );
+  assertEquals(
+    findOutput(separate, "f1040")?.fields.line25b_withheld_1099,
+    30,
+  );
+});
+
 Deno.test("f1099oid: affirmed investment-property OID reaches Form 4952 once", () => {
   const item = {
     payer_name: "Bond Fund",
