@@ -87,7 +87,8 @@ export function reconcileDependentMagi(
           form.recipient_ssn?.replaceAll("-", "") !== ssn
         ) || source.wage_forms_w2?.some((form) =>
           form.employee_ssn.replaceAll("-", "") !== ssn
-        );
+        ) || (source.dividend_form1099 !== undefined &&
+          source.dividend_form1099.recipient_ssn.replaceAll("-", "") !== ssn);
     })
   ) {
     const hasWages = claimed.some((dependent) =>
@@ -114,6 +115,9 @@ export function reconcileDependentMagi(
         source.filed_form1040.source_document_id,
         ...source.interest_forms1099.map((form) => form.source_document_id),
         ...(source.wage_forms_w2?.map((form) => form.source_document_id) ?? []),
+        ...(source.dividend_form1099
+          ? [source.dividend_form1099.source_document_id]
+          : []),
       ]
       : [];
   });

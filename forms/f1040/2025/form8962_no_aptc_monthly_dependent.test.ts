@@ -206,3 +206,139 @@ Deno.test("Form 8962 dependent no-APTC monthly filing rejects source identity, S
     }, filer)
   );
 });
+
+const dividendDependent = {
+  ...dependent,
+  ptc_tax_return: {
+    ...dependent.ptc_tax_return,
+    filed_form1040: {
+      ...dependent.ptc_tax_return.filed_form1040,
+      line1z_wages: 0,
+      line3b_dividends: 16_000,
+      line11b_agi: 16_000,
+    },
+    interest_forms1099: [],
+    wage_forms_w2: undefined,
+    dividend_form1099: {
+      source_document_id: "casey-issued-2025-1099-div",
+      payer_ein: "998877665",
+      recipient_ssn: "987654321",
+      box1a_ordinary_dividends: 16_000,
+      box1b_qualified_dividends: 0,
+      box2a_capital_gain_distributions: 0,
+      box12_exempt_interest_dividends: 0,
+    },
+  },
+};
+
+function dividendReturn() {
+  return f1040_2025.executeReturn({
+    general: {
+      filing_status: InputFilingStatus.Single,
+      taxpayer_first_name: "Alex",
+      taxpayer_last_name: "Taxpayer",
+      taxpayer_ssn: "123-45-6789",
+      taxpayer_dob: "1985-06-15",
+      taxpayer_can_be_claimed_as_dependent: false,
+      digital_assets: false,
+      address_line1: "1 Main St",
+      address_city: "Austin",
+      address_state: "TX",
+      address_zip: "78701",
+      dependents: [dividendDependent],
+    },
+    w2: [{
+      employer_ein: "12-3456789",
+      employer_name: "Parent Employer",
+      employer_address_line1: "10 Work St",
+      employer_address_city: "Austin",
+      employer_address_state: "TX",
+      employer_address_zip: "78701",
+      employee_ssn: "123-45-6789",
+      box1_wages: 24_880,
+      box2_fed_withheld: 3_000,
+    }],
+    f1095a: [policy],
+  });
+}
+
+Deno.test("Form 8962 ordinary-dividend dependent joins monthly policy, final credit, native and PDF", async () => {
+  const result = dividendReturn();
+  assertEquals(result.diagnostics, []);
+  const pending = normalizeAllPending(result.pending);
+  assertEquals(pending.form8962.dependents_modified_agi, 16_000);
+  assertEquals(pending.form8962.household_income, 40_880);
+  assertEquals(pending.schedule3.line9_premium_tax_credit, 8_184);
+  assertEquals(pending.f1040.line31_additional_payments, 8_184);
+  const prepared = await f1040_2025.prepareReturn(result.pending, filer);
+  assertStringIncludes(
+    prepared.bundle.xml,
+    "<ReconciledPremiumTaxCreditAmt>8184</ReconciledPremiumTaxCreditAmt>",
+  );
+  await prepared.renderPdf();
+});
+
+Deno.test("Form 8962 ordinary-dividend dependent rejects threshold, owner, filed-line and document drift", async () => {
+  const result = dividendReturn();
+  const pending = normalizeAllPending(result.pending);
+  const changed = (ptcTaxReturn: typeof dividendDependent.ptc_tax_return) => ({
+    ...result.pending,
+    general: {
+      ...pending.general,
+      dependents: [{ ...dividendDependent, ptc_tax_return: ptcTaxReturn }],
+    },
+  });
+  await assertRejects(() =>
+    f1040_2025.prepareReturn(
+      changed({
+        ...dividendDependent.ptc_tax_return,
+        dividend_form1099: {
+          ...dividendDependent.ptc_tax_return.dividend_form1099,
+          recipient_ssn: "111223333",
+        },
+      }),
+      filer,
+    )
+  );
+  await assertRejects(() =>
+    f1040_2025.prepareReturn(
+      changed({
+        ...dividendDependent.ptc_tax_return,
+        filed_form1040: {
+          ...dividendDependent.ptc_tax_return.filed_form1040,
+          line3b_dividends: 15_999,
+        },
+      }),
+      filer,
+    )
+  );
+  await assertRejects(() =>
+    f1040_2025.prepareReturn(
+      changed({
+        ...dividendDependent.ptc_tax_return,
+        dividend_form1099: {
+          ...dividendDependent.ptc_tax_return.dividend_form1099,
+          source_document_id: "casey-filed-2025-form1040",
+        },
+      }),
+      filer,
+    )
+  );
+  await assertRejects(() =>
+    f1040_2025.prepareReturn(
+      changed({
+        ...dividendDependent.ptc_tax_return,
+        filed_form1040: {
+          ...dividendDependent.ptc_tax_return.filed_form1040,
+          line3b_dividends: 1_350,
+          line11b_agi: 1_350,
+        },
+        dividend_form1099: {
+          ...dividendDependent.ptc_tax_return.dividend_form1099,
+          box1a_ordinary_dividends: 1_350,
+        },
+      }),
+      filer,
+    )
+  );
+});

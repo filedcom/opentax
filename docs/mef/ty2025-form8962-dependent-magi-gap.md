@@ -244,3 +244,23 @@ and both filing outputs, with changed wage amount, recipient, repeated employer
 or document, and exact-threshold rejection fixtures. All remain unrun pending
 the bulk validation pass. Two W-2s mixed with interest, more employers, other
 filing triggers, and source-byte authentication remain outside this slice.
+
+## One ordinary-dividend-only dependent return (2026-10-01, unrun)
+
+The bounded dependent source now also accepts one identified 2025 Form 1099-DIV
+with ordinary dividends only. The recipient SSN must equal the claimed
+dependent's SSN, its source document ID must differ from the filed dependent
+Form 1040, and boxes for qualified dividends, capital-gain distributions, and
+exempt-interest dividends must be zero. Filed Form 1040 line 3b and AGI must
+equal box 1a; wages, interest, other taxable income, and adjustments remain
+zero. The dividend amount must exceed the applicable 2025 single-dependent
+unearned-income filing threshold, including age/blind increments. This follows
+the [2025 Publication 501 dependent filing table](https://www.irs.gov/publications/p501)
+and [Form 8962 Worksheet 1-2](https://www.irs.gov/instructions/i8962), which
+includes only dependents required to file because income meets the threshold.
+The authored twelve-month no-APTC fixture keeps household income at $40,880
+and joins Form 8962's $8,184 credit to Schedule 3 line 9, Form 1040 line 31,
+native MeF, and the PDF. Recipient, filed line, document identity, and
+at-threshold tamper fixtures are authored but unrun. Mixed dividend income,
+other 1099-DIV boxes, issuer-byte authentication, and IRS acceptance remain
+outside this route.

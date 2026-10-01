@@ -163,7 +163,7 @@ export const dependentSchema = z.object({
         line1z_wages: z.number().nonnegative(),
         line2a_tax_exempt_interest: z.number().nonnegative(),
         line2b_taxable_interest: z.number().nonnegative(),
-        line3b_dividends: z.literal(0),
+        line3b_dividends: z.number().nonnegative(),
         line4b_ira: z.literal(0),
         line5b_pensions: z.literal(0),
         line6b_social_security: z.literal(0),
@@ -180,6 +180,15 @@ export const dependentSchema = z.object({
           box8_tax_exempt_interest: z.number().nonnegative(),
         }).strict(),
       ),
+      dividend_form1099: z.object({
+        source_document_id: z.string().min(1),
+        payer_ein: z.string().regex(/^\d{9}$/),
+        recipient_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+        box1a_ordinary_dividends: z.number().positive(),
+        box1b_qualified_dividends: z.literal(0),
+        box2a_capital_gain_distributions: z.literal(0),
+        box12_exempt_interest_dividends: z.literal(0),
+      }).strict().optional(),
       wage_forms_w2: z.array(
         z.object({
           source_document_id: z.string().min(1),
@@ -397,6 +406,8 @@ export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
       (sum, source) => sum + source.box1_wages,
       0,
     ) ?? 0;
+    const dividends = taxReturn.dividend_form1099?.box1a_ordinary_dividends ??
+      0;
     if (
       taxReturn.wage_forms_w2 &&
       (new Set(taxReturn.wage_forms_w2.map((form) => form.source_document_id))
@@ -408,27 +419,37 @@ export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
         "Form 8962 dependent W-2 wage sources need distinct documents and employers",
       );
     }
-    const wageOnly = wages > 0 && taxableInterest === 0 &&
-      exemptInterest === 0 && taxReturn.interest_forms1099.length === 0;
-    const interestOnly = wages === 0 && taxableInterest > 0 &&
+    const dividendOnly = dividends > 0 && wages === 0 &&
+      taxableInterest === 0 && exemptInterest === 0 &&
+      taxReturn.interest_forms1099.length === 0 &&
       taxReturn.wage_forms_w2 === undefined;
-    const mixedWagesAndInterest = wages > 0 && taxableInterest > 0 &&
+    const wageOnly = dividends === 0 && wages > 0 && taxableInterest === 0 &&
+      exemptInterest === 0 && taxReturn.interest_forms1099.length === 0;
+    const interestOnly = dividends === 0 && wages === 0 &&
+      taxableInterest > 0 &&
+      taxReturn.wage_forms_w2 === undefined;
+    const mixedWagesAndInterest = dividends === 0 && wages > 0 &&
+      taxableInterest > 0 &&
       (taxReturn.wage_forms_w2?.length === 1 ||
         taxReturn.wage_forms_w2?.length === 2) &&
       taxReturn.interest_forms1099.length === 1;
-    if (!wageOnly && !interestOnly && !mixedWagesAndInterest) {
+    if (
+      !wageOnly && !interestOnly && !mixedWagesAndInterest &&
+      !dividendOnly
+    ) {
       throw new Error(
-        "Form 8962 dependent required-filing source supports one or two W-2s wage-only, Form 1099-INT interest-only, or one or two W-2s plus one Form 1099-INT return",
+        "Form 8962 dependent required-filing source supports one or two W-2s wage-only, Form 1099-INT interest-only, one ordinary-dividend-only Form 1099-DIV, or one or two W-2s plus one Form 1099-INT return",
       );
     }
     if (
       filed.line1z_wages !== wages ||
       filed.line2a_tax_exempt_interest !== exemptInterest ||
       filed.line2b_taxable_interest !== taxableInterest ||
-      filed.line11b_agi !== wages + taxableInterest
+      filed.line3b_dividends !== dividends ||
+      filed.line11b_agi !== wages + taxableInterest + dividends
     ) {
       throw new Error(
-        "Form 8962 dependent filed Form 1040 wages, interest, and AGI must reconcile to W-2 or Forms 1099-INT",
+        "Form 8962 dependent filed Form 1040 wages, interest, dividends, and AGI must reconcile to W-2 or Forms 1099",
       );
     }
     const birth = /^\d{4}-\d{2}-\d{2}$/.test(dep.dob)
@@ -441,6 +462,16 @@ export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
       throw new Error("Form 8962 dependent needs a valid birth date");
     }
     const age65 = birth.getTime() < Date.UTC(1961, 0, 2);
+    if (dividendOnly) {
+      const unearnedThreshold = 1_350 +
+        (age65 ? 2_000 : 0) + (filed.blind ? 2_000 : 0);
+      if (dividends <= unearnedThreshold) {
+        throw new Error(
+          "Form 8962 dependent ordinary dividends do not establish the 2025 filing requirement",
+        );
+      }
+      return total + filed.line11b_agi;
+    }
     if (wageOnly) {
       if (age65 || filed.blind || wages <= 15_750) {
         throw new Error(
