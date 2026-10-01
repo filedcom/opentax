@@ -20,6 +20,25 @@ and copy, review, line-2a, and tax-tamper fixture are authored but unrun.
 Neither issued statement nor review bytes are authenticated; allocable expenses,
 excepted bonds, and wider payer combinations remain open.
 
+## One issued private-activity-bond OID payer on line 2g (2026-10-01, unrun)
+
+The bounded Form 1099-OID route now accepts one tax-exempt OID copy with a
+positive box 11 amount entirely affirmed as specified private-activity-bond
+OID. It requires the payer TIN, issued-copy reference, reviewed bond/expense
+reference, and affirmative absence of an allocable deduction. Acquisition or
+bond premium may reduce the tax-exempt OID, and the reviewed PAB share must
+equal that net amount. Other taxable OID and withholding boxes, other PAB
+payers, and additional tax-exempt OID are closed in this route. Native MeF and
+PDF replay the retained copy, match the net amount to Form 1040 line 2a and
+Form 6251 line 2g, then join positive AMT to Schedule 2 line 2 and Form 1040
+line 17. Positive and copy, review, amount, and tax-tamper fixtures are
+authored for the deferred batch. The
+[IRS information-return instructions](https://www.irs.gov/instructions/i1099int)
+place specified private-activity-bond tax-exempt OID in Form 1099-OID box 11;
+the [2025 Form 6251 instructions](https://www.irs.gov/instructions/i6251)
+require line 2g to reflect specified bond interest after allowable expense
+reduction. Issued-copy and eligibility-review bytes are not authenticated.
+
 ## Two reviewed state-income-tax refunds on line 2b (2026-10-01, unrun)
 
 The bounded 2025 Form 1099-G route now accepts two taxable 2024 state-income-tax
@@ -124,8 +143,10 @@ Native and PDF Form 6251 line 2g now sums retained Form 1099-INT box 9, Form
 1099-OID specified private-activity-bond box 11, Form 1099-DIV box 13, and
 elected Form 8814 child private-activity-bond interest. It compares the
 nondividend and complete totals to the computed form and rejects missing or
-out-of-range source boxes. The replay fixture awaits the combined pass; issued
-payer/child source bytes and wider bond adjustments remain open.
+out-of-range source boxes. A positive 1099-OID PAB amount requires the single
+reviewed OID route above; mixed OID PAB source channels now reject. The replay
+fixture awaits the combined pass; issued payer/child source bytes and wider
+bond adjustments remain open.
 
 The Form 8949 AMT-basis replay now also verifies a valid 2025 sale date and
 short- or long-term holding period against each source row's Part I/II box. The

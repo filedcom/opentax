@@ -38,7 +38,7 @@ Deno.test("Form 6251 line 2g replays retained private-activity-bond source", () 
   );
 });
 
-Deno.test("Form 6251 line 2g reconciles all four PAB source channels", () => {
+Deno.test("Form 6251 line 2g closes mixed OID PAB channels without a reviewed source route", () => {
   const fields = {
     line2g_pab_interest: 625,
     private_activity_bond_interest: 700,
@@ -81,6 +81,36 @@ Deno.test("Form 6251 line 2g reconciles all four PAB source channels", () => {
       }],
     },
   };
+  assertThrows(
+    () => assertForm6251PrivateActivityBondSource(fields, pending),
+    Error,
+    "retained 1099-INT/OID/DIV",
+  );
+});
+
+Deno.test("Form 6251 line 2g replays net specified private-activity-bond OID", () => {
+  const oid = {
+    payer_name: "OID Payer",
+    payer_tin: "123456789",
+    source_document_reference: "issued-oid-2025",
+    box11_tax_exempt_oid: 250,
+    box10_bond_premium: 25,
+    box10_applies_to: "tax_exempt_oid",
+    box11_pab_oid: 225,
+    pab_eligible_bonds_reviewed: true,
+    pab_no_allocable_deduction_reviewed: true,
+    pab_review_reference: "reviewed-bond-and-expense-workpaper",
+  };
+  const fields = {
+    line2g_pab_interest: 225,
+    private_activity_bond_interest: 225,
+    line11_amt: 50,
+  };
+  const pending = {
+    f1099oid: { f1099oids: [oid] },
+    f1040: { line2a_tax_exempt: 225, line17_additional_taxes: 50 },
+    schedule2: { line2_amt: 50 },
+  };
   assertForm6251PrivateActivityBondSource(fields, pending);
   assertThrows(
     () =>
@@ -88,8 +118,8 @@ Deno.test("Form 6251 line 2g reconciles all four PAB source channels", () => {
         ...pending,
         f1099oid: {
           f1099oids: [{
-            ...pending.f1099oid.f1099oids[0],
-            box11_pab_oid: 230,
+            ...oid,
+            box11_pab_oid: 224,
           }],
         },
       }),
@@ -102,8 +132,8 @@ Deno.test("Form 6251 line 2g reconciles all four PAB source channels", () => {
         ...pending,
         f1099oid: {
           f1099oids: [{
-            payer_name: "OID Payer",
-            box11_tax_exempt_oid: 250,
+            ...oid,
+            pab_review_reference: undefined,
           }],
         },
       }),

@@ -19,6 +19,7 @@ export const itemSchema = z.object({
   // Payer identification
   payer_name: z.string().min(1),
   payer_tin: z.string().optional(),
+  source_document_reference: z.string().trim().min(1).optional(),
 
   // Box 1: Original issue discount for 2025
   box1_oid: z.number().nonnegative().optional(),
@@ -63,6 +64,9 @@ export const itemSchema = z.object({
   // Explicit AMT preference share of net tax-exempt OID. Box 11 alone does
   // not establish that the bond is a specified private-activity bond.
   box11_pab_oid: z.number().nonnegative().optional(),
+  pab_eligible_bonds_reviewed: z.literal(true).optional(),
+  pab_no_allocable_deduction_reviewed: z.literal(true).optional(),
+  pab_review_reference: z.string().trim().min(1).optional(),
 
   // Box 12: State tax withheld (informational)
   box12_state_tax: z.number().nonnegative().optional(),

@@ -46,6 +46,10 @@ export function assertForm6251PrivateActivityBondSource(
       item.pab_review_reference,
     ])
     : [];
+  const oneOidOnly = oids.length === 1 &&
+    (oids[0].box11_pab_oid ?? 0) > 0 &&
+    ints.length === 0 && divs.length === 0 && children.length === 0;
+  const hasOidPab = oids.some((item) => (item.box11_pab_oid ?? 0) > 0);
   const form1040 = pending?.f1040 as Record<string, unknown> | undefined;
   const schedule2 = pending?.schedule2 as Record<string, unknown> | undefined;
   const amt = typeof fields.line11_amt === "number"
@@ -55,6 +59,15 @@ export function assertForm6251PrivateActivityBondSource(
     (sum, item) => sum + (item.box8 ?? 0),
     0,
   );
+  const oneOidTaxExempt = oneOidOnly
+    ? (oids[0].box11_tax_exempt_oid ?? 0) -
+      (oids[0].box6_applies_to === "tax_exempt_oid"
+        ? oids[0].box6_acquisition_premium ?? 0
+        : 0) -
+      (oids[0].box10_applies_to === "tax_exempt_oid"
+        ? oids[0].box10_bond_premium ?? 0
+        : 0)
+    : 0;
   if (
     int?.success === false || oid?.success === false ||
     div?.success === false || child?.success === false ||
@@ -78,6 +91,7 @@ export function assertForm6251PrivateActivityBondSource(
     ) ||
     claimedInterest !== interest ||
     (fields.private_activity_bond_interest ?? 0) !== total ||
+    (hasOidPab && !oneOidOnly) ||
     (twoIntOnly && (
       ints.some((item) =>
         !item.source_document_reference || !item.payer_tin ||
@@ -93,6 +107,30 @@ export function assertForm6251PrivateActivityBondSource(
       (amt > 0 &&
         (typeof form1040?.line17_additional_taxes !== "number" ||
           Number(form1040?.line17_additional_taxes) < amt))
+    )) ||
+    (oneOidOnly && (
+      !oids[0].payer_tin?.match(/^\d{9}$/) ||
+      !oids[0].source_document_reference ||
+      !oids[0].pab_review_reference ||
+      oids[0].pab_eligible_bonds_reviewed !== true ||
+      oids[0].pab_no_allocable_deduction_reviewed !== true ||
+      oids[0].box11_pab_oid !== oneOidTaxExempt ||
+      (oids[0].box1_oid ?? 0) !== 0 ||
+      (oids[0].box2_other_interest ?? 0) !== 0 ||
+      (oids[0].box3_early_withdrawal_penalty ?? 0) !== 0 ||
+      (oids[0].box4_federal_withheld ?? 0) !== 0 ||
+      (oids[0].box5_market_discount ?? 0) !== 0 ||
+      (oids[0].box8_oid_treasury ?? 0) !== 0 ||
+      (oids[0].box9_investment_expenses ?? 0) !== 0 ||
+      (oids[0].box12_state_tax ?? 0) !== 0 ||
+      oids[0].box13_fatca === true ||
+      (oids[0].nominee_oid ?? 0) !== 0 ||
+      form1040?.line2a_tax_exempt !== oneOidTaxExempt ||
+      amt === undefined ||
+      (schedule2?.line2_amt ?? 0) !== amt ||
+      (amt > 0 &&
+        (typeof form1040?.line17_additional_taxes !== "number" ||
+          Number(form1040.line17_additional_taxes) < amt))
     ))
   ) {
     throw new Error(
