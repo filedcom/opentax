@@ -2688,6 +2688,9 @@ function reconcileAgreedSharedPolicy(
         policy.recipient_ssn?.replaceAll("-", "") !== filerSsn ||
         !covered?.includes(review.covered_individual_ssn.replaceAll("-", "")) ||
         review.covered_individual_ssn.replaceAll("-", "") === filerSsn ||
+        (claimedDependent !== undefined &&
+          review.covered_individual_ssn.replaceAll("-", "") ===
+            claimedDependent.ssn?.replaceAll("-", "")) ||
         review.other_taxpayer_ssn.replaceAll("-", "") !==
           allocation.other_taxpayer_ssn ||
         review.policy_number !== policy.policy_number ||
