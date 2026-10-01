@@ -424,7 +424,8 @@ export function qualifiedRetainedPropertySale(item: EItem): boolean {
 export function qualifiedFirstYearRetainedPropertySale(item: EItem): boolean {
   const sale = item.passive_property_sales?.[0];
   const source = item.first_year_activity_source;
-  return item.activity_type === "B" && item.property_type !== 6 &&
+  return (item.activity_type === "A" || item.activity_type === "B") &&
+    item.property_type !== 6 &&
     item.disposed_of === true &&
     item.passive_property_sales?.length === 1 && !!sale &&
     sale.part === "II" && sale.depreciation_allowed === 0 &&

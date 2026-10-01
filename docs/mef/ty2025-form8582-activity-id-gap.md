@@ -1,5 +1,27 @@
 # TY2025 Form 8582 durable activity identity
 
+## Active first-year retained Part II sale above phaseout (written, unrun)
+
+The first-year retained short-held sale source also supports one actively
+participated type-A rental for a single filer whose modified AGI is at least
+$150,000. With a $5,000 current rental loss and $2,000 ordinary Form 4797 Part
+II gain, Form 8582 Part IV allows $2,000 against the gain and carries $3,000 by
+activity ID. The 2025 acquisition and retained-interest sale records must
+match, with no prior loss, recapture, installment treatment, or grouping. The
+native Form 8582 builder checks the zero special allowance and exact Schedule
+E, Schedule 1, and final Form 1040 amounts; Form 8582, Form 4797, and Schedule
+E PDFs replay that check. Positive and acquisition, phaseout, and return-tamper
+fixtures are authored but unrun.
+
+The [2025 Form 8582 instructions](https://www.irs.gov/instructions/i8582)
+state that the active rental special allowance is generally zero at modified
+AGI of $150,000 or more for a single filer and that less-than-entire sale gains
+remain current activity income. The [2025 Form 4797
+instructions](https://www.irs.gov/instructions/i4797) put short-held ordinary
+property gains in Part II. Below-phaseout amounts, other filing statuses,
+prior PALs, multiple activities, authenticated source documents, XSD,
+filled-PDF, business-rule and acceptance checks remain open.
+
 ## First-year retained Part II property sale (written, unrun)
 
 One first-year type-B rental retains its activity after a short-held,
