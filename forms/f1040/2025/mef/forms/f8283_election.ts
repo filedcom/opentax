@@ -372,7 +372,7 @@ export function assertElectedSectionBReconciled(
   assertSectionBReconciled(context, filedScheduleA);
 }
 
-/** Reconcile a current-year Section B gift or the paired similar-art group. */
+/** Reconcile a current-year Section B gift or a bounded two-gift group. */
 export function assertOrdinarySectionBReconciled(
   context: MefBuildContext | undefined,
   propertyType: SectionBPropertyType,
@@ -469,13 +469,15 @@ export function isTwoSectionBSimilarArtGroup(form: F8283Input): boolean {
     new Set(documents).size === documents.length;
 }
 
-/** Two fully reviewed short-term equipment gifts in one similar-item group. */
-export function isTwoSectionBReducedEquipmentGroup(form: F8283Input): boolean {
+/** Two fully reviewed short-term equipment gifts with sourced group identities. */
+export function isTwoSectionBReducedEquipmentGifts(form: F8283Input): boolean {
   const items = form.section_b_items ?? [];
   if ((form.section_a_items ?? []).length !== 0 || items.length !== 2) {
     return false;
   }
-  const group = items[0]?.similar_item_group?.trim().toLowerCase();
+  const groups = items.map((item) =>
+    item.similar_item_group?.trim().toLowerCase()
+  );
   const documents = items.flatMap((item) => [
     item.signed_form_attachment_file_name,
     item.qualified_appraisal?.attachment_file_name,
@@ -484,9 +486,8 @@ export function isTwoSectionBReducedEquipmentGroup(form: F8283Input): boolean {
     item.ordinary_income_reduction?.purchase_record_attachment_file_name,
     item.ordinary_income_reduction?.reduction_statement_attachment_file_name,
   ]);
-  return !!group &&
+  return groups.every(Boolean) &&
     items.every((item) =>
-      item.similar_item_group?.trim().toLowerCase() === group &&
       item.property_type === SectionBPropertyType.Equipment &&
       item.fmv > 5_000 && item.fmv <= 500_000 &&
       item.deduction_claimed > 5_000 &&
@@ -550,7 +551,7 @@ function assertSectionBReconciled(
     isTwoSectionBSimilarArtGroup(form);
   const pairedEquipment = ordinary &&
     ordinaryPropertyType === SectionBPropertyType.Equipment &&
-    isTwoSectionBReducedEquipmentGroup(form);
+    isTwoSectionBReducedEquipmentGifts(form);
   if (
     (form.section_a_items ?? []).length !== 0 ||
     (!pairedArt && !pairedEquipment &&
@@ -565,7 +566,7 @@ function assertSectionBReconciled(
   ) {
     throw new Error(
       ordinary
-        ? `Form 8283 Section B ${route} needs one current-year gift or two separately sourced similar gifts`
+        ? `Form 8283 Section B ${route} needs one current-year gift or two separately sourced Section B gifts`
         : "Form 8283 Section B election is bounded to one current-year investment-land gift",
     );
   }

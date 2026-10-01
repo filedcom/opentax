@@ -28,7 +28,7 @@ import {
   assertOrdinarySectionBReconciled,
   isSingleSectionANeedyVehicleUnreduced,
   isSingleSectionAVehicleSale,
-  isTwoSectionBReducedEquipmentGroup,
+  isTwoSectionBReducedEquipmentGifts,
   isTwoSectionBSimilarArtGroup,
 } from "../../mef/forms/f8283_election.ts";
 import {
@@ -663,7 +663,7 @@ export const form8283Pdf: PdfFormDescriptor = {
     if (sectionB.length > 0) {
       if (sectionB.length === 2) {
         const similarArt = isTwoSectionBSimilarArtGroup(source);
-        const reducedEquipment = isTwoSectionBReducedEquipmentGroup(source);
+        const reducedEquipment = isTwoSectionBReducedEquipmentGifts(source);
         if (!similarArt && !reducedEquipment) {
           throw new Error(
             "Form 8283 PDF two Section B gifts need distinct signed/appraised similar-art sources and donees or reduced equipment sources",

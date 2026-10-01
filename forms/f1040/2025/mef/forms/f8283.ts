@@ -19,7 +19,7 @@ import {
   hasSectionAShortTermReduction,
   isSingleSectionANeedyVehicleUnreduced,
   isSingleSectionAVehicleSale,
-  isTwoSectionBReducedEquipmentGroup,
+  isTwoSectionBReducedEquipmentGifts,
   isTwoSectionBSimilarArtGroup,
 } from "./f8283_election.ts";
 import {
@@ -1277,7 +1277,7 @@ export const form8283: MefFormDescriptor<
     }
     if (sectionB.length === 2) {
       const similarArt = isTwoSectionBSimilarArtGroup(parsed);
-      const reducedEquipment = isTwoSectionBReducedEquipmentGroup(parsed);
+      const reducedEquipment = isTwoSectionBReducedEquipmentGifts(parsed);
       if (!similarArt && !reducedEquipment) {
         throw new Error(
           "Form 8283 two Section B gifts need distinct signed/appraised similar-art sources and donees or reduced equipment sources",

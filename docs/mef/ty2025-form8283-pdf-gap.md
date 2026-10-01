@@ -314,3 +314,21 @@ changed eighth item, repeated group, return-total, and ninth-item rejection
 fixtures are authored for the deferred bulk pass. Reduced gifts, vehicles,
 capital-gain property, mixed Section B, carryovers, source-byte authentication,
 and more than eight Section A gifts remain outside this bounded route.
+
+## Two distinct reduced Section B equipment groups (2026-10-01, unrun)
+
+The [2025 Form 8283 instructions](https://www.irs.gov/pub/irs-prior/i8283--2025.pdf)
+require a separate Section B for each donee and each item or similar-item
+group claimed above $5,000. The existing two-equipment route already has a
+separate qualified appraisal, signed Form 8283, appraiser/donee signatures,
+purchase/basis record, FMV-reduction statement, and reviewed attachment-byte
+digest for each gift. It now accepts two different, nonempty similar-item
+group identities as well as the existing same-group case. The native writer
+uses each group's own deduction total on its separate `IRS8283` document; PDF
+projects two Section B copies. A $12,000 equipment claim and a $13,000
+equipment claim reach Schedule A line 12 and itemized Form 1040 line 12e as
+$25,000 of noncash gifts, with $61,000 of total itemized deductions in the
+authored return. Changed second-group and finalized-total fixtures reject
+through native and PDF preflight. These source and output fixtures are unrun
+pending the bulk gate. Mixed property types, more than two Section B items,
+carryovers, and real document/authenticity review remain outside this route.

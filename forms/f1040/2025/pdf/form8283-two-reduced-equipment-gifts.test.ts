@@ -1,4 +1,9 @@
-import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
+import {
+  assertEquals,
+  assertRejects,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 import { inputSchema as form8283InputSchema } from "../../nodes/inputs/f8283/index.ts";
 import { execute } from "../../../../core/runtime/executor.ts";
@@ -80,7 +85,8 @@ Deno.test("two separately signed reduced Section B equipment gifts reach Schedul
     attachments.push(
       {
         fileName: names.purchase,
-        description: `Form 8283 Section B purchase and basis record: lot ${index}`,
+        description:
+          `Form 8283 Section B purchase and basis record: lot ${index}`,
         bytes: purchase,
       },
       {
@@ -95,7 +101,8 @@ Deno.test("two separately signed reduced Section B equipment gifts reach Schedul
       },
       {
         fileName: names.reduction,
-        description: `Form 8283 Section B FMV reduction statement: lot ${index}`,
+        description:
+          `Form 8283 Section B FMV reduction statement: lot ${index}`,
         bytes: reduction,
       },
       {
@@ -227,6 +234,103 @@ Deno.test("two separately signed reduced Section B equipment gifts reach Schedul
   const filled = await buildPdfBytes(pending, base.filer, ".pdf-cache", bundle);
   assertEquals((await PDFDocument.load(filled)).getPageCount() > 0, true);
 
+  // Separate equipment classes need their own group totals and still require
+  // each donee's signed Section B copy and appraised source packet.
+  const distinctItems = items.map((item, index) => ({
+    ...item,
+    similar_item_group: index === 0
+      ? "audio equipment"
+      : "laboratory equipment",
+  }));
+  const distinctTypedItems = form8283InputSchema.parse({
+    section_b_items: distinctItems,
+  }).section_b_items!;
+  const distinctResult = execute(buildExecutionPlan(registry), registry, {
+    ...base.inputs,
+    schedule_a: {
+      line_5a_state_income_tax: 24_000,
+      line_8a_mortgage_interest_1098: 12_000,
+      current_noncash_gift_inventory_complete_confirmed: true,
+      other_prior_charitable_carryovers_absent_confirmed: true,
+      capital_gain_property_carryovers: [],
+    },
+    f8283: { section_b_items: distinctItems },
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(distinctResult.diagnostics, []);
+  assertEquals(
+    distinctResult.pending.schedule_a.line_12_noncash_contributions,
+    25_000,
+  );
+  assertEquals(
+    distinctResult.pending.f1040.line12e_itemized_deductions,
+    61_000,
+  );
+  const distinctPending = buildPending(distinctResult.pending);
+  const distinctBundle = await buildMefBundle(distinctPending, {
+    filer: base.filer,
+    attachments,
+  });
+  assertEquals((distinctBundle.xml.match(/<IRS8283\b/g) ?? []).length, 2);
+  const distinctProjected = form8283Pdf.instances!(
+    distinctPending.f8283!,
+    base.filer,
+    {
+      f8283: distinctPending.f8283!,
+      schedule_a: distinctPending.schedule_a!,
+      f1040: distinctPending.f1040!,
+    },
+  );
+  assertEquals(distinctProjected.map((item) => item.section_b_claim), [
+    12_000,
+    13_000,
+  ]);
+  const distinctPdf = await buildPdfBytes(
+    distinctPending,
+    base.filer,
+    ".pdf-cache",
+    distinctBundle,
+  );
+  assertEquals((await PDFDocument.load(distinctPdf)).getPageCount() > 0, true);
+  await assertRejects(
+    () =>
+      buildMefBundle({
+        ...distinctPending,
+        f8283: {
+          section_b_items: [distinctTypedItems[0], {
+            ...distinctTypedItems[1],
+            similar_item_group: "audio equipment",
+          }],
+        },
+      }, { filer: base.filer, attachments }),
+    Error,
+    "complete source inventory",
+  );
+  await assertRejects(
+    () =>
+      buildMefBundle({
+        ...distinctPending,
+        f1040: {
+          ...distinctPending.f1040,
+          line12e_itemized_deductions: 60_999,
+        },
+      }, { filer: base.filer, attachments }),
+    Error,
+    "itemized total",
+  );
+  assertThrows(
+    () =>
+      form8283Pdf.instances!(distinctPending.f8283!, base.filer, {
+        f8283: distinctPending.f8283!,
+        schedule_a: distinctPending.schedule_a!,
+        f1040: {
+          ...distinctPending.f1040!,
+          line12e_itemized_deductions: 60_999,
+        },
+      }),
+    Error,
+    "itemized total",
+  );
+
   await assertRejects(
     () =>
       buildMefBundle(pending, {
@@ -255,7 +359,7 @@ Deno.test("two separately signed reduced Section B equipment gifts reach Schedul
         },
       }, { filer: base.filer, attachments }),
     Error,
-    "two separately sourced similar gifts",
+    "two separately sourced Section B gifts",
   );
   await assertRejects(
     () =>
