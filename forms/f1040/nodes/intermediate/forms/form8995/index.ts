@@ -33,6 +33,12 @@ export const scheduleFQbiBusinessSchema = z.object({
   source_schedule_f: z.unknown(),
 }).strict();
 
+// Schedule C keeps source cents until the Form 8995 line total is rounded.
+// Form 8995-A retains its own whole-dollar business schema.
+const scheduleCQbiBusinessWithCentsSchema = scheduleCQbiBusinessSchema.extend({
+  qbi: z.number().finite(),
+});
+
 function sumField(value: number | number[] | undefined): number {
   if (value === undefined) return 0;
   if (Array.isArray(value)) {
@@ -87,7 +93,8 @@ export const inputSchema = z.object({
   retirement_plan_deduction: accumulable(z.number().nonnegative()).optional(),
   // Prior-year QBI net loss carryforward (must be zero or negative)
   qbi_loss_carryforward: z.number().nonpositive().optional(),
-  schedule_c_qbi_businesses: z.array(scheduleCQbiBusinessSchema).optional(),
+  schedule_c_qbi_businesses: z.array(scheduleCQbiBusinessWithCentsSchema)
+    .optional(),
   schedule_f_qbi_businesses: z.array(scheduleFQbiBusinessSchema).optional(),
   qbi_no_prior_loss_or_suspended_loss_confirmed: z.literal(true).optional(),
   qbi_not_patron_of_specified_cooperative_confirmed: z.literal(true).optional(),
@@ -343,7 +350,7 @@ function oneScheduleCLines(
     business.no_other_adjustments_confirmed !== true ||
     input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
     input.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
-    !Number.isInteger(business.qbi) || business.qbi <= 0 ||
+    !Number.isFinite(business.qbi) || business.qbi <= 0 ||
     sumField(input.qbi_from_schedule_c) !== business.qbi ||
     sumField(input.qbi_from_schedule_f) !== 0 || sumField(input.qbi) !== 0 ||
     sumField(input.sstb_qbi) !== 0 ||

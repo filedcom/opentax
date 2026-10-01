@@ -145,7 +145,7 @@ open.
 
 The Schedule C node now retains an identified business row for positive QBI, and
 the Form 8995 node records lines 1-17 for one business. Export accepts the
-record only when the business has a name, EIN, reference, positive integer net
+record only when the business has a name, EIN, reference, positive net
 profit, an explicit no-other-adjustments confirmation, and an explicit no-prior-
 or-suspended-loss confirmation, plus confirmation that the filer is not a patron
 of a specified cooperative. The source Schedule C must independently recalculate
@@ -172,6 +172,19 @@ fractional mismatch. It also rejects original Schedule F/E, K-1, Form 1099-DIV,
 Schedule D and retirement-plan sources, plus any Form 7206 claim beyond its
 retained Schedule C and Schedule SE source records, even if their deposits were
 omitted from Form 8995 pending data.
+
+Schedule C may supply dollars and cents. The direct one-business Form 8995
+route keeps the exact Schedule C profit through Schedule 1 and its identified
+QBI source row, subtracts the attributable half-SE-tax or supported health
+deduction with cents intact, then rounds the Form 8995 line 1 total to whole
+dollars. The native and PDF guards replay that raw source and the filed
+integer lines. Authored 49-cent/50-cent calculation boundaries and a full
+Schedule C/native/PDF source-tamper fixture await the bulk pass. This follows
+the [2025 Form 1040 rounding instructions](https://www.irs.gov/instructions/i1040gi):
+retain cents while adding amounts for a line, then round the line total; use
+the same whole-dollar policy across the return. Form 8995-A's separate
+advanced business-row schema remains integer-only pending its own source and
+rounding review.
 
 These zero-source conditions are an explicit supported boundary, not inferred
 zeros: export checks the final Schedule 1 and Form 1040 before producing a
