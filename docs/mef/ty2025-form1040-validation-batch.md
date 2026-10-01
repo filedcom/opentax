@@ -263,7 +263,7 @@ scenario packet PDF as if it were a generated return.
 The workspace has blank IRS PDF templates in `.state/field-dumps/cache` and
 source ATS scenario PDFs in `.state/research/docs/ats-ty2025`. These are not
 filled-output fixtures. `forms/f1040/2025/pdf/review-fixtures.ts` now holds
-132 synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts`
+134 synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts`
 can run them through the real return graph and PDF builder. Earlier on
 2026-09-29, the first sixteen
 generated 94 pages successfully under
@@ -284,8 +284,8 @@ deno run --allow-read scripts/plan-ty2025-pdf-review.ts > /absolute/new/review-p
 
 The read-only plan enumerates all fixture IDs, expected PDF descriptor keys,
 synthetic owner SSNs, and review focus, then lists registered PDF keys not
-represented by any fixture. The current fixture metadata names **56 distinct
-registered PDF keys out of 112**; **56 keys remain without a fixture**, across
+represented by any fixture. The current fixture metadata names **59 distinct
+registered PDF keys out of 112**; **53 keys remain without a fixture**, across
 115 registered descriptors. The eight older human-readable expected-form aliases
 have been replaced with their exact descriptor keys, while repeated keys still
 indicate multiple expected copies. The plan does not prove that any PDF renders.
@@ -334,7 +334,15 @@ rented-home Schedule C deduction on Form 8829. Their source shapes follow the
 existing full-return graph/native/PDF paths; the held batch must still prove
 their XSD and filled-page results.
 
-Uncovered registered PDF keys at this checkpoint (56):
+Two further existing full-return routes add Form 8995-A with its Schedule C
+loss-netting companion and Form 7203 with a separately sourced capital
+contribution and formal shareholder note. The first has two distinct Schedule C
+business copies, so its page review also exercises copy-number tracking in the
+completion checker. The second reconciles the allowed K-1 loss to Schedule E,
+Schedule 1, and Form 1040. Neither new fixture has been rendered in this held
+batch.
+
+Uncovered registered PDF keys at this checkpoint (53):
 
 ```text
 f2106 f2210f f2439 f4136 f4255 f4835
@@ -344,10 +352,10 @@ f5471_schedule_r f5884 f8611 f8820 f8834 f8844 f8854 f8854_annual
 f8859 f8864 f8881 f8882 f8888 f8911 f8911_schedule_a f8912
 f8936 f8941 f8978 f8994 f965
 form461 form4684
-form5695 form7203 form8396 form8582cr
+form5695 form8396 form8582cr
 form8839 form8853 form8919
-form8978_schedule_a form8990 form8992 form8992_schedule_a form8995a
-form8995a_schedule_a form8995a_schedule_b form8995a_schedule_c
+form8978_schedule_a form8990 form8992 form8992_schedule_a
+form8995a_schedule_a form8995a_schedule_b
 form8995a_schedule_d form982 schedule_j schedule_r
 ```
 
