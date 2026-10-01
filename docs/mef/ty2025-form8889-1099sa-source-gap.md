@@ -44,8 +44,25 @@ matching printed form or an altered source/return cannot use this route.
 The [2025 Form 8889 instructions](https://www.irs.gov/instructions/i8889)
 direct those line destinations and the additional-tax rule.
 
-Employer funding, multiple 1099-SA forms or medical receipts, age-65 or
-disability exceptions, prior excess, and testing-period events are outside
+Employer funding, age-65 or disability exceptions, prior excess, and
+testing-period events are outside
 this narrow mixed path. The entered trustee and receipt references are not
 authenticated document bytes. Positive and tamper fixtures are authored for
 the deferred combined validation pass.
+
+## Two ordinary distribution statements and two medical receipts (written, unrun)
+
+The same single-owner, full-year self-only route now accepts exactly two
+distinct code-1 Forms 1099-SA identifying one HSA account, and two distinct
+reviewed medical receipts. The owner's box 1 amounts must sum to Form 8889
+line 14a and the reviewed receipt amounts to line 15. The calculator derives
+the remaining taxable amount and 20% additional tax. Native and PDF export
+replay all four source rows, require unique statement and receipt references
+and one matching HSA account reference, compare every printed owner line to
+the calculation, and match Schedule 1, Schedule 2, and Form 1040 lines 8,
+10, and 23. A full-return and statement, receipt, and tax-tamper fixture are
+authored for the deferred validation pass. The [2025 Form 8889
+instructions](https://www.irs.gov/instructions/i8889) use total Form 1099-SA
+box 1 on line 14a and unreimbursed qualified medical expenses on line 15.
+Account identity, trustee and receipt bytes remain unauthenticated; code-2/3,
+exception, rollover, and paired-owner mixes remain closed in this source route.

@@ -137,6 +137,9 @@ const beneficiaryInputSchema = z.object({
       box2_earnings_on_excess: z.number().nonnegative().optional(),
       box3_distribution_code: z.enum(["1", "2", "3"]),
       source_reference: z.string().trim().min(1),
+      // Required by the two-copy single-owner route: both issued copies must
+      // identify the same HSA, rather than two separately filed accounts.
+      hsa_account_reference: z.string().trim().min(1).optional(),
     }).strict().superRefine((row, ctx) => {
       if (
         row.box3_distribution_code === "2"

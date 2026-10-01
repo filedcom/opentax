@@ -57,8 +57,12 @@ export function reconcilePrimaryMixedMedicalForm8889(
     throw new Error("Form 8889 mixed medical distribution needs owner source");
   }
   const item = source.data;
-  const [distribution] = item.form1099_sa_distributions ?? [];
-  const [medical] = item.qualified_medical_expense_evidence ?? [];
+  const distributions = item.form1099_sa_distributions ?? [];
+  const medicalReceipts = item.qualified_medical_expense_evidence ?? [];
+  const references = [
+    ...distributions.map((row) => row.source_reference),
+    ...medicalReceipts.map((row) => row.source_reference),
+  ];
   const coverage = item.eligible_hdhp_coverage_by_month;
   if (
     !filer || filer.filingStatus !== FilingStatus.Single ||
@@ -85,15 +89,23 @@ export function reconcilePrimaryMixedMedicalForm8889(
     item.age_65_exception_evidence !== undefined ||
     item.disability_exception_evidence !== undefined ||
     item.exception_qualified_taxable_amount !== 0 ||
-    item.form1099_sa_distributions?.length !== 1 ||
-    !distribution || distribution.box3_distribution_code !== "1" ||
-    distribution.box1_gross_distribution !== item.hsa_distributions ||
-    item.qualified_medical_expense_evidence?.length !== 1 ||
-    !medical || medical.amount !== item.qualified_medical_expenses ||
-    (item.hsa_distributions ?? 0) <= medical.amount
+    distributions.length < 1 || distributions.length > 2 ||
+    distributions.some((row) => row.box3_distribution_code !== "1") ||
+    (distributions.length === 2 &&
+      (!distributions[0]?.hsa_account_reference ||
+        distributions[1]?.hsa_account_reference !==
+          distributions[0].hsa_account_reference)) ||
+    distributions.reduce((sum, row) => sum + row.box1_gross_distribution, 0) !==
+      item.hsa_distributions ||
+    medicalReceipts.length < 1 || medicalReceipts.length > 2 ||
+    medicalReceipts.reduce((sum, row) => sum + row.amount, 0) !==
+      item.qualified_medical_expenses ||
+    new Set(references).size !== references.length ||
+    (item.hsa_distributions ?? 0) <=
+      (item.qualified_medical_expenses ?? 0)
   ) {
     throw new Error(
-      "Form 8889 mixed medical distribution needs one sourced self-only primary HSA and reviewed expense",
+      "Form 8889 mixed medical distribution needs one sourced self-only primary HSA with distinct owner statements and reviewed expenses",
     );
   }
   const outputs = form8889.compute(
