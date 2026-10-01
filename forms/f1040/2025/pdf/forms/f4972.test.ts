@@ -16,6 +16,10 @@ import {
   inputSchema as form4972InputSchema,
 } from "../../../nodes/intermediate/forms/form4972/index.ts";
 
+Deno.test("2025 Form 4972 PDF omits an absent election from another return", () => {
+  assertEquals(form4972Pdf.instances?.({}, undefined, {}), []);
+});
+
 Deno.test("2025 Form 4972 PDF prints a sourced partial-share Part III and MRD", async () => {
   const source = {
     ...eligibility,

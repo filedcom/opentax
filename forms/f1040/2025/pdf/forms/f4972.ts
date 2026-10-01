@@ -310,6 +310,7 @@ export const form4972Pdf: PdfFormDescriptor = {
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f4972--2025.pdf",
   pageIndices: () => [0],
   instances(raw, filer, allPending) {
+    if (Object.keys(raw).length === 0) return [];
     if (!allPending) {
       throw new Error(
         "Form 4972 PDF collection needs the final pending return",
