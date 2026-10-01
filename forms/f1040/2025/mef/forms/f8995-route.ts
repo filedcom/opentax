@@ -128,16 +128,25 @@ function zeroOrAbsent(value: unknown): boolean {
 }
 
 /** One issued, nonnominee dividend record without other 1099-DIV components. */
-function qualifiedDividendSource(source: unknown): {
+function qualifiedDividendSource(source: unknown, reitAnchors: unknown): {
   ordinary: number;
   qualified: number;
 } {
   const parsed = form1099DivInputSchema.safeParse(source);
-  const item = parsed.success && parsed.data.f1099divs.length === 1
-    ? parsed.data.f1099divs[0]
+  const copies = parsed.success ? parsed.data.f1099divs : [];
+  const item = copies.length <= 2
+    ? copies.find((copy) => (copy.box1b ?? 0) > 0)
     : undefined;
+  const other = copies.find((copy) => copy !== item);
   if (
-    !item?.payerName?.trim() || !item.source_document_reference?.trim() ||
+    !item || (copies.length !== 1 && copies.length !== 2) ||
+    (other !== undefined &&
+      (reitAnchors === undefined || (other.box5 ?? 0) <= 0 ||
+        other.source_document_reference === item.source_document_reference ||
+        other.payerName?.trim().toLowerCase() ===
+          item.payerName?.trim().toLowerCase() ||
+        item.box1a + other.box1a > 1_500)) ||
+    !item.payerName?.trim() || !item.source_document_reference?.trim() ||
     item.isNominee || item.nominee_distribution !== undefined || item.box11 ||
     !Number.isSafeInteger(item.box1a) || item.box1a <= 0 ||
     item.box1a > 1_500 || !Number.isSafeInteger(item.box1b) ||
@@ -170,13 +179,17 @@ function qualifiedDividendSource(source: unknown): {
     item.investment_property_for_form4952 === true
   ) {
     throw new Error(
-      "Form 8995 qualified-dividend route needs one identified issued 1099-DIV without other dividend components or Schedule B threshold",
+      "Form 8995 qualified-dividend route needs one identified issued copy, optionally alongside one distinct REIT copy, without other dividend components or Schedule B threshold",
     );
   }
   return { ordinary: item.box1a, qualified: item.box1b! };
 }
 
-function qualifiedReitDividends(source: unknown, anchors: unknown): number {
+function qualifiedReitDividends(
+  source: unknown,
+  anchors: unknown,
+  qualifiedDividends: number,
+): number {
   if (source === undefined) {
     if (anchors !== undefined) {
       throw new Error(
@@ -186,16 +199,24 @@ function qualifiedReitDividends(source: unknown, anchors: unknown): number {
     return 0;
   }
   const parsed = form1099DivInputSchema.safeParse(source);
-  const items = parsed.success ? parsed.data.f1099divs : [];
+  const allItems = parsed.success ? parsed.data.f1099divs : [];
+  const items = allItems.filter((item) => (item.box5 ?? 0) > 0);
+  const other = allItems.filter((item) => (item.box5 ?? 0) <= 0);
   const validDate = (date: string | undefined) =>
     !!date && !Number.isNaN(Date.parse(`${date}T00:00:00Z`)) &&
     new Date(`${date}T00:00:00Z`).toISOString().slice(0, 10) === date;
   const sourceReferences = new Set<string>();
   const payerNames = new Set<string>();
   const reviewReferences = new Set<string>();
-  if (items.length < 1 || items.length > 2) {
+  if (
+    items.length < 1 || items.length > 2 || allItems.length > 2 ||
+    other.length !== (qualifiedDividends > 0 ? 1 : 0) ||
+    (other.length === 1 &&
+      (!other[0].box1b || other[0].box1b !== qualifiedDividends ||
+        allItems.reduce((sum, item) => sum + item.box1a, 0) > 1_500))
+  ) {
     throw new Error(
-      "Form 8995 REIT component needs one or two identified box 5 Forms 1099-DIV",
+      "Form 8995 REIT component needs one or two identified box 5 copies, optionally alongside one distinct qualified-dividend copy",
     );
   }
   if (!Array.isArray(anchors) || anchors.length !== items.length) {
@@ -332,12 +353,18 @@ export function assertOneScheduleC8995(
   ] as const;
   const form7206 = pending.form7206;
   const qualifiedDividends = !zeroOrAbsent(fields.net_capital_gain)
-    ? qualifiedDividendSource(pending.f1099div)
+    ? qualifiedDividendSource(
+      pending.f1099div,
+      fields.reit_dividend_sources,
+    )
     : { ordinary: 0, qualified: 0 };
-  const reit = qualifiedDividends.qualified > 0 ? 0 : qualifiedReitDividends(
-    pending.f1099div,
-    fields.reit_dividend_sources,
-  );
+  const reit = fields.reit_dividend_sources === undefined
+    ? 0
+    : qualifiedReitDividends(
+      pending.f1099div,
+      fields.reit_dividend_sources,
+      qualifiedDividends.qualified,
+    );
   const seDeduction = fields.se_tax_deduction ?? 0;
   const healthField = fields.se_health_insurance_deduction;
   const healthDeduction = typeof healthField === "number" ? healthField : 0;
@@ -469,8 +496,7 @@ export function assertOneScheduleC8995(
     !zeroOrAbsent(f1040.line7_capital_gain) ||
     !zeroOrAbsent(f1040.line7a_cap_gain_distrib) ||
     (fields.net_capital_gain ?? 0) !== qualifiedDividends.qualified ||
-    (qualifiedDividends.qualified > 0 &&
-      fields.reit_dividend_sources !== undefined) ||
+    reit + qualifiedDividends.ordinary > 1_500 ||
     !zeroOrAbsent(f1040.line13b_additional_deductions) ||
     typeof f1040.line11_agi !== "number" ||
     typeof f1040.line12c_deduction_total !== "number" ||

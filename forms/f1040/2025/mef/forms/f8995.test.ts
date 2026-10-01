@@ -139,6 +139,94 @@ Deno.test("one Schedule C and partly qualified 1099-DIV reconcile Form 8995 line
   );
 });
 
+Deno.test("one Schedule C combines separate qualified and held REIT dividend issuers", () => {
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-schedule-c"
+  );
+  if (!fixture) throw new Error("missing Schedule C review fixture");
+  const qualified = {
+    payerName: "Qualified Dividend Fund",
+    source_document_reference: "2025 qualified-dividend 1099-DIV",
+    isNominee: false,
+    box11: false,
+    box1a: 700,
+    box1b: 500,
+  };
+  const reit = {
+    payerName: "Separate REIT",
+    source_document_reference: "2025 REIT 1099-DIV",
+    isNominee: false,
+    box11: false,
+    box1a: 600,
+    box5: 600,
+    holdingPeriodDays: 60,
+    section199a_holding_review: {
+      ex_dividend_date: "2025-07-01",
+      qualified_held_days_in_91_day_window: 50,
+      diminished_risk_days_excluded: 10,
+      no_related_payment_obligation_confirmed: true,
+      review_reference: "Separate REIT holding review",
+      reviewed_on: "2026-03-01",
+    },
+  };
+  const result = execute(buildExecutionPlan(registry), registry, {
+    ...fixture.inputs,
+    f1099div: [qualified, reit],
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const { pending } = result;
+  const fields = pending.form8995;
+  assertEquals(pending.f1040?.line3a_qualified_dividends, 500);
+  assertEquals(pending.f1040?.line3b_ordinary_dividends, 1_300);
+  assertEquals(fields?.line6, 600);
+  assertEquals(fields?.line9, 120);
+  assertEquals(fields?.line12, 500);
+  assertEquals(fields?.line15, pending.f1040?.line13_qbi_deduction);
+  const xml = form8995.build(fields, { pending });
+  assertStringIncludes(
+    xml,
+    "<QlfyREITDivPTPIncomeLossAmt>600</QlfyREITDivPTPIncomeLossAmt>",
+  );
+  assertStringIncludes(xml, "<NetCapitalGainAmt>500</NetCapitalGainAmt>");
+  const returnXml = buildMefXml(pending, testFiler());
+  assertStringIncludes(returnXml, "<IRS8995 documentId=");
+  assertStringIncludes(returnXml, "<NetCapitalGainAmt>500</NetCapitalGainAmt>");
+  const pdf = form8995Pdf.projectFields?.(fields, pending);
+  assertEquals(pdf?.line6, 600);
+  assertEquals(pdf?.line12, 500);
+  assertEquals(pdf?.line15, fields?.line15);
+
+  const alteredSources = [
+    [qualified],
+    [{ ...qualified, box1b: 400 }, reit],
+    [qualified, { ...reit, box5: 599 }],
+    [qualified, {
+      ...reit,
+      source_document_reference: qualified.source_document_reference,
+    }],
+    [qualified, { ...reit, payerName: qualified.payerName }],
+    [qualified, {
+      ...reit,
+      section199a_holding_review: {
+        ...reit.section199a_holding_review,
+        no_related_payment_obligation_confirmed: false,
+      },
+    }],
+    [qualified, reit, { ...reit, payerName: "Third REIT" }],
+  ];
+  for (const copies of alteredSources) {
+    const changed = { ...pending, f1099div: { f1099divs: copies } };
+    assertThrows(() => form8995.build(fields, { pending: changed }), Error);
+    assertThrows(() => form8995Pdf.projectFields?.(fields, changed), Error);
+  }
+  const changedReturn = {
+    ...pending,
+    f1040: { ...pending.f1040, line3b_ordinary_dividends: 1_299 },
+  };
+  assertThrows(() => form8995.build(fields, { pending: changedReturn }), Error);
+  assertThrows(() => form8995Pdf.projectFields?.(fields, changedReturn), Error);
+});
+
 Deno.test("one Schedule C and one held 1099-DIV box 5 source reach Form 8995 and Form 1040", () => {
   const fixture = pdfReviewFixtures.find((item) =>
     item.id === "single-schedule-c"

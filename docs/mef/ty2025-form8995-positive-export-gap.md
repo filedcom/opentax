@@ -27,6 +27,23 @@ positive filing route remains subject to the source and export gates below.
 
 ## Implemented one-business route
 
+The one-Schedule-C route also combines exactly two distinct issued 1099-DIV
+copies: one with positive qualified dividends and one with reviewed section
+199A REIT dividends. Their combined ordinary dividends must be at most $1,500,
+so this bounded case does not require Schedule B. The REIT copy retains its
+91-day holding and related-payment review, while the qualified copy has no
+other dividend components. Native and PDF export replay both source copies,
+require distinct payer and document identities, and reconcile the REIT amount
+on Form 8995 lines 6/8/9, qualified dividends on line 12, Form 1040 lines
+3a/3b, and the final QBI deduction. A $700 ordinary/$500 qualified copy plus
+a separate $600 ordinary/$600 box 5 copy has authored positive and source,
+identity, holding-review, extra-copy, and return-tamper fixtures. These fixtures
+are unrun. This follows the
+[2025 Form 8995 instructions](https://www.irs.gov/instructions/i8995) for
+the separate REIT component and line 12's qualified-dividend increase to net
+capital gain. Larger totals, Schedule B, other dividend boxes, capital gains,
+and issued-copy byte authentication remain open.
+
 One bounded extension combines that single sourced Schedule C business with
 one identified Form 1099-DIV whose whole box 1a ordinary-dividend amount is
 box 5 section 199A dividends. A separate reviewed record names the
