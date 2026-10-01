@@ -193,8 +193,6 @@ function failUnsupportedFacts(item: Property): void {
   }
   if (
     (item.operating_expenses_carryover ?? 0) > 0 ||
-    (item.prior_unallowed_passive_4797_part1 ?? 0) > 0 ||
-    (item.prior_unallowed_passive_4797_part2 ?? 0) > 0 ||
     (item.prior_unallowed_at_risk ?? 0) > 0 ||
     (item.disallowed_mortgage_interest_8990 ?? 0) > 0 ||
     (item.disallowed_other_interest_8990 ?? 0) > 0
@@ -470,6 +468,35 @@ export function validatePassiveActivityLink(
   );
 }
 
+function validatePartIxCarryovers(
+  items: readonly Property[],
+  context: MefBuildContext | undefined,
+): void {
+  const carried = items.filter((item) =>
+    (item.prior_unallowed_passive_4797_part1 ?? 0) > 0 ||
+    (item.prior_unallowed_passive_4797_part2 ?? 0) > 0
+  );
+  if (carried.length === 0) return;
+  const linked = context?.pending?.form8582;
+  if (!linked || typeof linked !== "object" || Array.isArray(linked)) {
+    throw new Error("Schedule E Form 4797 carryovers need a matching Form 8582 worksheet");
+  }
+  const ledger = form8582InputSchema.parse(linked);
+  if (carried.some((item) => {
+    const activity = ledger.activities?.find((row) =>
+      row.activity_id === item.activity_id
+    );
+    return !activity ||
+      activity.prior_unallowed_4797_part1 !==
+        (item.prior_unallowed_passive_4797_part1 ?? 0) ||
+      activity.prior_unallowed_4797_part2 !==
+        (item.prior_unallowed_passive_4797_part2 ?? 0);
+  })) {
+    throw new Error("Schedule E Form 4797 carryovers differ from Form 8582 activity rows");
+  }
+  form8582.build(linked as Record<string, unknown>, context);
+}
+
 export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
   pendingKey: "schedule_e",
   sourcePendingKeys: ["schedule_e", "k1_partnership", "k1_s_corp"],
@@ -518,6 +545,7 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
     itemList.forEach((item) =>
       verifyMiscRoyaltySource(item, context?.pending?.f1099m, context?.filer)
     );
+    validatePartIxCarryovers(itemList, context);
     const allowedPassiveLosses = validatePassiveActivityLink(itemList, context);
     const properties = itemList.map((item, index) =>
       buildProperty(item, allowedPassiveLosses.get(index))
