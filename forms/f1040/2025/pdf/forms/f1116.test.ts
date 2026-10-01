@@ -625,7 +625,7 @@ Deno.test("Form 1116 PDF prints a source-joined 1065 K-3 line 12 reduction", () 
         schedule3: { line1_foreign_tax_credit: 50 },
       }),
     Error,
-    "differ from MeF or Schedule 3",
+    "differ from MeF, Schedule 3, or Form 1040",
   );
 });
 
@@ -908,8 +908,9 @@ Deno.test("Form 1116 PDF prints a reviewed one-source current-year excess with S
       line14_deductions_qbi_total: 0,
       line15_taxable_income: 1_000,
       line16_income_tax: 100,
+      line20_nonrefundable_credits: 100,
     },
-    schedule3: { line1_foreign_tax_credit: 100 },
+    schedule3: { line1_foreign_tax_credit: 100, line8_total: 100 },
     form_1116: fields,
     form1116_schedule_b: scheduleB,
   };
@@ -1034,7 +1035,7 @@ Deno.test("Form 1116 PDF rejects tampered conversion, missing review, and omitte
         single_source_pdf_review: undefined,
       }, pending),
     Error,
-    "affirmative single-source",
+    "affirmative source inventory and Part I–IV review",
   );
   assertThrows(
     () =>

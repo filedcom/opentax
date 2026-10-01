@@ -3,6 +3,13 @@ import { f1040_2025 } from "../../index.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
 import { normalizeAllPending } from "../../pending.ts";
 import { testFiler } from "../../mef/test-filer.ts";
+
+const finalFiler = {
+  ...testFiler(),
+  firstNameWithInitial: "Alex",
+  lastName: "Taxpayer",
+  nameLine1: "TAXPAYER ALEX",
+};
 import {
   form3800PartIAndIIFields,
   form3800PartIIIFields,
@@ -60,6 +67,7 @@ function filedReturn() {
       taxpayer_last_name: "Taxpayer",
       taxpayer_ssn: "123-45-6789",
       taxpayer_dob: "1985-06-15",
+      digital_assets: false,
     },
     w2: [{
       box1_wages: 120_000,
@@ -70,6 +78,10 @@ function filedReturn() {
       box6_medicare_withheld: 1_740,
       employer_ein: "12-3456789",
       employer_name: "ACME Corp",
+      employer_address_line1: "10 Payroll Way",
+      employer_address_city: "Austin",
+      employer_address_state: "TX",
+      employer_address_zip: "78701",
       box12_entries: [],
     }],
     f8936: source,
@@ -90,13 +102,13 @@ Deno.test("one commercial Form 8936 credit reaches Form 3800 line 1aa, Form 1040
   assertEquals(pending.f3800.allowed_credit, 3_000);
   assertEquals(pending.schedule3.line6a_total, 3_000);
   assertEquals(pending.f1040.line20_nonrefundable_credits, 3_000);
-  const prepared = await f1040_2025.prepareReturn(result.pending, testFiler());
+  const prepared = await f1040_2025.prepareReturn(result.pending, finalFiler);
   assertEquals(prepared.bundle.form3800Parts?.lines.line38, 3_000);
   assertStringIncludes(prepared.bundle.xml, "<IRS8936 ");
   assertStringIncludes(prepared.bundle.xml, "<IRS3800 ");
   const [printed] = form3800Pdf.instances!(
     pending.f3800,
-    testFiler(),
+    finalFiler,
     pending,
     prepared.bundle.form3800Parts,
   );
@@ -107,7 +119,7 @@ Deno.test("one commercial Form 8936 credit reaches Form 3800 line 1aa, Form 1040
 Deno.test("commercial vehicle source, prepared row and Form 1040 tampering stop Form 3800 PDF", async () => {
   const result = filedReturn();
   const pending = normalizeAllPending(result.pending);
-  const prepared = await f1040_2025.prepareReturn(result.pending, testFiler());
+  const prepared = await f1040_2025.prepareReturn(result.pending, finalFiler);
   const parts = prepared.bundle.form3800Parts!;
   for (
     const altered of [
@@ -135,14 +147,14 @@ Deno.test("commercial vehicle source, prepared row and Form 1040 tampering stop 
     ]
   ) {
     assertThrows(
-      () => form3800Pdf.instances!(pending.f3800, testFiler(), altered, parts),
+      () => form3800Pdf.instances!(pending.f3800, finalFiler, altered, parts),
       Error,
     );
   }
   assertThrows(() =>
     form3800Pdf.instances!(
       pending.f3800,
-      testFiler(),
+      finalFiler,
       pending,
       {
         ...parts,
@@ -165,7 +177,7 @@ Deno.test("commercial vehicle source, prepared row and Form 1040 tampering stop 
           subject_to_passive_activity_limit: false,
         },
       },
-      testFiler(),
+      finalFiler,
       pending,
       parts,
     ), Error);

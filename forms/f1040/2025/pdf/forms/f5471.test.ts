@@ -37,9 +37,12 @@ Deno.test("Form 5471 PDF maps Category 4/5a, A, B, C, F, G, and I", () => {
     "topmostSubform[0].Page5[0].c5_3[1]",
   );
   assertEquals(
-    form5471Pdf.fields.find((entry) => entry.domainKey === "shares_end")
-      ?.pdfField,
-    "topmostSubform[0].Page2[0].Table_SchB_PartII[0].Row1[0].Row1d[0].f2_81[0]",
+    form5471Pdf.fields.filter((entry) => entry.domainKey === "shares_end")
+      .map((entry) => entry.pdfField),
+    [
+      "topmostSubform[0].Page2[0].Table_SchB_PartI[0].Row1[0].Row1d[0].f2_10[0]",
+      "topmostSubform[0].Page2[0].Table_SchB_PartII[0].Row1[0].Row1d[0].f2_81[0]",
+    ],
   );
   assertThrows(() =>
     form5471Pdf.instances?.(

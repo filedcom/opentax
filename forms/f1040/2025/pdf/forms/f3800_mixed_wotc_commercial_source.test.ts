@@ -4,6 +4,13 @@ import { FilingStatus } from "../../../nodes/types.ts";
 import { TargetGroup } from "../../../nodes/inputs/f5884/index.ts";
 import { normalizeAllPending } from "../../pending.ts";
 import { testFiler } from "../../mef/test-filer.ts";
+
+const finalFiler = {
+  ...testFiler(),
+  firstNameWithInitial: "Alex",
+  lastName: "Taxpayer",
+  nameLine1: "TAXPAYER ALEX",
+};
 import {
   form3800PartIAndIIFields,
   form3800PartIIIFields,
@@ -95,6 +102,7 @@ function mixedReturn() {
       taxpayer_last_name: "Taxpayer",
       taxpayer_ssn: "123-45-6789",
       taxpayer_dob: "1985-06-15",
+      digital_assets: false,
     },
     w2: [{
       box1_wages: 300_000,
@@ -105,6 +113,10 @@ function mixedReturn() {
       box6_medicare_withheld: 4_350,
       employer_ein: "12-3456789",
       employer_name: "ACME Corp",
+      employer_address_line1: "10 Payroll Way",
+      employer_address_city: "Austin",
+      employer_address_state: "TX",
+      employer_address_zip: "78701",
       box12_entries: [],
     }],
     schedule_c: [{
@@ -113,7 +125,8 @@ function mixedReturn() {
       line_b_business_code: "459999",
       line_f_accounting_method: "cash",
       line_g_material_participation: true,
-      line_1_gross_receipts: 6_000,
+      line_i_made_1099_payments: false,
+      line_1_gross_receipts: 3_600,
       line_26_wages: 6_000,
     }],
     f5884: workOpportunity,
@@ -137,14 +150,14 @@ Deno.test("mixed work opportunity and commercial vehicle credits reach both Form
   assertEquals(pending.f3800.allowed_credit, 5_400);
   assertEquals(pending.schedule3.line6a_total, 5_400);
   assertEquals(pending.f1040.line20_nonrefundable_credits, 5_400);
-  const prepared = await f1040_2025.prepareReturn(result.pending, testFiler());
+  const prepared = await f1040_2025.prepareReturn(result.pending, finalFiler);
   const parts = prepared.bundle.form3800Parts!;
   assertEquals(parts.lines.line17, 3_000);
   assertEquals(parts.lines.line37, 2_400);
   assertEquals(parts.lines.line38, 5_400);
   const [printed] = form3800Pdf.instances!(
     pending.f3800,
-    testFiler(),
+    finalFiler,
     pending,
     parts,
   );
@@ -156,7 +169,7 @@ Deno.test("mixed work opportunity and commercial vehicle credits reach both Form
 Deno.test("mixed Form 3800 PDF rejects either source, prepared row, or final-credit drift", async () => {
   const result = mixedReturn();
   const pending = normalizeAllPending(result.pending);
-  const prepared = await f1040_2025.prepareReturn(result.pending, testFiler());
+  const prepared = await f1040_2025.prepareReturn(result.pending, finalFiler);
   const parts = prepared.bundle.form3800Parts!;
   for (
     const altered of [
@@ -190,13 +203,13 @@ Deno.test("mixed Form 3800 PDF rejects either source, prepared row, or final-cre
     ]
   ) {
     assertThrows(
-      () => form3800Pdf.instances!(pending.f3800, testFiler(), altered, parts),
+      () => form3800Pdf.instances!(pending.f3800, finalFiler, altered, parts),
       Error,
     );
   }
   assertThrows(
     () =>
-      form3800Pdf.instances!(pending.f3800, testFiler(), pending, {
+      form3800Pdf.instances!(pending.f3800, finalFiler, pending, {
         ...parts,
         currentRows: parts.currentRows.map((row) =>
           row.line === "1aa"

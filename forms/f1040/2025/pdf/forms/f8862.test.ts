@@ -198,7 +198,7 @@ Deno.test("Form 8862 PDF requires AOTC students to match Form 8863", () => {
   assertThrows(
     () => form8862Pdf.instances?.(aotc, filer, pending),
     Error,
-    "executor-owned authentication of prior IRS notice issuance and contents",
+    "standalone AOTC source, Form 8863, Schedule 3, and Form 1040 amounts do not reconcile",
   );
   assertThrows(
     () =>

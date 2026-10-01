@@ -216,7 +216,7 @@ Deno.test("open-loop cellulosic Form 8835 line 1f reconciles source, Form 3800, 
   assertThrows(
     () => form8835Pdf.instances?.({}, base.filer, changedMeter, parts),
     Error,
-    "matching kWh",
+    "matching dates and kWh",
   );
   const changedCredit = {
     ...pendingSource,

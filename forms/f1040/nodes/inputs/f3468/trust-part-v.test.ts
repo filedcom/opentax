@@ -43,6 +43,18 @@ Deno.test("Form 3468 derives 30% credit and sends it to Form 3800 line 1v source
 });
 
 Deno.test("Form 3468 rejects a changed review packet and direct-credit mix", () => {
+  const { not_section48d_lessee_confirmed: _missing, ...withoutLesseeReview } =
+    trustPartVStatementFixture;
+  assertThrows(() =>
+    f3468.inputSchema.parse({
+      ...trustForm3468PartVFixture,
+      trust_part_v_claims: [{
+        ...trustForm3468PartVFixture.trust_part_v_claims[0],
+        statement: withoutLesseeReview,
+      }],
+      trust_part_v_source_reviews: [withoutLesseeReview],
+    })
+  );
   assertThrows(
     () =>
       f3468.compute(

@@ -103,6 +103,7 @@ export const form3468: MefFormDescriptor<"f3468", unknown, readonly string[]> =
           element("DomContentCrNotQlfyInd", "X"),
           element("EgyComBonusCrNotQlfyInd", "X"),
           element("SolarWindCrComNotQlfyInd", "X"),
+          element("InvstCreditLesseeSect48dInd", "false"),
           elements("QlfyCleanElectricityFcltyGrp", [
             element(
               "BssQlfyInvstSect48Eb1Amt",

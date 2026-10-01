@@ -1,11 +1,15 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { registry } from "../registry.ts";
-import { buildMefXml } from "../mef/builder.ts";
+import { buildMefBundle, buildMefXml } from "../mef/builder.ts";
 import { buildPending } from "../mef/pending.ts";
+import { sha256Hex } from "../prepared-source.ts";
+import { inputSchema as w2gInputSchema } from "../../nodes/inputs/w2g/index.ts";
 import { pdfReviewFixtures } from "./review-fixtures.ts";
 import { irs1040Pdf } from "./forms/f1040.ts";
+import { w2gPdf } from "./forms/w2g.ts";
 
 const xsd = new URL(
   "../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
@@ -20,6 +24,49 @@ const xsdAvailable = (() => {
   }
 })();
 const plan = buildExecutionPlan(registry);
+
+async function withheldW2GXml(
+  pending: ReturnType<typeof buildPending>,
+  filer: (typeof pdfReviewFixtures)[number]["filer"],
+): Promise<string> {
+  const [issued] = w2gInputSchema.parse(pending.w2g).w2gs;
+  if (!issued) throw new Error("Missing W-2G source");
+  const projected = w2gPdf.instances?.(
+    { w2gs: [issued] },
+    filer,
+    { f1040: { line25c_total: pending.f1040?.line25c_total } },
+  )?.[0];
+  if (!projected) throw new Error("Missing W-2G recipient copy projection");
+  const copy = await PDFDocument.create();
+  copy.addPage([300, 400]);
+  for (const field of w2gPdf.fields) {
+    if (field.kind !== "text" || field.domainKey === "payer_phone") continue;
+    copy.getForm().createTextField(field.pdfField).setText(
+      String(projected[field.domainKey] ?? ""),
+    );
+  }
+  const bytes = await copy.save();
+  const hash = await sha256Hex(bytes);
+  const fileName = "IssuedW2G.pdf";
+  const bundle = await buildMefBundle({
+    ...pending,
+    w2g: {
+      w2gs: [{
+        ...issued,
+        issued_copy_attachment_file_name: fileName,
+        issued_copy_pdf_sha256: hash,
+      }],
+    },
+  }, {
+    filer,
+    attachments: [{
+      fileName,
+      description: "Payer-issued Form W-2G recipient copy",
+      bytes,
+    }],
+  });
+  return bundle.xml;
+}
 
 for (const fixture of pdfReviewFixtures) {
   Deno.test({
@@ -40,7 +87,11 @@ for (const fixture of pdfReviewFixtures) {
         );
         return;
       }
-      const xml = buildMefXml(buildPending(result.pending), fixture.filer);
+      const pending = buildPending(result.pending);
+      const xml = fixture.id === "single-withheld-w2g" ||
+          fixture.id === "single-partnership-code-k-and-w2g"
+        ? await withheldW2GXml(pending, fixture.filer)
+        : buildMefXml(pending, fixture.filer);
       if (fixture.id === "single-section-a-capital-gain-reduction-gift") {
         assertEquals(
           result.pending.schedule_a.line_12_noncash_contributions,

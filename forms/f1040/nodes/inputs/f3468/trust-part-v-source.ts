@@ -32,6 +32,7 @@ export const trustPartVStatementSchema = z.object({
   no_subsidized_financing_or_private_activity_bonds: z.literal(true),
   no_elective_payment_or_transfer: z.literal(true),
   no_cooperative_credit: z.literal(true),
+  not_section48d_lessee_confirmed: z.literal(true),
 }).strict().superRefine((statement, ctx) => {
   if (
     statement.construction_started_on > statement.placed_in_service_on ||

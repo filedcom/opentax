@@ -26,6 +26,7 @@ export const trustPartVStatementFixture = {
   no_subsidized_financing_or_private_activity_bonds: true,
   no_elective_payment_or_transfer: true,
   no_cooperative_credit: true,
+  not_section48d_lessee_confirmed: true,
 } as const;
 
 export const trustK1PartVFixture = {

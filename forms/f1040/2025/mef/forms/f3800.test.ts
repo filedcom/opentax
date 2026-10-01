@@ -838,6 +838,7 @@ Deno.test("Form 3800 binds trust box 14 code M statement to Form 3468 Part V lin
     no_subsidized_financing_or_private_activity_bonds: true,
     no_elective_payment_or_transfer: true,
     no_cooperative_credit: true,
+    not_section48d_lessee_confirmed: true,
   };
   const entry = {
     source_type: "trust" as const,
