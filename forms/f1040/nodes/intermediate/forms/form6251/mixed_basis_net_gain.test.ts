@@ -3,6 +3,32 @@ import { form6251 as mef6251 } from "../../../../2025/mef/forms/f6251.ts";
 import { form6251Pdf } from "../../../../2025/pdf/forms/f6251.ts";
 import { form6251, inputSchema } from "./index.ts";
 
+function basisSourcePending(fields: Record<string, unknown>) {
+  const raw = fields.line2k_8949_basis_dispositions;
+  if (raw === undefined) return {};
+  const rows = Array.isArray(raw) ? raw : [raw];
+  return {
+    f8949: {
+      f8949s: rows.map((row: {
+        source_transaction_id: string;
+        part: string;
+        proceeds: number;
+        regular_basis: number;
+        amt_basis: number;
+      }) => ({
+        source_transaction_id: row.source_transaction_id,
+        part: row.part,
+        description: "Synthetic AMT basis disposition",
+        date_acquired: "2022-01-10",
+        date_sold: "2025-06-20",
+        proceeds: row.proceeds,
+        cost_basis: row.regular_basis,
+        amt_cost_basis: row.amt_basis,
+      })),
+    },
+  };
+}
+
 const gain = {
   source_transaction_id: "short-gain",
   part: "A" as const,
@@ -55,11 +81,14 @@ Deno.test("Form 6251 nets audited short-term gains and losses without creating p
   assertEquals(filed?.fields.amti, 200_300);
   assertEquals(filed?.fields.line13, undefined);
   assertStringIncludes(
-    mef6251.build(filed!.fields),
+    mef6251.build(filed!.fields, {
+      pending: basisSourcePending(filed!.fields),
+    }),
     "<PropertyDispositionAmt>300</PropertyDispositionAmt>",
   );
   assertEquals(
     form6251Pdf.projectFields?.(filed!.fields, {
+      ...basisSourcePending(filed!.fields),
       f1040: { line11_agi: 200_000, line14_deductions_qbi_total: 0 },
     })?.line2k_disposition,
     300,
@@ -165,11 +194,14 @@ Deno.test("Form 6251 nets audited long-term gains and losses for AMT Part III", 
   assertEquals(filed?.fields.line13, 2_300);
   assertEquals(filed?.fields.line15, 2_300);
   assertStringIncludes(
-    mef6251.build(filed!.fields),
+    mef6251.build(filed!.fields, {
+      pending: basisSourcePending(filed!.fields),
+    }),
     "<CapitalGainsWorksheetAmt>2300</CapitalGainsWorksheetAmt>",
   );
   assertEquals(
     form6251Pdf.projectFields?.(filed!.fields, {
+      ...basisSourcePending(filed!.fields),
       f1040: { line11_agi: 200_000, line14_deductions_qbi_total: 0 },
     })?.line13,
     2_300,

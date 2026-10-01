@@ -34,6 +34,19 @@ const inboundRecordSchema = z.object({
 export type A2aRequestRecord = z.infer<typeof requestRecordSchema>;
 export type A2aInboundRecord = z.infer<typeof inboundRecordSchema>;
 
+export interface A2aArchivedSubmissionIdentity {
+  readonly submissionId: string;
+  readonly taxpayerSsn: string;
+  readonly submissionXmlSha256: string;
+}
+
+export interface A2aArchivedSubmissionEvidence extends A2aArchivedSubmissionIdentity {
+  readonly sendMessageId: string;
+  readonly containerSha256: string;
+  readonly submissionArchiveSha256: string;
+  readonly manifestSha256: string;
+}
+
 export interface A2aSendEvidenceInput {
   readonly messageId: string;
   readonly submissionIds: ReadonlyArray<string>;
@@ -163,6 +176,95 @@ export async function readA2aSendRecord(
     throw new Error("A2A Send evidence integrity or MessageID mismatch");
   }
   return record;
+}
+
+/** Reopen the exact outbound bytes for one submission. This is no IRS status proof. */
+export async function readA2aArchivedSubmission(
+  root: string,
+  sendMessageId: string,
+  expected: A2aArchivedSubmissionIdentity,
+): Promise<A2aArchivedSubmissionEvidence> {
+  const identity = z.object({
+    submissionId: z.string().regex(/^[0-9]{13}[a-z0-9]{7}$/),
+    taxpayerSsn: z.string().regex(/^\d{9}$/),
+    submissionXmlSha256: z.string().regex(/^[0-9a-f]{64}$/),
+  }).strict().parse(expected);
+  const send = await readA2aSendRecord(root, sendMessageId);
+  if (send.submissionIds.filter((id) => id === identity.submissionId).length !== 1) {
+    throw new Error("A2A outbound Submission ID is not unique in its Send record");
+  }
+  const key = await sha256(encoder.encode(sendMessageId));
+  const requestBytes = await Deno.readFile(join(root, "requests", key, "request.xml"));
+  const containerBytes = await Deno.readFile(join(root, "requests", key, "container.zip"));
+  if (
+    await sha256(requestBytes) !== send.requestBodySha256 ||
+    await sha256(containerBytes) !== send.containerSha256
+  ) {
+    throw new Error("A2A outbound Send bytes changed during evidence read");
+  }
+  const requestBody = new TextDecoder("utf-8", { fatal: true }).decode(requestBytes);
+  const bodyIds = [...requestBody.matchAll(/<SubmissionId>([^<]+)<\/SubmissionId>/g)]
+    .map((match) => match[1]);
+  if (
+    bodyIds.length !== send.submissionIds.length ||
+    new Set(bodyIds).size !== bodyIds.length ||
+    send.submissionIds.some((id) => !bodyIds.includes(id))
+  ) {
+    throw new Error("A2A outbound Send body differs from its Submission IDs");
+  }
+  let container: Record<string, Uint8Array>;
+  let archive: Record<string, Uint8Array>;
+  try {
+    container = unzipSync(containerBytes);
+    if (
+      Object.keys(container).length !== send.submissionIds.length ||
+      send.submissionIds.some((id) => !container[`${id}.zip`])
+    ) {
+      throw new Error("A2A outbound container differs from its Submission IDs");
+    }
+    archive = unzipSync(container[`${identity.submissionId}.zip`]);
+  } catch (error) {
+    throw new Error("A2A outbound Submission ZIP is unreadable or mismatched", {
+      cause: error,
+    });
+  }
+  const manifestBytes = archive["manifest/manifest.xml"];
+  const xmlBytes = archive["xml/submission.xml"];
+  if (
+    !manifestBytes || !xmlBytes ||
+    Object.keys(archive).some((name) =>
+      name !== "manifest/manifest.xml" &&
+      name !== "xml/submission.xml" &&
+      !name.startsWith("attachment/")
+    )
+  ) {
+    throw new Error("A2A outbound archive lacks its exact manifest or return XML");
+  }
+  const manifest = new TextDecoder("utf-8", { fatal: true }).decode(manifestBytes);
+  const xml = new TextDecoder("utf-8", { fatal: true }).decode(xmlBytes);
+  const one = (source: string, tag: string): string | undefined => {
+    const matches = [...source.matchAll(new RegExp(`<${tag}>([^<]+)</${tag}>`, "g"))];
+    return matches.length === 1 ? matches[0][1] : undefined;
+  };
+  const xmlSha256 = await sha256(xmlBytes);
+  if (
+    one(manifest, "SubmissionId") !== identity.submissionId ||
+    one(manifest, "TIN") !== identity.taxpayerSsn ||
+    one(manifest, "TaxYr") !== "2025" ||
+    one(manifest, "GovernmentCd") !== "IRS" ||
+    one(manifest, "FederalSubmissionTypeCd") !== "1040" ||
+    one(xml, "PrimarySSN") !== identity.taxpayerSsn ||
+    xmlSha256 !== identity.submissionXmlSha256
+  ) {
+    throw new Error("A2A outbound manifest, taxpayer, or XML digest differs from expected return");
+  }
+  return {
+    ...identity,
+    sendMessageId,
+    containerSha256: send.containerSha256,
+    submissionArchiveSha256: await sha256(container[`${identity.submissionId}.zip`]),
+    manifestSha256: await sha256(manifestBytes),
+  };
 }
 
 /** Archive opaque response/fault/ack bytes; this does not interpret IRS status. */

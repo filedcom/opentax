@@ -404,6 +404,37 @@ Deno.test("f1099r.compute: two same-plan full-share 4972 sources aggregate", () 
   );
 });
 
+Deno.test("f1099r.compute: two same-plan box 3 gains combine for one Form 4972", () => {
+  const form4972_plan = {
+    participant_name: "Ada Taxpayer",
+    participant_ssn: "123456789",
+    plan_reference: "Plan-2025-A",
+    full_balance_statement_reference: "Administrator final-balance statement",
+    all_qualified_distributions_included: true as const,
+  };
+  const first = minimalPensionItem({
+    box1_gross_distribution: 30_000,
+    box2a_taxable_amount: 30_000,
+    box3_capital_gain: 5_000,
+    box9a_pct_total: 100,
+    exclude_4972: true,
+    source_document_reference: "1099-R-capital-A",
+    form4972_plan,
+  });
+  const second = {
+    ...first,
+    box1_gross_distribution: 40_000,
+    box2a_taxable_amount: 40_000,
+    box3_capital_gain: 7_000,
+    source_document_reference: "1099-R-capital-B",
+  };
+  const fields = compute([first, second]).outputs.find((output) =>
+    output.nodeType === "form4972"
+  )?.fields;
+  assertEquals(fields?.lump_sum_amount, 70_000);
+  assertEquals(fields?.capital_gain_amount, 12_000);
+});
+
 Deno.test("f1099r.compute: an elected Form 4972 source cannot also deny receipt", () => {
   assertThrows(
     () =>

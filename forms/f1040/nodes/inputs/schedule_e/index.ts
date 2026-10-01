@@ -64,6 +64,9 @@ export const itemSchema = z.object({
   // --- Required identification fields ---
   tsj: tsjSchema,
   activity_id: z.string().trim().min(1).max(64).optional(),
+  // Retained evidence for a positive passive net-income amount used in the
+  // Form 8582-CR line 6 tax-without-passive-income worksheet.
+  passive_income_source_document_reference: z.string().trim().min(1).optional(),
   property_description: z.string().min(1),
   property_type: z.number().int().min(1).max(8),
   activity_type: z.enum(["A", "B", "C", "D"]),

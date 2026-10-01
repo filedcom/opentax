@@ -1082,7 +1082,6 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
         item.box9a_pct_total !== 100 ||
         item.box2a_taxable_amount === undefined ||
         item.box2a_taxable_amount <= 0 ||
-        (item.box3_capital_gain ?? 0) !== 0 ||
         (item.box6_nua ?? 0) !== 0 ||
         (item.box8_other ?? 0) !== 0 ||
         item.box8_pct_total !== undefined
@@ -1096,6 +1095,13 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
       recipient: first.ts,
       lump_sum_amount: first.box2a_taxable_amount! +
         second.box2a_taxable_amount!,
+      ...((first.box3_capital_gain ?? 0) +
+          (second.box3_capital_gain ?? 0) > 0
+        ? {
+          capital_gain_amount: (first.box3_capital_gain ?? 0) +
+            (second.box3_capital_gain ?? 0),
+        }
+        : {}),
       multiple_1099r: {
         ...plan,
         source_document_references: [

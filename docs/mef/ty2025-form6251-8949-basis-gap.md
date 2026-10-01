@@ -5,6 +5,13 @@ written. Tests are written but have not been run in the agreed full batch. IRS
 XSD validation, filled-PDF visual review, business-rule checks, and ATS
 acceptance are still pending.
 
+The native and PDF Form 6251 exporters now replay every line 2k basis row
+against the retained raw Form 8949 input. The row set must be exact, with
+distinct source IDs and matching part, proceeds, regular/AMT bases, and gains;
+adjusted or extra source rows reject. The direct replay fixture is authored but
+awaits the agreed bulk validation. This binds the two in-memory form routes,
+not the underlying broker document bytes.
+
 The [2025 Form 6251 instructions](https://www.irs.gov/instructions/i6251)
 require refiguring Form 8949 and Schedule D for AMT when a disposition has a
 different AMT basis. The difference between the AMT and regular-tax gain or loss

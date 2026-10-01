@@ -351,6 +351,17 @@ direct joins exist, the calculated record stays `unfiled`, the executor error
 continues to block finalized TY2025 export, and no 2026 carryforward is treated
 as filed. A reference string or locally written XML cannot clear this gate.
 
+The outbound half of that contract now has a read-only prerequisite:
+`readA2aArchivedSubmission` reopens the hash-checked Send record, the outer
+container, and the unique Submission ZIP. It checks the Send body's Submission
+IDs, the inner manifest's 2025/1040/IRS Submission ID and taxpayer TIN, and the
+return XML's primary SSN against a caller-supplied expected identity and exact
+prepared XML SHA-256. It returns container, inner archive, and manifest digests
+for a future accepted ledger. Focused exact-byte and wrong-identity fixtures are
+authored but unrun. The expected XML digest must itself come from a trusted
+prepared return; this reader does not assert transmission, parse an IRS
+acknowledgment, authenticate IRS status, or permit a Form 8990 export.
+
 The accepted-year ledger must be an immutable entry written only after reading
 the archived outbound Submission ZIP and a parsed IRS **accepted**
 acknowledgment for its unique Submission ID. Its key must include return ID,

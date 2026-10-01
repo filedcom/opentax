@@ -647,7 +647,7 @@ function requiredShortTermAttachments(
   if (!evidence || !appraisal?.attachment_file_name ||
     !appraisal.full_appraisal_source_review ||
     !item.signed_form_attachment_file_name || !item.signed_form_source_review) {
-    throw new Error("Form 8283 short-term equipment needs reviewed purchase, appraisal, signed form, and reduction PDFs");
+    throw new Error("Form 8283 short-term Section B gift needs reviewed purchase, appraisal, signed form, and reduction PDFs");
   }
   const names = [
     evidence.purchase_record_attachment_file_name,
@@ -658,7 +658,7 @@ function requiredShortTermAttachments(
     item.donee_acknowledgment?.signature_attachment_file_name,
   ];
   if (names.some((name) => !name) || new Set(names).size !== names.length) {
-    throw new Error("Form 8283 short-term equipment evidence must use six distinct PDFs");
+    throw new Error("Form 8283 short-term Section B gift evidence must use six distinct PDFs");
   }
   const reviewed = [
     [evidence.purchase_record_attachment_file_name,
@@ -671,14 +671,14 @@ function requiredShortTermAttachments(
   const ids: string[] = [];
   for (const [name, description, digest] of reviewed) {
     if (context.attachmentDescriptionsByFileName?.[name] !== description) {
-      throw new Error(`Form 8283 short-term equipment needs ${description}`);
+      throw new Error(`Form 8283 short-term Section B gift needs ${description}`);
     }
     if (context.documentIdsByPendingKey) {
       if (context.attachmentSha256ByFileName?.[name] !== digest) {
-        throw new Error(`Form 8283 short-term equipment ${description} bytes differ from reviewed SHA-256`);
+        throw new Error(`Form 8283 short-term Section B gift ${description} bytes differ from reviewed SHA-256`);
       }
       const id = context.documentIdsByAttachmentFileName?.[name];
-      if (!id) throw new Error(`Form 8283 short-term equipment ${description} has no linked MeF document`);
+      if (!id) throw new Error(`Form 8283 short-term Section B gift ${description} has no linked MeF document`);
       ids.push(id);
     }
   }
@@ -688,6 +688,9 @@ function requiredShortTermAttachments(
     appraisal.full_appraisal_source_review,
   );
   if (appraisalId) ids.push(appraisalId);
+  if (new Set(ids).size !== ids.length) {
+    throw new Error("Form 8283 short-term Section B gift PDFs need distinct MeF document IDs");
+  }
   return ids;
 }
 
@@ -849,6 +852,12 @@ function buildSectionBItem(
     .filter(
       (id): id is string => id !== undefined,
     );
+  if (
+    item.short_term_tangible_reduction && context.documentIdsByPendingKey &&
+    (binaryIds.length !== 6 || new Set(binaryIds).size !== 6)
+  ) {
+    throw new Error("Form 8283 short-term Section B gift needs six distinct linked MeF document IDs");
+  }
   return elements(
     "IRS8283",
     [
@@ -959,7 +968,14 @@ export const form8283: MefFormDescriptor<
       }
     }
     if (shortTermB) {
-      assertOrdinarySectionBReconciled(context, SectionBPropertyType.Equipment);
+      const propertyType = parsed.section_b_items?.[0]?.property_type;
+      if (
+        propertyType !== SectionBPropertyType.Equipment &&
+        propertyType !== SectionBPropertyType.ArtUnder20000
+      ) {
+        throw new Error("Form 8283 short-term Section B property type is unsupported");
+      }
+      assertOrdinarySectionBReconciled(context, propertyType);
     }
     const sectionA = parsed.section_a_items ?? [];
     const sectionB = parsed.section_b_items ?? [];

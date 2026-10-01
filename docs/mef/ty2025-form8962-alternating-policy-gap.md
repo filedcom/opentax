@@ -40,3 +40,19 @@ written but unrun under the build-first instruction. Other multi-policy
 overlaps, interstate, shared-tax-family, and
 corrected-SLCSP paths are not admitted by this extension. IRS XSD, filled-PDF
 visual, business-rule, and ATS verification remain open.
+
+One further bounded A-B-A route now allows a single `marketplace_error` SLCSP
+correction on one covered APTC month of one policy. The Form 1095-A node keeps
+the originally reported monthly column B and annual statement totals separate
+from the independently determined amount it sends to the monthly calculation.
+Native MeF requires a positive original and corrected SLCSP, a positive
+premium/APTC, a dated Marketplace tool/contact determination, its reference,
+and a reviewed record SHA-256. It checks the corrected month's PTC and the
+unchanged months against both source policies, Schedule 2/3, and Form 1040.
+PDF projection runs the same filing guard. The [2025 Form 8962 line 10
+instructions](https://www.irs.gov/instructions/i8962) direct a taxpayer who
+has reason to believe the Marketplace reported a wrong SLCSP to determine the
+correct amount and use monthly lines when it varies. Positive and tamper
+fixtures are authored for deferred bulk verification. This route excludes
+multiple corrected months, coverage-family changes, moves, no-APTC months,
+overlaps, other covered people, and unauthenticated determination bytes.

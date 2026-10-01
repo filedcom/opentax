@@ -29,17 +29,20 @@ async function sha256(bytes: Uint8Array): Promise<string> {
   return Array.from(digest, (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-Deno.test("Section B purchased short-term equipment joins reviewed bytes, Schedule A, native MeF, and PDF", async () => {
+for (const propertyType of ["equipment", "art_under_20000"] as const) {
+Deno.test(`Section B purchased short-term ${propertyType} joins reviewed bytes, Schedule A, native MeF, and PDF`, async () => {
   const purchase = await evidence("invoice and basis $12,000, 2025-01-15");
-  const appraisal = await evidence("signed appraisal: equipment FMV $18,000");
-  const signedForm = await evidence("completed signed Form 8283 for equipment");
+  const appraisal = await evidence(`signed appraisal: ${propertyType} FMV $18,000`);
+  const signedForm = await evidence(`completed signed Form 8283 for ${propertyType}`);
   const reduction = await evidence("FMV $18,000 less short-term gain $6,000 equals claim $12,000");
   const appraiserSignature = await evidence("appraiser signature");
   const doneeSignature = await evidence("donee signature");
   const address = { line1: "1 Main St", city: "Austin", state: "TX", zip: "78701" };
   const item = {
-    property_description: "Unused personal audio equipment, serial ST-8283",
-    property_type: "equipment",
+    property_description: propertyType === "equipment"
+      ? "Unused personal audio equipment, serial ST-8283"
+      : "Purchased framed painting, catalog ST-8283",
+    property_type: propertyType,
     physical_condition: "Good used condition",
     date_acquired: "2025-01-15",
     donor_acquisition_description: "Purchase",
@@ -113,7 +116,7 @@ Deno.test("Section B purchased short-term equipment joins reviewed bytes, Schedu
   const pending = buildPending(result.pending);
   const attachments = [
     { fileName: "PurchaseRecord.pdf", description: "Form 8283 Section B purchase and basis record", bytes: purchase },
-    { fileName: "FullAppraisal.pdf", description: "Qualified Appraisal for Section B equipment", bytes: appraisal },
+    { fileName: "FullAppraisal.pdf", description: `Qualified Appraisal for Section B ${propertyType}`, bytes: appraisal },
     { fileName: "Signed8283.pdf", description: "Form 8283 completed signed Section B", bytes: signedForm },
     { fileName: "ReductionStatement.pdf", description: "Form 8283 Section B FMV reduction statement", bytes: reduction },
     { fileName: "AppraiserSignature.pdf", description: "Form 8283 appraiser signature document", bytes: appraiserSignature },
@@ -123,6 +126,9 @@ Deno.test("Section B purchased short-term equipment joins reviewed bytes, Schedu
   assertStringIncludes(bundle.xml, "<AppraisedFairMarketValueAmt>18000</AppraisedFairMarketValueAmt>");
   assertStringIncludes(bundle.xml, "<DeductionClaimedAmt>12000</DeductionClaimedAmt>");
   assertStringIncludes(bundle.xml, "<OtherThanByCashOrCheckAmt>12000</OtherThanByCashOrCheckAmt>");
+  assertStringIncludes(bundle.xml, propertyType === "equipment"
+    ? "<EquipmentInd>X</EquipmentInd>"
+    : "<ArtWorthLssThan20000DollarsInd>X</ArtWorthLssThan20000DollarsInd>");
   const filled = await buildPdfBytes(pending, base.filer, ".pdf-cache", bundle);
   assertEquals((await PDFDocument.load(filled)).getPageCount() > 0, true);
   await assertRejects(() => buildMefBundle(pending, {
@@ -136,3 +142,4 @@ Deno.test("Section B purchased short-term equipment joins reviewed bytes, Schedu
     f1040: { ...pending.f1040, line12e_itemized_deductions: 47_999 },
   }, { filer: base.filer, attachments }), Error, "itemized total");
 });
+}

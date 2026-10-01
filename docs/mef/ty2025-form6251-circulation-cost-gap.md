@@ -18,6 +18,11 @@ field dump supplied the element and field mapping. The focused Form 6251/Form
 including positive, negative, missing-source, election, XML-order, and
 PDF-mapping checks.
 
+Native and PDF export now replays any nonzero line 2o against the retained Form
+59E input and rejects a missing source, duplicate workpaper reference, changed
+deduction, or conflicting election. The focused replay fixture is authored and
+will run with the agreed later bulk pass.
+
 This route relies on reviewed deduction figures; it does not calculate the
 three-year amortization schedule, a property-loss limitation, or establish that
 the regular deduction was included elsewhere in the return. Non-circulation

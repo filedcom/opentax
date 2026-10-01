@@ -78,3 +78,26 @@ allowances and Part VI election until they have their own source-backed routes.
 
 No PDF descriptor or print test was added. No test, typecheck, XSD validation or
 filled-PDF rendering was run in this audit.
+
+## Ordinary-tax line 6 candidate (staged for the next filing join)
+
+A bounded worksheet now recomputes both line 6 tax sides using the same TY2025
+ordinary Tax Table/Tax Computation Worksheet function as Form 1040 line 16.
+It accepts one positive passive Schedule E rental activity, a retained income
+ledger reference on that property, and final Form 1040 lines 8, 9, 11, and
+14-16. Schedule 1 line 5 and line 10 must equal the activity's computed net
+income; final taxable income and the all-income tax must match the filed
+return. The worksheet subtracts that net passive income from taxable income
+and independently computes the without-passive tax. It compares both results
+to the Form 8582-CR tax pair, rejecting changed sources and tax amounts.
+This follows the [2025 line 6 instructions](https://www.irs.gov/instructions/i8582cr),
+which require the same tax method used for the return on both taxable-income
+amounts. Positive and tamper fixtures are authored for deferred verification.
+
+This worksheet is a **prerequisite**, not a registered filing path. It remains
+outside the native and PDF descriptors because the current graph does not yet
+prove an exclusive passive-income inventory across Schedule E, K-1, Form 4835,
+property dispositions, and other passive sources, or persist accepted-return
+Worksheet 9 activity/year balances. Preferential tax methods, special
+allowances, PTPs, and Part VI remain closed. Native/PDF registration must call
+the worksheet only after those source and carryforward joins are established.

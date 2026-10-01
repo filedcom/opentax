@@ -2,6 +2,8 @@ import { element, elements } from "../../../mef/xml.ts";
 import { assertForm6251Line8 } from "../../form6251_line8.ts";
 import { assertForm3921IsoSource } from "../../../nodes/inputs/f3921/index.ts";
 import { assertIsoQualifiedDividendSource } from "../../form6251_iso_qualified_dividends.ts";
+import { assertForm6251Form8949Source } from "../../form6251_8949_source.ts";
+import { assertForm6251CirculationSource } from "../../form6251_circulation_source.ts";
 import { FilingStatus } from "../../../mef/header.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
@@ -145,6 +147,8 @@ function buildIRS6251(fields: Input, context?: MefBuildContext): string {
     );
   }
   assertForm6251Line8(fields);
+  assertForm6251Form8949Source(fields, context?.pending);
+  assertForm6251CirculationSource(fields, context?.pending);
   assertIsoQualifiedDividendSource(fields, context?.pending);
   if ((fields.iso_adjustment ?? 0) > 0) {
     const filer = context?.filer;

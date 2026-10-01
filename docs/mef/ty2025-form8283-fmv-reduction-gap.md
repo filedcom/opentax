@@ -387,3 +387,17 @@ Other Section B property types, multiple gifts, other reduction reasons, and
 carryover attachment combinations remain closed. This route follows the
 [2025 Form 8283 instructions](https://www.irs.gov/pub/irs-prior/i8283--2025.pdf)
 for ordinary-income-property reductions and signed Form 8283 attachments.
+
+## Purchased short-term Section B art below $20,000 (2026-10-01)
+
+The same reviewed-document and basis-limited route now accepts one purchased
+art item with appraised FMV below $20,000 and a claim above $5,000. It retains
+the capital-asset, holding-period, no creator/recapture, full appraisal, signed
+Form 8283, purchase/basis record, and reduction-statement requirements. The
+native form chooses the art-under-$20,000 property indicator and still requires
+six distinct attachment IDs; the PDF prints that art checkbox and the reduced
+claim. The complete Schedule A inventory and Form 1040 itemized total are
+recomputed as for equipment. A synthetic full-return art fixture and an
+out-of-range FMV rejection are authored for the deferred bulk pass. Art valued
+at $20,000 or more, multiple items, donor-created art, and unrelated-use art
+remain outside this route.

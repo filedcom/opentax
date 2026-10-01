@@ -24,7 +24,10 @@ export function reconcileForm4972Multiple1099R(
     !owner || owner.ssn.replaceAll("-", "") !== plan.participant_ssn ||
     owner.name.trim() !== plan.participant_name ||
     form.recipient !== "T" || form.elect_10yr_averaging !== true ||
-    form.elect_capital_gain === true || refs[0] === refs[1] ||
+    (form.elect_capital_gain === true
+      ? (form.capital_gain_amount ?? 0) <= 0
+      : (form.capital_gain_amount ?? 0) !== 0) ||
+    refs[0] === refs[1] ||
     elected.length !== 2 ||
     elected.some((item, index) =>
       item.ts !== "T" || item.source_document_reference !== refs[index] ||
@@ -37,7 +40,6 @@ export function reconcileForm4972Multiple1099R(
       item.box9a_pct_total !== 100 ||
       typeof item.box2a_taxable_amount !== "number" ||
       item.box2a_taxable_amount <= 0 ||
-      (item.box3_capital_gain ?? 0) !== 0 ||
       (item.box6_nua ?? 0) !== 0 ||
       (item.box8_other ?? 0) !== 0 || item.box8_pct_total !== undefined
     ) ||
@@ -46,13 +48,15 @@ export function reconcileForm4972Multiple1099R(
     !elected[0]?.payer_ein.trim() || !elected[0]?.payer_name.trim() ||
     elected.reduce((sum, item) => sum + (item.box2a_taxable_amount ?? 0), 0) !==
       form.lump_sum_amount ||
+    elected.reduce((sum, item) => sum + (item.box3_capital_gain ?? 0), 0) !==
+      (form.capital_gain_amount ?? 0) ||
     source.success && source.data.f1099rs.some((item) =>
       item.exclude_4972 !== true &&
       item.form4972_plan?.plan_reference === plan.plan_reference
     )
   ) {
     throw new Error(
-      "Form 4972 two-source election needs matching owner, plan, complete source copies, and summed boxes 2a",
+      "Form 4972 two-source election needs matching owner, plan, complete source copies, and summed boxes 2a and 3",
     );
   }
 

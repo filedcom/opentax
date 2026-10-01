@@ -26,6 +26,8 @@ import type { inputSchema as sCorpK1InputSchema } from "../../nodes/inputs/k1_s_
 import type { inputSchema as trustK1InputSchema } from "../../nodes/inputs/k1_trust/index.ts";
 import type { inputSchema as refinancePointsInputSchema } from "../../nodes/inputs/mortgage_refinance_points/index.ts";
 import type { inputSchema as form3921InputSchema } from "../../nodes/inputs/f3921/index.ts";
+import type { inputSchema as form8949SourceInputSchema } from "../../nodes/inputs/f8949/index.ts";
+import type { inputSchema as form59eSourceInputSchema } from "../../nodes/inputs/f59e/index.ts";
 import type { IsoAmtBasisLot } from "../../nodes/inputs/f3921/index.ts";
 
 type AnyForm = (typeof ALL_MEF_FORMS)[number];
@@ -56,4 +58,8 @@ export type MefFormsPending =
     f3921?: z.infer<typeof form3921InputSchema> & {
       iso_amt_basis_ledger?: readonly IsoAmtBasisLot[];
     };
+    // Raw transaction input is retained to replay AMT basis rows at export.
+    f8949?: z.infer<typeof form8949SourceInputSchema>;
+    // Current-year §59(e) records support Form 6251 line 2o replay.
+    f59e?: z.infer<typeof form59eSourceInputSchema>;
   };

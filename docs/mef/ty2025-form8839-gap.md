@@ -384,3 +384,17 @@ AcroForm field map and visual filled-PDF check. Separate routes remain for
 employer benefits, multiple children, foreign adoptions, carryforwards, ATIN,
 and MFS exceptions. Do not restore the old flat XML or add an asserted-facts
 bypass.
+
+## Reviewed document byte binding (2026-10-01)
+
+The staged one-child domestic candidate now has a strict byte preflight for
+every referenced decree, expense receipt, payment proof, and separate private
+reimbursement document. It first reconciles the reviewed transcription with
+the child ledger, then requires the exact set of unique nonempty source bytes
+and computes SHA-256 over each document. Missing, duplicate, extra, or changed
+bytes reject. Focused synthetic positive and tamper fixtures are authored but
+unrun. This is a concrete source prerequisite only: the active executor does
+not yet own these bytes or the post-tax Form 8839 deposit, and the registered
+MeF/PDF exporters remain fail-closed. A caller invoking this preflight cannot
+activate a filing, and no taxpayer decree or expense document has been reviewed
+in this workspace.

@@ -1,7 +1,8 @@
-import { assertEquals, assertThrows } from "@std/assert";
+import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../types.ts";
 import { form8839, prepareForm8839Credit } from "./index.ts";
 import { assertReviewedDomestic8839Source } from "./reviewed_source.ts";
+import { bindReviewedDomestic8839DocumentBytes } from "./document_byte_binding.ts";
 
 const input = {
   filing_status: FilingStatus.Single,
@@ -157,4 +158,70 @@ Deno.test("Form 8839 preflight does not reopen the active filing node", () => {
       input,
     )
   );
+});
+
+Deno.test("Form 8839 reviewed decree, receipt, payment and reimbursement bind to exact bytes", async () => {
+  const bytes = {
+    decree: new TextEncoder().encode("synthetic decree Ada 2025-07-15 TX"),
+    receipt: new TextEncoder().encode("synthetic adoption counsel receipt 12000"),
+    payment: new TextEncoder().encode("synthetic payment 2025-03-12 12000"),
+    reimbursement: new TextEncoder().encode("synthetic private reimbursement 1000"),
+  };
+  async function sha256(value: Uint8Array) {
+    const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", Uint8Array.from(value)));
+    return Array.from(digest, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  }
+  const sourced = {
+    ...input,
+    children: [{ ...input.children[0]!, expenses: [{
+      ...input.children[0]!.expenses[0]!, reimbursed_amount: 1_000,
+      reimbursement_source_document_id: "reimbursement-1",
+    }] }],
+  };
+  const reviewed = {
+    ...review,
+    decree: { ...review.decree, document_sha256: await sha256(bytes.decree) },
+    expenses: [{ ...review.expenses[0]!,
+      receipt_sha256: await sha256(bytes.receipt),
+      payment_proof_sha256: await sha256(bytes.payment),
+      reimbursement: {
+        source_document_id: "reimbursement-1",
+        document_sha256: await sha256(bytes.reimbursement),
+        reimbursed_amount: 1_000,
+        payer_name: "Private adoption grant",
+        paid_date: "2025-04-01",
+        not_employer_or_public_funds_confirmed: true,
+      },
+    }],
+  };
+  const documents = [
+    { source_document_id: "decree-1", bytes: bytes.decree },
+    { source_document_id: "invoice-1", bytes: bytes.receipt },
+    { source_document_id: "payment-1", bytes: bytes.payment },
+    { source_document_id: "reimbursement-1", bytes: bytes.reimbursement },
+  ];
+  await bindReviewedDomestic8839DocumentBytes(sourced, reviewed, documents);
+  await assertRejects(
+    () => bindReviewedDomestic8839DocumentBytes(sourced, reviewed, documents.slice(0, 3)),
+    Error,
+    "one distinct nonempty byte document",
+  );
+  await assertRejects(
+    () => bindReviewedDomestic8839DocumentBytes(sourced, reviewed, [
+      ...documents.slice(0, 2),
+      { ...documents[2]!, bytes: bytes.receipt },
+      documents[3]!,
+    ]),
+    Error,
+    "bytes differ from its source SHA-256",
+  );
+  await assertRejects(
+    () => bindReviewedDomestic8839DocumentBytes(sourced, reviewed, [
+      ...documents,
+      { source_document_id: "unreviewed", bytes: bytes.receipt },
+    ]),
+    Error,
+    "one distinct nonempty byte document",
+  );
+  assertThrows(() => form8839.compute({ taxYear: 2025, formType: "f1040" }, sourced));
 });

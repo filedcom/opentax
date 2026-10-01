@@ -2,6 +2,8 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { assertForm6251Line8 } from "../../form6251_line8.ts";
 import { assertForm3921IsoSource } from "../../../nodes/inputs/f3921/index.ts";
 import { assertIsoQualifiedDividendSource } from "../../form6251_iso_qualified_dividends.ts";
+import { assertForm6251Form8949Source } from "../../form6251_8949_source.ts";
+import { assertForm6251CirculationSource } from "../../form6251_circulation_source.ts";
 import { FilingStatus } from "../../../mef/header.ts";
 import { inputSchema as schedule1aInputSchema } from "../../../nodes/intermediate/forms/schedule1a/index.ts";
 import { schedule1a } from "../../mef/forms/schedule1a.ts";
@@ -80,6 +82,8 @@ export const form6251Pdf: PdfFormDescriptor = {
       );
     }
     assertForm6251Line8(fields);
+    assertForm6251Form8949Source(fields, allPending);
+    assertForm6251CirculationSource(fields, allPending);
     assertIsoQualifiedDividendSource(fields, allPending);
     const form1040 = allPending.f1040;
     const line14 = form1040?.line14_deductions_qbi_total;

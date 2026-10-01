@@ -1709,7 +1709,8 @@ function reconcileSimplePolicyMonths(
         : policy.coverage_state !== context.filer?.address.state) ||
       !policy.monthly_premiums || !policy.monthly_slcsps ||
       !policy.monthly_aptcs || policy.shared_policy_periods ||
-      (!interstateMove && policy.slcsp_corrections) ||
+      (!interstateMove && policy.slcsp_corrections &&
+        !(fields.household_size === 1 && policies.length === 2)) ||
       (!interstateMove && policy.slcsp_review_periods)
     ) ||
     fields.qsehra_ind === true || fields.mfs_exception_ind === true ||
@@ -1876,6 +1877,39 @@ function reconcileSimplePolicyMonths(
       ) {
         throw new Error(
           "Form 8962 unreported interstate move needs a complete sourced Marketplace SLCSP correction for each covered arrival month",
+        );
+      }
+    }
+  }
+  if (!interstateMove) {
+    const correctedPolicies = policies.filter((policy) =>
+      policy.slcsp_corrections !== undefined
+    );
+    if (correctedPolicies.length > 0) {
+      const policy = correctedPolicies[0];
+      const correction = policy?.slcsp_corrections?.[0];
+      const index = (correction?.month ?? 0) - 1;
+      if (
+        fields.household_size !== 1 || policies.length !== 2 ||
+        correctedPolicies.length !== 1 ||
+        policy?.slcsp_corrections?.length !== 1 ||
+        correction?.basis !== "marketplace_error" ||
+        !correction.determination_reference ||
+        !correction.determination_record_sha256 ||
+        !correction.determined_on ||
+        !validIsoDate(correction.determined_on) ||
+        correction.determined_on <
+          `2025-${String(correction.month).padStart(2, "0")}-01` ||
+        correction.determined_on > "2026-04-15" ||
+        (policy.monthly_premiums?.[index] ?? 0) <= 0 ||
+        (policy.monthly_aptcs?.[index] ?? 0) <= 0 ||
+        (policy.monthly_slcsps?.[index] ?? 0) <= 0 ||
+        correction.corrected_slcsp <= 0 ||
+        correction.corrected_slcsp === policy.monthly_slcsps?.[index] ||
+        policies.some((item) => item.slcsp_review_periods !== undefined)
+      ) {
+        throw new Error(
+          "Form 8962 same-state policies need one sourced Marketplace-error SLCSP correction on a covered APTC month",
         );
       }
     }

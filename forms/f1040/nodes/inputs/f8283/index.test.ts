@@ -640,9 +640,14 @@ Deno.test("f8283.inputSchema: purchased short-term Section B equipment needs rev
     },
   };
   assertEquals(inputSchema.safeParse({ section_b_items: [gift] }).success, true);
+  assertEquals(inputSchema.safeParse({ section_b_items: [{
+    ...gift,
+    property_type: SectionBPropertyType.ArtUnder20000,
+  }] }).success, true);
   for (const changed of [
     { ...gift, date_acquired: "2023-01-15" },
     { ...gift, deduction_claimed: 12_001 },
+    { ...gift, property_type: SectionBPropertyType.ArtUnder20000, fmv: 20_000 },
     { ...gift, short_term_tangible_reduction: {
       ...gift.short_term_tangible_reduction,
       short_term_gain_removed: 5_999,

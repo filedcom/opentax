@@ -1,6 +1,53 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../types.ts";
 import { form6251, inputSchema } from "./index.ts";
+
+function basisSourcePending(fields: Record<string, unknown>) {
+  const raw = fields.line2k_8949_basis_dispositions;
+  const circulation = fields.line2o_circulation_costs;
+  const f59e = typeof circulation === "number" && circulation !== 0
+    ? {
+      f59e: {
+        f59es: [{
+          expenditure_type: "circulation",
+          amortization_period_start: "2025-01-01",
+          original_amount: Math.abs(circulation),
+          remaining_unamortized: 0,
+          regular_tax_deduction: Math.max(circulation, 0),
+          amt_deduction: Math.max(-circulation, 0),
+          regular_three_year_writeoff_elected: false,
+          circulation_reviewed_workpaper_reference:
+            "synthetic circulation review",
+          circulation_no_unamortized_property_loss: true,
+        }],
+      },
+    }
+    : {};
+  if (raw === undefined) return f59e;
+  const rows = Array.isArray(raw) ? raw : [raw];
+  return {
+    ...f59e,
+    f8949: {
+      f8949s: rows.map((row: {
+        source_transaction_id: string;
+        part: string;
+        proceeds: number;
+        regular_basis: number;
+        amt_basis: number;
+      }) => ({
+        source_transaction_id: row.source_transaction_id,
+        part: row.part,
+        description: "Synthetic AMT basis disposition",
+        date_acquired: "2022-01-10",
+        date_sold: "2025-06-20",
+        proceeds: row.proceeds,
+        cost_basis: row.regular_basis,
+        amt_cost_basis: row.amt_basis,
+      })),
+    },
+  };
+}
+
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import { form6251 as mef6251 } from "../../../../2025/mef/forms/f6251.ts";
@@ -177,11 +224,14 @@ Deno.test("form6251: audited short-term basis loss below both deduction limits r
   assertEquals(filed?.fields.amti, 199_500);
   assertEquals(filed?.fields.line13, undefined);
   assertStringIncludes(
-    mef6251.build(filed!.fields),
+    mef6251.build(filed!.fields, {
+      pending: basisSourcePending(filed!.fields),
+    }),
     "<PropertyDispositionAmt>-500</PropertyDispositionAmt>",
   );
   assertEquals(
     form6251Pdf.projectFields?.(filed!.fields, {
+      ...basisSourcePending(filed!.fields),
       f1040: {
         line11_agi: 200_000,
         line14_deductions_qbi_total: 0,
@@ -222,11 +272,14 @@ Deno.test("form6251: audited long-term basis loss below both deduction limits re
   assertEquals(filed?.fields.amti, 199_500);
   assertEquals(filed?.fields.line13, undefined);
   assertStringIncludes(
-    mef6251.build(filed!.fields),
+    mef6251.build(filed!.fields, {
+      pending: basisSourcePending(filed!.fields),
+    }),
     "<PropertyDispositionAmt>-500</PropertyDispositionAmt>",
   );
   assertEquals(
     form6251Pdf.projectFields?.(filed!.fields, {
+      ...basisSourcePending(filed!.fields),
       f1040: { line11_agi: 200_000, line14_deductions_qbi_total: 0 },
     })?.line2k_disposition,
     -500,
@@ -464,11 +517,14 @@ Deno.test("form6251: audited short-term AMT basis and qualified dividends use Pa
   assertEquals(filed?.fields.line20, 190_000);
   assertEquals(filed?.fields.line27, 190_000);
   assertStringIncludes(
-    mef6251.build(filed!.fields),
+    mef6251.build(filed!.fields, {
+      pending: basisSourcePending(filed!.fields),
+    }),
     "<CapitalGainsWorksheetAmt>10000</CapitalGainsWorksheetAmt>",
   );
   assertEquals(
     form6251Pdf.projectFields?.(filed!.fields, {
+      ...basisSourcePending(filed!.fields),
       f1040: { line11_agi: 200_000, line14_deductions_qbi_total: 0 },
     })?.line13,
     10_000,
@@ -539,11 +595,14 @@ Deno.test("form6251: audited mixed Form 8949 basis gains keep short-term gain ou
   assertEquals(filed?.fields.line20, 150_000);
   assertEquals(filed?.fields.line27, 150_000);
   assertStringIncludes(
-    mef6251.build(filed!.fields),
+    mef6251.build(filed!.fields, {
+      pending: basisSourcePending(filed!.fields),
+    }),
     "<PropertyDispositionAmt>-15000</PropertyDispositionAmt>",
   );
   assertEquals(
     form6251Pdf.projectFields?.(filed!.fields, {
+      ...basisSourcePending(filed!.fields),
       f1040: { line11_agi: 200_000, line14_deductions_qbi_total: 0 },
     })?.line13,
     40_000,
@@ -674,10 +733,13 @@ Deno.test("form6251: negative trust K-1 code A with qualified dividends refigure
   assertEquals(filed?.fields.must_file_for_negative_adjustments, true);
   assertEquals(fieldsOf(result.outputs, schedule2), undefined);
   assertStringIncludes(
-    mef6251.build(filed!.fields),
+    mef6251.build(filed!.fields, {
+      pending: basisSourcePending(filed!.fields),
+    }),
     "<EstatesAndTrustsAmt>-20000</EstatesAndTrustsAmt>",
   );
   const pdf = form6251Pdf.projectFields?.(filed!.fields, {
+    ...basisSourcePending(filed!.fields),
     f1040: { line11_agi: 120_000, line14_deductions_qbi_total: 20_000 },
   });
   assertEquals(pdf?.line2j_estates_and_trusts, -20_000);
@@ -760,7 +822,9 @@ Deno.test("form6251: Schedule C AMT depletion difference enters line 2d and AMTI
     fieldsOf(result.outputs, schedule2)?.line2_amt,
     filed?.fields.line11_amt,
   );
-  const xml = mef6251.build(filed!.fields);
+  const xml = mef6251.build(filed!.fields, {
+    pending: basisSourcePending(filed!.fields),
+  });
   assertEquals(xml.includes("<DepletionAmt>400</DepletionAmt>"), true);
 });
 
@@ -956,10 +1020,13 @@ Deno.test("form6251: negative circulation costs with qualified dividends retain 
   assertEquals(filed?.fields.must_file_for_negative_adjustments, true);
   assertEquals(fieldsOf(result.outputs, schedule2), undefined);
   assertStringIncludes(
-    mef6251.build(filed!.fields),
+    mef6251.build(filed!.fields, {
+      pending: basisSourcePending(filed!.fields),
+    }),
     "<CirculationCostAmt>-20000</CirculationCostAmt>",
   );
   const pdf = form6251Pdf.projectFields?.(filed!.fields, {
+    ...basisSourcePending(filed!.fields),
     f1040: { line11_agi: 120_000, line14_deductions_qbi_total: 20_000 },
   });
   assertEquals(pdf?.line2o_circulation_costs, -20_000);
@@ -1724,7 +1791,9 @@ Deno.test("form6251: sourced Form 2555 and matching Form 4952 election reach Par
   assertEquals(filed?.fields.line13, 200);
   assertEquals(filed?.fields.line20, 399_800);
   assertEquals(filed?.fields.line27, 399_800);
-  const xml = mef6251.build(filed!.fields);
+  const xml = mef6251.build(filed!.fields, {
+    pending: basisSourcePending(filed!.fields),
+  });
   assertStringIncludes(
     xml,
     "<CapitalGainsWorksheetAmt>200</CapitalGainsWorksheetAmt>",
@@ -1734,6 +1803,7 @@ Deno.test("form6251: sourced Form 2555 and matching Form 4952 election reach Par
     "<IncomeAboveThresholdWorkshtAmt>399800</IncomeAboveThresholdWorkshtAmt>",
   );
   const pdf = form6251Pdf.projectFields?.(filed!.fields, {
+    ...basisSourcePending(filed!.fields),
     f1040: { line11_agi: 315_000, line14_deductions_qbi_total: 15_000 },
   });
   assertEquals(pdf?.line13, 200);
@@ -1983,9 +2053,10 @@ Deno.test("form6251: MFS line 4 adds 25% above the 2025 $900,350 threshold", () 
   assertEquals(filed?.fields.taxable_excess, 925_350);
   assertEquals(filed?.fields.tentative_tax, 256_707);
   assertEquals(
-    mef6251.build(filed!.fields).includes(
-      "<AlternativeMinTaxableIncomeAmt>925350</AlternativeMinTaxableIncomeAmt>",
-    ),
+    mef6251.build(filed!.fields, { pending: basisSourcePending(filed!.fields) })
+      .includes(
+        "<AlternativeMinTaxableIncomeAmt>925350</AlternativeMinTaxableIncomeAmt>",
+      ),
     true,
   );
 });
@@ -2077,9 +2148,10 @@ Deno.test("form6251: files when line 7 exceeds line 10 despite zero AMT after AM
   assertEquals(filed?.fields.regular_tax, 10_000);
   assertEquals(filed?.fields.line11_amt, 0);
   assertEquals(
-    mef6251.build(filed!.fields).includes(
-      "<AlternativeMinimumTaxAmt>0</AlternativeMinimumTaxAmt>",
-    ),
+    mef6251.build(filed!.fields, { pending: basisSourcePending(filed!.fields) })
+      .includes(
+        "<AlternativeMinimumTaxAmt>0</AlternativeMinimumTaxAmt>",
+      ),
     true,
   );
 });
@@ -2109,7 +2181,8 @@ Deno.test("form6251: required zero-AMT form leaves line 8 blank when line 10 rea
   assertEquals(filed?.fields.net_tmt, 29_094);
   assertEquals(filed?.fields.line11_amt, 0);
   assertEquals(
-    mef6251.build(filed!.fields).includes("<AMTForeignTaxCreditAmt>"),
+    mef6251.build(filed!.fields, { pending: basisSourcePending(filed!.fields) })
+      .includes("<AMTForeignTaxCreditAmt>"),
     false,
   );
 });

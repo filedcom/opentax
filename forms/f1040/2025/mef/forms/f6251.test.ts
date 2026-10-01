@@ -239,10 +239,35 @@ Deno.test("line 2j estate/trust adjustment serializes signed in XSD order", () =
 });
 
 Deno.test("line 2k Form 8949 AMT basis difference serializes signed in XSD order", () => {
-  const xml = filed({
+  const xml = form6251.build({
+    line11_amt: 1,
     line2j_estates_and_trusts: 100,
     line2k_disposition: -10_000,
+    line2k_8949_basis_dispositions: {
+      source_transaction_id: "basis-sale",
+      part: "D",
+      proceeds: 75_000,
+      regular_basis: 25_000,
+      amt_basis: 35_000,
+      regular_gain: 50_000,
+      amt_gain: 40_000,
+    },
     depreciation_adjustment: 200,
+  }, {
+    pending: {
+      f8949: {
+        f8949s: [{
+          source_transaction_id: "basis-sale",
+          part: "D",
+          description: "Shares",
+          date_acquired: "2022-01-10",
+          date_sold: "2025-06-20",
+          proceeds: 75_000,
+          cost_basis: 25_000,
+          amt_cost_basis: 35_000,
+        }],
+      },
+    },
   });
   const line2j = xml.indexOf("<EstatesAndTrustsAmt>100</EstatesAndTrustsAmt>");
   const line2k = xml.indexOf(
@@ -301,10 +326,28 @@ Deno.test("line 2d depletion serializes as a signed amount between lines 2c and 
 });
 
 Deno.test("line 2o circulation cost serializes signed after depreciation", () => {
-  const xml = filed({
+  const xml = form6251.build({
+    line11_amt: 1,
     depreciation_adjustment: 100,
     line2o_circulation_costs: -250,
     amti: 1_000,
+  }, {
+    pending: {
+      f59e: {
+        f59es: [{
+          expenditure_type: "circulation",
+          amortization_period_start: "2025-01-01",
+          original_amount: 250,
+          remaining_unamortized: 0,
+          regular_tax_deduction: 0,
+          amt_deduction: 250,
+          regular_three_year_writeoff_elected: false,
+          circulation_reviewed_workpaper_reference:
+            "synthetic circulation review",
+          circulation_no_unamortized_property_loss: true,
+        }],
+      },
+    },
   });
   const line2l = xml.indexOf("<DepreciationAmt>100</DepreciationAmt>");
   const line2o = xml.indexOf("<CirculationCostAmt>-250</CirculationCostAmt>");

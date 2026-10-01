@@ -100,3 +100,57 @@ Deno.test("Form 4972 two-source lines and Form 1040 tax reconcile", () => {
     "matching owner",
   );
 });
+
+Deno.test("Form 4972 combines two box 3 gains under Part II and Part III", () => {
+  const capitalSources = [
+    { ...sources[0], box3_capital_gain: 5_000 },
+    { ...sources[1], box3_capital_gain: 7_000 },
+  ];
+  const capitalElection = {
+    ...election,
+    elect_capital_gain: true,
+    capital_gain_amount: 12_000,
+  };
+  const outputs = form4972.compute(
+    { taxYear: 2025, formType: "f1040" }, capitalElection,
+  ).outputs;
+  const fields = outputs.find((output) => output.nodeType === "form4972")!
+    .fields;
+  const tax = outputs.find((output) =>
+    output.nodeType === "income_tax_calculation"
+  )!.fields.form4972_tax;
+  const pending = {
+    f1099r: { f1099rs: capitalSources },
+    f1040: { form4972_tax: tax },
+  };
+  const owner = { name: "Ada Taxpayer", ssn: "123456789" };
+  reconcileForm4972FullShare(fields, pending, owner);
+  assertEquals(fields.line6, 12_000);
+  assertEquals(fields.line7, 2_400);
+  assertEquals(fields.line8, 58_000);
+  const filer: FilerIdentity = {
+    primarySSN: "123456789", fullName: "Ada Taxpayer",
+    nameLine1: "TAXPAYER ADA", nameControl: "TAXP",
+    filingStatus: FilingStatus.Single,
+    address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
+  };
+  const xml = nativeForm4972.build(fields, { filer, pending });
+  assertStringIncludes(xml, "<CapitalGainElectionAmt>12000</CapitalGainElectionAmt>");
+  const projected = form4972Pdf.projectFields?.({ ...fields }, {
+    ...pending,
+    general: {
+      taxpayer_first_name: "Ada", taxpayer_last_name: "Taxpayer",
+      taxpayer_ssn: "123456789",
+    },
+  });
+  assertEquals(projected?.line6, 12_000);
+  assertEquals(projected?.line30, fields.line30);
+  assertThrows(() => reconcileForm4972FullShare(fields, {
+    ...pending,
+    f1099r: { f1099rs: [capitalSources[0], {
+      ...capitalSources[1], box3_capital_gain: 6_999,
+    }] },
+  }, owner), Error, "summed boxes 2a and 3");
+  assertThrows(() => reconcileForm4972FullShare({ ...fields, line7: 1 },
+    pending, owner), Error, "calculated lines");
+});

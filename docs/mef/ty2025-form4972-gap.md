@@ -164,6 +164,19 @@ including the form's multiple-recipient instructions and worksheets on pages
   independently authenticated document. A third distribution, different
   participant, spouse pair, partial share, capital-gain/NUA/annuity adjustment,
   and separate Form 4972 attachments remain blocked.
+
+  The same two-source, full-share, same-plan taxpayer route now also supports
+  a combined Part II capital-gain and Part III ten-year election when the two
+  elected Forms 1099-R report positive box 3 amounts. The source node sums
+  boxes 2a and 3 once, and the Form 4972 calculation uses the summed box 3 on
+  lines 6/7 and subtracts it from summed box 2a on line 8. Native and PDF
+  source checks require the same participant, plan, distinct 1099-R references,
+  exact box totals, numbered lines, and finalized Form 1040 special tax. The
+  [2025 Form 4972 instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf)
+  direct all qualified distributions for one participant in one tax year to a
+  single Form 4972. NUA, annuity, beneficiary, partial-share, multiple-plan,
+  and separate-spouse combinations remain closed for this two-source route;
+  focused fixtures are authored but unrun.
 - An elected Form 1099-R marked `no_distribution_received` now fails at source
   validation. Previously the active-item filter discarded it, leaving no Form
   4972 output even though the election flag remained on the document. A focused
