@@ -154,10 +154,12 @@ function reconcileOnePolicyDependentIdentity(
   if (
     !general.success || householdSize === undefined || householdSize === null ||
     dependents.length !== householdSize - 1 ||
+    allowed.size !== householdSize ||
     (general.data.taxpayer_ssn !== undefined &&
       general.data.taxpayer_ssn.replaceAll("-", "") !==
         primarySSN.replaceAll("-", "")) ||
     !covered?.length || covered.length > householdSize ||
+    (householdSize === 3 && covered.length !== 3) ||
     new Set(covered).size !== covered.length ||
     covered.some((ssn) => !allowed.has(ssn))
   ) {
@@ -582,7 +584,8 @@ function reconcileSimpleAnnualPolicy(
     fields.monthly_ptc_rows != null ||
     (fields.household_size !== 1 && fields.household_size !== 2 &&
       fields.household_size !== 3) ||
-    (fields.household_size === 3 && policies.length !== 3) ||
+    (fields.household_size === 3 &&
+      policies.length !== 1 && policies.length !== 3) ||
     (policies.length === 3 && fields.household_size !== 3) ||
     fields.qsehra_ind === true ||
     (fields.shared_policy_allocations?.length ?? 0) > 0 ||

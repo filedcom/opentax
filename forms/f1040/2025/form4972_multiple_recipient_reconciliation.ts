@@ -31,7 +31,9 @@ export function reconcileForm4972MultipleRecipients(
   if (
     item && typeof fields.federal_estate_tax === "number" &&
     fields.federal_estate_tax > 0 &&
-    item.box1_gross_distribution !== item.box2a_taxable_amount
+    item.box1_gross_distribution !==
+      (item.box2a_taxable_amount ?? 0) +
+        (fields.elect_include_nua === true ? (item.box6_nua ?? 0) : 0)
   ) {
     throw new Error(
       "Form 4972 partial-share estate allocation needs a wholly taxable source distribution",

@@ -36,7 +36,7 @@ const filer: FilerIdentity = {
   },
 };
 
-function pairedPriorExcessCase() {
+function pairedPriorExcessCase(bothOwners = false) {
   const source = inputSchema.parse({
     beneficiary_identity: {
       owner: "T",
@@ -70,6 +70,19 @@ function pairedPriorExcessCase() {
       spouse_has_separate_hsa: true,
       last_month_rule_elected: false,
       taxpayer_hsa_contributions: 1_000,
+      ...(bothOwners
+        ? {
+          hsa_december_31_value: 8_000,
+          prior_year_hsa_excess: {
+            tax_year: 2024,
+            filed_form5329_reference: "Sam filed 2024 Form 5329 page 3",
+            filed_return_reviewed: true,
+            owner_ssn: "987654321",
+            form5329_line48: 4_000,
+            form5329_line49: 240,
+          },
+        }
+        : {}),
     },
   });
   const outputs = form8889Node.compute(
@@ -89,11 +102,14 @@ function pairedPriorExcessCase() {
     form8889: { ...source, forms },
     form5329: { owner_entries: ownerEntries, owner_forms: ownerForms },
     schedule1: {
-      line13_hsa_deduction: 5_300,
-      line26_total_adjustments: 5_300,
+      line13_hsa_deduction: bothOwners ? 8_600 : 5_300,
+      line26_total_adjustments: bothOwners ? 8_600 : 5_300,
     },
-    schedule2: { line8_form5329_tax: 42 },
-    f1040: { line10_adjustments: 5_300, line23_other_taxes: 42 },
+    schedule2: { line8_form5329_tax: bothOwners ? 84 : 42 },
+    f1040: {
+      line10_adjustments: bothOwners ? 8_600 : 5_300,
+      line23_other_taxes: bothOwners ? 84 : 42,
+    },
   };
   const context: MefBuildContext = { filer, pending };
   return { source, forms, pending, context };
@@ -111,6 +127,85 @@ Deno.test("paired owner prior HSA excess reaches Form 8889 and owner Form 5329 n
   assertEquals(
     form5329Pdf.instances?.(pending.form5329, filer, pending)?.length,
     1,
+  );
+});
+
+Deno.test("both paired HSA owners carry independently reviewed 2024 excess through native and PDF", () => {
+  const { forms, pending, context } = pairedPriorExcessCase(true);
+  assertEquals(pending.form5329.owner_forms.map((form) => form.owner), [
+    "T",
+    "S",
+  ]);
+  assertEquals(
+    pending.form5329.owner_forms.map((form) => form.print_hsa_line48),
+    [700, 700],
+  );
+  assertEquals(
+    pending.form5329.owner_forms.map((form) => form.print_hsa_line49),
+    [42, 42],
+  );
+  assertEquals(form8889.build({ forms }, context).length, 2);
+  assertEquals(form8889Pdf.instances?.({ forms }, filer, pending)?.length, 2);
+  assertEquals(form5329.build(pending.form5329 as never, context).length, 2);
+  assertEquals(
+    form5329Pdf.instances?.(pending.form5329, filer, pending)?.length,
+    2,
+  );
+
+  const tamperedSpouse = {
+    ...pending,
+    form8889: {
+      ...pending.form8889,
+      spouse_hsa: {
+        ...pending.form8889.spouse_hsa!,
+        prior_year_hsa_excess: {
+          ...pending.form8889.spouse_hsa!.prior_year_hsa_excess!,
+          owner_ssn: filer.primarySSN,
+        },
+      },
+    },
+  };
+  assertThrows(() =>
+    form8889.build({ forms }, { ...context, pending: tamperedSpouse })
+  );
+  assertThrows(() => form8889Pdf.instances?.({ forms }, filer, tamperedSpouse));
+  const duplicatedReference = {
+    ...pending,
+    form8889: {
+      ...pending.form8889,
+      spouse_hsa: {
+        ...pending.form8889.spouse_hsa!,
+        prior_year_hsa_excess: {
+          ...pending.form8889.spouse_hsa!.prior_year_hsa_excess!,
+          filed_form5329_reference:
+            pending.form8889.prior_year_hsa_excess!.filed_form5329_reference,
+        },
+      },
+    },
+  };
+  assertThrows(() =>
+    form8889.build({ forms }, { ...context, pending: duplicatedReference })
+  );
+  assertThrows(() =>
+    form8889Pdf.instances?.({ forms }, filer, duplicatedReference)
+  );
+  assertThrows(
+    () =>
+      form5329.build(pending.form5329 as never, {
+        ...context,
+        pending: { ...pending, schedule2: { line8_form5329_tax: 42 } },
+      }),
+    Error,
+    "Schedule 2 line 8",
+  );
+  assertThrows(
+    () =>
+      form5329Pdf.instances?.(pending.form5329, filer, {
+        ...pending,
+        schedule2: { line8_form5329_tax: 42 },
+      }),
+    Error,
+    "Schedule 2 line 8",
   );
 });
 

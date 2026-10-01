@@ -1,6 +1,7 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { assertForm3800FinalCreditJoin } from "../../form3800_final_credit_join.ts";
 import { sourceOrphanDrugK1Credits } from "../../mef/forms/f3800.ts";
+import { reconcileFiledTrustPartVClaims } from "../../mef/forms/f3468_source.ts";
 import {
   inputSchema as f3800InputSchema,
   reconcileForm3800NonpassiveCarryforwards,
@@ -102,8 +103,102 @@ export const form3800Pdf: PdfFormDescriptor = {
       )
     ) {
       throw new Error(
-        "Form 3800 PDF estate/trust K-1 box 13 code M is clean electricity investment credit, not orphan-drug credit",
+        "Form 3800 PDF estate/trust K-1 box 13 code M orphan-drug credit needs qualified clinical-testing and passive-activity source evidence",
       );
+    }
+    const trustPartVClaims = reconcileFiledTrustPartVClaims(all);
+    const trustPartVEntries = source.f3468_trust_part_v_credit_entries ?? [];
+    const rawTrustPartVEntries =
+      raw.f3468_trust_part_v_credit_entries === undefined
+        ? []
+        : f3800InputSchema.parse(raw).f3468_trust_part_v_credit_entries ?? [];
+    if (
+      trustPartVClaims.length > 0 || trustPartVEntries.length > 0 ||
+      rawTrustPartVEntries.length > 0
+    ) {
+      const row = prepared.currentRows.filter((item) => item.line === "1v");
+      const amount = prepared.currentAmounts.filter((item) =>
+        item.line === "1v"
+      );
+      const details = prepared.currentDetails.filter((item) =>
+        item.line === "1v"
+      );
+      const claimKeys = trustPartVClaims.map((claim) =>
+        JSON.stringify([
+          claim.source_type,
+          claim.source_ein,
+          claim.source_document_reference,
+          claim.source_statement_reference,
+          claim.credit_amount,
+          claim.subject_to_passive_activity_limit,
+        ])
+      );
+      const entryKeys = trustPartVEntries.map((entry) =>
+        JSON.stringify([
+          entry.source_type,
+          entry.source_ein,
+          entry.source_document_reference,
+          entry.source_statement_reference,
+          entry.credit_amount,
+          entry.subject_to_passive_activity_limit,
+        ])
+      );
+      const credit = trustPartVClaims.reduce(
+        (sum, claim) => sum + claim.credit_amount,
+        0,
+      );
+      const creditByEin = new Map<string, number>();
+      for (const claim of trustPartVClaims) {
+        creditByEin.set(
+          claim.source_ein,
+          (creditByEin.get(claim.source_ein) ?? 0) + claim.credit_amount,
+        );
+      }
+      const largestEin = [...creditByEin.entries()]
+        .sort((left, right) => right[1] - left[1])[0]?.[0];
+      if (
+        claimKeys.length === 0 ||
+        trustPartVClaims.some((claim) =>
+          claim.statement.beneficiary_ssn !== filer.primarySSN
+        ) ||
+        new Set(claimKeys).size !== claimKeys.length ||
+        claimKeys.length !== entryKeys.length ||
+        claimKeys.some((key) => !entryKeys.includes(key)) ||
+        JSON.stringify(rawTrustPartVEntries) !==
+          JSON.stringify(trustPartVEntries) ||
+        row.length !== 1 || amount.length !== 1 ||
+        details.length !== trustPartVClaims.length ||
+        row[0].metadata.sourceCount !== trustPartVClaims.length ||
+        !(row[0].metadata.entity && "ein" in row[0].metadata.entity) ||
+        row[0].metadata.entity.ein !== largestEin ||
+        row[0].metadata.referenceDocumentName !== "IRS3468" ||
+        row[0].metadata.referenceDocumentId !==
+          details.map((detail) => detail.sourceDocumentId).join(" ") ||
+        row[0].entityCredits.length !== trustPartVClaims.length ||
+        row[0].entityCredits.some((entity, index) =>
+          !("ein" in entity.entity) ||
+          entity.entity.ein !== trustPartVClaims[index].source_ein ||
+          entity.credit !== trustPartVClaims[index].credit_amount
+        ) ||
+        details.some((detail, index) =>
+          detail.passThroughEin !== trustPartVClaims[index].source_ein ||
+          detail.credit !== trustPartVClaims[index].credit_amount ||
+          !detail.sourceDocumentId ||
+          detail.appliedCredit < 0 ||
+          detail.appliedCredit > detail.credit
+        ) ||
+        amount[0].nonpassiveCredit !== credit ||
+        amount[0].totalCredit !== credit ||
+        amount[0].transferOutCredit !== 0 ||
+        amount[0].passiveBeforeLimit !== 0 ||
+        amount[0].passiveAfterLimit !== 0 ||
+        amount[0].appliedCredit !==
+          details.reduce((sum, detail) => sum + detail.appliedCredit, 0)
+      ) {
+        throw new Error(
+          "Form 3800 PDF line 1v differs from reviewed trust Form 3468 source",
+        );
+      }
     }
     if (
       directOrphanK1?.length === 1 &&

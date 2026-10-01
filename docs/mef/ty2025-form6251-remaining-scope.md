@@ -15,7 +15,7 @@ and direct nonzero `nol_adjustment`, but the absence of an input field does
 | IRS area                                      | Current bounded route                                                                                                                                                                                                                                                                                              | Remaining source and calculation needed                                                                                                                                                                                                              |
 | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Line 2f, alternative tax NOL                  | Nonzero direct amount is rejected.                                                                                                                                                                                                                                                                                 | Filed regular NOL, separate AMT NOL basis and carryovers, AMT deduction limits, and the Form 6251 signed line.                                                                                                                                       |
-| Line 2k, dispositions                         | Identified positive, unadjusted Form 8949 gains with complete Schedule D audit and AMT basis are modeled. Bounded short-term-only and long-term-only loss routes also accept all-negative rows when both regular and AMT losses remain fully deductible under the Schedule D $3,000/$1,500 limit; cases are unrun. | Losses crossing either deduction limit, mixed-term or mixed-sign rows, adjusted or digital-asset rows, other capital activity, AMT capital-loss carryovers, Form 4684/4797 gains, and their AMT Schedule D and Part III worksheets.                  |
+| Line 2k, dispositions                         | Identified unadjusted Form 8949 basis rows with a complete Schedule D audit cover positive gains, bounded mixed-term offsets, and all-negative short/long-term rows when both regular and AMT totals remain within the separate $3,000/$1,500 deduction limits. Source rows must have TY2025 sale dates and matching holding periods. Cases are unrun. | Losses crossing either deduction limit, sign-changing rows, adjusted or digital-asset rows, other capital activity, AMT capital-loss carryovers, Form 4684/4797 gains, and their AMT Schedule D and Part III worksheets.                  |
 | Lines 2l-2n, depreciation and activity limits | Reviewed, nonpassive post-1998 200%-declining-balance property can feed 2l.                                                                                                                                                                                                                                        | Other property/depreciation classes; activity-level AMT Form 8582 and prior suspended losses for 2m; AMT at-risk, partnership, and S corporation basis refigures for 2n. Amounts assigned to 2m/2n must be removed from any 2l or other source feed. |
 | Lines 2o-2t                                   | Reviewed Form 59E circulation-cost deduction difference can feed 2o.                                                                                                                                                                                                                                               | Other circulation-cost cases; contract percentage-of-completion, mining, research, installment-sale, and intangible-drilling-cost source workpapers for 2p-2t.                                                                                       |
 | Line 3                                        | Mixed `other_adjustments` is rejected, not printed as line 3.                                                                                                                                                                                                                                                      | Separate pre-1987 depreciation, pollution-control, tax-shelter-farm, charitable-contribution, business-interest, mortgage-interest, disaster-loss, and related-adjustment workpapers with anti-duplication checks.                                   |
@@ -37,9 +37,9 @@ acceptances before release.
 Build addendum (2026-09-29, unrun): the bounded line-2k path also covers
 same-term short-term Form 8949 rows with gains and losses that net positive
 under both regular and AMT bases. It uses the existing complete Schedule D audit
-and files only the AMT-minus-regular difference. Mixed terms, zero or negative
-nets, dividends, elections and unaudited capital activity still stop; this does
-not resolve the remaining line-2k rows above. See the
+and files only the AMT-minus-regular difference. Later bounded mixed-term,
+deductible-loss, and sourced qualified-dividend cases are described below;
+elections and unaudited capital activity still stop. See the
 [AMT-basis gap](ty2025-form6251-8949-basis-gap.md).
 
 # Multiple ordinary-dividend payers with retained ISO (staged, unrun)
@@ -94,6 +94,11 @@ nondividend and complete totals to the computed form and rejects missing or
 out-of-range source boxes. The replay fixture awaits the combined pass;
 issued payer/child source bytes and wider bond adjustments remain open.
 
+The Form 8949 AMT-basis replay now also verifies a valid 2025 sale date and
+short- or long-term holding period against each source row's Part I/II box.
+The date-mismatch fixture awaits the final batch; issued broker-copy bytes
+remain open.
+
 # Mixed-term Form 8949 basis offset (staged, unrun)
 
 The audited line-2k path now accepts identified short-term loss rows offset by
@@ -109,10 +114,11 @@ its audited regular and AMT preferential net capital gain is zero, so Part III
 does not print. Positive and mismatched-net fixtures are authored for the deferred
 batch. Net losses, sign-changing rows, other capital activity, special-rate
 gains and Form 4952 elections remain closed. A bounded ordinary 1099-DIV
-qualified-dividend combination now joins the audited short-term-basis gain and
-short-term-loss/long-term-gain paths to Part III when the combined preferential
-amount fits both regular and AMT taxable income. Native and PDF export require
-the retained 1099-DIV payer, finalized Form 1040 dividends, capital gain, and taxable income,
+qualified-dividend combination now joins the audited short-term-basis gain,
+long-term-basis gain, and short-term-loss/long-term-gain paths to Part III when
+the combined preferential amount fits both regular and AMT taxable income.
+Native and PDF export require the retained 1099-DIV payer, finalized Form 1040
+dividends, capital gain, and taxable income,
 and the separate AMT net capital gain. The positive and tamper fixtures await
 the requested final bulk pass; other dividend classes, capital-gain-excess
 worksheets, and issued-copy bytes remain open. See the

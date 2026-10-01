@@ -29,6 +29,13 @@ const source = {
   lump_sum_amount: 20_000,
   recipient_share_pct: 50,
   federal_estate_tax: 2_000,
+  partial_estate_tax_source: {
+    administrator_statement_reference: "estate administrator 2025 allocation",
+    estate_tax_return_reference: "filed estate Form 706 tax workpaper",
+    full_distribution_taxable_amount: 40_000,
+    full_distribution_federal_estate_tax: 2_000,
+    recipient_allocated_federal_estate_tax: 1_000,
+  },
   elect_10yr_averaging: true,
 };
 

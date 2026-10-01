@@ -5,6 +5,7 @@ import {
   SelfCertificationReason,
 } from "../../nodes/inputs/f1099r/index.ts";
 import { EnergyType } from "../../nodes/inputs/f8835/index.ts";
+import { trustPartVStatementFixture } from "../../nodes/inputs/f3468/trust-part-v.fixture.ts";
 import { CoverageType } from "../../nodes/intermediate/forms/form8889/index.ts";
 import { LanguagePreferenceCode } from "../../nodes/inputs/schedule_lep/index.ts";
 import { FilingStatus as SourceFilingStatus } from "../../nodes/types.ts";
@@ -1001,6 +1002,38 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "Form 8283 prints both $700 Section A claims and two separate reduction explanations",
       "Each native reduced amount links to its own FMV statement; item B remains item B",
       "Schedule A line 12 is $1,400 and Form 1040 itemized deductions are $37,400",
+    ],
+  },
+  {
+    id: "single-trust-clean-electricity-investment-credit",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(150_000, 30_000, "Example Employer", "12-3456789")],
+      k1_trust: [{
+        estate_trust_name: "Solar Trust",
+        entity_type: "trust",
+        estate_trust_ein: "123456789",
+        source_document_reference: "trust-k1-2025",
+        beneficiary_ssn: "111223333",
+        box14_code_m_clean_electricity_investment_information: true,
+        box14_code_m_form3468_part_v_statement: trustPartVStatementFixture,
+      }],
+      f3468: {
+        trust_part_v_source_reviews: [trustPartVStatementFixture],
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: [
+      "f1040",
+      "schedule3",
+      "form6251",
+      "form3468",
+      "form3800",
+    ],
+    reviewFocus: [
+      "Trust K-1 box 14 code M and independent reviewed property statement yield a $3,000 Form 3468 Part V credit",
+      "Form 3800 line 1v limits the source credit and joins Schedule 3 line 6a and Form 1040 line 20",
+      "Native IRS3468 and the three selected official PDF pages identify the same trust, facility, basis, and credit",
     ],
   },
   {
@@ -2215,7 +2248,8 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
             employee_ssn: "111-22-3333",
             employer_ein: "12-3456789",
             qualified_overtime_premium: 4_000,
-            statement_reference: "Synthetic furnished 2025 employer premium statement",
+            statement_reference:
+              "Synthetic furnished 2025 employer premium statement",
             furnished_to_employee: true,
           },
         },
@@ -2223,11 +2257,14 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       schedule1a: {
         senior_zero_exclusions_review: {
           no_section933_puerto_rico_excluded_income: true,
-          section933_review_source_reference: "Synthetic 2025 residency and income review",
+          section933_review_source_reference:
+            "Synthetic 2025 residency and income review",
           no_form2555_filed: true,
-          form2555_review_source_reference: "Synthetic 2025 foreign-income review",
+          form2555_review_source_reference:
+            "Synthetic 2025 foreign-income review",
           no_form4563_filed: true,
-          form4563_review_source_reference: "Synthetic 2025 Samoa-source income review",
+          form4563_review_source_reference:
+            "Synthetic 2025 Samoa-source income review",
         },
       },
     },

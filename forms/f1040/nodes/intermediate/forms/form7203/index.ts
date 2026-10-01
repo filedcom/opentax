@@ -117,10 +117,11 @@ function tentativeStockBasis(
   );
 }
 
-// Step 4: Tentative debt basis for loss allocation (Part II Line 29 simplified)
-// IRC §1367(b)(2) — beginning debt basis + new loans
+// Step 4: Tentative debt basis for loss allocation (Part II line 29).
+// A fully based principal repayment reduces the new note before the loss.
 function tentativeDebtBasis(input: Form7203Input): number {
-  return (input.debt_basis_beginning ?? 0) + (input.new_loans ?? 0);
+  return (input.debt_basis_beginning ?? 0) + (input.new_loans ?? 0) -
+    (input.reviewed_one_note_debt?.principal_repayment?.amount ?? 0);
 }
 
 // Step 5: Total loss pool — current year + prior carryforward (Part III)
@@ -166,15 +167,36 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
       ((input.debt_basis_beginning ?? 0) > 0 || (input.new_loans ?? 0) > 0 ||
         note) &&
       (!note || input.debt_basis_beginning !== undefined ||
-        input.new_loans !== note.cash_advance_amount ||
+        input.new_loans !== note.cash_advance_amount +
+          (note.second_formal_note?.cash_advance_amount ?? 0) ||
         input.stock_basis_beginning !== note.beginning_stock_basis ||
         input.ordinary_loss !== note.current_box1_ordinary_loss ||
         (input.additional_contributions ?? 0) !== 0 ||
+        (input.ordinary_income ?? 0) !== 0 ||
+        (input.tax_exempt_income ?? 0) !== 0 ||
+        (input.distributions ?? 0) !== 0 ||
+        (input.nondeductible_expenses ?? 0) !== 0 ||
         (input.prior_year_unallowed_loss ?? 0) !== 0)
     ) {
       throw new Error(
-        "Form 7203 debt-supported loss needs identified note or open-account source; the bounded route requires a single reviewed new formal note and matching current K-1 loss",
+        "Form 7203 debt-supported loss needs identified formal-note source and matching current K-1 loss without other basis items",
       );
+    }
+    if (note?.second_formal_note) {
+      const stock = input.stock_basis_beginning ?? 0;
+      const debtLoss = Math.min(
+        (input.ordinary_loss ?? 0) - stock,
+        input.new_loans ?? 0,
+      );
+      if (
+        debtLoss <= 0 || !Number.isSafeInteger(
+          debtLoss * note.cash_advance_amount / (input.new_loans ?? 0),
+        )
+      ) {
+        throw new Error(
+          "Form 7203 two-note loss needs exact whole-dollar pro rata debt allocation",
+        );
+      }
     }
 
     const pool = totalLossPool(input);

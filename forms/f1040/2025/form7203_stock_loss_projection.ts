@@ -63,7 +63,8 @@ export function projectReviewedStockLoss7203(
           note.beginning_stock_basis_workpaper_reference ||
         ledger.shareholder_ssn !== note.shareholder_ssn ||
         ledger.corporation_ein !== note.corporation_ein ||
-        fields.new_loans !== note.cash_advance_amount ||
+        fields.new_loans !== note.cash_advance_amount +
+          (note.second_formal_note?.cash_advance_amount ?? 0) ||
         JSON.stringify(fields.reviewed_one_note_debt) !== JSON.stringify(note)
       : !ledger.no_shareholder_debt_or_repayments ||
         fields.new_loans !== undefined ||
@@ -116,9 +117,25 @@ export function projectReviewedStockLoss7203(
   }
 
   const allowedStock = Math.min(currentLoss, availableBasis);
-  const allowedDebt = note
-    ? Math.min(currentLoss - allowedStock, note.cash_advance_amount)
+  const firstDebtBasis = note
+    ? note.cash_advance_amount - (note.principal_repayment?.amount ?? 0)
     : 0;
+  const secondDebtBasis = note?.second_formal_note?.cash_advance_amount ?? 0;
+  const allowedDebt = note
+    ? Math.min(
+      currentLoss - allowedStock,
+      firstDebtBasis + secondDebtBasis,
+    )
+    : 0;
+  const allowedDebt1 = secondDebtBasis > 0
+    ? allowedDebt * firstDebtBasis / (firstDebtBasis + secondDebtBasis)
+    : allowedDebt;
+  if (!Number.isSafeInteger(allowedDebt1)) {
+    throw new Error(
+      "Form 7203 two-note loss does not allocate in exact whole dollars",
+    );
+  }
+  const allowedDebt2 = allowedDebt - allowedDebt1;
   const allowed = allowedStock + allowedDebt;
   const carryover = currentLoss - allowed;
   const schedule1 = pendingRecordSchema.parse(allPending.schedule1);
@@ -146,6 +163,8 @@ export function projectReviewedStockLoss7203(
     currentLoss,
     allowedStock,
     allowedDebt,
+    allowedDebt1,
+    allowedDebt2,
     allowed,
     carryover,
   };

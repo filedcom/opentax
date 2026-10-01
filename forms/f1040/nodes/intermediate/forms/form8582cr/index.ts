@@ -245,7 +245,7 @@ export const inputSchema = z.object({
         code: "custom",
         path: ["credit_sources", index],
         message:
-          "Estate/trust K-1 box 13 code M is clean electricity investment credit, not orphan-drug credit",
+          "Estate/trust K-1 box 13 code M orphan-drug credit needs a reviewed passive source route",
       });
     }
   });
@@ -255,7 +255,7 @@ export const inputSchema = z.object({
         code: "custom",
         path: ["required_orphan_drug_k1_credits", index],
         message:
-          "Estate/trust K-1 box 13 code M is clean electricity investment credit, not orphan-drug credit",
+          "Estate/trust K-1 box 13 code M orphan-drug credit needs a reviewed passive source route",
       });
     }
   });

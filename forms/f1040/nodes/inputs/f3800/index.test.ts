@@ -137,10 +137,46 @@ Deno.test("f3800: estate/trust code M cannot enter orphan-drug calculation", () 
             }],
           }),
         Error,
-        "clean electricity investment credit",
+        "qualified clinical-testing and passive-activity source evidence",
       );
     }
   }
+});
+
+Deno.test("f3800: one sourced trust Form 3468 Part V credit reaches the tax limit", () => {
+  const entry = {
+    source_type: "trust" as const,
+    source_ein: "123456789",
+    source_document_reference: "2025 trust K-1",
+    source_statement_reference: "2025 48E statement",
+    credit_amount: 1_250,
+    subject_to_passive_activity_limit: false as const,
+  };
+  const result = f3800.compute({ taxYear: 2025, formType: "f1040" }, {
+    f3468_trust_part_v_credit_entries: [entry],
+  });
+  assertEquals(fieldsOf(result.outputs, f1040)?.form3800_source_credits, {
+    standardCredit: 1_250,
+    specifiedCredit: 0,
+    standardCarryforward: 0,
+    specifiedCarryforward: 0,
+    passiveLines: ZERO_FORM3800_PASSIVE_ACTIVITY,
+  });
+  assertThrows(
+    () =>
+      f3800.compute({ taxYear: 2025, formType: "f1040" }, {
+        f3468_trust_part_v_credit_entries: [entry, entry],
+      }),
+    Error,
+    "Duplicate Form 3468 Part V trust K-1 source",
+  );
+  assertThrows(() =>
+    f3800.compute({ taxYear: 2025, formType: "f1040" }, {
+      f3468_trust_part_v_credit_entries: [{
+        ...entry,
+        subject_to_passive_activity_limit: true,
+      }],
+    }), Error);
 });
 
 Deno.test("f3800: distinct K-1 orphan-drug sources add once", () => {

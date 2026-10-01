@@ -106,7 +106,7 @@ function reconcilePassiveOrphanDrugSources(
     )
   ) {
     throw new Error(
-      "Form 8582-CR estate/trust K-1 box 13 code M is clean electricity investment credit, not orphan-drug credit",
+      "Form 8582-CR estate/trust K-1 box 13 code M orphan-drug credit needs reviewed passive source evidence",
     );
   }
   if (!context.documentIdsByPendingKey) return;

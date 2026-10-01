@@ -163,10 +163,19 @@ const f8820K1CreditSchema = z.object({
       code: "custom",
       path: ["source_type"],
       message:
-        "Estate/trust K-1 box 13 code M is clean electricity investment credit, not orphan-drug credit",
+        "Estate/trust K-1 box 13 code M orphan-drug credit needs qualified clinical-testing and passive-activity source evidence",
     });
   }
 });
+
+const f3468TrustPartVCreditSchema = z.object({
+  source_type: z.literal("trust"),
+  source_ein: z.string().regex(/^\d{9}$/),
+  source_document_reference: z.string().trim().min(1),
+  source_statement_reference: z.string().trim().min(1),
+  credit_amount: z.number().int().positive(),
+  subject_to_passive_activity_limit: z.literal(false),
+}).strict();
 
 const f8936NewVehicleCreditSchema = z.object({
   credit_amount: z.number().finite().nonnegative(),
@@ -195,6 +204,8 @@ export const inputSchema = z.object({
   f8874_credit: f8874CreditSchema.optional(),
   f8874_k1_credit_entries: z.array(f8874K1CreditSchema).min(1).optional(),
   f8820_k1_credit_entries: z.array(f8820K1CreditSchema).min(1).optional(),
+  f3468_trust_part_v_credit_entries: z.array(f3468TrustPartVCreditSchema)
+    .min(1).optional(),
   f8936_new_vehicle_credit: f8936NewVehicleCreditSchema.optional(),
   f8936_commercial_vehicle_credit: f8936NewVehicleCreditSchema.optional(),
   passive_source_allocations: z.array(sourceAllocationSchema).min(1).optional(),
@@ -204,6 +215,8 @@ export const inputSchema = z.object({
   form8820_applied_credits_by_source: z.array(appliedSourceCreditSchema)
     .optional(),
   form8874_applied_credits_by_source: z.array(appliedSourceCreditSchema)
+    .optional(),
+  form3468_part_v_applied_credits_by_source: z.array(appliedSourceCreditSchema)
     .optional(),
   form5884_applied_credit: appliedSourceCreditSchema.optional(),
   form5884_applied_credits_by_source: z.array(appliedSourceCreditSchema)
@@ -224,6 +237,7 @@ export const inputSchema = z.object({
     input.f8874_credit !== undefined ||
     input.f8874_k1_credit_entries !== undefined ||
     input.f8820_k1_credit_entries !== undefined ||
+    input.f3468_trust_part_v_credit_entries !== undefined ||
     input.f8936_new_vehicle_credit !== undefined ||
     input.f8936_commercial_vehicle_credit !== undefined ||
     input.passive_source_allocations !== undefined,
@@ -313,6 +327,9 @@ function schedule3Output(
   f8874Credit: z.infer<typeof f8874CreditSchema> | undefined,
   f8874K1Credits: readonly z.infer<typeof f8874K1CreditSchema>[],
   f8820K1Credits: readonly z.infer<typeof f8820K1CreditSchema>[],
+  f3468TrustPartVCredits: readonly z.infer<
+    typeof f3468TrustPartVCreditSchema
+  >[],
   f8936Credit: z.infer<typeof f8936NewVehicleCreditSchema> | undefined,
   f8936CommercialCredit:
     | z.infer<typeof f8936NewVehicleCreditSchema>
@@ -385,6 +402,19 @@ function schedule3Output(
     (sum, entry) => sum + entry.credit_amount,
     0,
   );
+  const partVTrustKeys = new Set<string>();
+  for (const entry of f3468TrustPartVCredits) {
+    const key =
+      `${entry.source_ein}:${entry.source_document_reference}:${entry.source_statement_reference}`;
+    if (partVTrustKeys.has(key)) {
+      throw new Error("Duplicate Form 3468 Part V trust K-1 source");
+    }
+    partVTrustKeys.add(key);
+  }
+  const partVTrustCredit = f3468TrustPartVCredits.reduce(
+    (sum, entry) => sum + entry.credit_amount,
+    0,
+  );
   if (
     (f8936Credit && f8936Credit.credit_amount > 0 &&
       f8936Credit.subject_to_passive_activity_limit) ||
@@ -428,6 +458,7 @@ function schedule3Output(
     (f8874Credit?.credit_amount ?? 0) > 0 ||
     newMarketsK1Credit > 0 ||
     orphanDrugK1Credit > 0 ||
+    partVTrustCredit > 0 ||
     (f8936Credit?.credit_amount ?? 0) > 0 ||
     (f8936CommercialCredit?.credit_amount ?? 0) > 0 ||
     hasPassiveSource || carryforward.length > 0;
@@ -445,6 +476,7 @@ function schedule3Output(
             (f8874Credit?.credit_amount ?? 0) +
             newMarketsK1Credit +
             orphanDrugK1Credit +
+            partVTrustCredit +
             (f8936Credit?.credit_amount ?? 0) +
             (f8936CommercialCredit?.credit_amount ?? 0) +
             (f8835Credit?.standardCredit ?? 0),
@@ -481,6 +513,7 @@ class F3800Node extends TaxNode<typeof inputSchema> {
         parsed.f8874_credit,
         parsed.f8874_k1_credit_entries ?? [],
         parsed.f8820_k1_credit_entries ?? [],
+        parsed.f3468_trust_part_v_credit_entries ?? [],
         parsed.f8936_new_vehicle_credit,
         parsed.f8936_commercial_vehicle_credit,
         parsed.passive_source_allocations,

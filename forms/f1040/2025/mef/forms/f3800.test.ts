@@ -804,9 +804,132 @@ Deno.test("Form 3800 rejects estate and trust code M on orphan-drug line 1h", ()
           documentIdsByPendingKey: { form6251: ["IRS6251_1"] },
         }),
       Error,
-      "clean electricity investment credit",
+      "qualified clinical-testing and passive-activity source evidence",
     );
   }
+});
+
+Deno.test("Form 3800 binds trust box 14 code M statement to Form 3468 Part V line 1v and final tax", () => {
+  const statement = {
+    source_document_reference: "k1-trust-2025",
+    statement_reference: "trust-solar-stmt",
+    reviewed_on: "2026-02-01",
+    reviewer_reference: "review-3468",
+    issuer_pdf_sha256: "a".repeat(64),
+    issuer_ein: "123456789",
+    beneficiary_ssn: "123456789",
+    facility_type: "solar",
+    facility_address: {
+      line1: "1 Sun St",
+      city: "Austin",
+      state: "TX",
+      zip: "78701",
+    },
+    construction_started_on: "2024-06-01",
+    placed_in_service_on: "2025-03-01",
+    net_output_kw_ac: 500,
+    beneficiary_allocated_qualified_basis: 10_000,
+    beneficiary_allocated_credit: 3_000,
+    beneficiary_nonpassive_activity_reviewed: true,
+    generation_emissions_rate_zero: true,
+    no_prior_or_current_incompatible_section38_credit: true,
+    no_interconnection_property: true,
+    no_domestic_content_or_energy_community_bonus: true,
+    no_subsidized_financing_or_private_activity_bonds: true,
+    no_elective_payment_or_transfer: true,
+    no_cooperative_credit: true,
+  };
+  const entry = {
+    source_type: "trust" as const,
+    source_ein: "123456789",
+    source_document_reference: "k1-trust-2025",
+    source_statement_reference: "trust-solar-stmt",
+    credit_amount: 3_000,
+    subject_to_passive_activity_limit: false as const,
+  };
+  const businessTax = { ...tax, standardCredit: 3_000 };
+  const fields = {
+    f3468_trust_part_v_credit_entries: [entry],
+    tax_context: businessTax,
+    allowed_credit: 3_000,
+  };
+  const pending = {
+    ...filedPending(businessTax, 3_000),
+    f3800: fields,
+    k1_trust: {
+      k1_trusts: [{
+        estate_trust_name: "Solar Trust",
+        entity_type: "trust",
+        estate_trust_ein: "123456789",
+        source_document_reference: "k1-trust-2025",
+        beneficiary_ssn: "123456789",
+        box14_code_m_clean_electricity_investment_information: true,
+        box14_code_m_form3468_part_v_statement: statement,
+      }],
+    },
+    f3468: {
+      trust_part_v_source_reviews: [statement],
+      trust_part_v_claims: [{
+        source_type: "trust",
+        source_ein: "123456789",
+        source_document_reference: "k1-trust-2025",
+        statement,
+      }],
+    },
+  };
+  const context = {
+    pending,
+    documentIdsByPendingKey: {
+      form6251: ["IRS6251_1"],
+      f3468: ["IRS3468_1"],
+    },
+  };
+  const parts = prepareForm3800DocumentParts(fields, context);
+  assertEquals(
+    parts?.currentAmounts.find((row) => row.line === "1v")?.totalCredit,
+    3_000,
+  );
+  assertEquals(
+    parts?.currentRows.find((row) => row.line === "1v")?.metadata.entity,
+    { ein: "123456789" },
+  );
+  const xml = form3800.build(fields, context);
+  assertStringIncludes(xml, "<Form3468PartVCYCreditsGrp");
+  assertEquals(xml.includes("<Frm3468PartVCYAggrgtAmtGrp"), false);
+  assertStringIncludes(
+    xml,
+    "<CurrentYearCreditAllowedAmt>3000</CurrentYearCreditAllowedAmt>",
+  );
+  assertThrows(
+    () =>
+      form3800.build({
+        ...fields,
+        f3468_trust_part_v_credit_entries: [{ ...entry, credit_amount: 3_001 }],
+      }, context),
+    Error,
+    "reviewed trust Form 3468 source",
+  );
+  assertThrows(
+    () =>
+      form3800.build(fields, {
+        ...context,
+        documentIdsByPendingKey: { form6251: ["IRS6251_1"] },
+      }),
+    Error,
+    "one attached Form 3468",
+  );
+  assertThrows(
+    () =>
+      form3800.build(fields, {
+        ...context,
+        pending: {
+          ...pending,
+          f1040: { ...pending.f1040, line20_nonrefundable_credits: 2_999 },
+        },
+      }),
+    Error,
+    "Form 1040 line 20",
+  );
 });
 
 Deno.test("Form 3800 reconciles partnership and S-corporation code Z on line 1h", () => {
@@ -913,7 +1036,7 @@ Deno.test("Form 3800 rejects estate code M even alongside own Form 8820", () => 
         },
       }),
     Error,
-    "clean electricity investment credit",
+    "qualified clinical-testing and passive-activity source evidence",
   );
 });
 

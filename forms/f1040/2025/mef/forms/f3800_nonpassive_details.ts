@@ -2,7 +2,7 @@ import { element, elements } from "../../../mef/xml.ts";
 
 /** One nonpassive current-year source retained for Part V and print mapping. */
 export type Form3800NonpassiveDetailRow = {
-  readonly line: "1e" | "1f" | "1h" | "1i" | "1y" | "1aa" | "4b" | "4e";
+  readonly line: "1e" | "1f" | "1h" | "1i" | "1v" | "1y" | "1aa" | "4b" | "4e";
   readonly credit: number;
   readonly appliedCredit: number;
   readonly passThroughEin?: string;
@@ -16,6 +16,7 @@ const detailTag: Record<Form3800NonpassiveDetailRow["line"], string> = {
   "1f": "Frm8835PartIICYAggrgtAmtGrp",
   "1h": "Frm8820CYAggrgtAmtGrp",
   "1i": "Frm8874CYAggrgtAmtGrp",
+  "1v": "Frm3468PartVCYAggrgtAmtGrp",
   "1y": "Frm8936PartIICYAggrgtAmtGrp",
   "1aa": "Frm8936PartVCYAggrgtAmtGrp",
   "4b": "Frm5884CYAggrgtAmtGrp",
@@ -28,6 +29,7 @@ const sourceDocumentName: Record<Form3800NonpassiveDetailRow["line"], string> =
     "1f": "IRS8835",
     "1h": "IRS8820",
     "1i": "IRS8874",
+    "1v": "IRS3468 BinaryAttachment",
     "1y": "IRS8936",
     "1aa": "IRS8936",
     "4b": "IRS5884",
@@ -48,7 +50,7 @@ export function form3800NonpassiveCurrentDetailXml(
     (!facility && (transferred !== 0 || row.transferRegistrationNumber)) ||
     (transferred > 0 && !row.transferRegistrationNumber) ||
     (row.passThroughEin !== undefined && !/^\d{9}$/.test(row.passThroughEin)) ||
-    (row.passThroughEin && row.sourceDocumentId)
+    (row.passThroughEin && row.sourceDocumentId && row.line !== "1v")
   ) {
     throw new Error("Form 3800 nonpassive Part V source is invalid");
   }

@@ -705,6 +705,9 @@ export function reconcilePairedForm8889(
   const pairedPriorExcessOwners = owners.filter((owner) =>
     owner.prior_year_hsa_excess !== undefined
   );
+  const priorExcessReferences = pairedPriorExcessOwners.map((owner) =>
+    owner.prior_year_hsa_excess!.filed_form5329_reference
+  );
   const rolloverReferences = owners.flatMap((owner) => {
     const rollover = owner.hsa_excluded_distributions?.rollover;
     return rollover
@@ -716,7 +719,7 @@ export function reconcilePairedForm8889(
   });
   if (
     pairedCode2Owners.length > 1 ||
-    pairedPriorExcessOwners.length > 1 ||
+    new Set(priorExcessReferences).size !== priorExcessReferences.length ||
     (pairedPriorExcessOwners.length > 0 &&
       (!selfOnly || pairedRollovers.length > 0 ||
         pairedCode2Owners.length > 0 ||
@@ -766,8 +769,7 @@ export function reconcilePairedForm8889(
           !owner.qualified_medical_expense_evidence?.length) ||
         owner.qualified_hsa_funding_distributions !== undefined ||
         (owner.prior_year_hsa_excess !== undefined &&
-          (pairedPriorExcessOwners.length !== 1 ||
-            owner.prior_year_hsa_excess.form5329_line48 <= 0 ||
+          (owner.prior_year_hsa_excess.form5329_line48 <= 0 ||
             owner.prior_year_hsa_excess.form5329_line49 <= 0 ||
             owner.hsa_december_31_value === undefined ||
             (owner.hsa_distributions ?? 0) !== 0 ||
@@ -819,10 +821,10 @@ export function reconcilePairedForm8889(
   let pairedExcessTax = 0;
   if (expectedExcess.length > 0 || pairedPriorExcessOwners.length > 0) {
     if (
-      pairedPriorExcessOwners.length !== 1 || expectedExcess.length !== 1
+      expectedExcess.length !== pairedPriorExcessOwners.length
     ) {
       throw new Error(
-        "Form 8889 paired excess needs one reviewed prior-year owner Form 5329 source",
+        "Form 8889 paired excess needs a reviewed prior-year Form 5329 source for each affected owner",
       );
     }
     const pending5329 = z.object({
@@ -853,8 +855,10 @@ export function reconcilePairedForm8889(
     const calculated5329 = calculate5329OwnerForms(parsed5329);
     if (
       canonical(pending5329.owner_forms) !== canonical(calculated5329.forms) ||
-      calculated5329.forms.length !== 1 ||
-      calculated5329.forms[0]?.hsa_part_vii?.line47_current_year_excess !== 0 ||
+      calculated5329.forms.length !== pairedPriorExcessOwners.length ||
+      calculated5329.forms.some((form) =>
+        form.hsa_part_vii?.line47_current_year_excess !== 0
+      ) ||
       calculated5329.total <= 0
     ) {
       throw new Error(

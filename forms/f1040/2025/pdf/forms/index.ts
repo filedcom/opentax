@@ -30,6 +30,7 @@ import { form2555Pdf } from "./f2555.ts";
 import { form4137Pdf } from "./f4137.ts";
 import { form4136Pdf } from "./f4136.ts";
 import { form3800Pdf } from "./f3800.ts";
+import { form3468Pdf } from "./f3468.ts";
 import { form4136ScheduleAPdf } from "./f4136_schedule_a.ts";
 import { form4562Pdf } from "./f4562.ts";
 import { form4684Pdf } from "./f4684.ts";
@@ -120,6 +121,7 @@ export const ALL_PDF_FORMS: readonly PdfFormDescriptor[] = [
   form2441Pdf,
   form2555Pdf,
   form4136Pdf,
+  form3468Pdf,
   form3800Pdf,
   form4136ScheduleAPdf,
   form4137Pdf,

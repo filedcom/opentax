@@ -60,6 +60,7 @@ import { readDisabledAccessCapLedger } from "./f8826_cap_ledger.ts";
 import { inputSchema as partnershipK1InputSchema } from "../../../nodes/inputs/k1_partnership/index.ts";
 import { inputSchema as sCorpK1InputSchema } from "../../../nodes/inputs/k1_s_corp/index.ts";
 import { reconcileNewMarketsK1Credits } from "./f8874_credit_evidence.ts";
+import { reconcileFiledTrustPartVClaims } from "./f3468_source.ts";
 
 const amount = z.number().finite().nonnegative();
 const taxBase = z.object({
@@ -438,7 +439,7 @@ export function sourceOrphanDrugK1Credits(
       }
     } else {
       throw new Error(
-        "Form 3800 estate/trust K-1 box 13 code M is clean electricity investment credit, not orphan-drug credit",
+        "Form 3800 estate/trust K-1 box 13 code M orphan-drug credit needs qualified clinical-testing and passive-activity source evidence",
       );
     }
   }
@@ -644,7 +645,7 @@ function form5884SourceAllocations(
 }
 
 function nonpassiveSourceAllocations(
-  form: "8820" | "8874",
+  form: "8820" | "8874" | "3468",
   amounts: readonly number[],
   credit: number,
   appliedCredit: number,
@@ -783,6 +784,71 @@ export function prepareForm3800DocumentParts(
     parsed,
     context,
   );
+  const trustPartVEntries = parsed.f3468_trust_part_v_credit_entries ?? [];
+  const filedTrustPartVClaims = reconcileFiledTrustPartVClaims(
+    context.pending ?? {},
+  );
+  if (trustPartVEntries.length !== filedTrustPartVClaims.length) {
+    throw new Error(
+      "Form 3800 line 1v trust credits differ from filed Form 3468 Part V",
+    );
+  }
+  const form3468Ids = context.documentIdsByPendingKey.f3468 ?? [];
+  if (
+    trustPartVEntries.length > 0 &&
+    (form3468Ids.length !== filedTrustPartVClaims.length ||
+      form3468Ids.some((id) => !id))
+  ) {
+    throw new Error(
+      "Form 3800 line 1v needs one attached Form 3468 per trust property",
+    );
+  }
+  const trustPartVSourceRows = filedTrustPartVClaims.map((claim, index) => {
+    if (
+      context.filer &&
+      claim.statement.beneficiary_ssn !== context.filer.primarySSN
+    ) {
+      throw new Error(
+        "Form 3800 line 1v trust beneficiary differs from filed taxpayer",
+      );
+    }
+    const matches = trustPartVEntries.filter((entry) =>
+      entry.source_type === claim.source_type &&
+      entry.source_ein === claim.source_ein &&
+      entry.source_document_reference === claim.source_document_reference &&
+      entry.source_statement_reference === claim.source_statement_reference &&
+      entry.credit_amount === claim.credit_amount &&
+      entry.subject_to_passive_activity_limit === false
+    );
+    if (matches.length !== 1) {
+      throw new Error(
+        "Form 3800 line 1v credit differs from reviewed trust Form 3468 source",
+      );
+    }
+    const documentId = form3468Ids[index];
+    if (!documentId) {
+      throw new Error(
+        "Form 3800 line 1v trust property lacks its Form 3468 document ID",
+      );
+    }
+    return {
+      credit: claim.credit_amount,
+      ein: claim.source_ein,
+      documentId,
+    };
+  });
+  const form3468PartVCredit = trustPartVSourceRows.reduce(
+    (sum, source) => sum + source.credit,
+    0,
+  );
+  if (
+    form3468PartVCredit === 0 &&
+    parsed.form3468_part_v_applied_credits_by_source !== undefined
+  ) {
+    throw new Error(
+      "Form 3800 has Form 3468 Part V allocations without a trust source",
+    );
+  }
   const facilities = sourceForm8835(parsed, context);
   const form5884 = sourceForm5884(parsed, context);
   const form8936 = sourceForm8936(parsed, context);
@@ -832,6 +898,7 @@ export function prepareForm3800DocumentParts(
     form8826Credit,
     form8820Credit,
     form8874Credit,
+    form3468PartVCredit,
     form5884Credit: form5884?.credit,
     form8936NewVehicleCredit: form8936?.credit,
     form8936CommercialVehicleCredit: form8936Commercial?.credit,
@@ -898,6 +965,11 @@ export function prepareForm3800DocumentParts(
     parsed.form8820_applied_credit,
   );
   const form8874Applied = applied("nonpassive:8874");
+  const form3468PartVApplied = sourceApplied(
+    form3468PartVCredit > 0,
+    "nonpassive:3468-part-v",
+    undefined,
+  );
   if (
     form8820Credit === 0 &&
     parsed.form8820_applied_credits_by_source !== undefined
@@ -1027,6 +1099,20 @@ export function prepareForm3800DocumentParts(
             form8874Credit,
             form8874Applied,
             parsed.form8874_applied_credits_by_source,
+          ),
+        }
+        : undefined,
+      form3468PartV: form3468PartVCredit > 0
+        ? {
+          credit: form3468PartVCredit,
+          appliedCredit: form3468PartVApplied,
+          sources: trustPartVSourceRows,
+          appliedCreditsBySource: nonpassiveSourceAllocations(
+            "3468",
+            trustPartVSourceRows.map((source) => source.credit),
+            form3468PartVCredit,
+            form3468PartVApplied,
+            parsed.form3468_part_v_applied_credits_by_source,
           ),
         }
         : undefined,

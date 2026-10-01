@@ -14,6 +14,11 @@ import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
 import { form4952 } from "../../intermediate/forms/form4952/index.ts";
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import { f3800 } from "../f3800/index.ts";
+import { f3468 } from "../f3468/index.ts";
+import {
+  reconcileTrustPartVStatement,
+  trustPartVStatementSchema,
+} from "../f3468/trust-part-v-source.ts";
 import { form8582cr } from "../../intermediate/forms/form8582cr/index.ts";
 import { disabledAccessLimit } from "../../intermediate/forms/disabled_access_limit/index.ts";
 import {
@@ -39,11 +44,12 @@ export const itemSchema = z.object({
   entity_type: z.enum(["estate", "trust"]).optional(),
   estate_trust_ein: z.string().regex(/^\d{9}$/).optional(),
   source_document_reference: z.string().trim().min(1).optional(),
-  // TY2025 box 13 code M is the clean electricity investment credit, which
-  // needs the trust's Form 3468 Part V property statement. No such path is
-  // supported here. Explicit rejection prevents the former wrong label from
-  // being silently stripped by Zod's object parser.
+  // TY2025 box 14 code M supplies Part V information, not a credit amount.
+  // Box 13 code M is the separate orphan-drug credit and stays closed here.
   box13_code_m_clean_electricity_investment_credit: z.never().optional(),
+  box14_code_m_clean_electricity_investment_information: z.literal(true)
+    .optional(),
+  box14_code_m_form3468_part_v_statement: trustPartVStatementSchema.optional(),
   box13_code_m_orphan_drug_credit: z.never().optional(),
   orphan_drug_credit_subject_to_passive_activity_limit: z.never().optional(),
   box13_code_zz_new_markets_credit: z.number().int().positive().optional(),
@@ -163,6 +169,36 @@ export const itemSchema = z.object({
   box14_foreign_tax_credit_method: z.nativeEnum(ForeignTaxCreditMethod)
     .optional(),
 }).superRefine((item, ctx) => {
+  if (
+    item.box14_code_m_clean_electricity_investment_information !== undefined ||
+    item.box14_code_m_form3468_part_v_statement !== undefined
+  ) {
+    if (
+      item.entity_type !== "trust" ||
+      item.box14_code_m_clean_electricity_investment_information !== true ||
+      item.box14_code_m_form3468_part_v_statement === undefined
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["box14_code_m_form3468_part_v_statement"],
+        message:
+          "Trust K-1 box 14 code M needs a reviewed Form 3468 Part V statement",
+      });
+    } else {
+      try {
+        reconcileTrustPartVStatement(
+          item.box14_code_m_form3468_part_v_statement,
+          item,
+        );
+      } catch (error) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["box14_code_m_form3468_part_v_statement"],
+          message: String(error),
+        });
+      }
+    }
+  }
   for (
     const key of [
       "box4b_28pct_rate_gain",
@@ -599,6 +635,25 @@ function newMarketsCreditOutputs(items: K1TrustItems): NodeOutput[] {
   });
 }
 
+function cleanElectricityInvestmentCreditOutputs(
+  items: K1TrustItems,
+): NodeOutput[] {
+  return items.flatMap((item) => {
+    if (item.box14_code_m_clean_electricity_investment_information !== true) {
+      return [];
+    }
+    const statement = item.box14_code_m_form3468_part_v_statement!;
+    return [output(f3468, {
+      trust_part_v_claims: [{
+        source_type: "trust",
+        source_ein: item.estate_trust_ein!,
+        source_document_reference: item.source_document_reference!,
+        statement,
+      }],
+    })];
+  });
+}
+
 class K1TrustNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "k1_trust";
   readonly inputSchema = inputSchema;
@@ -613,6 +668,7 @@ class K1TrustNode extends TaxNode<typeof inputSchema> {
     form4952,
     form6251,
     f3800,
+    f3468,
     form8582cr,
     disabledAccessLimit,
   ]);
@@ -647,6 +703,7 @@ class K1TrustNode extends TaxNode<typeof inputSchema> {
       ...form1116Outputs(k1_trusts),
       ...disabledAccessCreditOutputs(k1_trusts),
       ...newMarketsCreditOutputs(k1_trusts),
+      ...cleanElectricityInvestmentCreditOutputs(k1_trusts),
       ...k1_trusts.flatMap((item) =>
         (item.box12_code_a_amt_adjustment ?? 0) === 0 ? [] : [output(form6251, {
           line2j_estates_and_trusts: item.box12_code_a_amt_adjustment!,

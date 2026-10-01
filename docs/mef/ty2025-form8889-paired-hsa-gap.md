@@ -1,5 +1,26 @@
 # TY2025 paired Form 8889 boundary
 
+## Both owners' prior HSA excess (2026-10-01 build pass, unrun)
+
+The paired full-year self-only route now accepts independently reviewed 2024
+Form 5329 Part VII excess for each spouse. Each owner must provide their own
+filed-return reference, matching SSN, positive 2024 lines 48 and 49, and a
+2025 HSA year-end value. The two references must be distinct. The owner
+calculator reduces each carryover by that owner's unused 2025 contribution
+room and produces separate 2025 Forms 5329 lines 42–49. Native MeF and PDF
+export replay both source calculations, verify both owner copies and identities,
+sum the two 6% taxes on Schedule 2 line 8 and Form 1040 line 23, and reconcile
+both Form 8889 deductions through Schedule 1 and Form 1040. Positive and
+source/tax tamper fixtures are authored but unrun.
+
+The [2025 Form 8889 instructions](https://www.irs.gov/instructions/i8889)
+require separate spouse Forms 8889; the [2025 Form 5329
+instructions](https://www.irs.gov/instructions/i5329) require separate spouse
+Forms 5329 and permit 2024 line 48 on 2025 line 42 when 2024 line 49 was
+positive. This route still requires no current excess, distributions, rollovers,
+employer funding, or testing-period event. The reviewed 2024 return references
+are not authenticated source bytes.
+
 ## Distinct rollovers for both owners (2026-10-01 build pass, unrun)
 
 The paired full-year self-only route now accepts one sourced HSA-to-HSA
@@ -40,8 +61,8 @@ match the two deductions to Schedule 1 and Form 1040, and the one owner tax to
 Schedule 2 line 8 and Form 1040 line 23. Form 5329's native and PDF exporters
 then independently verify the same source and Schedule 2 tax. Positive and
 source/tax tamper fixtures are authored but unrun. The filed 2024 return is
-referenced and reviewed, not authenticated by retained bytes; both-owner
-carryovers, other coverage patterns and mixed HSA events remain open.
+referenced and reviewed, not authenticated by retained bytes; other coverage
+patterns and mixed HSA events remain open.
 
 ## One spouse loses eligibility to nonpermitted other coverage (written, unrun)
 

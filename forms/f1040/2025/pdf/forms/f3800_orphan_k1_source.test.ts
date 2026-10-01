@@ -127,7 +127,7 @@ Deno.test("Form 3800 nine-page PDF binds a direct partnership code Z credit to p
         },
       }, prepared),
     Error,
-    "clean electricity investment credit",
+    "qualified clinical-testing and passive-activity source evidence",
   );
   assertThrows(
     () =>
@@ -141,6 +141,6 @@ Deno.test("Form 3800 nine-page PDF binds a direct partnership code Z credit to p
         prepared,
       ),
     Error,
-    "clean electricity investment credit",
+    "qualified clinical-testing and passive-activity source evidence",
   );
 });

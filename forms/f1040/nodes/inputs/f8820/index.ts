@@ -123,7 +123,7 @@ export const inputSchema = z.object({
         code: "custom",
         path: ["pass_through_credits", index, "source_type"],
         message:
-          "Estate/trust K-1 box 13 code M is clean electricity investment credit, not orphan-drug credit",
+          "Estate/trust K-1 box 13 code M orphan-drug credit needs a reviewed source route before Form 8820",
       });
     }
     const id = `${entry.source_type}:${entry.entity_ein}`;

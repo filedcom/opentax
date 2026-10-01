@@ -61,7 +61,7 @@ export function reconcileOrphanDrugK1Credits(
       }
     } else {
       throw new Error(
-        "Form 8820 estate/trust K-1 box 13 code M is clean electricity investment credit, not orphan-drug credit",
+        "Form 8820 estate/trust K-1 box 13 code M orphan-drug credit needs reviewed source evidence",
       );
     }
   }

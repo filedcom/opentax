@@ -196,7 +196,6 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
           input.elect_capital_gain !== true) ||
           (input.elect_10yr_averaging === true &&
             input.elect_capital_gain === true) ||
-          (input.box6_nua ?? 0) > 0 ||
           (input.annuity_actuarial_value ?? 0) > 0 ||
           deathBenefit > 0)))
   ) {
@@ -211,7 +210,9 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
       estateSource.administrator_statement_reference ===
         estateSource.estate_tax_return_reference ||
       estateSource.full_distribution_taxable_amount !==
-        input.lump_sum_amount / recipientShare ||
+        (input.lump_sum_amount +
+          (input.elect_include_nua === true ? (input.box6_nua ?? 0) : 0)) /
+          recipientShare ||
       estateSource.full_distribution_federal_estate_tax !==
         input.federal_estate_tax ||
       !Number.isSafeInteger(input.federal_estate_tax! * recipientShare) ||
@@ -438,14 +439,14 @@ class Form4972Node extends TaxNode<typeof inputSchema> {
     const estateTaxCapitalShare = electCapGain && taxableAmount > 0
       ? Math.round(
         estateTaxForRecipient * capitalGain /
-          (partialPartIIEstate ? box2aTaxable : taxableAmount),
+          (partialPartIIEstate ? box2aTaxable + includedNua : taxableAmount),
       )
       : 0;
     const ordinaryEstateTax = estateTaxForRecipient - estateTaxCapitalShare;
     if (
       deathBenefitCapitalShare + estateTaxCapitalShare > capitalGain ||
       ordinaryDeathBenefit + ordinaryEstateTax >
-        (partialPartIIEstate ? box2aTaxable : taxableAmount) -
+        (partialPartIIEstate ? box2aTaxable + includedNua : taxableAmount) -
           (electCapGain ? capitalGain : 0)
     ) {
       throw new Error(

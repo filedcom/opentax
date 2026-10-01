@@ -179,3 +179,253 @@ Deno.test("Form 7203 native and PDF print one formal note and Part III debt allo
     "must match Schedule 1 line 5",
   );
 });
+
+Deno.test("Form 7203 sourced principal repayment reduces debt basis before the current loss", () => {
+  const repaidNote = {
+    ...oneNote,
+    no_2025_repayments_confirmed: false,
+    principal_repayment: {
+      date: "2025-08-15",
+      amount: 500,
+      corporate_loan_ledger_reference: "corporate loan ledger repayment 2025-08",
+      shareholder_bank_deposit_reference: "shareholder bank principal deposit 2025-08",
+      principal_only_confirmed: true,
+    },
+  };
+  const source = {
+    ...oneNoteK1,
+    box16_code_e_loan_repayment: 500,
+    form7203_one_note_debt_candidate: repaidNote,
+  };
+  assertEquals(
+    reconcileOneNoteDebtCandidate(repaidNote, source)
+      .debtSupportedLossCandidate,
+    1_500,
+  );
+  const k1 = k1SCorpNode.compute(
+    { taxYear: 2025, formType: "f1040" },
+    k1SCorpNode.inputSchema.parse({ k1_s_corps: [source] }),
+  );
+  const fields = k1.outputs.find((row) => row.nodeType === "form7203")!.fields;
+  const result = form7203Node.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form7203Node.inputSchema.parse(fields),
+  );
+  assertEquals(result.carryforwards?.suspended_scorp_loss_7203, 2_000);
+  assertEquals(
+    result.outputs.find((row) => row.nodeType === "schedule1")?.fields
+      .basis_disallowed_add_back,
+    2_000,
+  );
+  const filer = {
+    primarySSN: "123456789",
+    fullName: "Alex Taxpayer",
+    nameLine1: "Alex Taxpayer",
+    nameControl: "TAXP",
+    address: {
+      line1: "1 Main St",
+      city: "Wilmington",
+      state: "DE",
+      zip: "19801",
+    },
+    filingStatus: FilingStatus.Single,
+  };
+  const pending = {
+    k1_s_corp: { k1_s_corps: [source] },
+    schedule1: {
+      line5_schedule_e: -2_000,
+      line10_total_additional_income: -2_000,
+    },
+    f1040: { line8_additional_income: -2_000 },
+  };
+  const xml = buildReviewedStockLoss7203(fields, { filer, pending });
+  assertEquals(xml.includes("<PrincipalDebtRepaymentAmt>500</PrincipalDebtRepaymentAmt>"), true);
+  assertEquals(xml.includes("<NontaxableDebtRepaymentAmt>500</NontaxableDebtRepaymentAmt>"), true);
+  assertEquals(xml.includes("<AllowableLossAmt>1500</AllowableLossAmt>"), true);
+  const pdf = form7203StockLossPdf.instances?.(fields, filer, pending)?.[0];
+  assertEquals(pdf?.line19_debt1, 500);
+  assertEquals(pdf?.line26_debt1, 500);
+  assertEquals(pdf?.line30_debt1, 1_500);
+  assertEquals(pdf?.line32_debt1, 500);
+  assertEquals(pdf?.line33_debt1, 500);
+  assertEquals(pdf?.line35_allowed_debt, 1_500);
+  assertThrows(() => reconcileOneNoteDebtCandidate({
+    ...repaidNote,
+    principal_repayment: {
+      ...repaidNote.principal_repayment,
+      date: "2025-03-01",
+    },
+  }, source));
+  assertThrows(() => buildReviewedStockLoss7203(fields, {
+    filer,
+    pending: {
+      ...pending,
+      k1_s_corp: {
+        k1_s_corps: [{
+          ...source,
+          form7203_one_note_debt_candidate: {
+            ...repaidNote,
+            principal_repayment: {
+              ...repaidNote.principal_repayment,
+              amount: 600,
+            },
+          },
+        }],
+      },
+    },
+  }));
+  assertThrows(() => form7203StockLossPdf.instances?.(fields, filer, {
+    ...pending,
+    f1040: { line8_additional_income: -1_900 },
+  }));
+});
+
+Deno.test("Form 7203 two sourced formal notes allocate Part II loss in separate columns", () => {
+  const twoNotes = {
+    ...oneNote,
+    second_formal_note: {
+      formal_note_id: "note-2025-02",
+      signed_note_document_reference: "signed note PDF 2025-02",
+      note_execution_date: "2025-06-12",
+      shareholder_lender_ssn: "123456789",
+      corporate_borrower_ein: "987654321",
+      bank_transfer_reference: "2025 bank transfer 88",
+      cash_advance_amount: 1_000,
+      corporation_received_funds_confirmed: true,
+      shareholder_funded_directly_confirmed: true,
+      not_a_guarantee_or_cosign_confirmed: true,
+      beginning_note_face_amount: 0,
+      beginning_note_debt_basis: 0,
+      no_2025_repayments_confirmed: true,
+      no_prior_reduced_debt_basis_confirmed: true,
+    },
+  };
+  const source = {
+    ...oneNoteK1,
+    form7203_one_note_debt_candidate: twoNotes,
+  };
+  assertEquals(
+    reconcileOneNoteDebtCandidate(twoNotes, source)
+      .debtSupportedLossCandidate,
+    3_000,
+  );
+  const k1 = k1SCorpNode.compute(
+    { taxYear: 2025, formType: "f1040" },
+    k1SCorpNode.inputSchema.parse({ k1_s_corps: [source] }),
+  );
+  const fields = k1.outputs.find((row) => row.nodeType === "form7203")!.fields;
+  assertEquals(fields.new_loans, 3_000);
+  const result = form7203Node.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form7203Node.inputSchema.parse(fields),
+  );
+  assertEquals(result.carryforwards?.suspended_scorp_loss_7203, 500);
+  const filer = {
+    primarySSN: "123456789",
+    fullName: "Alex Taxpayer",
+    nameLine1: "Alex Taxpayer",
+    nameControl: "TAXP",
+    address: { line1: "1 Main St", city: "Wilmington", state: "DE", zip: "19801" },
+    filingStatus: FilingStatus.Single,
+  };
+  const pending = {
+    k1_s_corp: { k1_s_corps: [source] },
+    schedule1: {
+      line5_schedule_e: -3_500,
+      line10_total_additional_income: -3_500,
+    },
+    f1040: { line8_additional_income: -3_500 },
+  };
+  const xml = buildReviewedStockLoss7203(fields, { filer, pending });
+  assertEquals(xml.match(/<ShareholderDebtBasisGrp>/g)?.length, 2);
+  assertEquals(xml.includes("<TotAdditionalLoansAmt>3000</TotAdditionalLoansAmt>"), true);
+  assertEquals(xml.includes("<TotDebtBasisEndTaxYrAmt>0</TotDebtBasisEndTaxYrAmt>"), true);
+  const pdf = form7203StockLossPdf.instances?.(fields, filer, pending)?.[0];
+  assertEquals(pdf?.formal_note_debt2, true);
+  assertEquals(pdf?.line17_debt2, 1_000);
+  assertEquals(pdf?.line17_total, 3_000);
+  assertEquals(pdf?.line30_debt1, 2_000);
+  assertEquals(pdf?.line30_debt2, 1_000);
+  assertEquals(pdf?.line30_total, 3_000);
+  assertEquals(
+    form7203StockLossPdf.fields.find((entry) =>
+      entry.domainKey === "formal_note_debt2"
+    )?.pdfField,
+    "topmostSubform[0].Page1[0].Table_SectionA[0].Header[0].bDebt2[0].c1_8[0]",
+  );
+  assertEquals(
+    form7203StockLossPdf.fields.find((entry) =>
+      entry.domainKey === "line30_debt2"
+    )?.pdfField,
+    "topmostSubform[0].Page2[0].Table_SectionB[0].Line30[0].f2_38[0]",
+  );
+  const scheduleEXml = buildReviewedStockLossScheduleE(fields, { filer, pending });
+  assertEquals(scheduleEXml.includes("<NonpassiveLossAmt>3500</NonpassiveLossAmt>"), true);
+  const scheduleEPdf = scheduleEStockLossPdf.instances?.(fields, filer, pending)?.[0];
+  assertEquals(scheduleEPdf?.line41, -3_500);
+  assertThrows(() => reconcileOneNoteDebtCandidate({
+    ...twoNotes,
+    second_formal_note: {
+      ...twoNotes.second_formal_note,
+      formal_note_id: twoNotes.formal_note_id,
+    },
+  }, source));
+  assertThrows(() => reconcileOneNoteDebtCandidate({
+    ...twoNotes,
+    current_box1_ordinary_loss: 2_400,
+  }, {
+    ...source,
+    box1_ordinary_business: -2_400,
+  }));
+  assertThrows(() => buildReviewedStockLoss7203(fields, {
+    filer,
+    pending: {
+      ...pending,
+      k1_s_corp: {
+        k1_s_corps: [{
+          ...source,
+          form7203_one_note_debt_candidate: {
+            ...twoNotes,
+            second_formal_note: {
+              ...twoNotes.second_formal_note,
+              cash_advance_amount: 1_200,
+            },
+          },
+        }],
+      },
+    },
+  }));
+  assertThrows(() => form7203StockLossPdf.instances?.(fields, filer, {
+    ...pending,
+    f1040: { line8_additional_income: -3_400 },
+  }));
+  const partialSource = {
+    ...source,
+    box1_ordinary_business: -2_000,
+    form7203_one_note_debt_candidate: {
+      ...twoNotes,
+      current_box1_ordinary_loss: 2_000,
+    },
+  };
+  const partialFields = k1SCorpNode.compute(
+    { taxYear: 2025, formType: "f1040" },
+    k1SCorpNode.inputSchema.parse({ k1_s_corps: [partialSource] }),
+  ).outputs.find((row) => row.nodeType === "form7203")!.fields;
+  const partialPending = {
+    k1_s_corp: { k1_s_corps: [partialSource] },
+    schedule1: {
+      line5_schedule_e: -2_000,
+      line10_total_additional_income: -2_000,
+    },
+    f1040: { line8_additional_income: -2_000 },
+  };
+  const partialPdf = form7203StockLossPdf.instances?.(
+    partialFields,
+    filer,
+    partialPending,
+  )?.[0];
+  assertEquals(partialPdf?.line30_debt1, 1_000);
+  assertEquals(partialPdf?.line30_debt2, 500);
+  assertEquals(partialPdf?.line31_debt1, 1_000);
+  assertEquals(partialPdf?.line31_debt2, 500);
+});

@@ -16,6 +16,7 @@ import { form1116AlternativeCompensationStatement } from "./f1116_alternative_co
 import { form2441 } from "./f2441.ts";
 import { form2555 } from "./f2555.ts";
 import { form3800 } from "./f3800.ts";
+import { form3468 } from "./f3468.ts";
 import { form3800CarryforwardStatement } from "./f3800_carryforward_statement.ts";
 import { form4137 } from "./f4137.ts";
 import { form4255 } from "./f4255.ts";
@@ -180,6 +181,8 @@ export const ALL_MEF_FORMS = [
   form2441,
   // Form 2555
   form2555,
+  // Trust-sourced Form 3468 Part V: one attachment per qualified facility.
+  form3468,
   // Form 3800 is one document after Form 2555 in ReturnData1040.xsd.
   form3800,
   // Form 4136 precedes Form 4137 in ReturnData1040.xsd.

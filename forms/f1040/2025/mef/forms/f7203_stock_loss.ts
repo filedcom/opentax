@@ -16,12 +16,19 @@ export function buildReviewedStockLoss7203(
     currentLoss,
     allowedStock,
     allowedDebt,
+    allowedDebt1,
+    allowedDebt2,
     carryover,
   } = projectReviewedStockLoss7203(
     rawFields,
     context?.pending ?? {},
     context?.filer,
   );
+  const repayment = note?.principal_repayment?.amount ?? 0;
+  const debtAfterRepayment = (note?.cash_advance_amount ?? 0) - repayment;
+  const secondAdvance = note?.second_formal_note?.cash_advance_amount ?? 0;
+  const totalAdvance = (note?.cash_advance_amount ?? 0) + secondAdvance;
+  const totalDebtAfterRepayment = debtAfterRepayment + secondAdvance;
   const lossGroup = (amount: number) => [
     element("OrdinaryBusinessLossAmt", amount),
     element("TotalAllowableLossAmt", amount),
@@ -55,34 +62,54 @@ export function buildReviewedStockLoss7203(
         element("LoanBalanceBeginTaxYrAmt", 0),
         element("AdditionalLoansAmt", note.cash_advance_amount),
         element("LoanedBeginningBalAmt", note.cash_advance_amount),
-        element("LoanBalanceEndTaxYrAmt", note.cash_advance_amount),
+        repayment > 0 ? element("PrincipalDebtRepaymentAmt", repayment) : "",
+        element("LoanBalanceEndTaxYrAmt", debtAfterRepayment),
         element("DebtBasisBeginTaxYrAmt", 0),
         element("DebtBasisBfrRepaymentAmt", note.cash_advance_amount),
         element("DebtLoanRepaymentPct", "1.0000"),
-        element("DebtBasisBfrExpnssLossAmt", note.cash_advance_amount),
-        element("DebtBasisBeforeLossDedAmt", note.cash_advance_amount),
-        element("AllowableLossAmt", allowedDebt),
-        element("DebtBasisEndTaxYrAmt", note.cash_advance_amount - allowedDebt),
+        repayment > 0 ? element("NontaxableDebtRepaymentAmt", repayment) : "",
+        element("DebtBasisBfrExpnssLossAmt", debtAfterRepayment),
+        element("DebtBasisBeforeLossDedAmt", debtAfterRepayment),
+        element("AllowableLossAmt", allowedDebt1),
+        element("DebtBasisEndTaxYrAmt", debtAfterRepayment - allowedDebt1),
+      ])
+      : "",
+    note?.second_formal_note
+      ? elements("ShareholderDebtBasisGrp", [
+        element("FormalNoteInd", "X"),
+        element("LoanBalanceBeginTaxYrAmt", 0),
+        element("AdditionalLoansAmt", secondAdvance),
+        element("LoanedBeginningBalAmt", secondAdvance),
+        element("LoanBalanceEndTaxYrAmt", secondAdvance),
+        element("DebtBasisBeginTaxYrAmt", 0),
+        element("DebtBasisBfrRepaymentAmt", secondAdvance),
+        element("DebtLoanRepaymentPct", "1.0000"),
+        element("DebtBasisBfrExpnssLossAmt", secondAdvance),
+        element("DebtBasisBeforeLossDedAmt", secondAdvance),
+        element("AllowableLossAmt", allowedDebt2),
+        element("DebtBasisEndTaxYrAmt", secondAdvance - allowedDebt2),
       ])
       : "",
     note ? element("TotLoanBalanceBeginTaxYrAmt", 0) : "",
-    note ? element("TotAdditionalLoansAmt", note.cash_advance_amount) : "",
-    note ? element("TotLoanedBeginningBalAmt", note.cash_advance_amount) : "",
-    note ? element("TotLoanBalanceEndTaxYrAmt", note.cash_advance_amount) : "",
+    note ? element("TotAdditionalLoansAmt", totalAdvance) : "",
+    note ? element("TotLoanedBeginningBalAmt", totalAdvance) : "",
+    note && repayment > 0 ? element("TotPrincipalDebtRepaymentAmt", repayment) : "",
+    note ? element("TotLoanBalanceEndTaxYrAmt", totalDebtAfterRepayment) : "",
     note ? element("TotDebtBasisBeginTaxYrAmt", 0) : "",
     note
-      ? element("TotDebtBasisBfrRepaymentAmt", note.cash_advance_amount)
+      ? element("TotDebtBasisBfrRepaymentAmt", totalAdvance)
+      : "",
+    note && repayment > 0 ? element("TotNontaxableDebtRepaymentAmt", repayment) : "",
+    note
+      ? element("TotDebtBasisBfrExpnssLossAmt", totalDebtAfterRepayment)
       : "",
     note
-      ? element("TotDebtBasisBfrExpnssLossAmt", note.cash_advance_amount)
-      : "",
-    note
-      ? element("TotDebtBasisBeforeLossDedAmt", note.cash_advance_amount)
+      ? element("TotDebtBasisBeforeLossDedAmt", totalDebtAfterRepayment)
       : "",
     note
       ? element(
         "TotDebtBasisEndTaxYrAmt",
-        note.cash_advance_amount - allowedDebt,
+        totalDebtAfterRepayment - allowedDebt,
       )
       : "",
     elements("ShrCurrentYrLossDeductionsGrp", lossGroup(currentLoss)),

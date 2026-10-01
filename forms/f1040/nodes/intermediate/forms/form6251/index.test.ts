@@ -117,7 +117,9 @@ function basisSourcePending(fields: Record<string, unknown>) {
         source_transaction_id: row.source_transaction_id,
         part: row.part,
         description: "Synthetic AMT basis disposition",
-        date_acquired: "2022-01-10",
+        date_acquired: ["A", "B", "C"].includes(row.part)
+          ? "2025-01-10"
+          : "2022-01-10",
         date_sold: "2025-06-20",
         proceeds: row.proceeds,
         cost_basis: row.regular_basis,
@@ -213,6 +215,47 @@ Deno.test("form6251: identified Form 8949 basis gain refigures line 2k and Part 
   assertEquals(filed?.fields.line13, 40_000);
   assertEquals(filed?.fields.line20, 150_000);
   assertEquals(filed?.fields.line27, 150_000);
+});
+
+Deno.test("form6251: audited long-term basis gain and 1099-DIV qualified dividends share Part III", () => {
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    regular_tax_income: 200_000,
+    regular_taxable_income: 200_000,
+    regular_tax: 10_000,
+    qualified_dividends: 10_000,
+    net_capital_gain: 50_000,
+    line2k_8949_capital_audit: amtBasisCapitalAudit,
+    line2k_8949_basis_dispositions: {
+      source_transaction_id: "broker-2025-1",
+      part: "D",
+      proceeds: 75_000,
+      regular_basis: 25_000,
+      amt_basis: 35_000,
+      regular_gain: 50_000,
+      amt_gain: 40_000,
+    },
+  });
+  const filed = result.outputs.find((row) => row.nodeType === "form6251");
+  assertEquals(filed?.fields.line13, 50_000);
+  const pending = basisDividendPending(filed!.fields, 10_000, 12_000);
+  assertStringIncludes(
+    mef6251.build(filed!.fields, { pending }),
+    "<CapitalGainsWorksheetAmt>50000</CapitalGainsWorksheetAmt>",
+  );
+  assertEquals(
+    form6251Pdf.projectFields?.(filed!.fields, pending)?.line13,
+    50_000,
+  );
+  assertThrows(
+    () =>
+      form6251Pdf.projectFields?.(filed!.fields, {
+        ...pending,
+        f1040: { ...pending.f1040, line3a_qualified_dividends: 9_999 },
+      }),
+    Error,
+    "reconciled 1099-DIV",
+  );
 });
 
 Deno.test("form6251: Form 8949 AMT basis requires intact rows and regular Schedule D reconciliation", () => {
@@ -418,6 +461,24 @@ Deno.test("form6251: audited short- and long-term losses within both deduction l
       f1040: { line11_agi: 200_000, line14_deductions_qbi_total: 0 },
     })?.line2k_disposition,
     -100,
+  );
+  const source = basisSourcePending(filed!.fields);
+  if (!("f8949" in source)) throw new Error("Missing Form 8949 fixture");
+  assertThrows(
+    () =>
+      mef6251.build(filed!.fields, {
+        pending: {
+          ...source,
+          f8949: {
+            f8949s: [{
+              ...source.f8949.f8949s[0],
+              date_acquired: "2022-01-10",
+            }, ...source.f8949.f8949s.slice(1)],
+          },
+        },
+      }),
+    Error,
+    "holding period",
   );
   assertThrows(
     () =>

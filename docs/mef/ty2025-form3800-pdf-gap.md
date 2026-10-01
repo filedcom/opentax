@@ -27,14 +27,15 @@ and [Form 3800 instructions](https://www.irs.gov/instructions/i3800) govern
 the direct credit line; the underlying issuer copy remains a reviewed source
 record rather than authenticated bytes. Other line 1h source combinations,
 passive allocations, and credit carryovers remain open. The separately modeled
-estate/trust K-1 box 13 code M orphan-drug route has been removed. The official
-[2025 beneficiary instructions](https://www.irs.gov/instructions/i1041sk1)
-assign code M to clean electricity investment credit and require a beneficiary
-statement for Form 3468 Part V. Intake rejects both the former orphan-drug
-label and the clean-electricity amount; Form 8820, Form 3800, Form 8582-CR,
-and direct Form 3800 PDF claims also reject estate/trust orphan-drug entries.
-Rejection fixtures are authored but unrun. A positive Form 3468 Part V source,
-native, PDF, and Form 3800 line 1v path remains open.
+estate/trust K-1 box 13 code M orphan-drug route remains closed: the current
+source model lacks qualified clinical-testing and passive-activity evidence.
+The official [2025 beneficiary instructions](https://www.irs.gov/instructions/i1041sk1)
+identify box 13 code M as orphan-drug credit, while box 14 code M supplies
+clean electricity investment information for Form 3468 Part V. Form 3800
+line 1v is being wired to the reviewed box-14 property statement, Form 3468,
+and final tax; it must not consume a box-13 code M amount. Rejection and
+positive fixtures are authored for the deferred batch, with the full chain
+still under integration.
 
 The Form 8835 source calculation now rejects electricity sold on or after the
 tenth anniversary of the facility's placed-in-service date, including a 2025

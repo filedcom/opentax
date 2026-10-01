@@ -150,6 +150,7 @@ export const itemSchema = z.object({
   box16_tax_exempt_income: z.number().nonnegative().optional().describe(
     "Box 16 — Tax-exempt income and nondeductible expenses",
   ),
+  box16_code_e_loan_repayment: z.number().int().nonnegative().optional(),
 
   // Previously mislabeled distribution field. TY2025 nondividend distributions
   // are box 16 code D; this field is rejected until that source is modeled.
@@ -574,7 +575,9 @@ function buildForm7203Fields(
       : {}),
     ...(item.form7203_one_note_debt_candidate
       ? {
-        new_loans: item.form7203_one_note_debt_candidate.cash_advance_amount,
+        new_loans: item.form7203_one_note_debt_candidate.cash_advance_amount +
+          (item.form7203_one_note_debt_candidate.second_formal_note
+            ?.cash_advance_amount ?? 0),
         reviewed_one_note_debt: item.form7203_one_note_debt_candidate,
       }
       : {}),
@@ -750,12 +753,20 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
           ledger.corporation_ein !== note.corporation_ein ||
           ledger.beginning_stock_basis !== note.beginning_stock_basis ||
           ledger.beginning_basis_workpaper_reference !==
-            note.beginning_stock_basis_workpaper_reference
+            note.beginning_stock_basis_workpaper_reference ||
+          (item.box16_code_e_loan_repayment ?? 0) !==
+            (note.principal_repayment?.amount ?? 0)
         ) {
           throw new Error(
             "Form 7203 formal note and reviewed stock ledger must reconcile",
           );
         }
+      } else if (
+        (item.box16_code_e_loan_repayment ?? 0) > 0
+      ) {
+        throw new Error(
+          "Form 7203 K-1 box 16 code E repayment needs an identified reviewed shareholder note",
+        );
       } else if (
         item.form7203_stock_loss_ledger &&
         !item.form7203_stock_loss_ledger.no_shareholder_debt_or_repayments

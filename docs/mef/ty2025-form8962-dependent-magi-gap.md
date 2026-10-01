@@ -1,5 +1,22 @@
 # TY2025 Form 8962 dependent modified AGI: bounded filing path
 
+## Two required-filing dependents on one annual policy (2026-10-01, unrun)
+
+One single-filer, three-person household may now combine a distinct dependent's
+filed W-2 plus Form 1099-INT return with another dependent's filed interest-only
+return. Each filed 2025 single Form 1040 reconciles to its own W-2 or 1099-INT,
+each passes the applicable under-65, nonblind dependent filing threshold, and
+the filed-return and issued-form references are unique across both children.
+Their AGI plus tax-exempt interest is summed on Worksheet 1-2 line 2b; the
+parent's AGI stays separate. The bounded policy is unchanged for all twelve
+months, in the parent's state, and covers the filer and both distinct claimed
+dependents. Native Form 8962 checks the three-person poverty line, annual
+credit or repayment, Schedule 3/2, and final Form 1040; PDF projection replays
+the same source and return checks. Net-credit, excess-APTC, threshold,
+identity, duplicate-reference, policy-family, and final-return fixtures are
+authored but unrun. Dependent source bytes, other income patterns, partial-year
+or multiple policies, and below-400%-FPL one-policy family cases remain open.
+
 ## One W-2 plus one Form 1099-INT (2026-10-01, unrun)
 
 One under-65, nonblind dependent's identified 2025 W-2 wages and one identified

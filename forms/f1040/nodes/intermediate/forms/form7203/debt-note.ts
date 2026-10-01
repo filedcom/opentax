@@ -6,8 +6,8 @@ const ty2025Date = z.string().regex(/^2025-\d{2}-\d{2}$/).refine((value) =>
   new Date(value).toISOString().slice(0, 10) === value
 );
 
-// Source prerequisite for one new formal shareholder note. This does not
-// authorize Part II filing or an allowed debt-basis loss.
+// Source contract for one or two new formal shareholder notes. One-note
+// cases may also include a single later principal repayment.
 export const reviewedOneNoteDebtCandidateSchema = z.object({
   shareholder_ssn: z.string().regex(/^\d{9}$/),
   corporation_ein: z.string().regex(/^\d{9}$/),
@@ -22,13 +22,36 @@ export const reviewedOneNoteDebtCandidateSchema = z.object({
   corporate_borrower_ein: z.string().regex(/^\d{9}$/),
   bank_transfer_reference: sourceReference,
   cash_advance_amount: z.number().int().positive(),
+  second_formal_note: z.object({
+    formal_note_id: sourceReference,
+    signed_note_document_reference: sourceReference,
+    note_execution_date: ty2025Date,
+    shareholder_lender_ssn: z.string().regex(/^\d{9}$/),
+    corporate_borrower_ein: z.string().regex(/^\d{9}$/),
+    bank_transfer_reference: sourceReference,
+    cash_advance_amount: z.number().int().positive(),
+    corporation_received_funds_confirmed: z.literal(true),
+    shareholder_funded_directly_confirmed: z.literal(true),
+    not_a_guarantee_or_cosign_confirmed: z.literal(true),
+    beginning_note_face_amount: z.literal(0),
+    beginning_note_debt_basis: z.literal(0),
+    no_2025_repayments_confirmed: z.literal(true),
+    no_prior_reduced_debt_basis_confirmed: z.literal(true),
+  }).strict().optional(),
   corporation_received_funds_confirmed: z.literal(true),
   shareholder_funded_directly_confirmed: z.literal(true),
   not_a_guarantee_or_cosign_confirmed: z.literal(true),
   beginning_note_face_amount: z.literal(0),
   beginning_note_debt_basis: z.literal(0),
   no_other_shareholder_debt_confirmed: z.literal(true),
-  no_2025_repayments_confirmed: z.literal(true),
+  no_2025_repayments_confirmed: z.boolean(),
+  principal_repayment: z.object({
+    date: ty2025Date,
+    amount: z.number().int().positive(),
+    corporate_loan_ledger_reference: sourceReference,
+    shareholder_bank_deposit_reference: sourceReference,
+    principal_only_confirmed: z.literal(true),
+  }).strict().optional(),
   no_prior_reduced_debt_basis_confirmed: z.literal(true),
   no_other_2025_basis_changes_confirmed: z.literal(true),
   no_prior_suspended_losses_confirmed: z.literal(true),
@@ -39,16 +62,35 @@ export const reviewedOneNoteDebtCandidateSchema = z.object({
     note.formal_note_id,
     note.signed_note_document_reference,
     note.bank_transfer_reference,
+    ...(note.second_formal_note
+      ? [note.second_formal_note.formal_note_id,
+        note.second_formal_note.signed_note_document_reference,
+        note.second_formal_note.bank_transfer_reference]
+      : []),
+    ...(note.principal_repayment
+      ? [note.principal_repayment.corporate_loan_ledger_reference,
+        note.principal_repayment.shareholder_bank_deposit_reference]
+      : []),
   ];
   if (
     note.shareholder_ssn !== note.shareholder_lender_ssn ||
     note.corporation_ein !== note.corporate_borrower_ein ||
-    new Set(references).size !== references.length
+    (note.second_formal_note !== undefined &&
+      (note.second_formal_note.shareholder_lender_ssn !== note.shareholder_ssn ||
+        note.second_formal_note.corporate_borrower_ein !== note.corporation_ein ||
+        note.no_2025_repayments_confirmed !== true ||
+        note.principal_repayment !== undefined)) ||
+    new Set(references).size !== references.length ||
+    note.no_2025_repayments_confirmed ===
+      (note.principal_repayment !== undefined) ||
+    (note.principal_repayment !== undefined &&
+      (note.principal_repayment.date <= note.note_execution_date ||
+        note.principal_repayment.amount >= note.cash_advance_amount))
   ) {
     ctx.addIssue({
       code: "custom",
       message:
-        "Form 7203 note needs matching lender/borrower identity and distinct K-1, stock, signed-note, note-ID, and bank records",
+        "Form 7203 note needs matching lender/borrower identity, distinct loan records, and any principal repayment after the advance and below the note face amount",
     });
   }
 });
@@ -64,6 +106,7 @@ export function reconcileOneNoteDebtCandidate(
     source_document_reference?: string;
     recipient_tin?: string;
     box1_ordinary_business?: number;
+    box16_code_e_loan_repayment?: number;
   },
 ) {
   const note = reviewedOneNoteDebtCandidateSchema.parse(raw);
@@ -74,17 +117,32 @@ export function reconcileOneNoteDebtCandidate(
     note.corporation_ein !== k1.corporation_ein ||
     note.k1_source_document_reference !== k1.source_document_reference ||
     note.shareholder_ssn !== k1.recipient_tin ||
-    note.current_box1_ordinary_loss !== loss
+    note.current_box1_ordinary_loss !== loss ||
+    (k1.box16_code_e_loan_repayment ?? 0) !==
+      (note.principal_repayment?.amount ?? 0)
   ) {
     throw new Error(
-      "Form 7203 one-note debt candidate must match the identified shareholder, corporation, K-1 source, and box-1 loss",
+      "Form 7203 formal-note debt candidate must match the identified shareholder, corporation, K-1 source, box-1 loss, and box-16 repayment",
     );
   }
   const stockSupportedLoss = Math.min(loss, note.beginning_stock_basis);
   const debtSupportedLossCandidate = Math.min(
     loss - stockSupportedLoss,
-    note.cash_advance_amount,
+    note.cash_advance_amount - (note.principal_repayment?.amount ?? 0) +
+      (note.second_formal_note?.cash_advance_amount ?? 0),
   );
+  if (
+    note.second_formal_note &&
+    !Number.isSafeInteger(
+      debtSupportedLossCandidate * note.cash_advance_amount /
+        (note.cash_advance_amount +
+          note.second_formal_note.cash_advance_amount),
+    )
+  ) {
+    throw new Error(
+      "Form 7203 two-note bounded loss needs exact whole-dollar pro rata debt allocation",
+    );
+  }
   if (debtSupportedLossCandidate <= 0) {
     throw new Error(
       "Form 7203 one-note debt candidate needs a current loss beyond reviewed stock basis",

@@ -1,5 +1,50 @@
 # TY2025 Form 7203 bounded ordinary-loss routes (focused check)
 
+## Two new formal shareholder notes (2026-10-01, unrun)
+
+The reviewed formal-note source can identify a second signed 2025 note and
+its own cash-transfer proof. Both note IDs, signed-note references and bank
+transfer references must be distinct; both share the K-1 shareholder lender
+and corporation borrower. The complete-debt inventory affirmation still means
+there is no shareholder debt beyond the listed one or two notes. This bounded
+case requires zero opening face/basis for each note, no repayments, no prior
+debt-basis reduction, and an exact whole-dollar pro rata allocation of the
+current loss to the two note bases. No guarantee or cosign supplies basis.
+
+Form 7203 Part II now emits separate debt 1 and debt 2 columns in both native
+MeF and the two-page PDF, with full advance/basis totals and per-note line 30
+loss reductions. Part III sums the allowed debt loss once, after the stock
+loss. The shared projection reconciles the two source notes and the allowed
+loss against Schedule E, Schedule 1 line 5 and Form 1040 line 8. A positive
+two-note case and altered note-ID/amount/return cases are authored but unrun.
+The note and bank records remain referenced rather than byte-authenticated;
+repayments across notes, prior reduced debt basis, more than two notes, and
+nonintegral pro rata allocations remain closed. The separate-column and pro
+rata treatment follows the [Form 7203 instructions](https://www.irs.gov/instructions/i7203).
+
+## One new formal note with a principal repayment (2026-10-01, unrun)
+
+The reviewed one-note source now accepts one separately evidenced 2025
+principal repayment after the dated direct cash advance. It requires a
+corporate loan ledger reference and a distinct shareholder bank deposit,
+identifies the payment as principal, matches K-1 box 16 code E, and keeps the note's beginning face and
+basis at zero with no prior reduced debt basis. The repayment must be less than
+the advance, leaving a positive note balance for the current K-1 loss. The
+same source is replayed at native and PDF export, including the final Schedule
+1 line 5 and Form 1040 line 8 loss joins.
+
+Form 7203 Part II first reports the loan on lines 17/18/24, then the principal
+payment on lines 19/26/32/33 at the full-basis line 25 ratio of 1.0000. Lines
+20/27/29 reflect the remaining note balance before the current-year loss
+reduces debt basis on line 30. Line 34 reportable repayment gain is zero in
+this bounded case. Part III and Schedule E allocate current ordinary loss to
+stock, then the repaid note's remaining basis; Schedule 1 and Form 1040 carry
+the resulting allowed loss. Positive and altered date/source/return fixtures
+are authored for the deferred batch. This does not cover a prior reduced-basis
+note, multiple notes, interest in the payment, more than one repayment, or
+authenticated bank and corporate-record bytes. See the [Form 7203](https://www.irs.gov/pub/irs-pdf/f7203.pdf)
+and [instructions](https://www.irs.gov/instructions/i7203).
+
 ## One new formal-note debt loss route (2026-10-01, unrun)
 
 The public S-corporation K-1 input accepts a strict

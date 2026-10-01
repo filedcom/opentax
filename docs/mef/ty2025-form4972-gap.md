@@ -316,8 +316,42 @@ elected 1099-R, recompute all elected form lines and NUA notes, and check the
 Form 1040 special tax. Focused positive and tamper cases are written but unrun.
 The estate administrator's attributable-tax statement and any death-benefit
 entitlement evidence are still preparer-supplied facts, not verified from Form
-1099-R. Partial-share allocation, filled-PDF visual review, XSD/business-rule
+1099-R. Other partial-share allocations, filled-PDF visual review, XSD/business-rule
 checks, and ATS acceptance remain open.
+
+## Partial-share beneficiary NUA with Part-II-only estate allocation (written, unrun)
+
+A beneficiary with one elected Form 1099-R, a box 9a share below 100%, box 3
+capital gain, and box 6 employer-security NUA can now elect current inclusion
+and Part II without Part III. The source must be wholly taxable apart from NUA:
+box 1 equals box 2a plus box 6. The estate administrator statement and estate
+return workpaper must have distinct references and agree on the full taxable
+distribution **including elected NUA**, total federal estate tax, and the
+recipient's box 9a allocation. The 2025 NUA Worksheet adds box 3 to the
+capital portion of box 6; the Death Benefit Worksheet's capital fraction uses
+box 2a plus box 6. Only the recipient's estate-tax share reduces line 6. The
+ordinary estate-tax share reaches Schedule A line 16, while the recipient's ordinary
+distribution reaches Form 1040 line 5b and Part II tax reaches line 16.
+Native MeF and PDF replay source boxes, calculated lines, and Form 1040 tax.
+Positive and tamper fixtures are authored for the deferred validation batch.
+Estate statement and filed Form 706 bytes are still unauthenticated; partial
+death benefit, annuity, and mixed Part-II/III estate combinations remain closed.
+
+## Partial-share beneficiary NUA with Part-III-only estate allocation (written, unrun)
+
+The one-1099-R beneficiary route also admits a Part-III-only ten-year election
+with box 6 NUA and federal estate tax, without Part II, a death-benefit
+exclusion, or an annuity. Box 1 must equal box 2a plus box 6. The distinct
+administrator and estate-return references must reconcile the full taxable
+distribution including elected NUA, full attributable tax, and box 9a
+recipient tax share. The multiple-recipient worksheet grosses up box 2a plus
+box 6 and the `NUA` note by box 9a for line 8, uses the full estate tax on line
+18, and allocates line 29 tax back to the recipient by box 9a. Form 1040 line
+16 carries that special tax; no pension amount is added to line 5b. Native MeF
+and PDF replay the elected 1099-R, all calculated lines, and finalized Form
+1040 special tax. Positive and source/estate/tax tamper fixtures are authored
+for deferred validation. Estate-statement and filed Form 706 bytes, mixed
+Part II/III estate elections, death benefits, and annuities remain open.
 
 ## Full-share beneficiary NUA, annuity, and allocation (written, unrun)
 
@@ -346,8 +380,8 @@ They require all of these steps:
    9a.
 2. The no-NUA capital-election and bounded NUA line 8 routes with or without
    Part II are implemented and reconciled. The full-share, no-annuity
-   beneficiary allocation is written; partial-share NUA/death-benefit allocation
-   remains open.
+   beneficiary allocation and bounded partial-share NUA/estate Part II and Part III routes are
+   written; partial-share NUA/death-benefit allocation remains open.
 3. The full-share line 11 annuity/death/estate combination is bounded above. A
    Part-III-only partial-share estate-tax route without other allocations is now
    bounded above. Other partial-share allocations remain open: the full
@@ -360,7 +394,7 @@ They require all of these steps:
 5. Source-backed cases now include no NUA with and without capital election, an
    annuity whose box 8 percentage differs from box 9a, plus NUA with or without
    Part II and no other allocation, including an annuity. Add NUA with death
-   benefit or estate-tax allocation, death-benefit allocation, and
+   benefit or other estate-tax allocation, death-benefit allocation, and
    invalid/missing percentages. Verify native XML against v5.4 XSD and visually
    inspect filled page 1, including `NUA` and `MRD` notes.
 
@@ -373,7 +407,7 @@ They require all of these steps:
 - Part-II-only estate-tax/IRD arithmetic and Form 1040/Schedule A routing have
   source-backed unrun cases for a single full-share beneficiary, including a
   concurrent death-benefit exclusion. Other beneficiary, recipient-share, and
-  NUA combinations still need source reconciliation; Schedule A's deduction
+  NUA combinations outside the bounded partial-share estate routes still need source reconciliation; Schedule A's deduction
   applies only if itemized deductions are selected.
 - Resolve the repeatable collection shape before enabling multiple participants
   or spouses. Preserve one Form 4972 per participant, keep the individual
