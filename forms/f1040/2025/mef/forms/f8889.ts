@@ -6,6 +6,7 @@ import {
   reconcileCode2Form8889,
   reconcileDatedExceptionForm8889,
   reconcilePairedForm8889,
+  reconcilePrimaryLastMonthRuleForm8889,
   reconcileRolloverForm8889,
   reconcileSpouseOnlyForm8889,
 } from "../../form8889_spouse_reconciliation.ts";
@@ -181,6 +182,11 @@ function buildIRS8889(
     context?.filer,
   );
   reconcileCode2Form8889(fields.forms, context?.pending, context?.filer);
+  reconcilePrimaryLastMonthRuleForm8889(
+    fields.forms,
+    context?.pending,
+    context?.filer,
+  );
   reconcileRolloverForm8889(fields.forms, context?.pending, context?.filer);
   reconcilePairedForm8889(
     fields.forms,

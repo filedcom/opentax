@@ -4,6 +4,7 @@ import {
   reconcileCode2Form8889,
   reconcileDatedExceptionForm8889,
   reconcilePairedForm8889,
+  reconcilePrimaryLastMonthRuleForm8889,
   reconcileRolloverForm8889,
   reconcileSpouseOnlyForm8889,
 } from "../../form8889_spouse_reconciliation.ts";
@@ -214,6 +215,7 @@ export const form8889Pdf: PdfFormDescriptor = {
     reconcileSpouseOnlyForm8889(forms, allPending, filer);
     reconcileDatedExceptionForm8889(forms, allPending, filer);
     reconcileCode2Form8889(forms, allPending, filer);
+    reconcilePrimaryLastMonthRuleForm8889(forms, allPending, filer);
     reconcileRolloverForm8889(forms, allPending, filer);
     reconcilePairedForm8889(forms, allPending, filer);
     reconcilePrimaryMixedMedicalForm8889(forms, allPending, filer);

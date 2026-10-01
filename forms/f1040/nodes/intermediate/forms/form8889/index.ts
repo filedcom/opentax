@@ -348,20 +348,24 @@ function verifyPriorYearSpouseFacts(
   }
   // December family coverage makes elected line 3 the $8,300 family limit.
   // With December self-only coverage and earlier family months, the filed
-  // line 3 is the greater of the 2024 monthly worksheet and $4,150. The
-  // age-55 mixed-coverage worksheet also affects line 7 and remains out of
-  // scope here.
+  // line 3 is the greater of the 2024 monthly worksheet and $4,150.
+  // For an age-55 owner the self-only months include the catch-up in that
+  // worksheet, while eligible family months put their catch-up on line 7.
   const december = evidence.eligible_hdhp_coverage_by_month[11];
   const selfOnly = december === CoverageType.SelfOnly;
   const mixedToSelfOnly = selfOnly &&
     evidence.eligible_hdhp_coverage_by_month.includes(CoverageType.Family);
-  if (mixedToSelfOnly && evidence.age_55_or_older) {
-    throw new Error(
-      "Form 8889 married 2024 age-55 mixed-coverage recapture needs the filed additional-contribution worksheet",
-    );
-  }
   const baseLimit = selfOnly ? 4_150 : 8_300;
   const catchup = evidence.age_55_or_older ? 1_000 : 0;
+  const familyMonths =
+    evidence.eligible_hdhp_coverage_by_month.filter((month) =>
+      month === CoverageType.Family
+    ).length;
+  const line7Catchup = !selfOnly
+    ? catchup
+    : evidence.age_55_or_older && familyMonths > 0
+    ? Math.round(familyMonths * 1_000 / 12)
+    : 0;
   const monthlyWorksheet = Math.round(
     evidence.eligible_hdhp_coverage_by_month.reduce(
       (sum, coverage) =>
@@ -369,7 +373,7 @@ function verifyPriorYearSpouseFacts(
         (coverage === CoverageType.Family
           ? 8_300
           : coverage === CoverageType.SelfOnly
-          ? 4_150
+          ? 4_150 + (evidence.age_55_or_older ? 1_000 : 0)
           : 0),
       0,
     ) / 12,
@@ -383,9 +387,8 @@ function verifyPriorYearSpouseFacts(
     evidence.filed_form8889_line3 !== electedLine3 ||
     evidence.filed_form8889_line5 !== electedLine3 ||
     evidence.filed_form8889_line6 !== electedLine3 ||
-    evidence.filed_form8889_line7 !== (selfOnly ? 0 : catchup) ||
-    evidence.filed_form8889_line8 !== electedLine3 +
-        (selfOnly ? 0 : catchup)
+    evidence.filed_form8889_line7 !== line7Catchup ||
+    evidence.filed_form8889_line8 !== electedLine3 + line7Catchup
   ) {
     throw new Error(
       "Form 8889 married 2024 recapture needs filed lines 3-8 showing the December coverage limit and catch-up without spouse allocation",
@@ -437,17 +440,34 @@ function lastMonthRuleIncome(
     priorCoverage.reduce((sum, coverage) => sum + annualLimit(coverage), 0) /
       12,
   );
+  const redeterminedAge55MixedLimit =
+    evidence.married_at_year_end && evidence.age_55_or_older &&
+      priorCoverage.includes(CoverageType.Family)
+      ? Math.round(
+        priorCoverage.reduce(
+          (sum, coverage) =>
+            sum + (coverage === CoverageType.Family
+              ? 8_300
+              : coverage === CoverageType.SelfOnly
+              ? 5_150
+              : 0),
+          0,
+        ) / 12,
+      ) + Math.round(
+        priorCoverage.filter((coverage) => coverage === CoverageType.Family)
+          .length * 1_000 / 12,
+      )
+      : redeterminedFamilyLimit;
   const enhancedLimit = pairedPriorYear
     ? 4_150
     : evidence.married_at_year_end &&
         december === CoverageType.SelfOnly &&
-        priorCoverage.includes(CoverageType.Family) &&
-        !evidence.age_55_or_older
-    ? Math.max(4_150, redeterminedFamilyLimit)
+        priorCoverage.includes(CoverageType.Family)
+    ? evidence.filed_form8889_line3! + evidence.filed_form8889_line7!
     : annualLimit(december);
   const redeterminedLimit = pairedPriorYear
     ? redeterminedFamilyLimit / 2
-    : redeterminedFamilyLimit;
+    : redeterminedAge55MixedLimit;
   const contributed = evidence.filed_form8889_line2 +
     evidence.filed_form8889_line9;
   if (

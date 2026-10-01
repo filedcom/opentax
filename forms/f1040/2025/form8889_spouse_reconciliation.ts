@@ -16,6 +16,83 @@ import {
   reconcileHsaOwnerForms,
 } from "../nodes/intermediate/forms/form5329/index.ts";
 
+/** Replay a sole primary owner's last-month-rule recapture at export. */
+export function reconcilePrimaryLastMonthRuleForm8889(
+  forms: readonly Readonly<Record<string, unknown>>[],
+  allPending: Readonly<Record<string, unknown>> | undefined,
+  filer: FilerIdentity | undefined,
+): void {
+  if (forms.length !== 1 || !forms[0] || allPending === undefined) return;
+  const filed = forms[0];
+  const raw = allPending.form8889;
+  const rawFailure = raw && typeof raw === "object" && !Array.isArray(raw)
+    ? (raw as Record<string, unknown>).testing_period_failure
+    : undefined;
+  const sourceHasPriorEvidence = rawFailure && typeof rawFailure === "object" &&
+    "last_month_rule_evidence" in rawFailure;
+  if (Number(filed.print_line18 ?? 0) <= 0 && !sourceHasPriorEvidence) return;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    throw new Error("Form 8889 line 18 needs retained last-month-rule source");
+  }
+  const { forms: _printed, ...sourceFields } = raw as Record<string, unknown>;
+  const source = inputSchema.parse(sourceFields);
+  const prior = source.testing_period_failure?.last_month_rule_evidence;
+  if (
+    !prior || source.spouse_hsa !== undefined || filed.owner !== "primary" ||
+    source.beneficiary_identity.owner !== TS.T ||
+    source.beneficiary_identity.ssn.replaceAll("-", "") !==
+      filer?.primarySSN.replaceAll("-", "") ||
+    filed.beneficiary_ssn !== filer?.primarySSN.replaceAll("-", "") ||
+    filed.beneficiary_name !== filer?.fullName ||
+    source.beneficiary_identity.name !== filer?.fullName
+  ) {
+    throw new Error(
+      "Form 8889 line 18 needs one identified HSA owner and prior-year source",
+    );
+  }
+  const outputs = form8889.compute(
+    { taxYear: 2025, formType: "f1040" },
+    source,
+  ).outputs;
+  const expected = (outputs.find((row) => row.nodeType === "form8889")
+    ?.fields.forms as readonly Record<string, unknown>[] | undefined)?.[0];
+  if (
+    !expected ||
+    Object.keys(expected).sort().join("|") !==
+      Object.keys(filed).sort().join("|") ||
+    Object.keys(expected).some((key) => expected[key] !== filed[key])
+  ) {
+    throw new Error(
+      "Form 8889 line 18 differs from prior-year source calculation",
+    );
+  }
+  if (Number(expected.print_line18 ?? 0) <= 0) return;
+  const schedule1 = z.object({
+    line8f_hsa_income: z.number(),
+    line10_total_additional_income: z.number(),
+  }).passthrough().parse(allPending.schedule1);
+  const schedule2 = z.object({
+    line17d_hsa_eligibility_tax: z.number(),
+  }).passthrough().parse(allPending.schedule2);
+  const return1040 = z.object({
+    line8_additional_income: z.number(),
+    line23_other_taxes: z.number(),
+  }).passthrough().parse(allPending.f1040);
+  if (
+    schedule1.line8f_hsa_income !==
+      Number(filed.print_line16_taxable ?? 0) +
+        Number(filed.print_line20 ?? 0) ||
+    schedule2.line17d_hsa_eligibility_tax !== filed.print_line21 ||
+    schedule1.line10_total_additional_income !==
+      return1040.line8_additional_income ||
+    return1040.line23_other_taxes < schedule2.line17d_hsa_eligibility_tax
+  ) {
+    throw new Error(
+      "Form 8889 line 18 income and tax differ from Schedule 1, Schedule 2, or Form 1040",
+    );
+  }
+}
+
 /** Bind a primary owner's dated exception to its Form 1099-SA sources. */
 export function reconcileDatedExceptionForm8889(
   forms: readonly Readonly<Record<string, unknown>>[],

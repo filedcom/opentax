@@ -1154,16 +1154,17 @@ Deno.test("part1: prior excess can supply line 13 without a current contribution
 
 Deno.test("part1: prior excess rejects a different filed Form 5329 owner", () => {
   assertThrows(
-    () => compute({
-      ...uniformSelfOnly,
-      prior_year_hsa_excess: {
-        ...priorExcessSource,
-        owner_ssn: "987654321",
-        form5329_line48: 1_000,
-        form5329_line49: 60,
-      },
-      hsa_december_31_value: 1_000,
-    }),
+    () =>
+      compute({
+        ...uniformSelfOnly,
+        prior_year_hsa_excess: {
+          ...priorExcessSource,
+          owner_ssn: "987654321",
+          form5329_line48: 1_000,
+          form5329_line49: 60,
+        },
+        hsa_december_31_value: 1_000,
+      }),
     Error,
     "must belong to this HSA owner",
   );
@@ -1965,29 +1966,32 @@ Deno.test("part2: HSA rollover line 14b needs supported redeposit evidence", () 
     500,
   );
   assertThrows(
-    () => compute(source({
-      ...base,
-      form1099_sa_source_reference: "unmatched 1099-SA",
-    })),
+    () =>
+      compute(source({
+        ...base,
+        form1099_sa_source_reference: "unmatched 1099-SA",
+      })),
     Error,
     "linked code-1 Form 1099-SA",
   );
   assertThrows(
-    () => compute(source({
-      ...base,
-      form1099_sa_source_reference: base.contribution_source_reference,
-    })),
+    () =>
+      compute(source({
+        ...base,
+        form1099_sa_source_reference: base.contribution_source_reference,
+      })),
     Error,
     "linked code-1 Form 1099-SA",
   );
   assertThrows(
-    () => compute({
-      ...source(base),
-      form1099_sa_distributions: [{
-        ...ordinary1099Sa(500).form1099_sa_distributions[0],
-        box3_distribution_code: "3",
-      }],
-    }),
+    () =>
+      compute({
+        ...source(base),
+        form1099_sa_distributions: [{
+          ...ordinary1099Sa(500).form1099_sa_distributions[0],
+          box3_distribution_code: "3",
+        }],
+      }),
     Error,
     "linked code-1 Form 1099-SA",
   );
@@ -2707,8 +2711,66 @@ Deno.test("part3: married one-HSA 2024 self-only last-month rule uses filed self
         },
       }),
     Error,
-    "age-55 mixed-coverage recapture needs the filed additional-contribution worksheet",
+    "filed lines 3-8",
   );
+});
+
+Deno.test("part3: married age-55 one-HSA family-to-self-only recapture uses separate line 7", () => {
+  const evidence = {
+    ...prior2024MarriedFamily,
+    eligible_hdhp_coverage_by_month: [
+      CoverageType.Family,
+      CoverageType.Family,
+      ...Array(9).fill(null),
+      CoverageType.SelfOnly,
+    ],
+    age_55_or_older: true,
+    filed_form8889_line2: 4_317,
+    filed_form8889_line3: 4_150,
+    filed_form8889_line5: 4_150,
+    filed_form8889_line6: 4_150,
+    filed_form8889_line7: 167,
+    filed_form8889_line8: 4_317,
+    filed_form8889_line13: 4_317,
+  };
+  const failure = {
+    last_month_rule_evidence: evidence,
+    qualified_funding_distribution_amount: 0,
+    not_death_or_disability: true as const,
+    prior_year_source: "Filed 2024 owner Form 8889 and monthly HDHP records",
+  };
+  const result = compute({
+    eligible_hdhp_coverage_by_month: Array(12).fill(null),
+    testing_period_failure: failure,
+  });
+  // Line 3 $1,813 plus line 7 $167 gives a $1,980 monthly limit.
+  assertEquals(firstForm(result)?.print_line18, 2_337);
+  assertAlmostEquals(firstForm(result)?.print_line21 as number, 233.7);
+  assertEquals(fieldsOf(result.outputs, schedule1)?.line8f_hsa_income, 2_337);
+  assertAlmostEquals(
+    fieldsOf(result.outputs, schedule2)?.line17d_hsa_eligibility_tax as number,
+    233.7,
+  );
+  for (
+    const changed of [
+      { filed_form8889_line3: 5_150 },
+      { filed_form8889_line7: 0 },
+      { filed_form8889_line8: 4_150 },
+    ]
+  ) {
+    assertThrows(
+      () =>
+        compute({
+          eligible_hdhp_coverage_by_month: Array(12).fill(null),
+          testing_period_failure: {
+            ...failure,
+            last_month_rule_evidence: { ...evidence, ...changed },
+          },
+        }),
+      Error,
+      "filed lines 3-8",
+    );
+  }
 });
 
 Deno.test("part3: married one-HSA 2024 family-to-self-only election uses the greater filed limit", () => {
