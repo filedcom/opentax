@@ -1,4 +1,7 @@
-import { form7220ReviewedFixture } from "./form8908_form7220_fixture.ts";
+import {
+  form7220ReviewedFixture,
+  form7220StatementFixture,
+} from "./form8908_form7220_fixture.ts";
 import { assertEquals, assertThrows } from "@std/assert";
 import { calculateForm8908Source } from "./form8908_source.ts";
 
@@ -46,6 +49,12 @@ function fixture() {
           pdf_sha256: String(index + 1).repeat(64),
           completed_for_residence_confirmed: true as const,
           reviewed_record: form7220ReviewedFixture(),
+          signed_no_alterations_statement: form7220StatementFixture(
+            index + 1,
+            `${index + 1} Main Street`,
+            `sale-${index + 1}`,
+            `7220-${index + 1}`,
+          ),
         }
         : undefined,
       certifier: {

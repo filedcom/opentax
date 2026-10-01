@@ -1,6 +1,10 @@
-import { form7220ReviewedFixture } from "../../form8908_form7220_fixture.ts";
+import {
+  form7220ReviewedFixture,
+  form7220StatementFixture,
+} from "../../form8908_form7220_fixture.ts";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
+  form8908NoAlterationsStatementDescription,
   form8908PwaAttachmentDescription,
   form8908SourceSchema,
 } from "../../form8908_source.ts";
@@ -35,6 +39,12 @@ function home(index: number) {
       pdf_sha256: String(index).repeat(64),
       completed_for_residence_confirmed: true,
       reviewed_record: form7220ReviewedFixture(),
+      signed_no_alterations_statement: form7220StatementFixture(
+        index,
+        street,
+        acquisition,
+        `PWA-REVIEW-${index}`,
+      ),
     },
     certifier: {
       kind: "business",
@@ -60,20 +70,31 @@ function source() {
 function context() {
   const homes = source().homes;
   return {
-    binaryAttachmentFileNames: homes.map((home) =>
-      home.form7220!.pdf_file_name
+    binaryAttachmentFileNames: homes.flatMap((home) => [
+      home.form7220!.pdf_file_name,
+      home.form7220!.signed_no_alterations_statement.pdf_file_name,
+    ]),
+    attachmentDescriptionsByFileName: Object.fromEntries(
+      homes.flatMap((home) => [
+        [home.form7220!.pdf_file_name, form8908PwaAttachmentDescription(home)],
+        [
+          home.form7220!.signed_no_alterations_statement.pdf_file_name,
+          form8908NoAlterationsStatementDescription(home),
+        ],
+      ]),
     ),
-    attachmentDescriptionsByFileName: Object.fromEntries(homes.map((home) => [
-      home.form7220!.pdf_file_name,
-      form8908PwaAttachmentDescription(home),
-    ])),
-    attachmentSha256ByFileName: Object.fromEntries(homes.map((home) => [
-      home.form7220!.pdf_file_name,
-      home.form7220!.pdf_sha256,
+    attachmentSha256ByFileName: Object.fromEntries(homes.flatMap((home) => [
+      [home.form7220!.pdf_file_name, home.form7220!.pdf_sha256],
+      [
+        home.form7220!.signed_no_alterations_statement.pdf_file_name,
+        home.form7220!.signed_no_alterations_statement.pdf_sha256,
+      ],
     ])),
     documentIdsByAttachmentFileName: {
       "Form7220-1.pdf": "BinaryAttachment1",
       "Form7220-2.pdf": "BinaryAttachment2",
+      "Form7220Statement-1.pdf": "BinaryAttachment3",
+      "Form7220Statement-2.pdf": "BinaryAttachment4",
     },
   };
 }
@@ -92,6 +113,42 @@ Deno.test("Form 8908 binds distinct completed Form 7220 PDFs to two residences",
     "BinaryAttachment1",
     "BinaryAttachment2",
   ]);
+  assertEquals(links.map((link) => link.statementDocumentId), [
+    "BinaryAttachment3",
+    "BinaryAttachment4",
+  ]);
+});
+
+Deno.test("Form 8908 rejects statement document reuse and home mismatch", () => {
+  const base = context();
+  assertThrows(
+    () =>
+      reconcileForm8908PwaAttachments(source(), {
+        ...base,
+        documentIdsByAttachmentFileName: {
+          ...base.documentIdsByAttachmentFileName,
+          "Form7220Statement-2.pdf": "BinaryAttachment3",
+        },
+      }),
+    Error,
+    "distinct signed statement binary document ID",
+  );
+  const moved = structuredClone(source());
+  moved.homes[1].form7220!.signed_no_alterations_statement.residence.street =
+    "9 Other Street";
+  assertThrows(
+    () => reconcileForm8908PwaAttachments(moved, base),
+    Error,
+    "signed statement differs from Form 7220",
+  );
+  const reused = structuredClone(source());
+  reused.homes[1].form7220!.signed_no_alterations_statement.pdf_file_name =
+    reused.homes[0].form7220!.signed_no_alterations_statement.pdf_file_name;
+  assertThrows(
+    () => reconcileForm8908PwaAttachments(reused, base),
+    Error,
+    "distinct signed statement PDF",
+  );
 });
 
 Deno.test("Form 8908 Form 7220 rejects missing, altered, or reused binary attachments", () => {
@@ -134,7 +191,7 @@ Deno.test("Form 8908 Form 7220 rejects missing, altered, or reused binary attach
       reconcileForm8908PwaAttachments(source(), {
         ...base,
         documentIdsByAttachmentFileName: {
-          "Form7220-1.pdf": "BinaryAttachment1",
+          ...base.documentIdsByAttachmentFileName,
           "Form7220-2.pdf": "BinaryAttachment1",
         },
       }),
@@ -147,6 +204,8 @@ Deno.test("Form 8908 Form 7220 rejects missing, altered, or reused binary attach
         ...base,
         documentIdsByAttachmentFileName: {
           "Form7220-1.pdf": "BinaryAttachment1",
+          "Form7220Statement-1.pdf": "BinaryAttachment3",
+          "Form7220Statement-2.pdf": "BinaryAttachment4",
         },
       }),
     Error,
@@ -181,6 +240,9 @@ Deno.test("Form 8908 Form 7220 source rejects a changed residence and reused rev
   const repeatedReview = structuredClone(source());
   repeatedReview.homes[1].form7220!.review_reference =
     repeatedReview.homes[0].form7220!.review_reference;
+  repeatedReview.homes[1].form7220!.signed_no_alterations_statement
+    .form7220_review_reference = repeatedReview.homes[0].form7220!
+      .review_reference;
   assertThrows(
     () => reconcileForm8908PwaAttachments(repeatedReview, context()),
     Error,

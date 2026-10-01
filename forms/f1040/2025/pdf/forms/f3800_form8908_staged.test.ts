@@ -1,4 +1,7 @@
-import { form7220ReviewedFixture } from "../../form8908_form7220_fixture.ts";
+import {
+  form7220ReviewedFixture,
+  form7220StatementFixture,
+} from "../../form8908_form7220_fixture.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../nodes/types.ts";
 import { assertAttachmentCoverage } from "../../attachment-coverage.ts";
@@ -77,15 +80,29 @@ const pwaHome = {
     pdf_sha256: "a".repeat(64),
     completed_for_residence_confirmed: true,
     reviewed_record: form7220ReviewedFixture(),
+    signed_no_alterations_statement: form7220StatementFixture(
+      1,
+      "1 Main Street",
+      "SALE-1",
+      "PWA-1",
+    ),
   },
 };
 const pwaAttachment = {
-  binaryAttachmentFileNames: ["Form7220-1.pdf"],
+  binaryAttachmentFileNames: ["Form7220-1.pdf", "Form7220Statement-1.pdf"],
   attachmentDescriptionsByFileName: {
     "Form7220-1.pdf": "Form 7220 PWA-1 for Form 8908 home SALE-1",
+    "Form7220Statement-1.pdf":
+      "Form 7220 no-alterations statement STATEMENT-REVIEW-1 for home SALE-1",
   },
-  attachmentSha256ByFileName: { "Form7220-1.pdf": "a".repeat(64) },
-  documentIdsByAttachmentFileName: { "Form7220-1.pdf": "BinaryAttachment1" },
+  attachmentSha256ByFileName: {
+    "Form7220-1.pdf": "a".repeat(64),
+    "Form7220Statement-1.pdf": "b".repeat(63) + "1",
+  },
+  documentIdsByAttachmentFileName: {
+    "Form7220-1.pdf": "BinaryAttachment1",
+    "Form7220Statement-1.pdf": "BinaryAttachment2",
+  },
 };
 
 Deno.test("staged Form 8908 credit has a distinct Form 3800 line 1p source", () => {
@@ -166,6 +183,12 @@ Deno.test("staged Form 8908 line 1p rejects altered source and missing attachmen
               pdf_sha256: "a".repeat(64),
               completed_for_residence_confirmed: true,
               reviewed_record: form7220ReviewedFixture(),
+              signed_no_alterations_statement: form7220StatementFixture(
+                1,
+                "1 Main Street",
+                "SALE-1",
+                "PWA-1",
+              ),
             },
           }],
         },

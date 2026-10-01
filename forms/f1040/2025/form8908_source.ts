@@ -37,8 +37,22 @@ export const form7220ReviewedRecordSchema = z.object({
   no_prevailing_wage_corrections: z.literal(true),
   apprenticeship_not_applicable: z.literal(true),
   no_alterations_or_repairs: z.literal(true),
-  signed_no_alterations_statement_reference: z.string().trim().min(1),
   wage_rows: z.array(form7220WageRowSchema).min(1).max(18),
+}).strict();
+
+const form7220SignedStatementSchema = z.object({
+  review_reference: z.string().trim().min(1),
+  form7220_review_reference: z.string().trim().min(1),
+  acquisition_record_reference: z.string().trim().min(1),
+  residence: residenceSchema,
+  owner_name: z.string().trim().min(1),
+  pdf_file_name: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._-]*\.pdf$/).max(64),
+  pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+  signer_name: z.string().trim().min(1),
+  signed_on: isoDate,
+  signature_present_reviewed: z.literal(true),
+  no_alterations_declaration_reviewed: z.literal(true),
+  perjury_declaration_reviewed: z.literal(true),
 }).strict();
 
 const form7220AttachmentSchema = z.object({
@@ -49,6 +63,7 @@ const form7220AttachmentSchema = z.object({
   pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/),
   completed_for_residence_confirmed: z.literal(true),
   reviewed_record: form7220ReviewedRecordSchema,
+  signed_no_alterations_statement: form7220SignedStatementSchema,
 }).strict();
 
 export const form8908HomeSourceSchema = z.object({
@@ -106,6 +121,23 @@ export function form8908PwaAttachmentDescription(
   return description;
 }
 
+export function form8908NoAlterationsStatementDescription(
+  home: Form8908Source["homes"][number],
+): string {
+  const statement = home.form7220?.signed_no_alterations_statement;
+  if (!statement) {
+    throw new Error("Form 8908 home has no signed Form 7220 statement");
+  }
+  const description =
+    `Form 7220 no-alterations statement ${statement.review_reference} for home ${home.acquisition_record_reference}`;
+  if (description.length > 128 || /[\x00-\x1F\x7F]/.test(description)) {
+    throw new Error(
+      "Form 8908 signed statement description exceeds MeF limits",
+    );
+  }
+  return description;
+}
+
 export interface Form8908SourceLines {
   counts: readonly [number, number, number, number, number, number];
   credits: readonly [number, number, number, number, number, number];
@@ -138,6 +170,7 @@ export function calculateForm8908Source(raw: unknown): Form8908SourceLines {
   const seenForm7220Files = new Set<string>();
   const seenForm7220Digests = new Set<string>();
   const seenForm7220Reviews = new Set<string>();
+  const seenStatementReviews = new Set<string>();
   const certifiers = new Map<
     string,
     Form8908SourceLines["certifiers"][number]
@@ -185,6 +218,7 @@ export function calculateForm8908Source(raw: unknown): Form8908SourceLines {
     }
     if (home.form7220) {
       const attachment = home.form7220;
+      const statement = attachment.signed_no_alterations_statement;
       if (attachment.reviewed_record.taxpayer_tin !== source.contractor_ssn) {
         throw new Error(
           "Form 8908 Form 7220 taxpayer identity differs from contractor",
@@ -215,6 +249,29 @@ export function calculateForm8908Source(raw: unknown): Form8908SourceLines {
         );
       }
       if (
+        statement.form7220_review_reference !== attachment.review_reference ||
+        statement.acquisition_record_reference !==
+          home.acquisition_record_reference ||
+        JSON.stringify(statement.residence) !== JSON.stringify(residence) ||
+        statement.signer_name !== attachment.reviewed_record.taxpayer_name ||
+        statement.signed_on < "2025-12-31"
+      ) {
+        throw new Error(
+          "Form 8908 signed statement differs from Form 7220, home, or taxpayer",
+        );
+      }
+      if (
+        statement.pdf_file_name === attachment.pdf_file_name ||
+        statement.pdf_sha256 === attachment.pdf_sha256 ||
+        seenForm7220Files.has(statement.pdf_file_name) ||
+        seenForm7220Digests.has(statement.pdf_sha256) ||
+        seenStatementReviews.has(statement.review_reference)
+      ) {
+        throw new Error(
+          "Form 8908 needs a distinct signed statement PDF and review per home",
+        );
+      }
+      if (
         seenForm7220Files.has(attachment.pdf_file_name) ||
         seenForm7220Digests.has(attachment.pdf_sha256) ||
         seenForm7220Reviews.has(attachment.review_reference)
@@ -226,7 +283,11 @@ export function calculateForm8908Source(raw: unknown): Form8908SourceLines {
       seenForm7220Files.add(attachment.pdf_file_name);
       seenForm7220Digests.add(attachment.pdf_sha256);
       seenForm7220Reviews.add(attachment.review_reference);
+      seenForm7220Files.add(statement.pdf_file_name);
+      seenForm7220Digests.add(statement.pdf_sha256);
+      seenStatementReviews.add(statement.review_reference);
       form8908PwaAttachmentDescription(home);
+      form8908NoAlterationsStatementDescription(home);
     }
     const category = home.program !== "multifamily"
       ? home.zero_energy_ready ? 1 : 0

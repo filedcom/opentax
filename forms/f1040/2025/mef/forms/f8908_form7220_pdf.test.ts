@@ -1,8 +1,15 @@
 import { assertRejects } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
-import { form7220ReviewedFixture } from "../../form8908_form7220_fixture.ts";
-import { form8908PwaAttachmentDescription } from "../../form8908_source.ts";
+import {
+  form7220ReviewedFixture,
+  form7220StatementFixture,
+} from "../../form8908_form7220_fixture.ts";
+import {
+  form8908NoAlterationsStatementDescription,
+  form8908PwaAttachmentDescription,
+} from "../../form8908_source.ts";
 import { assertForm8908Form7220PdfContents } from "./f8908_form7220_pdf.ts";
+import { assertForm8908NoAlterationsStatementPdf } from "./f8908_no_alterations_pdf.ts";
 import { assertForm8908PwaSubmittedPdfs } from "./f8908_pwa.ts";
 
 function source() {
@@ -37,6 +44,12 @@ function source() {
         pdf_sha256: "a".repeat(64),
         completed_for_residence_confirmed: true as const,
         reviewed_record: form7220ReviewedFixture(),
+        signed_no_alterations_statement: form7220StatementFixture(
+          1,
+          "1 Main Street",
+          "SALE-1",
+          "PWA-1",
+        ),
       },
       certifier: { kind: "business" as const, name: "Certifier", state: "NY" },
       certification_reference: "CERT-1",
@@ -125,6 +138,56 @@ async function reviewedSource(bytes: Uint8Array) {
   return reviewed;
 }
 
+async function completedStatementPdf(changes: Record<string, string> = {}) {
+  const pdf = await PDFDocument.create();
+  pdf.addPage();
+  const form = pdf.getForm();
+  const prefix = "Form7220NoAlterationsStatement.";
+  const fields = {
+    TaxpayerName: "Sample Contractor",
+    TaxpayerTIN: "111223333",
+    FacilityDescription: "Energy efficient multifamily residence",
+    OwnerName: "Residence Owner",
+    HomeStreet: "1 Main Street",
+    HomeCityStateZIP: "Albany, NY 12207",
+    AcquiredOn: "06/01/2025",
+    Form7220ReviewReference: "PWA-1",
+    AcquisitionRecordReference: "SALE-1",
+    StatementReviewReference: "STATEMENT-REVIEW-1",
+    SignerName: "Sample Contractor",
+    SignedOn: "01/20/2026",
+    NoAlterationsText:
+      "No alterations or repairs were performed to the facility during the tax year.",
+    PerjuryDeclarationText:
+      "Under penalties of perjury, I declare that I have examined this statement, including accompanying documents, and to the best of my knowledge and belief, the facts presented in support of this statement are true, correct, and complete.",
+  };
+  for (const [name, value] of Object.entries(fields)) {
+    form.createTextField(`${prefix}${name}`).setText(changes[name] ?? value);
+  }
+  for (
+    const name of ["NoAlterationsOrRepairs", "PerjuryDeclarationAcknowledged"]
+  ) {
+    const box = form.createCheckBox(`${prefix}${name}`);
+    if (changes[name] !== "off") box.check();
+  }
+  return await pdf.save();
+}
+
+async function statementReviewedSource(
+  formBytes: Uint8Array,
+  statementBytes: Uint8Array,
+) {
+  const reviewed = await reviewedSource(formBytes);
+  reviewed.homes[0].form7220.signed_no_alterations_statement.pdf_sha256 = Array
+    .from(
+      new Uint8Array(
+        await crypto.subtle.digest("SHA-256", Uint8Array.from(statementBytes)),
+      ),
+      (byte) => byte.toString(16).padStart(2, "0"),
+    ).join("");
+  return reviewed;
+}
+
 Deno.test("Form 8908 Form 7220 PDF matches reviewed home, employer, wage and required marks", async () => {
   const bytes = await completedPdf();
   await assertForm8908Form7220PdfContents(
@@ -170,7 +233,8 @@ Deno.test("Form 8908 Form 7220 PDF rejects bytes outside the reviewed digest", a
 
 Deno.test("Form 8908 MeF preparation binds exact Form 7220 bytes and rejects an unbound signed statement", async () => {
   const bytes = await completedPdf();
-  const reviewed = await reviewedSource(bytes);
+  const statementBytes = await completedStatementPdf();
+  const reviewed = await statementReviewedSource(bytes, statementBytes);
   const attachment = {
     fileName: "Form7220-1.pdf",
     description: form8908PwaAttachmentDescription(reviewed.homes[0]),
@@ -180,6 +244,11 @@ Deno.test("Form 8908 MeF preparation binds exact Form 7220 bytes and rejects an 
     "topmostSubform[0].Page2[0].Table_PartII[0].Line1[0].f2_1[0]":
       "Other Employer",
   });
+  const statementAttachment = {
+    fileName: "Form7220Statement-1.pdf",
+    description: form8908NoAlterationsStatementDescription(reviewed.homes[0]),
+    bytes: statementBytes,
+  };
   await assertRejects(
     () => assertForm8908PwaSubmittedPdfs(reviewed, []),
     Error,
@@ -197,6 +266,39 @@ Deno.test("Form 8908 MeF preparation binds exact Form 7220 bytes and rejects an 
   await assertRejects(
     () => assertForm8908PwaSubmittedPdfs(reviewed, [attachment]),
     Error,
-    "byte-bound signed no-alterations statement",
+    "distinct signed no-alterations statement attachment",
   );
+  await assertRejects(
+    () =>
+      assertForm8908PwaSubmittedPdfs(reviewed, [
+        attachment,
+        statementAttachment,
+      ]),
+    Error,
+    "signature authenticity is not verified",
+  );
+});
+
+Deno.test("Form 8908 signed statement PDF rejects changed home, signer date, and declaration", async () => {
+  const formBytes = await completedPdf();
+  for (
+    const changes of [
+      { HomeStreet: "9 Other Street" },
+      { SignedOn: "01/21/2026" },
+      { PerjuryDeclarationAcknowledged: "off" },
+    ]
+  ) {
+    const statementBytes = await completedStatementPdf(changes);
+    const reviewed = await statementReviewedSource(formBytes, statementBytes);
+    await assertRejects(
+      () =>
+        assertForm8908NoAlterationsStatementPdf(
+          reviewed,
+          "SALE-1",
+          statementBytes,
+        ),
+      Error,
+      "Form 8908 signed statement",
+    );
+  }
 });

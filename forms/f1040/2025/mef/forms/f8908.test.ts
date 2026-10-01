@@ -1,4 +1,7 @@
-import { form7220ReviewedFixture } from "../../form8908_form7220_fixture.ts";
+import {
+  form7220ReviewedFixture,
+  form7220StatementFixture,
+} from "../../form8908_form7220_fixture.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form8908 } from "./f8908.ts";
 import { form8908Pdf } from "../../pdf/forms/f8908.ts";
@@ -47,6 +50,12 @@ function sixClassSource() {
           pdf_sha256: String(index + 1).repeat(64),
           completed_for_residence_confirmed: true as const,
           reviewed_record: form7220ReviewedFixture(),
+          signed_no_alterations_statement: form7220StatementFixture(
+            index + 1,
+            `${index + 1} Main Street`,
+            `sale-${index + 1}`,
+            `Form7220-review-${index + 1}`,
+          ),
         }
         : undefined,
       certifier: {
@@ -75,28 +84,50 @@ function pwaContext(source: {
       pdf_file_name: string;
       pdf_sha256: string;
       review_reference: string;
+      signed_no_alterations_statement: {
+        pdf_file_name: string;
+        pdf_sha256: string;
+        review_reference: string;
+      };
     };
   }[];
 }) {
   const homes = source.f8908s.filter((home) => home.form7220 !== undefined);
   return {
-    binaryAttachmentFileNames: homes.map((home) =>
-      home.form7220!.pdf_file_name
+    binaryAttachmentFileNames: homes.flatMap((home) => [
+      home.form7220!.pdf_file_name,
+      home.form7220!.signed_no_alterations_statement.pdf_file_name,
+    ]),
+    attachmentDescriptionsByFileName: Object.fromEntries(
+      homes.flatMap((home) => [
+        [
+          home.form7220!.pdf_file_name,
+          `Form 7220 ${
+            home.form7220!.review_reference
+          } for Form 8908 home ${home.acquisition_record_reference}`,
+        ],
+        [
+          home.form7220!.signed_no_alterations_statement.pdf_file_name,
+          `Form 7220 no-alterations statement ${
+            home.form7220!.signed_no_alterations_statement.review_reference
+          } for home ${home.acquisition_record_reference}`,
+        ],
+      ]),
     ),
-    attachmentDescriptionsByFileName: Object.fromEntries(homes.map((home) => [
-      home.form7220!.pdf_file_name,
-      `Form 7220 ${
-        home.form7220!.review_reference
-      } for Form 8908 home ${home.acquisition_record_reference}`,
-    ])),
-    attachmentSha256ByFileName: Object.fromEntries(homes.map((home) => [
-      home.form7220!.pdf_file_name,
-      home.form7220!.pdf_sha256,
+    attachmentSha256ByFileName: Object.fromEntries(homes.flatMap((home) => [
+      [home.form7220!.pdf_file_name, home.form7220!.pdf_sha256],
+      [
+        home.form7220!.signed_no_alterations_statement.pdf_file_name,
+        home.form7220!.signed_no_alterations_statement.pdf_sha256,
+      ],
     ])),
     documentIdsByAttachmentFileName: Object.fromEntries(
-      homes.map((home, index) => [
-        home.form7220!.pdf_file_name,
-        `BinaryAttachment${index + 1}`,
+      homes.flatMap((home, index) => [
+        [home.form7220!.pdf_file_name, `BinaryAttachment${index * 2 + 1}`],
+        [
+          home.form7220!.signed_no_alterations_statement.pdf_file_name,
+          `BinaryAttachment${index * 2 + 2}`,
+        ],
       ]),
     ),
   };

@@ -61,14 +61,18 @@ not-applicable mark, correction status, and line 10. The 2025
 [Form 7220 instructions](https://www.irs.gov/instructions/i7220) say section 45L
 has no apprenticeship requirement. Its line 10 "No" also calls for a separate
 signed no-alterations statement; the reviewed source names that statement, but
-its signature and bytes are not yet bound to an attachment. The official PDF has
-no signature field. PDF signatures, flattened appearance, XFA/AcroForm
-synchronization, and independent payroll authenticity are not verified by this
-field reader. The MeF bundle preparation now passes its already validated
-BinaryAttachment bytes to this verifier before XML preparation. Missing or
-altered Form 7220 bytes reject. The existing native link still requires a unique
-document ID per home. After the PDF check, preparation explicitly rejects the
-line-10 "No" branch because the required signed statement is only named by a
-source reference; its bytes and signature have not been bound. The public guard
-remains closed pending signed-statement handling, XFA/appearance review,
-independent provenance, and full-batch tests.
+its signature must be authenticated. The official Form 7220 PDF has no signature
+field. The direct source now requires a separate statement PDF per residence,
+with the owner, home and acquisition record, Form 7220 review, taxpayer,
+signer/date, and reviewed declaration/signature assertions. MeF preparation
+checks the exact statement PDF digest and named AcroForm identity, date, and
+declaration fields after validating its PDF bytes. The native link requires a
+distinct BinaryAttachment document ID for both the Form 7220 and its statement
+for each home. Missing, reused, and mismatched statement files reject.
+
+These field checks cannot authenticate a handwritten or digital signature. They
+also cannot verify flattened appearance, XFA/AcroForm synchronization, or
+independent payroll authenticity. Preparation therefore explicitly rejects the
+line-10 "No" branch after checking the two PDFs. Public Form 8908 filing remains
+closed pending signature authentication, appearance review, independent
+provenance, and full-batch tests.

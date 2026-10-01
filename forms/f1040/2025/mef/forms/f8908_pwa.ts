@@ -1,11 +1,13 @@
 import {
   calculateForm8908Source,
+  form8908NoAlterationsStatementDescription,
   form8908PwaAttachmentDescription,
   type Form8908Source,
   form8908SourceSchema,
 } from "../../form8908_source.ts";
 import type { MefBuildContext, MefPdfAttachment } from "../form-descriptor.ts";
 import { assertForm8908Form7220PdfContents } from "./f8908_form7220_pdf.ts";
+import { assertForm8908NoAlterationsStatementPdf } from "./f8908_no_alterations_pdf.ts";
 
 export type Form8908PwaAttachmentLink = {
   readonly acquisitionRecordReference: string;
@@ -14,6 +16,10 @@ export type Form8908PwaAttachmentLink = {
   readonly sha256: string;
   readonly description: string;
   readonly documentId: string;
+  readonly statementFileName: string;
+  readonly statementSha256: string;
+  readonly statementDescription: string;
+  readonly statementDocumentId: string;
 };
 
 /** Read the exact PDFs accepted into the MeF bundle before XML preparation. */
@@ -43,13 +49,31 @@ export async function assertForm8908PwaSubmittedPdfs(
       home.acquisition_record_reference,
       matching[0].bytes,
     );
+    const statement = document.signed_no_alterations_statement;
+    const statementMatches = attachments.filter((attachment) =>
+      attachment.fileName === statement.pdf_file_name
+    );
+    if (
+      statementMatches.length !== 1 ||
+      statementMatches[0].description !==
+        form8908NoAlterationsStatementDescription(home)
+    ) {
+      throw new Error(
+        `Form 8908 residence ${home.acquisition_record_reference} needs one distinct signed no-alterations statement attachment`,
+      );
+    }
+    await assertForm8908NoAlterationsStatementPdf(
+      source,
+      home.acquisition_record_reference,
+      statementMatches[0].bytes,
+    );
     needsSignedStatement = true;
   }
-  // Form 7220 line 10 No requires a separate signed statement. A source
-  // reference alone does not establish the submitted bytes or signature.
+  // The signed statement fields and bytes are linked, but neither PDF form
+  // values nor a source review authenticate the human signature itself.
   if (needsSignedStatement) {
     throw new Error(
-      "Form 8908 needs a byte-bound signed no-alterations statement per PWA residence",
+      "Form 8908 no-alterations statement signature authenticity is not verified",
     );
   }
 }
@@ -90,6 +114,37 @@ export function reconcileForm8908PwaAttachments(
       );
     }
     documentIds.add(documentId);
+    const statement = attachment.signed_no_alterations_statement;
+    const statementFileName = statement.pdf_file_name;
+    const statementDescription = form8908NoAlterationsStatementDescription(
+      home,
+    );
+    const statementMatches = context.binaryAttachmentFileNames?.filter((name) =>
+      name === statementFileName
+    ).length;
+    if (
+      statementMatches !== 1 ||
+      context.attachmentDescriptionsByFileName?.[statementFileName] !==
+        statementDescription ||
+      context.attachmentSha256ByFileName?.[statementFileName] !==
+        statement.pdf_sha256
+    ) {
+      throw new Error(
+        `Form 8908 residence ${home.acquisition_record_reference} needs its reviewed signed statement PDF bytes`,
+      );
+    }
+    const statementDocumentId = context.documentIdsByAttachmentFileName
+      ?.[statementFileName];
+    if (
+      !statementDocumentId ||
+      !/^BinaryAttachment[0-9]+$/.test(statementDocumentId) ||
+      documentIds.has(statementDocumentId)
+    ) {
+      throw new Error(
+        `Form 8908 residence ${home.acquisition_record_reference} needs a distinct signed statement binary document ID`,
+      );
+    }
+    documentIds.add(statementDocumentId);
     links.push({
       acquisitionRecordReference: home.acquisition_record_reference,
       reviewReference: attachment.review_reference,
@@ -97,6 +152,10 @@ export function reconcileForm8908PwaAttachments(
       sha256: attachment.pdf_sha256,
       description,
       documentId,
+      statementFileName,
+      statementSha256: statement.pdf_sha256,
+      statementDescription,
+      statementDocumentId,
     });
   }
   return links;
