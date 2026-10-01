@@ -23,6 +23,7 @@ import { form8874Pdf } from "./pdf/forms/f8874.ts";
 import {
   form3800PartIAndIIFields,
   form3800PartIIIFields,
+  form3800PartVFields,
 } from "./pdf/forms/f3800_fields.ts";
 
 const passiveIncome = 20_000;
@@ -286,6 +287,75 @@ function filedSCorpReturn() {
   return result;
 }
 
+function filedMixedK1Return() {
+  const partnershipReference = "2025 partnership K-1 code AD mixed";
+  const sCorpReference = "2025 S corporation K-1 code AD mixed";
+  const result = f1040_2025.executeReturn({
+    general,
+    w2: [{ box1_wages: 100_000, box2_fed_withheld: 16_000 }],
+    schedule_e: [{
+      tsj: "T",
+      activity_id: "rental-1",
+      passive_income_source_document_reference: incomeReference,
+      property_description: "Rental property",
+      property_type: 1,
+      activity_type: "B",
+      fair_rental_days: 365,
+      personal_use_days: 0,
+      rent_income: passiveIncome,
+      form_1099_payments_made: false,
+    }],
+    k1_partnership: {
+      k1_partnerships: [{
+        partnership_name: "Community partnership",
+        partnership_ein: "123456789",
+        source_document_reference: partnershipReference,
+        recipient_tin: "111223333",
+        box15_code_ad_new_markets_credit: 5_000,
+        new_markets_credit_subject_to_passive_activity_limit: true,
+      }],
+    },
+    k1_s_corp: {
+      k1_s_corps: [{
+        corporation_name: "Community S corporation",
+        corporation_ein: "234567891",
+        source_document_reference: sCorpReference,
+        recipient_tin: "111223333",
+        box13_code_ad_new_markets_credit: 2_500,
+        new_markets_credit_subject_to_passive_activity_limit: true,
+      }],
+    },
+    form8582cr: {
+      credit_sources: [{
+        ...source,
+        activity_reference: partnershipReference,
+        source_document_reference: partnershipReference,
+        current_year_credit: 5_000,
+        source_origin: {
+          kind: "partnership" as const,
+          entity_reference: "Community partnership",
+          ein: "123456789",
+        },
+      }, {
+        ...source,
+        activity_reference: sCorpReference,
+        source_document_reference: sCorpReference,
+        current_year_credit: 2_500,
+        source_origin: {
+          kind: "s_corporation" as const,
+          entity_reference: "Community S corporation",
+          ein: "234567891",
+        },
+      }],
+      regular_tax_all_income: taxAll,
+      regular_tax_without_passive: taxWithout,
+      line6_ordinary_worksheet: worksheet,
+    },
+  });
+  assertEquals(result.diagnostics, []);
+  return result;
+}
+
 Deno.test("S corporation K-1 code AD passive credit reconciles rental line 6, Form 3800, native and PDF", async () => {
   const result = filedSCorpReturn();
   const pending = normalizeAllPending(result.pending);
@@ -387,6 +457,145 @@ Deno.test("partnership K-1 code AD passive credit rejects changed issuer, amount
       Error,
     );
   }
+});
+
+Deno.test("partnership and S corporation code AD credits share one passive tax limit with distinct Worksheet 9 and Part V rows", async () => {
+  const result = filedMixedK1Return();
+  const pending = normalizeAllPending(result.pending);
+  const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
+  assertEquals(ledger.total_credit, 7_500);
+  assertEquals(ledger.allowed_credit, 4_412);
+  assertEquals(
+    ledger.rows.map((row) => [
+      row.source.source_origin.kind,
+      row.total_credit,
+      row.allowed_credit,
+      row.unallowed_credit,
+    ]),
+    [
+      ["partnership", 5_000, 2_941, 2_059],
+      ["s_corporation", 2_500, 1_471, 1_029],
+    ],
+  );
+  assertEquals(pending.schedule3.line6a_total, 4_412);
+  assertEquals(pending.f1040.line20_nonrefundable_credits, 4_412);
+  const passivePdf = form8582crPdf.projectFields!(pending.form8582cr, pending);
+  assertEquals(passivePdf.line4a, 7_500);
+  assertEquals(passivePdf.line37, 4_412);
+  const prepared = await f1040_2025.prepareReturn(
+    result.pending,
+    extractFilerIdentity(general),
+  );
+  const parts = prepared.bundle.form3800Parts!;
+  assertEquals(parts.lines.line2, 7_500);
+  assertEquals(parts.lines.line3, 4_412);
+  assertEquals(parts.lines.line38, 4_412);
+  assertEquals(parts.currentRows.length, 1);
+  assertEquals(parts.currentRows[0].metadata.sourceCount, 2);
+  assertEquals(parts.currentRows[0].metadata.referenceDocumentId, undefined);
+  assertEquals(
+    parts.passiveCurrentDetails.map((detail) => [
+      detail.source.sourceOrigin.kind,
+      detail.source.activityReference,
+      detail.source.beforePassiveLimit,
+      detail.source.afterPassiveLimit,
+      detail.sourceDocument,
+    ]),
+    ledger.rows.map((row) => [
+      row.source.source_origin.kind,
+      row.source.activity_reference,
+      row.total_credit,
+      row.allowed_credit,
+      undefined,
+    ]),
+  );
+  assertEquals(
+    [...prepared.bundle.xml.matchAll(/<Frm8874CYAggrgtAmtGrp/g)].length,
+    2,
+  );
+  assertStringIncludes(
+    prepared.bundle.xml,
+    "<PassThroughEntityEIN>123456789</PassThroughEntityEIN>",
+  );
+  assertStringIncludes(
+    prepared.bundle.xml,
+    "<PassThroughEntityEIN>234567891</PassThroughEntityEIN>",
+  );
+  assert(!prepared.bundle.xml.includes("<IRS8874 "));
+  const filed = normalizeAllPending(prepared.bundle.pending);
+  const form3800Printed = form3800Pdf.instances?.(
+    filed.f3800,
+    extractFilerIdentity(general),
+    filed,
+    parts,
+  )?.[0];
+  assertEquals(form3800Printed?.[form3800PartIIIFields("1i").g], 4_412);
+  assertEquals(form3800Printed?.[form3800PartVFields(1).c1], "123456789");
+  assertEquals(form3800Printed?.[form3800PartVFields(2).c1], "234567891");
+  assertEquals(form3800Printed?.[form3800PartIAndIIFields.line38], 4_412);
+  assert(
+    (await PDFDocument.load(await prepared.renderPdf())).getPageCount() > 0,
+  );
+  const partnership =
+    (filed.k1_partnership.k1_partnerships as Record<string, unknown>[])[0];
+  const corporation =
+    (filed.k1_s_corp.k1_s_corps as Record<string, unknown>[])[0];
+  for (
+    const changed of [
+      {
+        ...filed,
+        k1_partnership: {
+          k1_partnerships: [{ ...partnership, partnership_ein: "999887777" }],
+        },
+      },
+      {
+        ...filed,
+        k1_s_corp: {
+          k1_s_corps: [{ ...corporation, recipient_tin: "999887777" }],
+        },
+      },
+      {
+        ...filed,
+        k1_s_corp: {
+          k1_s_corps: [{
+            ...corporation,
+            box13_code_ad_new_markets_credit: 2_499,
+          }],
+        },
+      },
+      {
+        ...filed,
+        k1_s_corp: {
+          k1_s_corps: [{ ...corporation, box1_ordinary_business: 10 }],
+        },
+      },
+    ]
+  ) {
+    assertThrows(
+      () => form8582crPdf.projectFields!(changed.form8582cr, changed),
+      Error,
+    );
+  }
+  assertThrows(
+    () =>
+      form3800Pdf.instances?.(
+        filed.f3800,
+        extractFilerIdentity(general),
+        filed,
+        {
+          ...parts,
+          passiveCurrentDetails: [parts.passiveCurrentDetails[0], {
+            ...parts.passiveCurrentDetails[1],
+            source: {
+              ...parts.passiveCurrentDetails[1].source,
+              sourceDocumentReference: "wrong S corporation K-1",
+            },
+          }],
+        },
+      ),
+    Error,
+    "mixed pass-through New Markets activities",
+  );
 });
 
 Deno.test("current-year passive New Markets credit and rental income reconcile Form 8582-CR line 6, Form 3800, Form 1040, native and PDF", () => {

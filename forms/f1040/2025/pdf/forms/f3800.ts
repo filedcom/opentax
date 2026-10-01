@@ -410,6 +410,97 @@ export const form3800Pdf: PdfFormDescriptor = {
         );
       }
     }
+    if (
+      !source.f8874_credit &&
+      source.passive_source_allocations !== undefined &&
+      source.passive_source_allocations.length === 2 &&
+      source.passive_source_allocations.some((entry) =>
+        entry.source_origin.kind === "partnership" &&
+        entry.source_form === "Form 8874" &&
+        entry.form3800_credit_line === "1i"
+      ) &&
+      source.passive_source_allocations.some((entry) =>
+        entry.source_origin.kind === "s_corporation" &&
+        entry.source_form === "Form 8874" &&
+        entry.form3800_credit_line === "1i"
+      ) &&
+      !source.f8820_credit && !source.f5884_credit &&
+      !source.f8835_credit_entries?.length &&
+      !source.f8826_credit_entries?.length &&
+      !source.f8874_k1_credit_entries?.length &&
+      !source.f8820_k1_credit_entries?.length &&
+      !source.f3468_trust_part_v_credit_entries?.length &&
+      !source.carryforward_vintages?.length
+    ) {
+      const { lines: passive, ledger } = reconcileFiledForm8582CROrdinary(
+        all.form8582cr,
+        all,
+      );
+      const rawSource = f3800InputSchema.parse(raw);
+      const rows = prepared.currentRows.filter((row) => row.line === "1i");
+      const amounts = prepared.currentAmounts.filter((row) =>
+        row.line === "1i"
+      );
+      const details = prepared.passiveCurrentDetails.filter((row) =>
+        row.line === "1i"
+      );
+      if (
+        all.f8874 !== undefined ||
+        JSON.stringify(rawSource.passive_source_allocations) !==
+          JSON.stringify(source.passive_source_allocations) ||
+        ledger.rows.length !== 2 ||
+        rows.length !== 1 || amounts.length !== 1 || details.length !== 2 ||
+        prepared.currentDetails.some((row) => row.line === "1i") ||
+        rows[0].metadata.sourceCount !== 2 ||
+        rows[0].metadata.referenceDocumentId !== undefined ||
+        rows[0].metadata.referenceDocumentName !== undefined ||
+        details.some((detail) => {
+          const matches = ledger.rows.filter((row) =>
+            row.source.activity_reference ===
+              detail.source.activityReference &&
+            row.source.source_document_reference ===
+              detail.source.sourceDocumentReference &&
+            row.source.source_form === detail.source.sourceForm &&
+            row.source.reporting_route === detail.source.reportingRoute &&
+            row.source.form3800_credit_line ===
+              detail.source.form3800CreditLine &&
+            detail.source.originatingTaxYear === 2025 &&
+            row.source.source_origin.kind === detail.source.sourceOrigin.kind &&
+            row.source.source_origin.kind !== "self" &&
+            detail.source.sourceOrigin.kind !== "self" &&
+            row.source.source_origin.ein === detail.source.sourceOrigin.ein &&
+            row.source.source_origin.entity_reference ===
+              detail.source.sourceOrigin.entity_reference
+          );
+          return matches.length !== 1 ||
+            detail.sourceDocument !== undefined ||
+            detail.source.beforePassiveLimit !== matches[0].total_credit ||
+            detail.source.afterPassiveLimit !== matches[0].allowed_credit ||
+            detail.source.unusedAfterTaxLimit !== 0;
+        }) ||
+        ledger.rows.some((row) =>
+          details.filter((detail) =>
+            detail.source.activityReference === row.source.activity_reference &&
+            detail.source.sourceDocumentReference ===
+              row.source.source_document_reference
+          ).length !== 1
+        ) ||
+        amounts[0].nonpassiveCredit !== 0 ||
+        amounts[0].passiveBeforeLimit !== passive.partI.line5 ||
+        amounts[0].passiveAfterLimit !== passive.line37 ||
+        amounts[0].appliedCredit !== passive.line37 ||
+        prepared.lines.line1 !== 0 ||
+        prepared.lines.line2 !== passive.partI.line5 ||
+        prepared.lines.line3 !== passive.line37 ||
+        prepared.lines.line6 !== passive.line37 ||
+        prepared.lines.line17 !== passive.line37 ||
+        prepared.lines.line38 !== passive.line37
+      ) {
+        throw new Error(
+          "Form 3800 PDF mixed pass-through New Markets activities differ from filed K-1 and Worksheet 9 sources",
+        );
+      }
+    }
     const directOrphanK1 = source.f8820_k1_credit_entries;
     const rawOrphanK1 = raw.f8820_k1_credit_entries === undefined
       ? undefined

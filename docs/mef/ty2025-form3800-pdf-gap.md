@@ -382,6 +382,17 @@ tamper fixtures await the shared validation run. The separate one-passive
 plus one-nonpassive route stays bounded to that pair. Accepted prior-year
 credit import remains closed without authenticated evidence.
 
+One credit-only partnership K-1 box 15 code AD and one credit-only S
+corporation K-1 box 13 code AD can now contribute distinct current-year
+passive New Markets credits to the same sourced Form 8582-CR ordinary line 6.
+The $5,000 and $2,500 credits retain separate 2025 Worksheet 9 balances;
+$4,412 is allowed in total. Form 3800 Part III line 1i and two Part V rows
+retain both pass-through EINs and exact source amounts without an unsourced
+individual Form 8874. Schedule 3, Form 1040, native XML, and PDF use the
+allowed amount. Issuer/recipient/extra-box and prepared-detail tamper fixtures
+are authored but unrun. Other K-1 mixes and prior-year accepted-carryover
+claims remain closed.
+
 The seven-investment New Markets return prints $3,500 on Form 3800 Part III
 line 1i and line 38, Schedule 3 line 6a, and Form 1040 line 20. Form 8874
 uses the required last-row "See attached" convention and an additional
