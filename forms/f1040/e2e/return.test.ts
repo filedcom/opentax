@@ -343,7 +343,7 @@ Deno.test("E2E Scenario 3a: foreign employer compensation with no W-2 — reache
   );
 });
 
-Deno.test("E2E: clergy excess allowance and foreign wages sum on line 1h", () => {
+Deno.test("E2E: clergy allowance without matched evidence stops the return", () => {
   const result = runReturn({
     general: singleGeneral(),
     clergy: [{
@@ -357,19 +357,16 @@ Deno.test("E2E: clergy excess allowance and foreign wages sum on line 1h", () =>
     fec: [fecItem(1_000)],
   });
 
-  assertEquals(result.diagnostics, []);
-  assertEquals(result.pending["agi_aggregator"]?.["line1h_other_earned"], [
-    5_000,
-    1_000,
-  ]);
-  assertEquals(result.pending["standard_deduction"]?.["agi"], 6_000);
-  assertEquals(result.pending["f1040"]?.["line1h_other_earned"], 6_000);
-  assertEquals(result.pending["f1040"]?.["line1z_total_wages"], 6_000);
-  assertEquals(result.pending["f1040"]?.["line11_agi"], 6_000);
-  assertEquals(result.pending["f1040"]?.["line24_total_tax"], 0);
+  assertEquals(
+    result.diagnostics.some((entry) =>
+      entry.nodeType === "clergy" &&
+      entry.message.includes("matched W-2")
+    ),
+    true,
+  );
 });
 
-Deno.test("E2E: ministerial loss reduces Schedule C income for SE tax", () => {
+Deno.test("E2E: ministerial loss without matched evidence stops the return", () => {
   const result = runReturn({
     general: singleGeneral(),
     clergy: [{
@@ -387,16 +384,13 @@ Deno.test("E2E: ministerial loss reduces Schedule C income for SE tax", () => {
     }],
   });
 
-  assertEquals(result.diagnostics, []);
   assertEquals(
-    result.pending["schedule_se"]?.["ministerial_se_earnings"],
-    -1_000,
+    result.diagnostics.some((entry) =>
+      entry.nodeType === "clergy" &&
+      entry.message.includes("matched W-2")
+    ),
+    true,
   );
-  assertEquals(
-    result.pending["schedule_se"]?.["net_profit_schedule_c"],
-    10_000,
-  );
-  assertEquals(result.pending["schedule2"]?.["line4_se_tax"], 1_271.6595);
 });
 
 Deno.test("E2E Scenario 3b: foreign employer compensation beside a W-2 — lines 1a and 1h total", () => {

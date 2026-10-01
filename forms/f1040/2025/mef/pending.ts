@@ -23,7 +23,7 @@ export function buildPending(
   // reconcile a filed schedule with a finalized reporting-year worksheet.
   // Only ALL_MEF_FORMS controls which keys are emitted as XML documents.
   for (const [nodeType, raw] of Object.entries(pending)) {
-    const normalized = normalizePendingDict(raw);
+    const normalized = normalizePendingDict(raw, nodeType);
     if (normalized === undefined) continue;
     // The graph can retain a source-only Form 8960 slice (for example taxable
     // interest) even when the calculator returned no form below the MAGI

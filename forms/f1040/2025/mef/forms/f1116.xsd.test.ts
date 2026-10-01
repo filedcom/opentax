@@ -401,6 +401,33 @@ Deno.test({
   sanitizeResources: false,
   ignore: !xsdAvailable,
 }, async () => {
+  const carryover = {
+    income_category: IncomeCategory.Passive,
+    vintages: [
+      {
+        vintage_tax_year: 2021,
+        prior_year_schedule_b_line8_vintage_amount: 100,
+      },
+      {
+        vintage_tax_year: 2022,
+        prior_year_schedule_b_line8_vintage_amount: 100,
+      },
+      {
+        vintage_tax_year: 2023,
+        prior_year_schedule_b_line8_vintage_amount: 100,
+      },
+      {
+        vintage_tax_year: 2024,
+        prior_year_schedule_b_line8_vintage_amount: 500,
+      },
+    ],
+    prior_year_schedule_b_line8_total: 800,
+    prior_year_schedule_b_line8_other_vintages_total: 0,
+    no_intervening_adjustments: true,
+    source_document_references: [
+      "Filed 2024 Schedule B (Form 1116), passive line 8 2021-2024 columns and total",
+    ],
+  };
   const result = form1116Node.compute(
     { taxYear: 2025, formType: "f1040" },
     {
@@ -415,33 +442,7 @@ Deno.test({
       }],
       worldwide_taxable_income: 50_000,
       us_tax_before_credits: 2_500,
-      prior_year_carryovers: [{
-        income_category: IncomeCategory.Passive,
-        vintages: [
-          {
-            vintage_tax_year: 2021,
-            prior_year_schedule_b_line8_vintage_amount: 100,
-          },
-          {
-            vintage_tax_year: 2022,
-            prior_year_schedule_b_line8_vintage_amount: 100,
-          },
-          {
-            vintage_tax_year: 2023,
-            prior_year_schedule_b_line8_vintage_amount: 100,
-          },
-          {
-            vintage_tax_year: 2024,
-            prior_year_schedule_b_line8_vintage_amount: 500,
-          },
-        ],
-        prior_year_schedule_b_line8_total: 800,
-        prior_year_schedule_b_line8_other_vintages_total: 0,
-        no_intervening_adjustments: true,
-        source_document_references: [
-          "Filed 2024 Schedule B (Form 1116), passive line 8 2021-2024 columns and total",
-        ],
-      }],
+      prior_year_carryovers: [carryover],
     },
   );
   const formFields = result.outputs.find((output) =>
@@ -452,6 +453,7 @@ Deno.test({
   )?.fields;
   assertEquals(scheduleBFields?.used_prior_year_carryover, 300);
   const xml = buildMefXml({
+    form1116_prior_carryover: { carryovers: [carryover] },
     form_1116: formFields as Parameters<typeof form1116.build>[0],
     form1116_schedule_b: scheduleBFieldsSchema.parse(scheduleBFields),
     schedule3: {
@@ -652,7 +654,7 @@ Deno.test({
   assertThrows(
     () => buildMefXml(result.pending, filer),
     Error,
-    "one reviewed ordinary 1099-DIV",
+    "two reviewed same-country 1099 sources and the finalized return",
   );
 });
 

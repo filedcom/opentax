@@ -21,7 +21,17 @@ export function priorIsoSaleFixture(tin = "111-22-3333") {
     no_2025_compensation_or_disqualifying_disposition_verified: true,
   };
   return {
-    w2: [{ box1_wages: 200_000, box2_fed_withheld: 35_000 }],
+    w2: [{
+      employer_ein: "12-3456789",
+      employer_name: "Option Corporation",
+      employer_address_line1: "100 Option Way",
+      employer_address_city: "Austin",
+      employer_address_state: "TX",
+      employer_address_zip: "78701",
+      employee_ssn: tin,
+      box1_wages: 200_000,
+      box2_fed_withheld: 35_000,
+    }],
     f3921: [{
       source_document_reference: "2025 issued Form 3921 retained lot B",
       corporation_name: "Option Corporation",

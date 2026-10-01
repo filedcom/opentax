@@ -307,7 +307,7 @@ Deno.test("Form 4952 rejects altered prior line 7, filer, and retained source", 
         filer: testFiler(),
       }),
     Error,
-    "prior carryforward differs",
+    "prior carryforward needs complete retained source",
   );
   assertThrows(
     () =>

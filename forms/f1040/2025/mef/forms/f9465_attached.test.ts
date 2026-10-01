@@ -114,7 +114,7 @@ Deno.test("Form 9465 attached request remains blocked pending authorization and 
     assertThrows(
       () => assertAttachmentCoverage(pending, kind),
       Error,
-      "Form 9465 attached installment request remains blocked pending accepted electronic authorization",
+      "Form 9465 attached installment request remains blocked until IRS guidance",
     );
   }
 });

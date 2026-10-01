@@ -17,6 +17,7 @@ const contract = {
   business_reference: "contract-2025",
   line_f_accounting_method: "cash",
   line_g_material_participation: true,
+  line_i_made_1099_payments: false,
   line_1_gross_receipts: 0,
   amt_long_term_contract_workpaper: {
     contract_reference: "contract-one",
@@ -43,6 +44,7 @@ function filing() {
       taxpayer_last_name: "Taxpayer",
       taxpayer_ssn: "123-45-6789",
       taxpayer_dob: "1980-06-15",
+      digital_assets: false,
     },
     w2: [{
       box1_wages: 300_000,
@@ -53,9 +55,13 @@ function filing() {
       box6_medicare_withheld: 4_350,
       employer_ein: "12-3456789",
       employer_name: "ACME Corp",
+      employer_address_line1: "2 Payroll Road",
+      employer_address_city: "Austin",
+      employer_address_state: "TX",
+      employer_address_zip: "78701",
       box12_entries: [],
     }],
-    schedule_c: { schedule_cs: [contract] },
+    schedule_c: [contract],
     schedule_b_part_iii: {
       foreign_accounts_question: false,
       fincen_form114_required: false,
@@ -99,15 +105,20 @@ Deno.test("Form 6251 first-year long-term contract uses AMT percentage of comple
     "topmostSubform[0].Page1[0].f1_20[0]",
   );
   const pending = buildPending(result.pending);
+  const finalFiler = {
+    ...testFiler(),
+    firstNameWithInitial: "Alex",
+    lastName: "Taxpayer",
+  };
   const bundle = await buildMefBundle(pending, {
-    filer: testFiler(),
+    filer: finalFiler,
     attachments: [],
   });
   assertStringIncludes(
     bundle.xml,
     "<LongTermContractAmt>150000</LongTermContractAmt>",
   );
-  const pdf = await buildPdfBytes(pending, testFiler(), ".pdf-cache", bundle);
+  const pdf = await buildPdfBytes(pending, finalFiler, ".pdf-cache", bundle);
   assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 4, true);
 
   for (

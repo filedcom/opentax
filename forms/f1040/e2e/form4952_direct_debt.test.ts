@@ -63,6 +63,7 @@ function filing(
       taxpayer_last_name: "Taxpayer",
       taxpayer_ssn: "123-45-6789",
       taxpayer_dob: "1980-06-15",
+      digital_assets: false,
       ...(spouseOwned
         ? {
           spouse_first_name: "Sam",
@@ -474,19 +475,20 @@ Deno.test("Form 4952 traced loan excludes one payer's qualified dividends and ca
   );
 
   const pending = buildPending(result.pending);
+  const finalFiler = {
+    ...testFiler(),
+    firstNameWithInitial: "Alex",
+    lastName: "Taxpayer",
+  };
   const bundle = await buildMefBundle(pending, {
-    filer: testFiler(),
+    filer: finalFiler,
     attachments: [],
   });
   assertStringIncludes(
     bundle.xml,
     "<InvestmentPropQualDividendsAmt>15000</InvestmentPropQualDividendsAmt>",
   );
-  const pdf = await buildPdfBytes(pending, {
-    ...testFiler(),
-    firstNameWithInitial: "Alex",
-    lastName: "Taxpayer",
-  }, ".pdf-cache", bundle);
+  const pdf = await buildPdfBytes(pending, finalFiler, ".pdf-cache", bundle);
   assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 4, true);
 
   const source = result.pending.f1099div as {
@@ -710,19 +712,20 @@ Deno.test("Form 4952 traced loan joins two interest and two dividend payers with
     5_000,
   );
   const pending = buildPending(result.pending);
+  const finalFiler = {
+    ...testFiler(),
+    firstNameWithInitial: "Alex",
+    lastName: "Taxpayer",
+  };
   const bundle = await buildMefBundle(pending, {
-    filer: testFiler(),
+    filer: finalFiler,
     attachments: [],
   });
   assertStringIncludes(
     bundle.xml,
     "<InvestmentInterestExpDeductAmt>20000</InvestmentInterestExpDeductAmt>",
   );
-  const pdf = await buildPdfBytes(pending, {
-    ...testFiler(),
-    firstNameWithInitial: "Alex",
-    lastName: "Taxpayer",
-  }, ".pdf-cache", bundle);
+  const pdf = await buildPdfBytes(pending, finalFiler, ".pdf-cache", bundle);
   assertEquals((await PDFDocument.load(pdf)).getPageCount() > 0, true);
 
   const interestItems = (result.pending.f1099int as {

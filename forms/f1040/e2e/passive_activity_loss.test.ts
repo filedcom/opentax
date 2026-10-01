@@ -87,10 +87,10 @@ function rental(rentIncome: number, repairs: number) {
   };
 }
 
-Deno.test("first-year active rental entire gain reaches Form 8582 Part IV and Form 1040", () => {
+Deno.test("first-year passive rental entire gain reaches Form 8582 Part V and Form 1040", () => {
   const sale = {
     activity_id: "active-first-year-sale",
-    activity_name: "Active first-year rental",
+    activity_name: "First-year passive rental",
     part: "II",
     property_description: "Short-held rental property",
     acquired_on: "2025-02-01",
@@ -113,6 +113,7 @@ Deno.test("first-year active rental entire gain reaches Form 8582 Part IV and Fo
   };
   const property = {
     ...rental(0, 2_000),
+    activity_type: "B",
     activity_id: sale.activity_id,
     property_description: sale.activity_name,
     fair_rental_days: 180,
@@ -126,7 +127,7 @@ Deno.test("first-year active rental entire gain reaches Form 8582 Part IV and Fo
   };
   const result = runReturn({
     general: singleGeneral(),
-    schedule_e: { schedule_es: [property] },
+    schedule_e: [property],
   });
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.schedule1?.line4_other_gains, 10_000);
@@ -136,10 +137,10 @@ Deno.test("first-year active rental entire gain reaches Form 8582 Part IV and Fo
   const fields = result.pending.form8582 as Record<string, unknown>;
   assertStringIncludes(
     form8582Mef.build(fields, { pending: result.pending }),
-    "<RentalRealtyIncomeAmt>10000</RentalRealtyIncomeAmt>",
+    "<OtherActivityIncomeAmt>10000</OtherActivityIncomeAmt>",
   );
   assertEquals(
-    form8582Pdf.projectFields!(fields, result.pending).part4_1_gain,
+    form8582Pdf.projectFields!(fields, result.pending).part5_1_gain,
     "8000",
   );
   assertEquals(
