@@ -4,7 +4,7 @@ import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
 import { computeF8828Lines, f8828 } from "./index.ts";
 
 function transaction(overrides: Record<string, unknown> = {}) {
-  return {
+  const facts = {
     property_address: {
       line1: "14 Main St",
       city: "Boise",
@@ -37,6 +37,37 @@ function transaction(overrides: Record<string, unknown> = {}) {
     issuer_federally_subsidized_amount: 12_500,
     issuer_holding_period_percentage: 100,
     ...overrides,
+  };
+  const source_transaction_id = `sale-${facts.property_address.line1}`;
+  return {
+    ...facts,
+    source_transaction_id,
+    reviewed_issuer: {
+      document_reference: "issuer-notification-14-main",
+      borrower_ssn: "123456789",
+      issuer_name: facts.issuer_name,
+      issuer_state: facts.issuer_state,
+      issuer_type: facts.issuer_type,
+      original_loan_closing_date: facts.original_loan_closing_date,
+      highest_federally_subsidized_loan_amount:
+        facts.highest_federally_subsidized_loan_amount,
+      federally_subsidized_amount: facts.issuer_federally_subsidized_amount,
+      adjusted_qualifying_income: facts.adjusted_qualifying_income,
+      holding_period_percentage: facts.issuer_holding_period_percentage,
+    },
+    reviewed_sale: {
+      document_reference: "closing-statement-14-main",
+      basis_record_reference: "basis-record-14-main",
+      source_transaction_id,
+      owner_ssn: "123456789",
+      property_address: facts.property_address,
+      disposition_date: facts.disposition_date,
+      sales_price_of_interest: facts.sales_price_of_interest,
+      selling_expenses: facts.selling_expenses,
+      adjusted_basis_of_interest: facts.adjusted_basis_of_interest,
+      gain_included_in_gross_income: facts.home_gain_included_in_gross_income,
+      exclusion_record_reference: "home-exclusion-14-main",
+    },
   };
 }
 

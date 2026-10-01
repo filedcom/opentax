@@ -4,7 +4,7 @@ import { form8828Pdf } from "../../pdf/forms/f8828.ts";
 import { FilingStatus } from "../../../mef/header.ts";
 
 function item(overrides: Record<string, unknown> = {}) {
-  return {
+  const facts = {
     property_address: {
       line1: "14 Main St",
       city: "Boise",
@@ -38,12 +38,58 @@ function item(overrides: Record<string, unknown> = {}) {
     issuer_holding_period_percentage: 100,
     ...overrides,
   };
+  const source_transaction_id = `sale-${facts.property_address.line1}`;
+  return {
+    ...facts,
+    source_transaction_id,
+    reviewed_issuer: {
+      document_reference: "issuer-notification-14-main",
+      borrower_ssn: "123456789",
+      issuer_name: facts.issuer_name,
+      issuer_state: facts.issuer_state,
+      issuer_type: facts.issuer_type,
+      original_loan_closing_date: facts.original_loan_closing_date,
+      highest_federally_subsidized_loan_amount:
+        facts.highest_federally_subsidized_loan_amount,
+      federally_subsidized_amount: facts.issuer_federally_subsidized_amount,
+      adjusted_qualifying_income: facts.adjusted_qualifying_income,
+      holding_period_percentage: facts.issuer_holding_period_percentage,
+    },
+    reviewed_sale: {
+      document_reference: "closing-statement-14-main",
+      basis_record_reference: "basis-record-14-main",
+      source_transaction_id,
+      owner_ssn: "123456789",
+      property_address: facts.property_address,
+      disposition_date: facts.disposition_date,
+      sales_price_of_interest: facts.sales_price_of_interest,
+      selling_expenses: facts.selling_expenses,
+      adjusted_basis_of_interest: facts.adjusted_basis_of_interest,
+      gain_included_in_gross_income: facts.home_gain_included_in_gross_income,
+      exclusion_record_reference: "home-exclusion-14-main",
+    },
+  };
 }
 
 function pending(total = 6_250) {
   return {
     f1040: { line11_agi: 105_000, line2a_tax_exempt: 1_000 },
     schedule2: { line17b_mortgage_subsidy_recapture: total },
+    form8949: {
+      transaction: {
+        part: "F",
+        description: "14 Main St, Boise ID",
+        source_transaction_id: "sale-14 Main St",
+        date_acquired: "2020-06-01",
+        date_sold: "2025-03-01",
+        proceeds: 282_000,
+        cost_basis: 250_000,
+        adjustment_codes: "H",
+        adjustment_amount: -26_000,
+        gain_loss: 6_000,
+        is_long_term: true,
+      },
+    },
   };
 }
 
@@ -130,4 +176,84 @@ Deno.test("staged IRS8828 rejects mismatched return amounts and invalid address 
         issuer_holding_period_percentage: 80,
       })],
     }), Error);
+});
+
+Deno.test("staged IRS8828 rejects tampered issuer, sale, owner, and taxable-gain links", () => {
+  const source = { f8828s: [item()] };
+  const issuer = item();
+  issuer.reviewed_issuer.federally_subsidized_amount = 11_000;
+  assertThrows(
+    () => form8828.build({ f8828s: [issuer] }, { pending: pending() }),
+    Error,
+    "issuer",
+  );
+
+  const sale = item();
+  sale.reviewed_sale.selling_expenses = 10_000;
+  assertThrows(
+    () => form8828.build({ f8828s: [sale] }, { pending: pending() }),
+    Error,
+    "sale records",
+  );
+
+  const wrongGain = pending();
+  wrongGain.form8949.transaction.gain_loss = 5_000;
+  assertThrows(
+    () => form8828.build(source, { pending: wrongGain }),
+    Error,
+    "Form 8949",
+  );
+
+  const noGainRow = { ...pending(), form8949: { transaction: undefined } };
+  assertThrows(
+    () => form8828.build(source, { pending: noGainRow }),
+    Error,
+    "Form 8949",
+  );
+
+  const wrongOwner = item();
+  wrongOwner.reviewed_sale.owner_ssn = "999999999";
+  assertThrows(
+    () =>
+      form8828.build({ f8828s: [wrongOwner] }, {
+        pending: pending(),
+        filer: {
+          nameLine1: "Jane Taxpayer",
+          nameControl: "TAXP",
+          primarySSN: "123456789",
+          filingStatus: FilingStatus.Single,
+          address: {
+            line1: "14 Main St",
+            city: "Boise",
+            state: "ID",
+            zip: "83702",
+          },
+        },
+      }),
+    Error,
+    "owner",
+  );
+});
+
+Deno.test("staged IRS8828 accepts fully excluded gain only with exclusion evidence", () => {
+  const excluded = item({
+    home_gain_included_in_gross_income: 0,
+    adjusted_qualifying_income: 110_000,
+  });
+  const reviewed = {
+    ...excluded,
+    reviewed_sale: {
+      ...excluded.reviewed_sale,
+      exclusion_record_reference: undefined,
+    },
+  };
+  assertThrows(
+    () => form8828.build({ f8828s: [reviewed] }),
+    Error,
+    "exclusion evidence",
+  );
+  const xml = form8828.build({ f8828s: [excluded] }, {
+    pending: { ...pending(0), form8949: undefined },
+  });
+  assertEquals(xml.length, 1);
 });

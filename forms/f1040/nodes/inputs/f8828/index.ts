@@ -29,8 +29,39 @@ const usAddressSchema = z.object({
   state: z.string().regex(/^[A-Z]{2}$/),
   zip: z.string().regex(/^\d{5}(?:\d{4}|\d{7})?$/),
 });
+const sourceReference = z.string().trim().min(1);
+
+const reviewedIssuerSchema = z.object({
+  document_reference: sourceReference,
+  borrower_ssn: z.string().regex(/^\d{9}$/),
+  issuer_name: z.string().min(1),
+  issuer_state: z.string().regex(/^[A-Z]{2}$/),
+  issuer_type: z.enum(["agency", "political_subdivision"]),
+  original_loan_closing_date: dateSchema,
+  highest_federally_subsidized_loan_amount: moneySchema,
+  federally_subsidized_amount: moneySchema,
+  adjusted_qualifying_income: moneySchema,
+  holding_period_percentage: z.number().int().min(0).max(100),
+});
+
+const reviewedSaleSchema = z.object({
+  document_reference: sourceReference,
+  basis_record_reference: sourceReference,
+  source_transaction_id: sourceReference,
+  owner_ssn: z.string().regex(/^\d{9}$/),
+  property_address: usAddressSchema,
+  disposition_date: dateSchema,
+  sales_price_of_interest: moneySchema,
+  selling_expenses: moneySchema,
+  adjusted_basis_of_interest: moneySchema,
+  gain_included_in_gross_income: moneySchema,
+  exclusion_record_reference: sourceReference.optional(),
+});
 
 export const itemSchema = z.object({
+  source_transaction_id: sourceReference,
+  reviewed_issuer: reviewedIssuerSchema,
+  reviewed_sale: reviewedSaleSchema,
   property_address: usAddressSchema, // Part I, line 1; MeF USAddressType
   subsidy_type: z.enum(["tax_exempt_bond_loan", "mortgage_credit_certificate"]), // line 2
   issuer_type: z.enum(["agency", "political_subdivision"]), // line 3 MeF destination

@@ -5,6 +5,7 @@ import {
   inputSchema,
 } from "../../../nodes/inputs/f8828/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
+import { reconcileForm8828Sources } from "./f8828_source_reconciliation.ts";
 
 type Input = ReturnType<typeof inputSchema.parse>;
 export const FIELD_MAP: ReadonlyArray<readonly [string, string]> = [];
@@ -43,32 +44,8 @@ export function reconcileForm8828(
   items: readonly F8828Item[],
   context?: MefBuildContext,
 ): void {
-  if (!context?.pending) return;
-  const pending = context.pending;
-  const f1040 = pending.f1040 as Record<string, unknown> | undefined;
-  const schedule2 = pending.schedule2 as Record<string, unknown> | undefined;
-  if (!f1040 || !schedule2) {
-    throw new Error("Form 8828 needs Form 1040 and Schedule 2 destinations");
-  }
-  const agi = f1040.line11_agi;
-  const exemptInterest = f1040.line2a_tax_exempt ?? 0;
-  if (
-    items.some((item) =>
-      item.adjusted_gross_income !== agi ||
-      item.tax_exempt_interest !== exemptInterest
-    )
-  ) {
-    throw new Error(
-      "Form 8828 modified AGI sources must match Form 1040 lines 11 and 2a",
-    );
-  }
-  const total = items.reduce(
-    (sum, item) => sum + validateFiledAmount(item).line23_tax,
-    0,
-  );
-  if (total !== (schedule2.line17b_mortgage_subsidy_recapture ?? 0)) {
-    throw new Error("Form 8828 line 23 total must match Schedule 2 line 17b");
-  }
+  for (const item of items) validateFiledAmount(item);
+  reconcileForm8828Sources(items, context?.pending, context?.filer);
 }
 
 function buildIRS8828(item: F8828Item): string {
