@@ -4,6 +4,10 @@ import { element, elements } from "../../mef/xml.ts";
 import type { MefBundle } from "./builder.ts";
 import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
 import { assertF1040FinalHeader } from "../filer-source-reconciliation.ts";
+import {
+  assertFilingResidencyReview,
+  type FilingResidencyReview,
+} from "./residency-review.ts";
 
 const XML_DECLARATION = '<?xml version="1.0" encoding="UTF-8"?>\n';
 const encoder = new TextEncoder();
@@ -12,14 +16,17 @@ export interface MefSubmissionArchiveOptions {
   readonly filer: FilerIdentity;
   readonly submissionId: string;
   readonly processingDate: Date;
+  readonly residencyReview: FilingResidencyReview;
 }
 
 export interface MefSubmissionArchive {
   readonly submissionId: string;
   readonly fileName: string;
+  readonly processingDate: Date;
   readonly bytes: Uint8Array;
   readonly manifestXml: string;
   readonly bundle: MefBundle;
+  readonly residencyReview: FilingResidencyReview;
 }
 
 export interface MefTransmissionSubmission {
@@ -87,6 +94,19 @@ function assertPreparedArchiveContents(archive: MefSubmissionArchive): void {
       "MeF transmission submission manifest differs from its ID or prepared return",
     );
   }
+  const spouseTin = /<SpouseSSN>(\d{9})<\/SpouseSSN>/.exec(archive.bundle.xml)
+    ?.[1];
+  const statusCode =
+    /<IndividualReturnFilingStatusCd>([1-5])<\/IndividualReturnFilingStatusCd>/
+      .exec(archive.bundle.xml)?.[1];
+  assertFilingResidencyReview(
+    archive.residencyReview,
+    tin,
+    spouseTin,
+    Number(statusCode),
+    archive.processingDate,
+    archive.bundle.xml.includes("<NRASpouseTreatedAsResidentGrp>"),
+  );
 }
 
 function dayOfYear(date: Date): number {
@@ -171,6 +191,14 @@ export async function buildMefSubmissionArchive(
     throw new Error("MeF submission differs from its prepared return");
   }
   assertF1040FinalHeader(bundle.pending.f1040 ?? {}, options.filer);
+  const residencyReview = assertFilingResidencyReview(
+    options.residencyReview,
+    tin,
+    options.filer.spouse?.ssn.replaceAll("-", ""),
+    options.filer.filingStatus,
+    options.processingDate,
+    bundle.xml.includes("<NRASpouseTreatedAsResidentGrp>"),
+  );
   const attachmentNames = bundle.attachments.map(({ fileName }) => fileName);
   const digestNames = Object.keys(bundle.attachmentSha256ByFileName);
   if (
@@ -203,9 +231,11 @@ export async function buildMefSubmissionArchive(
   return {
     submissionId: options.submissionId,
     fileName: `${options.submissionId}.zip`,
+    processingDate: options.processingDate,
     bytes: zipSync(files, { level: 6 }),
     manifestXml,
     bundle,
+    residencyReview,
   };
 }
 

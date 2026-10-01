@@ -14,6 +14,16 @@ import {
 
 const processingDate = new Date("2026-09-26T10:00:00Z");
 const submissionId = "1234562026269abcdefg";
+const residencyReview = {
+  tax_year: 2025 as const,
+  taxpayer: {
+    tin: "123456789",
+    tax_status: "full_year_us_citizen" as const,
+    status_source_reference: "reviewed-2025-citizenship-record",
+    reviewer_reference: "reviewer-2026-04-01",
+    reviewed_on: "2026-04-01",
+  },
+};
 
 function filer(): FilerIdentity {
   return {
@@ -48,7 +58,10 @@ async function makeSubmissionArchive(
     filer: options.filer,
     attachments: options.attachments,
   });
-  return buildMefSubmissionArchive(bundle, options);
+  return buildMefSubmissionArchive(bundle, {
+    ...options,
+    residencyReview,
+  });
 }
 
 Deno.test("MeF submission refuses an unanswered digital-asset question", async () => {
@@ -76,6 +89,127 @@ Deno.test("MeF submission refuses a missing Form 1040 filing status", async () =
       }),
     Error,
     "filing status must match the identified filer",
+  );
+});
+
+Deno.test("MeF submission requires reviewed full-year residency for the final filer", async () => {
+  const identity = filer();
+  const bundle = await buildMefBundle({
+    f1040: { filing_status: "single", digital_assets: false },
+  }, { filer: identity, attachments: [] });
+  const options = { filer: identity, submissionId, processingDate };
+  await assertRejects(() =>
+    buildMefSubmissionArchive(bundle, {
+      ...options,
+      residencyReview: undefined as unknown as typeof residencyReview,
+    })
+  );
+  await assertRejects(
+    () =>
+      buildMefSubmissionArchive(bundle, {
+        ...options,
+        residencyReview: {
+          ...residencyReview,
+          taxpayer: { ...residencyReview.taxpayer, tin: "987654321" },
+        },
+      }),
+    Error,
+    "must identify every joint filer and the final return",
+  );
+  await assertRejects(
+    () =>
+      buildMefSubmissionArchive(bundle, {
+        ...options,
+        residencyReview: {
+          ...residencyReview,
+          taxpayer: {
+            ...residencyReview.taxpayer,
+            tax_status: "dual_status" as const,
+          },
+        },
+      }),
+    Error,
+    "dual-status or nonresident filer cannot enter",
+  );
+  const submitted = await buildMefSubmissionArchive(bundle, {
+    ...options,
+    residencyReview,
+  });
+  assertThrows(
+    () =>
+      buildMefTransmissionPackage([{
+        archive: {
+          ...submitted,
+          residencyReview: {
+            ...residencyReview,
+            taxpayer: {
+              ...residencyReview.taxpayer,
+              tax_status: "nonresident" as const,
+            },
+          },
+        },
+        electronicPostmark: processingDate,
+      }]),
+    Error,
+    "dual-status or nonresident filer cannot enter",
+  );
+});
+
+Deno.test("joint MeF submission requires a separately reviewed spouse classification", async () => {
+  const identity: FilerIdentity = {
+    ...filer(),
+    filingStatus: FilingStatus.MarriedFilingJointly,
+    spouse: {
+      ssn: "987654321",
+      firstName: "Jane",
+      lastName: "Smith",
+      nameControl: "SMIT",
+    },
+  };
+  const bundle = await buildMefBundle({
+    f1040: {
+      filing_status: "mfj",
+      taxpayer_ssn: "123456789",
+      spouse_ssn: "987654321",
+      digital_assets: false,
+    },
+  }, { filer: identity, attachments: [] });
+  const options = { filer: identity, submissionId, processingDate };
+  await assertRejects(
+    () =>
+      buildMefSubmissionArchive(bundle, {
+        ...options,
+        residencyReview,
+      }),
+    Error,
+    "must identify every joint filer",
+  );
+  const jointReview = {
+    ...residencyReview,
+    spouse: {
+      tin: "987654321",
+      tax_status: "full_year_resident_alien" as const,
+      status_source_reference: "reviewed-2025-resident-record",
+      reviewer_reference: "reviewer-2026-04-01",
+      reviewed_on: "2026-04-01",
+    },
+  };
+  const submission = await buildMefSubmissionArchive(bundle, {
+    ...options,
+    residencyReview: jointReview,
+  });
+  assertEquals(submission.residencyReview.spouse?.tin, "987654321");
+  await assertRejects(
+    () =>
+      buildMefSubmissionArchive(bundle, {
+        ...options,
+        residencyReview: {
+          ...jointReview,
+          spouse: { ...jointReview.spouse, tax_status: "dual_status" as const },
+        },
+      }),
+    Error,
+    "dual-status or nonresident filer cannot enter",
   );
 });
 
@@ -200,7 +334,12 @@ Deno.test("MeF submission rejects changes after bundle preparation", async () =>
       bytes: await pdf.save(),
     }],
   });
-  const options = { filer: identity, submissionId, processingDate };
+  const options = {
+    filer: identity,
+    submissionId,
+    processingDate,
+    residencyReview,
+  };
   await assertRejects(
     () =>
       buildMefSubmissionArchive({
@@ -257,6 +396,7 @@ Deno.test("Form 3800 PDF and submission ZIP consume one prepared native return",
     filer: identity,
     submissionId,
     processingDate,
+    residencyReview,
   });
   const xml = new TextDecoder().decode(
     unzipSync(submission.bytes)["xml/submission.xml"],
