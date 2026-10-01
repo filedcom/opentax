@@ -4,6 +4,29 @@ Status: route-by-route audit, 2026-09-29. The table records focused evidence
 where available; it is not a current-source full-batch or ATS result. These
 paths remain in the Form 1040 scope.
 
+## 2026-10-01 implementation reconciliation (unrun)
+
+The Form 7203 source path now combines one reviewed cash capital contribution
+with a separate newly funded formal shareholder note, allocating one K-1 box-1
+loss to stock basis before debt basis and replaying Schedule E, Form 1040,
+native MeF, and PDF. The route still needs authenticated source bytes and wider
+basis, repayment, and carryover cases.
+
+Form 7217's bounded multi-property liquidating distribution now checks each
+property's section 732(c) basis increase against a named allocation workpaper
+and property class rather than checking only the Part II total. Other property
+classes, basis decreases, and accepted source bytes remain open. A 2025 Form
+6252 final-payment path now also requires a reviewed 2024 Form 6252 line record
+and reconciles the prior sale and recognized-gain figures; acceptance and
+current payment principal/interest evidence remain open.
+
+The staged attached Form 9465 request now requires a sourced ten-digit home
+phone and call-time entry, projected to its native and PDF fields. Its
+electronic authorization and linked filing review remain unresolved, so both
+positive exporters still reject. These new source/native/PDF fixtures are
+authored for the agreed later bulk pass and have not changed the earlier local
+XSD, filled-PDF, or ATS evidence reported below.
+
 ## Four public paths originally flagged as source-only
 
 | Path       | Source and tax effect                                                                                                                                          | Missing filing document                                                 | Current export boundary                                                                                                                                                                                                                                                                  | Work still required                                                                                                                                                                                                            |
