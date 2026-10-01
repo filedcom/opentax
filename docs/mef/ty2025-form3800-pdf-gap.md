@@ -361,6 +361,15 @@ Form 1040. Its 15-page packet and local TY2025 v5.4 XML pass the bounded
 source-to-return check; Form 8874 and Part III were visually inspected. The
 expanded review set has 21 PDFs (170 pages) and 21 XML files under
 `.state/research/ty2025-filled-pdf-review/2026-09-29-v23/`.
+For a direct nonpassive Form 8874 claim with no K-1 credit, the child PDF now
+replays its printed investment and line 3, then binds the claimed credit to
+the prepared Form 3800 Part III line 1i IRS8874 document ID, amount, Part V
+detail, line 38, Schedule 3, and Form 1040. The $500 return and altered
+source, print, claim, document ID, amount, detail, and final-credit fixtures
+await the bulk run. Mixed K-1 and passive Form 8874 routes retain their
+existing parent and Form 8582-CR checks; this child parity check covers the
+bounded direct nonpassive source.
+
 The next two Form 8874 returns print two and six qualified equity investments
 on one source form each, with $1,100 and $3,000 on Part III line 1i and
 line 38. Their Form 8874 pages and one Part III page were visually checked;

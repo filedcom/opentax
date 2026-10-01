@@ -7,6 +7,8 @@ import { assertForm8874AIssuanceOwners } from "../../../nodes/inputs/f8874/issua
 import { form8874, reconciledForm8874K1Line2 } from "../../mef/forms/f8874.ts";
 import { appendForm8874InvestmentStatement } from "./f8874_overflow_statement.ts";
 import { PDFDocument, StandardFonts } from "pdf-lib";
+import { inputSchema as f3800InputSchema } from "../../../nodes/inputs/f3800/index.ts";
+import { assertForm3800FinalCreditJoin } from "../../form3800_final_credit_join.ts";
 
 // Form 8874 (Rev. November 2021) has six investment rows on its only form
 // page. Pages 2 and 3 in the IRS PDF are instructions, not return pages.
@@ -154,6 +156,60 @@ export const form8874Pdf: PdfFormDescriptor = {
       }));
     }
     return printed;
+  },
+  instances(fields, _filer, allPending, prepared) {
+    if (Object.keys(fields).length === 0) return [];
+    if (!allPending?.f8874) {
+      throw new Error("Form 8874 PDF needs its finalized source return");
+    }
+    const source = inputSchema.parse(allPending.f8874);
+    const lines = calculateForm8874(source);
+    const claim = f3800InputSchema.parse(allPending.f3800);
+    // The parent checks mixed and passive allocations. This child check binds
+    // the retained direct, nonpassive Form 8874 copy to its own filed document.
+    if (
+      lines.nonpassiveCredit === 0 ||
+      lines.rows.some((row) =>
+        row.investment.subject_to_passive_activity_limit
+      ) ||
+      (claim.f8874_k1_credit_entries?.length ?? 0) > 0
+    ) return [fields];
+    if (!prepared) {
+      throw new Error("Form 8874 PDF needs the prepared Form 3800 document");
+    }
+    const rows = prepared.currentRows.filter((row) => row.line === "1i");
+    const amounts = prepared.currentAmounts.filter((row) => row.line === "1i");
+    const details = prepared.currentDetails.filter((row) => row.line === "1i");
+    const [row] = rows;
+    const [amount] = amounts;
+    const [detail] = details;
+    if (
+      JSON.stringify(fields) !==
+        JSON.stringify(form8874Pdf.projectFields!(source, allPending)) ||
+      fields.line2 !== 0 || fields.line3 !== lines.line1 ||
+      claim.f8874_credit?.credit_amount !== lines.line1 ||
+      claim.f8874_credit?.subject_to_passive_activity_limit !== false ||
+      rows.length !== 1 || amounts.length !== 1 || details.length !== 1 ||
+      row.metadata.sourceCount !== 1 ||
+      row.metadata.referenceDocumentName !== "IRS8874" ||
+      !row.metadata.referenceDocumentId || row.entityCredits.length !== 0 ||
+      amount.nonpassiveCredit !== lines.line1 ||
+      amount.totalCredit !== lines.line1 ||
+      amount.transferOutCredit !== 0 ||
+      amount.passiveBeforeLimit !== 0 ||
+      amount.passiveAfterLimit !== 0 ||
+      amount.appliedCredit !== detail.appliedCredit ||
+      detail.credit !== lines.line1 ||
+      detail.sourceDocumentId !== row.metadata.referenceDocumentId ||
+      detail.passThroughEin !== undefined ||
+      prepared.lines.line38 !== claim.allowed_credit
+    ) {
+      throw new Error(
+        "Form 8874 PDF differs from prepared Form 3800 line 1i",
+      );
+    }
+    assertForm3800FinalCreditJoin(prepared.lines.line38, allPending);
+    return [fields];
   },
   pageIndices: () => [0],
   appendSupplementalPages: appendForm8874InvestmentStatement,
