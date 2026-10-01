@@ -1,4 +1,5 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
+import { assertForm3800FinalCreditJoin } from "../../form3800_final_credit_join.ts";
 import { reconcileForm8882DirectEmployer } from "../../mef/forms/f8882_source.ts";
 
 // Official Rev. 12/2017 PDF AcroForm: p1-t1/t2 identify the filer; odd
@@ -31,5 +32,41 @@ export const form8882Pdf: PdfFormDescriptor = {
     if (Object.keys(raw).length === 0) return {};
     const { lines } = reconcileForm8882DirectEmployer(raw, allPending);
     return lines;
+  },
+  instances(fields, _filer, allPending, prepared) {
+    if (Object.keys(fields).length === 0) return [];
+    if (!allPending || !prepared) {
+      throw new Error("Form 8882 PDF needs the prepared Form 3800 document");
+    }
+    const { lines } = reconcileForm8882DirectEmployer(
+      allPending.f8882,
+      allPending,
+    );
+    const rows = prepared.currentRows.filter((row) => row.line === "1k");
+    const amounts = prepared.currentAmounts.filter((row) => row.line === "1k");
+    const details = prepared.currentDetails.filter((row) => row.line === "1k");
+    const [row] = rows;
+    const [amount] = amounts;
+    const [detail] = details;
+    if (
+      fields.line7 !== lines.line7 ||
+      rows.length !== 1 || amounts.length !== 1 || details.length !== 1 ||
+      row.metadata.sourceCount !== 1 ||
+      row.metadata.referenceDocumentName !== "IRS8882" ||
+      !row.metadata.referenceDocumentId || row.entityCredits.length !== 0 ||
+      detail.sourceDocumentId !== row.metadata.referenceDocumentId ||
+      detail.passThroughEin !== undefined ||
+      detail.credit !== lines.line7 ||
+      amount.nonpassiveCredit !== lines.line7 ||
+      amount.totalCredit !== lines.line7 ||
+      amount.transferOutCredit !== 0 ||
+      amount.passiveBeforeLimit !== 0 ||
+      amount.passiveAfterLimit !== 0 ||
+      amount.appliedCredit !== detail.appliedCredit
+    ) {
+      throw new Error("Form 8882 PDF differs from filed Form 3800 line 1k");
+    }
+    assertForm3800FinalCreditJoin(prepared.lines.line38, allPending);
+    return [fields];
   },
 };

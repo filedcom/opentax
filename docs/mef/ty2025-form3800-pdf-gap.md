@@ -632,3 +632,11 @@ line 20. An authored $1,250 plus $800 example reaches $2,050; changed K-1 box
 does not cover the self-earned-plus-K-1 combination above, passive allocations,
 more than two partnership sources, S corporation/estate/trust sources, partial
 tax use, or source-byte authentication.
+
+The Form 8882 printable copy now independently requires its prepared Form 3800
+Part III line 1k source row, current amount, and detail to retain one filed
+IRS8882 document ID and the exact Form 8882 line 7 credit. It also requires
+Form 3800 line 38 to reconcile through Schedule 3 line 6a/8 to finalized Form
+1040 line 20. Authored fixtures change the document ID, amount, and final tax
+credit; they await the shared bulk run. This check does not authenticate the
+underlying child-care invoices or widen the supported Form 8882 claim.
