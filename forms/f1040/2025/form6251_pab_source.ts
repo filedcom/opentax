@@ -92,7 +92,7 @@ export function assertForm6251PrivateActivityBondSource(
       (schedule2?.line2_amt ?? 0) !== amt ||
       (amt > 0 &&
         (typeof form1040?.line17_additional_taxes !== "number" ||
-          form1040.line17_additional_taxes < amt))
+          Number(form1040?.line17_additional_taxes) < amt))
     ))
   ) {
     throw new Error(
