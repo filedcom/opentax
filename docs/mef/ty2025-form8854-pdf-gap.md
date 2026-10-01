@@ -21,47 +21,54 @@ previously filed Form 8854.
 
 ## Initial statement
 
-The current input has five scalar
-`prior_year_us_income_tax_less_foreign_tax_credit` values for 2020-2024 but
-does not identify or read those prior returns and Schedule 3 credits. The
-native builder prints the same entered values in Part II Section A; its
-covered-expatriate decision uses their average. Consequently, even the
-noncovered path cannot independently establish whether Section C is properly
-absent. `certified_tax_compliance` and the prior-year residence/exception facts
-are also self-declared without the five-year filing/payment evidence needed to
-support the Section A answers. The balance sheet has typed categories and
-arithmetic totals, but no asset- or liability-level valuation evidence join to
-its completeness confirmations. A covered path can reconcile identified
-mark-to-market assets to Form 8949; that current-year join does not cure the
-prior-year status or balance-sheet gaps. Section D additionally needs its
-separate hypothetical-return and deferral-agreement evidence to be reflected
-in the complete printed package.
+The initial input now requires five document-identified 2020-2024 filed
+Form 1040 records. Each records Form 1040 line 24, Schedule 3 line 1 foreign
+tax credit, a filed-return SHA-256 and IRS acceptance reference. The schema
+requires one distinct record for each year and recomputes every Part II
+Section A net-tax value as line 24 less that foreign credit. The covered
+threshold calculation and native Section A therefore use values cross-checked
+against the five structured prior-return records. A positive fixture with a
+2024 $100 tax/$20 foreign credit and altered-credit, duplicated-year, and
+reused-digest fixtures are written but unrun.
+
+The executor still does not load and authenticate the underlying prior-return
+bytes or payment evidence; the references and digests are entered metadata.
+`certified_tax_compliance` and prior residence/exception facts still lack
+verified five-year filing/payment evidence. The balance sheet has typed
+categories and arithmetic totals, but no asset- or liability-level valuation
+evidence join to its completeness confirmations. A covered path can reconcile
+identified mark-to-market assets to Form 8949; that current-year join does not
+cure the prior-year status or balance-sheet gaps. Section D additionally needs
+its separate hypothetical-return and deferral-agreement evidence to be
+reflected in the complete printed package. Positive PDF export remains closed.
 
 ## Annual statement
 
-The annual input requires a `prior_form8854_document_id` on each obligation
-and a `prior_form8854_obligations_confirmed_complete` flag. The annual native
-builder does not load that prior Form 8854 or a durable carryforward ledger to
-verify that every prior deferred property, eligible compensation item, and
-nongrantor trust appears in Part III with the original gain, deferred tax, and
-waiver status. It can match a 2025 property disposition to an identified
-Form 8949 transaction, and it internally matches entered distribution rows to
-entered `source_1042s` summaries. Those are useful current-year checks, but
-the Form 1042-S summaries are not independently joined to actual source
-documents, and neither check establishes the prior-year inventory. The
-no-distribution annual case is not safe to print merely because current rows
-are empty: the earlier filing could contain an omitted item.
+The annual input now requires a document-identified prior Form 8854 obligation
+ledger with a filed tax year, SHA-256 and IRS acceptance reference. Its
+deferred properties, eligible compensation items, and nongrantor trusts must
+match every current Part III item exactly, including original gain/deferred
+tax and waiver status. Omitted, changed, or newly inserted current items are
+rejected; a positive one-property ledger and tampering fixtures are written
+but unrun. The current bounded ledger represents one prior filing, and each
+current obligation must name that filing. The executor still does not load or
+authenticate those prior Form 8854 bytes, so the ledger is a cross-check of
+entered facts, not proof of complete prior history. It can match a 2025
+property disposition to an identified Form 8949 transaction, and it
+internally matches entered distribution rows to entered `source_1042s`
+summaries. The Form 1042-S summaries are not independently joined to actual
+source documents. The no-distribution annual case is not safe to print merely
+because current rows are empty: the earlier filing could contain an omitted
+item.
 
-To open either PDF route, add a durable, document-identified prior-return
-source. Recompute the initial five Section A tax amounts from each year's Form
-1040 total tax and foreign tax credit, verify the covered-status and Section C
-decision, and substantiate Section B valuations/completeness. For annual
-filings, import and reconcile every surviving obligation against the actual
-prior Form 8854/carryforward history, then join 2025 sales and distributions
+To open either PDF route, authenticate the five initial filed-return source
+documents and substantiate tax compliance and Section B valuations/completeness.
+For annual filings, authenticate the prior Form 8854/carryforward history,
+then join 2025 sales and distributions
 to filed Form 8949 and Form 1042-S evidence. Only then map all applicable
 official fields and required statements, reconcile them with native MeF and
 the final Form 1040, and retain the separate signature and mailing obligations
 described in the IRS instructions.
 
 No PDF descriptor, registration or focused print test was added. No tests,
-typecheck, XSD validation or filled-PDF rendering was run in this audit.
+typecheck, XSD validation or filled-PDF rendering was run in this batch.

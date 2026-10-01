@@ -74,6 +74,16 @@ const noncoveredInput = initialSchema.parse({
     year_2021: 0,
     year_2020: 0,
   },
+  prior_year_filed_return_sources: [2020, 2021, 2022, 2023, 2024].map(
+    (year) => ({
+      tax_year: year,
+      filed_form1040_document_id: `filed-${year}-form1040`,
+      filed_form1040_sha256: String(year).repeat(16),
+      form1040_line24_total_tax: 0,
+      schedule3_line1_foreign_tax_credit: 0,
+      irs_acceptance_reference: `irs-accepted-${year}`,
+    }),
+  ),
   balance_sheet: {
     asset_categories_confirmed_complete: true,
     liabilities_confirmed_complete: true,
@@ -209,6 +219,29 @@ const annualNoActivityInput = annualInputSchema.parse({
   },
   tax_status_2025: "FULL_YEAR_US_CITIZEN_OR_RESIDENT",
   prior_form8854_obligations_confirmed_complete: true,
+  prior_form8854_obligation_ledger: {
+    source_document_id: "DOC-PRIOR",
+    source_sha256: "c".repeat(64),
+    filed_tax_year: 2024,
+    irs_acceptance_reference: "irs-accepted-2024-form8854",
+    deferred_properties: [{
+      item_id: "stock",
+      description: "Stock holding",
+      mark_to_market_gain_or_loss_amount: 111_000,
+      deferred_tax_amount: 50_000,
+    }],
+    eligible_deferred_compensation_items: [{
+      item_id: "plan",
+      description: "Deferred plan",
+      irrevocable_treaty_reduction_waiver_confirmed: true,
+    }],
+    nongrantor_trust_interests: [{
+      item_id: "trust",
+      description: "Family trust",
+      no_prior_full_value_election_confirmed: true,
+      treaty_reduction_waiver_confirmed: true,
+    }],
+  },
   original_form8854_mailed_confirmed: true,
   attached_form8854_copy_marked_copy_confirmed: true,
   source_1042s: [],
@@ -739,6 +772,8 @@ Deno.test({
       year_2021: 0,
       year_2020: 0,
     },
+    prior_year_filed_return_sources:
+      noncoveredInput.prior_year_filed_return_sources,
     balance_sheet: {
       asset_categories_confirmed_complete: true,
       liabilities_confirmed_complete: true,
