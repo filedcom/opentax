@@ -48,6 +48,7 @@ function filing(
     | "qualified_dividend"
     | "two_qualified_dividends"
     | "oid"
+    | "two_oid"
     | "interest_dividend"
     | "oid_dividend"
     | "two_interest"
@@ -164,6 +165,20 @@ function filing(
             ...(source === "qualified_dividend" ? { box1b: 15_000 } : {}),
             investment_property_for_form4952: true,
           }],
+      }
+      : source === "two_oid"
+      ? {
+        f1099oid: [{
+          payer_name: "First taxable OID bond payer",
+          source_document_reference: "issued-2025-first-taxable-oid",
+          box1_oid: 60_000,
+          investment_property_for_form4952: true,
+        }, {
+          payer_name: "Second taxable OID bond payer",
+          source_document_reference: "issued-2025-second-taxable-oid",
+          box1_oid: 40_000,
+          investment_property_for_form4952: true,
+        }],
       }
       : {
         f1099oid: [{
@@ -433,6 +448,76 @@ Deno.test("Form 4952 traced loan combines Treasury box 3 and taxable OID box 1 i
     Error,
     "owner must match the final filer",
   );
+});
+
+Deno.test("Form 4952 traced loan joins two distinct taxable OID payers through the final native and PDF return", async () => {
+  const result = filing("two_oid");
+  assertEquals(result.diagnostics, []);
+  const fields = result.pending.form4952!;
+  assertEquals(fields.line1, 20_000);
+  assertEquals(fields.line4a, 100_000);
+  assertEquals(fields.line8, 20_000);
+  assertEquals(result.pending.f1040?.line2b_taxable_interest, 100_000);
+  assertEquals(result.pending.schedule_a?.line_9_investment_interest, 20_000);
+  const finalFiler = {
+    ...testFiler(),
+    firstNameWithInitial: "Alex",
+    lastName: "Taxpayer",
+  };
+  assertStringIncludes(
+    nativeForm4952.build(fields, {
+      pending: result.pending,
+      filer: finalFiler,
+    }),
+    "<InvestmentPropGrossIncomeAmt>100000</InvestmentPropGrossIncomeAmt>",
+  );
+  assertEquals(
+    form4952Pdf.projectFields!(fields, result.pending).line8,
+    20_000,
+  );
+  const pending = buildPending(result.pending);
+  const bundle = await buildMefBundle(pending, {
+    filer: finalFiler,
+    attachments: [],
+  });
+  assertStringIncludes(
+    bundle.xml,
+    "<InvestmentInterestExpDeductAmt>20000</InvestmentInterestExpDeductAmt>",
+  );
+  const pdf = await buildPdfBytes(pending, finalFiler, ".pdf-cache", bundle);
+  assertEquals((await PDFDocument.load(pdf)).getPageCount() > 0, true);
+
+  const oidItems = result.pending.f1099oid!.f1099oids;
+  const duplicate = {
+    ...result.pending,
+    f1099oid: {
+      f1099oids: [oidItems[0], {
+        ...oidItems[1],
+        source_document_reference: oidItems[0].source_document_reference,
+      }],
+    },
+  };
+  assertThrows(() =>
+    nativeForm4952.build(fields, {
+      pending: duplicate,
+      filer: finalFiler,
+    }), Error);
+  assertThrows(() => form4952Pdf.projectFields!(fields, duplicate), Error);
+  assertThrows(() =>
+    nativeForm4952.build(fields, {
+      pending: {
+        ...result.pending,
+        f1099oid: {
+          f1099oids: [oidItems[0], { ...oidItems[1], box1_oid: 39_999 }],
+        },
+      },
+      filer: finalFiler,
+    }), Error);
+  assertThrows(() =>
+    form4952Pdf.instances!(fields, {
+      ...finalFiler,
+      primarySSN: "999887777",
+    }, result.pending), Error);
 });
 
 Deno.test("Form 4952 traced loan joins distinct Treasury, OID, and ordinary dividend payers through final native and PDF return", async () => {

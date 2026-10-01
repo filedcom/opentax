@@ -699,3 +699,21 @@ The issued dividend copies and lender records remain entered references, not
 authenticated bytes. Multiple qualified payers, interest/OID combinations,
 capital gains, foreign income/tax, carryovers, AMT differences, and other tax
 worksheets remain outside this bounded election route.
+
+## Traced loan with two taxable OID payers (2026-10-01, unrun)
+
+The [2025 Form 4952](https://www.irs.gov/pub/irs-prior/f4952--2025.pdf)
+includes interest from investment property on line 4a and limits line 8 to net
+investment income. One owner-identified, direct-use taxable-securities loan
+now accepts exactly two separately identified, unadjusted Form 1099-OID box 1
+payers. Both payer names and issued-copy references must differ. Their two
+source deposits must match Form 4952 line 4a and finalized Form 1040 line 2b;
+the traced $20,000 interest deduction joins Schedule A line 9, selected Form
+1040 itemization, native MeF, and PDF. A $60,000 plus $40,000 positive
+full-return fixture and duplicate-copy, changed-amount, and owner-tamper
+fixtures are authored for the deferred batch.
+
+The issued OID copies and lender records are entered references rather than
+authenticated bytes. OID acquisition premium, bond premium, market discount,
+Treasury box 8 OID, tax-exempt OID, foreign-source/tax facts, mixed-use debt,
+carryovers, and additional payer combinations remain outside this route.

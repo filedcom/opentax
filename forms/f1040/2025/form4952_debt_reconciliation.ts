@@ -122,6 +122,15 @@ export function reconcileForm4952DirectDebtExport(
     new Set(dividend.data.f1099divs.map((item) => item.payerName)).size === 2;
   const oneOid = oid.success && oid.data.f1099oids.length === 1 &&
     pending.f1099int === undefined && pending.f1099div === undefined;
+  const twoOid = oid.success && oid.data.f1099oids.length === 2 &&
+    pending.f1099int === undefined && pending.f1099div === undefined &&
+    oid.data.f1099oids.every((item) =>
+      !!item.source_document_reference?.trim() && !!item.payer_name?.trim()
+    ) &&
+    new Set(
+        oid.data.f1099oids.map((item) => item.source_document_reference),
+      ).size === 2 &&
+    new Set(oid.data.f1099oids.map((item) => item.payer_name)).size === 2;
   const oneTreasuryInterestAndOid = interest.success && oid.success &&
     interest.data.f1099ints.length === 1 &&
     oid.data.f1099oids.length === 1 &&
@@ -228,6 +237,7 @@ export function reconcileForm4952DirectDebtExport(
     !printed.success || !retained.success ||
     !printed.data.direct_debt_trace || !retained.data.direct_debt_trace ||
     (!oneInterest && !twoInterest && !oneDividend && !twoDividends && !oneOid &&
+      !twoOid &&
       !oneTreasuryInterestAndOid &&
       !treasuryOidAndDividend &&
       !oneInterestAndDividend && !oneOidAndDividend &&
@@ -339,7 +349,7 @@ export function reconcileForm4952DirectDebtExport(
         typeof retained.data.source_1099_qualified_dividends !== "number" ||
         printed.data.source_1099_qualified_dividends !==
           retained.data.source_1099_qualified_dividends
-      : twoInterest || oneTreasuryInterestAndOid ||
+      : twoInterest || twoOid || oneTreasuryInterestAndOid ||
           treasuryOidAndDividend || twoInterestAndDividend
       ? !Array.isArray(printed.data.source_1099_interest) ||
         !Array.isArray(retained.data.source_1099_interest) ||
@@ -351,7 +361,7 @@ export function reconcileForm4952DirectDebtExport(
           JSON.stringify(
             [...retained.data.source_1099_interest].sort((a, b) => a - b),
           ) ||
-        (twoInterest || oneTreasuryInterestAndOid
+        (twoInterest || twoOid || oneTreasuryInterestAndOid
           ? printed.data.source_1099_dividends !== undefined ||
             retained.data.source_1099_dividends !== undefined
           : typeof printed.data.source_1099_dividends !== "number" ||
