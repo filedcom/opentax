@@ -19,7 +19,7 @@ interpreter-expense and Schedule C reduction route; wider sources remain open.
 
 | Native pending key      | Native root(s)              | Current PDF gap / decision                                                                                                                                 |
 | ----------------------- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `form8621`              | `IRS8621`                   | No PFIC Form 8621 PDF or Part V excess-distribution statement print route.                                                                                 |
+| `form8621`              | `IRS8621`                   | No PFIC parent Form 8621 PDF; a bounded Part V supporting statement can now print from checked source events.                                             |
 | `f4255`                 | `IRS4255`                   | No investment-credit recapture PDF.                                                                                                                        |
 | `f8854`, `f8854_annual` | `IRS8854` initial or annual | Neither filed variant has a Form 8854 PDF descriptor. The native initial/annual statements do not substitute for the parent printed form.                  |
 
