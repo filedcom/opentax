@@ -14,8 +14,10 @@ export const reviewedPriorReducedNoteSchema = z.object({
   shareholder_ssn: z.string().regex(/^\d{9}$/),
   corporation_ein: z.string().regex(/^\d{9}$/),
   k1_source_document_reference: reference,
+  k1_source_document_sha256: digest,
   beginning_stock_basis: z.number().int().nonnegative(),
   beginning_stock_basis_workpaper_reference: reference,
+  beginning_stock_basis_workpaper_sha256: digest,
   current_box1_ordinary_loss: z.number().int().positive(),
   formal_note_id: reference,
   signed_note_document_reference: reference,
@@ -61,6 +63,8 @@ export const reviewedPriorReducedNoteSchema = z.object({
     source.principal_repayment.shareholder_bank_deposit_reference,
   ];
   const digests = [
+    source.k1_source_document_sha256,
+    source.beginning_stock_basis_workpaper_sha256,
     source.signed_note_sha256,
     source.prior_filed_return_sha256,
     source.prior_accepted_acknowledgement_sha256,

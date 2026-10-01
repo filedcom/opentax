@@ -1,6 +1,11 @@
 import type { NodeRegistry } from "../types/node-registry.ts";
 import type { ExecutionStep } from "./planner.ts";
 import type { NodeContext } from "../types/node-context.ts";
+import {
+  type SourceDocumentBytes,
+  type SourceDocumentClaim,
+  VerifiedSourceDocuments,
+} from "./source-documents.ts";
 
 export type ExecutorDiagnosticEntry = {
   readonly severity: "error";
@@ -15,6 +20,29 @@ export type ExecuteResult = {
   readonly diagnostics: readonly ExecutorDiagnosticEntry[];
   readonly carryforwards: Readonly<Record<string, number>>;
 };
+
+export type DocumentBoundExecuteResult = ExecuteResult & {
+  readonly verifiedSourceDocuments: VerifiedSourceDocuments;
+};
+
+/** Verify and privately retain the exact source bytes before graph execution. */
+export async function executeWithSourceDocuments(
+  plan: readonly ExecutionStep[],
+  registry: NodeRegistry,
+  inputs: Record<string, unknown>,
+  ctx: NodeContext,
+  claims: readonly SourceDocumentClaim[],
+  documents: readonly SourceDocumentBytes[],
+): Promise<DocumentBoundExecuteResult> {
+  const verifiedSourceDocuments = await VerifiedSourceDocuments.verify(
+    claims,
+    documents,
+  );
+  return {
+    ...execute(plan, registry, inputs, ctx),
+    verifiedSourceDocuments,
+  };
+}
 
 /**
  * Merges output.fields into pending[targetId].

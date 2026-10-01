@@ -2,6 +2,25 @@
 
 ## Prior reduced formal-note basis and taxable repayment prerequisite (2026-10-01, unrun)
 
+The executor now has an async `executeWithSourceDocuments` entry point. It
+requires an exact set of distinct source references, nonempty `Uint8Array`
+bytes, and SHA-256 matches before running the graph. Its result retains a
+read-only reference/digest manifest and privately copied bytes; access returns
+another copy. The Form 7203-specific entry point derives its eight claims
+from the parsed, single-K-1 prior-reduced source: 2025 K-1, opening stock-basis
+workpaper, signed note, prior filed return, IRS acceptance acknowledgement,
+prior filed Form 7203, corporate loan ledger, and shareholder bank deposit.
+It also requires the same shareholder, corporation, stock ledger, and exact
+K-1 repayment/loss. Complete-byte, missing-byte, changed-byte, and altered-
+claim fixtures are authored for the deferred batch.
+
+This verifies that the supplied bytes match the declared digests in this
+execution. It does **not** authenticate the issuer or IRS, parse the prior
+accepted return/Form 7203 to prove line 20/31, prove the note and principal
+payment contents, or establish the gain's holding period and character. The
+K-1 node and Form 7203 native/PDF exporters still reject the prior-reduced
+branch. Form 8949, Schedule D, and Form 1040 line 7 remain unjoined.
+
 The public K-1 source now uses the strict tagged `form7203_debt_evidence`
 contract. Its `new_2025_formal_notes` branch retains the active new-note routes
 below. The `prior_reduced_formal_note_repayment` branch records a signed older
@@ -20,13 +39,13 @@ opening stock basis and then the remaining debt basis. The
 [Form 7203 instructions](https://www.irs.gov/instructions/i7203) require
 formal-note gain on Form 8949 and Schedule D.
 
-This workpaper is **not a filing route**. The executor currently retains only
-the K-1 JSON and document references, not the prior accepted-return/Form 7203
-bytes or current note and payment bytes. Declarative digests cannot prove those
-records or authorize a positive Form 8949/Schedule D/1040 line 7 join. K-1
+This workpaper is **not a filing route**. The byte-bound entry point retains
+the exact declared source bytes, but the graph does not establish their content
+or IRS acceptance and cannot authorize a Form 8949/Schedule D/1040 line 7
+join. K-1
 posting, direct Form 7203 calculation, native MeF, and PDF fail closed for this
 branch. Positive arithmetic and source/return/export rejection fixtures are
-authored for the deferred batch. Executor-owned byte binding, prior-return
+authored for the deferred batch. Prior-return
 acceptance review, gain character/holding-period proof, and the final Form
 8949/Schedule D/Form 1040 join remain open.
 

@@ -1,4 +1,4 @@
-import { assertEquals, assertThrows } from "@std/assert";
+import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { k1SCorpNode } from "../../../inputs/k1_s_corp/index.ts";
 import { reconcileNewFormalNotes } from "./debt-note.ts";
 import { calculatePriorReducedNoteWorkpaper } from "./prior-reduced-note.ts";
@@ -8,6 +8,7 @@ import { buildReviewedStockLossScheduleE } from "../../../../2025/mef/forms/sche
 import { scheduleEStockLossPdf } from "../../../../2025/pdf/forms/schedule_e_stock_loss.ts";
 import { form7203 as form7203Node } from "./index.ts";
 import { FilingStatus } from "../../../../mef/header.ts";
+import { executePriorReduced7203WithSourceDocuments } from "../../../../2025/form7203_prior_reduced_execution.ts";
 
 export const oneNote = {
   kind: "new_2025_formal_notes",
@@ -956,27 +957,48 @@ Deno.test("Form 7203 two formal notes replay each identified repayment through t
   );
 });
 
-Deno.test("Form 7203 prior reduced formal note computes taxable repayment but cannot file without retained source bytes", () => {
+Deno.test("Form 7203 prior reduced formal note binds eight exact source bytes but remains closed for filing", async () => {
+  const records = [
+    "2025 signed K-1 copy",
+    "2024 stock-basis rollforward",
+    "signed 2023 formal note",
+    "accepted 2024 Form 1040",
+    "2024 IRS acceptance receipt",
+    "accepted 2024 Form 7203",
+    "2025 corporate note principal ledger",
+    "2025 shareholder bank deposit",
+  ].map((reference) => ({
+    reference,
+    bytes: new TextEncoder().encode(`reviewed synthetic bytes: ${reference}`),
+  }));
+  const hashes = await Promise.all(records.map(async (document) =>
+    Array.from(
+      new Uint8Array(await crypto.subtle.digest("SHA-256", document.bytes)),
+      (byte) => byte.toString(16).padStart(2, "0"),
+    ).join("")
+  ));
   const prior = {
     kind: "prior_reduced_formal_note_repayment",
     shareholder_ssn: "123456789",
     corporation_ein: "987654321",
     k1_source_document_reference: "2025 signed K-1 copy",
+    k1_source_document_sha256: hashes[0],
     beginning_stock_basis: 100,
     beginning_stock_basis_workpaper_reference: "2024 stock-basis rollforward",
+    beginning_stock_basis_workpaper_sha256: hashes[1],
     current_box1_ordinary_loss: 400,
     formal_note_id: "note-2023-01",
     signed_note_document_reference: "signed 2023 formal note",
-    signed_note_sha256: "a".repeat(64),
+    signed_note_sha256: hashes[2],
     note_execution_date: "2023-05-10",
     shareholder_lender_ssn: "123456789",
     corporate_borrower_ein: "987654321",
     prior_filed_return_reference: "accepted 2024 Form 1040",
-    prior_filed_return_sha256: "b".repeat(64),
+    prior_filed_return_sha256: hashes[3],
     prior_accepted_acknowledgement_reference: "2024 IRS acceptance receipt",
-    prior_accepted_acknowledgement_sha256: "c".repeat(64),
+    prior_accepted_acknowledgement_sha256: hashes[4],
     prior_filed_form7203_reference: "accepted 2024 Form 7203",
-    prior_filed_form7203_sha256: "d".repeat(64),
+    prior_filed_form7203_sha256: hashes[5],
     prior_form7203_line20_ending_face: 1_000,
     prior_form7203_line31_ending_basis: 500,
     opening_note_face_amount: 1_000,
@@ -986,9 +1008,9 @@ Deno.test("Form 7203 prior reduced formal note computes taxable repayment but ca
       date: "2025-08-15",
       amount: 400,
       corporate_loan_ledger_reference: "2025 corporate note principal ledger",
-      corporate_loan_ledger_sha256: "e".repeat(64),
+      corporate_loan_ledger_sha256: hashes[6],
       shareholder_bank_deposit_reference: "2025 shareholder bank deposit",
-      shareholder_bank_deposit_sha256: "f".repeat(64),
+      shareholder_bank_deposit_sha256: hashes[7],
       principal_only_confirmed: true,
     },
     no_other_shareholder_debt_confirmed: true,
@@ -1007,6 +1029,56 @@ Deno.test("Form 7203 prior reduced formal note computes taxable repayment but ca
     },
     form7203_debt_evidence: prior,
   };
+  const inputs = {
+    general: { taxpayer_ssn: "123-45-6789" },
+    k1_s_corp: [source],
+  };
+  const bound = await executePriorReduced7203WithSourceDocuments(
+    inputs,
+    records,
+  );
+  assertEquals(bound.verifiedSourceDocuments.manifest.length, 8);
+  assertEquals(
+    bound.verifiedSourceDocuments.getBytes(records[0].reference),
+    records[0].bytes,
+  );
+  assertEquals(
+    bound.diagnostics.some((entry) =>
+      entry.nodeType === "k1_s_corp" &&
+      entry.message.includes("prior reduced note")
+    ),
+    true,
+  );
+  await assertRejects(() =>
+    executePriorReduced7203WithSourceDocuments(
+      inputs,
+      records.slice(1),
+    )
+  );
+  await assertRejects(() =>
+    executePriorReduced7203WithSourceDocuments(
+      inputs,
+      [
+        { ...records[0], bytes: new TextEncoder().encode("changed") },
+        ...records.slice(1),
+      ],
+    )
+  );
+  await assertRejects(() =>
+    executePriorReduced7203WithSourceDocuments(
+      {
+        ...inputs,
+        k1_s_corp: [{
+          ...source,
+          form7203_debt_evidence: {
+            ...prior,
+            k1_source_document_sha256: "0".repeat(64),
+          },
+        }],
+      },
+      records,
+    )
+  );
   const workpaper = calculatePriorReducedNoteWorkpaper(prior, source);
   assertEquals(workpaper.line25_basis_ratio, "0.5000");
   assertEquals(workpaper.line26_nontaxable_repayment, 200);
