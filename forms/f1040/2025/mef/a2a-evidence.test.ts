@@ -342,6 +342,69 @@ Deno.test("A2A evidence detects altered stored acknowledgment bytes", async () =
   }
 });
 
+Deno.test("A2A evidence replays Send and inbound correlation after stored metadata changes", async () => {
+  const root = await Deno.makeTempDir();
+  try {
+    const send = await recordA2aSendPackage(root, {
+      messageId,
+      submissionIds: [submissionId],
+      package: packageFor(),
+      recordedAt: new Date("2026-09-26T10:00:00Z"),
+    });
+    const sendKey = await digest(encoder.encode(messageId));
+    const sendPath = `${root}/requests/${sendKey}/record.json`;
+    await Deno.writeTextFile(
+      sendPath,
+      JSON.stringify({
+        ...send,
+        submissionIds: ["1234562026269xxxxxxx"],
+      }),
+    );
+    await assertRejects(
+      () => readA2aSendRecord(root, messageId),
+      Error,
+      "body and container Submission IDs differ",
+    );
+    await Deno.writeTextFile(sendPath, JSON.stringify(send));
+
+    const inbound = await recordA2aInboundPayload(root, {
+      kind: "send_response",
+      sendMessageId: messageId,
+      relatesToMessageId: messageId,
+      submissionIds: [submissionId],
+      receivedAt: new Date("2026-09-26T11:00:00Z"),
+      rawPayload: encoder.encode("response bytes"),
+    });
+    const inboundPath = `${root}/inbound/${inbound.recordId}/record.json`;
+    await Deno.writeTextFile(
+      inboundPath,
+      JSON.stringify({
+        ...inbound,
+        relatesToMessageId: "different-message",
+      }),
+    );
+    await assertRejects(
+      () => readA2aInboundPayload(root, inbound.recordId),
+      Error,
+      "payload integrity or record ID mismatch",
+    );
+    await Deno.writeTextFile(
+      inboundPath,
+      JSON.stringify({
+        ...inbound,
+        submissionIds: [submissionId, submissionId],
+      }),
+    );
+    await assertRejects(
+      () => readA2aInboundPayload(root, inbound.recordId),
+      Error,
+      "payload integrity or record ID mismatch",
+    );
+  } finally {
+    await Deno.remove(root, { recursive: true });
+  }
+});
+
 Deno.test("A2A evidence rejects an inbound record ID before path construction", async () => {
   await assertRejects(
     () => readA2aInboundPayload("/unused", "../requests"),

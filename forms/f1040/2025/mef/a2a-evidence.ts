@@ -110,6 +110,30 @@ function assertSendSubmissionArchive(
   }
 }
 
+function assertSendPackageIdentity(
+  submissionIds: ReadonlyArray<string>,
+  requestBody: string,
+  container: Readonly<Record<string, Uint8Array>>,
+): void {
+  const bodyIds = [...requestBody.matchAll(
+    /<SubmissionId>([^<]+)<\/SubmissionId>/g,
+  )].map((match) => match[1]);
+  const archiveNames = Object.keys(container);
+  if (
+    bodyIds.length !== submissionIds.length ||
+    archiveNames.length !== submissionIds.length ||
+    new Set(bodyIds).size !== bodyIds.length ||
+    new Set(submissionIds).size !== submissionIds.length ||
+    submissionIds.some((id) =>
+      !bodyIds.includes(id) || !archiveNames.includes(`${id}.zip`)
+    )
+  ) {
+    throw new Error(
+      "A2A Send package body and container Submission IDs differ",
+    );
+  }
+}
+
 function assertArchivedDocumentInventory(
   xml: string,
   archive: Readonly<Record<string, Uint8Array>>,
@@ -230,22 +254,12 @@ export async function recordA2aSendPackage(
   if (new Set(record.submissionIds).size !== record.submissionIds.length) {
     throw new Error("A2A evidence has duplicate Submission IDs");
   }
-  const bodyIds = [...input.package.sendSubmissionsRequestXml.matchAll(
-    /<SubmissionId>([^<]+)<\/SubmissionId>/g,
-  )].map((match) => match[1]);
   const container = unzipSync(input.package.containerZipBytes);
-  const archiveNames = Object.keys(container);
-  if (
-    bodyIds.length !== record.submissionIds.length ||
-    archiveNames.length !== record.submissionIds.length ||
-    record.submissionIds.some((id) =>
-      !bodyIds.includes(id) || !archiveNames.includes(`${id}.zip`)
-    )
-  ) {
-    throw new Error(
-      "A2A Send package body and container Submission IDs differ",
-    );
-  }
+  assertSendPackageIdentity(
+    record.submissionIds,
+    input.package.sendSubmissionsRequestXml,
+    container,
+  );
   for (const id of record.submissionIds) {
     assertSendSubmissionArchive(id, container[`${id}.zip`]);
   }
@@ -266,15 +280,20 @@ export async function readA2aSendRecord(
   const record = requestRecordSchema.parse(
     JSON.parse(await Deno.readTextFile(join(path, "record.json"))),
   );
+  const requestBytes = await Deno.readFile(join(path, "request.xml"));
+  const containerBytes = await Deno.readFile(join(path, "container.zip"));
   if (
     record.messageId !== messageId ||
-    record.requestBodySha256 !==
-      await sha256(await Deno.readFile(join(path, "request.xml"))) ||
-    record.containerSha256 !==
-      await sha256(await Deno.readFile(join(path, "container.zip")))
+    record.requestBodySha256 !== await sha256(requestBytes) ||
+    record.containerSha256 !== await sha256(containerBytes)
   ) {
     throw new Error("A2A Send evidence integrity or MessageID mismatch");
   }
+  assertSendPackageIdentity(
+    record.submissionIds,
+    new TextDecoder("utf-8", { fatal: true }).decode(requestBytes),
+    unzipSync(containerBytes),
+  );
   return record;
 }
 
@@ -442,7 +461,11 @@ export async function readA2aInboundPayload(
   if (
     record.recordId !== recordId ||
     record.payloadSha256 !== await sha256(rawPayload) ||
-    record.submissionIds.some((id) => !send.submissionIds.includes(id))
+    record.submissionIds.some((id) => !send.submissionIds.includes(id)) ||
+    new Set(record.submissionIds).size !== record.submissionIds.length ||
+    (record.kind !== "acknowledgment_payload" &&
+      record.relatesToMessageId !== record.sendMessageId) ||
+    rawPayload.length === 0
   ) {
     throw new Error("A2A inbound payload integrity or record ID mismatch");
   }
