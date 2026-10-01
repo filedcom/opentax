@@ -21,6 +21,7 @@ import {
   passivePropertySaleSchema,
   passiveSaleGain,
 } from "../../../nodes/intermediate/forms/form4797/index.ts";
+import { inputSchema as w2InputSchema } from "../../../nodes/inputs/w2/index.ts";
 import { z } from "zod";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
@@ -406,6 +407,43 @@ function buildOtherPassive(
     activeParticipation: false,
     filingStatus: input.filing_status,
   });
+  // One current Form 4835 loss offset by one unrelated Schedule E passive
+  // rental profit must reach the finalized return exactly once. This narrow
+  // no-prior, no-sale route has no special rental allowance.
+  const farmLoss = activities.find((activity) =>
+    activity.reporting_form === "form4835" && activity.current_net < 0
+  );
+  const rentalProfit = activities.find((activity) =>
+    activity.reporting_form === "schedule_e" && activity.current_net > 0
+  );
+  if (
+    activities.length === 2 && farmLoss && rentalProfit &&
+    activities.every((activity) =>
+      activity.prior_unallowed_operating === 0 &&
+      activity.prior_unallowed_4797_part1 === 0 &&
+      activity.prior_unallowed_4797_part2 === 0
+    ) && saleGains.length === 0 &&
+    input.has_current_4797_transaction !== true
+  ) {
+    const pending = context?.pending;
+    const w2 = w2InputSchema.safeParse(pending?.w2);
+    const f1040 = pending?.f1040 as Record<string, unknown> | undefined;
+    const schedule1 = pending?.schedule1 as Record<string, unknown> | undefined;
+    const net = Math.max(0, rentalProfit.current_net + farmLoss.current_net);
+    if (
+      !w2.success || w2.data.w2s.length !== 1 || !f1040 || !schedule1 ||
+      rentalProfit.current_net >= -farmLoss.current_net ||
+      limit.allowed !== rentalProfit.current_net ||
+      schedule1.line5_schedule_e !== net ||
+      (f1040.line8_additional_income ?? 0) !== net ||
+      f1040.line1z_total_wages !== w2.data.w2s[0].box1_wages ||
+      f1040.line11_agi !== w2.data.w2s[0].box1_wages
+    ) {
+      throw new Error(
+        "Form 8582 farm-loss/rental-profit offset must reconcile Form 4835, Schedule E, Schedule 1 and final Form 1040",
+      );
+    }
+  }
   const losses = activities.map((activity) =>
     Math.max(0, -activity.current_net) + activity.prior_unallowed_operating +
     activity.prior_unallowed_4797_part1 +

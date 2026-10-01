@@ -1,5 +1,20 @@
 # TY2025 Form 8582 durable activity identity
 
+## One current farm-rental loss offset by one rental profit
+
+A bounded no-prior, no-sale type-B route now joins one Form 4835 share-rent
+farm's $5,000 current at-risk loss to one distinct Schedule E rental's $3,000
+current profit. Form 8582 allows $3,000 of the farm loss against passive rental
+income and suspends $2,000 under the farm activity ID. The native Form 8582
+descriptor requires the two source activities, one W-2, final Schedule 1 line
+5, and Form 1040 wages, additional income, and AGI to reconcile. The Form 8582
+PDF replays the native check; Form 4835 PDF uses the same allowed-loss
+allocation. A full-return positive fixture and source/final-return tamper
+cases are authored but unrun. This is not an active-rental special allowance:
+both activities are other passive, and the farm source explicitly says the
+investment is all at risk. Other income, prior PALs, sales, multiple farms,
+source-byte authentication, and filled-PDF/XSD/ATS validation remain open.
+
 ## Native worksheet source-order join
 
 The native MeF/PDF worksheet now joins pending Schedule E/Form 4835 activities
