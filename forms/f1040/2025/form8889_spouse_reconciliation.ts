@@ -938,7 +938,11 @@ export function reconcilePairedForm8889(
   if (
     new Set(priorExcessReferences).size !== priorExcessReferences.length ||
     (pairedPriorExcessOwners.length > 0 &&
-      (!selfOnly || pairedRollovers.length > 0 ||
+      (!selfOnly && !(medicareSelfOnlyMonths &&
+            pairedExcessOwners.every((owner) =>
+              owner === medicareCurrentExcessOwner
+            )) ||
+        pairedRollovers.length > 0 ||
         pairedCode2Owners.length > 0 ||
         owners.some((owner) =>
           (owner.hsa_distributions ?? 0) > 0 ||

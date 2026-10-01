@@ -49,7 +49,7 @@ const beneficiaryInputSchema = z.object({
     .length(12).optional(),
   // Used for the paired route where Medicare ends one spouse's eligibility.
   medicare_enrollment: z.object({
-    first_ineligible_month: z.number().int().min(2).max(12),
+    first_ineligible_month: z.number().int().min(1).max(12),
     source_reference: z.string().trim().min(1),
   }).strict().optional(),
   other_disqualifying_coverage: z.object({

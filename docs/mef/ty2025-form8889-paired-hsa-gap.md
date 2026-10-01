@@ -496,3 +496,24 @@ document bytes and the 2024 HSA year-end value are not authenticated. The
 single-owner source, calculation, MeF, PDF, and tamper fixtures are written but
 unrun. Multiple simultaneous prior excess carryovers and wider paired-owner
 combinations remain outside this bounded route.
+
+## January Medicare onset and current excess (written, unrun)
+
+The [2025 Form 8889 instructions](https://www.irs.gov/instructions/i8889) assign
+zero contribution room for every month enrolled in Medicare. A paired self-only
+route now accepts Medicare enrollment effective January 1 for one owner with
+twelve ineligible months, while the other owner remains eligible for all twelve
+months. The first owner's retained personal contribution has zero deductible
+room and goes to that owner's Form 5329 Part VII; the other owner's contribution
+remains on their separate Form 8889 and reaches Schedule 1 line 13 once. The
+current-excess export guard also now admits the existing later-onset Medicare
+route, which was otherwise blocked by a full-year self-only predicate that
+excludes Medicare by design. Native and PDF export recompute both Forms 8889,
+compare the owner Form 5329, and reconcile Schedule 1, Schedule 2, and
+Form 1040. Positive and tamper fixtures are authored but unrun pending the
+coordinated bulk validation.
+
+The onset notice, contribution record, and HSA year-end balance are entered
+source facts rather than authenticated document bytes. January family coverage
+allocation, employer funding, timely withdrawals, age-65 distributions, and
+simultaneous prior excess remain outside this bounded route.
