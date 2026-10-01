@@ -13,15 +13,24 @@ specified clean-hydrogen emissions-tier recapture. The
 [TY2025 instructions](https://www.irs.gov/instructions/i4255) govern which
 additional parts and statements apply.
 
-The current `f4255.rows` source is entered directly. Its only document link is
-the free-text `source_document_reference`; no node deposits or verifies the row
-against a prior filed Form 3468 Part IV, Form 8933, Form 3800 utilization,
-elective-payment record or recapture/EP determination. The row schema proves
-internal column arithmetic and limits columns (j), (k) and (n)(2) to zero. The
-native `IRS4255` builder prints Part I groups for line 1d or 2a and a total
-group, and joins resulting amounts to Schedule 2 lines 1d, 1e, 1f and 19. That
-Schedule 2 equality is a downstream arithmetic check, not independent proof of
-the prior credit or event.
+The `f4255.rows` candidate now requires typed prior-credit evidence for each
+row: tax year, original Form 3468 Part IV or Form 8933, filed-return reference
+and SHA-256, and the prior Part I amounts. The typed source must match the
+row's credit line and columns (a), (b), (c), and (e). Any excessive payment
+also requires a 2025 IRS determination notice reference and SHA-256, its
+determined net-EPE amount, and a reasonable-cause decision. The row's column
+(n)(1) and 20% column (n)(3) must reconcile to that notice. An EP-only
+candidate without Part II recapture can be calculated and routed to Schedule 2.
+The existing row arithmetic and zero limits on columns (j), (k), and (n)(2)
+remain.
+
+These references and hashes are entered source metadata. The executor cannot
+yet authenticate the filed return, original credit utilization, or IRS notice
+bytes against them. Native Form 4255 now explicitly rejects every positive
+candidate, even if its Schedule 2 entries reconcile. This keeps positive
+export closed while the original source and PDF route are unfinished. The
+Schedule 2 calculator and standalone projections can still inspect staged
+candidate amounts; they do not establish an exportable Form 4255 filing.
 
 A positive line 1d or 2a net-EPE recapture additionally needs the applicable
 property-level Part II facts, including original credit, dates or financing
@@ -31,12 +40,14 @@ needs a source-backed EP liability and gross/net EPE split; a text reference and
 entered amount cannot prove it. Form 8933 has no source node in the current
 graph, and the current Form 3468 node is not a prior-year credit ledger.
 
-Before registering a bounded PDF, add a typed prior-credit/payment and event
-source with a stable document identity. Recompute the applicable Part I row from
-that source, determine whether Part II or III and attachments are required, and
-reconcile the full printed form to native MeF, Schedule 2, and final Form 1040
-tax totals. Keep other credit lines, transfer columns, penalties and unproved
-recapture events closed until each has its own route.
+Before registering a bounded PDF, bind the supplied prior-return and IRS
+determination bytes to their SHA-256 values and extracted fields; derive the
+applicable Part I row from those authenticated records, determine whether
+Part II or III and attachments are required, and reconcile the printed form to
+native MeF, Schedule 2, and final Form 1040 tax totals. Keep other credit
+lines, transfer columns, penalties and unproved recapture events closed until
+each has its own route.
 
-No PDF descriptor, registration or focused print test was added. No tests,
-typecheck, XSD validation or filled-PDF rendering was run in this audit.
+The source-staging positive and tamper fixtures are written but unrun. No PDF
+descriptor or registration was added. No tests, typecheck, XSD validation or
+filled-PDF rendering was run in this batch.

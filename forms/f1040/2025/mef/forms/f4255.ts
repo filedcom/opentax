@@ -7,7 +7,15 @@ import {
 } from "../../../nodes/inputs/f4255/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
-function rowFields(row: F4255Row): string[] {
+type PartIRow = Omit<
+  F4255Row,
+  | "source_document_reference"
+  | "credit_line"
+  | "prior_credit_evidence"
+  | "excessive_payment_notice"
+>;
+
+function rowFields(row: PartIRow): string[] {
   return [
     element("PYCrClmAmt", row.prior_credit_claimed),
     element("PYGroEPEPrtnCrClmAmt", row.gross_epe),
@@ -29,16 +37,14 @@ function rowFields(row: F4255Row): string[] {
   ];
 }
 
-function totalRows(rows: readonly F4255Row[]): F4255Row {
-  const sum = (key: keyof F4255Row): number =>
+function totalRows(rows: readonly F4255Row[]): PartIRow {
+  const sum = (key: keyof PartIRow): number =>
     rows.reduce(
       (total, row) =>
         total + (typeof row[key] === "number" ? row[key] as number : 0),
       0,
     );
   return {
-    source_document_reference: "Form 4255 Part I line 3",
-    credit_line: "1d",
     prior_credit_claimed: sum("prior_credit_claimed"),
     gross_epe: sum("gross_epe"),
     gross_epe_applied_regular_tax: sum("gross_epe_applied_regular_tax"),
@@ -62,6 +68,13 @@ export const form4255: MefFormDescriptor<"f4255", unknown> = {
     if (!raw || typeof raw !== "object" || !("rows" in raw)) return "";
     const input = inputSchema.parse(raw) as F4255Input;
     const lines = calculateForm4255Routes(input);
+    // References and digests identify review records, but this executor has
+    // no authenticated prior return or IRS determination bytes to verify.
+    if (Object.values(lines).some((amount) => amount > 0)) {
+      throw new Error(
+        "Form 4255 export needs authenticated prior-credit and IRS determination source bytes and a registered Form 4255 PDF",
+      );
+    }
     if (context?.pending) {
       const schedule2 = context.pending.schedule2 as
         | Record<string, unknown>
