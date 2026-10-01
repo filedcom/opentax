@@ -1,55 +1,80 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { f8941 } from "./index.ts";
+import { calculateForm8941, f8941 } from "./index.ts";
+import { form8941DirectFixture } from "./fixture.ts";
 
-function compute(input: Parameters<typeof f8941.compute>[1]) {
-  return f8941.compute({ taxYear: 2025, formType: "f1040" }, input);
-}
+Deno.test("Form 8941 derives the Albany SHOP credit from employee hours, wages and premium cap", () => {
+  const lines = calculateForm8941(form8941DirectFixture());
+  assertEquals(lines.line1, 5);
+  assertEquals(lines.line2, 5);
+  assertEquals(lines.line3, 20_000);
+  assertEquals(lines.line4, 25_000);
+  assertEquals(lines.line5, 23_395);
+  assertEquals(lines.line6, 23_395);
+  assertEquals(lines.line7, 11_698);
+  assertEquals(lines.line12, 11_698);
+  assertEquals(lines.line13, 5);
+  assertEquals(lines.line14, 5);
+  assertEquals(lines.line16, 11_698);
+});
 
-const base = {
-  fte_count: 5,
-  average_annual_wages: 20_000,
-  premiums_paid: 50_000,
-};
+Deno.test("Form 8941 applies both printed FTE and wage phaseouts", () => {
+  const source = form8941DirectFixture();
+  source.employees = Array.from({ length: 11 }, (_, index) => ({
+    ...source.employees[0],
+    employee_reference: `EMP-${index + 1}`,
+    enrollment_and_payroll_record_reference: `SHOP-PAYROLL-${index + 1}`,
+    social_security_medicare_wages: 34_000,
+  }));
+  const lines = calculateForm8941(source);
+  assertEquals(lines.line2, 11);
+  assertEquals(lines.line3, 34_000);
+  if (!(lines.line9 < lines.line8 && lines.line8 < lines.line7)) {
+    throw new Error("Expected both Form 8941 reductions");
+  }
+});
 
-Deno.test("Form 8941 rejects a direct credit even when SHOP is affirmed", () => {
+Deno.test("Form 8941 rejects altered SHOP contributions, rating area, history and old override shape", () => {
+  const premium = form8941DirectFixture();
+  premium.employees[0].employer_premium_paid = 6000;
   assertThrows(
-    () => compute({ ...base, shop_enrollment: true }),
+    () => calculateForm8941(premium),
     Error,
-    "TY2025 Form 8941 credit needs verified SHOP and credit-period facts",
+    "uniform SHOP contribution",
   );
-});
-
-Deno.test("Form 8941 rejects missing or false SHOP rather than treating either as eligibility", () => {
-  assertThrows(() => compute(base), Error);
-  assertThrows(() => compute({ ...base, shop_enrollment: false }), Error);
-});
-
-Deno.test("Form 8941 does not turn $56,000 wages into an obsolete 2025 disqualification", () => {
+  const rating = form8941DirectFixture();
+  rating.employees[0].irs_2025_rating_area_average_premium = 10_000;
+  assertThrows(() => calculateForm8941(rating), Error, "one rating area");
+  const incomplete = { ...form8941DirectFixture() };
+  delete (incomplete as Partial<typeof incomplete>)
+    .all_nonexcluded_employees_enrolled_verified;
+  assertEquals(f8941.inputSchema.safeParse(incomplete).success, false);
+  const history = {
+    ...form8941DirectFixture(),
+    credit_period_first_year: 2024 as const,
+  };
   assertThrows(
-    () => compute({ ...base, average_annual_wages: 56_000 }),
+    () => calculateForm8941(history),
     Error,
-    "TY2025 Form 8941 credit needs verified SHOP and credit-period facts",
+    "credit-period history",
   );
-});
-
-Deno.test("Form 8941 tax-exempt premium claim also cannot use Schedule 3 route", () => {
-  assertThrows(() => compute({ ...base, is_tax_exempt: true }), Error);
-});
-
-Deno.test("Form 8941 zero premiums make no claim; negative or unmodeled facts reject", () => {
-  assertEquals(compute({ ...base, premiums_paid: 0 }).outputs, []);
   assertEquals(
-    f8941.inputSchema.safeParse({ ...base, premiums_paid: -1 }).success,
+    f8941.inputSchema.safeParse({
+      fte_count: 5,
+      average_annual_wages: 20_000,
+      premiums_paid: 25_000,
+    }).success,
     false,
   );
+});
+
+Deno.test("Form 8941 source remains closed to public Schedule 3 output", () => {
   assertThrows(
     () =>
-      compute(
-        { ...base, form3800_credit: 12_000 } as Parameters<
-          typeof f8941.compute
-        >[1],
+      f8941.compute(
+        { taxYear: 2025, formType: "f1040" },
+        form8941DirectFixture(),
       ),
     Error,
-    "Unrecognized key",
+    "Form 3800 source reconciliation before export",
   );
 });
