@@ -66,6 +66,26 @@ for (
       gross: 500,
       qualified: 100,
     },
+    {
+      name: "1099-OID/DIV",
+      payer: {
+        f1099oid: [{
+          payer_name: "Taxable OID Bond",
+          box1_oid: 200,
+          investment_property_for_form4952: true,
+        }],
+        f1099div: [{
+          payerName: "Investment Fund",
+          isNominee: false,
+          box11: false,
+          box1a: 500,
+          box1b: 100,
+          investment_property_for_form4952: true,
+        }],
+      },
+      gross: 700,
+      qualified: 100,
+    },
   ]
 ) {
   Deno.test(`recipient-owned K-1 code H and ${source.name} reach a full Form 4952 return`, async () => {
@@ -104,6 +124,10 @@ for (
     assertEquals(result.pending.f1040.line12e_itemized_deductions, 18_300);
     if (source.name === "1099-INT" || source.name === "1099-OID") {
       assertEquals(result.pending.f1040.line2b_taxable_interest, 500);
+    } else if (source.name === "1099-OID/DIV") {
+      assertEquals(result.pending.f1040.line2b_taxable_interest, 200);
+      assertEquals(result.pending.f1040.line3a_qualified_dividends, 100);
+      assertEquals(result.pending.f1040.line3b_ordinary_dividends, 500);
     } else {
       assertEquals(result.pending.f1040.line3a_qualified_dividends, 100);
       assertEquals(result.pending.f1040.line3b_ordinary_dividends, 500);

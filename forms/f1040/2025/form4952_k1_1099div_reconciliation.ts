@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { inputSchema as dividendSchema } from "../nodes/inputs/f1099div/index.ts";
+import { inputSchema as oidSchema } from "../nodes/inputs/f1099oid/index.ts";
 import { inputSchema as partnershipSchema } from "../nodes/inputs/k1_partnership/index.ts";
 import {
   calculateForm4952,
@@ -10,11 +11,13 @@ import {
   sourceAmountsMatch,
 } from "./form4952_combined_reconciliation.ts";
 import { reconcileForm4952Itemization } from "./form4952_itemization.ts";
+import { plainInvestmentOid } from "./form4952_oid_source.ts";
 
 const scheduleASchema = z.object({
   line_9_investment_interest: z.number().nonnegative(),
 });
 const form1040Schema = z.object({
+  line2b_taxable_interest: z.number().nonnegative().optional(),
   line3a_qualified_dividends: z.number().nonnegative().optional(),
   line3b_ordinary_dividends: z.number().nonnegative(),
   line12e_itemized_deductions: z.number().nonnegative(),
@@ -51,6 +54,7 @@ export function reconcileForm4952K1InterestAgainst1099DivPath(
 ): void {
   const partnership = partnershipSchema.safeParse(pending.k1_partnership);
   const dividend = dividendSchema.safeParse(pending.f1099div);
+  const oid = oidSchema.safeParse(pending.f1099oid);
   const form = form4952Schema.safeParse(fields);
   const scheduleA = scheduleASchema.safeParse(pending.schedule_a);
   const form1040 = form1040Schema.safeParse(pending.f1040);
@@ -64,6 +68,8 @@ export function reconcileForm4952K1InterestAgainst1099DivPath(
   }
   const k1s = partnership.data.k1_partnerships;
   const payers = dividend.data.f1099divs;
+  const oidPayers = oid.success ? oid.data.f1099oids : [];
+  const hasOid = form.data.source_1099_interest !== undefined;
   const k1Expense = k1s.reduce(
     (sum, item) => sum + (item.box13_code_h_investment_interest ?? 0),
     0,
@@ -76,6 +82,11 @@ export function reconcileForm4952K1InterestAgainst1099DivPath(
     (sum, item) => sum + (item.box1b ?? 0),
     0,
   );
+  const oidIncome = oidPayers.reduce(
+    (sum, item) => sum + (item.box1_oid ?? 0),
+    0,
+  );
+  const claimedOidIncome = hasOid ? oidIncome : 0;
   if (
     k1s.length === 0 || payers.length === 0 ||
     new Set(k1s.map((item) => item.partnership_ein)).size !== k1s.length ||
@@ -96,6 +107,14 @@ export function reconcileForm4952K1InterestAgainst1099DivPath(
       (item.box1b ?? 0) > item.box1a ||
       !plainInvestmentDividend({ ...item, box1b: 0 })
     ) ||
+    (hasOid && (
+      !oid.success || pending.f1099int !== undefined ||
+      !oidPayers.every(plainInvestmentOid) ||
+      !sourceAmountsMatch(
+        form.data.source_1099_interest,
+        oidPayers.map((item) => item.box1_oid ?? 0),
+      )
+    )) ||
     !sourceAmountsMatch(
       form.data.source_k1_investment_interest,
       k1s.map((item) => item.box13_code_h_investment_interest ?? 0),
@@ -122,7 +141,6 @@ export function reconcileForm4952K1InterestAgainst1099DivPath(
     (form.data.investment_income_election ?? 0) !== 0 ||
     (form.data.elected_capital_gain_portion ?? 0) !== 0 ||
     (form.data.investment_expenses ?? 0) !== 0 ||
-    (form.data.source_1099_interest ?? 0) !== 0 ||
     (form.data.source_1099_capital_gain_distributions ?? 0) !== 0 ||
     (form.data.source_1099_royalties ?? 0) !== 0 ||
     (form.data.source_private_activity_bond_interest ?? 0) !== 0 ||
@@ -137,12 +155,13 @@ export function reconcileForm4952K1InterestAgainst1099DivPath(
     Object.values(form.data.amt_refigure).some((amount) => amount !== 0)
   ) {
     throw new Error(
-      "Form 4952 mixed path supports only identified code H K-1 expenses and domestic 1099-DIV box 1a/1b income without elections",
+      "Form 4952 mixed path supports only identified code H K-1 expenses, domestic 1099-DIV box 1a/1b, and optional plain 1099-OID box 1 income without elections",
     );
   }
   const lines = calculateForm4952(form.data);
   if (
-    lines.line1 !== k1Expense || lines.line4a !== ordinaryDividends ||
+    lines.line1 !== k1Expense ||
+    lines.line4a !== ordinaryDividends + claimedOidIncome ||
     lines.line4b !== qualifiedDividends || lines.line8 <= 0 ||
     lines.line2 !== 0 || lines.line4d !== 0 || lines.line5 !== 0 ||
     numberedLines.some((line) => fields[line] !== lines[line])
@@ -153,6 +172,7 @@ export function reconcileForm4952K1InterestAgainst1099DivPath(
   }
   if (
     scheduleA.data.line_9_investment_interest !== lines.line8 ||
+    (hasOid && (form1040.data.line2b_taxable_interest ?? 0) !== oidIncome) ||
     (form1040.data.line3a_qualified_dividends ?? 0) !== qualifiedDividends ||
     form1040.data.line3b_ordinary_dividends !== ordinaryDividends ||
     form1040.data.line12e_itemized_deductions < lines.line8

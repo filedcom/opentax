@@ -105,17 +105,17 @@ export const form4952: MefFormDescriptor<"form4952", Input> = {
       );
     } else if (
       fields.source_1099_dividends !== undefined &&
-      fields.source_1099_interest !== undefined
-    ) {
-      reconcileForm4952CombinedPath(fields, context?.pending ?? {});
-    } else if (
-      fields.source_1099_dividends !== undefined &&
       fields.source_k1_investment_interest !== undefined
     ) {
       reconcileForm4952K1InterestAgainst1099DivPath(
         fields,
         context?.pending ?? {},
       );
+    } else if (
+      fields.source_1099_dividends !== undefined &&
+      fields.source_1099_interest !== undefined
+    ) {
+      reconcileForm4952CombinedPath(fields, context?.pending ?? {});
     } else if (fields.source_1099_dividends !== undefined) {
       reconcileForm4952DividendPath(fields, context?.pending ?? {});
     } else if (

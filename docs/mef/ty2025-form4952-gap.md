@@ -391,6 +391,22 @@ independently authenticate the issued K-1s, loan tracing, or the interest
 payment. Focused positive and negative cases are written but unrun. The full
 test, TY2025 XSD, filled-PDF, business-rule, and ATS batch remains pending.
 
+The same K-1 code H expense route now also accepts one or more affirmed,
+unadjusted taxable 1099-OID box 1 payers alongside the domestic 1099-DIV
+box 1a/1b payers. Each OID and dividend amount must match its own accumulated
+Form 4952 source entry. Their sum reaches line 4a, qualified box 1b stays on
+line 4b, and code H remains the only line 1 source. Native MeF and PDF check
+every numbered Form 4952 line, Schedule A line 9, the selected itemized
+Form 1040 total, and Form 1040 lines 2b/3a/3b. A $200 OID plus $500 ordinary
+dividend, including $100 qualified, supports a $300 K-1 code H deduction in
+the authored full-return fixture. Adjusted or unclassified OID, an additional
+1099-INT, and Form 1040 interest drift reject in focused fixtures. The
+[2025 Form 4952 instructions](https://www.irs.gov/pub/irs-prior/f4952--2025.pdf)
+include investment interest and ordinary dividends on line 4a and remove
+qualified dividends on line 4b. Positive box 20 code B remains closed without
+the issued supplement and allowed-deduction proof; source bytes and wider
+mixed payers remain open. These fixtures await the deferred validation batch.
+
 ## Plain Form 1099-OID box 1 investment income
 
 The existing Form 1099-OID node already routes affirmed taxable OID into the

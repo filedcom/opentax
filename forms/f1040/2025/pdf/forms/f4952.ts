@@ -66,14 +66,14 @@ export const form4952Pdf: PdfFormDescriptor = {
       reconcileForm4952MiscRoyaltyPath(fields, allPending);
     } else if (
       fields.source_1099_dividends !== undefined &&
-      fields.source_1099_interest !== undefined
-    ) {
-      reconcileForm4952CombinedPath(fields, allPending);
-    } else if (
-      fields.source_1099_dividends !== undefined &&
       fields.source_k1_investment_interest !== undefined
     ) {
       reconcileForm4952K1InterestAgainst1099DivPath(fields, allPending);
+    } else if (
+      fields.source_1099_dividends !== undefined &&
+      fields.source_1099_interest !== undefined
+    ) {
+      reconcileForm4952CombinedPath(fields, allPending);
     } else if (fields.source_1099_dividends !== undefined) {
       reconcileForm4952DividendPath(fields, allPending);
     } else if (
