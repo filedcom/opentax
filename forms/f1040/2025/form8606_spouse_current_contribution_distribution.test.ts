@@ -13,6 +13,7 @@ import { form8606Pdf } from "./pdf/forms/f8606.ts";
 import { normalizeForm8606TestPending } from "./form8606_test_pending.ts";
 
 const general = {
+  digital_assets: false,
   filing_status: FilingStatus.MFJ,
   taxpayer_first_name: "Alex",
   taxpayer_last_name: "Saver",
@@ -79,22 +80,20 @@ function filedReturn(receivedOn = "2026-02-15") {
       box2_fed_withheld: 25_000,
       box13_retirement_plan: true,
     }],
-    f1099r: {
-      f1099rs: [{
-        payer_name: "IRA Custodian",
-        payer_ein: "123456789",
-        recipient_ssn: "999-88-7777",
-        source_document_reference: evidence.form1099r_source_document_reference,
-        box1_gross_distribution: 20_000,
-        box2a_taxable_amount: 20_000,
-        box7_distribution_code: "7",
-        box7_ira_simple_indicator: true,
-        ts: "S",
-        prior_ira_basis: 6_000,
-        year_end_ira_value: 10_000,
-        form8606_distribution_evidence: evidence,
-      }],
-    },
+    f1099r: [{
+      payer_name: "IRA Custodian",
+      payer_ein: "123456789",
+      recipient_ssn: "999-88-7777",
+      source_document_reference: evidence.form1099r_source_document_reference,
+      box1_gross_distribution: 20_000,
+      box2a_taxable_amount: 20_000,
+      box7_distribution_code: "7",
+      box7_ira_simple_indicator: true,
+      ts: "S",
+      prior_ira_basis: 6_000,
+      year_end_ira_value: 10_000,
+      form8606_distribution_evidence: evidence,
+    }],
     ira_deduction_worksheet: {
       filing_status: FilingStatus.MFJ,
       magi: receivedOn.startsWith("2025-") ? 215_340 : 216_000,

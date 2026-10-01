@@ -79,6 +79,7 @@ const source = {
   publicly_traded_partnership: false,
 };
 const general = {
+  digital_assets: false,
   filing_status: FilingStatus.Single,
   taxpayer_first_name: "Alex",
   taxpayer_last_name: "Owner",
@@ -142,6 +143,10 @@ function filedReturn(
       activity_id: "rental-1",
       passive_income_source_document_reference: incomeReference,
       property_description: "Rental property",
+      street_address: "10 Rental Rd",
+      city: "Austin",
+      state: "TX",
+      zip: "78701",
       property_type: 1,
       activity_type: "B",
       fair_rental_days: 365,
@@ -220,6 +225,10 @@ function filedPartnershipReturn() {
       activity_id: "rental-1",
       passive_income_source_document_reference: incomeReference,
       property_description: "Rental property",
+      street_address: "10 Rental Rd",
+      city: "Austin",
+      state: "TX",
+      zip: "78701",
       property_type: 1,
       activity_type: "B",
       fair_rental_days: 365,
@@ -227,16 +236,14 @@ function filedPartnershipReturn() {
       rent_income: passiveIncome,
       form_1099_payments_made: false,
     }],
-    k1_partnership: {
-      k1_partnerships: [{
-        partnership_name: "Community partnership",
-        partnership_ein: "123456789",
-        source_document_reference: "2025 partnership K-1 code AD",
-        recipient_tin: "111223333",
-        box15_code_ad_new_markets_credit: 500,
-        new_markets_credit_subject_to_passive_activity_limit: true,
-      }],
-    },
+    k1_partnership: [{
+      partnership_name: "Community partnership",
+      partnership_ein: "123456789",
+      source_document_reference: "2025 partnership K-1 code AD",
+      recipient_tin: "111223333",
+      box15_code_ad_new_markets_credit: 500,
+      new_markets_credit_subject_to_passive_activity_limit: true,
+    }],
     form8582cr: {
       credit_sources: [{
         ...source,
@@ -266,6 +273,10 @@ function filedSCorpReturn() {
       activity_id: "rental-1",
       passive_income_source_document_reference: incomeReference,
       property_description: "Rental property",
+      street_address: "10 Rental Rd",
+      city: "Austin",
+      state: "TX",
+      zip: "78701",
       property_type: 1,
       activity_type: "B",
       fair_rental_days: 365,
@@ -273,16 +284,14 @@ function filedSCorpReturn() {
       rent_income: passiveIncome,
       form_1099_payments_made: false,
     }],
-    k1_s_corp: {
-      k1_s_corps: [{
-        corporation_name: "Community S corporation",
-        corporation_ein: "234567891",
-        source_document_reference: "2025 S corporation K-1 code AD",
-        recipient_tin: "111223333",
-        box13_code_ad_new_markets_credit: 500,
-        new_markets_credit_subject_to_passive_activity_limit: true,
-      }],
-    },
+    k1_s_corp: [{
+      corporation_name: "Community S corporation",
+      corporation_ein: "234567891",
+      source_document_reference: "2025 S corporation K-1 code AD",
+      recipient_tin: "111223333",
+      box13_code_ad_new_markets_credit: 500,
+      new_markets_credit_subject_to_passive_activity_limit: true,
+    }],
     form8582cr: {
       credit_sources: [{
         ...source,
@@ -353,6 +362,10 @@ function filedMixedK1Return(
       activity_id: "rental-1",
       passive_income_source_document_reference: incomeReference,
       property_description: "Rental property",
+      street_address: "10 Rental Rd",
+      city: "Austin",
+      state: "TX",
+      zip: "78701",
       property_type: 1,
       activity_type: "B",
       fair_rental_days: 365,
@@ -360,12 +373,8 @@ function filedMixedK1Return(
       rent_income: passiveIncome,
       form_1099_payments_made: false,
     }],
-    k1_partnership: {
-      k1_partnerships: partnerships,
-    },
-    k1_s_corp: {
-      k1_s_corps: corporations,
-    },
+    k1_partnership: partnerships,
+    k1_s_corp: corporations,
     form8582cr: {
       credit_sources: [
         ...partnerships.map((k1) => ({
@@ -459,6 +468,10 @@ function filedSelfAndK1Return(
       activity_id: "rental-1",
       passive_income_source_document_reference: incomeReference,
       property_description: "Rental property",
+      street_address: "10 Rental Rd",
+      city: "Austin",
+      state: "TX",
+      zip: "78701",
       property_type: 1,
       activity_type: "B",
       fair_rental_days: 365,
@@ -467,8 +480,8 @@ function filedSelfAndK1Return(
       form_1099_payments_made: false,
     }],
     f8874: { investments },
-    k1_partnership: { k1_partnerships: partnerships },
-    k1_s_corp: { k1_s_corps: [corporation] },
+    k1_partnership: partnerships,
+    k1_s_corp: [corporation],
     form8582cr: {
       credit_sources: [
         ...investments.map((item) => ({

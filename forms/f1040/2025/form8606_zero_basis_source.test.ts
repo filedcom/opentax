@@ -8,6 +8,7 @@ import { form8606Pdf } from "./pdf/forms/f8606.ts";
 import { normalizeForm8606TestPending } from "./form8606_test_pending.ts";
 
 const general = {
+  digital_assets: false,
   filing_status: FilingStatus.Single,
   taxpayer_first_name: "Alex",
   taxpayer_last_name: "Saver",

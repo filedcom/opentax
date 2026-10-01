@@ -7,6 +7,7 @@ import { form8606Pdf } from "./pdf/forms/f8606.ts";
 import { normalizeForm8606TestPending } from "./form8606_test_pending.ts";
 
 const general = {
+  digital_assets: false,
   filing_status: FilingStatus.MFJ,
   taxpayer_first_name: "Alex",
   taxpayer_last_name: "Saver",
@@ -55,21 +56,19 @@ const evidence = {
 function filedReturn() {
   const result = f1040_2025.executeReturn({
     general,
-    f1099r: {
-      f1099rs: [{
-        payer_name: "IRA Custodian",
-        payer_ein: "123456789",
-        source_document_reference: evidence.form1099r_source_document_reference,
-        box1_gross_distribution: 7_000,
-        box2b_not_determined: true,
-        box7_distribution_code: "J",
-        box7_ira_simple_indicator: true,
-        box13_date_of_payment: "2025-09-01",
-        ts: "S",
-        exclude_8606_roth: true,
-        roth_distribution_evidence: evidence,
-      }],
-    },
+    f1099r: [{
+      payer_name: "IRA Custodian",
+      payer_ein: "123456789",
+      source_document_reference: evidence.form1099r_source_document_reference,
+      box1_gross_distribution: 7_000,
+      box2b_not_determined: true,
+      box7_distribution_code: "J",
+      box7_ira_simple_indicator: true,
+      box13_date_of_payment: "2025-09-01",
+      ts: "S",
+      exclude_8606_roth: true,
+      roth_distribution_evidence: evidence,
+    }],
   });
   assertEquals(result.diagnostics, []);
   return normalizeForm8606TestPending(result.pending);
