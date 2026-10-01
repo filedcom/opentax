@@ -1,5 +1,6 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { rgb, StandardFonts } from "pdf-lib";
+import { AccountType } from "../../../mef/header.ts";
 import { form8814ParentPrintAmounts } from "./f8814.ts";
 import { appendIraDistributionStatement } from "./ira_distribution_statement.ts";
 import { appendDependentContinuation } from "./dependent_continuation.ts";
@@ -48,7 +49,9 @@ import {
 //   f2_17–f2_21:  withholding lines 25a–26 (shifted +1)
 //   f2_22:        SSN field (skipped)
 //   f2_23–f2_31:  payments lines 27a–35a
-//   f2_32:        line 37 amount owed
+//   f2_32–f2_33:  direct-deposit routing and account numbers (lines 35b, 35d)
+//                 c2_16[0]/[1] = checking/savings (line 35c)
+//   f2_35:        line 37 amount owed
 
 const fields: ReadonlyArray<PdfFieldEntry> = [
   {
@@ -826,6 +829,30 @@ export const irs1040Pdf: PdfFormDescriptor = {
       kind: "text",
       domainKey: "primarySSN",
       pdfField: "topmostSubform[0].Page1[0].f1_16[0]",
+    },
+    // The final MeF/PDF source guard owns the single-account refund election.
+    // The 2025 IRS Form 1040 AcroForm places lines 35b–d on page 2.
+    {
+      kind: "text",
+      domainKey: "bankAccount.routingNumber",
+      pdfField: "topmostSubform[0].Page2[0].RoutingNo[0].f2_32[0]",
+    },
+    {
+      kind: "checkboxWhen",
+      domainKey: "bankAccount.accountType",
+      pdfField: "topmostSubform[0].Page2[0].c2_16[0]",
+      whenValue: AccountType.Checking,
+    },
+    {
+      kind: "checkboxWhen",
+      domainKey: "bankAccount.accountType",
+      pdfField: "topmostSubform[0].Page2[0].c2_16[1]",
+      whenValue: AccountType.Savings,
+    },
+    {
+      kind: "text",
+      domainKey: "bankAccount.accountNumber",
+      pdfField: "topmostSubform[0].Page2[0].AccountNo[0].f2_33[0]",
     },
     // ── Sign Here block (page 2): occupation ───────────────────────────────
     {

@@ -1,4 +1,5 @@
 import { assertEquals, assertMatch, assertThrows } from "@std/assert";
+import { AccountType } from "../../../mef/header.ts";
 import { irs1040Pdf } from "./f1040.ts";
 
 // ---------------------------------------------------------------------------
@@ -301,6 +302,43 @@ Deno.test("irs1040Pdf.fields: contains expected payment fields", () => {
   for (const key of expected) {
     assertEquals(domainKeys.has(key), true, `Missing domain key: ${key}`);
   }
+});
+
+Deno.test("2025 Form 1040 single-account refund uses the finalized filer bank account on lines 35b–d", () => {
+  const bankFields = irs1040Pdf.filerFields?.filter((entry) =>
+    entry.domainKey.startsWith("bankAccount.")
+  );
+  assertEquals(bankFields, [
+    {
+      kind: "text",
+      domainKey: "bankAccount.routingNumber",
+      pdfField: "topmostSubform[0].Page2[0].RoutingNo[0].f2_32[0]",
+    },
+    {
+      kind: "checkboxWhen",
+      domainKey: "bankAccount.accountType",
+      pdfField: "topmostSubform[0].Page2[0].c2_16[0]",
+      whenValue: AccountType.Checking,
+    },
+    {
+      kind: "checkboxWhen",
+      domainKey: "bankAccount.accountType",
+      pdfField: "topmostSubform[0].Page2[0].c2_16[1]",
+      whenValue: AccountType.Savings,
+    },
+    {
+      kind: "text",
+      domainKey: "bankAccount.accountNumber",
+      pdfField: "topmostSubform[0].Page2[0].AccountNo[0].f2_33[0]",
+    },
+  ]);
+  assertEquals(
+    irs1040Pdf.fields.some((entry) =>
+      entry.domainKey === "bank_routing_number" ||
+      entry.domainKey === "bank_account_number"
+    ),
+    false,
+  );
 });
 
 Deno.test("Form 1040 line 35a marks an attached Form 8888", () => {
