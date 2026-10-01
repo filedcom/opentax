@@ -205,6 +205,23 @@ function buildIRS965A(input: F965Input, context?: MefBuildContext): string {
   );
 }
 
+export function reconcileForm965aSchedule2(
+  input: F965Input,
+  pending?: Record<string, unknown>,
+): void {
+  if (!pending) return;
+  const schedule2 = pending.schedule2;
+  const line20 = schedule2 && typeof schedule2 === "object"
+    ? (schedule2 as { line20_965_tax_installment?: number })
+      .line20_965_tax_installment ?? 0
+    : 0;
+  if (Math.abs(line20 - currentYear965Payment(input)) > 0.005) {
+    throw new Error(
+      "Form 965-A Part II current-year payments differ from Schedule 2 line 20",
+    );
+  }
+}
+
 export const form965a: MefFormDescriptor<"f965", unknown> = {
   pendingKey: "f965",
   FIELD_MAP: [],
@@ -215,18 +232,7 @@ export const form965a: MefFormDescriptor<"f965", unknown> = {
     if (input.reporting_year !== 2025) {
       throw new Error("TY2025 Form 965-A requires a 2025 reporting year");
     }
-    if (context?.pending) {
-      const schedule2 = context.pending.schedule2;
-      const line20 = schedule2 && typeof schedule2 === "object"
-        ? (schedule2 as { line20_965_tax_installment?: number })
-          .line20_965_tax_installment ?? 0
-        : 0;
-      if (Math.abs(line20 - currentYear965Payment(input)) > 0.005) {
-        throw new Error(
-          "Form 965-A Part II current-year payments differ from Schedule 2 line 20",
-        );
-      }
-    }
+    reconcileForm965aSchedule2(input, context?.pending);
     return buildIRS965A(input, context);
   },
   async buildBinaryAttachments(raw) {
