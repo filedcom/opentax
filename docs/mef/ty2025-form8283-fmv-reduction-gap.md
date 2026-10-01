@@ -648,3 +648,26 @@ PDF fixtures are authored for the deferred bulk pass. The record references do
 not authenticate the underlying documents or a filed Form 8899. Other
 intellectual property, nonzero donee income, Section B, multiple gifts, and
 carryovers remain unsupported.
+
+## Purchased long-term Section B equipment put to unrelated use (2026-10-01, unrun)
+
+The [2025 Form 8283 instructions](https://www.irs.gov/instructions/i8283)
+and [Publication 526 (2025)](https://www.irs.gov/publications/p526) reduce the
+deduction for appreciated tangible personal property put to a donee use
+unrelated to its exempt purpose by its long-term appreciation. The existing
+reviewed Section B art route now also admits one purchased equipment item, such
+as personally held vintage camera equipment, held more than one year. The source
+requires capital-asset and no-depreciation/recapture review, a basis-limited
+claim, the donee's actual unrelated-use statement, the qualified appraisal, a
+completed signed Form 8283, a separate FMV-reduction computation, and separate
+appraiser/donee signatures. All seven named PDFs retain distinct document IDs
+and reviewed byte digests. The basis claim joins Schedule A and itemized Form
+1040; native Form 8283 selects `EquipmentInd` and prints appraised FMV and the
+reduced claim separately; the PDF projects the same fields and explanation.
+
+A synthetic $18,000 FMV/$12,000 basis return and changed donee-use bytes,
+unreduced amount, recapture review, and Form 1040 itemization fixtures are
+authored for the deferred bulk pass. The route depends on a real review of the
+purchase, use, valuation, and signed documents; a name or digest alone does not
+authenticate their contents. Other equipment histories, disposition-year
+reductions, multiple gifts, and carryovers remain closed.

@@ -947,6 +947,8 @@ const sectionBItemSchema = z.object({
       property_dates_basis_match_confirmed: z.literal(true),
       capital_asset_not_inventory_confirmed: z.literal(true),
       no_depreciation_or_recapture_confirmed: z.literal(true),
+      personal_use_non_depreciable_equipment_confirmed: z.literal(true)
+        .optional(),
     }).strict(),
     donee_use_attachment_file_name: z.string().trim().min(1),
     donee_use_review: z.object({
@@ -1075,7 +1077,11 @@ const sectionBItemSchema = z.object({
         : NaN;
     if (
       (item.property_type !== SectionBPropertyType.ArtUnder20000 &&
-        item.property_type !== SectionBPropertyType.ArtAtLeast20000) ||
+        item.property_type !== SectionBPropertyType.ArtAtLeast20000 &&
+        item.property_type !== SectionBPropertyType.Equipment) ||
+      (item.property_type === SectionBPropertyType.Equipment &&
+        unrelatedReduction.purchase_record_review
+            .personal_use_non_depreciable_equipment_confirmed !== true) ||
       item.fmv <= 5_000 || item.fmv > 500_000 ||
       (item.property_type === SectionBPropertyType.ArtUnder20000 &&
         item.fmv >= 20_000) ||
@@ -1109,7 +1115,7 @@ const sectionBItemSchema = z.object({
         code: "custom",
         path: ["unrelated_use_capital_gain_reduction"],
         message:
-          "Form 8283 Section B unrelated-use art needs purchased long-term capital property, donee-use evidence, reviewed basis/appraisal/signed-form/reduction PDFs, and a basis-limited claim",
+          "Form 8283 Section B unrelated-use tangible property needs purchased long-term capital property, donee-use evidence, reviewed basis/appraisal/signed-form/reduction PDFs, and a basis-limited claim",
       });
     }
   }
