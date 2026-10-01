@@ -73,8 +73,8 @@ const inputSchema = z.object({
   line1f_taxable_adoption_benefits: z.number().nonnegative().optional(),
   // Line 1g — Wages from Form 8919 (uncollected SS/Medicare)
   line1g_wages_8919: z.number().nonnegative().optional(),
-  // Line 1h — Other earned income
-  line1h_other_earned: z.number().optional(),
+  // Line 1h — Other earned income (clergy, foreign employers, and Form 2555)
+  line1h_other_earned: accumulable(z.number()).optional(),
   // Line 1i — Combat pay election
   line1i_combat_pay: z.number().nonnegative().optional(),
   // Line 1z — Total wages (sum of 1a–1h)
@@ -275,7 +275,7 @@ function totalWages(input: F1040Input): number {
     (input.line1e_taxable_dep_care ?? 0) +
     (input.line1f_taxable_adoption_benefits ?? 0) +
     (input.line1g_wages_8919 ?? 0) +
-    (input.line1h_other_earned ?? 0)
+    sumField(input.line1h_other_earned)
   );
 }
 
@@ -878,6 +878,10 @@ function assembleReturn(
     line25d_total_withholding: computed_line25d,
     line33_total_payments: computed_line33,
   };
+  // The sink's finalized value also gives PDF and MeF a scalar line 1h.
+  if (input.line1h_other_earned !== undefined) {
+    result.line1h_other_earned = sumField(input.line1h_other_earned);
+  }
 
   // Emit computed subtotals — always include these aggregates regardless of value
   result.line10_adjustments = computed_line10;

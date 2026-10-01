@@ -64,6 +64,17 @@ Deno.test("schedule_se: net_profit_schedule_c maps to NetNonFarmProfitLossAmt", 
   );
 });
 
+Deno.test("schedule_se: ministerial loss offsets Schedule C on line 2", () => {
+  const result = scheduleSE.build({
+    net_profit_schedule_c: 10_000,
+    ministerial_se_earnings: -1_000,
+  });
+  assertStringIncludes(
+    result,
+    "<NetNonFarmProfitLossAmt>9000</NetNonFarmProfitLossAmt>",
+  );
+});
+
 Deno.test("schedule_se: net_profit_schedule_f maps to NetFarmProfitLossAmt", () => {
   const result = scheduleSE.build({ net_profit_schedule_f: 15000 });
   assertStringIncludes(

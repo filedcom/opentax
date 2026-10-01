@@ -39,10 +39,22 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["wages_8919", "WagesSubjectToSSTAmt"],
 ];
 
+// Schedule SE line 2 (NetNonFarmProfitLossAmt) carries Schedule C profit plus
+// ministerial SE earnings for clergy without an approved Form 4361 (Pub 517).
+function withMinisterialEarnings(fields: Input): Input {
+  const ministerial = fields["ministerial_se_earnings"];
+  if (typeof ministerial !== "number" || ministerial === 0) return fields;
+  return {
+    ...fields,
+    net_profit_schedule_c: (fields.net_profit_schedule_c ?? 0) + ministerial,
+  };
+}
+
 function buildIRS1040ScheduleSE(
-  fields: Input,
+  rawFields: Input,
   context?: MefBuildContext,
 ): string {
+  const fields = withMinisterialEarnings(rawFields);
   const optional = farmOptionalMethodLines(fields);
   const hasSeIncome = SE_INCOME_KEYS.some((key) =>
     typeof fields[key] === "number"

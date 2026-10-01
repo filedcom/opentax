@@ -150,6 +150,15 @@ Deno.test("calc_combined_c_and_f: schedule_c + schedule_f profits are summed", (
   assertEquals(round2(s2!.fields.line4_se_tax as number), round2(seTax));
 });
 
+Deno.test("calc_ministerial_loss_offsets_schedule_c_profit", () => {
+  const result = compute({
+    net_profit_schedule_c: 10_000,
+    ministerial_se_earnings: -1_000,
+  });
+  const s2 = findOutput(result, "schedule2");
+  assertEquals(s2?.fields.line4_se_tax, computeExpectedSeTax(9_000).seTax);
+});
+
 Deno.test("calc_combined_c_below_f_above: c=200 + f=300 = 500 ≥ $400 → SE tax computed", () => {
   const result = compute({
     net_profit_schedule_c: 200,

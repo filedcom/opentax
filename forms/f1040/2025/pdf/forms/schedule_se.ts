@@ -48,7 +48,17 @@ export const scheduleSePdf: PdfFormDescriptor = {
     { kind: "text", domainKey: "fullName", pdfField: `${page1}f1_1[0]` },
     { kind: "text", domainKey: "primarySSN", pdfField: `${page1}f1_2[0]` },
   ],
-  projectFields(fields) {
+  projectFields(rawFields) {
+    // Line 2 carries Schedule C profit plus ministerial SE earnings (Pub 517).
+    const ministerial = rawFields["ministerial_se_earnings"];
+    const fields = typeof ministerial === "number" && ministerial !== 0
+      ? {
+        ...rawFields,
+        net_profit_schedule_c:
+          ((rawFields["net_profit_schedule_c"] as number | undefined) ?? 0) +
+          ministerial,
+      }
+      : rawFields;
     const optional = farmOptionalMethodLines(fields);
     return optional
       ? { ...fields, net_profit_schedule_f: undefined, ...optional }

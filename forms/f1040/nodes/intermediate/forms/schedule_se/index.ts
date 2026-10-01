@@ -33,6 +33,10 @@ const SE_DEDUCTION_RATE = 0.50;
 export const inputSchema = z.object({
   // Net profit from Schedule C, line 31 (Sch SE Line 2)
   net_profit_schedule_c: z.number().optional(),
+  // Net earnings from ministerial services (clergy without an approved Form 4361): wages,
+  // housing allowance, parsonage rental value, less allowable expenses. Part of Sch SE Line 2
+  // per the Schedule SE instructions and Pub 517.
+  ministerial_se_earnings: z.number().optional(),
   // Net farm profit from Schedule F, line 34 (Sch SE Line 1a)
   net_profit_schedule_f: z.number().optional(),
   // An affirmative Part II farm optional method election. The farm profit is
@@ -58,6 +62,7 @@ type ScheduleSEInput = z.infer<typeof inputSchema>;
 // calculation, which skips Part I line 1a.
 function combinedNetProfit(input: ScheduleSEInput): number {
   return (input.net_profit_schedule_c ?? 0) +
+    (input.ministerial_se_earnings ?? 0) +
     (input.net_profit_schedule_f ?? 0);
 }
 

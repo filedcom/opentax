@@ -32,6 +32,14 @@ Deno.test("2025 Schedule SE PDF uses printed AcroForm line positions", () => {
   ]);
 });
 
+Deno.test("2025 Schedule SE PDF line 2 includes a ministerial loss", () => {
+  const projected = scheduleSePdf.projectFields?.({
+    net_profit_schedule_c: 10_000,
+    ministerial_se_earnings: -1_000,
+  }, {});
+  assertEquals(projected?.net_profit_schedule_c, 9_000);
+});
+
 Deno.test("2025 Schedule SE PDF projects elected farm method without Part I line 1a", () => {
   const projected = scheduleSePdf.projectFields?.({
     farm_optional_method_elected: true,

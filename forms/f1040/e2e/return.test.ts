@@ -343,6 +343,62 @@ Deno.test("E2E Scenario 3a: foreign employer compensation with no W-2 — reache
   );
 });
 
+Deno.test("E2E: clergy excess allowance and foreign wages sum on line 1h", () => {
+  const result = runReturn({
+    general: singleGeneral(),
+    clergy: [{
+      is_ordained_minister: true,
+      has_4361_exemption: true,
+      housing_allowance_designated: 30_000,
+      housing_allowance_paid: 30_000,
+      actual_housing_expenses: 25_000,
+      fair_market_rental_value: 40_000,
+    }],
+    fec: [fecItem(1_000)],
+  });
+
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending["agi_aggregator"]?.["line1h_other_earned"], [
+    5_000,
+    1_000,
+  ]);
+  assertEquals(result.pending["standard_deduction"]?.["agi"], 6_000);
+  assertEquals(result.pending["f1040"]?.["line1h_other_earned"], 6_000);
+  assertEquals(result.pending["f1040"]?.["line1z_total_wages"], 6_000);
+  assertEquals(result.pending["f1040"]?.["line11_agi"], 6_000);
+  assertEquals(result.pending["f1040"]?.["line24_total_tax"], 0);
+});
+
+Deno.test("E2E: ministerial loss reduces Schedule C income for SE tax", () => {
+  const result = runReturn({
+    general: singleGeneral(),
+    clergy: [{
+      is_ordained_minister: true,
+      ministerial_wages: 1_000,
+      unreimbursed_ministerial_expenses: 2_000,
+    }],
+    schedule_c: [{
+      line_a_principal_business: "Consulting",
+      line_b_business_code: "541600",
+      line_c_business_name: "Consulting",
+      line_f_accounting_method: "cash",
+      line_g_material_participation: true,
+      line_1_gross_receipts: 10_000,
+    }],
+  });
+
+  assertEquals(result.diagnostics, []);
+  assertEquals(
+    result.pending["schedule_se"]?.["ministerial_se_earnings"],
+    -1_000,
+  );
+  assertEquals(
+    result.pending["schedule_se"]?.["net_profit_schedule_c"],
+    10_000,
+  );
+  assertEquals(result.pending["schedule2"]?.["line4_se_tax"], 1_271.6595);
+});
+
 Deno.test("E2E Scenario 3b: foreign employer compensation beside a W-2 — lines 1a and 1h total", () => {
   const result = runReturn({
     general: singleGeneral(),

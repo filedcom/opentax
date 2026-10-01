@@ -78,210 +78,123 @@ Deno.test("clergy.inputSchema: valid full item passes", () => {
 });
 
 // =============================================================================
+// =============================================================================
 // 2. Non-ordained Minister — No Special Outputs
 // =============================================================================
 
-Deno.test("clergy.compute: non-ordained minister — no SE output", () => {
-  const result = compute([minimalItem({
-    ministerial_wages: 50000,
-    housing_allowance_designated: 12000,
-    is_ordained_minister: false,
-  })]);
+Deno.test("clergy.compute: is_ordained_minister false — no outputs", () => {
+  const result = compute([{ is_ordained_minister: false, ministerial_wages: 50000, housing_allowance_designated: 20000 }]);
+  assertEquals(result.outputs.length, 0);
+});
+
+Deno.test("clergy.compute: is_ordained_minister omitted — no outputs", () => {
+  const result = compute([{ ministerial_wages: 50000, housing_allowance_designated: 20000 }]);
+  assertEquals(result.outputs.length, 0);
+});
+
+// =============================================================================
+// 3. SE Earnings — Ordained, No Form 4361 (Pub 517, IRC §1402(a)(8))
+// =============================================================================
+
+Deno.test("clergy.compute: SE earnings = wages + housing allowance paid", () => {
+  const result = compute([{ is_ordained_minister: true, ministerial_wages: 60000, housing_allowance_designated: 24000 }]);
+  assertEquals(findOutput(result, "schedule_se")?.fields.ministerial_se_earnings, 84000);
+});
+
+Deno.test("clergy.compute: SE earnings use allowance paid when it differs from designated", () => {
+  const result = compute([{ is_ordained_minister: true, ministerial_wages: 60000, housing_allowance_designated: 24000, housing_allowance_paid: 20000 }]);
+  assertEquals(findOutput(result, "schedule_se")?.fields.ministerial_se_earnings, 80000);
+});
+
+Deno.test("clergy.compute: parsonage fair rental value IS included in SE earnings", () => {
+  const result = compute([{ is_ordained_minister: true, ministerial_wages: 40000, parsonage_value: 18000 }]);
+  assertEquals(findOutput(result, "schedule_se")?.fields.ministerial_se_earnings, 58000);
+});
+
+Deno.test("clergy.compute: unreimbursed ministerial expenses reduce SE earnings", () => {
+  const result = compute([{ is_ordained_minister: true, ministerial_wages: 40000, housing_allowance_designated: 20000, unreimbursed_ministerial_expenses: 3000 }]);
+  assertEquals(findOutput(result, "schedule_se")?.fields.ministerial_se_earnings, 57000);
+});
+
+Deno.test("clergy.compute: ministerial loss reaches Schedule SE", () => {
+  const result = compute([{
+    is_ordained_minister: true,
+    ministerial_wages: 1_000,
+    unreimbursed_ministerial_expenses: 2_000,
+  }]);
+  assertEquals(findOutput(result, "schedule_se")?.fields.ministerial_se_earnings, -1_000);
+});
+
+Deno.test("clergy.compute: SE earnings zero — no schedule_se output", () => {
+  const result = compute([{ is_ordained_minister: true }]);
   assertEquals(findOutput(result, "schedule_se"), undefined);
 });
 
-Deno.test("clergy.compute: is_ordained_minister omitted — no SE output", () => {
-  const result = compute([minimalItem({
-    ministerial_wages: 50000,
-    housing_allowance_designated: 12000,
-  })]);
+// =============================================================================
+// 4. Form 4361 Exemption
+// =============================================================================
+
+Deno.test("clergy.compute: has_4361_exemption — no schedule_se output", () => {
+  const result = compute([{ is_ordained_minister: true, has_4361_exemption: true, ministerial_wages: 90000, housing_allowance_designated: 30000, actual_housing_expenses: 30000, fair_market_rental_value: 30000 }]);
+  assertEquals(findOutput(result, "schedule_se"), undefined);
+  assertEquals(result.outputs.length, 0);
+});
+
+Deno.test("clergy.compute: has_4361_exemption — excess allowance still taxable on line 1h", () => {
+  const result = compute([{ is_ordained_minister: true, has_4361_exemption: true, housing_allowance_designated: 30000, actual_housing_expenses: 26000, fair_market_rental_value: 32000 }]);
+  assertEquals(findOutput(result, "f1040")?.fields.line1h_other_earned, 4000);
   assertEquals(findOutput(result, "schedule_se"), undefined);
 });
 
-Deno.test("clergy.compute: non-ordained — no schedule1 housing exclusion output", () => {
-  const result = compute([minimalItem({
-    ministerial_wages: 50000,
-    housing_allowance_designated: 12000,
-    actual_housing_expenses: 10000,
-    fair_market_rental_value: 15000,
-    is_ordained_minister: false,
-  })]);
+// =============================================================================
+// 5. Housing Allowance — allowance left out of W-2 box 1 (the normal case)
+// =============================================================================
+
+Deno.test("clergy.compute: fully substantiated allowance — no income adjustment (no double exclusion)", () => {
+  const result = compute([{ is_ordained_minister: true, has_4361_exemption: true, housing_allowance_designated: 30000, actual_housing_expenses: 34000, fair_market_rental_value: 36000 }]);
+  assertEquals(findOutput(result, "f1040"), undefined);
   assertEquals(findOutput(result, "schedule1"), undefined);
 });
 
-// =============================================================================
-// 3. SE Tax Routing — Ordained, No Form 4361
-// =============================================================================
-
-Deno.test("clergy.compute: ordained minister routes to schedule_se", () => {
-  const result = compute([minimalItem({
-    ministerial_wages: 50000,
-    housing_allowance_designated: 12000,
-    is_ordained_minister: true,
-    has_4361_exemption: false,
-  })]);
-  assertEquals(findOutput(result, "schedule_se") !== undefined, true);
+Deno.test("clergy.compute: excess over actual expenses → line 1h and AGI", () => {
+  const result = compute([{ is_ordained_minister: true, has_4361_exemption: true, housing_allowance_designated: 30000, actual_housing_expenses: 25000, fair_market_rental_value: 40000 }]);
+  assertEquals(findOutput(result, "f1040")?.fields.line1h_other_earned, 5000);
+  assertEquals(findOutput(result, "agi_aggregator")?.fields.line1h_other_earned, 5000);
 });
 
-Deno.test("clergy.compute: SE base = ministerial_wages + housing_allowance_designated", () => {
-  const result = compute([minimalItem({
-    ministerial_wages: 50000,
-    housing_allowance_designated: 12000,
-    is_ordained_minister: true,
-    has_4361_exemption: false,
-  })]);
-  const out = findOutput(result, "schedule_se");
-  assertEquals(out?.fields.net_profit_schedule_c, 62000);
+Deno.test("clergy.compute: excess over fair rental value → line 1h", () => {
+  const result = compute([{ is_ordained_minister: true, has_4361_exemption: true, housing_allowance_designated: 30000, actual_housing_expenses: 35000, fair_market_rental_value: 27000 }]);
+  assertEquals(findOutput(result, "f1040")?.fields.line1h_other_earned, 3000);
 });
 
-Deno.test("clergy.compute: SE base uses only wages when no housing allowance", () => {
-  const result = compute([minimalItem({
-    ministerial_wages: 40000,
-    is_ordained_minister: true,
-    has_4361_exemption: false,
-  })]);
-  const out = findOutput(result, "schedule_se");
-  assertEquals(out?.fields.net_profit_schedule_c, 40000);
+Deno.test("clergy.compute: spending above the designation does not create a deduction", () => {
+  const result = compute([{ is_ordained_minister: true, has_4361_exemption: true, housing_allowance_designated: 30000, actual_housing_expenses: 45000, fair_market_rental_value: 45000 }]);
+  assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("clergy.compute: parsonage_value not included in SE base", () => {
-  // SE base = wages + housing allowance (NOT parsonage)
-  const result = compute([minimalItem({
-    ministerial_wages: 40000,
-    parsonage_value: 15000,
-    is_ordained_minister: true,
-    has_4361_exemption: false,
-  })]);
-  const out = findOutput(result, "schedule_se");
-  assertEquals(out?.fields.net_profit_schedule_c, 40000);
+Deno.test("clergy.compute: missing expense or rental value — whole allowance is taxable", () => {
+  const result = compute([{ is_ordained_minister: true, has_4361_exemption: true, housing_allowance_designated: 30000 }]);
+  assertEquals(findOutput(result, "f1040")?.fields.line1h_other_earned, 30000);
 });
 
-Deno.test("clergy.compute: SE base zero — no schedule_se output", () => {
-  const result = compute([minimalItem({
-    ministerial_wages: 0,
-    housing_allowance_designated: 0,
-    is_ordained_minister: true,
-    has_4361_exemption: false,
-  })]);
-  assertEquals(findOutput(result, "schedule_se"), undefined);
+Deno.test("clergy.compute: parsonage in kind — no income adjustment", () => {
+  const result = compute([{ is_ordained_minister: true, has_4361_exemption: true, parsonage_value: 18000 }]);
+  assertEquals(result.outputs.length, 0);
 });
 
 // =============================================================================
-// 4. Form 4361 Exemption — No SE Output
+// 6. Housing Allowance — church included it in W-2 box 1 (uncommon)
 // =============================================================================
 
-Deno.test("clergy.compute: has_4361_exemption = true — no schedule_se output", () => {
-  const result = compute([minimalItem({
-    ministerial_wages: 50000,
-    housing_allowance_designated: 12000,
-    is_ordained_minister: true,
-    has_4361_exemption: true,
-  })]);
-  assertEquals(findOutput(result, "schedule_se"), undefined);
+Deno.test("clergy.compute: allowance inside box 1 — SE earnings do not count it twice", () => {
+  const result = compute([{ is_ordained_minister: true, housing_allowance_included_in_w2_box1: true, ministerial_wages: 70000, housing_allowance_designated: 20000, actual_housing_expenses: 20000, fair_market_rental_value: 25000 }]);
+  assertEquals(findOutput(result, "schedule_se")?.fields.ministerial_se_earnings, 70000);
 });
 
-Deno.test("clergy.compute: has_4361_exemption = true — still routes housing exclusion to schedule1", () => {
-  const result = compute([minimalItem({
-    ministerial_wages: 50000,
-    housing_allowance_designated: 12000,
-    actual_housing_expenses: 11000,
-    fair_market_rental_value: 13000,
-    is_ordained_minister: true,
-    has_4361_exemption: true,
-  })]);
-  // Housing exclusion still applies even with 4361 exemption
-  assertEquals(findOutput(result, "schedule1") !== undefined, true);
-});
-
-// =============================================================================
-// 5. Housing Allowance Exclusion — Three-Way Minimum
-// =============================================================================
-
-Deno.test("clergy.compute: housing exclusion = min(designated, actual, fmrv)", () => {
-  // designated=12000, actual=10000, fmrv=15000 → exclusion = 10000
-  const result = compute([minimalItem({
-    ministerial_wages: 50000,
-    housing_allowance_designated: 12000,
-    actual_housing_expenses: 10000,
-    fair_market_rental_value: 15000,
-    is_ordained_minister: true,
-  })]);
-  const out = findOutput(result, "schedule1");
-  assertEquals(out?.fields.line8z_other_income, -10000);
-});
-
-Deno.test("clergy.compute: housing exclusion limited by designated amount", () => {
-  // designated=8000, actual=12000, fmrv=15000 → exclusion = 8000
-  const result = compute([minimalItem({
-    ministerial_wages: 50000,
-    housing_allowance_designated: 8000,
-    actual_housing_expenses: 12000,
-    fair_market_rental_value: 15000,
-    is_ordained_minister: true,
-  })]);
-  const out = findOutput(result, "schedule1");
-  assertEquals(out?.fields.line8z_other_income, -8000);
-});
-
-Deno.test("clergy.compute: housing exclusion limited by fmrv", () => {
-  // designated=12000, actual=12000, fmrv=9000 → exclusion = 9000
-  const result = compute([minimalItem({
-    ministerial_wages: 50000,
-    housing_allowance_designated: 12000,
-    actual_housing_expenses: 12000,
-    fair_market_rental_value: 9000,
-    is_ordained_minister: true,
-  })]);
-  const out = findOutput(result, "schedule1");
-  assertEquals(out?.fields.line8z_other_income, -9000);
-});
-
-Deno.test("clergy.compute: no housing exclusion when actual_housing_expenses is zero", () => {
-  const result = compute([minimalItem({
-    ministerial_wages: 50000,
-    housing_allowance_designated: 12000,
-    actual_housing_expenses: 0,
-    fair_market_rental_value: 15000,
-    is_ordained_minister: true,
-  })]);
-  assertEquals(findOutput(result, "schedule1"), undefined);
-});
-
-Deno.test("clergy.compute: no housing exclusion when fields are missing", () => {
-  // No housing fields provided — no schedule1 output
-  const result = compute([minimalItem({
-    ministerial_wages: 50000,
-    is_ordained_minister: true,
-  })]);
-  assertEquals(findOutput(result, "schedule1"), undefined);
-});
-
-// =============================================================================
-// 6. Parsonage Exclusion
-// =============================================================================
-
-Deno.test("clergy.compute: parsonage_value > 0 routes exclusion to schedule1", () => {
-  const result = compute([minimalItem({
-    ministerial_wages: 50000,
-    parsonage_value: 15000,
-    is_ordained_minister: true,
-  })]);
-  const out = findOutput(result, "schedule1");
-  assertEquals(out?.fields.line8z_other_income, -15000);
-});
-
-Deno.test("clergy.compute: parsonage + housing allowance exclusions combined", () => {
-  // parsonage=15000, housing exclusion=min(12000,10000,13000)=10000 → total exclusion = -25000
-  const result = compute([minimalItem({
-    ministerial_wages: 50000,
-    housing_allowance_designated: 12000,
-    actual_housing_expenses: 10000,
-    fair_market_rental_value: 13000,
-    parsonage_value: 15000,
-    is_ordained_minister: true,
-  })]);
-  const out = findOutput(result, "schedule1");
-  assertEquals(out?.fields.line8z_other_income, -25000);
+Deno.test("clergy.compute: allowance inside box 1 — allowable amount subtracted on schedule1", () => {
+  const result = compute([{ is_ordained_minister: true, has_4361_exemption: true, housing_allowance_included_in_w2_box1: true, housing_allowance_designated: 30000, actual_housing_expenses: 25000, fair_market_rental_value: 40000 }]);
+  assertEquals(findOutput(result, "schedule1")?.fields.line8z_other_income, -25000);
+  assertEquals(findOutput(result, "f1040"), undefined);
 });
 
 // =============================================================================
@@ -289,90 +202,22 @@ Deno.test("clergy.compute: parsonage + housing allowance exclusions combined", (
 // =============================================================================
 
 Deno.test("clergy.compute: throws on negative ministerial_wages", () => {
-  assertThrows(() => compute([minimalItem({ ministerial_wages: -100 })]), Error);
+  assertThrows(() => compute([{ ministerial_wages: -1 }]));
 });
 
-Deno.test("clergy.compute: throws on negative housing_allowance_designated", () => {
-  assertThrows(
-    () => compute([minimalItem({ housing_allowance_designated: -500 })]),
-    Error,
-  );
-});
-
-Deno.test("clergy.compute: zero wages do not throw", () => {
-  const result = compute([minimalItem({ ministerial_wages: 0, is_ordained_minister: true })]);
-  assertEquals(Array.isArray(result.outputs), true);
+Deno.test("clergy.compute: throws on negative housing_allowance_paid", () => {
+  assertThrows(() => compute([{ housing_allowance_paid: -1 }]));
 });
 
 // =============================================================================
 // 8. Aggregation — Multiple Ministers
 // =============================================================================
 
-Deno.test("clergy.compute: multiple ordained ministers — SE bases summed", () => {
+Deno.test("clergy.compute: two ministers — SE earnings and excess summed separately", () => {
   const result = compute([
-    minimalItem({ ministerial_wages: 30000, housing_allowance_designated: 6000, is_ordained_minister: true }),
-    minimalItem({ ministerial_wages: 20000, housing_allowance_designated: 4000, is_ordained_minister: true }),
+    { is_ordained_minister: true, ministerial_wages: 40000, housing_allowance_designated: 10000, actual_housing_expenses: 8000, fair_market_rental_value: 20000 },
+    { is_ordained_minister: true, has_4361_exemption: true, ministerial_wages: 30000, housing_allowance_designated: 12000, actual_housing_expenses: 9000, fair_market_rental_value: 20000 },
   ]);
-  // (30000 + 6000) + (20000 + 4000) = 36000 + 24000 = 60000
-  const out = findOutput(result, "schedule_se");
-  assertEquals(out?.fields.net_profit_schedule_c, 60000);
-});
-
-Deno.test("clergy.compute: one ordained, one with 4361 exemption — only ordained routes to SE", () => {
-  const result = compute([
-    minimalItem({ ministerial_wages: 30000, housing_allowance_designated: 6000, is_ordained_minister: true, has_4361_exemption: false }),
-    minimalItem({ ministerial_wages: 20000, housing_allowance_designated: 4000, is_ordained_minister: true, has_4361_exemption: true }),
-  ]);
-  const out = findOutput(result, "schedule_se");
-  assertEquals(out?.fields.net_profit_schedule_c, 36000);
-});
-
-Deno.test("clergy.compute: housing exclusions from multiple ministers combined", () => {
-  const result = compute([
-    minimalItem({
-      ministerial_wages: 30000,
-      housing_allowance_designated: 10000,
-      actual_housing_expenses: 9000,
-      fair_market_rental_value: 12000,
-      is_ordained_minister: true,
-    }),
-    minimalItem({
-      ministerial_wages: 20000,
-      housing_allowance_designated: 8000,
-      actual_housing_expenses: 7000,
-      fair_market_rental_value: 10000,
-      is_ordained_minister: true,
-    }),
-  ]);
-  // exclusion1 = min(10000, 9000, 12000) = 9000
-  // exclusion2 = min(8000, 7000, 10000) = 7000
-  // total = -16000
-  const out = findOutput(result, "schedule1");
-  assertEquals(out?.fields.line8z_other_income, -16000);
-});
-
-// =============================================================================
-// 9. Smoke Test
-// =============================================================================
-
-Deno.test("clergy.compute: smoke test — ordained minister with all fields", () => {
-  const result = compute([
-    minimalItem({
-      ministerial_wages: 55000,
-      housing_allowance_designated: 15000,
-      actual_housing_expenses: 14000,
-      fair_market_rental_value: 18000,
-      parsonage_value: 0,
-      is_ordained_minister: true,
-      has_4361_exemption: false,
-    }),
-  ]);
-
-  // SE base = 55000 + 15000 = 70000
-  const seOut = findOutput(result, "schedule_se");
-  assertEquals(seOut?.fields.net_profit_schedule_c, 70000);
-
-  // housing exclusion = min(15000, 14000, 18000) = 14000
-  const s1Out = findOutput(result, "schedule1");
-  assertEquals(s1Out?.fields.line8z_other_income, -14000);
+  assertEquals(findOutput(result, "schedule_se")?.fields.ministerial_se_earnings, 50000);
+  assertEquals(findOutput(result, "f1040")?.fields.line1h_other_earned, 5000);
 });
