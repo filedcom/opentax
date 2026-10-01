@@ -1,6 +1,6 @@
-import { type FilerIdentity, FilingStatus } from "../../mef/header.ts";
-import { inputSchema } from "../../nodes/inputs/f1099r/index.ts";
-import { TS } from "../../nodes/types.ts";
+import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
+import { inputSchema } from "../nodes/inputs/f1099r/index.ts";
+import { TS } from "../nodes/types.ts";
 
 /** Require a positive payer copy's recipient to match the filed owner. */
 export function assert1099RRecipientOwner(

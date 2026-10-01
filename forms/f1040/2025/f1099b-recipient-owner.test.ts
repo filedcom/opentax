@@ -21,7 +21,7 @@ const filer: FilerIdentity = {
 
 const row = {
   recipient_ssn: "111223333",
-  part: "A",
+  part: "A" as const,
   description: "10 shares ABC",
   date_acquired: "01012024",
   date_sold: "01022025",

@@ -1,5 +1,5 @@
-import { type FilerIdentity, FilingStatus } from "../../mef/header.ts";
-import { inputSchema } from "../../nodes/inputs/f1099patr/index.ts";
+import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
+import { inputSchema } from "../nodes/inputs/f1099patr/index.ts";
 
 /** Match cooperative backup withholding to an issued recipient on this return. */
 export function assertPatrWithholdingRecipient(

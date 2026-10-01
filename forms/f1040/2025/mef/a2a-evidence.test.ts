@@ -112,7 +112,10 @@ Deno.test("A2A archived outbound evidence rejects broken document and PDF ZIP pa
     const manifest = encoder.encode(
       `<IRSSubmissionManifest><SubmissionId>${submissionId}</SubmissionId><TaxYr>2025</TaxYr><GovernmentCd>IRS</GovernmentCd><FederalSubmissionTypeCd>1040</FederalSubmissionTypeCd><TIN>111223333</TIN></IRSSubmissionManifest>`,
     );
-    const variants = [
+    const variants: Array<{
+      xml: string;
+      attachments: Record<string, Uint8Array>;
+    }> = [
       {
         xml:
           `<Return><ReturnHeader binaryAttachmentCnt="0"></ReturnHeader><ReturnData documentCnt="1"><IRS1040 documentId="IRS10400"><PrimarySSN>111223333</PrimarySSN><Statement referenceDocumentId="missing"/></IRS1040></ReturnData></Return>`,

@@ -1,5 +1,5 @@
-import { type FilerIdentity, FilingStatus } from "../../mef/header.ts";
-import { inputSchema } from "../../nodes/inputs/f1099b/index.ts";
+import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
+import { inputSchema } from "../nodes/inputs/f1099b/index.ts";
 
 /** A broker-reported sale must belong to a filer on this return. */
 export function assert1099BRecipientOwner(

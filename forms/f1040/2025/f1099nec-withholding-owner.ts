@@ -1,5 +1,5 @@
-import { type FilerIdentity, FilingStatus } from "../../mef/header.ts";
-import { inputSchema } from "../../nodes/inputs/f1099nec/index.ts";
+import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
+import { inputSchema } from "../nodes/inputs/f1099nec/index.ts";
 
 /** Bind positive NEC backup withholding to a recipient on this return. */
 export function assertNecWithholdingRecipient(
