@@ -229,8 +229,8 @@ export const form8606Pdf: PdfFormDescriptor = {
         print_line2_prior_basis: undefined,
         print_line3_total_basis: undefined,
         print_line14_remaining_basis: undefined,
-        print_owner_name: filer.fullName,
-        print_owner_ssn: filer.primarySSN,
+        print_owner_name: roth.ownerName,
+        print_owner_ssn: roth.ownerSsn,
       }];
     }
     const reviewed = reconcileForm8606Distribution(raw, allPending, filer);

@@ -84,16 +84,20 @@ taxpayer and spouse Form 8606 claims remain closed.
    deducting contribution basis before calculating taxable earnings. The taxable
    earnings reach Form 1040 line 4b and Form 5329's early distribution line;
    gross reaches Form 1040 line 4a. Native and PDF export replay the source,
-   owner, printed lines, Form 1040, and Form 5329. Positive and tamper fixtures
-   are authored but unrun. The generic Part III calculation remains unsupported
+   owner, printed lines, Form 1040, and Form 5329. The same first-year source
+   shape now supports one spouse-owned code J payment on a joint return when
+   the spouse owns the opening statement, Form 5498, contribution receipt,
+   issued Form 1099-R, and sole Form 5329 early-distribution entry. The native
+   and PDF Form 8606 print the spouse's name and SSN; the return's IRA totals
+   remain joint. Taxpayer and spouse positives and source/owner/tax tamper
+   fixtures are authored but unrun. The generic Part III calculation remains unsupported
    for export because it does not model qualifying distributions,
    first-time-homebuyer expense, prior contribution or conversion basis, and
    taxable earnings ordering.
 4. Focused node and serializer tests now cover source-to-print routing, native
    owner and line tags, and unsupported shapes, but were not run. The shared
-   `builder.test.ts` still has three legacy Form 8606 fixtures for the owner of
-   that shared file to reconcile before the full batch. The flat payload is not
-   accepted as a fallback.
+   `builder.test.ts` rejects aggregate-only Form 8606 data and contains an
+   absent-form check; there is no flat-payload fallback.
 
 ## Smallest safe rebuild boundary
 

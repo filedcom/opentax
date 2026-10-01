@@ -23,6 +23,15 @@ export function reconcileForm8606Roth(
   );
   const entered = source.success ? source.data.f1099rs : [];
   const item = entered[0];
+  const spouseOwned = item?.ts === "S";
+  const ownerSsn = spouseOwned ? filer?.spouse?.ssn : filer?.primarySSN;
+  const ownerName = spouseOwned
+    ? [
+      filer?.spouse?.firstName,
+      filer?.spouse?.middleInitial,
+      filer?.spouse?.lastName,
+    ].filter(Boolean).join(" ")
+    : filer?.fullName;
   const contribution = evidence.form5498.box10_roth_ira_contributions;
   const gross = item?.box1_gross_distribution ?? 0;
   const taxable = gross - contribution;
@@ -30,7 +39,10 @@ export function reconcileForm8606Roth(
   const form5329 = pending?.form5329 as
     | { owner_forms?: Record<string, unknown>[] }
     | undefined;
-  const early = form5329?.owner_forms?.[0];
+  const ownerForms = form5329?.owner_forms ?? [];
+  const early = ownerForms.find((row) =>
+    row.owner === (spouseOwned ? "S" : "T")
+  );
   const references = [
     evidence.opening_statement.source_document_reference,
     evidence.form5498.source_document_reference,
@@ -38,10 +50,15 @@ export function reconcileForm8606Roth(
     evidence.form1099r_source_document_reference,
   ];
   if (
-    !filer || filer.filingStatus !== FilingStatus.Single ||
-    !filer.fullName?.trim() || !/^\d{9}$/.test(filer.primarySSN) ||
+    !filer ||
+    !(spouseOwned
+      ? filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+        !!filer.spouse?.firstName && !!filer.spouse?.lastName
+      : filer.filingStatus === FilingStatus.Single) ||
+    !ownerName?.trim() || !ownerSsn || !/^\d{9}$/.test(ownerSsn) ||
     entered.length !== 1 || !item ||
-    item.ts !== "T" || item.box7_distribution_code !== "J" ||
+    item.ts !== (spouseOwned ? "S" : "T") ||
+    item.box7_distribution_code !== "J" ||
     item.box7_ira_simple_indicator !== true ||
     item.exclude_8606_roth !== true ||
     item.box2a_taxable_amount !== undefined ||
@@ -58,9 +75,9 @@ export function reconcileForm8606Roth(
     item.source_document_reference !==
       evidence.form1099r_source_document_reference ||
     item.payer_ein.replace(/\D/g, "") !== evidence.form5498.custodian_ein ||
-    evidence.opening_statement.owner_ssn !== filer.primarySSN ||
-    evidence.form5498.owner_ssn !== filer.primarySSN ||
-    evidence.contribution_receipt.owner_ssn !== filer.primarySSN ||
+    evidence.opening_statement.owner_ssn !== ownerSsn ||
+    evidence.form5498.owner_ssn !== ownerSsn ||
+    evidence.contribution_receipt.owner_ssn !== ownerSsn ||
     evidence.form5498.custodian_ein !==
       evidence.contribution_receipt.custodian_ein ||
     evidence.opening_statement.first_roth_ira_opened_on >
@@ -90,12 +107,12 @@ export function reconcileForm8606Roth(
     fields.print_roth_line25c_taxable !== taxable ||
     !f1040 || f1040.line4a_ira_gross !== gross ||
     f1040.line4b_ira_taxable !== taxable ||
-    !early || early.owner !== "T" ||
+    ownerForms.length !== 1 || !early ||
     early.early_distribution !== taxable
   ) {
     throw new Error(
       "Form 8606 Roth Part III needs one matched first-year contribution, code J payment, owner, Form 5329 and finalized Form 1040",
     );
   }
-  return { fields, gross, contribution, taxable };
+  return { fields, gross, contribution, taxable, ownerName, ownerSsn };
 }

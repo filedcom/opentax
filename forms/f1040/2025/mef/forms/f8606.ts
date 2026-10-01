@@ -27,10 +27,9 @@ function buildIRS8606(rawFields: Input, context?: MefBuildContext): string {
     context?.filer,
   );
   if (reviewedRoth) {
-    const filer = context!.filer!;
     return elements("IRS8606", [
-      element("Form8606IRANamelineTxt", filer.fullName),
-      element("NondedIRATxpyrWithIRASSN", filer.primarySSN),
+      element("Form8606IRANamelineTxt", reviewedRoth.ownerName),
+      element("NondedIRATxpyrWithIRASSN", reviewedRoth.ownerSsn),
       element(
         "TotNonQlfyDistriFromRothIRAAmt",
         fields.print_roth_line19_distributions,
