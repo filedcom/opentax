@@ -117,15 +117,18 @@ including the form's multiple-recipient instructions and worksheets on pages
   the filled PDF annotations have not been visually inspected.
 - A bounded partial-share beneficiary route now permits one Part-III-only
   election with no NUA, annuity, death-benefit exclusion, or Part II election
-  and a preparer-supplied full attributable federal estate-tax amount. The
+  and a referenced full attributable federal estate-tax amount. The
   recipient's box 9a percentage grosses up line 8, the full estate-tax amount
   reduces line 18, and line 29 prorates the resulting Part III tax. This follows
   the
   [2025 Form 4972 multiple-recipient steps and line 18 instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf).
-  Native MeF and PDF require one matching elected Form 1099-R, recompute every
-  line, and reconcile line 30 with the Form 1040 tax source. Focused positive,
-  line-tamper, and final-tax cases are written but unrun. The estate
-  administrator's attribution, other partial-share estate combinations, filled
+  The partial-share source now requires distinct administrator-allocation and
+  estate-return references, a wholly taxable source Form 1099-R, a full taxable
+  distribution matching box 2a divided by box 9a, and a full/recipient estate-tax allocation at whole-dollar
+  precision. Calculation, native MeF, and PDF reject a changed allocation while
+  matching the one elected Form 1099-R and final Form 1040 special tax. Focused
+  positive and tamper fixtures are authored but unrun. The estate
+  administrator's statement bytes and tax-return contents, other partial-share estate combinations, filled
   PDF, XSD/business-rule checks, and ATS acceptance remain open.
 - A separate bounded partial-share beneficiary route now permits a Part-III-only
   death-benefit exclusion with no Part II, NUA, annuity, or estate-tax

@@ -59,6 +59,54 @@ Deno.test("2025 Form 4972 PDF prints a sourced partial-share Part III and MRD", 
   assertMatch(operators, /<4d5244>/i);
 });
 
+Deno.test("2025 Form 4972 PDF binds partial beneficiary estate allocation", () => {
+  const source = {
+    ...eligibility,
+    recipient: "T",
+    beneficiary_distribution: true,
+    participant_five_year_member: false,
+    prior_beneficiary_election_after_1986: false,
+    lump_sum_amount: 20_000,
+    recipient_share_pct: 50,
+    federal_estate_tax: 2_000,
+    partial_estate_tax_source: {
+      administrator_statement_reference: "plan-estate-allocation-2025",
+      estate_tax_return_reference: "estate-form706-2025",
+      full_distribution_taxable_amount: 40_000,
+      full_distribution_federal_estate_tax: 2_000,
+      recipient_allocated_federal_estate_tax: 1_000,
+    },
+    elect_10yr_averaging: true,
+  };
+  const calculated = form4972Node.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form4972InputSchema.parse(source),
+  ).outputs[0].fields;
+  const original = pending("T", 20_000);
+  const allPending = {
+    ...original,
+    f1099r: {
+      f1099rs: [{ ...original.f1099r.f1099rs[0], box9a_pct_total: 50 }],
+    },
+    f1040: { form4972_tax: 1_955 },
+  };
+  const projected = form4972Pdf.projectFields?.(calculated, allPending);
+  assertEquals(projected?.line18, 2_000);
+  assertEquals(projected?.line29, 1_955);
+  assertThrows(
+    () =>
+      form4972Pdf.projectFields?.({
+        ...calculated,
+        partial_estate_tax_source: {
+          ...source.partial_estate_tax_source,
+          full_distribution_federal_estate_tax: 1_999,
+        },
+      }, allPending),
+    Error,
+    "matching the full distribution",
+  );
+});
+
 Deno.test("2025 Form 4972 PDF keeps a partial beneficiary's full death benefit on line 9", () => {
   const source = {
     ...eligibility,
@@ -125,7 +173,9 @@ Deno.test("2025 Form 4972 PDF prints partial beneficiary Part-II-only death-bene
   const original = pending("T", 20_000, 4_000);
   const allPending = {
     ...original,
-    f1099r: { f1099rs: [{ ...original.f1099r.f1099rs[0], box9a_pct_total: 50 }] },
+    f1099r: {
+      f1099rs: [{ ...original.f1099r.f1099rs[0], box9a_pct_total: 50 }],
+    },
     f1040: { form4972_tax: 700, line5b_pension_taxable: 14_000 },
   };
   const projected = form4972Pdf.projectFields?.(calculated, allPending);
@@ -133,7 +183,8 @@ Deno.test("2025 Form 4972 PDF prints partial beneficiary Part-II-only death-bene
   assertEquals(projected?.line7, 700);
   assertEquals(projected?.line8, undefined);
   assertThrows(
-    () => form4972Pdf.projectFields?.({ ...calculated, line6: 4_000 }, allPending),
+    () =>
+      form4972Pdf.projectFields?.({ ...calculated, line6: 4_000 }, allPending),
     Error,
     "partial-share lines differ",
   );

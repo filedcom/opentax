@@ -28,7 +28,13 @@ export interface Fields {
       employee_id: string;
       payroll_source_reference: string;
       relationship: "unrelated";
-      age_18_or_older_for_fica: true;
+      age_18_or_older_for_fica: boolean;
+      student_minor_fica_exclusion?: {
+        birth_date: string;
+        birth_date_source_reference: string;
+        student_enrollment_source_reference: string;
+        student_during_2025_verified: true;
+      };
       ordinary_cash_only: true;
       annual_cash_wages: number;
       quarterly_cash_wages: [number, number, number, number];
@@ -51,7 +57,13 @@ export interface Fields {
       employee_id: string;
       payroll_source_reference: string;
       relationship: "unrelated";
-      age_18_or_older_for_fica: true;
+      age_18_or_older_for_fica: boolean;
+      student_minor_fica_exclusion?: {
+        birth_date: string;
+        birth_date_source_reference: string;
+        student_enrollment_source_reference: string;
+        student_during_2025_verified: true;
+      };
       ordinary_cash_only: true;
       annual_cash_wages: number;
       quarterly_cash_wages: [number, number, number, number];
@@ -120,7 +132,9 @@ function buildIRS1040ScheduleH(
       (source.federal_income_tax_withheld ?? 0) > 0) &&
     source.fica_only_payroll === undefined
   ) {
-    throw new Error("Schedule H FICA-only export needs employee payroll source");
+    throw new Error(
+      "Schedule H FICA-only export needs employee payroll source",
+    );
   }
   const amounts = computeScheduleHAmounts(source, 2025);
   const unemployment = fields.federal_unemployment;

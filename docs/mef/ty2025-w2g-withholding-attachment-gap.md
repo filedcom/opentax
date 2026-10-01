@@ -43,6 +43,21 @@ withheld source must use a distinct attachment file. The bytes are included in
 the return archive alongside the native `IRSW2G`, so a changed, missing, or
 swapped PDF blocks export. The generated Copy B remains a printable display
 and does not substitute for the attached payer-issued PDF. The current source
-fields do not prove that a PDF was actually issued by the payer or that its
-visible values match the reviewed entries. Those checks, IRS business rules,
-and a current full-batch XSD/PDF pass remain open.
+fields and byte hash alone did not prove that a PDF was issued by the payer or
+that its form-field values matched the reviewed entries. IRS business rules and
+a current full-batch XSD/PDF pass remain open.
+
+The prepared bundle now also opens each exact attached PDF and compares every
+modeled, readable recipient Copy B AcroForm text field with the sourced W-2G
+projection before native XML is built. Payer and winner identity/address,
+calendar year, winnings, withholding, and all modeled optional boxes must
+agree; an absent field or altered value rejects. The one unmodeled payer phone
+field is ignored. The existing SHA-256 check still binds the content-checked
+PDF to the submitted bytes, while the printable Copy B and native `IRSW2G`
+derive from the same source. Focused content/tamper and updated full-return
+fixtures are authored for the deferred batch. This strict route requires a
+readable Copy B AcroForm; flattened, scanned, password-protected, or differently
+named payer PDFs remain closed pending a separate evidence extraction design.
+Field agreement cannot establish that the payer issued the document, that its
+rendered appearance matches the AcroForm values, or that a signature is
+authentic; those checks remain open.

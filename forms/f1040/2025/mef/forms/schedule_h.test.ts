@@ -63,44 +63,100 @@ Deno.test("Schedule H uses the form's required identity and line-level tax amoun
   );
 });
 
-Deno.test("Schedule H reports Additional Medicare wage excess and withholding on lines 5 and 6", () => {
-  assertThrows(() => scheduleH.build({
+Deno.test("Schedule H native FUTA-only student minor keeps Part I wages at zero", () => {
+  const xml = scheduleH.build({
     employer_ein: "123456789",
-    cash_wages_over_2025_limit: true,
-    cash_wages_over_quarter_limit: false,
-    ss_wages: 176_100,
-    medicare_wages: 220_000,
-    additional_medicare_wages: 20_000,
-  }, { filer }), Error, "needs employee payroll source");
+    cash_wages_over_2025_limit: false,
+    cash_wages_over_quarter_limit: true,
+    ss_wages: 0,
+    medicare_wages: 0,
+    federal_income_tax_withheld: 0,
+    federal_unemployment: {
+      paid_only_one_state: true,
+      all_contributions_paid_on_time: true,
+      all_futa_wages_state_taxable: true,
+      state: "OH",
+      contributions_paid: 40,
+      taxable_wages: 4_000,
+      all_household_employees_included: true,
+      prior_year_quarter_threshold_met: false,
+      employee_wages: [{
+        employee_id: "student-worker",
+        payroll_source_reference: "2025-student-payroll",
+        relationship: "unrelated",
+        age_18_or_older_for_fica: false,
+        student_minor_fica_exclusion: {
+          birth_date: "2008-05-10",
+          birth_date_source_reference: "student-age-record",
+          student_enrollment_source_reference: "2025-school-enrollment",
+          student_during_2025_verified: true,
+        },
+        ordinary_cash_only: true,
+        annual_cash_wages: 4_000,
+        quarterly_cash_wages: [1_000, 1_000, 1_000, 1_000],
+      }],
+    },
+  }, { filer });
+  assertStringIncludes(
+    xml,
+    "<SocialSecurityTaxCashWagesAmt>0</SocialSecurityTaxCashWagesAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalCashWagesSubjFUTATaxAmt>4000</TotalCashWagesSubjFUTATaxAmt>",
+  );
+  assertStringIncludes(xml, "<FUTATaxAmt>24</FUTATaxAmt>");
+  assertStringIncludes(
+    xml,
+    "<CombinedFUTATaxPlusNetTaxesAmt>24</CombinedFUTATaxPlusNetTaxesAmt>",
+  );
+});
+
+Deno.test("Schedule H reports Additional Medicare wage excess and withholding on lines 5 and 6", () => {
+  assertThrows(
+    () =>
+      scheduleH.build({
+        employer_ein: "123456789",
+        cash_wages_over_2025_limit: true,
+        cash_wages_over_quarter_limit: false,
+        ss_wages: 176_100,
+        medicare_wages: 220_000,
+        additional_medicare_wages: 20_000,
+      }, { filer }),
+    Error,
+    "needs employee payroll source",
+  );
 });
 
 Deno.test("Schedule H FICA-only source rejects current/prior quarter and W-2 drift", () => {
   const base = ficaOnlySource.fica_only_payroll;
   assertThrows(
-    () => scheduleH.build({
-      ...ficaOnlySource,
-      fica_only_payroll: {
-        ...base,
-        prior_year_quarter_cash_wages: [0, 1_000, 0, 0],
-      },
-    }, { filer }),
+    () =>
+      scheduleH.build({
+        ...ficaOnlySource,
+        fica_only_payroll: {
+          ...base,
+          prior_year_quarter_cash_wages: [0, 1_000, 0, 0],
+        },
+      }, { filer }),
     Error,
     "below the FUTA quarter threshold",
   );
   assertThrows(
-    () => scheduleH.build({
-      ...ficaOnlySource,
-      fica_only_payroll: {
-        ...base,
-        employee_wages: [{
-          ...base.employee_wages[0],
-          w2: {
-            ...base.employee_wages[0].w2,
-            box3_social_security_wages: 3_099,
-          },
-        }],
-      },
-    }, { filer }),
+    () =>
+      scheduleH.build({
+        ...ficaOnlySource,
+        fica_only_payroll: {
+          ...base,
+          employee_wages: [{
+            ...base.employee_wages[0],
+            w2: {
+              ...base.employee_wages[0].w2,
+              box3_social_security_wages: 3_099,
+            },
+          }],
+        },
+      }, { filer }),
     Error,
     "differ from the employee Form W-2",
   );

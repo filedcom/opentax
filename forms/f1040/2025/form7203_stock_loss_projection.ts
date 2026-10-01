@@ -3,6 +3,7 @@ import type { FilerIdentity } from "../mef/header.ts";
 import { inputSchema as k1SCorpInputSchema } from "../nodes/inputs/k1_s_corp/index.ts";
 import { inputSchema as form7203InputSchema } from "../nodes/intermediate/forms/form7203/index.ts";
 import { reviewedStockLossLedgerSchema } from "../nodes/intermediate/forms/form7203/stock-ledger.ts";
+import { reconcileOneNoteDebtCandidate } from "../nodes/intermediate/forms/form7203/debt-note.ts";
 
 const pendingRecordSchema = z.record(z.string(), z.unknown());
 
@@ -14,10 +15,14 @@ export function projectReviewedStockLoss7203(
   filer: FilerIdentity | undefined,
 ) {
   if (!filer) {
-    throw new Error("Form 7203 stock-loss projection needs the identified filer");
+    throw new Error(
+      "Form 7203 stock-loss projection needs the identified filer",
+    );
   }
   if (!allPending.k1_s_corp) {
-    throw new Error("Form 7203 stock-loss projection needs a reviewed S-corporation K-1");
+    throw new Error(
+      "Form 7203 stock-loss projection needs a reviewed S-corporation K-1",
+    );
   }
   const k1Sources = k1SCorpInputSchema.parse(allPending.k1_s_corp).k1_s_corps;
   if (k1Sources.length !== 1) {
@@ -26,13 +31,24 @@ export function projectReviewedStockLoss7203(
     );
   }
   const source = k1Sources[0];
+  if (source.form7203_one_note_debt_candidate) {
+    reconcileOneNoteDebtCandidate(
+      source.form7203_one_note_debt_candidate,
+      source,
+    );
+    throw new Error(
+      "Form 7203 one-note debt source reconciles, but Part II and Part III debt columns are not registered for native or PDF filing",
+    );
+  }
   const ledger = reviewedStockLossLedgerSchema.parse(
     source.form7203_stock_loss_ledger,
   );
-  if (Object.keys(rawFields).some((key) =>
-    key !== "stock_basis_beginning" && key !== "ordinary_loss" &&
-    key !== "additional_contributions"
-  )) {
+  if (
+    Object.keys(rawFields).some((key) =>
+      key !== "stock_basis_beginning" && key !== "ordinary_loss" &&
+      key !== "additional_contributions"
+    )
+  ) {
     throw new Error(
       "Form 7203 stock-loss projection does not accept unreviewed basis fields",
     );
@@ -100,5 +116,14 @@ export function projectReviewedStockLoss7203(
     );
   }
 
-  return { source, ledger, basis, contribution, availableBasis, currentLoss, allowed, carryover };
+  return {
+    source,
+    ledger,
+    basis,
+    contribution,
+    availableBasis,
+    currentLoss,
+    allowed,
+    carryover,
+  };
 }

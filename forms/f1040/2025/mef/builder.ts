@@ -27,6 +27,7 @@ import { assertBox11CodeKSources } from "../../nodes/inputs/k1_partnership/box11
 import { assertBox11CodeSSources } from "../../nodes/inputs/k1_partnership/box11_code_s.ts";
 import { assertBox11Line10Sources } from "../../nodes/inputs/k1_partnership/box11_line10.ts";
 import { assertForm8915FSourceLinks } from "../../nodes/inputs/f8915f/index.ts";
+import { assertW2GPayerCopyContents } from "./w2g-payer-copy.ts";
 
 export interface MefBundle {
   readonly xml: string;
@@ -386,6 +387,7 @@ export async function buildMefBundle(
     ...options.attachments,
     ...generated.flat(),
   ]);
+  await assertW2GPayerCopyContents(pending, options.filer, attachments);
   const attachmentSha256ByFileName = Object.fromEntries(
     await Promise.all(attachments.map(async ({ fileName, bytes }) => {
       return [fileName, await sha256Hex(bytes)] as const;

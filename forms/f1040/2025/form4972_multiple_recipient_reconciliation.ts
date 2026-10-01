@@ -29,6 +29,15 @@ export function reconcileForm4972MultipleRecipients(
   }
   const item = elected[0];
   if (
+    item && typeof fields.federal_estate_tax === "number" &&
+    fields.federal_estate_tax > 0 &&
+    item.box1_gross_distribution !== item.box2a_taxable_amount
+  ) {
+    throw new Error(
+      "Form 4972 partial-share estate allocation needs a wholly taxable source distribution",
+    );
+  }
+  if (
     !item || item.box9a_pct_total === undefined ||
     item.box9a_pct_total <= 0 || item.box9a_pct_total >= 100 ||
     item.box9a_pct_total !== fields.recipient_share_pct ||

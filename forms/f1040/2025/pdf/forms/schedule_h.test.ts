@@ -41,6 +41,39 @@ const sourcedFicaOnly = {
     }],
   },
 };
+const sourcedStudentMinor = {
+  employer_ein: "123456789",
+  cash_wages_over_2025_limit: false,
+  cash_wages_over_quarter_limit: true,
+  ss_wages: 0,
+  medicare_wages: 0,
+  federal_income_tax_withheld: 0,
+  federal_unemployment: {
+    paid_only_one_state: true,
+    all_contributions_paid_on_time: true,
+    all_futa_wages_state_taxable: true,
+    state: "OH",
+    contributions_paid: 40,
+    taxable_wages: 4_000,
+    all_household_employees_included: true,
+    prior_year_quarter_threshold_met: false,
+    employee_wages: [{
+      employee_id: "student-worker",
+      payroll_source_reference: "2025-student-payroll",
+      relationship: "unrelated",
+      age_18_or_older_for_fica: false,
+      student_minor_fica_exclusion: {
+        birth_date: "2008-05-10",
+        birth_date_source_reference: "student-age-record",
+        student_enrollment_source_reference: "2025-school-enrollment",
+        student_during_2025_verified: true,
+      },
+      ordinary_cash_only: true,
+      annual_cash_wages: 4_000,
+      quarterly_cash_wages: [1_000, 1_000, 1_000, 1_000],
+    }],
+  },
+};
 const filer: FilerIdentity = {
   primarySSN: facts.taxpayer.ssn,
   nameLine1: `${facts.taxpayer.firstName} ${facts.taxpayer.lastName}`,
@@ -49,6 +82,31 @@ const filer: FilerIdentity = {
   filingStatus: FilingStatus.Single,
   address: facts.taxpayer.address,
 };
+
+Deno.test("synthetic student minor Schedule H PDF reconciles FUTA without FICA", () => {
+  const projected = scheduleHPdf.projectFields!(sourcedStudentMinor);
+  assertEquals(projected.cash_wages_over_2025_limit, false);
+  assertEquals(projected.line8_fica_and_withholding, 0);
+  assertEquals(projected.section_a_taxable_wages, 4_000);
+  assertEquals(projected.section_a_futa_tax, 24);
+  assertEquals(projected.line26_total_tax, 24);
+  assertEquals(
+    scheduleHPdf.instances?.(projected, filer, {
+      schedule_h: sourcedStudentMinor,
+      schedule2: { line9_household_employment: 24 },
+    })?.length,
+    1,
+  );
+  assertThrows(
+    () =>
+      scheduleHPdf.instances?.(projected, filer, {
+        schedule_h: sourcedStudentMinor,
+        schedule2: { line9_household_employment: 23 },
+      }),
+    Error,
+    "reconcile to Schedule 2 line 9",
+  );
+});
 
 Deno.test("ATS Scenario 1 Schedule H PDF prints sourced Part I on the 2025 widgets", () => {
   const projected = scheduleHPdf.projectFields?.(source, {}) ?? {};
@@ -105,9 +163,10 @@ Deno.test("ATS Scenario 1 Schedule H PDF prints sourced Part I on the 2025 widge
         scheduleHPdf.projectFields!(sourcedFicaOnly),
         filer,
         {
-        schedule_h: sourcedFicaOnly,
-        schedule2: { line9_household_employment: 473 },
-      }),
+          schedule_h: sourcedFicaOnly,
+          schedule2: { line9_household_employment: 473 },
+        },
+      ),
     Error,
     "reconcile to Schedule 2 line 9",
   );
@@ -117,21 +176,25 @@ Deno.test("synthetic sourced FICA-only Schedule H PDF reconciles its worker and 
   const projected = scheduleHPdf.projectFields!(sourcedFicaOnly);
   assertEquals(projected.line8_fica_and_withholding, 474);
   assertEquals(projected.cash_wages_over_quarter_limit, false);
-  assertEquals(scheduleHPdf.instances?.(projected, filer, {
-    schedule_h: sourcedFicaOnly,
-    schedule2: { line9_household_employment: 474 },
-  })?.length, 1);
-  assertThrows(
-    () => scheduleHPdf.instances?.(projected, filer, {
-      schedule_h: {
-        ...sourcedFicaOnly,
-        fica_only_payroll: {
-          ...sourcedFicaOnly.fica_only_payroll,
-          prior_year_quarter_cash_wages: [0, 1_000, 0, 0],
-        },
-      },
+  assertEquals(
+    scheduleHPdf.instances?.(projected, filer, {
+      schedule_h: sourcedFicaOnly,
       schedule2: { line9_household_employment: 474 },
-    }),
+    })?.length,
+    1,
+  );
+  assertThrows(
+    () =>
+      scheduleHPdf.instances?.(projected, filer, {
+        schedule_h: {
+          ...sourcedFicaOnly,
+          fica_only_payroll: {
+            ...sourcedFicaOnly.fica_only_payroll,
+            prior_year_quarter_cash_wages: [0, 1_000, 0, 0],
+          },
+        },
+        schedule2: { line9_household_employment: 474 },
+      }),
     Error,
     "below the FUTA quarter threshold",
   );

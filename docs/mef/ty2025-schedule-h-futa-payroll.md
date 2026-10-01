@@ -1,6 +1,6 @@
 # TY2025 Schedule H FUTA employee payroll slice
 
-The Schedule H FUTA source lists every unrelated adult household employee in a
+The Schedule H FUTA source lists every unrelated household employee in a
 reviewed 2025 payroll ledger. Each row has a distinct employee ID, a nonempty
 payroll source reference, quarterly and annual cash wages, and any Form W-2
 source reference and box 2/3/5 amounts. The source affirms that all household
@@ -19,7 +19,8 @@ must match the payroll ledger.
 The [2025 Schedule H instructions](https://www.irs.gov/instructions/i1040sh)
 specify the per-employee $7,000 FUTA base and the exclusions for wages paid to
 a spouse, child under 21, or parent. This bounded ledger accepts unrelated
-adults only. Family and under-18 exceptions, gross-up, noncash pay, and
+adults and a separately evidenced unrelated student under age 18. Family,
+other minor cases, gross-up, noncash pay, and
 multiple employers remain outside this slice. Wider FICA-only returns without a
 worker ledger, actual prior-year quarter and W-2/W-3 source copies, state wage-base
 differences, and payroll byte authentication remain open. The implementation
@@ -46,3 +47,18 @@ supplies $3,100 Schedule H wage totals and a No answer on line 9, but no
 worker-level 2024/2025 quarter ledger. It remains partial evidence and cannot
 pass the FICA-only export gate without reviewed payroll facts. Entered source
 references do not authenticate payroll or W-2 bytes.
+
+## Unrelated student minor with FUTA only (written, unrun)
+
+The worker ledger can now identify one unrelated student who was under 18 at
+some point in 2025 by a birth-date record and a separate school-enrollment
+record. Both references must differ from the payroll reference. The IRS
+instructions exclude that worker's cash wages from the $2,800 FICA test but
+include them in the $1,000 FUTA quarter test and $7,000 FUTA wage base.
+A synthetic one-worker $4,000 case therefore reports line A No, zero Social
+Security/Medicare wages, $4,000 Section A wages, $24 FUTA, and $24 on
+Schedule 2 line 9. Calculation, native XML, PDF, age tamper, line A drift, and
+Schedule 2 mismatch fixtures are authored for the deferred batch. Age,
+enrollment, payroll, and state source bytes are not authenticated. Employees
+under 18 who are not students, family workers, and wider combinations remain
+open.

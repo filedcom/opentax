@@ -47,6 +47,7 @@ function isoContext(amount: number) {
 
 function filed(fields: Parameters<typeof form6251.build>[0]): string {
   const context = isoContext(fields.iso_adjustment ?? 0);
+  const pab = pabSourcePending(fields);
   const trust = typeof fields.line2j_estates_and_trusts === "number" &&
       fields.line2j_estates_and_trusts !== 0
     ? {
@@ -70,8 +71,43 @@ function filed(fields: Parameters<typeof form6251.build>[0]): string {
         }
         : {}),
     },
-    { ...context, pending: { ...context.pending, ...trust } },
+    { ...context, pending: { ...context.pending, ...trust, ...pab } },
   );
+}
+
+function pabSourcePending(fields: Parameters<typeof form6251.build>[0]) {
+  const total = fields.private_activity_bond_interest ?? 0;
+  const rawInterest = fields.line2g_pab_interest ?? 0;
+  const interest = Array.isArray(rawInterest)
+    ? rawInterest.reduce((sum, value) => sum + value, 0)
+    : rawInterest;
+  return {
+    ...(interest > 0
+      ? {
+        f1099int: {
+          f1099ints: [{
+            payer_name: "Bond Payer",
+            box8: interest,
+            box9: interest,
+          }],
+        },
+      }
+      : {}),
+    ...(total > interest
+      ? {
+        f1099div: {
+          f1099divs: [{
+            payerName: "Bond Fund",
+            isNominee: false,
+            box11: false,
+            box1a: 0,
+            box12: total - interest,
+            box13: total - interest,
+          }],
+        },
+      }
+      : {}),
+  };
 }
 
 function trustCopy(amount: number) {
@@ -389,6 +425,7 @@ Deno.test("line 2d depletion serializes as a signed amount between lines 2c and 
           },
         }],
       },
+      ...pabSourcePending({ private_activity_bond_interest: 500 }),
     },
   });
   const line2c = xml.indexOf(
@@ -591,6 +628,15 @@ Deno.test("private_activity_bond_interest maps to ExemptPrivateActivityBondsAmt"
   );
 });
 
+Deno.test("private-activity-bond interest cannot export without its retained source", () => {
+  assertThrows(
+    () =>
+      form6251.build({ line11_amt: 1, private_activity_bond_interest: 800 }),
+    Error,
+    "retained 1099-INT/OID/DIV",
+  );
+});
+
 Deno.test("qsbs_adjustment maps to Section1202ExclusionAmt", () => {
   const result = filed({ qsbs_adjustment: 10000 });
   assertStringIncludes(
@@ -681,13 +727,21 @@ const allFields = {
 };
 
 Deno.test("base fields present: output wrapped in IRS6251 tag", () => {
-  const result = form6251.build(allFields, isoContext(5_000));
+  const context = isoContext(5_000);
+  const result = form6251.build(allFields, {
+    ...context,
+    pending: { ...context.pending, ...pabSourcePending(allFields) },
+  });
   assertStringIncludes(result, "<IRS6251>");
   assertStringIncludes(result, "</IRS6251>");
 });
 
 Deno.test("base fields present: all elements emitted", () => {
-  const result = form6251.build(allFields, isoContext(5_000));
+  const context = isoContext(5_000);
+  const result = form6251.build(allFields, {
+    ...context,
+    pending: { ...context.pending, ...pabSourcePending(allFields) },
+  });
   assertStringIncludes(
     result,
     "<AGILessTotDedLessEnhncSrDedAmt>75000</AGILessTotDedLessEnhncSrDedAmt>",

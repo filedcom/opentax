@@ -9,6 +9,76 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
+const studentMinorFuta = {
+  employer_ein: "123456789",
+  cash_wages_over_2025_limit: false,
+  cash_wages_over_quarter_limit: true,
+  ss_wages: 0,
+  medicare_wages: 0,
+  federal_income_tax_withheld: 0,
+  federal_unemployment: {
+    paid_only_one_state: true,
+    all_contributions_paid_on_time: true,
+    all_futa_wages_state_taxable: true,
+    state: "OH",
+    contributions_paid: 40,
+    taxable_wages: 4_000,
+    all_household_employees_included: true,
+    prior_year_quarter_threshold_met: false,
+    employee_wages: [{
+      employee_id: "student-worker",
+      payroll_source_reference: "2025-student-payroll",
+      relationship: "unrelated",
+      age_18_or_older_for_fica: false,
+      student_minor_fica_exclusion: {
+        birth_date: "2008-05-10",
+        birth_date_source_reference: "student-age-record",
+        student_enrollment_source_reference: "2025-school-enrollment",
+        student_during_2025_verified: true,
+      },
+      ordinary_cash_only: true,
+      annual_cash_wages: 4_000,
+      quarterly_cash_wages: [1_000, 1_000, 1_000, 1_000],
+    }],
+  },
+};
+
+Deno.test("Schedule H unrelated student minor owes FUTA without FICA", () => {
+  assertEquals(
+    findOutput(compute(studentMinorFuta), "schedule2")?.fields
+      .line9_household_employment,
+    24,
+  );
+  assertThrows(
+    () =>
+      compute({
+        ...studentMinorFuta,
+        cash_wages_over_2025_limit: true,
+      }),
+    Error,
+    "line A differs",
+  );
+  assertThrows(
+    () =>
+      compute({
+        ...studentMinorFuta,
+        federal_unemployment: {
+          ...studentMinorFuta.federal_unemployment,
+          employee_wages: [{
+            ...studentMinorFuta.federal_unemployment.employee_wages[0],
+            student_minor_fica_exclusion: {
+              ...studentMinorFuta.federal_unemployment.employee_wages[0]
+                .student_minor_fica_exclusion,
+              birth_date: "2007-01-01",
+            },
+          }],
+        },
+      }),
+    Error,
+    "proving under 18",
+  );
+});
+
 // ─── Smoke Tests ─────────────────────────────────────────────────────────────
 
 Deno.test("smoke — empty input returns no outputs", () => {
@@ -159,16 +229,17 @@ Deno.test("one-worker FICA-only payroll reaches Schedule 2 without FUTA", () => 
     474,
   );
   assertThrows(
-    () => compute({
-      ...source,
-      fica_only_payroll: {
-        ...source.fica_only_payroll,
-        employee_wages: [{
-          ...source.fica_only_payroll.employee_wages[0],
-          quarterly_cash_wages: [1_000, 700, 700, 700],
-        }],
-      },
-    }),
+    () =>
+      compute({
+        ...source,
+        fica_only_payroll: {
+          ...source.fica_only_payroll,
+          employee_wages: [{
+            ...source.fica_only_payroll.employee_wages[0],
+            quarterly_cash_wages: [1_000, 700, 700, 700],
+          }],
+        },
+      }),
     Error,
     "below the FUTA quarter threshold",
   );

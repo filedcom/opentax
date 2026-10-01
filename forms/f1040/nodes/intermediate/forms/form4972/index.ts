@@ -83,6 +83,13 @@ export const inputSchema = z.object({
   // Form 1099-R box 8 percentage, distinct from the box 9a distribution share.
   annuity_share_pct: z.number().positive().max(100).optional(),
   federal_estate_tax: z.number().nonnegative().optional(),
+  partial_estate_tax_source: z.object({
+    administrator_statement_reference: z.string().trim().min(1),
+    estate_tax_return_reference: z.string().trim().min(1),
+    full_distribution_taxable_amount: z.number().int().positive(),
+    full_distribution_federal_estate_tax: z.number().int().positive(),
+    recipient_allocated_federal_estate_tax: z.number().int().nonnegative(),
+  }).strict().optional(),
   // Recipient's Form 1099-R box 9a percentage. Part III grosses up the
   // ordinary amount; Part-II-only uses the recipient's own distribution.
   recipient_share_pct: z.number().positive().max(100).optional(),
@@ -192,6 +199,29 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
   ) {
     throw new Error(
       "form4972: partial box 9a share supports Part II or III with optional elected NUA, Part III with an annuity and its separate box 8 percentage, or sourced Part-III-only death benefit or estate tax; other combinations remain unsupported",
+    );
+  }
+  const estateSource = input.partial_estate_tax_source;
+  if (partialShare && (input.federal_estate_tax ?? 0) > 0) {
+    if (
+      !estateSource ||
+      estateSource.administrator_statement_reference ===
+        estateSource.estate_tax_return_reference ||
+      estateSource.full_distribution_taxable_amount !==
+        input.lump_sum_amount / recipientShare ||
+      estateSource.full_distribution_federal_estate_tax !==
+        input.federal_estate_tax ||
+      !Number.isSafeInteger(input.federal_estate_tax! * recipientShare) ||
+      estateSource.recipient_allocated_federal_estate_tax !==
+        input.federal_estate_tax! * recipientShare
+    ) {
+      throw new Error(
+        "form4972: partial-share estate tax needs distinct administrator and estate-return sources matching the full distribution, tax, and recipient allocation",
+      );
+    }
+  } else if (estateSource !== undefined) {
+    throw new Error(
+      "form4972: partial-share estate source requires a positive shared estate-tax adjustment",
     );
   }
   if (input.alternate_payee_distribution === true) {

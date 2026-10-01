@@ -13,6 +13,7 @@ import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { registry } from "../registry.ts";
 import { buildMefBundle, buildMefXml } from "./builder.ts";
+import { w2gPdf } from "../pdf/forms/w2g.ts";
 import type { MefFormsPending } from "./types.ts";
 import { FilingStatus } from "../../nodes/types.ts";
 import { EnergyType } from "../../nodes/inputs/f8835/index.ts";
@@ -8224,8 +8225,45 @@ Deno.test({
   ignore: !xsdAvailable,
 }, async () => {
   const general = singleGeneral();
+  const issuedFacts = {
+    calendar_year: 2025,
+    source_document_reference: "2025 payer-issued W-2G copy",
+    issued_copy_attachment_file_name: "IssuedW2G.pdf",
+    payer_name: "Casino Inc",
+    payer_name_control: "CASI",
+    payer_us_address: {
+      line1: "500 Casino Way",
+      city: "Las Vegas",
+      state: "NV",
+      zip: "89101",
+    },
+    payer_ein: "12-3456789",
+    winner_name: "Test Taxpayer",
+    winner_us_address: {
+      line1: general.address_line1,
+      city: general.address_city,
+      state: general.address_state,
+      zip: general.address_zip,
+    },
+    box9_winner_tin: general.taxpayer_ssn,
+    box1_winnings: 10_000,
+    box4_federal_withheld: 2_400,
+    standard_or_nonstandard_code: "S" as const,
+  };
   const issuedCopy = await PDFDocument.create();
   issuedCopy.addPage([300, 400]);
+  const copyFields = w2gPdf.instances?.(
+    { w2gs: [issuedFacts] },
+    extractFilerIdentity(general),
+    { f1040: { line25c_total: 2_400 } },
+  )?.[0];
+  if (!copyFields) throw new Error("Missing W-2G Copy B fields");
+  for (const field of w2gPdf.fields) {
+    if (field.kind !== "text" || field.domainKey === "payer_phone") continue;
+    issuedCopy.getForm().createTextField(field.pdfField).setText(
+      String(copyFields[field.domainKey] ?? ""),
+    );
+  }
   const issuedCopyBytes = await issuedCopy.save();
   const issuedCopyHash = Array.from(
     new Uint8Array(await crypto.subtle.digest("SHA-256", issuedCopyBytes)),
@@ -8233,32 +8271,7 @@ Deno.test({
   ).join("");
   const result = runReturn({
     general,
-    w2g: [{
-      calendar_year: 2025,
-      source_document_reference: "2025 payer-issued W-2G copy",
-      issued_copy_attachment_file_name: "IssuedW2G.pdf",
-      issued_copy_pdf_sha256: issuedCopyHash,
-      payer_name: "Casino Inc",
-      payer_name_control: "CASI",
-      payer_us_address: {
-        line1: "500 Casino Way",
-        city: "Las Vegas",
-        state: "NV",
-        zip: "89101",
-      },
-      payer_ein: "12-3456789",
-      winner_name: "Test Taxpayer",
-      winner_us_address: {
-        line1: general.address_line1,
-        city: general.address_city,
-        state: general.address_state,
-        zip: general.address_zip,
-      },
-      box9_winner_tin: general.taxpayer_ssn,
-      box1_winnings: 10_000,
-      box4_federal_withheld: 2_400,
-      standard_or_nonstandard_code: "S",
-    }],
+    w2g: [{ ...issuedFacts, issued_copy_pdf_sha256: issuedCopyHash }],
   });
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.f1040?.line25c_total, 2_400);
@@ -8895,24 +8908,29 @@ Deno.test({
   name: "ATS Scenario 1 Schedule H source slice needs employee payroll",
 }, () => {
   const source = SCENARIO_1040_01_FACTS.scheduleH;
-  assertThrows(() => buildMefXml(
-    {
-      schedule_h: {
-        employer_ein: source.employerEin,
-        cash_wages_over_2025_limit: source.cashWagesOver2025Limit,
-        cash_wages_over_quarter_limit: source.cashWagesOverQuarterLimit,
-        ss_wages: source.socialSecurityWages,
-        medicare_wages: source.medicareWages,
-        federal_income_tax_withheld: source.federalWithholding,
-      },
-    },
-    extractFilerIdentity({
-      ...singleGeneral(),
-      taxpayer_first_name: SCENARIO_1040_01_FACTS.taxpayer.firstName,
-      taxpayer_last_name: SCENARIO_1040_01_FACTS.taxpayer.lastName,
-      taxpayer_ssn: SCENARIO_1040_01_FACTS.taxpayer.ssn,
-    }),
-  ), Error, "FICA-only export needs employee payroll source");
+  assertThrows(
+    () =>
+      buildMefXml(
+        {
+          schedule_h: {
+            employer_ein: source.employerEin,
+            cash_wages_over_2025_limit: source.cashWagesOver2025Limit,
+            cash_wages_over_quarter_limit: source.cashWagesOverQuarterLimit,
+            ss_wages: source.socialSecurityWages,
+            medicare_wages: source.medicareWages,
+            federal_income_tax_withheld: source.federalWithholding,
+          },
+        },
+        extractFilerIdentity({
+          ...singleGeneral(),
+          taxpayer_first_name: SCENARIO_1040_01_FACTS.taxpayer.firstName,
+          taxpayer_last_name: SCENARIO_1040_01_FACTS.taxpayer.lastName,
+          taxpayer_ssn: SCENARIO_1040_01_FACTS.taxpayer.ssn,
+        }),
+      ),
+    Error,
+    "FICA-only export needs employee payroll source",
+  );
 });
 
 Deno.test({

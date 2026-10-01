@@ -1,5 +1,29 @@
 # TY2025 Form 7203 stock-only ordinary-loss slice (focused check)
 
+## One new formal-note debt source prerequisite (2026-10-01, unrun)
+
+The public S-corporation K-1 input now accepts a strict, **nonfiling**
+`form7203_one_note_debt_candidate` for a single new 2025 formal shareholder
+note. It ties the shareholder/borrower identifiers, exact K-1 source and box-1
+loss, opening stock-basis workpaper, signed note, separate note ID, and bank
+transfer to one direct cash advance. It requires zero beginning note balance
+and debt basis, no other notes, repayments, prior reduced debt basis, other
+basis changes, or suspended losses. Distinct references and the K-1 amount
+are reconciled before estimating how much current loss exceeds stock basis and
+could be supported by the note. The estimate is only a review value; it never
+posts Schedule 1 or Form 1040 income. A guarantee or cosign cannot satisfy the
+source contract.
+
+The K-1 calculation and shared native/PDF Form 7203 preflight now reject a
+matched candidate with an explicit Part II/Part III debt-column filing reason.
+This keeps a direct descriptor call from printing the stock-only form for a
+known note. Positive, source-swap, duplicate-reference, calculation-gate, and
+native/PDF-gate fixtures are authored and unrun. The records are references
+and affirmations, not authenticated note/bank bytes. Filing still needs
+executor-owned evidence, per-note Part II lines 16–34, debt reduction and
+restoration ordering, Part III debt-allowed columns, repayments and gain when
+applicable, and final Schedule E/Schedule 1/Form 1040 reconciliation.
+
 ## Debt-supported loss boundary (staged, unrun)
 
 The 2022 [Form 7203 instructions](https://www.irs.gov/instructions/i7203)

@@ -24,6 +24,10 @@ import {
 } from "../../intermediate/forms/form_1116/index.ts";
 import { form7203 } from "../../intermediate/forms/form7203/index.ts";
 import { reviewedStockLossLedgerSchema } from "../../intermediate/forms/form7203/stock-ledger.ts";
+import {
+  reconcileOneNoteDebtCandidate,
+  reviewedOneNoteDebtCandidateSchema,
+} from "../../intermediate/forms/form7203/debt-note.ts";
 import { form4797 } from "../../intermediate/forms/form4797/index.ts";
 import { rate_28_gain_worksheet } from "../../intermediate/worksheets/rate_28_gain_worksheet/index.ts";
 import { unrecaptured_1250_worksheet } from "../../intermediate/worksheets/unrecaptured_1250_worksheet/index.ts";
@@ -189,6 +193,9 @@ export const itemSchema = z.object({
   stock_basis_beginning: z.number().nonnegative().optional(),
   // Direct reviewed per-corporation source for the bounded current box-1 loss.
   form7203_stock_loss_ledger: reviewedStockLossLedgerSchema.optional(),
+  // Reviewed one-note candidate is deliberately blocked before tax posting.
+  form7203_one_note_debt_candidate: reviewedOneNoteDebtCandidateSchema
+    .optional(),
   // Shareholder's debt basis at beginning of the tax year
   debt_basis_beginning: z.number().nonnegative().optional(),
 
@@ -556,8 +563,10 @@ function buildForm7203Fields(
       ? { stock_basis_beginning: beginningBasis }
       : {}),
     ...(loss > 0 && item.form7203_stock_loss_ledger?.cash_capital_contribution
-      ? { additional_contributions:
-        item.form7203_stock_loss_ledger.cash_capital_contribution.amount }
+      ? {
+        additional_contributions:
+          item.form7203_stock_loss_ledger.cash_capital_contribution.amount,
+      }
       : {}),
     ...(item.debt_basis_beginning !== undefined
       ? { debt_basis_beginning: item.debt_basis_beginning }
@@ -719,6 +728,18 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { k1_s_corps } = inputSchema.parse(input);
+
+    for (const item of k1_s_corps) {
+      if (item.form7203_one_note_debt_candidate) {
+        reconcileOneNoteDebtCandidate(
+          item.form7203_one_note_debt_candidate,
+          item,
+        );
+        throw new Error(
+          "Form 7203 one-note debt source reconciles, but Part II and Part III debt columns are not registered for filing",
+        );
+      }
+    }
 
     if (
       k1_s_corps.some((item) =>

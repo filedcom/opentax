@@ -59,6 +59,84 @@ Deno.test("Form 4972 MeF links partial-recipient line 29 to MRD", () => {
   );
 });
 
+Deno.test("Form 4972 MeF binds partial beneficiary estate allocation to line 18", () => {
+  const source = {
+    ...qualified,
+    recipient: TS.T,
+    beneficiary_distribution: true,
+    participant_five_year_member: false,
+    prior_beneficiary_election_after_1986: false,
+    lump_sum_amount: 20_000,
+    recipient_share_pct: 50,
+    federal_estate_tax: 2_000,
+    partial_estate_tax_source: {
+      administrator_statement_reference: "plan-estate-allocation-2025",
+      estate_tax_return_reference: "estate-form706-2025",
+      full_distribution_taxable_amount: 40_000,
+      full_distribution_federal_estate_tax: 2_000,
+      recipient_allocated_federal_estate_tax: 1_000,
+    },
+    elect_10yr_averaging: true,
+  };
+  const fields = form4972Node.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form4972InputSchema.parse(source),
+  ).outputs[0].fields;
+  const pending = {
+    f1099r: {
+      f1099rs: [{
+        payer_name: "Qualified Plan",
+        payer_ein: "123456789",
+        box1_gross_distribution: 20_000,
+        box2a_taxable_amount: 20_000,
+        box7_distribution_code: DistributionCode.CodeA,
+        box9a_pct_total: 50,
+        ts: TS.T,
+        exclude_4972: true,
+      }],
+    },
+    f1040: { form4972_tax: 1_955 },
+  };
+  const xml = form4972.build(fields, { filer, pending });
+  assertStringIncludes(
+    xml,
+    "<LumpDistribFederalEstateTaxAmt>2000</LumpDistribFederalEstateTaxAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<LumpSumDistriMultRecipientsCd>MRD</LumpSumDistriMultRecipientsCd>",
+  );
+  assertThrows(
+    () =>
+      form4972.build({
+        ...fields,
+        partial_estate_tax_source: {
+          ...source.partial_estate_tax_source,
+          recipient_allocated_federal_estate_tax: 999,
+        },
+      }, { filer, pending }),
+    Error,
+    "recipient allocation",
+  );
+  assertThrows(
+    () =>
+      form4972.build(fields, {
+        filer,
+        pending: {
+          ...pending,
+          f1099r: {
+            f1099rs: [{
+              ...pending.f1099r.f1099rs[0],
+              box1_gross_distribution: 21_000,
+            }],
+          },
+        },
+      }),
+    Error,
+    "wholly taxable source distribution",
+  );
+});
+
 Deno.test("Form 4972 MeF prints sourced full death-benefit exclusion for a partial beneficiary", () => {
   const source = {
     ...qualified,
@@ -246,25 +324,40 @@ Deno.test("Form 4972 MeF reconciles partial beneficiary Part-II-only death benef
     form4972InputSchema.parse(source),
   ).outputs[0].fields;
   const pending = {
-    f1099r: { f1099rs: [{
-      payer_name: "Qualified Plan",
-      payer_ein: "123456789",
-      box1_gross_distribution: 20_000,
-      box2a_taxable_amount: 20_000,
-      box3_capital_gain: 4_000,
-      box7_distribution_code: DistributionCode.CodeA,
-      box9a_pct_total: 50,
-      ts: TS.T,
-      exclude_4972: true,
-    }] },
+    f1099r: {
+      f1099rs: [{
+        payer_name: "Qualified Plan",
+        payer_ein: "123456789",
+        box1_gross_distribution: 20_000,
+        box2a_taxable_amount: 20_000,
+        box3_capital_gain: 4_000,
+        box7_distribution_code: DistributionCode.CodeA,
+        box9a_pct_total: 50,
+        ts: TS.T,
+        exclude_4972: true,
+      }],
+    },
     f1040: { form4972_tax: 700, line5b_pension_taxable: 14_000 },
   };
   const xml = form4972.build(fields, { filer, pending });
-  assertStringIncludes(xml, "<CapitalGainElectionAmt>3500</CapitalGainElectionAmt>");
-  assertStringIncludes(xml, "<CapitalGainTimesElectionPctAmt>700</CapitalGainTimesElectionPctAmt>");
+  assertStringIncludes(
+    xml,
+    "<CapitalGainElectionAmt>3500</CapitalGainElectionAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<CapitalGainTimesElectionPctAmt>700</CapitalGainTimesElectionPctAmt>",
+  );
   assertEquals(xml.includes("<LumpSumDistriOrdinaryIncmAmt>"), false);
   assertThrows(
-    () => form4972.build(fields, { filer, pending: { ...pending, f1040: { ...pending.f1040, line5b_pension_taxable: 13_999 } } }),
+    () =>
+      form4972.build(fields, {
+        filer,
+        pending: {
+          ...pending,
+          f1040: { ...pending.f1040, line5b_pension_taxable: 13_999 },
+        },
+      }),
     Error,
     "ordinary income is missing",
   );

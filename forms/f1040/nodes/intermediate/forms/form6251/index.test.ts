@@ -3,6 +3,42 @@ import { FilingStatus } from "../../../types.ts";
 import { form6251, inputSchema } from "./index.ts";
 
 function basisSourcePending(fields: Record<string, unknown>) {
+  const total = typeof fields.private_activity_bond_interest === "number"
+    ? fields.private_activity_bond_interest
+    : 0;
+  const rawInterest = fields.line2g_pab_interest;
+  const interest = Array.isArray(rawInterest)
+    ? rawInterest.reduce((sum: number, value: number) => sum + value, 0)
+    : typeof rawInterest === "number"
+    ? rawInterest
+    : 0;
+  const pab = {
+    ...(interest > 0
+      ? {
+        f1099int: {
+          f1099ints: [{
+            payer_name: "Bond Payer",
+            box8: interest,
+            box9: interest,
+          }],
+        },
+      }
+      : {}),
+    ...(total > interest
+      ? {
+        f1099div: {
+          f1099divs: [{
+            payerName: "Bond Fund",
+            isNominee: false,
+            box11: false,
+            box1a: 0,
+            box12: total - interest,
+            box13: total - interest,
+          }],
+        },
+      }
+      : {}),
+  };
   const raw = fields.line2k_8949_basis_dispositions;
   const circulation = fields.line2o_circulation_costs;
   const depletion = fields.line2d_depletion;
@@ -63,12 +99,13 @@ function basisSourcePending(fields: Record<string, unknown>) {
       },
     }
     : {};
-  if (raw === undefined) return { ...f59e, ...scheduleC, ...trust };
+  if (raw === undefined) return { ...f59e, ...scheduleC, ...trust, ...pab };
   const rows = Array.isArray(raw) ? raw : [raw];
   return {
     ...f59e,
     ...scheduleC,
     ...trust,
+    ...pab,
     f8949: {
       f8949s: rows.map((row: {
         source_transaction_id: string;

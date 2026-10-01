@@ -84,3 +84,12 @@ retained trust K-1 box 12 code A sources. Each source must name its trust,
 issued-copy reference and EIN, and affirm that other box 12 AMT codes are
 absent. Omitting or changing a source rejects; the focused fixtures await the
 bulk pass. This does not authenticate issued K-1 bytes or model codes B–I.
+
+# Private-activity-bond replay (staged, unrun)
+
+Native and PDF Form 6251 line 2g now sums retained Form 1099-INT box 9,
+Form 1099-OID specified private-activity-bond box 11, Form 1099-DIV box 13,
+and elected Form 8814 child private-activity-bond interest. It compares the
+nondividend and complete totals to the computed form and rejects missing or
+out-of-range source boxes. The replay fixture awaits the combined pass;
+issued payer/child source bytes and wider bond adjustments remain open.
