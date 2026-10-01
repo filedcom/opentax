@@ -245,3 +245,28 @@ changed-liability rejection fixtures are authored for the deferred batch. The
 staged reviewed PDFs establish byte hashes and reviewer links, but do not
 extract filed lines from an authenticated IRS record or prove an amendment was
 accepted; they therefore cannot activate this route.
+
+## Staged 2025 return join, still not filed
+
+`reconcileScheduleCCurrentYearCandidate` now takes the bounded affected-year
+Schedule C ledger/evidence and the ordinary 2025 Form 1116 source separately. It
+runs the existing Form 1116 calculator for one passive or general category with
+one identified 2025 tax source, zero prior carryovers and zero current excess
+tax. It compares the calculated category credit to the prospective current Form
+1116, Schedule 3 lines 1 and 8, and Form 1040 lines 15-24 and Form 1116
+worksheet deposits. It requires Schedule B to be absent: the
+[2025 Form 1116 instructions](https://www.irs.gov/instructions/i1116) require
+Schedule B when a prior carryover is entered or a current excess is generated.
+Changed credits, tax totals, and unexpected Schedule B entries have focused
+rejection fixtures. The native and PDF Schedule C candidates remain staged and
+the live Form 1116 redetermination guard remains unchanged.
+
+This arithmetic join does not authenticate the affected-year filed Forms 1116,
+Schedule 3 and 1040, the foreign tax assessment/refund source, the reviewed 2025
+foreign income and tax records, or the claimed absence of intervening-year
+carryovers. A changed affected-year liability still needs a filed/accepted
+amendment and its changed-return package. The prospective 2025 return snapshot
+must be bound to an authenticated completed return before registration or
+export; source references and reviewed PDF hashes alone cannot prove that filing
+state. No tests, typecheck, XSD validation or filled-PDF rendering was run in
+this implementation batch.
