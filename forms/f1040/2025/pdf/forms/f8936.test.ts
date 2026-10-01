@@ -40,6 +40,13 @@ Deno.test("Form 8936 PDF: printed lines distinguish tentative and allowed credit
   assertEquals(fields.line9, 7_500);
   assertEquals(fields.line12, 5_000);
   assertEquals(fields.line13, 5_000);
+  assertEquals(
+    form8936Pdf.instances!(fields, undefined, {
+      ...pending,
+      f8936: source,
+    }),
+    [fields],
+  );
 });
 
 Deno.test("Form 8936 Schedule A PDF: one personal-use vehicle fills its Part II and III facts", () => {

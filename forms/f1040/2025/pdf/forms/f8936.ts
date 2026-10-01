@@ -1,4 +1,5 @@
 import { form8936Lines } from "../../form8936_lines.ts";
+import { assertForm3800FinalCreditJoin } from "../../form3800_final_credit_join.ts";
 import { inputSchema, modifiedAgi } from "../../../nodes/inputs/f8936/index.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
@@ -122,5 +123,51 @@ export const form8936Pdf: PdfFormDescriptor = {
       line19: lines.line19Commercial > 0 ? lines.line19Commercial : undefined,
       line21: lines.line19Commercial > 0 ? lines.line19Commercial : undefined,
     };
+  },
+  instances(fields, _filer, allPending, prepared) {
+    if (Object.keys(fields).length === 0) return [];
+    if (!allPending) {
+      throw new Error("Form 8936 PDF needs the finalized return");
+    }
+    const lines = form8936Lines(
+      inputSchema.parse(allPending.f8936),
+      allPending,
+    );
+    if (!lines || lines.line19Commercial === 0) return [fields];
+    if (!prepared || !allPending.f3800) {
+      throw new Error(
+        "Commercial Form 8936 PDF needs the prepared Form 3800 document",
+      );
+    }
+    const rows = prepared.currentRows.filter((row) => row.line === "1aa");
+    const amounts = prepared.currentAmounts.filter((row) => row.line === "1aa");
+    const details = prepared.currentDetails.filter((row) => row.line === "1aa");
+    const [row] = rows;
+    const [amount] = amounts;
+    const [detail] = details;
+    if (
+      fields.line19 !== lines.line19Commercial ||
+      fields.line21 !== lines.line19Commercial ||
+      rows.length !== 1 || amounts.length !== 1 || details.length !== 1 ||
+      row.metadata.sourceCount !== 1 ||
+      row.metadata.referenceDocumentName !== "IRS8936" ||
+      !row.metadata.referenceDocumentId || row.entityCredits.length !== 0 ||
+      detail.sourceDocumentId !== row.metadata.referenceDocumentId ||
+      detail.passThroughEin !== undefined ||
+      detail.credit !== lines.line19Commercial ||
+      amount.nonpassiveCredit !== lines.line19Commercial ||
+      amount.totalCredit !== lines.line19Commercial ||
+      amount.transferOutCredit !== 0 ||
+      amount.passiveBeforeLimit !== 0 ||
+      amount.passiveAfterLimit !== 0 ||
+      amount.appliedCredit !== detail.appliedCredit ||
+      prepared.lines.line38 !== allPending.f3800.allowed_credit
+    ) {
+      throw new Error(
+        "Commercial Form 8936 PDF differs from filed Form 3800 line 1aa",
+      );
+    }
+    assertForm3800FinalCreditJoin(prepared.lines.line38, allPending);
+    return [fields];
   },
 };
