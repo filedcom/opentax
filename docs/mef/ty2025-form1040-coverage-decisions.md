@@ -24,7 +24,8 @@ not count a staged source as registered.
 The Form 3800 carryforward computation descriptor was registered on
 2026-09-29. It passes a standalone schema check and a synthetic parent-link
 check, but the production parent filing remains blocked; this does not change
-any disposition below. The root census remains the dated 2026-09-28 snapshot.
+any disposition below. The root list was captured 2026-09-28; its source-literal
+statuses have since been reconciled with the current tree.
 
 ## What can be decided from current evidence
 
