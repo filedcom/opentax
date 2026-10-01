@@ -103,7 +103,7 @@ Deno.test("2024 rental PAL offsets same activity 2025 profit and stays in Part V
   assertEquals(pdf.line2c, "5000");
   assertEquals(pdf.line11, "3000");
   const schedulePdf = scheduleEPdf.projectFields!(pending.schedule_e, pending);
-  assertEquals(schedulePdf.property_0_line22, undefined);
+  assertEquals(schedulePdf.property_0_line22, 3_000);
   const ledger = buildForm8582Ledger(
     pending.form8582,
     "synthetic accepted 2025 return reference",
