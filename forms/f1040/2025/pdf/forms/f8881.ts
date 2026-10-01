@@ -42,6 +42,7 @@ export const form8881Pdf: PdfFormDescriptor = {
   ],
   filerFields: [text("nameLine1", 1), text("primarySSN", 2)],
   projectFields(raw, allPending) {
+    if (Object.keys(raw).length === 0) return {};
     const source = inputSchema.parse(raw);
     if (
       JSON.stringify(source) !==

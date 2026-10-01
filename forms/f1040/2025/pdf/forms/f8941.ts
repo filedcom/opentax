@@ -30,6 +30,7 @@ export const form8941Pdf: PdfFormDescriptor = {
     ),
   ],
   projectFields(raw, allPending) {
+    if (Object.keys(raw).length === 0) return {};
     const { source, lines } = reconcileForm8941DocumentSource(raw, allPending);
     return {
       ...lines,

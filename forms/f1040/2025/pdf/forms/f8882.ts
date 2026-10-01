@@ -28,6 +28,7 @@ export const form8882Pdf: PdfFormDescriptor = {
   ],
   filerFields: [text("nameLine1", 1), text("primarySSN", 2)],
   projectFields(raw, allPending) {
+    if (Object.keys(raw).length === 0) return {};
     const { lines } = reconcileForm8882DirectEmployer(raw, allPending);
     return lines;
   },
