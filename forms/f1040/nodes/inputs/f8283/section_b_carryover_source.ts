@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { XMLParser, XMLValidator } from "fast-xml-parser";
 import { sha256Hex } from "../../../2025/prepared-source.ts";
 import type { MefBuildContext } from "../../../2025/mef/form-descriptor.ts";
 import {
@@ -109,6 +110,42 @@ function validDate(value: string): boolean {
     date.toISOString().startsWith(value);
 }
 
+const acknowledgementParser = new XMLParser({
+  ignoreAttributes: false,
+  removeNSPrefix: true,
+  parseTagValue: false,
+  parseAttributeValue: false,
+  processEntities: false,
+});
+
+function acceptedAcknowledgementMatches(
+  bytes: Uint8Array,
+  submissionId: string,
+  taxpayerSsn: string,
+): boolean {
+  try {
+    const xml = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    if (XMLValidator.validate(xml) !== true) return false;
+    const parsed = acknowledgementParser.parse(xml);
+    const acknowledgement = parsed?.Acknowledgement;
+    if (
+      !acknowledgement || typeof acknowledgement !== "object" ||
+      Array.isArray(acknowledgement)
+    ) return false;
+    const record = acknowledgement as Record<string, unknown>;
+    return record.SubmissionId === submissionId &&
+      record.TaxYr === "2024" &&
+      record.ExtndGovernmentCd === "IRS" &&
+      record.SubmissionTyp === "1040" &&
+      record.AcceptanceStatusTxt === "Accepted" &&
+      record.TIN === taxpayerSsn &&
+      typeof record.EFIN === "string" && record.EFIN.length > 0 &&
+      typeof record.StatusDt === "string" && validDate(record.StatusDt);
+  } catch {
+    return false;
+  }
+}
+
 /** Bind the required prior Section B form and appraisal to one carried gift. */
 export async function bindForm8283SectionBCarryoverSource(
   rawSource: unknown,
@@ -205,11 +242,16 @@ export async function bindForm8283SectionBCarryoverSource(
   if (
     !(acceptanceNoticeBytes instanceof Uint8Array) ||
     acceptanceNoticeBytes.length < 8 ||
-    new TextDecoder().decode(acceptanceNoticeBytes.subarray(0, 1)) !== "<" ||
-    await sha256Hex(acceptanceNoticeBytes) !== accepted.acceptance_notice.sha256
+    await sha256Hex(acceptanceNoticeBytes) !==
+      accepted.acceptance_notice.sha256 ||
+    !acceptedAcknowledgementMatches(
+      acceptanceNoticeBytes,
+      accepted.acceptance_notice.submission_id,
+      source.filed_taxpayer_ssn,
+    )
   ) {
     throw new Error(
-      "Form 8283 Section B acceptance notice bytes differ from reviewed SHA-256",
+      "Form 8283 Section B needs exact reviewed IRS acknowledgment bytes with accepted 2024 Form 1040, submission ID, and taxpayer",
     );
   }
 }

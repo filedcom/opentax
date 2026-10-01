@@ -25,7 +25,7 @@ const filedReturnBytes = new TextEncoder().encode(
   "%PDF-1.7 reviewed filed 2024 return with Schedule A fixture",
 );
 const acceptanceNoticeBytes = new TextEncoder().encode(
-  "<Acknowledgment><Status>Accepted</Status><TaxYr>2024</TaxYr></Acknowledgment>",
+  "<Acknowledgement><SubmissionId>2024-submission-1</SubmissionId><EFIN>123456</EFIN><TaxYr>2024</TaxYr><ExtndGovernmentCd>IRS</ExtndGovernmentCd><SubmissionTyp>1040</SubmissionTyp><AcceptanceStatusTxt>Accepted</AcceptanceStatusTxt><StatusDt>2025-02-01</StatusDt><TIN>123456789</TIN></Acknowledgement>",
 );
 
 Deno.test("Form 8283 binds a prior Section B artwork and required appraisal to one carryover", async () => {
@@ -141,6 +141,43 @@ Deno.test("Form 8283 binds a prior Section B artwork and required appraisal to o
       acceptanceNoticeBytes,
     );
   await bind(source);
+  for (
+    const [oldValue, newValue] of [
+      ["<AcceptanceStatusTxt>Accepted", "<AcceptanceStatusTxt>Rejected"],
+      ["<TaxYr>2024", "<TaxYr>2023"],
+      ["<SubmissionId>2024-submission-1", "<SubmissionId>other-submission"],
+      ["<TIN>123456789", "<TIN>999999999"],
+      ["<SubmissionTyp>1040", "<SubmissionTyp>1041"],
+    ]
+  ) {
+    const changedNotice = new TextEncoder().encode(
+      new TextDecoder().decode(acceptanceNoticeBytes).replace(
+        oldValue,
+        newValue,
+      ),
+    );
+    const changedSha256 = await sha256Hex(changedNotice);
+    await assertRejects(() =>
+      bindForm8283SectionBCarryoverSource(
+        {
+          ...source,
+          accepted_2024_filing: {
+            ...source.accepted_2024_filing,
+            acceptance_notice: {
+              ...source.accepted_2024_filing.acceptance_notice,
+              sha256: changedSha256,
+            },
+          },
+        },
+        carryover,
+        "123456789",
+        priorFormBytes,
+        appraisalBytes,
+        filedReturnBytes,
+        changedNotice,
+      )
+    );
+  }
   await assertRejects(() =>
     bind(source, new TextEncoder().encode("%PDF-1.7 changed prior form"))
   );

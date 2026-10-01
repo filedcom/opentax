@@ -118,6 +118,17 @@ owner, and deduction amount are rejected. The filed return and acknowledgment
 are retained evidence, not 2025 MeF attachments. Only the prior Form 8283 and
 required appraisal are checked against distinct proposed MeF PDF attachment IDs.
 
+The retained acknowledgment prerequisite now parses the exact hashed XML copy
+and requires an IRS `Acknowledgement` with `Accepted` status, TY2024 Form 1040,
+the reviewed submission ID, and the same taxpayer TIN. A matched hash alone
+no longer permits a receipt, rejected return, different year, different
+submission, or different taxpayer. Positive and altered-field cases are
+authored for the deferred bulk pass. The [IRS MeF acknowledgment
+guide](https://www.irs.gov/pub/irs-pdf/p4164.pdf) distinguishes an accepted
+acknowledgment from a submission status record. This structural check cannot authenticate
+the XML's IRS origin or prove that the separately retained PDF is the accepted
+submission, so Section B carryover export remains closed.
+
 A separate staged return review checks this one-gift, primary-owner case against
 the complete finalized 2025 Schedule A capital-gain election ledger. It
 recomputes lines 11–13, requires the refigured basis less the 2024 deduction to
