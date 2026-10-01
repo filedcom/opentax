@@ -1,5 +1,16 @@
 import { assertThrows } from "@std/assert";
 import { assertAttachmentCoverage } from "./attachment-coverage.ts";
+import { form8992Pending } from "./form8992.fixture.ts";
+
+Deno.test("reviewed no-distribution Category 4/5a Form 5471 stays gated at both exports", () => {
+  for (const kind of ["mef", "pdf"] as const) {
+    assertThrows(
+      () => assertAttachmentCoverage(form8992Pending, kind),
+      Error,
+      "Schedule R all-zero treatment",
+    );
+  }
+});
 
 Deno.test("native attachment preflight blocks unfiled public inputs", () => {
   for (

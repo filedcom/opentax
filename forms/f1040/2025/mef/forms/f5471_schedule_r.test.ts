@@ -28,6 +28,11 @@ Deno.test("Schedule R reports reviewed no-distribution CFC identity", () => {
     "<ForeignEntityReferenceIdNum>FC001</ForeignEntityReferenceIdNum>",
   );
   assertEquals(xml.includes("<DistributionsFromFrgnCorpGrp>"), false);
+  assertEquals(
+    xml.includes("<DistributionFuncCurAmt>0</DistributionFuncCurAmt>"),
+    false,
+  );
+  assertEquals(xml.includes("<DistributionDt>"), false);
   assertThrows(() =>
     form5471ScheduleR.build({}, {
       filer: form8992Filer,
@@ -44,6 +49,35 @@ Deno.test("Schedule R reports reviewed no-distribution CFC identity", () => {
         },
       },
     }), Error);
+});
+
+Deno.test({
+  name:
+    "TY2025 v5.4 Schedule R has no zero-only XML field outside a dated distribution row",
+  ignore: !schemaAvailable,
+  fn: () => {
+    const schema = Deno.readTextFileSync(xsd);
+    const distribution = schema.indexOf('name="DistributionsFromFrgnCorpGrp"');
+    const rowType = schema.indexOf('name="DistributionsFromFrgnCorpGrpType"');
+    assertEquals(distribution > 0, true);
+    assertEquals(rowType > distribution, true);
+    assertEquals(
+      schema.slice(distribution, rowType).includes('minOccurs="0"'),
+      true,
+    );
+    const row = schema.slice(rowType);
+    for (
+      const field of [
+        "RowId",
+        "DistributionDesc",
+        "DistributionDt",
+        "DistributionFuncCurAmt",
+        "DistributionFromEPFuncCurAmt",
+      ]
+    ) {
+      assertEquals(row.includes(`name="${field}"`), true);
+    }
+  },
 });
 
 Deno.test({

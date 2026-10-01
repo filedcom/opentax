@@ -209,7 +209,8 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
   {
     pendingKey: "f5471",
     exportKinds: ["mef", "pdf"],
-    reason: "Form 5471 foreign-corporation reporting needs native schedules",
+    reason:
+      "Form 5471 Schedule R all-zero treatment and parent reference linkage need current MeF evidence",
     isActive: (fields) => nonempty(fields.f5471s),
   },
   {
