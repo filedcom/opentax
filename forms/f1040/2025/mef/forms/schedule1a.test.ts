@@ -269,6 +269,37 @@ Deno.test("Schedule 1-A reviewed vehicle loan fills Part IV and reconciles", () 
   );
 });
 
+Deno.test("Schedule 1-A refinanced loan keeps one VIN and its qualified interest", () => {
+  const refinanced = {
+    ...singleVehicle,
+    vehicle_loans: [{
+      ...vehicleLoan,
+      refinance: {
+        refinanced_date: "2025-07-01",
+        lender_name: "Second Credit Union",
+        interest_statement_reference: "2025 refinance lender statement",
+        refinance_and_first_lien_reference:
+          "2025 refinance first-lien agreement",
+        outstanding_original_principal_at_refinance: 20_000,
+        refinanced_principal: 20_000,
+        original_loan_interest_paid_before_refinance: 1_500,
+        refinanced_loan_interest_paid: 2_500,
+        first_lien_secured_on_same_vehicle: true as const,
+        no_cash_out_or_ineligible_debt: true as const,
+      },
+    }],
+  };
+  const xml = schedule1a.build(refinanced, {
+    pending: { f1040: singleOvertime1040 },
+  });
+  assertStringIncludes(xml, `<VIN>${vehicleLoan.vin}</VIN>`);
+  assertStringIncludes(
+    xml,
+    "<QualifiedCarLoanInterestAmt>4000</QualifiedCarLoanInterestAmt>",
+  );
+  assertEquals(xml.match(/<QlfyPassengerVehicleLoanIntGrp>/g)?.length, 1);
+});
+
 Deno.test("Schedule 1-A vehicle loan checks borrower, duplicate VIN, and phaseout", () => {
   assertThrows(
     () =>

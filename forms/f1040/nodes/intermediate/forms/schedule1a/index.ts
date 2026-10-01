@@ -46,7 +46,42 @@ const vehicleLoanSchema = z.object({
   qualified_interest_paid: z.number().int().positive(),
   interest_deducted_elsewhere: z.literal(0),
   no_other_interest_deduction_review_reference: z.string().trim().min(1),
-}).strict();
+  refinance: z.object({
+    refinanced_date: vehiclePurchaseDateSchema,
+    lender_name: z.string().trim().min(1),
+    interest_statement_reference: z.string().trim().min(1),
+    refinance_and_first_lien_reference: z.string().trim().min(1),
+    outstanding_original_principal_at_refinance: z.number().int().positive(),
+    refinanced_principal: z.number().int().positive(),
+    original_loan_interest_paid_before_refinance: z.number().int()
+      .nonnegative(),
+    refinanced_loan_interest_paid: z.number().int().positive(),
+    first_lien_secured_on_same_vehicle: z.literal(true),
+    no_cash_out_or_ineligible_debt: z.literal(true),
+  }).strict().optional(),
+}).strict().superRefine((loan, context) => {
+  const refinance = loan.refinance;
+  if (!refinance) return;
+  if (
+    refinance.refinanced_date <= loan.loan_originated_date ||
+    refinance.refinanced_date < loan.vehicle_purchased_date ||
+    refinance.refinanced_principal >
+      refinance.outstanding_original_principal_at_refinance ||
+    refinance.original_loan_interest_paid_before_refinance +
+          refinance.refinanced_loan_interest_paid !==
+      loan.qualified_interest_paid ||
+    refinance.interest_statement_reference ===
+      loan.lender_interest_statement_reference ||
+    refinance.refinance_and_first_lien_reference ===
+      loan.purchase_and_lien_reference
+  ) {
+    context.addIssue({
+      code: "custom",
+      message:
+        "Schedule 1-A refinance needs later secured debt within the original qualified balance and reconciled distinct interest sources",
+    });
+  }
+});
 
 /** Fields a taxpayer supplies directly for Schedule 1-A. */
 export const seniorZeroExclusionsReviewSchema = z.object({
@@ -889,7 +924,7 @@ export function calculateW2OvertimeSchedule1A(
   });
 }
 
-/** Reviewed 2025 purchase loans with no interest deducted elsewhere. */
+/** Reviewed 2025 purchase loans and bounded same-vehicle refinances. */
 export function calculateVehicleInterestSchedule1A(
   ctx: NodeContext,
   rawInput: Schedule1AInput,

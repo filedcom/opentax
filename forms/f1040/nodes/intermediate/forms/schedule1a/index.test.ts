@@ -377,6 +377,52 @@ Deno.test("schedule1a: reviewed vehicle interest allows MFS", () => {
   );
 });
 
+Deno.test("schedule1a: bounded same-vehicle refinance retains eligible interest", () => {
+  const refinance = {
+    refinanced_date: "2025-07-01",
+    lender_name: "Second Credit Union",
+    interest_statement_reference: "2025 refinance lender interest statement",
+    refinance_and_first_lien_reference:
+      "2025 refinance and first-lien agreement",
+    outstanding_original_principal_at_refinance: 20_000,
+    refinanced_principal: 20_000,
+    original_loan_interest_paid_before_refinance: 1_000,
+    refinanced_loan_interest_paid: 2_000,
+    first_lien_secured_on_same_vehicle: true as const,
+    no_cash_out_or_ineligible_debt: true as const,
+  };
+  const loan = { ...vehicleLoan(3_000), refinance };
+  assertEquals(
+    deduction({
+      vehicle_loans: [loan],
+      taxpayer_ssn: TAXPAYER_SSN,
+      magi: 80_000,
+      filing_status: FilingStatus.Single,
+    }),
+    3_000,
+  );
+  for (
+    const invalid of [
+      { ...refinance, refinanced_principal: 20_001 },
+      { ...refinance, refinanced_date: "2025-01-01" },
+      { ...refinance, refinanced_loan_interest_paid: 1_999 },
+      {
+        ...refinance,
+        interest_statement_reference: loan.lender_interest_statement_reference,
+      },
+      { ...refinance, first_lien_secured_on_same_vehicle: false },
+      { ...refinance, no_cash_out_or_ineligible_debt: false },
+    ]
+  ) {
+    assertEquals(
+      schedule1a.inputSchema.safeParse({
+        vehicle_loans: [{ ...loan, refinance: invalid }],
+      }).success,
+      false,
+    );
+  }
+});
+
 Deno.test("schedule1a: passes computed line 30 vehicle interest separately", () => {
   const result = schedule1a.compute(ctx, {
     vehicle_loans: [vehicleLoan(4_000)],

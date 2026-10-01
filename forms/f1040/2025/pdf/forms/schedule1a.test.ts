@@ -324,6 +324,32 @@ Deno.test("2025 Schedule 1-A PDF maps reviewed vehicle interest to Part IV", asy
   assertEquals(projected?.line23_total_interest, 4_000);
   assertEquals(projected?.line30_vehicle_interest, 4_000);
   assertEquals(projected?.line38_total, 4_000);
+  const refinancedSource = {
+    ...vehicleSource,
+    vehicle_loans: [{
+      ...loan,
+      refinance: {
+        refinanced_date: "2025-07-01",
+        lender_name: "Second Credit Union",
+        interest_statement_reference: "2025 refinance lender statement",
+        refinance_and_first_lien_reference:
+          "2025 refinance first-lien agreement",
+        outstanding_original_principal_at_refinance: 20_000,
+        refinanced_principal: 20_000,
+        original_loan_interest_paid_before_refinance: 1_500,
+        refinanced_loan_interest_paid: 2_500,
+        first_lien_secured_on_same_vehicle: true as const,
+        no_cash_out_or_ineligible_debt: true as const,
+      },
+    }],
+  };
+  const refinancedProjected = schedule1aPdf.projectFields?.(
+    refinancedSource,
+    { schedule1a: refinancedSource, f1040: vehicleReturn },
+  );
+  assertEquals(refinancedProjected?.line22a_vin, loan.vin);
+  assertEquals(refinancedProjected?.line22a_interest, 4_000);
+  assertEquals(refinancedProjected?.line30_vehicle_interest, 4_000);
   const secondLoan = {
     ...loan,
     vin: "1HGCM82633A004353",

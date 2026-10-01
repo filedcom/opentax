@@ -263,7 +263,7 @@ scenario packet PDF as if it were a generated return.
 The workspace has blank IRS PDF templates in `.state/field-dumps/cache` and
 source ATS scenario PDFs in `.state/research/docs/ats-ty2025`. These are not
 filled-output fixtures. `forms/f1040/2025/pdf/review-fixtures.ts` now holds
-141 synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts`
+142 synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts`
 can run them through the real return graph and PDF builder. Earlier on
 2026-09-29, the first sixteen
 generated 94 pages successfully under
@@ -292,6 +292,11 @@ indicate multiple expected copies. The plan does not prove that any PDF renders.
 Its uncovered list is the concrete queue for more source-backed fixtures or
 documented fail-closed routes; none may be treated as visually reviewed by this
 batch.
+
+The later `single-refinanced-car-loan-schedule1a` source case keeps one VIN and
+splits $4,000 of qualified interest between the original 2025 purchase loan
+and its same-vehicle, first-lien refinance. It awaits the same execution, XSD,
+rendering, and page review as the rest of this batch.
 
 Three newly authored positive source cases target registered PDFs that were
 missing from the matrix: a nonliquidating Form 7217 distribution with three

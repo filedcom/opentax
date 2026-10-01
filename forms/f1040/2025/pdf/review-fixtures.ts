@@ -2367,6 +2367,76 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-refinanced-car-loan-schedule1a",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        taxpayer_ssn_valid_for_employment: true,
+        taxpayer_ssn_issued_before_due_date: true,
+        taxpayer_tin_issued_by_due_date: true,
+      },
+      w2: [wage(80_000, 8_000, "Example Employer", "12-3456789")],
+      schedule1a: {
+        senior_zero_exclusions_review: {
+          no_section933_puerto_rico_excluded_income: true,
+          section933_review_source_reference: "Synthetic 2025 residency review",
+          no_form2555_filed: true,
+          form2555_review_source_reference:
+            "Synthetic 2025 foreign-income review",
+          no_form4563_filed: true,
+          form4563_review_source_reference:
+            "Synthetic 2025 Samoa-source review",
+        },
+        vehicle_loans: [{
+          vin: "1HGCM82633A004352",
+          borrower_ssn: "111223333",
+          loan_originated_date: "2025-02-01",
+          vehicle_purchased_date: "2025-02-01",
+          lender_name: "First Credit Union",
+          lender_interest_statement_reference:
+            "Synthetic original 2025 interest statement",
+          purchase_and_lien_reference:
+            "Synthetic original 2025 purchase and lien",
+          final_assembly_reference: "Synthetic vehicle information label",
+          original_borrower: true,
+          purchase_proceeds_only: true,
+          first_lien_secured: true,
+          original_vehicle_use: true,
+          road_vehicle_with_two_or_more_wheels: true,
+          vehicle_type: "car",
+          gross_vehicle_weight_under_14000_pounds: true,
+          final_assembly_in_us: true,
+          expected_personal_use_over_half: true,
+          qualified_interest_paid: 4_000,
+          interest_deducted_elsewhere: 0,
+          no_other_interest_deduction_review_reference:
+            "Synthetic 2025 Schedule C/E/F review",
+          refinance: {
+            refinanced_date: "2025-07-01",
+            lender_name: "Second Credit Union",
+            interest_statement_reference:
+              "Synthetic refinance 2025 interest statement",
+            refinance_and_first_lien_reference:
+              "Synthetic refinance 2025 first lien",
+            outstanding_original_principal_at_refinance: 20_000,
+            refinanced_principal: 20_000,
+            original_loan_interest_paid_before_refinance: 1_500,
+            refinanced_loan_interest_paid: 2_500,
+            first_lien_secured_on_same_vehicle: true,
+            no_cash_out_or_ineligible_debt: true,
+          },
+        }],
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule1a"],
+    reviewFocus: [
+      "Original and refinance interest sources total $4,000 without counting the same VIN twice",
+      "Schedule 1-A line 22a and lines 23/30/38 print $4,000",
+      "Form 1040 line 13b agrees with the final native Schedule 1-A and PDF",
+    ],
+  },
+  {
     id: "single-three-car-loan-schedule1a",
     inputs: {
       general: {

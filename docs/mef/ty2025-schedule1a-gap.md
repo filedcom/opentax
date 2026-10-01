@@ -73,8 +73,16 @@ two-page PDF field map and inspected synthetic full-return packets.
   elsewhere. Bare VIN/interest assertions and positive Schedule C/E/F amounts
   are rejected. The native v5.4 schema permits 50
   vehicle groups; the PDF prints one VIN plus an attached subtotal and paginated
-  statement when there are more than two. Refinance, inherited-obligor, mixed
-  business-use interest, document authentication, and cross-schedule deduction
+  statement when there are more than two. A bounded same-vehicle 2025
+  refinance retains the original purchase-loan facts plus the later lender
+  and first-lien references, original outstanding qualified principal, new
+  principal no greater than that balance, and separate before/after interest
+  amounts summing to line 22 interest. Cash-out and other ineligible debt
+  reject. The calculator, native group, and PDF retain one VIN and the same
+  line 23/30/38 total; positive and tamper cases are authored but unrun.
+  This follows the [2025 Schedule 1-A instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
+  for refinanced qualifying loans. Inherited obligors, mixed business-use
+  interest, document authentication, and cross-schedule deduction
   reconciliation remain open.
 - Part V's senior calculation computes per-person lines 36a/36b and
   intermediate lines 32–35. Its zero-exclusion review does not establish the
