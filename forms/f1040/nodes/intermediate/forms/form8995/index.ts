@@ -59,6 +59,18 @@ export const inputSchema = z.object({
   sstb_unadjusted_basis: accumulable(z.number().nonnegative()).optional(),
   // Section 199A dividends from REITs (Form 1099-DIV box 5)
   line6_sec199a_dividends: accumulable(z.number().nonnegative()).optional(),
+  reit_dividend_sources: z.array(z.object({
+    payer_name: z.string(),
+    source_document_reference: z.string(),
+    box1a: z.number(),
+    box5: z.number(),
+    ex_dividend_date: z.string().optional(),
+    qualified_held_days_in_91_day_window: z.number().optional(),
+    diminished_risk_days_excluded: z.number().optional(),
+    no_related_payment_obligation_confirmed: z.boolean().optional(),
+    review_reference: z.string().optional(),
+    reviewed_on: z.string().optional(),
+  })).optional(),
   // Taxable income before QBI deduction (AGI minus deductions).
   // When provided, caps QBI deduction at 20% of this amount (IRC §199A(a)).
   taxable_income: z.number().nonnegative().optional(),

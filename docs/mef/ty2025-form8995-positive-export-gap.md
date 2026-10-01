@@ -39,11 +39,25 @@ and line 10 includes the business and REIT components. The exporter compares
 that record with Form 1040 line 3b, the final line 13 deduction, and every
 printed Form 8995 line; the PDF invokes the same source check. An executor
 positive case and amount, 91-day holding, related-payment, source-reference, qualified-dividend,
-return and prepared-line tamper fixtures are authored but unrun. Multiple
+return and prepared-line tamper fixtures are authored but unrun. More than two
 dividend issuers, qualified dividends, capital gains, prior REIT/PTP losses,
 PTP income, and issued-document byte authentication remain open. This follows
 the [2025 Form 8995 instructions](https://www.irs.gov/instructions/i8995)
 for the separate qualified-REIT component and taxable-income limit.
+
+The same one-business route now accepts exactly two separately identified
+Form 1099-DIV issuers when each issued copy has only box 5 ordinary dividends,
+each has a distinct 91-day holding and related-payment review, and their
+combined box 1a/box 5 amount is no more than $1,500, so no Schedule B is
+required. The calculation retains each issuer's amount, source reference, and
+holding review. Native and PDF export require distinct payer names, document
+references, and review references and replay those retained facts against each
+issued copy; they sum both issued amounts into Form 8995
+lines 6/8/9, reconcile Form 1040 lines 3b/13, and replay every printed line.
+A full-return positive and changed-source, duplicate-identity, insufficient-
+holding, and changed-return fixtures are authored for the deferred validation
+pass. More than two issuers, Schedule B amounts, other dividend boxes, and
+issued-document byte authentication remain open.
 
 The Schedule C node now retains an identified business row for positive QBI, and
 the Form 8995 node records lines 1-17 for one business. Export accepts the

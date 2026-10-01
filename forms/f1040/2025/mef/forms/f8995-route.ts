@@ -125,58 +125,124 @@ function zeroOrAbsent(value: unknown): boolean {
   return value === undefined || value === 0;
 }
 
-function oneQualifiedReitDividend(source: unknown): number {
-  if (source === undefined) return 0;
+function qualifiedReitDividends(source: unknown, anchors: unknown): number {
+  if (source === undefined) {
+    if (anchors !== undefined) {
+      throw new Error(
+        "Form 8995 retained REIT sources lack issued 1099-DIV copies",
+      );
+    }
+    return 0;
+  }
   const parsed = form1099DivInputSchema.safeParse(source);
-  const item = parsed.success && parsed.data.f1099divs.length === 1
-    ? parsed.data.f1099divs[0]
-    : undefined;
-  const review = item?.section199a_holding_review;
+  const items = parsed.success ? parsed.data.f1099divs : [];
   const validDate = (date: string | undefined) =>
     !!date && !Number.isNaN(Date.parse(`${date}T00:00:00Z`)) &&
     new Date(`${date}T00:00:00Z`).toISOString().slice(0, 10) === date;
-  if (
-    !item || !item.source_document_reference || !item.payerName ||
-    item.isNominee || item.nominee_distribution !== undefined || item.box11 ||
-    !Number.isSafeInteger(item.box5) || (item.box5 ?? 0) <= 0 ||
-    (item.box5 ?? 0) > 1_500 || item.box1a !== item.box5 ||
-    !review || !validDate(review.ex_dividend_date) ||
-    !validDate(review.reviewed_on) ||
-    review.qualified_held_days_in_91_day_window <= 45 ||
-    review.qualified_held_days_in_91_day_window +
-          review.diminished_risk_days_excluded > 91 ||
-    (item.holdingPeriodDays ?? 0) <
-      review.qualified_held_days_in_91_day_window +
-        review.diminished_risk_days_excluded ||
-    [
-      item.box1b,
-      item.box2a,
-      item.box2b,
-      item.box2c,
-      item.box2d,
-      item.box2e,
-      item.box2f,
-      item.box3,
-      item.box4,
-      item.box6,
-      item.box7,
-      item.box9,
-      item.box10,
-      item.box12,
-      item.box13,
-      item.box16,
-    ].some((amount) => !zeroOrAbsent(amount)) ||
-    item.investment_property_for_form4952 === true ||
-    item.box8 !== undefined || item.box14 !== undefined ||
-    item.box15 !== undefined ||
-    item.foreign_source_dividends_usd !== undefined ||
-    item.foreign_source_qualified_dividends_usd !== undefined
-  ) {
+  const sourceReferences = new Set<string>();
+  const payerNames = new Set<string>();
+  const reviewReferences = new Set<string>();
+  if (items.length < 1 || items.length > 2) {
     throw new Error(
-      "Form 8995 REIT component needs one identified box 5 Form 1099-DIV with reviewed 91-day qualified holding and no related-payment obligation",
+      "Form 8995 REIT component needs one or two identified box 5 Forms 1099-DIV",
     );
   }
-  return item.box5!;
+  if (!Array.isArray(anchors) || anchors.length !== items.length) {
+    throw new Error(
+      "Form 8995 retained REIT sources do not match issued 1099-DIV copies",
+    );
+  }
+  const anchoredByReference = new Map<string, Record<string, unknown>>();
+  for (const anchor of anchors) {
+    if (
+      typeof anchor !== "object" || anchor === null ||
+      Array.isArray(anchor) ||
+      typeof (anchor as Record<string, unknown>).source_document_reference !==
+        "string" ||
+      anchoredByReference.has(
+        (anchor as Record<string, string>).source_document_reference,
+      )
+    ) {
+      throw new Error("Form 8995 retained REIT source identity is invalid");
+    }
+    const reference = (anchor as Record<string, string>)
+      .source_document_reference;
+    anchoredByReference.set(reference, anchor as Record<string, unknown>);
+  }
+  let total = 0;
+  for (const item of items) {
+    const review = item.section199a_holding_review;
+    const sourceReference = item.source_document_reference?.trim();
+    const payerName = item.payerName?.trim().toLowerCase();
+    const reviewReference = review?.review_reference.trim();
+    const anchor = sourceReference
+      ? anchoredByReference.get(sourceReference)
+      : undefined;
+    if (
+      !sourceReference || !payerName || !reviewReference || !anchor ||
+      anchor.payer_name !== item.payerName ||
+      anchor.box1a !== item.box1a || anchor.box5 !== item.box5 ||
+      anchor.ex_dividend_date !== review?.ex_dividend_date ||
+      anchor.qualified_held_days_in_91_day_window !==
+        review?.qualified_held_days_in_91_day_window ||
+      anchor.diminished_risk_days_excluded !==
+        review?.diminished_risk_days_excluded ||
+      anchor.no_related_payment_obligation_confirmed !==
+        review?.no_related_payment_obligation_confirmed ||
+      anchor.review_reference !== review?.review_reference ||
+      anchor.reviewed_on !== review?.reviewed_on ||
+      sourceReferences.has(sourceReference) || payerNames.has(payerName) ||
+      reviewReferences.has(reviewReference) ||
+      item.isNominee || item.nominee_distribution !== undefined || item.box11 ||
+      !Number.isSafeInteger(item.box5) || (item.box5 ?? 0) <= 0 ||
+      item.box1a !== item.box5 ||
+      !review || !validDate(review.ex_dividend_date) ||
+      !validDate(review.reviewed_on) ||
+      review.qualified_held_days_in_91_day_window <= 45 ||
+      review.qualified_held_days_in_91_day_window +
+            review.diminished_risk_days_excluded > 91 ||
+      (item.holdingPeriodDays ?? 0) <
+        review.qualified_held_days_in_91_day_window +
+          review.diminished_risk_days_excluded ||
+      [
+        item.box1b,
+        item.box2a,
+        item.box2b,
+        item.box2c,
+        item.box2d,
+        item.box2e,
+        item.box2f,
+        item.box3,
+        item.box4,
+        item.box6,
+        item.box7,
+        item.box9,
+        item.box10,
+        item.box12,
+        item.box13,
+        item.box16,
+      ].some((amount) => !zeroOrAbsent(amount)) ||
+      item.investment_property_for_form4952 === true ||
+      item.box8 !== undefined || item.box14 !== undefined ||
+      item.box15 !== undefined ||
+      item.foreign_source_dividends_usd !== undefined ||
+      item.foreign_source_qualified_dividends_usd !== undefined
+    ) {
+      throw new Error(
+        "Form 8995 REIT component needs one identified box 5 Form 1099-DIV with reviewed 91-day qualified holding and no related-payment obligation",
+      );
+    }
+    sourceReferences.add(sourceReference);
+    payerNames.add(payerName);
+    reviewReferences.add(reviewReference);
+    total += item.box5!;
+  }
+  if (total > 1_500) {
+    throw new Error(
+      "Form 8995 REIT component above $1,500 needs Schedule B source reconciliation",
+    );
+  }
+  return total;
 }
 
 /** Only the fully reconciled, one-business positive route can leave the guard. */
@@ -214,7 +280,10 @@ export function assertOneScheduleC8995(
     "sep_retirement",
   ] as const;
   const form7206 = pending.form7206;
-  const reit = oneQualifiedReitDividend(pending.f1099div);
+  const reit = qualifiedReitDividends(
+    pending.f1099div,
+    fields.reit_dividend_sources,
+  );
   const seDeduction = fields.se_tax_deduction ?? 0;
   const healthField = fields.se_health_insurance_deduction;
   const healthDeduction = typeof healthField === "number" ? healthField : 0;
