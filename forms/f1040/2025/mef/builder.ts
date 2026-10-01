@@ -43,6 +43,7 @@ import { assertNecWithholdingRecipient } from "../f1099nec-withholding-owner.ts"
 import { assert1099BRecipientOwner } from "../f1099b-recipient-owner.ts";
 import { assertPatrWithholdingRecipient } from "../f1099patr-withholding-owner.ts";
 import { assertW2WithholdingSource } from "../w2-withholding-reconciliation.ts";
+import { assert1099WithholdingSource } from "../f1099-withholding-reconciliation.ts";
 import {
   hasForm8994Claim,
   reconcileForm8994EvidenceBytes,
@@ -255,6 +256,7 @@ function buildReturnXml(
   assert1099BRecipientOwner(pending.f1099b, filer);
   assertPatrWithholdingRecipient(pending.f1099patr, filer);
   assertW2WithholdingSource(pending, filer);
+  assert1099WithholdingSource(pending, filer);
   assertExtensionPaymentSource(pending, filer);
   assertForm8915FSourceLinks(pending);
   assertKIncomeClassification(pending);

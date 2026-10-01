@@ -1,0 +1,168 @@
+import { assertThrows } from "@std/assert";
+import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
+import { assert1099WithholdingSource } from "./f1099-withholding-reconciliation.ts";
+import { FormType } from "../nodes/inputs/f4852/index.ts";
+
+const filer: FilerIdentity = {
+  primarySSN: "111223333",
+  nameLine1: "TAXPAYER TEST",
+  nameControl: "TEST",
+  address: { line1: "1 Main St", city: "Austin", state: "TX", zip: "78701" },
+  filingStatus: FilingStatus.MarriedFilingJointly,
+  spouse: {
+    ssn: "222334444",
+    firstName: "Joint",
+    lastName: "Spouse",
+    nameControl: "SPOU",
+  },
+};
+
+Deno.test("1099-family box withholding replays once across distinct taxpayer and joint-spouse copies", () => {
+  const pending = {
+    f1099int: { f1099ints: [{ payer_name: "Bank", box4: 10 }] },
+    f1099g: {
+      f1099gs: [{
+        box_4_federal_withheld: 20,
+        recipient_tin: "222334444",
+      }],
+    },
+    f1099m: {
+      f1099ms: [{
+        payer_name: "Payer",
+        payer_tin: "123456789",
+        recipient_tin: "111223333",
+        box4_federal_withheld: 30,
+      }],
+    },
+    ssa1099: {
+      ssas: [{
+        box3_gross_benefits: 1_000,
+        box6_federal_withheld: 40,
+      }],
+    },
+    rrb1099r: {
+      rrb1099rs: [{
+        payer_name: "RRB",
+        box7_sseb_withheld: 50,
+        box10_tier2_withheld: 60,
+      }],
+    },
+    f4852: {
+      f4852s: [{
+        form_type: FormType.R_1099,
+        payer_name: "Replacement payer",
+        gross_distribution: 1_000,
+        federal_withheld: 70,
+      }],
+    },
+    f1040: { line25b_withheld_1099: 280 },
+  };
+  assert1099WithholdingSource(pending, filer);
+  assertThrows(
+    () =>
+      assert1099WithholdingSource({
+        ...pending,
+        f1040: { line25b_withheld_1099: 279 },
+      }, filer),
+    Error,
+    "line 25b differs",
+  );
+  assertThrows(
+    () =>
+      assert1099WithholdingSource({
+        ...pending,
+        f1099g: {
+          f1099gs: [{
+            box_4_federal_withheld: 20,
+            recipient_tin: "999887777",
+          }],
+        },
+      }, filer),
+    Error,
+    "recipient must match",
+  );
+  assertThrows(
+    () =>
+      assert1099WithholdingSource({
+        ...pending,
+        f1099m: {
+          f1099ms: [{
+            ...pending.f1099m.f1099ms[0],
+            recipient_tin: "999887777",
+          }],
+        },
+      }, filer),
+    Error,
+    "recipient must match",
+  );
+});
+
+Deno.test("1099-B and Form 8949 cannot claim the same identified broker withholding twice", () => {
+  const sale = {
+    part: "A" as const,
+    description: "Stock",
+    date_acquired: "2025-01-01",
+    date_sold: "2025-02-01",
+    proceeds: 1_000,
+    cost_basis: 500,
+    federal_withheld: 50,
+  };
+  assertThrows(
+    () =>
+      assert1099WithholdingSource({
+        f1099b: {
+          f1099bs: [{
+            ...sale,
+            recipient_ssn: "111223333",
+            transaction_id: "sale-1",
+          }],
+        },
+        f8949: { f8949s: [{ ...sale, source_transaction_id: "sale-1" }] },
+        f1040: { line25b_withheld_1099: 100 },
+      }, filer),
+    Error,
+    "repeat withholding",
+  );
+});
+
+Deno.test("positive 1099-R withholding needs an identified recipient on a joint return", () => {
+  const pending = {
+    f1099r: {
+      f1099rs: [{
+        payer_name: "Plan",
+        payer_ein: "123456789",
+        recipient_ssn: "222334444",
+        box1_gross_distribution: 1_000,
+        box4_federal_withheld: 100,
+        box7_distribution_code: "7",
+      }],
+    },
+    f1040: { line25b_withheld_1099: 100 },
+  };
+  assert1099WithholdingSource(pending, filer);
+  assertThrows(
+    () =>
+      assert1099WithholdingSource({
+        ...pending,
+        f1099r: {
+          f1099rs: [{
+            ...pending.f1099r.f1099rs[0],
+            recipient_ssn: undefined,
+          }],
+        },
+      }, filer),
+    Error,
+    "recipient must match",
+  );
+});
+
+Deno.test("an unsupported bare line 25b amount cannot be filed without retained payer rows", () => {
+  assertThrows(
+    () =>
+      assert1099WithholdingSource({
+        f1040: { line25b_withheld_1099: 10 },
+      }, filer),
+    Error,
+    "line 25b differs",
+  );
+});

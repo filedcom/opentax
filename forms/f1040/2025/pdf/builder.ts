@@ -40,6 +40,7 @@ import { assertNecWithholdingRecipient } from "../f1099nec-withholding-owner.ts"
 import { assert1099BRecipientOwner } from "../f1099b-recipient-owner.ts";
 import { assertPatrWithholdingRecipient } from "../f1099patr-withholding-owner.ts";
 import { assertW2WithholdingSource } from "../w2-withholding-reconciliation.ts";
+import { assert1099WithholdingSource } from "../f1099-withholding-reconciliation.ts";
 import { assertPositiveW2GRecipient } from "../mef/forms/w2g.ts";
 import { assertForm1098IssuerCopies } from "../../nodes/inputs/f1098/issuer_copy.ts";
 import {
@@ -306,6 +307,7 @@ export async function buildPdfBytes(
   assert1099BRecipientOwner(normalized.f1099b, filer);
   assertPatrWithholdingRecipient(normalized.f1099patr, filer);
   assertW2WithholdingSource(normalized, filer);
+  assert1099WithholdingSource(normalized, filer);
   assertForm8915FSourceLinks(normalized);
   assertKIncomeClassification(normalized);
   if (filer) {

@@ -1864,6 +1864,32 @@ Deno.test("multiple W-2s become separate documents with unique IDs and an exact 
   );
 });
 
+Deno.test("final MeF and PDF exports reject 1099 withholding changed after source calculation", async () => {
+  const payer = {
+    f1099int: { f1099ints: [{ payer_name: "Bank", box4: 80 }] },
+    f1040: { line25b_withheld_1099: 80 },
+  };
+  const filerIdentity = sampleFiler();
+  assertStringIncludes(
+    buildMefXml(payer, filerIdentity),
+    "<Form1099WithheldTaxAmt>80</Form1099WithheldTaxAmt>",
+  );
+  const tampered = {
+    ...payer,
+    f1040: { line25b_withheld_1099: 79 },
+  };
+  assertThrows(
+    () => buildMefXml(tampered, filerIdentity),
+    Error,
+    "line 25b differs",
+  );
+  await assertRejects(
+    () => buildPdfBytes(tampered, filerIdentity),
+    Error,
+    "line 25b differs",
+  );
+});
+
 Deno.test("context-only supporting forms are not emitted", () => {
   const xml = buildMefXml({
     schedule_a: { agi: 30_000 },
