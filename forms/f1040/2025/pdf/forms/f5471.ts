@@ -21,6 +21,19 @@ const partII = (key: string, path: string) =>
   field(key, 2, `Table_SchB_PartII[0].Row1[0].${path}`);
 const partI = (key: string, path: string) =>
   field(key, 2, `Table_SchB_PartI[0].Row1[0].${path}`);
+const scheduleC = (key: string, line: string, number: number) =>
+  field(key, 3, `Table_SchC[0].Row${line}[0].f3_${number}[0]`);
+const scheduleF = (
+  key: string,
+  section: "Assets" | "Liabilities",
+  line: string,
+  number: number,
+) =>
+  field(
+    key,
+    4,
+    `Table_SchF_${section}[0].Row${line}[0].f4_${number}[0]`,
+  );
 const monthDay = (date: string) => date.slice(5).replace("-", "/");
 const shortYear = (date: string) => date.slice(2, 4);
 const fullDate = (date: string) =>
@@ -56,8 +69,8 @@ const scheduleGQuestions = [
 export const form5471Pdf: PdfFormDescriptor = {
   pendingKey: "f5471_parent",
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f5471.pdf",
-  // The direct sole owner is both Category 4 and 5a. C/F remain gated.
-  pageIndices: () => [0, 1, 3, 4, 5],
+  // The direct sole owner is both Category 4 and 5a.
+  pageIndices: () => [0, 1, 2, 3, 4, 5],
   fields: [
     field("cfc_begin_md", 1, "PgHeader[0].f1_1[0]"),
     field("cfc_begin_year", 1, "PgHeader[0].f1_2[0]"),
@@ -108,6 +121,37 @@ export const form5471Pdf: PdfFormDescriptor = {
     partII("stock_class", "Row1b[0].f2_73[0]"),
     partII("shares_begin", "Row1c[0].f2_77[0]"),
     partII("shares_end", "Row1d[0].f2_81[0]"),
+    ...([
+      ["c_sales", "1a", 1],
+      ["c_net_sales", "1c", 5],
+      ["c_cogs", "2", 7],
+      ["c_gross_profit", "3", 9],
+      ["c_interest_income", "5", 13],
+      ["c_total_income", "10", 27],
+      ["c_interest_expense", "13", 35],
+      ["c_depreciation", "14", 37],
+      ["c_total_deductions", "18", 45],
+      ["c_pre_tax_income", "19", 47],
+      ["c_current_income_tax", "21a", 51],
+      ["c_net_income", "22", 55],
+    ] as const).flatMap(([key, line, first]) => [
+      scheduleC(key, line, first),
+      scheduleC(key, line, first + 1),
+    ]),
+    scheduleF("f_cash_begin", "Assets", "1", 1),
+    scheduleF("f_cash_end", "Assets", "1", 2),
+    scheduleF("f_gross_assets_begin", "Assets", "9a", 19),
+    scheduleF("f_gross_assets_end", "Assets", "9a", 20),
+    scheduleF("f_accum_depreciation_begin", "Assets", "9b", 21),
+    scheduleF("f_accum_depreciation_end", "Assets", "9b", 22),
+    scheduleF("f_total_assets_begin", "Assets", "14", 39),
+    scheduleF("f_total_assets_end", "Assets", "14", 40),
+    scheduleF("f_common_stock_begin", "Liabilities", "20b", 53),
+    scheduleF("f_common_stock_end", "Liabilities", "20b", 54),
+    scheduleF("f_retained_begin", "Liabilities", "22", 57),
+    scheduleF("f_retained_end", "Liabilities", "22", 58),
+    scheduleF("f_total_equity_begin", "Liabilities", "24", 61),
+    scheduleF("f_total_equity_end", "Liabilities", "24", 62),
     ...scheduleGQuestions.map(([domainKey, pdfPage, question]) => ({
       kind: "checkboxWhen" as const,
       domainKey,
@@ -164,6 +208,21 @@ export const form5471Pdf: PdfFormDescriptor = {
     );
     const id = cfc.form5471_identity;
     const i = cfc.schedule_i;
+    const c = cfc.schedule_c;
+    const f = cfc.schedule_f;
+    const grossProfit = c.gross_sales_receipts_functional -
+      c.cost_of_goods_sold_functional;
+    const totalIncome = grossProfit + c.interest_income_functional;
+    const totalDeductions = c.interest_expense_functional +
+      c.depreciation_functional;
+    const preTaxIncome = totalIncome - totalDeductions;
+    const netIncome = preTaxIncome - c.current_income_tax_expense_functional;
+    const assetsBegin = f.cash_begin_usd +
+      f.depreciable_assets_gross_begin_usd -
+      f.accumulated_depreciation_begin_usd;
+    const assetsEnd = f.cash_end_usd +
+      f.depreciable_assets_gross_end_usd -
+      f.accumulated_depreciation_end_usd;
     const a = id.foreign_address;
     const foreignAddress =
       `${a.line1}\n${a.city} ${a.postal_code}\n${a.country_code}`;
@@ -210,6 +269,32 @@ export const form5471Pdf: PdfFormDescriptor = {
       shares_begin: id.direct_shares_begin,
       shares_end: id.direct_shares_end,
       pro_rata_subpart_f_percent: cfc.ownership_percent,
+      c_sales: c.gross_sales_receipts_functional,
+      c_net_sales: c.gross_sales_receipts_functional,
+      c_cogs: c.cost_of_goods_sold_functional,
+      c_gross_profit: grossProfit,
+      c_interest_income: c.interest_income_functional,
+      c_total_income: totalIncome,
+      c_interest_expense: c.interest_expense_functional,
+      c_depreciation: c.depreciation_functional,
+      c_total_deductions: totalDeductions,
+      c_pre_tax_income: preTaxIncome,
+      c_current_income_tax: c.current_income_tax_expense_functional,
+      c_net_income: netIncome,
+      f_cash_begin: f.cash_begin_usd,
+      f_cash_end: f.cash_end_usd,
+      f_gross_assets_begin: f.depreciable_assets_gross_begin_usd,
+      f_gross_assets_end: f.depreciable_assets_gross_end_usd,
+      f_accum_depreciation_begin: f.accumulated_depreciation_begin_usd,
+      f_accum_depreciation_end: f.accumulated_depreciation_end_usd,
+      f_total_assets_begin: assetsBegin,
+      f_total_assets_end: assetsEnd,
+      f_common_stock_begin: f.common_stock_begin_usd,
+      f_common_stock_end: f.common_stock_end_usd,
+      f_retained_begin: f.retained_earnings_begin_usd,
+      f_retained_end: f.retained_earnings_end_usd,
+      f_total_equity_begin: assetsBegin,
+      f_total_equity_end: assetsEnd,
       ...Object.fromEntries(
         scheduleGQuestions.map(([key]) => [key, cfc.schedule_g[key]]),
       ),

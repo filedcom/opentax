@@ -2,17 +2,19 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { form8992Filer, form8992Pending } from "../../form8992.fixture.ts";
 import { form5471Pdf } from "./f5471.ts";
 
-Deno.test("Form 5471 PDF maps Category 4/5a, A, B, G, and I", () => {
+Deno.test("Form 5471 PDF maps Category 4/5a, A, B, C, F, G, and I", () => {
   const [fields] = form5471Pdf.instances?.(
     {},
     form8992Filer,
     form8992Pending,
   ) ?? [];
-  assertEquals(form5471Pdf.pageIndices?.(fields ?? {}), [0, 1, 3, 4, 5]);
+  assertEquals(form5471Pdf.pageIndices?.(fields ?? {}), [0, 1, 2, 3, 4, 5]);
   assertEquals(fields?.category5a, true);
   assertEquals(fields?.category4, true);
   assertEquals(fields?.total_shares_end, 100);
   assertEquals(fields?.pro_rata_subpart_f_percent, 100);
+  assertEquals(fields?.c_net_income, 60_000);
+  assertEquals(fields?.f_total_assets_end, 170_000);
   assertEquals(fields?.shares_end, 100);
   assertEquals(fields?.line1f, 10_000);
   assertEquals(fields?.line2, 1_000);

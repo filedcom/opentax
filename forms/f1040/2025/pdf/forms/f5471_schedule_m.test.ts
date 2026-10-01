@@ -10,8 +10,8 @@ Deno.test("Schedule M PDF maps related inventory sale and maximum balances", () 
   ) ?? [];
   assertEquals(form5471ScheduleMPdf.pageIndices?.(fields ?? {}), [0, 1]);
   assertEquals(fields?.currency_rate, "EUR / 1.0000");
-  assertEquals(fields?.inventory_sales, 10_000);
-  assertEquals(fields?.total_received, 10_000);
+  assertEquals(fields?.inventory_sales, 11_000);
+  assertEquals(fields?.total_received, 11_000);
   assertEquals(fields?.max_accounts_receivable, 0);
   assertEquals(
     form5471ScheduleMPdf.fields.find((entry) =>

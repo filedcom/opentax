@@ -27,10 +27,10 @@ Deno.test("Schedule M reports the reviewed sale to the sole shareholder", () => 
     "<FunctionalCurrencyDesc>EUR</FunctionalCurrencyDesc>",
   );
   assertStringIncludes(xml, "<ExchangeRt>1.0000</ExchangeRt>");
-  assertStringIncludes(xml, "<InventorySalesAmt>10000</InventorySalesAmt>");
+  assertStringIncludes(xml, "<InventorySalesAmt>11000</InventorySalesAmt>");
   assertStringIncludes(
     xml,
-    "<TotalTransactionsReceivedAmt>10000</TotalTransactionsReceivedAmt>",
+    "<TotalTransactionsReceivedAmt>11000</TotalTransactionsReceivedAmt>",
   );
   assertStringIncludes(xml, "<AccountsReceivableAmt>0</AccountsReceivableAmt>");
   assertEquals(xml.includes("<DomCorpPrtshpUSPersonFilingGrp>"), false);

@@ -43,6 +43,21 @@ export const form5471: MefFormDescriptor<"f5471_parent", unknown> = {
     const id = cfc.form5471_identity;
     const i = cfc.schedule_i;
     const g = cfc.schedule_g;
+    const c = cfc.schedule_c;
+    const f = cfc.schedule_f;
+    const grossProfit = c.gross_sales_receipts_functional -
+      c.cost_of_goods_sold_functional;
+    const totalIncome = grossProfit + c.interest_income_functional;
+    const totalDeductions = c.interest_expense_functional +
+      c.depreciation_functional;
+    const preTaxIncome = totalIncome - totalDeductions;
+    const netIncome = preTaxIncome - c.current_income_tax_expense_functional;
+    const assetsBegin = f.cash_begin_usd +
+      f.depreciable_assets_gross_begin_usd -
+      f.accumulated_depreciation_begin_usd;
+    const assetsEnd = f.cash_end_usd +
+      f.depreciable_assets_gross_end_usd -
+      f.accumulated_depreciation_end_usd;
     const cfcAddress = id.foreign_address;
     return elements("IRS5471", [
       element("TaxYearBeginDt", id.cfc_tax_year_begin),
@@ -131,6 +146,72 @@ export const form5471: MefFormDescriptor<"f5471_parent", unknown> = {
             element("AnnualAcctPeriodEndShareCnt", id.direct_shares_end),
           ]),
         ]),
+      ]),
+      elements("IRS5471ScheduleC", [
+        element(
+          "ForeignGrossReceiptsOrSalesAmt",
+          c.gross_sales_receipts_functional,
+        ),
+        element("USGrossReceiptsOrSalesAmt", c.gross_sales_receipts_functional),
+        element(
+          "ForeignNetGrossReceiptsAmt",
+          c.gross_sales_receipts_functional,
+        ),
+        element("USNetGrossReceiptsAmt", c.gross_sales_receipts_functional),
+        element("ForeignCostOfGoodsSoldAmt", c.cost_of_goods_sold_functional),
+        element("USCostOfGoodsSoldAmt", c.cost_of_goods_sold_functional),
+        element("ForeignGrossProfitAmt", grossProfit),
+        element("USGrossProfitAmt", grossProfit),
+        element("ForeignInterestIncomeAmt", c.interest_income_functional),
+        element("USInterestIncomeAmt", c.interest_income_functional),
+        element("ForeignTotalIncomeAmt", totalIncome),
+        element("USTotalIncomeAmt", totalIncome),
+        element("ForeignInterestDeductionAmt", c.interest_expense_functional),
+        element("USInterestDeductionAmt", c.interest_expense_functional),
+        element("ForeignDepreciationNotDedAmt", c.depreciation_functional),
+        element("USDepreciationNotDedAmt", c.depreciation_functional),
+        element("ForeignTotalDeductionsAmt", totalDeductions),
+        element("USTotalDeductionsAmt", totalDeductions),
+        element("FrgnTotalIncomeMinusTotDedAmt", preTaxIncome),
+        element("USTotalIncomeMinusTotDedAmt", preTaxIncome),
+        element(
+          "FrgnCurrentIncomeTaxExpenseAmt",
+          c.current_income_tax_expense_functional,
+        ),
+        element(
+          "USCurrentIncomeTaxExpenseAmt",
+          c.current_income_tax_expense_functional,
+        ),
+        element("ForeignCYNetIncomePerBooksAmt", netIncome),
+        element("USCYNetIncomePerBooksAmt", netIncome),
+      ]),
+      elements("IRS5471ScheduleF", [
+        element("BegngAcctPrdCashAmt", f.cash_begin_usd),
+        element("EndAcctPrdCashAmt", f.cash_end_usd),
+        element(
+          "BegngAcctPrdBldgAndOtherAstAmt",
+          f.depreciable_assets_gross_begin_usd,
+        ),
+        element(
+          "EndAcctPrdBldgAndOtherAstAmt",
+          f.depreciable_assets_gross_end_usd,
+        ),
+        element(
+          "BegngAcctPrdNetAccumDeprecAmt",
+          f.accumulated_depreciation_begin_usd,
+        ),
+        element(
+          "EndAcctPrdNetAccumDeprecAmt",
+          f.accumulated_depreciation_end_usd,
+        ),
+        element("BegngAcctPrdTotalAssetsAmt", assetsBegin),
+        element("EndAcctPrdTotalAssetsAmt", assetsEnd),
+        element("BegngAcctPrdCommonStockAmt", f.common_stock_begin_usd),
+        element("EndAcctPrdCommonStockAmt", f.common_stock_end_usd),
+        element("BegngAcctPrdRtnEarningsAmt", f.retained_earnings_begin_usd),
+        element("EndAcctPrdRtnEarningsAmt", f.retained_earnings_end_usd),
+        element("BegngAcctPrdTotLiabShrEqtyAmt", assetsBegin),
+        element("EndAcctPrdTotLiabShrEqtyAmt", assetsEnd),
       ]),
       elements("IRS5471ScheduleG", [
         element(

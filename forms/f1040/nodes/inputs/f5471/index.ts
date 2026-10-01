@@ -350,6 +350,39 @@ export const scheduleMSchema = z.object({
   source_workpaper_reference: sourceReference,
 }).strict();
 
+// Category 4 GAAP income statement: inventory sales and cost of goods sold,
+// interest, depreciation, and one current-year income tax expense.
+export const scheduleCSchema = z.object({
+  gross_sales_receipts_functional: dollars,
+  cost_of_goods_sold_functional: dollars,
+  interest_income_functional: dollars,
+  interest_expense_functional: dollars,
+  depreciation_functional: dollars,
+  current_income_tax_expense_functional: dollars,
+  no_other_income_or_deductions: z.literal(true),
+  gaap_translation_rate: z.literal("1.0000"),
+  source_workpaper_reference: sourceReference,
+}).strict();
+
+// Category 4 GAAP balance sheet with all activity in cash, one depreciable
+// asset class, common stock, and retained earnings. No related-party balance.
+export const scheduleFSchema = z.object({
+  cash_begin_usd: dollars,
+  cash_end_usd: dollars,
+  depreciable_assets_gross_begin_usd: dollars,
+  depreciable_assets_gross_end_usd: dollars,
+  accumulated_depreciation_begin_usd: dollars,
+  accumulated_depreciation_end_usd: dollars,
+  common_stock_begin_usd: dollars,
+  common_stock_end_usd: dollars,
+  retained_earnings_begin_usd: dollars,
+  retained_earnings_end_usd: dollars,
+  no_other_assets_liabilities_or_equity: z.literal(true),
+  gaap_begin_translation_rate: z.literal("1.0000"),
+  gaap_end_translation_rate: z.literal("1.0000"),
+  source_workpaper_reference: sourceReference,
+}).strict();
+
 const foreignAddressSchema = z.object({
   line1: z.string().trim().min(1).max(35)
     .regex(/^[A-Za-z0-9]( ?[A-Za-z0-9\-/])*$/),
@@ -416,6 +449,8 @@ export const itemSchema = z.object({
   schedule_r: scheduleRSchema,
   schedule_q: scheduleQSchema,
   schedule_m: scheduleMSchema,
+  schedule_c: scheduleCSchema,
+  schedule_f: scheduleFSchema,
   form5471_identity: form5471IdentitySchema,
 }).strict().superRefine((value, ctx) => {
   const e = value.schedule_e;
@@ -449,10 +484,58 @@ export const itemSchema = z.object({
   const j = value.schedule_j;
   const q = value.schedule_q;
   const m = value.schedule_m;
+  const c = value.schedule_c;
+  const f = value.schedule_f;
+  const cNet = c.gross_sales_receipts_functional -
+    c.cost_of_goods_sold_functional + c.interest_income_functional -
+    c.interest_expense_functional - c.depreciation_functional -
+    c.current_income_tax_expense_functional;
+  const fAssetsBegin = f.cash_begin_usd +
+    f.depreciable_assets_gross_begin_usd -
+    f.accumulated_depreciation_begin_usd;
+  const fAssetsEnd = f.cash_end_usd + f.depreciable_assets_gross_end_usd -
+    f.accumulated_depreciation_end_usd;
+  if (
+    c.gross_sales_receipts_functional - c.cost_of_goods_sold_functional +
+          c.interest_income_functional !==
+      value.schedule_i1.gross_income_functional ||
+    c.cost_of_goods_sold_functional !==
+      m.inventory_sales_to_filer_functional -
+        q.sales_gross_income_functional ||
+    c.interest_income_functional !==
+      value.schedule_i1.interest_income_functional ||
+    c.interest_expense_functional !==
+      q.tested_other_interest_expense_functional ||
+    c.depreciation_functional !== q.tested_other_expenses_functional ||
+    c.current_income_tax_expense_functional !==
+      value.schedule_e.tax_functional ||
+    cNet !== value.schedule_h.book_net_income_functional ||
+    cNet !== f.retained_earnings_end_usd -
+        f.retained_earnings_begin_usd ||
+    fAssetsBegin !==
+      f.common_stock_begin_usd + f.retained_earnings_begin_usd ||
+    fAssetsEnd !== f.common_stock_end_usd + f.retained_earnings_end_usd ||
+    f.depreciable_assets_gross_begin_usd !==
+      f.depreciable_assets_gross_end_usd ||
+    f.accumulated_depreciation_end_usd -
+          f.accumulated_depreciation_begin_usd !== c.depreciation_functional ||
+    f.common_stock_begin_usd !== f.common_stock_end_usd ||
+    f.cash_end_usd - f.cash_begin_usd !== cNet + c.depreciation_functional ||
+    f.retained_earnings_begin_usd !==
+      value.schedule_j.opening_post2017_untaxed_ep_functional ||
+    f.retained_earnings_end_usd !==
+      f.retained_earnings_begin_usd + cNet
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["schedule_c"],
+      message:
+        "Category 4 GAAP income statement and balance sheet must reconcile to Schedules I-1, E, H, J, M, and Q",
+    });
+  }
   if (
     m.inventory_sales_to_filer_functional !==
-      q.sales_gross_income_functional ||
-    m.inventory_sales_to_filer_usd !== value.schedule_i.line1f ||
+      q.sales_gross_income_functional + c.cost_of_goods_sold_functional ||
     Math.round(
         m.inventory_sales_to_filer_functional /
           Number(value.schedule_i1.average_exchange_rate),
@@ -462,7 +545,7 @@ export const itemSchema = z.object({
       code: z.ZodIssueCode.custom,
       path: ["schedule_m"],
       message:
-        "Schedule M related-person inventory sale must reconcile to Schedule Q sales and Schedule I line 1f",
+        "Schedule M related-person inventory proceeds less Schedule C cost of goods sold must reconcile to Schedule Q sales income and Schedule I line 1f",
     });
   }
   if (

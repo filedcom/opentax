@@ -54,15 +54,22 @@ direct shares equal total outstanding shares at both year ends.
 identity, filer/category facts, and mandatory Schedule B Part II, E/E-1, G,
 H, I, I-1, J, P, Q, and R, with H-1 for a CAMT applicable corporation
 and other attachments depending on ownership and transactions. Form 5471 page 1,
-Schedule B Part II, G, and I, plus Form 8992, its Schedule A, and separate
+Schedule A, B Parts I/II, C, F, G, and I, plus Form 8992, its Schedule A, and separate
 Form 5471 Schedules E/E-1, H, I-1, J, M, P, Q and R now have source-reconciled native MeF/PDF
 descriptors. A sole direct owner is also Category 4 under the 2025 instructions;
 the parent now marks both categories and sources Schedule A and B Part I from
-the same stock register. Schedule M reports the $10,000 inventory sale to the
-U.S. shareholder in column (b), lines 1 and 15, with a reviewed ledger ruling
-out other related-party transactions and peak balances. Its two-page PDF and
-native fixtures are authored but unrun. Category 4 Schedules C and F, plus
-applicable conditional attachments, remain.
+the same stock register. Schedule M reports $11,000 inventory sale proceeds to
+the U.S. shareholder in column (b), lines 1 and 15; the reviewed GAAP Schedule C
+assigns $1,000 cost of goods sold to that sale, yielding $10,000 Schedule Q
+line 1g gross income and Schedule I line 1f inclusion. Its ledger rules out
+other related-party transactions and peak balances. Schedule C has $65,000
+total income, $4,500 deductions before income tax, $500 current income tax,
+and $60,000 book net income tied to Schedule H. Schedule F balances $110,000
+beginning and $170,000 ending assets against common stock and retained
+earnings; cash movement equals book net income plus $1,500 depreciation.
+Both GAAP tables and Schedule M have native/PDF fixtures authored but unrun.
+Applicable conditional attachments and Schedule R all-zero business-rule
+treatment remain.
 Schedule G-1 is required for each cost sharing arrangement in which the CFC
 was a controlled participant; this branch requires Schedule G line 7 No, so
 G-1 is not present.

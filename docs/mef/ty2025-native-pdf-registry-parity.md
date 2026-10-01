@@ -40,7 +40,7 @@ the issued-copy bytes and any required signature remain separate evidence
 gates. This does not change the parent taxpayer-form priority-1 list.
 
 Form 3468's bounded trust-owned Part V route now has both registered
-descriptors. Form 8992, its Schedule A, and Form 5471 page 1/B Part II/G/I plus
+descriptors. Form 8992, its Schedule A, and Form 5471 page 1/A/B/C/F/G/I plus
 separate Schedules E/E-1, H, I-1, J, M, P, Q and R also have native and PDF descriptors for
 one wholly owned Category 5a CFC. Their source/return checks and fixtures are
 written but unrun. The Schedule H route requires explicit zero book-to-tax
@@ -50,9 +50,10 @@ PTEP and U.S.-dollar basis. Schedule R has a reviewed empty distribution
 ledger and a header-only projection; its all-zero instruction/business-rule
 status remains unverified. Schedule Q has reviewed general-category sales and
 tested income groups, with authored native/PDF fixtures unrun. The parent now
-includes Category 4, Schedule A, and B Part I. Schedule M has a reviewed
-related-party inventory sale and two-page PDF, unrun. Category 4 Schedules C/F
-and applicable conditional attachments remain, so the
+includes Category 4, Schedule A, B Part I, and GAAP Schedules C/F. Schedule M has
+reviewed $11,000 related-party inventory sale proceeds, $1,000 cost of goods
+sold on C, and a two-page PDF, unrun. Applicable conditional attachments and
+Schedule R business-rule treatment remain, so the
 attachment-coverage and Schedule 1 export guards continue to reject positive
 filing. Registry parity for these documents does not imply a complete
 foreign corporation filing packet.
