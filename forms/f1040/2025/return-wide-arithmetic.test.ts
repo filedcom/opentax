@@ -108,6 +108,11 @@ Deno.test("Form 1040 export replays overpayment and amount owed", () => {
     line38_underpayment_penalty: 250,
     line37_amount_owed: 50,
   });
+  assertReturnWideArithmetic({
+    line24_total_tax: 26_357.62,
+    line33_total_payments: 25_751.28,
+    line37_amount_owed: 607,
+  });
 });
 
 const filed = {
