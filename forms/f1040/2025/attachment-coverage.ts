@@ -188,10 +188,9 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
   {
     pendingKey: "f8882",
     exportKinds: ["mef", "pdf"],
-    reason: "Form 8882 employer child-care credit needs a native attachment",
-    isActive: (fields) =>
-      positive(fields.qualified_childcare_expenses) ||
-      positive(fields.resource_referral_expenses),
+    reason:
+      "Form 8882 direct employer credit needs Form 3800 and registered native/PDF attachments",
+    isActive: () => true,
   },
   {
     pendingKey: "f8908",

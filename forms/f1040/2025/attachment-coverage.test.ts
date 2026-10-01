@@ -41,7 +41,7 @@ Deno.test("native attachment preflight blocks unfiled public inputs", () => {
       { f8881: { startup: { startup_costs: 100 } } },
       { f8881: { auto_enrollment: { maintained_in_2025_confirmed: true } } },
       { f3800: { f8881_credit: { part_i_credit: 750 } } },
-      { f8882: { resource_referral_expenses: 100 } },
+      { f8882: { facility_contract: {} } },
       { f8908: { f8908s: [{}] } },
       { f8994: { employees: [{}] } },
       { f1310: { claimant_type: "other" } },
