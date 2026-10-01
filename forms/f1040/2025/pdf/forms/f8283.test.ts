@@ -760,7 +760,7 @@ Deno.test("Form 8283 PDF maps December 2025 Section A identity and four rows", (
     byKey.get("row4_claim"),
     "Form8283[0].Page1[0].Table_Line1_ColsD-I[0].Row1D[0].f1_39[0]",
   );
-  assertEquals(form8283Pdf.fields.length, 71);
+  assertEquals(form8283Pdf.fields.length, 72);
 });
 
 Deno.test("Form 8283 PDF prints reconciled Section A and carries the FMV explanation", () => {
@@ -926,7 +926,7 @@ Deno.test("Form 8283 PDF prints unrelated-use tangible property basis and statem
         schedule_a: changedSchedule,
       }),
     Error,
-    "differs from Schedule A's gift inventory",
+    "Appreciated capital-gain property in the 50% category needs an elected or unrelated-use basis reduction",
   );
 });
 

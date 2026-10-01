@@ -574,7 +574,7 @@ Deno.test("lawfully present filer below 100% FPL claims no-APTC monthly credit",
         },
       }),
     Error,
-    "below-400%-FPL filing needs one filer",
+    "below-400%-FPL filing needs a verified one-person or family-policy route",
   );
 });
 
@@ -631,6 +631,6 @@ Deno.test("lawfully present filer below 100% FPL claims no-APTC annual credit", 
         },
       }),
     Error,
-    "below-400%-FPL filing needs one filer",
+    "below-400%-FPL filing needs a verified one-person or family-policy route",
   );
 });
