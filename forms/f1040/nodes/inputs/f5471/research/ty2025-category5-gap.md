@@ -25,11 +25,20 @@ E&P only. Its line 5d U.S.-dollar amount ties to the functional-currency E&P
 and a reviewed divide-by exchange rate. Other adjustments, passive or section
 901(j) allocations, and DASTM remain outside this branch.
 
+The Schedule E/E-1 branch requires one directly paid general-category tax row
+at the CFC level, a reviewed tax jurisdiction, two tax-year end dates, local
+currency and conversion rate, and an explicit tax workpaper. It reconciles the
+row's U.S.-dollar and functional-currency amounts to Schedule I-1 line 7. It
+also requires zero lower-tier deemed paid tax, disallowed tax, prior E-1 tax
+balance, PTEP tax, inclusion deemed paid tax, and other E-1 adjustments. Thus
+Schedule E-1 tested-income lines 4, 8, 13, and 15 can be computed directly.
+The remaining categories and foreign tax histories stay outside this branch.
+
 **Filing remains closed.** Form 5471 Category 5a requires the full corporation
 identity, filer/category facts, and mandatory Schedule B Part II, E/E-1, G,
 G-1, H, I, I-1, J, P, Q, and R, with H-1 for a CAMT applicable corporation
 and other attachments depending on ownership and transactions. This source contract does not yet contain or emit
-those schedules. Form 8992, Schedule A, and separate Form 5471 Schedules H and I-1
+those schedules. Form 8992, Schedule A, and separate Form 5471 Schedules E/E-1, H and I-1
 now have source-reconciled native MeF/PDF descriptors, but the full Form 5471
 packet remains incomplete. The Form 5471 attachment coverage gate and the
 Schedule 1 8n/8o export guards reject positive filing. The source reference is a

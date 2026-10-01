@@ -86,6 +86,25 @@ const item: F5471Item = {
     average_exchange_rate: "1.0000",
     source_workpaper_reference: "2025 Schedule H workpaper",
   },
+  schedule_e: {
+    tax_country_code: "IE",
+    foreign_tax_year_end: "2025-12-31",
+    us_tax_year_end: "2025-12-31",
+    taxable_income_local: 50_000,
+    local_currency: "EUR",
+    tax_local: 500,
+    tax_conversion_rate: "1.0000",
+    tax_usd: 500,
+    tax_functional: 500,
+    section986_election: false,
+    lower_tier_deemed_paid_tax: 0,
+    disallowed_tax: 0,
+    prior_year_tax_balance: 0,
+    other_e1_adjustments: 0,
+    taxes_deemed_paid_on_inclusion: 0,
+    ptep_tax: 0,
+    source_workpaper_reference: "2025 Schedule E/E-1 workpaper",
+  },
 };
 const ctx = { taxYear: 2025, formType: "f1040" };
 
@@ -141,6 +160,14 @@ Deno.test("Category 5a rejects missing worksheets, wrong pro rata income, and as
     {
       ...item,
       schedule_h: { ...item.schedule_h, current_ep_usd: 49_999 },
+    },
+    {
+      ...item,
+      schedule_e: { ...item.schedule_e, tax_usd: 499 },
+    },
+    {
+      ...item,
+      schedule_e: { ...item.schedule_e, disallowed_tax: 1 },
     },
     { ...item, gilti_inclusion: 42_000 },
     { ...item, ownership_percent: 80 },

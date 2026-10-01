@@ -195,6 +195,34 @@ export const scheduleHSchema = z.object({
   "Schedule H general-category E&P must reconcile from functional currency to U.S. dollars",
 );
 
+// One directly paid general-category tax, wholly attributable to tested
+// income. Other Schedule E/E-1 columns require separate source histories.
+export const scheduleESchema = z.object({
+  tax_country_code: z.string().regex(/^[A-Z]{2}$/),
+  foreign_tax_year_end: z.string().regex(/^2025-\d{2}-\d{2}$/),
+  us_tax_year_end: z.string().regex(/^2025-\d{2}-\d{2}$/),
+  taxable_income_local: dollars,
+  local_currency: z.string().regex(/^[A-Z]{3}$/),
+  tax_local: dollars,
+  tax_conversion_rate: z.string().regex(/^\d{1,10}(\.\d{1,12})?$/)
+    .refine((rate) => Number(rate) > 0),
+  tax_usd: dollars,
+  tax_functional: dollars,
+  section986_election: z.literal(false),
+  lower_tier_deemed_paid_tax: z.literal(0),
+  disallowed_tax: z.literal(0),
+  prior_year_tax_balance: z.literal(0),
+  other_e1_adjustments: z.literal(0),
+  taxes_deemed_paid_on_inclusion: z.literal(0),
+  ptep_tax: z.literal(0),
+  source_workpaper_reference: sourceReference,
+}).strict().refine(
+  (value) =>
+    Math.round(value.tax_local / Number(value.tax_conversion_rate)) ===
+      value.tax_usd,
+  "Schedule E local tax and conversion rate must reconcile to U.S. dollars",
+);
+
 export const itemSchema = z.object({
   foreign_corp_name: z.string().trim().min(1).max(75)
     .regex(/^([A-Za-z0-9#&'()-] ?)*[A-Za-z0-9#&'()-]$/),
@@ -211,7 +239,24 @@ export const itemSchema = z.object({
   schedule_i: scheduleISchema,
   schedule_i1: testedIncomeSchema,
   schedule_h: scheduleHSchema,
-}).strict().refine(
+  schedule_e: scheduleESchema,
+}).strict().superRefine((value, ctx) => {
+  const e = value.schedule_e;
+  if (
+    e.local_currency !== value.functional_currency ||
+    e.tax_local !== e.tax_functional ||
+    e.tax_functional !== value.schedule_i1.tested_foreign_taxes_functional ||
+    e.tax_usd !== value.schedule_i1.tested_foreign_taxes_usd ||
+    value.schedule_i1.separate_category !== "GEN"
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["schedule_e"],
+      message:
+        "Bounded Schedule E tax must be solely general-category tested income, in the CFC functional currency, and reconcile to Schedule I-1 line 7",
+    });
+  }
+}).refine(
   (value) =>
     (value.foreign_corp_ein === undefined) !==
       (value.foreign_corp_reference_id === undefined),

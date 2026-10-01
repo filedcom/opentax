@@ -81,6 +81,25 @@ export const form8992Cfc: F5471Item = {
     average_exchange_rate: "1.0000",
     source_workpaper_reference: "Reviewed Schedule H book-to-E&P workpaper",
   },
+  schedule_e: {
+    tax_country_code: "IE",
+    foreign_tax_year_end: "2025-12-31",
+    us_tax_year_end: "2025-12-31",
+    taxable_income_local: 50_000,
+    local_currency: "EUR",
+    tax_local: 500,
+    tax_conversion_rate: "1.0000",
+    tax_usd: 500,
+    tax_functional: 500,
+    section986_election: false,
+    lower_tier_deemed_paid_tax: 0,
+    disallowed_tax: 0,
+    prior_year_tax_balance: 0,
+    other_e1_adjustments: 0,
+    taxes_deemed_paid_on_inclusion: 0,
+    ptep_tax: 0,
+    source_workpaper_reference: "Reviewed Schedule E/E-1 tax workpaper",
+  },
 };
 
 export const form8992Filer = {
