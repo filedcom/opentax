@@ -79,6 +79,7 @@ Deno.test("two same-plan 1099-R copies aggregate exact NUA worksheet through For
   assertEquals(form.line8_nua_included, 9_000);
   assertEquals(form.line8, 54_000);
   assertEquals(pending.f1040.form4972_tax, form.line30);
+  assertEquals(pending.f1040.line16_income_tax, form.line30);
   const filer = extractFilerIdentity(pending.f1040);
   const [xml] = native.build(pending.form4972, { filer, pending });
   assert(xml.includes(">6000</CapitalGainElectionAmt>"));

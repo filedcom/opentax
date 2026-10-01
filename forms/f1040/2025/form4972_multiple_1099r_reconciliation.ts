@@ -50,9 +50,10 @@ export function reconcileForm4972Multiple1099R(
       item.box9a_pct_total !== 100 ||
       typeof item.box2a_taxable_amount !== "number" ||
       item.box2a_taxable_amount <= 0 ||
-      !Number.isSafeInteger(item.box2a_taxable_amount ?? 0) ||
-      !Number.isSafeInteger(item.box3_capital_gain ?? 0) ||
-      !Number.isSafeInteger(item.box6_nua ?? 0) ||
+      (nua > 0 &&
+        (!Number.isSafeInteger(item.box2a_taxable_amount ?? 0) ||
+          !Number.isSafeInteger(item.box3_capital_gain ?? 0) ||
+          !Number.isSafeInteger(item.box6_nua ?? 0))) ||
       (item.box8_other ?? 0) !== 0 || item.box8_pct_total !== undefined
     ) ||
     elected.some((item) =>
