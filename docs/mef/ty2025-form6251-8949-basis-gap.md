@@ -179,8 +179,10 @@ deduction limit. A $2,000 regular gain changing to a $500 AMT loss, plus
 $500/$700 and $400/$600 regular/AMT losses, gives $1,100 regular gain,
 $1,800 deductible AMT loss, and negative $2,900 on Form 6251 line 2k. The
 authored native/PDF case replays all three dated rows and Schedule 2/Form 1040
-totals; a changed third AMT basis or return gain rejects. These fixtures are
-unrun pending the final bulk batch. Four or more lots, carryovers, source-byte
+totals; a changed third AMT basis or return gain rejects. The complete audit
+now allows additional long-term loss rows under the same one sign-changing
+gain, positive regular net, and separately deductible AMT net rules. These
+fixtures are unrun pending the final bulk batch. Carryovers, source-byte
 authentication, IRS business rules, and ATS remain open.
 
 A separate two-lot mixed-term route accepts one short-term loss under both bases
@@ -196,3 +198,14 @@ rows, Schedule 2 line 2, Form 1040 lines 7/15, and sufficient line 17 tax.
 Changed source basis, return gain, Schedule 2 tax, or AMT loss beyond the
 deduction ceiling rejects. Other mixed-term sign changes and capital-loss
 carryovers remain closed. Fixtures await the final validation batch.
+
+The complete Schedule D audit now allows any number of separately identified
+short-term loss rows under both bases beside that one long-term gain changing to
+an AMT loss. The audited regular net must stay positive, and the separate AMT
+net loss must fit the filing-status loss limit. A four-lot case with three
+short-term losses nets $1,800 regular gain and $1,750 AMT loss, producing
+negative $3,550 on line 2k with no AMT preferential gain. Native and PDF
+replay all dated rows and final tax/capital-gain totals; changing one source AMT
+basis or Form 1040 gain rejects. The four-lot fixtures are authored but unrun.
+Other gain/loss sign patterns, carryovers, source-byte authentication, IRS
+business rules, and ATS remain open.

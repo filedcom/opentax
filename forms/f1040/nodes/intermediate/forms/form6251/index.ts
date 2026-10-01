@@ -618,10 +618,11 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
     const lossLimit = input.filing_status === FilingStatus.MFS
       ? -1_500
       : -3_000;
-    const shortLossLongGainToAmtLoss = basisRows.length === 2 &&
-      shortTermBasisRows.length === 1 && longTermBasisRows.length === 1 &&
-      shortTermBasisRows[0].regular_gain < 0 &&
-      shortTermBasisRows[0].amt_gain < 0 &&
+    const shortLossLongGainToAmtLoss = shortTermBasisRows.length > 0 &&
+      longTermBasisRows.length === 1 &&
+      shortTermBasisRows.every((row) =>
+        row.regular_gain < 0 && row.amt_gain < 0
+      ) &&
       longTermBasisRows[0].regular_gain > 0 &&
       longTermBasisRows[0].amt_gain < 0 &&
       regularBasisNet > 0 && amtBasisNet < 0 && amtBasisNet >= lossLimit;
@@ -639,7 +640,6 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
       // other audited lots may be losses under both bases if the regular net
       // stays positive and the separate AMT net loss is fully deductible.
       const longTermGainToAmtLoss = basisRows.length >= 1 &&
-        basisRows.length <= 3 &&
         longTermBasisRows.length === basisRows.length &&
         basisRows.filter((row) => row.regular_gain > 0 && row.amt_gain < 0)
             .length === 1 &&

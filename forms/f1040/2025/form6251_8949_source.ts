@@ -96,25 +96,26 @@ export function assertForm6251Form8949Source(
   }
   const regularNet = rows.reduce((sum, row) => sum + row.regular_gain, 0);
   const amtNet = rows.reduce((sum, row) => sum + row.amt_gain, 0);
-  const gainToAmtLoss = rows.length >= 1 && rows.length <= 3 &&
+  const gainToAmtLoss = rows.length >= 1 &&
     rows.every((row) => ["D", "E", "F"].includes(row.part)) &&
     rows.filter((row) => row.regular_gain > 0 && row.amt_gain < 0)
         .length === 1 &&
     rows.filter((row) => row.regular_gain < 0 && row.amt_gain < 0)
         .length === rows.length - 1 &&
     regularNet > 0 && amtNet < 0;
-  const shortLoss = rows.find((row) => ["A", "B", "C"].includes(row.part));
-  const longGainToLoss = rows.find((row) => ["D", "E", "F"].includes(row.part));
-  const mixedTermGainToAmtLoss = rows.length === 2 && !!shortLoss &&
-    !!longGainToLoss && shortLoss.regular_gain < 0 &&
-    shortLoss.amt_gain < 0 && longGainToLoss.regular_gain > 0 &&
-    longGainToLoss.amt_gain < 0 && regularNet > 0 && amtNet < 0;
+  const shortLosses = rows.filter((row) => ["A", "B", "C"].includes(row.part));
+  const longRows = rows.filter((row) => ["D", "E", "F"].includes(row.part));
+  const mixedTermGainToAmtLoss = shortLosses.length > 0 &&
+    longRows.length === 1 &&
+    shortLosses.every((row) => row.regular_gain < 0 && row.amt_gain < 0) &&
+    longRows[0].regular_gain > 0 && longRows[0].amt_gain < 0 &&
+    regularNet > 0 && amtNet < 0;
   if (
     rows.some((row) => row.regular_gain > 0 && row.amt_gain < 0) &&
     !gainToAmtLoss && !mixedTermGainToAmtLoss
   ) {
     throw new Error(
-      "Form 6251 gain-to-AMT-loss basis sale needs audited long-term lots or one short-term loss offsetting a long-term regular gain with a fully deductible AMT net loss",
+      "Form 6251 gain-to-AMT-loss basis sale needs audited long-term lots or identified short-term losses offsetting one long-term regular gain with a fully deductible AMT net loss",
     );
   }
   if (gainToAmtLoss || mixedTermGainToAmtLoss) {
