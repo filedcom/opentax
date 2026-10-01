@@ -76,7 +76,8 @@ Deno.test("distinct issued INT and OID private-activity-bond sources reconcile F
   assertEquals(result.pending.f1040.line17_additional_taxes, amt);
   const pending = buildPending(result.pending);
   assertEquals(
-    form6251Pdf.projectFields?.(form, pending)?.private_activity_bond_interest,
+    form6251Pdf.projectFields?.(form, result.pending)
+      ?.private_activity_bond_interest,
     200_000,
   );
   const bundle = await buildMefBundle(pending, {
@@ -188,7 +189,8 @@ Deno.test("same-issuer INT stated interest and OID with reviewed allocable deduc
   assertEquals(result.pending.f1040.line17_additional_taxes, form.line11_amt);
   const pending = buildPending(result.pending);
   assertEquals(
-    form6251Pdf.projectFields?.(form, pending)?.private_activity_bond_interest,
+    form6251Pdf.projectFields?.(form, result.pending)
+      ?.private_activity_bond_interest,
     185_000,
   );
   const bundle = await buildMefBundle(pending, {

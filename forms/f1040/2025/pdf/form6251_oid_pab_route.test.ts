@@ -56,7 +56,8 @@ Deno.test("issued 1099-OID private-activity-bond source reaches Form 6251 line 2
   );
   const pending = buildPending(result.pending);
   assertEquals(
-    form6251Pdf.projectFields?.(form, pending)?.private_activity_bond_interest,
+    form6251Pdf.projectFields?.(form, result.pending)
+      ?.private_activity_bond_interest,
     200_000,
   );
   const bundle = await buildMefBundle(pending, {
