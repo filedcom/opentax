@@ -4,7 +4,7 @@
 
 Draft [PR #56](https://github.com/filedcom/opentax/pull/56) covers the
 TY2025 Form 1040 filing family. This board lists **54 open TODOs only**.
-The **351 completed bounded items** and their exact limits live in the
+The **352 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -14,7 +14,7 @@ coverage decision, or release gate.
 | --- | ---: | ---: | --- |
 | Scope and completion rules | 5 | 1 | Filing boundaries and end-to-end acceptance rule need final review. |
 | Coverage inventory and decisions | 8 | 0 | Form applicability, ownership, evidence standards, and unsupported-path decisions remain open. |
-| Core return and source paths | 8 | 34 | Return-wide joins and source classification remain incomplete. |
+| Core return and source paths | 8 | 35 | Return-wide joins and source classification remain incomplete. |
 | Named tax-form gaps | 20 | 296 | Many sourced form slices exist; the listed parent form paths remain open. |
 | Native MeF and PDF parity | 3 | 20 | Registry, attachment, and printable-output parity remain open. |
 | Automated and artifact validation | 5 | 0 | The agreed final bulk gate has not run on this work. |
@@ -40,8 +40,10 @@ authenticated.
 
 **Current implementation batch.** Form 1116 Schedule C current-year
 reconciliation and Form 8582 prior-year rental PAL import are recorded in the
-ledger as bounded and export-gated. Form 1098 Copy B evidence binding and Form
-8962 self-employed health-insurance deduction/PTC ordering remain in progress.
+ledger as bounded and export-gated. Form 1098 Copy B evidence binding for
+positive box 6 is also recorded. Form 8962 self-employed health-insurance
+deduction/PTC ordering and further Form 6251 and Form 8283 slices remain in
+progress.
 The agreed full test batch remains deferred until implementation is finished.
 
 **Coverage still to decide.** Reconcile the 138 registered native MeF
@@ -118,7 +120,7 @@ release.
 - [ ] **Forms 2210/2210-F, 8801, 172, 461, 4562, 4797, 6252, 7206, 7217, 8829, 8606, 8815, 8915-F:** review their applicable public inputs, computations, source proof, Form 1040 joins, native/PDF documents, and conditional attachments; finish all positive routes or obtain a named fail-closed decision. Use the matching form gap notes under [docs/mef](docs/mef/) and the [form audit](docs/mef/ty2025-form1040-form-audit.md).
 - [ ] **Forms 2106, 8853, 8863, 8880, 8886, 8941, 8958, 8959, 8978, 8997, 982, 3115, 4255, 6478, 8621, 8864, 8874, 8911, 965-A, 8582-CR, 8611, 8826:** resolve the per-form unsupported branches, source/owner evidence, PDF parity, and required schedules or statements listed in the [form audit](docs/mef/ty2025-form1040-form-audit.md) and corresponding [gap notes](docs/mef/). Complete the remaining Form 8863 education-credit paths. For Form 8886, resolve the per-transaction current-return attachment and separate initial-year OTSA copy workflow under the [IRS instructions](https://www.irs.gov/instructions/i8886).
 - [ ] **Foreign/entity and special attachments:** resolve applicable Forms 5471, 8858/Schedule M, 1118, trust K-1 backup withholding, section 965, and every other individual-filer root flagged in the [unregistered-root crosswalk](docs/mef/ty2025-unregistered-root-applicability.md), including source copy versus transmitted attachment ownership.
-- [ ] **Source/statement exceptions:** authenticate W-2G payer-copy contents; finish Form 1098 source-byte proof, wider cross-loan mortgage limits, cash-out, and points cases beyond the checked [bounded routes](docs/mef/ty2025-form1098-box6-points.md); bind Schedule LEP prior elections and Schedule R physician, income, and benefit evidence to reviewed source bytes and complete full-return review; authenticate Form 8814 issuer records and finish mixed filled-PDF review; authenticate Form 8862 prior IRS notices and complete ODC/AOTC full-return and filled-PDF review; finish wider Schedule H FICA-only, family/under-18, mixed-worker, source-byte, and state/rate cases; and resolve required signed/byte-bound statements and source copies identified by the [form audit](docs/mef/ty2025-form1040-form-audit.md).
+- [ ] **Source/statement exceptions:** authenticate W-2G payer-copy contents; extend Form 1098 source-byte proof beyond positive box 6 and finish wider cross-loan mortgage limits, cash-out, and points cases in the [Form 1098 gap](docs/mef/ty2025-form1098-box6-points.md); bind Schedule LEP prior elections and Schedule R physician, income, and benefit evidence to reviewed source bytes and complete full-return review; authenticate Form 8814 issuer records and finish mixed filled-PDF review; authenticate Form 8862 prior IRS notices and complete ODC/AOTC full-return and filled-PDF review; finish wider Schedule H FICA-only, family/under-18, mixed-worker, source-byte, and state/rate cases; and resolve required signed/byte-bound statements and source copies identified by the [form audit](docs/mef/ty2025-form1040-form-audit.md).
 
 ## Native MeF and PDF parity
 

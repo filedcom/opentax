@@ -1,6 +1,6 @@
 # TY2025 Form 1098 box 6 points
 
-## Issuer Copy B byte/content prerequisite (staged, unrun)
+## Issuer Copy B byte/content gate (implemented, unrun)
 
 A strict 2025 Form 1098 Copy B verifier now accepts one identified source item,
 an exact attachment filename and SHA-256 review, and the attachment bytes. It
@@ -12,12 +12,15 @@ tax amounts, or missing fields reject. Positive, changed-box, changed-hash, and
 missing-field fixtures are authored for deferred validation. The field names
 were read from the [official 2025 Form 1098 Copy B](https://www.irs.gov/pub/irs-prior/f1098--2025.pdf).
 
-This verifier is a **prerequisite**, not yet an active filing gate: the current
-Form 1098 source has no issuer-attachment contract and its Schedule A/1
-descriptors receive structured facts without the PDF bytes. It is not invoked
-by MeF or PDF export. A future bundle-level hook and required source contract
-must bind the reviewed bytes before claiming issuer-copy authenticated filing.
-The verifier is limited to readable official Copy B AcroForm values; scanned or
+For a positive box 6 source, the public Form 1098 input now carries an
+`issuer_copy` with filename, reviewed SHA-256, and exact PDF bytes. The MeF
+bundle and filled-PDF builders require this evidence and invoke the same
+Copy B verifier on the executor's original source before export. The issued
+copy is retained as evidence and is not included in the transmitted MeF PDF
+attachments. Positive, missing-copy, and changed-byte fixtures are authored
+for the deferred bulk batch. The standalone synchronous XML construction
+function does not authenticate external PDF bytes; filing uses the asynchronous
+bundle path. The verifier is limited to readable official Copy B AcroForm values; scanned or
 flattened copies, rendered-appearance differences, issuer provenance,
 signature, and independently verified Pub. 936/Pub. 525 workpapers remain open.
 

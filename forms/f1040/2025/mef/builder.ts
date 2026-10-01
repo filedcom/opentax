@@ -28,6 +28,7 @@ import { assertBox11CodeSSources } from "../../nodes/inputs/k1_partnership/box11
 import { assertBox11Line10Sources } from "../../nodes/inputs/k1_partnership/box11_line10.ts";
 import { assertForm8915FSourceLinks } from "../../nodes/inputs/f8915f/index.ts";
 import { assertW2GPayerCopyContents } from "./w2g-payer-copy.ts";
+import { assertForm1098IssuerCopies } from "../../nodes/inputs/f1098/issuer_copy.ts";
 
 export interface MefBundle {
   readonly xml: string;
@@ -373,6 +374,7 @@ export async function buildMefBundle(
   pending: MefFormsPending,
   options: MefBundleOptions,
 ): Promise<MefBundle> {
+  await assertForm1098IssuerCopies(pending);
   const generated = await Promise.all(
     ALL_MEF_FORMS.map((form) =>
       "buildBinaryAttachments" in form && form.buildBinaryAttachments

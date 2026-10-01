@@ -1,6 +1,6 @@
 import { PDFDocument } from "pdf-lib";
 import { z } from "zod";
-import { itemSchema } from "./index.ts";
+import { inputSchema, itemSchema } from "./index.ts";
 
 export const form1098IssuerCopyReviewSchema = z.object({
   source_document_reference: z.string().trim().min(1),
@@ -112,5 +112,36 @@ export async function verifyForm1098IssuerCopy(
     ) {
       throw new Error("Form 1098 issuer Copy B box 3 date differs from source");
     }
+  }
+}
+
+/** Bind every positive box 6 source in the executor's original input. */
+export async function assertForm1098IssuerCopies(
+  pending: Record<string, unknown>,
+): Promise<void> {
+  const start = pending.start;
+  if (start === null || typeof start !== "object" || Array.isArray(start)) {
+    return;
+  }
+  const raw = (start as Record<string, unknown>).f1098;
+  if (raw === undefined) return;
+  const { f1098s } = inputSchema.parse({ f1098s: raw });
+  for (const item of f1098s) {
+    if ((item.box6_points_paid ?? 0) <= 0) continue;
+    if (!item.issuer_copy) {
+      throw new Error(
+        "Positive Form 1098 box 6 needs the reviewed issuer Copy B bytes",
+      );
+    }
+    await verifyForm1098IssuerCopy(
+      item,
+      {
+        source_document_reference: item.source_document_reference,
+        file_name: item.issuer_copy.file_name,
+        pdf_sha256: item.issuer_copy.pdf_sha256,
+      },
+      item.issuer_copy.bytes,
+      item.issuer_copy.file_name,
+    );
   }
 }

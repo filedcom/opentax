@@ -1,6 +1,12 @@
 import { assertRejects } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
-import { verifyForm1098IssuerCopy } from "./issuer_copy.ts";
+import {
+  assertForm1098IssuerCopies,
+  verifyForm1098IssuerCopy,
+} from "./issuer_copy.ts";
+import { buildMefBundle } from "../../../2025/mef/builder.ts";
+import { buildPdfBytes } from "../../../2025/pdf/builder.ts";
+import type { MefFormsPending } from "../../../2025/mef/types.ts";
 
 const item = {
   lender_name: "Test Mortgage Bank",
@@ -91,5 +97,62 @@ Deno.test("Form 1098 official Copy B fields bind reviewed bytes and tax boxes", 
       ),
     Error,
     "lacks readable Copy B field",
+  );
+});
+
+Deno.test("Form 1098 box 6 export binds original Copy B bytes and rejects missing or altered evidence", async () => {
+  const bytes = await copy();
+  const reviewed = await review(bytes);
+  const source = {
+    start: {
+      f1098: [{
+        ...item,
+        issuer_copy: {
+          file_name: reviewed.file_name,
+          pdf_sha256: reviewed.pdf_sha256,
+          bytes,
+        },
+      }],
+    },
+  };
+  await assertForm1098IssuerCopies(source);
+  await assertRejects(
+    () =>
+      assertForm1098IssuerCopies({
+        start: { f1098: [{ ...item }] },
+      }),
+    Error,
+    "needs the reviewed issuer Copy B bytes",
+  );
+  await assertRejects(
+    () =>
+      buildMefBundle(
+        { start: { f1098: [{ ...item }] } } as unknown as MefFormsPending,
+        { attachments: [] },
+      ),
+    Error,
+    "needs the reviewed issuer Copy B bytes",
+  );
+  await assertRejects(
+    () => buildPdfBytes({ start: { f1098: [{ ...item }] } }, undefined),
+    Error,
+    "needs the reviewed issuer Copy B bytes",
+  );
+  const changed = await copy("17999");
+  await assertRejects(
+    () =>
+      assertForm1098IssuerCopies({
+        start: {
+          f1098: [{
+            ...item,
+            issuer_copy: {
+              ...source.start.f1098[0].issuer_copy,
+              bytes: changed,
+            },
+          }],
+        },
+      }),
+    Error,
+    "exact PDF SHA-256",
   );
 });

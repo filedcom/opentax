@@ -91,6 +91,13 @@ export const itemSchema = z.object({
   lender_name: z.string().optional(),
   recipient_tin: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
   source_document_reference: z.string().trim().min(1).optional(),
+  // Retained source evidence. The issuer copy is reviewed for a claimed box 6
+  // at filing export; it is not a MeF binary attachment.
+  issuer_copy: z.object({
+    file_name: z.string().trim().regex(/^[^/\\]+\.pdf$/i),
+    pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+    bytes: z.instanceof(Uint8Array),
+  }).strict().optional(),
   box2_outstanding_principal: z.number().nonnegative().optional(),
   box3_origination_date: z.string().optional(),
   // Reviewed Pub. 936 amount before any separate Form 8396 credit reduction.
