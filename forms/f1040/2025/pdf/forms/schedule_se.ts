@@ -55,6 +55,7 @@ export const scheduleSePdf: PdfFormDescriptor = {
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040sse--2025.pdf",
   fields,
   projectFields(fields, allPending) {
+    if (Object.keys(fields).length === 0) return fields;
     const lines = scheduleSELines(fields, CONFIG_BY_YEAR[2025].ssWageBase);
     const businesses = (allPending?.schedule_c as {
       schedule_cs?: Array<{ proprietor_recipient?: TS }>;
