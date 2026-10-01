@@ -88,6 +88,31 @@ export const itemSchema = z.object({
     unrelated_buyer_verified: z.literal(true),
     section48_energy_credit_not_claimed_verified: z.literal(true),
   }).strict().optional(),
+  landfill_gas_source: z.object({
+    facility_description: z.string().trim().min(1),
+    feedstock_record_reference: z.string().trim().min(1),
+    municipal_solid_waste_landfill_gas_verified: z.literal(true),
+    original_facility_verified: z.literal(true),
+    filer_produced_electricity_verified: z.literal(true),
+    section45k_nonclaim_record_reference: z.string().trim().min(1),
+    section45k_credit_not_allowed_verified: z.literal(true),
+    section48_biogas_nonclaim_record_reference: z.string().trim().min(1),
+    section48_biogas_credit_not_allowed_this_or_prior_year_verified: z.literal(
+      true,
+    ),
+    investment_election_nonclaim_record_reference: z.string().trim().min(1),
+    no_section48_election_or_section1603_grant_verified: z.literal(true),
+    construction_record_reference: z.string().trim().min(1),
+    construction_began_on: isoDate,
+    production_meter_record_reference: z.string().trim().min(1),
+    meter_period_start_date: isoDate,
+    meter_period_end_date: isoDate,
+    metered_kwh_produced: z.number().int().nonnegative(),
+    unrelated_sale_invoice_reference: z.string().trim().min(1),
+    unrelated_sale_invoice_date: isoDate,
+    invoiced_kwh_sold: z.number().int().nonnegative(),
+    unrelated_buyer_verified: z.literal(true),
+  }).strict().optional(),
   facility_description: z.string().min(1).max(50).optional(),
   facility_us_address: z.object({
     line1: z.string().min(1),
@@ -370,6 +395,50 @@ export function calculateForm8835(item: F8835Item): F8835Lines {
   } else if (item.solar_production_source !== undefined) {
     throw new Error(
       "Form 8835 solar source cannot classify another energy type",
+    );
+  }
+  if (item.energy_type === EnergyType.Landfill) {
+    const source = item.landfill_gas_source;
+    if (
+      item.facility_placed_in_service_date < "2022-01-01" ||
+      item.facility_construction_start_date >= "2025-01-01" ||
+      item.facility_owned_by_filer !== true ||
+      item.facility_owner_person !== undefined ||
+      item.facility_owner_business !== undefined ||
+      item.existing_facility_expansion === true ||
+      item.subject_to_passive_activity_limit || item.is_fiscal_year ||
+      item.increased_credit_reason !== "none" ||
+      item.domestic_content_bonus || item.energy_community_bonus ||
+      (item.tax_exempt_bond_proceeds ?? 0) !== 0 ||
+      (item.transfer_election_amount ?? 0) !== 0 ||
+      item.registration_number !== undefined || !source ||
+      source.facility_description !== item.facility_description ||
+      source.construction_began_on !== item.facility_construction_start_date ||
+      source.meter_period_start_date !== item.production_period_start_date ||
+      source.meter_period_end_date !== item.production_period_end_date ||
+      parsedDate(source.unrelated_sale_invoice_date) <
+        parsedDate(item.production_period_start_date) ||
+      parsedDate(source.unrelated_sale_invoice_date) >
+        parsedDate(item.production_period_end_date) ||
+      source.metered_kwh_produced !== item.kwh_produced ||
+      source.invoiced_kwh_sold !== item.kwh_sold ||
+      new Set([
+          source.feedstock_record_reference,
+          source.section45k_nonclaim_record_reference,
+          source.section48_biogas_nonclaim_record_reference,
+          source.investment_election_nonclaim_record_reference,
+          source.construction_record_reference,
+          source.production_meter_record_reference,
+          source.unrelated_sale_invoice_reference,
+        ]).size !== 7
+    ) {
+      throw new Error(
+        "Form 8835 landfill gas needs original filer-owned municipal-solid-waste production, no section 45K, section 48, or section 1603 overlap, and seven distinct feedstock, nonclaim, construction, meter, and unrelated-sale records matching dates and kWh",
+      );
+    }
+  } else if (item.landfill_gas_source !== undefined) {
+    throw new Error(
+      "Form 8835 landfill gas source cannot classify another energy type",
     );
   }
   if (item.energy_type === EnergyType.BiomassClosed) {

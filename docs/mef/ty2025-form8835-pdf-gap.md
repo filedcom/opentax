@@ -8,11 +8,12 @@ credit to Form 3800 line 4e for production during the first four years after the
 facility entered service.
 
 The current PDF route covers filer-owned, nonpassive wind, geothermal,
-closed-loop biomass, open-loop cellulosic biomass, and solar facilities placed in service after 2021, with 2025 production during the first
+closed-loop biomass, open-loop cellulosic biomass, solar, and sourced landfill-gas facilities placed in service after 2021, with 2025 production during the first
 four years. It prints a separate three-page copy for each facility, including
 source-backed identity, address, coordinates, dates, and AC capacity. Wind
 production and credit use line 1a; closed-loop biomass uses line 1b; geothermal
-uses line 1c; solar uses line 1d; open-loop cellulosic biomass uses line 1f. All carry their calculated amount through lines 2, 4, 6, 8, 9,
+uses line 1c; solar uses line 1d; open-loop biomass uses line 1f; landfill gas
+uses line 1g. All carry their calculated amount through lines 2, 4, 6, 8, 9,
 12, 13, and 15. The printed rate cells are read-only and left untouched. The source gate matches each
 indexed Form 3800 line 4e entry and the prepared native Part III source rows,
 requires the facility credit to be fully used on line 4e, and checks the
@@ -83,6 +84,23 @@ are reviewed source assertions; retained bytes and issuer authenticity are
 not established. New-unit/expanded, non-owner production, passive, bonus,
 transfer, and later-year branches remain closed.
 
+The bounded filer-owned landfill-gas route now covers an original municipal
+solid waste facility placed in service after 2021 with construction before
+2025 and first-four-year electricity sales. The
+[2025 instructions](https://www.irs.gov/instructions/i8835) put this resource
+on line 1g at the post-2021 0.3-cent rate and exclude facilities with an
+allowed section 45K credit or an allowed section 48 credit for qualified
+biogas property. The source requires seven distinct feedstock, section 45K,
+section 48 biogas, other investment-credit/grant, construction, meter, and
+unrelated-buyer invoice references. It reconciles facility identity, dates,
+and kWh, and requires explicit no-overlap assertions. A 100,000-kWh fixture
+puts $300 on native and PDF Form 8835 line 1g/15, Form 3800 line 4e,
+Schedule 3, and Form 1040. Meter, duplicated-record, excluded-credit, and
+prepared Form 3800 tamper cases are authored for deferred validation. Record
+references and assertions do not authenticate source bytes or IRS prior-year
+credit history; other municipal-solid-waste, transfer, bonus, passive, and
+later-year routes remain closed.
+
 Local source-to-XML-to-PDF cases cover one geothermal facility, two distinct
 geothermal facilities, and one wind plus one geothermal facility. The mixed
 packet's two source documents each carry a $600 credit, Form 3800 Part V has
@@ -124,7 +142,7 @@ The fixed-source `deno task test` run on `08786417` passed 8,860/8,860,
 zero failed, with no ignored tests reported in 15m48s; its log is
 `.state/research/ty2025-full-test-08786417.log`.
 
-Other energy types beyond wind, geothermal, closed-loop biomass, open-loop cellulosic biomass, and solar,
+Other energy types beyond wind, geothermal, closed-loop biomass, open-loop cellulosic and livestock-waste biomass, solar, and landfill gas,
 pre-2022 rates and wind phaseout, production after the
 first four years, passive credits, transfers, increased credit, domestic
 content or energy-community bonuses, bond reduction, fiscal-year phaseout,

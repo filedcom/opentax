@@ -101,6 +101,14 @@ export const form8835Pdf: PdfFormDescriptor = {
       "line1f_credit",
       `${page2}.Table_PartII_Lines1a-j[0].Line1f[0].f2_18[0]`,
     ),
+    text(
+      "line1g_quantity",
+      `${page2}.Table_PartII_Lines1a-j[0].Line1g[0].f2_19[0]`,
+    ),
+    text(
+      "line1g_credit",
+      `${page2}.Table_PartII_Lines1a-j[0].Line1g[0].f2_21[0]`,
+    ),
     text("line2", `${page2}.f2_31[0]`),
     text("line4", `${page2}.f2_35[0]`),
     text("line6", `${page2}.f2_40[0]`),
@@ -126,6 +134,7 @@ export const form8835Pdf: PdfFormDescriptor = {
         const closedLoopBiomass = item.energy_type === EnergyType.BiomassClosed;
         const openLoopBiomass = item.energy_type === EnergyType.BiomassOpen;
         const solar = item.energy_type === EnergyType.Solar;
+        const landfill = item.energy_type === EnergyType.Landfill;
         const lat = parts(item.facility_latitude!, 2);
         const long = parts(item.facility_longitude!, 3);
         return {
@@ -141,6 +150,8 @@ export const form8835Pdf: PdfFormDescriptor = {
               : "Open-loop biomass (cellulosic waste)"
             : solar
             ? "Solar"
+            : landfill
+            ? "Landfill gas (municipal solid waste)"
             : "Geothermal",
           facility_description: item.facility_description,
           address_line1: source.addressLine1,
@@ -177,6 +188,8 @@ export const form8835Pdf: PdfFormDescriptor = {
           line1d_credit: solar ? lines.line1 : undefined,
           line1f_quantity: openLoopBiomass ? item.kwh_sold : undefined,
           line1f_credit: openLoopBiomass ? lines.line1 : undefined,
+          line1g_quantity: landfill ? item.kwh_sold : undefined,
+          line1g_credit: landfill ? lines.line1 : undefined,
           line2: lines.line2,
           line4: lines.line4,
           line6: lines.line6,
