@@ -488,3 +488,17 @@ final-return fixtures are authored for the deferred batch. The
 require gross income from both U.S. and foreign sources in the worldwide
 denominator. Other 1099 boxes, more payers, mixed income, source-byte
 authentication, filled-output/XSD review, and IRS acceptance remain open.
+
+**Current-year excess final-credit join (written, unrun):** For a sourced
+positive Form 1116 with current-year excess and no prior carryover, the parent
+native and PDF projections now compare a supplied final Schedule 3 line 8 to
+Form 1040 line 20 and require that total to cover the allowed foreign tax
+credit. This closes a parent-path gap where the two totals could differ even
+though Form 1116 line 35 matched Schedule 3 line 1; prior-carryover claims
+already had a final-total check. The check applies whenever either final-total
+field is present, while isolated calculation projections with neither field
+remain source components rather than complete returns. A full-return 1099-INT
+positive case and altered Schedule 3/Form 1040 totals are authored for the
+deferred pass. The [2025 Schedule 3](https://www.irs.gov/pub/irs-pdf/f1040s3.pdf)
+directs line 8 to Form 1040 line 20. This join does not authenticate the
+1099-INT or the filed prior-year Form 1116 reviewed for the excess carryover.

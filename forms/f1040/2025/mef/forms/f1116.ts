@@ -826,6 +826,24 @@ function buildIRS1116(
     ) {
       throw new Error("Form 1116 credit differs from Schedule 3 line 1");
     }
+    const line8 = schedule3 && typeof schedule3 === "object" &&
+        "line8_total" in schedule3
+      ? schedule3.line8_total
+      : undefined;
+    const return1040 = context.pending.f1040;
+    const line20 = return1040 && typeof return1040 === "object" &&
+        "line20_nonrefundable_credits" in return1040
+      ? return1040.line20_nonrefundable_credits
+      : undefined;
+    if (
+      (line8 !== undefined || line20 !== undefined) &&
+      (typeof line8 !== "number" || typeof line20 !== "number" ||
+        line20 !== line8 || line20 < claimedCredit)
+    ) {
+      throw new Error(
+        "Form 1116 finalized credit differs from Schedule 3 line 8 and Form 1040 line 20",
+      );
+    }
   }
   const partIV = [
     ...credits,

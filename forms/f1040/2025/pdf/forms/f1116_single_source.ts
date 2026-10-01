@@ -635,8 +635,10 @@ export function projectSingleSourceForm1116Pdf(
   if (
     summary.allowedCredit !== line24 ||
     schedule3.line1_foreign_tax_credit !== line33 ||
-    (priorCarryover > 0 &&
-      (typeof f1040.line20_nonrefundable_credits !== "number" ||
+    ((priorCarryover > 0 || schedule3.line8_total !== undefined ||
+      f1040.line20_nonrefundable_credits !== undefined) &&
+      (typeof schedule3.line8_total !== "number" ||
+        typeof f1040.line20_nonrefundable_credits !== "number" ||
         f1040.line20_nonrefundable_credits !== schedule3.line8_total ||
         f1040.line20_nonrefundable_credits < line33)) ||
     fields.foreign_tax_paid !== item.foreign_tax_paid ||
