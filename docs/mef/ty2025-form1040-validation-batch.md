@@ -340,6 +340,11 @@ form8995a_schedule_d form982 form_8829 schedule_j schedule_r
 deno run --allow-read --allow-write --allow-net=www.irs.gov --allow-run=xmllint scripts/generate-ty2025-pdf-review.ts /absolute/new/review-directory /absolute/path/Return1040.xsd
 ```
 
+Each generated native XML must pass the supplied TY2025 `Return1040.xsd`
+before its PDF artifact is written. The manifest records the schema file digest
+and each case's structural validation result; IRS business rules, source
+authenticity, and visual parity still require separate review.
+
 Each case writes a filled PDF and a JSON record of its synthetic source,
 identity, expected forms, review focus and raw computed pending data. On a fully
 successful run, the generator also writes `review-manifest.json` with exact PDF
