@@ -278,6 +278,8 @@ Moved from [product_board.md](../../product_board.md) on 2026-10-01 so the board
 
 - [x] Bind a 2025 final installment payment from a 2024 unrelated-party capital-land sale to a reviewed prior Form 6252 line record: sale identity, filed lines 16/18/19/20/22/23/26, prior payments and recognized gain reconcile with current Schedule D, Form 1040, native MeF, and PDF. Positive full-return and history/payment/return tamper fixtures are authored for deferred validation; accepted-return bytes, current payment principal/interest proof, related-party and recapture branches remain open.
 
+- [x] Tighten the staged attached TY2025 Form 9465 request to require a ten-digit home phone and bounded call-time source, then project both into schema-ordered native fields and inspected page-one PDF fields. Positive and missing/malformed/overlong/changed-pending fixtures are authored for deferred validation; attached electronic authorization and linked filing/ATS review remain unresolved, so positive native/PDF export stays closed.
+
 ## Native MeF and PDF parity
 
 - [x] Register a bounded Form 8582-CR PDF and native line-6 source join for one current-year self-earned passive Form 8874 credit plus one separately sourced Schedule E rental-income activity: recompute both ordinary-tax sides from finalized Form 1040, retain current-year Worksheet 9 activity/source/allowed/unallowed amounts, reconcile Form 3800, Schedule 3 and Form 1040, and print Part I/line 37. Full-return and source/tax/credit/return tamper fixtures are authored for deferred validation; prior-year credits, wider passive sources, special allowances, Part VI, accepted-year import and filled-output/XSD review remain open.
