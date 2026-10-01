@@ -263,7 +263,7 @@ scenario packet PDF as if it were a generated return.
 The workspace has blank IRS PDF templates in `.state/field-dumps/cache` and
 source ATS scenario PDFs in `.state/research/docs/ats-ty2025`. These are not
 filled-output fixtures. `forms/f1040/2025/pdf/review-fixtures.ts` now holds
-sixty synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts`
+117 synthetic source returns, and `scripts/generate-ty2025-pdf-review.ts`
 can run them through the real return graph and PDF builder. Earlier on
 2026-09-29, the first sixteen
 generated 94 pages successfully under
@@ -279,13 +279,66 @@ existing output directory and stops on executor diagnostics. Rerun it after
 changes using a new output directory:
 
 ```sh
+deno run --allow-read scripts/plan-ty2025-pdf-review.ts > /absolute/new/review-plan.json
+```
+
+The read-only plan enumerates all fixture IDs, expected PDF descriptor keys,
+synthetic owner SSNs, and review focus, then lists registered PDF keys not
+represented by any fixture. The current fixture metadata names **41 distinct
+registered PDF keys out of 112**; **71 keys remain without a fixture**, across
+115 registered descriptors. The eight older human-readable expected-form aliases
+have been replaced with their exact descriptor keys, while repeated keys still
+indicate multiple expected copies. The plan does not prove that any PDF renders.
+Its uncovered list is the concrete queue for more source-backed fixtures or
+documented fail-closed routes; none may be treated as visually reviewed by this
+batch.
+
+Three newly authored positive source cases target registered PDFs that were
+missing from the matrix: a nonliquidating Form 7217 distribution with three
+property bases, a W-2 code-D retirement-savings Form 8880 credit, and a direct
+interpreter-expense Form 8826 credit with its Schedule C deduction reduction and
+Form 3800 parent. Their source shapes come from existing native/PDF route
+fixtures; no filled packet or XSD result has been produced for these three yet.
+The plan's `uncoveredPdfKeys` is the exact remaining descriptor-key list and
+must be reviewed after every further fixture addition. Many of those keys need
+additional independently reviewed source facts or guarded attachment bytes;
+the list is not a set of safe positive filing paths.
+
+Uncovered registered PDF keys at this checkpoint (71):
+
+```text
+f2106 f2210f f2439 f4136 f4255 f4835
+f5471_parent f5471_schedule_e f5471_schedule_h f5471_schedule_i1
+f5471_schedule_j f5471_schedule_m f5471_schedule_p f5471_schedule_q
+f5471_schedule_r f5884 f8611 f8820 f8834 f8844 f8854 f8854_annual
+f8859 f8863 f8864 f8881 f8882 f8888 f8911 f8911_schedule_a f8912
+f8915f f8936 f8941 f8978 f8994 f965
+form2441 form2555 form4562 form461 form4684 form4952 form5329
+form5695 form6252 form6781 form7203 form7206 form8396 form8582cr
+form8606 form8815 form8824 form8839 form8853 form8919
+form8978_schedule_a form8990 form8992 form8992_schedule_a form8995a
+form8995a_schedule_a form8995a_schedule_b form8995a_schedule_c
+form8995a_schedule_d form982 form_8829 schedule_f schedule_j schedule_r
+```
+
+```sh
 deno run --allow-read --allow-write --allow-net=www.irs.gov scripts/generate-ty2025-pdf-review.ts /absolute/new/review-directory
 ```
 
 Each case writes a filled PDF and a JSON record of its synthetic source,
-identity, expected forms, review focus and raw computed pending data. The six
-original cases plus ten source-backed filing paths are a starting matrix, not
-coverage of all registered PDF descriptors:
+identity, expected forms, review focus and raw computed pending data. On a fully
+successful run, the generator also writes `review-manifest.json` with exact PDF
+and native XML hashes, the rendered page count, expected owner and form-copy
+lists, and one unreviewed checklist slot for **every actual page**. Reviewers
+must identify each page's observed form and owner, compare amounts and
+checkboxes with source/XML, and inspect continuation order and clipping before
+marking the slots complete. Any guarded or otherwise failing fixture stops the
+run without a completion manifest; the known `single-8862-ctc-reinstatement`
+case currently expects a native export guard. Resolve such cases by a supported
+route or an explicit validation-scope decision, not by dropping them silently.
+The table below records the earlier starting subset; the plan script enumerates
+all current fixtures. This subset is not coverage of all registered PDF
+descriptors:
 
 | Synthetic case                           | Target visual evidence                                                                                             |
 | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |

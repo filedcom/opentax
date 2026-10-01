@@ -10,6 +10,7 @@ import { trustPartVStatementFixture } from "../../nodes/inputs/f3468/trust-part-
 import { CoverageType } from "../../nodes/intermediate/forms/form8889/index.ts";
 import { LanguagePreferenceCode } from "../../nodes/inputs/schedule_lep/index.ts";
 import { FilingStatus as SourceFilingStatus } from "../../nodes/types.ts";
+import { form7217NonliquidatingDecrease } from "../form7217_732c_decrease.fixture.ts";
 
 /** Synthetic source returns for the held TY2025 filled-PDF review. */
 export interface PdfReviewFixture {
@@ -756,7 +757,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       },
     },
     filer: singleFiler,
-    expectedPdfForms: ["f1040", "schedule_8812", "f8862"],
+    expectedPdfForms: ["f1040", "f8812", "f8862"],
     reviewFocus: [
       "Form 8862 Part III names the same child as the Form 1040 dependent and checks the CTC eligibility answers",
       "Schedule 8812 and Form 1040 carry the restored child tax credit once",
@@ -810,7 +811,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       }],
     },
     filer: singleFiler,
-    expectedPdfForms: ["f1040", "schedule_8812"],
+    expectedPdfForms: ["f1040", "f8812"],
     reviewFocus: [
       "Form 1040 checks the overflow box, prints four dependent columns, and appends the fifth dependent's complete statement",
       "The taxpayer U.S. main-home checkbox is present in both native XML and the filled Form 1040 PDF",
@@ -990,7 +991,13 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       }],
     },
     filer: singleFiler,
-    expectedPdfForms: ["f1040", "schedule1", "schedule_d", "f8949", "form8814"],
+    expectedPdfForms: [
+      "f1040",
+      "schedule1",
+      "schedule_d",
+      "form8949",
+      "form8814",
+    ],
     reviewFocus: [
       "The child capital-gain portion prints as Form 8814 on Schedule D line 13",
       "Form 1040 line 7a includes the finalized Schedule D result without a direct-child-gain line 7b mark",
@@ -1032,7 +1039,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       },
     },
     filer: singleFiler,
-    expectedPdfForms: ["f1040", "schedule_a", "form8283"],
+    expectedPdfForms: ["f1040", "schedule_a", "f8283"],
     reviewFocus: [
       "Form 8283 Section A prints the fully sourced ordinary gift without a reduction statement",
       "Schedule A line 12 includes the 1,200 gift once and reconciles with Form 1040 itemized deductions",
@@ -1076,7 +1083,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       },
     },
     filer: singleFiler,
-    expectedPdfForms: ["f1040", "schedule_a", "form8283"],
+    expectedPdfForms: ["f1040", "schedule_a", "f8283"],
     reviewFocus: [
       "Section A column (h) prints the reduced $3,000 claim and column (i) prints the $3,000 basis",
       "The linked native and printable FMV statement shows original $4,500 FMV, $1,500 appreciation removed, and the 50% limit election",
@@ -1128,7 +1135,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       },
     },
     filer: singleFiler,
-    expectedPdfForms: ["f1040", "schedule_a", "form8283"],
+    expectedPdfForms: ["f1040", "schedule_a", "f8283"],
     reviewFocus: [
       "Form 8283 Section A column (h) prints the $300 basis claim below $1,000 FMV",
       "The linked FMV statement and PDF explanation remove $700 hypothetical ordinary gain from the donor-prepared manuscript",
@@ -1172,7 +1179,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       },
     },
     filer: singleFiler,
-    expectedPdfForms: ["f1040", "schedule_a", "form8283"],
+    expectedPdfForms: ["f1040", "schedule_a", "f8283"],
     reviewFocus: [
       "Form 8283 prints both $700 Section A claims and two separate reduction explanations",
       "Each native reduced amount links to its own FMV statement; item B remains item B",
@@ -1202,8 +1209,8 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "f1040",
       "schedule3",
       "form6251",
-      "form3468",
-      "form3800",
+      "f3468",
+      "f3800",
     ],
     reviewFocus: [
       "Trust K-1 box 14 code M and independent reviewed property statement yield a $3,000 Form 3468 Part V credit",
@@ -1228,8 +1235,8 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "f1040",
       "schedule3",
       "form6251",
-      "form3800",
-      "form8835",
+      "f3800",
+      "f8835",
     ],
     reviewFocus: [
       "One $600 geothermal credit flows from Form 8835 to Form 3800 line 38, Schedule 3 line 6a, and Form 1040 line 20",
@@ -1262,9 +1269,9 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "f1040",
       "schedule3",
       "form6251",
-      "form3800",
-      "form8835",
-      "form8835",
+      "f3800",
+      "f8835",
+      "f8835",
     ],
     reviewFocus: [
       "Two distinct Form 8835 facilities contribute $600 each to Form 3800 line 4e and line 38",
@@ -1292,9 +1299,9 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "f1040",
       "schedule3",
       "form6251",
-      "form3800",
-      "form8835",
-      "form8835",
+      "f3800",
+      "f8835",
+      "f8835",
     ],
     reviewFocus: [
       "Wind and geothermal Form 8835 copies print their distinct Part I identities and Part II lines 1a and 1c",
@@ -1337,8 +1344,8 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "f1040",
       "schedule3",
       "form6251",
-      "form3800",
-      "form8874",
+      "f3800",
+      "f8874",
     ],
     reviewFocus: [
       "One sourced 10,000 qualified equity investment prints at 5% and a 500 credit on Form 8874",
@@ -1382,8 +1389,8 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "f1040",
       "schedule3",
       "form6251",
-      "form3800",
-      "form8874",
+      "f3800",
+      "f8874",
     ],
     reviewFocus: [
       "The long CDE name and address move to a wrapped supplemental page without clipping",
@@ -1450,8 +1457,8 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "f1040",
       "schedule3",
       "form6251",
-      "form3800",
-      "form8874",
+      "f3800",
+      "f8874",
     ],
     reviewFocus: [
       "Two CDE identities and addresses occupy separate Form 8874 rows without clipping",
@@ -1500,8 +1507,8 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "f1040",
       "schedule3",
       "form6251",
-      "form3800",
-      "form8874",
+      "f3800",
+      "f8874",
     ],
     reviewFocus: [
       "Six distinct CDE identities fill all Form 8874 rows without clipping or a missing last row",
@@ -1550,8 +1557,8 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "f1040",
       "schedule3",
       "form6251",
-      "form3800",
-      "form8874",
+      "f3800",
+      "f8874",
     ],
     reviewFocus: [
       "Five QEI investments print on Form 8874, with See attached and a 1,000 credit on its last row",
@@ -1603,8 +1610,8 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "form8959",
       "form8960",
       "form6251",
-      "form3800",
-      "form8874",
+      "f3800",
+      "f8874",
     ],
     reviewFocus: [
       "Five direct Form 8874 rows and a last-row 9,500 attachment total reconcile with nineteen further investments",
@@ -1653,9 +1660,9 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "f1040",
       "schedule3",
       "form6251",
-      "form3800",
-      "form8835",
-      "form8874",
+      "f3800",
+      "f8835",
+      "f8874",
     ],
     reviewFocus: [
       "Distinct Form 8835 and Form 8874 source documents and PDF pages each retain their source identity",
@@ -1780,7 +1787,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       ],
     },
     filer: singleFiler,
-    expectedPdfForms: ["f1040", "schedule1", "f4797"],
+    expectedPdfForms: ["f1040", "schedule1", "form4797"],
     reviewFocus: [
       "Partnership box 11 code L and R retain separate $400/$600 Form 4797 line 10 rows",
       "Form 4797 line 17/18b and Schedule 1 line 4 carry $1,000 once",
@@ -1814,7 +1821,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       ),
     },
     filer: singleFiler,
-    expectedPdfForms: ["f1040", "schedule1", "f4797"],
+    expectedPdfForms: ["f1040", "schedule1", "form4797"],
     reviewFocus: [
       "Six K-1 code L/R rows total $1,000 on Form 4797 line 10",
       "First three rows print on Form 4797; row four shows an attached $400 subtotal",
@@ -2040,7 +2047,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       }],
     },
     filer: singleFiler,
-    expectedPdfForms: ["f1040", "schedule_d", "f8949"],
+    expectedPdfForms: ["f1040", "schedule_d", "form8949"],
     reviewFocus: [
       "The sourced long-term collectible sale reports $3,000 gain on Form 8949 and Schedule D",
       "The 28% rate amount reaches tax calculation exactly once",
@@ -2071,7 +2078,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       }],
     },
     filer: singleFiler,
-    expectedPdfForms: ["f1040", "schedule_d", "f8949"],
+    expectedPdfForms: ["f1040", "schedule_d", "form8949"],
     reviewFocus: [
       "The short-term sale prints on Form 8949 box B and Schedule D line 2",
       "The long-term sale prints on Form 8949 box F and Schedule D line 10",
@@ -2135,7 +2142,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       }],
     },
     filer: singleFiler,
-    expectedPdfForms: ["f1040", "schedule_d", "f8949"],
+    expectedPdfForms: ["f1040", "schedule_d", "form8949"],
     reviewFocus: [
       "The direct $1,000 gain prints only on Schedule D line 1a",
       "The adjusted $200 loss prints on Form 8949 box A and Schedule D line 1b",
@@ -5423,6 +5430,100 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "Schedule 1 lines 8l and 24b print 9,000 and 50 in their native boxes",
       "Schedule E royalty receipts print 3,000 without a duplicate 1099-MISC passthrough",
       "Form 1040 line 27a reflects the positive at-limit EIC and line 11 reflects net rental income",
+    ],
+  },
+  {
+    id: "single-form7217-nonliquidating-basis-decrease",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(75_000, 11_000, "Example Employer", "12-3456789")],
+      f7217: { form7217s: [form7217NonliquidatingDecrease] },
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "f7217"],
+    reviewFocus: [
+      "Form 7217 identifies the same partnership distribution as its native document",
+      "Three property rows retain 100, 150, and 150 of post-distribution basis and line 10 totals 400",
+      "All Form 7217 pages and owner identifiers are present with no displaced rows",
+    ],
+  },
+  {
+    id: "single-form8880-w2-deferral",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        taxpayer_dob: "1980-01-01",
+        taxpayer_form8880_student_five_months: false,
+        taxpayer_form8880_claimed_as_dependent: false,
+      },
+      w2: [{
+        ...wage(20_000, 500, "Example Employer", "12-3456789"),
+        employee_ssn: "111-22-3333",
+        box12_entries: [{ code: "D", amount: 2_000 }],
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule3", "form8880"],
+    reviewFocus: [
+      "Form 8880 uses the taxpayer's W-2 box 12 code D deferral and reviewed eligibility answers",
+      "The finalized credit is limited by tax and agrees with Schedule 3 line 4 and Form 1040 line 20",
+      "Form 8880 owner and all printed lines remain legible on its one-page copy",
+    ],
+  },
+  {
+    id: "single-form8826-direct-interpreter-credit",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(300_000, 60_000, "Example Employer", "12-3456789")],
+      f8826: {
+        eligible_expenditures: 5_000,
+        prior_year_gross_receipts: 500_000,
+        prior_year_full_time_employee_count: 20,
+        subject_to_passive_activity_limit: false,
+        self_source_evidence: {
+          business_reference: "ACCESS-BUSINESS",
+          prior_year_gross_receipts_source_reference:
+            "Synthetic 2024 business return",
+          prior_year_gross_receipts: 500_000,
+          prior_year_full_time_employee_count_source_reference:
+            "Synthetic 2024 payroll roster",
+          prior_year_full_time_employee_count: 20,
+          no_predecessor_or_common_control_confirmed: true,
+          interpreter_expenditures: [{
+            expense_record_reference: "ACCESS-EXPENSE-1",
+            invoice_reference: "ACCESS-INVOICE-1",
+            payment_reference: "ACCESS-PAYMENT-1",
+            paid_or_incurred_on: "2025-06-01",
+            amount: 5_000,
+            hearing_impaired_service_confirmed: true,
+            ada_compliance_confirmed: true,
+            reasonable_and_necessary_confirmed: true,
+          }],
+          schedule_c_line27b: {
+            amount_before_credit_reduction: 5_000,
+            credit_reduction_amount: 2_375,
+            amount_after_credit_reduction: 2_625,
+            not_deducted_elsewhere_confirmed: true,
+            not_capitalized_or_used_for_other_credit_confirmed: true,
+          },
+        },
+      },
+      schedule_c: [{
+        business_reference: "ACCESS-BUSINESS",
+        line_a_principal_business: "Interpreter services",
+        line_b_business_code: "541930",
+        line_f_accounting_method: "cash",
+        line_g_material_participation: true,
+        line_1_gross_receipts: 100_000,
+        line_27b_other_expenses: 2_625,
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule_c", "schedule3", "f3800", "f8826"],
+    reviewFocus: [
+      "Form 8826 line 7 and the prepared Form 3800 source row carry the same 2,375 credit",
+      "Schedule C line 27b prints the separately reduced 2,625 expense, not the unreduced invoice",
+      "Schedule 3 line 6a and Form 1040 line 20 reconcile with the final allowed credit",
     ],
   },
 ];
