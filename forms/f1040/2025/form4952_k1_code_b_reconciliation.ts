@@ -101,7 +101,11 @@ export function reconcileForm4952K1CodeBRoyaltyPath(
   }
   const k1s = partnership.data.k1_partnerships;
   const rows = scheduleE.data.schedule_es;
-  const k1 = k1s[0];
+  const codeBK1s = k1s.filter((item) =>
+    item.box20_code_b_investment_expenses !== undefined
+  );
+  const k1 = codeBK1s[0];
+  const otherK1 = k1s.find((item) => item !== k1);
   const row = rows[0];
   const codeB = k1?.box20_code_b_investment_expenses;
   const codeI = k1?.box13_code_i_royalty_deduction;
@@ -109,14 +113,34 @@ export function reconcileForm4952K1CodeBRoyaltyPath(
   const source = row?.k1_royalty_source;
   const expense = codeB?.allowed_deduction_amount ?? 0;
   const gross = k1?.box7_royalties ?? 0;
-  const interest = k1?.box13_code_h_investment_interest ?? 0;
-  const box5 = k1?.box5_interest ?? 0;
+  const interest = k1s.reduce(
+    (sum, item) => sum + (item.box13_code_h_investment_interest ?? 0),
+    0,
+  );
+  const box5 = k1s.reduce(
+    (sum, item) => sum + (item.box5_interest ?? 0),
+    0,
+  );
   if (
-    k1s.length !== 1 || rows.length !== 1 || !k1 || !row || !codeB ||
+    (k1s.length !== 1 && k1s.length !== 2) ||
+    codeBK1s.length !== 1 || rows.length !== 1 || !k1 || !row || !codeB ||
     !codeI || !royalty || !source || !k1.partnership_ein ||
     !k1.source_document_reference || !k1.recipient_tin ||
     k1.investment_property_for_form4952 !== true ||
-    gross <= 0 || interest <= 0 || expense <= 0 ||
+    gross <= 0 || (k1.box13_code_h_investment_interest ?? 0) <= 0 ||
+    interest <= 0 || expense <= 0 ||
+    (otherK1 !== undefined &&
+      (otherK1.investment_property_for_form4952 !== true ||
+        !otherK1.partnership_ein || !otherK1.source_document_reference ||
+        !otherK1.recipient_tin ||
+        otherK1.partnership_ein === k1.partnership_ein ||
+        otherK1.source_document_reference === k1.source_document_reference ||
+        otherK1.recipient_tin !== k1.recipient_tin ||
+        (otherK1.box5_interest ?? 0) <= 0 ||
+        (otherK1.box13_code_h_investment_interest ?? 0) <= 0 ||
+        otherK1.box7_royalties !== undefined ||
+        otherK1.box7_royalty_reporting !== undefined ||
+        otherK1.box13_code_i_royalty_deduction !== undefined)) ||
     codeI.reported_amount !== codeB.reported_amount ||
     codeI.allowed_amount !== expense ||
     codeI.expense_kind !== codeB.allowed_deduction_kind ||
@@ -128,7 +152,9 @@ export function reconcileForm4952K1CodeBRoyaltyPath(
       codeI.issuer_expense_item_id ||
     codeB.issuer_crosswalk.royalty_property_description !==
       royalty.property_description ||
-    Object.keys(k1).some((key) => !permittedPartnershipFields.has(key)) ||
+    k1s.some((item) =>
+      Object.keys(item).some((key) => !permittedPartnershipFields.has(key))
+    ) ||
     Object.keys(scheduleE.data).some((key) => key !== "schedule_es") ||
     Object.keys(row).some((key) => !permittedRoyaltyFields.has(key)) ||
     row.property_type !== 6 || row.activity_type !== "D" ||
@@ -158,9 +184,17 @@ export function reconcileForm4952K1CodeBRoyaltyPath(
     !sourceAmountsMatch(form.data.source_k1_allowed_investment_expenses, [
       expense,
     ]) ||
-    !sourceAmountsMatch(form.data.source_k1_investment_interest, [interest]) ||
+    !sourceAmountsMatch(
+      form.data.source_k1_investment_interest,
+      k1s.map((item) => item.box13_code_h_investment_interest ?? 0),
+    ) ||
     (box5 > 0
-      ? !sourceAmountsMatch(form.data.source_k1_interest, [box5])
+      ? !sourceAmountsMatch(
+        form.data.source_k1_interest,
+        k1s.flatMap((item) =>
+          (item.box5_interest ?? 0) > 0 ? [item.box5_interest!] : []
+        ),
+      )
       : form.data.source_k1_interest !== undefined) ||
     (form.data.investment_interest_expense ?? 0) !== 0 ||
     (form.data.prior_year_carryforward ?? 0) !== 0 ||

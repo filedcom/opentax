@@ -122,4 +122,21 @@ than Schedule A. The staged fixture asserts that its code-H interest is not
 royalty-attributable; a supplied assertion alone does not prove the debt
 allocation. Issued K-1/supplement bytes, partner limitation workpapers, and
 source-backed code-H debt tracing are still needed before positive code-B
-filing can be enabled. Other code-I destinations and mixed K-1s remain open.
+filing can be enabled. Other code-I destinations and broader mixed K-1s remain
+open.
+
+## One additional investment K-1 (staged, unrun)
+
+The return-level code-B reconciliation now also accepts exactly one distinct
+box-5-interest and box-13-code-H K-1 alongside the single code-B/code-I
+royalty K-1. Both statements must identify the same partner, have different
+issuer EINs and document references, and retain only the supported boxes.
+The extra K-1 contributes its own interest to Form 4952 line 4a and Form
+1040 line 2b, and its code H expense to Form 4952 line 1. The royalty K-1's
+code I deduction remains the only Schedule E line 19 debit and the code B
+amount remains only Form 4952 line 5. A staged full-return fixture has $400
+line 1, $1,100 line 4a, $350 line 5, $400 line 8, and $500 Form 1040 line
+2b; it includes source, recipient, and filed-line tamper checks. Native and
+PDF export still reject positive code B after reconciliation until the issued
+supplement, partner limitation workpapers, and debt allocation are verified.
+Other K-1 boxes, additional royalties, and more than two K-1s remain closed.

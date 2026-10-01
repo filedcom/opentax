@@ -145,3 +145,102 @@ Deno.test("K-1 code B royalty expense joins one Schedule E debit and Form 4952 l
     Error,
   );
 });
+
+Deno.test("code B royalty K-1 and separate box 5/code H K-1 reconcile their retained sources without opening export", () => {
+  const secondK1 = {
+    partnership_name: "Bond Partnership",
+    partnership_ein: "987654321",
+    source_document_reference: "2025-issued-bond-k1",
+    recipient_tin: "111223333",
+    investment_property_for_form4952: true,
+    box5_interest: 500,
+    box13_code_h_investment_interest: 100,
+  };
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    { ...inputs, k1_partnership: [k1, secondK1] },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form4952?.line1, 400);
+  assertEquals(result.pending.form4952?.line4a, 1_100);
+  assertEquals(result.pending.form4952?.line5, 350);
+  assertEquals(result.pending.form4952?.line8, 400);
+  assertEquals(result.pending.schedule_a?.line_9_investment_interest, 400);
+  assertEquals(result.pending.schedule1?.line5_schedule_e, 250);
+  assertEquals(result.pending.f1040?.line2b_taxable_interest, 500);
+  const pending = buildPending(result.pending);
+  reconcileForm4952K1CodeBRoyaltyPath(pending.form4952!, pending);
+  assertThrows(
+    () =>
+      nativeForm4952.build(pending.form4952!, {
+        pending,
+        filer: base.filer,
+      }),
+    Error,
+    "needs verified issued supplement",
+  );
+  assertThrows(
+    () => form4952Pdf.projectFields?.(pending.form4952!, pending),
+    Error,
+    "needs verified issued supplement",
+  );
+  assertThrows(
+    () => form4952Pdf.instances?.(pending.form4952!, base.filer, pending),
+    Error,
+    "needs verified issued supplement",
+  );
+
+  const changedSecondK1 = structuredClone(pending);
+  (changedSecondK1.k1_partnership as {
+    k1_partnerships: Array<{ box5_interest?: number }>;
+  }).k1_partnerships[1].box5_interest = 501;
+  assertThrows(
+    () =>
+      reconcileForm4952K1CodeBRoyaltyPath(
+        pending.form4952!,
+        changedSecondK1,
+      ),
+    Error,
+  );
+  const changedRecipient = structuredClone(pending);
+  (changedRecipient.k1_partnership as {
+    k1_partnerships: Array<{ recipient_tin?: string }>;
+  }).k1_partnerships[1].recipient_tin = "999887777";
+  assertThrows(
+    () => form4952Pdf.projectFields?.(pending.form4952!, changedRecipient),
+    Error,
+  );
+  const reusedIssuer = structuredClone(pending);
+  (reusedIssuer.k1_partnership as {
+    k1_partnerships: Array<{ partnership_ein?: string }>;
+  }).k1_partnerships[1].partnership_ein = k1.partnership_ein;
+  assertThrows(
+    () => reconcileForm4952K1CodeBRoyaltyPath(pending.form4952!, reusedIssuer),
+    Error,
+  );
+  const extraCodeB = structuredClone(pending);
+  (extraCodeB.k1_partnership as {
+    k1_partnerships: Array<{
+      box20_code_b_investment_expenses?: unknown;
+    }>;
+  }).k1_partnerships[1].box20_code_b_investment_expenses =
+    k1.box20_code_b_investment_expenses;
+  assertThrows(
+    () => reconcileForm4952K1CodeBRoyaltyPath(pending.form4952!, extraCodeB),
+    Error,
+  );
+  const changedInterestLine = structuredClone(pending);
+  (changedInterestLine.f1040 as {
+    line2b_taxable_interest?: number;
+  }).line2b_taxable_interest = 499;
+  assertThrows(
+    () =>
+      reconcileForm4952K1CodeBRoyaltyPath(
+        pending.form4952!,
+        changedInterestLine,
+      ),
+    Error,
+  );
+});
