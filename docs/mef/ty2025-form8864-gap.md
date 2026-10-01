@@ -7,8 +7,9 @@ Lines 7 and 8 apply $0.10 per gallon through June 30 and $0.20 per gallon after
 June 30. The older biodiesel, renewable-diesel and SAF credits expired for fuel
 sold or used after 2024; a fiscal-year pass-through can still allocate an older
 credit. Direct producer line 9 must be included in income, with Form 3800 Part
-III line 1l reporting. A section 6418 transfer election for a second-half credit
-needs pre-filing registration.
+III line 1l reporting. Its inclusion is subtracted when figuring AMT on Form
+6251 line 3. A section 6418 transfer election for a second-half credit needs
+pre-filing registration.
 
 The new `f8864` source is a bounded, direct Schedule C **sale** route for a
 registered small producer. It records Form 637 registration, facility capacity
@@ -20,12 +21,21 @@ credits and recapture events. The sourced line 9 is reconciled to one
 taxpayer-owned Schedule C producer's line 6 other income; this bounded join
 requires that line 6 contain only the credit inclusion.
 
-The public node remains **fail-closed** and emits no tax credit. The official
-one-page PDF fields for lines 7-11 were read from the AcroForm and staged in an
-unregistered descriptor. No `IRS8864` TY2025 XSD is checked into this
-repository; the native MeF descriptor, Form 3800 limit, Schedule 3 credit,
-transfer election, fiscal-year/K-1 recipient, seller self-use, controlled-group
-attribution and Form 6251 AMT income adjustment remain unimplemented. Reviewed
-registration, feedstock, capacity, invoice and buyer-use references are retained
-source facts; the return graph does not inspect their document bytes. Authored
-positive and tamper fixtures await the final bulk test pass.
+The source now stages one nonpassive Form 3800 Part III line 1l current credit,
+Part V source row, standard-credit tax limit and a signed Form 6251 line 3
+adjustment equal to negative line 9. The native `IRS8864` descriptor uses the
+exact TY2025 v5.4 tags for lines 7, 8, 9 and 11 and requires sourced Form 3800
+and Form 6251 documents. The official one-page PDF and its Form 3800/6251
+projections are registered. Both representations reject source, Schedule C,
+credit and AMT mismatches. The schema was inspected in an **ignored local IRS
+v5.4 cache** at
+`.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/CorporateIncomeTax/Common/IRS8864/IRS8864.xsd`;
+it is not tracked or reproducible from this repository alone.
+
+The public `f8864` node remains **fail-closed** and emits no tax credit pending
+bulk XSD/PDF validation and review of the complete return route. Transfer
+elections, fiscal-year/K-1 recipients, seller self-use and controlled-group
+attribution remain outside the bounded source. Reviewed registration, feedstock,
+capacity, invoice and buyer-use references are retained source facts; the return
+graph does not inspect their document bytes. The authored positive and tamper
+fixtures have not yet been run in the final bulk test pass.

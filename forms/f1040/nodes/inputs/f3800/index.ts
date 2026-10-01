@@ -158,6 +158,13 @@ const f8994DirectEmployerCreditSchema = z.object({
   subject_to_passive_activity_limit: z.literal(false),
 }).strict();
 
+const f8864DirectProducerCreditSchema = z.object({
+  credit_amount: z.number().int().positive(),
+  schedule_c_business_reference: z.string().trim().min(1),
+  form637_registration_number: z.string().trim().min(1),
+  subject_to_passive_activity_limit: z.literal(false),
+}).strict();
+
 const f8882DirectEmployerCreditSchema = z.object({
   credit_amount: z.number().int().positive(),
   schedule_c_business_reference: z.string().trim().min(1),
@@ -249,6 +256,7 @@ export const inputSchema = z.object({
   f8908_credit: f8908CreditSchema.optional(),
   f8941_direct_employer_credit: f8941DirectEmployerCreditSchema.optional(),
   f8994_direct_employer_credit: f8994DirectEmployerCreditSchema.optional(),
+  f8864_direct_producer_credit: f8864DirectProducerCreditSchema.optional(),
   f8882_direct_employer_credit: f8882DirectEmployerCreditSchema.optional(),
   f8820_credit: f8820CreditSchema.optional(),
   f8874_credit: f8874CreditSchema.optional(),
@@ -271,6 +279,7 @@ export const inputSchema = z.object({
   form5884_applied_credit: appliedSourceCreditSchema.optional(),
   form8941_applied_credit: appliedSourceCreditSchema.optional(),
   form8994_applied_credit: appliedSourceCreditSchema.optional(),
+  form8864_applied_credit: appliedSourceCreditSchema.optional(),
   form5884_applied_credits_by_source: z.array(appliedSourceCreditSchema)
     .optional(),
   // Optional Part V allocation choices. Required only when a tax limit cuts
@@ -290,6 +299,7 @@ export const inputSchema = z.object({
     input.f8908_credit !== undefined ||
     input.f8941_direct_employer_credit !== undefined ||
     input.f8994_direct_employer_credit !== undefined ||
+    input.f8864_direct_producer_credit !== undefined ||
     input.f8882_direct_employer_credit !== undefined ||
     input.f8820_credit !== undefined ||
     input.f8874_credit !== undefined ||
@@ -386,6 +396,7 @@ function schedule3Output(
   f8908Credit: z.infer<typeof f8908CreditSchema> | undefined,
   f8941Credit: z.infer<typeof f8941DirectEmployerCreditSchema> | undefined,
   f8994Credit: z.infer<typeof f8994DirectEmployerCreditSchema> | undefined,
+  f8864Credit: z.infer<typeof f8864DirectProducerCreditSchema> | undefined,
   f8882Credit: z.infer<typeof f8882DirectEmployerCreditSchema> | undefined,
   f8820Credit: z.infer<typeof f8820CreditSchema> | undefined,
   f8874Credit: z.infer<typeof f8874CreditSchema> | undefined,
@@ -530,6 +541,7 @@ function schedule3Output(
     (f8908Credit?.credit_amount ?? 0) > 0 ||
     (f8941Credit?.credit_amount ?? 0) > 0 ||
     (f8994Credit?.credit_amount ?? 0) > 0 ||
+    (f8864Credit?.credit_amount ?? 0) > 0 ||
     (f8882Credit?.credit_amount ?? 0) > 0 ||
     (f8820Credit?.credit_amount ?? 0) > 0 ||
     (f8874Credit?.credit_amount ?? 0) > 0 ||
@@ -552,6 +564,7 @@ function schedule3Output(
             (f8820Credit?.credit_amount ?? 0) +
             (f8874Credit?.credit_amount ?? 0) +
             (f8908Credit?.credit_amount ?? 0) +
+            (f8864Credit?.credit_amount ?? 0) +
             (f8882Credit?.credit_amount ?? 0) +
             newMarketsK1Credit +
             orphanDrugK1Credit +
@@ -601,6 +614,7 @@ class F3800Node extends TaxNode<typeof inputSchema> {
         parsed.f8908_credit,
         parsed.f8941_direct_employer_credit,
         parsed.f8994_direct_employer_credit,
+        parsed.f8864_direct_producer_credit,
         parsed.f8882_direct_employer_credit,
         parsed.f8820_credit,
         parsed.f8874_credit,

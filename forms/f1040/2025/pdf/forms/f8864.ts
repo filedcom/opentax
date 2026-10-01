@@ -1,5 +1,5 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
-import { reconcileForm8864DirectProducer } from "../../form8864_source.ts";
+import { reconcileForm8864DocumentSource } from "../../form8864_source.ts";
 
 // Field IDs inspected in the official December 2025 one-page AcroForm.
 const page = "topmostSubform[0].Page1[0].";
@@ -10,7 +10,7 @@ const text = (domainKey: string, field: string): PdfFieldEntry => ({
   pdfField: field,
 });
 
-/** Staged direct-producer PDF projection, absent from public registry. */
+/** Bounded direct-producer official PDF projection. */
 export const form8864Pdf: PdfFormDescriptor = {
   pendingKey: "f8864",
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8864.pdf",
@@ -31,7 +31,7 @@ export const form8864Pdf: PdfFormDescriptor = {
     text("primarySSN", `${page}f1_2[0]`),
   ],
   projectFields(raw, allPending) {
-    const { lines } = reconcileForm8864DirectProducer(raw, allPending);
+    const { lines } = reconcileForm8864DocumentSource(raw, allPending);
     return {
       line7_gallons: lines.line7_gallons || undefined,
       line7_rate: lines.line7_gallons ? "0.10" : undefined,

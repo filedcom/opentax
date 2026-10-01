@@ -111,15 +111,35 @@ export function calculateForm8864(raw: F8864Input) {
   };
 }
 
+/** Prepared direct claims; the public node still rejects this staged route. */
+export function form8864DirectClaims(raw: F8864Input) {
+  const source = inputSchema.parse(raw);
+  const lines = calculateForm8864(source);
+  if (lines.line11 <= 0) {
+    throw new Error("Form 8864 direct producer needs a positive credit");
+  }
+  return {
+    form3800: {
+      f8864_direct_producer_credit: {
+        credit_amount: lines.line11,
+        schedule_c_business_reference: source.schedule_c_business_reference,
+        form637_registration_number: source.form637_registration_number,
+        subject_to_passive_activity_limit: false as const,
+      },
+    },
+    form6251: { line3_form8864_income_exclusion: -lines.line9 },
+  };
+}
+
 class F8864Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8864";
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([]);
 
   compute(_ctx: NodeContext, rawInput: F8864Input): NodeResult {
-    inputSchema.parse(rawInput);
+    form8864DirectClaims(rawInput);
     throw new Error(
-      "TY2025 Form 8864 direct producer credit needs native attachment and Form 3800 linkage before filing",
+      "TY2025 Form 8864 direct producer credit awaits complete XSD/PDF route review before filing",
     );
   }
 }

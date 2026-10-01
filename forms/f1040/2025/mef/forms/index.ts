@@ -52,6 +52,7 @@ import { form8844 } from "./f8844.ts";
 import { form8881 } from "./f8881.ts";
 import { form8882 } from "./f8882.ts";
 import { form8941 } from "./f8941.ts";
+import { form8864 } from "./f8864.ts";
 import { form5884ControlledGroupStatement } from "./f5884_controlled_group_statement.ts";
 import { form5884DeductionDifferentiationStatement } from "./f5884_deduction_differentiation_stmt.ts";
 import { form6198 } from "./f6198.ts";
@@ -295,6 +296,7 @@ export const ALL_MEF_FORMS = [
   form8862,
   // Form 8863
   form8863,
+  form8864,
   form8874,
   // Form 8880
   form8880,

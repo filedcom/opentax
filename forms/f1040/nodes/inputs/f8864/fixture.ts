@@ -1,4 +1,4 @@
-import { inputSchema } from "./index.ts";
+import { form8864DirectClaims, inputSchema } from "./index.ts";
 
 export const directAgriBiodieselSource = inputSchema.parse({
   source_type: "direct_schedule_c_small_agri_biodiesel_producer",
@@ -46,6 +46,11 @@ export const directAgriBiodieselSource = inputSchema.parse({
 
 export const directAgriBiodieselPending = {
   f8864: directAgriBiodieselSource,
+  f3800: {
+    ...form8864DirectClaims(directAgriBiodieselSource).form3800,
+    form8864_applied_credit: 500,
+  },
+  form6251: form8864DirectClaims(directAgriBiodieselSource).form6251,
   f1040: { taxpayer_ssn: "123-45-6789" },
   schedule_c: {
     schedule_cs: [{
