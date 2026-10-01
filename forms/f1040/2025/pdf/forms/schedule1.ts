@@ -3,6 +3,7 @@ import { FilingStatus } from "../../../mef/header.ts";
 import { assertForm1098Box4Sources } from "../../../nodes/inputs/f1098/index.ts";
 import {
   assertForm1099gRtaaSources,
+  assertForm1099gTaxableGrantTotal,
   inputSchema as form1099gInputSchema,
 } from "../../../nodes/inputs/f1099g/index.ts";
 import { assertSCorpK1CodeJSources } from "../../../nodes/inputs/k1_s_corp/index.ts";
@@ -333,7 +334,8 @@ export const schedule1Pdf: PdfFormDescriptor = {
     if (
       all?.f1099g !== undefined ||
       Number(fields.line8z_rtaa ?? 0) > 0 ||
-      fields.f1099g_rtaa_sources !== undefined
+      fields.f1099g_rtaa_sources !== undefined ||
+      Number(fields.line8z_taxable_grants ?? 0) > 0
     ) {
       if (!filer) throw new Error("Schedule 1 PDF RTAA needs filer identity");
       const recipients = [filer.primarySSN];
@@ -346,6 +348,10 @@ export const schedule1Pdf: PdfFormDescriptor = {
         fields.f1099g_rtaa_sources,
         Number(fields.line8z_rtaa ?? 0),
         recipients,
+      );
+      assertForm1099gTaxableGrantTotal(
+        all?.f1099g,
+        Number(fields.line8z_taxable_grants ?? 0),
       );
     }
     if (

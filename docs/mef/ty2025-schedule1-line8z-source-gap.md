@@ -1,5 +1,17 @@
 # TY2025 Schedule 1 line 8z source ledger gap
 
+## 2026-10-02 Form 1099-G box 6 grant total replay (unrun)
+
+The existing taxable-grant route now replays the aggregate of retained Form
+1099-G box 6 entries at both native and PDF Schedule 1 export. A changed or
+unsourced line 8z grant amount rejects; two-copy positive and altered-total
+fixtures are authored for the deferred bulk gate. The
+[Form 1099-G instructions](https://www.irs.gov/pub/irs-pdf/i1099g.pdf)
+identify box 6 as taxable grants. This narrow check does not establish each
+grant's tax character, recipient ownership, payer-copy authenticity, or
+business/farm routing. Those source reviews and the filled PDF, XSD, and IRS
+acceptance checks remain open.
+
 ## 2026-10-02 S corporation K-1 box 10 code J source rows (unrun)
 
 The existing tax-benefit recovery calculation now retains a separate row for

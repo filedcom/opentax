@@ -233,6 +233,21 @@ function totalTaxableGrants(g99s: G99Items): number {
   return g99s.reduce((sum, item) => sum + (item.box_6_taxable_grants ?? 0), 0);
 }
 
+export function assertForm1099gTaxableGrantTotal(
+  raw: unknown,
+  expectedAmount: number,
+): void {
+  const issued = raw === undefined ? [] : inputSchema.parse(raw).f1099gs;
+  if (
+    !Number.isSafeInteger(expectedAmount) || expectedAmount < 0 ||
+    totalTaxableGrants(issued) !== expectedAmount
+  ) {
+    throw new Error(
+      "Schedule 1 taxable-grant total differs from retained Form 1099-G box 6 copies",
+    );
+  }
+}
+
 function schedule1Output(g99s: G99Items): NodeOutput[] {
   const unemploymentNet = netUnemployment(g99s);
   const stateRefund = totalStateRefundTaxable(g99s);

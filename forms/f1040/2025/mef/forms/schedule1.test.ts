@@ -239,6 +239,19 @@ Deno.test("Schedule 1 line 8z sums typed sources once and links the statement", 
     }],
   };
   const xml = schedule1.build(fields, {
+    filer: {
+      primarySSN: "111223333",
+      nameLine1: "TEST TAXPAYER",
+      nameControl: "TAXP",
+      address: {
+        line1: "1 Test Way",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+      },
+      filingStatus: FilingStatus.Single,
+    },
+    pending: { f1099g: { f1099gs: [{ box_6_taxable_grants: 1_500 }] } },
     documentIdsByPendingKey: {
       schedule1_other_income_statement: ["OtherIncomeTypeStatement-1"],
     },
@@ -271,7 +284,7 @@ Deno.test("Schedule 1 line 8z rejects generic amounts and missing or duplicate s
       "generic income needs identified source types",
     );
   }
-  const typed = { line8z_taxable_grants: 300 };
+  const typed = { line8z_hsa_excess_earnings: 300 };
   for (const ids of [[], ["Statement-1", "Statement-2"]]) {
     assertThrows(
       () =>
@@ -282,6 +295,38 @@ Deno.test("Schedule 1 line 8z rejects generic amounts and missing or duplicate s
       "needs its linked other-income type statement",
     );
   }
+});
+
+Deno.test("Schedule 1 native replays 1099-G box 6 grants before writing line 8z", () => {
+  const filer = {
+    primarySSN: "111223333",
+    nameLine1: "TEST TAXPAYER",
+    nameControl: "TAXP",
+    address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
+    filingStatus: FilingStatus.Single,
+  };
+  const copies = {
+    f1099gs: [{ box_6_taxable_grants: 400 }, { box_6_taxable_grants: 600 }],
+  };
+  const xml = schedule1.build({ line8z_taxable_grants: 1_000 }, {
+    filer,
+    pending: { f1099g: copies },
+  });
+  assertStringIncludes(xml, "<OtherIncomeTotalAmt>1000</OtherIncomeTotalAmt>");
+  assertThrows(
+    () =>
+      schedule1.build({ line8z_taxable_grants: 999 }, {
+        filer,
+        pending: { f1099g: copies },
+      }),
+    Error,
+    "taxable-grant total differs from retained Form 1099-G box 6 copies",
+  );
+  assertThrows(
+    () => schedule1.build({ line8z_taxable_grants: 1_000 }, { filer }),
+    Error,
+    "taxable-grant total differs from retained Form 1099-G box 6 copies",
+  );
 });
 
 Deno.test("Schedule 1 rejects unsupported sources without required filing facts", () => {

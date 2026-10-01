@@ -247,11 +247,55 @@ Deno.test("Schedule 1 PDF combines identified line 8z sources once", () => {
     line8z_taxable_grants: 300,
     line8z_form8814: 200,
     line8z_hsa_excess_earnings: 100,
+  }, {
+    primarySSN: "111223333",
+    filingStatus: FilingStatus.Single,
+  } as never, {
+    f1099g: { f1099gs: [{ box_6_taxable_grants: 300 }] },
   })?.[0];
   assertEquals(projected?.line8z_other, 600);
   assertEquals(
     projected?.line8z_description,
     "Form 8814, HSA excess earnings, Taxable grants",
+  );
+});
+
+Deno.test("Schedule 1 PDF rejects changed or unsourced 1099-G box 6 grant totals", () => {
+  const filer = {
+    primarySSN: "111223333",
+    filingStatus: FilingStatus.Single,
+  } as never;
+  const all = {
+    f1099g: {
+      f1099gs: [{ box_6_taxable_grants: 400 }, { box_6_taxable_grants: 600 }],
+    },
+  };
+  const projected = schedule1Pdf.instances?.(
+    { line8z_taxable_grants: 1_000 },
+    filer,
+    all,
+  )?.[0];
+  assertEquals(projected?.line8z_other, 1_000);
+  assertEquals(projected?.line8z_description, "Taxable grants");
+  assertThrows(
+    () =>
+      schedule1Pdf.instances?.(
+        { line8z_taxable_grants: 999 },
+        filer,
+        all,
+      ),
+    Error,
+    "taxable-grant total differs from retained Form 1099-G box 6 copies",
+  );
+  assertThrows(
+    () =>
+      schedule1Pdf.instances?.(
+        { line8z_taxable_grants: 1_000 },
+        filer,
+        {},
+      ),
+    Error,
+    "taxable-grant total differs from retained Form 1099-G box 6 copies",
   );
 });
 

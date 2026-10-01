@@ -1,7 +1,10 @@
 import { element, elements } from "../../../mef/xml.ts";
 import { FilingStatus } from "../../../mef/header.ts";
 import { assertForm1098Box4Sources } from "../../../nodes/inputs/f1098/index.ts";
-import { assertForm1099gRtaaSources } from "../../../nodes/inputs/f1099g/index.ts";
+import {
+  assertForm1099gRtaaSources,
+  assertForm1099gTaxableGrantTotal,
+} from "../../../nodes/inputs/f1099g/index.ts";
 import { assertSCorpK1CodeJSources } from "../../../nodes/inputs/k1_s_corp/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import { schedule1OtherIncomeRows } from "./schedule1_other_income_rows.ts";
@@ -240,7 +243,8 @@ export const schedule1: MefFormDescriptor<"schedule1", Input> = {
     if (
       context?.pending?.f1099g !== undefined ||
       (fields.line8z_rtaa ?? 0) > 0 ||
-      fields.f1099g_rtaa_sources !== undefined
+      fields.f1099g_rtaa_sources !== undefined ||
+      (fields.line8z_taxable_grants ?? 0) > 0
     ) {
       const filer = context?.filer;
       if (!filer) throw new Error("Schedule 1 RTAA needs filer identity");
@@ -254,6 +258,10 @@ export const schedule1: MefFormDescriptor<"schedule1", Input> = {
         fields.f1099g_rtaa_sources,
         fields.line8z_rtaa ?? 0,
         recipients,
+      );
+      assertForm1099gTaxableGrantTotal(
+        context?.pending?.f1099g,
+        fields.line8z_taxable_grants ?? 0,
       );
     }
     if (
