@@ -649,3 +649,134 @@ Deno.test("Form 8835 PDF stops for bonus, duplicate facilities, and zero credit"
   );
   assertEquals(form8835Pdf.instances?.({}, filer, {}), []);
 });
+
+function nonownerCellulosicLessee(): F8835Item {
+  const item = openLoopCellulosicFacility();
+  return {
+    ...item,
+    facility_owned_by_filer: false,
+    facility_owner_business: {
+      name: "Owner Biomass LLC",
+      ein: "987654321",
+    },
+    open_loop_nonowner_lessee_source: {
+      facility_description: item.facility_description!,
+      facility_address_line1: item.facility_us_address!.line1,
+      facility_latitude: item.facility_latitude!,
+      facility_longitude: item.facility_longitude!,
+      owner_business_name: "Owner Biomass LLC",
+      owner_business_ein: "987654321",
+      lease_agreement_reference: "2024 biomass facility lease",
+      owner_producer_acknowledgment_reference:
+        "2025 owner production and credit acknowledgment",
+      filer_is_lessee_and_electricity_producer_verified: true,
+      owner_not_producer_or_claimant_for_2025_verified: true,
+    },
+  };
+}
+
+Deno.test("non-owner open-loop biomass lessee joins Form 8835 owner, Form 3800, native, and PDF", async () => {
+  const base = pdfReviewFixtures.find((fixture) =>
+    fixture.id === "single-geothermal-general-business-credit"
+  )!;
+  const source = nonownerCellulosicLessee();
+  const result = f1040_2025.executeReturn({
+    ...base.inputs,
+    f8835: [source],
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f3800.f8835_credit_entries[0].credit_amount, 300);
+  assertEquals(result.pending.schedule3.line6a_total, 300);
+  assertEquals(result.pending.f1040.line20_nonrefundable_credits, 300);
+  const prepared = await f1040_2025.prepareReturn(result.pending, base.filer);
+  assertStringIncludes(
+    prepared.bundle.xml,
+    "<FacilityOwnerEIN>987654321</FacilityOwnerEIN>",
+  );
+  assertStringIncludes(
+    prepared.bundle.xml,
+    "<KwHrsPrdcdSoldOpenLopBmssCrAmt>300</KwHrsPrdcdSoldOpenLopBmssCrAmt>",
+  );
+  const parts = prepared.bundle.form3800Parts!;
+  assertEquals(parts.currentRows[0].line, "4e");
+  assertEquals(parts.currentAmounts[0].appliedCredit, 300);
+  const pendingSource = result.pending as Record<
+    string,
+    Record<string, unknown>
+  >;
+  const [projected] = form8835Pdf.instances!(
+    {},
+    base.filer,
+    pendingSource,
+    parts,
+  );
+  assertEquals(projected.owner_name, "Owner Biomass LLC");
+  assertEquals(projected.owner_tin, "987654321");
+  assertEquals(projected.line1f_credit, 300);
+  assertEquals(projected.line15, 300);
+  assertEquals(
+    form8835Pdf.fields.find((field) => field.domainKey === "owner_tin")
+      ?.pdfField,
+    "topmostSubform[0].Page1[0].f1_7[0]",
+  );
+  const changed = (item: F8835Item) => ({
+    ...pendingSource,
+    f8835: { f8835s: [item] },
+  });
+  assertThrows(() =>
+    form8835Pdf.instances!(
+      {},
+      base.filer,
+      changed({
+        ...source,
+        facility_owner_business: {
+          ...source.facility_owner_business!,
+          ein: "111223333",
+        },
+      }),
+      parts,
+    )
+  );
+  assertThrows(() =>
+    form8835Pdf.instances!(
+      {},
+      base.filer,
+      changed({
+        ...source,
+        open_loop_nonowner_lessee_source: {
+          ...source.open_loop_nonowner_lessee_source!,
+          lease_agreement_reference:
+            source.open_loop_cellulosic_source!.feedstock_record_reference,
+        },
+      }),
+      parts,
+    )
+  );
+  assertThrows(() =>
+    form8835Pdf.instances!(
+      {},
+      base.filer,
+      changed({ ...source, open_loop_nonowner_lessee_source: undefined }),
+      parts,
+    )
+  );
+  assertThrows(() =>
+    form8835Pdf.instances!(
+      {},
+      base.filer,
+      {
+        ...pendingSource,
+        f3800: {
+          ...pendingSource.f3800,
+          f8835_credit_entries: [{
+            form3800_line: "4e",
+            credit_amount: 299,
+            transfer_out_amount: 0,
+            subject_to_passive_activity_limit: false,
+          }],
+        },
+      },
+      parts,
+    )
+  );
+});

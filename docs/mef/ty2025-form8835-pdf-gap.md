@@ -171,3 +171,22 @@ and other mixed Form 3800 credit sources remain open. A zero-credit facility sto
 rather than silently omitting a PDF that native XML would still emit.
 Source-only data without the finalized credit also stops. IRS business-rule
 and ATS acceptance are not established by these local checks.
+
+## Non-owner cellulosic biomass lessee (2026-10-01, unrun)
+
+The [2025 instructions](https://www.irs.gov/instructions/i8835) permit the
+lessee or operator to claim the production credit for open-loop biomass when
+the facility owner is not the electricity producer. A bounded lessee route now
+requires one distinct business owner name/EIN, a matching facility identity,
+a lease reference, and an owner acknowledgment that the owner neither produced
+nor claimed the 2025 electricity credit. Those two references must differ from
+the feedstock, construction, meter, and unrelated-sale records; the filer must
+be the recorded producer. The original post-2021 cellulosic facility retains
+its 0.3-cent line 1f rate, first-four-year Form 3800 line 4e routing, and
+Schedule 3/Form 1040 tax join. Native Form 8835 carries the owner name/EIN; the
+PDF now prints those same facts in Part I line 2b. An authored 100,000-kWh
+$300 full-return fixture plus owner, lease, missing-entitlement, and Form 3800
+tamper fixtures await the bulk validation pass. Lease, owner acknowledgment,
+feedstock, meter, and sale bytes are not authenticated. Non-owner operators
+other than a sourced lessee, livestock-waste, expanded/co-fired, passive,
+transfer, bonus, and later-year branches remain closed.
