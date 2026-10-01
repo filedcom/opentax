@@ -2,10 +2,10 @@
 
 Status: a bounded source-backed Form 8582-CR PDF descriptor is registered for
 one to fifteen current-year passive New Markets credits from distinct
-self-earned Form 8874 investments (one passive investment may also be paired
-with one distinct nonpassive Form 8874 investment), or one to fifteen
-credit-only partnership K-1 box 15 code AD and S corporation K-1 box 13
-code AD sources in any mix, plus one
+self-earned Form 8874 investments and credit-only partnership K-1 box 15
+code AD or S corporation K-1 box 13 code AD sources in any mix. One passive
+self-earned investment may also be paired with one distinct nonpassive Form
+8874 investment when no K-1 credit enters the route. All cases use one
 Schedule E passive rental income activity. Other branches remain closed at PDF
 export until their source, final-return, and carryforward joins are complete.
 
@@ -81,6 +81,18 @@ the physical Part V capacity; a sixteenth source is rejected. Positive,
 missing/changed K-1, prepared-detail, and capacity fixtures are authored but
 unrun. [2025 Form 3800 instructions](https://www.irs.gov/instructions/i3800)
 require Part V when a credit has multiple pass-through sources.
+Self-earned and K-1 passive credits may now share the same Form 8582-CR
+ordinary line-6 limit. In a three-source return, the $5,000 self-earned
+investment and $2,500/$1,500 pass-through credits produce $9,000 before the
+limit and $4,412 allowed. Their separate 2025 Worksheet 9 balances retain
+$2,451/$1,226/$735 allowed. The attached Form 8874 prints $5,000 on line 1,
+$4,000 of K-1 credits on line 2, and $9,000 on line 3; Form 3800 Part V
+retains its IRS8874 document reference only for the self-earned detail and
+the issuer EINs for K-1 details. A second full-return fixture combines two
+self-earned investments and three K-1s. Source-amount and prepared-detail
+tamper cases are authored but unrun. A nonpassive investment alongside K-1
+credits, other K-1 boxes, Form 3800 tax-use restrictions below the allowed
+passive credit, and prior-year carryforward imports remain closed.
 Full-return/native/PDF fixtures for all three source kinds and source, credit, tax,
 and return-tamper fixtures are authored for deferred validation.
 The [2025 IRS instructions](https://www.irs.gov/instructions/i8582cr) direct
@@ -100,7 +112,7 @@ their line 6 source, final-return tax method, or carryforward join:
 | Native calculation branch | Printable gap |
 | --- | --- |
 | Other-category current-year credits from estate, trust, or cooperative K-1 sources; partnership or S corporation K-1s with other income, deduction, or credit boxes; or self-earned sources other than the bounded Form 8874 investments | Complete passive-income inventory, issuer evidence, and final-return line 6 join. |
-| More than fifteen current-year sources, K-1s with other income/deduction/credit boxes, self-earned/K-1 combinations, mixed passive/nonpassive sources beyond the one-investment pair, or mixed Form 3800 reporting lines 3, 24, and 33 | Printable Part V capacity or per-activity Form 3800/Form 1040 tax-use proof for every source. |
+| More than fifteen current-year sources, K-1s with other income/deduction/credit boxes, nonpassive investments beside K-1 credits, mixed passive/nonpassive sources beyond the one-investment pair, or mixed Form 3800 reporting lines 3, 24, and 33 | Printable Part V capacity or per-activity Form 3800/Form 1040 tax-use proof for every source. |
 | Prior-year unallowed credits in any category | Authenticated prior filed Worksheet 9 by origin year and activity, accepted-return reference, and current-year vintage allocation. |
 | Active-participation rental, rehabilitation/pre-1990 housing, or post-1989 low-income housing credits | Parts II-IV MAGI, Form 8582 line 9, and tax-on-reduced-income worksheets with native/PDF parity. |
 | Other tax methods, multiple Schedule E rentals, K-1 or farm-rental passive income, and passive dispositions | Reperform line 6 under the actual finalized Form 1040 method and complete passive net-income set. |

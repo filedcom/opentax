@@ -161,10 +161,21 @@ export function reconcileFiledForm8582CROrdinary(
       entry.source_origin.kind === PassiveCreditSourceOrigin.Partnership ||
       entry.source_origin.kind === PassiveCreditSourceOrigin.SCorporation
     );
+  const selfSources = input.credit_sources.filter((entry) =>
+    entry.source_origin.kind === PassiveCreditSourceOrigin.Self
+  );
+  const passThroughSources = input.credit_sources.filter((entry) =>
+    entry.source_origin.kind === PassiveCreditSourceOrigin.Partnership ||
+    entry.source_origin.kind === PassiveCreditSourceOrigin.SCorporation
+  );
+  const mixedCredit = selfSources.length > 0 &&
+    passThroughSources.length > 0 &&
+    selfSources.length + passThroughSources.length ===
+      input.credit_sources.length;
   if (
     !input.line6_ordinary_worksheet || input.credit_sources.length === 0 ||
     input.credit_sources.length > FORM3800_PRINTED_PART_V_ROWS || !source ||
-    (!selfCredit && !passThroughCredit) ||
+    (!selfCredit && !passThroughCredit && !mixedCredit) ||
     input.credit_sources.some((entry) =>
       entry.source_form !== "Form 8874" ||
       entry.category !== PassiveCreditCategory.Other ||
@@ -188,7 +199,7 @@ export function reconcileFiledForm8582CROrdinary(
     ].some((key) => nonemptySource(pending[key]))
   ) {
     throw new Error(
-      "Form 8582-CR printable ordinary route needs current-year self-earned Form 8874 or credit-only partnership/S corporation K-1 code AD sources within Form 3800 Part V capacity, plus one sourced passive rental income activity",
+      "Form 8582-CR printable ordinary route needs current-year self-earned Form 8874 and/or credit-only partnership/S corporation K-1 code AD sources within Form 3800 Part V capacity, plus one sourced passive rental income activity",
     );
   }
   const tax = calculateForm8582CRLine6OrdinaryWorksheet(
@@ -201,10 +212,11 @@ export function reconcileFiledForm8582CROrdinary(
     pending.f1099int,
   );
   let nonpassiveForm8874Credit = 0;
-  if (selfCredit) {
+  if (selfCredit || mixedCredit) {
     if (
-      nonemptySource(pending.k1_partnership) ||
-      nonemptySource(pending.k1_s_corp)
+      selfCredit &&
+      (nonemptySource(pending.k1_partnership) ||
+        nonemptySource(pending.k1_s_corp))
     ) {
       throw new Error("Form 8582-CR self-earned route has another K-1 source");
     }
@@ -216,21 +228,21 @@ export function reconcileFiledForm8582CROrdinary(
     const ordinaryCredits = rows.filter((row) =>
       !row.investment.subject_to_passive_activity_limit
     );
-    const sourceKeys = input.credit_sources.map((entry) =>
+    const sourceKeys = selfSources.map((entry) =>
       JSON.stringify([
         entry.activity_reference,
         entry.source_document_reference,
       ])
     );
     if (
-      credits.length !== input.credit_sources.length ||
-      ordinaryCredits.length > 1 ||
-      (ordinaryCredits.length === 1 && credits.length !== 1) ||
-      input.credit_sources.length + ordinaryCredits.length >
+      credits.length !== selfSources.length ||
+      ordinaryCredits.length > (mixedCredit ? 0 : 1) ||
+      (ordinaryCredits.length === 1 && selfSources.length !== 1) ||
+      selfSources.length + ordinaryCredits.length >
         FORM3800_PRINTED_PART_V_ROWS ||
       new Set(sourceKeys).size !== sourceKeys.length ||
       credits.some((row) =>
-        input.credit_sources.filter((entry) =>
+        selfSources.filter((entry) =>
           row.investment.passive_activity_reference ===
             entry.activity_reference &&
           row.investment.passive_source_document_reference ===
@@ -238,7 +250,7 @@ export function reconcileFiledForm8582CROrdinary(
           row.creditAmount === entry.current_year_credit
         ).length !== 1
       ) ||
-      input.credit_sources.some((entry) =>
+      selfSources.some((entry) =>
         credits.filter((row) =>
           row.investment.passive_activity_reference ===
             entry.activity_reference &&
@@ -253,8 +265,9 @@ export function reconcileFiledForm8582CROrdinary(
       );
     }
     nonpassiveForm8874Credit = ordinaryCredits[0]?.creditAmount ?? 0;
-  } else {
-    if (nonemptySource(pending.f8874)) {
+  }
+  if (passThroughCredit || mixedCredit) {
+    if (passThroughCredit && nonemptySource(pending.f8874)) {
       throw new Error(
         "Form 8582-CR K-1 route has another Form 8874 source",
       );

@@ -9,6 +9,14 @@ the partnership/S corporation credit and line 3 is the sum. Pages 2-3 are
 instructions, not filed form pages. The source PDF AcroForm has fields
 `f1_03`-`f1_38` for those six rows and `f1_39`/`f1_40` for lines 2/3.
 
+The current-year passive mixed route now prints line 1 from a self-earned
+investment and line 2 from sourced partnership/S corporation code AD K-1s
+on the same attached Form 8874. A bounded full return prints $5,000 and
+$4,000 on those lines, $9,000 on line 3, and carries only the $4,412 allowed
+by Form 8582-CR to Form 3800/Schedule 3/Form 1040. The two source families
+retain separate Form 3800 Part V references and Worksheet 9 balances.
+Positive and tamper fixtures are authored for the deferred bulk run.
+
 The bounded PDF route prints one source-backed `f8874` investment form when
 the investment/credit amounts retain whole-dollar print precision. For more
 than six investments, or when a CDE name or address cannot fit its form row,

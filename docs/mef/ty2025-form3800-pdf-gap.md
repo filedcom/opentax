@@ -403,6 +403,18 @@ Form 1040. A three-partnership/one-S-corporation return and the fifteen-row
 printable boundary have positive and tamper fixtures authored for the deferred
 run. Other source types and accepted prior-year credit imports remain closed.
 
+Self-earned Form 8874 investments and passive partnership/S corporation
+code AD K-1 credits can now share Form 3800 Part III line 1i within the
+fifteen-row Part V printable capacity. The direct Form 8874 line 1 investment
+credit and its line 2 K-1 credit reconcile to line 3; each activity retains
+its own Form 8582-CR 2025 Worksheet 9 balance. The current Part III row
+references the filed IRS8874; Part V binds that document only to self-earned
+details and prints issuer EINs for K-1 details. A $9,000 gross/$4,412 allowed
+three-source return and a five-source combination have native/PDF and
+source/prepared-detail tamper fixtures authored for deferred validation.
+Nonpassive investment plus K-1 credit mixes and accepted prior-year credit
+imports remain closed.
+
 The seven-investment New Markets return prints $3,500 on Form 3800 Part III
 line 1i and line 38, Schedule 3 line 6a, and Form 1040 line 20. Form 8874
 uses the required last-row "See attached" convention and an additional
