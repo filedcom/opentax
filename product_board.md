@@ -4,7 +4,7 @@
 
 Merged [PR #56](https://github.com/filedcom/opentax/pull/56) provides the
 TY2025 Form 1040 code checkpoint. This board contains **53 open TODOs and no
-completed checkboxes**. The **619 completed bounded items** and their exact limits live in the
+completed checkboxes**. The **622 completed bounded items** and their exact limits live in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md);
 the [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
 retains earlier evidence. A completed slice does not close a broader form,
@@ -28,7 +28,7 @@ diagnostic evidence, not a release pass.
 | Automated and artifact validation | 5 | A 134-case filled-PDF plan with an XSD gate is prepared; the prior full command reached 10,168 passes and 174 failures. |
 | IRS ATS and delivery | 5 | CLI v2.0.5 is published; artifact smoke and scenario assertions are prepared, while IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** The completed ledger records 619 bounded routes and
+**Implemented coverage.** The completed ledger records 622 bounded routes and
 prerequisites across income, deductions, credits, business and investment
 activity, foreign tax, retirement, health coverage, and supporting documents.
 Each entry names its supported source pattern, any return/native/PDF
@@ -104,6 +104,9 @@ reviewed facts, retained source bytes, signatures, and IRS acceptance differ;
 the overall evidence policy still needs a user decision.
 Positive 1099-PATR backup withholding now needs an owner-matched recipient TIN
 at finalized export.
+Schedule 1-A now rejects omitted qualifying tip employers; Schedule EIC export
+replays the claimed child's U.S. residency flag. The 2025 Schedule 2 graph and
+native/PDF projectors reject obsolete Form 5405 line 10 repayments.
 A nine-root workflow matrix states the remaining amendment, payment,
 recipient-copy, and optional preference decisions without assuming their outcome.
 The TY2025 v5.4 schema archive and extracted XSD have pinned local hashes and
