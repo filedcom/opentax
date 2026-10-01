@@ -355,7 +355,8 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
   {
     pendingKey: "f8611",
     exportKinds: ["pdf"],
-    reason: "Form 8611 has a native filing but no source-backed PDF",
+    reason:
+      "Form 8611 historical credit, qualified-basis, and interest records need source verification before printable filing",
     isActive: (fields) => nonempty(fields.f8611s),
   },
   {
