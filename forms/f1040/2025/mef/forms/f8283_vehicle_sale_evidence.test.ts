@@ -89,6 +89,49 @@ Deno.test("vehicle sale acknowledgment review binds exact PDF bytes to VIN, done
   );
 });
 
+Deno.test("vehicle sale acknowledgment review accepts Section A identifier lengths", async () => {
+  const { review, attachment } = await caseForReview();
+  for (const vehicle_vin of ["123456789012", "1234567890123456789"]) {
+    await verifyVehicleSaleAcknowledgmentEvidence(
+      { ...item, vehicle_vin },
+      { ...review, vehicle_vin },
+      attachment,
+      "123456789",
+    );
+  }
+  await assertRejects(() =>
+    verifyVehicleSaleAcknowledgmentEvidence(
+      { ...item, vehicle_vin: "123456789012345678" },
+      { ...review, vehicle_vin: "123456789012345678" },
+      attachment,
+      "123456789",
+    )
+  );
+});
+
+Deno.test("vehicle sale acknowledgment review rejects a zero-page PDF", async () => {
+  const { review, attachment } = await caseForReview();
+  const emptyBytes = await (await PDFDocument.create()).save();
+  const digest = new Uint8Array(
+    await crypto.subtle.digest("SHA-256", emptyBytes),
+  );
+  const pdfSha256 = Array.from(
+    digest,
+    (byte) => byte.toString(16).padStart(2, "0"),
+  ).join("");
+  await assertRejects(
+    () =>
+      verifyVehicleSaleAcknowledgmentEvidence(
+        item,
+        { ...review, pdf_sha256: pdfSha256 },
+        { ...attachment, bytes: emptyBytes },
+        "123456789",
+      ),
+    Error,
+    "needs a PDF page",
+  );
+});
+
 Deno.test("vehicle sale acknowledgment prerequisite rejects bytes, amount, owner, and document drift", async () => {
   const { review, attachment } = await caseForReview();
   const changedDocument = await PDFDocument.create();

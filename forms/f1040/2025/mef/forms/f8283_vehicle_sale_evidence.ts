@@ -13,7 +13,7 @@ export const vehicleSalePdfReviewSchema = z.object({
   pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/),
   donee_name: z.string().trim().min(1),
   donee_ein: z.string().regex(/^\d{9}$/),
-  vehicle_vin: z.string().regex(/^[A-Z0-9]{17}$/),
+  vehicle_vin: z.string().regex(/^[A-Z0-9]{1,17}$|^[A-Z0-9]{19}$/),
   sale_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   gross_proceeds: z.number().positive(),
   acknowledgment_furnished_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -98,10 +98,14 @@ export async function verifyVehicleSaleAcknowledgmentEvidence(
       "Form 8283 vehicle sale acknowledgment review differs from owner, donee, VIN, certified proceeds, or attached document",
     );
   }
+  let pdf: PDFDocument;
   try {
-    await PDFDocument.load(attachment.bytes);
+    pdf = await PDFDocument.load(attachment.bytes);
   } catch {
     throw new Error("Form 8283 vehicle acknowledgment is not a readable PDF");
+  }
+  if (pdf.getPageCount() === 0) {
+    throw new Error("Form 8283 vehicle acknowledgment needs a PDF page");
   }
   const digest = new Uint8Array(
     await crypto.subtle.digest("SHA-256", attachment.bytes),
