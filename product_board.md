@@ -20,125 +20,40 @@ coverage decision, or release gate.
 | Automated and artifact validation | 5 | 0 | The merged code checkpoint passed 10,006/10,006 local tests; the new implementation batch is unrun. |
 | IRS ATS and delivery | 5 | 1 | CLI v2.0.5 is published; IRS ATS acceptance and a filing-ready release remain open. |
 
-**Implemented coverage.** Bounded routes now connect selected wage, information
-return, K-1, foreign-tax, mortgage, business, rental, investment, IRA, HSA,
-Marketplace, education, dependent-credit, household-employment, and business
-credit sources to Form 1040. The ledger details source checks, owner identity,
-calculations, native MeF, PDF projection, and authored positive or tamper cases
-for each completed slice. Recent work includes three-country Form 1116 income,
-two-owner Form 8889 distributions and rollovers, Form 6251 multi-lot AMT basis
-losses, Form 3800 mixed and Form 8826 direct-plus-K-1 credits, Form 5471
-Schedule G answers and Schedule R boundary, guarded Forms 4255, 8611, 965-A,
-and initial/annual 8854 PDFs, staged Form 8621 section 1291 pages and separate
-Part V statements, and a Form 8962 shared policy with a claimed dependent and
-another tax family. The latest batch also adds two-employer Form 4562 income
-limits, mixed Form 4797 section 1245 sales, and Form 8815 savings-bond interest
-and MAGI reconciliation, mixed spouse coverage months for Form 7206, and a
-spouse-owned nondeductible contribution for Form 8606, and direct business-area
-repairs for Form 8829, a short-term capital installment sale for Form 6252,
-and reviewed-source prerequisites for Forms 172 and 8801.
-Draft return PDFs now use a faint centered gray
-watermark.
-The completed ledger records the finished slices; the checklist below records
-only the work needed to close their parent paths.
-Several candidates intentionally stop at source review because prior accepted
-returns, IRS notices, signatures, or other authoritative bytes cannot yet be
-authenticated.
+**Implemented coverage.** The completed ledger records 418 bounded routes and
+prerequisites across income, deductions, credits, business and investment
+activity, foreign tax, retirement, health coverage, and supporting documents.
+Each entry names its supported source pattern, any return/native/PDF
+reconciliation, authored fixtures, and remaining limits. The checklist below
+contains only open parent work; a completed slice does not close its parent form.
 
-**Merged code checkpoint.** PR #56 was squash-merged as `48f69237` on
-2026-10-01. The latest bounded slices add a qualifying prior
-ISO sale below both bases on Form 6251, four reported residence states on Form
-8962, and positive two-business Form 8995-A QBI with an extra-companion
-rejection. The prior batch includes a Schedule J
-election combining two positive Schedule F farms and one evidenced fishing
-Schedule C activity, plus a filer-owned Form 8835 trash-combustion facility
-through Form 3800 and the printable packet. A two-copy Form 4972 NUA election
-and a retained Form 8995-A current QBI loss are also recorded. The preceding
-four-form batch
-added a Form 6251
-regular long-term gain/AMT capital-loss crossover, one overlapping Form 8962
-Marketplace month, two separately sourced Form 8283 Section B equipment gifts,
-and a paired Form 8889/5329 Medicare-onset excess case. Earlier work
-added Form 6251 capital-loss caps and the opposite gain/loss crossover, Form
-1116 Schedule B vintage and two-country carryover reconciliation, Form 8582
-activity-ledger and Part IX paths, Form 3800 mixed credits, Form 8962 corrected
-policy months, and a staged Form 8621 prior-distribution record check. These
-are bounded slices; each parent form TODO below still has wider inputs or
-evidence gates. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md)
-names the exact supported inputs and remaining gates for every slice.
-The code checkpoint is locally green. The branch was rebased onto
-`origin/main` at `80647e73` on 2026-10-01; clergy source-evidence rejection and
-the PR's shared Schedule SE calculation were retained at the two conflict
-sites. The repaired branch passes the complete local test suite. This is a
-code checkpoint; coverage decisions, manual packet inspection, and IRS ATS
-acceptance remain open below.
+**Merged checkpoint.** [PR #56](https://github.com/filedcom/opentax/pull/56)
+was merged as `48f69237` on 2026-10-01. Its full local suite at `c0d45cb0`
+passed 10,006/10,006 tests with no ignored cases; a separate TY2025 v5.4 XSD
+batch passed 181/181. Those results apply to the merged checkpoint, not the
+current PR. [CLI v2.0.5](https://github.com/filedcom/opentax/releases/tag/v2.0.5)
+was published from that merge after platform builds, a 34/34 pre-merge smoke
+suite, and a downloaded-binary smoke. It exports a return but does not transmit
+one. The [September 30 checkpoint](docs/mef/ty2025-product-board-checkpoint-2026-09-30.md)
+retains earlier evidence.
 
-**Coverage still to decide.** Reconcile the 139 registered native MeF
-descriptors, 109 PDF descriptors, and 211 TY2025 IRS schema roots (112 source
-literals, 99 without) with the form audit and applicability crosswalk. Set
-the ownership and workflow boundaries for entity-associated attachments,
-amendments, payment/account forms, and optional filing forms. Resolve whether
-structured reviewed facts alone meet the evidence standard for complex
-source records. Every retained positive route still needs an unbroken
-source-to-calculation-to-Form-1040-to-native-MeF-to-PDF-to-attachment chain;
-otherwise its named fail-closed boundary needs user approval.
+**Current implementation batch.** Draft [PR #59](https://github.com/filedcom/opentax/pull/59)
+extends sourced routes and reconciliation, including the recent Forms 4562, 4797,
+8815, 7206, 8606, 8829, and 6252 slices and reviewed-source prerequisites for
+Forms 172 and 8801. Draft return PDFs now use a faint centered gray watermark.
+The new positive and tamper fixtures are authored but the agreed full-batch test,
+XSD checks, and filled-PDF visual review have not run on this branch.
 
-**Validation and delivery.** `deno task test` at `c0d45cb0` completed on
-2026-10-01: **10,006 passed, 0 failed, 0 ignored** in 27m13s. The
-[local log](.state/research/ty2025-pr56-final-green-check-2026-10-01.log)
-records the complete command. It used Deno 2.7.7, TypeScript 5.9.2, and
-libxml 2.9.13. The corrected TY2025 v5.4
-[XSD validation file](.state/research/pr56-xsd-focused.log) separately passed
-**181/181**, including source-backed positive cases and explicit stops where
-authenticated prior filing bytes are missing. The full suite includes
-source-to-XML and filled-PDF integration fixtures; the separate
-[sixty-case manual render and inspection batch](docs/mef/ty2025-form1040-validation-batch.md)
-remains open. The Form 8978 negative Schedule 2 line 18 PDF route remains
-closed pending a supported signed-offset projection. IRS ATS transmission and
-acceptance with issued credentials are not yet evidenced. Resolve the open
-scope and form paths, inspect the prepared PDFs, then complete ATS and review
-before declaring the TY2025 filing family ready for accepted transmission.
-
-**CLI release checkpoint.** The user requested a new CLI version from the
-rebased PR as a bounded code release, without claiming IRS filing acceptance.
-The pre-merge signed W-2 CLI, MeF archive, and filled-PDF smoke suite passed
-**34/34** on 2026-10-01
-([local log](.state/research/pr56-release-smoke-premerge-2026-10-01.log)).
-A locally compiled binary reported `opentax dev` and listed 211 registered
-nodes. [CLI v2.0.5](https://github.com/filedcom/opentax/releases/tag/v2.0.5)
-was published from merged commit `48f69237` after all five platform builds
-and the release job passed. The published macOS ARM binary's SHA-256 matched
-the release page; downloaded-binary smoke verified version `2.0.5`, 211
-registered nodes, a synthetic W-2 MeF XML document valid against TY2025 v5.4,
-and a parseable two-page PDF
-([local log](.state/research/pr56-v2.0.5-binary-smoke.log)). The release notes
-state that CLI export does not transmit returns. The manual PDF and IRS ATS
-gates above remain open.
-
-**Current implementation batch (unrun).** On draft [PR #59](https://github.com/filedcom/opentax/pull/59), authored
-bounded changes extend Form 8962 reported interstate moves to 12 distinct
-chronological states, pair Form 8820 self-earned and partnership K-1 orphan-drug
-credits in Form 3800 Part V, join one traced-loan Form 4952 qualified-dividend
-election to its tax calculation and output, and carry each Form 1099-MISC box 8
-payer into Schedule 1's type statement while reconciling the aggregate. A
-four-gift Form 8283 Section A route, a paired January Medicare-onset
-Form 8889/5329 excess route, a two-payer Form 1116 ordinary-dividend route,
-a one-spouse NUA Form 4972 pair, a two-farm Form 8582 passive-loss allocation,
-a two-employer dependent Form 8962 MAGI route, a three-issuer Form 8995
-REIT-only route, a two-mine Form 6251 AMT route, and two partnership
-orphan-drug credits on Form 3800, and a higher-value unrelated-use art gift on
-Form 8283, a two-payer Form 4952 dividend election, and a Form 8835 biomass
-facility lessee, two-country Form 1116 ordinary dividends, and a paired HSA
-other-coverage excess route, a farm loss against two rental profits on Form
-8582, dependent MAGI from two W-2s plus interest on Form 8962, and one
-Form 8995-A business with a sourced REIT dividend and a fee-basis Form 2106
-job, spouse coverage on Form 7206, and a reviewed Form 1099-DIV box 13
-private-activity-bond AMT source, two W-2 employers on Form 4562, and mixed
-section 1245 investment recapture on Form 4797 are also authored. Draft PDFs
-now have a faint centered gray watermark.
-Positive and tamper fixtures are authored. These changes have not passed the
-agreed bulk test, XSD, or filled-PDF review, and the parent TODOs below remain
-open for their wider combinations and evidence gates.
+**Coverage and release gates.** The last audit counted 139 registered native MeF
+descriptors, 109 PDF descriptors, and 211 TY2025 IRS schema roots. Reconcile their
+applicability, source and owner evidence, conditional attachments, and
+unsupported-path decisions before calling the filing family complete. Every
+retained positive route needs source-to-Form-1040-to-native-MeF-to-PDF agreement;
+otherwise it needs a named, user-approved fail-closed boundary. After
+implementation, run the single full test batch, validate retained XML against
+the IRS schema and business rules, inspect the sixty synthetic filled-PDF cases,
+and complete IRS ATS submission with issued credentials and acknowledgments.
+These gates and a filing-ready release remain open.
 
 ## Scope and completion rules
 
