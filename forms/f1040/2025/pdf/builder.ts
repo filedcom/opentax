@@ -91,14 +91,15 @@ function fillEntry(
     if (entry.kind === "text") {
       // IRS convention: leave numeric fields blank when value is zero —
       // unless the descriptor marks the line as printZero (explicit "0").
-      if (
-        typeof value === "number" && Math.round(value) === 0 &&
-        !("printZero" in entry && entry.printZero)
-      ) return;
-      const text = typeof value === "number"
-        ? Math.round(value).toString()
-        : String(value);
-      form.getTextField(entry.pdfField).setText(text);
+      const blankZero = typeof value === "number" && Math.round(value) === 0 &&
+        !("printZero" in entry && entry.printZero);
+      const field = form.getTextField(entry.pdfField);
+      if (!blankZero) {
+        const text = typeof value === "number"
+          ? Math.round(value).toString()
+          : String(value);
+        field.setText(text);
+      }
     } else if (entry.kind === "checkbox") {
       const box = form.getCheckBox(entry.pdfField);
       value ? box.check() : box.uncheck();
@@ -121,14 +122,16 @@ function fillEntry(
       for (const extraField of entry.extraPdfFields) {
         try {
           if (entry.kind === "text") {
-            if (
-              typeof value === "number" && Math.round(value) === 0 &&
-              !("printZero" in entry && entry.printZero)
-            ) continue;
-            const text = typeof value === "number"
-              ? Math.round(value).toString()
-              : String(value);
-            form.getTextField(extraField).setText(text);
+            const blankZero = typeof value === "number" &&
+              Math.round(value) === 0 &&
+              !("printZero" in entry && entry.printZero);
+            const field = form.getTextField(extraField);
+            if (!blankZero) {
+              const text = typeof value === "number"
+                ? Math.round(value).toString()
+                : String(value);
+              field.setText(text);
+            }
           } else if (entry.kind === "checkbox") {
             const box = form.getCheckBox(extraField);
             value ? box.check() : box.uncheck();

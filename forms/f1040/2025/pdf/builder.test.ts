@@ -412,6 +412,77 @@ Deno.test("fillFormPdf validates an unselected Form 1040 checkbox field", async 
   }
 });
 
+Deno.test("fillFormPdf validates present blank-zero text fields and extra fields", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  const descriptor = {
+    pendingKey: "f1040",
+    pdfUrl: F1040_PDF_URL,
+    fields: [
+      { kind: "text" as const, domainKey: "total", pdfField: "total" },
+      {
+        kind: "text" as const,
+        domainKey: "zero_line",
+        pdfField: "zero_line",
+        extraPdfFields: ["zero_line_copy"],
+      },
+      { kind: "text" as const, domainKey: "optional", pdfField: "optional" },
+    ],
+  };
+  try {
+    await seedCache(
+      tmpDir,
+      F1040_PDF_URL,
+      await makeMinimalF1040Pdf(["total"], false),
+    );
+    await assertRejects(
+      () =>
+        fillFormPdf(
+          descriptor,
+          { total: 100, zero_line: 0 },
+          undefined,
+          tmpDir,
+        ),
+      Error,
+      'failed to fill field "zero_line"',
+    );
+
+    await seedCache(
+      tmpDir,
+      F1040_PDF_URL,
+      await makeMinimalF1040Pdf(["total", "zero_line"], false),
+    );
+    await assertRejects(
+      () =>
+        fillFormPdf(
+          descriptor,
+          { total: 100, zero_line: 0 },
+          undefined,
+          tmpDir,
+        ),
+      Error,
+      'failed to fill extra field "zero_line_copy"',
+    );
+
+    await seedCache(
+      tmpDir,
+      F1040_PDF_URL,
+      await makeMinimalF1040Pdf(
+        ["total", "zero_line", "zero_line_copy"],
+        false,
+      ),
+    );
+    const filled = await fillFormPdf(
+      descriptor,
+      { total: 100, zero_line: 0 },
+      undefined,
+      tmpDir,
+    );
+    assertEquals(filled instanceof Uint8Array, true);
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
 Deno.test("fillFormPdf: a missing row AcroForm field stops the export", async () => {
   const tmpDir = await Deno.makeTempDir();
   try {
