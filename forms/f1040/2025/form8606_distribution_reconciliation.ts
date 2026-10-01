@@ -1,9 +1,12 @@
 import { inputSchema as f1099rSchema } from "../nodes/inputs/f1099r/index.ts";
 import {
+  currentContributionSourceSchema,
   distributionEvidenceSchema,
   IraOwner,
   printSchema,
 } from "../nodes/intermediate/forms/form8606/index.ts";
+import { inputSchema as iraWorksheetSchema } from "../nodes/intermediate/worksheets/ira_deduction_worksheet/index.ts";
+import { inputSchema as w2Schema } from "../nodes/inputs/w2/index.ts";
 import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
 
 /** The source and all printable Part I lines for one taxpayer IRA distribution. */
@@ -22,8 +25,16 @@ export function reconcileForm8606Distribution(
   const evidence = distributionEvidenceSchema.parse(
     fields.distribution_evidence,
   );
+  const contributionSource = fields.current_contribution_source === undefined
+    ? undefined
+    : currentContributionSourceSchema.parse(fields.current_contribution_source);
+  const contribution = contributionSource?.form5498.box1_ira_contributions ?? 0;
+  const received = contributionSource?.contribution_receipt.received_on;
+  const line4 = received?.startsWith("2026-") ? contribution : 0;
   const item = entered[0];
-  const basis = evidence.prior_form8606.filed_line14_basis;
+  const priorBasis = evidence.prior_form8606.filed_line14_basis;
+  const totalBasis = priorBasis + contribution;
+  const basis = totalBasis - line4;
   const distribution = item?.box1_gross_distribution ?? 0;
   const yearEnd = evidence.year_end_statement.total_fair_market_value;
   const denominator = distribution + yearEnd;
@@ -37,6 +48,46 @@ export function reconcileForm8606Distribution(
   );
   const taxable = distribution - nontaxable;
   const f1040 = pending?.f1040 as Record<string, unknown> | undefined;
+  const schedule1 = pending?.schedule1 as Record<string, unknown> | undefined;
+  const worksheet = contributionSource
+    ? iraWorksheetSchema.safeParse(pending?.ira_deduction_worksheet)
+    : undefined;
+  const w2s = contributionSource ? w2Schema.safeParse(pending?.w2) : undefined;
+  const receipt = contributionSource?.contribution_receipt;
+  const form5498 = contributionSource?.form5498;
+  const contributionSourcesMatch = !contributionSource || (
+    receipt !== undefined && form5498 !== undefined &&
+    received !== undefined &&
+    received >= "2025-01-01" && received <= "2026-04-15" &&
+    !Number.isNaN(Date.parse(`${received}T00:00:00Z`)) &&
+    new Date(`${received}T00:00:00Z`).toISOString().slice(0, 10) === received &&
+    receipt.contribution_amount === contribution &&
+    receipt.owner_ssn === filer?.primarySSN &&
+    form5498.owner_ssn === filer?.primarySSN &&
+    receipt.custodian_ein === form5498.custodian_ein &&
+    new Set([
+        receipt.source_document_reference,
+        form5498.source_document_reference,
+        evidence.prior_form8606.source_document_reference,
+        evidence.year_end_statement.source_document_reference,
+        evidence.form1099r_source_document_reference,
+      ]).size === 5 &&
+    worksheet?.success === true && w2s?.success === true &&
+    w2s.data.w2s.length === 1 &&
+    worksheet.data.ira_contribution === contribution &&
+    worksheet.data.form8606_filing_details?.owner === IraOwner.Taxpayer &&
+    worksheet.data.form8606_filing_details
+        ?.no_ira_distributions_or_conversions_confirmed === false &&
+    JSON.stringify(worksheet.data.form8606_current_contribution_source) ===
+      JSON.stringify(contributionSource) &&
+    worksheet.data.active_participant === true &&
+    worksheet.data.magi === f1040?.line11_agi &&
+    w2s.data.w2s[0].box13_retirement_plan === true &&
+    w2s.data.w2s[0].employee_ssn?.replace(/\D/g, "") ===
+      filer?.primarySSN &&
+    f1040?.line11_agi === w2s.data.w2s[0].box1_wages + taxable &&
+    (schedule1?.line20_ira_deduction ?? 0) === 0
+  );
   if (
     !filer || filer.filingStatus !== FilingStatus.Single ||
     !filer.fullName?.trim() ||
@@ -45,10 +96,13 @@ export function reconcileForm8606Distribution(
     item.no_distribution_received === true ||
     item.source_document_reference !==
       evidence.form1099r_source_document_reference ||
-    item.prior_ira_basis !== basis ||
+    item.prior_ira_basis !== priorBasis ||
     (item.year_end_ira_value ?? 0) !== yearEnd ||
     JSON.stringify(item.form8606_distribution_evidence) !==
       JSON.stringify(evidence) ||
+    evidence.no_current_nondeductible_contribution_confirmed !==
+      (contributionSource === undefined) ||
+    !contributionSourcesMatch ||
     evidence.prior_form8606.owner_ssn !== filer.primarySSN ||
     evidence.year_end_statement.owner_ssn !== filer.primarySSN ||
     fields.filing_details?.owner !== IraOwner.Taxpayer ||
@@ -57,10 +111,10 @@ export function reconcileForm8606Distribution(
     fields.source_traditional_distributions !== distribution ||
     fields.source_roth_conversion !== 0 ||
     fields.source_roth_distribution !== 0 ||
-    fields.print_line1_nondeductible !== 0 ||
-    fields.print_line2_prior_basis !== basis ||
-    fields.print_line3_total_basis !== basis ||
-    fields.print_line4_post_year_contributions !== 0 ||
+    fields.print_line1_nondeductible !== contribution ||
+    fields.print_line2_prior_basis !== priorBasis ||
+    fields.print_line3_total_basis !== totalBasis ||
+    fields.print_line4_post_year_contributions !== line4 ||
     fields.print_line5_current_basis !== basis ||
     fields.print_line6_year_end_value !== yearEnd ||
     fields.print_line7_distributions !== distribution ||
@@ -70,7 +124,7 @@ export function reconcileForm8606Distribution(
     fields.print_line11_nontaxable_conversion !== 0 ||
     fields.print_line12_nontaxable_distribution !== nontaxable ||
     fields.print_line13_nontaxable !== nontaxable ||
-    fields.print_line14_remaining_basis !== basis - nontaxable ||
+    fields.print_line14_remaining_basis !== totalBasis - nontaxable ||
     fields.print_line15a_not_converted !== taxable ||
     fields.print_line15b_disaster !== 0 ||
     fields.print_line15c_taxable !== taxable ||

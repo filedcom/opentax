@@ -8,6 +8,7 @@ import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import {
+  currentContributionSourceSchema,
   filingDetailsSchema,
   form8606,
   zeroBasisSourceSchema,
@@ -41,6 +42,8 @@ export const inputSchema = z.object({
   spouse_active_participant: z.boolean().optional(),
   form8606_filing_details: filingDetailsSchema.optional(),
   form8606_zero_basis_source: zeroBasisSourceSchema.optional(),
+  form8606_current_contribution_source: currentContributionSourceSchema
+    .optional(),
 });
 
 type IraDeductionInput = z.infer<typeof inputSchema>;
@@ -224,8 +227,12 @@ class IraDeductionWorksheetNode extends TaxNode<typeof inputSchema> {
       outputs.push(
         this.outputNodes.output(form8606, {
           nondeductible_contributions: nonDeductible,
-          filing_details: input.form8606_filing_details,
+          ...(input.form8606_current_contribution_source
+            ? {}
+            : { filing_details: input.form8606_filing_details }),
           zero_basis_source: input.form8606_zero_basis_source,
+          current_contribution_source:
+            input.form8606_current_contribution_source,
         }),
       );
     }

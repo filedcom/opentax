@@ -16,7 +16,6 @@ import { form4972Elections } from "../../intermediate/forms/form4972/elections.t
 import {
   distributionEvidenceSchema,
   form8606,
-  type Form8606Input,
   IraOwner,
   taxableTraditionalDistribution,
 } from "../../intermediate/forms/form8606/index.ts";
@@ -929,7 +928,7 @@ function routedThrough8606PartI(item: R1099Item): boolean {
 // Form 8606 Part I payload for a traditional IRA distribution carrying that basis.
 // prior_ira_basis is the total nondeductible basis carried into this year (line 2).
 // year_end_ira_value is the FMV of remaining traditional IRAs on 12/31 (line 6; 0 if fully distributed).
-function form8606PartIInput(item: R1099Item): Form8606Input {
+function form8606PartIInput(item: R1099Item) {
   const evidence = item.form8606_distribution_evidence;
   if (
     !evidence || item.ts !== "T" || !item.source_document_reference ||
@@ -951,7 +950,9 @@ function form8606PartIInput(item: R1099Item): Form8606Input {
     );
   }
   return {
-    nondeductible_contributions: 0,
+    ...(evidence.no_current_nondeductible_contribution_confirmed
+      ? { nondeductible_contributions: 0 }
+      : {}),
     prior_basis: item.prior_ira_basis!,
     traditional_distributions: item.box1_gross_distribution,
     year_end_ira_value: item.year_end_ira_value ?? 0,
@@ -1061,10 +1062,21 @@ function form5329Outputs(items: R1099Items): NodeOutput[] {
       item.form8915f_treatment === undefined,
   );
   return earlyItems.map((item) => {
+    if (
+      item.form8606_distribution_evidence
+        ?.no_current_nondeductible_contribution_confirmed === false
+    ) {
+      throw new Error(
+        "Form 5329 early IRA distribution with a current-year Form 8606 contribution needs a finalized contribution basis join",
+      );
+    }
     // Form 5329 line 1 takes the early distribution "includible in income". With
     // nondeductible basis that is the Form 8606 line 15c taxable amount, not box 2a.
     const taxable = routedThrough8606PartI(item)
-      ? taxableTraditionalDistribution(form8606PartIInput(item))
+      ? taxableTraditionalDistribution({
+        ...form8606PartIInput(item),
+        nondeductible_contributions: 0,
+      })
       : item.box2a_taxable_amount ?? item.box1_gross_distribution;
     return output(form5329, {
       owner_entries: [{

@@ -1,7 +1,8 @@
 # TY2025 Form 8606 coverage gap
 
 Status: bounded taxpayer-owned no-activity and one prior-basis distribution
-Part I native MeF/PDF routes written but unrun. Tests, local XSD validation,
+Part I native MeF/PDF routes, including one sourced 2025 nondeductible
+contribution with that distribution, written but unrun. Tests, local XSD validation,
 filled PDF rendering, and IRS ATS remain outstanding.
 
 ## Structural mismatch
@@ -49,11 +50,21 @@ unsupported assumption.
    conversion, rollover, QCD, HSA transfer, or disaster amount. It computes
    and prints all Part I lines 1–15c, including a three-decimal basis ratio,
    and replays the 1099-R, source owners, Form 1040 lines 4a/4b, native XML,
-   and two-page PDF. Positive and tamper fixtures are authored but unrun.
-   The [2025 instructions](https://www.irs.gov/pub/irs-pdf/i8606.pdf) also
-   require line 4 for 2025 contributions made during January 1 through
-   April 15, 2026. That route, current-year rollover/repayment,
-   qualified-disaster, first-time-homebuyer, and mixed/multiple IRA sources
+   and two-page PDF. A second bounded variant adds one 2025 Form 5498 box 1
+   nondeductible contribution, a distinct custodian receipt naming its 2025
+   tax-year designation and actual receipt date, and an IRA deduction worksheet
+   matched to one plan-covered W-2 and the finalized AGI. Its Form 5498,
+   receipt, 1099-R, year-end statement, and filed prior Form 8606 references
+   must be distinct and their owner/custodian facts agree. For a receipt dated
+   January 1 through April 15, 2026, all of line 1 also prints on line 4 and
+   is excluded from line 5's 2025 distribution basis; for a 2025 receipt,
+   line 4 is zero and line 5 includes it. Lines 1–15c, remaining line 14
+   basis, Form 1040 lines 4a/4b, native XML, and PDF replay both timings.
+   This follows the [2025 Form 8606 and instructions](https://www.irs.gov/instructions/i8606)
+   and [2025 Form 5498](https://www.irs.gov/pub/irs-prior/f5498--2025.pdf).
+   Full-return and source/timing/return tamper fixtures are authored but unrun.
+   Current-year rollover/repayment, qualified-disaster, first-time-homebuyer,
+   other contribution or distribution sources, and mixed/multiple IRA sources
    remain open.
 3. The Part III calculation subtracts combined contribution and conversion
    bases from gross Roth distribution in one step. The form orders those

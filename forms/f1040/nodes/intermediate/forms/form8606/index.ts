@@ -37,7 +37,7 @@ export const distributionEvidenceSchema = z.object({
     total_fair_market_value: z.number().int().nonnegative(),
   }).strict(),
   form1099r_source_document_reference: z.string().trim().min(1),
-  no_current_nondeductible_contribution_confirmed: z.literal(true),
+  no_current_nondeductible_contribution_confirmed: z.boolean(),
   no_other_traditional_ira_distribution_or_conversion_confirmed: z.literal(
     true,
   ),
@@ -61,6 +61,27 @@ export const zeroBasisSourceSchema = z.object({
     source_document_reference: z.string().trim().min(1),
     owner_ssn: z.string().regex(/^\d{9}$/),
     filed_line14_basis: z.literal(0),
+  }).strict(),
+}).strict();
+
+export const currentContributionSourceSchema = z.object({
+  form5498: zeroBasisSourceSchema.shape.form5498,
+  contribution_receipt: z.object({
+    source_document_reference: z.string().trim().min(1),
+    custodian_ein: z.string().regex(/^\d{9}$/),
+    owner_ssn: z.string().regex(/^\d{9}$/),
+    designated_tax_year: z.literal(2025),
+    received_on: z.string().regex(/^2025-\d{2}-\d{2}$|^2026-\d{2}-\d{2}$/)
+      .refine((value) => {
+        const date = new Date(`${value}T00:00:00Z`);
+        return !Number.isNaN(date.valueOf()) &&
+          date.toISOString().slice(0, 10) === value &&
+          value >= "2025-01-01" && value <= "2026-04-15";
+      }, {
+        message:
+          "2025 IRA contribution receipt must be dated by April 15, 2026",
+      }),
+    contribution_amount: z.number().int().positive(),
   }).strict(),
 }).strict();
 
@@ -98,6 +119,7 @@ export const inputSchema = z.object({
   // Required source attestations and owner for the bounded no-activity MeF path.
   filing_details: filingDetailsSchema.optional(),
   zero_basis_source: zeroBasisSourceSchema.optional(),
+  current_contribution_source: currentContributionSourceSchema.optional(),
   distribution_evidence: distributionEvidenceSchema.optional(),
 });
 
@@ -130,6 +152,7 @@ export const printSchema = z.object({
   source_roth_basis_conversions: z.number().nonnegative(),
   filing_details: filingDetailsSchema.optional(),
   zero_basis_source: zeroBasisSourceSchema.optional(),
+  current_contribution_source: currentContributionSourceSchema.optional(),
   distribution_evidence: distributionEvidenceSchema.optional(),
 });
 
@@ -213,7 +236,13 @@ type PartIResult = {
 
 function reviewedDistributionPartI(input: Form8606Input) {
   const evidence = input.distribution_evidence!;
-  const basis = input.prior_basis ?? 0;
+  const priorBasis = input.prior_basis ?? 0;
+  const contribution = input.nondeductible_contributions;
+  const source = input.current_contribution_source;
+  const received = source?.contribution_receipt.received_on;
+  const postYear = received?.startsWith("2026-") ? contribution : 0;
+  const basis = priorBasis + contribution - postYear;
+  const totalBasis = priorBasis + contribution;
   const distribution = input.traditional_distributions ?? 0;
   const yearEndValue = input.year_end_ira_value ?? 0;
   const denominator = yearEndValue + distribution;
@@ -221,10 +250,22 @@ function reviewedDistributionPartI(input: Form8606Input) {
     input.filing_details?.owner !== IraOwner.Taxpayer ||
     input.filing_details.no_ira_distributions_or_conversions_confirmed !==
       false ||
-    input.nondeductible_contributions !== 0 || basis <= 0 ||
+    priorBasis <= 0 || basis <= 0 ||
+    (evidence.no_current_nondeductible_contribution_confirmed !==
+      (source === undefined)) ||
+    (source !== undefined && (
+      contribution <= 0 ||
+      source.form5498.box1_ira_contributions !== contribution ||
+      source.contribution_receipt.contribution_amount !== contribution ||
+      source.contribution_receipt.custodian_ein !==
+        source.form5498.custodian_ein ||
+      source.contribution_receipt.owner_ssn !== source.form5498.owner_ssn ||
+      !received || received < "2025-01-01" || received > "2026-04-15"
+    )) ||
+    (source === undefined && contribution !== 0) ||
     distribution <= 0 || (input.roth_conversion ?? 0) !== 0 ||
     (input.roth_distribution ?? 0) !== 0 ||
-    evidence.prior_form8606.filed_line14_basis !== basis ||
+    evidence.prior_form8606.filed_line14_basis !== priorBasis ||
     evidence.year_end_statement.total_fair_market_value !== yearEndValue ||
     denominator <= 0
   ) {
@@ -242,9 +283,9 @@ function reviewedDistributionPartI(input: Form8606Input) {
   return {
     taxableTraditionalDist: taxable,
     taxableConversionAmt: 0,
-    line14RemainingBasis: basis - nontaxable,
+    line14RemainingBasis: totalBasis - nontaxable,
     print: {
-      print_line4_post_year_contributions: 0,
+      print_line4_post_year_contributions: postYear,
       print_line5_current_basis: basis,
       print_line6_year_end_value: yearEndValue,
       print_line7_distributions: distribution,
@@ -398,6 +439,7 @@ class Form8606Node extends TaxNode<typeof inputSchema> {
       source_roth_basis_conversions: input.roth_basis_conversions ?? 0,
       filing_details: input.filing_details,
       zero_basis_source: input.zero_basis_source,
+      current_contribution_source: input.current_contribution_source,
       distribution_evidence: input.distribution_evidence,
       ...(reviewed ? reviewed.print : {}),
       ...(!reviewed && distributions + conversions > 0

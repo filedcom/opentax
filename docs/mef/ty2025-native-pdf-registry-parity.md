@@ -1,10 +1,12 @@
 # TY2025 Form 1040 native/PDF registry parity audit
 
-Static comparison on 2026-09-28 of the descriptors actually registered in
+Static comparison updated 2026-10-01 of the descriptors actually registered in
 `forms/f1040/2025/mef/forms/index.ts` and `forms/f1040/2025/pdf/forms/index.ts`,
 checked against `forms/f1040/2025/attachment-coverage.ts`. This is a
 printable-return coverage audit, not an IRS rule, passed test, or new product
-exclusion. No test, XSD, filled PDF, or ATS run was performed.
+exclusion. The indexes currently hold **130 native descriptors and 94 PDF
+descriptors**. No test, XSD, filled PDF, or ATS run was performed for this
+inventory update.
 
 ## Priority 1: native taxpayer forms with no PDF descriptor
 
@@ -36,6 +38,15 @@ The later W-2G route now has a registered recipient Copy B PDF descriptor and
 an inspected five-page synthetic packet. It reproduces reviewed source facts;
 the issued-copy bytes and any required signature remain separate evidence
 gates. This does not change the parent taxpayer-form priority-1 list.
+
+Form 3468's bounded trust-owned Part V route now has both registered
+descriptors. Form 8992, its Schedule A, and Form 5471 Schedule I-1 also have
+native and PDF descriptors for one wholly owned Category 5a CFC. Their
+source/return checks and fixtures are written but unrun. The Form 5471 parent
+and other mandatory Category 5a schedules are still missing, so the
+attachment-coverage and Schedule 1 export guards continue to reject positive
+filing. Registry parity for those three documents does not imply a complete
+foreign corporation filing packet.
 
 Form 3800 was on the initial parity list. Its nine-page parent descriptor now
 uses the native prepared parts; one- and two-facility geothermal returns and a
