@@ -19,6 +19,10 @@ import {
   form8582,
   priorYear8582SourceSchema,
 } from "../../intermediate/forms/form8582/index.ts";
+import {
+  filed2024Form8582RecordSchema,
+  reconcileFiled2024Form8582Record,
+} from "../../intermediate/forms/form8582/prior_year_import.ts";
 import { form8960 } from "../../intermediate/forms/form8960/index.ts";
 import {
   form4797,
@@ -213,6 +217,10 @@ export const itemSchema = z.object({
 
 export const inputSchema = z.object({
   schedule_es: z.array(itemSchema).optional().default([]),
+  // Reviewed filed-year record, joined to every positive 2025 prior PAL by
+  // durable activity ID and reporting character. Acceptance is verified by
+  // the export boundary, not inferred from this entered reference.
+  filed_2024_form8582_record: filed2024Form8582RecordSchema.optional(),
   estate_trust_rows: z.array(
     z.object({
       estate_trust_name: z.string().trim().min(1),
@@ -1232,6 +1240,23 @@ class ScheduleENode extends TaxNode<typeof inputSchema> {
     const deductibleNet = entireLoss === undefined
       ? totalNet + passiveCurrentLoss(schedule_es) + farmCurrentLoss(farms)
       : totalNet - (schedule_es[0].prior_unallowed_passive_operating ?? 0);
+    const passiveLossOutputs = entireLoss === undefined
+      ? form8582Outputs(schedule_es, farms)
+      : [];
+    if (parsed.filed_2024_form8582_record) {
+      const form8582Input = passiveLossOutputs.find((item) =>
+        item.nodeType === "form8582"
+      )?.fields;
+      if (!form8582Input) {
+        throw new Error(
+          "Filed 2024 Form 8582 record needs a linked 2025 passive-loss activity",
+        );
+      }
+      reconcileFiled2024Form8582Record(
+        parsed.filed_2024_form8582_record,
+        form8582Input,
+      );
+    }
     const outputs: NodeOutput[] = [
       output(schedule1, { line5_schedule_e: deductibleNet }),
       this.outputNodes.output(agi_aggregator, {
@@ -1241,7 +1266,7 @@ class ScheduleENode extends TaxNode<typeof inputSchema> {
         eic_passive_schedule_e_income: eicPassiveIncome,
         ...(entireLoss === undefined ? palFields(schedule_es, farms) : {}),
       }),
-      ...(entireLoss === undefined ? form8582Outputs(schedule_es, farms) : []),
+      ...passiveLossOutputs,
       ...form8960Outputs(schedule_es),
       ...scheduleAOutputs(schedule_es),
       ...form8995Outputs(schedule_es),

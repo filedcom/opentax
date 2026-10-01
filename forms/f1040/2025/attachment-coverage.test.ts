@@ -48,6 +48,7 @@ Deno.test("native attachment preflight blocks unfiled public inputs", () => {
       { f8332: { child_name: "Child" } },
       { f8379: { injured_spouse_name: "Spouse" } },
       { f5471: { f5471s: [{}] } },
+      { form8582: { prior_unallowed: 5_000 } },
       { form7203: { stock_basis: 1_000 } },
       { f9465: { monthly_payment: 100 } },
       { nol_carryforward: { nol_carryforwards: [{ nol_amount: 100 }] } },

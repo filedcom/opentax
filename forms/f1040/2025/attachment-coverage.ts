@@ -330,6 +330,22 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
     isActive: (fields) => nonempty(fields.f965s),
   },
   {
+    pendingKey: "form8582",
+    exportKinds: ["mef", "pdf"],
+    reason:
+      "Form 8582 prior PAL needs authenticated accepted-2024 return and activity ledger before export",
+    isActive: (fields) =>
+      positive(fields.prior_unallowed) ||
+      (Array.isArray(fields.activities) && fields.activities.some((row) =>
+        row !== null && typeof row === "object" &&
+        (positive((row as Record<string, unknown>).prior_unallowed_operating) ||
+          positive(
+            (row as Record<string, unknown>).prior_unallowed_4797_part1,
+          ) ||
+          positive((row as Record<string, unknown>).prior_unallowed_4797_part2))
+      )),
+  },
+  {
     pendingKey: "form8582cr",
     exportKinds: ["pdf"],
     reason:

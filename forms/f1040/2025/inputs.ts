@@ -13,6 +13,10 @@ import {
   inputSchema as form1116PriorCarryoverInputSchema,
 } from "../nodes/inputs/form1116_prior_carryover/index.ts";
 import {
+  form8582_prior_year_record,
+  inputSchema as form8582PriorYearRecordInputSchema,
+} from "../nodes/inputs/form8582_prior_year_record/index.ts";
+import {
   form1116_carryover_review,
   inputSchema as form1116CarryoverReviewInputSchema,
 } from "../nodes/inputs/form1116_carryover_review/index.ts";
@@ -711,6 +715,11 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f8949, itemSchema: f8949ItemSchema, isArray: true },
   { node: scheduleC, itemSchema: scheduleCItemSchema, isArray: true },
   { node: scheduleE, itemSchema: scheduleEItemSchema, isArray: true },
+  {
+    node: form8582_prior_year_record,
+    inputSchema: form8582PriorYearRecordInputSchema,
+    isArray: false,
+  },
   {
     node: personal_property_rental,
     itemSchema: personalPropertyRentalItemSchema,

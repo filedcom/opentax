@@ -23,6 +23,7 @@ import {
   passivePropertySaleSchema,
   passiveSaleGain,
 } from "../../../nodes/intermediate/forms/form4797/index.ts";
+import { reconcileFiled2024Form8582Record } from "../../../nodes/intermediate/forms/form8582/prior_year_import.ts";
 import { inputSchema as w2InputSchema } from "../../../nodes/inputs/w2/index.ts";
 import { z } from "zod";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
@@ -787,6 +788,12 @@ export const form8582: MefFormDescriptor<"form8582", Input> = {
     }
 
     assertPriorYear8582Evidence(input);
+    const filed2024 = scheduleEInputSchema.parse(
+      context.pending.schedule_e ?? {},
+    ).filed_2024_form8582_record;
+    if (filed2024) {
+      reconcileFiled2024Form8582Record(filed2024, input);
+    }
     const activities = input.activities ?? [];
     if (
       activities.length > 0 &&

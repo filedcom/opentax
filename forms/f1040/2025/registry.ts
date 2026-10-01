@@ -6,6 +6,7 @@ import { ext } from "../nodes/inputs/ext/index.ts";
 import { form1116_review } from "../nodes/inputs/form1116_review/index.ts";
 import { form1116_carryover_review } from "../nodes/inputs/form1116_carryover_review/index.ts";
 import { form1116_prior_carryover } from "../nodes/inputs/form1116_prior_carryover/index.ts";
+import { form8582_prior_year_record } from "../nodes/inputs/form8582_prior_year_record/index.ts";
 import { f1098 } from "../nodes/inputs/f1098/index.ts";
 import { mortgage_refinance_points } from "../nodes/inputs/mortgage_refinance_points/index.ts";
 import { f1099b } from "../nodes/inputs/f1099b/index.ts";
@@ -249,6 +250,7 @@ export const registry: NodeRegistry = {
   form1116_review,
   form1116_carryover_review,
   form1116_prior_carryover,
+  form8582_prior_year_record,
   k1_trust,
   k1_s_corp: k1SCorpNode,
   k1_partnership: k1Partnership,
