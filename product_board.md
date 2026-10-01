@@ -59,7 +59,8 @@ policy months, and a staged Form 8621 prior-distribution record check. These
 are bounded slices; each parent form TODO below still has wider inputs or
 evidence gates. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md)
 names the exact supported inputs and remaining gates for every slice.
-Merge-readiness validation is under way. The branch was rebased onto
+The code merge checkpoint is locally green and PR #56 has no merge conflicts.
+The branch was rebased onto
 `origin/main` at `80647e73` on 2026-10-01; clergy source-evidence rejection and
 the PR's shared Schedule SE calculation were retained at the two conflict
 sites. The repaired branch passes the complete local test suite. This is a
@@ -164,5 +165,5 @@ before merge and release.
 - [ ] Complete the Publication 1436 Form 1040 ATS scenario matrix, source-backed expected outputs, required supporting forms and attachments, and scenario-specific assertions in [ATS preparation](docs/ats/ty2025.md). Resolve the known Scenario 1 Form 5695 door-cost conflict and Scenario 8 printed QCD mark before submission.
 - [ ] Obtain and verify the issued ATS certificate, enrolled ASID/Test ETIN, current IRS ATS endpoint/WSDL/trust package, and authorized transmission credentials. Do not put private keys or certificate secrets in the repository.
 - [ ] Submit each required Form 1040-family ATS scenario only after its source, XML, PDF, and package checks pass; retain transmitted package, IRS acknowledgment, acceptance/rejection details, and repair/retest evidence. No local test or XSD pass substitutes for an accepted IRS acknowledgment.
-- [ ] Review the completed diff, user-approved scope decisions, security/privacy implications, and test/ATS evidence; then update draft PR #56 with a precise description and linked test evidence. Do not merge merely because code is written.
+- [ ] Review the completed diff, user-approved scope decisions, security/privacy implications, and test/ATS evidence; then confirm PR #56's description and linked evidence. Do not merge merely because code is written.
 - [ ] After review and required acceptance gates, merge the PR, release a new version, verify the published artifact/version and release notes, and close or update the linked issues with a short human explanation and thanks.
